@@ -1797,9 +1797,13 @@ int reg_heap::uniquify_reg(int R, int t)
     assert(reg_is_owned_by(R2, t));
     assert(not reg_is_shared(R2));
 
-    // R2 should have a result IFF R1 has a result
+    // R2 should have a result if R1 has a result
     assert(not access(R1).result or access(R2).result);
-    assert(not access(R2).result or access(R1).result);
+    // R2 *may* have a result when R1 has no result, if it's call chain leads to a moved WHNF reg who result was updated.
+    // Currently we find *all* such ancestors -- not just those that had a result before -- and propagate the new location of the WHNF reg as a result.
+    // Perhaps we should not do this, as it then has the effect of doing more than simply MOVE the graph.
+    //   Therefore we do NOT: assert(not access(R2).result or access(R1).result);
+    // But we would like to.
 
     // R2 should have a call IFF R1 has a call
     assert(not access(R1).call or access(R2).call);
