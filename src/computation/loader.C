@@ -163,6 +163,9 @@ using std::map;
  *      - We are spending 7% of the time in __ieee754_log_avx.
  *        - There should be a better way to multiply lots of doubles together while avoiding underflow.
  *      - 1% of CPU time spend on memory allocation from vector::vector in three_way_topology_sample?
+ *
+ * 12. We should be able to store a list of triggers to evaluate in Parameters::recalc( )...
+ *      - How different is this than looking at the list of parameters which have changed?
  *        
  * 13. Rationalize Programs, Modules.
  *     13a. [DONE] Allow loading stuff from files.
