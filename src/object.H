@@ -280,6 +280,12 @@ public:
   bool operator<=(const T& t2)           const {return t <= T(t2);}
 };
 
+template<> 
+inline std::string POD_math<char>::print() const
+{
+  return std::string("'")+t+"'";
+}
+
 template <typename T>
 bool unshare(object_ptr<T>& ptr)
 {
