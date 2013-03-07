@@ -207,6 +207,8 @@ listFromVectorvectorInt v = listFromVectorvectorInt' v (sizeOfVectorvectorInt v)
 
 c_pair (x,y) = c_pair' x y;
 
+pair_from_c p = (c_fst p, c_snd p);
+
 new_vector s = IOAction1 builtin_new_vector s;
 
 set_vector_index v i x = IOAction3 builtin_set_vector_index v i x;
