@@ -802,6 +802,37 @@ int Parameters::SPR(int br1, int br2, int branch_to_move)
   return dead_branch;
 }
 
+void Parameters::check_h_tree() const
+{
+  for(int b=0; b < 2*T().n_branches(); b++)
+  {
+    object_ref p = C.get_parameter_value(parameter_for_tree_branch[b]);
+    object_ref s = convert<const OPair>(p)->t.first;
+    object_ref t = convert<const OPair>(p)->t.second;
+    assert(T().directed_branch(b).source() == *convert<const Int>(s));
+    assert(T().directed_branch(b).target() == *convert<const Int>(t));
+  }
+
+  for(int n=0; n < n*T().n_nodes(); n++)
+  {
+    object_ptr<const OVector> V = convert<const OVector>(C.get_parameter_value(parameter_for_tree_node[n]));
+    vector<int> VV;
+    for(const auto& elem: V->t)
+      VV.push_back(*convert<const Int>(elem));
+
+    vector<const_branchview> v = branches_from_node(T(), n);
+    vector<int> vv;
+    for(const auto& bv: v)
+      vv.push_back(bv);
+
+    assert(V->t.size() == v.size());
+    for(int elem: v)
+      assert(includes(VV,elem));
+    for(int elem: VV)
+      assert(includes(vv,elem));
+  }
+}
+
 efloat_t Parameters::prior_no_alignment() const 
 {
   efloat_t Pr = Model::prior();
