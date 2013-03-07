@@ -183,11 +183,11 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   //------------ Check the alignment branch constraints ------------//
   for(int i=0;i<p.size();i++) {
     vector<int> branches;
-    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][1]));
-    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][2]));
-    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][3]));
+    branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][1]));
+    branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][2]));
+    branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][3]));
 
-    if (any_branches_constrained(branches, *p[i].T, *p[i].TC, p[i].AC))
+    if (any_branches_constrained(branches, p[i].T(), *p[i].TC, p[i].AC))
       return -1;
   }
 
@@ -269,7 +269,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  dynamic_bitset<> ignore(p[0].T->n_nodes());
+  dynamic_bitset<> ignore(p[0].T().n_nodes());
   ignore[ nodes[0][0] ] = true;
 
   // Check that our constraints are met
@@ -357,7 +357,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 
 void sample_node(Parameters& P,int node) 
 {
-  const Tree& T = *P.T;
+  const Tree& T = P.T();
 
   vector<Parameters> p(1,P);
 

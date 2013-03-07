@@ -256,9 +256,6 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
       object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)), false);
 
       object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
-      int p_index = -1;
-      if (object_ptr<const parameter> p = rand_var.is_a<parameter>())
-	p_index = P.find_parameter(p->parameter_name);
 
       for(const auto& x: V->t)
       {
@@ -422,7 +419,7 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
     set_if_undef(P.keys,"pi_dirichlet_N",1.0);
     unsigned total_length = 0;
     for(int i=0;i<P.n_data_partitions();i++)
-    total_length += max(sequence_lengths(*P[i].A, P.T->n_leaves()));
+    total_length += max(sequence_lengths(*P[i].A, P.T().n_leaves()));
     P.keys["pi_dirichlet_N"] *= total_length;
 
     set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
@@ -517,13 +514,13 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 MCMC::MoveAll get_alignment_moves(Parameters& P)
 {
   // args for branch-based stuff
-  vector<int> branches(P.T->n_branches());
+  vector<int> branches(P.T().n_branches());
   for(int i=0;i<branches.size();i++)
     branches[i] = i;
 
   // args for node-based stuff
   vector<int> internal_nodes;
-  for(int i=P.T->n_leaves();i<P.T->n_nodes();i++)
+  for(int i=P.T().n_leaves();i<P.T().n_nodes();i++)
     internal_nodes.push_back(i);
 
   using namespace MCMC;
@@ -538,7 +535,7 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
 					   sample_alignments_one,
 					   branches)
 			     );
-  if (P.T->n_leaves() >2) {
+  if (P.T().n_leaves() >2) {
     alignment_branch_moves.add(0.15,MoveArgSingle("sample_tri","alignment:alignment_branch:nodes",
 						 sample_tri_one,
 						 branches)
@@ -557,12 +554,12 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
 
   //---------- alignment::nodes_master (nodes_moves) ----------//
   MoveEach nodes_moves("nodes_master","alignment:nodes");
-  if (P.T->n_leaves() >= 3)
+  if (P.T().n_leaves() >= 3)
     nodes_moves.add(10,MoveArgSingle("sample_node","alignment:nodes",
 				   sample_node_move,
 				   internal_nodes)
 		   );
-  if (P.T->n_leaves() >= 4)
+  if (P.T().n_leaves() >= 4)
     nodes_moves.add(1,MoveArgSingle("sample_two_nodes","alignment:nodes",
 				   sample_two_nodes_move,
 				   internal_nodes)
@@ -582,13 +579,13 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
 MCMC::MoveAll get_tree_moves(Parameters& P)
 {
   // args for branch-based stuff
-  vector<int> branches(P.T->n_branches());
+  vector<int> branches(P.T().n_branches());
   for(int i=0;i<branches.size();i++)
     branches[i] = i;
 
   // args for branch-based stuff
   vector<int> internal_branches;
-  for(int i=P.T->n_leaves();i<P.T->n_branches();i++)
+  for(int i=P.T().n_leaves();i<P.T().n_branches();i++)
     internal_branches.push_back(i);
 
   using namespace MCMC;
@@ -640,7 +637,7 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 
   topology_move.add(1,NNI_move,false);
   topology_move.add(1,SPR_move);
-  if (P.T->n_leaves() >3)
+  if (P.T().n_leaves() >3)
     tree_moves.add(1,topology_move);
   
   //-------------- tree::lengths (length_moves) -------------//
@@ -761,7 +758,7 @@ double min_branch_length(const SequenceTree& T)
 /// Replace negative or zero branch lengths with saner values.
 void set_min_branch_length(Parameters& P, double min_branch)
 {
-  const SequenceTree& T = *P.T;
+  const SequenceTree& T = P.T();
 
   for(int b=0;b<T.n_branches();b++) 
     if (T.branch(b).length() < min_branch)
@@ -774,7 +771,7 @@ void avoid_zero_likelihood(owned_ptr<Probability_Model>& P, ostream& out_log,ost
 
   for(int i=0;i<20 and P->likelihood() == 0.0;i++)
   {
-    double min_branch = min_branch_length(*PP.T);
+    double min_branch = min_branch_length(PP.T());
     out_log<<"  likelihood = "<<P->likelihood()<<"  min(T[b]) = "<<min_branch<<"\n";
 
     min_branch = std::max(min_branch, 0.0001);
@@ -883,7 +880,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     // enable and disable moves
     enable_disable_transition_kernels(pre_burnin,args);
 
-    int n_pre_burnin2 = n_pre_burnin + (int)log(P.as<Parameters>()->T->n_leaves());
+    int n_pre_burnin2 = n_pre_burnin + (int)log(P.as<Parameters>()->T().n_leaves());
     for(int i=0;i<n_pre_burnin2;i++) {
       out_both<<" NNI #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
       out_both<<"   |T| = "<<Get_Tree_Length_Function()(P,0);
@@ -1016,9 +1013,9 @@ void do_sampling(const variables_map& args,
   // - It does call the likelihood function, doesn't it?
   // FIXME -   However, it is probably not so important to resample most parameters in a way that is interleaved with stuff... (?)
   // FIXME -   Certainly, we aren't going to be interleaved with branches, anyway!
-  sampler.add(5 + log(PP.T->n_branches()), MH_but_no_slice_moves);
+  sampler.add(5 + log(PP.T().n_branches()), MH_but_no_slice_moves);
   if (P->keys["enable_MH_sampling"] > 0.5)
-    sampler.add(5 + log(PP.T->n_branches()),MH_moves);
+    sampler.add(5 + log(PP.T().n_branches()),MH_moves);
   else
     sampler.add(1,MH_moves);
   // Question: how are these moves intermixed with the other ones?

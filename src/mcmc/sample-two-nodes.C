@@ -309,13 +309,13 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   for(int i=0;i<p.size();i++) {
     vector<int> branches;
 
-    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][4]));
-    branches.push_back(p[i].T->branch(nodes[i][1],nodes[i][4]));
-    branches.push_back(p[i].T->branch(nodes[i][2],nodes[i][5]));
-    branches.push_back(p[i].T->branch(nodes[i][3],nodes[i][5]));
-    branches.push_back(p[i].T->branch(nodes[i][4],nodes[i][5]));
+    branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][4]));
+    branches.push_back(p[i].T().branch(nodes[i][1],nodes[i][4]));
+    branches.push_back(p[i].T().branch(nodes[i][2],nodes[i][5]));
+    branches.push_back(p[i].T().branch(nodes[i][3],nodes[i][5]));
+    branches.push_back(p[i].T().branch(nodes[i][4],nodes[i][5]));
 
-    if (any_branches_constrained(branches, *p[i].T, *p[i].TC, p[i].AC))
+    if (any_branches_constrained(branches, p[i].T(), *p[i].TC, p[i].AC))
       return -1;
   }
 
@@ -344,7 +344,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
 	if (i==0) 
-	  check_subA(*P0[j].subA, *P0[j].A, *p[0][j].subA, *p[0][j].A, *p[0].T);
+	  check_subA(*P0[j].subA, *P0[j].A, *p[0][j].subA, *p[0][j].A, p[0].T());
 	p[i][j].likelihood();  // check the likelihood calculation
 #endif
       }
@@ -409,7 +409,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  dynamic_bitset<> ignore(p[0].T->n_nodes());
+  dynamic_bitset<> ignore(p[0].T().n_nodes());
   ignore[ nodes[0][4] ] = true;
   ignore[ nodes[0][5] ] = true;
 
@@ -498,7 +498,7 @@ void sample_two_nodes(Parameters& P,int b)
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
-  nodes[0] = A5::get_nodes_random(*P.T, b);
+  nodes[0] = A5::get_nodes_random(P.T(), b);
 
   vector<efloat_t> rho(1,1);
 

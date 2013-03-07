@@ -286,11 +286,11 @@ string Get_Total_Total_Length_Indels_Function::operator()(const owned_ptr<Probab
 
 double mu_scale(const Parameters& P)
 {
-  SequenceTree T = *P.T;
+  SequenceTree T = P.T();
   
   valarray<double> weights(P.n_data_partitions());
   for(int i=0;i<weights.size();i++)
-    weights[i] = max(sequence_lengths(*P[i].A, P.T->n_leaves()));
+    weights[i] = max(sequence_lengths(*P[i].A, P.T().n_leaves()));
   weights /= weights.sum();
   
   // FIXME - we are just looking at branch 0!
@@ -355,16 +355,14 @@ string Get_Tree_Length_Function::operator()(const owned_ptr<Probability_Model>& 
 {
   Parameters& PP = *P.as<Parameters>();
 
-  const SequenceTree& T = *PP.T;
-
-  return convertToString( mu_scale(PP) * tree_length(T) );
+  return convertToString( mu_scale(PP) * tree_length(PP.T()) );
 }
 
 string TreeFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   const Parameters& PP = *P.as<Parameters>();
 
-  SequenceTree T = *PP.T;
+  SequenceTree T = PP.T();
     
   double scale = mu_scale(PP);
 

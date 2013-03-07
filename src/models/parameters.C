@@ -117,7 +117,7 @@ bool use_internal_index = true;
 
 const SequenceTree& data_partition::T() const
 {
-  return *P->T;
+  return P->T();
 }
 
 
@@ -682,17 +682,37 @@ double Parameters::get_beta() const
   return get_parameter_value_as<Double>(0);
 }
 
+const SequenceTree& Parameters::T() const
+{
+  return *T_;
+}
+
+void Parameters::set_tree(const SequenceTree& T2)
+{
+  *T_.modify() = T2;
+}
+
+void Parameters::exchange_subtrees(int b1, int b2)
+{
+  ::exchange_subtrees(*T_.modify(),b1,b2);
+}
+
+int Parameters::SPR(int b1, int b2, int bm)
+{
+  return ::SPR(*T_.modify(), b1, b2, bm);
+}
+
 efloat_t Parameters::prior_no_alignment() const 
 {
   efloat_t Pr = Model::prior();
 
   // prior on the topology and branch lengths
-  Pr *= ::prior(*this, *T, 1.0);
+  Pr *= ::prior(*this, T(), 1.0);
 
   if (branch_length_max > 0)
-    for(int i=0; i<T->n_branches(); i++)
+    for(int i=0; i<T().n_branches(); i++)
     {
-      if (T->branch(i).length() > branch_length_max)
+      if (T().branch(i).length() > branch_length_max)
 	return 0;
     }
 
@@ -705,7 +725,7 @@ efloat_t Parameters::prior_no_alignment() const
 
     efloat_t pA = (1.0 - p_unaligned);
 
-    for(int b=0;b<T->n_branches();b++)
+    for(int b=0;b<T().n_branches();b++)
       if (not branch_HMM_type[b])
 	Pr *= pA;
       else
@@ -790,7 +810,7 @@ void Parameters::recalc_smodel(int m)
 void Parameters::select_root(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    ::select_root(*T, b, get_data_partition(i).LC);
+    ::select_root(T(), b, get_data_partition(i).LC);
 }
 
 void Parameters::set_root(int node)
@@ -802,7 +822,7 @@ void Parameters::set_root(int node)
 void Parameters::LC_invalidate_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).LC.invalidate_branch(*T,b);
+    get_data_partition(i).LC.invalidate_branch(T(),b);
 }
 
 void Parameters::LC_invalidate_one_branch(int b)
@@ -886,11 +906,11 @@ void Parameters::recalc(const vector<int>& indices)
       assert(0 <= s and s < n_scales);
       
       // Change branch lengths for the s-th scale
-      assert(branch_length_indices[s].size() == T->n_branches());
-      for(int b=0;b<T->n_branches();b++)
+      assert(branch_length_indices[s].size() == T().n_branches());
+      for(int b=0;b<T().n_branches();b++)
       {
 	double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
-	double delta_t = T->branch(b).length();
+	double delta_t = T().branch(b).length();
 
 	C.set_parameter_value(branch_length_indices[s][b], Double(rate*delta_t));
       }
@@ -940,14 +960,14 @@ void Parameters::variable_alignment(bool b)
 
 void Parameters::setlength_no_invalidate_LC(int b,double l) 
 {
-  b = T->directed_branch(b).undirected_name();
-  T.modify()->directed_branch(b).set_length(l);
+  b = T().directed_branch(b).undirected_name();
+  T_.modify()->directed_branch(b).set_length(l);
 
   // Update D parameters
   for(int s=0; s<n_scales; s++) 
   {
     double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
-    double delta_t = T->branch(b).length();
+    double delta_t = T().branch(b).length();
     
     C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
   }
@@ -958,16 +978,22 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
     get_data_partition(i).setlength_no_invalidate_LC(b);
 }
 
+void Parameters::setlength_unsafe(int b,double l) 
+{
+  b = T().directed_branch(b).undirected_name();
+  T_.modify()->directed_branch(b).set_length(l);
+}
+
 void Parameters::setlength(int b,double l) 
 {
-  b = T->directed_branch(b).undirected_name();
-  T.modify()->directed_branch(b).set_length(l);
+  b = T().directed_branch(b).undirected_name();
+  T_.modify()->directed_branch(b).set_length(l);
 
   // Update D parameters
   for(int s=0; s<n_scales; s++) 
   {
     double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
-    double delta_t = T->branch(b).length();
+    double delta_t = T().branch(b).length();
     
     C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
   }
@@ -1028,8 +1054,8 @@ Parameters::Parameters(const module_loader& L,
    imodel_for_partition(i_mapping),
    scale_for_partition(scale_mapping),
    n_scales(max(scale_mapping)+1),
+   T_(t),
    branch_prior_type(0),
-   T(t),
    TC(star_tree(t.get_leaf_labels())),
    branch_HMM_type(t.n_branches(),0),
    updown(-1),
@@ -1111,10 +1137,10 @@ Parameters::Parameters(const module_loader& L,
   {
     string prefix= "Scale" + convertToString(s+1);
     branch_length_indices.push_back(vector<int>());
-    for(int b=0;b<T->n_branches();b++)
+    for(int b=0;b<T().n_branches();b++)
     {
       double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
-      double delta_t = T->branch(b).length();
+      double delta_t = T().branch(b).length();
 
       string name = "d" + convertToString(b+1);
       int index = add_parameter(prefix+"."+name, Double(rate * delta_t));
@@ -1124,7 +1150,7 @@ Parameters::Parameters(const module_loader& L,
 
   // Add and initialize variables for branch *categories*: branch_cat<b>
   vector<expression_ref> branch_categories;
-  for(int b=0;b<T->n_branches();b++)
+  for(int b=0;b<T().n_branches();b++)
   {
     string name = "Main.branchCat" + convertToString(b+1);
     add_parameter(name, Int(0));
@@ -1140,7 +1166,7 @@ Parameters::Parameters(const module_loader& L,
       string prefix= "Scale" + convertToString(s+1);
       // Get a list of the branch LENGTH (not time) parameters
       vector<expression_ref> D;
-      for(int b=0;b<T->n_branches();b++)
+      for(int b=0;b<T().n_branches();b++)
       {
 	string name = "d" + convertToString(b+1);
 	D.push_back(parameter(prefix+"."+name));
@@ -1172,7 +1198,7 @@ Parameters::Parameters(const module_loader& L,
       expression_ref V = Vector_From_List<Matrix,MatrixObject>();
       //expression_ref I = 0;
       expression_ref I = (identifier("!!"),branch_cat_list,v1);
-      expression_ref E = (identifier("mkArray"), T->n_branches(), v1^(V,(identifier("branchTransitionP"), (identifier("getNthMixture"),S,I), (identifier("!"), DL, v1) ) ) );
+      expression_ref E = (identifier("mkArray"), T().n_branches(), v1^(V,(identifier("branchTransitionP"), (identifier("getNthMixture"),S,I), (identifier("!"), DL, v1) ) ) );
       branch_transition_p_indices(s,m) = C.add_compute_expression(E);
     }
   }
@@ -1199,7 +1225,7 @@ Parameters::Parameters(const module_loader& L,
   Module tree_module("MyTree");
 
   vector<expression_ref> node_branches;
-  for(int n=0; n < T->n_nodes(); n++)
+  for(int n=0; n < T().n_nodes(); n++)
   {
     string name = "nodeBranches"+convertToString(n);
     tree_module.declare_parameter("nodeBranches"+convertToString(n));
@@ -1209,7 +1235,7 @@ Parameters::Parameters(const module_loader& L,
   expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
 
   vector<expression_ref> branch_nodes;
-  for(int b=0; b < 2*T->n_branches(); b++)
+  for(int b=0; b < 2*T().n_branches(); b++)
   {
     string name = "branchNodes"+convertToString(b); 
     tree_module.declare_parameter(name);
@@ -1220,14 +1246,14 @@ Parameters::Parameters(const module_loader& L,
   expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
 
   tree_module.add_import(false, "Tree");
-  tree_module.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
+  tree_module.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T().n_nodes(), T().n_branches()));
 
   add_submodel( tree_module );
 
-  for(int n=0; n < T->n_nodes(); n++)
+  for(int n=0; n < T().n_nodes(); n++)
   {
     vector<const_branchview> branch_list;
-    append(T->node(n).branches_out(),branch_list);
+    append(T().node(n).branches_out(),branch_list);
     Vector<int> branch_list_;
     for(auto b: branch_list)
       branch_list_.t.push_back(b);
@@ -1236,10 +1262,10 @@ Parameters::Parameters(const module_loader& L,
     C.set_parameter_value(parameter_name, branch_list_);
   }
 
-  for(int b=0; b < 2*T->n_branches(); b++)
+  for(int b=0; b < 2*T().n_branches(); b++)
   {
-    int source = T->directed_branch(b).source();
-    int target = T->directed_branch(b).target();
+    int source = T().directed_branch(b).source();
+    int target = T().directed_branch(b).target();
 
     string parameter_name = "MyTree.branchNodes"+convertToString(b);
 
@@ -1252,10 +1278,10 @@ Parameters::Parameters(const module_loader& L,
   C.evaluate_expression( (identifier("neighbors"), identifier("MyTree.tree"), 0));
   C.evaluate_expression( (identifier("nodesForEdge"),identifier("MyTree.tree"), 0));
   int nn = *convert<const Int>(C.evaluate_expression( (identifier("edgeForNodes"), identifier("MyTree.tree"), (identifier("nodesForEdge"),identifier("MyTree.tree"), 0))));
-  for(int b=0; b < 2*T->n_branches(); b++)
+  for(int b=0; b < 2*T().n_branches(); b++)
   {
     vector<const_branchview> branch_list;
-    append(T->directed_branch(b).branches_before(),branch_list);
+    append(T().directed_branch(b).branches_before(),branch_list);
     vector<int> branch_list_;
     for(auto b: branch_list)
       branch_list_.push_back(b);

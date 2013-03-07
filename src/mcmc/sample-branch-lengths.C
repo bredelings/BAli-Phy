@@ -66,7 +66,7 @@ MCMC::Result change_branch_length_(owned_ptr<Probability_Model>& P,int b,double 
   MCMC::Result result(3);
   
   //------------ Propose new length -------------//
-  const double length = P.as<const Parameters>()->T->directed_branch(b).length();
+  const double length = P.as<const Parameters>()->T().directed_branch(b).length();
   double newlength = length;
 
   double ratio = twiddle(newlength,sigma);
@@ -94,7 +94,7 @@ void change_branch_length_flat(owned_ptr<Probability_Model>& P,
 {
   Parameters& PP = *P.as<Parameters>();
 
-  const double L = PP.T->directed_branch(b).length();
+  const double L = PP.T().directed_branch(b).length();
   const double mu = PP.branch_mean();
 
   MCMC::Result result = change_branch_length_(P, b, sigma*PP.branch_mean(), branch_twiddle_positive);
@@ -115,7 +115,7 @@ void change_branch_length_log_scale(owned_ptr<Probability_Model>& P,
 				    int b,
 				    double sigma)
 {
-  const double L = P.as<Parameters>()->T->directed_branch(b).length();
+  const double L = P.as<Parameters>()->T().directed_branch(b).length();
   const double mu = P.as<Parameters>()->branch_mean();
 
   MCMC::Result result = change_branch_length_(P, b, sigma, scale_gaussian );
@@ -138,7 +138,7 @@ void slice_sample_branch_length(owned_ptr<Probability_Model>& P,MoveStats& Stats
   Parameters& PP = *P.as<Parameters>();
   PP.select_root(b);
   
-  const double L = PP.T->directed_branch(b).length();
+  const double L = PP.T().directed_branch(b).length();
   const double mu = PP.branch_mean();
 
 
@@ -197,7 +197,7 @@ void change_branch_length_and_T(owned_ptr<Probability_Model>& P,MoveStats& Stats
   result.counts[0] = 1;
 
   //------------- Propose new length --------------//
-  const double length = PP.T->directed_branch(b).length();
+  const double length = PP.T().directed_branch(b).length();
   double newlength = length;
   double ratio = branch_twiddle(newlength,PP.branch_mean()*0.6);
 
@@ -231,12 +231,12 @@ void change_branch_length_and_T(owned_ptr<Probability_Model>& P,MoveStats& Stats
     //----- Generate the Different Topologies ------//
     vector<Parameters> p(2,PP);
     
-    SequenceTree& T2 = *p[1].T.modify();
+    const SequenceTree& T2 = p[1].T();
     
     vector<int> nodes = A5::get_nodes_random(T2,b);
     int b1 = T2.directed_branch(nodes[4],nodes[1]);
     int b2 = T2.directed_branch(nodes[5],nodes[2]);
-    exchange_subtrees(T2,b1,b2);
+    p[1].exchange_subtrees(b1,b2);
 
     p[1].invalidate_subA_index_branch(b);
 
@@ -320,7 +320,7 @@ void slide_node(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b0)
   Parameters* PP = P.as<Parameters>();
 
   vector<const_branchview> b;
-  b.push_back( PP->T->directed_branch(b0) );
+  b.push_back( PP->T().directed_branch(b0) );
 
   // choose branches to alter
   if (uniform() < 0.5)
@@ -333,8 +333,8 @@ void slide_node(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b0)
   b0 = b[0].name();
   int b1 = b[1].undirected_name();
   int b2 = b[2].undirected_name();
-  double L1a = PP->T->branch(b1).length();
-  double L2a = PP->T->branch(b2).length();
+  double L1a = PP->T().branch(b1).length();
+  double L2a = PP->T().branch(b2).length();
 
   PP->set_root(b[0].target());
 
@@ -361,8 +361,8 @@ void slide_node(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b0)
       name = "slide_node_expand_branch";
     }
     PP = P.as<Parameters>();
-    double L1b = PP->T->branch(b1).length();
-    double L2b = PP->T->branch(b2).length();
+    double L1b = PP->T().branch(b1).length();
+    double L2b = PP->T().branch(b2).length();
 
     MCMC::Result result(2);
     result.totals[0] = success?1:0;
@@ -452,10 +452,9 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   }
 #endif
 
-  SequenceTree& T2 = *P2->T.modify();
-  for(int b=0;b<T2.n_branches();b++) {
-    const double length = T2.branch(b).length();
-    T2.branch(b).set_length(length/scale);
+  for(int b=0;b<P2->T().n_branches();b++) {
+    const double length = P2->T().branch(b).length();
+    P2->setlength_unsafe(b, length/scale);
   }
 
   for(int i=0;i<PP->n_branch_means();i++) 
@@ -475,7 +474,7 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
 #endif
 
   //--------- Compute proposal ratio ---------//
-  efloat_t p_ratio = pow(efloat_t(scale),P2->n_data_partitions()-T2.n_branches());
+  efloat_t p_ratio = pow(efloat_t(scale),P2->n_data_partitions()-P2->T().n_branches());
   efloat_t a_ratio = P2->prior_no_alignment()/PP->prior_no_alignment()*p_ratio;
 
 #ifndef NDEBUG
@@ -509,7 +508,7 @@ void change_3_branch_lengths(owned_ptr<Probability_Model>& P,MoveStats& Stats,in
   Parameters* PP = P.as<Parameters>();
   MCMC::Result result(2);
 
-  const Tree& T = *PP->T;
+  const Tree& T = PP->T();
   if (not T.node(n).is_internal_node()) return;
 
   //-------------- Find branches ------------------//

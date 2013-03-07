@@ -264,11 +264,11 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
   //------------ Check the alignment branch constraints ------------//
   for(int i=0;i<p.size();i++) {
     vector<int> branches;
-    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][1]));
-    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][2]));
-    branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][3]));
+    branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][1]));
+    branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][2]));
+    branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][3]));
 
-    if (any_branches_constrained(branches, *p[i].T, *p[i].TC, p[i].AC))
+    if (any_branches_constrained(branches, p[i].T(), *p[i].TC, p[i].AC))
       return;// -1;
   }
 
@@ -359,10 +359,10 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  dynamic_bitset<> ignore1A = ~p[0].T->partition(nodes[0][0],nodes[0][1]);
-  dynamic_bitset<> ignore2A = ~(p[0].T->partition(nodes[0][0],nodes[0][2]) | p[0].T->partition(nodes[0][0],nodes[0][3]) );
-  dynamic_bitset<> ignore1(p[0].T->n_nodes()); 
-  dynamic_bitset<> ignore2(p[0].T->n_nodes()); 
+  dynamic_bitset<> ignore1A = ~p[0].T().partition(nodes[0][0],nodes[0][1]);
+  dynamic_bitset<> ignore2A = ~(p[0].T().partition(nodes[0][0],nodes[0][2]) | p[0].T().partition(nodes[0][0],nodes[0][3]) );
+  dynamic_bitset<> ignore1(p[0].T().n_nodes()); 
+  dynamic_bitset<> ignore2(p[0].T().n_nodes()); 
   for(int i=0;i<ignore1.size();i++) {
     ignore1[i] = ignore1A[i];
     ignore2[i] = ignore2A[i];
@@ -567,7 +567,7 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
-  nodes[0] = A3::get_nodes_branch_random(*P.T,node1,node2);
+  nodes[0] = A3::get_nodes_branch_random(P.T(),node1,node2);
 
   vector<efloat_t> rho(1,1);
 
@@ -605,7 +605,7 @@ bool tri_sample_alignment_branch(Parameters& P,
   vector<Parameters> p(2,P);
   p[1].setlength(b,length2);
 
-  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(*P.T,node1,node2) );
+  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.T(),node1,node2) );
 
   vector<efloat_t> rho(2);
   rho[0] = 1;
@@ -628,7 +628,7 @@ bool tri_sample_alignment_and_parameter(Parameters& P,
   vector<Parameters> p(2,P);
   p[1].set_parameter_value(p_index,v2);
 
-  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(*P.T,node1,node2) );
+  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.T(),node1,node2) );
 
   vector<efloat_t> rho(2);
   rho[0] = 1;
@@ -649,11 +649,11 @@ bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
   //----------- Generate the Different Matrices ---------//
   vector<Parameters> p(2,P);
 
-  int b = P.T->branch(node1,node2);
+  int b = P.T().branch(node1,node2);
   p[1].branch_HMM_type[b] = 1 - p[1].branch_HMM_type[b];
   p[1].recalc_imodels();
 
-  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(*P.T, node1,node2) );
+  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.T(), node1,node2) );
 
   vector<efloat_t> rho(2,1.0);
 

@@ -933,7 +933,7 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
     checked_ifstream partitions(filename,"partition weights file");
     string line;
     while(portable_getline(partitions,line)) {
-      Partition p(P.T->get_leaf_labels(),line);
+      Partition p(P.T().get_leaf_labels(),line);
       portable_getline(partitions,line);
       double o = convertTo<double>(line);
       
@@ -1173,7 +1173,7 @@ void write_initial_alignments(const vector<alignment>& A, int proc_id, string di
 
 void set_lambda_scale_branch_parameters(Parameters& P, const variables_map& args)
 {
-  const SequenceTree& T = *P.T;
+  const SequenceTree& T = P.T();
 
   // Set the initial value of the branch to (optionally) scale the indel rate by.
   if (args.count("lambda-scale-branch"))
@@ -1200,7 +1200,7 @@ void set_lambda_scale_branch_parameters(Parameters& P, const variables_map& args
     // Get the integer name of the branch on the current tree.
     int b = which_branch(T, p);
     if (b == -1)
-      throw myexception()<<"Partition '"<<p<<"' is not in the starting tree '"<<*P.T<<"'";
+      throw myexception()<<"Partition '"<<p<<"' is not in the starting tree '"<<P.T()<<"'";
     b = T.directed_branch(b).undirected_name();
       
     // Get a list of all parameters with names ending in lambda_scale_branch
@@ -1244,7 +1244,7 @@ void set_lambda_scale_branch_parameters(Parameters& P, const variables_map& args
 /// If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
 void set_foreground_branches(Parameters& P)
 {
-  const SequenceTree& T = *P.T;
+  const SequenceTree& T = P.T();
 
   if (T.find_undirected_branch_attribute_index_by_name("foreground") != -1)
   {

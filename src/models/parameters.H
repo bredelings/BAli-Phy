@@ -253,6 +253,9 @@ class Parameters: public Probability_Model
   /// The alignments and cached computations
   mutable std::vector<data_partition> data_partitions;
 
+  /// The Tree - mean branch lengths = 1
+  cow_ptr<SequenceTree> T_;
+
 public:
 
   /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
@@ -277,8 +280,11 @@ public:
   void set_beta(double b);
   double get_beta() const;
 
-  /// The Tree - mean branch lengths = 1
-  cow_ptr<SequenceTree> T;
+  const SequenceTree& T() const;
+
+  void set_tree(const SequenceTree& T);
+  void exchange_subtrees(int b1, int b2);
+  int SPR(int b1, int b2, int bm=-1);
 
   /// Topology and Branch-Length Constraint
   cow_ptr<SequenceTree> TC;
@@ -325,6 +331,7 @@ public:
   object_ptr<const alphabet> get_alphabet_for_smodel(int i) const;
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
+  void setlength_unsafe(int b, double l);
   void setlength(int b,double l); 
   void setlength_no_invalidate_LC(int b,double l); 
   

@@ -124,7 +124,7 @@ double branch_length_slice_function::operator()()
 
 double branch_length_slice_function::current_value() const
 {
-  return P.T->directed_branch(b).length();
+  return P.T().directed_branch(b).length();
 }
 
 branch_length_slice_function::branch_length_slice_function(Parameters& P_,int b_)
@@ -153,14 +153,14 @@ double slide_node_slice_function::operator()(double x)
 
 double slide_node_slice_function::current_value() const
 {
-  return P.T->branch(b1).length();
+  return P.T().branch(b1).length();
 }
 
 slide_node_slice_function::slide_node_slice_function(Parameters& P_,int b0)
   :count(0),P(P_)
 {
   vector<const_branchview> b;
-  b.push_back( P.T->directed_branch(b0) );
+  b.push_back( P.T().directed_branch(b0) );
 
   // choose branches to alter
   append(b[0].branches_after(),b);
@@ -171,8 +171,8 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P_,int b0)
   b1 = b[1].undirected_name();
   b2 = b[2].undirected_name();
 
-  x0 = P.T->branch(b1).length();
-  y0 = P.T->branch(b2).length();
+  x0 = P.T().branch(b1).length();
+  y0 = P.T().branch(b2).length();
 
   set_lower_bound(0);
   set_upper_bound(x0+y0);
@@ -181,8 +181,8 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P_,int b0)
 slide_node_slice_function::slide_node_slice_function(Parameters& P_,int i1,int i2)
   :count(0),b1(i1),b2(i2),P(P_)
 {
-  x0 = P.T->branch(b1).length();
-  y0 = P.T->branch(b2).length();
+  x0 = P.T().branch(b1).length();
+  y0 = P.T().branch(b2).length();
 
   set_lower_bound(0);
   set_upper_bound(x0+y0);
@@ -220,12 +220,10 @@ double scale_means_only_slice_function::operator()(double t)
   double scale = set_sum_of_means_tricky(P, initial_sum_of_means * exp(t));
 
   // Scale the tree in the opposite direction
-  SequenceTree& T = *P.T.modify();
-
-  for(int b=0;b<T.n_branches();b++) 
+  for(int b=0;b<P.T().n_branches();b++) 
   {
-    const double L = T.branch(b).length();
-    T.branch(b).set_length(L/scale);
+    const double L = P.T().branch(b).length();
+    P.setlength_unsafe(b, L/scale);
   }
 
   return operator()();
@@ -235,8 +233,7 @@ double scale_means_only_slice_function::operator()()
 {
   count++;
 
-  SequenceTree& T = *P.T.modify();
-  const int B = T.n_branches();
+  const int B = P.T().n_branches();
   const int n = P.n_branch_means();
 
   // return pi * (\sum_i \mu_i)^(n-B)

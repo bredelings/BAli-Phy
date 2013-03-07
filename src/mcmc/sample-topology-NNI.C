@@ -105,8 +105,8 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, i
     assert(p[0][j].variable_alignment() == p[1][j].variable_alignment());
 
   vector< vector<int> > nodes(2);
-  nodes[0] = A5::get_nodes_random(*p[0].T, b);
-  nodes[1] = A5::get_nodes_random(*p[1].T, b);
+  nodes[0] = A5::get_nodes_random(p[0].T(), b);
+  nodes[1] = A5::get_nodes_random(p[1].T(), b);
 
   try {
     return sample_two_nodes_multi(p,nodes,rho,true,false);
@@ -145,7 +145,7 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, i
 // check the HMM type for a DIRECTED branch without going off the end of the array
 int HMM_type_for_branch(const Parameters& P, int b)
 {
-  const Tree& T = *P.T;
+  const Tree& T = P.T();
   b = T.directed_branch(b).undirected_name();
   assert(0 <= b and b < P.branch_HMM_type.size());
   return P.branch_HMM_type[b];
@@ -154,31 +154,31 @@ int HMM_type_for_branch(const Parameters& P, int b)
 void two_way_topology_slice_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T->directed_branch(b).is_leaf_branch()) return;
+  if (PP.T().directed_branch(b).is_leaf_branch()) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
-  Tree T0 = *PP.T;
+  Tree T0 = PP.T();
 
-  vector<int> nodes = A5::get_nodes_random(*PP.T, b);
+  vector<int> nodes = A5::get_nodes_random(PP.T(), b);
 
   PP.select_root(b);
   // P.likelihood();  Why does this not make a difference in speed?
 
   vector<Parameters> p(2,PP);
 
-  int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
-  int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
+  int b1 = p[1].T().directed_branch(nodes[4],nodes[1]);
+  int b2 = p[1].T().directed_branch(nodes[5],nodes[2]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  exchange_subtrees(*p[1].T.modify(), b1, b2);
+  p[1].exchange_subtrees(b1, b2);
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[1].T, *PP.TC))
+  if (not extends(p[1].T(), *PP.TC))
     return;
 
-  double L = PP.T->directed_branch(b).length();
+  double L = PP.T().directed_branch(b).length();
 
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
   //  double Pr1 = log(p[0].probability());
@@ -212,7 +212,7 @@ void two_way_topology_slice_sample(owned_ptr<Probability_Model>& P, MoveStats& S
     result.totals[1] = L;
   else
     result.counts[1] = 0;
-  result.totals[2] = std::abs(PP.T->directed_branch(b).length() - L);
+  result.totals[2] = std::abs(PP.T().directed_branch(b).length() - L);
 
   //  if (C == 1) std::cerr<<"slice-diff = "<<Pr2 - Pr1<<"\n";
 
@@ -222,7 +222,7 @@ void two_way_topology_slice_sample(owned_ptr<Probability_Model>& P, MoveStats& S
 void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T->directed_branch(b).is_leaf_branch()) return;
+  if (PP.T().directed_branch(b).is_leaf_branch()) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
@@ -233,22 +233,22 @@ void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, 
     return;
   }
 
-  vector<int> nodes = A5::get_nodes_random(*PP.T, b);
+  vector<int> nodes = A5::get_nodes_random(PP.T(), b);
 
   PP.select_root(b);
   // PP.likelihood();  Why does this not make a difference in speed?
 
   vector<Parameters> p(2,PP);
 
-  int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
-  int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
+  int b1 = p[1].T().directed_branch(nodes[4],nodes[1]);
+  int b2 = p[1].T().directed_branch(nodes[5],nodes[2]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  exchange_subtrees(*p[1].T.modify() ,b1, b2);
+  p[1].exchange_subtrees(b1, b2);
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[1].T, *PP.TC))
+  if (not extends(p[1].T(), *PP.TC))
     return;
 
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
@@ -274,45 +274,45 @@ void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, 
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T->directed_branch(b).length();
+    result.totals[1] = p[0].T().directed_branch(b).length();
   else
     result.counts[1] = 0;
 
-  NNI_inc(Stats,"NNI (2-way)", result,*p[0].T,b);
+  NNI_inc(Stats,"NNI (2-way)", result,p[0].T(),b);
 }
 
 void two_way_NNI_SPR_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T->directed_branch(b).is_leaf_branch()) return;
+  if (PP.T().directed_branch(b).is_leaf_branch()) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
-  vector<int> nodes = A5::get_nodes_random(*PP.T, b);
+  vector<int> nodes = A5::get_nodes_random(PP.T(), b);
 
   PP.select_root(b);
   // PP.likelihood();  Why does this not make a difference in speed?
 
   vector<Parameters> p(2,PP);
 
-  int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
-  int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
+  int b1 = p[1].T().directed_branch(nodes[4],nodes[1]);
+  int b2 = p[1].T().directed_branch(nodes[5],nodes[2]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  exchange_subtrees(*p[1].T.modify(), b1, b2);
+  p[1].exchange_subtrees(b1, b2);
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[1].T, *PP.TC))
+  if (not extends(p[1].T(), *PP.TC))
     return;
 
-  double LA = p[0].T->branch(nodes[4],nodes[0]).length();
-  double LB = p[0].T->branch(nodes[4],nodes[5]).length();
-  double LC = p[0].T->branch(nodes[5],nodes[3]).length();
+  double LA = p[0].T().branch(nodes[4],nodes[0]).length();
+  double LB = p[0].T().branch(nodes[4],nodes[5]).length();
+  double LC = p[0].T().branch(nodes[5],nodes[3]).length();
 
-  p[1].setlength(p[1].T->branch(nodes[0],nodes[4]),LA + LB);
-  p[1].setlength(p[1].T->branch(nodes[4],nodes[5]),LC*uniform());
-  p[1].setlength(p[1].T->branch(nodes[5],nodes[3]),LC - p[1].T->branch(nodes[4],nodes[5]).length());
+  p[1].setlength(p[1].T().branch(nodes[0],nodes[4]),LA + LB);
+  p[1].setlength(p[1].T().branch(nodes[4],nodes[5]),LC*uniform());
+  p[1].setlength(p[1].T().branch(nodes[5],nodes[3]),LC - p[1].T().branch(nodes[4],nodes[5]).length());
 
   vector<efloat_t> rho(2,1);
   rho[1] = LC/(LA+LB);
@@ -329,10 +329,10 @@ void two_way_NNI_SPR_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, i
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T->directed_branch(b).length();
+    result.totals[1] = p[0].T().directed_branch(b).length();
   else
     result.counts[1] = 0;
-  NNI_inc(Stats,"NNI (2-way/SPR)", result, *p[0].T, b);
+  NNI_inc(Stats,"NNI (2-way/SPR)", result, p[0].T(), b);
 }
 
 vector<int> NNI_branches(const Tree& T, int b) 
@@ -355,11 +355,11 @@ vector<int> NNI_branches(const Tree& T, int b)
 void two_way_NNI_and_branches_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T->directed_branch(b).is_leaf_branch()) return;
+  if (PP.T().directed_branch(b).is_leaf_branch()) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
-  vector<int> nodes = A5::get_nodes_random(*PP.T,b);
+  vector<int> nodes = A5::get_nodes_random(PP.T(),b);
 
   PP.select_root(b);
   // PP.likelihood();  Why does this not make a difference in speed?
@@ -367,26 +367,26 @@ void two_way_NNI_and_branches_sample(owned_ptr<Probability_Model>& P, MoveStats&
   vector<Parameters> p(2,PP);
 
   //---------------- Do the NNI operation -------------------//
-  int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
-  int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
+  int b1 = p[1].T().directed_branch(nodes[4],nodes[1]);
+  int b2 = p[1].T().directed_branch(nodes[5],nodes[2]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  exchange_subtrees(*p[1].T.modify(), b1, b2);
+  p[1].exchange_subtrees(b1, b2);
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[1].T, *PP.TC))
+  if (not extends(p[1].T(), *PP.TC))
     return;
 
   //------------- Propose new branch lengths ----------------//
   double ratio = 1.0;
-  vector<int> branches = NNI_branches(*p[1].T, b);
+  vector<int> branches = NNI_branches(p[1].T(), b);
 
   for(int i=0;i<branches.size();i++) {
 
     double factor = exp(gaussian(0,0.05));
 
-    double L = p[1].T->directed_branch( branches[i] ).length() * factor;
+    double L = p[1].T().directed_branch( branches[i] ).length() * factor;
 
     p[1].setlength(branches[i], L);
 
@@ -409,17 +409,17 @@ void two_way_NNI_and_branches_sample(owned_ptr<Probability_Model>& P, MoveStats&
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T->directed_branch(b).length();
+    result.totals[1] = p[0].T().directed_branch(b).length();
   else
     result.counts[1] = 0;
 
-  NNI_inc(Stats,"NNI (2-way) + branches", result, *p[0].T, b);
+  NNI_inc(Stats,"NNI (2-way) + branches", result, p[0].T(), b);
 }
 
 void two_way_NNI_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T->directed_branch(b).is_leaf_branch()) return;
+  if (PP.T().directed_branch(b).is_leaf_branch()) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
@@ -441,9 +441,9 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<efloat_t>& rho
   assert(p[1].variable_alignment() == p[2].variable_alignment());
 
   vector< vector<int> > nodes(3);
-  nodes[0] = A5::get_nodes_random(*p[0].T, b);
-  nodes[1] = A5::get_nodes_random(*p[1].T, b);
-  nodes[2] = A5::get_nodes_random(*p[2].T, b);
+  nodes[0] = A5::get_nodes_random(p[0].T(), b);
+  nodes[1] = A5::get_nodes_random(p[1].T(), b);
+  nodes[2] = A5::get_nodes_random(p[2].T(), b);
 
   try {
     return sample_two_nodes_multi(p,nodes,rho,true,false);
@@ -459,13 +459,13 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<efloat_t>& rho
 void three_way_topology_sample_slice(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T->directed_branch(b).is_leaf_branch()) return;
+  if (PP.T().directed_branch(b).is_leaf_branch()) return;
 
   if (PP.variable_alignment()) return;
 
-  Tree T0 = *PP.T;
+  Tree T0 = PP.T();
 
-  vector<int> nodes = A5::get_nodes_random(*PP.T,b);
+  vector<int> nodes = A5::get_nodes_random(PP.T(),b);
 
   //------ Generate Topologies and alter caches ------///
   PP.select_root(b);
@@ -473,29 +473,29 @@ void three_way_topology_sample_slice(owned_ptr<Probability_Model>& P, MoveStats&
   
   vector<Parameters> p(3,PP);
 
-  int b1 = PP.T->directed_branch(nodes[4],nodes[1]);
-  int b2 = PP.T->directed_branch(nodes[5],nodes[2]);
-  int b3 = PP.T->directed_branch(nodes[5],nodes[3]);
+  int b1 = PP.T().directed_branch(nodes[4],nodes[1]);
+  int b2 = PP.T().directed_branch(nodes[5],nodes[2]);
+  int b3 = PP.T().directed_branch(nodes[5],nodes[3]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  exchange_subtrees(*p[1].T.modify(), b1, b2);
+  p[1].exchange_subtrees(b1, b2);
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
 
-  if (not extends(*p[1].T, *PP.TC))
+  if (not extends(p[1].T(), *PP.TC))
     return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
-  exchange_subtrees(*p[2].T.modify(), b1, b3);
+  p[2].exchange_subtrees(b1, b3);
   p[2].LC_invalidate_branch(b);
   p[2].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[2].T, *PP.TC))
+  if (not extends(p[2].T(), *PP.TC))
     return;
 
   const vector<efloat_t> rho(3,1);
 
-  double L = PP.T->directed_branch(b).length();
+  double L = PP.T().directed_branch(b).length();
 
 #ifndef NDEBUG
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
@@ -535,7 +535,7 @@ void three_way_topology_sample_slice(owned_ptr<Probability_Model>& P, MoveStats&
     result.totals[1] = L;
   else
     result.counts[1] = 0;
-  result.totals[2] = std::abs(PP.T->directed_branch(b).length() - L);
+  result.totals[2] = std::abs(PP.T().directed_branch(b).length() - L);
   result.totals[3] = logp1.count + logp2.count + logp3.count;
 
   //  if (C == 1) std::cerr<<"slice-diff3 = "<<Pr2 - Pr1<<"\n";
@@ -548,7 +548,7 @@ void three_way_topology_sample_slice(owned_ptr<Probability_Model>& P, MoveStats&
 void three_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T->directed_branch(b).is_leaf_branch()) return;
+  if (PP.T().directed_branch(b).is_leaf_branch()) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1)
     return;
@@ -560,7 +560,7 @@ void three_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats
     return;
   }
 
-  vector<int> nodes = A5::get_nodes_random(*PP.T,b);
+  vector<int> nodes = A5::get_nodes_random(PP.T(),b);
 
   //------ Generate Topologies and alter caches ------///
   PP.select_root(b);
@@ -568,24 +568,24 @@ void three_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats
 
   vector<Parameters> p(3,PP);
 
-  int b1 = PP.T->directed_branch(nodes[4],nodes[1]);
-  int b2 = PP.T->directed_branch(nodes[5],nodes[2]);
-  int b3 = PP.T->directed_branch(nodes[5],nodes[3]);
+  int b1 = PP.T().directed_branch(nodes[4],nodes[1]);
+  int b2 = PP.T().directed_branch(nodes[5],nodes[2]);
+  int b3 = PP.T().directed_branch(nodes[5],nodes[3]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  exchange_subtrees(*p[1].T.modify(), b1, b2);
+  p[1].exchange_subtrees(b1, b2);
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
 
-  if (not extends(*p[1].T, *PP.TC))
+  if (not extends(p[1].T(), *PP.TC))
     return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
-  exchange_subtrees(*p[2].T.modify(), b1, b3);
+  p[2].exchange_subtrees(b1, b3);
   p[2].LC_invalidate_branch(b);
   p[2].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[2].T, *PP.TC))
+  if (not extends(p[2].T(), *PP.TC))
     return;
 
   const vector<efloat_t> rho(3,1);
@@ -602,56 +602,56 @@ void three_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T->directed_branch(b).length();
+    result.totals[1] = p[0].T().directed_branch(b).length();
   else
     result.counts[1] = 0;
 
-  NNI_inc(Stats,"NNI (3-way)", result, *p[0].T, b);
+  NNI_inc(Stats,"NNI (3-way)", result, p[0].T(), b);
 }
 
 void three_way_topology_and_alignment_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T->directed_branch(b).is_leaf_branch()) return;
+  if (PP.T().directed_branch(b).is_leaf_branch()) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1)
     return;
 
-  vector<int> two_way_nodes = A5::get_nodes_random(*PP.T, b);
+  vector<int> two_way_nodes = A5::get_nodes_random(PP.T(), b);
 
   //--------- Generate the Different Topologies -------//
   // We ALWAYS resample the connection between two_way_nodes [0] and [4].
 
   vector<Parameters> p(3,PP);
-  int b1 = p[0].T->directed_branch(two_way_nodes[4],two_way_nodes[1]);
-  int b2 = p[0].T->directed_branch(two_way_nodes[5],two_way_nodes[2]);
-  int b3 = p[0].T->directed_branch(two_way_nodes[5],two_way_nodes[3]);
+  int b1 = p[0].T().directed_branch(two_way_nodes[4],two_way_nodes[1]);
+  int b2 = p[0].T().directed_branch(two_way_nodes[5],two_way_nodes[2]);
+  int b3 = p[0].T().directed_branch(two_way_nodes[5],two_way_nodes[3]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  exchange_subtrees(*p[1].T.modify(), b1, b2);
+  p[1].exchange_subtrees(b1, b2);
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
  
   p[1].recompute_pairwise_alignment(b1);
   p[1].note_alignment_changed_on_branch(b2);
 
-  if (not extends(*p[1].T, *PP.TC))
+  if (not extends(p[1].T(), *PP.TC))
     return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
-  exchange_subtrees(*p[2].T.modify(), b1, b3);
+  p[2].exchange_subtrees(b1, b3);
   p[2].LC_invalidate_branch(b);
   p[2].invalidate_subA_index_branch(b);
 
   p[2].recompute_pairwise_alignment(b1);
   p[2].note_alignment_changed_on_branch(b3);
 
-  if (not extends(*p[2].T, *PP.TC))
+  if (not extends(p[2].T(), *PP.TC))
     return;
 
   vector< vector< int> > nodes;
   for(int i=0;i<p.size();i++)
-    nodes.push_back(A3::get_nodes_branch_random(*p[i].T, two_way_nodes[4], two_way_nodes[0]) );
+    nodes.push_back(A3::get_nodes_branch_random(p[i].T(), two_way_nodes[4], two_way_nodes[0]) );
 
   const vector<efloat_t> rho(3,1);
 
@@ -674,9 +674,9 @@ void three_way_topology_and_alignment_sample(owned_ptr<Probability_Model>& P, Mo
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T->directed_branch(b).length();
+    result.totals[1] = p[0].T().directed_branch(b).length();
   else
     result.counts[1] = 0;
   
-  NNI_inc(Stats,"NNI (3-way) + A", result, *p[0].T, b);
+  NNI_inc(Stats,"NNI (3-way) + A", result, p[0].T(), b);
 }

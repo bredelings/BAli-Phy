@@ -1097,7 +1097,7 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
 
 void mcmc_init(Parameters& P, ostream& s_out)
 {
-  const SequenceTree& T = *P.T;
+  const SequenceTree& T = P.T();
 
   // Check that the Alignments and Tree are properly linked
   for(int i=0;i<P.n_data_partitions();i++) 
@@ -1204,7 +1204,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
   {
     Parameters& PP = *P.as<Parameters>();
 
-    const SequenceTree& T = *PP.T;
+    const SequenceTree& T = PP.T();
 
     mcmc_init(PP,s_out);
 

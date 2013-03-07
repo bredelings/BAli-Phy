@@ -159,7 +159,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
 void sample_alignment(Parameters& P,int b)
 {
-  if (any_branches_constrained(vector<int>(1,b), *P.T, *P.TC, P.AC))
+  if (any_branches_constrained(vector<int>(1,b), P.T(), *P.TC, P.AC))
     return;
 
   P.select_root(b);
@@ -189,7 +189,7 @@ void sample_alignment(Parameters& P,int b)
 	Matrices[i].push_back(sample_alignment_base(p[i][j], b));
 	// If Pr_sum_all_paths() == 0, then the alignment for this partition will be unchanged.
 #ifndef NDEBUG
-	check_subA(*P0[j].subA, *P0[j].A, *p[i][j].subA, *p[i][j].A, *p[0].T);
+	check_subA(*P0[j].subA, *P0[j].A, *p[i][j].subA, *p[i][j].A, p[0].T());
 	p[i][j].likelihood();  // check the likelihood calculation
 #endif
       }
@@ -200,8 +200,8 @@ void sample_alignment(Parameters& P,int b)
 #ifndef NDEBUG_DP
   std::cerr<<"\n\n----------------------------------------------\n";
 
-  int node1 = P.T->branch(b).target();
-  int node2 = P.T->branch(b).source();
+  int node1 = P.T().branch(b).target();
+  int node2 = P.T().branch(b).source();
 
   vector<int> nodes;
   nodes.push_back(node1);
