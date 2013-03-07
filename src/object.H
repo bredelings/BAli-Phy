@@ -119,6 +119,8 @@ template<typename T>
 class Box: public Object 
 {
 public:
+  typedef T subtype;
+
   T t;
 
   Box<T>* clone() const {return new Box<T>(*this);}
@@ -150,6 +152,8 @@ class POD: public Object
 protected:
   T t;
 public:
+  typedef T subtype;
+
   POD<T>* clone() const {return new POD<T>(*this);}
 
   operator T() const {return t;}
@@ -208,6 +212,8 @@ class POD_math: public Object
 protected:
   T t;
 public:
+  typedef T subtype;
+
   POD_math<T>* clone() const {return new POD_math<T>(*this);}
 
   operator T() const {return t;}
