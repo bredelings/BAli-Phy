@@ -264,14 +264,6 @@ void data_partition::recalc_imodel_for_branch(int b)
 {
   if (not variable_alignment()) return;
 
-  // FIXME #1 - this used to go along with computation of the branch_HMMs[].
-  // Is it OK to move it here?
-  //
-  // FIXME #2 - IModel_ should be branch-specific.
-  //  IModel_.modify()->set_heat( get_beta() );
-
-  b = T().directed_branch(b).undirected_name();
-
   cached_alignment_prior.invalidate();
 }
 
