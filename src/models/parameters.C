@@ -688,12 +688,7 @@ void Parameters::set_tree(const SequenceTree& T2)
     C.set_parameter_value(parameter_for_tree_node[n], edges_connecting_to_node(T(),n));
 
   for(int b=0; b < 2*T().n_branches(); b++)
-  {
-    int source = T().directed_branch(b).source();
-    int target = T().directed_branch(b).target();
-
-    C.set_parameter_value(parameter_for_tree_branch[b], OPair({Int(source), Int(target)}) );
-  }
+    C.set_parameter_value(parameter_for_tree_branch[b], OPair({Int(T().directed_branch(b).source()), Int(T().directed_branch(b).target())}) );
 }
 
 void Parameters::reconnect_branch(int s1, int t1, int t2)
