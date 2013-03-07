@@ -692,10 +692,14 @@ void Parameters::set_tree(const SequenceTree& T2)
 
   for(int b=0; b < 2*T().n_branches(); b++)
     C.set_parameter_value(parameter_for_tree_branch[b], OPair({Int(T().directed_branch(b).source()), Int(T().directed_branch(b).target())}) );
+
+  check_h_tree();
 }
 
 void Parameters::reconnect_branch(int s1, int t1, int t2)
 {
+  check_h_tree();
+
   int b1 = T().directed_branch(s1,t1);
   int b2 = T().directed_branch(t1,s1);
 
@@ -705,6 +709,8 @@ void Parameters::reconnect_branch(int s1, int t1, int t2)
   C.set_parameter_value(parameter_for_tree_branch[b2], OPair({Int(T().directed_branch(b2).source()), Int(T().directed_branch(b2).target())}) );
   C.set_parameter_value(parameter_for_tree_node[t1], edges_connecting_to_node(T(),t1));
   C.set_parameter_value(parameter_for_tree_node[t2], edges_connecting_to_node(T(),t2));
+
+  check_h_tree();
 }
 
 // This could create loops it we don't check that the subtrees are disjoint.
@@ -741,6 +747,8 @@ void Parameters::exchange_subtrees(int br1, int br2)
 /// Got m1<--->x<--->m2 and n1<--->n2, and trying to move x onto (n1,n2)
 int Parameters::SPR(int br1, int br2, int branch_to_move)
 {
+  check_h_tree();
+
   int x1 = T().directed_branch(br1).source();
   int x2 = T().directed_branch(br1).target();
 
