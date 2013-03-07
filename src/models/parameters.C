@@ -1363,24 +1363,7 @@ Parameters::Parameters(const module_loader& L,
     assert( parameter_for_tree_branch.back() != -1);
   }
 
-  for(int n=0; n < T().n_nodes(); n++)
-  {
-    vector<const_branchview> branch_list;
-    append(T().node(n).branches_out(),branch_list);
-    Vector<object_ref> branch_list_;
-    for(auto b: branch_list)
-      branch_list_.t.push_back(Int(int(b)));
-    
-    C.set_parameter_value(parameter_for_tree_node[n], branch_list_);
-  }
-
-  for(int b=0; b < 2*T().n_branches(); b++)
-  {
-    int source = T().directed_branch(b).source();
-    int target = T().directed_branch(b).target();
-
-    C.set_parameter_value(parameter_for_tree_branch[b], OPair({Int(source),Int(target)}));
-  }
+  set_tree(T());
 
   C.evaluate_expression( (identifier("numNodes"), identifier("MyTree.tree")));
   C.evaluate_expression( (identifier("numBranches"), identifier("MyTree.tree")));

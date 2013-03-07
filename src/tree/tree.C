@@ -1605,8 +1605,6 @@ void Tree::inc_node_pointers()
 
 Tree& Tree::operator=(const Tree& T) 
 {
-  assert(&T != this);
-
   // bail if we are copying the same thing only ourselves
   if (&T == this)
     return *this;
