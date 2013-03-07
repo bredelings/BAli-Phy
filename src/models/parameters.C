@@ -69,6 +69,9 @@ using std::ostream;
  *
  * 5. Translate code from calls to parser?
  *
+ * 6. Now that we can stop triggering on imodel parameters, can we somehow attach objects to Changeable nodes
+ *    as triggers?  Perhaps each changeable node needs a list of triggers that "fire" when it is invalidated?
+ *
  * 7. Allow addressing anonymous parameters by setting structures containing parameters to things.  For example,
  *    setting [x,y] to [1,2] would set x to 1 and y to 2.
  *    - But sometimes we do want to change z=[x,y] to (say) [].
