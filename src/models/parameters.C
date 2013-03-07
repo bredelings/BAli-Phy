@@ -695,12 +695,11 @@ void Parameters::reconnect_branch(int s1, int t1, int t2)
 {
   int b = T().directed_branch(s1,t1);
 
-  // The only things that change are:
-  // - the branch b (its endpoint is now t2);
-  // - the node t1
-  // - the node t2
-
   T_.modify()->reconnect_branch(s1,t1,t2);
+
+  C.set_parameter_value(parameter_for_tree_branch[b], OPair({Int(T().directed_branch(b).source()), Int(T().directed_branch(b).target())}) );
+  C.set_parameter_value(parameter_for_tree_node[t1], edges_connecting_to_node(T(),t1));
+  C.set_parameter_value(parameter_for_tree_node[t2], edges_connecting_to_node(T(),t2));
 }
 
 // This could create loops it we don't check that the subtrees are disjoint.
