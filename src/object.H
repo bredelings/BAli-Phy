@@ -293,6 +293,12 @@ typedef POD_math<log_double_t> Log_Double;
 template <typename T>
 using Vector = Box<std::vector<T>>;
 
+template <typename T1,typename T2>
+using Pair = Box<std::pair<T1,T2>>;
+
+typedef Vector<object_ref> OVector;
+typedef Pair<object_ref,object_ref> OPair;
+
 template <typename T>
 object_ptr<T> ptr(const T& t) {return object_ptr<T>(t.clone());}
 template <typename T>
