@@ -46,17 +46,20 @@ using std::endl;
 using std::ostream;
 
 /*
+ * 1. [DONE] Allow calculating the location of unnamed parameters hidden in structures & arrays.
+ *
+ * 2. [DONE] Remove class Parameter that is solely used in the old way of defining parameters.
+ *
+ *
  * \todo Goal: Construct a complete tree-based imodel along the lines of
+ *
  *       SingleRate[RS07] or BranchwiseRate[RS07]
  * 
  * 1. Move calculation of alignment prior dependencies to the machine!
  *    - Otherwise changing ANY imodel parameter with invalidate ALL dependencies!
- *    
- * 2. Allow defining things in a formula_expression
- *    (f_e is becoming more like a program!)
- *    - Could we use let-expressions instead?
- *    - We COULD, but this wouldn't allow the names to be published!
  *
+ * 2. Improve quality of code fragments here by switching from integer names (e.g. "a12") to subscripts (e.g. "a!12").
+ *    
  * 3. Eliminate any remaining cached_value< > in calculation of alignment prior.
  *    - Eliminate cached_alignment_prior
  *    - Eliminate cached_sequence_lengths
@@ -64,27 +67,7 @@ using std::ostream;
  * 4. Move unchangeable name mappings out of context and into reg_heap.
  *   - That is, separate name bindings into (a) dependent and (b) non-dependent vars?
  *
- * 6. Allow calculating the location of unnamed parameters hidden in structures & arrays.
- *    - Problem #1! Things move around.
- *      + Calculation of locations might work.  But they would change as soon as we change
- *        their value.
- *      + Also, the location of an anonymous parameter depends on the context.
- *      + Still, it would be nice to be able to change only a single FIELD or PART of a
- *        parameter's value.
- *      + We want to be able to refer to things like "the 6th element in the array that parameter
- *        "x" evaluates to.
- *
- *    - Problem #2! Structures like arrays actually contain a reg_var pointing to the parameter.
- *      + Possible solution: Evaluate each structure element until we come to a parameter, and return that.
- *      + Make another evaluation context, in which parameters are objects that evaluate to themselves
- *        instead of to their values.
- *      + In this context, we can e.g. evaluate list elements until a parameter is found.
- *      + What *type* do we give structures containing parameters, though?  Is [1, parameter("x"), 3] allowed?
- *        - Perhaps it is if we always evaluate parameters to their VALUES.  It would be:
- *              [1, (value parameter("x")), 3]
- *          which is OK.
- *
- *        - However, if we sometimes do not, then we have the issue that everything would need to have a consistent type.
+ * 5. Translate code from calls to parser?
  *
  * 7. Allow addressing anonymous parameters by setting structures containing parameters to things.  For example,
  *    setting [x,y] to [1,2] would set x to 1 and y to 2.
@@ -100,8 +83,6 @@ using std::ostream;
  * 9. Define moves on the tree based on the idea that some entries are parameters.
  *
  * 10. Compare the monadic interface with Acar's interface.
- *
- * 11. [DONE] Remove class Parameter that is solely used in the old way of defining parameters.
  *
  * 12. Make loading of data easier
  *     - Handle sequences with lengths not divisible by 3.

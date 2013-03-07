@@ -47,6 +47,7 @@ using std::map;
 /* \todo: List of things to do to clean up programs.
  *
  * See list in parser/desugar.C
+ * See list in models/parameters.C 
  *
  * 0. Make Parameters::recalc( ) check when things change, so that we don't need to worry about
  *    which parameter parameters should indicate recalculation!
@@ -167,6 +168,8 @@ using std::map;
  *     13a. [DONE] Allow loading stuff from files.
  *     13b. [DONE] Allow importing, desugaring, and thus resolving symbols after modules are (jointly) loaded into the machine.
  *     13c. Remove any earlier attempts at importing.
+ * 14. Rewrite multi-case code to take patterns in terms of expression_ref's that might be seen from the parser.
+ *     + Allows 16.
  * 15. Handle 'where' clauses (e.g. in "alt")
  * 16. Handle guards clauses (e.g. in gdrhs, and gdpat)
  *     + I *think* that guards cannot fail in a way that makes the rule fail and move to the next rule.
