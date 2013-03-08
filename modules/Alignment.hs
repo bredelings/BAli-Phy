@@ -10,7 +10,7 @@ module Alignment where
   
   branch_hmms model distances heat training n_branches = listArray' $ map (branch_hmm model distances heat training) [0..n_branches-1];
   
-  alignment_branch_pr a hmm = pairwise_alignment_probability_from_counts (transition_counts a) hmm;
+  alignment_branch_pr a hmm b = pairwise_alignment_probability_from_counts (transition_counts (a!b)) hmm;
   
   seqlength a t n = pairwise_alignment_length1 (a!b) where { b = head $ edgesOutOfNode t n};
   

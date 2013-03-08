@@ -618,7 +618,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       expression_ref a = parameter( P->parameter_name(pairwise_alignment_for_branch[b]) );
       as_.push_back(a);
     }
-    expression_ref as = P->C.get_expression( p->C.add_compute_expression(get_list(as_)));
+    expression_ref as = P->C.get_expression( p->C.add_compute_expression((identifier("listArray'"),get_list(as_))) );
 
     for(int b=0;b<B;b++)
     {
@@ -627,8 +627,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       branch_HMM_indices.push_back( index );
       expression_ref hmm = P->C.get_expression(index);
 
-      expression_ref a = parameter( P->parameter_name(pairwise_alignment_for_branch[b]) );
-      alignment_prior_for_branch[b] = p->C.add_compute_expression( (identifier("alignment_branch_pr"),a,hmm) );
+      alignment_prior_for_branch[b] = p->C.add_compute_expression( (identifier("alignment_branch_pr"),as,hmm,b) );
     }
   }
 }
