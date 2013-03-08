@@ -12,7 +12,7 @@ module Alignment where
   
   alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a!b)) (hmms!b);
   
-  seqlength a t n = pairwise_alignment_length1 (a!b) where { b = head $ edgesOutOfNode t n};
+  seqlength a tree node = pairwise_alignment_length1 (a!b) where { b = head $ edgesOutOfNode tree node};
   
   product' = foldl' (*) (doubleToLogDouble 1.0);
   alignment_pr_top a tree hmm = product' $ map (alignment_branch_pr a hmm) [0..numBranches tree - 1];
