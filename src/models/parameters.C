@@ -632,6 +632,10 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
 
       alignment_prior_for_branch[b] = p->C.add_compute_expression( (identifier("alignment_branch_pr"),as,hmms,b) );
     }
+
+    expression_ref tree = identifier("MyTree.tree");
+
+    //    alignment_prior_top = p->C.add_compute_expression( (identifier("alignment_pr_top"), as, tree, hmms) );
   }
 }
 
@@ -1362,10 +1366,6 @@ Parameters::Parameters(const module_loader& L,
     }
   }
 
-  // create data partitions
-  for(int i=0;i<A.size();i++) 
-    data_partitions.push_back( data_partition(this, i, A[i]) );
-
   // Register compute expressions for branch HMMs and sequence length distributions
   for(int i=0;i<n_imodels();i++) 
   {
@@ -1447,6 +1447,10 @@ Parameters::Parameters(const module_loader& L,
     for( int i: branch_list_)
       assert(includes(b2,i));
   }
+
+  // create data partitions
+  for(int i=0;i<A.size();i++) 
+    data_partitions.push_back( data_partition(this, i, A[i]) );
 }
 
 Parameters::Parameters(const module_loader& L,
