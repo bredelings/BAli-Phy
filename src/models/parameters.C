@@ -610,12 +610,13 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
     expression_ref D = (identifier("!"),identifier("Params.substitutionBranchLengths"),scale_index);
     expression_ref heat = parameter("Heat.beta");
     expression_ref training = parameter("IModels.training");
+    expression_ref model = (identifier("!"),identifier("IModels.models"),i_index);
 
     for(int b=0;b<B;b++)
     {
       // (fst IModels.models!i_index) D b heat training
-      int index = p->C.add_compute_expression( ((identifier("fst"),(identifier("!"),identifier("IModels.models"),i_index)),D,b,heat,training) );
-      branch_HMM_indices.push_back(  index );
+      int index = p->C.add_compute_expression( (identifier("branch_hmm"), model, D, heat, training, b) );
+      branch_HMM_indices.push_back( index );
       expression_ref hmm = P->C.get_expression(index);
 
       expression_ref getTransitionCounts = lambda_expression( get_transition_counts() );
