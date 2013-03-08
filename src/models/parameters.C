@@ -511,6 +511,8 @@ efloat_t data_partition::prior_alignment() const
       assert(not different(prior_for_branch_b, prior_branch(AA, get_branch_HMM(b), target, source)));
 #endif
     }
+    efloat_t Pr2 = *P->C.evaluate_as<Log_Double>(alignment_prior_top);
+    assert(not different(Pr, Pr2));
 
     cached_alignment_prior = Pr * prior_HMM_rootless_scale(*this);
   }
@@ -635,7 +637,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
 
     expression_ref tree = identifier("MyTree.tree");
 
-    //    alignment_prior_top = p->C.add_compute_expression( (identifier("alignment_pr_top"), as, tree, hmms) );
+    alignment_prior_top = p->C.add_compute_expression( (identifier("alignment_pr_top"), as, tree, hmms) );
   }
 }
 
