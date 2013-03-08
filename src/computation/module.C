@@ -1028,6 +1028,7 @@ expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
   {
     string name = V->name;
     if (not is_qualified_symbol(name))
+    {
       for(const auto& module: P)
 	if (module.is_declared(name))
 	{
@@ -1036,6 +1037,8 @@ expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
 	  string qualified_name = S.name;
 	  return identifier(qualified_name);
 	}
+      throw myexception()<<"Can't find any module for unqualified symbol '"<<name<<"'";
+    }
   }
 
   // Other constants have no parts, and don't need to be resolved
