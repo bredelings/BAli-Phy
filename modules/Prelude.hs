@@ -181,6 +181,8 @@ concat xs = foldr (++) [] xs;
 
 concatMap f = concat . map f;
 
+filter p xs = [ x | x <- xs, p x];
+
 listArray n l = mkArray n (\i -> l !! i);
 
 listArray' l = listArray (length l) l;
