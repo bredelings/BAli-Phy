@@ -619,8 +619,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       branch_HMM_indices.push_back( index );
       expression_ref hmm = P->C.get_expression(index);
 
-      expression_ref getTransitionCounts = lambda_expression( get_transition_counts() );
-      expression_ref getPairwiseAlignmentProbabilityFromCounts = lambda_expression( pairwise_alignment_probability_from_counts() );
       expression_ref a = parameter( P->parameter_name(pairwise_alignment_for_branch[b]) );
       alignment_prior_for_branch[b] = p->C.add_compute_expression( (identifier("alignment_branch_pr"),a,hmm) );
     }
