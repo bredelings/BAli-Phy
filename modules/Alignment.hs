@@ -15,7 +15,7 @@ module Alignment where
   seqlength a t n = pairwise_alignment_length1 (a!b) where { b = head $ edgesOutOfNode t n};
   
   product' = foldl' (*) (doubleToLogDouble 1.0);
-  alignment_pr_top a t hmm = product' $ map (alignment_branch_pr a hmm) [0..numNodes t];
-  alignment_pr_bot a t lengthp = (product' $ map (lengthp . seqlength a t) (internal_nodes t))^2;
-  alignment_pr a t hmm lengthp = (alignment_pr_top a t hmm)/(alignment_pr_bot a t lengthp);
+  alignment_pr_top a tree hmm = product' $ map (alignment_branch_pr a hmm) [0..numNodes tree];
+  alignment_pr_bot a tree lengthp = (product' $ map (lengthp . seqlength a tree) (internal_nodes tree))^2;
+  alignment_pr a tree hmm lengthp = (alignment_pr_top a tree hmm)/(alignment_pr_bot a tree lengthp);
 }  
