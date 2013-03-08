@@ -147,7 +147,10 @@ closure Case::operator()(OperationArgs& Args) const
     bodies[i] = Args.reference(2 + 2*i);
   }
 
-  assert(not is_a<lambda2>(obj.exp));
+#ifndef NEDBUG
+  if (is_a<lambda2>(obj.exp))
+    throw myexception()<<"Case argument is a lambda '"<<make_case_expression(obj.exp, cases, bodies)<<"'";
+#endif
 
   closure result;
   result.Env = C.Env;
