@@ -18,6 +18,6 @@ is_leaf_node t n = (nodeDegree t n == 1);
 is_internal_node t n = not $ is_leaf_node t n;
 
 nodes t = [0..numNodes t - 1];
-leaf_nodes t = filter is_leaf_node (nodes t);
-internal_nodes t = filter is_internal_node (nodes t);
+leaf_nodes t = filter (is_leaf_node t) (nodes t);
+internal_nodes t = filter (is_internal_node t) (nodes t);
 }
