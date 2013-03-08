@@ -346,7 +346,8 @@ pkglib_LTLIBRARIES = mod.la log.la builtinError.la seq.la join.la reapply.la \
 		is_modifiable.la is_changeable.la get_modifiable_index.la get_modifiable_for_index.la \
 		set_vector_index.la new_vector.la get_vector_index.la vector_size.la \
 		c_fst.la c_snd.la c_pair.la new_modifiable.la evaluate.la get_modifiable_value.la \
-		show.la rs07_branch_HMM.la rs07_lengthp.la
+		show.la rs07_branch_HMM.la rs07_lengthp.la pairwise_alignment_length1.la \
+		pairwise_alignment_length2.la 
 
 mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
@@ -491,3 +492,10 @@ rs07_branch_HMM_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 rs07_lengthp_la_SOURCES = computation/builtins/rs07_lengthp.C
 rs07_lengthp_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
+pairwise_alignment_length1_la_SOURCES = computation/builtins/pairwise_alignment_length1.C
+pairwise_alignment_length1_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
+pairwise_alignment_length2_la_SOURCES = computation/builtins/pairwise_alignment_length2.C
+pairwise_alignment_length2_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
