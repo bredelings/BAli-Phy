@@ -630,7 +630,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       branch_HMM_indices.push_back( index );
       expression_ref hmm = P->C.get_expression(index);
 
-      alignment_prior_for_branch[b] = p->C.add_compute_expression( (identifier("alignment_branch_pr"),as,hmm,b) );
+      alignment_prior_for_branch[b] = p->C.add_compute_expression( (identifier("alignment_branch_pr"),as,hmms,b) );
     }
   }
 }
