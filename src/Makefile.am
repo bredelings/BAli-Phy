@@ -347,7 +347,7 @@ pkglib_LTLIBRARIES = mod.la log.la builtinError.la seq.la join.la reapply.la \
 		set_vector_index.la new_vector.la get_vector_index.la vector_size.la \
 		c_fst.la c_snd.la c_pair.la new_modifiable.la evaluate.la get_modifiable_value.la \
 		show.la rs07_branch_HMM.la rs07_lengthp.la pairwise_alignment_length1.la \
-		pairwise_alignment_length2.la 
+		pairwise_alignment_length2.la transition_counts.la
 
 mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
@@ -484,9 +484,6 @@ evaluate_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 get_modifiable_value_la_SOURCES = computation/builtins/get_modifiable_value.C
 get_modifiable_value_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
-show_la_SOURCES = computation/builtins/show.C
-show_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
-
 rs07_branch_HMM_la_SOURCES = computation/builtins/rs07_branch_HMM.C
 rs07_branch_HMM_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
@@ -498,4 +495,10 @@ pairwise_alignment_length1_la_LDFLAGS = -module -shared -avoid-version -export-d
 
 pairwise_alignment_length2_la_SOURCES = computation/builtins/pairwise_alignment_length2.C
 pairwise_alignment_length2_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
+transition_counts_la_SOURCES = computation/builtins/transition_counts.C
+transition_counts_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
+show_la_SOURCES = computation/builtins/show.C
+show_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
