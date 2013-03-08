@@ -620,10 +620,13 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
     }
     expression_ref as = P->C.get_expression( p->C.add_compute_expression((identifier("listArray'"),get_list(as_))) );
 
+    expression_ref hmms = (identifier("branch_hmms"), model, D, heat, training, B);
+    hmms = P->C.get_expression( p->C.add_compute_expression(hmms) );
+
     for(int b=0;b<B;b++)
     {
       // (fst IModels.models!i_index) D b heat training
-      int index = p->C.add_compute_expression( (identifier("branch_hmm"), model, D, heat, training, b) );
+      int index = p->C.add_compute_expression( (identifier("!"), hmms, b) );
       branch_HMM_indices.push_back( index );
       expression_ref hmm = P->C.get_expression(index);
 
