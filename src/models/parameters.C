@@ -612,6 +612,14 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
     expression_ref training = parameter("IModels.training");
     expression_ref model = (identifier("!"),identifier("IModels.models"),i_index);
 
+    vector<expression_ref> as_;
+    for(int b=0;b<B;b++)
+    {
+      expression_ref a = parameter( P->parameter_name(pairwise_alignment_for_branch[b]) );
+      as_.push_back(a);
+    }
+    expression_ref as = P->C.get_expression( p->C.add_compute_expression(get_list(as_)));
+
     for(int b=0;b<B;b++)
     {
       // (fst IModels.models!i_index) D b heat training
