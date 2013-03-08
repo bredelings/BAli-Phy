@@ -605,12 +605,14 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
   int scale_index = P->scale_for_partition[partition_index];
 
   if (i_index != -1)
+  {
+    // D = Params.substitutionBranchLengths!scale_index
+    expression_ref D = (identifier("!"),identifier("Params.substitutionBranchLengths"),scale_index);
+    expression_ref heat = parameter("Heat.beta");
+    expression_ref training = parameter("IModels.training");
+
     for(int b=0;b<B;b++)
     {
-      // D = Params.substitutionBranchLengths!scale_index
-      expression_ref D = (identifier("!"),identifier("Params.substitutionBranchLengths"),scale_index);
-      expression_ref heat = parameter("Heat.beta");
-      expression_ref training = parameter("IModels.training");
       // (fst IModels.models!i_index) D b heat training
       int index = p->C.add_compute_expression( ((identifier("fst"),(identifier("!"),identifier("IModels.models"),i_index)),D,b,heat,training) );
       branch_HMM_indices.push_back(  index );
@@ -621,6 +623,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       expression_ref a = parameter( P->parameter_name(pairwise_alignment_for_branch[b]) );
       alignment_prior_for_branch[b] = p->C.add_compute_expression( (identifier("alignment_branch_pr"),a,hmm) );
     }
+  }
 }
 
 //-----------------------------------------------------------------------------//
