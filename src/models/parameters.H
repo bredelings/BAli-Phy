@@ -289,6 +289,7 @@ public:
   void set_tree(const SequenceTree& T);
   void exchange_subtrees(int b1, int b2);
   int SPR(int b1, int b2, int bm=-1);
+  void read_h_tree();
   void check_h_tree() const;
 
   /// Topology and Branch-Length Constraint

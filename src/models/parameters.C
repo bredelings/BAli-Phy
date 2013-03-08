@@ -683,15 +683,21 @@ OVector edges_connecting_to_node(const Tree& T, int n)
   return branch_list_;
 }
 
-void Parameters::set_tree(const SequenceTree& T2)
+void Parameters::read_h_tree()
 {
-  *T_.modify() = T2;
-
   for(int n=0; n < T().n_nodes(); n++)
     C.set_parameter_value(parameter_for_tree_node[n], edges_connecting_to_node(T(),n));
 
   for(int b=0; b < 2*T().n_branches(); b++)
     C.set_parameter_value(parameter_for_tree_branch[b], OPair({Int(T().directed_branch(b).source()), Int(T().directed_branch(b).target())}) );
+}
+void Parameters::set_tree(const SequenceTree& T2)
+{
+  check_h_tree();
+
+  *T_.modify() = T2;
+
+  read_h_tree();
 
   check_h_tree();
 }
@@ -1406,7 +1412,9 @@ Parameters::Parameters(const module_loader& L,
     assert( parameter_for_tree_branch.back() != -1);
   }
 
-  set_tree(T());
+  read_h_tree();
+
+  check_h_tree();
 
   C.evaluate_expression( (identifier("numNodes"), identifier("MyTree.tree")));
   C.evaluate_expression( (identifier("numBranches"), identifier("MyTree.tree")));
