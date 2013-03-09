@@ -81,8 +81,6 @@ class data_partition: public Mat_Cache
 
   ublas::matrix<int> base_model_indices;
 
-  double branch_mean_;
-
   void branch_mean_changed();
 
   bool variable_alignment_;
