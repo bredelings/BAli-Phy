@@ -12,5 +12,5 @@ note meanIndelLengthMinus1 ~ exponential(10.0);
   
   lambda = exp logLambda;
   
-  main = (\t b h t -> rs07_branch_HMM epsilon (lambda*t!b) h t, \l -> rs07_lengthp epsilon l);
+  main = (\d b heat training -> rs07_branch_HMM epsilon (lambda*d!b) heat training, \l -> rs07_lengthp epsilon l);
 }
