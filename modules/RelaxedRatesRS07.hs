@@ -17,8 +17,15 @@ note sigmaOverMu ~ iid(n, gamma(1.05,0.1) );
   
   alpha = 1.0;
 
-  dpp <- truncated_dpp n alpha;
-  p <- "p" ~ dirichlet dpp;
+note q ~ iid (n, beta(1.0,alpha) );
+
+  normalize l = let {total = sum l} in map (/total) l;
+
+  q' = map (1.0-) q;
+  left = [ product (take i q') | i <- take n [0..]];
+  p' = zipWith (*) q left;
+  
+  p = normalize p';
   
   lambda_dist = mixture [ (p!!i, gamma (a!!i,b!!i)) | i <- take n [0..]];
   
