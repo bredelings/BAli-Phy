@@ -520,10 +520,13 @@ efloat_t data_partition::prior_alignment() const
     cached_alignment_prior = Pr * prior_HMM_rootless_scale(*this);
   }
 
-  
-  assert(not different(cached_alignment_prior, ::prior_HMM(*this)));
+  efloat_t Pr = *P->C.evaluate_as<Log_Double>(alignment_prior_index);
 
-  return cached_alignment_prior;
+  assert(not different(Pr, ::prior_HMM(*this)));
+  
+  assert(not different(cached_alignment_prior, Pr));
+
+  return Pr;
 }
 
 efloat_t data_partition::prior() const 
@@ -642,6 +645,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
 
     alignment_prior_top = p->C.add_compute_expression( (identifier("alignment_pr_top"), as, tree, hmms) );
     alignment_prior_bottom = p->C.add_compute_expression( (identifier("alignment_pr_bot"), as, tree, model) );
+    alignment_prior_index = p->C.add_compute_expression( (identifier("alignment_pr"), as, tree, hmms, model) );
   }
 }
 
