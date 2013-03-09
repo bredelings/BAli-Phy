@@ -36,6 +36,15 @@ set_parameter_value token p v = if (is_modifiable token p)
                                 then set_modifiable_value token p v 
                                 else set_parameter_value' token p v;
 
+set_parameter_value_' token (p:ps) (v:vs) = do { set_parameter_value_ token p (evaluate token v); 
+                                                 set_parameter_value_ token ps (evaluate token vs)
+                                              };
+set_parameter_value_' token [] [] = return ();  
+
+set_parameter_value_ token p v = if (is_modifiable token p) 
+                                 then set_modifiable_value token p v
+                                 else set_parameter_value_' token p v;
+
 get_modifiable_result token m = evaluate token (get_modifiable_value token m);
 
 subscript name n = name++['!']++show n;
