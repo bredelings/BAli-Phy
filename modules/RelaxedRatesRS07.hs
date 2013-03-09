@@ -1,13 +1,14 @@
 module RelaxedRatesRS07 where
 {
   import Distributions;
+  import Tree;
   import MyTree;
   
   builtin rs07_branch_HMM 4 "rs07_branch_HMM";
   builtin rs07_lengthp 2 "rs07_lengthp";
   
   n = 5;
-  n_branches = numBranches Mytree.tree;
+  n_branches = numBranches MyTree.tree;
   
 note mean ~ iid(n, laplace(-4.0,1.0));
 note sigmaOverMu ~ iid(n, gamma(1.05,0.1) );
@@ -30,7 +31,7 @@ note q ~ iid (n, beta(1.0,alpha) );
   lambda_dist = mixture [ (p!!i, gamma (a!!i,b!!i)) | i <- take n [0..]];
   
 note logLambdas ~ iid(n_branches, lambda_dist);
-note e ~ exponential(10.0);
+note meanIndelLengthMinus1 ~ exponential(10.0);
     
   epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
   lambdas = map exp logLambdas;
