@@ -32,8 +32,8 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
   }
   else if (name == "fg_branch_scale[RS07]")
   {
-    expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
-    expression_ref lengthp = lambda_expression( RS07_lengthp() );
+    expression_ref RS07BranchHMM;
+    expression_ref lengthp;
 
     expression_ref log_lambda = def_parameter(imodel, "logLambda", -4.0, nullptr, (identifier("laplace"), Tuple(-4.0, 1.0)));
     expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0), (identifier("exponential"), 10.0));
@@ -73,8 +73,8 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
      *         \l -> lengthp epsilon l)
      */
 
-    expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
-    expression_ref lengthp = lambda_expression( RS07_lengthp() );
+    expression_ref RS07BranchHMM;
+    expression_ref lengthp;
     expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0), (identifier("exponential"), 10.0));
     expression_ref epsilon = (identifier("/"),meanIndelLengthMinus1,((identifier("+"),1.0,meanIndelLengthMinus1)));
 
@@ -152,8 +152,8 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
      *          \a -> lengthp epsilon a)
      *
      */
-    expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
-    expression_ref lengthp = lambda_expression( RS07_lengthp() );
+    expression_ref RS07BranchHMM;
+    expression_ref lengthp;
     expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0), (identifier("exponential"), 10.0));
     expression_ref epsilon = (identifier("/"),meanIndelLengthMinus1,((identifier("+"),1.0,meanIndelLengthMinus1)));
 
