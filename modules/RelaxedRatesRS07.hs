@@ -11,12 +11,9 @@ module RelaxedRatesRS07 where
   n_branches = numBranches MyTree.tree;
   
 note mean ~ iid(n, laplace(-4.0,1.0));
-note sigmaOverMu ~ iid(n, gamma(1.05,0.1) );
+note sigma ~ iid(n, gamma(1.05,0.05) );
   
-  a = map (\x->1.0/(x^2)) sigmaOverMu;
-  b = zipWith (/) mean a;
-  
-  alpha = 1.0;
+  alpha = 0.1;
 
 note q ~ iid (n, beta(1.0,alpha) );
 
@@ -28,7 +25,9 @@ note q ~ iid (n, beta(1.0,alpha) );
   
   p = normalize p';
   
-  lambda_dist = mixture [ (p!!i, gamma (a!!i,b!!i)) | i <- take n [0..]];
+  lambda_dist = mixture [ (p!!i, normal (mean!!i,sigma!!i)) | i <- take n [0..]];
+  
+note log_lambda_sample ~ lambda_dist;
   
 note logLambdas ~ iid(n_branches, lambda_dist);
 note meanIndelLengthMinus1 ~ exponential(10.0);
