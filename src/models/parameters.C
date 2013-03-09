@@ -60,9 +60,7 @@ using std::ostream;
  *
  * 2. Improve quality of code fragments here by switching from integer names (e.g. "a12") to subscripts (e.g. "a!12").
  *    
- * 3. Eliminate any remaining cached_value< > in calculation of alignment prior.
- *    - Eliminate cached_alignment_prior
- *    - Eliminate cached_sequence_lengths
+ * 3. [Done] Eliminate any remaining cached_value< > in calculation of alignment prior or sequence lengths.
  *
  * 4. Move unchangeable name mappings out of context and into reg_heap.
  *   - That is, separate name bindings into (a) dependent and (b) non-dependent vars?
@@ -380,12 +378,6 @@ void data_partition::recompute_pairwise_alignment(int b, bool require_match_A)
   set_pairwise_alignment(b, A2::get_pairwise_alignment(*A,n1,n2), require_match_A);
 }
 
-void data_partition::note_sequence_length_changed(int n)
-{
-  if (not variable_alignment())
-    throw myexception()<<"Alignment variation is OFF: how can the sequence length change?";
-}
-
 void data_partition::invalidate_pairwise_alignment_for_branch(int b) const
 {
   const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[b], object_ref());
@@ -405,11 +397,6 @@ void data_partition::note_alignment_changed_on_branch(int b)
   const Tree& TT = T();
   int target = TT.branch(b).target();
   int source = TT.branch(b).source();
-
-  if (target >= TT.n_leaves())
-    note_sequence_length_changed(target);
-  if (source >= TT.n_leaves())
-    note_sequence_length_changed(source);
 
   // If the alignment changes AT ALL, then the mapping from subA columns to alignment columns is broken.
   // Therefore we always mark it as out-of-date and needing to be recomputed.
@@ -980,13 +967,6 @@ void Parameters::note_alignment_changed()
   for(int i=0;i<n_data_partitions();i++)
     if (get_data_partition(i).variable_alignment())
       get_data_partition(i).note_alignment_changed();
-}
-
-void Parameters::note_sequence_length_changed(int n)
-{
-  for(int i=0;i<n_data_partitions();i++)
-    if (get_data_partition(i).variable_alignment())
-      get_data_partition(i).note_sequence_length_changed(n);
 }
 
 void Parameters::recalc(const vector<int>& indices)

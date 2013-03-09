@@ -178,8 +178,6 @@ public:
 
   void note_alignment_changed();
 
-  void note_sequence_length_changed(int n);
-
   // The prior, likelihood, and probability
   efloat_t prior_no_alignment() const;
   efloat_t prior_alignment() const;
@@ -368,8 +366,6 @@ public:
   void recompute_pairwise_alignment(int b, bool=true);
 
   void note_alignment_changed();
-
-  void note_sequence_length_changed(int n);
 
   int n_branch_means() const;
 
