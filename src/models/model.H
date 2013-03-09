@@ -188,7 +188,7 @@ public:
   virtual void write_value(int i, const object_ptr<const Object>& p);
 
   /// Set the value of a modifiable
-  void set_modifiable_value(int m, int p, const object_ref& value);
+  void set_modifiable_value(int m, const object_ref& value);
 
   /// Set A model parameter value
           void set_parameter_value(int p,Double value);
