@@ -202,7 +202,7 @@ double sum_of_means(const Parameters& P)
 /// \param P The model state to modify.
 /// \param t The sum of the branch means after modification.
 ///
-/// Neither recalc_smodel() nor recalc_imodel() is called on the data_partitions.
+/// The lengths D=mu*T are not updated by calling recalc, so that the smodel and imodel do not get updated.
 ///
 double set_sum_of_means_tricky(Parameters& P, double t)
 {

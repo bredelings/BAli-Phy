@@ -150,9 +150,6 @@ void data_partition::variable_alignment(bool b)
       set_pairwise_alignment(b, A2::get_pairwise_alignment(*A,n1,n2));
     }
 
-    // we need to calculate the branch_HMMs
-    recalc_imodel();
-
     // Minimally connecting leaf characters may remove empty columns, in theory.
     // And we just changed the subA index type
     LC.invalidate_all();
@@ -244,19 +241,6 @@ double data_partition::sequence_length_pr(int l) const
   return *P->C.evaluate_as<Double>( P->IModel_methods[m].length_p );
 }
 
-void data_partition::recalc_imodel_for_branch(int b)
-{
-  if (not variable_alignment()) return;
-
-  cached_alignment_prior.invalidate();
-}
-
-void data_partition::recalc_imodel() 
-{
-  for(int b=0;b<T().n_branches();b++) 
-    recalc_imodel_for_branch(b);
-}
-
 /// \brief Recalculate cached values relating to the substitution model.
 ///
 /// Specifically, we invalidate:
@@ -272,17 +256,8 @@ void data_partition::recalc_smodel()
   LC.invalidate_all();
 }
 
-void data_partition::setlength_no_invalidate_LC(int b)
-{
-  b = T().directed_branch(b).undirected_name();
-
-  // This now just invalidates cached_alignment_prior
-  recalc_imodel_for_branch(b);
-}
-
 void data_partition::setlength(int b)
 {
-  setlength_no_invalidate_LC(b);
   LC.invalidate_branch(T(),b);
 }
 
@@ -426,8 +401,6 @@ void data_partition::note_alignment_changed_on_branch(int b)
 
   b = T().directed_branch(b).undirected_name();
 
-  cached_alignment_prior.invalidate();
-
   int B = T().directed_branch(b).reverse();
   invalidate_pairwise_alignment_for_branch(b);
   invalidate_pairwise_alignment_for_branch(B);
@@ -468,9 +441,6 @@ void data_partition::branch_mean_changed()
 {
   // the scale of the substitution tree changed
   recalc_smodel();
-
-  // the scale of the indel tree changed also
-  recalc_imodel();
 }
 
 efloat_t data_partition::prior_no_alignment() const 
@@ -491,40 +461,9 @@ efloat_t data_partition::prior_alignment() const
   for(int i=0;i<T().n_branches()*2;i++)
     assert(P->get_parameter_value(pairwise_alignment_for_branch[i]));
 
-  if (not cached_alignment_prior.is_valid()) 
-  {
-    const alignment& AA = *A;
-    const SequenceTree& TT = T();
-
-    efloat_t Pr = 1;
-    for(int b=0;b<TT.n_branches();b++)
-    {
-      efloat_t prior_for_branch_b = *P->C.evaluate_as<Log_Double>(alignment_prior_for_branch[b]);
-      Pr *= prior_for_branch_b;
-
-#ifndef NDEBUG      
-      int target = TT.branch(b).target();
-      int source  = TT.branch(b).source();
-      //efloat_t p1 = cached_alignment_prior_for_branch[b];
-      //efloat_t p2 = prior_branch(AA, get_branch_HMM(b), target, source);
-      //double error = log(p1) - log(p2);
-      assert(not different(prior_for_branch_b, prior_branch(AA, get_branch_HMM(b), target, source)));
-#endif
-    }
-    efloat_t Pr2 = *P->C.evaluate_as<Log_Double>(alignment_prior_top);
-    assert(not different(Pr, Pr2));
-
-    efloat_t Pr3 = prior_HMM_rootless_scale(*this);
-    efloat_t Pr4 = *P->C.evaluate_as<Log_Double>(alignment_prior_bottom);
-    assert(not different(1.0/Pr3, Pr4));
-    cached_alignment_prior = Pr * prior_HMM_rootless_scale(*this);
-  }
-
   efloat_t Pr = *P->C.evaluate_as<Log_Double>(alignment_prior_index);
 
   assert(not different(Pr, ::prior_HMM(*this)));
-  
-  assert(not different(cached_alignment_prior, Pr));
 
   return Pr;
 }
@@ -945,23 +884,6 @@ efloat_t Parameters::heated_likelihood() const
   return Pr;
 }
 
-void Parameters::recalc_imodels() 
-{
-  for(int i=0;i<n_imodels();i++)
-    recalc_imodel(i);
-}
-
-void Parameters::recalc_imodel(int m) 
-{
-  for(int i=0;i<n_data_partitions();i++) 
-  {
-    if (imodel_for_partition[i] == m) {
-      // recompute cached computations
-      get_data_partition(i).recalc_imodel();
-    }
-  }
-}
-
 void Parameters::recalc_smodels() 
 {
   for(int i=0;i<SModels.size();i++)
@@ -1067,12 +989,7 @@ void Parameters::recalc(const vector<int>& indices)
   // Check for beta (0) or mu[i] (i+1)
   for(int index: indices)
   {
-    if (index == 0) // beta
-    {
-      for(int p=0;p<n_data_partitions();p++)
-	get_data_partition(p).recalc_imodel();
-    }
-    else if (index < n_scales+1)
+    if (0 < index and index < n_scales+1)
     {
       int s = index - 1;
       
@@ -1095,14 +1012,6 @@ void Parameters::recalc(const vector<int>& indices)
 	  get_data_partition(p).branch_mean_changed();
       }
     }
-
-    // If any of the imodel parameters have changed, invalidate all branch HMMs
-    for(int i=0;i<n_imodels();i++)
-      if (includes(IModel_methods[i].parameters,index))
-	recalc_imodel(i);
-
-    if (parameter_name(index) == "IModels.training")
-      recalc_imodels();
   }
 
   // Check if any substitution models have changed.
@@ -1144,11 +1053,6 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
     
     C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
   }
-
-  // Recalc the imodel, but don't change likelihoods
-  // Actually, this just invalidates cached_alignment_prior.
-  for(int i=0;i<n_data_partitions();i++) 
-    get_data_partition(i).setlength_no_invalidate_LC(b);
 }
 
 void Parameters::setlength_unsafe(int b,double l) 
@@ -1171,7 +1075,7 @@ void Parameters::setlength(int b,double l)
     C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
   }
 
-  // Invalidates cached_alignment_prior and conditional likelihoods
+  // Invalidates conditional likelihoods
   for(int p=0;p<n_data_partitions();p++) 
     get_data_partition(p).setlength(b);
 }

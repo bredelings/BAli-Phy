@@ -59,9 +59,6 @@ class data_partition: public Mat_Cache
 
   int partition_index;
 
-  /// Cached prior for just the alignment -- accessed through alignment_prior( )
-  mutable cached_value<efloat_t> cached_alignment_prior;
-
   /// The pairwise alignment for each branch
   std::vector<int> pairwise_alignment_for_branch;
 
@@ -152,17 +149,12 @@ public:
   // get the alphabet for partition i
   const alphabet& get_alphabet() const {return A->get_alphabet();}
 
-  /// Recalculate transition matrix for branch b
-  void recalc_imodel_for_branch(int b);
-
   /// Recalculate all the cached transition matrices
-  void recalc_imodel();
   void recalc_smodel();
 
   bool has_IModel() const;
 
   void setlength(int b);
-  void setlength_no_invalidate_LC(int b);
 
   int seqlength(int n) const;
 
@@ -348,8 +340,6 @@ public:
   void setlength_no_invalidate_LC(int b,double l); 
   
   /// Recalculate all the cached transition matrices
-  void recalc_imodels();
-  void recalc_imodel(int i);
   void recalc_smodels();
   void recalc_smodel(int i);
 

@@ -651,7 +651,6 @@ bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
 
   int b = P.T().branch(node1,node2);
   p[1].branch_HMM_type[b] = 1 - p[1].branch_HMM_type[b];
-  p[1].recalc_imodels();
 
   vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.T(), node1,node2) );
 
