@@ -90,7 +90,7 @@ mixDiscreteDistributions' [] [] = [];
 mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap unwrapDD l2));
 
 average (DiscreteDistribution l) = foldl' (\x y->(x+(fst y)*(snd y))) 0.0 l;
-uniformDiscretize q n = let {n' = (intToDouble n)} in DiscreteDistribution (map (\i->(1.0/n',q (2.0*i+1.0)/n')) (take n [0..]));
+uniformDiscretize q n = let {n' = (intToDouble n)} in DiscreteDistribution $ map ((\i->(1.0/n',q (2.0*i+1.0)/n').intToDouble)) (take n [0..]);
 
 expTransform (ProbDensity d q v r) = (ProbDensity (\x -> (d $ log x)/(doubleToLogDouble x)) (q.log) (exp v) (Range.expTransform r));
 expTransform' family args = Distributions.expTransform (family args);
