@@ -1648,6 +1648,10 @@ int main(int argc,char* argv[])
       cerr.flush() ; cerr.rdbuf(files[1]->rdbuf());
       clog.flush() ; clog.rdbuf(files[1]->rdbuf());
 
+      // Force the creation of parameters
+      for(int i=0;i<P.n_parameters();i++)
+	P.get_context().parameter_is_modifiable(i);
+
       //------ Redirect output to files -------//
       owned_ptr<Probability_Model> Ptr(P);
 
