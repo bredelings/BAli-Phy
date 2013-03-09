@@ -578,7 +578,7 @@ double Proposal2M::operator()(Probability_Model& P) const
   double ratio = (*proposal)(x,parameters);
 
   for(int i=0;i<y.size();i++)
-    P.set_modifiable_value(indices[i],x[i]);
+    P.set_modifiable_value(indices[i],-1,x[i]);
 
   return ratio;
 }

@@ -406,9 +406,13 @@ void Model::write_value(int i,const object_ptr<const Object>& value)
   modify_parameter(i);
 }
 
-void Model::set_modifiable_value(int m, const object_ref& value) 
+void Model::set_modifiable_value(int m, int p, const object_ref& value) 
 {
   C.set_modifiable_value(m, value);
+  if (p != -1)
+    modify_parameter(p);
+  invalidate();
+  update();
 }
 
 void Model::set_parameter_value(int i,Double value) 

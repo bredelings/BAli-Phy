@@ -95,6 +95,9 @@ struct modifiable_slice_function:public slice_function
   /// The modifiable index.
   int m;
 
+  /// The parameter index - for invalidation purposes.
+  int p;
+
   double operator()(double);
 
   double operator()();
@@ -106,8 +109,8 @@ struct modifiable_slice_function:public slice_function
   // function to go from the value on which the prior is to the stored value.
   double (*inverse)(double);
 
-  modifiable_slice_function(Probability_Model&,int,const Bounds<double>&);
-  modifiable_slice_function(Probability_Model&,int,const Bounds<double>&,double(*)(double),double(*)(double));
+  modifiable_slice_function(Probability_Model&,int,int,const Bounds<double>&);
+  modifiable_slice_function(Probability_Model&,int,int,const Bounds<double>&,double(*)(double),double(*)(double));
 };
 
 

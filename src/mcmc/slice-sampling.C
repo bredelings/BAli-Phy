@@ -77,7 +77,7 @@ parameter_slice_function::parameter_slice_function(Probability_Model& P_,int n_,
 double modifiable_slice_function::operator()(double x)
 {
   count++;
-  P.set_modifiable_value(m, Double(inverse(x)));
+  P.set_modifiable_value(m, p, Double(inverse(x)));
   return log(P.heated_probability());
 }
 
@@ -92,15 +92,15 @@ double modifiable_slice_function::current_value() const
   return P.get_modifiable_value_as<Double>(m);
 }
 
-modifiable_slice_function::modifiable_slice_function(Probability_Model& P_,int m_, const Bounds<double>& bounds)
-  :modifiable_slice_function(P_, m_, bounds, slice_sampling::identity, slice_sampling::identity)
+modifiable_slice_function::modifiable_slice_function(Probability_Model& P_,int m_, int p_, const Bounds<double>& bounds)
+  :modifiable_slice_function(P_, m_, p_, bounds, slice_sampling::identity, slice_sampling::identity)
 { }
 
-modifiable_slice_function::modifiable_slice_function(Probability_Model& P_,int m_, const Bounds<double>& bounds,
+modifiable_slice_function::modifiable_slice_function(Probability_Model& P_,int m_, int p_, const Bounds<double>& bounds,
 						     double(*f1)(double),
 						     double(*f2)(double))
   :slice_function(bounds),
-   count(0),P(P_),m(m_),transform(f1),inverse(f2)
+   count(0),P(P_),m(m_),p(p_),transform(f1),inverse(f2)
 {
   if (has_lower_bound)
     lower_bound = transform(lower_bound);
@@ -357,7 +357,7 @@ double constant_sum_modifiable_slice_function::operator()(double t)
   assert(std::abs(sum(x) - total) < 1.0e-9);
 
   for(int i=0;i<N;i++)
-    P.set_modifiable_value(indices[i], Double(x[i]) );
+    P.set_modifiable_value(indices[i], -1, Double(x[i]) );
 
   return operator()();
 }
