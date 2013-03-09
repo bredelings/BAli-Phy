@@ -1,3 +1,4 @@
+#define DEBUG_SPR_ALL
 /*
    Copyright (C) 2004-2009 Benjamin Redelings
 
