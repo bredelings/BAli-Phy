@@ -36,5 +36,5 @@ note meanIndelLengthMinus1 ~ exponential(10.0);
   epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
   lambdas = map exp logLambdas;
 
-  main = (\t b h t -> rs07_branch_HMM epsilon (lambdas!!b * t!b) h t, \l -> rs07_lengthp epsilon l);
+  main = (\d b heat training -> rs07_branch_HMM epsilon (lambdas!!b * d!b) heat training, \l -> rs07_lengthp epsilon l);
 }
