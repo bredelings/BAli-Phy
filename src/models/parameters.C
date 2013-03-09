@@ -263,12 +263,11 @@ void data_partition::setlength(int b)
 
 int data_partition::seqlength(int n) const
 {
-  if (not cached_sequence_lengths[n].is_valid())
-    cached_sequence_lengths[n] = A->seqlength(n);
+  int l = *P->C.evaluate_as<Int>(sequence_length_indices[n]);
 
-  assert(cached_sequence_lengths[n] == A->seqlength(n));
+  assert(l == A->seqlength(n));
 
-  return cached_sequence_lengths[n];
+  return l;
 }
 
 void data_partition::invalidate_subA_index_branch(int b)
@@ -385,8 +384,6 @@ void data_partition::note_sequence_length_changed(int n)
 {
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: how can the sequence length change?";
-
-  cached_sequence_lengths[n].invalidate();
 }
 
 void data_partition::invalidate_pairwise_alignment_for_branch(int b) const
@@ -493,7 +490,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
    partition_index(i),
    pairwise_alignment_for_branch(2*T().n_branches()),
    alignment_prior_for_branch(T().n_branches()),
-   cached_sequence_lengths(a.n_sequences()),
+   sequence_length_indices(a.n_sequences(),-1),
    transition_p_method_indices(T().n_branches(),-1),
    variable_alignment_( has_IModel() ),
    sequences( alignment_letters(a,T().n_leaves()) ),
@@ -585,6 +582,14 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
     alignment_prior_top = p->C.add_compute_expression( (identifier("alignment_pr_top"), as, tree, hmms) );
     alignment_prior_bottom = p->C.add_compute_expression( (identifier("alignment_pr_bot"), as, tree, model) );
     alignment_prior_index = p->C.add_compute_expression( (identifier("alignment_pr"), as, tree, hmms, model) );
+
+    for(int n=0;n<T().n_nodes();n++)
+    {
+      expression_ref L = A->seqlength(n);
+      if (variable_alignment())
+	L = (identifier("seqlength"),as,tree,n);
+      sequence_length_indices[n] = p->C.add_compute_expression( L );
+    }
   }
 }
 

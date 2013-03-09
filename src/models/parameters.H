@@ -69,8 +69,7 @@ class data_partition: public Mat_Cache
 
   void set_pairwise_alignment_(int b, const pairwise_alignment_t&,bool=true) const;
 
-  /// Cached sequence lengths -- accessed through seqlength( )
-  mutable std::vector<cached_value<int> > cached_sequence_lengths;
+  std::vector<int> sequence_length_indices;
 
   std::vector<int> transition_p_method_indices;
 
