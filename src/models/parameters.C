@@ -566,8 +566,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
 
     expression_ref tree = identifier("MyTree.tree");
 
-    alignment_prior_top = p->C.add_compute_expression( (identifier("alignment_pr_top"), as, tree, hmms) );
-    alignment_prior_bottom = p->C.add_compute_expression( (identifier("alignment_pr_bot"), as, tree, model) );
     alignment_prior_index = p->C.add_compute_expression( (identifier("alignment_pr"), as, tree, hmms, model) );
 
     for(int n=0;n<T().n_nodes();n++)

@@ -75,10 +75,6 @@ class data_partition: public Mat_Cache
 
   std::vector<int> branch_HMM_indices;
 
-  int alignment_prior_top = -1;
-
-  int alignment_prior_bottom = -1;
-
   int alignment_prior_index = -1;
 
   std::vector<int> frequencies_indices;
