@@ -1139,6 +1139,74 @@ Parameters::Parameters(const module_loader& L,
     add_note( constructor(":~",2)+parameter(mu_name)+(identifier("gamma"), Tuple(0.5, 2.0)));
   }
 
+  /*------------------------- Create the tree structure -----------------------*/
+  Module tree_module("MyTree");
+
+  vector<expression_ref> node_branches;
+  for(int n=0; n < T().n_nodes(); n++)
+  {
+    string name = "nodeBranches"+convertToString(n);
+    tree_module.declare_parameter("nodeBranches"+convertToString(n));
+    expression_ref param = parameter("MyTree." + name);
+    node_branches.push_back( (identifier("list_from_vector"),param) );
+  }
+  expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
+
+  vector<expression_ref> branch_nodes;
+  for(int b=0; b < 2*T().n_branches(); b++)
+  {
+    string name = "branchNodes"+convertToString(b); 
+    tree_module.declare_parameter(name);
+    branch_nodes.push_back( (identifier("pair_from_c"), parameter("MyTree."+name)) );
+  }
+  expression_ref branch_nodes_array = (identifier("listArray'"),get_list(branch_nodes));
+
+  expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
+
+  tree_module.add_import(false, "Tree");
+  tree_module.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T().n_nodes(), T().n_branches()));
+
+  add_submodel( tree_module );
+
+  // Determine the parameter index for branches adjoining a tree node
+  for(int n=0; n < T().n_nodes(); n++)
+  {
+    string parameter_name = "MyTree.nodeBranches"+convertToString(n);
+    parameter_for_tree_node.push_back ( find_parameter(parameter_name) );
+    assert( parameter_for_tree_node.back() != -1);
+  }
+  // Determine the parameter index for nodes at the endpoint of a branch
+  for(int b=0; b < 2*T().n_branches(); b++)
+  {
+    string parameter_name = "MyTree.branchNodes"+convertToString(b);
+    parameter_for_tree_branch.push_back( find_parameter(parameter_name) );
+    assert( parameter_for_tree_branch.back() != -1);
+  }
+
+  read_h_tree();
+
+  check_h_tree();
+
+  C.evaluate_expression( (identifier("numNodes"), identifier("MyTree.tree")));
+  C.evaluate_expression( (identifier("numBranches"), identifier("MyTree.tree")));
+  C.evaluate_expression( (identifier("edgesOutOfNode"), identifier("MyTree.tree"), 0));
+  C.evaluate_expression( (identifier("neighbors"), identifier("MyTree.tree"), 0));
+  C.evaluate_expression( (identifier("nodesForEdge"),identifier("MyTree.tree"), 0));
+  int nn = *convert<const Int>(C.evaluate_expression( (identifier("edgeForNodes"), identifier("MyTree.tree"), (identifier("nodesForEdge"),identifier("MyTree.tree"), 0))));
+  for(int b=0; b < 2*T().n_branches(); b++)
+  {
+    vector<const_branchview> branch_list;
+    append(T().directed_branch(b).branches_before(),branch_list);
+    vector<int> branch_list_;
+    for(auto b: branch_list)
+      branch_list_.push_back(b);
+
+    auto b2 = convert<const Vector<int>>(C.evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),identifier("MyTree.tree"),b)))))->t;
+    assert(b2.size() == branch_list_.size());
+    for( int i: branch_list_)
+      assert(includes(b2,i));
+  }
+
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())
     throw myexception()<<"There are "<<A.size()
@@ -1275,74 +1343,6 @@ Parameters::Parameters(const module_loader& L,
     I.length_p = C.add_compute_expression( (lengthp, lengthp_arg) );
 
     // Note that branch_HMM's are per scale and per-imodel.  Construct them in the data_partition.
-  }
-
-  /*------------------------- Create the tree structure -----------------------*/
-  Module tree_module("MyTree");
-
-  vector<expression_ref> node_branches;
-  for(int n=0; n < T().n_nodes(); n++)
-  {
-    string name = "nodeBranches"+convertToString(n);
-    tree_module.declare_parameter("nodeBranches"+convertToString(n));
-    expression_ref param = parameter("MyTree." + name);
-    node_branches.push_back( (identifier("list_from_vector"),param) );
-  }
-  expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
-
-  vector<expression_ref> branch_nodes;
-  for(int b=0; b < 2*T().n_branches(); b++)
-  {
-    string name = "branchNodes"+convertToString(b); 
-    tree_module.declare_parameter(name);
-    branch_nodes.push_back( (identifier("pair_from_c"), parameter("MyTree."+name)) );
-  }
-  expression_ref branch_nodes_array = (identifier("listArray'"),get_list(branch_nodes));
-
-  expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
-
-  tree_module.add_import(false, "Tree");
-  tree_module.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T().n_nodes(), T().n_branches()));
-
-  add_submodel( tree_module );
-
-  // Determine the parameter index for branches adjoining a tree node
-  for(int n=0; n < T().n_nodes(); n++)
-  {
-    string parameter_name = "MyTree.nodeBranches"+convertToString(n);
-    parameter_for_tree_node.push_back ( find_parameter(parameter_name) );
-    assert( parameter_for_tree_node.back() != -1);
-  }
-  // Determine the parameter index for nodes at the endpoint of a branch
-  for(int b=0; b < 2*T().n_branches(); b++)
-  {
-    string parameter_name = "MyTree.branchNodes"+convertToString(b);
-    parameter_for_tree_branch.push_back( find_parameter(parameter_name) );
-    assert( parameter_for_tree_branch.back() != -1);
-  }
-
-  read_h_tree();
-
-  check_h_tree();
-
-  C.evaluate_expression( (identifier("numNodes"), identifier("MyTree.tree")));
-  C.evaluate_expression( (identifier("numBranches"), identifier("MyTree.tree")));
-  C.evaluate_expression( (identifier("edgesOutOfNode"), identifier("MyTree.tree"), 0));
-  C.evaluate_expression( (identifier("neighbors"), identifier("MyTree.tree"), 0));
-  C.evaluate_expression( (identifier("nodesForEdge"),identifier("MyTree.tree"), 0));
-  int nn = *convert<const Int>(C.evaluate_expression( (identifier("edgeForNodes"), identifier("MyTree.tree"), (identifier("nodesForEdge"),identifier("MyTree.tree"), 0))));
-  for(int b=0; b < 2*T().n_branches(); b++)
-  {
-    vector<const_branchview> branch_list;
-    append(T().directed_branch(b).branches_before(),branch_list);
-    vector<int> branch_list_;
-    for(auto b: branch_list)
-      branch_list_.push_back(b);
-
-    auto b2 = convert<const Vector<int>>(C.evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),identifier("MyTree.tree"),b)))))->t;
-    assert(b2.size() == branch_list_.size());
-    for( int i: branch_list_)
-      assert(includes(b2,i));
   }
 
   // create data partitions
