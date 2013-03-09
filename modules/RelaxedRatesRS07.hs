@@ -1,6 +1,6 @@
 module RelaxedRatesRS07 where
 {
-  import Distributions
+  import Distributions;
   import MyTree;
   
   builtin rs07_branch_HMM 4 "rs07_branch_HMM";
