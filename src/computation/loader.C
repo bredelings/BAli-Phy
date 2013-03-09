@@ -72,26 +72,32 @@ using std::map;
  *           + This would mean that the value that is computed will depend on the value
  *             of other parameters when the value is FIRST evaluated!
  *         - Randomly sample initial values from the distribution!
- *    5b. Perform MCMC on structures.
- *        - For the moment, search and discover modifiable names and (when necessary) Bounds.
- *        - How shall we name these moves?
- *        - Create a separate move-discovery routine for each type of range.
- *        - Simplex ranges will have to discover groups of modifiables.
- *    5c. Create structures with variable components.
- *    5d. Log structures with variable components.
- *        - How shall we name the pieces?  We want piA instead of pi!0.
-
- * 6. Keep better track of which variables have transition kernels.
- *    - Right now, we create a separate move for each modifiable.
- *    - It is unclear how these modifiables map to parameters.
- *    - One idea would be to create a single move for each parameter.
- *      + This move would walk the parameter, and apply sub-moves to its pieces.
- *      + This method would allow situations where parameters change size.
- *      + The method would also allow determine the bounds for slice moves dynamically.
+ *    5b. [DONE] Perform MCMC on structures.
+ *        - It is unclear how these modifiables map to parameters.
+ *        - One idea would be to create a single move for each parameter.
+ *          + This move would walk the parameter, and apply sub-moves to its pieces.
+ *          + This method would allow situations where parameters change size.
+ *          + The method would also allow determine the bounds for slice moves dynamically.
  *        - Currently, I think we determine the bounds dynamically!
  *        - Currently, the bounds are set to an expression!
  *        - Losing this is a step backwards!
  *        - Hmm... If proposals depend on the bounds, that would make the proposals dynamic too!
+ *        - For the moment, search and discover modifiable names and (when necessary) Bounds.
+ *        - How shall we name these moves?
+ *        - Create a separate move-discovery routine for each type of range.
+ *        - Simplex ranges will have to discover groups of modifiables.
+ *    5c. [DONE] Create structures with variable components.
+ *    5d. Log structures with variable components.
+ *        - How shall we name the pieces?  We want piA instead of pi!0.
+ *
+ * 6. Make a model-creation monad.  This could allow us to modify the model after creating it, thus
+ *    allowing the specification of default parameters.
+ *
+ *    - Our primary goal here is to eliminate formula_expression_ref in favor of writing 
+ *      readable Haskell model descriptions.
+ *    - Model descriptions probably need to be functions, since they need to take arguments.
+ *    - These arguments could then affect  e.g. the dimension of distributions and the
+ *       dimension of random lists created by the model.
 
  * 7. Fix the parser to give meaningful error messages, instead of just saying that the entire body doesn't parse.
 
