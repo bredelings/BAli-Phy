@@ -885,7 +885,7 @@ void set_default_values_from_notes(context& C, int b, int e)
       expression_ref parameter = results[0];
       int token = C.get_token();
       expression_ref value = (identifier("evaluate"),token,(identifier("distDefaultValue"),results[1]));
-      C.perform_expression( (identifier("set_parameter_value"),C.get_token(),parameter,value) );
+      C.perform_expression( (identifier("set_parameter_value_"),C.get_token(),parameter,value) );
     }
   }
 
@@ -899,7 +899,7 @@ void set_default_values_from_notes(context& C, int b, int e)
     {
       expression_ref parameter = results[0];
       expression_ref value = results[1];
-      C.perform_expression( (identifier("set_parameter_value"),C.get_token(),parameter,value) );
+      C.perform_expression( (identifier("set_parameter_value_"),C.get_token(),parameter,value) );
     }
   }
 
