@@ -6,7 +6,10 @@ using boost::dynamic_pointer_cast;
 
 extern "C" closure builtin_function_evaluate(OperationArgs& Args)
 {
-  assert(not Args.evaluate_changeables());
+#ifndef NDEBUG
+  if (Args.evaluate_changeables())
+    throw myexception()<<"Calling builtin_function_evaluate( ) when evaluate_changeables=true";
+#endif
 
   int token = *Args.evaluate_as<Int>(0);
   assert( Args.current_token() == token );
