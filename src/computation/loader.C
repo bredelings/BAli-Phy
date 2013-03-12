@@ -53,6 +53,22 @@ using std::map;
  *    which parameter parameters should indicate recalculation!
  *    - This will allow us to use add_real_MH_proposals( )
  *    - It will also simplify Model::set_modifiable_value( ) and remove its second argument.
+ *
+ *    - Signals:
+ *      + OK, so we mark some nods as always being kept up-to-date. Non-lazy, I guess.
+ *        Therefore, when those nodes get invalidated, they will automatically re-activate.
+ *
+ *      + Their recomputation will perform some I/O.  This could be to send a 'trigger'
+ *         signal (e.g. evaluate_as<vector<int>>(1).push-back(arg2).  Or something.
+ *        We may need re-apply to make sure actions get re-performed.
+ *
+ *      + It would be nice if there was some way to avoid allocating new nodes for the
+ *         re-performance -- is that really necessary?
+ *        I guess the re-performance is to make sure the entire I/O is re-performed if
+ *         one part of it uses values of modifiables.
+ *
+ *      + How hard would it be to set up a trigger node?
+ *   
  * 1. Efficiently recalculate the probability when only a few densities change.
  *    - Will this require signals? (Signals might also help us to recalculate mu*t to see if anything changed.)
  *    - This will allow us to avoid maintaining a Markov blanket.
