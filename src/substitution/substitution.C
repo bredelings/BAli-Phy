@@ -1716,7 +1716,7 @@ namespace substitution {
     P2.LC.invalidate_all();
     P2.invalidate_subA_index_all();
     for(int i=0;i<P2.T().n_branches();i++)
-      P2.setlength(i,P2.T().branch(i).length());
+      P2.setlength(i);
     efloat_t result2 = Pr(P2, P2.LC);
 
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
@@ -1759,10 +1759,6 @@ namespace substitution {
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
     check_regenerate(I, A, T, cache.root);
-#endif
-
-#ifdef DEBUG_SUBSTITUTION
-    std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
 
     const vector<unsigned>& smap = MC.state_letters();
