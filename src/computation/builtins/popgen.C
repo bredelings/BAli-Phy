@@ -177,3 +177,67 @@ extern "C" closure builtin_function_ewens_sampling_mixture_probability(Operation
 
   return Log_Double(Pr);
 }
+
+// The probability should be theta/(theta+total) is its new, and n/(theta+total) otherwise.
+// Here the total and the count do not include the current allele;
+double process_allele(int& count, int& total, double theta)
+{
+  double Pr;
+
+  if (count == 0)
+    Pr = theta/(theta + total);
+  else if ( count > 0 )
+    Pr = double(count)/(theta + total);
+  else
+    throw myexception()<<"GEM process: counts should not be negative!";
+
+  count++;
+  total++;
+
+  return Pr;
+}
+
+extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Args)
+{
+  // This is the theta = 2*N*mu
+  const double theta = *Args.evaluate_as<Double>(0);
+
+  // These are the alleles
+  object_ptr<const Vector<int>> alleles_ = Args.evaluate_as<Vector<int>>(1);
+  const vector<int>& alleles = alleles_->t;
+
+  // These are indicators of coalescence
+  object_ptr<const Vector<int>> I_ = Args.evaluate_as<Vector<int>>(2);
+  const vector<int>& I = I_->t;
+
+  // How many times has each allele been seen?
+  map<int,int> counts;
+
+  // Determine number of individuals
+  int n = alleles.size();
+  assert(n%2 == 0);
+  n /= 2;
+
+  double Pr = 1.0;
+  for(int i=0,total=0;i<n;i++)
+  {
+    int a1 = alleles[2*i];
+    int a2 = alleles[2*i+1];
+
+    bool coalesced = I[i];
+
+    // Heterozygotes coalesce before outbreeding with probability 0.
+    if (a1 != a2 and coalesced)
+      Pr = 0.0;
+
+    Pr *= process_allele(counts[a1], total, theta);
+
+    // Don't count the second allele if they coalesced.
+    if (coalesced) continue;
+
+    Pr *= process_allele(counts[a2], total, theta);
+  }
+
+  return Log_Double(Pr);
+}
+
