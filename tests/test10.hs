@@ -7,15 +7,15 @@ module Test where
   filename = "/home/bredelings/Reports/Kmar/BP.phase1.infile";
 
   n = 5;
-  
+
 note mean ~ iid(n, gamma(0.5,0.5) );
 note sigmaOverMu ~ iid(n, gamma(1.05,0.1) );
-  
+
   a = map (\x->1.0/(x^2)) sigmaOverMu;
   b = zipWith (/) mean a;
 
   alpha = 1.0;
-  
+
 note q ~ iid (n, beta(1.0,alpha) );
 
   normalize l = let {total = sum l} in map (/total) l;
@@ -23,17 +23,17 @@ note q ~ iid (n, beta(1.0,alpha) );
   q' = map (1.0-) q;
   left = [ product (take i q') | i <- take n [0..]];
   p' = zipWith (*) q left;
-  
+
   p = normalize p';
-  
+
   thetaDist = mixture [ (p!!i, gamma (a!!i,b!!i)) | i <- take n [0..]];
 
 note theta_example ~ thetaDist;
-  
+
   data1 = get_observed_alleles filename;
-  
+
   n_loci = length data1;
-  
+
   n_individuals = (length (data1!!0))/2;
 
 note s ~ uniform(0.0, 1.0);
