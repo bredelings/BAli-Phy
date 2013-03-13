@@ -500,48 +500,6 @@ namespace substitution
 
   // Q_from_R_and_S(R,S) = let Q = S*R in (RateMatrix, Q, (frequencies, R), (get_eigensystem, Q, pi), 1.0)
 
-  // 
-  object_ptr<const Double> 
-  Get_Equilibrium_Rate_Function(const alphabet& a, const vector<unsigned>& smap, const Matrix& Q, const vector<double>& pi)
-  {
-    assert(Q.size2() == Q.size1());
-    const unsigned N = smap.size();
-    
-    double scale=0;
-
-    if (N == a.size()) 
-    {
-      for(int i=0;i<Q.size1();i++) 
-	scale -= pi[i]*Q(i,i);
-    }
-    else 
-    {
-      for(int s1=0;s1<N;s1++)
-      {
-	double temp = 0;
-	for(int s2=0;s2<N;s2++)
-	  if (smap[s1] != smap[s2])
-	    temp += Q(s1,s2);
-
-	scale += temp*pi[s1];
-      }
-    }
-
-    return object_ptr<const Double>(new Double(scale/a.width()));
-  }
-
-  closure Get_Equilibrium_Rate_Op::operator()(OperationArgs& Args) const
-  {
-    object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
-    object_ptr<const Box<vector<unsigned> > > smap = Args.evaluate_as< Box<vector<unsigned> > >(1);
-    object_ptr<const MatrixObject > Q = Args.evaluate_as< MatrixObject >(2);
-    object_ptr<const Vector<double> > pi = Args.evaluate_as< Vector<double> >(3);
-    
-    return Get_Equilibrium_Rate_Function(*a, *smap, *Q, pi->t);
-  }
-
-  expression_ref Get_Equilibrium_Rate = lambda_expression(Get_Equilibrium_Rate_Op());
-
   object_ref Empirical_Exchange_Function(const alphabet& a, istream& ifile)
   {
     object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);

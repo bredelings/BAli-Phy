@@ -1,5 +1,6 @@
 #include "computation/computation.H"
 #include "math/exponential.H"
+#include "sequence/alphabet.H"
 
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
@@ -104,4 +105,46 @@ extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
 
   //---------------- Compute eigensystem ------------------//
   return object_ptr<const EigenValues>(new EigenValues(S));
+}
+
+
+  // 
+extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
+{
+  object_ptr<const alphabet> a_ = Args.evaluate_as<alphabet>(0);
+  const alphabet& a = *a_;
+
+  object_ptr<const Vector<unsigned> > smap_ = Args.evaluate_as< Vector<unsigned> >(1);
+  const vector<unsigned>& smap = smap_->t;
+
+  object_ptr<const MatrixObject > Q_ = Args.evaluate_as< MatrixObject >(2);
+  const Matrix& Q = Q_->t;
+
+  object_ptr<const Vector<double> > pi_ = Args.evaluate_as< Vector<double> >(3);
+  const vector<double> pi = pi_->t;
+
+  assert(Q.size2() == Q.size1());
+  const unsigned N = smap.size();
+    
+  double scale=0;
+
+  if (N == a.size()) 
+  {
+    for(int i=0;i<Q.size1();i++) 
+      scale -= pi[i]*Q(i,i);
+  }
+  else 
+  {
+    for(int s1=0;s1<N;s1++)
+    {
+      double temp = 0;
+      for(int s2=0;s2<N;s2++)
+	if (smap[s1] != smap[s2])
+	  temp += Q(s1,s2);
+
+      scale += temp*pi[s1];
+    }
+  }
+
+  return object_ptr<const Double>(new Double(scale/a.width()));
 }
