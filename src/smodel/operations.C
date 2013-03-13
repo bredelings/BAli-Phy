@@ -318,37 +318,6 @@ namespace substitution
     return Plus_gwF_Model(a,pi);
   }
 
-  object_ptr<const MatrixObject> Q_Function(const SymmetricMatrix& S, const Matrix& R)
-  {
-    const unsigned N = S.size1();
-    assert(S.size1() == R.size1());
-    assert(S.size1() == R.size2());
-
-    Matrix Q(N,N);
-
-    for(int i=0;i<N;i++) {
-      double sum=0;
-      for(int j=0;j<N;j++) {
-	if (i==j) continue;
-	Q(i,j) = S(i,j) * R(i,j);
-	sum += Q(i,j);
-      }
-      Q(i,i) = -sum;
-    }
-
-    return object_ptr<const MatrixObject>(new MatrixObject(Q));
-  }
-
-  closure Q_Op::operator()(OperationArgs& Args) const
-  {
-    object_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(0);
-    object_ptr<const MatrixObject> F = Args.evaluate_as<MatrixObject>(1);
-    
-    return Q_Function(*S, *F);
-  }
-
-  const expression_ref Q = lambda_expression( Q_Op() );
-
   formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& FS, const formula_expression_ref& FR)
   {
     formula_expression_ref S = prefix_formula("S",FS);

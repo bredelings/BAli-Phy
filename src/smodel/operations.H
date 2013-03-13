@@ -100,29 +100,6 @@ namespace substitution {
 
   formula_expression_ref Plus_gwF_Model(const alphabet& a);
 
-  struct Q_Op: public Operation
-  {
-    Q_Op* clone() const {return new Q_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "Q";}
-
-    Q_Op():Operation(2) { }
-  };
-
-  extern const expression_ref Q;
-
   formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& S, const formula_expression_ref& R);
 
   formula_expression_ref Unit_Model(const formula_expression_ref&);
