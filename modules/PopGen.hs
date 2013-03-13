@@ -14,9 +14,13 @@ read_phase_file = builtin_read_phase_file . listToString;
 
 ewens_sampling_mixture_probability (thetas,ps) x = builtin_ewens_sampling_mixture_probability (listToVectorDouble thetas) (listToVectorDouble ps) x;
 
+ewens_diploid_probability (theta,i) x = builtin_ewens_diploid_probability theta (list_to_vector i) (list_to_vector x);
+
 afs args = (ProbDensity (ewens_sampling_probability args) (error "afs has no quantile") () ());
 
 afsGroup args = (ProbDensity (ewens_sampling_group_probability args) (error "afs has no quantile") () ());
 
 afsMixture args = (ProbDensity (ewens_sampling_mixture_probability args) (error "afs has no quantile") () ());
+
+afs2 args  = (ProbDensity (ewens_diploid_probability args) (error "afs has no quantile") () ());
 }
