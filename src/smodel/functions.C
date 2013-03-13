@@ -12,12 +12,6 @@ void SModel_Functions(Module& P)
   P.def_function("getEquilibriumRate", lambda_expression(substitution::Get_Equilibrium_Rate_Op()));
   P.def_function("singletToTripletExchange", lambda_expression( substitution::Singlet_to_Triplet_Exchange_Op()));
 
-  P.def_constructor("ReversibleMarkov",7);
-  P.def_constructor("ReversibleFrequency",4);
-  P.def_constructor("F81",4);
-  P.def_constructor("MixtureModel",1);
-  P.def_constructor("MixtureModels",1);
-
   // scale x (F81 a s a' pi)= (F81 a s a'*x pi) ??
   // scale x (MixtureModel (DiscreteDistribution l)) s= (MixtureModel (DiscreteDistribution (fmap2,scale(s),l))) ??
 }

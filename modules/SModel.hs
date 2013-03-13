@@ -8,6 +8,14 @@ builtin gtr 7 "gtr";
 builtin m0 3 "m0";
 builtin lExp 3 "lExp" "SModel";
 builtin q_from_s_and_r 2 "q_from_s_and_r" "SModel";
+
+data ReversibleMarkov = ReversibleMarkov a b c d e f g;
+data ReversibleFrequency = ReversibleFrequency a b c d;
+data F81 = F81 a b c d;
+data MixtureModel = MixtureModel a;
+data MixtureModels = MixtureModels a;
+
+
 hky a k = gtr a k 1.0 1.0 1.0 1.0 k;
 tn a k1 k2 = gtr a k1 1.0 1.0 1.0 1.0 k2;
 
