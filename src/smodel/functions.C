@@ -8,7 +8,6 @@ using std::string;
 
 void SModel_Functions(Module& P)
 {
-  P.def_function("getEigensystem", lambda_expression(substitution::Get_Eigensystem_Op()));
   P.def_function("getEquilibriumRate", lambda_expression(substitution::Get_Equilibrium_Rate_Op()));
   P.def_function("singletToTripletExchange", lambda_expression( substitution::Singlet_to_Triplet_Exchange_Op()));
 

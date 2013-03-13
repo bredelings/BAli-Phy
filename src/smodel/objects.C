@@ -107,7 +107,8 @@ namespace substitution
     assert(pi2.size() == f.size());
     for(int i=0;i<pi2.size();i++)
       pi2[i] = f[i];
-    return exp(*Get_Eigensystem_Function(Q,pi), pi2,t);
+    //    return exp(*Get_Eigensystem_Function(Q,pi), pi2,t);
+    return Q; // This is just to make it compile //
   }
 
   //------------------------ F81 Model -------------------------//
