@@ -295,7 +295,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  //	  | "instance" >> -(scontext >> "=>") >> qtycls >> inst >> -("where" >> idecls)
 	  //	  | "default" >> *type
 	  //	  | "foreign" >> fdecl
-	  | lit("builtin") >> (var|varop)[ push_back(_a,construct<String>(_1)) ] >> h_integer[ push_back(_a,construct<String>(_1)) ] >> h_string[ push_back(_a,construct<String>(_1)) ] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
+	  | lit("builtin") >> (var|varop)[ push_back(_a,construct<String>(_1)) ] >> h_integer[ push_back(_a,construct<String>(_1)) ] >> h_string[ push_back(_a,construct<String>(_1)) ] >> -h_string[ push_back(_a,construct<String>(_1)) ] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
 	  | lit("note") >> bugs_line [_val = _1]
 	  | decl [_val = _1]
 	  ;
