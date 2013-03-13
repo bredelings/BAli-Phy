@@ -38,7 +38,7 @@ mixtureRange ((_,dist1):_) = distRange dist1;
 
 bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p));
 
-bernoulli args = (ProbDensity (bernoulliDensity args) (error "Bernoulli has no quantile") True TrueFalseRange);
+bernoulli args = (ProbDensity (bernoulliDensity args) (error "Bernoulli has no quantile") False TrueFalseRange);
 beta args = (ProbDensity (betaDensity args) (betaQuantile args) ((\(a,b)->a/(a+b)) args) (between 0.0 1.0));
 uniform (l,u) = (ProbDensity (uniformDensity (l,u)) () ((l+u)/2.0) (between l u));
 
