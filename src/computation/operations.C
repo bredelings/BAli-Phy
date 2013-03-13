@@ -208,18 +208,6 @@ std::string Case::name() const {
   return "case";
 }
 
-closure LExp_Op::operator()(OperationArgs& Args) const
-{
-  const EigenValues& L = *Args.evaluate_as<EigenValues>(0);
-  const Vector<double>& pi = *Args.evaluate_as< Vector<double> >(1);
-  double t = *Args.evaluate_as<Double>(2);
-
-  Matrix E = exp(L, pi, t);
-  MatrixObject* M = new MatrixObject;
-  M->t.assign_temporary(E);
-  return M;
-}
-
 //---------------------------------------------------------------------------------------//
 
 tribool Sqrt_Op::compare(const Object& o) const 
