@@ -458,16 +458,7 @@ struct OperationFn: public Operation
   { }
 };
 
-expression_ref load_builtin(const module_loader& L, const string& filename, int n, const string& fname)
-{
-  // \todo:windows Make this depend on the operating system
-  const string extension = ".so";
-
-  fs::path filepath = find_file_in_path(L.builtins_path, filename + extension);
-  return load_builtin(filepath.string(), n, fname);
-}
-
-expression_ref load_builtin(const string& filename, const string& symbol_name, int n, const string& fname)
+expression_ref load_builtin_(const string& filename, const string& symbol_name, int n, const string& fname)
 {
   // load the library
   void* library = dlopen(filename.c_str(), RTLD_LAZY);
@@ -490,10 +481,17 @@ expression_ref load_builtin(const string& filename, const string& symbol_name, i
   return lambda_expression(O);
 }
 
-expression_ref load_builtin(const string& filename, int n, const string& fname)
+expression_ref load_builtin(const string& symbol_name, const string& filename, int n, const string& function_name)
 {
-  const string prefix = "builtin_function_";
-  string symbol_name = prefix + fs::path(filename).stem().string();
-  return load_builtin(filename, symbol_name, n, fname);
+  return load_builtin_(filename, symbol_name, n, function_name);
+}
+
+expression_ref load_builtin(const module_loader& L, const string& symbol_name, const string& plugin_name, int n, const string& function_name)
+{
+  // \todo:windows Make this depend on the operating system
+  const string extension = ".so";
+
+  fs::path filepath = find_file_in_path(L.builtins_path, plugin_name + extension);
+  return load_builtin(symbol_name, filepath.string(), n, function_name);
 }
 

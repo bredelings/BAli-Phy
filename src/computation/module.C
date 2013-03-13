@@ -402,18 +402,24 @@ void Module::resolve_symbols(const std::vector<Module>& P)
 
 void Module::load_builtins(const module_loader& L)
 {
+  const string builtin_prefix = "builtin_function_";
+
   if (not topdecls) return;
 
   for(const auto& decl: topdecls->sub)
     if (is_AST(decl,"Builtin"))
     {
-      string bname = *decl->sub[0].assert_is_a<String>();
+      string function_name = *decl->sub[0].assert_is_a<String>();
       int n = convertTo<int>( *decl->sub[1].assert_is_a<String>() );
-      string plugin_name = *decl->sub[2].assert_is_a<String>();
+      string symbol_name = *decl->sub[2].assert_is_a<String>();
+      string plugin_name = symbol_name;
 
-      bname = lookup_symbol(bname).name;
+      if (decl->sub.size() > 3)
+	plugin_name = *decl->sub[3].assert_is_a<String>();
 
-      symbols.at(bname).body = load_builtin(L, plugin_name, n, bname);
+      function_name = lookup_symbol(function_name).name;
+
+      symbols.at(function_name).body = load_builtin(L, builtin_prefix + symbol_name, plugin_name, n, function_name);
     }
 }
 
