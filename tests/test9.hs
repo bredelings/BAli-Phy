@@ -2,7 +2,7 @@ module Test where
 {
   import PopGen;
   import Distributions;
-  getAFS = (listFromVectorVectorInt . alleleFrequencySpectrum . remove2ndAllele . readPhaseFile);
+  getAFS = (listFromVectorVectorInt . allele_frequency_spectrum . remove_2nd_allele . read_phase_file);
 
   filename = "/home/bredelings/Reports/Kmar/BP.phase1.infile";
 
