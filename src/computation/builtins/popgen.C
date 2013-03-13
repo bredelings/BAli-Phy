@@ -52,12 +52,16 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
     matrix.push_back(loci);
   }
 
+  assert(matrix[0].size() == 2*n_loci);
+
   OVector result;
   for(int l=0;l<n_loci;l++)
   {
     OVector locus;
-    for(int i=0;i<n_individuals;i++)
-      locus.t.push_back(Int(matrix[i][l]));
+    for(int i=0;i<n_individuals;i++) {
+      locus.t.push_back(Int(matrix[i][2*l]));
+      locus.t.push_back(Int(matrix[i][2*l+1]));
+    }
     result.t.push_back(locus);
   }
 
@@ -227,6 +231,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
   int n = alleles.size();
   assert(n%2 == 0);
   n /= 2;
+  assert(n == I.size());
 
   double Pr = 1.0;
   for(int i=0,total=0;i<n;i++)
