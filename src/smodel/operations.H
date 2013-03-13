@@ -10,33 +10,8 @@
 #include "models/model.H"
 #include "computation/formula_expression.H"
 #include "computation/expression.H"
-#include "computation/operation.H"
-#include "computation/computation.H"
 
 namespace substitution {
-
-  struct F3x4_Matrix_Op: public Operation
-  {
-    F3x4_Matrix_Op* clone() const {return new F3x4_Matrix_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "F3x4_Matrix";}
-
-    F3x4_Matrix_Op():Operation(4) { }
-  };
-
-  extern const expression_ref F3x4_Matrix;
 
   formula_expression_ref F1x4_Model(const Triplets& T);
 
@@ -45,27 +20,6 @@ namespace substitution {
   formula_expression_ref MG94_Model(const Triplets& T);
 
   formula_expression_ref MG94w9_Model(const Triplets& T);
-
-  struct EQU_Op: public Operation
-  {
-    EQU_Op* clone() const {return new EQU_Op;}
-    
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "EQU";}
-    
-    EQU_Op():Operation(1) { }
-  };
 
   formula_expression_ref EQU_Model(const alphabet& a);
   
@@ -84,127 +38,6 @@ namespace substitution {
   formula_expression_ref Unit_Model(const formula_expression_ref&);
 
   formula_expression_ref Mixture_Model(const std::vector<formula_expression_ref>& models);
-
-  // Generate a Empirical exchangeability matrix.
-  struct Empirical_Op: public Operation
-  {
-    Empirical_Op* clone() const {return new Empirical_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "Empirical";}
-
-    Empirical_Op(): Operation(2) { }
-  };
-
-  extern const expression_ref Empirical;
-
-  // Generate a PAM exchangeability matrix.
-  struct PAM_Op: public Operation
-  {
-    PAM_Op* clone() const {return new PAM_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "PAM";}
-
-    PAM_Op(): Operation(1) { }
-  };
-
-  extern const expression_ref PAM;
-
-  // Generate a JTT exchangeability matrix.
-  struct JTT_Op: public Operation
-  {
-    JTT_Op* clone() const {return new JTT_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "JTT";}
-
-    JTT_Op(): Operation(1) { }
-  };
-
-  extern const expression_ref JTT;
-
-  // Generate a PAM exchangeability matrix.
-  struct WAG_Op: public Operation
-  {
-    WAG_Op* clone() const {return new WAG_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "WAG";}
-
-    WAG_Op(): Operation(1) { }
-  };
-
-  extern const expression_ref WAG;
-
-  // Generate a LG exchangeability matrix.
-  struct LG_Op: public Operation
-  {
-    LG_Op* clone() const {return new LG_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "LG";}
-
-    LG_Op(): Operation(1) { }
-  };
-
-  extern const expression_ref LG;
-
 }
 
 // PROBLEMS!

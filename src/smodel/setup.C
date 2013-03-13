@@ -186,7 +186,7 @@ formula_expression_ref coerce_to_EM(const module_loader& L,
 
   formula_expression_ref S = get_smodel_(L,smodel, a, frequencies);
 
-  if (S.exp() and dynamic_pointer_cast<const SymmetricMatrixObject>(S.result(L,vector<string>{"Distributions","Range"})))
+  if (S.exp() and dynamic_pointer_cast<const SymmetricMatrixObject>(S.result(L,vector<string>{"SModel","Distributions","Range"})))
     return S;
 
   throw myexception()<<": '"<<smodel<<"' is not an exchange model.";
@@ -299,33 +299,33 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
 
     if (*a != AminoAcids())
       throw myexception()<<"PAM: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
-    return (PAM,a);
+    return (identifier("SModel.pam"),a);
   }
   else if (model_args[0] == "JTT") {
     check_n_args(model_args, 0);
 
     if (*a != AminoAcids())
       throw myexception()<<"JTT: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
-    return (JTT,a);
+    return (identifier("SModel.jtt"),a);
   }
   else if (model_args[0] == "WAG") {
     check_n_args(model_args, 0);
 
     if (*a != AminoAcids())
       throw myexception()<<"WAG: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
-    return (WAG,a);
+    return (identifier("SModel.wag"),a);
   }
   else if (model_args[0] == "LG") {
     check_n_args(model_args, 0);
 
     if (*a != AminoAcids())
       throw myexception()<<"LG: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
-    return (LG,a);
+    return (identifier("SModel.lg"),a);
   }
   else if (model_args[0] == "Empirical") 
   {
     check_n_args(model_args,0,2);
-    return (Empirical,a,model_args[2]);
+    return (identifier("SModel.empirical"),a,model_args[2]);
   }
   /*
   else if (model_args[0] == "C10")

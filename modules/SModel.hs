@@ -11,6 +11,14 @@ builtin q_from_s_and_r 2 "q_from_s_and_r" "SModel";
 builtin get_eigensystem 2 "get_eigensystem" "SModel";
 builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel";
 builtin singlet_to_triplet_exchange 2 "singlet_to_triplet_exchange" "SModel";
+builtin equ 1 "equ" "SModel";
+builtin empirical 2 "empirical" "SModel";
+builtin pam 1 "pam" "SModel";
+builtin jtt 1 "jtt" "SModel";
+builtin wag 1 "wag" "SModel";
+builtin lg 1 "lg" "SModel";
+
+
 
 data ReversibleMarkov = ReversibleMarkov a b c d e f g;
 data ReversibleFrequency = ReversibleFrequency a b c d;

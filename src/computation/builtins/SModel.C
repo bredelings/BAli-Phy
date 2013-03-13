@@ -279,7 +279,7 @@ object_ptr<const Object> EQU_Exchange_Function(int n)
   return R;
 }
 
-extern "C" closure builtin_function_equ_smatrix(OperationArgs& Args)
+extern "C" closure builtin_function_equ(OperationArgs& Args)
 {
   int n = *Args.evaluate_as<Int>(0);
     
