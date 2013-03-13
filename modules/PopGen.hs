@@ -2,13 +2,20 @@ module PopGen where
 {
 import Distributions;
 
-readPhaseFile = builtinReadPhaseFile . listToString;
+builtin builtin_read_phase_file 1 "read_phase_file" "popgen";
+builtin remove_2nd_allele 1 "remove_2nd_allele" "popgen";
+builtin allele_frequency_spectrum 1 "allele_frequency_spectrum" "popgen";
+builtin ewens_sampling_group_probability 2 "ewens_sampling_group_probability" "popgen";
+builtin ewens_sampling_probability 2 "ewens_sampling_probability" "popgen";
+builtin builtin_ewens_sampling_mixture_probability 3 "ewens_sampling_mixture_probability" "popgen";
 
-ewensSamplingMixtureProbability (thetas,ps) x = builtinEwensSamplingMixtureProbability (listToVectorDouble thetas) (listToVectorDouble ps) x;
+read_phase_file = builtin_read_phase_file . listToString;
 
-afs args = (ProbDensity (ewensSamplingProbability args) (error "afs has no quantile") () ());
+ewens_sampling_mixture_probability (thetas,ps) x = builtin_ewens_sampling_mixture_probability (listToVectorDouble thetas) (listToVectorDouble ps) x;
 
-afsGroup args = (ProbDensity (ewensSamplingGroupProbability args) (error "afs has no quantile") () ());
+afs args = (ProbDensity (ewens_sampling_probability args) (error "afs has no quantile") () ());
 
-afsMixture args = (ProbDensity (ewensSamplingMixtureProbability args) (error "afs has no quantile") () ());
+afsGroup args = (ProbDensity (ewens_sampling_group_probability args) (error "afs has no quantile") () ());
+
+afsMixture args = (ProbDensity (ewens_sampling_mixture_probability args) (error "afs has no quantile") () ());
 }

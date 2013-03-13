@@ -308,10 +308,4 @@ closure Ewens_Sampling_Mixture_Probability::operator()(OperationArgs& Args) cons
 
 void PopGen_Functions(Module& P)
 {
-  P.def_function("builtinReadPhaseFile", lambda_expression(Read_PHASE_File()));
-  P.def_function("remove2ndAllele", lambda_expression(Remove_2nd_Allele()));
-  P.def_function("alleleFrequencySpectrum", lambda_expression(Allele_Frequency_Spectrum()));
-  P.def_function("ewensSamplingProbability", lambda_expression(Ewens_Sampling_Probability()));
-  P.def_function("ewensSamplingGroupProbability", lambda_expression(Ewens_Sampling_Group_Probability()));
-  P.def_function("builtinEwensSamplingMixtureProbability", lambda_expression(Ewens_Sampling_Mixture_Probability()));
 }
