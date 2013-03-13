@@ -34,7 +34,7 @@ note theta_example ~ thetaDist;
   
   n_loci = length data1;
   
-  n_individuals = length (data1!!0);
+  n_individuals = (length (data1!!0))/2;
 
 note s ~ uniform(0.0, 1.0);
 
