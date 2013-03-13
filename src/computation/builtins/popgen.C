@@ -39,16 +39,26 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
       throw myexception()<<"Locus "<<i+1<<" is not a microsatellite locus!";
 
   // Lines 4- for each individual.
-  Vector<Vector<int>> result;
+  // Indexed by matrix[k][l]
+  vector<vector<int>> matrix;
   for(int i=0;i<n_individuals;i++)
   {
     portable_getline(phase_file, line);
     vector<string> words = split(line, '\t');
     words.erase(words.begin());
-    Vector<int> loci;
+    vector<int> loci;
     for(const auto& word: words)
-      loci.t.push_back(convertTo<int>(word));
-    result.t.push_back(loci);
+      loci.push_back(convertTo<int>(word));
+    matrix.push_back(loci);
+  }
+
+  OVector result;
+  for(int l=0;l<n_loci;l++)
+  {
+    OVector locus;
+    for(int i=0;i<n_individuals;i++)
+      locus.t.push_back(Int(matrix[i][l]));
+    result.t.push_back(locus);
   }
 
   return result;
@@ -202,13 +212,13 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
   // This is the theta = 2*N*mu
   const double theta = *Args.evaluate_as<Double>(0);
 
-  // These are the alleles
-  object_ptr<const Vector<int>> alleles_ = Args.evaluate_as<Vector<int>>(1);
-  const vector<int>& alleles = alleles_->t;
-
   // These are indicators of coalescence
-  object_ptr<const Vector<int>> I_ = Args.evaluate_as<Vector<int>>(2);
-  const vector<int>& I = I_->t;
+  object_ptr<const OVector> I_ = Args.evaluate_as<OVector>(1);
+  const vector<object_ref>& I = I_->t;
+
+  // These are the alleles
+  object_ptr<const OVector> alleles_ = Args.evaluate_as<OVector>(2);
+  const vector<object_ref>& alleles = alleles_->t;
 
   // How many times has each allele been seen?
   map<int,int> counts;
@@ -221,10 +231,10 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
   double Pr = 1.0;
   for(int i=0,total=0;i<n;i++)
   {
-    int a1 = alleles[2*i];
-    int a2 = alleles[2*i+1];
+    int a1 = *convert<const Int>(alleles[2*i]);
+    int a2 = *convert<const Int>(alleles[2*i+1]);
 
-    bool coalesced = I[i];
+    bool coalesced = convert<const constructor>(I[i])->f_name == "Prelude.True";
 
     // Heterozygotes coalesce before outbreeding with probability 0.
     if (a1 != a2 and coalesced)
