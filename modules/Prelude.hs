@@ -22,8 +22,11 @@ flip f x y = f y x;
 f $ x = f x;
 f $! x = x `seq` f x;
 
+x ^ 0 = 1;
 x ^ 1 = x;
 x ^ n = x*(x^(n-1));
+
+a ** b = exp (b*log a);
 
 data Bool = True | False;
 data Maybe a = Just a | Nothing;
