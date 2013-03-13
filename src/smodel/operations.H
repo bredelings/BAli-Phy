@@ -69,27 +69,6 @@ namespace substitution {
 
   formula_expression_ref EQU_Model(const alphabet& a);
   
-  struct Singlet_to_Triplet_Exchange_Op: public Operation
-  {
-    Singlet_to_Triplet_Exchange_Op* clone() const {return new Singlet_to_Triplet_Exchange_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "Singlet_to_Triplet_Exchange";}
-
-    Singlet_to_Triplet_Exchange_Op():Operation(2) { }
-  };
-
   object_ptr<SymmetricMatrixObject> SingletToTripletExchangeFunction(const Triplets& T, const SymmetricMatrixObject& S2);
 
   formula_expression_ref Plus_F_Model(const alphabet& a, const std::valarray<double>& pi);
@@ -105,33 +84,6 @@ namespace substitution {
   formula_expression_ref Unit_Model(const formula_expression_ref&);
 
   formula_expression_ref Mixture_Model(const std::vector<formula_expression_ref>& models);
-
-  object_ptr<const Double> 
-  Get_Equilibrium_Rate_Function(const alphabet&, const std::vector<unsigned>&, const Matrix&, const expression_ref&);
-
-  // Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);x
-  struct Get_Equilibrium_Rate_Op: public Operation
-  {
-    Get_Equilibrium_Rate_Op* clone() const {return new Get_Equilibrium_Rate_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "Get_Equilbrium_Rate";}
-
-    Get_Equilibrium_Rate_Op(): Operation(4) { }
-  };
-
-  extern expression_ref Get_Equilibrium_Rate;
 
   // Generate a Empirical exchangeability matrix.
   struct Empirical_Op: public Operation

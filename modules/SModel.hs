@@ -10,6 +10,7 @@ builtin lExp 3 "lExp" "SModel";
 builtin q_from_s_and_r 2 "q_from_s_and_r" "SModel";
 builtin get_eigensystem 2 "get_eigensystem" "SModel";
 builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel";
+builtin singlet_to_triplet_exchange 2 "singlet_to_triplet_exchange" "SModel";
 
 data ReversibleMarkov = ReversibleMarkov a b c d e f g;
 data ReversibleFrequency = ReversibleFrequency a b c d;

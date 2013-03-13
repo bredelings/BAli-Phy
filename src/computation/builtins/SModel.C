@@ -108,7 +108,6 @@ extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
 }
 
 
-  // 
 extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
 {
   object_ptr<const alphabet> a_ = Args.evaluate_as<alphabet>(0);
@@ -147,4 +146,47 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
   }
 
   return object_ptr<const Double>(new Double(scale/a.width()));
+}
+
+
+extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& Args)
+{
+  object_ptr<const Triplets> T_ = Args.evaluate_as<Triplets>(0);
+  const Triplets& T = *T_;
+
+  object_ptr<const SymmetricMatrixObject> S_ = Args.evaluate_as<SymmetricMatrixObject>(1);
+  const SymmetricMatrix& S2 = S_->t;
+
+  int N = T.size();
+
+  object_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject(N) );
+
+  SymmetricMatrix& S = R->t;
+
+  for(int i=0;i<T.size();i++)
+    for(int j=0;j<i;j++) 
+    {
+      int nmuts=0;
+      int pos=-1;
+      for(int p=0;p<3;p++)
+	if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
+	  nmuts++;
+	  pos=p;
+	}
+      assert(nmuts>0);
+      assert(pos >= 0 and pos < 3);
+	
+      S(i,j) = 0;
+
+      if (nmuts == 1) {
+
+	int l1 = T.sub_nuc(i,pos);
+	int l2 = T.sub_nuc(j,pos);
+	assert(l1 != l2);
+
+	S(i,j) = S2(l1,l2);
+      }
+    }
+
+  return R;
 }

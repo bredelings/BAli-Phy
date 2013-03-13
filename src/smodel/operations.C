@@ -114,51 +114,6 @@ namespace substitution
     return (EQU_Op(), a.size());
   }
   
-  object_ptr<SymmetricMatrixObject> SingletToTripletExchangeFunction(const Triplets& T, const SymmetricMatrixObject& R2)
-  {
-    int N = T.size();
-
-    object_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject(N) );
-
-    SymmetricMatrix& S = R->t;
-    const SymmetricMatrix& S2 = R2.t;
-
-    for(int i=0;i<T.size();i++)
-      for(int j=0;j<i;j++) 
-      {
-	int nmuts=0;
-	int pos=-1;
-	for(int p=0;p<3;p++)
-	  if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
-	    nmuts++;
-	    pos=p;
-	  }
-	assert(nmuts>0);
-	assert(pos >= 0 and pos < 3);
-	
-	S(i,j) = 0;
-
-	if (nmuts == 1) {
-
-	  int l1 = T.sub_nuc(i,pos);
-	  int l2 = T.sub_nuc(j,pos);
-	  assert(l1 != l2);
-
-	  S(i,j) = S2(l1,l2);
-	}
-      }
-
-    return R;
-  }
-
-  closure Singlet_to_Triplet_Exchange_Op::operator()(OperationArgs& Args) const
-  {
-    object_ptr<const Triplets> T = Args.evaluate_as<Triplets>(0);
-    object_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(1);
-    
-    return SingletToTripletExchangeFunction(*T,*S);
-  }
-
   formula_expression_ref Frequencies_Model(const alphabet& a, const valarray<double>& pi)
   {
     formula_expression_ref F = List();
