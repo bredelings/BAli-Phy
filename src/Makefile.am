@@ -104,7 +104,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
 	  imodel/setup.C smodel/objects.C computation/computation.C \
 	  computation/graph_register.C computation/module.C \
-	  computation/formula_expression.C smodel/operations.C probability/distribution-operations.C \
+	  computation/formula_expression.C smodel/operations.C \
 	  computation/operations.C computation/loader.C computation/context.C \
 	  computation/model_notes.C substitution/matcache.C smodel/functions.C computation/closure.C \
 	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C object.C \

@@ -295,8 +295,6 @@ void make_Prelude(Module& P)
   P.def_function("builtinSetVectorIndexMatrix", lambda_expression( BuiltinSetVectorIndexOp<Matrix,MatrixObject>() ) ); 
 }
 
-void Distribution_Functions(Module&);
-void Range_Functions(Module&);
 void SModel_Functions(Module&);
 
 expression_ref module_loader::read_module_from_file(const string& filename) const
@@ -366,10 +364,6 @@ Module module_loader::load_module_from_file(const string& filename) const
     
     if (M.name == "Prelude")
       make_Prelude(M);
-    else if (M.name == "Distributions")
-      Distribution_Functions(M);
-    else if (M.name == "Range")
-      Range_Functions(M);
     else if (M.name == "SModel")
       SModel_Functions(M);
 

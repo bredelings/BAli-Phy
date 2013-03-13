@@ -1,6 +1,8 @@
 module Range where
 {
-data Range = OpenInterval Double Double | IntegerInterval Int Int | TrueFalseRange | Simplex Int Double | ListRange [Range]; 
+data Range = OpenInterval Double Double | IntegerInterval Int Int | TrueFalseRange | Simplex Int Double | ListRange [Range];
+ 
+builtin builtinGetBounds 2 "get_bounds" "Range";
   
 realLine = OpenInterval Nothing Nothing;
 

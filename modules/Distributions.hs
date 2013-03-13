@@ -2,6 +2,22 @@ module Distributions where
 {
 import Range;
 
+builtin exponential_density 2 "exponential_density" "Distribution";
+
+builtin builtin_gamma_density 3 "gamma_density" "Distribution";
+builtin builtin_gamma_quantile 3 "gamma_quantile" "Distribution";
+
+builtin builtin_beta_density 3 "beta_density" "Distribution";
+builtin builtin_beta_quantile 3 "beta_quantile" "Distribution";
+
+builtin builtin_normal_density 3 "normal_density" "Distribution";
+builtin builtin_normal_quantile 3 "normal_quantile" "Distribution";
+
+builtin builtin_cauchy_density 3 "cauchy_density" "Distribution";
+builtin builtin_laplace_density 3 "laplace_density" "Distribution";
+builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
+builtin builtin_uniform_density 3 "uniform_density" "Distribution";
+
 data ProbDensity = ProbDensity a b c d;
 data DiscreteDistribution a = DiscreteDistribution [(Double,a)];
 
@@ -10,20 +26,20 @@ quantile (ProbDensity _ q _ _) = q;
 distDefaultValue (ProbDensity _ _ v _) = v;
 distRange (ProbDensity _ _ _ r) = r;
 
-gammaDensity (a,b) x = builtinGammaDensity a b x;
-gammaQuantile (a,b) p = builtinGammaQuantile a b p;
-betaDensity (a,b) x = builtinBetaDensity a b x;
-betaQuantile (a,b) p = builtinBetaQuantile a b p;
-normalDensity (mu,sigma) x =  builtinNormalDensity mu sigma x;
-normalQuantile (mu,sigma) p =  builtinNormalQuantile mu sigma p;
+gammaDensity (a,b) x = builtin_gamma_density a b x;
+gammaQuantile (a,b) p = builtin_gamma_quantile a b p;
+betaDensity (a,b) x = builtin_beta_density a b x;
+betaQuantile (a,b) p = builtin_beta_quantile a b p;
+normalDensity (mu,sigma) x =  builtin_normal_density mu sigma x;
+normalQuantile (mu,sigma) p =  builtin_normal_quantile mu sigma p;
 
-cauchyDensity (m,s) x = builtinCauchyDensity m s x;
+cauchyDensity (m,s) x = builtin_cauchy_density m s x;
 
-laplaceDensity (m,s) x = builtinLaplaceDensity m s x;
+laplaceDensity (m,s) x = builtin_laplace_density m s x;
 
-dirichletDensity ps xs = builtinDirichletDensity (listToVectorDouble ps) (listToVectorDouble xs);
+dirichletDensity ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
 
-uniformDensity (min,max) x = builtinUniformDensity min max x;
+uniformDensity (min,max) x = builtin_uniform_density min max x;
 
 exponentialQuantile mu p = gammaQuantile (1.0,mu) p;
 
@@ -43,7 +59,7 @@ beta args = (ProbDensity (betaDensity args) (betaQuantile args) ((\(a,b)->a/(a+b
 uniform (l,u) = (ProbDensity (uniformDensity (l,u)) () ((l+u)/2.0) (between l u));
 
 normal args = (ProbDensity (normalDensity args) (normalQuantile args) 0.0 realLine);
-exponential mu = (ProbDensity (exponentialDensity mu) (exponentialQuantile mu) mu (above 0.0));
+exponential mu = (ProbDensity (exponential_density mu) (exponentialQuantile mu) mu (above 0.0));
 gamma args = (ProbDensity (gammaDensity args) (gammaQuantile args) ((\(a,b)->a*b) args) (above 0.0));
 laplace args = (ProbDensity (laplaceDensity args) () ((\(m,s)->m) args) realLine);
 cauchy args = (ProbDensity (cauchyDensity args) () 0.0 realLine);
