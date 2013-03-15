@@ -2,7 +2,7 @@ module Test where
 {
   import PopGen;
   import Distributions;
-  getAFS = (listFromVectorVectorInt . allele_frequency_spectrum . remove_2nd_allele . read_phase_file);
+  get_AFS file = map (allele_frequency_spectrum . remove_2nd_allele) $ list_from_vector $ read_phase_file file;
 
   filename = "/home/bredelings/Reports/Kmar/BP.phase1.infile";
 
@@ -28,12 +28,14 @@ note q ~ iid (n, beta(1.0,alpha) );
   
   thetaDist = mixture [ (p!!i, gamma (a!!i,b!!i)) | i <- take n [0..]];
 
+  data1 = get_AFS filename;
+  n_loci = length data1;
+  
 note theta_example ~ thetaDist;
   
-note theta ~ iid (length d1, thetaDist);
+note theta ~ iid (n_loci, thetaDist);
 
-  d1 = getAFS filename;
-note data d1 ~ plate (length d1, \i -> afs (theta!!i));
+note data data1 ~ plate (n_loci, \l -> afs (theta!!l));
 note MakeLogger (p!!0);
 note MakeLogger (p!!1);
 note MakeLogger (p!!2);
