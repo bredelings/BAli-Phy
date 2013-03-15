@@ -70,45 +70,42 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
 
 extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
 {
-  object_ptr<const Vector<Vector<int>>> alleles = Args.evaluate_as<Vector<Vector<int>>>(0);
+  object_ptr<const OVector> alleles = Args.evaluate_as<OVector>(0);
 
-  Vector<Vector<int>> alleles2 = *alleles;
+  OVector alleles2;
 
-  for(auto& v:alleles2.t)
-    for(int i=v.t.size()-1;i>=0;i-=2)
-      v.t.erase(v.t.begin() + i);
+  for(int i=0;i<alleles->t.size();i+=2)
+    alleles2.t.push_back(alleles->t[i]);
 
   return alleles2;
 }
 
 extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Args)
 {
-  const vector<Vector<int>>& alleles = *Args.evaluate_as<Vector<Vector<int>>>(0);
+  object_ptr<const OVector> alleles = Args.evaluate_as<OVector>(0);
 
-  int n_individuals = alleles.size();
+  int n_individuals = alleles->t.size();
   assert(n_individuals > 0);
 
-  int n_loci = alleles[0].t.size();
-
-  Vector<Vector<int>> afs_;
-  vector<Vector<int>>& afs = afs_.t;
-
-  for(int l=0;l<n_loci;l++)
+  // 1. Count the alleles of each type
+  map<int,int> allele_counts;
+  for(const auto& a: alleles->t)
   {
-    // 1. Count the alleles of each type
-    map<int,int> allele_counts;
-    for(int i=0;i<n_individuals;i++)
-      allele_counts[alleles[i].t[l]]++;
-
-    // 2. Determine how many alleles with each count there are.
-    vector<int> spectrum(n_individuals,0);
-    for(const auto& allele_and_count: allele_counts)
-      spectrum[allele_and_count.second-1]++;
-
-    afs.push_back(spectrum);
+    int aa = *convert<const Int>(a);
+    allele_counts[aa]++;
   }
 
-  return afs_;
+  // 2. Determine how many alleles with each count there are.
+  vector<int> spectrum(n_individuals,0);
+  for(const auto& allele_and_count: allele_counts)
+    spectrum[allele_and_count.second-1]++;
+  
+  // 3. Convert vector<int> to OVector
+  OVector afs;
+  for(int count: spectrum)
+    afs.t.push_back(Int(count));
+
+  return afs;
 }
 
 log_double_t factorial(int n)
@@ -157,7 +154,11 @@ extern "C" closure builtin_function_ewens_sampling_group_probability(OperationAr
 extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Args)
 {
   const double theta = *Args.evaluate_as<Double>(0);
-  const vector<int>& afs = *Args.evaluate_as<Vector<int>>(1);
+  object_ptr<const OVector> afs_ = Args.evaluate_as<OVector>(1);
+
+  vector<int> afs;
+  for(const auto& count: afs_->unbox())
+    afs.push_back(*convert<const Int>(count));
 
   log_double_t Pr = ewens_sampling_probability(theta,afs);
 
