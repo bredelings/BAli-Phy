@@ -54,15 +54,15 @@ mixtureRange ((_,dist1):_) = distRange dist1;
 
 bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p));
 
-bernoulli args = (ProbDensity (bernoulliDensity args) (error "Bernoulli has no quantile") False TrueFalseRange);
-beta args = (ProbDensity (betaDensity args) (betaQuantile args) ((\(a,b)->a/(a+b)) args) (between 0.0 1.0));
-uniform (l,u) = (ProbDensity (uniformDensity (l,u)) () ((l+u)/2.0) (between l u));
+bernoulli args = ProbDensity (bernoulliDensity args) (error "Bernoulli has no quantile") False TrueFalseRange;
+beta args = ProbDensity (betaDensity args) (betaQuantile args) ((\(a,b)->a/(a+b)) args) (between 0.0 1.0);
+uniform (l,u) = ProbDensity (uniformDensity (l,u)) () ((l+u)/2.0) (between l u);
 
-normal args = (ProbDensity (normalDensity args) (normalQuantile args) 0.0 realLine);
-exponential mu = (ProbDensity (exponential_density mu) (exponentialQuantile mu) mu (above 0.0));
-gamma args = (ProbDensity (gammaDensity args) (gammaQuantile args) ((\(a,b)->a*b) args) (above 0.0));
-laplace args = (ProbDensity (laplaceDensity args) () ((\(m,s)->m) args) realLine);
-cauchy args = (ProbDensity (cauchyDensity args) () 0.0 realLine);
+normal args = ProbDensity (normalDensity args) (normalQuantile args) 0.0 realLine;
+exponential mu = ProbDensity (exponential_density mu) (exponentialQuantile mu) mu (above 0.0);
+gamma args = ProbDensity (gammaDensity args) (gammaQuantile args) ((\(a,b)->a*b) args) (above 0.0);
+laplace args = ProbDensity (laplaceDensity args) () ((\(m,s)->m) args) realLine;
+cauchy args = ProbDensity (cauchyDensity args) () 0.0 realLine;
 
 logNormal = expTransform' normal;
 logExponential = expTransform' exponential;
@@ -76,10 +76,10 @@ geometric_quantile p = error "geometric currently has no quantile";
 
 geometric_initial p = 1;
 
-geometric p = (ProbDensity (geometric_density p) (geometric_quantile p) (geometric_initial p) (IntegerInterval (Just 0) Nothing));
+geometric p = ProbDensity (geometric_density p) (geometric_quantile p) (geometric_initial p) (IntegerInterval (Just 0) Nothing);
 
 
-dirichlet args = (ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") (dirichletDefault args) (Simplex (length args) 1.0));
+dirichlet args = ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") (dirichletDefault args) (Simplex (length args) 1.0);
 dirichlet' (n,x) = dirichlet (replicate n x);
 
 mixture args = ProbDensity (mixtureDensity args) (error "Mixture has no quantiles") (mixtureDefault args) (mixtureRange args);
@@ -118,6 +118,6 @@ average (DiscreteDistribution l) = foldl' (\x y->(x+(fst y)*(snd y))) 0.0 l;
 
 uniformDiscretize q n = DiscreteDistribution [( 1.0/n', (2.0*i'+1.0)/n' ) | i <- take n [0..], let {n' = intToDouble n;i'=intToDouble i}];
 
-expTransform (ProbDensity d q v r) = (ProbDensity (\x -> (d $ log x)/(doubleToLogDouble x)) (q.log) (exp v) (Range.expTransform r));
+expTransform (ProbDensity d q v r) = ProbDensity (\x -> (d $ log x)/(doubleToLogDouble x)) (q.log) (exp v) (Range.expTransform r);
 expTransform' family args = Distributions.expTransform (family args);
 }
