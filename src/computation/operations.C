@@ -158,10 +158,10 @@ closure Case::operator()(OperationArgs& Args) const
   for(int i=0;i<L and not result;i++)
   {
     // If its _, then match it.
-    if (object_ptr<const dummy> D2 = is_a<dummy>(cases[i]))
+    if (cases[i]->head->type() == dummy_type)
     {
       // We standardize to avoid case x of v -> f(v) so that f cannot reference v.
-      assert(is_wildcard(*D2));
+      assert(is_wildcard(cases[i]));
       assert(i == L-1);
       
       result.exp = bodies[i];
