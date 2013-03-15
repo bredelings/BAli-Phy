@@ -70,6 +70,15 @@ logGamma = expTransform' gamma;
 logLaplace = expTransform' laplace;
 logCauchy = expTransform' cauchy;
 
+geometric_density p n = doubleToLogDouble $ p**(intToDouble (n-1)) * (1.0-p);
+
+geometric_quantile p = error "geometric currently has no quantile";
+
+geometric_initial p = 1;
+
+geometric p = (ProbDensity (geometric_density p) (geometric_quantile p) (geometric_initial p) (IntegerInterval (Just 0) Nothing));
+
+
 dirichlet args = (ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") (dirichletDefault args) (Simplex (length args) 1.0));
 dirichlet' (n,x) = dirichlet (replicate n x);
 
