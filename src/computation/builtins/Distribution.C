@@ -95,10 +95,10 @@ extern "C" closure builtin_function_cauchy_density(OperationArgs& Args)
 // Third convert all the expression_ref's here to "var" and use Distribution_Functions()
 extern "C" closure builtin_function_dirichlet_density(OperationArgs& Args)
 {
-  const vector<double>& n = Args.evaluate_as<Vector<double>>(0)->t;
-  const vector<double>& x = Args.evaluate_as<Vector<double>>(1)->t;
+  object_ptr<const Vector<double>> n = Args.evaluate_as<Vector<double>>(0);
+  object_ptr<const Vector<double>> x = Args.evaluate_as<Vector<double>>(1);
   
-  object_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(x,n) ) );
+  object_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(x->unbox(),n->unbox()) ) );
   
   return R;
 }
