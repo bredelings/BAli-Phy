@@ -9,11 +9,11 @@ using std::istream;
 
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
-  const EigenValues& L = *Args.evaluate_as<EigenValues>(0);
-  const Vector<double>& pi = *Args.evaluate_as< Vector<double> >(1);
+  auto L = Args.evaluate_as<EigenValues>(0);
+  auto pi = Args.evaluate_as< Vector<double> >(1);
   double t = *Args.evaluate_as<Double>(2);
 
-  Matrix E = exp(L, pi, t);
+  Matrix E = exp(*L, pi->unbox(), t);
   MatrixObject* M = new MatrixObject;
   M->t.assign_temporary(E);
   return M;
