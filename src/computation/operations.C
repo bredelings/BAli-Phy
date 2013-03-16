@@ -137,8 +137,7 @@ closure Case::operator()(OperationArgs& Args) const
 
   int L = (Args.n_args() - 1)/2;
 
-  // FIXME:speed - we really shouldn't be allocating memory here!
-  // But this IS easier not to break.
+#ifndef NEDBUG
   vector<expression_ref> cases(L);
   vector<expression_ref> bodies(L);
   for(int i=0;i<L;i++)
@@ -147,7 +146,6 @@ closure Case::operator()(OperationArgs& Args) const
     bodies[i] = Args.reference(2 + 2*i);
   }
 
-#ifndef NEDBUG
   if (is_a<lambda2>(obj.exp))
     throw myexception()<<"Case argument is a lambda '"<<make_case_expression(obj.exp, cases, bodies)<<"'";
 #endif
@@ -157,21 +155,24 @@ closure Case::operator()(OperationArgs& Args) const
 
   for(int i=0;i<L and not result;i++)
   {
+    const expression_ref& this_case = Args.reference(1 + 2*i);
+    const expression_ref& this_body = Args.reference(2 + 2*i);
+
     // If its _, then match it.
-    if (cases[i]->head->type() == dummy_type)
+    if (this_case->head->type() == dummy_type)
     {
       // We standardize to avoid case x of v -> f(v) so that f cannot reference v.
-      assert(is_wildcard(cases[i]));
+      assert(is_wildcard(this_case));
       assert(i == L-1);
       
-      result.exp = bodies[i];
+      result.exp = this_body;
     }
     else
     {
       // FIXME! Convert every pattern head to an integer...
 
       // If we are a constructor, then match iff the the head matches.
-      if (obj.exp->head->compare(*cases[i]->head))
+      if (obj.exp->head->compare(*this_case->head))
       {
 #ifndef NDEBUG
 	if (obj.exp->size())
@@ -183,7 +184,7 @@ closure Case::operator()(OperationArgs& Args) const
 	  assert(obj.exp->size() == obj.Env.size());
 	}
 #endif	
-	result.exp = bodies[i];
+	result.exp = this_body;
 	
 	for(int j=0;j<obj.exp->size();j++)
 	{
@@ -197,7 +198,11 @@ closure Case::operator()(OperationArgs& Args) const
   }
 
   if (not result)
+#ifdef NDEBUG
+    throw myexception()<<"Case: object doesn't match any alternative";
+#else
     throw myexception()<<"Case: object doesn't match any alternative in '"<<make_case_expression(obj.exp, cases, bodies)<<"'";
+#endif
 
   result = get_trimmed(result);
 
