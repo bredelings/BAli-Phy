@@ -196,11 +196,16 @@ extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& A
 
 extern "C" closure builtin_function_f3x4_matrix(OperationArgs& Args)
 {
-  const Triplets& T = *Args.evaluate_as<Triplets>(0);
+  auto T = Args.evaluate_as<Triplets>(0);
   
-  const Matrix& R1 = Args.evaluate_as<MatrixObject>(1)->t; 
-  const Matrix& R2 = Args.evaluate_as<MatrixObject>(2)->t;
-  const Matrix& R3 = Args.evaluate_as<MatrixObject>(3)->t;
+  auto R1_ = Args.evaluate_as<MatrixObject>(1);
+  const Matrix& R1 = R1_->t;
+
+  auto R2_ = Args.evaluate_as<MatrixObject>(2);
+  const Matrix& R2 = R2_->t;
+
+  auto R3_ = Args.evaluate_as<MatrixObject>(3);
+  const Matrix& R3 = R3_->t;
 
   // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
   assert(R1.size1() == 4);
@@ -212,7 +217,7 @@ extern "C" closure builtin_function_f3x4_matrix(OperationArgs& Args)
 
   object_ptr<MatrixObject> R( new MatrixObject );
 
-  const int n = T.size();
+  const int n = T->size();
 
   R->t.resize(n, n);
   for(int i=0;i<n;i++)
@@ -223,11 +228,11 @@ extern "C" closure builtin_function_f3x4_matrix(OperationArgs& Args)
       int to=-1;
       int pos=-1;
       for(int p=0;p<3;p++)
-	if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
+	if (T->sub_nuc(i,p) != T->sub_nuc(j,p)) {
 	  nmuts++;
 	  pos = p;
-	  from = T.sub_nuc(i,p);
-	  to = T.sub_nuc(j,p);
+	  from = T->sub_nuc(i,p);
+	  to = T->sub_nuc(j,p);
 	}
 
       double r = 0;
