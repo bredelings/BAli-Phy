@@ -337,7 +337,7 @@ path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.
 # See libtool documentation on plugins:
 #    http://www.flameeyes.eu/autotools-mythbuster/libtool/plugins.html
 
-pkglib_LTLIBRARIES = mod.la log.la builtinError.la seq.la join.la reapply.la \
+pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la \
 		arraySize.la getIndex.la mkArray.la intToDouble.la negate.la \
 		exp.la doubleToLogDouble.la add.la subtract.la divide.la multiply.la \
 		equals.la notequals.la greaterthan.la greaterthanorequal.la lessthan.la \
@@ -386,8 +386,8 @@ negate_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 exp_la_SOURCES = computation/builtins/exp.C
 exp_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
-log_la_SOURCES = computation/builtins/log.C
-log_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+Prelude_la_SOURCES = computation/builtins/Prelude.C
+Prelude_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 add_la_SOURCES = computation/builtins/add.C
 add_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
