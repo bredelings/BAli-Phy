@@ -50,6 +50,10 @@ otherwise = True;
 
 builtin log 1 "log" "Prelude";
 builtin sqrt 1 "sqrt" "Prelude";
+builtin truncate 1 "truncate" "Prelude";
+builtin ceiling 1 "ceiling" "Prelude";
+builtin floor 1 "floor" "Prelude";
+builtin round 1 "round" "Prelude";
 builtin mod 2 "mod";
 builtin builtinError 1 "builtinError";
 builtin seq 2 "seq";
