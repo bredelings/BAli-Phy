@@ -418,6 +418,7 @@ reg& reg::operator=(reg&& R) noexcept
   state = R.state;
   temp_owners = std::move( R.temp_owners );
   temp = R.temp;
+  re_evaluate = R.re_evaluate;
 
   R.prev_reg = -1;
   R.next_reg = -1;
@@ -443,7 +444,8 @@ reg::reg(reg&& R) noexcept
   next_reg ( R.next_reg ),
   state ( R.state ),
   temp_owners ( std::move( R.temp_owners ) ),
-  temp ( R.temp )
+  temp ( R.temp ),
+  re_evaluate ( R.re_evaluate )
 { 
   R.prev_reg = -1;
   R.next_reg = -1;
@@ -469,6 +471,8 @@ void reg_heap::clear(int R)
 
   // This should already be cleared.
   assert( access(R).temp == -1);
+
+  access(R).re_evaluate = false;
 }
 
 void reg_heap::set_used_input(int R1, int R2)

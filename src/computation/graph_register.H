@@ -44,7 +44,7 @@ public:
   int call = -1;
   back_edge_deleter call_reverse;
 
-  /* 2. The computations we used */
+  /* 2. The computations we used. */
   /// Which reg's were used to reduce this expression?
   std::vector< std::pair<int,back_edge_deleter> > used_inputs;
 
@@ -70,6 +70,8 @@ public:
   owner_set_t temp_owners;
 
   int temp = -1;
+
+  bool re_evaluate = false;
 
   reg& operator=(const reg&) = delete;
   reg& operator=(reg&&) noexcept;
