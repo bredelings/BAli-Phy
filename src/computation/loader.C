@@ -49,6 +49,11 @@ using std::map;
  * See list in parser/desugar.C
  * See list in models/parameters.C 
  *
+ * -1. Add simple "trigger" mechanism to update D!b when mu*t!b changes
+ *    - How do we make the trigger depend on something it doesn't normally use?
+ *    - Can we do "x << trigger i" ?
+ *    - Or do we need to make a new builtin "use x" that just records a dependency on x and returns ()?
+ *
  * 0. Make Parameters::recalc( ) check when things change, so that we don't need to worry about
  *    which parameter parameters should indicate recalculation!
  *    - This will allow us to use add_real_MH_proposals( )
