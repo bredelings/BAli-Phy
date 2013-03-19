@@ -333,25 +333,4 @@ expression_ref BuiltinGetVectorIndex()
   return lambda_expression(BuiltinGetVectorIndexOp<T,U>());
 }
 
-struct LExp_Op: public Operation
-{
-  LExp_Op* clone() const {return new LExp_Op(*this);}
-  
-  tribool compare(const Object& O) const
-  {
-    if (this == &O) 
-      return true;
-    
-    if (typeid(*this) != typeid(O)) return false;
-    
-    return true;
-  }
-  
-  closure operator()(OperationArgs& Args) const;
-  
-  std::string name() const {return "LExp";}
-  
-  LExp_Op(): Operation(3) { }
-};
-
 #endif

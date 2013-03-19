@@ -10,33 +10,8 @@
 #include "models/model.H"
 #include "computation/formula_expression.H"
 #include "computation/expression.H"
-#include "computation/operation.H"
-#include "computation/computation.H"
 
 namespace substitution {
-
-  struct F3x4_Matrix_Op: public Operation
-  {
-    F3x4_Matrix_Op* clone() const {return new F3x4_Matrix_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "F3x4_Matrix";}
-
-    F3x4_Matrix_Op():Operation(4) { }
-  };
-
-  extern const expression_ref F3x4_Matrix;
 
   formula_expression_ref F1x4_Model(const Triplets& T);
 
@@ -46,50 +21,8 @@ namespace substitution {
 
   formula_expression_ref MG94w9_Model(const Triplets& T);
 
-  struct EQU_Op: public Operation
-  {
-    EQU_Op* clone() const {return new EQU_Op;}
-    
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "EQU";}
-    
-    EQU_Op():Operation(1) { }
-  };
-
   formula_expression_ref EQU_Model(const alphabet& a);
   
-  struct Singlet_to_Triplet_Exchange_Op: public Operation
-  {
-    Singlet_to_Triplet_Exchange_Op* clone() const {return new Singlet_to_Triplet_Exchange_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "Singlet_to_Triplet_Exchange";}
-
-    Singlet_to_Triplet_Exchange_Op():Operation(2) { }
-  };
-
   object_ptr<SymmetricMatrixObject> SingletToTripletExchangeFunction(const Triplets& T, const SymmetricMatrixObject& S2);
 
   formula_expression_ref Plus_F_Model(const alphabet& a, const std::valarray<double>& pi);
@@ -100,210 +33,11 @@ namespace substitution {
 
   formula_expression_ref Plus_gwF_Model(const alphabet& a);
 
-  struct Q_Op: public Operation
-  {
-    Q_Op* clone() const {return new Q_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "Q";}
-
-    Q_Op():Operation(2) { }
-  };
-
-  extern const expression_ref Q;
-
   formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& S, const formula_expression_ref& R);
 
   formula_expression_ref Unit_Model(const formula_expression_ref&);
 
-  extern expression_ref Modulated_Markov_E;
-
   formula_expression_ref Mixture_Model(const std::vector<formula_expression_ref>& models);
-
-  object_ptr<const EigenValues> Get_Eigensystem_Function(const Matrix& Q, const std::vector<double>& pi);
-
-  // Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);x
-  struct Get_Eigensystem_Op: public Operation
-  {
-    Get_Eigensystem_Op* clone() const {return new Get_Eigensystem_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "Get_Eigensystem";}
-
-    Get_Eigensystem_Op(): Operation(2) { }
-  };
-
-  extern expression_ref Get_Eigensystem;
-
-  object_ptr<const Double> 
-  Get_Equilibrium_Rate_Function(const alphabet&, const std::vector<unsigned>&, const Matrix&, const expression_ref&);
-
-  // Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);x
-  struct Get_Equilibrium_Rate_Op: public Operation
-  {
-    Get_Equilibrium_Rate_Op* clone() const {return new Get_Equilibrium_Rate_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "Get_Equilbrium_Rate";}
-
-    Get_Equilibrium_Rate_Op(): Operation(4) { }
-  };
-
-  extern expression_ref Get_Equilibrium_Rate;
-
-  // Generate a Empirical exchangeability matrix.
-  struct Empirical_Op: public Operation
-  {
-    Empirical_Op* clone() const {return new Empirical_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "Empirical";}
-
-    Empirical_Op(): Operation(2) { }
-  };
-
-  extern const expression_ref Empirical;
-
-  // Generate a PAM exchangeability matrix.
-  struct PAM_Op: public Operation
-  {
-    PAM_Op* clone() const {return new PAM_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "PAM";}
-
-    PAM_Op(): Operation(1) { }
-  };
-
-  extern const expression_ref PAM;
-
-  // Generate a JTT exchangeability matrix.
-  struct JTT_Op: public Operation
-  {
-    JTT_Op* clone() const {return new JTT_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "JTT";}
-
-    JTT_Op(): Operation(1) { }
-  };
-
-  extern const expression_ref JTT;
-
-  // Generate a PAM exchangeability matrix.
-  struct WAG_Op: public Operation
-  {
-    WAG_Op* clone() const {return new WAG_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "WAG";}
-
-    WAG_Op(): Operation(1) { }
-  };
-
-  extern const expression_ref WAG;
-
-  // Generate a LG exchangeability matrix.
-  struct LG_Op: public Operation
-  {
-    LG_Op* clone() const {return new LG_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
- 
-    std::string name() const {return "LG";}
-
-    LG_Op(): Operation(1) { }
-  };
-
-  extern const expression_ref LG;
-
 }
 
 // PROBLEMS!

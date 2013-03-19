@@ -212,7 +212,7 @@ using std::map;
  *     16d. What does it mean (if its true) that irrefutable bindings are only irrefutable at the top level?
  * 17. Compute the entire probability expression at once, instead of adding pieces incrementally.
  * 18. Make Context load an entire program, instead of adding pieces incrementally.
- *     19. Move the Program from Context to reg_heap.
+ * 19. Move the Program from Context to reg_heap.
  * 20. [DONE] Load builtins from a file.
  *     20a. Convert builtins to new framework.
  * 21. [DONE] Add computed loggers.
@@ -240,6 +240,9 @@ using std::map;
  *     - Simplify some case expressions based on knowledge of let-bound variable?
  * 30. Can we also maintain parameter/distribution pairs?
  *     - This will allow us to determine the bounds on a parameter, for example.
+ * 31. Print out simpler names than Test.i for parameter i.
+ *     - I think parameters are in a separate namespace?
+ *     - Perhaps put a '*' on the beginning of the name when comparing with the Haskell namespace?
  */
 
 
@@ -297,10 +300,6 @@ void make_Prelude(Module& P)
   P.def_function("builtinNewVectorMatrix", lambda_expression( BuiltinNewVectorOp<Matrix>() ) ); 
   P.def_function("builtinSetVectorIndexMatrix", lambda_expression( BuiltinSetVectorIndexOp<Matrix,MatrixObject>() ) ); 
 }
-
-void Distribution_Functions(Module&);
-void Range_Functions(Module&);
-void SModel_Functions(Module&);
 
 expression_ref module_loader::read_module_from_file(const string& filename) const
 {
@@ -369,12 +368,6 @@ Module module_loader::load_module_from_file(const string& filename) const
     
     if (M.name == "Prelude")
       make_Prelude(M);
-    else if (M.name == "Distributions")
-      Distribution_Functions(M);
-    else if (M.name == "Range")
-      Range_Functions(M);
-    else if (M.name == "SModel")
-      SModel_Functions(M);
 
     return M;
   }

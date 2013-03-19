@@ -104,9 +104,9 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
 	  imodel/setup.C smodel/objects.C computation/computation.C \
 	  computation/graph_register.C computation/module.C \
-	  computation/formula_expression.C smodel/operations.C probability/distribution-operations.C \
+	  computation/formula_expression.C smodel/operations.C \
 	  computation/operations.C computation/loader.C computation/context.C \
-	  computation/model_notes.C substitution/matcache.C smodel/functions.C computation/closure.C \
+	  computation/model_notes.C substitution/matcache.C computation/closure.C \
 	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C object.C \
 	  parser/AST.C computation/program.C
 
@@ -348,7 +348,7 @@ pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la
 		c_fst.la c_snd.la c_pair.la new_modifiable.la evaluate.la get_modifiable_value.la \
 		show.la rs07_branch_HMM.la rs07_lengthp.la pairwise_alignment_length1.la \
 		pairwise_alignment_length2.la transition_counts.la pairwise_alignment_probability_from_counts.la \
-		popgen.la trigger.la
+		popgen.la Distribution.la Range.la SModel.la trigger.la
 
 mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
@@ -509,6 +509,14 @@ popgen_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 trigger_la_SOURCES = computation/builtins/trigger.C
 trigger_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
+Distribution_la_SOURCES = computation/builtins/Distribution.C
+Distribution_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
+Range_la_SOURCES = computation/builtins/Range.C
+Range_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
+SModel_la_SOURCES = computation/builtins/SModel.C
+SModel_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
 show_la_SOURCES = computation/builtins/show.C
 show_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
-

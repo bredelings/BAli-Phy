@@ -26,6 +26,7 @@ enum type_number {none=0,
 		  parameter_type, 
 		  modifiable_type,
 		  index_var_type,
+		  dummy_type,
 		  trim_type,
 		  let2_type,
 		  constructor_type,
@@ -127,6 +128,8 @@ struct dummy: public Object
   tribool compare(const Object& o) const;
   
   bool operator<(const dummy&) const;
+
+  int type() const {return dummy_type;}
 
   dummy(int i):index(i) {}
   dummy(const std::string& s):index(-1),name(s) { assert(name != "_");}
