@@ -40,6 +40,9 @@ private:
   const std::map<std::string, root_t>& identifiers() const {return memory->get_identifiers_for_context(token);}
         std::map<std::string, root_t>& identifiers()       {return memory->get_identifiers_for_context(token);}
 
+  const std::vector<int>& triggers() const {return memory->triggers(token);}
+        std::vector<int>& triggers()       {return memory->triggers(token);}
+
   void release_identifiers();
 
   root_t push_temp_head() const;
