@@ -186,6 +186,9 @@ public:
     /// The register indices of non-root parameters
     pool<int> modifiable_regs;
 
+    /// A list of signals that have been sent
+    std::vector<int> triggers;
+
     bool used;
     graph_roots():used(false) {}
   };
@@ -204,6 +207,9 @@ public:
 
   const std::map<std::string,root_t>& get_identifiers_for_context(int t) const {return token_roots[t].identifiers;}
         std::map<std::string,root_t>& get_identifiers_for_context(int t)       {return token_roots[t].identifiers;}
+
+  const std::vector<int>& triggers(int t) const {return token_roots[t].triggers;}
+        std::vector<int>& triggers(int t)       {return token_roots[t].triggers;}
 
   /// Allocate a reg in context t and put it on the top of the temporary-head stack.
   root_t push_temp_head(int t);
