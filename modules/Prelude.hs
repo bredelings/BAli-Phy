@@ -49,6 +49,7 @@ not False        =  True;
 otherwise = True;
 
 builtin log 1 "log" "Prelude";
+builtin sqrt 1 "sqrt" "Prelude";
 builtin mod 2 "mod";
 builtin builtinError 1 "builtinError";
 builtin seq 2 "seq";

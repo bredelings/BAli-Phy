@@ -255,8 +255,6 @@ void make_Prelude(Module& P)
   //  P += "{enumFromThen x y = ... }";
   //  P += "{enumFromThenTo x y z = ... }";
 
-  P.def_function("sqrt", lambda_expression( Sqrt_Op() ) );
-
   P.def_function("sizeOfVectorUnsigned", lambda_expression( VectorSizeOp<unsigned>() ) );
   //--------------------------------------- listFromVectorInt ----------------------------------------//
   P.def_function("getVectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<int,Int>() ) ); 

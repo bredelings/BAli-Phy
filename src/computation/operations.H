@@ -354,21 +354,4 @@ struct LExp_Op: public Operation
   LExp_Op(): Operation(3) { }
 };
 
-struct Sqrt_Op: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual Sqrt_Op* clone() const {return new Sqrt_Op(*this);}
-
-  tribool compare(const Object& o) const;
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "sqrt";}
-
-  Sqrt_Op():Operation(1) {}
-};
-
-extern const expression_ref Sqrt;
-
 #endif

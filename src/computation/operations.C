@@ -219,20 +219,3 @@ closure LExp_Op::operator()(OperationArgs& Args) const
   M->t.assign_temporary(E);
   return M;
 }
-
-//---------------------------------------------------------------------------------------//
-
-tribool Sqrt_Op::compare(const Object& o) const 
-{
-  return dynamic_cast<const Sqrt_Op*>(&o);
-}
-
-closure Sqrt_Op::operator()(OperationArgs& Args) const
-{
-  object_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  assert(*x >= 0.0);
-
-  return new Double(sqrt(*x));
-}
-
-const expression_ref Sqrt = lambda_expression( Sqrt_Op() );
