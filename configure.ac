@@ -230,6 +230,8 @@ if test "$GXX" = yes ; then
       CXXFLAGS="-ffast-math $CXXFLAGS"
   elif test "$debug" = O ; then
       CXXFLAGS="$CXXFLAGS -O"
+  elif test "$debug" = Og ; then
+      CXXFLAGS="$CXXFLAGS -Og"
   elif test "$debug" = O2 ; then
       CXXFLAGS="$CXXFLAGS -O2"
   fi
