@@ -729,6 +729,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   vector< int >& call_and_result_may_be_changed = get_scratch_list();
   vector< int >& result_may_be_changed = get_scratch_list();
+  vector< int >& regs_to_re_evaluate = get_scratch_list();
 
   // The index that we just altered cannot be known to be unchanged.
   call_and_result_may_be_changed.push_back(P);
@@ -744,6 +745,10 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     {
       int R1 = result_may_be_changed[j];
       assert(access(R1).temp == mark_call_result or access(R1).temp == mark_result);
+
+      // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+      if (access(R1).re_evaluate)
+	regs_to_re_evaluate.push_back(R1);
 
       // Since the computation may be different, we don't know if the value has changed.
       clear_result(R1);
@@ -770,6 +775,10 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     {
       int R1 = call_and_result_may_be_changed[i];
       assert(access(R1).temp == mark_call_result);
+
+      // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+      if (access(R1).re_evaluate)
+	regs_to_re_evaluate.push_back(R1);
 
       // Since the computation may be different, we don't know if the value has changed.
       clear_result(R1);
@@ -817,7 +826,11 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   release_scratch_list();
   release_scratch_list();
+  release_scratch_list();
   assert(n_active_scratch_lists == 0);
+
+  for(int R: regs_to_re_evaluate)
+    incremental_evaluate(R,token,true);
 }
 
 int reg_heap::n_regs() const
