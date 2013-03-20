@@ -10,6 +10,7 @@ builtin get_modifiable_for_index 2 "get_modifiable_for_index";
 builtin builtin_new_modifiable 1 "new_modifiable";
 builtin evaluate 2 "evaluate";
 builtin get_modifiable_value 2 "get_modifiable_value";
+builtin builtin_trigger 1 "trigger";
 
 new_modifiable token = IOAction1 builtin_new_modifiable token;
 
@@ -73,4 +74,8 @@ findInteger t p r = list_to_vector [c_pair (get_modifiable_index t m, getBounds 
 
 findSimplex t p r = list_to_vector [c_pair (list_to_vector $ map (get_modifiable_index t) ms, c_pair (n,total)) 
                                  | (ms,Simplex n total) <- findAtomic p r];
+  
+trigger i = IOAction1 builtin_trigger i;
+
+trigger_on x i = unsafePerformIO do {return x;trigger i};
 }
