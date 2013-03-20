@@ -190,6 +190,9 @@ public:
   /// Change the i-th compute expression to e
   void set_compute_expression_(int i, closure&& e);
 
+  /// Should the ith compute expression be re_evaluated when invalidated?
+  void set_re_evaluate(int i, bool b);
+
   int n_expressions() const;
   expression_ref get_expression(int i) const;
 

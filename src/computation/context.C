@@ -408,6 +408,13 @@ void context::set_compute_expression_(int i, closure&& C)
   pop_root(r1);
 }
 
+/// Should the ith compute expression be re_evaluated when invalidated?
+void context::set_re_evaluate(int i, bool b)
+{
+  int R = *heads()[i];
+  access(R).re_evaluate = b;
+}
+
 
 int context::n_expressions() const
 {
