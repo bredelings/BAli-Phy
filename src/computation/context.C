@@ -413,6 +413,7 @@ void context::set_re_evaluate(int i, bool b)
 {
   int R = *heads()[i];
   access(R).re_evaluate = b;
+  incremental_evaluate(R,true);
 }
 
 
