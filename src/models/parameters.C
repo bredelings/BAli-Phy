@@ -969,6 +969,9 @@ void Parameters::note_alignment_changed()
 
 void Parameters::recalc(const vector<int>& indices)
 {
+  vector<int> triggers = C.triggers();
+  C.triggers().clear();
+
   // Check for beta (0) or mu[i] (i+1)
   for(int index: indices)
   {
