@@ -2905,7 +2905,9 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
 
     o<<"label = \""<<label<<"\"";
-    if (C.access(R).changeable)
+    if (C.access(R).re_evaluate)
+      o<<",style=\"dashed,filled\",color=yellow";
+    else if (C.access(R).changeable)
       o<<",style=\"dashed,filled\",color=red";
 
     if (C.access(R).result and C.access(R).changeable)
