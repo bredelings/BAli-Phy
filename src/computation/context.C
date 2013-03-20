@@ -411,8 +411,8 @@ void context::set_compute_expression_(int i, closure&& C)
 /// Should the ith compute expression be re_evaluated when invalidated?
 void context::set_re_evaluate(int i, bool b)
 {
-  int R = *heads()[i];
-  incremental_evaluate(R,true);
+  int& R = *heads()[i];
+  R = incremental_evaluate(R,true);
   if (access(R).changeable)
     access(R).re_evaluate = b;
 }
