@@ -77,5 +77,5 @@ findSimplex t p r = list_to_vector [c_pair (list_to_vector $ map (get_modifiable
   
 trigger i = IOAction1 builtin_trigger i;
 
-trigger_on x i = unsafePerformIO do {return x;trigger i};
+trigger_on x i = unsafePerformIO $ do {return x;trigger i};
 }
