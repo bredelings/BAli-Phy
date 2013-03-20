@@ -364,8 +364,6 @@ void set_initial_parameter_values(Parameters& P, const variables_map& args)
 
     P.set_parameter_value(p_index,value);
   }
-
-  P.recalc_all();
 }
 
 /// Close the files.
