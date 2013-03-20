@@ -412,8 +412,9 @@ void context::set_compute_expression_(int i, closure&& C)
 void context::set_re_evaluate(int i, bool b)
 {
   int R = *heads()[i];
-  access(R).re_evaluate = b;
   incremental_evaluate(R,true);
+  if (access(R).changeable)
+    access(R).re_evaluate = b;
 }
 
 
