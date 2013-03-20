@@ -1606,6 +1606,7 @@ int reg_heap::uniquify_reg(int R, int t)
       int R2 = *temp_heads[temp_heads.size()-1-i];
       access(R1).temp = R2;
       access(R2).changeable = access(R1).changeable;
+      access(R2).re_evaluate = access(R1).re_evaluate;
       split.push_back(R1);
     }
   }
