@@ -1140,6 +1140,9 @@ Parameters::Parameters(const module_loader& L,
     add_parameter(mu_name, Double(0.25), lower_bound(0));
     // prior on mu[i], the mean branch length for scale i
     add_note( constructor(":~",2)+parameter(mu_name)+(identifier("gamma"), Tuple(0.5, 2.0)));
+
+    int trigger = C.add_compute_expression( (identifier("trigger_on"),parameter(mu_name),i) );
+    C.set_re_evaluate(trigger, true);
   }
 
   /*------------------------- Create the tree structure -----------------------*/
