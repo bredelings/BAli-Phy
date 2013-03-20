@@ -979,6 +979,7 @@ void Parameters::recalc(const vector<int>& indices)
     {
       int s = index - 1;
       
+      assert(includes(triggers,s));
       assert(0 <= s and s < n_scales);
       
       // Change branch lengths for the s-th scale
