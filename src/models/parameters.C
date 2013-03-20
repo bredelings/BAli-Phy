@@ -973,12 +973,12 @@ void Parameters::recalc(const vector<int>& indices)
   std::swap(triggers, C.triggers());
 
   // Check for beta (0) or mu[i] (i+1)
-  for(int index: indices)
+  for(int index: triggers)
   {
-    if (0 < index and index < n_scales+1)
+    if (0 <= index and index < n_scales)
     {
-      int s = index - 1;
-      
+      int s = index;
+
       assert(includes(triggers,s));
       assert(0 <= s and s < n_scales);
       
@@ -1292,7 +1292,7 @@ Parameters::Parameters(const module_loader& L,
     branch_categories.push_back(parameter(name));
   }
   expression_ref branch_cat_list = C.get_expression( C.add_compute_expression( (get_list(branch_categories) ) ) );
-  
+
   expression_ref substitutionBranchLengthsList;
   {
     vector<expression_ref> SBLL;
