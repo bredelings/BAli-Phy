@@ -72,55 +72,35 @@ using std::map;
  *        we wouldn't need to 
  * 5. Allow distributions on structures with variable components
  *    5a. Make the computation of default values delayed, so that they can depend on parameters not yet set?
- *    5b. [DONE] Perform MCMC on structures dynamically, inside the machine.
+ *    5b. Perform MCMC on structures dynamically, inside the machine.
  *        - This move would walk the parameter, and apply sub-moves to its pieces.
  *          + This method would allow situations where parameters change size.
  *          + The method would also allow determine the bounds for slice moves dynamically.
  *        - We'd like to set the bounds dynamically, instead of only once, statically, before starting MCMC.
  *        - Hmm... If proposals depend on the bounds, that would make the proposals dynamic too!
- *    5c. Log structures with variable components.
+ *    5c. Log structures with variable components intelligently.
  *        - How shall we name the pieces?  We want piA instead of pi!0.
  *
+ * 7. Allow model files to create models where dimension of parameter depends on argument to model.
+
  * 8. Rationalize Model_Notes, formula_expression_ref, and program?
  *    - I note that a "model" compresses a complex expression into Model.main.
- *    - [DONE] Add Model_Notes to Module.
- *    - Stop allowing the creation of parameters that aren't in modules?
+ *    - Remove Model_Notes from Module.
+ *    - Allowing the creation of parameters in their own namespace, instead of having names in modules?
  *    - Define some (all?) things in a Module instead of a formula_expression_ref.
- *    - [DONE] Allow formula_expression_ref's to import things using import notes and import_submodel notes.
- *    - [DONE] Allow creating formula_expression_ref's from modules => refer to Module.main, and import the Module.
- *      + Perhaps when prefixing a module, we don't want to prefix its FUNCTIONS,
- *        just its parameters and notes?
- *      + No, we do want to prefix its functions, because they might refer to parameters.
- *      + Basically, a f.e.r. should be a set of definitions (w/ imports) and a 'main' routine?
- *        - How does this relate to simply bringing in the notes attached to parameters?
- *        - How does this attempt to give parameters default names relate to the more general approach?
- *      + Problem: Code generation can currently be done, by passing numbers of model names as arguments to models.
- *                 These arguments are used to generate a different model (in C++).
- *
- *                 But models defined in a module file can only take function arguments, not arguments that affect the code
- *                   in the module.  In order to have any significate effect, we'd need to be able to substituted
- *                   in for code anywhere in the module.  And substituting integers still can't affect e.g. which parameters
- *                   are declared and what their names are.
- *
- *                 If we can programmatically generate variable structures with a variable number of pieces, then
- *                   we at least won't need to programmatically generate names for each piece. Or will we?  
- *
- *                 Instead, we can refer to parameters as e.g. pi!0.  (Although that ignores the problems with naming
- *                   these pieces for logging.  What we have right now is a giant hack.)
- *
- *                 I think that arguments to the Model.main expression won't affect e.g. the 
- *                   dimension of any parameters declared in the model.
- *
- *                 We want to be able to pass arguments to models to specify things about the model.  For example,
- *                   we might want to specify the dimension of the model.
- *
- *                 Models might be implemented as functions of some internal random state.  We might want to log
- *                   functions of the random state, and not the random state itself.  For example, w/ DPP, or a
- *                   random tree of with the truncated DPP, etc.
- *
+ *    - Eliminate import and import_submodel notes.
  *    - Eliminate parameter definition notes in formula_expression_ref?
- *      + Eliminate import and import_submodel notes.
- *
+ *    - [DONE] Allow creating formula_expression_ref's from modules => refer to Module.main, and import the Module.
+ *    - The problem with a f.e.r. is that it doesn't have arguments you can substitute into.
+ *    - Perhaps when prefixing a module, we don't want to prefix its FUNCTIONS,
+ *      just its parameters and notes?
+ *    - No, we do want to prefix its functions, because they might refer to parameters.
+ *    - Problem:  Models need to be able to take arguments in order to affect distributions and their dimension.
+ *        + Therefore, models should be functions!
+ *        + Models might be implemented as functions of some internal random state.  We might want to log
+ *          functions of the random state, and not the random state itself.  For example, w/ DPP, or a
+ *          random tree of with the truncated DPP, etc.
+
  * 9. Try to rewrite models into BUGS modules/models.
  *    - M8b? [ Issue - how many sub-categories, though? ]
  *    - branch-site [ Issue - how to specify F3x4, HKY?  Issue - how to specify number of conservation categories? ]
@@ -130,13 +110,14 @@ using std::map;
  *      + Frequency defaults - how can we specify these?
  *      + Submodel parameters in the M+M+M formulation - these need separate parsing to coerce them to the right type.
  *        - But is that a problem?
+
  * 11. [SPEED] For bali-phy 5d.fasta --seed=0 --iter=1000
  *      - (We are spending 20% of the time in operator new.)
  *      - [DONE] Clear identifiers after loading programs -- Model::compile();
  *      - We are spending 7% of the time in __ieee754_log_avx.
  *        - There should be a better way to multiply lots of doubles together while avoiding underflow.
  *      - 1% of CPU time spend on memory allocation from vector::vector in three_way_topology_sample?
- *
+
  * 13. Rationalize Programs, Modules.
  *     13a. [DONE] Allow loading stuff from files.
  *     13b. [DONE] Allow importing, desugaring, and thus resolving symbols after modules are (jointly) loaded into the machine.
@@ -162,7 +143,6 @@ using std::map;
  *     (This will allow us to e.g. select min/max functions for logging.)
  *     21a. [DONE] Find a haskell expression to log [p1,p2,p3] based on the order of [q1,q2,q3]
  * 23. (?) Print expressions with fixity.
- * 25. Allow model files to create models with a variable number of parameters => depends on 24.
  * 26. (?) Allow model files to create models where an argument is the name of another model file.
  * 27. Allow fixing parameters. (e.g. to test the branch-site model under ML)
  * 28. Make model creation into an IO operation?
