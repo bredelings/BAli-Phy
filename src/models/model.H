@@ -172,9 +172,6 @@ public:
   /// Get ALL model parameter values
   std::vector<object_ptr<const Object> > get_parameter_values() const;
 
-  /// Store ONE parameter value down into submodels
-  virtual void write_value(int i, const object_ptr<const Object>& p);
-
   /// Set the value of a modifiable
   void set_modifiable_value(int m, int p, const object_ref& value);
 
