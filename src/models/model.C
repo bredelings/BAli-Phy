@@ -61,37 +61,6 @@ void Model::invalidate() const
   valid = false;
 }
 
-void Model::modify_parameter(int i) const
-{
-  assert(i >= 0 and i< n_parameters());
-  changed[i] = true;
-
-  invalidate();
-}
-
-void Model::modify_parameters(const vector<int>& indices)
-{
-  for(int i=0;i<indices.size();i++)
-    modify_parameter(indices[i]);
-}
-
-void Model::modify_all_parameters() const
-{
-  for(int i=0;i<n_parameters();i++)
-    modify_parameter(i);
-}
-
-vector<int> Model::modified_parameters() const
-{
-  vector<int> changed_parameters;
-
-  for(int i=0;i<n_parameters();i++)
-    if (changed[i])
-      changed_parameters.push_back(i);
-
-  return changed_parameters;
-}
-
 int Model::add_parameter(const string& name)
 {
   assert(changed.size() == n_parameters());
@@ -397,14 +366,12 @@ object_ptr<const Object> Model::get_parameter_value(const std::string& p_name) c
 void Model::write_value(int i,const object_ptr<const Object>& value)
 {
   C.set_parameter_value(i,value);
-  modify_parameter(i);
+  invalidate();
 }
 
 void Model::set_modifiable_value(int m, int p, const object_ref& value) 
 {
   C.set_modifiable_value(m, value);
-  if (p != -1)
-    modify_parameter(p);
   invalidate();
   update();
 }
@@ -509,8 +476,7 @@ Model::Model(const module_loader& L, const vector<expression_ref>& notes)
     add_note(notes[i]);
 
   // 3. Then set all default values.
-  for(int i=0;i<n_parameters();i++)
-    modify_parameter(i);
+  invalidate();
 
   set_default_values_from_notes(C, 0, C.n_notes());
 

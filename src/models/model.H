@@ -75,15 +75,6 @@ protected:
 
   void invalidate() const;
 
-  /// Mark this parameter as being possibly different than the last computed value
-  void modify_parameter(int) const;
-  /// Mark these parameters as being possibly different than the last computed value
-  void modify_parameters(const std::vector<int>&);
-  /// Mark all parameters as being possibly different than the last computed value
-  void modify_all_parameters() const;
-  /// Which parameters have been modified?
-  std::vector<int> modified_parameters() const;
-
   int add_parameter(const std::string&);
   int add_parameter(const std::string&,const object_ref&);
   int add_parameter(const std::string&,const object_ref&,const Bounds<double>&);
