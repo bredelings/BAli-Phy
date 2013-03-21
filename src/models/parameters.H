@@ -233,7 +233,7 @@ class Parameters: public Probability_Model
   std::vector<int> scale_for_partition;
   int n_scales;
 
-  void recalc(const std::vector<int>&);
+  void recalc();
 
   std::vector< std::vector<int> > branch_length_indices;
 

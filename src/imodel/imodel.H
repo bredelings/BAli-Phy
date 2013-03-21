@@ -136,7 +136,7 @@ public:
 
 class SimpleIndelModel : public IndelModel {
 protected:
-  void recalc(const std::vector<int>&);
+  void recalc();
 
   /// The transition matrix with G2 state removed
   indel::PairHMM Q1;

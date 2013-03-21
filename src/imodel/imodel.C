@@ -455,7 +455,7 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const
 }
 
 
-void SimpleIndelModel::recalc(const vector<int>&) 
+void SimpleIndelModel::recalc()
 {
   /* Chain with transitions to End state */
   Q1 = get_branch_HMM(1);
@@ -497,8 +497,6 @@ SimpleIndelModel::SimpleIndelModel(const module_loader& L)
   add_parameter("delta",  Double(-5), upper_bound(-log(2)));
   add_parameter("epsilon",Double(-0.25)); // no upper bound on transformed scale
   add_parameter("tau",    Double(log(0.001)), upper_bound(0));
-
-  recalc_all();
 }
 
 indel::PairHMM RS07_branch_HMM_(double e, double D, double heat, bool in_training)

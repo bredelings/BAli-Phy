@@ -92,12 +92,6 @@ vector<int> Model::modified_parameters() const
   return changed_parameters;
 }
 
-void Model::recalc_all() 
-{
-  modify_all_parameters();
-  update();
-}
-
 int Model::add_parameter(const string& name)
 {
   assert(changed.size() == n_parameters());
@@ -549,7 +543,7 @@ void Model::update()
 {
   if (not is_valid())
   {
-    recalc(modified_parameters());
+    recalc();
     validate();
   }
 }

@@ -91,11 +91,9 @@ protected:
   /// \brief Recalculate internal data based on current parameters
   ///
   ////  \param indices The indices of the parameters that changed.
-  virtual void recalc(const std::vector<int>& /*indices*/) {}
+  virtual void recalc() {}
 
 public:
-  /// Recalculate all internal data based on current parameters
-  void recalc_all();
 
   /// Make a copy of this object
   virtual Model* clone() const {return new Model(*this);}

@@ -100,15 +100,11 @@ namespace substitution {
   UniformFrequencyModel::UniformFrequencyModel(const alphabet& a)
     :ReversibleFrequencyModel(a)
   {
-    // initialize everything
-    recalc_all();
   }
 
   UniformFrequencyModel::UniformFrequencyModel(const alphabet& a,const valarray<double>&)
     :ReversibleFrequencyModel(a)
   {
-    // initialize everything
-    recalc_all();
   }
 
   object_ptr<const Object> SimpleFrequencyModel::result() const
@@ -151,9 +147,6 @@ namespace substitution {
       string pname = string("pi") + a.letter(i);
       add_parameter(pname, Double(1.0/a.size()), between(0, 1));
     }
-
-    // initialize everything
-    recalc_all();
   }
 
   SimpleFrequencyModel::SimpleFrequencyModel(const alphabet& a,const valarray<double>& pi)
@@ -172,9 +165,6 @@ namespace substitution {
       string pname = string("pi") + a.letter(i);
       add_parameter(pname, Double(f[i]), between(0, 1));
     }
-
-    // initialize everything
-    recalc_all();
   }
 
   /*
@@ -276,8 +266,6 @@ namespace substitution {
     }
 
     insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
-
-    recalc_all();
   }
 
   //------------------- Codon Frequency Model -----------------//
@@ -346,8 +334,6 @@ namespace substitution {
     model_slots_for_index.push_back(vector<model_slot>());
 
     insert_submodel("1",SimpleFrequencyModel(C.getAminoAcids()));
-
-    recalc_all();
   }
 
 
@@ -436,8 +422,6 @@ namespace substitution {
     }
 
     insert_submodel("1",TripletsFrequencyModel(C));
-
-    recalc_all();
   }
 
   //------------------- Codons Frequency Model 2 -----------------//
@@ -509,8 +493,6 @@ namespace substitution {
     }
 
     insert_submodel("1",TripletsFrequencyModel(C));
-
-    recalc_all();
   }
   */
   //----------------------- ReversibleMarkovModel --------------------------//
@@ -557,8 +539,6 @@ namespace substitution {
       string pname = string("pi") + a.letter(i);
       add_parameter(pname, Double(1.0/N), between(0, 1));
     }
-
-    recalc_all();
   }
 
   F81_Model::F81_Model(const alphabet& a,const valarray<double>& f)
@@ -573,8 +553,6 @@ namespace substitution {
       string pname = string("pi") + a.letter(i);
       add_parameter(pname, Double(f[i]), between(0, 1));
     }
-
-    recalc_all();
   }
 
   //---------------------- CAT_FixedFrequencyModel -----------------------//
@@ -664,8 +642,6 @@ namespace substitution {
       string name = "CAT.f"+convertToString(i+1);
       add_parameter(name,Double(prior_fraction[i]),between(0,1));
     }
-
-    recalc_all();
     */
   }
 

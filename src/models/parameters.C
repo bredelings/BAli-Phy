@@ -967,7 +967,7 @@ void Parameters::note_alignment_changed()
       get_data_partition(i).note_alignment_changed();
 }
 
-void Parameters::recalc(const vector<int>& indices)
+void Parameters::recalc()
 {
   vector<int> triggers;
   std::swap(triggers, C.triggers());

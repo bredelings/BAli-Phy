@@ -175,7 +175,7 @@ namespace substitution {
   class SimpleFrequencyModel: public ReversibleFrequencyModel
   {
   protected:
-    void recalc(const std::vector<int>&) {std::abort();}
+    void recalc() {std::abort();}
     void update() { }
   public:
 
@@ -195,7 +195,7 @@ namespace substitution {
   class UniformFrequencyModel: public ReversibleFrequencyModel
   {
   protected:
-    void recalc(const std::vector<int>&) {std::abort();}
+    void recalc() {std::abort();}
 
   public:
     
@@ -223,7 +223,7 @@ namespace substitution {
 				public SuperModelOver<SimpleFrequencyModel>
   {
   protected:
-    void recalc(const std::vector<int>&) {std::abort();}
+    void recalc() {std::abort();}
 
   public:
     object_ptr<const Object> result() const;
@@ -250,7 +250,7 @@ namespace substitution {
 			       public SuperModelOver<SimpleFrequencyModel>
   {
   protected:
-    void recalc(const std::vector<int>&) {std::abort();}
+    void recalc() {std::abort();}
   public:
     object_ptr<const Object> result() const;
 
@@ -265,7 +265,7 @@ namespace substitution {
 			      public SuperModelOver<TripletsFrequencyModel>
   {
   protected:
-    void recalc(const std::vector<int>&) {std::abort();}
+    void recalc() {std::abort();}
 
   public:
     object_ptr<const Object> result() const;
@@ -284,7 +284,7 @@ namespace substitution {
 			      public SuperModelOver<TripletsFrequencyModel>
   {
   protected:
-    void recalc(const std::vector<int>&) {std::abort();}
+    void recalc() {std::abort();}
 
   public:
     object_ptr<const Object> result() const;
@@ -325,7 +325,7 @@ namespace substitution {
   /// A Felsenstein-81 model, in which Q_ij = a*pi[j]
   class F81_Model: public ReversibleMarkovModel
   {
-    void recalc(const std::vector<int>&) {std::abort();}
+    void recalc() {std::abort();}
   public:
     /// Make a copy of this object
     virtual F81_Model* clone() const {return new F81_Model(*this);}
@@ -362,7 +362,7 @@ namespace substitution {
 
     string name_;
 
-    void recalc(const std::vector<int>&) {std::abort();}
+    void recalc() {std::abort();}
 
     void update() { }
   public:
