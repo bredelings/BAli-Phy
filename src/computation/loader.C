@@ -60,32 +60,14 @@ using std::map;
  *    4a. If we would just compute the entire probability expression once, then
  *        we wouldn't need to 
  * 5. Allow distributions on structures with variable components
- *    5a. Set default values for structures.
- *         - [DONE] Collect all the default-value setting code into one place.
- *         - [DONE] Don't initialize data distributions.
- *         - Make the computation of default values delayed?
- *           + Can we do this by setting the value to (evaluate token expr)?
- *           + We want evaluation to be delayed until the value is used, but
- *             then we want to value to not recompute when its dependencies change.
- *           + This would mean that the value that is computed will depend on the value
- *             of other parameters when the value is FIRST evaluated!
- *         - Randomly sample initial values from the distribution!
- *    5b. [DONE] Perform MCMC on structures.
- *        - It is unclear how these modifiables map to parameters.
- *        - One idea would be to create a single move for each parameter.
- *          + This move would walk the parameter, and apply sub-moves to its pieces.
+ *    5a. Make the computation of default values delayed, so that they can depend on parameters not yet set?
+ *    5b. [DONE] Perform MCMC on structures dynamically, inside the machine.
+ *        - This move would walk the parameter, and apply sub-moves to its pieces.
  *          + This method would allow situations where parameters change size.
  *          + The method would also allow determine the bounds for slice moves dynamically.
- *        - Currently, I think we determine the bounds dynamically!
- *        - Currently, the bounds are set to an expression!
- *        - Losing this is a step backwards!
+ *        - We'd like to set the bounds dynamically, instead of only once, statically, before starting MCMC.
  *        - Hmm... If proposals depend on the bounds, that would make the proposals dynamic too!
- *        - For the moment, search and discover modifiable names and (when necessary) Bounds.
- *        - How shall we name these moves?
- *        - Create a separate move-discovery routine for each type of range.
- *        - Simplex ranges will have to discover groups of modifiables.
- *    5c. [DONE] Create structures with variable components.
- *    5d. Log structures with variable components.
+ *    5c. Log structures with variable components.
  *        - How shall we name the pieces?  We want piA instead of pi!0.
  *
  * 6. Make a model-creation monad.  This could allow us to modify the model after creating it, thus
@@ -148,19 +130,6 @@ using std::map;
  *      + Frequency defaults - how can we specify these?
  *      + Submodel parameters in the M+M+M formulation - these need separate parsing to coerce them to the right type.
  *        - But is that a problem?
- * 10. Add default values and Bounds to distributions.
- *    - [DONE] Add Bounds to distributions.
- *    - [DONE] Allow setting of default values to components of vector structures, where the structure is fixed.
- *    - But how do we add default values to distributions that return random structures?
- *      10a. Make performing an MCMC move into an IO operation that is performed in the machine.
- *      10b. MCMC on a structure can then call MCMC on the child elements.
- *      10c. By examining the distribution of the structure, the parent MCMC can determine the distribution
- *            -- and thus the bounds -- for the MCMC on the parts.
- *      10d. [DONE] We need a way to refer to dynamically created parameters -- and it can't be the static parameter name.
- *      10e. [DONE] We *could* arrange for unique name for parameters inside a machine, so that we wouldn't need to
- *           refer to parameters by their address.
- *      10f. Issue: if we have a structure of parameters, that's OK.  But what if we have a CHANGEABLE
- *                  structure, of changeable parameters!  Is that OK?
  * 11. [SPEED] For bali-phy 5d.fasta --seed=0 --iter=1000
  *      - (We are spending 20% of the time in operator new.)
  *      - [DONE] Clear identifiers after loading programs -- Model::compile();
