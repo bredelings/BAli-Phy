@@ -65,7 +65,6 @@ protected:
   /// Parameter values and model attributes
   context C;
 
-  mutable std::vector<bool> changed;
   std::vector< int > bounds;
   std::vector< int> prior_note_index;
 

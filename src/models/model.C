@@ -52,8 +52,6 @@ vector<expression_ref> model_parameter_expressions(const Model& M)
 void Model::validate() const
 {
   valid = true;
-  for(int i=0;i<n_parameters();i++)
-    changed[i] = false;
 }
 
 void Model::invalidate() const
@@ -63,8 +61,6 @@ void Model::invalidate() const
 
 int Model::add_parameter(const string& name)
 {
-  assert(changed.size() == n_parameters());
-
   for(int i=0;i<n_parameters();i++)
     if (parameter_name(i) == name)
       throw myexception()<<"A parameter with name '"<<name<<"' already exists - cannot add another one.";
@@ -72,7 +68,6 @@ int Model::add_parameter(const string& name)
   int index = n_parameters();
 
   C.add_parameter(name);
-  changed.push_back(true);
   bounds.push_back(-1);
   prior_note_index.push_back(-1);
 
@@ -120,10 +115,9 @@ vector<int> Model::add_submodel(const Module& M)
   // \todo FIXME:cleanup - Try to merge with add_submodel(context&,N)
   // 4. Account for any parameters that were added.
   vector<int> new_parameters;
-  for(int i=changed.size();i<n_parameters();i++)
+  for(int i=bounds.size();i<n_parameters();i++)
   {
     new_parameters.push_back( i );
-    changed.push_back(true);
     bounds.push_back(-1);
     prior_note_index.push_back(-1);
   }
@@ -163,8 +157,6 @@ vector<int> Model::add_submodel(const Model_Notes& N)
   //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
   set_default_values_from_notes(C, first_note, n_notes());
   
-  assert(changed.size() == n_parameters());
-
   return new_parameters;
 }
 
@@ -212,9 +204,8 @@ int Model::add_note(const expression_ref& E)
 
   int index = C.add_note(E);
 
-  for(int i=changed.size();i<n_parameters();i++)
+  for(int i=bounds.size();i<n_parameters();i++)
   {
-    changed.push_back(true);
     bounds.push_back(-1);
     prior_note_index.push_back(-1);
   }
