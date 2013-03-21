@@ -49,16 +49,6 @@ vector<expression_ref> model_parameter_expressions(const Model& M)
   return sub;
 }
 
-void Model::validate() const
-{
-  valid = true;
-}
-
-void Model::invalidate() const
-{
-  valid = false;
-}
-
 int Model::add_parameter(const string& name)
 {
   for(int i=0;i<n_parameters();i++)
@@ -354,17 +344,10 @@ object_ptr<const Object> Model::get_parameter_value(const std::string& p_name) c
   return C.get_parameter_value(p_name);
 }
 
-void Model::write_value(int i,const object_ptr<const Object>& value)
-{
-  C.set_parameter_value(i,value);
-  invalidate();
-}
-
 void Model::set_modifiable_value(int m, int p, const object_ref& value) 
 {
   C.set_modifiable_value(m, value);
-  invalidate();
-  update();
+  recalc();
 }
 
 void Model::set_parameter_value(int i,Double value) 
@@ -399,11 +382,10 @@ void Model::set_parameter_values(const vector<int>& indices,const vector<object_
 {
   assert(indices.size() == p.size());
 
-  invalidate();
   for(int i=0;i<indices.size();i++)
     C.set_parameter_value(indices[i], p[i]);
 
-  update();
+  recalc();
 }
 
 unsigned Model::n_parameters() const 
@@ -451,7 +433,7 @@ Model::Model(const module_loader& L)
 { }
 
 Model::Model(const module_loader& L, const vector<expression_ref>& notes)
-  :valid(false),C(L)
+  :C(L)
 {
   // 1. Create the parameters
   std::set<string> names = find_declared_parameters(notes);
@@ -468,8 +450,6 @@ Model::Model(const module_loader& L, const vector<expression_ref>& notes)
     add_note(notes[i]);
 
   // 3. Then set all default values.
-  invalidate();
-
   set_default_values_from_notes(C, 0, C.n_notes());
 
   // 4. Set bounds.
@@ -495,15 +475,6 @@ Model::Model(const module_loader& L, const vector<expression_ref>& notes)
   std::cout<<"prior = "<<log(prior())<<"\n";
   std::cout<<C<<std::endl;
 #endif
-}
-
-void Model::update()
-{
-  if (not is_valid())
-  {
-    recalc();
-    validate();
-  }
 }
 
 void show_parameters(std::ostream& o,const Model& M) {

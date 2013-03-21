@@ -60,8 +60,6 @@ class Model;
 class Model
 {
 protected:
-  mutable bool valid;
-
   /// Parameter values and model attributes
   context C;
 
@@ -69,10 +67,6 @@ protected:
   std::vector< int> prior_note_index;
 
   int prior_index;
-
-  void validate() const;
-
-  void invalidate() const;
 
   int add_parameter(const std::string&);
   int add_parameter(const std::string&,const object_ref&);
@@ -187,9 +181,6 @@ public:
           void set_parameter_values(const std::vector<int>& indices,const std::vector<object_ptr<const Object> >& p);
 
   unsigned n_parameters() const;
-
-  bool is_valid() const {return valid;}
-  virtual void update();
 
   virtual std::vector<std::string> show_priors() const;
 
