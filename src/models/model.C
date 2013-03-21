@@ -344,7 +344,7 @@ object_ptr<const Object> Model::get_parameter_value(const std::string& p_name) c
   return C.get_parameter_value(p_name);
 }
 
-void Model::set_modifiable_value(int m, int p, const object_ref& value) 
+void Model::set_modifiable_value(int m, const object_ref& value) 
 {
   C.set_modifiable_value(m, value);
   recalc();
