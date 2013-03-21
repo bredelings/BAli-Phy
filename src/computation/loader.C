@@ -42,6 +42,7 @@ using std::map;
  *     + [DONE] 11a. Process mutually dependent modules.
  *     + [DONE] 11b. Note that clashing declarations are allowed if the symbol is unreferenced!
  * 12. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
+ * 13. [DONE] Replace recalc indices with trigers.
  */
 
 /* \todo: List of things to do to clean up programs.
@@ -49,31 +50,6 @@ using std::map;
  * See list in parser/desugar.C
  * See list in models/parameters.C 
  *
- * -1. Add simple "trigger" mechanism to update D!b when mu*t!b changes
- *    - How do we make the trigger depend on something it doesn't normally use?
- *    - Can we do "x << trigger i" ?
- *    - Or do we need to make a new builtin "use x" that just records a dependency on x and returns ()?
- *
- * 0. Make Parameters::recalc( ) check when things change, so that we don't need to worry about
- *    which parameter parameters should indicate recalculation!
- *    - This will allow us to use add_real_MH_proposals( )
- *    - It will also simplify Model::set_modifiable_value( ) and remove its second argument.
- *
- *    - Signals:
- *      + OK, so we mark some nods as always being kept up-to-date. Non-lazy, I guess.
- *        Therefore, when those nodes get invalidated, they will automatically re-activate.
- *
- *      + Their recomputation will perform some I/O.  This could be to send a 'trigger'
- *         signal (e.g. evaluate_as<vector<int>>(1).push-back(arg2).  Or something.
- *        We may need re-apply to make sure actions get re-performed.
- *
- *      + It would be nice if there was some way to avoid allocating new nodes for the
- *         re-performance -- is that really necessary?
- *        I guess the re-performance is to make sure the entire I/O is re-performed if
- *         one part of it uses values of modifiables.
- *
- *      + How hard would it be to set up a trigger node?
- *   
  * 1. Efficiently recalculate the probability when only a few densities change.
  *    - Will this require signals? (Signals might also help us to recalculate mu*t to see if anything changed.)
  *    - This will allow us to avoid maintaining a Markov blanket.
