@@ -43,6 +43,7 @@ using std::map;
  *     + [DONE] 11b. Note that clashing declarations are allowed if the symbol is unreferenced!
  * 12. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
  * 13. [DONE] Replace recalc indices with trigers.
+ * 14. Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
  */
 
 /* \todo: List of things to do to clean up programs.
@@ -195,15 +196,6 @@ using std::map;
  *     (This will allow us to e.g. select min/max functions for logging.)
  *     21a. [DONE] Find a haskell expression to log [p1,p2,p3] based on the order of [q1,q2,q3]
  * 23. (?) Print expressions with fixity.
- * 24. Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
- *     24a. Perhaps the letter frequencies would be a good first example of this.
- *     24b. The different categories in the branch-site model would be a good second example.
- *     24c. [DONE] Allow each parameter to be uniquely identified by a number that is not its location.
- *          The parameter will encode this number in its expression, even if it doesn't have a name.
- *     24d. We can then have an IO operation to change the parameter value.
- *     24e. This will allow us to set default values for vector parameters.
- *     24f. But how will we scan the variable parameter list and propose new values?
- *     24g. How will we determine the bounds of these parameters?
  * 25. Allow model files to create models with a variable number of parameters => depends on 24.
  * 26. (?) Allow model files to create models where an argument is the name of another model file.
  * 27. Allow fixing parameters. (e.g. to test the branch-site model under ML)
