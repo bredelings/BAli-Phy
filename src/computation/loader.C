@@ -51,6 +51,17 @@ using std::map;
  * See list in parser/desugar.C
  * See list in models/parameters.C 
  *
+ * -1. Make a model-creation monad.  This could allow us to modify the model after creating it, thus
+ *    allowing the specification of default parameters.
+ *
+ *    - Our primary goal here is to eliminate formula_expression_ref in favor of writing 
+ *      readable Haskell model descriptions.
+ *    - Model descriptions probably need to be functions, since they need to take arguments.
+ *    - These arguments could then affect  e.g. the dimension of distributions and the
+ *       dimension of random lists created by the model.
+
+ * 0. Fix the parser to give meaningful error messages, instead of just saying that the entire body doesn't parse.
+
  * 1. Efficiently recalculate the probability when only a few densities change.
  *    - Will this require signals? (Signals might also help us to recalculate mu*t to see if anything changed.)
  *    - This will allow us to avoid maintaining a Markov blanket.
@@ -70,17 +81,6 @@ using std::map;
  *    5c. Log structures with variable components.
  *        - How shall we name the pieces?  We want piA instead of pi!0.
  *
- * 6. Make a model-creation monad.  This could allow us to modify the model after creating it, thus
- *    allowing the specification of default parameters.
- *
- *    - Our primary goal here is to eliminate formula_expression_ref in favor of writing 
- *      readable Haskell model descriptions.
- *    - Model descriptions probably need to be functions, since they need to take arguments.
- *    - These arguments could then affect  e.g. the dimension of distributions and the
- *       dimension of random lists created by the model.
-
- * 7. Fix the parser to give meaningful error messages, instead of just saying that the entire body doesn't parse.
-
  * 8. Rationalize Model_Notes, formula_expression_ref, and program?
  *    - I note that a "model" compresses a complex expression into Model.main.
  *    - [DONE] Add Model_Notes to Module.
@@ -137,15 +137,12 @@ using std::map;
  *        - There should be a better way to multiply lots of doubles together while avoiding underflow.
  *      - 1% of CPU time spend on memory allocation from vector::vector in three_way_topology_sample?
  *
- * 12. We should be able to store a list of triggers to evaluate in Parameters::recalc( )...
- *      - How different is this than looking at the list of parameters which have changed?
- *        
  * 13. Rationalize Programs, Modules.
  *     13a. [DONE] Allow loading stuff from files.
  *     13b. [DONE] Allow importing, desugaring, and thus resolving symbols after modules are (jointly) loaded into the machine.
  *     13c. Remove any earlier attempts at importing.
  * 14. Rewrite multi-case code to take patterns in terms of expression_ref's that might be seen from the parser.
- *     + Allows 16.
+ *     + Allows moving towards 16 incrementally.
  * 15. Handle 'where' clauses (e.g. in "alt")
  * 16. Handle guards clauses (e.g. in gdrhs, and gdpat)
  *     + I *think* that guards cannot fail in a way that makes the rule fail and move to the next rule.
