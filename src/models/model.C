@@ -399,8 +399,9 @@ void Model::set_parameter_values(const vector<int>& indices,const vector<object_
 {
   assert(indices.size() == p.size());
 
+  invalidate();
   for(int i=0;i<indices.size();i++)
-    write_value(indices[i], p[i]);
+    C.set_parameter_value(indices[i], p[i]);
 
   update();
 }
