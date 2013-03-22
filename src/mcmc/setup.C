@@ -259,7 +259,7 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 	object_ptr<const Pair> p = convert<const Pair>(x);
 	int m_index = *convert<const Int>(p->t.first);
 	Bounds<double> bounds = *convert<const Bounds<double>>(p->t.second);
-	string name = rand_var->print()+"_"+convertToString<int>(m_index);
+	string name = rand_var->print()+"_cauchy_"+convertToString<int>(m_index);
 	if (bounds.has_lower_bound and bounds.lower_bound >= 0.0)
 	  add_modifiable_MH_move(name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), m_index, {1.0}, M, 0.01);
 	else
@@ -491,6 +491,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 
   // Add slice moves for continuous 1D distributions
   add_real_slice_moves(P, slice_moves);
+  add_real_MH_moves(P, slice_moves);
   add_dirichlet_slice_moves(P, slice_moves);
 
   // imodel parameters
