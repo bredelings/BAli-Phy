@@ -95,7 +95,7 @@ mixture args = ProbDensity (mixtureDensity args) (error "Mixture has no quantile
 
 listDensity ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
   where {densities = zipWith density ds xs;
-         pr = foldl' (*) (doubleToLogDouble 1.0) densities};
+         pr = balanced_product densities};
 
 list dists = ProbDensity (listDensity dists) quantiles (map distDefaultValue dists) (ListRange (map distRange dists))
   where { quantiles = (error "list distribution has no quantiles") };
