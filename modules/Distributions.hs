@@ -21,6 +21,15 @@ builtin builtin_uniform_density 3 "uniform_density" "Distribution";
 data ProbDensity = ProbDensity a b c d;
 data DiscreteDistribution a = DiscreteDistribution [(Double,a)];
 
+pairs f (x:y:t) = f x y : pairs f t;
+pairs _ t       = t;
+
+foldt f z []  = z;
+foldt f _ [x] = x;
+foldt f z xs  = foldt f z (pairs f xs);
+
+balanced_product xs = foldt (*) (doubleToLogDouble 1.0) xs;
+
 density (ProbDensity d _ _ _) = d;
 quantile (ProbDensity _ q _ _) = q;
 distDefaultValue (ProbDensity _ _ v _) = v;
