@@ -648,8 +648,11 @@ void reg_heap::set_C(int R, closure&& C)
 #endif
 
   // mark R2 as being referenced by R
+  access(R).unmoveable = true;
   for(int R2: access(R).C.Env)
   {
+    access(R).unmoveable = access(R).unmoveable and access(R2).unmoveable;
+
     reg::back_edge_deleter D = access(R2).referenced_by_in_E.push_back(R);
     access(R).referenced_by_in_E_reverse.push_back(D);
   }
