@@ -406,6 +406,7 @@ reg& reg::operator=(reg&& R) noexcept
   C = std::move(R.C);
   referenced_by_in_E_reverse = std::move( R.referenced_by_in_E_reverse );
   changeable = R.changeable;
+  unmoveable = R.unmoveable;
   result = R.result;
   call = R.call;
   call_reverse = std::move( R.call_reverse );
@@ -433,6 +434,7 @@ reg::reg(reg&& R) noexcept
   C( std::move(R.C) ),
   referenced_by_in_E_reverse ( std::move( R.referenced_by_in_E_reverse ) ),
   changeable( R.changeable ),
+  unmoveable( R.unmoveable ),
   result( R.result ),
   call ( R.call ),
   call_reverse ( std::move( R.call_reverse) ),
@@ -473,6 +475,7 @@ void reg_heap::clear(int R)
   assert( access(R).temp == -1);
 
   access(R).re_evaluate = false;
+  access(R).unmoveable = false;
 }
 
 void reg_heap::set_used_input(int R1, int R2)
@@ -1606,6 +1609,7 @@ int reg_heap::uniquify_reg(int R, int t)
       int R2 = *temp_heads[temp_heads.size()-1-i];
       access(R1).temp = R2;
       access(R2).changeable = access(R1).changeable;
+      access(R2).unmoveable = access(R1).unmoveable;
       access(R2).re_evaluate = access(R1).re_evaluate;
       split.push_back(R1);
     }

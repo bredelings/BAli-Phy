@@ -37,6 +37,9 @@ public:
   /// Is C a parameter, or is the reduction result dependent on a parameter value?
   bool changeable = false;
 
+  /// Does C avoid transitively referencing anything unchangeable?
+  bool unmoveable = false;
+
   /// What does C reduce to eventually? (WHNF, but not an index_var.)
   int result;
 
