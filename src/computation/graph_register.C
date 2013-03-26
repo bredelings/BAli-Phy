@@ -724,6 +724,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
   assert(access(P).changeable);
+  assert(not access(P).unmoveable);
 
   // Clear the call, clear the result, and set the value
   assert(access(P).used_inputs.empty());
