@@ -1616,7 +1616,7 @@ namespace substitution {
 
 #ifndef DEBUG_CACHING
     if (LC.cv_up_to_date()) {
-#ifdef DEBUG_CACHING
+#ifdef DEBUG_SUBSTITUTION
       std::clog<<"Pr: Using cached value "<<log(LC.cached_value)<<"\n";
 #endif
       return LC.cached_value;
