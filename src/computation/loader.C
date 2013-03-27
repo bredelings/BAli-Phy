@@ -43,7 +43,7 @@ using std::map;
  *     + [DONE] 11b. Note that clashing declarations are allowed if the symbol is unreferenced!
  * 12. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
  * 13. [DONE] Replace recalc indices with trigers.
- * 14. Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
+ * 14. [DONE] Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
  */
 
 /* \todo: List of things to do to clean up programs.
