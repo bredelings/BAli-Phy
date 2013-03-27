@@ -1166,6 +1166,13 @@ void reg_heap::compute_ownership_categories()
 
     here = R.next_reg;
   }
+
+#ifdef DEBUG_MACHINE
+  for(const auto& i: canonical_ownership_categories)
+    assert(i.first == *i.second);
+  for(const auto& i: ownership_categories)
+    assert(canonical_ownership_categories.find(i) != canonical_ownership_categories.end());
+#endif
 }
 
 void reg_heap::collect_garbage()
@@ -1917,6 +1924,8 @@ void reg_heap::remove_ownership_mark(int t)
 #ifdef DEBUG_MACHINE
   for(const auto& i: canonical_ownership_categories)
     assert(i.first == *i.second);
+  for(const auto& i: ownership_categories)
+    assert(canonical_ownership_categories.find(i) != canonical_ownership_categories.end());
   check_used_regs();
 #endif
 
@@ -1937,6 +1946,8 @@ void reg_heap::remove_ownership_mark(int t)
 #ifdef DEBUG_MACHINE
   for(const auto& i: canonical_ownership_categories)
     assert(i.first == *i.second);
+  for(const auto& i: ownership_categories)
+    assert(canonical_ownership_categories.find(i) != canonical_ownership_categories.end());
   check_used_regs();
 #endif
 }
@@ -1946,17 +1957,30 @@ void reg_heap::duplicate_ownership_mark(int t1, int t2)
 #ifdef DEBUG_MACHINE
   for(const auto& i: canonical_ownership_categories)
     assert(i.first == *i.second);
+  for(const auto& i: ownership_categories)
+    assert(canonical_ownership_categories.find(i) != canonical_ownership_categories.end());
   check_used_regs();
 #endif
 
   // Clear ownership marks for token t and recompute the canonical reverse hashes.
-  canonical_ownership_categories.clear();
   for(auto i = ownership_categories.begin(); i != ownership_categories.end(); i++)
   {
-    if (i->test(t1))
-      i->set(t2,true);
-    if (not canonical_ownership_categories.count(*i))
-      canonical_ownership_categories[*i] = i;
+    if (not i->test(t1)) continue;
+
+    owner_set_t old_owners = *i;
+
+    i->set(t2,true);
+
+    auto loc = canonical_ownership_categories.find(old_owners);
+    if (loc != canonical_ownership_categories.end())
+    {
+      // If old_owners is still canonical, then it must be the first one in the list.
+      assert(loc->second == i);
+      canonical_ownership_categories.erase(loc);
+      canonical_ownership_categories.emplace(*i,i);
+    }
+    assert(canonical_ownership_categories.find(*i) != canonical_ownership_categories.end());
+    assert(canonical_ownership_categories.find(old_owners) == canonical_ownership_categories.end());
   }
 
   /*
@@ -1969,6 +1993,8 @@ void reg_heap::duplicate_ownership_mark(int t1, int t2)
 #ifdef DEBUG_MACHINE
   for(const auto& i: canonical_ownership_categories)
     assert(i.first == *i.second);
+  for(const auto& i: ownership_categories)
+    assert(canonical_ownership_categories.find(i) != canonical_ownership_categories.end());
   check_used_regs();
 #endif
 }
