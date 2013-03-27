@@ -112,12 +112,13 @@ using std::map;
  *        - But is that a problem?
 
  * 11. [SPEED] For bali-phy 5d.fasta --seed=0 --iter=1000
- *      - MH_Move::iterate( ): 2.5% of CPU time spent checking way too many parameters to see if they are in range.
+ *      - MH_Move::iterate( ): 4.5% of CPU time spent checking way too many parameters to see if they are in range.
  *      - Model::keys: 1% copying this every time we set a parameter.
  *      - data_partition::[copy]: 3.7% total copying things.  For example, suba_index, even if it won't change.
  *      - (We are spending 20% of the time in operator new.)
  *      - We are spending 7% of the time in __ieee754_log_avx.
  *        - There should be a better way to multiply lots of doubles together while avoiding underflow.
+ *      - Remove timer_stack things, in hopes that perf will supersed them.
  *      - 1% of CPU time spend on memory allocation from vector::vector in three_way_topology_sample?
  *      - [DONE] Clear identifiers after loading programs -- Model::compile();
 
