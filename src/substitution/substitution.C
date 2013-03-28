@@ -1613,19 +1613,18 @@ namespace substitution {
 	      const Mat_Cache& MC,const Tree& T,Likelihood_Cache& LC)
   {
     total_likelihood++;
-    default_timer_stack.push_timer("substitution");
-    default_timer_stack.push_timer("substitution::likelihood");
 
 #ifndef DEBUG_CACHING
     if (LC.cv_up_to_date()) {
-#ifdef DEBUG_CACHING
+#ifdef DEBUG_SUBSTITUTION
       std::clog<<"Pr: Using cached value "<<log(LC.cached_value)<<"\n";
 #endif
-      default_timer_stack.pop_timer();
-      default_timer_stack.pop_timer();
       return LC.cached_value;
     }
 #endif
+
+    default_timer_stack.push_timer("substitution");
+    default_timer_stack.push_timer("substitution::likelihood");
 
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
