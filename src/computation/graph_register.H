@@ -14,6 +14,7 @@
 #include "CacheList.H"
 #include <unordered_map>
 #include "pool.H"
+#include "bithash.H"
 
 // Type for ownership sets
 typedef std::bitset<64> owner_set_t;
@@ -33,8 +34,8 @@ public:
   /* The closure */
   closure C;
   std::vector<back_edge_deleter> referenced_by_in_E_reverse;
-
-  /// Is C a parameter, or is the reduction result dependent on a parameter value?
+ 
+ /// Is C a parameter, or is the reduction result dependent on a parameter value?
   bool changeable = false;
 
   /// What does C reduce to eventually? (WHNF, but not an index_var.)
@@ -95,7 +96,7 @@ class reg_heap
   mutable std::vector< object_ptr<Vector<int> > > scratch_lists;
 
   CacheList<owner_set_t> ownership_categories;
-  std::unordered_map< owner_set_t, ownership_category_t> canonical_ownership_categories;
+  bithash< owner_set_t, ownership_category_t> canonical_ownership_categories;
 
   /// Start of free list 
   int first_free_reg;

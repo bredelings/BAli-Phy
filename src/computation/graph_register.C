@@ -1154,7 +1154,7 @@ void reg_heap::compute_ownership_categories()
   canonical_ownership_categories.clear();
   {
     owner_set_t empty;
-    canonical_ownership_categories[empty] = ownership_categories.push_back(empty);
+    canonical_ownership_categories.insert(empty, ownership_categories.push_back(empty) );
   }
 
   int here = first_used_reg;
@@ -1233,8 +1233,8 @@ const ownership_category_t& reg_heap::get_reg_ownership_category(int R) const
 void reg_heap::set_reg_owners(int r, const owner_set_t& owners)
 {
   // Find or create the category for this specific bitmask.
-  if (not canonical_ownership_categories.count(owners))
-    canonical_ownership_categories[owners] = ownership_categories.push_back(owners);
+  if (not canonical_ownership_categories.contains_key(owners))
+    canonical_ownership_categories.insert(owners, ownership_categories.push_back(owners) );
 
   set_reg_ownership_category(r, canonical_ownership_categories[owners] );
 }
@@ -1925,8 +1925,8 @@ void reg_heap::remove_ownership_mark(int t)
   for(auto i = ownership_categories.begin(); i != ownership_categories.end(); i++)
   {
     i->set(t,false);
-    if (not canonical_ownership_categories.count(*i))
-      canonical_ownership_categories[*i] = i;
+    if (not canonical_ownership_categories.contains_key(*i))
+      canonical_ownership_categories.insert(*i,i);
   }
   /*
   int here = first_used_reg;
@@ -1955,8 +1955,8 @@ void reg_heap::duplicate_ownership_mark(int t1, int t2)
   {
     if (i->test(t1))
       i->set(t2,true);
-    if (not canonical_ownership_categories.count(*i))
-      canonical_ownership_categories[*i] = i;
+    if (not canonical_ownership_categories.contains_key(*i))
+      canonical_ownership_categories.insert(*i,i);
   }
 
   /*
@@ -2207,7 +2207,7 @@ reg_heap::reg_heap()
   memory.resize(1);
 
   owner_set_t empty;
-  canonical_ownership_categories[empty] = ownership_categories.push_back(empty);
+  canonical_ownership_categories.insert(empty, ownership_categories.push_back(empty));
 }
 
 #include "computation.H"

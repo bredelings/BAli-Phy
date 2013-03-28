@@ -24,7 +24,7 @@ class bithash
       n = 0;
       first = value_type();
       rest.clear();
-    }      
+    }
 
     // Set map[k] = v, and return true if we inserted anything a new key.
     std::pair<T&,bool> find_or_add(Key k)
