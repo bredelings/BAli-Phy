@@ -1240,10 +1240,11 @@ const ownership_category_t& reg_heap::get_reg_ownership_category(int R) const
 void reg_heap::set_reg_owners(int r, const owner_set_t& owners)
 {
   // Find or create the category for this specific bitmask.
-  if (not canonical_ownership_categories.contains_key(owners))
-    canonical_ownership_categories.insert(owners, ownership_categories.push_back(owners) );
+  auto p = canonical_ownership_categories.find_or_add(owners);
+  if (p.second)
+    p.first = ownership_categories.push_back(owners);
 
-  set_reg_ownership_category(r, canonical_ownership_categories[owners] );
+  set_reg_ownership_category(r, p.first );
 }
 
 void reg_heap::set_reg_ownership_category(int r, const ownership_category_t& c)

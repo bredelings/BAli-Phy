@@ -219,7 +219,8 @@ public:
     return lookup_key(k);
   }
 
-  T& operator[](Key k)
+  // Set map[k] = v, and return true if we inserted anything a new key.
+  std::pair<T&,bool> find_or_add(Key k)
   {
     int b = bucket_for_key(k);
     bucket& B = buckets[b];
@@ -233,7 +234,12 @@ public:
 	n_buckets_++;
     }
 
-    return p.first;
+    return p;
+  }
+
+  T& operator[](Key k)
+  {
+    return find_or_add(k).first;
   }
 
   float load_factor() const {return float(n_elements_)/n_buckets_;}
