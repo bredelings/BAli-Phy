@@ -26,7 +26,33 @@ class bithash
       rest.clear();
     }      
 
-    // Set map[k] = v, and return true if k was already in the hash.
+    // Set map[k] = v, and return true if we inserted anything a new key.
+    std::pair<T&,bool> find_or_add(Key k)
+    {
+      // If the bucket is completely empty, take the first spot.
+      if (not n)
+      {
+	first.first = k;
+	n++;
+	return {first.second, true};
+      }
+
+      // If the bucket has a first spot, check if the key is right.
+      if (first.first == k)
+	return {first.second, false};
+
+      // If the key isn't in the first spot, check all the other spots, and over-write one if we find it.
+      for(auto& p: rest)
+	if (p.first == k)
+	  return {p.second,false};
+      
+      // If the key isn't anywhere, add it at the beginning of the list.
+      rest.insert(rest.begin(),{k,{}});
+      n++;
+      return {rest.begin()->second,true};
+    }
+
+    // Set map[k] = v if k is not in the hash, and return true if we insert a new key.
     bool insert(Key k, const T& v)
     {
       // If the bucket is completely empty, add to the reserved spot.
@@ -34,30 +60,22 @@ class bithash
       {
 	first = {k,v};
 	n++;
-	return false;
+	return true;
       }
 
       // If the bucket has a first spot, check and over-write it if the key is right.
       if (first.first == k)
-      {
-	first.second = v;
-	return true;
-      }
+	return false;
 
       // If the key isn't in the first spot, check all the other spots, and over-write one if we find it.
       for(auto& p: rest)
-      {
 	if (p.first == k)
-	{
-	  p.second = v;
-	  return true;
-	}
-      }
+	  return false;
       
       // If the key isn't anywhere, add it at the end of the list.
       rest.insert(rest.end(),{k,v});
       n++;
-      return false;
+      return true;
     }
 
     // Remove any map[k]=<any value>, and return true if such a k was in the hash.
@@ -148,7 +166,7 @@ public:
     return hash_for_key(k)%buckets.size();
   }
 
-  // Set map[k] = v, and return true if k was already in the hash.
+  // Set map[k] = v if k is not in the hash, and return true if we inserted a new key.
   bool insert(Key k, const T& v)
   {
     int b = bucket_for_key(k);
@@ -199,6 +217,23 @@ public:
   const T& operator[](Key k) const
   {
     return lookup_key(k);
+  }
+
+  T& operator[](Key k)
+  {
+    int b = bucket_for_key(k);
+    bucket& B = buckets[b];
+
+    std::pair<T&,bool> p = B.find_or_add(k);
+
+    if (p.second)
+    {
+      n_elements_++;
+      if (B.n==1)
+	n_buckets_++;
+    }
+
+    return p.first;
   }
 
   float load_factor() const {return float(n_elements_)/n_buckets_;}
