@@ -1935,8 +1935,7 @@ void reg_heap::remove_ownership_mark(int t)
   for(auto i = ownership_categories.begin(); i != ownership_categories.end(); i++)
   {
     i->set(t,false);
-    if (not canonical_ownership_categories.contains_key(*i))
-      canonical_ownership_categories.insert(*i,i);
+    canonical_ownership_categories.insert(*i,i);
   }
   /*
   int here = first_used_reg;
@@ -1972,12 +1971,10 @@ void reg_heap::duplicate_ownership_mark(int t1, int t2)
 
     i->set(t2,true);
 
-    if (canonical_ownership_categories.contains_key(old_owners))
-    {
-      // If old_owners is still canonical, then it must be the first one in the list.
-      canonical_ownership_categories.erase(old_owners);
+    // If old_owners is still canonical, then it must be the first one in the list.
+    if (canonical_ownership_categories.erase(old_owners))
       canonical_ownership_categories.insert(*i,i);
-    }
+
     assert(canonical_ownership_categories.contains_key(*i));
     assert(not canonical_ownership_categories.contains_key(old_owners));
   }
