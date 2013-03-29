@@ -87,9 +87,9 @@ class bithash
       // Check if the key is in the first spot
       if (first.first == k)
       {
-	// If there are no list elements, this bucket is empty!
+	// If there are no list elements, this bucket will be empty!
 	if (rest.empty())
-	  assert(n == 0);
+	  assert(n == 1);
 	// If there are list elements, then move one down.
 	else
 	{
