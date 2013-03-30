@@ -1107,13 +1107,13 @@ void reg_heap::remove_unused_ownership_marks()
 void reg_heap::trace_and_reclaim_unreachable()
 {
   vector<int>& scan = get_scratch_list();
+  vector<int>& next_scan = get_scratch_list();
 
   for(int i: roots)
     scan.push_back(i);
 
   while (not scan.empty())
   {
-    vector<int> next_scan;
     for(int i=0;i<scan.size();i++)
     {
       reg& R = access(scan[i]);
@@ -1129,7 +1129,8 @@ void reg_heap::trace_and_reclaim_unreachable()
       if (R.call) 
 	next_scan.insert(next_scan.end(), R.call);
     }
-    scan = next_scan;
+    std::swap(scan,next_scan);
+    next_scan.clear();
   }
 
   int here = first_used_reg;
@@ -1145,6 +1146,7 @@ void reg_heap::trace_and_reclaim_unreachable()
     here = next;
   }
 
+  release_scratch_list();
   release_scratch_list();
 }
 
