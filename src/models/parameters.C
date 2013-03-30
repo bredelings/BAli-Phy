@@ -1002,7 +1002,7 @@ void Parameters::recalc()
   }
 
   // Check if any substitution models have changed.
-  // WHY does this work?  Shouldn't this be a structure that never gets out of date?
+  // This (probably?) works because it recursively check the up-to-date-ness of the entire structure.
   for(int s=0;s<n_smodels();s++)
     if (not C.compute_expression_is_up_to_date(SModels[s].main))
       recalc_smodel(s);
