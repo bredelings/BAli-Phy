@@ -109,7 +109,7 @@ bool context::reg_is_fully_up_to_date(int R) const
   if (not E->size()) return true;
 
   // If the result is a lambda function, then R is up-to-date.
-  if (not is_a<constructor>(E)) return true;
+  if (E->head->type() != constructor_type) return true;
 
   // If we get here, this had better be a constructor!
   assert(is_a<constructor>(E));
