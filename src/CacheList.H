@@ -22,6 +22,22 @@ class CacheList
   /// This points to the first free node.
   typename std::list<T>::iterator begin_free;
 
+  int count_n_used() const
+  {
+    int count = 0;
+    for(auto i = L.begin();i!=begin_free;i++)
+      count++;
+    return count;
+  }
+
+  int count_n_free() const
+  {
+    int count = 0;
+    for(auto i = begin_free;i!=L.end();i++)
+      count++;
+    return count;
+  }
+
 public:
   typedef typename std::list<T>::iterator iterator;
   typedef typename std::list<T>::const_iterator const_iterator;
@@ -40,6 +56,12 @@ public:
 
   const_iterator end() const {return begin_free;}
   iterator end() {return begin_free;}
+
+  void check() const
+  {
+    assert(n_free == count_n_free());
+    assert(n_used == count_n_used());
+  }
 
   /// Remove an element from the list. (Place it in the free area.)
   void erase(iterator loc) 
