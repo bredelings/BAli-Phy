@@ -60,10 +60,14 @@ using boost::dynamic_pointer_cast;
 
 int get_n_lambdas(const expression_ref& E)
 {
-  if (E->head->type() == lambda2_type)
-    return 1 + get_n_lambdas(E->sub[0]);
-  else
-    return 0;
+  expression_ref E2 = E;
+  int n = 0;
+  while(E2->head->type() == lambda2_type)
+  {
+    E2 = E2->sub[0];
+    n++;
+  }
+  return n;
 }
 
 expression_ref peel_n_lambdas(const expression_ref& E, int n)
