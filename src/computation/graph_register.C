@@ -978,9 +978,9 @@ reg_heap::root_t reg_heap::push_temp_head(const owner_set_t& tokens)
 
 void reg_heap::pop_temp_head(int t)
 {
-  owner_set_t tokens;
-  tokens.set(t,true);
-  pop_temp_head(tokens);
+  root_t r = token_roots[t].temp.back();
+  token_roots[t].temp.pop_back();
+  pop_root(r);
 }
 
 
