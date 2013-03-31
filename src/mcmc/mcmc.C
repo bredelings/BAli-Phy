@@ -378,8 +378,8 @@ namespace MCMC {
     std::cerr<<endl<<endl;
 #endif
 
+#ifndef NDEBUG
     // Check that we have not strayed outside the bounds.
-    bool in_range = true;
     for(int i=0;i<P->n_parameters();i++)
     {
       if (not P->get_context().parameter_is_modifiable(i)) continue;
@@ -392,11 +392,12 @@ namespace MCMC {
       if (not range.in_range(P->get_parameter_value_as<Double>(i)))
 	throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value_as<Double>(i)<<" is NOT in range "<<range;
       if (not range.in_range(P2->get_parameter_value_as<Double>(i)))
-	in_range = false;
+	throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value_as<Double>(i)<<" is NOT in range "<<range;
     }
+#endif
 
     // Accept or Reject
-    if (in_range and accept_MH(*P,*P2,ratio)) {
+    if (accept_MH(*P,*P2,ratio)) {
       result.totals[0] = 1;
       if (n == 2) {
 	int first_index = p2->get_indices()[0];
