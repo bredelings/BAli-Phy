@@ -36,9 +36,6 @@ closure get_trimmed(const closure& C)
 
     // Should this ever happen?
     assert(not is_a<Trim>(C2.exp));
-
-    // For safety... 
-    C2 = get_trimmed(C2);
   }
   
   return C2;
