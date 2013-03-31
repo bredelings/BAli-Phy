@@ -25,6 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include "alignment/alignment.H"
 #include "tree/tree.H"
+#include "object.H"
 
 /* The algorithms in this file provide each column in a sub-alignment
  * with a name that persists through alignment and tree changes that
@@ -190,7 +191,7 @@ along with BAli-Phy; see the file COPYING.  If not see
  * augmented alignments, we could define update_one_branch( ) in terms of the pairwise
  * alignments for the previous branches...*/
 
-struct subA_index_t
+struct subA_index_t: public Object
 {
   enum subA_index_kind {leaf_index=1, internal_index=2};
 
