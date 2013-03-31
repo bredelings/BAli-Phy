@@ -72,12 +72,13 @@ int get_n_lambdas(const expression_ref& E)
 
 expression_ref peel_n_lambdas(const expression_ref& E, int n)
 {
-  if (n == 0)
-    return E;
-  else if (E->head->type() == lambda2_type)
-    return peel_n_lambdas(E->sub[0], n-1);
-  else
-    std::abort();
+  expression_ref E2 = E;
+  for(int i=0;i<n;i++)
+  {
+    assert(E2->head->type() == lambda2_type);
+    E2 = E2->sub[0];
+  }
+  return E2;
 }
       
 
