@@ -1933,11 +1933,20 @@ void reg_heap::remove_ownership_mark(int t)
 #endif
 
   // Clear ownership marks for token t and recompute the canonical reverse hashes.
-  canonical_ownership_categories.clear();
   for(auto i = ownership_categories.begin(); i != ownership_categories.end(); i++)
   {
+    if (not i->test(t)) continue;
+
+    owner_set_t old_owners = *i;
+
     i->set(t,false);
-    canonical_ownership_categories.insert(*i,i);
+
+    // If old_owners is still canonical, then it must be the first one in the list.
+    if (canonical_ownership_categories.erase(old_owners))
+      canonical_ownership_categories.insert(*i,i);
+
+    assert(canonical_ownership_categories.contains_key(*i));
+    assert(not canonical_ownership_categories.contains_key(old_owners));
   }
   /*
   int here = first_used_reg;
