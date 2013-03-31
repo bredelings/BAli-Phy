@@ -40,7 +40,18 @@ class Probability_Model: public Model
 {
 public:
   /// An object for key-value pairs.
-  std::map<std::string,double> keys;
+  cow_ptr< std::map<std::string,double> > keys;
+
+  bool contains_key(const std::string& key) const { return keys->count(key);}
+  double lookup_key(const std::string& key) const { return keys->find(key)->second;}
+  double load_value(const std::string& key,double v) const 
+  { 
+    auto loc = keys->find(key);
+    if (loc != keys->end())
+      return loc->second;
+    else
+      return v;
+  }
 
   virtual Probability_Model* clone() const =0;
 
@@ -58,7 +69,7 @@ public:
   virtual efloat_t heated_probability() const {return heated_prior() * heated_likelihood();}
 
   Probability_Model(const module_loader& L)
-    :Model(L)
+    :Model(L),keys(new std::map<std::string,double>)
   {}
 };
 

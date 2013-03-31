@@ -102,7 +102,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Probability_Model>& P, M
 {
   Parameters* PP = P.as<Parameters>();
 
-  if ( loadvalue(PP->keys,"parameter_tri",1.0) < 0.5) return;
+  if ( PP->load_value("parameter_tri",1.0) < 0.5) return;
 
   MCMC::Result result(2);
 
@@ -326,7 +326,7 @@ void sample_branch_length_(owned_ptr<Probability_Model>& P,  MoveStats& Stats, i
 {
   //std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
-  double slice_fraction = loadvalue(P->keys,"branch_slice_fraction",0.9);
+  double slice_fraction = P->load_value("branch_slice_fraction",0.9);
 
   bool do_slice = (uniform() < slice_fraction);
   if (do_slice)
@@ -409,7 +409,7 @@ void walk_tree_sample_NNI(owned_ptr<Probability_Model>& P, MoveStats& Stats)
 
 void walk_tree_sample_NNI_and_A(owned_ptr<Probability_Model>& P, MoveStats& Stats) 
 {
-  double NNI_A_fraction = loadvalue(P->keys,"NNI+A_fraction",0.01);
+  double NNI_A_fraction = P->load_value("NNI+A_fraction",0.01);
 
   Parameters& PP = *P.as<Parameters>();
   vector<int> branches = walk_tree_path(PP.T(), PP[0].LC.root);

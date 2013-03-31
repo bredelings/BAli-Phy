@@ -146,7 +146,7 @@ void slice_sample_branch_length(owned_ptr<Probability_Model>& P,MoveStats& Stats
   
   //------------- Find new length --------------//
   
-  double sigma = loadvalue(P->keys,"slice_branch_sigma",1.5);
+  double sigma = P->load_value("slice_branch_sigma",1.5);
   // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
   double w = sigma*(PP.branch_mean()+L);
   branch_length_slice_function logp(PP,b);
@@ -172,11 +172,11 @@ void change_branch_length(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b
 {
   if (myrandomf() < 0.5)
   {
-    double sigma = loadvalue(P->keys,"log_branch_sigma",0.6);
+    double sigma = P->load_value("log_branch_sigma",0.6);
     change_branch_length_log_scale(P, Stats, b, sigma);
   }
   else {
-    double sigma = loadvalue(P->keys,"branch_sigma",0.6);
+    double sigma = P->load_value("branch_sigma",0.6);
     change_branch_length_flat(P, Stats, b, sigma);
   }
 }
@@ -300,7 +300,7 @@ bool slide_node(owned_ptr<Probability_Model>& P,
   lengths[0] = b[1].length();
   lengths[1] = b[2].length();
 
-  double sigma = loadvalue(P->keys,"slide_node_sigma",0.3);
+  double sigma = P->load_value("slide_node_sigma",0.3);
   double ratio = slide(lengths,sigma);
 
   //---------------- Propose new lengths ---------------//
@@ -338,11 +338,11 @@ void slide_node(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b0)
 
   PP->set_root(b[0].target());
 
-  double p = loadvalue(P->keys,"branch_slice_fraction",0.9);
+  double p = P->load_value("branch_slice_fraction",0.9);
   if (uniform() < p)
   {
     slide_node_slice_function logp(*PP,b0);
-    double w = (logp.x0 + logp.y0) * loadvalue(P->keys,"slide_branch_slice_window",0.3);
+    double w = (logp.x0 + logp.y0) * P->load_value("slide_branch_slice_window",0.3);
     double L1b = slice_sample(logp,w,100);
     
     MCMC::Result result(2);
@@ -415,7 +415,7 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   MCMC::Result result(2);
 
   //------------ Propose scaling ratio ------------//
-  const double sigma = loadvalue(P->keys,"log_branch_mean_sigma",0.6);
+  const double sigma = P->load_value("log_branch_mean_sigma",0.6);
 
   Bounds<double> b;
   for(int i=0; i<PP->n_branch_means(); i++)
@@ -525,7 +525,7 @@ void change_3_branch_lengths(owned_ptr<Probability_Model>& P,MoveStats& Stats,in
   double S31 = T3 + T1;
 
   //----------- Propose new distances -------------//
-  double sigma = loadvalue(P->keys,"log_branch_sigma",0.6)/2.0;
+  double sigma = P->load_value("log_branch_sigma",0.6)/2.0;
   double ratio = 1.0;
 
   double T1_ = T1;

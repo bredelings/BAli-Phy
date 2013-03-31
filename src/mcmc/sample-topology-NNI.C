@@ -226,7 +226,7 @@ void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, 
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
-  double slice_fraction = loadvalue(PP.keys,"NNI_slice_fraction",-0.25);
+  double slice_fraction = PP.load_value("NNI_slice_fraction",-0.25);
 
   if (not PP.variable_alignment() and uniform() < slice_fraction) {
     two_way_topology_slice_sample(P,Stats,b);
@@ -553,7 +553,7 @@ void three_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1)
     return;
 
-  double slice_fraction = loadvalue(PP.keys,"NNI_slice_fraction",-0.25);
+  double slice_fraction = PP.load_value("NNI_slice_fraction",-0.25);
 
   if (not PP.variable_alignment() and uniform() < slice_fraction) {
     three_way_topology_sample_slice(P,Stats,b);

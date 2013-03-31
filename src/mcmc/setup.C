@@ -64,7 +64,7 @@ void add_MH_move(Probability_Model& P, const Proposal_Fn& proposal, const vector
   if (pnames.size() != pvalues.size()) std::abort();
 
   for(int i=0;i<pnames.size();i++)
-    set_if_undef(P.keys, pnames[i], pvalues[i]);
+    set_if_undef(*P.keys.modify(), pnames[i], pvalues[i]);
 
   // 2. For each MCMC parameter, create a move for it.
   for(const auto& parameter_name: names) 
@@ -410,62 +410,6 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
 
   add_MH_move(P, Between(-20,20,shift_cauchy), "logLambdaScale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
 
-  /*
-    Here are my hacky estimates of the jump size that is appropriate.
-
-    set_if_undef(P.keys,"pi_dirichlet_N",1.0);
-    unsigned total_length = 0;
-    for(int i=0;i<P.n_data_partitions();i++)
-    total_length += max(sequence_lengths(*P[i].A, P.T().n_leaves()));
-    P.keys["pi_dirichlet_N"] *= total_length;
-
-    set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
-    if (s==0) P.keys["GTR_dirichlet_N"] *= 100;
-    add_MH_move(P, dirichlet_proposal,  prefix + "S.GTR.?", "GTR_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"v_dirichlet_N",1.0);
-    if (s==0) P.keys["v_dirichlet_N"] *= total_length;
-    add_MH_move(P, dirichlet_proposal,  prefix +  "v*", "v_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"b_dirichlet_N",1.0);
-    if (s==0) P.keys["b_dirichlet_N"] *= total_length;
-    add_MH_move(P, dirichlet_proposal,  prefix +  "b_*", "b_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"M2.f_dirichlet_N",1.0);
-    if (s==0) P.keys["M2.f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,  prefix +  "M2.f*", "M2.f_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"M2a.f_dirichlet_N",1.0);
-    if (s==0) P.keys["M2a.f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,  prefix +  "M2a.f*", "M2a.f_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"M3.f_dirichlet_N",1.0);
-    if (s==0) P.keys["M3.f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,   prefix + "M3.f*", "M3.f_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"M8b.f_dirichlet_N",1.0);
-    if (s==0) P.keys["M8b.f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,   prefix + "M8b.f*", "M8b.f_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"multi.p_dirichlet_N",1.0);
-    if (s==0) P.keys["multi.p_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,   prefix + "multi.p*", "multi:p_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"DP.f_dirichlet_N",1.0);
-    if (s==0) P.keys["DP.f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,   prefix + "DP.f*", "DP.f_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"DP.rate_dirichlet_N",1.0);
-    //FIXME - this should probably be 20*#rate_categories...
-    if (s==0) P.keys["DP.rate_dirichlet_N"] *= 10*10;
-    // add_MH_move(P, sorted(dirichlet_proposal), prefix + "DP.rate*", "DP.rate_dirichlet_N",     1,  parameter_moves);
-    add_MH_move(P, dirichlet_proposal, prefix + "DP.rate*", "DP.rate_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"Mixture.p_dirichlet_N",1.0);
-    if (s==0) P.keys["Mixture.p_dirichlet_N"] *= 10*10;
-    add_MH_move(P, dirichlet_proposal,         prefix + "Mixture.p*", "Mixture.p_dirichlet_N",     1,  parameter_moves);
-  */
-
   return MH_moves;
 }
 
@@ -563,7 +507,7 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
 				   internal_nodes)
 		   );
 
-  int nodes_weight = (int)(loadvalue(P.keys,"nodes_weight",1.0)+0.5);
+  int nodes_weight = (int)(P.load_value("nodes_weight",1.0)+0.5);
 
   alignment_moves.add(nodes_weight, nodes_moves);
  
@@ -711,7 +655,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
 
   {
     int index = P.find_parameter("lambdaScaleBranch");
-    if (index != -1 and (P.get_parameter_value_as<Int>(index) != -1 or P.keys.count("lambda_search_all")))
+    if (index != -1 and (P.get_parameter_value_as<Int>(index) != -1 or P.contains_key("lambda_search_all")))
     {
       P.set_parameter_value(index, object_ref(Int(0)));
       Generic_Proposal m(move_scale_branch,{index});
@@ -719,7 +663,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
     }
   }
 
-  if (P.keys.count("sample_foreground_branch"))
+  if (P.contains_key("sample_foreground_branch"))
   {
     Generic_Proposal m(move_subst_type_branch);
     parameter_moves.add(1.0, MCMC::MH_Move(m,"sample_foreground_branch"));
@@ -900,7 +844,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 
 
   // 4. Then do an initial tree search - SPR - with variable alignment
-  if (P->keys.find("pre-burnin-A") != P->keys.end())
+  if (P->contains_key("pre-burnin-A"))
   {
     // turn training on
     {
@@ -1001,7 +945,7 @@ void do_sampling(const variables_map& args,
     sampler.add_logger(loggers[i]);
   if (has_imodel)
   {
-    double factor = loadvalue(P->keys,"alignment_sampling_factor",1.0);
+    double factor = P->load_value("alignment_sampling_factor",1.0);
     std::cerr<<"alignment sampling factor = "<<factor<<"\n";
     sampler.add(factor,alignment_moves);
   }
@@ -1012,13 +956,13 @@ void do_sampling(const variables_map& args,
   // FIXME -   However, it is probably not so important to resample most parameters in a way that is interleaved with stuff... (?)
   // FIXME -   Certainly, we aren't going to be interleaved with branches, anyway!
   sampler.add(5 + log(PP.T().n_branches()), MH_but_no_slice_moves);
-  if (P->keys["enable_MH_sampling"] > 0.5)
+  if (P->lookup_key("enable_MH_sampling") > 0.5)
     sampler.add(5 + log(PP.T().n_branches()),MH_moves);
   else
     sampler.add(1,MH_moves);
   // Question: how are these moves intermixed with the other ones?
 
-  if (P->keys["disable_slice_sampling"] < 0.5)
+  if (P->lookup_key("disable_slice_sampling") < 0.5)
     sampler.add(1,slice_moves);
 
   //------------------- Enable and Disable moves ---------------------------//
@@ -1041,7 +985,7 @@ void do_sampling(const variables_map& args,
   } 
 
   sampler.check_moves(P);
-  if (PP.keys["AIS"] > 0.5) 
+  if (PP.lookup_key("AIS") > 0.5) 
   {
     // before we do this, just run 20 iterations of a sampler that keeps the alignment fixed
     // - first, we need a way to change the tree on a sampler that has internal node sequences?

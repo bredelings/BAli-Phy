@@ -59,7 +59,7 @@ int random_int_from_double(double x)
 
 int n_SPR_moves(const Parameters& P)
 {
-  double f = loadvalue(P.keys,"SPR_amount",0.1);
+  double f = P.load_value("SPR_amount",0.1);
   int n = random_int_from_double(P.T().n_branches()*f);
   return n+1;
 }
@@ -520,7 +520,7 @@ void sample_SPR_flat_one(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b1
 
   if (PP.T().directed_branch(b1).target().is_leaf_node()) return;
 
-  double p = loadvalue(P->keys,"SPR_slice_fraction",-0.25);
+  double p = P->load_value("SPR_slice_fraction",-0.25);
 
   int b2 = choose_SPR_target(PP.T(),b1);
 
@@ -540,7 +540,7 @@ efloat_t likelihood_unaligned_root(const Parameters& P)
 {
   efloat_t Pr = 1;
 
-  bool old = (P.keys.find("no_unaligned_root") != P.keys.end());
+  bool old = P.contains_key("no_unaligned_root");
 
   for(int i=0;i<P.n_data_partitions();i++)
     if (P[i].variable_alignment() and not old)
@@ -1164,7 +1164,7 @@ void sample_SPR_all(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   Parameters& PP = *P.as<Parameters>();
   int n = n_SPR_moves(PP);
 
-  // double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
+  // double p = P.load_value("SPR_slice_fraction",-0.25);
 
   for(int i=0;i<n;i++) 
   {
@@ -1174,7 +1174,7 @@ void sample_SPR_all(owned_ptr<Probability_Model>& P,MoveStats& Stats)
     sample_SPR_search_one(PP, Stats, b1);
   }
 
-  if (loadvalue(P->keys, "SPR_longest", 1.0) > 0.5)
+  if (P->load_value("SPR_longest", 1.0) > 0.5)
   {
     // Try moving the longest or least-determined branch every time.
     int least_informed_branch = argmax(effective_lengths_min(PP.T()));
@@ -1313,7 +1313,7 @@ void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   Parameters& PP = *P.as<Parameters>();
   int n = n_SPR_moves(PP);
 
-  //  double p = loadvalue(P->keys,"SPR_slice_fraction",-0.25);
+  //  double p = P->load_value("SPR_slice_fraction",-0.25);
 
   for(int i=0;i<n;i++) 
   {
@@ -1322,7 +1322,7 @@ void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats)
     sample_SPR_flat_one(P, Stats, b1);
   }
 
-  if (loadvalue(P->keys, "SPR_longest", 1.0) > 0.5)
+  if (P->load_value("SPR_longest", 1.0) > 0.5)
   {
     // Try moving the longest or least-determined branch every time.
     int least_informed_branch = argmax(effective_lengths_min(PP.T()));
@@ -1336,7 +1336,7 @@ void sample_SPR_nodes(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   Parameters& PP = *P.as<Parameters>();
   int n = n_SPR_moves(PP);
 
-  double p = loadvalue(P->keys,"SPR_slice_fraction",-0.25);
+  double p = P->load_value("SPR_slice_fraction",-0.25);
 
   for(int i=0;i<n;i++) {
 
@@ -1355,7 +1355,7 @@ void sample_SPR_nodes(owned_ptr<Probability_Model>& P,MoveStats& Stats)
     }
   }
 
-  if (loadvalue(P->keys, "SPR_longest", 1.0) > 0.5)
+  if (P->load_value("SPR_longest", 1.0) > 0.5)
   {
     // Try moving the longest or least-determined branch every time.
     int least_informed_branch = argmax(effective_lengths_min(PP.T()));

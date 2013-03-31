@@ -514,7 +514,7 @@ double Proposal2::operator()(Probability_Model& P) const
   // Load parameter values from names
   vector<double> p(pnames.size());
   for(int i=0;i<p.size();i++)
-    p[i] = loadvalue(P.keys, pnames[i]);
+    p[i] = P.lookup_key(pnames[i]);
 
   // read, alter, and write parameter values
   vector< object_ptr<const Object> > y = P.get_parameter_values(indices);
@@ -610,7 +610,7 @@ double move_scale_branch(Probability_Model& P)
 
   assert( scale_branch != -1);
 
-  if (P.keys.count("lambda_search_all"))
+  if (P.contains_key("lambda_search_all"))
     scale_branch = uniform()*PP.T().n_branches();
   else
   {

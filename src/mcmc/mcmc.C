@@ -1199,7 +1199,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
   P->compile();
 #endif
 
-  int alignment_burnin_iterations = (int)loadvalue(P->keys,"alignment-burnin",10.0);
+  int alignment_burnin_iterations = (int)P->load_value("alignment-burnin",10.0);
 
   {
     Parameters& PP = *P.as<Parameters>();

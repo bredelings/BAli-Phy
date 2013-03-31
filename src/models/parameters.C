@@ -821,7 +821,7 @@ efloat_t Parameters::prior_no_alignment() const
   // prior for each branch being aligned/unaliged
   if (variable_alignment()) 
   {
-    const double p_unaligned = loadvalue(keys,"P_aligned",0.0);
+    const double p_unaligned = load_value("P_aligned",0.0);
 
     efloat_t pNA = p_unaligned;
 

@@ -676,13 +676,13 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(Parameters& P, const vector<s
   }
 
   // Write out the probability that each column is in a particular substitution component to C<>.P<>.CAT
-  if (P.keys.count("log-categories"))
+  if (P.contains_key("log-categories"))
     for(int i=0;i<P.n_data_partitions();i++)
       loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
 					Mixture_Components_Function(i) ) );
 
   // Write out ancestral sequences
-  if (P.keys.count("log-ancestral"))
+  if (P.contains_key("log-ancestral"))
     for(int i=0;i<P.n_data_partitions();i++)
       loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
 					Ancestral_Sequences_Function(i) ) );
