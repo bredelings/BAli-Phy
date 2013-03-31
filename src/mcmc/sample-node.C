@@ -38,7 +38,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution/substitution-index.H"
 #include <boost/shared_ptr.hpp>
 #include "dp/dp-array.H"
-#include "timer_stack.H"
 
 //TODO - 1. calculate the probability of 
 //  a) the path we came in with
@@ -73,7 +72,6 @@ vector<HMM::bitmask_t> get_bitpath_3way(const data_partition& P, const vector<in
 
 boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
 {
-  default_timer_stack.push_timer("alignment::DP1/3-way");
   const Tree& T = P.T();
 
   assert(P.variable_alignment());
@@ -150,7 +148,6 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   if (Matrices->Pr_sum_all_paths() <= 0.0)
   {
     std::cerr<<"sample_node_base( ): All paths have probability 0!"<<std::endl;
-    default_timer_stack.pop_timer();
     return Matrices;
   }
 
@@ -169,7 +166,6 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 
   assert(valid(*P.A));
 
-  default_timer_stack.pop_timer();
   return Matrices;
 }
 

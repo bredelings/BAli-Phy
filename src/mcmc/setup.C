@@ -887,7 +887,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 
   out_log<<Stats<<endl;
   duration_t t2 = total_cpu_time();
-  out_log<<default_timer_stack.report()<<endl;
   out_both<<"Finished pre-burnin in "<<duration_cast<boost::chrono::duration<double> >(t2-t1)<<".\n"<<endl;
 
 

@@ -25,7 +25,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cmath>
 #include <valarray>
 #include <vector>
-#include "timer_stack.H"
 #include "alignment/alignment-util.H"
 #include "util.H"
 
@@ -1623,9 +1622,6 @@ namespace substitution {
     }
 #endif
 
-    default_timer_stack.push_timer("substitution");
-    default_timer_stack.push_timer("substitution::likelihood");
-
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
     check_regenerate(I, A, T, LC.root);
@@ -1669,8 +1665,6 @@ namespace substitution {
     LC.cached_value = Pr;
     LC.cv_up_to_date() = true;
 
-    default_timer_stack.pop_timer();
-    default_timer_stack.pop_timer();
     return Pr;
   }
 

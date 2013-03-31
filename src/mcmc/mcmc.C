@@ -46,7 +46,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment-util.H"
 
 #include "slice-sampling.H"
-#include "timer_stack.H"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -188,10 +187,9 @@ namespace MCMC {
   }
 
 
-  void MoveGroup::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int i) {
+  void MoveGroup::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int i) 
+  {
     assert(i < order.size());
-
-    default_timer_stack.push_timer(name);
 
 #ifndef NDEBUG
     clog<<" move = "<<name<<endl;
@@ -209,7 +207,6 @@ namespace MCMC {
       e.prepend(o.str());
       throw e;
     }
-    default_timer_stack.pop_timer();
   }
 
   void MoveGroup::start_learning(int i) 
@@ -316,8 +313,6 @@ namespace MCMC {
 
   void SingleMove::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int) 
   {
-    default_timer_stack.push_timer(name);
-
 #ifndef NDEBUG
     clog<<" [single] move = "<<name<<endl;
 #endif
@@ -333,8 +328,6 @@ namespace MCMC {
       e.prepend(o.str());
       throw e;
     }
-    
-    default_timer_stack.pop_timer();
   }
 
   int MH_Move::reset(double lambda) {
@@ -345,8 +338,6 @@ namespace MCMC {
 
   void MH_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int) 
   {
-    default_timer_stack.push_timer(name);
-
 #ifndef NDEBUG
     clog<<" [MH] move = "<<name<<endl;
 #endif
@@ -432,13 +423,10 @@ namespace MCMC {
     }
 
     Stats.inc(name,result);
-    default_timer_stack.pop_timer();
   }
 
   double Slice_Move::sample(Probability_Model& P, slice_function& slice_levels, double v1)
   {
-    default_timer_stack.push_timer(name);
-
 #ifndef NDEBUG
     clog<<" [Slice] move = "<<name<<endl;
 #endif
@@ -470,7 +458,6 @@ namespace MCMC {
     std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
     std::cerr<<endl<<endl;
 #endif
-    default_timer_stack.pop_timer();
     return v2;
   }
 
@@ -744,9 +731,7 @@ void MoveArg::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) {
 
 void MoveArg::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int i) 
 {
-  default_timer_stack.push_timer(name);
   (*this)(P,Stats,order[i]);
-  default_timer_stack.pop_timer();
 }
 
 
@@ -849,7 +834,6 @@ void MoveEach::show_enabled(ostream& o,int depth) const {
 
 void MoveArgSingle::operator()(owned_ptr<Probability_Model>& P,MoveStats& Stats,int arg) 
 {
-  default_timer_stack.push_timer(name);
 #ifndef NDEBUG
   clog<<" [single] move = "<<name<<endl;
 #endif
@@ -865,7 +849,6 @@ void MoveArgSingle::operator()(owned_ptr<Probability_Model>& P,MoveStats& Stats,
     e.prepend(o.str());
     throw e;
   }
-  default_timer_stack.pop_timer();
 }
     
 
@@ -1160,7 +1143,6 @@ void mcmc_log(long iterations, long max_iter, int subsample, Parameters& P, ostr
       std::cout<<S<<endl;
       std::cout<<endl;
       std::cout<<"CPU Profiles for various (nested and/or overlapping) tasks:\n\n";
-      std::cout<<default_timer_stack.report()<<endl;
     }
 }
 

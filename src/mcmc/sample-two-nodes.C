@@ -38,7 +38,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution/substitution-index.H"
 #include <boost/numeric/ublas/io.hpp>
 #include "dp/dp-array.H"
-#include "timer_stack.H"
 
 // for prior(p[i])
 #include "likelihood.H"
@@ -69,7 +68,6 @@ using boost::dynamic_bitset;
 
 void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayConstrained*& Matrices)
 {
-  default_timer_stack.push_timer("alignment::DP1/5-way");
   const Tree& T = P.T();
   alignment& A = *P.A.modify();
   alignment old = A;
@@ -253,7 +251,6 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
   if (Matrices->Pr_sum_all_paths() <= 0.0) 
   {
     std::cerr<<"sample_two_nodes_base( ): All paths have probability 0!"<<std::endl;
-    default_timer_stack.pop_timer();
     return; // Matrices;
   }
 
@@ -291,7 +288,6 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
   assert(path_new   == path);
   assert(valid(A));
 #endif
-  default_timer_stack.pop_timer();
 }
 
 static vector<vector<DParrayConstrained*> > cached_dparrays;

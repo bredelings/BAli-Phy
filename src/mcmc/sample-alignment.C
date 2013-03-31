@@ -29,7 +29,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution/substitution-index.H"
 #include "dp/dp-matrix.H"
 #include <boost/shared_ptr.hpp>
-#include "timer_stack.H"
 
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric
@@ -74,7 +73,6 @@ typedef vector< Matrix > (*distributions_t_local)(const data_partition&,
 
 boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b) 
 {
-  default_timer_stack.push_timer("alignment::DP2/2-way");
   assert(P.variable_alignment());
 
   dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, *P.A);
@@ -133,7 +131,6 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   if (Matrices->Pr_sum_all_paths() <= 0.0)
   {
     std::cerr<<"sample_alignment_base( ): All paths have probability 0!"<<std::endl;
-    default_timer_stack.pop_timer();
     return Matrices;
   }
 
@@ -153,7 +150,6 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   assert(path_new == path);
 #endif
 
-  default_timer_stack.pop_timer();
   return Matrices;
 }
 
