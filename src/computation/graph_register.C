@@ -2427,7 +2427,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       assert(evaluate_changeable);
 
       // Evaluate S, looking through unchangeable redirections
-      int call = incremental_evaluate(access(R).call, t);
+      int call = incremental_evaluate(access(R).call, t, evaluate_changeable);
 
       // If access(R).call can be evaluated to refer to S w/o moving through any changable operations, 
       // then it should be safe to change access(R).call to refer to S, even if R is changeable.
