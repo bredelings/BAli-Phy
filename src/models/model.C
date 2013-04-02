@@ -285,7 +285,7 @@ bool Model::has_bounds(int i) const
 {
   if (bounds[i] == -1) return false;
 
-  return dynamic_pointer_cast<const Bounds<double>>(C.evaluate(bounds[i]));
+  return (bool)dynamic_pointer_cast<const Bounds<double>>(C.evaluate(bounds[i]));
 }
 
 const Bounds<double>& Model::get_bounds(int i) const 

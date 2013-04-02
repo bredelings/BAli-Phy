@@ -1826,7 +1826,7 @@ T,U,V -> x
 
 bool is_irrefutable_pattern(const expression_ref& E)
 {
-  return is_a<dummy>(E);
+  return (bool)is_a<dummy>(E);
 }
 
 /// Is this either (a) irrefutable, (b) a constant, or (c) a constructor whose arguments are irrefutable patterns?
@@ -2285,17 +2285,17 @@ bool is_WHNF(const expression_ref& E)
 
 bool is_index_var(const expression_ref& E)
 {
-  return is_a<index_var>(E);
+  return (bool)is_a<index_var>(E);
 }
 
 bool is_dummy(const expression_ref& E)
 {
-  return is_a<dummy>(E);
+  return (bool)is_a<dummy>(E);
 }
 
 bool is_parameter(const expression_ref& E)
 {
-  return is_a<parameter>(E);
+  return (bool)is_a<parameter>(E);
 }
 
 bool is_modifiable(const expression_ref& E)
@@ -2307,12 +2307,12 @@ bool is_modifiable(const expression_ref& E)
 
 bool is_identifier(const expression_ref& E)
 {
-  return is_a<identifier>(E);
+  return (bool)is_a<identifier>(E);
 }
 
 bool is_reg_var(const expression_ref& E)
 {
-  return is_a<reg_var>(E);
+  return (bool)is_a<reg_var>(E);
 }
 
 bool is_reglike(const expression_ref& E)

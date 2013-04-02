@@ -17,5 +17,5 @@ extern "C" closure builtin_function_get_bounds(OperationArgs& Args)
   if (has_upper)
     upper = *has_upper;
   
-  return Bounds<double>(has_lower, lower, has_upper, upper);
+  return Bounds<double>((bool)has_lower, lower, (bool)has_upper, upper);
 }

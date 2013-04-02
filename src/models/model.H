@@ -130,7 +130,7 @@ public:
   object_ptr<const Object> get_parameter_value(const std::string& p_name) const;
 
   template <typename T>
-  bool parameter_has_type(int index) const {return boost::dynamic_pointer_cast<const T>(get_parameter_value(index));}
+  bool parameter_has_type(int index) const {return (bool)boost::dynamic_pointer_cast<const T>(get_parameter_value(index));}
 
   /// Get A model parameter value
   template <typename T>
