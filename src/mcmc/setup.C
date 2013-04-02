@@ -955,13 +955,13 @@ void do_sampling(const variables_map& args,
   // FIXME -   However, it is probably not so important to resample most parameters in a way that is interleaved with stuff... (?)
   // FIXME -   Certainly, we aren't going to be interleaved with branches, anyway!
   sampler.add(5 + log(PP.T().n_branches()), MH_but_no_slice_moves);
-  if (P->lookup_key("enable_MH_sampling") > 0.5)
+  if (P->load_value("enable_MH_sampling",0.0) > 0.5)
     sampler.add(5 + log(PP.T().n_branches()),MH_moves);
   else
     sampler.add(1,MH_moves);
   // Question: how are these moves intermixed with the other ones?
 
-  if (P->lookup_key("disable_slice_sampling") < 0.5)
+  if (P->load_value("disable_slice_sampling", 0.0) < 0.5)
     sampler.add(1,slice_moves);
 
   //------------------- Enable and Disable moves ---------------------------//
@@ -984,7 +984,7 @@ void do_sampling(const variables_map& args,
   } 
 
   sampler.check_moves(P);
-  if (PP.lookup_key("AIS") > 0.5) 
+  if (PP.load_value("AIS",0.0) > 0.5) 
   {
     // before we do this, just run 20 iterations of a sampler that keeps the alignment fixed
     // - first, we need a way to change the tree on a sampler that has internal node sequences?

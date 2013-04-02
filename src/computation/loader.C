@@ -112,15 +112,30 @@ using std::map;
  *        - But is that a problem?
 
  * 11. [SPEED] For bali-phy 5d.fasta --seed=0 --iter=1000
+ *      + ??? Why is diploid_ewens_??( ) calling reapply???
+ *        - Cuz I'm trying to use changeable I/O to create a new OVector each time, that's why!
+ *      + Why is push_temp_head() triggering garbage collection so much?
+ *      + Eliminate roots() in favor of just scanning all the heads in token_roots[*]?
+ *      - Spending 2% in case calling dynamic_cast from Object->compare( ).
+ *      - Spending 1.3% in data_patition::copy()
+ *      - Spending 1% in evaluate_reg_to_object() --- why?
+ *      - Spending 1% in pop_temp_head()
+ *      - Spending 1% in rs07_branch_HMM copying strings!
+ *      - Spending 0.5% copying parameter names.
+ *        + Also calling dynamic_cast from MH_move_iterate.  Total dynamic_cast about 5%.
  *      - MH_Move::iterate( ): 4.5% of CPU time spent checking way too many parameters to see if they are in range.
- *      - Model::keys: 1% copying this every time we set a parameter.
  *      - data_partition::[copy]: 3.7% total copying things.  For example, suba_index, even if it won't change.
+ *      - trace_and_reclaim_unreachable( ) spends 5.1% out of 7.4% in operator new?
+ *        + thus, perhaps 
  *      - (We are spending 20% of the time in operator new.)
  *      - We are spending 7% of the time in __ieee754_log_avx.
  *        - There should be a better way to multiply lots of doubles together while avoiding underflow.
  *      - Remove timer_stack things, in hopes that perf will supersed them.
- *      - 1% of CPU time spend on memory allocation from vector::vector in three_way_topology_sample?
- *      - [DONE] Clear identifiers after loading programs -- Model::compile();
+ *      - push_temp_head( ) iterates over all 64 possible tokens??
+ *        + Doesn't seem to actually take that much time, though!
+ *      - 1% of CPU to spend on memory allocation from vector::vector in three_way_topology_sample?
+ *      - [DONE?] Clear identifiers after loading programs -- Model::compile();
+ *      - [DONE] Model::keys: 1% copying this every time we set a parameter.
 
  * 13. Rationalize Programs, Modules.
  *     13a. [DONE] Allow loading stuff from files.

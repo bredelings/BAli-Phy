@@ -2,10 +2,12 @@
 
 extern "C" closure builtin_function_getIndex(OperationArgs& Args)
 {
-  const closure& C = Args.evaluate_slot_to_closure(0);
   int n = *Args.evaluate_as<Int>(1);
+  // Do this second, so that evaluation of the 1st argument can't call expand_memory afterwards.
+  const closure& C = Args.evaluate_slot_to_closure(0);
 
   int N = C.exp->size();
+  assert(C.Env.size() == C.exp->size());
 
   if (n < 0 or n >= N)
     throw myexception()<<"Trying to access index "<<n<<" in array of size "<<N<<".";
