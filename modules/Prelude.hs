@@ -54,6 +54,7 @@ builtin truncate 1 "truncate" "Prelude";
 builtin ceiling 1 "ceiling" "Prelude";
 builtin floor 1 "floor" "Prelude";
 builtin round 1 "round" "Prelude";
+builtin builtin_vector_from_list 1 "vector_from_list" "Prelude";
 builtin mod 2 "mod";
 builtin builtinError 1 "builtinError";
 builtin seq 2 "seq";
@@ -226,7 +227,8 @@ set_vector_index v i x = IOAction3 builtin_set_vector_index v i x;
 copy_list_to_vector [] v i = return ();
 copy_list_to_vector (h:t) v i = do {set_vector_index v i h; copy_list_to_vector t v (i+1)};
 
-list_to_vector l = unsafePerformIO $ do {v <- new_vector (length l); copy_list_to_vector l v 0; return v};
+slow_list_to_vector l = unsafePerformIO $ do {v <- new_vector (length l); copy_list_to_vector l v 0; return v};
+list_to_vector = builtin_vector_from_list;
 
 newVectorInt s = IOAction1 builtinNewVectorInt s;
 
