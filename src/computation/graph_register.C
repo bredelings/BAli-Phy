@@ -955,6 +955,28 @@ void reg_heap::pop_root(reg_heap::root_t r)
     roots.erase(r);
 }
 
+void reg_heap::get_roots(vector<int>& scan) const
+{
+  for(int t=0;t<get_n_tokens();t++)
+  {
+    if (not token_is_used(t)) continue;
+
+    get_roots(scan,t);
+  }
+}
+
+template <typename T>
+void insert_at_end(vector<int>& v, const T& t)
+{
+  v.insert(v.end(), t.begin(), t.end());
+}
+
+void reg_heap::get_roots(vector<int>& scan, int t) const
+{
+  insert_at_end(scan, token_roots[t].temp);
+  insert_at_end(scan, token_roots[t].heads);
+}
+
 reg_heap::root_t reg_heap::push_temp_head(int t)
 {
   owner_set_t tokens;
@@ -965,12 +987,13 @@ reg_heap::root_t reg_heap::push_temp_head(int t)
 reg_heap::root_t reg_heap::push_temp_head(const owner_set_t& tokens)
 {
   root_t r = allocate_reg();
+  pop_root(r);
   set_reg_owners( *r, tokens );
   for(int t=0;t< tokens.size();t++)
   {
     if (not tokens.test(t)) continue;
 
-    token_roots[t].temp.push_back(r);
+    token_roots[t].temp.push_back(*r);
   }
 
   return r;
@@ -978,9 +1001,7 @@ reg_heap::root_t reg_heap::push_temp_head(const owner_set_t& tokens)
 
 void reg_heap::pop_temp_head(int t)
 {
-  root_t r = token_roots[t].temp.back();
   token_roots[t].temp.pop_back();
-  pop_root(r);
 }
 
 
@@ -988,12 +1009,12 @@ void reg_heap::pop_temp_head(int t)
 void reg_heap::pop_temp_head(const owner_set_t& tokens)
 {
   int t0 = -1;
-  root_t r0;
+  int r0;
 
   for(int t=0;t< tokens.size();t++)
   {
     if (not tokens.test(t)) continue;
-    root_t r = token_roots[t].temp.back();
+    int r = token_roots[t].temp.back();
 
     if (t0 == -1)
     {
@@ -1003,11 +1024,9 @@ void reg_heap::pop_temp_head(const owner_set_t& tokens)
     else
       assert( r == r0 );
 
-    assert( reg_is_owned_by(*r, t) );
+    assert( reg_is_owned_by(r, t) );
     token_roots[t].temp.pop_back();
   }
-
-  pop_root(r0);
 }
 
 void reg_heap::expand_memory(int s)
@@ -1111,6 +1130,9 @@ void reg_heap::trace_and_reclaim_unreachable()
 
   for(int i: roots)
     scan.push_back(i);
+
+  // Put roots that are not on the list into the scan vector.
+  get_roots(scan);
 
   while (not scan.empty())
   {
@@ -1601,7 +1623,7 @@ int reg_heap::uniquify_reg(int R, int t)
   for(int R1:shared_ancestors)
     push_temp_head(t);
 
-  const std::vector<root_t>& temp_heads = get_temp_heads_for_context(t);
+  const std::vector<int>& temp_heads = get_temp_heads_for_context(t);
 
   // 4e. Initialize/Copy changeable
   // 2. Remove regs that got deallocated from the list.
@@ -1613,7 +1635,7 @@ int reg_heap::uniquify_reg(int R, int t)
 
     if (access(R1).state == reg::used and reg_is_shared(R1) and reg_is_owned_by(R1,t))
     {
-      int R2 = *temp_heads[temp_heads.size()-1-i];
+      int R2 = temp_heads[temp_heads.size()-1-i];
       access(R1).temp = R2;
       access(R2).changeable = access(R1).changeable;
       access(R2).re_evaluate = access(R1).re_evaluate;
@@ -1703,8 +1725,8 @@ int reg_heap::uniquify_reg(int R, int t)
   // 4a. Adjust heads to point to the new regs
   for(int j=0;j<token_roots[t].heads.size();j++)
   {
-    int R1 = *token_roots[t].heads[j];
-    *token_roots[t].heads[j] = remap_reg(R1);
+    int R1 = token_roots[t].heads[j];
+    token_roots[t].heads[j] = remap_reg(R1);
   }
 
   // 4b. Adjust parameters to point to the new regs
@@ -2030,11 +2052,8 @@ vector<int> reg_heap::find_all_used_regs_in_context(int t) const
 void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& unique) const
 {
   vector<int>& scan = get_scratch_list();
-  for(const auto& i: token_roots[t].temp)
-    scan.push_back(*i);
 
-  for(const auto& i: token_roots[t].heads)
-    scan.push_back(*i);
+  get_roots(scan, t);
 
   for(const auto& i: token_roots[t].parameters)
     scan.push_back(*i.second);
@@ -2049,14 +2068,13 @@ void reg_heap::find_all_used_regs_in_context(int t, vector<int>& unique) const
 {
   vector<int>& scan = get_scratch_list();
 
-  for(const auto& i: token_roots[t].temp)
-    scan.push_back(*i);
-
-  for(const auto& i: token_roots[t].heads)
-    scan.push_back(*i);
+  get_roots(scan, t);
 
   for(const auto& i: token_roots[t].parameters)
     scan.push_back(*i.second);
+
+  for(const auto& i: token_roots[t].identifiers)
+    scan.push_back(*(i.second));
 
   find_all_regs_in_context_no_check(t,scan,unique);
 
@@ -2158,8 +2176,6 @@ void reg_heap::release_token(int t)
   remove_ownership_mark(t);
 
   // remove the roots for the heads of graph t
-  for(const auto& i: token_roots[t].heads)
-    pop_root(i);
   token_roots[t].heads.clear();
 
   // remove the roots for the parameters of graph t
@@ -2195,8 +2211,7 @@ int reg_heap::copy_token(int t)
 
   assert(token_roots[t].temp.empty());
 
-  for(const auto& i: token_roots[t].heads)
-    token_roots[t2].heads.insert( token_roots[t2].heads.end(), push_root(*i) );
+  token_roots[t2].heads = token_roots[t].heads;
 
   token_roots[t2].parameters = token_roots[t].parameters;
   for(auto& i: token_roots[t2].parameters)
