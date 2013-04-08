@@ -1123,6 +1123,7 @@ void reg_heap::trace_and_reclaim_unreachable()
       R.state = reg::checked;
 
       // Count the references from E
+      // FIXME - speed?
       next_scan.insert(next_scan.end(), R.C.Env.begin(), R.C.Env.end());
 
       // Count also the references from the call
