@@ -368,9 +368,11 @@ int context::add_parameter(const string& full_name)
   int index = n_parameters();
 
   root_t r = allocate_reg();
-  parameters().push_back( {full_name, r} );
+  parameters().push_back( {full_name, *r} );
 
   set_C(*r, preprocess( (identifier("unsafePerformIO"),(identifier("new_modifiable"),get_token()) ) ) );
+
+  pop_root(r);
 
   return index;
 }
@@ -626,7 +628,8 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 	assert(find_parameter(S.name) == -1);
 
 	root_t r = allocate_reg();
-	parameters().push_back( {S.name, r} );
+	parameters().push_back( {S.name, *r} );
+	pop_root(r);
       }
     }
   }
@@ -798,7 +801,7 @@ int context::get_parameter_reg(int index) const
 {
   assert(index >= 0 and index < n_parameters());
 
-  return *parameters()[index].second;
+  return parameters()[index].second;
 }
 
 int context::find_parameter_modifiable_reg(int index) const
@@ -808,7 +811,7 @@ int context::find_parameter_modifiable_reg(int index) const
   int R2 = incremental_evaluate(R, false);
 
   if (R != R2)
-    *parameters()[index].second = R2;
+    parameters()[index].second = R2;
 
 #ifndef NDEBUG
   if (not is_modifiable(access(R2).C.exp))

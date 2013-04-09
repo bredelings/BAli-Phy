@@ -975,6 +975,8 @@ void reg_heap::get_roots(vector<int>& scan, int t) const
 {
   insert_at_end(scan, token_roots[t].temp);
   insert_at_end(scan, token_roots[t].heads);
+  for(int j=0;j<token_roots[t].parameters.size();j++)
+    scan.push_back(token_roots[t].parameters[j].second);
 }
 
 reg_heap::root_t reg_heap::push_temp_head(int t)
@@ -1733,8 +1735,8 @@ int reg_heap::uniquify_reg(int R, int t)
   // 4b. Adjust parameters to point to the new regs
   for(int j=0;j<token_roots[t].parameters.size();j++)
   {
-    int R1 = *token_roots[t].parameters[j].second;
-    *token_roots[t].parameters[j].second = remap_reg(R1);
+    int R1 = token_roots[t].parameters[j].second;
+    token_roots[t].parameters[j].second = remap_reg(R1);
   }
 
   // 4c. Adjust identifiers to point to the new regs
@@ -2056,9 +2058,6 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& unique) con
 
   get_roots(scan, t);
 
-  for(const auto& i: token_roots[t].parameters)
-    scan.push_back(*i.second);
-
   for(const auto& i: token_roots[t].identifiers)
     scan.push_back(*(i.second));
 
@@ -2070,9 +2069,6 @@ void reg_heap::find_all_used_regs_in_context(int t, vector<int>& unique) const
   vector<int>& scan = get_scratch_list();
 
   get_roots(scan, t);
-
-  for(const auto& i: token_roots[t].parameters)
-    scan.push_back(*i.second);
 
   for(const auto& i: token_roots[t].identifiers)
     scan.push_back(*(i.second));
@@ -2180,8 +2176,6 @@ void reg_heap::release_token(int t)
   token_roots[t].heads.clear();
 
   // remove the roots for the parameters of graph t
-  for(const auto&i: token_roots[t].parameters)
-    pop_root(i.second);
   token_roots[t].parameters.clear();
 
   // remove the roots for the identifiers of graph t
@@ -2215,8 +2209,6 @@ int reg_heap::copy_token(int t)
   token_roots[t2].heads = token_roots[t].heads;
 
   token_roots[t2].parameters = token_roots[t].parameters;
-  for(auto& i: token_roots[t2].parameters)
-    i.second = push_root(*i.second);
 
   token_roots[t2].identifiers = token_roots[t].identifiers;
   for(auto& i: token_roots[t2].identifiers)
@@ -2858,7 +2850,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
   const auto& params = C.get_parameters_for_context(t);
   for(const auto& p: params)
-    reg_names[*p.second] = p.first;
+    reg_names[p.second] = p.first;
 
   map<string,string> simplify = get_simplified_names(get_names(ids));
 
