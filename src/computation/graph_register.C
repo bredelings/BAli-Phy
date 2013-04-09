@@ -981,26 +981,27 @@ void reg_heap::get_roots(vector<int>& scan, int t) const
     scan.push_back(i.second);
 }
 
-reg_heap::root_t reg_heap::push_temp_head(int t)
+int reg_heap::push_temp_head(int t)
 {
   owner_set_t tokens;
   tokens.set(t,true);
   return push_temp_head(tokens);
 }
 
-reg_heap::root_t reg_heap::push_temp_head(const owner_set_t& tokens)
+int reg_heap::push_temp_head(const owner_set_t& tokens)
 {
   root_t r = allocate_reg();
+  int R = *r;
   pop_root(r);
-  set_reg_owners( *r, tokens );
+  set_reg_owners( R, tokens );
   for(int t=0;t< tokens.size();t++)
   {
     if (not tokens.test(t)) continue;
 
-    token_roots[t].temp.push_back(*r);
+    token_roots[t].temp.push_back(R);
   }
 
-  return r;
+  return R;
 }
 
 void reg_heap::pop_temp_head(int t)
@@ -2293,7 +2294,7 @@ public:
 
   int allocate(closure&& C)
   {
-    int r = *M.push_temp_head( owners );
+    int r = M.push_temp_head( owners );
     M.set_C(r, std::move(C) );
     n_allocated++;
     return r;
@@ -2490,7 +2491,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
 	// Hmm... should this happen at all?  How?
 
-	int V = *push_temp_head(owners);
+	int V = push_temp_head(owners);
 	new_heap_vars.push_back( V );
 	local_env.push_back( V );
       }

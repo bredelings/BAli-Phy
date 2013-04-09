@@ -158,7 +158,7 @@ object_ref context::evaluate(int index) const
 closure context::lazy_evaluate_expression_(closure&& C, bool ec) const
 {
   try {
-    int R = *push_temp_head();
+    int R = push_temp_head();
     set_C(R, std::move(C) );
 
     R = incremental_evaluate(R,ec);
@@ -790,7 +790,7 @@ context::~context()
   memory->release_token(token);
 }
 
-reg_heap::root_t context::push_temp_head() const
+int context::push_temp_head() const
 {
   return memory->push_temp_head( token );
 }

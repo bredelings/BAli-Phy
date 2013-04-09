@@ -43,7 +43,7 @@ public:
 private:
   void release_identifiers();
 
-  root_t push_temp_head() const;
+  int push_temp_head() const;
   void pop_temp_head() const;
 
   int get_parameter_reg(int i) const;
