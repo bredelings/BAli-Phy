@@ -1,4 +1,3 @@
-#undef NDEBUG
 #include "computation/computation.H"
 
 extern "C" closure builtin_function_log(OperationArgs& Args)
