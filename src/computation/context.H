@@ -14,7 +14,7 @@ class context: public Model_Notes
   //         (that is, which we are in the middle of modifying the context)?
 
   /// The array of registers that make up our memory.
-  mutable boost::shared_ptr<reg_heap> memory;
+  mutable object_ptr<reg_heap> memory;
 
   // FIXME:speed - This is going to be really slow to copy around all the time!
   // FIXME:speed - Instead, wrap in cow_ptr< >.

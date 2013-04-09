@@ -87,7 +87,7 @@ public:
 // * well, parameters could be reg's, so that a separate reg must be a separate parameter.
 // * how, then, do we handle reg NAME's, if reg's are not uniquely identified by their names?
 
-class reg_heap
+class reg_heap: public Object
 {
   std::vector<reg> memory;
   CacheList<int> roots;
@@ -124,6 +124,8 @@ class reg_heap
   void check_used_regs() const;
 
 public:
+
+  reg_heap* clone() const {std::abort();}
 
   const reg& access(int i) const {return memory[i];}
         reg& access(int i)       {return memory[i];}
