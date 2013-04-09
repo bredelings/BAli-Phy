@@ -64,7 +64,7 @@ string context::parameter_name(int i) const
   return parameters()[i].first;
 }
 
-reg_heap::root_t context::add_identifier(const string& name) const
+int context::add_identifier(const string& name) const
 {
   if (find_parameter(name) != -1)
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already a parameter with that name.";
@@ -503,8 +503,7 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
 	loc = identifiers().find(S.name);
 	assert(loc != identifiers().end());
 	
-	root_t r = loc->second;
-	int R = *r;
+	int R = loc->second;
 	
 	assert(R != -1);
 	set_C(R, preprocess(S.body) );
@@ -513,7 +512,7 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
 	throw myexception()<<"Can't translate undefined identifier '"<<V->name<<"' in expression!";
     }
 
-    reg = *(loc->second);
+    reg = loc->second;
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
@@ -656,10 +655,9 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
       if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
 
       // get the root for each identifier
-      map<string, root_t>::iterator loc = identifiers().find(S.name);
+      auto loc = identifiers().find(S.name);
       assert(loc != identifiers().end());
-      root_t r = loc->second;
-      int R = *r;
+      int R = loc->second;
 
       expression_ref F = M.get_function(S.name);
       assert(F);

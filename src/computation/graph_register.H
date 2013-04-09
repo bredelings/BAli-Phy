@@ -187,7 +187,7 @@ public:
     std::vector<std::pair<std::string,int>> parameters;
 
     /// Probably this would be non-parameter identifiers
-    std::map<std::string, root_t> identifiers;
+    std::map<std::string, int> identifiers;
 
     /// The register indices of non-root parameters
     pool<int> modifiable_regs;
@@ -211,8 +211,8 @@ public:
   const pool<int>& get_modifiable_regs_for_context(int t) const {return token_roots[t].modifiable_regs;}
         pool<int>& get_modifiable_regs_for_context(int t)       {return token_roots[t].modifiable_regs;}
 
-  const std::map<std::string,root_t>& get_identifiers_for_context(int t) const {return token_roots[t].identifiers;}
-        std::map<std::string,root_t>& get_identifiers_for_context(int t)       {return token_roots[t].identifiers;}
+  const std::map<std::string,int>& get_identifiers_for_context(int t) const {return token_roots[t].identifiers;}
+        std::map<std::string,int>& get_identifiers_for_context(int t)       {return token_roots[t].identifiers;}
 
   const std::vector<int>& triggers(int t) const {return token_roots[t].triggers;}
         std::vector<int>& triggers(int t)       {return token_roots[t].triggers;}
@@ -230,7 +230,7 @@ public:
   void pop_temp_head(const owner_set_t& tokens);
 
   /// Add a new identifier, pointing to a newly allocated location
-  root_t add_identifier_to_context(int, const std::string&);
+  int add_identifier_to_context(int, const std::string&);
 
   /// The roots for each token
   std::vector<graph_roots> token_roots;

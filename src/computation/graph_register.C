@@ -977,6 +977,8 @@ void reg_heap::get_roots(vector<int>& scan, int t) const
   insert_at_end(scan, token_roots[t].heads);
   for(int j=0;j<token_roots[t].parameters.size();j++)
     scan.push_back(token_roots[t].parameters[j].second);
+  for(const auto& i: token_roots[t].identifiers)
+    scan.push_back(i.second);
 }
 
 reg_heap::root_t reg_heap::push_temp_head(int t)
@@ -1610,7 +1612,7 @@ int reg_heap::uniquify_reg(int R, int t)
     const map<string,root_t>& identifiers = get_identifiers_for_context(t);
     for(const auto& ident: identifiers)
     {
-      assert(not access(*ident.second).changeable);
+      assert(not access(ident.second).changeable);
     }
   }
   */
@@ -1740,11 +1742,11 @@ int reg_heap::uniquify_reg(int R, int t)
   }
 
   // 4c. Adjust identifiers to point to the new regs
-  for(const auto& j: token_roots[t].identifiers)
+  for(auto& j: token_roots[t].identifiers)
   {
     // Hmmm.... this could be a lot of identifiers to scan...
-    int R1 = *j.second;
-    *j.second = remap_reg(R1);
+    int R1 = j.second;
+    j.second = remap_reg(R1);
   }
 
   // 4d. Adjust modifiable_regs to point to the new regs
@@ -2058,9 +2060,6 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& unique) con
 
   get_roots(scan, t);
 
-  for(const auto& i: token_roots[t].identifiers)
-    scan.push_back(*(i.second));
-
   find_all_regs_in_context_no_check(t,scan,unique);
 }
 
@@ -2069,9 +2068,6 @@ void reg_heap::find_all_used_regs_in_context(int t, vector<int>& unique) const
   vector<int>& scan = get_scratch_list();
 
   get_roots(scan, t);
-
-  for(const auto& i: token_roots[t].identifiers)
-    scan.push_back(*(i.second));
 
   find_all_regs_in_context_no_check(t,scan,unique);
 
@@ -2152,11 +2148,9 @@ void reg_heap::find_all_regs_in_context(int t, vector<int>& unique) const
 #endif
 }
 
+/// Remove the roots for the identifiers of graph t
 void reg_heap::release_identifiers(int t)
 {
-  // remove the roots for the identifiers of graph t
-  for(const auto& i: token_roots[t].identifiers)
-    pop_root(i.second);
   token_roots[t].identifiers.clear();
 }
 
@@ -2179,8 +2173,6 @@ void reg_heap::release_token(int t)
   token_roots[t].parameters.clear();
 
   // remove the roots for the identifiers of graph t
-  for(const auto& i: token_roots[t].identifiers)
-    pop_root(i.second);
   token_roots[t].identifiers.clear();
 
   // remove the table of parameter locations for graph t
@@ -2211,8 +2203,6 @@ int reg_heap::copy_token(int t)
   token_roots[t2].parameters = token_roots[t].parameters;
 
   token_roots[t2].identifiers = token_roots[t].identifiers;
-  for(auto& i: token_roots[t2].identifiers)
-    i.second = push_root(*i.second);
 
   token_roots[t2].modifiable_regs = token_roots[t].modifiable_regs;
 
@@ -2227,18 +2217,20 @@ int reg_heap::n_null_regs() const
   return 1;
 }
 
-reg_heap::root_t reg_heap::add_identifier_to_context(int t, const string& name)
+int reg_heap::add_identifier_to_context(int t, const string& name)
 {
-  map<string,root_t>& identifiers = get_identifiers_for_context(t);
+  map<string,int>& identifiers = get_identifiers_for_context(t);
 
   // if there's already an 's', then complain
   if (identifiers.count(name))
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
 
   root_t r = allocate_reg();
-  reg_add_owner(*r, t);
-  identifiers[name] = r;
-  return r;
+  int R = *r;
+  reg_add_owner(R, t);
+  identifiers[name] = R;
+  pop_root(r);
+  return R;
 }
 
 reg_heap::reg_heap()
@@ -2329,8 +2321,8 @@ public:
   }
 };
 
-expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, reg_heap::root_t>&);
-expression_ref untranslate_vars(const expression_ref& E, const map<string, reg_heap::root_t>& ids);
+expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>&);
+expression_ref untranslate_vars(const expression_ref& E, const map<string, int>& ids);
 expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& ids);
 map<int,string> get_constants(const reg_heap& C, int t);
 
@@ -2658,7 +2650,7 @@ expression_ref subst_referenced_vars(const expression_ref& E, const vector<int>&
     return E;
 }
 
-void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& names, const map<string, reg_heap::root_t>& id)
+void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& names, const map<string, int>& id)
 {
   const closure& C = H.access(R).C;
 
@@ -2760,15 +2752,15 @@ expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& 
   return V;
 }
 
-map<int,string> get_register_names(const map<string, reg_heap::root_t>& ids)
+map<int,string> get_register_names(const map<string, int>& ids)
 {
   map<int,string> ids2;
   for(const auto i:ids)
-    ids2[*i.second] = i.first;
+    ids2[i.second] = i.first;
   return ids2;
 }
 
-set<string> get_names(const map<string, reg_heap::root_t>& ids)
+set<string> get_names(const map<string, int>& ids)
 {
   set<string> names;
   for(const auto i:ids)
@@ -2776,19 +2768,19 @@ set<string> get_names(const map<string, reg_heap::root_t>& ids)
   return names;
 }
 
-expression_ref untranslate_vars(const expression_ref& E, const map<string, reg_heap::root_t>& ids)
+expression_ref untranslate_vars(const expression_ref& E, const map<string, int>& ids)
 {
   return untranslate_vars(E, get_register_names(ids));
 }
 
-expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, reg_heap::root_t>& ids)
+expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>& ids)
 {
   return C[R].C.exp;
 
   map< int, expression_ref> names;
   for(const auto& id: ids)
   {
-    int R = *(id.second);
+    int R = id.second;
     string name = id.first;
     names[R] = expression_ref(new identifier(name) );
   }

@@ -32,11 +32,9 @@ private:
 
   std::vector<std::pair<std::string,int>>& parameters() const {return memory->get_parameters_for_context(token);}
 
-  const pool<int>& modifiable_regs() const {return memory->get_modifiable_regs_for_context(token);}
-        pool<int>& modifiable_regs()       {return memory->get_modifiable_regs_for_context(token);}
+  pool<int>& modifiable_regs() const {return memory->get_modifiable_regs_for_context(token);}
 
-  const std::map<std::string, root_t>& identifiers() const {return memory->get_identifiers_for_context(token);}
-        std::map<std::string, root_t>& identifiers()       {return memory->get_identifiers_for_context(token);}
+  std::map<std::string, int>& identifiers() const {return memory->get_identifiers_for_context(token);}
 
 public:
   const std::vector<int>& triggers() const {return memory->triggers(token);}
@@ -179,7 +177,7 @@ public:
   int add_parameter(const std::string& s);
 
   /// Reserve an identifier with name s
-  root_t add_identifier(const std::string& s) const;
+  int add_identifier(const std::string& s) const;
 
   /// Add a literal expression that MAY be reduced
   int add_compute_expression(const expression_ref& e);
