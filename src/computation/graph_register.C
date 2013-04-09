@@ -1070,7 +1070,7 @@ reg_heap::root_t reg_heap::allocate_reg()
   //SLOW! assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
   assert(access(r).state == reg::used);
 
-  root_t root = roots.insert(roots.end(), r);
+  root_t root = push_root(r);
 
   return root;
 }
