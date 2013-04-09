@@ -130,7 +130,7 @@ bool context::reg_is_fully_up_to_date(int R) const
 
 bool context::compute_expression_is_up_to_date(int index) const
 {
-  int& H = *heads()[index];
+  int H = heads()[index];
 
   return reg_is_fully_up_to_date(H);
 }
@@ -138,7 +138,7 @@ bool context::compute_expression_is_up_to_date(int index) const
 /// Return the value of a particular index, computing it if necessary
 closure context::lazy_evaluate(int index) const
 {
-  int& H = *heads()[index];
+  int& H = heads()[index];
 
   H = incremental_evaluate(H);
 
@@ -148,7 +148,7 @@ closure context::lazy_evaluate(int index) const
 /// Return the value of a particular index, computing it if necessary
 object_ref context::evaluate(int index) const
 {
-  int& H = *heads()[index];
+  int& H = heads()[index];
 
   H = incremental_evaluate(H);
 
@@ -387,7 +387,7 @@ int context::add_compute_expression_(closure&& C)
   root_t r = allocate_reg();
   set_C( *r, std::move(C) );
 
-  heads().push_back( r );
+  heads().push_back( *r );
   return heads().size() - 1;
 }
 
@@ -403,15 +403,14 @@ void context::set_compute_expression_(int i, closure&& C)
   root_t r2 = allocate_reg();
   set_C( *r2, std::move(C) );
 
-  root_t r1 = heads()[i];
-  heads()[i] = r2;
-  pop_root(r1);
+  heads()[i] = *r2;
+  pop_root(r2);
 }
 
 /// Should the ith compute expression be re_evaluated when invalidated?
 void context::set_re_evaluate(int i, bool b)
 {
-  int& R = *heads()[i];
+  int& R = heads()[i];
   R = incremental_evaluate(R,true);
   if (access(R).changeable)
     access(R).re_evaluate = b;
@@ -425,7 +424,7 @@ int context::n_expressions() const
 
 expression_ref context::get_expression(int i) const
 {
-  int H = *heads()[i];
+  int H = heads()[i];
   return reg_var(H);
 }
 

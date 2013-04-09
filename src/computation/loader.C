@@ -112,9 +112,6 @@ using std::map;
  *        - But is that a problem?
 
  * 11. [SPEED] For bali-phy 5d.fasta --seed=0 --iter=1000
- *      + ??? Why is diploid_ewens_??( ) calling reapply???
- *        - Cuz I'm trying to use changeable I/O to create a new OVector each time, that's why!
- *      + Why is push_temp_head() triggering garbage collection so much?
  *      + Eliminate roots() in favor of just scanning all the heads in token_roots[*]?
  *      - Spending 2% in case calling dynamic_cast from Object->compare( ).
  *      - Spending 1.3% in data_patition::copy()
@@ -122,6 +119,12 @@ using std::map;
  *      - Spending 1% in pop_temp_head()
  *      - Spending 1% in rs07_branch_HMM copying strings!
  *      - Spending 0.5% copying parameter names.
+ *      + ------------------------------------------- +
+ *      + Why is set_reg_value spending so much time in incremental_evaluate?
+ *      + Spending 7.7% in _List_node_base::_M_transfer
+ *        - accounts for 6.5% out of 11.81% of reg_heap::release_token( ).
+ *      + Spending 1.7% deleting counted_base
+ *      + ------------------------------------------- +
  *        + Also calling dynamic_cast from MH_move_iterate.  Total dynamic_cast about 5%.
  *      - MH_Move::iterate( ): 4.5% of CPU time spent checking way too many parameters to see if they are in range.
  *      - data_partition::[copy]: 3.7% total copying things.  For example, suba_index, even if it won't change.
@@ -136,6 +139,7 @@ using std::map;
  *      - 1% of CPU to spend on memory allocation from vector::vector in three_way_topology_sample?
  *      - [DONE?] Clear identifiers after loading programs -- Model::compile();
  *      - [DONE] Model::keys: 1% copying this every time we set a parameter.
+ *      - [DONE] 3x speed-up by implementing C++ version of vector_from_list
 
  * 13. Rationalize Programs, Modules.
  *     13a. [DONE] Allow loading stuff from files.

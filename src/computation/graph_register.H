@@ -172,13 +172,16 @@ public:
   /// The list of unused_tokens
   std::vector<int> unused_tokens;
 
+  void get_roots(std::vector<int>&) const;
+  void get_roots(std::vector<int>&,int) const;
+
   struct graph_roots
   {
     // the list of expressions that we are temporarily evaluating
-    std::vector<root_t> temp;
+    std::vector<int> temp;
 
     // the list of expressions that we are interested in evaluating.
-    std::vector<root_t> heads;
+    std::vector<int> heads;
     
     /// The register indices of the named parameters.
     std::vector<std::pair<std::string,root_t>> parameters;
@@ -196,11 +199,11 @@ public:
     graph_roots():used(false) {}
   };
 
-  const std::vector<root_t>& get_temp_heads_for_context(int t) const {return token_roots[t].temp;}
-        std::vector<root_t>& get_temp_heads_for_context(int t)       {return token_roots[t].temp;}
+  const std::vector<int>& get_temp_heads_for_context(int t) const {return token_roots[t].temp;}
+        std::vector<int>& get_temp_heads_for_context(int t)       {return token_roots[t].temp;}
 
-  const std::vector<root_t>& get_heads_for_context(int t) const {return token_roots[t].heads;}
-        std::vector<root_t>& get_heads_for_context(int t)       {return token_roots[t].heads;}
+  const std::vector<int>& get_heads_for_context(int t) const {return token_roots[t].heads;}
+        std::vector<int>& get_heads_for_context(int t)       {return token_roots[t].heads;}
 
   const std::vector<std::pair<std::string,root_t>>& get_parameters_for_context(int t) const {return token_roots[t].parameters;}
         std::vector<std::pair<std::string,root_t>>& get_parameters_for_context(int t)       {return token_roots[t].parameters;}

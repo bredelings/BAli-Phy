@@ -26,10 +26,9 @@ private:
 
   int token;
 
-  std::vector<root_t>& temp_heads() const {return memory->get_temp_heads_for_context(token);}
+  std::vector<int>& temp_heads() const {return memory->get_temp_heads_for_context(token);}
 
-  const std::vector<root_t>& heads() const {return memory->get_heads_for_context(token);}
-        std::vector<root_t>& heads()       {return memory->get_heads_for_context(token);}
+  std::vector<int>& heads() const {return memory->get_heads_for_context(token);}
 
   const std::vector<std::pair<std::string,root_t>>& parameters() const {return memory->get_parameters_for_context(token);}
         std::vector<std::pair<std::string,root_t>>& parameters()       {return memory->get_parameters_for_context(token);}
