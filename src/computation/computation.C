@@ -11,7 +11,7 @@ int OperationArgs::reg_for_slot(int slot) const
 
 int OperationArgs::n_args() const {return current_closure().exp->sub.size();}
 
-expression_ref OperationArgs::reference(int slot) const {return current_closure().exp->sub[slot];}
+const expression_ref& OperationArgs::reference(int slot) const {return current_closure().exp->sub[slot];}
 
 const closure& OperationArgs::evaluate_slot_to_closure(int slot)
 {
@@ -63,22 +63,22 @@ const closure& OperationArgs::evaluate_reg_to_closure(int R)
   return evaluate_reg_to_closure(R, evaluate_changeables());
 }
 
-object_ref OperationArgs::evaluate_reg_to_object(int R2)
+const object_ptr<const Object>& OperationArgs::evaluate_reg_to_object(int R2)
 {
-  expression_ref result = evaluate_reg_to_closure(R2).exp->head;
+  const object_ptr<const Object>& result = evaluate_reg_to_closure(R2).exp->head;
 #ifndef NDEBUG
-  if (is_a<lambda2>(result))
+  if (is_a<lambda2>(expression_ref(result)))
     throw myexception()<<"Evaluating lambda as object: "<<result->print();
 #endif
-  return result->head;
+  return result;
 }
 
-object_ref OperationArgs::evaluate_slot_to_object(int slot)
+const object_ptr<const Object>& OperationArgs::evaluate_slot_to_object(int slot)
 {
   return evaluate_reg_to_object(reg_for_slot(slot));
 }
 
-object_ref OperationArgs::evaluate(int slot)
+const object_ptr<const Object>& OperationArgs::evaluate(int slot)
 {
   return evaluate_slot_to_object(slot);
 }

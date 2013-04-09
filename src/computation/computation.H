@@ -21,7 +21,7 @@ struct OperationArgs: public Object
 
   int n_args() const;
 
-  expression_ref reference(int slot) const;
+  const expression_ref& reference(int slot) const;
 
   int reg_for_slot(int slot) const;
 
@@ -47,11 +47,11 @@ struct OperationArgs: public Object
 
   const closure& evaluate_slot_to_closure(int);
 
-  object_ref evaluate_reg_to_object(int);
+  const object_ptr<const Object>& evaluate_reg_to_object(int);
 
-  object_ref evaluate_slot_to_object(int);
+  const object_ptr<const Object>& evaluate_slot_to_object(int);
 
-  object_ref evaluate(int);
+  const object_ptr<const Object>& evaluate(int);
 
   template <typename T>
   object_ptr<const T> evaluate_as(int slot)
