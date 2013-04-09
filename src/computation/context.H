@@ -10,10 +10,6 @@ class Module;
 /// This class contains only compute expressions, parameters, and names for the compute expressions
 class context: public Model_Notes
 {
-public:
-  typedef reg_heap::root_t root_t;
-
-private:
   // FIXME - disallow operator=() as long as there are any regs on the stack?
   //         (that is, which we are in the middle of modifying the context)?
 
@@ -70,10 +66,6 @@ public:
   const std::vector<Module>& get_Program() const {return *P;}
 
   int add_note(const expression_ref&);
-
-  /// Remove a stack-allocated reg from the stack.
-  root_t push_root(int R) const {return memory->push_root(R);}
-  void pop_root(root_t r) const {memory->pop_root(r);}
 
   /// The total size of the reg memory
   int n_regs() const {return memory->n_regs();}
@@ -204,10 +196,10 @@ protected:
   int incremental_evaluate(int R, bool ec=true) const {return memory->incremental_evaluate(R,token,ec);}
 
   /// Allocate a reg which will be a root for garbage-collection
-  root_t allocate_reg() const {
-    root_t r = memory->allocate_reg();
-    memory->reg_add_owner(*r, token);
-    return r;
+  int allocate_reg() const {
+    int R = memory->allocate_reg();
+    memory->reg_add_owner(R, token);
+    return R;
   }
 
   module_loader loader;

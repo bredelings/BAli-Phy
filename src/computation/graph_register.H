@@ -124,8 +124,6 @@ class reg_heap
   void check_used_regs() const;
 
 public:
-  typedef CacheList<int>::iterator root_t;
-  typedef CacheList<int>::const_iterator const_root_t;
 
   const reg& access(int i) const {return memory[i];}
         reg& access(int i)       {return memory[i];}
@@ -148,10 +146,7 @@ public:
   int n_used_regs() const;
   int n_null_regs() const;
 
-  root_t push_root(int);
-  void pop_root(root_t);
-
-  root_t allocate_reg();
+  int allocate_reg();
 
   void collect_garbage();
   void trace_and_reclaim_unreachable();

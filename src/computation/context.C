@@ -367,9 +367,7 @@ int context::add_parameter(const string& full_name)
 
   int index = n_parameters();
 
-  root_t r = allocate_reg();
-  int R = *r;
-  pop_root(r);
+  int R = allocate_reg();
 
   parameters().push_back( {full_name, R} );
 
@@ -387,9 +385,7 @@ int context::add_compute_expression(const expression_ref& E)
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression_(closure&& C)
 {
-  root_t r = allocate_reg();
-  int R = *r;
-  pop_root(r);
+  int R = allocate_reg();
 
   heads().push_back( R);
 
@@ -407,9 +403,7 @@ void context::set_compute_expression(int i, const expression_ref& E)
 /// Change the i-th compute expression to e
 void context::set_compute_expression_(int i, closure&& C)
 {
-  root_t r = allocate_reg();
-  int R = *r;
-  pop_root(r);
+  int R = allocate_reg();
 
   heads()[i] = R;
 
@@ -633,9 +627,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
       {
 	assert(find_parameter(S.name) == -1);
 
-	root_t r = allocate_reg();
-	int R = *r;
-	pop_root(r);
+	int R = allocate_reg();
 
 	parameters().push_back( {S.name, R} );
       }

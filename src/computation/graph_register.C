@@ -698,9 +698,7 @@ void reg_heap::set_reduction_result(int R, closure&& result)
   // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the result and call it.
   else
   {
-    root_t r = allocate_reg();
-    int R2 = *r;
-    pop_root(r);
+    int R2 = allocate_reg();
 
     set_reg_ownership_category(R2, get_reg_ownership_category(R));
     set_C(R2, std::move( result ) );
@@ -945,18 +943,6 @@ void reg_heap::reclaim_used_reg(int r)
   add_reg_to_free_list(r);
 }
 
-reg_heap::root_t reg_heap::push_root(int R)
-{
-  assert(0 <= R and R < n_regs());
-  return roots.insert(roots.end(), R);
-}
-
-void reg_heap::pop_root(reg_heap::root_t r)
-{
-  if (r != roots.end())
-    roots.erase(r);
-}
-
 void reg_heap::get_roots(vector<int>& scan) const
 {
   for(int t=0;t<get_n_tokens();t++)
@@ -992,9 +978,7 @@ int reg_heap::push_temp_head(int t)
 
 int reg_heap::push_temp_head(const owner_set_t& tokens)
 {
-  root_t r = allocate_reg();
-  int R = *r;
-  pop_root(r);
+  int R = allocate_reg();
 
   set_reg_owners( R, tokens );
   for(int t=0;t< tokens.size();t++)
@@ -1049,7 +1033,7 @@ void reg_heap::expand_memory(int s)
   assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
 }
 
-reg_heap::root_t reg_heap::allocate_reg()
+int reg_heap::allocate_reg()
 {
   // SLOW!  assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
 
@@ -1074,9 +1058,7 @@ reg_heap::root_t reg_heap::allocate_reg()
   //SLOW! assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
   assert(access(r).state == reg::used);
 
-  root_t root = push_root(r);
-
-  return root;
+  return r;
 }
 
 void reg_heap::remove_unused_ownership_marks()
@@ -1613,7 +1595,7 @@ int reg_heap::uniquify_reg(int R, int t)
 
   /*
   {
-    const map<string,root_t>& identifiers = get_identifiers_for_context(t);
+    const map<string,int>& identifiers = get_identifiers_for_context(t);
     for(const auto& ident: identifiers)
     {
       assert(not access(ident.second).changeable);
@@ -2223,9 +2205,7 @@ int reg_heap::add_identifier_to_context(int t, const string& name)
   if (identifiers.count(name))
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
 
-  root_t r = allocate_reg();
-  int R = *r;
-  pop_root(r);
+  int R = allocate_reg();
 
   reg_add_owner(R, t);
   identifiers[name] = R;
