@@ -368,11 +368,12 @@ int context::add_parameter(const string& full_name)
   int index = n_parameters();
 
   root_t r = allocate_reg();
-  parameters().push_back( {full_name, *r} );
-
-  set_C(*r, preprocess( (identifier("unsafePerformIO"),(identifier("new_modifiable"),get_token()) ) ) );
-
+  int R = *r;
   pop_root(r);
+
+  parameters().push_back( {full_name, R} );
+
+  set_C(R, preprocess( (identifier("unsafePerformIO"),(identifier("new_modifiable"),get_token()) ) ) );
 
   return index;
 }
@@ -387,9 +388,13 @@ int context::add_compute_expression(const expression_ref& E)
 int context::add_compute_expression_(closure&& C)
 {
   root_t r = allocate_reg();
-  set_C( *r, std::move(C) );
+  int R = *r;
+  pop_root(r);
 
-  heads().push_back( *r );
+  heads().push_back( R);
+
+  set_C( R, std::move(C) );
+
   return heads().size() - 1;
 }
 

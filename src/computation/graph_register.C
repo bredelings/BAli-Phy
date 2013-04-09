@@ -699,10 +699,12 @@ void reg_heap::set_reduction_result(int R, closure&& result)
   else
   {
     root_t r = allocate_reg();
-    set_reg_ownership_category(*r, get_reg_ownership_category(R));
-    set_C(*r, std::move( result ) );
-    set_call(R, *r);
+    int R2 = *r;
     pop_root(r);
+
+    set_reg_ownership_category(R2, get_reg_ownership_category(R));
+    set_C(R2, std::move( result ) );
+    set_call(R, R2);
   }
 }
 
@@ -993,6 +995,7 @@ int reg_heap::push_temp_head(const owner_set_t& tokens)
   root_t r = allocate_reg();
   int R = *r;
   pop_root(r);
+
   set_reg_owners( R, tokens );
   for(int t=0;t< tokens.size();t++)
   {
@@ -2222,9 +2225,10 @@ int reg_heap::add_identifier_to_context(int t, const string& name)
 
   root_t r = allocate_reg();
   int R = *r;
+  pop_root(r);
+
   reg_add_owner(R, t);
   identifiers[name] = R;
-  pop_root(r);
   return R;
 }
 
