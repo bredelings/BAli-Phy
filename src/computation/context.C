@@ -407,11 +407,13 @@ void context::set_compute_expression(int i, const expression_ref& E)
 /// Change the i-th compute expression to e
 void context::set_compute_expression_(int i, closure&& C)
 {
-  root_t r2 = allocate_reg();
-  set_C( *r2, std::move(C) );
+  root_t r = allocate_reg();
+  int R = *r;
+  pop_root(r);
 
-  heads()[i] = *r2;
-  pop_root(r2);
+  heads()[i] = R;
+
+  set_C( R, std::move(C) );
 }
 
 /// Should the ith compute expression be re_evaluated when invalidated?
@@ -632,8 +634,10 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 	assert(find_parameter(S.name) == -1);
 
 	root_t r = allocate_reg();
-	parameters().push_back( {S.name, *r} );
+	int R = *r;
 	pop_root(r);
+
+	parameters().push_back( {S.name, R} );
       }
     }
   }
