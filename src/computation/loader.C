@@ -113,9 +113,7 @@ using std::map;
 
  * 11. [SPEED] For bali-phy 5d.fasta --seed=0 --iter=1000
  *      + Split parameter names out of token roots?  Identifier names also? Program also?
- *      + Speed up remap_reg?  Make sure its inlined?
- *      + Make Vector into something that can be used like vector.
- *       -> Make alignment, Program, reg_heap, etc into Objects and switch cow_ptr to intrusive_ptr
+ *      + Speed up remap_reg?  Make sure its inlined?  Make access(R).temp = R so we need no condition?
  *      - Spending 3.5% in evaluate_reg_to_object( ) to do nothing!
  *      - Spending 2% in case calling dynamic_cast from Object->compare( ).
  *      - Spending 1.3% in data_patition::copy()
@@ -145,6 +143,7 @@ using std::map;
  *      - [DONE] Model::keys: 1% copying this every time we set a parameter.
  *      - [DONE] 3x speed-up by implementing C++ version of vector_from_list
  *      - [DONE] 15% speedup by eliminating roots() in favor of just scanning all the heads in token_roots.
+ *      - [DONE] Vector into something that can be used like vector.
 
  * 13. Rationalize Programs, Modules.
  *     13a. [DONE] Allow loading stuff from files.
