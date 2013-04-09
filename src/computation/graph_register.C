@@ -2198,13 +2198,7 @@ int reg_heap::copy_token(int t)
 
   assert(token_roots[t].temp.empty());
 
-  token_roots[t2].heads = token_roots[t].heads;
-
-  token_roots[t2].parameters = token_roots[t].parameters;
-
-  token_roots[t2].identifiers = token_roots[t].identifiers;
-
-  token_roots[t2].modifiable_regs = token_roots[t].modifiable_regs;
+  token_roots[t2] = token_roots[t];
 
   // remove ownership mark from used regs in this context
   duplicate_ownership_mark(t, t2);
