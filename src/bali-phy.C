@@ -581,11 +581,11 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
 	  expression_ref E2 = (identifier("find_loggables_c"), P.get_context().get_token(), *p, p->parameter_name);
 	  object_ref parts = P.get_context().evaluate_expression( E2, false);
 	  object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(parts);
-	  for(const auto& x: V->t)
+	  for(const auto& x: *V)
 	  {
 	    object_ptr<const Pair> p = convert<const Pair>(x);
-	    int m_index = *convert<const Int>(p->t.first);
-	    string m_name = *convert<const String>(p->t.second);
+	    int m_index = *convert<const Int>(p->first);
+	    string m_name = *convert<const String>(p->second);
 	    //	    std::cout<<"("<<m_index<<","<<m_name<<")\n";
 
 	    int index = P.add_compute_expression(modifiable(m_index));

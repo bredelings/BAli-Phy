@@ -200,7 +200,7 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
       object_ref v = P.get_context().evaluate_expression( (identifier("findBinary"),token,rand_var,(identifier("distRange"),dist)), false);
       object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
 
-      for(const auto& x: V->t)
+      for(const auto& x: *V)
       {
 	int m_index = *convert<const Int>(x);
 	string name = rand_var->print()+"_"+convertToString<int>(m_index);
@@ -226,11 +226,11 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 
       object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
 
-      for(const auto& x: V->t)
+      for(const auto& x: *V)
       {
 	object_ptr<const Pair> p = convert<const Pair>(x);
-	int m_index = *convert<const Int>(p->t.first);
-	Bounds<double> bounds = *convert<const Bounds<double>>(p->t.second);
+	int m_index = *convert<const Int>(p->first);
+	Bounds<double> bounds = *convert<const Bounds<double>>(p->second);
 	string name = rand_var->print()+"_"+convertToString<int>(m_index);
 	M.add( 1.0, MCMC::Modifiable_Slice_Move(name, m_index, bounds, 1.0) );
       }
@@ -254,11 +254,11 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 
       object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
 
-      for(const auto& x: V->t)
+      for(const auto& x: *V)
       {
 	object_ptr<const Pair> p = convert<const Pair>(x);
-	int m_index = *convert<const Int>(p->t.first);
-	Bounds<double> bounds = *convert<const Bounds<double>>(p->t.second);
+	int m_index = *convert<const Int>(p->first);
+	Bounds<double> bounds = *convert<const Bounds<double>>(p->second);
 	string name = rand_var->print()+"_cauchy_"+convertToString<int>(m_index);
 	if (bounds.has_lower_bound and bounds.lower_bound >= 0.0)
 	  add_modifiable_MH_move(name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), m_index, {1.0}, M, 0.01);
@@ -285,16 +285,16 @@ void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 
       object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
 
-      for(const auto& x: V->t)
+      for(const auto& x: *V)
       {
 	object_ptr<const Pair> p = convert<const Pair>(x);
 	string name = rand_var->print();
 
-	object_ptr<const Vector<object_ref>> ms = convert<const Vector<object_ref>>(p->t.first);
-	object_ptr<const Pair> r = convert<const Pair>(p->t.second);
+	object_ptr<const Vector<object_ref>> ms = convert<const Vector<object_ref>>(p->first);
+	object_ptr<const Pair> r = convert<const Pair>(p->second);
 
 	vector<int> indices;
-	for(const auto& y: ms->t)
+	for(const auto& y: *ms)
 	{
 	  int index = *convert<const Int>(y);
 	  indices.push_back(index);
@@ -328,16 +328,16 @@ void add_dirichlet_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 
       object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
 
-      for(const auto& x: V->t)
+      for(const auto& x: *V)
       {
 	object_ptr<const Pair> p = convert<const Pair>(x);
 	string name = rand_var->print();
 
-	object_ptr<const Vector<object_ref>> ms = convert<const Vector<object_ref>>(p->t.first);
-	object_ptr<const Pair> r = convert<const Pair>(p->t.second);
+	object_ptr<const Vector<object_ref>> ms = convert<const Vector<object_ref>>(p->first);
+	object_ptr<const Pair> r = convert<const Pair>(p->second);
 
 	vector<int> indices;
-	for(const auto& y: ms->t)
+	for(const auto& y: *ms)
 	{
 	  int index = *convert<const Int>(y);
 	  indices.push_back(index);

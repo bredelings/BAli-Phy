@@ -98,7 +98,7 @@ extern "C" closure builtin_function_dirichlet_density(OperationArgs& Args)
   object_ptr<const Vector<double>> n = Args.evaluate_as<Vector<double>>(0);
   object_ptr<const Vector<double>> x = Args.evaluate_as<Vector<double>>(1);
   
-  object_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(x->unbox(),n->unbox()) ) );
+  object_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(*x,*n) ) );
   
   return R;
 }

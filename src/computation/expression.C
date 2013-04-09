@@ -202,7 +202,7 @@ string expression::print() const
     {
       object_ptr<const Vector<int>> V = ::is_a<Vector<int>>(sub[0]);
 
-      result = "Trim {"+join(V->t,",")+"} " + sub[1]->print();
+      result = "Trim {"+join(*V,",")+"} " + sub[1]->print();
       return result;
     }
 
@@ -940,7 +940,7 @@ vector<int> get_free_index_vars(const expression_ref& E)
   {
     // Which vars are we not throwing away?
     // This should also be an assert.
-    vars = is_a<Vector<int>>(E->sub[0])->t;
+    vars = *is_a<Vector<int>>(E->sub[0]);
     
 #ifndef NDEBUG
     vector<int> vars2 = get_free_index_vars(E->sub[1]);
@@ -1086,7 +1086,7 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
   {
     // Which vars are we not throwing away?
     // This should also be an assert.
-    vars = is_a<Vector<int>>(E->sub[0])->t;
+    vars = *is_a<Vector<int>>(E->sub[0]);
 
     // remap free vars
     for(auto& var:vars)
@@ -1181,7 +1181,7 @@ expression_ref untrim(const expression_ref& E)
   {
     object_ptr<const Vector<int>> V = ::is_a<Vector<int>>(E->sub[0]);
 
-    return remap_free_indices(E->sub[1], V->t, 0);
+    return remap_free_indices(E->sub[1], *V, 0);
   }
   else
     return E;

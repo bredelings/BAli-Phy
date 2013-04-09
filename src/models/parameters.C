@@ -647,7 +647,7 @@ OVector edges_connecting_to_node(const Tree& T, int n)
   
   OVector branch_list_;
   for(auto b: branch_list)
-    branch_list_.t.push_back(Int(int(b)));
+    branch_list_.push_back(Int(int(b)));
 
   return branch_list_;
 }
@@ -658,7 +658,7 @@ void Parameters::read_h_tree()
     C.set_parameter_value(parameter_for_tree_node[n], edges_connecting_to_node(T(),n));
 
   for(int b=0; b < 2*T().n_branches(); b++)
-    C.set_parameter_value(parameter_for_tree_branch[b], OPair({Int(T().directed_branch(b).source()), Int(T().directed_branch(b).target())}) );
+    C.set_parameter_value(parameter_for_tree_branch[b], OPair(Opair{Int(T().directed_branch(b).source()), Int(T().directed_branch(b).target())}) );
 }
 void Parameters::set_tree(const SequenceTree& T2)
 {
@@ -682,8 +682,8 @@ void Parameters::reconnect_branch(int s1, int t1, int t2)
 
   T_.modify()->reconnect_branch(s1,t1,t2);
 
-  C.set_parameter_value(parameter_for_tree_branch[b1], OPair({Int(T().directed_branch(b1).source()), Int(T().directed_branch(b1).target())}) );
-  C.set_parameter_value(parameter_for_tree_branch[b2], OPair({Int(T().directed_branch(b2).source()), Int(T().directed_branch(b2).target())}) );
+  C.set_parameter_value(parameter_for_tree_branch[b1], OPair(Opair{Int(T().directed_branch(b1).source()), Int(T().directed_branch(b1).target())}) );
+  C.set_parameter_value(parameter_for_tree_branch[b2], OPair(Opair{Int(T().directed_branch(b2).source()), Int(T().directed_branch(b2).target())}) );
   C.set_parameter_value(parameter_for_tree_node[t1], edges_connecting_to_node(T(),t1));
   C.set_parameter_value(parameter_for_tree_node[t2], edges_connecting_to_node(T(),t2));
 
@@ -793,8 +793,8 @@ void Parameters::check_h_tree() const
   for(int b=0; b < 2*T().n_branches(); b++)
   {
     object_ref p = C.get_parameter_value(parameter_for_tree_branch[b]);
-    object_ref s = convert<const OPair>(p)->t.first;
-    object_ref t = convert<const OPair>(p)->t.second;
+    object_ref s = convert<const OPair>(p)->first;
+    object_ref t = convert<const OPair>(p)->second;
     assert(T().directed_branch(b).source() == *convert<const Int>(s));
     assert(T().directed_branch(b).target() == *convert<const Int>(t));
   }
@@ -803,7 +803,7 @@ void Parameters::check_h_tree() const
   {
     object_ptr<const OVector> V = convert<const OVector>(C.get_parameter_value(parameter_for_tree_node[n]));
     vector<int> VV;
-    for(const auto& elem: V->t)
+    for(const auto& elem: *V)
       VV.push_back(*convert<const Int>(elem));
 
     vector<const_branchview> v = branches_from_node(T(), n);
@@ -811,7 +811,7 @@ void Parameters::check_h_tree() const
     for(const auto& bv: v)
       vv.push_back(bv);
 
-    assert(V->t.size() == v.size());
+    assert(V->size() == v.size());
     for(int elem: v)
       assert(includes(VV,elem));
     for(int elem: VV)
@@ -1231,7 +1231,7 @@ Parameters::Parameters(const module_loader& L,
     for(auto b: branch_list)
       branch_list_.push_back(b);
 
-    auto b2 = convert<const Vector<int>>(C.evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),identifier("MyTree.tree"),b)))))->t;
+    vector<int> b2 = *convert<const Vector<int>>(C.evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),identifier("MyTree.tree"),b)))));
     assert(b2.size() == branch_list_.size());
     for( int i: branch_list_)
       assert(includes(b2,i));

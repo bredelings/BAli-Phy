@@ -59,10 +59,10 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
   {
     OVector locus;
     for(int i=0;i<n_individuals;i++) {
-      locus.t.push_back(Int(matrix[i][2*l]));
-      locus.t.push_back(Int(matrix[i][2*l+1]));
+      locus.push_back(Int(matrix[i][2*l]));
+      locus.push_back(Int(matrix[i][2*l+1]));
     }
-    result.t.push_back(locus);
+    result.push_back(locus);
   }
 
   return result;
@@ -74,8 +74,8 @@ extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
 
   OVector alleles2;
 
-  for(int i=0;i<alleles->t.size();i+=2)
-    alleles2.t.push_back(alleles->t[i]);
+  for(int i=0;i<alleles->size();i+=2)
+    alleles2.push_back((*alleles)[i]);
 
   return alleles2;
 }
@@ -84,12 +84,12 @@ extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Arg
 {
   object_ptr<const OVector> alleles = Args.evaluate_as<OVector>(0);
 
-  int n_individuals = alleles->t.size();
+  int n_individuals = alleles->size();
   assert(n_individuals > 0);
 
   // 1. Count the alleles of each type
   map<int,int> allele_counts;
-  for(const auto& a: alleles->t)
+  for(const auto& a: *alleles)
   {
     int aa = *convert<const Int>(a);
     allele_counts[aa]++;
@@ -103,7 +103,7 @@ extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Arg
   // 3. Convert vector<int> to OVector
   OVector afs;
   for(int count: spectrum)
-    afs.t.push_back(Int(count));
+    afs.push_back(Int(count));
 
   return afs;
 }
@@ -146,7 +146,7 @@ extern "C" closure builtin_function_ewens_sampling_group_probability(OperationAr
 
   log_double_t Pr = 1;
   for(const auto& a: afs)
-    Pr *= ewens_sampling_probability(theta,a.t);
+    Pr *= ewens_sampling_probability(theta,a);
 
   return Log_Double(Pr);
 }
@@ -157,7 +157,7 @@ extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Ar
   object_ptr<const OVector> afs_ = Args.evaluate_as<OVector>(1);
 
   vector<int> afs;
-  for(const auto& count: afs_->unbox())
+  for(const auto& count: *afs_)
     afs.push_back(*convert<const Int>(count));
 
   log_double_t Pr = ewens_sampling_probability(theta,afs);
@@ -185,7 +185,7 @@ extern "C" closure builtin_function_ewens_sampling_mixture_probability(Operation
   {
     double pr = 0;
     for(int i=0;i<thetas.size();i++)
-      pr += ps[i] * ewens_sampling_probability(thetas[i],a.t);
+      pr += ps[i] * ewens_sampling_probability(thetas[i],a);
 
     Pr *= pr;
   }
@@ -219,11 +219,11 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 
   // These are indicators of coalescence
   object_ptr<const OVector> I_ = Args.evaluate_as<OVector>(1);
-  const vector<object_ref>& I = I_->t;
+  const vector<object_ref>& I = *I_;
 
   // These are the alleles
   object_ptr<const OVector> alleles_ = Args.evaluate_as<OVector>(2);
-  const vector<object_ref>& alleles = alleles_->t;
+  const vector<object_ref>& alleles = *alleles_;
 
   // How many times has each allele been seen?
   map<int,int> counts;

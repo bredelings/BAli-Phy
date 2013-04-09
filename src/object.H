@@ -118,34 +118,30 @@ struct object_ref: public object_ptr<const Object>
 };
 
 template<typename T>
-class Box: public Object 
+class Box: public Object, public T
 {
 public:
-  typedef T subtype;
-
-  T t;
-
   Box<T>* clone() const {return new Box<T>(*this);}
 
-  operator const T&() const {return t;}
+  Box<T>& operator=(const Box<T>& t)
+  {
+    T::operator=(t);
+    return *this;
+  }
 
-  const T& const_unbox() const {return t;}
-  const T& unbox() const {return t;}
-        T& unbox()       {return t;}
+  Box<T>& operator=(const T& t)
+  {
+    T::operator=(t);
+    return *this;
+  }
 
-  //  template <typename U>
-  //  operator Box<U>() const {return t;}
+  std::string print() const {return Object::print();}
 
-  Box<T>& operator=(const Box<T>& p2) {t = p2.t; return *this;}
+  using T::T;
 
-  Box<T>& operator=(const T& t2) {t = t2; return *this;}
-
-  Box() {}
-  Box(const T& t2):t(t2) {}
-
-  // Doesn't seem to do ANYTHING?  Why not?
-  //  template <typename U>
-  //  Box(const boost::enable_if_c<boost::is_convertible<U,T>::type,U>& u):t(u) { }
+  Box() = default;
+  Box(const Box<T>&) = default;
+  explicit Box(const T& t):T(t) {}
 };
 
 template<typename T>
@@ -191,9 +187,9 @@ public:
 };
 
 template<> 
-inline std::string POD<std::string>::print() const
+inline std::string Box<std::string>::print() const
 {
-  return "\""+t+"\"";
+  return "\""+(*this)+"\"";
 }
 template<> 
 inline std::string POD<char>::print() const
@@ -206,7 +202,7 @@ inline std::string POD<char>::print() const
 /***************** Make log_double_t count as an arithmetic type **************/
 
 //typedef POD<bool> Bool;
-typedef POD<std::string> String;
+typedef Box<std::string> String;
 
 template <typename T>
 class POD_math: public Object
@@ -311,6 +307,7 @@ template <typename T1,typename T2>
 using Pair = Box<std::pair<T1,T2>>;
 
 typedef Vector<object_ref> OVector;
+typedef std::pair<object_ref,object_ref> Opair;
 typedef Pair<object_ref,object_ref> OPair;
 
 template <typename T>

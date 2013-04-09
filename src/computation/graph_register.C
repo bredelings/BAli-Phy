@@ -2586,7 +2586,7 @@ vector<int>& reg_heap::get_scratch_list() const
   while(n_active_scratch_lists >= scratch_lists.size())
     scratch_lists.push_back( new Vector<int> );
 
-  vector<int>& v = scratch_lists[ n_active_scratch_lists++ ]->t;
+  vector<int>& v = *scratch_lists[ n_active_scratch_lists++ ];
 
   v.clear();
 

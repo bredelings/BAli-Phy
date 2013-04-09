@@ -265,10 +265,10 @@ std::set<std::string> Module::dependencies() const
   for(const auto& impdecl:impdecls->sub)
   {
     int i=0;
-    bool qualified = impdecl->sub[0].is_a<String>()->t == "qualified";
+    bool qualified = *impdecl->sub[0].is_a<String>() == "qualified";
     if (qualified) i++;
 
-    bool submodel = impdecl->sub[i].is_a<String>()->t == "submodel";
+    bool submodel = *impdecl->sub[i].is_a<String>() == "submodel";
     if (submodel) i++;
 
     // bail out if this is a submodel declaration.
@@ -291,10 +291,10 @@ map<string,string> Module::submodel_dependencies() const
   for(const auto& impdecl:impdecls->sub)
   {
     int i=0;
-    bool qualified = impdecl->sub[0].is_a<String>()->t == "qualified";
+    bool qualified = *impdecl->sub[0].is_a<String>() == "qualified";
     if (qualified) i++;
 
-    bool submodel = impdecl->sub[i].is_a<String>()->t == "submodel";
+    bool submodel = *impdecl->sub[i].is_a<String>() == "submodel";
     if (submodel) i++;
 
     // bail out if this is NOT a submodel declaration.
@@ -303,7 +303,7 @@ map<string,string> Module::submodel_dependencies() const
     string imp_module_name = *impdecl->sub[i++].is_a<String>();
 
     string imp_module_name_as = imp_module_name;
-    if (i < impdecl->sub.size() and impdecl->sub[i++].is_a<String>()->t == "as")
+    if (i < impdecl->sub.size() and *impdecl->sub[i++].is_a<String>() == "as")
       imp_module_name_as = *impdecl->sub[i++].is_a<String>();
 
     // Store map from m1 -> m0.m2
@@ -323,16 +323,16 @@ void Module::resolve_symbols(const std::vector<Module>& P)
     for(const auto& impdecl:impdecls->sub)
     {
       int i=0;
-      bool qualified = impdecl->sub[0].is_a<String>()->t == "qualified";
+      bool qualified = *impdecl->sub[0].is_a<String>() == "qualified";
       if (qualified) i++;
     
-      bool submodel = impdecl->sub[i].is_a<String>()->t == "submodel";
+      bool submodel = *impdecl->sub[i].is_a<String>() == "submodel";
       if (submodel) i++;
     
       string imp_module_name = *impdecl->sub[i++].is_a<String>();
       
       string imp_module_name_as = imp_module_name;
-      if (i < impdecl->sub.size() and impdecl->sub[i++].is_a<String>()->t == "as")
+      if (i < impdecl->sub.size() and *impdecl->sub[i++].is_a<String>() == "as")
 	imp_module_name_as = *impdecl->sub[i++].is_a<String>();
       
       assert(i == impdecl->sub.size());
@@ -746,13 +746,13 @@ Module& Module::operator+=(const expression_ref& E)
       for(const auto& impdecl:impdecls->sub)
       {
 	int i=0;
-	bool qualified = impdecl->sub[0].is_a<String>()->t == "qualified";
+	bool qualified = *impdecl->sub[0].is_a<String>() == "qualified";
 	if (qualified) i++;
 
 	string imp_module_name = *impdecl->sub[i++].is_a<String>();
 
 	string imp_module_name_as = imp_module_name;
-	if (i < impdecl->sub.size() and impdecl->sub[i++].is_a<String>()->t == "as")
+	if (i < impdecl->sub.size() and *impdecl->sub[i++].is_a<String>() == "as")
 	  imp_module_name_as = *impdecl->sub[i++].is_a<String>();
 
 	assert(i == impdecl->sub.size());

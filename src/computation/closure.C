@@ -27,7 +27,7 @@ closure get_trimmed(const closure& C)
   {
     C2.exp = C.exp->sub[1];
     
-    const vector<int>& keep = assert_is_a<Vector<int>>(C.exp->sub[0])->t;
+    const vector<int>& keep = *assert_is_a<Vector<int>>(C.exp->sub[0]);
     
     // Since environments are indexed backwards
     C2.Env.resize(keep.size());

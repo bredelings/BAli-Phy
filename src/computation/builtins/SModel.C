@@ -13,26 +13,26 @@ extern "C" closure builtin_function_lExp(OperationArgs& Args)
   auto pi = Args.evaluate_as< Vector<double> >(1);
   double t = *Args.evaluate_as<Double>(2);
 
-  Matrix E = exp(*L, pi->unbox(), t);
+  Matrix E = exp(*L, *pi, t);
   MatrixObject* M = new MatrixObject;
-  M->t.assign_temporary(E);
+  M->assign_temporary(E);
   return M;
 }
 
 extern "C" closure builtin_function_q_from_s_and_r(OperationArgs& Args)
 {
   object_ptr<const SymmetricMatrixObject> S_ = Args.evaluate_as<SymmetricMatrixObject>(0);
-  const SymmetricMatrix& S = S_->t;
+  const SymmetricMatrix& S = *S_;
 
   object_ptr<const MatrixObject> R_ = Args.evaluate_as<MatrixObject>(1);
-  const Matrix& R = R_->t;
+  const Matrix& R = *R_;
     
   const unsigned N = S.size1();
   assert(S.size1() == R.size1());
   assert(S.size1() == R.size2());
 
   object_ptr<MatrixObject> Q_(new MatrixObject);
-  Matrix& Q = Q_->t;
+  Matrix& Q = *Q_;
   Q.resize(N,N);
 
   for(int i=0;i<N;i++) {
@@ -59,7 +59,7 @@ extern "C" closure builtin_function_q_from_s_and_r(OperationArgs& Args)
 extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
 {
   object_ptr<const MatrixObject> Q_ = Args.evaluate_as<MatrixObject>(0);
-  const Matrix& Q = Q_->t;
+  const Matrix& Q = *Q_;
 
   object_ptr<const Vector<double>> pi_ = Args.evaluate_as< Vector<double> >(1);
   const vector<double>& pi = *pi_;
@@ -117,13 +117,13 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
   const alphabet& a = *a_;
 
   object_ptr<const Vector<unsigned> > smap_ = Args.evaluate_as< Vector<unsigned> >(1);
-  const vector<unsigned>& smap = smap_->t;
+  const vector<unsigned>& smap = *smap_;
 
   object_ptr<const MatrixObject > Q_ = Args.evaluate_as< MatrixObject >(2);
-  const Matrix& Q = Q_->t;
+  const Matrix& Q = *Q_;
 
   object_ptr<const Vector<double> > pi_ = Args.evaluate_as< Vector<double> >(3);
-  const vector<double> pi = pi_->t;
+  const vector<double> pi = *pi_;
 
   assert(Q.size2() == Q.size1());
   const unsigned N = smap.size();
@@ -158,13 +158,13 @@ extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& A
   const Triplets& T = *T_;
 
   object_ptr<const SymmetricMatrixObject> S_ = Args.evaluate_as<SymmetricMatrixObject>(1);
-  const SymmetricMatrix& S2 = S_->t;
+  const SymmetricMatrix& S2 = *S_;
 
   int N = T.size();
 
   object_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject(N) );
 
-  SymmetricMatrix& S = R->t;
+  SymmetricMatrix& S = *R;
 
   for(int i=0;i<T.size();i++)
     for(int j=0;j<i;j++) 
@@ -199,13 +199,13 @@ extern "C" closure builtin_function_f3x4_matrix(OperationArgs& Args)
   auto T = Args.evaluate_as<Triplets>(0);
   
   auto R1_ = Args.evaluate_as<MatrixObject>(1);
-  const Matrix& R1 = R1_->t;
+  const Matrix& R1 = *R1_;
 
   auto R2_ = Args.evaluate_as<MatrixObject>(2);
-  const Matrix& R2 = R2_->t;
+  const Matrix& R2 = *R2_;
 
   auto R3_ = Args.evaluate_as<MatrixObject>(3);
-  const Matrix& R3 = R3_->t;
+  const Matrix& R3 = *R3_;
 
   // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
   assert(R1.size1() == 4);
@@ -219,7 +219,7 @@ extern "C" closure builtin_function_f3x4_matrix(OperationArgs& Args)
 
   const int n = T->size();
 
-  R->t.resize(n, n);
+  R->resize(n, n);
   for(int i=0;i<n;i++)
     for(int j=0;j<n;j++)
     {
@@ -247,7 +247,7 @@ extern "C" closure builtin_function_f3x4_matrix(OperationArgs& Args)
 	else
 	  std::abort();
       }
-      R->t(i,j) = r;
+      (*R)(i,j) = r;
     }
 
   return R;
@@ -258,13 +258,13 @@ object_ptr<Object> SimpleExchangeFunction(double rho, int n)
 {
   object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
 
-  R->t.resize(n);
+  R->resize(n);
 
   for(int i=0;i<n;i++) {
     for(int j=0;j<n;j++)
-      R->t(i,j) = rho;
+      (*R)(i,j) = rho;
 
-    R->t(i,i) = 0;       // this is NOT a rate away.
+    (*R)(i,i) = 0;       // this is NOT a rate away.
   }
 
   return R;
@@ -274,12 +274,12 @@ object_ptr<const Object> EQU_Exchange_Function(int n)
 {
   object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
 
-  R->t.resize(n);
+  R->resize(n);
 
   // Calculate S matrix
   for(int i=0;i<n;i++)
     for(int j=0;j<n;j++)
-      R->t(i,j) = 1;
+      (*R)(i,j) = 1;
 
   return R;
 }
@@ -434,12 +434,12 @@ object_ref Empirical_Exchange_Function(const alphabet& a, istream& ifile)
 
   int n = a.size();
 
-  R->t.resize(n);
+  R->resize(n);
   
   for(int i=0;i<n;i++)
     for(int j=0;j<i;j++) {
-      ifile>>R->t(i,j);
-      R->t(j,i) = R->t(i,j);
+      ifile>>(*R)(i,j);
+      (*R)(j,i) = (*R)(i,j);
     }
 
   return object_ref(R);

@@ -4,7 +4,7 @@
 
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
 {
-  const ublas::matrix<int>& counts = Args.evaluate_as<Box<ublas::matrix<int>>>(0)->t;
+  const ublas::matrix<int>& counts = *Args.evaluate_as<Box<ublas::matrix<int>>>(0);
   const indel::PairHMM& Q = *Args.evaluate_as<indel::PairHMM>(1);
 
   using namespace A2;

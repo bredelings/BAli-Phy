@@ -10,9 +10,9 @@ closure iota_function(OperationArgs& Args)
   
   object_ptr<Box<std::vector<T> > > V(new Box<std::vector<T> >() );
   
-  V->t.resize(n);
+  V->resize(n);
   for(unsigned i=0;i<n;i++)
-    V->t[i] = i;
+    (*V)[i] = i;
   
   return V;
 }

@@ -6,7 +6,5 @@ using boost::dynamic_pointer_cast;
 
 extern "C" closure builtin_function_c_snd(OperationArgs& Args)
 {
-  const OPair& p = *Args.evaluate_as<OPair>(0);
-
-  return p.t.second;
+  return Args.evaluate_as<OPair>(0)->second;
 }

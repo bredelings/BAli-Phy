@@ -64,7 +64,7 @@ extern "C" closure builtin_function_vector_from_list(OperationArgs& Args)
     int next_reg = top->lookup_in_env( next_index );
 
     // Add the element to the list.
-    v->t.push_back( Args.evaluate_reg_to_object(element_reg) );
+    v->push_back( Args.evaluate_reg_to_object(element_reg) );
     // Move to the next element or end
     top = &Args.evaluate_reg_to_closure(next_reg);
   }

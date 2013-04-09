@@ -9,5 +9,5 @@ extern "C" closure builtin_function_c_pair(OperationArgs& Args)
   const object_ref fst = Args.evaluate(0);
   const object_ref snd = Args.evaluate(1);
 
-  return OPair({fst,snd});
+  return OPair(Opair{fst,snd});
 }

@@ -10,7 +10,7 @@ extern "C" closure builtin_function_m0(OperationArgs& Args)
 
   object_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject );
 
-  R->t.resize(C->size());
+  (*R).resize(C->size());
 
   for(int i=0;i<C->size();i++) 
   {
@@ -33,13 +33,13 @@ extern "C" closure builtin_function_m0(OperationArgs& Args)
 	int l2 = C->sub_nuc(j,pos);
 	assert(l1 != l2);
 
-	rate = S->t(l1,l2);
+	rate = (*S)(l1,l2);
 
 	if (C->translate(i) != C->translate(j))
 	  rate *= omega;	
       }
 
-      R->t(i,j) = R->t(j,i) = rate;
+      (*R)(i,j) = (*R)(j,i) = rate;
     }
   }
 

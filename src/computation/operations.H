@@ -79,7 +79,7 @@ struct Vector_From_List_Op: public Operation
       int next_reg = top->lookup_in_env( next_index );
 
       // Add the element to the list.
-      v->t.push_back( *convert<const U>(Args.evaluate_reg_to_object(element_reg)) );
+      v->push_back( *convert<const U>(Args.evaluate_reg_to_object(element_reg)) );
       // Move to the next element or end
       top = &Args.evaluate_reg_to_closure(next_reg);
     }
@@ -162,7 +162,7 @@ struct BuiltinNewStringOp: public Operation
 
     object_ptr<String> v (new String);
 
-    v->t.resize(length);
+    v->resize(length);
 
     return v;
   }
@@ -190,7 +190,7 @@ struct BuiltinSetStringIndexOp: public Operation
 
     const String* vv = &(*v);
     String* vvv = const_cast<String*>(vv);
-    vvv->t[i] = x;
+    (*vvv)[i] = x;
 
     return constructor("()",0);
   }
@@ -249,7 +249,7 @@ struct BuiltinNewVectorOp: public Operation
 
     object_ptr<Vector<T>> v (new Vector<T>);
 
-    v->t.resize(*length);
+    v->resize(*length);
 
     return v;
   }
@@ -285,7 +285,7 @@ struct BuiltinSetVectorIndexOp: public Operation
 
     const Vector<T>* vv = &(*v);
     Vector<T>* vvv = const_cast<Vector<T>*>(vv);
-    vvv->t[i] = x;
+    (*vvv)[i] = x;
 
     return constructor("()",0);
   }
@@ -319,7 +319,7 @@ struct BuiltinGetVectorIndexOp: public Operation
     object_ptr<const Vector<T>> v = Args.evaluate_as<Vector<T>>(0);
     int i = *Args.evaluate_as<Int>(1);
 
-    return U(v->t[i]);
+    return U((*v)[i]);
   }
 
   std::string name() const {return "builtinGetVectorIndex";}

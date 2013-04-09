@@ -18,7 +18,7 @@ extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
 
   const int n = a.size();
 
-  R->t.resize(n, n);
+  R->resize(n, n);
 
   // compute frequencies
   vector<double> pi = *pi_;
@@ -32,11 +32,11 @@ extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
 
   for(int i=0;i<n;i++)
     for(int j=0;j<n;j++)
-      R->t(i,j) = pi_f[i]/pi[i] * pi_f[j];
+      (*R)(i,j) = pi_f[i]/pi[i] * pi_f[j];
 
   // diagonal entries should have no effect
   for(int i=0;i<n;i++)
-    R->t(i,i) = 0;
+    (*R)(i,i) = 0;
 
   return R;
 }

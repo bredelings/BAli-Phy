@@ -12,7 +12,7 @@ extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
 
   const Vector<object_ref>* vv = &v;
   Vector<object_ref>* vvv = const_cast<Vector<object_ref>*>(vv);
-  vvv->t[i] = x;
+  (*vvv)[i] = x;
 
   return constructor("()",0);
 }
