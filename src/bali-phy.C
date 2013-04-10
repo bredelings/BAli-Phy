@@ -563,35 +563,29 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
     vector<string> logged_names;
 
     map<string,string> simplify = get_simplified_names(P.get_Program());
-    expression_ref query = constructor("MakeLogger",1) + match(0);
 
     for(int i=0;i<P.n_notes();i++)
     {
-      vector<expression_ref> results;
-      if (find_match(query, P.get_note(i), results))
+      if (not is_exactly(P.get_note(i),"MakeLogger")) continue;
+
+      expression_ref E = P.get_note(i)->sub[0];
+      string name = map_symbol_names(E,simplify)->print();
+
+      if (object_ptr<const parameter> p = is_a<parameter>(E))
       {
-	expression_ref E = results[0];
-	string name = map_symbol_names(E,simplify)->print();
-
-	if (object_ptr<const parameter> p = is_a<parameter>(E))
+	expression_ref E2 = (identifier("find_loggables_c"), P.get_context().get_token(), *p, p->parameter_name);
+	object_ref parts = P.get_context().evaluate_expression( E2, false);
+	object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(parts);
+	for(const auto& x: *V)
 	{
-	  typedef std::pair<object_ref,object_ref> Pair_;
-	  typedef Box<Pair_> Pair;
+	  object_ptr<const OPair> p = convert<const OPair>(x);
+	  int m_index = *convert<const Int>(p->first);
+	  string m_name = *convert<const String>(p->second);
+	  //	    std::cout<<"("<<m_index<<","<<m_name<<")\n";
 
-	  expression_ref E2 = (identifier("find_loggables_c"), P.get_context().get_token(), *p, p->parameter_name);
-	  object_ref parts = P.get_context().evaluate_expression( E2, false);
-	  object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(parts);
-	  for(const auto& x: *V)
-	  {
-	    object_ptr<const Pair> p = convert<const Pair>(x);
-	    int m_index = *convert<const Int>(p->first);
-	    string m_name = *convert<const String>(p->second);
-	    //	    std::cout<<"("<<m_index<<","<<m_name<<")\n";
-
-	    int index = P.add_compute_expression(modifiable(m_index));
-	    logged_computations.push_back(index);
-	    logged_names.push_back(m_name);
-	  }
+	  int index = P.add_compute_expression(modifiable(m_index));
+	  logged_computations.push_back(index);
+	  logged_names.push_back(m_name);
 	}
       }
     }
