@@ -205,6 +205,10 @@ public:
 
   int add_compute_expression(const expression_ref& E);
 
+  void set_compute_expression(int i, const expression_ref& E);
+
+  expression_ref get_expression(int i) const;
+
   object_ref evaluate(int index) const;
 
   /// No more code changes allowed after this!

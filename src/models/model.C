@@ -155,6 +155,16 @@ int Model::add_compute_expression(const expression_ref& E)
   return C.add_compute_expression(E);
 }
 
+void Model::set_compute_expression(int i, const expression_ref& E)
+{
+  C.set_compute_expression(i, E);
+}
+
+expression_ref Model::get_expression(int i) const
+{
+  return C.get_expression(i);
+}
+
 object_ref Model::evaluate(int index) const
 {
   return C.evaluate(index);
