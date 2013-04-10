@@ -72,6 +72,8 @@ public:
 
   int temp = -1;
 
+  int target = -1;
+
   bool re_evaluate = false;
 
   reg& operator=(const reg&) = delete;

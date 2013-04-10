@@ -139,6 +139,7 @@ using std::map;
  *      - push_temp_head( ) iterates over all 64 possible tokens??
  *        + Doesn't seem to actually take that much time, though!
  *      - 1% of CPU to spend on memory allocation from vector::vector in three_way_topology_sample?
+ *      + We have a problem with needing to remap all heads - there are too many to scan!
  *      - [DONE?] Clear identifiers after loading programs -- Model::compile();
  *      - [DONE] Model::keys: 1% copying this every time we set a parameter.
  *      - [DONE] 3x speed-up by implementing C++ version of vector_from_list
