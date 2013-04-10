@@ -198,7 +198,7 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
       expression_ref dist = P.get_note(i)->sub[1];
 
       object_ref v = P.get_context().evaluate_expression( (identifier("findBinary"),token,rand_var,(identifier("distRange"),dist)), false);
-      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      object_ptr<const OVector> V = convert<const OVector>(v);
 
       for(const auto& x: *V)
       {
@@ -212,8 +212,6 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
 /// Find parameters with distribution name Dist
 void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  typedef std::pair<object_ref,object_ref> Pair_;
-  typedef Box<Pair_> Pair;
   int token = P.get_context().get_token();
   
   for(int i=0;i<P.n_notes();i++)
@@ -224,11 +222,11 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 
       object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)), false);
 
-      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      object_ptr<const OVector> V = convert<const OVector>(v);
 
       for(const auto& x: *V)
       {
-	object_ptr<const Pair> p = convert<const Pair>(x);
+	object_ptr<const OPair> p = convert<const OPair>(x);
 	int m_index = *convert<const Int>(p->first);
 	Bounds<double> bounds = *convert<const Bounds<double>>(p->second);
 	string name = rand_var->print()+"_"+convertToString<int>(m_index);
@@ -240,8 +238,6 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 /// Find parameters with distribution name Dist
 void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  typedef std::pair<object_ref,object_ref> Pair_;
-  typedef Box<Pair_> Pair;
   int token = P.get_context().get_token();
   
   for(int i=0;i<P.n_notes();i++)
@@ -252,11 +248,11 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 
       object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)), false);
 
-      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      object_ptr<const OVector> V = convert<const OVector>(v);
 
       for(const auto& x: *V)
       {
-	object_ptr<const Pair> p = convert<const Pair>(x);
+	object_ptr<const OPair> p = convert<const OPair>(x);
 	int m_index = *convert<const Int>(p->first);
 	Bounds<double> bounds = *convert<const Bounds<double>>(p->second);
 	string name = rand_var->print()+"_cauchy_"+convertToString<int>(m_index);
@@ -271,8 +267,6 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 /// Find parameters with distribution name Dist
 void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  typedef std::pair<object_ref,object_ref> Pair_;
-  typedef Box<Pair_> Pair;
   int token = P.get_context().get_token();
   
   for(int i=0;i<P.n_notes();i++)
@@ -283,15 +277,15 @@ void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 
       object_ref v = P.get_context().evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)), false);
 
-      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      object_ptr<const OVector> V = convert<const OVector>(v);
 
       for(const auto& x: *V)
       {
-	object_ptr<const Pair> p = convert<const Pair>(x);
+	object_ptr<const OPair> p = convert<const OPair>(x);
 	string name = rand_var->print();
 
-	object_ptr<const Vector<object_ref>> ms = convert<const Vector<object_ref>>(p->first);
-	object_ptr<const Pair> r = convert<const Pair>(p->second);
+	object_ptr<const OVector> ms = convert<const OVector>(p->first);
+	object_ptr<const OPair> r = convert<const OPair>(p->second);
 
 	vector<int> indices;
 	for(const auto& y: *ms)
@@ -314,8 +308,6 @@ void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 /// Find parameters with distribution name Dist
 void add_dirichlet_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  typedef std::pair<object_ref,object_ref> Pair_;
-  typedef Box<Pair_> Pair;
   int token = P.get_context().get_token();
   
   for(int i=0;i<P.n_notes();i++)
@@ -326,15 +318,15 @@ void add_dirichlet_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 
       object_ref v = P.get_context().evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)), false);
 
-      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      object_ptr<const OVector> V = convert<const OVector>(v);
 
       for(const auto& x: *V)
       {
-	object_ptr<const Pair> p = convert<const Pair>(x);
+	object_ptr<const OPair> p = convert<const OPair>(x);
 	string name = rand_var->print();
 
-	object_ptr<const Vector<object_ref>> ms = convert<const Vector<object_ref>>(p->first);
-	object_ptr<const Pair> r = convert<const Pair>(p->second);
+	object_ptr<const OVector> ms = convert<const OVector>(p->first);
+	object_ptr<const OPair> r = convert<const OPair>(p->second);
 
 	vector<int> indices;
 	for(const auto& y: *ms)
