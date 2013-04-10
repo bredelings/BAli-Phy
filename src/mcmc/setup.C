@@ -456,7 +456,6 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 
   // Add slice moves for continuous 1D distributions
   add_real_slice_moves(P, slice_moves);
-  add_real_MH_moves(P, slice_moves);
   add_dirichlet_slice_moves(P, slice_moves);
 
   // imodel parameters
@@ -657,6 +656,10 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
 
   add_boolean_MH_moves(P, parameter_moves, 1.5);
+  add_integer_uniform_MH_moves(P, parameter_moves);
+
+  // Actually there ARE slice moves for this, but they don't jump modes!
+  add_real_MH_moves(P, parameter_moves);
 
   // FIXME - we need a proposal that sorts after changing
   //         then we can un-hack the recalc function in smodel.C
