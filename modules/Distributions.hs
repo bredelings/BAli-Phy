@@ -66,7 +66,7 @@ bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (
 bernoulli args = ProbDensity (bernoulliDensity args) (error "Bernoulli has no quantile") False TrueFalseRange;
 
 categorical p = ProbDensity (q!) (error "Categorical has no quantiles") 0 (IntegerInterval (Just 0) (Just (length p - 1)))
-                where {q = mkArray $ map doubleToLogDouble p};
+                where {q = listArray' $ map doubleToLogDouble p};
 
 beta args = ProbDensity (betaDensity args) (betaQuantile args) ((\(a,b)->a/(a+b)) args) (between 0.0 1.0);
 uniform (l,u) = ProbDensity (uniformDensity (l,u)) () ((l+u)/2.0) (between l u);
