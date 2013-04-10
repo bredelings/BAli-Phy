@@ -309,27 +309,27 @@ void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
   int token = P.get_context().get_token();
-  
+
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
     {
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.get_context().evaluate_expression( (identifier("findInteger"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ref v = P.get_context().evaluate_expression( (identifier("findBoundedInteger"),token,rand_var,(identifier("distRange"),dist)), false);
 
       object_ptr<const OVector> V = convert<const OVector>(v);
 
       for(const auto& x: *V)
       {
-	object_ptr<const OPair> p = convert<const OPair>(x);
-	int m_index = *convert<const Int>(p->first);
-	Bounds<double> bounds = *convert<const Bounds<double>>(p->second);
-	string name = rand_var->print()+"_cauchy_"+convertToString<int>(m_index);
-	if (bounds.has_lower_bound and bounds.lower_bound >= 0.0)
-	  add_modifiable_MH_move(name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), m_index, {1.0}, M, 0.01);
-	else
-	  add_modifiable_MH_move(name, Reflect(bounds, shift_cauchy), m_index, {1.0}, M, 0.1);
+	OPair p = *convert<const OPair>(x);
+	int m_index = *convert<const Int>(p.first);
+	OPair bounds = *convert<const OPair>(p.second);
+	int l = *convert<const Int>(bounds.first);
+	int u = *convert<const Int>(bounds.second);
+
+	string name = rand_var->print()+"_uniform_"+convertToString<int>(m_index);
+	add_modifiable_MH_move(name, discrete_uniform, m_index, {l,u}, M, 0.1);
       }
     }
 }
