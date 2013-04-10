@@ -72,8 +72,6 @@ public:
 
   int temp = -1;
 
-  int target = -1;
-
   bool re_evaluate = false;
 
   reg& operator=(const reg&) = delete;
@@ -92,6 +90,7 @@ public:
 class reg_heap: public Object
 {
   std::vector<reg> memory;
+  std::vector<int> target;
   CacheList<int> roots;
 
   mutable int n_active_scratch_lists = 0;
