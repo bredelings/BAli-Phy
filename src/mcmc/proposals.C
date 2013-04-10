@@ -245,7 +245,7 @@ double discrete_uniform(vector< object_ref >& x, const vector<double>& v)
 
   int i1 = *convert<const Int>(x[0]);
   
-  int i2 = myrandom(l,u);
+  int i2 = l+(u-l+1)*uniform();
 
   x[0] = Int(i2);
 
