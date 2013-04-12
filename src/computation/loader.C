@@ -46,6 +46,10 @@ using std::map;
  * 14. [DONE] Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
  */
 
+// allow print ints w/o decimal points
+// make model derive from context.
+// update boost
+
 /* \todo: List of things to do to clean up programs.
  *
  * See list in parser/desugar.C

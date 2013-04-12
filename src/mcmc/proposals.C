@@ -234,6 +234,25 @@ double bit_flip(vector< object_ref >& x, const vector<double>&)
 }
 
 
+double discrete_uniform(vector< object_ref >& x, const vector<double>& v)
+{
+  assert(v.size() == 2);
+  int l = (int)v[0];
+  int u = (int)v[1];
+
+  if (x.size() != 1) 
+    throw myexception()<<"discrete_uniform: expected one dimension, got "<<x.size()<<".";
+
+  int i1 = *convert<const Int>(x[0]);
+  
+  int i2 = l+(u-l+1)*uniform();
+
+  x[0] = Int(i2);
+
+  return 1;
+}
+
+
 double dirichlet_proposal(std::vector< object_ref >& x,const std::vector<double>& p)
 {
   if (p.size() != 1) 

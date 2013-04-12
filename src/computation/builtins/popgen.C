@@ -217,6 +217,8 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
   // This is the theta = 2*N*mu
   const double theta = *Args.evaluate_as<Double>(0);
 
+  assert(theta > 0);
+
   // These are indicators of coalescence
   object_ptr<const OVector> I_ = Args.evaluate_as<OVector>(1);
   const vector<object_ref>& I = *I_;

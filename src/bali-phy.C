@@ -544,6 +544,51 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, cons
   return indices;
 }
 
+void find_sub_loggers(Parameters& P, int& index, const string& name, vector<int>& logged_computations, vector<string>& logged_names)
+{
+  assert(index != -1);
+  object_ref result = P.evaluate(index);
+  if ((bool)dynamic_pointer_cast<const Double>(result) or (bool)dynamic_pointer_cast<const Int>(result))
+  {
+    logged_computations.push_back(index);
+    logged_names.push_back(name);
+    index = -1;
+    return;
+  }
+
+  if (auto c = dynamic_pointer_cast<const constructor>(result))
+  {
+    if (c->f_name == "Prelude.True" or c->f_name == "Prelude.False")
+    {
+      logged_computations.push_back(index);
+      logged_names.push_back(name);
+      index = -1;
+      return;
+    }
+
+    if (c->f_name == "[]")
+      return;
+
+    if (c->f_name == ":")
+    {
+      expression_ref L = P.get_expression(index);
+      expression_ref E = (identifier("Prelude.length"),L);
+      int length = *convert<const Int>(P.evaluate_expression(E));
+      int index2 = -1;
+      for(int i=0;i<length;i++)
+      {
+	expression_ref E2 = (identifier("Prelude.!!"),L,i) ;
+	if (index2 == -1)
+	  index2 = P.add_compute_expression(E2);
+	else
+	  P.set_compute_expression(index2, E2);
+
+	find_sub_loggers(P, index2, name+"!!"+convertToString(i), logged_computations, logged_names);
+      }
+    }
+  }
+}
+
 
 owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, const vector<string>& Rao_Blackwellize)
 {
@@ -563,37 +608,21 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
     vector<string> logged_names;
 
     map<string,string> simplify = get_simplified_names(P.get_Program());
-    expression_ref query = constructor("MakeLogger",1) + match(0);
 
+    int index = -1;
     for(int i=0;i<P.n_notes();i++)
     {
-      vector<expression_ref> results;
-      if (find_match(query, P.get_note(i), results))
-      {
-	expression_ref E = results[0];
-	string name = map_symbol_names(E,simplify)->print();
+      if (not is_exactly(P.get_note(i),"MakeLogger")) continue;
 
-	if (object_ptr<const parameter> p = is_a<parameter>(E))
-	{
-	  typedef std::pair<object_ref,object_ref> Pair_;
-	  typedef Box<Pair_> Pair;
+      expression_ref E = P.get_note(i)->sub[0];
+      string name = map_symbol_names(E,simplify)->print();
 
-	  expression_ref E2 = (identifier("find_loggables_c"), P.get_context().get_token(), *p, p->parameter_name);
-	  object_ref parts = P.get_context().evaluate_expression( E2, false);
-	  object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(parts);
-	  for(const auto& x: *V)
-	  {
-	    object_ptr<const Pair> p = convert<const Pair>(x);
-	    int m_index = *convert<const Int>(p->first);
-	    string m_name = *convert<const String>(p->second);
-	    //	    std::cout<<"("<<m_index<<","<<m_name<<")\n";
+      if (index == -1)
+	index = P.add_compute_expression(E);
+      else
+	P.set_compute_expression(index, E);
 
-	    int index = P.add_compute_expression(modifiable(m_index));
-	    logged_computations.push_back(index);
-	    logged_names.push_back(m_name);
-	  }
-	}
-      }
+      find_sub_loggers(P, index, name, logged_computations, logged_names);
     }
 
     TableGroupFunction<double> T1;
@@ -1648,7 +1677,7 @@ int main(int argc,char* argv[])
 
       // Force the creation of parameters
       for(int i=0;i<P.n_parameters();i++)
-	P.get_context().parameter_is_modifiable(i);
+	P.parameter_is_modifiable(i);
 
       //------ Redirect output to files -------//
       owned_ptr<Probability_Model> Ptr(P);

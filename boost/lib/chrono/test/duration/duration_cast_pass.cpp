@@ -14,15 +14,23 @@
 #include <boost/chrono/duration.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/detail/lightweight_test.hpp>
-#if !defined(BOOST_NO_STATIC_ASSERT)
+#if !defined(BOOST_NO_CXX11_STATIC_ASSERT)
 #define NOTHING ""
 #endif
+
+#ifdef BOOST_NO_CXX11_CONSTEXPR
+#define BOOST_CONSTEXPR_ASSERT(C) BOOST_TEST(C)
+#else
+#include <boost/static_assert.hpp>
+#define BOOST_CONSTEXPR_ASSERT(C) BOOST_STATIC_ASSERT(C)
+#endif
+
 
 template <class ToDuration, class FromDuration>
 void
 test(const FromDuration& f, const ToDuration& d)
 {
-//~ #if defined(BOOST_NO_DECLTYPE)
+//~ #if defined(BOOST_NO_CXX11_DECLTYPE)
     //~ typedef BOOST_TYPEOF_TPL(boost::chrono::duration_cast<ToDuration>(f)) R;
 //~ #else
     //~ typedef decltype(boost::chrono::duration_cast<ToDuration>(f)) R;
@@ -43,5 +51,9 @@ int main()
          boost::chrono::duration<double, boost::ratio<3600> >(7265./3600));
     test(boost::chrono::duration<int, boost::ratio<2, 3> >(9),
          boost::chrono::duration<int, boost::ratio<3, 5> >(10));
+    {
+      BOOST_CONSTEXPR boost::chrono::hours h = boost::chrono::duration_cast<boost::chrono::hours>(boost::chrono::milliseconds(7265000));
+      BOOST_CONSTEXPR_ASSERT(h.count() == 2);
+    }
     return boost::report_errors();
 }

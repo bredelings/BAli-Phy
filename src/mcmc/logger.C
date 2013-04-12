@@ -180,7 +180,7 @@ double GetComputationFunction::operator()(const owned_ptr<Probability_Model>& P,
 
   if (auto D = dynamic_pointer_cast<const Double>(result))
     return *D;
-  else if (auto I = dynamic_pointer_cast<const Double>(result))
+  else if (auto I = dynamic_pointer_cast<const Int>(result))
     return *I;
   else if (auto c = dynamic_pointer_cast<const constructor>(result))
   {

@@ -10,39 +10,17 @@
 template <typename T>
 class CacheList
 {
+  /// This points to the first free node.
+  static std::list<T> free_pool;
+
   /// The actual storage.
   std::list<T> L;
-
-  /// How many entries on the used list?
-  int n_used = 0;
-
-  /// How many entries on the free list?
-  int n_free = 0;
-
-  /// This points to the first free node.
-  typename std::list<T>::iterator begin_free;
-
-  int count_n_used() const
-  {
-    int count = 0;
-    for(auto i = L.begin();i!=begin_free;i++)
-      count++;
-    return count;
-  }
-
-  int count_n_free() const
-  {
-    int count = 0;
-    for(auto i = begin_free;i!=L.end();i++)
-      count++;
-    return count;
-  }
 
 public:
   typedef typename std::list<T>::iterator iterator;
   typedef typename std::list<T>::const_iterator const_iterator;
 
-  int size() const {return n_used;}
+  int size() const {std::abort();}
 
   const_iterator begin() const 
   {
@@ -54,75 +32,56 @@ public:
     return L.begin();
   }
 
-  const_iterator end() const {return begin_free;}
-  iterator end() {return begin_free;}
-
-  void check() const
+  const_iterator end() const 
   {
-    assert(n_free == count_n_free());
-    assert(n_used == count_n_used());
+    return L.end();
+  }
+
+  iterator end() {
+    return L.end();
   }
 
   /// Remove an element from the list. (Place it in the free area.)
   void erase(iterator loc) 
   {
-    assert(loc != begin_free);
-
-    // Move (used) element from loc to *before* begin_free.
-    L.splice(begin_free, L, loc);
-    // Adjust begin_free to point to the new element.
-    begin_free = loc;
-
-    n_used--;
-    n_free++;
+    // Move (used) element from loc to the free pool.
+    free_pool.splice(free_pool.begin(), L, loc);
   }
 
   /// Insert the value t *before* loc.
   iterator insert(iterator loc, const T& t)
   {
-    if (begin_free == L.end())
+    if (free_pool.empty())
+      return L.insert(loc, t);
+    else
     {
-      assert(n_free == 0);
-      n_used++;
-      return L.insert(begin_free, t);
+      iterator free_loc = free_pool.begin();
+      
+      // Set the value
+      *free_loc = t;
+
+      // Move (used) element from loc to *before* begin_free.
+      L.splice(loc, free_pool, free_loc);
+
+      return free_loc;
     }
-    assert(n_free > 0);
-
-    // Set the value
-    iterator node = begin_free;
-    *node = t;
-
-    // Move begin_free to the next free value
-    begin_free++;
-
-    n_used++;
-    n_free--;
-
-    // Move (used) element from loc to *before* begin_free.
-    L.splice(loc, L, node);
-
-    return node;
   }
 
   const T& back() const
   {
-    iterator last = begin_free;
-    last--;
-    return *last;
+    return L.back();
   }
 
   T& back()
   {
-    iterator last = begin_free;
-    last--;
-    return *last;
+    return L.back();
   }
 
   void pop_back()
   {
-    assert(size());
+    assert(not empty());
 
-    iterator last = begin_free;
+    iterator last = end();
     last--;
     erase(last);
   }
@@ -134,7 +93,7 @@ public:
 
   void pop_front()
   {
-    assert(size());
+    assert(not empty());
 
     erase(begin());
   }
@@ -146,13 +105,13 @@ public:
 
   bool empty() const
   {
-    return not n_used;
+    return L.empty();
   }
 
   int count(const T& t) const
   {
     int total = 0;
-    for(const auto& i: *this)
+    for(const auto& i: L)
       if (i == t)
 	total++;
     return total;
@@ -160,81 +119,56 @@ public:
 
   void clear() 
   {
-    n_free += n_used;
-    n_used = 0;
-
-    assert(n_free == L.size());
-
-    begin_free = L.begin();
-  }
-
-  int capacity() const
-  {
-    assert(n_used + n_free = L.size());
-    return L.size();
+    free_pool.splice(free_pool.begin(), L);
   }
 
   void swap(CacheList<T>& CL2) noexcept
   {
-    bool bf_is_end = (begin_free == L.end());
-    bool CL2_bf_is_end = (CL2.begin_free == CL2.L.end());
-      
-    std::swap(L, CL2.L);
-    std::swap(n_used, CL2.n_used);
-    std::swap(n_free, CL2.n_free);
-
-    std::swap(begin_free, CL2.begin_free);
-    if (CL2_bf_is_end)
-      begin_free = L.end();
-    if (bf_is_end)
-      CL2.begin_free = CL2.L.end();
+    L.swap(CL2.L);
   }
 
-  CacheList<T>& operator=(std::initializer_list<T> L2)
+  CacheList<T>& operator=(const std::list<T>& L2)
   {
-    L = L2;
-    begin_free = L.end();
+    clear();
+    for(auto i: L2)
+      push_back(i);
+    return *this;
   }
 
   CacheList<T>& operator=(const CacheList<T>& CL2)
   {
+    return operator=(CL2.L);
+  }
+
+  CacheList<T>& operator=(std::list<T>&& L2) noexcept
+  {
     clear();
-    for(auto i: CL2)
-      push_back(i);
+    L.swap(L2);
     return *this;
   }
 
   CacheList<T>& operator=(CacheList<T>&& CL2) noexcept
   {
-    swap(CL2);
-
-    return *this;
+    return operator=(std::move(CL2.L));
   }
 
-  CacheList()
-    :begin_free(L.end())
-  { }
+  CacheList() {}
 
   CacheList(const std::list<T>& L2)
-    :L(L2),
-     n_used(L.size()),
-     n_free(0),
-     begin_free(L.end())
-  { }
+  {
+    operator=(L2);
+  }
 
   CacheList(const std::list<T>&& L2)
-    :L(L2),
-     n_used(L.size()),
-     n_free(0),
-     begin_free(L.end())
-  { }
+  { 
+    operator=(std::move(L2));
+  }
 
-  CacheList(std::initializer_list<T> L2)
-    :L(L2),
-     n_used(L.size()),
-     n_free(0),
-     begin_free(L.end())
-  { }
+  CacheList(std::initializer_list<T> IL2)
+  { 
+    for(auto i: IL2)
+      push_back(i);
+  }
 
   CacheList(const CacheList<T>& L)
     :CacheList()
@@ -247,6 +181,13 @@ public:
   { 
     swap(L);
   }
+
+  ~CacheList()
+  {
+    clear();
+  }
 };
+
+template<typename T> std::list<T> CacheList<T>::free_pool = {};
 
 #endif

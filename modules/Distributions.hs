@@ -64,6 +64,10 @@ mixtureRange ((_,dist1):_) = distRange dist1;
 bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p));
 
 bernoulli args = ProbDensity (bernoulliDensity args) (error "Bernoulli has no quantile") False TrueFalseRange;
+
+categorical p = ProbDensity (q!) (error "Categorical has no quantiles") 0 (IntegerInterval (Just 0) (Just (length p - 1)))
+                where {q = listArray' $ map doubleToLogDouble p};
+
 beta args = ProbDensity (betaDensity args) (betaQuantile args) ((\(a,b)->a/(a+b)) args) (between 0.0 1.0);
 uniform (l,u) = ProbDensity (uniformDensity (l,u)) () ((l+u)/2.0) (between l u);
 
@@ -86,7 +90,6 @@ geometric_quantile p = error "geometric currently has no quantile";
 geometric_initial p = 1;
 
 geometric p = ProbDensity (geometric_density p) (geometric_quantile p) (geometric_initial p) (IntegerInterval (Just 0) Nothing);
-
 
 dirichlet args = ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") (dirichletDefault args) (Simplex (length args) 1.0);
 dirichlet' (n,x) = dirichlet (replicate n x);

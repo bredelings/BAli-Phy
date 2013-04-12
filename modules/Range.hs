@@ -24,4 +24,10 @@ getBounds (OpenInterval Nothing (Just u))  = builtinGetBounds () u;
 getBounds (OpenInterval (Just l) Nothing)  = builtinGetBounds l ();
 getBounds (OpenInterval (Just l) (Just u)) = builtinGetBounds l u;
 getBounds _                                = error "getBounds is undefined if argument is not an OpenInterval!";
+
+get_integer_bounds (IntegerInterval Nothing Nothing)   = ((),());
+get_integer_bounds (IntegerInterval Nothing (Just u))  = ((),u);
+get_integer_bounds (IntegerInterval (Just l) Nothing)  = (l,());
+get_integer_bounds (IntegerInterval (Just l) (Just u)) = (l, u);
+get_integer_bounds _                                   = error "getIntegerBounds is undefined if argument is not an IntegerInterval!";
 }

@@ -106,7 +106,7 @@ double default_sampling_rate(const Model& M, const string& parameter_name)
 
   vector<expression_ref> results;
   expression_ref query = (sampling_rate * parameter( parameter_name ) * match(0));
-  int found = M.get_context().find_match_notes(query, results, 0);
+  int found = M.find_match_notes(query, results, 0);
 
   if (found != -1)
   {
@@ -189,7 +189,7 @@ void add_slice_moves(Probability_Model& P, const string& name,
 
 void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
 {
-  int token = P.get_context().get_token();
+  int token = P.get_token();
   
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
@@ -197,8 +197,8 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.get_context().evaluate_expression( (identifier("findBinary"),token,rand_var,(identifier("distRange"),dist)), false);
-      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      object_ref v = P.evaluate_expression( (identifier("findBinary"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ptr<const OVector> V = convert<const OVector>(v);
 
       for(const auto& x: *V)
       {
@@ -212,9 +212,7 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
 /// Find parameters with distribution name Dist
 void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  typedef std::pair<object_ref,object_ref> Pair_;
-  typedef Box<Pair_> Pair;
-  int token = P.get_context().get_token();
+  int token = P.get_token();
   
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
@@ -222,13 +220,13 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ref v = P.evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)), false);
 
-      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      object_ptr<const OVector> V = convert<const OVector>(v);
 
       for(const auto& x: *V)
       {
-	object_ptr<const Pair> p = convert<const Pair>(x);
+	object_ptr<const OPair> p = convert<const OPair>(x);
 	int m_index = *convert<const Int>(p->first);
 	Bounds<double> bounds = *convert<const Bounds<double>>(p->second);
 	string name = rand_var->print()+"_"+convertToString<int>(m_index);
@@ -240,9 +238,7 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 /// Find parameters with distribution name Dist
 void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  typedef std::pair<object_ref,object_ref> Pair_;
-  typedef Box<Pair_> Pair;
-  int token = P.get_context().get_token();
+  int token = P.get_token();
   
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
@@ -250,13 +246,13 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ref v = P.evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)), false);
 
-      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      object_ptr<const OVector> V = convert<const OVector>(v);
 
       for(const auto& x: *V)
       {
-	object_ptr<const Pair> p = convert<const Pair>(x);
+	object_ptr<const OPair> p = convert<const OPair>(x);
 	int m_index = *convert<const Int>(p->first);
 	Bounds<double> bounds = *convert<const Bounds<double>>(p->second);
 	string name = rand_var->print()+"_cauchy_"+convertToString<int>(m_index);
@@ -271,9 +267,7 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 /// Find parameters with distribution name Dist
 void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  typedef std::pair<object_ref,object_ref> Pair_;
-  typedef Box<Pair_> Pair;
-  int token = P.get_context().get_token();
+  int token = P.get_token();
   
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
@@ -281,17 +275,17 @@ void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.get_context().evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ref v = P.evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)), false);
 
-      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      object_ptr<const OVector> V = convert<const OVector>(v);
 
       for(const auto& x: *V)
       {
-	object_ptr<const Pair> p = convert<const Pair>(x);
+	object_ptr<const OPair> p = convert<const OPair>(x);
 	string name = rand_var->print();
 
-	object_ptr<const Vector<object_ref>> ms = convert<const Vector<object_ref>>(p->first);
-	object_ptr<const Pair> r = convert<const Pair>(p->second);
+	object_ptr<const OVector> ms = convert<const OVector>(p->first);
+	object_ptr<const OPair> r = convert<const OPair>(p->second);
 
 	vector<int> indices;
 	for(const auto& y: *ms)
@@ -312,11 +306,38 @@ void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 }
 
 /// Find parameters with distribution name Dist
+void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
+{
+  int token = P.get_token();
+
+  for(int i=0;i<P.n_notes();i++)
+    if (is_exactly(P.get_note(i),":~"))
+    {
+      expression_ref rand_var = P.get_note(i)->sub[0];
+      expression_ref dist = P.get_note(i)->sub[1];
+
+      object_ref v = P.evaluate_expression( (identifier("findBoundedInteger"),token,rand_var,(identifier("distRange"),dist)), false);
+
+      object_ptr<const OVector> V = convert<const OVector>(v);
+
+      for(const auto& x: *V)
+      {
+	OPair p = *convert<const OPair>(x);
+	int m_index = *convert<const Int>(p.first);
+	OPair bounds = *convert<const OPair>(p.second);
+	int l = *convert<const Int>(bounds.first);
+	int u = *convert<const Int>(bounds.second);
+
+	string name = rand_var->print()+"_uniform_"+convertToString<int>(m_index);
+	add_modifiable_MH_move(name, discrete_uniform, m_index, {l,u}, M, 0.1);
+      }
+    }
+}
+
+/// Find parameters with distribution name Dist
 void add_dirichlet_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  typedef std::pair<object_ref,object_ref> Pair_;
-  typedef Box<Pair_> Pair;
-  int token = P.get_context().get_token();
+  int token = P.get_token();
   
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
@@ -324,17 +345,17 @@ void add_dirichlet_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.get_context().evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ref v = P.evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)), false);
 
-      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      object_ptr<const OVector> V = convert<const OVector>(v);
 
       for(const auto& x: *V)
       {
-	object_ptr<const Pair> p = convert<const Pair>(x);
+	object_ptr<const OPair> p = convert<const OPair>(x);
 	string name = rand_var->print();
 
-	object_ptr<const Vector<object_ref>> ms = convert<const Vector<object_ref>>(p->first);
-	object_ptr<const Pair> r = convert<const Pair>(p->second);
+	object_ptr<const OVector> ms = convert<const OVector>(p->first);
+	object_ptr<const OPair> r = convert<const OPair>(p->second);
 
 	vector<int> indices;
 	for(const auto& y: *ms)
@@ -435,7 +456,6 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 
   // Add slice moves for continuous 1D distributions
   add_real_slice_moves(P, slice_moves);
-  add_real_MH_moves(P, slice_moves);
   add_dirichlet_slice_moves(P, slice_moves);
 
   // imodel parameters
@@ -636,6 +656,10 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
 
   add_boolean_MH_moves(P, parameter_moves, 1.5);
+  add_integer_uniform_MH_moves(P, parameter_moves);
+
+  // Actually there ARE slice moves for this, but they don't jump modes!
+  add_real_MH_moves(P, parameter_moves);
 
   // FIXME - we need a proposal that sorts after changing
   //         then we can un-hack the recalc function in smodel.C

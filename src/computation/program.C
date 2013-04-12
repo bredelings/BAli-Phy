@@ -113,7 +113,6 @@ void add_missing_imports(const module_loader& L, vector<Module>& P, Model_Notes&
       try {
 	module.load_builtins(L);
 	module.resolve_symbols(P);
-	N.add_notes( module.get_notes() );
       }
       catch (myexception& e)
       {
