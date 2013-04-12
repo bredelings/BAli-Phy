@@ -57,11 +57,9 @@ class Model;
 /// Model objects currently wrap a context object.  They add the ability to
 /// call recalc() to fixup things after changing a parameter.
 ///
-class Model
+class Model: public context
 {
 protected:
-  /// Parameter values and model attributes
-  context C;
 
   std::vector< int > bounds;
   std::vector< int> prior_note_index;
@@ -85,13 +83,7 @@ public:
   /// the prior for the model, on the same scale as proposal densities
   virtual efloat_t prior() const;
 
-  const std::vector<Module>& get_Program() const {return C.get_Program();}
-
   /// Names of the parameters
-  std::string parameter_name(int i) const;
-  void rename_parameter(int i, const std::string& s);
-  int find_parameter(const std::string& s) const;
-
   bool is_random_variable(int i) const;
 
   bool has_bounds(int i) const;
@@ -100,8 +92,6 @@ public:
   void set_bounds(int i,const Bounds<double>&);
 
   /// Get the value of a modifiable
-  object_ref get_modifiable_value(int i) const;
-
   template <typename T>
   bool modifiable_has_type(int index) const {return boost::dynamic_pointer_cast<const T>(get_modifiable_value(index));}
 
@@ -126,9 +116,6 @@ public:
   }
 
   /// Get A model parameter value
-  object_ptr<const Object> get_parameter_value(int i) const;
-  object_ptr<const Object> get_parameter_value(const std::string& p_name) const;
-
   template <typename T>
   bool parameter_has_type(int index) const {return (bool)boost::dynamic_pointer_cast<const T>(get_parameter_value(index));}
 
@@ -180,39 +167,16 @@ public:
   /// Set SOME of the model parameter values
           void set_parameter_values(const std::vector<int>& indices,const std::vector<object_ptr<const Object> >& p);
 
-  unsigned n_parameters() const;
-
   virtual std::vector<std::string> show_priors() const;
-
-  int n_notes() const;
-
-  const std::vector<expression_ref>& get_notes() const;
-
-  const expression_ref get_note(int i) const;
 
   int add_note(const expression_ref&);
 
   void process_note(int);
 
-  int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
-
   // Add a Module, including any notes and declared parameters.
   std::vector<int> add_submodel(const Module&);
 
   std::vector<int> add_submodel(const Model_Notes&);
-
-  const context& get_context() const {return C;}
-
-  int add_compute_expression(const expression_ref& E);
-
-  void set_compute_expression(int i, const expression_ref& E);
-
-  expression_ref get_expression(int i) const;
-
-  object_ref evaluate(int index) const;
-
-  /// No more code changes allowed after this!
-  void compile();
 
   /// Construct an empty model
   Model(const module_loader&);

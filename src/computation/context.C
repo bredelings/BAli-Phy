@@ -645,13 +645,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 
       if (S.scope != local_scope) continue;
 
-      if (S.symbol_type == parameter_symbol)
-      {
-	int R = get_parameter_reg( find_parameter(S.name) );
-	expression_ref E = (identifier("unsafePerformIO"),(parameter_constructor(S.name,get_notes()), get_token()) );
-	set_C(R, preprocess( E ) );
-	continue;
-      }
+      if (S.symbol_type == parameter_symbol) continue; // we handle this in initialize_parameter_structures_from_notes( )
 
       if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
 
@@ -669,12 +663,37 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
   }
 }
 
+void context::initialize_parameter_structures_for_modules(const vector<string>& module_names)
+{
+  // 3. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
+  for(const auto& name: module_names)
+  {
+    const Module& M = get_module(*P, name);
+
+    for(const auto& s: M.get_symbols())
+    {
+      const symbol_info& S = s.second;
+
+      if (S.scope != local_scope) continue;
+
+      if (S.symbol_type == parameter_symbol)
+      {
+	int R = get_parameter_reg( find_parameter(S.name) );
+	expression_ref E = (identifier("unsafePerformIO"),(parameter_constructor(S.name,get_notes()), get_token()) );
+	set_C(R, preprocess( E ) );
+      }
+    }
+  }
+}
+
 // \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
 context& context::operator+=(const Module& M)
 {
   Program& PP = *P.modify();
 
   int first_note = n_notes();
+
+  int first_module = PP.size();
 
   // Get module_names, but in a set<string>
   set<string> old_module_names = module_names_set(PP);
@@ -690,6 +709,14 @@ context& context::operator+=(const Module& M)
 
   allocate_identifiers_for_modules(new_module_names);
 
+  // 3. Now that parameters are defined, add notes -- which can add priors for parameters.
+  for(int i=first_module;i<PP.size();i++)
+    add_notes(PP[i].get_notes());
+
+  // 4. Create a structure containing modifiables for each parameter
+  initialize_parameter_structures_for_modules(new_module_names);
+
+  // 5. Finally, set default parameter values.
   set_default_values_from_notes(*this,first_note,n_notes());
   
   return *this;

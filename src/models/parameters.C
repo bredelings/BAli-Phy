@@ -165,20 +165,20 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   b = T().directed_branch(b).undirected_name();
   assert(b >= 0 and b < T().n_branches());
 
-  return *P->C.evaluate_as<Box<vector<Matrix>>>( transition_p_method_indices[b] );
+  return *P->evaluate_as<Box<vector<Matrix>>>( transition_p_method_indices[b] );
 }
 
 int data_partition::n_base_models() const
 {
   int s = P->smodel_for_partition[partition_index];
-  object_ref O = P->C.evaluate(P->SModels[s].n_base_models);
+  object_ref O = P->evaluate(P->SModels[s].n_base_models);
   return *convert<const Int>(O);
 }
 
 int data_partition::n_states() const
 {
   int s = P->smodel_for_partition[partition_index];
-  object_ref O = P->C.evaluate(P->SModels[s].n_states);
+  object_ref O = P->evaluate(P->SModels[s].n_states);
   return *convert<const Int>(O);
 }
 
@@ -186,27 +186,27 @@ vector<double> data_partition::distribution() const
 {
   // Add Op to convert list to vector<Double>
   int s = P->smodel_for_partition[partition_index];
-  object_ref O = P->C.evaluate(P->SModels[s].distribution);
+  object_ref O = P->evaluate(P->SModels[s].distribution);
   return *convert<const Box<vector<double>>>(O);
 }
 
 vector<unsigned> data_partition::state_letters() const
 {
   int s = P->smodel_for_partition[partition_index];
-  object_ref O = P->C.evaluate(P->SModels[s].state_letters);
+  object_ref O = P->evaluate(P->SModels[s].state_letters);
   return *convert<const Box<vector<unsigned> > >(O);
 }
 
 vector<double> data_partition::frequencies(int m) const
 {
-  return *P->C.evaluate_as<Vector<double>>( frequencies_indices[m] );
+  return *P->evaluate_as<Vector<double>>( frequencies_indices[m] );
 }
 
 object_ptr<const Object> data_partition::base_model(int m, int b) const
 {
   b = T().directed_branch(b).undirected_name();
 
-  return P->C.evaluate( base_model_indices(m,b) );
+  return P->evaluate( base_model_indices(m,b) );
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -215,7 +215,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 
   b = T().directed_branch(b).undirected_name();
 
-  return *P->C.evaluate_as<indel::PairHMM>( branch_HMM_indices[b] );
+  return *P->evaluate_as<indel::PairHMM>( branch_HMM_indices[b] );
 }
 
 vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) const
@@ -236,7 +236,7 @@ double data_partition::sequence_length_pr(int l) const
 
   const_cast<Parameters*>(P)->set_parameter_value(arg_param_index, new Int(l) );
 
-  return *P->C.evaluate_as<Double>( P->IModel_methods[m].length_p );
+  return *P->evaluate_as<Double>( P->IModel_methods[m].length_p );
 }
 
 /// \brief Recalculate cached values relating to the substitution model.
@@ -261,7 +261,7 @@ void data_partition::setlength(int b)
 
 int data_partition::seqlength(int n) const
 {
-  int l = *P->C.evaluate_as<Int>(sequence_length_indices[n]);
+  int l = *P->evaluate_as<Int>(sequence_length_indices[n]);
 
   assert(l == A->seqlength(n));
 
@@ -459,7 +459,7 @@ efloat_t data_partition::prior_alignment() const
   for(int i=0;i<T().n_branches()*2;i++)
     assert(P->get_parameter_value(pairwise_alignment_for_branch[i]));
 
-  efloat_t Pr = *P->C.evaluate_as<Log_Double>(alignment_prior_index);
+  efloat_t Pr = *P->evaluate_as<Log_Double>(alignment_prior_index);
 
   assert(not different(Pr, ::prior_HMM(*this)));
 
@@ -526,10 +526,10 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
     int s = P->scale_for_partition[partition_index];
     int m = P->smodel_for_partition[partition_index];
 
-    expression_ref E = P->C.get_expression(P->branch_transition_p_indices(s,m));
+    expression_ref E = P->get_expression(P->branch_transition_p_indices(s,m));
     E = (identifier("!"), E, b);
 
-    transition_p_method_indices[b] = p->C.add_compute_expression(E);
+    transition_p_method_indices[b] = p->add_compute_expression(E);
   }
 
   // Add method indices for calculating base models and frequencies
@@ -537,12 +537,12 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
   for(int m=0;m<n_models;m++)
   {
     int s = P->smodel_for_partition[partition_index];
-    expression_ref F = P->C.get_expression(P->SModels[s].frequencies);
-    frequencies_indices.push_back( p->C.add_compute_expression( (F,m) ) );
+    expression_ref F = P->get_expression(P->SModels[s].frequencies);
+    frequencies_indices.push_back( p->add_compute_expression( (F,m) ) );
 
-    expression_ref BM = P->C.get_expression(P->SModels[s].base_model);
+    expression_ref BM = P->get_expression(P->SModels[s].base_model);
     for(int b=0;b<B;b++)
-      base_model_indices(m,b) = p->C.add_compute_expression((BM,m,b));
+      base_model_indices(m,b) = p->add_compute_expression((BM,m,b));
   }
 
   // Add method indices for calculating branch HMMs
@@ -563,31 +563,31 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       expression_ref a = parameter( P->parameter_name(pairwise_alignment_for_branch[b]) );
       as_.push_back(a);
     }
-    expression_ref as = P->C.get_expression( p->C.add_compute_expression((identifier("listArray'"),get_list(as_))) );
+    expression_ref as = P->get_expression( p->add_compute_expression((identifier("listArray'"),get_list(as_))) );
 
     expression_ref hmms = (identifier("branch_hmms"), model, D, heat, training, B);
-    hmms = P->C.get_expression( p->C.add_compute_expression(hmms) );
+    hmms = P->get_expression( p->add_compute_expression(hmms) );
 
     for(int b=0;b<B;b++)
     {
       // (fst IModels.models!i_index) D b heat training
-      int index = p->C.add_compute_expression( (identifier("!"), hmms, b) );
+      int index = p->add_compute_expression( (identifier("!"), hmms, b) );
       branch_HMM_indices.push_back( index );
-      expression_ref hmm = P->C.get_expression(index);
+      expression_ref hmm = P->get_expression(index);
 
-      alignment_prior_for_branch[b] = p->C.add_compute_expression( (identifier("alignment_branch_pr"),as,hmms,b) );
+      alignment_prior_for_branch[b] = p->add_compute_expression( (identifier("alignment_branch_pr"),as,hmms,b) );
     }
 
     expression_ref tree = identifier("MyTree.tree");
 
-    alignment_prior_index = p->C.add_compute_expression( (identifier("alignment_pr"), as, tree, hmms, model) );
+    alignment_prior_index = p->add_compute_expression( (identifier("alignment_pr"), as, tree, hmms, model) );
 
     for(int n=0;n<T().n_nodes();n++)
     {
       expression_ref L = A->seqlength(n);
       if (variable_alignment())
 	L = (identifier("seqlength"),as,tree,n);
-      sequence_length_indices[n] = p->C.add_compute_expression( L );
+      sequence_length_indices[n] = p->add_compute_expression( L );
     }
   }
 }
@@ -655,10 +655,10 @@ OVector edges_connecting_to_node(const Tree& T, int n)
 void Parameters::read_h_tree()
 {
   for(int n=0; n < T().n_nodes(); n++)
-    C.set_parameter_value(parameter_for_tree_node[n], edges_connecting_to_node(T(),n));
+    context::set_parameter_value(parameter_for_tree_node[n], edges_connecting_to_node(T(),n));
 
   for(int b=0; b < 2*T().n_branches(); b++)
-    C.set_parameter_value(parameter_for_tree_branch[b], OPair(Opair{Int(T().directed_branch(b).source()), Int(T().directed_branch(b).target())}) );
+    context::set_parameter_value(parameter_for_tree_branch[b], OPair(Opair{Int(T().directed_branch(b).source()), Int(T().directed_branch(b).target())}) );
 }
 void Parameters::set_tree(const SequenceTree& T2)
 {
@@ -682,10 +682,10 @@ void Parameters::reconnect_branch(int s1, int t1, int t2)
 
   T_.modify()->reconnect_branch(s1,t1,t2);
 
-  C.set_parameter_value(parameter_for_tree_branch[b1], OPair(Opair{Int(T().directed_branch(b1).source()), Int(T().directed_branch(b1).target())}) );
-  C.set_parameter_value(parameter_for_tree_branch[b2], OPair(Opair{Int(T().directed_branch(b2).source()), Int(T().directed_branch(b2).target())}) );
-  C.set_parameter_value(parameter_for_tree_node[t1], edges_connecting_to_node(T(),t1));
-  C.set_parameter_value(parameter_for_tree_node[t2], edges_connecting_to_node(T(),t2));
+  context::set_parameter_value(parameter_for_tree_branch[b1], OPair(Opair{Int(T().directed_branch(b1).source()), Int(T().directed_branch(b1).target())}) );
+  context::set_parameter_value(parameter_for_tree_branch[b2], OPair(Opair{Int(T().directed_branch(b2).source()), Int(T().directed_branch(b2).target())}) );
+  context::set_parameter_value(parameter_for_tree_node[t1], edges_connecting_to_node(T(),t1));
+  context::set_parameter_value(parameter_for_tree_node[t2], edges_connecting_to_node(T(),t2));
 
   check_h_tree();
 }
@@ -792,7 +792,7 @@ void Parameters::check_h_tree() const
 #ifndef NDEBUG
   for(int b=0; b < 2*T().n_branches(); b++)
   {
-    object_ref p = C.get_parameter_value(parameter_for_tree_branch[b]);
+    object_ref p = get_parameter_value(parameter_for_tree_branch[b]);
     object_ref s = convert<const OPair>(p)->first;
     object_ref t = convert<const OPair>(p)->second;
     assert(T().directed_branch(b).source() == *convert<const Int>(s));
@@ -801,7 +801,7 @@ void Parameters::check_h_tree() const
 
   for(int n=0; n < n*T().n_nodes(); n++)
   {
-    object_ptr<const OVector> V = convert<const OVector>(C.get_parameter_value(parameter_for_tree_node[n]));
+    object_ptr<const OVector> V = convert<const OVector>(get_parameter_value(parameter_for_tree_node[n]));
     vector<int> VV;
     for(const auto& elem: *V)
       VV.push_back(*convert<const Int>(elem));
@@ -992,27 +992,24 @@ void Parameters::note_alignment_changed()
 
 void Parameters::recalc()
 {
-  vector<int> triggers;
-  std::swap(triggers, C.triggers());
-
   // Check for beta (0) or mu[i] (i+1)
-  for(int index: triggers)
+  for(int index: triggers())
   {
     if (0 <= index and index < n_scales)
     {
       int s = index;
 
-      assert(includes(triggers,s));
+      assert(includes(triggers(),s));
       assert(0 <= s and s < n_scales);
       
       // Change branch lengths for the s-th scale
       assert(branch_length_indices[s].size() == T().n_branches());
       for(int b=0;b<T().n_branches();b++)
       {
-	double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+	double rate = *convert<const Double>(get_parameter_value(branch_mean_index(s)));
 	double delta_t = T().branch(b).length();
 
-	C.set_parameter_value(branch_length_indices[s][b], Double(rate*delta_t));
+	context::set_parameter_value(branch_length_indices[s][b], Double(rate*delta_t));
       }
 
       // notify partitions with scale 'p' that their branch mean changed
@@ -1023,17 +1020,18 @@ void Parameters::recalc()
       }
     }
   }
+  triggers().clear();
 
   // Check if any substitution models have changed.
   // This (probably?) works because it recursively check the up-to-date-ness of the entire structure.
   for(int s=0;s<n_smodels();s++)
-    if (not C.compute_expression_is_up_to_date(SModels[s].main))
+    if (not compute_expression_is_up_to_date(SModels[s].main))
       recalc_smodel(s);
 }
 
 object_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
 {
-  return convert<const alphabet>(C.evaluate(SModels[s].get_alphabet));
+  return convert<const alphabet>(evaluate(SModels[s].get_alphabet));
 }
 
 bool Parameters::variable_alignment() const
@@ -1058,10 +1056,10 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
   // Update D parameters
   for(int s=0; s<n_scales; s++) 
   {
-    double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+    double rate = *convert<const Double>(get_parameter_value(branch_mean_index(s)));
     double delta_t = T().branch(b).length();
     
-    C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
+    context::set_parameter_value(branch_length_indices[s][b], rate * delta_t);
   }
 }
 
@@ -1079,10 +1077,10 @@ void Parameters::setlength(int b,double l)
   // Update D parameters
   for(int s=0; s<n_scales; s++) 
   {
-    double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+    double rate = *convert<const Double>(get_parameter_value(branch_mean_index(s)));
     double delta_t = T().branch(b).length();
     
-    C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
+    context::set_parameter_value(branch_length_indices[s][b], rate * delta_t);
   }
 
   // Invalidates conditional likelihoods
@@ -1119,7 +1117,7 @@ void Parameters::branch_mean(int i, double x)
 // I think we do it by not going through set_parameter_value( ) as above.
 void Parameters::branch_mean_tricky(int i,double x)
 {
-  C.set_parameter_value(branch_mean_index(i), Double(x) );
+  context::set_parameter_value(branch_mean_index(i), Double(x) );
 }
 
 double Parameters::get_branch_subst_rate(int p, int /* b */) const
@@ -1150,7 +1148,7 @@ Parameters::Parameters(const module_loader& L,
    branch_length_max(-1)
 {
   // \todo FIXME:cleanup|fragile - Don't touch C here directly!
-  C += { "SModel","Distributions","Range","PopGen","Alignment" };
+  *this += { "SModel","Distributions","Range","PopGen","Alignment" };
   
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 
@@ -1165,8 +1163,8 @@ Parameters::Parameters(const module_loader& L,
     // prior on mu[i], the mean branch length for scale i
     add_note( constructor(":~",2)+parameter(mu_name)+(identifier("gamma"), Tuple(0.5, 2.0)));
 
-    int trigger = C.add_compute_expression( (identifier("trigger_on"),parameter(mu_name),i) );
-    C.set_re_evaluate(trigger, true);
+    int trigger = add_compute_expression( (identifier("trigger_on"),parameter(mu_name),i) );
+    set_re_evaluate(trigger, true);
   }
 
   /*------------------------- Create the tree structure -----------------------*/
@@ -1217,12 +1215,12 @@ Parameters::Parameters(const module_loader& L,
 
   check_h_tree();
 
-  C.evaluate_expression( (identifier("numNodes"), identifier("MyTree.tree")));
-  C.evaluate_expression( (identifier("numBranches"), identifier("MyTree.tree")));
-  C.evaluate_expression( (identifier("edgesOutOfNode"), identifier("MyTree.tree"), 0));
-  C.evaluate_expression( (identifier("neighbors"), identifier("MyTree.tree"), 0));
-  C.evaluate_expression( (identifier("nodesForEdge"),identifier("MyTree.tree"), 0));
-  int nn = *convert<const Int>(C.evaluate_expression( (identifier("edgeForNodes"), identifier("MyTree.tree"), (identifier("nodesForEdge"),identifier("MyTree.tree"), 0))));
+  evaluate_expression( (identifier("numNodes"), identifier("MyTree.tree")));
+  evaluate_expression( (identifier("numBranches"), identifier("MyTree.tree")));
+  evaluate_expression( (identifier("edgesOutOfNode"), identifier("MyTree.tree"), 0));
+  evaluate_expression( (identifier("neighbors"), identifier("MyTree.tree"), 0));
+  evaluate_expression( (identifier("nodesForEdge"),identifier("MyTree.tree"), 0));
+  int nn = *convert<const Int>(evaluate_expression( (identifier("edgeForNodes"), identifier("MyTree.tree"), (identifier("nodesForEdge"),identifier("MyTree.tree"), 0))));
   for(int b=0; b < 2*T().n_branches(); b++)
   {
     vector<const_branchview> branch_list;
@@ -1231,7 +1229,7 @@ Parameters::Parameters(const module_loader& L,
     for(auto b: branch_list)
       branch_list_.push_back(b);
 
-    vector<int> b2 = *convert<const Vector<int>>(C.evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),identifier("MyTree.tree"),b)))));
+    vector<int> b2 = *convert<const Vector<int>>(evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),identifier("MyTree.tree"),b)))));
     assert(b2.size() == branch_list_.size());
     for( int i: branch_list_)
       assert(includes(b2,i));
@@ -1252,7 +1250,7 @@ Parameters::Parameters(const module_loader& L,
 
     add_submodel(smodel);
 
-    SModels.push_back( smodel_methods( smodel.exp(), C) );
+    SModels.push_back( smodel_methods( smodel.exp(), *this) );
   }
 
   // register the indel models as sub-models
@@ -1271,7 +1269,7 @@ Parameters::Parameters(const module_loader& L,
   imodels_program.def_function("models", (identifier("listArray'"), get_list(imodels_).exp()));
   imodels_program.declare_parameter("training");
   add_submodel(imodels_program);
-  C.set_parameter_value(C.find_parameter("IModels.training"), false);
+  context::set_parameter_value(find_parameter("IModels.training"), false);
   
   // check that we only map existing smodels to data partitions
   for(int i=0;i<smodel_for_partition.size();i++) {
@@ -1297,7 +1295,7 @@ Parameters::Parameters(const module_loader& L,
     branch_length_indices.push_back(vector<int>());
     for(int b=0;b<T().n_branches();b++)
     {
-      double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+      double rate = *convert<const Double>(get_parameter_value(branch_mean_index(s)));
       double delta_t = T().branch(b).length();
 
       string name = "d" + convertToString(b+1);
@@ -1314,7 +1312,7 @@ Parameters::Parameters(const module_loader& L,
     add_parameter(name, Int(0));
     branch_categories.push_back(parameter(name));
   }
-  expression_ref branch_cat_list = C.get_expression( C.add_compute_expression( (get_list(branch_categories) ) ) );
+  expression_ref branch_cat_list = get_expression( add_compute_expression( (get_list(branch_categories) ) ) );
 
   expression_ref substitutionBranchLengthsList;
   {
@@ -1351,13 +1349,13 @@ Parameters::Parameters(const module_loader& L,
     // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
     for(int m=0;m < n_smodels(); m++)
     {
-      expression_ref S = C.get_expression(SModels[m].main);
+      expression_ref S = get_expression(SModels[m].main);
       //expression_ref V = identifier("listToVectorMatrix");
       expression_ref V = Vector_From_List<Matrix,MatrixObject>();
       //expression_ref I = 0;
       expression_ref I = (identifier("!!"),branch_cat_list,v1);
       expression_ref E = (identifier("mkArray"), T().n_branches(), v1^(V,(identifier("branchTransitionP"), (identifier("getNthMixture"),S,I), (identifier("!"), DL, v1) ) ) );
-      branch_transition_p_indices(s,m) = C.add_compute_expression(E);
+      branch_transition_p_indices(s,m) = add_compute_expression(E);
     }
   }
 
@@ -1370,7 +1368,7 @@ Parameters::Parameters(const module_loader& L,
     I.length_arg_param_index = add_parameter(prefix+".lengthpArg", Int(1));
     expression_ref lengthp = (identifier("snd"),(identifier("!"),identifier("IModels.models"),i));
     expression_ref lengthp_arg = parameter(prefix+".lengthpArg");
-    I.length_p = C.add_compute_expression( (lengthp, lengthp_arg) );
+    I.length_p = add_compute_expression( (lengthp, lengthp_arg) );
 
     // Note that branch_HMM's are per scale and per-imodel.  Construct them in the data_partition.
   }

@@ -573,7 +573,7 @@ void find_sub_loggers(Parameters& P, int& index, const string& name, vector<int>
     {
       expression_ref L = P.get_expression(index);
       expression_ref E = (identifier("Prelude.length"),L);
-      int length = *convert<const Int>(P.get_context().evaluate_expression(E));
+      int length = *convert<const Int>(P.evaluate_expression(E));
       int index2 = -1;
       for(int i=0;i<length;i++)
       {
@@ -1677,7 +1677,7 @@ int main(int argc,char* argv[])
 
       // Force the creation of parameters
       for(int i=0;i<P.n_parameters();i++)
-	P.get_context().parameter_is_modifiable(i);
+	P.parameter_is_modifiable(i);
 
       //------ Redirect output to files -------//
       owned_ptr<Probability_Model> Ptr(P);

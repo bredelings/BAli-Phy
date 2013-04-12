@@ -57,7 +57,7 @@ int Model::add_parameter(const string& name)
 
   int index = n_parameters();
 
-  C.add_parameter(name);
+  context::add_parameter(name);
   bounds.push_back(-1);
   prior_note_index.push_back(-1);
 
@@ -69,7 +69,7 @@ int Model::add_parameter(const string& name, const object_ref& o)
   int index = add_parameter(name);
 
   if (o)
-    C.set_parameter_value(index, o);
+    context::set_parameter_value(index, o);
 
   return index;
 }
@@ -97,7 +97,7 @@ vector<int> Model::add_submodel(const Module& M)
 {
   // 1. Load the module, perform imports, and resolve its symbols.
   int old_n_notes = n_notes();
-  C += M;
+  *this += M;
 
   // 3. Check that no parameters are declared via notes, here.
   assert( find_declared_parameters(M).empty() );
@@ -111,9 +111,6 @@ vector<int> Model::add_submodel(const Module& M)
     bounds.push_back(-1);
     prior_note_index.push_back(-1);
   }
-
-  for(int i=old_n_notes;i<n_notes();i++)
-    process_note(i);
 
   return new_parameters;
 }
@@ -145,29 +142,9 @@ vector<int> Model::add_submodel(const Model_Notes& N)
   
   // 5. Set default values.
   //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
-  set_default_values_from_notes(C, first_note, n_notes());
+  set_default_values_from_notes(*this, first_note, n_notes());
   
   return new_parameters;
-}
-
-int Model::add_compute_expression(const expression_ref& E)
-{
-  return C.add_compute_expression(E);
-}
-
-void Model::set_compute_expression(int i, const expression_ref& E)
-{
-  C.set_compute_expression(i, E);
-}
-
-expression_ref Model::get_expression(int i) const
-{
-  return C.get_expression(i);
-}
-
-object_ref Model::evaluate(int index) const
-{
-  return C.evaluate(index);
 }
 
 std::vector< object_ptr<const Object> > Model::get_parameter_values(const std::vector<int>& indices) const
@@ -180,29 +157,11 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values(const std::v
   return values;  
 }
 
-std::string Model::parameter_name(int i) const
-{
-  return C.parameter_name(i);
-}
-
-void Model::rename_parameter(int i, const std::string& s)
-{
-  C.rename_parameter(i,s);
-}
-
-int Model::find_parameter(const string& s) const
-{
-  // This check cannot be in Context:: because there we check if operators are already defined as parameters.
-  assert(is_haskell_var_name(s));
-
-  return C.find_parameter(s);
-}
-
 int Model::add_note(const expression_ref& E)
 {
   int old_n_notes = n_notes();
 
-  int index = C.add_note(E);
+  int index = context::add_note(E);
 
   for(int i=bounds.size();i<n_parameters();i++)
   {
@@ -210,16 +169,14 @@ int Model::add_note(const expression_ref& E)
     prior_note_index.push_back(-1);
   }
 
-  // Only process notes that we haven't seen already.
-  for(int i= old_n_notes;i < n_notes();i++)
-    process_note(i);
+  process_note(index);
 
   return index;
 }
 
 void Model::process_note(int index)
 {
-  const expression_ref& note = C.get_note(index);
+  const expression_ref& note = get_note(index);
 
   // 1. Check to see if this expression adds a bound.
   expression_ref query = constructor("VarBounds",2) + match(0) + match(1);
@@ -259,7 +216,7 @@ void Model::process_note(int index)
 	
 	if (prior_note_index[p_index] != -1)
 	  throw myexception()<<"Variable '"<<name<<"': new prior '"<<show_probability_expression(note)
-			     <<"' on top of original prior '"<<show_probability_expression(C.get_note(prior_note_index[p_index]))<<"'?";
+			     <<"' on top of original prior '"<<show_probability_expression(get_note(prior_note_index[p_index]))<<"'?";
 	else
 	  prior_note_index[p_index] = index;
       }
@@ -270,11 +227,11 @@ void Model::process_note(int index)
     // Extend the probability expression to include this term also.
     // (FIXME: a balanced tree could save computation time)
     if (prior_index == -1)
-      prior_index = C.add_compute_expression( Pr_new );
+      prior_index = add_compute_expression( Pr_new );
     else
     {
-      expression_ref Pr = C.get_expression(prior_index);
-      C.set_compute_expression(prior_index, (identifier("*"),Pr_new,Pr));
+      expression_ref Pr = get_expression(prior_index);
+      set_compute_expression(prior_index, (identifier("*"),Pr_new,Pr));
     }
 
     if (auto p = x.is_a<parameter>())
@@ -295,7 +252,7 @@ bool Model::has_bounds(int i) const
 {
   if (bounds[i] == -1) return false;
 
-  return (bool)dynamic_pointer_cast<const Bounds<double>>(C.evaluate(bounds[i]));
+  return (bool)dynamic_pointer_cast<const Bounds<double>>(evaluate(bounds[i]));
 }
 
 const Bounds<double>& Model::get_bounds(int i) const 
@@ -303,7 +260,7 @@ const Bounds<double>& Model::get_bounds(int i) const
   if (bounds[i] == -1)
     throw myexception()<<"parameter '"<<parameter_name(i)<<"' doesn't have bounds.";
 
-  return *C.evaluate_as<Bounds<double>>(bounds[i]);
+  return *evaluate_as<Bounds<double>>(bounds[i]);
 }
 
 void Model::set_bounds(int i,const expression_ref& b) 
@@ -316,22 +273,17 @@ void Model::set_bounds(int i,const expression_ref& b)
 
   expression_ref E = (identifier("Range.getBounds"),b);
   if (bounds[i] == -1)
-    bounds[i] = C.add_compute_expression(E);
+    bounds[i] = add_compute_expression(E);
   else
-    C.set_compute_expression(bounds[i],E);
+    set_compute_expression(bounds[i],E);
 }
 
 void Model::set_bounds(int i,const Bounds<double>& b) 
 {
   if (bounds[i] == -1)
-    bounds[i] = C.add_compute_expression(b);
+    bounds[i] = add_compute_expression(b);
   else
-    C.set_compute_expression(bounds[i],b);
-}
-
-object_ref Model::get_modifiable_value(int i) const
-{
-  return C.get_modifiable_value(i);
+    set_compute_expression(bounds[i],b);
 }
 
 std::vector< object_ref > Model::get_modifiable_values(const std::vector<int>& indices) const
@@ -344,19 +296,9 @@ std::vector< object_ref > Model::get_modifiable_values(const std::vector<int>& i
   return values;  
 }
 
-object_ptr<const Object> Model::get_parameter_value(int i) const
-{
-  return C.get_parameter_value(i);
-}
-
-object_ptr<const Object> Model::get_parameter_value(const std::string& p_name) const 
-{
-  return C.get_parameter_value(p_name);
-}
-
 void Model::set_modifiable_value(int m, const object_ref& value) 
 {
-  C.set_modifiable_value(m, value);
+  context::set_modifiable_value(m, value);
   recalc();
 }
 
@@ -393,49 +335,22 @@ void Model::set_parameter_values(const vector<int>& indices,const vector<object_
   assert(indices.size() == p.size());
 
   for(int i=0;i<indices.size();i++)
-    C.set_parameter_value(indices[i], p[i]);
+    context::set_parameter_value(indices[i], p[i]);
 
   recalc();
-}
-
-unsigned Model::n_parameters() const 
-{
-  return C.n_parameters();
 }
 
 efloat_t Model::prior() const
 {
   if (prior_index == -1) return 1.0;
 
-  object_ptr<const Log_Double> R = C.evaluate_as<Log_Double>(prior_index);
+  object_ptr<const Log_Double> R = evaluate_as<Log_Double>(prior_index);
   return *R;
 }
 
 vector<string> Model::show_priors() const
 {
-  return show_probability_expressions(C);
-}
-
-int Model::n_notes() const {return C.n_notes();}
-
-const std::vector<expression_ref>& Model::get_notes() const 
-{
-  return C.get_notes();
-}
-
-const expression_ref Model::get_note(int i) const 
-{
-  return C.get_note(i);
-}
-
-int Model::find_match_notes(const expression_ref& e, std::vector<expression_ref>& results, int start) const
-{
-  return C.find_match_notes(e, results, start);
-}
-
-void Model::compile()
-{
-  C.compile();
+  return show_probability_expressions(*this);
 }
 
 Model::Model(const module_loader& L)
@@ -443,7 +358,7 @@ Model::Model(const module_loader& L)
 { }
 
 Model::Model(const module_loader& L, const vector<expression_ref>& notes)
-  :C(L)
+  :context(L)
 {
   // 1. Create the parameters
   std::set<string> names = find_declared_parameters(notes);
@@ -453,14 +368,14 @@ Model::Model(const module_loader& L, const vector<expression_ref>& notes)
   for(const auto& name: names)
     add_parameter(name);
 
-  C.alphabetize_parameters();
+  alphabetize_parameters();
 
   // 2. Add the notes refering to the parameters.
   for(int i=0;i<notes.size();i++)
     add_note(notes[i]);
 
   // 3. Then set all default values.
-  set_default_values_from_notes(C, 0, C.n_notes());
+  set_default_values_from_notes(*this, 0, n_notes());
 
   // 4. Set bounds.
   for(int i=0;i<n_parameters();i++)
@@ -468,7 +383,7 @@ Model::Model(const module_loader& L, const vector<expression_ref>& notes)
     expression_ref var = parameter(parameter_name(i));
     vector<expression_ref> results;
     expression_ref query = constructor("VarBounds",2) + var + match(0);
-    int found = C.find_match_notes(query, results, 0);
+    int found = find_match_notes(query, results, 0);
     if (found != -1)
     {
       assert(results.size());
@@ -477,13 +392,13 @@ Model::Model(const module_loader& L, const vector<expression_ref>& notes)
   }
 
   // 5. Create the prior
-  prior_index = add_probability_expression(C);
+  prior_index = add_probability_expression(*this);
 
 #ifndef NDEBUG
-  std::cout<<C<<"\n";
+  std::cout<<*this<<"\n";
   std::cout<<"prior_index = "<<prior_index<<"\n";
   std::cout<<"prior = "<<log(prior())<<"\n";
-  std::cout<<C<<std::endl;
+  std::cout<<*this<<std::endl;
 #endif
 }
 
@@ -492,13 +407,13 @@ void show_parameters(std::ostream& o,const Model& M) {
     o<<"    ";
     o<<M.parameter_name(i)<<" = ";
     string output="[NULL]";
-    if (M.get_context().parameter_is_modifiable(i) and M.get_parameter_value(i))
+    if (M.parameter_is_modifiable(i) and M.get_parameter_value(i))
     {
       output=M.get_parameter_value(i)->print();
       if (output.find(10) != string::npos or output.find(13) != string::npos)
 	output = "[multiline]";
     }
-    else if (not M.get_context().parameter_is_modifiable(i))
+    else if (not M.parameter_is_modifiable(i))
       output = "[not modifiable]";
     o<<output;
   }
