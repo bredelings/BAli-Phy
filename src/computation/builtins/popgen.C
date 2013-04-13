@@ -128,7 +128,7 @@ log_double_t ewens_sampling_probability(double theta, const vector<int>& a)
   for(int i=1;i<=n;i++)
   {
     int a_i = a[i-1];
-    Pr *= (double(i)/(theta+i-1));
+    Pr *= (double(i)/(theta+(i-1)));
     if (a_i > 0) 
     {
       log_double_t x = theta/i;
