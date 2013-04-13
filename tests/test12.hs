@@ -25,7 +25,14 @@ note category ~ iid(n_loci, categorical p);
 
 note z ~ iid(n_loci, normal(0.0, 1.0));
 
-  theta = [ exp $ (z!!i + log (mean!!k))*sigmaOverMu!!k | i <- take n_loci [0..], let {k=category!!i}];
+  safe_exp x = if (x < (-20.0)) then
+                 exp (-20.0);
+               else if (x > 20.0) then
+                 exp 20.0;
+               else
+                 exp x;
+
+  theta = [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n_loci [0..], let {k=category!!i}];
 
 note theta_example ~ mixture [ (p!!i, logNormal(log(mean!!i),sigmaOverMu!!i)) | i <- take n [0..] ];
 
