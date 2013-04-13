@@ -64,6 +64,7 @@ int Model::add_parameter(const string& name)
 {
   assert(bounds.size() == n_parameters());
 
+  // Declaring this forwarding function avoids hiding it when we declare it w/ extra arguments below.
   int index = context::add_parameter(name);
 
   assert(bounds.size() == n_parameters());
