@@ -165,6 +165,11 @@ public:
   /// Lookup the index for the named parameter s
   int find_parameter(const std::string& s) const;
 
+protected:
+  /// Create a new parameter named s
+  virtual void add_parameter_(const std::string& s);
+
+public:
   /// Create a new parameter named s
   int add_parameter(const std::string& s);
 

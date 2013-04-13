@@ -46,14 +46,12 @@ using std::map;
  * 14. [DONE] Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
  */
 
-// allow print ints w/o decimal points
-// make model derive from context.
-// update boost
-
 /* \todo: List of things to do to clean up programs.
  *
  * See list in parser/desugar.C
  * See list in models/parameters.C 
+ *
+ * -2. allow print ints w/o decimal points
  *
  * -1. Make a model-creation monad.  This could allow us to modify the model after creating it, thus
  *    allowing the specification of default parameters.
@@ -63,9 +61,9 @@ using std::map;
  *    - Model descriptions probably need to be functions, since they need to take arguments.
  *    - These arguments could then affect  e.g. the dimension of distributions and the
  *       dimension of random lists created by the model.
-
+ *
  * 0. Fix the parser to give meaningful error messages, instead of just saying that the entire body doesn't parse.
-
+ *
  * 1. Efficiently recalculate the probability when only a few densities change.
  *    - Will this require signals? (Signals might also help us to recalculate mu*t to see if anything changed.)
  *    - This will allow us to avoid maintaining a Markov blanket.
@@ -114,6 +112,9 @@ using std::map;
  *      + Frequency defaults - how can we specify these?
  *      + Submodel parameters in the M+M+M formulation - these need separate parsing to coerce them to the right type.
  *        - But is that a problem?
+
+ * 10. Eliminate the need for set_branch_mean_tricky( )
+ *    - Implement setting D!b only when the change is large enough.
 
  * 11. [SPEED] For bali-phy 5d.fasta --seed=0 --iter=1000
  *      + Split parameter names out of token roots?  Identifier names also? Program also?

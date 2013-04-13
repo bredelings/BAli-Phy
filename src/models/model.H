@@ -66,6 +66,7 @@ protected:
 
   int prior_index;
 
+  void add_parameter_(const std::string&);
   int add_parameter(const std::string&);
   int add_parameter(const std::string&,const object_ref&);
   int add_parameter(const std::string&,const object_ref&,const Bounds<double>&);

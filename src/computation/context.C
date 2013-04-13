@@ -333,10 +333,24 @@ int context::find_parameter(const string& s) const
   return -1;
 }
 
+void context::add_parameter_(const string& name)
+{
+  assert(find_parameter(name) == -1);
+
+  int R = allocate_reg();
+
+  parameters().push_back( {name, R} );
+}
+
 int context::add_parameter(const string& full_name)
 {
   if (not is_haskell_var_name(full_name))
     throw myexception()<<"Parameter name '"<<full_name<<"' is not a Haskell variable name";
+
+  // 0. Check that we don't already have a parameter with that name
+  for(int i=0;i<n_parameters();i++)
+    if (parameter_name(i) == full_name)
+      throw myexception()<<"A parameter with name '"<<full_name<<"' already exists - cannot add another one.";
 
   // 1. Determine module name and extension of parameter name.
   string module_name = get_module_name(full_name);
@@ -367,9 +381,9 @@ int context::add_parameter(const string& full_name)
 
   int index = n_parameters();
 
-  int R = allocate_reg();
+  add_parameter_(full_name);
 
-  parameters().push_back( {full_name, R} );
+  int R = parameters().back().second;
 
   set_C(R, preprocess( (identifier("unsafePerformIO"),(identifier("new_modifiable"),get_token()) ) ) );
 
@@ -624,13 +638,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 	add_identifier(S.name);
       }
       else if (S.symbol_type == parameter_symbol)
-      {
-	assert(find_parameter(S.name) == -1);
-
-	int R = allocate_reg();
-
-	parameters().push_back( {S.name, R} );
-      }
+	add_parameter_(S.name);
     }
   }
       

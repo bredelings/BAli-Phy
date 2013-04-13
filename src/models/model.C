@@ -49,17 +49,24 @@ vector<expression_ref> model_parameter_expressions(const Model& M)
   return sub;
 }
 
-int Model::add_parameter(const string& name)
+void Model::add_parameter_(const string& name)
 {
-  for(int i=0;i<n_parameters();i++)
-    if (parameter_name(i) == name)
-      throw myexception()<<"A parameter with name '"<<name<<"' already exists - cannot add another one.";
+  assert(bounds.size() == n_parameters());
 
-  int index = n_parameters();
-
-  context::add_parameter(name);
+  context::add_parameter_(name);
   bounds.push_back(-1);
   prior_note_index.push_back(-1);
+
+  assert(bounds.size() == n_parameters());
+}
+
+int Model::add_parameter(const string& name)
+{
+  assert(bounds.size() == n_parameters());
+
+  int index = context::add_parameter(name);
+
+  assert(bounds.size() == n_parameters());
 
   return index;
 }
@@ -95,6 +102,10 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values() const
 
 vector<int> Model::add_submodel(const Module& M)
 {
+  assert(bounds.size() == n_parameters());
+
+  int old_n_parameters = n_parameters();
+
   // 1. Load the module, perform imports, and resolve its symbols.
   int old_n_notes = n_notes();
   *this += M;
@@ -105,12 +116,10 @@ vector<int> Model::add_submodel(const Module& M)
   // \todo FIXME:cleanup - Try to merge with add_submodel(context&,N)
   // 4. Account for any parameters that were added.
   vector<int> new_parameters;
-  for(int i=bounds.size();i<n_parameters();i++)
-  {
+  for(int i=old_n_parameters;i<n_parameters();i++)
     new_parameters.push_back( i );
-    bounds.push_back(-1);
-    prior_note_index.push_back(-1);
-  }
+
+  assert(bounds.size() == n_parameters());
 
   return new_parameters;
 }
@@ -159,15 +168,11 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values(const std::v
 
 int Model::add_note(const expression_ref& E)
 {
-  int old_n_notes = n_notes();
+  assert(bounds.size() == n_parameters());
 
   int index = context::add_note(E);
 
-  for(int i=bounds.size();i<n_parameters();i++)
-  {
-    bounds.push_back(-1);
-    prior_note_index.push_back(-1);
-  }
+  assert(bounds.size() == n_parameters());
 
   process_note(index);
 
