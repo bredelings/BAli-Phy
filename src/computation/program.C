@@ -87,7 +87,7 @@ map<string,string> unresolved_submodel_imports(const vector<Module>& P)
   return submodels_to_add;
 }
 
-void add_missing_imports(const module_loader& L, vector<Module>& P, Model_Notes& N)
+void add_missing_imports(const module_loader& L, vector<Module>& P)
 {
   // 1. Perform a closure over missing modules.
   std::set<string> modules_to_add;
@@ -125,7 +125,7 @@ void add_missing_imports(const module_loader& L, vector<Module>& P, Model_Notes&
   
 }
 
-void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const Module& M)
+void add(const module_loader& L, vector<Module>& P, const Module& M)
 {
   // Get module_names, but in a set<string>
   set<string> old_module_names = module_names_set(P);
@@ -144,38 +144,38 @@ void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const Module
 #endif
 
   // 4. Import any modules that are (transitively) implied by the ones we just loaded.
-  add_missing_imports(L, P, N);
+  add_missing_imports(L, P);
 }
 
-void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const vector<Module>& modules)
+void add(const module_loader& L, vector<Module>& P, const vector<Module>& modules)
 {
   for(const auto& M: modules)
-    add(L, P, N, M);
+    add(L, P, M);
 }
 
-void add(const module_loader& L, std::vector<Module>& P, Model_Notes& N, const std::string& name)
+void add(const module_loader& L, std::vector<Module>& P, const std::string& name)
 {
   if (not contains_module(P, name))
-    add(L, P, N, L.load_module(name));
+    add(L, P, L.load_module(name));
 }
 
-void add_renamed(const module_loader& L, std::vector<Module>& P, Model_Notes& N, const std::pair<std::string, std::string>& names)
+void add_renamed(const module_loader& L, std::vector<Module>& P, const std::pair<std::string, std::string>& names)
 {
   if (not contains_module(P,names.second))
-    add(L, P, N, L.load_and_rename_module(names.first, names.second));
+    add(L, P, L.load_and_rename_module(names.first, names.second));
 }
 
-void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const vector<string>& module_names, const vector<pair<string,string>>& submodule_names)
+void add(const module_loader& L, vector<Module>& P, const vector<string>& module_names, const vector<pair<string,string>>& submodule_names)
 {
   vector<Module> modules;
 
   // Load the regular modules
   for(const auto& name: module_names)
-    add(L, P, N, name);
+    add(L, P, name);
 
   // Load the modules to be renamed
   for(const auto& names: submodule_names)
-    add_renamed(L, P, N, names);
+    add_renamed(L, P, names);
 }
 
 bool is_declared(const vector<Module>& modules, const string& qvar)

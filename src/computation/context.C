@@ -707,7 +707,7 @@ context& context::operator+=(const Module& M)
   set<string> old_module_names = module_names_set(PP);
 
   // 1. Add the new modules to the program, add notes, perform imports, and resolve symbols.
-  add(loader, PP, *this, M);
+  add(loader, PP, M);
 
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
   vector<string> new_module_names;
