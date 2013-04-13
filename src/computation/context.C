@@ -316,7 +316,11 @@ void context::set_reg_value(int P, closure&& C)
 /// Update the value of a non-constant, non-computed index
 void context::set_parameter_value(const std::string& var, const expression_ref& O)
 {
-  set_parameter_value(find_parameter(var), O);
+  int i = find_parameter(var);
+  if (i == -1)
+    throw myexception()<<"Cannot find parameter called '"<<var<<"'";
+    
+  set_parameter_value(i, O);
 }
 
 int context::n_parameters() const
