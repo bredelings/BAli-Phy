@@ -997,6 +997,17 @@ expression_ref parse_bugs_line(const string& line)
 
 expression_ref parse_bugs_file(const string& lines)
 {
+  typedef lex::lexertl::token<
+    char const*, boost::mpl::vector<std::string>
+    > token_type;
+
+  typedef lex::lexertl::lexer<token_type> lexer_type;
+
+  typedef word_count_tokens<lexer_type>::iterator_type iterator_type;
+
+  word_count_tokens<lexer_type> word_count;          // Our lexer
+  /*----------------------------------------------------------------------------*/
+
   using boost::spirit::ascii::space;
 
   string::const_iterator iter = lines.begin();
