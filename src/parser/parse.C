@@ -26,8 +26,12 @@ using std::endl;
 #include <boost/foreach.hpp>
 #include <functional>
 
+#include <boost/spirit/include/lex_lexertl.hpp>
+
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
+namespace lex = boost::spirit::lex;
+
 
 namespace phoenix = boost::phoenix;
 //-----------------------------------------------------------------------//
@@ -50,6 +54,8 @@ namespace phoenix = boost::phoenix;
 // Unify mathematical operators -- at least for now.
 //   - We should have only 1 function each for +,*,-,/,neg, etc.
 //   
+
+
 
 // A symbol table for parameters and vars.
 qi::symbols<char,expression_ref> identifiers;
