@@ -55,10 +55,36 @@ namespace phoenix = boost::phoenix;
 //   - We should have only 1 function each for +,*,-,/,neg, etc.
 //   
 
+template <typename Lexer>
+struct word_count_tokens : lex::lexer<Lexer>
+{
+    word_count_tokens()
+    {
+        // define patterns (lexer macros) to be used during token definition 
+        // below
+        this->self.add_pattern
+	  ("WORD", "[^ \t\n]+")
+	  ("ID",".")
+        ;
 
+        // define tokens and associate them with the lexer
+        word = "{WORD}";    // reference the pattern 'WORD' as defined above
+	id   = "{ID}";
 
-// A symbol table for parameters and vars.
-qi::symbols<char,expression_ref> identifiers;
+        // this lexer will recognize 3 token types: words, newlines, and 
+        // everything else
+        this->self.add
+	  (word)          // no token id is needed here
+	  ('\n')          // characters are usable as tokens as well
+	  (id)    // string literals will not be esacped by the library
+        ;
+    }
+
+    // the token 'word' exposes the matched string as its parser attribute
+    lex::token_def<std::string> word;
+    lex::token_def<> id;
+};
+
 
 template <typename Iterator>
 struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
