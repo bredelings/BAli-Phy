@@ -44,16 +44,13 @@ using std::map;
  * 12. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
  * 13. [DONE] Replace recalc indices with trigers.
  * 14. [DONE] Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
+ * 15. [DONE] Allow printing ints w/o decimal points.
  */
 
 /* \todo: List of things to do to clean up programs.
  *
  * See list in parser/desugar.C
  * See list in models/parameters.C 
- *
- * -2. allow print ints w/o decimal points
- *    (a) The issue here is logging strings instead of doubles.
- *    (b) The SortedTableFunction currently requires a string?
  *
  * -1. Make a model-creation monad.  This could allow us to modify the model after creating it, thus
  *    allowing the specification of default parameters.

@@ -76,15 +76,21 @@ vector<string> SortedTableFunction::field_names() const
 /// Parameter values indexed by indices[i] are sorted so that the parameter values indexed
 /// by indices[0] are in increasing order.
 ///
-vector<double> make_identifiable(const vector<double>& v,const vector< vector<int> >& indices)
+vector<object_ref> make_identifiable(const vector<object_ref>& v,const vector< vector<int> >& indices)
 {
   assert(indices.size());
   int N = indices[0].size();
 
-  vector<double> v_sub = select(v,indices[0]);
+  vector<object_ref> v_sub = select(v,indices[0]);
 
   vector<int> O = iota(N);
-  std::sort(O.begin(),O.end(), [&v_sub](int i, int j) {return v_sub[i]<v_sub[j];});
+  std::sort(O.begin(),O.end(), 
+	    [&v_sub](int i, int j) 
+	    {
+	      double di = *convert<const Double>(v_sub[i]);
+	      double dj = *convert<const Double>(v_sub[j]);
+	      return di < dj;
+	    });
 
   vector<int> O_all = iota<int>(v.size());
   for(int i=0;i<indices.size();i++) 
@@ -95,14 +101,14 @@ vector<double> make_identifiable(const vector<double>& v,const vector< vector<in
       O_all[indices[i][j]] = indices[i][O[j]];
     }
   }
-  vector<double> v2 = apply_mapping(v,invert(O_all));
+  vector<object_ref> v2 = apply_mapping(v,invert(O_all));
 
   return v2;
 }
 
-vector<double> SortedTableFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
+vector<object_ref> SortedTableFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
 {
-  vector<double> v = (*F)(P,t);
+  vector<object_ref> v = (*F)(P,t);
 
   for(int i=0;i<indices.size();i++)
     v = make_identifiable(v, indices[i]);
@@ -110,7 +116,7 @@ vector<double> SortedTableFunction::operator()(const owned_ptr<Probability_Model
   return v;
 }
 
-SortedTableFunction::SortedTableFunction(const owned_ptr<TableFunction<double> >& f, const std::vector< std::vector< std::vector< int> > >& i_)
+SortedTableFunction::SortedTableFunction(const owned_ptr<TableFunction<object_ref> >& f, const std::vector< std::vector< std::vector< int> > >& i_)
   :F(f), indices(i_), sorted_index(f->n_fields(),-1)
 { 
   for(int i=0;i<indices.size();i++)
@@ -174,25 +180,25 @@ TableViewerFunction::TableViewerFunction(const owned_ptr<TableFunction<string> >
   :function(f)
 { }
 
-double GetComputationFunction::operator()(const owned_ptr<Probability_Model>& P, long)
+object_ref GetComputationFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   object_ref result = P->evaluate(index);
 
   if (auto D = dynamic_pointer_cast<const Double>(result))
-    return *D;
+    return result;
   else if (auto I = dynamic_pointer_cast<const Int>(result))
-    return *I;
+    return result;
   else if (auto c = dynamic_pointer_cast<const constructor>(result))
   {
     if (c->f_name == "Prelude.True")
-      return 1;
+      return Int(1);
     else if (c->f_name == "Prelude.False")
-      return 0;
+      return Int(0);
     else
-      return -1;
+      return Int(-1);
   }
   else
-    return -1;
+    return Int(-1);
 }
 
 GetComputationFunction::GetComputationFunction(int i)

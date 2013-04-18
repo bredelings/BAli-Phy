@@ -625,7 +625,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
       find_sub_loggers(P, index, name, logged_computations, logged_names);
     }
 
-    TableGroupFunction<double> T1;
+    TableGroupFunction<object_ref> T1;
     for(int i=0;i<logged_computations.size();i++)
     {
       int index = logged_computations[i];
@@ -635,7 +635,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
 
     SortedTableFunction T2(T1, get_un_identifiable_indices(P, logged_names));
 
-    TL->add_fields( ConvertTableToStringFunction<double>( T2 ) );
+    TL->add_fields( ConvertTableToStringFunction<object_ref>( T2 ) );
   }
 
   
