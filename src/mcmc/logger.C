@@ -84,7 +84,7 @@ vector<double> make_identifiable(const vector<double>& v,const vector< vector<in
   vector<double> v_sub = select(v,indices[0]);
 
   vector<int> O = iota(N);
-  std::sort(O.begin(),O.end(), sequence_order<double>(v_sub));
+  std::sort(O.begin(),O.end(), [&v_sub](int i, int j) {return v_sub[i]<v_sub[j];});
 
   vector<int> O_all = iota<int>(v.size());
   for(int i=0;i<indices.size();i++) 
