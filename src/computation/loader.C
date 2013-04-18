@@ -52,6 +52,8 @@ using std::map;
  * See list in models/parameters.C 
  *
  * -2. allow print ints w/o decimal points
+ *    (a) The issue here is logging strings instead of doubles.
+ *    (b) The SortedTableFunction currently requires a string?
  *
  * -1. Make a model-creation monad.  This could allow us to modify the model after creating it, thus
  *    allowing the specification of default parameters.
