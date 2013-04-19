@@ -51,6 +51,11 @@ using std::map;
  * See list in parser/desugar.C
  * See list in models/parameters.C 
  *
+ * -3. Merging Model::add_submodel(Model_Notes&) and add_submodel(Context&, vector<expression_ref>&)
+ *     - Distribution notes need to be present BEFORE parameters are added, because they determine the structure.
+ *     - Distribution notes need to be added AFTER parameters, since they set prior_index for the parameter.
+ *     - This is related to setting prior_index in both process_note( ) and add_probability_expression( ).
+ *
  * -2. allow print ints w/o decimal points
  *
  * -1. Make a model-creation monad.  This could allow us to modify the model after creating it, thus
@@ -63,15 +68,16 @@ using std::map;
  *       dimension of random lists created by the model.
  *
  * 0. Fix the parser to give meaningful error messages, instead of just saying that the entire body doesn't parse.
+ *    - This is related to adding a lexer.  Which would also allow comments in the code.
  *
  * 1. Efficiently recalculate the probability when only a few densities change.
  *    - Will this require signals? (Signals might also help us to recalculate mu*t to see if anything changed.)
  *    - This will allow us to avoid maintaining a Markov blanket.
- * 2. Rewrite module loading routines to load modules 1-at-a-time.
+ * 2. (?) Rewrite module loading routines to load modules 1-at-a-time.
  * 3. Make sure we don't read alignments with ^@ characters in the sequences!
  * 4. Eliminate duplication between Model::add_note( ) and add_probability_expression( )
- *    4a. If we would just compute the entire probability expression once, then
- *        we wouldn't need to 
+ *    4a. Computing things all at once would be nice, and make balanced *-trees easy.
+ *    4b. Doing things incrementally is more monad-like, though.
  * 5. Allow distributions on structures with variable components
  *    5a. Make the computation of default values delayed, so that they can depend on parameters not yet set?
  *    5b. Perform MCMC on structures dynamically, inside the machine.
@@ -176,7 +182,7 @@ using std::map;
  *     (This will allow us to e.g. select min/max functions for logging.)
  *     21a. [DONE] Find a haskell expression to log [p1,p2,p3] based on the order of [q1,q2,q3]
  * 23. (?) Print expressions with fixity.
- * 26. (?) Allow model files to create models where an argument is the name of another model file.
+
  * 27. Allow fixing parameters. (e.g. to test the branch-site model under ML)
  * 28. Make model creation into an IO operation?
  *     - Hmm.... but how would we specify default priors, then?
