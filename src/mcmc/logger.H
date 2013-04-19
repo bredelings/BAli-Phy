@@ -40,7 +40,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "models/parameters.H"
 #include "io.H"
 #include "owned-ptr.H"
-
+#include "object.H"
 
 struct slice_function;
 
@@ -90,12 +90,12 @@ namespace MCMC {
     long operator()(const owned_ptr<Probability_Model>&,long t) {return t;}
   };
 
-  class GetComputationFunction: public LoggerFunction<double>
+  class GetComputationFunction: public LoggerFunction<object_ref>
   {
     int index;
   public:
     GetComputationFunction* clone() const {return new GetComputationFunction(*this);}
-    double operator()(const owned_ptr<Probability_Model>& P,long t);
+    object_ref operator()(const owned_ptr<Probability_Model>& P,long t);
     GetComputationFunction(int i);
   };
 
@@ -285,9 +285,9 @@ namespace MCMC {
     { }
   };
 
-  class SortedTableFunction: public TableFunction<double>
+  class SortedTableFunction: public TableFunction<object_ref>
   {
-    owned_ptr<TableFunction<double> > F;
+    owned_ptr<TableFunction<object_ref> > F;
     std::vector< std::vector< std::vector< int > > > indices;
     std::vector<int> sorted_index;
   public:
@@ -296,9 +296,9 @@ namespace MCMC {
     int n_fields() const;
     std::vector<std::string> field_names() const;
 
-    std::vector<double> operator()(const owned_ptr<Probability_Model>& P, long t);
+    std::vector<object_ref> operator()(const owned_ptr<Probability_Model>& P, long t);
 
-    SortedTableFunction(const owned_ptr<TableFunction<double> >&, const std::vector< std::vector< std::vector< int> > >& );
+    SortedTableFunction(const owned_ptr<TableFunction<object_ref> >&, const std::vector< std::vector< std::vector< int> > >& );
   };
 
   template <typename T>
@@ -379,6 +379,18 @@ namespace MCMC {
 
     ConvertTableToStringFunction(const owned_ptr<TableFunction<T> >& f):F(f) { }
   };
+
+  template<> 
+  inline std::vector<std::string> ConvertTableToStringFunction<object_ref>::operator()(const owned_ptr<Probability_Model>& P, long t)
+  {
+    std::vector<object_ref> values = (*F)(P,t);
+
+    std::vector<std::string> output(values.size());
+    for(int i=0;i<values.size();i++)
+      output[i] = values[i]->print();
+    
+    return output;
+  }
 
   class TableLogger: public FileLogger
   {

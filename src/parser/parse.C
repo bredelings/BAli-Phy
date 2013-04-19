@@ -26,8 +26,12 @@ using std::endl;
 #include <boost/foreach.hpp>
 #include <functional>
 
+#include <boost/spirit/include/lex_lexertl.hpp>
+
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
+namespace lex = boost::spirit::lex;
+
 
 namespace phoenix = boost::phoenix;
 //-----------------------------------------------------------------------//
@@ -51,8 +55,36 @@ namespace phoenix = boost::phoenix;
 //   - We should have only 1 function each for +,*,-,/,neg, etc.
 //   
 
-// A symbol table for parameters and vars.
-qi::symbols<char,expression_ref> identifiers;
+template <typename Lexer>
+struct word_count_tokens : lex::lexer<Lexer>
+{
+    word_count_tokens()
+    {
+        // define patterns (lexer macros) to be used during token definition 
+        // below
+        this->self.add_pattern
+	  ("WORD", "[^ \t\n]+")
+	  ("ID",".")
+        ;
+
+        // define tokens and associate them with the lexer
+        word = "{WORD}";    // reference the pattern 'WORD' as defined above
+	id   = "{ID}";
+
+        // this lexer will recognize 3 token types: words, newlines, and 
+        // everything else
+        this->self.add
+	  (word)          // no token id is needed here
+	  ('\n')          // characters are usable as tokens as well
+	  (id)    // string literals will not be esacped by the library
+        ;
+    }
+
+    // the token 'word' exposes the matched string as its parser attribute
+    lex::token_def<std::string> word;
+    lex::token_def<> id;
+};
+
 
 template <typename Iterator>
 struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
@@ -965,6 +997,17 @@ expression_ref parse_bugs_line(const string& line)
 
 expression_ref parse_bugs_file(const string& lines)
 {
+  typedef lex::lexertl::token<
+    char const*, boost::mpl::vector<std::string>
+    > token_type;
+
+  typedef lex::lexertl::lexer<token_type> lexer_type;
+
+  typedef word_count_tokens<lexer_type>::iterator_type iterator_type;
+
+  word_count_tokens<lexer_type> word_count;          // Our lexer
+  /*----------------------------------------------------------------------------*/
+
   using boost::spirit::ascii::space;
 
   string::const_iterator iter = lines.begin();

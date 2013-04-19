@@ -44,6 +44,7 @@ using std::map;
  * 12. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
  * 13. [DONE] Replace recalc indices with trigers.
  * 14. [DONE] Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
+ * 15. [DONE] Allow printing ints w/o decimal points.
  */
 
 /* \todo: List of things to do to clean up programs.
@@ -55,8 +56,6 @@ using std::map;
  *     - Distribution notes need to be present BEFORE parameters are added, because they determine the structure.
  *     - Distribution notes need to be added AFTER parameters, since they set prior_index for the parameter.
  *     - This is related to setting prior_index in both process_note( ) and add_probability_expression( ).
- *
- * -2. allow print ints w/o decimal points
  *
  * -1. Make a model-creation monad.  This could allow us to modify the model after creating it, thus
  *    allowing the specification of default parameters.
