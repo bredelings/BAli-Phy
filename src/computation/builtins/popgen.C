@@ -263,7 +263,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 extern "C" closure builtin_function_selfing_coalescence_probability(OperationArgs& Args)
 {
   // The number of loci
-  int L = *Args.evaluate_as<Double>(0);
+  int L = *Args.evaluate_as<Int>(0);
 
   // The selfing rate
   const double s = *Args.evaluate_as<Double>(1);
@@ -303,7 +303,7 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
     x2 *= x1;
     x3 *= 0.5;
 
-    double delta = x1 * exp(log1p(-x3));
+    double delta = x2 * exp(log1p(-x3)*n);
     sum += delta;
 
     if (delta/sum < 1.0e-15)
