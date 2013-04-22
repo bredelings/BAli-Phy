@@ -306,7 +306,7 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
     double delta = x2 * exp(log1p(-x3)*n);
     sum += delta;
 
-    if (delta/sum < 1.0e-15)
+    if (delta/sum < 1.0e-15 and t > 30)
       break;
   }
 
