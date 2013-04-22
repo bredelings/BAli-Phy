@@ -259,3 +259,59 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
   return Log_Double(Pr);
 }
 
+// Pr(I|s) = \sum_t=0^\infty s^t (1-s) (1/2^t)^(L-n) (1-(1/2^t))^n
+extern "C" closure builtin_function_selfing_coalescence_probability(OperationArgs& Args)
+{
+  // The number of loci
+  int L = *Args.evaluate_as<Double>(0);
+
+  // The selfing rate
+  const double s = *Args.evaluate_as<Double>(1);
+
+  assert(s >= 0 and s <= 1);
+
+  // These are indicators of coalescence
+  object_ptr<const OVector> I_ = Args.evaluate_as<OVector>(2);
+  const vector<object_ref>& I = *I_;
+
+  // Determine number of coalescences;
+  int n = 0;
+  for(int l=0;l<L;l++)
+  {
+    bool coalesced = convert<const constructor>(I[l])->f_name == "Prelude.True";
+    if (coalesced)
+      n++;
+  }
+
+  // Handle s == 0
+  if (s == 0.0)
+  {
+    if (n == 0)
+      return Log_Double(1.0);
+    else
+      return Log_Double(0.0);
+  }
+
+
+  double sum = (n==0)?1.0:0.0;
+  const double x1 = s*pow(0.5,L-n);
+  double x2 = 1.0;
+  double x3 = 1.0;
+
+  for(int t = 1;; t++)
+  {
+    x2 *= x1;
+    x3 *= 0.5;
+
+    double delta = x1 * exp(log1p(-x3));
+    sum += delta;
+
+    if (delta/sum < 1.0e-15)
+      break;
+  }
+
+  sum *= (1.0 - s);
+
+  return Log_Double(sum);
+}
+

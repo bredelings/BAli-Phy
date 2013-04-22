@@ -9,6 +9,7 @@ builtin ewens_sampling_group_probability 2 "ewens_sampling_group_probability" "p
 builtin ewens_sampling_probability 2 "ewens_sampling_probability" "popgen";
 builtin builtin_ewens_sampling_mixture_probability 3 "ewens_sampling_mixture_probability" "popgen";
 builtin builtin_ewens_diploid_probability 3 "ewens_diploid_probability" "popgen";
+builtin builtin_selfing_coalescence_probability 3 "selfing_coalescence_probability" "popgen";
 
 read_phase_file = builtin_read_phase_file . listToString;
 
@@ -16,11 +17,15 @@ ewens_sampling_mixture_probability (thetas,ps) x = builtin_ewens_sampling_mixtur
 
 ewens_diploid_probability (theta,i) x = builtin_ewens_diploid_probability theta (list_to_vector i) (list_to_vector x);
 
-afs args = (ProbDensity (ewens_sampling_probability args) (error "afs has no quantile") () ());
+selfing_coalescence_probability (n_loci,s) i = builtin_selfing_coalescence_probability n_loci s (list_to_vector i);
 
-afsGroup args = (ProbDensity (ewens_sampling_group_probability args) (error "afs has no quantile") () ());
+afs args = ProbDensity (ewens_sampling_probability args) (error "afs has no quantile") () ();
 
-afsMixture args = (ProbDensity (ewens_sampling_mixture_probability args) (error "afs has no quantile") () ());
+afsGroup args = ProbDensity (ewens_sampling_group_probability args) (error "afs has no quantile") () ();
 
-afs2 args  = (ProbDensity (ewens_diploid_probability args) (error "afs has no quantile") () ());
+afsMixture args = ProbDensity (ewens_sampling_mixture_probability args) (error "afs has no quantile") () ();
+
+afs2 args  = ProbDensity (ewens_diploid_probability args) (error "afs has no quantile") () ();
+
+selfing_coalescence (n_loci,s) = ProbDensity (selfing_coalescence_probability (n_loci,s)) (error "selfing_coalescence has no quantile") (replicate n_loci False) (ListRange (replicate n_loci,TrueFalseRange));
 }
