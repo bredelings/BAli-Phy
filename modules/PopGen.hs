@@ -1,6 +1,7 @@
 module PopGen where
 {
 import Distributions;
+import Range;
 
 builtin builtin_read_phase_file 1 "read_phase_file" "popgen";
 builtin remove_2nd_allele 1 "remove_2nd_allele" "popgen";
@@ -27,5 +28,5 @@ afsMixture args = ProbDensity (ewens_sampling_mixture_probability args) (error "
 
 afs2 args  = ProbDensity (ewens_diploid_probability args) (error "afs has no quantile") () ();
 
-selfing_coalescence (n_loci,s) = ProbDensity (selfing_coalescence_probability (n_loci,s)) (error "selfing_coalescence has no quantile") (replicate n_loci False) (ListRange (replicate n_loci,TrueFalseRange));
+selfing_coalescence (n_loci,s) = ProbDensity (selfing_coalescence_probability (n_loci,s)) (error "selfing_coalescence has no quantile") (replicate n_loci False) (ListRange (replicate n_loci TrueFalseRange));
 }
