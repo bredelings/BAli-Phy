@@ -120,3 +120,12 @@ extern "C" closure builtin_function_uniform_density(OperationArgs& Args)
   
   return object_ptr<Log_Double> (new Log_Double( ::uniform_pdf(x,a1,a2) ) );
 }
+
+extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
+{
+  double n = *Args.evaluate_as<Int>(0);
+  double p = *Args.evaluate_as<Double>(1);
+  double k = *Args.evaluate_as<Int>(2);
+  
+  return object_ptr<Log_Double> (new Log_Double( ::binomial_pdf(n,k,p) ) );
+}
