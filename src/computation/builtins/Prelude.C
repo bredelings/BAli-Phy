@@ -47,6 +47,13 @@ extern "C" closure builtin_function_round(OperationArgs& Args)
   return new Double(round(*x));
 }
 
+extern "C" closure builtin_function_doubleToInt(OperationArgs& Args)
+{
+  double x = *Args.evaluate_as<Double>(0);
+  int xi = (int)x;
+  return new Int(xi);
+}
+
 extern "C" closure builtin_function_vector_from_list(OperationArgs& Args)
 {
   object_ptr<OVector> v (new OVector);

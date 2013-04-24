@@ -55,6 +55,7 @@ builtin ceiling 1 "ceiling" "Prelude";
 builtin floor 1 "floor" "Prelude";
 builtin round 1 "round" "Prelude";
 builtin builtin_vector_from_list 1 "vector_from_list" "Prelude";
+builtin doubleToInt 1 "doubleToInt" "Prelude";
 builtin mod 2 "mod";
 builtin builtinError 1 "builtinError";
 builtin seq 2 "seq";
