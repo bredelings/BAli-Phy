@@ -50,7 +50,7 @@ note i ~ iid(n_loci, plate (n_individuals,\k->bernoulli (1.0-0.5**t!!k)) );
 
 note data data1 ~ plate (n_loci, \l -> afs2 (theta_ewens!!l,i!!l));
 
-note data 19 ~ binomial(119, p_m);
+note data 19 ~ binomial(112, p_m);
 
 note MakeLogger p;
 note MakeLogger theta;

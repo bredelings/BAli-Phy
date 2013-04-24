@@ -34,7 +34,7 @@ note z ~ iid(n_loci, normal(0.0, 1.0));
 
   theta = [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n_loci [0..], let {k=category!!i}];
 
-  theta_effective = map (*(1.0-s*0.5)) theta;
+  theta_ewens = map (*(1.0-s*0.5)) theta;
 
 note theta_example ~ mixture [ (p!!i, logNormal(log(mean!!i),sigmaOverMu!!i)) | i <- take n [0..] ];
 
@@ -44,7 +44,7 @@ note t ~ iid(n_individuals, exponential (s/(1.0-s)));
 
 note i ~ iid(n_loci, plate (n_individuals,\k->bernoulli (1.0-0.5**t!!k)) );
 
-note data data1 ~ plate (n_loci, \l -> afs2 (theta_effective!!l,i!!l));
+note data data1 ~ plate (n_loci, \l -> afs2 (theta_ewens!!l,i!!l));
 
 note MakeLogger p;
 note MakeLogger theta;
