@@ -339,7 +339,7 @@ path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.
 
 pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la \
 		arraySize.la getIndex.la mkArray.la intToDouble.la negate.la \
-		exp.la doubleToLogDouble.la add.la subtract.la divide.la multiply.la \
+		exp.la doubleToLogDouble.la \
 		equals.la notequals.la greaterthan.la greaterthanorequal.la lessthan.la \
 		lessthanorequal.la getNucleotides.la plus_gwF.la alphabetSize.la \
 		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la set_modifiable_value.la \
@@ -388,18 +388,6 @@ exp_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 Prelude_la_SOURCES = computation/builtins/Prelude.C
 Prelude_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
-
-add_la_SOURCES = computation/builtins/add.C
-add_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
-
-subtract_la_SOURCES = computation/builtins/subtract.C
-subtract_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
-
-divide_la_SOURCES = computation/builtins/divide.C
-divide_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
-
-multiply_la_SOURCES = computation/builtins/multiply.C
-multiply_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 equals_la_SOURCES = computation/builtins/equals.C
 equals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
