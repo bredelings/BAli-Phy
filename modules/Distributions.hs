@@ -99,6 +99,9 @@ dirichlet' (n,x) = dirichlet (replicate n x);
 mixture args = ProbDensity (mixtureDensity args) (error "Mixture has no quantiles") (mixtureDefault args) (mixtureRange args);
 
 binomial_density (n,p) k = builtin_binomial_density n p k;
+
+binomial (n,p) = ProbDensity binomial_density (error "binomial has no quantile") (doubleToInt $ (intToDouble n)*p) (IntegerInterval (Just 0) (Just n));
+
 listDensity ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
   where {densities = zipWith density ds xs;
          pr = balanced_product densities};
