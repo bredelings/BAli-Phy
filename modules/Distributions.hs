@@ -18,6 +18,8 @@ builtin builtin_laplace_density 3 "laplace_density" "Distribution";
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
 builtin builtin_uniform_density 3 "uniform_density" "Distribution";
 
+builtin builtin_binomial_density 3 "binomial_density" "Distribution";
+
 data ProbDensity = ProbDensity a b c d;
 data DiscreteDistribution a = DiscreteDistribution [(Double,a)];
 
@@ -96,6 +98,7 @@ dirichlet' (n,x) = dirichlet (replicate n x);
 
 mixture args = ProbDensity (mixtureDensity args) (error "Mixture has no quantiles") (mixtureDefault args) (mixtureRange args);
 
+binomial_density (n,p) k = builtin_binomial_density n p k;
 listDensity ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
   where {densities = zipWith density ds xs;
          pr = balanced_product densities};
