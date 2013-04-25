@@ -330,16 +330,22 @@ inline std::ostream& operator<<(std::ostream& o,const Object& R)
 }
 
 template <typename T>
-object_ptr<T> convert(const object_ptr<const Object>& o)
+object_ptr<T> convert_and_check(const object_ptr<const Object>& o)
 {
-#ifdef NDEBUG
-  return boost::static_pointer_cast<T>(o);
-#else
   assert(o);
   object_ptr<T> converted =  boost::dynamic_pointer_cast<const T>(o);
   if (not converted)
     throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<demangle(typeid(*o.get()).name())<<" to type "<<demangle(typeid(T).name());
   return converted;
+}
+
+template <typename T>
+object_ptr<T> convert(const object_ptr<const Object>& o)
+{
+#ifdef NDEBUG
+  return boost::static_pointer_cast<T>(o);
+#else
+  return convert_and_check<T>(o);
 #endif
 }
 

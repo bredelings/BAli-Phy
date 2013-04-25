@@ -365,3 +365,20 @@ double gamma_quantile(double p, double a, double b)
     return gsl_cdf_lognormal_Pinv(p,mu,sigma);
   }
 }
+
+log_double_t binomial_pdf(int n, int k, double p)
+{
+  if (k > n)
+    return 0;
+
+  if (p == 0) 
+    return (k == 0) ? 1 : 0;
+
+  if (p == 1)
+    return (k == n) ? 1 : 0;
+
+  log_double_t Pr;
+  Pr.log() = gsl_sf_lnchoose (n, k) + k*log (p) + (n - k)*log1p (-p);
+
+  return Pr;
+}
