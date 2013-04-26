@@ -55,11 +55,93 @@ namespace phoenix = boost::phoenix;
 //   - We should have only 1 function each for +,*,-,/,neg, etc.
 //   
 
+/*
+literal → { lexeme | whitespace }
+special → qvarid | qconid | qvarsym | qconsym
+          | literal | special | reservedop | reservedid
+          → integer | float | char | string
+            → (|)|,|;|[|]|`|{|}
+whitespace → whitestuff {whitestuff }
+whitestuff → whitechar | comment | ncomment
+whitechar → newline | vertab | space | tab | uniWhite
+newline → return linefeed | return | linefeed | formfeed
+return → a carriage return
+linefeed → a line feed
+vertab → a vertical tab
+formfeed → a form feed
+space → a space
+tab → a horizontal tab
+uniWhite → any Unicode character defined as whitespace
+comment → dashes [ any symbol {any} ] newline
+dashes → -- {-}
+opencom → {-
+closecom → -}
+ncomment → opencom ANYseq {ncomment ANYseq} closecom
+ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
+ANY → graphic | whitechar
+any → graphic | space | tab
+graphic → small | large | symbol | digit | special | " | ’
+small → ascSmall | uniSmall | _
+ascSmall → a | b | ... | z
+uniSmall → any Unicode lowercase letter
+large → ascLarge | uniLarge
+ascLarge → A | B | ... | Z
+uniLarge → any uppercase or titlecase Unicode letter
+symbol → ascSymbol | uniSymbol special | _ | " | ’
+ascSymbol → !|#|$|%|&|*|+|.|/|<|=|>|?|@
+            | \|ˆ|||-| ̃|:
+uniSymbol → any Unicode symbol or punctuation
+digit → ascDigit | uniDigit
+ascDigit → 0 | 1 | ... | 9
+uniDigit → any Unicode decimal digit
+octit → 0 | 1 | ... | 7
+hexit → digit | A | . . . | F | a | . . . | f
+*/
+
+// http://www.haskell.org/ghc/docs/6.10.2/html/libraries/haskell-src/Language-Haskell-Lexer.html
 template <typename Lexer>
 struct word_count_tokens : lex::lexer<Lexer>
 {
     word_count_tokens()
     {
+/*
+program → { lexeme | whitespace }
+lexem → qvarid | qconid | qvarsym | qconsym
+          | literal | special | reservedop | reservedid
+literal  → integer | float | char | string
+
+opencom → {-
+closecom → -}
+ncomment → opencom ANYseq {ncomment ANYseq} closecom
+ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
+
+*/
+      string newline = "\r\n|[\r\n\f]";
+      string whitechar = "[\n\v \t]"; // uniWhite
+      string uniWhite = "??";
+      string ascDigit = "[0-9]";
+      string uniDigit = "??";
+      string digit = ascDigit; // | uniDigit
+      string octit = "[0-7]";
+      string hexit = digit+"|[A-F]|[a-f]";
+      string ascSymbol = "[!#$%&*+./<=>?@\\\\ˆ|\\-~:]";
+      string uniSymbol = "??";
+      string symbol = ascSymbol; //uniSymbol except <special,_,",'>
+      string ascSmall = "[a-z]";
+      string uniSmall = "??";
+      string small = ascSmall; // | uniSmall
+      string ascLarge = "[A-Z]";
+      string uniLarge = "??";
+      string large = ascLarge; // | uniLarge
+      string special = "[(),;[\\]`{}]";
+      string graphic = small +"|"+ large +"|"+ symbol +"|"+ digit +"|"+ special + "|[\"']";
+      string any = graphic + "|[\t ]";
+      string ANY = graphic +"|"+ whitechar;
+      string dashes = "---*";
+      string comment = dashes + "((?!"+symbol+")"+any + "("+any+")*|)" + newline;
+      string whitestuff = whitechar +"|"+ comment; // | ncomment
+      string whitespace = whitestuff + "(" + whitestuff + ")*";
+
         // define patterns (lexer macros) to be used during token definition 
         // below
         this->self.add_pattern
@@ -80,9 +162,75 @@ struct word_count_tokens : lex::lexer<Lexer>
         ;
     }
 
+  lex::token_def<std::string> VarID;    // String
+  lex::token_def<std::string> QVarId;   // (String,STring)
+  lex::token_def<std::string> ConId;    // String	
+  lex::token_def<std::string> QConId;   // (String, String)	
+  lex::token_def<std::string> VarSym;   // String	
+  lex::token_def<std::string> ConSym;   // String	
+  lex::token_def<std::string> QVarSym;  // (String, String)	
+  lex::token_def<std::string> QConSym;  // (String, String)	
+  lex::token_def<std::string> IntTok;   // Integer
+  lex::token_def<std::string> FloatTok; // Rational	
+  lex::token_def<char> Character;       // Char	
+  lex::token_def<std::string> StringTok;// String	
+  lex::token_def<> LeftParen;
+  lex::token_def<> RightParen;
+  lex::token_def<> SemiColon;
+  lex::token_def<> LeftCurly;
+  lex::token_def<> RightCurly;
+  lex::token_def<> VRightCurly;
+  lex::token_def<> LeftSquare;
+  lex::token_def<> RightSquare;
+  lex::token_def<> Comma;
+  lex::token_def<> Underscore;
+  lex::token_def<> BackQuote;
+  lex::token_def<> DotDot;
+  lex::token_def<> Colon;
+  lex::token_def<> DoubleColon;
+  lex::token_def<> Equals;
+  lex::token_def<> Backslash;
+  lex::token_def<> Bar;
+  lex::token_def<> LeftArrow;
+  lex::token_def<> RightArrow;
+  lex::token_def<> At;
+  lex::token_def<> Tilde;
+  lex::token_def<> DoubleArrow;
+  lex::token_def<> Minus;
+  lex::token_def<> Exclamation;
+  // Keywords
+  lex::token_def<> KW_Case;
+  lex::token_def<> KW_Class;
+  lex::token_def<> KW_Data;
+  lex::token_def<> KW_Default;
+  lex::token_def<> KW_Deriving;
+  lex::token_def<> KW_Do;
+  lex::token_def<> KW_Else;
+  lex::token_def<> KW_Foreign;
+  lex::token_def<> KW_If;
+  lex::token_def<> KW_Import;
+  lex::token_def<> KW_In;
+  lex::token_def<> KW_Infix;
+  lex::token_def<> KW_InfixL;
+  lex::token_def<> KW_InfixR;
+  lex::token_def<> KW_Instance;
+  lex::token_def<> KW_Let;
+  lex::token_def<> KW_Module;
+  lex::token_def<> KW_NewType;
+  lex::token_def<> KW_Of;
+  lex::token_def<> KW_Then;
+  lex::token_def<> KW_Type;
+  lex::token_def<> KW_Where;
+  lex::token_def<> KW_As;
+  lex::token_def<> KW_Export;
+  lex::token_def<> KW_Hiding;
+  lex::token_def<> KW_Qualified;
+  lex::token_def<> KW_Safe;
+  lex::token_def<> KW_Unsafe;
+  //  lex::token_def<> EOF;
     // the token 'word' exposes the matched string as its parser attribute
-    lex::token_def<std::string> word;
-    lex::token_def<> id;
+  lex::token_def<std::string> word;
+  lex::token_def<> id;
 };
 
 
