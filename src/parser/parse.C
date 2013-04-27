@@ -119,7 +119,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       string newline = "\r\n|[\r\n\f]";
       string whitechar = "[\n\v \t]"; // uniWhite
       string uniWhite = "??";
-      string ascDigit = "[0-9]";
+      string ascDigit = "\\d+";
       string uniDigit = "??";
       string digit = ascDigit; // | uniDigit
       string octit = "[0-7]";
@@ -137,11 +137,27 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       string graphic = small +"|"+ large +"|"+ symbol +"|"+ digit +"|"+ special + "|[\"']";
       string any = graphic + "|[\t ]";
       string ANY = graphic +"|"+ whitechar;
-      string dashes = "---*";
-      string comment = dashes + "((?!"+symbol+")"+any + "("+any+")*|)" + newline;
+      string dashes = "--+";
+      string comment = dashes + "((?!"+symbol+")"+"("+any+")+)?" + newline;
       string whitestuff = whitechar +"|"+ comment; // | ncomment
-      string whitespace = whitestuff + "(" + whitestuff + ")*";
-
+      string whitespace = "(" + whitestuff + ")+";
+      string varid = "("+small+")" + "("+small+"|"+large+"|"+digit+"|'" + ")*";// - reservedid;
+      string conid = "("+large+")" + "("+small+"|"+large+"|"+digit+"|'" + ")*";
+      string varsym = "(?!:)("+symbol+")+"; // -reservedop
+      string consym = ":("+symbol+")*"; //-reservedop;
+      string modid = "(("+conid+")\\.)+";
+      string qvarid = "("+modid+")("+varid+")";
+      string qconid = "("+modid+")("+conid+")";
+      string qvarsym = "("+modid+")("+varsym+")";
+      string qconsym = "("+modid+")("+consym+")";
+      string int_literal = "\\d+";
+      string exponent = "[eE][\\+-]?\\d+";
+      string float_literal = "(\\d+\\.\\d+("+exponent+")?)|\\d+"+exponent;
+      // The char and string literals could be improved
+      string escape = "\\[abfnrtv\\\"']";
+      string char_literal = "'(((?!['\\])"+graphic+")| |("+escape+"))'";
+      string string_literal = "\"(((?![\"\\])"+graphic+")| |("+escape+"))*\"";
+      
         // define patterns (lexer macros) to be used during token definition 
         // below
         this->self.add_pattern
