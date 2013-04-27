@@ -203,16 +203,16 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	 Character = "'(((?!['\\]){graphic})| |({escape}))'";
       StringTok = "\"(((?![\"\\]){graphic})| |({escape}))*\"";
 
-      LeftParen = "(";
-      RightParen = ")";
-      SemiColon = ";";
-      LeftCurly = "{";
-      RightCurly = "}";
+      LeftParen   = "(";
+      RightParen  = ")";
+      SemiColon   = ";";
+      LeftCurly   = "{";
+      RightCurly  = "}";
       VRightCurly = "}";
-      LeftSquare = "[";
+      LeftSquare  = "[";
       RightSquare = "]";
-      Comma = ",";
-      BackQuote = "`";
+      Comma       = ",";
+      BackQuote   = "`";
 
 	  // underscore - part of reservedid?
       Underscore = "_";
@@ -272,13 +272,13 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
         // everything else
         this->self 
 	  = QVarId //[lex::_pass = phoenix::bind(fail_if_reservedqid,lex::_val)]
-	  | VarId //[lex::_pass = phoenix::bind(fail_if_reservedid,lex::_val)]
+	  | VarId  //[lex::_pass = phoenix::bind(fail_if_reservedid,lex::_val)]
 	  | QConId
 	  | ConId
 	  | QVarSym //[lex::_pass = phoenix::bind(fail_if_reservedqop,lex::_val)] 
-	  | VarSym //[lex::_pass = phoenix::bind(fail_if_reservedop,lex::_val)]
+	  | VarSym  //[lex::_pass = phoenix::bind(fail_if_reservedop,lex::_val)]
 	  | QConSym //[lex::_pass = phoenix::bind(fail_if_reservedqop,lex::_val)]
-	  | ConSym //[lex::_pass = phoenix::bind(fail_if_reservedop,lex::_val)]
+	  | ConSym  //[lex::_pass = phoenix::bind(fail_if_reservedop,lex::_val)]
 
 	  // Literal
 	  | IntTok
