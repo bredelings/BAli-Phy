@@ -98,6 +98,22 @@ octit → 0 | 1 | ... | 7
 hexit → digit | A | . . . | F | a | . . . | f
 */
 
+int fail_if_reservedid(const string& id)
+{
+  if (id == "case" or id=="class" or id=="data" or id=="default" or id=="deriving" or id=="do" or id=="else" or id=="foreign" or id=="if" or id=="import" or id=="in" or id=="infix" or id=="infixl" or id=="infixr" or id=="instance" or id=="let" or id=="module" or id=="newtype" or id=="of" or id=="then" or id=="type" or id=="where" or id=="_")
+    return 0; // pass_fail
+  else
+    return 1; // pass__normal
+}
+
+int fail_if_reservedop(const string& op)
+{
+  if (op == ".." or op == ":" or op == "::" or op == "=" or op == "\\" or op == "|" or op == "<-" or op == "->" or op == "@" or op == "~" or op == "=>")
+    return 0;
+  else
+    return 1;  
+}
+
 // http://www.haskell.org/ghc/docs/6.10.2/html/libraries/haskell-src/Language-Haskell-Lexer.html
 template <typename Lexer>
 struct word_count_tokens : lex::lexer<Lexer>
