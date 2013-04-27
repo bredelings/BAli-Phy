@@ -56,11 +56,11 @@ namespace phoenix = boost::phoenix;
 //   
 
 /*
-literal → { lexeme | whitespace }
-special → qvarid | qconid | qvarsym | qconsym
+program → { lexeme | whitespace }
+lexem → qvarid | qconid | qvarsym | qconsym
           | literal | special | reservedop | reservedid
-          → integer | float | char | string
-            → (|)|,|;|[|]|`|{|}
+literal  → integer | float | char | string
+special  → (|)|,|;|[|]|`|{|}
 whitespace → whitestuff {whitestuff }
 whitestuff → whitechar | comment | ncomment
 whitechar → newline | vertab | space | tab | uniWhite
