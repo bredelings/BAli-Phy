@@ -57,7 +57,7 @@ namespace phoenix = boost::phoenix;
 
 /*
 program → { lexeme | whitespace }
-lexem → qvarid | qconid | qvarsym | qconsym
+lexeme → qvarid | qconid | qvarsym | qconsym
           | literal | special | reservedop | reservedid
 literal  → integer | float | char | string
 special  → (|)|,|;|[|]|`|{|}
@@ -106,7 +106,7 @@ struct word_count_tokens : lex::lexer<Lexer>
     {
 /*
 program → { lexeme | whitespace }
-lexem → qvarid | qconid | qvarsym | qconsym
+lexeme → qvarid | qconid | qvarsym | qconsym
           | literal | special | reservedop | reservedid
 literal  → integer | float | char | string
 
