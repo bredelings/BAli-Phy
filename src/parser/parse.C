@@ -179,6 +179,10 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	  | VarSym
 	  | QConSym
 	  | ConSym
+	  | IntTok
+	  | FloatTok
+	  | Character
+	  | StringTok
 	  | WHITESPACE
         ;
     }
