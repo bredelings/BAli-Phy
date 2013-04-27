@@ -1149,7 +1149,7 @@ expression_ref parse_bugs_file(const string& lines)
     char const*, boost::mpl::vector<std::string>
     > token_type;
 
-  typedef lex::lexertl::lexer<token_type> lexer_type;
+  typedef lex::lexertl::actor_lexer<token_type> lexer_type;
 
   typedef word_count_tokens<lexer_type>::iterator_type iterator_type;
 
