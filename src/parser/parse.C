@@ -106,12 +106,26 @@ int fail_if_reservedid(const string& id)
     return 1; // pass__normal
 }
 
+std::string get_unqualified_name(const std::string&);
+
+int fail_if_reservedqid(const string& qid)
+{
+  string id = get_unqualified_name(qid);
+  return fail_if_reservedid(id);
+}
+
 int fail_if_reservedop(const string& op)
 {
   if (op == ".." or op == ":" or op == "::" or op == "=" or op == "\\" or op == "|" or op == "<-" or op == "->" or op == "@" or op == "~" or op == "=>")
     return 0;
   else
-    return 1;  
+    return 1;
+}
+
+int fail_if_reservedqop(const string& qop)
+{
+  string op = get_unqualified_name(qop);
+  return fail_if_reservedid(op);
 }
 
 // http://www.haskell.org/ghc/docs/6.10.2/html/libraries/haskell-src/Language-Haskell-Lexer.html
@@ -187,14 +201,14 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
         // this lexer will recognize 3 token types: words, newlines, and 
         // everything else
         this->self 
-	  = QVarId // 
-	  | VarId
+	  = QVarId [lex::_pass = phoenix::bind(fail_if_reservedqid,lex::_val)]
+	  | VarId [lex::_pass = phoenix::bind(fail_if_reservedid,lex::_val)]
 	  | QConId
 	  | ConId
-	  | QVarSym
-	  | VarSym
-	  | QConSym
-	  | ConSym
+	  | QVarSym [lex::_pass = phoenix::bind(fail_if_reservedqop,lex::_val)] 
+	  | VarSym [lex::_pass = phoenix::bind(fail_if_reservedop,lex::_val)]
+	  | QConSym [lex::_pass = phoenix::bind(fail_if_reservedqop,lex::_val)]
+	  | ConSym [lex::_pass = phoenix::bind(fail_if_reservedop,lex::_val)]
 
 	  // Literal
 	  | IntTok
