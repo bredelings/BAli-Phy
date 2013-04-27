@@ -176,18 +176,18 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       
         // define patterns (lexer macros) to be used during token definition 
         // below
-        this->self.add_pattern
-	  ("WORD", "[^ \t\n]+")
-	  ("ID",".")
-        ;
+      //        this->self.add_pattern
+      //	  ("WORD", "[^ \t\n]+")
+      //	  ("ID",".")
+      //        ;
 
         // define tokens and associate them with the lexer
-        word = "{WORD}";    // reference the pattern 'WORD' as defined above
+      //        word = "{WORD}";    // reference the pattern 'WORD' as defined above
 
         // this lexer will recognize 3 token types: words, newlines, and 
         // everything else
         this->self 
-	  = QVarId
+	  = QVarId // 
 	  | VarId
 	  | QConId
 	  | ConId
@@ -195,11 +195,74 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	  | VarSym
 	  | QConSym
 	  | ConSym
+
+	  // Literal
 	  | IntTok
 	  | FloatTok
 	  | Character
 	  | StringTok
-	  | WHITESPACE
+
+	  // Special
+	  | LeftParen
+	  | RightParen
+	  | SemiColon
+	  | LeftCurly
+	  | RightCurly
+	  | VRightCurly // added to satisfy demands of parser?
+	  | LeftSquare
+	  | RightSquare
+	  | Comma
+	  | BackQuote
+
+	  // underscore - part of reservedid?
+	  | Underscore
+
+	  // reservedop
+	  | DotDot
+	  | Colon
+	  | DoubleColon
+	  | Equals
+	  | Backslash
+	  | Bar
+	  | LeftArrow
+	  | RightArrow
+	  | At
+	  | Tilde
+	  | DoubleArrow
+	  | Minus         //?
+	  | Exclamation   //?
+
+	  // reservedid
+	  | KW_Case
+	  | KW_Class
+	  | KW_Data
+	  | KW_Default
+	  | KW_Deriving
+	  | KW_Do
+	  | KW_Else
+	  | KW_Foreign
+	  | KW_If
+	  | KW_Import
+	  | KW_In
+	  | KW_Infix
+	  | KW_InfixL
+	  | KW_InfixR
+	  | KW_Instance
+	  | KW_Let
+	  | KW_Module
+	  | KW_NewType
+	  | KW_Of
+	  | KW_Then
+	  | KW_Type
+	  | KW_Where
+	  | KW_As
+	  | KW_Export
+	  | KW_Hiding
+	  | KW_Qualified
+	  | KW_Safe
+	  | KW_Unsafe
+	  // whitespace
+	  | WHITESPACE [ lex::_pass = lex::pass_flags::pass_ignore ] // how do we skip whitespace in the lexer?
         ;
     }
 
@@ -268,11 +331,9 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<> KW_Qualified;
   lex::token_def<> KW_Safe;
   lex::token_def<> KW_Unsafe;
-  lex::token_def<std::string> WHITESPACE;
+  //  lex::token_def<std::string> WHITESPACE; For multi-stage lexing, we will actually need the matched string
+  lex::token_def<lex::omit> WHITESPACE;
   //  lex::token_def<> EOF;
-    // the token 'word' exposes the matched string as its parser attribute
-  lex::token_def<std::string> word;
-  lex::token_def<> id;
 };
 
 
