@@ -98,17 +98,17 @@ octit → 0 | 1 | ... | 7
 hexit → digit | A | . . . | F | a | . . . | f
 */
 
-int fail_if_reservedid(const string& id)
+decltype(lex::pass_flags::pass_fail) fail_if_reservedid(const string& id)
 {
   if (id == "case" or id=="class" or id=="data" or id=="default" or id=="deriving" or id=="do" or id=="else" or id=="foreign" or id=="if" or id=="import" or id=="in" or id=="infix" or id=="infixl" or id=="infixr" or id=="instance" or id=="let" or id=="module" or id=="newtype" or id=="of" or id=="then" or id=="type" or id=="where" or id=="_")
-    return 0; // pass_fail
+    return lex::pass_flags::pass_fail; // pass_fail
   else
-    return 1; // pass__normal
+    return lex::pass_flags::pass_normal; // pass__normal
 }
 
 std::string get_unqualified_name(const std::string&);
 
-int fail_if_reservedqid(const string& qid)
+decltype(lex::pass_flags::pass_fail) fail_if_reservedqid(const string& qid)
 {
   string id = get_unqualified_name(qid);
   return fail_if_reservedid(id);
@@ -125,7 +125,7 @@ int fail_if_reservedop(const string& op)
 int fail_if_reservedqop(const string& qop)
 {
   string op = get_unqualified_name(qop);
-  return fail_if_reservedid(op);
+  return fail_if_reservedop(op);
 }
 
 // http://www.haskell.org/ghc/docs/6.10.2/html/libraries/haskell-src/Language-Haskell-Lexer.html
@@ -271,7 +271,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
         // this lexer will recognize 3 token types: words, newlines, and 
         // everything else
         this->self 
-	  = QVarId //[lex::_pass = phoenix::bind(fail_if_reservedqid,lex::_val)]
+	  = QVarId [lex::_pass = fail_if_reservedid("case")]
 	  | VarId  //[lex::_pass = phoenix::bind(fail_if_reservedid,lex::_val)]
 	  | QConId
 	  | ConId
