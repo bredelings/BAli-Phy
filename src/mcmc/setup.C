@@ -329,7 +329,7 @@ void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 	int u = *convert<const Int>(bounds.second);
 
 	string name = rand_var->print()+"_uniform_"+convertToString<int>(m_index);
-	add_modifiable_MH_move(name, discrete_uniform, m_index, {l,u}, M, 0.1);
+	add_modifiable_MH_move(name, discrete_uniform, m_index, {double(l),double(u)}, M, 0.1);
       }
     }
 }
