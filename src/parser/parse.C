@@ -146,54 +146,57 @@ ncomment → opencom ANYseq {ncomment ANYseq} closecom
 ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 
 */
-      string newline = "\r\n|[\r\n\f]";
-      string whitechar = "[\n\v \t]"; // uniWhite
-      string uniWhite = "??";
-      string ascDigit = "\\d+";
-      string uniDigit = "??";
-      string digit = ascDigit; // | uniDigit
-      string octit = "[0-7]";
-      string hexit = digit+"|[A-F]|[a-f]";
-      string ascSymbol = "[!#$%&*+./<=>?@\\\\ˆ|\\-~:]";
-      string uniSymbol = "??";
-      string symbol = ascSymbol; //uniSymbol except <special,_,",'>
-      string ascSmall = "[a-z]";
-      string uniSmall = "??";
-      string small = ascSmall; // | uniSmall
-      string ascLarge = "[A-Z]";
-      string uniLarge = "??";
-      string large = ascLarge; // | uniLarge
-      string special = "[(),;[\\]`{}]";
-      string graphic = small +"|"+ large +"|"+ symbol +"|"+ digit +"|"+ special + "|[\"']";
-      string any = graphic + "|[\t ]";
-      string ANY = graphic +"|"+ whitechar;
-      string dashes = "--+";
-      string comment = dashes + "((?!"+symbol+")"+"("+any+")+)?" + newline;
-      string whitestuff = whitechar +"|"+ comment; // | ncomment
-      string whitespace = "(" + whitestuff + ")+";
-      string varid = "("+small+")" + "("+small+"|"+large+"|"+digit+"|'" + ")*";// - reservedid;
-      string conid = "("+large+")" + "("+small+"|"+large+"|"+digit+"|'" + ")*";
-      string varsym = "(?!:)("+symbol+")+"; // -reservedop
-      string consym = ":("+symbol+")*"; //-reservedop;
-      string modid = "(("+conid+")\\.)+";
-      string qvarid = "("+modid+")("+varid+")";
-      string qconid = "("+modid+")("+conid+")";
-      string qvarsym = "("+modid+")("+varsym+")";
-      string qconsym = "("+modid+")("+consym+")";
-      string int_literal = "\\d+";
-      string exponent = "[eE][\\+-]?\\d+";
-      string float_literal = "(\\d+\\.\\d+("+exponent+")?)|\\d+"+exponent;
-      // The char and string literals could be improved
-      string escape = "\\[abfnrtv\\\"']";
-      string char_literal = "'(((?!['\\])"+graphic+")| |("+escape+"))'";
-      string string_literal = "\"(((?![\"\\])"+graphic+")| |("+escape+"))*\"";
-      
-        // define patterns (lexer macros) to be used during token definition 
+      // define patterns (lexer macros) to be used during token definition 
         // below
       //        this->self.add_pattern
       //	  ("WORD", "[^ \t\n]+")
       //	  ("ID",".")
       //        ;
+      this->self.add_pattern
+	("newline","\r\n|[\r\n\f]")
+	("whitechar","[\n\v \t]")
+	// uniWhite
+	("ascDigit","\\d+")
+	("digit","{ascDigit}")
+	// uniDigit
+	("octit","[0-7]")
+	("hexit","{digit}|[A-F]|[a-f]")
+	("ascSymbol","[!#$%&*+./<=>?@\\\\ˆ|\\-~:]")
+	// uniSymbol
+	("symbol","{ascSymbol}") // | uniSymbol except <special,_,",'>
+	("ascSmall","[a-z]")
+	// uniSmall
+	("small","{ascSmall}") // | uniSmall
+	("ascLarge","[A-Z]")
+	// uniLarge
+	("large","{ascLarge}") // | uniLarge
+	("special","[(),;[\\]`{}]")
+	("graphic","{small}|{large}|{symbol}|{digit}|{special}|[\"']")
+	("any","{graphic}|[\t ]")
+	("ANY","{graphic}|{whitechar}")
+	("dashes","--+")
+	("comment","{dashes}((?!{symbol}){any}+)?{newline}")
+	("whitestuff","{whitechar}|{comment}") // | ncomment
+	("whitespace","{whitestuff}+")
+	("varid","{small}({small}|{large}|{digit}|')*") // -reservedid
+	("conid","{large}({small}|{large}|{digit}|')*") // -reservedid
+	("varsym","(?!:){symbol}+") // - reservedop
+	("consym",":{symbol}*") //-reservedop;
+	("modid","({conid}\\.)+")
+	("qvarid","{modid}{varid}")
+	("qconid","{modid}{conid}")
+	("qvarsym","{modid}{varsym}")
+	("qconsym","{modid}{consym}")
+	("decimal","\\d+")
+	("INT","{decimal}")
+	("exponent","[eE][\\+-]?{decimal}")
+	("FLOAT","{digit}\\.{digit}{exponent}?|{digit}{exponent}")
+	// The char and string literals could be improved
+	("escape","\\[abfnrtv\\\"']")
+	("CHAR","'(((?!['\\]){graphic})| |({escape}))'")
+	("STRING","\"(((?![\"\\]){graphic})| |({escape}))*\"");
+
+      QVarId = "{qvarid}";
 
         // define tokens and associate them with the lexer
       //        word = "{WORD}";    // reference the pattern 'WORD' as defined above
