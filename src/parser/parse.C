@@ -167,19 +167,24 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 
         // define tokens and associate them with the lexer
         word = "{WORD}";    // reference the pattern 'WORD' as defined above
-	id   = "{ID}";
 
         // this lexer will recognize 3 token types: words, newlines, and 
         // everything else
-        this->self.add
-	  (word)          // no token id is needed here
-	  ('\n')          // characters are usable as tokens as well
-	  (id)    // string literals will not be esacped by the library
+        this->self 
+	  = QVarId
+	  | VarId
+	  | QConId
+	  | ConId
+	  | QVarSym
+	  | VarSym
+	  | QConSym
+	  | ConSym
+	  | WHITESPACE
         ;
     }
 
-  lex::token_def<std::string> VarID;    // String
   lex::token_def<std::string> QVarId;   // (String,STring)
+  lex::token_def<std::string> VarId;    // String
   lex::token_def<std::string> ConId;    // String	
   lex::token_def<std::string> QConId;   // (String, String)	
   lex::token_def<std::string> VarSym;   // String	
@@ -243,6 +248,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<> KW_Qualified;
   lex::token_def<> KW_Safe;
   lex::token_def<> KW_Unsafe;
+  lex::token_def<std::string> WHITESPACE;
   //  lex::token_def<> EOF;
     // the token 'word' exposes the matched string as its parser attribute
   lex::token_def<std::string> word;
