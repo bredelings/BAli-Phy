@@ -183,20 +183,87 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	("varsym","(?!:){symbol}+") // - reservedop
 	("consym",":{symbol}*") //-reservedop;
 	("modid","({conid}\\.)+")
-	("qvarid","{modid}{varid}")
-	("qconid","{modid}{conid}")
-	("qvarsym","{modid}{varsym}")
-	("qconsym","{modid}{consym}")
 	("decimal","\\d+")
-	("INT","{decimal}")
 	("exponent","[eE][\\+-]?{decimal}")
-	("FLOAT","{digit}\\.{digit}{exponent}?|{digit}{exponent}")
 	// The char and string literals could be improved
-	("escape","\\[abfnrtv\\\"']")
-	("CHAR","'(((?!['\\]){graphic})| |({escape}))'")
-	("STRING","\"(((?![\"\\]){graphic})| |({escape}))*\"");
+	("escape","\\[abfnrtv\\\"']");
 
-      QVarId = "{qvarid}";
+      QVarId = "{modid}{varid}";
+      VarId = "{varid}";
+      QConId = "{modid}{conid}";
+      ConId = "{conid";
+      QVarSym = "{modid}{varsym}";
+      VarSym = "{varsym}";
+      QConSym = "{modid}{consym}";
+      ConSym = "{consym}";
+
+	  // Literal
+      IntTok = "{decimal}";
+      FloatTok = "{digit}\\.{digit}{exponent}?|{digit}{exponent}";
+	 Character = "'(((?!['\\]){graphic})| |({escape}))'";
+      StringTok = "STRING","\"(((?![\"\\]){graphic})| |({escape}))*\"";
+
+      LeftParen = "(";
+      RightParen = ")";
+      SemiColon = ";";
+      LeftCurly = "{";
+      RightCurly = "}";
+      VRightCurly = "}";
+      LeftSquare = "[";
+      RightSquare = "]";
+      Comma = ",";
+      BackQuote = "`";
+
+	  // underscore - part of reservedid?
+      Underscore = "_";
+
+	  // reservedop
+      DotDot = "..";
+      Colon = ":";
+      DoubleColon = "::";
+      Equals = "=";
+      Backslash = "\\";
+      Bar = "|";
+      LeftArrow = "<-";
+      RightArrow = "->";
+      At = "@";
+      Tilde = "~";
+      DoubleArrow = "=>";
+      Minus = "-";
+      Exclamation = "!";
+
+	  // reservedid
+      KW_Case = "case";
+      KW_Class = "class";
+      KW_Data = "data";
+      KW_Default = "default";
+      KW_Deriving = "deriving";
+      KW_Do = "do";
+      KW_Else = "else";
+      KW_Foreign = "foreign";
+      KW_If = "if";
+      KW_Import = "import";
+      KW_In = "in";
+      KW_Infix = "infix";
+      KW_InfixL = "infixl";
+      KW_InfixR = "infixr";
+      KW_Instance = "instance";
+      KW_Let = "let";
+      KW_Module = "module";
+      KW_NewType = "newtype";
+      KW_Of = "of";
+      KW_Then = "then";
+      KW_Type = "type";
+      KW_Where = "where";
+      KW_As = "as";
+      KW_Export = "export";
+      KW_Hiding = "hiding";
+      KW_Qualified = "qualified";
+      KW_Safe = "safe";
+      KW_Unsafe = "unsafe";
+      KW_Note = "note";
+      // whitespace
+      WHITESPACE = "{whitespace}";
 
         // define tokens and associate them with the lexer
       //        word = "{WORD}";    // reference the pattern 'WORD' as defined above
@@ -204,14 +271,14 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
         // this lexer will recognize 3 token types: words, newlines, and 
         // everything else
         this->self 
-	  = QVarId [lex::_pass = phoenix::bind(fail_if_reservedqid,lex::_val)]
-	  | VarId [lex::_pass = phoenix::bind(fail_if_reservedid,lex::_val)]
+	  = QVarId //[lex::_pass = phoenix::bind(fail_if_reservedqid,lex::_val)]
+	  | VarId //[lex::_pass = phoenix::bind(fail_if_reservedid,lex::_val)]
 	  | QConId
 	  | ConId
-	  | QVarSym [lex::_pass = phoenix::bind(fail_if_reservedqop,lex::_val)] 
-	  | VarSym [lex::_pass = phoenix::bind(fail_if_reservedop,lex::_val)]
-	  | QConSym [lex::_pass = phoenix::bind(fail_if_reservedqop,lex::_val)]
-	  | ConSym [lex::_pass = phoenix::bind(fail_if_reservedop,lex::_val)]
+	  | QVarSym //[lex::_pass = phoenix::bind(fail_if_reservedqop,lex::_val)] 
+	  | VarSym //[lex::_pass = phoenix::bind(fail_if_reservedop,lex::_val)]
+	  | QConSym //[lex::_pass = phoenix::bind(fail_if_reservedqop,lex::_val)]
+	  | ConSym //[lex::_pass = phoenix::bind(fail_if_reservedop,lex::_val)]
 
 	  // Literal
 	  | IntTok
@@ -278,6 +345,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	  | KW_Qualified
 	  | KW_Safe
 	  | KW_Unsafe
+	  | KW_Note
 	  // whitespace
 	  | WHITESPACE [ lex::_pass = lex::pass_flags::pass_ignore ] // how do we skip whitespace in the lexer?
         ;
@@ -348,6 +416,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<> KW_Qualified;
   lex::token_def<> KW_Safe;
   lex::token_def<> KW_Unsafe;
+  lex::token_def<> KW_Note;
   //  lex::token_def<std::string> WHITESPACE; For multi-stage lexing, we will actually need the matched string
   lex::token_def<lex::omit> WHITESPACE;
   //  lex::token_def<> EOF;
