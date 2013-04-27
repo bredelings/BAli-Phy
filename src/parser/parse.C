@@ -201,7 +201,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       IntTok = "{decimal}";
       FloatTok = "{digit}\\.{digit}{exponent}?|{digit}{exponent}";
 	 Character = "'(((?!['\\]){graphic})| |({escape}))'";
-      StringTok = "STRING","\"(((?![\"\\]){graphic})| |({escape}))*\"";
+      StringTok = "\"(((?![\"\\]){graphic})| |({escape}))*\"";
 
       LeftParen = "(";
       RightParen = ")";
