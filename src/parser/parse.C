@@ -136,6 +136,25 @@ void fail_if_reserved_qop(const char* start, const char* end, BOOST_SCOPED_ENUM(
     pass = lex::pass_flags::pass_fail;
 }
 
+void fail_if_starts_with_colon(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
+{
+  if (start == end or start[0] == ':')
+    pass = lex::pass_flags::pass_fail;
+}
+
+void check_qvarsym(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
+{
+  string op = get_unqualified_name(string(start,end));
+  fail_if_reserved_op(&op[0],&op[0]+op.size(),pass);
+  fail_if_starts_with_colon(start,end,pass);
+}
+
+void check_varsym(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
+{
+  fail_if_reserved_op(start,end,pass);
+  fail_if_starts_with_colon(start,end,pass);
+}
+
 // http://www.haskell.org/ghc/docs/6.10.2/html/libraries/haskell-src/Language-Haskell-Lexer.html
 template <typename Lexer>
 struct haskell_lex1 : lex::lexer<Lexer>
@@ -188,7 +207,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	("whitespace","{whitestuff}+")
 	("varid","{small}({small}|{large}|{digit}|')*") // -reservedid
 	("conid","{large}({small}|{large}|{digit}|')*") // -reservedid
-	("varsym","(?!:){symbol}+") // - reservedop
+	("varsym","{symbol}+") // - reservedop
 	("consym",":{symbol}*") //-reservedop;
 	("modid","({conid}\\.)+")
 	("decimal","\\d+")
@@ -284,8 +303,8 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	  | VarId  [&fail_if_reserved_id]
 	  | QConId
 	  | ConId
-	  | QVarSym [&fail_if_reserved_qop]
-	  | VarSym  [&fail_if_reserved_op]
+	  | QVarSym [&check_qvarsym]
+	  | VarSym  [&check_varsym]
 	  | QConSym [&fail_if_reserved_qop]
 	  | ConSym  [&fail_if_reserved_op]
 
