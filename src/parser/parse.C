@@ -215,7 +215,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	("consym",":{symbol}*") //-reservedop;
 	("modid","({conid}\\.)+")
 	("decimal","\\d+")
-	("exponent","[eE][\\+-]?{decimal}")
+	("exponent","[eE][\\+\\-]?{decimal}")
 	// The char and string literals could be improved
 	("escape","\\[abfnrtv\\\"']");
 
@@ -237,7 +237,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       LeftParen   = "\\(";
       RightParen  = "\\)";
       SemiColon   = ";";
-      LeftCurly   = "{";
+      LeftCurly   = "\\{";
       RightCurly  = "}";
       VRightCurly = "}";
       LeftSquare  = "\\[";
