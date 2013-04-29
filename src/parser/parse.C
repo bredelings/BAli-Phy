@@ -1381,7 +1381,7 @@ expression_ref parse_bugs_file(const string& lines)
     for(auto i = lexer1.begin(first,end); i != lexer1.end() and (*i).is_valid(); i++)
     {
       auto& t = *i;
-      std::cout<<t.value()<<"\n";;
+      std::cout<<"'"<<t.value()<<"'\n";;
     }
   }
 
