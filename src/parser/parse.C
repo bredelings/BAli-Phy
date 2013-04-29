@@ -254,7 +254,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       DoubleColon = "::";
       Equals = "=";
       Backslash = "\\\\";
-      Bar = "|";
+      Bar = "\\|";
       LeftArrow = "<-";
       RightArrow = "->";
       At = "@";
