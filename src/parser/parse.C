@@ -138,9 +138,9 @@ void fail_if_reserved_qop(const char* start, const char* end, BOOST_SCOPED_ENUM(
 
 // http://www.haskell.org/ghc/docs/6.10.2/html/libraries/haskell-src/Language-Haskell-Lexer.html
 template <typename Lexer>
-struct word_count_tokens : lex::lexer<Lexer>
+struct haskell_lex1 : lex::lexer<Lexer>
 {
-    word_count_tokens()
+    haskell_lex1()
     {
 /*
 program → { lexeme | whitespace }
@@ -1349,9 +1349,9 @@ expression_ref parse_bugs_file(const string& lines)
 
   typedef lex::lexertl::actor_lexer<token_type> lexer_type;
 
-  typedef word_count_tokens<lexer_type>::iterator_type iterator_type;
+  typedef haskell_lex1<lexer_type>::iterator_type iterator_type;
 
-  word_count_tokens<lexer_type> word_count;          // Our lexer
+  haskell_lex1<lexer_type> lexer1;          // Our lexer
   /*----------------------------------------------------------------------------*/
 
   using boost::spirit::ascii::space;
