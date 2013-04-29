@@ -304,13 +304,13 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
         this->self 
 	  = QVarId [&fail_if_reserved_qid]
 	  //	  | VarId  [lex::_pass = phoenix::bind(fail_if_reservedid,lex::_val)]
-	  | VarId  [&fail_if_reserved_id]
+	  | VarId  [&fail_if_reserved_id] // here, adjust token id??
 	  | QConId
 	  | ConId
 	  | QVarSym [&check_qvarsym]
-	  | VarSym  [&check_varsym]
+	  | VarSym  [&check_varsym]       // here, adjust token id??
 	  | QConSym [&fail_if_reserved_qop]
-	  | ConSym  [&fail_if_reserved_op]
+	  | ConSym  [&fail_if_reserved_op] // here, adjust token id??
 
 	  // Literal
 	  | IntTok
