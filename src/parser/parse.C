@@ -98,39 +98,42 @@ octit → 0 | 1 | ... | 7
 hexit → digit | A | . . . | F | a | . . . | f
 */
 
-decltype(lex::pass_flags::pass_fail) fail_if_reservedid(const string& id)
+bool is_reservedid(const string& id)
 {
-  if (id == "case" or id=="class" or id=="data" or id=="default" or id=="deriving" or id=="do" or id=="else" or id=="foreign" or id=="if" or id=="import" or id=="in" or id=="infix" or id=="infixl" or id=="infixr" or id=="instance" or id=="let" or id=="module" or id=="newtype" or id=="of" or id=="then" or id=="type" or id=="where" or id=="_")
-    return lex::pass_flags::pass_fail; // pass_fail
-  else
-    return lex::pass_flags::pass_normal; // pass__normal
+  return (id == "case" or id=="class" or id=="data" or id=="default" or id=="deriving" or id=="do" or id=="else" or id=="foreign" or id=="if" or id=="import" or id=="in" or id=="infix" or id=="infixl" or id=="infixr" or id=="instance" or id=="let" or id=="module" or id=="newtype" or id=="of" or id=="then" or id=="type" or id=="where" or id=="_");
+}
+
+bool is_reservedop(const string& op)
+{
+  return (op == ".." or op == ":" or op == "::" or op == "=" or op == "\\" or op == "|" or op == "<-" or op == "->" or op == "@" or op == "~" or op == "=>");
 }
 
 std::string get_unqualified_name(const std::string&);
 
-decltype(lex::pass_flags::pass_fail) fail_if_reservedqid(const string& qid)
-{
-  string id = get_unqualified_name(qid);
-  return fail_if_reservedid(id);
-}
-
-int fail_if_reservedop(const string& op)
-{
-  if (op == ".." or op == ":" or op == "::" or op == "=" or op == "\\" or op == "|" or op == "<-" or op == "->" or op == "@" or op == "~" or op == "=>")
-    return 0;
-  else
-    return 1;
-}
-
-int fail_if_reservedqop(const string& qop)
-{
-  string op = get_unqualified_name(qop);
-  return fail_if_reservedop(op);
-}
-
 void fail_if_reserved_id(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
 {
-  pass = fail_if_reservedid(std::string(start, end));
+  if (is_reservedid(std::string(start, end)))
+    pass = lex::pass_flags::pass_fail;
+}
+
+void fail_if_reserved_qid(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
+{
+  string id = get_unqualified_name(string(start,end));
+  if (is_reservedid(id))
+    pass = lex::pass_flags::pass_fail;
+}
+
+void fail_if_reserved_op(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
+{
+  if (is_reservedop(std::string(start, end)))
+    pass = lex::pass_flags::pass_fail;
+}
+
+void fail_if_reserved_qop(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
+{
+  string op = get_unqualified_name(string(start,end));
+  if (is_reservedop(op))
+    pass = lex::pass_flags::pass_fail;
 }
 
 // http://www.haskell.org/ghc/docs/6.10.2/html/libraries/haskell-src/Language-Haskell-Lexer.html
@@ -276,7 +279,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
         // this lexer will recognize 3 token types: words, newlines, and 
         // everything else
         this->self 
-	  = QVarId [lex::_pass = fail_if_reservedid("case")]
+	  = QVarId [&fail_if_reserved_qid]
 	  //	  | VarId  [lex::_pass = phoenix::bind(fail_if_reservedid,lex::_val)]
 	  | VarId  [&fail_if_reserved_id]
 	  | QConId
