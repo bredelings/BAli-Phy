@@ -234,13 +234,13 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       Character = "'({graphicnonq}| |{escape})'";
       StringTok = "\"({graphicnonqq}| |{escape})*\"";
 
-      LeftParen   = "(";
-      RightParen  = ")";
+      LeftParen   = "\\(";
+      RightParen  = "\\)";
       SemiColon   = ";";
       LeftCurly   = "{";
       RightCurly  = "}";
       VRightCurly = "}";
-      LeftSquare  = "[";
+      LeftSquare  = "\\[";
       RightSquare = "]";
       Comma       = ",";
       BackQuote   = "`";
