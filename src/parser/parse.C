@@ -222,7 +222,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       QVarId = "{modid}{varid}";
       VarId = "{varid}";
       QConId = "{modid}{conid}";
-      ConId = "{conid";
+      ConId = "{conid}";
       QVarSym = "{modid}{varsym}";
       VarSym = "{varsym}";
       QConSym = "{modid}{consym}";
