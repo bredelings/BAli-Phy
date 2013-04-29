@@ -249,7 +249,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       Underscore = "_";
 
 	  // reservedop
-      DotDot = "..";
+      DotDot = "\\.\\.";
       Colon = ":";
       DoubleColon = "::";
       Equals = "=";
