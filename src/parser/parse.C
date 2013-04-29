@@ -284,10 +284,10 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	  | VarId  [&fail_if_reserved_id]
 	  | QConId
 	  | ConId
-	  | QVarSym //[lex::_pass = phoenix::bind(fail_if_reservedqop,lex::_val)] 
-	  | VarSym  //[lex::_pass = phoenix::bind(fail_if_reservedop,lex::_val)]
-	  | QConSym //[lex::_pass = phoenix::bind(fail_if_reservedqop,lex::_val)]
-	  | ConSym  //[lex::_pass = phoenix::bind(fail_if_reservedop,lex::_val)]
+	  | QVarSym [&fail_if_reserved_qop]
+	  | VarSym  [&fail_if_reserved_op]
+	  | QConSym [&fail_if_reserved_qop]
+	  | ConSym  [&fail_if_reserved_op]
 
 	  // Literal
 	  | IntTok
