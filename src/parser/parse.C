@@ -128,6 +128,11 @@ int fail_if_reservedqop(const string& qop)
   return fail_if_reservedop(op);
 }
 
+void fail_if_reserved_id(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
+{
+  pass = fail_if_reservedid(std::string(start, end));
+}
+
 // http://www.haskell.org/ghc/docs/6.10.2/html/libraries/haskell-src/Language-Haskell-Lexer.html
 template <typename Lexer>
 struct word_count_tokens : lex::lexer<Lexer>
@@ -272,7 +277,8 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
         // everything else
         this->self 
 	  = QVarId [lex::_pass = fail_if_reservedid("case")]
-	  | VarId  //[lex::_pass = phoenix::bind(fail_if_reservedid,lex::_val)]
+	  //	  | VarId  [lex::_pass = phoenix::bind(fail_if_reservedid,lex::_val)]
+	  | VarId  [&fail_if_reserved_id]
 	  | QConId
 	  | ConId
 	  | QVarSym //[lex::_pass = phoenix::bind(fail_if_reservedqop,lex::_val)] 
