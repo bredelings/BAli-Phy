@@ -28,14 +28,14 @@
 <para>
 This tutorial contains step-by-step commands, assuming that you have already installed bali-phy.  The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html">manual</link> contains more detailed explanations for many things, so you might want to refer to it during the tutorial.</para>
   </section>
-  <section xml:id="work_directory"><info><title>Setting up the <filename>~/Work</filename> directory</title></info>
+  <section xml:id="work_directory"><info><title>Setting up the <filename>~/alignment_files</filename> directory</title></info>
 
 <para>Go to your home directory:
 % cd ~
-Make a directory called Work inside it:
-% mkdir Work
-Go into the <filename>Work</filename> directory:
-% cd Work
+Make a directory called alignment_files inside it:
+% mkdir alignment_files
+Go into the <filename>alignment_files</filename> directory:
+% cd alignment_files
 Download the example alignment files:
 % wget http://nucleus.biology.duke.edu/~bredelings/examples.tgz
 Extract the compressed archive:
@@ -174,28 +174,52 @@ Now lets use the analysis script to run all the summaries and make a report:
 </section>
 
 <section><info><title>Multi-gene analyses</title></info>
-<para>This is described in more detail in section 4.3 of the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html">manual</link>.</para>
-<para>
-Download HIV env and pol alignments with the same sequence names:
-% wget http://nucleus.biology.duke.edu/~bredelings/alignment_files/env-common.fasta
-% wget http://nucleus.biology.duke.edu/~bredelings/alignment_files/pol-common.fasta
-Try to analyze these genes jointly under a codon model:
-% bali-phy --show-only --alphabet Codons env-common.fasta pol-common.fasta --smodel M0
-Take a look at the lengths of these files, to see whether the sequencealignment lengths are multiples of 3:
-% alignment-info pol-common.fasta
-% alignment-info env-common.fasta
-Now edit the fasta files so that the lengths are a multiple of three:
-% alignment-cat -c1-951 env-common.fasta > env-common2.fasta
-% alignment-cat -c1-1068 pol-common.fasta > pol-common2.fasta
-Try running bali-phy again:
-% bali-phy --show-only --alphabet Codons env-common2.fasta pol-common2.fasta --smodel M0
-Now open the fasta files in an editor and replace all nucleotide ambiguity codes K and M with N.  This time the run should succeed:
-% bali-phy --show-only --alphabet Codons env-common2.fasta pol-common2.fasta --smodel M0
-By default, the M0 substitution model will be selected for both genes.  However, each gene will have a separate instance of the model with its own gene-specific values for the model parameters.  Try specifying that both genes share one instance of the model parameters:
-% bali-phy --iterations=10 --alphabet Codons env-common2.fasta pol-common2.fasta --smodel=1,2:M0
-Now try reading one gene as Codons, and the other as DNA:
-% bali-phy --iterations=10 --alphabet=1:Codons --alphabet=2:DNA env-common2.fasta pol-common2.fasta
+<para>In this section we'll practice running analysis with multiple
+partitions.  Dividing the data into multiple partitions is useful
+because different partitions can have different models, or can have
+different parameters for the same model. This is described in more
+detail in section 4.3 of the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html">manual</link>.</para> 
+
+<section><info><title>A simple multi-gene analysis</title></info>
+<para>Let's look at a data set that is divided into three partitions:
+% alignment-info ITS/ITS1-trimmed.fasta
+% alignment-info ITS/5.8S.fasta
+% alignment-info ITS/ITS2-trimmed.fasta
 </para>
+<section><info><title>Running the analysis</title></info>
+<para>
+We can run an analysis of this partitioned data simply by supplying a
+number of different alignment files as input to bali-phy.  Let's run an analysis
+of these three alignment files for 30 iterations:
+% bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --iter=30 --smodel=TN --imodel=RS07
+You could leave off the <userinput>--smodel=TN --imodel=RS07</userinput>
+part of the command line:
+% bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --iter=30
+This would give the same output, since TN and RS07 are the defaults.
+</para>
+</section>
+<section><info><title>What did the analysis do?</title></info>
+<para>Now, lets look at sampled continuous parameters:
+% tracer ITS1-trimmed-5.8S-ITS2-trimmed-1/C1.p &#38;
+You'll see that each partition has a TN (Tamura-Nei) substitution
+model, as well as an RS07 indel model.  Each partition has its own
+copy of the TN parameters and the RS07 parameters.</para>
+
+<para>The partitions share a common tree shape, including the same
+relative branch lengths.  However, the size of the tree for each
+partition is different.  We scale the whole shared tree by
+mu1 in partition 1, mu2 in partition 2, etc.  The mu parameters give
+the average branch length in that partition.  Thus, partitions with a
+smaller mu value have slower evolution.</para>
+</section>
+<section><info><title>Question</title></info>
+<para>Do the different partitions of this data set have the same
+evolutionary rates? Do the different partitions of this data set have
+the same base frequencies?</para>
+</section>
+
+</section>
 </section>
 
 </article>
+
