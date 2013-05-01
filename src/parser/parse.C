@@ -136,25 +136,6 @@ void fail_if_reserved_qop(const char* start, const char* end, BOOST_SCOPED_ENUM(
     pass = lex::pass_flags::pass_fail;
 }
 
-void fail_if_starts_with_colon(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
-{
-  if (start == end or start[0] == ':')
-    pass = lex::pass_flags::pass_fail;
-}
-
-void check_qvarsym(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
-{
-  string op = get_unqualified_name(string(start,end));
-  fail_if_reserved_op(&op[0],&op[0]+op.size(),pass);
-  fail_if_starts_with_colon(start,end,pass);
-}
-
-void check_varsym(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
-{
-  fail_if_reserved_op(start,end,pass);
-  fail_if_starts_with_colon(start,end,pass);
-}
-
 // http://www.haskell.org/ghc/docs/6.10.2/html/libraries/haskell-src/Language-Haskell-Lexer.html
 template <typename Lexer>
 struct haskell_lex1 : lex::lexer<Lexer>
@@ -209,14 +190,14 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	("comment","{dashes}({anynonsymbol}{any}*)?{newline}")
 	("whitestuff","{whitechar}|{comment}") // | ncomment
 	("whitespace","{whitestuff}+")
-	("varid","{small}({small}|{large}|{digit}|')*") // -reservedid
-	("conid","{large}({small}|{large}|{digit}|')*") // -reservedid
-	("varsym","{symbol}+") // - reservedop
-	("consym",":{symbol}*") //-reservedop;
+	("varid","{small}({small}|{large}|{digit}|')*")
+	("conid","{large}({small}|{large}|{digit}|')*")
+	("varsym","{symbol}+")
+	("consym",":{symbol}*")
 	("modid","({conid}\\.)+")
 	("decimal","\\d+")
 	("exponent","[eE][\\+\\-]?{decimal}")
-	// The char and string literals could be improved
+	// The char and string literals are missing some stuff
 	("escape","\\[abfnrtv\\\"']");
 
       QVarId = "{modid}{varid}";
@@ -234,83 +215,25 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       Character = "'({graphicnonq}| |{escape})'";
       StringTok = "\"({graphicnonqq}| |{escape})*\"";
 
-      LeftParen   = "\\(";
-      RightParen  = "\\)";
-      SemiColon   = ";";
-      LeftCurly   = "\\{";
-      RightCurly  = "}";
-      VRightCurly = "}";
-      LeftSquare  = "\\[";
-      RightSquare = "]";
-      Comma       = ",";
-      BackQuote   = "`";
+      Special = "{special}";
 
-	  // underscore - part of reservedid?
-      Underscore = "_";
-
-	  // reservedop
-      DotDot = "\\.\\.";
-      Colon = ":";
-      DoubleColon = "::";
-      Equals = "=";
-      Backslash = "\\\\";
-      Bar = "\\|";
-      LeftArrow = "<-";
-      RightArrow = "->";
-      At = "@";
-      Tilde = "~";
-      DoubleArrow = "=>";
-      Minus = "-";
-      Exclamation = "!";
-
-	  // reservedid
-      KW_Case = "case";
-      KW_Class = "class";
-      KW_Data = "data";
-      KW_Default = "default";
-      KW_Deriving = "deriving";
-      KW_Do = "do";
-      KW_Else = "else";
-      KW_Foreign = "foreign";
-      KW_If = "if";
-      KW_Import = "import";
-      KW_In = "in";
-      KW_Infix = "infix";
-      KW_InfixL = "infixl";
-      KW_InfixR = "infixr";
-      KW_Instance = "instance";
-      KW_Let = "let";
-      KW_Module = "module";
-      KW_NewType = "newtype";
-      KW_Of = "of";
-      KW_Then = "then";
-      KW_Type = "type";
-      KW_Where = "where";
-      KW_As = "as";
-      KW_Export = "export";
-      KW_Hiding = "hiding";
-      KW_Qualified = "qualified";
-      KW_Safe = "safe";
-      KW_Unsafe = "unsafe";
-      KW_Note = "note";
       // whitespace
       WHITESPACE = "{whitespace}";
 
-        // define tokens and associate them with the lexer
+      // define tokens and associate them with the lexer
       //        word = "{WORD}";    // reference the pattern 'WORD' as defined above
-
-        // this lexer will recognize 3 token types: words, newlines, and 
-        // everything else
-        this->self 
+      
+      // this lexer will recognize 3 token types: words, newlines, and 
+      // everything else
+      this->self 
 	  = QVarId [&fail_if_reserved_qid]
-	  //	  | VarId  [lex::_pass = phoenix::bind(fail_if_reservedid,lex::_val)]
-	  | VarId  [&fail_if_reserved_id] // here, adjust token id??
+	  | VarId
 	  | QConId
 	  | ConId
-	  | QVarSym [&check_qvarsym]
-	  | VarSym  [&check_varsym]       // here, adjust token id??
 	  | QConSym [&fail_if_reserved_qop]
-	  | ConSym  [&fail_if_reserved_op] // here, adjust token id??
+	  | ConSym
+	  | QVarSym [&fail_if_reserved_qop]
+	  | VarSym
 
 	  // Literal
 	  | IntTok
@@ -319,65 +242,8 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	  | StringTok
 
 	  // Special
-	  | LeftParen
-	  | RightParen
-	  | SemiColon
-	  | LeftCurly
-	  | RightCurly
-	  | VRightCurly // added to satisfy demands of parser?
-	  | LeftSquare
-	  | RightSquare
-	  | Comma
-	  | BackQuote
+	  | Special
 
-	  // underscore - part of reservedid?
-	  | Underscore
-
-	  // reservedop
-	  | DotDot
-	  | Colon
-	  | DoubleColon
-	  | Equals
-	  | Backslash
-	  | Bar
-	  | LeftArrow
-	  | RightArrow
-	  | At
-	  | Tilde
-	  | DoubleArrow
-	  | Minus         //?
-	  | Exclamation   //?
-
-	  // reservedid
-	  | KW_Case
-	  | KW_Class
-	  | KW_Data
-	  | KW_Default
-	  | KW_Deriving
-	  | KW_Do
-	  | KW_Else
-	  | KW_Foreign
-	  | KW_If
-	  | KW_Import
-	  | KW_In
-	  | KW_Infix
-	  | KW_InfixL
-	  | KW_InfixR
-	  | KW_Instance
-	  | KW_Let
-	  | KW_Module
-	  | KW_NewType
-	  | KW_Of
-	  | KW_Then
-	  | KW_Type
-	  | KW_Where
-	  | KW_As
-	  | KW_Export
-	  | KW_Hiding
-	  | KW_Qualified
-	  | KW_Safe
-	  | KW_Unsafe
-	  | KW_Note
 	  // whitespace
 	  | WHITESPACE [ lex::_pass = lex::pass_flags::pass_ignore ] // how do we skip whitespace in the lexer?
         ;
@@ -395,60 +261,9 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<std::string> FloatTok; // Rational	
   lex::token_def<char> Character;       // Char	
   lex::token_def<std::string> StringTok;// String	
-  lex::token_def<> LeftParen;
-  lex::token_def<> RightParen;
-  lex::token_def<> SemiColon;
-  lex::token_def<> LeftCurly;
-  lex::token_def<> RightCurly;
-  lex::token_def<> VRightCurly;
-  lex::token_def<> LeftSquare;
-  lex::token_def<> RightSquare;
-  lex::token_def<> Comma;
-  lex::token_def<> Underscore;
-  lex::token_def<> BackQuote;
-  lex::token_def<> DotDot;
-  lex::token_def<> Colon;
-  lex::token_def<> DoubleColon;
-  lex::token_def<> Equals;
-  lex::token_def<> Backslash;
-  lex::token_def<> Bar;
-  lex::token_def<> LeftArrow;
-  lex::token_def<> RightArrow;
-  lex::token_def<> At;
-  lex::token_def<> Tilde;
-  lex::token_def<> DoubleArrow;
-  lex::token_def<> Minus;
-  lex::token_def<> Exclamation;
-  // Keywords
-  lex::token_def<> KW_Case;
-  lex::token_def<> KW_Class;
-  lex::token_def<> KW_Data;
-  lex::token_def<> KW_Default;
-  lex::token_def<> KW_Deriving;
-  lex::token_def<> KW_Do;
-  lex::token_def<> KW_Else;
-  lex::token_def<> KW_Foreign;
-  lex::token_def<> KW_If;
-  lex::token_def<> KW_Import;
-  lex::token_def<> KW_In;
-  lex::token_def<> KW_Infix;
-  lex::token_def<> KW_InfixL;
-  lex::token_def<> KW_InfixR;
-  lex::token_def<> KW_Instance;
-  lex::token_def<> KW_Let;
-  lex::token_def<> KW_Module;
-  lex::token_def<> KW_NewType;
-  lex::token_def<> KW_Of;
-  lex::token_def<> KW_Then;
-  lex::token_def<> KW_Type;
-  lex::token_def<> KW_Where;
-  lex::token_def<> KW_As;
-  lex::token_def<> KW_Export;
-  lex::token_def<> KW_Hiding;
-  lex::token_def<> KW_Qualified;
-  lex::token_def<> KW_Safe;
-  lex::token_def<> KW_Unsafe;
-  lex::token_def<> KW_Note;
+
+  lex::token_def<char> Special;         // Char
+
   //  lex::token_def<std::string> WHITESPACE; For multi-stage lexing, we will actually need the matched string
   lex::token_def<lex::omit> WHITESPACE;
   //  lex::token_def<> EOF;
@@ -1322,6 +1137,63 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_parameter;
 
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_line;
+
+  /*
+  lex::token_def<> LeftParen;
+  lex::token_def<> RightParen;
+  lex::token_def<> SemiColon;
+  lex::token_def<> LeftCurly;
+  lex::token_def<> RightCurly;
+  lex::token_def<> VRightCurly;
+  lex::token_def<> LeftSquare;
+  lex::token_def<> RightSquare;
+  lex::token_def<> Comma;
+  lex::token_def<> Underscore;
+  lex::token_def<> BackQuote;
+  lex::token_def<> DotDot;
+  lex::token_def<> Colon;
+  lex::token_def<> DoubleColon;
+  lex::token_def<> Equals;
+  lex::token_def<> Backslash;
+  lex::token_def<> Bar;
+  lex::token_def<> LeftArrow;
+  lex::token_def<> RightArrow;
+  lex::token_def<> At;
+  lex::token_def<> Tilde;
+  lex::token_def<> DoubleArrow;
+  lex::token_def<> Minus;
+  lex::token_def<> Exclamation;
+  // Keywords
+  lex::token_def<> KW_Case;
+  lex::token_def<> KW_Class;
+  lex::token_def<> KW_Data;
+  lex::token_def<> KW_Default;
+  lex::token_def<> KW_Deriving;
+  lex::token_def<> KW_Do;
+  lex::token_def<> KW_Else;
+  lex::token_def<> KW_Foreign;
+  lex::token_def<> KW_If;
+  lex::token_def<> KW_Import;
+  lex::token_def<> KW_In;
+  lex::token_def<> KW_Infix;
+  lex::token_def<> KW_InfixL;
+  lex::token_def<> KW_InfixR;
+  lex::token_def<> KW_Instance;
+  lex::token_def<> KW_Let;
+  lex::token_def<> KW_Module;
+  lex::token_def<> KW_NewType;
+  lex::token_def<> KW_Of;
+  lex::token_def<> KW_Then;
+  lex::token_def<> KW_Type;
+  lex::token_def<> KW_Where;
+  lex::token_def<> KW_As;
+  lex::token_def<> KW_Export;
+  lex::token_def<> KW_Hiding;
+  lex::token_def<> KW_Qualified;
+  lex::token_def<> KW_Safe;
+  lex::token_def<> KW_Unsafe;
+  lex::token_def<> KW_Note;
+  */
 };
 
 //-----------------------------------------------------------------------//
