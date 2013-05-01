@@ -193,7 +193,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	("symbol","{ascSymbol}") // | uniSymbol except <special,_,",'>
 	("ascSmall","[a-z]")
 	// uniSmall
-	("small","{ascSmall}") // | uniSmall
+	("small","{ascSmall}|_") // | uniSmall
 	("ascLarge","[A-Z]")
 	// uniLarge
 	("large","{ascLarge}") // | uniLarge
