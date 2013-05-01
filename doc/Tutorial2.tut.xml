@@ -259,7 +259,7 @@ this analysis to see what parameters appear.
 <section><info><title>Using different indel models models</title></info>
 <para>
 We can also specify different indel models for each partition:
-% bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --imodel=1:RS07 --imodel=2:none --imodel=3:RS07 --show-only &#38;
+% bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --imodel=1:RS07 --imodel=2:none --imodel=3:RS07 --show-only
 There are only two indel models: RS07, and none.  Specifying
 <userinput>--imodel=none</userinput> removes the insertion-deletion
 model and parameters for a partition.  It also disables alignment estimation.
@@ -268,14 +268,14 @@ model and parameters for a partition.  It also disables alignment estimation.
 <section><info><title>Sharing model parameter between partitions</title></info>
 We can also specify that some partitions with the same model also share the
 same parameters for the model:
-% bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --smodel=1,3:GTR --imodel=1,3:RS07 --smodel=2:TN --imodel=2:none --show-only &#38;
+% bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --smodel=1,3:GTR --imodel=1,3:RS07 --smodel=2:TN --imodel=2:none --show-only
 This means that the information is pooled between the partitions to
 inferm the shared parameters.
 </section>
 <section><info><title>Sharing substitution rates between partitions</title></info>
 We can also specify that some partitions with the same model also share the
 same parameters for the model:
-% bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --smodel=1,3:GTR --imodel=1,3:RS07 --smodel=2:TN --imodel=2:none --same-scale=1,3:mu1 --show-only &#38;
+% bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --smodel=1,3:GTR --imodel=1,3:RS07 --smodel=2:TN --imodel=2:none --same-scale=1,3:mu1 --show-only
 This means that the branch lengths for partitions 1 and 3 are the
 same, instead of being independently estimated.
 </section>
@@ -294,7 +294,7 @@ imodel = none
 same-scale = 1,3:mu1
 </programlisting>
 You can run the analysis like this:
-% bali-phy -c analysis1.script
+% bali-phy -c analysis1.script --show-only
 </section>
 
 </article>
