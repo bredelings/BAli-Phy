@@ -44,7 +44,7 @@ Take a look inside the <filename>examples</filename> directory:
 % ls examples
 Take a look at an input file:
 % less examples/5S-rRNA/5d.fasta
-Take a look at an input file:
+Get some information about the alignment:
 % alignment-info examples/5S-rRNA/5d.fasta
 </para>
   </section>
@@ -100,13 +100,29 @@ The M0 model requires a codon alphabet:
 </section>
   </section>
 
-
+<section><info><title>Starting and stopping the program</title></info>
+<para>Start an analysis.  The <userinput>&#38;</userinput> makes the command run in the background, so that you can run other commands before it finishes.
+% bali-phy examples/5S-rRNA/25.fasta &#38;
+We didn't specify the number of iterations to run, so it will run for
+100,000 iterations, or until you stop it yourself.  See <link xmlns:xlink="http://www.w3.org/1999/xlink"
+xlink:href="http://www.bali-phy.org/README.html#mixing_and_convergence">Section
+8: Convergence and Mixing: Is it done yet?</link> of the manual for
+more information about when to stop an analysis.</para>
+<para>In order to stop a running job, you need to kill it. You can type
+% jobs
+to see running jobs that were started from this terminal.  One way of stopping
+bali-phy analyses is this:
+% killall bali-phy
+However, beware: if you are running multiple analyses, this will
+terminate all of them.
+</para>
+</section>
 <section ><info><title>Output</title></info>
 <para>
 See <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html#output">Section 6: Output</link> of the manual for more information about this section.
 </para>
 <para>
-Try running an analysis with a few more iterations.  The &#38; makes the command run in the background, so that you can run other commands before it finishes.
+Try running an analysis with a few more iterations.
 % bali-phy examples/5S-rRNA/25-muscle.fasta --iterations=200 &#38;
 Run another copy of the same analysis:
 % bali-phy examples/5S-rRNA/25-muscle.fasta --iterations=200 &#38;
@@ -191,34 +207,94 @@ detail in section 4.3 of the <link xmlns:xlink="http://www.w3.org/1999/xlink" xl
 We can run an analysis of this partitioned data simply by supplying a
 number of different alignment files as input to bali-phy.  Let's run an analysis
 of these three alignment files for 30 iterations:
-% bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --iter=30 --smodel=TN --imodel=RS07
+% bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --iter=30 --smodel=TN --imodel=RS07 &#38;
 You could leave off the <userinput>--smodel=TN --imodel=RS07</userinput>
 part of the command line:
-% bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --iter=30
+% bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --iter=30 &#38;
 This would give the same output, since TN and RS07 are the defaults.
 </para>
 </section>
 <section><info><title>What did the analysis do?</title></info>
 <para>Now, lets look at sampled continuous parameters:
+% statreport ITS1-trimmed-5.8S-ITS2-trimmed-1/C1.p | less
 % tracer ITS1-trimmed-5.8S-ITS2-trimmed-1/C1.p &#38;
 You'll see that each partition has a TN (Tamura-Nei) substitution
 model, as well as an RS07 indel model.  Each partition has its own
 copy of the TN parameters and the RS07 parameters.</para>
 
+</section>
+<section><info><title>Question</title></info>
 <para>The partitions share a common tree shape, including the same
 relative branch lengths.  However, the size of the tree for each
 partition is different.  We scale the whole shared tree by
 mu1 in partition 1, mu2 in partition 2, etc.  The mu parameters give
 the average branch length in that partition.  Thus, partitions with a
 smaller mu value have slower evolution.</para>
-</section>
-<section><info><title>Question</title></info>
+
 <para>Do the different partitions of this data set have the same
 evolutionary rates? Do the different partitions of this data set have
 the same base frequencies?</para>
 </section>
 
 </section>
+
+<section><info><title>Using different models in different
+partitions</title></info>
+
+<section><info><title>Using different substitution models</title></info>
+<para>
+Now lets try to specify different models for different partitions.
+Here we've used a command-line trick with curly braces {} to avoid
+typing some things multiple times.
+% bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --smodel=1:GTR --smodel=2:HKY --smodel=3:TN &#38;
+</para>
+<para>
+We've also specified different substitution models for each
+partitions.  Take a look at the <filename>C1.p</filename> file for
+this analysis to see what parameters appear.
+</para>
+</section>
+</section>
+
+<section><info><title>Using different indel models models</title></info>
+<para>
+We can also specify different indel models for each partition:
+% bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --imodel=1:RS07 --imodel=2:none --imodel=3:RS07 --show-only &#38;
+There are only two indel models: RS07, and none.  Specifying
+<userinput>--imodel=none</userinput> removes the insertion-deletion
+model and parameters for a partition.  It also disables alignment estimation.
+</para>
+</section>
+<section><info><title>Sharing model parameter between partitions</title></info>
+We can also specify that some partitions with the same model also share the
+same parameters for the model:
+% bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --smodel=1,3:GTR --imodel=1,3:RS07 --smodel=2:TN --imodel=2:none --show-only &#38;
+This means that the information is pooled between the partitions to
+inferm the shared parameters.
+</section>
+<section><info><title>Sharing substitution rates between partitions</title></info>
+We can also specify that some partitions with the same model also share the
+same parameters for the model:
+% bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --smodel=1,3:GTR --imodel=1,3:RS07 --smodel=2:TN --imodel=2:none --same-scale=1,3:mu1 --show-only &#38;
+This means that the branch lengths for partitions 1 and 3 are the
+same, instead of being independently estimated.
+</section>
+</section>
+
+<section><info><title>Option files</title></info>
+You can collect command line options into a file for later use.  Make
+a text file called <filename>analysis1.script</filename>:
+<programlisting>
+align = ITS1-trimmed.fasta
+align = 5.8S.fasta
+align = ITS2-trimmed.fasta
+smodel = 1,3:TN+DP[3]
+smodel = 2:TN
+imodel = none
+same-scale = 1,3:mu1
+</programlisting>
+You can run the analysis like this:
+% bali-phy -c analysis1.script
 </section>
 
 </article>
