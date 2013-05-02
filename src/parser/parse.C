@@ -184,7 +184,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	("ANY","{graphic}|{whitechar}")
 	("dashes","--+")
 	("graphicnonsymbol","{small}|{large}|{digit}|{special}|[\"']")
-	("graphicnonq","{small}|{large}|{symbol}|{digit}|{special}|[\"]")
+	("graphicnonq", "{small}|{large}|{symbol}|{digit}|{special}|[\"]")
 	("graphicnonqq","{small}|{large}|{symbol}|{digit}|{special}|'")
 	("anynonsymbol","{graphicnonsymbol}|[\t ]")
 	("comment","{dashes}({anynonsymbol}{any}*)?{newline}")
@@ -212,8 +212,10 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	  // Literal
       IntTok = "{decimal}";
       FloatTok = "{digit}\\.{digit}{exponent}?|{digit}{exponent}";
+      //      Character = "'({graphicnonq}| |{escape})'";
       Character = "'({graphicnonq}| |{escape})'";
-      StringTok = "\"({graphicnonqq}| |{escape})*\"";
+      //      StringTok = "\"({graphicnonqq}| |{escape})*\"";
+      StringTok = "[\"]({graphicnonqq}| |{escape})*[\"]";
 
       Special = "{special}";
 
