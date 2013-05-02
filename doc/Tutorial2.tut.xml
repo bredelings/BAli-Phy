@@ -66,66 +66,50 @@ Some options have a short form which is a single letter:
 <para>
 Analyze a data set, but don't begin MCMC.  (This is useful to know if the analysis works, what model will be used,
 compute likelihoods, etc.)
-% bali-phy --show-only examples/5S-rRNA/5d.fasta
+% cd ~/alignment_files/examples
+% bali-phy --show-only 5S-rRNA/5d.fasta
 Finally, run an analysis!  (This is just 10 iterations, so its not a real run.)
-% bali-phy examples/5S-rRNA/5d.fasta --iterations=10
+% bali-phy 5S-rRNA/5d.fasta --iterations=10
 If you specify <parameter>--imodel=none</parameter>, then the alignment won't be estimated, and indels will be ignored (just like <application>MrBayes</application>).
-% bali-phy examples/5S-rRNA/5d.fasta --iterations=10 --imodel=none
+% bali-phy 5S-rRNA/5d.fasta --iterations=10 --imodel=none
 You can specify the alphabet, substitution model, insertion/deletion model, etc.
 Defaults are used if you don't specify.
-% bali-phy examples/5S-rRNA/5d.fasta --iterations=10 --alphabet=DNA --smodel=TN --imodel=RS07 
+% bali-phy 5S-rRNA/5d.fasta --iterations=10 --alphabet=DNA --smodel=TN --imodel=RS07 
 You can change this to the GTR, if you want:
-% bali-phy examples/5S-rRNA/5d.fasta --iterations=10 --alphabet=DNA --smodel=GTR --imodel=RS07 
+% bali-phy 5S-rRNA/5d.fasta --iterations=10 --alphabet=DNA --smodel=GTR --imodel=RS07 
 You can add gamma[4]+INV rate heterogeneity:
-% bali-phy examples/5S-rRNA/5d.fasta --iterations=10 --alphabet=DNA --smodel=GTR+gamma[4]+INV --imodel=RS07
+% bali-phy 5S-rRNA/5d.fasta --iterations=10 --alphabet=DNA --smodel=GTR+gamma[4]+INV --imodel=RS07
 </para>
 </section>
 
 <section ><info><title>Amino Acids</title></info>
 <para>
 When the data set contains amino acids, the default is amino acids:
-% bali-phy examples/EF-Tu/12d.fasta --iterations=10
+% bali-phy EF-Tu/12d.fasta --iterations=10
 </para>
 </section>
 
 <section ><info><title>Codons</title></info>
 <para>
 What alphabet is used here?  What substitution model?
-% bali-phy examples/HIV/chain-2005/env-clustal-codons.fasta --show-only
+% bali-phy HIV/chain-2005/env-clustal-codons.fasta --show-only
 What happens when trying to use the M0 model (e.g. positive selection)?
-% bali-phy examples/HIV/chain-2005/env-clustal-codons.fasta --show-only --smodel=M0 
+% bali-phy HIV/chain-2005/env-clustal-codons.fasta --show-only --smodel=M0 
 The M0 model requires a codon alphabet:
-% bali-phy examples/HIV/chain-2005/env-clustal-codons.fasta --show-only --smodel=M0 --alphabet=Codons 
+% bali-phy HIV/chain-2005/env-clustal-codons.fasta --show-only --smodel=M0 --alphabet=Codons 
 </para>
 </section>
   </section>
 
-<section><info><title>Starting and stopping the program</title></info>
-<para>Start an analysis.  The <userinput>&#38;</userinput> makes the command run in the background, so that you can run other commands before it finishes.
-% bali-phy examples/5S-rRNA/25.fasta &#38;
-We didn't specify the number of iterations to run, so it will run for
-100,000 iterations, or until you stop it yourself.  See <link xmlns:xlink="http://www.w3.org/1999/xlink"
-xlink:href="http://www.bali-phy.org/README.html#mixing_and_convergence">Section
-8: Convergence and Mixing: Is it done yet?</link> of the manual for
-more information about when to stop an analysis.</para>
-<para>In order to stop a running job, you need to kill it. You can type
-% jobs
-to see running jobs that were started from this terminal.  One way of stopping
-bali-phy analyses is this:
-% killall bali-phy
-However, beware: if you are running multiple analyses, this will
-terminate all of them.
-</para>
-</section>
 <section ><info><title>Output</title></info>
 <para>
 See <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html#output">Section 6: Output</link> of the manual for more information about this section.
 </para>
 <para>
 Try running an analysis with a few more iterations.
-% bali-phy examples/5S-rRNA/25-muscle.fasta --iterations=200 &#38;
+% bali-phy 5S-rRNA/25-muscle.fasta &#38;
 Run another copy of the same analysis:
-% bali-phy examples/5S-rRNA/25-muscle.fasta --iterations=200 &#38;
+% bali-phy 5S-rRNA/25-muscle.fasta &#38;
 You can take a look at your running jobs:
 % jobs
 </para>
@@ -189,6 +173,20 @@ Now lets use the analysis script to run all the summaries and make a report:
 </section>
 </section>
 
+<section><info><title>Starting and stopping the program</title></info>
+<para>We didn't specify the number of iterations to run in the section above, so the two analyses will run for
+100,000 iterations, or until you stop them yourself.  See <link xmlns:xlink="http://www.w3.org/1999/xlink"
+xlink:href="http://www.bali-phy.org/README.html#mixing_and_convergence">Section
+8: Convergence and Mixing: Is it done yet?</link> of the manual for
+more information about when to stop an analysis.</para>
+<para>In order to stop a running job, you need to kill it. One way of stopping
+bali-phy analyses is this:
+% killall bali-phy
+However, beware: if you are running multiple analyses, this will
+terminate all of them.
+</para>
+</section>
+
 <section><info><title>Multi-gene analyses</title></info>
 <para>In this section we'll practice running analysis with multiple
 partitions.  Dividing the data into multiple partitions is useful
@@ -206,11 +204,12 @@ detail in section 4.3 of the <link xmlns:xlink="http://www.w3.org/1999/xlink" xl
 <para>
 We can run an analysis of this partitioned data simply by supplying a
 number of different alignment files as input to bali-phy.  Let's run an analysis
-of these three alignment files for 30 iterations:
-% bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --iter=30 --smodel=TN --imodel=RS07 &#38;
+of these three alignment files:
+% bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --smodel=TN --imodel=RS07 &#38;
+% bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --smodel=TN --imodel=RS07 &#38;
 You could leave off the <userinput>--smodel=TN --imodel=RS07</userinput>
 part of the command line:
-% bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --iter=30 &#38;
+% bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta &#38;
 This would give the same output, since TN and RS07 are the defaults.
 </para>
 </section>
@@ -262,7 +261,7 @@ We can also specify different indel models for each partition:
 % bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --imodel=1:RS07 --imodel=2:none --imodel=3:RS07 --show-only
 There are only two indel models: RS07, and none.  Specifying
 <userinput>--imodel=none</userinput> removes the insertion-deletion
-model and parameters for a partition.  It also disables alignment estimation.
+model and parameters for a partition.  It also disables alignment estimation for that partition.
 </para>
 </section>
 <section><info><title>Sharing model parameter between partitions</title></info>
@@ -285,9 +284,9 @@ same, instead of being independently estimated.
 You can collect command line options into a file for later use.  Make
 a text file called <filename>analysis1.script</filename>:
 <programlisting>
-align = ITS1-trimmed.fasta
-align = 5.8S.fasta
-align = ITS2-trimmed.fasta
+align = ITS/ITS1-trimmed.fasta
+align = ITS/5.8S.fasta
+align = ITS/ITS2-trimmed.fasta
 smodel = 1,3:TN+DP[3]
 smodel = 2:TN
 imodel = none
