@@ -155,11 +155,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 
 */
       // define patterns (lexer macros) to be used during token definition 
-        // below
-      //        this->self.add_pattern
-      //	  ("WORD", "[^ \t\n]+")
-      //	  ("ID",".")
-      //        ;
+      // below
       this->self.add_pattern
 	("newline","\r\n|[\r\n\f]")
 	("whitechar","[\n\v \t]")
@@ -169,7 +165,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	// uniDigit
 	("octit","[0-7]")
 	("hexit","{digit}|[A-F]|[a-f]")
-	("ascSymbol","[!#$%&*+./<=>?@\\\\ˆ|\\-~:]")
+	("ascSymbol","[!#$%&*+./<=>?@\\\\^|\\-~:]")
 	// uniSymbol
 	("symbol","{ascSymbol}") // | uniSymbol except <special,_,",'>
 	("ascSmall","[a-z]")
