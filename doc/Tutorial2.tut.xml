@@ -289,7 +289,7 @@ align = ITS/5.8S.fasta
 align = ITS/ITS2-trimmed.fasta
 smodel = 1,3:TN+DP[3]
 smodel = 2:TN
-imodel = none
+imodel = 2:none
 same-scale = 1,3:mu1
 </programlisting>
 You can run the analysis like this:
