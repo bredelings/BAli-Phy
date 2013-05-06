@@ -215,6 +215,66 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 
       Special = "{special}";
 
+      LeftParen   = "\\(";
+      RightParen  = "\\)";
+      SemiColon   = ";";
+      LeftCurly   = "\\{";
+      RightCurly  = "}";
+      VRightCurly = "}";
+      LeftSquare  = "\\[";
+      RightSquare = "]";
+      Comma       = ",";
+      BackQuote   = "`";
+
+         // underscore - part of reservedid?
+      Underscore = "_";
+
+         // reservedop
+      DotDot = "\\.\\.";
+      Colon = ":";
+      DoubleColon = "::";
+      Equals = "=";
+      Backslash = "\\\\";
+      Bar = "\\|";
+      LeftArrow = "<-";
+      RightArrow = "->";
+      At = "@";
+      Tilde = "~";
+      DoubleArrow = "=>";
+      Minus = "-";
+      Exclamation = "!";
+
+         // reservedid
+      KW_Case = "case";
+      KW_Class = "class";
+      KW_Data = "data";
+      KW_Default = "default";
+      KW_Deriving = "deriving";
+      KW_Do = "do";
+      KW_Else = "else";
+      KW_Foreign = "foreign";
+      KW_If = "if";
+      KW_Import = "import";
+      KW_In = "in";
+      KW_Infix = "infix";
+      KW_InfixL = "infixl";
+      KW_InfixR = "infixr";
+      KW_Instance = "instance";
+      KW_Let = "let";
+      KW_Module = "module";
+      KW_NewType = "newtype";
+      KW_Of = "of";
+      KW_Then = "then";
+      KW_Type = "type";
+      KW_Where = "where";
+      KW_As = "as";
+      KW_Export = "export";
+      KW_Hiding = "hiding";
+      KW_Qualified = "qualified";
+      KW_Safe = "safe";
+      KW_Unsafe = "unsafe";
+      KW_Note = "note";
+
       // whitespace
       WHITESPACE = "{whitespace}";
 
@@ -223,27 +283,87 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       
       // this lexer will recognize 3 token types: words, newlines, and 
       // everything else
-      this->self 
-	  = QVarId [&fail_if_reserved_qid]
-	  | VarId
-	  | QConId
-	  | ConId
-	  | QConSym [&fail_if_reserved_qop]
-	  | ConSym
-	  | QVarSym [&fail_if_reserved_qop]
-	  | VarSym
+      this->self  =
+	LeftParen
+	| RightParen
+	| SemiColon
+	| LeftCurly
+	| RightCurly
+	| VRightCurly // added to satisfy demands of parser?
+	| LeftSquare
+	| RightSquare
+	| Comma
+	| BackQuote
 
-	  // Literal
-	  | IntTok
-	  | FloatTok
-	  | Character
-	  | StringTok
+	// underscore - part of reservedid?
+	| Underscore
 
-	  // Special
-	  | Special
+	// reservedop
+	| DotDot
+	| Colon
+	| DoubleColon
+	| Equals
+	| Backslash
+	| Bar
+	| LeftArrow
+	| RightArrow
+	| At
+	| Tilde
+	| DoubleArrow
+	| Minus         //?
+	| Exclamation   //?
 
-	  // whitespace
-	  | WHITESPACE [ lex::_pass = lex::pass_flags::pass_ignore ] // how do we skip whitespace in the lexer?
+	// reservedid
+	| KW_Case
+	| KW_Class
+	| KW_Data
+	| KW_Default
+	| KW_Deriving
+	| KW_Do
+	| KW_Else
+	| KW_Foreign
+	| KW_If
+	| KW_Import
+	| KW_In
+	| KW_Infix
+	| KW_InfixL
+	| KW_InfixR
+	| KW_Instance
+	| KW_Let
+	| KW_Module
+	| KW_NewType
+	| KW_Of
+	| KW_Then
+	| KW_Type
+	| KW_Where
+	| KW_As
+	| KW_Export
+	| KW_Hiding
+	| KW_Qualified
+	| KW_Safe
+	| KW_Unsafe
+	| KW_Note
+
+	| QVarId [&fail_if_reserved_qid]
+	| VarId
+	| QConId
+	| ConId
+	| QConSym [&fail_if_reserved_qop]
+	| ConSym
+	| QVarSym [&fail_if_reserved_qop]
+	| VarSym
+
+	// Literal
+	| IntTok
+	| FloatTok
+	| Character
+	| StringTok
+	
+	// Special
+	| Special
+	
+	// whitespace
+	| WHITESPACE [ lex::_pass = lex::pass_flags::pass_ignore ] // how do we skip whitespace in the lexer?
         ;
     }
 
@@ -262,11 +382,65 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 
   lex::token_def<char> Special;         // Char
 
+  lex::token_def<> LeftParen;
+  lex::token_def<> RightParen;
+  lex::token_def<> SemiColon;
+  lex::token_def<> LeftCurly;
+  lex::token_def<> RightCurly;
+  lex::token_def<> VRightCurly;
+  lex::token_def<> LeftSquare;
+  lex::token_def<> RightSquare;
+  lex::token_def<> Comma;
+  lex::token_def<> Underscore;
+  lex::token_def<> BackQuote;
+  lex::token_def<> DotDot;
+  lex::token_def<> Colon;
+  lex::token_def<> DoubleColon;
+  lex::token_def<> Equals;
+  lex::token_def<> Backslash;
+  lex::token_def<> Bar;
+  lex::token_def<> LeftArrow;
+  lex::token_def<> RightArrow;
+  lex::token_def<> At;
+  lex::token_def<> Tilde;
+  lex::token_def<> DoubleArrow;
+  lex::token_def<> Minus;
+  lex::token_def<> Exclamation;
+  // Keywords
+  lex::token_def<> KW_Case;
+  lex::token_def<> KW_Class;
+  lex::token_def<> KW_Data;
+  lex::token_def<> KW_Default;
+  lex::token_def<> KW_Deriving;
+  lex::token_def<> KW_Do;
+  lex::token_def<> KW_Else;
+  lex::token_def<> KW_Foreign;
+  lex::token_def<> KW_If;
+  lex::token_def<> KW_Import;
+  lex::token_def<> KW_In;
+  lex::token_def<> KW_Infix;
+  lex::token_def<> KW_InfixL;
+  lex::token_def<> KW_InfixR;
+  lex::token_def<> KW_Instance;
+  lex::token_def<> KW_Let;
+  lex::token_def<> KW_Module;
+  lex::token_def<> KW_NewType;
+  lex::token_def<> KW_Of;
+  lex::token_def<> KW_Then;
+  lex::token_def<> KW_Type;
+  lex::token_def<> KW_Where;
+  lex::token_def<> KW_As;
+  lex::token_def<> KW_Export;
+  lex::token_def<> KW_Hiding;
+  lex::token_def<> KW_Qualified;
+  lex::token_def<> KW_Safe;
+  lex::token_def<> KW_Unsafe;
+  lex::token_def<> KW_Note;
+
   //  lex::token_def<std::string> WHITESPACE; For multi-stage lexing, we will actually need the matched string
   lex::token_def<lex::omit> WHITESPACE;
   //  lex::token_def<> EOF;
 };
-
 
 template <typename Iterator>
 struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
@@ -1136,62 +1310,6 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_line;
 
-  /*
-  lex::token_def<> LeftParen;
-  lex::token_def<> RightParen;
-  lex::token_def<> SemiColon;
-  lex::token_def<> LeftCurly;
-  lex::token_def<> RightCurly;
-  lex::token_def<> VRightCurly;
-  lex::token_def<> LeftSquare;
-  lex::token_def<> RightSquare;
-  lex::token_def<> Comma;
-  lex::token_def<> Underscore;
-  lex::token_def<> BackQuote;
-  lex::token_def<> DotDot;
-  lex::token_def<> Colon;
-  lex::token_def<> DoubleColon;
-  lex::token_def<> Equals;
-  lex::token_def<> Backslash;
-  lex::token_def<> Bar;
-  lex::token_def<> LeftArrow;
-  lex::token_def<> RightArrow;
-  lex::token_def<> At;
-  lex::token_def<> Tilde;
-  lex::token_def<> DoubleArrow;
-  lex::token_def<> Minus;
-  lex::token_def<> Exclamation;
-  // Keywords
-  lex::token_def<> KW_Case;
-  lex::token_def<> KW_Class;
-  lex::token_def<> KW_Data;
-  lex::token_def<> KW_Default;
-  lex::token_def<> KW_Deriving;
-  lex::token_def<> KW_Do;
-  lex::token_def<> KW_Else;
-  lex::token_def<> KW_Foreign;
-  lex::token_def<> KW_If;
-  lex::token_def<> KW_Import;
-  lex::token_def<> KW_In;
-  lex::token_def<> KW_Infix;
-  lex::token_def<> KW_InfixL;
-  lex::token_def<> KW_InfixR;
-  lex::token_def<> KW_Instance;
-  lex::token_def<> KW_Let;
-  lex::token_def<> KW_Module;
-  lex::token_def<> KW_NewType;
-  lex::token_def<> KW_Of;
-  lex::token_def<> KW_Then;
-  lex::token_def<> KW_Type;
-  lex::token_def<> KW_Where;
-  lex::token_def<> KW_As;
-  lex::token_def<> KW_Export;
-  lex::token_def<> KW_Hiding;
-  lex::token_def<> KW_Qualified;
-  lex::token_def<> KW_Safe;
-  lex::token_def<> KW_Unsafe;
-  lex::token_def<> KW_Note;
-  */
 };
 
 //-----------------------------------------------------------------------//
