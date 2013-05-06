@@ -293,7 +293,7 @@ imodel = 2:none
 same-scale = 1,3:mu1
 </programlisting>
 You can run the analysis like this:
-% bali-phy -c analysis1.script --show-only
+% bali-phy -c analysis1.script &#38;
 </section>
 
 </article>
