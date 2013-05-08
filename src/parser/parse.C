@@ -273,7 +273,12 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       KW_Qualified = "qualified";
       KW_Safe = "safe";
       KW_Unsafe = "unsafe";
+      KW_Builtin = "builtin";
+      KW_External= "external";
       KW_Note = "note";
+      KW_Parameter = "parameter";
+      KW_Submodel = "submodel";
+      ColonEqual = ":=";
 
       // whitespace
       WHITESPACE = "{whitespace}";
@@ -294,6 +299,13 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	| RightSquare
 	| Comma
 	| BackQuote
+
+	| KW_Builtin
+	| KW_External
+	| KW_Note
+	| KW_Parameter
+	| KW_Submodel
+	| ColonEqual
 
 	// underscore - part of reservedid?
 	| Underscore
@@ -435,7 +447,13 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<> KW_Qualified;
   lex::token_def<> KW_Safe;
   lex::token_def<> KW_Unsafe;
+
+  lex::token_def<> KW_Builtin;
+  lex::token_def<> KW_External;
   lex::token_def<> KW_Note;
+  lex::token_def<> KW_Parameter;
+  lex::token_def<> KW_Submodel;
+  lex::token_def<> ColonEqual;
 
   //  lex::token_def<std::string> WHITESPACE; For multi-stage lexing, we will actually need the matched string
   lex::token_def<lex::omit> WHITESPACE;
