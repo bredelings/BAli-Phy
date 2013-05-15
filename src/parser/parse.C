@@ -1235,17 +1235,20 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 
 //-----------------------------------------------------------------------//
 
+typedef lex::lexertl::token<
+  char const*, boost::mpl::vector<std::string>
+  > token_type;
+
+typedef lex::lexertl::actor_lexer<token_type> lexer_type;
+
+typedef haskell_lex1<lexer_type>::iterator_type iterator_type;
+
+haskell_lex1<lexer_type> lexer1;          // Our lexer
+
+haskell_grammar<iterator_type> haskell_parser(lexer1);
+
 expression_ref parse_haskell_line(const string& line)
 {
-  typedef lex::lexertl::token<
-    char const*, boost::mpl::vector<std::string>
-    > token_type;
-
-  typedef lex::lexertl::actor_lexer<token_type> lexer_type;
-
-  typedef haskell_lex1<lexer_type>::iterator_type iterator_type;
-
-  haskell_lex1<lexer_type> lexer1;          // Our lexer
   {
     const char* first = &line[0];
     const char* end = first + line.size();
@@ -1259,7 +1262,6 @@ expression_ref parse_haskell_line(const string& line)
   /*----------------------------------------------------------------------------*/
 
   string::const_iterator iter = line.begin();
-  haskell_grammar<iterator_type> haskell_parser(lexer1);
   expression_ref cmd;
   const char* first = &line[0];
   const char* last = first + line.size();
@@ -1271,15 +1273,6 @@ expression_ref parse_haskell_line(const string& line)
 
 expression_ref parse_haskell_decls(const string& line)
 {
-  typedef lex::lexertl::token<
-    char const*, boost::mpl::vector<std::string>
-    > token_type;
-
-  typedef lex::lexertl::actor_lexer<token_type> lexer_type;
-
-  typedef haskell_lex1<lexer_type>::iterator_type iterator_type;
-
-  haskell_lex1<lexer_type> lexer1;          // Our lexer
   {
     const char* first = &line[0];
     const char* end = first + line.size();
@@ -1293,7 +1286,7 @@ expression_ref parse_haskell_decls(const string& line)
   /*----------------------------------------------------------------------------*/
 
   string::const_iterator iter = line.begin();
-  haskell_grammar<iterator_type> haskell_parser(lexer1);
+
   expression_ref cmd;
   const char* first = &line[0];
   const char* last = first + line.size();
@@ -1305,15 +1298,6 @@ expression_ref parse_haskell_decls(const string& line)
 
 expression_ref parse_bugs_line(const string& line)
 {
-  typedef lex::lexertl::token<
-    char const*, boost::mpl::vector<std::string>
-    > token_type;
-
-  typedef lex::lexertl::actor_lexer<token_type> lexer_type;
-
-  typedef haskell_lex1<lexer_type>::iterator_type iterator_type;
-
-  haskell_lex1<lexer_type> lexer1;          // Our lexer
   {
     const char* first = &line[0];
     const char* end = first + line.size();
@@ -1327,7 +1311,7 @@ expression_ref parse_bugs_line(const string& line)
   /*----------------------------------------------------------------------------*/
 
   string::const_iterator iter = line.begin();
-  haskell_grammar<iterator_type> haskell_parser(lexer1);
+
   expression_ref cmd;
   const char* first = &line[0];
   const char* last = first + line.size();
@@ -1339,15 +1323,6 @@ expression_ref parse_bugs_line(const string& line)
 
 expression_ref parse_bugs_file(const string& lines)
 {
-  typedef lex::lexertl::token<
-    char const*, boost::mpl::vector<std::string>
-    > token_type;
-
-  typedef lex::lexertl::actor_lexer<token_type> lexer_type;
-
-  typedef haskell_lex1<lexer_type>::iterator_type iterator_type;
-
-  haskell_lex1<lexer_type> lexer1;          // Our lexer
   /*
   {
     const char* first = &lines[0];
@@ -1362,7 +1337,7 @@ expression_ref parse_bugs_file(const string& lines)
   /*----------------------------------------------------------------------------*/
 
   string::const_iterator iter = lines.begin();
-  haskell_grammar<iterator_type> haskell_parser(lexer1);
+
   expression_ref cmd;
   const char* first = &lines[0];
   const char* last = first + lines.size();
