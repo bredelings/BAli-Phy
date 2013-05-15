@@ -1258,8 +1258,6 @@ expression_ref parse_haskell_line(const string& line)
 
   /*----------------------------------------------------------------------------*/
 
-  using boost::spirit::ascii::space;
-
   string::const_iterator iter = line.begin();
   haskell_grammar<iterator_type> haskell_parser(lexer1);
   expression_ref cmd;
@@ -1293,8 +1291,6 @@ expression_ref parse_haskell_decls(const string& line)
   }
 
   /*----------------------------------------------------------------------------*/
-
-  using boost::spirit::ascii::space;
 
   string::const_iterator iter = line.begin();
   haskell_grammar<iterator_type> haskell_parser(lexer1);
@@ -1330,8 +1326,6 @@ expression_ref parse_bugs_line(const string& line)
 
   /*----------------------------------------------------------------------------*/
 
-  using boost::spirit::ascii::space;
-
   string::const_iterator iter = line.begin();
   haskell_grammar<iterator_type> haskell_parser(lexer1);
   expression_ref cmd;
@@ -1366,8 +1360,6 @@ expression_ref parse_bugs_file(const string& lines)
   }
   */
   /*----------------------------------------------------------------------------*/
-
-  using boost::spirit::ascii::space;
 
   string::const_iterator iter = lines.begin();
   haskell_grammar<iterator_type> haskell_parser(lexer1);
