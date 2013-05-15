@@ -1237,37 +1237,107 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 
 expression_ref parse_haskell_line(const string& line)
 {
+  typedef lex::lexertl::token<
+    char const*, boost::mpl::vector<std::string>
+    > token_type;
+
+  typedef lex::lexertl::actor_lexer<token_type> lexer_type;
+
+  typedef haskell_lex1<lexer_type>::iterator_type iterator_type;
+
+  haskell_lex1<lexer_type> lexer1;          // Our lexer
+  {
+    const char* first = &line[0];
+    const char* end = first + line.size();
+    for(auto i = lexer1.begin(first,end); i != lexer1.end() and (*i).is_valid(); i++)
+    {
+      auto& t = *i;
+      std::cout<<"'"<<t.value()<<"'\n";;
+    }
+  }
+
+  /*----------------------------------------------------------------------------*/
+
   using boost::spirit::ascii::space;
 
   string::const_iterator iter = line.begin();
-  haskell_grammar<string::const_iterator> haskell_parser;
-  expression_ref E;
-  if (phrase_parse(iter, line.end(), haskell_parser, space, E) and iter == line.end())
-    return E;
+  haskell_grammar<iterator_type> haskell_parser(lexer1);
+  expression_ref cmd;
+  const char* first = &line[0];
+  const char* last = first + line.size();
+  if (tokenize_and_parse(first, last, lexer1, haskell_parser))
+    return cmd;
 
   throw myexception()<<"Haskell pharse parse: only parsed "<<line.substr(0, iter-line.begin());
 }
 
 expression_ref parse_haskell_decls(const string& line)
 {
+  typedef lex::lexertl::token<
+    char const*, boost::mpl::vector<std::string>
+    > token_type;
+
+  typedef lex::lexertl::actor_lexer<token_type> lexer_type;
+
+  typedef haskell_lex1<lexer_type>::iterator_type iterator_type;
+
+  haskell_lex1<lexer_type> lexer1;          // Our lexer
+  {
+    const char* first = &line[0];
+    const char* end = first + line.size();
+    for(auto i = lexer1.begin(first,end); i != lexer1.end() and (*i).is_valid(); i++)
+    {
+      auto& t = *i;
+      std::cout<<"'"<<t.value()<<"'\n";;
+    }
+  }
+
+  /*----------------------------------------------------------------------------*/
+
   using boost::spirit::ascii::space;
 
   string::const_iterator iter = line.begin();
-  haskell_grammar<string::const_iterator> haskell_parser;
-  expression_ref E;
-  if (phrase_parse(iter, line.end(), haskell_parser.decls, space, E) and iter == line.end())
-    return E;
+  haskell_grammar<iterator_type> haskell_parser(lexer1);
+  expression_ref cmd;
+  const char* first = &line[0];
+  const char* last = first + line.size();
+  if (tokenize_and_parse(first, last, lexer1, haskell_parser.decls))
+    return cmd;
+
   throw myexception()<<"Haskell pharse parse: only parsed "<<line.substr(0, iter-line.begin());
 }
 
 expression_ref parse_bugs_line(const string& line)
 {
+  typedef lex::lexertl::token<
+    char const*, boost::mpl::vector<std::string>
+    > token_type;
+
+  typedef lex::lexertl::actor_lexer<token_type> lexer_type;
+
+  typedef haskell_lex1<lexer_type>::iterator_type iterator_type;
+
+  haskell_lex1<lexer_type> lexer1;          // Our lexer
+  {
+    const char* first = &line[0];
+    const char* end = first + line.size();
+    for(auto i = lexer1.begin(first,end); i != lexer1.end() and (*i).is_valid(); i++)
+    {
+      auto& t = *i;
+      std::cout<<"'"<<t.value()<<"'\n";;
+    }
+  }
+
+  /*----------------------------------------------------------------------------*/
+
   using boost::spirit::ascii::space;
 
   string::const_iterator iter = line.begin();
-  haskell_grammar<string::const_iterator> haskell_parser;
+  haskell_grammar<iterator_type> haskell_parser(lexer1);
   expression_ref cmd;
-  if (phrase_parse(iter, line.end(), haskell_parser.bugs_line, space, cmd) and iter == line.end())
+  const char* first = &line[0];
+  const char* last = first + line.size();
+  if (tokenize_and_parse(first, last, lexer1, haskell_parser.bugs_line))
     return cmd;
 
   throw myexception()<<"BUGS pharse parse: only parsed "<<line.substr(0, iter-line.begin());
@@ -1304,7 +1374,7 @@ expression_ref parse_bugs_file(const string& lines)
   expression_ref cmd;
   const char* first = &lines[0];
   const char* last = first + lines.size();
-  if (tokenize_and_parse(first, last, lexer1, haskell_parser))
+  if (tokenize_and_parse(first, last, lexer1, haskell_parser.module))
     return cmd;
 
   throw myexception()<<"BUGS pharse parse: only parsed "<<lines.substr(0, iter-lines.begin());
