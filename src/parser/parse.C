@@ -1135,11 +1135,11 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> qual;  
 
   /*----- Section 3.13 -----*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> alts;  
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> alt;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> gdpat;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> guards;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> guard;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> alts;  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> alt;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gdpat;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> guards;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> guard;
 
   /*----- Section 3.14 -----*/
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> stmts;
@@ -1199,19 +1199,19 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> dclass;
 
   /*----- Section 4.3.1 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> scontext;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> simpleclass;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> scontext;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> simpleclass;
 
   /*----- Section 4.3.2 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> inst;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> inst;
 
   /*----- Section 4.4.3 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> funlhs;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> rhs;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> gdrhs;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> funlhs;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> rhs;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gdrhs;
 
   /*----- Section 5.1 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> impdecls;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> impdecls;
 
   /*----- Section 5.2 ------*/
   qi::rule<Iterator, std::string()> exports;
