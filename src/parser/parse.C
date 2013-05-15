@@ -273,6 +273,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       KW_Qualified = "qualified";
       KW_Safe = "safe";
       KW_Unsafe = "unsafe";
+
       KW_Builtin = "builtin";
       KW_External= "external";
       KW_Note = "note";
@@ -461,9 +462,11 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 };
 
 template <typename Iterator>
-struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
+struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 {
-    haskell_grammar() : haskell_grammar::base_type(exp)
+  template <typename TokenDef>
+    haskell_grammar(const TokenDef& tok) 
+      : haskell_grammar::base_type(exp)
     {
         using qi::lit;
         using qi::lexeme;
@@ -486,86 +489,39 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	using phoenix::new_;
 	using phoenix::val;
 
-	small %= char_("a-z") | char_('_');
-	large %= char_("A-Z");
-	digit %= char_("0-9");
-	symbol %= char_("!#$%&*+./<=>?@\\^|~:") | char_('-');
-	special %= char_("(),;[]`{}");
-	graphic %= small | large | symbol | digit | special | char_('"') | char_('\'');
+	tyvar %= tok.VarId;
+	tycon %= tok.ConId;
+	tycls %= tok.ConId;
+	modid %= tok.QConId;
 
-	dashes %= lit("--")>>*lit("-");
+	qtycon %= tok.QVarId;
+	qtycls %= tok.QConId;
 
-	varid %= (small>>(*(small|large|digit|char_('\'')))) - reservedid;
-	conid %= large>>(*(small|large|digit|char_('\'')));
-	reservedid_ %= lit("case") | "class" | "data" | "default" | "deriving" | "do" | "else" |	"foreign" | "if" | "import" | "in" | "infix" | "infixl" | 	"infixr" | "instance" | "let" | "module" | "newtype" | "of" | 	"then" | "type" | "where" | "_";
-	reservedid %= reservedid_ >> !(small|large|digit|'\'');
-
-	// here, we need to match "==", but not "="
-	varsym %= ((symbol-lit(':'))>>*symbol)-reservedop-dashes;
-	consym %= (char_(':')>>*symbol)-reservedop;
-	reservedop_ %= string("..") | string(":") | string("::") | string("=") | string("\\") | string("|") | string("<-") | string("->") | string("@") | string("~") | string("=>");
-	reservedop %= reservedop_ >> !symbol;
-
-	tyvar %= varid;
-	tycon %= conid;
-	tycls %= conid;
-	modid %= conid>>*(string(".")>>conid);
-
-	//	qvarid %= -(modid>>char_('.')) >> varid;
-	qvarid %= *(conid>>char_('.'))>>varid;
-	//	qconid %= -(modid>>char_('.')) >> conid;
-	qconid %= conid>>*(char_('.')>>conid);
-	//	qtycon %= -(modid>>char_('.')) >> tycon;
-	qtycon %= conid>>*(char_('.')>>conid);
-	//	qtycls %= -(modid>>char_('.')) >> tycls;
-	qtycls %= conid>>*(char_('.')>>conid);
-	//	qvarsym %= -(modid>>char_('.')) >> varsym;
-	qvarsym %= *(conid>>char_('.')) >> varsym;
-	//	qconsym %= -(modid>>char_('.')) >> consym;
-	qconsym %= *(conid>>char_('.')) >> consym;
-
-	decimal %= +char_("0-9");
-	h_integer %= decimal;
-
-	h_float %= decimal >> char_('.') >> decimal >> -exponent | decimal >> exponent;
-	exponent %= ( char_('e') | char_('E') ) >> -(char_('+')|char_('-')) >> decimal;
-
-	h_char %= lit('\'') >> ((graphic - '\'' - '\\')|char_(' ')|escape) >> lit('\'');
-	h_string %= lit('"') >> *((graphic - '"' - '\\')|char_(' ')|escape) >> lit('"');
-	escape = lit("\\a") [_val = '\a'] |
-	  lit("\\b") [_val = '\b'] |
-	  lit("\\f") [_val = '\f'] |
-	  lit("\\n") [_val = '\n'] |
-	  lit("\\r") [_val = '\r'] |
-	  lit("\\t") [_val = '\t'] |
-	  lit("\\v") [_val = '\v'] |
-	  lit("\\\\") [_val = '\\'] |
-	  lit("\\\"") [_val = '"'] |
-	  lit("'") [_val = '\''];
-
-	literal = h_float [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Float"), _a)  ]
-	  | h_integer [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Integer"), _a)  ]
-	  | h_char [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Char"), _a)  ]
-	  | h_string [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("String"), _a)  ];
+	//	literal2 = tok.FloatTok [ _val  = _1 ];
+	literal2 %= tok.FloatTok;
+	literal = tok.FloatTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Float"), _a)  ]
+	  | tok.IntTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Integer"), _a)  ];
+	  //	  | tok.Character [push_back(_a,construct<Char>(_1))] >> eps [ _val = new_<expression>(AST_node("Char"), _a)  ]
+	  //	  | tok.StringTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("String"), _a)  ];
 
 	/*----- Section 3 ------*/
 	exp = 
-	  infixexp [ _val = _1 ] >> "::" >> -(context >> "=>") >> type 
+	  infixexp [ _val = _1 ] >> tok.DoubleColon >> -(context >> tok.DoubleArrow) >> type 
 	  | infixexp [_val = _1 ];
 
 	infixexp = 
 	  lexp [push_back(_a,_1)] >> qop [push_back(_a,_1)] >> infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
-	  | eps[clear(_a)] >> lit("-") [push_back(_a, AST_node("neg"))] >> infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
+	  | eps[clear(_a)] >> tok.Minus [push_back(_a, AST_node("neg"))] >> infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
 	  | lexp [ _val = _1 ]
 	  ;
 
 	lexp = 
-	  lit("\\") > +apat[push_back(_a,_1)] > lit("->") > exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Lambda"), _a)  ]
+	  tok.Backslash > +apat[push_back(_a,_1)] > tok.RightArrow > exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Lambda"), _a)  ]
 	  | fexp [_val = _1]
-	  | lit("let")[clear(_a)] > decls[push_back(_a,_1)] > "in" > exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ]
-	  | lit("if")[clear(_a)] > exp[push_back(_a,_1)] > -lit(';') >> "then" > exp[push_back(_a,_1)] > -lit(';') > "else" > exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ]
-	  | lit("case")[clear(_a)] > exp[push_back(_a,_1)] > "of" > "{" >> alts[push_back(_a,_1)] >> "}" >> eps [ _val = new_<expression>(AST_node("Case"), _a)  ]
-	  | lit("do")[clear(_a)] > "{" >> stmts[push_back(_a,_1)] >> lit("}") [ _val = new_<expression>(AST_node("Do"), _a)  ]
+	  | tok.KW_Let[clear(_a)] > decls[push_back(_a,_1)] > tok.KW_In > exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ]
+	  | tok.KW_If [clear(_a)] > exp[push_back(_a,_1)] > -tok.SemiColon >> tok.KW_Then > exp[push_back(_a,_1)] > -tok.SemiColon > tok.KW_Else > exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ]
+	  | tok.KW_Case[clear(_a)] > exp[push_back(_a,_1)] > tok.KW_Of > tok.LeftCurly >> alts[push_back(_a,_1)] >> tok.RightCurly >> eps [ _val = new_<expression>(AST_node("Case"), _a)  ]
+	  | tok.KW_Do[clear(_a)] > tok.LeftCurly >> stmts[push_back(_a,_1)] >> tok.RightCurly [ _val = new_<expression>(AST_node("Do"), _a)  ]
 	  ;
 
 	fexp = +aexp [ push_back(_a,_1) ] >> eps [ _val = new_<expression>(AST_node("Apply"), _a) ]  ; // function application
@@ -580,67 +536,70 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  // literal
 	  | literal [_val = _1 ]
 	  // parenthesized expression
-	  | "(" >> exp [_val = _1] >> ")"
+	  | tok.LeftParen >> exp [_val = _1] >> tok.RightParen
 	  // tuple, k >= 2
-	  | "(" >> exp [push_back(_a,_1)] >> +(','>>exp [push_back(_a,_1)]) >> ")" >> eps [ _val = new_<expression>(AST_node("Tuple"), _a) ]
+	  | tok.LeftParen >> exp [push_back(_a,_1)] >> +(tok.Comma>>exp [push_back(_a,_1)]) >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("Tuple"), _a) ]
 	  // list
-	  | lit("[")[clear(_a)] >> (exp[push_back(_a,_1)]%',') >> "]" >> eps [ _val = new_<expression>(AST_node("List"), _a) ]
+	  | tok.LeftSquare[clear(_a)] >> (exp[push_back(_a,_1)]%tok.Comma) >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("List"), _a) ]
 	  // arithmetic sequence
-	  | lit("[")[clear(_a)] >> exp[push_back(_a,_1)] >> ".." >> "]" >> eps [ _val = new_<expression>(AST_node("enumFrom"), _a) ]
-	  | lit("[")[clear(_a)] >> exp[push_back(_a,_1)] >> ".." >> exp[push_back(_a,_1)] >> "]"  >> eps [ _val = new_<expression>(AST_node("enumFromTo"), _a) ]
-	  | lit("[")[clear(_a)] >> exp[push_back(_a,_1)] >> ','>>exp[push_back(_a,_1)] >>".." >> "]"  >> eps [ _val = new_<expression>(AST_node("enumFromThen"), _a) ]
-	  | lit("[")[clear(_a)] >> exp[push_back(_a,_1)] >> ','>>exp[push_back(_a,_1)] >>".." >> exp[push_back(_a,_1)] >> "]" >> eps [ _val = new_<expression>(AST_node("enumFromThenTo"), _a) ]
+	  | tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.DotDot >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("enumFrom"), _a) ]
+	  | tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.DotDot >> exp[push_back(_a,_1)] >> tok.RightSquare  >> eps [ _val = new_<expression>(AST_node("enumFromTo"), _a) ]
+	  | tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.Comma>>exp[push_back(_a,_1)] >>tok.DotDot >> tok.RightSquare  >> eps [ _val = new_<expression>(AST_node("enumFromThen"), _a) ]
+	  | tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.Comma>>exp[push_back(_a,_1)] >>tok.DotDot >> exp[push_back(_a,_1)] >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("enumFromThenTo"), _a) ]
 	  // list comprehension
-	  | lit("[")[clear(_a)] >> exp[push_back(_a,_1)] >>"|" >> (qual[push_back(_a,_1)]%',') >> "]" >> eps [ _val = new_<expression>(AST_node("ListComprehension"), _a) ]
+	  | tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >>tok.Bar >> (qual[push_back(_a,_1)]%tok.Comma) >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("ListComprehension"), _a) ]
 	  // left section
-	  | lit("(")[clear(_a)] >> infixexp[push_back(_a,_1)]  >> qop[push_back(_a,_1)] >> ")" >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
+	  | tok.LeftParen[clear(_a)] >> infixexp[push_back(_a,_1)]  >> qop[push_back(_a,_1)] >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
 	  // right section
-	  | lit("(")[clear(_a)] >> ((qop[push_back(_a,_1)] - "-") >> infixexp[push_back(_a,_1)]) >> ")" >> eps [ _val = new_<expression>(AST_node("RightSection"), _a) ]
-	  //	  | qcon >> "{" >> *fbind >> "}"  // labeled construction (?)
-	  //	  | (aexp - qcon) >> "{">> +fbind >> "}"; // labeled update
+	  | tok.LeftParen[clear(_a)] >> ((qop[push_back(_a,_1)] - tok.Minus) >> infixexp[push_back(_a,_1)]) >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("RightSection"), _a) ]
+	  //	  | qcon >> tok.LeftCurly >> *fbind >> tok.RightCurly  // labeled construction (?)
+	  //	  | (aexp - qcon) >> tok.LeftCurly>> +fbind >> tok.RightCurly; // labeled update
 	  ;
 	  
 	/*----- Section 3.2 -------*/
-	gcon %= string("()") | string("[]") | string("(,") >> *char_(',')>>string(")") | qcon;
+	gcon = (tok.LeftParen >> tok.RightParen) [_val = "()"]
+	  | (tok.LeftSquare >> tok.RightSquare) [_val = "[]"]
+	  | (tok.LeftParen >> tok.Comma >> *tok.Comma >> tok.RightParen)
+	  | qcon [ _val = _1];
 
-	var  %= varid  | "(" >> varsym >> ")";    // variable
-	qvar %= qvarid | "(" >> qvarsym >> ")";   // qualified variable
-	con  %= conid  | "(" >> consym >> ")";    // constructor
-	qcon %= qconid | "(" >> gconsym >> ")";   // qualified constructor
-	varop %= varsym | "`" >> varid >> "`";    // variable operator
-	qvarop %= qvarsym | "`" >> qvarid >> "`"; // qualified variable operator
-	conop %= consym | "`" >> conid >> "`";    // constructor operator
-	qconop %= gconsym | "`" >> qconid >> "`"; // qualified constructor operator
+	var  %= tok.VarId  | tok.LeftParen >> tok.VarSym >> tok.RightParen;    // variable
+	qvar %= tok.QVarId | tok.LeftParen >> tok.QVarSym >> tok.RightParen;   // qualified variable
+	con  %= tok.ConId  | tok.LeftParen >> tok.ConSym >> tok.RightParen;    // constructor
+	qcon %= tok.QConId | tok.LeftParen >> gconsym >> tok.RightParen;   // qualified constructor
+	varop %= tok.VarSym | tok.BackQuote >> tok.VarId >> tok.BackQuote;    // variable operator
+	qvarop %= tok.QVarSym | tok.BackQuote >> tok.QVarId >> tok.BackQuote; // qualified variable operator
+	conop %= tok.ConSym | tok.BackQuote >> tok.ConId >> tok.BackQuote;    // constructor operator
+	qconop %= gconsym | tok.BackQuote >> tok.QConId >> tok.BackQuote; // qualified constructor operator
 	op %= varop | conop;                      // operator
 	qop = qvarop [ _val = construct<AST_node>("id", construct<String>(_1)) ] | qconop [ _val = construct<AST_node>("id",construct<String>(_1)) ];  // qualified operator
-	gconsym %= qconsym | string(":");
+	gconsym %= tok.QConSym | tok.Colon;
 
 	/*----- Section 3.11 -----*/
-	qual = pat [push_back(_a,_1)] >> "<-" > exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
-	  | lit("let") >> decls[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("LetQual"), _a) ]
+	qual = pat [push_back(_a,_1)] >> tok.LeftArrow > exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
+	  | tok.KW_Let >> decls[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("LetQual"), _a) ]
 	  | eps [clear(_a) ] >> exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("SimpleQual"), _a) ];
 
 	/*----- Section 3.13 -----*/
-	alts = (alt % ';' )[_a = _1] >> eps [ _val = new_<expression>(AST_node("alts"), _a) ];
-	alt =  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> "->" > exp[push_back(_a,_1)] >> -("where" >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
-	  |  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> gdpat[push_back(_a,_1)] >> -("where" >> decls[push_back(_a,_1)])  >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
+	alts = (alt % tok.SemiColon )[_a = _1] >> eps [ _val = new_<expression>(AST_node("alts"), _a) ];
+	alt =  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> tok.RightArrow > exp[push_back(_a,_1)] >> -(tok.KW_Where >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
+	  |  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> gdpat[push_back(_a,_1)] >> -(tok.KW_Where >> decls[push_back(_a,_1)])  >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
 	  | eps;
 
-	gdpat = guards [push_back(_a,_1)]>> "->" >> exp[push_back(_a,_1)] >> -gdpat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("GdPat"), _a) ];
-	guards = "|" >> +guard[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Guards"), _a) ];
-	guard = pat[push_back(_a,_1)] >> "<-" >> infixexp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("PatternGuard"), _a) ]
-	  | eps [clear(_a) ] >> "let" >> decls[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("LetGuard"), _a) ]
+	gdpat = guards [push_back(_a,_1)]>> tok.RightArrow >> exp[push_back(_a,_1)] >> -gdpat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("GdPat"), _a) ];
+	guards = tok.Bar >> +guard[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Guards"), _a) ];
+	guard = pat[push_back(_a,_1)] >> tok.LeftArrow >> infixexp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("PatternGuard"), _a) ]
+	  | eps [clear(_a) ] >> tok.KW_Let >> decls[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("LetGuard"), _a) ]
 	  |  eps [clear(_a) ] >> infixexp[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("BoolGuard"), _a) ];
 
 	/*----- Section 3.14 -----*/
-	stmts = *stmt[push_back(_a,_1)] >> exp[push_back(_a,_1)] >> -lit(';') >> eps [ _val = new_<expression>(AST_node("Stmts"), _a) ];
-	stmt =  exp[push_back(_a,_1)] >> lit(";") [ _val = new_<expression>(AST_node("SimpleStmt"), _a) ]
-	  | eps [clear(_a) ] >> pat[push_back(_a,_1)] >> "<-" >> exp[push_back(_a,_1)] >> lit(";") [ _val = new_<expression>(AST_node("PatStmt"), _a) ]
-	  | eps [clear(_a) ] >> "let" >> decls[push_back(_a,_1)] >> lit(";") [ _val = new_<expression>(AST_node("LetStmt"), _a) ]
-	  | eps [clear(_a) ] >> lit(";") [ _val = new_<expression>(AST_node("EmptyStmt"), _a) ];
+	stmts = *stmt[push_back(_a,_1)] >> exp[push_back(_a,_1)] >> -tok.SemiColon >> eps [ _val = new_<expression>(AST_node("Stmts"), _a) ];
+	stmt =  exp[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("SimpleStmt"), _a) ]
+	  | eps [clear(_a) ] >> pat[push_back(_a,_1)] >> tok.LeftArrow >> exp[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("PatStmt"), _a) ]
+	  | eps [clear(_a) ] >> tok.KW_Let >> decls[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("LetStmt"), _a) ]
+	  | eps [clear(_a) ] >> tok.SemiColon [ _val = new_<expression>(AST_node("EmptyStmt"), _a) ];
 
 	/*----- Section 3.15 -----*/
-	//	fbind %= qvar >> "=" >> exp;
+	//	fbind %= qvar >> tok.Equals >> exp;
 
 	/*----- Section 3.17 -----*/
 	pat = 
@@ -649,9 +608,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	lpat = 
 	  // negative literal float
-	  eps [clear(_a)] >> lit('-') >> h_float [ push_back(_a,construct<String>(_1)) ] >> eps [  _val = new_<expression>(AST_node("neg_h_float"), _a) ]
+	  eps [clear(_a)] >> tok.Minus >> tok.FloatTok [ push_back(_a,construct<String>(_1)) ] >> eps [  _val = new_<expression>(AST_node("neg_h_float"), _a) ]
 	  // negative literal integer
-	  | eps [clear(_a)] >> lit('-') >> h_integer [ push_back(_a,construct<String>(_1)) ] >> eps [  _val = new_<expression>(AST_node("neg_h_integer"), _a) ]
+	  | eps [clear(_a)] >> tok.Minus >> tok.IntTok [ push_back(_a,construct<String>(_1)) ] >> eps [  _val = new_<expression>(AST_node("neg_h_integer"), _a) ]
 	  // here the number of apat's must match the constructor arity
 	  | eps [clear(_a)] >>  gcon[ push_back(_a,construct<String>(_1)) ] >> +apat[ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
 	  // apat
@@ -660,76 +619,76 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	apat = 
 	  // as pattern
-	  //	  var >> lit('@')>>apat 
+	  //	  var >> tok.At>>apat 
 	  // irrefutable var pattern
 	  var [ qi::_val = phoenix::construct<AST_node>("apat_var", qi::_1) ]        
 	  // arity gcon = 0
 	  | gcon [ push_back(_a,construct<String>(_1)) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
 	  // labelled pattern
-	  //	  | qcon >> "{" >> *fpat >> "}"     
+	  //	  | qcon >> tok.LeftCurly >> *fpat >> tok.RightCurly     
 	  | literal [  _val = _1 ]
 	  // wildcard
-	  | lit('_') [ qi::_val = phoenix::construct<AST_node>("WildcardPattern") ]                       
+	  | tok.Underscore [ qi::_val = phoenix::construct<AST_node>("WildcardPattern") ]                       
 	  // parenthesized pattern
-	  | lit('(') >> pat [ _val = _1 ] >> ')'          
+	  | tok.LeftParen >> pat [ _val = _1 ] >> tok.RightParen          
 	  // tuple patten
-	  | lit('(')[clear(_a)] >> pat[ push_back(_a,_1) ] >> +(lit(',') >> pat[ push_back(_a,_1) ]) >> lit(')') [ _val = new_<expression>(AST_node("Tuple"), _a) ]
+	  | tok.LeftParen[clear(_a)] >> pat[ push_back(_a,_1) ] >> +(tok.Comma >> pat[ push_back(_a,_1) ]) >> tok.RightParen [ _val = new_<expression>(AST_node("Tuple"), _a) ]
 	  // list pattern
-	  | lit('[')[clear(_a)] >> pat[ push_back(_a,_1) ] % ',' >> lit(']') [ _val = new_<expression>(AST_node("List"), _a) ]
+	  | tok.LeftSquare[clear(_a)] >> pat[ push_back(_a,_1) ] % tok.Comma >> tok.RightSquare [ _val = new_<expression>(AST_node("List"), _a) ]
 	  // irrefutable pattern
-	  //	  | lit('~') >> apat                
+	  //	  | tok.Tilde >> apat                
 	  ;
-	//	fpat %= qvar >> "=" >> pat;         // field pattern
+	//	fpat %= qvar >> tok.Equals >> pat;         // field pattern
 
 	/*------ Section 4 -------*/
 	module = 
-	  lit("module") > modid[ push_back(_a,construct<String>(_1)) ] > /*-exports >>*/ "where" > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ]
+	  tok.KW_Module > modid[ push_back(_a,construct<String>(_1)) ] > /*-exports >>*/ tok.KW_Where > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ]
 	  | eps[clear(_a)] >>  body[ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
 
 	body = 
-	  lit('{') >> impdecls[ push_back(_a,_1) ] >> ';' >> topdecls[ push_back(_a,_1) ] >> '}'>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
-	  | lit('{')[clear(_a)] >> impdecls[ push_back(_a,_1) ] >> '}'>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
-	  | lit('{') >> topdecls [ push_back(_a,_1) ] >> '}' >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
+	  tok.LeftCurly >> impdecls[ push_back(_a,_1) ] >> tok.SemiColon >> topdecls[ push_back(_a,_1) ] >> tok.RightCurly>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
+	  | tok.LeftCurly[clear(_a)] >> impdecls[ push_back(_a,_1) ] >> tok.RightCurly>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
+	  | tok.LeftCurly >> topdecls [ push_back(_a,_1) ] >> tok.RightCurly >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
 
-	topdecls = topdecl [ push_back(_a,_1) ] % ';' >> eps[ _val = new_<expression>(AST_node("TopDecls"), _a) ];
+	topdecls = topdecl [ push_back(_a,_1) ] % tok.SemiColon >> eps[ _val = new_<expression>(AST_node("TopDecls"), _a) ];
 	topdecl = 
-	  lit("type") >> simpletype[ push_back(_a,_1) ] >> '=' >> type[ push_back(_a,_1) ] >> eps [ _val = new_<expression>(AST_node("Decl:type"), _a) ]
-	  | "data" >> /*-(context >> "=>") >> */ simpletype[ push_back(_a,_1) ] >> '=' >> constrs[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
-	  | "data" >> /*-(context >> "=>") >> */ simpletype[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
-	  | "newtype" >> /*-(context >> "=>") >> */ simpletype [ push_back(_a,_1) ] >> '=' >> newconstr[ push_back(_a,_1) ] /*>> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:newtype"), _a) ]
-	  //	  | "class" >> -(scontext >> "=>") >> tycls >> tyvar >> -("where" >> cdecls)
-	  //	  | "instance" >> -(scontext >> "=>") >> qtycls >> inst >> -("where" >> idecls)
-	  //	  | "default" >> *type
-	  //	  | "foreign" >> fdecl
-	  | lit("builtin") >> (var|varop)[ push_back(_a,construct<String>(_1)) ] >> h_integer[ push_back(_a,construct<String>(_1)) ] >> h_string[ push_back(_a,construct<String>(_1)) ] >> -h_string[ push_back(_a,construct<String>(_1)) ] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
-	  | lit("note") >> bugs_line [_val = _1]
+	  tok.KW_Type >> simpletype[ push_back(_a,_1) ] >> tok.Equals >> type[ push_back(_a,_1) ] >> eps [ _val = new_<expression>(AST_node("Decl:type"), _a) ]
+	  | tok.KW_Data >> /*-(context >> tok.DoubleArrow) >> */ simpletype[ push_back(_a,_1) ] >> tok.Equals >> constrs[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
+	  | tok.KW_Data >> /*-(context >> tok.DoubleArrow) >> */ simpletype[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
+	  | tok.KW_NewType >> /*-(context >> tok.DoubleArrow) >> */ simpletype [ push_back(_a,_1) ] >> tok.Equals >> newconstr[ push_back(_a,_1) ] /*>> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:newtype"), _a) ]
+	  //	  | tok.KW_Class >> -(scontext >> tok.DoubleArrow) >> tycls >> tyvar >> -(tok.KW_Where >> cdecls)
+	  //	  | tok.KW_Instance >> -(scontext >> tok.DoubleArrow) >> qtycls >> inst >> -(tok.KW_Where >> idecls)
+	  //	  | tok.KW_Default >> *type
+	  //	  | tok.KW_Foreign >> fdecl
+	  | tok.KW_Builtin >> (var|varop)[ push_back(_a,construct<String>(_1)) ] >> tok.IntTok[ push_back(_a,construct<String>(_1)) ] >> tok.StringTok[ push_back(_a,construct<String>(_1)) ] >> -tok.StringTok[ push_back(_a,construct<String>(_1)) ] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
+	  | tok.KW_Note >> bugs_line [_val = _1]
 	  | decl [_val = _1]
 	  ;
 
-	decls = lit('{') > (decl % ';')[_val = new_<expression>(AST_node("Decls"), _1)] > '}';
+	decls = tok.LeftCurly > (decl % tok.SemiColon)[_val = new_<expression>(AST_node("Decls"), _1)] > tok.RightCurly;
 	decl  = 
 	  (funlhs | pat)[push_back(_a,_1)] >> rhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Decl"), _a)  ]
 	| gendecl [_val = _1];
 
 	// class declarations
-	cdecls %= lit('{') >> cdecl % ';' > '}';
+	cdecls %= tok.LeftCurly >> cdecl % tok.SemiColon > tok.RightCurly;
 	//	cdecl  %= gendecl | (funlhs | var) >> rhs;
 
 	// instance declarations
-	idecls %= lit('{') >> idecl % ';' > '}';
+	idecls %= tok.LeftCurly >> idecl % tok.SemiColon > tok.RightCurly;
 	//	idecl  %= (funlhs | var) >> rhs | eps;
 
-	gendecl = // vars >> "::" >>  -(context >> "=>") >> type 
-	  fixity[push_back(_a,construct<String>(_1))] >> -h_integer[push_back(_a,construct<String>(_1))] >> ops[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FixityDecl"), _a)  ]
+	gendecl = // vars >> tok.DoubleColon >>  -(context >> tok.DoubleArrow) >> type 
+	  fixity[push_back(_a,construct<String>(_1))] >> -tok.IntTok[push_back(_a,construct<String>(_1))] >> ops[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FixityDecl"), _a)  ]
 	  | eps [ _val = new_<expression>(AST_node("EmptyDecl"), _a)  ];
 
-	ops = op[push_back(_a,construct<String>(_1))]%',' >> eps [ _val = new_<expression>(AST_node("Ops"), _a)  ];
+	ops = op[push_back(_a,construct<String>(_1))]%tok.Comma >> eps [ _val = new_<expression>(AST_node("Ops"), _a)  ];
 	vars %= +var;
-	fixity %= string("infixl") | string("infixr") | string("infix");
+	fixity %= tok.KW_InfixL [_val = "infixl"] | tok.KW_InfixR [_val = "infixr"] | tok.KW_Infix [_val = "infix" ];
 
 	/*----- Section 4.1.2 ------*/
 
-	type = btype[push_back(_a,_1)] >> lit("->") >> type[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FunctionType"), _a) ]
+	type = btype[push_back(_a,_1)] >> tok.RightArrow >> type[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FunctionType"), _a) ]
 	  | btype [_val = _1];
 
 	btype = +atype[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("TypeApply"), _a) ];
@@ -738,101 +697,103 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  // tuple variable
 	  | tyvar [_val = construct<AST_node>("type_id",construct<String>(_1)) ]
 	  // tuple type, k >= 2
-	  | eps[clear(_a)] >> lit('(') >> type[push_back(_a,_1)] >> +(lit(',')>>type[push_back(_a,_1)]) >> ')' >> eps [ _val = new_<expression>(AST_node("TupleType"), _a) ]
+	  | eps[clear(_a)] >> tok.LeftParen >> type[push_back(_a,_1)] >> +(tok.Comma>>type[push_back(_a,_1)]) >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("TupleType"), _a) ]
 	  // list type
-	  | eps[clear(_a)] >> lit('[') >> type [push_back(_a,_1)] >> ']'  >> eps [ _val = new_<expression>(AST_node("ListType"), _a) ]
+	  | eps[clear(_a)] >> tok.LeftSquare >> type [push_back(_a,_1)] >> tok.RightSquare  >> eps [ _val = new_<expression>(AST_node("ListType"), _a) ]
 	  // parenthesized type
-	  | eps[clear(_a)] >> lit('(') >> type [_val = _1 ] >> ')';
-	atype2 = atype [_val = _1] | lit('!') >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("StrictAtype"), _a) ];
+	  | eps[clear(_a)] >> tok.LeftParen >> type [_val = _1 ] >> tok.RightParen;
+	atype2 = atype [_val = _1] | tok.Exclamation >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("StrictAtype"), _a) ];
 
-	gtycon %= string("()") | string("[]") | lit("(") >> string("->") >> lit(")") | string("(,") >> *char_(',')>>string(")") | qtycon;
+	// fixme - this isn't going to set the attribute for gtycon!
+	gtycon %= tok.LeftParen >> tok.RightParen | tok.LeftSquare >> tok.RightSquare | tok.LeftParen >> tok.RightArrow >> tok.RightParen | tok.LeftParen >> tok.Comma >> *tok.Comma >>tok.RightParen | qtycon;
 
 	/*----- Section 4.1.3 ------*/
-	//	context %= h_class | lit('(') >> *h_class >> lit(')');
+	//	context %= h_class | tok.LeftParen >> *h_class >> tok.RightParen;
 	//	h_class %= qtycls >> tyvar 
-	//        | qtycls >> lit('(') >> tyvar >> +atype >> lit(')');
+	//        | qtycls >> tok.LeftParen >> tyvar >> +atype >> tok.RightParen;
 
 	/*----- Section 4.2.1 ------*/
 	newconstr = con[push_back(_a,_1)] >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("newconstr"), _a) ];
-	  // | con >> '{' >> var >> "::" >> type > '}';
+	  // | con >> tok.LeftCurly >> var >> tok.DoubleColon >> type > tok.RightCurly;
 	simpletype = tycon[_val = construct<AST_node>("type_id",construct<String>(_1)) ] >> *tyvar[_val = construct<AST_node>("type_id",construct<String>(_1)) ];
-	constrs = constr[push_back(_a,_1)]%'|' >> eps [ _val = new_<expression>(AST_node("constrs"), _a) ];
+	constrs = constr[push_back(_a,_1)]%tok.Bar >> eps [ _val = new_<expression>(AST_node("constrs"), _a) ];
 
 	constr = con[push_back(_a,construct<String>(_1))] >> *atype2[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("constr"), _a) ]
        	  | (btype | atype2)[push_back(_a,_1)] >> conop[push_back(_a,_1)] >> (btype | atype2)[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("constr_op"), _a) ];
-	  //	  | con >> '{' >> *fielddecl > '}';
+	  //	  | con >> tok.LeftCurly >> *fielddecl > tok.RightCurly;
 
-	fielddecl = vars >> "::" >> (type | '!' >> atype);
-	//	deriving = lit("deriving") >> (dclass | lit("()") | '(' >> dclass%',' >> ')');
+	fielddecl = vars >> tok.DoubleColon >> (type | tok.Exclamation >> atype);
+	//	deriving = tok.KW_Deriving >> (dclass | tok.LeftParen >> tok.RightParen | tok.LeftParen >> dclass%tok.Comma >> tok.RightParen);
 	dclass = qtycls;
 
 	/*------ Section 4.3.1 -----*/
-	//	scontext %= simpleclass | "()" | '(' >> simpleclass%',' >> ')';
+	//	scontext %= simpleclass | tok.LeftParen >> tok.RightParen | tok.LeftParen >> simpleclass%tok.Comma >> tok.RightParen;
 	//	simpleclass %= qtycls >> tyvar;
 	
 	/*------ Section 4.3.2 -----*/
 	/*
 	inst %= 
 	  gtycon 
-	  | '(' >> gtycon >> *tyvar >>')' 
-	  | '(' >> tyvar >> ',' >> tyvar %',' >> ')'
-	  | '[' >> tyvar >> ']'
-	  | tyvar >> "->" >> tyvar
+	  | tok.LeftParen >> gtycon >> *tyvar >>tok.RightParen 
+	  | tok.LeftParen >> tyvar >> tok.Comma >> tyvar %tok.Comma >> tok.RightParen
+	  | tok.LeftSquare >> tyvar >> tok.RightSquare
+	  | tyvar >> tok.RightArrow >> tyvar
 	  ;
 	*/
 
 	/*------ Section 4.4.3 -----*/
 	funlhs = var [push_back(_a,phoenix::construct<AST_node>("id", construct<String>(_1)))] >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs1"), _a)  ]
 	  | eps[clear(_a)] >> pat [push_back(_a,_1)] >> varop[push_back(_a,phoenix::construct<AST_node>("id", construct<String>(_1)))] >> pat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs2"), _a)  ]
-		  | eps[clear(_a)] >> "(" >> funlhs[push_back(_a,_1)] >> ")" > +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs3"), _a)  ];
+		  | eps[clear(_a)] >> tok.LeftParen >> funlhs[push_back(_a,_1)] >> tok.RightParen > +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs3"), _a)  ];
 
-	rhs = lit('=') >> exp [push_back(_a,_1)] >> -(lit("where") >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ]
-	  | gdrhs[push_back(_a,_1)] >> -(lit("where") >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ];
+	rhs = tok.Equals >> exp [push_back(_a,_1)] >> -(tok.KW_Where >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ]
+	  | gdrhs[push_back(_a,_1)] >> -(tok.KW_Where >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ];
 
-	gdrhs = guards[push_back(_a,_1)] >> "=" >> exp [push_back(_a,_1)] >> -gdrhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("gdrhs"), _a)  ];
+	gdrhs = guards[push_back(_a,_1)] >> tok.Equals >> exp [push_back(_a,_1)] >> -gdrhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("gdrhs"), _a)  ];
 
 	/*------ Section 5.1 -------*/
-	impdecls = impdecl[push_back(_a,_1)] % ';' >> eps [ _val = new_<expression>(AST_node("impdecls"), _a)  ];
+	impdecls = impdecl[push_back(_a,_1)] % tok.SemiColon >> eps [ _val = new_<expression>(AST_node("impdecls"), _a)  ];
 	
 	/*------ Section 5.2 -------*/
 	/*
-	exports = lit("()") | '('>> h_export % ',' >> -lit(',') >> ')';
+	exports = tok.LeftParen >> tok.RightParen | tok.LeftParen>> h_export % tok.Comma >> -tok.Comma >> tok.RightParen;
 	h_export = 
 	  qvar
-	  | qtycon >> -("(..)" | lit("()") | "(" >> cname %',' >> ")")
-	  | qtycls >> -("(..)" | lit("()") | "(" >> var %',' >> ")")
+	  | qtycon >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> cname %tok.Comma >> tok.RightParen)
+	  | qtycls >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> var %tok.Comma >> tok.RightParen)
 	  | "module" >> modid
 	  ;
 	*/
 	cname = var | con;
 	
 	/*------ Section 5.3 -------*/
-	impdecl = "import" > -string("qualified")[push_back(_a,construct<String>(_1))] 
-	                   > -string("submodel")[push_back(_a,construct<String>(_1))] 
+	impdecl = "import" > -tok.KW_Qualified[push_back(_a,"qualified")] 
+	                   > -tok.KW_Submodel[push_back(_a,"submodel")] 
 	                   > modid[push_back(_a,construct<String>(_1))] 
-			   >> -(string("as")[push_back(_a,construct<String>(_1))] > modid[push_back(_a,construct<String>(_1))]) 
+			   >> -tok.KW_As[push_back(_a,"as")] 
+	                   > modid[push_back(_a,construct<String>(_1))] 
 			   >> /*-impspec >>*/ eps [ _val = new_<expression>(AST_node("ImpDecl"), _a)  ];
 
 	//	impspec = 
-	//	  lit("()")
-	//	  | '(' >> import%',' >> ')'
-	//	  | lit("hiding") >> '(' >> import%',' >> ')';
+	//	  tok.LeftParen >> tok.RightParen
+	//	  | tok.LeftParen >> import%tok.Comma >> tok.RightParen
+	//	  | tok.KW_Hiding >> tok.LeftParen >> import%tok.Comma >> tok.RightParen;
 
 	// FIXME! Parsing problems //
 	/*
 	import = 
 	   var
-	  | tycon >> -("(..)" | lit("()") | "(" >> cname %"," >> ")")
-	  | tycls >> -("(..)" | lit("()") | "(" >> var %"," >> ")");
+	  | tycon >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> cname %"," >> tok.RightParen)
+	  | tycls >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> var %"," >> tok.RightParen);
 	*/
 
 	/*----------- Rules for notes and related processing - not Haskell --------------*/
-	bugs_dist = lit("data") >> exp[push_back(_a,_1)] >> '~' > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDataDist"), _a)  ] 
-	  | eps [clear(_a) ] >> lit("external") >> exp[push_back(_a,_1)] >> '~' > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsExternalDist"), _a)  ]
-	  | eps [clear(_a) ] >> exp[push_back(_a,_1)] >> '~' > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
-	bugs_default_value = qvar [push_back(_a, phoenix::construct<AST_node>("id", construct<String>(_1))) ] >> ":=" > exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
+	bugs_dist = tok.KW_Data >> exp[push_back(_a,_1)] >> tok.Tilde > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDataDist"), _a)  ] 
+	  | eps [clear(_a) ] >> tok.KW_External >> exp[push_back(_a,_1)] >> tok.Tilde > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsExternalDist"), _a)  ]
+	  | eps [clear(_a) ] >> exp[push_back(_a,_1)] >> tok.Tilde > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
+	bugs_default_value = qvar [push_back(_a, phoenix::construct<AST_node>("id", construct<String>(_1))) ] >> tok.ColonEqual > exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
 	bugs_note = fexp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
-	bugs_parameter = lit("parameter") >> varid [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Parameter"), _a)  ];
+	bugs_parameter = tok.KW_Parameter >> tok.VarId [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Parameter"), _a)  ];
 
 	bugs_line %= bugs_parameter | bugs_default_value | bugs_dist | bugs_note;
 
@@ -1055,30 +1016,6 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	on_error<fail>
 	  (
-	   h_integer
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   h_string
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
 	   literal
 	   , std::cout
 	   << val("Error! Expecting ")
@@ -1156,8 +1093,6 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	fixity.name("fixity");
 	gcon.name("gcon");
 	literal.name("literal");
-	h_string.name("h_string");
-	reservedid.name("reserved_id");
 
 	bugs_parameter.name("bugs_parameter");
 	bugs_default_value.name("bugs_default_value");
@@ -1165,71 +1100,39 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	bugs_note.name("bugs_note");
     }
 
-  qi::rule<Iterator, char()> small;
-  qi::rule<Iterator, char()> large;
-  qi::rule<Iterator, char()> digit;
-  qi::rule<Iterator, char()> symbol;
-  qi::rule<Iterator, char()> special;
-  qi::rule<Iterator, char()> graphic;
-
-  qi::rule<Iterator, std::string()> dashes;
-
-  qi::rule<Iterator, std::string()> varid;
-  qi::rule<Iterator, std::string()> conid;
-  qi::rule<Iterator, std::string()> reservedid_;
-  qi::rule<Iterator, std::string()> reservedid;
-
-  qi::rule<Iterator, std::string()> varsym;
-  qi::rule<Iterator, std::string()> consym;
-  qi::rule<Iterator, std::string()> reservedop_; // reserved operator
-  qi::rule<Iterator, std::string()> reservedop; // reserved operator
-
   qi::rule<Iterator, std::string()> tyvar;
   qi::rule<Iterator, std::string()> tycon;
   qi::rule<Iterator, std::string()> tycls;
   qi::rule<Iterator, std::string()> modid; // module id
 
-  qi::rule<Iterator, std::string()> qvarid; // qualified variable id
-  qi::rule<Iterator, std::string()> qconid; // qualified constructor id
   qi::rule<Iterator, std::string()> qtycon; // qualified type constructor
   qi::rule<Iterator, std::string()> qtycls; // qualified type class
-  qi::rule<Iterator, std::string()> qvarsym;
-  qi::rule<Iterator, std::string()> qconsym;
-
-  qi::rule<Iterator, std::string()> decimal;
-  qi::rule<Iterator, std::string()> h_integer;
-  qi::rule<Iterator, std::string()> h_float;
-  qi::rule<Iterator, std::string()> exponent;
-
-  qi::rule<Iterator, char()> h_char;
-  qi::rule<Iterator, char()> escape;
-  qi::rule<Iterator, std::string()> h_string;
-  qi::rule<Iterator, std::string()> charesc;
 
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal;  
+  qi::rule<Iterator, std::string()> literal2;
 
-  qi::rule<Iterator, expression_ref(), ascii::space_type> exp;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> infixexp;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> lexp;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> fexp;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> aexp;
+  qi::rule<Iterator, expression_ref()> exp;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> infixexp;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> fexp;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> aexp;
 
   /*----- Section 3.2 -------*/
-  qi::rule<Iterator, std::string(), ascii::space_type> gcon;
-  qi::rule<Iterator, std::string(), ascii::space_type> var;
-  qi::rule<Iterator, std::string(), ascii::space_type> qvar;
-  qi::rule<Iterator, std::string(), ascii::space_type> con;
-  qi::rule<Iterator, std::string(), ascii::space_type> qcon;
-  qi::rule<Iterator, std::string(), ascii::space_type> varop;
-  qi::rule<Iterator, std::string(), ascii::space_type> qvarop;
-  qi::rule<Iterator, std::string(), ascii::space_type> conop;
-  qi::rule<Iterator, std::string(), ascii::space_type> qconop;
-  qi::rule<Iterator, std::string(), ascii::space_type> op;
-  qi::rule<Iterator, std::string(), ascii::space_type> gconsym;
-  qi::rule<Iterator, expression_ref(), ascii::space_type> qop;
+  qi::rule<Iterator, std::string()> gcon;
+  qi::rule<Iterator, std::string()> var;
+  qi::rule<Iterator, std::string()> qvar;
+  qi::rule<Iterator, std::string()> con;
+  qi::rule<Iterator, std::string()> qcon;
+  qi::rule<Iterator, std::string()> varop;
+  qi::rule<Iterator, std::string()> qvarop;
+  qi::rule<Iterator, std::string()> conop;
+  qi::rule<Iterator, std::string()> qconop;
+  qi::rule<Iterator, std::string()> op;
+  qi::rule<Iterator, std::string()> gconsym;
+  qi::rule<Iterator, expression_ref()> qop;
 
   /*----- Section 3.11 -----*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> qual;  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> qual;  
 
   /*----- Section 3.13 -----*/
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> alts;  
@@ -1239,61 +1142,61 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> guard;
 
   /*----- Section 3.14 -----*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> stmts;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> stmt;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> stmts;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> stmt;
 
   /*----- Section 3.15 -----*/
-  qi::rule<Iterator, std::string(), ascii::space_type> fbind;  
+  qi::rule<Iterator, std::string()> fbind;  
 
   /*----- Section 3.17 -----*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> pat;  
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> lpat;  
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> apat;  
-  qi::rule<Iterator, std::string(), ascii::space_type> fpat;  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> pat;  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lpat;  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> apat;  
+  qi::rule<Iterator, std::string()> fpat;  
 
   /*----- Section 4 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> module;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> body;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> module;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> body;
 
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> topdecls;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> topdecl;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> topdecls;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> topdecl;
 
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> decls;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> decl;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> decls;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> decl;
 
-  qi::rule<Iterator, std::string(), ascii::space_type> cdecls;
-  qi::rule<Iterator, std::string(), ascii::space_type> cdecl;
+  qi::rule<Iterator, std::string()> cdecls;
+  qi::rule<Iterator, std::string()> cdecl;
 
-  qi::rule<Iterator, std::string(), ascii::space_type> idecls;
-  qi::rule<Iterator, std::string(), ascii::space_type> idecl;
+  qi::rule<Iterator, std::string()> idecls;
+  qi::rule<Iterator, std::string()> idecl;
 
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> gendecl;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gendecl;
 
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> ops;
-  qi::rule<Iterator, std::string(), ascii::space_type> vars;
-  qi::rule<Iterator, std::string(), ascii::space_type> fixity;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> ops;
+  qi::rule<Iterator, std::string()> vars;
+  qi::rule<Iterator, std::string()> fixity;
 
   /*----- Section 4.1.2 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> type;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> btype;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> atype;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> atype2;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> gtype;
-  //  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> gtycon;
-  qi::rule<Iterator, std::string(), ascii::space_type> gtycon;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> type;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> btype;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> atype;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> atype2;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gtype;
+  //  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gtycon;
+  qi::rule<Iterator, std::string()> gtycon;
 
   /*----- Section 4.1.3 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> context;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> h_class;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> context;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> h_class;
 
   /*----- Section 4.2.1 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> newconstr;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> simpletype;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> constrs;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> constr;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> fielddecl;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> deriving;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> dclass;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> newconstr;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> simpletype;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> constrs;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> constr;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> fielddecl;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> deriving;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> dclass;
 
   /*----- Section 4.3.1 ------*/
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> scontext;
@@ -1311,22 +1214,22 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> impdecls;
 
   /*----- Section 5.2 ------*/
-  qi::rule<Iterator, std::string(), ascii::space_type> exports;
-  qi::rule<Iterator, std::string(), ascii::space_type> h_export;
-  qi::rule<Iterator, std::string(), ascii::space_type> cname;
+  qi::rule<Iterator, std::string()> exports;
+  qi::rule<Iterator, std::string()> h_export;
+  qi::rule<Iterator, std::string()> cname;
 
   /*----- Section 5.3 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> impdecl;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> impspec;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> import;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> impdecl;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> impspec;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> import;
 
   /*----------- Rules for notes and related processing - not Haskell --------------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_dist;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_default_value;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_note;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_parameter;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> bugs_dist;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> bugs_default_value;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> bugs_note;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> bugs_parameter;
 
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_line;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> bugs_line;
 
 };
 
@@ -1397,9 +1300,11 @@ expression_ref parse_bugs_file(const string& lines)
   using boost::spirit::ascii::space;
 
   string::const_iterator iter = lines.begin();
-  haskell_grammar<string::const_iterator> haskell_parser;
+  haskell_grammar<iterator_type> haskell_parser(lexer1);
   expression_ref cmd;
-  if (phrase_parse(iter, lines.end(), haskell_parser.module, space, cmd) and iter == lines.end())
+  const char* first = &lines[0];
+  const char* last = first + lines.size();
+  if (tokenize_and_parse(first, last, lexer1, haskell_parser))
     return cmd;
 
   throw myexception()<<"BUGS pharse parse: only parsed "<<lines.substr(0, iter-lines.begin());
