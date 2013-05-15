@@ -390,7 +390,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<std::string> QConSym;  // (String, String)	
   lex::token_def<std::string> IntTok;   // Integer
   lex::token_def<std::string> FloatTok; // Rational	
-  lex::token_def<char> Character;       // Char	
+  lex::token_def<std::string> Character;       // Char	
   lex::token_def<std::string> StringTok;// String	
 
   lex::token_def<char> Special;         // Char
@@ -500,9 +500,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 	//	literal2 = tok.FloatTok [ _val  = _1 ];
 	literal2 %= tok.FloatTok;
 	literal = tok.FloatTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Float"), _a)  ]
-	  | tok.IntTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Integer"), _a)  ];
-	  //	  | tok.Character [push_back(_a,construct<Char>(_1))] >> eps [ _val = new_<expression>(AST_node("Char"), _a)  ]
-	  //	  | tok.StringTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("String"), _a)  ];
+	  | tok.IntTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Integer"), _a)  ]
+	  | tok.Character [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Char"), _a)  ]
+	  | tok.StringTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("String"), _a)  ];
 
 	/*----- Section 3 ------*/
 	exp = 
