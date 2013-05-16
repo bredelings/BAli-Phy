@@ -776,7 +776,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 	cname = var | con;
 	
 	/*------ Section 5.3 -------*/
-	impdecl = "import" > -tok.KW_Qualified[push_back(_a,"qualified")] 
+	impdecl = tok.KW_Import > -tok.KW_Qualified[push_back(_a,"qualified")] 
 	                   > -tok.KW_Submodel[push_back(_a,"submodel")] 
 	                   > modid[push_back(_a,construct<String>(_1))] 
 			   >> -tok.KW_As[push_back(_a,"as")] 
