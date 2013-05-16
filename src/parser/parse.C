@@ -689,7 +689,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 	//	idecl  %= (funlhs | var) >> rhs | eps;
 
 	gendecl = // vars >> tok.DoubleColon >>  -(context >> tok.DoubleArrow) >> type 
-	  fixity[push_back(_a,construct<String>(_1))] >> -tok.IntTok[push_back(_a,construct<String>(_1))] >> ops[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FixityDecl"), _a)  ]
+	  fixity[push_back(_a,construct<String>(_1))] > -tok.IntTok[push_back(_a,construct<String>(_1))] >> ops[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FixityDecl"), _a)  ]
 	  | eps [ _val = new_<expression>(AST_node("EmptyDecl"), _a)  ];
 
 	ops = op[push_back(_a,construct<String>(_1))]%tok.Comma >> eps [ _val = new_<expression>(AST_node("Ops"), _a)  ];
