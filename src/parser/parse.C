@@ -780,8 +780,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 	impdecl = tok.KW_Import > -tok.KW_Qualified[push_back(_a,"qualified")] 
 	                   > -tok.KW_Submodel[push_back(_a,"submodel")] 
 	                   > modid[push_back(_a,construct<String>(_1))] 
-			   >> -tok.KW_As[push_back(_a,"as")] 
-	                   > modid[push_back(_a,construct<String>(_1))] 
+                           >> -(tok.KW_As[push_back(_a,"as")] > modid[push_back(_a,construct<String>(_1))])
 			   >> /*-impspec >>*/ eps [ _val = new_<expression>(AST_node("ImpDecl"), _a)  ];
 
 	//	impspec = 
