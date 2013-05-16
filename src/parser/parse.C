@@ -498,7 +498,6 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 	qtycls %= tok.QConId;
 
 	//	literal2 = tok.FloatTok [ _val  = _1 ];
-	literal2 %= tok.FloatTok;
 	literal = tok.FloatTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Float"), _a)  ]
 	  | tok.IntTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Integer"), _a)  ]
 	  | tok.Character [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Char"), _a)  ]
@@ -1110,7 +1109,6 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
   qi::rule<Iterator, std::string()> qtycls; // qualified type class
 
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal;  
-  qi::rule<Iterator, std::string()> literal2;
 
   qi::rule<Iterator, expression_ref()> exp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> infixexp;
