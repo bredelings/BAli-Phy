@@ -407,7 +407,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<> Underscore;
   lex::token_def<> BackQuote;
   lex::token_def<> DotDot;
-  lex::token_def<> Colon;
+  lex::token_def<std::string> Colon;
   lex::token_def<> DoubleColon;
   lex::token_def<> Equals;
   lex::token_def<> Backslash;
