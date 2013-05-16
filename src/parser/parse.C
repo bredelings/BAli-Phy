@@ -1062,6 +1062,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 	   << std::endl
 	   );
 
+	modid.name("modid");
 	exp.name("exp");
 	infixexp.name("infixexp");
 	lexp.name("lexp");
