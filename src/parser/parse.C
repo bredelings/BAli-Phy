@@ -694,7 +694,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 
 	ops = op[push_back(_a,construct<String>(_1))]%tok.Comma >> eps [ _val = new_<expression>(AST_node("Ops"), _a)  ];
 	vars %= +var;
-	fixity %= tok.KW_InfixL [_val = "infixl"] | tok.KW_InfixR [_val = "infixr"] | tok.KW_Infix [_val = "infix" ];
+	fixity = tok.KW_InfixL [_val = "infixl"] | tok.KW_InfixR [_val = "infixr"] | tok.KW_Infix [_val = "infix" ];
 
 	/*----- Section 4.1.2 ------*/
 
