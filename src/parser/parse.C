@@ -489,13 +489,23 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 	using phoenix::new_;
 	using phoenix::val;
 
-	tyvar %= tok.VarId;
-	tycon %= tok.ConId;
-	tycls %= tok.ConId;
-	modid %= tok.QConId;
+	varid %= tok.VarId;
+	qvarid %= tok.VarId | tok.QVarId;
+	conid %= tok.ConId;
+	qconid %= tok.ConId | tok.QConId;
 
-	qtycon %= tok.QVarId;
-	qtycls %= tok.QConId;
+	varsym %= tok.VarSym;
+	qvarsym %= tok.VarSym | tok.QVarSym;
+	consym %= tok.ConSym;
+	qconsym %= tok.ConSym | tok.QConSym;
+
+	tyvar %= varid;
+	tycon %= conid;
+	tycls %= conid;
+	modid %= qconid;
+
+	qtycon %= qvarid;
+	qtycls %= qconid;
 
 	//	literal2 = tok.FloatTok [ _val  = _1 ];
 	literal = tok.FloatTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Float"), _a)  ]
@@ -561,17 +571,17 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 	  | (tok.LeftParen >> tok.Comma >> *tok.Comma >> tok.RightParen)
 	  | qcon [ _val = _1];
 
-	var  %= tok.VarId  | tok.LeftParen >> tok.VarSym >> tok.RightParen;    // variable
-	qvar %= tok.QVarId | tok.LeftParen >> tok.QVarSym >> tok.RightParen;   // qualified variable
-	con  %= tok.ConId  | tok.LeftParen >> tok.ConSym >> tok.RightParen;    // constructor
-	qcon %= tok.QConId | tok.LeftParen >> gconsym >> tok.RightParen;   // qualified constructor
-	varop %= tok.VarSym | tok.BackQuote >> tok.VarId >> tok.BackQuote;    // variable operator
-	qvarop %= tok.QVarSym | tok.BackQuote >> tok.QVarId >> tok.BackQuote; // qualified variable operator
-	conop %= tok.ConSym | tok.BackQuote >> tok.ConId >> tok.BackQuote;    // constructor operator
-	qconop %= gconsym | tok.BackQuote >> tok.QConId >> tok.BackQuote; // qualified constructor operator
+	var  %= varid  | tok.LeftParen >> varsym >> tok.RightParen;    // variable
+	qvar %= qvarid | tok.LeftParen >> qvarsym >> tok.RightParen;   // qualified variable
+	con  %= conid  | tok.LeftParen >> consym >> tok.RightParen;    // constructor
+	qcon %= qconid | tok.LeftParen >> gconsym >> tok.RightParen;   // qualified constructor
+	varop %= varsym | tok.BackQuote >> varid >> tok.BackQuote;    // variable operator
+	qvarop %= qvarsym | tok.BackQuote >> qvarid >> tok.BackQuote; // qualified variable operator
+	conop %= consym | tok.BackQuote >> conid >> tok.BackQuote;    // constructor operator
+	qconop %= gconsym | tok.BackQuote >> qconid >> tok.BackQuote; // qualified constructor operator
 	op %= varop | conop;                      // operator
 	qop = qvarop [ _val = construct<AST_node>("id", construct<String>(_1)) ] | qconop [ _val = construct<AST_node>("id",construct<String>(_1)) ];  // qualified operator
-	gconsym %= tok.QConSym | tok.Colon;
+	gconsym %= qconsym | tok.Colon;
 
 	/*----- Section 3.11 -----*/
 	qual = pat [push_back(_a,_1)] >> tok.LeftArrow > exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
@@ -792,7 +802,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 	  | eps [clear(_a) ] >> exp[push_back(_a,_1)] >> tok.Tilde > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
 	bugs_default_value = qvar [push_back(_a, phoenix::construct<AST_node>("id", construct<String>(_1))) ] >> tok.ColonEqual > exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
 	bugs_note = fexp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
-	bugs_parameter = tok.KW_Parameter >> tok.VarId [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Parameter"), _a)  ];
+	bugs_parameter = tok.KW_Parameter >> varid [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Parameter"), _a)  ];
 
 	bugs_line %= bugs_parameter | bugs_default_value | bugs_dist | bugs_note;
 
@@ -1099,6 +1109,15 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 	bugs_dist.name("bugs_dist");
 	bugs_note.name("bugs_note");
     }
+  qi::rule<Iterator, std::string()> varid;
+  qi::rule<Iterator, std::string()> qvarid;
+  qi::rule<Iterator, std::string()> conid;
+  qi::rule<Iterator, std::string()> qconid;
+
+  qi::rule<Iterator, std::string()> varsym;
+  qi::rule<Iterator, std::string()> qvarsym;
+  qi::rule<Iterator, std::string()> consym;
+  qi::rule<Iterator, std::string()> qconsym;
 
   qi::rule<Iterator, std::string()> tyvar;
   qi::rule<Iterator, std::string()> tycon;
