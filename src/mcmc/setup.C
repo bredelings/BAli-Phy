@@ -43,7 +43,7 @@ using std::vector;
 using std::endl;
 using std::string;
 using std::ostream;
-
+using std::map;
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
 void add_modifiable_MH_move(const string& name, const Proposal_Fn& proposal, int m_index, const vector<double>& parameters,
@@ -534,6 +534,29 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
   return alignment_moves;
 }
 
+MCMC::MoveAll get_h_moves(Parameters& P)
+{
+  using namespace MCMC;
+
+  MoveAll h_moves("haskell_moves");
+
+  map<string,string> simplify = get_simplified_names(P.get_Program());
+
+  for(int i=0;i<P.n_notes();i++)
+  {
+    if (not is_exactly(P.get_note(i),"MakeMove")) continue;
+    
+    expression_ref E = P.get_note(i)->sub[0];
+    string name = map_symbol_names(E,simplify)->print();
+    
+    int head = P.add_compute_expression(E);
+    
+    h_moves.add(1,IOMove(name, head));
+  }
+
+  return h_moves;
+}
+
 /// \brief Construct moves to sample the tree
 ///
 /// \param P   The model and state.
@@ -987,6 +1010,9 @@ void do_sampling(const variables_map& args,
 
   if (P->load_value("disable_slice_sampling", 0.0) < 0.5)
     sampler.add(1,slice_moves);
+
+  //------------------- Add moves defined via notes ---------------------------//
+  sampler.add(1, get_h_moves(PP));
 
   //------------------- Enable and Disable moves ---------------------------//
   enable_disable_transition_kernels(sampler,args);
