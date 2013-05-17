@@ -655,10 +655,10 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 	  | eps[clear(_a)] >>  body[ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
 
 	body = 
-	  tok.LeftCurly >> impdecls[ push_back(_a,_1) ] >> tok.SemiColon >> topdecls[ push_back(_a,_1) ] >> tok.RightCurly>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
-	  | tok.LeftCurly[clear(_a)] >> impdecls[ push_back(_a,_1) ] >> tok.RightCurly>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
+	  tok.LeftCurly >> impdecls[ push_back(_a,_1) ] >> tok.SemiColon > topdecls[ push_back(_a,_1) ] > tok.RightCurly >> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
+	  | tok.LeftCurly[clear(_a)] >> impdecls[ push_back(_a,_1) ] > tok.RightCurly>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
 	  // Since body MUST match wherever it occurs, we can force the last rule to match...
-	  | tok.LeftCurly > topdecls [ push_back(_a,_1) ] >> tok.RightCurly >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
+	  | tok.LeftCurly > topdecls [ push_back(_a,_1) ] > tok.RightCurly >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
 
 	topdecls = topdecl [ push_back(_a,_1) ] % tok.SemiColon >> eps[ _val = new_<expression>(AST_node("TopDecls"), _a) ];
 	topdecl = 
