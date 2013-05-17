@@ -348,7 +348,7 @@ pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la
 		c_fst.la c_snd.la c_pair.la new_modifiable.la evaluate.la get_modifiable_value.la \
 		show.la rs07_branch_HMM.la rs07_lengthp.la pairwise_alignment_length1.la \
 		pairwise_alignment_length2.la transition_counts.la pairwise_alignment_probability_from_counts.la \
-		popgen.la Distribution.la Range.la SModel.la trigger.la
+		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la
 
 mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
@@ -508,3 +508,6 @@ SModel_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 show_la_SOURCES = computation/builtins/show.C
 show_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
+sum_out_coals_la_SOURCES = computation/builtins/sum_out_coals.C
+sum_out_coals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic

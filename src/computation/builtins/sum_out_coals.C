@@ -4,6 +4,7 @@
 #include "rng.H"
 
 using boost::dynamic_pointer_cast;
+using namespace std;
 
 // The idea here is to propose new values of X, and evaluate them by summing over each Y_i \in {True,False}.
 // Then the Y_i are resampled.  
@@ -67,22 +68,22 @@ extern "C" closure builtin_sum_out_coals(OperationArgs& Args)
   
   for(int R: R_Y)
   {
-    Args.memory.set_reg_value(R, {constructor("Prelude.False"),{}}, token);
+    Args.memory().set_reg_value(R, {constructor("Prelude.False",0),{}}, token);
   }
 
-  log_double_t pr_base_1 = *convert<Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
+  log_double_t pr_base_1 = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
 
   log_double_t pr_total_1 = pr_base_1;
   vector<log_double_t> pr_y_0(R_Y.size());
   for(int i=0;i<R_Y.size();i++)
   {
-    Args.memory.set_reg_value(R_Y[i], {constructor("Prelude.True"),{}}, token);
-    log_double_t pr_offset = *convert<Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
-    Args.memory.set_reg_value(R_Y[i], {constructor("Prelude.False"),{}}, token);
+    Args.memory().set_reg_value(R_Y[i], {constructor("Prelude.True",0),{}}, token);
+    log_double_t pr_offset = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
+    Args.memory().set_reg_value(R_Y[i], {constructor("Prelude.False",0),{}}, token);
     double delta = log(pr_offset/pr_base_1);
     pr_y_0[i] = exp<log_double_t>(-log1pexp(delta));
     
-    pr_total1 /= pr_y_0[i];
+    pr_total_1 /= pr_y_0[i];
   }
 
   return constructor("()",0);
