@@ -736,6 +736,16 @@ void MoveArg::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int i)
 }
 
 
+  void IOMove::iterate(owned_ptr<Probability_Model>& P, MoveStats& M)
+  {
+    iterate(P,M,0);
+  }
+
+  void IOMove::iterate(owned_ptr<Probability_Model>& P, MoveStats& M,int)
+  {
+    P->perform(head);
+  }
+
 void MoveEach::add(double l,const MoveArg& m,bool enabled) {
   MoveGroupBase::add(l,m,enabled);
 

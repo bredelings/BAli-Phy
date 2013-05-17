@@ -155,6 +155,14 @@ object_ref context::evaluate(int index) const
   return access_result(H).exp->head;
 }
 
+/// Return the value of a particular index, computing it if necessary
+object_ref context::perform(int index) const
+{
+  int H = heads()[index];
+
+  return perform_expression(reg_var(H));
+}
+
 closure context::lazy_evaluate_expression_(closure&& C, bool ec) const
 {
   try {

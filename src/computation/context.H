@@ -95,6 +95,9 @@ public:
   object_ref evaluate(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
+  object_ref perform(int index) const;
+
+  /// Return the value of a particular index, computing it if necessary
   closure lazy_evaluate_expression_(closure&&,bool=true) const;
 
   /// Return the value of a particular index, computing it if necessary

@@ -459,6 +459,20 @@ namespace MCMC {
     virtual ~MoveArg() {}
   };
 
+  class IOMove: public Move
+  {
+    int head;
+  public:
+    IOMove* clone() const {return new IOMove(*this);}
+
+    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return {};}
+
+    void iterate(owned_ptr<Probability_Model>&,MoveStats&);
+    void iterate(owned_ptr<Probability_Model>&,MoveStats&,int);
+
+    IOMove(const std::string& name, int h):Move(name),head(h) { }
+  };
+
 
   /// Apply this move to Each arg
 
