@@ -23,11 +23,10 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 {
   assert(not Args.evaluate_changeables());
 
-  int token = *Args.evaluate_as<Int>(0);
-  assert( Args.current_token() == token );
+  int token = Args.current_token();
 
   //------------- 1a. Get argument X -----------------
-  int R_X = Args.evaluate_slot_to_reg(1);
+  int R_X = Args.evaluate_slot_to_reg(0);
 
   //------------- 1b. Get arguments Y_i  -----------------
   vector<int> R_Y;
