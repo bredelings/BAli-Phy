@@ -354,6 +354,14 @@ efloat_t Model::prior() const
   return *R;
 }
 
+expression_ref Model::get_h_prior_expression() const
+{
+  if (prior_index == -1)
+    return Log_Double(1.0);
+  else
+    return get_expression(prior_index);
+}
+
 vector<string> Model::show_priors() const
 {
   return show_probability_expressions(*this);

@@ -19,7 +19,7 @@ double log1pexp(double x)
     return x;
 }
 
-extern "C" closure builtin_sum_out_coals(OperationArgs& Args)
+extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 {
   assert(not Args.evaluate_changeables());
 
