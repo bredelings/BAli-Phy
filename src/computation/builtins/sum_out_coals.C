@@ -58,7 +58,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   
   //------------- 2. Figure out t and the next t ------------//
 
-  int x1 = *convert<const Int>(Args.evaluate_reg_to_closure(R_X,true).exp->head);
+  int x1 = (int)*convert<const Double>(Args.evaluate_reg_to_closure(R_X,true).exp->head);
   int x2 = x1 + 1;
   if (uniform() < 0.5)
   {
