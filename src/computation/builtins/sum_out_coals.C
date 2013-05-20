@@ -43,6 +43,9 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     int next_index = assert_is_a<index_var>(top->exp->sub[1])->index;
     int next_reg = top->lookup_in_env( next_index );
 
+    // evaluate the list element
+    element_reg = Args.evaluate_reg_to_reg(element_reg);
+
     // Add the element to the list.
     R_Y.push_back( element_reg );
     // Move to the next element or end
