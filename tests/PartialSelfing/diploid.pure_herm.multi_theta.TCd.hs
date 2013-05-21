@@ -51,5 +51,5 @@ note data data1 ~ plate (n_loci, \l -> afs2 (theta_effective!!l,map (!!l) i));
 note MakeLogger p;
 note MakeLogger theta;
 note MakeLogger t;
-note MakeMove (\pr -> do { sum_out_coals (t'!!0) (i!!0) pr ; sum_out_coals (t'!!1) (i!!1) pr });
+note MakeMove (\pr -> mapM_ (\k-> sum_out_coals (t'!!k) (i!!k) pr) [0..n_individuals-1]);
 }
