@@ -1381,6 +1381,7 @@ expression_ref parse_bugs_file(const string& lines)
   typedef haskell_lex1<lexer_type>::iterator_type iterator_type;
 
   haskell_lex1<lexer_type> lexer1;          // Our lexer
+  /*
   {
     const char* first = &lines[0];
     const char* end = first + lines.size();
@@ -1390,7 +1391,7 @@ expression_ref parse_bugs_file(const string& lines)
       std::cout<<"'"<<t.value()<<"'\n";;
     }
   }
-
+  */
   /*----------------------------------------------------------------------------*/
 
   using boost::spirit::ascii::space;
