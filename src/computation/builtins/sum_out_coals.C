@@ -68,7 +68,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
   R_X = M.get_modifiable_regs_for_context(token)[M_X];
   double x1 = *convert<const Double>(Args.evaluate_reg_to_closure(R_X,true).exp->head);
-  double x2 = x1 + gaussian(0,1.0);
+  double x2 = x1 + gaussian(0,2.0);
   x2 = reflect_more_than(x2, 0.0);
 
   //------------- 3. Record base probability and relative probability for x1
