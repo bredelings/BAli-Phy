@@ -84,7 +84,7 @@ public:
   /// the prior for the model, on the same scale as proposal densities
   virtual efloat_t prior() const;
 
-  expression_ref get_h_prior_expression() const;
+  int get_h_prior_index() const;
 
   /// Names of the parameters
   bool is_random_variable(int i) const;
