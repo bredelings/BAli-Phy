@@ -3,6 +3,7 @@
 #include "computation/graph_register.H"
 #include "rng.H"
 #include "util.H"
+#include "probability/choose.H"
 
 using boost::dynamic_pointer_cast;
 using namespace std;
@@ -70,7 +71,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   double x2 = x1 + gaussian(0,1.0);
   x2 = reflect_more_than(x2, 0.0);
 
-  //------------- 3. Record base probability and relative probability for x
+  //------------- 3. Record base probability and relative probability for x1
   
   for(int m: M_Y)
   {
@@ -82,7 +83,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   log_double_t pr_base_1 = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
 
   log_double_t pr_total_1 = pr_base_1;
-  vector<log_double_t> pr_y_0(M_Y.size());
+  vector<log_double_t> pr_y_1(M_Y.size());
   for(int i=0;i<M_Y.size();i++)
   {
     int R = M.get_modifiable_regs_for_context(token)[M_Y[i]];
@@ -91,9 +92,53 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     log_double_t pr_offset = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
     Args.memory().set_reg_value(R, {constructor("Prelude.False",0),{}}, token);
     double delta = log(pr_offset/pr_base_1);
-    pr_y_0[i] = exp<log_double_t>(-log1pexp(delta));
+    pr_y_1[i] = exp<log_double_t>(-log1pexp(delta));
     
-    pr_total_1 /= pr_y_0[i];
+    pr_total_1 /= pr_y_1[i];
+  }
+
+  //------------- 4. Record base probability and relative probability for x2
+
+  R_X = M.get_modifiable_regs_for_context(token)[M_X];
+  Args.memory().set_reg_value(R_X, Double(x2), token);
+
+  R_Pr = M.get_heads_for_context(token)[H_Pr];
+  log_double_t pr_base_2 = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
+
+  log_double_t pr_total_2 = pr_base_2;
+  vector<log_double_t> pr_y_2(M_Y.size());
+  for(int i=0;i<M_Y.size();i++)
+  {
+    int R = M.get_modifiable_regs_for_context(token)[M_Y[i]];
+    Args.memory().set_reg_value(R, {constructor("Prelude.True",0),{}}, token);
+    R_Pr = M.get_heads_for_context(token)[H_Pr];
+    log_double_t pr_offset = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
+    Args.memory().set_reg_value(R, {constructor("Prelude.False",0),{}}, token);
+    double delta = log(pr_offset/pr_base_2);
+    pr_y_2[i] = exp<log_double_t>(-log1pexp(delta));
+    
+    pr_total_2 /= pr_y_2[i];
+  }
+
+  //------------- 5. Choose to accept or not, depending on the relative probabilities.
+  int choice = choose2(pr_total_1, pr_total_2);
+
+  //------------- 6. Set x depending on the choice
+  if (choice == 0)
+  {
+    R_X = M.get_modifiable_regs_for_context(token)[M_X];
+    Args.memory().set_reg_value(R_X, Double(x1), token);
+  }
+    
+  //------------- 7. Sample the Y[i] depending on the choice.
+  vector<log_double_t> pr_y = choice?pr_y_2:pr_y_1;
+
+  for(int i=0;i<M_Y.size();i++)
+  {
+    int R = M.get_modifiable_regs_for_context(token)[M_Y[i]];
+    double pr = 1.0 - double(pr_y[i]);
+    if (uniform() < pr)
+      Args.memory().set_reg_value(R, {constructor("Prelude.True",0),{}}, token);
   }
 
   return constructor("()",0);
