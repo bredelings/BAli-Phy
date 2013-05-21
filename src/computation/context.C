@@ -204,7 +204,7 @@ object_ref context::evaluate_expression(const expression_ref& E,bool ec) const
 
 object_ref context::perform_expression(const expression_ref& E,bool ec) const
 {
-  expression_ref E2 = (identifier("unsafePerformIO"),E);
+  expression_ref E2 = (get_expression(perform_io_head),E);
   return evaluate_expression_( preprocess(E2), ec);
 }
 
@@ -757,6 +757,7 @@ context& context::operator=(const context& C)
   
   memory = C.memory;
   token = memory->copy_token(C.token);
+  perform_io_head = C.perform_io_head;
   P = C.P;
   notes = C.notes;
 
@@ -815,6 +816,8 @@ context::context(const module_loader& L, const vector<expression_ref>& N, const 
   (*this) += "Distributions";
   (*this) += Ps;
 
+  perform_io_head = add_compute_expression(identifier("unsafePerformIO"));
+
   add_submodel(*this, N);
 }
 
@@ -830,6 +833,7 @@ context::context(const context& C)
    memory(C.memory),
    P(C.P),
    token(memory->copy_token(C.token)),
+   perform_io_head(C.perform_io_head),
    loader(C.loader)
 { }
 

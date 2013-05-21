@@ -22,6 +22,8 @@ class context: public Model_Notes
 
   int token;
 
+  int perform_io_head = -1;
+
   std::vector<int>& temp_heads() const {return memory->get_temp_heads_for_context(token);}
 
   std::vector<int>& heads() const {return memory->get_heads_for_context(token);}
