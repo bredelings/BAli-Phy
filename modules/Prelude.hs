@@ -300,13 +300,13 @@ sequence (a:as) = do { x <- a;
                        xs <- sequence as;
                        return (x:xs)
                      };
-                  
+
 sequence_ [] = return ();
 sequence_ (a:as) = do { a;
-                        as;
+                        sequence_ as;
                         return ()
                       };
-                  
+
 mapM f = sequence . map f;
 mapM_ f = sequence_ . map f
 }
