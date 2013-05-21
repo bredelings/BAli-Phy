@@ -51,5 +51,5 @@ note data data1 ~ plate (n_loci, \l -> afs2 (theta_effective!!l,map (!!l) i));
 note MakeLogger p;
 note MakeLogger theta;
 note MakeLogger t;
-note MakeMove (sum_out_coals (t!0) (i!0));
+note MakeMove (sum_out_coals (t'!0) (i!0));
 }
