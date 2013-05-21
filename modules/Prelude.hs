@@ -294,4 +294,19 @@ show (x,y) = "(" ++ show x ++ "," ++ show y ++ ")";
 show (x,y,z) = "(" ++ show x ++ "," ++ show y ++ "," ++ show z ++ ")";
 show (x:y) = x:y;
 show x     = listFromString $ builtin_show x;
+
+sequence [] = return [];
+sequence (a:as) = do { x <- a;
+                       xs <- sequence as;
+                       return (x:xs)
+                     };
+                  
+sequence_ [] = return ();
+sequence_ (a:as) = do { a;
+                        as;
+                        return ()
+                      };
+                  
+mapM f = sequence . map f;
+mapM_ f = sequence_ . map f
 }
