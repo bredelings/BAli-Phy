@@ -200,12 +200,17 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
       object_ref v = P.evaluate_expression( (identifier("findBinary"),token,rand_var,(identifier("distRange"),dist)), false);
       object_ptr<const OVector> V = convert<const OVector>(v);
 
+      MCMC::MoveAll rand_var_move(rand_var->print());
+
       for(const auto& x: *V)
       {
 	int m_index = *convert<const Int>(x);
 	string name = rand_var->print()+"_"+convertToString<int>(m_index);
-	add_modifiable_MH_move(name, bit_flip, m_index, {}, M, weight);
+	add_modifiable_MH_move(name, bit_flip, m_index, {}, rand_var_move, weight);
       }
+
+      if (rand_var_move.nmoves())
+	M.add(1.0, rand_var_move);
     }
 }
 
@@ -224,14 +229,19 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 
       object_ptr<const OVector> V = convert<const OVector>(v);
 
+      MCMC::MoveAll rand_var_move(rand_var->print());
+
       for(const auto& x: *V)
       {
 	object_ptr<const OPair> p = convert<const OPair>(x);
 	int m_index = *convert<const Int>(p->first);
 	Bounds<double> bounds = *convert<const Bounds<double>>(p->second);
 	string name = rand_var->print()+"_"+convertToString<int>(m_index);
-	M.add( 1.0, MCMC::Modifiable_Slice_Move(name, m_index, bounds, 1.0) );
+	rand_var_move.add( 1.0, MCMC::Modifiable_Slice_Move(name, m_index, bounds, 1.0) );
       }
+
+      if (rand_var_move.nmoves())
+	M.add(1.0, rand_var_move);
     }
 }
 
@@ -250,6 +260,8 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 
       object_ptr<const OVector> V = convert<const OVector>(v);
 
+      MCMC::MoveAll rand_var_move(rand_var->print());
+
       for(const auto& x: *V)
       {
 	object_ptr<const OPair> p = convert<const OPair>(x);
@@ -257,10 +269,13 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 	Bounds<double> bounds = *convert<const Bounds<double>>(p->second);
 	string name = rand_var->print()+"_cauchy_"+convertToString<int>(m_index);
 	if (bounds.has_lower_bound and bounds.lower_bound >= 0.0)
-	  add_modifiable_MH_move(name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), m_index, {1.0}, M, 0.01);
+	  add_modifiable_MH_move(name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), m_index, {1.0}, rand_var_move, 0.01);
 	else
-	  add_modifiable_MH_move(name, Reflect(bounds, shift_cauchy), m_index, {1.0}, M, 0.1);
+	  add_modifiable_MH_move(name, Reflect(bounds, shift_cauchy), m_index, {1.0}, rand_var_move, 0.1);
       }
+
+      if (rand_var_move.nmoves())
+	M.add(1.0, rand_var_move);
     }
 }
 
@@ -320,6 +335,8 @@ void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 
       object_ptr<const OVector> V = convert<const OVector>(v);
 
+      MCMC::MoveAll rand_var_move(rand_var->print());
+
       for(const auto& x: *V)
       {
 	OPair p = *convert<const OPair>(x);
@@ -329,8 +346,11 @@ void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 	int u = *convert<const Int>(bounds.second);
 
 	string name = rand_var->print()+"_uniform_"+convertToString<int>(m_index);
-	add_modifiable_MH_move(name, discrete_uniform, m_index, {double(l),double(u)}, M, 0.1);
+	add_modifiable_MH_move(name, discrete_uniform, m_index, {double(l),double(u)}, rand_var_move, 0.1);
       }
+
+      if (rand_var_move.nmoves())
+	M.add(1.0, rand_var_move);
     }
 }
 
