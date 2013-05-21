@@ -60,11 +60,12 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   assert(is_exactly(top->exp,"[]"));
 
   //------------- 1c. Get index for probability expression -----------------
-  int H_Pr = *convert<const Int>(Args.evaluate_reg_to_closure(R_X,true).exp->head);
+  int H_Pr = *Args.evaluate_as<Int>(2);
   int R_Pr = M.get_heads_for_context(token)[H_Pr];
 
   //------------- 2. Figure out t and the next t ------------//
 
+  R_X = M.get_modifiable_regs_for_context(token)[M_X];
   double x1 = *convert<const Double>(Args.evaluate_reg_to_closure(R_X,true).exp->head);
   double x2 = x1 + gaussian(0,1.0);
   x2 = reflect_more_than(x2, 0.0);
