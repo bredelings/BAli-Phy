@@ -27,6 +27,40 @@ extern "C" closure builtin_function_log(OperationArgs& Args)
   throw myexception()<<"log: object '"<<x->print()<<"' is not Double, Int, or Log_Double";
 }
 
+extern "C" closure builtin_function_pow(OperationArgs& Args)
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+
+  double yy = 0;
+  if (object_ptr<const Double> yd = dynamic_pointer_cast<const Double>(y))
+    yy = *yd;
+  else if (object_ptr<const Int> yi = dynamic_pointer_cast<const Int>(y))
+    yy = (int)*yi;
+  else
+    throw myexception()<<"pow: exponent '"<<x->print()<<"' is not Double or Int";
+    
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    double xx = *xd;
+    assert(xx > 0.0);
+    return new Double(pow(xx,yy));
+  }
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    double xx = (int)*xi;
+    assert(xx > 0.0);
+    return new Double(pow(xx,yy));
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    log_double_t xx = *xld;
+    return new Log_Double(pow(xx,yy));
+  }
+
+  throw myexception()<<"pow: object '"<<x->print()<<"' is not Double, Int, or Log_Double";
+}
+
 extern "C" closure builtin_function_sqrt(OperationArgs& Args)
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
