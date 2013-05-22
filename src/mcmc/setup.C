@@ -354,6 +354,36 @@ void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
     }
 }
 
+void add_integer_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
+{
+  int token = P.get_token();
+
+  for(int i=0;i<P.n_notes();i++)
+    if (is_exactly(P.get_note(i),":~"))
+    {
+      expression_ref rand_var = P.get_note(i)->sub[0];
+      expression_ref dist = P.get_note(i)->sub[1];
+
+      object_ref v = P.evaluate_expression( (identifier("findInteger"),token,rand_var,(identifier("distRange"),dist)), false);
+
+      object_ptr<const OVector> V = convert<const OVector>(v);
+
+      MCMC::MoveAll rand_var_move(rand_var->print());
+
+      for(const auto& x: *V)
+      {
+	OPair p = *convert<const OPair>(x);
+	int m_index = *convert<const Int>(p.first);
+	Bounds<int> bounds = *convert<const Bounds<int>>(p.second);
+	string name = rand_var->print()+"_slice_"+convertToString<int>(m_index);
+	rand_var_move.add( 1.0, MCMC::Integer_Modifiable_Slice_Move(name, m_index, bounds, 1.0) );
+      }
+
+      if (rand_var_move.nmoves())
+	M.add(1.0, rand_var_move);
+    }
+}
+
 /// Find parameters with distribution name Dist
 void add_dirichlet_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
@@ -417,6 +447,8 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   for(int i=0;i<P.n_branch_means();i++)
     add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
 
+
+  /*
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.HKY.kappa",     "kappa_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.rho",     "rho_scale_sigma",  0.2,  MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.TN.kappaPur", "kappa_scale_sigma",  0.3,  MH_moves);
@@ -440,10 +472,10 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.gamma.sigma/mu","gamma.sigma_scale_sigma",  0.25, MH_moves);
   add_MH_move(P, log_scaled(Between(-20,0,shift_cauchy)),    "*.Beta.varOverMu", "beta.Var_scale_sigma",  0.25, MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.LogNormal.sigma_over_mu","log-normal.sigma_scale_sigma",  0.25, MH_moves);
+*/
   MH_moves.add(4,MCMC::SingleMove(scale_means_only,
 				  "scale_means_only", {/*FIXME*/}, "mean")
 		      );
-
   
   add_MH_move(P, shift_delta,                  "b*.delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
   add_MH_move(P, Between(-40,0,shift_cauchy),  "*.logLambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
@@ -476,6 +508,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 
   // Add slice moves for continuous 1D distributions
   add_real_slice_moves(P, slice_moves);
+  add_integer_slice_moves(P, slice_moves);
   add_dirichlet_slice_moves(P, slice_moves);
 
   // imodel parameters

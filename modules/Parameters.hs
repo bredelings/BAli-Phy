@@ -72,6 +72,9 @@ findReal t p r = list_to_vector [c_pair (get_modifiable_index t m, getBounds (Op
 findBoundedInteger t p r = list_to_vector [c_pair (get_modifiable_index t m, c_pair (x,y))
                                           | (m,IntegerInterval (Just x) (Just y)) <- findAtomic p r];
 
+findInteger t p r = list_to_vector [c_pair (get_modifiable_index t m, getIntegerBounds (IntegerInterval x y)) 
+                                   | (m, IntegerInterval x y) <- findAtomic p r];
+
 findSimplex t p r = list_to_vector [c_pair (list_to_vector $ map (get_modifiable_index t) ms, c_pair (n,total)) 
                                  | (ms,Simplex n total) <- findAtomic p r];
   
