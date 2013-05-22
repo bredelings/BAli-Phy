@@ -4,10 +4,27 @@ using boost::dynamic_pointer_cast;
 
 extern "C" closure builtin_function_log(OperationArgs& Args)
 {
-  object_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  assert(*x > 0.0);
+  object_ref x = Args.evaluate(0);
 
-  return new Double(log(*x));
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    double xx = *xd;
+    assert(xx > 0.0);
+    return new Double(log(xx));
+  }
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    double xx = (int)*xi;
+    assert(xx > 0.0);
+    return new Double(log(xx));
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    log_double_t xx = *xld;
+    return new Double(log(xx));
+  }
+
+  throw myexception()<<"log: object '"<<x->print()<<"' is not Double, Int, or Log_Double";
 }
 
 extern "C" closure builtin_function_sqrt(OperationArgs& Args)
