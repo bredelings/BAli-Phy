@@ -111,6 +111,34 @@ struct modifiable_slice_function:public slice_function
 };
 
 
+/// A slice_function for slice-sampling a single parameter
+struct integer_modifiable_slice_function:public slice_function
+{
+  int count;
+
+  Probability_Model& P;
+
+  /// The modifiable index.
+  int m;
+
+  double current_x = 0.0;
+
+  double operator()(double);
+
+  double operator()();
+
+  double current_value() const;
+
+  // function to go from the stored value to the value on which the prior is.
+  double (*transform)(double);
+  // function to go from the value on which the prior is to the stored value.
+  double (*inverse)(double);
+
+  integer_modifiable_slice_function(Probability_Model&,int,const Bounds<int>&);
+  integer_modifiable_slice_function(Probability_Model&,int,const Bounds<int>&,double(*)(double),double(*)(double));
+};
+
+
 /// A slice_function for slice-sampling a single branch length
 struct branch_length_slice_function:public slice_function
 {

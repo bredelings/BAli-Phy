@@ -109,6 +109,60 @@ modifiable_slice_function::modifiable_slice_function(Probability_Model& P_,int m
 }
 
 
+double integer_modifiable_slice_function::operator()(double x)
+{
+  count++;
+  current_x = x;
+  int x_integer = (int)floor(current_x);
+  P.set_modifiable_value(m, Int(x_integer));
+
+  return log(P.heated_probability());
+}
+
+double integer_modifiable_slice_function::operator()()
+{
+  count++;
+  return log(P.heated_probability());
+}
+
+double integer_modifiable_slice_function::current_value() const
+{
+  int x_integer = (int)((double)P.get_modifiable_value_as<Double>(m));
+  assert(x_integer == (int)floor(current_x));
+  return current_x;
+}
+
+
+Bounds<double> convert_bounds(const Bounds<int>& int_bounds)
+{
+  Bounds<double> double_bounds;
+
+  double_bounds.lower_bound = int_bounds.lower_bound;
+  double_bounds.has_lower_bound = int_bounds.has_lower_bound;
+
+  double_bounds.upper_bound = int_bounds.upper_bound+1;
+  double_bounds.has_upper_bound = int_bounds.has_upper_bound;
+
+  return double_bounds;
+}
+
+integer_modifiable_slice_function::integer_modifiable_slice_function(Probability_Model& P_,int m_, const Bounds<int>& bounds)
+  :integer_modifiable_slice_function(P_, m_, bounds, slice_sampling::identity, slice_sampling::identity)
+{ }
+
+integer_modifiable_slice_function::integer_modifiable_slice_function(Probability_Model& P_,int m_, const Bounds<int>& bounds,
+						     double(*f1)(double),
+						     double(*f2)(double))
+  :slice_function(convert_bounds(bounds)),
+   count(0),P(P_),m(m_),transform(f1),inverse(f2)
+{
+  if (has_lower_bound)
+    lower_bound = transform(lower_bound);
+  if (has_upper_bound)
+    upper_bound = transform(upper_bound);
+}
+
+
 double branch_length_slice_function::operator()(double l)
 {
   count++;
