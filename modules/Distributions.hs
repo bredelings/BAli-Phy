@@ -85,7 +85,7 @@ logGamma = expTransform' gamma;
 logLaplace = expTransform' laplace;
 logCauchy = expTransform' cauchy;
 
-geometric_density p n = doubleToLogDouble $ p**(intToDouble (n-1)) * (1.0-p);
+geometric_density p n = doubleToLogDouble $ p**(n-1) * (1.0-p);
 
 geometric_quantile p = error "geometric currently has no quantile";
 
