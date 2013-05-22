@@ -607,6 +607,47 @@ namespace MCMC {
     :Slice_Move(s,v,W_,f1,f2), m_index(m), bounds(b)
   {}
 
+  void Integer_Modifiable_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
+  {
+    int v1 = P->get_modifiable_value_as<Int>(m_index);
+    double x1 = double(v1)+uniform();
+
+    integer_modifiable_slice_function logp(*P, m_index, bounds, transform, inverse);
+
+    double x2 = sample(*P,logp,x1);
+
+    //---------- Record Statistics --------------//
+    Result result(2);
+    result.totals[0] = std::abs(x2-x1);
+    result.totals[1] = logp.count;
+    
+    Stats.inc(name,result);
+  }
+
+  Integer_Modifiable_Slice_Move::Integer_Modifiable_Slice_Move(const string& s,int m,
+					       const Bounds<int>& b, double W_)
+    :Slice_Move(s,W_), m_index(m), bounds(b)
+  {}
+
+  Integer_Modifiable_Slice_Move::Integer_Modifiable_Slice_Move(const string& s, const string& v,int m,
+					       const Bounds<int>& b, double W_)
+    :Slice_Move(s,v,W_), m_index(m), bounds(b)
+  {}
+
+  Integer_Modifiable_Slice_Move::Integer_Modifiable_Slice_Move(const string& s,int m,
+					       const Bounds<int>& b, double W_,
+					       double(*f1)(double),
+					       double(*f2)(double))
+    :Slice_Move(s,"",W_,f1,f2), m_index(m), bounds(b)
+  {}
+
+  Integer_Modifiable_Slice_Move::Integer_Modifiable_Slice_Move(const string& s, const string& v,int m,
+					       const Bounds<int>& b, double W_,
+					       double(*f1)(double),
+					       double(*f2)(double))
+    :Slice_Move(s,v,W_,f1,f2), m_index(m), bounds(b)
+  {}
+
   void Dirichlet_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
   {
     double v1 = P->get_parameter_value_as<Double>(indices[n]);
