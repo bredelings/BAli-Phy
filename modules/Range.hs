@@ -3,6 +3,7 @@ module Range where
 data Range = OpenInterval Double Double | IntegerInterval Int Int | TrueFalseRange | Simplex Int Double | ListRange [Range];
  
 builtin builtinGetBounds 2 "get_bounds" "Range";
+builtin builtinGetIntegerBounds 2 "get_integer_bounds" "Range";
   
 realLine = OpenInterval Nothing Nothing;
 
@@ -24,6 +25,12 @@ getBounds (OpenInterval Nothing (Just u))  = builtinGetBounds () u;
 getBounds (OpenInterval (Just l) Nothing)  = builtinGetBounds l ();
 getBounds (OpenInterval (Just l) (Just u)) = builtinGetBounds l u;
 getBounds _                                = error "getBounds is undefined if argument is not an OpenInterval!";
+
+getIntegerBounds (IntegerInterval Nothing Nothing)   = builtinGetIntegerBounds () ();
+getIntegerBounds (IntegerInterval Nothing (Just u))  = builtinGetIntegerBounds () u;
+getIntegerBounds (IntegerInterval (Just l) Nothing)  = builtinGetIntegerBounds l ();
+getIntegerBounds (IntegerInterval (Just l) (Just u)) = builtinGetIntegerBounds l u;
+getIntegerBounds _                                = error "getIntegerBounds is undefined if argument is not an IntegerInterval!";
 
 get_integer_bounds (IntegerInterval Nothing Nothing)   = ((),());
 get_integer_bounds (IntegerInterval Nothing (Just u))  = ((),u);
