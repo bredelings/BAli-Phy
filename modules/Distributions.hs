@@ -19,6 +19,7 @@ builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
 builtin builtin_uniform_density 3 "uniform_density" "Distribution";
 
 builtin builtin_binomial_density 3 "binomial_density" "Distribution";
+builtin geometric_density 2 "geometric_density" "Distribution";
 
 data ProbDensity = ProbDensity a b c d;
 data DiscreteDistribution a = DiscreteDistribution [(Double,a)];
@@ -84,8 +85,6 @@ logExponential = expTransform' exponential;
 logGamma = expTransform' gamma;
 logLaplace = expTransform' laplace;
 logCauchy = expTransform' cauchy;
-
-geometric_density p n = doubleToLogDouble $ if n < 0 then 0.0 else p**n * (1.0-p);
 
 geometric_quantile p = error "geometric currently has no quantile";
 

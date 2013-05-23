@@ -129,3 +129,11 @@ extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
   
   return object_ptr<Log_Double> (new Log_Double( ::binomial_pdf(n,k,p) ) );
 }
+
+extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
+{
+  double p = *Args.evaluate_as<Double>(0);
+  double n = *Args.evaluate_as<Int>(1);
+  
+  return object_ptr<Log_Double> (new Log_Double( ::geometric_pdf(p,n) ) );
+}

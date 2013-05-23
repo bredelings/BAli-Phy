@@ -67,6 +67,8 @@ log_double_t cauchy_pdf(double y, double a, double b);
 
 log_double_t binomial_pdf(int total, int n, double p);
 
+log_double_t geometric_pdf(double p, int n);
+
 // -------- Topology counting functions ------ //
 log_double_t num_branches(int n);
 log_double_t num_topologies(int n);

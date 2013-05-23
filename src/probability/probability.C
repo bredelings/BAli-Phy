@@ -382,3 +382,15 @@ log_double_t binomial_pdf(int n, int k, double p)
 
   return Pr;
 }
+
+log_double_t geometric_pdf(double p, int n)
+{
+  if (n < 0)
+    return 0.0;
+
+  log_double_t pr = (1.0-p);
+  if (n>0)
+    pr *= pow(log_double_t(p),double(n));
+
+  return pr;
+}
