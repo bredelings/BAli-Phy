@@ -67,9 +67,14 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   //------------- 2. Figure out t and the next t ------------//
 
   R_X = M.get_modifiable_regs_for_context(token)[M_X];
-  double x1 = *convert<const Double>(Args.evaluate_reg_to_closure(R_X,true).exp->head);
-  double x2 = x1 + gaussian(0,2.0);
-  x2 = reflect_more_than(x2, 0.0);
+  int x1 = *convert<const Int>(Args.evaluate_reg_to_closure(R_X,true).exp->head);
+  int x2 = x1 + 1;
+  if (uniform() < 0.5)
+  {
+    x2 = x1 - 1;
+    if (x2 < 0)
+      x2 = 0;
+  }
 
   //------------- 3. Record base probability and relative probability for x1
   
@@ -100,7 +105,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   //------------- 4. Record base probability and relative probability for x2
 
   R_X = M.get_modifiable_regs_for_context(token)[M_X];
-  Args.memory().set_reg_value(R_X, Double(x2), token);
+  Args.memory().set_reg_value(R_X, Int(x2), token);
 
   R_Pr = M.get_heads_for_context(token)[H_Pr];
   log_double_t pr_base_2 = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
@@ -127,7 +132,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   if (choice == 0)
   {
     R_X = M.get_modifiable_regs_for_context(token)[M_X];
-    Args.memory().set_reg_value(R_X, Double(x1), token);
+    Args.memory().set_reg_value(R_X, Int(x1), token);
   }
     
   //------------- 7. Sample the Y[i] depending on the choice.
