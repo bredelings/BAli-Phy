@@ -32,9 +32,9 @@ note z ~ iid(n_loci, normal(0.0, 1.0));
                else
                  exp x;
 
-  theta = [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n_loci [0..], let {k=category!!i}];
+  theta_effective = [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n_loci [0..], let {k=category!!i}];
 
-  theta_effective = map (*(2.0-s)) theta;
+  theta = map (/(2.0-s)) theta_effective;
 
 note theta_example ~ mixture [ (p!!i, logNormal(log(mean!!i),sigmaOverMu!!i)) | i <- take n [0..] ];
 
