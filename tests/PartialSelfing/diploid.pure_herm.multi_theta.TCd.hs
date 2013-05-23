@@ -40,16 +40,13 @@ note theta_example ~ mixture [ (p!!i, logNormal(log(mean!!i),sigmaOverMu!!i)) | 
 
 note s ~ uniform(0.0, 1.0);
 
-note t' ~ iid(n_individuals, exponential (-1.0/log s));
-
-  t = map truncate t';
+note t ~ iid(n_individuals, geometric s);
 
 note i ~ plate(n_individuals, \k->iid(n_loci, bernoulli (1.0-0.5**t!!k)) );
 
 note data data1 ~ plate (n_loci, \l -> afs2 (theta_effective!!l,map (!!l) i));
 
 note MakeLogger p;
-note MakeLogger theta;
-note MakeLogger t;
-note MakeMove (\pr -> mapM_ (\k-> sum_out_coals (t'!!k) (i!!k) pr) [0..n_individuals-1]);
+note MakeLogger theta_herm;
+note MakeMove (\pr -> mapM_ (\k-> sum_out_coals (t!!k) (i!!k) pr) [0..n_individuals-1]);
 }
