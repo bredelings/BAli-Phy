@@ -32,9 +32,19 @@ note z ~ iid(n_loci, normal(0.0, 1.0));
                else
                  exp x;
 
+note p_m ~ uniform (0.0, 1.0);
+  
+p_h = 1.0 - p_m;
+  
   theta_effective = [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n_loci [0..], let {k=category!!i}];
 
-  theta_herm = map (/(1.0-s/2.0)) theta_effective;
+  theta_factor = (1.0 - s*0.5);
+  
+  andro_factor = (1.0 - s*0.5)/( (1.0+s)^2 /(4.0*p_h) + (1.0-s)^2/(4.0*p_m));
+
+  theta_herm = map (/theta_factor) theta_effective;
+  
+  theta_andro = map (/andro_factor) theta_effective;
 
 note theta_example ~ mixture [ (p!!i, logNormal(log(mean!!i),sigmaOverMu!!i)) | i <- take n [0..] ];
 
@@ -46,7 +56,10 @@ note i ~ plate(n_individuals, \k->iid(n_loci, bernoulli (1.0-0.5**t!!k)) );
 
 note data data1 ~ plate (n_loci, \l -> afs2 (theta_effective!!l,map (!!l) i));
 
+note data 19 ~ binomial(112, p_m);
+
 note MakeLogger p;
 note MakeLogger theta_herm;
+note MakeLogger theta_andro;
 note MakeMove (\pr -> mapM_ (\k-> sum_out_coals (t!!k) (i!!k) pr) [0..n_individuals-1]);
 }
