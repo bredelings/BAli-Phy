@@ -29,11 +29,17 @@ note q ~ iid (n, beta(1.0,alpha) );
   
 note log_lambda_sample ~ lambda_dist;
   
-note logLambdas ~ iid(n_branches, lambda_dist);
+note category ~ iid(n_branches, categorical p);
+
+note z ~ iid(n_branches, normal(0.0, 1.0));
+
+  logLambdas = [ mean!!k + z!!i * sigma!!k | i <- take n_branches [0..], let {k=category!!i}];
+
 note meanIndelLengthMinus1 ~ exponential(10.0);
     
   epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
   lambdas = map exp logLambdas;
 
   main = (\d b heat training -> rs07_branch_HMM epsilon (lambdas!!b * d!b) heat training, \l -> rs07_lengthp epsilon l);
+note MakeLogger logLambdas;
 }
