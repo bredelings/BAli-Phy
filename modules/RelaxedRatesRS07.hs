@@ -13,7 +13,7 @@ module RelaxedRatesRS07 where
 note mean ~ iid(n, laplace(-4.0,1.0));
 note sigma ~ iid(n, gamma(1.05,0.05) );
   
-  alpha = 0.1;
+note alpha ~ gamma (2.0, 1.0/6.0);
 
 note q ~ iid (n, beta(1.0,alpha) );
 
@@ -42,4 +42,5 @@ note meanIndelLengthMinus1 ~ exponential(10.0);
 
   main = (\d b heat training -> rs07_branch_HMM epsilon (lambdas!!b * d!b) heat training, \l -> rs07_lengthp epsilon l);
 note MakeLogger logLambdas;
+note MakeLogger p;
 }
