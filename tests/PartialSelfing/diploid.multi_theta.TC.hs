@@ -6,12 +6,12 @@ module Test where
 
   filename = "/home/bredelings/Reports/Kmar/TwinCays2005a.phase1.infile";
 
-  n = 5;
+  n = 10;
 
 note mean ~ iid(n, gamma(0.5,0.5) );
 note sigmaOverMu ~ iid(n, gamma(1.05,0.1) );
 
-  alpha = 1.0;
+note alpha ~ gamma(0.5, 2.0);
 
 note p ~ dirichlet' (n, alpha/(intToDouble n));
 
