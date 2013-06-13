@@ -32,11 +32,14 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "stats-table.H"
 
 #include <boost/program_options.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 using namespace std;
 
 namespace po = boost::program_options;
 using po::variables_map;
+
+using boost::dynamic_bitset;
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
@@ -52,6 +55,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   visible.add_options()
     ("help,h", "Produce help message.")
     ("ignore", value<vector<string> >()->composing(),"Do not analyze these fields.")
+    ("select", value<vector<string> >()->composing(),"Analyze only these fields.")
     ("individual,i","Show results for individual files separately also.")
     ("skip,s",value<string>()->default_value("10%"),"Number of initial lines to skip.")
     ("sub-sample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
@@ -411,20 +415,24 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   return var_stats(Ne,RCI,RNe,RCF);
 }
 
-vector<bool> 
-get_mask_by_ignoring(const vector<string>& strings,const vector<string>& names, vector<bool> mask)
+dynamic_bitset<>
+get_mask(const vector<string>& strings,const vector<string>& names)
 {
-  for(int i=0;i<strings.size();i++) {
+  dynamic_bitset<> mask(names.size());
+
+  for(int i=0;i<strings.size();i++) 
+  {
     const string& s = strings[i];
 
-    // This is a field name to ignore
-    if (s.find(':') == -1) {
+    // This is a field name
+    if (s.find(':') == -1) 
+    {
       int index = find_index(names,s);
       if (index == -1)
 	throw myexception()<<"No field named '"<<s<<"'";
-      mask[index] = false;
+      mask[index] = true;
     }
-    // This is a numeric range of fields to ignore
+    // This is a numeric range of fields
     else {
       vector<string> bounds = split(s,':');
       if (bounds.size() != 2) 
@@ -441,7 +449,7 @@ get_mask_by_ignoring(const vector<string>& strings,const vector<string>& names, 
 
       for(int i=0;i<mask.size();i++)
 	if (start <=i+1 and i+1 <= end)
-	  mask[i]=false;
+	  mask[i]=true;
     }
   }
 
@@ -507,10 +515,14 @@ int main(int argc,char* argv[])
     int n_columns = tables[0].n_columns();
 
     //------------ Parse column mask ----------//
-    vector<bool> mask(n_columns,true);
+    dynamic_bitset<> mask(n_columns);
+    mask.flip();
     
     if (args.count("ignore"))
-      mask = get_mask_by_ignoring(args["ignore"].as<vector<string> >(), field_names, mask);
+      mask = mask & ~get_mask(args["ignore"].as<vector<string> >(), field_names);
+
+    if (args.count("select"))
+      mask &= get_mask(args["select"].as<vector<string> >(), field_names);
 
     //------------- Determine burnin ---------------//
     int skip = 0;
