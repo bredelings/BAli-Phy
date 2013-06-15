@@ -244,6 +244,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("unalign-all","Unalign all sequences sequences before use.")
     ("tree",value<string>(),"File with initial tree")
     ("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>")
+    ("set",value<vector<string> >()->composing(),"Set key=<value>")
     ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.")
     ("BUGS",value<string>(),"File containing heirarchical model description.")
     ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
@@ -323,6 +324,26 @@ int parameter_with_extension(const Model& M, const string& name)
     e<<"   * "<<M.parameter_name(indices[i])<<"\n";
 
   throw e;
+}
+
+void set_key_values(Parameters& P, const variables_map& args)
+{
+  if (not args.count("set")) return;
+
+  vector<string> key_value_pairs = args["set"].as<vector<string> >();
+
+  for(const auto& key_value_pair: key_value_pairs)
+  {
+    vector<string> parse = split(key_value_pair,'=');
+    if (parse.size() != 2)
+      throw myexception()<<"Ill-formed key-value pair '"<<key_value_pair<<"'.";
+
+    string key = parse[0];
+
+    double value = convertTo<double>(parse[1]);
+    
+    (*P.keys.modify())[key] = value;
+  }
 }
 
 /// Parse command line arguments of the form --fix X=x or --unfix X=x or --set X=x and modify P

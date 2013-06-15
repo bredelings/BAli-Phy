@@ -112,7 +112,16 @@ void stats_table::load_file(istream& file,int skip,int subsample, int max)
     // This is the 'op'
     {
       // should this be protected by a try { } catch(...) {} block?
-      v = split<double>(line,'\t');
+      try
+      {
+	v = split<double>(line,'\t');
+      }
+      catch (...)
+      {
+	// +2 = +1 (start indexing at 1) +1 (count the header line)
+	std::cerr<<"Error: bad data on line "<<line_number+2<<", giving up.\n Line = '"<<line<<"'";
+	break;
+      }
 
       if (v.size() != n_columns())
 	throw myexception()<<"Found "<<v.size()<<"/"<<n_columns()<<" values on line "<<line_number<<".";
