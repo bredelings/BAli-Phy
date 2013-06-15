@@ -8,7 +8,7 @@
 # -cwd:       Execute the job from the current working directory.
 # -N <name>   Specify job name
 
-QSUB_ARGS='-V -S /bin/sh -cwd -N bali-phy'
+QSUB_ARGS='-V -S /bin/sh -cwd -N bali-phy -l mem_free=2G'
 
 #------------------ Locate the programs --------------------#
 QSUB=$(type -p qsub)
