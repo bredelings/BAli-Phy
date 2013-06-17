@@ -71,4 +71,5 @@ note MakeLogger theta_herm_example;
 note MakeLogger theta_andro_example;
 
 note MakeMove (\pr -> mapM_ (\k-> sum_out_coals (t!!k) (i!!k) pr) [0..n_individuals-1]);
+note MakeMove (\pr -> mapM_ (\l-> gibbs_sample_categorical (category!!l) n pr) [0..n_loci-1]);
 }

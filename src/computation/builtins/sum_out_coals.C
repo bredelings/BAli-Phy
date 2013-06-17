@@ -148,3 +148,50 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
   return constructor("()",0);
 }
+
+// gibbs_sample_categorical x n pr
+extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args)
+{
+  assert(not Args.evaluate_changeables());
+
+  int token = Args.current_token();
+
+  const reg_heap& M = Args.memory();
+
+  //------------- 1a. Get argument X -----------------
+  int R_X = Args.evaluate_slot_to_reg(0);
+  int M_X = is_a<modifiable>(M.access(R_X).C.exp)->index;
+
+  //------------- 1b. Get arguments Y_i  -----------------
+  int n = *Args.evaluate_as<Int>(1);
+  std::cerr<<"n = "<<n<<endl;
+
+  //------------- 1c. Get index for probability expression -----------------
+  int H_Pr = *Args.evaluate_as<Int>(2);
+  int R_Pr = M.get_heads_for_context(token)[H_Pr];
+
+  //------------- 2. Figure out probability of each value of x ------------//
+  int x1 = *convert<const Int>(Args.evaluate_reg_to_closure(R_X,true).exp->head);
+  std::cerr<<"x1 = "<<x1<<endl;
+
+  vector<log_double_t> pr_x(n);
+  for(int i=0;i<pr_x.size();i++)
+  {
+    std::cerr<<"i = "<<i<<endl;
+    R_X = M.get_modifiable_regs_for_context(token)[M_X];
+    Args.memory().set_reg_value(R_X, Int(i), token);
+    R_Pr = M.get_heads_for_context(token)[H_Pr];
+    log_double_t pr = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
+    std::cerr<<"pr = "<<pr<<endl;
+    pr_x[i] = pr;
+  }
+
+  //------------- 4. Record base probability and relative probability for x2
+
+  int x2 = choose(pr_x);
+
+  R_X = M.get_modifiable_regs_for_context(token)[M_X];
+  Args.memory().set_reg_value(R_X, Int(x2), token);
+
+  return constructor("()",0);
+}

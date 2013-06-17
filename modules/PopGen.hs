@@ -12,8 +12,11 @@ builtin builtin_ewens_sampling_mixture_probability 3 "ewens_sampling_mixture_pro
 builtin builtin_ewens_diploid_probability 3 "ewens_diploid_probability" "popgen";
 builtin builtin_selfing_coalescence_probability 3 "selfing_coalescence_probability" "popgen";
 builtin builtin_sum_out_coals 3 "sum_out_coals" "sum_out_coals";
+builtin builtin_gibbs_sample_categorical 3 "gibbs_sample_categorical" "sum_out_coals";
 
 sum_out_coals x y pr = IOAction3 builtin_sum_out_coals x y pr;
+
+gibbs_sample_categorical x n pr = IOAction3 builtin_gibbs_sample_categorical x n pr;
 
 read_phase_file = builtin_read_phase_file . listToString;
 
