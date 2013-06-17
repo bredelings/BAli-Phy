@@ -6,7 +6,7 @@ module Test where
 
   filename = "/home/bredelings/Reports/Kmar/TwinCays2005a.phase1.infile";
 
-  n = 10;
+  n = 20;
 
 note mean ~ iid(n, gamma(0.5,0.5) );
 note sigmaOverMu ~ iid(n, gamma(1.05,0.1) );
