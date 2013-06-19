@@ -222,6 +222,8 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
   // This is the theta = 2*N*mu
   const double theta = *Args.evaluate_as<Double>(0);
 
+  const int missing = 0;
+
   assert(theta > 0);
 
   // These are indicators of coalescence
@@ -247,18 +249,36 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
     int a1 = *convert<const Int>(alleles[2*i]);
     int a2 = *convert<const Int>(alleles[2*i+1]);
 
-    bool coalesced = convert<const constructor>(I[i])->f_name == "Prelude.True";
+    int s1 = (a1 != missing)?1:0;
+    int s2 = (a2 != missing)?1:0;
+    int s = s1 + s2;
 
-    // Heterozygotes coalesce before outbreeding with probability 0.
-    if (a1 != a2 and coalesced)
-      Pr = 0.0;
+    if (s == 0)
+      continue;
+    else if (s == 1)
+    {
+      if (a1 == missing) std::swap(a1,a2);
+      Pr *= process_allele(counts[a1], total, theta);
+    }
+    else 
+    {
+      assert(s == 2);
+      bool coalesced = convert<const constructor>(I[i])->f_name == "Prelude.True";
 
-    Pr *= process_allele(counts[a1], total, theta);
-
-    // Don't count the second allele if they coalesced.
-    if (coalesced) continue;
-
-    Pr *= process_allele(counts[a2], total, theta);
+      // Heterozygotes coalesce before outbreeding with probability 0.
+      if (a1 != a2 and coalesced)
+      {
+	Pr = 0.0;
+	break;
+      }
+      
+      Pr *= process_allele(counts[a1], total, theta);
+      
+      // Don't count the second allele if they coalesced.
+      if (coalesced) continue;
+      
+      Pr *= process_allele(counts[a2], total, theta);
+    }
   }
 
   return Log_Double(Pr);
