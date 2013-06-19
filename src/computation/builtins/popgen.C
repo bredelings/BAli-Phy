@@ -200,7 +200,12 @@ double process_allele(int& count, int& total, double theta)
   double Pr;
 
   if (count == 0)
-    Pr = theta/(theta + total);
+  {
+    if (total == 0)
+      Pr = 1.0;
+    else
+      Pr = theta/(theta + total);
+  }
   else if ( count > 0 )
     Pr = double(count)/(theta + total);
   else
