@@ -447,47 +447,6 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   return var_stats(Ne,RCI,RNe,RCF);
 }
 
-dynamic_bitset<>
-get_mask(const vector<string>& strings,const vector<string>& names)
-{
-  dynamic_bitset<> mask(names.size());
-
-  for(int i=0;i<strings.size();i++) 
-  {
-    const string& s = strings[i];
-
-    // This is a field name
-    if (s.find(':') == -1) 
-    {
-      int index = find_index(names,s);
-      if (index == -1)
-	throw myexception()<<"No field named '"<<s<<"'";
-      mask[index] = true;
-    }
-    // This is a numeric range of fields
-    else {
-      vector<string> bounds = split(s,':');
-      if (bounds.size() != 2) 
-	throw myexception()<<"Can't understand the column range '"<<s<<"'.";
-
-      unsigned start = 1;
-      unsigned end = mask.size();
-      if (bounds[0].size())
-	start = convertTo<unsigned>(bounds[0]);
-      if (bounds[1].size())
-	start = convertTo<unsigned>(bounds[1]);
-      start = max(1U,start);
-      end = min((unsigned)(mask.size()),end);
-
-      for(int i=0;i<mask.size();i++)
-	if (start <=i+1 and i+1 <= end)
-	  mask[i]=true;
-    }
-  }
-
-  return mask;
-}
-
 // stats-table can't distinguish double && int
 
 /// FIXME - reduce the numbers of quantile/median/confidence_interval calls?
@@ -512,8 +471,13 @@ int main(int argc,char* argv[])
     if (args.count("max"))
       max = args["max"].as<int>();
 
-    vector<string> ignore = args["ignore"].as<vector<string> >();
-    vector<string> select = args["select"].as<vector<string> >();
+    vector<string> ignore;
+    if (args.count("ignore"))
+      ignore = args["ignore"].as<vector<string> >();
+
+    vector<string> select;
+    if (args.count("select"))
+      select = args["select"].as<vector<string> >();
 
     //------------ Read Data ---------------//
     vector<stats_table> tables;
@@ -549,16 +513,6 @@ int main(int argc,char* argv[])
     }
     int n_columns = tables[0].n_columns();
 
-    //------------ Parse column mask ----------//
-    dynamic_bitset<> mask(n_columns);
-    mask.flip();
-    
-    if (args.count("ignore"))
-      mask = mask & ~get_mask(args["ignore"].as<vector<string> >(), field_names);
-
-    if (args.count("select"))
-      mask &= get_mask(args["select"].as<vector<string> >(), field_names);
-
     //------------- Determine burnin ---------------//
     int skip = 0;
     {
@@ -585,11 +539,11 @@ int main(int argc,char* argv[])
 
     for(int i=0;i<tables.size();i++) {
       for(int j=0;j<n_columns;j++) 
-	if (mask[j]) {
-	  int b = get_burn_in(tables[i].column(j), 0.05, 2);
-	  burnin[i][j] = b;
-	  worst_burnin.check_max(j,b);
-	}
+      {
+	int b = get_burn_in(tables[i].column(j), 0.05, 2);
+	burnin[i][j] = b;
+	worst_burnin.check_max(j,b);
+      }
       tables[i].chop_first_rows(skip);
       if (not tables[i].n_rows())
 	throw myexception()<<"File '"<<filenames[i]<<"' has no samples left after removal of burn-in!";
@@ -606,21 +560,19 @@ int main(int argc,char* argv[])
     vector<string> decreasing_names;
     for(int i=0;i<n_columns;i++) 
     {
-      if (mask[i]) {
-	var_stats S = show_stats(args, tables, i, burnin);
-	cout<<endl;
+      var_stats S = show_stats(args, tables, i, burnin);
+      cout<<endl;
 
-	if (not S.ignored) {
-	  worst_Ne.check_min(i,S.Ne);
-	  worst_RCI.check_max(i,S.RCI);
-	  worst_RNe.check_max(i,S.RNe);
-	  worst_RCF.check_max(i,S.RCF);
-	}
-	else if (S.increasing)
-	  increasing_names.push_back(field_names[i]);
-	else if (S.decreasing)
-	  decreasing_names.push_back(field_names[i]);
+      if (not S.ignored) {
+	worst_Ne.check_min(i,S.Ne);
+	worst_RCI.check_max(i,S.RCI);
+	worst_RNe.check_max(i,S.RNe);
+	worst_RCF.check_max(i,S.RCF);
       }
+      else if (S.increasing)
+	increasing_names.push_back(field_names[i]);
+      else if (S.decreasing)
+	decreasing_names.push_back(field_names[i]);
     }
 
     if (worst_Ne.index != -1)
