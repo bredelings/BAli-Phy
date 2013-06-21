@@ -459,6 +459,8 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
 int main(int argc,char* argv[]) 
 { 
+  std::ios::sync_with_stdio(false);
+
   try {
     //----------- Parse command line  -----------//
     variables_map args = parse_cmd_line(argc,argv);
