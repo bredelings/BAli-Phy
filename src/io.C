@@ -19,34 +19,49 @@ istream& portable_getline(istream& file,string& s)
   const char LF = 10;
 
   s.clear();
+  ios_base::iostate err = ios_base::goodbit;
 
   // Make sure that while(getline()) terminates:
   //  - read at least one char in order to set failbit on an empty file.
-  int c = file.get();
-
-  do
+  try
   {
-    // we just read an EOF
-    if (file.eof()) break;
+    std::streambuf* sb = file.rdbuf();
 
-    // we just read an EOL
-    if (c == CR or c == LF) break;
+    int c = sb->sgetc();
 
-    s.append(1,c);
+    while (c != std::streambuf::traits_type::eof() and c != CR and c != LF)
+    {
+      s.append(1,c);
+      
+      c = sb->snextc();
+    }
 
-    c = file.get();
+    // If the line ends with an EOF, then set eofbit, and we're done.
+    if (c == std::streambuf::traits_type::eof() )
+      err |= ios::eofbit;
+    else
+    {
+      // If then line ends with an EOL then move the pointer to the next character.
+      char c2 = sb->snextc();
 
-  } while(file);
+      // If this is the LF of a CR LF, then skip the LF
+      if (c == CR and c2 == LF) sb->sbumpc();
 
-  // If the EOL character is a CR, then also skip any following LF
-  if (c == CR and file.good() and file.peek() == LF)
-    file.ignore();
+      // NOTE: Any EOF's that we discover here will end the NEXT line.
+    }
+  }
+  catch (...)
+  {
+    file.setstate(ios::badbit);
+  }
 
-  // FIXME: redo this using the underlying buffer...
-  // If we read to the EOF, then the last file.get() will set the failbit, because
-  //  it didn't return a character.  But we don't want this, unless s is empty.
-  if (file.eof() and s.size() and file.fail())
-    file.clear( file.rdstate() & ~ios::failbit );
+  // If we didn't read any characters, then set the failbit.
+  if (not s.size())
+    err |= ios::failbit;
+
+  // Set any error bits.
+  if (err)
+    file.setstate(err);
 
   return file;
 }
