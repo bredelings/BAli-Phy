@@ -31,7 +31,7 @@ istream& portable_getline(istream& file,string& s)
 
     while (c != std::streambuf::traits_type::eof() and c != CR and c != LF)
     {
-      s.append(1,c);
+      s += c;
       
       c = sb->snextc();
     }
