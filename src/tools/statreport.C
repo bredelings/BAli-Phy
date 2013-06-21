@@ -30,6 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "statistics.H"
 #include "stats-table.H"
+#include "math/log-double.H"
 
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
@@ -61,6 +62,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("sub-sample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
     ("max,m",value<int>(),"Maximum number of lines to read.")
     ("mean", "Show mean and standard deviation.")
+    ("log-mean", "Show log mean of X given log X.")
     ("median", "Show median and confidence level.")
     ("confidence",value<double>()->default_value(0.95,"0.95"),"Confidence interval level.")
     ("precision,p", value<unsigned>()->default_value(4),"Number of significant figures.")
@@ -244,6 +246,19 @@ bool monotonic_decreasing(const vector<stats_table>& tables, int index)
 }
 
 
+double log_average_exp(const vector<double>& xs)
+{
+  log_double_t total = 0;
+  for(double x:xs)
+  {
+    total += exp<log_double_t>(x);
+    //    std::cerr<<"x = "<<x<<"  total = "<<total<<"\n";
+  }
+  total /= double(xs.size());
+  return log(total);
+}
+
+
 var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int index,const vector<vector<int> >& burnin)
 {
   const string& name = tables[0].names()[index];
@@ -284,14 +299,14 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
   bool integers = is_integers(total);
   // Print out mean and standard deviation
-  if (args.count("mean")) {
-    if (tables.size() > 1)
-      for(int i=0;i<tables.size();i++) {
+  if (args.count("mean"))
+  {
+    if (tables.size() > 1 and show_individual)
+      for(int i=0;i<tables.size();i++) 
+      {
 	const vector<double>& values = tables[i].column(index);
-	if (show_individual) {
-	  cout<<" E "<<name<<" ["<<i+1<<"] = "<<average(values);
-	  cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
-	}
+	cout<<" E "<<name<<" ["<<i+1<<"] = "<<average(values);
+	cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
       }
 
     const vector<double>& values = total;
@@ -302,7 +317,24 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
     cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
   }
 
- 
+  // Print out log(E(exp(X)))
+  if (args.count("log-mean"))
+  {
+    if (tables.size() > 1 and show_individual)
+      for(int i=0;i<tables.size();i++)
+      {
+	const vector<double>& values = tables[i].column(index);
+	cout<<" log E exp "<<name<<" ["<<i+1<<"] = "<<log_average_exp(values);
+      }
+
+    const vector<double>& values = total;
+    if (show_individual)
+      cout<<" log E exp "<<name<<"     = "<<log_average_exp(values);
+    else
+      cout<<" log E exp "<<name<<" = "<<log_average_exp(values);
+  }
+
+
   // Print out median and confidence interval
   double sum_CI=0;
   double total_CI=0;
