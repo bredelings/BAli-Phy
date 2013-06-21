@@ -140,28 +140,19 @@ vector<int> get_indices_from_mask(const dynamic_bitset<>& mask)
   return indices;
 }
 
-//FIXME - can we use scan_lines?
-//        This would add sub-sampling automatically.
-
-bool scan(const string& line, int& i, char delim)
-{
-  for(;i<line.size();i++)
-    if (line[i] == delim)
-      return true;
-  return false;
-}
-
 bool read_entries(const string& line, const vector<int>& indices, char delim, vector<double>& entries)
 {
   int i=0; // position in line
   int j=0; // which field
   int k=0; // position in 'indices'
-  while (k<indices.size() and i < line.size())
+  while (k<indices.size())
   {
     // Locate the character after the end of the current field
     int i2 = line.find(delim,i+1);
     if (i2 == -1)
+    {
       i2 = line.size();
+    }
 
     // If the current field is the next field we want, convert it to double.
     if (j == indices[k])
@@ -170,8 +161,12 @@ bool read_entries(const string& line, const vector<int>& indices, char delim, ve
       k++;
     }
 
+    if (i2 == line.size() and k < indices.size())
+      throw myexception()<<"Only read "<<k<<" entries!";
+
     // The next field starts after the delimiter between fields.
     i = i2 + 1;
+    j++;
   }
   return true;
 }
