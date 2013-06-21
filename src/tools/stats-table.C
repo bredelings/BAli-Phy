@@ -25,7 +25,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "io.H"
 
 #include <boost/dynamic_bitset.hpp>
+#include <boost/lexical_cast.hpp>
 
+using boost::lexical_cast;
 using namespace std;
 
 using boost::dynamic_bitset;
@@ -129,17 +131,51 @@ get_mask(const vector<string>& strings,const vector<string>& names)
   return mask;
 }
 
-vector<int> get_mapping_from_mask(const dynamic_bitset<>& mask)
+vector<int> get_indices_from_mask(const dynamic_bitset<>& mask)
 {
-  vector<int> mapping;
+  vector<int> indices;
   for(int i=0;i<mask.size();i++)
     if (mask[i])
-      mapping.push_back(i);
-  return mapping;
+      indices.push_back(i);
+  return indices;
 }
 
 //FIXME - can we use scan_lines?
 //        This would add sub-sampling automatically.
+
+bool scan(const string& line, int& i, char delim)
+{
+  for(;i<line.size();i++)
+    if (line[i] == delim)
+      return true;
+  return false;
+}
+
+bool read_entries(const string& line, const vector<int>& indices, char delim, vector<double>& entries)
+{
+  int i=0; // position in line
+  int j=0; // which field
+  int k=0; // position in 'indices'
+  while (k<indices.size() and i < line.size())
+  {
+    // Locate the character after the end of the current field
+    int i2 = line.find(delim,i+1);
+    if (i2 == -1)
+      i2 = line.size();
+
+    // If the current field is the next field we want, convert it to double.
+    if (j == indices[k])
+    {
+      entries[k] = lexical_cast<double>(line.data() + i, i2-i);
+      k++;
+    }
+
+    // The next field starts after the delimiter between fields.
+    i = i2 + 1;
+  }
+  return true;
+}
+
 
 void stats_table::load_file(istream& file,int skip,int subsample, int max,
 			    const vector<string>& ignore, const vector<string>& select)
@@ -156,9 +192,9 @@ void stats_table::load_file(istream& file,int skip,int subsample, int max,
   if (select.size())
     mask &=  get_mask(select, names_);
 
-  vector<int> mapping = get_mapping_from_mask(mask);
+  vector<int> indices = get_indices_from_mask(mask);
 
-  names_ = apply_indices(names_, mapping);
+  names_ = apply_indices(names_, indices);
 
   data_.resize(names_.size());
 
@@ -182,9 +218,7 @@ void stats_table::load_file(istream& file,int skip,int subsample, int max,
       // should this be protected by a try { } catch(...) {} block?
       try
       {
-	vector<string> entries = split(line,'\t');
-	for(int i=0;i<names_.size();i++)
-	  v[i] = convertTo<double>(entries[mapping[i]]);
+	read_entries(line,indices,'\t',v);
       }
       catch (...)
       {
