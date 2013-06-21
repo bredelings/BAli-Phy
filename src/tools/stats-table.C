@@ -87,7 +87,8 @@ void stats_table::add_row(const vector<double>& row)
 //FIXME - can we use scan_lines?
 //        This would add sub-sampling automatically.
 
-void stats_table::load_file(istream& file,int skip,int subsample, int max)
+void stats_table::load_file(istream& file,int skip,int subsample, int max,
+			    const vector<string>& ignore, const vector<string>& select)
 {
   // Read in headers from file
   names_ = read_header(file);
@@ -152,16 +153,16 @@ void stats_table::chop_first_rows(int n)
     remove_first_elements(data_[i],n);
 }
 
-stats_table::stats_table(istream& file, int skip, int subsample, int max)
+stats_table::stats_table(istream& file, int skip, int subsample, int max, const vector<string>& ignore, const vector<string>& select)
 {
-  load_file(file,skip,subsample,max);
+  load_file(file,skip,subsample,max,ignore,select);
   if (log_verbose) cerr<<"STDIN: Read in "<<n_rows()<<" lines.\n";
 }
 
-stats_table::stats_table(const string& filename, int skip, int subsample, int max)
+stats_table::stats_table(const string& filename, int skip, int subsample, int max, const vector<string>& ignore, const vector<string>& select)
 {
   checked_ifstream file(filename,"statistics file");
 
-  load_file(file,skip,subsample,max);
+  load_file(file,skip,subsample,max,ignore,select);
   if (log_verbose) cerr<<filename<<": Read in "<<n_rows()<<" lines.\n";
 }

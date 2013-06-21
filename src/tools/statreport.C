@@ -512,6 +512,9 @@ int main(int argc,char* argv[])
     if (args.count("max"))
       max = args["max"].as<int>();
 
+    vector<string> ignore = args["ignore"].as<vector<string> >();
+    vector<string> select = args["select"].as<vector<string> >();
+
     //------------ Read Data ---------------//
     vector<stats_table> tables;
     vector<string> filenames;
@@ -522,9 +525,9 @@ int main(int argc,char* argv[])
     filenames = args["filenames"].as< vector<string> >();
     for(int i=0;i<filenames.size();i++) {
       if (filenames[i] == "-")
-	tables.push_back(stats_table(std::cin,0,subsample,max));
+	tables.push_back(stats_table(std::cin,0,subsample,max,ignore,select));
       else
-	tables.push_back(stats_table(filenames[i],0,subsample,max));
+	tables.push_back(stats_table(filenames[i],0,subsample,max,ignore,select));
       if (not tables.back().n_rows())
 	throw myexception()<<"File '"<<filenames[i]<<"' has no samples left after removal of burn-in!";
     }

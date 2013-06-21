@@ -184,7 +184,7 @@ int main(int argc,char* argv[])
     variables_map args = parse_cmd_line(argc,argv);
 
     //---------------- Read Data ----------------//
-    stats_table table(std::cin,0,1,-1);
+    stats_table table(std::cin,0,1,-1,{},{});
 
     //------------ Parse column names ----------//
     vector< owned_ptr<table_row_function<double> > > column_functions;

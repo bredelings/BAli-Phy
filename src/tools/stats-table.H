@@ -34,7 +34,7 @@ class stats_table
   std::vector< std::vector<double> > data_;
 
   /// Load data from a file
-  void load_file(std::istream&,int,int,int);
+  void load_file(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
 
 public:
   /// Access the column names
@@ -58,10 +58,10 @@ public:
   void chop_first_rows(int n);
 
   /// Load the table from a file
-  stats_table(std::istream&,int,int,int);
+  stats_table(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
 
   /// Load the table from a file by name
-  stats_table(const std::string&,int,int,int);
+  stats_table(const std::string&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
 };
 
 std::vector<std::string> parse_header(const std::string&);
