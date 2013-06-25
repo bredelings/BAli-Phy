@@ -48,7 +48,12 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
     words.erase(words.begin());
     vector<int> loci;
     for(const auto& word: words)
-      loci.push_back(convertTo<int>(word));
+    {
+      if (word == "" or word == "NA")
+	loci.push_back(0);
+      else
+	loci.push_back(convertTo<int>(word));
+    }
     matrix.push_back(loci);
   }
 
