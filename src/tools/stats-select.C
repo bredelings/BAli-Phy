@@ -52,7 +52,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("no-header","Suppress the line of column names.")
     ("select,s",value<vector<string> >()->composing(),"Select on key=value pairs")
     ("remove,r","Remove selected columns, instead of keeping them.")
-    ("add,a","Remove selected columns, instead of keeping them.")
+    ("add,a",value<vector<string> >()->composing(),"Remove selected columns, instead of keeping them.")
     ;
 
   options_description all("All options");
@@ -184,37 +184,33 @@ int main(int argc,char* argv[])
     variables_map args = parse_cmd_line(argc,argv);
 
     //---------------- Read Data ----------------//
-    stats_table table(std::cin,0,1,-1,{},{});
+    vector<string> keep;
+    if (args.count("columns"))
+      keep = args["columns"].as<vector<string> >();
+
+    vector<string> remove;
+    if (not args.count("columns") or args.count("remove"))
+      std::swap(remove,keep);
+
+    vector<string> add;
+    if (args.count("add"))
+      add = args["add"].as<vector<string> >();
+
+    stats_table table(std::cin,0,1,-1,remove,keep);
 
     //------------ Parse column names ----------//
     vector< owned_ptr<table_row_function<double> > > column_functions;
 
-    if (not args.count("columns") or args.count("remove"))
+    for(int i=0;i<table.n_columns();i++)
     {
-      vector<string> remove;
-      if (args.count("remove"))
-	remove = args["columns"].as<vector<string> >();
-
-      for(int i=0;i<table.n_columns();i++)
-      {
-	const string& name = table.names()[i];
-	if (not includes(remove,name))
-	  column_functions.push_back(select_column_function(table, name));
-      }
+      const string& name = table.names()[i];
+      column_functions.push_back(select_column_function(table, name));
     }
-    else 
+
+    if (add.size())
     {
-      vector<string> column_names = args["columns"].as<vector<string> >();
-
-      if (args.count("add"))
-	for(int i=0;i<table.n_columns();i++)
-	{
-	  const string& name = table.names()[i];
-	  column_functions.push_back(select_column_function(table, name));
-	}
-
-      for(int i=0;i<column_names.size();i++)
-	column_functions.push_back(sum_of_fields(table,column_names[i]));
+      for(const auto& sum:add)
+	column_functions.push_back(sum_of_fields(table,sum));
     }
 
     //----------- Parse conditions ------------//
@@ -224,8 +220,8 @@ int main(int argc,char* argv[])
     {
       vector<string> selections = args["select"].as<vector<string> >();
 
-      for(int i=0;i<selections.size();i++) 
-	conditions.push_back(key_value_condition(table, selections[i]));
+      for(const auto& selection: selections)
+	conditions.push_back(key_value_condition(table, selection));
     }
     
     //------------ Print  column names ----------//
