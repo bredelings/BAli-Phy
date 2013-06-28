@@ -21,6 +21,8 @@ builtin builtin_uniform_density 3 "uniform_density" "Distribution";
 builtin builtin_binomial_density 3 "binomial_density" "Distribution";
 builtin geometric_density 2 "geometric_density" "Distribution";
 
+builtin crp_density 4 "CRP_density" "Distribution";
+
 data ProbDensity = ProbDensity a b c d;
 data DiscreteDistribution a = DiscreteDistribution [(Double,a)];
 
@@ -107,6 +109,9 @@ listDensity ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 
 
 list dists = ProbDensity (listDensity dists) quantiles (map distDefaultValue dists) (ListRange (map distRange dists))
   where { quantiles = (error "list distribution has no quantiles") };
+
+crp (alpha,n,d) = ProbDensity (crp_density alpha n d) quantiles (replicate n 0) (ListRange (replicate n (IntegerInterval (Just 0) (Just (n+d-1)))))
+  where { quantiles = (error "crp distribution has no quantiles") };
 
 iid (n,d) = list (replicate n d);
 
