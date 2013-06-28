@@ -137,3 +137,76 @@ extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
   
   return object_ptr<Log_Double> (new Log_Double( ::geometric_pdf(p,n) ) );
 }
+
+log_double_t CRP_pdf(const double alpha, int N, int D, const vector<int>& z)
+{
+  if (z.size() != N) return 0.0;
+
+  log_double_t Pr = 1;
+
+  // 1. Determine probability of the unlabelled pattern
+  vector<int> counts(N+D,0);
+  int n_types = 0;
+  for(int i=0;i<z.size();i++)
+  {
+    assert(z[i] >=0 and z[i] < N+D);
+    int& count = counts[z[i]];
+    if (count > 0)
+      Pr *= double(count)/(i+alpha);
+    else
+    {
+      if (i > 0)
+	Pr *= (alpha/(i+alpha));
+      n_types++;
+    }
+    count++;
+  }
+
+  // 2. Determine the probability of the labelling
+  for(int i=0;i<n_types;i++)
+    Pr /= double(N+D-i);
+
+  return Pr;
+}
+
+// This is the Chinese Restaurant Process density for N observations, N+Delta values, and parameter alpha.
+// CRP(alpha,N,Delta)
+// The final argument is z, which is a list of N integers.
+
+extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
+{
+  assert(not Args.evaluate_changeables());
+
+  int token = Args.current_token();
+
+  const reg_heap& M = Args.memory();
+
+  //------------- 1. Get arguments alpha, N, D -----------------
+  double alpha = *Args.evaluate_as<Double>(0);
+  int N = *Args.evaluate_as<Int>(1);
+  int D = *Args.evaluate_as<Int>(2);
+
+  //------------- 2. Get argument Z -----------------
+  vector<int> z;
+  const closure* top = &Args.evaluate_slot_to_closure(3);
+  while(top->exp->size())
+  {
+    assert(is_exactly(top->exp,":"));
+    assert(top->exp->size() == 2);
+
+    int element_index = assert_is_a<index_var>(top->exp->sub[0])->index;
+    int element_reg = top->lookup_in_env( element_index );
+
+    int next_index = assert_is_a<index_var>(top->exp->sub[1])->index;
+    int next_reg = top->lookup_in_env( next_index );
+
+    // Add the element to the list.
+    z.push_back( *convert<const Int>(Args.evaluate_reg_to_object(element_reg)) );
+
+    // Move to the next element or end
+    top = &Args.evaluate_reg_to_closure(next_reg);
+  }
+  assert(is_exactly(top->exp,"[]"));
+
+  return object_ptr<Log_Double> (new Log_Double( ::CRP_pdf(alpha,N,D,z) ) );
+}
