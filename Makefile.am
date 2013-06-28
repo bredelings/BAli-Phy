@@ -19,7 +19,8 @@ modulesdir = $(libdir)/@PACKAGE@/modules/
 modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude.hs modules/Range.hs modules/SModel.hs \
 		modules/Tree.hs modules/HKY.hs modules/TN.hs modules/M0.hs modules/HKYx3.hs \
 		modules/GTR.hs modules/TNx3.hs modules/GTRx3.hs modules/F3x4.hs modules/Alphabet.hs \
-		modules/Parameters.hs modules/RS07.hs modules/Alignment.hs modules/RelaxedRatesRS07.hs
+		modules/Parameters.hs modules/RS07.hs modules/Alignment.hs modules/RelaxedRatesRS07.hs \
+		modules/MCMC.hs
 
 # Distributed in the doc/ directory
 docdir = $(datadir)/doc/@PACKAGE@
