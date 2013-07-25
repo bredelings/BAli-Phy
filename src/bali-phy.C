@@ -258,7 +258,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("branch-prior",value<string>()->default_value("Gamma"),"Exponential, Gamma, or Dirichlet.")
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
-    ("lambda-scale-branch",value<string>(),"File with partition describing branch to scale")
     ("modules-path",value<string>(),"Directories to search for modules (: separated)")
     ("builtins-path",value<string>(),"Directories to search for modules (: separated)")
     ;
@@ -1219,76 +1218,6 @@ void write_initial_alignments(const vector<alignment>& A, int proc_id, string di
   }
 }
 
-void set_lambda_scale_branch_parameters(Parameters& P, const variables_map& args)
-{
-  const SequenceTree& T = P.T();
-
-  // Set the initial value of the branch to (optionally) scale the indel rate by.
-  if (args.count("lambda-scale-branch"))
-  {
-    // Currently this code doesn't make sense of the topology can change so the partition 
-    //  described in the partition file is not longer a part of the tree.
-    // Therefore, you should supply an initial tree using --tree=<treefile> and also
-    //  add "--disable topology " or "--disable topology,alignment_branch".
-
-    // Find the name of the file containing the partition describing the branch to set.
-    string filename = args["lambda-scale-branch"].as<string>();
-    // Format is e.g "taxon1 taxon2 taxon3 | taxon4 taxon 5".
-
-    // Open the file
-    checked_ifstream partition(filename,"partition file for specifying which branch may have a different indel rate");
-
-    // Read the first line
-    string line;
-    portable_getline(partition, line);
-
-    // Create the partition from the line
-    Partition p(T.get_leaf_labels(), line);
-
-    // Get the integer name of the branch on the current tree.
-    int b = which_branch(T, p);
-    if (b == -1)
-      throw myexception()<<"Partition '"<<p<<"' is not in the starting tree '"<<P.T()<<"'";
-    b = T.directed_branch(b).undirected_name();
-      
-    // Get a list of all parameters with names ending in lambda_scale_branch
-    vector<int> indices = parameters_with_extension(P,"lambdaScaleBranch");
-
-    // Set the parameters to the  correct value.
-    object_ref B = Int(b);
-    for(int i=0;i<indices.size();i++)
-      P.set_parameter_value(indices[i], B);
-  }
-  else if (T.find_undirected_branch_attribute_index_by_name("lambda-scale-branch") != -1)
-  {
-    int attribute_index = T.find_undirected_branch_attribute_index_by_name("lambda-scale-branch");
-
-    int bb = -1;
-    for(int b=0;b<T.n_branches();b++)
-    {
-      boost::any value = T.branch(b).undirected_attribute(attribute_index);
-      if (not value.empty())
-	bb = b;
-    }
-
-    // Get a list of all parameters with names ending in lambda_scale_branch
-    vector<int> indices = parameters_with_extension(P,"lambdaScaleBranch");
-
-    // Set the parameters to the  correct value.
-    object_ref B = Int(bb);
-    for(int i=0;i<indices.size();i++)
-      P.set_parameter_value(indices[i], B);
-
-    // Write out a tree 
-    cout.unsetf(std::ios::floatfield);
-    SequenceTree T2 = T;
-    for(int b=0;b<T2.n_branches();b++)
-      T2.branch(b).set_length(b);
-    std::cerr<<"branch numbers = "<<T2<<"\n";
-  }
-}
-
-
 /// If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
 void set_foreground_branches(Parameters& P)
 {
@@ -1309,6 +1238,17 @@ void set_foreground_branches(Parameters& P)
       std::cerr<<"Setting branch '"<<b<<"' to foreground level "<<foreground_level<<"\n";;
     }
   }
+}
+
+void write_branch_numbers(ostream& o, SequenceTree T)
+{
+  // Write out a tree 
+  auto flags = o.flags();
+  o.unsetf(std::ios::floatfield);
+  for(int b=0;b<T.n_branches();b++)
+    T.branch(b).set_length(b);
+  o<<"branch numbers = "<<T<<"\n\n";
+  o.flags(flags);
 }
 
 fs::path find_exe_path(const fs::path& argv0)
@@ -1563,8 +1503,8 @@ int main(int argc,char* argv[])
     //-------------Create the Parameters object--------------//
     Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
 
-
-    set_lambda_scale_branch_parameters(P,args);
+    // Write out a tree with branch numbers as branch lengths
+    write_branch_numbers(out_cache, T);
 
     // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
     set_foreground_branches(P);
