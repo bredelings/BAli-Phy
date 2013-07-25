@@ -734,7 +734,7 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(Parameters& P, const vector<s
   // Write out ancestral sequences
   if (P.contains_key("log-ancestral"))
     for(int i=0;i<P.n_data_partitions();i++)
-      loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
+      loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".ancestral.fastas", 
 					Ancestral_Sequences_Function(i) ) );
 
   // Write out the alignments for each (variable) partition to C<>.P<>.fastas
@@ -1588,6 +1588,8 @@ int main(int argc,char* argv[])
     }
       
     set_initial_parameter_values(P,args);
+
+    set_key_values(P,args);
 
     //-------------------- Log model -------------------------//
     log_summary(out_cache,out_screen,out_both,imodel_names_mapping,smodel_names_mapping,P,args);
