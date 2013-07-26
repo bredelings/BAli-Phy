@@ -884,18 +884,9 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   }
   else if (model_args[0] == "M2a") // M2a[0,S,F]
   {
-    formula_expression_ref p1 = def_parameter("M2a.fConserved", Double(1.0/3), between(0,1));
-    formula_expression_ref p2 = def_parameter("M2a.fNeutral", Double(1.0/3), between(0,1));
-    formula_expression_ref p3 = def_parameter("M2a.fSelected", Double(1.0/3), between(0,1));
-    formula_expression_ref w1 = def_parameter("M2a.omega1", Double(1.0), between(0,1),(identifier("uniform"),Tuple(0.0,1.0)));
-    formula_expression_ref w3 = def_parameter("M2a.omega3", Double(1.5), lower_bound(1),(identifier("logGamma"), Tuple(4.0, 0.25)));
-    formula_expression_ref D = (identifier("DiscreteDistribution"),Tuple(p1,w1)&(Tuple(p2,1.0)&(Tuple(p3,w3)&ListEnd)));
-
-    D.add_expression( constructor(":~",2) + (p1&(p2&(p3&ListEnd))).exp() + (identifier("dirichlet"), List(10.0, 10.0, 1.0)) );
-
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
 
-    return (identifier("multiParameter"),M0,D);
+    return (submodel_expression("M2a"),M0);
   }
   else if (model_args[0] == "M8b") // M8b[0,n,S,+F]
   {
