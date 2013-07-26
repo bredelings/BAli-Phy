@@ -9,13 +9,13 @@
 
 [library Boost.Chrono
     [quickbook 1.5]
-    [version 2.0.0]
+    [version 2.0.2]
     [authors [Hinnant, Howard]]
     [authors [Dawes, Beman]]
     [authors [Botet Escriba, Vicente J.]]
     [copyright 2008 Howard Hinnant]
     [copyright 2006, 2008 Beman Dawes]
-    [copyright 2009-2012 Vicente J. Botet Escriba]
+    [copyright 2009-2013 Vicente J. Botet Escriba]
     [category utilities system]
     [id chrono]
     [dirname chrono]
@@ -2864,7 +2864,7 @@ A __duration measures time between two points in time (__time_point). A __durati
             duration& __duration__op_plus_eq(const duration& d);
             duration& __duration__op_minus_eq(const duration& d);
 
-            duration& __duration__op_mult_eq=(const rep& rhs);
+            duration& __duration__op_mult_eq(const rep& rhs);
             duration& __duration__op_div_eq(const rep& rhs);
             duration& __duration__op_mod_eq(const rep& rhs);
             duration& __duration__op_mod_eq2(const duration& rhs);
@@ -3330,7 +3330,7 @@ A type `TC` meets the `TrivialClock` requirements if:
 [note This means, in particular, that operations on these types will not throw exceptions.]
 
 * lvalues of the types `TC::rep`, `TC::duration`, and `TC::time_point` are swappable,
-* the function `TC::now()` does not throw exceptions, and
+* the function `TC::now()` does not throw exceptions and it is thread-safe, and
 * the type `TC::time_point::clock` meets the `TrivialClock` requirements, recursively.
 
 Models of __TrivialClock:
@@ -3350,7 +3350,8 @@ Models of __TrivialClock:
 A type `EcC` meets the `EcClock` requirements if
 
 * `TC` satisfies the `TrivialClock ` requirements, and
-* it add `now()` interfaces allowing to recover internal error codes as described in the following table.
+* it adds `now()` interfaces allowing to recover internal error codes as described in the following table.
+* the added now() function is thread-safe.
 
 In this table `C1` denotes a `EcClock` type and `ec` is an instance of a `boost::system::error_code`.
 
@@ -3803,7 +3804,7 @@ This file contains the standard clock classes. The types defined in this section
 
 [section:system_clock Class `system_clock`]
 
-The __system_clock class provides a means of obtaining the current wall-clock time from the system-wide real-time clock. The current time can be obtained by calling `system_clock::now()`. Instances of `system_clock::time_point`  can be converted to and from time_t  with the `system_clock::to_time_t()`  and `system_clock::to_time_point()`  functions. If system clock is not steady, a subsequent call to `system_clock::now()`  may return an earlier time than a previous call (e.g. if the operating system clock is manually adjusted, or synchronized with an external clock).
+The __system_clock class provides a means of obtaining the current wall-clock time from the system-wide real-time clock. The current time can be obtained by calling `system_clock::now()`. Instances of `system_clock::time_point`  can be converted to and from time_t  with the `system_clock::to_time_t()`  and `system_clock::from_time_t()`  functions. If system clock is not steady, a subsequent call to `system_clock::now()`  may return an earlier time than a previous call (e.g. if the operating system clock is manually adjusted, or synchronized with an external clock).
 
 The current implementation of __system_clock is related an epoch (midnight UTC of January 1, 1970), but this is not in the contract. You need to use the static function static
 
@@ -7321,6 +7322,22 @@ All the units are given using the suffix "s" following the System International 
 [/==================================]
 [section:history Appendix: History]
 [/==================================]
+
+[//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////]
+[section [*Version 2.0.2, June 15, 2013 - 1.54] ]
+
+[*Fixes:]
+
+* [@http://svn.boost.org/trac/boost/ticket/8079 #8079] Chrono memory leak
+* [@http://svn.boost.org/trac/boost/ticket/8318 #8318] BOOST_FORCEINLINE constructors of time_point and duration
+* [@http://svn.boost.org/trac/boost/ticket/8367 #8367] chrono does not compile with clang from XCode 4.5.2 with -std=c++11 -stdlib=libc++ and -arch armv7
+* [@http://svn.boost.org/trac/boost/ticket/8370 #8370] typo in chrono reference
+* [@http://svn.boost.org/trac/boost/ticket/8435 #8435] Can't compile Chrono on HP-UX due to no CLOCK_REALTIME macro.
+* [@http://svn.boost.org/trac/boost/ticket/8690 #8690] duration_units_default - lost return types constness in overridden methods.
+* [@http://svn.boost.org/trac/boost/ticket/8691 #8691] iostate is not checked after scan_keyword call.
+* [@http://svn.boost.org/trac/boost/ticket/8696 #8696] chrono compilation error on Solaris/gcc.
+
+[endsect] [/section [*Version 2.0.2] ]
 
 [//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////]
 [section [*Version 2.0.1, January 18, 2013 - 1.53] ]
