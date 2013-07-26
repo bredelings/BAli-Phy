@@ -882,11 +882,23 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     return (identifier("multiParameter"), M0, D);
   }
+  else if (model_args[0] == "M1a") // M2a[0,S,F]
+  {
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
+
+    return (submodel_expression("M1a"),M0);
+  }
   else if (model_args[0] == "M2a") // M2a[0,S,F]
   {
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
 
     return (submodel_expression("M2a"),M0);
+  }
+  else if (model_args[0] == "M2a_Test") // M2a[0,S,F]
+  {
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
+
+    return (submodel_expression("M2a_Test"),M0);
   }
   else if (model_args[0] == "M8b") // M8b[0,n,S,+F]
   {
