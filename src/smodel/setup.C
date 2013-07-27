@@ -931,7 +931,9 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     // Determine the a and b parameters of the beta distribution
     formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
     formula_expression_ref gamma = def_parameter("Beta.sigma2_over_mu", Double(0.1), between(0,1), (identifier("exponential"), 0.1));
-    formula_expression_ref N = (minus, (divide, 1.0, gamma), 1.0); // N = 1.0/gamma - 1.0;
+    formula_expression_ref cap = (identifier("min"),(divide,mu,(plus,1.0,mu)),(divide,(minus,1.0,mu),(minus,2.0,mu)));
+    formula_expression_ref gamma_ = (times,gamma,cap);
+    formula_expression_ref N = (minus, (divide, 1.0, gamma_), 1.0); // N = 1.0/gamma - 1.0;
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;
     formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
     // Create the discrete distribution for omega
