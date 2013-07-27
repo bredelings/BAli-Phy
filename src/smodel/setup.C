@@ -900,7 +900,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     return (submodel_expression("M2a_Test"),M0);
   }
-  else if (model_args[0] == "M8b") // M8b[0,n,S,+F]
+  else if (model_args[0] == "M8b_Test") // M8b[0,n,S,+F]
   {
     // FIXME: Conditional on one omega being small, the probability of the other ones being
     //        small too should be higher.
@@ -929,8 +929,8 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       n = convertTo<int>(model_args[2]);
 
     // Determine the a and b parameters of the beta distribution
-    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (identifier("beta"), Tuple(10.0, 1.0)));
-    formula_expression_ref gamma = def_parameter("Beta.identifierOverMu", Double(0.1), between(0,1), (identifier("exponential"), 0.1));
+    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
+    formula_expression_ref gamma = def_parameter("Beta.sigma2_over_mu", Double(0.1), between(0,1), (identifier("exponential"), 0.1));
     formula_expression_ref N = (minus, (divide, 1.0, gamma), 1.0); // N = 1.0/gamma - 1.0;
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;
     formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
@@ -938,17 +938,17 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref D = (identifier("uniformDiscretize"), (identifier("betaQuantile"), Tuple(alpha,beta)), n);
 
     // *Question*: How much does D simplify with "completely lazy" evaluation?
-    formula_expression_ref p1 = def_parameter("M8b.fPurifying", Double(0.6), between(0,1));
+    formula_expression_ref p1 = def_parameter("M8b.fConserved", Double(0.6), between(0,1));
     formula_expression_ref p2 = def_parameter("M8b.fNeutral", Double(0.3), between(0,1));
-    formula_expression_ref p3 = def_parameter("M8b.fPositive", Double(0.1), between(0,1));
+    formula_expression_ref p3 = def_parameter("M8b.fDiversifying", Double(0.1), between(0,1));
     // [positive selection, if it exists] w ~ log_exponential(0.05)
-    formula_expression_ref w = def_parameter("M8b.omega3", Double(1.0), lower_bound(1), (identifier("logExponential"), 0.05));
-    formula_expression_ref I  = def_parameter("M8b.omega3NonZero", true, nullptr, (identifier("bernoulli"), 0.5));
+    formula_expression_ref w = def_parameter("M8b.omega3", Double(1.5), lower_bound(1), (identifier("logGamma"), Tuple(4.0, 0.25)));
+    formula_expression_ref I  = def_parameter("M8b.pos_selection", true, nullptr, (identifier("bernoulli"), 0.5));
     formula_expression_ref w3 = (If, I, w, 1.0);
 
     // Add the neutral and (possibility) positive selection categories
     // mu    = E(X)
-    // gamma = Identifier(X)/[ mu * (1-mu)] = 1/(1 + a + b)  \in (0,1]
+    // gamma = var(X)/[ mu * (1-mu)] = 1/(1 + a + b)  \in (0,1]
     //
     // N = a + b = 1/gamma - 1
 
@@ -967,8 +967,8 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       n = convertTo<int>(model_args[2]);
 
     // Determine the a and b parameters of the beta distribution
-    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (identifier("beta"), Tuple(10.0, 1.0)));
-    formula_expression_ref gamma = def_parameter("Beta.identifierOverMu", Double(0.1), between(0,1), (identifier("exponential"), 0.1));
+    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
+    formula_expression_ref gamma = def_parameter("Beta.sigma2OverMu", Double(0.1), between(0,1), (identifier("exponential"), 0.1));
     formula_expression_ref N = (minus, (divide, 1.0, gamma), 1.0); // N = 1.0/gamma - 1.0;
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;
     formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
