@@ -9,7 +9,7 @@ note omega3 ~ logGamma(4.0, 0.25);
 note pos_selection ~ bernoulli 0.5;
 
   omega3' = if pos_selection then omega3 else 1.0;
-  dist = DiscreteDistribution [(fConserved,omega1),(fNeutral, 1.0),(fSelection,omega3')];
+  dist = DiscreteDistribution [(fConserved,omega1),(fNeutral, 1.0),(fDiversifying,omega3')];
 
   main m0 = multiParameter m0 dist;
 }
