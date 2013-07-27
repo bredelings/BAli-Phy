@@ -179,7 +179,7 @@ double beta_quantile(double p, double a, double b)
   b = std::max(b,0.1);
 
   double x = gsl_cdf_beta_Pinv(p,a,b);
-  std::cerr<<"x = "<<x<<" p = "<<p<<" a = "<<a<<" b = "<<b<<std::endl;
+  // std::cerr<<"x = "<<x<<" p = "<<p<<" a = "<<a<<" b = "<<b<<std::endl;
   return x;
 }
 
