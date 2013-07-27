@@ -924,7 +924,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     //        and then has the possibility of [n] conserved rates with a UNIFORM prior.
     //        (The Uniform seems like a good analogue of the dirichlet.)
 
-    int n=3;
+    int n = 4;
     if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
