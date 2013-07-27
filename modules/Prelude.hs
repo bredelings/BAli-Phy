@@ -279,6 +279,9 @@ f >>= g = IOAndPass f g;
 return f = IOReturn f;
 fail e = error e;
 
+min x y = if (x <= y) then x else y;
+max x y = if (x >= y) then x else y;
+
 quicksort [] = [];
 quicksort (x:xs) = quicksort small ++ (x : quicksort large)
    where { small = [y | y <- xs, y <= x ] ;
