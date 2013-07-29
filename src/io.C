@@ -20,6 +20,7 @@ istream& portable_getline(istream& file,string& s)
 
   s.clear();
   ios_base::iostate err = ios_base::goodbit;
+  int n_extracted = 0;
 
   // Make sure that while(getline()) terminates:
   //  - read at least one char in order to set failbit on an empty file.
@@ -32,7 +33,7 @@ istream& portable_getline(istream& file,string& s)
     while (c != std::streambuf::traits_type::eof() and c != CR and c != LF)
     {
       s += c;
-      
+      n_extracted++;
       c = sb->snextc();
     }
 
@@ -42,10 +43,16 @@ istream& portable_getline(istream& file,string& s)
     else
     {
       // If then line ends with an EOL then move the pointer to the next character.
+      n_extracted++;
       char c2 = sb->snextc();
 
       // If this is the LF of a CR LF, then skip the LF
-      if (c == CR and c2 == LF) sb->sbumpc();
+      if (c == CR and c2 == LF) 
+      {
+	n_extracted++;
+
+	sb->sbumpc();
+      }
 
       // NOTE: Any EOF's that we discover here will end the NEXT line.
     }
@@ -56,7 +63,7 @@ istream& portable_getline(istream& file,string& s)
   }
 
   // If we didn't read any characters, then set the failbit.
-  if (not s.size())
+  if (not n_extracted)
     err |= ios::failbit;
 
   // Set any error bits.
