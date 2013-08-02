@@ -21,7 +21,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define RNG_H
 
 #include <valarray>
-#include <cassert>
 #include <random>
 
 unsigned long myrand_init();

@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include <cassert>
 #include <ctime>
 #include <cmath>
 #include <fstream>
@@ -52,7 +51,6 @@ std::mt19937_64 standard;
 
 unsigned long myrand_init(unsigned long s) 
 {
-  assert(not standard);
   standard.seed(s);
   return s;
 }
