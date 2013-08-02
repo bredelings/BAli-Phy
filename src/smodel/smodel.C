@@ -24,8 +24,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "math/exponential.H"
 #include "rng.H"
 #include "util.H"
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_sf.h>
 #include "math/logsum.H"
 #include "probability/probability.H"
 #include "io.H"
