@@ -28,182 +28,104 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::valarray;
 
-/************* Interfaces to rng::standard *********************/
-namespace rng {
-  RNG* standard;
-
-  unsigned long get_random_seed()
-  {
-    unsigned long s=0;
-    const int bits_per_read = sizeof(unsigned)*8;
-
-    boost::random::random_device random;
-
-    if (random.entropy())
-      for(int i=0;i*bits_per_read < sizeof(s)*8;i++) 
-      {
-	unsigned u = random();
-	s <<= bits_per_read;
-	s |=  u;
-      }
-    else
-      s = time(NULL);
-
-    return s;
-  }
-}
-
-unsigned long myrand_init() {
-  assert(not rng::standard);
-  rng::init();
-  unsigned long s = rng::standard->seed();
+unsigned long get_random_seed()
+{
+  unsigned long s=0;
+  const int bits_per_read = sizeof(unsigned)*8;
   
-  assert(rng::standard);
+  boost::random::random_device random;
+  
+  if (random.entropy())
+    for(int i=0;i*bits_per_read < sizeof(s)*8;i++) 
+    {
+      unsigned u = random();
+      s <<= bits_per_read;
+      s |=  u;
+    }
+  else
+    s = time(NULL);
+  
   return s;
 }
 
-unsigned long myrand_init(unsigned long s) {
-  assert(not rng::standard);
-  rng::init();
-  s = rng::standard->seed(s);
-  
-  assert(rng::standard);
+std::mt19937_64 standard;
+
+unsigned long myrand_init(unsigned long s) 
+{
+  assert(not standard);
+  standard.seed(s);
   return s;
 }
 
-unsigned long uniform_unsigned_long() {
-  return rng::standard->get();
+unsigned long myrand_init() 
+{
+  return myrand_init(get_random_seed());
 }
 
-double uniform() {
-  return rng::standard->uniform();
+double uniform() 
+{
+  return std::uniform_real_distribution<>(0.0, 1.0)(standard);
 }
 
 double myrandomf() {
   return uniform();
 }
 
+/// returns a value in [0,max-1]
+unsigned long myrandom(unsigned long max) {
+  return std::uniform_int_distribution<unsigned long>(0, max-1)(standard);
+} 
+
+long myrandom(long min,long max) {
+  unsigned long diff = max - min;
+  return myrandom(diff)+min;
+}
+
 double log_unif() {
-  return rng::standard->log_unif();
+  return -std::exponential_distribution<>(1.0)(standard);
 }
 
-double gaussian(double mu,double sigma) {
-  return rng::standard->gaussian(mu,sigma);
+double gaussian(double mu,double sigma) 
+{
+  return std::normal_distribution<>(mu, sigma)(standard);
 }
 
-double laplace(double mu,double sigma) {
-  return rng::standard->laplace(mu,sigma);
+double laplace(double mu,double sigma) 
+{
+  double x = exponential(sigma);
+  auto y = standard();
+  if (y&1)
+    x = -x;
+  x += mu;
+  return x;
 }
 
 double cauchy(double l,double s) {
-  return rng::standard->cauchy(l,s);
+  return std::cauchy_distribution<>(l,s)(standard);
 }
 
 double exponential(double mu) {
-  return rng::standard->exponential(mu);
+  return std::exponential_distribution<>(1.0/mu)(standard);
 }
 
 double gamma(double a, double b) {
-  return rng::standard->gamma(a,b);
+  return std::gamma_distribution<>(a,b)(standard);
 }
 
 unsigned poisson(double mu) {
-  return rng::standard->poisson(mu);
+  return std::poisson_distribution<>(mu)(standard);
 }
 
-unsigned geometric(double mu) {
-  return rng::standard->geometric(mu);
+unsigned geometric(double p) {
+  return std::geometric_distribution<>(p)(standard);
 }
 
-valarray<double> dirichlet(const valarray<double>& n) {
-  return rng::standard->dirichlet(n);
-}
-
-/*************** Functions for rng,dng and RNG **************/
-void dng::init() { }
-
-using namespace rng;
-
-void rng::init() {
-  // set up default generator and default seed from environment
-  gsl_rng_env_setup();
-  standard = new RNG;
-}
-
-
-
-unsigned long RNG::seed() {
-  return seed(get_random_seed());
-}
-
-unsigned long RNG::seed(unsigned long int s) {
-  assert(generator != NULL);
-  gsl_rng_set(generator,s);
-  return s;
-}
-
-RNG::RNG() {
-  generator = gsl_rng_alloc(gsl_rng_default);
-
-}
-
-RNG::~RNG() {
-  gsl_rng_free(generator);
-}
-
-
-
-unsigned Binomial::operator()(double p,unsigned long n1) {
-  //  cerr<<"mean = "<<p*n<<endl;
-  unsigned n = (unsigned)n1;
-  assert((unsigned long)(n) == n1);
-  
-  assert(p>=0.0);
-  assert(p<=1.0+1e-10);
-
-  return gsl_ran_binomial(generator,p,n);
-}
-
-double Exponential::operator()() {
-  return gsl_ran_exponential(generator,mu);
-}
-
-
-unsigned Poisson::operator()(double lambda) {
-  //  cerr<<"lambda = "<<lambda<<endl;
-  assert(lambda>=0.0);
-  
-  return gsl_ran_poisson(generator,lambda);
-}
-
-
-// this division and stuff is killing us
-tuple Multinomial::operator()(const valarray<double>& p,unsigned long n1) {
-  unsigned n = (unsigned)n1;
-  assert((unsigned long)(n) == n1);
-
-  assert(std::abs(double(p.sum())-1.0) < 1e-10);
-
-  tuple m(0,p.size());
-  double remaining = 1.0;
-  for(int i=1;n and i<p.size();i++) {
-    m[i] = Bin(p[i]/remaining,n);
-    n -= m[i];
-    remaining -= p[i];
-  }
-  m[0] = n;
-  return m;
-}
-
-valarray<double> RNG::dirichlet(const valarray<double>& n)
+valarray<double> dirichlet(const valarray<double>& n) 
 {
-  valarray<double> D(n.size());
-
-  for(int i=0;i<D.size();i++)
-    D[i] = gamma(n[i],1);
-
-  D /= D.sum();
-
-  return D;
+  valarray<double> x(n.size());
+  for(int i=0;i<n.size();i++)
+    x[i] = gamma(n[i],1.0);
+  x /= x.sum();
+  return x;
 }
 

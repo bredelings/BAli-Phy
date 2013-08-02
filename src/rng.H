@@ -20,17 +20,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef RNG_H
 #define RNG_H
 
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
 #include <valarray>
 #include <cassert>
+#include <random>
 
 unsigned long myrand_init();
 unsigned long myrand_init(unsigned long);
  
-
-unsigned long uniform_unsigned_long();
-
 // synonym for 'uniform'
 double myrandomf();
 
@@ -64,13 +60,9 @@ unsigned geometric(double p);
 // return a dirichlet random vector
 std::valarray<double> dirichlet(const std::valarray<double>& n);
 
-namespace rng {
+unsigned long get_random_seed();
 
-  unsigned long get_random_seed();
-
-  typedef int amount_t;
-  typedef std::valarray<amount_t> tuple;
-
+  /*
   class RNG {
 
   protected:
@@ -110,73 +102,20 @@ namespace rng {
     RNG();
     ~RNG();
   };
+  */
 
+unsigned long myrandom(unsigned long max);
+long myrandom(long min,long max);
 
-  class Binomial:public RNG {
-  public:
-    unsigned operator()(double p,unsigned long n);
-  };
-  
-  
-  class Poisson:public RNG {
-  public:
-    unsigned operator()(double lambda);
-  };
-  
-
-  class Multinomial {
-    Binomial Bin;
-  public:
-    tuple operator()(const std::valarray<double>& p,unsigned long n);
-  };
-
-  class Exponential: public RNG {
-    double mu;
-  public:
-    double operator()();
-
-    Exponential(double d):mu(d) { assert(mu>0.0); }
-  };
-
-  void init();
-
-  extern RNG* standard;
-}
-
+/*
 /// returns a value in [0,max-1]
-inline unsigned long myrandom(unsigned long max) {
   return (unsigned long)rng::standard->uniform_int(max);
 } 
 
-inline long myrandom(long min,long max) {
+long myrandom(long min,long max) {
   unsigned long diff = max - min;
   return myrandom(diff)+min;
 }
-
-namespace dng {
-  
-  typedef double amount_t;
-  typedef std::valarray<amount_t> tuple;
-  
-  class Binomial {
-  public:
-    double operator()(double p,double n) { return p*n;}
-  };
-  
-  
-  class Poisson {
-  public:
-    double operator()(double lambda) {return lambda;}
-  };
-  
-  
-  class Multinomial {
-  public:
-    tuple operator()(const std::valarray<double>& p,double n) { return p*n;}
-  };
-
-
-  void init();
-}
+  */
 
 #endif
