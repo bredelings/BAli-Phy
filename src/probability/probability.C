@@ -18,9 +18,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "probability/probability.H"
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_sf.h>
-#include <gsl/gsl_cdf.h>
 #include <iostream>
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/math/special_functions/beta.hpp>
@@ -60,6 +57,16 @@ log_double_t num_topologies_in_partition(int n1,int n2)
 double log_gamma(double x) {
   assert(x>0.0);
   return lgamma(x);
+}
+
+double log_beta(double a, double b)
+{
+  return lgamma(a) + lgamma(b) - lgamma(a+b);
+}
+
+double log_choose(int n, int k)
+{
+  return -log_beta(n - k + 1, k + 1) - log(n + 1);
 }
 
 log_double_t dirichlet_pdf(const valarray<double>& p,const valarray<double>& n) 
@@ -389,7 +396,7 @@ log_double_t binomial_pdf(int n, int k, double p)
     return (k == n) ? 1 : 0;
 
   log_double_t Pr;
-  Pr.log() = gsl_sf_lnchoose (n, k) + k*log (p) + (n - k)*log1p (-p);
+  Pr.log() = log_choose (n, k) + k*log (p) + (n - k)*log1p (-p);
 
   return Pr;
 }
