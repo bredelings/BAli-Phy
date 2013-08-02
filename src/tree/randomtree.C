@@ -39,7 +39,7 @@ vector<int> permutation(int n) {
 BranchNode* random_sub_node(BranchNode* n)
 {
   unsigned d = nodeview(n).degree();
-  unsigned temp = unsigned( uniform()*d );
+  unsigned temp = uniform(0, d-1);
 
   for(unsigned i=0;i<temp;i++)
     n = n->next;
@@ -50,7 +50,7 @@ BranchNode* random_sub_node(BranchNode* n)
 BranchNode* random_sub_node_after(BranchNode* n)
 {
   unsigned d = nodeview(n).degree()-1;
-  unsigned temp = unsigned( uniform()*d );
+  unsigned temp = uniform(0, d-1);
 
   BranchNode* n2 = n->next;
   for(unsigned i=0;i<temp;i++)

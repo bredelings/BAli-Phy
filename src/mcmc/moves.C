@@ -132,7 +132,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Probability_Model>& P, M
     //    sigma = 0.5;
   }
   if (not indices.size()) return;
-  int p = indices[(int)(uniform()*indices.size())];
+  int p = indices[uniform(0,indices.size()-1)];
   std::string pname = PP->parameter_name(p);
 
   double v1 = PP->get_parameter_value_as<Double>(p);

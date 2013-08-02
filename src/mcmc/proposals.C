@@ -630,7 +630,7 @@ double move_scale_branch(Probability_Model& P)
   assert( scale_branch != -1);
 
   if (P.contains_key("lambda_search_all"))
-    scale_branch = uniform()*PP.T().n_branches();
+    scale_branch = uniform(0, PP.T().n_branches() - 1);
   else
   {
     int attribute_index = PP.T().find_undirected_branch_attribute_index_by_name("lambda-scale-branch");  
@@ -645,7 +645,7 @@ double move_scale_branch(Probability_Model& P)
 	branches.push_back(b);
     }
     
-    int i = uniform()*branches.size();
+    int i = uniform(0, branches.size() -1);
     scale_branch = branches[i];
   }
 
@@ -673,7 +673,7 @@ double move_subst_type_branch(Probability_Model& P)
 
   if (which_branch != -1)
   {
-    int new_branch = uniform()*(B-1);
+    int new_branch = uniform(0, B-2);
     if (new_branch >= which_branch)
       new_branch++;
 

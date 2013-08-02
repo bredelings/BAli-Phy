@@ -471,7 +471,7 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, doub
 
   //  std::cerr<<"!!    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
   if (m>1) {
-    int J = floor(uniform()*m);
+    int J = uniform(0,m-1);
     int K = (m-1)-J;
 
     while (J>0 and (not g.below_lower_bound(L)) and g(L)>logy) {
