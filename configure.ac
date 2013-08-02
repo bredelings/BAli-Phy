@@ -383,6 +383,7 @@ AC_CHECK_HEADERS([boost/filesystem/operations.hpp],[],[echo "Error: I can't find
 AC_CHECK_HEADERS([boost/program_options.hpp],[],[echo "Error: I can't find <boost/program_options.hpp>."; echo "Please install the BOOST.program options headers." ; exit 1])
 AC_CHECK_HEADERS([boost/graph/graph_traits.hpp],[],[echo "Error: I can't find <boost/graph/graph_traits.hpp>."; echo "Please install the BOOST.graph library headers." ; exit 1])
 AC_CHECK_HEADERS([boost/chrono.hpp],[],[echo "Error: I can't find <boost/chrono.hpp>."; echo "Please install the BOOST.chrono library headers." ; exit 1])
+AC_CHECK_HEADERS([boost/random/random_device.hpp],[],[echo "Error: I can't find <boost/random/random_device.hpp>."; echo "Please install the BOOST.random library headers." ; exit 1])
 
 if test "$use_mpi" != no ; then
    AC_CHECK_HEADERS([boost/serialization/serialization.hpp],[],[echo "Error: I can't find <boost/serialization/serialization.hpp>."; echo "Please install the BOOST.serialization library headers." ; exit 1])
@@ -394,6 +395,7 @@ AC_CHECK_LIB(boost_program_options${BOOST_SUFFIX},main,[],[echo "Error: I can't 
 AC_CHECK_LIB(boost_system${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_system library! (-lboost_system${BOOST_SUFFIX})" ; exit 1])
 AC_CHECK_LIB(boost_filesystem${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_filesystem library! (-lboost_filesystem${BOOST_SUFFIX})" ; exit 1])
 AC_CHECK_LIB(boost_chrono${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_chrono library! (-lboost_chrono${BOOST_SUFFIX})" ; exit 1])
+AC_CHECK_LIB(boost_random${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_random library! (-lboost_random${BOOST_SUFFIX})" ; exit 1])
 if test "$use_mpi" != no ; then
    AC_CHECK_LIB(boost_serialization${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_serialization library! (-lboost_serialization${BOOST_SUFFIX})" ; exit 1])
    AC_CHECK_LIB(boost_mpi${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_serialization library! (-lboost_mpi${BOOST_SUFFIX})" ; exit 1])
@@ -476,6 +478,7 @@ AC_OUTPUT([
   boost/Makefile 
   boost/lib/Makefile 
   boost/lib/chrono/Makefile 
+  boost/lib/random/Makefile 
   boost/lib/filesystem/Makefile 
   boost/lib/system/Makefile 
   boost/lib/program_options/Makefile

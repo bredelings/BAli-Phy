@@ -22,6 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <boost/random/random_device.hpp>
 
 #include "rng.H"
 
@@ -34,18 +35,17 @@ namespace rng {
   unsigned long get_random_seed()
   {
     unsigned long s=0;
+    const int bits_per_read = sizeof(unsigned)*8;
 
-    std::ifstream random("/dev/urandom");
-    if (random.good())
-    {
-      for(int i=0;i<sizeof(s);i++) 
+    boost::random::random_device random;
+
+    if (random.entropy())
+      for(int i=0;i*bits_per_read < sizeof(s)*8;i++) 
       {
-	unsigned char c;
-	random >> c;
-	s <<= 8;
-	s |=  c;
+	unsigned u = random();
+	s <<= bits_per_read;
+	s |=  u;
       }
-    }
     else
       s = time(NULL);
 
