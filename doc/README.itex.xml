@@ -324,7 +324,6 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	      <ulink url="http://www.gnu.org/software/make">
 		GNU make</ulink> version 3.80 (or higher).
 	  </para></listitem-->
-	  <listitem><para> The GNU Scientific Library (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.gnu.org/software/gsl/">GSL</link>) version 1.8 (or higher).</para></listitem>
 	  <listitem><para> The Cairo graphics library
 	      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link>)
 	      version 1.6 (or higher).  (Cairo is not strictly
@@ -389,7 +388,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 
       </section>
 
-      <section><info><title>Specifying where to find libraries and header files (e.g. GSL)</title></info>
+      <section><info><title>Specifying where to find libraries and header files (e.g. Cairo)</title></info>
 	
 	<para>You can instruct the compiler to look for include files
 	  in directory <replaceable>dir</replaceable> by passing
@@ -403,7 +402,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	  <parameter>--with-extra-libs=<replaceable>dir</replaceable></parameter> to the <command>configure</command> script.  
 	</para> 
 
-	<para>For example, if your system has GSL installed in <filename>/usr/local/</filename>, then you might need to add "<userinput>--with-extra-includes=/usr/local/include --with-extra-libs=/usr/local/lib</userinput>" to the configure script arguments so that the compiler can find the GSL include files and libraries.</para>
+	<para>For example, if your system has Cairo installed in <filename>/usr/local/</filename>, then you might need to add "<userinput>--with-extra-includes=/usr/local/include --with-extra-libs=/usr/local/lib</userinput>" to the configure script arguments so that the compiler can find the Cairo include files and libraries.</para>
       </section>
 
       <section><info><title>Selecting a non-default C++ compiler</title></info>
