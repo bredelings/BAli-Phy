@@ -341,7 +341,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   //FIXME - PARTITION - compute and cache P0 part before changing p[0], then we can
   //                     throw P0 away if we want to.
   efloat_t C2 = A3::correction(p[C],nodes[C]);
-  if (myrandomf() > double(C1/C2))
+  if (uniform() > double(C1/C2))
     return -1;
 
   return C;

@@ -328,8 +328,8 @@ double sorted_proposal(std::valarray<double>& x,const std::vector<double>& p)
     for(int m=0;m<fraction.size();m++)
       C[m] = exp(gaussian(0,0.1));
 
-    int n1 =(int)( myrandomf()*Alphabet().size());
-    int n2 =(int)( myrandomf()*Alphabet().size());
+    int n1 =(int)( uniform()*Alphabet().size());
+    int n2 =(int)( uniform()*Alphabet().size());
 
     double ratio = 1;
 

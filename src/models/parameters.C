@@ -1393,7 +1393,7 @@ bool accept_MH(const Probability_Model& P1,const Probability_Model& P2,double rh
 
   efloat_t ratio = efloat_t(rho)*(p2/p1);
 
-  if (ratio >= 1.0 or myrandomf() < ratio) 
+  if (ratio >= 1.0 or uniform() < ratio) 
     return true;
   else
     return false;

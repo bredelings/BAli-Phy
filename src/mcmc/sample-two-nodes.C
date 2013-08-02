@@ -482,7 +482,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
 
   // if we reject the move, then don't do anything
   efloat_t C2 = A5::correction(p[C],nodes[C]);
-  if (myrandomf() > double(C1/C2))
+  if (uniform() > double(C1/C2))
     return -1;
 
   return C;

@@ -259,7 +259,7 @@ namespace MCMC {
 
   int MoveOne::choose() const 
   {
-    double r = myrandomf()*sum();
+    double r = uniform()*sum();
 
     double sum = 0;
     int i = 0;
@@ -753,7 +753,7 @@ int MoveArg::reset(double l)
     if (l < 1) {
       double l2 = l*numbers.size();
       int n = (int)l2;
-      if (myrandomf() < (l2-n))
+      if (uniform() < (l2-n))
 	n++;
       assert(n < v.size());
       v.erase(v.begin()+n,v.end());
@@ -839,7 +839,7 @@ double MoveEach::sum(int arg) const {
 int MoveEach::choose(int arg) const {
   assert(moves.size() > 0);
 
-  double r = myrandomf()*sum(arg);
+  double r = uniform()*sum(arg);
 
   double sum = 0;
   int i = 0;

@@ -173,7 +173,7 @@ double do_SPR(Parameters& P, int b1_,int b2)
   double L1 = connected1[0].length() + connected1[1].length();
   double L2 = connected2[0].length() + connected2[1].length();
 
-  P.setlength_unsafe(P.T().directed_branch(connected2[0]), myrandomf() * L2 );
+  P.setlength_unsafe(P.T().directed_branch(connected2[0]), uniform() * L2 );
   P.setlength_unsafe(P.T().directed_branch(connected2[1]), L2 - P.T().directed_branch(connected2[0]).length() );
 
   return L2/L1;

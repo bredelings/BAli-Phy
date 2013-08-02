@@ -64,11 +64,11 @@ namespace A5 {
 
   vector<int> get_nodes_random(const Tree& T, int b) {
     vector<int> nodes = get_nodes(T,b);
-    if (myrandomf() < 0.5)
+    if (uniform() < 0.5)
       std::swap(nodes[0],nodes[1]);
-    if (myrandomf() < 0.5)
+    if (uniform() < 0.5)
       std::swap(nodes[2],nodes[3]);
-    if (myrandomf() < 0.5) {
+    if (uniform() < 0.5) {
       std::swap(nodes[0],nodes[2]);
       std::swap(nodes[1],nodes[3]);
       std::swap(nodes[4],nodes[5]);

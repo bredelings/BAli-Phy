@@ -170,7 +170,7 @@ void slice_sample_branch_length(owned_ptr<Probability_Model>& P,MoveStats& Stats
 
 void change_branch_length(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b)
 {
-  if (myrandomf() < 0.5)
+  if (uniform() < 0.5)
   {
     double sigma = P->load_value("log_branch_sigma",0.6);
     change_branch_length_log_scale(P, Stats, b, sigma);

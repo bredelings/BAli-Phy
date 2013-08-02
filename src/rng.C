@@ -67,10 +67,6 @@ double uniform()
   return std::uniform_real_distribution<>(0.0, 1.0)(standard);
 }
 
-double myrandomf() {
-  return uniform();
-}
-
 int uniform(int min, int max)
 {
   return std::uniform_int_distribution<unsigned long>(min, max)(standard);

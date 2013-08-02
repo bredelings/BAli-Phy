@@ -56,7 +56,7 @@ void sample_tri_one(owned_ptr<Probability_Model>& P, MoveStats&,int b)
   int node1 = T.branch(b).target();
   int node2 = T.branch(b).source();
 
-  if (myrandomf() < 0.5)
+  if (uniform() < 0.5)
     std::swap(node1,node2);
 
   if (node1 < T.n_leaves())
@@ -78,7 +78,7 @@ void sample_tri_branch_one(owned_ptr<Probability_Model>& P, MoveStats& Stats,int
   int node1 = T.branch(b).target();
   int node2 = T.branch(b).source();
 
-  if (myrandomf() < 0.5)
+  if (uniform() < 0.5)
     std::swap(node1,node2);
 
   if (node1 < T.n_leaves())
@@ -113,7 +113,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Probability_Model>& P, M
   int node1 = T.branch(b).target();
   int node2 = T.branch(b).source();
 
-  if (myrandomf() < 0.5)
+  if (uniform() < 0.5)
     std::swap(node1,node2);
 
   if (node1 < T.n_leaves())
@@ -168,7 +168,7 @@ void sample_tri_branch_type_one(owned_ptr<Probability_Model>& P, MoveStats& Stat
   int node1 = T.branch(b).target();
   int node2 = T.branch(b).source();
 
-  if (myrandomf() < 0.5)
+  if (uniform() < 0.5)
     std::swap(node1,node2);
 
   if (node1 < T.n_leaves())
@@ -347,7 +347,7 @@ void sample_branch_length_(owned_ptr<Probability_Model>& P,  MoveStats& Stats, i
   // TEST and Check Scaling of # of branches peeled
   if (P.as<Parameters>()->T().n_nodes() > 2)
   {
-    if (myrandomf() < 0.5)
+    if (uniform() < 0.5)
       slide_node(P,Stats,bv);
     else 
       change_3_branch_lengths(P,Stats,bv.target());
@@ -379,7 +379,7 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Probability_Model>& P, Mo
       // is non-zero, and one of the two other topologies is good while one is bad.
       //
       // This seems to actually occur for the Enolase-48 data set.
-      if (myrandomf() < 0.95)
+      if (uniform() < 0.95)
 	three_way_topology_sample(P,Stats,b);
       else
 	two_way_NNI_sample(P,Stats,b);
@@ -399,7 +399,7 @@ void walk_tree_sample_NNI(owned_ptr<Probability_Model>& P, MoveStats& Stats)
   for(int i=0;i<branches.size();i++) 
   {
     int b = branches[i];
-    if (myrandomf() < 0.95)
+    if (uniform() < 0.95)
       three_way_topology_sample(P,Stats,b);
     else
       two_way_NNI_sample(P,Stats,b);
@@ -417,10 +417,10 @@ void walk_tree_sample_NNI_and_A(owned_ptr<Probability_Model>& P, MoveStats& Stat
   for(int i=0;i<branches.size();i++) 
   {
     int b = branches[i];
-    if (myrandomf() < NNI_A_fraction)
+    if (uniform() < NNI_A_fraction)
       three_way_topology_and_alignment_sample(P,Stats,b);
     else
-      if (myrandomf() < 0.95)
+      if (uniform() < 0.95)
 	three_way_topology_sample(P,Stats,b);
       else
 	two_way_NNI_sample(P,Stats,b);
@@ -439,7 +439,7 @@ void walk_tree_sample_alignments(owned_ptr<Probability_Model>& P, MoveStats& Sta
 
     //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
-    if ((myrandomf() < 0.15) and (PP.T().n_leaves() >2))
+    if ((uniform() < 0.15) and (PP.T().n_leaves() >2))
     {
       // FIXME: don't call sample_parameter_and_alignment_on_branch( ): something is wrong.
       if (uniform() < 0.5 or true)

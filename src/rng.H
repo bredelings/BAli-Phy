@@ -27,10 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 unsigned long myrand_init();
 unsigned long myrand_init(unsigned long);
  
-// synonym for 'uniform'
-double myrandomf();
-
-// returns a value in (0,1)
+// returns a value in [0,1)
 double uniform();
 
 // return the log of a variable that is uniform on (0,1)
