@@ -22,12 +22,17 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_cdf.h>
 #include <iostream>
+#include <boost/math/special_functions/gamma.hpp>
+#include <boost/math/special_functions/beta.hpp>
+#include <boost/math/distributions.hpp>
 
 #include "math/logsum.H"
 #include "util.H"
 
 using std::valarray;
 using std::vector;
+
+using boost::math::quantile;
 
 log_double_t double_factorial(int n) 
 {
@@ -54,7 +59,7 @@ log_double_t num_topologies_in_partition(int n1,int n2)
 
 double log_gamma(double x) {
   assert(x>0.0);
-  return gsl_sf_lngamma(x);
+  return lgamma(x);
 }
 
 log_double_t dirichlet_pdf(const valarray<double>& p,const valarray<double>& n) 
@@ -141,9 +146,9 @@ log_double_t exponential_pdf(double x, double mu) {
   return exp<log_double_t>(-x/mu)/mu;
 }
 
-log_double_t laplace_pdf(double x, double mu, double sigma) {
-  double a = sigma/sqrt(2);
-  return gsl_ran_laplace_pdf(x-mu,a);
+log_double_t laplace_pdf(double x, double mu, double b) 
+{
+  return exp<log_double_t>(-std::abs(x-mu)/b)/(2.0*b);
 }
 
 log_double_t cauchy_pdf(double x, double l, double s)
@@ -154,26 +159,31 @@ log_double_t cauchy_pdf(double x, double l, double s)
   return pow(C2,-1.0);
 }
 
-log_double_t beta_pdf(double p,double a, double b) 
+log_double_t beta_pdf(double p_,double a, double b) 
 {
-    if (p <= 0.0 or p >= 1.0)
+  if (p_ <= 0.0 or p_ >= 1.0)
       return 0;
-    else
-      return gsl_ran_beta_pdf(p,a,b);
+
+  log_double_t p = p_;
+  log_double_t q = 1.0-p_;
+
+  return pow(p,a-1)*pow(q,b-1)/boost::math::beta(a,b);
 }
 
 double beta_quantile(double p, double a, double b)
 {
+  using boost::math::beta_distribution;
+
   //  std::cerr<<" p = "<<p<<" a = "<<a<<" b = "<<b<<std::endl;
   if (a<0 or b<0)
     a=b=1;
 
-  // Avoid values GSL can't handle: could we approximate with e.g. normal here?
+  // Avoid values BOOST can't handle: could we approximate with e.g. normal here?
   if (a > 100 or b > 100 or a < 0.1 or b < 0.1)
     return a/(a+b);
 
   //  std::cerr<<" * p = "<<p<<" a = "<<a<<" b = "<<b<<std::endl;
-  double x = gsl_cdf_beta_Pinv(p,a,b);
+  double x = quantile(beta_distribution<>(a,b),p);
   //  std::cerr<<" ** x = "<<x<<" p = "<<p<<" a = "<<a<<" b = "<<b<<std::endl;
   return x;
 }
@@ -205,10 +215,12 @@ log_double_t normal_pdf(double x, double mu, double sigma)
 
 double normal_quantile(double p, double mu, double sigma)
 {
+  using boost::math::normal_distribution;
+
   assert(p >= 0);
   assert(p <= 1);
   assert(sigma >= 0);
-  return mu+gsl_cdf_gaussian_Pinv(p,sigma);
+  return quantile(normal_distribution<>(mu,sigma),p);
 }
 
 log_double_t log_normal_pdf(double x, double mu, double sigma)
@@ -221,6 +233,8 @@ log_double_t log_normal_pdf(double x, double mu, double sigma)
 
 double log_normal_quantile(double p, double lmu, double lsigma)
 {
+  using boost::math::lognormal_distribution;
+
   assert(p >= 0);
   assert(p <= 1);
   assert(lsigma >= 0);
@@ -228,7 +242,7 @@ double log_normal_quantile(double p, double lmu, double lsigma)
   // don't go crazy
   lsigma = minmax(lsigma, 1.0e-5, 1.0e5);
 
-  return gsl_cdf_lognormal_Pinv(p, lmu, lsigma);
+  return quantile(lognormal_distribution<>(lmu, lsigma),p);
 }
 
 static double pointChi2(double prob, double v)
@@ -261,7 +275,7 @@ static double pointChi2(double prob, double v)
     p = 0.999998;
   }
 
-  g = gsl_sf_lngamma(v / 2);
+  g = log_gamma(v / 2);
     
   xx = v / 2;
   c = xx - 1;
@@ -272,7 +286,7 @@ static double pointChi2(double prob, double v)
     }
   } else {
     if (v > 0.32) {
-      x = gsl_cdf_gaussian_Pinv(p,1);
+      x = normal_quantile(p,0,1);
       p1 = 0.222222 / v;
       ch = v * pow((x * sqrt(p1) + 1 - p1), 3.0);
       if (ch > 2.2 * v + 6) {
@@ -296,8 +310,10 @@ static double pointChi2(double prob, double v)
   do {
     q = ch;
     p1 = 0.5 * ch;
-      
-    if ((t = gsl_sf_gamma_inc_P(xx, p1)) < 0)
+
+    t = boost::math::gamma_p(xx,p1);
+
+    if (t < 0)
       throw myexception()<<"Arguments out of range: t < 0";
 
     p2 = p - t;
@@ -357,7 +373,7 @@ double gamma_quantile(double p, double a, double b)
     // don't go crazy
     sigma = minmax(sigma, 1.0e-5, 1.0e5);
 
-    return gsl_cdf_lognormal_Pinv(p,mu,sigma);
+    return normal_quantile(p, mu ,sigma);
   }
 }
 
