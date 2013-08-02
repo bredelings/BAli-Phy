@@ -71,14 +71,18 @@ double myrandomf() {
   return uniform();
 }
 
+int uniform(int min, int max)
+{
+  return std::uniform_int_distribution<unsigned long>(min, max)(standard);
+}
+
 /// returns a value in [0,max-1]
 unsigned long myrandom(unsigned long max) {
-  return std::uniform_int_distribution<unsigned long>(0, max-1)(standard);
+  return uniform(0, max-1);
 } 
 
 long myrandom(long min,long max) {
-  unsigned long diff = max - min;
-  return myrandom(diff)+min;
+  return uniform(min,max-1);
 }
 
 double log_unif() {
