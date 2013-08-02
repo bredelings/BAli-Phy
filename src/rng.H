@@ -62,60 +62,7 @@ std::valarray<double> dirichlet(const std::valarray<double>& n);
 
 unsigned long get_random_seed();
 
-  /*
-  class RNG {
-
-  protected:
-    gsl_rng* generator;
-    
-
-  public:
-    unsigned long int seed(unsigned long int);
-    unsigned long int seed();
-    
-    unsigned long min() const { return gsl_rng_min(generator); }
-    unsigned long max() const { return gsl_rng_max(generator); }
-
-    unsigned long get() { return gsl_rng_get(generator) ;}
-
-    double uniform() { return gsl_rng_uniform_pos(generator); }
-    
-    double uniform_int(unsigned long int n) { return gsl_rng_uniform_int(generator,n); }
-
-    double log_unif() {return -gsl_ran_exponential(generator,1.0);}
-
-    double laplace(double mu,double sigma) {return gsl_ran_laplace(generator,sigma)+mu;}
-
-    double cauchy(double l=0.0,double s=1.0) {return gsl_ran_cauchy(generator,s)+l;}
-
-    double gaussian(double mu,double sigma) {return gsl_ran_gaussian(generator,sigma/sqrt(2))+mu;}
-
-    double exponential(double mu) {return gsl_ran_exponential(generator,mu);}
-    double gamma(double a,double b) {return gsl_ran_gamma(generator,a,b);}
-
-    int geometric (double p) {return gsl_ran_geometric(generator,p);}
-
-    unsigned poisson(double mu) {return gsl_ran_poisson(generator,mu);}
-
-    std::valarray<double> dirichlet(const std::valarray<double>& n);
-
-    RNG();
-    ~RNG();
-  };
-  */
-
 unsigned long myrandom(unsigned long max);
 long myrandom(long min,long max);
-
-/*
-/// returns a value in [0,max-1]
-  return (unsigned long)rng::standard->uniform_int(max);
-} 
-
-long myrandom(long min,long max) {
-  unsigned long diff = max - min;
-  return myrandom(diff)+min;
-}
-  */
 
 #endif
