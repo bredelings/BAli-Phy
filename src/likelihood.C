@@ -21,8 +21,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "math/logsum.H"
 #include "substitution/substitution.H"
 #include "setup.H"
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_sf.h>
 #include "probability/probability.H"
 #include "alignment/alignment-util.H"
 #include "util.H"

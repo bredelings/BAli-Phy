@@ -27,7 +27,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "imodel/imodel.H"
 #include "math/logsum.H"
 #include "rng.H"
-#include <gsl/gsl_randist.h>
 #include "myexception.H"
 #include "probability/probability.H"
 #include "util.H"

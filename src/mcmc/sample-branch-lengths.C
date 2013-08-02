@@ -27,7 +27,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution/substitution.H"
 #include "likelihood.H"
 #include "proposals.H"
-#include <gsl/gsl_cdf.h>
 
 using MCMC::MoveStats;
 using std::vector;
