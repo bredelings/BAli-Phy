@@ -1260,11 +1260,9 @@ typedef lex::lexertl::position_token<char const*,
 
 typedef lex::lexertl::actor_lexer<Token> Lexer;
 
-typedef HTokens<Lexer>::iterator_type iterator_type;
-
 HTokens<Lexer> lexer1;          // Our lexer
 
-HParser<iterator_type> haskell_parser(lexer1);
+HParser<HTokens<Lexer>::iterator_type> haskell_parser(lexer1);
 
 expression_ref parse_haskell_line(const string& line)
 {
