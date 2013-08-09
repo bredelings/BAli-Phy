@@ -27,6 +27,7 @@ using std::endl;
 #include <functional>
 
 #include <boost/spirit/include/lex_lexertl.hpp>
+#include <boost/spirit/include/lex_lexertl_position_token.hpp>
 
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
@@ -138,9 +139,9 @@ void fail_if_reserved_qop(const char* start, const char* end, BOOST_SCOPED_ENUM(
 
 // http://www.haskell.org/ghc/docs/6.10.2/html/libraries/haskell-src/Language-Haskell-Lexer.html
 template <typename Lexer>
-struct haskell_lex1 : lex::lexer<Lexer>
+struct HTokens : lex::lexer<Lexer>
 {
-    haskell_lex1()
+    HTokens()
     {
 /*
 program → { lexeme | whitespace }
@@ -462,11 +463,11 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 };
 
 template <typename Iterator>
-struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
+struct HParser : qi::grammar<Iterator, expression_ref()>
 {
   template <typename TokenDef>
-    haskell_grammar(const TokenDef& tok) 
-      : haskell_grammar::base_type(exp)
+    HParser(const TokenDef& tok) 
+      : HParser::base_type(exp)
     {
         using qi::lit;
         using qi::lexeme;
@@ -1253,17 +1254,17 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref()>
 
 //-----------------------------------------------------------------------//
 
-typedef lex::lexertl::token<
-  char const*, boost::mpl::vector<std::string>
-  > token_type;
+typedef lex::lexertl::position_token<char const*, 
+				     boost::mpl::vector<int,std::string>
+				     > Token;
 
-typedef lex::lexertl::actor_lexer<token_type> lexer_type;
+typedef lex::lexertl::actor_lexer<Token> Lexer;
 
-typedef haskell_lex1<lexer_type>::iterator_type iterator_type;
+typedef HTokens<Lexer>::iterator_type iterator_type;
 
-haskell_lex1<lexer_type> lexer1;          // Our lexer
+HTokens<Lexer> lexer1;          // Our lexer
 
-haskell_grammar<iterator_type> haskell_parser(lexer1);
+HParser<iterator_type> haskell_parser(lexer1);
 
 expression_ref parse_haskell_line(const string& line)
 {
