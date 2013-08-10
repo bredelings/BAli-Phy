@@ -21,6 +21,7 @@ using std::endl;
 #include <boost/spirit/include/phoenix_algorithm.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/spirit/include/phoenix_bind.hpp>
+#include <boost/spirit/include/phoenix_function.hpp>
 #include <boost/fusion/include/io.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/foreach.hpp>
@@ -36,6 +37,83 @@ namespace lex = boost::spirit::lex;
 
 
 namespace phoenix = boost::phoenix;
+
+template <typename BaseIterator, typename Iterator>
+struct myerror_handler
+{
+  template <typename, typename, typename>
+  struct result { typedef void type; };
+
+  myerror_handler(BaseIterator first, BaseIterator last)
+    : first(first), last(last) {}
+
+  template <typename Message, typename What>
+  void operator()(
+		  Message const& message,
+		  What const& what,
+		  Iterator err_pos) const
+  {
+    // retrieve underlying iterator from current token
+    BaseIterator err_pos_base = err_pos->matched().begin();
+
+    int line;
+    BaseIterator line_start = get_pos(err_pos_base, line);
+    if (err_pos_base != last)
+    {
+      std::cout << message << what << " line " << line << ':' << std::endl;
+      std::cout << get_line(line_start) << std::endl;
+      for (; line_start != err_pos_base; ++line_start)
+	std::cout << ' ';
+      std::cout << '^' << std::endl;
+    }
+    else
+    {
+      std::cout << "Unexpected end of file. ";
+      std::cout << message << what << " line " << line << std::endl;
+    }
+  }
+
+  BaseIterator get_pos(BaseIterator err_pos, int& line) const
+  {
+    line = 1;
+    BaseIterator i = first;
+    BaseIterator line_start = first;
+    while (i != err_pos)
+    {
+      bool eol = false;
+      if (i != err_pos && *i == '\r') // CR
+      {
+	eol = true;
+	line_start = ++i;
+      }
+      if (i != err_pos && *i == '\n') // LF
+      {
+	eol = true;
+	line_start = ++i;
+      }
+      if (eol)
+	++line;
+      else
+	++i;
+    }
+    return line_start;
+  }
+
+  std::string get_line(BaseIterator err_pos) const
+  {
+    BaseIterator i = err_pos;
+    // position i to the next EOL
+    while (i != last && (*i != '\r' && *i != '\n'))
+      ++i;
+    return std::string(err_pos, i);
+  }
+
+  BaseIterator first;
+  BaseIterator last;
+  std::vector<Iterator> iters;
+};
+
+
 //-----------------------------------------------------------------------//
 // Handle column numbers
 //    - http://stackoverflow.com/questions/8100050/boost-spirit-dynamic-lexer-with-column-numbers
@@ -468,8 +546,10 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 template <typename Iterator>
 struct HParser : qi::grammar<Iterator, expression_ref()>
 {
+  typedef myerror_handler<StreamIter, Iterator> error_handler_type;
+
   template <typename TokenDef>
-    HParser(const TokenDef& tok) 
+    HParser(error_handler_type& error_handler, const TokenDef& tok) 
       : HParser::base_type(exp)
     {
         using qi::lit;
@@ -492,6 +572,9 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	using phoenix::construct;
 	using phoenix::new_;
 	using phoenix::val;
+	using boost::phoenix::function;
+
+	typedef function<error_handler_type> error_handler_function;
 
 	varid %= tok.VarId;
 	qvarid %= tok.VarId | tok.QVarId;
@@ -810,270 +893,32 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 	bugs_line %= bugs_parameter | bugs_default_value | bugs_dist | bugs_note;
 
+#define add_error_handler(node) on_error<fail>(node,\
+	error_handler_function(error_handler)(\
+            "Error! Expecting ", _4, _3));\
 
-	on_error<fail>
-	  (
-	   exp
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   lexp
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   aexp
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   funlhs
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   gendecl
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   fixity
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   rhs
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   impdecls
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   impdecl
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   decls
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   decl
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   topdecls
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   module
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   body
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   topdecl
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   pat
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   lpat
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   apat
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   literal
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   bugs_line
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   bugs_dist
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   bugs_default_value
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
+	add_error_handler(exp);
+	add_error_handler(lexp);
+	add_error_handler(aexp);
+	add_error_handler(funlhs);
+	add_error_handler(gendecl);
+	add_error_handler(fixity);
+	add_error_handler(rhs);
+	add_error_handler(impdecls);
+	add_error_handler(impdecl);
+	add_error_handler(decls);
+	add_error_handler(decl);
+	add_error_handler(topdecls);
+	add_error_handler(topdecl);
+	add_error_handler(module);
+	add_error_handler(body);
+	add_error_handler(pat);
+	add_error_handler(lpat);
+	add_error_handler(apat);
+	add_error_handler(literal);
+	add_error_handler(bugs_line);
+	add_error_handler(bugs_dist);
+	add_error_handler(bugs_default_value);
 
 	modid.name("modid");
 	exp.name("exp");
@@ -1264,15 +1109,17 @@ typedef lex::lexertl::actor_lexer<Token> Lexer;
 
 HTokens<Lexer> lexer1;          // Our lexer
 
-HParser<HTokens<Lexer>::iterator_type> haskell_parser(lexer1);
-
 expression_ref parse_haskell_line(const string& line)
 {
   std::stringstream line_stream(line);
   line_stream.unsetf(std::ios::skipws);
 
+  StreamIter beg = StreamIter(line_stream), end;
+
+  HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
+  HParser<HTokens<Lexer>::iterator_type> haskell_parser(error_handler,lexer1);
+
   {
-    StreamIter beg = StreamIter(line_stream), end;
     for(auto i = lexer1.begin(beg, end); i != lexer1.end() and (*i).is_valid(); i++)
     {
       auto& t = *i;
@@ -1283,7 +1130,6 @@ expression_ref parse_haskell_line(const string& line)
   /*----------------------------------------------------------------------------*/
   expression_ref cmd;
 
-  StreamIter beg = StreamIter(line_stream), end;
   StreamIter iter = beg;
   if (not tokenize_and_parse(iter, end, lexer1, haskell_parser, cmd))
     throw myexception()<<"Haskell line parse failed!";
@@ -1299,8 +1145,12 @@ expression_ref parse_haskell_decls(const string& line)
   std::stringstream line_stream(line);
   line_stream.unsetf(std::ios::skipws);
 
+  StreamIter beg = StreamIter(line_stream), end;
+
+  HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
+  HParser<HTokens<Lexer>::iterator_type> haskell_parser(error_handler,lexer1);
+
   {
-    StreamIter beg = StreamIter(line_stream), end;
     for(auto i = lexer1.begin(beg, end); i != lexer1.end() and (*i).is_valid(); i++)
     {
       auto& t = *i;
@@ -1311,7 +1161,6 @@ expression_ref parse_haskell_decls(const string& line)
   /*----------------------------------------------------------------------------*/
 
   expression_ref cmd;
-  StreamIter beg = StreamIter(line_stream), end;
   StreamIter iter = beg;
   if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.decls, cmd))
     throw myexception()<<"Haskell decls parse failed!";
@@ -1327,8 +1176,12 @@ expression_ref parse_bugs_line(const string& line)
   std::stringstream line_stream(line);
   line_stream.unsetf(std::ios::skipws);
 
+  StreamIter beg = StreamIter(line_stream), end;
+
+  HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
+  HParser<HTokens<Lexer>::iterator_type> haskell_parser(error_handler,lexer1);
+
   {
-    StreamIter beg = StreamIter(line_stream), end;
     for(auto i = lexer1.begin(beg, end); i != lexer1.end() and (*i).is_valid(); i++)
     {
       auto& t = *i;
@@ -1339,7 +1192,6 @@ expression_ref parse_bugs_line(const string& line)
   /*----------------------------------------------------------------------------*/
 
   expression_ref cmd;
-  StreamIter beg = StreamIter(line_stream), end;
   StreamIter iter = beg;
   if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.bugs_line, cmd))
     throw myexception()<<"HBUGS line parse failed!";
@@ -1355,9 +1207,13 @@ expression_ref parse_bugs_file(const string& lines)
   std::stringstream line_stream(lines);
   line_stream.unsetf(std::ios::skipws);
 
+  StreamIter beg = StreamIter(line_stream), end;
+
+  HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
+  HParser<HTokens<Lexer>::iterator_type> haskell_parser(error_handler,lexer1);
+
   /*
   {
-    StreamIter beg = StreamIter(line_stream), end;
     for(auto i = lexer1.begin(beg,end); i != lexer1.end() and (*i).is_valid(); i++)
     {
       auto& t = *i;
@@ -1368,7 +1224,6 @@ expression_ref parse_bugs_file(const string& lines)
   /*----------------------------------------------------------------------------*/
 
   expression_ref cmd;
-  StreamIter beg = StreamIter(line_stream), end;
   StreamIter iter = beg;
   if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.module, cmd))
     throw myexception()<<"Module parse failed!";
