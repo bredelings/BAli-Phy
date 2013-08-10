@@ -627,7 +627,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 	aexp = 
 	  // variable
-	  qvar [_val = phoenix::construct<AST_node>("id", construct<String>(_1)) ]
+	  qvar [_val = phoenix::construct<AST_node>("id", _1) ]
 	  // general constructor
 	  | gcon [ _val = phoenix::construct<AST_node>("id", _1) ]
 	  // literal
