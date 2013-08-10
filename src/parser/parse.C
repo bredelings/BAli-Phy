@@ -924,6 +924,41 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	add_error_handler(bugs_dist);
 	add_error_handler(bugs_default_value);
 
+	BOOST_SPIRIT_DEBUG_NODE(varid);
+	BOOST_SPIRIT_DEBUG_NODE(qvarid);
+	BOOST_SPIRIT_DEBUG_NODE(conid);
+	BOOST_SPIRIT_DEBUG_NODE(qconid);
+	BOOST_SPIRIT_DEBUG_NODE(varsym);
+	BOOST_SPIRIT_DEBUG_NODE(qvarsym);
+	BOOST_SPIRIT_DEBUG_NODE(consym);
+	BOOST_SPIRIT_DEBUG_NODE(qconsym);
+
+	BOOST_SPIRIT_DEBUG_NODE(var);
+	BOOST_SPIRIT_DEBUG_NODE(qvar);
+	BOOST_SPIRIT_DEBUG_NODE(con);
+	BOOST_SPIRIT_DEBUG_NODE(qcon);
+	BOOST_SPIRIT_DEBUG_NODE(varop);
+	BOOST_SPIRIT_DEBUG_NODE(qvarop);
+	BOOST_SPIRIT_DEBUG_NODE(conop);
+	BOOST_SPIRIT_DEBUG_NODE(qconop);
+	BOOST_SPIRIT_DEBUG_NODE(op);
+	BOOST_SPIRIT_DEBUG_NODE(qop);
+	BOOST_SPIRIT_DEBUG_NODE(gconsym);
+	BOOST_SPIRIT_DEBUG_NODE(gcon);
+
+	BOOST_SPIRIT_DEBUG_NODE(exp);
+	BOOST_SPIRIT_DEBUG_NODE(lexp);
+	BOOST_SPIRIT_DEBUG_NODE(aexp);
+	BOOST_SPIRIT_DEBUG_NODE(funlhs);
+	BOOST_SPIRIT_DEBUG_NODE(rhs);
+	BOOST_SPIRIT_DEBUG_NODE(decl);
+	BOOST_SPIRIT_DEBUG_NODE(decls);
+	BOOST_SPIRIT_DEBUG_NODE(pat);
+	BOOST_SPIRIT_DEBUG_NODE(lpat);
+	BOOST_SPIRIT_DEBUG_NODE(apat);
+	BOOST_SPIRIT_DEBUG_NODE(var);
+	BOOST_SPIRIT_DEBUG_NODE(varop);
+
 	modid.name("modid");
 	exp.name("exp");
 	infixexp.name("infixexp");
