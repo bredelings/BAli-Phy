@@ -582,7 +582,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	conid %= tok.ConId;
 	qconid %= tok.ConId | tok.QConId;
 
-	varsym %= tok.VarSym | tok.Minus | tok.Exclamation;
+	varsym %= tok.VarSym | tok.Minus[_val = "-"] | tok.Exclamation [_val = "!"];
 	qvarsym %= tok.VarSym | tok.QVarSym;
 	consym %= tok.ConSym;
 	qconsym %= tok.ConSym | tok.QConSym;
@@ -1220,6 +1220,7 @@ expression_ref parse_bugs_file(const string& lines)
       auto& t = *i;
       std::cout<<"'"<<t.value()<<"'\n";;
     }
+    // Sharing the same stream might not work.
   }
   */
   /*----------------------------------------------------------------------------*/
