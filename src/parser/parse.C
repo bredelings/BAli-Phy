@@ -585,7 +585,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	qconid %= tok.ConId | tok.QConId;
 
 	varsym = tok.VarSym [_val = _1] | tok.Minus[_val = "-"] | tok.Exclamation [_val = "!"];
-	qvarsym %= tok.VarSym | tok.QVarSym;
+	qvarsym %= varsym | tok.QVarSym;
 	consym %= tok.ConSym;
 	qconsym %= tok.ConSym | tok.QConSym;
 
