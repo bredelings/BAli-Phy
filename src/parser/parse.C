@@ -1218,6 +1218,12 @@ expression_ref parse_bugs_file(const string& lines)
 
   /*
   {
+    std::stringstream line_stream(lines);
+    line_stream.unsetf(std::ios::skipws);
+
+    StreamIter beg = StreamIter(line_stream), end;
+
+    HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
     for(auto i = lexer1.begin(beg,end); i != lexer1.end() and (*i).is_valid(); i++)
     {
       auto& t = *i;
