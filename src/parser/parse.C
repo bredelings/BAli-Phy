@@ -725,7 +725,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  //	  | qcon >> tok.LeftCurly >> *fpat >> tok.RightCurly     
 	  | literal [  _val = _1 ]
 	  // wildcard
-	  | tok.Underscore [ qi::_val = phoenix::construct<AST_node>("WildcardPattern") ]                       
+	  | tok.Underscore [ _val = construct<AST_node>("WildcardPattern") ]                       
 	  // parenthesized pattern
 	  | tok.LeftParen >> pat [ _val = _1 ] >> tok.RightParen          
 	  // tuple patten
