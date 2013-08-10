@@ -718,7 +718,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  // as pattern
 	  //	  var >> tok.At>>apat 
 	  // irrefutable var pattern
-	  var [ qi::_val = phoenix::construct<AST_node>("apat_var", qi::_1) ]        
+	  var [ _val = construct<AST_node>("apat_var", construct<String>(_1)) ]
 	  // arity gcon = 0
 	  | gcon [ push_back(_a,construct<String>(_1)) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
 	  // labelled pattern
