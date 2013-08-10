@@ -654,9 +654,9 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  ;
 	  
 	/*----- Section 3.2 -------*/
-	gcon = (tok.LeftParen >> tok.RightParen) [_val = "()"]
-	  | (tok.LeftSquare >> tok.RightSquare) [_val = "[]"]
-	  | (tok.LeftParen >> tok.Comma [_val = "(,"] >> *tok.Comma[_val += ","] >> tok.RightParen[_val += ")"])
+	gcon =  tok.LeftParen >> tok.RightParen [_val = "()"]
+	  | tok.LeftSquare >> tok.RightSquare [_val = "[]"]
+	  | tok.LeftParen >> tok.Comma [_val = "(,"] >> *tok.Comma[_val += ","] >> tok.RightParen[_val += ")"]
 	  | qcon [ _val = _1];
 
 	var  %= varid  | tok.LeftParen >> varsym >> tok.RightParen;    // variable
@@ -802,9 +802,9 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  | eps[clear(_a)] >> tok.LeftParen >> type [_val = _1 ] >> tok.RightParen;
 	atype2 = atype [_val = _1] | tok.Exclamation >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("StrictAtype"), _a) ];
 
-	gtycon = (tok.LeftParen >> tok.RightParen) [_val = "()"]
-	  | (tok.LeftSquare >> tok.RightSquare) [_val = "[]"]
-	  | (tok.LeftParen >> tok.RightArrow >> tok.RightParen) [_val = "->"]
+	gtycon = tok.LeftParen >> tok.RightParen [_val = "()"]
+	  | tok.LeftSquare >> tok.RightSquare [_val = "[]"]
+	  | tok.LeftParen >> tok.RightArrow >> tok.RightParen [_val = "->"]
 	  | tok.LeftParen >> tok.Comma [_val = "(,"] >> *tok.Comma[_val += ","] >>tok.RightParen[_val += ")"]
 	  | qtycon [ _val = _1];
 
