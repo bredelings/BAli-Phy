@@ -490,7 +490,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<> Underscore;
   lex::token_def<> BackQuote;
   lex::token_def<> DotDot;
-  lex::token_def<std::string> Colon;
+  lex::token_def<> Colon;
   lex::token_def<> DoubleColon;
   lex::token_def<> Equals;
   lex::token_def<> Backslash;
@@ -669,7 +669,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	qconop %= gconsym | tok.BackQuote >> qconid >> tok.BackQuote; // qualified constructor operator
 	op %= varop | conop;                      // operator
 	qop = qvarop [ _val = construct<AST_node>("id", construct<String>(_1)) ] | qconop [ _val = construct<AST_node>("id",construct<String>(_1)) ];  // qualified operator
-	gconsym %= qconsym | tok.Colon;
+	gconsym %= qconsym | tok.Colon [_val = ":"];
 
 	/*----- Section 3.11 -----*/
 	qual = pat [push_back(_a,_1)] >> tok.LeftArrow > exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
