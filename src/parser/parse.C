@@ -802,8 +802,11 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  | eps[clear(_a)] >> tok.LeftParen >> type [_val = _1 ] >> tok.RightParen;
 	atype2 = atype [_val = _1] | tok.Exclamation >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("StrictAtype"), _a) ];
 
-	// fixme - this isn't going to set the attribute for gtycon!
-	gtycon %= tok.LeftParen >> tok.RightParen | tok.LeftSquare >> tok.RightSquare | tok.LeftParen >> tok.RightArrow >> tok.RightParen | tok.LeftParen >> tok.Comma >> *tok.Comma >>tok.RightParen | qtycon;
+	gtycon = (tok.LeftParen >> tok.RightParen) [_val = "()"]
+	  | (tok.LeftSquare >> tok.RightSquare) [_val = "[]"]
+	  | (tok.LeftParen >> tok.RightArrow >> tok.RightParen) [_val = "->"]
+	  | tok.LeftParen >> tok.Comma [_val = "(,"] >> *tok.Comma[_val += ","] >>tok.RightParen[_val += ")"]
+	  | qtycon [ _val = _1];
 
 	/*----- Section 4.1.3 ------*/
 	//	context %= h_class | tok.LeftParen >> *h_class >> tok.RightParen;
