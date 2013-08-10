@@ -297,8 +297,8 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 
       Special = "{special}";
 
-      LeftParen   = "\\(";
-      RightParen  = "\\)";
+      LeftParen   = "[(]";
+      RightParen  = "[)]";
       SemiColon   = ";";
       LeftCurly   = "\\{";
       RightCurly  = "}";
