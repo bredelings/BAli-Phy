@@ -656,7 +656,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	/*----- Section 3.2 -------*/
 	gcon = (tok.LeftParen >> tok.RightParen) [_val = "()"]
 	  | (tok.LeftSquare >> tok.RightSquare) [_val = "[]"]
-	  | (tok.LeftParen >> tok.Comma >> *tok.Comma >> tok.RightParen)
+	  | (tok.LeftParen >> tok.Comma [_val = "(,"] >> *tok.Comma[_val += ","] >> tok.RightParen[_val += ")"])
 	  | qcon [ _val = _1];
 
 	var  %= varid  | tok.LeftParen >> varsym >> tok.RightParen;    // variable
