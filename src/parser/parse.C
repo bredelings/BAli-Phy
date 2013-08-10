@@ -25,6 +25,7 @@ using std::endl;
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/foreach.hpp>
 #include <functional>
+#include <sstream>
 
 #include <boost/spirit/include/lex_lexertl.hpp>
 #include <boost/spirit/include/lex_lexertl_position_token.hpp>
@@ -111,26 +112,28 @@ bool is_reservedop(const string& op)
 
 std::string get_unqualified_name(const std::string&);
 
-void fail_if_reserved_id(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
+typedef boost::spirit::istream_iterator StreamIter;
+
+void fail_if_reserved_id(const StreamIter start, const StreamIter end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
 {
   if (is_reservedid(std::string(start, end)))
     pass = lex::pass_flags::pass_fail;
 }
 
-void fail_if_reserved_qid(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
+void fail_if_reserved_qid(const StreamIter start, const StreamIter end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
 {
   string id = get_unqualified_name(string(start,end));
   if (is_reservedid(id))
     pass = lex::pass_flags::pass_fail;
 }
 
-void fail_if_reserved_op(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
+void fail_if_reserved_op(const StreamIter start, const StreamIter end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
 {
   if (is_reservedop(std::string(start, end)))
     pass = lex::pass_flags::pass_fail;
 }
 
-void fail_if_reserved_qop(const char* start, const char* end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
+void fail_if_reserved_qop(const StreamIter start, const StreamIter end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
 {
   string op = get_unqualified_name(string(start,end));
   if (is_reservedop(op))
@@ -1253,8 +1256,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 };
 
 //-----------------------------------------------------------------------//
-
-typedef lex::lexertl::position_token<char const*, 
+typedef lex::lexertl::position_token<StreamIter,
 				     boost::mpl::vector<int,std::string>
 				     > Token;
 
@@ -1266,10 +1268,12 @@ HParser<HTokens<Lexer>::iterator_type> haskell_parser(lexer1);
 
 expression_ref parse_haskell_line(const string& line)
 {
+  std::stringstream line_stream(line);
+  line_stream.unsetf(std::ios::skipws);
+
   {
-    const char* first = &line[0];
-    const char* end = first + line.size();
-    for(auto i = lexer1.begin(first,end); i != lexer1.end() and (*i).is_valid(); i++)
+    StreamIter beg = StreamIter(line_stream), end;
+    for(auto i = lexer1.begin(beg, end); i != lexer1.end() and (*i).is_valid(); i++)
     {
       auto& t = *i;
       std::cout<<"'"<<t.value()<<"'\n";;
@@ -1277,23 +1281,27 @@ expression_ref parse_haskell_line(const string& line)
   }
 
   /*----------------------------------------------------------------------------*/
-
-  string::const_iterator iter = line.begin();
   expression_ref cmd;
-  const char* first = &line[0];
-  const char* last = first + line.size();
-  if (tokenize_and_parse(first, last, lexer1, haskell_parser))
-    return cmd;
 
-  throw myexception()<<"Haskell pharse parse: only parsed "<<line.substr(0, iter-line.begin());
+  StreamIter beg = StreamIter(line_stream), end;
+  StreamIter iter = beg;
+  if (not tokenize_and_parse(iter, end, lexer1, haskell_parser, cmd))
+    throw myexception()<<"Haskell line parse failed!";
+
+  if (iter != end)
+    throw myexception()<<"Haskell line parse only parsed:\n "<<string(beg,iter)<<"\n";
+
+  return cmd;
 }
 
 expression_ref parse_haskell_decls(const string& line)
 {
+  std::stringstream line_stream(line);
+  line_stream.unsetf(std::ios::skipws);
+
   {
-    const char* first = &line[0];
-    const char* end = first + line.size();
-    for(auto i = lexer1.begin(first,end); i != lexer1.end() and (*i).is_valid(); i++)
+    StreamIter beg = StreamIter(line_stream), end;
+    for(auto i = lexer1.begin(beg, end); i != lexer1.end() and (*i).is_valid(); i++)
     {
       auto& t = *i;
       std::cout<<"'"<<t.value()<<"'\n";;
@@ -1302,23 +1310,26 @@ expression_ref parse_haskell_decls(const string& line)
 
   /*----------------------------------------------------------------------------*/
 
-  string::const_iterator iter = line.begin();
-
   expression_ref cmd;
-  const char* first = &line[0];
-  const char* last = first + line.size();
-  if (tokenize_and_parse(first, last, lexer1, haskell_parser.decls))
-    return cmd;
+  StreamIter beg = StreamIter(line_stream), end;
+  StreamIter iter = beg;
+  if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.decls, cmd))
+    throw myexception()<<"Haskell decls parse failed!";
 
-  throw myexception()<<"Haskell pharse parse: only parsed "<<line.substr(0, iter-line.begin());
+  if (iter != end)
+    throw myexception()<<"Haskell decls parse only parsed:\n "<<string(beg,iter)<<"\n";
+
+  return cmd;
 }
 
 expression_ref parse_bugs_line(const string& line)
 {
+  std::stringstream line_stream(line);
+  line_stream.unsetf(std::ios::skipws);
+
   {
-    const char* first = &line[0];
-    const char* end = first + line.size();
-    for(auto i = lexer1.begin(first,end); i != lexer1.end() and (*i).is_valid(); i++)
+    StreamIter beg = StreamIter(line_stream), end;
+    for(auto i = lexer1.begin(beg, end); i != lexer1.end() and (*i).is_valid(); i++)
     {
       auto& t = *i;
       std::cout<<"'"<<t.value()<<"'\n";;
@@ -1327,24 +1338,27 @@ expression_ref parse_bugs_line(const string& line)
 
   /*----------------------------------------------------------------------------*/
 
-  string::const_iterator iter = line.begin();
-
   expression_ref cmd;
-  const char* first = &line[0];
-  const char* last = first + line.size();
-  if (tokenize_and_parse(first, last, lexer1, haskell_parser.bugs_line))
-    return cmd;
+  StreamIter beg = StreamIter(line_stream), end;
+  StreamIter iter = beg;
+  if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.bugs_line, cmd))
+    throw myexception()<<"HBUGS line parse failed!";
 
-  throw myexception()<<"BUGS pharse parse: only parsed "<<line.substr(0, iter-line.begin());
+  if (iter != end)
+    throw myexception()<<"HBUGS line parse only parsed:\n "<<string(beg,iter)<<"\n";
+
+  return cmd;
 }
 
 expression_ref parse_bugs_file(const string& lines)
 {
+  std::stringstream line_stream(lines);
+  line_stream.unsetf(std::ios::skipws);
+
   /*
   {
-    const char* first = &lines[0];
-    const char* end = first + lines.size();
-    for(auto i = lexer1.begin(first,end); i != lexer1.end() and (*i).is_valid(); i++)
+    StreamIter beg = StreamIter(line_stream), end;
+    for(auto i = lexer1.begin(beg,end); i != lexer1.end() and (*i).is_valid(); i++)
     {
       auto& t = *i;
       std::cout<<"'"<<t.value()<<"'\n";;
@@ -1353,13 +1367,14 @@ expression_ref parse_bugs_file(const string& lines)
   */
   /*----------------------------------------------------------------------------*/
 
-  string::const_iterator iter = lines.begin();
-
   expression_ref cmd;
-  const char* first = &lines[0];
-  const char* last = first + lines.size();
-  if (tokenize_and_parse(first, last, lexer1, haskell_parser.module))
-    return cmd;
+  StreamIter beg = StreamIter(line_stream), end;
+  StreamIter iter = beg;
+  if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.module, cmd))
+    throw myexception()<<"Module parse failed!";
 
-  throw myexception()<<"BUGS pharse parse: only parsed "<<lines.substr(0, iter-lines.begin());
+  if (iter != end)
+    throw myexception()<<"Haskell module parse only parsed:\n "<<string(beg,iter)<<"\n";
+
+  return cmd;
 }
