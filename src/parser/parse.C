@@ -740,8 +740,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 	/*------ Section 4 -------*/
 	module = 
-	  tok.KW_Module > modid[ push_back(_a,construct<String>(_1)) ] > /*-exports >>*/ tok.KW_Where > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ]
-	  | eps[clear(_a)] >>  body[ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
+	  -(tok.KW_Module > modid[ push_back(_a,construct<String>(_1)) ] > /*-exports >>*/ tok.KW_Where) > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
 
 	body = 
 	  tok.LeftCurly >> impdecls[ push_back(_a,_1) ] >> tok.SemiColon > topdecls[ push_back(_a,_1) ] > tok.RightCurly >> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
