@@ -1160,7 +1160,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 //-----------------------------------------------------------------------//
 typedef lex::lexertl::position_token<StreamIter,
-				     boost::mpl::vector<int,std::string>
+				     boost::mpl::vector<int,char,std::string>
 				     > Token;
 
 typedef lex::lexertl::actor_lexer<Token> Lexer;
