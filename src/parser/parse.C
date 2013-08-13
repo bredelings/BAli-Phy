@@ -794,7 +794,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	btype = +atype[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("TypeApply"), _a) ];
 
 	atype = gtycon [_val = construct<AST_node>("type_id",construct<String>(_1)) ]
-	  // tuple variable
+	  // type variable
 	  | tyvar [_val = construct<AST_node>("type_id",construct<String>(_1)) ]
 	  // tuple type, k >= 2
 	  | eps[clear(_a)] >> tok.LeftParen >> type[push_back(_a,_1)] >> +(tok.Comma>>type[push_back(_a,_1)]) >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("TupleType"), _a) ]
