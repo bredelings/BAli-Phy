@@ -975,6 +975,8 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	BOOST_SPIRIT_DEBUG_NODE(atype);
 	BOOST_SPIRIT_DEBUG_NODE(atype2);
 	BOOST_SPIRIT_DEBUG_NODE(btype);
+	BOOST_SPIRIT_DEBUG_NODE(gtycon);
+	BOOST_SPIRIT_DEBUG_NODE(qtycon);
 
 	modid.name("modid");
 	exp.name("exp");
