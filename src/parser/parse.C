@@ -1,4 +1,4 @@
-//#define BOOST_SPIRIT_DEBUG
+#define BOOST_SPIRIT_DEBUG
 //#define BOOST_SPIRIT_LEXERTL_DEBUG
 #include "parse.H"
 
@@ -1292,6 +1292,8 @@ expression_ref parse_bugs_file(const string& lines)
   StreamIter iter = beg;
   if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.module, cmd))
     throw myexception()<<"Module parse failed!";
+
+  std::cerr<<"cmd = "<<cmd<<std::endl;
 
   if (iter != end)
     throw myexception()<<"Haskell module parse only parsed:\n "<<string(beg,iter)<<"\n";
