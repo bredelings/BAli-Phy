@@ -952,6 +952,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	BOOST_SPIRIT_DEBUG_NODE(module);
 	BOOST_SPIRIT_DEBUG_NODE(body);
 	BOOST_SPIRIT_DEBUG_NODE(topdecls);
+	BOOST_SPIRIT_DEBUG_NODE(topdecl);
 
 	BOOST_SPIRIT_DEBUG_NODE(exp);
 	BOOST_SPIRIT_DEBUG_NODE(lexp);
@@ -966,6 +967,14 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	BOOST_SPIRIT_DEBUG_NODE(apat);
 	BOOST_SPIRIT_DEBUG_NODE(var);
 	BOOST_SPIRIT_DEBUG_NODE(varop);
+	BOOST_SPIRIT_DEBUG_NODE(constrs);
+	BOOST_SPIRIT_DEBUG_NODE(constr);
+	BOOST_SPIRIT_DEBUG_NODE(con);
+
+	BOOST_SPIRIT_DEBUG_NODE(type);
+	BOOST_SPIRIT_DEBUG_NODE(atype);
+	BOOST_SPIRIT_DEBUG_NODE(atype2);
+	BOOST_SPIRIT_DEBUG_NODE(btype);
 
 	modid.name("modid");
 	exp.name("exp");
