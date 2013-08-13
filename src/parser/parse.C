@@ -594,7 +594,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	tycls %= conid;
 	modid %= qconid;
 
-	qtycon %= qvarid;
+	qtycon %= qconid;
 	qtycls %= qconid;
 
 	//	literal2 = tok.FloatTok [ _val  = _1 ];
