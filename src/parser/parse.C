@@ -753,7 +753,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	topdecls = topdecl [ push_back(_a,_1) ] % tok.SemiColon >> eps[ _val = new_<expression>(AST_node("TopDecls"), _a) ];
 	topdecl = 
 	  tok.KW_Type > simpletype[ push_back(_a,_1) ] >> tok.Equals >> type[ push_back(_a,_1) ] >> eps [ _val = new_<expression>(AST_node("Decl:type"), _a) ]
-	  | tok.KW_Data > /*-(context >> tok.DoubleArrow) >> */ simpletype[ push_back(_a,_1) ] >> tok.Equals >> constrs[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
+	  | tok.KW_Data > /*-(context >> tok.DoubleArrow) >> */ simpletype[ push_back(_a,_1) ] >> tok.Equals > constrs[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
 	  | tok.KW_Data > /*-(context >> tok.DoubleArrow) >> */ simpletype[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
 	  | tok.KW_NewType > /*-(context >> tok.DoubleArrow) >> */ simpletype [ push_back(_a,_1) ] >> tok.Equals >> newconstr[ push_back(_a,_1) ] /*>> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:newtype"), _a) ]
 	  //	  | tok.KW_Class >> -(scontext >> tok.DoubleArrow) >> tycls >> tyvar >> -(tok.KW_Where >> cdecls)
