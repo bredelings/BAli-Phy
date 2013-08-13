@@ -605,8 +605,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 	/*----- Section 3 ------*/
 	exp = 
-	  infixexp [ _val = _1 ] >> tok.DoubleColon >> -(context >> tok.DoubleArrow) >> type 
-	  | infixexp [_val = _1 ];
+	  infixexp [ _val = _1 ] >> -(tok.DoubleColon >> -(context >> tok.DoubleArrow) >> type);
 
 	infixexp = 
 	  lexp [push_back(_a,_1)] >> qop [push_back(_a,_1)] >> infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
