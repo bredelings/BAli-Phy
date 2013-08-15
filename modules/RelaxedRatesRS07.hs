@@ -12,7 +12,7 @@ module RelaxedRatesRS07 where
   
   delta = 4;
 
-note mean ~ iid(n_branches + delta, laplace(-4.0,1.0));
+note mean ~ iid(n_branches + delta, laplace(-4.0,1.0/sqrt 2.0));
 note sigma ~ iid(n_branches + delta, gamma(1.05,0.05) );
   
 note alpha ~ gamma (2.0, 1.0/6.0);
