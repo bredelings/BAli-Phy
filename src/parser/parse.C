@@ -663,7 +663,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	qconop %= gconsym | tok.BackQuote >> qconid >> tok.BackQuote; // qualified constructor operator
 	op %= varop | conop;                      // operator
 	qop = qvarop [ _val = construct<AST_node>("id", construct<String>(_1)) ] | qconop [ _val = construct<AST_node>("id",construct<String>(_1)) ];  // qualified operator
-	gconsym %= qconsym | tok.Colon [_val = ":"];
+	gconsym = qconsym [_val = _1] | tok.Colon [_val = ":"];
 
 	/*----- Section 3.11 -----*/
 	qual = pat [push_back(_a,_1)] >> tok.LeftArrow > exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
