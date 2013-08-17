@@ -630,6 +630,10 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  | tok.LeftParen >> exp [_val = _1] >> tok.RightParen
 	  // tuple, k >= 2
 	  | tok.LeftParen >> exp [push_back(_a,_1)] >> +(tok.Comma>>exp [push_back(_a,_1)]) >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("Tuple"), _a) ]
+	  // left section
+	  | tok.LeftParen[clear(_a)] >> infixexp[push_back(_a,_1)]  >> qop[push_back(_a,_1)] >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
+	  // right section
+	  | tok.LeftParen[clear(_a)] >> qop[push_back(_a,_1)] - tok.Minus >> infixexp[push_back(_a,_1)] >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("RightSection"), _a) ]
 	  // list
 	  | tok.LeftSquare[clear(_a)] >> (exp[push_back(_a,_1)]%tok.Comma) >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("List"), _a) ]
 	  // arithmetic sequence
@@ -639,10 +643,6 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  | tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.Comma>>exp[push_back(_a,_1)] >>tok.DotDot >> exp[push_back(_a,_1)] >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("enumFromThenTo"), _a) ]
 	  // list comprehension
 	  | tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >>tok.Bar >> (qual[push_back(_a,_1)]%tok.Comma) >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("ListComprehension"), _a) ]
-	  // left section
-	  | tok.LeftParen[clear(_a)] >> infixexp[push_back(_a,_1)]  >> qop[push_back(_a,_1)] >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
-	  // right section
-	  | tok.LeftParen[clear(_a)] >> ((qop[push_back(_a,_1)] - tok.Minus) >> infixexp[push_back(_a,_1)]) >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("RightSection"), _a) ]
 	  //	  | qcon >> tok.LeftCurly >> *fbind >> tok.RightCurly  // labeled construction (?)
 	  //	  | (aexp - qcon) >> tok.LeftCurly>> +fbind >> tok.RightCurly; // labeled update
 	  ;
