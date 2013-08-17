@@ -297,8 +297,6 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       //      StringTok = "\"({graphicnonqq}| |{escape})*\"";
       StringTok = "[\"]({graphicnonqq}| |{escape})*[\"]";
 
-      Special = "{special}";
-
       LeftParen   = "[(]";
       RightParen  = "[)]";
       SemiColon   = ";";
@@ -457,9 +455,6 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	| Character
 	| StringTok
 	
-	// Special
-	| Special
-	
 	// whitespace
 	| WHITESPACE [ lex::_pass = lex::pass_flags::pass_ignore ] // how do we skip whitespace in the lexer?
         ;
@@ -477,8 +472,6 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<std::string> FloatTok; // Rational	
   lex::token_def<std::string> Character;       // Char	
   lex::token_def<std::string> StringTok;// String	
-
-  lex::token_def<char> Special;         // Char
 
   lex::token_def<> LeftParen;
   lex::token_def<> RightParen;
