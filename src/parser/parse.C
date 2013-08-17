@@ -627,13 +627,13 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  // literal
 	  | literal [_val = _1 ]
 	  // parenthesized expression
-	  | tok.LeftParen >> exp [_val = _1] >> tok.RightParen
+	  | eps[clear(_a)] >> tok.LeftParen >> exp [_val = _1] >> tok.RightParen
 	  // tuple, k >= 2
-	  | tok.LeftParen >> exp [push_back(_a,_1)] >> +(tok.Comma>>exp [push_back(_a,_1)]) >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("Tuple"), _a) ]
+	  | eps[clear(_a)] >> tok.LeftParen >> exp [push_back(_a,_1)] >> +(tok.Comma>>exp [push_back(_a,_1)]) >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("Tuple"), _a) ]
 	  // left section
-	  | tok.LeftParen[clear(_a)] >> infixexp[push_back(_a,_1)]  >> qop[push_back(_a,_1)] >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
+	  | eps[clear(_a)] >> tok.LeftParen >> infixexp[push_back(_a,_1)]  >> qop[push_back(_a,_1)] >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
 	  // right section
-	  | tok.LeftParen[clear(_a)] >> qop[push_back(_a,_1)] - tok.Minus >> infixexp[push_back(_a,_1)] >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("RightSection"), _a) ]
+	  | eps[clear(_a)] >> tok.LeftParen >> qop[push_back(_a,_1)] - tok.Minus >> infixexp[push_back(_a,_1)] >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("RightSection"), _a) ]
 	  // list
 	  | tok.LeftSquare[clear(_a)] >> (exp[push_back(_a,_1)]%tok.Comma) >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("List"), _a) ]
 	  // arithmetic sequence
@@ -723,7 +723,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  // parenthesized pattern
 	  | tok.LeftParen >> pat [ _val = _1 ] >> tok.RightParen          
 	  // tuple patten
-	  | tok.LeftParen[clear(_a)] >> pat[ push_back(_a,_1) ] >> +(tok.Comma >> pat[ push_back(_a,_1) ]) >> tok.RightParen [ _val = new_<expression>(AST_node("Tuple"), _a) ]
+	  | eps[clear(_a)] >> tok.LeftParen >> pat[ push_back(_a,_1) ] >> +(tok.Comma >> pat[ push_back(_a,_1) ]) >> tok.RightParen [ _val = new_<expression>(AST_node("Tuple"), _a) ]
 	  // list pattern
 	  | tok.LeftSquare[clear(_a)] >> pat[ push_back(_a,_1) ] % tok.Comma >> tok.RightSquare [ _val = new_<expression>(AST_node("List"), _a) ]
 	  // irrefutable pattern
