@@ -438,7 +438,6 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	| KW_Qualified
 	| KW_Safe
 	| KW_Unsafe
-	| KW_Note
 
 	| QVarId [&fail_if_reserved_qid]
 	| VarId
