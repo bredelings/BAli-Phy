@@ -461,12 +461,13 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 
   lex::token_def<std::string> QVarId;   // (String,STring)
   lex::token_def<std::string> VarId;    // String
-  lex::token_def<std::string> ConId;    // String	
   lex::token_def<std::string> QConId;   // (String, String)	
-  lex::token_def<std::string> VarSym;   // String	
-  lex::token_def<std::string> ConSym;   // String	
+  lex::token_def<std::string> ConId;    // String	
   lex::token_def<std::string> QVarSym;  // (String, String)	
+  lex::token_def<std::string> VarSym;   // String	
   lex::token_def<std::string> QConSym;  // (String, String)	
+  lex::token_def<std::string> ConSym;   // String 
+
   lex::token_def<std::string> IntTok;   // Integer
   lex::token_def<std::string> FloatTok; // Rational	
   lex::token_def<std::string> Character;       // Char	
@@ -481,8 +482,10 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<> LeftSquare;
   lex::token_def<> RightSquare;
   lex::token_def<> Comma;
-  lex::token_def<> Underscore;
   lex::token_def<> BackQuote;
+
+  lex::token_def<> Underscore;
+
   lex::token_def<> DotDot;
   lex::token_def<> Colon;
   lex::token_def<> DoubleColon;
@@ -494,6 +497,7 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<> At;
   lex::token_def<> Tilde;
   lex::token_def<> DoubleArrow;
+
   lex::token_def<> Minus;
   lex::token_def<> Exclamation;
   // Keywords
