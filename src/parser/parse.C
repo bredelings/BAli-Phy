@@ -350,7 +350,6 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       KW_Then = "then";
       KW_Type = "type";
       KW_Where = "where";
-      KW_As = "as";
       KW_Export = "export";
       KW_Hiding = "hiding";
       KW_Qualified = "qualified";
@@ -432,7 +431,6 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	| KW_Then
 	| KW_Type
 	| KW_Where
-	| KW_As
 	| KW_Export
 	| KW_Hiding
 	| KW_Qualified
@@ -523,7 +521,6 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<> KW_Then;
   lex::token_def<> KW_Type;
   lex::token_def<> KW_Where;
-  lex::token_def<> KW_As;
   lex::token_def<> KW_Export;
   lex::token_def<> KW_Hiding;
   lex::token_def<> KW_Qualified;
@@ -867,7 +864,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	impdecl = tok.KW_Import > -tok.KW_Qualified[push_back(_a,"qualified")] 
 	                   > -tok.KW_Submodel[push_back(_a,"submodel")] 
 	                   > modid[push_back(_a,construct<String>(_1))] 
-                           >> -(tok.KW_As[push_back(_a,"as")] > modid[push_back(_a,construct<String>(_1))])
+                           >> -(tok.KW_In[push_back(_a,"as")] > modid[push_back(_a,construct<String>(_1))])
 			   >> /*-impspec >>*/ eps [ _val = new_<expression>(AST_node("ImpDecl"), _a)  ];
 
 	//	impspec = 
