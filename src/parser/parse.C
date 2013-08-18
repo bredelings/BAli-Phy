@@ -1312,7 +1312,7 @@ expression_ref parse_bugs_file(const string& lines)
   if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.module, cmd))
     throw myexception()<<"Module parse failed!";
 
-  std::cerr<<"cmd = "<<cmd<<std::endl;
+  //  std::cerr<<"cmd = "<<cmd<<std::endl;
 
   if (iter != end)
     throw myexception()<<"Haskell module parse only parsed:\n "<<string(beg,iter)<<"\n";
