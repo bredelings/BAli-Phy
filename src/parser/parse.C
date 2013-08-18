@@ -653,14 +653,14 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  | tok.LeftParen >> tok.Comma [_val = "(,"] >> *tok.Comma[_val += ","] >> tok.RightParen[_val += ")"]
 	  | qcon [ _val = _1];
 
-	var  %= varid  | tok.LeftParen >> varsym >> tok.RightParen;    // variable
-	qvar %= qvarid | tok.LeftParen >> qvarsym >> tok.RightParen;   // qualified variable
-	con  %= conid  | tok.LeftParen >> consym >> tok.RightParen;    // constructor
-	qcon %= qconid | tok.LeftParen >> gconsym >> tok.RightParen;   // qualified constructor
-	varop %= varsym | tok.BackQuote >> varid >> tok.BackQuote;    // variable operator
-	qvarop %= qvarsym | tok.BackQuote >> qvarid >> tok.BackQuote; // qualified variable operator
-	conop %= consym | tok.BackQuote >> conid >> tok.BackQuote;    // constructor operator
-	qconop %= gconsym | tok.BackQuote >> qconid >> tok.BackQuote; // qualified constructor operator
+	var  = varid[_val = _1] | tok.LeftParen >> varsym[_val = _1] >> tok.RightParen;    // variable
+	qvar = qvarid[_val = _1] | tok.LeftParen >> qvarsym[_val = _1] >> tok.RightParen;   // qualified variable
+	con  = conid[_val = _1]  | tok.LeftParen >> consym[_val = _1] >> tok.RightParen;    // constructor
+	qcon = qconid[_val = _1] | tok.LeftParen >> gconsym[_val = _1] >> tok.RightParen;   // qualified constructor
+	varop = varsym[_val = _1] | tok.BackQuote >> varid[_val = _1] >> tok.BackQuote;    // variable operator
+	qvarop = qvarsym[_val = _1] | tok.BackQuote >> qvarid[_val = _1] >> tok.BackQuote; // qualified variable operator
+	conop = consym[_val = _1] | tok.BackQuote >> conid[_val = _1] >> tok.BackQuote;    // constructor operator
+	qconop = gconsym[_val = _1] | tok.BackQuote >> qconid[_val = _1] >> tok.BackQuote; // qualified constructor operator
 	op %= varop | conop;                      // operator
 	qop = qvarop [ _val = construct<AST_node>("id", construct<String>(_1)) ] | qconop [ _val = construct<AST_node>("id",construct<String>(_1)) ];  // qualified operator
 	gconsym = qconsym [_val = _1] | tok.Colon [_val = ":"];
