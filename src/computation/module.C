@@ -410,7 +410,7 @@ void Module::load_builtins(const module_loader& L)
     if (is_AST(decl,"Builtin"))
     {
       string function_name = *decl->sub[0].assert_is_a<String>();
-      int n = convertTo<int>( *decl->sub[1].assert_is_a<String>() );
+      int n = *decl->sub[1].assert_is_a<Int>();
       string symbol_name = *decl->sub[2].assert_is_a<String>();
       string plugin_name = symbol_name;
 

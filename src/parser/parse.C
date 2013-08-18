@@ -539,6 +539,28 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   //  lex::token_def<> EOF;
 };
 
+expression_ref to_int(const string& s)
+{
+  return Int(convertTo<int>(s));
+}
+
+expression_ref to_float(const string& s)
+{
+  return Double(convertTo<double>(s));
+}
+
+expression_ref to_char(const string& s)
+{
+  assert(s.size() == 3);
+  return Char(s[1]);
+}
+
+expression_ref to_string(const string& s)
+{
+  assert(s.size() >= 2);
+  return String(s.substr(1,s.size()-2));
+}
+
 template <typename Iterator>
 struct HParser : qi::grammar<Iterator, expression_ref()>
 {
@@ -590,11 +612,13 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	qtycon %= qconid;
 	qtycls %= qconid;
 
+	literal_float = tok.FloatTok [ _val = phoenix::bind(to_float,_1) ];
+	literal_int   = tok.IntTok [ _val = phoenix::bind(to_int,_1) ];
+	literal_char  = tok.Character [ _val = phoenix::bind(to_char,_1) ];
+	literal_string = tok.StringTok [ _val = phoenix::bind(to_string,_1) ];
+
 	//	literal2 = tok.FloatTok [ _val  = _1 ];
-	literal = tok.FloatTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Float"), _a)  ]
-	  | tok.IntTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Integer"), _a)  ]
-	  | tok.Character [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Char"), _a)  ]
-	  | tok.StringTok [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("String"), _a)  ];
+	literal %= literal_float | literal_int | literal_char | literal_string;
 
 	/*----- Section 3 ------*/
 	exp = 
@@ -751,7 +775,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  //	  | tok.KW_Instance >> -(scontext >> tok.DoubleArrow) >> qtycls >> inst >> -(tok.KW_Where >> idecls)
 	  //	  | tok.KW_Default >> *type
 	  //	  | tok.KW_Foreign >> fdecl
-	  | tok.KW_Builtin > (var|varop)[ push_back(_a,construct<String>(_1)) ] >> tok.IntTok[ push_back(_a,construct<String>(_1)) ] >> tok.StringTok[ push_back(_a,construct<String>(_1)) ] >> -tok.StringTok[ push_back(_a,construct<String>(_1)) ] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
+	  | tok.KW_Builtin > (var|varop)[ push_back(_a,construct<String>(_1)) ] >> literal_int[push_back(_a,_1)] >> literal_string[push_back(_a,_1)] >> -literal_string[push_back(_a,_1)] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
 	  | tok.KW_Note > bugs_line [_val = _1]
 	  | decl [_val = _1]
 	  ;
@@ -1025,7 +1049,11 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
   qi::rule<Iterator, std::string()> qtycon; // qualified type constructor
   qi::rule<Iterator, std::string()> qtycls; // qualified type class
 
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal;  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_float;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_int;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_char;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_string;
+  qi::rule<Iterator, expression_ref()> literal;  
 
   qi::rule<Iterator, expression_ref()> exp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> infixexp;

@@ -918,25 +918,6 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       }
       return E2;
     }
-    else if (n->type == "Integer")
-    {
-      string s = *E->sub[0].assert_is_a<String>();
-      return Int(convertTo<int>(s));
-    }
-    else if (n->type == "Float")
-    {
-      string s = *E->sub[0].assert_is_a<String>();
-      return Double(convertTo<double>(s));
-    }
-    else if (n->type == "Char")
-    {
-      E->sub[0].assert_is_a<Char>();
-      return E->sub[0];
-    }
-    else if (n->type == "String")
-    {
-      return E->sub[0];
-    }
     else if (n->type == "BugsNote")
     {
       // This expression should have the form 'AST[BugsNote] (AST[Apply] con_name arg1 arg2 ... arg_n)'.
