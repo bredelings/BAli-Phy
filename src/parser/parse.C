@@ -555,10 +555,15 @@ expression_ref to_char(const string& s)
   return Char(s[1]);
 }
 
-expression_ref to_string(const string& s)
+string remove_quotes(const string& s)
 {
   assert(s.size() >= 2);
-  return String(s.substr(1,s.size()-2));
+  return s.substr(1,s.size()-2);
+}
+
+expression_ref to_String(const string& s)
+{
+  return String(remove_quotes(s));
 }
 
 template <typename Iterator>
@@ -612,10 +617,12 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	qtycon %= qconid;
 	qtycls %= qconid;
 
+	quoted_string = tok.StringTok [ _val = phoenix::bind(to_String,_1) ];
+	
 	literal_float = tok.FloatTok [ _val = phoenix::bind(to_float,_1) ];
 	literal_int   = tok.IntTok [ _val = phoenix::bind(to_int,_1) ];
 	literal_char  = tok.Character [ _val = phoenix::bind(to_char,_1) ];
-	literal_string = tok.StringTok [ _val = phoenix::bind(to_string,_1) ];
+	literal_string = tok.StringTok [ _val = phoenix::bind(remove_quotes,_1) ];
 
 	literal %= literal_float | literal_int | literal_char | literal_string;
 
@@ -774,7 +781,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  //	  | tok.KW_Instance >> -(scontext >> tok.DoubleArrow) >> qtycls >> inst >> -(tok.KW_Where >> idecls)
 	  //	  | tok.KW_Default >> *type
 	  //	  | tok.KW_Foreign >> fdecl
-	  | tok.KW_Builtin > (var|varop)[ push_back(_a,construct<String>(_1)) ] >> literal_int[push_back(_a,_1)] >> literal_string[push_back(_a,_1)] >> -literal_string[push_back(_a,_1)] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
+	  | tok.KW_Builtin > (var|varop)[ push_back(_a,construct<String>(_1)) ] >> literal_int[push_back(_a,_1)] >> quoted_string[push_back(_a,_1)] >> -quoted_string[push_back(_a,_1)] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
 	  | tok.KW_Note > bugs_line [_val = _1]
 	  | decl [_val = _1]
 	  ;
@@ -1052,6 +1059,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_int;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_char;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_string;
+  qi::rule<Iterator, expression_ref()> quoted_string;
   qi::rule<Iterator, expression_ref()> literal;  
 
   qi::rule<Iterator, expression_ref()> exp;
