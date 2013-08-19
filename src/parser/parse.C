@@ -617,7 +617,6 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	literal_char  = tok.Character [ _val = phoenix::bind(to_char,_1) ];
 	literal_string = tok.StringTok [ _val = phoenix::bind(to_string,_1) ];
 
-	//	literal2 = tok.FloatTok [ _val  = _1 ];
 	literal %= literal_float | literal_int | literal_char | literal_string;
 
 	/*----- Section 3 ------*/
@@ -723,9 +722,9 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 	lpat = 
 	  // negative literal float
-	  eps [clear(_a)] >> tok.Minus >> tok.FloatTok [ push_back(_a,construct<String>(_1)) ] >> eps [  _val = new_<expression>(AST_node("neg_h_float"), _a) ]
+	  eps [clear(_a)] >> tok.Minus >> literal_float[push_back(_a,_1)] >> eps [  _val = new_<expression>(AST_node("neg_h_float"), _a) ]
 	  // negative literal integer
-	  | eps [clear(_a)] >> tok.Minus >> tok.IntTok [ push_back(_a,construct<String>(_1)) ] >> eps [  _val = new_<expression>(AST_node("neg_h_integer"), _a) ]
+	  | eps [clear(_a)] >> tok.Minus >> literal_int[push_back(_a,_1)] >> eps [  _val = new_<expression>(AST_node("neg_h_integer"), _a) ]
 	  // here the number of apat's must match the constructor arity
 	  | eps [clear(_a)] >>  gcon[ push_back(_a,construct<String>(_1)) ] >> +apat[ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
 	  // apat
@@ -794,7 +793,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	//	idecl  %= (funlhs | var) >> rhs | eps;
 
 	gendecl = // vars >> tok.DoubleColon >>  -(context >> tok.DoubleArrow) >> type 
-	  fixity[push_back(_a,construct<String>(_1))] > -tok.IntTok[push_back(_a,construct<String>(_1))] > ops[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FixityDecl"), _a)  ]
+	  fixity[push_back(_a,construct<String>(_1))] > -literal_int[push_back(_a,_1)] > ops[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FixityDecl"), _a)  ]
 	  | eps [ _val = new_<expression>(AST_node("EmptyDecl"), _a)  ];
 
 	ops = op[push_back(_a,construct<String>(_1))]%tok.Comma >> eps [ _val = new_<expression>(AST_node("Ops"), _a)  ];

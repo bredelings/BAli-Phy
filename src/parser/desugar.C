@@ -177,8 +177,8 @@ expression_ref infixpat_parse_neg(const Module& m, const symbol_info& op1, deque
   {
     if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
-    string d = *E1->sub[0].is_a<String>();
-    Double D = -convertTo<double>(d);
+    Double D = *E1->sub[0].is_a<Double>();
+    D = -D;
 
     return infixpat_parse(m, op1, D, T);
   }
@@ -187,8 +187,8 @@ expression_ref infixpat_parse_neg(const Module& m, const symbol_info& op1, deque
   {
     if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
-    string i = *E1->sub[0].is_a<String>();
-    Int I = -convertTo<int>(i);
+    Int I = *E1->sub[0].is_a<Int>();
+    I = -I;
 
     return infixpat_parse(m, op1, I, T);
   }

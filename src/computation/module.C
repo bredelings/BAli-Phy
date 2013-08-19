@@ -786,10 +786,7 @@ Module& Module::operator+=(const expression_ref& E)
       // Determine precedence.
       int precedence = 9;
       if (decl->sub.size() == 3)
-      {
-	string p = *decl->sub[1].assert_is_a<String>();
-	precedence = convertTo<int>(p);
-      }
+	precedence = *decl->sub[1].assert_is_a<Int>();
 
       // Find op names and declare fixity and precedence.
       for(const auto& op: decl->sub.back()->sub)
