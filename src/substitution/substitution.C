@@ -1726,7 +1726,7 @@ namespace substitution {
     {
       efloat_t result4 = Pr_from_scratch_internal(P);
 
-      compare_branch_totals(subA3,subA4,LC3,LC4, P.T(), *P.A, P);
+      //      compare_branch_totals(subA3,subA4,LC3,LC4, P.T(), *P.A, P);
       assert(std::abs(log(result3) - log(result4)) < 1.0e-9);
     }
 
