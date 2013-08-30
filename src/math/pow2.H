@@ -51,13 +51,15 @@ inline double log2(double x)
 
 namespace fp_scale {
 
-  const unsigned max = 50;
-  const unsigned shift = max;
+  const int max = 50;
+  const int shift = max;
 
   extern double table[max*2+1];
 
-  inline double pow2(int i) {
-    if (std::abs(i) > max)
+  inline double pow2(int i) 
+  {
+    // NOTE: we can't use abs(i), because abs(INT_MIN) == INT_MIN < 0
+    if (i < -max or i > max)
       return exp2(i);
     else
       return table[i+shift];
