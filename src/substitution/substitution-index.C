@@ -1,3 +1,4 @@
+// #define DEBUG_INDEXING
 /*
    Copyright (C) 2005,2009 Benjamin Redelings
 

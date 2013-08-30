@@ -28,6 +28,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment-util.H"
 #include "util.H"
 
+// #define DEBUG_SUBSTITUTION
+// #define DEBUG_CACHING
+// #define DEBUG_INDEXING
+
 #ifdef NDEBUG
 #define IF_DEBUG(x)
 #else
@@ -1380,7 +1384,7 @@ namespace substitution {
     //   to this one.
 
     // get the relationships with the sub-alignments
-    if (P.subA.as<subA_index_leaf>())
+    if (dynamic_pointer_cast<subA_index_leaf>(P.subA))
     {
       ublas::matrix<int> index1 = I.get_subA_index_none(rb,A,T,nodes);
       efloat_t Pr1 = calc_root_probability(P,rb,index1);
