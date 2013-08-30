@@ -295,6 +295,8 @@ void data_partition::invalidate_subA_index_one_branch(int b)
 
 void data_partition::invalidate_subA_index_all()
 {
+  uniquify_subA_index();
+
   subA->invalidate_all_branches();
 }
 
