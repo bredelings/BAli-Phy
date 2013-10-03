@@ -20,7 +20,7 @@
 <article xmlns="http://docbook.org/ns/docbook" version="5.0" 
          xmlns:mml="http://www.w3.org/1998/Math/MathML"
 	 xml:lang="en">
-  <info><title><application>BAli-Phy</application> User's Guide v2.1.1</title>
+  <info><title><application>BAli-Phy</application> User's Guide v2.2.0</title>
     
     <author><personname><firstname>Benjamin</firstname><surname>Redelings</surname></personname></author>
   </info>
@@ -147,12 +147,11 @@ bali-phy-<replaceable>version</replaceable>.tgz  bin  share
 
     <listitem><para>Finally, test that the program can be run.
 <screen><prompt>%</prompt> <userinput>~/local/bin/bali-phy -v</userinput>
-VERSION: 2.1.1  [master commit 8ea33010]  (Jan 28 2011 20:27:15)
-BUILD: Feb  1 2011 16:14:05
+VERSION: 2.2.0  [2.2 commit 66ad8405+]  (Oct 03 2013 14:47:48)
+BUILD: Oct  3 2013 15:13:10
 ARCH: x86_64-unknown-linux-gnu
-COMPILER: GCC 4.5.2
-FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
--DNDEBUG_DP -funroll-loops -fweb  -march=native  -pipe -O3
+COMPILER: GCC 4.8.1
+FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops -std=c++11 -finline-limit=1000   -pipe -O3
 </screen>
 </para></listitem>
     </orderedlist>
@@ -307,16 +306,13 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	
 	<itemizedlist>
 	  <listitem><para> The GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>)
-	      version 3.4 (or higher).
+	      version 4.8 (or higher).
 	    </para> 
 	    
 	    <note><info><title>Mac OS X issues:</title></info>
 	      
 	      
-	      <para>Apple's XCode software works, but only if you
-		use OS X 10.4 (Tiger) or higher, and install XCode
-		2.2 or higher.
-	      </para>
+	      <para>At this time, the <application>LLVM clang</application> compiler used by XCode fails on one or two files used by BAli-Phy.  I hope this issue will be resolved soon.</para>
 	    </note>
 	  </listitem>
 
@@ -346,13 +342,13 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	extract the source code archive, using a graphical archive
 	manager, or the command-line tool <command>tar</command>:
 	
-	<screen><prompt>%</prompt> <userinput>tar -zxf bali-phy-2.1.1.tgz</userinput></screen>
+	<screen><prompt>%</prompt> <userinput>tar -zxf bali-phy-2.2.0.tgz</userinput></screen>
 	Then create a <emphasis>separate</emphasis> build directory, enter it, and run the
 	configure command:
 
 	<screen><prompt>%</prompt> <userinput>mkdir build</userinput>
 <prompt>%</prompt> <userinput>cd build</userinput>
-<prompt>%</prompt> <userinput>../bali-phy-2.1.1/configure --prefix=&#36;HOME/local</userinput></screen>
+<prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/local</userinput></screen>
 	
 	If this command succeeds, then you can simply type
 
@@ -382,7 +378,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	  <application>BAli-Phy</application> under
 	  <filename>~/local</filename>, you can enter:
 
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.1/configure --prefix=&#36;HOME/local</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/local</userinput></screen>
           This is recommended.
 	</para>
 
@@ -415,7 +411,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	  <command>g++-4.5</command> as the C++ compiler when compiling
 	  <application>BAli-Phy</application>, you would set the CXX
 	  environment variable as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.1/configure CXX=g++-4.5</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure CXX=g++-4.5</userinput></screen>
 	</para>
       </section>
 
@@ -424,7 +420,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	<para>You can specify optimizing for a specific brand of CPU,
 	  by specifying the <userinput>CHIP</userinput> variable to
 	  <command>configure</command>, as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.1/configure CHIP=<replaceable>cpu</replaceable></userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure CHIP=<replaceable>cpu</replaceable></userinput></screen>
 	  You can set CHIP to any of <userinput>pentium3</userinput>,
 	  <userinput>pentium4</userinput>,
 	  <userinput>nocona</userinput>, <userinput>core2</userinput>,
@@ -453,7 +449,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	<para>
           All these options to <command>configure</command> can be
 	  combined, as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.1/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.5 CHIP=pentium4</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.5 CHIP=pentium4</userinput></screen>
           This example uses <command>g++-4.5</command> to build a
 	  pentium4-optimized version of <command>bali-phy</command> with
 	  static linkage.
@@ -2611,26 +2607,24 @@ The stabilization criterion is the same one described above for numerical values
 	    example:
 <screen><prompt>%</prompt> less 5d-1/C1.out
 command: bali-phy 5d.fasta
-start time: Thu Jan  6 02:26:47 2011
+start time: Thu Oct  3 15:18:17 2013
 
-VERSION: 2.1.1-alpha  [master commit 94d557df+]  (Jan 05 2011 13:04:11)
-BUILD: Jan  5 2011 14:13:58
+VERSION: 2.2.0  [2.2 commit 66ad8405+]  (Oct 03 2013 14:47:48)
+BUILD: Oct  3 2013 15:13:10
 ARCH: x86_64-unknown-linux-gnu
-COMPILER: GCC 4.5.2
-FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops -fweb  -march=native  -pipe -O3  -isystem /usr/lib/openmpi/include -isystem /usr/lib/openmpi/include/openmpi -pthread
+COMPILER: GCC 4.8.1
+FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops -std=c++11 -finline-limit=1000   -pipe -O3
 directory: /home/bredelings/Devel/bali-phy/Runs
 subdirectory: 5d-1
 hostname: mutant
-<emphasis>PID: 3479</emphasis>
-MPI_RANK: 0
-MPI_SIZE: 1
+<emphasis>PID: 21415</emphasis>
 
-random seed = 15356341113359626675
+random seed = 10968853200429096211
 
 ...
 </screen>
-Here the PID is 3479.  Therefore you can type:
-<screen><prompt>%</prompt> kill 3479</screen>
+Here the PID is 21415.  Therefore you can type:
+<screen><prompt>%</prompt> kill 21415</screen>
 On some operating systems you can also type:
 <screen><prompt>%</prompt> killall bali-phy</screen>
 However, be aware that this will terminate <emphasis>all</emphasis> of
