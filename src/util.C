@@ -456,13 +456,18 @@ vector<string> get_arguments(string& s,char begin, char end)
   return split(args,',');
 }
 
-void remove_element(vector<int>& v, const  int e)
+int remove_element(vector<int>& v, const  int e)
 {
+  int where = -1;
   for(int i=0;i<v.size();)
     if (v[i] == e)
+    {
       v.erase(v.begin() + i);
+      where = i;
+    }
     else
       i++;
+  return where;
 }
 
 void remove_elements(vector<int>& v, const vector<int>& e)
