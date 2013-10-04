@@ -1,6 +1,8 @@
 #ifndef POOL_H
 #define POOL_H
 
+#include <functional>
+
 template <typename T>
 class pool
 {
@@ -192,6 +194,13 @@ public:
     add_to_free_list(r);
   }
 
+  virtual void get_more_memory()
+  {
+    collect_garbage();
+    if (memory.size() < n_used()*2+10)
+      expand_memory(memory.size()*2+10);
+  }
+
   int allocate()
   {
     // SLOW!
@@ -202,8 +211,7 @@ public:
     // allocation failed
     if (r == -1)
     {
-      if (memory.size() < n_used()*2+10)
-	expand_memory(memory.size()*2+10);
+      get_more_memory();
       r = get_free_element();
       assert(r != -1);
     }
@@ -222,6 +230,8 @@ public:
 
   const T& operator[](int i) const {assert(is_used(i));return access(i).value;}
         T& operator[](int i)       {assert(is_used(i));return access(i).value;}
+
+  std::function<void()> collect_garbage = [](){};
 
   pool()
   { }
