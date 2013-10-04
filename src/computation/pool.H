@@ -224,10 +224,12 @@ public:
         T& operator[](int i)       {assert(is_used(i));return access(i).value;}
 
   pool()
+  { }
+
+  pool(int n)
   {
-    // This would be the null record.
-    // memory.resize(1);
-    // Check that 
+    // Add this number of null records.
+    memory.resize(n);
   }
 };
 
