@@ -710,6 +710,8 @@ void reg_heap::set_reduction_result(int R, closure&& result)
 /// Update the value of a non-constant, non-computed index
 void reg_heap::set_reg_value(int P, closure&& C, int token)
 {
+  assert(is_terminal_token(token));
+
   // Check that reg P is owned by context token.
   assert(reg_is_owned_by(P,token));
 
@@ -1241,6 +1243,12 @@ int reg_heap::get_unused_token()
   assert(not token_is_used(t));
 
   token_roots[t].used = true;
+
+  assert(token_roots[t].parent == -1);
+  assert(token_roots[t].children.empty());
+  assert(not token_roots[t].referenced);
+
+  token_roots[t].referenced = true;
 
   return t;
 }
@@ -2137,8 +2145,11 @@ void reg_heap::release_identifiers(int t)
   token_roots[t].identifiers.clear();
 }
 
-void reg_heap::release_token(int t)
+void reg_heap::try_release_token(int t)
 {
+  if (not is_terminal_token(t) or token_roots[t].referenced)
+    return;
+
   assert(token_is_used(t));
 
   // We shouldn't have any temporary heads still on the stack, here!
@@ -2168,6 +2179,27 @@ void reg_heap::release_token(int t)
 #ifdef DEBUG_MACHINE
   check_used_regs();
 #endif
+
+  int parent = token_roots[t].parent;
+  if (parent != -1)
+  {
+    int index = remove_element(token_roots[parent].children, t);
+    assert(index != -1);
+    token_roots[t].parent = -1;
+
+    try_release_token(parent);
+  }
+}
+
+bool reg_heap::is_terminal_token(int t) const
+{
+  return token_roots[t].children.empty();
+}
+
+void reg_heap::release_token(int t)
+{
+  token_roots[t].referenced = false;
+  try_release_token(t);
 }
 
 bool reg_heap::token_is_used(int t) const
@@ -2182,6 +2214,12 @@ int reg_heap::copy_token(int t)
   assert(token_roots[t].temp.empty());
 
   token_roots[t2] = token_roots[t];
+
+  // set parent relationship
+  token_roots[t2].parent = t;
+  token_roots[t2].children.clear();
+
+  token_roots[t].children.push_back(t2);
 
   // remove ownership mark from used regs in this context
   duplicate_ownership_mark(t, t2);
@@ -2370,6 +2408,7 @@ map<int,string> get_constants(const reg_heap& C, int t);
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
 int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 {
+  assert(is_terminal_token(t));
   assert(R > 0 and R < n_regs());
   assert(access(R).state == reg::used);
   assert(reg_is_owned_by(R,t));

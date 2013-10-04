@@ -175,6 +175,12 @@ public:
 
   struct graph_roots
   {
+    // The context this context is derived from.
+    int parent = -1;
+    // Contexts that are derived from this one.
+    std::vector<int> children;
+    bool referenced = false;
+    
     // the list of expressions that we are temporarily evaluating
     std::vector<int> temp;
 
@@ -242,8 +248,13 @@ public:
   /// Acquire an unused token
   int get_unused_token();
 
-  /// Release a used token
+  /// Release the token if its unreferenced and has no children.
+  void try_release_token(int);
+
+  /// Mark the token unreferenced and try to release it.
   void release_token(int);
+
+  bool is_terminal_token(int) const;
 
   /// Release just the identifiers for a token
   void release_identifiers(int);
