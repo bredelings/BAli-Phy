@@ -399,12 +399,10 @@ expression_ref Fun_normalize(const expression_ref& E)
 }
 
 
-reg& reg::operator=(reg&& R) noexcept
+computation_record& computation_record::operator=(computation_record&& R) noexcept
 {
   owners = std::move( R.owners );
   ownership_category = std::move( R.ownership_category );
-  C = std::move(R.C);
-  referenced_by_in_E_reverse = std::move( R.referenced_by_in_E_reverse );
   changeable = R.changeable;
   result = R.result;
   call = R.call;
@@ -412,13 +410,38 @@ reg& reg::operator=(reg&& R) noexcept
   used_inputs  = std::move( R.used_inputs );
   outputs = std::move( R.outputs );
   call_outputs = std::move( R.call_outputs );
+  temp_owners = std::move( R.temp_owners );
+  temp = R.temp;
+  re_evaluate = R.re_evaluate;
+
+  return *this;
+}
+
+computation_record::computation_record(computation_record&& R) noexcept
+ :owners( std::move( R.owners ) ),
+  ownership_category( std::move( R.ownership_category) ),
+  changeable( R.changeable ),
+  result( R.result ),
+  call ( R.call ),
+  call_reverse ( std::move( R.call_reverse) ),
+  used_inputs ( std::move(R.used_inputs) ),
+  outputs ( std::move( R.outputs) ),
+  call_outputs ( std::move( R.call_outputs) ),
+  temp_owners ( std::move( R.temp_owners ) ),
+  temp ( R.temp ),
+  re_evaluate ( R.re_evaluate )
+{ }
+
+reg& reg::operator=(reg&& R) noexcept
+{
+  computation_record::operator=(std::move(R));
+
+  C = std::move(R.C);
+  referenced_by_in_E_reverse = std::move( R.referenced_by_in_E_reverse );
   referenced_by_in_E = std::move( R.referenced_by_in_E );
   prev_reg = R.prev_reg;
   next_reg = R.next_reg;
   state = R.state;
-  temp_owners = std::move( R.temp_owners );
-  temp = R.temp;
-  re_evaluate = R.re_evaluate;
 
   R.prev_reg = -1;
   R.next_reg = -1;
@@ -428,24 +451,13 @@ reg& reg::operator=(reg&& R) noexcept
 }
 
 reg::reg(reg&& R) noexcept
- :owners( std::move( R.owners ) ),
-  ownership_category( std::move( R.ownership_category) ),
+:computation_record(std::move(R)),
   C( std::move(R.C) ),
   referenced_by_in_E_reverse ( std::move( R.referenced_by_in_E_reverse ) ),
-  changeable( R.changeable ),
-  result( R.result ),
-  call ( R.call ),
-  call_reverse ( std::move( R.call_reverse) ),
-  used_inputs ( std::move(R.used_inputs) ),
-  outputs ( std::move( R.outputs) ),
-  call_outputs ( std::move( R.call_outputs) ),
   referenced_by_in_E ( std::move( R.referenced_by_in_E) ),
   prev_reg( R.prev_reg ),
   next_reg ( R.next_reg ),
-  state ( R.state ),
-  temp_owners ( std::move( R.temp_owners ) ),
-  temp ( R.temp ),
-  re_evaluate ( R.re_evaluate )
+  state ( R.state )
 { 
   R.prev_reg = -1;
   R.next_reg = -1;

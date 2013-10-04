@@ -20,9 +20,8 @@
 typedef std::bitset<64> owner_set_t;
 typedef CacheList<owner_set_t>::iterator ownership_category_t;
 
-struct reg
+struct computation_record
 {
-public:
   /* 5. Which sub-graphs are we in for sub-graph sharing? */
   owner_set_t owners;
 
@@ -31,11 +30,7 @@ public:
 
   typedef CacheList<int>::iterator back_edge_deleter;
 
-  /* The closure */
-  closure C;
-  std::vector<back_edge_deleter> referenced_by_in_E_reverse;
- 
- /// Is C a parameter, or is the reduction result dependent on a parameter value?
+  /// Is C a parameter, or is the reduction result dependent on a parameter value?
   bool changeable = false;
 
   /// What does C reduce to eventually? (WHNF, but not an index_var.)
@@ -57,6 +52,31 @@ public:
   /// Which reduction results made use of the value of this expression (via call)
   CacheList<int> call_outputs;
 
+  /* 5. Which sub-graphs are we in for sub-graph sharing? */
+  owner_set_t temp_owners;
+
+  int temp = -1;
+
+  bool re_evaluate = false;
+
+  computation_record& operator=(const computation_record&) = delete;
+  computation_record& operator=(computation_record&&) noexcept;
+
+  computation_record() = default;
+
+  computation_record(const computation_record&) = delete;
+  computation_record(computation_record&&) noexcept;
+};
+
+struct reg: public computation_record
+{
+public:
+  typedef CacheList<int>::iterator back_edge_deleter;
+
+  /* The closure */
+  closure C;
+  std::vector<back_edge_deleter> referenced_by_in_E_reverse;
+ 
   /// The nodes that directly reference us (not via a call)
   CacheList<int> referenced_by_in_E;
 
@@ -66,13 +86,6 @@ public:
   int prev_reg = -1;
   int next_reg = -1;
   mutable States state = none;
-
-  /* 5. Which sub-graphs are we in for sub-graph sharing? */
-  owner_set_t temp_owners;
-
-  int temp = -1;
-
-  bool re_evaluate = false;
 
   reg& operator=(const reg&) = delete;
   reg& operator=(reg&&) noexcept;
