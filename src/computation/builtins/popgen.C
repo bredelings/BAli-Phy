@@ -45,6 +45,7 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
   {
     portable_getline(phase_file, line);
     vector<string> words = split(line, '\t');
+    string individual_name = words[0];
     words.erase(words.begin());
     vector<int> loci;
     for(const auto& word: words)
@@ -54,6 +55,8 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
       else
 	loci.push_back(convertTo<int>(word));
     }
+    if (loci.size() != 2*n_loci)
+      throw myexception()<<"Reading file '"<<filename<<"': expecting "<<2*n_loci<<" alleles for individual '"<<individual_name<<"', but actually got "<<loci.size()<<".";
     matrix.push_back(loci);
   }
 
