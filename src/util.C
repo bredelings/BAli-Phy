@@ -456,6 +456,20 @@ vector<string> get_arguments(string& s,char begin, char end)
   return split(args,',');
 }
 
+int replace_element(vector<int>& v, const  int e1, int e2)
+{
+  int where = -1;
+  for(int i=0;i<v.size();i++)
+  {
+    if (v[i] == e1)
+    {
+      v[i] = e2;
+      where = i;
+    }
+  }
+  return where;
+}
+
 int remove_element(vector<int>& v, const  int e)
 {
   int where = -1;

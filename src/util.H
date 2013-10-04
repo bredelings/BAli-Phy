@@ -632,6 +632,8 @@ std::string remove_extension(std::string filename);
 
 std::vector<std::string> get_arguments(std::string& s,char begin, char end);
 
+int replace_element(std::vector<int>& v, const  int e1, int e2);
+
 int remove_element(std::vector<int>& v, const  int e);
 
 void remove_elements(std::vector<int>& v, const std::vector<int>& e);
