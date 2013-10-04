@@ -2147,7 +2147,8 @@ void reg_heap::release_identifiers(int t)
 
 void reg_heap::try_release_token(int t)
 {
-  if (not is_terminal_token(t) or token_roots[t].referenced)
+  int n_children = token_roots[t].children.size();
+  if (n_children > 1 or token_roots[t].referenced)
     return;
 
   assert(token_is_used(t));
@@ -2181,11 +2182,37 @@ void reg_heap::try_release_token(int t)
 #endif
 
   int parent = token_roots[t].parent;
+  token_roots[t].parent = -1;
+
+  int child_token = -1;
+  if (n_children)
+    child_token = token_roots[t].children[0];
+  token_roots[t].children.clear();  
+ 
+  // Any context must be either referenced or have more than 1 child context.
   if (parent != -1)
+    assert(token_roots[parent].referenced or token_roots[parent].children.size() > 1);
+
+  if (n_children == 1)
+  {
+    // Remove this context -- pass on any memory overrides to the child at this point.
+
+    // FIXME - do we want to make context 0 be the null context, and have its children be all the roots?
+
+    // make parent point to child
+    if (parent != -1)
+    {
+      int index = replace_element(token_roots[parent].children, t, child_token);
+      assert(index != -1);
+    }
+
+    // make child point to parent
+    token_roots[child_token].parent = parent;
+  }
+  else if (parent != -1)
   {
     int index = remove_element(token_roots[parent].children, t);
     assert(index != -1);
-    token_roots[t].parent = -1;
 
     try_release_token(parent);
   }
