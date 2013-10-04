@@ -14,29 +14,47 @@ class context: public Model_Notes
   //         (that is, which we are in the middle of modifying the context)?
 
   /// The array of registers that make up our memory.
-  mutable object_ptr<reg_heap> memory;
+  mutable object_ptr<reg_heap> memory_;
+
+  inline bool locked() const
+  {
+    return not memory_->is_terminal_token(token);
+  }
+
+  inline void unlock_if_locked() const
+  {
+    if (locked())
+    {
+      int old_token = token;
+      token = memory_->copy_token(token);
+      memory_->release_token(old_token);
+    }
+    assert(not locked());
+  }
+
+  object_ptr<reg_heap>& memory() const {unlock_if_locked(); return memory_;}
 
   // FIXME:speed - This is going to be really slow to copy around all the time!
   // FIXME:speed - Instead, wrap in cow_ptr< >.
   cow_ptr<Program> P;
 
-  int token;
+  mutable int token;
 
   int perform_io_head = -1;
 
-  std::vector<int>& temp_heads() const {return memory->get_temp_heads_for_context(token);}
+  std::vector<int>& temp_heads() const {return memory()->get_temp_heads_for_context(token);}
 
-  std::vector<int>& heads() const {return memory->get_heads_for_context(token);}
+  std::vector<int>& heads() const {return memory()->get_heads_for_context(token);}
 
-  std::vector<std::pair<std::string,int>>& parameters() const {return memory->get_parameters_for_context(token);}
+  std::vector<std::pair<std::string,int>>& parameters() const {return memory()->get_parameters_for_context(token);}
 
-  pool<int>& modifiable_regs() const {return memory->get_modifiable_regs_for_context(token);}
+  pool<int>& modifiable_regs() const {return memory()->get_modifiable_regs_for_context(token);}
 
-  std::map<std::string, int>& identifiers() const {return memory->get_identifiers_for_context(token);}
+  std::map<std::string, int>& identifiers() const {return memory()->get_identifiers_for_context(token);}
 
 public:
-  const std::vector<int>& triggers() const {return memory->triggers(token);}
-        std::vector<int>& triggers()       {return memory->triggers(token);}
+  const std::vector<int>& triggers() const {return memory()->triggers(token);}
+        std::vector<int>& triggers()       {return memory()->triggers(token);}
 
 private:
   void release_identifiers();
@@ -70,15 +88,15 @@ public:
   int add_note(const expression_ref&);
 
   /// The total size of the reg memory
-  int n_regs() const {return memory->n_regs();}
+  int n_regs() const {return memory()->n_regs();}
   /// How many regs are not known to be free?
-  int n_used_regs() const {return memory->n_used_regs();}
+  int n_used_regs() const {return memory()->n_used_regs();}
 
-  reg& access(int i) const {return memory->access(i);}
+  reg& access(int i) const {return memory()->access(i);}
 
-  const closure& access_result(int i) const {return memory->access_result(i);}
+  const closure& access_result(int i) const {return memory()->access_result(i);}
 
-  reg& operator[](int i) const {return memory->access(i);}
+  reg& operator[](int i) const {return memory()->access(i);}
 
   context* clone() const {return new context(*this);}
 
@@ -201,14 +219,14 @@ public:
   void compile();
 
 protected:  
-  void set_C(int R, closure&& c) const {memory->set_C(R,std::move(c));}
-  void set_reduction_result(int R, closure&& result) const {memory->set_reduction_result(R, std::move(result) );}
-  int incremental_evaluate(int R, bool ec=true) const {return memory->incremental_evaluate(R,token,ec);}
+  void set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
+  void set_reduction_result(int R, closure&& result) const {memory()->set_reduction_result(R, std::move(result) );}
+  int incremental_evaluate(int R, bool ec=true) const {return memory()->incremental_evaluate(R,token,ec);}
 
   /// Allocate a reg which will be a root for garbage-collection
   int allocate_reg() const {
-    int R = memory->allocate_reg();
-    memory->reg_add_owner(R, token);
+    int R = memory()->allocate_reg();
+    memory()->reg_add_owner(R, token);
     return R;
   }
 

@@ -69,7 +69,7 @@ int context::add_identifier(const string& name) const
   if (find_parameter(name) != -1)
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already a parameter with that name.";
 
-  return memory->add_identifier_to_context(token,name);
+  return memory()->add_identifier_to_context(token,name);
 }
 
 int context::add_note(const expression_ref& E)
@@ -318,7 +318,7 @@ void context::set_parameter_value_(int index, closure&& C)
 
 void context::set_reg_value(int P, closure&& C)
 {
-  return memory->set_reg_value(P, std::move(C), token);
+  return memory()->set_reg_value(P, std::move(C), token);
 }
 
 /// Update the value of a non-constant, non-computed index
@@ -459,7 +459,7 @@ expression_ref context::get_expression(int i) const
 
 void context::pop_temp_head() const
 {
-  memory->pop_temp_head( token );
+  memory()->pop_temp_head( token );
 }
 
 void context::alphabetize_parameters()
@@ -478,7 +478,7 @@ void context::alphabetize_parameters()
 
 void context::release_identifiers()
 {
-  memory->release_identifiers(token);
+  memory()->release_identifiers(token);
 }
 
 void context::compile()
@@ -488,7 +488,7 @@ void context::compile()
 
 void context::collect_garbage() const
 {
-  memory->collect_garbage();
+  memory()->collect_garbage();
 }
 
 expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env) const
@@ -753,10 +753,10 @@ context& context::operator+=(const vector<Module>& Ms)
 
 context& context::operator=(const context& C)
 {
-  memory->release_token(token);
+  memory_->release_token(token);
   
-  memory = C.memory;
-  token = memory->copy_token(C.token);
+  memory_ = C.memory_;
+  token = memory_->copy_token(C.token);
   perform_io_head = C.perform_io_head;
   P = C.P;
   notes = C.notes;
@@ -806,9 +806,9 @@ context::context(const module_loader& L, const vector<expression_ref>& N)
 { }
 
 context::context(const module_loader& L, const vector<expression_ref>& N, const vector<Module>& Ps)
-  :memory(new reg_heap()),
+  :memory_(new reg_heap()),
    P(new Program),
-   token(memory->get_unused_token()),
+   token(memory_->get_unused_token()),
    loader(L)
 {
   (*this) += "Prelude";
@@ -830,21 +830,21 @@ context::context(const module_loader& L, const vector<expression_ref>& N, const 
 
 context::context(const context& C)
   :Model_Notes(C),
-   memory(C.memory),
+   memory_(C.memory_),
    P(C.P),
-   token(memory->copy_token(C.token)),
+   token(memory_->copy_token(C.token)),
    perform_io_head(C.perform_io_head),
    loader(C.loader)
 { }
 
 context::~context()
 {
-  memory->release_token(token);
+  memory_->release_token(token);
 }
 
 int context::push_temp_head() const
 {
-  return memory->push_temp_head( token );
+  return memory()->push_temp_head( token );
 }
 
 int context::get_parameter_reg(int index) const
