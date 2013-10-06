@@ -358,28 +358,32 @@ reg::reg(reg&& R) noexcept
   R.state = reg::none;
 }
 
+void reg::clear()
+{
+  C.clear();
+  changeable = false;
+  result = 0;
+  used_inputs.clear();
+  call = 0;
+  call_reverse = back_edge_deleter();
+  outputs.clear();
+  call_outputs.clear();
+  referenced_by_in_E.clear();
+  ownership_category = ownership_category_t();
+
+  // This should already be cleared.
+  assert(temp == -1);
+  
+  re_evaluate = false;
+}
+
 void reg_heap::clear(int R)
 {
-  access(R).C.clear();
-  access(R).changeable = false;
-  clear_result(R);
-
-  access(R).used_inputs.clear();
-  access(R).call = 0;
-  access(R).call_reverse = reg::back_edge_deleter();
-
-  // Upstream objects can NOT still exist - otherwise this object would be used :-)
-  access(R).outputs.clear();
-  access(R).call_outputs.clear();
-  access(R).referenced_by_in_E.clear();
+  access(R).clear();
 
   reg_clear_owners(R);
 
-  // This should already be cleared.
-  assert( access(R).temp == -1);
   assert( target[R] == R );
-
-  access(R).re_evaluate = false;
 }
 
 void reg_heap::set_used_input(int R1, int R2)

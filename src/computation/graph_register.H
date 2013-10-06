@@ -89,6 +89,8 @@ public:
   int next_reg = -1;
   mutable States state = none;
 
+  void clear();
+
   reg& operator=(const reg&) = delete;
   reg& operator=(reg&&) noexcept;
 
