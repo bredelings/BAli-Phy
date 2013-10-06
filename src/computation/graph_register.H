@@ -82,6 +82,9 @@ public:
   /* The closure */
   closure C;
   std::vector<back_edge_deleter> referenced_by_in_E_reverse;
+
+  computation_record& get_computation() {return *this;}
+  const computation_record& get_computation() const {return *this;}
  
   /// The nodes that directly reference us (not via a call)
   CacheList<int> referenced_by_in_E;
