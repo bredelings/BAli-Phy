@@ -39,12 +39,6 @@ closure trim_normalize(closure&& C)
   return C;
 }
 
-closure Fun_normalize(closure&& C)
-{
-  C.exp = Fun_normalize(expression_ref(C.exp));
-  return C;
-}
-
 closure resolve_refs(const vector<Module>& P, closure&& C)
 {
   C.exp = resolve_refs(P, C.exp);
