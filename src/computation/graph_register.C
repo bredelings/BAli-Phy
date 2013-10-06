@@ -293,6 +293,7 @@ expression_ref graph_normalize(const expression_ref& E)
 
 computation_record& computation_record::operator=(computation_record&& R) noexcept
 {
+  source = R.source;
   owners = std::move( R.owners );
   ownership_category = std::move( R.ownership_category );
   changeable = R.changeable;
@@ -310,7 +311,8 @@ computation_record& computation_record::operator=(computation_record&& R) noexce
 }
 
 computation_record::computation_record(computation_record&& R) noexcept
- :owners( std::move( R.owners ) ),
+:source(R.source),
+  owners( std::move( R.owners ) ),
   ownership_category( std::move( R.ownership_category) ),
   changeable( R.changeable ),
   result( R.result ),

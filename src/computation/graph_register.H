@@ -22,6 +22,8 @@ typedef CacheList<owner_set_t>::iterator ownership_category_t;
 
 struct computation_record
 {
+  int source = -1;
+
   /* 5. Which sub-graphs are we in for sub-graph sharing? */
   owner_set_t owners;
 
