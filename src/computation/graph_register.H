@@ -61,6 +61,10 @@ struct computation_record
 
   bool re_evaluate = false;
 
+  void clear();
+
+  void check_cleared();
+
   computation_record& operator=(const computation_record&) = delete;
   computation_record& operator=(computation_record&&) noexcept;
 

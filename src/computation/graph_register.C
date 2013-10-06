@@ -291,6 +291,31 @@ expression_ref graph_normalize(const expression_ref& E)
 // See "From Natural Semantics to C: A Formal Derivation of two STG machines."
 //      by Alberto de la Encina and Ricardo Pena.
 
+void computation_record::clear()
+{
+  changeable = false;
+  result = 0;
+  used_inputs.clear();
+  call = 0;
+  call_reverse = back_edge_deleter();
+  outputs.clear();
+  call_outputs.clear();
+  ownership_category = ownership_category_t();
+
+  // This should already be cleared.
+  assert(temp == -1);
+  
+  re_evaluate = false;
+}
+
+void computation_record::check_cleared()
+{
+  assert(not result);
+  assert(not call);
+  assert(used_inputs.empty());
+  assert(call_outputs.empty());
+}
+
 computation_record& computation_record::operator=(computation_record&& R) noexcept
 {
   source = R.source;
@@ -361,31 +386,17 @@ reg::reg(reg&& R) noexcept
 void reg::clear()
 {
   C.clear();
-  changeable = false;
-  result = 0;
-  used_inputs.clear();
-  call = 0;
-  call_reverse = back_edge_deleter();
-  outputs.clear();
-  call_outputs.clear();
   referenced_by_in_E.clear();
-  ownership_category = ownership_category_t();
 
-  // This should already be cleared.
-  assert(temp == -1);
-  
-  re_evaluate = false;
+  get_computation().clear();
 }
 
 void reg::check_cleared()
 {
   assert(not C);
   assert(referenced_by_in_E_reverse.empty());
-  assert(not result);
-  assert(not call);
-  assert(used_inputs.empty());
-  assert(call_outputs.empty());
   assert(referenced_by_in_E.empty());
+  get_computation().check_cleared();
 }
 
 void reg_heap::clear(int R)
