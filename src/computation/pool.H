@@ -44,7 +44,7 @@ class pool
     return 0;
   }
 
-  void expand_memory(int s)
+  virtual void expand_memory(int s)
   {
     assert(memory.size() == n_used() + n_free() + n_null());
     
