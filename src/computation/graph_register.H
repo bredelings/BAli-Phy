@@ -91,6 +91,8 @@ public:
 
   void clear();
 
+  void check_cleared();
+
   reg& operator=(const reg&) = delete;
   reg& operator=(reg&&) noexcept;
 

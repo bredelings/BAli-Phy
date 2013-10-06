@@ -377,6 +377,17 @@ void reg::clear()
   re_evaluate = false;
 }
 
+void reg::check_cleared()
+{
+  assert(not C);
+  assert(referenced_by_in_E_reverse.empty());
+  assert(not result);
+  assert(not call);
+  assert(used_inputs.empty());
+  assert(call_outputs.empty());
+  assert(referenced_by_in_E.empty());
+}
+
 void reg_heap::clear(int R)
 {
   access(R).clear();
@@ -788,17 +799,7 @@ int reg_heap::get_free_reg()
   int r = first_free_reg;
 
 #ifndef NDEBUG
-  {
-    const reg& R = access(r);
-    
-    assert(not R.C);
-    assert(R. referenced_by_in_E_reverse.empty());
-    assert(not R.result);
-    assert(not R.call);
-    assert(R.used_inputs.empty());
-    assert(R.call_outputs.empty());
-    assert(R.referenced_by_in_E.empty());
-  }
+  access(r).check_cleared();
 #endif
 
   assert(access(r).state == reg::free);
