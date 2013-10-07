@@ -88,9 +88,9 @@ public:
   int add_note(const expression_ref&);
 
   /// The total size of the reg memory
-  int n_regs() const {return memory()->n_regs();}
+  int n_regs() const {return memory()->size();}
   /// How many regs are not known to be free?
-  int n_used_regs() const {return memory()->n_used_regs();}
+  int n_used_regs() const {return memory()->n_used();}
 
   reg& access(int i) const {return memory()->access(i);}
 

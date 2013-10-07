@@ -768,12 +768,12 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     incremental_evaluate(R,token,true);
 }
 
-int reg_heap::n_regs() const
+int reg_heap::size() const
 {
   return memory.size();
 }
 
-int reg_heap::n_free_regs() const
+int reg_heap::n_free() const
 {
   int here = first_free_reg;
   int count = 0;
@@ -782,7 +782,7 @@ int reg_heap::n_free_regs() const
   return count;
 }
 
-int reg_heap::n_used_regs() const
+int reg_heap::n_used() const
 {
   int here = first_used_reg;
   int count = 0;
@@ -948,7 +948,7 @@ void reg_heap::pop_temp_head(const owner_set_t& tokens)
 
 void reg_heap::expand_memory(int s)
 {
-  assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
+  assert(n_regs() == n_used() + n_free() + n_null());
 
   int k = memory.size();
   memory.resize(memory.size()+s);
@@ -959,12 +959,12 @@ void reg_heap::expand_memory(int s)
     add_reg_to_free_list(i);
   }
 
-  assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
+  assert(n_regs() == n_used() + n_free() + n_null());
 }
 
 int reg_heap::allocate_reg()
 {
-  // SLOW!  assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
+  // SLOW!  assert(n_regs() == n_used() + n_free() + n_null());
 
   int r = get_free_reg();
 
@@ -972,8 +972,8 @@ int reg_heap::allocate_reg()
   if (r == -1)
   {
     collect_garbage();
-    assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
-    if (memory.size() < n_used_regs()*2+10)
+    assert(n_regs() == n_used() + n_free() + n_null());
+    if (memory.size() < n_used()*2+10)
       expand_memory(memory.size()*2+10);
     r = get_free_reg();
     assert(r != -1);
@@ -984,7 +984,7 @@ int reg_heap::allocate_reg()
 
   assert( reg_is_unowned(r) );
 
-  //SLOW! assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
+  //SLOW! assert(n_regs() == n_used() + n_free() + n_null());
   assert(access(r).state == reg::used);
 
   return r;
@@ -1125,12 +1125,12 @@ void reg_heap::collect_garbage()
   std::cerr<<"***********Garbage Collection******************"<<std::endl;
   check_used_regs();
 #endif
-  assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
+  assert(n_regs() == n_used() + n_free() + n_null());
 
   trace_and_reclaim_unreachable();
 
 #ifdef DEBUG_MACHINE
-  cerr<<"Regs: "<<n_used_regs()<<"/"<<n_regs()<<endl;
+  cerr<<"Regs: "<<n_used()<<"/"<<n_regs()<<endl;
   cerr<<"#roots = "<<roots.size()<<endl;
   check_used_regs();
 #endif
@@ -2176,7 +2176,7 @@ int reg_heap::copy_token(int t)
   return t2;
 }
 
-int reg_heap::n_null_regs() const
+int reg_heap::n_null() const
 {
   return 1;
 }

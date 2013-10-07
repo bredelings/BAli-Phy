@@ -170,10 +170,10 @@ public:
 
   void clear_result(int R) {access(R).result = 0;}
 
-  int n_regs() const;
-  int n_free_regs() const;
-  int n_used_regs() const;
-  int n_null_regs() const;
+  int size() const;
+  int n_free() const;
+  int n_used() const;
+  int n_null() const;
 
   int allocate_reg();
 
