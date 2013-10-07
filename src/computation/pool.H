@@ -83,7 +83,7 @@ protected:
 
     int r = first_free;
 
-    assert(lookup(r).state == free);
+    assert(is_free(r));
     first_free = lookup(r).next;
     lookup(r).prev = -1;
     lookup(r).next = -1;
@@ -105,6 +105,8 @@ protected:
 
   void remove_from_used_list(int r)
   {
+    assert(is_used(r));
+
     int P = lookup(r).prev;
     int N = lookup(r).next;
 
