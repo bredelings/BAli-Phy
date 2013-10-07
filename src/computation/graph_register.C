@@ -456,7 +456,7 @@ void reg_heap::clear_used_inputs(int R1)
   //  correct edges.
 
   // We shouldn't need to call this on regs that are already on the free list.
-  assert( access(R1).state != reg::free );
+  assert( not is_free(R1) );
 
   // Remove the back edges from each used_input reg that is not on the free list.
   for(const auto& i: access(R1).used_inputs)
@@ -464,7 +464,7 @@ void reg_heap::clear_used_inputs(int R1)
     int R2 = i.first;
     assert(R2 > 0 and R2 < size());
 
-    if (access(R2).state == reg::free)
+    if (is_free(R2))
       assert( access(R2).outputs.empty() );
     else
     {
@@ -544,7 +544,7 @@ void reg_heap::clear_call(int R)
   assert( access(R).state != reg::used or access(R2).call_outputs.count(R) );
 
   // If the call points to a freed reg, then its call_outputs list should already be cleared.
-  if (access(R2).state == reg::free)
+  if (is_free(R2))
     assert( access(R2).call_outputs.empty() );
   // If the call points to a used reg, then we need to notify it that the incoming call edge is being removed.
   else {
@@ -591,7 +591,7 @@ void reg_heap::clear_C(int R)
   {
     int R2 = access(R).C.Env[i];
     reg::back_edge_deleter& D = access(R).referenced_by_in_E_reverse[i];
-    if (access(R2).state != reg::free)
+    if (not is_free(R2))
     {
       assert( not access(R2).referenced_by_in_E.empty() );
       access(R2).referenced_by_in_E.erase(D);
@@ -813,7 +813,7 @@ int reg_heap::get_free_element()
   access(r).check_cleared();
 #endif
 
-  assert(access(r).state == reg::free);
+  assert(is_free(r));
   first_free_reg = access(r).next_reg;
   access(r).prev_reg = -1;
   access(r).next_reg = -1;
@@ -1057,8 +1057,9 @@ void reg_heap::trace_and_reclaim_unreachable()
   {
     for(int i=0;i<scan.size();i++)
     {
-      reg& R = access(scan[i]);
-      assert(R.state != reg::free);
+      int r = scan[i];
+      reg& R = access(r);
+      assert(not is_free(r));
       if (R.state == reg::marked) continue;
 
       R.state = reg::marked;
@@ -1325,10 +1326,11 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
   // However, these may be unshared, and may also be from any context.
   for(int i=0;i<scan.size();i++)
   {
-    const reg& R = access(scan[i]);
+    int r = scan[i];
+    const reg& R = access(r);
 
     // Regs should be on the used list
-    assert(R.state != reg::free and R.state != reg::none);
+    assert(is_used(r) or is_marked(r));
 
     // Only add each reg at most once
     if (R.state == reg::marked) continue;
@@ -1696,8 +1698,8 @@ int reg_heap::uniquify_reg(int R, int t)
       int& I1 = i.first;
 
       int I2 = target[I1];
-      assert( access(I1).state != reg::free);
-      assert( access(I2).state != reg::free);
+      assert( not is_free(I1));
+      assert( not is_free(I2));
 
       if (I2 != I1)
       {
@@ -1997,8 +1999,9 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
 {
   for(int i=0;i<scan.size();i++)
   {
-    const reg& R = access(scan[i]);
-    assert(R.state != reg::free and R.state != reg::none);
+    int r = scan[i];
+    const reg& R = access(r);
+    assert(is_used(r) or is_marked(r));
     if (R.state == reg::marked) continue;
 
     R.state = reg::marked;
@@ -2007,10 +2010,10 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
 
   for(int i=0;i<unique.size();i++)
   {
-    const reg& R = access(unique[i]);
-    assert(R.state != reg::free and R.state != reg::none);
-    assert(R.state == reg::marked);
+    int r = unique[i];
+    assert(is_marked(r));
 
+    const reg& R = access(r);
     for(int j:R.C.Env)
     {
       const reg& R2 = access(j);
