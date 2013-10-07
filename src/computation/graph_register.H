@@ -175,6 +175,13 @@ public:
   int n_used() const;
   int n_null() const;
 
+  void set_state(int R, reg::States s) {memory[R].state = s;}
+  reg::States get_state(int R) const {return memory[R].state;}
+  bool is_null(int R) const {assert(0 <= R and R < size()); return get_state(R) == reg::none;}
+  bool is_free(int R) const {assert(0 <= R and R < size()); return get_state(R) == reg::free;}
+  bool is_used(int R) const {assert(0 <= R and R < size()); return get_state(R) == reg::used;}
+  bool is_marked(int R) const {assert(0 <= R and R < size()); return get_state(R) == reg::marked;}
+
   int allocate();
 
   void collect_garbage();

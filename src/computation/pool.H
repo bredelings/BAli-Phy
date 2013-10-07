@@ -24,6 +24,12 @@ protected:
   int first_free = -1;
   int first_used = -1;
 
+
+  int size() const
+  {
+    return memory.size();
+  }
+
   int n_free() const
   {
     int here = first_free;
