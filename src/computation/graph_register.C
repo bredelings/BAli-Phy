@@ -548,7 +548,7 @@ void reg_heap::clear_call(int R)
     assert( access(R2).call_outputs.empty() );
   // If the call points to a used reg, then we need to notify it that the incoming call edge is being removed.
   else {
-    assert( access(R2).state == reg::used or access(R2).state == reg::checked );
+    assert( access(R2).state == reg::used or access(R2).state == reg::marked );
     assert( not access(R2).call_outputs.empty() );
     access(R2).call_outputs.erase( access(R).call_reverse );
   }
@@ -1059,9 +1059,9 @@ void reg_heap::trace_and_reclaim_unreachable()
     {
       reg& R = access(scan[i]);
       assert(R.state != reg::free);
-      if (R.state == reg::checked) continue;
+      if (R.state == reg::marked) continue;
 
-      R.state = reg::checked;
+      R.state = reg::marked;
 
       // Count the references from E
       // FIXME - speed?
@@ -1080,7 +1080,7 @@ void reg_heap::trace_and_reclaim_unreachable()
   {
     reg& R = access(here);
     int next = access(here).next_reg;
-    if (R.state == reg::checked)
+    if (R.state == reg::marked)
       R.state = reg::used;
     else 
       reclaim_used(here);
@@ -1271,7 +1271,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
     // Skip ancestors not in this context
     if (not reg_is_owned_by(R,t)) continue;
 
-    access(Q).state = reg::checked;
+    access(Q).state = reg::marked;
     ancestors.push_back(Q);
   }
 
@@ -1280,19 +1280,19 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
   {
     int Q1 = ancestors[i];
 
-    assert(access(Q1).state == reg::checked);
+    assert(access(Q1).state == reg::marked);
 
     for(int Q2: access(Q1).call_outputs)
     {
       // Skip regs that have been seen before.
-      if (access(Q2).state == reg::checked) continue;
+      if (access(Q2).state == reg::marked) continue;
 
       assert( access(Q2).state == reg::used);
 
       // Skip ancestors not in this context
       if (not reg_is_owned_by(Q2,t)) continue;
 
-      access(Q2).state = reg::checked;
+      access(Q2).state = reg::marked;
       ancestors.push_back(Q2);
     }
   }
@@ -1331,7 +1331,7 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
     assert(R.state != reg::free and R.state != reg::none);
 
     // Only add each reg at most once
-    if (R.state == reg::checked) continue;
+    if (R.state == reg::marked) continue;
 
     // Skip this reg if its not in context t
     if (not reg_is_owned_by(scan[i],t)) continue;
@@ -1340,7 +1340,7 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
     if (not reg_is_shared(scan[i])) continue;
     // We could add this reg to the unsplit list here, if we didn't have to trim the split list later.  Grrr.
 
-    R.state = reg::checked;
+    R.state = reg::marked;
     unique.push_back(scan[i]);
 
     // Count the references from E in other regs
@@ -1352,7 +1352,7 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
 
   for(int R: unique)
   {
-    assert(access(R).state == reg::checked);
+    assert(access(R).state == reg::marked);
 
     access(R).state = reg::used;
   }
@@ -1414,14 +1414,14 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
     for(int Q1: access(R1).referenced_by_in_E)
     {
       // Skip regs that we've handled already.
-      if (access(Q1).state == reg::checked) continue;
+      if (access(Q1).state == reg::marked) continue;
 
       // We are only interested in the unshared E-ancestors in t.
       if (not reg_is_owned_by_only(Q1, t)) continue;
 
       // Mark Q1
       assert(access(Q1).state == reg::used);
-      access(Q1).state = reg::checked;
+      access(Q1).state = reg::marked;
       unsplit_parents.push_back(Q1);
     }
 
@@ -1450,28 +1450,28 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
     for(int Q1: access(R1).outputs)
     {
       // Skip regs that we've handled already.
-      if (access(Q1).state == reg::checked) continue;
+      if (access(Q1).state == reg::marked) continue;
 
       // We are only interested in the unshared E-ancestors in t.
       if (not reg_is_owned_by_only(Q1, t)) continue;
 
       // Mark Q1
       assert(access(Q1).state == reg::used);
-      access(Q1).state = reg::checked;
+      access(Q1).state = reg::marked;
       unsplit_parents.push_back(Q1);
     }
 
     for(int Q1: access(R1).call_outputs)
     {
       // Skip regs that we've handled already.
-      if (access(Q1).state == reg::checked) continue;
+      if (access(Q1).state == reg::marked) continue;
 
       // We are only interested in the unshared E-ancestors in t.
       if (not reg_is_owned_by_only(Q1, t)) continue;
 
       // Mark Q1
       assert(access(Q1).state == reg::used);
-      access(Q1).state = reg::checked;
+      access(Q1).state = reg::marked;
       unsplit_parents.push_back(Q1);
     }
   }
@@ -1999,9 +1999,9 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
   {
     const reg& R = access(scan[i]);
     assert(R.state != reg::free and R.state != reg::none);
-    if (R.state == reg::checked) continue;
+    if (R.state == reg::marked) continue;
 
-    R.state = reg::checked;
+    R.state = reg::marked;
     unique.push_back(scan[i]);
   }
 
@@ -2009,14 +2009,14 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
   {
     const reg& R = access(unique[i]);
     assert(R.state != reg::free and R.state != reg::none);
-    assert(R.state == reg::checked);
+    assert(R.state == reg::marked);
 
     for(int j:R.C.Env)
     {
       const reg& R2 = access(j);
       if (R2.state == reg::used)
       {
-	R2.state = reg::checked;
+	R2.state = reg::marked;
 	unique.push_back(j);
       }
     }
@@ -2024,7 +2024,7 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
     // Count also the references from the call
     if (R.call and access(R.call).state == reg::used)
     {
-      access(R.call).state = reg::checked;
+      access(R.call).state = reg::marked;
       unique.push_back(R.call);
     }
   }
@@ -2038,7 +2038,7 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
   for(int i=0;i<unique.size();i++)
   {
     const reg& R = access(unique[i]);
-    assert(R.state == reg::checked);
+    assert(R.state == reg::marked);
 
     R.state = reg::used;
   }

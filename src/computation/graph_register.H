@@ -90,7 +90,7 @@ public:
   CacheList<int> referenced_by_in_E;
 
   /* 4. Fields used by the memory manager */
-  enum States {none=0,free=1,used=2,checked=3};
+  enum States {none=0,free=1,used=2,marked=3};
 
   int prev_reg = -1;
   int next_reg = -1;
