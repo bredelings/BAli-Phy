@@ -121,9 +121,9 @@ protected:
 
 public:
   
-  bool is_free(int r) const {assert(0 <= R2 and R2 < size()); return memory[r].state == free;}
-  bool is_used(int r) const {assert(0 <= R2 and R2 < size()); return memory[r].state == used;}
-  bool is_marked(int r) const {assert(0 <= R2 and R2 < size()); return memory[r].state == marked;}
+  bool is_free(int r) const {assert(0 <= r and r < size()); return memory[r].state == free;}
+  bool is_used(int r) const {assert(0 <= r and r < size()); return memory[r].state == used;}
+  bool is_marked(int r) const {assert(0 <= r and r < size()); return memory[r].state == marked;}
   States get_state(int r) const {return memory[r].state;}
 
   class PoolIterator
