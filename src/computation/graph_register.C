@@ -534,7 +534,7 @@ void reg_heap::clear_call(int R)
   else {
     assert( is_used(R2) or is_marked(R2) );
     assert( not access(R2).call_outputs.empty() );
-    access(R2).call_outputs.erase( access(R).call_reverse );
+    access(R2).call_outputs.erase( access_unused(R).call_reverse );
   }
 
   access_unused(R).call_reverse = reg::back_edge_deleter();
