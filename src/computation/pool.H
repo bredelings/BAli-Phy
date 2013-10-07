@@ -151,13 +151,18 @@ public:
 
     int addr() const {return index;}
 
-    T& operator *()
+    T& operator *() const
     {
       return (*mypool)[index];
     }
 
-    bool operator ==(PoolIterator &i2) {assert(mypool == i2.mypool); return index == i2.index;}
-    bool operator !=(PoolIterator &i2) {return not (*this == i2);}
+    T* operator->() const
+    {
+      return &(*mypool)[index];
+    }
+
+    bool operator ==(const PoolIterator &i2) const {assert(mypool == i2.mypool); return index == i2.index;}
+    bool operator !=(const PoolIterator &i2) const {return not (*this == i2);}
   };
 
   class constPoolIterator
@@ -167,7 +172,7 @@ public:
   public:
     // etc
     constPoolIterator(const pool * p, int i)
-      :index(i), mypool(p)
+      :mypool(p), index(i)
     { }
 
     constPoolIterator operator ++() { index = mypool->lookup(index).next; return *this;}
@@ -177,13 +182,18 @@ public:
 
     int addr() const {return index;}
 
-    const T& operator *()
+    const T& operator *() const
     {
       return (*mypool)[index];
     }
 
-    bool operator ==(constPoolIterator &i2) {assert(mypool == i2.mypool); return index == i2.index;}
-    bool operator !=(constPoolIterator &i2) {return not (*this == i2);}
+    const T* operator->() const
+    {
+      return &(*mypool)[index];
+    }
+
+    bool operator ==(const constPoolIterator &i2) const {assert(mypool == i2.mypool); return index == i2.index;}
+    bool operator !=(const constPoolIterator &i2) const {return not (*this == i2);}
   };
 
   PoolIterator begin() {return {this,first_used};}
@@ -191,6 +201,9 @@ public:
 
   constPoolIterator begin() const {return {this,first_used};}
   constPoolIterator end()   const {return {this,-1};}
+
+  constPoolIterator cbegin() const {return {this,first_used};}
+  constPoolIterator cend()   const {return {this,-1};}
 
   void clear()
   {
