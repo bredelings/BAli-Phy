@@ -6,6 +6,7 @@
 template <typename T>
 class pool
 {
+  int n_null_;
 public:
   enum States {none=0,free=1,used=2,marked=3};
 
@@ -50,7 +51,7 @@ protected:
 
   int n_null() const
   {
-    return 0;
+    return n_null_;
   }
 
   virtual void expand_memory(int s)
@@ -262,6 +263,7 @@ public:
   { }
 
   pool(int n)
+    :n_null_(n)
   {
     // Add this number of null records.
     memory.resize(n);
