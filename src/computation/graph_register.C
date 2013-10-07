@@ -502,11 +502,9 @@ void reg_heap::clear_used_inputs(int R1)
 void reg_heap::set_call_unsafe(int R1, int R2)
 {
   // Check that R1 is legal
-  assert(0 <= R1 and R1 < size());
   assert(is_used(R1));
 
   // Check that R2 is legal
-  assert(0 <= R2 and R2 < size());
   assert(is_used(R2));
 
   // Check that we aren't overriding an existing *call*
@@ -623,7 +621,6 @@ void reg_heap::set_reduction_result(int R, closure&& result)
 
     int Q = result.lookup_in_env( index );
     
-    assert(0 <= Q and Q < size());
     assert(is_used(Q));
     
     set_call(R,Q);
@@ -1000,7 +997,7 @@ void reg_heap::remove_unused_ownership_marks()
   {
     reg& R = access(here);
 #ifndef NDEBUG
-    R.temp_owners = get_reg_owners(here);
+    R.temp_owners = *R.ownership_category;
 #endif
     R.owners.reset();
 
@@ -2000,11 +1997,10 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
   for(int i=0;i<scan.size();i++)
   {
     int r = scan[i];
-    const reg& R = access(r);
     assert(is_used(r) or is_marked(r));
-    if (R.state == reg::marked) continue;
+    if (is_marked(r)) continue;
 
-    R.state = reg::marked;
+    set_state(r, reg::marked);
     unique.push_back(scan[i]);
   }
 
@@ -2016,10 +2012,9 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
     const reg& R = access(r);
     for(int j:R.C.Env)
     {
-      const reg& R2 = access(j);
       if (is_used(j))
       {
-	R2.state = reg::marked;
+	set_state(j, reg::marked);
 	unique.push_back(j);
       }
     }
