@@ -358,13 +358,6 @@ reg& reg::operator=(reg&& R) noexcept
   C = std::move(R.C);
   referenced_by_in_E_reverse = std::move( R.referenced_by_in_E_reverse );
   referenced_by_in_E = std::move( R.referenced_by_in_E );
-  prev_reg = R.prev_reg;
-  next_reg = R.next_reg;
-  state = R.state;
-
-  R.prev_reg = -1;
-  R.next_reg = -1;
-  R.state = reg::none;
 
   return *this;
 }
@@ -373,15 +366,8 @@ reg::reg(reg&& R) noexcept
 :computation_record(std::move(R)),
   C( std::move(R.C) ),
   referenced_by_in_E_reverse ( std::move( R.referenced_by_in_E_reverse ) ),
-  referenced_by_in_E ( std::move( R.referenced_by_in_E) ),
-  prev_reg( R.prev_reg ),
-  next_reg ( R.next_reg ),
-  state ( R.state )
-{ 
-  R.prev_reg = -1;
-  R.next_reg = -1;
-  R.state = reg::none;
-}
+  referenced_by_in_E ( std::move( R.referenced_by_in_E) )
+{ }
 
 void reg::clear()
 {
@@ -459,13 +445,13 @@ void reg_heap::clear_used_inputs(int R1)
   assert( not is_free(R1) );
 
   // Remove the back edges from each used_input reg that is not on the free list.
-  for(const auto& i: access(R1).used_inputs)
+  for(const auto& i: access_unused(R1).used_inputs)
   {
     int R2 = i.first;
-    assert(R2 > 0 and R2 < size());
+    assert(is_address(R2));
 
     if (is_free(R2))
-      assert( access(R2).outputs.empty() );
+      assert( access_unused(R2).outputs.empty() );
     else
     {
       assert( not access(R2).outputs.empty() );
@@ -478,9 +464,9 @@ void reg_heap::clear_used_inputs(int R1)
   }
 
   // Remove the forward edges.
-  access(R1).used_inputs.clear();
+  access_unused(R1).used_inputs.clear();
 
-  assert(access(R1).used_inputs.empty());
+  assert(access_unused(R1).used_inputs.empty());
 }
 
 // set_call (or set_call_unsafe) is only called when
@@ -529,12 +515,12 @@ void reg_heap::set_call(int R1, int R2)
 
 void reg_heap::clear_call(int R)
 {
-  int R2 = access(R).call;
+  int R2 = access_unused(R).call;
   if (not R2) return;
   assert(R2 > 0 and R2 < size());
   
-  assert( *access(R).call_reverse == R );
-  access(R).call = 0;
+  assert( *access_unused(R).call_reverse == R );
+  access_unused(R).call = 0;
 
   // If this reg is unused, then upstream regs are in the process of being destroyed.
   // However, if this reg is used, then upstream regs may be live, and so should have
@@ -543,7 +529,7 @@ void reg_heap::clear_call(int R)
 
   // If the call points to a freed reg, then its call_outputs list should already be cleared.
   if (is_free(R2))
-    assert( access(R2).call_outputs.empty() );
+    assert( access_unused(R2).call_outputs.empty() );
   // If the call points to a used reg, then we need to notify it that the incoming call edge is being removed.
   else {
     assert( is_used(R2) or is_marked(R2) );
@@ -551,7 +537,7 @@ void reg_heap::clear_call(int R)
     access(R2).call_outputs.erase( access(R).call_reverse );
   }
 
-  access(R).call_reverse = reg::back_edge_deleter();
+  access_unused(R).call_reverse = reg::back_edge_deleter();
 }
 
 void reg_heap::set_C(int R, closure&& C)
@@ -585,21 +571,21 @@ void reg_heap::set_C(int R, closure&& C)
 
 void reg_heap::clear_C(int R)
 {
-  for(int i=0;i<access(R).C.Env.size();i++)
+  for(int i=0;i<access_unused(R).C.Env.size();i++)
   {
-    int R2 = access(R).C.Env[i];
-    reg::back_edge_deleter& D = access(R).referenced_by_in_E_reverse[i];
+    int R2 = access_unused(R).C.Env[i];
+    reg::back_edge_deleter& D = access_unused(R).referenced_by_in_E_reverse[i];
     if (not is_free(R2))
     {
       assert( not access(R2).referenced_by_in_E.empty() );
       access(R2).referenced_by_in_E.erase(D);
     }
     else
-      assert( access(R2).referenced_by_in_E.empty() );
+      assert( access_unused(R2).referenced_by_in_E.empty() );
   }
 
-  access(R).C.clear();
-  access(R).referenced_by_in_E_reverse.clear();
+  access_unused(R).C.clear();
+  access_unused(R).referenced_by_in_E_reverse.clear();
 }
 
 void reg_heap::set_reduction_result(int R, closure&& result)
@@ -765,89 +751,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     incremental_evaluate(R,token,true);
 }
 
-int reg_heap::size() const
-{
-  return memory.size();
-}
-
-int reg_heap::n_free() const
-{
-  int here = first_free_reg;
-  int count = 0;
-  for(;here != -1;here = access(here).next_reg)
-    count++;
-  return count;
-}
-
-int reg_heap::n_used() const
-{
-  int here = first_used_reg;
-  int count = 0;
-  for(;here != -1;here = access(here).next_reg)
-    count++;
-  return count;
-}
-
-int reg_heap::add_to_free_list(int r)
-{
-  clear(r);
-  access(r).state = reg::free;
-  access(r).prev_reg = -1;
-  access(r).next_reg = first_free_reg;
-  if (first_free_reg != -1)
-    access(first_free_reg).prev_reg = r;
-  first_free_reg = r;
-  return r;
-}
-
-int reg_heap::get_free_element()
-{
-  if (first_free_reg == -1) return -1;
-
-  int r = first_free_reg;
-
-#ifndef NDEBUG
-  access(r).check_cleared();
-#endif
-
-  assert(is_free(r));
-  first_free_reg = access(r).next_reg;
-  access(r).prev_reg = -1;
-  access(r).next_reg = -1;
-  access(r).state = reg::none;
-
-  return r;
-}
-
-int reg_heap::add_to_used_list(int r)
-{
-  set_state(r, reg::used);
-  access(r).prev_reg = -1;
-  access(r).next_reg = first_used_reg;
-  if (first_used_reg != -1)
-    access(first_used_reg).prev_reg = r;
-  first_used_reg = r;
-  return r;
-}
-
-void reg_heap::remove_from_used_list(int r)
-{
-  int P = access(r).prev_reg;
-  int N = access(r).next_reg;
-
-  if (P == -1)
-    first_used_reg = N;
-  else
-    access(P).next_reg = N;
-
-  if (N == -1)
-    ;
-  else
-    access(N).prev_reg = P;
-
-  access(r).state = reg::none;
-}
-
 void reg_heap::reclaim_used(int r)
 {
   // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
@@ -943,46 +846,33 @@ void reg_heap::pop_temp_head(const owner_set_t& tokens)
   }
 }
 
+void reg_heap::get_more_memory()
+{
+  collect_garbage();
+  base_pool_t::get_more_memory();
+}
+
 void reg_heap::expand_memory(int s)
 {
-  assert(size() == n_used() + n_free() + n_null());
+  int k = size();
+  assert(size() == target.size());
 
-  int k = memory.size();
-  memory.resize(memory.size()+s);
-  target.resize(memory.size());
-  for(int i=k;i<memory.size();i++)
+  base_pool_t::expand_memory(s);
+
+  target.resize(size());
+  for(int i=k;i<size();i++)
   {
     target[i] = i;
-    add_to_free_list(i);
   }
-
-  assert(size() == n_used() + n_free() + n_null());
 }
 
 int reg_heap::allocate()
 {
-  // SLOW!  assert(size() == n_used() + n_free() + n_null());
+  int r = base_pool_t::allocate();
 
-  int r = get_free_element();
-
-  // allocation failed
-  if (r == -1)
-  {
-    collect_garbage();
-    assert(size() == n_used() + n_free() + n_null());
-    if (memory.size() < n_used()*2+10)
-      expand_memory(memory.size()*2+10);
-    r = get_free_element();
-    assert(r != -1);
-  }
-
-  add_to_used_list(r);
   access(r).ownership_category = ownership_categories.begin();
 
   assert( reg_is_unowned(r) );
-
-  //SLOW! assert(size() == n_used() + n_free() + n_null());
-  assert(is_used(r));
 
   return r;
 }
@@ -992,16 +882,13 @@ void reg_heap::remove_unused_ownership_marks()
   int n0 = n_active_scratch_lists;
 
   // Clear ownership marks
-  int here = first_used_reg;
-  for(;here != -1;)
+  for(auto& R: *this)
   {
-    reg& R = access(here);
 #ifndef NDEBUG
     R.temp_owners = *R.ownership_category;
 #endif
-    R.owners.reset();
 
-    here = R.next_reg;
+    R.owners.reset();
   }
 
   // Mark ownership on regs according to reachability.
@@ -1027,14 +914,11 @@ void reg_heap::remove_unused_ownership_marks()
 
 #ifndef NDEBUG
   // Check that we did not ADD any ownership marks!
-  here = first_used_reg;
-  for(;here != -1;)
+  for(reg& R: *this)
   {
-    reg& R = access(here);
     assert( includes(R.temp_owners, R.owners) );
-    R.temp_owners.reset();
 
-    here = R.next_reg;
+    R.temp_owners.reset();
   }
 #endif
 }
@@ -1059,7 +943,7 @@ void reg_heap::trace_and_reclaim_unreachable()
       assert(not is_free(r));
       if (is_marked(r)) continue;
 
-      set_state(r, reg::marked);
+      set_state(r, marked);
 
       // Count the references from E
       // FIXME - speed?
@@ -1073,16 +957,13 @@ void reg_heap::trace_and_reclaim_unreachable()
     next_scan.clear();
   }
 
-  int here = first_used_reg;
-  for(;here != -1;)
+  for(auto r = begin();r != end(); r++)
   {
-    int next = access(here).next_reg;
+    int here = r.addr();
     if (is_marked(here))
-      set_state(here, reg::used);
+      set_state(here, used);
     else 
       reclaim_used(here);
-
-    here = next;
   }
 
   release_scratch_list();
@@ -1098,15 +979,8 @@ void reg_heap::compute_ownership_categories()
     canonical_ownership_categories.insert(empty, ownership_categories.push_back(empty) );
   }
 
-  int here = first_used_reg;
-  for(;here != -1;)
-  {
-    reg& R = access(here);
-
-    set_reg_owners(here, access(here).owners );
-
-    here = R.next_reg;
-  }
+  for(auto r = cbegin(); r != cend(); r++)
+    set_reg_owners(r.addr(), r->owners );
 
 #ifdef DEBUG_MACHINE
   for(const auto& i: canonical_ownership_categories)
@@ -1138,14 +1012,8 @@ void reg_heap::collect_garbage()
   compute_ownership_categories();
 
   // Check that we have no un-owned objects that are used
-  int here = first_used_reg;
-  for(;here != -1;)
-  {
-    reg& R = access(here);
-    assert(not reg_is_unowned(here) );
-
-    here = R.next_reg;
-  }
+  for(auto r = begin(); r != end(); r++)
+    assert( not reg_is_unowned(r.addr()) );
 }
 
 int reg_heap::get_unused_token()
@@ -1268,7 +1136,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
     // Skip ancestors not in this context
     if (not reg_is_owned_by(R,t)) continue;
 
-    set_state(Q, reg::marked);
+    set_state(Q, marked);
     ancestors.push_back(Q);
   }
 
@@ -1289,14 +1157,14 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
       // Skip ancestors not in this context
       if (not reg_is_owned_by(Q2,t)) continue;
 
-      set_state(Q2, reg::marked);
+      set_state(Q2, marked);
       ancestors.push_back(Q2);
     }
   }
 
   // Reset the mark
   for(int i=0;i<ancestors.size();i++)
-    set_state(ancestors[i], reg::used);
+    set_state(ancestors[i], used);
 
   return ancestors;
 }
@@ -1337,7 +1205,7 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
     if (not reg_is_shared(scan[i])) continue;
     // We could add this reg to the unsplit list here, if we didn't have to trim the split list later.  Grrr.
 
-    set_state(r, reg::marked);
+    set_state(r, marked);
     unique.push_back(scan[i]);
 
     const reg& R = access(r);
@@ -1353,7 +1221,7 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
   {
     assert(is_marked(R));
 
-    set_state(R, reg::used);
+    set_state(R, used);
   }
 
   release_scratch_list();
@@ -1420,7 +1288,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
       // Mark Q1
       assert(is_used(Q1));
-      set_state(Q1, reg::marked);
+      set_state(Q1, marked);
       unsplit_parents.push_back(Q1);
     }
 
@@ -1456,7 +1324,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
       // Mark Q1
       assert(is_used(Q1));
-      set_state(Q1, reg::marked);
+      set_state(Q1, marked);
       unsplit_parents.push_back(Q1);
     }
 
@@ -1470,14 +1338,14 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
       // Mark Q1
       assert(is_used(Q1));
-      set_state(Q1, reg::marked);
+      set_state(Q1, marked);
       unsplit_parents.push_back(Q1);
     }
   }
 
   // Unmark the unsplit parents;
   for(int i=0;i<unsplit_parents.size();i++)
-    set_state(unsplit_parents[i], reg::used);
+    set_state(unsplit_parents[i], used);
 
 #ifndef NDEBUG
   // Check that marks were removed.
@@ -1852,11 +1720,8 @@ void reg_heap::check_used_reg(int index) const
 void reg_heap::check_used_regs() const
 {
   // check_used_regs
-  for(int here = first_used_reg;here != -1;)
-  {
-    check_used_reg(here);
-    here = access(here).next_reg;
-  }
+  for(auto r = begin(); r != end(); r++)
+    check_used_reg( r.addr() );
 }
 
 // TODO - search: shared memory garbage collection.
@@ -2000,7 +1865,7 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
     assert(is_used(r) or is_marked(r));
     if (is_marked(r)) continue;
 
-    set_state(r, reg::marked);
+    set_state(r, marked);
     unique.push_back(scan[i]);
   }
 
@@ -2014,7 +1879,7 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
     {
       if (is_used(j))
       {
-	set_state(j, reg::marked);
+	set_state(j, marked);
 	unique.push_back(j);
       }
     }
@@ -2022,7 +1887,7 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
     // Count also the references from the call
     if (R.call and is_used(R.call))
     {
-      set_state(R.call, reg::marked);
+      set_state(R.call, marked);
       unique.push_back(R.call);
     }
   }
@@ -2038,7 +1903,7 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
     int r = unique[i];
     assert(is_marked(r));
 
-    set_state(r, reg::used);
+    set_state(r, used);
   }
 
   release_scratch_list();
@@ -2174,11 +2039,6 @@ int reg_heap::copy_token(int t)
   return t2;
 }
 
-int reg_heap::n_null() const
-{
-  return 1;
-}
-
 int reg_heap::add_identifier_to_context(int t, const string& name)
 {
   map<string,int>& identifiers = get_identifiers_for_context(t);
@@ -2195,11 +2055,9 @@ int reg_heap::add_identifier_to_context(int t, const string& name)
 }
 
 reg_heap::reg_heap()
-  :first_free_reg(-1),
-   first_used_reg(-1)
+  :base_pool_t(1)
 { 
-  memory.resize(1);
-  target.resize(memory.size());
+  target.resize(size());
   target[0] = 0;
 
   owner_set_t empty;

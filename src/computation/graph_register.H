@@ -89,13 +89,6 @@ public:
   /// The nodes that directly reference us (not via a call)
   CacheList<int> referenced_by_in_E;
 
-  /* 4. Fields used by the memory manager */
-  enum States {none=0,free=1,used=2,marked=3};
-
-  int prev_reg = -1;
-  int next_reg = -1;
-  mutable States state = none;
-
   void clear();
 
   void check_cleared();
@@ -113,9 +106,10 @@ public:
 // * well, parameters could be reg's, so that a separate reg must be a separate parameter.
 // * how, then, do we handle reg NAME's, if reg's are not uniquely identified by their names?
 
-class reg_heap: public Object
+class reg_heap: public Object, public checked_pool<reg>
 {
-  std::vector<reg> memory;
+  typedef checked_pool<reg> base_pool_t;
+
   std::vector<int> target;
   CacheList<int> roots;
 
@@ -125,23 +119,9 @@ class reg_heap: public Object
   CacheList<owner_set_t> ownership_categories;
   bithash< owner_set_t, ownership_category_t> canonical_ownership_categories;
 
-  /// Start of free list 
-  int first_free_reg;
-
-  /// Start of used list 
-  int first_used_reg;
+  void get_more_memory();
 
   void expand_memory(int);
-
-  /// Add a reg (not on any list) to the free list
-  int add_to_free_list(int);
-  /// Take the first free reg off the free list, or return -1 if empty
-  int get_free_element();
-
-  /// Add a reg (not on any list) to the used list
-  int add_to_used_list(int);
-
-  void remove_from_used_list(int);
 
   void reclaim_used(int);
 
@@ -154,13 +134,6 @@ public:
 
   reg_heap* clone() const {std::abort();}
 
-  const reg& access(int i) const {return memory[i];}
-        reg& access(int i)       {return memory[i];}
-
-  const reg& operator[](int i) const {return access(i);}
-        reg& operator[](int i)       {return access(i);}
-
-
   const closure& access_result(int R1) const
   {
     int R2 = access(R1).result;
@@ -169,18 +142,6 @@ public:
   }
 
   void clear_result(int R) {access(R).result = 0;}
-
-  int size() const;
-  int n_free() const;
-  int n_used() const;
-  int n_null() const;
-
-  void set_state(int R, reg::States s) const {memory[R].state = s;}
-  reg::States get_state(int R) const {return memory[R].state;}
-  bool is_null(int R) const {assert(0 <= R and R < size()); return get_state(R) == reg::none;}
-  bool is_free(int R) const {assert(0 <= R and R < size()); return get_state(R) == reg::free;}
-  bool is_used(int R) const {assert(0 <= R and R < size()); return get_state(R) == reg::used;}
-  bool is_marked(int R) const {assert(0 <= R and R < size()); return get_state(R) == reg::marked;}
 
   int allocate();
 
