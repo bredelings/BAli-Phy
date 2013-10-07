@@ -1271,7 +1271,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
     // Skip ancestors not in this context
     if (not reg_is_owned_by(R,t)) continue;
 
-    access(Q).state = reg::marked;
+    set_state(Q, reg::marked);
     ancestors.push_back(Q);
   }
 
@@ -1292,7 +1292,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
       // Skip ancestors not in this context
       if (not reg_is_owned_by(Q2,t)) continue;
 
-      access(Q2).state = reg::marked;
+      set_state(Q2, reg::marked);
       ancestors.push_back(Q2);
     }
   }
@@ -1326,13 +1326,12 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
   for(int i=0;i<scan.size();i++)
   {
     int r = scan[i];
-    const reg& R = access(r);
 
     // Regs should be on the used list
     assert(is_used(r) or is_marked(r));
 
     // Only add each reg at most once
-    if (R.state == reg::marked) continue;
+    if (is_marked(r)) continue;
 
     // Skip this reg if its not in context t
     if (not reg_is_owned_by(scan[i],t)) continue;
@@ -1341,8 +1340,10 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
     if (not reg_is_shared(scan[i])) continue;
     // We could add this reg to the unsplit list here, if we didn't have to trim the split list later.  Grrr.
 
-    R.state = reg::marked;
+    set_state(r, reg::marked);
     unique.push_back(scan[i]);
+
+    const reg& R = access(r);
 
     // Count the references from E in other regs
     scan.insert(scan.end(), R.referenced_by_in_E.begin(), R.referenced_by_in_E.end());
@@ -1355,7 +1356,7 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
   {
     assert(is_marked(R));
 
-    access(R).state = reg::used;
+    set_state(R, reg::used);
   }
 
   release_scratch_list();
@@ -1422,7 +1423,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
       // Mark Q1
       assert(is_used(Q1));
-      access(Q1).state = reg::marked;
+      set_state(Q1, reg::marked);
       unsplit_parents.push_back(Q1);
     }
 
@@ -1458,7 +1459,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
       // Mark Q1
       assert(is_used(Q1));
-      access(Q1).state = reg::marked;
+      set_state(Q1, reg::marked);
       unsplit_parents.push_back(Q1);
     }
 
@@ -1472,7 +1473,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
       // Mark Q1
       assert(is_used(Q1));
-      access(Q1).state = reg::marked;
+      set_state(Q1, reg::marked);
       unsplit_parents.push_back(Q1);
     }
   }
@@ -2026,7 +2027,7 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
     // Count also the references from the call
     if (R.call and is_used(R.call))
     {
-      access(R.call).state = reg::marked;
+      set_state(R.call, reg::marked);
       unique.push_back(R.call);
     }
   }
