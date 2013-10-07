@@ -124,7 +124,7 @@ protected:
   const record& lookup(int i) const {return memory[i];}
         record& lookup(int i)       {return memory[i];}
 
-  void set_state(int r, States s) {memory[r] = s;}
+  void set_state(int r, States s) const {memory[r].state = s;}
 
 public:
   
