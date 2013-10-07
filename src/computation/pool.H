@@ -147,12 +147,14 @@ public:
     PoolIterator operator ++(int) { PoolIterator i = *this; index = mypool->access(index).next; return i;}
     PoolIterator operator --(int) { PoolIterator i = *this; index = mypool->access(index).prev; return i;}
 
+    int addr() const {return index;}
+
     T& operator *()
     {
       return (*mypool)[index];
     }
 
-    bool operator ==(PoolIterator &i2) {return mypool == i2.mypool and index == i2.index;}
+    bool operator ==(PoolIterator &i2) {assert(mypool == i2.mypool); return index == i2.index;}
     bool operator !=(PoolIterator &i2) {return not (*this == i2);}
   };
 
@@ -171,12 +173,14 @@ public:
     constPoolIterator operator ++(int) { constPoolIterator i = *this; index = mypool->access(index).next; return i;}
     constPoolIterator operator --(int) { constPoolIterator i = *this; index = mypool->access(index).prev; return i;}
 
+    int addr() const {return index;}
+
     const T& operator *()
     {
       return (*mypool)[index];
     }
 
-    bool operator ==(constPoolIterator &i2) {return mypool == i2.mypool and index == i2.index;}
+    bool operator ==(constPoolIterator &i2) {assert(mypool == i2.mypool); return index == i2.index;}
     bool operator !=(constPoolIterator &i2) {return not (*this == i2);}
   };
 
