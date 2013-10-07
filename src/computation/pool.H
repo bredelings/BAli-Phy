@@ -6,7 +6,7 @@
 template <typename T>
 class pool
 {
-  int n_null_;
+  int n_null_ = 0;
 public:
   enum States {none=0,free=1,used=2,marked=3};
 
@@ -66,7 +66,7 @@ protected:
     assert(memory.size() == n_used() + n_free() + n_null());
   }
 
-  int add_to_free_list(int r)
+  virtual int add_to_free_list(int r)
   {
     lookup(r).state = free;
     lookup(r).prev = -1;
@@ -77,7 +77,7 @@ protected:
     return r;
   }
 
-  int get_free_element()
+  virtual int get_free_element()
   {
     if (first_free == -1) return -1;
 
@@ -121,18 +121,18 @@ protected:
     lookup(r).state = none;
   }
 
-  const record& lookup(int i) const {return memory[i];}
-        record& lookup(int i)       {return memory[i];}
+  const record& lookup(int i) const {assert(is_address(i)); return memory[i];}
+        record& lookup(int i)       {assert(is_address(i)); return memory[i];}
 
-  void set_state(int r, States s) const {memory[r].state = s;}
+  void set_state(int r, States s) const {assert(is_address(r)); memory[r].state = s;}
 
 public:
   
-  bool is_null(int r) const {assert(0 <= r and r < size()); return memory[r].state == none;}
-  bool is_free(int r) const {assert(0 <= r and r < size()); return memory[r].state == free;}
-  bool is_used(int r) const {assert(0 <= r and r < size()); return memory[r].state == used;}
-  bool is_marked(int r) const {assert(0 <= r and r < size()); return memory[r].state == marked;}
-  States get_state(int r) const {return memory[r].state;}
+  bool is_null(int r) const {assert(is_address(r)); return memory[r].state == none;}
+  bool is_free(int r) const {assert(is_address(r)); return memory[r].state == free;}
+  bool is_used(int r) const {assert(is_address(r)); return memory[r].state == used;}
+  bool is_marked(int r) const {assert(is_address(r)); return memory[r].state == marked;}
+  States get_state(int r) const {assert(is_address(r)); return memory[r].state;}
 
   class PoolIterator
   {
@@ -211,7 +211,7 @@ public:
       reclaim_used(first_used);
   }
 
-  void reclaim_used(int r)
+  virtual void reclaim_used(int r)
   {
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
     remove_from_used_list(r);
@@ -267,8 +267,13 @@ public:
   //  void check_used(int) const;
   //  void check_all_used() const;
 
-  const T& access(int i) const {assert(is_used(i));return lookup(i).value;}
-        T& access(int i)       {assert(is_used(i));return lookup(i).value;}
+  bool is_address(int i) const {return 0 <= i and i < size();}
+
+  const T& access_unused(int i) const {return lookup(i).value;}
+        T& access_unused(int i)       {return lookup(i).value;}
+
+  const T& access(int i) const {assert(is_used(i) or is_marked(i));return lookup(i).value;}
+        T& access(int i)       {assert(is_used(i) or is_marked(i));return lookup(i).value;}
 
   const T& operator[](int i) const {return access(i);}
         T& operator[](int i)       {return access(i);}
