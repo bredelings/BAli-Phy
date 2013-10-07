@@ -134,16 +134,16 @@ class reg_heap: public Object
   void expand_memory(int);
 
   /// Add a reg (not on any list) to the free list
-  int add_reg_to_free_list(int);
+  int add_to_free_list(int);
   /// Take the first free reg off the free list, or return -1 if empty
-  int get_free_reg();
+  int get_free_element();
 
   /// Add a reg (not on any list) to the used list
-  int add_reg_to_used_list(int);
+  int add_to_used_list(int);
 
-  void remove_reg_from_used_list(int);
+  void remove_from_used_list(int);
 
-  void reclaim_used_reg(int);
+  void reclaim_used(int);
 
   void remove_unused_ownership_marks();
 
@@ -175,7 +175,7 @@ public:
   int n_used() const;
   int n_null() const;
 
-  int allocate_reg();
+  int allocate();
 
   void collect_garbage();
   void trace_and_reclaim_unreachable();

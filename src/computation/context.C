@@ -343,7 +343,7 @@ void context::add_parameter_(const string& name)
 {
   assert(find_parameter(name) == -1);
 
-  int R = allocate_reg();
+  int R = allocate();
 
   parameters().push_back( {name, R} );
 }
@@ -405,7 +405,7 @@ int context::add_compute_expression(const expression_ref& E)
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression_(closure&& C)
 {
-  int R = allocate_reg();
+  int R = allocate();
 
   heads().push_back( R);
 
@@ -423,7 +423,7 @@ void context::set_compute_expression(int i, const expression_ref& E)
 /// Change the i-th compute expression to e
 void context::set_compute_expression_(int i, closure&& C)
 {
-  int R = allocate_reg();
+  int R = allocate();
 
   heads()[i] = R;
 

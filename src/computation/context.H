@@ -224,8 +224,8 @@ protected:
   int incremental_evaluate(int R, bool ec=true) const {return memory()->incremental_evaluate(R,token,ec);}
 
   /// Allocate a reg which will be a root for garbage-collection
-  int allocate_reg() const {
-    int R = memory()->allocate_reg();
+  int allocate() const {
+    int R = memory()->allocate();
     memory()->reg_add_owner(R, token);
     return R;
   }

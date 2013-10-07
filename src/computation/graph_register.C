@@ -410,8 +410,8 @@ void reg_heap::clear(int R)
 
 void reg_heap::set_used_input(int R1, int R2)
 {
-  assert(R1 > 0 and R1 < n_regs());
-  assert(R2 > 0 and R2 < n_regs());
+  assert(R1 > 0 and R1 < size());
+  assert(R2 > 0 and R2 < size());
 
   assert(access(R1).C);
   assert(access(R2).C);
@@ -445,11 +445,11 @@ int count(const std::vector<int>& v, int I)
 }
 
 
-// Called from: set_reg_value( ), reclaim_used_reg( ), uniquify_reg( ), incremental_evaluate( ).
+// Called from: set_reg_value( ), reclaim_used( ), uniquify_reg( ), incremental_evaluate( ).
 
 void reg_heap::clear_used_inputs(int R1)
 {
-  assert(R1 > 0 and R1 < n_regs());
+  assert(R1 > 0 and R1 < size());
 
   // If this reg is unused, then upstream regs are in the process of being destroyed.
   // However, if this reg is used, then upstream regs may be live, and so should have
@@ -462,7 +462,7 @@ void reg_heap::clear_used_inputs(int R1)
   for(const auto& i: access(R1).used_inputs)
   {
     int R2 = i.first;
-    assert(R2 > 0 and R2 < n_regs());
+    assert(R2 > 0 and R2 < size());
 
     if (access(R2).state == reg::free)
       assert( access(R2).outputs.empty() );
@@ -502,11 +502,11 @@ void reg_heap::clear_used_inputs(int R1)
 void reg_heap::set_call_unsafe(int R1, int R2)
 {
   // Check that R1 is legal
-  assert(0 <= R1 and R1 < n_regs());
+  assert(0 <= R1 and R1 < size());
   assert(access(R1).state == reg::used);
 
   // Check that R2 is legal
-  assert(0 <= R2 and R2 < n_regs());
+  assert(0 <= R2 and R2 < size());
   assert(access(R2).state == reg::used);
 
   // Check that we aren't overriding an existing *call*
@@ -533,7 +533,7 @@ void reg_heap::clear_call(int R)
 {
   int R2 = access(R).call;
   if (not R2) return;
-  assert(R2 > 0 and R2 < n_regs());
+  assert(R2 > 0 and R2 < size());
   
   assert( *access(R).call_reverse == R );
   access(R).call = 0;
@@ -567,7 +567,7 @@ void reg_heap::set_C(int R, closure&& C)
 #ifndef NDEBUG
   for(int r: access(R).C.Env)
   {
-    assert(0 <= r and r < n_regs());
+    assert(0 <= r and r < size());
 
     // check that all of the owners of R are also owners of *r.
     assert(reg_is_owned_by_all_of(r, get_reg_owners(R)) );
@@ -623,7 +623,7 @@ void reg_heap::set_reduction_result(int R, closure&& result)
 
     int Q = result.lookup_in_env( index );
     
-    assert(0 <= Q and Q < n_regs());
+    assert(0 <= Q and Q < size());
     assert(access(Q).state == reg::used);
     
     set_call(R,Q);
@@ -631,7 +631,7 @@ void reg_heap::set_reduction_result(int R, closure&& result)
   // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the result and call it.
   else
   {
-    int R2 = allocate_reg();
+    int R2 = allocate();
 
     set_reg_ownership_category(R2, get_reg_ownership_category(R));
     set_C(R2, std::move( result ) );
@@ -791,7 +791,7 @@ int reg_heap::n_used() const
   return count;
 }
 
-int reg_heap::add_reg_to_free_list(int r)
+int reg_heap::add_to_free_list(int r)
 {
   clear(r);
   access(r).state = reg::free;
@@ -803,7 +803,7 @@ int reg_heap::add_reg_to_free_list(int r)
   return r;
 }
 
-int reg_heap::get_free_reg()
+int reg_heap::get_free_element()
 {
   if (first_free_reg == -1) return -1;
 
@@ -822,7 +822,7 @@ int reg_heap::get_free_reg()
   return r;
 }
 
-int reg_heap::add_reg_to_used_list(int r)
+int reg_heap::add_to_used_list(int r)
 {
   access(r).state = reg::used;
   access(r).prev_reg = -1;
@@ -833,7 +833,7 @@ int reg_heap::add_reg_to_used_list(int r)
   return r;
 }
 
-void reg_heap::remove_reg_from_used_list(int r)
+void reg_heap::remove_from_used_list(int r)
 {
   int P = access(r).prev_reg;
   int N = access(r).next_reg;
@@ -851,10 +851,10 @@ void reg_heap::remove_reg_from_used_list(int r)
   access(r).state = reg::none;
 }
 
-void reg_heap::reclaim_used_reg(int r)
+void reg_heap::reclaim_used(int r)
 {
   // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
-  remove_reg_from_used_list(r);
+  remove_from_used_list(r);
 
   // Upstream regs must also be dead, since if they were live, this reg would be live as well.
   // Therefore, we do not need to update upstream regs even when we destroy incoming edges.
@@ -865,7 +865,7 @@ void reg_heap::reclaim_used_reg(int r)
   clear_call(r);
   clear_C(r);
 
-  add_reg_to_free_list(r);
+  add_to_free_list(r);
 }
 
 void reg_heap::get_roots(vector<int>& scan) const
@@ -903,7 +903,7 @@ int reg_heap::push_temp_head(int t)
 
 int reg_heap::push_temp_head(const owner_set_t& tokens)
 {
-  int R = allocate_reg();
+  int R = allocate();
 
   set_reg_owners( R, tokens );
   for(int t=0;t< tokens.size();t++)
@@ -948,7 +948,7 @@ void reg_heap::pop_temp_head(const owner_set_t& tokens)
 
 void reg_heap::expand_memory(int s)
 {
-  assert(n_regs() == n_used() + n_free() + n_null());
+  assert(size() == n_used() + n_free() + n_null());
 
   int k = memory.size();
   memory.resize(memory.size()+s);
@@ -956,35 +956,35 @@ void reg_heap::expand_memory(int s)
   for(int i=k;i<memory.size();i++)
   {
     target[i] = i;
-    add_reg_to_free_list(i);
+    add_to_free_list(i);
   }
 
-  assert(n_regs() == n_used() + n_free() + n_null());
+  assert(size() == n_used() + n_free() + n_null());
 }
 
-int reg_heap::allocate_reg()
+int reg_heap::allocate()
 {
-  // SLOW!  assert(n_regs() == n_used() + n_free() + n_null());
+  // SLOW!  assert(size() == n_used() + n_free() + n_null());
 
-  int r = get_free_reg();
+  int r = get_free_element();
 
   // allocation failed
   if (r == -1)
   {
     collect_garbage();
-    assert(n_regs() == n_used() + n_free() + n_null());
+    assert(size() == n_used() + n_free() + n_null());
     if (memory.size() < n_used()*2+10)
       expand_memory(memory.size()*2+10);
-    r = get_free_reg();
+    r = get_free_element();
     assert(r != -1);
   }
 
-  add_reg_to_used_list(r);
+  add_to_used_list(r);
   access(r).ownership_category = ownership_categories.begin();
 
   assert( reg_is_unowned(r) );
 
-  //SLOW! assert(n_regs() == n_used() + n_free() + n_null());
+  //SLOW! assert(size() == n_used() + n_free() + n_null());
   assert(access(r).state == reg::used);
 
   return r;
@@ -1083,7 +1083,7 @@ void reg_heap::trace_and_reclaim_unreachable()
     if (R.state == reg::checked)
       R.state = reg::used;
     else 
-      reclaim_used_reg(here);
+      reclaim_used(here);
 
     here = next;
   }
@@ -1125,12 +1125,12 @@ void reg_heap::collect_garbage()
   std::cerr<<"***********Garbage Collection******************"<<std::endl;
   check_used_regs();
 #endif
-  assert(n_regs() == n_used() + n_free() + n_null());
+  assert(size() == n_used() + n_free() + n_null());
 
   trace_and_reclaim_unreachable();
 
 #ifdef DEBUG_MACHINE
-  cerr<<"Regs: "<<n_used()<<"/"<<n_regs()<<endl;
+  cerr<<"Regs: "<<n_used()<<"/"<<size()<<endl;
   cerr<<"#roots = "<<roots.size()<<endl;
   check_used_regs();
 #endif
@@ -2189,7 +2189,7 @@ int reg_heap::add_identifier_to_context(int t, const string& name)
   if (identifiers.count(name))
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
 
-  int R = allocate_reg();
+  int R = allocate();
 
   reg_add_owner(R, t);
   identifiers[name] = R;
@@ -2358,7 +2358,7 @@ map<int,string> get_constants(const reg_heap& C, int t);
 int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 {
   assert(is_terminal_token(t));
-  assert(R > 0 and R < n_regs());
+  assert(R > 0 and R < size());
   assert(access(R).state == reg::used);
   assert(reg_is_owned_by(R,t));
   assert(not is_a<expression>(access(R).C.exp));
