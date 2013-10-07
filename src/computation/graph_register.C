@@ -824,7 +824,7 @@ int reg_heap::get_free_element()
 
 int reg_heap::add_to_used_list(int r)
 {
-  access(r).state = reg::used;
+  set_state(r, reg::used);
   access(r).prev_reg = -1;
   access(r).next_reg = first_used_reg;
   if (first_used_reg != -1)
@@ -1480,7 +1480,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
   // Unmark the unsplit parents;
   for(int i=0;i<unsplit_parents.size();i++)
-    access(unsplit_parents[i]).state = reg::used;
+    set_state(unsplit_parents[i], reg::used);
 
 #ifndef NDEBUG
   // Check that marks were removed.
