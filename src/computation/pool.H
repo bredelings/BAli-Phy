@@ -289,5 +289,32 @@ public:
   }
 };
 
+template <typename T>
+class checked_pool: public pool<T>
+{
+public:
 
+  int add_to_free_list(int r)
+  {
+    this->lookup(r).value.clear();
+    
+    return pool<T>::add_to_free_list(r);
+  }
+
+  int get_free_element()
+  {
+    int r = pool<T>::get_free_element();
+
+#ifndef NDEBUG
+    if (r != -1)
+      this->lookup(r).value.check_cleared();
+#endif
+
+    return r;
+  }
+
+  checked_pool(): pool<T>() {}
+
+  checked_pool(int n): pool<T>(n) {}
+};
 #endif
