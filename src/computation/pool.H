@@ -6,7 +6,10 @@
 template <typename T>
 class pool
 {
-  enum States {none=0,free=1,used=2,checked=3};
+public:
+  enum States {none=0,free=1,used=2,marked=3};
+
+protected:
 
   struct record
   {
@@ -58,7 +61,6 @@ class pool
 
   int add_to_free_list(int r)
   {
-    //    clear(r);
     access(r).state = free;
     access(r).prev = -1;
     access(r).next = first_free;
@@ -73,10 +75,6 @@ class pool
     if (first_free == -1) return -1;
 
     int r = first_free;
-
-#ifndef NDEBUG
-    // check really empty
-#endif
 
     assert(access(r).state == free);
     first_free = access(r).next;
@@ -119,10 +117,14 @@ class pool
   const record& access(int i) const {return memory[i];}
         record& access(int i)       {return memory[i];}
 
+  void set_state(int r, States s) {memory[r] = s;}
+
 public:
   
-  bool is_free(int r) const {return memory[r].state == free;}
-  bool is_used(int r) const {return memory[r].state == used;}
+  bool is_free(int r) const {assert(0 <= R2 and R2 < size()); return memory[r].state == free;}
+  bool is_used(int r) const {assert(0 <= R2 and R2 < size()); return memory[r].state == used;}
+  bool is_marked(int r) const {assert(0 <= R2 and R2 < size()); return memory[r].state == marked;}
+  States get_state(int r) const {return memory[r].state;}
 
   class PoolIterator
   {
@@ -194,17 +196,30 @@ public:
     add_to_free_list(r);
   }
 
+  void reclaim_unmarked()
+  {
+    int here = first_used;
+    for(;here != -1;)
+    {
+      int next = memory[here].next_reg;
+      if (is_marked(here))
+	set_state(used);
+      else 
+	reclaim_used(here);
+      
+      here = next;
+    }
+  }
+
   virtual void get_more_memory()
   {
-    collect_garbage();
     if (memory.size() < n_used()*2+10)
       expand_memory(memory.size()*2+10);
   }
 
   int allocate()
   {
-    // SLOW!
-    assert(memory.size() == n_used() + n_free() + n_null());
+    // SLOW! assert(memory.size() == n_used() + n_free() + n_null());
 
     int r = get_free_element();
 
@@ -218,8 +233,7 @@ public:
 
     add_to_used_list(r);
 
-    // SLOW!
-    assert(memory.size() == n_used() + n_free() + n_null());
+    // SLOW! assert(memory.size() == n_used() + n_free() + n_null());
 
     return r;
   }
@@ -230,8 +244,6 @@ public:
 
   const T& operator[](int i) const {assert(is_used(i));return access(i).value;}
         T& operator[](int i)       {assert(is_used(i));return access(i).value;}
-
-  std::function<void()> collect_garbage = [](){};
 
   pool()
   { }
