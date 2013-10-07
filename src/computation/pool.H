@@ -20,7 +20,7 @@ protected:
     T value;
   };
 
-  std::vector<record> memory;
+  mutable std::vector<record> memory;
 
   int first_free = -1;
   int first_used = -1;
