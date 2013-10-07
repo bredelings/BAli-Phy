@@ -34,7 +34,7 @@ protected:
   {
     int here = first_free;
     int count = 0;
-    for(;here != -1;here = access(here).next)
+    for(;here != -1;here = lookup(here).next)
       count++;
     return count;
   }
@@ -43,7 +43,7 @@ protected:
   {
     int here = first_used;
     int count = 0;
-    for(;here != -1;here = access(here).next)
+    for(;here != -1;here = lookup(here).next)
       count++;
     return count;
   }
@@ -67,11 +67,11 @@ protected:
 
   int add_to_free_list(int r)
   {
-    access(r).state = free;
-    access(r).prev = -1;
-    access(r).next = first_free;
+    lookup(r).state = free;
+    lookup(r).prev = -1;
+    lookup(r).next = first_free;
     if (first_free != -1)
-      access(first_free).prev = r;
+      lookup(first_free).prev = r;
     first_free = r;
     return r;
   }
@@ -82,46 +82,46 @@ protected:
 
     int r = first_free;
 
-    assert(access(r).state == free);
-    first_free = access(r).next;
-    access(r).prev = -1;
-    access(r).next = -1;
-    access(r).state = none;
+    assert(lookup(r).state == free);
+    first_free = lookup(r).next;
+    lookup(r).prev = -1;
+    lookup(r).next = -1;
+    lookup(r).state = none;
 
     return r;
   }
 
   int add_to_used_list(int r)
   {
-    access(r).state = used;
-    access(r).prev = -1;
-    access(r).next = first_used;
+    lookup(r).state = used;
+    lookup(r).prev = -1;
+    lookup(r).next = first_used;
     if (first_used != -1)
-      access(first_used).prev = r;
+      lookup(first_used).prev = r;
     first_used = r;
     return r;
   }
 
   void remove_from_used_list(int r)
   {
-    int P = access(r).prev;
-    int N = access(r).next;
+    int P = lookup(r).prev;
+    int N = lookup(r).next;
 
     if (P == -1)
       first_used = N;
     else
-      access(P).next = N;
+      lookup(P).next = N;
 
     if (N == -1)
       ;
     else
-      access(N).prev = P;
+      lookup(N).prev = P;
 
-    access(r).state = none;
+    lookup(r).state = none;
   }
 
-  const record& access(int i) const {return memory[i];}
-        record& access(int i)       {return memory[i];}
+  const record& lookup(int i) const {return memory[i];}
+        record& lookup(int i)       {return memory[i];}
 
   void set_state(int r, States s) {memory[r] = s;}
 
@@ -142,10 +142,10 @@ public:
       :mypool(p), index(i)
     { }
 
-    PoolIterator operator ++() { index = mypool->access(index).next; return *this;}
-    PoolIterator operator --() { index = mypool->access(index).prev; return *this;}
-    PoolIterator operator ++(int) { PoolIterator i = *this; index = mypool->access(index).next; return i;}
-    PoolIterator operator --(int) { PoolIterator i = *this; index = mypool->access(index).prev; return i;}
+    PoolIterator operator ++() { index = mypool->lookup(index).next; return *this;}
+    PoolIterator operator --() { index = mypool->lookup(index).prev; return *this;}
+    PoolIterator operator ++(int) { PoolIterator i = *this; index = mypool->lookup(index).next; return i;}
+    PoolIterator operator --(int) { PoolIterator i = *this; index = mypool->lookup(index).prev; return i;}
 
     int addr() const {return index;}
 
@@ -168,10 +168,10 @@ public:
       :index(i), mypool(p)
     { }
 
-    constPoolIterator operator ++() { index = mypool->access(index).next; return *this;}
-    constPoolIterator operator --() { index = mypool->access(index).prev; return *this;}
-    constPoolIterator operator ++(int) { constPoolIterator i = *this; index = mypool->access(index).next; return i;}
-    constPoolIterator operator --(int) { constPoolIterator i = *this; index = mypool->access(index).prev; return i;}
+    constPoolIterator operator ++() { index = mypool->lookup(index).next; return *this;}
+    constPoolIterator operator --() { index = mypool->lookup(index).prev; return *this;}
+    constPoolIterator operator ++(int) { constPoolIterator i = *this; index = mypool->lookup(index).next; return i;}
+    constPoolIterator operator --(int) { constPoolIterator i = *this; index = mypool->lookup(index).prev; return i;}
 
     int addr() const {return index;}
 
@@ -201,7 +201,7 @@ public:
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
     remove_from_used_list(r);
     
-    // access(r).value.clear()
+    // lookup(r).value.clear()
     
     add_to_free_list(r);
   }
@@ -252,8 +252,8 @@ public:
   //  void check_used(int) const;
   //  void check_all_used() const;
 
-  const T& operator[](int i) const {assert(is_used(i));return access(i).value;}
-        T& operator[](int i)       {assert(is_used(i));return access(i).value;}
+  const T& operator[](int i) const {assert(is_used(i));return lookup(i).value;}
+        T& operator[](int i)       {assert(is_used(i));return lookup(i).value;}
 
   pool()
   { }
