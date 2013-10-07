@@ -252,8 +252,11 @@ public:
   //  void check_used(int) const;
   //  void check_all_used() const;
 
-  const T& operator[](int i) const {assert(is_used(i));return lookup(i).value;}
-        T& operator[](int i)       {assert(is_used(i));return lookup(i).value;}
+  const T& access(int i) const {assert(is_used(i));return lookup(i).value;}
+        T& access(int i)       {assert(is_used(i));return lookup(i).value;}
+
+  const T& operator[](int i) const {return access(i);}
+        T& operator[](int i)       {return access(i);}
 
   pool()
   { }
