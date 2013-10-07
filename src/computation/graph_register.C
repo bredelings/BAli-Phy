@@ -957,12 +957,13 @@ void reg_heap::trace_and_reclaim_unreachable()
     next_scan.clear();
   }
 
-  for(auto r = begin();r != end(); r++)
+  for(auto r = begin();r != end(); )
   {
     int here = r.addr();
+    r++;
     if (is_marked(here))
       set_state(here, used);
-    else 
+    else
       reclaim_used(here);
   }
 
