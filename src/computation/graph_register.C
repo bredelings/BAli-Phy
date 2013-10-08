@@ -513,7 +513,7 @@ void reg_heap::set_call(int R1, int R2)
   assert(not computation_for_reg(R1).result);
 }
 
-void reg_heap::clear_call(int R)
+void reg_heap::clear_call_for_reg(int R)
 {
   int rc = map_target(R);
   computation_record& RC = computation_records.access_unused(rc);
@@ -644,7 +644,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   // Clear the call, clear the result, and set the value
   assert(computation_for_reg(P).used_inputs.empty());
-  clear_call(P);
+  clear_call_for_reg(P);
   clear_result(P);
 
   const int mark_call_result = 1;
@@ -709,7 +709,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       // Since the computation may be different, we don't know if the value has changed.
       clear_result(R1);
       // We don't know what the reduction result is, so invalidate the call.
-      clear_call(R1);
+      clear_call_for_reg(R1);
       // Remember to clear the used inputs.
       clear_used_inputs(R1);
 
@@ -1613,7 +1613,7 @@ int reg_heap::uniquify_reg(int R, int t)
 
       if (old_call != new_call)
       {
-	clear_call(Q1);
+	clear_call_for_reg(Q1);
 	set_call_unsafe(Q1, new_call);
       }
     }
@@ -2146,7 +2146,7 @@ reg_heap::reg_heap()
     // We'd have to make back-edges refer to computation_records directly.
     int r = computation_records.access_unused(rc).source;
     clear_used_inputs(r);
-    clear_call(r);
+    clear_call_for_reg(r);
     computation_records.access_unused(rc).source = -1;
   };
 }
@@ -2342,7 +2342,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       // then it should be safe to change computation_for_reg(R).call to refer to S, even if R is changeable.
       if (call != computation_for_reg(R).call)
       {
-	clear_call(R);
+	clear_call_for_reg(R);
 	set_call(R,call);
       }
 
