@@ -577,8 +577,9 @@ void reg_heap::clear_C(int R)
     reg::back_edge_deleter& D = access_unused(R).referenced_by_in_E_reverse[i];
     if (not is_free(R2))
     {
-      assert( not access(R2).referenced_by_in_E.empty() );
-      access(R2).referenced_by_in_E.erase(D);
+      // R2 may equal R, and may thus be in state none.
+      assert( not access_unused(R2).referenced_by_in_E.empty() );
+      access_unused(R2).referenced_by_in_E.erase(D);
     }
     else
       assert( access_unused(R2).referenced_by_in_E.empty() );
