@@ -379,16 +379,6 @@ void reg::check_cleared()
   assert(referenced_by_in_E.empty());
 }
 
-void reg_heap::clear(int R)
-{
-  access(R).clear();
-  computation_for_reg(R).clear();
-
-  reg_clear_owners(R);
-
-  assert( target[R] == R );
-}
-
 void reg_heap::set_used_input(int R1, int R2)
 {
   assert(R1 > 0 and R1 < size());
