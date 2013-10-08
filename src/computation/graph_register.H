@@ -166,6 +166,7 @@ public:
   void clear_used_inputs(int R);
   void set_call(int R1, int R2);
   void set_call_unsafe(int R1, int R2);
+  void clear_call(int rc);
   void clear_call_for_reg(int R);
   void clear(int);
   void clear_C(int R);

@@ -513,9 +513,8 @@ void reg_heap::set_call(int R1, int R2)
   assert(not computation_for_reg(R1).result);
 }
 
-void reg_heap::clear_call_for_reg(int R)
+void reg_heap::clear_call(int rc)
 {
-  int rc = map_target(R);
   computation_record& RC = computation_records.access_unused(rc);
 
   int R2 = RC.call;
@@ -528,7 +527,7 @@ void reg_heap::clear_call_for_reg(int R)
   // If this reg is unused, then upstream regs are in the process of being destroyed.
   // However, if this reg is used, then upstream regs may be live, and so should have
   //  correct edges.
-  assert( not is_used(R) or computation_for_reg(R2).call_outputs.count(rc) );
+  assert( not is_used(RC.source) or computation_for_reg(R2).call_outputs.count(rc) );
 
   // If the call points to a freed reg, then its call_outputs list should already be cleared.
   if (is_free(R2))
@@ -542,6 +541,13 @@ void reg_heap::clear_call_for_reg(int R)
   }
 
   RC.call_reverse = reg::back_edge_deleter();
+}
+
+void reg_heap::clear_call_for_reg(int R)
+{
+  int rc = map_target(R);
+  if (rc > 0)
+    clear_call( rc );
 }
 
 void reg_heap::set_C(int R, closure&& C)
@@ -2146,7 +2152,7 @@ reg_heap::reg_heap()
     // We'd have to make back-edges refer to computation_records directly.
     int r = computation_records.access_unused(rc).source;
     clear_used_inputs(r);
-    clear_call_for_reg(r);
+    clear_call(rc);
     computation_records.access_unused(rc).source = -1;
   };
 }
