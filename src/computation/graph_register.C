@@ -411,14 +411,14 @@ void reg_heap::set_used_input(int R1, int R2)
   //   through regvar chains that are not changeable.
 
   // R1 shouldn't have any used inputs if it isn't changeable.
-  assert(access(R1).changeable);
+  assert(computation_for_reg(R1).changeable);
   // Don't add unchangeable results as inputs
-  assert(access(R2).changeable);
+  assert(computation_for_reg(R2).changeable);
   // Don't add a reg as input if no reduction has been performed.
-  // assert(access(R2).result or access(R2).call);
+  // assert(computation_for_reg(R2).result or computation_for_reg(R2).call);
 
-  reg::back_edge_deleter D = access(R2).outputs.insert(access(R2).outputs.end(), R1);
-  access(R1).used_inputs.emplace_back(R2,D);
+  reg::back_edge_deleter D = computation_for_reg(R2).outputs.insert(computation_for_reg(R2).outputs.end(), R1);
+  computation_for_reg(R1).used_inputs.emplace_back(R2,D);
 }
 
 int count(const std::vector<int>& v, int I)
@@ -445,28 +445,28 @@ void reg_heap::clear_used_inputs(int R1)
   assert( not is_free(R1) );
 
   // Remove the back edges from each used_input reg that is not on the free list.
-  for(const auto& i: access_unused(R1).used_inputs)
+  for(const auto& i: computation_for_reg(R1).used_inputs)
   {
     int R2 = i.first;
     assert(is_address(R2));
 
     if (is_free(R2))
-      assert( access_unused(R2).outputs.empty() );
+      assert( computation_for_reg(R2).outputs.empty() );
     else
     {
-      assert( not access(R2).outputs.empty() );
+      assert( not computation_for_reg(R2).outputs.empty() );
 
       reg::back_edge_deleter D = i.second;
       assert( *D == R1 );
 
-      access(R2).outputs.erase(D);
+      computation_for_reg(R2).outputs.erase(D);
     }
   }
 
   // Remove the forward edges.
-  access_unused(R1).used_inputs.clear();
+  computation_for_reg(R1).used_inputs.clear();
 
-  assert(access_unused(R1).used_inputs.empty());
+  assert(computation_for_reg(R1).used_inputs.empty());
 }
 
 // set_call (or set_call_unsafe) is only called when
@@ -494,11 +494,11 @@ void reg_heap::set_call_unsafe(int R1, int R2)
   assert(is_used(R2));
 
   // Check that we aren't overriding an existing *call*
-  assert(not access(R1).call);
+  assert(not computation_for_reg(R1).call);
 
-  access(R1).call = R2;
-  access(R1).call_reverse = access(R2).call_outputs.insert(access(R2).call_outputs.end(), R1);
-  assert( *access(R1).call_reverse == R1 );
+  computation_for_reg(R1).call = R2;
+  computation_for_reg(R1).call_reverse = computation_for_reg(R2).call_outputs.insert(computation_for_reg(R2).call_outputs.end(), R1);
+  assert( *computation_for_reg(R1).call_reverse == R1 );
 
   // check that all of the owners of R are also owners of R.call;
   assert( reg_is_owned_by_all_of(R2, get_reg_owners(R1)) );
@@ -510,34 +510,34 @@ void reg_heap::set_call(int R1, int R2)
   set_call_unsafe(R1, R2);
 
   // Check that we aren't overriding an existing *result*
-  assert(not access(R1).result);
+  assert(not computation_for_reg(R1).result);
 }
 
 void reg_heap::clear_call(int R)
 {
-  int R2 = access_unused(R).call;
+  int R2 = computation_for_reg(R).call;
   if (not R2) return;
   assert(R2 > 0 and R2 < size());
   
-  assert( *access_unused(R).call_reverse == R );
-  access_unused(R).call = 0;
+  assert( *computation_for_reg(R).call_reverse == R );
+  computation_for_reg(R).call = 0;
 
   // If this reg is unused, then upstream regs are in the process of being destroyed.
   // However, if this reg is used, then upstream regs may be live, and so should have
   //  correct edges.
-  assert( not is_used(R) or access(R2).call_outputs.count(R) );
+  assert( not is_used(R) or computation_for_reg(R2).call_outputs.count(R) );
 
   // If the call points to a freed reg, then its call_outputs list should already be cleared.
   if (is_free(R2))
-    assert( access_unused(R2).call_outputs.empty() );
+    assert( computation_for_reg(R2).call_outputs.empty() );
   // If the call points to a used reg, then we need to notify it that the incoming call edge is being removed.
   else {
     assert( is_used(R2) or is_marked(R2) );
-    assert( not access(R2).call_outputs.empty() );
-    access(R2).call_outputs.erase( access_unused(R).call_reverse );
+    assert( not computation_for_reg(R2).call_outputs.empty() );
+    computation_for_reg(R2).call_outputs.erase( computation_for_reg(R).call_reverse );
   }
 
-  access_unused(R).call_reverse = reg::back_edge_deleter();
+  computation_for_reg(R).call_reverse = reg::back_edge_deleter();
 }
 
 void reg_heap::set_C(int R, closure&& C)
@@ -592,10 +592,10 @@ void reg_heap::clear_C(int R)
 void reg_heap::set_reduction_result(int R, closure&& result)
 {
   // Check that there is no result we are overriding
-  assert(not access(R).result );
+  assert(not computation_for_reg(R).result );
 
   // Check that there is no previous call we are overriding.
-  assert(not access(R).call);
+  assert(not computation_for_reg(R).call);
 
   // if the result is NULL, just leave the result and call both unset.
   //  (this could happen if we set a parameter value to null.)
@@ -636,10 +636,10 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
-  assert(access(P).changeable);
+  assert(computation_for_reg(P).changeable);
 
   // Clear the call, clear the result, and set the value
-  assert(access(P).used_inputs.empty());
+  assert(computation_for_reg(P).used_inputs.empty());
   clear_call(P);
   clear_result(P);
 
@@ -652,7 +652,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   // The index that we just altered cannot be known to be unchanged.
   call_and_result_may_be_changed.push_back(P);
-  access(P).temp = mark_call_result;
+  computation_for_reg(P).temp = mark_call_result;
   result_may_be_changed.push_back(P);
 
   int i=0;
@@ -663,28 +663,28 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     for(;j<result_may_be_changed.size();j++)
     {
       int R1 = result_may_be_changed[j];
-      assert(access(R1).temp == mark_call_result or access(R1).temp == mark_result);
+      assert(computation_for_reg(R1).temp == mark_call_result or computation_for_reg(R1).temp == mark_result);
 
       // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-      if (access(R1).re_evaluate)
+      if (computation_for_reg(R1).re_evaluate)
 	regs_to_re_evaluate.push_back(R1);
 
       // Since the computation may be different, we don't know if the value has changed.
       clear_result(R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(int R2: access(R1).outputs)
+      for(int R2: computation_for_reg(R1).outputs)
       {
-	if (access(R2).temp == mark_call_result) continue;
-	access(R2).temp = mark_call_result;
+	if (computation_for_reg(R2).temp == mark_call_result) continue;
+	computation_for_reg(R2).temp = mark_call_result;
 	call_and_result_may_be_changed.push_back(R2);
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(int R2: access(R1).call_outputs)
+      for(int R2: computation_for_reg(R1).call_outputs)
       {
-	if (access(R2).temp != -1) continue;
-	access(R2).temp = mark_result;
+	if (computation_for_reg(R2).temp != -1) continue;
+	computation_for_reg(R2).temp = mark_result;
 	result_may_be_changed.push_back(R2);
       }
     }
@@ -693,10 +693,10 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     for(;i<call_and_result_may_be_changed.size();i++)
     {
       int R1 = call_and_result_may_be_changed[i];
-      assert(access(R1).temp == mark_call_result);
+      assert(computation_for_reg(R1).temp == mark_call_result);
 
       // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-      if (access(R1).re_evaluate)
+      if (computation_for_reg(R1).re_evaluate)
 	regs_to_re_evaluate.push_back(R1);
 
       // Since the computation may be different, we don't know if the value has changed.
@@ -707,18 +707,18 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       clear_used_inputs(R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(int R2: access(R1).outputs)
+      for(int R2: computation_for_reg(R1).outputs)
       {
-	if (access(R2).temp == mark_call_result) continue;
-	access(R2).temp = mark_call_result;
+	if (computation_for_reg(R2).temp == mark_call_result) continue;
+	computation_for_reg(R2).temp = mark_call_result;
 	call_and_result_may_be_changed.push_back(R2);
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(int R2: access(R1).call_outputs)
+      for(int R2: computation_for_reg(R1).call_outputs)
       {
-	if (access(R2).temp != -1) continue;
-	access(R2).temp = mark_result;
+	if (computation_for_reg(R2).temp != -1) continue;
+	computation_for_reg(R2).temp = mark_result;
 	result_may_be_changed.push_back(R2);
       }
     }
@@ -726,19 +726,19 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
 #ifndef NDEBUG
   for(int R: result_may_be_changed)
-    assert(access(R).temp == mark_result or access(R).temp == mark_call_result);
+    assert(computation_for_reg(R).temp == mark_result or computation_for_reg(R).temp == mark_call_result);
 
   for(int R: call_and_result_may_be_changed)
-    assert(access(R).temp == mark_call_result);
+    assert(computation_for_reg(R).temp == mark_call_result);
 #endif
 
   // Clear the marks
   for(int R: result_may_be_changed)
-    access(R).temp = -1;
+    computation_for_reg(R).temp = -1;
 
   // Clear the marks
   for(int R: call_and_result_may_be_changed)
-    access(R).temp = -1;
+    computation_for_reg(R).temp = -1;
 
   // Finally set the new value.
   set_reduction_result(P, std::move(C) );
@@ -880,7 +880,7 @@ int reg_heap::allocate()
 {
   int r = base_pool_t::allocate();
 
-  access(r).ownership_category = ownership_categories.begin();
+  computation_for_reg(r).ownership_category = ownership_categories.begin();
 
   assert( reg_is_unowned(r) );
 
@@ -892,13 +892,14 @@ void reg_heap::remove_unused_ownership_marks()
   int n0 = n_active_scratch_lists;
 
   // Clear ownership marks
-  for(auto& R: *this)
+  for(auto r = begin(); r != end(); r++)
   {
+    computation_record& RC = computation_for_reg(r.addr());
 #ifndef NDEBUG
-    R.temp_owners = *R.ownership_category;
+    RC.temp_owners = *RC.ownership_category;
 #endif
 
-    R.owners.reset();
+    RC.owners.reset();
   }
 
   // Mark ownership on regs according to reachability.
@@ -915,7 +916,7 @@ void reg_heap::remove_unused_ownership_marks()
     for(int i=0;i<regs.size();i++)
     {
       int R = regs[i];
-      access(R).owners.set(t,true);
+      computation_for_reg(R).owners.set(t,true);
     }
 
     release_scratch_list();
@@ -924,11 +925,13 @@ void reg_heap::remove_unused_ownership_marks()
 
 #ifndef NDEBUG
   // Check that we did not ADD any ownership marks!
-  for(reg& R: *this)
+  for(auto r = begin(); r != end(); r++)
   {
-    assert( includes(R.temp_owners, R.owners) );
+    computation_record& RC = computation_for_reg(r.addr());
 
-    R.temp_owners.reset();
+    assert( includes(RC.temp_owners, RC.owners) );
+
+    RC.temp_owners.reset();
   }
 #endif
 }
@@ -949,7 +952,6 @@ void reg_heap::trace_and_reclaim_unreachable()
     for(int i=0;i<scan.size();i++)
     {
       int r = scan[i];
-      reg& R = access(r);
       assert(not is_free(r));
       if (is_marked(r)) continue;
 
@@ -957,11 +959,13 @@ void reg_heap::trace_and_reclaim_unreachable()
 
       // Count the references from E
       // FIXME - speed?
+      reg& R = access_unused(r);
       next_scan.insert(next_scan.end(), R.C.Env.begin(), R.C.Env.end());
 
       // Count also the references from the call
-      if (R.call) 
-	next_scan.insert(next_scan.end(), R.call);
+      computation_record& RC = computation_for_reg(r);
+      if (RC.call) 
+	next_scan.insert(next_scan.end(), RC.call);
     }
     std::swap(scan,next_scan);
     next_scan.clear();
@@ -991,7 +995,7 @@ void reg_heap::compute_ownership_categories()
   }
 
   for(auto r = cbegin(); r != cend(); r++)
-    set_reg_owners(r.addr(), r->owners );
+    set_reg_owners(r.addr(), computation_for_reg(r.addr()).owners );
 
 #ifdef DEBUG_MACHINE
   for(const auto& i: canonical_ownership_categories)
@@ -1064,9 +1068,9 @@ const owner_set_t& reg_heap::get_reg_owners(int R) const
 
 const ownership_category_t& reg_heap::get_reg_ownership_category(int R) const
 {
-  assert(access(R).ownership_category != ownership_categories.end());
-  //  assert(access(R).owners == *access(R).ownership_category);
-  return access(R).ownership_category;
+  assert(computation_for_reg(R).ownership_category != ownership_categories.end());
+  //  assert(computation_for_reg(R).owners == *computation_for_reg(R).ownership_category);
+  return computation_for_reg(R).ownership_category;
 }
 
 void reg_heap::set_reg_owners(int r, const owner_set_t& owners)
@@ -1081,11 +1085,11 @@ void reg_heap::set_reg_owners(int r, const owner_set_t& owners)
 
 void reg_heap::set_reg_ownership_category(int r, const ownership_category_t& c)
 {
-  reg& R = access(r);
-  R.ownership_category = c;
+  computation_record& RC = computation_for_reg(r);
+  RC.ownership_category = c;
   //  R.owners = *c;
 
-  assert(R.ownership_category != ownership_categories.end());
+  assert(RC.ownership_category != ownership_categories.end());
   //  assert(R.owners == *R.ownership_category);
 }
 
@@ -1106,7 +1110,7 @@ void reg_heap::reg_clear_owner(int r, int t)
 void reg_heap::reg_clear_owners(int r)
 {
   set_reg_ownership_category(r, ownership_categories.begin() );
-  assert( access(r).ownership_category->none());
+  assert( computation_for_reg(r).ownership_category->none());
 }
 
 bool reg_heap::reg_is_owned_by(int r, int t) const
@@ -1146,7 +1150,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
   vector<int> ancestors;
 
   // Add the call parents of R
-  for(int Q: access(R).call_outputs)
+  for(int Q: computation_for_reg(R).call_outputs)
   {
     assert(is_used(Q));
 
@@ -1164,7 +1168,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
 
     assert(is_marked(Q1));
 
-    for(int Q2: access(Q1).call_outputs)
+    for(int Q2: computation_for_reg(Q1).call_outputs)
     {
       // Skip regs that have been seen before.
       if (is_marked(Q2)) continue;
@@ -1225,13 +1229,14 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
     set_state(r, marked);
     unique.push_back(scan[i]);
 
-    const reg& R = access(r);
-
     // Count the references from E in other regs
+    const reg& R = access_unused(r);
     scan.insert(scan.end(), R.referenced_by_in_E.begin(), R.referenced_by_in_E.end());
 
     // Count the references from calls by other regs
-    scan.insert(scan.end(), R.call_outputs.begin(), R.call_outputs.end());
+    const computation_record& RC = computation_for_reg(r);
+
+    scan.insert(scan.end(), RC.call_outputs.begin(), RC.call_outputs.end());
   }
 
   for(int R: unique)
@@ -1263,12 +1268,12 @@ void reg_heap::check_results_in_context(int t) const
   vector<int> regs = find_all_regs_in_context(t);
   for(int Q: regs)
   {
-    if (access(Q).call)
-      assert( *access(Q).call_reverse == Q );
+    if (computation_for_reg(Q).call)
+      assert( *computation_for_reg(Q).call_reverse == Q );
       
-    if (access(Q).result == Q)
+    if (computation_for_reg(Q).result == Q)
     {
-      assert(not access(Q).call);
+      assert(not computation_for_reg(Q).call);
       WHNF_results.push_back(Q);
     }
   }
@@ -1279,8 +1284,8 @@ void reg_heap::check_results_in_context(int t) const
     vector<int> regs = find_call_ancestors_in_context( Q, t);
 
     for(int j=0;j<regs.size();j++)
-      if (access(regs[j]).result)
-	assert( access(regs[j]).result == Q );
+      if (computation_for_reg(regs[j]).result)
+	assert( computation_for_reg(regs[j]).result == Q );
   }
 }
 
@@ -1331,7 +1336,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
       the changed reg, but we only invalidate thing that CURRENTLY depend on the
       changed reg.
     */
-    for(int Q1: access(R1).outputs)
+    for(int Q1: computation_for_reg(R1).outputs)
     {
       // Skip regs that we've handled already.
       if (is_marked(Q1)) continue;
@@ -1345,7 +1350,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
       unsplit_parents.push_back(Q1);
     }
 
-    for(int Q1: access(R1).call_outputs)
+    for(int Q1: computation_for_reg(R1).call_outputs)
     {
       // Skip regs that we've handled already.
       if (is_marked(Q1)) continue;
@@ -1409,7 +1414,7 @@ int reg_heap::uniquify_reg(int R, int t)
     const map<string,int>& identifiers = get_identifiers_for_context(t);
     for(const auto& ident: identifiers)
     {
-      assert(not access(ident.second).changeable);
+      assert(not computation_for_reg(ident.second).changeable);
     }
   }
   */
@@ -1439,8 +1444,8 @@ int reg_heap::uniquify_reg(int R, int t)
     {
       int R2 = temp_heads[temp_heads.size()-1-i];
       target[R1] = R2;
-      access(R2).changeable = access(R1).changeable;
-      access(R2).re_evaluate = access(R1).re_evaluate;
+      computation_for_reg(R2).changeable = computation_for_reg(R1).changeable;
+      computation_for_reg(R2).re_evaluate = computation_for_reg(R1).re_evaluate;
       split.push_back(R1);
     }
   }
@@ -1499,28 +1504,28 @@ int reg_heap::uniquify_reg(int R, int t)
     int R2 = target[R1];
 
     // 4b. Initialize/Remap call
-    if (access(R1).call)
-      set_call(R2, target[access(R1).call] );
+    if (computation_for_reg(R1).call)
+      set_call(R2, target[computation_for_reg(R1).call] );
 
     // 4c. Initialize/Remap used_inputs
-    for(const auto& i: access(R1).used_inputs)
+    for(const auto& i: computation_for_reg(R1).used_inputs)
       set_used_input(R2, target[i.first] );
 
     // 4d. Initialize/Remap result if E is in WHNF.
-    if (not access(R2).call and access(R1).result)
+    if (not computation_for_reg(R2).call and computation_for_reg(R1).result)
     {
-      assert( access(R1).result == R1);
-      access(R2).result = R2;
+      assert( computation_for_reg(R1).result == R1);
+      computation_for_reg(R2).result = R2;
       changed_results.push_back(R2);
     }
     // 4d. Initialize/Copy result otherwise.
     else
     {
-      assert( access(R1).result != R1);
+      assert( computation_for_reg(R1).result != R1);
       // Q: Why is it OK to use the un-remapped result?
       // A: Because we remap calls here; later we trace backwards along these
       //    remapped call chains to set any results to the proper WHNF expression.
-      access(R2).result = access(R1).result;
+      computation_for_reg(R2).result = computation_for_reg(R1).result;
     }
   }
 
@@ -1562,9 +1567,9 @@ int reg_heap::uniquify_reg(int R, int t)
     set_C(Q1, remap_regs(access(Q1).C ) );
     
     // b. Remap call
-    if (access(Q1).call)
+    if (computation_for_reg(Q1).call)
     {
-      int old_call = access(Q1).call;
+      int old_call = computation_for_reg(Q1).call;
       int new_call = target[ old_call ];
 
       if (old_call != new_call)
@@ -1575,7 +1580,7 @@ int reg_heap::uniquify_reg(int R, int t)
     }
     
     // c. Adjust use edges
-    for(auto& i: access(Q1).used_inputs)
+    for(auto& i: computation_for_reg(Q1).used_inputs)
     {
       int& I1 = i.first;
 
@@ -1586,15 +1591,15 @@ int reg_heap::uniquify_reg(int R, int t)
       if (I2 != I1)
       {
 	// Remove the edge to I1
-	assert( not access(I1).outputs.empty() );
+	assert( not computation_for_reg(I1).outputs.empty() );
 
 	reg::back_edge_deleter& D = i.second;
 	assert( *D == Q1 );
 
-	access(I1).outputs.erase(D);
+	computation_for_reg(I1).outputs.erase(D);
 
 	// Add the edge to I2
-	D = access(I2).outputs.push_back(Q1);
+	D = computation_for_reg(I2).outputs.push_back(Q1);
 	I1 = I2;
       }
     }
@@ -1616,12 +1621,12 @@ int reg_heap::uniquify_reg(int R, int t)
   // Update regs that indirectly call WHNF regs that have moved.
   for(int Q: changed_results)
   {
-    assert(access(Q).result == Q);
+    assert(computation_for_reg(Q).result == Q);
 
     vector<int> regs = find_call_ancestors_in_context( Q, t);
     for(int S: regs)
     {
-      access(S).result = Q;
+      computation_for_reg(S).result = Q;
 
       // In general, the owners of a parent (S) should all be owners of a child (S).
       // This allows S to have no owners, which could happen if S became unreachable.
@@ -1650,16 +1655,16 @@ int reg_heap::uniquify_reg(int R, int t)
     assert(not reg_is_shared(R2));
 
     // R2 should have a result if R1 has a result
-    assert(not access(R1).result or access(R2).result);
+    assert(not computation_for_reg(R1).result or computation_for_reg(R2).result);
     // R2 *may* have a result when R1 has no result, if it's call chain leads to a moved WHNF reg who result was updated.
     // Currently we find *all* such ancestors -- not just those that had a result before -- and propagate the new location of the WHNF reg as a result.
     // Perhaps we should not do this, as it then has the effect of doing more than simply MOVE the graph.
-    //   Therefore we do NOT: assert(not access(R2).result or access(R1).result);
+    //   Therefore we do NOT: assert(not computation_for_reg(R2).result or computation_for_reg(R1).result);
     // But we would like to.
 
     // R2 should have a call IFF R1 has a call
-    assert(not access(R1).call or access(R2).call);
-    assert(not access(R2).call or access(R1).call);
+    assert(not computation_for_reg(R1).call or computation_for_reg(R2).call);
+    assert(not computation_for_reg(R2).call or computation_for_reg(R1).call);
   }
 #endif
 
@@ -1710,7 +1715,9 @@ void reg_heap::check_used_reg(int index) const
     assert(access(r).referenced_by_in_E.count(index) );
   }
   
-  for(const auto& i: R.used_inputs)
+  const computation_record& RC = computation_for_reg(index);
+
+  for(const auto& i: RC.used_inputs)
   {
     int r = i.first;
 
@@ -1718,19 +1725,19 @@ void reg_heap::check_used_reg(int index) const
     assert( reg_is_owned_by_all_of(r, get_reg_owners(index) ) );
 
     // Check that used regs are have back-references to R
-    assert( access(r).outputs.count(index) );
+    assert( computation_for_reg(r).outputs.count(index) );
   }
 
-  if (R.call)
+  if (RC.call)
   {
     // Check that the pointer to the reverse edge iterator is intact.
-    assert( *R.call_reverse == index );
+    assert( *RC.call_reverse == index );
 
     // Check that the call-used reg is owned by owners of R
-    assert( reg_is_owned_by_all_of(R.call, get_reg_owners(index) ) );
+    assert( reg_is_owned_by_all_of(RC.call, get_reg_owners(index) ) );
 
     // Check that the call-used reg has back-references to R
-    assert( access(R.call).call_outputs.count(index) == 1 );
+    assert( computation_for_reg(RC.call).call_outputs.count(index) == 1 );
   }
 }
 
@@ -1772,7 +1779,7 @@ void reg_heap::remove_ownership_mark(int t)
   /*
   int here = first_used_reg;
   for(;here != -1;here = access(here).next_reg)
-    access(here).owners.set(t,false);
+    computation_for_reg(here).owners.set(t,false);
   */
 
 #ifdef DEBUG_MACHINE
@@ -1814,8 +1821,8 @@ void reg_heap::duplicate_ownership_mark(int t1, int t2)
   /*
   int here = first_used_reg;
   for(;here != -1;here = access(here).next_reg)
-    if (access(here).owners.test(t1))
-      access(here).owners.set(t2,true);
+    if (computation_for_reg(here).owners.test(t1))
+      computation_for_reg(here).owners.set(t2,true);
   */
 
 #ifdef DEBUG_MACHINE
@@ -1901,11 +1908,13 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
       }
     }
 
+    const computation_record& RC = computation_for_reg(r);
+
     // Count also the references from the call
-    if (R.call and is_used(R.call))
+    if (RC.call and is_used(RC.call))
     {
-      set_state(R.call, marked);
-      unique.push_back(R.call);
+      set_state(RC.call, marked);
+      unique.push_back(RC.call);
     }
   }
 
@@ -2128,10 +2137,10 @@ class RegOperationArgs: public OperationArgs
     // Compute the result, and follow index_var chains (which are not changeable).
     int R3 = M.incremental_evaluate(R2, t, ec);
 
-    if (M[R3].changeable and evaluate_changeables())
+    if (M.computation_for_reg(R3).changeable and evaluate_changeables())
     {
       // If R2 -> result was changeable, then R -> result will be changeable as well.
-      M[R].changeable = true;
+      M.computation_for_reg(R).changeable = true;
 
       // Note that although R2 is newly used, R3 might be already used if it was 
       // found from R2 through a non-changeable reg_var chain.
@@ -2157,7 +2166,7 @@ public:
     :R(r),M(m),t(T),owners(M.get_reg_owners(R)), n_allocated(0), evaluate_changeable(ec)
   { 
     // I think these should already be cleared.
-    assert(M.access(R).used_inputs.empty());
+    assert(M.computation_for_reg(R).used_inputs.empty());
   }
 
   ~RegOperationArgs()
@@ -2243,16 +2252,16 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
   assert(is_used(R));
   assert(reg_is_owned_by(R,t));
   assert(not is_a<expression>(access(R).C.exp));
-  assert(not access(R).result or is_WHNF(access_result(R).exp));
-  assert(not access(R).result or not is_a<expression>(access_result(R).exp));
-  assert(not access(R).result or not is_a<index_var>(access_result(R).exp));
-  assert(not access(R).result or not is_a<index_var>(access(R).C.exp));
+  assert(not computation_for_reg(R).result or is_WHNF(access_result(R).exp));
+  assert(not computation_for_reg(R).result or not is_a<expression>(access_result(R).exp));
+  assert(not computation_for_reg(R).result or not is_a<index_var>(access_result(R).exp));
+  assert(not computation_for_reg(R).result or not is_a<index_var>(access(R).C.exp));
 
 #ifndef NDEBUG
-  //  if (not access(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
+  //  if (not computation_for_reg(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
 
-  while (not access(R).result and (evaluate_changeable or not access(R).changeable))
+  while (not computation_for_reg(R).result and (evaluate_changeable or not computation_for_reg(R).changeable))
   {
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
@@ -2265,36 +2274,36 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 #endif
 
     // If we know what to call, then call it and use it to set the result
-    if (access(R).call)
+    if (computation_for_reg(R).call)
     {
       // This should only be an Operation or a modifiable.
-      assert(access(R).changeable);
+      assert(computation_for_reg(R).changeable);
 
       // Only changeable regs have calls, and changeable regs are in normal form unless evaluate_changeable==true.
       assert(evaluate_changeable);
 
       // Evaluate S, looking through unchangeable redirections
-      int call = incremental_evaluate(access(R).call, t, evaluate_changeable);
+      int call = incremental_evaluate(computation_for_reg(R).call, t, evaluate_changeable);
 
-      // If access(R).call can be evaluated to refer to S w/o moving through any changable operations, 
-      // then it should be safe to change access(R).call to refer to S, even if R is changeable.
-      if (call != access(R).call)
+      // If computation_for_reg(R).call can be evaluated to refer to S w/o moving through any changable operations, 
+      // then it should be safe to change computation_for_reg(R).call to refer to S, even if R is changeable.
+      if (call != computation_for_reg(R).call)
       {
 	clear_call(R);
 	set_call(R,call);
       }
 
       // R gets its result from S.
-      access(R).result = access(call).result;
+      computation_for_reg(R).result = computation_for_reg(call).result;
     }
 
     /*---------- Below here, there is no call, and no result. ------------*/
 
     else if (access(R).C.exp->head->type() == index_var_type)
     {
-      assert( not access(R).call );
+      assert( not computation_for_reg(R).call );
 
-      assert( not access(R).changeable);
+      assert( not computation_for_reg(R).changeable);
 
       int index = assert_is_a<index_var>(access(R).C.exp)->index;
 
@@ -2311,7 +2320,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
     // Check for WHNF *OR* heap variables
     else if (is_WHNF(access(R).C.exp))
-      access(R).result = R;
+      computation_for_reg(R).result = R;
 
 #ifndef NDEBUG
     else if (is_a<Trim>(access(R).C.exp))
@@ -2324,12 +2333,12 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     // A modifiable has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
     else if (access(R).C.exp->head->type() == modifiable_type)
-      throw myexception()<<"Modifiable '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<access(R).changeable<<")";
+      throw myexception()<<"Modifiable '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<computation_for_reg(R).changeable<<")";
 
     // Reduction: let expression
     else if (parse_indexed_let_expression(access(R).C.exp, bodies, T))
     {
-      assert(not access(R).changeable);
+      assert(not computation_for_reg(R).changeable);
 
       owner_set_t owners = get_reg_owners(R);
 
@@ -2354,14 +2363,14 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       for(int i=0;i<bodies.size();i++)
 	set_C(new_heap_vars[i], get_trimmed({bodies[i],local_env}));
 
-      assert(not access(R).changeable);
+      assert(not computation_for_reg(R).changeable);
 
       // Remove the new heap vars from the list of temp heads in reverse order.
       for(int i=0;i<new_heap_vars.size(); i++)
 	pop_temp_head(owners);
       
-      assert(not access(R).call);
-      assert(not access(R).result);
+      assert(not computation_for_reg(R).call);
+      assert(not computation_for_reg(R).result);
     }
     
     // 3. Reduction: Operation (includes @, case, +, etc.)
@@ -2370,7 +2379,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
 
       // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable result.
-      // Therefore, we cannot do "assert(not access(R).changeable);" here.
+      // Therefore, we cannot do "assert(not computation_for_reg(R).changeable);" here.
 
 #ifdef DEBUG_MACHINE
       string SS = "";
@@ -2390,11 +2399,11 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	//       How could we assert that?
 	
 	// If the reduction doesn't depend on modifiable, then replace E with the result.
-	if (not access(R).changeable)
+	if (not computation_for_reg(R).changeable)
 	{
 	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
-	  assert(not access(R).call);
-	  assert(not access(R).result);
+	  assert(not computation_for_reg(R).call);
+	  assert(not computation_for_reg(R).result);
 	  clear_used_inputs(R);
 	  set_C(R, std::move(result) );
 	}
@@ -2433,9 +2442,9 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
   assert(not is_a<index_var>(access(R).C.exp));
 
-  if (evaluate_changeable or (not access(R).changeable and access(R).result))
+  if (evaluate_changeable or (not computation_for_reg(R).changeable and computation_for_reg(R).result))
   {
-    assert(access(R).result);
+    assert(computation_for_reg(R).result);
     assert(is_WHNF(access_result(R).exp));
     assert(not is_a<index_var>(access_result(R).exp));
     assert(not is_a<expression>(access_result(R).exp));
@@ -2786,14 +2795,14 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
 
     o<<"label = \""<<label<<"\"";
-    if (C.access(R).re_evaluate)
+    if (C.computation_for_reg(R).re_evaluate)
       o<<",style=\"dashed,filled\",color=yellow";
-    else if (C.access(R).changeable)
+    else if (C.computation_for_reg(R).changeable)
       o<<",style=\"dashed,filled\",color=red";
 
-    if (C.access(R).result and C.access(R).changeable)
+    if (C.computation_for_reg(R).result and C.computation_for_reg(R).changeable)
       o<<",fillcolor=\"#007700\",fontcolor=white";
-    else if (C.access(R).changeable)
+    else if (C.computation_for_reg(R).changeable)
       o<<",fillcolor=\"#770000\",fontcolor=white";
     else if (C.access(R).C.exp->head->type() == index_var_type)
       o<<",fillcolor=\"#77bbbb\"";
@@ -2806,11 +2815,11 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       {
 	string name2 = "n" + convertToString(R2);
 	bool used = false;
-	for(const auto& i: C.access(R).used_inputs)
+	for(const auto& i: C.computation_for_reg(R).used_inputs)
 	  if (i.first == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
-	if (reg_names.count(R2) and not C.access(R2).changeable and not used) continue;
+	if (reg_names.count(R2) and not C.computation_for_reg(R2).changeable and not used) continue;
 
 	// Don't draw ref edges to things like fmap.
 	if (constants.count(R2) and not used) continue;
@@ -2827,11 +2836,11 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       {
 	string name2 = "n" + convertToString(R2);
 	bool used = false;
-	for(const auto& i: C.access(R).used_inputs)
+	for(const auto& i: C.computation_for_reg(R).used_inputs)
 	  if (i.first == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
-	if (reg_names.count(R2) and not C.access(R2).changeable and not used) continue;
+	if (reg_names.count(R2) and not C.computation_for_reg(R2).changeable and not used) continue;
 	
 	// Don't draw ref edges to things like fmap.
 	if (constants.count(R2) and not used) continue;
@@ -2846,9 +2855,9 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     // call-edges
     // FIXME:Drawing - how can allow these to go to the right, but not above, if no ref edges?
     // FIXME:Drawing - doing :w and {rank=same; n -> n} makes the edge drawn over the node icon.
-    if (C.access(R).call)
+    if (C.computation_for_reg(R).call)
     {
-      string name2 = "n" + convertToString(C.access(R).call);
+      string name2 = "n" + convertToString(C.computation_for_reg(R).call);
       o<<name<<":e -> "<<name2<<":w ";
       o<<"[";
       o<<"color=\"#007700\"";
@@ -2856,7 +2865,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
 
     // used_inputs
-    for(const auto& i: C.access(R).used_inputs)
+    for(const auto& i: C.computation_for_reg(R).used_inputs)
     {
       int R2 = i.first;
 

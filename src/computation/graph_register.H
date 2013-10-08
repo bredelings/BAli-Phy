@@ -74,7 +74,7 @@ struct computation_record
   computation_record(computation_record&&) noexcept;
 };
 
-struct reg: public computation_record
+class reg: private computation_record
 {
 public:
   typedef CacheList<int>::iterator back_edge_deleter;
@@ -110,6 +110,8 @@ class reg_heap: public Object, public checked_pool<reg>
 {
   typedef checked_pool<reg> base_pool_t;
 
+  checked_pool<computation_record> computation_records;
+
   std::vector<int> target;
   CacheList<int> roots;
 
@@ -134,14 +136,17 @@ public:
 
   reg_heap* clone() const {std::abort();}
 
+  const computation_record& computation_for_reg(int R) const { return access_unused(R).get_computation(); }
+        computation_record& computation_for_reg(int R)       { return access_unused(R).get_computation(); }
+
   const closure& access_result(int R1) const
   {
-    int R2 = access(R1).result;
+    int R2 = computation_for_reg(R1).result;
     assert(R2);
     return access(R2).C;
   }
 
-  void clear_result(int R) {access(R).result = 0;}
+  void clear_result(int R) {computation_for_reg(R).result = 0;}
 
   int allocate();
 

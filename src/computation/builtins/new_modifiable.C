@@ -26,7 +26,7 @@ extern "C" closure builtin_function_new_modifiable(OperationArgs& Args)
 
   // Allocate a reg, and fill it with a modifiable of the correct index
   int R1 = Args.allocate(modifiable(m_index));
-  M[R1].changeable = true;
+  M.computation_for_reg(R1).changeable = true;
 
   // Mark the location of the new modifiable
   modifiable_regs[m_index] = R1;

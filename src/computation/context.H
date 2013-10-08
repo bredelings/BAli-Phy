@@ -89,6 +89,8 @@ public:
 
   reg& access(int i) const {return memory()->access(i);}
 
+  computation_record& computation_for_reg(int i) const {return memory()->computation_for_reg(i);}
+
   const closure& access_result(int i) const {return memory()->access_result(i);}
 
   reg& operator[](int i) const {return memory()->access(i);}

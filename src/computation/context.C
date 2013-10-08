@@ -92,7 +92,7 @@ void context::rename_parameter(int i, const string& new_name)
 
 bool context::reg_is_fully_up_to_date(int R) const
 {
-  if (not access(R).result) return false;
+  if (not computation_for_reg(R).result) return false;
 
   const closure& result = access_result(R);
 
@@ -218,7 +218,7 @@ bool context::parameter_is_set(int index) const
 
   int P = find_parameter_modifiable_reg(index);
 
-  if (not access(P).result and not access(P).call) return false;
+  if (not computation_for_reg(P).result and not computation_for_reg(P).call) return false;
 
   return true;
 }
@@ -226,10 +226,10 @@ bool context::parameter_is_set(int index) const
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 object_ref context::get_reg_value(int R) const
 {
-  if (not access(R).result)
+  if (not computation_for_reg(R).result)
   {
     // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-    if (not access(R).call) return object_ref();
+    if (not computation_for_reg(R).call) return object_ref();
 
     // If the value needs to be computed (e.g. its a call expression) then compute it.
     incremental_evaluate(R);
@@ -435,8 +435,8 @@ void context::set_re_evaluate(int i, bool b)
 {
   int& R = heads()[i];
   R = incremental_evaluate(R,true);
-  if (access(R).changeable)
-    access(R).re_evaluate = b;
+  if (computation_for_reg(R).changeable)
+    computation_for_reg(R).re_evaluate = b;
 }
 
 

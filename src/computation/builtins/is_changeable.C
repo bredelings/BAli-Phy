@@ -12,7 +12,7 @@ extern "C" closure builtin_function_is_changeable(OperationArgs& Args)
   int R1 = Args.evaluate_slot_to_reg(1);
 
   const reg_heap& M = Args.memory();
-  if (M.access(R1).changeable)
+  if (M.computation_for_reg(R1).changeable)
     return constructor("Prelude.True",0);
   else
     return constructor("Prelude.False",0);
