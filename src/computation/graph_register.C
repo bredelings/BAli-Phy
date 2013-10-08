@@ -49,8 +49,8 @@ using std::endl;
  *
  * Forward edges consist of
  * - E edges / reference edges (forward: C.Env) (backward: referenced_by_in_E)
- * - call edges (forward: call, call_outputs)
- * - used edges (forward: used_inputs, outputs)
+ * - call edges (forward: call, called_by)
+ * - used edges (forward: used_inputs, used_by)
  *
  * ------------------------------------ Shared subgraphs ---------------------------------------------
  *
@@ -298,8 +298,8 @@ void computation_record::clear()
   used_inputs.clear();
   call = 0;
   call_reverse = back_edge_deleter();
-  outputs.clear();
-  call_outputs.clear();
+  used_by.clear();
+  called_by.clear();
   ownership_category = ownership_category_t();
 
   // This should already be cleared.
@@ -313,7 +313,7 @@ void computation_record::check_cleared()
   assert(not result);
   assert(not call);
   assert(used_inputs.empty());
-  assert(call_outputs.empty());
+  assert(called_by.empty());
 }
 
 computation_record& computation_record::operator=(computation_record&& R) noexcept
@@ -326,8 +326,8 @@ computation_record& computation_record::operator=(computation_record&& R) noexce
   call = R.call;
   call_reverse = std::move( R.call_reverse );
   used_inputs  = std::move( R.used_inputs );
-  outputs = std::move( R.outputs );
-  call_outputs = std::move( R.call_outputs );
+  used_by = std::move( R.used_by );
+  called_by = std::move( R.called_by );
   temp_owners = std::move( R.temp_owners );
   temp = R.temp;
   re_evaluate = R.re_evaluate;
@@ -344,8 +344,8 @@ computation_record::computation_record(computation_record&& R) noexcept
   call ( R.call ),
   call_reverse ( std::move( R.call_reverse) ),
   used_inputs ( std::move(R.used_inputs) ),
-  outputs ( std::move( R.outputs) ),
-  call_outputs ( std::move( R.call_outputs) ),
+  used_by ( std::move( R.used_by) ),
+  called_by ( std::move( R.called_by) ),
   temp_owners ( std::move( R.temp_owners ) ),
   temp ( R.temp ),
   re_evaluate ( R.re_evaluate )
@@ -412,7 +412,7 @@ void reg_heap::set_used_input(int R1, int R2)
   // Don't add a reg as input if no reduction has been performed.
   // assert(computation_for_reg(R2).result or computation_for_reg(R2).call);
 
-  reg::back_edge_deleter D = computation_for_reg(R2).outputs.insert(computation_for_reg(R2).outputs.end(), R1);
+  reg::back_edge_deleter D = computation_for_reg(R2).used_by.insert(computation_for_reg(R2).used_by.end(), R1);
   computation_for_reg(R1).used_inputs.emplace_back(R2,D);
 }
 
@@ -446,16 +446,16 @@ void reg_heap::clear_used_inputs(int R1)
     assert(is_address(R2));
 
     if (is_free(R2))
-      //      assert( computation_for_reg(R2).outputs.empty() );
+      //      assert( computation_for_reg(R2).used_by.empty() );
       assert( map_target(R2) == 0);
     else
     {
-      assert( not computation_for_reg(R2).outputs.empty() );
+      assert( not computation_for_reg(R2).used_by.empty() );
 
       reg::back_edge_deleter D = i.second;
       assert( *D == R1 );
 
-      computation_for_reg(R2).outputs.erase(D);
+      computation_for_reg(R2).used_by.erase(D);
     }
   }
 
@@ -495,9 +495,9 @@ void reg_heap::set_call_unsafe(int R1, int R2)
   int rc1 = map_target(R1);
   computation_record& RC1 = computation_records[rc1];
   RC1.call = R2;
-  auto& call_outputs2 = computation_for_reg(R2).call_outputs;
+  auto& called_by2 = computation_for_reg(R2).called_by;
 
-  RC1.call_reverse = call_outputs2.insert(call_outputs2.end(), rc1);
+  RC1.call_reverse = called_by2.insert(called_by2.end(), rc1);
   assert( *RC1.call_reverse == rc1 );
 
   // check that all of the owners of R are also owners of R.call;
@@ -527,17 +527,17 @@ void reg_heap::clear_call(int rc)
   // If this reg is unused, then upstream regs are in the process of being destroyed.
   // However, if this reg is used, then upstream regs may be live, and so should have
   //  correct edges.
-  assert( not is_used(RC.source) or computation_for_reg(R2).call_outputs.count(rc) );
+  assert( not is_used(RC.source) or computation_for_reg(R2).called_by.count(rc) );
 
-  // If the call points to a freed reg, then its call_outputs list should already be cleared.
+  // If the call points to a freed reg, then its called_by list should already be cleared.
   if (is_free(R2))
-    //    assert( computation_for_reg(R2).call_outputs.empty() );
+    //    assert( computation_for_reg(R2).called_by.empty() );
     assert( map_target(R2) == 0 );
   // If the call points to a used reg, then we need to notify it that the incoming call edge is being removed.
   else {
     assert( is_used(R2) or is_marked(R2) );
-    assert( not computation_for_reg(R2).call_outputs.empty() );
-    computation_for_reg(R2).call_outputs.erase( RC.call_reverse );
+    assert( not computation_for_reg(R2).called_by.empty() );
+    computation_for_reg(R2).called_by.erase( RC.call_reverse );
   }
 
   RC.call_reverse = reg::back_edge_deleter();
@@ -683,7 +683,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       clear_result(R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(int R2: computation_for_reg(R1).outputs)
+      for(int R2: computation_for_reg(R1).used_by)
       {
 	if (computation_for_reg(R2).temp == mark_call_result) continue;
 	computation_for_reg(R2).temp = mark_call_result;
@@ -691,7 +691,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(int rc2: computation_for_reg(R1).call_outputs)
+      for(int rc2: computation_for_reg(R1).called_by)
       {
 	computation_record& RC2 = computation_records[rc2];
 
@@ -720,7 +720,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       clear_used_inputs(R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(int R2: computation_for_reg(R1).outputs)
+      for(int R2: computation_for_reg(R1).used_by)
       {
 	if (computation_for_reg(R2).temp == mark_call_result) continue;
 	computation_for_reg(R2).temp = mark_call_result;
@@ -728,7 +728,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(int rc2: computation_for_reg(R1).call_outputs)
+      for(int rc2: computation_for_reg(R1).called_by)
       {
 	computation_record& RC2 = computation_records[rc2];
 
@@ -1183,7 +1183,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
   vector<int> ancestors;
 
   // Add the call parents of R
-  for(int qc: computation_for_reg(R).call_outputs)
+  for(int qc: computation_for_reg(R).called_by)
   {
     const computation_record& QC = computation_records[qc];
     int Q = QC.source;
@@ -1203,7 +1203,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
 
     assert(is_marked(Q1));
 
-    for(int qc2: computation_for_reg(Q1).call_outputs)
+    for(int qc2: computation_for_reg(Q1).called_by)
     {
       const computation_record& QC2 = computation_records[qc2];
       int Q2 = QC2.source;
@@ -1274,7 +1274,7 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
     // Count the references from calls by other regs
     const computation_record& RC = computation_for_reg(r);
 
-    for(int rc2: RC.call_outputs)
+    for(int rc2: RC.called_by)
       scan.push_back(computation_records[rc2].source);
   }
 
@@ -1335,7 +1335,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 {
   for(int R1: split)
   {
-    // Parents are: (a) referenced_by_in_E + (b) call_outputs + (c) outputs
+    // Parents are: (a) referenced_by_in_E + (b) called_by + (c) used_by
     //  See note below about why output (use-parents) are included.
 
     // CLAIM: we could have parents that are in t and are marked shared, but these
@@ -1358,7 +1358,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
     /* NOTE: When splitting regs, we only look backwards along E or call edges.
 
-       Q: Why then do we look backwards along outputs edges, here?
+       Q: Why then do we look backwards along used_by edges, here?
        A: The answer is that, although a reg R1 can only use a reg R2 if it
         is reachable along E- or call- edges, it might not be reachable this
         way in a single step.
@@ -1378,7 +1378,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
       the changed reg, but we only invalidate thing that CURRENTLY depend on the
       changed reg.
     */
-    for(int Q1: computation_for_reg(R1).outputs)
+    for(int Q1: computation_for_reg(R1).used_by)
     {
       // Skip regs that we've handled already.
       if (is_marked(Q1)) continue;
@@ -1392,7 +1392,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
       unsplit_parents.push_back(Q1);
     }
 
-    for(int qc1: computation_for_reg(R1).call_outputs)
+    for(int qc1: computation_for_reg(R1).called_by)
     {
       const computation_record& QC1 = computation_records[qc1];
       int Q1 = QC1.source;
@@ -1636,15 +1636,15 @@ int reg_heap::uniquify_reg(int R, int t)
       if (I2 != I1)
       {
 	// Remove the edge to I1
-	assert( not computation_for_reg(I1).outputs.empty() );
+	assert( not computation_for_reg(I1).used_by.empty() );
 
 	reg::back_edge_deleter& D = i.second;
 	assert( *D == Q1 );
 
-	computation_for_reg(I1).outputs.erase(D);
+	computation_for_reg(I1).used_by.erase(D);
 
 	// Add the edge to I2
-	D = computation_for_reg(I2).outputs.push_back(Q1);
+	D = computation_for_reg(I2).used_by.push_back(Q1);
 	I1 = I2;
       }
     }
@@ -1770,7 +1770,7 @@ void reg_heap::check_used_reg(int index) const
     assert( reg_is_owned_by_all_of(r, get_reg_owners(index) ) );
 
     // Check that used regs are have back-references to R
-    assert( computation_for_reg(r).outputs.count(index) );
+    assert( computation_for_reg(r).used_by.count(index) );
   }
 
   if (RC.call)
@@ -1784,7 +1784,7 @@ void reg_heap::check_used_reg(int index) const
     assert( reg_is_owned_by_all_of(RC.call, get_reg_owners(index) ) );
 
     // Check that the call-used reg has back-references to R
-    assert( computation_for_reg(RC.call).call_outputs.count(index_c) == 1 );
+    assert( computation_for_reg(RC.call).called_by.count(index_c) == 1 );
   }
 }
 

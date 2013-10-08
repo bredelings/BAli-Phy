@@ -49,10 +49,10 @@ struct computation_record
   /* 3. The computations that use or reference us. */
 
   /// Which pairs (reg,slot) USED the reduction result of C (via an operation)?
-  CacheList< int > outputs;
+  CacheList< int > used_by;
 
   /// Which reduction results made use of the value of this expression (via call)
-  CacheList<int> call_outputs;
+  CacheList<int> called_by;
 
   /* 5. Which sub-graphs are we in for sub-graph sharing? */
   owner_set_t temp_owners;
