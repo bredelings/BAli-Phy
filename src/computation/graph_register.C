@@ -492,9 +492,13 @@ void reg_heap::set_call_unsafe(int R1, int R2)
   // Check that we aren't overriding an existing *call*
   assert(not computation_for_reg(R1).call);
 
-  computation_for_reg(R1).call = R2;
-  computation_for_reg(R1).call_reverse = computation_for_reg(R2).call_outputs.insert(computation_for_reg(R2).call_outputs.end(), R1);
-  assert( *computation_for_reg(R1).call_reverse == R1 );
+  int rc1 = map_target(R1);
+  computation_record& RC1 = computation_records[rc1];
+  RC1.call = R2;
+  auto& call_outputs2 = computation_for_reg(R2).call_outputs;
+
+  RC1.call_reverse = call_outputs2.insert(call_outputs2.end(), rc1);
+  assert( *RC1.call_reverse == rc1 );
 
   // check that all of the owners of R are also owners of R.call;
   assert( reg_is_owned_by_all_of(R2, get_reg_owners(R1)) );
@@ -511,17 +515,20 @@ void reg_heap::set_call(int R1, int R2)
 
 void reg_heap::clear_call(int R)
 {
-  int R2 = computation_for_reg(R).call;
+  int rc = map_target(R);
+  computation_record& RC = computation_records.access_unused(rc);
+
+  int R2 = RC.call;
   if (not R2) return;
   assert(R2 > 0 and R2 < size());
   
-  assert( *computation_for_reg(R).call_reverse == R );
-  computation_for_reg(R).call = 0;
+  assert( *RC.call_reverse == rc );
+  RC.call = 0;
 
   // If this reg is unused, then upstream regs are in the process of being destroyed.
   // However, if this reg is used, then upstream regs may be live, and so should have
   //  correct edges.
-  assert( not is_used(R) or computation_for_reg(R2).call_outputs.count(R) );
+  assert( not is_used(R) or computation_for_reg(R2).call_outputs.count(rc) );
 
   // If the call points to a freed reg, then its call_outputs list should already be cleared.
   if (is_free(R2))
@@ -531,10 +538,10 @@ void reg_heap::clear_call(int R)
   else {
     assert( is_used(R2) or is_marked(R2) );
     assert( not computation_for_reg(R2).call_outputs.empty() );
-    computation_for_reg(R2).call_outputs.erase( computation_for_reg(R).call_reverse );
+    computation_for_reg(R2).call_outputs.erase( RC.call_reverse );
   }
 
-  computation_for_reg(R).call_reverse = reg::back_edge_deleter();
+  RC.call_reverse = reg::back_edge_deleter();
 }
 
 void reg_heap::set_C(int R, closure&& C)
@@ -678,11 +685,14 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(int R2: computation_for_reg(R1).call_outputs)
+      for(int rc2: computation_for_reg(R1).call_outputs)
       {
-	if (computation_for_reg(R2).temp != -1) continue;
-	computation_for_reg(R2).temp = mark_result;
-	result_may_be_changed.push_back(R2);
+	computation_record& RC2 = computation_records[rc2];
+
+	if (RC2.temp != -1) continue;
+
+	RC2.temp = mark_result;
+	result_may_be_changed.push_back(RC2.source);
       }
     }
 
@@ -712,11 +722,14 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(int R2: computation_for_reg(R1).call_outputs)
+      for(int rc2: computation_for_reg(R1).call_outputs)
       {
-	if (computation_for_reg(R2).temp != -1) continue;
-	computation_for_reg(R2).temp = mark_result;
-	result_may_be_changed.push_back(R2);
+	computation_record& RC2 = computation_records[rc2];
+
+	if (RC2.temp != -1) continue;
+
+	RC2.temp = mark_result;
+	result_may_be_changed.push_back(RC2.source);
       }
     }
   }
@@ -977,7 +990,7 @@ void reg_heap::trace_and_reclaim_unreachable()
       next_scan.insert(next_scan.end(), R.C.Env.begin(), R.C.Env.end());
 
       // Count also the references from the call
-      computation_record& RC = computation_for_reg(r);
+      const computation_record& RC = computation_for_reg(r);
       if (RC.call) 
 	next_scan.insert(next_scan.end(), RC.call);
     }
@@ -1164,8 +1177,10 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
   vector<int> ancestors;
 
   // Add the call parents of R
-  for(int Q: computation_for_reg(R).call_outputs)
+  for(int qc: computation_for_reg(R).call_outputs)
   {
+    const computation_record& QC = computation_records[qc];
+    int Q = QC.source;
     assert(is_used(Q));
 
     // Skip ancestors not in this context
@@ -1182,8 +1197,11 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
 
     assert(is_marked(Q1));
 
-    for(int Q2: computation_for_reg(Q1).call_outputs)
+    for(int qc2: computation_for_reg(Q1).call_outputs)
     {
+      const computation_record& QC2 = computation_records[qc2];
+      int Q2 = QC2.source;
+
       // Skip regs that have been seen before.
       if (is_marked(Q2)) continue;
 
@@ -1250,7 +1268,8 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
     // Count the references from calls by other regs
     const computation_record& RC = computation_for_reg(r);
 
-    scan.insert(scan.end(), RC.call_outputs.begin(), RC.call_outputs.end());
+    for(int rc2: RC.call_outputs)
+      scan.push_back(computation_records[rc2].source);
   }
 
   for(int R: unique)
@@ -1283,7 +1302,10 @@ void reg_heap::check_results_in_context(int t) const
   for(int Q: regs)
   {
     if (computation_for_reg(Q).call)
-      assert( *computation_for_reg(Q).call_reverse == Q );
+    {
+      int qc = map_target(Q);
+      assert( *computation_for_reg(Q).call_reverse == qc );
+    }
       
     if (computation_for_reg(Q).result == Q)
     {
@@ -1364,8 +1386,11 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
       unsplit_parents.push_back(Q1);
     }
 
-    for(int Q1: computation_for_reg(R1).call_outputs)
+    for(int qc1: computation_for_reg(R1).call_outputs)
     {
+      const computation_record& QC1 = computation_records[qc1];
+      int Q1 = QC1.source;
+
       // Skip regs that we've handled already.
       if (is_marked(Q1)) continue;
 
@@ -1744,14 +1769,16 @@ void reg_heap::check_used_reg(int index) const
 
   if (RC.call)
   {
+    int index_c = map_target(index);
+
     // Check that the pointer to the reverse edge iterator is intact.
-    assert( *RC.call_reverse == index );
+    assert( *RC.call_reverse == index_c );
 
     // Check that the call-used reg is owned by owners of R
     assert( reg_is_owned_by_all_of(RC.call, get_reg_owners(index) ) );
 
     // Check that the call-used reg has back-references to R
-    assert( computation_for_reg(RC.call).call_outputs.count(index) == 1 );
+    assert( computation_for_reg(RC.call).call_outputs.count(index_c) == 1 );
   }
 }
 
