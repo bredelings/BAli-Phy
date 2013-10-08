@@ -353,8 +353,6 @@ computation_record::computation_record(computation_record&& R) noexcept
 
 reg& reg::operator=(reg&& R) noexcept
 {
-  computation_record::operator=(std::move(R));
-
   C = std::move(R.C);
   referenced_by_in_E_reverse = std::move( R.referenced_by_in_E_reverse );
   referenced_by_in_E = std::move( R.referenced_by_in_E );
@@ -363,8 +361,7 @@ reg& reg::operator=(reg&& R) noexcept
 }
 
 reg::reg(reg&& R) noexcept
-:computation_record(std::move(R)),
-  C( std::move(R.C) ),
+:C( std::move(R.C) ),
   referenced_by_in_E_reverse ( std::move( R.referenced_by_in_E_reverse ) ),
   referenced_by_in_E ( std::move( R.referenced_by_in_E) )
 { }
@@ -373,8 +370,6 @@ void reg::clear()
 {
   C.clear();
   referenced_by_in_E.clear();
-
-  get_computation().clear();
 }
 
 void reg::check_cleared()
@@ -382,12 +377,12 @@ void reg::check_cleared()
   assert(not C);
   assert(referenced_by_in_E_reverse.empty());
   assert(referenced_by_in_E.empty());
-  get_computation().check_cleared();
 }
 
 void reg_heap::clear(int R)
 {
   access(R).clear();
+  computation_for_reg(R).clear();
 
   reg_clear_owners(R);
 
@@ -451,7 +446,8 @@ void reg_heap::clear_used_inputs(int R1)
     assert(is_address(R2));
 
     if (is_free(R2))
-      assert( computation_for_reg(R2).outputs.empty() );
+      //      assert( computation_for_reg(R2).outputs.empty() );
+      assert( map_target(R2) == 0);
     else
     {
       assert( not computation_for_reg(R2).outputs.empty() );
@@ -529,7 +525,8 @@ void reg_heap::clear_call(int R)
 
   // If the call points to a freed reg, then its call_outputs list should already be cleared.
   if (is_free(R2))
-    assert( computation_for_reg(R2).call_outputs.empty() );
+    //    assert( computation_for_reg(R2).call_outputs.empty() );
+    assert( map_target(R2) == 0 );
   // If the call points to a used reg, then we need to notify it that the incoming call edge is being removed.
   else {
     assert( is_used(R2) or is_marked(R2) );
@@ -752,6 +749,22 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     incremental_evaluate(R,token,true);
 }
 
+int reg_heap::map_reg(int r)
+{
+  int rc = computation_records.allocate();
+  computation_records.access_unused(rc).source = r;
+  token_roots[0].virtual_mapping[r] = rc;
+  return rc;
+}
+
+void reg_heap::unmap_reg(int r)
+{
+  int rc = map_target(r);
+  if (rc > 0)
+    computation_records.reclaim_used(rc);
+  token_roots[0].virtual_mapping[r] = 0;
+}
+
 void reg_heap::reclaim_used(int r)
 {
   // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
@@ -762,8 +775,7 @@ void reg_heap::reclaim_used(int r)
 
   // However, downstream regs may be live, and therefore when we destroy outgoing edges, we
   // need to notify downstream regs of the absence of these incoming edges.
-  clear_used_inputs(r);
-  clear_call(r);
+  unmap_reg(r);
   clear_C(r);
 
   add_to_free_list(r);
@@ -879,6 +891,8 @@ void reg_heap::expand_memory(int s)
 int reg_heap::allocate()
 {
   int r = base_pool_t::allocate();
+
+  map_reg(r);
 
   computation_for_reg(r).ownership_category = ownership_categories.begin();
 
@@ -2089,13 +2103,25 @@ int reg_heap::add_identifier_to_context(int t, const string& name)
 }
 
 reg_heap::reg_heap()
-  :base_pool_t(1)
+  :base_pool_t(1),
+   computation_records(1)
 { 
   target.resize(size());
   target[0] = 0;
 
   owner_set_t empty;
   canonical_ownership_categories.insert(empty, ownership_categories.push_back(empty));
+
+  //  computation_records.collect_garbage = [this](){collect_garbage();};
+  computation_records.collect_garbage = [](){};
+  computation_records.clear_references = [this](int rc){
+    // Can we avoid referring to r at all here?
+    // We'd have to make back-edges refer to computation_records directly.
+    int r = computation_records.access_unused(rc).source;
+    clear_used_inputs(r);
+    clear_call(r);
+    computation_records.access_unused(rc).source = -1;
+  };
 }
 
 #include "computation.H"

@@ -74,7 +74,7 @@ struct computation_record
   computation_record(computation_record&&) noexcept;
 };
 
-class reg: private computation_record
+class reg
 {
 public:
   typedef CacheList<int>::iterator back_edge_deleter;
@@ -83,9 +83,6 @@ public:
   closure C;
   std::vector<back_edge_deleter> referenced_by_in_E_reverse;
 
-  computation_record& get_computation() {return *this;}
-  const computation_record& get_computation() const {return *this;}
- 
   /// The nodes that directly reference us (not via a call)
   CacheList<int> referenced_by_in_E;
 
@@ -110,7 +107,7 @@ class reg_heap: public Object, public checked_pool<reg>
 {
   typedef checked_pool<reg> base_pool_t;
 
-  checked_pool<computation_record> computation_records;
+  checked_pool_callback<computation_record> computation_records;
 
   std::vector<int> target;
   CacheList<int> roots;
@@ -136,8 +133,19 @@ public:
 
   reg_heap* clone() const {std::abort();}
 
-  const computation_record& computation_for_reg(int R) const { return access_unused(R).get_computation(); }
-        computation_record& computation_for_reg(int R)       { return access_unused(R).get_computation(); }
+  const computation_record& computation_for_reg(int r) const 
+  { 
+    int rc = map_target(r);
+    assert(rc > 0);
+    return computation_records.access_unused(rc);
+  }
+
+        computation_record& computation_for_reg(int r)
+  { 
+    int rc = map_target(r);
+    assert(rc > 0);
+    return computation_records.access_unused(rc);
+  }
 
   const closure& access_result(int R1) const
   {
@@ -315,6 +323,18 @@ public:
   std::vector<int> find_call_ancestors_in_context(int,int) const;
   /*----- Graph walking ------*/
   void check_results_in_context(int) const;
+
+  int map_reg(int r);
+
+  void unmap_reg(int r);
+
+  int map_target(int r) const {
+    int rc = token_roots[0].virtual_mapping[r];
+    if (rc > 0)
+      assert(computation_records.access_unused(rc).source == r);
+    return rc;
+  }
+
   /*----- Graph splitting -----*/
   int remap_reg(int) const;
   /*----- Graph splitting -----*/

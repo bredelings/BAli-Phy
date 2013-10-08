@@ -319,4 +319,37 @@ public:
 
   checked_pool(int n): pool<T>(n) {}
 };
+
+
+template <typename T>
+class checked_pool_callback: public checked_pool<T>
+{
+public:
+
+  void reclaim_used(int r)
+  {
+    // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
+    this->remove_from_used_list(r);
+    
+    clear_references(r);
+    
+    this->add_to_free_list(r);
+  }
+
+  void get_more_memory()
+  {
+    collect_garbage();
+    checked_pool<T>::get_more_memory();
+  }
+
+  std::function<void()> collect_garbage;
+
+  std::function<void(int)> clear_references;
+
+  checked_pool_callback(): checked_pool<T>() {}
+
+  checked_pool_callback(int n): checked_pool<T>(n) {}
+};
+
+
 #endif
