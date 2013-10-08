@@ -381,8 +381,8 @@ void reg::check_cleared()
 
 void reg_heap::set_used_input(int R1, int R2)
 {
-  assert(R1 > 0 and R1 < size());
-  assert(R2 > 0 and R2 < size());
+  assert(is_valid_address(R1));
+  assert(is_valid_address(R2));
 
   assert(access(R1).C);
   assert(access(R2).C);
@@ -436,7 +436,7 @@ void reg_heap::clear_used_inputs(int rc1)
   for(const auto& i: RC1.used_inputs)
   {
     int R2 = i.first;
-    assert(is_address(R2));
+    assert(is_valid_address(R2));
 
     if (is_free(R2))
       //      assert( computation_for_reg(R2).used_by.empty() );
@@ -519,7 +519,7 @@ void reg_heap::clear_call(int rc)
 
   int R2 = RC.call;
   if (not R2) return;
-  assert(R2 > 0 and R2 < size());
+  assert(is_valid_address(R2));
   
   assert( *RC.call_reverse == rc );
   RC.call = 0;
@@ -2316,7 +2316,7 @@ map<int,string> get_constants(const reg_heap& C, int t);
 int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 {
   assert(is_terminal_token(t));
-  assert(R > 0 and R < size());
+  assert(is_valid_address(R));
   assert(is_used(R));
   assert(reg_is_owned_by(R,t));
   assert(not is_a<expression>(access(R).C.exp));

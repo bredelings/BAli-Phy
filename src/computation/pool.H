@@ -123,18 +123,18 @@ protected:
     lookup(r).state = none;
   }
 
-  const record& lookup(int i) const {assert(is_address(i)); return memory[i];}
-        record& lookup(int i)       {assert(is_address(i)); return memory[i];}
+  const record& lookup(int i) const {assert(is_valid_address(i)); return memory[i];}
+        record& lookup(int i)       {assert(is_valid_address(i)); return memory[i];}
 
-  void set_state(int r, States s) const {assert(is_address(r)); memory[r].state = s;}
+  void set_state(int r, States s) const {assert(is_valid_address(r)); memory[r].state = s;}
 
 public:
   
-  bool is_null(int r) const {assert(is_address(r)); return memory[r].state == none;}
-  bool is_free(int r) const {assert(is_address(r)); return memory[r].state == free;}
-  bool is_used(int r) const {assert(is_address(r)); return memory[r].state == used;}
-  bool is_marked(int r) const {assert(is_address(r)); return memory[r].state == marked;}
-  States get_state(int r) const {assert(is_address(r)); return memory[r].state;}
+  bool is_null(int r) const {assert(is_valid_address(r)); return memory[r].state == none;}
+  bool is_free(int r) const {assert(is_valid_address(r)); return memory[r].state == free;}
+  bool is_used(int r) const {assert(is_valid_address(r)); return memory[r].state == used;}
+  bool is_marked(int r) const {assert(is_valid_address(r)); return memory[r].state == marked;}
+  States get_state(int r) const {assert(is_valid_address(r)); return memory[r].state;}
 
   class PoolIterator
   {
@@ -269,7 +269,7 @@ public:
   //  void check_used(int) const;
   //  void check_all_used() const;
 
-  bool is_address(int i) const {return 0 <= i and i < size();}
+  bool is_valid_address(int i) const {return n_null() <= i and i < size();}
 
   const T& access_unused(int i) const {return lookup(i).value;}
         T& access_unused(int i)       {return lookup(i).value;}
