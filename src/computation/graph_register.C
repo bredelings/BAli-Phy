@@ -855,15 +855,24 @@ void reg_heap::get_more_memory()
 
 void reg_heap::expand_memory(int s)
 {
-  int k = size();
+  int old_size = size();
   assert(size() == target.size());
+  for(auto& tr: token_roots)
+    assert(tr.virtual_mapping.size() == old_size);
 
   base_pool_t::expand_memory(s);
 
+  // Add new target, with default target[i] = i
   target.resize(size());
-  for(int i=k;i<size();i++)
-  {
+  for(int i=old_size;i<size();i++)
     target[i] = i;
+
+  // Extend virtual mappings, with virtual_mapping[i] = 0;
+  for(auto& tr: token_roots)
+  {
+    tr.virtual_mapping.resize(size());
+    for(int i=old_size;i<size();i++)
+      tr.virtual_mapping[i] = 0;
   }
 }
 
@@ -1024,7 +1033,13 @@ int reg_heap::get_unused_token()
   {
     unused_tokens.push_back(get_n_tokens());
     token_roots.push_back(graph_roots());
+    token_roots.back().virtual_mapping.resize(size());
+    for(int& i: token_roots.back().virtual_mapping)
+      i=0;
   }
+
+  for(auto& tr: token_roots)
+    assert(tr.virtual_mapping.size() == size());
 
   int t = unused_tokens.back();
   unused_tokens.pop_back();
@@ -1964,7 +1979,15 @@ void reg_heap::try_release_token(int t)
   unused_tokens.push_back(t);
   token_roots[t].used = false;
 
+  // clear only the mappings that were actually updated here.
+  for(int R: token_roots[t].modified)
+    token_roots[t].virtual_mapping[R] = 0;
+
 #ifdef DEBUG_MACHINE
+  assert(token_roots[t].virtual_mapping.size() == size());
+  for(int i: token_roots[t].virtual_mapping)
+    assert(i==0);
+
   check_used_regs();
 #endif
 

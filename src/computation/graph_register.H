@@ -193,6 +193,11 @@ public:
     /// A list of signals that have been sent
     std::vector<int> triggers;
 
+    /// Mapping from closures to computations/results
+    std::vector<int> virtual_mapping;
+
+    std::vector<int> modified;
+
     bool used;
     graph_roots():used(false) {}
   };
