@@ -431,21 +431,16 @@ int count(const std::vector<int>& v, int I)
 
 
 // Called from: set_reg_value( ), reclaim_used( ), uniquify_reg( ), incremental_evaluate( ).
-
-void reg_heap::clear_used_inputs(int R1)
+void reg_heap::clear_used_inputs(int rc1)
 {
-  assert(is_address(R1));
-
   // If this reg is unused, then upstream regs are in the process of being destroyed.
   // However, if this reg is used, then upstream regs may be live, and so should have
   //  correct edges.
 
-  // We shouldn't need to call this on regs that are already on the free list.
-  assert( not is_free(R1) );
-
-  int rc1 = map_target(R1);
-
   auto& RC1 = computation_records.access_unused(rc1);
+
+  // We shouldn't need to call this on regs that are already on the free list.
+  assert( not is_free(RC1.source) );
 
   // Remove the back edges from each used_input reg that is not on the free list.
   for(const auto& i: RC1.used_inputs)
@@ -471,6 +466,13 @@ void reg_heap::clear_used_inputs(int R1)
   RC1.used_inputs.clear();
 
   assert(RC1.used_inputs.empty());
+}
+
+void reg_heap::clear_used_inputs_for_reg(int R)
+{
+  int rc = map_target(R);
+  if (rc > 0)
+    clear_used_inputs(rc);
 }
 
 // set_call (or set_call_unsafe) is only called when
@@ -728,7 +730,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       // We don't know what the reduction result is, so invalidate the call.
       clear_call_for_reg(R1);
       // Remember to clear the used inputs.
-      clear_used_inputs(R1);
+      clear_used_inputs_for_reg(R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
       for(int rc2: computation_for_reg(R1).used_by)
@@ -2166,14 +2168,12 @@ reg_heap::reg_heap()
 
   //  computation_records.collect_garbage = [this](){collect_garbage();};
   computation_records.collect_garbage = [](){};
-  computation_records.clear_references = [this](int rc){
-    // Can we avoid referring to r at all here?
-    // We'd have to make back-edges refer to computation_records directly.
-    int r = computation_records.access_unused(rc).source;
-    clear_used_inputs(r);
-    clear_call(rc);
-    computation_records.access_unused(rc).source = -1;
-  };
+  computation_records.clear_references = [this](int rc)
+    {
+      clear_used_inputs(rc);
+      clear_call(rc);
+      computation_records.access_unused(rc).source = -1;
+    };
 }
 
 #include "computation.H"
@@ -2482,7 +2482,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
 	  assert(not computation_for_reg(R).call);
 	  assert(not computation_for_reg(R).result);
-	  clear_used_inputs(R);
+	  clear_used_inputs_for_reg(R);
 	  set_C(R, std::move(result) );
 	}
 	// Otherwise, set the reduction result.
