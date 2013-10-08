@@ -397,6 +397,9 @@ void reg_heap::set_used_input(int R1, int R2)
   assert(access(R1).C);
   assert(access(R2).C);
 
+  int rc1 = map_target(R1);
+  computation_record& RC1 = computation_records[rc1];
+
   // An index_var's result only changes if the thing the index-var points to also changes.
   // So, we may as well forbid using an index_var as an input.
   assert(access(R2).C.exp->head->type() != index_var_type);
@@ -406,14 +409,15 @@ void reg_heap::set_used_input(int R1, int R2)
   //   through regvar chains that are not changeable.
 
   // R1 shouldn't have any used inputs if it isn't changeable.
-  assert(computation_for_reg(R1).changeable);
+  assert(RC1.changeable);
   // Don't add unchangeable results as inputs
   assert(computation_for_reg(R2).changeable);
   // Don't add a reg as input if no reduction has been performed.
   // assert(computation_for_reg(R2).result or computation_for_reg(R2).call);
 
-  reg::back_edge_deleter D = computation_for_reg(R2).used_by.insert(computation_for_reg(R2).used_by.end(), R1);
-  computation_for_reg(R1).used_inputs.emplace_back(R2,D);
+  auto& used_by = computation_for_reg(R2).used_by;
+  reg::back_edge_deleter D = used_by.insert(used_by.end(), rc1);
+  RC1.used_inputs.emplace_back(R2,D);
 }
 
 int count(const std::vector<int>& v, int I)
@@ -430,7 +434,7 @@ int count(const std::vector<int>& v, int I)
 
 void reg_heap::clear_used_inputs(int R1)
 {
-  assert(R1 > 0 and R1 < size());
+  assert(is_address(R1));
 
   // If this reg is unused, then upstream regs are in the process of being destroyed.
   // However, if this reg is used, then upstream regs may be live, and so should have
@@ -439,8 +443,12 @@ void reg_heap::clear_used_inputs(int R1)
   // We shouldn't need to call this on regs that are already on the free list.
   assert( not is_free(R1) );
 
+  int rc1 = map_target(R1);
+
+  auto& RC1 = computation_records.access_unused(rc1);
+
   // Remove the back edges from each used_input reg that is not on the free list.
-  for(const auto& i: computation_for_reg(R1).used_inputs)
+  for(const auto& i: RC1.used_inputs)
   {
     int R2 = i.first;
     assert(is_address(R2));
@@ -453,16 +461,16 @@ void reg_heap::clear_used_inputs(int R1)
       assert( not computation_for_reg(R2).used_by.empty() );
 
       reg::back_edge_deleter D = i.second;
-      assert( *D == R1 );
+      assert( *D == rc1 );
 
       computation_for_reg(R2).used_by.erase(D);
     }
   }
 
   // Remove the forward edges.
-  computation_for_reg(R1).used_inputs.clear();
+  RC1.used_inputs.clear();
 
-  assert(computation_for_reg(R1).used_inputs.empty());
+  assert(RC1.used_inputs.empty());
 }
 
 // set_call (or set_call_unsafe) is only called when
@@ -683,11 +691,14 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       clear_result(R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(int R2: computation_for_reg(R1).used_by)
+      for(int rc2: computation_for_reg(R1).used_by)
       {
-	if (computation_for_reg(R2).temp == mark_call_result) continue;
-	computation_for_reg(R2).temp = mark_call_result;
-	call_and_result_may_be_changed.push_back(R2);
+	auto& RC2 = computation_records[rc2];
+
+	if (RC2.temp == mark_call_result) continue;
+
+	RC2.temp = mark_call_result;
+	call_and_result_may_be_changed.push_back(RC2.source);
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
@@ -720,11 +731,14 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       clear_used_inputs(R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(int R2: computation_for_reg(R1).used_by)
+      for(int rc2: computation_for_reg(R1).used_by)
       {
-	if (computation_for_reg(R2).temp == mark_call_result) continue;
-	computation_for_reg(R2).temp = mark_call_result;
-	call_and_result_may_be_changed.push_back(R2);
+	auto& RC2 = computation_records[rc2];
+
+	if (RC2.temp == mark_call_result) continue;
+
+	RC2.temp = mark_call_result;
+	call_and_result_may_be_changed.push_back(RC2.source);
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
@@ -1378,8 +1392,11 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
       the changed reg, but we only invalidate thing that CURRENTLY depend on the
       changed reg.
     */
-    for(int Q1: computation_for_reg(R1).used_by)
+    for(int qc1: computation_for_reg(R1).used_by)
     {
+      const auto& QC1 = computation_records[qc1];
+      int Q1 = QC1.source;
+
       // Skip regs that we've handled already.
       if (is_marked(Q1)) continue;
 
@@ -1608,6 +1625,8 @@ int reg_heap::uniquify_reg(int R, int t)
   // Remap the unsplit parents. (The parents don't move, but they reference children that do.)
   for(int Q1: unsplit_parents)
   {
+    int qc1 = map_target(Q1);
+
     // a. Remap E
     set_C(Q1, remap_regs(access(Q1).C ) );
     
@@ -1639,12 +1658,12 @@ int reg_heap::uniquify_reg(int R, int t)
 	assert( not computation_for_reg(I1).used_by.empty() );
 
 	reg::back_edge_deleter& D = i.second;
-	assert( *D == Q1 );
+	assert( *D == qc1 );
 
 	computation_for_reg(I1).used_by.erase(D);
 
 	// Add the edge to I2
-	D = computation_for_reg(I2).used_by.push_back(Q1);
+	D = computation_for_reg(I2).used_by.push_back(qc1);
 	I1 = I2;
       }
     }
@@ -1747,6 +1766,8 @@ void reg_heap::check_used_reg(int index) const
 {
   const reg& R = access(index);
 
+  int index_c = map_target(index);
+
   // This should check the ownership is working correctly.
   // (i.e. Does the bitmap match the category bitmap?  It might not need too.)
   get_reg_owners(index);
@@ -1770,13 +1791,11 @@ void reg_heap::check_used_reg(int index) const
     assert( reg_is_owned_by_all_of(r, get_reg_owners(index) ) );
 
     // Check that used regs are have back-references to R
-    assert( computation_for_reg(r).used_by.count(index) );
+    assert( computation_for_reg(r).used_by.count(index_c) );
   }
 
   if (RC.call)
   {
-    int index_c = map_target(index);
-
     // Check that the pointer to the reverse edge iterator is intact.
     assert( *RC.call_reverse == index_c );
 
