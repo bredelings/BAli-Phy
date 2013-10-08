@@ -291,7 +291,7 @@ expression_ref graph_normalize(const expression_ref& E)
 // See "From Natural Semantics to C: A Formal Derivation of two STG machines."
 //      by Alberto de la Encina and Ricardo Pena.
 
-void computation_record::clear()
+void computation::clear()
 {
   changeable = false;
   result = 0;
@@ -308,7 +308,7 @@ void computation_record::clear()
   re_evaluate = false;
 }
 
-void computation_record::check_cleared()
+void computation::check_cleared()
 {
   assert(not result);
   assert(not call);
@@ -316,7 +316,7 @@ void computation_record::check_cleared()
   assert(called_by.empty());
 }
 
-computation_record& computation_record::operator=(computation_record&& R) noexcept
+computation& computation::operator=(computation&& R) noexcept
 {
   source = R.source;
   owners = std::move( R.owners );
@@ -335,7 +335,7 @@ computation_record& computation_record::operator=(computation_record&& R) noexce
   return *this;
 }
 
-computation_record::computation_record(computation_record&& R) noexcept
+computation::computation(computation&& R) noexcept
 :source(R.source),
   owners( std::move( R.owners ) ),
   ownership_category( std::move( R.ownership_category) ),
@@ -398,7 +398,7 @@ void reg_heap::set_used_input(int R1, int R2)
   assert(access(R2).C);
 
   int rc1 = map_target(R1);
-  computation_record& RC1 = computation_records[rc1];
+  computation& RC1 = computations[rc1];
 
   // An index_var's result only changes if the thing the index-var points to also changes.
   // So, we may as well forbid using an index_var as an input.
@@ -437,7 +437,7 @@ void reg_heap::clear_used_inputs(int rc1)
   // However, if this reg is used, then upstream regs may be live, and so should have
   //  correct edges.
 
-  auto& RC1 = computation_records.access_unused(rc1);
+  auto& RC1 = computations.access_unused(rc1);
 
   // We shouldn't need to call this on regs that are already on the free list.
   assert( not is_free(RC1.source) );
@@ -503,7 +503,7 @@ void reg_heap::set_call_unsafe(int R1, int R2)
   assert(not computation_for_reg(R1).call);
 
   int rc1 = map_target(R1);
-  computation_record& RC1 = computation_records[rc1];
+  computation& RC1 = computations[rc1];
   RC1.call = R2;
   auto& called_by2 = computation_for_reg(R2).called_by;
 
@@ -525,7 +525,7 @@ void reg_heap::set_call(int R1, int R2)
 
 void reg_heap::clear_call(int rc)
 {
-  computation_record& RC = computation_records.access_unused(rc);
+  computation& RC = computations.access_unused(rc);
 
   int R2 = RC.call;
   if (not R2) return;
@@ -695,7 +695,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
       for(int rc2: computation_for_reg(R1).used_by)
       {
-	auto& RC2 = computation_records[rc2];
+	auto& RC2 = computations[rc2];
 
 	if (RC2.temp == mark_call_result) continue;
 
@@ -706,7 +706,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       // Scan regs that call R2 directly and put them on the invalid-result list.
       for(int rc2: computation_for_reg(R1).called_by)
       {
-	computation_record& RC2 = computation_records[rc2];
+	computation& RC2 = computations[rc2];
 
 	if (RC2.temp != -1) continue;
 
@@ -735,7 +735,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
       for(int rc2: computation_for_reg(R1).used_by)
       {
-	auto& RC2 = computation_records[rc2];
+	auto& RC2 = computations[rc2];
 
 	if (RC2.temp == mark_call_result) continue;
 
@@ -746,7 +746,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       // Scan regs that call R2 directly and put them on the invalid-result list.
       for(int rc2: computation_for_reg(R1).called_by)
       {
-	computation_record& RC2 = computation_records[rc2];
+	computation& RC2 = computations[rc2];
 
 	if (RC2.temp != -1) continue;
 
@@ -786,8 +786,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
 int reg_heap::map_reg(int r)
 {
-  int rc = computation_records.allocate();
-  computation_records.access_unused(rc).source = r;
+  int rc = computations.allocate();
+  computations.access_unused(rc).source = r;
   token_roots[0].virtual_mapping[r] = rc;
   return rc;
 }
@@ -796,7 +796,7 @@ void reg_heap::unmap_reg(int r)
 {
   int rc = map_target(r);
   if (rc > 0)
-    computation_records.reclaim_used(rc);
+    computations.reclaim_used(rc);
   token_roots[0].virtual_mapping[r] = 0;
 }
 
@@ -943,7 +943,7 @@ void reg_heap::remove_unused_ownership_marks()
   // Clear ownership marks
   for(auto r = begin(); r != end(); r++)
   {
-    computation_record& RC = computation_for_reg(r.addr());
+    computation& RC = computation_for_reg(r.addr());
 #ifndef NDEBUG
     RC.temp_owners = *RC.ownership_category;
 #endif
@@ -976,7 +976,7 @@ void reg_heap::remove_unused_ownership_marks()
   // Check that we did not ADD any ownership marks!
   for(auto r = begin(); r != end(); r++)
   {
-    computation_record& RC = computation_for_reg(r.addr());
+    computation& RC = computation_for_reg(r.addr());
 
     assert( includes(RC.temp_owners, RC.owners) );
 
@@ -1012,7 +1012,7 @@ void reg_heap::trace_and_reclaim_unreachable()
       next_scan.insert(next_scan.end(), R.C.Env.begin(), R.C.Env.end());
 
       // Count also the references from the call
-      const computation_record& RC = computation_for_reg(r);
+      const computation& RC = computation_for_reg(r);
       if (RC.call) 
 	next_scan.insert(next_scan.end(), RC.call);
     }
@@ -1134,7 +1134,7 @@ void reg_heap::set_reg_owners(int r, const owner_set_t& owners)
 
 void reg_heap::set_reg_ownership_category(int r, const ownership_category_t& c)
 {
-  computation_record& RC = computation_for_reg(r);
+  computation& RC = computation_for_reg(r);
   RC.ownership_category = c;
   //  R.owners = *c;
 
@@ -1201,7 +1201,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
   // Add the call parents of R
   for(int qc: computation_for_reg(R).called_by)
   {
-    const computation_record& QC = computation_records[qc];
+    const computation& QC = computations[qc];
     int Q = QC.source;
     assert(is_used(Q));
 
@@ -1221,7 +1221,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
 
     for(int qc2: computation_for_reg(Q1).called_by)
     {
-      const computation_record& QC2 = computation_records[qc2];
+      const computation& QC2 = computations[qc2];
       int Q2 = QC2.source;
 
       // Skip regs that have been seen before.
@@ -1288,10 +1288,10 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
     scan.insert(scan.end(), R.referenced_by_in_E.begin(), R.referenced_by_in_E.end());
 
     // Count the references from calls by other regs
-    const computation_record& RC = computation_for_reg(r);
+    const computation& RC = computation_for_reg(r);
 
     for(int rc2: RC.called_by)
-      scan.push_back(computation_records[rc2].source);
+      scan.push_back(computations[rc2].source);
   }
 
   for(int R: unique)
@@ -1396,7 +1396,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
     */
     for(int qc1: computation_for_reg(R1).used_by)
     {
-      const auto& QC1 = computation_records[qc1];
+      const auto& QC1 = computations[qc1];
       int Q1 = QC1.source;
 
       // Skip regs that we've handled already.
@@ -1413,7 +1413,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
     for(int qc1: computation_for_reg(R1).called_by)
     {
-      const computation_record& QC1 = computation_records[qc1];
+      const computation& QC1 = computations[qc1];
       int Q1 = QC1.source;
 
       // Skip regs that we've handled already.
@@ -1783,7 +1783,7 @@ void reg_heap::check_used_reg(int index) const
     assert(access(r).referenced_by_in_E.count(index) );
   }
   
-  const computation_record& RC = computation_for_reg(index);
+  const computation& RC = computation_for_reg(index);
 
   for(const auto& i: RC.used_inputs)
   {
@@ -1976,7 +1976,7 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
       }
     }
 
-    const computation_record& RC = computation_for_reg(r);
+    const computation& RC = computation_for_reg(r);
 
     // Count also the references from the call
     if (RC.call and is_used(RC.call))
@@ -2158,7 +2158,7 @@ int reg_heap::add_identifier_to_context(int t, const string& name)
 
 reg_heap::reg_heap()
   :base_pool_t(1),
-   computation_records(1)
+   computations(1)
 { 
   target.resize(size());
   target[0] = 0;
@@ -2166,13 +2166,13 @@ reg_heap::reg_heap()
   owner_set_t empty;
   canonical_ownership_categories.insert(empty, ownership_categories.push_back(empty));
 
-  //  computation_records.collect_garbage = [this](){collect_garbage();};
-  computation_records.collect_garbage = [](){};
-  computation_records.clear_references = [this](int rc)
+  //  computations.collect_garbage = [this](){collect_garbage();};
+  computations.collect_garbage = [](){};
+  computations.clear_references = [this](int rc)
     {
       clear_used_inputs(rc);
       clear_call(rc);
-      computation_records.access_unused(rc).source = -1;
+      computations.access_unused(rc).source = -1;
     };
 }
 

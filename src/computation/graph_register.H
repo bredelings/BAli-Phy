@@ -20,7 +20,7 @@
 typedef std::bitset<64> owner_set_t;
 typedef CacheList<owner_set_t>::iterator ownership_category_t;
 
-struct computation_record
+struct computation
 {
   int source = -1;
 
@@ -65,13 +65,13 @@ struct computation_record
 
   void check_cleared();
 
-  computation_record& operator=(const computation_record&) = delete;
-  computation_record& operator=(computation_record&&) noexcept;
+  computation& operator=(const computation&) = delete;
+  computation& operator=(computation&&) noexcept;
 
-  computation_record() = default;
+  computation() = default;
 
-  computation_record(const computation_record&) = delete;
-  computation_record(computation_record&&) noexcept;
+  computation(const computation&) = delete;
+  computation(computation&&) noexcept;
 };
 
 class reg
@@ -107,7 +107,7 @@ class reg_heap: public Object, public checked_pool<reg>
 {
   typedef checked_pool<reg> base_pool_t;
 
-  checked_pool_callback<computation_record> computation_records;
+  checked_pool_callback<computation> computations;
 
   std::vector<int> target;
   CacheList<int> roots;
@@ -133,18 +133,18 @@ public:
 
   reg_heap* clone() const {std::abort();}
 
-  const computation_record& computation_for_reg(int r) const 
+  const computation& computation_for_reg(int r) const 
   { 
     int rc = map_target(r);
     assert(rc > 0);
-    return computation_records.access_unused(rc);
+    return computations.access_unused(rc);
   }
 
-        computation_record& computation_for_reg(int r)
+        computation& computation_for_reg(int r)
   { 
     int rc = map_target(r);
     assert(rc > 0);
-    return computation_records.access_unused(rc);
+    return computations.access_unused(rc);
   }
 
   const closure& access_result(int R1) const
@@ -333,7 +333,7 @@ public:
   int map_target(int r) const {
     int rc = token_roots[0].virtual_mapping[r];
     if (rc > 0)
-      assert(computation_records.access_unused(rc).source == r);
+      assert(computations.access_unused(rc).source == r);
     return rc;
   }
 
