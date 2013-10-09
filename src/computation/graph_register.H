@@ -179,6 +179,14 @@ public:
   void get_roots(std::vector<int>&) const;
   void get_roots(std::vector<int>&,int) const;
 
+  struct address
+  {
+    int rc = 0;
+    int index = -1;
+    address() {}
+    address(int i1, int i2):rc(i1),index(i2) {}
+  };
+
   struct graph_roots
   {
     // The context this context is derived from.
@@ -206,7 +214,7 @@ public:
     std::vector<int> triggers;
 
     /// Mapping from closures to computations/results
-    std::vector<int> virtual_mapping;
+    std::vector<address> virtual_mapping;
 
     std::vector<int> modified;
 
@@ -333,12 +341,12 @@ public:
     int rc = 0;
     do
     {
-      if (t < 0) return true;
-      rc = token_roots[t].virtual_mapping[r];
+      if (t < 0) return false;
+      rc = token_roots[t].virtual_mapping[r].rc;
       t = token_roots[t].parent;
     } while (not rc);
 
-    return false;
+    return true;
   }
 
   int map_target(int t, int r) const 
@@ -347,11 +355,11 @@ public:
     do
     {
       assert(t >= 0);
-      rc = token_roots[t].virtual_mapping[r];
+      rc = token_roots[t].virtual_mapping[r].rc;
       t = token_roots[t].parent;
     } while (not rc);
   
-    assert( rc == token_roots[0].virtual_mapping[r] );
+    assert( rc == token_roots[0].virtual_mapping[r].rc );
 
     return rc;
   }

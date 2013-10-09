@@ -379,6 +379,24 @@ void reg::check_cleared()
   assert(referenced_by_in_E.empty());
 }
 
+void erase_from_stack(vector<int>& s, int i, vector<reg_heap::address>& v)
+{
+  int x = s.back();
+  s.pop_back();
+
+  if (i < s.size())
+  {
+    s[i] = x;
+    v[x].index = i;
+  }
+}
+
+void erase_from_stack_check(vector<int>& s, int i, int x0, vector<reg_heap::address>& v)
+{
+  assert(s[i] == x0);
+  erase_from_stack(s, i, v);
+}
+
 void reg_heap::set_used_input(int R1, int R2)
 {
   assert(is_valid_address(R1));
@@ -441,7 +459,7 @@ void reg_heap::clear_used_inputs(int rc1)
 
     if (is_free(R2))
       //      assert( computation_for_reg(0,R2).used_by.empty() );
-      assert( not is_mapped(0,R2) == 0);
+      assert( not is_mapped(0,R2) );
     else
     {
       auto& RC2 = computation_for_reg(0,R2);
@@ -529,7 +547,7 @@ void reg_heap::clear_call(int rc)
   // If the call points to a freed reg, then its called_by list should already be cleared.
   if (is_free(R2))
     //    assert( computation_for_reg(0,R2).called_by.empty() );
-    assert( not is_mapped(0,R2) == 0 );
+    assert( not is_mapped(0,R2) );
   // If the call points to a used reg, then we need to notify it that the incoming call edge is being removed.
   else {
     assert( is_used(R2) or is_marked(R2) );
@@ -785,18 +803,31 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
 int reg_heap::map_reg(int t, int r)
 {
+  assert( not is_mapped(t,r) );
+  int index = token_roots[t].modified.size();
+  token_roots[t].modified.push_back(r);
+
   int rc = computations.allocate();
   computations.access_unused(rc).source = r;
-  token_roots[t].virtual_mapping[r] = rc;
+  token_roots[t].virtual_mapping[r] = {rc,index};
+  assert(token_roots[t].modified[index] == r);
   return rc;
 }
 
 void reg_heap::unmap_reg(int t, int r)
 {
-  int rc = map_target(t,r);
-  if (rc > 0)
-    computations.reclaim_used(rc);
-  token_roots[t].virtual_mapping[r] = 0;
+  // find the mapping for reg r in context t
+  auto& addr =   token_roots[t].virtual_mapping[r];
+  assert(addr.rc > 0);
+  computations.reclaim_used(addr.rc);
+
+  // erase the mark that reg r is modified
+  erase_from_stack_check(token_roots[t].modified, addr.index, r, token_roots[t].virtual_mapping);
+
+  // unmap reg r in context t
+  addr = {};
+
+  assert(not is_mapped(t,r));
 }
 
 void reg_heap::reclaim_used(int r)
@@ -809,8 +840,13 @@ void reg_heap::reclaim_used(int r)
 
   // However, downstream regs may be live, and therefore when we destroy outgoing edges, we
   // need to notify downstream regs of the absence of these incoming edges.
-  unmap_reg(0, r);
-  //FIXME - how to reclaim computations from ALL contexts?
+  for(int t=0;t<token_roots.size();t++)
+    if (is_mapped(t,r))
+      unmap_reg(t, r);
+
+  for(int t=0;t<token_roots.size();t++)
+    assert(not is_mapped(t,r));
+
   clear_C(r);
 
   add_to_free_list(r);
@@ -919,7 +955,7 @@ void reg_heap::expand_memory(int s)
   {
     tr.virtual_mapping.resize(size());
     for(int i=old_size;i<size();i++)
-      tr.virtual_mapping[i] = 0;
+      assert(tr.virtual_mapping[i].rc == 0);
   }
 }
 
@@ -1087,8 +1123,8 @@ int reg_heap::get_unused_token()
     unused_tokens.push_back(get_n_tokens());
     token_roots.push_back(graph_roots());
     token_roots.back().virtual_mapping.resize(size());
-    for(int& i: token_roots.back().virtual_mapping)
-      i=0;
+    for(auto& addr: token_roots.back().virtual_mapping)
+      assert(addr.rc == 0);
   }
 
   for(auto& tr: token_roots)
@@ -2067,7 +2103,8 @@ void reg_heap::try_release_token(int t)
 
   // clear only the mappings that were actually updated here.
   for(int R: token_roots[t].modified)
-    token_roots[t].virtual_mapping[R] = 0;
+    token_roots[t].virtual_mapping[R] = {0,-1};
+  token_roots[t].modified.clear();
 
 #ifdef DEBUG_MACHINE
   assert(token_roots[t].virtual_mapping.size() == size());
