@@ -328,10 +328,31 @@ public:
 
   void unmap_reg(int t, int r);
 
-  int map_target(int t, int r) const {
-    int rc = token_roots[0].virtual_mapping[r];
-    if (rc > 0)
-      assert(computations.access_unused(rc).source == r);
+  bool is_mapped(int t, int r) const
+  {
+    int rc = 0;
+    do
+    {
+      if (t < 0) return true;
+      rc = token_roots[t].virtual_mapping[r];
+      t = token_roots[t].parent;
+    } while (not rc);
+
+    return false;
+  }
+
+  int map_target(int t, int r) const 
+  {
+    int rc = 0;
+    do
+    {
+      assert(t >= 0);
+      rc = token_roots[t].virtual_mapping[r];
+      t = token_roots[t].parent;
+    } while (not rc);
+  
+    assert( rc == token_roots[0].virtual_mapping[r] );
+
     return rc;
   }
 

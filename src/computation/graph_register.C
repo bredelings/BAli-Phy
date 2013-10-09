@@ -441,7 +441,7 @@ void reg_heap::clear_used_inputs(int rc1)
 
     if (is_free(R2))
       //      assert( computation_for_reg(0,R2).used_by.empty() );
-      assert( map_target(0,R2) == 0);
+      assert( not is_mapped(0,R2) == 0);
     else
     {
       auto& RC2 = computation_for_reg(0,R2);
@@ -529,7 +529,7 @@ void reg_heap::clear_call(int rc)
   // If the call points to a freed reg, then its called_by list should already be cleared.
   if (is_free(R2))
     //    assert( computation_for_reg(0,R2).called_by.empty() );
-    assert( map_target(0,R2) == 0 );
+    assert( not is_mapped(0,R2) == 0 );
   // If the call points to a used reg, then we need to notify it that the incoming call edge is being removed.
   else {
     assert( is_used(R2) or is_marked(R2) );
@@ -2135,7 +2135,11 @@ int reg_heap::copy_token(int t)
 
   assert(token_roots[t].temp.empty());
 
-  token_roots[t2] = token_roots[t];
+  token_roots[t2].heads = token_roots[t].heads;
+  token_roots[t2].parameters = token_roots[t].parameters;
+  token_roots[t2].identifiers = token_roots[t].identifiers;
+  token_roots[t2].modifiable_regs = token_roots[t].modifiable_regs;
+  token_roots[t2].triggers = token_roots[t].triggers;
 
   // set parent relationship
   token_roots[t2].parent = t;
