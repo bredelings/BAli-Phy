@@ -276,7 +276,6 @@ public:
   int copy_token(int);
 
   /*---- Ownership ------*/
-
   const owner_set_t& get_reg_owners(int) const;
   
   const ownership_category_t& get_reg_ownership_category(int) const;
