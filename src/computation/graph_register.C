@@ -401,11 +401,12 @@ void reg_heap::set_used_input(int R1, int R2)
   // R1 shouldn't have any used inputs if it isn't changeable.
   assert(RC1.changeable);
   // Don't add unchangeable results as inputs
-  assert(computation_for_reg(R2).changeable);
+  computation& RC2 = computation_for_reg(R2);
+  assert(RC2.changeable);
   // Don't add a reg as input if no reduction has been performed.
   // assert(computation_for_reg(R2).result or computation_for_reg(R2).call);
 
-  auto& used_by = computation_for_reg(R2).used_by;
+  auto& used_by = RC2.used_by;
   reg::back_edge_deleter D = used_by.insert(used_by.end(), rc1);
   RC1.used_inputs.emplace_back(R2,D);
 }
@@ -443,12 +444,13 @@ void reg_heap::clear_used_inputs(int rc1)
       assert( map_target(R2) == 0);
     else
     {
-      assert( not computation_for_reg(R2).used_by.empty() );
+      auto& RC2 = computation_for_reg(R2);
+      assert( not RC2.used_by.empty() );
 
       reg::back_edge_deleter D = i.second;
       assert( *D == rc1 );
 
-      computation_for_reg(R2).used_by.erase(D);
+      RC2.used_by.erase(D);
     }
   }
 
