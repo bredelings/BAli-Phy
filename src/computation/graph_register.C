@@ -701,7 +701,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(int rc2: computation_for_reg(R1).called_by)
+      for(int rc2: RC1.called_by)
       {
 	computation& RC2 = computations[rc2];
 
@@ -1322,15 +1322,17 @@ void reg_heap::check_results_in_context(int t) const
   vector<int> regs = find_all_regs_in_context(t);
   for(int Q: regs)
   {
-    if (computation_for_reg(Q).call)
+    int qc = map_target(Q);
+    const auto& QC = computations[qc];
+
+    if (QC.call)
     {
-      int qc = map_target(Q);
-      assert( *computation_for_reg(Q).call_reverse == qc );
+      assert( *QC.call_reverse == qc );
     }
       
-    if (computation_for_reg(Q).result == Q)
+    if (QC.result == Q)
     {
-      assert(not computation_for_reg(Q).call);
+      assert(not QC.call);
       WHNF_results.push_back(Q);
     }
   }
@@ -1564,31 +1566,34 @@ int reg_heap::uniquify_reg(int R, int t)
   //      This is after copying C to avoid linking to regs with no C
   for(int R1: split)
   {
+    auto& RC1 = computation_for_reg(R1);
+
     int R2 = target[R1];
+    auto& RC2 = computation_for_reg(R2);
 
     // 4b. Initialize/Remap call
-    if (computation_for_reg(R1).call)
-      set_call(R2, target[computation_for_reg(R1).call] );
+    if (RC1.call)
+      set_call(R2, target[RC1.call] );
 
     // 4c. Initialize/Remap used_inputs
-    for(const auto& i: computation_for_reg(R1).used_inputs)
+    for(const auto& i: RC1.used_inputs)
       set_used_input(R2, target[i.first] );
 
     // 4d. Initialize/Remap result if E is in WHNF.
-    if (not computation_for_reg(R2).call and computation_for_reg(R1).result)
+    if (not RC2.call and RC1.result)
     {
-      assert( computation_for_reg(R1).result == R1);
-      computation_for_reg(R2).result = R2;
+      assert( RC1.result == R1);
+      RC2.result = R2;
       changed_results.push_back(R2);
     }
     // 4d. Initialize/Copy result otherwise.
     else
     {
-      assert( computation_for_reg(R1).result != R1);
+      assert( RC1.result != R1);
       // Q: Why is it OK to use the un-remapped result?
       // A: Because we remap calls here; later we trace backwards along these
       //    remapped call chains to set any results to the proper WHNF expression.
-      computation_for_reg(R2).result = computation_for_reg(R1).result;
+      RC2.result = RC1.result;
     }
   }
 
