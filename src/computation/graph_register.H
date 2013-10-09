@@ -275,6 +275,8 @@ public:
   /// Acquire a copy of a token
   int copy_token(int);
 
+  /*---- Ownership ------*/
+
   const owner_set_t& get_reg_owners(int) const;
   
   const ownership_category_t& get_reg_ownership_category(int) const;
@@ -301,30 +303,30 @@ public:
 
   bool reg_is_shared(int) const;
 
-  /*----- Graph walking ------*/
   void remove_ownership_mark(int);
-  /*----- Graph walking ------*/
   void duplicate_ownership_mark(int,int);
+
   /*----- Graph walking ------*/
   void find_all_regs_in_context(int, std::vector<int>&) const;
   void find_all_used_regs_in_context(int, std::vector<int>&) const;
-  /*----- Graph walking ------*/
+
   void find_all_regs_in_context_no_check(int, std::vector<int>&) const;
   void find_all_regs_in_context_no_check(int, std::vector<int>&,std::vector<int>&) const;
-  /*----- Graph walking ------*/
+
   std::vector<int> find_all_regs_in_context(int) const;
   std::vector<int> find_all_used_regs_in_context(int) const;
-  /*----- Graph walking ------*/
+
   std::vector<int> find_all_regs_in_context_no_check(int) const;
-  /*----- Graph walking ------*/
+
   void find_shared_ancestor_regs_in_context(int,int, std::vector<int>&) const;
-  /*----- Graph walking ------*/
+
   void find_unsplit_parents(const std::vector<int>&,int, std::vector<int>&) const;
-  /*----- Graph walking ------*/
+
   std::vector<int> find_call_ancestors_in_context(int,int) const;
-  /*----- Graph walking ------*/
+
   void check_results_in_context(int) const;
 
+  /*----- Virtual memory ------*/
   int map_reg(int r);
 
   void unmap_reg(int r);
