@@ -91,7 +91,7 @@ public:
 
   computation& computation_for_reg(int i) const {return memory()->computation_for_reg(i);}
 
-  const closure& access_result(int i) const {return memory()->access_result(i);}
+  const closure& access_result_for_reg(int i) const {return memory()->access_result_for_reg(i);}
 
   reg& operator[](int i) const {return memory()->access(i);}
 

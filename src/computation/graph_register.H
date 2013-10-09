@@ -147,14 +147,12 @@ public:
     return computations.access_unused(rc);
   }
 
-  const closure& access_result(int R1) const
+  const closure& access_result_for_reg(int R1) const
   {
     int R2 = computation_for_reg(R1).result;
     assert(R2);
     return access(R2).C;
   }
-
-  void clear_result(int R) {computation_for_reg(R).result = 0;}
 
   int allocate();
 

@@ -656,7 +656,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Clear the call, clear the result, and set the value
   assert(PC.used_inputs.empty());
   clear_call_for_reg(P);
-  clear_result(P);
+  PC.result = 0;
 
   const int mark_call_result = 1;
   const int mark_result = 2;
@@ -687,7 +687,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 	regs_to_re_evaluate.push_back(R1);
 
       // Since the computation may be different, we don't know if the value has changed.
-      clear_result(R1);
+      RC1.result = 0;
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
       for(int rc2: RC1.used_by)
@@ -725,7 +725,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 	regs_to_re_evaluate.push_back(R1);
 
       // Since the computation may be different, we don't know if the value has changed.
-      clear_result(R1);
+      RC1.result = 0;
       // We don't know what the reduction result is, so invalidate the call.
       clear_call_for_reg(R1);
       // Remember to clear the used inputs.
@@ -2337,9 +2337,9 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
   assert(is_used(R));
   assert(reg_is_owned_by(R,t));
   assert(not is_a<expression>(access(R).C.exp));
-  assert(not computation_for_reg(R).result or is_WHNF(access_result(R).exp));
-  assert(not computation_for_reg(R).result or not is_a<expression>(access_result(R).exp));
-  assert(not computation_for_reg(R).result or not is_a<index_var>(access_result(R).exp));
+  assert(not computation_for_reg(R).result or is_WHNF(access_result_for_reg(R).exp));
+  assert(not computation_for_reg(R).result or not is_a<expression>(access_result_for_reg(R).exp));
+  assert(not computation_for_reg(R).result or not is_a<index_var>(access_result_for_reg(R).exp));
   assert(not computation_for_reg(R).result or not is_a<index_var>(access(R).C.exp));
 
 #ifndef NDEBUG
@@ -2530,9 +2530,9 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
   if (evaluate_changeable or (not computation_for_reg(R).changeable and computation_for_reg(R).result))
   {
     assert(computation_for_reg(R).result);
-    assert(is_WHNF(access_result(R).exp));
-    assert(not is_a<index_var>(access_result(R).exp));
-    assert(not is_a<expression>(access_result(R).exp));
+    assert(is_WHNF(access_result_for_reg(R).exp));
+    assert(not is_a<index_var>(access_result_for_reg(R).exp));
+    assert(not is_a<expression>(access_result_for_reg(R).exp));
   }
 
   return R;

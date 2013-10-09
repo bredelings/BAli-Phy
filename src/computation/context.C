@@ -94,7 +94,7 @@ bool context::reg_is_fully_up_to_date(int R) const
 {
   if (not computation_for_reg(R).result) return false;
 
-  const closure& result = access_result(R);
+  const closure& result = access_result_for_reg(R);
 
   // NOTE! result cannot be an index_var.
   const expression_ref& E = result.exp;
@@ -136,7 +136,7 @@ closure context::lazy_evaluate(int index) const
 
   H = incremental_evaluate(H);
 
-  return access_result(H);
+  return access_result_for_reg(H);
 }
 
 /// Return the value of a particular index, computing it if necessary
@@ -146,7 +146,7 @@ object_ref context::evaluate(int index) const
 
   H = incremental_evaluate(H);
 
-  return access_result(H).exp->head;
+  return access_result_for_reg(H).exp->head;
 }
 
 /// Return the value of a particular index, computing it if necessary
@@ -164,7 +164,7 @@ closure context::lazy_evaluate_expression_(closure&& C, bool ec) const
     set_C(R, std::move(C) );
 
     R = incremental_evaluate(R,ec);
-    const closure& result = access_result(R);
+    const closure& result = access_result_for_reg(R);
     
     pop_temp_head();
     return result;
@@ -235,7 +235,7 @@ object_ref context::get_reg_value(int R) const
     incremental_evaluate(R);
   }
 
-  return access_result(R).exp->head;
+  return access_result_for_reg(R).exp->head;
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
