@@ -1171,6 +1171,20 @@ void reg_heap::compute_ownership_categories()
 #endif
 }
 
+/*
+ * We would like to know if a reg E[i] ---t--> C[i] that is unreachable in t could
+ * be reachable in a child context of t.
+ *
+ * Let's assume that new regs are only added into contexts where they are reachable
+ * at the time.
+ * 
+ * Then
+ * 1. If the reg was reachable when t was duplicated, then t will still be reachable in t.
+ * 2. If the reg was unreachable when t was duplicated, then t will be unreach in 
+      t & descendants.
+ * 3. If the reg was 
+ */
+
 void reg_heap::collect_garbage()
 {
 #ifdef DEBUG_MACHINE
