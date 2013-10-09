@@ -650,10 +650,11 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
-  assert(computation_for_reg(P).changeable);
+  auto& PC = computation_for_reg(P);
+  assert(PC.changeable);
 
   // Clear the call, clear the result, and set the value
-  assert(computation_for_reg(P).used_inputs.empty());
+  assert(PC.used_inputs.empty());
   clear_call_for_reg(P);
   clear_result(P);
 
@@ -666,7 +667,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   // The index that we just altered cannot be known to be unchanged.
   call_and_result_may_be_changed.push_back(P);
-  computation_for_reg(P).temp = mark_call_result;
+  PC.temp = mark_call_result;
   result_may_be_changed.push_back(P);
 
   int i=0;
@@ -677,17 +678,19 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     for(;j<result_may_be_changed.size();j++)
     {
       int R1 = result_may_be_changed[j];
-      assert(computation_for_reg(R1).temp == mark_call_result or computation_for_reg(R1).temp == mark_result);
+      int rc1 = map_target(R1);
+      auto& RC1 = computations[rc1];
+      assert(RC1.temp == mark_call_result or RC1.temp == mark_result);
 
       // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-      if (computation_for_reg(R1).re_evaluate)
+      if (RC1.re_evaluate)
 	regs_to_re_evaluate.push_back(R1);
 
       // Since the computation may be different, we don't know if the value has changed.
       clear_result(R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(int rc2: computation_for_reg(R1).used_by)
+      for(int rc2: RC1.used_by)
       {
 	auto& RC2 = computations[rc2];
 
@@ -713,10 +716,12 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     for(;i<call_and_result_may_be_changed.size();i++)
     {
       int R1 = call_and_result_may_be_changed[i];
-      assert(computation_for_reg(R1).temp == mark_call_result);
+      int rc1 = map_target(R1);
+      auto& RC1 = computations[rc1];
+      assert(RC1.temp == mark_call_result);
 
       // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-      if (computation_for_reg(R1).re_evaluate)
+      if (RC1.re_evaluate)
 	regs_to_re_evaluate.push_back(R1);
 
       // Since the computation may be different, we don't know if the value has changed.
@@ -727,7 +732,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       clear_used_inputs_for_reg(R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(int rc2: computation_for_reg(R1).used_by)
+      for(int rc2: RC1.used_by)
       {
 	auto& RC2 = computations[rc2];
 
@@ -738,7 +743,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(int rc2: computation_for_reg(R1).called_by)
+      for(int rc2: RC1.called_by)
       {
 	computation& RC2 = computations[rc2];
 
