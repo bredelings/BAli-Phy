@@ -133,23 +133,23 @@ public:
 
   reg_heap* clone() const {std::abort();}
 
-  const computation& computation_for_reg(int r) const 
+  const computation& computation_for_reg(int t, int r) const 
   { 
-    int rc = map_target(r);
+    int rc = map_target(t,r);
     assert(rc > 0);
     return computations.access_unused(rc);
   }
 
-        computation& computation_for_reg(int r)
+        computation& computation_for_reg(int t, int r)
   { 
-    int rc = map_target(r);
+    int rc = map_target(t,r);
     assert(rc > 0);
     return computations.access_unused(rc);
   }
 
-  const closure& access_result_for_reg(int R1) const
+  const closure& access_result_for_reg(int t, int R1) const
   {
-    int R2 = computation_for_reg(R1).result;
+    int R2 = computation_for_reg(t,R1).result;
     assert(R2);
     return access(R2).C;
   }
@@ -324,11 +324,11 @@ public:
   void check_results_in_context(int) const;
 
   /*----- Virtual memory ------*/
-  int map_reg(int r);
+  int map_reg(int t, int r);
 
-  void unmap_reg(int r);
+  void unmap_reg(int t, int r);
 
-  int map_target(int r) const {
+  int map_target(int t, int r) const {
     int rc = token_roots[0].virtual_mapping[r];
     if (rc > 0)
       assert(computations.access_unused(rc).source == r);

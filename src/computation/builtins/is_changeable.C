@@ -9,10 +9,12 @@ extern "C" closure builtin_function_is_changeable(OperationArgs& Args)
   assert(not Args.evaluate_changeables());
 
   int token = *Args.evaluate_as<Int>(0);
+  assert( Args.current_token() == token );
+
   int R1 = Args.evaluate_slot_to_reg(1);
 
   const reg_heap& M = Args.memory();
-  if (M.computation_for_reg(R1).changeable)
+  if (M.computation_for_reg(token,R1).changeable)
     return constructor("Prelude.True",0);
   else
     return constructor("Prelude.False",0);

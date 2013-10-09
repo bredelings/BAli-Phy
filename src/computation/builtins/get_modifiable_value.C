@@ -16,9 +16,9 @@ extern "C" closure builtin_function_get_modifiable_value(OperationArgs& Args)
   const reg_heap& M = Args.memory();
 
   assert( M.access(R1).C.exp->head->type() == modifiable_type);
-  assert( M.computation_for_reg(R1).changeable );
+  assert( M.computation_for_reg(token,R1).changeable );
 
-  int R2 = Args.memory().computation_for_reg(R1).call;
+  int R2 = Args.memory().computation_for_reg(token,R1).call;
 
   assert( R2 );
 

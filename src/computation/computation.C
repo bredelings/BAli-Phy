@@ -53,7 +53,7 @@ const closure& OperationArgs::evaluate_reg_to_closure(int R2, bool ec)
 {
   int R3 = evaluate_reg_to_reg(R2, ec);
   if (ec)
-    return memory().access_result_for_reg(R3);
+    return memory().access_result_for_reg(current_token(),R3);
   else
     return memory().access(R3).C;
 }
