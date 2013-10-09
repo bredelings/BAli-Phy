@@ -787,16 +787,16 @@ int reg_heap::map_reg(int t, int r)
 {
   int rc = computations.allocate();
   computations.access_unused(rc).source = r;
-  token_roots[0].virtual_mapping[r] = rc;
+  token_roots[t].virtual_mapping[r] = rc;
   return rc;
 }
 
 void reg_heap::unmap_reg(int t, int r)
 {
-  int rc = map_target(0,r);
+  int rc = map_target(t,r);
   if (rc > 0)
     computations.reclaim_used(rc);
-  token_roots[0].virtual_mapping[r] = 0;
+  token_roots[t].virtual_mapping[r] = 0;
 }
 
 void reg_heap::reclaim_used(int r)
@@ -1103,6 +1103,7 @@ int reg_heap::get_unused_token()
 
   assert(token_roots[t].parent == -1);
   assert(token_roots[t].children.empty());
+  assert(token_roots[t].modified.empty());
   assert(not token_roots[t].referenced);
 
   token_roots[t].referenced = true;
