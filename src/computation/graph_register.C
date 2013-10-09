@@ -1717,7 +1717,10 @@ int reg_heap::uniquify_reg(int R, int t)
 #ifndef NDEBUG
   for(int R1: split)
   {
+    const auto& RC1 = computation_for_reg(R1);
+
     int R2 = target[R1];
+    const auto& RC2 = computation_for_reg(R2);
 
     // Check that ownership has been properly split
     assert(not reg_is_owned_by(R1,t) );
@@ -1725,7 +1728,7 @@ int reg_heap::uniquify_reg(int R, int t)
     assert(not reg_is_shared(R2));
 
     // R2 should have a result if R1 has a result
-    assert(not computation_for_reg(R1).result or computation_for_reg(R2).result);
+    assert(not RC1.result or RC2.result);
     // R2 *may* have a result when R1 has no result, if it's call chain leads to a moved WHNF reg who result was updated.
     // Currently we find *all* such ancestors -- not just those that had a result before -- and propagate the new location of the WHNF reg as a result.
     // Perhaps we should not do this, as it then has the effect of doing more than simply MOVE the graph.
@@ -1733,8 +1736,8 @@ int reg_heap::uniquify_reg(int R, int t)
     // But we would like to.
 
     // R2 should have a call IFF R1 has a call
-    assert(not computation_for_reg(R1).call or computation_for_reg(R2).call);
-    assert(not computation_for_reg(R2).call or computation_for_reg(R1).call);
+    assert(not RC1.call or RC2.call);
+    assert(not RC1.call or RC2.call);
   }
 #endif
 
