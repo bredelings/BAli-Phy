@@ -391,10 +391,33 @@ void erase_from_stack(vector<int>& s, int i, vector<reg_heap::address>& v)
   }
 }
 
-void erase_from_stack_check(vector<int>& s, int i, int x0, vector<reg_heap::address>& v)
+void vm_add(vector<int>& m, vector<reg_heap::address>& v, int r, int rc)
 {
-  assert(s[i] == x0);
-  erase_from_stack(s, i, v);
+  assert(not v[r].rc);
+  int index = m.size();
+
+  v[r] = {rc, index};
+  m.push_back(r);
+  assert(m[index] == r);
+}
+
+int vm_erase(vector<int>& m, vector<reg_heap::address>& v, int r)
+{
+  int rc = v[r].rc;
+
+  // The reg should be mapped.
+  assert(rc > 0);
+
+  // Lookup the position in m where we mention r
+  int index = v[r].index;
+  assert(m[index] == r);
+
+  // Erase location r from m, updating v[m.back()] if m.back() is moved within m.
+  erase_from_stack(m, index, v);
+
+  // Actually clear the mapping.
+  v[r] = {};
+  return rc;
 }
 
 void reg_heap::set_used_input(int R1, int R2)
@@ -449,7 +472,7 @@ void reg_heap::clear_used_inputs(int rc1)
   auto& RC1 = computations.access_unused(rc1);
 
   // We shouldn't need to call this on regs that are already on the free list.
-  assert( not is_free(RC1.source) );
+  //  assert( not is_free(RC1.source) );
 
   // Remove the back edges from each used_input reg that is not on the free list.
   for(const auto& i: RC1.used_inputs)
@@ -803,31 +826,89 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
 int reg_heap::map_reg(int t, int r)
 {
-  assert( not is_mapped(t,r) );
-  int index = token_roots[t].modified.size();
-  token_roots[t].modified.push_back(r);
-
   int rc = computations.allocate();
   computations.access_unused(rc).source = r;
-  token_roots[t].virtual_mapping[r] = {rc,index};
-  assert(token_roots[t].modified[index] == r);
+
+  vm_add(token_roots[t].modified, token_roots[t].virtual_mapping, r, rc);
+
   return rc;
 }
 
 void reg_heap::unmap_reg(int t, int r)
 {
-  // find the mapping for reg r in context t
-  auto& addr =   token_roots[t].virtual_mapping[r];
-  assert(addr.rc > 0);
-  computations.reclaim_used(addr.rc);
-
   // erase the mark that reg r is modified
-  erase_from_stack_check(token_roots[t].modified, addr.index, r, token_roots[t].virtual_mapping);
+  int rc = vm_erase(token_roots[t].modified, token_roots[t].virtual_mapping, r);
 
-  // unmap reg r in context t
-  addr = {};
+  computations.reclaim_used(rc);
 
   assert(not is_mapped(t,r));
+}
+
+void pivot_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<int>& m2, vector<reg_heap::address>& v2)
+{
+  if (m1.size() < m2.size())
+  {
+    for(int i=0;i<m1.size();)
+    {
+      int r = m1[i];
+      assert(v1[r].rc);
+      if (not v2[r].rc)
+      {
+	// transfer mapping from v1[r] -> v2[r]
+	int rc = vm_erase(m1, v1, r);
+	vm_add(m2, v2, r, rc);
+      }
+      else
+	i++;
+    }
+  }
+  else
+  {
+    for(int i=0;i<m2.size();)
+    {
+      int r = m2[i];
+      assert(v2[r].rc);
+      if (v2[r].rc)
+      {
+	std::swap(v1[r].rc, v2[r].rc);
+	i++;
+      }
+      else
+      {
+	// transfer mapping from v2[r] -> v2[r]
+	int rc = vm_erase(m2, v2, r);
+	vm_add(m1, v1, r, rc);
+      }
+    }
+    std::swap(m1,m2);
+    std::swap(v1,v2);
+  }
+}
+
+void reg_heap::reroot_mappings_at(int t)
+{
+  assert(token_is_used(t));
+
+  int parent = token_roots[t].parent;
+  if (parent == -1)
+    return;
+
+  // If this context isn't a direct child of the root, then make it one
+  if (token_roots[parent].parent != -1)
+    reroot_mappings_at(parent);
+
+  // Now this context should be a direct child of the root
+  assert(token_roots[parent].parent == -1);
+
+  pivot_mapping(token_roots[parent].modified, token_roots[parent].virtual_mapping,
+		token_roots[t].modified, token_roots[t].virtual_mapping);
+
+  token_roots[parent].parent = t;
+  int index = remove_element(token_roots[parent].children, t);
+  assert(index != -1);
+
+  token_roots[t].parent = -1;
+  token_roots[t].children.push_back(parent);
 }
 
 void reg_heap::reclaim_used(int r)

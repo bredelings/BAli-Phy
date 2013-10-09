@@ -364,6 +364,8 @@ public:
     return rc;
   }
 
+  void reroot_mappings_at(int t);
+
   /*----- Graph splitting -----*/
   int remap_reg(int) const;
   /*----- Graph splitting -----*/
