@@ -112,7 +112,11 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 
 nodist_bali_phy_SOURCES = git_version.h
 
+if HOST_LINUX
 bali_phy_LDFLAGS = -rdynamic
+else
+bali_phy_LDFLAGS =
+endif
 
 if WITH_MPI
 bali_phy_LDADD = ${LDADD} @MPI_LDFLAGS@ 
