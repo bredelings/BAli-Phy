@@ -285,6 +285,8 @@ ac_search_lib_dirs="$extra_libs2 /usr/lib /usr/local/lib"
 AC_CHECK_LIB(m,main)
 
 #---------------------- Check for libdl ------------------#
+
+if test "${host_os_noversion}" != mingw32 ; then 
 echo "------------------------------------------"
 echo " * Looking for libdl headers..."
 AC_CHECK_HEADERS([dlfcn.h],[],[echo "Error: I can't find <dlfcn.h> (CXXFLAGS='$CXXFLAGS').  If libdl is installed in a non-standard location you may need to specify --with-extra-includes=DIR to tell the configure script to look for it in directory DIR"])
@@ -292,7 +294,7 @@ AC_CHECK_HEADERS([dlfcn.h],[],[echo "Error: I can't find <dlfcn.h> (CXXFLAGS='$C
 echo " * Looking for the libdl library..."
 AC_CHECK_LIB(dl, main, [], [echo "Error: I can't find the libdl lirary! (-ldl LIBS='$LIBS')  If libdl is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
 AC_CHECK_LIB(dl, dlopen, [], [echo "Error: I can't find the libdl lirary! (-ldl LIBS='$LIBS')  If libdl is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
-
+fi
 #------------------- Check for OpenMPI or MPICH ------------------#
 echo "------------------------------------------"
 
