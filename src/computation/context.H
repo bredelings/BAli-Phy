@@ -89,9 +89,11 @@ public:
 
   reg& access(int i) const {return memory()->access(i);}
 
-  computation& computation_for_reg(int i) const {return memory()->computation_for_reg(0,i);}
+  computation& computation_for_reg(int i) const {return memory()->computation_for_reg(token,i);}
 
-  const closure& access_result_for_reg(int i) const {return memory()->access_result_for_reg(0,i);}
+  int result_for_reg(int i) const {return memory()->result_for_reg(token,i);}
+
+  const closure& access_result_for_reg(int i) const {return memory()->access_result_for_reg(token,i);}
 
   reg& operator[](int i) const {return memory()->access(i);}
 

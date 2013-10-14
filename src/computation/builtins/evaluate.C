@@ -16,7 +16,7 @@ extern "C" closure builtin_function_evaluate(OperationArgs& Args)
 
   int R1 = Args.evaluate_slot_to_reg(1,true);
 
-  int R2 = Args.memory().computation_for_reg(token,R1).result;
+  int R2 = Args.memory().result_for_reg(token,R1);
 
   assert( R2 );
 

@@ -35,9 +35,6 @@ struct computation
   /// Is C a parameter, or is the reduction result dependent on a parameter value?
   bool changeable = false;
 
-  /// What does C reduce to eventually? (WHNF, but not an index_var.)
-  int result;
-
   /// Does C reduce to another reg that we need to evaluate to get the true result?
   int call = -1;
   back_edge_deleter call_reverse;
@@ -135,21 +132,21 @@ public:
 
   const computation& computation_for_reg(int t, int r) const 
   { 
-    int rc = map_target(t,r);
+    int rc = computation_index_for_reg(t,r);
     assert(rc > 0);
     return computations.access_unused(rc);
   }
 
         computation& computation_for_reg(int t, int r)
   { 
-    int rc = map_target(t,r);
+    int rc = computation_index_for_reg(t,r);
     assert(rc > 0);
     return computations.access_unused(rc);
   }
 
   const closure& access_result_for_reg(int t, int R1) const
   {
-    int R2 = computation_for_reg(t,R1).result;
+    int R2 = result_for_reg(t,R1);
     assert(R2);
     return access(R2).C;
   }
@@ -182,9 +179,11 @@ public:
   struct address
   {
     int rc = 0;
+    int result = 0;
     int index = -1;
     address() {}
-    address(int i1, int i2):rc(i1),index(i2) {}
+    address(int i1, int i2):rc(i1),result(i2),index(-1) {}
+    address(int i1, int i2, int i3):rc(i1),result(i2),index(i3) {}
   };
 
   struct graph_roots
@@ -349,19 +348,49 @@ public:
     return true;
   }
 
-  int map_target(int t, int r) const 
+  int computation_index_for_reg(int t, int r) const 
   {
     int rc = 0;
-    do
+
+    while(true)
     {
       assert(t >= 0);
       rc = token_roots[t].virtual_mapping[r].rc;
+      if (rc > 0) return rc;
       t = token_roots[t].parent;
-    } while (not rc);
+    }
   
     assert( rc == token_roots[0].virtual_mapping[r].rc );
 
     return rc;
+  }
+
+  int result_for_reg(int t, int r) const 
+  {
+    int rc = 0;
+
+    while(true)
+    {
+      assert(t >= 0);
+      rc = token_roots[t].virtual_mapping[r].rc;
+      if (rc > 0) return token_roots[t].virtual_mapping[r].result;
+      t = token_roots[t].parent;
+    }
+  
+    assert( rc == token_roots[0].virtual_mapping[r].rc );
+
+    return rc;
+  }
+
+  void set_result_for_reg(int t, int r1, int r2)
+  {
+    assert( token_roots[0].virtual_mapping[r1].rc );
+    token_roots[0].virtual_mapping[r1].result = r2;
+  }
+
+  void clear_result(int t, int r)
+  {
+    set_result_for_reg(t,r,0);
   }
 
   void reroot_mappings_at(int t);
