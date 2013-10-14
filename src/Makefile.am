@@ -110,6 +110,10 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C object.C \
 	  parser/AST.C computation/program.C
 
+if HOST_MINGW32
+bali_phy_SOURCES += dlfcn.c
+endif
+
 nodist_bali_phy_SOURCES = git_version.h
 
 if HOST_LINUX
