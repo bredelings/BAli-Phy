@@ -134,6 +134,8 @@ public:
   bool is_free(int r) const {assert(is_valid_address(r)); return memory[r].state == free;}
   bool is_used(int r) const {assert(is_valid_address(r)); return memory[r].state == used;}
   bool is_marked(int r) const {assert(is_valid_address(r)); return memory[r].state == marked;}
+  void set_mark(int r) const {assert(is_used(r));set_state(r, marked);}
+  void unmark(int r) const {assert(is_marked(r));set_state(r, used);}
   States get_state(int r) const {assert(is_valid_address(r)); return memory[r].state;}
 
   class PoolIterator
