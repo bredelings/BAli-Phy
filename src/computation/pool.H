@@ -225,12 +225,11 @@ public:
 
   void reclaim_unmarked()
   {
-    int here = first_used;
-    for(;here != -1;)
+    for(int here = first_used; here != -1;)
     {
-      int next = memory[here].next_reg;
+      int next = memory[here].next;
       if (is_marked(here))
-	set_state(used);
+	set_state(here, used);
       else 
 	reclaim_used(here);
       

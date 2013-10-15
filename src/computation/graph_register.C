@@ -904,7 +904,7 @@ int reg_heap::allocate(int t)
 
   map_reg(0,r);
 
-  computation_for_reg(0,r).ownership_category = ownership_categories.begin();
+  computation_for_reg(t,r).ownership_category = ownership_categories.begin();
 
   assert( reg_is_unowned(r) );
 
@@ -995,15 +995,7 @@ void reg_heap::trace_and_reclaim_unreachable()
     next_scan.clear();
   }
 
-  for(auto r = begin();r != end(); )
-  {
-    int here = r.addr();
-    r++;
-    if (is_marked(here))
-      set_state(here, used);
-    else
-      reclaim_used(here);
-  }
+  reclaim_unmarked();
 
   release_scratch_list();
   release_scratch_list();
