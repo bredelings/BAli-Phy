@@ -286,7 +286,7 @@ void reg_heap::set_used_input(int t, int R1, int R2)
   assert(access(R1).C);
   assert(access(R2).C);
 
-  int rc1 = computation_index_for_reg(0,R1);
+  int rc1 = computation_index_for_reg(t,R1);
   computation& RC1 = computations[rc1];
 
   // An index_var's result only changes if the thing the index-var points to also changes.
@@ -300,7 +300,7 @@ void reg_heap::set_used_input(int t, int R1, int R2)
   // R1 shouldn't have any used inputs if it isn't changeable.
   assert(RC1.changeable);
   // Don't add unchangeable results as inputs
-  int rc2 = computation_index_for_reg(0,R2);
+  int rc2 = computation_index_for_reg(t,R2);
   computation& RC2 = computations[rc2];
   assert(RC2.changeable);
 
@@ -358,7 +358,7 @@ void reg_heap::clear_used_inputs(int rc1)
 
 void reg_heap::clear_used_inputs_for_reg(int t, int R)
 {
-  int rc = computation_index_for_reg(0,R);
+  int rc = computation_index_for_reg(t,R);
   if (rc > 0)
     clear_used_inputs(rc);
 }
