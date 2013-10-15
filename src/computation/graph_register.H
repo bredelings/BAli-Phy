@@ -126,6 +126,8 @@ class reg_heap: public Object, public checked_pool<reg>
   void check_used_reg(int) const;
   void check_used_regs() const;
 
+  int root_token = -1;
+
 public:
 
   reg_heap* clone() const {std::abort();}
@@ -276,6 +278,10 @@ public:
   void release_token(int);
 
   bool is_terminal_token(int) const;
+
+  bool is_root_token(int) const;
+
+  int parent_token(int) const;
 
   /// Release just the identifiers for a token
   void release_identifiers(int);

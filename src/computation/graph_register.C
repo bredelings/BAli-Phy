@@ -884,16 +884,16 @@ void reg_heap::reroot_mappings_at(int t)
 {
   assert(token_is_used(t));
 
-  int parent = token_roots[t].parent;
-  if (parent == -1)
-    return;
+  if (is_root_token(t)) return;
+
+  int parent = parent_token(t);
 
   // If this context isn't a direct child of the root, then make it one
-  if (token_roots[parent].parent != -1)
+  if (not is_root_token(parent))
     reroot_mappings_at(parent);
 
   // Now this context should be a direct child of the root
-  assert(token_roots[parent].parent == -1);
+  assert(is_root_token(parent));
 
   pivot_mapping(token_roots[parent].modified, token_roots[parent].virtual_mapping,
 		token_roots[t].modified, token_roots[t].virtual_mapping);
@@ -904,6 +904,9 @@ void reg_heap::reroot_mappings_at(int t)
 
   token_roots[t].parent = -1;
   token_roots[t].children.push_back(parent);
+  root_token = t;
+
+  assert(is_root_token(t));
 }
 
 void reg_heap::reclaim_used(int r)
@@ -1222,6 +1225,8 @@ int reg_heap::get_unused_token()
 
   int t = unused_tokens.back();
   unused_tokens.pop_back();
+  if (root_token == -1)
+    root_token = t;
 
   assert(not token_is_used(t));
 
@@ -2204,8 +2209,10 @@ void reg_heap::try_release_token(int t)
   check_used_regs();
 #endif
 
-  int parent = token_roots[t].parent;
+  int parent = parent_token(t);
   token_roots[t].parent = -1;
+  if (t == root_token)
+    root_token = -1;
 
   int child_token = -1;
   if (n_children)
@@ -2220,7 +2227,8 @@ void reg_heap::try_release_token(int t)
   {
     // Remove this context -- pass on any memory overrides to the child at this point.
 
-    // FIXME - do we want to make context 0 be the null context, and have its children be all the roots?
+    //    pivot_mapping(token_roots[t].modified, token_roots[t].virtual_mapping,
+    //		  token_roots[child_token].modified, token_roots[child_token].virtual_mapping);
 
     // make parent point to child
     if (parent != -1)
@@ -2244,6 +2252,18 @@ void reg_heap::try_release_token(int t)
 bool reg_heap::is_terminal_token(int t) const
 {
   return token_roots[t].children.empty();
+}
+
+bool reg_heap::is_root_token(int t) const
+{
+  assert(root_token != -1);
+  assert((t==root_token) == (token_roots[t].parent == -1));
+  return t == root_token;
+}
+
+int reg_heap::parent_token(int t) const
+{
+  return token_roots[t].parent;
 }
 
 void reg_heap::release_token(int t)
