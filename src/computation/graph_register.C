@@ -1218,7 +1218,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
   vector<int> ancestors;
 
   // Add the call parents of R
-  for(int qc: computation_for_reg(0,R).called_by)
+  for(int qc: computation_for_reg(t,R).called_by)
   {
     const computation& QC = computations[qc];
     int Q = QC.source;
@@ -1238,7 +1238,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
 
     assert(is_marked(Q1));
 
-    for(int qc2: computation_for_reg(0,Q1).called_by)
+    for(int qc2: computation_for_reg(t,Q1).called_by)
     {
       const computation& QC2 = computations[qc2];
       int Q2 = QC2.source;
@@ -1307,7 +1307,7 @@ void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& u
     scan.insert(scan.end(), R.referenced_by_in_E.begin(), R.referenced_by_in_E.end());
 
     // Count the references from calls by other regs
-    const computation& RC = computation_for_reg(0,r);
+    const computation& RC = computation_for_reg(t,r);
 
     for(int rc2: RC.called_by)
       scan.push_back(computations[rc2].source);
@@ -1338,7 +1338,7 @@ void reg_heap::check_results_in_context(int t) const
   vector<int> regs = find_all_regs_in_context(t);
   for(int Q: regs)
   {
-    int qc = computation_index_for_reg(0,Q);
+    int qc = computation_index_for_reg(t,Q);
     const auto& QC = computations[qc];
 
     if (QC.call)
@@ -1359,8 +1359,8 @@ void reg_heap::check_results_in_context(int t) const
     vector<int> regs = find_call_ancestors_in_context( Q, t);
 
     for(int j=0;j<regs.size();j++)
-      if (result_for_reg(0,regs[j]))
-	assert( result_for_reg(0,regs[j]) == Q );
+      if (result_for_reg(t,regs[j]))
+	assert( result_for_reg(t,regs[j]) == Q );
   }
 }
 
@@ -1411,7 +1411,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
       the changed reg, but we only invalidate thing that CURRENTLY depend on the
       changed reg.
     */
-    for(int qc1: computation_for_reg(0,R1).used_by)
+    for(int qc1: computation_for_reg(t,R1).used_by)
     {
       const auto& QC1 = computations[qc1];
       int Q1 = QC1.source;
@@ -1428,7 +1428,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
       unsplit_parents.push_back(Q1);
     }
 
-    for(int qc1: computation_for_reg(0,R1).called_by)
+    for(int qc1: computation_for_reg(t,R1).called_by)
     {
       const computation& QC1 = computations[qc1];
       int Q1 = QC1.source;
