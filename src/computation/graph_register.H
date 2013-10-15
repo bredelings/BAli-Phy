@@ -153,6 +153,16 @@ public:
     return access(R2).C;
   }
 
+  bool reg_has_call(int t, int r) const
+  {
+    return computation_for_reg(t,r).call;
+  }
+
+  int call_for_reg(int t, int r) const
+  {
+    return computations[computation_for_reg(t,r).call].source;
+  }
+
   int allocate(int t);
 
   void collect_garbage();
