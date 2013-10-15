@@ -165,7 +165,7 @@ public:
   void set_call(int R1, int R2);
   void set_call_unsafe(int R1, int R2);
   void clear_call(int rc);
-  void clear_call_for_reg(int R);
+  void clear_call_for_reg(int t, int R);
   void clear_C(int R);
   void set_C(int R, closure&& C);
   void set_reduction_result(int R, closure&& C);
@@ -359,36 +359,16 @@ public:
 
   int computation_index_for_reg(int t, int r) const 
   {
-    int rc = 0;
-
-    while(true)
-    {
-      assert(t >= 0);
-      rc = token_roots[t].virtual_mapping[r].rc;
-      if (rc > 0) return rc;
-      t = token_roots[t].parent;
-    }
-  
-    assert( rc == token_roots[0].virtual_mapping[r].rc );
-
+    int rc = token_roots[0].virtual_mapping[r].rc;
+    assert(rc > 0);
     return rc;
   }
 
   int result_for_reg(int t, int r) const 
   {
-    int rc = 0;
+    assert( token_roots[0].virtual_mapping[r].rc );
 
-    while(true)
-    {
-      assert(t >= 0);
-      rc = token_roots[t].virtual_mapping[r].rc;
-      if (rc > 0) return token_roots[t].virtual_mapping[r].result;
-      t = token_roots[t].parent;
-    }
-  
-    assert( rc == token_roots[0].virtual_mapping[r].rc );
-
-    return rc;
+    return token_roots[0].virtual_mapping[r].result;
   }
 
   void set_result_for_reg(int t, int r1, int r2)
