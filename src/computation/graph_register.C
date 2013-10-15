@@ -1834,7 +1834,7 @@ void reg_heap::check_used_reg(int index) const
       assert( reg_is_owned_by_all_of(computations[RC.call].source, get_reg_owners(index) ) );
 
       // Check that the call-used reg has back-references to R
-      assert( computation_for_reg(0,computations[RC.call].source).called_by.count(index_c) == 1 );
+      assert( computation_for_reg(t,computations[RC.call].source).called_by.count(index_c) == 1 );
     }
   }
 }
@@ -2982,7 +2982,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     // call-edges
     // FIXME:Drawing - how can allow these to go to the right, but not above, if no ref edges?
     // FIXME:Drawing - doing :w and {rank=same; n -> n} makes the edge drawn over the node icon.
-    if (C.reg_has_call(0,R))
+    if (C.reg_has_call(t,R))
     {
       string name2 = "n" + convertToString(C.call_for_reg(t,R));
       o<<name<<":e -> "<<name2<<":w ";
