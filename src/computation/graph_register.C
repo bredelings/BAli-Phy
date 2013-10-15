@@ -1791,8 +1791,6 @@ void reg_heap::check_used_reg(int index) const
 {
   const reg& R = access(index);
 
-  int index_c = computation_index_for_reg(0,index);
-
   // This should check the ownership is working correctly.
   // (i.e. Does the bitmap match the category bitmap?  It might not need too.)
   get_reg_owners(index);
@@ -1806,29 +1804,38 @@ void reg_heap::check_used_reg(int index) const
     assert(access(r).referenced_by_in_E.count(index) );
   }
   
-  const computation& RC = computation_for_reg(0,index);
-
-  for(const auto& i: RC.used_inputs)
+  for(int t=0;t<get_n_tokens();t++)
   {
-    int rc = i.first;
+    if (not token_is_used(t)) continue;
 
-    // Check that used regs are owned by the owners of R
-    assert( reg_is_owned_by_all_of(computations[rc].source, get_reg_owners(index) ) );
+    if (not is_mapped(t, index)) continue;
 
-    // Check that used regs are have back-references to R
-    assert( computations[rc].used_by.count(index_c) );
-  }
+    int index_c = computation_index_for_reg(t,index);
 
-  if (RC.call)
-  {
-    // Check that the pointer to the reverse edge iterator is intact.
-    assert( *RC.call_reverse == index_c );
+    const computation& RC = computation_for_reg(t,index);
 
-    // Check that the call-used reg is owned by owners of R
-    assert( reg_is_owned_by_all_of(computations[RC.call].source, get_reg_owners(index) ) );
+    for(const auto& i: RC.used_inputs)
+    {
+      int rc = i.first;
 
-    // Check that the call-used reg has back-references to R
-    assert( computation_for_reg(0,computations[RC.call].source).called_by.count(index_c) == 1 );
+      // Check that used regs are owned by the owners of R
+      assert( reg_is_owned_by_all_of(computations[rc].source, get_reg_owners(index) ) );
+
+      // Check that used regs are have back-references to R
+      assert( computations[rc].used_by.count(index_c) );
+    }
+
+    if (RC.call)
+    {
+      // Check that the pointer to the reverse edge iterator is intact.
+      assert( *RC.call_reverse == index_c );
+
+      // Check that the call-used reg is owned by owners of R
+      assert( reg_is_owned_by_all_of(computations[RC.call].source, get_reg_owners(index) ) );
+
+      // Check that the call-used reg has back-references to R
+      assert( computation_for_reg(0,computations[RC.call].source).called_by.count(index_c) == 1 );
+    }
   }
 }
 
