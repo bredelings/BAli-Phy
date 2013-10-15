@@ -16,19 +16,9 @@
 #include "pool.H"
 #include "bithash.H"
 
-// Type for ownership sets
-typedef std::bitset<64> owner_set_t;
-typedef CacheList<owner_set_t>::iterator ownership_category_t;
-
 struct computation
 {
   int source = -1;
-
-  /* 5. Which sub-graphs are we in for sub-graph sharing? */
-  owner_set_t owners;
-
-  /// Pointer to the current ownership set
-  ownership_category_t ownership_category;
 
   typedef CacheList<int>::iterator back_edge_deleter;
 
@@ -50,9 +40,6 @@ struct computation
 
   /// Which reduction results made use of the value of this expression (via call)
   CacheList<int> called_by;
-
-  /* 5. Which sub-graphs are we in for sub-graph sharing? */
-  owner_set_t temp_owners;
 
   int temp = -1;
 
@@ -78,10 +65,6 @@ public:
 
   /* The closure */
   closure C;
-  std::vector<back_edge_deleter> referenced_by_in_E_reverse;
-
-  /// The nodes that directly reference us (not via a call)
-  CacheList<int> referenced_by_in_E;
 
   void clear();
 
@@ -112,16 +95,11 @@ class reg_heap: public Object, public checked_pool<reg>
   mutable int n_active_scratch_lists = 0;
   mutable std::vector< object_ptr<Vector<int> > > scratch_lists;
 
-  CacheList<owner_set_t> ownership_categories;
-  bithash< owner_set_t, ownership_category_t> canonical_ownership_categories;
-
   void get_more_memory();
 
   void expand_memory(int);
 
   void reclaim_used(int);
-
-  void remove_unused_ownership_marks();
 
   void check_used_reg(int) const;
   void check_used_regs() const;
@@ -167,7 +145,6 @@ public:
 
   void collect_garbage();
   void trace_and_reclaim_unreachable();
-  void compute_ownership_categories();
 
   void set_used_input(int t, int R1, int R2);
   void clear_used_inputs_for_reg(int t, int R);
@@ -257,14 +234,8 @@ public:
   /// Allocate a reg in context t and put it on the top of the temporary-head stack.
   int push_temp_head(int t);
 
-  /// Allocate a reg in contexts tokens and put it on the top of the temporary-head stacks.
-  int push_temp_head(const owner_set_t& tokens);
-
   /// Deallocate the temporary head on the top of the temporary-head stack.
   void pop_temp_head(int t);
-
-  /// Deallocate the temporary head on the top of the temporary-head stacks for context tokens.
-  void pop_temp_head(const owner_set_t& tokens);
 
   /// Add a new identifier, pointing to a newly allocated location
   int add_identifier_to_context(int, const std::string&);
@@ -300,34 +271,7 @@ public:
   int copy_token(int);
 
   /*---- Ownership ------*/
-  const owner_set_t& get_reg_owners(int) const;
-  
-  const ownership_category_t& get_reg_ownership_category(int) const;
-  
-  void set_reg_owners(int, const owner_set_t& o);
-
-  void set_reg_ownership_category(int, const ownership_category_t&);
-
-  void reg_add_owner(int, int);
-
-  void reg_clear_owner(int, int);
-
-  void reg_clear_owners(int);
-
-  bool reg_is_owned_by(int,int) const;
-
-  bool reg_is_owned_by_only(int,int) const;
-
-  bool reg_is_owned_by_all_of(int,const owner_set_t&) const;
-
-  int n_reg_owners(int) const;
-
-  bool reg_is_unowned(int) const;
-
   bool reg_is_shared(int) const;
-
-  void remove_ownership_mark(int);
-  void duplicate_ownership_mark(int,int);
 
   /*----- Graph walking ------*/
   void find_all_regs_in_context(int, std::vector<int>&) const;
@@ -341,12 +285,6 @@ public:
 
   std::vector<int> find_all_regs_in_context_no_check(int) const;
 
-  void find_shared_ancestor_regs_in_context(int,int, std::vector<int>&) const;
-
-  void find_unsplit_parents(const std::vector<int>&,int, std::vector<int>&) const;
-
-  std::vector<int> find_call_ancestors_in_context(int,int) const;
-
   void check_results_in_context(int) const;
 
   /*----- Virtual memory ------*/
@@ -356,35 +294,28 @@ public:
 
   bool is_mapped(int t, int r) const
   {
-    int rc = 0;
-    do
-    {
-      if (t < 0) return false;
-      rc = token_roots[t].virtual_mapping[r].rc;
-      t = token_roots[t].parent;
-    } while (not rc);
-
-    return true;
+    int rc = token_roots[t].virtual_mapping[r].rc;
+    return rc;
   }
 
   int computation_index_for_reg(int t, int r) const 
   {
-    int rc = token_roots[0].virtual_mapping[r].rc;
+    int rc = token_roots[t].virtual_mapping[r].rc;
     assert(rc > 0);
     return rc;
   }
 
   int result_for_reg(int t, int r) const 
   {
-    assert( token_roots[0].virtual_mapping[r].rc );
+    assert( token_roots[t].virtual_mapping[r].rc );
 
-    return token_roots[0].virtual_mapping[r].result;
+    return token_roots[t].virtual_mapping[r].result;
   }
 
   void set_result_for_reg(int t, int r1, int r2)
   {
-    assert( token_roots[0].virtual_mapping[r1].rc );
-    token_roots[0].virtual_mapping[r1].result = r2;
+    assert( token_roots[t].virtual_mapping[r1].rc );
+    token_roots[t].virtual_mapping[r1].result = r2;
   }
 
   void clear_result(int t, int r)

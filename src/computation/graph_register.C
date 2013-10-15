@@ -25,16 +25,11 @@ using std::endl;
  * entries in the memory.
  *
  * Forward edges consist of
- * - E edges / reference edges (forward: C.Env) (backward: referenced_by_in_E)
- * - call edges (forward: call, called_by)
- * - used edges (forward: used_inputs, used_by)
+ * - E edges
+ * - call edges (forward: call, backward: called_by)
+ * - used edges (forward: used_inputs, backward: used_by)
  *
  */
-
-bool includes(const owner_set_t& S1, const owner_set_t& S2)
-{
-  return (S2 & ~S1).none();
-}
 
 /*
  * Q: How can we share eigensystems between Q matrices that differ only by rate?
@@ -160,7 +155,6 @@ void computation::clear()
   call_reverse = back_edge_deleter();
   used_by.clear();
   called_by.clear();
-  ownership_category = ownership_category_t();
 
   // This should already be cleared.
   assert(temp == -1);
@@ -178,15 +172,12 @@ void computation::check_cleared()
 computation& computation::operator=(computation&& R) noexcept
 {
   source = R.source;
-  owners = std::move( R.owners );
-  ownership_category = std::move( R.ownership_category );
   changeable = R.changeable;
   call = R.call;
   call_reverse = std::move( R.call_reverse );
   used_inputs  = std::move( R.used_inputs );
   used_by = std::move( R.used_by );
   called_by = std::move( R.called_by );
-  temp_owners = std::move( R.temp_owners );
   temp = R.temp;
   re_evaluate = R.re_evaluate;
 
@@ -195,15 +186,12 @@ computation& computation::operator=(computation&& R) noexcept
 
 computation::computation(computation&& R) noexcept
 :source(R.source),
-  owners( std::move( R.owners ) ),
-  ownership_category( std::move( R.ownership_category) ),
   changeable( R.changeable ),
   call ( R.call ),
   call_reverse ( std::move( R.call_reverse) ),
   used_inputs ( std::move(R.used_inputs) ),
   used_by ( std::move( R.used_by) ),
   called_by ( std::move( R.called_by) ),
-  temp_owners ( std::move( R.temp_owners ) ),
   temp ( R.temp ),
   re_evaluate ( R.re_evaluate )
 { }
@@ -211,29 +199,22 @@ computation::computation(computation&& R) noexcept
 reg& reg::operator=(reg&& R) noexcept
 {
   C = std::move(R.C);
-  referenced_by_in_E_reverse = std::move( R.referenced_by_in_E_reverse );
-  referenced_by_in_E = std::move( R.referenced_by_in_E );
 
   return *this;
 }
 
 reg::reg(reg&& R) noexcept
-:C( std::move(R.C) ),
-  referenced_by_in_E_reverse ( std::move( R.referenced_by_in_E_reverse ) ),
-  referenced_by_in_E ( std::move( R.referenced_by_in_E) )
+:C( std::move(R.C) )
 { }
 
 void reg::clear()
 {
   C.clear();
-  referenced_by_in_E.clear();
 }
 
 void reg::check_cleared()
 {
   assert(not C);
-  assert(referenced_by_in_E_reverse.empty());
-  assert(referenced_by_in_E.empty());
 }
 
 void erase_from_stack(vector<int>& s, int i, vector<reg_heap::address>& v)
@@ -397,8 +378,7 @@ void reg_heap::set_call_unsafe(int t, int R1, int R2)
   RC1.call_reverse = called_by2.insert(called_by2.end(), rc1);
   assert( *RC1.call_reverse == rc1 );
 
-  // check that all of the owners of R are also owners of R.call;
-  assert( reg_is_owned_by_all_of(R2, get_reg_owners(R1)) );
+  //  assert( reg_is_owned_by_all_of(R2, get_reg_owners(R1)) );
 }
 
 
@@ -447,49 +427,18 @@ void reg_heap::set_C(int R, closure&& C)
 {
   assert(C);
   assert(not is_a<expression>(C.exp));
-  assert(not reg_is_unowned(R) );
   clear_C(R);
 
   access(R).C = std::move(C);
 #ifndef NDEBUG
   for(int r: access(R).C.Env)
-  {
-    assert(0 <= r and r < size());
-
-    // check that all of the owners of R are also owners of *r.
-    assert(reg_is_owned_by_all_of(r, get_reg_owners(R)) );
-
-    // check that *r is not already marked as being referenced by R
-    assert(not access(r).referenced_by_in_E.count(R) );
-  }
+    assert(is_valid_address(r));
 #endif
-
-  // mark R2 as being referenced by R
-  for(int R2: access(R).C.Env)
-  {
-    reg::back_edge_deleter D = access(R2).referenced_by_in_E.push_back(R);
-    access(R).referenced_by_in_E_reverse.push_back(D);
-  }
 }
 
 void reg_heap::clear_C(int R)
 {
-  for(int i=0;i<access_unused(R).C.Env.size();i++)
-  {
-    int R2 = access_unused(R).C.Env[i];
-    reg::back_edge_deleter& D = access_unused(R).referenced_by_in_E_reverse[i];
-    if (not is_free(R2))
-    {
-      // R2 may equal R, and may thus be in state none.
-      assert( not access_unused(R2).referenced_by_in_E.empty() );
-      access_unused(R2).referenced_by_in_E.erase(D);
-    }
-    else
-      assert( access_unused(R2).referenced_by_in_E.empty() );
-  }
-
   access_unused(R).C.clear();
-  access_unused(R).referenced_by_in_E_reverse.clear();
 }
 
 void reg_heap::set_reduction_result(int t, int R, closure&& result)
@@ -520,7 +469,6 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   {
     int R2 = allocate(t);
 
-    set_reg_ownership_category(R2, get_reg_ownership_category(R));
     set_C(R2, std::move( result ) );
     set_call(t, R, R2);
   }
@@ -531,7 +479,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 {
   assert(is_terminal_token(token)); 
   // Check that reg P is owned by context token.
-  assert(reg_is_owned_by(P,token));
+  assert(is_mapped(token,P));
 
   // Split this reg and its E-ancestors out from other graphs, if its shared.
   P = uniquify_reg(P,token);
@@ -819,22 +767,9 @@ void reg_heap::get_roots(vector<int>& scan, int t) const
 
 int reg_heap::push_temp_head(int t)
 {
-  owner_set_t tokens;
-  tokens.set(t,true);
-  return push_temp_head(tokens);
-}
+  int R = allocate(t);
 
-int reg_heap::push_temp_head(const owner_set_t& tokens)
-{
-  int R = allocate(0);
-
-  set_reg_owners( R, tokens );
-  for(int t=0;t< tokens.size();t++)
-  {
-    if (not tokens.test(t)) continue;
-
-    token_roots[t].temp.push_back(R);
-  }
+  token_roots[t].temp.push_back(R);
 
   return R;
 }
@@ -842,31 +777,6 @@ int reg_heap::push_temp_head(const owner_set_t& tokens)
 void reg_heap::pop_temp_head(int t)
 {
   token_roots[t].temp.pop_back();
-}
-
-
-
-void reg_heap::pop_temp_head(const owner_set_t& tokens)
-{
-  int t0 = -1;
-  int r0;
-
-  for(int t=0;t< tokens.size();t++)
-  {
-    if (not tokens.test(t)) continue;
-    int r = token_roots[t].temp.back();
-
-    if (t0 == -1)
-    {
-      t0 = t;
-      r0 = r;
-    }
-    else
-      assert( r == r0 );
-
-    assert( reg_is_owned_by(r, t) );
-    token_roots[t].temp.pop_back();
-  }
 }
 
 void reg_heap::get_more_memory()
@@ -902,66 +812,15 @@ int reg_heap::allocate(int t)
 {
   int r = base_pool_t::allocate();
 
-  map_reg(0,r);
-
-  computation_for_reg(t,r).ownership_category = ownership_categories.begin();
-
-  assert( reg_is_unowned(r) );
+  map_reg(t,r);
 
   return r;
 }
 
-void reg_heap::remove_unused_ownership_marks()
-{
-  int n0 = n_active_scratch_lists;
-
-  // Clear ownership marks
-  for(auto r = begin(); r != end(); r++)
-  {
-    computation& RC = computation_for_reg(0,r.addr());
-#ifndef NDEBUG
-    RC.temp_owners = *RC.ownership_category;
-#endif
-
-    RC.owners.reset();
-  }
-
-  // Mark ownership on regs according to reachability.
-  for(int t=0;t<get_n_tokens();t++)
-  {
-    // Don't compute reachability from unused tokens.
-    if (not token_is_used(t)) continue;
-
-    // Find the all the regs reachable from heads in t
-    vector<int>& regs = get_scratch_list();
-    find_all_regs_in_context_no_check(t, regs);
-
-    // Mark regs reachable in t as being owned by t
-    for(int i=0;i<regs.size();i++)
-    {
-      int R = regs[i];
-      computation_for_reg(0,R).owners.set(t,true);
-    }
-
-    release_scratch_list();
-    assert(n0 == n_active_scratch_lists);
-  }
-
-#ifndef NDEBUG
-  // Check that we did not ADD any ownership marks!
-  for(auto r = begin(); r != end(); r++)
-  {
-    computation& RC = computation_for_reg(0,r.addr());
-
-    assert( includes(RC.temp_owners, RC.owners) );
-
-    RC.temp_owners.reset();
-  }
-#endif
-}
-
 void reg_heap::trace_and_reclaim_unreachable()
 {
+  check_used_regs();
+
   vector<int>& tokens = get_scratch_list();
 
   vector<int>& scan1 = get_scratch_list();
@@ -987,6 +846,7 @@ void reg_heap::trace_and_reclaim_unreachable()
       for(int r: scan1)
       {
 	assert(not is_free(r));
+	if (not is_mapped(t,r)) continue;
 	if (is_marked(r)) continue;
 
 	set_mark(r);
@@ -1034,26 +894,7 @@ void reg_heap::trace_and_reclaim_unreachable()
   release_scratch_list();
   release_scratch_list();
   release_scratch_list();
-}
-
-void reg_heap::compute_ownership_categories()
-{
-  ownership_categories.clear();
-  canonical_ownership_categories.clear();
-  {
-    owner_set_t empty;
-    canonical_ownership_categories.insert(empty, ownership_categories.push_back(empty) );
-  }
-
-  for(auto r = cbegin(); r != cend(); r++)
-    set_reg_owners(r.addr(), computation_for_reg(0,r.addr()).owners );
-
-#ifdef DEBUG_MACHINE
-  for(const auto& i: canonical_ownership_categories)
-    assert(i.first == *i.second);
-  for(const auto& i: ownership_categories)
-    assert(canonical_ownership_categories.find(i) != canonical_ownership_categories.end());
-#endif
+  check_used_regs();
 }
 
 /*
@@ -1085,15 +926,6 @@ void reg_heap::collect_garbage()
   cerr<<"#roots = "<<roots.size()<<endl;
   check_used_regs();
 #endif
-
-  // Currently called only from garbage collector.
-  remove_unused_ownership_marks();
-
-  compute_ownership_categories();
-
-  // Check that we have no un-owned objects that are used
-  for(auto r = begin(); r != end(); r++)
-    assert( not reg_is_unowned(r.addr()) );
 }
 
 int reg_heap::get_unused_token()
@@ -1126,141 +958,9 @@ int reg_heap::get_unused_token()
 
   token_roots[t].referenced = true;
 
+  check_used_regs();
+
   return t;
-}
-
-const owner_set_t& reg_heap::get_reg_owners(int R) const
-{
-  return *get_reg_ownership_category(R);
-}
-
-const ownership_category_t& reg_heap::get_reg_ownership_category(int R) const
-{
-  assert(computation_for_reg(0,R).ownership_category != ownership_categories.end());
-  //  assert(computation_for_reg(0,R).owners == *computation_for_reg(0,R).ownership_category);
-  return computation_for_reg(0,R).ownership_category;
-}
-
-void reg_heap::set_reg_owners(int r, const owner_set_t& owners)
-{
-  // Find or create the category for this specific bitmask.
-  auto p = canonical_ownership_categories.find_or_add(owners);
-  if (p.second)
-    p.first = ownership_categories.push_back(owners);
-
-  set_reg_ownership_category(r, p.first );
-}
-
-void reg_heap::set_reg_ownership_category(int r, const ownership_category_t& c)
-{
-  computation& RC = computation_for_reg(0,r);
-  RC.ownership_category = c;
-  //  R.owners = *c;
-
-  assert(RC.ownership_category != ownership_categories.end());
-  //  assert(R.owners == *R.ownership_category);
-}
-
-void reg_heap::reg_add_owner(int r, int t)
-{
-  owner_set_t owners = get_reg_owners(r);
-  owners.set(t, true);
-  set_reg_owners(r, owners);
-}
-
-void reg_heap::reg_clear_owner(int r, int t)
-{
-  owner_set_t owners = get_reg_owners(r);
-  owners.set(t, false);
-  set_reg_owners(r, owners);
-}
-
-void reg_heap::reg_clear_owners(int r)
-{
-  set_reg_ownership_category(r, ownership_categories.begin() );
-  assert( computation_for_reg(0,r).ownership_category->none());
-}
-
-bool reg_heap::reg_is_owned_by(int r, int t) const
-{
-  return get_reg_owners(r).test(t);
-}
-
-bool reg_heap::reg_is_owned_by_only(int r, int t) const
-{
-  owner_set_t owners;
-  owners.set(t,true);
-  return owners == get_reg_owners(r);
-}
-
-bool reg_heap::reg_is_owned_by_all_of(int r, const owner_set_t& owners) const
-{
-  return includes(get_reg_owners(r), owners);
-}
-
-int reg_heap::n_reg_owners(int r) const
-{
-  return get_reg_owners(r).count();
-}
-
-bool reg_heap::reg_is_unowned(int r) const
-{
-  return get_reg_owners(r).none();
-}
-
-bool reg_heap::reg_is_shared(int r) const
-{
-  return n_reg_owners(r) > 1;
-}
-
-vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
-{
-  vector<int> ancestors;
-
-  // Add the call parents of R
-  for(int qc: computation_for_reg(t,R).called_by)
-  {
-    const computation& QC = computations[qc];
-    int Q = QC.source;
-    assert(is_used(Q));
-
-    // Skip ancestors not in this context
-    if (not reg_is_owned_by(R,t)) continue;
-
-    set_mark(Q);
-    ancestors.push_back(Q);
-  }
-
-  // Recursively add the call parents
-  for(int i=0;i<ancestors.size();i++)
-  {
-    int Q1 = ancestors[i];
-
-    assert(is_marked(Q1));
-
-    for(int qc2: computation_for_reg(t,Q1).called_by)
-    {
-      const computation& QC2 = computations[qc2];
-      int Q2 = QC2.source;
-
-      // Skip regs that have been seen before.
-      if (is_marked(Q2)) continue;
-
-      assert( is_used(Q2));
-
-      // Skip ancestors not in this context
-      if (not reg_is_owned_by(Q2,t)) continue;
-
-      set_mark(Q2);
-      ancestors.push_back(Q2);
-    }
-  }
-
-  // Reset the mark
-  for(int i=0;i<ancestors.size();i++)
-    unmark(ancestors[i]);
-
-  return ancestors;
 }
 
 /* We only need to split shared regs that can reg another split reg through
@@ -1272,52 +972,6 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
    direct use are also transitive reachability along forward E- or call- edges,
    just as for indirect use (i.e. dependence).
  */
-
-void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& unique) const
-{
-  assert(reg_is_owned_by(R,t));
-
-  vector<int>& scan = get_scratch_list();
-  scan = {R};
-
-  // Here, scan contains reference-parents and call-parents to split regs.
-  // However, these may be unshared, and may also be from any context.
-  for(int i=0;i<scan.size();i++)
-  {
-    int r = scan[i];
-
-    // Regs should be on the used list
-    assert(is_used(r) or is_marked(r));
-
-    // Only add each reg at most once
-    if (is_marked(r)) continue;
-
-    // Skip this reg if its not in context t
-    if (not reg_is_owned_by(scan[i],t)) continue;
-
-    // Put this reg on the unsplit list if its already split
-    if (not reg_is_shared(scan[i])) continue;
-    // We could add this reg to the unsplit list here, if we didn't have to trim the split list later.  Grrr.
-
-    set_mark(r);
-    unique.push_back(scan[i]);
-
-    // Count the references from E in other regs
-    const reg& R = access_unused(r);
-    scan.insert(scan.end(), R.referenced_by_in_E.begin(), R.referenced_by_in_E.end());
-
-    // Count the references from calls by other regs
-    const computation& RC = computation_for_reg(t,r);
-
-    for(int rc2: RC.called_by)
-      scan.push_back(computations[rc2].source);
-  }
-
-  for(int R: unique)
-    unmark(R);
-
-  release_scratch_list();
-}
 
 int reg_heap::remap_reg(int R) const
 {
@@ -1344,6 +998,12 @@ void reg_heap::check_results_in_context(int t) const
     if (QC.call)
     {
       assert( *QC.call_reverse == qc );
+
+      if (int r = result_for_reg(t,Q))
+      {
+	int C = QC.source;
+	assert(r == result_for_reg(t, C));
+      }
     }
       
     if (result_for_reg(t,Q) == Q)
@@ -1352,463 +1012,25 @@ void reg_heap::check_results_in_context(int t) const
       WHNF_results.push_back(Q);
     }
   }
-
-  // Check the call outputs
-  for(int Q: WHNF_results)
-  {
-    vector<int> regs = find_call_ancestors_in_context( Q, t);
-
-    for(int j=0;j<regs.size();j++)
-      if (result_for_reg(t,regs[j]))
-	assert( result_for_reg(t,regs[j]) == Q );
-  }
 }
 
-void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>& unsplit_parents) const
+int reg_heap::uniquify_reg(int R, int /* t */)
 {
-  for(int R1: split)
-  {
-    // Parents are: (a) referenced_by_in_E + (b) called_by + (c) used_by
-    //  See note below about why output (use-parents) are included.
-
-    // CLAIM: we could have parents that are in t and are marked shared, but these
-    // should be regs that are no longer reachable in t, and will be eventually 
-    // reclaimed.
-
-    for(int Q1: access(R1).referenced_by_in_E)
-    {
-      // Skip regs that we've handled already.
-      if (is_marked(Q1)) continue;
-
-      // We are only interested in the unshared E-ancestors in t.
-      if (not reg_is_owned_by_only(Q1, t)) continue;
-
-      // Mark Q1
-      assert(is_used(Q1));
-      set_mark(Q1);
-      unsplit_parents.push_back(Q1);
-    }
-
-    /* NOTE: When splitting regs, we only look backwards along E or call edges.
-
-       Q: Why then do we look backwards along used_by edges, here?
-       A: The answer is that, although a reg R1 can only use a reg R2 if it
-        is reachable along E- or call- edges, it might not be reachable this
-        way in a single step.
-
-        Since we stop back-tracing for split regs as soon as we find an unsplit
-        reg, looking only one step further back along E- and call- edges
-	might not find an unsplit grandparent reg that needs its
-	used_inputs (but not its C.exp) adjusted.
-
-	This situation only occurs in C++ operators, since native operators only
-	directly used their E-children.  However, C++ operators can use their
-	E-grandchildren or E-children of their call-children.
-
-      Ignoring these might seem to work since set_reg_value is about to invalidate
-      many of the shared inputs.  However, it is not necessarily the case that anything
-      that is split will be invalidated, since we split regs that COULD depend on
-      the changed reg, but we only invalidate thing that CURRENTLY depend on the
-      changed reg.
-    */
-    for(int qc1: computation_for_reg(t,R1).used_by)
-    {
-      const auto& QC1 = computations[qc1];
-      int Q1 = QC1.source;
-
-      // Skip regs that we've handled already.
-      if (is_marked(Q1)) continue;
-
-      // We are only interested in the unshared E-ancestors in t.
-      if (not reg_is_owned_by_only(Q1, t)) continue;
-
-      // Mark Q1
-      assert(is_used(Q1));
-      set_mark(Q1);
-      unsplit_parents.push_back(Q1);
-    }
-
-    for(int qc1: computation_for_reg(t,R1).called_by)
-    {
-      const computation& QC1 = computations[qc1];
-      int Q1 = QC1.source;
-
-      // Skip regs that we've handled already.
-      if (is_marked(Q1)) continue;
-
-      // We are only interested in the unshared E-ancestors in t.
-      if (not reg_is_owned_by_only(Q1, t)) continue;
-
-      // Mark Q1
-      assert(is_used(Q1));
-      set_mark(Q1);
-      unsplit_parents.push_back(Q1);
-    }
-  }
-
-  // Unmark the unsplit parents;
-  for(int i=0;i<unsplit_parents.size();i++)
-    unmark(unsplit_parents[i]);
-
-#ifndef NDEBUG
-  // Check that marks were removed.
-  for(int R1: split)
-  {
-    int R2 = target[R1];
-
-    // Original nodes should never have been marked.
-    assert( is_used(R1) );
-
-    // Split nodes should not have been marked.
-    assert( is_used(R2) );
-
-    // The split nodes should now be E-ancestors in t
-    for(int j: access(R2).referenced_by_in_E)
-      assert( is_used(j) );
-
-    // The split nodes should now be E-ancestors in t
-    for(int j: access(R1).referenced_by_in_E)
-      assert( is_used(j) );
-  }
-#endif
-}
-
-int reg_heap::uniquify_reg(int R, int t)
-{
-  int n_temp = token_roots[t].temp.size();
-
-  // If the reg is already unique, then we don't need to do anything.
-  if (not reg_is_shared(R))
-  {
-    assert(reg_is_owned_by(R,t));
-    return R;
-  }
-
-#ifdef DEBUG_MACHINE
-  check_results_in_context(t);
-
-  // This checks that ownership and references are consistent
-  find_all_regs_in_context(t);
-
-  /*
-  {
-    const map<string,int>& identifiers = get_identifiers_for_context(t);
-    for(const auto& ident: identifiers)
-    {
-      assert(not computation_for_reg(t,ident.second).changeable);
-    }
-  }
-  */
-#endif  
-
-  // 1. Find all ancestors with name 't' that are *shared*
-  // (Some of these could be unreachable!)
-  vector<int>& shared_ancestors = get_scratch_list();
-  find_shared_ancestor_regs_in_context(R,t,shared_ancestors);
-  int n_new_regs = shared_ancestors.size();
-
-  // 2. Allocate new regs for each *shared* ancestor reg in context t
-  for(int R1:shared_ancestors)
-    push_temp_head(t);
-
-  const std::vector<int>& temp_heads = get_temp_heads_for_context(t);
-
-  // 4e. Initialize/Copy changeable
-  // 2. Remove regs that got deallocated from the list.
-  // Alternatively, I could LOCK them in place.
-  vector<int>& split = get_scratch_list();
-  for(int i=0;i<shared_ancestors.size();i++)
-  {
-    int R1 = shared_ancestors[i];
-
-    if (is_used(R1) and reg_is_shared(R1) and reg_is_owned_by(R1,t))
-    {
-      int R2 = temp_heads[temp_heads.size()-1-i];
-      target[R1] = R2;
-      computation_for_reg(t,R2).changeable = computation_for_reg(t,R1).changeable;
-      computation_for_reg(t,R2).re_evaluate = computation_for_reg(t,R1).re_evaluate;
-      split.push_back(R1);
-    }
-  }
-
-
-  // NOTE: We HAVE to quit now if R has been removed from new_regs.
-  // If for some reason the reg is no longer shared, then we can quit now.
-  assert( reg_is_owned_by(R, t) );
-  if (not reg_is_shared(R)) 
-  {
-    for(int i=0;i<n_new_regs;i++)
-      pop_temp_head(t);
-
-    assert(token_roots[t].temp.size() == n_temp);
-    
-    for(int R1: split)
-      target[R1] = R1;
-    
-#ifdef DEBUG_MACHINE
-    for(int R1: shared_ancestors)
-      assert( target[R1] == R1);
-    
-    check_results_in_context(t);
-#endif  
-    
-    release_scratch_list();
-    release_scratch_list();
-    assert(n_active_scratch_lists == 0);
-    return R;
-  }
-
-  // Track WHNF regs that have moved.
-  vector<int>& changed_results = get_scratch_list();
-
-  // 2a. Copy the over and remap C
-  for(int R1: split)
-  {
-    int R2 = target[R1];
-
-    // Check no mark on R2
-    assert(is_used(R1));
-    assert(is_used(R2));
-    
-    assert( not reg_is_unowned(R1) );
-
-    // 4. Initialize fields in the new node
-
-    // 4a. Initialize/Remap C
-    set_C(R2, remap_regs( access(R1).C ) );
-  }
-
-  // 2b.  Copy over and remap the call, used_inputs, and result
-  //      This is after copying C to avoid linking to regs with no C
-  for(int R1: split)
-  {
-    auto& RC1 = computation_for_reg(t,R1);
-
-    int R2 = target[R1];
-    auto& RC2 = computation_for_reg(t,R2);
-
-    // 4b. Initialize/Remap call
-    if (RC1.call)
-      set_call(t, R2, target[computations[RC1.call].source] );
-
-    // 4c. Initialize/Remap used_inputs
-    for(const auto& i: RC1.used_inputs)
-      set_used_input(t, R2, target[computations[i.first].source] );
-
-    // 4d. Initialize/Remap result if E is in WHNF.
-    if (not RC2.call and result_for_reg(t, R1))
-    {
-      assert( result_for_reg(t, R1) == R1);
-      set_result_for_reg(t, R2, R2);
-      changed_results.push_back(R2);
-    }
-    // 4d. Initialize/Copy result otherwise.
-    else
-    {
-      assert( result_for_reg(t,R1) != R1);
-      // Q: Why is it OK to use the un-remapped result?
-      // A: Because we remap calls here; later we trace backwards along these
-      //    remapped call chains to set any results to the proper WHNF expression.
-      set_result_for_reg(t, R2, result_for_reg(t, R1));
-    }
-  }
-
-  // 4a. Adjust heads to point to the new regs
-  for(int j=0;j<token_roots[t].heads.size();j++)
-  {
-    int R1 = token_roots[t].heads[j];
-    token_roots[t].heads[j] = target[R1];
-  }
-
-  // 4b. Adjust parameters to point to the new regs
-  for(int j=0;j<token_roots[t].parameters.size();j++)
-  {
-    int R1 = token_roots[t].parameters[j].second;
-    token_roots[t].parameters[j].second = target[R1];
-  }
-
-  // 4c. Adjust identifiers to point to the new regs
-  for(auto& j: token_roots[t].identifiers)
-  {
-    // Hmmm.... this could be a lot of identifiers to scan...
-    int R1 = j.second;
-    j.second = target[R1];
-  }
-
-  // 4d. Adjust modifiable_regs to point to the new regs
-  for(auto& j:token_roots[t].modifiable_regs)
-    j = target[j];
-
-  // 5. Find the unsplit parents of split regs
-  //    These will be the only parents of the old regs that have context t.
-  vector<int>& unsplit_parents = get_scratch_list();
-  find_unsplit_parents(split, t, unsplit_parents);
-  
-  // Remap the unsplit parents. (The parents don't move, but they reference children that do.)
-  for(int Q1: unsplit_parents)
-  {
-    int qc1 = computation_index_for_reg(t,Q1);
-
-    // a. Remap E
-    set_C(Q1, remap_regs(access(Q1).C ) );
-    
-    // b. Remap call
-    if (computation_for_reg(t,Q1).call)
-    {
-      int old_call = call_for_reg(t,Q1);
-      int new_call = target[ old_call ];
-
-      if (old_call != new_call)
-      {
-	clear_call_for_reg(t, Q1);
-	set_call_unsafe(t, Q1, new_call);
-      }
-    }
-    
-    // c. Adjust use edges
-    for(auto& i: computation_for_reg(t,Q1).used_inputs)
-    {
-      int& rc = i.first;
-
-      int rc_new = computation_index_for_reg(t,target[computations[rc].source]);
-      assert( not computations.is_free(rc));
-      assert( not computations.is_free(rc_new));
-
-      if (rc_new != rc)
-      {
-	// Remove the edge to rc
-	assert( not computations[rc].used_by.empty() );
-
-	reg::back_edge_deleter& D = i.second;
-	assert( *D == qc1 );
-
-	computations[rc].used_by.erase(D);
-
-	// Add the edge to rc_new
-	D = computations[rc_new].used_by.push_back(qc1);
-	rc = rc_new;
-      }
-    }
-  }
-
-  // Remove ownership from the old regs.
-  for(int Q: split)
-  {
-    // These regs should be shared.
-    assert(reg_is_shared(Q));
-
-    // These regs should have originally contained t.
-    assert( reg_is_owned_by(Q, t) );
-
-    // But now remove membership in t from these regs.
-    reg_clear_owner(Q, t);
-  }
-
-  // Update regs that indirectly call WHNF regs that have moved.
-  for(int Q: changed_results)
-  {
-    assert(result_for_reg(t,Q) == Q);
-
-    vector<int> regs = find_call_ancestors_in_context( Q, t);
-    for(int S: regs)
-    {
-      set_result_for_reg(t, S, Q);
-
-      // In general, the owners of a parent (S) should all be owners of a child (S).
-      // This allows S to have no owners, which could happen if S became unreachable.
-
-      // Any call ancestors of E-ancestors of p should be E-ancestors of p, and therefore should be in t.
-      assert(reg_is_unowned(S) or reg_is_owned_by(S,t));
-
-      // Any call ancestors of E-ancestors of p should be E-ancestors of p, and therefore should be uniquified.
-      assert(not reg_is_shared(S));
-    }
-  }
-
-#ifdef DEBUG_MACHINE
-  // This checks that ownership and references are consistent
-  find_all_regs_in_context(t);
-#endif
-
-#ifndef NDEBUG
-  for(int R1: split)
-  {
-    const auto& RC1 = computation_for_reg(t,R1);
-
-    int R2 = target[R1];
-    const auto& RC2 = computation_for_reg(t,R2);
-
-    // Check that ownership has been properly split
-    assert(not reg_is_owned_by(R1,t) );
-    assert(reg_is_owned_by(R2, t));
-    assert(not reg_is_shared(R2));
-
-    // R2 should have a result if R1 has a result
-    assert(not result_for_reg(t,R1) or result_for_reg(t,R2));
-    // R2 *may* have a result when R1 has no result, if it's call chain leads to a moved WHNF reg who result was updated.
-    // Currently we find *all* such ancestors -- not just those that had a result before -- and propagate the new location of the WHNF reg as a result.
-    // Perhaps we should not do this, as it then has the effect of doing more than simply MOVE the graph.
-    //   Therefore we do NOT: assert(not result_for_reg(t,R2) or result_for_reg(t,R1));
-    // But we would like to.
-
-    // R2 should have a call IFF R1 has a call
-    assert(not RC1.call or RC2.call);
-    assert(not RC1.call or RC2.call);
-  }
-#endif
-
-  // 5. Remove root references to new regs.
-  //    Remove t-ownership from old regs.
-  //    Remove remapping info from regs.
-  for(int i=0;i<n_new_regs;i++)
-    pop_temp_head(t);
-
-  assert(token_roots[t].temp.size() == n_temp);
-
-  int R2 = target[R];
-
-  for(int R1: split)
-    target[R1] = R1;
-
-#ifdef DEBUG_MACHINE
-  for(int R1: shared_ancestors)
-    assert( target[R1] == R1);
-
-  check_results_in_context(t);
-#endif  
-
-  release_scratch_list();
-  release_scratch_list();
-  release_scratch_list();
-  release_scratch_list();
-  assert(n_active_scratch_lists == 0);
-
-  assert(R2 != R);
-  return R2;
+  return R;
 }
 
 void reg_heap::check_used_reg(int index) const
 {
   const reg& R = access(index);
 
-  // This should check the ownership is working correctly.
-  // (i.e. Does the bitmap match the category bitmap?  It might not need too.)
-  get_reg_owners(index);
-
-  for(int r: R.C.Env)
-  {
-    // Check that referenced regs are owned by the owners of R
-    assert(reg_is_owned_by_all_of(r, get_reg_owners(index) ) );
-    
-    // Check that referenced regs are have back-references to R
-    assert(access(r).referenced_by_in_E.count(index) );
-  }
-  
   for(int t=0;t<get_n_tokens();t++)
   {
     if (not token_is_used(t)) continue;
 
     if (not is_mapped(t, index)) continue;
+
+    for(int r2: R.C.Env)
+      assert(is_mapped(t,r2));
 
     int index_c = computation_index_for_reg(t,index);
 
@@ -1818,24 +1040,13 @@ void reg_heap::check_used_reg(int index) const
     {
       int rc = i.first;
 
-      // Check that used regs are owned by the owners of R
-      assert( reg_is_owned_by_all_of(computations[rc].source, get_reg_owners(index) ) );
-
       // Check that used regs are have back-references to R
       assert( computations[rc].used_by.count(index_c) );
     }
 
+    // Check that the pointer to the reverse edge iterator is intact.
     if (RC.call)
-    {
-      // Check that the pointer to the reverse edge iterator is intact.
       assert( *RC.call_reverse == index_c );
-
-      // Check that the call-used reg is owned by owners of R
-      assert( reg_is_owned_by_all_of(computations[RC.call].source, get_reg_owners(index) ) );
-
-      // Check that the call-used reg has back-references to R
-      assert( computation_for_reg(t,computations[RC.call].source).called_by.count(index_c) == 1 );
-    }
   }
 }
 
@@ -1844,92 +1055,6 @@ void reg_heap::check_used_regs() const
   // check_used_regs
   for(auto r = begin(); r != end(); r++)
     check_used_reg( r.addr() );
-}
-
-// TODO - search: shared memory garbage collection.
-
-void reg_heap::remove_ownership_mark(int t)
-{
-#ifdef DEBUG_MACHINE
-  for(const auto& i: canonical_ownership_categories)
-    assert(i.first == *i.second);
-  for(const auto& i: ownership_categories)
-    assert(canonical_ownership_categories.find(i) != canonical_ownership_categories.end());
-  check_used_regs();
-#endif
-
-  // Clear ownership marks for token t and recompute the canonical reverse hashes.
-  for(auto i = ownership_categories.begin(); i != ownership_categories.end(); i++)
-  {
-    if (not i->test(t)) continue;
-
-    owner_set_t old_owners = *i;
-
-    i->set(t,false);
-
-    // If old_owners is still canonical, then it must be the first one in the list.
-    if (canonical_ownership_categories.erase(old_owners))
-      canonical_ownership_categories.insert(*i,i);
-
-    assert(canonical_ownership_categories.contains_key(*i));
-    assert(not canonical_ownership_categories.contains_key(old_owners));
-  }
-  /*
-  int here = first_used_reg;
-  for(;here != -1;here = access(here).next_reg)
-    computation_for_reg(0,here).owners.set(t,false);
-  */
-
-#ifdef DEBUG_MACHINE
-  for(const auto& i: canonical_ownership_categories)
-    assert(i.first == *i.second);
-  for(const auto& i: ownership_categories)
-    assert(canonical_ownership_categories.find(i) != canonical_ownership_categories.end());
-  check_used_regs();
-#endif
-}
-
-void reg_heap::duplicate_ownership_mark(int t1, int t2)
-{
-#ifdef DEBUG_MACHINE
-  for(const auto& i: canonical_ownership_categories)
-    assert(i.first == *i.second);
-  for(const auto& i: ownership_categories)
-    assert(canonical_ownership_categories.find(i) != canonical_ownership_categories.end());
-  check_used_regs();
-#endif
-
-  // Clear ownership marks for token t and recompute the canonical reverse hashes.
-  for(auto i = ownership_categories.begin(); i != ownership_categories.end(); i++)
-  {
-    if (not i->test(t1)) continue;
-
-    owner_set_t old_owners = *i;
-
-    i->set(t2,true);
-
-    // If old_owners is still canonical, then it must be the first one in the list.
-    if (canonical_ownership_categories.erase(old_owners))
-      canonical_ownership_categories.insert(*i,i);
-
-    assert(canonical_ownership_categories.contains_key(*i));
-    assert(not canonical_ownership_categories.contains_key(old_owners));
-  }
-
-  /*
-  int here = first_used_reg;
-  for(;here != -1;here = access(here).next_reg)
-    if (computation_for_reg(0,here).owners.test(t1))
-      computation_for_reg(0,here).owners.set(t2,true);
-  */
-
-#ifdef DEBUG_MACHINE
-  for(const auto& i: canonical_ownership_categories)
-    assert(i.first == *i.second);
-  for(const auto& i: ownership_categories)
-    assert(canonical_ownership_categories.find(i) != canonical_ownership_categories.end());
-  check_used_regs();
-#endif
 }
 
 vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
@@ -1972,10 +1097,7 @@ void reg_heap::find_all_used_regs_in_context(int t, vector<int>& unique) const
 
 #ifndef NDEBUG
   for(int R: unique)
-  {
-    assert(reg_is_owned_by(R,t));
     check_used_reg(R);
-  }
 #endif
 }
 
@@ -2066,9 +1188,6 @@ void reg_heap::try_release_token(int t)
   // (But how fast is it?)
   assert(token_roots[t].temp.empty());
 
-  // remove ownership marks on all of our regs - used and unused.
-  remove_ownership_mark(t);
-
   // remove the roots for the heads of graph t
   token_roots[t].heads.clear();
 
@@ -2084,19 +1203,6 @@ void reg_heap::try_release_token(int t)
   // mark token for this context unused
   unused_tokens.push_back(t);
   token_roots[t].used = false;
-
-  // clear only the mappings that were actually updated here.
-  for(int R: token_roots[t].modified)
-    token_roots[t].virtual_mapping[R] = {0,-1};
-  token_roots[t].modified.clear();
-
-#ifdef DEBUG_MACHINE
-  assert(token_roots[t].virtual_mapping.size() == size());
-  for(int i: token_roots[t].virtual_mapping)
-    assert(i==0);
-
-  check_used_regs();
-#endif
 
   int parent = parent_token(t);
   token_roots[t].parent = -1;
@@ -2133,9 +1239,29 @@ void reg_heap::try_release_token(int t)
   {
     int index = remove_element(token_roots[parent].children, t);
     assert(index != -1);
-
-    try_release_token(parent);
   }
+
+  // clear only the mappings that were actually updated here.
+  for(int r: token_roots[t].modified)
+  {
+    // We don't need to use unmap_reg( ) because we don't need to maintain the modified list.
+    int rc = token_roots[t].virtual_mapping[r].rc;
+    computations.reclaim_used(rc);
+    token_roots[t].virtual_mapping[r] = {};
+  }
+  token_roots[t].modified.clear();
+
+  // If we just released a terminal token, maybe it's parent is not terminal also.
+  if (parent != -1)
+    try_release_token(parent);
+
+#ifdef DEBUG_MACHINE
+  assert(token_roots[t].virtual_mapping.size() == size());
+  for(const auto& A: token_roots[t].virtual_mapping)
+    assert(not A.rc);
+
+  check_used_regs();
+#endif
 }
 
 bool reg_heap::is_terminal_token(int t) const
@@ -2168,6 +1294,8 @@ bool reg_heap::token_is_used(int t) const
 
 int reg_heap::copy_token(int t)
 {
+  check_used_regs();
+
   int t2 = get_unused_token();
 
   assert(token_roots[t].temp.empty());
@@ -2181,12 +1309,28 @@ int reg_heap::copy_token(int t)
   // set parent relationship
   token_roots[t2].parent = t;
   token_roots[t2].children.clear();
+  token_roots[t2].modified.clear();
 
   token_roots[t].children.push_back(t2);
 
-  // remove ownership mark from used regs in this context
-  duplicate_ownership_mark(t, t2);
+  // For each reg that mapped in t1, map it separately in t2.
+  for(int r: token_roots[t].modified)
+    map_reg(t2,r);
 
+  // For each reg that mapped in t1, map it separately in t2.
+  for(int r: token_roots[t].modified)
+  {
+    if (computation_for_reg(t,r).changeable)
+      computation_for_reg(t2,r).changeable = true;
+
+    if (is_modifiable(access(r).C.exp))
+    {
+      int r2 = call_for_reg(t,r);
+      set_call(t2,r,r2);
+    }
+  }
+
+  check_used_regs();
   return t2;
 }
 
@@ -2200,7 +1344,6 @@ int reg_heap::add_identifier_to_context(int t, const string& name)
 
   int R = allocate(t);
 
-  reg_add_owner(R, t);
   identifiers[name] = R;
   return R;
 }
@@ -2211,9 +1354,6 @@ reg_heap::reg_heap()
 { 
   target.resize(size());
   target[0] = 0;
-
-  owner_set_t empty;
-  canonical_ownership_categories.insert(empty, ownership_categories.push_back(empty));
 
   //  computations.collect_garbage = [this](){collect_garbage();};
   computations.collect_garbage = [](){};
@@ -2235,8 +1375,6 @@ class RegOperationArgs: public OperationArgs
   reg_heap& M;
 
   const int t;
-
-  owner_set_t owners;
 
   int n_allocated;
 
@@ -2281,7 +1419,7 @@ public:
 
   int allocate(closure&& C)
   {
-    int r = M.push_temp_head( owners );
+    int r = M.push_temp_head( t );
     M.set_C(r, std::move(C) );
     n_allocated++;
     return r;
@@ -2290,7 +1428,7 @@ public:
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
   RegOperationArgs(int r, reg_heap& m, int T, bool ec)
-    :R(r),M(m),t(T),owners(M.get_reg_owners(R)), n_allocated(0), evaluate_changeable(ec)
+    :R(r),M(m),t(T), n_allocated(0), evaluate_changeable(ec)
   { 
     // I think these should already be cleared.
     assert(M.computation_for_reg(t,R).used_inputs.empty());
@@ -2299,7 +1437,7 @@ public:
   ~RegOperationArgs()
   {
     for(int i=0;i<n_allocated;i++)
-      M.pop_temp_head( owners );
+      M.pop_temp_head( t );
   }
 };
 
@@ -2377,12 +1515,13 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
   assert(is_terminal_token(t));
   assert(is_valid_address(R));
   assert(is_used(R));
-  assert(reg_is_owned_by(R,t));
+  assert(is_mapped(t,R));
   assert(not is_a<expression>(access(R).C.exp));
   assert(not result_for_reg(t,R) or is_WHNF(access_result_for_reg(t,R).exp));
   assert(not result_for_reg(t,R) or not is_a<expression>(access_result_for_reg(t,R).exp));
   assert(not result_for_reg(t,R) or not is_a<index_var>(access_result_for_reg(t,R).exp));
   assert(not result_for_reg(t,R) or not is_a<index_var>(access(R).C.exp));
+  check_used_reg(R);
 
 #ifndef NDEBUG
   //  if (not result_for_reg(t,R)) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
@@ -2390,6 +1529,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
   while (not result_for_reg(t,R) and (evaluate_changeable or not computation_for_reg(t,R).changeable))
   {
+    assert(is_mapped(t,R));
+
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     expression_ref T;
@@ -2442,6 +1583,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       if (R3 != R2)
 	set_C(R, closure(index_var(0),{R3}));
 
+      check_used_reg(R3);
       return R3;
     }
 
@@ -2467,8 +1609,6 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     {
       assert(not computation_for_reg(t,R).changeable);
 
-      owner_set_t owners = get_reg_owners(R);
-
       vector<int> local_env = access(R).C.Env;
 
       vector<int> new_heap_vars;
@@ -2479,7 +1619,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
 	// Hmm... should this happen at all?  How?
 
-	int V = push_temp_head(owners);
+	int V = push_temp_head(t);
 	new_heap_vars.push_back( V );
 	local_env.push_back( V );
       }
@@ -2494,7 +1634,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
       // Remove the new heap vars from the list of temp heads in reverse order.
       for(int i=0;i<new_heap_vars.size(); i++)
-	pop_temp_head(owners);
+	pop_temp_head(t);
       
       assert(not reg_has_call(t,R) );
       assert(not result_for_reg(t,R));
@@ -2577,6 +1717,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     assert(not is_a<expression>(access_result_for_reg(t,R).exp));
   }
 
+  check_used_reg(R);
   return R;
 }
 
