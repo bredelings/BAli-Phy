@@ -962,41 +962,76 @@ void reg_heap::remove_unused_ownership_marks()
 
 void reg_heap::trace_and_reclaim_unreachable()
 {
-  vector<int>& scan = get_scratch_list();
-  vector<int>& next_scan = get_scratch_list();
+  vector<int>& tokens = get_scratch_list();
 
-  for(int i: roots)
-    scan.push_back(i);
+  vector<int>& scan1 = get_scratch_list();
+  vector<int>& next_scan1 = get_scratch_list();
+  vector<int>& scan2 = get_scratch_list();
+  vector<int>& next_scan2 = get_scratch_list();
 
-  // Put roots that are not on the list into the scan vector.
-  get_roots(scan);
+  assert(root_token != -1);
+  tokens.push_back(root_token);
 
-  while (not scan.empty())
+  for(int i=0;i<tokens.size();i++)
   {
-    for(int i=0;i<scan.size();i++)
+    int t = tokens[i];
+    assert(token_is_used(t));
+
+    for(int i: roots)
+      scan1.push_back(i);
+
+    get_roots(scan1,t);
+
+    while (not scan1.empty() or not scan2.empty())
     {
-      int r = scan[i];
-      assert(not is_free(r));
-      if (is_marked(r)) continue;
+      for(int r: scan1)
+      {
+	assert(not is_free(r));
+	if (is_marked(r)) continue;
 
-      set_state(r, marked);
+	set_mark(r);
 
-      // Count the references from E
-      // FIXME - speed?
-      reg& R = access_unused(r);
-      next_scan.insert(next_scan.end(), R.C.Env.begin(), R.C.Env.end());
+	reg& R = access(r);
 
-      // Count also the references from the call
-      const computation& RC = computation_for_reg(0,r);
-      if (RC.call) 
-	next_scan.insert(next_scan.end(), computations[RC.call].source);
+	// Count the references from E
+	next_scan1.insert(next_scan1.end(), R.C.Env.begin(), R.C.Env.end());
+
+	// Count the computation, if any.
+	int rc = computation_index_for_reg(t,r);
+	scan2.push_back(rc);
+      }
+      std::swap(scan1,next_scan1);
+      next_scan1.clear();
+
+      for(int rc: scan2)
+      {
+	assert(not computations.is_free(rc));
+	if (computations.is_marked(rc)) continue;
+
+	computations.set_mark(rc);
+
+	const computation& RC = computations[rc];
+
+	// Count the reg that references us
+	assert(RC.source);
+	scan1.push_back(RC.source);
+
+	// Count also the computation we call
+	if (RC.call) 
+	  next_scan2.push_back(RC.call);
+      }
+      std::swap(scan2,next_scan2);
+      next_scan2.clear();
     }
-    std::swap(scan,next_scan);
-    next_scan.clear();
+    tokens.insert(tokens.end(), token_roots[t].children.begin(), token_roots[t].children.end());
   }
 
   reclaim_unmarked();
+  computations.reclaim_unmarked();
 
+  release_scratch_list();
+  release_scratch_list();
+  release_scratch_list();
   release_scratch_list();
   release_scratch_list();
 }
