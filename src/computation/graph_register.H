@@ -217,6 +217,9 @@ public:
 
     std::vector<int> modified;
 
+    /// These are the regs we need to check for new uses to split.
+    std::vector<int> modified_modifiables;
+
     bool used;
     graph_roots():used(false) {}
   };
