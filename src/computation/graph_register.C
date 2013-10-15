@@ -417,7 +417,7 @@ reg_heap::address vm_erase(vector<int>& m, vector<reg_heap::address>& v, int r)
   return A;
 }
 
-void reg_heap::set_used_input(int R1, int R2)
+void reg_heap::set_used_input(int t, int R1, int R2)
 {
   assert(is_valid_address(R1));
   assert(is_valid_address(R2));
@@ -496,7 +496,7 @@ void reg_heap::clear_used_inputs(int rc1)
   assert(RC1.used_inputs.empty());
 }
 
-void reg_heap::clear_used_inputs_for_reg(int R)
+void reg_heap::clear_used_inputs_for_reg(int t, int R)
 {
   int rc = computation_index_for_reg(0,R);
   if (rc > 0)
@@ -665,7 +665,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the result and call it.
   else
   {
-    int R2 = allocate();
+    int R2 = allocate(t);
 
     set_reg_ownership_category(R2, get_reg_ownership_category(R));
     set_C(R2, std::move( result ) );
@@ -764,7 +764,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       // We don't know what the reduction result is, so invalidate the call.
       clear_call_for_reg(token, R1);
       // Remember to clear the used inputs.
-      clear_used_inputs_for_reg(R1);
+      clear_used_inputs_for_reg(token, R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
       for(int rc2: RC1.used_by)
@@ -965,7 +965,7 @@ int reg_heap::push_temp_head(int t)
 
 int reg_heap::push_temp_head(const owner_set_t& tokens)
 {
-  int R = allocate();
+  int R = allocate(0);
 
   set_reg_owners( R, tokens );
   for(int t=0;t< tokens.size();t++)
@@ -1037,7 +1037,7 @@ void reg_heap::expand_memory(int s)
   }
 }
 
-int reg_heap::allocate()
+int reg_heap::allocate(int t)
 {
   int r = base_pool_t::allocate();
 
@@ -1709,7 +1709,7 @@ int reg_heap::uniquify_reg(int R, int t)
 
     // 4c. Initialize/Remap used_inputs
     for(const auto& i: RC1.used_inputs)
-      set_used_input(R2, target[i.first] );
+      set_used_input(t, R2, target[i.first] );
 
     // 4d. Initialize/Remap result if E is in WHNF.
     if (not RC2.call and result_for_reg(t, R1))
@@ -2308,7 +2308,7 @@ int reg_heap::add_identifier_to_context(int t, const string& name)
   if (identifiers.count(name))
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
 
-  int R = allocate();
+  int R = allocate(t);
 
   reg_add_owner(R, t);
   identifiers[name] = R;
@@ -2381,7 +2381,7 @@ class RegOperationArgs: public OperationArgs
 
       // Note that although R2 is newly used, R3 might be already used if it was 
       // found from R2 through a non-changeable reg_var chain.
-      M.set_used_input(R, R3);
+      M.set_used_input(t, R, R3);
     }
 
     return R3;
@@ -2641,7 +2641,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
 	  assert(not computation_for_reg(t,R).call);
 	  assert(not result_for_reg(t,R));
-	  clear_used_inputs_for_reg(R);
+	  clear_used_inputs_for_reg(t,R);
 	  set_C(R, std::move(result) );
 	}
 	// Otherwise, set the reduction result.

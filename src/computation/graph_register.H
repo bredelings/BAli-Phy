@@ -153,14 +153,14 @@ public:
     return access(R2).C;
   }
 
-  int allocate();
+  int allocate(int t);
 
   void collect_garbage();
   void trace_and_reclaim_unreachable();
   void compute_ownership_categories();
 
-  void set_used_input(int R1, int R2);
-  void clear_used_inputs_for_reg(int R);
+  void set_used_input(int t, int R1, int R2);
+  void clear_used_inputs_for_reg(int t, int R);
   void clear_used_inputs(int R);
   void set_call(int t, int R1, int R2);
   void set_call_unsafe(int t, int R1, int R2);

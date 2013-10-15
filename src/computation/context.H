@@ -224,7 +224,7 @@ protected:
 
   /// Allocate a reg which will be a root for garbage-collection
   int allocate() const {
-    int R = memory()->allocate();
+    int R = memory()->allocate(token);
     memory()->reg_add_owner(R, token);
     return R;
   }
