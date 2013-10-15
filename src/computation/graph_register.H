@@ -382,6 +382,8 @@ public:
     set_result_for_reg(t,r,0);
   }
 
+  std::vector<int> used_regs_for_reg(int t, int r) const;
+
   void reroot_mappings_at(int t);
 
   /*----- Graph splitting -----*/

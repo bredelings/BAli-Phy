@@ -768,6 +768,14 @@ void reg_heap::reroot_mappings_at(int t)
   assert(is_root_token(t));
 }
 
+std::vector<int> reg_heap::used_regs_for_reg(int t, int r) const
+{
+  vector<int> U;
+  for(const auto& I: computation_for_reg(t,r).used_inputs)
+    U.push_back(computations[I.first].source);
+  return U;
+}
+
 void reg_heap::reclaim_used(int r)
 {
   // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
@@ -2789,7 +2797,6 @@ void dot_graph_for_token(const reg_heap& C, int t)
 
 void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 {
-  /*
   const auto& ids = C.get_identifiers_for_context(t);
 
   map<int,string> reg_names = get_register_names(ids);
@@ -2913,8 +2920,8 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       {
 	string name2 = "n" + convertToString(R2);
 	bool used = false;
-	for(const auto& i: C.computation_for_reg(0,R).used_inputs)
-	  if (C.computations[i.first].source == R2) used = true;
+	for(int i: C.used_regs_for_reg(0,R))
+	  if (i == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
 	if (reg_names.count(R2) and not C.computation_for_reg(0,R2).changeable and not used) continue;
@@ -2934,8 +2941,8 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       {
 	string name2 = "n" + convertToString(R2);
 	bool used = false;
-	for(const auto& i: C.computation_for_reg(0,R).used_inputs)
-	  if (C.computations[i.first] == R2) used = true;
+	for(int i: C.used_regs_for_reg(0,R))
+	  if (i == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
 	if (reg_names.count(R2) and not C.computation_for_reg(0,R2).changeable and not used) continue;
@@ -2963,10 +2970,8 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
 
     // used_inputs
-    for(const auto& i: C.computation_for_reg(0,R).used_inputs)
+    for(int R2: C.used_regs_for_reg(0,R))
     {
-      int R2 = C.computations[i.first].source;
-
       bool is_ref_edge_also = false;
       for(int R3: C.access(R).C.Env)
 	if (R2 == R3)
@@ -2984,5 +2989,4 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
   }
   o<<"}"<<std::endl;
-  */
 }
