@@ -300,12 +300,13 @@ void reg_heap::set_used_input(int t, int R1, int R2)
   // R1 shouldn't have any used inputs if it isn't changeable.
   assert(RC1.changeable);
   // Don't add unchangeable results as inputs
-  computation& RC2 = computation_for_reg(0,R2);
+  int rc2 = computation_index_for_reg(0,R2);
+  computation& RC2 = computations[rc2];
   assert(RC2.changeable);
 
   auto& used_by = RC2.used_by;
   reg::back_edge_deleter D = used_by.insert(used_by.end(), rc1);
-  RC1.used_inputs.emplace_back(R2,D);
+  RC1.used_inputs.emplace_back(rc2,D);
 }
 
 int count(const std::vector<int>& v, int I)
@@ -333,15 +334,13 @@ void reg_heap::clear_used_inputs(int rc1)
   // Remove the back edges from each used_input reg that is not on the free list.
   for(const auto& i: RC1.used_inputs)
   {
-    int R2 = i.first;
-    assert(is_valid_address(R2));
+    int rc2 = i.first;
 
-    if (is_free(R2))
-      //      assert( computation_for_reg(0,R2).used_by.empty() );
-      assert( not is_mapped(0,R2) );
+    if (computations.is_free(rc2))
+      ;
     else
     {
-      auto& RC2 = computation_for_reg(0,R2);
+      auto& RC2 = computations[rc2];
       assert( not RC2.used_by.empty() );
 
       reg::back_edge_deleter D = i.second;
@@ -1570,7 +1569,7 @@ int reg_heap::uniquify_reg(int R, int t)
 
     // 4c. Initialize/Remap used_inputs
     for(const auto& i: RC1.used_inputs)
-      set_used_input(t, R2, target[i.first] );
+      set_used_input(t, R2, target[computations[i.first].source] );
 
     // 4d. Initialize/Remap result if E is in WHNF.
     if (not RC2.call and result_for_reg(t, R1))
@@ -1645,25 +1644,25 @@ int reg_heap::uniquify_reg(int R, int t)
     // c. Adjust use edges
     for(auto& i: computation_for_reg(t,Q1).used_inputs)
     {
-      int& I1 = i.first;
+      int& rc = i.first;
 
-      int I2 = target[I1];
-      assert( not is_free(I1));
-      assert( not is_free(I2));
+      int rc_new = computation_index_for_reg(0,target[computations[rc].source]);
+      assert( not computations.is_free(rc));
+      assert( not computations.is_free(rc_new));
 
-      if (I2 != I1)
+      if (rc_new != rc)
       {
-	// Remove the edge to I1
-	assert( not computation_for_reg(t,I1).used_by.empty() );
+	// Remove the edge to rc
+	assert( not computations[rc].used_by.empty() );
 
 	reg::back_edge_deleter& D = i.second;
 	assert( *D == qc1 );
 
-	computation_for_reg(t,I1).used_by.erase(D);
+	computations[rc].used_by.erase(D);
 
-	// Add the edge to I2
-	D = computation_for_reg(t,I2).used_by.push_back(qc1);
-	I1 = I2;
+	// Add the edge to rc_new
+	D = computations[rc_new].used_by.push_back(qc1);
+	rc = rc_new;
       }
     }
   }
@@ -1787,13 +1786,13 @@ void reg_heap::check_used_reg(int index) const
 
   for(const auto& i: RC.used_inputs)
   {
-    int r = i.first;
+    int rc = i.first;
 
     // Check that used regs are owned by the owners of R
-    assert( reg_is_owned_by_all_of(r, get_reg_owners(index) ) );
+    assert( reg_is_owned_by_all_of(computations[rc].source, get_reg_owners(index) ) );
 
     // Check that used regs are have back-references to R
-    assert( computation_for_reg(0,r).used_by.count(index_c) );
+    assert( computations[rc].used_by.count(index_c) );
   }
 
   if (RC.call)
@@ -2790,6 +2789,7 @@ void dot_graph_for_token(const reg_heap& C, int t)
 
 void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 {
+  /*
   const auto& ids = C.get_identifiers_for_context(t);
 
   map<int,string> reg_names = get_register_names(ids);
@@ -2914,7 +2914,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	string name2 = "n" + convertToString(R2);
 	bool used = false;
 	for(const auto& i: C.computation_for_reg(0,R).used_inputs)
-	  if (i.first == R2) used = true;
+	  if (C.computations[i.first].source == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
 	if (reg_names.count(R2) and not C.computation_for_reg(0,R2).changeable and not used) continue;
@@ -2935,7 +2935,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	string name2 = "n" + convertToString(R2);
 	bool used = false;
 	for(const auto& i: C.computation_for_reg(0,R).used_inputs)
-	  if (i.first == R2) used = true;
+	  if (C.computations[i.first] == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
 	if (reg_names.count(R2) and not C.computation_for_reg(0,R2).changeable and not used) continue;
@@ -2965,7 +2965,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     // used_inputs
     for(const auto& i: C.computation_for_reg(0,R).used_inputs)
     {
-      int R2 = i.first;
+      int R2 = C.computations[i.first].source;
 
       bool is_ref_edge_also = false;
       for(int R3: C.access(R).C.Env)
@@ -2984,4 +2984,5 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
   }
   o<<"}"<<std::endl;
+  */
 }
