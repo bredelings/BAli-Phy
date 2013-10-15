@@ -519,7 +519,7 @@ void reg_heap::clear_used_inputs_for_reg(int R)
 //    *unchangeably* redirects to <b>, then we can call directly to <b>, although we
 //    have to invalidate this when the reduction result is invalidated.
 
-void reg_heap::set_call_unsafe(int R1, int R2)
+void reg_heap::set_call_unsafe(int t, int R1, int R2)
 {
   // Check that R1 is legal
   assert(is_used(R1));
@@ -529,12 +529,12 @@ void reg_heap::set_call_unsafe(int R1, int R2)
 
   // Check that we aren't overriding an existing *call*
 
-  int rc1 = computation_index_for_reg(0,R1);
+  int rc1 = computation_index_for_reg(t,R1);
   computation& RC1 = computations[rc1];
   assert(not RC1.call);
   RC1.call = R2;
 
-  auto& called_by2 = computation_for_reg(0,R2).called_by;
+  auto& called_by2 = computation_for_reg(t,R2).called_by;
   RC1.call_reverse = called_by2.insert(called_by2.end(), rc1);
   assert( *RC1.call_reverse == rc1 );
 
@@ -543,12 +543,12 @@ void reg_heap::set_call_unsafe(int R1, int R2)
 }
 
 
-void reg_heap::set_call(int R1, int R2)
+void reg_heap::set_call(int t, int R1, int R2)
 {
-  set_call_unsafe(R1, R2);
+  set_call_unsafe(t, R1, R2);
 
   // Check that we aren't overriding an existing *result*
-  assert(not result_for_reg(0,R1));
+  assert(not result_for_reg(t,R1));
 }
 
 void reg_heap::clear_call(int rc)
@@ -639,13 +639,13 @@ void reg_heap::clear_C(int R)
   access_unused(R).referenced_by_in_E_reverse.clear();
 }
 
-void reg_heap::set_reduction_result(int R, closure&& result)
+void reg_heap::set_reduction_result(int t, int R, closure&& result)
 {
   // Check that there is no result we are overriding
-  assert(not result_for_reg(0,R) );
+  assert(not result_for_reg(t,R) );
 
   // Check that there is no previous call we are overriding.
-  assert(not computation_for_reg(0,R).call);
+  assert(not computation_for_reg(t,R).call);
 
   // if the result is NULL, just leave the result and call both unset.
   //  (this could happen if we set a parameter value to null.)
@@ -660,7 +660,7 @@ void reg_heap::set_reduction_result(int R, closure&& result)
     
     assert(is_used(Q));
     
-    set_call(R,Q);
+    set_call(t,R,Q);
   }
   // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the result and call it.
   else
@@ -669,7 +669,7 @@ void reg_heap::set_reduction_result(int R, closure&& result)
 
     set_reg_ownership_category(R2, get_reg_ownership_category(R));
     set_C(R2, std::move( result ) );
-    set_call(R, R2);
+    set_call(t, R, R2);
   }
 }
 
@@ -807,7 +807,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     computation_for_reg(token,R).temp = -1;
 
   // Finally set the new value.
-  set_reduction_result(P, std::move(C) );
+  set_reduction_result(token, P, std::move(C) );
 
   release_scratch_list();
   release_scratch_list();
@@ -1705,7 +1705,7 @@ int reg_heap::uniquify_reg(int R, int t)
 
     // 4b. Initialize/Remap call
     if (RC1.call)
-      set_call(R2, target[RC1.call] );
+      set_call(0, R2, target[RC1.call] );
 
     // 4c. Initialize/Remap used_inputs
     for(const auto& i: RC1.used_inputs)
@@ -1777,7 +1777,7 @@ int reg_heap::uniquify_reg(int R, int t)
       if (old_call != new_call)
       {
 	clear_call_for_reg(t, Q1);
-	set_call_unsafe(Q1, new_call);
+	set_call_unsafe(0, Q1, new_call);
       }
     }
     
@@ -2527,7 +2527,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       if (call != computation_for_reg(t,R).call)
       {
 	clear_call_for_reg(t,R);
-	set_call(R,call);
+	set_call(t, R, call);
       }
 
       // R gets its result from S.
@@ -2646,7 +2646,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	}
 	// Otherwise, set the reduction result.
 	else
-	  set_reduction_result(R, std::move(result) );
+	  set_reduction_result(t, R, std::move(result) );
       }
       catch (myexception& e)
       {

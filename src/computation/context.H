@@ -219,7 +219,7 @@ public:
 
 protected:  
   void set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
-  void set_reduction_result(int R, closure&& result) const {memory()->set_reduction_result(R, std::move(result) );}
+  void set_reduction_result(int R, closure&& result) const {memory()->set_reduction_result(token, R, std::move(result) );}
   int incremental_evaluate(int R, bool ec=true) const {return memory()->incremental_evaluate(R,token,ec);}
 
   /// Allocate a reg which will be a root for garbage-collection
