@@ -1589,7 +1589,7 @@ int reg_heap::uniquify_reg(int R, int t)
 
     // 4b. Initialize/Remap call
     if (RC1.call)
-      set_call(0, R2, target[computations[RC1.call].source] );
+      set_call(t, R2, target[computations[RC1.call].source] );
 
     // 4c. Initialize/Remap used_inputs
     for(const auto& i: RC1.used_inputs)
@@ -1661,7 +1661,7 @@ int reg_heap::uniquify_reg(int R, int t)
       if (old_call != new_call)
       {
 	clear_call_for_reg(t, Q1);
-	set_call_unsafe(0, Q1, new_call);
+	set_call_unsafe(t, Q1, new_call);
       }
     }
     
@@ -1670,7 +1670,7 @@ int reg_heap::uniquify_reg(int R, int t)
     {
       int& rc = i.first;
 
-      int rc_new = computation_index_for_reg(0,target[computations[rc].source]);
+      int rc_new = computation_index_for_reg(t,target[computations[rc].source]);
       assert( not computations.is_free(rc));
       assert( not computations.is_free(rc_new));
 
@@ -1972,7 +1972,7 @@ void reg_heap::find_all_used_regs_in_context(int t, vector<int>& unique) const
 #endif
 }
 
-void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, vector<int>& unique) const
+void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& scan, vector<int>& unique) const
 {
   for(int i=0;i<scan.size();i++)
   {
@@ -1999,7 +1999,7 @@ void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, v
       }
     }
 
-    const computation& RC = computation_for_reg(0,r);
+    const computation& RC = computation_for_reg(t,r);
 
     // Count also the references from the call
     if (RC.call and computations.is_used(RC.call))
@@ -2257,10 +2257,10 @@ class RegOperationArgs: public OperationArgs
     // Compute the result, and follow index_var chains (which are not changeable).
     int R3 = M.incremental_evaluate(R2, t, ec);
 
-    if (M.computation_for_reg(0,R3).changeable and evaluate_changeables())
+    if (M.computation_for_reg(t,R3).changeable and evaluate_changeables())
     {
       // If R2 -> result was changeable, then R -> result will be changeable as well.
-      M.computation_for_reg(0,R).changeable = true;
+      M.computation_for_reg(t,R).changeable = true;
 
       // Note that although R2 is newly used, R3 might be already used if it was 
       // found from R2 through a non-changeable reg_var chain.
@@ -2286,7 +2286,7 @@ public:
     :R(r),M(m),t(T),owners(M.get_reg_owners(R)), n_allocated(0), evaluate_changeable(ec)
   { 
     // I think these should already be cleared.
-    assert(M.computation_for_reg(0,R).used_inputs.empty());
+    assert(M.computation_for_reg(t,R).used_inputs.empty());
   }
 
   ~RegOperationArgs()
@@ -2915,14 +2915,14 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
 
     o<<"label = \""<<label<<"\"";
-    if (C.computation_for_reg(0,R).re_evaluate)
+    if (C.computation_for_reg(t,R).re_evaluate)
       o<<",style=\"dashed,filled\",color=yellow";
-    else if (C.computation_for_reg(0,R).changeable)
+    else if (C.computation_for_reg(t,R).changeable)
       o<<",style=\"dashed,filled\",color=red";
 
-    if (C.result_for_reg(0,R) and C.computation_for_reg(0,R).changeable)
+    if (C.result_for_reg(t,R) and C.computation_for_reg(t,R).changeable)
       o<<",fillcolor=\"#007700\",fontcolor=white";
-    else if (C.computation_for_reg(0,R).changeable)
+    else if (C.computation_for_reg(t,R).changeable)
       o<<",fillcolor=\"#770000\",fontcolor=white";
     else if (C.access(R).C.exp->head->type() == index_var_type)
       o<<",fillcolor=\"#77bbbb\"";
@@ -2935,11 +2935,11 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       {
 	string name2 = "n" + convertToString(R2);
 	bool used = false;
-	for(int i: C.used_regs_for_reg(0,R))
+	for(int i: C.used_regs_for_reg(t,R))
 	  if (i == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
-	if (reg_names.count(R2) and not C.computation_for_reg(0,R2).changeable and not used) continue;
+	if (reg_names.count(R2) and not C.computation_for_reg(t,R2).changeable and not used) continue;
 
 	// Don't draw ref edges to things like fmap.
 	if (constants.count(R2) and not used) continue;
@@ -2956,11 +2956,11 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       {
 	string name2 = "n" + convertToString(R2);
 	bool used = false;
-	for(int i: C.used_regs_for_reg(0,R))
+	for(int i: C.used_regs_for_reg(t,R))
 	  if (i == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
-	if (reg_names.count(R2) and not C.computation_for_reg(0,R2).changeable and not used) continue;
+	if (reg_names.count(R2) and not C.computation_for_reg(t,R2).changeable and not used) continue;
 	
 	// Don't draw ref edges to things like fmap.
 	if (constants.count(R2) and not used) continue;
@@ -2977,7 +2977,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     // FIXME:Drawing - doing :w and {rank=same; n -> n} makes the edge drawn over the node icon.
     if (C.reg_has_call(0,R))
     {
-      string name2 = "n" + convertToString(C.call_for_reg(0,R));
+      string name2 = "n" + convertToString(C.call_for_reg(t,R));
       o<<name<<":e -> "<<name2<<":w ";
       o<<"[";
       o<<"color=\"#007700\"";
@@ -2985,7 +2985,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
 
     // used_inputs
-    for(int R2: C.used_regs_for_reg(0,R))
+    for(int R2: C.used_regs_for_reg(t,R))
     {
       bool is_ref_edge_also = false;
       for(int R3: C.access(R).C.Env)
