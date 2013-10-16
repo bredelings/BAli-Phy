@@ -764,17 +764,16 @@ void reg_heap::get_roots(vector<int>& scan) const
     scan.push_back(i.second);
 }
 
-int reg_heap::push_temp_head(int t)
+int reg_heap::push_temp_head()
 {
   int R = allocate();
-  map_reg(t,R);
 
   temp.push_back(R);
 
   return R;
 }
 
-void reg_heap::pop_temp_head(int t)
+void reg_heap::pop_temp_head()
 {
   temp.pop_back();
 }
@@ -1393,7 +1392,7 @@ public:
 
   int allocate(closure&& C)
   {
-    int r = M.push_temp_head( t );
+    int r = M.push_temp_head();
     M.set_C(r, std::move(C) );
     n_allocated++;
     return r;
@@ -1411,7 +1410,7 @@ public:
   ~RegOperationArgs()
   {
     for(int i=0;i<n_allocated;i++)
-      M.pop_temp_head( t );
+      M.pop_temp_head();
   }
 };
 
@@ -1596,7 +1595,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
 	// Hmm... should this happen at all?  How?
 
-	int V = push_temp_head(t);
+	int V = push_temp_head();
 	new_heap_vars.push_back( V );
 	local_env.push_back( V );
       }
@@ -1611,7 +1610,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
       // Remove the new heap vars from the list of temp heads in reverse order.
       for(int i=0;i<new_heap_vars.size(); i++)
-	pop_temp_head(t);
+	pop_temp_head();
       
       assert(not reg_has_call(t,R) );
       assert(not result_for_reg(t,R));

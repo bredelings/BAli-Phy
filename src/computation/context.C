@@ -452,7 +452,7 @@ expression_ref context::get_expression(int i) const
 
 void context::pop_temp_head() const
 {
-  memory()->pop_temp_head( token );
+  memory()->pop_temp_head();
 }
 
 void context::alphabetize_parameters()
@@ -837,7 +837,7 @@ context::~context()
 
 int context::push_temp_head() const
 {
-  return memory()->push_temp_head( token );
+  return memory()->push_temp_head();
 }
 
 int context::get_parameter_reg(int index) const

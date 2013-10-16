@@ -227,10 +227,10 @@ public:
         std::vector<int>& triggers(int t)       {return token_roots[t].triggers;}
 
   /// Allocate a reg in context t and put it on the top of the temporary-head stack.
-  int push_temp_head(int t);
+  int push_temp_head();
 
   /// Deallocate the temporary head on the top of the temporary-head stack.
-  void pop_temp_head(int t);
+  void pop_temp_head();
 
   /// Add a new identifier, pointing to a newly allocated location
   int add_identifier(const std::string&);
