@@ -87,8 +87,6 @@ class reg_heap: public Object, public checked_pool<reg>
 
   checked_pool_callback<computation> computations;
 
-  std::vector<int> target;
-
   mutable int n_active_scratch_lists = 0;
   mutable std::vector< object_ptr<Vector<int> > > scratch_lists;
 
@@ -319,10 +317,6 @@ public:
 
   void reroot_mappings_at(int t);
 
-  /*----- Graph splitting -----*/
-  int remap_reg(int) const;
-  /*----- Graph splitting -----*/
-  closure remap_regs(closure) const;
   /*----- Graph splitting -----*/
   int uniquify_reg(int reg, int t);
   /// Update the value of a non-constant, non-computed index

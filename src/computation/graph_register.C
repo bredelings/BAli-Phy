@@ -787,16 +787,10 @@ void reg_heap::get_more_memory()
 void reg_heap::expand_memory(int s)
 {
   int old_size = size();
-  assert(size() == target.size());
   for(auto& tr: token_roots)
     assert(tr.virtual_mapping.size() == old_size);
 
   base_pool_t::expand_memory(s);
-
-  // Add new target, with default target[i] = i
-  target.resize(size());
-  for(int i=old_size;i<size();i++)
-    target[i] = i;
 
   // Extend virtual mappings, with virtual_mapping[i] = 0;
   for(auto& tr: token_roots)
@@ -961,19 +955,6 @@ int reg_heap::get_unused_token()
    direct use are also transitive reachability along forward E- or call- edges,
    just as for indirect use (i.e. dependence).
  */
-
-int reg_heap::remap_reg(int R) const
-{
-  return target[R];
-}
-
-closure reg_heap::remap_regs(closure C) const
-{
-  for(int& R: C.Env)
-    R = target[R];
-
-  return C;
-}
 
 void reg_heap::check_results_in_context(int t) const
 {
@@ -1325,9 +1306,6 @@ reg_heap::reg_heap()
   :base_pool_t(1),
    computations(1)
 { 
-  target.resize(size());
-  target[0] = 0;
-
   //  computations.collect_garbage = [this](){collect_garbage();};
   computations.collect_garbage = [](){};
   computations.clear_references = [this](int rc)
