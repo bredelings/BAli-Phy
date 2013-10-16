@@ -1300,6 +1300,10 @@ int reg_heap::copy_token(int t)
     }
   }
 
+  for(int r: token_roots[t].modified)
+    if (access(r).re_evaluate)
+      incremental_evaluate(r,t2,true);
+
   check_used_regs();
   return t2;
 }
