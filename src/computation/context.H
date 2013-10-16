@@ -42,15 +42,15 @@ class context: public Model_Notes
 
   int perform_io_head = -1;
 
-  std::vector<int>& temp_heads() const {return memory()->get_temp_heads_for_context(token);}
+  std::vector<int>& temp_heads() const {return memory()->get_temp_heads();}
 
-  std::vector<int>& heads() const {return memory()->get_heads_for_context(token);}
+  std::vector<int>& heads() const {return memory()->get_heads();}
 
-  std::vector<std::pair<std::string,int>>& parameters() const {return memory()->get_parameters_for_context(token);}
+  std::vector<std::pair<std::string,int>>& parameters() const {return memory()->get_parameters();}
 
   pool<int>& modifiable_regs() const {return memory()->get_modifiable_regs_for_context(token);}
 
-  std::map<std::string, int>& identifiers() const {return memory()->get_identifiers_for_context(token);}
+  std::map<std::string, int>& identifiers() const {return memory()->get_identifiers();}
 
 public:
   const std::vector<int>& triggers() const {return memory()->triggers(token);}

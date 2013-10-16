@@ -739,29 +739,19 @@ void reg_heap::reclaim_used(int r)
   add_to_free_list(r);
 }
 
-void reg_heap::get_roots(vector<int>& scan) const
-{
-  for(int t=0;t<get_n_tokens();t++)
-  {
-    if (not token_is_used(t)) continue;
-
-    get_roots(scan,t);
-  }
-}
-
 template <typename T>
 void insert_at_end(vector<int>& v, const T& t)
 {
   v.insert(v.end(), t.begin(), t.end());
 }
 
-void reg_heap::get_roots(vector<int>& scan, int t) const
+void reg_heap::get_roots(vector<int>& scan) const
 {
-  insert_at_end(scan, token_roots[t].temp);
-  insert_at_end(scan, token_roots[t].heads);
-  for(int j=0;j<token_roots[t].parameters.size();j++)
-    scan.push_back(token_roots[t].parameters[j].second);
-  for(const auto& i: token_roots[t].identifiers)
+  insert_at_end(scan, temp);
+  insert_at_end(scan, heads);
+  for(int j=0;j<parameters.size();j++)
+    scan.push_back(parameters[j].second);
+  for(const auto& i: identifiers)
     scan.push_back(i.second);
 }
 
@@ -769,14 +759,14 @@ int reg_heap::push_temp_head(int t)
 {
   int R = allocate(t);
 
-  token_roots[t].temp.push_back(R);
+  temp.push_back(R);
 
   return R;
 }
 
 void reg_heap::pop_temp_head(int t)
 {
-  token_roots[t].temp.pop_back();
+  temp.pop_back();
 }
 
 void reg_heap::get_more_memory()
@@ -831,13 +821,11 @@ void reg_heap::trace_and_reclaim_unreachable()
   assert(root_token != -1);
   tokens.push_back(root_token);
 
-  for(int i=0;i<tokens.size();i++)
+  for(int t=0;t<get_n_tokens();t++)
   {
-    int t = tokens[i];
-    assert(token_is_used(t));
+    if (not token_is_used(t)) continue;
 
-
-    get_roots(scan1,t);
+    get_roots(scan1);
 
     while (not scan1.empty() or not scan2.empty())
     {
@@ -881,11 +869,12 @@ void reg_heap::trace_and_reclaim_unreachable()
       std::swap(scan2,next_scan2);
       next_scan2.clear();
     }
-    tokens.insert(tokens.end(), token_roots[t].children.begin(), token_roots[t].children.end());
   }
 
+  check_used_regs();
   reclaim_unmarked();
   computations.reclaim_unmarked();
+  check_used_regs();
 
   release_scratch_list();
   release_scratch_list();
@@ -1026,9 +1015,6 @@ void reg_heap::check_used_reg(int index) const
 
     if (not is_mapped(t, index)) continue;
 
-    for(int r2: R.C.Env)
-      assert(is_mapped(t,r2));
-
     int index_c = computation_index_for_reg(t,index);
 
     const computation& RC = computation_for_reg(t,index);
@@ -1079,7 +1065,7 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& unique) con
 {
   vector<int>& scan = get_scratch_list();
 
-  get_roots(scan, t);
+  get_roots(scan);
 
   find_all_regs_in_context_no_check(t,scan,unique);
 }
@@ -1088,7 +1074,7 @@ void reg_heap::find_all_used_regs_in_context(int t, vector<int>& unique) const
 {
   vector<int>& scan = get_scratch_list();
 
-  get_roots(scan, t);
+  get_roots(scan);
 
   find_all_regs_in_context_no_check(t,scan,unique);
 
@@ -1167,9 +1153,9 @@ void reg_heap::find_all_regs_in_context(int t, vector<int>& unique) const
 }
 
 /// Remove the roots for the identifiers of graph t
-void reg_heap::release_identifiers(int t)
+void reg_heap::release_identifiers()
 {
-  token_roots[t].identifiers.clear();
+  identifiers.clear();
 }
 
 void reg_heap::try_release_token(int t)
@@ -1183,16 +1169,7 @@ void reg_heap::try_release_token(int t)
   // We shouldn't have any temporary heads still on the stack, here!
   // (This should be fast now, no longer proportional to the number of regs in context t.)
   // (But how fast is it?)
-  assert(token_roots[t].temp.empty());
-
-  // remove the roots for the heads of graph t
-  token_roots[t].heads.clear();
-
-  // remove the roots for the parameters of graph t
-  token_roots[t].parameters.clear();
-
-  // remove the roots for the identifiers of graph t
-  token_roots[t].identifiers.clear();
+  assert(temp.empty());
 
   // remove the table of parameter locations for graph t
   token_roots[t].modifiable_regs.clear();
@@ -1295,11 +1272,8 @@ int reg_heap::copy_token(int t)
 
   int t2 = get_unused_token();
 
-  assert(token_roots[t].temp.empty());
+  assert(temp.empty());
 
-  token_roots[t2].heads = token_roots[t].heads;
-  token_roots[t2].parameters = token_roots[t].parameters;
-  token_roots[t2].identifiers = token_roots[t].identifiers;
   token_roots[t2].modifiable_regs = token_roots[t].modifiable_regs;
   token_roots[t2].triggers = token_roots[t].triggers;
 
@@ -1331,15 +1305,15 @@ int reg_heap::copy_token(int t)
   return t2;
 }
 
-int reg_heap::add_identifier_to_context(int t, const string& name)
+int reg_heap::add_identifier(const string& name)
 {
-  map<string,int>& identifiers = get_identifiers_for_context(t);
+  map<string,int>& identifiers = get_identifiers();
 
   // if there's already an 's', then complain
   if (identifiers.count(name))
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
 
-  int R = allocate(t);
+  int R = allocate(0);
 
   identifiers[name] = R;
   return R;
@@ -1647,9 +1621,9 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
 #ifdef DEBUG_MACHINE
       string SS = "";
-      SS = compact_graph_expression(*this, R, get_identifiers_for_context(t))->print();
+      SS = compact_graph_expression(*this, R, get_identifiers())->print();
       string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
-				    get_identifiers_for_context(t))->print();
+				    get_identifiers())->print();
       if (log_verbose)
 	dot_graph_for_token(*this, t);
 #endif
@@ -1679,9 +1653,9 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       {
 	dot_graph_for_token(*this, t);
 
-	string SS  = compact_graph_expression(*this, R, get_identifiers_for_context(t))->print();
+	string SS  = compact_graph_expression(*this, R, get_identifiers())->print();
 	string SSS = unlet(untranslate_vars(
-					    untranslate_vars(deindexify(trim_unnormalize(access(R).C)), get_identifiers_for_context(t)),
+					    untranslate_vars(deindexify(trim_unnormalize(access(R).C)), get_identifiers()),
 					    get_constants(*this,t)
 					    )
 			   )->print();
@@ -1912,7 +1886,7 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
 
 map<int,string> get_constants(const reg_heap& C, int t)
 {
-  map<int,string> reg_names = get_register_names(C.get_identifiers_for_context(t));
+  map<int,string> reg_names = get_register_names(C.get_identifiers());
 
   map<int,string> constants;
 
@@ -1957,11 +1931,11 @@ void dot_graph_for_token(const reg_heap& C, int t)
 
 void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 {
-  const auto& ids = C.get_identifiers_for_context(t);
+  const auto& ids = C.get_identifiers();
 
   map<int,string> reg_names = get_register_names(ids);
 
-  const auto& params = C.get_parameters_for_context(t);
+  const auto& params = C.get_parameters();
   for(const auto& p: params)
     reg_names[p.second] = p.first;
 

@@ -62,7 +62,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
   //------------- 1c. Get index for probability expression -----------------
   int H_Pr = *Args.evaluate_as<Int>(2);
-  int R_Pr = M.get_heads_for_context(token)[H_Pr];
+  int R_Pr = M.get_heads()[H_Pr];
 
   //------------- 2. Figure out t and the next t ------------//
 
@@ -84,7 +84,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     Args.memory().set_reg_value(R, {constructor("Prelude.False",0),{}}, token);
   }
 
-  R_Pr = M.get_heads_for_context(token)[H_Pr];
+  R_Pr = M.get_heads()[H_Pr];
   log_double_t pr_base_1 = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
 
   log_double_t pr_total_1 = pr_base_1;
@@ -93,7 +93,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   {
     int R = M.get_modifiable_regs_for_context(token)[M_Y[i]];
     Args.memory().set_reg_value(R, {constructor("Prelude.True",0),{}}, token);
-    R_Pr = M.get_heads_for_context(token)[H_Pr];
+    R_Pr = M.get_heads()[H_Pr];
     log_double_t pr_offset = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
     Args.memory().set_reg_value(R, {constructor("Prelude.False",0),{}}, token);
     double delta = log(pr_offset/pr_base_1);
@@ -107,7 +107,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   R_X = M.get_modifiable_regs_for_context(token)[M_X];
   Args.memory().set_reg_value(R_X, Int(x2), token);
 
-  R_Pr = M.get_heads_for_context(token)[H_Pr];
+  R_Pr = M.get_heads()[H_Pr];
   log_double_t pr_base_2 = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
 
   log_double_t pr_total_2 = pr_base_2;
@@ -116,7 +116,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   {
     int R = M.get_modifiable_regs_for_context(token)[M_Y[i]];
     Args.memory().set_reg_value(R, {constructor("Prelude.True",0),{}}, token);
-    R_Pr = M.get_heads_for_context(token)[H_Pr];
+    R_Pr = M.get_heads()[H_Pr];
     log_double_t pr_offset = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
     Args.memory().set_reg_value(R, {constructor("Prelude.False",0),{}}, token);
     double delta = log(pr_offset/pr_base_2);
@@ -167,7 +167,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 
   //------------- 1c. Get index for probability expression -----------------
   int H_Pr = *Args.evaluate_as<Int>(2);
-  int R_Pr = M.get_heads_for_context(token)[H_Pr];
+  int R_Pr = M.get_heads()[H_Pr];
 
   //------------- 2. Figure out probability of each value of x ------------//
   int x1 = *convert<const Int>(Args.evaluate_reg_to_closure(R_X,true).exp->head);
@@ -177,7 +177,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
   {
     R_X = M.get_modifiable_regs_for_context(token)[M_X];
     Args.memory().set_reg_value(R_X, Int(i), token);
-    R_Pr = M.get_heads_for_context(token)[H_Pr];
+    R_Pr = M.get_heads()[H_Pr];
     log_double_t pr = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
     pr_x[i] = pr;
   }

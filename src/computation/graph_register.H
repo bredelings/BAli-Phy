@@ -162,7 +162,6 @@ public:
   std::vector<int> unused_tokens;
 
   void get_roots(std::vector<int>&) const;
-  void get_roots(std::vector<int>&,int) const;
 
   struct address
   {
@@ -174,6 +173,18 @@ public:
     address(int i1, int i2, int i3):rc(i1),result(i2),index(i3) {}
   };
 
+  // the list of expressions that we are temporarily evaluating
+  std::vector<int> temp;
+  
+  // the list of expressions that we are interested in evaluating.
+  std::vector<int> heads;
+  
+  /// The register indices of the named parameters.
+  std::vector<std::pair<std::string,int>> parameters;
+  
+  /// Probably this would be non-parameter identifiers
+  std::map<std::string, int> identifiers;
+
   struct graph_roots
   {
     // The context this context is derived from.
@@ -182,18 +193,6 @@ public:
     std::vector<int> children;
     bool referenced = false;
     
-    // the list of expressions that we are temporarily evaluating
-    std::vector<int> temp;
-
-    // the list of expressions that we are interested in evaluating.
-    std::vector<int> heads;
-    
-    /// The register indices of the named parameters.
-    std::vector<std::pair<std::string,int>> parameters;
-
-    /// Probably this would be non-parameter identifiers
-    std::map<std::string, int> identifiers;
-
     /// The register indices of non-root parameters
     pool<int> modifiable_regs;
 
@@ -212,20 +211,20 @@ public:
     graph_roots():used(false) {}
   };
 
-  const std::vector<int>& get_temp_heads_for_context(int t) const {return token_roots[t].temp;}
-        std::vector<int>& get_temp_heads_for_context(int t)       {return token_roots[t].temp;}
+  const std::vector<int>& get_temp_heads() const {return temp;}
+        std::vector<int>& get_temp_heads()       {return temp;}
 
-  const std::vector<int>& get_heads_for_context(int t) const {return token_roots[t].heads;}
-        std::vector<int>& get_heads_for_context(int t)       {return token_roots[t].heads;}
+  const std::vector<int>& get_heads() const {return heads;}
+        std::vector<int>& get_heads()       {return heads;}
 
-  const std::vector<std::pair<std::string,int>>& get_parameters_for_context(int t) const {return token_roots[t].parameters;}
-        std::vector<std::pair<std::string,int>>& get_parameters_for_context(int t)       {return token_roots[t].parameters;}
+  const std::vector<std::pair<std::string,int>>& get_parameters() const {return parameters;}
+        std::vector<std::pair<std::string,int>>& get_parameters()       {return parameters;}
 
   const pool<int>& get_modifiable_regs_for_context(int t) const {return token_roots[t].modifiable_regs;}
         pool<int>& get_modifiable_regs_for_context(int t)       {return token_roots[t].modifiable_regs;}
 
-  const std::map<std::string,int>& get_identifiers_for_context(int t) const {return token_roots[t].identifiers;}
-        std::map<std::string,int>& get_identifiers_for_context(int t)       {return token_roots[t].identifiers;}
+  const std::map<std::string,int>& get_identifiers() const {return identifiers;}
+        std::map<std::string,int>& get_identifiers()       {return identifiers;}
 
   const std::vector<int>& triggers(int t) const {return token_roots[t].triggers;}
         std::vector<int>& triggers(int t)       {return token_roots[t].triggers;}
@@ -237,7 +236,7 @@ public:
   void pop_temp_head(int t);
 
   /// Add a new identifier, pointing to a newly allocated location
-  int add_identifier_to_context(int, const std::string&);
+  int add_identifier(const std::string&);
 
   /// The roots for each token
   std::vector<graph_roots> token_roots;
@@ -264,7 +263,7 @@ public:
   int parent_token(int) const;
 
   /// Release just the identifiers for a token
-  void release_identifiers(int);
+  void release_identifiers();
 
   /// Acquire a copy of a token
   int copy_token(int);

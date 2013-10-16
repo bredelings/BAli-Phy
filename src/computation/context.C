@@ -63,7 +63,7 @@ int context::add_identifier(const string& name) const
   if (find_parameter(name) != -1)
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already a parameter with that name.";
 
-  return memory()->add_identifier_to_context(token,name);
+  return memory()->add_identifier(name);
 }
 
 int context::add_note(const expression_ref& E)
@@ -472,7 +472,7 @@ void context::alphabetize_parameters()
 
 void context::release_identifiers()
 {
-  memory()->release_identifiers(token);
+  memory()->release_identifiers();
 }
 
 void context::compile()
