@@ -439,7 +439,6 @@ void context::set_re_evaluate(int i, bool b)
     access(R).re_evaluate = b;
 }
 
-
 int context::n_expressions() const
 {
   return heads().size();
