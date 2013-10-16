@@ -475,7 +475,8 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the result and call it.
   else
   {
-    int R2 = allocate(t);
+    int R2 = allocate();
+    map_reg(t, R2);
 
     set_C(R2, std::move( result ) );
     set_call(t, R, R2);
@@ -765,7 +766,8 @@ void reg_heap::get_roots(vector<int>& scan) const
 
 int reg_heap::push_temp_head(int t)
 {
-  int R = allocate(t);
+  int R = allocate();
+  map_reg(t,R);
 
   temp.push_back(R);
 
@@ -804,15 +806,6 @@ void reg_heap::expand_memory(int s)
     for(int i=old_size;i<size();i++)
       assert(tr.virtual_mapping[i].rc == 0);
   }
-}
-
-int reg_heap::allocate(int t)
-{
-  int r = base_pool_t::allocate();
-
-  map_reg(t,r);
-
-  return r;
 }
 
 void reg_heap::trace_and_reclaim_unreachable()
@@ -1323,7 +1316,7 @@ int reg_heap::add_identifier(const string& name)
   if (identifiers.count(name))
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
 
-  int R = allocate(0);
+  int R = allocate();
 
   identifiers[name] = R;
   return R;

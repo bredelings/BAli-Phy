@@ -224,7 +224,7 @@ protected:
 
   /// Allocate a reg which will be a root for garbage-collection
   int allocate() const {
-    return memory()->allocate(token);
+    return memory()->allocate();
   }
 
   module_loader loader;

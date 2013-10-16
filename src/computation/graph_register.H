@@ -138,8 +138,6 @@ public:
     return computations[computation_for_reg(t,r).call].source;
   }
 
-  int allocate(int t);
-
   void collect_garbage();
   void trace_and_reclaim_unreachable();
   bool reg_is_changeable(int r) const;
