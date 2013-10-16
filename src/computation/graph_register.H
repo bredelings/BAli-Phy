@@ -303,14 +303,11 @@ public:
 
   int result_for_reg(int t, int r) const 
   {
-    assert( token_roots[t].virtual_mapping[r].rc );
-
     return token_roots[t].virtual_mapping[r].result;
   }
 
   void set_result_for_reg(int t, int r1, int r2)
   {
-    assert( token_roots[t].virtual_mapping[r1].rc );
     token_roots[t].virtual_mapping[r1].result = r2;
   }
 
