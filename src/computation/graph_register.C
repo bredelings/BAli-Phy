@@ -836,8 +836,6 @@ void reg_heap::trace_and_reclaim_unreachable()
     int t = tokens[i];
     assert(token_is_used(t));
 
-    for(int i: roots)
-      scan1.push_back(i);
 
     get_roots(scan1,t);
 
@@ -923,7 +921,6 @@ void reg_heap::collect_garbage()
 
 #ifdef DEBUG_MACHINE
   cerr<<"Regs: "<<n_used()<<"/"<<size()<<endl;
-  cerr<<"#roots = "<<roots.size()<<endl;
   check_used_regs();
 #endif
 }
