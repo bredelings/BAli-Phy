@@ -818,57 +818,55 @@ void reg_heap::trace_and_reclaim_unreachable()
   vector<int>& scan2 = get_scratch_list();
   vector<int>& next_scan2 = get_scratch_list();
 
-  assert(root_token != -1);
+  //  assert(root_token != -1);
   tokens.push_back(root_token);
 
-  for(int t=0;t<get_n_tokens();t++)
+  get_roots(scan1);
+  
+  while (not scan1.empty() or not scan2.empty())
   {
-    if (not token_is_used(t)) continue;
-
-    get_roots(scan1);
-
-    while (not scan1.empty() or not scan2.empty())
+    for(int r: scan1)
     {
-      for(int r: scan1)
-      {
-	assert(not is_free(r));
-	if (not is_mapped(t,r)) continue;
-	if (is_marked(r)) continue;
-
-	set_mark(r);
-
-	reg& R = access(r);
-
-	// Count the references from E
-	next_scan1.insert(next_scan1.end(), R.C.Env.begin(), R.C.Env.end());
-
-	// Count the computation, if any.
-	int rc = computation_index_for_reg(t,r);
-	scan2.push_back(rc);
-      }
-      std::swap(scan1,next_scan1);
-      next_scan1.clear();
-
-      for(int rc: scan2)
-      {
-	assert(not computations.is_free(rc));
-	if (computations.is_marked(rc)) continue;
-
-	computations.set_mark(rc);
-
-	const computation& RC = computations[rc];
-
-	// Count the reg that references us
-	assert(RC.source);
-	scan1.push_back(RC.source);
-
-	// Count also the computation we call
-	if (RC.call) 
-	  next_scan2.push_back(RC.call);
-      }
-      std::swap(scan2,next_scan2);
-      next_scan2.clear();
+      assert(not is_free(r));
+      if (is_marked(r)) continue;
+      
+      set_mark(r);
+      
+      reg& R = access(r);
+      
+      // Count the references from E
+      next_scan1.insert(next_scan1.end(), R.C.Env.begin(), R.C.Env.end());
+      
+      // Count all computations
+      for(int t=0;t<get_n_tokens();t++)
+	if (token_is_used(t) and is_mapped(t,r))
+	{
+	  int rc = computation_index_for_reg(t,r);
+	  scan2.push_back(rc);
+	}
     }
+    std::swap(scan1,next_scan1);
+    next_scan1.clear();
+
+    for(int rc: scan2)
+    {
+      assert(not computations.is_free(rc));
+      if (computations.is_marked(rc)) continue;
+      
+      computations.set_mark(rc);
+      
+      const computation& RC = computations[rc];
+      
+      // Count the reg that references us
+      assert(RC.source);
+      scan1.push_back(RC.source);
+      
+      // Count also the computation we call
+      if (RC.call) 
+	next_scan2.push_back(RC.call);
+    }
+    std::swap(scan2,next_scan2);
+    next_scan2.clear();
   }
 
   check_used_regs();
