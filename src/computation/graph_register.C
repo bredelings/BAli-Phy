@@ -368,6 +368,8 @@ void reg_heap::set_call_unsafe(int t, int R1, int R2)
   assert(is_used(R2));
 
   // Check that we aren't overriding an existing *call*
+  if (not is_mapped(t,R2))
+    map_reg(t,R2);
 
   int rc1 = computation_index_for_reg(t,R1);
   int rc2 = computation_index_for_reg(t,R2);
@@ -1285,17 +1287,13 @@ int reg_heap::copy_token(int t)
 
   // For each reg that mapped in t1, map it separately in t2.
   for(int r: token_roots[t].modified)
-    map_reg(t2,r);
-
-  // For each reg that mapped in t1, map it separately in t2.
-  for(int r: token_roots[t].modified)
   {
-    if (computation_for_reg(t,r).changeable)
-      computation_for_reg(t2,r).changeable = true;
-
     if (is_modifiable(access(r).C.exp))
     {
+      map_reg(t2,r);
+      computation_for_reg(t2,r).changeable = true;
       int r2 = call_for_reg(t,r);
+      map_reg(t2,r2);
       set_call(t2,r,r2);
     }
   }
@@ -1489,7 +1487,9 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
   assert(is_terminal_token(t));
   assert(is_valid_address(R));
   assert(is_used(R));
-  assert(is_mapped(t,R));
+  if (not is_mapped(t,R))
+    map_reg(t,R);
+
   assert(not is_a<expression>(access(R).C.exp));
   assert(not result_for_reg(t,R) or is_WHNF(access_result_for_reg(t,R).exp));
   assert(not result_for_reg(t,R) or not is_a<expression>(access_result_for_reg(t,R).exp));
