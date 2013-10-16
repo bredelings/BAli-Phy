@@ -158,8 +158,6 @@ void computation::clear()
 
   // This should already be cleared.
   assert(temp == -1);
-  
-  re_evaluate = false;
 }
 
 void computation::check_cleared()
@@ -179,7 +177,6 @@ computation& computation::operator=(computation&& R) noexcept
   used_by = std::move( R.used_by );
   called_by = std::move( R.called_by );
   temp = R.temp;
-  re_evaluate = R.re_evaluate;
 
   return *this;
 }
@@ -192,29 +189,33 @@ computation::computation(computation&& R) noexcept
   used_inputs ( std::move(R.used_inputs) ),
   used_by ( std::move( R.used_by) ),
   called_by ( std::move( R.called_by) ),
-  temp ( R.temp ),
-  re_evaluate ( R.re_evaluate )
+  temp ( R.temp )
 { }
 
 reg& reg::operator=(reg&& R) noexcept
 {
   C = std::move(R.C);
 
+  re_evaluate = R.re_evaluate;
+
   return *this;
 }
 
 reg::reg(reg&& R) noexcept
-:C( std::move(R.C) )
+:C( std::move(R.C) ),
+  re_evaluate( R.re_evaluate )
 { }
 
 void reg::clear()
 {
   C.clear();
+  re_evaluate = false;
 }
 
 void reg::check_cleared()
 {
   assert(not C);
+  assert(not re_evaluate);
 }
 
 void erase_from_stack(vector<int>& s, int i, vector<reg_heap::address>& v)
@@ -286,7 +287,7 @@ void reg_heap::set_used_input(int t, int R1, int R2)
   assert(RC2.changeable);
 
   auto& used_by = RC2.used_by;
-  reg::back_edge_deleter D = used_by.insert(used_by.end(), rc1);
+  computation::back_edge_deleter D = used_by.insert(used_by.end(), rc1);
   RC1.used_inputs.emplace_back(rc2,D);
 }
 
@@ -322,7 +323,7 @@ void reg_heap::clear_used_inputs(int rc1)
       auto& RC2 = computations[rc2];
       assert( not RC2.used_by.empty() );
 
-      reg::back_edge_deleter D = i.second;
+      computation::back_edge_deleter D = i.second;
       assert( *D == rc1 );
 
       RC2.used_by.erase(D);
@@ -413,7 +414,7 @@ void reg_heap::clear_call(int rc)
   }
 
   RC.call = 0;
-  RC.call_reverse = reg::back_edge_deleter();
+  RC.call_reverse = computation::back_edge_deleter();
 }
 
 void reg_heap::clear_call_for_reg(int t, int R)
@@ -519,7 +520,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       assert(RC1.temp == mark_call_result or RC1.temp == mark_result);
 
       // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-      if (RC1.re_evaluate)
+      if (access(R1).re_evaluate)
 	regs_to_re_evaluate.push_back(R1);
 
       // Since the computation may be different, we don't know if the value has changed.
@@ -557,7 +558,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       assert(RC1.temp == mark_call_result);
 
       // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-      if (RC1.re_evaluate)
+      if (access(R1).re_evaluate)
 	regs_to_re_evaluate.push_back(R1);
 
       // Since the computation may be different, we don't know if the value has changed.
@@ -1194,8 +1195,8 @@ void reg_heap::try_release_token(int t)
   {
     // Remove this context -- pass on any memory overrides to the child at this point.
 
-    pivot_mapping(token_roots[t].modified, token_roots[t].virtual_mapping,
-    		  token_roots[child_token].modified, token_roots[child_token].virtual_mapping);
+    //    pivot_mapping(token_roots[t].modified, token_roots[t].virtual_mapping,
+    //    		  token_roots[child_token].modified, token_roots[child_token].virtual_mapping);
 
     // make parent point to child
     if (parent != -1)
@@ -2032,7 +2033,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
 
     o<<"label = \""<<label<<"\"";
-    if (C.computation_for_reg(t,R).re_evaluate)
+    if (C.access(R).re_evaluate)
       o<<",style=\"dashed,filled\",color=yellow";
     else if (C.computation_for_reg(t,R).changeable)
       o<<",style=\"dashed,filled\",color=red";

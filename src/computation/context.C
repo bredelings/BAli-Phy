@@ -436,7 +436,7 @@ void context::set_re_evaluate(int i, bool b)
   int& R = heads()[i];
   R = incremental_evaluate(R,true);
   if (computation_for_reg(R).changeable)
-    computation_for_reg(R).re_evaluate = b;
+    access(R).re_evaluate = b;
 }
 
 

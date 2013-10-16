@@ -43,8 +43,6 @@ struct computation
 
   int temp = -1;
 
-  bool re_evaluate = false;
-
   void clear();
 
   void check_cleared();
@@ -61,10 +59,10 @@ struct computation
 class reg
 {
 public:
-  typedef CacheList<int>::iterator back_edge_deleter;
-
   /* The closure */
   closure C;
+
+  bool re_evaluate = false;
 
   void clear();
 
