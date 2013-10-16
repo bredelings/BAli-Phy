@@ -149,7 +149,6 @@ expression_ref graph_normalize(const expression_ref& E)
 
 void computation::clear()
 {
-  changeable = false;
   used_inputs.clear();
   call = 0;
   call_reverse = back_edge_deleter();
@@ -170,7 +169,6 @@ void computation::check_cleared()
 computation& computation::operator=(computation&& R) noexcept
 {
   source = R.source;
-  changeable = R.changeable;
   call = R.call;
   call_reverse = std::move( R.call_reverse );
   used_inputs  = std::move( R.used_inputs );
@@ -183,7 +181,6 @@ computation& computation::operator=(computation&& R) noexcept
 
 computation::computation(computation&& R) noexcept
 :source(R.source),
-  changeable( R.changeable ),
   call ( R.call ),
   call_reverse ( std::move( R.call_reverse) ),
   used_inputs ( std::move(R.used_inputs) ),
@@ -196,6 +193,8 @@ reg& reg::operator=(reg&& R) noexcept
 {
   C = std::move(R.C);
 
+  changeable = R.changeable;
+
   re_evaluate = R.re_evaluate;
 
   return *this;
@@ -203,18 +202,21 @@ reg& reg::operator=(reg&& R) noexcept
 
 reg::reg(reg&& R) noexcept
 :C( std::move(R.C) ),
+  changeable( R.changeable ),
   re_evaluate( R.re_evaluate )
 { }
 
 void reg::clear()
 {
   C.clear();
+  changeable = false;
   re_evaluate = false;
 }
 
 void reg::check_cleared()
 {
   assert(not C);
+  assert(not changeable);
   assert(not re_evaluate);
 }
 
@@ -280,11 +282,11 @@ void reg_heap::set_used_input(int t, int R1, int R2)
   //   through regvar chains that are not changeable.
 
   // R1 shouldn't have any used inputs if it isn't changeable.
-  assert(RC1.changeable);
+  assert(reg_is_changeable(R1));
+  assert(reg_is_changeable(R2));
   // Don't add unchangeable results as inputs
   int rc2 = computation_index_for_reg(t,R2);
   computation& RC2 = computations[rc2];
-  assert(RC2.changeable);
 
   auto& used_by = RC2.used_by;
   computation::back_edge_deleter D = used_by.insert(used_by.end(), rc1);
@@ -361,6 +363,9 @@ void reg_heap::clear_used_inputs_for_reg(int t, int R)
 
 void reg_heap::set_call_unsafe(int t, int R1, int R2)
 {
+  assert(reg_is_changeable(R1));
+  // R2 might be of UNKNOWN changeableness
+
   // Check that R1 is legal
   assert(is_used(R1));
 
@@ -480,6 +485,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
 /// Update the value of a non-constant, non-computed index
 void reg_heap::set_reg_value(int P, closure&& C, int token)
 {
+  assert(reg_is_changeable(P));
   assert(is_terminal_token(token)); 
   // Check that reg P is owned by context token.
   assert(is_mapped(token,P));
@@ -490,7 +496,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
   auto& PC = computation_for_reg(token,P);
-  assert(PC.changeable);
 
   // Clear the call, clear the result, and set the value
   assert(PC.used_inputs.empty());
@@ -883,6 +888,11 @@ void reg_heap::trace_and_reclaim_unreachable()
   release_scratch_list();
   release_scratch_list();
   check_used_regs();
+}
+
+bool reg_heap::reg_is_changeable(int r) const
+{
+  return access(r).changeable;
 }
 
 /*
@@ -1291,7 +1301,6 @@ int reg_heap::copy_token(int t)
     if (is_modifiable(access(r).C.exp))
     {
       map_reg(t2,r);
-      computation_for_reg(t2,r).changeable = true;
       int r2 = call_for_reg(t,r);
       map_reg(t2,r2);
       set_call(t2,r,r2);
@@ -1374,10 +1383,10 @@ class RegOperationArgs: public OperationArgs
     // Compute the result, and follow index_var chains (which are not changeable).
     int R3 = M.incremental_evaluate(R2, t, ec);
 
-    if (M.computation_for_reg(t,R3).changeable and evaluate_changeables())
+    if (M.reg_is_changeable(R3) and evaluate_changeables())
     {
       // If R2 -> result was changeable, then R -> result will be changeable as well.
-      M.computation_for_reg(t,R).changeable = true;
+      M.access(R).changeable = true;
 
       // Note that although R2 is newly used, R3 might be already used if it was 
       // found from R2 through a non-changeable reg_var chain.
@@ -1501,7 +1510,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
   //  if (not result_for_reg(t,R)) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
 
-  while (not result_for_reg(t,R) and (evaluate_changeable or not computation_for_reg(t,R).changeable))
+  while (not result_for_reg(t,R) and (evaluate_changeable or not reg_is_changeable(R)))
   {
     assert(is_mapped(t,R));
 
@@ -1519,7 +1528,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     if (reg_has_call(t,R))
     {
       // This should only be an Operation or a modifiable.
-      assert(computation_for_reg(t,R).changeable);
+      assert(reg_is_changeable(R));
 
       // Only changeable regs have calls, and changeable regs are in normal form unless evaluate_changeable==true.
       assert(evaluate_changeable);
@@ -1537,15 +1546,16 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
       // R gets its result from S.
       set_result_for_reg(t, R, result_for_reg(t,call));
+      break;
     }
 
     /*---------- Below here, there is no call, and no result. ------------*/
 
     else if (access(R).C.exp->head->type() == index_var_type)
     {
-      assert( not reg_has_call(t,R) );
+      assert( not reg_is_changeable(R) );
 
-      assert( not computation_for_reg(t,R).changeable);
+      assert( not reg_has_call(t,R) );
 
       int index = assert_is_a<index_var>(access(R).C.exp)->index;
 
@@ -1576,12 +1586,12 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     // A modifiable has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
     else if (access(R).C.exp->head->type() == modifiable_type)
-      throw myexception()<<"Modifiable '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<computation_for_reg(t,R).changeable<<")";
+      throw myexception()<<"Modifiable '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<reg_is_changeable(R)<<")";
 
     // Reduction: let expression
     else if (parse_indexed_let_expression(access(R).C.exp, bodies, T))
     {
-      assert(not computation_for_reg(t,R).changeable);
+      assert( not reg_is_changeable(R) );
 
       vector<int> local_env = access(R).C.Env;
 
@@ -1604,7 +1614,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       for(int i=0;i<bodies.size();i++)
 	set_C(new_heap_vars[i], get_trimmed({bodies[i],local_env}));
 
-      assert(not computation_for_reg(t,R).changeable);
+      assert( not reg_is_changeable(R) );
 
       // Remove the new heap vars from the list of temp heads in reverse order.
       for(int i=0;i<new_heap_vars.size(); i++)
@@ -1640,7 +1650,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	//       How could we assert that?
 	
 	// If the reduction doesn't depend on modifiable, then replace E with the result.
-	if (not computation_for_reg(t,R).changeable)
+	if (not reg_is_changeable(R))
 	{
 	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
 	  assert(not reg_has_call(t,R) );
@@ -1683,7 +1693,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
   assert(not is_a<index_var>(access(R).C.exp));
 
-  if (evaluate_changeable or (not computation_for_reg(t,R).changeable and result_for_reg(t,R)))
+  if (evaluate_changeable or (not reg_is_changeable(R) and result_for_reg(t,R)))
   {
     assert(result_for_reg(t,R));
     assert(is_WHNF(access_result_for_reg(t,R).exp));
@@ -2039,12 +2049,12 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     o<<"label = \""<<label<<"\"";
     if (C.access(R).re_evaluate)
       o<<",style=\"dashed,filled\",color=yellow";
-    else if (C.computation_for_reg(t,R).changeable)
+    else if (C.reg_is_changeable(R))
       o<<",style=\"dashed,filled\",color=red";
 
-    if (C.result_for_reg(t,R) and C.computation_for_reg(t,R).changeable)
+    if (C.result_for_reg(t,R) and C.reg_is_changeable(R))
       o<<",fillcolor=\"#007700\",fontcolor=white";
-    else if (C.computation_for_reg(t,R).changeable)
+    else if (C.reg_is_changeable(R))
       o<<",fillcolor=\"#770000\",fontcolor=white";
     else if (C.access(R).C.exp->head->type() == index_var_type)
       o<<",fillcolor=\"#77bbbb\"";
@@ -2061,7 +2071,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	  if (i == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
-	if (reg_names.count(R2) and not C.computation_for_reg(t,R2).changeable and not used) continue;
+	if (reg_names.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
 
 	// Don't draw ref edges to things like fmap.
 	if (constants.count(R2) and not used) continue;
@@ -2082,7 +2092,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	  if (i == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
-	if (reg_names.count(R2) and not C.computation_for_reg(t,R2).changeable and not used) continue;
+	if (reg_names.count(R2) and not C.reg_is_changeable(R) and not used) continue;
 	
 	// Don't draw ref edges to things like fmap.
 	if (constants.count(R2) and not used) continue;

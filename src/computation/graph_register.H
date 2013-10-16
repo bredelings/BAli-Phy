@@ -22,9 +22,6 @@ struct computation
 
   typedef CacheList<int>::iterator back_edge_deleter;
 
-  /// Is C a parameter, or is the reduction result dependent on a parameter value?
-  bool changeable = false;
-
   /// Does C reduce to another reg that we need to evaluate to get the true result?
   int call = -1;
   back_edge_deleter call_reverse;
@@ -61,6 +58,9 @@ class reg
 public:
   /* The closure */
   closure C;
+
+  /// Is C a parameter, or is the reduction result dependent on a parameter value?
+  bool changeable = false;
 
   bool re_evaluate = false;
 
@@ -142,6 +142,7 @@ public:
 
   void collect_garbage();
   void trace_and_reclaim_unreachable();
+  bool reg_is_changeable(int r) const;
 
   void set_used_input(int t, int R1, int R2);
   void clear_used_inputs_for_reg(int t, int R);
