@@ -995,8 +995,6 @@ int reg_heap::uniquify_reg(int R, int /* t */)
 
 void reg_heap::check_used_reg(int index) const
 {
-  const reg& R = access(index);
-
   for(int t=0;t<get_n_tokens();t++)
   {
     if (not token_is_used(t)) continue;
