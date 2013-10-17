@@ -197,13 +197,16 @@ reg& reg::operator=(reg&& R) noexcept
 
   re_evaluate = R.re_evaluate;
 
+  type = R.type;
+
   return *this;
 }
 
 reg::reg(reg&& R) noexcept
 :C( std::move(R.C) ),
   changeable( R.changeable ),
-  re_evaluate( R.re_evaluate )
+  re_evaluate( R.re_evaluate ),
+  type ( R.type )
 { }
 
 void reg::clear()
@@ -211,6 +214,7 @@ void reg::clear()
   C.clear();
   changeable = false;
   re_evaluate = false;
+  type = type_t::unknown;
 }
 
 void reg::check_cleared()
@@ -218,6 +222,7 @@ void reg::check_cleared()
   assert(not C);
   assert(not changeable);
   assert(not re_evaluate);
+  assert(type == type_t::unknown);
 }
 
 void erase_from_stack(vector<int>& s, int i, vector<reg_heap::address>& v)

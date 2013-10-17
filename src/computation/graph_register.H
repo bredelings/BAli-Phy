@@ -64,6 +64,10 @@ public:
 
   bool re_evaluate = false;
 
+  enum class type_t {unknown=0, index_var=0, constant=0};
+
+  type_t type = type_t::unknown;
+
   void clear();
 
   void check_cleared();
