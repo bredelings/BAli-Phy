@@ -378,8 +378,8 @@ void reg_heap::set_call_unsafe(int t, int R1, int R2)
   assert(is_used(R2));
 
   // Check that we aren't overriding an existing *call*
-  if (not is_mapped(t,R2))
-    map_reg(t,R2);
+  if (not has_computation(t,R2))
+    add_computation(t,R2);
 
   int rc1 = computation_index_for_reg(t,R1);
   int rc2 = computation_index_for_reg(t,R2);
@@ -481,7 +481,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   else
   {
     int R2 = allocate();
-    map_reg(t, R2);
+    add_computation(t, R2);
 
     set_C(R2, std::move( result ) );
     set_call(t, R, R2);
@@ -494,7 +494,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   assert(reg_is_changeable(P));
   assert(is_terminal_token(token)); 
   // Check that reg P is owned by context token.
-  assert(is_mapped(token,P));
+  assert(has_computation(token,P));
 
   // Split this reg and its E-ancestors out from other graphs, if its shared.
   P = uniquify_reg(P,token);
@@ -506,7 +506,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Clear the call, clear the result, and set the value
   assert(PC.used_inputs.empty());
   clear_call_for_reg(token, P);
-  clear_result(token, P);
+  clear_computation_result(token, P);
 
   const int mark_call_result = 1;
   const int mark_result = 2;
@@ -537,7 +537,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 	regs_to_re_evaluate.push_back(R1);
 
       // Since the computation may be different, we don't know if the value has changed.
-      clear_result(token, R1);
+      clear_computation_result(token, R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
       for(int rc2: RC1.used_by)
@@ -575,7 +575,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 	regs_to_re_evaluate.push_back(R1);
 
       // Since the computation may be different, we don't know if the value has changed.
-      clear_result(token, R1);
+      clear_computation_result(token, R1);
       // We don't know what the reduction result is, so invalidate the call.
       clear_call_for_reg(token, R1);
       // Remember to clear the used inputs.
@@ -633,7 +633,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     incremental_evaluate(R,token,true);
 }
 
-int reg_heap::map_reg(int t, int r)
+int reg_heap::add_computation(int t, int r)
 {
   int rc = computations.allocate();
   computations.access_unused(rc).source = r;
@@ -643,14 +643,14 @@ int reg_heap::map_reg(int t, int r)
   return rc;
 }
 
-void reg_heap::unmap_reg(int t, int r)
+void reg_heap::remove_computation(int t, int r)
 {
   // erase the mark that reg r is modified
   reg_heap::address A = vm_erase(token_roots[t].modified, token_roots[t].virtual_mapping, r);
 
   computations.reclaim_used(A.rc);
 
-  assert(not is_mapped(t,r));
+  assert(not has_computation(t,r));
 }
 
 void pivot_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<int>& m2, vector<reg_heap::address>& v2)
@@ -742,11 +742,11 @@ void reg_heap::reclaim_used(int r)
   // However, downstream regs may be live, and therefore when we destroy outgoing edges, we
   // need to notify downstream regs of the absence of these incoming edges.
   for(int t=0;t<token_roots.size();t++)
-    if (is_mapped(t,r))
-      unmap_reg(t, r);
+    if (has_computation(t,r))
+      remove_computation(t, r);
 
   for(int t=0;t<token_roots.size();t++)
-    assert(not is_mapped(t,r));
+    assert(not has_computation(t,r));
 
   clear_C(r);
 
@@ -838,7 +838,7 @@ void reg_heap::trace_and_reclaim_unreachable()
       
       // Count all computations
       for(int t=0;t<get_n_tokens();t++)
-	if (token_is_used(t) and is_mapped(t,r))
+	if (token_is_used(t) and has_computation(t,r))
 	{
 	  int rc = computation_index_for_reg(t,r);
 	  scan2.push_back(rc);
@@ -999,7 +999,7 @@ void reg_heap::check_used_reg(int index) const
   {
     if (not token_is_used(t)) continue;
 
-    if (not is_mapped(t, index)) continue;
+    if (not has_computation(t, index)) continue;
 
     int index_c = computation_index_for_reg(t,index);
 
@@ -1201,7 +1201,7 @@ void reg_heap::try_release_token(int t)
   // clear only the mappings that were actually updated here.
   for(int r: token_roots[t].modified)
   {
-    // We don't need to use unmap_reg( ) because we don't need to maintain the modified list.
+    // We don't need to use remove_computation( ) because we don't need to maintain the modified list.
     int rc = token_roots[t].virtual_mapping[r].rc;
     computations.reclaim_used(rc);
     token_roots[t].virtual_mapping[r] = {};
@@ -1271,8 +1271,8 @@ int reg_heap::copy_token(int t)
   {
     if (is_modifiable(access(r).C.exp))
     {
-      map_reg(t2,r);
-      if (is_mapped(t,r) and reg_has_call(t,r))
+      add_computation(t2,r);
+      if (has_computation(t,r) and reg_has_call(t,r))
       {
 	int r2 = call_for_reg(t,r);
 	if (r2)
@@ -1467,8 +1467,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
   assert(is_terminal_token(t));
   assert(is_valid_address(R));
   assert(is_used(R));
-  if (not is_mapped(t,R))
-    map_reg(t,R);
+  if (not has_computation(t,R))
+    add_computation(t,R);
 
   assert(not is_a<expression>(access(R).C.exp));
   assert(not result_for_reg(t,R) or is_WHNF(access_result_for_reg(t,R).exp));
@@ -1483,7 +1483,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
   while (not result_for_reg(t,R) and (evaluate_changeable or not reg_is_changeable(R)))
   {
-    assert(is_mapped(t,R));
+    assert(has_computation(t,R));
 
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
@@ -1516,7 +1516,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       }
 
       // R gets its result from S.
-      set_result_for_reg(t, R, result_for_reg(t,call));
+      set_computation_result_for_reg(t, R, result_for_reg(t,call));
       break;
     }
 
@@ -1544,7 +1544,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
     // Check for WHNF *OR* heap variables
     else if (is_WHNF(access(R).C.exp))
-      set_result_for_reg(t, R, R);
+      set_computation_result_for_reg(t, R, R);
 
 #ifndef NDEBUG
     else if (is_a<Trim>(access(R).C.exp))

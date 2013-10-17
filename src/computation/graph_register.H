@@ -130,6 +130,13 @@ public:
     return access(R2).C;
   }
 
+  const closure& access_computation_result_for_reg(int t, int R1) const
+  {
+    int R2 = computation_result_for_reg(t,R1);
+    assert(R2);
+    return access(R2).C;
+  }
+
   bool reg_has_call(int t, int r) const
   {
     return computation_for_reg(t,r).call;
@@ -279,11 +286,11 @@ public:
   void check_results_in_context(int) const;
 
   /*----- Virtual memory ------*/
-  int map_reg(int t, int r);
+  int add_computation(int t, int r);
 
-  void unmap_reg(int t, int r);
-
-  bool is_mapped(int t, int r) const
+  void remove_computation(int t, int r);
+  
+  bool has_computation(int t, int r) const
   {
     int rc = token_roots[t].virtual_mapping[r].rc;
     return rc;
@@ -298,17 +305,22 @@ public:
 
   int result_for_reg(int t, int r) const 
   {
+    return computation_result_for_reg(t,r);
+  }
+
+  int computation_result_for_reg(int t, int r) const 
+  {
     return token_roots[t].virtual_mapping[r].result;
   }
 
-  void set_result_for_reg(int t, int r1, int r2)
+  void set_computation_result_for_reg(int t, int r1, int r2)
   {
     token_roots[t].virtual_mapping[r1].result = r2;
   }
 
-  void clear_result(int t, int r)
+  void clear_computation_result(int t, int r)
   {
-    set_result_for_reg(t,r,0);
+    set_computation_result_for_reg(t,r,0);
   }
 
   std::vector<int> used_regs_for_reg(int t, int r) const;
