@@ -873,7 +873,6 @@ void reg_heap::trace_and_reclaim_unreachable()
   release_scratch_list();
   release_scratch_list();
   release_scratch_list();
-  check_used_regs();
 }
 
 bool reg_heap::reg_is_changeable(int r) const
