@@ -1273,9 +1273,12 @@ int reg_heap::copy_token(int t)
     if (is_modifiable(access(r).C.exp))
     {
       map_reg(t2,r);
-      int r2 = call_for_reg(t,r);
-      map_reg(t2,r2);
-      set_call(t2,r,r2);
+      if (is_mapped(t,r) and reg_has_call(t,r))
+      {
+	int r2 = call_for_reg(t,r);
+	if (r2)
+	  set_call(t2,r,r2);
+      }
     }
   }
 
