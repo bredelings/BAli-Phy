@@ -48,8 +48,6 @@ class context: public Model_Notes
 
   std::vector<std::pair<std::string,int>>& parameters() const {return memory()->get_parameters();}
 
-  pool<int>& modifiable_regs() const {return memory()->get_modifiable_regs_for_context(token);}
-
   std::map<std::string, int>& identifiers() const {return memory()->get_identifiers();}
 
 public:

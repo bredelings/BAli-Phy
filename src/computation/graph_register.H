@@ -188,9 +188,6 @@ public:
     std::vector<int> children;
     bool referenced = false;
     
-    /// The register indices of non-root parameters
-    pool<int> modifiable_regs;
-
     /// A list of signals that have been sent
     std::vector<int> triggers;
 
@@ -214,9 +211,6 @@ public:
 
   const std::vector<std::pair<std::string,int>>& get_parameters() const {return parameters;}
         std::vector<std::pair<std::string,int>>& get_parameters()       {return parameters;}
-
-  const pool<int>& get_modifiable_regs_for_context(int t) const {return token_roots[t].modifiable_regs;}
-        pool<int>& get_modifiable_regs_for_context(int t)       {return token_roots[t].modifiable_regs;}
 
   const std::map<std::string,int>& get_identifiers() const {return identifiers;}
         std::map<std::string,int>& get_identifiers()       {return identifiers;}

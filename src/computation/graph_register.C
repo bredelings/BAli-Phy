@@ -1154,9 +1154,6 @@ void reg_heap::try_release_token(int t)
   // (But how fast is it?)
   assert(temp.empty());
 
-  // remove the table of parameter locations for graph t
-  token_roots[t].modifiable_regs.clear();
-
   // mark token for this context unused
   unused_tokens.push_back(t);
   token_roots[t].used = false;
@@ -1257,7 +1254,6 @@ int reg_heap::copy_token(int t)
 
   assert(temp.empty());
 
-  token_roots[t2].modifiable_regs = token_roots[t].modifiable_regs;
   token_roots[t2].triggers = token_roots[t].triggers;
 
   // set parent relationship

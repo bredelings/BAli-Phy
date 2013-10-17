@@ -537,21 +537,13 @@ parameter::parameter(const std::string& s)
 
 string modifiable::print() const 
 {
-  return "["+convertToString(index)+"]";
+  return "modifiable";
 }
 
 tribool modifiable::compare(const Object& o) const 
 {
-  const modifiable* E = dynamic_cast<const modifiable*>(&o);
-  if (not E) 
-    return false;
-
-  return index == E->index;
+  return dynamic_cast<const modifiable*>(&o);
 }
-
-modifiable::modifiable(int i)
-  :index(i)
-{ }
 
 string lambda::print() const {
   return "lambda";

@@ -502,10 +502,6 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
     reg = get_parameter_reg(param_index);
   }
 
-  // Replace parameters with the appropriate reg_var: of value parameter( )
-  if (object_ptr<const modifiable> m = is_a<modifiable>(E))
-    reg = get_modifiable_reg(m->index);
-
   // Replace parameters with the appropriate reg_var: of value whatever
   if (object_ptr<const identifier> V = is_a<identifier>(E))
   {
@@ -864,14 +860,11 @@ int context::find_parameter_modifiable_reg(int index) const
  return R2;
 }
 
-int context::get_modifiable_reg(int index) const
+int context::get_modifiable_reg(int r) const
 {
-  const pool<int>& p = modifiable_regs();
+  assert(is_modifiable(access(r).C.exp));
 
-  if (not p.is_used(index))
-    throw myexception()<<"Attempting to access non-existent modifiable #"<<index;
-
-  return p[index];
+  return r;
 }
 
 std::ostream& operator<<(std::ostream& o, const context& C)

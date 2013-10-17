@@ -15,7 +15,7 @@ extern "C" closure builtin_function_get_modifiable_index(OperationArgs& Args)
 
   const reg_heap& M = Args.memory();
 
-  int index = is_a<modifiable>(M.access(R1).C.exp)->index;
+  assert(is_modifiable(M.access(R1).C.exp));
 
-  return Int(index);
+  return Int(R1);
 }

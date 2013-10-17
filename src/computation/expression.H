@@ -93,15 +93,10 @@ struct parameter: public Object
 
 struct modifiable: public Object
 {
-  int index;
-
   modifiable* clone() const {return new modifiable(*this);}
-  std::string print() const;
   tribool compare(const Object& o) const;
-  
   int type() const {return modifiable_type;}
-
-  modifiable(int);
+  std::string print() const;
 };
 
 /// a de Bruijn indexed variable 
