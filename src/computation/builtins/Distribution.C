@@ -175,7 +175,7 @@ log_double_t CRP_pdf(const double alpha, int N, int D, const vector<int>& z)
 
 extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
 {
-  assert(not Args.evaluate_changeables());
+  // ?? assert(not Args.evaluate_changeables());
 
   int token = Args.current_token();
 
