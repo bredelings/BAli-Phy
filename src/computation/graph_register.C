@@ -1471,7 +1471,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
 #ifndef NDEBUG
   assert(not is_a<expression>(access(R).C.exp));
-  if (has_computation(t,R) and computation_result_for_reg(t,R))
+  if (computation_result_for_reg(t,R))
   {
     expression_ref E = access_result_for_reg(t,R).exp;
     assert(is_WHNF(E));
