@@ -1618,6 +1618,9 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	
 	// Evaluate S, looking through unchangeable redirections
 	int call = incremental_evaluate(call_for_reg(t,R), t, evaluate_changeable);
+
+	// We might have called a WHNF reg, which would set our result for us.
+	if (computation_result_for_reg(t,R)) break;
 	
 	// If computation_for_reg(t,R).call can be evaluated to refer to S w/o moving through any changable operations, 
 	// then it should be safe to change computation_for_reg(t,R).call to refer to S, even if R is changeable.
