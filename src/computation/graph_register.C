@@ -1368,12 +1368,18 @@ int reg_heap::copy_token(int t)
   {
     if (is_modifiable(access(r).C.exp))
     {
-      add_computation(t2,r);
       if (reg_has_call(t,r))
       {
+	add_computation(t2,r);
 	int r2 = call_for_reg(t,r);
-	if (r2)
-	  set_call(t2,r,r2);
+	set_call(t2,r,r2);
+      }
+
+      int result = computation_result_for_reg(t,r);
+      if (computation_result_for_reg(t,r))
+      {
+	if (not has_computation(t2,r)) add_computation(t2,r);
+	set_computation_result_for_reg(t2,r,result);
       }
     }
   }
