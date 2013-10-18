@@ -1188,6 +1188,17 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& scan, vecto
 	unique.push_back(called_reg);
       }
     }
+
+    // Count the reference from the result as well
+    int result = computation_result_for_reg(t,r);
+    if (result)
+    {
+      if (not is_marked(result))
+      {
+	set_mark(result);
+	unique.push_back(result);
+      }
+    }
   }
 
 #ifndef NDEBUG
