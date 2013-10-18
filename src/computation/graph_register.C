@@ -1470,19 +1470,32 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
   if (not has_computation(t,R))
     add_computation(t,R);
 
+#ifndef NDEBUG
   assert(not is_a<expression>(access(R).C.exp));
-  assert(not result_for_reg(t,R) or is_WHNF(access_result_for_reg(t,R).exp));
-  assert(not result_for_reg(t,R) or not is_a<expression>(access_result_for_reg(t,R).exp));
-  assert(not result_for_reg(t,R) or not is_a<index_var>(access_result_for_reg(t,R).exp));
-  assert(not result_for_reg(t,R) or not is_a<index_var>(access(R).C.exp));
+  if (has_computation(t,R) and computation_result_for_reg(t,R))
+  {
+    expression_ref E = access_result_for_reg(t,R).exp;
+    assert(is_WHNF(E));
+    assert(not is_a<expression>(E));
+    assert(not is_a<index_var>(E));
+  }
+  if (is_index_var(access(R).C.exp))
+    assert(not has_computation(t,R) or not computation_result_for_reg(t,R));
   check_used_reg(R);
+#endif
 
 #ifndef NDEBUG
   //  if (not result_for_reg(t,R)) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
 
-  while (not result_for_reg(t,R) and (evaluate_changeable or not reg_is_changeable(R)))
+  while (1)
   {
+    if (access(R).type == reg::type_t::constant) break;
+
+    if (has_computation(t,R) and computation_result_for_reg(t,R)) break;
+
+    if (reg_is_changeable(R) and not evaluate_changeable) break;
+
     assert(has_computation(t,R));
 
     vector<expression_ref> vars;
@@ -1544,7 +1557,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
     // Check for WHNF *OR* heap variables
     else if (is_WHNF(access(R).C.exp))
-      set_computation_result_for_reg(t, R, R);
+      access(R).type = reg::type_t::constant;
 
 #ifndef NDEBUG
     else if (is_a<Trim>(access(R).C.exp))
@@ -1591,8 +1604,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       for(int i=0;i<new_heap_vars.size(); i++)
 	pop_temp_head();
       
-      assert(not reg_has_call(t,R) );
-      assert(not result_for_reg(t,R));
+      assert(not has_computation(t,R) or not reg_has_call(t,R) );
+      assert(not has_computation(t,R) or not computation_result_for_reg(t,R));
     }
     
     // 3. Reduction: Operation (includes @, case, +, etc.)
@@ -1662,17 +1675,19 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     }
   }
 
-  assert(not is_a<index_var>(access(R).C.exp));
 
-  if (evaluate_changeable or (not reg_is_changeable(R) and result_for_reg(t,R)))
-  {
-    assert(result_for_reg(t,R));
-    assert(is_WHNF(access_result_for_reg(t,R).exp));
-    assert(not is_a<index_var>(access_result_for_reg(t,R).exp));
-    assert(not is_a<expression>(access_result_for_reg(t,R).exp));
-  }
-
+#ifndef NDEBUG
   check_used_reg(R);
+  assert(not is_a<index_var>(access(R).C.exp));
+  if (has_computation(t,R) and computation_result_for_reg(t,R))
+  {
+    expression_ref E = access_result_for_reg(t,R).exp;
+    assert(not is_a<index_var>(E));
+    assert(not is_a<expression>(E));
+    assert(is_WHNF(E));
+  }
+#endif
+
   return R;
 }
 

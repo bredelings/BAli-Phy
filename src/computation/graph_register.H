@@ -305,7 +305,11 @@ public:
 
   int result_for_reg(int t, int r) const 
   {
-    return computation_result_for_reg(t,r);
+    assert(not is_index_var(access(r).C.exp));
+    if (access(r).type == reg::type_t::constant)
+      return r;
+    else
+      return computation_result_for_reg(t,r);
   }
 
   int computation_result_for_reg(int t, int r) const 
