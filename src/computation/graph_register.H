@@ -314,7 +314,10 @@ public:
 
   int computation_result_for_reg(int t, int r) const 
   {
-    return token_roots[t].virtual_mapping[r].result;
+    int result = token_roots[t].virtual_mapping[r].result;
+    if (result)
+      assert(has_computation(t,r));
+    return result;
   }
 
   void set_computation_result_for_reg(int t, int r1, int r2)
