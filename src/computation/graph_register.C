@@ -1183,12 +1183,12 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& scan, vecto
       }
     }
 
-    const computation& RC = computation_for_reg(t,r);
+    if (not has_computation(t,r)) continue;
 
     // Count also the references from the call
-    if (RC.call and computations.is_used(RC.call))
+    if (reg_has_call(t,r))
     {
-      int called_reg = computations[RC.call].source;
+      int called_reg = call_for_reg(t,r);
       if (not is_marked(called_reg))
       {
 	set_mark(called_reg);
