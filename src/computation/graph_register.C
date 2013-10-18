@@ -247,6 +247,84 @@ void vm_add(vector<int>& m, vector<reg_heap::address>& v, int r, reg_heap::addre
   assert(m[A.index] == r);
 }
 
+const computation& reg_heap::computation_for_reg(int t, int r) const 
+{ 
+  int rc = computation_index_for_reg(t,r);
+  assert(rc > 0);
+  return computations.access_unused(rc);
+}
+
+computation& reg_heap::computation_for_reg(int t, int r)
+{ 
+  int rc = computation_index_for_reg(t,r);
+  assert(rc > 0);
+  return computations.access_unused(rc);
+}
+
+const closure& reg_heap::access_result_for_reg(int t, int R1) const
+{
+  int R2 = result_for_reg(t,R1);
+  assert(R2);
+  return access(R2).C;
+}
+
+const closure& reg_heap::access_computation_result_for_reg(int t, int R1) const
+{
+  int R2 = computation_result_for_reg(t,R1);
+  assert(R2);
+  return access(R2).C;
+}
+
+bool reg_heap::reg_has_call(int t, int r) const
+{
+  return computation_for_reg(t,r).call;
+}
+
+int reg_heap::call_for_reg(int t, int r) const
+{
+  return computations[computation_for_reg(t,r).call].source;
+}
+
+bool reg_heap::has_computation(int t, int r) const
+{
+  int rc = token_roots[t].virtual_mapping[r].rc;
+  return rc;
+}
+
+int reg_heap::computation_index_for_reg(int t, int r) const 
+{
+  int rc = token_roots[t].virtual_mapping[r].rc;
+  assert(rc > 0);
+  return rc;
+}
+
+int reg_heap::result_for_reg(int t, int r) const 
+{
+  assert(not is_index_var(access(r).C.exp));
+  if (access(r).type == reg::type_t::constant)
+    return r;
+  else
+    return computation_result_for_reg(t,r);
+}
+
+int reg_heap::computation_result_for_reg(int t, int r) const 
+{
+  int result = token_roots[t].virtual_mapping[r].result;
+  if (result)
+    assert(has_computation(t,r));
+  return result;
+}
+
+void reg_heap::set_computation_result_for_reg(int t, int r1, int r2)
+{
+  token_roots[t].virtual_mapping[r1].result = r2;
+}
+
+void reg_heap::clear_computation_result(int t, int r)
+{
+  set_computation_result_for_reg(t,r,0);
+}
+
 reg_heap::address vm_erase(vector<int>& m, vector<reg_heap::address>& v, int r)
 {
   reg_heap::address A = v[r];
@@ -1540,6 +1618,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     if (access(R).C.exp->head->type() == index_var_type)
     {
       assert( not reg_is_changeable(R) );
+
+      assert( not computation_result_for_reg(t,R) );
 
       assert( not has_computation(t,R) or not reg_has_call(t,R) );
 

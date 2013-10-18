@@ -109,43 +109,12 @@ public:
 
   reg_heap* clone() const {std::abort();}
 
-  const computation& computation_for_reg(int t, int r) const 
-  { 
-    int rc = computation_index_for_reg(t,r);
-    assert(rc > 0);
-    return computations.access_unused(rc);
-  }
-
-        computation& computation_for_reg(int t, int r)
-  { 
-    int rc = computation_index_for_reg(t,r);
-    assert(rc > 0);
-    return computations.access_unused(rc);
-  }
-
-  const closure& access_result_for_reg(int t, int R1) const
-  {
-    int R2 = result_for_reg(t,R1);
-    assert(R2);
-    return access(R2).C;
-  }
-
-  const closure& access_computation_result_for_reg(int t, int R1) const
-  {
-    int R2 = computation_result_for_reg(t,R1);
-    assert(R2);
-    return access(R2).C;
-  }
-
-  bool reg_has_call(int t, int r) const
-  {
-    return computation_for_reg(t,r).call;
-  }
-
-  int call_for_reg(int t, int r) const
-  {
-    return computations[computation_for_reg(t,r).call].source;
-  }
+  const computation& computation_for_reg(int t, int r) const ;
+        computation& computation_for_reg(int t, int r);
+  const closure& access_result_for_reg(int t, int R1) const;
+  const closure& access_computation_result_for_reg(int t, int R1) const;
+  bool reg_has_call(int t, int r) const;
+  int call_for_reg(int t, int r) const;
 
   void collect_garbage();
   void trace_and_reclaim_unreachable();
@@ -290,45 +259,17 @@ public:
 
   void remove_computation(int t, int r);
   
-  bool has_computation(int t, int r) const
-  {
-    int rc = token_roots[t].virtual_mapping[r].rc;
-    return rc;
-  }
+  bool has_computation(int t, int r) const;
 
-  int computation_index_for_reg(int t, int r) const 
-  {
-    int rc = token_roots[t].virtual_mapping[r].rc;
-    assert(rc > 0);
-    return rc;
-  }
+  int computation_index_for_reg(int t, int r) const;
 
-  int result_for_reg(int t, int r) const 
-  {
-    assert(not is_index_var(access(r).C.exp));
-    if (access(r).type == reg::type_t::constant)
-      return r;
-    else
-      return computation_result_for_reg(t,r);
-  }
+  int result_for_reg(int t, int r) const;
 
-  int computation_result_for_reg(int t, int r) const 
-  {
-    int result = token_roots[t].virtual_mapping[r].result;
-    if (result)
-      assert(has_computation(t,r));
-    return result;
-  }
+  int computation_result_for_reg(int t, int r) const;
 
-  void set_computation_result_for_reg(int t, int r1, int r2)
-  {
-    token_roots[t].virtual_mapping[r1].result = r2;
-  }
+  void set_computation_result_for_reg(int t, int r1, int r2);
 
-  void clear_computation_result(int t, int r)
-  {
-    set_computation_result_for_reg(t,r,0);
-  }
+  void clear_computation_result(int t, int r);
 
   std::vector<int> used_regs_for_reg(int t, int r) const;
 
