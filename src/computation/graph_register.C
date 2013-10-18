@@ -1666,7 +1666,23 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
     // Check for WHNF *OR* heap variables
     else if (is_WHNF(access(R).C.exp))
+    {
       access(R).type = reg::type_t::constant;
+      if (has_computation(t,R))
+      {
+	assert(computation_for_reg(t,R).used_by.empty());
+	for(int rc2: computation_for_reg(t,R).called_by)
+	{
+	  int r2 = computations[rc2].source;
+	  assert(has_computation(t,r2));
+	  computations[rc2].call = 0;
+	  computations[rc2].call_reverse = computation::back_edge_deleter();
+	  set_computation_result_for_reg(t,r2,R);
+	}
+	computation_for_reg(t,R).called_by.clear();
+	remove_computation(t,R);
+      }
+    }
 
 #ifndef NDEBUG
     else if (is_a<Trim>(access(R).C.exp))
