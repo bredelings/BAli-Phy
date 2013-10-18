@@ -64,7 +64,7 @@ public:
 
   bool re_evaluate = false;
 
-  enum class type_t {unknown=0, index_var=0, constant=0};
+  enum class type_t {unknown=0, index_var=1, constant=2};
 
   type_t type = type_t::unknown;
 
