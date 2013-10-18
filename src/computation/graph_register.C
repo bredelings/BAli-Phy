@@ -917,11 +917,18 @@ void reg_heap::trace_and_reclaim_unreachable()
       
       // Count all computations
       for(int t=0;t<get_n_tokens();t++)
-	if (token_is_used(t) and has_computation(t,r))
-	{
-	  int rc = computation_index_for_reg(t,r);
-	  scan2.push_back(rc);
-	}
+      {
+	if (not token_is_used(t)) continue;
+	
+	if (not has_computation(t,r)) continue;
+
+	int rc = computation_index_for_reg(t,r);
+	scan2.push_back(rc);
+
+	int result = computation_result_for_reg(t,r);
+	if (result)
+	  next_scan1.push_back(result);
+      }
     }
     std::swap(scan1,next_scan1);
     next_scan1.clear();
