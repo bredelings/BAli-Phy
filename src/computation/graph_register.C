@@ -493,8 +493,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 {
   assert(reg_is_changeable(P));
   assert(is_terminal_token(token)); 
-  // Check that reg P is owned by context token.
-  assert(has_computation(token,P));
+  // Ensure we have a computation to set a call
+  if (not has_computation(token,P))
+    add_computation(token,P);
 
   // Split this reg and its E-ancestors out from other graphs, if its shared.
   P = uniquify_reg(P,token);
@@ -1467,8 +1468,6 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
   assert(is_terminal_token(t));
   assert(is_valid_address(R));
   assert(is_used(R));
-  if (not has_computation(t,R))
-    add_computation(t,R);
 
 #ifndef NDEBUG
   assert(not is_a<expression>(access(R).C.exp));
@@ -1490,52 +1489,63 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
   while (1)
   {
-    if (access(R).type == reg::type_t::constant) break;
-
-    if (has_computation(t,R) and computation_result_for_reg(t,R)) break;
-
-    if (reg_is_changeable(R) and not evaluate_changeable) break;
-
-    assert(has_computation(t,R));
-
-    vector<expression_ref> vars;
-    vector<expression_ref> bodies;
-    expression_ref T;
-
     assert(access(R).C.exp);
 
 #ifndef NDEBUG
     //    std::cerr<<"   statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
 
-    // If we know what to call, then call it and use it to set the result
-    if (reg_has_call(t,R))
+    if (access(R).type == reg::type_t::constant) break;
+
+    else if (reg_is_changeable(R))
     {
-      // This should only be an Operation or a modifiable.
-      assert(reg_is_changeable(R));
+      // Changeable is a normal form, so we are done.
+      if (not evaluate_changeable) break;
 
-      // Only changeable regs have calls, and changeable regs are in normal form unless evaluate_changeable==true.
-      assert(evaluate_changeable);
-
-      // Evaluate S, looking through unchangeable redirections
-      int call = incremental_evaluate(call_for_reg(t,R), t, evaluate_changeable);
-
-      // If computation_for_reg(t,R).call can be evaluated to refer to S w/o moving through any changable operations, 
-      // then it should be safe to change computation_for_reg(t,R).call to refer to S, even if R is changeable.
-      if (call != call_for_reg(t,R))
+      if (has_computation(t,R))
       {
-	clear_call_for_reg(t,R);
-	set_call(t, R, call);
-      }
 
-      // R gets its result from S.
-      set_computation_result_for_reg(t, R, result_for_reg(t,call));
-      break;
+	// We have a result, so we are done.
+	if (computation_result_for_reg(t,R)) break;
+
+	// If we know what to call, then call it and use it to set the result
+	if (reg_has_call(t,R))
+	{
+	  // This should only be an Operation or a modifiable.
+	  assert(reg_is_changeable(R));
+	
+	  // Only changeable regs have calls, and changeable regs are in normal form unless evaluate_changeable==true.
+	  assert(evaluate_changeable);
+	
+	  // Evaluate S, looking through unchangeable redirections
+	  int call = incremental_evaluate(call_for_reg(t,R), t, evaluate_changeable);
+	
+	  // If computation_for_reg(t,R).call can be evaluated to refer to S w/o moving through any changable operations, 
+	  // then it should be safe to change computation_for_reg(t,R).call to refer to S, even if R is changeable.
+	  if (call != call_for_reg(t,R))
+	  {
+	    clear_call_for_reg(t,R);
+	    set_call(t, R, call);
+	  }
+	
+	  // R gets its result from S.
+	  set_computation_result_for_reg(t, R, result_for_reg(t,call));
+	  break;
+	}
+      }
     }
+
+    if (not has_computation(t,R))
+      add_computation(t,R);
+
+
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
 
     /*---------- Below here, there is no call, and no result. ------------*/
 
-    else if (access(R).C.exp->head->type() == index_var_type)
+    if (access(R).C.exp->head->type() == index_var_type)
     {
       assert( not reg_is_changeable(R) );
 
