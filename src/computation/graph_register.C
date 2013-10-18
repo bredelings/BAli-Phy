@@ -1535,10 +1535,6 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       }
     }
 
-    if (not has_computation(t,R))
-      add_computation(t,R);
-
-
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     expression_ref T;
@@ -1549,7 +1545,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     {
       assert( not reg_is_changeable(R) );
 
-      assert( not reg_has_call(t,R) );
+      assert( not has_computation(t,R) or not reg_has_call(t,R) );
 
       int index = assert_is_a<index_var>(access(R).C.exp)->index;
 
@@ -1621,6 +1617,9 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
+      if (not has_computation(t,R))
+	add_computation(t,R);
+
       object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
 
       // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable result.
