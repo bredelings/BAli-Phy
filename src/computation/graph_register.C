@@ -1479,7 +1479,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     assert(not is_a<index_var>(E));
   }
   if (is_index_var(access(R).C.exp))
-    assert(not has_computation(t,R) or not computation_result_for_reg(t,R));
+    assert(not computation_result_for_reg(t,R));
   check_used_reg(R);
 #endif
 
@@ -1502,36 +1502,32 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       // Changeable is a normal form, so we are done.
       if (not evaluate_changeable) break;
 
-      if (has_computation(t,R))
+      // We have a result, so we are done.
+      if (computation_result_for_reg(t,R)) break;
+
+      // If we know what to call, then call it and use it to set the result
+      if (has_computation(t,R) and reg_has_call(t,R))
       {
-
-	// We have a result, so we are done.
-	if (computation_result_for_reg(t,R)) break;
-
-	// If we know what to call, then call it and use it to set the result
-	if (reg_has_call(t,R))
+	// This should only be an Operation or a modifiable.
+	assert(reg_is_changeable(R));
+	
+	// Only changeable regs have calls, and changeable regs are in normal form unless evaluate_changeable==true.
+	assert(evaluate_changeable);
+	
+	// Evaluate S, looking through unchangeable redirections
+	int call = incremental_evaluate(call_for_reg(t,R), t, evaluate_changeable);
+	
+	// If computation_for_reg(t,R).call can be evaluated to refer to S w/o moving through any changable operations, 
+	// then it should be safe to change computation_for_reg(t,R).call to refer to S, even if R is changeable.
+	if (call != call_for_reg(t,R))
 	{
-	  // This should only be an Operation or a modifiable.
-	  assert(reg_is_changeable(R));
-	
-	  // Only changeable regs have calls, and changeable regs are in normal form unless evaluate_changeable==true.
-	  assert(evaluate_changeable);
-	
-	  // Evaluate S, looking through unchangeable redirections
-	  int call = incremental_evaluate(call_for_reg(t,R), t, evaluate_changeable);
-	
-	  // If computation_for_reg(t,R).call can be evaluated to refer to S w/o moving through any changable operations, 
-	  // then it should be safe to change computation_for_reg(t,R).call to refer to S, even if R is changeable.
-	  if (call != call_for_reg(t,R))
-	  {
-	    clear_call_for_reg(t,R);
-	    set_call(t, R, call);
-	  }
-	
-	  // R gets its result from S.
-	  set_computation_result_for_reg(t, R, result_for_reg(t,call));
-	  break;
+	  clear_call_for_reg(t,R);
+	  set_call(t, R, call);
 	}
+	
+	// R gets its result from S.
+	set_computation_result_for_reg(t, R, result_for_reg(t,call));
+	break;
       }
     }
 
