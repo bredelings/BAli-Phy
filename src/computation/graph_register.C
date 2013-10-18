@@ -277,7 +277,7 @@ const closure& reg_heap::access_computation_result_for_reg(int t, int R1) const
 
 bool reg_heap::reg_has_call(int t, int r) const
 {
-  return computation_for_reg(t,r).call;
+  return has_computation(t,r) and computation_for_reg(t,r).call;
 }
 
 int reg_heap::call_for_reg(int t, int r) const
@@ -1351,7 +1351,7 @@ int reg_heap::copy_token(int t)
     if (is_modifiable(access(r).C.exp))
     {
       add_computation(t2,r);
-      if (has_computation(t,r) and reg_has_call(t,r))
+      if (reg_has_call(t,r))
       {
 	int r2 = call_for_reg(t,r);
 	if (r2)
@@ -1584,7 +1584,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       if (computation_result_for_reg(t,R)) break;
 
       // If we know what to call, then call it and use it to set the result
-      if (has_computation(t,R) and reg_has_call(t,R))
+      if (reg_has_call(t,R))
       {
 	// This should only be an Operation or a modifiable.
 	assert(reg_is_changeable(R));
@@ -1621,7 +1621,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
       assert( not computation_result_for_reg(t,R) );
 
-      assert( not has_computation(t,R) or not reg_has_call(t,R) );
+      assert( not reg_has_call(t,R) );
 
       int index = assert_is_a<index_var>(access(R).C.exp)->index;
 
@@ -1686,8 +1686,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       for(int i=0;i<new_heap_vars.size(); i++)
 	pop_temp_head();
       
-      assert(not has_computation(t,R) or not reg_has_call(t,R) );
-      assert(not has_computation(t,R) or not computation_result_for_reg(t,R));
+      assert(not reg_has_call(t,R) );
+      assert(not computation_result_for_reg(t,R));
     }
     
     // 3. Reduction: Operation (includes @, case, +, etc.)
@@ -1764,7 +1764,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 #ifndef NDEBUG
   check_used_reg(R);
   assert(not is_a<index_var>(access(R).C.exp));
-  if (has_computation(t,R) and computation_result_for_reg(t,R))
+  if (computation_result_for_reg(t,R))
   {
     expression_ref E = access_result_for_reg(t,R).exp;
     assert(not is_a<index_var>(E));
