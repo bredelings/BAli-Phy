@@ -1298,12 +1298,8 @@ void reg_heap::try_release_token(int t)
 
   // clear only the mappings that were actually updated here.
   for(int r: token_roots[t].modified)
-  {
-    // We don't need to use remove_computation( ) because we don't need to maintain the modified list.
-    int rc = token_roots[t].virtual_mapping[r].rc;
-    computations.reclaim_used(rc);
     token_roots[t].virtual_mapping[r] = {};
-  }
+
   token_roots[t].modified.clear();
 
   // If we just released a terminal token, maybe it's parent is not terminal also.
