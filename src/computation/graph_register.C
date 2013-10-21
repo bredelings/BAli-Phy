@@ -710,7 +710,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Clear the marks
   for(int R: call_and_result_may_be_changed)
   {
-    if (not has_computation(token, R)) continue;
+    assert(has_computation(token,R));
 
     // Clear the mark
     computation_for_reg(token,R).temp = -1;
