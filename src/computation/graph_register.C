@@ -575,7 +575,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     add_computation(token,P);
 
   // Split this reg and its E-ancestors out from other graphs, if its shared.
-  P = uniquify_reg(P,token);
+  P = uniquify_reg(token,P);
 
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
@@ -1070,9 +1070,9 @@ void reg_heap::check_results_in_context(int t) const
   }
 }
 
-int reg_heap::uniquify_reg(int R, int /* t */)
+int reg_heap::uniquify_reg(int t, int r)
 {
-  return R;
+  return r;
 }
 
 void reg_heap::check_used_reg(int index) const
