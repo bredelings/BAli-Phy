@@ -713,6 +713,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
 int reg_heap::add_computation(int t, int r)
 {
+  assert(not token_roots[t].virtual_mapping[r].rc);
+
   int rc = computations.allocate();
   computations.access_unused(rc).source = r;
 
