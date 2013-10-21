@@ -579,10 +579,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
-  auto& PC = computation_for_reg(token,P);
 
   // Clear the call, clear the result, and set the value
-  assert(PC.used_inputs.empty());
+  assert(computation_for_reg(token,P).used_inputs.empty());
   clear_call_for_reg(token, P);
   clear_computation_result(token, P);
 
@@ -595,7 +594,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   // The index that we just altered cannot be known to be unchanged.
   call_and_result_may_be_changed.push_back(P);
-  PC.temp = mark_call_result;
+  computation_for_reg(token,P).temp = mark_call_result;
   result_may_be_changed.push_back(P);
 
   int i=0;
