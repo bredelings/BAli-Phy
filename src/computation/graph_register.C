@@ -643,7 +643,11 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
       // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
       if (access(R1).re_evaluate)
+      {
+	assert(has_computation(token,R1));
+	assert(computation_result_for_reg(token,R1));
 	regs_to_re_evaluate.push_back(R1);
+      }
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
       for(int rc2: RC1.used_by)
