@@ -218,7 +218,7 @@ bool context::parameter_is_set(int index) const
 
   int P = find_parameter_modifiable_reg(index);
 
-  if (not result_for_reg(P) and not computation_for_reg(P).call) return false;
+  if (not result_for_reg(P) and not reg_has_call(P)) return false;
 
   return true;
 }
@@ -229,7 +229,7 @@ object_ref context::get_reg_value(int R) const
   if (not result_for_reg(R))
   {
     // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-    if (not computation_for_reg(R).call) return object_ref();
+    if (not reg_has_call(R)) return object_ref();
 
     // If the value needs to be computed (e.g. its a call expression) then compute it.
     incremental_evaluate(R);

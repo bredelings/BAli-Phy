@@ -91,6 +91,8 @@ public:
 
   int result_for_reg(int i) const {return memory()->result_for_reg(token,i);}
 
+  bool reg_has_call(int r) const {return memory()->reg_has_call(token,r);}
+
   const closure& access_result_for_reg(int i) const {return memory()->access_result_for_reg(token,i);}
 
   reg& operator[](int i) const {return memory()->access(i);}
