@@ -684,6 +684,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Clear the marks
   for(int R: result_may_be_changed)
   {
+    assert(has_computation(token,R));
+
     // Since the computation may be different, we don't know if the value has changed.
     clear_computation_result(token, R);
     // Clear the mark
