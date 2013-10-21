@@ -700,26 +700,31 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   {
     assert(has_computation(token,R));
 
-    // Since the computation may be different, we don't know if the value has changed.
-    clear_computation_result(token, R);
     // Clear the mark
     computation_for_reg(token,R).temp = -1;
+
+    // Since the computation may be different, we don't know if the value has changed.
+    clear_computation_result(token, R);
   }
 
   // Clear the marks
   for(int R: call_and_result_may_be_changed)
   {
+    if (not has_computation(token, R)) continue;
+
+    // Clear the mark
+    computation_for_reg(token,R).temp = -1;
+
     // Since the computation may be different, we don't know if the value has changed.
     clear_computation_result(token, R);
     // We don't know what the reduction result is, so invalidate the call.
     clear_call_for_reg(token, R);
     // Remember to clear the used inputs.
     clear_used_inputs_for_reg(token, R);
-    // Clear the mark
-    computation_for_reg(token,R).temp = -1;
   }
 
   // Finally set the new value.
+
   set_reduction_result(token, P, std::move(C) );
 
   release_scratch_list();
