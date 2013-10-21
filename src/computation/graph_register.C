@@ -559,7 +559,6 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   else
   {
     int R2 = allocate();
-    add_computation(t, R2);
 
     set_C(R2, std::move( result ) );
     set_call(t, R, R2);
@@ -1772,7 +1771,20 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	}
 	// Otherwise, set the reduction result.
 	else
-	  set_reduction_result(t, R, std::move(result) );
+	{
+	  int r2 = push_temp_head();
+	  set_C(r2, std::move(result) );
+	  int r3 = incremental_evaluate(r2, t, evaluate_changeable);
+
+	  if (access(r3).type == reg::type_t::constant)
+	    set_computation_result_for_reg(t, R, r3);
+	  else
+	  {
+	    set_call(t, R, r3);
+	    set_computation_result_for_reg(t, R, computation_result_for_reg(t,r3));
+	  }
+	  pop_temp_head();
+	}
       }
       catch (myexception& e)
       {
