@@ -1766,7 +1766,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
 	  assert(not reg_has_call(t,R) );
 	  assert(not result_for_reg(t,R));
-	  clear_used_inputs_for_reg(t,R);
+	  assert(computation_for_reg(t,R).used_inputs.empty());
+	  //	  clear_used_inputs_for_reg(t,R);
 	  set_C(R, std::move(result) );
 	}
 	// Otherwise, set the reduction result.
