@@ -720,7 +720,7 @@ int reg_heap::add_computation(int t, int r)
 void reg_heap::remove_computation(int t, int r)
 {
   // erase the mark that reg r is modified
-  reg_heap::address A = vm_erase(token_roots[t].modified, token_roots[t].virtual_mapping, r);
+  vm_erase(token_roots[t].modified, token_roots[t].virtual_mapping, r);
 
   assert(not has_computation(t,r));
 }
