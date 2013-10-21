@@ -614,22 +614,28 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       for(int rc2: RC1.used_by)
       {
 	auto& RC2 = computations[rc2];
+	int R2 = RC2.source;
 
+	if (not has_computation(token,R2) or computation_index_for_reg(token,R2) != rc2) continue;
 	if (RC2.temp == mark_call_result) continue;
 
 	RC2.temp = mark_call_result;
-	call_and_result_may_be_changed.push_back(RC2.source);
+	assert(computation_index_for_reg(token,R2) == rc2);
+	call_and_result_may_be_changed.push_back(R2);
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
       for(int rc2: RC1.called_by)
       {
 	computation& RC2 = computations[rc2];
+	int R2 = RC2.source;
 
+	if (not has_computation(token,R2) or computation_index_for_reg(token,R2) != rc2) continue;
 	if (RC2.temp != -1) continue;
 
 	RC2.temp = mark_result;
-	result_may_be_changed.push_back(RC2.source);
+	assert(computation_index_for_reg(token,R2) == rc2);
+	result_may_be_changed.push_back(R2);
       }
     }
 
@@ -653,22 +659,30 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       for(int rc2: RC1.used_by)
       {
 	auto& RC2 = computations[rc2];
+	int R2 = RC2.source;
+
+	if (not has_computation(token,R2) or computation_index_for_reg(token,R2) != rc2) continue;
 
 	if (RC2.temp == mark_call_result) continue;
 
 	RC2.temp = mark_call_result;
-	call_and_result_may_be_changed.push_back(RC2.source);
+	assert(computation_index_for_reg(token,R2) == rc2);
+	call_and_result_may_be_changed.push_back(R2);
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
       for(int rc2: RC1.called_by)
       {
 	computation& RC2 = computations[rc2];
+	int R2 = RC2.source;
+
+	if (not has_computation(token,R2) or computation_index_for_reg(token,R2) != rc2) continue;
 
 	if (RC2.temp != -1) continue;
 
 	RC2.temp = mark_result;
-	result_may_be_changed.push_back(RC2.source);
+	assert(computation_index_for_reg(token,R2) == rc2);
+	result_may_be_changed.push_back(R2);
       }
     }
   }
