@@ -570,20 +570,13 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 {
   assert(reg_is_changeable(P));
   assert(is_terminal_token(token)); 
-  // Ensure we have a computation to set a call
-  if (not has_computation(token,P))
-    add_computation(token,P);
-
-  // Split this reg and its E-ancestors out from other graphs, if its shared.
-  P = uniquify_reg(token,P);
 
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
 
-  // Clear the call, clear the result, and set the value
-  assert(computation_for_reg(token,P).used_inputs.empty());
-  clear_call_for_reg(token, P);
-  clear_computation_result(token, P);
+  // Ensure we have a computation
+  if (not has_computation(token,P))
+    add_computation(token,P);
 
   const int mark_call_result = 1;
   const int mark_result = 2;
@@ -612,9 +605,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
       if (access(R1).re_evaluate)
 	regs_to_re_evaluate.push_back(R1);
-
-      // Since the computation may be different, we don't know if the value has changed.
-      clear_computation_result(token, R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
       for(int rc2: RC1.used_by)
@@ -651,13 +641,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       if (access(R1).re_evaluate)
 	regs_to_re_evaluate.push_back(R1);
 
-      // Since the computation may be different, we don't know if the value has changed.
-      clear_computation_result(token, R1);
-      // We don't know what the reduction result is, so invalidate the call.
-      clear_call_for_reg(token, R1);
-      // Remember to clear the used inputs.
-      clear_used_inputs_for_reg(token, R1);
-
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
       for(int rc2: RC1.used_by)
       {
@@ -692,11 +675,25 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   // Clear the marks
   for(int R: result_may_be_changed)
+  {
+    // Since the computation may be different, we don't know if the value has changed.
+    clear_computation_result(token, R);
+    // Clear the mark
     computation_for_reg(token,R).temp = -1;
+  }
 
   // Clear the marks
   for(int R: call_and_result_may_be_changed)
+  {
+    // Since the computation may be different, we don't know if the value has changed.
+    clear_computation_result(token, R);
+    // We don't know what the reduction result is, so invalidate the call.
+    clear_call_for_reg(token, R);
+    // Remember to clear the used inputs.
+    clear_used_inputs_for_reg(token, R);
+    // Clear the mark
     computation_for_reg(token,R).temp = -1;
+  }
 
   // Finally set the new value.
   set_reduction_result(token, P, std::move(C) );
