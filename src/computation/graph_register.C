@@ -1073,6 +1073,14 @@ void reg_heap::check_results_in_context(int t) const
 int reg_heap::uniquify_reg(int t, int r)
 {
   return r;
+  int parent = token_roots[t].parent;
+  if (parent != -1 and 
+      token_roots[parent].virtual_mapping[r].rc == token_roots[parent].virtual_mapping[r].rc)
+  {
+    remove_computation(t,r);
+    add_computation(t,r);
+  }
+  return r;
 }
 
 void reg_heap::check_used_reg(int index) const
