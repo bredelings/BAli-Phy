@@ -286,7 +286,10 @@ AC_CHECK_LIB(m,main)
 
 #---------------------- Check for libdl ------------------#
 
-if test "${host_os_noversion}" != mingw32 ; then 
+if test "${host_os_noversion}" = mingw32 ; then 
+  libdl_includes="-isystem \$(top_srcdir)/src/dlfcn-win32/"
+  CXXFLAGS="$libdl_includes $CXXFLAGS"
+else
 echo "------------------------------------------"
 echo " * Looking for libdl headers..."
 AC_CHECK_HEADERS([dlfcn.h],[],[echo "Error: I can't find <dlfcn.h> (CXXFLAGS='$CXXFLAGS').  If libdl is installed in a non-standard location you may need to specify --with-extra-includes=DIR to tell the configure script to look for it in directory DIR"])

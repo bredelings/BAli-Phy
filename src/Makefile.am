@@ -111,7 +111,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  parser/AST.C computation/program.C
 
 if HOST_MINGW32
-bali_phy_SOURCES += dlfcn.c
+bali_phy_SOURCES += dlfcn-win32/dlfcn.c
 endif
 
 nodist_bali_phy_SOURCES = git_version.h
