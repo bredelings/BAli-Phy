@@ -569,6 +569,10 @@ namespace MCMC {
 
   void Modifiable_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
   {
+#ifndef NDEBUG
+    clog<<" [modifiable slice] move = "<<m_index<<endl;
+#endif
+
     double v1 = P->get_modifiable_value_as<Double>(m_index);
 
     modifiable_slice_function logp(*P, m_index, bounds, transform, inverse);
@@ -609,6 +613,10 @@ namespace MCMC {
 
   void Integer_Modifiable_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
   {
+#ifndef NDEBUG
+    clog<<" [integer modifiable slice] move = "<<m_index<<endl;
+#endif
+
     int v1 = P->get_modifiable_value_as<Int>(m_index);
     double x1 = double(v1)+uniform();
 
@@ -650,6 +658,9 @@ namespace MCMC {
 
   void Dirichlet_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
   {
+#ifndef NDEBUG
+    clog<<" [dirichlet slice] move"<<endl;
+#endif
     double v1 = P->get_parameter_value_as<Double>(indices[n]);
     constant_sum_slice_function slice_levels_function(*P,indices,n);
 
@@ -679,6 +690,9 @@ namespace MCMC {
 
   void Dirichlet_Modifiable_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
   {
+#ifndef NDEBUG
+    clog<<" [dirichlet modifiable slice] move"<<endl;
+#endif
     double v1 = P->get_modifiable_value_as<Double>(indices[n]);
     constant_sum_modifiable_slice_function slice_levels_function(*P,indices,n);
 
@@ -715,6 +729,9 @@ namespace MCMC {
 
   void Scale_Means_Only_Slice_Move::iterate(owned_ptr<Probability_Model>& P, MoveStats& Stats,int)
   {
+#ifndef NDEBUG
+    clog<<" [scale means only slice] move"<<endl;
+#endif
     Parameters& PP = *P.as<Parameters>();
     // If any of the branch means are fixed, this won't work.
 
@@ -784,6 +801,9 @@ void MoveArg::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int i)
 
   void IOMove::iterate(owned_ptr<Probability_Model>& P, MoveStats& M,int)
   {
+#ifndef NDEBUG
+    clog<<" [IO Move] move = "<<head<<endl;
+#endif
     P->perform(head);
   }
 
