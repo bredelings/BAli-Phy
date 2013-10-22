@@ -23,6 +23,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/math/special_functions/beta.hpp>
 #include <boost/math/distributions.hpp>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #include "math/logsum.H"
 #include "util.H"
 
