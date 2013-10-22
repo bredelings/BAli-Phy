@@ -2288,6 +2288,14 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       o<<"color=\"#007700\"";
       o<<"];\n";
     }
+    else if (C.computation_result_for_reg(t,R))
+    {
+      string name2 = "n" + convertToString(C.computation_result_for_reg(t,R));
+      o<<name<<":e -> "<<name2<<":w ";
+      o<<"[";
+      o<<"color=\"#007700\"";
+      o<<"];\n";
+    }
 
     // used_inputs
     for(int R2: C.used_regs_for_reg(t,R))
