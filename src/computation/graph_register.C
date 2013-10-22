@@ -2247,7 +2247,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	if (reg_names.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
 
 	// Don't draw ref edges to things like fmap.
-	if (constants.count(R2) and not used) continue;
+	if (constants.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
 
 	if (not used)
 	  o<<name<<":<"<<R2<<">:s -> "<<name2<<":n;\n";
@@ -2265,10 +2265,10 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	  if (i == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
-	if (reg_names.count(R2) and not C.reg_is_changeable(R) and not used) continue;
+	if (reg_names.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
 	
 	// Don't draw ref edges to things like fmap.
-	if (constants.count(R2) and not used) continue;
+	if (constants.count(R2) and not C.reg_is_changeable(R2) and not used) continue;
 
 	if (not used)
 	  o<<name<<":s -> "<<name2<<":n;\n";
