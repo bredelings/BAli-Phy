@@ -829,8 +829,9 @@ void reg_heap::reroot_mappings_at(int t)
 std::vector<int> reg_heap::used_regs_for_reg(int t, int r) const
 {
   vector<int> U;
-  for(const auto& I: computation_for_reg(t,r).used_inputs)
-    U.push_back(computations[I.first].source);
+  if (has_computation(t,r))
+    for(const auto& I: computation_for_reg(t,r).used_inputs)
+      U.push_back(computations[I.first].source);
   return U;
 }
 
