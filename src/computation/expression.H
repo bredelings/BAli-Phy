@@ -5,6 +5,7 @@
 #include <valarray>
 #include <set>
 #include <string>
+#include <initializer_list>
 #include "object.H"
 #include "computation/operator.H"
 
@@ -69,6 +70,8 @@ struct expression: public Object
 
   expression() {}
   expression(const object_ref&);
+
+  expression(const object_ref&, const std::initializer_list< expression_ref > S);
 
   expression(const object_ref&, const std::vector< expression_ref >& S);
 
@@ -402,6 +405,8 @@ struct expression_ref: public object_ptr<const expression>
   expression_ref(Object* v):expression_ref(new expression(v)) { }
 
   expression_ref(const object_ref& o):expression_ref(new expression(o)) { }
+
+  expression_ref(const object_ref& o, const std::initializer_list<expression_ref> v):expression_ref(new expression(o,v)) { }
 
   expression_ref(const object_ref& o, const std::vector<expression_ref>& v):expression_ref(new expression(o,v)) { }
 

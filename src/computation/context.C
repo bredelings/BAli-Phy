@@ -765,7 +765,7 @@ context& context::operator=(const context& C)
 }
 
 context::context(const module_loader& L)
-  :context(L,{},vector<Module>{})
+  :context(L,vector<expression_ref>{},vector<Module>{})
 {  }
 
 // FIXME - this should be shared with Model::add_submodel( ), but we need to call Model::add_notes( ).

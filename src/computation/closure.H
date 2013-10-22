@@ -56,6 +56,10 @@ struct closure
     :exp(e), Env(E)
   { }
 
+  closure(const expression_ref& e, std::initializer_list<int> E)
+    :closure(e,std::vector<int>(E))
+  { }
+
   // Constructing w/ an environment
   closure(Object* o, const std::vector<int>& E)
     :closure(expression_ref(o),E)
@@ -71,6 +75,8 @@ struct closure
   { }
 
   closure(const Object& O, const std::vector<int>& E):closure(expression_ref(O),E) { }
+
+  closure(const Object& O, std::initializer_list<int> E):closure(O,std::vector<int>(E)) { }
 
   // Constructing w/o an environment
   closure(Object* o)

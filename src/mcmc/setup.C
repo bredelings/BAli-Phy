@@ -206,7 +206,7 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
       {
 	int m_index = *convert<const Int>(x);
 	string name = rand_var->print()+"_"+convertToString<int>(m_index);
-	add_modifiable_MH_move(name, bit_flip, m_index, {}, rand_var_move, weight);
+	add_modifiable_MH_move(name, bit_flip, m_index, vector<double>{}, rand_var_move, weight);
       }
 
       if (rand_var_move.nmoves())

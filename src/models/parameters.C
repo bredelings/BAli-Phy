@@ -1385,7 +1385,7 @@ Parameters::Parameters(const module_loader& L,
 		       const vector<formula_expression_ref>& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<int>& scale_mapping)
-  :Parameters(L, A, t, SMs, s_mapping, {}, {}, scale_mapping)
+  :Parameters(L, A, t, SMs, s_mapping, vector<formula_expression_ref>{}, vector<int>{}, scale_mapping)
 { }
 
 bool accept_MH(const Probability_Model& P1,const Probability_Model& P2,double rho)

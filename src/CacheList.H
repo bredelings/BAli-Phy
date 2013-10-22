@@ -188,6 +188,6 @@ public:
   }
 };
 
-template<typename T> std::list<T> CacheList<T>::free_pool = {};
+template<typename T> std::list<T> CacheList<T>::free_pool = std::list<T>{};
 
 #endif

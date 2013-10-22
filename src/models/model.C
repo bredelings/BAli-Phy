@@ -366,7 +366,7 @@ vector<string> Model::show_priors() const
 }
 
 Model::Model(const module_loader& L)
-  :Model(L, {})
+  :Model(L, vector<expression_ref>{})
 { }
 
 Model::Model(const module_loader& L, const vector<expression_ref>& notes)

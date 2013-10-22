@@ -336,6 +336,10 @@ expression::expression(const object_ref& H)
   assert(not dynamic_pointer_cast<const expression>(H));
 }
 
+expression::expression(const object_ref& H, const std::initializer_list< expression_ref > S)
+  :expression(H,std::vector<expression_ref>(S))
+{ }
+
 expression::expression(const object_ref& H, const std::vector< expression_ref >& S)
   :head(H),sub(S)
 { 
@@ -765,7 +769,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 
 expression_ref indexify(const expression_ref& E)
 {
-  return indexify(E,{});
+  return indexify(E,vector<dummy>{});
 }
 
 dummy get_named_dummy(int n)
@@ -874,7 +878,7 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
 
 expression_ref deindexify(const expression_ref& E)
 {
-  return deindexify(E,{});
+  return deindexify(E,vector<object_ref>{});
 }
 
 vector<int> pop_vars(int n, vector<int> vars)
@@ -927,7 +931,7 @@ vector<int> get_free_index_vars(const expression_ref& E)
     }
     // Constant
     else
-      return {};
+      return vector<int>{};
   }
 
   vector<expression_ref> bodies;
@@ -1955,7 +1959,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
     {
       which = constants.size();
       constants.push_back(C);
-      rules.push_back({});
+      rules.push_back(vector<int>{});
     }
 
     rules[which].push_back(j);
@@ -2070,7 +2074,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
       int r = rules[c][i];
 
       // Add the pattern
-      p2.push_back({});
+      p2.push_back(vector<expression_ref>{});
       assert(p[r][0]->size() == arity);
 
       // Add sub-patterns of p[r][1]
