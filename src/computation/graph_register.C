@@ -31,17 +31,6 @@ using std::endl;
  *
  */
 
-/*
- * Q: How can we share eigensystems between Q matrices that differ only by rate?
- *
- * Q: How can we share eigensystems between Q matrices that are identical by are at separate
- *        positions in the list?
- *
- * A: I guess we want to want Q matrices to carry their eigensystem with them, although it will
- *    be computed lazily.  We also carry around a scaling factor, and scale that number instead of
- *    the eigensystem.
- */
-
 expression_ref graph_normalize(const expression_ref& E)
 {
   if (not E) return E;
