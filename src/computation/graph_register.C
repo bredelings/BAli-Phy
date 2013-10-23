@@ -271,7 +271,7 @@ int reg_heap::call_for_reg(int t, int r) const
   return computation_for_reg(t,r).call;
 }
 
-void clean_weak_refs(vector<pool<computation>::weak_ref>& v, const pool<computation>& P)
+vector<pool<computation>::weak_ref>& clean_weak_refs(vector<pool<computation>::weak_ref>& v, const pool<computation>& P)
 {
   for(int i=0; i < v.size();)
   {
@@ -285,20 +285,19 @@ void clean_weak_refs(vector<pool<computation>::weak_ref>& v, const pool<computat
     else
       i++;
   }
+  return v;
 }
 
 const std::vector<pool<computation>::weak_ref>& reg_heap::reg_is_used_by(int t, int r) const
 {
   vector<pool<computation>::weak_ref>& used_by = computations[computation_index_for_reg(t,r)].used_by;
-  clean_weak_refs(used_by, computations);
-  return used_by;
+  return clean_weak_refs(used_by, computations);
 }
 
 const std::vector<pool<computation>::weak_ref>& reg_heap::reg_is_called_by(int t, int r) const
 {
   vector<pool<computation>::weak_ref>& called_by = computations[computation_index_for_reg(t,r)].called_by;
-  clean_weak_refs(called_by, computations);
-  return called_by;
+  return clean_weak_refs(called_by, computations);
 }
 
 bool reg_heap::has_computation(int t, int r) const
@@ -571,9 +570,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      clean_weak_refs(RC1.used_by, computations);
-
-      for(const auto& wrc2: RC1.used_by)
+      for(const auto& wrc2: clean_weak_refs(RC1.used_by,computations))
       {
 	int rc2 = wrc2.get(computations);
 
@@ -589,9 +586,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
-      clean_weak_refs(RC1.called_by, computations);
-
-      for(const auto& wrc2: RC1.called_by)
+      for(const auto& wrc2: clean_weak_refs(RC1.called_by,computations))
       {
 	int rc2 = wrc2.get(computations);
 
@@ -624,9 +619,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      clean_weak_refs(RC1.used_by, computations);
-
-      for(const auto& wrc2: RC1.used_by)
+      for(const auto& wrc2: clean_weak_refs(RC1.used_by, computations))
       {
 	int rc2 = wrc2.get(computations);
 
@@ -643,9 +636,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
-      clean_weak_refs(RC1.called_by, computations);
-
-      for(const auto& wrc2: RC1.called_by)
+      for(const auto& wrc2: clean_weak_refs(RC1.called_by, computations))
       {
 	int rc2 = wrc2.get(computations);
 
@@ -1684,8 +1675,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       if (has_computation(t,R))
       {
 	assert(computation_for_reg(t,R).used_by.empty());
-	clean_weak_refs(computation_for_reg(t,R).called_by, computations);
-	for(const auto& wrc2: computation_for_reg(t,R).called_by)
+
+	for(const auto& wrc2: reg_is_called_by(t,R))
 	{
 	  int rc2 = wrc2.get(computations);
 
