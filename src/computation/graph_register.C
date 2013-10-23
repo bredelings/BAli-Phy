@@ -333,33 +333,29 @@ reg_heap::address vm_erase(vector<int>& m, vector<reg_heap::address>& v, int r)
 
 void reg_heap::set_used_input(int t, int R1, int R2)
 {
-  assert(is_valid_address(R1));
-  assert(is_valid_address(R2));
+  assert(reg_is_changeable(R1));
+  assert(reg_is_changeable(R2));
+
+  assert(is_used(R1));
+  assert(is_used(R2));
 
   assert(access(R1).C);
   assert(access(R2).C);
 
-  int rc1 = computation_index_for_reg(t,R1);
-  computation& RC1 = computations[rc1];
+  assert(has_computation(t,R1));
+  assert(has_computation(t,R2));
 
   // An index_var's result only changes if the thing the index-var points to also changes.
   // So, we may as well forbid using an index_var as an input.
   assert(access(R2).C.exp->head->type() != index_var_type);
 
-  // It IS possible to add an input that's already used.
-  // This happens if we evaluate a new used input R2' to an already used input R2
-  //   through regvar chains that are not changeable.
-
-  // R1 shouldn't have any used inputs if it isn't changeable.
-  assert(reg_is_changeable(R1));
-  assert(reg_is_changeable(R2));
-  // Don't add unchangeable results as inputs
+  int rc1 = computation_index_for_reg(t,R1);
   int rc2 = computation_index_for_reg(t,R2);
-  computation& RC2 = computations[rc2];
 
-  auto& used_by = RC2.used_by;
-  computation::back_edge_deleter D = used_by.insert(used_by.end(), rc1);
-  RC1.used_inputs.emplace_back(rc2,D);
+  computations[rc1].used_inputs.push_back(rc2);
+  computations[rc2].used_by.push_back(computations.get_weak_ref(rc1));
+
+  assert(computation_is_used_by(t,rc1,rc2));
 }
 
 int count(const std::vector<int>& v, int I)
@@ -375,36 +371,7 @@ int count(const std::vector<int>& v, int I)
 // Called from: set_reg_value( ), reclaim_used( ), uniquify_reg( ), incremental_evaluate( ).
 void reg_heap::clear_used_inputs(int rc1)
 {
-  // If this reg is unused, then upstream regs are in the process of being destroyed.
-  // However, if this reg is used, then upstream regs may be live, and so should have
-  //  correct edges.
-
-  auto& RC1 = computations.access_unused(rc1);
-
-  // We shouldn't need to call this on regs that are already on the free list.
-  //  assert( not is_free(RC1.source) );
-
-  // Remove the back edges from each used_input reg that is not on the free list.
-  for(const auto& i: RC1.used_inputs)
-  {
-    int rc2 = i.first;
-
-    if (not computations.is_free(rc2))
-    {
-      auto& RC2 = computations[rc2];
-      assert( not RC2.used_by.empty() );
-
-      computation::back_edge_deleter D = i.second;
-      assert( *D == rc1 );
-
-      RC2.used_by.erase(D);
-    }
-  }
-
-  // Remove the forward edges.
-  RC1.used_inputs.clear();
-
-  assert(RC1.used_inputs.empty());
+  computations.access_unused(rc1).used_inputs.clear();
 }
 
 void reg_heap::clear_used_inputs_for_reg(int t, int R)
@@ -589,8 +556,12 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(int rc2: RC1.used_by)
+      clean_weak_refs(RC1.used_by, computations);
+
+      for(const auto& wrc2: RC1.used_by)
       {
+	int rc2 = wrc2.get(computations);
+
 	auto& RC2 = computations[rc2];
 	int R2 = RC2.source;
 
@@ -638,8 +609,12 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(int rc2: RC1.used_by)
+      clean_weak_refs(RC1.used_by, computations);
+
+      for(const auto& wrc2: RC1.used_by)
       {
+	int rc2 = wrc2.get(computations);
+
 	auto& RC2 = computations[rc2];
 	int R2 = RC2.source;
 
@@ -815,9 +790,11 @@ void reg_heap::reroot_mappings_at(int t)
 std::vector<int> reg_heap::used_regs_for_reg(int t, int r) const
 {
   vector<int> U;
-  if (has_computation(t,r))
-    for(const auto& I: computation_for_reg(t,r).used_inputs)
-      U.push_back(computations[I.first].source);
+  if (not has_computation(t,r)) return U;
+
+  for(int rc: computation_for_reg(t,r).used_inputs)
+    U.push_back(computations[rc].source);
+
   return U;
 }
 
@@ -1099,6 +1076,15 @@ int reg_heap::uniquify_reg(int t, int r)
   return r;
 }
 
+bool reg_heap::computation_is_used_by(int t, int rc1, int rc2) const
+{
+  for(const auto& wr: computations[rc2].used_by)
+    if (wr.get(computations) == rc1)
+      return true;
+
+  return false;
+}
+
 void reg_heap::check_used_reg(int index) const
 {
   for(int t=0;t<get_n_tokens();t++)
@@ -1111,13 +1097,9 @@ void reg_heap::check_used_reg(int index) const
 
     const computation& RC = computation_for_reg(t,index);
 
-    for(const auto& i: RC.used_inputs)
-    {
-      int rc = i.first;
-
-      // Check that used regs are have back-references to R
-      assert( computations[rc].used_by.count(index_c) );
-    }
+    // Check that used regs are have back-references to R
+    for(int rc: RC.used_inputs)
+      assert( computation_is_used_by(t, index_c, rc) );
   }
 }
 

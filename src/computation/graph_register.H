@@ -20,22 +20,17 @@ struct computation
 {
   int source = -1;
 
-  typedef CacheList<int>::iterator back_edge_deleter;
-
   /// Does C reduce to another reg that we need to evaluate to get the true result?
   int call = -1;
 
-  /* 2. The computations we used. */
   /// Which reg's were used to reduce this expression?
-  std::vector< std::pair<int,back_edge_deleter> > used_inputs;
-
-  /* 3. The computations that use or reference us. */
+  std::vector< int > used_inputs;
 
   /// Which pairs (reg,slot) USED the reduction result of C (via an operation)?
-  CacheList< int > used_by;
+  std::vector< pool<computation>::weak_ref > used_by;
 
   /// Which reduction results made use of the value of this expression (via call)
-  std::vector<pool<computation>::weak_ref> called_by;
+  std::vector< pool<computation>::weak_ref > called_by;
 
   int temp = -1;
 
@@ -88,7 +83,7 @@ class reg_heap: public Object, public checked_pool<reg>
 {
   typedef checked_pool<reg> base_pool_t;
 
-  checked_pool_callback<computation> computations;
+  mutable checked_pool_callback<computation> computations;
 
   mutable int n_active_scratch_lists = 0;
   mutable std::vector< object_ptr<Vector<int> > > scratch_lists;
@@ -101,6 +96,7 @@ class reg_heap: public Object, public checked_pool<reg>
 
   void check_used_reg(int) const;
   void check_used_regs() const;
+  bool computation_is_used_by(int, int, int) const;
 
   int root_token = -1;
 
