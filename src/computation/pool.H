@@ -22,7 +22,7 @@ public:
     void reset() {version = 1;}
 
     weak_ref() {}
-    weak_ref(int a, int b):r(a),version(b) {}
+    weak_ref(int a, unsigned b):r(a),version(b) {}
   };
 
 protected:
@@ -149,8 +149,8 @@ protected:
 
 public:
   
-  int get_weak_ref(int r) const {assert(is_used(r) or is_marked(r)); return {r,memory[r].version};}
-  int inc_version() {version++; return not version;}
+  weak_ref get_weak_ref(int r) const {assert(is_used(r) or is_marked(r)); return {r,memory[r].version};}
+  bool inc_version() {version++; return not version;}
 
   bool is_null(int r) const {assert(is_valid_address(r)); return memory[r].state == none;}
   bool is_free(int r) const {assert(is_valid_address(r)); return memory[r].state == free;}
