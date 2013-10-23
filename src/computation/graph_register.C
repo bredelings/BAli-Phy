@@ -271,6 +271,36 @@ int reg_heap::call_for_reg(int t, int r) const
   return computation_for_reg(t,r).call;
 }
 
+void clean_weak_refs(vector<pool<computation>::weak_ref>& v, const pool<computation>& P)
+{
+  for(int i=0; i < v.size();)
+  {
+    if (not v[i].get(P))
+    {
+      auto wr = v.back();
+      v.pop_back();
+      if (i < v.size())
+	v[i] = wr;
+    }
+    else
+      i++;
+  }
+}
+
+const std::vector<pool<computation>::weak_ref>& reg_heap::reg_is_used_by(int t, int r) const
+{
+  vector<pool<computation>::weak_ref>& used_by = computations[computation_index_for_reg(t,r)].used_by;
+  clean_weak_refs(used_by, computations);
+  return used_by;
+}
+
+const std::vector<pool<computation>::weak_ref>& reg_heap::reg_is_called_by(int t, int r) const
+{
+  vector<pool<computation>::weak_ref>& called_by = computations[computation_index_for_reg(t,r)].called_by;
+  clean_weak_refs(called_by, computations);
+  return called_by;
+}
+
 bool reg_heap::has_computation(int t, int r) const
 {
   int rc = token_roots[t].virtual_mapping[r].rc;
@@ -355,7 +385,8 @@ void reg_heap::set_used_input(int t, int R1, int R2)
   computations[rc1].used_inputs.push_back(rc2);
   computations[rc2].used_by.push_back(computations.get_weak_ref(rc1));
 
-  assert(computation_is_used_by(t,rc1,rc2));
+  assert(computation_is_used_by(rc1,rc2));
+  assert(reg_is_used_by(t,R1,R2));
 }
 
 int count(const std::vector<int>& v, int I)
@@ -491,22 +522,6 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
 
     set_C(R2, std::move( result ) );
     set_call(t, R, R2);
-  }
-}
-
-void clean_weak_refs(vector<pool<computation>::weak_ref>& v, const pool<computation>& P)
-{
-  for(int i=0; i < v.size();)
-  {
-    if (not v[i].get(P))
-    {
-      auto wr = v.back();
-      v.pop_back();
-      if (i < v.size())
-	v[i] = wr;
-    }
-    else
-      i++;
   }
 }
 
@@ -1072,13 +1087,21 @@ int reg_heap::uniquify_reg(int t, int r)
   return r;
 }
 
-bool reg_heap::computation_is_used_by(int t, int rc1, int rc2) const
+bool reg_heap::computation_is_used_by(int rc1, int rc2) const
 {
   for(const auto& wr: computations[rc2].used_by)
     if (wr.get(computations) == rc1)
       return true;
 
   return false;
+}
+
+bool reg_heap::reg_is_used_by(int t, int r1, int r2) const
+{
+  int rc1 = computation_index_for_reg(t,r1);
+  int rc2 = computation_index_for_reg(t,r2);
+
+  return computation_is_used_by(rc1,rc2);
 }
 
 void reg_heap::check_used_reg(int index) const
@@ -1095,7 +1118,7 @@ void reg_heap::check_used_reg(int index) const
 
     // Check that used regs are have back-references to R
     for(int rc: RC.used_inputs)
-      assert( computation_is_used_by(t, index_c, rc) );
+      assert( computation_is_used_by(index_c, rc) );
   }
 }
 

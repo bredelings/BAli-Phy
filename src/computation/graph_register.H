@@ -96,7 +96,9 @@ class reg_heap: public Object, public checked_pool<reg>
 
   void check_used_reg(int) const;
   void check_used_regs() const;
-  bool computation_is_used_by(int, int, int) const;
+
+  bool computation_is_used_by(int, int) const;
+  bool reg_is_used_by(int, int, int) const;
 
   int root_token = -1;
 
@@ -110,6 +112,9 @@ public:
   const closure& access_computation_result_for_reg(int t, int R1) const;
   bool reg_has_call(int t, int r) const;
   int call_for_reg(int t, int r) const;
+
+  const std::vector<pool<computation>::weak_ref>& reg_is_used_by(int t, int r) const;
+  const std::vector<pool<computation>::weak_ref>& reg_is_called_by(int t, int r) const;
 
   void collect_garbage();
   void trace_and_reclaim_unreachable();
