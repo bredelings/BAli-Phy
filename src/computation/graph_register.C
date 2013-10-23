@@ -140,7 +140,6 @@ void computation::clear()
 {
   used_inputs.clear();
   call = 0;
-  call_reverse = back_edge_deleter();
   used_by.clear();
   called_by.clear();
 
@@ -159,7 +158,6 @@ computation& computation::operator=(computation&& R) noexcept
 {
   source = R.source;
   call = R.call;
-  call_reverse = std::move( R.call_reverse );
   used_inputs  = std::move( R.used_inputs );
   used_by = std::move( R.used_by );
   called_by = std::move( R.called_by );
@@ -171,7 +169,6 @@ computation& computation::operator=(computation&& R) noexcept
 computation::computation(computation&& R) noexcept
 :source(R.source),
   call ( R.call ),
-  call_reverse ( std::move( R.call_reverse) ),
   used_inputs ( std::move(R.used_inputs) ),
   used_by ( std::move( R.used_by) ),
   called_by ( std::move( R.called_by) ),
@@ -450,14 +447,11 @@ void reg_heap::set_call_unsafe(int t, int R1, int R2)
 
   int rc1 = computation_index_for_reg(t,R1);
   int rc2 = computation_index_for_reg(t,R2);
-  computation& RC1 = computations[rc1];
-  assert(not RC1.call);
-  RC1.call = rc2;
 
-  auto& called_by2 = computations[rc2].called_by;
-  RC1.call_reverse = called_by2.insert(called_by2.end(), rc1);
-  assert( *RC1.call_reverse == rc1 );
+  assert(not computations[rc1].call);
+  computations[rc1].call = rc2;
 
+  computations[rc2].called_by.push_back(computations.get_weak_ref(rc1));
   //  assert( reg_is_owned_by_all_of(R2, get_reg_owners(R1)) );
 }
 
@@ -472,28 +466,7 @@ void reg_heap::set_call(int t, int R1, int R2)
 
 void reg_heap::clear_call(int rc)
 {
-  computation& RC = computations.access_unused(rc);
-
-  int rc2 = RC.call;
-  if (not rc2) return;
-
-  // If the call points to a freed reg, then its called_by list should already be cleared.
-  if (not computations.is_free(rc2))
-  {
-    // If this reg is unused, then upstream regs are in the process of being destroyed.
-    // However, if this reg is used, then upstream regs may be live, and so should have
-    //  correct edges.
-    auto& RC2 = computations[rc2];
-    assert( not RC2.called_by.empty() );
-
-    assert( RC2.called_by.count(rc) );
-    assert( *RC.call_reverse == rc );
-
-    RC2.called_by.erase( RC.call_reverse );
-  }
-
-  RC.call = 0;
-  RC.call_reverse = computation::back_edge_deleter();
+  computations.access_unused(rc).call = 0;
 }
 
 void reg_heap::clear_call_for_reg(int t, int R)
@@ -551,6 +524,22 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
 
     set_C(R2, std::move( result ) );
     set_call(t, R, R2);
+  }
+}
+
+void clean_weak_refs(vector<pool<computation>::weak_ref>& v, const pool<computation>& P)
+{
+  for(int i=0; i < v.size();)
+  {
+    if (not v[i].get(P))
+    {
+      auto wr = v.back();
+      v.pop_back();
+      if (i < v.size())
+	v[i] = wr;
+    }
+    else
+      i++;
   }
 }
 
@@ -614,8 +603,12 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(int rc2: RC1.called_by)
+      clean_weak_refs(RC1.called_by, computations);
+
+      for(const auto& wrc2: RC1.called_by)
       {
+	int rc2 = wrc2.get(computations);
+
 	computation& RC2 = computations[rc2];
 	int R2 = RC2.source;
 
@@ -660,8 +653,12 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       }
 
       // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(int rc2: RC1.called_by)
+      clean_weak_refs(RC1.called_by, computations);
+
+      for(const auto& wrc2: RC1.called_by)
       {
+	int rc2 = wrc2.get(computations);
+
 	computation& RC2 = computations[rc2];
 	int R2 = RC2.source;
 
@@ -1001,6 +998,9 @@ bool reg_heap::reg_is_changeable(int r) const
 
 void reg_heap::collect_garbage()
 {
+  // Make sure weak references to anything freed here are invalidated.
+  computations.inc_version();
+
 #ifdef DEBUG_MACHINE
   std::cerr<<"***********Garbage Collection******************"<<std::endl;
   check_used_regs();
@@ -1071,8 +1071,6 @@ void reg_heap::check_results_in_context(int t) const
 
     if (QC.call)
     {
-      assert( *QC.call_reverse == qc );
-
       if (int r = result_for_reg(t,Q))
       {
 	int C = QC.source;
@@ -1120,10 +1118,6 @@ void reg_heap::check_used_reg(int index) const
       // Check that used regs are have back-references to R
       assert( computations[rc].used_by.count(index_c) );
     }
-
-    // Check that the pointer to the reverse edge iterator is intact.
-    if (RC.call)
-      assert( *RC.call_reverse == index_c );
   }
 }
 
@@ -1689,12 +1683,14 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       if (has_computation(t,R))
       {
 	assert(computation_for_reg(t,R).used_by.empty());
-	for(int rc2: computation_for_reg(t,R).called_by)
+	clean_weak_refs(computation_for_reg(t,R).called_by, computations);
+	for(const auto& wrc2: computation_for_reg(t,R).called_by)
 	{
+	  int rc2 = wrc2.get(computations);
+
 	  int r2 = computations[rc2].source;
 	  assert(has_computation(t,r2));
 	  computations[rc2].call = 0;
-	  computations[rc2].call_reverse = computation::back_edge_deleter();
 	  set_computation_result_for_reg(t,r2,R);
 	}
 	computation_for_reg(t,R).called_by.clear();

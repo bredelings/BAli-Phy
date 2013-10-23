@@ -24,7 +24,6 @@ struct computation
 
   /// Does C reduce to another reg that we need to evaluate to get the true result?
   int call = -1;
-  back_edge_deleter call_reverse;
 
   /* 2. The computations we used. */
   /// Which reg's were used to reduce this expression?
@@ -36,7 +35,7 @@ struct computation
   CacheList< int > used_by;
 
   /// Which reduction results made use of the value of this expression (via call)
-  CacheList<int> called_by;
+  std::vector<pool<computation>::weak_ref> called_by;
 
   int temp = -1;
 
