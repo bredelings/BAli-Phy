@@ -21,7 +21,7 @@ public:
     int get(const pool<T>& p) const {return (p.lookup(r).version == version)?r:0;}
     void reset() {version = 1;}
 
-    weak_ref() {}
+    weak_ref() = default;
     weak_ref(int a, unsigned b):r(a),version(b) {}
   };
 
