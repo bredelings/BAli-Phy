@@ -288,13 +288,13 @@ vector<pool<computation>::weak_ref>& clean_weak_refs(vector<pool<computation>::w
   return v;
 }
 
-const std::vector<pool<computation>::weak_ref>& reg_heap::reg_is_used_by(int t, int r) const
+const std::vector<pool<computation>::weak_ref>& reg_heap::reg_used_by(int t, int r) const
 {
   vector<pool<computation>::weak_ref>& used_by = computations[computation_index_for_reg(t,r)].used_by;
   return clean_weak_refs(used_by, computations);
 }
 
-const std::vector<pool<computation>::weak_ref>& reg_heap::reg_is_called_by(int t, int r) const
+const std::vector<pool<computation>::weak_ref>& reg_heap::reg_called_by(int t, int r) const
 {
   vector<pool<computation>::weak_ref>& called_by = computations[computation_index_for_reg(t,r)].called_by;
   return clean_weak_refs(called_by, computations);
@@ -682,16 +682,21 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     // Clear the mark
     computation_for_reg(token,R).temp = -1;
 
-    // Since the computation may be different, we don't know if the value has changed.
-    clear_computation_result(token, R);
-    // We don't know what the reduction result is, so invalidate the call.
-    clear_call_for_reg(token, R);
-    // Remember to clear the used inputs.
-    clear_used_inputs_for_reg(token, R);
+    auto called_by = computation_for_reg(token,R).called_by;
+
+    remove_computation(token,R);
+
+    if (called_by.size())
+    {
+      add_computation(token,R);
+      computation_for_reg(token,R).called_by = called_by;
+    }
   }
 
   // Finally set the new value.
 
+  if (not has_computation(token,P))
+    add_computation(token,P);
   set_reduction_result(token, P, std::move(C) );
 
   release_scratch_list();
@@ -1676,7 +1681,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       {
 	assert(computation_for_reg(t,R).used_by.empty());
 
-	for(const auto& wrc2: reg_is_called_by(t,R))
+	for(const auto& wrc2: reg_called_by(t,R))
 	{
 	  int rc2 = wrc2.get(computations);
 
