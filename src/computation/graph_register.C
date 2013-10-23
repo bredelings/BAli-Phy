@@ -268,7 +268,7 @@ bool reg_heap::reg_has_call(int t, int r) const
 
 int reg_heap::call_for_reg(int t, int r) const
 {
-  return computations[computation_for_reg(t,r).call].source;
+  return computation_for_reg(t,r).call;
 }
 
 bool reg_heap::has_computation(int t, int r) const
@@ -415,8 +415,8 @@ void reg_heap::set_call_unsafe(int t, int R1, int R2)
   int rc1 = computation_index_for_reg(t,R1);
   int rc2 = computation_index_for_reg(t,R2);
 
-  assert(not computations[rc1].call);
-  computations[rc1].call = rc2;
+  assert(not reg_has_call(t,R1));
+  computations[rc1].call = R2;
 
   computations[rc2].called_by.push_back(computations.get_weak_ref(rc1));
   //  assert( reg_is_owned_by_all_of(R2, get_reg_owners(R1)) );
@@ -936,7 +936,7 @@ void reg_heap::trace_and_reclaim_unreachable()
       
       // Count also the computation we call
       if (RC.call) 
-	next_scan2.push_back(RC.call);
+	scan1.push_back(RC.call);
     }
     std::swap(scan2,next_scan2);
     next_scan2.clear();
@@ -1039,16 +1039,15 @@ int reg_heap::get_unused_token()
 
 void reg_heap::check_results_in_context(int t) const
 {
-  vector<int> WHNF_results;
   vector<int> regs = find_all_regs_in_context(t);
   for(int Q: regs)
   {
     int qc = computation_index_for_reg(t,Q);
     const auto& QC = computations[qc];
 
-    if (QC.call)
+    if (reg_has_call(t,Q))
     {
-      if (int r = result_for_reg(t,Q))
+      if (int r = computation_result_for_reg(t,Q))
       {
 	int C = QC.source;
 	assert(r == result_for_reg(t, C));
@@ -1056,10 +1055,7 @@ void reg_heap::check_results_in_context(int t) const
     }
       
     if (result_for_reg(t,Q) == Q)
-    {
-      assert(not QC.call);
-      WHNF_results.push_back(Q);
-    }
+      assert(not reg_has_call(t,Q));
   }
 }
 
