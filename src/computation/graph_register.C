@@ -1422,12 +1422,7 @@ reg_heap::reg_heap()
 { 
   //  computations.collect_garbage = [this](){collect_garbage();};
   computations.collect_garbage = [](){};
-  computations.clear_references = [this](int rc)
-    {
-      clear_used_inputs(rc);
-      clear_call(rc);
-      computations.access_unused(rc).source = -1;
-    };
+  computations.clear_references = [](int){};
 }
 
 #include "computation.H"
