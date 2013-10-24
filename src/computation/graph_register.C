@@ -138,6 +138,7 @@ expression_ref graph_normalize(const expression_ref& E)
 
 void computation::clear()
 {
+  source = -1;
   used_inputs.clear();
   call = 0;
   used_by.clear();
