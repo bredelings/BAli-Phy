@@ -1688,7 +1688,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
 	  int r2 = computations[rc2].source;
 	  assert(has_computation(t,r2));
-	  computations[rc2].call = 0;
+	  clear_call(rc2);
 	  set_computation_result_for_reg(t,r2,R);
 	}
 	computation_for_reg(t,R).called_by.clear();
