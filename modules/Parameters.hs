@@ -4,9 +4,8 @@ import Range;
 
 builtin builtin_set_modifiable_value 3 "set_modifiable_value";
 builtin is_changeable 2 "is_changeable";
-builtin is_modifiable 2 "is_modifiable";
-builtin get_modifiable_index 2 "get_modifiable_index";
-builtin get_modifiable_for_index 2 "get_modifiable_for_index";
+builtin is_modifiable 1 "is_modifiable";
+builtin get_modifiable_index 1 "get_modifiable_index";
 builtin builtin_new_modifiable 1 "new_modifiable";
 builtin evaluate 2 "evaluate";
 builtin get_modifiable_value 2 "get_modifiable_value";
@@ -33,7 +32,7 @@ set_parameter_value' token (p:ps) (v:vs) = do { set_parameter_value token p v;
                                               };
 set_parameter_value' token [] [] = return ();  
 
-set_parameter_value token p v = if (is_modifiable token p) 
+set_parameter_value token p v = if (is_modifiable p) 
                                 then set_modifiable_value token p v 
                                 else set_parameter_value' token p v;
 
@@ -42,7 +41,7 @@ set_parameter_value_' token (p:ps) (v:vs) = do { set_parameter_value_ token p (e
                                               };
 set_parameter_value_' token [] [] = return ();  
 
-set_parameter_value_ token p v = if (is_modifiable token p) 
+set_parameter_value_ token p v = if (is_modifiable p) 
                                  then set_modifiable_value token p v
                                  else set_parameter_value_' token p v;
 
@@ -52,30 +51,30 @@ subscript name n = name++['!']++show n;
 
 subscripts name xs = map (subscript name) xs;
 
-find_loggables' token ([],name) = [];
-find_loggables' token (p:ps,names) = concat $ map (find_loggables token) (zip (p:ps) (subscripts names [0..]));
+find_loggables' ([],name) = [];
+find_loggables' (p:ps,names) = concat $ map find_loggables (zip (p:ps) (subscripts names [0..]));
 
-find_loggables token (p,name) = if (is_modifiable token p)
+find_loggables (p,name) = if (is_modifiable p)
                                 then [(p,name)]
-                                else find_loggables' token (p,name);
+                                else find_loggables' (p,name);
   
-find_loggables_c token p name = list_to_vector [c_pair (get_modifiable_index token m, listToString name) | (m,name) <-find_loggables token (p,name)  ];
+find_loggables_c p name = list_to_vector [c_pair (get_modifiable_index m, listToString name) | (m,name) <-find_loggables (p,name)  ];
 
 findAtomic ps (ListRange rs) = concat $ zipWith findAtomic ps rs;
 findAtomic p r = [(p,r)];
 
-findBinary t p r = list_to_vector [get_modifiable_index t m | (m,TrueFalseRange) <- findAtomic p r];
+findBinary p r = list_to_vector [get_modifiable_index m | (m,TrueFalseRange) <- findAtomic p r];
 
-findReal t p r = list_to_vector [c_pair (get_modifiable_index t m, getBounds (OpenInterval x y)) 
+findReal p r = list_to_vector [c_pair (get_modifiable_index m, getBounds (OpenInterval x y)) 
                               | (m,OpenInterval x y) <- findAtomic p r];
 
-findBoundedInteger t p r = list_to_vector [c_pair (get_modifiable_index t m, c_pair (x,y))
+findBoundedInteger p r = list_to_vector [c_pair (get_modifiable_index m, c_pair (x,y))
                                           | (m,IntegerInterval (Just x) (Just y)) <- findAtomic p r];
 
-findInteger t p r = list_to_vector [c_pair (get_modifiable_index t m, getIntegerBounds (IntegerInterval x y)) 
+findInteger p r = list_to_vector [c_pair (get_modifiable_index m, getIntegerBounds (IntegerInterval x y)) 
                                    | (m, IntegerInterval x y) <- findAtomic p r];
 
-findSimplex t p r = list_to_vector [c_pair (list_to_vector $ map (get_modifiable_index t) ms, c_pair (n,total)) 
+findSimplex p r = list_to_vector [c_pair (list_to_vector $ map get_modifiable_index ms, c_pair (n,total)) 
                                  | (ms,Simplex n total) <- findAtomic p r];
   
 trigger i = IOAction1 builtin_trigger i;

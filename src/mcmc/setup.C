@@ -189,7 +189,6 @@ void add_slice_moves(Probability_Model& P, const string& name,
 
 void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
 {
-  int token = P.get_token();
   
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
@@ -197,7 +196,7 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.evaluate_expression( (identifier("findBinary"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ref v = P.evaluate_expression( (identifier("findBinary"),rand_var,(identifier("distRange"),dist)), false);
       object_ptr<const OVector> V = convert<const OVector>(v);
 
       MCMC::MoveAll rand_var_move(rand_var->print());
@@ -217,15 +216,13 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
 /// Find parameters with distribution name Dist
 void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  int token = P.get_token();
-  
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
     {
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ref v = P.evaluate_expression( (identifier("findReal"),rand_var,(identifier("distRange"),dist)), false);
 
       object_ptr<const OVector> V = convert<const OVector>(v);
 
@@ -248,15 +245,13 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 /// Find parameters with distribution name Dist
 void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  int token = P.get_token();
-  
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
     {
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ref v = P.evaluate_expression( (identifier("findReal"),rand_var,(identifier("distRange"),dist)), false);
 
       object_ptr<const OVector> V = convert<const OVector>(v);
 
@@ -282,15 +277,13 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 /// Find parameters with distribution name Dist
 void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  int token = P.get_token();
-  
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
     {
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ref v = P.evaluate_expression( (identifier("findSimplex"),rand_var,(identifier("distRange"),dist)), false);
 
       object_ptr<const OVector> V = convert<const OVector>(v);
 
@@ -323,15 +316,13 @@ void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 /// Find parameters with distribution name Dist
 void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  int token = P.get_token();
-
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
     {
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.evaluate_expression( (identifier("findBoundedInteger"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ref v = P.evaluate_expression( (identifier("findBoundedInteger"),rand_var,(identifier("distRange"),dist)), false);
 
       object_ptr<const OVector> V = convert<const OVector>(v);
 
@@ -356,15 +347,13 @@ void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 
 void add_integer_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  int token = P.get_token();
-
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
     {
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.evaluate_expression( (identifier("findInteger"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ref v = P.evaluate_expression( (identifier("findInteger"),rand_var,(identifier("distRange"),dist)), false);
 
       object_ptr<const OVector> V = convert<const OVector>(v);
 
@@ -387,15 +376,13 @@ void add_integer_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 /// Find parameters with distribution name Dist
 void add_dirichlet_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  int token = P.get_token();
-  
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
     {
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)), false);
+      object_ref v = P.evaluate_expression( (identifier("findSimplex"),rand_var,(identifier("distRange"),dist)), false);
 
       object_ptr<const OVector> V = convert<const OVector>(v);
 
