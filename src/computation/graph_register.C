@@ -1038,28 +1038,6 @@ int reg_heap::get_unused_token()
   return t;
 }
 
-void reg_heap::check_results_in_context(int t) const
-{
-  vector<int> regs = find_all_regs_in_context(t);
-  for(int Q: regs)
-  {
-    int qc = computation_index_for_reg(t,Q);
-    const auto& QC = computations[qc];
-
-    if (reg_has_call(t,Q))
-    {
-      if (int r = computation_result_for_reg(t,Q))
-      {
-	int C = QC.source;
-	assert(r == result_for_reg(t, C));
-      }
-    }
-      
-    if (result_for_reg(t,Q) == Q)
-      assert(not reg_has_call(t,Q));
-  }
-}
-
 int reg_heap::uniquify_reg(int t, int r)
 {
   return r;

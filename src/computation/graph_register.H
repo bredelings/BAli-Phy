@@ -252,8 +252,6 @@ public:
 
   std::vector<int> find_all_regs_in_context_no_check(int) const;
 
-  void check_results_in_context(int) const;
-
   /*----- Virtual memory ------*/
   int add_computation(int t, int r);
 
