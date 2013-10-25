@@ -412,13 +412,12 @@ void reg_heap::clear_used_inputs_for_reg(int t, int R)
     clear_used_inputs(rc);
 }
 
-// set_call (or set_call_unsafe) is only called when
-// 1. uniquify_reg( ): A  call is being remapped
-// 2. incremental_evaluate( ):
+// set_call is only called when
+// 1. incremental_evaluate( ):
 // - an existing call is being remapping to the end of an unchangeable indirection chain.
 // - access(R).C is a reg_var
 // * a CHANGEABLE operation was performed (see set_reduction_result)
-// 3. set_reduction_result( )
+// 2. set_reduction_result( )
 // - a parameter value is being set.
 // - an operation was just performed AND
 
