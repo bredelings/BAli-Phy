@@ -1333,34 +1333,18 @@ int reg_heap::copy_token(int t)
   // set parent relationship
   token_roots[t2].parent = t;
   token_roots[t2].children.clear();
-  token_roots[t2].modified.clear();
 
   token_roots[t].children.push_back(t2);
 
-  // For each reg that mapped in t1, map it separately in t2.
+  // use all the same computations and result.
+  token_roots[t2].modified = token_roots[t].modified;
+  token_roots[t2].virtual_mapping = token_roots[t].virtual_mapping;
+
   for(int r: token_roots[t].modified)
   {
-    if (is_modifiable(access(r).C.exp))
-    {
-      if (reg_has_call(t,r))
-      {
-	add_computation(t2,r);
-	int r2 = call_for_reg(t,r);
-	set_call(t2,r,r2);
-      }
-
-      int result = computation_result_for_reg(t,r);
-      if (computation_result_for_reg(t,r))
-      {
-	if (not has_computation(t2,r)) add_computation(t2,r);
-	set_computation_result_for_reg(t2,r,result);
-      }
-    }
+    assert(has_computation(t,r));
+    assert(has_computation(t2,r));
   }
-
-  for(int r: token_roots[t].modified)
-    if (access(r).re_evaluate)
-      incremental_evaluate(r,t2,true);
 
   check_used_regs();
   return t2;
