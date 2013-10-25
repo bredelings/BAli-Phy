@@ -326,8 +326,10 @@ int reg_heap::result_for_reg(int t, int r) const
 int reg_heap::computation_result_for_reg(int t, int r) const 
 {
   int result = token_roots[t].virtual_mapping[r].result;
-  if (result)
-    assert(has_computation(t,r));
+
+  // If we have a result, then we must also have a computation
+  assert(not result or has_computation(t,r));
+
   return result;
 }
 
