@@ -1038,16 +1038,6 @@ int reg_heap::get_unused_token()
   return t;
 }
 
-/* We only need to split shared regs that can reg another split reg through
-   either forward E- or call- edges.  Since ownership can only decrease
-   going backwards, we can stop looking for regs to split as soon as we find
-   an unshared reg, since its E- or call- parents cannot be shared.
-
-   We do not need to separately consider use-edges here, since the rules for
-   direct use are also transitive reachability along forward E- or call- edges,
-   just as for indirect use (i.e. dependence).
- */
-
 void reg_heap::check_results_in_context(int t) const
 {
   vector<int> regs = find_all_regs_in_context(t);
