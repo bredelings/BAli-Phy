@@ -331,7 +331,7 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
       double length = convertTo<double>(words[1]);
       Partition P(line);
 
-      assert(not isnan(length));
+      assert(not std::isnan(length));
 
       nodes.push_back(P);
       node_lengths.push_back(length);
@@ -1838,7 +1838,7 @@ double graph_energy_function::node_node_attraction(const graph_layout& GL, vecto
   DEL[n2].x += (x2-x1)*temp;
   DEL[n2].y += (y2-y1)*temp;
 
-  assert(not isnan(E));
+  assert(not std::isnan(E));
   return E;
 }
 
@@ -1977,13 +1977,13 @@ double get_angle_derivative(double x11, double x12,
   double D = H/L;
 
   //  cerr<<"D = "<<D<<"  L = "<<L<<"H = "<<H<<"  A = "<<A<<" B = "<<B<<endl;
-  assert(not isnan(x21) and std::isfinite(x21));
-  assert(not isnan(x22) and std::isfinite(x22));
-  assert(not isnan(D) and std::isfinite(D));
+  assert(not std::isnan(x21) and std::isfinite(x21));
+  assert(not std::isnan(x22) and std::isfinite(x22));
+  assert(not std::isnan(D) and std::isfinite(D));
   D = std::max(D,-1.0);
   D = std::min(D,1.0);
   double a = acos(D);
-  assert(not isnan(a) and std::isfinite(a));
+  assert(not std::isnan(a) and std::isfinite(a));
 
   double dA_dx11 = 2*(x11 - x31), dA_dx12 = 2*(x12 - x32);
   double dA_dx21 = 0            , dA_dx22 = 0;
@@ -2076,7 +2076,7 @@ double angle_energy(const graph_layout& GL,vector<point_position>& D,
 				  da_dx21,da_dx22,
 				  da_dx31,da_dx32);
 
-  //  cerr<<"a = "<<a<<"   isnan(a) = "<<isnan(a)<<"   isnormal(a) = "<<isnormal(a)<<endl;
+  //  cerr<<"a = "<<a<<"   std::isnan(a) = "<<std::isnan(a)<<"   isnormal(a) = "<<isnormal(a)<<endl;
   assert(std::isnormal(a));
   if (not std::isnormal(a))
     std::abort();
@@ -3440,7 +3440,7 @@ int main(int argc,char* argv[])
       MC = collapse_MC_tree(MC);
 
     for(int i=0;i<MC.n_nodes();i++)
-      assert(not isnan(MC.node_length(i)));
+      assert(not std::isnan(MC.node_length(i)));
 
 
     if (args.count("collapse"))

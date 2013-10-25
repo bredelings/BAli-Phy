@@ -28,7 +28,7 @@ using std::vector;
 using std::cerr;
 using std::endl;
 using std::ostream;
-using std::isnan;
+
 
 namespace optimize {
 
@@ -291,7 +291,7 @@ namespace optimize {
       cerr<<"  retry #"<<i<<"  value: "<<cvalue<<" -> "<<value2;
 #endif
 
-      if (value2 > cvalue and not isnan(value2)) {
+      if (value2 > cvalue and not std::isnan(value2)) {
 #ifndef NDEBUG
 	cerr<<" [ACCEPTED]\n";
 #endif

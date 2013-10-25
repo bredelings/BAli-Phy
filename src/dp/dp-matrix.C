@@ -236,7 +236,7 @@ void DPmatrix::compute_Pr_sum_all_paths()
     total += (*this)(I,J,state1)*GQ(state1,endstate());
 
   Pr_total = pow(efloat_t(2.0),scale(I,J)) * total;
-  assert(not isnan(log(Pr_total)) and isfinite(log(Pr_total)));
+  assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 }
 
 void DPmatrix::forward_square() 
@@ -735,7 +735,7 @@ void DPmatrixConstrained::compute_Pr_sum_all_paths()
   }
 
   Pr_total = pow(efloat_t(2.0),scale(I,J)) * total;
-  assert(not isnan(log(Pr_total)) and isfinite(log(Pr_total)));
+  assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 }
 
 efloat_t DPmatrixConstrained::path_P(const vector<int>& path) const 
