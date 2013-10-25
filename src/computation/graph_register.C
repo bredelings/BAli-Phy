@@ -429,7 +429,7 @@ void reg_heap::clear_used_inputs_for_reg(int t, int R)
 //    *unchangeably* redirects to <b>, then we can call directly to <b>, although we
 //    have to invalidate this when the reduction result is invalidated.
 
-void reg_heap::set_call_unsafe(int t, int R1, int R2)
+void reg_heap::set_call(int t, int R1, int R2)
 {
   assert(reg_is_changeable(R1));
   // R2 might be of UNKNOWN changeableness
@@ -440,27 +440,24 @@ void reg_heap::set_call_unsafe(int t, int R1, int R2)
   // Check that R2 is legal
   assert(is_used(R2));
 
-  // Check that we aren't overriding an existing *call*
-  if (not has_computation(t,R2))
-    add_computation(t,R2);
-
-  int rc1 = computation_index_for_reg(t,R1);
-  int rc2 = computation_index_for_reg(t,R2);
-
+  // Don't override an *existing* call
   assert(not reg_has_call(t,R1));
-  computations[rc1].call = R2;
-
-  computations[rc2].called_by.push_back(computations.get_weak_ref(rc1));
-  //  assert( reg_is_owned_by_all_of(R2, get_reg_owners(R1)) );
-}
-
-
-void reg_heap::set_call(int t, int R1, int R2)
-{
-  set_call_unsafe(t, R1, R2);
 
   // Check that we aren't overriding an existing *result*
   assert(not result_for_reg(t,R1));
+
+  // Set the call
+  int rc1 = computation_index_for_reg(t,R1);
+  computations[rc1].call = R2;
+
+  // If R2 is WHNF then we are done
+  if (access(R2).type == reg::type_t::constant) return;
+
+  // If R2 doesn't have a computation, add one to hold the called-by edge.
+  if (not has_computation(t,R2)) add_computation(t,R2);
+
+  // Add a called-by edge to R2.
+  computation_for_reg(t,R2).called_by.push_back(computations.get_weak_ref(rc1));
 }
 
 void reg_heap::clear_call(int rc)
@@ -669,6 +666,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   {
     assert(has_computation(token,R));
 
+    assert(R == P or reg_has_call(token,R));
+
     // Clear the mark
     computation_for_reg(token,R).temp = -1;
 
@@ -683,6 +682,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     // Clear the mark
     computation_for_reg(token,R).temp = -1;
+
+    assert(R == P or not is_modifiable(access(R).C.exp));
 
     auto called_by = computation_for_reg(token,R).called_by;
 
@@ -925,10 +926,6 @@ void reg_heap::trace_and_reclaim_unreachable()
 
 	int rc = computation_index_for_reg(t,r);
 	scan2.push_back(rc);
-
-	int result = computation_result_for_reg(t,r);
-	if (result)
-	  next_scan1.push_back(result);
       }
     }
     std::swap(scan1,next_scan1);
@@ -1078,6 +1075,15 @@ void reg_heap::check_used_reg(int index) const
 
     if (not has_computation(t, index)) continue;
 
+    int call = call_for_reg(t,index);
+    int result = computation_result_for_reg(t,index);
+
+    if (call and result == call)
+      assert(access(call).type == reg::type_t::constant);
+
+    if (call and result and access(call).type == reg::type_t::constant)
+      assert(result == call);
+
     int index_c = computation_index_for_reg(t,index);
 
     const computation& RC = computation_for_reg(t,index);
@@ -1176,17 +1182,6 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& scan, vecto
       {
 	set_mark(called_reg);
 	unique.push_back(called_reg);
-      }
-    }
-
-    // Count the reference from the result as well
-    int result = computation_result_for_reg(t,r);
-    if (result)
-    {
-      if (not is_marked(result))
-      {
-	set_mark(result);
-	unique.push_back(result);
       }
     }
   }
@@ -1593,9 +1588,6 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	// Evaluate S, looking through unchangeable redirections
 	int call = incremental_evaluate(call_for_reg(t,R), t, evaluate_changeable);
 
-	// We might have called a WHNF reg, which would set our result for us.
-	if (computation_result_for_reg(t,R)) break;
-	
 	// If computation_for_reg(t,R).call can be evaluated to refer to S w/o moving through any changable operations, 
 	// then it should be safe to change computation_for_reg(t,R).call to refer to S, even if R is changeable.
 	if (call != call_for_reg(t,R))
@@ -1643,21 +1635,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     {
       access(R).type = reg::type_t::constant;
       if (has_computation(t,R))
-      {
-	assert(computation_for_reg(t,R).used_by.empty());
-
-	for(const auto& wrc2: reg_called_by(t,R))
-	{
-	  int rc2 = wrc2.get(computations);
-
-	  int r2 = computations[rc2].source;
-	  assert(has_computation(t,r2));
-	  clear_call(rc2);
-	  set_computation_result_for_reg(t,r2,R);
-	}
-	computation_for_reg(t,R).called_by.clear();
 	remove_computation(t,R);
-      }
     }
 
 #ifndef NDEBUG
@@ -1768,13 +1746,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	  }
 	  int r3 = incremental_evaluate(r2, t, evaluate_changeable);
 
-	  if (access(r3).type == reg::type_t::constant)
-	    set_computation_result_for_reg(t, R, r3);
-	  else
-	  {
-	    set_call(t, R, r3);
-	    set_computation_result_for_reg(t, R, computation_result_for_reg(t,r3));
-	  }
+	  set_call(t, R, r3);
+	  set_computation_result_for_reg(t, R, result_for_reg(t,r3));
 
 	  if (not result_is_index_var)
 	    pop_temp_head();
@@ -2230,14 +2203,6 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     if (C.reg_has_call(t,R))
     {
       string name2 = "n" + convertToString(C.call_for_reg(t,R));
-      o<<name<<":e -> "<<name2<<":w ";
-      o<<"[";
-      o<<"color=\"#007700\"";
-      o<<"];\n";
-    }
-    else if (C.computation_result_for_reg(t,R))
-    {
-      string name2 = "n" + convertToString(C.computation_result_for_reg(t,R));
       o<<name<<":e -> "<<name2<<":w ";
       o<<"[";
       o<<"color=\"#007700\"";

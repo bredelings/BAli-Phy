@@ -124,7 +124,6 @@ public:
   void clear_used_inputs_for_reg(int t, int R);
   void clear_used_inputs(int R);
   void set_call(int t, int R1, int R2);
-  void set_call_unsafe(int t, int R1, int R2);
   void clear_call(int rc);
   void clear_call_for_reg(int t, int R);
   void clear_C(int R);
