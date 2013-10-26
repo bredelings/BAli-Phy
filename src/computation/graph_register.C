@@ -627,6 +627,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 	if (computation_index_for_reg(token,R2) != rc2) continue;
 	if (RC2.temp != -1) continue;
 
+	// If the reg calling us has no result, then we don't need to clear its result
+	if (not computation_result_for_reg(token,R2)) continue;
+
 	RC2.temp = mark_result;
 	assert(computation_index_for_reg(token,R2) == rc2);
 	result_may_be_changed.push_back(R2);
@@ -678,6 +681,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
 	if (RC2.temp != -1) continue;
 
+	// If the reg calling us has no result, then we don't need to clear its result
+	if (not computation_result_for_reg(token,R2)) continue;
+
 	RC2.temp = mark_result;
 	assert(computation_index_for_reg(token,R2) == rc2);
 	result_may_be_changed.push_back(R2);
@@ -697,6 +703,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   for(int R: result_may_be_changed)
   {
     assert(has_computation(token,R));
+
+    assert(R == P or computation_result_for_reg(token,R));
 
     assert(R == P or reg_has_call(token,R));
 
