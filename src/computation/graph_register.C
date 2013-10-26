@@ -608,7 +608,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 	auto& RC2 = computations[rc2];
 	int R2 = RC2.source;
 
-	if (not has_computation(token,R2) or computation_index_for_reg(token,R2) != rc2) continue;
+	if (computation_index_for_reg(token,R2) != rc2) continue;
 	if (RC2.temp == mark_call_result) continue;
 
 	RC2.temp = mark_call_result;
@@ -624,7 +624,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 	computation& RC2 = computations[rc2];
 	int R2 = RC2.source;
 
-	if (not has_computation(token,R2) or computation_index_for_reg(token,R2) != rc2) continue;
+	if (computation_index_for_reg(token,R2) != rc2) continue;
 	if (RC2.temp != -1) continue;
 
 	RC2.temp = mark_result;
@@ -657,7 +657,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 	auto& RC2 = computations[rc2];
 	int R2 = RC2.source;
 
-	if (not has_computation(token,R2) or computation_index_for_reg(token,R2) != rc2) continue;
+	if (computation_index_for_reg(token,R2) != rc2) continue;
 
 	if (RC2.temp == mark_call_result) continue;
 
@@ -674,7 +674,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 	computation& RC2 = computations[rc2];
 	int R2 = RC2.source;
 
-	if (not has_computation(token,R2) or computation_index_for_reg(token,R2) != rc2) continue;
+	if (computation_index_for_reg(token,R2) != rc2) continue;
 
 	if (RC2.temp != -1) continue;
 
