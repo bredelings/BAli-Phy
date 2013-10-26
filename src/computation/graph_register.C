@@ -871,11 +871,11 @@ void reg_heap::reclaim_used(int r)
   remove_from_used_list(r);
 
   for(int t=0;t<token_roots.size();t++)
-    if (has_computation(t,r))
+    if (token_is_used(t) and has_local_computation(t,r))
       remove_computation(t, r);
 
   for(int t=0;t<token_roots.size();t++)
-    assert(not has_computation(t,r));
+    assert(not has_local_computation(t,r));
 
   clear_C(r);
 
@@ -1079,8 +1079,6 @@ int reg_heap::get_unused_token()
   assert(not token_roots[t].referenced);
 
   token_roots[t].referenced = true;
-
-  check_used_regs();
 
   return t;
 }
