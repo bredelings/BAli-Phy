@@ -303,14 +303,40 @@ const std::vector<pool<computation>::weak_ref>& reg_heap::reg_called_by(int t, i
 
 bool reg_heap::has_computation(int t, int r) const
 {
-  int rc = token_roots[t].virtual_mapping[r].rc;
-  return rc;
+  return computation_index_for_reg(t,r);
+}
+
+bool reg_heap::has_local_computation(int t, int r) const
+{
+  return local_computation_index_for_reg(t,r);
+}
+
+int reg_heap::find_computation_for_reg(int t, int r) const
+{
+  int t0 = t;
+  int rc = 0;
+  while(true)
+  {
+    assert(token_is_used(t));
+    rc = token_roots[t].virtual_mapping[r].rc;
+    if (rc or t == root_token or access_unused(r).type == reg::type_t::constant) break;
+    t = parent_token(t);
+    assert(t != -1);
+  }
+
+  assert(not rc or t0 == t);
+
+  return t;
 }
 
 int reg_heap::computation_index_for_reg(int t, int r) const 
 {
+  return local_computation_index_for_reg(t,r);
+}
+
+int reg_heap::local_computation_index_for_reg(int t, int r) const 
+{
   int rc = token_roots[t].virtual_mapping[r].rc;
-  assert(rc > 0);
   return rc;
 }
 
@@ -325,16 +351,22 @@ int reg_heap::result_for_reg(int t, int r) const
 
 int reg_heap::computation_result_for_reg(int t, int r) const 
 {
+  return local_computation_result_for_reg(t,r);
+}
+
+int reg_heap::local_computation_result_for_reg(int t, int r) const 
+{
   int result = token_roots[t].virtual_mapping[r].result;
 
   // If we have a result, then we must also have a computation
-  assert(not result or has_computation(t,r));
+  assert(not result or has_local_computation(t,r));
 
   return result;
 }
 
 void reg_heap::set_computation_result_for_reg(int t, int r1, int r2)
 {
+  assert(has_local_computation(t,r1));
   token_roots[t].virtual_mapping[r1].result = r2;
 }
 
@@ -721,6 +753,19 @@ int reg_heap::add_computation(int t, int r)
   vm_add(token_roots[t].modified, token_roots[t].virtual_mapping, r, {rc,0});
 
   return rc;
+}
+
+int reg_heap::copy_computation(int t1, int t2, int r)
+{
+  assert(not has_local_computation(t1,r));
+
+  auto A = token_roots[t1].virtual_mapping[r];
+
+  assert(A.rc);
+
+  vm_add(token_roots[t2].modified, token_roots[t2].virtual_mapping, r, {A.rc, A.result});
+
+  return A.rc;
 }
 
 void reg_heap::remove_computation(int t, int r)

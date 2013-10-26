@@ -254,15 +254,25 @@ public:
   /*----- Virtual memory ------*/
   int add_computation(int t, int r);
 
+  int copy_computation(int t1, int t2, int r);
+
   void remove_computation(int t, int r);
   
   bool has_computation(int t, int r) const;
 
+  bool has_local_computation(int t, int r) const;
+
+  int find_computation_for_reg(int t, int r) const;
+
   int computation_index_for_reg(int t, int r) const;
+
+  int local_computation_index_for_reg(int t, int r) const;
 
   int result_for_reg(int t, int r) const;
 
   int computation_result_for_reg(int t, int r) const;
+
+  int local_computation_result_for_reg(int t, int r) const;
 
   void set_computation_result_for_reg(int t, int r1, int r2);
 
