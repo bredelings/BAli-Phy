@@ -870,11 +870,6 @@ void reg_heap::reclaim_used(int r)
   // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
   remove_from_used_list(r);
 
-  // Upstream regs must also be dead, since if they were live, this reg would be live as well.
-  // Therefore, we do not need to update upstream regs even when we destroy incoming edges.
-
-  // However, downstream regs may be live, and therefore when we destroy outgoing edges, we
-  // need to notify downstream regs of the absence of these incoming edges.
   for(int t=0;t<token_roots.size();t++)
     if (has_computation(t,r))
       remove_computation(t, r);
