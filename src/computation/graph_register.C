@@ -406,14 +406,14 @@ void reg_heap::set_used_input(int t, int R1, int R2)
   assert(access(R1).C);
   assert(access(R2).C);
 
-  assert(has_computation(t,R1));
+  assert(has_local_computation(t,R1));
   assert(has_computation(t,R2));
 
   // An index_var's result only changes if the thing the index-var points to also changes.
   // So, we may as well forbid using an index_var as an input.
   assert(access(R2).C.exp->head->type() != index_var_type);
 
-  int rc1 = computation_index_for_reg(t,R1);
+  int rc1 = local_computation_index_for_reg(t,R1);
   int rc2 = computation_index_for_reg(t,R2);
 
   computations[rc1].used_inputs.push_back(rc2);
@@ -457,6 +457,9 @@ void reg_heap::set_call(int t, int R1, int R2)
   // Check that R2 is legal
   assert(is_used(R2));
 
+  // Only modify the call for the current context;
+  assert(has_local_computation(t,R1));
+
   // Don't override an *existing* call
   assert(not reg_has_call(t,R1));
 
@@ -464,7 +467,7 @@ void reg_heap::set_call(int t, int R1, int R2)
   assert(not result_for_reg(t,R1));
 
   // Set the call
-  int rc1 = computation_index_for_reg(t,R1);
+  int rc1 = local_computation_index_for_reg(t,R1);
   computations[rc1].call = R2;
 
   // If R2 is WHNF then we are done
