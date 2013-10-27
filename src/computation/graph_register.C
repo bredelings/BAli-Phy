@@ -1131,7 +1131,7 @@ void reg_heap::check_used_reg(int index) const
       assert( computation_is_used_by(index_c, rc) );
 
     // If we have a result, then all of our used_inputs must also have a result!
-    if (result)
+    if (call)
       for(int rc: RC.used_inputs)
       {
 	int R2 = computations[rc].source;
