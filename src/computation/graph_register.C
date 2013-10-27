@@ -1114,6 +1114,9 @@ void reg_heap::check_used_reg(int index) const
     int call = call_for_reg(t,index);
     int result = computation_result_for_reg(t,index);
 
+    if (result)
+      assert(call);
+
     if (call and result == call)
       assert(access(call).type == reg::type_t::constant);
 
@@ -1127,6 +1130,20 @@ void reg_heap::check_used_reg(int index) const
     // Check that used regs are have back-references to R
     for(int rc: RC.used_inputs)
       assert( computation_is_used_by(index_c, rc) );
+
+    // If we have a result, then all of our used_inputs must also have a result!
+    if (result)
+      for(int rc: RC.used_inputs)
+      {
+	int R2 = computations[rc].source;
+	assert(computation_index_for_reg(t,R2) == rc);
+
+	assert(computation_result_for_reg(t,R2));
+      }
+
+    // If we have a result, then 
+    if (result)
+      assert(result_for_reg(t,call));
   }
 }
 
