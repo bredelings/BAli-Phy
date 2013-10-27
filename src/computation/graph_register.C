@@ -319,7 +319,7 @@ int reg_heap::find_computation_for_reg(int t, int r) const
   {
     assert(token_is_used(t));
     rc = token_roots[t].virtual_mapping[r].rc;
-    if (rc or t == root_token or access_unused(r).type == reg::type_t::constant) break;
+    if (rc or t == root_token) break;
     t = parent_token(t);
     assert(t != -1);
   }
@@ -1652,8 +1652,9 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     else if (is_WHNF(access(R).C.exp))
     {
       access(R).type = reg::type_t::constant;
-      if (has_computation(t,R))
-	remove_computation(t,R);
+      for(int t=0;t<get_n_tokens();t++)
+	if (token_is_used(t) and has_local_computation(t,R))
+	  remove_computation(t,R);
     }
 
 #ifndef NDEBUG
