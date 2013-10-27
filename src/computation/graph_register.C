@@ -433,7 +433,6 @@ int count(const std::vector<int>& v, int I)
 }
 
 
-// Called from: set_reg_value( ), reclaim_used( ), uniquify_reg( ), incremental_evaluate( ).
 void reg_heap::clear_used_inputs(int rc1)
 {
   computations.access_unused(rc1).used_inputs.clear();
