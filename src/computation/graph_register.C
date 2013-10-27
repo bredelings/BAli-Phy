@@ -553,7 +553,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   assert(is_modifiable(access(P).C.exp));
 
   // Ensure we have a computation
-  if (not has_computation(token,P))
+  if (not has_local_computation(token,P))
     add_computation(token,P);
 
   const int mark_call_result = 1;
@@ -766,10 +766,12 @@ int reg_heap::copy_computation(int t1, int t2, int r)
 
 void reg_heap::remove_computation(int t, int r)
 {
+  assert(has_local_computation(t,r));
+
   // erase the mark that reg r is modified
   vm_erase(token_roots[t].modified, token_roots[t].virtual_mapping, r);
 
-  assert(not has_computation(t,r));
+  assert(not has_local_computation(t,r));
 }
 
 void pivot_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<int>& m2, vector<reg_heap::address>& v2)
