@@ -446,21 +446,6 @@ void reg_heap::clear_used_inputs_for_reg(int t, int R)
     clear_used_inputs(rc);
 }
 
-// set_call is only called when
-// 1. incremental_evaluate( ):
-// - an existing call is being remapping to the end of an unchangeable indirection chain.
-// - access(R).C is a reg_var
-// * a CHANGEABLE operation was performed (see set_reduction_result)
-// 2. set_reduction_result( )
-// - a parameter value is being set.
-// - an operation was just performed AND
-
-// Q: OK, so why is it OK to not create a new node with a redirection when we 
-// CHANGEABLY evaluate to a reg_var?
-// A: Well, it seems that the answer is that when we changably call <a>, and <a>
-//    *unchangeably* redirects to <b>, then we can call directly to <b>, although we
-//    have to invalidate this when the reduction result is invalidated.
-
 void reg_heap::set_call(int t, int R1, int R2)
 {
   assert(reg_is_changeable(R1));
