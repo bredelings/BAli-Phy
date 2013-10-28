@@ -1127,19 +1127,18 @@ void reg_heap::check_used_reg(int index) const
 
     const computation& RC = computation_for_reg(t,index);
 
-    // Check that used regs are have back-references to R
     for(int rc: RC.used_inputs)
+    {
+      // Used regs should have back-references to R
       assert( computation_is_used_by(index_c, rc) );
 
-    // If we have a result, then all of our used_inputs must also have a result!
-    if (call)
-      for(int rc: RC.used_inputs)
-      {
-	int R2 = computations[rc].source;
-	assert(computation_index_for_reg(t,R2) == rc);
-
-	assert(computation_result_for_reg(t,R2));
-      }
+      // Used computations should be mapped computation for the current token
+      int R2 = computations[rc].source;
+      assert(computation_index_for_reg(t,R2) == rc);
+      
+      // Used computations should have results
+      assert(computation_result_for_reg(t,R2));
+    }
 
     // If we have a result, then 
     if (result)
