@@ -94,9 +94,6 @@ class reg_heap: public Object, public checked_pool<reg>
 
   void reclaim_used(int);
 
-  void check_used_reg(int) const;
-  void check_used_regs() const;
-
   bool computation_is_used_by(int, int) const;
   bool reg_is_used_by(int, int, int) const;
 
@@ -105,6 +102,9 @@ class reg_heap: public Object, public checked_pool<reg>
 public:
 
   reg_heap* clone() const {std::abort();}
+
+  void check_used_reg(int) const;
+  void check_used_regs() const;
 
   const computation& computation_for_reg(int t, int r) const ;
         computation& computation_for_reg(int t, int r);
