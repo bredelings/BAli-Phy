@@ -408,6 +408,7 @@ void reg_heap::set_used_input(int t, int R1, int R2)
 
   assert(has_local_computation(t,R1));
   assert(has_computation(t,R2));
+  assert(computation_result_for_reg(t,R2));
 
   // An index_var's result only changes if the thing the index-var points to also changes.
   // So, we may as well forbid using an index_var as an input.
