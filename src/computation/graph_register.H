@@ -20,6 +20,9 @@ struct computation
 {
   int source = -1;
 
+  /// What final WHNF does this computation reduce to?
+  int result = -1;
+
   /// Does C reduce to another reg that we need to evaluate to get the true result?
   int call = -1;
 
@@ -145,11 +148,10 @@ public:
   struct address
   {
     int rc = 0;
-    int result = 0;
     int index = -1;
     address() {}
-    address(int i1, int i2):rc(i1),result(i2),index(-1) {}
-    address(int i1, int i2, int i3):rc(i1),result(i2),index(i3) {}
+    address(int i1):rc(i1) {}
+    //    address(int i1, int i2):rc(i1),index(i2) {}
   };
 
   // the list of expressions that we are temporarily evaluating

@@ -139,8 +139,9 @@ expression_ref graph_normalize(const expression_ref& E)
 void computation::clear()
 {
   source = -1;
-  used_inputs.clear();
+  result = 0;
   call = 0;
+  used_inputs.clear();
   used_by.clear();
   called_by.clear();
 
@@ -157,6 +158,7 @@ void computation::check_cleared()
 
 computation& computation::operator=(computation&& R) noexcept
 {
+  result = R.result;
   source = R.source;
   call = R.call;
   used_inputs  = std::move( R.used_inputs );
@@ -169,6 +171,7 @@ computation& computation::operator=(computation&& R) noexcept
 
 computation::computation(computation&& R) noexcept
 :source(R.source),
+  result (R.result), 
   call ( R.call ),
   used_inputs ( std::move(R.used_inputs) ),
   used_by ( std::move( R.used_by) ),
@@ -389,18 +392,12 @@ int reg_heap::computation_result_for_reg(int t, int r) const
 
 int reg_heap::local_computation_result_for_reg(int t, int r) const 
 {
-  int result = token_roots[t].virtual_mapping[r].result;
-
-  // If we have a result, then we must also have a computation
-  assert(not result or has_local_computation(t,r));
-
-  return result;
+  return local_computation_for_reg(t,r).result;
 }
 
 void reg_heap::set_computation_result_for_reg(int t, int r1, int r2)
 {
-  assert(has_local_computation(t,r1));
-  token_roots[t].virtual_mapping[r1].result = r2;
+  local_computation_for_reg(t,r1).result = r2;
 }
 
 void reg_heap::clear_computation_result(int t, int r)
@@ -720,7 +717,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     assert(computation_for_reg(token,R).temp == mark_call_result);
 #endif
 
-  // Clear the marks
+  std::cerr<<" result: "<<result_may_be_changed.size()<<"\n";
+
+  // Clear the marks: 1a
   for(int R: result_may_be_changed)
   {
     assert(has_computation(token,R));
@@ -729,38 +728,107 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     assert(R == P or reg_has_call(token,R));
 
-    // Clear the mark
-    computation_for_reg(token,R).temp = -1;
+    int rc1 = computation_index_for_reg(token,R);
+
+    auto& RC = computations[rc1];
+
+    // Deal with these in round 2.
+    if (RC.temp == mark_call_result) continue;
+
+    RC.temp = -1;
+
+    std::cerr<<R<<" ";
+
+    // If the reg is shared, we need to split it, and preserve the forward edges
+    if (reg_is_shared(token,R))
+    {
+      remove_computation(token,R);
+      add_computation(token,R);
+      computation_for_reg(token,R).temp = mark_result;
+
+      int rc2 = computation_index_for_reg(token,R);
+      assert(rc1 != rc2);
+
+      computations[rc2].call = computations[rc1].call;
+      assert(computations[rc2].call);
+      computations[rc2].used_inputs = computations[rc1].used_inputs;
+    }
 
     // Since the computation may be different, we don't know if the value has changed.
     clear_computation_result(token, R);
   }
 
-  // Clear the marks
+  std::cerr<<"\n call+result: "<<result_may_be_changed.size()<<"\n";
+
+  // Clear the marks: 2a
   for(int R: call_and_result_may_be_changed)
   {
     assert(has_computation(token,R));
 
+    assert(R == P or reg_has_call(token,R));
+
+    int rc1 = computation_index_for_reg(token,R);
+
+    auto& RC = computations[rc1];
+
+    assert(RC.temp == mark_call_result);
+
     // Clear the mark
-    computation_for_reg(token,R).temp = -1;
+    RC.temp = -1;
 
     assert(R == P or not is_modifiable(access(R).C.exp));
 
-    auto called_by = computation_for_reg(token,R).called_by;
+    std::cerr<<R<<" ";
 
-    remove_computation(token,R);
-
-    if (called_by.size())
+    if (reg_is_shared(token,R))
     {
+      remove_computation(token,R);
       add_computation(token,R);
-      computation_for_reg(token,R).called_by = called_by;
+    }
+    computation_for_reg(token,R).used_by.clear();
+    clear_computation_result(token,R);
+    clear_call_for_reg(token,R);
+    clear_used_inputs_for_reg(token,R);
+  }
+
+  std::cerr<<"\n result(b): "<<result_may_be_changed.size()<<"\n";
+  // Clear the marks: 1b
+  for(int R: result_may_be_changed)
+  {
+    assert(is_used(R));
+
+    int rc1 = computation_index_for_reg(token,R);
+
+    auto& RC = computations[rc1];
+
+    // If this wasn't shared, then we don't need to do this.
+    if (RC.temp != mark_result) continue;
+
+    // Clear the mark
+    RC.temp = -1;
+
+    std::cerr<<R<<" ";
+
+    int R2 = computations[rc1].call;
+    assert(R2);
+    computations[rc1].call = 0;
+    set_call(token,R,R2);
+
+    vector<int> used_inputs;
+    std::swap(computations[rc1].used_inputs, used_inputs);
+    for(int rc: used_inputs)
+    {
+      int R2 = computations[rc].source;
+      // This computation should still be active in this token.
+      assert(computation_index_for_reg(token,R2) == rc);
+      set_used_input(token,R,R2);
     }
   }
+  std::cerr<<"\n";
 
   // Finally set the new value.
 
-  if (not has_computation(token,P))
-    add_computation(token,P);
+  assert(has_computation(token,P));
   set_reduction_result(token, P, std::move(C) );
 
   release_scratch_list();
@@ -781,27 +849,27 @@ bool reg_heap::reg_is_shared(int t, int r) const
 
 int reg_heap::add_computation(int t, int r)
 {
-  assert(not token_roots[t].virtual_mapping[r].rc);
+  assert(not has_local_computation(t,r));
 
   int rc = computations.allocate();
   computations.access_unused(rc).source = r;
 
-  vm_add(token_roots[t].modified, token_roots[t].virtual_mapping, r, {rc,0});
+  vm_add(token_roots[t].modified, token_roots[t].virtual_mapping, r, rc);
 
   return rc;
 }
 
 int reg_heap::copy_computation(int t1, int t2, int r)
 {
-  assert(not has_local_computation(t1,r));
+  assert(not has_local_computation(t2,r));
 
-  auto A = token_roots[t1].virtual_mapping[r];
+  int rc = token_roots[t1].virtual_mapping[r].rc;
 
-  assert(A.rc);
+  assert(rc);
 
-  vm_add(token_roots[t2].modified, token_roots[t2].virtual_mapping, r, {A.rc, A.result});
+  vm_add(token_roots[t2].modified, token_roots[t2].virtual_mapping, r, rc);
 
-  return A.rc;
+  return rc;
 }
 
 void reg_heap::remove_computation(int t, int r)
@@ -1432,6 +1500,22 @@ int reg_heap::copy_token(int t)
 
   token_roots[t].children.push_back(t2);
 
+  for(int r: token_roots[t].modified)
+    if (reg_has_computation_result(t,r))
+      copy_computation(t,t2,r);
+    else if (is_modifiable(access(r).C.exp))
+    {
+      copy_computation(t,t2,r);
+      int call = call_for_reg(t,r);
+      if (not has_local_computation(t2,call))
+	copy_computation(t,t2,call);
+    }
+
+  for(int r: token_roots[t].modified)
+    if (access(r).re_evaluate)
+      incremental_evaluate(r,t2,true);
+
+  /*
   // use all the same computations and result.
   token_roots[t2].modified = token_roots[t].modified;
   token_roots[t2].virtual_mapping = token_roots[t].virtual_mapping;
@@ -1441,7 +1525,7 @@ int reg_heap::copy_token(int t)
     assert(has_computation(t,r));
     assert(has_computation(t2,r));
   }
-
+  */
   check_used_regs();
   return t2;
 }
