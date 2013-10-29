@@ -772,6 +772,11 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     incremental_evaluate(R,token,true);
 }
 
+bool reg_heap::reg_is_shared(int t, int r) const
+{
+  return true;
+}
+
 int reg_heap::add_computation(int t, int r)
 {
   assert(not token_roots[t].virtual_mapping[r].rc);
