@@ -770,6 +770,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   for(int R: regs_to_re_evaluate)
     incremental_evaluate(R,token,true);
+
+  check_used_regs();
 }
 
 bool reg_heap::reg_is_shared(int t, int r) const
@@ -1831,6 +1833,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	  if (not result_is_index_var)
 	    pop_temp_head();
 	}
+	check_used_reg(R);
       }
       catch (myexception& e)
       {
