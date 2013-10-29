@@ -94,6 +94,7 @@ class reg_heap: public Object, public checked_pool<reg>
 
   void reclaim_used(int);
 
+  bool computation_is_called_by(int, int) const;
   bool computation_is_used_by(int, int) const;
   bool reg_is_used_by(int, int, int) const;
 
@@ -106,10 +107,14 @@ public:
   void check_used_reg(int) const;
   void check_used_regs() const;
 
+  const computation& local_computation_for_reg(int t, int r) const ;
+        computation& local_computation_for_reg(int t, int r);
   const computation& computation_for_reg(int t, int r) const ;
         computation& computation_for_reg(int t, int r);
   const closure& access_result_for_reg(int t, int R1) const;
   const closure& access_computation_result_for_reg(int t, int R1) const;
+  bool reg_has_result(int t, int r) const;
+  bool reg_has_computation_result(int t, int r) const;
   bool reg_has_call(int t, int r) const;
   int call_for_reg(int t, int r) const;
 
@@ -283,7 +288,6 @@ public:
   void reroot_mappings_at(int t);
 
   /*----- Graph splitting -----*/
-  int uniquify_reg(int reg, int t);
   /// Update the value of a non-constant, non-computed index
   void set_reg_value(int index, closure&&, int t);
 

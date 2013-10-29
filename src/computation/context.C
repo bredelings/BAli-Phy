@@ -92,7 +92,7 @@ void context::rename_parameter(int i, const string& new_name)
 
 bool context::reg_is_fully_up_to_date(int R) const
 {
-  if (not result_for_reg(R)) return false;
+  if (not reg_has_result(R)) return false;
 
   const closure& result = access_result_for_reg(R);
 
@@ -218,7 +218,7 @@ bool context::parameter_is_set(int index) const
 
   int P = find_parameter_modifiable_reg(index);
 
-  if (not result_for_reg(P) and not reg_has_call(P)) return false;
+  if (not reg_has_result(P) and not reg_has_call(P)) return false;
 
   return true;
 }
@@ -226,7 +226,7 @@ bool context::parameter_is_set(int index) const
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 object_ref context::get_reg_value(int R) const
 {
-  if (not result_for_reg(R))
+  if (not reg_has_result(R))
   {
     // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
     if (not reg_has_call(R)) return object_ref();

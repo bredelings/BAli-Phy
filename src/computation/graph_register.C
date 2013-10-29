@@ -234,17 +234,27 @@ void vm_add(vector<int>& m, vector<reg_heap::address>& v, int r, reg_heap::addre
   assert(m[A.index] == r);
 }
 
+const computation& reg_heap::local_computation_for_reg(int t, int r) const 
+{ 
+  int rc = local_computation_index_for_reg(t,r);
+  return computations.access_unused(rc);
+}
+
+computation& reg_heap::local_computation_for_reg(int t, int r)
+{ 
+  int rc = local_computation_index_for_reg(t,r);
+  return computations.access_unused(rc);
+}
+
 const computation& reg_heap::computation_for_reg(int t, int r) const 
 { 
   int rc = computation_index_for_reg(t,r);
-  assert(rc > 0);
   return computations.access_unused(rc);
 }
 
 computation& reg_heap::computation_for_reg(int t, int r)
 { 
   int rc = computation_index_for_reg(t,r);
-  assert(rc > 0);
   return computations.access_unused(rc);
 }
 
@@ -262,9 +272,22 @@ const closure& reg_heap::access_computation_result_for_reg(int t, int R1) const
   return access(R2).C;
 }
 
+bool reg_heap::reg_has_result(int t, int r) const
+{
+  if (access(r).type == reg::type_t::constant)
+    return true;
+  else
+    return reg_has_computation_result(t,r);
+}
+
+bool reg_heap::reg_has_computation_result(int t, int r) const
+{
+  return has_computation(t,r) and computation_result_for_reg(t,r);
+}
+
 bool reg_heap::reg_has_call(int t, int r) const
 {
-  return has_computation(t,r) and computation_for_reg(t,r).call;
+  return has_computation(t,r) and call_for_reg(t,r);
 }
 
 int reg_heap::call_for_reg(int t, int r) const
@@ -474,7 +497,7 @@ void reg_heap::set_call(int t, int R1, int R2)
   assert(not reg_has_call(t,R1));
 
   // Check that we aren't overriding an existing *result*
-  assert(not result_for_reg(t,R1));
+  assert(not reg_has_result(t,R1));
 
   // Set the call
   int rc1 = local_computation_index_for_reg(t,R1);
@@ -523,7 +546,7 @@ void reg_heap::clear_C(int R)
 void reg_heap::set_reduction_result(int t, int R, closure&& result)
 {
   // Check that there is no result we are overriding
-  assert(not result_for_reg(t,R) );
+  assert(not reg_has_result(t,R) );
 
   // Check that there is no previous call we are overriding.
   assert(not reg_has_call(t,R) );
@@ -1083,17 +1106,13 @@ int reg_heap::get_unused_token()
   return t;
 }
 
-int reg_heap::uniquify_reg(int t, int r)
+bool reg_heap::computation_is_called_by(int rc1, int rc2) const
 {
-  return r;
-  int parent = token_roots[t].parent;
-  if (parent != -1 and 
-      token_roots[parent].virtual_mapping[r].rc == token_roots[parent].virtual_mapping[r].rc)
-  {
-    remove_computation(t,r);
-    add_computation(t,r);
-  }
-  return r;
+  for(const auto& wr: computations[rc2].called_by)
+    if (wr.get(computations) == rc1)
+      return true;
+
+  return false;
 }
 
 bool reg_heap::computation_is_used_by(int rc1, int rc2) const
@@ -1158,8 +1177,9 @@ void reg_heap::check_used_reg(int index) const
       assert( computation_is_called_by(index_c, rc2) );
     }
 
+    // If we have a result, then our call should have a result
     if (result)
-      assert(result_for_reg(t,call));
+      assert(reg_has_result(t,call));
   }
 }
 
@@ -1595,7 +1615,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
 #ifndef NDEBUG
   assert(not is_a<expression>(access(R).C.exp));
-  if (computation_result_for_reg(t,R))
+  if (reg_has_result(t,R))
   {
     expression_ref E = access_result_for_reg(t,R).exp;
     assert(is_WHNF(E));
@@ -1603,12 +1623,12 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     assert(not is_a<index_var>(E));
   }
   if (is_index_var(access(R).C.exp))
-    assert(not computation_result_for_reg(t,R));
+    assert(not reg_has_result(t,R));
   check_used_reg(R);
 #endif
 
 #ifndef NDEBUG
-  //  if (not result_for_reg(t,R)) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
+  //  if (not reg_has_result(t,R)) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
 
   while (1)
@@ -1627,7 +1647,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       if (not evaluate_changeable) break;
 
       // We have a result, so we are done.
-      if (computation_result_for_reg(t,R)) break;
+      if (reg_has_result(t,R)) break;
 
       // If we know what to call, then call it and use it to set the result
       if (reg_has_call(t,R))
@@ -1665,7 +1685,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     {
       assert( not reg_is_changeable(R) );
 
-      assert( not computation_result_for_reg(t,R) );
+      assert( not reg_has_result(t,R) );
 
       assert( not reg_has_call(t,R) );
 
@@ -1738,7 +1758,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	pop_temp_head();
       
       assert(not reg_has_call(t,R) );
-      assert(not computation_result_for_reg(t,R));
+      assert(not reg_has_result(t,R) );
     }
     
     // 3. Reduction: Operation (includes @, case, +, etc.)
@@ -1774,7 +1794,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	{
 	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
 	  assert(not reg_has_call(t,R) );
-	  assert(not result_for_reg(t,R));
+	  assert(not reg_has_result(t,R));
 	  assert(computation_for_reg(t,R).used_inputs.empty());
 	  //	  clear_used_inputs_for_reg(t,R);
 	  set_C(R, std::move(result) );
@@ -1840,7 +1860,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 #ifndef NDEBUG
   check_used_reg(R);
   assert(not is_a<index_var>(access(R).C.exp));
-  if (computation_result_for_reg(t,R))
+  if (reg_has_result(t,R))
   {
     expression_ref E = access_result_for_reg(t,R).exp;
     assert(not is_a<index_var>(E));
