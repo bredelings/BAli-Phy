@@ -280,7 +280,7 @@ public:
 
   int local_computation_result_for_reg(int t, int r) const;
 
-  void set_computation_result_for_reg(int t, int r1, int r2);
+  void set_computation_result_for_reg(int t, int r1);
 
   void clear_computation_result(int t, int r);
 

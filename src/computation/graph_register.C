@@ -395,14 +395,36 @@ int reg_heap::local_computation_result_for_reg(int t, int r) const
   return local_computation_for_reg(t,r).result;
 }
 
-void reg_heap::set_computation_result_for_reg(int t, int r1, int r2)
+void reg_heap::set_computation_result_for_reg(int t, int r1)
 {
-  local_computation_for_reg(t,r1).result = r2;
+  int call = call_for_reg(t,r1);
+
+  assert(call);
+
+  int result = result_for_reg(t,call);
+
+  assert(result);
+
+  local_computation_for_reg(t,r1).result = result;
+
+  // If R2 is WHNF then we are done
+  if (access(call).type == reg::type_t::constant) return;
+
+  // If R2 doesn't have a computation, add one to hold the called-by edge.
+  assert(has_computation(t,call));
+
+  int rc1 = local_computation_index_for_reg(t,r1);
+
+  // Add a called-by edge to R2.
+  computation_for_reg(t,call).called_by.push_back(computations.get_weak_ref(rc1));
 }
 
 void reg_heap::clear_computation_result(int t, int r)
 {
-  set_computation_result_for_reg(t,r,0);
+  local_computation_for_reg(t,r).result = 0;
+
+  // Blow away called-by
+  //   local_computation_for_reg(t,r).called_by.clear();
 }
 
 reg_heap::address vm_erase(vector<int>& m, vector<reg_heap::address>& v, int r)
@@ -1761,7 +1783,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	}
 	
 	// R gets its result from S.
-	set_computation_result_for_reg(t, R, result_for_reg(t,call));
+	set_computation_result_for_reg(t, R);
 	break;
       }
     }
@@ -1912,7 +1934,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	  int r3 = incremental_evaluate(r2, t, evaluate_changeable);
 
 	  set_call(t, R, r3);
-	  set_computation_result_for_reg(t, R, result_for_reg(t,r3));
+	  set_computation_result_for_reg(t, R);
 
 	  if (not result_is_index_var)
 	    pop_temp_head();
