@@ -774,6 +774,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       computations[rc2].call = computations[rc1].call;
       assert(computations[rc2].call);
       computations[rc2].used_inputs = computations[rc1].used_inputs;
+      // FIXME - aren't we forgetting to add back-edges here?
     }
 
     // Since the computation may be different, we don't know if the value has changed.
