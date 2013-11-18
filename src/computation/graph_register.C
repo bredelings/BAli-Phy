@@ -932,7 +932,7 @@ void merge_split_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<
     {
       int r = m2[i];
       assert(v2[r].rc);
-      if (v2[r].rc)
+      if (v1[r].rc)
       {
 	std::swap(v1[r].rc, v2[r].rc);
 	i++;
