@@ -76,7 +76,7 @@ object_ptr<reg_heap>& context::memory_root() const
   return memory_;
 }
 
-object_ptr<reg_heap>& context::memory() const {return memory_terminal();}
+object_ptr<reg_heap>& context::memory() const {return memory_;}
 
 std::vector<int>& context::temp_heads() const {return memory_plain()->get_temp_heads();}
 
@@ -379,6 +379,9 @@ void context::set_parameter_value_(int index, closure&& C)
 
 void context::set_reg_value(int P, closure&& C)
 {
+  make_terminal_token();
+  // FIXME - we can only change values on contexts that are not dirty!
+  // BUT this is ultimately checked in the reg_heap itself.
   return memory()->set_reg_value(P, std::move(C), token);
 }
 
