@@ -78,18 +78,16 @@ object_ptr<reg_heap>& context::memory_root() const
 
 object_ptr<reg_heap>& context::memory() const {return memory_;}
 
-std::vector<int>& context::temp_heads() const {return memory_plain()->get_temp_heads();}
+std::vector<int>& context::heads() const {return memory()->get_heads();}
 
-std::vector<int>& context::heads() const {return memory_plain()->get_heads();}
+std::vector<std::pair<std::string,int>>& context::parameters() const {return memory()->get_parameters();}
 
-std::vector<std::pair<std::string,int>>& context::parameters() const {return memory_plain()->get_parameters();}
+std::map<std::string, int>& context::identifiers() const {return memory()->get_identifiers();}
 
-std::map<std::string, int>& context::identifiers() const {return memory_plain()->get_identifiers();}
+const std::vector<int>& context::triggers() const {return memory()->triggers(token);}
+      std::vector<int>& context::triggers()       {return memory()->triggers(token);}
 
-const std::vector<int>& context::triggers() const {return memory_plain()->triggers(token);}
-      std::vector<int>& context::triggers()       {return memory_plain()->triggers(token);}
-
-reg& context::access(int i) const {return memory_plain()->access(i);}
+reg& context::access(int i) const {return memory()->access(i);}
 
 computation& context::computation_for_reg(int i) const {return memory()->computation_for_reg(token,i);}
 
@@ -101,13 +99,13 @@ bool context::reg_has_result(int r) const {return memory()->reg_has_result(token
 
 const closure& context::access_result_for_reg(int i) const {return memory()->access_result_for_reg(token,i);}
 
-reg& context::operator[](int i) const {return memory_plain()->access(i);}
+reg& context::operator[](int i) const {return memory()->access(i);}
 
-void context::set_C(int R, closure&& c) const {memory_plain()->set_C(R,std::move(c));}
+void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
 int context::incremental_evaluate(int R, bool ec) const 
 {
   make_terminal_token();
-  return memory_plain()->incremental_evaluate(R,token,ec);
+  return memory()->incremental_evaluate(R,token,ec);
 }
 
 int context::allocate() const {return memory()->allocate();}

@@ -26,8 +26,6 @@ class context: public Model_Notes
 
   object_ptr<reg_heap>& memory_root() const;
 
-  object_ptr<reg_heap>& memory_plain() const {return memory_;}
-
   object_ptr<reg_heap>& memory() const;
 
   // FIXME:speed - This is going to be really slow to copy around all the time!
