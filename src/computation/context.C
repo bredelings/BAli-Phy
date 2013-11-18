@@ -49,6 +49,7 @@ object_ptr<reg_heap>& context::memory_terminal() const
 {
   token = memory_->make_terminal_token(token);
 
+  assert(memory_->is_terminal_token(token));
   return memory_;
 }
 
@@ -67,15 +68,32 @@ std::vector<std::pair<std::string,int>>& context::parameters() const {return mem
 
 std::map<std::string, int>& context::identifiers() const {return memory_plain()->get_identifiers();}
 
-const std::vector<int>& context::triggers() const 
+const std::vector<int>& context::triggers() const {return memory()->triggers(token);}
+      std::vector<int>& context::triggers()       {return memory()->triggers(token);}
+
+reg& context::access(int i) const {return memory()->access(i);}
+
+computation& context::computation_for_reg(int i) const {return memory()->computation_for_reg(token,i);}
+
+int context::result_for_reg(int i) const {return memory()->result_for_reg(token,i);}
+
+bool context::reg_has_call(int r) const {return memory()->reg_has_call(token,r);}
+
+bool context::reg_has_result(int r) const {return memory()->reg_has_result(token,r);}
+
+const closure& context::access_result_for_reg(int i) const {return memory()->access_result_for_reg(token,i);}
+
+reg& context::operator[](int i) const {return memory()->access(i);}
+
+void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
+void context::set_reduction_result(int R, closure&& result) const {memory()->set_reduction_result(token, R, std::move(result) );}
+int context::incremental_evaluate(int R, bool ec) const 
 {
-  return memory()->triggers(token);
+  memory();
+  return memory()->incremental_evaluate(R,token,ec);
 }
 
-std::vector<int>& context::triggers()
-{
-  return memory()->triggers(token);
-}
+int context::allocate() const {return memory()->allocate();}
 
 closure context::preprocess(const closure& C) const
 {

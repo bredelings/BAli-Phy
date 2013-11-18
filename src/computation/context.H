@@ -75,19 +75,19 @@ public:
 
   int add_note(const expression_ref&);
 
-  reg& access(int i) const {return memory()->access(i);}
+  reg& access(int i) const;
 
-  computation& computation_for_reg(int i) const {return memory()->computation_for_reg(token,i);}
+  computation& computation_for_reg(int i) const;
 
-  int result_for_reg(int i) const {return memory()->result_for_reg(token,i);}
+  int result_for_reg(int i) const;
 
-  bool reg_has_call(int r) const {return memory()->reg_has_call(token,r);}
+  bool reg_has_call(int r) const;
 
-  bool reg_has_result(int r) const {return memory()->reg_has_result(token,r);}
+  bool reg_has_result(int r) const;
 
-  const closure& access_result_for_reg(int i) const {return memory()->access_result_for_reg(token,i);}
+  const closure& access_result_for_reg(int i) const;
 
-  reg& operator[](int i) const {return memory()->access(i);}
+  reg& operator[](int i) const;
 
   context* clone() const {return new context(*this);}
 
@@ -210,14 +210,10 @@ public:
   void compile();
 
 protected:  
-  void set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
-  void set_reduction_result(int R, closure&& result) const {memory()->set_reduction_result(token, R, std::move(result) );}
-  int incremental_evaluate(int R, bool ec=true) const {return memory()->incremental_evaluate(R,token,ec);}
-
-  /// Allocate a reg which will be a root for garbage-collection
-  int allocate() const {
-    return memory()->allocate();
-  }
+  void set_C(int R, closure&& c) const;
+  void set_reduction_result(int R, closure&& result) const;
+  int incremental_evaluate(int R, bool ec=true) const;
+  int allocate() const;
 
   module_loader loader;
 
