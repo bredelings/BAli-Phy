@@ -59,6 +59,24 @@ object_ptr<reg_heap>& context::memory_root() const
   return memory_;
 }
 
+std::vector<int>& context::temp_heads() const {return memory_plain()->get_temp_heads();}
+
+std::vector<int>& context::heads() const {return memory_plain()->get_heads();}
+
+std::vector<std::pair<std::string,int>>& context::parameters() const {return memory_plain()->get_parameters();}
+
+std::map<std::string, int>& context::identifiers() const {return memory_plain()->get_identifiers();}
+
+const std::vector<int>& context::triggers() const 
+{
+  return memory()->triggers(token);
+}
+
+std::vector<int>& context::triggers()
+{
+  return memory()->triggers(token);
+}
+
 closure context::preprocess(const closure& C) const
 {
   assert(C.exp);

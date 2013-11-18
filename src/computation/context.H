@@ -20,6 +20,8 @@ class context: public Model_Notes
 
   object_ptr<reg_heap>& memory_root() const;
 
+  object_ptr<reg_heap>& memory_plain() const {return memory_;}
+
   object_ptr<reg_heap>& memory() const {return memory_terminal();}
 
   // FIXME:speed - This is going to be really slow to copy around all the time!
@@ -30,17 +32,17 @@ class context: public Model_Notes
 
   int perform_io_head = -1;
 
-  std::vector<int>& temp_heads() const {return memory()->get_temp_heads();}
+  std::vector<int>& temp_heads() const;
 
-  std::vector<int>& heads() const {return memory()->get_heads();}
+  std::vector<int>& heads() const;
 
-  std::vector<std::pair<std::string,int>>& parameters() const {return memory()->get_parameters();}
+  std::vector<std::pair<std::string,int>>& parameters() const;
 
-  std::map<std::string, int>& identifiers() const {return memory()->get_identifiers();}
+  std::map<std::string, int>& identifiers() const;
 
 public:
-  const std::vector<int>& triggers() const {return memory()->triggers(token);}
-        std::vector<int>& triggers()       {return memory()->triggers(token);}
+  const std::vector<int>& triggers() const;
+        std::vector<int>& triggers();
 
 private:
   void release_identifiers();
