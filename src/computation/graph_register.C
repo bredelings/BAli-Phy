@@ -949,6 +949,26 @@ void merge_split_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<
   }
 }
 
+// Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
+// where (m2,v2) is at the root and (m1,v1) is relative.
+void pivot_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<int>& m2, vector<reg_heap::address>& v2)
+{
+  for(int i=0;i<m2.size();)
+  {
+    int r = m2[i];
+    assert(v2[r].rc);
+
+    // To prevent this computation from being shared afterwards, create an empty computation.
+    if (not v1[r].rc)
+      vm_add(m1, v1, r, {});
+
+    std::swap(v1[r].rc, v2[r].rc);
+  }
+  std::swap(m1,m2);
+  std::swap(v1,v2);
+}
+
+
 int reg_heap::make_terminal_token(int t)
 {
   if (is_terminal_token(t))
