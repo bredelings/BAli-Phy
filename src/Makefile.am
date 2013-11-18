@@ -345,6 +345,13 @@ path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.
 # See libtool documentation on plugins:
 #    http://www.flameeyes.eu/autotools-mythbuster/libtool/plugins.html
 
+# http://stackoverflow.com/questions/15454968/dll-plugin-that-uses-functions-defined-in-the-main-executable
+# * dlltool --export-all-symbols <program>.exe -l lib<program>.a -D <program>.exe
+
+# 
+# http://www.mingw.org/wiki/sampleDLL
+
+
 pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la \
 		arraySize.la getIndex.la mkArray.la intToDouble.la negate.la \
 		exp.la doubleToLogDouble.la \
@@ -358,8 +365,8 @@ pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la
 		pairwise_alignment_length2.la transition_counts.la pairwise_alignment_probability_from_counts.la \
 		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la
 
-mod_la_SOURCES = computation/builtins/mod.C
-mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+mod_la_SOURCES = computation/builtins/mod.C -lbali-phy.exe
+mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic # -no-undefined -enable-runtime-pseudo-reloc
 
 builtinError_la_SOURCES = computation/builtins/builtinError.C
 builtinError_la_LDFLAGS = -module -shared -avoid-version -export-dynamic

@@ -52,6 +52,10 @@ if test "${host_os_noversion}" = darwin ; then
 
   CXXFLAGS="$CXXFLAGS -fvisibility=default"
 
+elif test "${host_os_noversion}" = darwin ; then 
+
+AC_LIBTOOL_WIN32_DLL
+
 fi
 
 CXXFLAGS="-std=c++11 $CXXFLAGS"
