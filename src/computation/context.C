@@ -86,7 +86,6 @@ const closure& context::access_result_for_reg(int i) const {return memory()->acc
 reg& context::operator[](int i) const {return memory()->access(i);}
 
 void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
-void context::set_reduction_result(int R, closure&& result) const {memory()->set_reduction_result(token, R, std::move(result) );}
 int context::incremental_evaluate(int R, bool ec) const 
 {
   memory();

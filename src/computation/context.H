@@ -211,7 +211,6 @@ public:
 
 protected:  
   void set_C(int R, closure&& c) const;
-  void set_reduction_result(int R, closure&& result) const;
   int incremental_evaluate(int R, bool ec=true) const;
   int allocate() const;
 
