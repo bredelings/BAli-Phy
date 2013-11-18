@@ -1444,7 +1444,12 @@ void reg_heap::try_release_token(int t)
   int parent = parent_token(t);
   token_roots[t].parent = -1;
   if (t == root_token)
-    root_token = -1;
+  {
+    if (token_roots[t].children.empty())
+      root_token = -1;
+    else
+      root_token = token_roots[t].children[0];
+  }
 
   int child_token = -1;
   if (n_children)
