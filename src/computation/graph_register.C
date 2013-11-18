@@ -859,6 +859,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   release_scratch_list();
   assert(n_active_scratch_lists == 0);
 
+  reroot_mappings_at(token);
   for(int R: regs_to_re_evaluate)
     incremental_evaluate(R,token,true);
 
@@ -955,12 +956,16 @@ int reg_heap::make_terminal_token(int t)
     // TODO - Allow setting things directly at the root in this case, instead of requiring terminal tokens.
     int child = token_roots[t].children[0];
     reroot_mappings_at(child);
+    assert(is_terminal_token(t));
   }
   else
   {
     int new_token = copy_token(t);
+    reroot_mappings_at(t); // FIXME - we shouldn't have to do this!
+    assert(is_terminal_token(new_token));
     release_token(t);
     t = new_token;
+    assert(is_terminal_token(t));
   }
   assert(is_terminal_token(t));
   return t;
@@ -1493,6 +1498,9 @@ void reg_heap::try_release_token(int t)
   if (parent != -1)
     try_release_token(parent);
 
+  if (token_roots.size() - unused_tokens.size() > 0)
+    assert(root_token != -1);
+
 #ifdef DEBUG_MACHINE
   assert(token_roots[t].virtual_mapping.size() == size());
   for(const auto& A: token_roots[t].virtual_mapping)
@@ -1561,6 +1569,7 @@ int reg_heap::copy_token(int t)
 	copy_computation(t,t2,call);
     }
 
+  reroot_mappings_at(t2);
   for(int r: token_roots[t].modified)
     if (access(r).re_evaluate)
       incremental_evaluate(r,t2,true);
@@ -1750,7 +1759,7 @@ map<int,string> get_constants(const reg_heap& C, int t);
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
 int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 {
-  assert(is_terminal_token(t));
+  assert(is_root_token(t));
   assert(is_valid_address(R));
   assert(is_used(R));
 

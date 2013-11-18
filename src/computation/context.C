@@ -104,7 +104,7 @@ reg& context::operator[](int i) const {return memory()->access(i);}
 void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
 int context::incremental_evaluate(int R, bool ec) const 
 {
-  make_terminal_token();
+  make_root_token();
   return memory()->incremental_evaluate(R,token,ec);
 }
 
