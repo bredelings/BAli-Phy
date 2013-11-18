@@ -906,7 +906,9 @@ void reg_heap::remove_computation(int t, int r)
   assert(not has_local_computation(t,r));
 }
 
-void pivot_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<int>& m2, vector<reg_heap::address>& v2)
+// Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
+// and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
+void merge_split_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<int>& m2, vector<reg_heap::address>& v2)
 {
   if (m1.size() < m2.size())
   {
@@ -984,8 +986,8 @@ void reg_heap::reroot_mappings_at(int t)
   // Now this context should be a direct child of the root
   assert(is_root_token(parent));
 
-  //  pivot_mapping(token_roots[parent].modified, token_roots[parent].virtual_mapping,
-  //		token_roots[t].modified, token_roots[t].virtual_mapping);
+  //  merge_split(token_roots[parent].modified, token_roots[parent].virtual_mapping,
+  //		  token_roots[t].modified, token_roots[t].virtual_mapping);
 
   token_roots[parent].parent = t;
   int index = remove_element(token_roots[parent].children, t);
