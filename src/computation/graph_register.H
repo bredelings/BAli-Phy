@@ -288,6 +288,8 @@ public:
 
   void reroot_mappings_at(int t);
 
+  int make_terminal_token(int t);
+
   /*----- Graph splitting -----*/
   /// Update the value of a non-constant, non-computed index
   void set_reg_value(int index, closure&&, int t);

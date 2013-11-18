@@ -45,6 +45,20 @@ closure resolve_refs(const vector<Module>& P, closure&& C)
   return C;
 }
 
+object_ptr<reg_heap>& context::memory_terminal() const 
+{
+  token = memory_->make_terminal_token(token);
+
+  return memory_;
+}
+
+object_ptr<reg_heap>& context::memory_root() const 
+{
+  memory_->reroot_mappings_at(token);
+
+  return memory_;
+}
+
 closure context::preprocess(const closure& C) const
 {
   assert(C.exp);

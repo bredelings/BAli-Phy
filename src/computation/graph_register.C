@@ -946,10 +946,28 @@ void pivot_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<int>& 
   }
 }
 
+int reg_heap::make_terminal_token(int t)
+{
+  if (is_terminal_token(t))
+    ;
+  else if (is_root_token(t) and token_roots[t].children.size() == 1)
+  {
+    // TODO - Allow setting things directly at the root in this case, instead of requiring terminal tokens.
+    int child = token_roots[t].children[0];
+    reroot_mappings_at(child);
+  }
+  else
+  {
+    int new_token = copy_token(t);
+    release_token(t);
+    t = new_token;
+  }
+  assert(is_terminal_token(t));
+  return t;
+}
+
 void reg_heap::reroot_mappings_at(int t)
 {
-  assert(token_is_used(t));
-
   if (is_root_token(t)) return;
 
   int parent = parent_token(t);
@@ -961,8 +979,8 @@ void reg_heap::reroot_mappings_at(int t)
   // Now this context should be a direct child of the root
   assert(is_root_token(parent));
 
-  pivot_mapping(token_roots[parent].modified, token_roots[parent].virtual_mapping,
-		token_roots[t].modified, token_roots[t].virtual_mapping);
+  //  pivot_mapping(token_roots[parent].modified, token_roots[parent].virtual_mapping,
+  //		token_roots[t].modified, token_roots[t].virtual_mapping);
 
   token_roots[parent].parent = t;
   int index = remove_element(token_roots[parent].children, t);
@@ -1481,6 +1499,8 @@ void reg_heap::try_release_token(int t)
 
 bool reg_heap::is_terminal_token(int t) const
 {
+  assert(token_is_used(t));
+
   return token_roots[t].children.empty();
 }
 
@@ -1488,6 +1508,8 @@ bool reg_heap::is_root_token(int t) const
 {
   assert(root_token != -1);
   assert((t==root_token) == (token_roots[t].parent == -1));
+  assert(token_is_used(t));
+
   return t == root_token;
 }
 

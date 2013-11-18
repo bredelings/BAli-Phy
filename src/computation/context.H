@@ -16,23 +16,11 @@ class context: public Model_Notes
   /// The array of registers that make up our memory.
   mutable object_ptr<reg_heap> memory_;
 
-  inline bool locked() const
-  {
-    return not memory_->is_terminal_token(token);
-  }
+  object_ptr<reg_heap>& memory_terminal() const;
 
-  inline void unlock_if_locked() const
-  {
-    if (locked())
-    {
-      int old_token = token;
-      token = memory_->copy_token(token);
-      memory_->release_token(old_token);
-    }
-    assert(not locked());
-  }
+  object_ptr<reg_heap>& memory_root() const;
 
-  object_ptr<reg_heap>& memory() const {unlock_if_locked(); return memory_;}
+  object_ptr<reg_heap>& memory() const {return memory_terminal();}
 
   // FIXME:speed - This is going to be really slow to copy around all the time!
   // FIXME:speed - Instead, wrap in cow_ptr< >.
