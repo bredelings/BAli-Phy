@@ -22,11 +22,13 @@ class context: public Model_Notes
 
   void make_root_token() const;
 
+  void make_root_tip() const;
+
   object_ptr<reg_heap>& memory_root() const;
 
   object_ptr<reg_heap>& memory_plain() const {return memory_;}
 
-  object_ptr<reg_heap>& memory() const {return memory_terminal();}
+  object_ptr<reg_heap>& memory() const;
 
   // FIXME:speed - This is going to be really slow to copy around all the time!
   // FIXME:speed - Instead, wrap in cow_ptr< >.

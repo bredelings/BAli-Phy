@@ -50,6 +50,12 @@ void context::make_terminal_token() const
   token = memory_->make_terminal_token(token);
 }
 
+void context::make_root_tip() const
+{
+  make_terminal_token();
+  make_root_token();
+}
+
 object_ptr<reg_heap>& context::memory_terminal() const 
 {
   make_terminal_token();
@@ -69,6 +75,8 @@ object_ptr<reg_heap>& context::memory_root() const
 
   return memory_;
 }
+
+object_ptr<reg_heap>& context::memory() const {return memory_terminal();}
 
 std::vector<int>& context::temp_heads() const {return memory_plain()->get_temp_heads();}
 
