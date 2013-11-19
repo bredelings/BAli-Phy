@@ -621,50 +621,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     j = result_may_be_changed.size();
 
     // Second find all users or callers of regs where the result AND CALL are out of date.
-    for(;i<call_and_result_may_be_changed.size();i++)
-    {
-      int R1 = call_and_result_may_be_changed[i];
-      int rc1 = computation_index_for_reg(token,R1);
-      auto& RC1 = computations[rc1];
-      assert(RC1.temp == mark_call_result);
-
-      // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(const auto& wrc2: clean_weak_refs(RC1.used_by, computations))
-      {
-	int rc2 = wrc2.get(computations);
-
-	auto& RC2 = computations[rc2];
-	int R2 = RC2.source;
-
-	if (computation_index_for_reg(token,R2) != rc2) continue;
-
-	if (RC2.temp == mark_call_result) continue;
-
-	RC2.temp = mark_call_result;
-	assert(computation_index_for_reg(token,R2) == rc2);
-	call_and_result_may_be_changed.push_back(R2);
-      }
-
-      // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(const auto& wrc2: clean_weak_refs(RC1.called_by, computations))
-      {
-	int rc2 = wrc2.get(computations);
-
-	computation& RC2 = computations[rc2];
-	int R2 = RC2.source;
-
-	if (computation_index_for_reg(token,R2) != rc2) continue;
-
-	if (RC2.temp != -1) continue;
-
-	// If the reg calling us has no result, then we don't need to clear its result
-	if (not computation_result_for_reg(token,R2) and not reg_is_shared(token,R2)) continue;
-
-	RC2.temp = mark_result;
-	assert(computation_index_for_reg(token,R2) == rc2);
-	result_may_be_changed.push_back(R2);
-      }
-    }
+    find_users(token, token, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers(token, token, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
+    i = call_and_result_may_be_changed.size();
   }
 
 #ifndef NDEBUG
@@ -982,7 +941,7 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
       if (RC2.temp >= mark) continue;
 
       // There (usually) shouldn't be a back edge to r2 if r2 has no result.
-      assert(RC2.result);
+      //      assert(RC2.result);
 
       RC2.temp = mark;
       assert(computation_index_for_reg(t2,r2) == rc2);
