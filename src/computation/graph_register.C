@@ -1856,6 +1856,9 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	  set_call(t, R, call);
 	}
 	
+	// split the reg, so that we can set the result, but only for this context
+	split_reg(t,R);
+
 	// R gets its result from S.
 	set_computation_result_for_reg(t, R);
 	break;
