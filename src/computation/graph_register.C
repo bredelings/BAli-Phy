@@ -599,8 +599,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   if (not has_local_computation(token,P))
     add_computation(token,P);
 
-  const int mark_call_result = 1;
-  const int mark_result = 2;
+  const int mark_result = 1;
+  const int mark_call_result = 2;
 
   vector< int >& call_and_result_may_be_changed = get_scratch_list();
   vector< int >& result_may_be_changed = get_scratch_list();
@@ -616,48 +616,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
   {
     // First find all users or callers of regs where the result is out of date.
-    for(;j<result_may_be_changed.size();j++)
-    {
-      int R1 = result_may_be_changed[j];
-      int rc1 = computation_index_for_reg(token,R1);
-      auto& RC1 = computations[rc1];
-      assert(RC1.temp == mark_call_result or RC1.temp == mark_result);
-
-      // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(const auto& wrc2: clean_weak_refs(RC1.used_by,computations))
-      {
-	int rc2 = wrc2.get(computations);
-
-	auto& RC2 = computations[rc2];
-	int R2 = RC2.source;
-
-	if (computation_index_for_reg(token,R2) != rc2) continue;
-	if (RC2.temp == mark_call_result) continue;
-
-	RC2.temp = mark_call_result;
-	assert(computation_index_for_reg(token,R2) == rc2);
-	call_and_result_may_be_changed.push_back(R2);
-      }
-
-      // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(const auto& wrc2: clean_weak_refs(RC1.called_by,computations))
-      {
-	int rc2 = wrc2.get(computations);
-
-	computation& RC2 = computations[rc2];
-	int R2 = RC2.source;
-
-	if (computation_index_for_reg(token,R2) != rc2) continue;
-	if (RC2.temp != -1) continue;
-
-	// If the reg calling us has no result, then we don't need to clear its result
-	if (not computation_result_for_reg(token,R2) and not reg_is_shared(token,R2)) continue;
-
-	RC2.temp = mark_result;
-	assert(computation_index_for_reg(token,R2) == rc2);
-	result_may_be_changed.push_back(R2);
-      }
-    }
+    find_callers(token, token, j, result_may_be_changed, result_may_be_changed, mark_result);
+    find_users(token, token, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    j = result_may_be_changed.size();
 
     // Second find all users or callers of regs where the result AND CALL are out of date.
     for(;i<call_and_result_may_be_changed.size();i++)
