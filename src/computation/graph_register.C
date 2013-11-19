@@ -752,21 +752,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     std::cerr<<R<<" ";
 
-    // If the reg is shared, we need to split it, and preserve the forward edges
-    if (reg_is_shared(token,R))
-    {
-      remove_computation(token,R);
-      add_computation(token,R);
-      computation_for_reg(token,R).temp = mark_result;
-
-      int rc2 = computation_index_for_reg(token,R);
-      assert(rc1 != rc2);
-
-      computations[rc2].call = computations[rc1].call;
-      assert(computations[rc2].call);
-      computations[rc2].used_inputs = computations[rc1].used_inputs;
-      // FIXME - aren't we forgetting to add back-edges here?
-    }
+    split_reg(token, R);
 
     // Since the computation may be different, we don't know if the value has changed.
     clear_computation_result(token, R);
@@ -804,41 +790,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     clear_call_for_reg(token,R);
     clear_used_inputs_for_reg(token,R);
   }
-
-  std::cerr<<"\n result(b): "<<result_may_be_changed.size()<<"\n";
-  // Clear the marks: 1b
-  for(int R: result_may_be_changed)
-  {
-    assert(is_used(R));
-
-    int rc1 = computation_index_for_reg(token,R);
-
-    auto& RC = computations[rc1];
-
-    // If this wasn't shared, then we don't need to do this.
-    if (RC.temp != mark_result) continue;
-
-    // Clear the mark
-    RC.temp = -1;
-
-    std::cerr<<R<<" ";
-
-    int R2 = computations[rc1].call;
-    assert(R2);
-    computations[rc1].call = 0;
-    set_call(token,R,R2);
-
-    vector<int> used_inputs;
-    std::swap(computations[rc1].used_inputs, used_inputs);
-    for(int rc: used_inputs)
-    {
-      int R2 = computations[rc].source;
-      // This computation should still be active in this token.
-      assert(computation_index_for_reg(token,R2) == rc);
-      set_used_input(token,R,R2);
-    }
-  }
-  std::cerr<<"\n";
 
   // Finally set the new value.
 
