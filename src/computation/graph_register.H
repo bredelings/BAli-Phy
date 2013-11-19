@@ -262,7 +262,7 @@ public:
 
   int copy_computation(int t1, int t2, int r);
 
-  void remove_computation(int t, int r);
+  int remove_computation(int t, int r);
   
   bool has_computation(int t, int r) const;
 

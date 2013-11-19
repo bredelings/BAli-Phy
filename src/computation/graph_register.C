@@ -427,7 +427,7 @@ void reg_heap::clear_computation_result(int t, int r)
   //   local_computation_for_reg(t,r).called_by.clear();
 }
 
-reg_heap::address vm_erase(vector<int>& m, vector<reg_heap::address>& v, int r)
+int vm_erase(vector<int>& m, vector<reg_heap::address>& v, int r)
 {
   reg_heap::address A = v[r];
 
@@ -444,7 +444,7 @@ reg_heap::address vm_erase(vector<int>& m, vector<reg_heap::address>& v, int r)
 
   // Actually clear the mapping.
   v[r] = {};
-  return A;
+  return A.rc;
 }
 
 void reg_heap::set_used_input(int t, int R1, int R2)
@@ -896,14 +896,16 @@ int reg_heap::copy_computation(int t1, int t2, int r)
   return rc;
 }
 
-void reg_heap::remove_computation(int t, int r)
+int reg_heap::remove_computation(int t, int r)
 {
   assert(has_local_computation(t,r));
 
   // erase the mark that reg r is modified
-  vm_erase(token_roots[t].modified, token_roots[t].virtual_mapping, r);
+  int rc = vm_erase(token_roots[t].modified, token_roots[t].virtual_mapping, r);
 
   assert(not has_local_computation(t,r));
+
+  return rc;
 }
 
 // Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
