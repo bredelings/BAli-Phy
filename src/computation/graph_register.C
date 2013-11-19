@@ -1335,6 +1335,19 @@ void reg_heap::check_used_regs() const
     check_used_reg( r.addr() );
 }
 
+int reg_heap::split_reg(int t, int r)
+{
+  int rcA = remove_computation(t,r);
+  add_computation(t,r);
+  set_call(t,r,computations[rcA].call);
+  for(int rc: computations[rcA].used_inputs)
+  {
+    int r2 = computations[rc].source;
+    set_used_input(t,r,r2);
+  }
+  return rcA;
+}
+
 vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
 {
   vector<int> unique;

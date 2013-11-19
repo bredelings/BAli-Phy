@@ -294,6 +294,7 @@ public:
   /// Update the value of a non-constant, non-computed index
   void set_reg_value(int index, closure&&, int t);
   bool reg_is_shared(int t, int r) const;
+  int split_reg(int t, int r);
 
   int incremental_evaluate(int R, int t, bool = true);
 
