@@ -730,7 +730,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     assert(computation_for_reg(token,R).temp == mark_call_result);
 #endif
 
-  std::cerr<<" result: "<<result_may_be_changed.size()<<"\n";
+  //  std::cerr<<" result: "<<result_may_be_changed.size()<<"\n";
 
   // Clear the marks: 1a
   for(int R: result_may_be_changed)
@@ -750,7 +750,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     RC.temp = -1;
 
-    std::cerr<<R<<" ";
+    //    std::cerr<<R<<" ";
 
     split_reg(token, R);
 
@@ -758,7 +758,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     clear_computation_result(token, R);
   }
 
-  std::cerr<<"\n call+result: "<<result_may_be_changed.size()<<"\n";
+  //  std::cerr<<"\n call+result: "<<result_may_be_changed.size()<<"\n";
 
   // Clear the marks: 2a
   for(int R: call_and_result_may_be_changed)
@@ -779,7 +779,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     assert(R == P or not is_modifiable(access(R).C.exp));
 
-    std::cerr<<R<<" ";
+    //    std::cerr<<R<<" ";
 
     if (reg_is_shared(token,R))
     {
