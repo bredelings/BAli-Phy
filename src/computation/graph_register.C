@@ -1911,6 +1911,9 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	// Otherwise, set the reduction result.
 	else
 	{
+	  int rc = split_reg(t,R);
+	  computations[rc].used_inputs.clear();
+	  
 	  bool result_is_index_var = result.exp->head->type() == index_var_type;
 
 	  int r2=0;
