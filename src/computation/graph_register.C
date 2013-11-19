@@ -16,6 +16,7 @@ using std::ofstream;
 
 using std::cerr;
 using std::endl;
+
 /*
  * Goal: Share computation of WHNF structures between contexts, even when those
  *       stuctures are uncomputed at the time the contexts are split.
