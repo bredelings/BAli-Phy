@@ -521,15 +521,6 @@ void reg_heap::set_call(int t, int R1, int R2)
   // Set the call
   int rc1 = local_computation_index_for_reg(t,R1);
   computations[rc1].call = R2;
-
-  // If R2 is WHNF then we are done
-  if (access(R2).type == reg::type_t::constant) return;
-
-  // If R2 doesn't have a computation, add one to hold the called-by edge.
-  if (not has_computation(t,R2)) add_computation(t,R2);
-
-  // Add a called-by edge to R2.
-  computation_for_reg(t,R2).called_by.push_back(computations.get_weak_ref(rc1));
 }
 
 void reg_heap::clear_call(int rc)
