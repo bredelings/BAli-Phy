@@ -1602,7 +1602,7 @@ int reg_heap::copy_token(int t)
     {
       copy_computation(t,t2,r);
       int call = call_for_reg(t,r);
-      if (not has_local_computation(t2,call))
+      if (has_local_computation(t,call) and not has_local_computation(t2,call))
 	copy_computation(t,t2,call);
     }
 
