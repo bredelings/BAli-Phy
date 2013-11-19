@@ -20,15 +20,21 @@ using std::endl;
  * Goal: Share computation of WHNF structures between contexts, even when those
  *       stuctures are uncomputed at the time the contexts are split.
  *
+ *       Rolling back to a previous context should not require recomputing anything
+ *       that was previously known, and should take advantage of anything we computed
+ *       for the next context that is also used by the old one.
+ *
  * In order to share partially evaluated expressions between contexts, we need
- * this contexts to share a memory, since constructor expressions reference other
+ * these contexts to share a memory, since constructor expressions reference other
  * entries in the memory.
  *
  * Forward edges consist of
  * - E edges
- * - call edges (forward: call, backward: called_by)
  * - used edges (forward: used_inputs, backward: used_by)
- *
+ * - call edges (forward: call, backward: called_by)
+ * - result edges (computed by following call edges).
+ * The called_by back edges indicate that a result is being used by another result that calls us.
+ * Thus called_by edges need not be set when setting a call, but only when setting the result.
  */
 
 expression_ref graph_normalize(const expression_ref& E)
