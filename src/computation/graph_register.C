@@ -958,19 +958,68 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
 
 int reg_heap::invalidate_shared_regs(int t1, int t2)
 {
+  const int mark_call_result = 1;
+  const int mark_result = 2;
+  const int mark_modified = 3;
+
   // find all regs in t2 that are not shared from t1
   vector<int> modified;
   for(int i=0;i<token_roots[t1].virtual_mapping.size();i++)
     if (token_roots[t1].virtual_mapping[i].rc != token_roots[t2].virtual_mapping[i].rc
 	and token_roots[t1].virtual_mapping[i].rc and token_roots[t2].virtual_mapping[i].rc)
+    {
+      computation_for_reg(t2,i).temp = mark_modified;
       modified.push_back(i);
-
-  const int mark_call_result = 1;
-  const int mark_result = 2;
+    }
 
   vector< int >& call_and_result_may_be_changed = get_scratch_list();
   vector< int >& result_may_be_changed = get_scratch_list();
   vector< int >& regs_to_re_evaluate = get_scratch_list();
+
+  find_callers(t1, t2, 0, modified, result_may_be_changed, mark_result);
+  find_users(t1, t2, 0, modified, call_and_result_may_be_changed, mark_call_result);
+
+  int i=0;
+  int j=0;
+  while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
+  {
+    // First find all users or callers of regs where the result is out of date.
+    find_callers(t2, t2, j, result_may_be_changed, result_may_be_changed, mark_result);
+    find_users(t2, t2, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    j = result_may_be_changed.size();
+
+    // Second find all users or callers of regs where the result AND CALL are out of date.
+    find_users(t2, t2, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers(t2, t2, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
+    i = call_and_result_may_be_changed.size();
+  }
+
+  for(int r:result_may_be_changed)
+  {
+    auto& RC = computation_for_reg(t2,r);
+
+    if (RC.temp > mark_result) continue;
+
+    RC.temp = -1;
+  }
+
+  for(int r:call_and_result_may_be_changed)
+  {
+    auto& RC = computation_for_reg(t2,r);
+
+    if (RC.temp > mark_call_result) continue;
+
+    RC.temp = -1;
+  }
+
+  for(int r:modified)
+  {
+    auto& RC = computation_for_reg(t2,r);
+
+    assert(RC.temp == mark_modified);
+
+    RC.temp = -1;
+  }
 
   // find all regs in t2 that are not shared from t1.  Nothing needs to be done to these - they are already split.
   // Anything that uses these needs to be unshared.
