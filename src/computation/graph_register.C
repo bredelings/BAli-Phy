@@ -975,6 +975,26 @@ bool reg_heap::is_completely_dirty(int t) const
 
 int reg_heap::invalidate_shared_regs(int t1, int t2)
 {
+  // find all regs in t2 that are not shared from t1
+  vector<int> modified;
+  for(int i=0;i<token_roots[t1].virtual_mapping.size();i++)
+    if (token_roots[t1].virtual_mapping[i].rc != token_roots[t2].virtual_mapping[i].rc
+	and token_roots[t1].virtual_mapping[i].rc and token_roots[t2].virtual_mapping[i].rc)
+      modified.push_back(i);
+
+  // find all regs in t2 that are not shared from t1.  Nothing needs to be done to these - they are already split.
+  // Anything that uses these needs to be unshared.
+  //  - The local version should be completely cleared.  We can remove the computation.
+  //  - All children should have their computations removed also
+  // Anything that calls these needs to be unshared.
+  //  - The local version should preserve its uses and call, but its result should be cleared.
+  //  - All children should be updated to use the new computation.
+
+  // This is similar to set_reg_value, but not the same.
+  // Should set_reg_value be able to consist of
+  // (a) change the computation for some modifiables
+  // (b) run invalidate_shared_regs?
+
   assert(token_roots[t1].version >= token_roots[t2].version);
   token_roots[t2].version = token_roots[t1].version;
 }
