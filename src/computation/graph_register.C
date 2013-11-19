@@ -938,6 +938,8 @@ void reg_heap::reroot_mappings_at(int t)
   token_roots[t].children.push_back(parent);
   root_token = t;
 
+  try_release_token(parent);
+
   assert(is_root_token(t));
 }
 
