@@ -765,7 +765,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   {
     assert(has_computation(token,R));
 
-    assert(R == P or reg_has_call(token,R));
+    // Put this back when we stop making spurious used_by edges
+    //    assert(R == P or reg_has_call(token,R));
 
     int rc1 = computation_index_for_reg(token,R);
 
