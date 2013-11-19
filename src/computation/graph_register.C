@@ -1528,7 +1528,7 @@ int reg_heap::copy_token(int t)
   reroot_mappings_at(t2);
   for(int r: token_roots[t].modified)
     if (access(r).re_evaluate)
-      incremental_evaluate(r,t2,true);
+      assert(reg_has_result(t2,r));
 
   /*
   // use all the same computations and result.
