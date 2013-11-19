@@ -297,6 +297,8 @@ public:
   void mark_completely_dirty(int t);
   bool is_completely_dirty(int t) const;
   bool is_dirty(int t) const;
+  void find_callers(int t1, int t2, const std::vector<int>& split, std::vector<int>& callers, int mark);
+  void find_users(int t1, int t2, const std::vector<int>& split, std::vector<int>& callers, int mark);
 
   int incremental_evaluate(int R, int t, bool = true);
 

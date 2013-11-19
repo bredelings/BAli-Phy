@@ -964,69 +964,70 @@ bool reg_heap::is_completely_dirty(int t) const
   return true;
 }
   
-/*
-void find_callers_in_token(int t1, int t2, const vector<int>& invalid, vector<int>& callers)
+// find regs in t2 that call values only active in t1.  We look at regs in split, and append results to callers
+void reg_heap::find_callers(int t1, int t2, const vector<int>& split, vector<int>& callers, int mark)
 {
-
-  for(int i=0;i<invalid.size();i++)
+  for(int i=0;i<split.size();i++)
   {
-    int 
+    int r1 = split[i];
+    int rc1 = computation_index_for_reg(t1,r1);
+
+    // Look at computations in t2 that call the old value in t1.
+    for(const auto& wrc2: clean_weak_refs(computations[rc1].called_by, computations))
+    {
+      int rc2 = wrc2.get(computations);
+
+      computation& RC2 = computations[rc2];
+      int r2 = RC2.source;
+
+      // If this computation is not used in t2, we don't need to unshare it.
+      if (computation_index_for_reg(t2,r2) != rc2) continue;
+
+      // Skip this one if its been marked high enough already
+      if (RC2.temp < mark) continue;
+
+      // There (usually) shouldn't be a back edge to r2 if r2 has no result.
+      assert(RC2.result);
+
+      RC2.temp = mark;
+      assert(computation_index_for_reg(t2,r2) == rc2);
+      callers.push_back(r2);
+    }
   }
 }
-    // Second find all users or callers of regs where the result AND CALL are out of date.
-    for(;i<call_and_result_may_be_changed.size();i++)
+
+// find regs in t2 that used values only active in t1.  We look at regs in split, and append results to callers
+void reg_heap::find_users(int t1, int t2, const vector<int>& split, vector<int>& users, int mark)
+{
+  for(int i=0;i<split.size();i++)
+  {
+    int r1 = split[i];
+    int rc1 = computation_index_for_reg(t1,r1);
+
+    // Look at computations in t2 that call the old value in t1.
+    for(const auto& wrc2: clean_weak_refs(computations[rc1].used_by, computations))
     {
-      int R1 = call_and_result_may_be_changed[i];
-      int rc1 = computation_index_for_reg(token,R1);
-      auto& RC1 = computations[rc1];
-      assert(RC1.temp == mark_call_result);
+      int rc2 = wrc2.get(computations);
 
-      // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-      if (access(R1).re_evaluate)
-      {
-	assert(has_computation(token,R1));
-	assert(computation_result_for_reg(token,R1));
-	regs_to_re_evaluate.push_back(R1);
-      }
+      computation& RC2 = computations[rc2];
+      int r2 = RC2.source;
 
-      // Scan regs that used R2 directly and put them on the invalid-call/result list.
-      for(const auto& wrc2: clean_weak_refs(RC1.used_by, computations))
-      {
-	int rc2 = wrc2.get(computations);
+      // If this computation is not used in t2, we don't need to unshare it.
+      if (computation_index_for_reg(t2,r2) != rc2) continue;
 
-	auto& RC2 = computations[rc2];
-	int R2 = RC2.source;
+      // Skip this one if its been marked high enough already
+      if (RC2.temp < mark) continue;
 
-	if (computation_index_for_reg(token,R2) != rc2) continue;
+      // There (usually) shouldn't be a back edge to r2 if r2 has no result.
+      assert(RC2.result);
 
-	if (RC2.temp == mark_call_result) continue;
-
-	RC2.temp = mark_call_result;
-	assert(computation_index_for_reg(token,R2) == rc2);
-	call_and_result_may_be_changed.push_back(R2);
-      }
-
-      // Scan regs that call R2 directly and put them on the invalid-result list.
-      for(const auto& wrc2: clean_weak_refs(RC1.called_by, computations))
-      {
-	int rc2 = wrc2.get(computations);
-
-	computation& RC2 = computations[rc2];
-	int R2 = RC2.source;
-
-	if (computation_index_for_reg(token,R2) != rc2) continue;
-
-	if (RC2.temp != -1) continue;
-
-	// If the reg calling us has no result, then we don't need to clear its result
-	if (not computation_result_for_reg(token,R2) and not reg_is_shared(token,R2)) continue;
-
-	RC2.temp = mark_result;
-	assert(computation_index_for_reg(token,R2) == rc2);
-	result_may_be_changed.push_back(R2);
-      }
+      RC2.temp = mark;
+      assert(computation_index_for_reg(t2,r2) == rc2);
+      users.push_back(r2);
     }
-*/
+  }
+}
+
 int reg_heap::invalidate_shared_regs(int t1, int t2)
 {
   // find all regs in t2 that are not shared from t1
