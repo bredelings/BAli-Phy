@@ -1515,15 +1515,8 @@ int reg_heap::copy_token(int t)
   token_roots[t].children.push_back(t2);
 
   for(int r: token_roots[t].modified)
-    if (reg_has_computation_result(t,r))
+    if (has_local_computation(t,r))
       copy_computation(t,t2,r);
-    else if (is_modifiable(access(r).C.exp))
-    {
-      copy_computation(t,t2,r);
-      int call = call_for_reg(t,r);
-      if (has_local_computation(t,call) and not has_local_computation(t2,call))
-	copy_computation(t,t2,call);
-    }
 
   reroot_mappings_at(t2);
   for(int r: token_roots[t].modified)
