@@ -1314,8 +1314,8 @@ void reg_heap::check_used_reg(int index) const
       assert(computation_result_for_reg(t,R2));
     }
 
-    // Called regs should have back-references to R
-    if (call and access(call).type != reg::type_t::constant)
+    // Regs with results should have back-references from their call.
+    if (result and access(call).type != reg::type_t::constant)
     {
       assert( has_computation(t,call) );
       int rc2 = computation_index_for_reg(t,call);
