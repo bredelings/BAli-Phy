@@ -1492,8 +1492,16 @@ int reg_heap::parent_token(int t) const
 
 void reg_heap::release_token(int t)
 {
+  for(int i=0;i<token_roots.size();i++)
+    if (token_is_used(i))
+      assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
+
   token_roots[t].referenced = false;
   try_release_token(t);
+
+  for(int i=0;i<token_roots.size();i++)
+    if (token_is_used(i))
+      assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
 }
 
 bool reg_heap::token_is_used(int t) const
@@ -1503,6 +1511,10 @@ bool reg_heap::token_is_used(int t) const
 
 int reg_heap::copy_token(int t)
 {
+  for(int i=0;i<token_roots.size();i++)
+    if (token_is_used(i))
+      assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
+
   check_used_regs();
 
   int t2 = get_unused_token();
@@ -1537,6 +1549,11 @@ int reg_heap::copy_token(int t)
   }
   */
   check_used_regs();
+
+  for(int i=0;i<token_roots.size();i++)
+    if (token_is_used(i))
+      assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
+
   return t2;
 }
 
