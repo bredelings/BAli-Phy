@@ -623,14 +623,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       auto& RC1 = computations[rc1];
       assert(RC1.temp == mark_call_result or RC1.temp == mark_result);
 
-      // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-      if (access(R1).re_evaluate)
-      {
-	assert(has_computation(token,R1));
-	assert(computation_result_for_reg(token,R1));
-	regs_to_re_evaluate.push_back(R1);
-      }
-
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
       for(const auto& wrc2: clean_weak_refs(RC1.used_by,computations))
       {
@@ -674,14 +666,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       int rc1 = computation_index_for_reg(token,R1);
       auto& RC1 = computations[rc1];
       assert(RC1.temp == mark_call_result);
-
-      // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-      if (access(R1).re_evaluate)
-      {
-	assert(has_computation(token,R1));
-	assert(computation_result_for_reg(token,R1));
-	regs_to_re_evaluate.push_back(R1);
-      }
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
       for(const auto& wrc2: clean_weak_refs(RC1.used_by, computations))
@@ -756,6 +740,10 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     // Since the computation may be different, we don't know if the value has changed.
     clear_computation_result(token, R);
+
+    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+    if (access(R).re_evaluate)
+      regs_to_re_evaluate.push_back(R);
   }
 
   //  std::cerr<<"\n call+result: "<<result_may_be_changed.size()<<"\n";
@@ -790,6 +778,10 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     clear_computation_result(token,R);
     clear_call_for_reg(token,R);
     clear_used_inputs_for_reg(token,R);
+
+    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+    if (access(R).re_evaluate)
+      regs_to_re_evaluate.push_back(R);
   }
 
   // Finally set the new value.
