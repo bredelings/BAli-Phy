@@ -694,10 +694,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       remove_computation(token,R);
       add_computation(token,R);
     }
-    computation_for_reg(token,R).used_by.clear();
-    clear_computation_result(token,R);
-    clear_call_for_reg(token,R);
-    clear_used_inputs_for_reg(token,R);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
