@@ -45,35 +45,16 @@ closure resolve_refs(const vector<Module>& P, closure&& C)
   return C;
 }
 
-void context::make_terminal_token() const
-{
-  token = memory_->make_terminal_token(token);
-}
-
 void context::make_root_tip() const
 {
-  make_terminal_token();
+  //  make_terminal_token();
   make_root_token();
-}
-
-object_ptr<reg_heap>& context::memory_terminal() const 
-{
-  make_terminal_token();
-
-  return memory_;
 }
 
 void context::make_root_token() const
 {
   memory_->reroot_mappings_at(token);
   
-}
-
-object_ptr<reg_heap>& context::memory_root() const 
-{
-  make_root_token();
-
-  return memory_;
 }
 
 object_ptr<reg_heap>& context::memory() const {return memory_;}

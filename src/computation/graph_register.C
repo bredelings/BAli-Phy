@@ -913,30 +913,6 @@ void pivot_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<int>& 
 }
 
 
-int reg_heap::make_terminal_token(int t)
-{
-  if (is_terminal_token(t))
-    ;
-  else if (is_root_token(t) and token_roots[t].children.size() == 1)
-  {
-    // TODO - Allow setting things directly at the root in this case, instead of requiring terminal tokens.
-    int child = token_roots[t].children[0];
-    reroot_mappings_at(child);
-    assert(is_terminal_token(t));
-  }
-  else
-  {
-    int new_token = copy_token(t);
-    reroot_mappings_at(t); // FIXME - we shouldn't have to do this!
-    assert(is_terminal_token(new_token));
-    release_token(t);
-    t = new_token;
-    assert(is_terminal_token(t));
-  }
-  assert(is_terminal_token(t));
-  return t;
-}
-
 void reg_heap::reroot_mappings_at(int t)
 {
   if (is_root_token(t)) return;
