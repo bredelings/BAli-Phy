@@ -938,9 +938,45 @@ void reg_heap::reroot_mappings_at(int t)
   token_roots[t].children.push_back(parent);
   root_token = t;
 
+  invalidate_shared_regs(parent,t);
+
+  for(int t2: token_roots[t].children)
+    assert(token_roots[t2].version <= token_roots[t].version);
+
   try_release_token(parent);
 
   assert(is_root_token(t));
+}
+
+void reg_heap::mark_completely_dirty(int t)
+{
+  for(int t2:token_roots[t].children)
+    t = std::max(t,token_roots[t2].version+1);
+}
+
+bool reg_heap::is_dirty(int t) const
+{
+  for(int t2:token_roots[t].children)
+    if (token_roots[t].version > token_roots[t2].version)
+      return true;
+  return false;
+}
+
+bool reg_heap::is_completely_dirty(int t) const
+{
+  if (token_roots[t].children.empty()) return false;
+
+  for(int t2:token_roots[t].children)
+    if (token_roots[t].version <= token_roots[t2].version)
+      return false;
+  return true;
+}
+  
+
+int reg_heap::invalidate_shared_regs(int t1, int t2)
+{
+  assert(token_roots[t1].version >= token_roots[t2].version);
+  token_roots[t2].version = token_roots[t1].version;
 }
 
 std::vector<int> reg_heap::used_regs_for_reg(int t, int r) const

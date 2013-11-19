@@ -184,8 +184,8 @@ public:
     /// These are the regs we need to check for new uses to split.
     std::vector<int> modified_modifiables;
 
-    bool used;
-    graph_roots():used(false) {}
+    bool used = false;
+    int version = 0;
   };
 
   const std::vector<int>& get_temp_heads() const {return temp;}
@@ -293,6 +293,10 @@ public:
   void set_reg_value(int index, closure&&, int t);
   bool reg_is_shared(int t, int r) const;
   int split_reg(int t, int r);
+  int invalidate_shared_regs(int t1, int t2);
+  void mark_completely_dirty(int t);
+  bool is_completely_dirty(int t) const;
+  bool is_dirty(int t) const;
 
   int incremental_evaluate(int R, int t, bool = true);
 
