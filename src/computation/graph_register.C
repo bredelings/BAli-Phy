@@ -965,15 +965,16 @@ bool reg_heap::is_completely_dirty(int t) const
 }
   
 // find regs in t2 that call values only active in t1.  We look at regs in split, and append results to callers
-void reg_heap::find_callers(int t1, int t2, const vector<int>& split, vector<int>& callers, int mark)
+void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split, vector<int>& callers, int mark)
 {
-  for(int i=0;i<split.size();i++)
+  for(int i=start;i<split.size();i++)
   {
     int r1 = split[i];
     int rc1 = computation_index_for_reg(t1,r1);
+    auto& RC1 = computations[rc1];
 
     // Look at computations in t2 that call the old value in t1.
-    for(const auto& wrc2: clean_weak_refs(computations[rc1].called_by, computations))
+    for(const auto& wrc2: clean_weak_refs(RC1.called_by, computations))
     {
       int rc2 = wrc2.get(computations);
 
@@ -984,7 +985,7 @@ void reg_heap::find_callers(int t1, int t2, const vector<int>& split, vector<int
       if (computation_index_for_reg(t2,r2) != rc2) continue;
 
       // Skip this one if its been marked high enough already
-      if (RC2.temp < mark) continue;
+      if (RC2.temp >= mark) continue;
 
       // There (usually) shouldn't be a back edge to r2 if r2 has no result.
       assert(RC2.result);
@@ -997,15 +998,16 @@ void reg_heap::find_callers(int t1, int t2, const vector<int>& split, vector<int
 }
 
 // find regs in t2 that used values only active in t1.  We look at regs in split, and append results to callers
-void reg_heap::find_users(int t1, int t2, const vector<int>& split, vector<int>& users, int mark)
+void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, vector<int>& users, int mark)
 {
-  for(int i=0;i<split.size();i++)
+  for(int i=start;i<split.size();i++)
   {
     int r1 = split[i];
     int rc1 = computation_index_for_reg(t1,r1);
+    auto& RC1 = computations[rc1];
 
     // Look at computations in t2 that call the old value in t1.
-    for(const auto& wrc2: clean_weak_refs(computations[rc1].used_by, computations))
+    for(const auto& wrc2: clean_weak_refs(RC1.used_by, computations))
     {
       int rc2 = wrc2.get(computations);
 
@@ -1016,7 +1018,7 @@ void reg_heap::find_users(int t1, int t2, const vector<int>& split, vector<int>&
       if (computation_index_for_reg(t2,r2) != rc2) continue;
 
       // Skip this one if its been marked high enough already
-      if (RC2.temp < mark) continue;
+      if (RC2.temp >= mark) continue;
 
       // There (usually) shouldn't be a back edge to r2 if r2 has no result.
       assert(RC2.result);
