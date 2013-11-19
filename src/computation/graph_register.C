@@ -972,7 +972,69 @@ bool reg_heap::is_completely_dirty(int t) const
   return true;
 }
   
+/*
+void find_callers_in_token(int t1, int t2, const vector<int>& invalid, vector<int>& callers)
+{
 
+  for(int i=0;i<invalid.size();i++)
+  {
+    int 
+  }
+}
+    // Second find all users or callers of regs where the result AND CALL are out of date.
+    for(;i<call_and_result_may_be_changed.size();i++)
+    {
+      int R1 = call_and_result_may_be_changed[i];
+      int rc1 = computation_index_for_reg(token,R1);
+      auto& RC1 = computations[rc1];
+      assert(RC1.temp == mark_call_result);
+
+      // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+      if (access(R1).re_evaluate)
+      {
+	assert(has_computation(token,R1));
+	assert(computation_result_for_reg(token,R1));
+	regs_to_re_evaluate.push_back(R1);
+      }
+
+      // Scan regs that used R2 directly and put them on the invalid-call/result list.
+      for(const auto& wrc2: clean_weak_refs(RC1.used_by, computations))
+      {
+	int rc2 = wrc2.get(computations);
+
+	auto& RC2 = computations[rc2];
+	int R2 = RC2.source;
+
+	if (computation_index_for_reg(token,R2) != rc2) continue;
+
+	if (RC2.temp == mark_call_result) continue;
+
+	RC2.temp = mark_call_result;
+	assert(computation_index_for_reg(token,R2) == rc2);
+	call_and_result_may_be_changed.push_back(R2);
+      }
+
+      // Scan regs that call R2 directly and put them on the invalid-result list.
+      for(const auto& wrc2: clean_weak_refs(RC1.called_by, computations))
+      {
+	int rc2 = wrc2.get(computations);
+
+	computation& RC2 = computations[rc2];
+	int R2 = RC2.source;
+
+	if (computation_index_for_reg(token,R2) != rc2) continue;
+
+	if (RC2.temp != -1) continue;
+
+	// If the reg calling us has no result, then we don't need to clear its result
+	if (not computation_result_for_reg(token,R2) and not reg_is_shared(token,R2)) continue;
+
+	RC2.temp = mark_result;
+	assert(computation_index_for_reg(token,R2) == rc2);
+	result_may_be_changed.push_back(R2);
+      }
+    }
+*/
 int reg_heap::invalidate_shared_regs(int t1, int t2)
 {
   // find all regs in t2 that are not shared from t1
@@ -981,6 +1043,13 @@ int reg_heap::invalidate_shared_regs(int t1, int t2)
     if (token_roots[t1].virtual_mapping[i].rc != token_roots[t2].virtual_mapping[i].rc
 	and token_roots[t1].virtual_mapping[i].rc and token_roots[t2].virtual_mapping[i].rc)
       modified.push_back(i);
+
+  const int mark_call_result = 1;
+  const int mark_result = 2;
+
+  vector< int >& call_and_result_may_be_changed = get_scratch_list();
+  vector< int >& result_may_be_changed = get_scratch_list();
+  vector< int >& regs_to_re_evaluate = get_scratch_list();
 
   // find all regs in t2 that are not shared from t1.  Nothing needs to be done to these - they are already split.
   // Anything that uses these needs to be unshared.
@@ -995,6 +1064,12 @@ int reg_heap::invalidate_shared_regs(int t1, int t2)
   // (a) change the computation for some modifiables
   // (b) run invalidate_shared_regs?
 
+  release_scratch_list();
+  release_scratch_list();
+  release_scratch_list();
+  assert(n_active_scratch_lists == 0);
+
+  // Mark this context as not having computations that need to be unshared
   assert(token_roots[t1].version >= token_roots[t2].version);
   token_roots[t2].version = token_roots[t1].version;
 }

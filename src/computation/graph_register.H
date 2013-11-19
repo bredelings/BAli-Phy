@@ -181,8 +181,8 @@ public:
 
     std::vector<int> modified;
 
-    /// These are the regs we need to check for new uses to split.
-    std::vector<int> modified_modifiables;
+    /// These are the regs that must be evaluated when the context becomes active.
+    std::vector<int> regs_to_re_evaluate;
 
     bool used = false;
     int version = 0;
