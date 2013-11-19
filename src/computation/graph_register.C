@@ -599,7 +599,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
 void reg_heap::set_reg_value(int P, closure&& C, int token)
 {
   assert(reg_is_changeable(P));
-  assert(is_terminal_token(token)); 
+  assert(is_root_token(token)); 
 
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
