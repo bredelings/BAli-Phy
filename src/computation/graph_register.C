@@ -842,7 +842,10 @@ void reg_heap::reroot_mappings_at(int t)
   // Now this context should be a direct child of the root
   assert(is_root_token(parent));
 
-  invalidate_shared_regs(parent,t);
+  if (token_roots[parent].version > token_roots[t].version)
+    invalidate_shared_regs(parent,t);
+
+  assert(token_roots[t].version >= token_roots[parent].version);
 
   //  pivot_mapping(token_roots[parent].modified, token_roots[parent].virtual_mapping,
   //		    token_roots[t].modified, token_roots[t].virtual_mapping);
