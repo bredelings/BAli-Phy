@@ -2037,6 +2037,11 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	// Otherwise, set the reduction result.
 	else
 	{
+	  if (not evaluate_changeable)
+	  {
+	    computation_for_reg(t,R).used_inputs.clear();
+	    return R;
+	  }
 	  int rc = unshare_and_clear_result(t,R);
 	  computations[rc].used_inputs.clear();
 	  
