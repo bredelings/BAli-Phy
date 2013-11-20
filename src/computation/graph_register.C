@@ -1601,6 +1601,11 @@ int reg_heap::parent_token(int t) const
   return token_roots[t].parent;
 }
 
+const vector<int>& reg_heap::children_of_token(int t) const
+{
+  return token_roots[t].children;
+}
+
 void reg_heap::release_token(int t)
 {
   for(int i=0;i<token_roots.size();i++)
