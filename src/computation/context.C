@@ -65,8 +65,8 @@ std::vector<std::pair<std::string,int>>& context::parameters() const {return mem
 
 std::map<std::string, int>& context::identifiers() const {return memory()->get_identifiers();}
 
-const std::vector<int>& context::triggers() const {return memory()->triggers(token);}
-      std::vector<int>& context::triggers()       {return memory()->triggers(token);}
+const std::vector<int>& context::triggers() const {make_root_token();return memory()->triggers(token);}
+      std::vector<int>& context::triggers()       {make_root_token();return memory()->triggers(token);}
 
 reg& context::access(int i) const {return memory()->access(i);}
 

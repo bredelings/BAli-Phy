@@ -200,8 +200,8 @@ public:
   const std::map<std::string,int>& get_identifiers() const {return identifiers;}
         std::map<std::string,int>& get_identifiers()       {return identifiers;}
 
-  const std::vector<int>& triggers(int t) const {return token_roots[t].triggers;}
-        std::vector<int>& triggers(int t)       {return token_roots[t].triggers;}
+  const std::vector<int>& triggers(int t) const;
+        std::vector<int>& triggers(int t);
 
   /// Allocate a reg in context t and put it on the top of the temporary-head stack.
   int push_temp_head();

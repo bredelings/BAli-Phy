@@ -244,6 +244,9 @@ void vm_add(vector<int>& m, vector<reg_heap::address>& v, int r, reg_heap::addre
   assert(m[A.index] == r);
 }
 
+const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t));return token_roots[t].triggers;}
+      std::vector<int>& reg_heap::triggers(int t)       {assert(is_root_token(t));return token_roots[t].triggers;}
+
 const computation& reg_heap::local_computation_for_reg(int t, int r) const 
 { 
   int rc = local_computation_index_for_reg(t,r);
