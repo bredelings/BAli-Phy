@@ -1061,11 +1061,11 @@ void reg_heap::reclaim_used(int r)
   // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
   remove_from_used_list(r);
 
-  for(int t=0;t<token_roots.size();t++)
+  for(int t=1;t<token_roots.size();t++)
     if (token_is_used(t) and has_local_computation(t,r))
       remove_computation(t, r);
 
-  for(int t=0;t<token_roots.size();t++)
+  for(int t=1;t<token_roots.size();t++)
     assert(not has_local_computation(t,r));
 
   clear_C(r);
@@ -1112,17 +1112,17 @@ void reg_heap::get_more_memory()
 void reg_heap::expand_memory(int s)
 {
   int old_size = size();
-  for(auto& tr: token_roots)
-    assert(tr.virtual_mapping.size() == old_size);
+  for(int t=1;t<token_roots.size();t++)
+    assert(token_roots[t].virtual_mapping.size() == old_size);
 
   base_pool_t::expand_memory(s);
 
   // Extend virtual mappings, with virtual_mapping[i] = 0;
-  for(auto& tr: token_roots)
+  for(int t=1;t<token_roots.size();t++)
   {
-    tr.virtual_mapping.resize(size());
+    token_roots[t].virtual_mapping.resize(size());
     for(int i=old_size;i<size();i++)
-      assert(tr.virtual_mapping[i].rc == 0);
+      assert(token_roots[t].virtual_mapping[i].rc == 0);
   }
 }
 
@@ -1252,8 +1252,8 @@ int reg_heap::get_unused_token()
       assert(addr.rc == 0);
   }
 
-  for(auto& tr: token_roots)
-    assert(tr.virtual_mapping.size() == size());
+  for(int i=1;i<token_roots.size();i++)
+    assert(token_roots[i].virtual_mapping.size() == size());
 
   int t = unused_tokens.back();
   unused_tokens.pop_back();
@@ -1566,7 +1566,8 @@ void reg_heap::try_release_token(int t)
   if (parent != -1)
     try_release_token(parent);
 
-  if (token_roots.size() - unused_tokens.size() > 0)
+  // The -1 accounts for the unused token 0.
+  if (token_roots.size() - unused_tokens.size() -1 > 0)
     assert(root_token != -1);
 
 #ifdef DEBUG_MACHINE
@@ -1606,14 +1607,14 @@ const vector<int>& reg_heap::children_of_token(int t) const
 
 void reg_heap::release_token(int t)
 {
-  for(int i=0;i<token_roots.size();i++)
+  for(int i=1;i<token_roots.size();i++)
     if (token_is_used(i))
       assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
 
   token_roots[t].referenced = false;
   try_release_token(t);
 
-  for(int i=0;i<token_roots.size();i++)
+  for(int i=1;i<token_roots.size();i++)
     if (token_is_used(i))
       assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
 }
@@ -1625,7 +1626,7 @@ bool reg_heap::token_is_used(int t) const
 
 int reg_heap::copy_token(int t)
 {
-  for(int i=0;i<token_roots.size();i++)
+  for(int i=1;i<token_roots.size();i++)
     if (token_is_used(i))
       assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
 
@@ -1664,7 +1665,7 @@ int reg_heap::copy_token(int t)
   */
   check_used_regs();
 
-  for(int i=0;i<token_roots.size();i++)
+  for(int i=1;i<token_roots.size();i++)
     if (token_is_used(i))
       assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
 
@@ -1687,7 +1688,8 @@ int reg_heap::add_identifier(const string& name)
 
 reg_heap::reg_heap()
   :base_pool_t(1),
-   computations(1)
+   computations(1),
+   token_roots(1)
 { 
   //  computations.collect_garbage = [this](){collect_garbage();};
   computations.collect_garbage = [](){};
