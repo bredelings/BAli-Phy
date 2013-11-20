@@ -244,9 +244,6 @@ public:
   /// Acquire a copy of a token
   int copy_token(int);
 
-  /*---- Ownership ------*/
-  bool reg_is_shared(int) const;
-
   /*----- Graph walking ------*/
   void find_all_regs_in_context(int, std::vector<int>&) const;
   void find_all_used_regs_in_context(int, std::vector<int>&) const;
@@ -294,7 +291,8 @@ public:
   /// Update the value of a non-constant, non-computed index
   void set_reg_value(int index, closure&&, int t);
   bool reg_is_shared(int t, int r) const;
-  int split_reg(int t, int r);
+  int unshare_and_clear(int t, int r);
+  int unshare_and_clear_result(int t, int r);
   int invalidate_shared_regs(int t1, int t2);
   void mark_completely_dirty(int t);
   bool is_completely_dirty(int t) const;

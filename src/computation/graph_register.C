@@ -651,7 +651,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   {
     assert(has_computation(token,R));
 
-    assert(R == P or computation_result_for_reg(token,R) or reg_is_shared(token,R));
+    //    assert(R == P or computation_result_for_reg(token,R) or reg_is_shared(token,R));
 
     assert(R == P or reg_has_call(token,R));
 
@@ -666,7 +666,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     //    std::cerr<<R<<" ";
 
-    split_reg(token, R);
+    unshare_and_clear_result(token, R);
 
     // Since the computation may be different, we don't know if the value has changed.
     clear_computation_result(token, R);
@@ -699,11 +699,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     //    std::cerr<<R<<" ";
 
-    if (reg_is_shared(token,R))
-    {
-      remove_computation(token,R);
-      add_computation(token,R);
-    }
+    unshare_and_clear(token,R);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
@@ -727,11 +723,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   }
 
   check_used_regs();
-}
-
-bool reg_heap::reg_is_shared(int t, int r) const
-{
-  return true;
 }
 
 int reg_heap::add_computation(int t, int r)
@@ -1367,10 +1358,17 @@ void reg_heap::check_used_regs() const
     check_used_reg( r.addr() );
 }
 
-int reg_heap::split_reg(int t, int r)
+int reg_heap::unshare_and_clear(int t, int r)
 {
-  int rcA = remove_computation(t,r);
+  int rc = remove_computation(t,r);
   add_computation(t,r);
+  return rc;
+}
+
+int reg_heap::unshare_and_clear_result(int t, int r)
+{
+  int rcA = unshare_and_clear(t,r);
+
   if (computations[rcA].call) 
     set_call(t,r,computations[rcA].call);
   for(int rc: computations[rcA].used_inputs)
@@ -1904,7 +1902,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	}
 	
 	// split the reg, so that we can set the result, but only for this context
-	split_reg(t,R);
+	unshare_and_clear_result(t,R);
 
 	// R gets its result from S.
 	set_computation_result_for_reg(t, R);
@@ -2039,7 +2037,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	// Otherwise, set the reduction result.
 	else
 	{
-	  int rc = split_reg(t,R);
+	  int rc = unshare_and_clear_result(t,R);
 	  computations[rc].used_inputs.clear();
 	  
 	  bool result_is_index_var = result.exp->head->type() == index_var_type;
