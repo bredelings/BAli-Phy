@@ -614,7 +614,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   vector< int >& call_and_result_may_be_changed = get_scratch_list();
   vector< int >& result_may_be_changed = get_scratch_list();
-  vector< int >& regs_to_re_evaluate = get_scratch_list();
+  vector< int >& regs_to_re_evaluate = token_roots[token].regs_to_re_evaluate;
 
   // The index that we just altered cannot be known to be unchanged.
   call_and_result_may_be_changed.push_back(P);
@@ -717,12 +717,14 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   release_scratch_list();
   release_scratch_list();
-  release_scratch_list();
   assert(n_active_scratch_lists == 0);
 
-  reroot_mappings_at(token);
-  for(int R: regs_to_re_evaluate)
-    incremental_evaluate(R,token,true);
+  if (token == root_token)
+  {
+    for(int R: regs_to_re_evaluate)
+      incremental_evaluate(R,token,true);
+    regs_to_re_evaluate.clear();
+  }
 
   check_used_regs();
 }
@@ -867,6 +869,11 @@ void reg_heap::reroot_mappings_at(int t)
   try_release_token(parent);
 
   assert(is_root_token(t));
+
+  // re-evaluate all the regs that need to be up-to-date.
+  for(int R: token_roots[t].regs_to_re_evaluate)
+    incremental_evaluate(R,t,true);
+  token_roots[t].regs_to_re_evaluate.clear();
 }
 
 void reg_heap::mark_completely_dirty(int t)
