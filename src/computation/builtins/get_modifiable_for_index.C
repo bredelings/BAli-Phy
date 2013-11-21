@@ -8,9 +8,7 @@ extern "C" closure builtin_function_get_modifiable_for_index(OperationArgs& Args
 {
   assert(not Args.evaluate_changeables());
 
-  int token = *Args.evaluate_as<Int>(0);
-
-  int R1 = *Args.evaluate_as<Int>(1);
+  int R1 = *Args.evaluate_as<Int>(0);
 
   return {index_var(0),{R1}};
 }

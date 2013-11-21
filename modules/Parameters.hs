@@ -3,7 +3,7 @@ module Parameters where
 import Range;
 
 builtin builtin_set_modifiable_value 3 "set_modifiable_value";
-builtin is_changeable 2 "is_changeable";
+builtin is_changeable 1 "is_changeable";
 builtin is_modifiable 1 "is_modifiable";
 builtin get_modifiable_index 1 "get_modifiable_index";
 builtin builtin_new_modifiable 1 "new_modifiable";

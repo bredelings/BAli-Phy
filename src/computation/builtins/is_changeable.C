@@ -8,9 +8,7 @@ extern "C" closure builtin_function_is_changeable(OperationArgs& Args)
 {
   assert(not Args.evaluate_changeables());
 
-  int token = *Args.evaluate_as<Int>(0);
-
-  int R1 = Args.evaluate_slot_to_reg(1);
+  int R1 = Args.evaluate_slot_to_reg(0);
 
   const reg_heap& M = Args.memory();
   if (M.reg_is_changeable(R1))
