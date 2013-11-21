@@ -979,7 +979,7 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   vector< int >& call_and_result_may_be_changed = get_scratch_list();
   vector< int >& result_may_be_changed = get_scratch_list();
-  vector< int >& regs_to_re_evaluate = get_scratch_list();
+  vector< int >& regs_to_re_evaluate = token_roots[t2].regs_to_re_evaluate;
 
   find_callers(t1, t2, 0, modified, result_may_be_changed, mark_result);
   find_users(t1, t2, 0, modified, call_and_result_may_be_changed, mark_call_result);
@@ -1039,7 +1039,6 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   // (a) change the computation for some modifiables
   // (b) run invalidate_shared_regs?
 
-  release_scratch_list();
   release_scratch_list();
   release_scratch_list();
   assert(n_active_scratch_lists == 0);
