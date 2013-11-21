@@ -8,8 +8,6 @@ extern "C" closure builtin_function_new_modifiable(OperationArgs& Args)
 {
   assert(not Args.evaluate_changeables());
 
-  int token = *Args.evaluate_as<Int>(0);
-
   reg_heap& M = Args.memory();
 
   // Allocate a reg, and fill it with a modifiable of the correct index
