@@ -48,13 +48,13 @@ closure resolve_refs(const vector<Module>& P, closure&& C)
 void context::make_clean() const
 {
   if (memory()->is_dirty(token))
-    token = memory()->copy_token(token);
+    token = memory()->switch_to_child_token(token);
 }
 
 void context::make_root_tip() const
 {
   if (memory()->children_of_token(token).size() >= 2)
-    token = memory()->copy_token(token);
+    token = memory()->switch_to_child_token(token);
   make_root_token();
 }
 
