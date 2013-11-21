@@ -873,8 +873,9 @@ void reg_heap::reroot_mappings_at(int t)
 
 void reg_heap::mark_completely_dirty(int t)
 {
+  int& version = token_roots[t].version;
   for(int t2:token_roots[t].children)
-    t = std::max(t,token_roots[t2].version+1);
+    version = std::max(version, token_roots[t2].version+1);
 }
 
 bool reg_heap::is_dirty(int t) const
