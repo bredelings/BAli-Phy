@@ -655,28 +655,18 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     assert(R == P or reg_has_call(token,R));
 
-    int rc1 = computation_index_for_reg(token,R);
+    auto& RC = computation_for_reg(token,R);
 
-    auto& RC = computations[rc1];
-
-    // Deal with these in round 2.
-    if (RC.temp == mark_call_result) continue;
+    if (RC.temp > mark_result) continue;
 
     RC.temp = -1;
 
-    //    std::cerr<<R<<" ";
-
     unshare_and_clear_result(token, R);
-
-    // Since the computation may be different, we don't know if the value has changed.
-    clear_computation_result(token, R);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
       regs_to_re_evaluate.push_back(R);
   }
-
-  //  std::cerr<<"\n call+result: "<<result_may_be_changed.size()<<"\n";
 
   // Clear the marks: 2a
   for(int R: call_and_result_may_be_changed)
@@ -686,18 +676,13 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     // Put this back when we stop making spurious used_by edges
     //    assert(R == P or reg_has_call(token,R));
 
-    int rc1 = computation_index_for_reg(token,R);
-
-    auto& RC = computations[rc1];
+    auto& RC = computation_for_reg(token,R);
 
     assert(RC.temp == mark_call_result);
 
-    // Clear the mark
     RC.temp = -1;
 
     assert(R == P or not is_modifiable(access(R).C.exp));
-
-    //    std::cerr<<R<<" ";
 
     unshare_and_clear(token,R);
 
