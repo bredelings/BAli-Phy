@@ -1847,6 +1847,7 @@ map<int,string> get_constants(const reg_heap& C, int t);
 int reg_heap::incremental_evaluate(int R, int t)
 {
   assert(not t or is_root_token(t));
+  assert(not t or is_completely_dirty(t));
   assert(is_valid_address(R));
   assert(is_used(R));
 

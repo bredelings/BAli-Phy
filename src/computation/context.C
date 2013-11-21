@@ -86,6 +86,8 @@ void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
 int context::incremental_evaluate(int R, bool ec) const 
 {
   make_root_token();
+  if (ec) 
+    memory()->mark_completely_dirty(token);
   return memory()->incremental_evaluate(R,ec?token:0);
 }
 
