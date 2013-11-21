@@ -991,6 +991,12 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     if (RC.temp > mark_result) continue;
 
     RC.temp = -1;
+
+    share_and_clear_result(t2,r);
+
+    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+    if (access(r).re_evaluate)
+      regs_to_re_evaluate.push_back(r);
   }
 
   for(int r:call_and_result_may_be_changed)
@@ -1000,6 +1006,12 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     if (RC.temp > mark_call_result) continue;
 
     RC.temp = -1;
+
+    share_and_clear(t2,r);
+
+    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+    if (access(r).re_evaluate)
+      regs_to_re_evaluate.push_back(r);
   }
 
   for(int r:modified)
@@ -1356,6 +1368,47 @@ int reg_heap::unshare_and_clear(int t, int r)
 int reg_heap::unshare_and_clear_result(int t, int r)
 {
   int rcA = unshare_and_clear(t,r);
+
+  if (computations[rcA].call) 
+    set_call(t,r,computations[rcA].call);
+  for(int rc: computations[rcA].used_inputs)
+  {
+    int r2 = computations[rc].source;
+    set_used_input(t,r,r2);
+  }
+  return rcA;
+}
+
+void reg_heap::replace_computation(int t, int r, int rc1, int rc2)
+{
+  assert(t);
+  assert(rc1);
+  assert(rc2);
+
+  if (token_roots[t].virtual_mapping[r].rc != rc1) return;
+
+  token_roots[t].virtual_mapping[r].rc = rc2;
+
+  for(int t2: token_roots[t].children)
+    replace_computation(t2, r, rc1, rc2);
+}
+
+int reg_heap::share_and_clear(int t, int r)
+{
+  int rc1 = token_roots[t].virtual_mapping[r].rc;
+  assert(rc1);
+
+  int rc2 = computations.allocate();
+  computations.access_unused(rc2).source = r;
+
+  replace_computation(t, r, rc1, rc2);
+
+  return rc1;
+}
+
+int reg_heap::share_and_clear_result(int t, int r)
+{
+  int rcA = share_and_clear(t,r);
 
   if (computations[rcA].call) 
     set_call(t,r,computations[rcA].call);

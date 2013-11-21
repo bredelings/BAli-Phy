@@ -296,6 +296,9 @@ public:
   bool reg_is_shared(int t, int r) const;
   int unshare_and_clear(int t, int r);
   int unshare_and_clear_result(int t, int r);
+  void replace_computation(int t, int r, int rc1, int rc2);
+  int share_and_clear(int t, int r);
+  int share_and_clear_result(int t, int r);
   void invalidate_shared_regs(int t1, int t2);
   void mark_completely_dirty(int t);
   bool is_completely_dirty(int t) const;
