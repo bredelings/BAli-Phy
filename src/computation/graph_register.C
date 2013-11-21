@@ -1648,6 +1648,8 @@ int reg_heap::copy_token(int t)
 
   token_roots[t].children.push_back(t2);
 
+  token_roots[t2].version = token_roots[t].version;
+
   for(int r: token_roots[t].modified)
     if (has_local_computation(t,r))
       copy_computation(t,t2,r);
