@@ -957,7 +957,7 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
   }
 }
 
-int reg_heap::invalidate_shared_regs(int t1, int t2)
+void reg_heap::invalidate_shared_regs(int t1, int t2)
 {
   const int mark_call_result = 1;
   const int mark_result = 2;

@@ -293,7 +293,7 @@ public:
   bool reg_is_shared(int t, int r) const;
   int unshare_and_clear(int t, int r);
   int unshare_and_clear_result(int t, int r);
-  int invalidate_shared_regs(int t1, int t2);
+  void invalidate_shared_regs(int t1, int t2);
   void mark_completely_dirty(int t);
   bool is_completely_dirty(int t) const;
   bool is_dirty(int t) const;
