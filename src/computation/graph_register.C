@@ -717,6 +717,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   if (token == root_token)
   {
+    if (regs_to_re_evaluate.size())
+      mark_completely_dirty(token);
     for(int R: regs_to_re_evaluate)
       incremental_evaluate(R,token);
     regs_to_re_evaluate.clear();
@@ -862,6 +864,8 @@ void reg_heap::reroot_mappings_at(int t)
   assert(is_root_token(t));
 
   // re-evaluate all the regs that need to be up-to-date.
+  if (token_roots[t].regs_to_re_evaluate.size())
+    mark_completely_dirty(t);
   for(int R: token_roots[t].regs_to_re_evaluate)
     incremental_evaluate(R,t);
   token_roots[t].regs_to_re_evaluate.clear();
