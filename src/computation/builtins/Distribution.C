@@ -177,8 +177,6 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
 {
   // ?? assert(not Args.evaluate_changeables());
 
-  int token = Args.current_token();
-
   const reg_heap& M = Args.memory();
 
   //------------- 1. Get arguments alpha, N, D -----------------
