@@ -368,7 +368,6 @@ void context::set_parameter_value_(int index, closure&& C)
 void context::set_reg_value(int P, closure&& C)
 {
   make_clean();
-  make_root_token();
   // FIXME - we can only change values on contexts that are not dirty!
   // BUT this is ultimately checked in the reg_heap itself.
   return memory()->set_reg_value(P, std::move(C), token);
