@@ -90,12 +90,17 @@ const closure& context::access_result_for_reg(int i) const {return memory()->acc
 reg& context::operator[](int i) const {return memory()->access(i);}
 
 void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
-int context::incremental_evaluate(int R, bool ec) const 
+
+int context::incremental_evaluate(int R) const 
 {
   make_root_token();
-  if (ec) 
-    memory()->mark_completely_dirty(token);
-  return memory()->incremental_evaluate(R,ec?token:0);
+  memory()->mark_completely_dirty(token);
+  return memory()->incremental_evaluate(R,token);
+}
+
+int context::incremental_evaluate_unchangeable(int R) const 
+{
+  return memory()->incremental_evaluate(R,0);
 }
 
 int context::allocate() const {return memory()->allocate();}
@@ -218,7 +223,10 @@ closure context::lazy_evaluate_expression_(closure&& C, bool ec) const
     int R = push_temp_head();
     set_C(R, std::move(C) );
 
-    R = incremental_evaluate(R,ec?token:0);
+    if (ec)
+      R = incremental_evaluate(R);
+    else
+      R = incremental_evaluate_unchangeable(R);
     const closure& result = access_result_for_reg(R);
     
     pop_temp_head();
@@ -261,7 +269,7 @@ bool context::parameter_is_modifiable(int index) const
 {
   int R = get_parameter_reg(index);
 
-  int R2 = memory()->incremental_evaluate(R,0);
+  int R2 = incremental_evaluate_unchangeable(R);
 
   return is_modifiable(access(R2).C.exp);
 }
@@ -905,7 +913,7 @@ int context::find_parameter_modifiable_reg(int index) const
 {
   int R = get_parameter_reg(index);
 
-  int R2 = memory()->incremental_evaluate(R, 0);
+  int R2 = incremental_evaluate_unchangeable(R);
 
   if (R != R2)
     parameters()[index].second = R2;
