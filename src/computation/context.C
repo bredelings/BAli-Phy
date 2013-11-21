@@ -86,7 +86,7 @@ void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
 int context::incremental_evaluate(int R, bool ec) const 
 {
   make_root_token();
-  return memory()->incremental_evaluate(R,token,ec);
+  return memory()->incremental_evaluate(R,ec?token:0);
 }
 
 int context::allocate() const {return memory()->allocate();}
@@ -209,7 +209,7 @@ closure context::lazy_evaluate_expression_(closure&& C, bool ec) const
     int R = push_temp_head();
     set_C(R, std::move(C) );
 
-    R = incremental_evaluate(R,ec);
+    R = incremental_evaluate(R,ec?token:0);
     const closure& result = access_result_for_reg(R);
     
     pop_temp_head();
@@ -252,7 +252,7 @@ bool context::parameter_is_modifiable(int index) const
 {
   int R = get_parameter_reg(index);
 
-  int R2 = incremental_evaluate(R, false);
+  int R2 = memory()->incremental_evaluate(R,0);
 
   return is_modifiable(access(R2).C.exp);
 }
@@ -483,7 +483,7 @@ void context::set_compute_expression_(int i, closure&& C)
 void context::set_re_evaluate(int i, bool b)
 {
   int& R = heads()[i];
-  R = incremental_evaluate(R,true);
+  R = incremental_evaluate(R);
   if (memory()->reg_is_changeable(R))
     access(R).re_evaluate = b;
 }
@@ -896,7 +896,7 @@ int context::find_parameter_modifiable_reg(int index) const
 {
   int R = get_parameter_reg(index);
 
-  int R2 = incremental_evaluate(R, false);
+  int R2 = memory()->incremental_evaluate(R, 0);
 
   if (R != R2)
     parameters()[index].second = R2;

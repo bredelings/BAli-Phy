@@ -300,7 +300,7 @@ public:
   void find_callers(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
   void find_users(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
 
-  int incremental_evaluate(int R, int t, bool = true);
+  int incremental_evaluate(int R, int t);
 
   std::vector<int>& get_scratch_list() const;
   void release_scratch_list() const;

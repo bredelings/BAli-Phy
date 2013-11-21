@@ -718,7 +718,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   if (token == root_token)
   {
     for(int R: regs_to_re_evaluate)
-      incremental_evaluate(R,token,true);
+      incremental_evaluate(R,token);
     regs_to_re_evaluate.clear();
   }
 
@@ -863,7 +863,7 @@ void reg_heap::reroot_mappings_at(int t)
 
   // re-evaluate all the regs that need to be up-to-date.
   for(int R: token_roots[t].regs_to_re_evaluate)
-    incremental_evaluate(R,t,true);
+    incremental_evaluate(R,t);
   token_roots[t].regs_to_re_evaluate.clear();
 }
 
@@ -1061,11 +1061,11 @@ void reg_heap::reclaim_used(int r)
   // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
   remove_from_used_list(r);
 
-  for(int t=1;t<token_roots.size();t++)
+  for(int t=0;t<token_roots.size();t++)
     if (token_is_used(t) and has_local_computation(t,r))
       remove_computation(t, r);
 
-  for(int t=1;t<token_roots.size();t++)
+  for(int t=0;t<token_roots.size();t++)
     assert(not has_local_computation(t,r));
 
   clear_C(r);
@@ -1112,13 +1112,13 @@ void reg_heap::get_more_memory()
 void reg_heap::expand_memory(int s)
 {
   int old_size = size();
-  for(int t=1;t<token_roots.size();t++)
+  for(int t=0;t<token_roots.size();t++)
     assert(token_roots[t].virtual_mapping.size() == old_size);
 
   base_pool_t::expand_memory(s);
 
   // Extend virtual mappings, with virtual_mapping[i] = 0;
-  for(int t=1;t<token_roots.size();t++)
+  for(int t=0;t<token_roots.size();t++)
   {
     token_roots[t].virtual_mapping.resize(size());
     for(int i=old_size;i<size();i++)
@@ -1252,7 +1252,7 @@ int reg_heap::get_unused_token()
       assert(addr.rc == 0);
   }
 
-  for(int i=1;i<token_roots.size();i++)
+  for(int i=0;i<token_roots.size();i++)
     assert(token_roots[i].virtual_mapping.size() == size());
 
   int t = unused_tokens.back();
@@ -1607,14 +1607,14 @@ const vector<int>& reg_heap::children_of_token(int t) const
 
 void reg_heap::release_token(int t)
 {
-  for(int i=1;i<token_roots.size();i++)
+  for(int i=0;i<token_roots.size();i++)
     if (token_is_used(i))
       assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
 
   token_roots[t].referenced = false;
   try_release_token(t);
 
-  for(int i=1;i<token_roots.size();i++)
+  for(int i=0;i<token_roots.size();i++)
     if (token_is_used(i))
       assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
 }
@@ -1626,7 +1626,7 @@ bool reg_heap::token_is_used(int t) const
 
 int reg_heap::copy_token(int t)
 {
-  for(int i=1;i<token_roots.size();i++)
+  for(int i=0;i<token_roots.size();i++)
     if (token_is_used(i))
       assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
 
@@ -1665,7 +1665,7 @@ int reg_heap::copy_token(int t)
   */
   check_used_regs();
 
-  for(int i=1;i<token_roots.size();i++)
+  for(int i=0;i<token_roots.size();i++)
     if (token_is_used(i))
       assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
 
@@ -1694,6 +1694,9 @@ reg_heap::reg_heap()
   //  computations.collect_garbage = [this](){collect_garbage();};
   computations.collect_garbage = [](){};
   computations.clear_references = [](int){};
+  token_roots[0].virtual_mapping.resize(1);
+  token_roots[0].used = true;
+  token_roots[0].referenced = true;
 }
 
 #include "computation.H"
@@ -1724,14 +1727,14 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_reg_no_record(int R2, bool ec)
   {
-    return M.incremental_evaluate(R2, t, ec);
+    return M.incremental_evaluate(R2, ec?t:0);
   }
 
   /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
   int evaluate_reg_to_reg(int R2, bool ec)
   {
     // Compute the result, and follow index_var chains (which are not changeable).
-    int R3 = M.incremental_evaluate(R2, t, ec);
+    int R3 = M.incremental_evaluate(R2, ec?t:0);
 
     if (M.reg_is_changeable(R3) and evaluate_changeables())
     {
@@ -1841,15 +1844,15 @@ map<int,string> get_constants(const reg_heap& C, int t);
 
 /// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
-int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
+int reg_heap::incremental_evaluate(int R, int t)
 {
-  assert(is_root_token(t));
+  assert(not t or is_root_token(t));
   assert(is_valid_address(R));
   assert(is_used(R));
 
 #ifndef NDEBUG
   assert(not is_a<expression>(access(R).C.exp));
-  if (reg_has_result(t,R))
+  if (t and reg_has_result(t,R))
   {
     expression_ref E = access_result_for_reg(t,R).exp;
     assert(is_WHNF(E));
@@ -1878,7 +1881,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     else if (reg_is_changeable(R))
     {
       // Changeable is a normal form, so we are done.
-      if (not evaluate_changeable) break;
+      if (not t) break;
 
       // We have a result, so we are done.
       if (reg_has_result(t,R)) break;
@@ -1890,10 +1893,10 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	assert(reg_is_changeable(R));
 	
 	// Only changeable regs have calls, and changeable regs are in normal form unless evaluate_changeable==true.
-	assert(evaluate_changeable);
+	assert(t);
 	
 	// Evaluate S, looking through unchangeable redirections
-	int call = incremental_evaluate(call_for_reg(t,R), t, evaluate_changeable);
+	int call = incremental_evaluate(call_for_reg(t,R), t);
 
 	// If computation_for_reg(t,R).call can be evaluated to refer to S w/o moving through any changable operations, 
 	// then it should be safe to change computation_for_reg(t,R).call to refer to S, even if R is changeable.
@@ -1930,7 +1933,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
       int R2 = access(R).C.lookup_in_env( index );
 
-      int R3 = incremental_evaluate(R2, t, evaluate_changeable);
+      int R3 = incremental_evaluate(R2, t);
 
       // If we point to R3 through an intermediate index_var chain, then change us to point to the end
       if (R3 != R2)
@@ -1994,8 +1997,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       for(int i=0;i<new_heap_vars.size(); i++)
 	pop_temp_head();
       
-      assert(not reg_has_call(t,R) );
-      assert(not reg_has_result(t,R) );
+      assert(not t or not reg_has_call(t,R) );
+      assert(not t or not reg_has_result(t,R) );
     }
     
     // 3. Reduction: Operation (includes @, case, +, etc.)
@@ -2020,7 +2023,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
       try
       {
-	RegOperationArgs Args(R, *this, t, evaluate_changeable);
+	RegOperationArgs Args(R, *this, t, t>0);
 	closure result = (*O)(Args);
 	
 	// NOTE: While not all used_inputs are E-children, they SHOULD all be E-descendents.
@@ -2039,9 +2042,9 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	// Otherwise, set the reduction result.
 	else
 	{
-	  if (not evaluate_changeable)
+	  if (not t)
 	  {
-	    computation_for_reg(t,R).used_inputs.clear();
+	    remove_computation(t,R);
 	    return R;
 	  }
 	  int rc = unshare_and_clear_result(t,R);
@@ -2063,7 +2066,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	    r2 = push_temp_head();
 	    set_C(r2, std::move(result) );
 	  }
-	  int r3 = incremental_evaluate(r2, t, evaluate_changeable);
+	  int r3 = incremental_evaluate(r2, t);
 
 	  set_call(t, R, r3);
 	  set_computation_result_for_reg(t, R);

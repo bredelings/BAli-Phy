@@ -9,7 +9,6 @@ extern "C" closure builtin_function_get_modifiable_value(OperationArgs& Args)
   assert(not Args.evaluate_changeables());
 
   int token = *Args.evaluate_as<Int>(0);
-  assert( Args.current_token() == token );
 
   int R1 = Args.evaluate_slot_to_reg(1);
 
