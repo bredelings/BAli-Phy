@@ -260,6 +260,8 @@ public:
   std::vector<int> find_all_regs_in_context_no_check(int) const;
 
   /*----- Virtual memory ------*/
+  int add_computation(int t, int r, int rc);
+
   int add_computation(int t, int r);
 
   int copy_computation(int t1, int t2, int r);
@@ -267,6 +269,16 @@ public:
   int remove_computation(int t, int r);
   
   bool has_computation(int t, int r) const;
+
+  void replace_shared_computation(int t, int r, int rc1, int rc2);
+
+  void remove_shared_computation(int t, int r, int rc);
+
+  int remove_shared_computation(int t, int r);
+
+  void add_shared_computation(int t, int r, int rc);
+
+  int add_shared_computation(int t, int r);
 
   bool has_local_computation(int t, int r) const;
 
@@ -296,7 +308,6 @@ public:
   bool reg_is_shared(int t, int r) const;
   int unshare_and_clear(int t, int r);
   int unshare_and_clear_result(int t, int r);
-  void replace_computation(int t, int r, int rc1, int rc2);
   int share_and_clear(int t, int r);
   int share_and_clear_result(int t, int r);
   void invalidate_shared_regs(int t1, int t2);

@@ -712,6 +712,15 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   check_used_regs();
 }
 
+int reg_heap::add_computation(int t, int r, int rc)
+{
+  assert(computations[rc].source == r);
+
+  vm_add(token_roots[t].modified, token_roots[t].virtual_mapping, r, rc);
+
+  return rc;
+}
+
 int reg_heap::add_computation(int t, int r)
 {
   assert(not has_local_computation(t,r));
@@ -719,7 +728,7 @@ int reg_heap::add_computation(int t, int r)
   int rc = computations.allocate();
   computations.access_unused(rc).source = r;
 
-  vm_add(token_roots[t].modified, token_roots[t].virtual_mapping, r, rc);
+  add_computation(t, r, rc);
 
   return rc;
 }
@@ -732,7 +741,7 @@ int reg_heap::copy_computation(int t1, int t2, int r)
 
   assert(rc);
 
-  vm_add(token_roots[t2].modified, token_roots[t2].virtual_mapping, r, rc);
+  add_computation(t2, r, rc);
 
   return rc;
 }
@@ -1379,7 +1388,7 @@ int reg_heap::unshare_and_clear_result(int t, int r)
   return rcA;
 }
 
-void reg_heap::replace_computation(int t, int r, int rc1, int rc2)
+void reg_heap::replace_shared_computation(int t, int r, int rc1, int rc2)
 {
   assert(t);
   assert(rc1);
@@ -1390,7 +1399,49 @@ void reg_heap::replace_computation(int t, int r, int rc1, int rc2)
   token_roots[t].virtual_mapping[r].rc = rc2;
 
   for(int t2: token_roots[t].children)
-    replace_computation(t2, r, rc1, rc2);
+    replace_shared_computation(t2, r, rc1, rc2);
+}
+
+void reg_heap::remove_shared_computation(int t, int r, int rc)
+{
+  assert(t);
+  assert(rc);
+
+  if (token_roots[t].virtual_mapping[r].rc != rc) return;
+
+  remove_computation(t,r);
+
+  for(int t2: token_roots[t].children)
+    remove_shared_computation(t2, r, rc);
+}
+
+int reg_heap::remove_shared_computation(int t, int r)
+{
+  int rc = token_roots[t].virtual_mapping[r].rc;
+  assert(rc);
+  remove_shared_computation(t, r, rc);
+  return rc;
+}
+
+void reg_heap::add_shared_computation(int t, int r, int rc)
+{
+  if (token_roots[t].virtual_mapping[r].rc) return;
+
+  add_computation(t, r, rc);
+
+  for(int t2: token_roots[t].children)
+    add_shared_computation(t2, r, rc);
+}
+
+int reg_heap::add_shared_computation(int t, int r)
+{
+  int rc = computations.allocate();
+
+  computations[rc].source = r;
+
+  add_shared_computation(t,r);
+
+  return rc;
 }
 
 int reg_heap::share_and_clear(int t, int r)
@@ -1401,7 +1452,7 @@ int reg_heap::share_and_clear(int t, int r)
   int rc2 = computations.allocate();
   computations.access_unused(rc2).source = r;
 
-  replace_computation(t, r, rc1, rc2);
+  replace_shared_computation(t, r, rc1, rc2);
 
   return rc1;
 }
