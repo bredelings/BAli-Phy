@@ -1678,6 +1678,13 @@ int reg_heap::copy_token(int t)
   return t2;
 }
 
+int reg_heap::switch_to_child_token(int t)
+{
+  int new_t = copy_token(t);
+  token_roots[t].referenced = false;
+  return new_t;
+}
+
 int reg_heap::add_identifier(const string& name)
 {
   map<string,int>& identifiers = get_identifiers();

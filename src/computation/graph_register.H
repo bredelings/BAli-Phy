@@ -244,6 +244,9 @@ public:
   /// Acquire a copy of a token
   int copy_token(int);
 
+  /// Make a child of the current token, and unreference the current token.
+  int switch_to_child_token(int);
+
   /*----- Graph walking ------*/
   void find_all_regs_in_context(int, std::vector<int>&) const;
   void find_all_used_regs_in_context(int, std::vector<int>&) const;
