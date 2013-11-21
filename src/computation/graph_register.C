@@ -885,10 +885,9 @@ bool reg_heap::is_dirty(int t) const
   return false;
 }
 
+// Note that a context can be completely dirty, w/o being dirty :-P
 bool reg_heap::is_completely_dirty(int t) const
 {
-  if (token_roots[t].children.empty()) return false;
-
   for(int t2:token_roots[t].children)
     if (token_roots[t].version <= token_roots[t2].version)
       return false;
