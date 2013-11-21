@@ -440,7 +440,7 @@ int context::add_parameter(const string& full_name)
 
   int R = parameters().back().second;
 
-  set_C(R, preprocess( (identifier("unsafePerformIO"),(identifier("new_modifiable"),get_token()) ) ) );
+  set_C(R, preprocess( (identifier("unsafePerformIO"),identifier("new_modifiable") ) ) );
 
   return index;
 }
@@ -737,7 +737,7 @@ void context::initialize_parameter_structures_for_modules(const vector<string>& 
       if (S.symbol_type == parameter_symbol)
       {
 	int R = get_parameter_reg( find_parameter(S.name) );
-	expression_ref E = (identifier("unsafePerformIO"),(parameter_constructor(S.name,get_notes()), get_token()) );
+	expression_ref E = (identifier("unsafePerformIO"), parameter_constructor(S.name,get_notes()) );
 	set_C(R, preprocess( E ) );
       }
     }

@@ -11,13 +11,13 @@ builtin evaluate 2 "evaluate";
 builtin get_modifiable_value 2 "get_modifiable_value";
 builtin builtin_trigger 1 "trigger";
 
-new_modifiable token = IOAction1 builtin_new_modifiable ();
+new_modifiable = IOAction1 builtin_new_modifiable ();
 
-new_modifiable_list [] token = return [];
-new_modifiable_list (h:t) token = do { m <- h token; 
-                                       ms <- new_modifiable_list t token; 
-                                       return (m:ms) 
-                                     };
+new_modifiable_list [] = return [];
+new_modifiable_list (h:t) = do { m <- h; 
+                                 ms <- new_modifiable_list t; 
+                                 return (m:ms) 
+                               };
 
 structure_for_range (OpenInterval _ _) = new_modifiable;
 structure_for_range (IntegerInterval _ _) = new_modifiable;
