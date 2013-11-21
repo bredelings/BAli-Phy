@@ -45,9 +45,16 @@ closure resolve_refs(const vector<Module>& P, closure&& C)
   return C;
 }
 
+void context::make_clean() const
+{
+  if (memory()->is_dirty(token))
+    token = memory()->copy_token(token);
+}
+
 void context::make_root_tip() const
 {
-  //  make_terminal_token();
+  if (memory()->children_of_token(token).size() >= 2)
+    token = memory()->copy_token(token);
   make_root_token();
 }
 
@@ -360,6 +367,7 @@ void context::set_parameter_value_(int index, closure&& C)
 
 void context::set_reg_value(int P, closure&& C)
 {
+  make_clean();
   make_root_token();
   // FIXME - we can only change values on contexts that are not dirty!
   // BUT this is ultimately checked in the reg_heap itself.

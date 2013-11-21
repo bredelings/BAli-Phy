@@ -16,6 +16,8 @@ class context: public Model_Notes
   /// The array of registers that make up our memory.
   mutable object_ptr<reg_heap> memory_;
 
+  void make_clean() const;
+
   void make_root_token() const;
 
   void make_root_tip() const;
