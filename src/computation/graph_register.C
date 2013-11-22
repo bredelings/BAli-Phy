@@ -2018,9 +2018,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 	  set_call(t, R, call);
 	}
 	
-	// split the reg, so that we can set the result, but only for this context
-	unshare_and_clear_result(t,R);
-
 	// R gets its result from S.
 	set_computation_result_for_reg(t, R);
 	break;
