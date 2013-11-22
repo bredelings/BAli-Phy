@@ -1441,7 +1441,7 @@ int reg_heap::add_shared_computation(int t, int r)
 
   computations[rc].source = r;
 
-  add_shared_computation(t,r);
+  add_shared_computation(t,r,rc);
 
   return rc;
 }
