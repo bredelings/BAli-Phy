@@ -827,16 +827,19 @@ void reg_heap::reroot_mappings_at(int t)
 
   int parent = parent_token(t);
 
-  // If this context isn't a direct child of the root, then make it one
+  // 1. If this context isn't a direct child of the root, then make it one
   if (not is_root_token(parent))
     reroot_mappings_at(parent);
 
   // Now this context should be a direct child of the root
   assert(is_root_token(parent));
 
+  // 2. Now invalidate regs in t that reference computations from parent
   invalidate_shared_regs(parent,t);
 
   assert(token_roots[t].version >= token_roots[parent].version);
+
+  // 3. Now actually reroot.
 
   //  pivot_mapping(token_roots[parent].modified, token_roots[parent].virtual_mapping,
   //		    token_roots[t].modified, token_roots[t].virtual_mapping);
@@ -861,6 +864,9 @@ void reg_heap::reroot_mappings_at(int t)
     incremental_evaluate(R,t);
   token_roots[t].regs_to_re_evaluate.clear();
 
+  check_used_regs();
+
+  // 4. Now, try to remove the parent if its unreferenced.
   try_release_token(parent);
 }
 
