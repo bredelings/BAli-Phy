@@ -272,6 +272,8 @@ public:
 
   void replace_shared_computation(int t, int r, int rc1, int rc2);
 
+  int replace_shared_computation(int t, int r);
+
   void remove_shared_computation(int t, int r, int rc);
 
   int remove_shared_computation(int t, int r);

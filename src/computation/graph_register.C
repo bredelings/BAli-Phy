@@ -1449,6 +1449,16 @@ int reg_heap::share_and_clear(int t, int r)
   int rc1 = token_roots[t].virtual_mapping[r].rc;
   assert(rc1);
 
+  remove_shared_computation(t, r, rc1);
+
+  return rc1;
+}
+
+int reg_heap::replace_shared_computation(int t, int r)
+{
+  int rc1 = token_roots[t].virtual_mapping[r].rc;
+  assert(rc1);
+
   int rc2 = computations.allocate();
   computations.access_unused(rc2).source = r;
 
@@ -1459,7 +1469,7 @@ int reg_heap::share_and_clear(int t, int r)
 
 int reg_heap::share_and_clear_result(int t, int r)
 {
-  int rcA = share_and_clear(t,r);
+  int rcA = replace_shared_computation(t,r);
 
   if (computations[rcA].call) 
     set_call(t,r,computations[rcA].call);
