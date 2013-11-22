@@ -1310,6 +1310,17 @@ bool reg_heap::reg_is_used_by(int t, int r1, int r2) const
   return computation_is_used_by(rc1,rc2);
 }
 
+bool reg_heap::computation_is_referenced(int t,int rc) const
+{
+  int r = computations[rc].source;
+  if (computation_index_for_reg(t,r) == rc) return true;
+  int p = parent_token(t);
+  if (p != -1)
+    return computation_is_referenced(p, rc);
+  else
+    return false;
+}
+
 void reg_heap::check_used_reg(int index) const
 {
   for(int t=0;t<get_n_tokens();t++)

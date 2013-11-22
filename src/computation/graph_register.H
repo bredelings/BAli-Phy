@@ -218,6 +218,8 @@ public:
   /// Is a particular token unused?
   bool token_is_used(int) const;
 
+  bool computation_is_referenced(int,int) const;
+
   /// How many tokens are there, maximum?
   int get_n_tokens() const {return token_roots.size();}
 
