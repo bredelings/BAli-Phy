@@ -1348,6 +1348,8 @@ void reg_heap::check_used_reg(int index) const
       assert(computations[rc].result);
     }
 
+    if (t != root_token) continue;
+
     // Regs with results should have back-references from their call.
     if (result and access(call).type != reg::type_t::constant)
     {
@@ -1366,7 +1368,12 @@ void reg_heap::check_used_regs() const
 {
   // check_used_regs
   for(auto r = begin(); r != end(); r++)
+  {
     check_used_reg( r.addr() );
+
+    if (access(r.addr()).re_evaluate)
+      assert(reg_has_result(root_token,r.addr()));
+  }
 }
 
 int reg_heap::unshare_and_clear(int t, int r)
