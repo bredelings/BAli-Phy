@@ -1353,7 +1353,7 @@ void reg_heap::check_used_reg(int index) const
       // Used computations should be mapped computation for the current token, if we are at the root
       int R2 = computations[rc].source;
       assert(reg_is_changeable(R2));
-      assert(t != root_token or computation_index_for_reg(t,R2) == rc);
+      assert(computation_is_referenced(t,rc));
       
       // Used computations should have results
       assert(computations[rc].result);
