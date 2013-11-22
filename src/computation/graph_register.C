@@ -834,8 +834,7 @@ void reg_heap::reroot_mappings_at(int t)
   // Now this context should be a direct child of the root
   assert(is_root_token(parent));
 
-  if (token_roots[parent].version > token_roots[t].version)
-    invalidate_shared_regs(parent,t);
+  invalidate_shared_regs(parent,t);
 
   assert(token_roots[t].version >= token_roots[parent].version);
 
@@ -957,6 +956,8 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
 
 void reg_heap::invalidate_shared_regs(int t1, int t2)
 {
+  if (token_roots[t1].version <= token_roots[t2].version) return;
+
   const int mark_call_result = 1;
   const int mark_result = 2;
   const int mark_modified = 3;
