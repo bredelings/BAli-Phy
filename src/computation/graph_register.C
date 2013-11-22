@@ -1339,12 +1339,13 @@ void reg_heap::check_used_reg(int index) const
       // Used regs should have back-references to R
       assert( computation_is_used_by(index_c, rc) );
 
-      // Used computations should be mapped computation for the current token
+      // Used computations should be mapped computation for the current token, if we are at the root
       int R2 = computations[rc].source;
-      assert(computation_index_for_reg(t,R2) == rc);
+      assert(reg_is_changeable(R2));
+      assert(t != root_token or computation_index_for_reg(t,R2) == rc);
       
       // Used computations should have results
-      assert(computation_result_for_reg(t,R2));
+      assert(computations[rc].result);
     }
 
     // Regs with results should have back-references from their call.
@@ -2157,8 +2158,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 	    remove_computation(t,R);
 	    return R;
 	  }
-	  int rc = unshare_and_clear_result(t,R);
-	  computations[rc].used_inputs.clear();
 	  
 	  bool result_is_index_var = result.exp->head->type() == index_var_type;
 
