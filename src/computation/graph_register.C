@@ -1627,11 +1627,18 @@ void reg_heap::release_identifiers()
 
 void reg_heap::try_release_token(int t)
 {
+  assert(token_is_used(t));
+
   int n_children = token_roots[t].children.size();
   if (n_children > 1 or token_roots[t].referenced)
     return;
 
-  assert(token_is_used(t));
+  int child_token = -1;
+  if (n_children)
+    child_token = token_roots[t].children[0];
+
+  if (child_token != -1)
+    invalidate_shared_regs(t, child_token);
 
   // We shouldn't have any temporary heads still on the stack, here!
   // (This should be fast now, no longer proportional to the number of regs in context t.)
@@ -1639,24 +1646,15 @@ void reg_heap::try_release_token(int t)
   assert(temp.empty());
 
   // mark token for this context unused
-  unused_tokens.push_back(t);
   token_roots[t].used = false;
+  token_roots[t].children.clear();  
+  unused_tokens.push_back(t);
 
   int parent = parent_token(t);
   token_roots[t].parent = -1;
   if (t == root_token)
-  {
-    if (token_roots[t].children.empty())
-      root_token = -1;
-    else
-      root_token = token_roots[t].children[0];
-  }
+    root_token = child_token;
 
-  int child_token = -1;
-  if (n_children)
-    child_token = token_roots[t].children[0];
-  token_roots[t].children.clear();  
- 
   // Any context must be either referenced or have more than 1 child context.
   if (parent != -1)
     assert(token_roots[parent].referenced or token_roots[parent].children.size() > 1);
@@ -1664,8 +1662,6 @@ void reg_heap::try_release_token(int t)
   if (n_children == 1)
   {
     // Remove this context -- pass on any memory overrides to the child at this point.
-
-    invalidate_shared_regs(t, child_token);
 
     //    pivot_mapping(token_roots[t].modified, token_roots[t].virtual_mapping,
     //    		  token_roots[child_token].modified, token_roots[child_token].virtual_mapping);
