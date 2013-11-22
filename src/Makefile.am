@@ -126,6 +126,8 @@ bali_phy_LDFLAGS =
 endif
 endif
 
+bali-phy.a: bali-phy.exe
+
 if WITH_MPI
 bali_phy_LDADD = ${LDADD} @MPI_LDFLAGS@ 
 if NO_SYSTEM_BOOST
@@ -369,164 +371,175 @@ pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la
 		pairwise_alignment_length2.la transition_counts.la pairwise_alignment_probability_from_counts.la \
 		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la
 
-mod_la_SOURCES = computation/builtins/mod.C -lbali-phy.exe
-mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic # -no-undefined -enable-runtime-pseudo-reloc
+if HOST_MINGW32
+IMPORTLIB = -lbali-phy.a
+else
+IMPORTLIB = 
+endif
+
+mod_la_SOURCES = computation/builtins/mod.C
+mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
+mod_la_LIBADD = $(IMPORTLIB)
 
 builtinError_la_SOURCES = computation/builtins/builtinError.C
-builtinError_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+builtinError_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
+builtinError_la_LIBADD = $(IMPORTLIB)
 
-seq_la_SOURCES = computation/builtins/seq.C
-seq_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+seq_la_SOURCES = computation/builtins/seq.C $(IMPORTLIB)
+seq_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
+seq_la_LIBADD = $(IMPORTLIB)
 
 join_la_SOURCES = computation/builtins/join.C
-join_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+join_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
+join_la_LIBADD = $(IMPORTLIB)
 
-reapply_la_SOURCES = computation/builtins/reapply.C
-reapply_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+reapply_la_SOURCES = computation/builtins/reapply.C $(IMPORTLIB)
+reapply_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-arraySize_la_SOURCES = computation/builtins/arraySize.C
-arraySize_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+arraySize_la_SOURCES = computation/builtins/arraySize.C $(IMPORTLIB)
+arraySize_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-getIndex_la_SOURCES = computation/builtins/getIndex.C
-getIndex_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+getIndex_la_SOURCES = computation/builtins/getIndex.C $(IMPORTLIB)
+getIndex_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-mkArray_la_SOURCES = computation/builtins/mkArray.C
-mkArray_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+mkArray_la_SOURCES = computation/builtins/mkArray.C $(IMPORTLIB)
+mkArray_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-intToDouble_la_SOURCES = computation/builtins/intToDouble.C
-intToDouble_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+intToDouble_la_SOURCES = computation/builtins/intToDouble.C $(IMPORTLIB)
+intToDouble_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-doubleToLogDouble_la_SOURCES = computation/builtins/doubleToLogDouble.C
-doubleToLogDouble_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+doubleToLogDouble_la_SOURCES = computation/builtins/doubleToLogDouble.C $(IMPORTLIB)
+doubleToLogDouble_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-negate_la_SOURCES = computation/builtins/negate.C
-negate_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+negate_la_SOURCES = computation/builtins/negate.C $(IMPORTLIB)
+negate_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-exp_la_SOURCES = computation/builtins/exp.C
-exp_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+exp_la_SOURCES = computation/builtins/exp.C $(IMPORTLIB)
+exp_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
 Prelude_la_SOURCES = computation/builtins/Prelude.C
-Prelude_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+Prelude_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
+Prelude_la_LIBADD = $(IMPORTLIB)
 
-equals_la_SOURCES = computation/builtins/equals.C
-equals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+equals_la_SOURCES = computation/builtins/equals.C $(IMPORTLIB)
+equals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-notequals_la_SOURCES = computation/builtins/notequals.C
-notequals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+notequals_la_SOURCES = computation/builtins/notequals.C $(IMPORTLIB)
+notequals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-greaterthan_la_SOURCES = computation/builtins/greaterthan.C
-greaterthan_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+greaterthan_la_SOURCES = computation/builtins/greaterthan.C $(IMPORTLIB)
+greaterthan_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-greaterthanorequal_la_SOURCES = computation/builtins/greaterthanorequal.C
-greaterthanorequal_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+greaterthanorequal_la_SOURCES = computation/builtins/greaterthanorequal.C $(IMPORTLIB)
+greaterthanorequal_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-lessthan_la_SOURCES = computation/builtins/lessthan.C
-lessthan_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+lessthan_la_SOURCES = computation/builtins/lessthan.C $(IMPORTLIB)
+lessthan_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-lessthanorequal_la_SOURCES = computation/builtins/lessthanorequal.C
-lessthanorequal_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+lessthanorequal_la_SOURCES = computation/builtins/lessthanorequal.C $(IMPORTLIB)
+lessthanorequal_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-getNucleotides_la_SOURCES = computation/builtins/getNucleotides.C
-getNucleotides_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+getNucleotides_la_SOURCES = computation/builtins/getNucleotides.C $(IMPORTLIB)
+getNucleotides_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-plus_gwF_la_SOURCES = computation/builtins/plus_gwF.C
-plus_gwF_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+plus_gwF_la_SOURCES = computation/builtins/plus_gwF.C $(IMPORTLIB)
+plus_gwF_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-alphabetSize_la_SOURCES = computation/builtins/alphabetSize.C
-alphabetSize_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+alphabetSize_la_SOURCES = computation/builtins/alphabetSize.C $(IMPORTLIB)
+alphabetSize_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-iotaUnsigned_la_SOURCES = computation/builtins/iotaUnsigned.C
-iotaUnsigned_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+iotaUnsigned_la_SOURCES = computation/builtins/iotaUnsigned.C $(IMPORTLIB)
+iotaUnsigned_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-f3x4_frequencies_la_SOURCES = computation/builtins/f3x4_frequencies.C
-f3x4_frequencies_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+f3x4_frequencies_la_SOURCES = computation/builtins/f3x4_frequencies.C $(IMPORTLIB)
+f3x4_frequencies_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-gtr_la_SOURCES = computation/builtins/gtr.C
-gtr_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+gtr_la_SOURCES = computation/builtins/gtr.C $(IMPORTLIB)
+gtr_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-m0_la_SOURCES = computation/builtins/m0.C
-m0_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+m0_la_SOURCES = computation/builtins/m0.C $(IMPORTLIB)
+m0_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-set_modifiable_value_la_SOURCES = computation/builtins/set_modifiable_value.C
-set_modifiable_value_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+set_modifiable_value_la_SOURCES = computation/builtins/set_modifiable_value.C $(IMPORTLIB)
+set_modifiable_value_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-is_modifiable_la_SOURCES = computation/builtins/is_modifiable.C
-is_modifiable_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+is_modifiable_la_SOURCES = computation/builtins/is_modifiable.C $(IMPORTLIB)
+is_modifiable_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-is_changeable_la_SOURCES = computation/builtins/is_changeable.C
-is_changeable_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+is_changeable_la_SOURCES = computation/builtins/is_changeable.C $(IMPORTLIB)
+is_changeable_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-get_modifiable_index_la_SOURCES = computation/builtins/get_modifiable_index.C
-get_modifiable_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+get_modifiable_index_la_SOURCES = computation/builtins/get_modifiable_index.C $(IMPORTLIB)
+get_modifiable_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-get_modifiable_for_index_la_SOURCES = computation/builtins/get_modifiable_for_index.C
-get_modifiable_for_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+get_modifiable_for_index_la_SOURCES = computation/builtins/get_modifiable_for_index.C $(IMPORTLIB)
+get_modifiable_for_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-set_vector_index_la_SOURCES = computation/builtins/set_vector_index.C
-set_vector_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+set_vector_index_la_SOURCES = computation/builtins/set_vector_index.C $(IMPORTLIB)
+set_vector_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-new_vector_la_SOURCES = computation/builtins/new_vector.C
-new_vector_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+new_vector_la_SOURCES = computation/builtins/new_vector.C $(IMPORTLIB)
+new_vector_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-get_vector_index_la_SOURCES = computation/builtins/get_vector_index.C
-get_vector_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+get_vector_index_la_SOURCES = computation/builtins/get_vector_index.C $(IMPORTLIB)
+get_vector_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-vector_size_la_SOURCES = computation/builtins/vector_size.C
-vector_size_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+vector_size_la_SOURCES = computation/builtins/vector_size.C $(IMPORTLIB)
+vector_size_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-c_fst_la_SOURCES = computation/builtins/c_fst.C
-c_fst_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+c_fst_la_SOURCES = computation/builtins/c_fst.C $(IMPORTLIB)
+c_fst_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-c_snd_la_SOURCES = computation/builtins/c_snd.C
-c_snd_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+c_snd_la_SOURCES = computation/builtins/c_snd.C $(IMPORTLIB)
+c_snd_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-c_pair_la_SOURCES = computation/builtins/c_pair.C
-c_pair_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+c_pair_la_SOURCES = computation/builtins/c_pair.C $(IMPORTLIB)
+c_pair_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-new_modifiable_la_SOURCES = computation/builtins/new_modifiable.C
-new_modifiable_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+new_modifiable_la_SOURCES = computation/builtins/new_modifiable.C $(IMPORTLIB)
+new_modifiable_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-evaluate_la_SOURCES = computation/builtins/evaluate.C
-evaluate_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+evaluate_la_SOURCES = computation/builtins/evaluate.C $(IMPORTLIB)
+evaluate_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-get_modifiable_value_la_SOURCES = computation/builtins/get_modifiable_value.C
-get_modifiable_value_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+get_modifiable_value_la_SOURCES = computation/builtins/get_modifiable_value.C $(IMPORTLIB)
+get_modifiable_value_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-rs07_branch_HMM_la_SOURCES = computation/builtins/rs07_branch_HMM.C
-rs07_branch_HMM_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+rs07_branch_HMM_la_SOURCES = computation/builtins/rs07_branch_HMM.C $(IMPORTLIB)
+rs07_branch_HMM_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-rs07_lengthp_la_SOURCES = computation/builtins/rs07_lengthp.C
-rs07_lengthp_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+rs07_lengthp_la_SOURCES = computation/builtins/rs07_lengthp.C $(IMPORTLIB)
+rs07_lengthp_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-pairwise_alignment_length1_la_SOURCES = computation/builtins/pairwise_alignment_length1.C
-pairwise_alignment_length1_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+pairwise_alignment_length1_la_SOURCES = computation/builtins/pairwise_alignment_length1.C $(IMPORTLIB)
+pairwise_alignment_length1_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-pairwise_alignment_length2_la_SOURCES = computation/builtins/pairwise_alignment_length2.C
-pairwise_alignment_length2_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+pairwise_alignment_length2_la_SOURCES = computation/builtins/pairwise_alignment_length2.C $(IMPORTLIB)
+pairwise_alignment_length2_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-transition_counts_la_SOURCES = computation/builtins/transition_counts.C
-transition_counts_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+transition_counts_la_SOURCES = computation/builtins/transition_counts.C $(IMPORTLIB)
+transition_counts_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-pairwise_alignment_probability_from_counts_la_SOURCES = computation/builtins/pairwise_alignment_probability_from_counts.C
-pairwise_alignment_probability_from_counts_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+pairwise_alignment_probability_from_counts_la_SOURCES = computation/builtins/pairwise_alignment_probability_from_counts.C $(IMPORTLIB)
+pairwise_alignment_probability_from_counts_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-popgen_la_SOURCES = computation/builtins/popgen.C
-popgen_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+popgen_la_SOURCES = computation/builtins/popgen.C $(IMPORTLIB)
+popgen_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-trigger_la_SOURCES = computation/builtins/trigger.C
-trigger_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+trigger_la_SOURCES = computation/builtins/trigger.C $(IMPORTLIB)
+trigger_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-Distribution_la_SOURCES = computation/builtins/Distribution.C
-Distribution_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+Distribution_la_SOURCES = computation/builtins/Distribution.C $(IMPORTLIB)
+Distribution_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-Range_la_SOURCES = computation/builtins/Range.C
-Range_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+Range_la_SOURCES = computation/builtins/Range.C $(IMPORTLIB)
+Range_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-SModel_la_SOURCES = computation/builtins/SModel.C
-SModel_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+SModel_la_SOURCES = computation/builtins/SModel.C $(IMPORTLIB)
+SModel_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-show_la_SOURCES = computation/builtins/show.C
-show_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+show_la_SOURCES = computation/builtins/show.C $(IMPORTLIB)
+show_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
 
-sum_out_coals_la_SOURCES = computation/builtins/sum_out_coals.C
-sum_out_coals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+sum_out_coals_la_SOURCES = computation/builtins/sum_out_coals.C $(IMPORTLIB)
+sum_out_coals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc
