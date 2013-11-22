@@ -852,8 +852,6 @@ void reg_heap::reroot_mappings_at(int t)
   for(int t2: token_roots[t].children)
     assert(token_roots[t2].version <= token_roots[t].version);
 
-  try_release_token(parent);
-
   assert(is_root_token(t));
 
   // re-evaluate all the regs that need to be up-to-date.
@@ -862,6 +860,8 @@ void reg_heap::reroot_mappings_at(int t)
   for(int R: token_roots[t].regs_to_re_evaluate)
     incremental_evaluate(R,t);
   token_roots[t].regs_to_re_evaluate.clear();
+
+  try_release_token(parent);
 }
 
 void reg_heap::mark_completely_dirty(int t)
