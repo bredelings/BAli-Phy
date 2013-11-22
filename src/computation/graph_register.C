@@ -1761,9 +1761,12 @@ int reg_heap::copy_token(int t)
     if (has_local_computation(t,r))
       copy_computation(t,t2,r);
 
+  /*
+    Only true for root token!
   for(int r: token_roots[t].modified)
     if (access(r).re_evaluate)
       assert(reg_has_result(t2,r));
+  */
 
   /*
   // use all the same computations and result.
