@@ -958,8 +958,8 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 {
   if (token_roots[t1].version <= token_roots[t2].version) return;
 
-  const int mark_call_result = 1;
-  const int mark_result = 2;
+  const int mark_result = 1;
+  const int mark_call_result = 2;
   const int mark_modified = 3;
 
   // find all regs in t2 that are not shared from t1
