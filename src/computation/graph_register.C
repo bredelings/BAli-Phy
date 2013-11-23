@@ -899,9 +899,7 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
 {
   for(int i=start;i<split.size();i++)
   {
-    int r1 = split[i];
-    int rc1 = computation_index_for_reg(t1,r1);
-    auto& RC1 = computations[rc1];
+    auto& RC1 = computation_for_reg(t1,split[i]);
 
     // Look at computations in t2 that call the old value in t1.
     for(const auto& wrc2: clean_weak_refs(RC1.called_by, computations))
@@ -939,9 +937,7 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
 {
   for(int i=start;i<split.size();i++)
   {
-    int r1 = split[i];
-    int rc1 = computation_index_for_reg(t1,r1);
-    auto& RC1 = computations[rc1];
+    auto& RC1 = computation_for_reg(t1, split[i]);
 
     // Look at computations in t2 that call the old value in t1.
     for(const auto& wrc2: clean_weak_refs(RC1.used_by, computations))
