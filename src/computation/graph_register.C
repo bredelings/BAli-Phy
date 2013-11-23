@@ -975,9 +975,10 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   vector<int> modified;
   for(int i=0;i<token_roots[t1].virtual_mapping.size();i++)
     if (token_roots[t1].virtual_mapping[i].rc != token_roots[t2].virtual_mapping[i].rc
-	and token_roots[t1].virtual_mapping[i].rc and token_roots[t2].virtual_mapping[i].rc)
+	and token_roots[t1].virtual_mapping[i].rc)
     {
-      computation_for_reg(t2,i).temp = mark_modified;
+      if (has_computation(t2,i))
+	computation_for_reg(t2,i).temp = mark_modified;
       modified.push_back(i);
     }
 
@@ -1034,13 +1035,14 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   }
 
   for(int r:modified)
-  {
-    auto& RC = computation_for_reg(t2,r);
+    if (has_computation(t2,r))
+    {
+      auto& RC = computation_for_reg(t2,r);
 
-    assert(RC.temp == mark_modified);
+      assert(RC.temp == mark_modified);
 
-    RC.temp = -1;
-  }
+      RC.temp = -1;
+    }
 
   // find all regs in t2 that are not shared from t1.  Nothing needs to be done to these - they are already split.
   // Anything that uses these needs to be unshared.
