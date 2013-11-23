@@ -872,12 +872,18 @@ void pivot_mapping(mapping& vm1, mapping& vm2)
 
     int rc1 = vm1[r];
     int rc2 = vm2[r];
-    std::swap(rc1,rc2);
-    if (rc1 == -1) rc1 = 0;
-    if (rc2 ==  0) rc2 = -1;
 
-    vm1.set_value(r,rc2);
-    vm2.set_value(r,rc1);
+    // switch from root/0 => root/-
+    if (rc1 == 0) rc1 = -1;
+
+    // switch root positions
+    std::swap(rc1,rc2);
+
+    // switch from root/0 => root/-
+    if (rc1 == -1) rc1 = 0;
+
+    vm1.set_value(r,rc1);
+    vm2.set_value(r,rc2);
   }
   std::swap(vm1,vm2);
 }
