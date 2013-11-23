@@ -234,9 +234,10 @@ void erase_from_stack(vector<int>& s, int i, vector<reg_heap::address>& v)
   }
 }
 
-void vm_add(vector<int>& m, vector<reg_heap::address>& v, int r, reg_heap::address A)
+void vm_add(vector<int>& m, vector<reg_heap::address>& v, int r, int rc)
 {
   assert(not v[r].rc);
+  reg_heap::address A(rc);
   A.index = m.size();
 
   v[r] = A;
@@ -771,8 +772,8 @@ void merge_split_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<
       if (not v2[r].rc)
       {
 	// transfer mapping from v1[r] -> v2[r]
-	reg_heap::address A = vm_erase(m1, v1, r);
-	vm_add(m2, v2, r, A);
+	int rc = vm_erase(m1, v1, r);
+	vm_add(m2, v2, r, rc);
       }
       else
 	i++;
@@ -792,8 +793,8 @@ void merge_split_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<
       else
       {
 	// transfer mapping from v2[r] -> v2[r]
-	reg_heap::address A = vm_erase(m2, v2, r);
-	vm_add(m1, v1, r, A);
+	int rc = vm_erase(m2, v2, r);
+	vm_add(m1, v1, r, rc);
       }
     }
     std::swap(m1,m2);
