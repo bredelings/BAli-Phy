@@ -870,7 +870,14 @@ void pivot_mapping(mapping& vm1, mapping& vm2)
     int r = vm2.modified()[i];
     assert(vm2[r]);
 
-    swap_value(vm1, vm2, r);
+    int rc1 = vm1[r];
+    int rc2 = vm2[r];
+    std::swap(rc1,rc2);
+    if (rc1 == -1) rc1 = 0;
+    if (rc2 ==  0) rc2 = -1;
+
+    vm1.set_value(r,rc2);
+    vm2.set_value(r,rc1);
   }
   std::swap(vm1,vm2);
 }
