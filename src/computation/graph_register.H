@@ -91,6 +91,15 @@ class mapping
   std::vector<int> modified_;
   std::vector<address> values;
 public:
+  mapping& operator=(mapping&) = default;
+
+  mapping& operator=(mapping&& vm) noexcept
+  {
+    modified_ = std::move(vm.modified_);
+    values = std::move(vm.values);
+    return *this;
+  }
+
   int operator[](int i) const {return values[i].value;}
   bool has_value(int r) const;
   void add_value(int r, int v);
@@ -105,6 +114,11 @@ public:
 
   mapping() {}
   mapping(int s) {resize(s);}
+  mapping(const mapping&) = default;
+  mapping(const mapping&& vm) noexcept
+  :modified_(std::move(vm.modified_)),
+    values(std::move(vm.values))
+  { }
 };
 
 // How do we handle parameters?
