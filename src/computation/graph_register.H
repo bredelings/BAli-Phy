@@ -78,6 +78,34 @@ public:
   reg(reg&&) noexcept;
 };
 
+class mapping
+{
+  struct address
+  {
+    int value = 0;
+    int index = -1;
+    address() {}
+    address(int i1):value(i1) {}
+  };
+
+  std::vector<int> modified_;
+  std::vector<address> values;
+public:
+  int operator[](int i) const {return values[i].value;}
+  bool has_value(int r) const;
+  void add_value(int r, int v);
+  int replace_value(int r, int v);
+  int erase_value(int r);
+  int set_value(int r, int v);
+  void clear();
+  void resize(int s);
+  int size() const;
+  const std::vector<int>& modified() const {return modified_;}
+
+  mapping() {}
+  mapping(int s) {resize(s);}
+};
+
 // How do we handle parameters?
 // * well, parameters could be reg's, so that a separate reg must be a separate parameter.
 // * how, then, do we handle reg NAME's, if reg's are not uniquely identified by their names?

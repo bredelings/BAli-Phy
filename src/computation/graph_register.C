@@ -245,6 +245,116 @@ void vm_add(vector<int>& m, vector<reg_heap::address>& v, int r, int rc)
   assert(m[A.index] == r);
 }
 
+int vm_erase(vector<int>& m, vector<reg_heap::address>& v, int r)
+{
+  reg_heap::address A = v[r];
+
+  // The reg should be mapped.
+  assert(A.rc > 0);
+
+  // Lookup the position in m where we mention r
+  int index = A.index;
+  A.index = -1;
+  assert(m[index] == r);
+
+  // Erase location r from m, updating v[m.back()] if m.back() is moved within m.
+  erase_from_stack(m, index, v);
+
+  // Actually clear the mapping.
+  v[r] = {};
+  return A.rc;
+}
+
+bool mapping::has_value(int r) const {return operator[](r);}
+
+void mapping::add_value(int r, int v) 
+{
+  assert(not has_value(r));
+  assert(v);
+
+  address A(v);
+  A.index = modified_.size();
+
+  values[r] = A;
+  modified_.push_back(r);
+
+  assert(modified_[values[r].index] == r);
+}
+
+int mapping::erase_value(int r)
+{
+  int v = values[r].value;
+
+  // The reg should be mapped.
+  assert(v);
+
+  // Check correspondence between modified_ and values
+  assert(modified_[values[r].index] == r);
+
+  // Lookup the position in modified_ where we mention r
+  int index = values[r].index;
+
+  int r2 = modified_.back();
+  modified_.pop_back();
+
+  // If we are deleting from the middle, move the last element to the middle
+  if (index < modified_.size())
+  {
+    modified_[index] = r2;
+    values[r2].index = index;
+    assert(modified_[values[r2].index] == r2);
+  }
+
+  values[r] = {};
+  return v;
+}
+
+int mapping::replace_value(int r, int v)
+{
+  assert(values[r].value);
+  assert(v);
+  int v_old = values[r].value;
+  values[r].value = v;
+  return v_old;
+}
+
+int mapping::set_value(int r, int v)
+{
+  if (v)
+  {
+    if (has_value(r))
+      return replace_value(r,v);
+    else
+    {
+      add_value(r,v);
+      return 0;
+    }
+  }
+  else if (has_value(r))
+    return erase_value(r);
+  else
+  {
+    return 0;
+  }
+}
+
+void mapping::clear()
+{
+  for(int r: modified_)
+    values[r] = {};
+  modified_.clear();
+}
+
+void mapping::resize(int s)
+{
+  values.resize(s);
+}
+
+int mapping::size() const
+{
+  return values.size();
+}
+
 const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t));return token_roots[t].triggers;}
       std::vector<int>& reg_heap::triggers(int t)       {assert(is_root_token(t));return token_roots[t].triggers;}
 
@@ -436,26 +546,6 @@ void reg_heap::clear_computation_result(int t, int r)
 
   // Blow away called-by
   //   local_computation_for_reg(t,r).called_by.clear();
-}
-
-int vm_erase(vector<int>& m, vector<reg_heap::address>& v, int r)
-{
-  reg_heap::address A = v[r];
-
-  // The reg should be mapped.
-  assert(A.rc > 0);
-
-  // Lookup the position in m where we mention r
-  int index = A.index;
-  A.index = -1;
-  assert(m[index] == r);
-
-  // Erase location r from m, updating v[m.back()] if m.back() is moved within m.
-  erase_from_stack(m, index, v);
-
-  // Actually clear the mapping.
-  v[r] = {};
-  return A.rc;
 }
 
 void reg_heap::set_used_input(int t, int R1, int R2)
