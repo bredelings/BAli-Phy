@@ -927,6 +927,7 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
 
 bool reg_heap::reg_is_shared_with_parent(int t, int r) const
 {
+  assert(t);
   if (is_root_token(t)) return false;
   int p = parent_token(t);
   return computation_index_for_reg(t,r) == computation_index_for_reg(p,r);
@@ -1323,6 +1324,7 @@ bool reg_heap::reg_is_used_by(int t, int r1, int r2) const
 
 bool reg_heap::computation_is_referenced(int t,int rc) const
 {
+  assert(rc);
   int r = computations[rc].source;
   if (computation_index_for_reg(t,r) == rc) return true;
   int p = parent_token(t);
@@ -1334,7 +1336,7 @@ bool reg_heap::computation_is_referenced(int t,int rc) const
 
 void reg_heap::check_used_reg(int index) const
 {
-  for(int t=0;t<get_n_tokens();t++)
+  for(int t=1;t<get_n_tokens();t++)
   {
     if (not token_is_used(t)) continue;
 
@@ -1364,6 +1366,9 @@ void reg_heap::check_used_reg(int index) const
       // Used computations should be mapped computation for the current token, if we are at the root
       int R2 = computations[rc].source;
       assert(reg_is_changeable(R2));
+
+      // The used computation should be referenced somewhere more root-ward
+      // so that this computation can be invalidated, and the used computation won't be GC-ed.
       assert(computation_is_referenced(t,rc));
       
       // Used computations should have results
@@ -1640,10 +1645,10 @@ void reg_heap::try_release_token(int t)
 
   int child_token = -1;
   if (n_children)
+  {
     child_token = token_roots[t].children[0];
-
-  if (child_token != -1)
     invalidate_shared_regs(t, child_token);
+  }
 
   // We shouldn't have any temporary heads still on the stack, here!
   // (This should be fast now, no longer proportional to the number of regs in context t.)
@@ -2146,7 +2151,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     else
     {
       if (not has_computation(t,R))
-	add_computation(t,R);
+	add_shared_computation(t,R);
 
       object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
 
