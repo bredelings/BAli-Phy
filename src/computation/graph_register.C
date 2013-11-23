@@ -1190,7 +1190,10 @@ void reg_heap::expand_memory(int s)
 {
   int old_size = size();
   for(int t=0;t<token_roots.size();t++)
+  {
     assert(token_roots[t].vm_absolute.size() == old_size);
+    assert(token_roots[t].vm_relative.size() == old_size);
+  }
 
   base_pool_t::expand_memory(s);
 
@@ -1198,8 +1201,12 @@ void reg_heap::expand_memory(int s)
   for(int t=0;t<token_roots.size();t++)
   {
     token_roots[t].vm_absolute.resize(size());
+    token_roots[t].vm_relative.resize(size());
     for(int i=old_size;i<size();i++)
+    {
       assert(token_roots[t].vm_absolute[i] == 0);
+      assert(token_roots[t].vm_relative[i] == 0);
+    }
   }
 }
 
@@ -1325,8 +1332,12 @@ int reg_heap::get_unused_token()
     unused_tokens.push_back(get_n_tokens());
     token_roots.push_back(graph_roots());
     token_roots.back().vm_absolute.resize(size());
+    token_roots.back().vm_relative.resize(size());
     for(int i=0;i<size();i++)
+    {
       assert(token_roots.back().vm_absolute[i] == 0);
+      assert(token_roots.back().vm_relative[i] == 0);
+    }
   }
 
   for(int i=0;i<token_roots.size();i++)
@@ -1749,6 +1760,7 @@ void reg_heap::try_release_token(int t)
 
   // clear only the mappings that were actually updated here.
   token_roots[t].vm_absolute.clear();
+  token_roots[t].vm_relative.clear();
 
   // If we just released a terminal token, maybe it's parent is not terminal also.
   if (parent != -1)
@@ -1895,6 +1907,7 @@ reg_heap::reg_heap()
   computations.collect_garbage = [](){};
   computations.clear_references = [](int){};
   token_roots[0].vm_absolute.resize(1);
+  token_roots[0].vm_relative.resize(1);
   token_roots[0].used = true;
   token_roots[0].referenced = true;
 }
