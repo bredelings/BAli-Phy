@@ -810,10 +810,6 @@ void pivot_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<int>& 
     int r = m2[i];
     assert(v2[r].rc);
 
-    // To prevent this computation from being shared afterwards, create an empty computation.
-    if (not v1[r].rc)
-      vm_add(m1, v1, r, {});
-
     std::swap(v1[r].rc, v2[r].rc);
   }
   std::swap(m1,m2);
