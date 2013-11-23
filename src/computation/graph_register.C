@@ -927,6 +927,13 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
   }
 }
 
+bool reg_heap::reg_is_shared_with_parent(int t, int r) const
+{
+  if (is_root_token(t)) return false;
+  int p = parent_token(t);
+  return computation_index_for_reg(t,r) == computation_index_for_reg(p,r);
+}
+
 // find regs in t2 that used values only active in t1.  We look at regs in split, and append results to callers
 void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, vector<int>& users, int mark)
 {

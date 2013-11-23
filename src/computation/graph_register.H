@@ -320,6 +320,7 @@ public:
   bool is_dirty(int t) const;
   void find_callers(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
   void find_users(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
+  bool reg_is_shared_with_parent(int t, int r) const;
 
   int incremental_evaluate(int R, int t);
 
