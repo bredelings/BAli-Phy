@@ -909,8 +909,7 @@ void reg_heap::reroot_mappings_at(int t)
 
   // 3. Now actually reroot.
 
-  //  pivot_mapping(token_roots[parent].modified, token_roots[parent].virtual_mapping,
-  //		    token_roots[t].modified, token_roots[t].virtual_mapping);
+  pivot_mapping(token_roots[parent].vm_relative, token_roots[t].vm_relative);
 
   token_roots[parent].parent = t;
   int index = remove_element(token_roots[parent].children, t);
