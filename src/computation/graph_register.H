@@ -100,6 +100,7 @@ public:
   void clear();
   void resize(int s);
   int size() const;
+  bool empty() const;
   const std::vector<int>& modified() const {return modified_;}
 
   mapping() {}
@@ -205,9 +206,7 @@ public:
     std::vector<int> triggers;
 
     /// Mapping from closures to computations/results
-    std::vector<address> virtual_mapping;
-
-    std::vector<int> modified;
+    mapping vm_absolute;
 
     /// These are the regs that must be evaluated when the context becomes active.
     std::vector<int> regs_to_re_evaluate;

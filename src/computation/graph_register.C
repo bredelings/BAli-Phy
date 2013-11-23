@@ -222,49 +222,6 @@ void reg::check_cleared()
   assert(type == type_t::unknown);
 }
 
-void erase_from_stack(vector<int>& s, int i, vector<reg_heap::address>& v)
-{
-  int x = s.back();
-  s.pop_back();
-
-  if (i < s.size())
-  {
-    s[i] = x;
-    v[x].index = i;
-  }
-}
-
-void vm_add(vector<int>& m, vector<reg_heap::address>& v, int r, int rc)
-{
-  assert(not v[r].rc);
-  reg_heap::address A(rc);
-  A.index = m.size();
-
-  v[r] = A;
-  m.push_back(r);
-  assert(m[A.index] == r);
-}
-
-int vm_erase(vector<int>& m, vector<reg_heap::address>& v, int r)
-{
-  reg_heap::address A = v[r];
-
-  // The reg should be mapped.
-  assert(A.rc > 0);
-
-  // Lookup the position in m where we mention r
-  int index = A.index;
-  A.index = -1;
-  assert(m[index] == r);
-
-  // Erase location r from m, updating v[m.back()] if m.back() is moved within m.
-  erase_from_stack(m, index, v);
-
-  // Actually clear the mapping.
-  v[r] = {};
-  return A.rc;
-}
-
 bool mapping::has_value(int r) const {return operator[](r);}
 
 void mapping::add_value(int r, int v) 
@@ -353,6 +310,11 @@ void mapping::resize(int s)
 int mapping::size() const
 {
   return values.size();
+}
+
+bool mapping::empty() const
+{
+  return modified_.empty();
 }
 
 const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t));return token_roots[t].triggers;}
@@ -475,7 +437,7 @@ int reg_heap::find_computation_for_reg(int t, int r) const
   while(true)
   {
     assert(token_is_used(t));
-    rc = token_roots[t].virtual_mapping[r].rc;
+    rc = token_roots[t].vm_absolute[r];
     if (rc or t == root_token) break;
     t = parent_token(t);
     assert(t != -1);
@@ -493,7 +455,7 @@ int reg_heap::computation_index_for_reg(int t, int r) const
 
 int reg_heap::local_computation_index_for_reg(int t, int r) const 
 {
-  int rc = token_roots[t].virtual_mapping[r].rc;
+  int rc = token_roots[t].vm_absolute[r];
   return rc;
 }
 
@@ -807,7 +769,7 @@ int reg_heap::add_computation(int t, int r, int rc)
 {
   assert(computations[rc].source == r);
 
-  vm_add(token_roots[t].modified, token_roots[t].virtual_mapping, r, rc);
+  token_roots[t].vm_absolute.add_value(r,rc);
 
   return rc;
 }
@@ -828,7 +790,7 @@ int reg_heap::copy_computation(int t1, int t2, int r)
 {
   assert(not has_local_computation(t2,r));
 
-  int rc = token_roots[t1].virtual_mapping[r].rc;
+  int rc = token_roots[t1].vm_absolute[r];
 
   assert(rc);
 
@@ -842,28 +804,36 @@ int reg_heap::remove_computation(int t, int r)
   assert(has_local_computation(t,r));
 
   // erase the mark that reg r is modified
-  int rc = vm_erase(token_roots[t].modified, token_roots[t].virtual_mapping, r);
+  int rc = token_roots[t].vm_absolute.erase_value(r);
 
   assert(not has_local_computation(t,r));
 
   return rc;
 }
 
+void swap_value(mapping& vm1, mapping& vm2, int r)
+{
+  int v1 = vm1[r];
+  int v2 = vm2[r];
+  vm1.replace_value(r,v2);
+  vm2.replace_value(r,v1);
+}
+
 // Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
-void merge_split_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<int>& m2, vector<reg_heap::address>& v2)
+void merge_split_mapping(mapping& vm1, mapping& vm2)
 {
-  if (m1.size() < m2.size())
+  if (vm1.modified().size() < vm2.modified().size())
   {
-    for(int i=0;i<m1.size();)
+    for(int i=0;i<vm1.modified().size();)
     {
-      int r = m1[i];
-      assert(v1[r].rc);
-      if (not v2[r].rc)
+      int r = vm1.modified()[i];
+      assert(vm1[r]);
+      if (not vm2[r])
       {
 	// transfer mapping from v1[r] -> v2[r]
-	int rc = vm_erase(m1, v1, r);
-	vm_add(m2, v2, r, rc);
+	int rc = vm1.erase_value(r);
+	vm2.add_value(r,rc);
       }
       else
 	i++;
@@ -871,40 +841,38 @@ void merge_split_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<
   }
   else
   {
-    for(int i=0;i<m2.size();)
+    for(int i=0;i<vm2.modified().size();)
     {
-      int r = m2[i];
-      assert(v2[r].rc);
-      if (v1[r].rc)
+      int r = vm2.modified()[i];
+      assert(vm2[r]);
+      if (vm1[r])
       {
-	std::swap(v1[r].rc, v2[r].rc);
+	swap_value(vm1, vm2, r);
 	i++;
       }
       else
       {
 	// transfer mapping from v2[r] -> v2[r]
-	int rc = vm_erase(m2, v2, r);
-	vm_add(m1, v1, r, rc);
+	int rc = vm2.erase_value(r);
+	vm1.add_value(r,rc);
       }
     }
-    std::swap(m1,m2);
-    std::swap(v1,v2);
+    std::swap(vm1,vm2);
   }
 }
 
 // Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
 // where (m2,v2) is at the root and (m1,v1) is relative.
-void pivot_mapping(vector<int>& m1, vector<reg_heap::address>& v1, vector<int>& m2, vector<reg_heap::address>& v2)
+void pivot_mapping(mapping& vm1, mapping& vm2)
 {
-  for(int i=0;i<m2.size();)
+  for(int i=0;i<vm2.modified().size();)
   {
-    int r = m2[i];
-    assert(v2[r].rc);
+    int r = vm2.modified()[i];
+    assert(vm2[r]);
 
-    std::swap(v1[r].rc, v2[r].rc);
+    swap_value(vm1, vm2, r);
   }
-  std::swap(m1,m2);
-  std::swap(v1,v2);
+  std::swap(vm1,vm2);
 }
 
 
@@ -1061,9 +1029,9 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   // find all regs in t2 that are not shared from t1
   vector<int> modified;
-  for(int i=0;i<token_roots[t1].virtual_mapping.size();i++)
-    if (token_roots[t1].virtual_mapping[i].rc != token_roots[t2].virtual_mapping[i].rc
-	and token_roots[t1].virtual_mapping[i].rc)
+  for(int i=0;i<token_roots[t1].vm_absolute.size();i++)
+    if (token_roots[t1].vm_absolute[i] != token_roots[t2].vm_absolute[i]
+	and token_roots[t1].vm_absolute[i])
     {
       if (has_computation(t2,i))
 	computation_for_reg(t2,i).temp = mark_modified;
@@ -1222,16 +1190,16 @@ void reg_heap::expand_memory(int s)
 {
   int old_size = size();
   for(int t=0;t<token_roots.size();t++)
-    assert(token_roots[t].virtual_mapping.size() == old_size);
+    assert(token_roots[t].vm_absolute.size() == old_size);
 
   base_pool_t::expand_memory(s);
 
   // Extend virtual mappings, with virtual_mapping[i] = 0;
   for(int t=0;t<token_roots.size();t++)
   {
-    token_roots[t].virtual_mapping.resize(size());
+    token_roots[t].vm_absolute.resize(size());
     for(int i=old_size;i<size();i++)
-      assert(token_roots[t].virtual_mapping[i].rc == 0);
+      assert(token_roots[t].vm_absolute[i] == 0);
   }
 }
 
@@ -1356,13 +1324,13 @@ int reg_heap::get_unused_token()
   {
     unused_tokens.push_back(get_n_tokens());
     token_roots.push_back(graph_roots());
-    token_roots.back().virtual_mapping.resize(size());
-    for(auto& addr: token_roots.back().virtual_mapping)
-      assert(addr.rc == 0);
+    token_roots.back().vm_absolute.resize(size());
+    for(int i=0;i<size();i++)
+      assert(token_roots.back().vm_absolute[i] == 0);
   }
 
   for(int i=0;i<token_roots.size();i++)
-    assert(token_roots[i].virtual_mapping.size() == size());
+    assert(token_roots[i].vm_absolute.size() == size());
 
   int t = unused_tokens.back();
   unused_tokens.pop_back();
@@ -1375,7 +1343,7 @@ int reg_heap::get_unused_token()
 
   assert(token_roots[t].parent == -1);
   assert(token_roots[t].children.empty());
-  assert(token_roots[t].modified.empty());
+  assert(token_roots[t].vm_absolute.empty());
   assert(not token_roots[t].referenced);
 
   token_roots[t].referenced = true;
@@ -1517,9 +1485,9 @@ void reg_heap::replace_shared_computation(int t, int r, int rc1, int rc2)
   assert(rc1);
   assert(rc2);
 
-  if (token_roots[t].virtual_mapping[r].rc != rc1) return;
+  if (token_roots[t].vm_absolute[r] != rc1) return;
 
-  token_roots[t].virtual_mapping[r].rc = rc2;
+  token_roots[t].vm_absolute.replace_value(r, rc2);
 
   for(int t2: token_roots[t].children)
     replace_shared_computation(t2, r, rc1, rc2);
@@ -1530,7 +1498,7 @@ void reg_heap::remove_shared_computation(int t, int r, int rc)
   assert(t);
   assert(rc);
 
-  if (token_roots[t].virtual_mapping[r].rc != rc) return;
+  if (token_roots[t].vm_absolute[r] != rc) return;
 
   remove_computation(t,r);
 
@@ -1540,7 +1508,7 @@ void reg_heap::remove_shared_computation(int t, int r, int rc)
 
 int reg_heap::remove_shared_computation(int t, int r)
 {
-  int rc = token_roots[t].virtual_mapping[r].rc;
+  int rc = token_roots[t].vm_absolute[r];
   assert(rc);
   remove_shared_computation(t, r, rc);
   return rc;
@@ -1548,7 +1516,7 @@ int reg_heap::remove_shared_computation(int t, int r)
 
 void reg_heap::add_shared_computation(int t, int r, int rc)
 {
-  if (token_roots[t].virtual_mapping[r].rc) return;
+  if (token_roots[t].vm_absolute[r]) return;
 
   add_computation(t, r, rc);
 
@@ -1569,7 +1537,7 @@ int reg_heap::add_shared_computation(int t, int r)
 
 int reg_heap::share_and_clear(int t, int r)
 {
-  int rc1 = token_roots[t].virtual_mapping[r].rc;
+  int rc1 = token_roots[t].vm_absolute[r];
   assert(rc1);
 
   remove_shared_computation(t, r, rc1);
@@ -1579,7 +1547,7 @@ int reg_heap::share_and_clear(int t, int r)
 
 int reg_heap::replace_shared_computation(int t, int r)
 {
-  int rc1 = token_roots[t].virtual_mapping[r].rc;
+  int rc1 = token_roots[t].vm_absolute[r];
   assert(rc1);
 
   int rc2 = computations.allocate();
@@ -1780,10 +1748,7 @@ void reg_heap::try_release_token(int t)
   }
 
   // clear only the mappings that were actually updated here.
-  for(int r: token_roots[t].modified)
-    token_roots[t].virtual_mapping[r] = {};
-
-  token_roots[t].modified.clear();
+  token_roots[t].vm_absolute.clear();
 
   // If we just released a terminal token, maybe it's parent is not terminal also.
   if (parent != -1)
@@ -1794,9 +1759,9 @@ void reg_heap::try_release_token(int t)
     assert(root_token != -1);
 
 #ifdef DEBUG_MACHINE
-  assert(token_roots[t].virtual_mapping.size() == size());
-  for(const auto& A: token_roots[t].virtual_mapping)
-    assert(not A.rc);
+  assert(token_roots[t].vm_absolute.size() == size());
+  for(int i=0;i<size();i++)
+    assert(not token_roots[t].vm_absolute[i]);
 
   check_used_regs();
 #endif
@@ -1869,7 +1834,7 @@ int reg_heap::copy_token(int t)
 
   token_roots[t2].version = token_roots[t].version;
 
-  for(int r: token_roots[t].modified)
+  for(int r: token_roots[t].vm_absolute.modified())
     if (has_local_computation(t,r))
       copy_computation(t,t2,r);
 
@@ -1929,7 +1894,7 @@ reg_heap::reg_heap()
   //  computations.collect_garbage = [this](){collect_garbage();};
   computations.collect_garbage = [](){};
   computations.clear_references = [](int){};
-  token_roots[0].virtual_mapping.resize(1);
+  token_roots[0].vm_absolute.resize(1);
   token_roots[0].used = true;
   token_roots[0].referenced = true;
 }
