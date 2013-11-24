@@ -841,12 +841,21 @@ void merge_split_mapping(mapping& vm1, mapping& vm2)
   }
   else
   {
-    for(int i=0;i<vm2.modified().size();i++)
+    for(int i=0;i<vm2.modified().size();)
     {
       int r = vm2.modified()[i];
       assert(vm2[r]);
 
-      swap_value(vm1, vm2, r);
+      if (vm1[r])
+      {
+	swap_value(vm1, vm2, r);
+	i++;
+      }
+      else
+      {
+	vm1.add_value(r,vm2[r]);
+	vm2.erase_value(r);
+      }
     }
     std::swap(vm1,vm2);
   }
