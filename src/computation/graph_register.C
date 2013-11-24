@@ -856,7 +856,7 @@ void merge_split_mapping(mapping& vm1, mapping& vm2)
 // where (m2,v2) is at the root and (m1,v1) is relative.
 void pivot_mapping(mapping& vm1, mapping& vm2)
 {
-  for(int i=0;i<vm2.modified().size();)
+  for(int i=0;i<vm2.modified().size();i++)
   {
     int r = vm2.modified()[i];
     assert(vm2[r]);
