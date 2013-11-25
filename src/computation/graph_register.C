@@ -2247,7 +2247,12 @@ int reg_heap::incremental_evaluate(int R, int t)
     else
     {
       if (not has_computation(t,R))
-	add_shared_computation(t,R);
+      {
+	if (t)
+	  add_shared_computation(t,R);
+	else
+	  add_computation(t,R);
+      }
 
       object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
 
