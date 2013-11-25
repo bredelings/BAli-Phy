@@ -1488,6 +1488,8 @@ void reg_heap::check_used_regs() const
 
 int reg_heap::unshare_and_clear(int t, int r)
 {
+  assert(t);
+
   int rc = 0;
   if (has_computation(t,r))
     rc = remove_computation(t,r);
@@ -1498,6 +1500,7 @@ int reg_heap::unshare_and_clear(int t, int r)
 
 int reg_heap::unshare_and_clear_result(int t, int r)
 {
+  assert(t);
   int rcA = unshare_and_clear(t,r);
 
   if (computations[rcA].call) 
@@ -1539,6 +1542,7 @@ void reg_heap::remove_shared_computation(int t, int r, int rc)
 
 int reg_heap::remove_shared_computation(int t, int r)
 {
+  assert(t);
   int rc = token_roots[t].vm_absolute[r];
   assert(rc);
   remove_shared_computation(t, r, rc);
@@ -1547,6 +1551,7 @@ int reg_heap::remove_shared_computation(int t, int r)
 
 void reg_heap::add_shared_computation(int t, int r, int rc)
 {
+  assert(t);
   if (token_roots[t].vm_absolute[r]) return;
 
   add_computation(t, r, rc);
@@ -1557,6 +1562,7 @@ void reg_heap::add_shared_computation(int t, int r, int rc)
 
 int reg_heap::add_shared_computation(int t, int r)
 {
+  assert(t);
   int rc = computations.allocate();
 
   computations[rc].source = r;
@@ -1568,6 +1574,7 @@ int reg_heap::add_shared_computation(int t, int r)
 
 int reg_heap::share_and_clear(int t, int r)
 {
+  assert(t);
   int rc1 = token_roots[t].vm_absolute[r];
   assert(rc1);
 
@@ -1591,6 +1598,7 @@ int reg_heap::replace_shared_computation(int t, int r)
 
 int reg_heap::share_and_clear_result(int t, int r)
 {
+  assert(t);
   int rcA = replace_shared_computation(t,r);
 
   if (computations[rcA].call) 
