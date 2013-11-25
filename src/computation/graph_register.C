@@ -1438,6 +1438,9 @@ void reg_heap::check_used_reg(int index) const
   {
     if (not token_is_used(t)) continue;
 
+    if (is_root_token(t))
+      assert(token_roots[t].vm_relative[index] != -1);
+
     if (not has_computation(t, index)) continue;
 
     int call = call_for_reg(t,index);
