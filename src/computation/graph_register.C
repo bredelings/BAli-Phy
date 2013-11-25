@@ -1594,6 +1594,7 @@ int reg_heap::share_and_clear(int t, int r)
 
 int reg_heap::replace_shared_computation(int t, int r)
 {
+  assert(t);
   int rc1 = token_roots[t].vm_absolute[r];
   assert(rc1);
 
