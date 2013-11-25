@@ -1161,11 +1161,20 @@ void reg_heap::reclaim_used(int r)
   remove_from_used_list(r);
 
   for(int t=0;t<token_roots.size();t++)
-    if (token_is_used(t) and has_local_computation(t,r))
-      remove_computation(t, r);
+  {
+    if (not token_is_used(t)) continue;
+
+    if (token_roots[t].vm_absolute[r])
+      token_roots[t].vm_absolute.erase_value(r);
+    if (token_roots[t].vm_relative[r])
+      token_roots[t].vm_relative.erase_value(r);
+  }
 
   for(int t=0;t<token_roots.size();t++)
-    assert(not has_local_computation(t,r));
+  {
+    assert(not token_roots[t].vm_absolute[r]);
+    assert(not token_roots[t].vm_relative[r]);
+  }
 
   clear_C(r);
 
