@@ -1565,6 +1565,7 @@ int reg_heap::remove_shared_computation(int t, int r)
 void reg_heap::add_shared_computation(int t, int r, int rc)
 {
   assert(t);
+
   if (token_roots[t].vm_absolute[r]) return;
 
   add_computation(t, r, rc);
