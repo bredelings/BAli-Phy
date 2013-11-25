@@ -833,7 +833,7 @@ void swap_value(mapping& vm1, mapping& vm2, int r)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
 void merge_split_mapping(mapping& vm1, mapping& vm2)
 {
-  if (vm1.modified().size() < vm2.modified().size() and false)
+  if (vm1.modified().size() < vm2.modified().size())
   {
     for(int i=0;i<vm1.modified().size();)
     {
