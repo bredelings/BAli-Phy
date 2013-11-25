@@ -1055,7 +1055,7 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   for(int r: token_roots[t2].vm_relative.modified())
     if (token_roots[t1].vm_absolute[r])
     {
-      if (has_computation(t2,r))
+      if (token_roots[t2].vm_relative[r] > 0)
 	computation_for_reg(t2,r).temp = mark_modified;
       modified.push_back(r);
     }
