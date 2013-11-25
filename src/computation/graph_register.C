@@ -1764,8 +1764,7 @@ void reg_heap::try_release_token(int t)
   {
     // Remove this context -- pass on any memory overrides to the child at this point.
 
-    //    pivot_mapping(token_roots[t].modified, token_roots[t].virtual_mapping,
-    //    		  token_roots[child_token].modified, token_roots[child_token].virtual_mapping);
+    merge_split_mapping(token_roots[t].vm_relative, token_roots[child_token].vm_relative);
 
     // make parent point to child
     if (parent != -1)
