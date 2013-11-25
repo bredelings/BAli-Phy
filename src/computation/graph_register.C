@@ -1483,12 +1483,7 @@ void reg_heap::check_used_regs() const
 {
   // check_used_regs
   for(auto r = begin(); r != end(); r++)
-  {
     check_used_reg( r.addr() );
-
-    if (access(r.addr()).re_evaluate)
-      assert(reg_has_result(root_token,r.addr()));
-  }
 }
 
 int reg_heap::unshare_and_clear(int t, int r)
