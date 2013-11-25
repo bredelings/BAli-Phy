@@ -1547,28 +1547,14 @@ int reg_heap::unshare_and_clear_result(int t, int r)
   return rcA;
 }
 
-void reg_heap::replace_shared_computation(int t, int r, int rc1, int rc2)
-{
-  assert(t);
-  assert(rc1);
-  assert(rc2);
-
-  if (token_roots[t].vm_absolute[r] != rc1) return;
-
-  token_roots[t].vm_absolute.replace_value(r, rc2);
-
-  for(int t2: token_roots[t].children)
-    replace_shared_computation(t2, r, rc1, rc2);
-}
-
 void reg_heap::remove_shared_computation(int t, int r, int rc)
 {
   assert(t);
   assert(rc);
 
-  if (token_roots[t].vm_absolute[r] != rc) return;
+  if (token_roots[t].vm_relative[r]) return;
 
-  remove_computation(t,r);
+  token_roots[t].vm_absolute.erase_value(r);
 
   for(int t2: token_roots[t].children)
     remove_shared_computation(t2, r, rc);
@@ -1585,6 +1571,10 @@ int reg_heap::remove_shared_computation(int t, int r)
     token_roots[t].vm_relative.erase_value(r);
   else
     token_roots[t].vm_relative.set_value(r,-1);
+
+  token_roots[t].vm_absolute.erase_value(r);
+  for(int t2: token_roots[t].children)
+    remove_shared_computation(t2, r, rc);
     
   return rc;
 }
@@ -1644,6 +1634,20 @@ int reg_heap::share_and_clear(int t, int r)
   return rc1;
 }
 
+void reg_heap::replace_shared_computation(int t, int r, int rc1, int rc2)
+{
+  assert(t);
+  assert(rc1);
+  assert(rc2);
+
+  if (token_roots[t].vm_relative[r]) return;
+
+  token_roots[t].vm_absolute.replace_value(r, rc2);
+
+  for(int t2: token_roots[t].children)
+    replace_shared_computation(t2, r, rc1, rc2);
+}
+
 int reg_heap::replace_shared_computation(int t, int r)
 {
   assert(t);
@@ -1653,10 +1657,12 @@ int reg_heap::replace_shared_computation(int t, int r)
   int rc2 = computations.allocate();
   computations.access_unused(rc2).source = r;
 
-  replace_shared_computation(t, r, rc1, rc2);
-
+  token_roots[t].vm_absolute.replace_value(r, rc2);
   token_roots[t].vm_relative.set_value(r, rc2);
   
+  for(int t2: token_roots[t].children)
+    replace_shared_computation(t2, r, rc1, rc2);
+
   return rc1;
 }
 
