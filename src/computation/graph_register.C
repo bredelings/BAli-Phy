@@ -2177,9 +2177,13 @@ int reg_heap::incremental_evaluate(int R, int t)
     else if (is_WHNF(access(R).C.exp))
     {
       access(R).type = reg::type_t::constant;
-      for(int t=0;t<get_n_tokens();t++)
-	if (token_is_used(t) and has_local_computation(t,R))
+      if (has_local_computation(t,R))
+      {
+	if (t)
+	  remove_shared_computation(t,R);
+	else
 	  remove_computation(t,R);
+      }
     }
 
 #ifndef NDEBUG
