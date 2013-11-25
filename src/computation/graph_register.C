@@ -945,6 +945,7 @@ void reg_heap::reroot_mappings_at(int t)
 
   // 4. Now, try to remove the parent if its unreferenced.
   try_release_token(parent);
+
 }
 
 void reg_heap::mark_completely_dirty(int t)
