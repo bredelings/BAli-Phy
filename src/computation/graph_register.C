@@ -658,21 +658,21 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
 
-  // Ensure we have a computation
-  if (not has_local_computation(token,P))
-    add_computation(token,P);
-
   const int mark_result = 1;
   const int mark_call_result = 2;
+  const int mark_modified = 3;
 
   vector< int >& call_and_result_may_be_changed = get_scratch_list();
   vector< int >& result_may_be_changed = get_scratch_list();
   vector< int >& regs_to_re_evaluate = token_roots[token].regs_to_re_evaluate;
 
   // The index that we just altered cannot be known to be unchanged.
-  call_and_result_may_be_changed.push_back(P);
-  computation_for_reg(token,P).temp = mark_call_result;
-  result_may_be_changed.push_back(P);
+  if (has_local_computation(token,P))
+  {
+    call_and_result_may_be_changed.push_back(P);
+    computation_for_reg(token,P).temp = mark_modified;
+    result_may_be_changed.push_back(P);
+  }
 
   int i=0;
   int j=0;
@@ -691,10 +691,15 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
 #ifndef NDEBUG
   for(int R: result_may_be_changed)
-    assert(computation_for_reg(token,R).temp == mark_result or computation_for_reg(token,R).temp == mark_call_result);
+    assert(computation_for_reg(token,R).temp == mark_result or 
+	   computation_for_reg(token,R).temp == mark_call_result or
+	   computation_for_reg(token,R).temp == mark_modified
+	   );
 
   for(int R: call_and_result_may_be_changed)
-    assert(computation_for_reg(token,R).temp == mark_call_result);
+    assert(computation_for_reg(token,R).temp == mark_call_result or
+	   computation_for_reg(token,R).temp == mark_modified
+	   );
 #endif
 
   //  std::cerr<<" result: "<<result_may_be_changed.size()<<"\n";
@@ -704,13 +709,13 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   {
     assert(has_computation(token,R));
 
-    //    assert(R == P or computation_result_for_reg(token,R) or reg_is_shared(token,R));
-
-    assert(R == P or reg_has_call(token,R));
+    //    assert(computation_result_for_reg(token,R) or reg_is_shared(token,R));
 
     auto& RC = computation_for_reg(token,R);
 
     if (RC.temp > mark_result) continue;
+
+    assert(reg_has_call(token,R));
 
     RC.temp = -1;
 
@@ -727,15 +732,17 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     assert(has_computation(token,R));
 
     // Put this back when we stop making spurious used_by edges
-    //    assert(R == P or reg_has_call(token,R));
+    //    assert(reg_has_call(token,R));
 
     auto& RC = computation_for_reg(token,R);
+
+    if (RC.temp > mark_call_result) continue;
 
     assert(RC.temp == mark_call_result);
 
     RC.temp = -1;
 
-    assert(R == P or not is_modifiable(access(R).C.exp));
+    assert(not is_modifiable(access(R).C.exp));
 
     unshare_and_clear(token,R);
 
@@ -744,8 +751,11 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       regs_to_re_evaluate.push_back(R);
   }
 
-  // Finally set the new value.
+  if (has_computation(token,P))
+    computation_for_reg(token,P).temp = -1;
 
+  // Finally set the new value.
+  unshare_and_clear(token,P);
   assert(has_computation(token,P));
   set_reduction_result(token, P, std::move(C) );
 
@@ -1483,8 +1493,11 @@ void reg_heap::check_used_regs() const
 
 int reg_heap::unshare_and_clear(int t, int r)
 {
-  int rc = remove_computation(t,r);
-  add_computation(t,r);
+  int rc = 0;
+  if (has_computation(t,r))
+    rc = remove_computation(t,r);
+
+  int rc2 = add_computation(t,r);
   return rc;
 }
 
