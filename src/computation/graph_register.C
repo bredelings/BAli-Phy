@@ -919,6 +919,8 @@ void reg_heap::reroot_at(int t)
 
   assert(token_roots[t].version >= token_roots[parent].version);
 
+  check_used_regs();
+
   // 3. Now actually reroot.
 
   pivot_mapping(token_roots[parent].vm_relative, token_roots[t].vm_relative);
@@ -948,6 +950,7 @@ void reg_heap::reroot_at(int t)
   // 4. Now, try to remove the parent if its unreferenced.
   try_release_token(parent);
 
+  check_tokens();
 }
 
 void reg_heap::mark_completely_dirty(int t)
@@ -1050,17 +1053,12 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   const int mark_result = 1;
   const int mark_call_result = 2;
-  const int mark_modified = 3;
 
   // find all regs in t2 that are not shared from t1
   vector<int> modified;
   for(int r: token_roots[t2].vm_relative.modified())
-    if (token_roots[t1].vm_absolute[r])
-    {
-      if (token_roots[t2].vm_relative[r] > 0)
-	computation_for_reg(t2,r).temp = mark_modified;
+    if (token_roots[t1].vm_relative[r] > 0)
       modified.push_back(r);
-    }
 
   vector< int >& call_and_result_may_be_changed = get_scratch_list();
   vector< int >& result_may_be_changed = get_scratch_list();
@@ -1113,16 +1111,6 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     if (access(r).re_evaluate)
       regs_to_re_evaluate.push_back(r);
   }
-
-  for(int r:modified)
-    if (has_computation(t2,r))
-    {
-      auto& RC = computation_for_reg(t2,r);
-
-      assert(RC.temp == mark_modified);
-
-      RC.temp = -1;
-    }
 
   // find all regs in t2 that are not shared from t1.  Nothing needs to be done to these - they are already split.
   // Anything that uses these needs to be unshared.
@@ -1847,6 +1835,8 @@ void reg_heap::try_release_token(int t)
     invalidate_shared_regs(t, child_token);
   }
 
+  check_used_regs();
+
   // mark token for this context unused
   token_roots[t].used = false;
   token_roots[t].children.clear();  
@@ -1891,6 +1881,8 @@ void reg_heap::try_release_token(int t)
   token_roots[t].vm_absolute.clear();
   token_roots[t].vm_relative.clear();
 
+  check_used_regs();
+
   // If we just released a terminal token, maybe it's parent is not terminal also.
   if (parent != -1)
     try_release_token(parent);
@@ -1899,6 +1891,8 @@ void reg_heap::try_release_token(int t)
   if (token_roots.size() - unused_tokens.size() -1 > 0)
     assert(root_token != -1);
 
+  check_used_regs();
+
 #ifdef DEBUG_MACHINE
   assert(token_roots[t].vm_absolute.size() == size());
   for(int i=0;i<size();i++)
@@ -1906,6 +1900,8 @@ void reg_heap::try_release_token(int t)
 
   check_used_regs();
 #endif
+
+  check_used_regs();
 }
 
 bool reg_heap::is_terminal_token(int t) const
