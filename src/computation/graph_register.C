@@ -1470,6 +1470,9 @@ void reg_heap::check_used_reg(int index) const
     else
       std::abort();
 
+    if (access(index).type == reg::type_t::constant)
+      assert(not has_computation(t,index));
+
     if (not has_computation(t, index)) continue;
 
     int call = call_for_reg(t,index);
