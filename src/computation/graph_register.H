@@ -152,6 +152,7 @@ public:
 
   void check_used_reg(int) const;
   void check_used_regs() const;
+  void check_tokens() const;
 
   const computation& local_computation_for_reg(int t, int r) const ;
         computation& local_computation_for_reg(int t, int r);

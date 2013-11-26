@@ -1431,6 +1431,17 @@ bool reg_heap::computation_is_referenced(int t,int rc) const
     return false;
 }
 
+void reg_heap::check_tokens() const
+{
+  for(int t=0;t<token_roots.size();t++)
+    if (token_is_used(t))
+    {
+      assert(token_roots[t].referenced or token_roots[t].children.size() > 1);
+      assert(not is_dirty(t) or is_root_token(t));
+      assert(not is_dirty(t) or children_of_token(t).size() < 2);
+    }
+}
+
 void reg_heap::check_used_reg(int index) const
 {
   for(int t=1;t<get_n_tokens();t++)
@@ -1915,16 +1926,12 @@ const vector<int>& reg_heap::children_of_token(int t) const
 
 void reg_heap::release_token(int t)
 {
-  for(int i=0;i<token_roots.size();i++)
-    if (token_is_used(i))
-      assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
+  check_tokens();
 
   token_roots[t].referenced = false;
   try_release_token(t);
 
-  for(int i=0;i<token_roots.size();i++)
-    if (token_is_used(i))
-      assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
+  check_tokens();
 }
 
 bool reg_heap::token_is_used(int t) const
@@ -1934,9 +1941,7 @@ bool reg_heap::token_is_used(int t) const
 
 int reg_heap::copy_token(int t)
 {
-  for(int i=0;i<token_roots.size();i++)
-    if (token_is_used(i))
-      assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
+  check_tokens();
 
   check_used_regs();
 
@@ -1978,9 +1983,7 @@ int reg_heap::copy_token(int t)
   */
   check_used_regs();
 
-  for(int i=0;i<token_roots.size();i++)
-    if (token_is_used(i))
-      assert(token_roots[i].referenced or token_roots[i].children.size() > 1);
+  check_tokens();
 
   return t2;
 }
