@@ -899,7 +899,7 @@ void pivot_mapping(mapping& vm1, mapping& vm2)
 }
 
 
-void reg_heap::reroot_mappings_at(int t)
+void reg_heap::reroot_at(int t)
 {
   if (is_root_token(t)) return;
 
@@ -907,7 +907,7 @@ void reg_heap::reroot_mappings_at(int t)
 
   // 1. If this context isn't a direct child of the root, then make it one
   if (not is_root_token(parent))
-    reroot_mappings_at(parent);
+    reroot_at(parent);
 
   // Now this context should be a direct child of the root
   assert(is_root_token(parent));
@@ -1830,7 +1830,7 @@ void reg_heap::try_release_token(int t)
     // handle the case when we are trying to release the root
     if (is_root_token(t))
     {
-      reroot_mappings_at(child_token);
+      reroot_at(child_token);
       return;
     }
 

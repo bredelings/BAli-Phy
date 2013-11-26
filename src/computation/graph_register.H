@@ -351,7 +351,7 @@ public:
 
   std::vector<int> used_regs_for_reg(int t, int r) const;
 
-  void reroot_mappings_at(int t);
+  void reroot_at(int t);
 
   /*----- Graph splitting -----*/
   /// Update the value of a non-constant, non-computed index

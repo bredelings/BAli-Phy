@@ -60,7 +60,7 @@ void context::make_root_tip() const
 
 void context::make_root_token() const
 {
-  memory_->reroot_mappings_at(token);
+  memory_->reroot_at(token);
   
 }
 
