@@ -53,7 +53,7 @@ void context::make_clean() const
 
 void context::make_root_tip() const
 {
-  if (memory()->children_of_token(token).size() >= 2)
+  if (memory()->degree_of_token(token) >= 2)
     token = memory()->switch_to_child_token(token);
   make_root_token();
 }

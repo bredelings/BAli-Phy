@@ -1924,6 +1924,15 @@ const vector<int>& reg_heap::children_of_token(int t) const
   return token_roots[t].children;
 }
 
+int reg_heap::degree_of_token(int t) const
+{
+  int degree = children_of_token(t).size();
+  if (not is_root_token(t))
+    degree++;
+  return degree;
+}
+  
+
 void reg_heap::release_token(int t)
 {
   check_tokens();

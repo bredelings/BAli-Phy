@@ -285,6 +285,8 @@ public:
 
   const std::vector<int>& children_of_token(int) const;
 
+  int degree_of_token(int) const;
+
   /// Release just the identifiers for a token
   void release_identifiers();
 
