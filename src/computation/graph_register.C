@@ -1435,11 +1435,7 @@ void reg_heap::check_tokens() const
 {
   for(int t=0;t<token_roots.size();t++)
     if (token_is_used(t))
-    {
       assert(token_roots[t].referenced or token_roots[t].children.size() > 1);
-      assert(not is_dirty(t) or is_root_token(t));
-      assert(not is_dirty(t) or children_of_token(t).size() < 2);
-    }
 }
 
 void reg_heap::check_used_reg(int index) const
