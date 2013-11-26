@@ -901,6 +901,8 @@ void reg_heap::reroot_at(int t)
 {
   if (is_root_token(t)) return;
 
+  check_used_regs();
+
   int parent = parent_token(t);
 
   // 1. If this context isn't a direct child of the root, then make it one
@@ -916,8 +918,6 @@ void reg_heap::reroot_at(int t)
   invalidate_shared_regs(parent,t);
 
   assert(token_roots[t].version >= token_roots[parent].version);
-
-  check_used_regs();
 
   // 3. Now actually reroot.
 
@@ -943,12 +943,8 @@ void reg_heap::reroot_at(int t)
     incremental_evaluate(R,t);
   token_roots[t].regs_to_re_evaluate.clear();
 
-  check_used_regs();
-
   // 4. Now, try to remove the parent if its unreferenced.
   try_release_token(parent);
-
-  check_tokens();
 }
 
 void reg_heap::mark_completely_dirty(int t)
@@ -1833,8 +1829,6 @@ void reg_heap::try_release_token(int t)
     invalidate_shared_regs(t, child_token);
   }
 
-  check_used_regs();
-
   // mark token for this context unused
   token_roots[t].used = false;
   token_roots[t].children.clear();  
@@ -1879,8 +1873,6 @@ void reg_heap::try_release_token(int t)
   token_roots[t].vm_absolute.clear();
   token_roots[t].vm_relative.clear();
 
-  check_used_regs();
-
   // If we just released a terminal token, maybe it's parent is not terminal also.
   if (parent != -1)
     try_release_token(parent);
@@ -1889,8 +1881,6 @@ void reg_heap::try_release_token(int t)
   if (token_roots.size() - unused_tokens.size() -1 > 0)
     assert(root_token != -1);
 
-  check_used_regs();
-
 #ifdef DEBUG_MACHINE
   assert(token_roots[t].vm_absolute.size() == size());
   for(int i=0;i<size();i++)
@@ -1898,8 +1888,6 @@ void reg_heap::try_release_token(int t)
 
   check_used_regs();
 #endif
-
-  check_used_regs();
 }
 
 bool reg_heap::is_terminal_token(int t) const
