@@ -771,8 +771,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       incremental_evaluate(R,token);
     regs_to_re_evaluate.clear();
   }
-
-  check_used_regs();
 }
 
 int reg_heap::add_computation(int t, int r, int rc)
