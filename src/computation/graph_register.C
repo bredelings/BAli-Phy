@@ -909,6 +909,8 @@ void reg_heap::reroot_at(int t)
   if (not is_root_token(parent))
     reroot_at(parent);
 
+  // re-rooting to the parent context shouldn't release its token.
+  assert(token_is_used(parent));
   // Now this context should be a direct child of the root
   assert(is_root_token(parent));
 
@@ -1141,7 +1143,10 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   // Mark this context as not having computations that need to be unshared
   assert(token_roots[t1].version >= token_roots[t2].version);
-  token_roots[t2].version = token_roots[t1].version;
+
+  // We can only do this if we know that t1 doesn't have an ancestor with the same version, I think.
+  if (is_root_token(t1))
+    token_roots[t2].version = token_roots[t1].version;
 }
 
 std::vector<int> reg_heap::used_regs_for_reg(int t, int r) const
@@ -1435,7 +1440,11 @@ void reg_heap::check_tokens() const
 {
   for(int t=0;t<token_roots.size();t++)
     if (token_is_used(t))
+    {
       assert(token_roots[t].referenced or token_roots[t].children.size() > 1);
+      for(int t2: children_of_token(t))
+	assert(token_roots[t].version >= token_roots[t2].version);
+    }
 }
 
 void reg_heap::check_used_reg(int index) const
