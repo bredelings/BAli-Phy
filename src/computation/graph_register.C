@@ -1631,7 +1631,9 @@ int reg_heap::share_and_clear(int t, int r)
   int rc1 = token_roots[t].vm_absolute[r];
   assert(rc1);
 
-  remove_shared_computation(t, r, rc1);
+  token_roots[t].vm_absolute.erase_value(r);
+  for(int t2: token_roots[t].children)
+    remove_shared_computation(t2, r, rc1);
 
   if (is_root_token(t))
   {
