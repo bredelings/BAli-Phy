@@ -1061,6 +1061,8 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
 
 void reg_heap::invalidate_shared_regs(int t1, int t2)
 {
+  assert(t1 == parent_token(t2));
+
   if (token_roots[t1].version <= token_roots[t2].version) return;
 
   const int mark_result = 1;
@@ -1600,7 +1602,6 @@ int reg_heap::remove_shared_computation(int t, int r)
 void reg_heap::add_shared_computation(int t, int r, int rc)
 {
   assert(t);
-
   if (token_roots[t].vm_relative[r]) return;
 
   token_roots[t].vm_absolute.add_value(r, rc);
@@ -1611,7 +1612,6 @@ void reg_heap::add_shared_computation(int t, int r, int rc)
 
 int reg_heap::add_shared_computation(int t, int r)
 {
-  assert(t);
   assert(not token_roots[t].vm_absolute[r]);
   assert(token_roots[t].vm_relative[r] <= 0);
 
@@ -2350,12 +2350,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     else
     {
       if (not has_computation(t,R))
-      {
-	if (t)
-	  add_shared_computation(t,R);
-	else
-	  add_computation(t,R);
-      }
+	add_shared_computation(t,R);
 
       object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
 
