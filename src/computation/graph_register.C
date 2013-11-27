@@ -1514,23 +1514,23 @@ int reg_heap::unshare_and_clear(int t, int r)
   assert(t);
   assert(degree_of_token(t) <= 1);
 
-  int rc = 0;
-  if (token_roots[t].vm_absolute[r])
-    rc = token_roots[t].vm_absolute.erase_value(r);
+  int rc = token_roots[t].vm_absolute.set_value(r,0);
 
   int rc2 = computations.allocate();
   computations.access_unused(rc2).source = r;
-  add_computation(t, r, rc2);
+  token_roots[t].vm_absolute.add_value(r,rc2);
 
   // Add a computation here that is NOT inherited by children
-  token_roots[t].vm_relative.set_value(r, rc2);
+  int rc3 = token_roots[t].vm_relative.set_value(r, rc2);
   if (token_roots[t].children.size())
   {
     assert(token_roots[t].children.size() == 1);
     assert(is_root_token(t));
     int t2 = token_roots[t].children[0];
+    if (not rc3)
+      rc3 = -1;
     if (not token_roots[t2].vm_relative[r])
-      token_roots[t2].vm_relative.set_value(r,rc);
+      token_roots[t2].vm_relative.set_value(r,rc3);
   }
 
   return rc;
