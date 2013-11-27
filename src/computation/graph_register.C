@@ -1572,12 +1572,10 @@ void reg_heap::remove_shared_computation(int t, int r, int rc)
 
 int reg_heap::remove_shared_computation(int t, int r)
 {
-  assert(t);
   int rc = token_roots[t].vm_absolute[r];
   assert(rc);
-  remove_shared_computation(t, r, rc);
 
-  if (is_root_token(t))
+  if (not t or is_root_token(t))
     token_roots[t].vm_relative.erase_value(r);
   else
     token_roots[t].vm_relative.set_value(r,-1);
@@ -2279,12 +2277,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     {
       access(R).type = reg::type_t::constant;
       if (has_local_computation(t,R))
-      {
-	if (t)
-	  remove_shared_computation(t,R);
-	else
-	  remove_computation(t,R);
-      }
+	remove_shared_computation(t,R);
     }
 
 #ifndef NDEBUG
@@ -2379,7 +2372,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 	{
 	  if (not t)
 	  {
-	    remove_computation(t,R);
+	    remove_shared_computation(t,R);
 	    return R;
 	  }
 	  
