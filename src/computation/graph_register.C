@@ -1433,7 +1433,10 @@ void reg_heap::check_used_reg(int index) const
     if (not token_is_used(t)) continue;
 
     if (is_root_token(t))
-      assert(token_roots[t].vm_relative[index] != -1);
+      assert(token_roots[t].vm_relative[index] == token_roots[t].vm_absolute[index]);
+    else if (token_roots[t].vm_absolute[index] == token_roots[parent_token(t)].vm_absolute[index]
+	     and token_roots[t].vm_absolute[index] > 0)
+      assert(token_roots[t].vm_relative[index] == 0);
 
     if (token_roots[t].vm_relative[index] == 0)
     {
