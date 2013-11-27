@@ -800,18 +800,6 @@ int reg_heap::add_computation(int t, int r, int rc)
   return rc;
 }
 
-int reg_heap::add_computation(int t, int r)
-{
-  assert(not has_local_computation(t,r));
-
-  int rc = computations.allocate();
-  computations.access_unused(rc).source = r;
-
-  add_computation(t, r, rc);
-
-  return rc;
-}
-
 int reg_heap::copy_computation(int t1, int t2, int r)
 {
   assert(not has_local_computation(t2,r));
@@ -1541,7 +1529,9 @@ int reg_heap::unshare_and_clear(int t, int r)
   if (has_computation(t,r))
     rc = remove_computation(t,r);
 
-  int rc2 = add_computation(t,r);
+  int rc2 = computations.allocate();
+  computations.access_unused(rc2).source = r;
+  add_computation(t, r, rc2);
 
   // Add a computation here that is NOT inherited by children
   token_roots[t].vm_relative.set_value(r, rc2);

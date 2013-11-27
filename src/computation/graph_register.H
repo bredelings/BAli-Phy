@@ -311,8 +311,6 @@ public:
   /*----- Virtual memory ------*/
   int add_computation(int t, int r, int rc);
 
-  int add_computation(int t, int r);
-
   int copy_computation(int t1, int t2, int r);
 
   int remove_computation(int t, int r);
