@@ -346,6 +346,7 @@ computation& reg_heap::computation_for_reg(int t, int r)
 
 const closure& reg_heap::access_result_for_reg(int t, int R1) const
 {
+  assert(not t or is_root_token(t));
   int R2 = result_for_reg(t,R1);
   assert(R2);
   return access(R2).C;
