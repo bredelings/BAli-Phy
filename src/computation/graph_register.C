@@ -675,8 +675,24 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   assert(not children_of_token(token).size());
   assert(reg_is_changeable(P));
 
+  if (not is_root_token(token) and token_roots[token].version == token_roots[parent_token(token)].version)
+    token_roots[token].version--;
+
+  // assert(not is_root_token and token_roots[token].version < token_roots[parent_token(token)].version) 
+
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
+
+  if (not token_roots[token].vm_relative[P] and not is_root_token(token))
+  {
+    assert(not is_root_token(token));
+
+    unshare_and_clear(token,P);
+    add_shared_computation(token,P);
+    assert(has_computation(token,P));
+    set_reduction_result(token, P, std::move(C) );
+    return;
+  }
 
   const int mark_result = 1;
   const int mark_call_result = 2;
