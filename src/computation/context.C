@@ -375,6 +375,9 @@ void context::set_parameter_value_(int index, closure&& C)
 
 void context::set_reg_value(int P, closure&& C)
 {
+  if (memory()->degree_of_token(token) >= 2)
+    token = memory()->switch_to_child_token(token);
+
   make_clean();
   // FIXME - we can only change values on contexts that are not dirty!
   // BUT this is ultimately checked in the reg_heap itself.

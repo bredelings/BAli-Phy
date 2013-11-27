@@ -1512,6 +1512,7 @@ void reg_heap::check_used_regs() const
 int reg_heap::unshare_and_clear(int t, int r)
 {
   assert(t);
+  assert(degree_of_token(t) <= 1);
 
   int rc = 0;
   if (has_computation(t,r))
