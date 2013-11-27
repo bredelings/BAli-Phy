@@ -365,6 +365,8 @@ public:
   void mark_completely_dirty(int t);
   bool is_completely_dirty(int t) const;
   bool is_dirty(int t) const;
+  void find_callers_(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
+  void find_users_(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
   void find_callers(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
   void find_users(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
   bool reg_is_shared_with_parent(int t, int r) const;

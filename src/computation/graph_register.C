@@ -683,17 +683,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
 
-  if (not token_roots[token].vm_relative[P] and not is_root_token(token))
-  {
-    assert(not is_root_token(token));
-
-    unshare_and_clear(token,P);
-    add_shared_computation(token,P);
-    assert(has_computation(token,P));
-    set_reduction_result(token, P, std::move(C) );
-    return;
-  }
-
   const int mark_result = 1;
   const int mark_call_result = 2;
   const int mark_modified = 3;
@@ -702,8 +691,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   vector< int >& result_may_be_changed = get_scratch_list();
   vector< int >& regs_to_re_evaluate = token_roots[token].regs_to_re_evaluate;
 
-  // The index that we just altered cannot be known to be unchanged.
-  if (has_local_computation(token,P))
+  // If we have a RELATIVE computation, we need to take care of its users new to this token.
+  if (rel_computation_index_for_reg(token,P))
   {
     call_and_result_may_be_changed.push_back(P);
     computation_for_reg(token,P).temp = mark_modified;
@@ -715,13 +704,13 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
   {
     // First find all users or callers of regs where the result is out of date.
-    find_callers(token, token, j, result_may_be_changed, result_may_be_changed, mark_result);
-    find_users(token, token, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers_(token, token, j, result_may_be_changed, result_may_be_changed, mark_result);
+    find_users_(token, token, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
     j = result_may_be_changed.size();
 
     // Second find all users or callers of regs where the result AND CALL are out of date.
-    find_users(token, token, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
-    find_callers(token, token, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
+    find_users_(token, token, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers_(token, token, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
     i = call_and_result_may_be_changed.size();
   }
 
@@ -984,6 +973,68 @@ bool reg_heap::is_completely_dirty(int t) const
   return true;
 }
   
+// find regs in t2 that call values only active in t1.  We look at regs in split, and append results to callers
+void reg_heap::find_callers_(int t1, int t2, int start, const vector<int>& split, vector<int>& callers, int mark)
+{
+  for(int i=start;i<split.size();i++)
+  {
+    auto& RC1 = rel_computation_for_reg(t1,split[i]);
+
+    // Look at computations in t2 that call the old value in t1.
+    for(const auto& wrc2: clean_weak_refs(RC1.called_by, computations))
+    {
+      int rc2 = wrc2.get(computations);
+
+      computation& RC2 = computations[rc2];
+      int r2 = RC2.source;
+
+      // If this computation is not used in t2, we don't need to unshare it.
+      if (rel_computation_index_for_reg(t2,r2) != rc2) continue;
+
+      // Skip this one if its been marked high enough already
+      if (RC2.temp >= mark) continue;
+
+      // There (usually) shouldn't be a back edge to r2 if r2 has no result.
+      assert(RC2.result);
+
+      RC2.temp = mark;
+      assert(rel_computation_index_for_reg(t2,r2) == rc2);
+      callers.push_back(r2);
+    }
+  }
+}
+
+// find regs in t2 that used values only active in t1.  We look at regs in split, and append results to callers
+void reg_heap::find_users_(int t1, int t2, int start, const vector<int>& split, vector<int>& users, int mark)
+{
+  for(int i=start;i<split.size();i++)
+  {
+    auto& RC1 = rel_computation_for_reg(t1, split[i]);
+
+    // Look at computations in t2 that call the old value in t1.
+    for(const auto& wrc2: clean_weak_refs(RC1.used_by, computations))
+    {
+      int rc2 = wrc2.get(computations);
+
+      computation& RC2 = computations[rc2];
+      int r2 = RC2.source;
+
+      // If this computation is not used in t2, we don't need to unshare it.
+      if (rel_computation_index_for_reg(t2,r2) != rc2) continue;
+
+      // Skip this one if its been marked high enough already
+      if (RC2.temp >= mark) continue;
+
+      // There (usually) shouldn't be a back edge to r2 if r2 has no result.
+      //      assert(RC2.result);
+
+      RC2.temp = mark;
+      assert(rel_computation_index_for_reg(t2,r2) == rc2);
+      users.push_back(r2);
+    }
+  }
+}
+
 // find regs in t2 that call values only active in t1.  We look at regs in split, and append results to callers
 void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split, vector<int>& callers, int mark)
 {
@@ -1554,6 +1605,8 @@ int reg_heap::unshare_and_clear(int t, int r)
       token_roots[t2].vm_relative.set_value(r,rc3);
   }
 
+  check_used_reg(r);
+
   return rc;
 }
 
@@ -1849,6 +1902,8 @@ void reg_heap::try_release_token(int t)
       return;
     }
 
+    merge_split_mapping(token_roots[t].vm_relative, token_roots[child_token].vm_relative);
+
     invalidate_shared_regs(t, child_token);
   }
 
@@ -1872,9 +1927,6 @@ void reg_heap::try_release_token(int t)
   if (n_children == 1)
   {
     assert(not t != root_token);
-    // Remove this context -- pass on any memory overrides to the child at this point.
-
-    merge_split_mapping(token_roots[t].vm_relative, token_roots[child_token].vm_relative);
 
     // make parent point to child
     if (parent != -1)
