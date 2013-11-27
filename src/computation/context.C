@@ -51,6 +51,19 @@ void context::make_clean() const
     token = memory()->switch_to_child_token(token);
 }
 
+void context::make_terminal_token() const
+{
+  if (memory()->is_root_token(token) and memory()->degree_of_token(token) == 1)
+  {
+    int child_token = memory()->children_of_token(token)[0];
+    memory()->reroot_at(child_token);
+  }
+  else if (memory()->degree_of_token(token) >= 2)
+    token = memory()->switch_to_child_token(token);
+
+  assert(memory()->children_of_token(token).empty());
+}
+
 void context::make_root_tip() const
 {
   if (memory()->degree_of_token(token) >= 2)
@@ -61,7 +74,6 @@ void context::make_root_tip() const
 void context::make_root_token() const
 {
   memory_->reroot_at(token);
-  
 }
 
 object_ptr<reg_heap>& context::memory() const {return memory_;}
@@ -375,13 +387,12 @@ void context::set_parameter_value_(int index, closure&& C)
 
 void context::set_reg_value(int P, closure&& C)
 {
-  if (memory()->degree_of_token(token) >= 2)
-    token = memory()->switch_to_child_token(token);
+  make_terminal_token();
 
   make_clean();
   // FIXME - we can only change values on contexts that are not dirty!
   // BUT this is ultimately checked in the reg_heap itself.
-  return memory()->set_reg_value(P, std::move(C), token);
+  memory()->set_reg_value(P, std::move(C), token);
 }
 
 /// Update the value of a non-constant, non-computed index
@@ -1000,6 +1011,7 @@ void set_default_values_from_notes(context& C, int b, int e)
     {
       expression_ref parameter = results[0];
       int token = C.get_token();
+      C.make_terminal_token();
       expression_ref value = (identifier("evaluate"),token,(identifier("distDefaultValue"),results[1]));
       C.perform_expression( (identifier("set_parameter_value_"),C.get_token(),parameter,value) );
     }

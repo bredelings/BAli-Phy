@@ -671,6 +671,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
 void reg_heap::set_reg_value(int P, closure&& C, int token)
 {
   assert(not is_dirty(token));
+  assert(not children_of_token(token).size());
   assert(reg_is_changeable(P));
 
   // Check that this reg is indeed settable

@@ -20,6 +20,10 @@ class context: public Model_Notes
 
   void make_root_token() const;
 
+public:
+  void make_terminal_token() const;
+
+private:
   void make_root_tip() const;
 
   object_ptr<reg_heap>& memory() const;
