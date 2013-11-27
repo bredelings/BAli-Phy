@@ -313,8 +313,6 @@ public:
 
   int copy_computation(int t1, int t2, int r);
 
-  int remove_computation(int t, int r);
-  
   bool has_computation(int t, int r) const;
 
   void replace_shared_computation(int t, int r, int rc1, int rc2);

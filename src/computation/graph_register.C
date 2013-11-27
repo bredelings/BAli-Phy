@@ -813,18 +813,6 @@ int reg_heap::copy_computation(int t1, int t2, int r)
   return rc;
 }
 
-int reg_heap::remove_computation(int t, int r)
-{
-  assert(has_local_computation(t,r));
-
-  // erase the mark that reg r is modified
-  int rc = token_roots[t].vm_absolute.erase_value(r);
-
-  assert(not has_local_computation(t,r));
-
-  return rc;
-}
-
 void swap_value(mapping& vm1, mapping& vm2, int r)
 {
   int v1 = vm1[r];
@@ -1527,7 +1515,7 @@ int reg_heap::unshare_and_clear(int t, int r)
 
   int rc = 0;
   if (has_computation(t,r))
-    rc = remove_computation(t,r);
+    rc = token_roots[t].vm_absolute.erase_value(r);
 
   int rc2 = computations.allocate();
   computations.access_unused(rc2).source = r;
