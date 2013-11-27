@@ -997,14 +997,6 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
   }
 }
 
-bool reg_heap::reg_is_shared_with_parent(int t, int r) const
-{
-  assert(t);
-  if (is_root_token(t)) return false;
-  int p = parent_token(t);
-  return computation_index_for_reg(t,r) == computation_index_for_reg(p,r);
-}
-
 // find regs in t2 that used values only active in t1.  We look at regs in split, and append results to callers
 void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, vector<int>& users, int mark)
 {
@@ -1126,6 +1118,14 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   // We can only do this if we know that t1 doesn't have an ancestor with the same version, I think.
   if (is_root_token(t1))
     token_roots[t2].version = token_roots[t1].version;
+}
+
+bool reg_heap::reg_is_shared_with_parent(int t, int r) const
+{
+  assert(t);
+  if (is_root_token(t)) return false;
+  int p = parent_token(t);
+  return computation_index_for_reg(t,r) == computation_index_for_reg(p,r);
 }
 
 std::vector<int> reg_heap::used_regs_for_reg(int t, int r) const
