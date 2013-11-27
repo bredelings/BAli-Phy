@@ -89,13 +89,23 @@ const std::vector<int>& context::triggers() const {make_root_token();return memo
 
 reg& context::access(int i) const {return memory()->access(i);}
 
+bool context::reg_has_call(int r) const 
+{
+  make_root_token();
+  return memory()->reg_has_call(token,r);
+}
 
+bool context::reg_has_result(int r) const 
+{
+  make_root_token();
+  return memory()->reg_has_result(token,r);
+}
 
-bool context::reg_has_call(int r) const {return memory()->reg_has_call(token,r);}
-
-bool context::reg_has_result(int r) const {return memory()->reg_has_result(token,r);}
-
-const closure& context::access_result_for_reg(int i) const {return memory()->access_result_for_reg(token,i);}
+const closure& context::access_result_for_reg(int i) const
+{
+  make_root_token();
+  return memory()->access_result_for_reg(token,i);
+}
 
 reg& context::operator[](int i) const {return memory()->access(i);}
 
@@ -299,6 +309,7 @@ bool context::parameter_is_set(int index) const
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 object_ref context::get_reg_value(int R) const
 {
+  make_root_token();
   if (not reg_has_result(R))
   {
     // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
