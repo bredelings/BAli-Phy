@@ -1515,7 +1515,7 @@ int reg_heap::unshare_and_clear(int t, int r)
   assert(degree_of_token(t) <= 1);
 
   int rc = 0;
-  if (has_computation(t,r))
+  if (token_roots[t].vm_absolute[r])
     rc = token_roots[t].vm_absolute.erase_value(r);
 
   int rc2 = computations.allocate();
@@ -1524,9 +1524,14 @@ int reg_heap::unshare_and_clear(int t, int r)
 
   // Add a computation here that is NOT inherited by children
   token_roots[t].vm_relative.set_value(r, rc2);
-  for(int t2: token_roots[t].children)
+  if (token_roots[t].children.size())
+  {
+    assert(token_roots[t].children.size() == 1);
+    assert(is_root_token(t));
+    int t2 = token_roots[t].children[0];
     if (not token_roots[t2].vm_relative[r])
-      token_roots[t2].vm_relative.set_value(r, rc);
+      token_roots[t2].vm_relative.set_value(r,rc);
+  }
 
   return rc;
 }
