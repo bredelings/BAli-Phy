@@ -89,9 +89,7 @@ const std::vector<int>& context::triggers() const {make_root_token();return memo
 
 reg& context::access(int i) const {return memory()->access(i);}
 
-computation& context::computation_for_reg(int i) const {return memory()->computation_for_reg(token,i);}
 
-int context::result_for_reg(int i) const {return memory()->result_for_reg(token,i);}
 
 bool context::reg_has_call(int r) const {return memory()->reg_has_call(token,r);}
 

@@ -81,10 +81,6 @@ public:
 
   reg& access(int i) const;
 
-  computation& computation_for_reg(int i) const;
-
-  int result_for_reg(int i) const;
-
   bool reg_has_call(int r) const;
 
   bool reg_has_result(int r) const;
