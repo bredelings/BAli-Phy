@@ -448,6 +448,24 @@ int reg_heap::find_computation_for_reg(int t, int r) const
   return t;
 }
 
+const computation& reg_heap::rel_computation_for_reg(int t, int r) const 
+{ 
+  int rc = rel_computation_index_for_reg(t,r);
+  return computations.access_unused(rc);
+}
+
+computation& reg_heap::rel_computation_for_reg(int t, int r)
+{ 
+  int rc = rel_computation_index_for_reg(t,r);
+  return computations.access_unused(rc);
+}
+
+int reg_heap::rel_computation_index_for_reg(int t, int r) const 
+{
+  int rc = token_roots[t].vm_relative[r];
+  return rc;
+}
+
 int reg_heap::computation_index_for_reg(int t, int r) const 
 {
   return local_computation_index_for_reg(t,r);
