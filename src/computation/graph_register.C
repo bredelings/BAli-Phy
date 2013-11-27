@@ -775,6 +775,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   // Finally set the new value.
   unshare_and_clear(token,P);
+  add_shared_computation(token,P);
   assert(has_computation(token,P));
   set_reduction_result(token, P, std::move(C) );
 
@@ -1520,12 +1521,11 @@ int reg_heap::unshare_and_clear(int t, int r)
 
   int rc = token_roots[t].vm_absolute.set_value(r,0);
 
-  int rc2 = computations.allocate();
-  computations.access_unused(rc2).source = r;
-  token_roots[t].vm_absolute.add_value(r,rc2);
-
   // Add a computation here that is NOT inherited by children
-  int rc3 = token_roots[t].vm_relative.set_value(r, rc2);
+  int non_copy = -1;
+  if (is_root_token(t))
+    non_copy = 0;
+  int rc3 = token_roots[t].vm_relative.set_value(r,non_copy);
   if (token_roots[t].children.size())
   {
     assert(token_roots[t].children.size() == 1);
@@ -1544,6 +1544,8 @@ int reg_heap::unshare_and_clear_result(int t, int r)
 {
   assert(t);
   int rcA = unshare_and_clear(t,r);
+
+  add_shared_computation(t,r);
 
   if (computations[rcA].call) 
     set_call(t,r,computations[rcA].call);
