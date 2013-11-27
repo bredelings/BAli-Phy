@@ -1480,7 +1480,7 @@ void reg_heap::check_used_reg(int index) const
 
       // The used computation should be referenced somewhere more root-ward
       // so that this computation can be invalidated, and the used computation won't be GC-ed.
-      assert(computation_is_referenced(t,rc));
+      assert(is_modifiable(access(R2).C.exp) or computation_is_referenced(t,rc));
       
       // Used computations should have results
       assert(computations[rc].result);
