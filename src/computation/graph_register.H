@@ -357,8 +357,6 @@ public:
   /// Update the value of a non-constant, non-computed index
   void set_reg_value(int index, closure&&, int t);
   bool reg_is_shared(int t, int r) const;
-  int unshare_and_clear(int t, int r);
-  int unshare_and_clear_result(int t, int r);
   int share_and_clear(int t, int r);
   int share_and_clear_result(int t, int r);
   void invalidate_shared_regs(int t1, int t2);

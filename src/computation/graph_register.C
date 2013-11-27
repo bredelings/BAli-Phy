@@ -744,7 +744,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     RC.temp = -1;
 
-    unshare_and_clear_result(token, R);
+    share_and_clear_result(token, R);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
@@ -769,7 +769,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     assert(not is_modifiable(access(R).C.exp));
 
-    unshare_and_clear(token,R);
+    share_and_clear(token,R);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
@@ -780,7 +780,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     computation_for_reg(token,P).temp = -1;
 
   // Finally set the new value.
-  unshare_and_clear(token,P);
+  token_roots[token].vm_absolute.set_value(P,0);
+  token_roots[token].vm_relative.set_value(P,-1);
   add_shared_computation(token,P);
   assert(has_computation(token,P));
   set_reduction_result(token, P, std::move(C) );
@@ -1580,51 +1581,6 @@ void reg_heap::check_used_regs() const
   // check_used_regs
   for(auto r = begin(); r != end(); r++)
     check_used_reg( r.addr() );
-}
-
-int reg_heap::unshare_and_clear(int t, int r)
-{
-  assert(t);
-  assert(degree_of_token(t) <= 1);
-
-  int rc = token_roots[t].vm_absolute.set_value(r,0);
-
-  // Add a computation here that is NOT inherited by children
-  int non_copy = -1;
-  if (is_root_token(t))
-    non_copy = 0;
-  int rc3 = token_roots[t].vm_relative.set_value(r,non_copy);
-  if (token_roots[t].children.size())
-  {
-    assert(token_roots[t].children.size() == 1);
-    assert(is_root_token(t));
-    int t2 = token_roots[t].children[0];
-    if (not rc3)
-      rc3 = -1;
-    if (not token_roots[t2].vm_relative[r])
-      token_roots[t2].vm_relative.set_value(r,rc3);
-  }
-
-  check_used_reg(r);
-
-  return rc;
-}
-
-int reg_heap::unshare_and_clear_result(int t, int r)
-{
-  assert(t);
-  int rcA = unshare_and_clear(t,r);
-
-  add_shared_computation(t,r);
-
-  if (computations[rcA].call) 
-    set_call(t,r,computations[rcA].call);
-  for(int rc: computations[rcA].used_inputs)
-  {
-    int r2 = computations[rc].source;
-    set_used_input(t,r,r2);
-  }
-  return rcA;
 }
 
 void reg_heap::remove_shared_computation(int t, int r, int rc)
