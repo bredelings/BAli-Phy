@@ -417,10 +417,7 @@ bool reg_heap::has_computation(int t, int r) const
 int reg_heap::find_computation_for_reg(int t, int r) const
 {
   if (not t)
-  {
-    assert(token_roots[t].vm_absolute[r] == token_roots[t].vm_relative[r]);
     return token_roots[t].vm_relative[r];
-  }
 
   int t0 = t;
   int rc = 0;
@@ -438,8 +435,6 @@ int reg_heap::find_computation_for_reg(int t, int r) const
     t = parent_token(t);
     assert(t != -1);
   }
-
-  assert(rc == token_roots[t0].vm_absolute[r]);
 
   return rc;
 }
@@ -764,7 +759,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     computation_for_reg(token,P).temp = -1;
 
   // Finally set the new value.
-  token_roots[token].vm_absolute.set_value(P,0);
   token_roots[token].vm_relative.set_value(P,-1);
   add_shared_computation(token,P);
   assert(has_computation(token,P));
@@ -787,8 +781,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 int reg_heap::add_computation(int t, int r, int rc)
 {
   assert(computations[rc].source == r);
-
-  token_roots[t].vm_absolute.add_value(r,rc);
 
   return rc;
 }
@@ -1292,15 +1284,12 @@ void reg_heap::reclaim_used(int r)
   {
     if (not token_is_used(t)) continue;
 
-    if (token_roots[t].vm_absolute[r])
-      token_roots[t].vm_absolute.erase_value(r);
     if (token_roots[t].vm_relative[r])
       token_roots[t].vm_relative.erase_value(r);
   }
 
   for(int t=0;t<token_roots.size();t++)
   {
-    assert(not token_roots[t].vm_absolute[r]);
     assert(not token_roots[t].vm_relative[r]);
   }
 
@@ -1349,23 +1338,16 @@ void reg_heap::expand_memory(int s)
 {
   int old_size = size();
   for(int t=0;t<token_roots.size();t++)
-  {
-    assert(token_roots[t].vm_absolute.size() == old_size);
     assert(token_roots[t].vm_relative.size() == old_size);
-  }
 
   base_pool_t::expand_memory(s);
 
   // Extend virtual mappings, with virtual_mapping[i] = 0;
   for(int t=0;t<token_roots.size();t++)
   {
-    token_roots[t].vm_absolute.resize(size());
     token_roots[t].vm_relative.resize(size());
     for(int i=old_size;i<size();i++)
-    {
-      assert(token_roots[t].vm_absolute[i] == 0);
       assert(token_roots[t].vm_relative[i] == 0);
-    }
   }
 }
 
@@ -1490,17 +1472,13 @@ int reg_heap::get_unused_token()
   {
     unused_tokens.push_back(get_n_tokens());
     token_roots.push_back(graph_roots());
-    token_roots.back().vm_absolute.resize(size());
     token_roots.back().vm_relative.resize(size());
     for(int i=0;i<size();i++)
-    {
-      assert(token_roots.back().vm_absolute[i] == 0);
       assert(token_roots.back().vm_relative[i] == 0);
-    }
   }
 
   for(int i=0;i<token_roots.size();i++)
-    assert(token_roots[i].vm_absolute.size() == size());
+    assert(token_roots[i].vm_relative.size() == size());
 
   int t = unused_tokens.back();
   unused_tokens.pop_back();
@@ -1513,7 +1491,7 @@ int reg_heap::get_unused_token()
 
   assert(token_roots[t].parent == -1);
   assert(token_roots[t].children.empty());
-  assert(token_roots[t].vm_absolute.empty());
+  assert(token_roots[t].vm_relative.empty());
   assert(not token_roots[t].referenced);
 
   token_roots[t].referenced = true;
@@ -1576,25 +1554,8 @@ void reg_heap::check_used_reg(int index) const
   {
     if (not token_is_used(t)) continue;
 
-    if (is_root_token(t))
-      assert(token_roots[t].vm_relative[index] == token_roots[t].vm_absolute[index]);
-    else if (token_roots[t].vm_absolute[index] == token_roots[parent_token(t)].vm_absolute[index]
-	     and token_roots[t].vm_absolute[index] > 0)
-      assert(token_roots[t].vm_relative[index] == 0);
-
-    if (token_roots[t].vm_relative[index] == 0)
-    {
-      if (is_root_token(t))
-	assert(token_roots[t].vm_absolute[index] == 0);
-      else
-	assert(token_roots[t].vm_absolute[index] == token_roots[parent_token(t)].vm_absolute[index]);
-    }
-    else if (token_roots[t].vm_relative[index] > 0)
-      assert(token_roots[t].vm_absolute[index] == token_roots[t].vm_relative[index]);
-    else if (token_roots[t].vm_relative[index] == -1)
-      assert(token_roots[t].vm_absolute[index] == 0);
-    else
-      std::abort();
+    if (not is_root_token(t) and token_roots[t].vm_relative[index] > 0 and token_roots[parent_token(t)].vm_relative[index] > 0)
+      assert(token_roots[t].vm_relative[index] != token_roots[parent_token(t)].vm_relative[index]);
 
     if (access(index).type == reg::type_t::constant)
       assert(not has_computation(t,index));
@@ -1664,8 +1625,6 @@ void reg_heap::remove_shared_computation(int t, int r, int rc)
 
   if (token_roots[t].vm_relative[r]) return;
 
-  token_roots[t].vm_absolute.erase_value(r);
-
   for(int t2: token_roots[t].children)
     remove_shared_computation(t2, r, rc);
 }
@@ -1680,7 +1639,6 @@ int reg_heap::remove_shared_computation(int t, int r)
   else
     token_roots[t].vm_relative.set_value(r,-1);
 
-  token_roots[t].vm_absolute.erase_value(r);
   for(int t2: token_roots[t].children)
     remove_shared_computation(t2, r, rc);
     
@@ -1692,15 +1650,12 @@ void reg_heap::add_shared_computation(int t, int r, int rc)
   assert(t);
   if (token_roots[t].vm_relative[r]) return;
 
-  token_roots[t].vm_absolute.add_value(r, rc);
-
   for(int t2: token_roots[t].children)
     add_shared_computation(t2, r, rc);
 }
 
 int reg_heap::add_shared_computation(int t, int r)
 {
-  assert(not token_roots[t].vm_absolute[r]);
   assert(token_roots[t].vm_relative[r] <= 0);
 
   int rc = computations.allocate();
@@ -1708,7 +1663,6 @@ int reg_heap::add_shared_computation(int t, int r)
   computations[rc].source = r;
 
   token_roots[t].vm_relative.set_value(r, rc);
-  token_roots[t].vm_absolute.add_value(r, rc);
 
   for(int t2: token_roots[t].children)
     add_shared_computation(t2, r, rc);
@@ -1722,7 +1676,6 @@ int reg_heap::share_and_clear(int t, int r)
   int rc1 = computation_index_for_reg(t,r);
   assert(rc1);
 
-  token_roots[t].vm_absolute.erase_value(r);
   for(int t2: token_roots[t].children)
     remove_shared_computation(t2, r, rc1);
 
@@ -1750,8 +1703,6 @@ void reg_heap::replace_shared_computation(int t, int r, int rc1, int rc2)
 
   if (token_roots[t].vm_relative[r]) return;
 
-  token_roots[t].vm_absolute.replace_value(r, rc2);
-
   for(int t2: token_roots[t].children)
     replace_shared_computation(t2, r, rc1, rc2);
 }
@@ -1765,7 +1716,6 @@ int reg_heap::replace_shared_computation(int t, int r)
   int rc2 = computations.allocate();
   computations.access_unused(rc2).source = r;
 
-  token_roots[t].vm_absolute.replace_value(r, rc2);
   token_roots[t].vm_relative.set_value(r, rc2);
   
   for(int t2: token_roots[t].children)
@@ -1975,7 +1925,6 @@ void reg_heap::try_release_token(int t)
   }
 
   // clear only the mappings that were actually updated here.
-  token_roots[t].vm_absolute.clear();
   token_roots[t].vm_relative.clear();
 
   // If we just released a terminal token, maybe it's parent is not terminal also.
@@ -1987,9 +1936,9 @@ void reg_heap::try_release_token(int t)
     assert(root_token != -1);
 
 #ifdef DEBUG_MACHINE
-  assert(token_roots[t].vm_absolute.size() == size());
+  assert(token_roots[t].vm_relative.size() == size());
   for(int i=0;i<size();i++)
-    assert(not token_roots[t].vm_absolute[i]);
+    assert(not token_roots[t].vm_relative[i]);
 
   check_used_regs();
 #endif
@@ -2065,10 +2014,6 @@ int reg_heap::copy_token(int t)
 
   token_roots[t2].version = token_roots[t].version;
 
-  for(int r: token_roots[t].vm_absolute.modified())
-    if (has_computation(t,r))
-      copy_computation(t,t2,r);
-
   /*
     Only true for root token!
   for(int r: token_roots[t].modified)
@@ -2123,7 +2068,6 @@ reg_heap::reg_heap()
   //  computations.collect_garbage = [this](){collect_garbage();};
   computations.collect_garbage = [](){};
   computations.clear_references = [](int){};
-  token_roots[0].vm_absolute.resize(1);
   token_roots[0].vm_relative.resize(1);
   token_roots[0].used = true;
   token_roots[0].referenced = true;
