@@ -290,8 +290,6 @@ public:
   std::vector<int> find_all_regs_in_context_no_check(int) const;
 
   /*----- Virtual memory ------*/
-  bool computation_is_referenced(int,int) const;
-
   const computation& computation_for_reg(int t, int r) const ;
         computation& computation_for_reg(int t, int r);
   const closure& access_result_for_reg(int t, int R1) const;
@@ -317,6 +315,8 @@ public:
   const computation& rel_computation_for_reg(int t, int r) const;
         computation& rel_computation_for_reg(int t, int r);
   int rel_computation_index_for_reg(int t, int r) const;
+
+  bool computation_is_referenced(int,int) const;
 
   int computation_index_for_reg(int t, int r) const;
 
