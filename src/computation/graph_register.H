@@ -219,9 +219,6 @@ public:
     std::vector<int> triggers;
 
     /// Mapping from closures to computations/results
-    mapping vm_absolute;
-
-    /// Mapping from closures to computations/results
     mapping vm_relative;
 
     /// These are the regs that must be evaluated when the context becomes active.
