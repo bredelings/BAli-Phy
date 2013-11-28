@@ -477,6 +477,8 @@ int reg_heap::computation_result_for_reg(int t, int r) const
 
 void reg_heap::set_computation_result_for_reg(int t, int r1)
 {
+  assert(not t or is_root_token(t));
+
   int call = call_for_reg(t,r1);
 
   assert(call);
