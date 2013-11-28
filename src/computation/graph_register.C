@@ -337,6 +337,23 @@ computation& reg_heap::computation_for_reg(int t, int r)
   return computations.access_unused(rc);
 }
 
+int reg_heap::abs_computation_index_for_reg(int t, int r) const 
+{
+  return find_computation_for_reg(t,r);
+}
+
+const computation& reg_heap::abs_computation_for_reg(int t, int r) const 
+{ 
+  int rc = computation_index_for_reg(t,r);
+  return computations.access_unused(rc);
+}
+
+computation& reg_heap::abs_computation_for_reg(int t, int r)
+{ 
+  int rc = computation_index_for_reg(t,r);
+  return computations.access_unused(rc);
+}
+
 const closure& reg_heap::access_result_for_reg(int t, int R1) const
 {
   assert(not t or is_root_token(t));

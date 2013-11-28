@@ -279,6 +279,11 @@ public:
   int computation_index_for_reg(int t, int r) const;
   const computation& computation_for_reg(int t, int r) const ;
         computation& computation_for_reg(int t, int r);
+
+  int abs_computation_index_for_reg(int t, int r) const;
+  const computation& abs_computation_for_reg(int t, int r) const ;
+        computation& abs_computation_for_reg(int t, int r);
+
   const closure& access_result_for_reg(int t, int R1) const;
 
   bool reg_has_result(int t, int r) const;
