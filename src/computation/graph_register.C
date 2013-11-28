@@ -417,6 +417,11 @@ bool reg_heap::has_computation(int t, int r) const
   return computation_index_for_reg(t,r);
 }
 
+bool reg_heap::has_rel_computation(int t, int r) const
+{
+  return rel_computation_index_for_reg(t,r)>0;
+}
+
 int reg_heap::find_computation_for_reg(int t, int r) const
 {
   if (not t)
@@ -455,8 +460,7 @@ computation& reg_heap::rel_computation_for_reg(int t, int r)
 
 int reg_heap::rel_computation_index_for_reg(int t, int r) const 
 {
-  int rc = token_roots[t].vm_relative[r];
-  return rc;
+  return token_roots[t].vm_relative[r];
 }
 
 int reg_heap::result_for_reg(int t, int r) const 

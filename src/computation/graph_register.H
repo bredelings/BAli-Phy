@@ -276,13 +276,19 @@ public:
   std::vector<int> find_all_regs_in_context_no_check(int) const;
 
   /*----- Virtual memory ------*/
-  int computation_index_for_reg(int t, int r) const;
-  const computation& computation_for_reg(int t, int r) const ;
-        computation& computation_for_reg(int t, int r);
-
   int abs_computation_index_for_reg(int t, int r) const;
   const computation& abs_computation_for_reg(int t, int r) const ;
         computation& abs_computation_for_reg(int t, int r);
+
+  int rel_computation_index_for_reg(int t, int r) const;
+  const computation& rel_computation_for_reg(int t, int r) const;
+        computation& rel_computation_for_reg(int t, int r);
+  bool has_rel_computation(int t, int r) const;
+
+  int computation_index_for_reg(int t, int r) const;
+  const computation& computation_for_reg(int t, int r) const ;
+        computation& computation_for_reg(int t, int r);
+  bool has_computation(int t, int r) const;
 
   const closure& access_result_for_reg(int t, int R1) const;
 
@@ -290,8 +296,6 @@ public:
   bool reg_has_computation_result(int t, int r) const;
   bool reg_has_call(int t, int r) const;
   int call_for_reg(int t, int r) const;
-
-  bool has_computation(int t, int r) const;
 
   int replace_shared_computation(int t, int r);
 
