@@ -304,21 +304,11 @@ public:
   std::vector<int> find_all_regs_in_context_no_check(int) const;
 
   /*----- Virtual memory ------*/
-  int add_computation(int t, int r, int rc);
-
-  int copy_computation(int t1, int t2, int r);
-
   bool has_computation(int t, int r) const;
-
-  void replace_shared_computation(int t, int r, int rc1, int rc2);
 
   int replace_shared_computation(int t, int r);
 
-  void remove_shared_computation(int t, int r, int rc);
-
   int remove_shared_computation(int t, int r);
-
-  void add_shared_computation(int t, int r, int rc);
 
   int add_shared_computation(int t, int r);
 

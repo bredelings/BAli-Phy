@@ -777,24 +777,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   }
 }
 
-int reg_heap::add_computation(int t, int r, int rc)
-{
-  assert(computations[rc].source == r);
-
-  return rc;
-}
-
-int reg_heap::copy_computation(int t1, int t2, int r)
-{
-  int rc = computation_index_for_reg(t1,r);
-
-  assert(rc);
-
-  add_computation(t2, r, rc);
-
-  return rc;
-}
-
 void swap_value(mapping& vm1, mapping& vm2, int r)
 {
   int v1 = vm1[r];
@@ -1617,17 +1599,6 @@ void reg_heap::check_used_regs() const
     check_used_reg( r.addr() );
 }
 
-void reg_heap::remove_shared_computation(int t, int r, int rc)
-{
-  assert(t);
-  assert(rc);
-
-  if (token_roots[t].vm_relative[r]) return;
-
-  for(int t2: token_roots[t].children)
-    remove_shared_computation(t2, r, rc);
-}
-
 int reg_heap::remove_shared_computation(int t, int r)
 {
   int rc = computation_index_for_reg(t,r);
@@ -1638,19 +1609,7 @@ int reg_heap::remove_shared_computation(int t, int r)
   else
     token_roots[t].vm_relative.set_value(r,-1);
 
-  for(int t2: token_roots[t].children)
-    remove_shared_computation(t2, r, rc);
-    
   return rc;
-}
-
-void reg_heap::add_shared_computation(int t, int r, int rc)
-{
-  assert(t);
-  if (token_roots[t].vm_relative[r]) return;
-
-  for(int t2: token_roots[t].children)
-    add_shared_computation(t2, r, rc);
 }
 
 int reg_heap::add_shared_computation(int t, int r)
@@ -1663,9 +1622,6 @@ int reg_heap::add_shared_computation(int t, int r)
 
   token_roots[t].vm_relative.set_value(r, rc);
 
-  for(int t2: token_roots[t].children)
-    add_shared_computation(t2, r, rc);
-
   return rc;
 }
 
@@ -1674,9 +1630,6 @@ int reg_heap::share_and_clear(int t, int r)
   assert(t);
   int rc1 = computation_index_for_reg(t,r);
   assert(rc1);
-
-  for(int t2: token_roots[t].children)
-    remove_shared_computation(t2, r, rc1);
 
   if (is_root_token(t))
   {
@@ -1694,18 +1647,6 @@ int reg_heap::share_and_clear(int t, int r)
   return rc1;
 }
 
-void reg_heap::replace_shared_computation(int t, int r, int rc1, int rc2)
-{
-  assert(t);
-  assert(rc1);
-  assert(rc2);
-
-  if (token_roots[t].vm_relative[r]) return;
-
-  for(int t2: token_roots[t].children)
-    replace_shared_computation(t2, r, rc1, rc2);
-}
-
 int reg_heap::replace_shared_computation(int t, int r)
 {
   assert(t);
@@ -1717,9 +1658,6 @@ int reg_heap::replace_shared_computation(int t, int r)
 
   token_roots[t].vm_relative.set_value(r, rc2);
   
-  for(int t2: token_roots[t].children)
-    replace_shared_computation(t2, r, rc1, rc2);
-
   return rc1;
 }
 
