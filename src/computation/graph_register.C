@@ -340,13 +340,6 @@ const closure& reg_heap::access_result_for_reg(int t, int R1) const
   return access(R2).C;
 }
 
-const closure& reg_heap::access_computation_result_for_reg(int t, int R1) const
-{
-  int R2 = computation_result_for_reg(t,R1);
-  assert(R2);
-  return access(R2).C;
-}
-
 bool reg_heap::reg_has_result(int t, int r) const
 {
   if (access(r).type == reg::type_t::constant)
@@ -395,18 +388,6 @@ vector<pool<computation>::weak_ref>& clean_weak_refs(vector<pool<computation>::w
     P.unmark(rc);
   }
   return v;
-}
-
-const std::vector<pool<computation>::weak_ref>& reg_heap::reg_used_by(int t, int r) const
-{
-  vector<pool<computation>::weak_ref>& used_by = computations[computation_index_for_reg(t,r)].used_by;
-  return clean_weak_refs(used_by, computations);
-}
-
-const std::vector<pool<computation>::weak_ref>& reg_heap::reg_called_by(int t, int r) const
-{
-  vector<pool<computation>::weak_ref>& called_by = computations[computation_index_for_reg(t,r)].called_by;
-  return clean_weak_refs(called_by, computations);
 }
 
 bool reg_heap::has_computation(int t, int r) const
