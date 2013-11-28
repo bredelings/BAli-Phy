@@ -320,18 +320,6 @@ bool mapping::empty() const
 const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t));return token_roots[t].triggers;}
       std::vector<int>& reg_heap::triggers(int t)       {assert(is_root_token(t));return token_roots[t].triggers;}
 
-const computation& reg_heap::local_computation_for_reg(int t, int r) const 
-{ 
-  int rc = local_computation_index_for_reg(t,r);
-  return computations.access_unused(rc);
-}
-
-computation& reg_heap::local_computation_for_reg(int t, int r)
-{ 
-  int rc = local_computation_index_for_reg(t,r);
-  return computations.access_unused(rc);
-}
-
 const computation& reg_heap::computation_for_reg(int t, int r) const 
 { 
   int rc = computation_index_for_reg(t,r);
@@ -426,11 +414,6 @@ bool reg_heap::has_computation(int t, int r) const
   return computation_index_for_reg(t,r);
 }
 
-bool reg_heap::has_local_computation(int t, int r) const
-{
-  return local_computation_index_for_reg(t,r);
-}
-
 int reg_heap::find_computation_for_reg(int t, int r) const
 {
   if (not t)
@@ -484,12 +467,6 @@ int reg_heap::computation_index_for_reg(int t, int r) const
   return find_computation_for_reg(t,r);
 }
 
-int reg_heap::local_computation_index_for_reg(int t, int r) const 
-{
-  int rc = token_roots[t].vm_absolute[r];
-  return rc;
-}
-
 int reg_heap::result_for_reg(int t, int r) const 
 {
   assert(not is_index_var(access(r).C.exp));
@@ -501,12 +478,7 @@ int reg_heap::result_for_reg(int t, int r) const
 
 int reg_heap::computation_result_for_reg(int t, int r) const 
 {
-  return local_computation_result_for_reg(t,r);
-}
-
-int reg_heap::local_computation_result_for_reg(int t, int r) const 
-{
-  return local_computation_for_reg(t,r).result;
+  return computation_for_reg(t,r).result;
 }
 
 void reg_heap::set_computation_result_for_reg(int t, int r1)
@@ -519,7 +491,7 @@ void reg_heap::set_computation_result_for_reg(int t, int r1)
 
   assert(result);
 
-  local_computation_for_reg(t,r1).result = result;
+  computation_for_reg(t,r1).result = result;
 
   // If R2 is WHNF then we are done
   if (access(call).type == reg::type_t::constant) return;
@@ -527,7 +499,7 @@ void reg_heap::set_computation_result_for_reg(int t, int r1)
   // If R2 doesn't have a computation, add one to hold the called-by edge.
   assert(has_computation(t,call));
 
-  int rc1 = local_computation_index_for_reg(t,r1);
+  int rc1 = computation_index_for_reg(t,r1);
 
   // Add a called-by edge to R2.
   computation_for_reg(t,call).called_by.push_back(computations.get_weak_ref(rc1));
@@ -535,7 +507,7 @@ void reg_heap::set_computation_result_for_reg(int t, int r1)
 
 void reg_heap::clear_computation_result(int t, int r)
 {
-  local_computation_for_reg(t,r).result = 0;
+  computation_for_reg(t,r).result = 0;
 
   // Blow away called-by
   //   local_computation_for_reg(t,r).called_by.clear();
@@ -552,7 +524,7 @@ void reg_heap::set_used_input(int t, int R1, int R2)
   assert(access(R1).C);
   assert(access(R2).C);
 
-  assert(has_local_computation(t,R1));
+  assert(has_computation(t,R1));
   assert(has_computation(t,R2));
   assert(computation_result_for_reg(t,R2));
 
@@ -560,7 +532,7 @@ void reg_heap::set_used_input(int t, int R1, int R2)
   // So, we may as well forbid using an index_var as an input.
   assert(access(R2).C.exp->head->type() != index_var_type);
 
-  int rc1 = local_computation_index_for_reg(t,R1);
+  int rc1 = computation_index_for_reg(t,R1);
   int rc2 = computation_index_for_reg(t,R2);
 
   computations[rc1].used_inputs.push_back(rc2);
@@ -604,7 +576,7 @@ void reg_heap::set_call(int t, int R1, int R2)
   assert(is_used(R2));
 
   // Only modify the call for the current context;
-  assert(has_local_computation(t,R1));
+  assert(has_computation(t,R1));
 
   // Don't override an *existing* call
   assert(not reg_has_call(t,R1));
@@ -613,7 +585,7 @@ void reg_heap::set_call(int t, int R1, int R2)
   assert(not reg_has_result(t,R1));
 
   // Set the call
-  int rc1 = local_computation_index_for_reg(t,R1);
+  int rc1 = computation_index_for_reg(t,R1);
   computations[rc1].call = R2;
 }
 
@@ -823,9 +795,7 @@ int reg_heap::add_computation(int t, int r, int rc)
 
 int reg_heap::copy_computation(int t1, int t2, int r)
 {
-  assert(not has_local_computation(t2,r));
-
-  int rc = token_roots[t1].vm_absolute[r];
+  int rc = computation_index_for_reg(t1,r);
 
   assert(rc);
 
@@ -2096,7 +2066,7 @@ int reg_heap::copy_token(int t)
   token_roots[t2].version = token_roots[t].version;
 
   for(int r: token_roots[t].vm_absolute.modified())
-    if (has_local_computation(t,r))
+    if (has_computation(t,r))
       copy_computation(t,t2,r);
 
   /*
@@ -2405,7 +2375,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     else if (is_WHNF(access(R).C.exp))
     {
       access(R).type = reg::type_t::constant;
-      if (has_local_computation(t,R))
+      if (has_computation(t,R))
 	remove_shared_computation(t,R);
     }
 

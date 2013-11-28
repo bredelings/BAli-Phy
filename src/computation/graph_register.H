@@ -154,8 +154,6 @@ public:
   void check_used_regs() const;
   void check_tokens() const;
 
-  const computation& local_computation_for_reg(int t, int r) const ;
-        computation& local_computation_for_reg(int t, int r);
   const computation& computation_for_reg(int t, int r) const ;
         computation& computation_for_reg(int t, int r);
   const closure& access_result_for_reg(int t, int R1) const;
@@ -327,8 +325,6 @@ public:
 
   int add_shared_computation(int t, int r);
 
-  bool has_local_computation(int t, int r) const;
-
   int find_computation_for_reg(int t, int r) const;
 
   const computation& rel_computation_for_reg(int t, int r) const;
@@ -337,13 +333,9 @@ public:
 
   int computation_index_for_reg(int t, int r) const;
 
-  int local_computation_index_for_reg(int t, int r) const;
-
   int result_for_reg(int t, int r) const;
 
   int computation_result_for_reg(int t, int r) const;
-
-  int local_computation_result_for_reg(int t, int r) const;
 
   void set_computation_result_for_reg(int t, int r1);
 
