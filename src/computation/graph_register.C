@@ -1672,7 +1672,7 @@ void reg_heap::remove_shared_computation(int t, int r, int rc)
 
 int reg_heap::remove_shared_computation(int t, int r)
 {
-  int rc = token_roots[t].vm_absolute[r];
+  int rc = computation_index_for_reg(t,r);
   assert(rc);
 
   if (not t or is_root_token(t))
@@ -1719,7 +1719,7 @@ int reg_heap::add_shared_computation(int t, int r)
 int reg_heap::share_and_clear(int t, int r)
 {
   assert(t);
-  int rc1 = token_roots[t].vm_absolute[r];
+  int rc1 = computation_index_for_reg(t,r);
   assert(rc1);
 
   token_roots[t].vm_absolute.erase_value(r);
@@ -1759,7 +1759,7 @@ void reg_heap::replace_shared_computation(int t, int r, int rc1, int rc2)
 int reg_heap::replace_shared_computation(int t, int r)
 {
   assert(t);
-  int rc1 = token_roots[t].vm_absolute[r];
+  int rc1 = computation_index_for_reg(t,r);
   assert(rc1);
 
   int rc2 = computations.allocate();
