@@ -1,9 +1,13 @@
 #ifndef CONTEXT_H
 
-#include "computation/graph_register.H"
-#include "computation/model_notes.H"
-#include "computation/program.H"
 #include "cow-ptr.H"
+#include "computation/program.H"
+#include "computation/model_notes.H"
+#include "computation/closure.H"
+
+class reg;
+
+class reg_heap;
 
 class Module;
 
