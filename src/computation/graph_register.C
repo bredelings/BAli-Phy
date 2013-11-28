@@ -482,14 +482,6 @@ void reg_heap::set_computation_result_for_reg(int t, int r1)
   computation_for_reg(t,call).called_by.push_back(computations.get_weak_ref(rc1));
 }
 
-void reg_heap::clear_computation_result(int t, int r)
-{
-  computation_for_reg(t,r).result = 0;
-
-  // Blow away called-by
-  //   local_computation_for_reg(t,r).called_by.clear();
-}
-
 void reg_heap::set_used_input(int t, int R1, int R2)
 {
   assert(reg_is_changeable(R1));
