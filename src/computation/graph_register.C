@@ -1098,6 +1098,98 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
   }
 }
 
+void reg_heap::invalidate_shared_regs_(int t1, int t2)
+{
+  assert(t1 == parent_token(t2));
+
+  if (token_roots[t1].version <= token_roots[t2].version) return;
+
+  const int mark_result = 1;
+  const int mark_call_result = 2;
+
+  // find all regs in t2 that are not shared from t1
+  vector<int> modified;
+  for(int r: token_roots[t2].vm_relative.modified())
+    if (token_roots[t1].vm_relative[r] > 0)
+      modified.push_back(r);
+
+  vector< int >& call_and_result_may_be_changed = get_scratch_list();
+  vector< int >& result_may_be_changed = get_scratch_list();
+  vector< int >& regs_to_re_evaluate = token_roots[t2].regs_to_re_evaluate;
+
+  find_callers(t1, t2, 0, modified, result_may_be_changed, mark_result);
+  find_users(t1, t2, 0, modified, call_and_result_may_be_changed, mark_call_result);
+
+  int i=0;
+  int j=0;
+  while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
+  {
+    // First find all users or callers of regs where the result is out of date.
+    find_callers(t2, t2, j, result_may_be_changed, result_may_be_changed, mark_result);
+    find_users(t2, t2, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    j = result_may_be_changed.size();
+
+    // Second find all users or callers of regs where the result AND CALL are out of date.
+    find_users(t2, t2, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers(t2, t2, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
+    i = call_and_result_may_be_changed.size();
+  }
+
+  for(int r:result_may_be_changed)
+  {
+    auto& RC = computation_for_reg(t2,r);
+
+    if (RC.temp > mark_result) continue;
+
+    RC.temp = -1;
+
+    share_and_clear_result(t2,r);
+
+    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+    if (access(r).re_evaluate)
+      regs_to_re_evaluate.push_back(r);
+  }
+
+  for(int r:call_and_result_may_be_changed)
+  {
+    auto& RC = computation_for_reg(t2,r);
+
+    if (RC.temp > mark_call_result) continue;
+
+    RC.temp = -1;
+
+    share_and_clear(t2,r);
+
+    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+    if (access(r).re_evaluate)
+      regs_to_re_evaluate.push_back(r);
+  }
+
+  // find all regs in t2 that are not shared from t1.  Nothing needs to be done to these - they are already split.
+  // Anything that uses these needs to be unshared.
+  //  - The local version should be completely cleared.  We can remove the computation.
+  //  - All children should have their computations removed also
+  // Anything that calls these needs to be unshared.
+  //  - The local version should preserve its uses and call, but its result should be cleared.
+  //  - All children should be updated to use the new computation.
+
+  // This is similar to set_reg_value, but not the same.
+  // Should set_reg_value be able to consist of
+  // (a) change the computation for some modifiables
+  // (b) run invalidate_shared_regs?
+
+  release_scratch_list();
+  release_scratch_list();
+  assert(n_active_scratch_lists == 0);
+
+  // Mark this context as not having computations that need to be unshared
+  assert(token_roots[t1].version >= token_roots[t2].version);
+
+  // We can only do this if we know that t1 doesn't have an ancestor with the same version, I think.
+  if (is_root_token(t1))
+    token_roots[t2].version = token_roots[t1].version;
+}
+
 void reg_heap::invalidate_shared_regs(int t1, int t2)
 {
   assert(t1 == parent_token(t2));

@@ -360,6 +360,7 @@ public:
   int share_and_clear(int t, int r);
   int share_and_clear_result(int t, int r);
   void invalidate_shared_regs(int t1, int t2);
+  void invalidate_shared_regs_(int t1, int t2);
   void mark_completely_dirty(int t);
   bool is_completely_dirty(int t) const;
   bool is_dirty(int t) const;
