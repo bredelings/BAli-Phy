@@ -433,20 +433,32 @@ bool reg_heap::has_local_computation(int t, int r) const
 
 int reg_heap::find_computation_for_reg(int t, int r) const
 {
+  if (not t)
+  {
+    assert(token_roots[t].vm_absolute[r] == token_roots[t].vm_relative[r]);
+    return token_roots[t].vm_relative[r];
+  }
+
   int t0 = t;
   int rc = 0;
+
   while(true)
   {
     assert(token_is_used(t));
-    rc = token_roots[t].vm_absolute[r];
-    if (rc or t == root_token) break;
+    rc = token_roots[t].vm_relative[r];
+    if (rc < 0)
+    {
+      rc = 0;
+      break;
+    }
+    else if (rc or t == root_token) break;
     t = parent_token(t);
     assert(t != -1);
   }
 
-  assert(not rc or t0 == t);
+  assert(rc == token_roots[t0].vm_absolute[r]);
 
-  return t;
+  return rc;
 }
 
 const computation& reg_heap::rel_computation_for_reg(int t, int r) const 
