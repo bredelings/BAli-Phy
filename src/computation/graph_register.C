@@ -419,7 +419,6 @@ int reg_heap::find_computation_for_reg(int t, int r) const
   if (not t)
     return token_roots[t].vm_relative[r];
 
-  int t0 = t;
   int rc = 0;
 
   while(true)
