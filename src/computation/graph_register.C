@@ -320,6 +320,11 @@ bool mapping::empty() const
 const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t));return token_roots[t].triggers;}
       std::vector<int>& reg_heap::triggers(int t)       {assert(is_root_token(t));return token_roots[t].triggers;}
 
+int reg_heap::computation_index_for_reg(int t, int r) const 
+{
+  return find_computation_for_reg(t,r);
+}
+
 const computation& reg_heap::computation_for_reg(int t, int r) const 
 { 
   int rc = computation_index_for_reg(t,r);
@@ -435,11 +440,6 @@ int reg_heap::rel_computation_index_for_reg(int t, int r) const
 {
   int rc = token_roots[t].vm_relative[r];
   return rc;
-}
-
-int reg_heap::computation_index_for_reg(int t, int r) const 
-{
-  return find_computation_for_reg(t,r);
 }
 
 int reg_heap::result_for_reg(int t, int r) const 
