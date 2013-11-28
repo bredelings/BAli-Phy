@@ -1603,15 +1603,10 @@ void reg_heap::check_used_regs() const
 
 int reg_heap::remove_shared_computation(int t, int r)
 {
-  int rc = computation_index_for_reg(t,r);
-  assert(rc);
-
   if (not t or is_root_token(t))
-    token_roots[t].vm_relative.erase_value(r);
+    return token_roots[t].vm_relative.erase_value(r);
   else
-    token_roots[t].vm_relative.set_value(r,-1);
-
-  return rc;
+    return token_roots[t].vm_relative.set_value(r,-1);
 }
 
 int reg_heap::add_shared_computation(int t, int r)
