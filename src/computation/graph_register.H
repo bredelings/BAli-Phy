@@ -3,18 +3,12 @@
 
 #include <string>
 #include <vector>
-#include <set>
-#include <bitset>
 #include "object.H"
 #include "expression.H"
 #include "util.H"
-#include <list>
 #include <utility>
 #include "closure.H"
-#include "CacheList.H"
-#include <unordered_map>
 #include "pool.H"
-#include "bithash.H"
 
 struct computation
 {
