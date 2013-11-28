@@ -154,18 +154,6 @@ public:
   void check_used_regs() const;
   void check_tokens() const;
 
-  const computation& computation_for_reg(int t, int r) const ;
-        computation& computation_for_reg(int t, int r);
-  const closure& access_result_for_reg(int t, int R1) const;
-  const closure& access_computation_result_for_reg(int t, int R1) const;
-  bool reg_has_result(int t, int r) const;
-  bool reg_has_computation_result(int t, int r) const;
-  bool reg_has_call(int t, int r) const;
-  int call_for_reg(int t, int r) const;
-
-  const std::vector<pool<computation>::weak_ref>& reg_used_by(int t, int r) const;
-  const std::vector<pool<computation>::weak_ref>& reg_called_by(int t, int r) const;
-
   void collect_garbage();
   void trace_and_reclaim_unreachable();
   bool reg_is_changeable(int r) const;
@@ -258,8 +246,6 @@ public:
   /// Is a particular token unused?
   bool token_is_used(int) const;
 
-  bool computation_is_referenced(int,int) const;
-
   /// How many tokens are there, maximum?
   int get_n_tokens() const {return token_roots.size();}
 
@@ -304,6 +290,20 @@ public:
   std::vector<int> find_all_regs_in_context_no_check(int) const;
 
   /*----- Virtual memory ------*/
+  bool computation_is_referenced(int,int) const;
+
+  const computation& computation_for_reg(int t, int r) const ;
+        computation& computation_for_reg(int t, int r);
+  const closure& access_result_for_reg(int t, int R1) const;
+  const closure& access_computation_result_for_reg(int t, int R1) const;
+  bool reg_has_result(int t, int r) const;
+  bool reg_has_computation_result(int t, int r) const;
+  bool reg_has_call(int t, int r) const;
+  int call_for_reg(int t, int r) const;
+
+  const std::vector<pool<computation>::weak_ref>& reg_used_by(int t, int r) const;
+  const std::vector<pool<computation>::weak_ref>& reg_called_by(int t, int r) const;
+
   bool has_computation(int t, int r) const;
 
   int replace_shared_computation(int t, int r);
