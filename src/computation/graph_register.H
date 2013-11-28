@@ -169,14 +169,6 @@ public:
 
   void get_roots(std::vector<int>&) const;
 
-  struct address
-  {
-    int rc = 0;
-    int index = -1;
-    address() {}
-    address(int i1):rc(i1) {}
-  };
-
   // the list of expressions that we are temporarily evaluating
   std::vector<int> temp;
   
