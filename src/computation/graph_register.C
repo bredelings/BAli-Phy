@@ -481,7 +481,7 @@ int reg_heap::rel_computation_index_for_reg(int t, int r) const
 
 int reg_heap::computation_index_for_reg(int t, int r) const 
 {
-  return local_computation_index_for_reg(t,r);
+  return find_computation_for_reg(t,r);
 }
 
 int reg_heap::local_computation_index_for_reg(int t, int r) const 
