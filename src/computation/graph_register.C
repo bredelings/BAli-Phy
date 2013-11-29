@@ -1871,7 +1871,7 @@ void reg_heap::try_release_token(int t)
 
     merge_split_mapping(token_roots[t].vm_relative, token_roots[child_token].vm_relative);
 
-    invalidate_shared_regs(t, child_token);
+    invalidate_shared_regs_(t, child_token);
   }
 
   // mark token for this context unused
