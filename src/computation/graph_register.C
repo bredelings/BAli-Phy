@@ -594,16 +594,16 @@ void reg_heap::set_call(int t, int R1, int R2)
   assert(is_used(R2));
 
   // Only modify the call for the current context;
-  assert(has_computation(t,R1));
+  assert(has_computation_(t,R1));
 
   // Don't override an *existing* call
-  assert(not reg_has_call(t,R1));
+  assert(not reg_has_call_(t,R1));
 
   // Check that we aren't overriding an existing *result*
-  assert(not reg_has_result(t,R1));
+  assert(not reg_has_result_(t,R1));
 
   // Set the call
-  int rc1 = computation_index_for_reg(t,R1);
+  int rc1 = computation_index_for_reg_(t,R1);
   computations[rc1].call = R2;
 }
 
@@ -639,11 +639,13 @@ void reg_heap::clear_C(int R)
 
 void reg_heap::set_reduction_result(int t, int R, closure&& result)
 {
+  assert( has_computation_(t,R) );
+
   // Check that there is no result we are overriding
-  assert(not reg_has_result(t,R) );
+  assert(not reg_has_result_(t,R) );
 
   // Check that there is no previous call we are overriding.
-  assert(not reg_has_call(t,R) );
+  assert(not reg_has_call_(t,R) );
 
   // if the result is NULL, just leave the result and call both unset.
   //  (this could happen if we set a parameter value to null.)
@@ -778,13 +780,13 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       regs_to_re_evaluate.push_back(R);
   }
 
-  if (has_computation(token,P))
-    computation_for_reg(token,P).temp = -1;
+  if (has_computation_(token,P))
+    computation_for_reg_(token,P).temp = -1;
 
   // Finally set the new value.
   token_roots[token].vm_relative.set_value(P,-1);
   add_shared_computation(token,P);
-  assert(has_computation(token,P));
+  assert(has_computation_(token,P));
   set_reduction_result(token, P, std::move(C) );
 
   release_scratch_list();
