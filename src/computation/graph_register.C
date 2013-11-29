@@ -908,15 +908,15 @@ void reg_heap::reroot_at(int t)
   // Now this context should be a direct child of the root
   assert(is_root_token(parent));
 
-  // 2. Now invalidate regs in t that reference computations from parent
-  invalidate_shared_regs(parent,t);
+  // 2. Change the relative mappings
+  pivot_mapping(token_roots[parent].vm_relative, token_roots[t].vm_relative);
+
+  // 3. Invalidate regs in t that reference(d) computations from parent
+  invalidate_shared_regs_(parent,t);
 
   assert(token_roots[t].version >= token_roots[parent].version);
 
-  // 3. Now actually reroot.
-
-  pivot_mapping(token_roots[parent].vm_relative, token_roots[t].vm_relative);
-
+  // 4. Alter the inheritance tree
   token_roots[parent].parent = t;
   int index = remove_element(token_roots[parent].children, t);
   assert(index != -1);
@@ -1100,7 +1100,7 @@ void reg_heap::invalidate_shared_regs_(int t1, int t2)
 
   // find all regs in t2 that are not shared from t1
   vector<int> modified;
-  for(int r: token_roots[t2].vm_relative.modified())
+  for(int r: token_roots[t1].vm_relative.modified())
     if (token_roots[t1].vm_relative[r] > 0)
       modified.push_back(r);
 
@@ -1108,33 +1108,43 @@ void reg_heap::invalidate_shared_regs_(int t1, int t2)
   vector< int >& result_may_be_changed = get_scratch_list();
   vector< int >& regs_to_re_evaluate = token_roots[t2].regs_to_re_evaluate;
 
-  find_callers(t1, t2, 0, modified, result_may_be_changed, mark_result);
-  find_users(t1, t2, 0, modified, call_and_result_may_be_changed, mark_call_result);
+  find_callers_(t1, t2, 0, modified, result_may_be_changed, mark_result);
+  find_users_(t1, t2, 0, modified, call_and_result_may_be_changed, mark_call_result);
 
   int i=0;
   int j=0;
   while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
   {
     // First find all users or callers of regs where the result is out of date.
-    find_callers(t2, t2, j, result_may_be_changed, result_may_be_changed, mark_result);
-    find_users(t2, t2, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers_(t2, t2, j, result_may_be_changed, result_may_be_changed, mark_result);
+    find_users_(t2, t2, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
     j = result_may_be_changed.size();
 
     // Second find all users or callers of regs where the result AND CALL are out of date.
-    find_users(t2, t2, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
-    find_callers(t2, t2, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
+    find_users_(t2, t2, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers_(t2, t2, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
     i = call_and_result_may_be_changed.size();
   }
 
   for(int r:result_may_be_changed)
   {
-    auto& RC = computation_for_reg(t2,r);
+    int rc2 = computation_index_for_reg_(t2,r);
+    auto& RC = computations[rc2];
 
     if (RC.temp > mark_result) continue;
 
     RC.temp = -1;
 
-    share_and_clear_result(t2,r);
+    if (not computation_index_for_reg_(t1,r))
+    {
+      int rc1 = rc2;
+      token_roots[t1].vm_relative.add_value(r, rc1);
+      int rc2 = new_computation_for_reg(r);
+      duplicate_computation(rc1,rc2); // but not the result
+      token_roots[t2].vm_relative.set_value(r, rc2);
+    }
+    else
+      RC.result = 0;
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(r).re_evaluate)
@@ -1143,12 +1153,15 @@ void reg_heap::invalidate_shared_regs_(int t1, int t2)
 
   for(int r:call_and_result_may_be_changed)
   {
-    auto& RC = computation_for_reg(t2,r);
+    int rc2 = computation_index_for_reg_(t2,r);
+    auto& RC = computations[rc2];
 
     if (RC.temp > mark_call_result) continue;
 
     RC.temp = -1;
 
+    if (not computation_index_for_reg_(t1,r))
+      token_roots[t1].vm_relative.add_value(r, rc2);
     share_and_clear(t2,r);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
