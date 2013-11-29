@@ -1557,21 +1557,6 @@ int reg_heap::replace_shared_computation(int t, int r)
   return rc1;
 }
 
-int reg_heap::share_and_clear_result(int t, int r)
-{
-  assert(t);
-  int rcA = replace_shared_computation(t,r);
-
-  if (computations[rcA].call) 
-    set_call(t,r,computations[rcA].call);
-  for(int rc: computations[rcA].used_inputs)
-  {
-    int r2 = computations[rc].source;
-    set_used_input(t,r,r2);
-  }
-  return rcA;
-}
-
 vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
 {
   vector<int> unique;
