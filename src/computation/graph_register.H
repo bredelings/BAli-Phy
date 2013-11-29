@@ -305,10 +305,6 @@ public:
 
   int find_computation_for_reg(int t, int r) const;
 
-  const computation& rel_computation_for_reg(int t, int r) const;
-        computation& rel_computation_for_reg(int t, int r);
-  int rel_computation_index_for_reg(int t, int r) const;
-
   bool computation_is_referenced(int,int) const;
 
   int result_for_reg(int t, int r) const;
