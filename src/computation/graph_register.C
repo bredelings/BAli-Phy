@@ -718,13 +718,13 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
   {
     // First find all users or callers of regs where the result is out of date.
-    find_callers_(token, token, j, result_may_be_changed, result_may_be_changed, mark_result);
-    find_users_(token, token, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers(token, token, j, result_may_be_changed, result_may_be_changed, mark_result);
+    find_users(token, token, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
     j = result_may_be_changed.size();
 
     // Second find all users or callers of regs where the result AND CALL are out of date.
-    find_users_(token, token, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
-    find_callers_(token, token, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
+    find_users(token, token, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers(token, token, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
     i = call_and_result_may_be_changed.size();
   }
 
@@ -912,7 +912,7 @@ void reg_heap::reroot_at(int t)
   pivot_mapping(token_roots[parent].vm_relative, token_roots[t].vm_relative);
 
   // 3. Invalidate regs in t that reference(d) computations from parent
-  invalidate_shared_regs_(parent,t);
+  invalidate_shared_regs(parent,t);
 
   assert(token_roots[t].version >= token_roots[parent].version);
 
@@ -966,7 +966,7 @@ bool reg_heap::is_completely_dirty(int t) const
 }
   
 // find regs in t2 that call values only active in t1.  We look at regs in split, and append results to callers
-void reg_heap::find_callers_(int t1, int t2, int start, const vector<int>& split, vector<int>& callers, int mark)
+void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split, vector<int>& callers, int mark)
 {
   for(int i=start;i<split.size();i++)
   {
@@ -997,7 +997,7 @@ void reg_heap::find_callers_(int t1, int t2, int start, const vector<int>& split
 }
 
 // find regs in t2 that used values only active in t1.  We look at regs in split, and append results to callers
-void reg_heap::find_users_(int t1, int t2, int start, const vector<int>& split, vector<int>& users, int mark)
+void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, vector<int>& users, int mark)
 {
   for(int i=start;i<split.size();i++)
   {
@@ -1027,7 +1027,7 @@ void reg_heap::find_users_(int t1, int t2, int start, const vector<int>& split, 
   }
 }
 
-void reg_heap::invalidate_shared_regs_(int t1, int t2)
+void reg_heap::invalidate_shared_regs(int t1, int t2)
 {
   assert(t1 == parent_token(t2));
 
@@ -1046,21 +1046,21 @@ void reg_heap::invalidate_shared_regs_(int t1, int t2)
   vector< int >& result_may_be_changed = get_scratch_list();
   vector< int >& regs_to_re_evaluate = token_roots[t2].regs_to_re_evaluate;
 
-  find_callers_(t1, t2, 0, modified, result_may_be_changed, mark_result);
-  find_users_(t1, t2, 0, modified, call_and_result_may_be_changed, mark_call_result);
+  find_callers(t1, t2, 0, modified, result_may_be_changed, mark_result);
+  find_users(t1, t2, 0, modified, call_and_result_may_be_changed, mark_call_result);
 
   int i=0;
   int j=0;
   while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
   {
     // First find all users or callers of regs where the result is out of date.
-    find_callers_(t2, t2, j, result_may_be_changed, result_may_be_changed, mark_result);
-    find_users_(t2, t2, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers(t2, t2, j, result_may_be_changed, result_may_be_changed, mark_result);
+    find_users(t2, t2, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
     j = result_may_be_changed.size();
 
     // Second find all users or callers of regs where the result AND CALL are out of date.
-    find_users_(t2, t2, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
-    find_callers_(t2, t2, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
+    find_users(t2, t2, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers(t2, t2, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
     i = call_and_result_may_be_changed.size();
   }
 
@@ -1717,7 +1717,7 @@ void reg_heap::try_release_token(int t)
 
     merge_split_mapping(token_roots[t].vm_relative, token_roots[child_token].vm_relative);
 
-    invalidate_shared_regs_(t, child_token);
+    invalidate_shared_regs(t, child_token);
   }
 
   // mark token for this context unused
