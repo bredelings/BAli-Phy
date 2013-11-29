@@ -417,9 +417,9 @@ bool reg_heap::has_computation(int t, int r) const
   return computation_index_for_reg(t,r);
 }
 
-bool reg_heap::has_rel_computation(int t, int r) const
+bool reg_heap::has_computation_(int t, int r) const
 {
-  return rel_computation_index_for_reg(t,r)>0;
+  return computation_index_for_reg_(t,r)>0;
 }
 
 int reg_heap::find_computation_for_reg(int t, int r) const
@@ -446,19 +446,19 @@ int reg_heap::find_computation_for_reg(int t, int r) const
   return rc;
 }
 
-const computation& reg_heap::rel_computation_for_reg(int t, int r) const 
+const computation& reg_heap::computation_for_reg_(int t, int r) const 
 { 
-  int rc = rel_computation_index_for_reg(t,r);
+  int rc = computation_index_for_reg_(t,r);
   return computations.access_unused(rc);
 }
 
-computation& reg_heap::rel_computation_for_reg(int t, int r)
+computation& reg_heap::computation_for_reg_(int t, int r)
 { 
-  int rc = rel_computation_index_for_reg(t,r);
+  int rc = computation_index_for_reg_(t,r);
   return computations.access_unused(rc);
 }
 
-int reg_heap::rel_computation_index_for_reg(int t, int r) const 
+int reg_heap::computation_index_for_reg_(int t, int r) const 
 {
   return token_roots[t].vm_relative[r];
 }
@@ -666,7 +666,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   vector< int >& regs_to_re_evaluate = token_roots[token].regs_to_re_evaluate;
 
   // If we have a RELATIVE computation, we need to take care of its users new to this token.
-  if (rel_computation_index_for_reg(token,P))
+  if (computation_index_for_reg_(token,P))
   {
     call_and_result_may_be_changed.push_back(P);
     computation_for_reg(token,P).temp = mark_modified;
@@ -930,7 +930,7 @@ void reg_heap::find_callers_(int t1, int t2, int start, const vector<int>& split
 {
   for(int i=start;i<split.size();i++)
   {
-    auto& RC1 = rel_computation_for_reg(t1,split[i]);
+    auto& RC1 = computation_for_reg_(t1,split[i]);
 
     // Look at computations in t2 that call the old value in t1.
     for(const auto& wrc2: clean_weak_refs(RC1.called_by, computations))
@@ -941,7 +941,7 @@ void reg_heap::find_callers_(int t1, int t2, int start, const vector<int>& split
       int r2 = RC2.source;
 
       // If this computation is not used in t2, we don't need to unshare it.
-      if (rel_computation_index_for_reg(t2,r2) != rc2) continue;
+      if (computation_index_for_reg_(t2,r2) != rc2) continue;
 
       // Skip this one if its been marked high enough already
       if (RC2.temp >= mark) continue;
@@ -950,7 +950,7 @@ void reg_heap::find_callers_(int t1, int t2, int start, const vector<int>& split
       assert(RC2.result);
 
       RC2.temp = mark;
-      assert(rel_computation_index_for_reg(t2,r2) == rc2);
+      assert(computation_index_for_reg_(t2,r2) == rc2);
       callers.push_back(r2);
     }
   }
@@ -961,7 +961,7 @@ void reg_heap::find_users_(int t1, int t2, int start, const vector<int>& split, 
 {
   for(int i=start;i<split.size();i++)
   {
-    auto& RC1 = rel_computation_for_reg(t1, split[i]);
+    auto& RC1 = computation_for_reg_(t1, split[i]);
 
     // Look at computations in t2 that call the old value in t1.
     for(const auto& wrc2: clean_weak_refs(RC1.used_by, computations))
@@ -972,7 +972,7 @@ void reg_heap::find_users_(int t1, int t2, int start, const vector<int>& split, 
       int r2 = RC2.source;
 
       // If this computation is not used in t2, we don't need to unshare it.
-      if (rel_computation_index_for_reg(t2,r2) != rc2) continue;
+      if (computation_index_for_reg_(t2,r2) != rc2) continue;
 
       // Skip this one if its been marked high enough already
       if (RC2.temp >= mark) continue;
@@ -981,7 +981,7 @@ void reg_heap::find_users_(int t1, int t2, int start, const vector<int>& split, 
       //      assert(RC2.result);
 
       RC2.temp = mark;
-      assert(rel_computation_index_for_reg(t2,r2) == rc2);
+      assert(computation_index_for_reg_(t2,r2) == rc2);
       users.push_back(r2);
     }
   }

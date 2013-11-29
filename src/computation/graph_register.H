@@ -280,10 +280,10 @@ public:
   const computation& abs_computation_for_reg(int t, int r) const ;
         computation& abs_computation_for_reg(int t, int r);
 
-  int rel_computation_index_for_reg(int t, int r) const;
-  const computation& rel_computation_for_reg(int t, int r) const;
-        computation& rel_computation_for_reg(int t, int r);
-  bool has_rel_computation(int t, int r) const;
+  int computation_index_for_reg_(int t, int r) const;
+  const computation& computation_for_reg_(int t, int r) const;
+        computation& computation_for_reg_(int t, int r);
+  bool has_computation_(int t, int r) const;
 
   int computation_index_for_reg(int t, int r) const;
   const computation& computation_for_reg(int t, int r) const ;
