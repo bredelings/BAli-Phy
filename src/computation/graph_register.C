@@ -1640,6 +1640,18 @@ int reg_heap::new_computation_for_reg(int r) const
   return rc;
 }
 
+void reg_heap::duplicate_computation(int rc1, int rc2) const
+{
+  assert(not computations[rc2].call);
+  int rc2 = new_computation_for_reg(r);
+  computations[rc2].call = computations[rc1].call;
+  computations[rc2].used_inputs = computations[rc1].used_inputs;
+
+  // set back-edges for used inputs
+  for(int rcu: computations[rc2].used_inputs)
+    computations[rcu].used_by.push_back(computations.get_weak_ref(rc2));
+}
+
 int reg_heap::add_shared_computation(int t, int r)
 {
   assert(token_roots[t].vm_relative[r] <= 0);
