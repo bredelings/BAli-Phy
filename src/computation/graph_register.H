@@ -306,6 +306,8 @@ public:
 
   int remove_shared_computation(int t, int r);
 
+  int new_computation_for_reg(int) const;
+
   int add_shared_computation(int t, int r);
 
   int find_computation_for_reg(int t, int r) const;

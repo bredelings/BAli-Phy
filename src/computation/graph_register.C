@@ -1633,13 +1633,18 @@ int reg_heap::remove_shared_computation(int t, int r)
     return token_roots[t].vm_relative.set_value(r,-1);
 }
 
+int reg_heap::new_computation_for_reg(int r) const
+{
+  int rc = computations.allocate();
+  computations[rc].source = r;
+  return rc;
+}
+
 int reg_heap::add_shared_computation(int t, int r)
 {
   assert(token_roots[t].vm_relative[r] <= 0);
 
-  int rc = computations.allocate();
-
-  computations[rc].source = r;
+  int rc = new_computation_for_reg(r);
 
   token_roots[t].vm_relative.set_value(r, rc);
 
@@ -1674,8 +1679,7 @@ int reg_heap::replace_shared_computation(int t, int r)
   int rc1 = computation_index_for_reg(t,r);
   assert(rc1);
 
-  int rc2 = computations.allocate();
-  computations.access_unused(rc2).source = r;
+  int rc2 = new_computation_for_reg(r);
 
   token_roots[t].vm_relative.set_value(r, rc2);
   
