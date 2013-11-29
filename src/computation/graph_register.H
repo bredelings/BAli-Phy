@@ -284,18 +284,23 @@ public:
   const computation& computation_for_reg_(int t, int r) const;
         computation& computation_for_reg_(int t, int r);
   bool has_computation_(int t, int r) const;
+  bool reg_has_result_(int t, int r) const;
+  bool reg_has_computation_result_(int t, int r) const;
+  int computation_result_for_reg_(int t, int r) const;
+  bool reg_has_call_(int t, int r) const;
+  int call_for_reg_(int t, int r) const;
 
   int computation_index_for_reg(int t, int r) const;
   const computation& computation_for_reg(int t, int r) const ;
         computation& computation_for_reg(int t, int r);
   bool has_computation(int t, int r) const;
-
-  const closure& access_result_for_reg(int t, int R1) const;
-
   bool reg_has_result(int t, int r) const;
   bool reg_has_computation_result(int t, int r) const;
+  int computation_result_for_reg(int t, int r) const;
   bool reg_has_call(int t, int r) const;
   int call_for_reg(int t, int r) const;
+
+  const closure& access_result_for_reg(int t, int R1) const;
 
   int replace_shared_computation(int t, int r);
 
@@ -308,8 +313,6 @@ public:
   bool computation_is_referenced(int,int) const;
 
   int result_for_reg(int t, int r) const;
-
-  int computation_result_for_reg(int t, int r) const;
 
   void set_computation_result_for_reg(int t, int r1);
 

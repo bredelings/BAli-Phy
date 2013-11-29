@@ -385,6 +385,29 @@ int reg_heap::call_for_reg(int t, int r) const
   return computation_for_reg(t,r).call;
 }
 
+bool reg_heap::reg_has_result_(int t, int r) const
+{
+  if (access(r).type == reg::type_t::constant)
+    return true;
+  else
+    return reg_has_computation_result_(t,r);
+}
+
+bool reg_heap::reg_has_computation_result_(int t, int r) const
+{
+  return has_computation_(t,r) and computation_result_for_reg_(t,r);
+}
+
+bool reg_heap::reg_has_call_(int t, int r) const
+{
+  return has_computation_(t,r) and call_for_reg_(t,r);
+}
+
+int reg_heap::call_for_reg_(int t, int r) const
+{
+  return computation_for_reg_(t,r).call;
+}
+
 vector<pool<computation>::weak_ref>& clean_weak_refs(vector<pool<computation>::weak_ref>& v, const pool<computation>& P)
 {
   for(int i=0; i < v.size();)
@@ -475,6 +498,11 @@ int reg_heap::result_for_reg(int t, int r) const
 int reg_heap::computation_result_for_reg(int t, int r) const 
 {
   return computation_for_reg(t,r).result;
+}
+
+int reg_heap::computation_result_for_reg_(int t, int r) const 
+{
+  return computation_for_reg_(t,r).result;
 }
 
 void reg_heap::set_computation_result_for_reg(int t, int r1)
