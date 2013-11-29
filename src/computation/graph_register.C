@@ -1555,21 +1555,21 @@ void reg_heap::check_used_reg(int index) const
 
     const computation& RC = computation_for_reg(t,index);
 
-    for(int rc: RC.used_inputs)
+    for(int rc2: RC.used_inputs)
     {
       // Used regs should have back-references to R
-      assert( computation_is_used_by(index_c, rc) );
+      assert( computation_is_used_by(index_c, rc2) );
 
       // Used computations should be mapped computation for the current token, if we are at the root
-      int R2 = computations[rc].source;
+      int R2 = computations[rc2].source;
       assert(reg_is_changeable(R2));
 
       // The used computation should be referenced somewhere more root-ward
       // so that this computation can be invalidated, and the used computation won't be GC-ed.
-      assert(is_modifiable(access(R2).C.exp) or computation_is_referenced(t,rc));
+      assert(is_modifiable(access(R2).C.exp) or computation_is_referenced(t,rc2));
       
       // Used computations should have results
-      assert(computations[rc].result);
+      assert(computations[rc2].result);
     }
 
     if (t != root_token) continue;
