@@ -1534,7 +1534,7 @@ bool reg_heap::computation_is_referenced(int t,int rc) const
 {
   assert(rc);
   int r = computations[rc].source;
-  if (computation_index_for_reg(t,r) == rc) return true;
+  if (computation_index_for_reg_(t,r) == rc) return true;
   int p = parent_token(t);
   if (p != -1)
     return computation_is_referenced(p, rc);
@@ -1567,8 +1567,8 @@ void reg_heap::check_used_reg(int index) const
 
     if (not has_computation_(t, index)) continue;
 
-    int call = call_for_reg(t,index);
-    int result = computation_result_for_reg(t,index);
+    int call = call_for_reg_(t,index);
+    int result = computation_result_for_reg_(t,index);
 
     if (result)
       assert(call);
@@ -1579,9 +1579,9 @@ void reg_heap::check_used_reg(int index) const
     if (call and result and access(call).type == reg::type_t::constant)
       assert(result == call);
 
-    int index_c = computation_index_for_reg(t,index);
+    int index_c = computation_index_for_reg_(t,index);
 
-    const computation& RC = computation_for_reg(t,index);
+    const computation& RC = computation_for_reg_(t,index);
 
     for(int rc2: RC.used_inputs)
     {
