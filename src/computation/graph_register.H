@@ -109,7 +109,7 @@ public:
   mapping() {}
   mapping(int s) {resize(s);}
   mapping(const mapping&) = default;
-  mapping(const mapping&& vm) noexcept
+  mapping(mapping&& vm) noexcept
   :modified_(std::move(vm.modified_)),
     values(std::move(vm.values))
   { }
