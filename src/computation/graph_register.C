@@ -783,7 +783,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     assert(not is_modifiable(access(R).C.exp));
 
-    token_roots[token].vm_relative.set_value(R,-1);
+    share_and_clear(token,R);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
@@ -1675,21 +1675,12 @@ int reg_heap::add_shared_computation(int t, int r)
 int reg_heap::share_and_clear(int t, int r)
 {
   assert(t);
-  int rc1 = computation_index_for_reg(t,r);
-  assert(rc1);
+  int rc1 = computation_index_for_reg_(t,r);
 
   if (is_root_token(t))
-  {
-    assert(token_roots[t].vm_relative[r] == rc1);
     token_roots[t].vm_relative.erase_value(t);
-  }
   else
-  {
-    if (token_roots[t].vm_relative[r] > 0)
-      assert(token_roots[t].vm_relative[r] == rc1);
-
     token_roots[t].vm_relative.set_value(r,-1);
-  }
 
   return rc1;
 }
