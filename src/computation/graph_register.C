@@ -672,6 +672,16 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   }
 }
 
+// If we replace a computation at P that is newly defined in this token,
+// there may be computations that call or use it that are also newly
+// defined in this token.  Such computations must be cleared, because they
+// do not use a value defined in a previous token, and so would not be detected
+// as invalidate by invalidate_shared_regs( ), which can only detect computations
+// as invalidate if they use a computation valid in a parent context.
+//
+// As a result, every computation that we invalidate is going to be newly defined
+// in the current context.  Other computations can be invalidated later.
+
 /// Update the value of a non-constant, non-computed index
 void reg_heap::set_reg_value(int P, closure&& C, int token)
 {
@@ -699,7 +709,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   if (computation_index_for_reg_(token,P))
   {
     call_and_result_may_be_changed.push_back(P);
-    computation_for_reg(token,P).temp = mark_modified;
+    computation_for_reg_(token,P).temp = mark_modified;
     result_may_be_changed.push_back(P);
   }
 
@@ -720,14 +730,14 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
 #ifndef NDEBUG
   for(int R: result_may_be_changed)
-    assert(computation_for_reg(token,R).temp == mark_result or 
-	   computation_for_reg(token,R).temp == mark_call_result or
-	   computation_for_reg(token,R).temp == mark_modified
+    assert(computation_for_reg_(token,R).temp == mark_result or 
+	   computation_for_reg_(token,R).temp == mark_call_result or
+	   computation_for_reg_(token,R).temp == mark_modified
 	   );
 
   for(int R: call_and_result_may_be_changed)
-    assert(computation_for_reg(token,R).temp == mark_call_result or
-	   computation_for_reg(token,R).temp == mark_modified
+    assert(computation_for_reg_(token,R).temp == mark_call_result or
+	   computation_for_reg_(token,R).temp == mark_modified
 	   );
 #endif
 
@@ -736,19 +746,19 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Clear the marks: 1a
   for(int R: result_may_be_changed)
   {
-    assert(has_computation(token,R));
+    assert(has_computation_(token,R));
 
     //    assert(computation_result_for_reg(token,R) or reg_is_shared(token,R));
 
-    auto& RC = computation_for_reg(token,R);
+    auto& RC = computation_for_reg_(token,R);
 
     if (RC.temp > mark_result) continue;
 
-    assert(reg_has_call(token,R));
+    assert(reg_has_call_(token,R));
 
     RC.temp = -1;
 
-    share_and_clear_result(token, R);
+    computation_for_reg_(token,R).result = 0;
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
@@ -758,12 +768,12 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Clear the marks: 2a
   for(int R: call_and_result_may_be_changed)
   {
-    assert(has_computation(token,R));
+    assert(has_computation_(token,R));
 
     // Put this back when we stop making spurious used_by edges
     //    assert(reg_has_call(token,R));
 
-    auto& RC = computation_for_reg(token,R);
+    auto& RC = computation_for_reg_(token,R);
 
     if (RC.temp > mark_call_result) continue;
 
@@ -773,7 +783,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     assert(not is_modifiable(access(R).C.exp));
 
-    share_and_clear(token,R);
+    token_roots[token].vm_relative.set_value(R,-1);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
