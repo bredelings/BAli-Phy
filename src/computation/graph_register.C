@@ -322,7 +322,8 @@ const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t)
 
 int reg_heap::computation_index_for_reg(int t, int r) const 
 {
-  return find_computation_for_reg(t,r);
+  assert(not t or is_root_token(t));
+  return computation_index_for_reg_(t,r);
 }
 
 const computation& reg_heap::computation_for_reg(int t, int r) const 
@@ -437,7 +438,7 @@ vector<pool<computation>::weak_ref>& clean_weak_refs(vector<pool<computation>::w
 
 bool reg_heap::has_computation(int t, int r) const
 {
-  return computation_index_for_reg(t,r);
+  return computation_index_for_reg(t,r)>0;
 }
 
 bool reg_heap::has_computation_(int t, int r) const
@@ -1262,9 +1263,9 @@ void reg_heap::trace_and_reclaim_unreachable()
       {
 	if (not token_is_used(t)) continue;
 	
-	if (not has_computation(t,r)) continue;
+	if (not has_computation_(t,r)) continue;
 
-	int rc = computation_index_for_reg(t,r);
+	int rc = computation_index_for_reg_(t,r);
 	scan2.push_back(rc);
       }
     }
