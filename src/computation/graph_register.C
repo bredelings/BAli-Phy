@@ -1643,7 +1643,6 @@ int reg_heap::new_computation_for_reg(int r) const
 void reg_heap::duplicate_computation(int rc1, int rc2) const
 {
   assert(not computations[rc2].call);
-  int rc2 = new_computation_for_reg(r);
   computations[rc2].call = computations[rc1].call;
   computations[rc2].used_inputs = computations[rc1].used_inputs;
 
