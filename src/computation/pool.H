@@ -25,6 +25,8 @@ public:
       return r;
     }
 
+    int get_unsafe() const {return r;}
+
     void reset() {version = 1;}
 
     weak_ref() = default;
