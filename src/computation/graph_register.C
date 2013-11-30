@@ -990,7 +990,7 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
       if (RC2.temp >= mark) continue;
 
       // There (usually) shouldn't be a back edge to r2 if r2 has no result.
-      assert(RC2.result);
+      // assert(RC2.result);
 
       RC2.temp = mark;
       assert(computation_index_for_reg_(t2,r2) == rc2);
