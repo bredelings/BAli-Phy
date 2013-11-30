@@ -411,6 +411,8 @@ int reg_heap::call_for_reg_(int t, int r) const
 
 vector<pool<computation>::weak_ref>& clean_weak_refs(vector<pool<computation>::weak_ref>& v, const pool<computation>& P)
 {
+  if (v.empty()) return v;
+
   for(int i=0; i < v.size();)
   {
     int rc = v[i].get(P);
