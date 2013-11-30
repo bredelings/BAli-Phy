@@ -18,7 +18,13 @@ public:
     unsigned version=0;
   public:
 
-    int get(const pool<T>& p) const {return (p.lookup(r).version == version)?r:0;}
+    int get(const pool<T>& p) const {
+      const auto& record = p.lookup(r);
+      if (record.state == free) return 0;
+      if (record.version != version) return 0;
+      return r;
+    }
+
     void reset() {version = 1;}
 
     weak_ref() = default;
