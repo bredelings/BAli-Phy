@@ -898,7 +898,9 @@ void reg_heap::reroot_at(int t)
 {
   if (is_root_token(t)) return;
 
+#ifdef DEBUG_MACHINE
   check_used_regs();
+#endif
 
   int parent = parent_token(t);
 
@@ -1232,7 +1234,9 @@ void reg_heap::expand_memory(int s)
 
 void reg_heap::trace_and_reclaim_unreachable()
 {
+#ifdef DEBUG_MACHINE
   check_used_regs();
+#endif
 
   vector<int>& tokens = get_scratch_list();
 
@@ -1295,10 +1299,14 @@ void reg_heap::trace_and_reclaim_unreachable()
     next_scan2.clear();
   }
 
+#ifdef DEBUG_MACHINE
   check_used_regs();
+#endif
   reclaim_unmarked();
   computations.reclaim_unmarked();
+#ifdef DEBUG_MACHINE
   check_used_regs();
+#endif
 
   release_scratch_list();
   release_scratch_list();
@@ -1817,9 +1825,11 @@ bool reg_heap::token_is_used(int t) const
 
 int reg_heap::copy_token(int t)
 {
+#ifdef DEBUG_MACHINE
   check_tokens();
 
   check_used_regs();
+#endif
 
   int t2 = get_unused_token();
 
@@ -1853,9 +1863,11 @@ int reg_heap::copy_token(int t)
     assert(has_computation(t2,r));
   }
   */
+#ifdef DEBUG_MACHINE
   check_used_regs();
 
   check_tokens();
+#endif
 
   return t2;
 }
@@ -2057,7 +2069,6 @@ int reg_heap::incremental_evaluate(int R, int t)
   }
   if (is_index_var(access(R).C.exp))
     assert(not reg_has_result(t,R));
-  check_used_reg(R);
 #endif
 
 #ifndef NDEBUG
@@ -2132,7 +2143,6 @@ int reg_heap::incremental_evaluate(int R, int t)
       if (R3 != R2)
 	set_C(R, closure(index_var(0),{R3}));
 
-      check_used_reg(R3);
       return R3;
     }
 
@@ -2264,7 +2274,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 	  if (not result_is_index_var)
 	    pop_temp_head();
 	}
-	check_used_reg(R);
       }
       catch (myexception& e)
       {
@@ -2297,7 +2306,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 
 
 #ifndef NDEBUG
-  check_used_reg(R);
   assert(not is_a<index_var>(access(R).C.exp));
   if (reg_has_result(t,R))
   {
