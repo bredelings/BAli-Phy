@@ -95,6 +95,7 @@ protected:
   virtual int add_to_free_list(int r)
   {
     lookup(r).state = free;
+    assert(lookup(r).version < version);
     lookup(r).version = version;
     lookup(r).prev = -1;
     lookup(r).next = first_free;
