@@ -916,12 +916,7 @@ void reg_heap::reroot_at(int t)
   // 2. Change the relative mappings
   pivot_mapping(token_roots[parent].vm_relative, token_roots[t].vm_relative);
 
-  // 3. Invalidate regs in t that reference(d) computations from parent
-  invalidate_shared_regs(parent,t);
-
-  assert(token_roots[t].version >= token_roots[parent].version);
-
-  // 4. Alter the inheritance tree
+  // 3. Alter the inheritance tree
   token_roots[parent].parent = t;
   int index = remove_element(token_roots[parent].children, t);
   assert(index != -1);
@@ -930,19 +925,29 @@ void reg_heap::reroot_at(int t)
   token_roots[t].children.push_back(parent);
   root_token = t;
 
+  // 4. Invalidate regs in t that reference(d) computations from parent
+  assert(token_roots[parent].version >= token_roots[t].version);
+
+  invalidate_shared_regs(parent,t);
+
+  // Mark this context as not having computations that need to be unshared
+  token_roots[t].version = token_roots[parent].version;
+
+  assert(token_roots[t].version >= token_roots[parent].version);
+
   for(int t2: token_roots[t].children)
     assert(token_roots[t2].version <= token_roots[t].version);
 
   assert(is_root_token(t));
 
-  // re-evaluate all the regs that need to be up-to-date.
+  // 5. re-evaluate all the regs that need to be up-to-date.
   if (token_roots[t].regs_to_re_evaluate.size())
     mark_completely_dirty(t);
   for(int R: token_roots[t].regs_to_re_evaluate)
     incremental_evaluate(R,t);
   token_roots[t].regs_to_re_evaluate.clear();
 
-  // 4. Now, try to remove the parent if its unreferenced.
+  // 6. Now, try to remove the parent if its unreferenced.
   try_release_token(parent);
 }
 
@@ -1034,7 +1039,8 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
 
 void reg_heap::invalidate_shared_regs(int t1, int t2)
 {
-  assert(t1 == parent_token(t2));
+  //  assert(t2 == parent_token(t1));
+  assert(token_roots[t1].version >= token_roots[t2].version);
 
   if (token_roots[t1].version <= token_roots[t2].version) return;
 
@@ -1128,13 +1134,6 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   release_scratch_list();
   release_scratch_list();
   assert(n_active_scratch_lists == 0);
-
-  // Mark this context as not having computations that need to be unshared
-  assert(token_roots[t1].version >= token_roots[t2].version);
-
-  // We can only do this if we know that t1 doesn't have an ancestor with the same version, I think.
-  if (is_root_token(t1))
-    token_roots[t2].version = token_roots[t1].version;
 }
 
 bool reg_heap::reg_is_shared_with_parent(int t, int r) const
