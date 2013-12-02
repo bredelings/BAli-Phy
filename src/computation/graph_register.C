@@ -1026,6 +1026,8 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
       // If this computation is not used in t2, we don't need to unshare it.
       if (computation_index_for_reg_(t2,r2) != rc2) continue;
 
+      assert(not is_modifiable(access(r2).C.exp));
+
       // Skip this one if its been marked high enough already
       if (RC2.temp >= mark) continue;
 
@@ -1106,6 +1108,8 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   {
     int rc2 = computation_index_for_reg_(t2,r);
     auto& RC = computations[rc2];
+
+    assert(not is_modifiable(access(r).C.exp));
 
     if (RC.temp > mark_call_result) continue;
 
