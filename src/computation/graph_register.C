@@ -418,11 +418,8 @@ vector<pool<computation>::weak_ref>& clean_weak_refs(vector<pool<computation>::w
   for(int i=0; i < v.size();)
   {
     int rc = v[i].get(P);
-    if (rc and not P.is_marked(rc))
-    {
-      P.set_mark(rc);
+    if (rc)
       i++;
-    }
     else
     {
       auto wr = v.back();
@@ -432,11 +429,6 @@ vector<pool<computation>::weak_ref>& clean_weak_refs(vector<pool<computation>::w
     }
   }
 
-  for(int i=0; i < v.size();i++)
-  {
-    int rc = v[i].get_unsafe();
-    P.unmark(rc);
-  }
   return v;
 }
 
