@@ -1002,6 +1002,9 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
       // Skip this one if its been marked high enough already
       if (RC2.temp >= mark) continue;
 
+      // If the computation has no result, then its called-by edge is out-of-date
+      if (not RC2.result) continue;
+
       // There (usually) shouldn't be a back edge to r2 if r2 has no result.
       // assert(RC2.result);
 
