@@ -709,7 +709,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   vector< int >& regs_to_re_evaluate = token_roots[token].regs_to_re_evaluate;
 
   // If we have a RELATIVE computation, we need to take care of its users new to this token.
-  if (computation_index_for_reg_(token,P))
+  if (has_computation_(token,P))
   {
     call_and_result_may_be_changed.push_back(P);
     computation_for_reg_(token,P).temp = mark_modified;
