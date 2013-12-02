@@ -158,9 +158,11 @@ void computation::clear()
 
 void computation::check_cleared()
 {
+  assert(not result);
   assert(not call);
   assert(used_inputs.empty());
   assert(called_by.empty());
+  assert(used_by.empty());
 }
 
 computation& computation::operator=(computation&& R) noexcept
