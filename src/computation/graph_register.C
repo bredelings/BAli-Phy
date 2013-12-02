@@ -1766,6 +1766,13 @@ void reg_heap::try_release_token(int t)
   }
 
   // clear only the mappings that were actually updated here.
+  computations.inc_version();
+  for(int r: token_roots[t].vm_relative.modified())
+  {
+    int rc = token_roots[t].vm_relative[r];
+    if (rc > 0)
+      computations.reclaim_used(rc);
+  }
   token_roots[t].vm_relative.clear();
 
   // If we just released a terminal token, maybe it's parent is not terminal also.
