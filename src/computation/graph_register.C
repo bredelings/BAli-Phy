@@ -770,6 +770,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       regs_to_re_evaluate.push_back(R);
   }
 
+  computations.inc_version();
   // Clear the marks: 2a
   for(int R: call_and_result_may_be_changed)
   {
@@ -788,7 +789,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     assert(not is_modifiable(access(R).C.exp));
 
-    share_and_clear(token,R);
+    int rc = share_and_clear(token,R);
+    if (rc > 0)
+      computations.reclaim_used(rc);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
@@ -803,6 +806,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   add_shared_computation(token,P);
   assert(has_computation_(token,P));
   set_reduction_result(token, P, std::move(C) );
+  assert(has_computation_(token,P));
 
   release_scratch_list();
   release_scratch_list();
