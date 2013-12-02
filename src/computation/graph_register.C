@@ -1551,7 +1551,7 @@ int reg_heap::share_and_clear(int t, int r)
   int rc1 = computation_index_for_reg_(t,r);
 
   if (is_root_token(t))
-    token_roots[t].vm_relative.erase_value(t);
+    token_roots[t].vm_relative.erase_value(r);
   else
     token_roots[t].vm_relative.set_value(r,-1);
 
