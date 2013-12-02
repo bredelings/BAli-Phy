@@ -20,7 +20,6 @@ public:
 
     int get(const pool<T>& p) const {
       const auto& record = p.lookup(r);
-      if (record.state == free) return 0;
       if (record.version != version) return 0;
       return r;
     }
