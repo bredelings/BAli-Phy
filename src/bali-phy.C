@@ -1458,7 +1458,7 @@ int main(int argc,char* argv[])
 	builtins.remove_filename();
 	builtins = builtins / "lib" / "bali-phy";
       }
-      if (builtins.empty() or not fs::exists(builtins/"Prelude"+plugin_extension))
+      if (builtins.empty() or not fs::exists(builtins/("Prelude"+plugin_extension)))
 	throw myexception()<<"No paths to find builtins are specified!.  Use --builtins-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
 
       L.builtins_path = {builtins.string()};
