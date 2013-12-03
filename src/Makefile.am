@@ -373,7 +373,7 @@ pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la
 		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la
 
 if HOST_MINGW32
-EXTRADEPENDENCIES = libbali-phy.dll.a
+EXTRADEPENDENCIES = bali-phy.exe
 EXTRALDFLAGS = -L$(top_builddir) -Wl,libbali-phy.dll.a
 else
 EXTRADEPENDENCIES =
@@ -382,7 +382,7 @@ endif
 
 mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc $(EXTRALDFLAGS)
-mod_la_DEPENDENCIES = $(EXTADEPENDENCIES)
+mod_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 builtinError_la_SOURCES = computation/builtins/builtinError.C
 builtinError_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc $(EXTRALDFLAGS)
@@ -430,7 +430,7 @@ exp_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 Prelude_la_SOURCES = computation/builtins/Prelude.C
 Prelude_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc $(EXTRALDFLAGS)
-Prelude_la_DEPENDENCIES = $(EXTADEPENDENCIES)
+Prelude_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 equals_la_SOURCES = computation/builtins/equals.C
 equals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic -no-undefined -enable-runtime-pseudo-reloc $(EXTRALDFLAGS)
