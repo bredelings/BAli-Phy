@@ -433,7 +433,7 @@ expression_ref load_builtin(const string& symbol_name, const string& filename, i
 
 expression_ref load_builtin(const module_loader& L, const string& symbol_name, const string& plugin_name, int n, const string& function_name)
 {
-  // \todo:windows Make this depend on the operating system
+  // Presumably on windows we don't need to search separate for ".DLL", since the FS isn't case sensitive.
 #if defined _MSC_VER || defined __MINGW32__
   const string extension = ".dll";
 #else
