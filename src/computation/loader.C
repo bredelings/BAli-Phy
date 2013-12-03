@@ -17,6 +17,12 @@ using std::vector;
 using std::set;
 using std::map;
 
+#if defined _MSC_VER || defined __MINGW32__
+  const string plugin_extension = ".dll";
+#else
+  const string plugin_extension = ".so";
+#endif
+
 /*
  * DONE:
  *
@@ -434,13 +440,7 @@ expression_ref load_builtin(const string& symbol_name, const string& filename, i
 expression_ref load_builtin(const module_loader& L, const string& symbol_name, const string& plugin_name, int n, const string& function_name)
 {
   // Presumably on windows we don't need to search separate for ".DLL", since the FS isn't case sensitive.
-#if defined _MSC_VER || defined __MINGW32__
-  const string extension = ".dll";
-#else
-  const string extension = ".so";
-#endif
-
-  fs::path filepath = find_file_in_path(L.builtins_path, plugin_name + extension);
+  fs::path filepath = find_file_in_path(L.builtins_path, plugin_name + plugin_extension);
   return load_builtin(symbol_name, filepath.string(), n, function_name);
 }
 

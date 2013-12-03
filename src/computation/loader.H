@@ -30,4 +30,6 @@ std::vector<Module> load_and_rename_modules(const module_loader&, const std::map
 
 expression_ref load_builtin(const module_loader& L, const std::string& symbol_name, const std::string& filename, int n, const std::string& fname);
 expression_ref load_builtin(const std::string& symbol_name, const std::string& filename, int n, const std::string& fname);
+
+extern const std::string plugin_extension;
 #endif
