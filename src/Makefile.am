@@ -126,8 +126,6 @@ bali_phy_LDFLAGS =
 endif
 endif
 
-libbali-phy.dll.a: bali-phy.exe
-#	$(DLLTOOL) -dllname bali-phy.exe --def bali-phy.def --output-lib libbali-phy.dll.a
 
 if WITH_MPI
 bali_phy_LDADD = ${LDADD} @MPI_LDFLAGS@ 
