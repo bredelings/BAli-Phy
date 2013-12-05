@@ -41,7 +41,7 @@ using std::endl;
 /*
  * 1. get_reg_value( )... can we avoid re-rooting?
  *
- * 2. set_reg_value( )... can we avoid forcing it to be terminal?
+ * 2. set_reg_value( ): speedup?
  *
  * 3. registering modifiables... can we just create a list inside reg_heap?
  *
