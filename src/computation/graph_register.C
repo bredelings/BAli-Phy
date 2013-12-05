@@ -331,6 +331,18 @@ bool mapping::empty() const
   return modified_.empty();
 }
 
+const vector<int>& reg_heap::random_modifiables() const
+{
+  return random_modifiables_;
+}
+
+int reg_heap::add_random_modifiable(int index)
+{
+  int i = random_modifiables_.size();
+  random_modifiables_.push_back(index);
+  return i;
+}
+
 const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t));return token_roots[t].triggers;}
       std::vector<int>& reg_heap::triggers(int t)       {assert(is_root_token(t));return token_roots[t].triggers;}
 
@@ -1205,6 +1217,7 @@ void reg_heap::get_roots(vector<int>& scan) const
 {
   insert_at_end(scan, temp);
   insert_at_end(scan, heads);
+  insert_at_end(scan, random_modifiables_);
   for(int j=0;j<parameters.size();j++)
     scan.push_back(parameters[j].second);
   for(const auto& i: identifiers)

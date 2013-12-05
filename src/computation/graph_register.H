@@ -179,8 +179,12 @@ public:
   int probability_index = -1;
 
   // the list of modifiables
-  std::vector<int> modifiables_;
+  std::vector<int> random_modifiables_;
   
+  const std::vector<int>& random_modifiables() const;
+
+  int add_random_modifiable(int);
+
   /// The register indices of the named parameters.
   std::vector<std::pair<std::string,int>> parameters;
   

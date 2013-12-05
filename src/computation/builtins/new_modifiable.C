@@ -14,6 +14,8 @@ extern "C" closure builtin_function_new_modifiable(OperationArgs& Args)
   int R1 = Args.allocate(modifiable());
   M.access(R1).changeable = true;
 
+  M.add_random_modifiable(R1);
+
   // Return a reference to the new modifiable.
   return {index_var(0),{R1}};
 }
