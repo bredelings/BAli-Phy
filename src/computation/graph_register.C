@@ -38,6 +38,18 @@ using std::endl;
  * Thus called_by edges need not be set when setting a call, but only when setting the result.
  */
 
+/*
+ * 1. get_reg_value( )... can we avoid re-rooting?
+ *
+ * 2. set_reg_value( )... can we avoid forcing it to be terminal?
+ *
+ * 3. registering modifiables... can we just create a list inside reg_heap?
+ *
+ * 4. how could we *dynamically* handle modifiables
+ *    - we need to make an MCMC move more them.
+ *    - we need to incorporate them into the PDF
+ */
+
 expression_ref graph_normalize(const expression_ref& E)
 {
   if (not E) return E;
