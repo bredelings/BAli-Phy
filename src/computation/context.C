@@ -54,12 +54,7 @@ void context::make_clean() const
 
 void context::make_terminal_token() const
 {
-  if (memory()->is_root_token(token) and memory()->degree_of_token(token) == 1)
-  {
-    int child_token = memory()->children_of_token(token)[0];
-    memory()->reroot_at(child_token);
-  }
-  else if (memory()->degree_of_token(token) >= 2)
+  if (not memory()->children_of_token(token).empty())
     token = memory()->switch_to_child_token(token);
 
   assert(memory()->children_of_token(token).empty());
