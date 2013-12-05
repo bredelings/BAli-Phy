@@ -174,6 +174,12 @@ public:
   
   // the list of expressions that we are interested in evaluating.
   std::vector<int> heads;
+
+  // where is the location of the probability expression
+  int probability_index = -1;
+
+  // the list of modifiables
+  std::vector<int> modifiables_;
   
   /// The register indices of the named parameters.
   std::vector<std::pair<std::string,int>> parameters;
