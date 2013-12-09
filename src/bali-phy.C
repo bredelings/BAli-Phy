@@ -246,7 +246,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>")
     ("set",value<vector<string> >()->composing(),"Set key=<value>")
     ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.")
-    ("BUGS",value<string>(),"File containing heirarchical model description.")
+    ("model",value<string>(),"File containing heirarchical model description.")
     ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
     ;
 
@@ -1503,9 +1503,9 @@ int main(int argc,char* argv[])
       throw myexception()<<"I don't understand --branch-prior argument '"<<branch_prior<<"'.\n  Only 'Exponential' and 'Gamma' are allowed.";
 
     //------------- Parse the Hierarchical Model description -----------//
-    if (args.count("BUGS"))
+    if (args.count("model"))
     {
-      const string filename = args["BUGS"].as<string>();
+      const string filename = args["model"].as<string>();
       add_BUGS(P,filename);
     }
       
