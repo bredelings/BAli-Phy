@@ -524,7 +524,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 
       <para>You can specify a more complex substitution model as follows (See <xref linkend="subst_basic"/>):
 
-	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel WAG+gamma+INV</userinput></screen> </para>
+	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel WAG+gamma_inv</userinput></screen> </para>
       <para>You may specify an indel model of <userinput>none</userinput>
 	to fix the alignment to its initial value, and ignore information in shared insertions or deletions.
   	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --imodel none</userinput></screen></para>
@@ -596,7 +596,7 @@ Finally, you may specify the option <userinput>--traditional</userinput>, or its
 align = examples/EF-Tu/5d.fasta
 
 #select an substitution model
-smodel = log-normal+INV
+smodel = log-normal_inv
 
 #fix the alignment and do not model indels
 traditional = traditional
@@ -608,7 +608,7 @@ traditional = traditional
 	  the option name as the value, because it does not take a
 	  value.  Thus, this configuration file corresponds to the
 	  command line
-	  <screen><prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal+INV --traditional</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv --traditional</userinput></screen>
 	</para>
       </section>
 
@@ -658,7 +658,7 @@ traditional = traditional
 	invariant sites.  The amount of rate variation and the fraction of
 	invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal+INV --randomize-alignment</userinput></screen></example>
+      <screen> <prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv --randomize-alignment</userinput></screen></example>
 
     <example><info><title>Fixed alignment</title></info>
       
@@ -1402,7 +1402,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
        <application>BAli-Phy</application> are specified using a
        stack, as follows: <userinput>Model[arg]+Model[arg]+...+Model[arg]</userinput>
         where each model uses the previous models as input.  For
-	example, <userinput>WAG+gamma[4]+INV</userinput>. Arguments
+	example, <userinput>WAG+gamma_inv[4]</userinput>. Arguments
 	are optional.</para>
 
 	<note>
@@ -1643,34 +1643,72 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
       <table frame="none" rowsep="1"><info><title>Frequency Models</title></info>
 	
-	<tgroup cols="4">
+	<tgroup cols="3">
 	  <colspec colnum="1" colname="col1" colwidth="1*"/>
 	  <colspec colnum="2" colname="col2" colwidth="1*"/>
 	  <colspec colnum="3" colname="col3" colwidth="1*"/>
-	  <colspec colnum="4" colname="col4" colwidth="1*"/>
 	  <thead><row>
 	      <entry>Model</entry>
 	      <entry>Alphabet</entry>
 	      <entry>Parameters</entry>
-	      <entry>Description</entry>
 	  </row></thead>
 
 	  <tbody>
 	    <row>
 	      <entry>
 		<para><userinput>F</userinput></para>
-		<para>Simple frequency model</para>
+		<para>Whelan and Goldman (2001)</para>
 	      </entry>
 	      <entry>any</entry>
 	      <entry>
-		<para>f: parameter from +gwF model.</para>
+		<para>pi<replaceable>l</replaceable>: frequency of letter <replaceable>l</replaceable>.</para>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		<para><userinput>F=constant</userinput></para>
+		<para>Whelan and Goldman (2001)</para>
+		<para>Frequencies fixed to simple estimates.</para>
+	      </entry>
+	      <entry>any</entry>
+	      <entry>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		<para><userinput>F=uniform</userinput></para>
+		<para>Whelan and Goldman (2001)</para>
+		<para>All letters have equal frequencies.</para>
+	      </entry>
+	      <entry>any</entry>
+	      <entry>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		<para><userinput>F61</userinput></para>
+		<para>Synonym of F for codon models</para>
+	      </entry>
+	      <entry>any</entry>
+	      <entry>
+		<para>pi<replaceable>l</replaceable>: frequency of letter <replaceable>l</replaceable>.</para>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		<para><userinput>gwF</userinput></para>
+		<para>Goldman and Whelan (2002)</para>
+	      </entry>
+	      <entry>any</entry>
+	      <entry>
+		<para>f: determines cause of high-frequency letters.</para>
 		<para>pi<replaceable>l</replaceable>: frequency of letter <replaceable>l</replaceable>.</para>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
 		<para><userinput>F1x4</userinput></para>
-		<para>Independent nucleotide frequency model</para>
+		<para>Single nucleotide frequency model</para>
 	      </entry>
 	      <entry>Triplets</entry>
 	      <entry>
@@ -1681,6 +1719,34 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>F3x4</userinput></para>
+		<para>Independent nucleotide frequency model</para>
+	      </entry>
+	      <entry>Triplets</entry>
+	      <entry>
+		<para>Site1.pi<replaceable>l</replaceable>: frequency
+		of letter <replaceable>l</replaceable> in first codon position.</para>
+		<para>Site2.pi<replaceable>l</replaceable>: frequency
+		of letter <replaceable>l</replaceable> in first codon position.</para>
+		<para>Site3.pi<replaceable>l</replaceable>: frequency
+		of letter <replaceable>l</replaceable> in first codon position.</para>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		<para><userinput>MG94</userinput></para>
+		<para>Muse and Gaut (1994)</para>
+		<para>Single nucleotide frequency model</para>
+	      </entry>
+	      <entry>Triplets</entry>
+	      <entry>
+		<para>pi<replaceable>l</replaceable>: frequency
+		of nucleotide <replaceable>l</replaceable> in first codon position.</para>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		<para><userinput>MG94w9</userinput></para>
+		<para>Muse and Gaut (1994)</para>
 		<para>Independent nucleotide frequency model</para>
 	      </entry>
 	      <entry>Triplets</entry>
@@ -1704,7 +1770,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </entry>
 	    <entry>$R_{\alpha\beta} = \frac{{(\pi_i \pi_j
 	      \pi_l)}^f}{{(\pi_i \pi_j \pi_k)}^{1-f}} \times \frac{\nu_\beta}{\nu_\alpha}$.</entry>
-	    </row -->
+	    </row>
 	    <row>
 	      <entry>
 		<para><userinput>F=amino-acids</userinput></para>
@@ -1717,7 +1783,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
 	    </row>
-	    <!-- row>
+	    <row>
 	    <entry><userinput>pi=codons</userinput></entry>
 	    <entry>Codons</entry>
 	    <entry>$f$</entry>
@@ -1803,7 +1869,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>M1a</userinput></para>
-		<para><userinput>M1a[HKY,F]</userinput> (default options)</para>
+		<para><userinput>M1a[HKY,gwF]</userinput> (default options)</para>
 		<para><userinput>M1a[GTR,F3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
@@ -1819,7 +1885,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>M2a</userinput></para>
-		<para><userinput>M2a[HKY,F]</userinput> (default options)</para>
+		<para><userinput>M2a[HKY,gwF]</userinput> (default options)</para>
 		<para><userinput>M2a[GTR,F3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
@@ -1837,7 +1903,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>M2a_Test</userinput></para>
-		<para><userinput>M2a_Test[HKY,F]</userinput></para>
+		<para><userinput>M2a_Test[HKY,gwF]</userinput> (default options)</para>
 		<para><userinput>M2a_Test[GTR,F3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
@@ -1893,9 +1959,9 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>branch-site</userinput></para>
-		<para><userinput>branch-site[2,HKY,F]</userinput>(default)</para>
+		<para><userinput>branch-site[2,HKY,gwF]</userinput>(default)</para>
 		<para><userinput>branch-site[,HKY,F3x4]</userinput></para>
-		<para><userinput>branch-site[3,GTR,F3x4]</userinput></para>
+		<para><userinput>branch-site[3,GTR,F61]</userinput></para>
 		<para>Zhang, et. al. (2005)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1955,16 +2021,17 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
     <section><info><title>Substitution model examples</title></info>
       
-      <para>Example: --smodel WAG+F+log-normal+INV</para>
-      <para>Example: --smodel WAG+log-normal+INV (same as above)</para>
+      <para>Example: --smodel WAG+F+log-normal_inv</para>
+      <para>Example: --smodel WAG+gwF+log-normal_inv</para>
+      <para>Example: --smodel WAG+log-normal_inv (same as above)</para>
       <para>Example: --smodel EQU --alphabet Triplets</para>
       <para>Example: --smodel HKY</para>
       <para>Example: --smodel TN+F=constant</para>
       <para>Example: --smodel M0 --alphabet Codons</para>
-      <para>Example: --smodel M0+F=nucleotides --alphabet Codons</para>
-      <para>Example: --smodel M2 --alphabet Codons</para>
-      <para>Example: --smodel M0[HKY]+M2 --alphabet Codons (same as above)</para>
-      <para>Example: --smodel M0[TN]+M2 --alphabet Codons</para>
+      <para>Example: --smodel M0+F1x4 --alphabet Codons</para>
+      <para>Example: --smodel M2a --alphabet Codons</para>
+      <para>Example: --smodel M2a[HKY] --alphabet Codons (same as above)</para>
+      <para>Example: --smodel M2[TN,F3x4] --alphabet Codons</para>
     </section>
   </section>
 
