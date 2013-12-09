@@ -308,13 +308,13 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	  <listitem><para> The GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>)
 	      version 4.8 (or higher).
 	    </para> 
-	    
-	    <note><info><title>Mac OS X issues:</title></info>
-	      
-	      
-	      <para>At this time, the <application>LLVM clang</application> compiler used by XCode fails on one or two files used by BAli-Phy.  I hope this issue will be resolved soon.</para>
-	    </note>
+	    <para> Alternatively, the Clang C++ compiler version 3.4
+	    or higher may be used.  The 3.3 version might work as
+	    well, but hasn't been tested yet.  I don't think the
+	    clang version that comes with Xcode 5 is new enough.
+	    </para>
 	  </listitem>
+
 
 	  <!--listitem><para>
 	      <ulink url="http://www.gnu.org/software/make">
@@ -1663,24 +1663,34 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry>any</entry>
 	      <entry>
-		<para>$f$ (1)</para>
-		<para>$\pi$ ($|\alpha|$) </para>
+		<para>f: parameter from +gwF model.</para>
+		<para>pi<replaceable>l</replaceable>: frequency of letter <replaceable>l</replaceable>.</para>
 	      </entry>
-	      <entry>$R_{ij} = \frac{\pi_j^f}{\pi_i^{1-f}}$.</entry>
 	    </row>
 	    <row>
 	      <entry>
-		<para><userinput>F=nucleotides</userinput></para>
+		<para><userinput>F1x4</userinput></para>
 		<para>Independent nucleotide frequency model</para>
 	      </entry>
 	      <entry>Triplets</entry>
 	      <entry>
-		<para>$f$ (1)</para>
-		<para>$\pi_N$ (4) </para>
+		<para>pi<replaceable>l</replaceable>: frequency
+		of nucleotide <replaceable>l</replaceable> in first codon position.</para>
 	      </entry>
+	    </row>
+	    <row>
 	      <entry>
-		<para>$\pi_\alpha = \pi_i \pi_j \pi_k$</para>
-		<para>$R_{\alpha\beta} = \frac{\pi_\beta^f}{\pi_\alpha^{1-f}}$.</para>
+		<para><userinput>F3x4</userinput></para>
+		<para>Independent nucleotide frequency model</para>
+	      </entry>
+	      <entry>Triplets</entry>
+	      <entry>
+		<para>Site1.pi<replaceable>l</replaceable>: frequency
+		of letter <replaceable>l</replaceable> in first codon position.</para>
+		<para>Site2.pi<replaceable>l</replaceable>: frequency
+		of letter <replaceable>l</replaceable> in first codon position.</para>
+		<para>Site3.pi<replaceable>l</replaceable>: frequency
+		of letter <replaceable>l</replaceable> in first codon position.</para>
 	      </entry>
 	    </row>
 	    <!-- row>
@@ -1732,95 +1742,118 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
       <table frame="none" rowsep="1"><info><title>CTMC Mixture Models</title></info>
 	
-	<tgroup cols="4">
+	<tgroup cols="3">
 	  <thead><row>
 	      <entry>Model</entry>
 	      <entry>Alphabet</entry>
 	      <entry>Parameters</entry>
-	      <entry>Description</entry>
 	  </row></thead>
 	  <tbody>
-	    <row>
-	      <entry>
-		<para><userinput><replaceable>sm</replaceable> + INV</userinput></para>
-	      </entry>
-	      <entry><replaceable>sm</replaceable> alphabet</entry>
-	      <entry>
-		<para>$p$: invariant fraction.</para>
-	      </entry>
-	      <entry>
-		<para>A fraction $p$ of sites do not allow substitutions.</para>
-	      </entry>
-	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>sm</replaceable> + gamma[$n$]</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + gamma[$n$]</userinput></para>
 		<para>Yang (1994)</para>
 	      </entry>
-	      <entry><replaceable>sm</replaceable> alphabet</entry>
+	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
 	      <entry>
-		<para>$\sigma/\mu$: noise to signal ratio for $\Gamma$.</para>
-	      </entry>
-	      <entry>
-		<para>rate $\sim \Gamma(\mu=1,\sigma)$.</para>
-		<para>A discrete approximation to the $\Gamma$ with $n$
-     	          bins is used.</para>
+		<para>sigmaOverMu: noise to signal ratio for $\Gamma$.  Also equal to 1/sqrt($\alpha$).</para>
+		<para>$n$: Number of bins for discrete $\Gamma$.</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>sm</replaceable> + log-normal[$n$]</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + gamma_inv[$n$]</userinput></para>
+		<para>Yang (1994)</para>
 	      </entry>
-	      <entry><replaceable>sm</replaceable> alphabet</entry>
+	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
+	      <entry>
+		<para>sigmaOverMu: noise to signal ratio for $\Gamma$.  Also equal to 1/sqrt($\alpha$).</para>
+		<para>$n$: Number of bins for discrete $\Gamma$.</para>
+		<para>$p$: Fraction of invariant sites.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput><replaceable>sub-model</replaceable> + log-normal[$n$]</userinput></para>
+	      </entry>
+	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
+	      <entry>
+		<para>sigmaOverMu: $\sigma/\mu$: noise to signal ratio for $\log Normal$.</para>
+		<para>$n$: Number of bins for discrete $\log Normal$.</para>
+		<para>$p$: Fraction of invariant sites.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput><replaceable>sub-model</replaceable> + log-normal_inv[$n$]</userinput></para>
+	      </entry>
+	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
 	      <entry>
 		<para>$\sigma/\mu$: noise to signal ratio for $\log Normal$.</para>
-	      </entry>
-	      <entry>
-		<para>rate $\sim \log Normal(\mu=1,\sigma)$.</para>
-		<para>A discrete approximation to the $log Normal$ with $n$
-     	          bins is used.</para>
+		<para>$n$: Number of bins for discrete $\log Normal$.</para>
+		<para>$p$: Fraction of invariant sites.</para>
 	      </entry>
 	    </row>
+<!-- M7, branch-site, M8b_Test, M2a_Test, M2a, M1a,  -->
 
 	    <row>
 	      <entry>
-		<para><userinput>M2</userinput></para>
-		<para><userinput><replaceable>sm</replaceable> + M2</userinput></para>
-		<para>Yang, et. al. (2000)</para>
+		<para><userinput>M1a</userinput></para>
+		<para><userinput>M1a[HKY,F]</userinput> (default options)</para>
+		<para><userinput>M1a[GTR,F3x4]</userinput></para>
+		<para>Wong, et. al. (2004)</para>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>$\kappa$: the ts/tv ratio</para>
-		<para>$p_1, p_2, p_3$: bin frequencies.</para>
-		<para>$\omega_3$: value of $\omega$ in bin 2.</para>
-	      </entry>
-	      <entry>
-		<para>$\Omega=\omega_i$ with probability $p_i$.</para>
-		<para>$\omega_1 = 0$, $\omega_2 = 1$.</para>
-		<para>The default for <replaceable>sm</replaceable> is M0.</para>
+		<para>kappa: the transition/transversion ratio</para>
+		<para>omega1: the conserved dN/dS ratio</para>
+		<para>fConserved: the fraction of conserved sites</para>
+		<para>fNeutral: the fraction of neutral sites</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput>M3[$n$]</userinput></para>
-		<para><userinput><replaceable>sm</replaceable> + M3[$n$]</userinput></para>
-		<para>Yang, et. al. (2000)</para>
+		<para><userinput>M2a</userinput></para>
+		<para><userinput>M2a[HKY,F]</userinput> (default options)</para>
+		<para><userinput>M2a[GTR,F3x4]</userinput></para>
+		<para>Wong, et. al. (2004)</para>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>$\kappa$: the ts/tv ratio</para>
-		<para>$p_1, \ldots, p_n$: bin frequencies.</para>
-		<para>$\omega_1, \ldots, \omega_n$: values of $\omega$.</para>
-	      </entry>
-	      <entry>
-		<para>$\Omega=\omega_i$ with probability $p_i$.</para>
+		<para>kappa: the transition/transversion ratio</para>
+		<para>omega1: the conserved dN/dS ratio</para>
+		<para>omega3: the positively selected dN/dS ratio</para>
+		<para>fConserved: the fraction of conserved sites</para>
+		<para>fNeutral: the fraction of neutral sites</para>
+		<para>fSelection: the fraction of neutral sites</para>
 	      </entry>
 	    </row>
 
 	    <row>
+	      <entry>
+		<para><userinput>M2a_Test</userinput></para>
+		<para><userinput>M2a_Test[HKY,F]</userinput></para>
+		<para><userinput>M2a_Test[GTR,F3x4]</userinput></para>
+		<para>Wong, et. al. (2004)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<para>kappa: the transition/transversion ratio</para>
+		<para>omega1: the conserved dN/dS ratio</para>
+		<para>omega3: the positively selected dN/dS ratio</para>
+		<para>fConserved: the fraction of conserved sites</para>
+		<para>fNeutral: the fraction of neutral sites</para>
+		<para>fSelection: the fraction of neutral sites</para>
+		<para>pos_selection: model selector (1 if positive selection, 0 if not).</para>
+	      </entry>
+	    </row>
+
+	    <!-- row>
 	      <entry>
 		<para><userinput>M7[$n$]</userinput></para>
 		<para><userinput><replaceable>sm</replaceable> + M7[$n$]</userinput></para>
@@ -1837,6 +1870,82 @@ The majority consensus tree is usually not fully resolved, so we recommend using
      	          bins is used.</para>
 	      </entry>
 	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput>M8b_Test</userinput></para>
+		<para><userinput><replaceable>sm</replaceable> + M8b_Test</userinput></para>
+		<para>Yang, et. al. (2000)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<para>$\kappa$: the ts/tv ratio</para>
+		<para>$p_1, p_2, p_3$: bin frequencies.</para>
+		<para>$\omega_3$: value of $\omega$ in bin 2.</para>
+	      </entry>
+	      <entry>
+		<para>$\Omega=\omega_i$ with probability $p_i$.</para>
+		<para>$\omega_1 = 0$, $\omega_2 = 1$.</para>
+		<para>The default for <replaceable>sm</replaceable> is M0.</para>
+	      </entry>
+	    </row -->
+
+	    <row>
+	      <entry>
+		<para><userinput>branch-site</userinput></para>
+		<para><userinput>branch-site[2,HKY,F]</userinput>(default)</para>
+		<para><userinput>branch-site[,HKY,F3x4]</userinput></para>
+		<para><userinput>branch-site[3,GTR,F3x4]</userinput></para>
+		<para>Zhang, et. al. (2005)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<para>f0: the fraction of sites conserved on background branches.</para>
+		<para>f1: the fraction of sites neutral on background branches.</para>
+		<para>posP: the fraction of sites (neutral or
+		conserved) that switch to positive selection on
+		foreground branches.</para>
+		<para>w0: the conserved dN/dS ratio.</para>
+		<para>posW: the positively selected dN/dS ratio.</para>
+		<para>posSelection: model selector (1 if positive selection, 0 if not).</para>
+	      </entry>
+	    </row>
+
+	    <!-- row>
+	      <entry>
+		<para><userinput>M2</userinput></para>
+		<para><userinput><replaceable>sm</replaceable> + M2</userinput></para>
+		<para>Yang, et. al. (2000)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<para>$\kappa$: the ts/tv ratio</para>
+		<para>$p_1, p_2, p_3$: bin frequencies.</para>
+		<para>$\omega_3$: value of $\omega$ in bin 2.</para>
+	      </entry>
+	      <entry>
+		<para>$\Omega=\omega_i$ with probability $p_i$.</para>
+		<para>$\omega_1 = 0$, $\omega_2 = 1$.</para>
+		<para>The default for <replaceable>sm</replaceable> is M0.</para>
+	      </entry>
+	    </row -->
+
+	    <!-- row>
+	      <entry>
+		<para><userinput>M3[$n$]</userinput></para>
+		<para><userinput><replaceable>sm</replaceable> + M3[$n$]</userinput></para>
+		<para>Yang, et. al. (2000)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<para>$\kappa$: the ts/tv ratio</para>
+		<para>$p_1, \ldots, p_n$: bin frequencies.</para>
+		<para>$\omega_1, \ldots, \omega_n$: values of $\omega$.</para>
+	      </entry>
+	      <entry>
+		<para>$\Omega=\omega_i$ with probability $p_i$.</para>
+	      </entry>
+	    </row -->
 
 	  </tbody>
 
