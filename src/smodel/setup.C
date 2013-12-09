@@ -393,10 +393,15 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
 
   if (model_args[0] == "F=constant") 
   {
-    if (frequencies)
-      R = (identifier("SModel.plus_gwF"), *a, 1.0, get_tuple(*frequencies) );
-    else
-      R = (identifier("SModel.plus_gwF"), *a, 1.0, get_tuple(*frequencies) );
+    if (not frequencies)
+      throw myexception()<<"F=constant: frequency estimates not available here.";
+
+    Vector<double> v;
+    v.resize(a->size());
+    for(int i=0;i<a->size();i++)
+      v[i] = (*frequencies)[i];
+
+    return (identifier("ReversibleFrequency"), *a, (identifier("iotaUnsigned"), a->size()), v, (identifier("SModel.plus_gwF"), a, 1.0, v));
   }
 
   else if (model_args[0] == "F61")
