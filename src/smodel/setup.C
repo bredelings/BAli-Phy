@@ -737,7 +737,10 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     return (identifier("multiRate"), base,  dist);
   }
-  else if (model_args[0] == "log-normal") {
+  else if (model_args[0] == "log-normal") 
+  {
+    check_n_args(model_args, 0, 2);
+
     int n=4;
     if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
@@ -753,7 +756,10 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     return (identifier("multiRate"), base,  dist);
   }
-  else if (model_args[0] == "log-normal_inv") {
+  else if (model_args[0] == "log-normal_inv") 
+  {
+    check_n_args(model_args, 0, 2);
+
     int n=4;
     if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
