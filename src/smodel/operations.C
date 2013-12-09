@@ -45,6 +45,7 @@ namespace substitution
   formula_expression_ref Plus_F_Model(const alphabet& a, const valarray<double>& pi0)
   {
     formula_expression_ref pi = Frequencies_Model(a,pi0);
+    pi = prefix_formula("F", pi);
 
     return let_expression(v1,(identifier("listToVectorDouble"),pi),
 			  (identifier("ReversibleFrequency"), a, (identifier("iotaUnsigned"), a.size()), v1, (identifier("SModel.plus_gwF"), a, 1.0, v1))
