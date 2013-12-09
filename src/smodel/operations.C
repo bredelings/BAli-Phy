@@ -54,7 +54,7 @@ namespace substitution
   formula_expression_ref Plus_F_Model(const alphabet& a)
   {
     valarray<double> pi (1.0/a.size(), a.size());
-    return Plus_Model(a,pi);
+    return Plus_F_Model(a,pi);
   }
 
   // FIXME** - Below I first coded something where 
