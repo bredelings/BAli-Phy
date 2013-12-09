@@ -147,11 +147,11 @@ namespace substitution
   {
     const Nucleotides& N = T.getNucleotides();
     formula_expression_ref pi1 = Frequencies_Model(N);
-    pi1 = prefix_formula("1",pi1);
+    pi1 = prefix_formula("Site1",pi1);
     formula_expression_ref pi2 = Frequencies_Model(N);
-    pi2 = prefix_formula("2",pi2);
+    pi2 = prefix_formula("Site2",pi2);
     formula_expression_ref pi3 = Frequencies_Model(N);
-    pi3 = prefix_formula("3",pi3);
+    pi3 = prefix_formula("Site3",pi3);
 
     return let(v1, (identifier("listToVectorDouble"),pi1),
 	       v2, (identifier("listToVectorDouble"),pi2),
