@@ -103,6 +103,7 @@ namespace substitution
   {
     const Nucleotides& N = T.getNucleotides();
     formula_expression_ref pi = Frequencies_Model(N);
+    pi = prefix_formula("F1x4", pi);
 
     return let(v2,(identifier("listToVectorDouble"),pi),
 	       v1,(identifier("SModel.f3x4_frequencies"),T,v2,v2,v2),
@@ -115,6 +116,7 @@ namespace substitution
   {
     const Nucleotides& N = T.getNucleotides();
     formula_expression_ref pi = Frequencies_Model(N);
+    pi = prefix_formula("MG94", pi);
 
     return let(v2,(identifier("listToVectorDouble"),pi),
 	       v1,(identifier("SModel.f3x4_frequencies"),T,v2,v2,v2),
