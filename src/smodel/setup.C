@@ -412,7 +412,7 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
     expression_ref pi = get_list(piv);
 
     R = let_expression(v1,(identifier("listToVectorDouble"),pi),
-		       (identifier("ReversibleFrequency"), *a, (identifier("iotaUnsigned"), a->size()), v1, (identifier("plusGWF"), *a, 1.0, v1))
+		       (identifier("ReversibleFrequency"), *a, (identifier("iotaUnsigned"), a->size()), v1, (identifier("SModel.plus_gwF"), *a, 1.0, v1))
 		       );
   }
   else if (model_args[0] == "F1x4")
