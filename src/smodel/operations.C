@@ -47,7 +47,7 @@ namespace substitution
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
     return let_expression(v1,(identifier("listToVectorDouble"),pi),
-			  (identifier("ReversibleFrequency"), a, (identifier("iotaUnsigned"), a.size()), v1, (identifier("plusGWF"), a, 1.0, v1))
+			  (identifier("ReversibleFrequency"), a, (identifier("iotaUnsigned"), a.size()), v1, (identifier("SModel.plus_gwF"), a, 1.0, v1))
 			  );
   }
 
