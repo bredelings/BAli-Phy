@@ -3,6 +3,7 @@ module SModel where
 import Distributions;
 
 builtin f3x4_frequencies 4 "f3x4_frequencies";
+builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
 builtin plus_gwF 3 "plus_gwF";
 builtin gtr 7 "gtr";
 builtin m0 3 "m0";

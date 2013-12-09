@@ -194,7 +194,7 @@ extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& A
   return R;
 }
 
-extern "C" closure builtin_function_f3x4_matrix(OperationArgs& Args)
+extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
 {
   auto T = Args.evaluate_as<Triplets>(0);
   

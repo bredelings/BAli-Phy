@@ -119,7 +119,7 @@ namespace substitution
     return let(v2,(identifier("listToVectorDouble"),pi),
 	       v1,(identifier("SModel.f3x4_frequencies"),T,v2,v2,v2),
 	       v3,(identifier("SModel.plus_gwF"), N, 1.0, v2),
-	       (identifier("ReversibleFrequency"), T, (identifier("iotaUnsigned"), T.size()), v1, (identifier("SModel.f3x4_matrix"), T, v3, v3, v3))
+	       (identifier("ReversibleFrequency"), T, (identifier("iotaUnsigned"), T.size()), v1, (identifier("SModel.muse_gaut_matrix"), T, v3, v3, v3))
 	       );
   }
 
@@ -157,7 +157,7 @@ namespace substitution
 	       v4, (identifier("SModel.plus_gwF"), N, 1.0, v1),
 	       v5, (identifier("SModel.plus_gwF"), N, 1.0, v2),
 	       v6, (identifier("SModel.plus_gwF"), N, 1.0, v3),
-	       (identifier("ReversibleFrequency"), T, (identifier("iotaUnsigned"), T.size()), (identifier("SModel.f3x4_frequencies"),T,v1,v2,v3), (identifier("SModel.f3x4_matrix"), T, v4, v5, v6))
+	       (identifier("ReversibleFrequency"), T, (identifier("iotaUnsigned"), T.size()), (identifier("SModel.f3x4_frequencies"),T,v1,v2,v3), (identifier("SModel.muse_gaut_matrix"), T, v4, v5, v6))
 	       );
   }
 
