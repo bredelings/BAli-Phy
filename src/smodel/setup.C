@@ -399,6 +399,15 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
       R = (identifier("SModel.plus_gwF"), *a, 1.0, get_tuple(*frequencies) );
   }
 
+  else if (model_args[0] == "F61")
+  {
+    if (a->size() != 61)
+      throw myexception()<<"Cannot use 'F61' frequency model since alphabet contains "<<a->size()<<" letters.";
+    if (frequencies)
+      R = Plus_F_Model(*a,*frequencies);
+    else
+      R = Plus_F_Model(*a);
+  }
   else if (model_args[0] == "F") 
   {
     if (frequencies)
