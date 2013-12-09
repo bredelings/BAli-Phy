@@ -171,9 +171,10 @@ namespace substitution
 
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
-    return let_expression(v1,(identifier("listToVectorDouble"),pi),
+    formula_expression_ref m = let_expression(v1,(identifier("listToVectorDouble"),pi),
 			  (identifier("ReversibleFrequency"), a, (identifier("iotaUnsigned"), a.size()), v1, (identifier("SModel.plus_gwF"), a, f, v1))
 			  );
+    return prefix_formula("GWF", m);
   }
 
   formula_expression_ref Plus_gwF_Model(const alphabet& a)
@@ -187,7 +188,7 @@ namespace substitution
     formula_expression_ref S = prefix_formula("S",FS);
     formula_expression_ref R = prefix_formula("R",FR);
     
-    return (identifier("qFromSandR"), S, R);
+    return (identifier("qFromSandR"), S, FR);
   }
 
   formula_expression_ref Unit_Model(const formula_expression_ref& R)
