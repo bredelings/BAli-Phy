@@ -415,6 +415,13 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
     else
       R = Plus_F_Model(*a);
   }
+  else if (model_args[0] == "gwF") 
+  {
+    if (frequencies)
+      R = Plus_gwF_Model(*a,*frequencies);
+    else
+      R = Plus_gwF_Model(*a);
+  }
   else if (model_args[0] == "F=uniform") 
   {
     vector<double> piv(a->size(),1.0/a->size() );
