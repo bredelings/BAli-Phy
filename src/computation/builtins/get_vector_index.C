@@ -1,6 +1,5 @@
 #include "computation/computation.H"
 #include "myexception.H"
-#include "computation/graph_register.H"
 
 using boost::dynamic_pointer_cast;
 

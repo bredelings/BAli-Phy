@@ -369,10 +369,9 @@ pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la
 		exp.la doubleToLogDouble.la \
 		equals.la notequals.la greaterthan.la greaterthanorequal.la lessthan.la \
 		lessthanorequal.la getNucleotides.la plus_gwF.la alphabetSize.la \
-		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la set_modifiable_value.la \
-		is_modifiable.la is_changeable.la get_modifiable_index.la get_modifiable_for_index.la \
+		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la \
 		set_vector_index.la new_vector.la get_vector_index.la vector_size.la \
-		c_fst.la c_snd.la c_pair.la new_modifiable.la evaluate.la get_modifiable_value.la \
+		c_fst.la c_snd.la c_pair.la evaluate.la Modifiables.la\
 		show.la rs07_branch_HMM.la rs07_lengthp.la pairwise_alignment_length1.la \
 		pairwise_alignment_length2.la transition_counts.la pairwise_alignment_probability_from_counts.la \
 		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la
@@ -497,25 +496,6 @@ m0_la_SOURCES = computation/builtins/m0.C
 m0_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 m0_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-set_modifiable_value_la_SOURCES = computation/builtins/set_modifiable_value.C
-set_modifiable_value_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
-set_modifiable_value_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-is_modifiable_la_SOURCES = computation/builtins/is_modifiable.C
-is_modifiable_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
-is_modifiable_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-is_changeable_la_SOURCES = computation/builtins/is_changeable.C
-is_changeable_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
-is_changeable_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-get_modifiable_index_la_SOURCES = computation/builtins/get_modifiable_index.C
-get_modifiable_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
-get_modifiable_index_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-get_modifiable_for_index_la_SOURCES = computation/builtins/get_modifiable_for_index.C
-get_modifiable_for_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
-get_modifiable_for_index_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 set_vector_index_la_SOURCES = computation/builtins/set_vector_index.C
 set_vector_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
@@ -545,17 +525,14 @@ c_pair_la_SOURCES = computation/builtins/c_pair.C
 c_pair_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 c_pair_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-new_modifiable_la_SOURCES = computation/builtins/new_modifiable.C
-new_modifiable_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
-new_modifiable_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 evaluate_la_SOURCES = computation/builtins/evaluate.C
 evaluate_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 evaluate_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-get_modifiable_value_la_SOURCES = computation/builtins/get_modifiable_value.C
-get_modifiable_value_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
-get_modifiable_value_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
+Modifiables_la_SOURCES = computation/builtins/Modifiables.C
+Modifiables_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
+Modifiables_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 rs07_branch_HMM_la_SOURCES = computation/builtins/rs07_branch_HMM.C
 rs07_branch_HMM_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
