@@ -12,6 +12,8 @@ builtin evaluate 2 "evaluate";
 builtin get_modifiable_value 2 "get_modifiable_value";
 builtin builtin_trigger 1 "trigger";
 
+new_random_modifiable dist = IOAction1 builtin_new_modifiable dist;
+
 new_modifiable = IOAction1 builtin_new_modifiable ();
 
 new_modifiable_list [] = return [];
@@ -20,13 +22,13 @@ new_modifiable_list (h:t) = do { m <- h;
                                  return (m:ms) 
                                };
 
-structure_for_range (OpenInterval _ _) = new_modifiable;
-structure_for_range (IntegerInterval _ _) = new_modifiable;
-structure_for_range TrueFalseRange = new_modifiable;
-structure_for_range (Simplex n _) = new_modifiable_list (replicate n new_modifiable);
-structure_for_range (ListRange l) = new_modifiable_list (map structure_for_range l);
+structure_for_range (OpenInterval _ _) dist = new_modifiable;
+structure_for_range (IntegerInterval _ _) dist = new_modifiable;
+structure_for_range TrueFalseRange dist = new_modifiable;
+structure_for_range (Simplex n _) dist = new_modifiable_list (replicate n new_modifiable);
+structure_for_range (ListRange l) dist = new_modifiable_list (map structure_for_range l);
 
-structure_for_dist dist = structure_for_range (distRange dist);
+structure_for_dist dist = structure_for_range (distRange dist) dist;
 
 set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v;
 
