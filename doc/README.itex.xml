@@ -74,6 +74,7 @@ While running the Cygwin installer
 	  <listitem><para>From <guilabel>Web</guilabel>, select <guilabel>wget</guilabel>.</para></listitem>
 	  <listitem><para>From <guilabel>Editors</guilabel>, select <guilabel>nano</guilabel>.</para></listitem>
 	</itemizedlist>
+	
       </para>
 
       <para>You may then access the Unix command line environment by running the
@@ -405,13 +406,13 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	
 	
 	<para>The default C++ compiler is <command>g++</command>.  On
-	  some systems, <command>g++</command> invokes GCC version 3.3,
+	  some systems, <command>g++</command> invokes GCC version 4.2,
 	  and the correct compiler is called something else, such as
-	  <command>g++-4.5</command>.  To use
-	  <command>g++-4.5</command> as the C++ compiler when compiling
+	  <command>g++-4.8</command>.  To use
+	  <command>g++-4.8</command> as the C++ compiler when compiling
 	  <application>BAli-Phy</application>, you would set the CXX
 	  environment variable as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure CXX=g++-4.5</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure CXX=g++-4.8</userinput></screen>
 	</para>
       </section>
 
@@ -449,8 +450,8 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	<para>
           All these options to <command>configure</command> can be
 	  combined, as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.5 CHIP=pentium4</userinput></screen>
-          This example uses <command>g++-4.5</command> to build a
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.8 CHIP=pentium4</userinput></screen>
+          This example uses <command>g++-4.8</command> to build a
 	  pentium4-optimized version of <command>bali-phy</command> with
 	  static linkage.
 	</para>
@@ -1818,49 +1819,57 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>sub-model</replaceable> + gamma[$n$]</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + gamma</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + gamma[4]</userinput> (default options)</para>
+		<para><userinput><replaceable>sub-model</replaceable> + gamma[<replaceable>n</replaceable>]</userinput></para>
 		<para>Yang (1994)</para>
 	      </entry>
 	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
 	      <entry>
 		<para>sigmaOverMu: noise to signal ratio for $\Gamma$.  Also equal to 1/sqrt($\alpha$).</para>
-		<para>$n$: Number of bins for discrete $\Gamma$.</para>
+		<para><replaceable>n</replaceable>: Number of bins for discrete $\Gamma$.</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>sub-model</replaceable> + gamma_inv[$n$]</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + gamma_inv</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + gamma_inv[4]</userinput> (default options)</para>
+		<para><userinput><replaceable>sub-model</replaceable> + gamma_inv[<replaceable>n</replaceable>]</userinput></para>
 		<para>Yang (1994)</para>
 	      </entry>
 	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
 	      <entry>
 		<para>sigmaOverMu: noise to signal ratio for $\Gamma$.  Also equal to 1/sqrt($\alpha$).</para>
-		<para>$n$: Number of bins for discrete $\Gamma$.</para>
+		<para><replaceable>n</replaceable>: Number of bins for discrete $\Gamma$.</para>
 		<para>$p$: Fraction of invariant sites.</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>sub-model</replaceable> + log-normal[$n$]</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + log-normal</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + log-normal[4]</userinput> (default options)</para>
+		<para><userinput><replaceable>sub-model</replaceable> + log-normal[<replaceable>n</replaceable>]</userinput></para>
 	      </entry>
 	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
 	      <entry>
 		<para>sigmaOverMu: $\sigma/\mu$: noise to signal ratio for $\log Normal$.</para>
-		<para>$n$: Number of bins for discrete $\log Normal$.</para>
+		<para><replaceable>n</replaceable>: Number of bins for discrete $\log Normal$.</para>
 		<para>$p$: Fraction of invariant sites.</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>sub-model</replaceable> + log-normal_inv[$n$]</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + log-normal_inv</userinput></para>
+		<para><userinput><replaceable>sub-model</replaceable> + log-normal_inv[4]</userinput> (default options)</para>
+		<para><userinput><replaceable>sub-model</replaceable> + log-normal_inv[<replaceable>n</replaceable>]</userinput></para>
 	      </entry>
 	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
 	      <entry>
 		<para>$\sigma/\mu$: noise to signal ratio for $\log Normal$.</para>
-		<para>$n$: Number of bins for discrete $\log Normal$.</para>
+		<para><replaceable>n</replaceable>: Number of bins for discrete $\log Normal$.</para>
 		<para>$p$: Fraction of invariant sites.</para>
 	      </entry>
 	    </row>
@@ -1921,8 +1930,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <!-- row>
 	      <entry>
-		<para><userinput>M7[$n$]</userinput></para>
-		<para><userinput><replaceable>sm</replaceable> + M7[$n$]</userinput></para>
+		<para><userinput>M7[<replaceable>n</replaceable>]</userinput></para>
+		<para><userinput><replaceable>sm</replaceable> + M7[<replaceable>n</replaceable>]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1932,7 +1941,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry>
 		<para>$\Omega \sim Beta(\mu,\sigma)$.</para>
-		<para>A discrete approximation to the Beta with $n$
+		<para>A discrete approximation to the Beta with <replaceable>n</replaceable>
      	          bins is used.</para>
 	      </entry>
 	    </row>
@@ -1959,7 +1968,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>branch-site</userinput></para>
-		<para><userinput>branch-site[2,HKY,gwF]</userinput>(default)</para>
+		<para><userinput>branch-site[2,HKY,gwF]</userinput>(default options)</para>
 		<para><userinput>branch-site[,HKY,F3x4]</userinput></para>
 		<para><userinput>branch-site[3,GTR,F61]</userinput></para>
 		<para>Zhang, et. al. (2005)</para>
@@ -1998,8 +2007,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <!-- row>
 	      <entry>
-		<para><userinput>M3[$n$]</userinput></para>
-		<para><userinput><replaceable>sm</replaceable> + M3[$n$]</userinput></para>
+		<para><userinput>M3[<replaceable>n</replaceable>]</userinput></para>
+		<para><userinput><replaceable>sm</replaceable> + M3[<replaceable>n</replaceable>]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -2019,6 +2028,31 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       </table>
     </section>
 
+    <section><info><title>The branch-site substitution model</title></info>
+    <para>In order to use the branch-site substitution model, the user needs to
+    <itemizedlist>
+      <listitem>Specify an unrooted tree topology in Newick format.</listitem>
+      <listitem>Label foreground branches on the tree using NHX attributes.</listitem>
+      <listitem>Disable topology changes in order to fix the tree topology (branch lengths are estimated).</listitem>
+    </itemizedlist>
+    Here is an example tree file:
+<example><title>An initial tree file with branch lengths</title>
+(((A1:0.1, B1:0.1):0.1,(C1:0.1, D1:0.1):0.1):0.1,((E1:0.1, F1:0.1):0.1,(G1:0.1, H1:0.1):0.1):0.1,(((A2:0.1, B2:0.1):0.1,(C2:0.1, D2:0.1):0.1):0.1,((E2:0.1, F2:0.1):0.1,(G2:0.1, H2:0.1):0.1):0.1):[&amp;&amp;NHX:foreground=1]0.2);
+</example>
+Any branch lengths provided will be used as initial values in the MCMC analysis.  However, it is not necessary to provide them:
+<example><title>An initial tree file without branch lengths</title>
+(((A1, B1),(C1, D1)),((E1, F1),(G1, H1)),(((A2, B2),(C2, D2)),((E2, F2),(G2, H2))):[&amp;&amp;NHX:foreground=1]);
+</example>
+The NHX attribute must be applied to the branch, not the node.  Therefore it must occur after a colon.  Multiple branches may be marked as foreground branches.
+    </para>
+    <para>An example command line is as follows:
+<screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta --smodel branch-site[,HKY,F3x4] --disable=topology --tree=<replaceable>tree</replaceable>.tree --alphabet=Codons</screen>
+</para>
+<para>The posterior probability of postive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <userinput>--mean</userinput> option.
+</para>
+<para>In case this probability is extremely close to 1 or 0, you may with to add the option <userinput>--Rao-Blackwellize S1.BranchSite.posSelection</userinput>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to computation a more accurate estimate of the posterior probability of positive selection.
+    </para>
+    </section>
     <section><info><title>Substitution model examples</title></info>
       
       <para>Example: --smodel WAG+F+log-normal_inv</para>
@@ -2398,117 +2432,6 @@ The stabilization criterion is the same one described above for numerical values
       </para>
     </sect3>
   </sect2 -->
-  </section>
-
-  <section xml:id="tuning_the_markov_chain"><info><title>Tuning the Markov Chain</title></info>
-    
-
-    <para>The Markov chain should be largely self-tuning, since all
-    numerical parameters are now sampled using self-tuning slice samplers.  However,
-    the following parameters still affect the size of Metropolis-Hastings
-    proposals.  You can modify them using the command line syntax "<userinput>--set <replaceable>parameter</replaceable>=<replaceable>value</replaceable></userinput>".</para>
-
-    <section><info><title>Parameters</title></info>
-      
-      <para>
-
-	<table frame="none" rowsep="1"><info><title>Tunable Parameters</title></info>
-	  
-	  <tgroup cols="4">
-	    <colspec colnum="1" colname="col1" colwidth="1*"/>
-	    <colspec colnum="2" colname="col2" colwidth="1*"/>
-	    <colspec colnum="3" colname="col3" colwidth="1*"/>
-	    <colspec colnum="4" colname="col4" colwidth="1*"/>
-	    <thead><row>
-		<entry>Name</entry>
-		<entry>Variable</entry>
-		<entry>Default</entry>
-		<entry>Meaning</entry>
-	    </row></thead>
-
-	    <tbody>
-	      <row>
-		<entry>log_branch_sigma</entry>
-		<entry>branch lengths</entry>
-		<entry>0.6</entry>
-		<entry>Scale of log-proposal.</entry>
-	      </row>
-
-	      <row>
-		<entry>branch_sigma</entry>
-		<entry>branch lengths</entry>
-		<entry>0.6</entry>
-		<entry>Scale of non-log-proposal.</entry>
-	      </row>
-
-	      <row>
-		<entry>mu_scale_sigma</entry>
-		<entry>mu</entry>
-		<entry>0.6</entry>
-		<entry>Width of proposal on log scale.</entry>
-	      </row>
-
-	      <row>
-		<entry>kappa_scale_sigma</entry>
-		<entry>HKY::kappa, TN::kappa(pur), TN::kappa(pyr)</entry>
-		<entry>0.3</entry>
-		<entry>Width of proposal on log scale.</entry>
-	      </row>
-
-	      <row>
-		<entry>omega_scale_sigma</entry>
-		<entry>M0::omega, M2::omega</entry>
-		<entry>0.3</entry>
-		<entry>Width of proposal on log scale.</entry>
-	      </row>
-
-	      <row>
-		<entry>beta::mu_scale_sigma</entry>
-		<entry>beta::mu</entry>
-		<entry>0.2</entry>
-		<entry>Width of proposal.</entry>
-	      </row>
-
-	      <row>
-		<entry>INV::p_shift_sigma</entry>
-		<entry>INV::p</entry>
-		<entry>0.03</entry>
-		<entry>Width of proposal.</entry>
-	      </row>
-
-	      <row>
-		<entry>gamma::sigma_scale_sigma</entry>
-		<entry>gamma::sigma/mu</entry>
-		<entry>0.25</entry>
-		<entry>Width of proposal of log scale.</entry>
-	      </row>
-
-	      <row>
-		<entry>pi_dirichlet_N</entry>
-		<entry>pi*</entry>
-		<entry>1.0</entry>
-		<entry>Tightness of dirichlet proposal for frequencies.</entry>
-	      </row>
-
-	      <row>
-		<entry>lambda_shift_sigma</entry>
-		<entry>delta, lambda</entry>
-		<entry>0.35</entry>
-		<entry>Width of proposal.</entry>
-	      </row>
-
-	      <row>
-		<entry>epsilon_shift_sigma</entry>
-		<entry>epsilon</entry>
-		<entry>0.15</entry>
-		<entry>Width of proposal.</entry>
-	      </row>
-
-	    </tbody>
-	  </tgroup>
-	</table>
-      </para>
-    </section>
   </section>
 
 
