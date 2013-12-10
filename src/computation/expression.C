@@ -2337,9 +2337,9 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 {
   // 1. Var
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-  if (not E->size())
+  if (not E->size() or is_modifiable(E))
     return E;
-  
+
   // 2. Lambda
   object_ptr<const lambda> L = is_a<lambda>(E);
   if (L)
@@ -2448,7 +2448,7 @@ expression_ref unlet(const expression_ref& E)
 {
   // 1. Var
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-  if (not E->size())
+  if (not E->size() or is_modifiable(E))
     return E;
   
   // 2. Lambda
