@@ -698,7 +698,7 @@ expression_ref parameter_constructor(const std::string& name, const vector<expre
     expression_ref dist = note->sub[1];
 
 
-    return (identifier("structure_for_range"),(identifier("distRange"),dist));
+    return (identifier("structure_for_dist"),dist);
   }
   return identifier("new_modifiable");
 }
