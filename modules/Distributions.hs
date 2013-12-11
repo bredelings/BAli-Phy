@@ -43,7 +43,6 @@ distRange (ProbDensity _ _ _ r) = r;
 strip (IOReturn v) = v;
 strip (IOAndPass f g) = let {x = strip f} in x `seq` (strip (g x));
 strip (IOAnd f g) = (strip f) `seq` (strip g);
-strip v = v;
 
 distDefaultValue d = strip (sample d);
 
@@ -111,10 +110,10 @@ listDensity ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 
   where {densities = zipWith density ds xs;
          pr = balanced_product densities};
 
-list dists = ProbDensity (listDensity dists) quantiles (map sample dists) (ListRange (map distRange dists))
+list dists = ProbDensity (listDensity dists) quantiles (mapM sample dists) (ListRange (map distRange dists))
   where { quantiles = (error "list distribution has no quantiles") };
 
-crp (alpha,n,d) = ProbDensity (crp_density alpha n d) quantiles (replicate n 0) (ListRange (replicate n (IntegerInterval (Just 0) (Just (n+d-1)))))
+crp (alpha,n,d) = ProbDensity (crp_density alpha n d) quantiles (return $ replicate n 0) (ListRange (replicate n (IntegerInterval (Just 0) (Just (n+d-1)))))
   where { quantiles = (error "crp distribution has no quantiles") };
 
 iid (n,d) = list (replicate n d);
