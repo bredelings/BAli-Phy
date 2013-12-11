@@ -44,6 +44,9 @@ double cauchy(double l=0.0,double s=1.0);
 // return an exponentially distributed variable
 double exponential(double mu);
 
+// return a beta-distributed variable
+double beta(double a, double b);
+
 // return an gamma-distributed variable
 double gamma(double a, double b);
 

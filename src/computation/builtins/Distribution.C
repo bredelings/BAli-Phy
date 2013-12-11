@@ -39,6 +39,15 @@ extern "C" closure builtin_function_gamma_density(OperationArgs& Args)
   return object_ptr<const Object>(result.clone());
 }
 
+extern "C" closure builtin_function_sample_gamma(OperationArgs& Args)
+{
+  double a1 = *Args.evaluate_as<Double>(0);
+  double a2 = *Args.evaluate_as<Double>(1);
+  
+  Double result = gamma(a1, a2);
+  return object_ptr<const Object>(result.clone());
+}
+
 extern "C" closure builtin_function_gamma_quantile(OperationArgs& Args)
 {
   double a1 = *Args.evaluate_as<Double>(0);
@@ -56,6 +65,15 @@ extern "C" closure builtin_function_beta_density(OperationArgs& Args)
   double x  = *Args.evaluate_as<Double>(2);
   
   Log_Double result = beta_pdf(x, a1, a2);
+  return object_ptr<const Object>(result.clone());
+}
+
+extern "C" closure builtin_function_sample_beta(OperationArgs& Args)
+{
+  double a1 = *Args.evaluate_as<Double>(0);
+  double a2 = *Args.evaluate_as<Double>(1);
+  
+  Double result = beta(a1, a2);
   return object_ptr<const Object>(result.clone());
 }
 
@@ -79,6 +97,15 @@ extern "C" closure builtin_function_normal_density(OperationArgs& Args)
   return object_ptr<const Object>(result.clone());
 }
  
+extern "C" closure builtin_function_sample_normal(OperationArgs& Args)
+{
+  double a1 = *Args.evaluate_as<Double>(0);
+  double a2 = *Args.evaluate_as<Double>(1);
+  
+  Double result = gaussian(a1, a2);
+  return object_ptr<const Object>(result.clone());
+}
+ 
 extern "C" closure builtin_function_normal_quantile(OperationArgs& Args)
 {
   double a1 = *Args.evaluate_as<Double>(0);
@@ -96,6 +123,15 @@ extern "C" closure builtin_function_cauchy_density(OperationArgs& Args)
   double x  = *Args.evaluate_as<Double>(2);
 
   Log_Double result = cauchy_pdf(x, a1, a2);
+  return object_ptr<const Object>(result.clone());
+}
+
+extern "C" closure builtin_function_sample_cauchy(OperationArgs& Args)
+{
+  double a1 = *Args.evaluate_as<Double>(0);
+  double a2 = *Args.evaluate_as<Double>(1);
+
+  Double result = cauchy(a1, a2);
   return object_ptr<const Object>(result.clone());
 }
 

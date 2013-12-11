@@ -106,6 +106,12 @@ double exponential(double mu) {
   return std::exponential_distribution<>(1.0/mu)(standard);
 }
 
+double beta(double a, double b) {
+  double x = gamma(a,1);
+  double y = gamma(b,1);
+  return x/(x+1);
+}
+
 double gamma(double a, double b) {
   return std::gamma_distribution<>(a,b)(standard);
 }
