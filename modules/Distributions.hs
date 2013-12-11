@@ -24,6 +24,10 @@ builtin geometric_density 2 "geometric_density" "Distribution";
 builtin builtin_sample_exponential 1 "sample_exponential" "Distribution";
 builtin builtin_sample_laplace 2 "sample_laplace" "Distribution";
 builtin builtin_sample_uniform 2 "sample_uniform" "Distribution";
+builtin builtin_sample_beta 2 "sample_beta" "Distribution";
+builtin builtin_sample_gamma 2 "sample_gamma" "Distribution";
+builtin builtin_sample_normal 2 "sample_normal" "Distribution";
+builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution";
 
 builtin crp_density 4 "CRP_density" "Distribution";
 
@@ -56,21 +60,27 @@ gammaDensity (a,b) x = builtin_gamma_density a b x;
 gammaQuantile (a,b) p = builtin_gamma_quantile a b p;
 betaDensity (a,b) x = builtin_beta_density a b x;
 betaQuantile (a,b) p = builtin_beta_quantile a b p;
+sample_gamma a b = Random (IOAction2 builtin_sample_gamma a b);
+
+sample_beta a b = Random (IOAction2 builtin_sample_beta a b);
+
 normalDensity (mu,sigma) x =  builtin_normal_density mu sigma x;
 normalQuantile (mu,sigma) p =  builtin_normal_quantile mu sigma p;
-sample_uniform a b = Random (IOAction2 builtin_sample_uniform a b);
-sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
-sample_laplace m s = Random (IOAction2 builtin_sample_laplace m s);
+sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
 
+sample_uniform a b = Random (IOAction2 builtin_sample_uniform a b);
 
 cauchyDensity (m,s) x = builtin_cauchy_density m s x;
+sample_cauchy m s = Random (IOAction2 builtin_sample_cauchy m s);
 
 laplace_density m s x = builtin_laplace_density m s x;
+sample_laplace m s = Random (IOAction2 builtin_sample_laplace m s);
 
 dirichletDensity ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
 
 uniformDensity (min,max) x = builtin_uniform_density min max x;
 
+sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
 exponentialQuantile mu p = gammaQuantile (1.0,mu) p;
 
 mixtureDensity ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixtureDensity l x);
