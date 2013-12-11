@@ -37,8 +37,10 @@ balanced_product xs = foldt (*) (doubleToLogDouble 1.0) xs;
 
 density (ProbDensity d _ _ _) = d;
 quantile (ProbDensity _ q _ _) = q;
-distDefaultValue (ProbDensity _ _ v _) = v;
+sample (ProbDensity _ _ s _) = s;
 distRange (ProbDensity _ _ _ r) = r;
+
+distDefaultValue d = sample d;
 
 gammaDensity (a,b) x = builtin_gamma_density a b x;
 gammaQuantile (a,b) p = builtin_gamma_quantile a b p;
@@ -107,7 +109,7 @@ listDensity ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 
   where {densities = zipWith density ds xs;
          pr = balanced_product densities};
 
-list dists = ProbDensity (listDensity dists) quantiles (map distDefaultValue dists) (ListRange (map distRange dists))
+list dists = ProbDensity (listDensity dists) quantiles (map sample dists) (ListRange (map distRange dists))
   where { quantiles = (error "list distribution has no quantiles") };
 
 crp (alpha,n,d) = ProbDensity (crp_density alpha n d) quantiles (replicate n 0) (ListRange (replicate n (IntegerInterval (Just 0) (Just (n+d-1)))))
