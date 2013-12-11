@@ -58,10 +58,10 @@ distDefaultValue d = strip (sample d);
 
 gammaDensity (a,b) x = builtin_gamma_density a b x;
 gammaQuantile (a,b) p = builtin_gamma_quantile a b p;
-betaDensity (a,b) x = builtin_beta_density a b x;
-betaQuantile (a,b) p = builtin_beta_quantile a b p;
 sample_gamma a b = Random (IOAction2 builtin_sample_gamma a b);
 
+beta_density a b x = builtin_beta_density a b x;
+beta_quantile a b p = builtin_beta_quantile a b p;
 sample_beta a b = Random (IOAction2 builtin_sample_beta a b);
 
 normalDensity (mu,sigma) x =  builtin_normal_density mu sigma x;
@@ -98,7 +98,7 @@ bernoulli args = ProbDensity (bernoulliDensity args) (error "Bernoulli has no qu
 categorical p = ProbDensity (q!) (error "Categorical has no quantiles") (return 0) (IntegerInterval (Just 0) (Just (length p - 1)))
                 where {q = listArray' $ map doubleToLogDouble p};
 
-beta args = ProbDensity (betaDensity args) (betaQuantile args) (return $ (\(a,b)->a/(a+b)) args) (between 0.0 1.0);
+beta (a,b) = ProbDensity (beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0);
 uniform (l,u) = ProbDensity (uniformDensity (l,u)) () (sample_uniform l u) (between l u);
 
 normal args = ProbDensity (normalDensity args) (normalQuantile args) (return 0.0) realLine;
