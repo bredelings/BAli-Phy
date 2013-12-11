@@ -195,6 +195,23 @@ extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
   return object_ptr<Log_Double> (new Log_Double( ::binomial_pdf(n,p,k) ) );
 }
 
+extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
+{
+  int n = *Args.evaluate_as<Int>(0);
+  double p = *Args.evaluate_as<Double>(1);
+
+  Int result = binomial(n,p);
+  return object_ptr<const Object>(result.clone());
+}
+
+extern "C" closure builtin_function_sample_bernoulli(OperationArgs& Args)
+{
+  double p = *Args.evaluate_as<Double>(0);
+
+  Int result = bernoulli(p);
+  return object_ptr<const Object>(result.clone());
+}
+
 extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
 {
   double p = *Args.evaluate_as<Double>(0);
@@ -202,6 +219,24 @@ extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
   
   return object_ptr<Log_Double> (new Log_Double( ::geometric_pdf(p,n) ) );
 }
+
+extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
+{
+  double p = *Args.evaluate_as<Double>(0);
+
+  Int result = geometric(p);
+  return object_ptr<const Object>(result.clone());
+}
+
+
+extern "C" closure builtin_function_sample_poisson(OperationArgs& Args)
+{
+  double mu = *Args.evaluate_as<Double>(0);
+
+  Int result = poisson(mu);
+  return object_ptr<const Object>(result.clone());
+}
+
 
 log_double_t CRP_pdf(const double alpha, int N, int D, const vector<int>& z)
 {
