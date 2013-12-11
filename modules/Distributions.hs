@@ -69,7 +69,6 @@ mixtureDensity [] _ = (doubleToLogDouble 0.0);
 
 sample_mixture ((p1,dist1):l) = sample dist1;
 sample_dirichlet l = let {n = length l} in return $ replicate n $ 1.0/(intToDouble n);
-sample_iid l = let {n = length l} in replicate n 1.0/(intToDouble n);
 
 mixtureRange ((_,dist1):_) = distRange dist1;
 
