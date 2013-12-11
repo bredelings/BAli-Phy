@@ -22,6 +22,9 @@ extern "C" closure builtin_function_new_modifiable(OperationArgs& Args)
   return {index_var(0),{R1}};
 }
 
+// This could also take an initial value -- that value would need to not depend
+// on anything.
+
 extern "C" closure builtin_function_new_random_modifiable(OperationArgs& Args)
 {
   assert(not Args.evaluate_changeables());
