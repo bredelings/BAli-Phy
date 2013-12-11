@@ -228,6 +228,13 @@ extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
   return object_ptr<const Object>(result.clone());
 }
 
+extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
+{
+  double p = *Args.evaluate_as<Double>(0);
+  double n = *Args.evaluate_as<Int>(1);
+  
+  return object_ptr<Log_Double> (new Log_Double( ::poisson_pdf(p,n) ) );
+}
 
 extern "C" closure builtin_function_sample_poisson(OperationArgs& Args)
 {

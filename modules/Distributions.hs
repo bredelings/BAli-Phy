@@ -33,6 +33,9 @@ builtin builtin_sample_binomial 2 "sample_binomial" "Distribution";
 builtin geometric_density 2 "geometric_density" "Distribution";
 builtin builtin_sample_geometric 1 "sample_geometric" "Distribution";
 
+builtin poisson_density 2 "poisson_density" "Distribution";
+builtin builtin_sample_poisson 1 "sample_poisson" "Distribution";
+
 builtin builtin_sample_bernoulli 1 "sample_bernoulli" "Distribution";
 
 builtin builtin_sample_exponential 1 "sample_exponential" "Distribution";
@@ -77,6 +80,8 @@ sample_cauchy m s = Random (IOAction2 builtin_sample_cauchy m s);
 
 sample_laplace m s = Random (IOAction2 builtin_sample_laplace m s);
 
+sample_poisson mu = Random (IOAction1 builtin_sample_poisson mu);
+
 sample_geometric p = Random (IOAction1 builtin_sample_geometric p);
 
 sample_binomial n p = Random (IOAction2 builtin_sample_binomial n p);
@@ -118,6 +123,10 @@ logExponential = expTransform' exponential;
 logGamma = expTransform' gamma;
 logLaplace = expTransform' laplace;
 logCauchy = expTransform' cauchy;
+
+no_quantile name = error (name++" currently has no quantile");
+
+poisson mu = ProbDensity (poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (IntegerInterval (Just 0) Nothing);
 
 geometric_quantile p = error "geometric currently has no quantile";
 
