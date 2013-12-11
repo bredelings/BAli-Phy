@@ -19,7 +19,8 @@ builtin uniform_density 3 "uniform_density" "Distribution";
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
 
-builtin builtin_binomial_density 3 "binomial_density" "Distribution";
+builtin binomial_density 3 "binomial_density" "Distribution";
+builtin builtin_sample_binomial 2 "sample_binomial" "Distribution";
 builtin geometric_density 2 "geometric_density" "Distribution";
 
 builtin builtin_sample_exponential 1 "sample_exponential" "Distribution";
@@ -114,9 +115,7 @@ dirichlet' (n,x) = dirichlet (replicate n x);
 
 mixture args = ProbDensity (mixture_density args) (error "Mixture has no quantiles") (sample_mixture args) (mixtureRange args);
 
-binomial_density (n,p) k = builtin_binomial_density n p k;
-
-binomial (n,p) = ProbDensity (binomial_density (n,p)) (error "binomial has no quantile") (return $ doubleToInt $ (intToDouble n)*p) (IntegerInterval (Just 0) (Just n));
+binomial (n,p) = ProbDensity (binomial_density n p) (error "binomial has no quantile") (sample_binomial n p) (IntegerInterval (Just 0) (Just n));
 
 list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
   where {densities = zipWith density ds xs;
