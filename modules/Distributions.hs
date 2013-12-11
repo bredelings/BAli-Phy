@@ -101,23 +101,12 @@ mixture_density [] _ = (doubleToLogDouble 0.0);
 sample_mixture ((p1,dist1):l) = dist1;
 mixture args = ProbDensity (mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args);
 
-
-
 categorical p = ProbDensity (q!) (no_quantile "categorical") (return 0) (IntegerInterval (Just 0) (Just (length p - 1)))
                 where {q = listArray' $ map doubleToLogDouble p};
 
 
 
-logNormal = expTransform' normal;
-logExponential = expTransform' exponential;
-logGamma = expTransform' gamma;
-logLaplace = expTransform' laplace;
-logCauchy = expTransform' cauchy;
-
-
-
-
-
+-- define the list distribution
 pairs f (x:y:t) = f x y : pairs f t;
 pairs _ t       = t;
 
@@ -127,17 +116,16 @@ foldt f z xs  = foldt f z (pairs f xs);
 
 balanced_product xs = foldt (*) (doubleToLogDouble 1.0) xs;
 
-
-
 list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
   where {densities = zipWith density ds xs;
          pr = balanced_product densities};
 
 list dists = ProbDensity (list_density dists) (no_quantile "list") (sequence dists) (ListRange (map distRange dists));
 
-iid (n,d) = list (replicate n d);
+-- define different examples of list distributions
+iid (n,didst) = list (replicate n dist);
 
-plate (n,f) = list $ map f [0..n-1];
+plate (n, dist_f) = list $ map dist_f [0..n-1];
   
 -- This contains functiosn for working with DiscreteDistribution
 data DiscreteDistribution a = DiscreteDistribution [(Double,a)];
@@ -170,4 +158,10 @@ uniformDiscretize q n = fmap2 q (uniformGrid n);
 -- This contains exp-transformed functions
 expTransform (ProbDensity d q s r) = ProbDensity (\x -> (d $ log x)/(doubleToLogDouble x)) (q.log) (do {v <- (ProbDensity d q s r); return $ exp v}) (Range.expTransform r);
 expTransform' family args = Distributions.expTransform (family args);
+
+logNormal = expTransform' normal;
+logExponential = expTransform' exponential;
+logGamma = expTransform' gamma;
+logLaplace = expTransform' laplace;
+logCauchy = expTransform' cauchy;
 }
