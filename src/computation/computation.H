@@ -43,20 +43,36 @@ struct OperationArgs: public Object
 
   const closure& evaluate_reg_to_closure(int, bool);
 
+  const closure& evaluate_reg_to_closure_(int, bool);
+
   const closure& evaluate_reg_to_closure(int);
+
+  const closure& evaluate_reg_to_closure_(int);
 
   const closure& evaluate_slot_to_closure(int);
 
   const object_ptr<const Object>& evaluate_reg_to_object(int);
 
+  const object_ptr<const Object>& evaluate_reg_to_object_(int);
+
   const object_ptr<const Object>& evaluate_slot_to_object(int);
 
+  const object_ptr<const Object>& evaluate_slot_to_object_(int);
+
   const object_ptr<const Object>& evaluate(int);
+
+  const object_ptr<const Object>& evaluate_(int);
 
   template <typename T>
   object_ptr<const T> evaluate_as(int slot)
   {
     return convert<const T>( evaluate(slot) );
+  }
+
+  template <typename T>
+  object_ptr<const T> evaluate_as_(int slot)
+  {
+    return convert<const T>( evaluate_(slot) );
   }
 
   virtual int allocate(closure&&) 

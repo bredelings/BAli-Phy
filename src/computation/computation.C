@@ -58,9 +58,24 @@ const closure& OperationArgs::evaluate_reg_to_closure(int R2, bool ec)
     return memory().access(R3).C;
 }
 
+/// Evaluate the reg R2, record dependencies, and return the result.
+const closure& OperationArgs::evaluate_reg_to_closure_(int R2, bool ec)
+{
+  int R3 = evaluate_reg_no_record(R2, ec);
+  if (ec)
+    return memory().access_result_for_reg(current_token(),R3);
+  else
+    return memory().access(R3).C;
+}
+
 const closure& OperationArgs::evaluate_reg_to_closure(int R)
 {
   return evaluate_reg_to_closure(R, evaluate_changeables());
+}
+
+const closure& OperationArgs::evaluate_reg_to_closure_(int R)
+{
+  return evaluate_reg_to_closure_(R, evaluate_changeables());
 }
 
 const object_ptr<const Object>& OperationArgs::evaluate_reg_to_object(int R2)
@@ -73,13 +88,33 @@ const object_ptr<const Object>& OperationArgs::evaluate_reg_to_object(int R2)
   return result;
 }
 
+const object_ptr<const Object>& OperationArgs::evaluate_reg_to_object_(int R2)
+{
+  const object_ptr<const Object>& result = evaluate_reg_to_closure_(R2).exp->head;
+#ifndef NDEBUG
+  if (is_a<lambda2>(expression_ref(result)))
+    throw myexception()<<"Evaluating lambda as object: "<<result->print();
+#endif
+  return result;
+}
+
 const object_ptr<const Object>& OperationArgs::evaluate_slot_to_object(int slot)
 {
   return evaluate_reg_to_object(reg_for_slot(slot));
 }
 
+const object_ptr<const Object>& OperationArgs::evaluate_slot_to_object_(int slot)
+{
+  return evaluate_reg_to_object_(reg_for_slot(slot));
+}
+
 const object_ptr<const Object>& OperationArgs::evaluate(int slot)
 {
   return evaluate_slot_to_object(slot);
+}
+
+const object_ptr<const Object>& OperationArgs::evaluate_(int slot)
+{
+  return evaluate_slot_to_object_(slot);
 }
 
