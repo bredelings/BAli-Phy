@@ -7,38 +7,69 @@ builtin exponential_density 2 "exponential_density" "Distribution";
 builtin gamma_density 3 "gamma_density" "Distribution";
 builtin gamma_quantile 3 "gamma_quantile" "Distribution";
 builtin builtin_sample_gamma 2 "sample_gamma" "Distribution";
+sample_gamma a b = Random (IOAction2 builtin_sample_gamma a b);
+gamma (a,b) = ProbDensity (gamma_density a b) (gamma_quantile a b) (sample_gamma a b) (above 0.0);
 
 builtin beta_density 3 "beta_density" "Distribution";
 builtin beta_quantile 3 "beta_quantile" "Distribution";
 builtin builtin_sample_beta 2 "sample_beta" "Distribution";
+sample_beta a b = Random (IOAction2 builtin_sample_beta a b);
+beta (a,b) = ProbDensity (beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0);
 
 builtin normal_density 3 "normal_density" "Distribution";
 builtin normal_quantile 3 "normal_quantile" "Distribution";
 builtin builtin_sample_normal 2 "sample_normal" "Distribution";
+sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
+normal (m,s) = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine;
 
 builtin cauchy_density 3 "cauchy_density" "Distribution";
 builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution";
+sample_cauchy m s = Random (IOAction2 builtin_sample_cauchy m s);
+cauchy (m,s) = ProbDensity (cauchy_density m s) () (sample_cauchy m s) realLine;
 
 builtin laplace_density 3 "laplace_density" "Distribution";
 builtin builtin_sample_laplace 2 "sample_laplace" "Distribution";
+sample_laplace m s = Random (IOAction2 builtin_sample_laplace m s);
+laplace (m,s) = ProbDensity (laplace_density m s) () (sample_laplace m s) realLine;
 
 builtin uniform_density 3 "uniform_density" "Distribution";
 builtin builtin_sample_uniform 2 "sample_uniform" "Distribution";
+sample_uniform l u = Random (IOAction2 builtin_sample_uniform l u);
+uniform (l,u) = ProbDensity (uniform_density l u) () (sample_uniform l u) (between l u);
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
+dirichlet_density ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
+sample_dirichlet ps = do { vs <- mapM (\a->gamma(a,1.0)) ps;
+                          return $ map (/(sum vs)) vs};
+dirichlet args = ProbDensity (dirichlet_density args) (no_quantile "dirichlet") (sample_dirichlet args) (Simplex (length args) 1.0);
+
+dirichlet' (n,x) = dirichlet (replicate n x);
 
 builtin binomial_density 3 "binomial_density" "Distribution";
 builtin builtin_sample_binomial 2 "sample_binomial" "Distribution";
+sample_binomial n p = Random (IOAction2 builtin_sample_binomial n p);
+binomial (n,p) = ProbDensity (binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (IntegerInterval (Just 0) (Just n));
 
 builtin geometric_density 2 "geometric_density" "Distribution";
 builtin builtin_sample_geometric 1 "sample_geometric" "Distribution";
+sample_geometric p = Random (IOAction1 builtin_sample_geometric p);
+geometric p = ProbDensity (geometric_density p) (no_quantile "geometric") (sample_geometric) (IntegerInterval (Just 0) Nothing);
 
 builtin poisson_density 2 "poisson_density" "Distribution";
 builtin builtin_sample_poisson 1 "sample_poisson" "Distribution";
+sample_poisson mu = Random (IOAction1 builtin_sample_poisson mu);
+poisson mu = ProbDensity (poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (IntegerInterval (Just 0) Nothing);
 
 builtin builtin_sample_bernoulli 1 "sample_bernoulli" "Distribution";
+sample_bernoulli p = Random (IOAction1 builtin_sample_bernoulli p);
+bernoulli_density p 1 = (doubleToLogDouble p);
+bernoulli_density p 0 = (doubleToLogDouble (1.0-p));
+bernoulli p = ProbDensity (bernoulli_density p) (no_quantile "bernoulli") (sample_bernoulli p) (IntegerInterval (Just 0) (Just 1));
 
 builtin builtin_sample_exponential 1 "sample_exponential" "Distribution";
+sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
+exponential_quantile mu p = gamma_quantile 1.0 mu p;
+exponential mu = ProbDensity (exponential_density mu) (exponential_quantile mu) (sample_exponential mu) (above 0.0);
 
 builtin crp_density 4 "CRP_density" "Distribution";
 
@@ -68,56 +99,30 @@ sample (ProbDensity p q s r) = sample s;
 
 distDefaultValue d = unsafePerformIO' $ sample d;
 
-sample_gamma a b = Random (IOAction2 builtin_sample_gamma a b);
 
-sample_beta a b = Random (IOAction2 builtin_sample_beta a b);
 
-sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
 
-sample_uniform l u = Random (IOAction2 builtin_sample_uniform l u);
 
-sample_cauchy m s = Random (IOAction2 builtin_sample_cauchy m s);
 
-sample_laplace m s = Random (IOAction2 builtin_sample_laplace m s);
 
-sample_poisson mu = Random (IOAction1 builtin_sample_poisson mu);
 
-sample_geometric p = Random (IOAction1 builtin_sample_geometric p);
 
-sample_binomial n p = Random (IOAction2 builtin_sample_binomial n p);
 
-sample_bernoulli p = Random (IOAction1 builtin_sample_bernoulli p);
 
-dirichlet_density ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
 
-sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
-exponential_quantile mu p = gamma_quantile 1.0 mu p;
 
 mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x);
 mixture_density [] _ = (doubleToLogDouble 0.0);
 
 sample_mixture ((p1,dist1):l) = dist1;
-sample_dirichlet ps = do { vs <- mapM (\a->gamma(a,1.0)) ps;
-                          return $ map (/(sum vs)) vs};
 
 mixtureRange ((_,dist1):_) = distRange dist1;
 
-bernoulli_density p 1 = (doubleToLogDouble p);
-bernoulli_density p 0 = (doubleToLogDouble (1.0-p));
-
-bernoulli p = ProbDensity (bernoulli_density p) (no_quantile "bernoulli") (sample_bernoulli p) (IntegerInterval (Just 0) (Just 1));
 
 categorical p = ProbDensity (q!) (no_quantile "categorical") (return 0) (IntegerInterval (Just 0) (Just (length p - 1)))
                 where {q = listArray' $ map doubleToLogDouble p};
 
-beta (a,b) = ProbDensity (beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0);
-uniform (l,u) = ProbDensity (uniform_density l u) () (sample_uniform l u) (between l u);
 
-normal (m,s) = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine;
-exponential mu = ProbDensity (exponential_density mu) (exponential_quantile mu) (sample_exponential mu) (above 0.0);
-gamma (a,b) = ProbDensity (gamma_density a b) (gamma_quantile a b) (sample_gamma a b) (above 0.0);
-laplace (m,s) = ProbDensity (laplace_density m s) () (sample_laplace m s) realLine;
-cauchy (m,s) = ProbDensity (cauchy_density m s) () (sample_cauchy m s) realLine;
 
 logNormal = expTransform' normal;
 logExponential = expTransform' exponential;
@@ -127,16 +132,11 @@ logCauchy = expTransform' cauchy;
 
 no_quantile name = error ("Distribution '"++name++"' has no quantile function");
 
-poisson mu = ProbDensity (poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (IntegerInterval (Just 0) Nothing);
 
-geometric p = ProbDensity (geometric_density p) (no_quantile "geometric") (sample_geometric) (IntegerInterval (Just 0) Nothing);
 
-dirichlet args = ProbDensity (dirichlet_density args) (no_quantile "dirichlet") (sample_dirichlet args) (Simplex (length args) 1.0);
-dirichlet' (n,x) = dirichlet (replicate n x);
 
 mixture args = ProbDensity (mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args);
 
-binomial (n,p) = ProbDensity (binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (IntegerInterval (Just 0) (Just n));
 
 list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
   where {densities = zipWith density ds xs;
