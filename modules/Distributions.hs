@@ -105,9 +105,9 @@ mixtureRange ((_,dist1):_) = distRange dist1;
 bernoulli_density p 1 = (doubleToLogDouble p);
 bernoulli_density p 0 = (doubleToLogDouble (1.0-p));
 
-bernoulli p = ProbDensity (bernoulli_density p) (error "Bernoulli has no quantile") (sample_bernoulli p) (IntegerInterval (Just 0) (Just 1));
+bernoulli p = ProbDensity (bernoulli_density p) (no_quantile "bernoulli") (sample_bernoulli p) (IntegerInterval (Just 0) (Just 1));
 
-categorical p = ProbDensity (q!) (error "Categorical has no quantiles") (return 0) (IntegerInterval (Just 0) (Just (length p - 1)))
+categorical p = ProbDensity (q!) (no_quantile "categorical") (return 0) (IntegerInterval (Just 0) (Just (length p - 1)))
                 where {q = listArray' $ map doubleToLogDouble p};
 
 beta (a,b) = ProbDensity (beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0);
@@ -125,30 +125,26 @@ logGamma = expTransform' gamma;
 logLaplace = expTransform' laplace;
 logCauchy = expTransform' cauchy;
 
-no_quantile name = error (name++" currently has no quantile");
+no_quantile name = error ("Distribution '"++name++"' has no quantile function");
 
 poisson mu = ProbDensity (poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (IntegerInterval (Just 0) Nothing);
 
-geometric_quantile p = error "geometric currently has no quantile";
+geometric p = ProbDensity (geometric_density p) (no_quantile "geometric") (sample_geometric) (IntegerInterval (Just 0) Nothing);
 
-geometric p = ProbDensity (geometric_density p) (geometric_quantile p) (sample_geometric) (IntegerInterval (Just 0) Nothing);
-
-dirichlet args = ProbDensity (dirichlet_density args) (error "Dirichlet has no quantiles") (sample_dirichlet args) (Simplex (length args) 1.0);
+dirichlet args = ProbDensity (dirichlet_density args) (no_quantile "dirichlet") (sample_dirichlet args) (Simplex (length args) 1.0);
 dirichlet' (n,x) = dirichlet (replicate n x);
 
-mixture args = ProbDensity (mixture_density args) (error "Mixture has no quantiles") (sample_mixture args) (mixtureRange args);
+mixture args = ProbDensity (mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args);
 
-binomial (n,p) = ProbDensity (binomial_density n p) (error "binomial has no quantile") (sample_binomial n p) (IntegerInterval (Just 0) (Just n));
+binomial (n,p) = ProbDensity (binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (IntegerInterval (Just 0) (Just n));
 
 list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
   where {densities = zipWith density ds xs;
          pr = balanced_product densities};
 
-list dists = ProbDensity (list_density dists) quantiles (sequence dists) (ListRange (map distRange dists))
-  where { quantiles = (error "list distribution has no quantiles") };
+list dists = ProbDensity (list_density dists) (no_quantile "list") (sequence dists) (ListRange (map distRange dists));
 
-crp (alpha,n,d) = ProbDensity (crp_density alpha n d) quantiles (return $ replicate n 0) (ListRange (replicate n (IntegerInterval (Just 0) (Just (n+d-1)))))
-  where { quantiles = (error "crp distribution has no quantiles") };
+crp (alpha,n,d) = ProbDensity (crp_density alpha n d) (no_quantile "crp") (return $ replicate n 0) (ListRange (replicate n (IntegerInterval (Just 0) (Just (n+d-1)))));
 
 iid (n,d) = list (replicate n d);
 
