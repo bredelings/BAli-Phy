@@ -284,6 +284,26 @@ inline std::string POD_math<char>::print() const
   return std::string("'")+t+"'";
 }
 
+template<> 
+inline std::string Box<std::vector<object_ref>>::print() const
+{
+  std::string s = "{";
+  for(int i=0;i<size()-1;i++) {
+    s += (*this)[i]->print();
+    s += ",";
+  }
+  s += this->back()->print() + "}";
+  return s;
+}
+
+template<> 
+inline std::string Box<std::pair<object_ref,object_ref>>::print() const
+{
+  return std::string("(") + first->print() + "," + second->print() + ")";
+}
+
+
+
 template <typename T>
 bool unshare(object_ptr<T>& ptr)
 {
