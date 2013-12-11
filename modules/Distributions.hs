@@ -71,6 +71,10 @@ sample_cauchy m s = Random (IOAction2 builtin_sample_cauchy m s);
 
 sample_laplace m s = Random (IOAction2 builtin_sample_laplace m s);
 
+sample_geometric p = Random (IOAction1 builtin_sample_geometric p);
+
+sample_binomial n p = Random (IOAction2 builtin_sample_binomial n p);
+
 dirichlet_density ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
 
 sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
