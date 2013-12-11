@@ -33,6 +33,8 @@ builtin builtin_sample_binomial 2 "sample_binomial" "Distribution";
 builtin geometric_density 2 "geometric_density" "Distribution";
 builtin builtin_sample_geometric 1 "sample_geometric" "Distribution";
 
+builtin builtin_sample_bernoulli 1 "sample_bernoulli" "Distribution";
+
 builtin builtin_sample_exponential 1 "sample_exponential" "Distribution";
 
 builtin crp_density 4 "CRP_density" "Distribution";
@@ -79,6 +81,8 @@ sample_geometric p = Random (IOAction1 builtin_sample_geometric p);
 
 sample_binomial n p = Random (IOAction2 builtin_sample_binomial n p);
 
+sample_bernoulli p = Random (IOAction1 builtin_sample_bernoulli p);
+
 dirichlet_density ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
 
 sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
@@ -92,9 +96,10 @@ sample_dirichlet l = let {n = length l} in return $ replicate n $ 1.0/(intToDoub
 
 mixtureRange ((_,dist1):_) = distRange dist1;
 
-bernoulli_density p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p));
+bernoulli_density p 1 = (doubleToLogDouble p);
+bernoulli_density p 0 = (doubleToLogDouble (1.0-p));
 
-bernoulli args = ProbDensity (bernoulli_density args) (error "Bernoulli has no quantile") (return False) TrueFalseRange;
+bernoulli p = ProbDensity (bernoulli_density p) (error "Bernoulli has no quantile") (sample_bernoulli p) (IntegerInterval (Just 0) (Just 1));
 
 categorical p = ProbDensity (q!) (error "Categorical has no quantiles") (return 0) (IntegerInterval (Just 0) (Just (length p - 1)))
                 where {q = listArray' $ map doubleToLogDouble p};
