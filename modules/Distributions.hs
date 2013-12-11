@@ -123,7 +123,7 @@ list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble
 list dists = ProbDensity (list_density dists) (no_quantile "list") (sequence dists) (ListRange (map distRange dists));
 
 -- define different examples of list distributions
-iid (n,didst) = list (replicate n dist);
+iid (n,dist) = list (replicate n dist);
 
 plate (n, dist_f) = list $ map dist_f [0..n-1];
   
