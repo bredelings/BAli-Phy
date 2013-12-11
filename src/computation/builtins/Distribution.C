@@ -121,6 +121,15 @@ extern "C" closure builtin_function_laplace_density(OperationArgs& Args)
   return object_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x, a1, a2) ) );
 }
 
+extern "C" closure builtin_function_sample_laplace(OperationArgs& Args)
+{
+  double m = *Args.evaluate_as_<Double>(0);
+  double s = *Args.evaluate_as_<Double>(1);
+  
+  Double result = laplace(m,s);
+  return object_ptr<const Object> (result.clone());
+}
+
 extern "C" closure builtin_function_uniform_density(OperationArgs& Args)
 {
   double a1 = *Args.evaluate_as<Double>(0);
@@ -128,6 +137,17 @@ extern "C" closure builtin_function_uniform_density(OperationArgs& Args)
   double x  = *Args.evaluate_as<Double>(2);
   
   return object_ptr<Log_Double> (new Log_Double( ::uniform_pdf(x,a1,a2) ) );
+}
+
+extern "C" closure builtin_function_sample_uniform(OperationArgs& Args)
+{
+  double a1 = *Args.evaluate_as_<Double>(0);
+  double a2 = *Args.evaluate_as_<Double>(1);
+
+  assert(a1 < a2);
+
+  Double result = a1 + (a2-a1)*uniform();
+  return object_ptr<const Object> (result.clone());
 }
 
 extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
