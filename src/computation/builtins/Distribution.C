@@ -6,6 +6,7 @@
 #include "computation/module.H"
 #include "probability/probability.H"
 #include "bounds.H"
+#include "rng.H"
 
 using std::vector;
 using std::string;
@@ -17,6 +18,14 @@ extern "C" closure builtin_function_exponential_density(OperationArgs& Args)
   double x = *Args.evaluate_as<Double>(1);
   
   Log_Double result = exponential_pdf(x,mu);
+  return object_ptr<const Object>(result.clone());
+}
+
+extern "C" closure builtin_function_sample_exponential(OperationArgs& Args)
+{
+  double mu = *Args.evaluate_as_<Double>(0);
+  
+  Double result = exponential(mu);
   return object_ptr<const Object>(result.clone());
 }
 
