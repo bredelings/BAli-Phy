@@ -315,6 +315,59 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
 }
 
 #include "probability/choose.H"
+#include "util.H"
+
+extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
+{
+  // ?? assert(not Args.evaluate_changeables());
+
+  //------------- 1. Get arguments alpha, N, D -----------------
+  double alpha = *Args.evaluate_as<Double>(0);
+  int N = *Args.evaluate_as<Int>(1);
+  int D = *Args.evaluate_as<Int>(2);
+
+  // The entries in [0,n_seen) are the categories we've seen
+  vector<int> categories = iota(N+D);
+
+  // These are the counts of the seen categories, followed by alpha
+  vector<double> counts = {alpha};
+
+  // The number of categories we've seen so far.
+  int n_seen=0;
+
+  // The series of sampled categories
+  object_ptr<OVector> S (new OVector);
+
+  for(int i=0;i<N;i++)
+  {
+    // Choose from the seen categories, or the possibilty we should pick a new category
+    int index = choose(counts);
+
+    // If we've chosen a category not seen before..
+    if (index == n_seen)
+    {
+      // .. then select an unsend category.
+      int a_index = n_seen + uniform(0,N+D-n_seen-1);
+
+      // Put the chosen category next in our list of seen categories
+      if (n_seen < a_index)
+	std::swap(categories[n_seen], categories[a_index]);
+      n_seen++;
+
+      // Give the category 0 counts, and mark the next unseen one with weight alpha
+      counts.back() = 0.0;
+      counts.push_back(alpha);
+    }
+
+    assert(index < n_seen);
+
+    // The index we've chosen is now valid.
+    counts[index] += 1.0;
+    S->push_back(new Int(categories[index]));
+  }
+
+  return S;
+}
 
 extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
 {
