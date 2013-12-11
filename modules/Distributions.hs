@@ -13,10 +13,11 @@ builtin beta_quantile 3 "beta_quantile" "Distribution";
 builtin normal_density 3 "normal_density" "Distribution";
 builtin normal_quantile 3 "normal_quantile" "Distribution";
 
-builtin builtin_cauchy_density 3 "cauchy_density" "Distribution";
-builtin builtin_laplace_density 3 "laplace_density" "Distribution";
+builtin cauchy_density 3 "cauchy_density" "Distribution";
+builtin laplace_density 3 "laplace_density" "Distribution";
+builtin uniform_density 3 "uniform_density" "Distribution";
+
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
-builtin builtin_uniform_density 3 "uniform_density" "Distribution";
 
 builtin builtin_binomial_density 3 "binomial_density" "Distribution";
 builtin geometric_density 2 "geometric_density" "Distribution";
@@ -62,17 +63,13 @@ sample_beta a b = Random (IOAction2 builtin_sample_beta a b);
 
 sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
 
-sample_uniform a b = Random (IOAction2 builtin_sample_uniform a b);
+sample_uniform l u = Random (IOAction2 builtin_sample_uniform l u);
 
-cauchyDensity (m,s) x = builtin_cauchy_density m s x;
 sample_cauchy m s = Random (IOAction2 builtin_sample_cauchy m s);
 
-laplace_density m s x = builtin_laplace_density m s x;
 sample_laplace m s = Random (IOAction2 builtin_sample_laplace m s);
 
 dirichletDensity ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
-
-uniformDensity (min,max) x = builtin_uniform_density min max x;
 
 sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
 exponentialQuantile mu p = gamma_quantile 1.0 mu p;
@@ -93,13 +90,13 @@ categorical p = ProbDensity (q!) (error "Categorical has no quantiles") (return 
                 where {q = listArray' $ map doubleToLogDouble p};
 
 beta (a,b) = ProbDensity (beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0);
-uniform (l,u) = ProbDensity (uniformDensity (l,u)) () (sample_uniform l u) (between l u);
+uniform (l,u) = ProbDensity (uniform_density l u) () (sample_uniform l u) (between l u);
 
 normal (m,s) = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine;
 exponential mu = ProbDensity (exponential_density mu) (exponentialQuantile mu) (sample_exponential mu) (above 0.0);
 gamma (a,b) = ProbDensity (gamma_density a b) (gamma_quantile a b) (sample_gamma a b) (above 0.0);
 laplace (m,s) = ProbDensity (laplace_density m s) () (sample_laplace m s) realLine;
-cauchy args = ProbDensity (cauchyDensity args) () (return 0.0) realLine;
+cauchy (m,s) = ProbDensity (cauchy_density m s) () (sample_cauchy m s) realLine;
 
 logNormal = expTransform' normal;
 logExponential = expTransform' exponential;
