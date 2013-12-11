@@ -47,15 +47,15 @@ balanced_product xs = foldt (*) (doubleToLogDouble 1.0) xs;
 
 density (ProbDensity d _ _ _) = d;
 quantile (ProbDensity _ q _ _) = q;
-sample (ProbDensity _ _ s _) = s;
+sampler (ProbDensity _ _ s _) = s;
 distRange (ProbDensity _ _ _ r) = r;
 
-strip (IOReturn v) = IOReturn v;
-strip (IOAndPass f g) = IOAndPass (strip f) (\x -> strip $ g x);
-strip (IOAnd f g) = IOAnd (strip f) (strip g);
-strip (Random x) = x;
+sample (IOReturn v) = IOReturn v;
+sample (IOAndPass f g) = IOAndPass (sample f) (\x -> sample $ g x);
+sample (IOAnd f g) = IOAnd (sample f) (sample g);
+sample (Random x) = x;
 
-distDefaultValue d = unsafePerformIO' $ strip $ sample d;
+distDefaultValue d = unsafePerformIO' $ sample $ sampler d;
 
 sample_gamma a b = Random (IOAction2 builtin_sample_gamma a b);
 
@@ -77,7 +77,7 @@ exponential_quantile mu p = gamma_quantile 1.0 mu p;
 mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x);
 mixture_density [] _ = (doubleToLogDouble 0.0);
 
-sample_mixture ((p1,dist1):l) = sample dist1;
+sample_mixture ((p1,dist1):l) = sampler dist1;
 sample_dirichlet l = let {n = length l} in return $ replicate n $ 1.0/(intToDouble n);
 
 mixtureRange ((_,dist1):_) = distRange dist1;
@@ -121,7 +121,7 @@ list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble
   where {densities = zipWith density ds xs;
          pr = balanced_product densities};
 
-list dists = ProbDensity (list_density dists) quantiles (mapM sample dists) (ListRange (map distRange dists))
+list dists = ProbDensity (list_density dists) quantiles (mapM sampler dists) (ListRange (map distRange dists))
   where { quantiles = (error "list distribution has no quantiles") };
 
 crp (alpha,n,d) = ProbDensity (crp_density alpha n d) quantiles (return $ replicate n 0) (ListRange (replicate n (IntegerInterval (Just 0) (Just (n+d-1)))))
