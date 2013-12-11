@@ -68,7 +68,7 @@ mixtureDensity ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mi
 mixtureDensity [] _ = (doubleToLogDouble 0.0);
 
 sample_mixture ((p1,dist1):l) = sample dist1;
-sample_dirichlet l = let {n = length l} in replicate n $ 1.0/(intToDouble n);
+sample_dirichlet l = let {n = length l} in return $ replicate n $ 1.0/(intToDouble n);
 sample_iid l = let {n = length l} in replicate n 1.0/(intToDouble n);
 
 mixtureRange ((_,dist1):_) = distRange dist1;
@@ -80,14 +80,14 @@ bernoulli args = ProbDensity (bernoulliDensity args) (error "Bernoulli has no qu
 categorical p = ProbDensity (q!) (error "Categorical has no quantiles") (return 0) (IntegerInterval (Just 0) (Just (length p - 1)))
                 where {q = listArray' $ map doubleToLogDouble p};
 
-beta args = ProbDensity (betaDensity args) (betaQuantile args) ((\(a,b)->a/(a+b)) args) (between 0.0 1.0);
+beta args = ProbDensity (betaDensity args) (betaQuantile args) (return $ (\(a,b)->a/(a+b)) args) (between 0.0 1.0);
 uniform (l,u) = ProbDensity (uniformDensity (l,u)) () (return $ (l+u)/2.0) (between l u);
 
 normal args = ProbDensity (normalDensity args) (normalQuantile args) (return 0.0) realLine;
 exponential mu = ProbDensity (exponential_density mu) (exponentialQuantile mu) (return mu) (above 0.0);
-gamma args = ProbDensity (gammaDensity args) (gammaQuantile args) ((\(a,b)->a*b) args) (above 0.0);
+gamma args = ProbDensity (gammaDensity args) (gammaQuantile args) (return (\(a,b)->a*b) args) (above 0.0);
 laplace args = ProbDensity (laplaceDensity args) () (return $ (\(m,s)->m) args) realLine;
-cauchy args = ProbDensity (cauchyDensity args) () 0.0 realLine;
+cauchy args = ProbDensity (cauchyDensity args) () (return 0.0) realLine;
 
 logNormal = expTransform' normal;
 logExponential = expTransform' exponential;
@@ -97,7 +97,7 @@ logCauchy = expTransform' cauchy;
 
 geometric_quantile p = error "geometric currently has no quantile";
 
-geometric p = ProbDensity (geometric_density p) (geometric_quantile p) 1 (IntegerInterval (Just 0) Nothing);
+geometric p = ProbDensity (geometric_density p) (geometric_quantile p) (return 1) (IntegerInterval (Just 0) Nothing);
 
 dirichlet args = ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") (sample_dirichlet args) (Simplex (length args) 1.0);
 dirichlet' (n,x) = dirichlet (replicate n x);
@@ -106,7 +106,7 @@ mixture args = ProbDensity (mixtureDensity args) (error "Mixture has no quantile
 
 binomial_density (n,p) k = builtin_binomial_density n p k;
 
-binomial (n,p) = ProbDensity (binomial_density (n,p)) (error "binomial has no quantile") (doubleToInt $ (intToDouble n)*p) (IntegerInterval (Just 0) (Just n));
+binomial (n,p) = ProbDensity (binomial_density (n,p)) (error "binomial has no quantile") (return $ doubleToInt $ (intToDouble n)*p) (IntegerInterval (Just 0) (Just n));
 
 listDensity ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
   where {densities = zipWith density ds xs;
