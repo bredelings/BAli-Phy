@@ -50,12 +50,12 @@ quantile (ProbDensity _ q _ _) = q;
 sample (ProbDensity _ _ s _) = s;
 distRange (ProbDensity _ _ _ r) = r;
 
-strip (IOReturn v) = v;
-strip (IOAndPass f g) = let {x = strip f} in x `seq` (strip (g x));
-strip (IOAnd f g) = (strip f) `seq` (strip g);
-strip (Random x) = unsafePerformIO' x;
+strip (IOReturn v) = IOReturn v;
+strip (IOAndPass f g) = IOAndPass (strip f) (\x -> strip $ g x);
+strip (IOAnd f g) = IOAnd (strip f) (strip g);
+strip (Random x) = x;
 
-distDefaultValue d = strip (sample d);
+distDefaultValue d = unsafePerformIO' $ strip $ sample d;
 
 sample_gamma a b = Random (IOAction2 builtin_sample_gamma a b);
 
