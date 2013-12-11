@@ -53,9 +53,10 @@ distRange (ProbDensity _ _ _ r) = r;
 sample (IOReturn v) = IOReturn v;
 sample (IOAndPass f g) = IOAndPass (sample f) (\x -> sample $ g x);
 sample (IOAnd f g) = IOAnd (sample f) (sample g);
-sample (Random x) = x;
+sample (ProbDensity p q (Random a) r) = a;
+sample (ProbDensity p q s r) = sample s;
 
-distDefaultValue d = unsafePerformIO' $ sample $ sampler d;
+distDefaultValue d = unsafePerformIO' $ sample d;
 
 sample_gamma a b = Random (IOAction2 builtin_sample_gamma a b);
 
@@ -77,7 +78,7 @@ exponential_quantile mu p = gamma_quantile 1.0 mu p;
 mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x);
 mixture_density [] _ = (doubleToLogDouble 0.0);
 
-sample_mixture ((p1,dist1):l) = sampler dist1;
+sample_mixture ((p1,dist1):l) = dist1;
 sample_dirichlet l = let {n = length l} in return $ replicate n $ 1.0/(intToDouble n);
 
 mixtureRange ((_,dist1):_) = distRange dist1;
@@ -121,7 +122,7 @@ list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble
   where {densities = zipWith density ds xs;
          pr = balanced_product densities};
 
-list dists = ProbDensity (list_density dists) quantiles (mapM sampler dists) (ListRange (map distRange dists))
+list dists = ProbDensity (list_density dists) quantiles (sequence dists) (ListRange (map distRange dists))
   where { quantiles = (error "list distribution has no quantiles") };
 
 crp (alpha,n,d) = ProbDensity (crp_density alpha n d) quantiles (return $ replicate n 0) (ListRange (replicate n (IntegerInterval (Just 0) (Just (n+d-1)))))
@@ -156,6 +157,6 @@ uniformGrid n = DiscreteDistribution [( 1.0/n', (2.0*i'+1.0)/(2.0*n') ) | i <- t
 
 uniformDiscretize q n = fmap2 q (uniformGrid n);
 
-expTransform (ProbDensity d q s r) = ProbDensity (\x -> (d $ log x)/(doubleToLogDouble x)) (q.log) (do {v <- s; return $ exp v}) (Range.expTransform r);
+expTransform (ProbDensity d q s r) = ProbDensity (\x -> (d $ log x)/(doubleToLogDouble x)) (q.log) (do {v <- (ProbDensity d q s r); return $ exp v}) (Range.expTransform r);
 expTransform' family args = Distributions.expTransform (family args);
 }
