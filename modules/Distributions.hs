@@ -62,9 +62,9 @@ exponentialQuantile mu p = gammaQuantile (1.0,mu) p;
 mixtureDensity ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixtureDensity l x);
 mixtureDensity [] _ = (doubleToLogDouble 0.0);
 
-mixtureDefault ((p1,dist1):l) = distDefaultValue dist1;
-dirichletDefault l = let {n = length l} in replicate n $ 1.0/(intToDouble n);
-iidDefault l = let {n = length l} in replicate n 1.0/(intToDouble n);
+sample_mixture ((p1,dist1):l) = sample dist1;
+sample_dirichlet l = let {n = length l} in replicate n $ 1.0/(intToDouble n);
+sample_iid l = let {n = length l} in replicate n 1.0/(intToDouble n);
 
 mixtureRange ((_,dist1):_) = distRange dist1;
 
@@ -92,14 +92,12 @@ logCauchy = expTransform' cauchy;
 
 geometric_quantile p = error "geometric currently has no quantile";
 
-geometric_initial p = 1;
+geometric p = ProbDensity (geometric_density p) (geometric_quantile p) 1 (IntegerInterval (Just 0) Nothing);
 
-geometric p = ProbDensity (geometric_density p) (geometric_quantile p) (geometric_initial p) (IntegerInterval (Just 0) Nothing);
-
-dirichlet args = ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") (dirichletDefault args) (Simplex (length args) 1.0);
+dirichlet args = ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") (sample_dirichlet args) (Simplex (length args) 1.0);
 dirichlet' (n,x) = dirichlet (replicate n x);
 
-mixture args = ProbDensity (mixtureDensity args) (error "Mixture has no quantiles") (mixtureDefault args) (mixtureRange args);
+mixture args = ProbDensity (mixtureDensity args) (error "Mixture has no quantiles") (sample_mixture args) (mixtureRange args);
 
 binomial_density (n,p) k = builtin_binomial_density n p k;
 
