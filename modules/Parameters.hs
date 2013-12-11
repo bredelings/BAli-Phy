@@ -27,7 +27,7 @@ structure_for_range (OpenInterval _ _) dist = new_modifiable;
 structure_for_range (IntegerInterval _ _) dist = new_modifiable;
 structure_for_range TrueFalseRange dist = new_modifiable;
 structure_for_range (Simplex n _) dist = new_modifiable_list (replicate n new_modifiable);
-structure_for_range (ListRange l) dist = new_modifiable_list (map structure_for_range l);
+structure_for_range (ListRange l) dist = new_modifiable_list (map (\r-> structure_for_range r ()) l);
 
 structure_for_dist dist = let {r = distRange dist} in
                           case r of {OpenInterval _ _ -> new_random_modifiable dist;
