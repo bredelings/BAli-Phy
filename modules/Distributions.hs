@@ -40,7 +40,12 @@ quantile (ProbDensity _ q _ _) = q;
 sample (ProbDensity _ _ s _) = s;
 distRange (ProbDensity _ _ _ r) = r;
 
-distDefaultValue d = sample d;
+strip (IOReturn v) = v;
+strip (IOAndPass f g) = let {x = strip f} in x `seq` (strip (g x));
+strip (IOAnd f g) = (strip f) `seq` (strip g);
+strip v = v;
+
+distDefaultValue d = strip (sample d);
 
 gammaDensity (a,b) x = builtin_gamma_density a b x;
 gammaQuantile (a,b) p = builtin_gamma_quantile a b p;
@@ -70,18 +75,18 @@ mixtureRange ((_,dist1):_) = distRange dist1;
 
 bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p));
 
-bernoulli args = ProbDensity (bernoulliDensity args) (error "Bernoulli has no quantile") False TrueFalseRange;
+bernoulli args = ProbDensity (bernoulliDensity args) (error "Bernoulli has no quantile") (return False) TrueFalseRange;
 
-categorical p = ProbDensity (q!) (error "Categorical has no quantiles") 0 (IntegerInterval (Just 0) (Just (length p - 1)))
+categorical p = ProbDensity (q!) (error "Categorical has no quantiles") (return 0) (IntegerInterval (Just 0) (Just (length p - 1)))
                 where {q = listArray' $ map doubleToLogDouble p};
 
 beta args = ProbDensity (betaDensity args) (betaQuantile args) ((\(a,b)->a/(a+b)) args) (between 0.0 1.0);
-uniform (l,u) = ProbDensity (uniformDensity (l,u)) () ((l+u)/2.0) (between l u);
+uniform (l,u) = ProbDensity (uniformDensity (l,u)) () (return $ (l+u)/2.0) (between l u);
 
-normal args = ProbDensity (normalDensity args) (normalQuantile args) 0.0 realLine;
-exponential mu = ProbDensity (exponential_density mu) (exponentialQuantile mu) mu (above 0.0);
+normal args = ProbDensity (normalDensity args) (normalQuantile args) (return 0.0) realLine;
+exponential mu = ProbDensity (exponential_density mu) (exponentialQuantile mu) (return mu) (above 0.0);
 gamma args = ProbDensity (gammaDensity args) (gammaQuantile args) ((\(a,b)->a*b) args) (above 0.0);
-laplace args = ProbDensity (laplaceDensity args) () ((\(m,s)->m) args) realLine;
+laplace args = ProbDensity (laplaceDensity args) () (return $ (\(m,s)->m) args) realLine;
 cauchy args = ProbDensity (cauchyDensity args) () 0.0 realLine;
 
 logNormal = expTransform' normal;
@@ -142,6 +147,6 @@ uniformGrid n = DiscreteDistribution [( 1.0/n', (2.0*i'+1.0)/(2.0*n') ) | i <- t
 
 uniformDiscretize q n = fmap2 q (uniformGrid n);
 
-expTransform (ProbDensity d q v r) = ProbDensity (\x -> (d $ log x)/(doubleToLogDouble x)) (q.log) (exp v) (Range.expTransform r);
+expTransform (ProbDensity d q s r) = ProbDensity (\x -> (d $ log x)/(doubleToLogDouble x)) (q.log) (do {v <- s; return $ exp v}) (Range.expTransform r);
 expTransform' family args = Distributions.expTransform (family args);
 }
