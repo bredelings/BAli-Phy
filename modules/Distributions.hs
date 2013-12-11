@@ -10,8 +10,8 @@ builtin gamma_quantile 3 "gamma_quantile" "Distribution";
 builtin beta_density 3 "beta_density" "Distribution";
 builtin beta_quantile 3 "beta_quantile" "Distribution";
 
-builtin builtin_normal_density 3 "normal_density" "Distribution";
-builtin builtin_normal_quantile 3 "normal_quantile" "Distribution";
+builtin normal_density 3 "normal_density" "Distribution";
+builtin normal_quantile 3 "normal_quantile" "Distribution";
 
 builtin builtin_cauchy_density 3 "cauchy_density" "Distribution";
 builtin builtin_laplace_density 3 "laplace_density" "Distribution";
@@ -60,8 +60,6 @@ sample_gamma a b = Random (IOAction2 builtin_sample_gamma a b);
 
 sample_beta a b = Random (IOAction2 builtin_sample_beta a b);
 
-normalDensity (mu,sigma) x =  builtin_normal_density mu sigma x;
-normalQuantile (mu,sigma) p =  builtin_normal_quantile mu sigma p;
 sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
 
 sample_uniform a b = Random (IOAction2 builtin_sample_uniform a b);
@@ -97,7 +95,7 @@ categorical p = ProbDensity (q!) (error "Categorical has no quantiles") (return 
 beta (a,b) = ProbDensity (beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0);
 uniform (l,u) = ProbDensity (uniformDensity (l,u)) () (sample_uniform l u) (between l u);
 
-normal args = ProbDensity (normalDensity args) (normalQuantile args) (return 0.0) realLine;
+normal (m,s) = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine;
 exponential mu = ProbDensity (exponential_density mu) (exponentialQuantile mu) (sample_exponential mu) (above 0.0);
 gamma (a,b) = ProbDensity (gamma_density a b) (gamma_quantile a b) (sample_gamma a b) (above 0.0);
 laplace (m,s) = ProbDensity (laplace_density m s) () (sample_laplace m s) realLine;
