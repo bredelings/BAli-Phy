@@ -93,7 +93,9 @@ sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
 exponential mu = ProbDensity (exponential_density mu) (exponential_quantile mu) (sample_exponential mu) (above 0.0);
 
 builtin crp_density 4 "CRP_density" "Distribution";
-crp (alpha,n,d) = ProbDensity (crp_density alpha n d) (no_quantile "crp") (return $ replicate n 0) (ListRange $ replicate n $ integer_between 0 (n+d-1));
+builtin sample_crp_vector 3 "sample_CRP" "Distribution";
+sample_crp alpha n d = Random $ do { v <- (IOAction3 sample_crp_vector alpha n d); return $ list_from_vector v};
+crp (alpha,n,d) = ProbDensity (crp_density alpha n d) (no_quantile "crp") (sample_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1));
 
 mixtureRange ((_,dist1):_) = distRange dist1;
 mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x);
