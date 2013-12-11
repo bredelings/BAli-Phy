@@ -109,7 +109,7 @@ double exponential(double mu) {
 double beta(double a, double b) {
   double x = gamma(a,1);
   double y = gamma(b,1);
-  return x/(x+1);
+  return x/(x+y);
 }
 
 double gamma(double a, double b) {
