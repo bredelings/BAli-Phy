@@ -11,6 +11,10 @@ above l = OpenInterval (Just l) Nothing;
 below u = OpenInterval Nothing (Just u);
 between l u = OpenInterval (Just l) (Just u);
 
+integer_above l = IntegerInterval (Just l) Nothing;
+integer_below u = IntegerInterval Nothing (Just u);
+integer_between l u = IntegerInterval (Just l) (Just u);
+
 logTransform (OpenInterval Nothing _) = error "Can't logTransform ranges with negative numbers!";
 logTransform (OpenInterval (Just l) Nothing ) = above (log l);
 logTransform (OpenInterval (Just l) (Just u)) = between (log l) (log u);
