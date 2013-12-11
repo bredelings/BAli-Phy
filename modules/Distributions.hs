@@ -4,11 +4,11 @@ import Range;
 
 builtin exponential_density 2 "exponential_density" "Distribution";
 
-builtin builtin_gamma_density 3 "gamma_density" "Distribution";
-builtin builtin_gamma_quantile 3 "gamma_quantile" "Distribution";
+builtin gamma_density 3 "gamma_density" "Distribution";
+builtin gamma_quantile 3 "gamma_quantile" "Distribution";
 
-builtin builtin_beta_density 3 "beta_density" "Distribution";
-builtin builtin_beta_quantile 3 "beta_quantile" "Distribution";
+builtin beta_density 3 "beta_density" "Distribution";
+builtin beta_quantile 3 "beta_quantile" "Distribution";
 
 builtin builtin_normal_density 3 "normal_density" "Distribution";
 builtin builtin_normal_quantile 3 "normal_quantile" "Distribution";
@@ -56,12 +56,8 @@ strip (Random x) = unsafePerformIO' x;
 
 distDefaultValue d = strip (sample d);
 
-gammaDensity (a,b) x = builtin_gamma_density a b x;
-gammaQuantile (a,b) p = builtin_gamma_quantile a b p;
 sample_gamma a b = Random (IOAction2 builtin_sample_gamma a b);
 
-beta_density a b x = builtin_beta_density a b x;
-beta_quantile a b p = builtin_beta_quantile a b p;
 sample_beta a b = Random (IOAction2 builtin_sample_beta a b);
 
 normalDensity (mu,sigma) x =  builtin_normal_density mu sigma x;
@@ -81,7 +77,7 @@ dirichletDensity ps xs = builtin_dirichlet_density (listToVectorDouble ps) (list
 uniformDensity (min,max) x = builtin_uniform_density min max x;
 
 sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
-exponentialQuantile mu p = gammaQuantile (1.0,mu) p;
+exponentialQuantile mu p = gamma_quantile 1.0 mu p;
 
 mixtureDensity ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixtureDensity l x);
 mixtureDensity [] _ = (doubleToLogDouble 0.0);
@@ -103,7 +99,7 @@ uniform (l,u) = ProbDensity (uniformDensity (l,u)) () (sample_uniform l u) (betw
 
 normal args = ProbDensity (normalDensity args) (normalQuantile args) (return 0.0) realLine;
 exponential mu = ProbDensity (exponential_density mu) (exponentialQuantile mu) (sample_exponential mu) (above 0.0);
-gamma args = ProbDensity (gammaDensity args) (gammaQuantile args) (return (\(a,b)->a*b) args) (above 0.0);
+gamma (a,b) = ProbDensity (gamma_density a b) (gamma_quantile a b) (sample_gamma a b) (above 0.0);
 laplace (m,s) = ProbDensity (laplace_density m s) () (sample_laplace m s) realLine;
 cauchy args = ProbDensity (cauchyDensity args) () (return 0.0) realLine;
 
