@@ -41,8 +41,8 @@ extern "C" closure builtin_function_gamma_density(OperationArgs& Args)
 
 extern "C" closure builtin_function_sample_gamma(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
+  double a1 = *Args.evaluate_as_<Double>(0);
+  double a2 = *Args.evaluate_as_<Double>(1);
   
   Double result = gamma(a1, a2);
   return object_ptr<const Object>(result.clone());
@@ -70,8 +70,8 @@ extern "C" closure builtin_function_beta_density(OperationArgs& Args)
 
 extern "C" closure builtin_function_sample_beta(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
+  double a1 = *Args.evaluate_as_<Double>(0);
+  double a2 = *Args.evaluate_as_<Double>(1);
   
   Double result = beta(a1, a2);
   return object_ptr<const Object>(result.clone());
@@ -99,8 +99,8 @@ extern "C" closure builtin_function_normal_density(OperationArgs& Args)
  
 extern "C" closure builtin_function_sample_normal(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
+  double a1 = *Args.evaluate_as_<Double>(0);
+  double a2 = *Args.evaluate_as_<Double>(1);
   
   Double result = gaussian(a1, a2);
   return object_ptr<const Object>(result.clone());
@@ -128,8 +128,8 @@ extern "C" closure builtin_function_cauchy_density(OperationArgs& Args)
 
 extern "C" closure builtin_function_sample_cauchy(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
+  double a1 = *Args.evaluate_as_<Double>(0);
+  double a2 = *Args.evaluate_as_<Double>(1);
 
   Double result = cauchy(a1, a2);
   return object_ptr<const Object>(result.clone());
@@ -197,8 +197,8 @@ extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
 
 extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
 {
-  int n = *Args.evaluate_as<Int>(0);
-  double p = *Args.evaluate_as<Double>(1);
+  int n = *Args.evaluate_as_<Int>(0);
+  double p = *Args.evaluate_as_<Double>(1);
 
   Int result = binomial(n,p);
   return object_ptr<const Object>(result.clone());
@@ -206,7 +206,7 @@ extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
 
 extern "C" closure builtin_function_sample_bernoulli(OperationArgs& Args)
 {
-  double p = *Args.evaluate_as<Double>(0);
+  double p = *Args.evaluate_as_<Double>(0);
 
   Int result = bernoulli(p);
   return object_ptr<const Object>(result.clone());
@@ -222,7 +222,7 @@ extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
 
 extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
 {
-  double p = *Args.evaluate_as<Double>(0);
+  double p = *Args.evaluate_as_<Double>(0);
 
   Int result = geometric(p);
   return object_ptr<const Object>(result.clone());
@@ -230,15 +230,15 @@ extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
 
 extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
 {
-  double p = *Args.evaluate_as<Double>(0);
-  double n = *Args.evaluate_as<Int>(1);
+  double p = *Args.evaluate_as_<Double>(0);
+  double n = *Args.evaluate_as_<Int>(1);
   
   return object_ptr<Log_Double> (new Log_Double( ::poisson_pdf(p,n) ) );
 }
 
 extern "C" closure builtin_function_sample_poisson(OperationArgs& Args)
 {
-  double mu = *Args.evaluate_as<Double>(0);
+  double mu = *Args.evaluate_as_<Double>(0);
 
   Int result = poisson(mu);
   return object_ptr<const Object>(result.clone());
@@ -322,9 +322,9 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
   // ?? assert(not Args.evaluate_changeables());
 
   //------------- 1. Get arguments alpha, N, D -----------------
-  double alpha = *Args.evaluate_as<Double>(0);
-  int N = *Args.evaluate_as<Int>(1);
-  int D = *Args.evaluate_as<Int>(2);
+  double alpha = *Args.evaluate_as_<Double>(0);
+  int N = *Args.evaluate_as_<Int>(1);
+  int D = *Args.evaluate_as_<Int>(2);
 
   // The entries in [0,n_seen) are the categories we've seen
   vector<int> categories = iota(N+D);
@@ -373,7 +373,7 @@ extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
 {
   //------------- 1. Get argument p -----------------
   vector<double> z;
-  const closure* top = &Args.evaluate_slot_to_closure(0);
+  const closure* top = &Args.evaluate_slot_to_closure_(0);
   while(top->exp->size())
   {
     assert(is_exactly(top->exp,":"));
@@ -386,7 +386,7 @@ extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
     int next_reg = top->lookup_in_env( next_index );
 
     // Add the element to the list.
-    z.push_back( *convert<const Double>(Args.evaluate_reg_to_object(element_reg)) );
+    z.push_back( *convert<const Double>(Args.evaluate_reg_to_object_(element_reg)) );
 
     // Move to the next element or end
     top = &Args.evaluate_reg_to_closure(next_reg);

@@ -51,6 +51,8 @@ struct OperationArgs: public Object
 
   const closure& evaluate_slot_to_closure(int);
 
+  const closure& evaluate_slot_to_closure_(int);
+
   const object_ptr<const Object>& evaluate_reg_to_object(int);
 
   const object_ptr<const Object>& evaluate_reg_to_object_(int);

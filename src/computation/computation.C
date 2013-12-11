@@ -18,6 +18,11 @@ const closure& OperationArgs::evaluate_slot_to_closure(int slot)
   return evaluate_reg_to_closure(reg_for_slot(slot));
 }
 
+const closure& OperationArgs::evaluate_slot_to_closure_(int slot)
+{
+  return evaluate_reg_to_closure_(reg_for_slot(slot));
+}
+
 int OperationArgs::evaluate_reg_no_record(int R)
 {
   return evaluate_reg_no_record(R, evaluate_changeables());
