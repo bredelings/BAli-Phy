@@ -2,8 +2,28 @@ module Distributions where
 {
 import Range;
 
-builtin exponential_density 2 "exponential_density" "Distribution";
+-- Define the ProbDensity type
+data ProbDensity = ProbDensity a b c d;
+density (ProbDensity d _ _ _) = d;
+quantile (ProbDensity _ q _ _) = q;
+sampler (ProbDensity _ _ s _) = s;
+distRange (ProbDensity _ _ _ r) = r;
 
+-- This implements the Random monad by transforming it into the IO monad.
+data Random a = Random a;
+
+sample (IOReturn v) = IOReturn v;
+sample (IOAndPass f g) = IOAndPass (sample f) (\x -> sample $ g x);
+sample (IOAnd f g) = IOAnd (sample f) (sample g);
+sample (ProbDensity p q (Random a) r) = a;
+sample (ProbDensity p q s r) = sample s;
+
+-- Define some helper functions
+distDefaultValue d = unsafePerformIO' $ sample d;
+
+no_quantile name = error ("Distribution '"++name++"' has no quantile function");
+
+-- Define some basic distributions
 builtin gamma_density 3 "gamma_density" "Distribution";
 builtin gamma_quantile 3 "gamma_quantile" "Distribution";
 builtin builtin_sample_gamma 2 "sample_gamma" "Distribution";
@@ -67,56 +87,20 @@ bernoulli_density p 0 = (doubleToLogDouble (1.0-p));
 bernoulli p = ProbDensity (bernoulli_density p) (no_quantile "bernoulli") (sample_bernoulli p) (IntegerInterval (Just 0) (Just 1));
 
 builtin builtin_sample_exponential 1 "sample_exponential" "Distribution";
-sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
+builtin exponential_density 2 "exponential_density" "Distribution";
 exponential_quantile mu p = gamma_quantile 1.0 mu p;
+sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
 exponential mu = ProbDensity (exponential_density mu) (exponential_quantile mu) (sample_exponential mu) (above 0.0);
 
 builtin crp_density 4 "CRP_density" "Distribution";
-
-data ProbDensity = ProbDensity a b c d;
-data DiscreteDistribution a = DiscreteDistribution [(Double,a)];
-data Random a = Random a;
-
-pairs f (x:y:t) = f x y : pairs f t;
-pairs _ t       = t;
-
-foldt f z []  = z;
-foldt f _ [x] = x;
-foldt f z xs  = foldt f z (pairs f xs);
-
-balanced_product xs = foldt (*) (doubleToLogDouble 1.0) xs;
-
-density (ProbDensity d _ _ _) = d;
-quantile (ProbDensity _ q _ _) = q;
-sampler (ProbDensity _ _ s _) = s;
-distRange (ProbDensity _ _ _ r) = r;
-
-sample (IOReturn v) = IOReturn v;
-sample (IOAndPass f g) = IOAndPass (sample f) (\x -> sample $ g x);
-sample (IOAnd f g) = IOAnd (sample f) (sample g);
-sample (ProbDensity p q (Random a) r) = a;
-sample (ProbDensity p q s r) = sample s;
-
-distDefaultValue d = unsafePerformIO' $ sample d;
-
-
-
-
-
-
-
-
-
-
-
-
-
-mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x);
-mixture_density [] _ = (doubleToLogDouble 0.0);
-
-sample_mixture ((p1,dist1):l) = dist1;
+crp (alpha,n,d) = ProbDensity (crp_density alpha n d) (no_quantile "crp") (return $ replicate n 0) (ListRange (replicate n (IntegerInterval (Just 0) (Just (n+d-1)))));
 
 mixtureRange ((_,dist1):_) = distRange dist1;
+mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x);
+mixture_density [] _ = (doubleToLogDouble 0.0);
+sample_mixture ((p1,dist1):l) = dist1;
+mixture args = ProbDensity (mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args);
+
 
 
 categorical p = ProbDensity (q!) (no_quantile "categorical") (return 0) (IntegerInterval (Just 0) (Just (length p - 1)))
@@ -130,12 +114,19 @@ logGamma = expTransform' gamma;
 logLaplace = expTransform' laplace;
 logCauchy = expTransform' cauchy;
 
-no_quantile name = error ("Distribution '"++name++"' has no quantile function");
 
 
 
 
-mixture args = ProbDensity (mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args);
+pairs f (x:y:t) = f x y : pairs f t;
+pairs _ t       = t;
+
+foldt f z []  = z;
+foldt f _ [x] = x;
+foldt f z xs  = foldt f z (pairs f xs);
+
+balanced_product xs = foldt (*) (doubleToLogDouble 1.0) xs;
+
 
 
 list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
@@ -144,12 +135,13 @@ list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble
 
 list dists = ProbDensity (list_density dists) (no_quantile "list") (sequence dists) (ListRange (map distRange dists));
 
-crp (alpha,n,d) = ProbDensity (crp_density alpha n d) (no_quantile "crp") (return $ replicate n 0) (ListRange (replicate n (IntegerInterval (Just 0) (Just (n+d-1)))));
-
 iid (n,d) = list (replicate n d);
 
 plate (n,f) = list $ map f [0..n-1];
   
+-- This contains functiosn for working with DiscreteDistribution
+data DiscreteDistribution a = DiscreteDistribution [(Double,a)];
+
 fmap1 f [] = [];
 fmap1 f ((x,y):l) = (f x,y):(fmap1 f l);
 fmap1 f (DiscreteDistribution l) = DiscreteDistribution (fmap1 f l);
@@ -175,6 +167,7 @@ uniformGrid n = DiscreteDistribution [( 1.0/n', (2.0*i'+1.0)/(2.0*n') ) | i <- t
 
 uniformDiscretize q n = fmap2 q (uniformGrid n);
 
+-- This contains exp-transformed functions
 expTransform (ProbDensity d q s r) = ProbDensity (\x -> (d $ log x)/(doubleToLogDouble x)) (q.log) (do {v <- (ProbDensity d q s r); return $ exp v}) (Range.expTransform r);
 expTransform' family args = Distributions.expTransform (family args);
 }
