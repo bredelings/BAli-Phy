@@ -69,22 +69,22 @@ sample_cauchy m s = Random (IOAction2 builtin_sample_cauchy m s);
 
 sample_laplace m s = Random (IOAction2 builtin_sample_laplace m s);
 
-dirichletDensity ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
+dirichlet_density ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
 
 sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
-exponentialQuantile mu p = gamma_quantile 1.0 mu p;
+exponential_quantile mu p = gamma_quantile 1.0 mu p;
 
-mixtureDensity ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixtureDensity l x);
-mixtureDensity [] _ = (doubleToLogDouble 0.0);
+mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x);
+mixture_density [] _ = (doubleToLogDouble 0.0);
 
 sample_mixture ((p1,dist1):l) = sample dist1;
 sample_dirichlet l = let {n = length l} in return $ replicate n $ 1.0/(intToDouble n);
 
 mixtureRange ((_,dist1):_) = distRange dist1;
 
-bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p));
+bernoulli_density p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p));
 
-bernoulli args = ProbDensity (bernoulliDensity args) (error "Bernoulli has no quantile") (return False) TrueFalseRange;
+bernoulli args = ProbDensity (bernoulli_density args) (error "Bernoulli has no quantile") (return False) TrueFalseRange;
 
 categorical p = ProbDensity (q!) (error "Categorical has no quantiles") (return 0) (IntegerInterval (Just 0) (Just (length p - 1)))
                 where {q = listArray' $ map doubleToLogDouble p};
@@ -93,7 +93,7 @@ beta (a,b) = ProbDensity (beta_density a b) (beta_quantile a b) (sample_beta a b
 uniform (l,u) = ProbDensity (uniform_density l u) () (sample_uniform l u) (between l u);
 
 normal (m,s) = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine;
-exponential mu = ProbDensity (exponential_density mu) (exponentialQuantile mu) (sample_exponential mu) (above 0.0);
+exponential mu = ProbDensity (exponential_density mu) (exponential_quantile mu) (sample_exponential mu) (above 0.0);
 gamma (a,b) = ProbDensity (gamma_density a b) (gamma_quantile a b) (sample_gamma a b) (above 0.0);
 laplace (m,s) = ProbDensity (laplace_density m s) () (sample_laplace m s) realLine;
 cauchy (m,s) = ProbDensity (cauchy_density m s) () (sample_cauchy m s) realLine;
@@ -108,20 +108,20 @@ geometric_quantile p = error "geometric currently has no quantile";
 
 geometric p = ProbDensity (geometric_density p) (geometric_quantile p) (return 1) (IntegerInterval (Just 0) Nothing);
 
-dirichlet args = ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") (sample_dirichlet args) (Simplex (length args) 1.0);
+dirichlet args = ProbDensity (dirichlet_density args) (error "Dirichlet has no quantiles") (sample_dirichlet args) (Simplex (length args) 1.0);
 dirichlet' (n,x) = dirichlet (replicate n x);
 
-mixture args = ProbDensity (mixtureDensity args) (error "Mixture has no quantiles") (sample_mixture args) (mixtureRange args);
+mixture args = ProbDensity (mixture_density args) (error "Mixture has no quantiles") (sample_mixture args) (mixtureRange args);
 
 binomial_density (n,p) k = builtin_binomial_density n p k;
 
 binomial (n,p) = ProbDensity (binomial_density (n,p)) (error "binomial has no quantile") (return $ doubleToInt $ (intToDouble n)*p) (IntegerInterval (Just 0) (Just n));
 
-listDensity ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
+list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
   where {densities = zipWith density ds xs;
          pr = balanced_product densities};
 
-list dists = ProbDensity (listDensity dists) quantiles (mapM sample dists) (ListRange (map distRange dists))
+list dists = ProbDensity (list_density dists) quantiles (mapM sample dists) (ListRange (map distRange dists))
   where { quantiles = (error "list distribution has no quantiles") };
 
 crp (alpha,n,d) = ProbDensity (crp_density alpha n d) quantiles (return $ replicate n 0) (ListRange (replicate n (IntegerInterval (Just 0) (Just (n+d-1)))))
