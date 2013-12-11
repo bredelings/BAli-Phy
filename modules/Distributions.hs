@@ -65,14 +65,14 @@ betaDensity (a,b) x = builtin_beta_density a b x;
 betaQuantile (a,b) p = builtin_beta_quantile a b p;
 normalDensity (mu,sigma) x =  builtin_normal_density mu sigma x;
 normalQuantile (mu,sigma) p =  builtin_normal_quantile mu sigma p;
-sample_uniform (a,b) = Random2 builtin_sample_uniform a b;
-sample_exponential mu = Random1 builtin_sample_uniform mu;
-sample_laplace m s = Random2 builtin_sample_uniform m s;
+sample_uniform a b = Random2 builtin_sample_uniform a b;
+sample_exponential mu = Random1 builtin_sample_exponential mu;
+sample_laplace m s = Random2 builtin_sample_laplace m s;
 
 
 cauchyDensity (m,s) x = builtin_cauchy_density m s x;
 
-laplaceDensity (m,s) x = builtin_laplace_density m s x;
+laplace_density m s x = builtin_laplace_density m s x;
 
 dirichletDensity ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
 
@@ -96,12 +96,12 @@ categorical p = ProbDensity (q!) (error "Categorical has no quantiles") (return 
                 where {q = listArray' $ map doubleToLogDouble p};
 
 beta args = ProbDensity (betaDensity args) (betaQuantile args) (return $ (\(a,b)->a/(a+b)) args) (between 0.0 1.0);
-uniform (l,u) = ProbDensity (uniformDensity (l,u)) () (return $ (l+u)/2.0) (between l u);
+uniform (l,u) = ProbDensity (uniformDensity (l,u)) () (sample_uniform l u) (between l u);
 
 normal args = ProbDensity (normalDensity args) (normalQuantile args) (return 0.0) realLine;
-exponential mu = ProbDensity (exponential_density mu) (exponentialQuantile mu) (return mu) (above 0.0);
+exponential mu = ProbDensity (exponential_density mu) (exponentialQuantile mu) (sample_exponential mu) (above 0.0);
 gamma args = ProbDensity (gammaDensity args) (gammaQuantile args) (return (\(a,b)->a*b) args) (above 0.0);
-laplace args = ProbDensity (laplaceDensity args) () (return $ (\(m,s)->m) args) realLine;
+laplace (m,s) = ProbDensity (laplace_density m s) () (sample_laplace m s) realLine;
 cauchy args = ProbDensity (cauchyDensity args) () (return 0.0) realLine;
 
 logNormal = expTransform' normal;
