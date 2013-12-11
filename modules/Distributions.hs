@@ -97,7 +97,8 @@ mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (m
 mixture_density [] _ = (doubleToLogDouble 0.0);
 
 sample_mixture ((p1,dist1):l) = dist1;
-sample_dirichlet l = let {n = length l} in return $ replicate n $ 1.0/(intToDouble n);
+sample_dirichlet ps = do { vs <- mapM (\a->gamma(a,1.0)) ps;
+                          return $ map (/(sum vs)) vs};
 
 mixtureRange ((_,dist1):_) = distRange dist1;
 
