@@ -56,6 +56,12 @@ unsigned poisson(double mu);
 // return a geometric random variate
 unsigned geometric(double p);
 
+// return a binomial random variate
+unsigned binomial(int n, double p);
+
+// return a binomial random variate
+unsigned bernoulli(double p);
+
 // return a dirichlet random vector
 std::valarray<double> dirichlet(const std::valarray<double>& n);
 

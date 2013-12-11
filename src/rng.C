@@ -124,6 +124,19 @@ unsigned geometric(double p) {
   return std::geometric_distribution<>(p)(standard);
 }
 
+unsigned binomial(int n, double p) {
+  return std::binomial_distribution<>(n,p)(standard);
+}
+
+unsigned bernoulli(double p) {
+  double u = uniform();
+
+  if (u<p)
+    return 1;
+  else
+    return 0;
+}
+
 valarray<double> dirichlet(const valarray<double>& n) 
 {
   valarray<double> x(n.size());
