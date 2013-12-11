@@ -69,6 +69,10 @@ log_double_t binomial_pdf(int n, double p, int k);
 
 log_double_t geometric_pdf(double p, int n);
 
+log_double_t bernoulli_pdf(double p, int k);
+
+log_double_t poisson_pdf(double mu, int k);
+
 // -------- Topology counting functions ------ //
 log_double_t num_branches(int n);
 log_double_t num_topologies(int n);

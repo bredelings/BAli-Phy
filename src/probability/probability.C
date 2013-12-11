@@ -63,6 +63,11 @@ double log_gamma(double x) {
   return lgamma(x);
 }
 
+double log_factorial(int n)
+{
+  return log_gamma(n+1);
+}
+
 double log_beta(double a, double b)
 {
   return lgamma(a) + lgamma(b) - lgamma(a+b);
@@ -405,6 +410,16 @@ log_double_t binomial_pdf(int n, double p, int k)
   return Pr;
 }
 
+log_double_t bernoulli_pdf(double p, int k)
+{
+  if (k == 0)
+    return (1.0-p);
+  else if (k == 1)
+    return p;
+  else
+    return 0.0;
+}
+
 log_double_t geometric_pdf(double p, int n)
 {
   if (n < 0)
@@ -415,4 +430,15 @@ log_double_t geometric_pdf(double p, int n)
     pr *= pow(log_double_t(p),double(n));
 
   return pr;
+}
+
+log_double_t poisson_pdf(double mu, int k)
+{
+  if (k < 0)
+    return 0.0;
+
+  log_double_t Pr;
+  Pr.log()= k * log(mu) - mu - log_factorial(k);
+
+  return Pr;
 }
