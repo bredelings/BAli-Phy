@@ -188,11 +188,11 @@ extern "C" closure builtin_function_sample_uniform(OperationArgs& Args)
 
 extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
 {
-  double n = *Args.evaluate_as<Int>(0);
+  int n = *Args.evaluate_as<Int>(0);
   double p = *Args.evaluate_as<Double>(1);
-  double k = *Args.evaluate_as<Int>(2);
+  int k = *Args.evaluate_as<Int>(2);
   
-  return object_ptr<Log_Double> (new Log_Double( ::binomial_pdf(n,k,p) ) );
+  return object_ptr<Log_Double> (new Log_Double( ::binomial_pdf(n,p,k) ) );
 }
 
 extern "C" closure builtin_function_geometric_density(OperationArgs& Args)

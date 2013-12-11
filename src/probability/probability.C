@@ -388,7 +388,7 @@ double gamma_quantile(double p, double a, double b)
   }
 }
 
-log_double_t binomial_pdf(int n, int k, double p)
+log_double_t binomial_pdf(int n, double p, int k)
 {
   if (k > n)
     return 0;
