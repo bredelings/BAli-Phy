@@ -186,8 +186,6 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
 {
   // ?? assert(not Args.evaluate_changeables());
 
-  const reg_heap& M = Args.memory();
-
   //------------- 1. Get arguments alpha, N, D -----------------
   double alpha = *Args.evaluate_as<Double>(0);
   int N = *Args.evaluate_as<Int>(1);
