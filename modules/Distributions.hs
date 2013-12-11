@@ -6,16 +6,24 @@ builtin exponential_density 2 "exponential_density" "Distribution";
 
 builtin gamma_density 3 "gamma_density" "Distribution";
 builtin gamma_quantile 3 "gamma_quantile" "Distribution";
+builtin builtin_sample_gamma 2 "sample_gamma" "Distribution";
 
 builtin beta_density 3 "beta_density" "Distribution";
 builtin beta_quantile 3 "beta_quantile" "Distribution";
+builtin builtin_sample_beta 2 "sample_beta" "Distribution";
 
 builtin normal_density 3 "normal_density" "Distribution";
 builtin normal_quantile 3 "normal_quantile" "Distribution";
+builtin builtin_sample_normal 2 "sample_normal" "Distribution";
 
 builtin cauchy_density 3 "cauchy_density" "Distribution";
+builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution";
+
 builtin laplace_density 3 "laplace_density" "Distribution";
+builtin builtin_sample_laplace 2 "sample_laplace" "Distribution";
+
 builtin uniform_density 3 "uniform_density" "Distribution";
+builtin builtin_sample_uniform 2 "sample_uniform" "Distribution";
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
 
@@ -26,12 +34,6 @@ builtin geometric_density 2 "geometric_density" "Distribution";
 builtin builtin_sample_geometric 1 "sample_geometric" "Distribution";
 
 builtin builtin_sample_exponential 1 "sample_exponential" "Distribution";
-builtin builtin_sample_laplace 2 "sample_laplace" "Distribution";
-builtin builtin_sample_uniform 2 "sample_uniform" "Distribution";
-builtin builtin_sample_beta 2 "sample_beta" "Distribution";
-builtin builtin_sample_gamma 2 "sample_gamma" "Distribution";
-builtin builtin_sample_normal 2 "sample_normal" "Distribution";
-builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution";
 
 builtin crp_density 4 "CRP_density" "Distribution";
 
