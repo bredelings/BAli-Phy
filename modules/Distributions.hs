@@ -101,10 +101,10 @@ mixture_density [] _ = (doubleToLogDouble 0.0);
 sample_mixture ((p1,dist1):l) = dist1;
 mixture args = ProbDensity (mixture_density args) (no_quantile "mixture") (sample_mixture args) (mixtureRange args);
 
-categorical p = ProbDensity (q!) (no_quantile "categorical") (return 0) (IntegerInterval (Just 0) (Just (length p - 1)))
-                where {q = listArray' $ map doubleToLogDouble p};
-
-
+builtin builtin_sample_categorical 1 "sample_categorical" "Distribution";
+sample_categorical ps = Random (IOAction1 builtin_sample_categorical ps);
+categorical ps = ProbDensity (qs!) (no_quantile "categorical") (sample_categorical ps) (IntegerInterval (Just 0) (Just (length ps - 1)))
+                where {qs = listArray' $ map doubleToLogDouble ps};
 
 -- define the list distribution
 pairs f (x:y:t) = f x y : pairs f t;
