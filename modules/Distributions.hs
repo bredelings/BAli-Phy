@@ -29,11 +29,7 @@ builtin crp_density 4 "CRP_density" "Distribution";
 
 data ProbDensity = ProbDensity a b c d;
 data DiscreteDistribution a = DiscreteDistribution [(Double,a)];
-data Random a = Random1 (b->a) a |
-                Random2 (b->c->a) b c | 
-                Random3 (b->c->d->a) b c d | 
-                Random4 (b->c->d->e->a) b c d e;
-
+data Random a = Random a;
 
 pairs f (x:y:t) = f x y : pairs f t;
 pairs _ t       = t;
@@ -52,10 +48,7 @@ distRange (ProbDensity _ _ _ r) = r;
 strip (IOReturn v) = v;
 strip (IOAndPass f g) = let {x = strip f} in x `seq` (strip (g x));
 strip (IOAnd f g) = (strip f) `seq` (strip g);
-strip (Random1 x y) = x y;
-strip (Random2 x y z) = x y z;
-strip (Random3 x y z w) = x y z w;
-strip (Random4 x y z w u) = x y z w u;
+strip (Random x) = unsafePerformIO' x;
 
 distDefaultValue d = strip (sample d);
 
@@ -65,9 +58,9 @@ betaDensity (a,b) x = builtin_beta_density a b x;
 betaQuantile (a,b) p = builtin_beta_quantile a b p;
 normalDensity (mu,sigma) x =  builtin_normal_density mu sigma x;
 normalQuantile (mu,sigma) p =  builtin_normal_quantile mu sigma p;
-sample_uniform a b = Random2 builtin_sample_uniform a b;
-sample_exponential mu = Random1 builtin_sample_exponential mu;
-sample_laplace m s = Random2 builtin_sample_laplace m s;
+sample_uniform a b = Random (IOAction2 builtin_sample_uniform a b);
+sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
+sample_laplace m s = Random (IOAction2 builtin_sample_laplace m s);
 
 
 cauchyDensity (m,s) x = builtin_cauchy_density m s x;
