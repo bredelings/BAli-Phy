@@ -21,7 +21,9 @@ builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
 
 builtin binomial_density 3 "binomial_density" "Distribution";
 builtin builtin_sample_binomial 2 "sample_binomial" "Distribution";
+
 builtin geometric_density 2 "geometric_density" "Distribution";
+builtin builtin_sample_geometric 1 "sample_geometric" "Distribution";
 
 builtin builtin_sample_exponential 1 "sample_exponential" "Distribution";
 builtin builtin_sample_laplace 2 "sample_laplace" "Distribution";
@@ -112,7 +114,7 @@ logCauchy = expTransform' cauchy;
 
 geometric_quantile p = error "geometric currently has no quantile";
 
-geometric p = ProbDensity (geometric_density p) (geometric_quantile p) (return 1) (IntegerInterval (Just 0) Nothing);
+geometric p = ProbDensity (geometric_density p) (geometric_quantile p) (sample_geometric) (IntegerInterval (Just 0) Nothing);
 
 dirichlet args = ProbDensity (dirichlet_density args) (error "Dirichlet has no quantiles") (sample_dirichlet args) (Simplex (length args) 1.0);
 dirichlet' (n,x) = dirichlet (replicate n x);
