@@ -8,7 +8,7 @@ builtin plus_gwF 3 "plus_gwF";
 builtin gtr 7 "gtr";
 builtin m0 3 "m0";
 builtin lExp 3 "lExp" "SModel";
-builtin q_from_s_and_r 2 "q_from_s_and_r" "SModel";
+builtin reversible_rate_matrix 2 "reversible_rate_matrix" "SModel";
 builtin get_eigensystem 2 "get_eigensystem" "SModel";
 builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel";
 builtin singlet_to_triplet_exchange 2 "singlet_to_triplet_exchange" "SModel";
@@ -45,7 +45,7 @@ qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t;
 branchTransitionP (MixtureModel (DiscreteDistribution l)) t = let {r = rate (MixtureModel (DiscreteDistribution l))} 
                                                               in map (\x -> qExp (scale (t/r) (snd x))) l;
 
-qFromSandR s (ReversibleFrequency a smap pi r) = let {q = q_from_s_and_r s r} 
+qFromSandR s (ReversibleFrequency a smap pi r) = let {q = reversible_rate_matrix s r} 
                                                  in ReversibleMarkov a smap q pi (get_eigensystem q pi) 1.0 (get_equilibrium_rate a smap q pi);
 
 nBaseModels (MixtureModel (DiscreteDistribution l)) = length l;

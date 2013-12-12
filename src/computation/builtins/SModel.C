@@ -19,7 +19,7 @@ extern "C" closure builtin_function_lExp(OperationArgs& Args)
   return M;
 }
 
-extern "C" closure builtin_function_q_from_s_and_r(OperationArgs& Args)
+extern "C" closure builtin_function_reversible_rate_matrix(OperationArgs& Args)
 {
   object_ptr<const SymmetricMatrixObject> S_ = Args.evaluate_as<SymmetricMatrixObject>(0);
   const SymmetricMatrix& S = *S_;
