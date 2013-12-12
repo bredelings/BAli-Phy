@@ -188,7 +188,7 @@ namespace substitution
     formula_expression_ref S = prefix_formula("S",FS);
     formula_expression_ref R = prefix_formula("R",FR);
     
-    return (identifier("qFromSandR"), S, FR);
+    return (identifier("reversible_markov"), S, FR);
   }
 
   formula_expression_ref Unit_Model(const formula_expression_ref& R)

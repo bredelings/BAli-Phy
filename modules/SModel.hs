@@ -45,8 +45,8 @@ qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t;
 branchTransitionP (MixtureModel (DiscreteDistribution l)) t = let {r = rate (MixtureModel (DiscreteDistribution l))} 
                                                               in map (\x -> qExp (scale (t/r) (snd x))) l;
 
-qFromSandR s (ReversibleFrequency a smap pi r) = let {q = reversible_rate_matrix s r} 
-                                                 in ReversibleMarkov a smap q pi (get_eigensystem q pi) 1.0 (get_equilibrium_rate a smap q pi);
+reversible_markov s (ReversibleFrequency a smap pi r) = let {q = reversible_rate_matrix s r} 
+                                                        in ReversibleMarkov a smap q pi (get_eigensystem q pi) 1.0 (get_equilibrium_rate a smap q pi);
 
 nBaseModels (MixtureModel (DiscreteDistribution l)) = length l;
 nBaseModels (MixtureModels (m:ms)) = nBaseModels m;
