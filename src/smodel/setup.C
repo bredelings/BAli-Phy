@@ -1092,6 +1092,104 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     return branch_site;
   }
+  else if (model_args[0] == "branch-site2")  // branch-site-test[0,n,S,F]
+  {
+    check_n_args(model_args, 0, 4);
+
+    // Determine how many categories there are, minus the positive category.
+    int n=2;
+    if (model_args.size() > 2 and model_args[2] != "")
+      n = convertTo<int>(model_args[2]);
+    if (n < 2) throw myexception()<<"The branch-site model needs at least two categories.";
+
+    // Create the parameter for degree of positive selection, if it exists.
+    formula_expression_ref w_pos = def_parameter("BranchSite.posW", Double(1.5), lower_bound(1), (identifier("logGamma"), Tuple(2.0, 0.5)));
+    formula_expression_ref I  = def_parameter("BranchSite.posSelection", true, nullptr, (identifier("bernoulli"), 0.5));
+    formula_expression_ref w_pos_effective = (If, I, w_pos, 1.0);
+
+    // Create the partial distributions, and their parameters.
+    // FIXME - should I try to make the prior mean for the neutral w always near 0.5?
+    formula_expression_ref D1 = ListEnd;
+    formula_expression_ref D2 = ListEnd;
+    formula_expression_ref F = ListEnd;
+    for(int i=n-1;i>=0;i--)
+    {
+      string n_ = convertToString(i);
+      formula_expression_ref f = def_parameter("BranchSite.f"+n_, Double(1.0/n));
+      formula_expression_ref w = def_parameter("BranchSite.w"+n_, Double(0.5), between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
+      if (i == n-1) w = expression_ref(1.0);
+
+      D1 = Tuple(f,w)&D1;
+      D2 = Tuple(f,w_pos_effective)&D2;
+      F = f&F;
+    }
+    D1 = (identifier("DiscreteDistribution"), D1);
+    D2 = (identifier("DiscreteDistribution"), D2);
+
+    formula_expression_ref p_pos = def_parameter("BranchSite.posP",Double(0.1),between(0,1),(identifier("beta"),Tuple(1.0,10.0)));
+
+    // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
+    // FIXME - look at the effect on power of using identifierious different priors for w2 here!
+    // FIXME - allow specifying the prior on the command line?
+
+    formula_expression_ref M0 = get_M0_omega_function(L,a, frequencies, model_args, 3);
+    formula_expression_ref mixture1 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D1,D1) ) );
+    formula_expression_ref mixture2 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
+
+    formula_expression_ref branch_site = (identifier("MixtureModels"), mixture1&(mixture2&ListEnd) );
+    branch_site.add_expression( constructor(":~",2) +  F.exp() + (identifier("dirichlet'"),Tuple(n,1.0)));
+
+    return branch_site;
+  }
+  else if (model_args[0] == "branch-site3")  // branch-site-test[0,n,S,F]
+  {
+    check_n_args(model_args, 0, 4);
+
+    // Determine how many categories there are, minus the positive category.
+    int n=2;
+    if (model_args.size() > 2 and model_args[2] != "")
+      n = convertTo<int>(model_args[2]);
+    if (n < 2) throw myexception()<<"The branch-site model needs at least two categories.";
+
+    // Create the parameter for degree of positive selection, if it exists.
+    formula_expression_ref w_pos = def_parameter("BranchSite.posW", Double(1.5), lower_bound(1), (identifier("logGamma"), Tuple(1.0, 1.0)));
+    formula_expression_ref I  = def_parameter("BranchSite.posSelection", true, nullptr, (identifier("bernoulli"), 0.5));
+    formula_expression_ref w_pos_effective = (If, I, w_pos, 1.0);
+
+    // Create the partial distributions, and their parameters.
+    // FIXME - should I try to make the prior mean for the neutral w always near 0.5?
+    formula_expression_ref D1 = ListEnd;
+    formula_expression_ref D2 = ListEnd;
+    formula_expression_ref F = ListEnd;
+    for(int i=n-1;i>=0;i--)
+    {
+      string n_ = convertToString(i);
+      formula_expression_ref f = def_parameter("BranchSite.f"+n_, Double(1.0/n));
+      formula_expression_ref w = def_parameter("BranchSite.w"+n_, Double(0.5), between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
+      if (i == n-1) w = expression_ref(1.0);
+
+      D1 = Tuple(f,w)&D1;
+      D2 = Tuple(f,w_pos_effective)&D2;
+      F = f&F;
+    }
+    D1 = (identifier("DiscreteDistribution"), D1);
+    D2 = (identifier("DiscreteDistribution"), D2);
+
+    formula_expression_ref p_pos = def_parameter("BranchSite.posP",Double(0.1),between(0,1),(identifier("beta"),Tuple(1.0,10.0)));
+
+    // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
+    // FIXME - look at the effect on power of using identifierious different priors for w2 here!
+    // FIXME - allow specifying the prior on the command line?
+
+    formula_expression_ref M0 = get_M0_omega_function(L,a, frequencies, model_args, 3);
+    formula_expression_ref mixture1 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D1,D1) ) );
+    formula_expression_ref mixture2 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
+
+    formula_expression_ref branch_site = (identifier("MixtureModels"), mixture1&(mixture2&ListEnd) );
+    branch_site.add_expression( constructor(":~",2) +  F.exp() + (identifier("dirichlet'"),Tuple(n,1.0)));
+
+    return branch_site;
+  }
 
   return formula_expression_ref();
 }
