@@ -385,11 +385,12 @@ if HOST_DARWIN
 # I think -no-undefined leads to the creation of bundles, which then need a bundle_loader argument
 # See http://www.opensource.apple.com/source/X11server/X11server-46/xorg-server-X11R7.2-1.2.0/hw/darwin/Makefile.am 
 #  for a possible example.
-EXTRADEPENDENCIES = # -no-undefined <?? -XCClinker -bundle -XCClinker /path/to/bali-phy ??>
+EXTRADEPENDENCIES = # -no-undefined <?? -XCClinker -bundle_loader -XCClinker /path/to/bali-phy ??>
 EXTRALDFLAGS =
-endif
+else
 EXTRADEPENDENCIES =
 EXTRALDFLAGS =
+endif
 endif
 
 mod_la_SOURCES = computation/builtins/mod.C
