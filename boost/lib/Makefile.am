@@ -4,8 +4,6 @@ endif
 
 SUBDIRS = filesystem system program_options chrono random $(MAYBE_MPI)
 
-EXTRA_DIST = detail system
-
 noinst_LTLIBRARIES = libboost_myparts.la
 if WITH_MPI
 noinst_LTLIBRARIES += libboost_myparts_mpi.la
