@@ -43,7 +43,13 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   tools/consensus-tree.H tools/partition.H mcmc/slice-sampling.H \
 	   timer_stack.H mcmc/setup.H models/probability-model.H owned-ptr.H \
 	   bounds.H io.H smodel/objects.H smodel/operations.H parser/parse.H \
-           parser/AST.H
+           parser/AST.H computation/computation.H computation/closure.H \
+           computation/context.H computation/expression.H computation/formula_expression.H \
+	   computation/bithash.H computation/graph_register.H computation/let-float.H \
+           computation/loader.H computation/model_notes.H computation/module.H \
+	   computation/operation.H computation/operations.H computation/operator.H \
+           computation/pool.H computation/program.H computation/builtins/conversion.H \
+	   computation/builtins/iota.H CacheList.H
 
 LDFLAGS = @ldflags@
 
