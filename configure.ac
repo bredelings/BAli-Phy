@@ -480,3 +480,11 @@ if test -n "$cairo" && test "$cairo" != "no"; then
 fi
 
 
+# Release instructions:
+# 1. Source: make dist
+# 2. Mac: CXX=g++-4.8 LDFLAGS="-static-libgcc -static-libstdc++ -mmacosx-version-min=10.6" CXXFLAGS="-mmacosx-version-min=10.6"
+# 3. Win: LDFLAGS="-static-libgcc -static-libstdc++" ... and hide dll for winpthreads?
+# 4. Linux: --enable-static --force-static CXXFLAGS=-g -fdiagnostics-color=always -finline-limit=1000
+
+# Question: are symbols for dynamic linking making everything MUCH larger?
+# Goal: Move module defs into their own subdirectory, just define LDFLAGS once
