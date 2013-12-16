@@ -2,9 +2,9 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(BAli-Phy, 2.3.0-devel, benjamin.redelings@nescent.org)
+AC_INIT(BAli-Phy, 2.3.0-devel, benjamin.redelings@duke.edu)
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE([1.9 foreign subdir-objects])
+AM_INIT_AUTOMAKE([1.9 foreign subdir-objects tar-ustar])
 AC_CONFIG_SRCDIR([src/bali-phy.C])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
