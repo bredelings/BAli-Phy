@@ -49,7 +49,8 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            computation/loader.H computation/model_notes.H computation/module.H \
 	   computation/operation.H computation/operations.H computation/operator.H \
            computation/pool.H computation/program.H computation/builtins/conversion.H \
-	   computation/builtins/iota.H CacheList.H
+	   computation/builtins/iota.H CacheList.H mcmc/logger.H smodel/setup.H \
+           dp/dp_hmm.H imodel/setup.H parser/desugar.H mcmc/AIS.H tools/distance-report.H
 
 LDFLAGS = @ldflags@
 
