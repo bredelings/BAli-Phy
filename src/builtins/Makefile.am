@@ -7,6 +7,7 @@
 # 
 # http://www.mingw.org/wiki/sampleDLL
 
+AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src
 
 pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la \
 		arraySize.la getIndex.la mkArray.la intToDouble.la negate.la \
@@ -36,196 +37,196 @@ EXTRALDFLAGS =
 endif
 endif
 
-mod_la_SOURCES = computation/builtins/mod.C
+mod_la_SOURCES = mod.C
 mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 mod_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-builtinError_la_SOURCES = computation/builtins/builtinError.C
+builtinError_la_SOURCES = builtinError.C
 builtinError_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 builtinError_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-seq_la_SOURCES = computation/builtins/seq.C
+seq_la_SOURCES = seq.C
 seq_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 seq_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-join_la_SOURCES = computation/builtins/join.C
+join_la_SOURCES = join.C
 join_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 join_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-reapply_la_SOURCES = computation/builtins/reapply.C
+reapply_la_SOURCES = reapply.C
 reapply_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 reapply_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-arraySize_la_SOURCES = computation/builtins/arraySize.C
+arraySize_la_SOURCES = arraySize.C
 arraySize_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 arraySize_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-getIndex_la_SOURCES = computation/builtins/getIndex.C
+getIndex_la_SOURCES = getIndex.C
 getIndex_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 getIndex_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-mkArray_la_SOURCES = computation/builtins/mkArray.C
+mkArray_la_SOURCES = mkArray.C
 mkArray_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 mkArray_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-intToDouble_la_SOURCES = computation/builtins/intToDouble.C
+intToDouble_la_SOURCES = intToDouble.C
 intToDouble_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 intToDouble_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-doubleToLogDouble_la_SOURCES = computation/builtins/doubleToLogDouble.C
+doubleToLogDouble_la_SOURCES = doubleToLogDouble.C
 doubleToLogDouble_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 doubleToLogDouble_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-negate_la_SOURCES = computation/builtins/negate.C
+negate_la_SOURCES = negate.C
 negate_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 negate_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-exp_la_SOURCES = computation/builtins/exp.C
+exp_la_SOURCES = exp.C
 exp_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 exp_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Prelude_la_SOURCES = computation/builtins/Prelude.C
+Prelude_la_SOURCES = Prelude.C
 Prelude_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 Prelude_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-equals_la_SOURCES = computation/builtins/equals.C
+equals_la_SOURCES = equals.C
 equals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 equals_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-notequals_la_SOURCES = computation/builtins/notequals.C
+notequals_la_SOURCES = notequals.C
 notequals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 notequals_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-greaterthan_la_SOURCES = computation/builtins/greaterthan.C
+greaterthan_la_SOURCES = greaterthan.C
 greaterthan_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 greaterthan_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-greaterthanorequal_la_SOURCES = computation/builtins/greaterthanorequal.C
+greaterthanorequal_la_SOURCES = greaterthanorequal.C
 greaterthanorequal_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 greaterthanorequal_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-lessthan_la_SOURCES = computation/builtins/lessthan.C
+lessthan_la_SOURCES = lessthan.C
 lessthan_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 lessthan_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-lessthanorequal_la_SOURCES = computation/builtins/lessthanorequal.C
+lessthanorequal_la_SOURCES = lessthanorequal.C
 lessthanorequal_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 lessthanorequal_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-getNucleotides_la_SOURCES = computation/builtins/getNucleotides.C
+getNucleotides_la_SOURCES = getNucleotides.C
 getNucleotides_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 getNucleotides_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-plus_gwF_la_SOURCES = computation/builtins/plus_gwF.C
+plus_gwF_la_SOURCES = plus_gwF.C
 plus_gwF_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 plus_gwF_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-alphabetSize_la_SOURCES = computation/builtins/alphabetSize.C
+alphabetSize_la_SOURCES = alphabetSize.C
 alphabetSize_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 alphabetSize_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-iotaUnsigned_la_SOURCES = computation/builtins/iotaUnsigned.C
+iotaUnsigned_la_SOURCES = iotaUnsigned.C
 iotaUnsigned_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 iotaUnsigned_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-f3x4_frequencies_la_SOURCES = computation/builtins/f3x4_frequencies.C
+f3x4_frequencies_la_SOURCES = f3x4_frequencies.C
 f3x4_frequencies_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 f3x4_frequencies_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-gtr_la_SOURCES = computation/builtins/gtr.C
+gtr_la_SOURCES = gtr.C
 gtr_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 gtr_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-m0_la_SOURCES = computation/builtins/m0.C
+m0_la_SOURCES = m0.C
 m0_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 m0_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 
-set_vector_index_la_SOURCES = computation/builtins/set_vector_index.C
+set_vector_index_la_SOURCES = set_vector_index.C
 set_vector_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 set_vector_index_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-new_vector_la_SOURCES = computation/builtins/new_vector.C
+new_vector_la_SOURCES = new_vector.C
 new_vector_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 new_vector_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-get_vector_index_la_SOURCES = computation/builtins/get_vector_index.C
+get_vector_index_la_SOURCES = get_vector_index.C
 get_vector_index_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 get_vector_index_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-vector_size_la_SOURCES = computation/builtins/vector_size.C
+vector_size_la_SOURCES = vector_size.C
 vector_size_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 vector_size_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-c_fst_la_SOURCES = computation/builtins/c_fst.C
+c_fst_la_SOURCES = c_fst.C
 c_fst_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 c_fst_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-c_snd_la_SOURCES = computation/builtins/c_snd.C
+c_snd_la_SOURCES = c_snd.C
 c_snd_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 c_snd_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-c_pair_la_SOURCES = computation/builtins/c_pair.C
+c_pair_la_SOURCES = c_pair.C
 c_pair_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 c_pair_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 
-evaluate_la_SOURCES = computation/builtins/evaluate.C
+evaluate_la_SOURCES = evaluate.C
 evaluate_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 evaluate_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Modifiables_la_SOURCES = computation/builtins/Modifiables.C
+Modifiables_la_SOURCES = Modifiables.C
 Modifiables_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 Modifiables_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-rs07_branch_HMM_la_SOURCES = computation/builtins/rs07_branch_HMM.C
+rs07_branch_HMM_la_SOURCES = rs07_branch_HMM.C
 rs07_branch_HMM_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 rs07_branch_HMM_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-rs07_lengthp_la_SOURCES = computation/builtins/rs07_lengthp.C
+rs07_lengthp_la_SOURCES = rs07_lengthp.C
 rs07_lengthp_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 rs07_lengthp_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-pairwise_alignment_length1_la_SOURCES = computation/builtins/pairwise_alignment_length1.C
+pairwise_alignment_length1_la_SOURCES = pairwise_alignment_length1.C
 pairwise_alignment_length1_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 pairwise_alignment_length1_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-pairwise_alignment_length2_la_SOURCES = computation/builtins/pairwise_alignment_length2.C
+pairwise_alignment_length2_la_SOURCES = pairwise_alignment_length2.C
 pairwise_alignment_length2_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 pairwise_alignment_length2_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-transition_counts_la_SOURCES = computation/builtins/transition_counts.C
+transition_counts_la_SOURCES = transition_counts.C
 transition_counts_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 transition_counts_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-pairwise_alignment_probability_from_counts_la_SOURCES = computation/builtins/pairwise_alignment_probability_from_counts.C
+pairwise_alignment_probability_from_counts_la_SOURCES = pairwise_alignment_probability_from_counts.C
 pairwise_alignment_probability_from_counts_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 pairwise_alignment_probability_from_counts_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-popgen_la_SOURCES = computation/builtins/popgen.C
+popgen_la_SOURCES = popgen.C
 popgen_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 popgen_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-trigger_la_SOURCES = computation/builtins/trigger.C
+trigger_la_SOURCES = trigger.C
 trigger_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 trigger_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Distribution_la_SOURCES = computation/builtins/Distribution.C
+Distribution_la_SOURCES = Distribution.C
 Distribution_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 Distribution_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Range_la_SOURCES = computation/builtins/Range.C
+Range_la_SOURCES = Range.C
 Range_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 Range_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-SModel_la_SOURCES = computation/builtins/SModel.C
+SModel_la_SOURCES = SModel.C
 SModel_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 SModel_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-show_la_SOURCES = computation/builtins/show.C
+show_la_SOURCES = show.C
 show_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 show_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-sum_out_coals_la_SOURCES = computation/builtins/sum_out_coals.C
+sum_out_coals_la_SOURCES = sum_out_coals.C
 sum_out_coals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 sum_out_coals_la_DEPENDENCIES = $(EXTRADEPENDENCIES)

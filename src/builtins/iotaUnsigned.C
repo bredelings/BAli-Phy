@@ -1,5 +1,5 @@
 #include "computation/computation.H"
-#include "computation/builtins/iota.H"
+#include "iota.H"
 
 extern "C" closure builtin_function_iotaUnsigned(OperationArgs& Args)
 {

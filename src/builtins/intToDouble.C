@@ -1,5 +1,5 @@
 #include "computation/computation.H"
-#include "computation/builtins/conversion.H"
+#include "conversion.H"
 
 extern "C" closure builtin_function_intToDouble(OperationArgs& Args)
 {

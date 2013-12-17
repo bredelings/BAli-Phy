@@ -458,6 +458,7 @@ AC_DEFINE_UNQUOTED([_ARCH_],["$host"] , ["Host architecture."])
 AC_OUTPUT([
   Makefile 
   src/Makefile 
+  src/builtins/Makefile 
   boost/Makefile 
   boost/lib/Makefile 
   boost/lib/chrono/Makefile 
