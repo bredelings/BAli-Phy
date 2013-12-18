@@ -709,7 +709,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"), Tuple(-3.0, 1.0) ));
     formula_expression_ref b = (times, W, W);
     formula_expression_ref a = (divide, 1.0, b);
-    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("gammaQuantile"), Tuple(a,b)) , n);
+    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("gamma"), Tuple(a,b))) , n);
 
     return (identifier("multiRate"), base,  dist);
   }
@@ -726,7 +726,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"),Tuple(-3.0, 1.0) ));
     formula_expression_ref b = (times, W, W);
     formula_expression_ref a = (divide, 1.0, b);
-    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("gammaQuantile"), Tuple(a,b)) , n);
+    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("gamma"), Tuple(a,b))) , n);
 
     formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), (identifier("beta"), Tuple(1.0, 2.0)) );
     dist = (identifier("extendDiscreteDistribution"), dist, p, 0.0);
@@ -748,7 +748,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref lIdentifier = (identifier("log"), (plus, 1.0, Identifier ) );
     formula_expression_ref lmu = (times, -0.5, lIdentifier);
     formula_expression_ref lsigma = (identifier("sqrt"), lIdentifier);
-    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("logNormalQuantile"), Tuple(lmu,lsigma)) , n);
+    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("logNormal"), Tuple(lmu,lsigma))) , n);
 
     return (identifier("multiRate"), base,  dist);
   }
@@ -767,7 +767,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref lIdentifier = (identifier("log"), (plus, 1.0, Identifier ) );
     formula_expression_ref lmu = (times, -0.5, lIdentifier);
     formula_expression_ref lsigma = (identifier("sqrt"), lIdentifier);
-    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("logNormalQuantile"), Tuple(lmu,lsigma)) , n);
+    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("logNormal"), Tuple(lmu,lsigma))) , n);
 
     formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), (identifier("beta"), Tuple(1.0, 2.0)) );
     dist = (identifier("extendDiscreteDistribution"), dist, p, 0.0);
