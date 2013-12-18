@@ -384,7 +384,7 @@ double gamma_quantile(double p, double a, double b)
     // don't go crazy
     sigma = minmax(sigma, 1.0e-5, 1.0e5);
 
-    return normal_quantile(p, mu ,sigma);
+    return log_normal_quantile(p, mu ,sigma);
   }
 }
 
