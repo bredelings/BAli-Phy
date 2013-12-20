@@ -54,7 +54,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   builtins/iota.H CacheList.H mcmc/logger.H smodel/setup.H \
            dp/dp_hmm.H imodel/setup.H parser/desugar.H mcmc/AIS.H tools/distance-report.H
 
-LDFLAGS = @ldflags@
+LDFLAGS = @ldflags@ 
 
 AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src
 
@@ -126,12 +126,12 @@ endif
 nodist_bali_phy_SOURCES = git_version.h
 
 if HOST_LINUX
-bali_phy_LDFLAGS = -rdynamic
+bali_phy_LDFLAGS = @ldflags@ -rdynamic
 else
 if HOST_MINGW32
-bali_phy_LDFLAGS = -Wl,--export-all-symbols,--out-implib=libbali-phy.dll.a
+bali_phy_LDFLAGS = @ldflags@ -Wl,--export-all-symbols,--out-implib=libbali-phy.dll.a
 else
-bali_phy_LDFLAGS =
+bali_phy_LDFLAGS = @ldflags@
 endif
 endif
 
