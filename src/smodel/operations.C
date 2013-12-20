@@ -30,7 +30,7 @@ namespace substitution
       F = Var&F;
     }
 
-    F.add_expression( constructor(":~",2)+ F.exp() + (identifier("dirichlet'"),Tuple((int)a.size(), 1.0) ));
+    F.add_expression( constructor(":~",2)+ F.exp() + (identifier("dirichlet'"),(int)a.size(), 1.0 ));
 
     return F;
   }
@@ -167,7 +167,7 @@ namespace substitution
   // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
   formula_expression_ref Plus_gwF_Model(const alphabet& a, const valarray<double>& pi0)
   {
-    formula_expression_ref f = def_parameter("f", 1.0, between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
+    formula_expression_ref f = def_parameter("f", 1.0, between(0,1), (identifier("uniform"),0.0, 1.0));
 
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
@@ -219,7 +219,7 @@ namespace substitution
     }
     formula_expression_ref R = (identifier("mixMixtureModels"),P,M);
 
-    R.add_expression(constructor(":~",2) + P.exp() + (identifier("dirichlet'"), Tuple(N, 1.0)));
+    R.add_expression(constructor(":~",2) + P.exp() + (identifier("dirichlet'"), N, 1.0));
 
     return R;
   }

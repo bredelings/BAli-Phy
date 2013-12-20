@@ -12,18 +12,18 @@ module RelaxedRatesRS07 where
   
   delta = 4;
 
-note mean ~ iid(n_branches + delta, laplace(-4.0,1.0/sqrt 2.0));
-note sigma ~ iid(n_branches + delta, gamma(1.05,0.05) );
+note mean ~ iid (n_branches + delta) (laplace (-4.0) (1.0/sqrt 2.0));
+note sigma ~ iid (n_branches + delta) (gamma 1.05 0.05);
   
-note alpha ~ gamma (2.0, 1.0/6.0);
+note alpha ~ gamma 2.0 (1.0/6.0);
 
-note category ~ crp(alpha, n_branches, delta);
+note category ~ crp alpha n_branches delta;
 
-note z ~ iid(n_branches, normal(0.0, 1.0));
+note z ~ iid n_branches (normal 0.0 1.0);
 
   logLambdas = [ mean!!k + z!!i * sigma!!k | i <- take n_branches [0..], let {k=category!!i}];
 
-note meanIndelLengthMinus1 ~ exponential(10.0);
+note meanIndelLengthMinus1 ~ exponential 10.0;
     
   epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
   lambdas = map exp logLambdas;

@@ -369,7 +369,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
 	throw myexception()<<"Submodel '"<<model_args[2]<<"' for M0 is not a (nucleotide) exchange model.";
     }
     // omega ~ logLaplace(0.0, 0.1)
-    formula_expression_ref w = def_parameter("M0.omega", Double(1), lower_bound(0), (identifier("logLaplace"), Tuple(0.0,0.1)));
+    formula_expression_ref w = def_parameter("M0.omega", Double(1), lower_bound(0), (identifier("logLaplace"), 0.0,0.1));
 
     // main = M0 a S omega
     return (identifier("m0"), a, S1, w);
@@ -722,12 +722,12 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
-    formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"),Tuple(-3.0, 1.0) ));
+    formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"),-3.0, 1.0 ));
     formula_expression_ref b = (times, W, W);
     formula_expression_ref a = (divide, 1.0, b);
-    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("gamma"), Tuple(a,b))) , n);
+    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("gamma"), a,b)) , n);
 
-    formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), (identifier("beta"), Tuple(1.0, 2.0)) );
+    formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), (identifier("beta"), 1.0, 2.0) );
     dist = (identifier("extendDiscreteDistribution"), dist, p, 0.0);
 
     return (identifier("multiRate"), base,  dist);
@@ -742,12 +742,12 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
-    formula_expression_ref W = def_parameter("LogNormal.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"), Tuple(-3.0, 1.0) ));
+    formula_expression_ref W = def_parameter("LogNormal.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"), -3.0, 1.0 ));
     formula_expression_ref Identifier = (times, W, W);
     formula_expression_ref lIdentifier = (identifier("log"), (plus, 1.0, Identifier ) );
     formula_expression_ref lmu = (times, -0.5, lIdentifier);
     formula_expression_ref lsigma = (identifier("sqrt"), lIdentifier);
-    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("logNormal"), Tuple(lmu,lsigma))) , n);
+    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("logNormal"), lmu,lsigma)) , n);
 
     return (identifier("multiRate"), base,  dist);
   }
@@ -761,14 +761,14 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
-    formula_expression_ref W = def_parameter("LogNormal.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"), Tuple(-3.0, 1.0) ));
+    formula_expression_ref W = def_parameter("LogNormal.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"), -3.0, 1.0 ));
     formula_expression_ref Identifier = (times, W, W);
     formula_expression_ref lIdentifier = (identifier("log"), (plus, 1.0, Identifier ) );
     formula_expression_ref lmu = (times, -0.5, lIdentifier);
     formula_expression_ref lsigma = (identifier("sqrt"), lIdentifier);
-    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("logNormal"), Tuple(lmu,lsigma))) , n);
+    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("logNormal"), lmu,lsigma)) , n);
 
-    formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), (identifier("beta"), Tuple(1.0, 2.0)) );
+    formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), (identifier("beta"), 1.0, 2.0) );
     dist = (identifier("extendDiscreteDistribution"), dist, p, 0.0);
 
     return (identifier("multiRate"), base,  dist);
@@ -805,8 +805,8 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       dist = Tuple(f, rate) & dist;
     }
     dist = (identifier("DiscreteDistribution"), dist);
-    dist.add_expression( constructor(":~",2) + get_list(fs) + (identifier("dirichlet'"), Tuple(n, 1.0+n/2.0)));
-    dist.add_expression( constructor(":~",2) + get_list(rates) +(identifier("dirichlet'"), Tuple(n, 2.0)));
+    dist.add_expression( constructor(":~",2) + get_list(fs) + (identifier("dirichlet'"), n, 1.0+n/2.0));
+    dist.add_expression( constructor(":~",2) + get_list(rates) +(identifier("dirichlet'"), n, 2.0));
 
     formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
     return (identifier("multiRate"), base,  dist);
@@ -863,13 +863,13 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       string pname_f = "M3.f" + convertToString(i+1);
       string pname_w = "M3.omega" + convertToString(i+1);
       formula_expression_ref f = def_parameter("M3.f"     + convertToString(i+1), Double(1.0/n), between(0,1));
-      formula_expression_ref w = def_parameter("M3.omega" + convertToString(i+1), Double(1.0), lower_bound(0), (identifier("uniform"), Tuple(0.0, 1.0)));
+      formula_expression_ref w = def_parameter("M3.omega" + convertToString(i+1), Double(1.0), lower_bound(0), (identifier("uniform"), 0.0, 1.0));
 
       D = Tuple(f,w)&D;
       F = f&F;
     }
     D = (identifier("DiscreteDistribution"), D);
-    D.add_expression( constructor(":~",2) + F.exp() + (identifier("dirichlet'"), Tuple(n, 4.0)));
+    D.add_expression( constructor(":~",2) + F.exp() + (identifier("dirichlet'"), n, 4.0));
 
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
@@ -898,7 +898,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       D = Tuple(f,w)&D;
     }
     D = (identifier("DiscreteDistribution"), D);
-    D.add_expression(constructor(":~",2) +  get_list(fraction) + (identifier("dirichlet'"), Tuple(n, 4.0)));
+    D.add_expression(constructor(":~",2) +  get_list(fraction) + (identifier("dirichlet'"), n, 4.0));
 
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
@@ -951,22 +951,22 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       n = convertTo<int>(model_args[2]);
 
     // Determine the a and b parameters of the beta distribution
-    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
-    formula_expression_ref gamma = def_parameter("Beta.sigma2_over_mu", Double(0.1), between(0,1), (identifier("beta"), Tuple(1.0,10.0)));
+    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (identifier("uniform"), 0.0, 1.0));
+    formula_expression_ref gamma = def_parameter("Beta.sigma2_over_mu", Double(0.1), between(0,1), (identifier("beta"), 1.0,10.0));
     formula_expression_ref cap = (identifier("min"),(divide,mu,(plus,1.0,mu)),(divide,(minus,1.0,mu),(minus,2.0,mu)));
     formula_expression_ref gamma_ = (times,gamma,cap);
     formula_expression_ref N = (minus, (divide, 1.0, gamma_), 1.0); // N = 1.0/gamma - 1.0;
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;
     formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
     // Create the discrete distribution for omega
-    formula_expression_ref D = (identifier("uniformDiscretize"), (identifier("betaQuantile"), Tuple(alpha,beta)), n);
+    formula_expression_ref D = (identifier("uniformDiscretize"), (identifier("betaQuantile"), alpha,beta), n);
 
     // *Question*: How much does D simplify with "completely lazy" evaluation?
     formula_expression_ref p1 = def_parameter("M8b.fConserved", Double(0.6), between(0,1));
     formula_expression_ref p2 = def_parameter("M8b.fNeutral", Double(0.3), between(0,1));
     formula_expression_ref p3 = def_parameter("M8b.fDiversifying", Double(0.1), between(0,1));
     // [positive selection, if it exists] w ~ log_exponential(0.05)
-    formula_expression_ref w = def_parameter("M8b.omega3", Double(1.5), lower_bound(1), (identifier("logGamma"), Tuple(4.0, 0.25)));
+    formula_expression_ref w = def_parameter("M8b.omega3", Double(1.5), lower_bound(1), (identifier("logGamma"), 4.0, 0.25));
     formula_expression_ref I  = def_parameter("M8b.pos_selection", true, nullptr, (identifier("bernoulli"), 0.5));
     formula_expression_ref w3 = (If, I, w, 1.0);
 
@@ -991,15 +991,15 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       n = convertTo<int>(model_args[2]);
 
     // Determine the a and b parameters of the beta distribution
-    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
-    formula_expression_ref gamma = def_parameter("Beta.sigma2_over_mu", Double(0.1), between(0,1), (identifier("beta"), Tuple(1.0,10.0)));
+    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (identifier("uniform"), 0.0, 1.0));
+    formula_expression_ref gamma = def_parameter("Beta.sigma2_over_mu", Double(0.1), between(0,1), (identifier("beta"), 1.0,10.0));
     formula_expression_ref cap = (identifier("min"),(divide,mu,(plus,1.0,mu)),(divide,(minus,1.0,mu),(minus,2.0,mu)));
     formula_expression_ref gamma_ = (times,gamma,cap);
     formula_expression_ref N = (minus, (divide, 1.0, gamma_), 1.0); // N = 1.0/gamma - 1.0;
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;
     formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
     // Create the discrete distribution for omega
-    formula_expression_ref D = (identifier("uniformDiscretize"), (identifier("betaQuantile"), Tuple(alpha,beta)), n);
+    formula_expression_ref D = (identifier("uniformDiscretize"), (identifier("beta_quantile"), alpha,beta), n);
 
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
@@ -1011,7 +1011,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     formula_expression_ref f0 = def_parameter("BranchSite.f0",Double(0.5));
     formula_expression_ref f1 = def_parameter("BranchSite.f1",Double(0.5));
-    formula_expression_ref f2 = def_parameter("BranchSite.posP",Double(0.1),between(0,1), (identifier("beta"),Tuple(1.0,10.0)));
+    formula_expression_ref f2 = def_parameter("BranchSite.posP",Double(0.1),between(0,1), (identifier("beta"),1.0,10.0));
     formula_expression_ref I  = def_parameter("BranchSite.posSelection", true, nullptr, (identifier("bernoulli"),0.5));
 
     formula_expression_ref p2 = (If, I, f2, 0.0);
@@ -1020,9 +1020,9 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref p2a = (times, f0, p2);
     formula_expression_ref p2b = (times, f1, p2);
 
-    formula_expression_ref w0 = def_parameter("BranchSite.w0", Double(0.5), between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
+    formula_expression_ref w0 = def_parameter("BranchSite.w0", Double(0.5), between(0,1), (identifier("uniform"), 0.0, 1.0));
     // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
-    formula_expression_ref w2 = def_parameter("branch-site.pos-w", Double(1.5), lower_bound(1), (identifier("logGamma"), Tuple(4.0, 0.25)));
+    formula_expression_ref w2 = def_parameter("branch-site.pos-w", Double(1.5), lower_bound(1), (identifier("logGamma"), 4.0, 0.25));
     // FIXME - look at the effect on power of using identifierious different priors for w2 here!
     // FIXME - allow specifying the prior on the command line?
 
@@ -1049,7 +1049,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     if (n < 2) throw myexception()<<"The branch-site model needs at least two categories.";
 
     // Create the parameter for degree of positive selection, if it exists.
-    formula_expression_ref w_pos = def_parameter("BranchSite.posW", Double(1.5), lower_bound(1), (identifier("logGamma"), Tuple(4.0, 0.25)));
+    formula_expression_ref w_pos = def_parameter("BranchSite.posW", Double(1.5), lower_bound(1), (identifier("logGamma"), 4.0, 0.25));
     formula_expression_ref I  = def_parameter("BranchSite.posSelection", true, nullptr, (identifier("bernoulli"), 0.5));
     formula_expression_ref w_pos_effective = (If, I, w_pos, 1.0);
 
@@ -1062,7 +1062,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     {
       string n_ = convertToString(i);
       formula_expression_ref f = def_parameter("BranchSite.f"+n_, Double(1.0/n));
-      formula_expression_ref w = def_parameter("BranchSite.w"+n_, Double(0.5), between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
+      formula_expression_ref w = def_parameter("BranchSite.w"+n_, Double(0.5), between(0,1), (identifier("uniform"), 0.0, 1.0));
       if (i == n-1) w = expression_ref(1.0);
 
       D1 = Tuple(f,w)&D1;
@@ -1072,7 +1072,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     D1 = (identifier("DiscreteDistribution"), D1);
     D2 = (identifier("DiscreteDistribution"), D2);
 
-    formula_expression_ref p_pos = def_parameter("BranchSite.posP",Double(0.1),between(0,1),(identifier("beta"),Tuple(1.0,10.0)));
+    formula_expression_ref p_pos = def_parameter("BranchSite.posP",Double(0.1),between(0,1),(identifier("beta"),1.0,10.0));
 
     // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
     // FIXME - look at the effect on power of using identifierious different priors for w2 here!
@@ -1083,7 +1083,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref mixture2 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
 
     formula_expression_ref branch_site = (identifier("MixtureModels"), mixture1&(mixture2&ListEnd) );
-    branch_site.add_expression( constructor(":~",2) +  F.exp() + (identifier("dirichlet'"),Tuple(n,1.0)));
+    branch_site.add_expression( constructor(":~",2) +  F.exp() + (identifier("dirichlet'"),n,1.0));
 
     return branch_site;
   }
@@ -1098,7 +1098,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     if (n < 2) throw myexception()<<"The branch-site model needs at least two categories.";
 
     // Create the parameter for degree of positive selection, if it exists.
-    formula_expression_ref w_pos = def_parameter("BranchSite.posW", Double(1.5), lower_bound(1), (identifier("logGamma"), Tuple(2.0, 0.5)));
+    formula_expression_ref w_pos = def_parameter("BranchSite.posW", Double(1.5), lower_bound(1), (identifier("logGamma"), 2.0, 0.5));
     formula_expression_ref I  = def_parameter("BranchSite.posSelection", true, nullptr, (identifier("bernoulli"), 0.5));
     formula_expression_ref w_pos_effective = (If, I, w_pos, 1.0);
 
@@ -1111,7 +1111,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     {
       string n_ = convertToString(i);
       formula_expression_ref f = def_parameter("BranchSite.f"+n_, Double(1.0/n));
-      formula_expression_ref w = def_parameter("BranchSite.w"+n_, Double(0.5), between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
+      formula_expression_ref w = def_parameter("BranchSite.w"+n_, Double(0.5), between(0,1), (identifier("uniform"), 0.0, 1.0));
       if (i == n-1) w = expression_ref(1.0);
 
       D1 = Tuple(f,w)&D1;
@@ -1121,7 +1121,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     D1 = (identifier("DiscreteDistribution"), D1);
     D2 = (identifier("DiscreteDistribution"), D2);
 
-    formula_expression_ref p_pos = def_parameter("BranchSite.posP",Double(0.1),between(0,1),(identifier("beta"),Tuple(1.0,10.0)));
+    formula_expression_ref p_pos = def_parameter("BranchSite.posP",Double(0.1),between(0,1),(identifier("beta"),1.0,10.0));
 
     // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
     // FIXME - look at the effect on power of using identifierious different priors for w2 here!
@@ -1132,7 +1132,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref mixture2 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
 
     formula_expression_ref branch_site = (identifier("MixtureModels"), mixture1&(mixture2&ListEnd) );
-    branch_site.add_expression( constructor(":~",2) +  F.exp() + (identifier("dirichlet'"),Tuple(n,1.0)));
+    branch_site.add_expression( constructor(":~",2) +  F.exp() + (identifier("dirichlet'"),n,1.0));
 
     return branch_site;
   }
@@ -1147,7 +1147,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     if (n < 2) throw myexception()<<"The branch-site model needs at least two categories.";
 
     // Create the parameter for degree of positive selection, if it exists.
-    formula_expression_ref w_pos = def_parameter("BranchSite.posW", Double(1.5), lower_bound(1), (identifier("logGamma"), Tuple(1.0, 1.0)));
+    formula_expression_ref w_pos = def_parameter("BranchSite.posW", Double(1.5), lower_bound(1), (identifier("logGamma"), 1.0, 1.0));
     formula_expression_ref I  = def_parameter("BranchSite.posSelection", true, nullptr, (identifier("bernoulli"), 0.5));
     formula_expression_ref w_pos_effective = (If, I, w_pos, 1.0);
 
@@ -1160,7 +1160,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     {
       string n_ = convertToString(i);
       formula_expression_ref f = def_parameter("BranchSite.f"+n_, Double(1.0/n));
-      formula_expression_ref w = def_parameter("BranchSite.w"+n_, Double(0.5), between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
+      formula_expression_ref w = def_parameter("BranchSite.w"+n_, Double(0.5), between(0,1), (identifier("uniform"), 0.0, 1.0));
       if (i == n-1) w = expression_ref(1.0);
 
       D1 = Tuple(f,w)&D1;
@@ -1170,7 +1170,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     D1 = (identifier("DiscreteDistribution"), D1);
     D2 = (identifier("DiscreteDistribution"), D2);
 
-    formula_expression_ref p_pos = def_parameter("BranchSite.posP",Double(0.1),between(0,1),(identifier("beta"),Tuple(1.0,10.0)));
+    formula_expression_ref p_pos = def_parameter("BranchSite.posP",Double(0.1),between(0,1),(identifier("beta"),1.0,10.0));
 
     // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
     // FIXME - look at the effect on power of using identifierious different priors for w2 here!
@@ -1181,7 +1181,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref mixture2 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
 
     formula_expression_ref branch_site = (identifier("MixtureModels"), mixture1&(mixture2&ListEnd) );
-    branch_site.add_expression( constructor(":~",2) +  F.exp() + (identifier("dirichlet'"),Tuple(n,1.0)));
+    branch_site.add_expression( constructor(":~",2) +  F.exp() + (identifier("dirichlet'"),n,1.0));
 
     return branch_site;
   }

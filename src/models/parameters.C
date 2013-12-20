@@ -1163,7 +1163,7 @@ Parameters::Parameters(const module_loader& L,
     string mu_name = "Main.mu"+convertToString(i+1);
     add_parameter(mu_name, Double(0.25), lower_bound(0));
     // prior on mu[i], the mean branch length for scale i
-    add_note( constructor(":~",2)+parameter(mu_name)+(identifier("gamma"), Tuple(0.5, 2.0)));
+    add_note( constructor(":~",2)+parameter(mu_name)+(identifier("gamma"), 0.5, 2.0));
 
     int trigger = add_compute_expression( (identifier("trigger_on"),parameter(mu_name),i) );
     set_re_evaluate(trigger, true);
