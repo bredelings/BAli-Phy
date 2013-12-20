@@ -1,14 +1,14 @@
 Source: bali-phy
 Section: science
 Priority: extra
-Maintainer: Benjamin Redelings <benjamin.redelings@nescent.org>
-Build-Depends: cdbs, debhelper (>= 5), autotools-dev, libgsl0-dev,
+Maintainer: Benjamin Redelings <benjamin.redelings@duke.edu>
+Build-Depends: cdbs, debhelper (>= 5), autotools-dev,
   libboost-filesystem-dev, libboost-program-options-dev, libboost-dev,
-  libopenmpi-dev
+  libboost-chrono-dev, libboost-random-dev, libboost-system-dev
 Standards-Version: 3.7.2
 Vcs-Git: git://github.com/bredelings/BAli-Phy.git
 Vcs-Browser: http://github.com/bredelings/BAli-Phy
-Homepage: http://www.biomath.ucla.edu/msuchard/bali-phy/
+Homepage: http://www.bali-phy.org/
 
 Package: bali-phy
 Architecture: any
