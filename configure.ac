@@ -247,9 +247,6 @@ if test "$GXX" = yes ; then
 
 fi
 
-ldflags=$LDFLAGS
-AC_SUBST(ldflags)
-
 
 AM_CONDITIONAL(GCC, test "$GXX" = yes)
 AM_CONDITIONAL(DEBUG, test "$debug" = yes)
@@ -449,6 +446,9 @@ fi
 AC_SUBST(cairo_progs)
 
 ldflags=$LDFLAGS
+if test "${host_os_noversion}" = "linux" ; then
+ldflags="$ldflags '-Wl,-rpath,\$\$ORIGIN/../lib/bali-phy/' -Wl,--enable-new-dtags"
+fi
 AC_SUBST(ldflags)
 
 # Write our compilation flags to config.h so that we can report them with the version info.
@@ -474,6 +474,7 @@ echo ""
 echo "CPPFLAGS = $CPPFLAGS"
 echo "CXXFLAGS = $CXXFLAGS"
 echo "LDFLAGS = $LDFLAGS"
+echo "ldflags = $ldflags"
 echo "LIBS = $LIBS"
 if test -n "$cairo" && test "$cairo" != "no"; then
   echo "CAIRO_CFLAGS = $CAIRO_CFLAGS"
