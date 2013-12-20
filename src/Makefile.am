@@ -124,12 +124,12 @@ endif
 nodist_bali_phy_SOURCES = git_version.h
 
 if HOST_LINUX
-bali_phy_LDFLAGS = -rdynamic
+bali_phy_LDFLAGS = @ldflags@ -rdynamic '-Wl,-rpath,$$ORIGIN/../lib/bali-phy/' -Wl,--enable-new-dtags
 else
 if HOST_MINGW32
-bali_phy_LDFLAGS = -Wl,--export-all-symbols,--out-implib=libbali-phy.dll.a
+bali_phy_LDFLAGS = @ldflags@ -Wl,--export-all-symbols,--out-implib=libbali-phy.dll.a
 else
-bali_phy_LDFLAGS =
+bali_phy_LDFLAGS = @ldflags@
 endif
 endif
 
