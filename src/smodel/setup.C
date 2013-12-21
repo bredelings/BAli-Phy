@@ -178,11 +178,7 @@ formula_expression_ref coerce_to_EM(const module_loader& L,
 
 {
   if (smodel == "")
-  {
-    smodel = default_markov_model(*a);
-    if (smodel == "")
-      throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a->name<<"'";
-  }
+    throw myexception()<<"Can't construct substitution model from empty description!";
 
   formula_expression_ref S = get_smodel_(L,smodel, a, frequencies);
 

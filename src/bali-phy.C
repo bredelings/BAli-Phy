@@ -1000,7 +1000,7 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
 
 vector<formula_expression_ref>
 get_smodels(const module_loader& L,const variables_map& args, const vector<alignment>& A,
-	    const shared_items<string>& smodel_names_mapping)
+	    shared_items<string>& smodel_names_mapping)
 {
   vector<formula_expression_ref> smodels;
   for(int i=0;i<smodel_names_mapping.n_unique_items();i++) 
@@ -1008,6 +1008,15 @@ get_smodels(const module_loader& L,const variables_map& args, const vector<align
     vector<alignment> alignments;
     for(int j=0;j<smodel_names_mapping.n_partitions_for_item(i);j++)
       alignments.push_back(A[smodel_names_mapping.partitions_for_item[i][j]]);
+
+    if (smodel_names_mapping.unique(i) == "")
+    {
+      const alphabet& a = alignments[0].get_alphabet();
+      smodel_names_mapping.unique(i) = default_markov_model(a);
+
+      if (smodel_names_mapping.unique(i) == "")
+	throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
+    }
 
     formula_expression_ref full_smodel = get_smodel(L,
 						    args,
