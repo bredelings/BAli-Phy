@@ -1,4 +1,5 @@
 <!DOCTYPE book [
+<!ENTITY  version                   "2.2.0"         >
 <!ENTITY % sgml.features "IGNORE">
 <!ENTITY % xml.features "INCLUDE">
 
@@ -20,7 +21,7 @@
 <article xmlns="http://docbook.org/ns/docbook" version="5.0" 
          xmlns:mml="http://www.w3.org/1998/Math/MathML"
 	 xml:lang="en">
-  <info><title><application>BAli-Phy</application> User's Guide v2.2.0</title>
+  <info><title><application>BAli-Phy</application> User's Guide v&version;</title>
     
     <author><personname><firstname>Benjamin</firstname><surname>Redelings</surname></personname></author>
   </info>
@@ -109,9 +110,9 @@ While running the Cygwin installer
     application; on Windows it will be the <application>Cygwin Terminal</application>, not the
     Windows command prompt.)</para></listitem>
     
-    <listitem><para>Make a directory called <filename>local</filename> in your
-    home directory to contain the executable files:
-<screen><prompt>%</prompt> <userinput>mkdir ~/local</userinput></screen>
+    <listitem><para>Make a directory called <filename>Applications</filename> in your
+    home directory:
+<screen><prompt>%</prompt> <userinput>mkdir ~/Applications</userinput></screen>
     <note>
     Note that <userinput>~</userinput> is a synonym for
     <userinput>&#36;HOME</userinput>, your home directory.  You can
@@ -123,31 +124,31 @@ or
 
     <listitem><para><link xmlns:xlink="http://www.w3.org/1999/xlink"
     xlink:href="http://www.bali-phy.org/download.php">Download</link> 
-BAli-Phy executables for your operating system from the web site using your browser.  If you're not sure, choose the 32-bit executables.  Save them to the <filename>~/local/</filename> directory that you just created on the command line. Then check to see that the file is there:
-<screen><prompt>%</prompt> <userinput>ls ~/local</userinput>
-bali-phy-<replaceable>version</replaceable>.tgz
+BAli-Phy executables for your operating system from the web site using your browser.  If you're not sure, choose the 32-bit executables.  Save them to the <filename>~/Applications</filename> directory that you just created on the command line. Then check to see that the file is there:
+<screen><prompt>%</prompt> <userinput>ls ~/Applications</userinput>
+bali-phy-&version;.tgz
 </screen>
 </para>
 <para>Alternatively, you can download the file directly from the command line using <userinput>wget</userinput> if you know the URL:
-<screen><prompt>%</prompt> <userinput>cd ~/local</userinput>
+<screen><prompt>%</prompt> <userinput>cd ~/Applications</userinput>
 <prompt>%</prompt> <userinput>wget <replaceable>URL</replaceable></userinput>
 <prompt>%</prompt> <userinput>ls</userinput>
-bali-phy-<replaceable>version</replaceable>.tgz
+bali-phy-&version;.tgz
 </screen>
 </para>
 </listitem>
 
     <listitem><para>Extract the compressed archive on the Unix (or
     Cygwin) command line using the <command>tar</command> command:
-<screen><prompt>%</prompt> <userinput>cd ~/local</userinput>
-<prompt>%</prompt> <userinput>tar -zxf bali-phy-<replaceable>version</replaceable>.tgz</userinput>
+<screen><prompt>%</prompt> <userinput>cd ~/Applications</userinput>
+<prompt>%</prompt> <userinput>tar -zxf bali-phy-&version;.tgz</userinput>
 <prompt>%</prompt> <userinput>ls</userinput>
-bali-phy-<replaceable>version</replaceable>.tgz  bin  share
+bali-phy-&version;.tgz  bali-phy-&version;/
 </screen>
     </para></listitem>
 
     <listitem><para>Finally, test that the program can be run.
-<screen><prompt>%</prompt> <userinput>~/local/bin/bali-phy -v</userinput>
+<screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy -v</userinput>
 VERSION: 2.2.0  [2.2 commit 66ad8405+]  (Oct 03 2013 14:47:48)
 BUILD: Oct  3 2013 15:13:10
 ARCH: x86_64-unknown-linux-gnu
@@ -163,8 +164,8 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
       <section><title>I have a path?</title>
       <para>
 	If you installed <application>BAli-Phy</application> to the directory
-	<filename>~/local</filename>, then you can run
-	bali-phy by typing <command>~/local/bin/bali-phy</command>.
+	<filename>~/Applications</filename>, then you can run
+	bali-phy by typing <command>~/Applications/bali-phy-&version;/bin/bali-phy</command>.
 	However, it would be much nicer to simply type
 	<command>bali-phy</command> and let the computer find the
 	executable for you.  This can be achieved by putting the directory
@@ -186,10 +187,10 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	this environment variable by typing:
 	<screen><prompt>%</prompt> <userinput>echo &#36;PATH</userinput></screen>
 	We will assume that you extracted the bali-phy archive in
-	<filename>~/local</filename> and so you want to add
-	<filename>&#36;HOME/local/bin</filename> to your <envar>PATH</envar>.  (If you
-	installed to another directory,
-	replace <filename>&#36;HOME/local/</filename> with that directory.)
+	<filename>~/Applications/</filename> and so you want to add
+	<filename>&#36;HOME/Applications/bali-phy-&version;/bin</filename>
+	to your <envar>PATH</envar>.  (If you installed to another directory,
+	replace <filename>&#36;HOME/Applications/bali-phy-&version;/bin</filename> with that directory.)
       </para>
       </section>
 
@@ -199,10 +200,10 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	<command>echo &#36;SHELL</command> to find out. If your
 	shell is <command>sh</command> or 
 	<command>bash</command> then the command looks like this: 
-	<screen><prompt>%</prompt> <userinput>PATH=&#36;HOME/local/bin:&#36;PATH</userinput></screen>
+	<screen><prompt>%</prompt> <userinput>PATH=&#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH</userinput></screen>
 	If your shell is <command>csh</command> or
 	<command>tcsh</command>, then the command looks like this:
-	<screen><prompt>%</prompt> <userinput>setenv PATH &#36;HOME/local/bin:&#36;PATH</userinput></screen>
+	<screen><prompt>%</prompt> <userinput>setenv PATH &#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH</userinput></screen>
 	Note that these commands will only affect the window you are typing
 	in, and will vanish when you reboot.   
       </para>
@@ -276,7 +277,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 
     <section xml:id="tests"><info><title>Testing the installed software</title></info>
     <para>In order to determine that the software has been correctly installed, and the <envar>PATH</envar> has been correctly set, run the following commands:
-<screen><prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=50</userinput>
+<screen><prompt>%</prompt> <userinput>bali-phy ~/Applications/bali-phy-&version;/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=50</userinput>
 <prompt>%</prompt> <userinput>bp-analyze.pl 5d-1/</userinput></screen>
     </para>
     <para>Furthermore, the directory <filename>5d-1</filename> should contain a file called <filename>C1.p</filename>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</para>
@@ -349,7 +350,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 
 	<screen><prompt>%</prompt> <userinput>mkdir build</userinput>
 <prompt>%</prompt> <userinput>cd build</userinput>
-<prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/local</userinput></screen>
+<prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/Applications/bali-phy-&version;/</userinput></screen>
 	
 	If this command succeeds, then you can simply type
 
@@ -357,7 +358,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 <prompt>%</prompt> <command>make install</command></screen>
 
 	to build and install <command>bali-phy</command> and its
-	associated tools and install it in <filename>~/local/</filename>.
+	associated tools and install it in <filename>~/Applications/bali-phy-&version;/</filename>.
 	To customize the compilation and installation process, read the
 	following sections on supplying arguments to the
 	<command>configure</command> script.
@@ -367,7 +368,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
     <section><info><title>Options to <command>configure</command></title></info>
       
 
-      <section xml:id="install-prefix"><info><title>Installing to a location besides <filename>~/local/</filename></title></info>
+      <section xml:id="install-prefix"><info><title>Installing to another location</title></info>
 	
 	<para>The configure script chooses to install
 	  <command>bali-phy</command> in the directory
@@ -380,7 +381,6 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	  <filename>~/local</filename>, you can enter:
 
 	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/local</userinput></screen>
-          This is recommended.
 	</para>
 
       </section>
@@ -416,44 +416,20 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	</para>
       </section>
 
-      <section><info><title>Optimizing for a specific architecture</title></info>
+      <section><info><title>Passing flags to the C++ compiler</title></info>
 	
-	<para>You can specify optimizing for a specific brand of CPU,
-	  by specifying the <userinput>CHIP</userinput> variable to
-	  <command>configure</command>, as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure CHIP=<replaceable>cpu</replaceable></userinput></screen>
-	  You can set CHIP to any of <userinput>pentium3</userinput>,
-	  <userinput>pentium4</userinput>,
-	  <userinput>nocona</userinput>, <userinput>core2</userinput>,
-	  <userinput>G3</userinput>,
-	  <userinput>G4</userinput>, or <userinput>G5</userinput>.
-	  (On recent versions of GCC, you can
-	  set <userinput>CHIP=native</userinput> to auto-detect the
-	  type of CPU you have.)  This may produce faster executables,
-	  but at the cost of producing executables that may not run on
-	  a different kind of chip.
+	
+	<para>You can pass flags to the C++ compiler by setting the CXXFLAGS variable:
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure CXXFLAGS="-march=native -g"</userinput></screen>
 	</para>
       </section>
 
-      <section><info><title>Statically linked executables</title></info>
-	
-	<para>Call <command>configure</command> with the flag
-	  <userinput>--enable-static</userinput> to build static
-	  executables.  Static executables will be able to run on other
-	  computers with the with the same type of CPU but slightly
-	  different versions of the operating system. 
-	</para> 
-      </section>
-      
       <section><info><title>Example</title></info>
 	
 	<para>
           All these options to <command>configure</command> can be
 	  combined, as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.8 CHIP=pentium4</userinput></screen>
-          This example uses <command>g++-4.8</command> to build a
-	  pentium4-optimized version of <command>bali-phy</command> with
-	  static linkage.
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/local CXX=g++-4.8 CXXFLAGS="-march=native -g"</userinput></screen>
 	</para>
       </section>
     </section>
@@ -609,7 +585,7 @@ traditional = traditional
 	  the option name as the value, because it does not take a
 	  value.  Thus, this configuration file corresponds to the
 	  command line
-	  <screen><prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv --traditional</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>bali-phy ~/Applications/bali-phy-&version;/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv --traditional</userinput></screen>
 	</para>
       </section>
 
@@ -649,7 +625,7 @@ traditional = traditional
       
       <para>Here we analyze the EF-Tu 5-taxon data set provided with
 	the software.</para>
-      <screen> <prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy ~/Applications/bali-phy-&version;/share/bali-phy/examples/EF-Tu/5d.fasta</userinput></screen>
     </example>
 
     <example><info><title>Multiple-Rate Substitution Model</title></info>
@@ -659,7 +635,7 @@ traditional = traditional
 	invariant sites.  The amount of rate variation and the fraction of
 	invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv --randomize-alignment</userinput></screen></example>
+      <screen> <prompt>%</prompt> <userinput>bali-phy ~/Applications/bali-phy-&version;/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv --randomize-alignment</userinput></screen></example>
 
     <example><info><title>Fixed alignment</title></info>
       
@@ -671,7 +647,7 @@ traditional = traditional
 	estimated from the input sequences.
       </para> 
 
-      <screen> <prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy ~/Applications/bali-phy-&version;/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</userinput></screen>
 
     </example>
   </section>
