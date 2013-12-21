@@ -75,32 +75,6 @@ AC_ARG_WITH([system-boost], AS_HELP_STRING([--with-system-boost],[Use the Boost 
   use_system_boost=no
 )
 
-AC_ARG_VAR(CHIP,
-           [Use features of what CPU type? (-march=?/-mcpu=?: see 'man gcc'])
-
-AC_ARG_VAR(TUNE,
-           [Optimize for what CPU type? (-mtune=?: see 'man gcc')])
-
-if test "$CHIP" = "" ; then
-   echo " No chip architecture specified: using default."
-elif test "$CHIP" = "G3" ; then
-   CHIP="-mcpu=G3"
-elif test "$CHIP" = "G4" ; then
-   CHIP="-mcpu=G4"
-elif test "$CHIP" = "G5" ; then
-   CHIP="-mcpu=G5"
-elif test "$CHIP" = "fast" ; then
-   CHIP="-fast"
-else
-   CHIP="-march=$CHIP"
-fi
-
-if test "$TUNE" != "" ; then
-   TUNE="-mtune=$TUNE"
-fi
-
-CXXFLAGS="$CXXFLAGS $CHIP $TUNE"
-
 # 1. Checks for programs.
 ORIG_CFLAGS=$CFLAGS
 ORIG_CXXFLAGS=$CXXFLAGS
