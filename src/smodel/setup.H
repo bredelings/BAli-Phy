@@ -41,4 +41,6 @@ formula_expression_ref get_smodel(const module_loader& L,
 				  const std::string&,
 				  const std::vector<alignment>& A);
 
+std::string default_markov_model(const alphabet& a);
+
 #endif
