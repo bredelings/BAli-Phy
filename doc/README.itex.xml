@@ -153,10 +153,10 @@ bali-phy-&version;.tgz  bali-phy-&version;/
 
     <listitem><para>Finally, test that the program can be run.
 <screen><prompt>%</prompt> <userinput>&exe.path; -v</userinput>
-VERSION: 2.2.0  [2.2 commit 66ad8405+]  (Oct 03 2013 14:47:48)
-BUILD: Oct  3 2013 15:13:10
+VERSION: 2.2.0  [2.2 commit 814e5134+]  (Dec 20 2013 20:24:02)
+BUILD: Dec 20 2013 20:28:12
 ARCH: x86_64-unknown-linux-gnu
-COMPILER: GCC 4.8.1
+COMPILER: GCC 4.8.2
 FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops -std=c++11 -finline-limit=1000   -pipe -O3
 </screen>
 </para></listitem>
@@ -450,11 +450,12 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	and autoconf 2.59 (or higher).  Run these commands in the top level
 	directory of the repository that you checked out.<screen><prompt>%</prompt><userinput> autoheader</userinput>
 <prompt>%</prompt> <userinput>aclocal -I m4</userinput>
+<prompt>%</prompt> <userinput>libtoolize</userinput>
 <prompt>%</prompt> <userinput>automake -a</userinput>
 <prompt>%</prompt> <userinput>autoconf</userinput></screen>
         If your system has multiple versions of automake, then you may
-	have to type e.g. <userinput>automake-1.11 -a</userinput> and
-	<userinput>aclocal-1.11</userinput> instead in order to specify which
+	have to type e.g. <userinput>automake-1.14 -a</userinput> and
+	<userinput>aclocal-1.14</userinput> instead in order to specify which
 	version to use.
       </para>
     </section>
@@ -505,7 +506,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 
       <para>You can specify a more complex substitution model as follows (See <xref linkend="subst_basic"/>):
 
-	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel WAG+gamma_inv</userinput></screen> </para>
+	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel LG+gamma_inv</userinput></screen> </para>
       <para>You may specify an indel model of <userinput>none</userinput>
 	to fix the alignment to its initial value, and ignore information in shared insertions or deletions.
   	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --imodel none</userinput></screen></para>
@@ -589,7 +590,7 @@ traditional = traditional
 	  the option name as the value, because it does not take a
 	  value.  Thus, this configuration file corresponds to the
 	  command line
-	  <screen><prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv --traditional</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>bali-phy examples/EF-Tu/5d.fasta --smodel log-normal_inv --traditional</userinput></screen>
 	</para>
       </section>
 
@@ -610,11 +611,11 @@ traditional = traditional
     <para>Here are some examples which demonstrate how to run
       <application>BAli-Phy</application>.  In order to run these
       examples, you must find the <filename>examples/</filename>
-      directory which contains the example files.  Typically, the
-      <filename>examples/</filename> directory will be found at
-      <filename><replaceable>prefix</replaceable>/share/bali-phy/examples/</filename>
-      if you installed <application>bali-phy</application> in directory
-      <replaceable>prefix</replaceable>.
+      directory which contains the example files.  If you downloaded
+      executables and extracted them in the
+      <filename>&install.prefix;</filename> directory, then the
+      <filename>examples/</filename> directory will be found at 
+      <filename>&install.path;/share/bali-phy/examples/</filename>.
     </para>
 
     <para>Also note that <command>bali-phy</command>
@@ -644,11 +645,10 @@ traditional = traditional
     <example><info><title>Fixed alignment</title></info>
       
       <para>Here we use the 5S rRNA 5-taxon data set provided with
-	the software.  The alignment is fixed and the traditional
-	likelihood model is used, making indels non-informative.  In
-	addition, the transition kernel which samples nucleotide frequencies
-	is disabled, thus fixing the nucleotide frequencies to empirical values
-	estimated from the input sequences.
+	the software.  The alignment is fixed and the <userinput>--traditional</userinput>
+	option is used, making indels non-informative.  In addition,
+	nucleotide frequencies are fixed to empirical values estimated
+	from the input sequences. 
       </para> 
 
       <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</userinput></screen>
@@ -755,18 +755,13 @@ traditional = traditional
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--set <replaceable>parameter=value</replaceable></option></term>
-	  <listitem><para>Specify initial value of <replaceable>parameter</replaceable>.</para></listitem>
+	  <term><option>--set <replaceable>key=value</replaceable></option></term>
+	  <listitem><para>Set <replaceable>key</replaceable>=<replaceable>value</replaceable>.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>--fix <replaceable>parameter[=value]</replaceable></option></term>
-	  <listitem><para>Mark <replaceable>parameter</replaceable> fixed, and optionally specify a value.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--unfix <replaceable>parameter[=value]</replaceable></option></term>
-	  <listitem><para>Mark <replaceable>parameter</replaceable> not fixed, and optionally specify an initial value.</para></listitem>
+	  <term><option>--initial-value <replaceable>parameter[=value]</replaceable></option></term>
+	  <listitem><para>Set <replaceable>parameter</replaceable>=<replaceable>initial value</replaceable>.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
@@ -1383,7 +1378,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
        <application>BAli-Phy</application> are specified using a
        stack, as follows: <userinput>Model[arg]+Model[arg]+...+Model[arg]</userinput>
         where each model uses the previous models as input.  For
-	example, <userinput>WAG+gamma_inv[4]</userinput>. Arguments
+	example, <userinput>LG+gamma_inv[4]</userinput>. Arguments
 	are optional.</para>
 
 	<note>
@@ -1423,7 +1418,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	</para>
 	
 	<para>The basic CTMC models are EQU, HKY, TN, GTR, HKYx3,
-	TNx3, GTRx3,  JTT, WAG, LG, and M0.  Each of these models is a
+	TNx3, GTRx3, JTT, WAG, LG, and M0.  Each of these models is a
 	way of specifying the exchangeability matrix $S_{ij}$.</para>
 
 	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
@@ -2030,7 +2025,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 </para>
 <para>The posterior probability of postive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <userinput>--mean</userinput> option.
 </para>
-<para>In case this probability is extremely close to 1 or 0, you may with to add the option <userinput>--Rao-Blackwellize S1.BranchSite.posSelection</userinput>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to computation a more accurate estimate of the posterior probability of positive selection.
+<para>In case this probability is extremely close to 1 or 0, you may wish to add the option <userinput>--Rao-Blackwellize S1.BranchSite.posSelection</userinput>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to computation a more accurate estimate of the posterior probability of positive selection.
     </para>
     </section>
     <section><info><title>Substitution model examples</title></info>
@@ -2649,10 +2644,10 @@ The stabilization criterion is the same one described above for numerical values
       
       <qandaset>
 	<qandaentry>
-	  <question><para>I tried to use <userinput>--smodel gamma[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
+	  <question><para>I tried to use <userinput>--smodel LG+gamma[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
 	  <answer>
-	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>gamma[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <command>bali-phy</command>.</para>
-	    <para>To avoid this, put a backslash in front of the first "[" and write <userinput>--smodel gamma&#92;[6]</userinput>.  This will keep the C-shell from interfering with your command.
+	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>LG+gamma[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <command>bali-phy</command>.</para>
+	    <para>To avoid this, put a backslash in front of the first "[" and write <userinput>--smodel LG+gamma&#92;[6]</userinput>.  This will keep the C-shell from interfering with your command.
 	    </para>
 	  </answer>
 	</qandaentry>
