@@ -99,10 +99,15 @@ vector<string> split_top_level(const string& s)
   for(int i=0;i<s.size();i++)
     if (s[i] == '[')
       depth++;
-    else if (s[i] == '[')
+    else if (s[i] == ']')
+    {
       depth--;
+      if (depth < 0) throw myexception()<<"Too many ']' in string '"<<s<<"'";
+    }
     else if (depth == 0 and s[i] == '+')
       split = i;
+  if (depth != 0)
+    throw myexception()<<"Too many '[' in string '"<<s<<"'";
   
   // Here if explicitly insert an "" argument if there are no '+' args before us.
   vector<string> args;
