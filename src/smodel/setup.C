@@ -402,7 +402,7 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
     for(int i=0;i<a->size();i++)
       v[i] = (*frequencies)[i];
 
-    return (identifier("ReversibleFrequency"), *a, (identifier("iotaUnsigned"), a->size()), v, (identifier("SModel.plus_gwF"), a, 1.0, v));
+    R = (identifier("ReversibleFrequency"), *a, (identifier("iotaUnsigned"), a->size()), v, (identifier("SModel.plus_gwF"), a, 1.0, v));
   }
 
   else if (model_args[0] == "F61")
