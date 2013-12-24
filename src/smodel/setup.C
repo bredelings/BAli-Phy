@@ -553,11 +553,7 @@ formula_expression_ref coerce_to_RA(const module_loader& L,
   try 
   {
     if (is_exactly(result, "SModel.ReversibleFrequency"))
-    {
-      formula_expression_ref S = coerce_to_EM(L,"",a,frequencies);
-      
-      return Reversible_Markov_Model(S,M);
-    }
+      throw myexception()<<"Cannot construct CTMC model from frequency model alone!";
 
     if (boost::dynamic_pointer_cast<const SymmetricMatrixObject>(result))
     {
@@ -581,10 +577,7 @@ formula_expression_ref coerce_to_RA(const module_loader& L,
 				    const shared_ptr< const valarray<double> >& frequencies)
 {
   formula_expression_ref M;
-  if (smodel == "")
-    M = coerce_to_EM(L, "", a, frequencies);
-  else
-    M = get_smodel_(L, smodel, a, frequencies);
+  M = get_smodel_(L, smodel, a, frequencies);
 
   return coerce_to_RA(L, M, a, frequencies);
 }
@@ -613,10 +606,7 @@ formula_expression_ref coerce_to_MM(const module_loader& L,
 				    const shared_ptr< const valarray<double> >& frequencies)
 {
   formula_expression_ref M;
-  if (smodel == "")
-    M = coerce_to_RA(L, "", a, frequencies);
-  else
-    M = get_smodel_(L, smodel, a, frequencies);
+  M = get_smodel_(L, smodel, a, frequencies);
 
   return coerce_to_MM(L, M,a,frequencies);
 }
@@ -646,10 +636,7 @@ formula_expression_ref coerce_to_MMM(const module_loader& L,
 {
   formula_expression_ref M;
 
-  if (smodel == "")
-    M = coerce_to_MM(L, "", a, frequencies);
-  else
-    M = get_smodel_(L, smodel, a, frequencies);
+  M = get_smodel_(L, smodel, a, frequencies);
   
   return coerce_to_MMM(L, M, a, frequencies);
 }
