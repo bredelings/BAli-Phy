@@ -51,11 +51,9 @@ public:
   closure C;
 
   /// Is C a parameter, or is the reduction result dependent on a parameter value?
-  bool changeable = false;
-
   bool re_evaluate = false;
 
-  enum class type_t {unknown=0, index_var=1, constant=2};
+  enum class type_t {unknown=0, index_var=1, constant=2, changeable=3};
 
   type_t type = type_t::unknown;
 
@@ -151,6 +149,7 @@ public:
   void collect_garbage();
   void trace_and_reclaim_unreachable();
   bool reg_is_changeable(int r) const;
+  void make_reg_changeable(int r);
 
   void set_used_input(int t, int R1, int R2);
   void clear_used_inputs_for_reg(int t, int R);

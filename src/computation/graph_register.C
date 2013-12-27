@@ -204,8 +204,6 @@ reg& reg::operator=(reg&& R) noexcept
 {
   C = std::move(R.C);
 
-  changeable = R.changeable;
-
   re_evaluate = R.re_evaluate;
 
   type = R.type;
@@ -215,7 +213,6 @@ reg& reg::operator=(reg&& R) noexcept
 
 reg::reg(reg&& R) noexcept
 :C( std::move(R.C) ),
-  changeable( R.changeable ),
   re_evaluate( R.re_evaluate ),
   type ( R.type )
 { }
@@ -223,7 +220,6 @@ reg::reg(reg&& R) noexcept
 void reg::clear()
 {
   C.clear();
-  changeable = false;
   re_evaluate = false;
   type = type_t::unknown;
 }
@@ -231,7 +227,6 @@ void reg::clear()
 void reg::check_cleared()
 {
   assert(not C);
-  assert(not changeable);
   assert(not re_evaluate);
   assert(type == type_t::unknown);
 }
@@ -1347,7 +1342,14 @@ void reg_heap::trace_and_reclaim_unreachable()
 
 bool reg_heap::reg_is_changeable(int r) const
 {
-  return access(r).changeable;
+  return access(r).type == reg::type_t::changeable;
+}
+
+void reg_heap::make_reg_changeable(int r)
+{
+  assert( access(r).type == reg::type_t::changeable or access(r).type == reg::type_t::unknown );
+
+  access(r).type = reg::type_t::changeable;
 }
 
 /*
@@ -1987,7 +1989,11 @@ class RegOperationArgs: public OperationArgs
     if (M.reg_is_changeable(R3) and evaluate_changeables())
     {
       // If R2 -> result was changeable, then R -> result will be changeable as well.
-      M.access(R).changeable = true;
+      if (not M.reg_is_changeable(R))
+      {
+	assert( M.access(R).type == reg::type_t::unknown );
+	M.make_reg_changeable(R);
+      }
 
       // Note that although R2 is newly used, R3 might be already used if it was 
       // found from R2 through a non-changeable reg_var chain.
