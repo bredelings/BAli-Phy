@@ -2219,7 +2219,9 @@ int reg_heap::incremental_evaluate(int R, int t)
     {
       assert( not reg_is_changeable(R) );
 
-      vector<int> local_env = access(R).C.Env;
+      vector<int> local_env = get_scratch_list();
+
+      local_env = access(R).C.Env;
 
       int start = local_env.size();
 
@@ -2238,6 +2240,8 @@ int reg_heap::incremental_evaluate(int R, int t)
       for(int i=0;i<bodies.size(); i++)
 	pop_temp_head();
       
+      release_scratch_list();
+
       assert(not t or not reg_has_call(t,R) );
       assert(not t or not reg_has_result(t,R) );
     }
