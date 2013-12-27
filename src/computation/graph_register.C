@@ -1075,7 +1075,7 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   const int mark_call_result = 2;
 
   // find all regs in t2 that are not shared from t1
-  vector<int> modified;
+  vector<int>& modified = get_scratch_list();
   for(int r: token_roots[t1].vm_relative.modified())
     if (token_roots[t1].vm_relative[r] > 0)
       modified.push_back(r);
@@ -1160,6 +1160,7 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   // (a) change the computation for some modifiables
   // (b) run invalidate_shared_regs?
 
+  release_scratch_list();
   release_scratch_list();
   release_scratch_list();
   assert(n_active_scratch_lists == 0);
