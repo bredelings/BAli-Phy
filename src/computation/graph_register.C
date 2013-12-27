@@ -2221,29 +2221,21 @@ int reg_heap::incremental_evaluate(int R, int t)
 
       vector<int> local_env = access(R).C.Env;
 
-      vector<int> new_heap_vars;
+      int start = local_env.size();
+
       for(int i=0;i<bodies.size();i++)
-      {
-	// FIXME - do we really want to add a new heap var to point to indirection nodes?
-	// And, what would this mean, anyway?
-
-	// Hmm... should this happen at all?  How?
-
-	int V = push_temp_head();
-	new_heap_vars.push_back( V );
-	local_env.push_back( V );
-      }
+	local_env.push_back( push_temp_head() );
       
       set_C(R, get_trimmed({T, local_env}));
 
       // Substitute the new heap vars for the dummy vars in expression T and in the bodies
       for(int i=0;i<bodies.size();i++)
-	set_C(new_heap_vars[i], get_trimmed({bodies[i],local_env}));
+	set_C(local_env[start+i], get_trimmed({bodies[i],local_env}));
 
       assert( not reg_is_changeable(R) );
 
       // Remove the new heap vars from the list of temp heads in reverse order.
-      for(int i=0;i<new_heap_vars.size(); i++)
+      for(int i=0;i<bodies.size(); i++)
 	pop_temp_head();
       
       assert(not t or not reg_has_call(t,R) );
