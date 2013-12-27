@@ -99,6 +99,8 @@ struct closure
 
 closure get_trimmed(const closure& C);
 
+closure get_trimmed(closure&& C);
+
 closure trim_unnormalize(closure C);
 
 expression_ref deindexify(const closure& C);

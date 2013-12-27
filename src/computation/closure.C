@@ -22,23 +22,31 @@ string closure::print() const
 closure get_trimmed(const closure& C)
 {
   closure C2 = C;
+  return get_trimmed(std::move(C2));
+}
 
+closure get_trimmed(closure&& C)
+{
   if (C.exp->head->type() == trim_type)
   {
-    C2.exp = C.exp->sub[1];
-    
-    const vector<int>& keep = *assert_is_a<Vector<int>>(C.exp->sub[0]);
-    
+    expression_ref old = C.exp;
+    const vector<int>& keep = *assert_is_a<Vector<int>>(old->sub[0]);
+
+    C.exp = C.exp->sub[1];
+
     // Since environments are indexed backwards
-    C2.Env.resize(keep.size());
     for(int i=0;i<keep.size();i++)
-      C2.Env[i] = C.lookup_in_env(keep[keep.size() - 1 - i]);
+    {
+      int k = keep[keep.size()-1-i];
+      C.Env[i] = C.lookup_in_env(k);
+    }
+    C.Env.resize(keep.size());
 
     // Should this ever happen?
-    assert(not is_a<Trim>(C2.exp));
+    assert(not is_a<Trim>(C.exp));
   }
   
-  return C2;
+  return std::move(C);
 }
 
 expression_ref deindexify(const closure& C)
