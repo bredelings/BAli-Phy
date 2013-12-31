@@ -902,7 +902,7 @@ traditional = traditional
 	  is not too long.</para> 
 
 	<para>You can speed up alignment for long genes by specifying
-	  alignment constraints (See <xref linkend="align-constraint1"/>).
+	  alignment constraints (See <xref linkend="alignment_constraints"/>).
 	  Ideally, 10 evenly spaced constraints should reduce the cost of
 	  re-aligning a sequence by a factor of 10.
 	</para>
@@ -938,7 +938,7 @@ traditional = traditional
 
     <section><info><title>Output options</title></info>
 
-    <para>In order to infer ancestral sequences at internal nodes, add the option <userinput>--set log-ancestral=1</userinput>.  This will lead to the creation of an additional output file called <filename>C1.P1.ancestral.fastas</filename>. This file contains a sampled alignment for each iteration, where N's are replaced with a randomly sampled letter.</para>
+    <para>In order to infer ancestral sequences at internal nodes, add the option <userinput>--set log-ancestral=1</userinput>.  This will lead to the creation of an additional output file called <filename>C1.P1.ancestral.fastas</filename>. This file contains a sampled alignment for each iteration, where N's are replaced with a letter randomly sampled from the posterior distribution.</para>
     </section>
 
     <section><info><title>Output files</title></info>
@@ -1375,7 +1375,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
   </section>
     
 
-    <section xml:id="subst_basic"><info><title>Substitution models</title></info>
+    <section xml:id="subst_models"><info><title>Substitution models</title></info>
       
 
        <para>Substitution models in
@@ -1402,7 +1402,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       </section>
 
 
-      <section><info><title>Basic CTMC models</title></info>
+      <section xml:id="subst_basic"><info><title>Basic CTMC models</title></info>
 	
 	<para>The basic substitution models in
 	  <application>BAli-Phy</application> are continuous-time Markov
@@ -1775,7 +1775,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     </section>
 
 
-    <section xml:id="subst_mixture"><info><title>Substitution Mixture Models</title></info>
+    <section><info><title>Substitution Mixture Models</title></info>
     
     <para>
       Complex substitution models in <application>BAli-Phy</application>
@@ -2027,7 +2027,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
     <para>An example command line is as follows:
 <screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta --smodel branch-site[,HKY,F3x4] --disable=topology --tree=<replaceable>tree</replaceable>.tree --alphabet=Codons</screen>
 </para>
-<para>The posterior probability of postive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <userinput>--mean</userinput> option.
+<para>The posterior probability of positive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <userinput>--mean</userinput> option.
 </para>
 <para>In case this probability is extremely close to 1 or 0, you may wish to add the option <userinput>--Rao-Blackwellize S1.BranchSite.posSelection</userinput>.  This will report the log-probability of positive selection each iteration.  The user may exponentiate the reported values and then average them (using R, for example) in order to compute a more accurate estimate of the posterior probability of positive selection.
     </para>
@@ -2058,7 +2058,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 
   </section>
 
-    <section><info><title>Insertion/deletion models</title></info>
+    <section xml:id="indel_models"><info><title>Insertion/deletion models</title></info>
       
       <para>The current models are RS05, RS07, and <userinput>none</userinput>.  The default is RS07.  Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments $\Pr(A|T,\tau,\Lambda)$ is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</para>
 
@@ -2120,7 +2120,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
       <para>Specifying an indel model of <userinput>none</userinput> for a given partition results in fixing the alignment for that partition to its initial value, and ignoring information in shared insertions or deletions.</para>
     </section>
 
-    <section xml:id="align-constraint1"><info><title>Alignment constraints</title></info>
+    <section xml:id="alignment_constraints"><info><title>Alignment constraints</title></info>
       
       <para>To fix specific columns of the alignment, you may specify alignment
 	constraints in a file as follows: </para>
@@ -2189,7 +2189,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
       advance how many iterations are required to give a good
       estimate. The number depends on the specific data set that is
       being examined. As a result, <application>BAli-Phy</application>
-      relies on the user to analyze the data in a running chain
+      relies on the user to analyze the output of a running chain
       periodically in order to determine when enough samples have been
       obtained.  This section describes a number of techniques to
       diagnose when more samples must be taken.
@@ -2239,7 +2239,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
     </section>
 
     
-    <section><info><title>Diagnostics: Variation in split frequencies across runs</title></info>
+    <section><info><title>Diagnostics: Variation in split frequencies across runs (ASDSF/MSDSF)</title></info>
       
       <section><info><title>ASDSF and MSDSF</title></info>
 	
