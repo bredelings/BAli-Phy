@@ -315,9 +315,8 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	      version 4.8 (or higher).
 	    </para> 
 	    <para> Alternatively, the Clang C++ compiler version 3.4
-	    or higher may be used.  The 3.3 version might work as
-	    well, but hasn't been tested yet.  I don't think the
-	    clang version that comes with Xcode 5 is new enough.
+	    or higher may be used.  The 3.3 might work, but may have
+	    a bug that gives a segmentation fault.
 	    </para>
 	  </listitem>
 
@@ -937,6 +936,11 @@ traditional = traditional
 	sequence-file name by using the <userinput>--name</userinput> option.</para>
     </section>
 
+    <section><info><title>Output options</title></info>
+
+    <para>In order to infer ancestral sequences at internal nodes, add the option <userinput>--set log-ancestral=1</userinput>.  This will lead to the creation of an additional output file called <filename>C1.P1.ancestral.fastas</filename>. This file contains a sampled alignment for each iteration, where N's are replaced with a randomly sampled letter.</para>
+    </section>
+
     <section><info><title>Output files</title></info>
       
       <para><application>BAli-Phy</application> writes the following output
@@ -992,6 +996,7 @@ traditional = traditional
       <section><title>Field names in <filename>C1.p</filename></title>
 
       <para>This section explains the meaning of the various field names in the file <filename>C1.p</filename>.</para>
+
 
       <section><title>Computed parameter names</title>
       <variablelist>
@@ -1368,7 +1373,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
   </section>
   </section>
-  <section xml:id="models"><info><title>Models</title></info>
     
 
     <section xml:id="subst_basic"><info><title>Substitution models</title></info>
@@ -2042,6 +2046,16 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
       <para>Example: --smodel M2a[HKY] --alphabet Codons (same as above)</para>
       <para>Example: --smodel M2[TN,F3x4] --alphabet Codons</para>
     </section>
+    <section xml:id="genetic-codes"><info><title>Genetic Codes</title></info>
+      
+      <para>When using a codon-based substitution model like <userinput>M0</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
+<para>If the genetic code is not specified, then the standard code is used:
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons</screen>
+	This example specifies the vertebrate mitochondrial code:
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons[mt-vert]</screen>
+</para>
+    </section>
+
   </section>
 
     <section><info><title>Insertion/deletion models</title></info>
@@ -2106,16 +2120,6 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
       <para>Specifying an indel model of <userinput>none</userinput> for a given partition results in fixing the alignment for that partition to its initial value, and ignoring information in shared insertions or deletions.</para>
     </section>
 
-    <section xml:id="genetic-codes"><info><title>Genetic Codes</title></info>
-      
-      <para>When using a codon-based substitution model like <userinput>M0</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
-<para>If the genetic code is not specified, then the standard code is used:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons</screen>
-	This example specifies the vertebrate mitochondrial code:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons[mt-vert]</screen>
-</para>
-    </section>
-
     <section xml:id="align-constraint1"><info><title>Alignment constraints</title></info>
       
       <para>To fix specific columns of the alignment, you may specify alignment
@@ -2174,8 +2178,6 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 	</para>
       </section>
     </section>
-
-  </section>
 
   <section xml:id="mixing_and_convergence"><info><title>Convergence and Mixing: Is it done yet?</title></info>
     
