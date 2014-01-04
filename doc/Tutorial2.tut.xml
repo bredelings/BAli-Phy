@@ -78,7 +78,7 @@ Defaults are used if you don't specify.
 You can change this to the GTR, if you want:
 % bali-phy 5S-rRNA/5d.fasta --iterations=10 --alphabet=DNA --smodel=GTR --imodel=RS07 
 You can add gamma[4]+INV rate heterogeneity:
-% bali-phy 5S-rRNA/5d.fasta --iterations=10 --alphabet=DNA --smodel=GTR+gamma[4]+INV --imodel=RS07
+% bali-phy 5S-rRNA/5d.fasta --iterations=10 --alphabet=DNA --smodel=GTR+gamma_inv[4] --imodel=RS07
 </para>
 </section>
 
@@ -177,7 +177,7 @@ Now lets use the analysis script to run all the summaries and make a report:
 <para>We didn't specify the number of iterations to run in the section above, so the two analyses will run for
 100,000 iterations, or until you stop them yourself.  See <link xmlns:xlink="http://www.w3.org/1999/xlink"
 xlink:href="http://www.bali-phy.org/README.html#mixing_and_convergence">Section
-8: Convergence and Mixing: Is it done yet?</link> of the manual for
+10: Convergence and Mixing: Is it done yet?</link> of the manual for
 more information about when to stop an analysis.</para>
 <para>In order to stop a running job, you need to kill it. One way of stopping
 bali-phy analyses is this:
@@ -188,7 +188,7 @@ terminate all of them.
 </section>
 
 <section><info><title>Multi-gene analyses</title></info>
-<para>In this section we'll practice running analysis with multiple
+<para>In this section we'll practice running analyses with multiple
 partitions.  Dividing the data into multiple partitions is useful
 because different partitions can have different models, or can have
 different parameters for the same model. This is described in more
