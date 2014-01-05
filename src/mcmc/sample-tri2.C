@@ -51,6 +51,8 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   const Tree& T0 = P0.T();
   assert(P.variable_alignment());
 
+  alignment old = A;
+
   assert(T.is_connected(nodes[0],nodes[1]));
   assert(T.is_connected(nodes[0],nodes[2]));
   assert(T.is_connected(nodes[0],nodes[3]));
@@ -214,34 +216,15 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
 
   vector<int> path = Matrices->ungeneralize(path_g);
 
-  A = A3::construct(A,path,nodes[0],nodes[1],nodes[2],nodes[3],T,seq1,seq2,seq3);
   for(int i=1;i<4;i++) {
     int b = T.directed_branch(nodes[0],nodes[i]);
-    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 0, i));
+    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 0, i), false);
   }
 
-#ifndef NDEBUG_DP
-  //--------------- Check alignment construction ------------------//
-  vector<int> path_new = get_path_3way(A3::project(A,nodes),0,1,2,3);
-
-  vector<int> path_new2 = get_path_3way(A,nodes);
-  assert(path_new == path_new2); // <- current implementation probably guarantees this
-                                 //    but its not a NECESSARY effect of the routine.
-                                 //    due to ordering stuff required in the path but
-                                 //    not store in the alignment A.
-  vector<int> path_new_g = Matrices->generalize(path_new);
-  if (path_new_g != path_g) {
-    std::clog<<"A' (reordered) = "<<A3::project(A,nodes)<<endl;
-    std::clog<<"A' = "<<A<<endl;
-    std::abort();
-  }
-
-  assert(valid(A));
-#endif
-
-  //  std::cerr<<"[tri]bandwidth = "<<bandwidth(Matrices,path_g)<<std::endl;
-
-  //  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g)<<std::endl;
+  vector<pairwise_alignment_t> As;
+  for(int b=0;b<2*T.n_branches();b++)
+    As.push_back(P.get_pairwise_alignment(b,false));
+  *P.A.modify() = get_alignment(old, *P.sequences, construct(T, As));
 
 #ifndef NDEBUG_DP
   check_alignment(A,T,"sample_tri_base:out");
