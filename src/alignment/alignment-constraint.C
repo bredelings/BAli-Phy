@@ -277,8 +277,7 @@ vector< pair<int,int> > get_y_ranges_for_band(int D, const vector<int>& seq1, co
 
 vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignment& A,
 			       const dynamic_bitset<>& group1,const dynamic_bitset<>& group2,
-			       const vector<int>& seq1,const vector<int>& seq2,
-			       const vector<int>& seq12) 
+			       const vector<int>& seq1,const vector<int>& seq2)
 {
   // determine which constraints are satisfied (not necessarily enforceable!)
   vector<int> satisfied = constraint_columns(constraint,A);
@@ -320,6 +319,13 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
   vector<int>& X = pins[0];
   vector<int>& Y = pins[1];
 
+  /* TODO: Rewrite this to go through the pinned columns in order.
+           The order of x-columns with constraints must match the y-order.
+	   If two constraints occur in the same x-column, the same two constraints must occur in the y-column.
+	   I guess I could make a set<int> for each x-column and each y-column.
+	   I could then go through and find matching columns. */
+
+  /*
   for(int i=0;i<seq12.size();i++)
   {
     int column = seq12[i];
@@ -343,7 +349,7 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
     if (Y.size() >= 2 and Y[pins.size()-2] > Y[pins.size()-1])
       throw myexception()<<"X pins not always increasing!";
   }
-
+  */
   return pins;
 }
 

@@ -123,7 +123,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
   //------------------ Compute the DP matrix ---------------------//
   vector<int> path_old = get_path(A,node1,node2);
-  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,~group1,seq1,seq2,seq12);
+  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,~group1,seq1,seq2);
 
   Matrices->forward_constrained(pins);
 

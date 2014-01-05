@@ -62,7 +62,10 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
 
   // If the tree changed, assert that previously nodes 2 and 3 were connected.
   if (tree_changed)
+  {
+    assert(bandwidth < 0);
     assert(T0.is_connected(nodes[2],nodes[3]));
+  }
   else
   {
     assert(T0.is_connected(nodes[0],nodes[2]));
@@ -165,7 +168,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   //  vector<int> path_old_g = Matrices.generalize(path_old);
 
   //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
-  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23,seq123);
+  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23);
 
   vector< pair<int,int> > yboundaries = get_y_ranges_for_band(bandwidth, seq23, seq1, seq123);
 
