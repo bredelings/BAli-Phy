@@ -76,13 +76,13 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   dynamic_bitset<> group2 = T.partition(nodes[0],nodes[2]);
   dynamic_bitset<> group3 = T.partition(nodes[0],nodes[3]);
 
-  vector<int> columns = A3::getorder(A,nodes[0],nodes[1],nodes[2],nodes[3]);
+  vector<int> seq123 = A3::getorder(A,nodes[0],nodes[1],nodes[2],nodes[3]);
 
   // Find sub-alignments and sequences
   vector<int> seq1; seq1.reserve(A.length());
   vector<int> seq23; seq23.reserve(A.length());
-  for(int i=0;i<columns.size();i++) {
-    int column = columns[i];
+  for(int i=0;i<seq123.size();i++) {
+    int column = seq123[i];
     if (not A.gap(column,nodes[1]))
       seq1.push_back(column);
 
@@ -165,9 +165,9 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   //  vector<int> path_old_g = Matrices.generalize(path_old);
 
   //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
-  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23,columns);
+  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23,seq123);
 
-  vector< pair<int,int> > yboundaries = get_y_ranges_for_band(bandwidth, seq23, seq1, columns);
+  vector< pair<int,int> > yboundaries = get_y_ranges_for_band(bandwidth, seq23, seq1, seq123);
 
   // if the constraints are currently met but cannot be met
   if (pins.size() == 1 and pins[0][0] == -1)
