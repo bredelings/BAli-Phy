@@ -63,6 +63,8 @@ public:
   /// What is the n-th state, in the correct order for DP?
   int dp_order(int i) const {assert(i < dp_order_.size());  return dp_order_[i];}
 
+  const std::vector<int>& dp_order() const {return dp_order_;}
+
   /// Convert a path to a generalized path
   std::vector<int> generalize(const std::vector<int>& path) const;
 
