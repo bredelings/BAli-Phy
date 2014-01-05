@@ -74,6 +74,21 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
 
   // std::cerr<<"A = "<<A<<endl;
 
+  int b1 = T.directed_branch(nodes[1],nodes[0]);
+  int b2 = T.directed_branch(nodes[0],nodes[2]);
+  int b3 = T.directed_branch(nodes[0],nodes[3]);
+
+  HMM m1 = P.get_branch_HMM(b1);
+  m1.remap_bits({0,3});
+  HMM m2 = P.get_branch_HMM(b2);
+  m2.remap_bits({3,1});
+  HMM m3 = P.get_branch_HMM(b3);
+  m3.remap_bits({3,2});
+
+  HMM m123 = Glue(m1,Glue(m2,m3));
+  m123.hidden_bits.set(3);
+  m123.B = P.get_beta();
+
   //------------- Compute sequence properties --------------//
   dynamic_bitset<> group1 = T.partition(nodes[0],nodes[1]);
   dynamic_bitset<> group2 = T.partition(nodes[0],nodes[2]);
