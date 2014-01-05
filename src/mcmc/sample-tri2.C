@@ -76,21 +76,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   dynamic_bitset<> group2 = T.partition(nodes[0],nodes[2]);
   dynamic_bitset<> group3 = T.partition(nodes[0],nodes[3]);
 
-
-  //  std::clog<<"n0 = "<<nodes[0]<<"   n1 = "<<nodes[1]<<"    n2 = "<<nodes[2]<<"    n3 = "<<nodes[3]<<std::endl;
-  //  std::clog<<"A (reordered) = "<<project(A,nodes[0],nodes[1],nodes[2],nodes[3])<<endl;
   vector<int> columns = A3::getorder(A,nodes[0],nodes[1],nodes[2],nodes[3]);
-
-#ifndef NDEBUG
-
-  // getorder(project(A,...)...) is not the same as getorder(A,...) because columns that are
-  // in both project(A,...) and A have different columns numbers in each alignment, and
-  // project(A,...) is shorter.
-
-  // However, the NUMBER of columns should be the same. 
-  vector<int> columns2 = A3::getorder(A3::project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
-  assert(columns.size() == columns2.size());
-#endif
 
   // Find sub-alignments and sequences
   vector<int> seq1; seq1.reserve(A.length());
