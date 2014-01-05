@@ -43,7 +43,7 @@ using boost::dynamic_bitset;
 
 // FIXME - resample the path multiple times - pick one on opposite side of the middle 
 
-boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition& P,const vector<int>& nodes, int bandwidth)
+boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition& P, const Tree& T0, const vector<int>& nodes, int bandwidth)
 {
   const Tree& T = P.T();
   alignment& A = *P.A.modify();
@@ -275,7 +275,7 @@ sample_tri_multi_calculation2::sample_tri_multi_calculation2(vector<Parameters>&
   {
     for(int j=0;j<p[i].n_data_partitions();j++) {
       if (p[i][j].variable_alignment())
-	Matrices[i].push_back( tri_sample_alignment_base2(p[i][j],nodes[i],bandwidth) );
+	Matrices[i].push_back( tri_sample_alignment_base2(p[i][j], p[0].T(), nodes[i],bandwidth) );
       else
 	Matrices[i].push_back( boost::shared_ptr<DPmatrixConstrained>());
     }
