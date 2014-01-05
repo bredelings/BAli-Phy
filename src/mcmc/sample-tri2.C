@@ -94,11 +94,19 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   dynamic_bitset<> group2 = T.partition(nodes[0],nodes[2]);
   dynamic_bitset<> group3 = T.partition(nodes[0],nodes[3]);
 
-  vector<int> seq123 = A3::getorder(A,nodes[0],nodes[1],nodes[2],nodes[3]);
-
-  // Find sub-alignments and sequences
   vector<int> seq1; seq1.reserve(A.length());
   vector<int> seq23; seq23.reserve(A.length());
+  vector<int> seq123; 
+  if (tree_changed)
+  {
+  }
+  else
+  {
+  }
+
+  seq123 = A3::getorder(A,nodes[0],nodes[1],nodes[2],nodes[3]);
+
+  // Find sub-alignments and sequences
   for(int i=0;i<seq123.size();i++) {
     int column = seq123[i];
     if (not A.gap(column,nodes[1]))
