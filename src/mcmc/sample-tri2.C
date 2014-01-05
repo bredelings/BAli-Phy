@@ -94,17 +94,11 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
 
   // Find sub-alignments and sequences
   vector<int> seq1; seq1.reserve(A.length());
-  vector<int> seq2; seq2.reserve(A.length());
-  vector<int> seq3; seq3.reserve(A.length());
   vector<int> seq23; seq23.reserve(A.length());
   for(int i=0;i<columns.size();i++) {
     int column = columns[i];
     if (not A.gap(column,nodes[1]))
       seq1.push_back(column);
-    if (not A.gap(column,nodes[2]))
-      seq2.push_back(column);
-    if (not A.gap(column,nodes[3]))
-      seq3.push_back(column);
 
     if (not A.gap(column,nodes[2]) or not A.gap(column,nodes[3]))
       seq23.push_back(column);
