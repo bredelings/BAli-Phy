@@ -43,16 +43,29 @@ using boost::dynamic_bitset;
 
 // FIXME - resample the path multiple times - pick one on opposite side of the middle 
 
-boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition& P, const Tree& T0, const vector<int>& nodes, int bandwidth)
+boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition& P, const data_partition& P0, const vector<int>& nodes, int bandwidth)
 {
   const Tree& T = P.T();
   alignment& A = *P.A.modify();
 
+  const Tree& T0 = P0.T();
   assert(P.variable_alignment());
 
   assert(T.is_connected(nodes[0],nodes[1]));
   assert(T.is_connected(nodes[0],nodes[2]));
   assert(T.is_connected(nodes[0],nodes[3]));
+
+  assert(T0.is_connected(nodes[0],nodes[1]));
+  bool tree_changed = not T0.is_connected(nodes[0],nodes[2]) or not T0.is_connected(nodes[0],nodes[3]);
+
+  // If the tree changed, assert that previously nodes 2 and 3 were connected.
+  if (tree_changed)
+    assert(T0.is_connected(nodes[2],nodes[3]));
+  else
+  {
+    assert(T0.is_connected(nodes[0],nodes[2]));
+    assert(T0.is_connected(nodes[0],nodes[3]));
+  }
 
   // std::cerr<<"A = "<<A<<endl;
 
@@ -275,7 +288,7 @@ sample_tri_multi_calculation2::sample_tri_multi_calculation2(vector<Parameters>&
   {
     for(int j=0;j<p[i].n_data_partitions();j++) {
       if (p[i][j].variable_alignment())
-	Matrices[i].push_back( tri_sample_alignment_base2(p[i][j], p[0].T(), nodes[i],bandwidth) );
+	Matrices[i].push_back( tri_sample_alignment_base2(p[i][j], P0[j], nodes[i], bandwidth) );
       else
 	Matrices[i].push_back( boost::shared_ptr<DPmatrixConstrained>());
     }
