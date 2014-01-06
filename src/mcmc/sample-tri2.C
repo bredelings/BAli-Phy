@@ -94,7 +94,8 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   dynamic_bitset<> group2 = T.partition(nodes[0],nodes[2]);
   dynamic_bitset<> group3 = T.partition(nodes[0],nodes[3]);
 
-  vector<int> seq1; seq1.reserve(A.length());
+  vector<int> seq1 = A.get_columns_for_characters(nodes[1]);
+
   vector<int> seq23; seq23.reserve(A.length());
   vector<int> seq123; 
   vector<HMM::bitmask_t> a12;
@@ -121,8 +122,6 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   // Find sub-alignments and sequences
   for(int i=0;i<seq123.size();i++) {
     int column = seq123[i];
-    if (not A.gap(column,nodes[1]))
-      seq1.push_back(column);
 
     if (not A.gap(column,nodes[2]) or not A.gap(column,nodes[3]))
       seq23.push_back(column);
