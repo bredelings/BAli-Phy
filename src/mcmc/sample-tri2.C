@@ -199,9 +199,8 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
     int j2 = jcol[c2];
     int k2 = kcol[c2];
     Matrices->states(c2).reserve(Matrices->n_dp_states());
-    for(int i=0;i<Matrices->n_dp_states();i++) {
-      int S2 = Matrices->dp_order(i);
-
+    for(int S2: Matrices->dp_order())
+    {
       //---------- Get (,j1,k1) ----------
       int j1 = j2;
       if (A3::dj(S2)) 
