@@ -131,6 +131,8 @@ public:
 
   efloat_t path_P(const std::vector<int>& path) const;
 
+  DPmatrix(int i1, int i2, const HMM& M);
+
   /// Construct a 2D DP matrix from the dimensions, and an HMM
   DPmatrix(int i1,
 	   int i2,

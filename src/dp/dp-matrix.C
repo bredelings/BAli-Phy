@@ -398,11 +398,8 @@ vector<int> DPmatrix::sample_path() const
 
 DPmatrix::DPmatrix(int i1,
 		   int i2,
-		   const vector<bitmask_t>& v1,
-		   const vector<double>& v2,
-		   const Matrix& M,
-		   double Beta)
-  :DPengine(v1,v2,M,Beta),
+		   const HMM& M)
+  :DPengine(M),
    state_matrix(i1,i2,n_dp_states())
 {
   const int I = size1()-1;
@@ -411,6 +408,15 @@ DPmatrix::DPmatrix(int i1,
   for(int state1=0;state1<n_dp_states();state1++)
     (*this)(I,J,state1) = 0;
 }
+
+DPmatrix::DPmatrix(int i1,
+		   int i2,
+		   const vector<bitmask_t>& v1,
+		   const vector<double>& v2,
+		   const Matrix& M,
+		   double Beta)
+  :DPmatrix(i1, i2, HMM(v1,v2,M,Beta))
+{ }
 
 inline void DPmatrixNoEmit::forward_cell(int i2,int j2) 
 { 
