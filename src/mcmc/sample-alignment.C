@@ -116,8 +116,8 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   state_emit[3] |= 0;
 
   boost::shared_ptr<DPmatrixSimple> 
-    Matrices( new DPmatrixSimple(state_emit, P.get_branch_HMM(b).start_pi(),
-				 P.get_branch_HMM(b), P.get_beta(),
+    Matrices( new DPmatrixSimple(HMM(state_emit, P.get_branch_HMM(b).start_pi(),
+				     P.get_branch_HMM(b), P.get_beta()),
 				 dists1, dists2, P.WeightedFrequencyMatrix())
 	      );
 

@@ -409,15 +409,6 @@ DPmatrix::DPmatrix(int i1,
     (*this)(I,J,state1) = 0;
 }
 
-DPmatrix::DPmatrix(int i1,
-		   int i2,
-		   const vector<bitmask_t>& v1,
-		   const vector<double>& v2,
-		   const Matrix& M,
-		   double Beta)
-  :DPmatrix(i1, i2, HMM(v1,v2,M,Beta))
-{ }
-
 inline void DPmatrixNoEmit::forward_cell(int i2,int j2) 
 { 
   assert(0 < i2 and i2 < size1());
@@ -540,14 +531,11 @@ void DPmatrixEmit::prepare_cell(int i,int j)
   s12_sub(i,j) = total;
 }
 
-DPmatrixEmit::DPmatrixEmit(const vector<bitmask_t>& v1,
-			   const vector<double>& v2,
-			   const Matrix& M,
-			   double Beta,
+DPmatrixEmit::DPmatrixEmit(const HMM& M,
 			   const vector< Matrix >& d1,
 			   const vector< Matrix >& d2, 
 			   const Matrix& weighted_frequencies)
-  :DPmatrix(d1.size(),d2.size(),v1,v2,M,Beta),
+  :DPmatrix(d1.size(),d2.size(),M),
    s12_sub(d1.size(),d2.size()),
    s1_sub(d1.size()),s2_sub(d2.size()),
    dists1(d1),dists2(d2)

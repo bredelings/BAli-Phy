@@ -133,13 +133,6 @@ public:
 
   DPmatrix(int i1, int i2, const HMM& M);
 
-  /// Construct a 2D DP matrix from the dimensions, and an HMM
-  DPmatrix(int i1,
-	   int i2,
-	   const std::vector<bitmask_t>& v1,
-	   const std::vector<double>& v2,
-	   const Matrix& M,
-	   double Beta);
   virtual ~DPmatrix() {}
 };
 
@@ -152,15 +145,7 @@ public:
 
   efloat_t path_Q_subst(const std::vector<int>&) const {return 1;}
 
-  DPmatrixNoEmit(int i1,
-		 int i2,
-		 const std::vector<bitmask_t>& v1,
-		 const std::vector<double>& v2,
-		 const Matrix& M,
-		 double Beta
-		 )
-    :DPmatrix(i1,i2,v1,v2,M,Beta) 
-  {}
+  using DPmatrix::DPmatrix;
 
   virtual ~DPmatrixNoEmit() {}
 };
@@ -200,10 +185,7 @@ public:
   double emit__(int i,int j) const;
 
   /// Construct a DP array from an HMM, emission probabilities, and substitution model
-  DPmatrixEmit(const std::vector<bitmask_t>& state_emit,
-	       const std::vector<double>& start_pi,
-	       const Matrix& HMM,
-	       double Beta,
+  DPmatrixEmit(const HMM& M,
 	       const std::vector< Matrix >& dists1,
 	       const std::vector< Matrix >& dists2, 
 	       const Matrix& frequency);
@@ -218,15 +200,7 @@ class DPmatrixSimple: public DPmatrixEmit {
 public:
   void forward_cell(int,int);
 
-  DPmatrixSimple(const std::vector<bitmask_t> & v1,
-		 const std::vector<double> & v2,
-		 const Matrix& M,
-		 double Beta,
-		 const std::vector< Matrix >& d1,
-		 const std::vector< Matrix >& d2, 
-		 const Matrix& f):
-    DPmatrixEmit(v1,v2,M,Beta,d1,d2,f)
-  { }
+  using DPmatrixEmit::DPmatrixEmit;
 
   virtual ~DPmatrixSimple() {}
 };
@@ -256,14 +230,11 @@ public:
 
   void prune();
 
-  DPmatrixConstrained(const std::vector<bitmask_t> & v1,
-		      const std::vector<double> & v2,
-		      const Matrix& M,
-		      double Beta,
+  DPmatrixConstrained(const HMM& M,
 		      const std::vector< Matrix >& d1,
 		      const std::vector< Matrix >& d2, 
 		      const Matrix& f):
-    DPmatrixEmit(v1,v2,M,Beta,d1,d2,f), allowed_states(d2.size())
+    DPmatrixEmit(M,d1,d2,f), allowed_states(d2.size())
   { }
 
   virtual ~DPmatrixConstrained() {}
