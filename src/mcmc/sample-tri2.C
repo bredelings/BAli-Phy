@@ -43,6 +43,36 @@ using boost::dynamic_bitset;
 
 // FIXME - resample the path multiple times - pick one on opposite side of the middle 
 
+vector<int> get_column_order(const alignment& A, const vector<HMM::bitmask_t>& a, const vector<int>& bits, const vector<int>& nodes)
+{
+  assert(bits.size() == nodes.size());
+
+  vector<vector<int>> node_columns;
+  for(int n: nodes)
+    node_columns.push_back(A.get_columns_for_characters(n));
+
+  vector<int> I(nodes.size(),0);
+
+  vector<int> combined_columns;
+  for(const auto& m: a)
+  {
+    int column = -1;
+    for(int j=0; j<bits.size(); j++)
+      if (m.test(bits[j]))
+      {
+	column = node_columns[j][I[j]];
+	I[j]++;
+      }
+    if (column >= 0)
+      combined_columns.push_back(column);
+  }
+
+  for(int j=0; j<bits.size(); j++)
+    assert(I[j] == node_columns[j].size());
+
+  return combined_columns;
+}
+
 boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition& P, const data_partition& P0, const vector<int>& nodes, int bandwidth)
 {
   const Tree& T = P.T();
