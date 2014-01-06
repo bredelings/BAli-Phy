@@ -127,7 +127,9 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   vector<int> seq1 = A.get_columns_for_characters(nodes[1]);
 
   vector<int> seq23; seq23.reserve(A.length());
+  vector<int> seq23_;
   vector<int> seq123; 
+  vector<int> seq123_; 
   vector<HMM::bitmask_t> a23;
   if (tree_changed)
   {
@@ -135,6 +137,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
     // Does this give the right order so that the move is reversible?
     // FIXME: Check that when we project a123_new to a12_new at the end, this does not change!!!
     a23 = convert_to_bits(P0.get_pairwise_alignment(b4),1,2);
+    seq23_ = get_column_order(A, a23, {1,2}, {nodes[2], nodes[3]});
   }
   else
   {
@@ -143,9 +146,9 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
     vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),3,2);
 
     vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
-    // how do we construct a23?
-    HMM::bitmask_t m23; m23.set(2);m23.set(3);
-    a23 = remove_silent(a123, m23);
+
+    seq23_ = get_column_order(A, a123, {1,2}, {nodes[2], nodes[3]});
+    seq123_ = get_column_order(A, a123, {0,1,2}, {nodes[1],nodes[2],nodes[3]});
   }
 
   seq123 = A3::getorder(A,nodes[0],nodes[1],nodes[2],nodes[3]);
