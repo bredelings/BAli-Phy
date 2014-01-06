@@ -40,8 +40,11 @@ namespace A3 {
   namespace states = A2::states;
   typedef HMM::bitmask_t bitmask_t;
 
-  // std::vector<int> get_nodes(const Tree& T,int n0);
+  //  std::vector<int> get_nodes(const Tree& T,int n0);
+
   std::vector<int> get_nodes_random(const Tree& T,int n0);
+
+  std::vector<int> get_nodes_branch(const Tree& T,int n0,int n1);
 
   std::vector<int> get_nodes_branch_random(const Tree& T,int n0,int n1);
 
