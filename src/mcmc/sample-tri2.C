@@ -217,10 +217,12 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
     allowed_states_for_mask[mask].push_back(S2);
   }
 
+  Matrices->states(1) = Matrices->dp_order();
+
   // Determine which states are allowed to match (,c2)
-  for(int c2=0;c2<dists23.size()-1;c2++) 
+  for(int c2=1;c2<dists23.size()-1;c2++) 
   {
-    unsigned int mask = ((a23[c2]<<1)&Matrices->emit2).to_ulong();
+    unsigned int mask = ((a23[c2-1]<<1)&Matrices->emit2).to_ulong();
     mask >>= 2;
     //    assert(mask);
 
@@ -239,7 +241,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
 	k1--;
       
       //------ Get c1, check if valid ------
-      if (c2==0 or (j1 == j2 and k1 == k2) or (j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
+      if ((j1 == j2 and k1 == k2) or (j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
 	Matrices->states(c2+1).push_back(S2);
       else
 	{ } // this state not allowed here
