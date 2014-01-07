@@ -89,7 +89,7 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1
   nodes[1] = A3::get_nodes_branch_random(p[1].T(), n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
 
   try {
-    return sample_tri_multi(p,nodes,rho,true,true);
+    return sample_tri_multi2(p,nodes,rho,true,true);
   }
   catch (choose_exception<efloat_t>& c)
   {
@@ -949,7 +949,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
   vector< vector<int> > nodes(2);
   nodes[0] = A3::get_nodes_branch_random(p[0].T(), n1, n2);     // Using two random orders can lead to different total
   nodes[1] = A3::get_nodes_branch_random(p[1].T(), n1, n2);     //  probabilities for p[0] and p[1] when p[0] == p[1].
-  sample_tri_multi_calculation tri(p, nodes, true, true);
+  sample_tri_multi_calculation2 tri(p, nodes, true, true);
 
   //--------- Compute PrL2: reverse proposal probabilities ---------//
 
