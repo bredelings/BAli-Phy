@@ -166,19 +166,12 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   for(int i=0;i<3;i++)
     branches[i] = T.branch(nodes[0],nodes[i+1]);
 
-  const Matrix Q = A3::createQ( P.get_branch_HMMs(branches) );
-  vector<double> start_P = A3::get_start_P( P.get_branch_HMMs(branches) );
-
-  // Actually create the Matrices & Chain
-  HMM M(A3::get_state_emit(), start_P, Q, P.get_beta());
-  M.hidden_bits = 1;
-
   boost::shared_ptr<DPmatrixConstrained> 
-    Matrices(new DPmatrixConstrained(M,
+    Matrices(new DPmatrixConstrained(m123,
 				     dists1, dists23, P.WeightedFrequencyMatrix())
 	     );
-  Matrices->emit1 = 2;
-  Matrices->emit2 = 4|8;
+  Matrices->emit1 = 1;
+  Matrices->emit2 = 2|4;
 
   // collect the silent-or-correct-emissions for each type columns
   vector< vector<int> > allowed_states_for_mask(4);
@@ -188,17 +181,17 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   // Construct the states that are allowed for each emission pattern.
   for(int S2: Matrices->dp_order())
   {
-    unsigned int mask = (M.state_emit[S2] & Matrices->emit2).to_ulong();
+    unsigned int mask = (m123.state_emit[S2] & Matrices->emit2).to_ulong();
 
     // Hidden states never contradict an emission pattern.
-    if (not mask) // M.silent(S2))
+    if (not mask) // m123.silent(S2))
     {
       for(int j=0;j<allowed_states_for_mask.size();j++)
 	allowed_states_for_mask[j].push_back(S2);
       continue;
     }
 
-    mask >>= 2;
+    mask >>= 1;
     allowed_states_for_mask[mask].push_back(S2);
   }
 
@@ -207,20 +200,14 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   // Determine which states are allowed to match (,c2)
   for(int c2=1;c2<dists23.size()-1;c2++) 
   {
-    unsigned int mask = ((a23[c2-1]<<1)&Matrices->emit2).to_ulong();
-    mask >>= 2;
+    unsigned int mask = (a23[c2-1]&Matrices->emit2).to_ulong();
+    mask >>= 1;
     assert(mask);
 
     Matrices->states(c2+1) = allowed_states_for_mask[mask];
   }
 
-
   //------------------ Compute the DP matrix ---------------------//
-
-  //  vector<int> path_old = get_path_3way(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
-  //  vector<int> path_old_g = Matrices.generalize(path_old);
-
-  //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
   vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23);
 
   vector< pair<int,int> > yboundaries = get_y_ranges_for_band(bandwidth, seq23, seq1, seq123);
@@ -252,9 +239,9 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
 
   vector<int> path = Matrices->ungeneralize(path_g);
 
-  for(int i=1;i<4;i++) {
-    int b = T.directed_branch(nodes[0],nodes[i]);
-    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 0, i), false);
+  for(int i=0;i<3;i++) {
+    int b = T.directed_branch(nodes[0],nodes[i+1]);
+    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
   }
 
   vector<pairwise_alignment_t> As;
