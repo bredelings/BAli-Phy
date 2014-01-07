@@ -196,29 +196,32 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   Matrices->emit2 = 4|8;
 
   // collect the silent-or-correct-emissions for each type columns
-  vector< vector<int> > allowed_states_for_mask(16);
+  vector< vector<int> > allowed_states_for_mask(4);
   for(auto& m: allowed_states_for_mask)
     m.reserve(Matrices->n_dp_states());
   
   // Construct the states that are allowed for each emission pattern.
   for(int S2: Matrices->dp_order())
   {
+    unsigned int mask = (M.state_emit[S2] & Matrices->emit2).to_ulong();
+
     // Hidden states never contradict an emission pattern.
-    if (M.silent(S2))
+    if (not mask) // M.silent(S2))
     {
       for(int j=0;j<allowed_states_for_mask.size();j++)
 	allowed_states_for_mask[j].push_back(S2);
       continue;
     }
 
-    unsigned int mask = (M.state_emit[S2] & Matrices->emit2).to_ulong();
+    mask >>= 2;
     allowed_states_for_mask[mask].push_back(S2);
   }
 
   // Determine which states are allowed to match (,c2)
   for(int c2=0;c2<dists23.size()-1;c2++) 
   {
-    unsigned int mask = (a23[c2]&Matrices->emit2).to_ulong();
+    unsigned int mask = ((a23[c2]<<1)&Matrices->emit2).to_ulong();
+    mask >>= 2;
     //    assert(mask);
 
     int j2 = jcol[c2];
