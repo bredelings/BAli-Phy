@@ -151,21 +151,6 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
     seq123 = get_column_order(A, a123, {0,1,2}, {nodes[1],nodes[2],nodes[3]});
   }
 
-  // Map columns with n2 or n3 to single index 'c'
-  vector<int> jcol(seq23.size()+1);
-  vector<int> kcol(seq23.size()+1);
-
-  jcol[0] = 0;
-  kcol[0] = 0;
-  for(int c=1,j=0,k=0;c<seq23.size()+1;c++) {
-    if (a23[c-1].test(1))
-      j++;    
-    if (a23[c-1].test(2))
-      k++;
-    jcol[c] = j;
-    kcol[c] = k;
-  }
-
   // Precompute distributions at nodes[0]
   distributions_t distributions = distributions_tree;
   //  if (not P.smodel_full_tree)
