@@ -224,28 +224,9 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   {
     unsigned int mask = ((a23[c2-1]<<1)&Matrices->emit2).to_ulong();
     mask >>= 2;
-    //    assert(mask);
+    assert(mask);
 
-    int j2 = jcol[c2];
-    int k2 = kcol[c2];
-    Matrices->states(c2).reserve(Matrices->n_dp_states());
-    for(int S2: Matrices->dp_order())
-    {
-      //---------- Get (,j1,k1) ----------
-      int j1 = j2;
-      if (A3::dj(S2)) 
-	j1--;
-
-      int k1 = k2;
-      if (A3::dk(S2)) 
-	k1--;
-      
-      //------ Get c1, check if valid ------
-      if ((j1 == j2 and k1 == k2) or (j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
-	Matrices->states(c2+1).push_back(S2);
-      else
-	{ } // this state not allowed here
-    }
+    Matrices->states(c2+1) = allowed_states_for_mask[mask];
   }
 
 
