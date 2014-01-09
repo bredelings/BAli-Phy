@@ -20,7 +20,8 @@ modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude.hs mod
 		modules/Tree.hs modules/HKY.hs modules/TN.hs modules/M0.hs modules/HKYx3.hs \
 		modules/GTR.hs modules/TNx3.hs modules/GTRx3.hs modules/F3x4.hs modules/Alphabet.hs \
 		modules/Parameters.hs modules/RS07.hs modules/Alignment.hs modules/RelaxedRatesRS07.hs \
-		modules/MCMC.hs modules/M2a.hs modules/M1a.hs modules/M2a_Test.hs modules/Gamma.hs
+		modules/MCMC.hs modules/M2a.hs modules/M1a.hs modules/M2a_Test.hs modules/Gamma.hs \
+		modules/BranchSiteTest.hs modules/M8b_Test.hs
 
 # Distributed in the doc/ directory
 docdir = $(datadir)/doc/@PACKAGE@
