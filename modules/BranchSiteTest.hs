@@ -16,6 +16,6 @@ note w0 ~ uniform 0.0 1.0;
 note posP ~ beta 1.0 10.0;
 
 main m0 = MixtureModels [mixture1,mixture2] where {
-           mixture1 = multiParameter m0 (mixDiscreteDistributions [posP,1.0-posP] [d1,d1]);
-           mixture2 = multiParameter m0 (mixDiscreteDistributions [posP,1.0-posP] [d1,d2])};
+           mixture1 = multiParameter m0 (mixDiscreteDistributions [1.0-posP, posP] [d1,d1]);
+           mixture2 = multiParameter m0 (mixDiscreteDistributions [1.0-posP, posP] [d1,d2])};
 }
