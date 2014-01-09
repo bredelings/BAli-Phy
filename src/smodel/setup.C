@@ -987,20 +987,9 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
-    // Determine the a and b parameters of the beta distribution
-    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (identifier("uniform"), 0.0, 1.0));
-    formula_expression_ref gamma = def_parameter("Beta.sigma2_over_mu", Double(0.1), between(0,1), (identifier("beta"), 1.0,10.0));
-    formula_expression_ref cap = (identifier("min"),(divide,mu,(plus,1.0,mu)),(divide,(minus,1.0,mu),(minus,2.0,mu)));
-    formula_expression_ref gamma_ = (times,gamma,cap);
-    formula_expression_ref N = (minus, (divide, 1.0, gamma_), 1.0); // N = 1.0/gamma - 1.0;
-    formula_expression_ref alpha = (times, N, mu); // a = N * mu;
-    formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
-    // Create the discrete distribution for omega
-    formula_expression_ref D = (identifier("uniformDiscretize"), (identifier("beta_quantile"), alpha,beta), n);
-
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
-    return (identifier("multiParameter"), M0, D);
+    return (submodel_expression("M7"), M0, n);
   }
   else if (model_args[0] == "branch-site-test1") // branch-site-test1[0,S,F]
   {
