@@ -912,6 +912,14 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   }
   else if (model_args[0] == "M8b_Test") // M8b[0,n,S,+F]
   {
+    int n = 4;
+    if (model_args.size() > 2 and model_args[2] != "")
+      n = convertTo<int>(model_args[2]);
+
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
+
+    return (submodel_expression("M8b_Test"),M0,n);
+    /*
     // FIXME: Conditional on one omega being small, the probability of the other ones being
     //        small too should be higher.
     //
@@ -971,6 +979,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
     return (identifier("multiParameter"), M0, D);
+    */
   }
   else if (model_args[0] == "M7")
   {
@@ -1031,11 +1040,17 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     check_n_args(model_args, 0, 4);
 
     // Determine how many categories there are, minus the positive category.
+    /*
     int n=2;
-    if (model_args.size() > 2 and model_args[2] != "")
+    if (model_args.size() > 2 and model_args[4] != "")
       n = convertTo<int>(model_args[2]);
     if (n < 2) throw myexception()<<"The branch-site model needs at least two categories.";
+    */
 
+    formula_expression_ref M0 = get_M0_omega_function(L,a, frequencies, model_args, 2);
+
+    return (submodel_expression("BranchSiteTest"),M0);
+    /*
     // Create the parameter for degree of positive selection, if it exists.
     formula_expression_ref w_pos = def_parameter("BranchSite.posW", Double(1.5), lower_bound(1), (identifier("logGamma"), 4.0, 0.25));
     formula_expression_ref I  = def_parameter("BranchSite.posSelection", true, nullptr, (identifier("bernoulli"), 0.5));
@@ -1066,7 +1081,6 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     // FIXME - look at the effect on power of using identifierious different priors for w2 here!
     // FIXME - allow specifying the prior on the command line?
 
-    formula_expression_ref M0 = get_M0_omega_function(L,a, frequencies, model_args, 3);
     formula_expression_ref mixture1 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D1,D1) ) );
     formula_expression_ref mixture2 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
 
@@ -1074,6 +1088,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     branch_site.add_expression( constructor(":~",2) +  F.exp() + (identifier("dirichlet'"),n,1.0));
 
     return branch_site;
+    */
   }
   else if (model_args[0] == "branch-site2")  // branch-site-test[0,n,S,F]
   {
