@@ -962,11 +962,13 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
       double D2 = D[1];
       for(int i=0;i<D1;i++) {
 	double next = P.beta_series.back() + D2;
-	next = std::max(0.0,std::min(1.0,next));
+	next = std::max(0.0,next);
 	P.beta_series.push_back(next);
       }
     }
   }
+  for(double b:P.beta_series)
+    std::cout<<b<<"\n";
 }
 
 void setup_partition_weights(const variables_map& args, Parameters& P) 
