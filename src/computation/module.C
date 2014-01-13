@@ -258,7 +258,7 @@ Module find_module(const string& module_name, const std::vector<Module>& P)
 
 std::set<std::string> Module::dependencies() const
 {
-  if (not impdecls) return {};
+  if (not impdecls) return set<string>{};
   
   set<string> module_names;
 
@@ -284,7 +284,7 @@ std::set<std::string> Module::dependencies() const
 // in module m0: import [qualified] submodel [m1] as [m2]
 map<string,string> Module::submodel_dependencies() const
 {
-  if (not impdecls) return {};
+  if (not impdecls) return map<string,string>{};
   
   map<string,string> module_names;
 

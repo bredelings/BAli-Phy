@@ -697,7 +697,7 @@ namespace MCMC {
 
   std::set<int> Dirichlet_Modifiable_Slice_Move::get_affected_parameters(const owned_ptr<Probability_Model>&) const
   {
-    return {};
+    return std::set<int>{};
   }
 
   Dirichlet_Modifiable_Slice_Move::Dirichlet_Modifiable_Slice_Move(const string& s, const vector<int>& indices_, int n_)

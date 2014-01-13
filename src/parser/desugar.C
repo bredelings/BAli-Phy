@@ -972,7 +972,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 
 expression_ref desugar(const Module& m, const expression_ref& E)
 {
-  return desugar(m,E,{});
+  return desugar(m,E,set<string>{});
 }
 
 expression_ref parse_haskell_line(const Module& P, const string& line)

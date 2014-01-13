@@ -474,7 +474,7 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.LogNormal.sigma_over_mu","log-normal.sigma_scale_sigma",  0.25, MH_moves);
 */
   MH_moves.add(4,MCMC::SingleMove(scale_means_only,
-				  "scale_means_only", {/*FIXME*/}, "mean")
+				  "scale_means_only", std::set<int>{/*FIXME*/}, "mean")
 		      );
   
   add_MH_move(P, shift_delta,                  "b*.delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
@@ -565,7 +565,7 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
 			       ,false);
   }
   alignment_moves.add(1, alignment_branch_moves, false);
-  alignment_moves.add(1, SingleMove(walk_tree_sample_alignments, "walk_tree_sample_alignments",{},"alignment:alignment_branch:nodes") );
+  alignment_moves.add(1, SingleMove(walk_tree_sample_alignments, "walk_tree_sample_alignments",std::set<int>{},"alignment:alignment_branch:nodes") );
 
   //---------- alignment::nodes_master (nodes_moves) ----------//
   MoveEach nodes_moves("nodes_master","alignment:nodes");
@@ -664,14 +664,14 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 
 
   if (has_imodel) {
-    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat",{}, "topology:lengths:nodes:alignment:alignment_branch"));
-    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes",{}, "topology:lengths:nodes:alignment:alignment_branch"));
-    SPR_move.add(5,SingleMove(sample_SPR_all,"SPR_and_A_all",{}, "topology:lengths:nodes:alignment:alignment_branch"));
+    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat",std::set<int>{}, "topology:lengths:nodes:alignment:alignment_branch"));
+    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes",std::set<int>{}, "topology:lengths:nodes:alignment:alignment_branch"));
+    SPR_move.add(5,SingleMove(sample_SPR_all,"SPR_and_A_all",std::set<int>{}, "topology:lengths:nodes:alignment:alignment_branch"));
   }
   else {
-    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_flat",{}, "topology:lengths"));
-    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_nodes",{}, "topology:lengths"));
-    SPR_move.add(10,SingleMove(sample_SPR_all,"SPR_all",{}, "topology:lengths"));
+    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_flat",std::set<int>{}, "topology:lengths"));
+    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_nodes",std::set<int>{}, "topology:lengths"));
+    SPR_move.add(10,SingleMove(sample_SPR_all,"SPR_all",std::set<int>{}, "topology:lengths"));
   }
 
   topology_move.add(1,NNI_move,false);
@@ -699,19 +699,19 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
   length_moves.add(1,length_moves1,false);
   // FIXME - Do we really want to do this, under slice sampling?
   length_moves.add(1,SingleMove(walk_tree_sample_branch_lengths,
-				"walk_tree_sample_branch_lengths",{},"lengths")
+				"walk_tree_sample_branch_lengths",std::set<int>{},"lengths")
 		   );
 
   tree_moves.add(1,length_moves);
-  tree_moves.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,"walk_tree_NNI_and_lengths",{}, "topology:lengths"));
+  tree_moves.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,"walk_tree_NNI_and_lengths",std::set<int>{}, "topology:lengths"));
 
   if (has_imodel)
-    tree_moves.add(2,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI", {}, "topology:lengths"));
+    tree_moves.add(2,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI", std::set<int>{}, "topology:lengths"));
   else  // w/o integrating over 5way alignments, this move is REALLY cheap!
-    tree_moves.add(4,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI", {}, "topology:lengths"));
+    tree_moves.add(4,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI", std::set<int>{}, "topology:lengths"));
 
   if (has_imodel)
-    tree_moves.add(0.5,SingleMove(walk_tree_sample_NNI_and_A,"walk_tree_NNI_and_A",{},"topology:lengths:nodes:alignment:alignment_branch"));
+    tree_moves.add(0.5,SingleMove(walk_tree_sample_NNI_and_A,"walk_tree_NNI_and_A",std::set<int>{},"topology:lengths:nodes:alignment:alignment_branch"));
 
   return tree_moves;
 }
@@ -884,10 +884,10 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     MoveAll pre_burnin("pre-burnin");
     pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
     pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
-				      "scale_means_only",{},"mean"));
+				      "scale_means_only",std::set<int>{},"mean"));
     pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths,
-				"walk_tree_sample_branch_lengths",{},"tree:lengths"));
-    pre_burnin.add(1,SingleMove(sample_SPR_search_all,"SPR_search_all", {},
+				"walk_tree_sample_branch_lengths",std::set<int>{},"tree:lengths"));
+    pre_burnin.add(1,SingleMove(sample_SPR_search_all,"SPR_search_all", std::set<int>{},
 				"tree:topology:lengths"));
 
     // enable and disable moves
@@ -916,9 +916,9 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 
     pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
     pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
-				      "scale_means_only",{/*FIXME*/},"mean"));
+				      "scale_means_only",std::set<int>{/*FIXME*/},"mean"));
     pre_burnin.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,
-				"NNI_and_lengths",{},"tree:topology:lengths"));
+				"NNI_and_lengths",std::set<int>{},"tree:topology:lengths"));
 
     // enable and disable moves
     enable_disable_transition_kernels(pre_burnin,args);
@@ -956,10 +956,10 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     MoveAll pre_burnin("pre-burnin+A");
     pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
     pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
-				      "scale_means_only",{/*FIXME*/}, "mean"));
+				      "scale_means_only",std::set<int>{/*FIXME*/}, "mean"));
     pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths,
-				"walk_tree_sample_branch_lengths",{}, "tree:lengths"));
-    pre_burnin.add(1,SingleMove(sample_SPR_A_search_all,"SPR_search_all", {},
+				"walk_tree_sample_branch_lengths",std::set<int>{}, "tree:lengths"));
+    pre_burnin.add(1,SingleMove(sample_SPR_A_search_all,"SPR_search_all", std::set<int>{},
 				"tree:topology:lengths"));
 
     // enable and disable moves
