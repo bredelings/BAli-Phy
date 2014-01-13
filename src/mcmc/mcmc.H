@@ -353,7 +353,7 @@ namespace MCMC {
     Bounds<double> bounds;
 
   public:
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return {};}
+    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return std::set<int>{};}
     
     Modifiable_Slice_Move* clone() const {return new Modifiable_Slice_Move(*this);}
     
@@ -389,7 +389,7 @@ namespace MCMC {
     Bounds<int> bounds;
 
   public:
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return {};}
+    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return std::set<int>{};}
     
     Integer_Modifiable_Slice_Move* clone() const {return new Integer_Modifiable_Slice_Move(*this);}
     
@@ -477,7 +477,7 @@ namespace MCMC {
   public:
     MoveArg* clone() const=0;
 
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return {};}
+    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return std::set<int>{};}
 
     /// A list of arguments to be passed to submoves
     std::vector<int> args;
@@ -501,7 +501,7 @@ namespace MCMC {
   public:
     IOMove* clone() const {return new IOMove(*this);}
 
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return {};}
+    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return std::set<int>{};}
 
     void iterate(owned_ptr<Probability_Model>&,MoveStats&);
     void iterate(owned_ptr<Probability_Model>&,MoveStats&,int);

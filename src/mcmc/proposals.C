@@ -604,7 +604,7 @@ double Proposal2M::operator()(Probability_Model& P) const
 
 std::set<int> Proposal2M::get_affected_parameters(const owned_ptr<Probability_Model>&) const
 {
-  return {};
+  return std::set<int>{};
 }
 
 Proposal2M::Proposal2M(const Proposal_Fn& p,int  s, const vector<double>& v)

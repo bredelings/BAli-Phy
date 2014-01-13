@@ -194,14 +194,16 @@ checked_filebuf::checked_filebuf(const string& s)
 }
 
 checked_ifstream::checked_ifstream(const string& filename)
-  :buf("file")
+  :istream(nullptr),
+   buf("file")
 {
   this->init(&buf);
   buf.open(filename, ios_base::in);
 }
 
 checked_ifstream::checked_ifstream(const string& filename, const string& description)
-  :buf(description)
+  :istream(nullptr),
+   buf(description)
 {
   this->init(&buf);
   buf.open(filename, ios_base::in);
@@ -223,17 +225,20 @@ void istream_or_ifstream::open(std::istream& is, const std::string& is_name, con
 }
 
 istream_or_ifstream::istream_or_ifstream()
+  :istream(nullptr)
 {
   this->init(&buf_null);
 }
 
 istream_or_ifstream::istream_or_ifstream(std::istream& is, const std::string& is_name, const std::string& filename)
+  :istream(nullptr)
 {
   open(is,is_name,filename,"file");
 }
 
 istream_or_ifstream::istream_or_ifstream(std::istream& is, const std::string& is_name, const std::string& filename,
 					 const std::string& description)
+  :istream(nullptr)
 {
   open(is,is_name,filename,description);
 }
