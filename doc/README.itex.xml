@@ -307,34 +307,36 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
     <section><info><title>Software requirements</title></info>
       
 
-      <para>The following software packages are required for
-	compiling BAli-Phy.
+    <para>In order to compile BAli-Phy, you need a C++ compiler than can understands the C++11 standard.
 	
-	<itemizedlist>
-	  <listitem><para> The GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>)
-	      version 4.8 (or higher).
-	    </para> 
-	    <para> Alternatively, the Clang C++ compiler version 3.4
-	    or higher may be used.  The 3.3 might work, but may have
-	    a bug that gives a segmentation fault.
-	    </para>
-	  </listitem>
+    <itemizedlist>
+      <listitem>
+	<para> The GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>)
+	version 4.8 (or higher).
+	</para> 
+      </listitem>
+      <listitem>
+	<para> On Mac OS X 10.8 and above, the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 5.0 (or newer) can be used.
+<note>Note that you must add the option <userinput>CXXFLAGS=-ftemplate-depth=256</userinput> to the configure script when using clang.  The default template depth of 128 is too low.  See below on how to add this option.
+    </note>
+	</para>
+      </listitem>
+    </itemizedlist>
+    </para>
+    
+    <para>This is not strictly necessary to run bali-phy, but is necessary for building the
+    tool <application>draw-tree</application> that is used to
+    draw consensus trees:
 
-
-	  <!--listitem><para>
-	      <ulink url="http://www.gnu.org/software/make">
-		GNU make</ulink> version 3.80 (or higher).
-	  </para></listitem-->
+    <itemizedlist>
 	  <listitem><para> The Cairo graphics library
 	      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link>)
-	      version 1.6 (or higher).  (Cairo is not strictly
-	    necessary, but is a requirement for building the
-	    tool <application>draw-tree</application> that is used to
-	    draw consensus trees.)</para></listitem>
+	  </para></listitem>
+    </itemizedlist>
+
 	  
 	  <!-- listitem><para> The BOOST C++ Library (<ulink
 							 url="http://www.boost.org">BOOST</ulink>) version 1.32 (or higher).</para></listitem -->
-	</itemizedlist>
 	See also <xref linkend="software_req"/>.
       </para>
       
@@ -353,7 +355,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 
 	<screen><prompt>%</prompt> <userinput>mkdir build</userinput>
 <prompt>%</prompt> <userinput>cd build</userinput>
-<prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/Applications/bali-phy-&version;/</userinput></screen>
+<prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/Applications/bali-phy-&version;/ CXXFLAGS=-ftemplate-depth=256</userinput></screen>
 	
 	If this command succeeds, then you can simply type
 
