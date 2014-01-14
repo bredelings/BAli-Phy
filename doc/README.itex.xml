@@ -307,23 +307,32 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
     <section><info><title>Software requirements</title></info>
       
 
-    <para>In order to compile BAli-Phy, you need a C++ compiler than can understands the C++11 standard.
-	
-    <itemizedlist>
-      <listitem>
-	<para> The GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>)
-	version 4.8 (or higher).
-	</para> 
-      </listitem>
-      <listitem>
-	<para> On Mac OS X 10.8 and above, the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 5.0 (or newer) can be used.
+    <para>In order to compile BAli-Phy, you need a C++ compiler than can understands the C++11 standard.  </para>
+    <section><info><title>Compilers: Linux</title></info>
+    <para>On Linux we recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 4.8 (or higher).
+    </para>
+    <para>You may also use the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 3.4.0 or higher.
+    </para>
+    </section>
+
+    <section><info><title>Compilers: Mac</title></info>
+    <para>On Mac 10.8 and above, the simplest method is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 5.0 (or newer).  Then you can use the default compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link>).
 <note>Note that you must add the option <userinput>CXXFLAGS=-ftemplate-depth=256</userinput> to the configure script when using clang.  The default template depth of 128 is too low.  See below on how to add this option.
     </note>
-	</para>
-      </listitem>
-    </itemizedlist>
+    </para>
+    <para>If you have 10.7 or below, you can't install XCode 5.  However, you can use <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh">homebrew</link> to install gcc 4.8.  The gcc_48 recipe is not available by default, so you must add the 'versions' tap.
     </para>
     
+    <para>There will soon be a homebrew recipe for building bali-phy 2.2.0.  Currently the recipe builds version 2.1.1.</para>
+
+    </section>
+    
+    <section><info><title>Compilers: Windows</title></info>
+    <para>On Windows we recommended the mingw-64 GCC 4.8 compiler.  This compiler can build both 32-bit and 64-bit executables.  You can install it through the compiler through <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/">Cygwin</link>.  The compiled executables can be run anywhere, and do not need Cygwin to run.
+    </para>
+    </section>
+
+    <section><info><title>Optional software libraries</title></info>
     <para>This is not strictly necessary to run bali-phy, but is necessary for building the
     tool <application>draw-tree</application> that is used to
     draw consensus trees:
@@ -333,14 +342,11 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link>)
 	  </para></listitem>
     </itemizedlist>
+	See also <xref linkend="software_req"/>.
+    </para>
+    </section>
 
 	  
-	  <!-- listitem><para> The BOOST C++ Library (<ulink
-							 url="http://www.boost.org">BOOST</ulink>) version 1.32 (or higher).</para></listitem -->
-	See also <xref linkend="software_req"/>.
-      </para>
-      
-
     </section>
 
     <section><info><title>Quick Start</title></info>
