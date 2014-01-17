@@ -73,7 +73,7 @@ binomial n p = ProbDensity (binomial_density n p) (no_quantile "binomial") (samp
 builtin geometric_density 2 "geometric_density" "Distribution";
 builtin builtin_sample_geometric 1 "sample_geometric" "Distribution";
 sample_geometric p = Random (IOAction1 builtin_sample_geometric p);
-geometric p = ProbDensity (geometric_density p) (no_quantile "geometric") (sample_geometric) (integer_above 0);
+geometric p = ProbDensity (geometric_density p) (no_quantile "geometric") (sample_geometric p) (integer_above 0);
 
 builtin poisson_density 2 "poisson_density" "Distribution";
 builtin builtin_sample_poisson 1 "sample_poisson" "Distribution";
