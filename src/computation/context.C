@@ -827,10 +827,10 @@ context& context::operator+=(const vector<Module>& Ms)
 
 context& context::operator=(const context& C)
 {
-  memory_->release_token(context_index);
+  memory_->release_context(context_index);
   
   memory_ = C.memory_;
-  context_index = memory_->copy_token(C.context_index);
+  context_index = memory_->copy_context(C.context_index);
   perform_io_head = C.perform_io_head;
   P = C.P;
   notes = C.notes;
@@ -882,7 +882,7 @@ context::context(const module_loader& L, const vector<expression_ref>& N)
 context::context(const module_loader& L, const vector<expression_ref>& N, const vector<Module>& Ps)
   :memory_(new reg_heap()),
    P(new Program),
-   context_index(memory_->get_unused_token()),
+   context_index(memory_->get_unused_context()),
    loader(L)
 {
   (*this) += "Prelude";
@@ -906,14 +906,14 @@ context::context(const context& C)
   :Model_Notes(C),
    memory_(C.memory_),
    P(C.P),
-   context_index(memory_->copy_token(C.context_index)),
+   context_index(memory_->copy_context(C.context_index)),
    perform_io_head(C.perform_io_head),
    loader(C.loader)
 { }
 
 context::~context()
 {
-  memory_->release_token(context_index);
+  memory_->release_context(context_index);
 }
 
 int context::push_temp_head() const

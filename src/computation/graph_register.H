@@ -250,6 +250,17 @@ public:
   /// Make a child of the current token, and unreference the current token.
   int switch_to_child_token(int);
 
+  /*------------- Stuff for context indices -----------*/
+  int copy_context(int);
+
+  int get_unused_context();
+
+  void release_context(int);
+
+  int token_for_context(int) const;
+
+  /*------------------------------------------------*/
+
   const std::vector<int>& get_temp_heads() const {return temp;}
         std::vector<int>& get_temp_heads()       {return temp;}
 

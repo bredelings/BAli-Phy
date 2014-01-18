@@ -1922,6 +1922,26 @@ int reg_heap::switch_to_child_token(int t)
   return new_t;
 }
 
+int reg_heap::token_for_context(int c) const
+{
+  return c;
+}
+
+int reg_heap::copy_context(int c)
+{
+  return copy_token(c);
+}
+
+int reg_heap::get_unused_context()
+{
+  return get_unused_token();
+}
+
+void reg_heap::release_context(int c)
+{
+  return release_token(c);
+}
+
 int reg_heap::add_identifier(const string& name)
 {
   map<string,int>& identifiers = get_identifiers();
