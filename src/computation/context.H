@@ -79,8 +79,6 @@ public:
 
   int get_context_index() const {return context_index;}
 
-  int get_token() const {return context_index;}
-
   const std::vector<Module>& get_Program() const {return *P;}
 
   int add_note(const expression_ref&);
