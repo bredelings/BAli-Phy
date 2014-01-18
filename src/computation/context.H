@@ -36,7 +36,7 @@ private:
   // FIXME:speed - Instead, wrap in cow_ptr< >.
   cow_ptr<Program> P;
 
-  mutable int token;
+  mutable int context_index;
 
   int perform_io_head = -1;
 
@@ -77,7 +77,9 @@ private:
 
 public:
 
-  int get_token() const {return token;}
+  int get_context_index() const {return context_index;}
+
+  int get_token() const {return context_index;}
 
   const std::vector<Module>& get_Program() const {return *P;}
 
