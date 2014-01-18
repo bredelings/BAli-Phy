@@ -136,15 +136,12 @@ class reg_heap: public Object, public checked_pool<reg>
   bool computation_is_used_by(int, int) const;
   bool reg_is_used_by(int, int, int) const;
 
-  int root_token = -1;
-
 public:
 
   reg_heap* clone() const {std::abort();}
 
   void check_used_reg(int) const;
   void check_used_regs() const;
-  void check_tokens() const;
 
   void collect_garbage();
   void trace_and_reclaim_unreachable();
@@ -160,11 +157,6 @@ public:
   void clear_C(int R);
   void set_C(int R, closure&& C);
   void set_reduction_result(int t, int R, closure&& C);
-
-  /*----- Token manager ------*/
-
-  /// The list of unused_tokens
-  std::vector<int> unused_tokens;
 
   void get_roots(std::vector<int>&) const;
 
@@ -190,6 +182,8 @@ public:
   /// Probably this would be non-parameter identifiers
   std::map<std::string, int> identifiers;
 
+  /*----- Token manager ------*/
+
   struct Token
   {
     // The context this context is derived from.
@@ -210,36 +204,20 @@ public:
     bool used = false;
     int version = 0;
   };
-
-  const std::vector<int>& get_temp_heads() const {return temp;}
-        std::vector<int>& get_temp_heads()       {return temp;}
-
-  const std::vector<int>& get_heads() const {return heads;}
-        std::vector<int>& get_heads()       {return heads;}
-
-  const std::vector<std::pair<std::string,int>>& get_parameters() const {return parameters;}
-        std::vector<std::pair<std::string,int>>& get_parameters()       {return parameters;}
-
-  const std::map<std::string,int>& get_identifiers() const {return identifiers;}
-        std::map<std::string,int>& get_identifiers()       {return identifiers;}
-
-  const std::vector<int>& triggers(int t) const;
-        std::vector<int>& triggers(int t);
-
-  /// Allocate a reg in context t and put it on the top of the temporary-head stack.
-  int push_temp_head();
-
-  /// Deallocate the temporary head on the top of the temporary-head stack.
-  void pop_temp_head();
-
-  /// Add a new identifier, pointing to a newly allocated location
-  int add_identifier(const std::string&);
+private:
+  int root_token = -1;
 
   /// The roots for each token
   std::vector<Token> token_roots;
 
+  /// The list of unused_tokens
+  std::vector<int> unused_tokens;
+
+public:
   /// Is a particular token unused?
   bool token_is_used(int) const;
+
+  void check_tokens() const;
 
   /// How many tokens are there, maximum?
   int get_n_tokens() const {return token_roots.size();}
@@ -271,6 +249,30 @@ public:
 
   /// Make a child of the current token, and unreference the current token.
   int switch_to_child_token(int);
+
+  const std::vector<int>& get_temp_heads() const {return temp;}
+        std::vector<int>& get_temp_heads()       {return temp;}
+
+  const std::vector<int>& get_heads() const {return heads;}
+        std::vector<int>& get_heads()       {return heads;}
+
+  const std::vector<std::pair<std::string,int>>& get_parameters() const {return parameters;}
+        std::vector<std::pair<std::string,int>>& get_parameters()       {return parameters;}
+
+  const std::map<std::string,int>& get_identifiers() const {return identifiers;}
+        std::map<std::string,int>& get_identifiers()       {return identifiers;}
+
+  const std::vector<int>& triggers(int t) const;
+        std::vector<int>& triggers(int t);
+
+  /// Allocate a reg in context t and put it on the top of the temporary-head stack.
+  int push_temp_head();
+
+  /// Deallocate the temporary head on the top of the temporary-head stack.
+  void pop_temp_head();
+
+  /// Add a new identifier, pointing to a newly allocated location
+  int add_identifier(const std::string&);
 
   /*----- Graph walking ------*/
   void find_all_regs_in_context(int, std::vector<int>&) const;
