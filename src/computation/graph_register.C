@@ -1391,7 +1391,7 @@ int reg_heap::get_unused_token()
   if (unused_tokens.empty())
   {
     unused_tokens.push_back(get_n_tokens());
-    token_roots.push_back(graph_roots());
+    token_roots.push_back(Token());
     token_roots.back().vm_relative.resize(size());
     for(int i=0;i<size();i++)
       assert(token_roots.back().vm_relative[i] == 0);

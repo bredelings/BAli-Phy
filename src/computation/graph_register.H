@@ -190,7 +190,7 @@ public:
   /// Probably this would be non-parameter identifiers
   std::map<std::string, int> identifiers;
 
-  struct graph_roots
+  struct Token
   {
     // The context this context is derived from.
     int parent = -1;
@@ -236,7 +236,7 @@ public:
   int add_identifier(const std::string&);
 
   /// The roots for each token
-  std::vector<graph_roots> token_roots;
+  std::vector<Token> token_roots;
 
   /// Is a particular token unused?
   bool token_is_used(int) const;
