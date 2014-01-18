@@ -139,9 +139,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 {
   assert(not Args.evaluate_changeables());
 
-  int token = Args.current_token();
-
-  const reg_heap& M = Args.memory();
+  reg_heap& M = Args.memory();
 
   //------------- 1a. Get argument X -----------------
   int R_X = Args.evaluate_slot_to_reg(0);
@@ -153,14 +151,18 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
   int H_Pr = *Args.evaluate_as<Int>(2);
   int R_Pr = M.get_heads()[H_Pr];
 
-  //------------- 2. Figure out probability of each value of x ------------//
-  int x1 = *convert<const Int>(Args.evaluate_reg_to_closure(R_X,true).exp->head);
+  //------------- 1d. Get index for probability expression -----------------
+  int token = *Args.evaluate_as<Int>(3);
 
+  //------------- 2. Figure out probability of each value of x ------------//
   vector<log_double_t> pr_x(n);
   for(int i=0;i<pr_x.size();i++)
   {
-    Args.memory().set_reg_value(R_X, Int(i), token);
-    log_double_t pr = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
+    M.set_reg_value(R_X, Int(i), token);
+
+    M.reroot_at(token);
+    int R_Pr_ = M.incremental_evaluate(R_Pr, token);
+    log_double_t pr = *convert<const Log_Double>(M.access_result_for_reg(token, R_Pr_).exp->head);
     pr_x[i] = pr;
   }
 
@@ -168,7 +170,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 
   int x2 = choose(pr_x);
 
-  Args.memory().set_reg_value(R_X, Int(x2), token);
+  M.set_reg_value(R_X, Int(x2), token);
 
   return constructor("()",0);
 }

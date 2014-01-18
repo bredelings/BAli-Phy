@@ -804,7 +804,9 @@ void MoveArg::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int i)
 #ifndef NDEBUG
     clog<<" [IO Move] move = "<<head<<endl;
 #endif
-    P->perform(head);
+    expression_ref E = P->get_expression(head);
+    E = (E,P->get_token());
+    P->perform_expression(E);
   }
 
 void MoveEach::add(double l,const MoveArg& m,bool enabled) {

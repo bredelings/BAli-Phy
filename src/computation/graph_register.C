@@ -1729,7 +1729,9 @@ void reg_heap::try_release_token(int t)
   // We shouldn't have any temporary heads still on the stack, here!
   // (This should be fast now, no longer proportional to the number of regs in context t.)
   // (But how fast is it?)
-  assert(temp.empty());
+
+  // FIXME: we can have temp heads here from performing an IO action from outside...
+  //  assert(temp.empty());
 
   int n_children = token_roots[t].children.size();
   if (n_children > 1 or token_roots[t].referenced)
