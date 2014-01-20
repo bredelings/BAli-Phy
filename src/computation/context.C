@@ -48,7 +48,7 @@ closure resolve_refs(const vector<Module>& P, closure&& C)
 
 int context::get_token() const
 {
-  int token = memory()->token_for_context(context_index);
+  return memory()->token_for_context(context_index);
 }
 
 void context::make_clean() const
@@ -85,8 +85,8 @@ std::vector<std::pair<std::string,int>>& context::parameters() const {return mem
 
 std::map<std::string, int>& context::identifiers() const {return memory()->get_identifiers();}
 
-const std::vector<int>& context::triggers() const {make_root_token();return memory()->triggers(get_token());}
-      std::vector<int>& context::triggers()       {make_root_token();return memory()->triggers(get_token());}
+const std::vector<int>& context::triggers() const {return memory()->triggers_for_context(context_index);}
+      std::vector<int>& context::triggers()       {return memory()->triggers_for_context(context_index);}
 
 reg& context::access(int i) const {return memory()->access(i);}
 
@@ -114,9 +114,7 @@ void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
 
 int context::incremental_evaluate(int R) const 
 {
-  make_root_token();
-  memory()->mark_completely_dirty(get_token());
-  return memory()->incremental_evaluate(R,get_token());
+  return memory()->incremental_evaluate_in_context(R, context_index);
 }
 
 int context::incremental_evaluate_unchangeable(int R) const 
@@ -173,34 +171,7 @@ void context::rename_parameter(int i, const string& new_name)
 
 bool context::reg_is_fully_up_to_date(int R) const
 {
-  if (not reg_has_result(R)) return false;
-
-  const closure& result = access_result_for_reg(R);
-
-  // NOTE! result cannot be an index_var.
-  const expression_ref& E = result.exp;
-
-  // Therefore, if the result is atomic, then R is up-to-date.
-  if (not E->size()) return true;
-
-  // If the result is a lambda function, then R is up-to-date.
-  if (E->head->type() != constructor_type) return true;
-
-  // If we get here, this had better be a constructor!
-  assert(is_a<constructor>(E));
-
-  // Check each component that is a index_var to see if its out of date.
-  for(int i=0;i<E->size();i++)
-  {
-    // assert_cast
-    object_ptr<const index_var> V = assert_is_a<index_var>(E->sub[i]);
-    int R2 = result.lookup_in_env( V->index );
-    
-    if (not reg_is_fully_up_to_date(R2)) return false;
-  }
-
-  // All the components must be fully up-to-date, so R is fully up-to-date.
-  return true;
+  return memory()->reg_is_fully_up_to_date_in_context(R, context_index);
 }
 
 bool context::compute_expression_is_up_to_date(int index) const
@@ -310,17 +281,7 @@ bool context::parameter_is_set(int index) const
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 object_ref context::get_reg_value(int R) const
 {
-  make_root_token();
-  if (not reg_has_result(R))
-  {
-    // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-    if (not reg_has_call(R)) return object_ref();
-
-    // If the value needs to be computed (e.g. its a call expression) then compute it.
-    incremental_evaluate(R);
-  }
-
-  return access_result_for_reg(R).exp->head;
+  return memory()->get_reg_value_in_context(R, context_index);
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
@@ -397,12 +358,7 @@ void context::set_parameter_value_(int index, closure&& C)
 
 void context::set_reg_value(int P, closure&& C)
 {
-  make_terminal_token();
-
-  make_clean();
-  // FIXME - we can only change values on contexts that are not dirty!
-  // BUT this is ultimately checked in the reg_heap itself.
-  memory()->set_reg_value(P, std::move(C), get_token());
+  memory()->set_reg_value_in_context(P, std::move(C), context_index);
 }
 
 /// Update the value of a non-constant, non-computed index

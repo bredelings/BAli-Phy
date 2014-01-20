@@ -1916,12 +1916,13 @@ int reg_heap::copy_token(int t)
   return t2;
 }
 
-void reg_heap::switch_to_child_token(int c)
+int reg_heap::switch_to_child_token(int c)
 {
   int t1 = token_for_context(c);
   int t2 = copy_token(t1);
   unset_token_for_context(c);
   set_token_for_context(c,t2);
+  return t2;
 }
 
 int reg_heap::get_n_contexts() const
@@ -2010,6 +2011,86 @@ void reg_heap::release_context(int c)
   unused_contexts.push_back(c);
 
   check_tokens();
+}
+
+std::vector<int>& reg_heap::triggers_for_context(int c)
+{
+  int t = token_for_context(c);
+  reroot_at(t);
+  return triggers(t);
+}
+
+bool reg_heap::reg_is_fully_up_to_date_in_context(int R, int c)
+{
+  int t = token_for_context(c);
+  reroot_at(t);
+  return reg_is_fully_up_to_date(R,t);
+}
+
+bool reg_heap::reg_is_fully_up_to_date(int R, int t) const
+{
+  if (not reg_has_result(t,R)) return false;
+
+  const closure& result = access_result_for_reg(t,R);
+
+  // NOTE! result cannot be an index_var.
+  const expression_ref& E = result.exp;
+
+  // Therefore, if the result is atomic, then R is up-to-date.
+  if (not E->size()) return true;
+
+  // If the result is a lambda function, then R is up-to-date.
+  if (E->head->type() != constructor_type) return true;
+
+  // If we get here, this had better be a constructor!
+  assert(is_a<constructor>(E));
+
+  // Check each component that is a index_var to see if its out of date.
+  for(int i=0;i<E->size();i++)
+  {
+    // assert_cast
+    object_ptr<const index_var> V = assert_is_a<index_var>(E->sub[i]);
+    int R2 = result.lookup_in_env( V->index );
+    
+    if (not reg_is_fully_up_to_date(R2,t)) return false;
+  }
+
+  // All the components must be fully up-to-date, so R is fully up-to-date.
+  return true;
+}
+
+object_ref reg_heap::get_reg_value_in_context(int R, int c)
+{
+  int t = token_for_context(c);
+  reroot_at(t);
+
+  if (not reg_has_result(t,R))
+  {
+    // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
+    if (not reg_has_call(t,R)) return object_ref();
+
+    // If the value needs to be computed (e.g. its a call expression) then compute it.
+    incremental_evaluate_in_context(R,c);
+  }
+
+  return access_result_for_reg(t,R).exp->head;
+}
+
+void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
+{
+  int t = token_for_context(c);
+  if (not children_of_token(t).empty())
+    t = switch_to_child_token(c);
+
+  set_reg_value(P, std::move(C), t);
+}
+
+int reg_heap::incremental_evaluate_in_context(int R, int c)
+{
+  int t = token_for_context(c);
+  reroot_at(t);
+  mark_completely_dirty(t);
+  return incremental_evaluate(R, t);
 }
 
 int reg_heap::add_identifier(const string& name)

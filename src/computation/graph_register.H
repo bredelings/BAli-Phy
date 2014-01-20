@@ -245,7 +245,7 @@ public:
   int copy_token(int);
 
   /// Make a child of the current token, and unreference the current token.
-  void switch_to_child_token(int);
+  int switch_to_child_token(int);
 
   /*------------- Stuff for context indices -----------*/
   std::vector<int> unused_contexts;
@@ -267,6 +267,18 @@ public:
   void release_context(int);
 
   int token_for_context(int) const;
+
+        std::vector<int>& triggers_for_context(int c);
+
+  bool reg_is_fully_up_to_date_in_context(int c, int r);
+
+  bool reg_is_fully_up_to_date(int t, int r) const;
+
+  int incremental_evaluate_in_context(int R, int c);
+
+  object_ref get_reg_value_in_context(int R, int c);
+
+  void set_reg_value_in_context(int index, closure&& C, int c);
 
   /*------------------------------------------------*/
 
