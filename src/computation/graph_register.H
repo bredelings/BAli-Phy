@@ -208,7 +208,7 @@ private:
   int root_token = -1;
 
   /// The roots for each token
-  std::vector<Token> token_roots;
+  std::vector<Token> tokens;
 
   /// The list of unused_tokens
   std::vector<int> unused_tokens;
@@ -220,7 +220,7 @@ public:
   void check_tokens() const;
 
   /// How many tokens are there, maximum?
-  int get_n_tokens() const {return token_roots.size();}
+  int get_n_tokens() const {return tokens.size();}
 
   /// Acquire an unused token
   int get_unused_token();
