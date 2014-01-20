@@ -152,17 +152,15 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
   int R_Pr = M.get_heads()[H_Pr];
 
   //------------- 1d. Get index for probability expression -----------------
-  int token = *Args.evaluate_as<Int>(3);
+  int c = *Args.evaluate_as<Int>(3);
 
   //------------- 2. Figure out probability of each value of x ------------//
   vector<log_double_t> pr_x(n);
   for(int i=0;i<pr_x.size();i++)
   {
-    M.set_reg_value(R_X, Int(i), token);
+    M.set_reg_value_in_context(R_X, Int(i), c);
 
-    M.reroot_at(token);
-    int R_Pr_ = M.incremental_evaluate(R_Pr, token);
-    log_double_t pr = *convert<const Log_Double>(M.access_result_for_reg(token, R_Pr_).exp->head);
+    log_double_t pr = *convert<const Log_Double>(M.lazy_evaluate(R_Pr, c).exp->head);
     pr_x[i] = pr;
   }
 
@@ -170,7 +168,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 
   int x2 = choose(pr_x);
 
-  M.set_reg_value(R_X, Int(x2), token);
+  M.set_reg_value_in_context(R_X, Int(x2), c);
 
   return constructor("()",0);
 }

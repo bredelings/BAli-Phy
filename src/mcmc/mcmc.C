@@ -805,7 +805,7 @@ void MoveArg::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int i)
     clog<<" [IO Move] move = "<<head<<endl;
 #endif
     expression_ref E = P->get_expression(head);
-    E = (E,P->get_token());
+    E = (E,P->get_context_index());
     P->perform_expression(E);
   }
 

@@ -1879,7 +1879,7 @@ int reg_heap::copy_token(int t)
 
   int t2 = get_unused_token();
 
-  assert(temp.empty());
+  // assert(temp.empty());
 
   tokens[t2].triggers = tokens[t].triggers;
 
