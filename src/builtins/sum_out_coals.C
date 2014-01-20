@@ -25,17 +25,22 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 {
   assert(not Args.evaluate_changeables());
 
-  int token = Args.current_token();
-
-  const reg_heap& M = Args.memory();
+  reg_heap& M = Args.memory();
 
   //------------- 1a. Get argument X -----------------
   int R_X = Args.evaluate_slot_to_reg(0);
 
+  int c = *Args.evaluate_as<Int>(3);
+
+  //------------- 1c. Get index for probability expression -----------------
+  int H_Pr = *Args.evaluate_as<Int>(2);
+  int R_Pr = M.get_heads()[H_Pr];
+
   //------------- 1b. Get arguments Y_i  -----------------
   vector<int> M_Y;
 
-  const closure* top = &Args.evaluate_slot_to_closure(1);
+  int next_reg = Args.reg_for_slot(1);
+  const closure* top = &M.lazy_evaluate(next_reg, c);
   while(top->exp->size())
   {
     assert(is_exactly(top->exp,":"));
@@ -45,25 +50,21 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     int element_reg = top->lookup_in_env( element_index );
 
     int next_index = assert_is_a<index_var>(top->exp->sub[1])->index;
-    int next_reg = top->lookup_in_env( next_index );
+    next_reg = top->lookup_in_env( next_index );
 
-    // evaluate the list element
+    // evaluate the list element in token 0
     element_reg = Args.evaluate_reg_to_reg(element_reg);
 
     // Add the element to the list.
     M_Y.push_back( element_reg );
     // Move to the next element or end
-    top = &Args.evaluate_reg_to_closure(next_reg);
+    top = &M.lazy_evaluate(next_reg, c);
   }
   assert(is_exactly(top->exp,"[]"));
 
-  //------------- 1c. Get index for probability expression -----------------
-  int H_Pr = *Args.evaluate_as<Int>(2);
-  int R_Pr = M.get_heads()[H_Pr];
-
   //------------- 2. Figure out t and the next t ------------//
 
-  int x1 = *convert<const Int>(Args.evaluate_reg_to_closure(R_X,true).exp->head);
+  int x1 = *convert<const Int>(M.lazy_evaluate(R_X, c).exp->head);
   int x2 = x1 + 1;
   if (uniform() < 0.5)
   {
@@ -75,18 +76,18 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   //------------- 3. Record base probability and relative probability for x1
   
   for(int R: M_Y)
-    Args.memory().set_reg_value(R, {constructor("Prelude.False",0),{}}, token);
+    M.set_reg_value_in_context(R, Int(0), c);
 
-  log_double_t pr_base_1 = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
+  log_double_t pr_base_1 = *convert<const Log_Double>(M.lazy_evaluate(R_Pr, c).exp->head);
 
   log_double_t pr_total_1 = pr_base_1;
   vector<log_double_t> pr_y_1(M_Y.size());
   for(int i=0;i<M_Y.size();i++)
   {
     int R = M_Y[i];
-    Args.memory().set_reg_value(R, {constructor("Prelude.True",0),{}}, token);
-    log_double_t pr_offset = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
-    Args.memory().set_reg_value(R, {constructor("Prelude.False",0),{}}, token);
+    M.set_reg_value_in_context(R, Int(1), c);
+    log_double_t pr_offset = *convert<const Log_Double>(M.lazy_evaluate(R_Pr, c).exp->head);
+    M.set_reg_value_in_context(R, Int(0), c);
     double delta = log(pr_offset/pr_base_1);
     pr_y_1[i] = exp<log_double_t>(-log1pexp(delta));
     
@@ -95,18 +96,18 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
   //------------- 4. Record base probability and relative probability for x2
 
-  Args.memory().set_reg_value(R_X, Int(x2), token);
+  M.set_reg_value_in_context(R_X, Int(x2), c);
 
-  log_double_t pr_base_2 = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
+  log_double_t pr_base_2 = *convert<const Log_Double>(M.lazy_evaluate(R_Pr,c).exp->head);
 
   log_double_t pr_total_2 = pr_base_2;
   vector<log_double_t> pr_y_2(M_Y.size());
   for(int i=0;i<M_Y.size();i++)
   {
     int R = M_Y[i];
-    Args.memory().set_reg_value(R, {constructor("Prelude.True",0),{}}, token);
-    log_double_t pr_offset = *convert<const Log_Double>(Args.evaluate_reg_to_closure(R_Pr,true).exp->head);
-    Args.memory().set_reg_value(R, {constructor("Prelude.False",0),{}}, token);
+    M.set_reg_value_in_context(R, Int(1), c);
+    log_double_t pr_offset = *convert<const Log_Double>(M.lazy_evaluate(R_Pr,c).exp->head);
+    M.set_reg_value_in_context(R, Int(0), c);
     double delta = log(pr_offset/pr_base_2);
     pr_y_2[i] = exp<log_double_t>(-log1pexp(delta));
     
@@ -118,7 +119,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
   //------------- 6. Set x depending on the choice
   if (choice == 0)
-    Args.memory().set_reg_value(R_X, Int(x1), token);
+    M.set_reg_value_in_context(R_X, Int(x1), c);
     
   //------------- 7. Sample the Y[i] depending on the choice.
   vector<log_double_t> pr_y = choice?pr_y_2:pr_y_1;
@@ -128,7 +129,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     int R = M_Y[i];
     double pr = 1.0 - double(pr_y[i]);
     if (uniform() < pr)
-      Args.memory().set_reg_value(R, {constructor("Prelude.True",0),{}}, token);
+      M.set_reg_value_in_context(R, Int(1), c);
   }
 
   return constructor("()",0);
