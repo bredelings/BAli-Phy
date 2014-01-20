@@ -111,7 +111,7 @@ extern "C" closure builtin_function_get_modifiable_value(OperationArgs& Args)
 {
   assert(not Args.evaluate_changeables());
 
-  int token = *Args.evaluate_as<Int>(0);
+  int c = *Args.evaluate_as<Int>(0);
 
   int R1 = Args.evaluate_slot_to_reg(1);
 
@@ -120,7 +120,7 @@ extern "C" closure builtin_function_get_modifiable_value(OperationArgs& Args)
   assert( M.access(R1).C.exp->head->type() == modifiable_type);
   assert( M.reg_is_changeable(R1) );
 
-  int R2 = Args.memory().computation_for_reg(token,R1).call;
+  int R2 = Args.memory().call_for_reg_in_context(R1, c);
 
   assert( R2 );
 

@@ -280,6 +280,8 @@ public:
 
   void set_reg_value_in_context(int index, closure&& C, int c);
 
+  int call_for_reg_in_context(int R, int c);
+
   /*------------------------------------------------*/
 
   const std::vector<int>& get_temp_heads() const {return temp;}

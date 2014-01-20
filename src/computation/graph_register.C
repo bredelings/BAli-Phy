@@ -2108,6 +2108,14 @@ const closure& reg_heap::lazy_evaluate_unchangeable(int& R)
   return access(R).C;
 }
 
+int reg_heap::call_for_reg_in_context(int R, int c)
+{
+  int t = token_for_context(c);
+  reroot_at(t);
+
+  return call_for_reg(R,t);
+}
+
 int reg_heap::add_identifier(const string& name)
 {
   map<string,int>& identifiers = get_identifiers();
