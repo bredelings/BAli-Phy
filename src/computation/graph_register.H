@@ -136,15 +136,12 @@ class reg_heap: public Object, public checked_pool<reg>
   bool computation_is_used_by(int, int) const;
   bool reg_is_used_by(int, int, int) const;
 
-  int root_token = -1;
-
 public:
 
   reg_heap* clone() const {std::abort();}
 
   void check_used_reg(int) const;
   void check_used_regs() const;
-  void check_tokens() const;
 
   void collect_garbage();
   void trace_and_reclaim_unreachable();
@@ -160,11 +157,6 @@ public:
   void clear_C(int R);
   void set_C(int R, closure&& C);
   void set_reduction_result(int t, int R, closure&& C);
-
-  /*----- Token manager ------*/
-
-  /// The list of unused_tokens
-  std::vector<int> unused_tokens;
 
   void get_roots(std::vector<int>&) const;
 
@@ -190,7 +182,9 @@ public:
   /// Probably this would be non-parameter identifiers
   std::map<std::string, int> identifiers;
 
-  struct graph_roots
+  /*----- Token manager ------*/
+
+  struct Token
   {
     // The context this context is derived from.
     int parent = -1;
@@ -210,6 +204,85 @@ public:
     bool used = false;
     int version = 0;
   };
+private:
+  int root_token = -1;
+
+  /// The roots for each token
+  std::vector<Token> tokens;
+
+  /// The list of unused_tokens
+  std::vector<int> unused_tokens;
+
+public:
+  /// Is a particular token unused?
+  bool token_is_used(int) const;
+
+  void check_tokens() const;
+
+  /// How many tokens are there, maximum?
+  int get_n_tokens() const {return tokens.size();}
+
+  /// Acquire an unused token
+  int get_unused_token();
+
+  /// Release the token if its unreferenced and has no children.
+  void try_release_token(int);
+
+  bool is_terminal_token(int) const;
+
+  bool is_root_token(int) const;
+
+  int parent_token(int) const;
+
+  const std::vector<int>& children_of_token(int) const;
+
+  int degree_of_token(int) const;
+
+  /// Release just the identifiers for a token
+  void release_identifiers();
+
+  /// Acquire a copy of a token
+  int copy_token(int);
+
+  /// Make a child of the current token, and unreference the current token.
+  int switch_to_child_token(int);
+
+  /*------------- Stuff for context indices -----------*/
+  std::vector<int> unused_contexts;
+
+  std::vector<int> token_for_context_;
+
+  int get_n_contexts() const;
+
+  int unset_token_for_context(int c);
+
+  void set_token_for_context(int c, int t);
+
+  int copy_context(int);
+
+  int get_new_context();
+
+  int get_unused_context();
+
+  void release_context(int);
+
+  int token_for_context(int) const;
+
+        std::vector<int>& triggers_for_context(int c);
+
+  bool reg_is_fully_up_to_date_in_context(int c, int r);
+
+  bool reg_is_fully_up_to_date(int t, int r) const;
+
+  int incremental_evaluate_in_context(int R, int c);
+
+  object_ref get_reg_value_in_context(int R, int c);
+
+  void set_reg_value_in_context(int index, closure&& C, int c);
+
+  int get_modifiable_value_in_context(int R, int c);
+
+  /*------------------------------------------------*/
 
   const std::vector<int>& get_temp_heads() const {return temp;}
         std::vector<int>& get_temp_heads()       {return temp;}
@@ -234,43 +307,6 @@ public:
 
   /// Add a new identifier, pointing to a newly allocated location
   int add_identifier(const std::string&);
-
-  /// The roots for each token
-  std::vector<graph_roots> token_roots;
-
-  /// Is a particular token unused?
-  bool token_is_used(int) const;
-
-  /// How many tokens are there, maximum?
-  int get_n_tokens() const {return token_roots.size();}
-
-  /// Acquire an unused token
-  int get_unused_token();
-
-  /// Release the token if its unreferenced and has no children.
-  void try_release_token(int);
-
-  /// Mark the token unreferenced and try to release it.
-  void release_token(int);
-
-  bool is_terminal_token(int) const;
-
-  bool is_root_token(int) const;
-
-  int parent_token(int) const;
-
-  const std::vector<int>& children_of_token(int) const;
-
-  int degree_of_token(int) const;
-
-  /// Release just the identifiers for a token
-  void release_identifiers();
-
-  /// Acquire a copy of a token
-  int copy_token(int);
-
-  /// Make a child of the current token, and unreference the current token.
-  int switch_to_child_token(int);
 
   /*----- Graph walking ------*/
   void find_all_regs_in_context(int, std::vector<int>&) const;
@@ -347,6 +383,10 @@ public:
   bool reg_is_shared_with_parent(int t, int r) const;
 
   int incremental_evaluate(int R, int t);
+
+  const closure& lazy_evaluate(int& R, int c);
+
+  const closure& lazy_evaluate_unchangeable(int& R);
 
   std::vector<int>& get_scratch_list() const;
   void release_scratch_list() const;

@@ -46,32 +46,6 @@ closure resolve_refs(const vector<Module>& P, closure&& C)
   return C;
 }
 
-void context::make_clean() const
-{
-  if (memory()->is_dirty(token))
-    token = memory()->switch_to_child_token(token);
-}
-
-void context::make_terminal_token() const
-{
-  if (not memory()->children_of_token(token).empty())
-    token = memory()->switch_to_child_token(token);
-
-  assert(memory()->children_of_token(token).empty());
-}
-
-void context::make_root_tip() const
-{
-  if (memory()->degree_of_token(token) >= 2)
-    token = memory()->switch_to_child_token(token);
-  make_root_token();
-}
-
-void context::make_root_token() const
-{
-  memory_->reroot_at(token);
-}
-
 object_ptr<reg_heap>& context::memory() const {return memory_;}
 
 std::vector<int>& context::heads() const {return memory()->get_heads();}
@@ -80,28 +54,10 @@ std::vector<std::pair<std::string,int>>& context::parameters() const {return mem
 
 std::map<std::string, int>& context::identifiers() const {return memory()->get_identifiers();}
 
-const std::vector<int>& context::triggers() const {make_root_token();return memory()->triggers(token);}
-      std::vector<int>& context::triggers()       {make_root_token();return memory()->triggers(token);}
+const std::vector<int>& context::triggers() const {return memory()->triggers_for_context(context_index);}
+      std::vector<int>& context::triggers()       {return memory()->triggers_for_context(context_index);}
 
 reg& context::access(int i) const {return memory()->access(i);}
-
-bool context::reg_has_call(int r) const 
-{
-  make_root_token();
-  return memory()->reg_has_call(token,r);
-}
-
-bool context::reg_has_result(int r) const 
-{
-  make_root_token();
-  return memory()->reg_has_result(token,r);
-}
-
-const closure& context::access_result_for_reg(int i) const
-{
-  make_root_token();
-  return memory()->access_result_for_reg(token,i);
-}
 
 reg& context::operator[](int i) const {return memory()->access(i);}
 
@@ -109,9 +65,7 @@ void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
 
 int context::incremental_evaluate(int R) const 
 {
-  make_root_token();
-  memory()->mark_completely_dirty(token);
-  return memory()->incremental_evaluate(R,token);
+  return memory()->incremental_evaluate_in_context(R, context_index);
 }
 
 int context::incremental_evaluate_unchangeable(int R) const 
@@ -168,34 +122,7 @@ void context::rename_parameter(int i, const string& new_name)
 
 bool context::reg_is_fully_up_to_date(int R) const
 {
-  if (not reg_has_result(R)) return false;
-
-  const closure& result = access_result_for_reg(R);
-
-  // NOTE! result cannot be an index_var.
-  const expression_ref& E = result.exp;
-
-  // Therefore, if the result is atomic, then R is up-to-date.
-  if (not E->size()) return true;
-
-  // If the result is a lambda function, then R is up-to-date.
-  if (E->head->type() != constructor_type) return true;
-
-  // If we get here, this had better be a constructor!
-  assert(is_a<constructor>(E));
-
-  // Check each component that is a index_var to see if its out of date.
-  for(int i=0;i<E->size();i++)
-  {
-    // assert_cast
-    object_ptr<const index_var> V = assert_is_a<index_var>(E->sub[i]);
-    int R2 = result.lookup_in_env( V->index );
-    
-    if (not reg_is_fully_up_to_date(R2)) return false;
-  }
-
-  // All the components must be fully up-to-date, so R is fully up-to-date.
-  return true;
+  return memory()->reg_is_fully_up_to_date_in_context(R, context_index);
 }
 
 bool context::compute_expression_is_up_to_date(int index) const
@@ -210,19 +137,13 @@ closure context::lazy_evaluate(int index) const
 {
   int& H = heads()[index];
 
-  H = incremental_evaluate(H);
-
-  return access_result_for_reg(H);
+  return memory()->lazy_evaluate(H, context_index);
 }
 
 /// Return the value of a particular index, computing it if necessary
 object_ref context::evaluate(int index) const
 {
-  int& H = heads()[index];
-
-  H = incremental_evaluate(H);
-
-  return access_result_for_reg(H).exp->head;
+  return lazy_evaluate(index).exp->head;
 }
 
 /// Return the value of a particular index, computing it if necessary
@@ -239,11 +160,11 @@ closure context::lazy_evaluate_expression_(closure&& C, bool ec) const
     int R = push_temp_head();
     set_C(R, std::move(C) );
 
+    closure result;
     if (ec)
-      R = incremental_evaluate(R);
+      result = memory()->lazy_evaluate(R, context_index);
     else
-      R = incremental_evaluate_unchangeable(R);
-    const closure& result = access_result_for_reg(R);
+      result = memory()->lazy_evaluate_unchangeable(R);
     
     pop_temp_head();
     return result;
@@ -291,31 +212,10 @@ bool context::parameter_is_modifiable(int index) const
 }
 
 
-bool context::parameter_is_set(int index) const
-{
-  assert(index >= 0 and index < n_parameters());
-
-  int P = find_parameter_modifiable_reg(index);
-
-  if (not reg_has_result(P) and not reg_has_call(P)) return false;
-
-  return true;
-}
-
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 object_ref context::get_reg_value(int R) const
 {
-  make_root_token();
-  if (not reg_has_result(R))
-  {
-    // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-    if (not reg_has_call(R)) return object_ref();
-
-    // If the value needs to be computed (e.g. its a call expression) then compute it.
-    incremental_evaluate(R);
-  }
-
-  return access_result_for_reg(R).exp->head;
+  return memory()->get_reg_value_in_context(R, context_index);
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
@@ -375,7 +275,7 @@ void context::set_parameter_value_expression(int index, const expression_ref& O)
 {
   if (O)
   {
-    expression_ref E = (identifier("set_parameter_value"), token, parameter(parameter_name(index)), O);
+    expression_ref E = (identifier("set_parameter_value"), get_context_index(), parameter(parameter_name(index)), O);
 
     perform_expression(E);
   }
@@ -392,12 +292,7 @@ void context::set_parameter_value_(int index, closure&& C)
 
 void context::set_reg_value(int P, closure&& C)
 {
-  make_terminal_token();
-
-  make_clean();
-  // FIXME - we can only change values on contexts that are not dirty!
-  // BUT this is ultimately checked in the reg_heap itself.
-  memory()->set_reg_value(P, std::move(C), token);
+  memory()->set_reg_value_in_context(P, std::move(C), context_index);
 }
 
 /// Update the value of a non-constant, non-computed index
@@ -827,10 +722,10 @@ context& context::operator+=(const vector<Module>& Ms)
 
 context& context::operator=(const context& C)
 {
-  memory_->release_token(token);
+  memory_->release_context(context_index);
   
   memory_ = C.memory_;
-  token = memory_->copy_token(C.token);
+  context_index = memory_->copy_context(C.context_index);
   perform_io_head = C.perform_io_head;
   P = C.P;
   notes = C.notes;
@@ -882,7 +777,7 @@ context::context(const module_loader& L, const vector<expression_ref>& N)
 context::context(const module_loader& L, const vector<expression_ref>& N, const vector<Module>& Ps)
   :memory_(new reg_heap()),
    P(new Program),
-   token(memory_->get_unused_token()),
+   context_index(memory_->get_unused_context()),
    loader(L)
 {
   (*this) += "Prelude";
@@ -906,14 +801,14 @@ context::context(const context& C)
   :Model_Notes(C),
    memory_(C.memory_),
    P(C.P),
-   token(memory_->copy_token(C.token)),
+   context_index(memory_->copy_context(C.context_index)),
    perform_io_head(C.perform_io_head),
    loader(C.loader)
 { }
 
 context::~context()
 {
-  memory_->release_token(token);
+  memory_->release_context(context_index);
 }
 
 int context::push_temp_head() const
@@ -1015,10 +910,8 @@ void set_default_values_from_notes(context& C, int b, int e)
     if (find_match(query, C.get_note(i), results))
     {
       expression_ref parameter = results[0];
-      int token = C.get_token();
-      C.make_terminal_token();
       expression_ref value = (identifier("distDefaultValue"),results[1]);
-      C.perform_expression( (identifier("set_parameter_value_"),C.get_token(),parameter,value) );
+      C.perform_expression( (identifier("set_parameter_value_"),C.get_context_index(),parameter,value) );
     }
   }
 
@@ -1032,7 +925,7 @@ void set_default_values_from_notes(context& C, int b, int e)
     {
       expression_ref parameter = results[0];
       expression_ref value = results[1];
-      C.perform_expression( (identifier("set_parameter_value_"),C.get_token(),parameter,value) );
+      C.perform_expression( (identifier("set_parameter_value_"),C.get_context_index(),parameter,value) );
     }
   }
 
