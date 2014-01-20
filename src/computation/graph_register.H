@@ -251,6 +251,8 @@ public:
   int switch_to_child_token(int);
 
   /*------------- Stuff for context indices -----------*/
+  int switch_context_to_token(int c, int t);
+
   int copy_context(int);
 
   int get_unused_context();

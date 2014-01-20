@@ -1927,6 +1927,21 @@ int reg_heap::token_for_context(int c) const
   return c;
 }
 
+int reg_heap::switch_context_to_token(int c, int t2)
+{
+  int t1 = token_for_context(c);
+  assert(t1);
+  if (t1 > 0)
+  {
+    token_roots[t1].referenced = false;
+  }
+
+  assert(t2>0);
+  assert(token_roots[t2].used);
+
+  token_roots[t2].referenced = true;
+}
+
 int reg_heap::copy_context(int c)
 {
   return copy_token(c);
