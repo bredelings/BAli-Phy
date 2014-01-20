@@ -1414,8 +1414,6 @@ int reg_heap::get_unused_token()
   assert(token_roots[t].vm_relative.empty());
   assert(not token_roots[t].referenced);
 
-  token_roots[t].referenced = true;
-
   return t;
 }
 
@@ -1851,16 +1849,6 @@ int reg_heap::degree_of_token(int t) const
 }
   
 
-void reg_heap::release_token(int t)
-{
-  check_tokens();
-
-  token_roots[t].referenced = false;
-  try_release_token(t);
-
-  check_tokens();
-}
-
 bool reg_heap::token_is_used(int t) const
 {
   return token_roots[t].used;
@@ -1915,11 +1903,12 @@ int reg_heap::copy_token(int t)
   return t2;
 }
 
-int reg_heap::switch_to_child_token(int t)
+int reg_heap::switch_to_child_token(int c)
 {
-  int new_t = copy_token(t);
-  token_roots[t].referenced = false;
-  return new_t;
+  int t1 = token_for_context(c);
+  int t2 = copy_token(t1);
+  switch_context_to_token(c,t2);
+  return t2;
 }
 
 int reg_heap::token_for_context(int c) const
@@ -1940,21 +1929,37 @@ int reg_heap::switch_context_to_token(int c, int t2)
   assert(token_roots[t2].used);
 
   token_roots[t2].referenced = true;
+
+  return t1;
 }
 
 int reg_heap::copy_context(int c)
 {
-  return copy_token(c);
+  int t1 = token_for_context(c);
+  int t2 = copy_token(t1);
+  token_roots[t2].referenced = true;
+
+  int c2 = t2;
+
+  return c2;
 }
 
 int reg_heap::get_unused_context()
 {
-  return get_unused_token();
+  int t = get_unused_token();
+  token_roots[t].referenced = true;
+  return t;
 }
 
 void reg_heap::release_context(int c)
 {
-  return release_token(c);
+  check_tokens();
+
+  int t = token_for_context(c);
+  token_roots[t].referenced = false;
+  try_release_token(t);
+
+  check_tokens();
 }
 
 int reg_heap::add_identifier(const string& name)
