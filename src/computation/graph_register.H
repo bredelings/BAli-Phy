@@ -280,7 +280,7 @@ public:
 
   void set_reg_value_in_context(int index, closure&& C, int c);
 
-  int call_for_reg_in_context(int R, int c);
+  int get_modifiable_value_in_context(int R, int c);
 
   /*------------------------------------------------*/
 

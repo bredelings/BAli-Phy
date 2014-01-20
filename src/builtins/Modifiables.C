@@ -115,12 +115,7 @@ extern "C" closure builtin_function_get_modifiable_value(OperationArgs& Args)
 
   int R1 = Args.evaluate_slot_to_reg(1);
 
-  const reg_heap& M = Args.memory();
-
-  assert( M.access(R1).C.exp->head->type() == modifiable_type);
-  assert( M.reg_is_changeable(R1) );
-
-  int R2 = Args.memory().call_for_reg_in_context(R1, c);
+  int R2 = Args.memory().get_modifiable_value_in_context(R1, c);
 
   assert( R2 );
 
