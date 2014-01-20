@@ -341,7 +341,7 @@ void context::set_parameter_value_expression(int index, const expression_ref& O)
 {
   if (O)
   {
-    expression_ref E = (identifier("set_parameter_value"), get_token(), parameter(parameter_name(index)), O);
+    expression_ref E = (identifier("set_parameter_value"), get_context_index(), parameter(parameter_name(index)), O);
 
     perform_expression(E);
   }
@@ -976,9 +976,8 @@ void set_default_values_from_notes(context& C, int b, int e)
     if (find_match(query, C.get_note(i), results))
     {
       expression_ref parameter = results[0];
-      C.make_terminal_token();
       expression_ref value = (identifier("distDefaultValue"),results[1]);
-      C.perform_expression( (identifier("set_parameter_value_"),C.get_token(),parameter,value) );
+      C.perform_expression( (identifier("set_parameter_value_"),C.get_context_index(),parameter,value) );
     }
   }
 
@@ -992,7 +991,7 @@ void set_default_values_from_notes(context& C, int b, int e)
     {
       expression_ref parameter = results[0];
       expression_ref value = results[1];
-      C.perform_expression( (identifier("set_parameter_value_"),C.get_token(),parameter,value) );
+      C.perform_expression( (identifier("set_parameter_value_"),C.get_context_index(),parameter,value) );
     }
   }
 
