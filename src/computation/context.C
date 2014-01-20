@@ -54,13 +54,13 @@ int context::get_token() const
 void context::make_clean() const
 {
   if (memory()->is_dirty(get_token()))
-    context_index = memory()->switch_to_child_token(context_index);
+    memory()->switch_to_child_token(context_index);
 }
 
 void context::make_terminal_token() const
 {
   if (not memory()->children_of_token(get_token()).empty())
-    context_index = memory()->switch_to_child_token(context_index);
+    memory()->switch_to_child_token(context_index);
 
   assert(memory()->children_of_token(get_token()).empty());
 }
@@ -68,7 +68,7 @@ void context::make_terminal_token() const
 void context::make_root_tip() const
 {
   if (memory()->degree_of_token(get_token()) >= 2)
-    context_index = memory()->switch_to_child_token(context_index);
+    memory()->switch_to_child_token(context_index);
   make_root_token();
 }
 

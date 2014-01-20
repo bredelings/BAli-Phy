@@ -245,7 +245,7 @@ public:
   int copy_token(int);
 
   /// Make a child of the current token, and unreference the current token.
-  int switch_to_child_token(int);
+  void switch_to_child_token(int);
 
   /*------------- Stuff for context indices -----------*/
   std::vector<int> unused_contexts;

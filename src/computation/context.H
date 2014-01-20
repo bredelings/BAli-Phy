@@ -36,7 +36,7 @@ private:
   // FIXME:speed - Instead, wrap in cow_ptr< >.
   cow_ptr<Program> P;
 
-  mutable int context_index;
+  int context_index;
 
   int perform_io_head = -1;
 

@@ -1873,6 +1873,8 @@ int reg_heap::copy_token(int t)
   check_used_regs();
 #endif
 
+  assert(tokens[t].used);
+
   int t2 = get_unused_token();
 
   assert(temp.empty());
@@ -1914,13 +1916,12 @@ int reg_heap::copy_token(int t)
   return t2;
 }
 
-int reg_heap::switch_to_child_token(int c)
+void reg_heap::switch_to_child_token(int c)
 {
   int t1 = token_for_context(c);
   int t2 = copy_token(t1);
   unset_token_for_context(c);
   set_token_for_context(c,t2);
-  return c;
 }
 
 int reg_heap::get_n_contexts() const
