@@ -1457,6 +1457,16 @@ bool reg_heap::computation_is_referenced(int t,int rc) const
 
 void reg_heap::check_tokens() const
 {
+  for(int c=0;c<get_n_contexts();c++)
+  {
+    int t = token_for_context(c);
+    if (t > 0)
+    {
+      assert(tokens[t].referenced);
+      assert(tokens[t].used);
+    }
+  }
+
   for(int t=0;t<tokens.size();t++)
     if (token_is_used(t))
     {
@@ -1464,6 +1474,7 @@ void reg_heap::check_tokens() const
       for(int t2: children_of_token(t))
 	assert(tokens[t].version >= tokens[t2].version);
     }
+
 }
 
 void reg_heap::check_used_reg(int index) const
@@ -1907,57 +1918,95 @@ int reg_heap::switch_to_child_token(int c)
 {
   int t1 = token_for_context(c);
   int t2 = copy_token(t1);
-  switch_context_to_token(c,t2);
-  return t2;
+  unset_token_for_context(c);
+  set_token_for_context(c,t2);
+  return c;
+}
+
+int reg_heap::get_n_contexts() const
+{
+  return token_for_context_.size();
 }
 
 int reg_heap::token_for_context(int c) const
 {
-  return c;
+  return token_for_context_[c];
 }
 
-int reg_heap::switch_context_to_token(int c, int t2)
+int reg_heap::unset_token_for_context(int c)
 {
-  int t1 = token_for_context(c);
-  assert(t1);
-  if (t1 > 0)
-  {
-    tokens[t1].referenced = false;
-  }
+  int t = token_for_context(c);
+  assert(t != -1);
+  assert(tokens[t].referenced);
 
-  assert(t2>0);
-  assert(tokens[t2].used);
+  token_for_context_[c] = -1;
+  tokens[t].referenced = false;
 
-  tokens[t2].referenced = true;
+  return t;
+}
 
-  return t1;
+void reg_heap::set_token_for_context(int c, int t)
+{
+  assert(token_for_context(c) == -1);
+  token_for_context_[c] = t;
+  assert(not tokens[t].referenced);
+  tokens[t].referenced = true;
 }
 
 int reg_heap::copy_context(int c)
 {
+  check_tokens();
+
   int t1 = token_for_context(c);
+
+  int c2 = get_new_context();
   int t2 = copy_token(t1);
-  tokens[t2].referenced = true;
+  set_token_for_context(c2,t2);
 
-  int c2 = t2;
-
+  check_tokens();
   return c2;
+}
+
+int reg_heap::get_new_context()
+{
+  // Add an unused context if we are missing one
+  if (unused_contexts.empty())
+  {
+    unused_contexts.push_back(get_n_contexts());
+    token_for_context_.push_back(-1);
+  }
+
+  // Get a new context index and check it has no token
+  int c = unused_contexts.back();
+  unused_contexts.pop_back();
+  assert(token_for_context(c) == -1);
+
+  return c;
 }
 
 int reg_heap::get_unused_context()
 {
-  int t = get_unused_token();
-  tokens[t].referenced = true;
-  return t;
+  int c = get_new_context();
+  
+  set_token_for_context(c, get_unused_token());
+
+  check_tokens();
+
+  return c;
 }
 
 void reg_heap::release_context(int c)
 {
+  // release the reference to the token
   check_tokens();
 
-  int t = token_for_context(c);
-  tokens[t].referenced = false;
+  int t = unset_token_for_context(c);
+
   try_release_token(t);
+
+  // Mark the context as unused
+  token_for_context_[c] = -1;
+  unused_contexts.push_back(c);
 
   check_tokens();
 }

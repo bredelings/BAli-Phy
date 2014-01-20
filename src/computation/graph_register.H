@@ -248,9 +248,19 @@ public:
   int switch_to_child_token(int);
 
   /*------------- Stuff for context indices -----------*/
-  int switch_context_to_token(int c, int t);
+  std::vector<int> unused_contexts;
+
+  std::vector<int> token_for_context_;
+
+  int get_n_contexts() const;
+
+  int unset_token_for_context(int c);
+
+  void set_token_for_context(int c, int t);
 
   int copy_context(int);
+
+  int get_new_context();
 
   int get_unused_context();
 

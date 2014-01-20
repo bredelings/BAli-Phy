@@ -46,30 +46,35 @@ closure resolve_refs(const vector<Module>& P, closure&& C)
   return C;
 }
 
+int context::get_token() const
+{
+  int token = memory()->token_for_context(context_index);
+}
+
 void context::make_clean() const
 {
-  if (memory()->is_dirty(context_index))
+  if (memory()->is_dirty(get_token()))
     context_index = memory()->switch_to_child_token(context_index);
 }
 
 void context::make_terminal_token() const
 {
-  if (not memory()->children_of_token(context_index).empty())
+  if (not memory()->children_of_token(get_token()).empty())
     context_index = memory()->switch_to_child_token(context_index);
 
-  assert(memory()->children_of_token(context_index).empty());
+  assert(memory()->children_of_token(get_token()).empty());
 }
 
 void context::make_root_tip() const
 {
-  if (memory()->degree_of_token(context_index) >= 2)
+  if (memory()->degree_of_token(get_token()) >= 2)
     context_index = memory()->switch_to_child_token(context_index);
   make_root_token();
 }
 
 void context::make_root_token() const
 {
-  memory_->reroot_at(context_index);
+  memory_->reroot_at(get_token());
 }
 
 object_ptr<reg_heap>& context::memory() const {return memory_;}
@@ -80,27 +85,27 @@ std::vector<std::pair<std::string,int>>& context::parameters() const {return mem
 
 std::map<std::string, int>& context::identifiers() const {return memory()->get_identifiers();}
 
-const std::vector<int>& context::triggers() const {make_root_token();return memory()->triggers(context_index);}
-      std::vector<int>& context::triggers()       {make_root_token();return memory()->triggers(context_index);}
+const std::vector<int>& context::triggers() const {make_root_token();return memory()->triggers(get_token());}
+      std::vector<int>& context::triggers()       {make_root_token();return memory()->triggers(get_token());}
 
 reg& context::access(int i) const {return memory()->access(i);}
 
 bool context::reg_has_call(int r) const 
 {
   make_root_token();
-  return memory()->reg_has_call(context_index,r);
+  return memory()->reg_has_call(get_token(),r);
 }
 
 bool context::reg_has_result(int r) const 
 {
   make_root_token();
-  return memory()->reg_has_result(context_index,r);
+  return memory()->reg_has_result(get_token(),r);
 }
 
 const closure& context::access_result_for_reg(int i) const
 {
   make_root_token();
-  return memory()->access_result_for_reg(context_index,i);
+  return memory()->access_result_for_reg(get_token(),i);
 }
 
 reg& context::operator[](int i) const {return memory()->access(i);}
@@ -110,8 +115,8 @@ void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
 int context::incremental_evaluate(int R) const 
 {
   make_root_token();
-  memory()->mark_completely_dirty(context_index);
-  return memory()->incremental_evaluate(R,context_index);
+  memory()->mark_completely_dirty(get_token());
+  return memory()->incremental_evaluate(R,get_token());
 }
 
 int context::incremental_evaluate_unchangeable(int R) const 
@@ -375,7 +380,7 @@ void context::set_parameter_value_expression(int index, const expression_ref& O)
 {
   if (O)
   {
-    expression_ref E = (identifier("set_parameter_value"), context_index, parameter(parameter_name(index)), O);
+    expression_ref E = (identifier("set_parameter_value"), get_token(), parameter(parameter_name(index)), O);
 
     perform_expression(E);
   }
@@ -397,7 +402,7 @@ void context::set_reg_value(int P, closure&& C)
   make_clean();
   // FIXME - we can only change values on contexts that are not dirty!
   // BUT this is ultimately checked in the reg_heap itself.
-  memory()->set_reg_value(P, std::move(C), context_index);
+  memory()->set_reg_value(P, std::move(C), get_token());
 }
 
 /// Update the value of a non-constant, non-computed index
@@ -1017,7 +1022,7 @@ void set_default_values_from_notes(context& C, int b, int e)
       expression_ref parameter = results[0];
       C.make_terminal_token();
       expression_ref value = (identifier("distDefaultValue"),results[1]);
-      C.perform_expression( (identifier("set_parameter_value_"),C.get_context_index(),parameter,value) );
+      C.perform_expression( (identifier("set_parameter_value_"),C.get_token(),parameter,value) );
     }
   }
 
@@ -1031,7 +1036,7 @@ void set_default_values_from_notes(context& C, int b, int e)
     {
       expression_ref parameter = results[0];
       expression_ref value = results[1];
-      C.perform_expression( (identifier("set_parameter_value_"),C.get_context_index(),parameter,value) );
+      C.perform_expression( (identifier("set_parameter_value_"),C.get_token(),parameter,value) );
     }
   }
 

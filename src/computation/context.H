@@ -77,6 +77,8 @@ private:
 
 public:
 
+  int get_token() const;
+
   int get_context_index() const {return context_index;}
 
   const std::vector<Module>& get_Program() const {return *P;}
