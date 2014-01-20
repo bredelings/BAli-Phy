@@ -1263,7 +1263,7 @@ void reg_heap::trace_and_reclaim_unreachable()
   check_used_regs();
 #endif
 
-  vector<int>& tokens = get_scratch_list();
+  //  vector<int>& tokens = get_scratch_list();
 
   vector<int>& scan1 = get_scratch_list();
   vector<int>& next_scan1 = get_scratch_list();
@@ -1271,7 +1271,7 @@ void reg_heap::trace_and_reclaim_unreachable()
   vector<int>& next_scan2 = get_scratch_list();
 
   //  assert(root_token != -1);
-  tokens.push_back(root_token);
+  //  tokens.push_back(root_token);
 
   get_roots(scan1);
   
@@ -1333,7 +1333,7 @@ void reg_heap::trace_and_reclaim_unreachable()
   check_used_regs();
 #endif
 
-  release_scratch_list();
+  //  release_scratch_list();
   release_scratch_list();
   release_scratch_list();
   release_scratch_list();
