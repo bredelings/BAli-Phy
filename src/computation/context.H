@@ -20,8 +20,6 @@ class context: public Model_Notes
   /// The array of registers that make up our memory.
   mutable object_ptr<reg_heap> memory_;
 
-  void make_root_token() const;
-
   object_ptr<reg_heap>& memory() const;
 
   // FIXME:speed - This is going to be really slow to copy around all the time!
@@ -68,8 +66,6 @@ private:
   closure preprocess(const closure& C) const;
 
 public:
-
-  int get_token() const;
 
   int get_context_index() const {return context_index;}
 

@@ -46,16 +46,6 @@ closure resolve_refs(const vector<Module>& P, closure&& C)
   return C;
 }
 
-int context::get_token() const
-{
-  return memory()->token_for_context(context_index);
-}
-
-void context::make_root_token() const
-{
-  memory_->reroot_at(get_token());
-}
-
 object_ptr<reg_heap>& context::memory() const {return memory_;}
 
 std::vector<int>& context::heads() const {return memory()->get_heads();}
@@ -68,12 +58,6 @@ const std::vector<int>& context::triggers() const {return memory()->triggers_for
       std::vector<int>& context::triggers()       {return memory()->triggers_for_context(context_index);}
 
 reg& context::access(int i) const {return memory()->access(i);}
-
-const closure& context::access_result_for_reg(int i) const
-{
-  make_root_token();
-  return memory()->access_result_for_reg(get_token(),i);
-}
 
 reg& context::operator[](int i) const {return memory()->access(i);}
 
@@ -153,19 +137,13 @@ closure context::lazy_evaluate(int index) const
 {
   int& H = heads()[index];
 
-  H = incremental_evaluate(H);
-
-  return access_result_for_reg(H);
+  return memory()->lazy_evaluate(H, context_index);
 }
 
 /// Return the value of a particular index, computing it if necessary
 object_ref context::evaluate(int index) const
 {
-  int& H = heads()[index];
-
-  H = incremental_evaluate(H);
-
-  return access_result_for_reg(H).exp->head;
+  return lazy_evaluate(index).exp->head;
 }
 
 /// Return the value of a particular index, computing it if necessary
@@ -182,11 +160,11 @@ closure context::lazy_evaluate_expression_(closure&& C, bool ec) const
     int R = push_temp_head();
     set_C(R, std::move(C) );
 
+    closure result;
     if (ec)
-      R = incremental_evaluate(R);
+      result = memory()->lazy_evaluate(R, context_index);
     else
-      R = incremental_evaluate_unchangeable(R);
-    const closure& result = access_result_for_reg(R);
+      result = memory()->lazy_evaluate_unchangeable(R);
     
     pop_temp_head();
     return result;

@@ -2093,6 +2093,21 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
   return incremental_evaluate(R, t);
 }
 
+const closure& reg_heap::lazy_evaluate(int& R, int c)
+{
+  int t = token_for_context(c);
+  reroot_at(t);
+  mark_completely_dirty(t);
+  R = incremental_evaluate(R, t);
+  return access_result_for_reg(t,R);
+}
+
+const closure& reg_heap::lazy_evaluate_unchangeable(int& R)
+{
+  R = incremental_evaluate(R, 0);
+  return access(R).C;
+}
+
 int reg_heap::add_identifier(const string& name)
 {
   map<string,int>& identifiers = get_identifiers();

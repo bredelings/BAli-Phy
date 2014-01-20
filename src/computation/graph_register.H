@@ -382,6 +382,10 @@ public:
 
   int incremental_evaluate(int R, int t);
 
+  const closure& lazy_evaluate(int& R, int c);
+
+  const closure& lazy_evaluate_unchangeable(int& R);
+
   std::vector<int>& get_scratch_list() const;
   void release_scratch_list() const;
 
