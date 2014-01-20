@@ -20,15 +20,7 @@ class context: public Model_Notes
   /// The array of registers that make up our memory.
   mutable object_ptr<reg_heap> memory_;
 
-  void make_clean() const;
-
   void make_root_token() const;
-
-public:
-  void make_terminal_token() const;
-
-private:
-  void make_root_tip() const;
 
   object_ptr<reg_heap>& memory() const;
 
@@ -87,10 +79,6 @@ public:
 
   reg& access(int i) const;
 
-  bool reg_has_call(int r) const;
-
-  bool reg_has_result(int r) const;
-
   const closure& access_result_for_reg(int i) const;
 
   reg& operator[](int i) const;
@@ -98,9 +86,6 @@ public:
   context* clone() const {return new context(*this);}
 
   bool parameter_is_modifiable(int p) const;
-
-  /// Check if a parameter has a value.
-  bool parameter_is_set(int i) const;
 
   /// Check if a compute expression is computed.
   bool compute_expression_is_up_to_date(int i) const;

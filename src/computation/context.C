@@ -51,27 +51,6 @@ int context::get_token() const
   return memory()->token_for_context(context_index);
 }
 
-void context::make_clean() const
-{
-  if (memory()->is_dirty(get_token()))
-    memory()->switch_to_child_token(context_index);
-}
-
-void context::make_terminal_token() const
-{
-  if (not memory()->children_of_token(get_token()).empty())
-    memory()->switch_to_child_token(context_index);
-
-  assert(memory()->children_of_token(get_token()).empty());
-}
-
-void context::make_root_tip() const
-{
-  if (memory()->degree_of_token(get_token()) >= 2)
-    memory()->switch_to_child_token(context_index);
-  make_root_token();
-}
-
 void context::make_root_token() const
 {
   memory_->reroot_at(get_token());
@@ -89,18 +68,6 @@ const std::vector<int>& context::triggers() const {return memory()->triggers_for
       std::vector<int>& context::triggers()       {return memory()->triggers_for_context(context_index);}
 
 reg& context::access(int i) const {return memory()->access(i);}
-
-bool context::reg_has_call(int r) const 
-{
-  make_root_token();
-  return memory()->reg_has_call(get_token(),r);
-}
-
-bool context::reg_has_result(int r) const 
-{
-  make_root_token();
-  return memory()->reg_has_result(get_token(),r);
-}
 
 const closure& context::access_result_for_reg(int i) const
 {
@@ -266,17 +233,6 @@ bool context::parameter_is_modifiable(int index) const
   return is_modifiable(access(R2).C.exp);
 }
 
-
-bool context::parameter_is_set(int index) const
-{
-  assert(index >= 0 and index < n_parameters());
-
-  int P = find_parameter_modifiable_reg(index);
-
-  if (not reg_has_result(P) and not reg_has_call(P)) return false;
-
-  return true;
-}
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 object_ref context::get_reg_value(int R) const
