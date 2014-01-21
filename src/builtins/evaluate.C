@@ -11,11 +11,13 @@ extern "C" closure builtin_function_evaluate(OperationArgs& Args)
     throw myexception()<<"Calling builtin_function_evaluate( ) when evaluate_changeables=true";
 #endif
 
-  int token = *Args.evaluate_as<Int>(0);
+  auto& M = Args.memory();
 
-  int R1 = Args.evaluate_slot_to_reg(1,true);
+  int c = *Args.evaluate_as<Int>(0);
 
-  int R2 = Args.memory().result_for_reg(token,R1);
+  int R1 = Args.reg_for_slot(1);
+
+  int R2 = M.incremental_evaluate_in_context(R1, c);
 
   assert( R2 );
 

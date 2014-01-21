@@ -901,6 +901,8 @@ int add_probability_expression(context& C)
 
 void set_default_values_from_notes(context& C, int b, int e)
 {
+  int c = C.get_context_index();
+
   // Set default values from distributions
   for(int i=b;i<e;i++)
   {
@@ -911,7 +913,8 @@ void set_default_values_from_notes(context& C, int b, int e)
     {
       expression_ref parameter = results[0];
       expression_ref value = (identifier("distDefaultValue"),results[1]);
-      C.perform_expression( (identifier("set_parameter_value_"),C.get_context_index(),parameter,value) );
+      value = (identifier("evaluate"), c, value);
+      C.perform_expression( (identifier("set_parameter_value_"), c, parameter, value) );
     }
   }
 
@@ -925,7 +928,8 @@ void set_default_values_from_notes(context& C, int b, int e)
     {
       expression_ref parameter = results[0];
       expression_ref value = results[1];
-      C.perform_expression( (identifier("set_parameter_value_"),C.get_context_index(),parameter,value) );
+      value = (identifier("evaluate"), c, value);
+      C.perform_expression( (identifier("set_parameter_value_"), c, parameter, value) );
     }
   }
 
