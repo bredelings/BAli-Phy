@@ -20,7 +20,7 @@ read_phase_file = builtin_read_phase_file . listToString;
 
 ewens_sampling_mixture_probability (thetas,ps) x = builtin_ewens_sampling_mixture_probability (listToVectorDouble thetas) (listToVectorDouble ps) x;
 
-ewens_diploid_probability (theta,i) x = builtin_ewens_diploid_probability theta (list_to_vector i) (list_to_vector x);
+ewens_diploid_probability theta i x = builtin_ewens_diploid_probability theta (list_to_vector i) (list_to_vector x);
 
 selfing_coalescence_probability (n_loci,s) i = builtin_selfing_coalescence_probability n_loci s (list_to_vector i);
 
@@ -30,7 +30,7 @@ afsGroup args = ProbDensity (ewens_sampling_group_probability args) (error "afs 
 
 afsMixture args = ProbDensity (ewens_sampling_mixture_probability args) (error "afs has no quantile") () ();
 
-afs2 args  = ProbDensity (ewens_diploid_probability args) (error "afs has no quantile") () ();
+afs2 thetas ps = ProbDensity (ewens_diploid_probability thetas ps) (error "afs2 has no quantile") () ();
 
 selfing_coalescence (n_loci,s) = ProbDensity (selfing_coalescence_probability (n_loci,s)) (error "selfing_coalescence has no quantile") (replicate n_loci False) (ListRange (replicate n_loci TrueFalseRange));
 }
