@@ -2174,16 +2174,16 @@ class RegOperationArgs: public OperationArgs
   bool evaluate_changeables() const {return evaluate_changeable;}
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
-  int evaluate_reg_no_record(int R2, bool ec)
+  int evaluate_reg_no_record(int R2)
   {
-    return M.incremental_evaluate(R2, ec?t:0);
+    return M.incremental_evaluate(R2, t);
   }
 
   /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
-  int evaluate_reg_to_reg(int R2, bool ec)
+  int evaluate_reg_to_reg(int R2)
   {
     // Compute the result, and follow index_var chains (which are not changeable).
-    int R3 = M.incremental_evaluate(R2, ec?t:0);
+    int R3 = M.incremental_evaluate(R2, t);
 
     if (M.reg_is_changeable(R3) and evaluate_changeables())
     {
