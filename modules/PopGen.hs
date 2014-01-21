@@ -14,7 +14,7 @@ builtin builtin_selfing_coalescence_probability 3 "selfing_coalescence_probabili
 builtin builtin_sum_out_coals 4 "sum_out_coals" "sum_out_coals";
 
 
-sum_out_coals x y pr = IOAction3 builtin_sum_out_coals x y pr;
+sum_out_coals x y pr c = IOAction4 builtin_sum_out_coals x y pr c;
 
 read_phase_file = builtin_read_phase_file . listToString;
 
