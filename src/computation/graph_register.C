@@ -2161,15 +2161,13 @@ class RegOperationArgs: public OperationArgs
 
   int n_allocated;
 
-  bool evaluate_changeable;
-
   int current_token() const {return t;}
 
   reg_heap& memory() {return M;}
 
   const closure& current_closure() const {return M[R].C;}
 
-  bool evaluate_changeables() const {return evaluate_changeable;}
+  bool evaluate_changeables() const {return t != 0;}
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_reg_no_record(int R2)
@@ -2183,7 +2181,7 @@ class RegOperationArgs: public OperationArgs
     // Compute the result, and follow index_var chains (which are not changeable).
     int R3 = M.incremental_evaluate(R2, t);
 
-    if (M.reg_is_changeable(R3) and evaluate_changeables())
+    if (M.reg_is_changeable(R3) and t)
     {
       // If R2 -> result was changeable, then R -> result will be changeable as well.
       if (not M.reg_is_changeable(R))
@@ -2213,7 +2211,7 @@ public:
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
   RegOperationArgs(int r, reg_heap& m, int T, bool ec)
-    :R(r),M(m),t(T), n_allocated(0), evaluate_changeable(ec)
+    :R(r),M(m),t(T), n_allocated(0)
   { 
     // I think these should already be cleared.
     assert(M.computation_for_reg(t,R).used_inputs.empty());
