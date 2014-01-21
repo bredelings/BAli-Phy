@@ -2169,8 +2169,6 @@ class RegOperationArgs: public OperationArgs
 
   const closure& current_closure() const {return M[R].C;}
 
-  const expression& get_E() const {return *current_closure().exp;}
-
   bool evaluate_changeables() const {return evaluate_changeable;}
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
