@@ -50,7 +50,7 @@ int OperationArgs::evaluate_slot_to_reg(int slot, bool ec)
 
 int OperationArgs::evaluate_slot_to_reg(int slot)
 {
-  return evaluate_slot_to_reg(slot, evaluate_changeables());
+  return evaluate_reg_to_reg(reg_for_slot(slot));
 }
 
 /// Evaluate the reg R2, record dependencies, and return the result.
