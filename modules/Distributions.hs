@@ -82,9 +82,12 @@ poisson mu = ProbDensity (poisson_density mu) (no_quantile "Poisson") (sample_po
 
 builtin builtin_sample_bernoulli 1 "sample_bernoulli" "Distribution";
 sample_bernoulli p = Random (IOAction1 builtin_sample_bernoulli p);
-bernoulli_density p 1 = (doubleToLogDouble p);
-bernoulli_density p 0 = (doubleToLogDouble (1.0-p));
-bernoulli p = ProbDensity (bernoulli_density p) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1);
+bernoulli_density2 p q 1 = (doubleToLogDouble p);
+bernoulli_density2 p q 0 = (doubleToLogDouble q);
+bernoulli2 p q = ProbDensity (bernoulli_density2 p q) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1);
+
+bernoulli p = bernoulli2 p (1.0-p);
+rbernoulli q = bernoulli2 (1.0-q) q;
 
 builtin builtin_sample_exponential 1 "sample_exponential" "Distribution";
 builtin exponential_density 2 "exponential_density" "Distribution";
