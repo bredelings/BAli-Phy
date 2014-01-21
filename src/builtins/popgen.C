@@ -271,7 +271,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
     else 
     {
       assert(s == 2);
-      bool coalesced = convert<const constructor>(I[i])->f_name == "Prelude.True";
+      bool coalesced = ( *convert<const Int>(I[i]) == 1);
 
       // Heterozygotes coalesce before outbreeding with probability 0.
       if (a1 != a2 and coalesced)
@@ -311,7 +311,7 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
   int n = 0;
   for(int l=0;l<L;l++)
   {
-    bool coalesced = convert<const constructor>(I[l])->f_name == "Prelude.True";
+    bool coalesced = ( *convert<const Int>(I[l]) == 1);
     if (coalesced)
       n++;
   }
