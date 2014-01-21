@@ -35,7 +35,7 @@ int OperationArgs::evaluate_slot_no_record(int slot, bool ec)
 
 int OperationArgs::evaluate_slot_no_record(int slot)
 {
-  return evaluate_slot_no_record(slot, evaluate_changeables());
+  return evaluate_reg_no_record(reg_for_slot(slot));
 }
 
 int OperationArgs::evaluate_reg_to_reg(int R)
