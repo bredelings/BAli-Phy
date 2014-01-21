@@ -56,8 +56,8 @@ int OperationArgs::evaluate_slot_to_reg(int slot)
 /// Evaluate the reg R2, record dependencies, and return the result.
 const closure& OperationArgs::evaluate_reg_to_closure(int R2, bool ec)
 {
-  int R3 = evaluate_reg_to_reg(R2, ec);
-  if (ec)
+  int R3 = evaluate_reg_to_reg(R2);
+  if (current_token())
     return memory().access_result_for_reg(current_token(),R3);
   else
     return memory().access(R3).C;
@@ -66,21 +66,29 @@ const closure& OperationArgs::evaluate_reg_to_closure(int R2, bool ec)
 /// Evaluate the reg R2, record dependencies, and return the result.
 const closure& OperationArgs::evaluate_reg_to_closure_(int R2, bool ec)
 {
-  int R3 = evaluate_reg_no_record(R2, ec);
-  if (ec)
+  int R3 = evaluate_reg_no_record(R2);
+  if (current_token())
     return memory().access_result_for_reg(current_token(),R3);
   else
     return memory().access(R3).C;
 }
 
-const closure& OperationArgs::evaluate_reg_to_closure(int R)
+const closure& OperationArgs::evaluate_reg_to_closure(int R2)
 {
-  return evaluate_reg_to_closure(R, evaluate_changeables());
+  int R3 = evaluate_reg_to_reg(R2);
+  if (current_token())
+    return memory().access_result_for_reg(current_token(),R3);
+  else
+    return memory().access(R3).C;
 }
 
-const closure& OperationArgs::evaluate_reg_to_closure_(int R)
+const closure& OperationArgs::evaluate_reg_to_closure_(int R2)
 {
-  return evaluate_reg_to_closure_(R, evaluate_changeables());
+  int R3 = evaluate_reg_no_record(R2);
+  if (current_token())
+    return memory().access_result_for_reg(current_token(),R3);
+  else
+    return memory().access(R3).C;
 }
 
 const object_ptr<const Object>& OperationArgs::evaluate_reg_to_object(int R2)
