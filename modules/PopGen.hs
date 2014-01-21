@@ -18,7 +18,7 @@ sum_out_coals x y pr c = IOAction4 builtin_sum_out_coals x y pr c;
 
 read_phase_file = builtin_read_phase_file . listToString;
 
-ewens_sampling_mixture_probability (thetas,ps) x = builtin_ewens_sampling_mixture_probability (listToVectorDouble thetas) (listToVectorDouble ps) x;
+ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_probability (listToVectorDouble thetas) (listToVectorDouble ps) x;
 
 ewens_diploid_probability theta i x = builtin_ewens_diploid_probability theta (list_to_vector i) (list_to_vector x);
 
@@ -28,7 +28,7 @@ afs args = ProbDensity (ewens_sampling_probability args) (error "afs has no quan
 
 afsGroup args = ProbDensity (ewens_sampling_group_probability args) (error "afs has no quantile") () ();
 
-afsMixture args = ProbDensity (ewens_sampling_mixture_probability args) (error "afs has no quantile") () ();
+afsMixture thetas ps = ProbDensity (ewens_sampling_mixture_probability thetas ps) (error "afsMixture has no quantile") () ();
 
 afs2 thetas ps = ProbDensity (ewens_diploid_probability thetas ps) (error "afs2 has no quantile") () ();
 
