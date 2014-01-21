@@ -422,12 +422,22 @@ log_double_t bernoulli_pdf(double p, int k)
 
 log_double_t geometric_pdf(double p, int n)
 {
+  return geometric_pdf(1.0-p, p, n);
+}
+
+log_double_t geometric_pdf(log_double_t p, int n)
+{
+  return geometric_pdf(1.0-p, p, n);
+}
+
+log_double_t geometric_pdf(log_double_t p_fail, log_double_t p_success, int n)
+{
   if (n < 0)
     return 0.0;
 
-  log_double_t pr = (1.0-p);
+  log_double_t pr = p_success;
   if (n>0)
-    pr *= pow(log_double_t(p),double(n));
+    pr *= pow(p_fail,double(n));
 
   return pr;
 }

@@ -70,10 +70,14 @@ builtin builtin_sample_binomial 2 "sample_binomial" "Distribution";
 sample_binomial n p = Random (IOAction2 builtin_sample_binomial n p);
 binomial n p = ProbDensity (binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (integer_between 0 n);
 
-builtin geometric_density 2 "geometric_density" "Distribution";
+-- A geometric distribution on [0,\infty).  How many failures before a success?
+builtin geometric_density 3 "geometric_density" "Distribution";
 builtin builtin_sample_geometric 1 "sample_geometric" "Distribution";
-sample_geometric p = Random (IOAction1 builtin_sample_geometric p);
-geometric p = ProbDensity (geometric_density p) (no_quantile "geometric") (sample_geometric p) (integer_above 0);
+sample_geometric p_success = Random (IOAction1 builtin_sample_geometric p_success);
+geometric2 p_fail p_success = ProbDensity (geometric_density p_fail p_success) (no_quantile "geometric") (sample_geometric p_success) (integer_above 0);
+
+geometric p = geometric2 (1.0-p) p;
+rgeometric q = geometric2 q (1.0-q);
 
 builtin poisson_density 2 "poisson_density" "Distribution";
 builtin builtin_sample_poisson 1 "sample_poisson" "Distribution";
@@ -81,7 +85,8 @@ sample_poisson mu = Random (IOAction1 builtin_sample_poisson mu);
 poisson mu = ProbDensity (poisson_density mu) (no_quantile "Poisson") (sample_poisson mu) (integer_above 0);
 
 builtin builtin_sample_bernoulli 1 "sample_bernoulli" "Distribution";
-sample_bernoulli p = Random (IOAction1 builtin_sample_bernoulli p);
+-- sample_bernoulli p = Random (IOAction1 builtin_sample_bernoulli p);
+sample_bernoulli p = Random (IOReturn 0);
 bernoulli_density2 p q 1 = (doubleToLogDouble p);
 bernoulli_density2 p q 0 = (doubleToLogDouble q);
 bernoulli2 p q = ProbDensity (bernoulli_density2 p q) (no_quantile "bernoulli") (sample_bernoulli p) (integer_between 0 1);

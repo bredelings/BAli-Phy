@@ -266,10 +266,11 @@ extern "C" closure builtin_function_sample_bernoulli(OperationArgs& Args)
 
 extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
 {
-  double p = *Args.evaluate_as<Double>(0);
-  double n = *Args.evaluate_as<Int>(1);
+  double p_fail = *Args.evaluate_as<Double>(0);
+  double p_success = *Args.evaluate_as<Double>(1);
+  double n = *Args.evaluate_as<Int>(2);
   
-  return object_ptr<Log_Double> (new Log_Double( ::geometric_pdf(p,n) ) );
+  return object_ptr<Log_Double> (new Log_Double( ::geometric_pdf(p_fail, p_success, n) ) );
 }
 
 extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
