@@ -2414,7 +2414,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     {
       assert( not reg_is_changeable(R) );
 
-      vector<int> local_env = get_scratch_list();
+      vector<int>& local_env = get_scratch_list();
 
       local_env = access(R).C.Env;
 
