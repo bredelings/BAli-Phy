@@ -2210,7 +2210,7 @@ public:
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-  RegOperationArgs(int r, reg_heap& m, int T, bool ec)
+  RegOperationArgs(int r, reg_heap& m, int T)
     :R(r),M(m),t(T), n_allocated(0)
   { 
     // I think these should already be cleared.
@@ -2462,7 +2462,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 
       try
       {
-	RegOperationArgs Args(R, *this, t, t>0);
+	RegOperationArgs Args(R, *this, t);
 	closure result = (*O)(Args);
 	
 	// NOTE: While not all used_inputs are E-children, they SHOULD all be E-descendents.
