@@ -2361,7 +2361,6 @@ int reg_heap::incremental_evaluate(int R, int t)
       }
     }
 
-    vector<expression_ref> vars;
     vector<expression_ref> bodies;
     expression_ref T;
 
