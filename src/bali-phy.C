@@ -200,6 +200,37 @@ void operator delete(void * p) throw() {
 
 // How to record that the user said e.g. "fix the alignment"?  Or, fix parameter X?  Should we?
 
+const string trailing_args_separator = "---";
+
+vector<string> drop_trailing_args(int argc, char* argv[], const string& separator)
+{
+  vector<string> args;
+  for(int i=1;i<argc;i++)
+  {
+    string arg = argv[i];
+    if (arg == separator) break;
+    args.push_back(arg);
+  }
+  return args;
+}
+
+vector<string> trailing_args(int argc, char* argv[], const string& separator)
+{
+  vector<string> args;
+  int i = 1;
+  for(;i<argc;i++)
+  {
+    string arg = argv[i];
+    if (arg == separator) break;
+  }
+  for(i++;i<argc;i++)
+  {
+    string arg = argv[i];
+    args.push_back(arg);
+  }
+  return args;
+}
+
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
   using namespace po;
@@ -270,8 +301,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
   positional_options_description p;
   p.add("align", -1);
   
-  variables_map args;     
-  store(command_line_parser(argc, argv).options(all).positional(p).run(), args);
+
+  vector<string> cargs = drop_trailing_args(argc, argv, trailing_args_separator);
+  variables_map args;
+  store(command_line_parser(cargs).options(all).positional(p).run(), args);
   notify(args);    
 
   if (args.count("version")) {
