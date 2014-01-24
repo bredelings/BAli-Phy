@@ -30,9 +30,9 @@ structure_for_range (Simplex n _) dist = new_modifiable_list (replicate n new_mo
 structure_for_range (ListRange l) dist = new_modifiable_list (map (\r-> structure_for_range r ()) l);
 
 structure_for_dist dist = let {r = distRange dist} in
-                          case r of {OpenInterval _ _ -> new_random_modifiable dist;
-                                     IntegerInterval _ _ -> new_random_modifiable dist;
-                                     TrueFalseRange -> new_random_modifiable dist;
+                          case r of {OpenInterval _ _ -> new_random_modifiable r;
+                                     IntegerInterval _ _ -> new_random_modifiable r;
+                                     TrueFalseRange -> new_random_modifiable r;
                                      _ -> structure_for_range r dist};
 
 set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v;
