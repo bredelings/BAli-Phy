@@ -361,7 +361,6 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       KW_Note = "note";
       KW_Parameter = "parameter";
       KW_Submodel = "submodel";
-      ColonEqual = ":=";
 
       // whitespace
       WHITESPACE = "{whitespace}";
@@ -388,7 +387,6 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	| KW_Note
 	| KW_Parameter
 	| KW_Submodel
-	| ColonEqual
 
 	// underscore - part of reservedid?
 	| Underscore
@@ -532,7 +530,6 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<> KW_Note;
   lex::token_def<> KW_Parameter;
   lex::token_def<> KW_Submodel;
-  lex::token_def<> ColonEqual;
 
   //  lex::token_def<std::string> WHITESPACE; For multi-stage lexing, we will actually need the matched string
   lex::token_def<lex::omit> WHITESPACE;
@@ -914,11 +911,10 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	bugs_dist = tok.KW_Data >> exp[push_back(_a,_1)] >> tok.Tilde > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDataDist"), _a)  ] 
 	  | eps [clear(_a) ] >> tok.KW_External >> exp[push_back(_a,_1)] >> tok.Tilde > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsExternalDist"), _a)  ]
 	  | eps [clear(_a) ] >> exp[push_back(_a,_1)] >> tok.Tilde > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
-	bugs_default_value = qvar [push_back(_a, construct<AST_node>("id", construct<String>(_1))) ] >> tok.ColonEqual > exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
 	bugs_note = fexp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
 	bugs_parameter = tok.KW_Parameter >> varid [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Parameter"), _a)  ];
 
-	bugs_line %= bugs_parameter | bugs_default_value | bugs_dist | bugs_note;
+	bugs_line %= bugs_parameter | bugs_dist | bugs_note;
 
 #define add_error_handler(node) on_error<fail>(node,\
 	error_handler_function(error_handler)(\
@@ -945,7 +941,6 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	add_error_handler(literal);
 	add_error_handler(bugs_line);
 	add_error_handler(bugs_dist);
-	add_error_handler(bugs_default_value);
 
 	BOOST_SPIRIT_DEBUG_NODE(varid);
 	BOOST_SPIRIT_DEBUG_NODE(qvarid);
@@ -1033,7 +1028,6 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	literal.name("literal");
 
 	bugs_parameter.name("bugs_parameter");
-	bugs_default_value.name("bugs_default_value");
 	bugs_dist.name("bugs_dist");
 	bugs_note.name("bugs_note");
     }

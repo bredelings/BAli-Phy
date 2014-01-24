@@ -387,7 +387,6 @@ void Module::resolve_symbols(const std::vector<Module>& P)
     if (is_AST(note,"BugsDataDist") or
 	is_AST(note,"BugsExternalDist") or
 	is_AST(note,"BugsDist") or
-	is_AST(note,"BugsDefaultValue") or
 	is_AST(note,"BugsNote"))
       add_note(note->sub[0]);
 
