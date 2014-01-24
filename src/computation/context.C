@@ -595,6 +595,7 @@ expression_ref parameter_constructor(const std::string& name, const vector<expre
 
     return (identifier("structure_for_dist"),dist);
   }
+  // for e.g. the tree, which is a parameter with no distribution!
   return identifier("new_modifiable");
 }
 
