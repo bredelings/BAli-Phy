@@ -917,20 +917,4 @@ void set_default_values_from_notes(context& C, int b, int e)
       C.perform_expression( (identifier("set_parameter_value_"), c, parameter, value) );
     }
   }
-
-  // Set default values from DefaultValue notes
-  for(int i=b;i<e;i++)
-  {
-    vector<expression_ref> results;
-    expression_ref query = constructor("DefaultValue",2) + match(0) + match(1);
-
-    if (find_match(query, C.get_note(i), results))
-    {
-      expression_ref parameter = results[0];
-      expression_ref value = results[1];
-      value = (identifier("evaluate"), c, value);
-      C.perform_expression( (identifier("set_parameter_value_"), c, parameter, value) );
-    }
-  }
-
 }

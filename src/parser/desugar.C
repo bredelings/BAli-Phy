@@ -935,15 +935,6 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       expression_ref note = { constructor(con_name,v.size()), v};
       return {E->head,{note}};
     }
-    else if (n->type == "BugsDefaultValue")
-    {
-      for(auto& e: v)
-	e = desugar(m, e, bound);
-
-      expression_ref note = constructor("DefaultValue",2) + v[0] + v[1];
-
-      return {E->head,{note}};
-    }
     else if (n->type == "BugsDist" or n->type == "BugsExternalDist")
     {
       for(auto& e: v)
