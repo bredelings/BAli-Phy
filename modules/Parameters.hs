@@ -23,9 +23,9 @@ new_modifiable_list (h:t) = do { m <- h;
                                  return (m:ms) 
                                };
 
-structure_for_range (OpenInterval _ _) dist = new_modifiable;
-structure_for_range (IntegerInterval _ _) dist = new_modifiable;
-structure_for_range TrueFalseRange dist = new_modifiable;
+structure_for_range (OpenInterval _ _) dist = new_random_modifiable (distRange dist);
+structure_for_range (IntegerInterval _ _) dist = new_random_modifiable (distRange dist);
+structure_for_range TrueFalseRange dist = new_random_modifiable (distRange dist);
 structure_for_range (Simplex n _) dist = new_modifiable_list (replicate n new_modifiable);
 structure_for_range (ListRange l) dist = new_modifiable_list (map (\r-> structure_for_range r ()) l);
 
