@@ -33,8 +33,7 @@ structure_for_dist dist = let {r = distRange dist} in
                                      IntegerInterval _ _ -> new_random_modifiable r;
                                      TrueFalseRange -> new_random_modifiable r;
                                      Simplex n _ -> new_modifiable_list (replicate n new_modifiable);
-                                     ListRange l -> new_modifiable_list (map (\r-> structure_for_range r ()) l);
-                                     _ -> structure_for_range r dist};
+                                     ListRange _ -> sample' dist};
 
 set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v;
 
