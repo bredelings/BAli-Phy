@@ -148,7 +148,7 @@ iid n dist = list (replicate n dist);
 
 plate n dist_f = list $ map dist_f [0..n-1];
   
--- This contains functiosn for working with DiscreteDistribution
+-- This contains functions for working with DiscreteDistribution
 data DiscreteDistribution a = DiscreteDistribution [(Double,a)];
 
 fmap1 f [] = [];
