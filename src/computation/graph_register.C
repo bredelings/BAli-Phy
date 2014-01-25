@@ -2403,7 +2403,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     // A modifiable has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
     else if (type == modifiable_type)
-      throw myexception()<<"Reg "<<R<<": Modifiable '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<reg_is_changeable(R)<<")";
+      throw myexception()<<"Reg "<<R<<": Modifiable '"<<access(R).C.exp<<"' with no result?! (token = "<<t<<"   Changeable = "<<reg_is_changeable(R)<<")";
 
     // Reduction: let expression
     else if (type == let2_type)
@@ -2526,13 +2526,13 @@ int reg_heap::incremental_evaluate(int R, int t)
 					    )
 			   )->print();
 	std::ostringstream o;
-	o<<"evaluating reg # "<<R<<": "<<SSS<<"\n\n";
+	o<<"evaluating reg # "<<R<<" in token "<<t<<": "<<SSS<<"\n\n";
 	e.prepend(o.str());
 	throw e;
       }
       catch (const std::exception& e)
       {
-	std::cerr<<"evaluating reg # "<<R<<std::endl;
+	std::cerr<<"evaluating reg # "<<R<<" in token "<<t<<std::endl;
 	dot_graph_for_token(*this, t);
 	throw e;
       }
