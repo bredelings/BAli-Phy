@@ -86,7 +86,6 @@ expression_ref def_parameter(Model_Notes& N, const std::string& name, const expr
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, const Bounds<double>& b)
 {
   expression_ref var = def_parameter(N, name, def_value);
-  N.add_note( constructor("VarBounds",2) + var + b );
   return var;
 }
 

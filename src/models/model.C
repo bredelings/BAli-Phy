@@ -184,19 +184,6 @@ void Model::process_note(int index)
 {
   const expression_ref& note = get_note(index);
 
-  // 1. Check to see if this expression adds a bound.
-  expression_ref query = constructor("VarBounds",2) + match(0) + match(1);
-
-  vector<expression_ref> results;
-  if (find_match(query, note, results))
-  {
-    object_ptr<const parameter> var = is_a<parameter>(results[0]);
-    int param_index = find_parameter(var->parameter_name);
-    if (param_index == -1)
-      throw myexception()<<"Cannot add bound '"<<note<<"' on missing variable '"<<var->parameter_name<<"'";
-    set_bounds(param_index , results[1]);
-  }
-
   // 2. Check to see if this expression adds a prior
   if (is_exactly(note,":~") or is_exactly(note,":=~"))
   {
@@ -388,20 +375,6 @@ Model::Model(const module_loader& L, const vector<expression_ref>& notes)
 
   // 3. Then set all default values.
   set_default_values_from_notes(*this, 0, n_notes());
-
-  // 4. Set bounds.
-  for(int i=0;i<n_parameters();i++)
-  {
-    expression_ref var = parameter(parameter_name(i));
-    vector<expression_ref> results;
-    expression_ref query = constructor("VarBounds",2) + var + match(0);
-    int found = find_match_notes(query, results, 0);
-    if (found != -1)
-    {
-      assert(results.size());
-      set_bounds(i,results[0]);
-    }
-  }
 
   // 5. Create the prior
   prior_index = add_probability_expression(*this);
