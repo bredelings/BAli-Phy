@@ -70,8 +70,8 @@ uniform l u = ProbDensity (uniform_density l u) () (sample_uniform l u) (between
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
 dirichlet_density ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
-sample_dirichlet ps = do { vs <- mapM (\a->gamma a 1.0) ps;
-                          return $ map (/(sum vs)) vs};
+sample_dirichlet ps = Random $ sample (do { vs <- mapM (\a->gamma a 1.0) ps;
+                          return $ map (/(sum vs)) vs});
 dirichlet ps = ProbDensity (dirichlet_density ps) (no_quantile "dirichlet") (sample_dirichlet ps) (Simplex (length ps) 1.0);
 
 dirichlet' n x = dirichlet (replicate n x);
@@ -181,7 +181,7 @@ expTransform (ProbDensity d q s r) = ProbDensity pdf' q' s' r'
  where {
   pdf' = \x -> (d $ log x)/(doubleToLogDouble x);
   q'   = exp . q;
-  s'   = Random (do {v <- sample (ProbDensity d q s r); return $ exp v});
+  s'   = Random $ sample (do {v <- (ProbDensity d q s r); return $ exp v});
   r'   = Range.expTransform r
  };
   
