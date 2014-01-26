@@ -177,8 +177,14 @@ uniformGrid n = DiscreteDistribution [( 1.0/n', (2.0*i'+1.0)/(2.0*n') ) | i <- t
 uniformDiscretize q n = fmap2 q (uniformGrid n);
 
 -- This contains exp-transformed functions
-expTransform (ProbDensity d q s r) = ProbDensity (\x -> (d $ log x)/(doubleToLogDouble x)) (exp.q) (do {v <- (ProbDensity d q s r); return $ exp v}) (Range.expTransform r);
-
+expTransform (ProbDensity d q s r) = ProbDensity pdf' q' s' r' 
+ where {
+  pdf' = \x -> (d $ log x)/(doubleToLogDouble x);
+  q'   = exp . q;
+  s'   = do {v <- (ProbDensity d q s r); return $ exp v};
+  r'   = Range.expTransform r
+ };
+  
 logNormal mu sigma = expTransform $ normal mu sigma;
 logExponential mu = expTransform $  exponential mu;
 logGamma a b = expTransform $ gamma a b;
