@@ -277,6 +277,7 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 /// Find parameters with distribution name Dist
 void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
+  return;
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
     {
@@ -376,6 +377,7 @@ void add_integer_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 /// Find parameters with distribution name Dist
 void add_dirichlet_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
+  return;
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
     {
