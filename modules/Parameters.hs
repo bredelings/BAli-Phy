@@ -23,12 +23,7 @@ new_modifiable_list (h:t) = do { m <- h;
                                  return (m:ms) 
                                };
 
-structure_for_dist dist = let {r = distRange dist} in
-                          case r of {OpenInterval _ _ -> sample' dist;
-                                     IntegerInterval _ _ -> sample' dist;
-                                     TrueFalseRange -> sample' dist;
-                                     Simplex n _ -> new_modifiable_list (replicate n new_modifiable);
-                                     ListRange _ -> sample' dist};
+structure_for_dist = sample';
 
 set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v;
 
