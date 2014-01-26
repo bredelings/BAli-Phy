@@ -833,6 +833,20 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   }
 }
 
+void reg_heap::set_shared_value(int r, int v)
+{
+  assert(root_token != -1);
+  int token = root_token;
+
+  // add a new computation
+  assert(not has_computation_(token, r));
+  add_shared_computation(token, r);
+  assert(has_computation_(token, r));
+
+  // set the value
+  set_call(token, r, v);
+}
+
 void swap_value(mapping& vm1, mapping& vm2, int r)
 {
   int v1 = vm1[r];
