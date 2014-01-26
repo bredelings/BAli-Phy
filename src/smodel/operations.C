@@ -22,17 +22,7 @@ namespace substitution
   
   formula_expression_ref Frequencies_Model(const alphabet& a, const valarray<double>& pi)
   {
-    formula_expression_ref F = List();
-    for(int i=a.size()-1; i>=0; i--)
-    {
-      string pname = string("pi") + a.letter(i);
-      formula_expression_ref Var  = def_parameter(pname, pi[i], between(0,1));
-      F = Var&F;
-    }
-
-    F.add_expression( constructor(":~",2)+ F.exp() + (identifier("dirichlet'"),(int)a.size(), 1.0 ));
-
-    return F;
+    return def_parameter("pi", 0, 0, (identifier("dirichlet'"),(int)a.size(), 1.0 ));
   }
 
   formula_expression_ref Frequencies_Model(const alphabet& a)
