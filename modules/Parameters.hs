@@ -25,8 +25,8 @@ new_modifiable_list (h:t) = do { m <- h;
 
 structure_for_dist dist = let {r = distRange dist} in
                           case r of {OpenInterval _ _ -> sample' dist;
-                                     IntegerInterval _ _ -> new_random_modifiable r;
-                                     TrueFalseRange -> new_random_modifiable r;
+                                     IntegerInterval _ _ -> sample' dist;
+                                     TrueFalseRange -> sample' dist;
                                      Simplex n _ -> new_modifiable_list (replicate n new_modifiable);
                                      ListRange _ -> sample' dist};
 
