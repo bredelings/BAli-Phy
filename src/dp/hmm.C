@@ -385,6 +385,16 @@ std::vector<HMM::bitmask_t> Glue_A(const std::vector<HMM::bitmask_t>& top, const
   return a;
 }
 
+vector<HMM::bitmask_t> get_bits_from_path(const vector<int>& path, const HMM& H)
+{
+  vector<HMM::bitmask_t> bit_path;
+
+  for(int S: path)
+    bit_path.push_back(H.state_emit[S]);
+
+  return bit_path;
+}
+
 pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path, const HMM& H, int n1, int n2)
 {
   assert(H.all_bits().test(n1));
@@ -401,6 +411,32 @@ pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& pa
     bool d1 = H.state_emit[path[i]].test(n1);
     bool d2 = H.state_emit[path[i]].test(n2);
     
+    if (d1 and d2)
+      pi.push_back(A2::states::M);
+    else if (d1 and not d2)
+      pi.push_back(A2::states::G2);
+    else if (not d1 and d2)
+      pi.push_back(A2::states::G1);
+  }
+  
+  pi.push_back(A2::states::E);
+  
+  return pi;
+}
+
+pairwise_alignment_t get_pairwise_alignment_from_bits(const std::vector<HMM::bitmask_t>& bit_path, int i, int j)
+{
+  assert(i != j);
+
+  pairwise_alignment_t pi;
+  pi.reserve(bit_path.size()+2);
+  pi.push_back(A2::states::S);
+
+  for(const auto& bits: bit_path)
+  {
+    bool d1 = bits.test(i);
+    bool d2 = bits.test(j);
+
     if (d1 and d2)
       pi.push_back(A2::states::M);
     else if (d1 and not d2)

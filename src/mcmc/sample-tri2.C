@@ -90,7 +90,9 @@ vector<HMM::bitmask_t> get_emissions_path(const data_partition& P, const vector<
 }
 
 
-boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition& P, const data_partition& P0, const vector<int>& nodes, int bandwidth)
+boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition& P, const data_partition& P0, 
+								  const vector<int>& nodes, const vector<int>& nodes0,
+								  int bandwidth)
 {
   const Tree& T = P.T();
   alignment& A = *P.A.modify();
@@ -105,6 +107,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   assert(T.is_connected(nodes[0],nodes[3]));
 
   assert(T0.is_connected(nodes[0],nodes[1]));
+  assert(nodes0[0] == nodes[0]);
   bool tree_changed = not T0.is_connected(nodes[0],nodes[2]) or not T0.is_connected(nodes[0],nodes[3]);
 
   // If the tree changed, assert that previously nodes 2 and 3 were connected.
@@ -153,6 +156,15 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
     // FIXME: Check that when we project a123_new to a12_new at the end, this does not change!!!
     a23 = convert_to_bits(P0.get_pairwise_alignment(b4),1,2);
     seq23 = get_column_order(A, a23, {1,2}, {nodes[2], nodes[3]});
+
+    // The branch that the subtree was pruned from.
+    int b5 = T.directed_branch(nodes0[2], nodes0[3]);
+    assert(T0.is_connected(nodes0[2],nodes0[0]));
+    assert(T0.is_connected(nodes0[3],nodes0[0]));
+
+    // Make sure the column order on the pruned branch matches the projected column order from the original alignment.
+    vector<HMM::bitmask_t> b123 = get_emissions_path(P0, nodes0);
+    P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2), false);
   }
   else
   {
@@ -307,7 +319,7 @@ sample_tri_multi_calculation2::sample_tri_multi_calculation2(vector<Parameters>&
   {
     for(int j=0;j<p[i].n_data_partitions();j++) {
       if (p[i][j].variable_alignment())
-	Matrices[i].push_back( tri_sample_alignment_base2(p[i][j], P0[j], nodes[i], bandwidth) );
+	Matrices[i].push_back( tri_sample_alignment_base2(p[i][j], P0[j], nodes[i], nodes[0], bandwidth) );
       else
 	Matrices[i].push_back( boost::shared_ptr<DPmatrixConstrained>());
     }
