@@ -41,8 +41,7 @@ using std::pair;
 using std::endl;
 using boost::dynamic_bitset;
 
-// FIXME - resample the path multiple times - pick one on opposite side of the middle 
-
+/// Figure out which columns in the full alignment correspond to each "column" in the emissions path.
 vector<int> get_column_order(const alignment& A, const vector<HMM::bitmask_t>& a, const vector<int>& bits, const vector<int>& nodes)
 {
   assert(bits.size() == nodes.size());
