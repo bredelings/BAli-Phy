@@ -73,6 +73,24 @@ vector<int> get_column_order(const alignment& A, const vector<HMM::bitmask_t>& a
   return combined_columns;
 }
 
+vector<HMM::bitmask_t> get_emissions_path(const data_partition& P, const vector<int>& nodes)
+{
+  const auto& T = P.T();
+
+  int b1 = T.directed_branch(nodes[1],nodes[0]);
+  int b2 = T.directed_branch(nodes[0],nodes[2]);
+  int b3 = T.directed_branch(nodes[0],nodes[3]);
+
+  vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,3);
+  vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),3,1);
+  vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),3,2);
+
+  vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
+
+  return a123;
+}
+
+
 boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition& P, const data_partition& P0, const vector<int>& nodes, int bandwidth)
 {
   const Tree& T = P.T();
@@ -423,19 +441,7 @@ int sample_tri_multi_calculation2::choose(vector<Parameters>& p, bool correct)
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment() and ok)
       {
-	auto& T = p[i][j].T();
-
-	int b1 = T.directed_branch(nodes[i][1],nodes[i][0]);
-	int b2 = T.directed_branch(nodes[i][0],nodes[i][2]);
-	int b3 = T.directed_branch(nodes[i][0],nodes[i][3]);
-
-	vector<HMM::bitmask_t> a1 = convert_to_bits(p[i][j].get_pairwise_alignment(b1),0,3);
-	vector<HMM::bitmask_t> a2 = convert_to_bits(p[i][j].get_pairwise_alignment(b2),3,1);
-	vector<HMM::bitmask_t> a3 = convert_to_bits(p[i][j].get_pairwise_alignment(b3),3,2);
-
-	vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
-
- 	paths[i].push_back( get_path_unique(a123,*Matrices[i][j]) );
+ 	paths[i].push_back( get_path_unique(get_emissions_path(p[i][j],nodes[i]),*Matrices[i][j]) );
 	  
 	OS[i][j] = other_subst(p[i][j],nodes[i]);
 	OP[i][j] = other_prior(p[i][j],nodes[i]);
