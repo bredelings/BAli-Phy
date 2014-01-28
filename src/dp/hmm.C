@@ -432,8 +432,6 @@ pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& pa
  * is an emitting state?  When we transition to it, should be emit anything?
  */
 
-//Question: should we move this to HMM.C, and add a get_unique_path( ) option?
-
 /// This path should have an end state, but no start state! (Its going to be evaluated using start_P)
 vector<int> get_path_unique(const vector<HMM::bitmask_t>& path1, const HMM& H)
 {
