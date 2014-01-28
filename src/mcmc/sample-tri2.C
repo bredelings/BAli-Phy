@@ -156,11 +156,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   }
   else
   {
-    vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,3);
-    vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),3,1);
-    vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),3,2);
-
-    vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
+    vector<HMM::bitmask_t> a123 = get_emissions_path(P, nodes);
     HMM::bitmask_t m23; m23.set(1); m23.set(2);
     a23 = remove_silent(a123, m23);
 
