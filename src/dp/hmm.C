@@ -435,14 +435,6 @@ pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& pa
 /// This path should have an end state, but no start state! (Its going to be evaluated using start_P)
 vector<int> get_path_unique(const vector<HMM::bitmask_t>& path1, const HMM& H)
 {
-  // How do I convert this to a path???
-  // We I guess we could convert it to a path by Gluing, just like we do everything else by gluing!
-  // Well, if we glue two paths, there really should be only 1 way of getting doing things.  This
-  //   shouldn't require any look-ahead, to disambiguate, I *think*!
-
-  // Issue: by allowing a distribution of start states, we lose this nice property!
-  // Possible solution: 
-
   // Issue: we basically need to make the start-state M/M/M.
 
   // Another issue: we actually DO need to look ahead, because only some states
