@@ -315,8 +315,11 @@ vector<HMM::bitmask_t> remove_silent(const vector<HMM::bitmask_t>& bits, HMM::bi
   vector<HMM::bitmask_t> new_bits;
   new_bits.reserve(bits.size());
   for(const auto& b: bits)
-    if ((b & emit).any())
-      new_bits.push_back(b);
+  {
+    auto b2 = b & emit;
+    if (b2.any())
+      new_bits.push_back(b2);
+  }
   return new_bits;
 }
 
