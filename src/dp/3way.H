@@ -148,6 +148,8 @@ namespace A3 {
 
   efloat_t acceptance_ratio(const Parameters& P1,const std::vector<int>&,
 			    const Parameters& P2,const std::vector<int>&);
+
+  std::vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const std::vector<int>& nodes);
 }
 
 

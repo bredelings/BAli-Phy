@@ -53,23 +53,6 @@ using std::endl;
 
 using boost::dynamic_bitset;
 
-vector<HMM::bitmask_t> get_bitpath_3way(const data_partition& P, const vector<int>& nodes)
-{
-  const Tree& T = P.T();
-
-  int b1 = T.directed_branch(nodes[1],nodes[0]);
-  int b2 = T.directed_branch(nodes[0],nodes[2]);
-  int b3 = T.directed_branch(nodes[0],nodes[3]);
-
-  vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,3);
-  vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),3,1);
-  vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),3,2);
-
-  vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
-
-  return a123;
-}
-
 boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
 {
   const Tree& T = P.T();
@@ -292,7 +275,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment())
       {
-	paths[i].push_back( get_path_unique(get_bitpath_3way(p[i][j], nodes[i]), *Matrices[i][j] ) );
+	paths[i].push_back( get_path_unique(A3::get_bitpath(p[i][j], nodes[i]), *Matrices[i][j] ) );
 	
 	OS[i][j] = p[i][j].likelihood();
 	OP[i][j] = other_prior(p[i][j],nodes[i]);

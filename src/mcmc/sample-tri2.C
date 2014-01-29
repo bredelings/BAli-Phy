@@ -72,24 +72,6 @@ vector<int> get_column_order(const alignment& A, const vector<HMM::bitmask_t>& a
   return combined_columns;
 }
 
-vector<HMM::bitmask_t> get_emissions_path(const data_partition& P, const vector<int>& nodes)
-{
-  const auto& T = P.T();
-
-  int b1 = T.directed_branch(nodes[1],nodes[0]);
-  int b2 = T.directed_branch(nodes[0],nodes[2]);
-  int b3 = T.directed_branch(nodes[0],nodes[3]);
-
-  vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,3);
-  vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),3,1);
-  vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),3,2);
-
-  vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
-
-  return a123;
-}
-
-
 boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition& P, const data_partition& P0, 
 								  const vector<int>& nodes, const vector<int>& nodes0,
 								  int bandwidth)
@@ -163,12 +145,12 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
     assert(T0.is_connected(nodes0[3],nodes0[0]));
 
     // Make sure the column order on the pruned branch matches the projected column order from the original alignment.
-    vector<HMM::bitmask_t> b123 = get_emissions_path(P0, nodes0);
+    vector<HMM::bitmask_t> b123 = A3::get_bitpath(P0, nodes0);
     P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2), false);
   }
   else
   {
-    vector<HMM::bitmask_t> a123 = get_emissions_path(P, nodes);
+    vector<HMM::bitmask_t> a123 = A3::get_bitpath(P, nodes);
     HMM::bitmask_t m23; m23.set(1); m23.set(2);
     a23 = remove_silent(a123, m23);
 
@@ -448,7 +430,7 @@ int sample_tri_multi_calculation2::choose(vector<Parameters>& p, bool correct)
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment() and ok)
       {
- 	paths[i].push_back( get_path_unique(get_emissions_path(p[i][j],nodes[i]),*Matrices[i][j]) );
+ 	paths[i].push_back( get_path_unique(A3::get_bitpath(p[i][j],nodes[i]),*Matrices[i][j]) );
 	  
 	OS[i][j] = other_subst(p[i][j],nodes[i]);
 	OP[i][j] = other_prior(p[i][j],nodes[i]);
