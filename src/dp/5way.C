@@ -629,4 +629,25 @@ namespace A5 {
   {
     return correction(P1,nodes1)/correction(P2,nodes2);
   }
+
+  vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const vector<int>& nodes)
+  {
+    const Tree& T = P.T();
+
+    int b1 = T.directed_branch(nodes[0],nodes[4]);
+    int b2 = T.directed_branch(nodes[4],nodes[1]);
+    int b3 = T.directed_branch(nodes[4],nodes[5]);
+    int b4 = T.directed_branch(nodes[5],nodes[2]);
+    int b5 = T.directed_branch(nodes[5],nodes[3]);
+    
+    vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,4);
+    vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),4,1);
+    vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),4,5);
+    vector<HMM::bitmask_t> a4 = convert_to_bits(P.get_pairwise_alignment(b4),5,2);
+    vector<HMM::bitmask_t> a5 = convert_to_bits(P.get_pairwise_alignment(b5),5,3);
+
+    vector<HMM::bitmask_t> a12345 = Glue_A(a1, Glue_A(a2, Glue_A(a3, Glue_A(a4, a5))));
+
+    return a12345;
+  }
 }

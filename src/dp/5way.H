@@ -96,6 +96,7 @@ namespace A5 {
 
   extern std::vector<int> states_list;
 
+  std::vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const std::vector<int>& nodes);
 }
 
 
