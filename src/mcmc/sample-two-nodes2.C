@@ -145,7 +145,7 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
     a1234.push_back(mask);
   }
 
-  /*-------------- Create alignment matrices ---------------*/
+  /*-------------- Create DP matrices ---------------*/
 
   // Create the transition matrix first using just the current, fixed ordering
   vector<int> branches(5);
@@ -164,10 +164,9 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
   const Matrix Q = A5::createQ( P.get_branch_HMMs(branches),A5::states_list);
 
   HMM H(state_emit, start_P, Q, P.get_beta());
+  H.hidden_bits = A5::bitsmask&~A5::leafbitsmask;
   
   shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(a1234.size(), H) );
-  
-  Matrices->hidden_bits = A5::bitsmask&~A5::leafbitsmask;
 
   // collect the silent-or-correct-emissions for each type columns
   vector< vector<int> > allowed_states_for_mask(16);
