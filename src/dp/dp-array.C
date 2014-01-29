@@ -167,12 +167,6 @@ DParray::DParray(int l, const HMM& H)
   set_length(l);
 }
 
-DParray::DParray(int l, const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
-  :DPengine(v1,v2,M,Beta)
-{ 
-  set_length(l);
-}
-
 // We can ignore scale(i) here, because it factors out.
 efloat_t DParrayConstrained::path_P(const vector<int>& g_path) const 
 {
@@ -398,11 +392,3 @@ DParrayConstrained::DParrayConstrained(int l, const HMM& H)
 { 
   allowed_states.resize(size());
 }
-
-DParrayConstrained::DParrayConstrained(int l,const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
-  :DParray(l,v1,v2,M,Beta)
-{ 
-  allowed_states.resize(size());
-}
-
-

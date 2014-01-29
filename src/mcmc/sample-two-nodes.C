@@ -184,9 +184,9 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
   
     const Matrix Q = A5::createQ( P.get_branch_HMMs(branches),A5::states_list);
 
-    Matrices = new DParrayConstrained(seqall.size(), state_emit, 
-				      start_P, Q, 
-				      P.get_beta());
+    HMM H(state_emit, start_P, Q, P.get_beta());
+
+    Matrices = new DParrayConstrained(seqall.size(), H);
 
     Matrices->hidden_bits = A5::bitsmask&~A5::leafbitsmask;
   }
