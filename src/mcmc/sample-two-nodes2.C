@@ -169,7 +169,7 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
 
   HMM H(state_emit, start_P, Q, P.get_beta());
   
-  shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(seqall.size(), H) );
+  shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(a1234.size(), H) );
   
   Matrices->hidden_bits = A5::bitsmask&~A5::leafbitsmask;
 
