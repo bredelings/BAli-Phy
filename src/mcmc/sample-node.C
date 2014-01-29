@@ -94,24 +94,20 @@ shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<i
     m.reserve(Matrices->n_dp_states());
   
   // Construct the states that are allowed for each emission pattern.
-  for(int i=0;i<Matrices->n_dp_states();i++) 
+  for(int S2:Matrices->dp_order()) 
   {
-    int S2 = Matrices->dp_order(i);
-    unsigned int state2 = (m123.state_emit[S2] & ~m123.hidden_bits).to_ulong();
+    unsigned int mask = (m123.state_emit[S2] & ~m123.hidden_bits).to_ulong();
     
     // Hidden states never contradict an emission pattern.
-    if (state2 == 0)
+    if (not mask)
       for(int j=0;j<8;j++)
 	allowed_states_for_mask[j].push_back(S2);
     else
-      allowed_states_for_mask[state2].push_back(S2);
+      allowed_states_for_mask[mask].push_back(S2);
   }
   
   // All states are allowed to match column 0
-  Matrices->states(0).clear();
-  Matrices->states(0).reserve(Matrices->n_dp_states());
-  for(int i=0;i<Matrices->n_dp_states();i++)
-    Matrices->states(0).push_back(Matrices->dp_order(i));
+  Matrices->states(0) = Matrices->dp_order();
   
   // Determine which states are allowed to match other columns (c2)
   for(int c2=0;c2<a123_emit.size();c2++) 
