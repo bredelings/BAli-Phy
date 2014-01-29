@@ -192,14 +192,13 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
 
     // Hidden states never contradict an emission pattern.
     if (not mask) // m123.silent(S2))
-    {
       for(int j=0;j<allowed_states_for_mask.size();j++)
 	allowed_states_for_mask[j].push_back(S2);
-      continue;
+    else
+    {
+      mask >>= 1;
+      allowed_states_for_mask[mask].push_back(S2);
     }
-
-    mask >>= 1;
-    allowed_states_for_mask[mask].push_back(S2);
   }
 
   Matrices->states(1) = Matrices->dp_order();

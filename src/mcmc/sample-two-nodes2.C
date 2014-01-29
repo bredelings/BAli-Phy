@@ -206,40 +206,37 @@ void sample_two_nodes_base2(data_partition& P, const vector<int>& nodes, DParray
 
   for(int S2: Matrices->dp_order())
   {
-    int state2 = A5::states_list[S2] & 15; // 4 bits = 1+2+4+8
-    if (state2 == 0)
+    unsigned int mask = A5::states_list[S2] & 15; // 4 bits = 1+2+4+8
+
+    // Hidden states never contradict an emission pattern.
+    if (not mask)
       for(int j=0;j<16;j++)
 	allowed_states_for_mask[j].push_back(S2);
     else
-      allowed_states_for_mask[state2].push_back(S2);
+      allowed_states_for_mask[mask].push_back(S2);
   }
 
+  Matrices->states(0) = Matrices->dp_order();
+
   // Determine which states are allowed to match (c2)
-  for(int c2=0;c2<Matrices->size();c2++) 
+  for(int c2=1;c2<Matrices->size();c2++) 
   {
     vector<int>& allowed_states = Matrices->states(c2);
     allowed_states.clear();
 
-    if (c2 == 0) {
-      allowed_states.reserve(Matrices->n_dp_states());
-      for(int i=0;i<Matrices->n_dp_states();i++)
-	allowed_states.push_back(Matrices->dp_order(i));
-    }
-    else {
-      unsigned mask=0;
+    unsigned mask=0;
 
-      if (icol[c2] != icol[c2-1]) { mask |= (1<<0); assert(icol[c2] == 1+icol[c2-1]); }
+    if (icol[c2] != icol[c2-1]) { mask |= (1<<0); assert(icol[c2] == 1+icol[c2-1]); }
  
-      if (jcol[c2] != jcol[c2-1]) { mask |= (1<<1); assert(jcol[c2] == 1+jcol[c2-1]); }
+    if (jcol[c2] != jcol[c2-1]) { mask |= (1<<1); assert(jcol[c2] == 1+jcol[c2-1]); }
 
-      if (kcol[c2] != kcol[c2-1]) { mask |= (1<<2); assert(kcol[c2] == 1+kcol[c2-1]); }
+    if (kcol[c2] != kcol[c2-1]) { mask |= (1<<2); assert(kcol[c2] == 1+kcol[c2-1]); }
 
-      if (lcol[c2] != lcol[c2-1]) { mask |= (1<<3); assert(lcol[c2] == 1+lcol[c2-1]); }
+    if (lcol[c2] != lcol[c2-1]) { mask |= (1<<3); assert(lcol[c2] == 1+lcol[c2-1]); }
 
-      assert(mask);
+    assert(mask);
 
-      allowed_states = allowed_states_for_mask[mask];
-    }
+    allowed_states = allowed_states_for_mask[mask];
   }
 
   //------------------ Compute the DP matrix ---------------------//
