@@ -52,8 +52,9 @@ using std::vector;
 using std::endl;
 
 using boost::dynamic_bitset;
+using boost::shared_ptr;
 
-boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
+shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
 {
   const Tree& T = P.T();
 
@@ -85,8 +86,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
   vector<HMM::bitmask_t> a123_emit = remove_silent(a123, m123.all_bits() & ~m123.hidden_bits);
 
-
-  boost::shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(a123_emit.size(), m123) );
+  shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(a123_emit.size(), m123) );
   
   // collect the silent-or-correct-emissions for each type columns
   vector< vector<int> > allowed_states_for_mask(8);
@@ -176,13 +176,13 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   const Parameters P0 = p[0];
 #endif
 
-  vector< vector< boost::shared_ptr<DParrayConstrained> > > Matrices(p.size());
+  vector< vector< shared_ptr<DParrayConstrained> > > Matrices(p.size());
   for(int i=0;i<p.size();i++) {
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment())
 	Matrices[i].push_back( sample_node_base(p[i][j],nodes[i]) );
       else
-	Matrices[i].push_back( boost::shared_ptr<DParrayConstrained>() );
+	Matrices[i].push_back( shared_ptr<DParrayConstrained>() );
   }
 
   //-------- Calculate corrections to path probabilities ---------//

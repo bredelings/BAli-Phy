@@ -111,7 +111,7 @@ sample_two_nodes_base2(data_partition& P, const vector<int>& nodes)
   vector<HMM::bitmask_t> a12345_emit = remove_silent(a12345, m12345.all_bits() & ~m12345.hidden_bits);
 
 
-  boost::shared_ptr<DParrayConstrained> Matrices_ ( new DParrayConstrained(a12345_emit.size(), m12345) );
+  shared_ptr<DParrayConstrained> Matrices_ ( new DParrayConstrained(a12345_emit.size(), m12345) );
   */
   //------------- Compute sequence properties --------------//
   vector<int> columns = A5::getorder(old,nodes);
@@ -166,11 +166,10 @@ sample_two_nodes_base2(data_partition& P, const vector<int>& nodes)
     state_emit[S2] = A5::states_list[S2]&A5::bitsmask;
   
   const Matrix Q = A5::createQ( P.get_branch_HMMs(branches),A5::states_list);
+
+  HMM H(state_emit, start_P, Q, P.get_beta());
   
-  shared_ptr<DParrayConstrained>
-    Matrices ( new DParrayConstrained(seqall.size(), state_emit, 
-				      start_P, Q, 
-				      P.get_beta()) );
+  shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(seqall.size(), H) );
   
   Matrices->hidden_bits = A5::bitsmask&~A5::leafbitsmask;
 
