@@ -103,7 +103,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  util.C tree/randomtree.C sequence/alphabet.C bali-phy.C \
 	  dp/hmm.C dp/dp-engine.C dp/dp-array.C dp/dp-matrix.C dp/3way.C dp/2way.C mcmc/sample-alignment.C \
 	  mcmc/sample-tri.C mcmc/sample-node.C imodel/imodel.C dp/5way.C mcmc/sample-topology-NNI.C \
-	  setup.C mcmc/sample-two-nodes.C sequence/sequence-format.C \
+	  setup.C mcmc/sample-two-nodes.C mcmc/sample-two-nodes2.C sequence/sequence-format.C \
 	  util-random.C alignment/alignment-random.C smodel/setup.C mcmc/sample-topology-SPR.C \
 	  dp/alignment-sums.C alignment/alignment-util.C probability/probability.C models/model.C \
 	  alignment/alignment-constraint.C substitution/substitution-cache.C \

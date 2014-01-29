@@ -109,7 +109,7 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, i
   nodes[1] = A5::get_nodes_random(p[1].T(), b);
 
   try {
-    return sample_two_nodes_multi(p,nodes,rho,true,false);
+    return sample_two_nodes_multi2(p,nodes,rho,true,false);
   }
   catch (choose_exception<efloat_t>& c)
   {
@@ -446,7 +446,7 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<efloat_t>& rho
   nodes[2] = A5::get_nodes_random(p[2].T(), b);
 
   try {
-    return sample_two_nodes_multi(p,nodes,rho,true,false);
+    return sample_two_nodes_multi2(p,nodes,rho,true,false);
   }
   catch (choose_exception<efloat_t>& c)
   {

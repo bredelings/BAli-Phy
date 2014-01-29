@@ -53,7 +53,7 @@ bool tri_sample_alignment_branch_model(Parameters&,
 void sample_node(Parameters&,int node);
 
 /// Resample gap/non-gap for 2 adjacent internal nodes, where not already determined
-void sample_two_nodes(Parameters& P,int b);
+void sample_two_nodes2(Parameters& P,int b);
 
 /// Resample between 3 NNI topologies around branch b
 bool three_way_topology_sample(Parameters& P1,const Parameters& P2,const Parameters& P3,int b);

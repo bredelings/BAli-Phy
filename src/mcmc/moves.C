@@ -214,7 +214,7 @@ void sample_two_nodes_move(owned_ptr<Probability_Model>& P, MoveStats&,int n0)
 
   int b = PP->T().branch(n0,n1);
 
-  sample_two_nodes(*PP,b);
+  sample_two_nodes2(*PP,b);
 }
 
 vector<int> get_cost(const Tree& T) {
