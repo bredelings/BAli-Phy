@@ -99,20 +99,16 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
   m12345.B = P.get_beta();
 
   /*
-    We need the column order a12345_emit... but the alignment can be in an inconsistent state here.
+    OK, so, what does it mean to get the column order from the first alignment?
+    I guess it means that we used (A0,T0,nodes0) to get an order.  We then keep that order
+    for use with (A[i],T[i],nodes[i]).
+   */
 
-  vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,4);
-  vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),4,1);
-  vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),4,5);
-  vector<HMM::bitmask_t> a4 = convert_to_bits(P.get_pairwise_alignment(b4),5,2);
-  vector<HMM::bitmask_t> a5 = convert_to_bits(P.get_pairwise_alignment(b5),5,3);
+  vector<HMM::bitmask_t> a123456 = A5::get_bitpath(P0, nodes0);
+  vector<HMM::bitmask_t> a1234 = remove_silent(a123456, m12345.all_bits() & ~m12345.hidden_bits);
 
-  vector<HMM::bitmask_t> a12345 = Glue_A(a1, Glue_A(a2, Glue_A(a3, Glue_A(a4, a5))));
-  vector<HMM::bitmask_t> a12345_emit = remove_silent(a12345, m12345.all_bits() & ~m12345.hidden_bits);
+  shared_ptr<DParrayConstrained> Matrices_ ( new DParrayConstrained(a1234.size(), m12345) );
 
-
-  shared_ptr<DParrayConstrained> Matrices_ ( new DParrayConstrained(a12345_emit.size(), m12345) );
-  */
   //------------- Compute sequence properties --------------//
   vector<int> columns = A5::getorder(old,nodes);
 
@@ -139,7 +135,7 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
   }
 
   // Determine emissions pattern
-  vector<HMM::bitmask_t> a1234;
+  a1234.clear();
   for(int c=0;c<seqall.size();c++) 
   {
     HMM::bitmask_t mask;
