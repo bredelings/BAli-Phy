@@ -68,7 +68,7 @@ using boost::shared_ptr;
 // Then, we can just debug one routine, basically.
 
 shared_ptr<DParrayConstrained>
-sample_two_nodes_base2(data_partition& P, const vector<int>& nodes)
+sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector<int>& nodes, const vector<int>& nodes0)
 {
   const Tree& T = P.T();
   alignment& A = *P.A.modify();
@@ -283,7 +283,7 @@ int sample_two_nodes_multi2(vector<Parameters>& p,const vector< vector<int> >& n
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment())
       {
-	Matrices[i].push_back(sample_two_nodes_base2(p[i][j], nodes[i]));
+	Matrices[i].push_back(sample_two_nodes_base2(p[i][j], P0[j], nodes[i], nodes[0]));
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][4]);
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
