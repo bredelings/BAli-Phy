@@ -222,8 +222,6 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
     As.push_back(P.get_pairwise_alignment(b,false));
   *P.A.modify() = get_alignment(old, *P.sequences, construct(T,As));
   
-  //  std::cerr<<"A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
-
 #ifndef NDEBUG_DP
   check_alignment(A,T,"sample_two_nodes_base:out");
 #endif
