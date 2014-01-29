@@ -204,9 +204,8 @@ void sample_two_nodes_base2(data_partition& P, const vector<int>& nodes, DParray
   for(auto& m: allowed_states_for_mask)
     m.reserve(Matrices->n_dp_states());
 
-  for(int i=0;i<Matrices->n_dp_states();i++) 
+  for(int S2: Matrices->dp_order())
   {
-    int S2 = Matrices->dp_order(i);
     int state2 = A5::states_list[S2] & 15; // 4 bits = 1+2+4+8
     if (state2 == 0)
       for(int j=0;j<16;j++)
