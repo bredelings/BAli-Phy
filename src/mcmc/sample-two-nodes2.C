@@ -136,32 +136,16 @@ void sample_two_nodes_base2(data_partition& P, const vector<int>& nodes, DParray
       seqall.push_back(column);
   }
 
-  // Map columns with n2 or n3 to single index 'c'
-  //  vector< vector<int> > cols(4,vector<int>(seqall.size()+1));
-  vector<int> icol(seqall.size()+1);
-  vector<int> jcol(seqall.size()+1);
-  vector<int> kcol(seqall.size()+1);
-  vector<int> lcol(seqall.size()+1);
-
-  icol[0] = 0;
-  jcol[0] = 0;
-  kcol[0] = 0;
-  lcol[0] = 0;
-  for(int c=1,i=0,j=0,k=0,l=0;c<seqall.size()+1;c++) {
-    if (not old.gap(seqall[c-1],nodes[0]))
-      i++;    
-    if (not old.gap(seqall[c-1],nodes[1]))
-      j++;    
-    if (not old.gap(seqall[c-1],nodes[2]))
-      k++;
-    if (not old.gap(seqall[c-1],nodes[3]))
-      l++;
-    icol[c] = i;
-    jcol[c] = j;
-    kcol[c] = k;
-    lcol[c] = l;
+  // Determine emissions pattern
+  vector<HMM::bitmask_t> a1234;
+  for(int c=0;c<seqall.size();c++) 
+  {
+    HMM::bitmask_t mask;
+    for(int i=0;i<4;i++)
+      if (not old.gap(seqall[c],nodes[i]))
+	mask.set(i);
+    a1234.push_back(mask);
   }
-
 
   /*-------------- Create alignment matrices ---------------*/
 
@@ -219,21 +203,11 @@ void sample_two_nodes_base2(data_partition& P, const vector<int>& nodes, DParray
   Matrices->states(0) = Matrices->dp_order();
 
   // Determine which states are allowed to match (c2)
-  for(int c2=1;c2<Matrices->size();c2++) 
+  for(int c2=0;c2<Matrices->size()-1;c2++) 
   {
-    unsigned mask=0;
+    unsigned mask=a1234[c2].to_ulong();
 
-    if (icol[c2] != icol[c2-1]) { mask |= (1<<0); assert(icol[c2] == 1+icol[c2-1]); }
- 
-    if (jcol[c2] != jcol[c2-1]) { mask |= (1<<1); assert(jcol[c2] == 1+jcol[c2-1]); }
-
-    if (kcol[c2] != kcol[c2-1]) { mask |= (1<<2); assert(kcol[c2] == 1+kcol[c2-1]); }
-
-    if (lcol[c2] != lcol[c2-1]) { mask |= (1<<3); assert(lcol[c2] == 1+lcol[c2-1]); }
-
-    assert(mask);
-
-    Matrices->states(c2) = allowed_states_for_mask[mask];
+    Matrices->states(c2+1) = allowed_states_for_mask[mask];
   }
 
   //------------------ Compute the DP matrix ---------------------//
