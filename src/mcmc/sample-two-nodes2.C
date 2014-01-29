@@ -211,16 +211,11 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
   vector<int> path_g = Matrices->sample_path();
   vector<int> path = Matrices->ungeneralize(path_g);
 
-  //  std::cerr<<"generalized A = \n"<<construct(old,path_g,nodes,T,seqs,A5::states_list)<<endl;
-  //  std::cerr<<"ungeneralized A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
-
-  A = A5::construct(old,path,nodes,T,seqs,A5::states_list);
-
-  P.set_pairwise_alignment(T.directed_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_path(path, *Matrices, 0, 4));
-  P.set_pairwise_alignment(T.directed_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_path(path, *Matrices, 1, 4));
-  P.set_pairwise_alignment(T.directed_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 2, 5));
-  P.set_pairwise_alignment(T.directed_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 3, 5));
-  P.set_pairwise_alignment(T.directed_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
+  P.set_pairwise_alignment(T.directed_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_path(path, *Matrices, 0, 4), false);
+  P.set_pairwise_alignment(T.directed_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_path(path, *Matrices, 1, 4), false);
+  P.set_pairwise_alignment(T.directed_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 2, 5), false);
+  P.set_pairwise_alignment(T.directed_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 3, 5), false);
+  P.set_pairwise_alignment(T.directed_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 4, 5), false);
 
   vector<pairwise_alignment_t> As;
   for(int b=0;b<2*T.n_branches();b++)
