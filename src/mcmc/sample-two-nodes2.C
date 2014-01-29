@@ -221,9 +221,6 @@ void sample_two_nodes_base2(data_partition& P, const vector<int>& nodes, DParray
   // Determine which states are allowed to match (c2)
   for(int c2=1;c2<Matrices->size();c2++) 
   {
-    vector<int>& allowed_states = Matrices->states(c2);
-    allowed_states.clear();
-
     unsigned mask=0;
 
     if (icol[c2] != icol[c2-1]) { mask |= (1<<0); assert(icol[c2] == 1+icol[c2-1]); }
@@ -236,7 +233,7 @@ void sample_two_nodes_base2(data_partition& P, const vector<int>& nodes, DParray
 
     assert(mask);
 
-    allowed_states = allowed_states_for_mask[mask];
+    Matrices->states(c2) = allowed_states_for_mask[mask];
   }
 
   //------------------ Compute the DP matrix ---------------------//
