@@ -175,7 +175,7 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
 
   for(int S2: Matrices->dp_order())
   {
-    unsigned int mask = A5::states_list[S2] & 15; // 4 bits = 1+2+4+8
+    unsigned int mask = (H.state_emit[S2] & ~H.hidden_bits).to_ulong();
 
     // Hidden states never contradict an emission pattern.
     if (not mask)
