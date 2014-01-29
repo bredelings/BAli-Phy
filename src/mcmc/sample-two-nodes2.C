@@ -60,13 +60,15 @@ using std::abs;
 using std::endl;
 
 using boost::dynamic_bitset;
+using boost::shared_ptr;
 
 // IDEA: make a routine which encapsulates this sampling, and passes back
 //  the total_sum.  Then we can just call sample_two_nodes w/ each of the 3 trees.
 // We can choose between them with the total_sum (I mean, sum_all_paths).
 // Then, we can just debug one routine, basically.
 
-void sample_two_nodes_base2(data_partition& P, const vector<int>& nodes, DParrayConstrained*& Matrices)
+shared_ptr<DParrayConstrained>
+sample_two_nodes_base2(data_partition& P, const vector<int>& nodes)
 {
   const Tree& T = P.T();
   alignment& A = *P.A.modify();
@@ -158,30 +160,19 @@ void sample_two_nodes_base2(data_partition& P, const vector<int>& nodes, DParray
   branches[4] = T.branch(nodes[4],nodes[5]);
   vector<double> start_P = A5::get_start_P( P.get_branch_HMMs(branches) );
 
-  // Actually create the Matrices & Chain
-  if (not Matrices) 
-  {
-    // Construct the 1D state-emit matrix from the 6D one
-    vector<HMM::bitmask_t> state_emit( A5::states_list.size() );
-    for(int S2=0;S2<state_emit.size();S2++)
-      state_emit[S2] = A5::states_list[S2]&A5::bitsmask;
+  // Construct the 1D state-emit matrix from the 6D one
+  vector<HMM::bitmask_t> state_emit( A5::states_list.size() );
+  for(int S2=0;S2<state_emit.size();S2++)
+    state_emit[S2] = A5::states_list[S2]&A5::bitsmask;
   
-    const Matrix Q = A5::createQ( P.get_branch_HMMs(branches),A5::states_list);
-
-    Matrices = new DParrayConstrained(seqall.size(), state_emit, 
+  const Matrix Q = A5::createQ( P.get_branch_HMMs(branches),A5::states_list);
+  
+  shared_ptr<DParrayConstrained>
+    Matrices ( new DParrayConstrained(seqall.size(), state_emit, 
 				      start_P, Q, 
-				      P.get_beta());
-
-    Matrices->hidden_bits = A5::bitsmask&~A5::leafbitsmask;
-  }
-  else 
-  {
-    //A5::updateQ(Matrices->Q,P.branch_HMMs,branches,A5::states_list); // 7%
-    A5::fillQ(Matrices->Q, P.get_branch_HMMs(branches), A5::states_list); // 16%
-    Matrices->update_GQ();         // 12%
-    Matrices->start_P = start_P;
-    Matrices->set_length(seqall.size());
-  }
+				      P.get_beta()) );
+  
+  Matrices->hidden_bits = A5::bitsmask&~A5::leafbitsmask;
 
   // collect the silent-or-correct-emissions for each type columns
   vector< vector<int> > allowed_states_for_mask(16);
@@ -218,7 +209,7 @@ void sample_two_nodes_base2(data_partition& P, const vector<int>& nodes, DParray
   if (Matrices->Pr_sum_all_paths() <= 0.0) 
   {
     std::cerr<<"sample_two_nodes_base( ): All paths have probability 0!"<<std::endl;
-    return; // Matrices;
+    return Matrices;
   }
 
   //------------- Sample a path from the matrix -------------------//
@@ -255,9 +246,9 @@ void sample_two_nodes_base2(data_partition& P, const vector<int>& nodes, DParray
   assert(path_new   == path);
   assert(valid(A));
 #endif
-}
 
-static vector<vector<DParrayConstrained*> > cached_dparrays;
+  return Matrices;
+}
 
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
 int sample_two_nodes_multi2(vector<Parameters>& p,const vector< vector<int> >& nodes_,
@@ -288,21 +279,12 @@ int sample_two_nodes_multi2(vector<Parameters>& p,const vector< vector<int> >& n
   const Parameters P0 = p[0];
 #endif
 
-  // WARNING - cached_dparrays = funky magic
-  if (cached_dparrays.size() < p.size())
-    cached_dparrays.resize(p.size());
-  for(int i=0;i<p.size();i++)
-    if (cached_dparrays[i].size() < p[i].n_data_partitions())
-      cached_dparrays[i].resize(p[i].n_data_partitions());
-
-  
-  vector< vector<DParrayConstrained*> > Matrices(p.size());
+  vector< vector< shared_ptr<DParrayConstrained> > > Matrices(p.size());
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment())
       {
-	sample_two_nodes_base2(p[i][j],nodes[i],cached_dparrays[i][j]);
-	Matrices[i].push_back(cached_dparrays[i][j]);
+	Matrices[i].push_back(sample_two_nodes_base2(p[i][j], nodes[i]));
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][4]);
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
