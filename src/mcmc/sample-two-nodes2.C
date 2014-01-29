@@ -222,23 +222,15 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
   P.set_pairwise_alignment(T.directed_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 3, 5));
   P.set_pairwise_alignment(T.directed_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
 
+  vector<pairwise_alignment_t> As;
+  for(int b=0;b<2*T.n_branches();b++)
+    As.push_back(P.get_pairwise_alignment(b,false));
+  *P.A.modify() = get_alignment(old, *P.sequences, construct(T,As));
+  
   //  std::cerr<<"A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
 
 #ifndef NDEBUG_DP
-  vector<int> newnodes;
-  for(int i=0;i<6;i++)
-    newnodes.push_back(i);
-
-  vector<int> path_new = A5::get_path(A5::project(A,nodes),newnodes,A5::states_list);
-  vector<int> path_new2 = A5::get_path(A,nodes,A5::states_list);
-  assert(path_new == path_new2); // <- current implementation probably guarantees this
-                                 //    but its not a NECESSARY effect of the routine.
-
-  // get the generalized paths - no sequential silent states that can loop
-  vector<int> path_new_g = Matrices->generalize(path_new);
-  assert(path_new_g == path_g);
-  assert(path_new   == path);
-  assert(valid(A));
+  check_alignment(A,T,"sample_two_nodes_base:out");
 #endif
 
   return Matrices;
