@@ -123,6 +123,7 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
    */
 
   vector<HMM::bitmask_t> a123456 = A5::get_bitpath(P0, nodes0);
+  a123456 = remap_bitpath(a123456, nodes0, nodes);
   vector<HMM::bitmask_t> a1234 = remove_silent(a123456, m12345.all_bits() & ~m12345.hidden_bits);
 
   shared_ptr<DParrayConstrained> Matrices_ ( new DParrayConstrained(a1234.size(), m12345) );
