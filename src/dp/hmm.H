@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2006,2010 Benjamin Redelings
+   Copyright (C) 2012,2014 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -100,6 +100,10 @@ public:
 int bitlength(const std::vector<HMM::bitmask_t>& bits, int b);
 
 int bitslength(const std::vector<HMM::bitmask_t>& bits, HMM::bitmask_t m);
+
+HMM::bitmask_t remap_bits(HMM::bitmask_t bits1, const std::vector<int>& mapping);
+
+std::vector<HMM::bitmask_t> remap_bitpath(const std::vector<HMM::bitmask_t>& path, const std::vector<int>& nodes1, const std::vector<int>& nodes2);
 
 std::vector<HMM::bitmask_t> remove_silent(const std::vector<HMM::bitmask_t>& bits, HMM::bitmask_t m);
 

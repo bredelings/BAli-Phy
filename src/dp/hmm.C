@@ -67,15 +67,24 @@ int HMM::n_characters() const
 
 using std::bitset;
 
-bitset<64> remap_bits(const bitset<64>& bits, const vector<int>& map)
+HMM::bitmask_t remap_bits(HMM::bitmask_t bits, const vector<int>& mapping)
 {
-  bitset<64> mask;
+  HMM::bitmask_t mask;
 
-  int B = map.size();
+  int B = mapping.size();
   for(int j=0;j<B;j++)
-    mask.set(map[j], bits.test(j));
+    mask.set(mapping[j], bits.test(j));
 
   return mask;
+}
+
+vector<HMM::bitmask_t> remap_bitpath(const vector<HMM::bitmask_t>& path, const vector<int>& nodes1, const vector<int>& nodes2)
+{
+  vector<int> mapping = compute_mapping(nodes1,nodes2);
+  vector<HMM::bitmask_t> path2 = path;
+  for(auto& mask: path2)
+    mask = remap_bits(mask,mapping);
+  return path2;
 }
 
 void HMM::remap_bits(const vector<int>& map)

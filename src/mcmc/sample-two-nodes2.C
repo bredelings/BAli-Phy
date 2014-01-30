@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2007,2009-2012 Benjamin Redelings
+   Copyright (C) 2004-2007,2009-2014 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -61,24 +61,6 @@ using std::endl;
 
 using boost::dynamic_bitset;
 using boost::shared_ptr;
-
-HMM::bitmask_t remap_bits(HMM::bitmask_t bits1, const vector<int>& mapping)
-{
-  HMM::bitmask_t bits2;
-  for(int i=0;i<mapping.size();i++)
-    if (bits1.test(i))
-      bits2.set(mapping[i]);
-  return bits2;
-}
-
-vector<HMM::bitmask_t> remap_bitpath(const vector<HMM::bitmask_t>& path, const vector<int>& nodes1, const vector<int>& nodes2)
-{
-  vector<int> mapping = compute_mapping(nodes1,nodes2);
-  vector<HMM::bitmask_t> path2 = path;
-  for(auto& mask: path2)
-    mask = remap_bits(mask,mapping);
-  return path2;
-}
 
 // IDEA: make a routine which encapsulates this sampling, and passes back
 //  the total_sum.  Then we can just call sample_two_nodes w/ each of the 3 trees.
