@@ -126,66 +126,9 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
   a123456 = remap_bitpath(a123456, nodes0, nodes);
   vector<HMM::bitmask_t> a1234 = remove_silent(a123456, m12345.all_bits() & ~m12345.hidden_bits);
 
-  shared_ptr<DParrayConstrained> Matrices_ ( new DParrayConstrained(a1234.size(), m12345) );
-
-  //------------- Compute sequence properties --------------//
-  vector<int> columns = A5::getorder(old,nodes);
-
-  //  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
-  //  std::cerr<<"old (reordered) = "<<project(old,nodes)<<endl;
-
-  // Find sub-alignments and sequences
-  vector<vector<int> > seqs(4);
-  for(int i=0;i<seqs.size();i++)
-    seqs[i].reserve(A.length());
-  vector<int> seqall;
-  seqall.reserve(A.length());
-  for(int i=0;i<columns.size();i++) {
-    int column = columns[i];
-    for(int i=0;i<4;i++)
-      if (not old.gap(column,nodes[i]))
-	seqs[i].push_back(column);
-
-    if (not old.gap(column,nodes[0]) or 
-	not old.gap(column,nodes[1]) or 
-	not old.gap(column,nodes[2]) or 
-	not old.gap(column,nodes[3]))
-      seqall.push_back(column);
-  }
-
-  // Determine emissions pattern
-  a1234.clear();
-  for(int c=0;c<seqall.size();c++) 
-  {
-    HMM::bitmask_t mask;
-    for(int i=0;i<4;i++)
-      if (not old.gap(seqall[c],nodes[i]))
-	mask.set(i);
-    a1234.push_back(mask);
-  }
-
   /*-------------- Create DP matrices ---------------*/
 
-  // Create the transition matrix first using just the current, fixed ordering
-  vector<int> branches(5);
-  branches[0] = T.branch(nodes[0],nodes[4]);
-  branches[1] = T.branch(nodes[1],nodes[4]);
-  branches[2] = T.branch(nodes[2],nodes[5]);
-  branches[3] = T.branch(nodes[3],nodes[5]);
-  branches[4] = T.branch(nodes[4],nodes[5]);
-  vector<double> start_P = A5::get_start_P( P.get_branch_HMMs(branches) );
-
-  // Construct the 1D state-emit matrix from the 6D one
-  vector<HMM::bitmask_t> state_emit( A5::states_list.size() );
-  for(int S2=0;S2<state_emit.size();S2++)
-    state_emit[S2] = A5::states_list[S2]&A5::bitsmask;
-  
-  const Matrix Q = A5::createQ( P.get_branch_HMMs(branches),A5::states_list);
-
-  HMM H(state_emit, start_P, Q, P.get_beta());
-  H.hidden_bits = A5::bitsmask&~A5::leafbitsmask;
-  
-  shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(a1234.size(), H) );
+  shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(a1234.size(), m12345) );
 
   // collect the silent-or-correct-emissions for each type columns
   vector< vector<int> > allowed_states_for_mask(16);
@@ -194,7 +137,7 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
 
   for(int S2: Matrices->dp_order())
   {
-    unsigned int mask = (H.state_emit[S2] & ~H.hidden_bits).to_ulong();
+    unsigned int mask = (m12345.state_emit[S2] & ~m12345.hidden_bits).to_ulong();
 
     // Hidden states never contradict an emission pattern.
     if (not mask)
@@ -384,7 +327,7 @@ int sample_two_nodes_multi2(vector<Parameters>& p,const vector< vector<int> >& n
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment())
       {
-	paths[i].push_back( A5::get_path(A5::project(*p[i][j].A, nodes[i]),newnodes,A5::states_list) );
+	paths[i].push_back( get_path_unique(A5::get_bitpath(p[i][j], nodes[i]), *Matrices[i][j]) );
     
 	OS[i][j] = p[i][j].likelihood();
 	OP[i][j] = other_prior(p[i][j],nodes[i]);
