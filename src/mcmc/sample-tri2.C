@@ -319,7 +319,7 @@ sample_tri_multi_calculation2::sample_tri_multi_calculation2(vector<Parameters>&
   {
     for(int j=0;j<p[i].n_data_partitions();j++) {
       if (p[i][j].variable_alignment())
-	Matrices[i].push_back( tri_sample_alignment_base2(p[i][j], P0[j], nodes[i], nodes[0], bandwidth) );
+	Matrices[i].push_back( tri_sample_alignment_base2(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth) );
       else
 	Matrices[i].push_back( boost::shared_ptr<DPmatrixConstrained>());
     }
