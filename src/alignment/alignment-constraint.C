@@ -21,6 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <fstream>
 #include <utility>
+#include <set>
 #include "alignment/alignment-constraint.H"
 #include "alignment/alignment-util.H"
 #include "tree/tree-util.H"
@@ -28,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "io.H"
 
 using std::string;
+using std::set;
 using std::ifstream;
 using std::vector;
 using std::valarray;
@@ -277,8 +279,7 @@ vector< pair<int,int> > get_y_ranges_for_band(int D, const vector<int>& seq1, co
 
 vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignment& A,
 			       const dynamic_bitset<>& group1,const dynamic_bitset<>& group2,
-			       const vector<int>& seq1,const vector<int>& seq2,
-			       const vector<int>& seq12) 
+			       const vector<int>& seq1,const vector<int>& seq2)
 {
   // determine which constraints are satisfied (not necessarily enforceable!)
   vector<int> satisfied = constraint_columns(constraint,A);
@@ -289,16 +290,18 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
     if (not (constrained(group1,constraint,i) and constrained(group2,constraint,i)))
       satisfied[i] = -1;
 
+  vector< vector<int> > impossible;
+  impossible.push_back(vector<int>(2,-1));
+
   // Mark and check each alignment column which is going to get pinned.
-  vector<int> pinned(A.length(),0);
+  vector<set<int>> x_constraints(seq1.size());
+  vector<set<int>> y_constraints(seq2.size());
   for(int i=0;i<satisfied.size();i++) 
   {
     int column = satisfied[i];
 
-    if (column != -1 and not pinned[column]) 
+    if (column != -1)
     {
-      pinned[column] = 1;
-    
       int x = find_index(seq1,column);
       int y = find_index(seq2,column);
 
@@ -307,11 +310,11 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
       // character is not present at the internal nodes that we have
       // access to.  Therefore, no alignment that we choose can satisfy
       // this constraint, so we must bail out.
-      if (x == -1 or y == -1) {
-	vector< vector<int> > impossible;
-	impossible.push_back(vector<int>(2,-1));
+      if (x == -1 or y == -1)
 	return impossible;
-      }    
+
+      x_constraints[x].insert(i);
+      y_constraints[y].insert(i);
     }
   }
 
@@ -320,20 +323,25 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
   vector<int>& X = pins[0];
   vector<int>& Y = pins[1];
 
-  for(int i=0;i<seq12.size();i++)
-  {
-    int column = seq12[i];
+  /* TODO: Note that we cannot have pins like (x1,y1) (x1,y2)
+           because we can only pin matches, and the second one
+	   would be a gap. */
 
-    if (not pinned[column]) continue;
-    
-    int x = find_index(seq1,column);
-    int y = find_index(seq2,column);
+  for(int x=0,y=0;;)
+  {
+    for(;x<seq1.size() and x_constraints[x].empty();x++)
+      ;
+    for(;y<seq2.size() and y_constraints[y].empty();y++)
+      ;
+
+    if (x == seq1.size() and y == seq2.size()) break;
+
+    if (x == seq1.size() or y == seq2.size()) return impossible;
+
+    if (x_constraints[x] != y_constraints[y]) return impossible;
 
     assert(x >=0 and x < seq1.size());
     assert(y >=0 and y < seq2.size());
-
-    if (x == -1 or y == -1)
-      throw myexception()<<"Did not already bail out on un-pinnable column?!?";
 
     X.push_back(x+1);
     Y.push_back(y+1);

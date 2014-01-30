@@ -41,73 +41,139 @@ using std::pair;
 using std::endl;
 using boost::dynamic_bitset;
 
-// FIXME - resample the path multiple times - pick one on opposite side of the middle 
+/// Figure out which columns in the full alignment correspond to each "column" in the emissions path.
+vector<int> get_column_order(const alignment& A, const vector<HMM::bitmask_t>& a, const vector<int>& bits, const vector<int>& nodes)
+{
+  assert(bits.size() == nodes.size());
 
-boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition& P,const vector<int>& nodes, int bandwidth)
+  vector<vector<int>> node_columns;
+  for(int n: nodes)
+    node_columns.push_back(A.get_columns_for_characters(n));
+
+  vector<int> I(nodes.size(),0);
+
+  vector<int> combined_columns;
+  for(const auto& m: a)
+  {
+    int column = -1;
+    for(int j=0; j<bits.size(); j++)
+      if (m.test(bits[j]))
+      {
+	column = node_columns[j][I[j]];
+	I[j]++;
+      }
+    if (column >= 0)
+      combined_columns.push_back(column);
+  }
+
+  for(int j=0; j<bits.size(); j++)
+    assert(I[j] == node_columns[j].size());
+
+  return combined_columns;
+}
+
+vector<HMM::bitmask_t> get_emissions_path(const data_partition& P, const vector<int>& nodes)
+{
+  const auto& T = P.T();
+
+  int b1 = T.directed_branch(nodes[1],nodes[0]);
+  int b2 = T.directed_branch(nodes[0],nodes[2]);
+  int b3 = T.directed_branch(nodes[0],nodes[3]);
+
+  vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,3);
+  vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),3,1);
+  vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),3,2);
+
+  vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
+
+  return a123;
+}
+
+
+boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition& P, const data_partition& P0, 
+								  const vector<int>& nodes, const vector<int>& nodes0,
+								  int bandwidth)
 {
   const Tree& T = P.T();
   alignment& A = *P.A.modify();
 
+  const Tree& T0 = P0.T();
   assert(P.variable_alignment());
+
+  alignment old = A;
 
   assert(T.is_connected(nodes[0],nodes[1]));
   assert(T.is_connected(nodes[0],nodes[2]));
   assert(T.is_connected(nodes[0],nodes[3]));
 
+  assert(T0.is_connected(nodes[0],nodes[1]));
+  assert(nodes0[0] == nodes[0]);
+  bool tree_changed = not T0.is_connected(nodes[0],nodes[2]) or not T0.is_connected(nodes[0],nodes[3]);
+
+  // If the tree changed, assert that previously nodes 2 and 3 were connected.
+  if (tree_changed)
+  {
+    assert(bandwidth < 0);
+    assert(T0.is_connected(nodes[2],nodes[3]));
+  }
+  else
+  {
+    assert(T0.is_connected(nodes[0],nodes[2]));
+    assert(T0.is_connected(nodes[0],nodes[3]));
+  }
+
   // std::cerr<<"A = "<<A<<endl;
+
+  int b1 = T.directed_branch(nodes[1],nodes[0]);
+  int b2 = T.directed_branch(nodes[0],nodes[2]);
+  int b3 = T.directed_branch(nodes[0],nodes[3]);
+
+  HMM m1 = P.get_branch_HMM(b1);
+  m1.remap_bits({0,3});
+  HMM m2 = P.get_branch_HMM(b2);
+  m2.remap_bits({3,1});
+  HMM m3 = P.get_branch_HMM(b3);
+  m3.remap_bits({3,2});
+
+  HMM m123 = Glue(m1,Glue(m2,m3));
+  m123.hidden_bits.set(3);
+  m123.B = P.get_beta();
 
   //------------- Compute sequence properties --------------//
   dynamic_bitset<> group1 = T.partition(nodes[0],nodes[1]);
   dynamic_bitset<> group2 = T.partition(nodes[0],nodes[2]);
   dynamic_bitset<> group3 = T.partition(nodes[0],nodes[3]);
 
+  vector<int> seq1 = A.get_columns_for_characters(nodes[1]);
 
-  //  std::clog<<"n0 = "<<nodes[0]<<"   n1 = "<<nodes[1]<<"    n2 = "<<nodes[2]<<"    n3 = "<<nodes[3]<<std::endl;
-  //  std::clog<<"A (reordered) = "<<project(A,nodes[0],nodes[1],nodes[2],nodes[3])<<endl;
-  vector<int> columns = A3::getorder(A,nodes[0],nodes[1],nodes[2],nodes[3]);
+  vector<int> seq23;
+  vector<int> seq123; 
+  vector<HMM::bitmask_t> a23;
+  if (tree_changed)
+  {
+    int b4 = T0.directed_branch(nodes[2],nodes[3]);
+    // Does this give the right order so that the move is reversible?
+    // FIXME: Check that when we project a123_new to a12_new at the end, this does not change!!!
+    a23 = convert_to_bits(P0.get_pairwise_alignment(b4),1,2);
+    seq23 = get_column_order(A, a23, {1,2}, {nodes[2], nodes[3]});
 
-#ifndef NDEBUG
+    // The branch that the subtree was pruned from.
+    int b5 = T.directed_branch(nodes0[2], nodes0[3]);
+    assert(T0.is_connected(nodes0[2],nodes0[0]));
+    assert(T0.is_connected(nodes0[3],nodes0[0]));
 
-  // getorder(project(A,...)...) is not the same as getorder(A,...) because columns that are
-  // in both project(A,...) and A have different columns numbers in each alignment, and
-  // project(A,...) is shorter.
-
-  // However, the NUMBER of columns should be the same. 
-  vector<int> columns2 = A3::getorder(A3::project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
-  assert(columns.size() == columns2.size());
-#endif
-
-  // Find sub-alignments and sequences
-  vector<int> seq1; seq1.reserve(A.length());
-  vector<int> seq2; seq2.reserve(A.length());
-  vector<int> seq3; seq3.reserve(A.length());
-  vector<int> seq23; seq23.reserve(A.length());
-  for(int i=0;i<columns.size();i++) {
-    int column = columns[i];
-    if (not A.gap(column,nodes[1]))
-      seq1.push_back(column);
-    if (not A.gap(column,nodes[2]))
-      seq2.push_back(column);
-    if (not A.gap(column,nodes[3]))
-      seq3.push_back(column);
-
-    if (not A.gap(column,nodes[2]) or not A.gap(column,nodes[3]))
-      seq23.push_back(column);
+    // Make sure the column order on the pruned branch matches the projected column order from the original alignment.
+    vector<HMM::bitmask_t> b123 = get_emissions_path(P0, nodes0);
+    P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2), false);
   }
+  else
+  {
+    vector<HMM::bitmask_t> a123 = get_emissions_path(P, nodes);
+    HMM::bitmask_t m23; m23.set(1); m23.set(2);
+    a23 = remove_silent(a123, m23);
 
-  // Map columns with n2 or n3 to single index 'c'
-  vector<int> jcol(seq23.size()+1);
-  vector<int> kcol(seq23.size()+1);
-
-  jcol[0] = 0;
-  kcol[0] = 0;
-  for(int c=1,j=0,k=0;c<seq23.size()+1;c++) {
-    if (not A.gap(seq23[c-1],nodes[2]))
-      j++;    
-    if (not A.gap(seq23[c-1],nodes[3]))
-      k++;
-    jcol[c] = j;
-    kcol[c] = k;
+    seq23 = get_column_order(A, a123, {1,2}, {nodes[2], nodes[3]});
+    seq123 = get_column_order(A, a123, {0,1,2}, {nodes[1],nodes[2],nodes[3]});
   }
 
   // Precompute distributions at nodes[0]
@@ -125,54 +191,51 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   for(int i=0;i<3;i++)
     branches[i] = T.branch(nodes[0],nodes[i+1]);
 
-  const Matrix Q = A3::createQ( P.get_branch_HMMs(branches) );
-  vector<double> start_P = A3::get_start_P( P.get_branch_HMMs(branches) );
-
-  // Actually create the Matrices & Chain
   boost::shared_ptr<DPmatrixConstrained> 
-    Matrices(new DPmatrixConstrained(A3::get_state_emit(), start_P, Q, P.get_beta(),
+    Matrices(new DPmatrixConstrained(m123,
 				     dists1, dists23, P.WeightedFrequencyMatrix())
 	     );
-  Matrices->emit1 = 2;
-  Matrices->emit2 = 4|8;
-  Matrices->hidden_bits = 1;
+  Matrices->emit1 = 1;
+  Matrices->emit2 = 2|4;
 
-  // Determine which states are allowed to match (,c2)
-  for(int c2=0;c2<dists23.size()-1;c2++) 
+  // collect the silent-or-correct-emissions for each type columns
+  vector< vector<int> > allowed_states_for_mask(4);
+  for(auto& m: allowed_states_for_mask)
+    m.reserve(Matrices->n_dp_states());
+  
+  // Construct the states that are allowed for each emission pattern.
+  for(int S2: Matrices->dp_order())
   {
-    int j2 = jcol[c2];
-    int k2 = kcol[c2];
-    Matrices->states(c2).reserve(Matrices->n_dp_states());
-    for(int i=0;i<Matrices->n_dp_states();i++) {
-      int S2 = Matrices->dp_order(i);
+    unsigned int mask = (m123.state_emit[S2] & Matrices->emit2).to_ulong();
 
-      //---------- Get (,j1,k1) ----------
-      int j1 = j2;
-      if (A3::dj(S2)) 
-	j1--;
-
-      int k1 = k2;
-      if (A3::dk(S2)) 
-	k1--;
-      
-      //------ Get c1, check if valid ------
-      if (c2==0 or (j1 == j2 and k1 == k2) or (j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
-	Matrices->states(c2+1).push_back(S2);
-      else
-	{ } // this state not allowed here
+    // Hidden states never contradict an emission pattern.
+    if (not mask) // m123.silent(S2))
+    {
+      for(int j=0;j<allowed_states_for_mask.size();j++)
+	allowed_states_for_mask[j].push_back(S2);
+      continue;
     }
+
+    mask >>= 1;
+    allowed_states_for_mask[mask].push_back(S2);
   }
 
+  Matrices->states(1) = Matrices->dp_order();
+
+  // Determine which states are allowed to match (,c2)
+  for(int c2=1;c2<dists23.size()-1;c2++) 
+  {
+    unsigned int mask = (a23[c2-1]&Matrices->emit2).to_ulong();
+    mask >>= 1;
+    assert(mask);
+
+    Matrices->states(c2+1) = allowed_states_for_mask[mask];
+  }
 
   //------------------ Compute the DP matrix ---------------------//
+  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23);
 
-  //  vector<int> path_old = get_path_3way(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
-  //  vector<int> path_old_g = Matrices.generalize(path_old);
-
-  //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
-  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23,columns);
-
-  vector< pair<int,int> > yboundaries = get_y_ranges_for_band(bandwidth, seq23, seq1, columns);
+  vector< pair<int,int> > yboundaries = get_y_ranges_for_band(bandwidth, seq23, seq1, seq123);
 
   // if the constraints are currently met but cannot be met
   if (pins.size() == 1 and pins[0][0] == -1)
@@ -201,34 +264,15 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
 
   vector<int> path = Matrices->ungeneralize(path_g);
 
-  A = A3::construct(A,path,nodes[0],nodes[1],nodes[2],nodes[3],T,seq1,seq2,seq3);
-  for(int i=1;i<4;i++) {
-    int b = T.directed_branch(nodes[0],nodes[i]);
-    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 0, i));
+  for(int i=0;i<3;i++) {
+    int b = T.directed_branch(nodes[0],nodes[i+1]);
+    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
   }
 
-#ifndef NDEBUG_DP
-  //--------------- Check alignment construction ------------------//
-  vector<int> path_new = get_path_3way(A3::project(A,nodes),0,1,2,3);
-
-  vector<int> path_new2 = get_path_3way(A,nodes);
-  assert(path_new == path_new2); // <- current implementation probably guarantees this
-                                 //    but its not a NECESSARY effect of the routine.
-                                 //    due to ordering stuff required in the path but
-                                 //    not store in the alignment A.
-  vector<int> path_new_g = Matrices->generalize(path_new);
-  if (path_new_g != path_g) {
-    std::clog<<"A' (reordered) = "<<A3::project(A,nodes)<<endl;
-    std::clog<<"A' = "<<A<<endl;
-    std::abort();
-  }
-
-  assert(valid(A));
-#endif
-
-  //  std::cerr<<"[tri]bandwidth = "<<bandwidth(Matrices,path_g)<<std::endl;
-
-  //  std::cerr<<"[tri]bandwidth2 = "<<bandwidth2(Matrices,path_g)<<std::endl;
+  vector<pairwise_alignment_t> As;
+  for(int b=0;b<2*T.n_branches();b++)
+    As.push_back(P.get_pairwise_alignment(b,false));
+  *P.A.modify() = get_alignment(old, *P.sequences, construct(T, As));
 
 #ifndef NDEBUG_DP
   check_alignment(A,T,"sample_tri_base:out");
@@ -275,7 +319,7 @@ sample_tri_multi_calculation2::sample_tri_multi_calculation2(vector<Parameters>&
   {
     for(int j=0;j<p[i].n_data_partitions();j++) {
       if (p[i][j].variable_alignment())
-	Matrices[i].push_back( tri_sample_alignment_base2(p[i][j],nodes[i],bandwidth) );
+	Matrices[i].push_back( tri_sample_alignment_base2(p[i][j], P0[j], nodes[i], nodes[0], bandwidth) );
       else
 	Matrices[i].push_back( boost::shared_ptr<DPmatrixConstrained>());
     }
@@ -404,7 +448,7 @@ int sample_tri_multi_calculation2::choose(vector<Parameters>& p, bool correct)
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment() and ok)
       {
-	paths[i].push_back( get_path_3way(A3::project(*p[i][j].A, nodes[i]), 0,1,2,3) );
+ 	paths[i].push_back( get_path_unique(get_emissions_path(p[i][j],nodes[i]),*Matrices[i][j]) );
 	  
 	OS[i][j] = other_subst(p[i][j],nodes[i]);
 	OP[i][j] = other_prior(p[i][j],nodes[i]);

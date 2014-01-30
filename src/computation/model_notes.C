@@ -80,7 +80,6 @@ expression_ref def_parameter(Model_Notes& N, const std::string& name)
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value)
 {
   expression_ref var = def_parameter(N,name);
-  N.add_note( constructor("DefaultValue",2) + var + def_value );
   return var;
 }
 

@@ -385,22 +385,29 @@ std::vector<HMM::bitmask_t> Glue_A(const std::vector<HMM::bitmask_t>& top, const
   return a;
 }
 
-pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path, const HMM& H, int n1, int n2)
+vector<HMM::bitmask_t> get_bits_from_path(const vector<int>& path, const HMM& H)
 {
-  assert(H.all_bits().test(n1));
-  assert(H.all_bits().test(n2));
+  vector<HMM::bitmask_t> bit_path;
 
-  assert(n1 != n2);
+  for(int S: path)
+    bit_path.push_back(H.state_emit[S]);
+
+  return bit_path;
+}
+
+pairwise_alignment_t get_pairwise_alignment_from_bits(const std::vector<HMM::bitmask_t>& bit_path, int i, int j)
+{
+  assert(i != j);
 
   pairwise_alignment_t pi;
-  pi.reserve(path.size()+2);
+  pi.reserve(bit_path.size()+2);
   pi.push_back(A2::states::S);
 
-  for(int i=0;i<path.size();i++)
+  for(const auto& bits: bit_path)
   {
-    bool d1 = H.state_emit[path[i]].test(n1);
-    bool d2 = H.state_emit[path[i]].test(n2);
-    
+    bool d1 = bits.test(i);
+    bool d2 = bits.test(j);
+
     if (d1 and d2)
       pi.push_back(A2::states::M);
     else if (d1 and not d2)
@@ -412,6 +419,14 @@ pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& pa
   pi.push_back(A2::states::E);
   
   return pi;
+}
+
+pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path, const HMM& H, int n1, int n2)
+{
+  assert(H.all_bits().test(n1));
+  assert(H.all_bits().test(n2));
+
+  return get_pairwise_alignment_from_bits(get_bits_from_path(path, H), n1, n2);
 }
 
 /*
@@ -432,19 +447,9 @@ pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& pa
  * is an emitting state?  When we transition to it, should be emit anything?
  */
 
-//Question: should we move this to HMM.C, and add a get_unique_path( ) option?
-
 /// This path should have an end state, but no start state! (Its going to be evaluated using start_P)
 vector<int> get_path_unique(const vector<HMM::bitmask_t>& path1, const HMM& H)
 {
-  // How do I convert this to a path???
-  // We I guess we could convert it to a path by Gluing, just like we do everything else by gluing!
-  // Well, if we glue two paths, there really should be only 1 way of getting doing things.  This
-  //   shouldn't require any look-ahead, to disambiguate, I *think*!
-
-  // Issue: by allowing a distribution of start states, we lose this nice property!
-  // Possible solution: 
-
   // Issue: we basically need to make the start-state M/M/M.
 
   // Another issue: we actually DO need to look ahead, because only some states

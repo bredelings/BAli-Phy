@@ -130,7 +130,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 
   // Actually create the Matrices & Chain
   boost::shared_ptr<DPmatrixConstrained> 
-    Matrices(new DPmatrixConstrained(A3::get_state_emit(), start_P, Q, P.get_beta(),
+    Matrices(new DPmatrixConstrained(HMM(A3::get_state_emit(), start_P, Q, P.get_beta()),
 				     dists1, dists23, P.WeightedFrequencyMatrix())
 	     );
   Matrices->emit1 = 2;
@@ -170,7 +170,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   //  vector<int> path_old_g = Matrices.generalize(path_old);
 
   //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
-  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23,columns);
+  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23);
 
   vector< pair<int,int> > yboundaries = get_y_ranges_for_band(bandwidth, seq23, seq1, columns);
 

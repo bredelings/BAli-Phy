@@ -89,7 +89,7 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1
   nodes[1] = A3::get_nodes_branch_random(p[1].T(), n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
 
   try {
-    return sample_tri_multi(p,nodes,rho,true,true);
+    return sample_tri_multi2(p,nodes,rho,true,true);
   }
   catch (choose_exception<efloat_t>& c)
   {
@@ -406,6 +406,16 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   // FIXME - do we need to USE the ratio anywhere?
   double ratio = do_SPR(p[1],b1,b2);
 
+  const SequenceTree& T0 = p[0].T();
+  const SequenceTree& T1 = p[1].T();
+
+  std::vector<int> nodes = A3::get_nodes_branch(T0,n1,n2);
+  assert(T0.is_connected(nodes[0],nodes[1]));
+  assert(T0.is_connected(nodes[0],nodes[2]));
+  assert(T0.is_connected(nodes[0],nodes[3]));
+
+  bool tree_changed = not T1.is_connected(nodes[0],nodes[2]) or not T1.is_connected(nodes[0],nodes[3]);
+
   // enforce tree constraints
   if (not extends(p[1].T(), *P.TC))
     return MCMC::Result(2+bins,0);
@@ -421,12 +431,16 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   for(int i=0;i<branches.size();i++) {
     int bi = branches[i];
     p[1].setlength(bi,p[1].T().directed_branch(bi).length());     // bidirectional effect
-    p[1].invalidate_subA_index_branch(bi);              // bidirectional effect
-    if (p[1].variable_alignment()) 
-      p[1].note_alignment_changed_on_branch(bi); 
+    if (tree_changed)
+    {
+      p[1].invalidate_subA_index_branch(bi);              // bidirectional effect
+      if (p[1].variable_alignment()) 
+	p[1].note_alignment_changed_on_branch(bi); 
+    }
   }
 
   // If we reattach on a different branch than we pulled out of...
+  assert(tree_changed == (branches.size() != 2));
   if (branches.size() != 2)
   {
     // ... then set the pairwise alignment of the branch we pulled out of.
@@ -935,7 +949,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
   vector< vector<int> > nodes(2);
   nodes[0] = A3::get_nodes_branch_random(p[0].T(), n1, n2);     // Using two random orders can lead to different total
   nodes[1] = A3::get_nodes_branch_random(p[1].T(), n1, n2);     //  probabilities for p[0] and p[1] when p[0] == p[1].
-  sample_tri_multi_calculation tri(p, nodes, true, true);
+  sample_tri_multi_calculation2 tri(p, nodes, true, true);
 
   //--------- Compute PrL2: reverse proposal probabilities ---------//
 

@@ -127,7 +127,7 @@ namespace A3 {
   }
 
   /// Setup node names, with nodes[0]=node1 and nodes[1]=node2
-  vector<int> get_nodes_branch_random(const Tree& T,int node1,int node2) {
+  vector<int> get_nodes_branch(const Tree& T,int node1,int node2) {
 
     assert( T.is_connected(node1,node2) );
 
@@ -143,6 +143,14 @@ namespace A3 {
     else
       std::abort();
     
+    return nodes;
+  }
+
+  /// Setup node names, with nodes[0]=node1 and nodes[1]=node2
+  vector<int> get_nodes_branch_random(const Tree& T,int node1,int node2) {
+
+    vector<int> nodes = get_nodes_branch(T, node1, node2);
+
     // randomize the order here
     if (myrandom(2) == 1)
       std::swap(nodes[2],nodes[3]);

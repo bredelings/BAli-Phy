@@ -2210,7 +2210,7 @@ public:
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-  RegOperationArgs(int r, reg_heap& m, int T, bool ec)
+  RegOperationArgs(int r, reg_heap& m, int T)
     :R(r),M(m),t(T), n_allocated(0)
   { 
     // I think these should already be cleared.
@@ -2361,13 +2361,9 @@ int reg_heap::incremental_evaluate(int R, int t)
       }
     }
 
-    vector<expression_ref> vars;
-    vector<expression_ref> bodies;
-    expression_ref T;
-
     /*---------- Below here, there is no call, and no result. ------------*/
-
-    if (access(R).C.exp->head->type() == index_var_type)
+    const int type = access(R).C.exp->head->type();
+    if (type == index_var_type)
     {
       assert( not reg_is_changeable(R) );
 
@@ -2406,33 +2402,39 @@ int reg_heap::incremental_evaluate(int R, int t)
     // If we are not evaluating changeable regs, then we shouldn't even get here.
     // A modifiable has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
-    else if (access(R).C.exp->head->type() == modifiable_type)
-      throw myexception()<<"Reg "<<R<<": Modifiable '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<reg_is_changeable(R)<<")";
+    else if (type == modifiable_type)
+      throw myexception()<<"Reg "<<R<<": Modifiable '"<<access(R).C.exp<<"' with no result?! (token = "<<t<<"   Changeable = "<<reg_is_changeable(R)<<")";
 
     // Reduction: let expression
-    else if (parse_indexed_let_expression(access(R).C.exp, bodies, T))
+    else if (type == let2_type)
     {
       assert( not reg_is_changeable(R) );
 
       vector<int>& local_env = get_scratch_list();
 
+      const vector<expression_ref>& A = access(R).C.exp->sub;
+
+      const expression_ref& T = A[0];
+
+      int n_bodies = int(A.size())-1;
+
       local_env = access(R).C.Env;
 
       int start = local_env.size();
 
-      for(int i=0;i<bodies.size();i++)
+      for(int i=0;i<n_bodies;i++)
 	local_env.push_back( push_temp_head() );
       
-      set_C(R, get_trimmed({T, local_env}));
-
       // Substitute the new heap vars for the dummy vars in expression T and in the bodies
-      for(int i=0;i<bodies.size();i++)
-	set_C(local_env[start+i], get_trimmed({bodies[i],local_env}));
+      for(int i=0;i<n_bodies;i++)
+	set_C(local_env[start+i], get_trimmed({A[i+1],local_env}));
+
+      set_C(R, get_trimmed({T, local_env}));
 
       assert( not reg_is_changeable(R) );
 
       // Remove the new heap vars from the list of temp heads in reverse order.
-      for(int i=0;i<bodies.size(); i++)
+      for(int i=0;i<n_bodies; i++)
 	pop_temp_head();
       
       release_scratch_list();
@@ -2463,7 +2465,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 
       try
       {
-	RegOperationArgs Args(R, *this, t, t>0);
+	RegOperationArgs Args(R, *this, t);
 	closure result = (*O)(Args);
 	
 	// NOTE: While not all used_inputs are E-children, they SHOULD all be E-descendents.
@@ -2524,13 +2526,13 @@ int reg_heap::incremental_evaluate(int R, int t)
 					    )
 			   )->print();
 	std::ostringstream o;
-	o<<"evaluating reg # "<<R<<": "<<SSS<<"\n\n";
+	o<<"evaluating reg # "<<R<<" in token "<<t<<": "<<SSS<<"\n\n";
 	e.prepend(o.str());
 	throw e;
       }
       catch (const std::exception& e)
       {
-	std::cerr<<"evaluating reg # "<<R<<std::endl;
+	std::cerr<<"evaluating reg # "<<R<<" in token "<<t<<std::endl;
 	dot_graph_for_token(*this, t);
 	throw e;
       }
