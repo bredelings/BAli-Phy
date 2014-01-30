@@ -39,33 +39,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/numeric/ublas/io.hpp>
 #include "dp/dp-array.H"
 
-// for prior(p[i])
-#include "likelihood.H"
-
-// We are sampling from a 5-way alignment (along 5 branches)
-
-// Its a 4-way dynamic programming, though - so the only thing
-// that matters is the order of the 4D path. (I think...)
-
-// We want to scramble the sorting method for the branches
-// Perhaps that should be the NEXT step?  We can scramble the
-// node names, though - we use those to know which leaf node
-// is connected to which internal node.
-
-// Branches are labelled 0-3, as are the leaves.  Internal nodes
-// are 4,5; internal branch is 5.
-
 using std::vector;
 using std::abs;
 using std::endl;
 
 using boost::dynamic_bitset;
 using boost::shared_ptr;
-
-// IDEA: make a routine which encapsulates this sampling, and passes back
-//  the total_sum.  Then we can just call sample_two_nodes w/ each of the 3 trees.
-// We can choose between them with the total_sum (I mean, sum_all_paths).
-// Then, we can just debug one routine, basically.
 
 shared_ptr<DParrayConstrained>
 sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector<int>& nodes, const vector<int>& nodes0)
