@@ -8,12 +8,12 @@ builtin is_changeable 1 "is_changeable" "Modifiables";
 builtin is_modifiable 1 "is_modifiable" "Modifiables";
 builtin get_modifiable_index 1 "get_modifiable_index" "Modifiables";
 builtin builtin_new_modifiable 1 "new_modifiable" "Modifiables";
-builtin builtin_new_random_modifiable 1 "new_random_modifiable" "Modifiables";
+builtin builtin_new_random_modifiable 2 "new_random_modifiable" "Modifiables";
 builtin evaluate 2 "evaluate";
 builtin get_modifiable_value 2 "get_modifiable_value" "Modifiables";
 builtin builtin_trigger 1 "trigger";
 
-new_random_modifiable dist = IOAction1 builtin_new_random_modifiable dist;
+new_random_modifiable range = IOAction1 builtin_new_random_modifiable range ();
 
 new_modifiable = IOAction1 builtin_new_modifiable ();
 

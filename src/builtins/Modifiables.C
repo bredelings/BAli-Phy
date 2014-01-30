@@ -27,22 +27,25 @@ extern "C" closure builtin_function_new_modifiable(OperationArgs& Args)
 
 extern "C" closure builtin_function_new_random_modifiable(OperationArgs& Args)
 {
-  assert(not Args.evaluate_changeables());
+  //  assert(not Args.evaluate_changeables());
 
   reg_heap& M = Args.memory();
 
   int D = Args.reg_for_slot(0);
 
+  int V = Args.reg_for_slot(1);
+
   // Allocate a reg, and fill it with a modifiable of the correct index
   expression_ref E(new expression(modifiable(),{index_var(0)}));
   closure C{E,{D}};
-  int R1 = Args.allocate(std::move(C));
-  M.make_reg_changeable(R1);
+  int r = Args.allocate(std::move(C));
+  M.make_reg_changeable(r);
+  M.set_shared_value(r,V);
 
-  M.add_random_modifiable(R1);
+  M.add_random_modifiable(r);
 
   // Return a reference to the new modifiable.
-  return {index_var(0),{R1}};
+  return {index_var(0),{r}};
 }
 
 extern "C" closure builtin_function_is_changeable(OperationArgs& Args)
