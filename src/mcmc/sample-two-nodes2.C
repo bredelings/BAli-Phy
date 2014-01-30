@@ -186,7 +186,7 @@ int sample_two_nodes_multi2(vector<Parameters>& p,const vector< vector<int> >& n
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment())
       {
-	Matrices[i].push_back(sample_two_nodes_base2(p[i][j], P0[j], nodes[i], nodes[0]));
+	Matrices[i].push_back(sample_two_nodes_base2(p[i][j], p[0][j], nodes[i], nodes[0]));
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][4]);
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
