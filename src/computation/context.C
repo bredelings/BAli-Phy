@@ -594,7 +594,7 @@ context& context::operator+=(const vector<string>& module_names)
   return *this;
 }
 
-expression_ref parameter_constructor(const std::string& name, const vector<expression_ref>& notes)
+expression_ref dist_for_parameter(const string& name, const vector<expression_ref>& notes)
 {
   for(const auto& note: notes)
   {
@@ -606,11 +606,19 @@ expression_ref parameter_constructor(const std::string& name, const vector<expre
 
     expression_ref dist = note->sub[1];
 
-
-    return (identifier("structure_for_dist"),dist);
+    return dist;
   }
+  return {};
+}
+
+expression_ref parameter_constructor(const std::string& name, const vector<expression_ref>& notes)
+{
+  expression_ref dist = dist_for_parameter(name, notes);
+  if (dist)
+    return (identifier("structure_for_dist"),dist);
+  else
+    return identifier("new_modifiable");
   // for e.g. the tree, which is a parameter with no distribution!
-  return identifier("new_modifiable");
 }
 
 void context::allocate_identifiers_for_modules(const vector<string>& module_names)
