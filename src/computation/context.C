@@ -728,9 +728,6 @@ context& context::operator+=(const Module& M)
 
   // 4. Create a structure containing modifiables for each parameter
   initialize_parameter_structures_for_modules(new_module_names);
-
-  // 5. Finally, set default parameter values.
-  set_default_values_from_notes(*this,first_note,n_notes());
   
   return *this;
 }
@@ -788,8 +785,6 @@ vector<int> add_submodel(context& C, const vector<expression_ref>& N)
     }
     else
       throw myexception()<<"Submodel declares existing parameter '"<<name<<"'!";
-  
-  set_default_values_from_notes(C, first_note, C.n_notes());
 
   return new_parameters;
 }
@@ -921,24 +916,4 @@ int add_probability_expression(context& C)
   }
   else
     return -1;
-}
-
-void set_default_values_from_notes(context& C, int b, int e)
-{
-  int c = C.get_context_index();
-
-  // Set default values from distributions
-  for(int i=b;i<e;i++)
-  {
-    vector<expression_ref> results;
-    expression_ref query = constructor(":~",2) + match(0) + match(1);
-
-    if (find_match(query, C.get_note(i), results))
-    {
-      expression_ref parameter = results[0];
-      expression_ref value = (identifier("distDefaultValue"),results[1]);
-      value = (identifier("evaluate"), c, value);
-      C.perform_expression( (identifier("set_parameter_value_"), c, parameter, value) );
-    }
-  }
 }

@@ -151,10 +151,6 @@ vector<int> Model::add_submodel(const Model_Notes& N)
   for(int i=old_n_parameters;i<n_parameters();i++)
     new_parameters.push_back( i );
   
-  // 5. Set default values.
-  //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
-  set_default_values_from_notes(*this, first_note, n_notes());
-  
   return new_parameters;
 }
 
@@ -373,9 +369,6 @@ Model::Model(const module_loader& L, const vector<expression_ref>& notes)
   // 2. Add the notes refering to the parameters.
   for(int i=0;i<notes.size();i++)
     add_note(notes[i]);
-
-  // 3. Then set all default values.
-  set_default_values_from_notes(*this, 0, n_notes());
 
   // 5. Create the prior
   prior_index = add_probability_expression(*this);
