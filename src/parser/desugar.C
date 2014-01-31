@@ -860,6 +860,8 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       set<string> bound2 = bound;
       for(const auto& decl: decls)
       {
+	if (is_AST(decl,"EmptyDecl")) continue;
+
 	bound2.insert(decl->sub[0].assert_is_a<dummy>()->name);
 	w.push_back(decl->sub[0]);
 	w.push_back(decl->sub[1]);
