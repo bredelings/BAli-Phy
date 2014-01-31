@@ -253,4 +253,5 @@ int add_probability_expression(context& C);
 
 void set_default_values_from_notes(context& C, int, int);
 
+expression_ref dist_for_parameter(const std::string& name, const std::vector<expression_ref>& notes);
 #endif

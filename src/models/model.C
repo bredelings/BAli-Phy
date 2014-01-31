@@ -136,7 +136,8 @@ vector<int> Model::add_submodel(const Model_Notes& N)
   for(const auto& name: declared_parameter_names)
     if (find_parameter(name) == -1)
     {
-      int index = add_parameter(name);
+      expression_ref dist = dist_for_parameter(name, N.get_notes());
+      int index = add_parameter_with_dist(name, dist);
       new_parameters.push_back(index);
     }
     else
