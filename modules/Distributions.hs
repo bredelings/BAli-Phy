@@ -23,7 +23,7 @@ sample' (IOReturn v) = IOReturn v;
 sample' (IOAndPass f g) = IOAndPass (sample' f) (\x -> sample' $ g x);
 sample' (IOAnd f g) = IOAnd (sample' f) (sample' g);
 sample' (ProbDensity p q (Random a) r) = do { -- v <- a;
-                                              m <- new_random_modifiable r;
+                                              m <- new_random_modifiable r ();
                                               -- register (p m)
                                               return m };
 sample' (ProbDensity p q s r) = sample' s;
