@@ -174,6 +174,12 @@ public:
   /// Create a new parameter named s
   int add_parameter(const std::string& s);
 
+  /// Create a new parameter named s
+  int add_parameter(const std::string& s, const expression_ref& initializer);
+
+  /// Create a new parameter named s
+  int add_parameter_with_dist(const std::string& s, const expression_ref& dist);
+
   /// Reserve an identifier with name s
   int add_identifier(const std::string& s) const;
 

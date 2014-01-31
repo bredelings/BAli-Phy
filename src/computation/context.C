@@ -330,6 +330,20 @@ void context::add_parameter_(const string& name)
 
 int context::add_parameter(const string& full_name)
 {
+  expression_ref initializer = (identifier("unsafePerformIO"),identifier("new_modifiable"));
+  return add_parameter(full_name, initializer);
+}
+
+int context::add_parameter_with_dist(const string& full_name,const expression_ref& dist)
+{
+  expression_ref E = (identifier("structure_for_dist"), dist);
+  E = (identifier("unsafePerformIO"), E);
+  E = (identifier("evaluate"),-1,E);
+  return add_parameter(full_name, E);
+}
+
+int context::add_parameter(const string& full_name, const expression_ref& initializer)
+{
   if (not is_haskell_var_name(full_name))
     throw myexception()<<"Parameter name '"<<full_name<<"' is not a Haskell variable name";
 
@@ -371,7 +385,7 @@ int context::add_parameter(const string& full_name)
 
   int R = parameters().back().second;
 
-  set_C(R, preprocess( (identifier("unsafePerformIO"),identifier("new_modifiable") ) ) );
+  set_C(R, preprocess( initializer) );
 
   return index;
 }
