@@ -1158,13 +1158,17 @@ Parameters::Parameters(const module_loader& L,
 
   add_parameter("Heat.beta", Double(1.0), lower_bound(0));
 
+  Model_Notes Main;
   for(int i=0;i<n_scales;i++)
   {
     string mu_name = "Main.mu"+convertToString(i+1);
-    add_parameter(mu_name, Double(0.25), lower_bound(0));
-    // prior on mu[i], the mean branch length for scale i
-    add_note( constructor(":~",2)+parameter(mu_name)+(identifier("gamma"), 0.5, 2.0));
+    def_parameter(Main, mu_name, Double(0.25), lower_bound(0), (identifier("gamma"), 0.5, 2.0));
+  }
+  add_submodel(Main);
 
+  for(int i=0;i<n_scales;i++)
+  {
+    string mu_name = "Main.mu"+convertToString(i+1);
     int trigger = add_compute_expression( (identifier("trigger_on"),parameter(mu_name),i) );
     set_re_evaluate(trigger, true);
   }
