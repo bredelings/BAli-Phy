@@ -670,6 +670,7 @@ void context::initialize_parameter_structures_for_modules(const vector<string>& 
       {
 	int R = get_parameter_reg( find_parameter(S.name) );
 	expression_ref E = (identifier("unsafePerformIO"), parameter_constructor(S.name,get_notes()) );
+	E = (identifier("evaluate"),-1,E);
 	set_C(R, preprocess( E ) );
       }
     }
