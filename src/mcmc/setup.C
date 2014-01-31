@@ -1076,7 +1076,6 @@ void do_sampling(const variables_map& args,
     report_constraints(s1,s2,i);
   } 
 
-  sampler.check_moves(P);
   if (PP.load_value("AIS",0.0) > 0.5) 
   {
     // before we do this, just run 20 iterations of a sampler that keeps the alignment fixed

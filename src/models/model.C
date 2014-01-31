@@ -55,7 +55,6 @@ void Model::add_parameter_(const string& name)
 
   context::add_parameter_(name);
   bounds.push_back(-1);
-  prior_note_index.push_back(-1);
 
   assert(bounds.size() == n_parameters());
 }
@@ -203,12 +202,6 @@ void Model::process_note(int index)
 	int p_index = find_parameter(name);
 	if (p_index == -1)
 	  throw myexception()<<"Trying to add prior to parameter '"<<name<<"' which doesn't exist!";
-	
-	if (prior_note_index[p_index] != -1)
-	  throw myexception()<<"Variable '"<<name<<"': new prior '"<<show_probability_expression(note)
-			     <<"' on top of original prior '"<<show_probability_expression(get_note(prior_note_index[p_index]))<<"'?";
-	else
-	  prior_note_index[p_index] = index;
       }
     }
     else if (not params.empty())
@@ -231,11 +224,6 @@ void Model::process_note(int index)
 	set_bounds(p_index,(identifier("Distributions.distRange"),D));
     }
   }
-}
-
-bool Model::is_random_variable(int i) const
-{
-  return prior_note_index[i] != -1;
 }
 
 bool Model::has_bounds(int i) const 

@@ -62,7 +62,6 @@ class Model: public context
 protected:
 
   std::vector< int > bounds;
-  std::vector< int> prior_note_index;
 
   int prior_index;
 
@@ -85,9 +84,6 @@ public:
   virtual efloat_t prior() const;
 
   int get_h_prior_index() const;
-
-  /// Names of the parameters
-  bool is_random_variable(int i) const;
 
   bool has_bounds(int i) const;
   const Bounds<double>& get_bounds(int i) const;
