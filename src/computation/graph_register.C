@@ -1227,6 +1227,7 @@ void reg_heap::get_roots(vector<int>& scan) const
 {
   insert_at_end(scan, temp);
   insert_at_end(scan, heads);
+  insert_at_end(scan, probability_heads);
   insert_at_end(scan, random_modifiables_);
   for(int j=0;j<parameters.size();j++)
     scan.push_back(parameters[j].second);

@@ -124,3 +124,31 @@ extern "C" closure builtin_function_get_modifiable_value(OperationArgs& Args)
 
   return {index_var(0),{R2}};
 }
+
+extern "C" closure builtin_function_add_parameter(OperationArgs& Args)
+{
+  assert(not Args.evaluate_changeables());
+
+  const std::string& name = *Args.evaluate_as<String>(0);
+
+  int R = Args.evaluate_slot_to_reg(1);
+
+  auto& M = Args.memory();
+
+  M.parameters.push_back({name,R});
+
+  return constructor("()",0);
+}
+
+extern "C" closure builtin_function_register_probability(OperationArgs& Args)
+{
+  assert(not Args.evaluate_changeables());
+
+  int R = Args.evaluate_slot_to_reg(0);
+
+  auto& M = Args.memory();
+
+  M.probability_heads.push_back(R);
+
+  return constructor("()",0);
+}

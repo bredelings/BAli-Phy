@@ -166,6 +166,8 @@ public:
   // the list of expressions that we are interested in evaluating.
   std::vector<int> heads;
 
+  std::vector<int> probability_heads;
+
   // where is the location of the probability expression
   int probability_index = -1;
 
