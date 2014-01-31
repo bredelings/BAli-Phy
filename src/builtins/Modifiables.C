@@ -144,7 +144,7 @@ extern "C" closure builtin_function_register_probability(OperationArgs& Args)
 {
   assert(not Args.evaluate_changeables());
 
-  int R = Args.evaluate_slot_to_reg(0);
+  int R = Args.reg_for_slot(0);
 
   auto& M = Args.memory();
 

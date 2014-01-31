@@ -24,7 +24,7 @@ sample' (IOAndPass f g) = IOAndPass (sample' f) (\x -> sample' $ g x);
 sample' (IOAnd f g) = IOAnd (sample' f) (sample' g);
 sample' (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;};
                                               m <- new_random_modifiable r v;
-                                              -- register (p m)
+                                              register_probability (p m);
                                               return m };
 sample' (ProbDensity p q s r) = sample' s;
 
