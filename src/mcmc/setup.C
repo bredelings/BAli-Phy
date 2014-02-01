@@ -189,28 +189,15 @@ void add_slice_moves(Probability_Model& P, const string& name,
 
 void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
 {
-  
-  for(int i=0;i<P.n_notes();i++)
-    if (is_exactly(P.get_note(i),":~"))
-    {
-      expression_ref rand_var = P.get_note(i)->sub[0];
-      expression_ref dist = P.get_note(i)->sub[1];
-
-      object_ref v = P.evaluate_expression( (identifier("findBinary"),rand_var,(identifier("distRange"),dist)), false);
-      object_ptr<const OVector> V = convert<const OVector>(v);
-
-      MCMC::MoveAll rand_var_move(rand_var->print());
-
-      for(const auto& x: *V)
-      {
-	int m_index = *convert<const Int>(x);
-	string name = rand_var->print()+"_"+convertToString<int>(m_index);
-	add_modifiable_MH_move(name, bit_flip, m_index, vector<double>{}, rand_var_move, weight);
-      }
-
-      if (rand_var_move.nmoves())
-	M.add(1.0, rand_var_move);
-    }
+  for(int r: P.random_modifiables())
+  {
+    auto range = P.get_range_for_reg(r);
+    auto con = dynamic_pointer_cast<const constructor>(range);
+    if (not con) continue;
+    if (con->f_name != "TrueFalseRange") continue;
+    string name = "m_bool_flip_"+convertToString<int>(r);
+    add_modifiable_MH_move(name, bit_flip, r, vector<double>{}, M, weight);
+  }
 }
 
 /// Find parameters with distribution name Dist
@@ -221,7 +208,7 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
     auto range = P.get_range_for_reg(r);
     auto bounds = dynamic_pointer_cast<const Bounds<double>>(range);
     if (not bounds) continue;
-    string name = "m_"+convertToString<int>(r);
+    string name = "m_real_"+convertToString<int>(r);
     M.add( 1.0, MCMC::Modifiable_Slice_Move(name, r, *bounds, 1.0) );
   }
 }
@@ -234,7 +221,7 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
     auto range = P.get_range_for_reg(r);
     auto bounds = dynamic_pointer_cast<const Bounds<double>>(range);
     if (not bounds) continue;
-    string name = "m_cauchy_"+convertToString<int>(r);
+    string name = "m_real_cauchy_"+convertToString<int>(r);
     if (bounds->has_lower_bound and bounds->lower_bound >= 0.0)
       add_modifiable_MH_move(name, Reflect(*bounds, log_scaled(Between(-20,20,shift_cauchy))), r, {1.0}, M, 0.01);
     else
@@ -243,138 +230,31 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 }
 
 /// Find parameters with distribution name Dist
-void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
-{
-  return;
-  for(int i=0;i<P.n_notes();i++)
-    if (is_exactly(P.get_note(i),":~"))
-    {
-      expression_ref rand_var = P.get_note(i)->sub[0];
-      expression_ref dist = P.get_note(i)->sub[1];
-
-      object_ref v = P.evaluate_expression( (identifier("findSimplex"),rand_var,(identifier("distRange"),dist)), false);
-
-      object_ptr<const OVector> V = convert<const OVector>(v);
-
-      for(const auto& x: *V)
-      {
-	object_ptr<const OPair> p = convert<const OPair>(x);
-	string name = rand_var->print();
-
-	object_ptr<const OVector> ms = convert<const OVector>(p->first);
-	object_ptr<const OPair> r = convert<const OPair>(p->second);
-
-	vector<int> indices;
-	for(const auto& y: *ms)
-	{
-	  int index = *convert<const Int>(y);
-	  indices.push_back(index);
-	  name += "_" + convertToString(index);
-	}
-
-	MCMC::MoveOne M2(name);
-
-	for(int i=0;i<indices.size();i++)
-	  M2.add( 1.0, MCMC::Dirichlet_Modifiable_Slice_Move(convertToString(i), indices, i) );
-
-	M.add(1.0, M2);
-      }
-    }
-}
-
-/// Find parameters with distribution name Dist
 void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  for(int i=0;i<P.n_notes();i++)
-    if (is_exactly(P.get_note(i),":~"))
-    {
-      expression_ref rand_var = P.get_note(i)->sub[0];
-      expression_ref dist = P.get_note(i)->sub[1];
-
-      object_ref v = P.evaluate_expression( (identifier("findBoundedInteger"),rand_var,(identifier("distRange"),dist)), false);
-
-      object_ptr<const OVector> V = convert<const OVector>(v);
-
-      MCMC::MoveAll rand_var_move(rand_var->print());
-
-      for(const auto& x: *V)
-      {
-	OPair p = *convert<const OPair>(x);
-	int m_index = *convert<const Int>(p.first);
-	OPair bounds = *convert<const OPair>(p.second);
-	int l = *convert<const Int>(bounds.first);
-	int u = *convert<const Int>(bounds.second);
-
-	string name = rand_var->print()+"_uniform_"+convertToString<int>(m_index);
-	add_modifiable_MH_move(name, discrete_uniform, m_index, {double(l),double(u)}, rand_var_move, 0.1);
-      }
-
-      if (rand_var_move.nmoves())
-	M.add(1.0, rand_var_move);
-    }
+  for(int r: P.random_modifiables())
+  {
+    auto range = P.get_range_for_reg(r);
+    auto bounds = dynamic_pointer_cast<const Bounds<int>>(range);
+    if (not bounds) continue;
+    if (not bounds->has_lower_bound or not bounds->has_upper_bound) continue;
+    string name = "m_int_uniform_"+convertToString<int>(r);
+    double l = (int)bounds->lower_bound;
+    double u = (int)bounds->upper_bound;
+    add_modifiable_MH_move(name, discrete_uniform, r, {double(l),double(u)}, M, 0.1);
+  }
 }
 
 void add_integer_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  for(int i=0;i<P.n_notes();i++)
-    if (is_exactly(P.get_note(i),":~"))
-    {
-      expression_ref rand_var = P.get_note(i)->sub[0];
-      expression_ref dist = P.get_note(i)->sub[1];
-
-      object_ref v = P.evaluate_expression( (identifier("findInteger"),rand_var,(identifier("distRange"),dist)), false);
-
-      object_ptr<const OVector> V = convert<const OVector>(v);
-
-      MCMC::MoveAll rand_var_move(rand_var->print());
-
-      for(const auto& x: *V)
-      {
-	OPair p = *convert<const OPair>(x);
-	int m_index = *convert<const Int>(p.first);
-	Bounds<int> bounds = *convert<const Bounds<int>>(p.second);
-	string name = rand_var->print()+"_slice_"+convertToString<int>(m_index);
-	rand_var_move.add( 1.0, MCMC::Integer_Modifiable_Slice_Move(name, m_index, bounds, 1.0) );
-      }
-
-      if (rand_var_move.nmoves())
-	M.add(1.0, rand_var_move);
-    }
-}
-
-/// Find parameters with distribution name Dist
-void add_dirichlet_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
-{
-  return;
-  for(int i=0;i<P.n_notes();i++)
-    if (is_exactly(P.get_note(i),":~"))
-    {
-      expression_ref rand_var = P.get_note(i)->sub[0];
-      expression_ref dist = P.get_note(i)->sub[1];
-
-      object_ref v = P.evaluate_expression( (identifier("findSimplex"),rand_var,(identifier("distRange"),dist)), false);
-
-      object_ptr<const OVector> V = convert<const OVector>(v);
-
-      for(const auto& x: *V)
-      {
-	object_ptr<const OPair> p = convert<const OPair>(x);
-	string name = rand_var->print();
-
-	object_ptr<const OVector> ms = convert<const OVector>(p->first);
-	object_ptr<const OPair> r = convert<const OPair>(p->second);
-
-	vector<int> indices;
-	for(const auto& y: *ms)
-	{
-	  int index = *convert<const Int>(y);
-	  indices.push_back(index);
-	  name += "_" + convertToString(index);
-	}
-
-	M.add( 1.0, MCMC::MH_Move( Proposal2M(dirichlet_proposal, indices, {100.0}), name) );
-      }
-    }
+  for(int r: P.random_modifiables())
+  {
+    auto range = P.get_range_for_reg(r);
+    auto bounds = dynamic_pointer_cast<const Bounds<int>>(range);
+    if (not bounds) continue;
+    string name = "m_int_"+convertToString<int>(r);
+    M.add( 1.0, MCMC::Integer_Modifiable_Slice_Move(name, r, *bounds, 1.0) );
+  }
 }
 
 MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
@@ -398,8 +278,6 @@ MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
 MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
 {
   MCMC::MoveAll MH_moves("parameters:MH");
-
-  add_dirichlet_MH_moves(P, MH_moves);
 
   for(int i=0;i<P.n_branch_means();i++)
     add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
@@ -466,7 +344,6 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   // Add slice moves for continuous 1D distributions
   add_real_slice_moves(P, slice_moves);
   add_integer_slice_moves(P, slice_moves);
-  add_dirichlet_slice_moves(P, slice_moves);
 
   // imodel parameters
   add_slice_moves(P, "*.delta", slice_moves, 10);
