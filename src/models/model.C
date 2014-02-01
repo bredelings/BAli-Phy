@@ -228,17 +228,23 @@ void Model::process_note(int index)
 
 bool Model::has_bounds(int i) const 
 {
-  if (bounds[i] == -1) return false;
+  object_ref o = get_parameter_range(i);
 
-  return (bool)dynamic_pointer_cast<const Bounds<double>>(evaluate(bounds[i]));
+  object_ptr<const Bounds<double>> b = dynamic_pointer_cast<const Bounds<double>>(o);
+
+  return (bool)b;
 }
 
 const Bounds<double>& Model::get_bounds(int i) const 
 {
-  if (bounds[i] == -1)
-    throw myexception()<<"parameter '"<<parameter_name(i)<<"' doesn't have bounds.";
+  object_ref o = get_parameter_range(i);
 
-  return *evaluate_as<Bounds<double>>(bounds[i]);
+  object_ptr<const Bounds<double>> b = dynamic_pointer_cast<const Bounds<double>>(o);
+
+  if (not b)
+    throw myexception()<<"parameter '"<<parameter_name(i)<<"' doesn't have Bounds<double>.";
+
+  return *b;
 }
 
 void Model::set_bounds(int i,const expression_ref& b) 
