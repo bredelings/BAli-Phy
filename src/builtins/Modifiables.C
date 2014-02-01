@@ -31,13 +31,15 @@ extern "C" closure builtin_function_new_random_modifiable(OperationArgs& Args)
 
   reg_heap& M = Args.memory();
 
-  int D = Args.reg_for_slot(0);
+  int R1 = Args.reg_for_slot(0);
 
-  int V = Args.reg_for_slot(1);
+  int R2 = Args.reg_for_slot(1);
+
+  int V = Args.reg_for_slot(2);
 
   // Allocate a reg, and fill it with a modifiable of the correct index
-  expression_ref E(new expression(modifiable(),{index_var(0)}));
-  closure C{E,{D}};
+  expression_ref E(new expression(modifiable(),{index_var(1),index_var(0)}));
+  closure C{E,{R2,R1}};
   int r = Args.allocate(std::move(C));
   M.make_reg_changeable(r);
   M.set_shared_value(r,V);
