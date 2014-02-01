@@ -57,36 +57,6 @@ set_parameter_value_ token p v = if (is_modifiable p)
 
 get_modifiable_result token m = evaluate token (get_modifiable_value token m);
 
-subscript name n = name++['!']++show n;
-
-subscripts name xs = map (subscript name) xs;
-
-find_loggables' ([],name) = [];
-find_loggables' (p:ps,names) = concat $ map find_loggables (zip (p:ps) (subscripts names [0..]));
-
-find_loggables (p,name) = if (is_modifiable p)
-                                then [(p,name)]
-                                else find_loggables' (p,name);
-  
-find_loggables_c p name = list_to_vector [c_pair (get_modifiable_index m, listToString name) | (m,name) <-find_loggables (p,name)  ];
-
-findAtomic ps (ListRange rs) = concat $ zipWith findAtomic ps rs;
-findAtomic p r = [(p,r)];
-
-findBinary p r = list_to_vector [get_modifiable_index m | (m,TrueFalseRange) <- findAtomic p r];
-
-findReal p r = list_to_vector [c_pair (get_modifiable_index m, getBounds (OpenInterval x y)) 
-                              | (m,OpenInterval x y) <- findAtomic p r];
-
-findBoundedInteger p r = list_to_vector [c_pair (get_modifiable_index m, c_pair (x,y))
-                                          | (m,IntegerInterval (Just x) (Just y)) <- findAtomic p r];
-
-findInteger p r = list_to_vector [c_pair (get_modifiable_index m, getIntegerBounds (IntegerInterval x y)) 
-                                   | (m, IntegerInterval x y) <- findAtomic p r];
-
-findSimplex p r = list_to_vector [c_pair (list_to_vector $ map get_modifiable_index ms, c_pair (n,total)) 
-                                 | (ms,Simplex n total) <- findAtomic p r];
-  
 trigger i = IOAction1 builtin_trigger i;
 
 trigger_on x i = unsafePerformIO $ do {return x;trigger i};
