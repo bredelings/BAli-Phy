@@ -229,33 +229,17 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 /// Find parameters with distribution name Dist
 void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  for(int i=0;i<P.n_notes();i++)
-    if (is_exactly(P.get_note(i),":~"))
-    {
-      expression_ref rand_var = P.get_note(i)->sub[0];
-      expression_ref dist = P.get_note(i)->sub[1];
-
-      object_ref v = P.evaluate_expression( (identifier("findReal"),rand_var,(identifier("distRange"),dist)), false);
-
-      object_ptr<const OVector> V = convert<const OVector>(v);
-
-      MCMC::MoveAll rand_var_move(rand_var->print());
-
-      for(const auto& x: *V)
-      {
-	object_ptr<const OPair> p = convert<const OPair>(x);
-	int m_index = *convert<const Int>(p->first);
-	Bounds<double> bounds = *convert<const Bounds<double>>(p->second);
-	string name = rand_var->print()+"_cauchy_"+convertToString<int>(m_index);
-	if (bounds.has_lower_bound and bounds.lower_bound >= 0.0)
-	  add_modifiable_MH_move(name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), m_index, {1.0}, rand_var_move, 0.01);
-	else
-	  add_modifiable_MH_move(name, Reflect(bounds, shift_cauchy), m_index, {1.0}, rand_var_move, 0.1);
-      }
-
-      if (rand_var_move.nmoves())
-	M.add(1.0, rand_var_move);
-    }
+  for(int r: P.random_modifiables())
+  {
+    auto range = P.get_range_for_reg(r);
+    auto bounds = dynamic_pointer_cast<const Bounds<double>>(range);
+    if (not bounds) continue;
+    string name = "m_cauchy_"+convertToString<int>(r);
+    if (bounds->has_lower_bound and bounds->lower_bound >= 0.0)
+      add_modifiable_MH_move(name, Reflect(*bounds, log_scaled(Between(-20,20,shift_cauchy))), r, {1.0}, M, 0.01);
+    else
+      add_modifiable_MH_move(name, Reflect(*bounds, shift_cauchy), r, {1.0}, M, 0.1);
+  }
 }
 
 /// Find parameters with distribution name Dist
