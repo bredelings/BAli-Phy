@@ -49,11 +49,6 @@ vector<expression_ref> model_parameter_expressions(const Model& M)
   return sub;
 }
 
-void Model::add_parameter_(const string& name)
-{
-  context::add_parameter_(name);
-}
-
 int Model::add_parameter(const string& name)
 {
   // Declaring this forwarding function avoids hiding it when we declare it w/ extra arguments below.
@@ -68,11 +63,6 @@ int Model::add_parameter(const string& name, const object_ref& o)
     context::set_parameter_value(index, o);
 
   return index;
-}
-
-int Model::add_parameter(const string& name, const object_ref& o, const Bounds<double>& b)
-{
-  return add_parameter(name,o);
 }
 
 std::vector< object_ptr<const Object> > Model::get_parameter_values() const

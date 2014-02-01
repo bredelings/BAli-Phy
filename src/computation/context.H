@@ -172,7 +172,7 @@ public:
 
 protected:
   /// Create a new parameter named s
-  virtual void add_parameter_(const std::string& s);
+  void add_parameter_(const std::string& s);
 
 public:
   /// Create a new parameter named s
