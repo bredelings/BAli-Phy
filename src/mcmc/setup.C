@@ -216,30 +216,14 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
 /// Find parameters with distribution name Dist
 void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
-  for(int i=0;i<P.n_notes();i++)
-    if (is_exactly(P.get_note(i),":~"))
-    {
-      expression_ref rand_var = P.get_note(i)->sub[0];
-      expression_ref dist = P.get_note(i)->sub[1];
-
-      object_ref v = P.evaluate_expression( (identifier("findReal"),rand_var,(identifier("distRange"),dist)), false);
-
-      object_ptr<const OVector> V = convert<const OVector>(v);
-
-      MCMC::MoveAll rand_var_move(rand_var->print());
-
-      for(const auto& x: *V)
-      {
-	object_ptr<const OPair> p = convert<const OPair>(x);
-	int m_index = *convert<const Int>(p->first);
-	Bounds<double> bounds = *convert<const Bounds<double>>(p->second);
-	string name = rand_var->print()+"_"+convertToString<int>(m_index);
-	rand_var_move.add( 1.0, MCMC::Modifiable_Slice_Move(name, m_index, bounds, 1.0) );
-      }
-
-      if (rand_var_move.nmoves())
-	M.add(1.0, rand_var_move);
-    }
+  for(int r: P.random_modifiables())
+  {
+    auto range = P.get_range_for_reg(r);
+    auto bounds = dynamic_pointer_cast<const Bounds<double>>(range);
+    if (not bounds) continue;
+    string name = "m_"+convertToString<int>(r);
+    M.add( 1.0, MCMC::Modifiable_Slice_Move(name, r, *bounds, 1.0) );
+  }
 }
 
 /// Find parameters with distribution name Dist
