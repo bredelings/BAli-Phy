@@ -338,6 +338,47 @@ int reg_heap::add_random_modifiable(int index)
   return i;
 }
 
+bool reg_heap::parameter_is_modifiable(int index)
+{
+  int R = parameters[index].second;
+
+  int R2 = incremental_evaluate(R,0);
+
+  return is_modifiable(access(R2).C.exp);
+}
+
+int reg_heap::find_parameter_modifiable_reg(int index)
+{
+  int R = parameters[index].second;
+
+  int R2 = incremental_evaluate(R,0);
+
+  if (R != R2)
+    parameters[index].second = R2;
+
+#ifndef NDEBUG
+  if (not is_modifiable(access(R2).C.exp))
+    throw myexception()<<"Parameter is not a modifiable!  Instead its value is '"<<access(R2).C.exp<<"'";
+#endif
+
+  assert(R2>0);
+  return R2;
+}
+
+object_ref reg_heap::get_parameter_range(int c, int p)
+{
+  return get_range_for_reg(c, find_parameter_modifiable_reg(p));
+}
+
+object_ref reg_heap::get_range_for_reg(int c, int r)
+{
+  if (access(r).C.Env.size() < 2)
+    return {};
+
+  int r2 = access(r).C.lookup_in_env(1);
+  return get_reg_value_in_context(r2,c);
+}
+
 const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t));return tokens[t].triggers;}
       std::vector<int>& reg_heap::triggers(int t)       {assert(is_root_token(t));return tokens[t].triggers;}
 
@@ -2084,10 +2125,10 @@ object_ref reg_heap::get_reg_value_in_context(int R, int c)
   if (not reg_has_result(t,R))
   {
     // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-    if (not reg_has_call(t,R)) return object_ref();
+    if (is_modifiable(access(R).C.exp) and not reg_has_call(t,R)) return object_ref();
 
     // If the value needs to be computed (e.g. its a call expression) then compute it.
-    incremental_evaluate_in_context(R,c);
+    R = incremental_evaluate_in_context(R,c);
   }
 
   return access_result_for_reg(t,R).exp->head;

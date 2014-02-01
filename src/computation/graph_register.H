@@ -184,6 +184,15 @@ public:
   /// Probably this would be non-parameter identifiers
   std::map<std::string, int> identifiers;
 
+  /*----- Modifiable ranges ----*/
+  bool parameter_is_modifiable(int index);
+
+  int find_parameter_modifiable_reg(int i);
+
+  object_ref get_parameter_range(int c, int r);
+
+  object_ref get_range_for_reg(int c, int r);
+
   /*----- Token manager ------*/
 
   struct Token

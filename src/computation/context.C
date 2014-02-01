@@ -204,11 +204,7 @@ object_ref context::perform_expression(const expression_ref& E,bool ec) const
 
 bool context::parameter_is_modifiable(int index) const
 {
-  int R = get_parameter_reg(index);
-
-  int R2 = incremental_evaluate_unchangeable(R);
-
-  return is_modifiable(access(R2).C.exp);
+  return memory()->parameter_is_modifiable(index);
 }
 
 
@@ -388,6 +384,16 @@ int context::add_parameter(const string& full_name, const expression_ref& initia
   set_C(R, preprocess( initializer) );
 
   return index;
+}
+
+object_ref context::get_range_for_reg(int r) const
+{
+  return memory()->get_range_for_reg(context_index, r);
+}
+
+object_ref context::get_parameter_range(int p) const
+{
+  return memory()->get_parameter_range(context_index, p);
 }
 
 /// Add an expression that may be replaced by its reduced form
@@ -844,19 +850,7 @@ int context::get_parameter_reg(int index) const
 
 int context::find_parameter_modifiable_reg(int index) const
 {
-  int R = get_parameter_reg(index);
-
-  int R2 = incremental_evaluate_unchangeable(R);
-
-  if (R != R2)
-    parameters()[index].second = R2;
-
-#ifndef NDEBUG
-  if (not is_modifiable(access(R2).C.exp))
-    throw myexception()<<"Parameter is not a modifiable!  Instead its value is '"<<access(R2).C.exp<<"'";
-#endif
-
- return R2;
+  return memory()->find_parameter_modifiable_reg(index);
 }
 
 int context::get_modifiable_reg(int r) const

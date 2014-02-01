@@ -166,6 +166,10 @@ public:
   /// Lookup the index for the named parameter s
   int find_parameter(const std::string& s) const;
 
+  object_ref get_range_for_reg(int r) const;
+
+  object_ref get_parameter_range(int p) const;
+
 protected:
   /// Create a new parameter named s
   virtual void add_parameter_(const std::string& s);
