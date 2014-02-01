@@ -386,6 +386,11 @@ int context::add_parameter(const string& full_name, const expression_ref& initia
   return index;
 }
 
+const vector<int>& context::random_modifiables() const
+{
+  return memory()->random_modifiables();
+}
+
 object_ref context::get_range_for_reg(int r) const
 {
   return memory()->get_range_for_reg(context_index, r);

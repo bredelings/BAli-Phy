@@ -166,6 +166,8 @@ public:
   /// Lookup the index for the named parameter s
   int find_parameter(const std::string& s) const;
 
+  const std::vector<int>& random_modifiables() const;
+
   object_ref get_range_for_reg(int r) const;
 
   object_ref get_parameter_range(int p) const;
