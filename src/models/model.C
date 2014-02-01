@@ -51,24 +51,13 @@ vector<expression_ref> model_parameter_expressions(const Model& M)
 
 void Model::add_parameter_(const string& name)
 {
-  assert(bounds.size() == n_parameters());
-
   context::add_parameter_(name);
-  bounds.push_back(-1);
-
-  assert(bounds.size() == n_parameters());
 }
 
 int Model::add_parameter(const string& name)
 {
-  assert(bounds.size() == n_parameters());
-
   // Declaring this forwarding function avoids hiding it when we declare it w/ extra arguments below.
-  int index = context::add_parameter(name);
-
-  assert(bounds.size() == n_parameters());
-
-  return index;
+  return  context::add_parameter(name);
 }
 
 int Model::add_parameter(const string& name, const object_ref& o)
@@ -83,11 +72,7 @@ int Model::add_parameter(const string& name, const object_ref& o)
 
 int Model::add_parameter(const string& name, const object_ref& o, const Bounds<double>& b)
 {
-  int index = add_parameter(name,o);
-
-  set_bounds(index, b);
-
-  return index;
+  return add_parameter(name,o);
 }
 
 std::vector< object_ptr<const Object> > Model::get_parameter_values() const
@@ -102,8 +87,6 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values() const
 
 vector<int> Model::add_submodel(const Module& M)
 {
-  assert(bounds.size() == n_parameters());
-
   int old_n_parameters = n_parameters();
 
   // 1. Load the module, perform imports, and resolve its symbols.
@@ -118,8 +101,6 @@ vector<int> Model::add_submodel(const Module& M)
   vector<int> new_parameters;
   for(int i=old_n_parameters;i<n_parameters();i++)
     new_parameters.push_back( i );
-
-  assert(bounds.size() == n_parameters());
 
   return new_parameters;
 }
@@ -165,11 +146,7 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values(const std::v
 
 int Model::add_note(const expression_ref& E)
 {
-  assert(bounds.size() == n_parameters());
-
   int index = context::add_note(E);
-
-  assert(bounds.size() == n_parameters());
 
   process_note(index);
 
@@ -216,13 +193,6 @@ void Model::process_note(int index)
       expression_ref Pr = get_expression(prior_index);
       set_compute_expression(prior_index, (identifier("*"),Pr_new,Pr));
     }
-
-    if (auto p = x.is_a<parameter>())
-    {
-      int p_index = find_parameter(p->parameter_name);
-      if (p_index != -1 and bounds[p_index] == -1)
-	set_bounds(p_index,(identifier("Distributions.distRange"),D));
-    }
   }
 }
 
@@ -245,29 +215,6 @@ const Bounds<double>& Model::get_bounds(int i) const
     throw myexception()<<"parameter '"<<parameter_name(i)<<"' doesn't have Bounds<double>.";
 
   return *b;
-}
-
-void Model::set_bounds(int i,const expression_ref& b) 
-{
-  if (auto B = b.is_a<Bounds<double>>())
-  {
-    set_bounds(i,*B);
-    return;
-  }
-
-  expression_ref E = (identifier("Range.getBounds"),b);
-  if (bounds[i] == -1)
-    bounds[i] = add_compute_expression(E);
-  else
-    set_compute_expression(bounds[i],E);
-}
-
-void Model::set_bounds(int i,const Bounds<double>& b) 
-{
-  if (bounds[i] == -1)
-    bounds[i] = add_compute_expression(b);
-  else
-    set_compute_expression(bounds[i],b);
 }
 
 std::vector< object_ref > Model::get_modifiable_values(const std::vector<int>& indices) const

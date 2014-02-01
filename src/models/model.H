@@ -61,8 +61,6 @@ class Model: public context
 {
 protected:
 
-  std::vector< int > bounds;
-
   int prior_index;
 
   void add_parameter_(const std::string&);
@@ -87,8 +85,6 @@ public:
 
   bool has_bounds(int i) const;
   const Bounds<double>& get_bounds(int i) const;
-  void set_bounds(int i,const expression_ref&);
-  void set_bounds(int i,const Bounds<double>&);
 
   /// Get the value of a modifiable
   template <typename T>
