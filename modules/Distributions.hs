@@ -37,6 +37,7 @@ sample' ps True (Log name x) = add_parameter (prefix_name ps name) x;
 sample' ps False (Log name x) = return ();
 
 prefix_name ps name = foldl (\a b -> b++"."++a) name ps;
+name ~~ dist = do { x <- dist ; Log name x ; return x};
 
 
 -- Define some helper functions
