@@ -33,7 +33,7 @@ new_modifiable_list (h:t) = do { m <- h;
                                  return (m:ms) 
                                };
 
-structure_for_dist = sample';
+structure_for_dist = sample' [] True;
 
 set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v;
 

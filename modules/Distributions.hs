@@ -11,22 +11,32 @@ sampler (ProbDensity _ _ s _) = s;
 distRange (ProbDensity _ _ _ r) = r;
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = Random a;
+data Random a = Random a | NoLog a | Prefix a b | Log a b;
 
 sample (IOReturn v) = IOReturn v;
 sample (IOAndPass f g) = IOAndPass (sample f) (\x -> sample $ g x);
 sample (IOAnd f g) = IOAnd (sample f) (sample g);
 sample (ProbDensity p q (Random a) r) = a;
 sample (ProbDensity p q s r) = sample s;
+sample (NoLog a) = sample a;
+sample (Prefix _ a) = sample a;
+sample (Log _ a) = sample a;
 
-sample' (IOReturn v) = IOReturn v;
-sample' (IOAndPass f g) = IOAndPass (sample' f) (\x -> sample' $ g x);
-sample' (IOAnd f g) = IOAnd (sample' f) (sample' g);
-sample' (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;};
+sample' ps l (IOReturn v) = IOReturn v;
+sample' ps l (IOAndPass f g) = IOAndPass (sample' ps l f) (\x -> sample' ps l $ g x);
+sample' ps l (IOAnd f g) = IOAnd (sample' ps l f) (sample' ps l g);
+sample' ps l (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;};
                                               m <- new_random_modifiable r v;
                                               register_probability (p m);
                                               return m };
-sample' (ProbDensity p q s r) = sample' s;
+sample' ps l (ProbDensity p q s r) = sample' ps l s;
+
+sample' ps l (NoLog a) = sample' ps False a;
+sample' ps l (Prefix p a) = sample' (p:ps) l a;
+sample' ps True (Log name x) = add_parameter (prefix_name ps name) x;
+sample' ps False (Log name x) = return ();
+
+prefix_name ps name = foldl (\a b -> b++"."++a) name ps;
 
 
 -- Define some helper functions
