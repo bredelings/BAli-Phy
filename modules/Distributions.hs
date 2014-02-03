@@ -38,6 +38,7 @@ sample' ps False (Log name x) = return ();
 
 prefix_name ps name = foldl (\a b -> b++"."++a) name ps;
 name ~~ dist = do { x <- dist ; Log name x ; return x};
+name @@ a = Prefix name a;
 
 
 -- Define some helper functions
