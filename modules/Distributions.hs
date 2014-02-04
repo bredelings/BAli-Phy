@@ -37,6 +37,8 @@ sample' ps l (Observe v dist) = register_probability (density dist v);
 sample' ps True (Log name x) = add_parameter (prefix_name ps name) x;
 sample' ps False (Log name x) = return ();
 
+gen_model m = sample' [] True m;
+
 prefix_name ps name = foldl (\a b -> b++"."++a) name ps;
 name ~~ dist = do { x <- dist ; Log name x ; return x};
 name @@ a = Prefix name a;

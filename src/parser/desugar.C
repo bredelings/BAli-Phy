@@ -1020,3 +1020,14 @@ void add_BUGS(Parameters& P, const std::string& filename)
   for(int i=0;i<P.n_notes();i++)
     std::cerr<<"note "<<i<<" = "<<P.get_note(i)->print()<<"\n\n";
 }
+
+void add_model(Parameters& P, const std::string& filename)
+{
+  auto m = read_BUGS(P, filename);
+
+  P.add_submodel(m);
+  P.perform_expression((identifier("gen_model"),identifier(m.name+".main")));
+
+  for(int i=0;i<P.n_notes();i++)
+    std::cerr<<"note "<<i<<" = "<<P.get_note(i)->print()<<"\n\n";
+}

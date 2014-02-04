@@ -1550,7 +1550,7 @@ int main(int argc,char* argv[])
     if (args.count("model"))
     {
       const string filename = args["model"].as<string>();
-      add_BUGS(P,filename);
+      add_model(P,filename);
     }
       
     set_initial_parameter_values(P,args);
