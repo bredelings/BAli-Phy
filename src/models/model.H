@@ -82,10 +82,6 @@ public:
 
   /// Get the value of a modifiable
   template <typename T>
-  bool modifiable_has_type(int index) const {return boost::dynamic_pointer_cast<const T>(get_modifiable_value(index));}
-
-  /// Get the value of a modifiable
-  template <typename T>
   const T& get_modifiable_value_as(int i) const {
     return *convert<const T>(get_modifiable_value(i));
   }
