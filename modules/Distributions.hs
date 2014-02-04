@@ -191,7 +191,7 @@ uniformDiscretize q n = fmap2 q (uniformGrid n);
 -- This contains exp-transformed functions
 expTransform (ProbDensity d q s r) = ProbDensity pdf' q' s' r' 
  where {
-  pdf' = \x -> (d $ log x)/(doubleToLogDouble x);
+  pdf' x = (d $ log x)/(doubleToLogDouble x);
   q'   = exp . q;
   s'   = do {v <- (ProbDensity d q s r); return $ exp v};
   r'   = Range.expTransform r
