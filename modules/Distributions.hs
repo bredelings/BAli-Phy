@@ -193,7 +193,7 @@ expTransform (ProbDensity d q s r) = ProbDensity pdf' q' s' r'
  where {
   pdf' = \x -> (d $ log x)/(doubleToLogDouble x);
   q'   = exp . q;
-  s'   = Random $ sample (do {v <- (ProbDensity d q s r); return $ exp v});
+  s'   = do {v <- (ProbDensity d q s r); return $ exp v};
   r'   = Range.expTransform r
  };
   
