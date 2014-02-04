@@ -211,6 +211,8 @@ public:
 
   efloat_t get_probability() const;
 
+  int add_probability_factor(const expression_ref& E);
+
 protected:  
   void set_C(int R, closure&& c) const;
   int incremental_evaluate(int R) const;

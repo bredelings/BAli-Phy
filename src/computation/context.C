@@ -487,6 +487,12 @@ efloat_t context::get_probability() const
   return memory()->probability_for_context(context_index);
 }
 
+int context::add_probability_factor(const expression_ref& E)
+{
+  return memory()->register_probability(preprocess(E));
+}
+
+
 void context::collect_garbage() const
 {
   memory()->collect_garbage();
