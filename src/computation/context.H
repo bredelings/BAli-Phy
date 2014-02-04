@@ -260,7 +260,7 @@ public:
 
 std::ostream& operator<<(std::ostream&, const context& C);
 
-int add_probability_expression(context& C);
+void add_probability_expression(context& C);
 
 expression_ref dist_for_parameter(const std::string& name, const std::vector<expression_ref>& notes);
 #endif

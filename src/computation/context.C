@@ -887,7 +887,7 @@ std::ostream& operator<<(std::ostream& o, const context& C)
 // Maybe we should always just compute a new probability expression from scratch?
 // Then we would always know that our notes were consistent!
 // TODO: Move to model.{H,C}?
-int add_probability_expression(context& C)
+void add_probability_expression(context& C)
 {
   expression_ref Pr;
 
@@ -896,32 +896,15 @@ int add_probability_expression(context& C)
   for(int i=0;i<C.n_notes();i++)
   {
     // If its a probability expression, then...
-    if (not is_exactly(C.get_note(i), ":~") and not is_exactly(C.get_note(i), ":=~")) continue;
+    if (not is_exactly(C.get_note(i), ":=~")) continue;
 
     // Extract the density operation
     expression_ref x = C.get_note(i)->sub[0];
     expression_ref D = C.get_note(i)->sub[1];
 
-    if (prior_expressions.count(x->print()))
-      throw myexception()<<"Duplicate prior expression for variable '"<<x->print()<<"'";
-    prior_expressions[x->print()] = D->print();
-    
     // Create an expression for calculating the density of these random variables given their inputs
     expression_ref Pr_i = (identifier("Distributions.density"),D,x);
     
-    // Extend the probability expression to include this term also.
-    // (FIXME: a balanced tree could save computation time)
-    if (not Pr)
-      Pr = Pr_i;
-    else
-      Pr = (identifier("*"),Pr_i, Pr);
+    C.add_probability_factor(Pr_i);
   }
-
-  // If this model has random variables... 
-  if (Pr)
-  {
-    return C.add_compute_expression(Pr);
-  }
-  else
-    return -1;
 }

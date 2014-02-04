@@ -61,8 +61,6 @@ class Model: public context
 {
 protected:
 
-  int prior_index;
-
   int add_parameter(const std::string&);
   int add_parameter(const std::string&,const object_ref&);
   
@@ -78,8 +76,6 @@ public:
 
   /// the prior for the model, on the same scale as proposal densities
   virtual efloat_t prior() const;
-
-  int get_h_prior_index() const;
 
   bool has_bounds(int i) const;
   const Bounds<double>& get_bounds(int i) const;

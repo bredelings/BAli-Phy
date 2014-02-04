@@ -148,7 +148,7 @@ void Model::process_note(int index)
   const expression_ref& note = get_note(index);
 
   // 2. Check to see if this expression adds a prior
-  if (is_exactly(note,":~") or is_exactly(note,":=~"))
+  if (is_exactly(note,":=~"))
   {
     // Extract the density operation
     expression_ref x = note->sub[0];
@@ -157,32 +157,9 @@ void Model::process_note(int index)
     // Create an expression for calculating the density of these random variables given their inputs
     expression_ref Pr_new = (identifier("Distributions.density"), D, x);
     
-    // Record that this variable is random, and has this prior.
-    // THIS would be the right place to determine what other random variables and parameters are being depended on.
-    // THIS would be the right place to check that dependencies are not cyclic.
-    const auto& params = find_named_parameters(x);
-
-    if (is_exactly(note,":~"))
-    {
-      for(const auto& name : params )
-      {
-	int p_index = find_parameter(name);
-	if (p_index == -1)
-	  throw myexception()<<"Trying to add prior to parameter '"<<name<<"' which doesn't exist!";
-      }
-    }
-    else if (not params.empty())
-      throw myexception()<<"Data note '"<<note<<"' contains parameters!";
-
     // Extend the probability expression to include this term also.
     // (FIXME: a balanced tree could save computation time)
-    if (prior_index == -1)
-      prior_index = add_compute_expression( Pr_new );
-    else
-    {
-      expression_ref Pr = get_expression(prior_index);
-      set_compute_expression(prior_index, (identifier("*"),Pr_new,Pr));
-    }
+    add_probability_factor(Pr_new);
   }
 }
 
@@ -263,16 +240,7 @@ void Model::set_parameter_values(const vector<int>& indices,const vector<object_
 
 efloat_t Model::prior() const
 {
-  if (prior_index == -1) return 1.0;
-
-  object_ptr<const Log_Double> R = evaluate_as<Log_Double>(prior_index);
-  return *R;
-}
-
-int Model::get_h_prior_index() const
-{
-  assert(prior_index != -1);
-  return prior_index;
+  return get_probability();
 }
 
 vector<string> Model::show_priors() const
@@ -301,12 +269,11 @@ Model::Model(const module_loader& L, const vector<expression_ref>& notes)
   for(int i=0;i<notes.size();i++)
     add_note(notes[i]);
 
-  // 5. Create the prior
-  prior_index = add_probability_expression(*this);
+  // 5. Add the data
+  add_probability_expression(*this);
 
 #ifndef NDEBUG
   std::cout<<*this<<"\n";
-  std::cout<<"prior_index = "<<prior_index<<"\n";
   std::cout<<"prior = "<<log(prior())<<"\n";
   std::cout<<*this<<std::endl;
 #endif
