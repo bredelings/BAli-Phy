@@ -326,6 +326,11 @@ bool mapping::empty() const
   return modified_.empty();
 }
 
+void reg_heap::register_probability(int r)
+{
+  probability_heads.push_back(r);
+}
+
 const vector<int>& reg_heap::random_modifiables() const
 {
   return random_modifiables_;

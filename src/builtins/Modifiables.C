@@ -150,7 +150,7 @@ extern "C" closure builtin_function_register_probability(OperationArgs& Args)
 
   auto& M = Args.memory();
 
-  M.probability_heads.push_back(R);
+  M.register_probability(R);
 
   return constructor("()",0);
 }

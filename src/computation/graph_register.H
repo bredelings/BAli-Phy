@@ -168,6 +168,8 @@ public:
 
   std::vector<int> probability_heads;
 
+  void register_probability(int r);
+
   // where is the location of the probability expression
   int probability_index = -1;
 
