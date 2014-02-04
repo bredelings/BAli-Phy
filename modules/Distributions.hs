@@ -11,7 +11,7 @@ sampler (ProbDensity _ _ s _) = s;
 distRange (ProbDensity _ _ _ r) = r;
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = Random a | NoLog a | Prefix a b | Log a b;
+data Random a = Random a | NoLog a | Prefix a b | Log a b | Observe a b;
 
 sample (IOReturn v) = IOReturn v;
 sample (IOAndPass f g) = IOAndPass (sample f) (\x -> sample $ g x);
@@ -33,6 +33,7 @@ sample' ps l (ProbDensity p q s r) = sample' ps l s;
 
 sample' ps l (NoLog a) = sample' ps False a;
 sample' ps l (Prefix p a) = sample' (p:ps) l a;
+sample' ps l (Observe v dist) = register_probability (density dist v);
 sample' ps True (Log name x) = add_parameter (prefix_name ps name) x;
 sample' ps False (Log name x) = return ();
 
