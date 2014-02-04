@@ -331,6 +331,14 @@ void reg_heap::register_probability(int r)
   probability_heads.push_back(r);
 }
 
+int reg_heap::register_probability(closure&& C)
+{
+  int r = allocate();
+  set_C(r, std::move(C));
+  register_probability(r);
+  return r;
+}
+
 efloat_t reg_heap::probability_for_context(int c)
 {
   efloat_t Pr = 1.0;

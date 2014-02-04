@@ -171,6 +171,8 @@ public:
 
   void register_probability(int r);
 
+  int register_probability(closure&& C);
+
   efloat_t probability_for_context(int c);
 
   // where is the location of the probability expression
