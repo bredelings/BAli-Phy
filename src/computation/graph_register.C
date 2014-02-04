@@ -2121,7 +2121,14 @@ bool reg_heap::reg_is_fully_up_to_date(int R, int t) const
   return true;
 }
 
-object_ref reg_heap::get_reg_value_in_context(int R, int c)
+object_ref reg_heap::get_parameter_value_in_context(int p, int c)
+{
+  int& R = parameters[p].second;
+
+  return get_reg_value_in_context(R, c);
+}
+
+object_ref reg_heap::get_reg_value_in_context(int& R, int c)
 {
   int t = token_for_context(c);
   reroot_at(t);

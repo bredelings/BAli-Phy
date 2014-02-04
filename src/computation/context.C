@@ -225,9 +225,7 @@ object_ref context::get_modifiable_value(int index) const
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 object_ref context::get_parameter_value(int index) const
 {
-  int R = find_parameter_modifiable_reg(index);
-
-  return get_reg_value(R);
+  return memory()->get_parameter_value_in_context(index, context_index);
 }
 
 /// Get the value of a non-constant, non-computed index

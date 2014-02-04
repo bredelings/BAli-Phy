@@ -317,14 +317,12 @@ void show_parameters(std::ostream& o,const Model& M) {
     o<<"    ";
     o<<M.parameter_name(i)<<" = ";
     string output="[NULL]";
-    if (M.parameter_is_modifiable(i) and M.get_parameter_value(i))
+    if (M.get_parameter_value(i))
     {
       output=M.get_parameter_value(i)->print();
       if (output.find(10) != string::npos or output.find(13) != string::npos)
 	output = "[multiline]";
     }
-    else if (not M.parameter_is_modifiable(i))
-      output = "[not modifiable]";
     o<<output;
   }
   o<<"\n";
