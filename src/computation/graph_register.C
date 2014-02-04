@@ -2582,6 +2582,11 @@ int reg_heap::incremental_evaluate(int R, int t)
 	    pop_temp_head();
 	}
       }
+      catch (no_context&)
+      {
+	access(R).type = reg::type_t::changeable;
+	return R;
+      }
       catch (myexception& e)
       {
 	dot_graph_for_token(*this, t);
