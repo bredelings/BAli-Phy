@@ -30,11 +30,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   //------------- 1a. Get argument X -----------------
   int R_X = Args.evaluate_slot_to_reg(0);
 
-  int c = *Args.evaluate_as<Int>(3);
-
-  //------------- 1c. Get index for probability expression -----------------
-  int H_Pr = *Args.evaluate_as<Int>(2);
-  int R_Pr = M.get_heads()[H_Pr];
+  int c = *Args.evaluate_as<Int>(2);
 
   //------------- 1b. Get arguments Y_i  -----------------
   vector<int> M_Y;
@@ -78,7 +74,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   for(int R: M_Y)
     M.set_reg_value_in_context(R, Int(0), c);
 
-  log_double_t pr_base_1 = *convert<const Log_Double>(M.lazy_evaluate(R_Pr, c).exp->head);
+  log_double_t pr_base_1 = M.probability_for_context(c);
 
   log_double_t pr_total_1 = pr_base_1;
   vector<log_double_t> pr_y_1(M_Y.size());
@@ -86,7 +82,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   {
     int R = M_Y[i];
     M.set_reg_value_in_context(R, Int(1), c);
-    log_double_t pr_offset = *convert<const Log_Double>(M.lazy_evaluate(R_Pr, c).exp->head);
+    log_double_t pr_offset = M.probability_for_context(c);
     M.set_reg_value_in_context(R, Int(0), c);
     double delta = log(pr_offset/pr_base_1);
     pr_y_1[i] = exp<log_double_t>(-log1pexp(delta));
@@ -98,7 +94,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
   M.set_reg_value_in_context(R_X, Int(x2), c);
 
-  log_double_t pr_base_2 = *convert<const Log_Double>(M.lazy_evaluate(R_Pr,c).exp->head);
+  log_double_t pr_base_2 = M.probability_for_context(c);
 
   log_double_t pr_total_2 = pr_base_2;
   vector<log_double_t> pr_y_2(M_Y.size());
@@ -106,7 +102,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   {
     int R = M_Y[i];
     M.set_reg_value_in_context(R, Int(1), c);
-    log_double_t pr_offset = *convert<const Log_Double>(M.lazy_evaluate(R_Pr,c).exp->head);
+    log_double_t pr_offset = M.probability_for_context(c);
     M.set_reg_value_in_context(R, Int(0), c);
     double delta = log(pr_offset/pr_base_2);
     pr_y_2[i] = exp<log_double_t>(-log1pexp(delta));
@@ -145,15 +141,11 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
   //------------- 1a. Get argument X -----------------
   int R_X = Args.evaluate_slot_to_reg(0);
 
-  //------------- 1b. Get arguments Y_i  -----------------
+  //------------- 1b. Get range [0,n) for X ----------
   int n = *Args.evaluate_as<Int>(1);
 
-  //------------- 1c. Get index for probability expression -----------------
-  int H_Pr = *Args.evaluate_as<Int>(2);
-  int R_Pr = M.get_heads()[H_Pr];
-
-  //------------- 1d. Get index for probability expression -----------------
-  int c = *Args.evaluate_as<Int>(3);
+  //------------- 1c. Get context index --------------
+  int c = *Args.evaluate_as<Int>(2);
 
   //------------- 2. Figure out probability of each value of x ------------//
   vector<log_double_t> pr_x(n);
@@ -161,8 +153,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
   {
     M.set_reg_value_in_context(R_X, Int(i), c);
 
-    log_double_t pr = *convert<const Log_Double>(M.lazy_evaluate(R_Pr, c).exp->head);
-    pr_x[i] = pr;
+    pr_x[i] = M.probability_for_context(c);
   }
 
   //------------- 4. Record base probability and relative probability for x2

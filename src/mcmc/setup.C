@@ -434,7 +434,6 @@ MCMC::MoveAll get_h_moves(Parameters& P)
     if (not is_exactly(P.get_note(i),"MakeMove")) continue;
     
     expression_ref E = P.get_note(i)->sub[0];
-    E = (E, P.get_h_prior_index());
     string name = map_symbol_names(E,simplify)->print();
     
     int head = P.add_compute_expression(E);
