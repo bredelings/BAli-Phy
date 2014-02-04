@@ -158,7 +158,7 @@ public:
   void set_C(int R, closure&& C);
   void set_reduction_result(int t, int R, closure&& C);
 
-  void get_roots(std::vector<int>&) const;
+  void get_roots(std::vector<int>&, bool keep_identifiers=true) const;
 
   // the list of expressions that we are temporarily evaluating
   std::vector<int> temp;
@@ -320,16 +320,16 @@ public:
   int add_identifier(const std::string&);
 
   /*----- Graph walking ------*/
-  void find_all_regs_in_context(int, std::vector<int>&) const;
-  void find_all_used_regs_in_context(int, std::vector<int>&) const;
+  void find_all_regs_in_context(int, bool, std::vector<int>&) const;
+  void find_all_used_regs_in_context(int, bool, std::vector<int>&) const;
 
-  void find_all_regs_in_context_no_check(int, std::vector<int>&) const;
+  void find_all_regs_in_context_no_check(int, bool, std::vector<int>&) const;
   void find_all_regs_in_context_no_check(int, std::vector<int>&,std::vector<int>&) const;
 
-  std::vector<int> find_all_regs_in_context(int) const;
-  std::vector<int> find_all_used_regs_in_context(int) const;
+  std::vector<int> find_all_regs_in_context(int, bool) const;
+  std::vector<int> find_all_used_regs_in_context(int, bool) const;
 
-  std::vector<int> find_all_regs_in_context_no_check(int) const;
+  std::vector<int> find_all_regs_in_context_no_check(int, bool) const;
 
   /*----- Virtual memory ------*/
   int abs_computation_index_for_reg(int t, int r) const;
@@ -412,4 +412,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o);
 
 void dot_graph_for_token(const reg_heap& C, int t);
 
+struct no_context: public std::exception
+{
+};
 #endif

@@ -1264,7 +1264,7 @@ void insert_at_end(vector<int>& v, const T& t)
   v.insert(v.end(), t.begin(), t.end());
 }
 
-void reg_heap::get_roots(vector<int>& scan) const
+void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 {
   insert_at_end(scan, temp);
   insert_at_end(scan, heads);
@@ -1272,8 +1272,9 @@ void reg_heap::get_roots(vector<int>& scan) const
   insert_at_end(scan, random_modifiables_);
   for(int j=0;j<parameters.size();j++)
     scan.push_back(parameters[j].second);
-  for(const auto& i: identifiers)
-    scan.push_back(i.second);
+  if (keep_identifiers)
+    for(const auto& i: identifiers)
+      scan.push_back(i.second);
 }
 
 int reg_heap::push_temp_head()
@@ -1669,28 +1670,28 @@ int reg_heap::replace_shared_computation(int t, int r)
   return rc1;
 }
 
-vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
+vector<int> reg_heap::find_all_regs_in_context_no_check(int t, bool keep_identifiers) const
 {
   vector<int> unique;
-  find_all_regs_in_context_no_check(t, unique);
+  find_all_regs_in_context_no_check(t, keep_identifiers, unique);
   return unique;
 }
 
-vector<int> reg_heap::find_all_regs_in_context(int t) const
+vector<int> reg_heap::find_all_regs_in_context(int t, bool keep_identifiers) const
 {
   vector<int> unique;
-  find_all_regs_in_context(t, unique);
+  find_all_regs_in_context(t, keep_identifiers, unique);
   return unique;
 }
 
-vector<int> reg_heap::find_all_used_regs_in_context(int t) const
+vector<int> reg_heap::find_all_used_regs_in_context(int t, bool keep_identifiers) const
 {
   vector<int> unique;
-  find_all_used_regs_in_context(t, unique);
+  find_all_used_regs_in_context(t, keep_identifiers, unique);
   return unique;
 }
 
-void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& unique) const
+void reg_heap::find_all_regs_in_context_no_check(int t, bool keep_identifiers, vector<int>& unique) const
 {
   vector<int>& scan = get_scratch_list();
 
@@ -1699,11 +1700,11 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& unique) con
   find_all_regs_in_context_no_check(t,scan,unique);
 }
 
-void reg_heap::find_all_used_regs_in_context(int t, vector<int>& unique) const
+void reg_heap::find_all_used_regs_in_context(int t, bool keep_identifiers, vector<int>& unique) const
 {
   vector<int>& scan = get_scratch_list();
 
-  get_roots(scan);
+  get_roots(scan, keep_identifiers);
 
   find_all_regs_in_context_no_check(t,scan,unique);
 
@@ -1768,9 +1769,9 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& scan, vecto
 
 // This routine is separate from the *_no_check variant because the
 // checks don't hold in all cases.
-void reg_heap::find_all_regs_in_context(int t, vector<int>& unique) const
+void reg_heap::find_all_regs_in_context(int t, bool keep_identifiers, vector<int>& unique) const
 {
-  find_all_regs_in_context_no_check(t, unique);
+  find_all_regs_in_context_no_check(t, keep_identifiers, unique);
 
 #ifdef DEBUG_MACHINE
   for(int R: unique)
@@ -2813,7 +2814,7 @@ map<int,string> get_constants(const reg_heap& C, int t)
 
   map<int,string> constants;
 
-  vector<int> regs = C.find_all_used_regs_in_context(t);
+  vector<int> regs = C.find_all_used_regs_in_context(t,true);
 
   // Record some regs as being constants worthy of substituting into regs that reference them.
   for(int R: regs)
@@ -2866,7 +2867,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
   map<int,string> constants = get_constants(C, t);
 
-  vector<int> regs = C.find_all_used_regs_in_context(t);
+  vector<int> regs = C.find_all_used_regs_in_context(t,false);
 
   o<<"digraph \"token"<<t<<"\" {\n";
   o<<"graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];\n";
