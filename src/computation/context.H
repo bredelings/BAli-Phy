@@ -4,6 +4,7 @@
 #include "computation/program.H"
 #include "computation/model_notes.H"
 #include "computation/closure.H"
+#include "mytypes.H"
 
 class reg;
 
@@ -207,6 +208,8 @@ public:
   void alphabetize_parameters();
 
   void compile();
+
+  efloat_t get_probability() const;
 
 protected:  
   void set_C(int R, closure&& c) const;

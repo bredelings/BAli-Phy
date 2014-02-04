@@ -482,6 +482,11 @@ void context::compile()
   release_identifiers();
 }
 
+efloat_t context::get_probability() const
+{
+  return memory()->probability_for_context(context_index);
+}
+
 void context::collect_garbage() const
 {
   memory()->collect_garbage();

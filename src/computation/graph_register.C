@@ -331,6 +331,18 @@ void reg_heap::register_probability(int r)
   probability_heads.push_back(r);
 }
 
+efloat_t reg_heap::probability_for_context(int c)
+{
+  efloat_t Pr = 1.0;
+  for(int r: probability_heads)
+  {
+    object_ref x = get_reg_value_in_context(r, c);
+    efloat_t X = *convert<const Log_Double>(x);
+    Pr *= X;
+  }
+  return Pr;
+}
+
 const vector<int>& reg_heap::random_modifiables() const
 {
   return random_modifiables_;

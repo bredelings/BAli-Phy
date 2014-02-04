@@ -9,6 +9,7 @@
 #include <utility>
 #include "closure.H"
 #include "pool.H"
+#include "mytypes.H"
 
 struct computation
 {
@@ -169,6 +170,8 @@ public:
   std::vector<int> probability_heads;
 
   void register_probability(int r);
+
+  efloat_t probability_for_context(int c);
 
   // where is the location of the probability expression
   int probability_index = -1;
