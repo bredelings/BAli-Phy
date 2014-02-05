@@ -34,13 +34,6 @@ using std::string;
 
 using boost::dynamic_pointer_cast;
 
-string parameter_name(const string& prefix, int i,int n) 
-{
-  if (i>=n)
-    throw myexception()<<"substitution model: referred to parameter "<<i<<" but there are only "<<n<<" parameters.";
-  return prefix + convertToString(i);
-}
-
 vector<expression_ref> model_parameter_expressions(const Model& M)
 {
   vector< expression_ref > sub;
