@@ -116,7 +116,7 @@ vector<string> split_top_level(const string& s)
   if (split != -1)
   {
     string arg0 = s.substr(0,split);
-    args.insert(args.begin(), arg0);
+    args.insert(args.begin()+1, arg0);
   }
   return args;
 }
