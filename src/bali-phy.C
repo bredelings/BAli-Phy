@@ -1226,13 +1226,6 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
   }
   if (P.n_data_partitions() > 1)
     out_both<<"(Each partition i has a separate 'Main.mu<i>' except where specified by --same-scale.)"<<endl;
-
-  vector<string> pr_exp = P.show_priors();
-  out_both<<"\n";
-  for(int i=0;i<pr_exp.size();i++)
-    out_both<<pr_exp[i]<<"\n"<<endl;
-
-  out_both<<endl;
 }
 
 void write_initial_alignments(const vector<alignment>& A, int proc_id, string dir_name)

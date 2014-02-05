@@ -152,8 +152,6 @@ public:
   /// Set SOME of the model parameter values
           void set_parameter_values(const std::vector<int>& indices,const std::vector<object_ptr<const Object> >& p);
 
-  virtual std::vector<std::string> show_priors() const;
-
   // Add a Module, including any notes and declared parameters.
   std::vector<int> add_submodel(const Module&);
 

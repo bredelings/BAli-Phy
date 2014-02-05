@@ -207,11 +207,6 @@ efloat_t Model::prior() const
   return get_probability();
 }
 
-vector<string> Model::show_priors() const
-{
-  return show_probability_expressions(*this);
-}
-
 Model::Model(const module_loader& L)
   :Model(L, vector<expression_ref>{})
 { }
@@ -542,39 +537,3 @@ vector<int> parameters_with_extension(const Model& M, string name)
   return parameters_with_extension(parameter_names(M), name);
 }
 
-string show_probability_expression(const expression_ref& E)
-{
-  if (is_exactly(E, ":~"))
-  {
-    expression_ref x = E->sub[0];
-    expression_ref d = E->sub[1];
-
-    return x->print() + " ~ " + d->print();
-  }
-  else if (is_exactly(E, ":=~"))
-  {
-    expression_ref x = E->sub[0];
-    expression_ref d = E->sub[1];
-
-    return x->print() + " =~ " + d->print();
-  }
-  else
-    throw myexception()<<"Expression '"<<E<<"' is not a probability expression.";
-}
-
-vector<string> show_probability_expressions(const context& C)
-{
-  std::map<string,string> simplify = get_simplified_names(C.get_Program());
-
-  vector<string> expressions;
-
-  // Check each expression in the Formula
-  for(int i=0;i<C.n_notes();i++)
-    if (is_exactly(C.get_note(i),":~") or is_exactly(C.get_note(i),":=~"))
-    {
-      expression_ref note = map_symbol_names(C.get_note(i), simplify);
-      expressions.push_back( show_probability_expression(note) );
-    }
-
-  return expressions;
-}
