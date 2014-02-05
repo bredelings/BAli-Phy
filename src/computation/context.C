@@ -506,7 +506,6 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
   if (object_ptr<const parameter> p = is_a<parameter>(E))
   {
     string qualified_name = p->parameter_name;
-    assert(is_qualified_symbol(qualified_name));
 
     int param_index = find_parameter(qualified_name);
     

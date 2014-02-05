@@ -182,6 +182,7 @@ using std::ostream;
 using std::string;
 using std::vector;
 using std::map;
+using std::set;
 
 using boost::dynamic_bitset;
 using boost::shared_ptr;
@@ -643,6 +644,8 @@ void find_sub_loggers(Parameters& P, int& index, const string& name, vector<int>
 }
 
 
+
+
 owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, const vector<string>& Rao_Blackwellize)
 {
   using namespace MCMC;
@@ -660,20 +663,16 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
     vector<int> logged_computations;
     vector<string> logged_names;
 
-    map<string,string> simplify = get_simplified_names(P.get_Program());
+    vector<string> names_ = parameter_names(P);
+    set<string> names(names_.begin(), names_.end());
 
-    int index = -1;
-    for(int i=0;i<P.n_notes();i++)
+    map<string,string> simplify = get_simplified_names(names);
+
+    for(int i=0;i<P.n_parameters();i++)
     {
-      if (not is_exactly(P.get_note(i),"MakeLogger")) continue;
+      string name = P.parameter_name(i);
 
-      expression_ref E = P.get_note(i)->sub[0];
-      string name = map_symbol_names(E,simplify)->print();
-
-      if (index == -1)
-	index = P.add_compute_expression(E);
-      else
-	P.set_compute_expression(index, E);
+      int index = P.add_compute_expression(parameter(name));
 
       find_sub_loggers(P, index, name, logged_computations, logged_names);
     }
