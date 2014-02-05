@@ -54,9 +54,8 @@ vector<string> split_args(string s)
     args = {s};
     return args;
   }
-  else
-    args  = { s.substr(0,pos) };
 
+  args = { s.substr(0,pos) };
   s = s.substr(pos);
 
   //2. Get the arguments from '[arg1, arg2, ... , argn]'.
@@ -85,7 +84,7 @@ vector<string> split_args(string s)
   return args;
 }
 
-/// \brief Turn an expression of the form h1[a]+h2[b] -> h2[h1["",a],b].
+/// \brief Turn an expression of the form h1[a]+h2[b] -> h2[h1[a],b].
 ///
 /// \param sstack A stack of strings that represent a substitution model.
 /// \param s The model name to match.
@@ -109,17 +108,15 @@ vector<string> split_top_level(const string& s)
   if (depth != 0)
     throw myexception()<<"Too many '[' in string '"<<s<<"'";
   
-  // Here if explicitly insert an "" argument if there are no '+' args before us.
-  vector<string> args;
-  if (split == -1)
+  // If there are no plus expressions then we can take the arguments as is.
+  string head = s.substr(split+1,s.size() - split);
+
+  vector<string> args = split_args(head);
+
+  if (split != -1)
   {
-    args = split_args(s);
-    args.insert(args.begin()+1,"");
-  }
-  else
-  {
-    args = split_args(s.substr(split+1,s.size() - split));
-    args.insert(args.begin()+1,s.substr(0,split));
+    string arg0 = s.substr(0,split);
+    args.insert(args.begin(), arg0);
   }
   return args;
 }
