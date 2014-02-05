@@ -1,13 +1,14 @@
 module Gamma where
 {
-  import Distributions;
-  import SModel;
-note sigmaOverMu ~ logLaplace (-3.0) 1.0;
-
-b = sigmaOverMu^2;
-a = 1.0/b;
-
-discretize n = uniformDiscretize (quantile (gamma a b)) n;
-
-main base n = multiRate base (discretize n)
+import Distributions;
+import SModel;
+main base n = Prefix "Gamma" 
+  (do {
+     sigmaOverMu <- logLaplace (-3.0) 1.0;
+     Log "sigmaOverMu" sigmaOverMu;
+     let {a = 1.0/b; 
+          b = sigmaOverMu^2;
+          discretize n = uniformDiscretize (quantile (gamma a b)) n};
+     return $ multiRate base (discretize n)
+});
 }
