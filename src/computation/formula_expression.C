@@ -271,7 +271,10 @@ formula_expression_ref get_list(const vector<formula_expression_ref>& v)
 formula_expression_ref submodel_expression(const string& modid1, const string& modid2)
 {
   expression_ref note = {AST_node("import_submodel_note"),{String(modid1),String(modid2)}};
-  return {vector<expression_ref>{note}, identifier(modid2+".main")};
+  expression_ref E = (identifier("gen_model"),identifier(modid2+".main"));
+  E = (identifier("unsafePerformIO'"),E);
+  E = (identifier("evaluate"),-1,E);
+  return {vector<expression_ref>{note}, E};
 }
 
 formula_expression_ref submodel_expression(const string& modid)

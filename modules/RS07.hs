@@ -12,7 +12,7 @@ note meanIndelLengthMinus1 ~ exponential 10.0;
   
   lambda = exp logLambda;
   
-  main = (\d b heat training -> rs07_branch_HMM epsilon (lambda*d!b) heat training, \l -> rs07_lengthp epsilon l);
+  main = return $ (\d b heat training -> rs07_branch_HMM epsilon (lambda*d!b) heat training, \l -> rs07_lengthp epsilon l);
 
   main2 x y = "RS07" @@  
              (do { logLambda <- "logLambda" ~~ laplace (-4.0) (1.0/sqrt 2.0);
