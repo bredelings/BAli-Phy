@@ -40,7 +40,72 @@ using boost::program_options::variables_map;
 using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 
-expression_ref If = dummy(0)^(dummy(1)^(dummy(2)^(case_expression(dummy(0),constructor("Prelude.True",0),dummy(1),dummy(2)))));
+const vector<vector<string>> default_arguments = 
+  {
+    {"F81"},
+    {"HKY"},
+    {"TN"},
+    {"GTR"},
+    {"HKYx3"},
+    {"TNx3"},
+    {"GTRx3"},
+    {"PAM"},
+    {"JTT"},
+    {"WAG"},
+    {"LG"},
+    {"Empirical",""},
+    {"M0","HKY"},
+    {"gamma","","4"},
+    {"gamma_inv","","4"},
+    {"log-normal","","4"},
+    {"log-normal_inv","","4"},
+    {"M1a","HKY","F61"},
+    {"M2a","HKY","F61"},
+    {"M2a_Test","HKY","F61"},
+    {"M3u","3","HKY","F61"},
+    {"M3","3","HKY","F61"},
+    {"M7","4","HKY","F61"},
+    {"M8b_Test","4","HKY","F61"},
+    {"branch-site","2","HKY","F61"}
+  };
+
+string show(vector<string> args)
+{
+  string output = args[0];
+  args.erase(args.begin());
+  if (args.empty()) return output;
+
+  output += '[';
+  output += join(args,',');
+  output += ']';
+  return output;
+}
+
+void handle_default_args(vector<string>& args, const vector<vector<string>>& D)
+{
+  for(const auto& d: D)
+  {
+    if (args[0] != d[0]) continue;
+
+    if (args.size() > d.size())
+      throw myexception()<<"Too many arguments: "<<show(args);
+
+    args.resize(d.size());
+
+    for(int i=1;i<d.size();i++)
+    {
+      if (not args[i].empty()) continue;
+
+      if (not d[i].empty())
+	args[i] = d[i];
+      else
+      {
+	args[i] = "*";
+	throw myexception()<<"Missing argument at *: "<<show(args);
+      }
+    }
+  }
+}
 
 // Turn an expression of the form head[arg1, arg2, ..., argn] -> {head, arg1, arg2, ..., argn}.
 vector<string> split_args(string s)
@@ -118,6 +183,9 @@ vector<string> split_top_level(const string& s)
     string arg0 = s.substr(0,split);
     args.insert(args.begin()+1, arg0);
   }
+
+  handle_default_args(args,default_arguments);
+
   return args;
 }
 
@@ -146,31 +214,6 @@ get_smodel_(const module_loader& L,const string& smodel,const object_ptr<const a
 
 formula_expression_ref
 get_smodel_(const module_loader& L,const string& smodel);
-
-void check_n_args(vector<string>& model_args, int m, int n = -1)
-{
-  if (n == -1) n = m;
-
-  int n_args = model_args.size() - 1;
-  if (model_args.size() < n+1)
-    model_args.resize(n+1);
-
-  if (n_args == 1 and model_args[1] == "")
-    n_args = 0;
-
-  if (n_args > n)
-  {
-    if (n == 0)
-      throw myexception()<<model_args[0]<<" does not take any arguments.";
-    else
-      throw myexception()<<model_args[0]<<" only takes "<<n<<" arguments, but you supplied "<<n_args<<".";
-  }
-
-  if (n_args < m)
-  {
-    throw myexception()<<model_args[0]<<" requires "<<m<<" arguments, but you only supplied "<<n_args<<".";
-  }
-}
 
 /// \brief Construct an AlphabetExchangeModel from string \a smodel.
 formula_expression_ref coerce_to_EM(const module_loader& L,
@@ -204,14 +247,11 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
   //------ Get the base markov model (Reversible Markov) ------//
   if (model_args[0] == "F81")
   {
-    check_n_args(model_args, 0);
-
     return EQU_Model(*a);
   }
 
   else if (model_args[0] == "F81")
   {
-    check_n_args(model_args, 0);
     /*
     if (frequencies)
       return F81_Model(*a,*frequencies);
@@ -223,8 +263,6 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
 
   else if (model_args[0] == "HKY")
   {
-    check_n_args(model_args, 0);
-
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)
       throw myexception()<<"HKY: '"<<a->name<<"' is not a nucleotide alphabet.";
@@ -233,8 +271,6 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
   }
   else if (model_args[0] == "TN")
   {
-    check_n_args(model_args, 0);
-
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)
       throw myexception()<<"TN: '"<<a->name<<"' is not a nucleotide alphabet.";
@@ -243,8 +279,6 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
   }
   else if (model_args[0] == "GTR")
   {
-    check_n_args(model_args, 0);
-
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)
       throw myexception()<<"GTR: '"<<a->name<<"' is not a nucleotide alphabet.";
@@ -255,7 +289,6 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
   }
   /*
   else if (model_args[0] == "EQUx3")) {
-    check_n_args(model_args, 0);
 
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (T) 
@@ -266,8 +299,6 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
   */
   else if (model_args[0] == "HKYx3")
   {
-    check_n_args(model_args, 0);
-
     if (const Triplets* T = dynamic_cast<const Triplets*>(&*a))
       return (submodel_expression("HKYx3"), *T);
     else
@@ -275,8 +306,6 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
   }
   else if (model_args[0] == "TNx3")
   {
-    check_n_args(model_args, 0);
-
     if (const Triplets* T = dynamic_cast<const Triplets*>(&*a))
       return (submodel_expression("TNx3"), *T);
     else
@@ -284,8 +313,6 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
   }
   else if (model_args[0] == "GTRx3")
   {
-    check_n_args(model_args, 0);
-
     if (const Triplets* T = dynamic_cast<const Triplets*>(&*a))
       return (submodel_expression("GTRx3"), *T);
     else
@@ -293,36 +320,27 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
   }
   else if (model_args[0] == "PAM")
   {
-    check_n_args(model_args, 0);
-
     if (*a != AminoAcids())
       throw myexception()<<"PAM: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     return (identifier("SModel.pam"),a);
   }
   else if (model_args[0] == "JTT") {
-    check_n_args(model_args, 0);
-
     if (*a != AminoAcids())
       throw myexception()<<"JTT: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     return (identifier("SModel.jtt"),a);
   }
   else if (model_args[0] == "WAG") {
-    check_n_args(model_args, 0);
-
     if (*a != AminoAcids())
       throw myexception()<<"WAG: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     return (identifier("SModel.wag"),a);
   }
   else if (model_args[0] == "LG") {
-    check_n_args(model_args, 0);
-
     if (*a != AminoAcids())
       throw myexception()<<"LG: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     return (identifier("SModel.lg"),a);
   }
   else if (model_args[0] == "Empirical") 
   {
-    check_n_args(model_args,0,2);
     return (identifier("SModel.empirical"),a,model_args[2]);
   }
   /*
@@ -348,8 +366,6 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
   */
   else if (model_args[0] == "M0") //M0[0,S]
   {
-    check_n_args(model_args,0,2);
-
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<"M0: '"<<a->name<<"' is not a 'Codons' alphabet";
@@ -687,11 +703,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   // else if (model_args[0] == "gamma_plus_uniform") {
   else if (model_args[0] == "gamma") 
   {
-    check_n_args(model_args, 0, 2);
-
-    int n=4;
-    if (model_args.size() > 2 and model_args[2] != "")
-      n = convertTo<int>(model_args[2]);
+    int n = convertTo<int>(model_args[2]);
 
     formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
@@ -699,11 +711,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   }
   else if (model_args[0] == "gamma_inv") 
   {
-    check_n_args(model_args, 0, 2);
-
-    int n=4;
-    if (model_args.size() > 2 and model_args[2] != "")
-      n = convertTo<int>(model_args[2]);
+    int n = convertTo<int>(model_args[2]);
 
     formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
@@ -719,11 +727,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   }
   else if (model_args[0] == "log-normal") 
   {
-    check_n_args(model_args, 0, 2);
-
-    int n=4;
-    if (model_args.size() > 2 and model_args[2] != "")
-      n = convertTo<int>(model_args[2]);
+    int n = convertTo<int>(model_args[2]);
 
     formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
@@ -738,11 +742,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   }
   else if (model_args[0] == "log-normal_inv") 
   {
-    check_n_args(model_args, 0, 2);
-
-    int n=4;
-    if (model_args.size() > 2 and model_args[2] != "")
-      n = convertTo<int>(model_args[2]);
+    int n = convertTo<int>(model_args[2]);
 
     formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
@@ -835,11 +835,9 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     return (identifier("multiParameter"),M0,D);
   }
-  else if (model_args[0] == "M3u") // M3u[0,n,S,F]
+  else if (model_args[0] == "M3u") // M3u[n,S,F]
   {
-    int n=3;
-    if (model_args.size() > 2 and model_args[2] != "")
-      n = convertTo<int>(model_args[2]);
+    int n = convertTo<int>(model_args[1]);
 
     formula_expression_ref D = ListEnd;
     formula_expression_ref F = ListEnd;
@@ -856,17 +854,15 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     D = (identifier("DiscreteDistribution"), D);
     D.add_expression( constructor(":~",2) + F.exp() + (identifier("dirichlet'"), n, 4.0));
 
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
 
     return (identifier("multiParameter"), M0, D);
   }
-  else if (model_args[0] == "M3") // M3[0,n,S,F]
+  else if (model_args[0] == "M3") // M3[n,S,F]
   {
     throw myexception()<<"The M3 model is not working right now.  Try M3u, with only stabilizing selection.";
 
-    int n=3;
-    if (model_args.size() > 2 and model_args[2] != "")
-      n = convertTo<int>(model_args[2]);
+    int n = convertTo<int>(model_args[1]);
 
     formula_expression_ref D = ListEnd;
     vector<expression_ref> fraction;
@@ -885,35 +881,33 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     D = (identifier("DiscreteDistribution"), D);
     D.add_expression(constructor(":~",2) +  get_list(fraction) + (identifier("dirichlet'"), n, 4.0));
 
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
 
     return (identifier("multiParameter"), M0, D);
   }
-  else if (model_args[0] == "M1a") // M2a[0,S,F]
+  else if (model_args[0] == "M1a") // M2a[S,F]
   {
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,1);
 
     return (submodel_expression("M1a"),M0);
   }
-  else if (model_args[0] == "M2a") // M2a[0,S,F]
+  else if (model_args[0] == "M2a") // M2a[S,F]
   {
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,1);
 
     return (submodel_expression("M2a"),M0);
   }
-  else if (model_args[0] == "M2a_Test") // M2a[0,S,F]
+  else if (model_args[0] == "M2a_Test") // M2a[S,F]
   {
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,1);
 
     return (submodel_expression("M2a_Test"),M0);
   }
-  else if (model_args[0] == "M8b_Test") // M8b[0,n,S,+F]
+  else if (model_args[0] == "M8b_Test") // M8b[n,S,+F]
   {
-    int n = 4;
-    if (model_args.size() > 2 and model_args[2] != "")
-      n = convertTo<int>(model_args[2]);
+    int n = convertTo<int>(model_args[2]);
 
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
 
     return (submodel_expression("M8b_Test"),M0,n);
     /*
@@ -980,160 +974,22 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   }
   else if (model_args[0] == "M7")
   {
-    int n=4;
-    if (model_args.size() > 2 and model_args[2] != "")
-      n = convertTo<int>(model_args[2]);
-
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
-
-    return (submodel_expression("M7"), M0, n);
-  }
-  else if (model_args[0] == "branch-site-test1") // branch-site-test1[0,S,F]
-  {
-    check_n_args(model_args, 0, 3);
-
-    formula_expression_ref f0 = def_parameter("BranchSite.f0",Double(0.5));
-    formula_expression_ref f1 = def_parameter("BranchSite.f1",Double(0.5));
-    formula_expression_ref f2 = def_parameter("BranchSite.posP",Double(0.1),between(0,1), (identifier("beta"),1.0,10.0));
-    formula_expression_ref I  = def_parameter("BranchSite.posSelection", true, nullptr, (identifier("bernoulli"),0.5));
-
-    formula_expression_ref p2 = (If, I, f2, 0.0);
-    formula_expression_ref p0 = (times, f0, (minus,1.0,p2));
-    formula_expression_ref p1 = (times, f1, (minus,1.0,p2));
-    formula_expression_ref p2a = (times, f0, p2);
-    formula_expression_ref p2b = (times, f1, p2);
-
-    formula_expression_ref w0 = def_parameter("BranchSite.w0", Double(0.5), between(0,1), (identifier("uniform"), 0.0, 1.0));
-    // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
-    formula_expression_ref w2 = def_parameter("branch-site.pos-w", Double(1.5), lower_bound(1), (identifier("logGamma"), 4.0, 0.25));
-    // FIXME - look at the effect on power of using identifierious different priors for w2 here!
-    // FIXME - allow specifying the prior on the command line?
+    int n = convertTo<int>(model_args[2]);
 
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
 
-    formula_expression_ref mixture1 = (identifier("DiscreteDistribution"),Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
-    formula_expression_ref mixture2 = (identifier("DiscreteDistribution"),Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w2)&(Tuple(p2b,w2)&ListEnd))));
-    mixture1 = (identifier("multiParameter"), M0, mixture1);
-    mixture2 = (identifier("multiParameter"), M0, mixture2);
-    formula_expression_ref branch_site = (identifier("MixtureModels"),mixture1&(mixture2&ListEnd));
-
-    branch_site.add_expression( constructor(":~",2) + (f0&(f1&ListEnd)).exp() + (identifier("dirichlet"), List(1.0, 1.0)) );
-
-    return branch_site;
+    return (submodel_expression("M7"), M0, n);
   }
-  else if (model_args[0] == "branch-site")  // branch-site-test[0,n,S,F]
+  else if (model_args[0] == "branch-site")  // branch-site-test[n,S,F]
   {
-    check_n_args(model_args, 0, 4);
-
-    // Determine how many categories there are, minus the positive category.
     /*
-    int n=2;
-    if (model_args.size() > 2 and model_args[4] != "")
-      n = convertTo<int>(model_args[2]);
+    int n=convertTo<int>(model_args[2]);
     if (n < 2) throw myexception()<<"The branch-site model needs at least two categories.";
     */
 
     formula_expression_ref M0 = get_M0_omega_function(L,a, frequencies, model_args, 2);
 
     return (submodel_expression("BranchSiteTest"),M0);
-  }
-  else if (model_args[0] == "branch-site2")  // branch-site-test[0,n,S,F]
-  {
-    check_n_args(model_args, 0, 4);
-
-    // Determine how many categories there are, minus the positive category.
-    int n=2;
-    if (model_args.size() > 2 and model_args[2] != "")
-      n = convertTo<int>(model_args[2]);
-    if (n < 2) throw myexception()<<"The branch-site model needs at least two categories.";
-
-    // Create the parameter for degree of positive selection, if it exists.
-    formula_expression_ref w_pos = def_parameter("BranchSite.posW", Double(1.5), lower_bound(1), (identifier("logGamma"), 2.0, 0.5));
-    formula_expression_ref I  = def_parameter("BranchSite.posSelection", true, nullptr, (identifier("bernoulli"), 0.5));
-    formula_expression_ref w_pos_effective = (If, I, w_pos, 1.0);
-
-    // Create the partial distributions, and their parameters.
-    // FIXME - should I try to make the prior mean for the neutral w always near 0.5?
-    formula_expression_ref D1 = ListEnd;
-    formula_expression_ref D2 = ListEnd;
-    formula_expression_ref F = ListEnd;
-    for(int i=n-1;i>=0;i--)
-    {
-      string n_ = convertToString(i);
-      formula_expression_ref f = def_parameter("BranchSite.f"+n_, Double(1.0/n));
-      formula_expression_ref w = def_parameter("BranchSite.w"+n_, Double(0.5), between(0,1), (identifier("uniform"), 0.0, 1.0));
-      if (i == n-1) w = expression_ref(1.0);
-
-      D1 = Tuple(f,w)&D1;
-      D2 = Tuple(f,w_pos_effective)&D2;
-      F = f&F;
-    }
-    D1 = (identifier("DiscreteDistribution"), D1);
-    D2 = (identifier("DiscreteDistribution"), D2);
-
-    formula_expression_ref p_pos = def_parameter("BranchSite.posP",Double(0.1),between(0,1),(identifier("beta"),1.0,10.0));
-
-    // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
-    // FIXME - look at the effect on power of using identifierious different priors for w2 here!
-    // FIXME - allow specifying the prior on the command line?
-
-    formula_expression_ref M0 = get_M0_omega_function(L,a, frequencies, model_args, 3);
-    formula_expression_ref mixture1 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D1,D1) ) );
-    formula_expression_ref mixture2 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
-
-    formula_expression_ref branch_site = (identifier("MixtureModels"), mixture1&(mixture2&ListEnd) );
-    branch_site.add_expression( constructor(":~",2) +  F.exp() + (identifier("dirichlet'"),n,1.0));
-
-    return branch_site;
-  }
-  else if (model_args[0] == "branch-site3")  // branch-site-test[0,n,S,F]
-  {
-    check_n_args(model_args, 0, 4);
-
-    // Determine how many categories there are, minus the positive category.
-    int n=2;
-    if (model_args.size() > 2 and model_args[2] != "")
-      n = convertTo<int>(model_args[2]);
-    if (n < 2) throw myexception()<<"The branch-site model needs at least two categories.";
-
-    // Create the parameter for degree of positive selection, if it exists.
-    formula_expression_ref w_pos = def_parameter("BranchSite.posW", Double(1.5), lower_bound(1), (identifier("logGamma"), 1.0, 1.0));
-    formula_expression_ref I  = def_parameter("BranchSite.posSelection", true, nullptr, (identifier("bernoulli"), 0.5));
-    formula_expression_ref w_pos_effective = (If, I, w_pos, 1.0);
-
-    // Create the partial distributions, and their parameters.
-    // FIXME - should I try to make the prior mean for the neutral w always near 0.5?
-    formula_expression_ref D1 = ListEnd;
-    formula_expression_ref D2 = ListEnd;
-    formula_expression_ref F = ListEnd;
-    for(int i=n-1;i>=0;i--)
-    {
-      string n_ = convertToString(i);
-      formula_expression_ref f = def_parameter("BranchSite.f"+n_, Double(1.0/n));
-      formula_expression_ref w = def_parameter("BranchSite.w"+n_, Double(0.5), between(0,1), (identifier("uniform"), 0.0, 1.0));
-      if (i == n-1) w = expression_ref(1.0);
-
-      D1 = Tuple(f,w)&D1;
-      D2 = Tuple(f,w_pos_effective)&D2;
-      F = f&F;
-    }
-    D1 = (identifier("DiscreteDistribution"), D1);
-    D2 = (identifier("DiscreteDistribution"), D2);
-
-    formula_expression_ref p_pos = def_parameter("BranchSite.posP",Double(0.1),between(0,1),(identifier("beta"),1.0,10.0));
-
-    // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
-    // FIXME - look at the effect on power of using identifierious different priors for w2 here!
-    // FIXME - allow specifying the prior on the command line?
-
-    formula_expression_ref M0 = get_M0_omega_function(L,a, frequencies, model_args, 3);
-    formula_expression_ref mixture1 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D1,D1) ) );
-    formula_expression_ref mixture2 = (identifier("multiParameter"), M0, (identifier("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
-
-    formula_expression_ref branch_site = (identifier("MixtureModels"), mixture1&(mixture2&ListEnd) );
-    branch_site.add_expression( constructor(":~",2) +  F.exp() + (identifier("dirichlet'"),n,1.0));
-
-    return branch_site;
   }
 
   return formula_expression_ref();
