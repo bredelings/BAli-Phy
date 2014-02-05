@@ -134,35 +134,6 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values(const std::v
   return values;  
 }
 
-int Model::add_note(const expression_ref& E)
-{
-  int index = context::add_note(E);
-
-  process_note(index);
-
-  return index;
-}
-
-void Model::process_note(int index)
-{
-  const expression_ref& note = get_note(index);
-
-  // 2. Check to see if this expression adds a prior
-  if (is_exactly(note,":=~"))
-  {
-    // Extract the density operation
-    expression_ref x = note->sub[0];
-    expression_ref D = note->sub[1];
-
-    // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_new = (identifier("Distributions.density"), D, x);
-    
-    // Extend the probability expression to include this term also.
-    // (FIXME: a balanced tree could save computation time)
-    add_probability_factor(Pr_new);
-  }
-}
-
 bool Model::has_bounds(int i) const 
 {
   object_ref o = get_parameter_range(i);
@@ -268,9 +239,6 @@ Model::Model(const module_loader& L, const vector<expression_ref>& notes)
   // 2. Add the notes refering to the parameters.
   for(int i=0;i<notes.size();i++)
     add_note(notes[i]);
-
-  // 5. Add the data
-  add_probability_expression(*this);
 
 #ifndef NDEBUG
   std::cout<<*this<<"\n";

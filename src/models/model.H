@@ -154,10 +154,6 @@ public:
 
   virtual std::vector<std::string> show_priors() const;
 
-  int add_note(const expression_ref&);
-
-  void process_note(int);
-
   // Add a Module, including any notes and declared parameters.
   std::vector<int> add_submodel(const Module&);
 

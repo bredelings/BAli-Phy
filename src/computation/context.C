@@ -883,27 +883,3 @@ std::ostream& operator<<(std::ostream& o, const context& C)
   return o;
 }
 
-// Maybe we should always just compute a new probability expression from scratch?
-// Then we would always know that our notes were consistent!
-// TODO: Move to model.{H,C}?
-void add_probability_expression(context& C)
-{
-  expression_ref Pr;
-
-  // Check each expression in the Formula
-  map<string,string> prior_expressions;
-  for(int i=0;i<C.n_notes();i++)
-  {
-    // If its a probability expression, then...
-    if (not is_exactly(C.get_note(i), ":=~")) continue;
-
-    // Extract the density operation
-    expression_ref x = C.get_note(i)->sub[0];
-    expression_ref D = C.get_note(i)->sub[1];
-
-    // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_i = (identifier("Distributions.density"),D,x);
-    
-    C.add_probability_factor(Pr_i);
-  }
-}
