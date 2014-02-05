@@ -992,38 +992,23 @@ bool is_all_space(const string& line)
   return true;
 }
 
-Module read_BUGS(const Parameters& P, const string& filename)
+Module read_model(const Parameters& P, const string& filename)
 {
   // 1. Read module
-  Module BUGS ( module_loader().read_module_from_file(filename) );
+  Module Model ( module_loader().read_module_from_file(filename) );
 
   // 2. Import all parameter symbols from other modules.
   for(const auto& M:P.get_Program())
     for(const auto& S:M.get_symbols())
       if (S.second.symbol_type == parameter_symbol)
-	BUGS.import_symbol(S.second, M.name,true);
+	Model.import_symbol(S.second, M.name,true);
 
-  // 3. Add Loggers for any locally declared parameters
-  expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
-  for(const auto& name: BUGS.parameter_names())
-    BUGS.add_note((make_logger*parameter(name)));
-
-  return BUGS;
-}
-
-void add_BUGS(Parameters& P, const std::string& filename)
-{
-  auto m = read_BUGS(P, filename);
-
-  P.add_submodel(m);
-
-  for(int i=0;i<P.n_notes();i++)
-    std::cerr<<"note "<<i<<" = "<<P.get_note(i)->print()<<"\n\n";
+  return Model;
 }
 
 void add_model(Parameters& P, const std::string& filename)
 {
-  auto m = read_BUGS(P, filename);
+  auto m = read_model(P, filename);
 
   P.add_submodel(m);
   P.perform_expression((identifier("gen_model"),identifier(m.name+".main")));
