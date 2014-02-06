@@ -120,4 +120,6 @@ reversible_markov_model s r = do {
   return (reversible_markov s' r')
 };
 
+unit_model m = do {x <- m; return $ MixtureModel (DiscreteDistribution [(1.0,x)])};
+
 }
