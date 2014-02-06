@@ -295,15 +295,14 @@ expression_ref translate_model(const expression_ref& E)
     for(const auto& F: E->sub)
       index = std::max(index,get_safe_binder_index(F));
 
-    expression_ref E2 = E;
+    expression_ref E2 = E->sub[0];
     int A = E->sub.size()-1;
     for(int i=0;i<A;i++)
       E2 = (E2,dummy(index+i));
     for(int i=A-1;i>=0;i--)
     {
-      auto d = dummy(index+i);
       expression_ref arg = translate_model(E->sub[i+1]);
-      E2 = (identifier(">>="),arg,d^(E2,d));
+      E2 = (identifier(">>="),arg,dummy(index+i)^E2);
     }
     return E2;
   }
