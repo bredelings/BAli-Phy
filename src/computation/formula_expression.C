@@ -110,13 +110,13 @@ object_ptr<const Object> formula_expression_ref::result(const module_loader& L) 
 object_ptr<const Object> formula_expression_ref::result(const module_loader& L, const vector<Module>& Ps) const
 {
   context C(L, get_notes(), Ps);
-  return C.evaluate_expression(exp());
+  return C.evaluate_expression(perform_exp());
 }
 
 object_ptr<const Object> formula_expression_ref::result(const module_loader& L, const vector<string>& module_names) const
 {
   context C(L, get_notes(), module_names);
-  return C.evaluate_expression(exp());
+  return C.evaluate_expression(perform_exp());
 }
 
 formula_expression_ref apply(const formula_expression_ref& F1, const expression_ref& E2)

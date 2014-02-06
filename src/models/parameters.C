@@ -1256,23 +1256,23 @@ Parameters::Parameters(const module_loader& L,
 
     add_submodel(smodel);
 
-    SModels.push_back( smodel_methods( smodel.exp(), *this) );
+    SModels.push_back( smodel_methods( smodel.perform_exp(), *this) );
   }
 
   // register the indel models as sub-models
-  vector<formula_expression_ref> imodels_;
+  vector<expression_ref> imodels_;
   for(int i=0;i<n_imodels();i++) 
   {
     string prefix = "I" + convertToString(i+1);
 
     formula_expression_ref imodel = prefix_formula(prefix, IMs[i]);
 
-    imodels_.push_back(imodel);
+    imodels_.push_back(imodel.perform_exp());
 
     IModel_methods[i].parameters = add_submodel(imodel);
   }
   Module imodels_program("IModels");
-  imodels_program.def_function("models", (identifier("listArray'"), get_list(imodels_).exp()));
+  imodels_program.def_function("models", (identifier("listArray'"), get_list(imodels_)));
   imodels_program.declare_parameter("training");
   add_submodel(imodels_program);
   context::set_parameter_value(find_parameter("IModels.training"), false);
