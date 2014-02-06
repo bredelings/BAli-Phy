@@ -1,6 +1,7 @@
 module SModel where 
 {
 import Distributions;
+import Alphabet;
 
 builtin f3x4_frequencies 4 "f3x4_frequencies";
 builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
@@ -79,5 +80,29 @@ getNthMixture (MixtureModels l) i = l !! i;
 unwrapMM (MixtureModel dd) = dd;
 
 mixMixtureModels l dd = MixtureModel (mixDiscreteDistributions l (map unwrapMM dd));
+
+--
+tn_model nuca = Prefix "TN" 
+  (do {
+     kappaPur <- logLaplace (log 2.0) 0.25 ;
+     Log "kappaPur" kappaPur;
+     kappaPyr <- logLaplace (log 2.0) 0.25 ;
+     Log "kappaPyr" kappaPyr;
+     return $ tn nuca kappaPur kappaPyr
+});
+
+frequencies_model a = do {
+  let {n_letters = alphabetSize a};
+  pi <- dirichlet' n_letters 1.0;
+  Log "pi" pi;
+  return pi
+};
+
+plus_f_model a = Prefix "F" (do {
+  pi <- frequencies_model a;
+  let {n_letters = alphabetSize a};
+  let {pi' = listToVectorDouble pi};
+  return (ReversibleFrequency a (iotaUnsigned n_letters) pi' (plus_gwF a 1.0 pi'))
+});
 
 }
