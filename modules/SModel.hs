@@ -105,6 +105,15 @@ plus_f_model a = Prefix "F" (do {
   return (ReversibleFrequency a (iotaUnsigned n_letters) pi' (plus_gwF a 1.0 pi'))
 });
 
+plus_gwf_model a = Prefix "GWF" (do {
+  pi <- frequencies_model a;
+  f <- uniform 0.0 1.0;
+  Log "f" f;
+  let {n_letters = alphabetSize a};
+  let {pi' = listToVectorDouble pi};
+  return (ReversibleFrequency a (iotaUnsigned n_letters) pi' (plus_gwF a 1.0 pi'))
+});
+
 reversible_markov_model s r = do {
   s' <- Prefix "S" s;
   r' <- Prefix "R" r;
