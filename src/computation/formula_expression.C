@@ -282,6 +282,19 @@ formula_expression_ref submodel_expression(const string& modid)
   return submodel_expression(modid,modid);
 }
 
+expression_ref formula_expression_ref::perform_exp() const
+{
+  expression_ref E = exp();
+  if (is_AST(E,"model"))
+  {
+    E = translate_model(E);
+    E = (identifier("gen_model"),E);
+    E = (identifier("unsafePerformIO'"),E);
+    E = (identifier("evaluate"),-1,E);
+  }
+  return E;
+}
+
 expression_ref model_expression(const vector<expression_ref>& es)
 {
   return expression_ref(AST_node("model"),es);

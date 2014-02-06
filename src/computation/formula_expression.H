@@ -18,6 +18,8 @@ public:
 
   expression_ref exp() const {return E;}
 
+  expression_ref perform_exp() const;
+
   int add_expression(const formula_expression_ref&);
 
   object_ptr<const Object> result(const module_loader& L) const;
