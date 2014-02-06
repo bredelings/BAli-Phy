@@ -302,10 +302,11 @@ expression_ref translate_model(const expression_ref& E)
     for(int i=A-1;i>=0;i--)
     {
       auto d = dummy(index+i);
-      E2 = (identifier(">>="),E->sub[i+1],d^(E2,d));
+      expression_ref arg = translate_model(E->sub[i+1]);
+      E2 = (identifier(">>="),arg,d^(E2,d));
     }
     return E2;
   }
   else
-    return E;
+    return ((identifier("return"),E));
 }
