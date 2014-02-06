@@ -282,5 +282,30 @@ formula_expression_ref submodel_expression(const string& modid)
   return submodel_expression(modid,modid);
 }
 
+expression_ref model_expression(const vector<expression_ref>& es)
+{
+  return expression_ref(AST_node("model"),es);
+}
 
+expression_ref translate_model(const expression_ref& E)
+{
+  if (is_AST(E,"model"))
+  {
+    int index = 0;
+    for(const auto& F: E->sub)
+      index = std::max(index,get_safe_binder_index(F));
 
+    expression_ref E2 = E;
+    int A = E->sub.size()-1;
+    for(int i=0;i<A;i++)
+      E2 = (E2,dummy(index+i));
+    for(int i=A-1;i>=0;i--)
+    {
+      auto d = dummy(index+i);
+      E2 = (identifier(">>="),E->sub[i+1],d^(E2,d));
+    }
+    return E2;
+  }
+  else
+    return E;
+}

@@ -74,4 +74,6 @@ formula_expression_ref get_list(const std::vector<formula_expression_ref>&);
 formula_expression_ref submodel_expression(const std::string&);
 formula_expression_ref submodel_expression(const std::string&, const std::string&);
 
+expression_ref model_expression(const std::vector<expression_ref>& es);
+expression_ref translate_model(const expression_ref&);
 #endif
