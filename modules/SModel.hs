@@ -106,6 +106,13 @@ gtr_model nuca = Prefix "GTR"
      return $ gtr nuca (s!!0) (s!!1) (s!!2) (s!!3) (s!!4) (s!!5)
 });
 
+m0_model codona s = Prefix "M0"
+  (do {
+     omega <- logLaplace 0.0 0.25;
+     Log "omega" omega;
+     return $ m0 codona s omega
+  });
+
 x3_model s a = do {
  s' <- s (getNucleotides a);
  return $ singlet_to_triplet_exchange a s'

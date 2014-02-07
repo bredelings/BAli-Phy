@@ -299,21 +299,21 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
   */
   else if (model_args[0] == "HKYx3")
   {
-    if (const Triplets* T = dynamic_cast<const Triplets*>(&*a))
+    if (dynamic_cast<const Triplets*>(&*a))
       return model_expression({identifier("hkyx3_model"),*a});
     else
       throw myexception()<<"HKYx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
   else if (model_args[0] == "TNx3")
   {
-    if (const Triplets* T = dynamic_cast<const Triplets*>(&*a))
+    if (dynamic_cast<const Triplets*>(&*a))
       return model_expression({identifier("tnx3_model"),*a});
     else
       throw myexception()<<"TNx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
   else if (model_args[0] == "GTRx3")
   {
-    if (const Triplets* T = dynamic_cast<const Triplets*>(&*a))
+    if (dynamic_cast<const Triplets*>(&*a))
       return model_expression({identifier("gtrx3_model"),*a});
     else
       throw myexception()<<"GTRx3: '"<<a->name<<"' is not a triplet alphabet.";
@@ -364,29 +364,16 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
     return M;
   }
   */
-  else if (model_args[0] == "M0") //M0[0,S]
+  else if (model_args[0] == "M0") //M0[S]
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<"M0: '"<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    // import duplicate HKY
-    // S = HKY.main
-    // .. or ..
-    // S = submodel HKY
-    formula_expression_ref S1 = (submodel_expression("HKY"), N);
-    if (model_args[2] != "")
-    {
-      S1 = coerce_to_EM(L,model_args[2], const_ptr(N), {});
-      if (not S1.result_as<SymmetricMatrixObject>(L))
-	throw myexception()<<"Submodel '"<<model_args[2]<<"' for M0 is not a (nucleotide) exchange model.";
-    }
-    // omega ~ logLaplace(0.0, 0.1)
-    formula_expression_ref w = def_parameter("M0.omega", Double(1), lower_bound(0), (identifier("logLaplace"), 0.0,0.1));
+    expression_ref S = coerce_to_EM(L,model_args[1], const_ptr(N), {}).exp();
 
-    // main = M0 a S omega
-    return (identifier("m0"), a, S1, w);
+    return model_expression({identifier("m0_model"), a , S});
   }
 
   return formula_expression_ref();
