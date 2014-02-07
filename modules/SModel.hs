@@ -114,12 +114,10 @@ plus_gwf_model a = Prefix "GWF" (do {
   return (ReversibleFrequency a (iotaUnsigned n_letters) pi' (plus_gwF a 1.0 pi'))
 });
 
-reversible_markov_model s r = do {
-  s' <- Prefix "S" s;
-  r' <- Prefix "R" r;
-  return (reversible_markov s' r')
-};
+reversible_markov_model s r = return $ reversible_markov s r;
 
-unit_model m = do {x <- m; return $ MixtureModel (DiscreteDistribution [(1.0,x)])};
+unit_model m = return $ MixtureModel (DiscreteDistribution [(1.0,m)]);
+
+mmm m = return $ MixtureModels [m];
 
 }

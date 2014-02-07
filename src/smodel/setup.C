@@ -275,7 +275,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
     if (not N)
       throw myexception()<<"TN: '"<<a->name<<"' is not a nucleotide alphabet.";
 
-    return (submodel_expression("TN"),*a);
+    return model_expression({identifier("SModel.tn_model"),*a});
   }
   else if (model_args[0] == "GTR")
   {
@@ -571,10 +571,10 @@ formula_expression_ref coerce_to_RA(const module_loader& L,
     if (boost::dynamic_pointer_cast<const SymmetricMatrixObject>(result))
     {
       // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
-      if (frequencies)
-	return Reversible_Markov_Model(M, Plus_gwF_Model(*a, *frequencies));
-      else
-	return Reversible_Markov_Model(M, Plus_gwF_Model(*a));
+      expression_ref r = model_expression({identifier("plus_f_model"),*a});
+      expression_ref s = M.exp();
+      expression_ref mm = model_expression({identifier("reversible_markov_model"), s, r});
+      return mm;
     }
     throw myexception()<<": Can't construct a SimpleReversibleMarkovModel from '"<<M.exp()<<"\n";
   }
@@ -605,7 +605,8 @@ formula_expression_ref coerce_to_MM(const module_loader& L,
     return M;
 
   try { 
-    return Unit_Model( coerce_to_RA(L,M,a, frequencies) ) ; 
+    expression_ref ra = coerce_to_RA(L,M,a, frequencies).exp();
+    return model_expression({identifier("unit_model"), ra});
   }
   catch (std::exception& e) { 
     throw myexception()<<": Can't construct a MixtureModel from '"<<M.exp()<<"':\n"<<e.what();
@@ -634,7 +635,8 @@ formula_expression_ref coerce_to_MMM(const module_loader& L,
     return M;
 
   try { 
-    return (identifier("MixtureModels"), (coerce_to_MM(L, M,a,frequencies)&ListEnd));
+    expression_ref mm = coerce_to_MM(L, M,a,frequencies).exp();
+    return model_expression({identifier("mmm"), mm});
   }
   catch (std::exception& e) { 
     throw myexception()<<": Can't construct a MixtureModels from '"<<M.exp()<<"':\n"<<e.what();
