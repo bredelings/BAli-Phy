@@ -520,8 +520,7 @@ formula_expression_ref coerce_to_frequency_model(const module_loader& L,
 /// \brief Construct a ReversibleMarkovModel from model \a M
 formula_expression_ref coerce_to_RA(const module_loader& L,
 				    const formula_expression_ref& M,
-				    const object_ptr<const alphabet>& a,
-				    const shared_ptr< const valarray<double> >& frequencies)
+				    const object_ptr<const alphabet>& a)
 {
   object_ref result = M.result(L, {"SModel", "Distributions","Range"});
 
@@ -557,23 +556,21 @@ formula_expression_ref coerce_to_RA(const module_loader& L,
 				    const object_ptr<const alphabet>& a,
 				    const shared_ptr< const valarray<double> >& frequencies)
 {
-  formula_expression_ref M;
-  M = get_smodel_(L, smodel, a, frequencies);
+  formula_expression_ref M = get_smodel_(L, smodel, a, frequencies);
 
-  return coerce_to_RA(L, M, a, frequencies);
+  return coerce_to_RA(L, M, a);
 }
 
 /// \brief Construct a MultiModel from model \a M
 formula_expression_ref coerce_to_MM(const module_loader& L,
 				    const formula_expression_ref& M,
-				    const object_ptr<const alphabet>& a, 
-				    const shared_ptr< const valarray<double> >& frequencies)
+				    const object_ptr<const alphabet>& a)
 {
   if (M.exp() and is_exactly(M.result(L,{"SModel","Distributions","Range"}), "SModel.MixtureModel"))
     return M;
 
   try { 
-    expression_ref ra = coerce_to_RA(L,M,a, frequencies).exp();
+    expression_ref ra = coerce_to_RA(L,M,a).exp();
     return model_expression({identifier("unit_model"), ra});
   }
   catch (std::exception& e) { 
@@ -590,20 +587,19 @@ formula_expression_ref coerce_to_MM(const module_loader& L,
   formula_expression_ref M;
   M = get_smodel_(L, smodel, a, frequencies);
 
-  return coerce_to_MM(L, M,a,frequencies);
+  return coerce_to_MM(L, M,a);
 }
 
 /// \brief Construct a MultiModel from model \a M
 formula_expression_ref coerce_to_MMM(const module_loader& L,
 				     const formula_expression_ref& M,
-				     const object_ptr<const alphabet>& a,
-				     const shared_ptr< const valarray<double> >& frequencies)
+				     const object_ptr<const alphabet>& a)
 {
   if (is_exactly(M.result(L,{"SModel","Distributions","Range"}), "SModel.MixtureModels"))
     return M;
 
   try { 
-    expression_ref mm = coerce_to_MM(L, M,a,frequencies).exp();
+    expression_ref mm = coerce_to_MM(L, M,a).exp();
     return model_expression({identifier("mmm"), mm});
   }
   catch (std::exception& e) { 
@@ -621,7 +617,7 @@ formula_expression_ref coerce_to_MMM(const module_loader& L,
 
   M = get_smodel_(L, smodel, a, frequencies);
   
-  return coerce_to_MMM(L, M, a, frequencies);
+  return coerce_to_MMM(L, M, a);
 }
 
 formula_expression_ref get_M0_omega_function(const module_loader& L,
@@ -660,7 +656,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   expression_ref divide = identifier("/");
 
   if (model_args[0] == "single") 
-    return coerce_to_MM(L,coerce_to_RA(L,model_args[1],a,frequencies),a,frequencies);
+    return coerce_to_MM(L,coerce_to_RA(L,model_args[1],a,frequencies),a);
 
   // else if (model_args[0] == "gamma_plus_uniform") {
   else if (model_args[0] == "gamma") 
