@@ -258,7 +258,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
     else
       return F81_Model(*a);
     */
-    return formula_expression_ref();
+    return {};
   }
 
   else if (model_args[0] == "HKY")
@@ -267,7 +267,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
     if (not N)
       throw myexception()<<"HKY: '"<<a->name<<"' is not a nucleotide alphabet.";
 
-    return (submodel_expression("HKY"),*a);
+    return model_expression({identifier("hky_model"),*a});
   }
   else if (model_args[0] == "TN")
   {
@@ -275,7 +275,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
     if (not N)
       throw myexception()<<"TN: '"<<a->name<<"' is not a nucleotide alphabet.";
 
-    return model_expression({identifier("SModel.tn_model"),*a});
+    return model_expression({identifier("tn_model"),*a});
   }
   else if (model_args[0] == "GTR")
   {
@@ -285,7 +285,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
 
     // FIXME - allow/make a general GTR model!
 
-    return (submodel_expression("GTR"),*a);
+    return model_expression({identifier("gtr_model"),*a});
   }
   /*
   else if (model_args[0] == "EQUx3")) {

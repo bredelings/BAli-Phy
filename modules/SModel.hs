@@ -82,6 +82,13 @@ unwrapMM (MixtureModel dd) = dd;
 mixMixtureModels l dd = MixtureModel (mixDiscreteDistributions l (map unwrapMM dd));
 
 --
+hky_model nuca = Prefix "HKY" 
+  (do {
+     kappa <- logLaplace (log 2.0) 0.25 ;
+     Log "kappa" kappa;
+     return $ hky nuca kappa
+});
+
 tn_model nuca = Prefix "TN" 
   (do {
      kappaPur <- logLaplace (log 2.0) 0.25 ;
@@ -90,6 +97,16 @@ tn_model nuca = Prefix "TN"
      Log "kappaPyr" kappaPyr;
      return $ tn nuca kappaPur kappaPyr
 });
+
+gtr_model nuca = Prefix "GTR" 
+  (do {
+-- ag at ac gt gc tc
+     s <- dirichlet [2.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 2.0/8.0];
+     Log "s" s;
+     return $ gtr nuca (s!!0) (s!!1) (s!!2) (s!!3) (s!!4) (s!!5)
+});
+
+
 
 frequencies_model a = do {
   let {n_letters = alphabetSize a};
