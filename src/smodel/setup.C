@@ -300,21 +300,21 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
   else if (model_args[0] == "HKYx3")
   {
     if (const Triplets* T = dynamic_cast<const Triplets*>(&*a))
-      return (submodel_expression("HKYx3"), *T);
+      return model_expression({identifier("hkyx3_model"),*a});
     else
       throw myexception()<<"HKYx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
   else if (model_args[0] == "TNx3")
   {
     if (const Triplets* T = dynamic_cast<const Triplets*>(&*a))
-      return (submodel_expression("TNx3"), *T);
+      return model_expression({identifier("tnx3_model"),*a});
     else
       throw myexception()<<"TNx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
   else if (model_args[0] == "GTRx3")
   {
     if (const Triplets* T = dynamic_cast<const Triplets*>(&*a))
-      return (submodel_expression("GTRx3"), *T);
+      return model_expression({identifier("gtrx3_model"),*a});
     else
       throw myexception()<<"GTRx3: '"<<a->name<<"' is not a triplet alphabet.";
   }

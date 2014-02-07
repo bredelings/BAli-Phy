@@ -106,7 +106,16 @@ gtr_model nuca = Prefix "GTR"
      return $ gtr nuca (s!!0) (s!!1) (s!!2) (s!!3) (s!!4) (s!!5)
 });
 
+x3_model s a = do {
+ s' <- s (getNucleotides a);
+ return $ singlet_to_triplet_exchange a s'
+};
 
+hkyx3_model a = x3_model hky_model;
+
+tnx3_model a = x3_model tn_model;
+
+gtrx3_model a = x3_model gtr_model;
 
 frequencies_model a = do {
   let {n_letters = alphabetSize a};
