@@ -182,6 +182,20 @@ f1x4_model triplet_a = Prefix "F1x4"
        return $ ReversibleFrequency triplet_a (iotaUnsigned n_letters) pi' (plus_gwF triplet_a 1.0 pi')
 });
 
+f3x4_model triplet_a = Prefix "F1x4" 
+ (do {
+       let {nuc_a = getNucleotides triplet_a};
+       nuc_pi1 <- Prefix "Site1" $ frequencies_model nuc_a;
+       nuc_pi2 <- Prefix "Site2" $ frequencies_model nuc_a;
+       nuc_pi3 <- Prefix "Site3" $ frequencies_model nuc_a;
+       let {nuc_pi1' = listToVectorDouble nuc_pi1;
+            nuc_pi2' = listToVectorDouble nuc_pi2;
+            nuc_pi3' = listToVectorDouble nuc_pi3;
+            pi' = f3x4_frequencies triplet_a nuc_pi1' nuc_pi2' nuc_pi3';
+            n_letters = alphabetSize triplet_a};
+       return $ ReversibleFrequency triplet_a (iotaUnsigned n_letters) pi' (plus_gwF triplet_a 1.0 pi')
+});
+
 gamma_model base n = Prefix "Gamma"
   (do {
      sigmaOverMu <- logLaplace (-3.0) 1.0;

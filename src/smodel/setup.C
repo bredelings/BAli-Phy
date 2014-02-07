@@ -426,11 +426,9 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
   }
   else if (model_args[0] == "F3x4") 
   {
-    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
-    if (not T)
-      throw myexception()<<"+F3x4: '"<<a->name<<"' is not a triplet alphabet.";
-
-    R = F3x4_Model(*T);
+    if (not dynamic_cast<const Triplets*>(&*a))
+      throw myexception()<<"+F1x4: '"<<a->name<<"' is not a triplet alphabet.";
+    return model_expression({identifier("f3x4_model"),a});
   }
   else if (model_args[0] == "MG94") 
   {
