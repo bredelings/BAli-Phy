@@ -709,7 +709,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
-    return (submodel_expression("Gamma"),base,n);
+    return model_expression({identifier("gamma_model"), base.exp(), n});
   }
   else if (model_args[0] == "gamma_inv") 
   {

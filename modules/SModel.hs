@@ -114,6 +114,16 @@ plus_gwf_model a = Prefix "GWF" (do {
   return (ReversibleFrequency a (iotaUnsigned n_letters) pi' (plus_gwF a 1.0 pi'))
 });
 
+gamma_model base n = Prefix "Gamma"
+  (do {
+     sigmaOverMu <- logLaplace (-3.0) 1.0;
+     Log "sigmaOverMu" sigmaOverMu;
+     let {a = 1.0/b; 
+          b = sigmaOverMu^2;
+          discretize n = uniformDiscretize (quantile (gamma a b)) n};
+     return $ multiRate base (discretize n)
+});
+
 reversible_markov_model s r = return $ reversible_markov s r;
 
 unit_model m = return $ MixtureModel (DiscreteDistribution [(1.0,m)]);
