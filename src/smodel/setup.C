@@ -409,25 +409,13 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
   {
     if (a->size() != 61)
       throw myexception()<<"Cannot use 'F61' frequency model since alphabet contains "<<a->size()<<" letters.";
-    if (frequencies)
-      R = Plus_F_Model(*a,*frequencies);
-    else
-      R = Plus_F_Model(*a);
+    model_args[0] = "F";
+    return process_stack_Frequencies(L,model_args,a,frequencies);
   }
   else if (model_args[0] == "F") 
-  {
-    if (frequencies)
-      R = Plus_F_Model(*a,*frequencies);
-    else
-      R = Plus_F_Model(*a);
-  }
+    return model_expression({identifier("plus_f_model"),a});
   else if (model_args[0] == "gwF") 
-  {
-    if (frequencies)
-      R = Plus_gwF_Model(*a,*frequencies);
-    else
-      R = Plus_gwF_Model(*a);
-  }
+    return model_expression({identifier("plus_gwf_model"),a});
   else if (model_args[0] == "F=uniform") 
   {
     vector<double> piv(a->size(),1.0/a->size() );
@@ -654,21 +642,13 @@ formula_expression_ref get_M0_omega_function(const module_loader& L,
     throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
   const Nucleotides& N = C->getNucleotides();
 
-  if (model_args.size() < where+2)
-    model_args.resize(where+2);
-
-  formula_expression_ref S1 = (submodel_expression("HKY"),N);
-  if (model_args[where] != "")
-  {
-    S1 = coerce_to_EM(L, model_args[where], const_ptr(N), {});
+  formula_expression_ref S1 = coerce_to_EM(L, model_args[where], const_ptr(N), {});
     if (not S1.result_as<SymmetricMatrixObject>(L))
       throw myexception()<<"Submodel '"<<model_args[where]<<"' for M0 is not a (nucleotide) exchange model.";
-  }
+
   formula_expression_ref S2 = (identifier("m0"), a, S1, dummy(0));
 
-  formula_expression_ref R = Plus_F_Model(*a);
-  if (model_args[where+1] != "")
-    R = coerce_to_frequency_model(L, model_args[where+1], a, frequencies);
+  formula_expression_ref R = coerce_to_frequency_model(L, model_args[where+1], a, frequencies);
   
   formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
@@ -882,9 +862,16 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   }
   else if (model_args[0] == "M2a") // M2a[S,F]
   {
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,1);
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    if (not C)
+      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
+    const Nucleotides& N = C->getNucleotides();
 
-    return (submodel_expression("M2a"),M0);
+    formula_expression_ref S = coerce_to_EM(L, model_args[1], const_ptr(N), {});
+
+    formula_expression_ref R = coerce_to_frequency_model(L, model_args[2], a, frequencies);
+
+    return model_expression({identifier("m2a_model"),a,S.exp(),R.exp()});
   }
   else if (model_args[0] == "M2a_Test") // M2a[S,F]
   {
