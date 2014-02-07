@@ -417,14 +417,7 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
   else if (model_args[0] == "gwF") 
     return model_expression({identifier("plus_gwf_model"),a});
   else if (model_args[0] == "F=uniform") 
-  {
-    vector<double> piv(a->size(),1.0/a->size() );
-    expression_ref pi = get_list(piv);
-
-    R = let_expression(v1,(identifier("listToVectorDouble"),pi),
-		       (identifier("ReversibleFrequency"), *a, (identifier("iotaUnsigned"), a->size()), v1, (identifier("SModel.plus_gwF"), *a, 1.0, v1))
-		       );
-  }
+    return (identifier("uniform_f_model"),a);
   else if (model_args[0] == "F1x4")
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);

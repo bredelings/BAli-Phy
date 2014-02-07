@@ -167,6 +167,11 @@ plus_gwf_model a = Prefix "GWF" (do {
   return (ReversibleFrequency a (iotaUnsigned n_letters) pi' (plus_gwF a 1.0 pi'))
 });
 
+uniform_f_model a = let {n_letters = alphabetSize a;
+                         pi = replicate n_letters (1.0/intToDouble n_letters);
+                         pi' = listToVectorDouble pi} in 
+                    ReversibleFrequency a (iotaUnsigned n_letters) pi' (plus_gwF a 1.0 pi');
+
 gamma_model base n = Prefix "Gamma"
   (do {
      sigmaOverMu <- logLaplace (-3.0) 1.0;
