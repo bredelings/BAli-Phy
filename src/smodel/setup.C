@@ -420,11 +420,9 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
     return (identifier("uniform_f_model"),a);
   else if (model_args[0] == "F1x4")
   {
-    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
-    if (not T)
+    if (not dynamic_cast<const Triplets*>(&*a))
       throw myexception()<<"+F1x4: '"<<a->name<<"' is not a triplet alphabet.";
-
-    R = F1x4_Model(*T);
+    return model_expression({identifier("f1x4_model"),a});
   }
   else if (model_args[0] == "F3x4") 
   {
@@ -632,8 +630,6 @@ formula_expression_ref get_M0_omega_function(const module_loader& L,
   const Nucleotides& N = C->getNucleotides();
 
   formula_expression_ref S1 = coerce_to_EM(L, model_args[where], const_ptr(N), {});
-    if (not S1.result_as<SymmetricMatrixObject>(L))
-      throw myexception()<<"Submodel '"<<model_args[where]<<"' for M0 is not a (nucleotide) exchange model.";
 
   formula_expression_ref S2 = (identifier("m0"), a, S1, dummy(0));
 

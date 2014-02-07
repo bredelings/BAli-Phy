@@ -172,6 +172,16 @@ uniform_f_model a = let {n_letters = alphabetSize a;
                          pi' = listToVectorDouble pi} in 
                     ReversibleFrequency a (iotaUnsigned n_letters) pi' (plus_gwF a 1.0 pi');
 
+f1x4_model triplet_a = Prefix "F1x4" 
+ (do {
+       let {nuc_a = getNucleotides triplet_a};
+       nuc_pi <- frequencies_model nuc_a;
+       let {nuc_pi' = listToVectorDouble nuc_pi;
+            pi' = f3x4_frequencies triplet_a nuc_pi' nuc_pi' nuc_pi';
+            n_letters = alphabetSize triplet_a};
+       return $ ReversibleFrequency triplet_a (iotaUnsigned n_letters) pi' (plus_gwF triplet_a 1.0 pi')
+});
+
 gamma_model base n = Prefix "Gamma"
   (do {
      sigmaOverMu <- logLaplace (-3.0) 1.0;
