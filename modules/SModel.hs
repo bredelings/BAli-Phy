@@ -328,6 +328,34 @@ f3x4_model triplet_a = Prefix "F1x4"
        return $ ReversibleFrequency triplet_a (iotaUnsigned n_letters) pi' (plus_gwF triplet_a 1.0 pi')
 });
 
+mg94_model triplet_a = Prefix "MG94" 
+ (do {
+       let {nuc_a = getNucleotides triplet_a};
+       nuc_pi <- frequencies_model nuc_a;
+       let {nuc_pi' = listToVectorDouble nuc_pi;
+            pi' = f3x4_frequencies triplet_a nuc_pi' nuc_pi' nuc_pi';
+            nuc_r = plus_gwF nuc_a 1.0 nuc_pi';
+            n_letters = alphabetSize triplet_a};
+       return $ ReversibleFrequency triplet_a (iotaUnsigned n_letters) pi' (muse_gaut_matrix triplet_a nuc_r nuc_r nuc_r)
+});
+
+mg94w9_model triplet_a = Prefix "MG94w9" 
+ (do {
+       let {nuc_a = getNucleotides triplet_a};
+       nuc_pi1 <- Prefix "Site1" $ frequencies_model nuc_a;
+       nuc_pi2 <- Prefix "Site2" $ frequencies_model nuc_a;
+       nuc_pi3 <- Prefix "Site3" $ frequencies_model nuc_a;
+       let {nuc_pi1' = listToVectorDouble nuc_pi1;
+            nuc_pi2' = listToVectorDouble nuc_pi2;
+            nuc_pi3' = listToVectorDouble nuc_pi3;
+            nuc_r1   = plus_gwF nuc_a 1.0 nuc_pi1';
+            nuc_r2   = plus_gwF nuc_a 1.0 nuc_pi2';
+            nuc_r3   = plus_gwF nuc_a 1.0 nuc_pi3';
+            pi' = f3x4_frequencies triplet_a nuc_pi1' nuc_pi2' nuc_pi3';
+            n_letters = alphabetSize triplet_a};
+       return $ ReversibleFrequency triplet_a (iotaUnsigned n_letters) pi' (muse_gaut_matrix triplet_a nuc_r1 nuc_r2 nuc_r3)
+});
+
 gamma_model base n = Prefix "Gamma"
   (do {
      sigmaOverMu <- logLaplace (-3.0) 1.0;
