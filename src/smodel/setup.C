@@ -487,23 +487,23 @@ expression_ref process_stack_Frequencies(const module_loader& L,
   return R;
 }
 
-formula_expression_ref coerce_to_frequency_model(const module_loader& L,
-						 const formula_expression_ref& M,
-						 const object_ptr<const alphabet>& /* a */,
-						 const shared_ptr< const valarray<double> >& /* frequencies */)
+expression_ref coerce_to_frequency_model(const module_loader& L,
+					 const expression_ref& M,
+					 const object_ptr<const alphabet>& /* a */,
+					 const shared_ptr< const valarray<double> >& /* frequencies */)
 {
-  if (is_exactly(M.result(L,{"SModel","Distributions","Range"}), "SModel.ReversibleFrequency"))
+  if (is_exactly(formula_expression_ref(M).result(L,{"SModel","Distributions","Range"}), "SModel.ReversibleFrequency"))
     return M;
 
-  throw myexception()<<": '"<<M.exp()<<"' is not an exchange model.";
+  throw myexception()<<": '"<<M<<"' is not an exchange model.";
 }
 
-formula_expression_ref coerce_to_frequency_model(const module_loader& L,
-						 string smodel,
-						 const object_ptr<const alphabet>& a,
-						 const shared_ptr< const valarray<double> >& frequencies)
+expression_ref coerce_to_frequency_model(const module_loader& L,
+					 string smodel,
+					 const object_ptr<const alphabet>& a,
+					 const shared_ptr< const valarray<double> >& frequencies)
 {
-  formula_expression_ref M = get_smodel_(L, smodel, a, frequencies);
+  expression_ref M = get_smodel_(L, smodel, a, frequencies).exp();
 
   return coerce_to_frequency_model(L, M, a,  frequencies);
 }
