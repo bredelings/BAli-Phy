@@ -876,74 +876,20 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     return model_expression({identifier("m2a_test_model"),a,S.exp(),R.exp()});
   }
-  else if (model_args[0] == "M8b_Test") // M8b[n,S,+F]
+  else if (model_args[0] == "M8b_Test") // M8b[n,S,F]
   {
-    int n = convertTo<int>(model_args[2]);
+    int n = convertTo<int>(model_args[1]);
 
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    if (not C)
+      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
+    const Nucleotides& N = C->getNucleotides();
 
-    return (submodel_expression("M8b_Test"),M0,n);
-    /*
-    // FIXME: Conditional on one omega being small, the probability of the other ones being
-    //        small too should be higher.
-    //
-    //        We could require more evidence for conservation if we required it only once.
-    //
-    //        But how can we enforce the idea that at least one of the categories has an
-    //        omega near 1?
-    //
-    //        Goal: Prior should place weak support on neutrality, and medium support on
-    //        some fraction of sites being neutral.  Given sites conserved at level w
-    //        we should place a decent level of support for other omegas being similar
-    //        to w.
-    //
-    //        Perhaps M3 is not quite the model for this, in a Bayesian context.
-    //        Instead: fix one omega to 1.0, and put a uniform prior on its frequency.
-    //        Place a uniform distribution on the other omegas, conditional on not being 1.0.
-    //        The user should decrease the number of omegas if they cannot be reliably estimated.
-    //
-    //        Make model that puts a uniform on (conserved,neutral) or (conserved,neutral,positive)
-    //        and then has the possibility of [n] conserved rates with a UNIFORM prior.
-    //        (The Uniform seems like a good analogue of the dirichlet.)
+    formula_expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
 
-    int n = 4;
-    if (model_args.size() > 2 and model_args[2] != "")
-      n = convertTo<int>(model_args[2]);
+    formula_expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
 
-    // Determine the a and b parameters of the beta distribution
-    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (identifier("uniform"), 0.0, 1.0));
-    formula_expression_ref gamma = def_parameter("Beta.sigma2_over_mu", Double(0.1), between(0,1), (identifier("beta"), 1.0,10.0));
-    formula_expression_ref cap = (identifier("min"),(divide,mu,(plus,1.0,mu)),(divide,(minus,1.0,mu),(minus,2.0,mu)));
-    formula_expression_ref gamma_ = (times,gamma,cap);
-    formula_expression_ref N = (minus, (divide, 1.0, gamma_), 1.0); // N = 1.0/gamma - 1.0;
-    formula_expression_ref alpha = (times, N, mu); // a = N * mu;
-    formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
-    // Create the discrete distribution for omega
-    formula_expression_ref D = (identifier("uniformDiscretize"), (identifier("betaQuantile"), alpha,beta), n);
-
-    // *Question*: How much does D simplify with "completely lazy" evaluation?
-    formula_expression_ref p1 = def_parameter("M8b.fConserved", Double(0.6), between(0,1));
-    formula_expression_ref p2 = def_parameter("M8b.fNeutral", Double(0.3), between(0,1));
-    formula_expression_ref p3 = def_parameter("M8b.fDiversifying", Double(0.1), between(0,1));
-    // [positive selection, if it exists] w ~ log_exponential(0.05)
-    formula_expression_ref w = def_parameter("M8b.omega3", Double(1.5), lower_bound(1), (identifier("logGamma"), 4.0, 0.25));
-    formula_expression_ref I  = def_parameter("M8b.pos_selection", true, nullptr, (identifier("bernoulli"), 0.5));
-    formula_expression_ref w3 = (If, I, w, 1.0);
-
-    // Add the neutral and (possibility) positive selection categories
-    // mu    = E(X)
-    // gamma = var(X)/[ mu * (1-mu)] = 1/(1 + a + b)  \in (0,1]
-    //
-    // N = a + b = 1/gamma - 1
-
-    D = (identifier("DiscreteDistribution"),Tuple(p3,w3) & (Tuple(p2,1.0) & (identifier("fmap1"), (v4^(times,v4,p1)), (identifier("unwrapDD"), D))));
-    // (p1,p2,p3) ~ Dirichlet(10, 10, 1)
-    D.add_expression( constructor(":~",2) +  (p1&(p2&(p3&ListEnd))).exp() + (identifier("dirichlet"), List(10.0, 10.0, 1.0)) );
-
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
-
-    return (identifier("multiParameter"), M0, D);
-    */
+    return model_expression({identifier("m8b_test_model"),a,n,S.exp(),R.exp()});
   }
   else if (model_args[0] == "M7")
   {

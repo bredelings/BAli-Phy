@@ -174,6 +174,46 @@ m2a_test_model codona s r = Prefix "M2a_Test"
   return $ multiParameter m0w dist
 });
 
+m8b_test_model codona n_bins s r = Prefix "M8b_Test" 
+(do {
+  mu <- uniform 0.0 1.0;
+  Log "mu" mu;
+
+  gamma <- beta 1.0 10.0;
+  -- sigma^2/mu
+  Log "gamma" gamma;
+
+  let {cap = min (mu/(1.0+mu)) ((1.0-mu)/(2.0-mu));
+       gamma' = gamma*cap;
+       n = (1.0/gamma')-1.0;
+       a = n*mu;
+       b = n*(1.0 - mu)};
+
+  [fConserved, fNeutral, fSelection] <- dirichlet [10.0, 10.0, 1.0];
+  Log "fConserved" fConserved;
+  Log "fNeutral" fNeutral;
+  Log "fSelection" fSelection;
+
+  omega1 <- uniform 0.0 1.0;
+  Log "omega1" omega1;
+
+  omega3 <- logGamma 4.0 0.25;
+  Log "omega3" omega3;
+
+  pos_selection <- bernoulli 0.5;
+  Log "pos_selection" pos_selection;
+
+  let {omega3' = if pos_selection then omega3 else 1.0};
+
+  let {d1 = uniformDiscretize (quantile (beta a b)) n_bins;
+       d2 = (fSelection, omega3'):(fNeutral, 1.0):(fmap1 (*fConserved) (unwrapDD d1));
+       dist = DiscreteDistribution d2};
+
+  let {m0w w = reversible_markov (m0 codona s w) r};
+  return $ multiParameter m0w dist
+});
+
+
 
 x3_model s a = do {
  s' <- s (getNucleotides a);
