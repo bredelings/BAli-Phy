@@ -64,7 +64,7 @@ extern "C" closure builtin_function_pow(OperationArgs& Args)
 extern "C" closure builtin_function_sqrt(OperationArgs& Args)
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  assert(*x > 0.0);
+  assert(*x >= 0.0);
 
   return new Double(sqrt(*x));
 }
