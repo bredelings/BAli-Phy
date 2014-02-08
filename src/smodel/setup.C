@@ -510,11 +510,11 @@ expression_ref coerce_to_frequency_model(const module_loader& L,
 
 
 /// \brief Construct a ReversibleMarkovModel from model \a M
-formula_expression_ref coerce_to_RA(const module_loader& L,
-				    const formula_expression_ref& M,
-				    const object_ptr<const alphabet>& a)
+expression_ref coerce_to_RA(const module_loader& L,
+			    const expression_ref& M,
+			    const object_ptr<const alphabet>& a)
 {
-  object_ref result = M.result(L, {"SModel", "Distributions","Range"});
+  object_ref result = formula_expression_ref{M}.result(L, {"SModel", "Distributions","Range"});
 
   if (is_exactly(result, "SModel.F81"))
     return M;
@@ -531,42 +531,42 @@ formula_expression_ref coerce_to_RA(const module_loader& L,
     {
       // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
       expression_ref r = model_expression({identifier("plus_f_model"),*a});
-      expression_ref s = M.exp();
+      expression_ref s = M;
       expression_ref mm = model_expression({identifier("reversible_markov_model"), s, r});
       return mm;
     }
-    throw myexception()<<": Can't construct a SimpleReversibleMarkovModel from '"<<M.exp()<<"\n";
+    throw myexception()<<": Can't construct a SimpleReversibleMarkovModel from '"<<M<<"\n";
   }
   catch (std::exception& e) { 
-    throw myexception()<<": Can't construct a SimpleReversibleMarkovModel from '"<<M.exp()<<"':\n "<<e.what();
+    throw myexception()<<": Can't construct a SimpleReversibleMarkovModel from '"<<M<<"':\n "<<e.what();
   }
 }
 
 /// \brief Construct a ReversibleMarkovModel from model \a M
-formula_expression_ref coerce_to_RA(const module_loader& L,
-				    string smodel,
-				    const object_ptr<const alphabet>& a,
-				    const shared_ptr< const valarray<double> >& frequencies)
+expression_ref coerce_to_RA(const module_loader& L,
+			    string smodel,
+			    const object_ptr<const alphabet>& a,
+			    const shared_ptr< const valarray<double> >& frequencies)
 {
-  formula_expression_ref M = get_smodel_(L, smodel, a, frequencies);
+  expression_ref M = get_smodel_(L, smodel, a, frequencies).exp();
 
   return coerce_to_RA(L, M, a);
 }
 
 /// \brief Construct a MultiModel from model \a M
 formula_expression_ref coerce_to_MM(const module_loader& L,
-				    const formula_expression_ref& M,
+				    const expression_ref& M,
 				    const object_ptr<const alphabet>& a)
 {
-  if (M.exp() and is_exactly(M.result(L,{"SModel","Distributions","Range"}), "SModel.MixtureModel"))
+  if (M and is_exactly(formula_expression_ref(M).result(L,{"SModel","Distributions","Range"}), "SModel.MixtureModel"))
     return M;
 
   try { 
-    expression_ref ra = coerce_to_RA(L,M,a).exp();
+    expression_ref ra = coerce_to_RA(L,M,a);
     return model_expression({identifier("unit_model"), ra});
   }
   catch (std::exception& e) { 
-    throw myexception()<<": Can't construct a MixtureModel from '"<<M.exp()<<"':\n"<<e.what();
+    throw myexception()<<": Can't construct a MixtureModel from '"<<M<<"':\n"<<e.what();
   }
 }
 
@@ -579,7 +579,7 @@ formula_expression_ref coerce_to_MM(const module_loader& L,
   formula_expression_ref M;
   M = get_smodel_(L, smodel, a, frequencies);
 
-  return coerce_to_MM(L, M,a);
+  return coerce_to_MM(L, M.exp(), a);
 }
 
 /// \brief Construct a MultiModel from model \a M
@@ -591,7 +591,7 @@ formula_expression_ref coerce_to_MMM(const module_loader& L,
     return M;
 
   try { 
-    expression_ref mm = coerce_to_MM(L, M,a).exp();
+    expression_ref mm = coerce_to_MM(L, M.exp(), a).exp();
     return model_expression({identifier("mmm"), mm});
   }
   catch (std::exception& e) { 
@@ -629,27 +629,19 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   // else if (model_args[0] == "gamma_plus_uniform") {
   else if (model_args[0] == "gamma") 
   {
+    expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
+
     int n = convertTo<int>(model_args[2]);
 
-    formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
-
-    return model_expression({identifier("gamma_model"), base.exp(), n});
+    return model_expression({identifier("gamma_model"), base, n});
   }
   else if (model_args[0] == "gamma_inv") 
   {
+    expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
+
     int n = convertTo<int>(model_args[2]);
 
-    formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
-
-    formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"),-3.0, 1.0 ));
-    formula_expression_ref b = (times, W, W);
-    formula_expression_ref a = (divide, 1.0, b);
-    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("gamma"), a,b)) , n);
-
-    formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), (identifier("beta"), 1.0, 2.0) );
-    dist = (identifier("extendDiscreteDistribution"), dist, p, 0.0);
-
-    return (identifier("multiRate"), base,  dist);
+    return model_expression({identifier("gamma_inv_model"), base, n});
   }
   else if (model_args[0] == "log-normal") 
   {

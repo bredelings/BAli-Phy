@@ -366,6 +366,21 @@ gamma_model base n = Prefix "Gamma"
      return $ multiRate base (discretize n)
 });
 
+gamma_inv_model base n = Prefix "GammaINV"
+  (do {
+     sigmaOverMu <- logLaplace (-3.0) 1.0;
+     Log "sigmaOverMu" sigmaOverMu;
+
+     pInv <- beta 1.0 2.0;
+     Log "pInv" pInv;
+
+     let {a = 1.0/b; 
+          b = sigmaOverMu^2;
+          dist = uniformDiscretize (quantile (gamma a b)) n;
+          dist2 = extendDiscreteDistribution dist pInv 0.0};
+     return $ multiRate base dist2
+});
+
 reversible_markov_model s r = return $ reversible_markov s r;
 
 unit_model m = return $ MixtureModel (DiscreteDistribution [(1.0,m)]);
