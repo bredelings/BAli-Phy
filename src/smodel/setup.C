@@ -768,6 +768,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     return Mixture_Model(models);
   }
+  /*
   else if (model_args[0] == "M2") 
   {
     formula_expression_ref p1 = def_parameter("M2.fAaINV", Double(1.0/3), between(0,1));
@@ -837,6 +838,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     return (identifier("multiParameter"), M0, D);
   }
+    */
   else if (model_args[0] == "M1a") // M2a[S,F]
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
@@ -893,11 +895,18 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   }
   else if (model_args[0] == "M7")
   {
-    int n = convertTo<int>(model_args[2]);
+    int n = convertTo<int>(model_args[1]);
 
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    if (not C)
+      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
+    const Nucleotides& N = C->getNucleotides();
 
-    return (submodel_expression("M7"), M0, n);
+    formula_expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+
+    formula_expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+
+    return model_expression({identifier("m7_model"),a,n,S.exp(),R.exp()});
   }
   else if (model_args[0] == "branch-site")  // branch-site-test[n,S,F]
   {

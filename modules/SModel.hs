@@ -174,6 +174,27 @@ m2a_test_model codona s r = Prefix "M2a_Test"
   return $ multiParameter m0w dist
 });
 
+m7_model codona n_bins s r = Prefix "M7"
+(do {
+  mu <- uniform 0.0 1.0;
+  Log "mu" mu;
+
+  gamma <- beta 1.0 10.0;
+  -- sigma^2/mu
+  Log "gamma" gamma;
+
+  let {cap = min (mu/(1.0+mu)) ((1.0-mu)/(2.0-mu));
+       gamma' = gamma*cap;
+       n = (1.0/gamma')-1.0;
+       a = n*mu;
+       b = n*(1.0 - mu)};
+
+  let {dist = uniformDiscretize (quantile (beta a b)) n_bins};
+
+  let {m0w w = reversible_markov (m0 codona s w) r};
+  return $ multiParameter m0w dist
+});
+
 m8b_test_model codona n_bins s r = Prefix "M8b_Test" 
 (do {
   mu <- uniform 0.0 1.0;
