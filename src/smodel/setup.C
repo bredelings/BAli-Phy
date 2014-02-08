@@ -239,29 +239,26 @@ formula_expression_ref coerce_to_EM(const module_loader& L,
 /// \param a The alphabet on which the model lives.
 /// \param frequencies The initial frequencies for the model.
 ///
-formula_expression_ref process_stack_Markov(const module_loader& L,
+expression_ref process_stack_Markov(const module_loader& L,
 					    vector<string>& model_args,
-					    const object_ptr<const alphabet>& a,
-					    const shared_ptr<const valarray<double> >& /* frequencies */)
+				    const object_ptr<const alphabet>& a)
 {
   //------ Get the base markov model (Reversible Markov) ------//
-  if (model_args[0] == "F81")
+  /*
+  if (model_args[0] == "EQU")
   {
     return EQU_Model(*a);
   }
-
   else if (model_args[0] == "F81")
   {
-    /*
     if (frequencies)
       return F81_Model(*a,*frequencies);
     else
       return F81_Model(*a);
-    */
-    return {};
   }
+  */
 
-  else if (model_args[0] == "HKY")
+  if (model_args[0] == "HKY")
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)
@@ -376,7 +373,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
     return model_expression({identifier("m0_model"), a , S});
   }
 
-  return formula_expression_ref();
+  return {};
 }
 
 /// \brief Construct a model from the top of the string stack
@@ -914,7 +911,7 @@ get_smodel_(const module_loader& L, string smodel,const object_ptr<const alphabe
 
   formula_expression_ref m;
 
-  m = process_stack_Markov(L, model_args, a, frequencies);
+  m = process_stack_Markov(L, model_args, a);
   if (m.exp()) return m;
 
   m = process_stack_Frequencies(L, model_args, a, frequencies);
