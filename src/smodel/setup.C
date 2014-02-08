@@ -616,28 +616,6 @@ formula_expression_ref coerce_to_MMM(const module_loader& L,
   return coerce_to_MMM(L, M, a);
 }
 
-formula_expression_ref get_M0_omega_function(const module_loader& L,
-					     const object_ptr<const alphabet>& a,
-					     const shared_ptr< const valarray<double> >& frequencies,
-					     vector<string> model_args,
-					     int where)
-{
-  const Codons* C = dynamic_cast<const Codons*>(&*a);
-  if (not C)
-    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-  const Nucleotides& N = C->getNucleotides();
-
-  formula_expression_ref S1 = coerce_to_EM(L, model_args[where], const_ptr(N), {});
-
-  formula_expression_ref S2 = (identifier("m0"), a, S1, dummy(0));
-
-  formula_expression_ref R = coerce_to_frequency_model(L, model_args[where+1], a, frequencies);
-  
-  formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
-
-  return M0;
-}
-
 
 formula_expression_ref process_stack_Multi(const module_loader& L,
 					   vector<string>& model_args,
