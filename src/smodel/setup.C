@@ -865,9 +865,16 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   }
   else if (model_args[0] == "M2a_Test") // M2a[S,F]
   {
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,1);
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    if (not C)
+      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
+    const Nucleotides& N = C->getNucleotides();
 
-    return (submodel_expression("M2a_Test"),M0);
+    formula_expression_ref S = coerce_to_EM(L, model_args[1], const_ptr(N), {});
+
+    formula_expression_ref R = coerce_to_frequency_model(L, model_args[2], a, frequencies);
+
+    return model_expression({identifier("m2a_test_model"),a,S.exp(),R.exp()});
   }
   else if (model_args[0] == "M8b_Test") // M8b[n,S,+F]
   {

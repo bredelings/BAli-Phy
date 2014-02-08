@@ -147,6 +147,33 @@ m2a_model codona s r = Prefix "M2a"
   return $ multiParameter m0w dist
 });
 
+m2a_test_model codona s r = Prefix "M2a_Test" 
+(do {
+  f <- dirichlet [10.0, 10.0, 1.0];
+  let {fConserved = f!!0;
+       fNeutral = f!!1;
+       fSelection = f!!2};
+  Log "fConserved" fConserved;
+  Log "fNeutral" fNeutral;
+  Log "fSelection" fSelection;
+
+  omega1 <- uniform 0.0 1.0;
+  Log "omega1" omega1;
+
+  omega3 <- logGamma 4.0 0.25;
+  Log "omega3" omega3;
+
+  pos_selection <- bernoulli 0.5;
+  Log "pos_selection" pos_selection;
+
+  let {omega3' = if pos_selection then omega3 else 1.0};
+
+  let {dist = DiscreteDistribution [(fConserved,omega1),(fNeutral, 1.0),(fSelection,omega3')]};
+  let {m0w w = reversible_markov (m0 codona s w) r};
+  return $ multiParameter m0w dist
+});
+
+
 x3_model s a = do {
  s' <- s (getNucleotides a);
  return $ singlet_to_triplet_exchange a s'
