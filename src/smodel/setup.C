@@ -216,7 +216,7 @@ formula_expression_ref
 get_smodel_(const module_loader& L,const string& smodel);
 
 /// \brief Construct an AlphabetExchangeModel from string \a smodel.
-formula_expression_ref coerce_to_EM(const module_loader& L,
+expression_ref coerce_to_EM(const module_loader& L,
 				    string smodel,
 				    const object_ptr<const alphabet>& a, 
 				    const shared_ptr< const valarray<double> >& frequencies)
@@ -228,7 +228,7 @@ formula_expression_ref coerce_to_EM(const module_loader& L,
   formula_expression_ref S = get_smodel_(L,smodel, a, frequencies);
 
   if (S.exp() and dynamic_pointer_cast<const SymmetricMatrixObject>(S.result(L,vector<string>{"SModel","Distributions","Range"})))
-    return S;
+    return S.exp();
 
   throw myexception()<<": '"<<smodel<<"' is not an exchange model.";
 }
@@ -368,7 +368,7 @@ expression_ref process_stack_Markov(const module_loader& L,
       throw myexception()<<"M0: '"<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L,model_args[1], const_ptr(N), {}).exp();
+    expression_ref S = coerce_to_EM(L,model_args[1], const_ptr(N), {});
 
     return model_expression({identifier("m0_model"), a , S});
   }
@@ -479,7 +479,7 @@ expression_ref process_stack_Frequencies(const module_loader& L,
   if (R and model_args[1] != "")
   {
     // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
-    expression_ref s = coerce_to_EM(L,model_args[1], a, frequencies).exp();
+    expression_ref s = coerce_to_EM(L,model_args[1], a, frequencies);
     expression_ref mm = model_expression({identifier("reversible_markov_model"), s, R});
     return mm;
   }
