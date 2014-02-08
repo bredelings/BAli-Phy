@@ -276,9 +276,10 @@ tnx3_model a = x3_model tn_model;
 gtrx3_model a = x3_model gtr_model;
 
 frequencies_model a = do {
-  let {n_letters = alphabetSize a};
+  let {n_letters = alphabetSize a;
+       letters = alphabet_letters a};
   pi <- dirichlet' n_letters 1.0;
-  Log "pi" pi;
+  sequence_ $ zipWith (\p l -> Log ("pi"++l) p) pi letters;
   return pi
 };
 
