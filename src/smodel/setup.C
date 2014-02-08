@@ -645,36 +645,19 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   }
   else if (model_args[0] == "log-normal") 
   {
+    expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
+
     int n = convertTo<int>(model_args[2]);
 
-    formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
-
-    formula_expression_ref W = def_parameter("LogNormal.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"), -3.0, 1.0 ));
-    formula_expression_ref Identifier = (times, W, W);
-    formula_expression_ref lIdentifier = (identifier("log"), (plus, 1.0, Identifier ) );
-    formula_expression_ref lmu = (times, -0.5, lIdentifier);
-    formula_expression_ref lsigma = (identifier("sqrt"), lIdentifier);
-    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("logNormal"), lmu,lsigma)) , n);
-
-    return (identifier("multiRate"), base,  dist);
+    return model_expression({identifier("log_normal_model"), base, n});
   }
   else if (model_args[0] == "log-normal_inv") 
   {
+    expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
+
     int n = convertTo<int>(model_args[2]);
 
-    formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
-
-    formula_expression_ref W = def_parameter("LogNormal.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"), -3.0, 1.0 ));
-    formula_expression_ref Identifier = (times, W, W);
-    formula_expression_ref lIdentifier = (identifier("log"), (plus, 1.0, Identifier ) );
-    formula_expression_ref lmu = (times, -0.5, lIdentifier);
-    formula_expression_ref lsigma = (identifier("sqrt"), lIdentifier);
-    formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("quantile"),(identifier("logNormal"), lmu,lsigma)) , n);
-
-    formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), (identifier("beta"), 1.0, 2.0) );
-    dist = (identifier("extendDiscreteDistribution"), dist, p, 0.0);
-
-    return (identifier("multiRate"), base,  dist);
+    return model_expression({identifier("log_normal_inv_model"), base, n});
   }
   else if (model_args[0] == "multi_freq") {
     // Pr(l|m) = Pr(m|l)*Pr(l)/Pr(m)

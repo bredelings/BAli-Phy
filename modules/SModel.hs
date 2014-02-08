@@ -366,6 +366,13 @@ gamma_model base n = Prefix "Gamma"
      return $ multiRate base (discretize n)
 });
 
+plus_inv_model dist = do 
+{
+  pInv <- beta 1.0 2.0;
+  Log "pInv" pInv;
+  return $ extendDiscreteDistribution dist pInv 0.0
+};
+
 gamma_inv_model base n = Prefix "GammaINV"
   (do {
      sigmaOverMu <- logLaplace (-3.0) 1.0;
@@ -376,8 +383,37 @@ gamma_inv_model base n = Prefix "GammaINV"
 
      let {a = 1.0/b; 
           b = sigmaOverMu^2;
-          dist = uniformDiscretize (quantile (gamma a b)) n;
-          dist2 = extendDiscreteDistribution dist pInv 0.0};
+          dist = uniformDiscretize (quantile (gamma a b)) n};
+
+     dist2 <- plus_inv_model dist;
+
+     return $ multiRate base dist2
+});
+
+log_normal_model base n = Prefix "LogNormal"
+  (do {
+     sigmaOverMu <- logLaplace (-3.0) 1.0;
+     Log "sigmaOverMu" sigmaOverMu;
+
+     let {x = log(1.0+sigmaOverMu^2);
+          lmu = -0.5*x;
+          lsigma = sqrt x;
+          dist = uniformDiscretize (quantile (logNormal lmu lsigma)) n};
+     return $ multiRate base dist
+});
+
+log_normal_inv_model base n = Prefix "LogNormalInv"
+  (do {
+     sigmaOverMu <- logLaplace (-3.0) 1.0;
+     Log "sigmaOverMu" sigmaOverMu;
+
+     let {x = log(1.0+sigmaOverMu^2);
+          lmu = -0.5*x;
+          lsigma = sqrt x;
+          dist = uniformDiscretize (quantile (logNormal lmu lsigma)) n};
+
+     dist2 <- plus_inv_model dist;
+
      return $ multiRate base dist2
 });
 
