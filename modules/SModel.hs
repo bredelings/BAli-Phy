@@ -100,10 +100,14 @@ tn_model nuca = Prefix "TN"
 
 gtr_model nuca = Prefix "GTR" 
   (do {
--- ag at ac gt gc tc
-     s <- dirichlet [2.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 2.0/8.0];
-     Log "s" s;
-     return $ gtr nuca (s!!0) (s!!1) (s!!2) (s!!3) (s!!4) (s!!5)
+     [ag,at,ac,gt,gc,tc] <- dirichlet [2.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 2.0/8.0];
+     Log "ag" ag;
+     Log "at" at;
+     Log "ac" ac;
+     Log "gt" gt;
+     Log "gc" gc;
+     Log "tc" tc;
+     return $ gtr nuca ag at ac gt gc tc
 });
 
 m0_model codona s = Prefix "M0"
