@@ -385,12 +385,12 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
 /// \param a The alphabet on which the model lives.
 /// \param frequencies The initial frequencies for the model.
 ///
-formula_expression_ref process_stack_Frequencies(const module_loader& L,
-						 vector<string>& model_args,
-						 const object_ptr<const alphabet>& a,
-						 const shared_ptr<const valarray<double> >& frequencies)
+expression_ref process_stack_Frequencies(const module_loader& L,
+					 vector<string>& model_args,
+					 const object_ptr<const alphabet>& a,
+					 const shared_ptr<const valarray<double> >& frequencies)
 {
-  formula_expression_ref R;
+  expression_ref R;
 
   if (model_args[0] == "F=constant") 
   {
@@ -432,19 +432,17 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
   }
   else if (model_args[0] == "MG94") 
   {
-    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
-    if (not T)
-      throw myexception()<<"+MG94: '"<<a->name<<"' is not a triplet alphabet.";
+    if (not dynamic_cast<const Triplets*>(&*a))
+      throw myexception()<<"+MG94w9: '"<<a->name<<"' is not a triplet alphabet.";
 
-    R = MG94_Model(*T);
+    return model_expression({identifier("mg94_model"),a});
   }
   else if (model_args[0] == "MG94w9") 
   {
-    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
-    if (not T)
+    if (not dynamic_cast<const Triplets*>(&*a))
       throw myexception()<<"+MG94w9: '"<<a->name<<"' is not a triplet alphabet.";
 
-    R = MG94w9_Model(*T);
+    return model_expression({identifier("mg94w9_model"),a});
   }
   /*
   else if (model_args[0] == "F=amino-acids") 
@@ -481,11 +479,12 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
   }
   */
 
-  if (R.exp() and model_args[1] != "")
+  if (R and model_args[1] != "")
   {
-    formula_expression_ref EM = coerce_to_EM(L,model_args[1], a, frequencies);
-
-    R = Reversible_Markov_Model(EM,R);
+    // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
+    expression_ref s = coerce_to_EM(L,model_args[1], a, frequencies).exp();
+    expression_ref mm = model_expression({identifier("reversible_markov_model"), s, R});
+    return mm;
   }
 
   return R;
