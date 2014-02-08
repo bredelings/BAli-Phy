@@ -115,6 +115,20 @@ m0_model codona s = Prefix "M0"
 
 m0_function codona s r = \omega -> reversible_markov (m0 codona s omega) r;
 
+m1a_model codona s r = Prefix "M1a" 
+(do {
+  f <- dirichlet [10.0, 11.0];
+  let {fConserved = f!!0;
+       fNeutral = f!!1};
+  Log "fConserved" fConserved;
+  Log "fNeutral" fNeutral;
+  omega1 <- uniform 0.0 1.0;
+  Log "omega1" omega1;
+  let {dist = DiscreteDistribution [(fConserved,omega1),(fNeutral, 1.0)]};
+  let {m0w w = reversible_markov (m0 codona s w) r};
+  return $ multiParameter m0w dist
+});
+
 m2a_model codona s r = Prefix "M2a" 
 (do {
   f <- dirichlet [10.0, 10.0, 1.0];
