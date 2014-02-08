@@ -234,7 +234,35 @@ m8b_test_model codona n_bins s r = Prefix "M8b_Test"
   return $ multiParameter m0w dist
 });
 
+branch_site_test_model codona n_bins s r = Prefix "BranchSiteTest"
+(do {
+  posW <- logGamma 4.0 0.25;
+  Log "posW" posW;
 
+  posSelection <- bernoulli 0.5;
+  Log "posSelection" posSelection;
+
+  let {posW' = if (posSelection == 1) then posW else 1.0};
+
+  [f0,f1] <- dirichlet' 2 1.0;
+  Log "f0" f0;
+  Log "f1" f1;
+
+  w0 <- uniform 0.0 1.0;
+  Log "w0" w0;
+
+  let {d1 = DiscreteDistribution [(f0,w0),(f1,1.0)];
+       d2 = DiscreteDistribution [(f0,posW'),(f1,posW')]};
+
+  posP <- beta 1.0 10.0;
+  Log "posP" posP;
+
+  let {m0w w = reversible_markov (m0 codona s w) r;
+       mixture1 = multiParameter m0w (mixDiscreteDistributions [1.0-posP, posP] [d1,d1]);
+       mixture2 = multiParameter m0w (mixDiscreteDistributions [1.0-posP, posP] [d1,d2])};
+
+  return $ MixtureModels [mixture1,mixture2]
+});
 
 x3_model s a = do {
  s' <- s (getNucleotides a);
