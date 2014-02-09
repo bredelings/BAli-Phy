@@ -1158,13 +1158,11 @@ Parameters::Parameters(const module_loader& L,
 
   add_parameter("Heat.beta", Double(1.0));
 
-  Model_Notes Main;
-  for(int i=0;i<n_scales;i++)
+  // Add a Main.mu<i> parameter for each scale.
   {
-    string mu_name = "Main.mu"+convertToString(i+1);
-    def_parameter(Main, mu_name, Double(0.25), lower_bound(0), (identifier("gamma"), 0.5, 2.0));
+    formula_expression_ref mus = model_expression({identifier("branch_mean_model"), n_scales});
+    evaluate_expression( mus.perform_exp() );
   }
-  add_submodel(Main);
 
   for(int i=0;i<n_scales;i++)
   {

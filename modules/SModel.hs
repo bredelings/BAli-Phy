@@ -435,6 +435,15 @@ dp_model base n = Prefix "DP"
    return $ multiRate base (DiscreteDistribution dist)
 });
 
+a_branch_mean_model n = 
+(do {
+   mu <- gamma 0.5 2.0;
+   Log ("mu"++show n) mu;
+   return ()
+});
+
+branch_mean_model n = Prefix "Main" (mapM_ (\i -> a_branch_mean_model i) [1..n]);
+
 reversible_markov_model s r = return $ reversible_markov s r;
 
 unit_model m = return $ MixtureModel (DiscreteDistribution [(1.0,m)]);
