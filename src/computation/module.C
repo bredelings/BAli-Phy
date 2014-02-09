@@ -56,6 +56,12 @@ using std::vector;
  * 7. Remove the concept of parameters from modules (e.g. parameter_symbol)
  *
  * 8. Handle the placing of substitution & indel parameters into prefixes.
+ *
+ * 9. Allow adding transition kernels from haskell
+ *
+ * 10. Allow specifying the sampling rate from haskell
+ *
+ * 11. Remove remaining BUGS note keywords from the parser.
  */
 
 symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2)

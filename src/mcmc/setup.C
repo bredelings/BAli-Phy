@@ -102,19 +102,7 @@ void add_MH_move(Probability_Model& P,const Proposal_Fn& proposal, const string&
 
 double default_sampling_rate(const Model& M, const string& parameter_name)
 {
-  expression_ref sampling_rate = lambda_expression(constructor("SamplingRate",2));
-
-  vector<expression_ref> results;
-  expression_ref query = (sampling_rate * parameter( parameter_name ) * match(0));
-  int found = M.find_match_notes(query, results, 0);
-
-  if (found != -1)
-  {
-    assert(results.size());
-    return *assert_is_a<Double>(results[0]);
-  }
-  else
-    return 1.0;
+  return 1.0;
 }
 
 
@@ -427,20 +415,13 @@ MCMC::MoveAll get_h_moves(Parameters& P)
 
   MoveAll h_moves("haskell_moves");
 
-  map<string,string> simplify = get_simplified_names(P.get_Program());
+  /*
+    for each expression...
 
-  for(int i=0;i<P.n_notes();i++)
-  {
-    if (not is_exactly(P.get_note(i),"MakeMove")) continue;
-    
-    expression_ref E = P.get_note(i)->sub[0];
-    string name = map_symbol_names(E,simplify)->print();
-    
     int head = P.add_compute_expression(E);
     
     h_moves.add(1,IOMove(name, head));
-  }
-
+  */
   return h_moves;
 }
 

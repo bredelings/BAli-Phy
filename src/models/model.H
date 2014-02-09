@@ -155,8 +155,6 @@ public:
   /// Construct an empty model
   Model(const module_loader&);
 
-  Model(const module_loader&, const std::vector<expression_ref>&);
-
   virtual ~Model() {};
 };
 

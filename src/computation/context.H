@@ -2,7 +2,6 @@
 
 #include "cow-ptr.H"
 #include "computation/program.H"
-#include "computation/model_notes.H"
 #include "computation/closure.H"
 #include "mytypes.H"
 
@@ -13,7 +12,7 @@ class reg_heap;
 class Module;
 
 /// This class contains only compute expressions, parameters, and names for the compute expressions
-class context: public Model_Notes
+class context
 {
   // FIXME - disallow operator=() as long as there are any regs on the stack?
   //         (that is, which we are in the middle of modifying the context)?
@@ -257,6 +256,4 @@ public:
 };
 
 std::ostream& operator<<(std::ostream&, const context& C);
-
-expression_ref dist_for_parameter(const std::string& name, const std::vector<expression_ref>& notes);
 #endif

@@ -594,33 +594,6 @@ context& context::operator+=(const vector<string>& module_names)
   return *this;
 }
 
-expression_ref dist_for_parameter(const string& name, const vector<expression_ref>& notes)
-{
-  for(const auto& note: notes)
-  {
-    if (not is_exactly(note, ":~")) continue;
-
-    expression_ref p = parameter(name);
-
-    if (not note->sub[0]->equals(*p)) continue;
-
-    expression_ref dist = note->sub[1];
-
-    return dist;
-  }
-  return {};
-}
-
-expression_ref parameter_constructor(const std::string& name, const vector<expression_ref>& notes)
-{
-  expression_ref dist = dist_for_parameter(name, notes);
-  if (dist)
-    return (identifier("structure_for_dist"),dist);
-  else
-    return identifier("new_modifiable");
-  // for e.g. the tree, which is a parameter with no distribution!
-}
-
 void context::allocate_identifiers_for_modules(const vector<string>& module_names)
 {
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
@@ -691,7 +664,7 @@ void context::initialize_parameter_structures_for_modules(const vector<string>& 
       if (S.symbol_type == parameter_symbol)
       {
 	int R = get_parameter_reg( find_parameter(S.name) );
-	expression_ref E = (identifier("unsafePerformIO"), parameter_constructor(S.name,get_notes()) );
+	expression_ref E = (identifier("unsafePerformIO"), identifier("new_modifiable") );
 	E = (identifier("evaluate"),-1,E);
 	set_C(R, preprocess( E ) );
       }
@@ -703,8 +676,6 @@ void context::initialize_parameter_structures_for_modules(const vector<string>& 
 context& context::operator+=(const Module& M)
 {
   Program& PP = *P.modify();
-
-  int first_note = n_notes();
 
   int first_module = PP.size();
 
@@ -721,10 +692,6 @@ context& context::operator+=(const Module& M)
       new_module_names.push_back(module.name);
 
   allocate_identifiers_for_modules(new_module_names);
-
-  // 3. Now that parameters are defined, add notes -- which can add priors for parameters.
-  for(int i=first_module;i<PP.size();i++)
-    add_notes(PP[i].get_notes());
 
   // 4. Create a structure containing modifiables for each parameter
   initialize_parameter_structures_for_modules(new_module_names);
@@ -749,7 +716,6 @@ context& context::operator=(const context& C)
   context_index = memory_->copy_context(C.context_index);
   perform_io_head = C.perform_io_head;
   P = C.P;
-  notes = C.notes;
 
   return *this;
 }
@@ -784,8 +750,7 @@ context::context(const module_loader& L, const vector<expression_ref>& N, const 
 }
 
 context::context(const context& C)
-  :Model_Notes(C),
-   memory_(C.memory_),
+  :memory_(C.memory_),
    P(C.P),
    context_index(memory_->copy_context(C.context_index)),
    perform_io_head(C.perform_io_head),

@@ -159,24 +159,8 @@ efloat_t Model::prior() const
 }
 
 Model::Model(const module_loader& L)
-  :Model(L, vector<expression_ref>{})
-{ }
-
-Model::Model(const module_loader& L, const vector<expression_ref>& notes)
   :context(L)
-{
-  alphabetize_parameters();
-
-  // 2. Add the notes refering to the parameters.
-  for(int i=0;i<notes.size();i++)
-    add_note(notes[i]);
-
-#ifndef NDEBUG
-  std::cout<<*this<<"\n";
-  std::cout<<"prior = "<<log(prior())<<"\n";
-  std::cout<<*this<<std::endl;
-#endif
-}
+{ }
 
 void show_parameters(std::ostream& o,const Model& M) {
   for(int i=0;i<M.n_parameters();i++) {

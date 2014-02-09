@@ -920,39 +920,6 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       }
       return E2;
     }
-    else if (n->type == "BugsNote")
-    {
-      // This expression should have the form 'AST[BugsNote] (AST[Apply] con_name arg1 arg2 ... arg_n)'.
-      expression_ref apply = E->sub[0];
-      if (not is_AST(apply,"Apply"))
-	throw myexception()<<"BUGS note '"<<apply->print()<<"' is not an Apply expression!";
-      v = apply->sub;
-
-      string con_name = v[0].assert_is_a<AST_node>()->value;
-      v.erase(v.begin());
-
-      for(auto& e: v)
-	e = desugar(m, e, bound);
-
-      expression_ref note = { constructor(con_name,v.size()), v};
-      return {E->head,{note}};
-    }
-    else if (n->type == "BugsDist" or n->type == "BugsExternalDist")
-    {
-      for(auto& e: v)
-	e = desugar(m, e, bound);
-
-      expression_ref note = constructor(":~",2) + v[0] + v[1];
-      return {E->head,{note}};
-    }
-    else if (n->type == "BugsDataDist")
-    {
-      for(auto& e: v)
-	e = desugar(m, e, bound);
-
-      expression_ref note = constructor(":=~",2) + v[0] + v[1];
-      return {E->head,{note}};
-    }
   }
 
   for(auto& e: v)
@@ -1012,7 +979,4 @@ void add_model(Parameters& P, const std::string& filename)
 
   P += m;
   P.perform_expression((identifier("gen_model"),identifier(m.name+".main")));
-
-  for(int i=0;i<P.n_notes();i++)
-    std::cerr<<"note "<<i<<" = "<<P.get_note(i)->print()<<"\n\n";
 }
