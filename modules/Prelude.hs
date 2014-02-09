@@ -292,9 +292,12 @@ quicksortWith f (x:xs) = quicksortWith f small ++ (x : quicksortWith f large)
    where { small = [y | y <- xs, (f y) <= (f x)] ;
            large = [y | y <- xs, (f y)  > (f x)] };
   
+show () = "()";
 show (x,y) = "(" ++ show x ++ "," ++ show y ++ ")";
 show (x,y,z) = "(" ++ show x ++ "," ++ show y ++ "," ++ show z ++ ")";
-show (x:y) = x:y;
+show [] = "[]";
+show (x:y) = "["++show x++show' y++"]" where {show' [] = "";
+                                              show' (x:y) = ","++show x++show' y};
 show x     = listFromString $ builtin_show x;
 
 sequence [] = return [];
