@@ -417,6 +417,24 @@ log_normal_inv_model base n = Prefix "LogNormalInv"
      return $ multiRate base dist2
 });
 
+dp_model base n = Prefix "DP"
+(do {
+   fraction <- dirichlet' n (1.0 + (intToDouble n/2.0));
+   rates    <- dirichlet' n 2.0;
+   let {dist = zip fraction rates;
+        dist' = quicksortWith (\(f,r)->r) dist';
+        x = unzip dist';
+        fs = fst x;
+        rs = snd x};
+
+   sequence_ $ zipWith (\f i -> Log ("f"++show i) f) fraction [1..];
+   sequence_ $ zipWith (\f i -> Log ("rates"++show i) f) rates [1..];
+--   mapM_ (\i -> Log ("f"++show i) (fs!!i)) [0..];
+--   mapM_ (\i -> Log ("rate"++show i) (rs!!i)) [0..];
+
+   return $ multiRate base (DiscreteDistribution dist)
+});
+
 reversible_markov_model s r = return $ reversible_markov s r;
 
 unit_model m = return $ MixtureModel (DiscreteDistribution [(1.0,m)]);

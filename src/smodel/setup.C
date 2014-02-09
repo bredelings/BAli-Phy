@@ -670,33 +670,15 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
   //  (a) either specify the FREQUENCIES of the model, or
   //  (b) split every model and make a zero-scaled version of it.
 
-  else if (model_args[0] == "DP") {
-    int n=4;
-    if (model_args.size() > 2 and model_args[2] != "")
-      n = convertTo<int>(model_args[2]);
+  else if (model_args[0] == "DP") 
+  {
+    expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
-    vector<expression_ref> fs;
-    vector<expression_ref> rates;
+    int n = convertTo<int>(model_args[2]);
 
-    formula_expression_ref dist = ListEnd;
-    for(int i=0;i<n;i++)
-    {
-      formula_expression_ref f = def_parameter("DP.f"+convertToString(i+1), Double(1.0/n), between(0,1));
-      formula_expression_ref rate = def_parameter("DP.rate"+convertToString(i+1), Double(1.0), between(0,n));
-      
-      fs.push_back(f.exp());
-      rates.push_back(rate.exp());
-
-      // dist = (f,rate):dist
-      dist = Tuple(f, rate) & dist;
-    }
-    dist = (identifier("DiscreteDistribution"), dist);
-    dist.add_expression( constructor(":~",2) + get_list(fs) + (identifier("dirichlet'"), n, 1.0+n/2.0));
-    dist.add_expression( constructor(":~",2) + get_list(rates) +(identifier("dirichlet'"), n, 2.0));
-
-    formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
-    return (identifier("multiRate"), base,  dist);
+    return model_expression({identifier("dp_model"), base, n});
   }
+  /*
   else if (model_args[0] == "Modulated")
   {
     formula_expression_ref MM = coerce_to_MM(L, model_args[1],a,frequencies);
@@ -717,7 +699,6 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     return Mixture_Model(models);
   }
-  /*
   else if (model_args[0] == "M2") 
   {
     formula_expression_ref p1 = def_parameter("M2.fAaINV", Double(1.0/3), between(0,1));
