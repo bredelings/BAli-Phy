@@ -1150,7 +1150,7 @@ Parameters::Parameters(const module_loader& L,
    branch_length_max(-1)
 {
   // \todo FIXME:cleanup|fragile - Don't touch C here directly!
-  *this += { "SModel","Distributions","Range","PopGen","Alignment" };
+  *this += { "SModel","Distributions","Range","PopGen","Alignment","IModel" };
   
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 

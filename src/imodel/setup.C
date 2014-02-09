@@ -27,87 +27,9 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
   else if (name == "RS07-no-T")
     ;
   else if (name == "RS07")
-  {
-    return submodel_expression("RS07");
-  }
-  else if (name == "fg_branch_scale[RS07]")
-  {
-    expression_ref RS07BranchHMM;
-    expression_ref lengthp;
-
-    expression_ref log_lambda = def_parameter(imodel, "logLambda", -4.0, nullptr, (identifier("laplace"), -4.0, 1.0));
-    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0), (identifier("exponential"), 10.0));
-
-    expression_ref log_lambda_scale = def_parameter(imodel, "logLambdaScale", 0.0, nullptr, (identifier("laplace"), 0.0, 1.0));
-    expression_ref lambda_scale_on = def_parameter(imodel, "lambdaScaleOn", false, nullptr, (identifier("bernoulli"), 0.5));
-    // FIXME!  We need a discrete uniform
-    expression_ref lambda_scale_branch = def_parameter(imodel, "lambdaScaleBranch", -1, between(0,T.n_branches()));
-
-    expression_ref epsilon = (identifier("/"),meanIndelLengthMinus1,((identifier("+"),1.0,meanIndelLengthMinus1)));
-    expression_ref lambda = (identifier("exp"), log_lambda);
-    expression_ref lambda_scale = (identifier("exp"), log_lambda_scale);
-    expression_ref rate = (identifier("If"), (identifier("=="),v2,lambda_scale_branch),(identifier("*"),lambda,lambda_scale),lambda);
-    expression_ref heat = parameter("Heat.beta");
-    expression_ref training = parameter("IModels.training");
-
-    imodel.set_exp( Tuple(v1^(v2^(RS07BranchHMM, epsilon, (identifier("*"),rate,(identifier("!"),v1,v2)), heat, training)), 
-			  v1^(lengthp,epsilon,v1)) );
-  }
-  else if (name == "relaxed_rates1[RS07]")
-  {
-    /*
-     * DefineBuiltin RS07BranchHMM
-     * DefineBuiltin lengthp
-     */
-
-    /*
-     * meanIndelLenthMinus1 ~ Exponential(10.0)
-     * lambdaSigmaOverMu ~ LogLaplace(-3.0, 1.0)
-     * lambdasList ~ let {b = lambdaSigmaOverMu * lambdaSigmaOverMu} in iid (nBranches, Gamma(1.0/b, b))
-     * logLambdaMean ~ Laplace(-4.0, 1.0)
-     *
-     * lambdaMean = exp logLambdaMean
-     * lambdaScales = listArray' lambdasList
-     * epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1)
-     * main = (\t b -> RS07BranchMHH epsilon (lambdaMean * lambdaScales!b * t!b) Heat.beta IModels.training, 
-     *         \l -> lengthp epsilon l)
-     */
-
-    expression_ref RS07BranchHMM;
-    expression_ref lengthp;
-    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0), (identifier("exponential"), 10.0));
-    expression_ref epsilon = (identifier("/"),meanIndelLengthMinus1,((identifier("+"),1.0,meanIndelLengthMinus1)));
-
-    expression_ref lambda_sigma_over_mu = def_parameter(imodel,"lambdaSigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"), -3.0, 1.0 ));
-    expression_ref B = (identifier("*"),lambda_sigma_over_mu,lambda_sigma_over_mu);
-    expression_ref A = (identifier("/"),1.0,B);
-
-    vector<expression_ref> branch_lambdas;
-    for(int b=0;b<T.n_branches();b++)
-      branch_lambdas.push_back(def_parameter(imodel, "lambdaScale"+convertToString(b), 1.0, nullptr, (identifier("gamma"), A, B)));
-    expression_ref lambdas_list = get_list(branch_lambdas);
-
-    expression_ref log_lambda_mean = def_parameter(imodel, "logLambdaMean", -4.0, nullptr, (identifier("laplace"), -4.0, 1.0));
-
-    expression_ref lambda_mean = (identifier("exp"), log_lambda_mean);
-    
-    expression_ref heat = parameter("Heat.beta");
-    expression_ref training = parameter("IModels.training");
-
-    // let lambdaMean = exp logLambdaMean, lambdaScales = arrayFromList lambdasList .... lambdaMean*lambdasList!b
-
-    imodel.set_exp( let_expression(v3, (identifier("exp"), log_lambda_mean),
-				   let_expression(v4, (identifier("listArray'"), lambdas_list),
-						  Tuple(v1^(v2^(RS07BranchHMM, epsilon, (identifier("*"),v3,(identifier("*"),(identifier("!"),v4,v2),(identifier("!"),v1,v2))), heat, training)), 
-							v1^(lengthp,epsilon,v1))
-						  )
-				   )
-		    );
-  }
+    return model_expression({identifier("rs07_model"),0});
   else if (name == "relaxed_rates_RS07")
-  {
-    return submodel_expression("RelaxedRatesRS07");
-  }
+    return model_expression({identifier("rs07_relaxed_rates_model"),0});
   else
     throw myexception()<<"Unrecognized indel model '"<<name<<"'";
 
