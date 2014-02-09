@@ -310,5 +310,8 @@ sequence_ (a:as) = do { a;
                       };
 
 mapM f = sequence . map f;
-mapM_ f = sequence_ . map f
+mapM_ f = sequence_ . map f;
+
+unzip [] = ([],[]);
+unzip [(x,y),l] = ([x:xs],[y:ys]) where {z = unzip l; xs = fst z; ys = snd z}
 }
