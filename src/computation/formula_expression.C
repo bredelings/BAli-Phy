@@ -100,6 +100,20 @@ expression_ref perform_exp(const expression_ref& F)
   return E;
 }
 
+expression_ref perform_exp(const expression_ref& F, const string& prefix)
+{
+  expression_ref E = F;
+  if (is_AST(E,"model"))
+  {
+    E = translate_model(E);
+    E = (identifier("add_prefix"),prefix,E);
+    E = (identifier("gen_model"),E);
+    E = (identifier("unsafePerformIO'"),E);
+    E = (identifier("evaluate"),-1,E);
+  }
+  return E;
+}
+
 object_ptr<const Object> result(const expression_ref& E, const module_loader& L)
 {
   return result(E, L,vector<Module>{});

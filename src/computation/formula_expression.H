@@ -30,6 +30,8 @@ public:
 
 expression_ref perform_exp(const expression_ref&);
 
+expression_ref perform_exp(const expression_ref&, const std::string& prefix);
+
 object_ptr<const Object> result(const expression_ref&, const module_loader& L);
 
 object_ptr<const Object> result(const expression_ref&, const module_loader& L, const std::vector<Module>&);

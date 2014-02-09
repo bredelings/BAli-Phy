@@ -1251,7 +1251,7 @@ Parameters::Parameters(const module_loader& L,
 
     expression_ref smodel = SMs[i];
 
-    SModels.push_back( smodel_methods( perform_exp(smodel), *this) );
+    SModels.push_back( smodel_methods( perform_exp(smodel,prefix), *this) );
   }
 
   // register the indel models as sub-models
@@ -1260,11 +1260,7 @@ Parameters::Parameters(const module_loader& L,
   {
     string prefix = "I" + convertToString(i+1);
 
-    formula_expression_ref imodel = prefix_formula(prefix, IMs[i]);
-
-    imodels_.push_back(imodel.perform_exp());
-
-    IModel_methods[i].parameters = add_submodel(imodel);
+    imodels_.push_back(perform_exp(IMs[i],prefix));
   }
   Module imodels_program("IModels");
   imodels_program.def_function("models", (identifier("listArray'"), get_list(imodels_)));
