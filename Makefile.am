@@ -17,11 +17,8 @@ noinst_SCRIPTS = scripts/git_version.sh
 
 modulesdir = $(libdir)/@PACKAGE@/modules/
 modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude.hs modules/Range.hs modules/SModel.hs \
-		modules/Tree.hs modules/HKY.hs modules/TN.hs modules/M0.hs modules/HKYx3.hs \
-		modules/GTR.hs modules/TNx3.hs modules/GTRx3.hs modules/F3x4.hs modules/Alphabet.hs \
-		modules/Parameters.hs modules/RS07.hs modules/Alignment.hs modules/RelaxedRatesRS07.hs \
-		modules/MCMC.hs modules/M2a.hs modules/M1a.hs modules/M2a_Test.hs modules/Gamma.hs \
-		modules/BranchSiteTest.hs modules/M8b_Test.hs modules/M7.hs modules/IModel.hs
+		modules/Tree.hs modules/Alphabet.hs modules/Parameters.hs modules/Alignment.hs \
+		modules/MCMC.hs modules/IModel.hs
 
 # Distributed in the doc/ directory
 docdir = $(datadir)/doc/@PACKAGE@
