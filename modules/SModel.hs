@@ -422,7 +422,7 @@ dp_model base n = Prefix "DP"
    fraction <- dirichlet' n (1.0 + (intToDouble n/2.0));
    rates    <- dirichlet' n 2.0;
    let {dist = zip fraction rates;
-        dist' = quicksortWith (\(f,r)->r) dist';
+        dist' = quicksortWith (\(f,r)->r) dist;
         x = unzip dist';
         fs = fst x;
         rs = snd x};
