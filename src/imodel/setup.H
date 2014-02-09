@@ -5,6 +5,6 @@
 #include "computation/formula_expression.H"
 #include "tree/sequencetree.H"
 
-formula_expression_ref get_imodel(std::string, const SequenceTree& T);
+expression_ref get_imodel(std::string, const SequenceTree& T);
 
 #endif
