@@ -36,16 +36,6 @@ using std::vector;
  *        - OK, so suppose we have Module HKY where { ... parameter kappa ... }
  *    (e) So, we have the model graph (statistics) from which we generate a program (computation).
  *
- * 3. How does a BUGS file relate to the program? (This may be more a question about how
- *     we construct MCMC samplers than a question about the underlying framework.)
- *
- * 4. How does Model_Notes relate to the program? (This may also not be a problem with
- *     Context & such; it may instead be a question of programming BUGS samplers.)
- *    (a) The model graph in Model_Notes is logically prior to the program.
- *    (b) Model_Notes represent (sub)models, as in formula_expression_ref.
- *    (c) Question: should each submodel simply define a 'main'?
- *        Or, should it define a 
- *
  * (a) How about notes such as logging frequency, etc.?
  *
  *
@@ -62,6 +52,8 @@ using std::vector;
  * 10. Allow specifying the sampling rate from haskell
  *
  * 11. Remove remaining BUGS note keywords from the parser.
+ *
+ * 12. See loader.C
  */
 
 symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2)
@@ -280,46 +272,8 @@ std::set<std::string> Module::dependencies() const
     bool qualified = *impdecl->sub[0].is_a<String>() == "qualified";
     if (qualified) i++;
 
-    bool submodel = *impdecl->sub[i].is_a<String>() == "submodel";
-    if (submodel) i++;
-
-    // bail out if this is a submodel declaration.
-    if (submodel) continue;
-    
     string imp_module_name = *impdecl->sub[i++].is_a<String>();
     module_names.insert(imp_module_name);
-  }
-
-  return module_names;
-}
-
-// in module m0: import [qualified] submodel [m1] as [m2]
-map<string,string> Module::submodel_dependencies() const
-{
-  if (not impdecls) return map<string,string>{};
-  
-  map<string,string> module_names;
-
-  for(const auto& impdecl:impdecls->sub)
-  {
-    int i=0;
-    bool qualified = *impdecl->sub[0].is_a<String>() == "qualified";
-    if (qualified) i++;
-
-    bool submodel = *impdecl->sub[i].is_a<String>() == "submodel";
-    if (submodel) i++;
-
-    // bail out if this is NOT a submodel declaration.
-    if (not submodel) continue;
-    
-    string imp_module_name = *impdecl->sub[i++].is_a<String>();
-
-    string imp_module_name_as = imp_module_name;
-    if (i < impdecl->sub.size() and *impdecl->sub[i++].is_a<String>() == "as")
-      imp_module_name_as = *impdecl->sub[i++].is_a<String>();
-
-    // Store map from m1 -> m0.m2
-    module_names.insert({imp_module_name, name+"."+imp_module_name_as});
   }
 
   return module_names;
@@ -338,30 +292,13 @@ void Module::resolve_symbols(const std::vector<Module>& P)
       bool qualified = *impdecl->sub[0].is_a<String>() == "qualified";
       if (qualified) i++;
     
-      bool submodel = *impdecl->sub[i].is_a<String>() == "submodel";
-      if (submodel) i++;
-    
       string imp_module_name = *impdecl->sub[i++].is_a<String>();
-      
-      string imp_module_name_as = imp_module_name;
-      if (i < impdecl->sub.size() and *impdecl->sub[i++].is_a<String>() == "as")
-	imp_module_name_as = *impdecl->sub[i++].is_a<String>();
       
       assert(i == impdecl->sub.size());
       
-      if (submodel){
-	// module M where { import submodel A as B } => 
-	// 1. load A
-	// 2. Rename it to M.B
-	// 3. Import it (e.g M.B) as B;
-	
-	// Note that the loaded module is imp_module_name, though.
-	imp_module_name = name+"."+imp_module_name_as;
-      }
-
       Module M = find_module(imp_module_name,P);
 
-      import_module(M, imp_module_name_as, qualified);
+      import_module(M, imp_module_name, qualified);
       if (imp_module_name == "Prelude")
 	saw_Prelude = true;
     }
@@ -394,15 +331,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
       decl = substitute(decl,dummy( name),identifier(qname));
     }
   
-  // 3. Add notes
-  for(const auto& note: decls_sub)
-    if (is_AST(note,"BugsDataDist") or
-	is_AST(note,"BugsExternalDist") or
-	is_AST(note,"BugsDist") or
-	is_AST(note,"BugsNote"))
-      add_note(note->sub[0]);
-
-  // 4. Define the symbols
+  // 3. Define the symbols
   for(const auto& decl: decls_sub)
     if (is_AST(decl,"Decl"))
     {

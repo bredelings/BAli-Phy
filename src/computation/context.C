@@ -439,20 +439,6 @@ void context::pop_temp_head() const
   memory()->pop_temp_head();
 }
 
-void context::alphabetize_parameters()
-{
-  vector<string> names;
-  for(int i=0;i<n_parameters();i++)
-    names.push_back( parameter_name(i) );
-
-  vector<string> names2 = names;
-  std::sort(names2.begin(), names2.end());
-
-  vector<int> mapping = compute_mapping(names, names2);
-
-  parameters() = apply_mapping(parameters(), mapping);
-}
-
 void context::release_identifiers()
 {
   memory()->release_identifiers();

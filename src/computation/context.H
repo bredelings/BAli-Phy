@@ -202,8 +202,6 @@ public:
   int n_expressions() const;
   expression_ref get_expression(int i) const;
 
-  void alphabetize_parameters();
-
   void compile();
 
   efloat_t get_probability() const;

@@ -48,7 +48,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            parser/AST.H computation/computation.H computation/closure.H \
            computation/context.H computation/expression.H computation/formula_expression.H \
 	   computation/bithash.H computation/graph_register.H computation/let-float.H \
-           computation/loader.H computation/model_notes.H computation/module.H \
+           computation/loader.H computation/module.H \
 	   computation/operation.H computation/operations.H computation/operator.H \
            computation/pool.H computation/program.H builtins/conversion.H \
 	   builtins/iota.H CacheList.H mcmc/logger.H smodel/setup.H \
@@ -115,7 +115,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  computation/graph_register.C computation/module.C \
 	  computation/formula_expression.C \
 	  computation/operations.C computation/loader.C computation/context.C \
-	  computation/model_notes.C substitution/matcache.C computation/closure.C \
+	  substitution/matcache.C computation/closure.C \
 	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C object.C \
 	  parser/AST.C computation/program.C mcmc/sample-tri2.C
 

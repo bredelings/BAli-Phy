@@ -6,7 +6,6 @@
 #include <set>
 #include <map>
 #include "computation/module.H"
-#include "computation/model_notes.H"
 
 class module_loader
 {

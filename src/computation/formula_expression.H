@@ -3,7 +3,6 @@
 
 #include "expression.H"
 #include <iostream>
-#include "model_notes.H"
 #include "computation/loader.H"
 
 class Module;
