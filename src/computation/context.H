@@ -72,8 +72,6 @@ public:
 
   const std::vector<Module>& get_Program() const {return *P;}
 
-  int add_note(const expression_ref&);
-
   reg& access(int i) const;
 
   const closure& access_result_for_reg(int i) const;

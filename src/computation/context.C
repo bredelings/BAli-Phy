@@ -96,18 +96,6 @@ int context::add_identifier(const string& name) const
   return memory()->add_identifier(name);
 }
 
-int context::add_note(const expression_ref& E)
-{
-  if (is_AST(E, "import_note"))
-  {
-    string modid = *E->sub[0].assert_is_a<String>();
-    (*this) += modid;
-  }
-  
-  return Model_Notes::add_note( E );
-}
-
-
 void context::rename_parameter(int i, const string& new_name)
 {
   parameters()[i].first = new_name;
