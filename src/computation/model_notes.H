@@ -35,12 +35,5 @@ public:
   Model_Notes(const std::vector<expression_ref>&);
 };
 
-Model_Notes add_prefix(const std::string& prefix, const Model_Notes& M);
-
-Model_Notes prefix_formula(const std::string&,const Model_Notes&);
-
 Model_Notes substitute(const Model_Notes& N, const expression_ref& E1, const expression_ref& E2);
-std::set<std::string> find_declared_parameters(const std::vector<expression_ref>&);
-std::set<std::string> find_declared_parameters(const Model_Notes&);
-
 #endif

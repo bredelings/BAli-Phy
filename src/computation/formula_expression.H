@@ -44,8 +44,6 @@ object_ptr<const T> result_as(const expression_ref& E,const module_loader& L) {r
 formula_expression_ref apply(const formula_expression_ref& F1, const expression_ref& E2);
 formula_expression_ref apply(const formula_expression_ref& F1, const formula_expression_ref& F2);
 
-formula_expression_ref prefix_formula(const std::string&,const formula_expression_ref&);
-
 std::ostream& operator<<(std::ostream&, const formula_expression_ref& F);
 
 template <typename T> struct Bounds;

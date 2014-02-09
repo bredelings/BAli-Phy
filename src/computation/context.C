@@ -758,37 +758,6 @@ context::context(const module_loader& L)
   :context(L,vector<expression_ref>{},vector<Module>{})
 {  }
 
-// FIXME - this should be shared with Model::add_submodel( ), but we need to call Model::add_notes( ).
-// If a model were to HOOK (a) add_parameter, (b) add_note( ), and (c) set_parameter_value( )
-//  then this routine could work on both.
-vector<int> add_submodel(context& C, const vector<expression_ref>& N)
-{
-  vector<int> new_parameters;
-
-  int first_note = C.n_notes();
-
-  // 3. Add the notes from this model to the current model.
-  for(const auto& n: N)
-    C.add_note(n);
-  
-  // 1. Find and the declared parameter names
-  std::set<string> declared_parameter_names = find_declared_parameters(N);
-  if (not includes(declared_parameter_names, find_named_parameters(N)))
-    throw myexception()<<"Some parameter is referenced, but not declared, at model creation!";
-
-  // 2. Add the declared parameters
-  for(const auto& name: declared_parameter_names)
-    if (C.find_parameter(name) == -1)
-    {
-      int index = C.add_parameter(name);
-      new_parameters.push_back(index);
-    }
-    else
-      throw myexception()<<"Submodel declares existing parameter '"<<name<<"'!";
-
-  return new_parameters;
-}
-
 context::context(const module_loader& L, const vector<expression_ref>& N)
   :context(L, N,vector<Module>{})
 { }
@@ -805,8 +774,6 @@ context::context(const module_loader& L, const vector<expression_ref>& N, const 
   (*this) += Ps;
 
   perform_io_head = add_compute_expression(identifier("unsafePerformIO"));
-
-  add_submodel(*this, N);
 }
 
 context::context(const module_loader& L, const vector<expression_ref>& N, const vector<string>& module_names)

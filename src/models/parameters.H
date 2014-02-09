@@ -193,7 +193,6 @@ struct imodel_methods
 {
   int length_arg_param_index;
   int length_p;
-  std::vector<int> parameters;
 };
 
 struct smodel_methods

@@ -1010,7 +1010,7 @@ void add_model(Parameters& P, const std::string& filename)
 {
   auto m = read_model(P, filename);
 
-  P.add_submodel(m);
+  P += m;
   P.perform_expression((identifier("gen_model"),identifier(m.name+".main")));
 
   for(int i=0;i<P.n_notes();i++)

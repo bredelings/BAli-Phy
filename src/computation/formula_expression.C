@@ -71,16 +71,6 @@ formula_expression_ref rename_module(const formula_expression_ref F, const strin
   return F2;
 }
 
-formula_expression_ref prefix_formula(const std::string& prefix,const formula_expression_ref& R)
-{
-  set<string> declared_parameter_names = find_declared_parameters(R.get_notes());
-  formula_expression_ref R2 = R;
-  for(const auto& name: declared_parameter_names)
-    R2 = substitute(R2, parameter(name), parameter(prefix+"."+name));
-
-  return R2;
-}
-
 int formula_expression_ref::add_expression(const formula_expression_ref& R)
 {
   add_notes(R.get_notes());

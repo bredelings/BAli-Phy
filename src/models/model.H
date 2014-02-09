@@ -152,11 +152,6 @@ public:
   /// Set SOME of the model parameter values
           void set_parameter_values(const std::vector<int>& indices,const std::vector<object_ptr<const Object> >& p);
 
-  // Add a Module, including any notes and declared parameters.
-  std::vector<int> add_submodel(const Module&);
-
-  std::vector<int> add_submodel(const Model_Notes&);
-
   /// Construct an empty model
   Model(const module_loader&);
 

@@ -68,55 +68,6 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values() const
   return values;  
 }
 
-vector<int> Model::add_submodel(const Module& M)
-{
-  int old_n_parameters = n_parameters();
-
-  // 1. Load the module, perform imports, and resolve its symbols.
-  int old_n_notes = n_notes();
-  *this += M;
-
-  // 3. Check that no parameters are declared via notes, here.
-  assert( find_declared_parameters(M).empty() );
-
-  // \todo FIXME:cleanup - Try to merge with add_submodel(context&,N)
-  // 4. Account for any parameters that were added.
-  vector<int> new_parameters;
-  for(int i=old_n_parameters;i<n_parameters();i++)
-    new_parameters.push_back( i );
-
-  return new_parameters;
-}
-
-vector<int> Model::add_submodel(const Model_Notes& N)
-{
-  vector<int> new_parameters;
-
-  int first_note = n_notes();
-
-  // 3. Find and add the declared names that don't exist yet.
-  std::set<string> declared_parameter_names = find_declared_parameters(N);
-  for(const auto& name: declared_parameter_names)
-    if (find_parameter(name) == -1)
-    {
-      expression_ref dist = dist_for_parameter(name, N.get_notes());
-      int index = add_parameter_with_dist(name, dist);
-      new_parameters.push_back(index);
-    }
-    else
-      throw myexception()<<"Submodel declares existing parameter '"<<name<<"'!";
-  
-  // 4. Add the notes from this model to the current model.
-  int old_n_parameters=n_parameters();
-  for(const auto& n: N.get_notes())
-    add_note(n);
-
-  for(int i=old_n_parameters;i<n_parameters();i++)
-    new_parameters.push_back( i );
-  
-  return new_parameters;
-}
-
 std::vector< object_ptr<const Object> > Model::get_parameter_values(const std::vector<int>& indices) const
 {
   std::vector< object_ptr<const Object> > values(indices.size());
@@ -214,14 +165,6 @@ Model::Model(const module_loader& L)
 Model::Model(const module_loader& L, const vector<expression_ref>& notes)
   :context(L)
 {
-  // 1. Create the parameters
-  std::set<string> names = find_declared_parameters(notes);
-  if (not includes(names, find_named_parameters(notes)))
-    throw myexception()<<"Some parameter is referenced, but not declared, at model creation!";
-  
-  for(const auto& name: names)
-    add_parameter(name);
-
   alphabetize_parameters();
 
   // 2. Add the notes refering to the parameters.

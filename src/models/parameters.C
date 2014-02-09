@@ -1197,7 +1197,7 @@ Parameters::Parameters(const module_loader& L,
   tree_module.add_import(false, "Tree");
   tree_module.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T().n_nodes(), T().n_branches()));
 
-  add_submodel( tree_module );
+  (*this) += tree_module;
 
   // Determine the parameter index for branches adjoining a tree node
   for(int n=0; n < T().n_nodes(); n++)
@@ -1265,7 +1265,7 @@ Parameters::Parameters(const module_loader& L,
   Module imodels_program("IModels");
   imodels_program.def_function("models", (identifier("listArray'"), get_list(imodels_)));
   imodels_program.declare_parameter("training");
-  add_submodel(imodels_program);
+  (*this) += imodels_program;
   context::set_parameter_value(find_parameter("IModels.training"), false);
   
   // check that we only map existing smodels to data partitions
@@ -1330,7 +1330,7 @@ Parameters::Parameters(const module_loader& L,
 
   Module parameter_program("Params");
   parameter_program.def_function("substitutionBranchLengths", (identifier("listArray'"),(identifier("fmap"),identifier("listArray'"),substitutionBranchLengthsList)));
-  add_submodel( parameter_program );
+  (*this) += parameter_program;
 
   // register the cached transition_p indices
   branch_transition_p_indices.resize(n_branch_means(), n_smodels());
