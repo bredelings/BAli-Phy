@@ -22,20 +22,22 @@ public:
 
   int add_expression(const formula_expression_ref&);
 
-  object_ptr<const Object> result(const module_loader& L) const;
-
-  object_ptr<const Object> result(const module_loader& L, const std::vector<Module>&) const;
-
-  object_ptr<const Object> result(const module_loader& L, const std::vector<std::string>&) const;
-
-  template <typename T>
-  object_ptr<const T> result_as(const module_loader& L) const {return boost::dynamic_pointer_cast<const T>(result(L));}
-
   formula_expression_ref();
   formula_expression_ref(const expression_ref&);
   formula_expression_ref(const Model_Notes&, int);
   formula_expression_ref(const Model_Notes&, const expression_ref&);
 };
+
+expression_ref perform_exp(const expression_ref&);
+
+object_ptr<const Object> result(const expression_ref&, const module_loader& L);
+
+object_ptr<const Object> result(const expression_ref&, const module_loader& L, const std::vector<Module>&);
+
+object_ptr<const Object> result(const expression_ref&, const module_loader& L, const std::vector<std::string>&);
+
+template <typename T>
+object_ptr<const T> result_as(const expression_ref& E,const module_loader& L) {return boost::dynamic_pointer_cast<const T>(result(E,L));}
 
 formula_expression_ref apply(const formula_expression_ref& F1, const expression_ref& E2);
 formula_expression_ref apply(const formula_expression_ref& F1, const formula_expression_ref& F2);

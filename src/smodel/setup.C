@@ -227,7 +227,7 @@ expression_ref coerce_to_EM(const module_loader& L,
 
   expression_ref S = get_smodel_(L,smodel, a, frequencies);
 
-  if (S and dynamic_pointer_cast<const SymmetricMatrixObject>(formula_expression_ref(S).result(L,vector<string>{"SModel","Distributions","Range"})))
+  if (S and dynamic_pointer_cast<const SymmetricMatrixObject>(result(S,L,vector<string>{"SModel","Distributions","Range"})))
     return S;
 
   throw myexception()<<": '"<<smodel<<"' is not an exchange model.";
@@ -492,7 +492,7 @@ expression_ref coerce_to_frequency_model(const module_loader& L,
 					 const object_ptr<const alphabet>& /* a */,
 					 const shared_ptr< const valarray<double> >& /* frequencies */)
 {
-  if (is_exactly(formula_expression_ref(M).result(L,{"SModel","Distributions","Range"}), "SModel.ReversibleFrequency"))
+  if (is_exactly(result(M,L,{"SModel","Distributions","Range"}), "SModel.ReversibleFrequency"))
     return M;
 
   throw myexception()<<": '"<<M<<"' is not an exchange model.";
@@ -514,7 +514,7 @@ expression_ref coerce_to_RA(const module_loader& L,
 			    const expression_ref& M,
 			    const object_ptr<const alphabet>& a)
 {
-  object_ref result = formula_expression_ref{M}.result(L, {"SModel", "Distributions","Range"});
+  object_ref result = ::result(M, L, {"SModel", "Distributions","Range"});
 
   if (is_exactly(result, "SModel.F81"))
     return M;
@@ -558,7 +558,7 @@ expression_ref coerce_to_MM(const module_loader& L,
 				    const expression_ref& M,
 				    const object_ptr<const alphabet>& a)
 {
-  if (M and is_exactly(formula_expression_ref(M).result(L,{"SModel","Distributions","Range"}), "SModel.MixtureModel"))
+  if (M and is_exactly(result(M, L,{"SModel","Distributions","Range"}), "SModel.MixtureModel"))
     return M;
 
   try { 
@@ -586,7 +586,7 @@ expression_ref coerce_to_MMM(const module_loader& L,
 				     const expression_ref& M,
 				     const object_ptr<const alphabet>& a)
 {
-  if (is_exactly(formula_expression_ref(M).result(L,{"SModel","Distributions","Range"}), "SModel.MixtureModels"))
+  if (is_exactly(result(M,L,{"SModel","Distributions","Range"}), "SModel.MixtureModels"))
     return M;
 
   try { 
@@ -898,7 +898,7 @@ get_smodel_(const module_loader& L,const string& smodel)
 /// \param a The alphabet.
 /// \param frequencies The initial letter frequencies in the model.
 ///
-formula_expression_ref
+expression_ref
 get_smodel(const module_loader& L, const string& smodel, const object_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >& frequencies) 
 {
   assert(frequencies->size() == a->size());
@@ -918,7 +918,7 @@ get_smodel(const module_loader& L, const string& smodel, const object_ptr<const 
 ///
 /// This routine constructs the initial frequencies based on all of the alignments.
 ///
-formula_expression_ref get_smodel(const module_loader& L, const variables_map& args, const string& smodel_name,const vector<alignment>& A) 
+expression_ref get_smodel(const module_loader& L, const variables_map& args, const string& smodel_name,const vector<alignment>& A) 
 {
   for(int i=1;i<A.size();i++)
     if (A[i].get_alphabet() != A[0].get_alphabet())
@@ -929,14 +929,14 @@ formula_expression_ref get_smodel(const module_loader& L, const variables_map& a
   return get_smodel(L, smodel_name, const_ptr( A[0].get_alphabet() ), frequencies);
 }
 
-formula_expression_ref get_smodel(const module_loader& L, const variables_map& args, const string& smodel_name,const alignment& A) 
+expression_ref get_smodel(const module_loader& L, const variables_map& args, const string& smodel_name,const alignment& A) 
 {
   shared_ptr< const valarray<double> > frequencies (new valarray<double>(empirical_frequencies(args,A)));
 
   return get_smodel(L, smodel_name, const_ptr( A.get_alphabet() ), frequencies);
 }
 
-formula_expression_ref get_smodel(const module_loader& L,const variables_map& args, const alignment& A) 
+expression_ref get_smodel(const module_loader& L,const variables_map& args, const alignment& A) 
 {
   string smodel_name = args["smodel"].as<string>();
 

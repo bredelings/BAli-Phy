@@ -87,21 +87,34 @@ int formula_expression_ref::add_expression(const formula_expression_ref& R)
   return add_note(R.exp());
 }
 
-object_ptr<const Object> formula_expression_ref::result(const module_loader& L) const
+expression_ref perform_exp(const expression_ref& F)
 {
-  return result(L,vector<Module>{});
+  expression_ref E = F;
+  if (is_AST(E,"model"))
+  {
+    E = translate_model(E);
+    E = (identifier("gen_model"),E);
+    E = (identifier("unsafePerformIO'"),E);
+    E = (identifier("evaluate"),-1,E);
+  }
+  return E;
 }
 
-object_ptr<const Object> formula_expression_ref::result(const module_loader& L, const vector<Module>& Ps) const
+object_ptr<const Object> result(const expression_ref& E, const module_loader& L)
 {
-  context C(L, get_notes(), Ps);
-  return C.evaluate_expression(perform_exp());
+  return result(E, L,vector<Module>{});
 }
 
-object_ptr<const Object> formula_expression_ref::result(const module_loader& L, const vector<string>& module_names) const
+object_ptr<const Object> result(const expression_ref& E, const module_loader& L, const vector<Module>& Ps)
 {
-  context C(L, get_notes(), module_names);
-  return C.evaluate_expression(perform_exp());
+  context C(L, {}, Ps);
+  return C.evaluate_expression(perform_exp(E));
+}
+
+object_ptr<const Object> result(const expression_ref& E, const module_loader& L, const vector<string>& module_names)
+{
+  context C(L, {}, module_names);
+  return C.evaluate_expression(perform_exp(E));
 }
 
 formula_expression_ref apply(const formula_expression_ref& F1, const expression_ref& E2)
@@ -220,15 +233,7 @@ formula_expression_ref get_list(const vector<formula_expression_ref>& v)
 
 expression_ref formula_expression_ref::perform_exp() const
 {
-  expression_ref E = exp();
-  if (is_AST(E,"model"))
-  {
-    E = translate_model(E);
-    E = (identifier("gen_model"),E);
-    E = (identifier("unsafePerformIO'"),E);
-    E = (identifier("evaluate"),-1,E);
-  }
-  return E;
+  return ::perform_exp(E);
 }
 
 expression_ref model_expression(const vector<expression_ref>& es)
