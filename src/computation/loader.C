@@ -57,6 +57,7 @@ using std::map;
  *
  * See list in parser/desugar.C
  * See list in models/parameters.C 
+ * See list in models/module.C
  *
  * -3. Merging Model::add_submodel(Model_Notes&) and add_submodel(Context&, vector<expression_ref>&)
  *     - Distribution notes need to be present BEFORE parameters are added, because they determine the structure.
