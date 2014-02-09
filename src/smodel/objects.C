@@ -1,5 +1,4 @@
 #include "smodel/objects.H"
-#include "smodel/operations.H"
 
 #include "math/exponential.H"
 

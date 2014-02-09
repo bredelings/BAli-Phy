@@ -46,12 +46,6 @@ std::ostream& operator<<(std::ostream&, const formula_expression_ref& F);
 
 template <typename T> struct Bounds;
 
-formula_expression_ref def_parameter(const std::string& name);
-formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value);
-formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b);
-formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref&);
-formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref&);
-
 formula_expression_ref let_expression(const expression_ref& var, const expression_ref& body, const formula_expression_ref& T);
 formula_expression_ref let_expression(const expression_ref& var, const formula_expression_ref& body, const expression_ref& T);
 formula_expression_ref let_expression(const expression_ref& var, const formula_expression_ref& body, const formula_expression_ref& T);

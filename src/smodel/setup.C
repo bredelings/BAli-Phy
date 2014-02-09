@@ -28,7 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "smodel/setup.H"
 #include "util.H"
 #include "myexception.H"
-#include "smodel/operations.H"
+#include "smodel/objects.H"
 #include "computation/module.H"
 #include "computation/loader.H"
 

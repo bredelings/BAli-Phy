@@ -119,41 +119,6 @@ formula_expression_ref apply(const formula_expression_ref& F1, const formula_exp
   return F3;
 }
 
-formula_expression_ref def_parameter(const std::string& name)
-{
-  Model_Notes N;
-  expression_ref E = def_parameter(N, name);
-  return formula_expression_ref(N,E);
-}
-
-formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value)
-{
-  Model_Notes N;
-  expression_ref E = def_parameter(N, name, def_value);
-  return formula_expression_ref(N,E);
-}
-
-formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b)
-{
-  Model_Notes N;
-  expression_ref E = def_parameter(N, name, def_value, b);
-  return formula_expression_ref(N,E);
-}
-
-formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref& D)
-{
-  Model_Notes N;
-  expression_ref E = def_parameter(N, name, def_value, b, D);
-  return formula_expression_ref(N,E);
-}
-
-formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref& D)
-{
-  Model_Notes N;
-  expression_ref E = def_parameter(N, name, def_value, nullptr, D);
-  return formula_expression_ref(N,E);
-}
-
 std::ostream& operator<<(std::ostream& o, const formula_expression_ref& F)
 {
   o<<F.exp();
