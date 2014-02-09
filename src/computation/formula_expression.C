@@ -78,21 +78,6 @@ formula_expression_ref prefix_formula(const std::string& prefix,const formula_ex
   for(const auto& name: declared_parameter_names)
     R2 = substitute(R2, parameter(name), parameter(prefix+"."+name));
 
-  // Add prefixes to the import_submodel notes.
-  vector<string> submodel_names;
-  for(auto& note: R2.get_notes())
-    if (is_AST(note,"import_submodel_note"))
-    {
-      string modid1 = *note->sub[0].assert_is_a<String>();
-      string modid2 = *note->sub[1].assert_is_a<String>();
-      submodel_names.push_back(modid2);
-      modid2 = prefix + "." + modid2;
-      note = {note->head,{String(modid1),String(modid2)}};
-    }
-
-  for(const auto& modid: submodel_names)
-    R2 = rename_module(R2, modid, prefix + "." + modid);
-
   return R2;
 }
 
@@ -266,20 +251,6 @@ formula_expression_ref get_list(const vector<formula_expression_ref>& v)
     F = v[i]&F;
 
   return F;
-}
-
-formula_expression_ref submodel_expression(const string& modid1, const string& modid2)
-{
-  expression_ref note = {AST_node("import_submodel_note"),{String(modid1),String(modid2)}};
-  expression_ref E = (identifier("gen_model"),identifier(modid2+".main"));
-  E = (identifier("unsafePerformIO'"),E);
-  E = (identifier("evaluate"),-1,E);
-  return {vector<expression_ref>{note}, E};
-}
-
-formula_expression_ref submodel_expression(const string& modid)
-{
-  return submodel_expression(modid,modid);
 }
 
 expression_ref formula_expression_ref::perform_exp() const

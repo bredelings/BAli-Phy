@@ -103,13 +103,6 @@ int context::add_note(const expression_ref& E)
     string modid = *E->sub[0].assert_is_a<String>();
     (*this) += modid;
   }
-  else if (is_AST(E, "import_submodel_note"))
-  {
-    string modid1 = *E->sub[0].assert_is_a<String>();
-    string modid2 = *E->sub[1].assert_is_a<String>();
-
-    (*this) += pair<string,string>{modid1, modid2};
-  }
   
   return Model_Notes::add_note( E );
 }
