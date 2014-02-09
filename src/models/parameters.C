@@ -1129,9 +1129,9 @@ double Parameters::get_branch_subst_rate(int p, int /* b */) const
 
 Parameters::Parameters(const module_loader& L,
 		       const vector<alignment>& A, const SequenceTree& t,
-		       const vector<formula_expression_ref>& SMs,
+		       const vector<expression_ref>& SMs,
 		       const vector<int>& s_mapping,
-		       const vector<formula_expression_ref>& IMs,
+		       const vector<expression_ref>& IMs,
 		       const vector<int>& i_mapping,
 		       const vector<int>& scale_mapping)
   :Probability_Model(L),
@@ -1159,8 +1159,8 @@ Parameters::Parameters(const module_loader& L,
 
   // Add a Main.mu<i> parameter for each scale.
   {
-    formula_expression_ref mus = model_expression({identifier("branch_mean_model"), n_scales});
-    evaluate_expression( mus.perform_exp() );
+    expression_ref mus = model_expression({identifier("branch_mean_model"), n_scales});
+    evaluate_expression( perform_exp(mus) );
   }
 
   for(int i=0;i<n_scales;i++)
@@ -1249,11 +1249,9 @@ Parameters::Parameters(const module_loader& L,
   {
     string prefix = "S" + convertToString(i+1);
 
-    formula_expression_ref smodel = prefix_formula(prefix, SMs[i]);
+    expression_ref smodel = SMs[i];
 
-    add_submodel(smodel);
-
-    SModels.push_back( smodel_methods( smodel.perform_exp(), *this) );
+    SModels.push_back( smodel_methods( perform_exp(smodel), *this) );
   }
 
   // register the indel models as sub-models
@@ -1379,10 +1377,10 @@ Parameters::Parameters(const module_loader& L,
 
 Parameters::Parameters(const module_loader& L,
 		       const vector<alignment>& A, const SequenceTree& t,
-		       const vector<formula_expression_ref>& SMs,
+		       const vector<expression_ref>& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<int>& scale_mapping)
-  :Parameters(L, A, t, SMs, s_mapping, vector<formula_expression_ref>{}, vector<int>{}, scale_mapping)
+  :Parameters(L, A, t, SMs, s_mapping, vector<expression_ref>{}, vector<int>{}, scale_mapping)
 { }
 
 bool accept_MH(const Probability_Model& P1,const Probability_Model& P2,double rho)

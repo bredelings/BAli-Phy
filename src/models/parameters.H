@@ -383,15 +383,15 @@ public:
 
   Parameters(const module_loader& L,
 	     const std::vector<alignment>& A, const SequenceTree&, 
-	     const std::vector<formula_expression_ref>&,
+	     const std::vector<expression_ref>&,
 	     const std::vector<int>&,
 	     const std::vector<int>&);
 
   Parameters(const module_loader& L,
 	     const std::vector<alignment>& A, const SequenceTree&, 
-	     const std::vector<formula_expression_ref>&,
+	     const std::vector<expression_ref>&,
 	     const std::vector<int>&,
-	     const std::vector<formula_expression_ref>&,
+	     const std::vector<expression_ref>&,
 	     const std::vector<int>&,
 	     const std::vector<int>&);
 };

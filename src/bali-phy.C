@@ -1032,11 +1032,11 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
   }
 }
 
-vector<formula_expression_ref>
+vector<expression_ref>
 get_smodels(const module_loader& L,const variables_map& args, const vector<alignment>& A,
 	    shared_items<string>& smodel_names_mapping)
 {
-  vector<formula_expression_ref> smodels;
+  vector<expression_ref> smodels;
   for(int i=0;i<smodel_names_mapping.n_unique_items();i++) 
   {
     vector<alignment> alignments;
@@ -1052,7 +1052,7 @@ get_smodels(const module_loader& L,const variables_map& args, const vector<align
 	throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
     }
 
-    formula_expression_ref full_smodel = get_smodel(L,
+    expression_ref full_smodel = get_smodel(L,
 						    args,
 						    smodel_names_mapping.unique(i),
 						    alignments);
@@ -1062,10 +1062,10 @@ get_smodels(const module_loader& L,const variables_map& args, const vector<align
   return smodels;
 }
 
-vector<formula_expression_ref> 
+vector<expression_ref> 
 get_imodels(const shared_items<string>& imodel_names_mapping, const SequenceTree& T)
 {
-  vector<formula_expression_ref> imodels;
+  vector<expression_ref> imodels;
   for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
     imodels.push_back( get_imodel(imodel_names_mapping.unique(i), T) );
   return imodels;
@@ -1503,7 +1503,7 @@ int main(int argc,char* argv[])
     //--------- Set up the substitution model --------//
 
     // FIXME - change to return a (model, standardized name) pair.
-    vector<formula_expression_ref> full_imodels = get_imodels(imodel_names_mapping, T);
+    vector<expression_ref> full_imodels = get_imodels(imodel_names_mapping, T);
 
     //--------- Set up the substitution model --------//
     shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
@@ -1511,7 +1511,7 @@ int main(int argc,char* argv[])
     vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
 
     // FIXME - change to return a (model, standardized name) pair.
-    vector<formula_expression_ref> full_smodels = get_smodels(L,args,A,smodel_names_mapping);
+    vector<expression_ref> full_smodels = get_smodels(L,args,A,smodel_names_mapping);
 
     //-------------- Which partitions share a scale? -----------//
     shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
