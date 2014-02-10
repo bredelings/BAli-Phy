@@ -624,7 +624,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 	lexp = 
 	  tok.Backslash > +apat[push_back(_a,_1)] > tok.RightArrow > exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Lambda"), _a)  ]
-	  | tok.KW_Let[clear(_a)] >> decls[push_back(_a,_1)] >> tok.KW_In > exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ]
+	  | eps[clear(_a)] >> let_decls[push_back(_a,_1)] >> tok.KW_In > exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ]
 	  | tok.KW_If [clear(_a)] > exp[push_back(_a,_1)] > -tok.SemiColon >> tok.KW_Then > exp[push_back(_a,_1)] > -tok.SemiColon > tok.KW_Else > exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ]
 	  | tok.KW_Case[clear(_a)] > exp[push_back(_a,_1)] > tok.KW_Of > tok.LeftCurly >> alts[push_back(_a,_1)] >> tok.RightCurly >> eps [ _val = new_<expression>(AST_node("Case"), _a)  ]
 	  | tok.KW_Do[clear(_a)] > tok.LeftCurly >> stmts[push_back(_a,_1)] >> tok.RightCurly [ _val = new_<expression>(AST_node("Do"), _a)  ]
@@ -683,7 +683,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 	/*----- Section 3.11 -----*/
 	qual = pat [push_back(_a,_1)] >> tok.LeftArrow > exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
-	  | tok.KW_Let >> decls[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("LetQual"), _a) ]
+	  | eps [clear(_a) ] >> let_decls[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("LetQual"), _a) ]
 	  | eps [clear(_a) ] >> exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("SimpleQual"), _a) ];
 
 	/*----- Section 3.13 -----*/
@@ -695,14 +695,14 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	gdpat = guards [push_back(_a,_1)]>> tok.RightArrow >> exp[push_back(_a,_1)] >> -gdpat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("GdPat"), _a) ];
 	guards = tok.Bar >> +guard[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Guards"), _a) ];
 	guard = pat[push_back(_a,_1)] >> tok.LeftArrow >> infixexp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("PatternGuard"), _a) ]
-	  | eps [clear(_a) ] >> tok.KW_Let >> decls[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("LetGuard"), _a) ]
+	  | eps [clear(_a) ] >> let_decls[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("LetGuard"), _a) ]
 	  |  eps [clear(_a) ] >> infixexp[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("BoolGuard"), _a) ];
 
 	/*----- Section 3.14 -----*/
 	stmts = *stmt[push_back(_a,_1)] >> exp[push_back(_a,_1)] >> -tok.SemiColon >> eps [ _val = new_<expression>(AST_node("Stmts"), _a) ];
 	stmt =  exp[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("SimpleStmt"), _a) ]
 	  | eps [clear(_a) ] >> pat[push_back(_a,_1)] >> tok.LeftArrow >> exp[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("PatStmt"), _a) ]
-	  | eps [clear(_a) ] >> tok.KW_Let >> decls[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("LetStmt"), _a) ]
+	  | eps [clear(_a) ] >> let_decls[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("LetStmt"), _a) ]
 	  | eps [clear(_a) ] >> tok.SemiColon [ _val = new_<expression>(AST_node("EmptyStmt"), _a) ];
 
 	/*----- Section 3.15 -----*/
@@ -771,6 +771,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  | decl [_val = _1]
 	  ;
 
+	let_decls = tok.KW_Let > decls[ _val = _1 ];
 	decls = tok.LeftCurly > (decl % tok.SemiColon)[_val = new_<expression>(AST_node("Decls"), _1)] > tok.RightCurly;
 	decl  = 
 	  (funlhs | pat)[push_back(_a,_1)] >> rhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Decl"), _a)  ]
@@ -1079,6 +1080,10 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> decls;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> decl;
+
+  // This is just so we can EXPECT decls after let, without locking in the containing rule
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> let_decls;
+
 
   qi::rule<Iterator, std::string()> cdecls;
   qi::rule<Iterator, std::string()> cdecl;
