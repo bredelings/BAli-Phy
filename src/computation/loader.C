@@ -51,6 +51,7 @@ using std::map;
  * 13. [DONE] Replace recalc indices with trigers.
  * 14. [DONE] Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
  * 15. [DONE] Allow printing ints w/o decimal points.
+ *
  * 16. [DONE] Make a model-creation monad.
  * 17. [DONE] Eliminate formula_expression_ref.
  * 18. [DONE] Eliminate all notes.
