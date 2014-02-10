@@ -23,97 +23,9 @@ using std::map;
   const string plugin_extension = ".so";
 #endif
 
-/*
- * DONE:
- *
- * 1. [DONE] Allow defining constructors in files.
- * 2. [DONE] Convert strings to [Char]
- * 3. [DONE] Update probability functions to separate the family from the probability object.
- *    3a. [DONE] Construct the ExpOf transform to make logNormal, logGamma, etc.
- *    3b. [DONE] Choose kernels based on the range, not based on the distribution name.
- * 4. [DONE] Convert Defs to use the machine.
- * 5. [DONE] SYNTAX: replace a ~ b ( c ) with a ~ b
- * 6. [DONE] SYNTAX: external a ~ b [To not declare all parameters]
- *      6a. [DONE] SYNTAX: data a ~ b [Don't treat a as a parameter at all!]
- * 7. [DONE] Allow defs in BUGS files.
- * 8. [DONE] Rationalize C++ operations on expression_ref and formula_expression_ref
- *    - [DONE] Eliminate C++ operators on formula_expression_ref -> use parser instead.
- *    - [DONE] Eliminate C++ operators on expression_ref -> use parser instead.
- *    - [DONE] Make (f,g) only create an apply expression, but NOT substitute.
- *    - [DONE] Make f+g simply append g to f->sub.
- *    - [DONE] Make f*g substitute into f.
- * 9. [DONE] Convert all of distribution-operations.H to the parser.
- * 10. [DONE] Remove arity argument to def_function.
- * 11. [DONE] Process imports
- *     + [DONE] 11a. Process mutually dependent modules.
- *     + [DONE] 11b. Note that clashing declarations are allowed if the symbol is unreferenced!
- * 12. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
- * 13. [DONE] Replace recalc indices with trigers.
- * 14. [DONE] Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
- * 15. [DONE] Allow printing ints w/o decimal points.
- *
- * 16. [DONE] Make a model-creation monad.
- * 17. [DONE] Eliminate formula_expression_ref.
- * 18. [DONE] Eliminate all notes.
- * 19. [DONE] Add Lexer => allows comments.
- * 20. [DONE] Eliminate module renaming.
- * 21. [DONE] Allow distributions on structures with variable components.
- * 22. [DONE] Name pieces of structures intelligently -- e.g. piA instead of pi!!0
- * 23. [DONE] Allow model files to create models where dimension of parameter depeonds on argument to model.
- * 24. [DONE] Allow creation of parameters in their own namespace.
- */
-
-/* \todo: List of things to do to clean up programs.
- *
- * See list in parser/desugar.C
- * See list in models/parameters.C 
- * See list in models/module.C
- *
- * 1. Efficiently recalculate the probability when only a few densities change.
- *    - Will this require signals? (Signals might also help us to recalculate mu*t to see if anything changed.)
- *    - This will allow us to avoid maintaining a Markov blanket.
- * 2. Make sure we don't read alignments with ^@ characters in the sequences!
- *
- * 3. Eliminate the need for set_branch_mean_tricky( )
- *    - Implement setting D!b only when the change is large enough.
- * 4. Rewrite multi-case code to take patterns in terms of expression_ref's that might be seen from the parser.
- *     + Allows moving towards 16 incrementally.
- * 5. Handle 'where' clauses (e.g. in "alt")
- * 6. Handle guards clauses (e.g. in gdrhs, and gdpat)
- *     + I *think* that guards cannot fail in a way that makes the rule fail and move to the next rule.
- *       (The 'otherwise' rule might be special, though??)
- *     + If failure of all guards leads to failure, then can the guards can be processed as a special RHS?
- *     6b. Handle as-patterns.
- *        case v of x@pat -> body => case v of pat -> (\x->body) v
- *     6c. Handle irrefutable patterns that use ~.
- *        case v of ~h:t -> body
- *     6d. What does it mean (if its true) that irrefutable bindings are only irrefutable at the top level?
- * 7. Compute the entire probability expression at once, instead of adding pieces incrementally.
- * 8. Make Context load an entire program, instead of adding pieces incrementally.
- * 9. Move the Program from Context to reg_heap.
-
- * 10. Allow fixing parameters. (e.g. to test the branch-site model under ML)
- * 11. How to specify default priors if model creation is an IO operation?
- * 12. Optimizations
- *     - Perform applications if expression is used only once?
- *     - Remove let bindings for unused variables?
- *     - Merge let bidings with identical bodies?
- *     - Simplify some case expressions based on knowledge of let-bound variable?
- * 13. Print out simpler names than Test.i for parameter i.
- *     - I think parameters are in a separate namespace?
- *     - Perhaps put a '*' on the beginning of the name when comparing with the Haskell namespace?
- * 14. Eliminate make_Prelude.
- */
-
-
 void make_Prelude(Module& P)
 {
   // See http://www.haskell.org/onlinereport/standard-prelude.html
-
-  // FIXME? IOAction 0 doesn't work, because we don't get a separate cell for each application... to nothing.
-  //        Current approach: supply dummy arguments to such a builtin that are not used.
-
-  //------------------------------------------------------------------------------------------------//
 
 
   // [ We could do this as two nested fmaps, instead. ]

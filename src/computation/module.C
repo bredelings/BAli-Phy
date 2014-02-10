@@ -15,47 +15,6 @@ using std::set;
 using std::string;
 using std::vector;
 
-/*
- * 1. If we are going to put parameter names into the same namespace as everything else, then
- *    (a) add_alias - yes we can add aliases for parameters!
- *    (b) add_symbol - parameters must also live in modules.
- *    (c) declare_symbol - allow declaring parameters.
- *    (d) import_symbol - importing parameters is not only allowed, but required to use them
- *                        if they are declared elsewhere!
- *
- *    (e) Also, we'll need to translate parameter names from model_notes!
- *        - default_value, distributed, etc.
- *
- * 2. How do we handle parameter namespaces? 
- *    (a) We are using those for a totally different purpose than modules!
- *    (b) This is really the fault of the model setup code, not of the programming framework...
- *    (c) Specifically, if we construct mini-programs with these names, then
- *        prefix-formula allows us to keep parameters created with the same name
- *        separate.
- *    (d) Maybe we can think of this more as automatic code generation!
- *        - OK, so suppose we have Module HKY where { ... parameter kappa ... }
- *    (e) So, we have the model graph (statistics) from which we generate a program (computation).
- *
- * (a) How about notes such as logging frequency, etc.?
- *
- *
- * 5. Remove 'arity' argument from def_function?
- *
- * 6. Remove all notes, if possible.
- *
- * 7. Remove the concept of parameters from modules (e.g. parameter_symbol)
- *
- * 8. Handle the placing of substitution & indel parameters into prefixes.
- *
- * 9. Allow adding transition kernels from haskell
- *
- * 10. Allow specifying the sampling rate from haskell
- *
- * 11. Remove remaining BUGS note keywords from the parser.
- *
- * 12. See loader.C
- */
-
 symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2)
   :name(s), symbol_type(st), scope(sc), arity(i2)
 { }

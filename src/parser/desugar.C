@@ -18,58 +18,6 @@ using std::pair;
 
 // See list in computation/loader.C
 //
-// 1. Add ability to change the prior on variables.
-// 2. [DONE] Add ability to add new variables.
-// 3. Add constructors to programs!
-// 4. Add the ability to store newtype definitions.
-// 5. Move to desugaring entire modules!
-//     - A program is a collection of modules.
-//     - This will have to be done in phases.
-//       - (1) In the first phase, we determine what types, constructors, let-vars are declared.
-//       -     That means that we have to handle fundecls here.
-//       - (2) In the second phase, we actually import symbols, desugar function bodies,
-//             and handle identifiers.
-//       - (?) How do we handle modules with non-parsed code here, like the Prelude?
-// 6. Move to only loading entire programs, where programs are entire module collections.
-// 7. Now that a Model_Notes contains 0,1,2, or more modules, how do we want to handle
-//    prefixing?
-//       - If it has 0 modules, it shouldn't have defs?
-//       - All modules should be sub-modules of the main module?
-//       - Then we prefix all the modules?
-// 8. How do we prefix a module?
-//       - First parse it, then prefix ids and module names.
-//       - We could prefix only module names that are "owned" by the module_notes.
-// 9.  At some level, the idea that we are creating a giant expression that drags along
-//     notes attached to its pieces should be ... simple!
-// 10. So, we use modules to
-//     (a) define notes
-//   
-// 11. How do we want to represent modules with notes?
-//
-//     Module HKY where {
-//       import SModel (HKY,dna)
-//       import Distributions
-//       -- parameter kappa
-//       kappa ~ LogLaplace(log(2), 0.25)
-//       main = hky dna kappa [piA,piT,piG,piC]
-//     }
-//
-//     Module PlusF where
-//     {
-//       import Distributions
-//       [piA, piT, piG, piC] ~ dirichlet [1.0, 1.0, 1.0, 1.0]
-//
-//       main = [piA, piT, piG, piC]
-//     }
-
-/*
- * OK, in a formula_expression_ref, how would I
- * (a) define local variables & parse identifiers to refer to them.
- * (b) import external variables to reference
- * (c) 
- * Perhaps a formula_expression_ref is just a tool for constructing a Model_Notes with a focussed expression.
- * Two formula_expression_ref's should only be combined if they have the same module name, I would think...
- */
 
 bool is_irrefutable_pat(const expression_ref& E)
 {

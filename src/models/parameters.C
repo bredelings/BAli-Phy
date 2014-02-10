@@ -45,53 +45,110 @@ using std::endl;
 using std::ostream;
 
 /*
- * 1. [DONE] Allow calculating the location of unnamed parameters hidden in structures & arrays.
+ * DONE:
  *
- * 2. [DONE] Remove class Parameter that is solely used in the old way of defining parameters.
+ * 1. [DONE] Allow defining constructors in files.
+ * 2. [DONE] Convert strings to [Char]
+ * 3. [DONE] Update probability functions to separate the family from the probability object.
+ *    3a. [DONE] Construct the ExpOf transform to make logNormal, logGamma, etc.
+ *    3b. [DONE] Choose kernels based on the range, not based on the distribution name.
+ * 4. [DONE] Convert Defs to use the machine.
+ * 5. [DONE] SYNTAX: replace a ~ b ( c ) with a ~ b
+ * 6. [DONE] SYNTAX: external a ~ b [To not declare all parameters]
+ *      6a. [DONE] SYNTAX: data a ~ b [Don't treat a as a parameter at all!]
+ * 7. [DONE] Allow defs in BUGS files.
+ * 8. [DONE] Rationalize C++ operations on expression_ref and formula_expression_ref
+ *    - [DONE] Eliminate C++ operators on formula_expression_ref -> use parser instead.
+ *    - [DONE] Eliminate C++ operators on expression_ref -> use parser instead.
+ *    - [DONE] Make (f,g) only create an apply expression, but NOT substitute.
+ *    - [DONE] Make f+g simply append g to f->sub.
+ *    - [DONE] Make f*g substitute into f.
+ * 9. [DONE] Convert all of distribution-operations.H to the parser.
+ * 10. [DONE] Remove arity argument to def_function.
+ * 11. [DONE] Process imports
+ *     + [DONE] 11a. Process mutually dependent modules.
+ *     + [DONE] 11b. Note that clashing declarations are allowed if the symbol is unreferenced!
+ * 12. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
+ * 13. [DONE] Replace recalc indices with trigers.
+ * 14. [DONE] Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
+ * 15. [DONE] Allow printing ints w/o decimal points.
  *
+ * 16. [DONE] Make a model-creation monad.
+ * 17. [DONE] Eliminate formula_expression_ref.
+ * 18. [DONE] Eliminate all notes.
+ * 19. [DONE] Add Lexer => allows comments.
+ * 20. [DONE] Eliminate module renaming.
+ * 21. [DONE] Allow distributions on structures with variable components.
+ * 22. [DONE] Name pieces of structures intelligently -- e.g. piA instead of pi!!0
+ * 23. [DONE] Allow model files to create models where dimension of parameter depeonds on argument to model.
+ * 24. [DONE] Allow creation of parameters in their own namespace.
+ */
+
+/* \todo: List of things to do to clean up programs.
  *
- * \todo Goal: Construct a complete tree-based imodel along the lines of
+ * See list in models/parameters.C 
  *
- *       SingleRate[RS07] or BranchwiseRate[RS07]
- * 
- * 1. Move calculation of alignment prior dependencies to the machine!
- *    - Otherwise changing ANY imodel parameter with invalidate ALL dependencies!
+ * 1. Efficiently recalculate the probability when only a few densities change.
+ *    - Will this require signals? (Signals might also help us to recalculate mu*t to see if anything changed.)
+ *    - This will allow us to avoid maintaining a Markov blanket.
+ * 2. Make sure we don't read alignments with ^@ characters in the sequences!
  *
- * 2. Improve quality of code fragments here by switching from integer names (e.g. "a12") to subscripts (e.g. "a!12").
- *    
- * 3. [Done] Eliminate any remaining cached_value< > in calculation of alignment prior or sequence lengths.
+ * 3. Eliminate the need for set_branch_mean_tricky( )
+ *    - Implement setting D!b only when the change is large enough.
+ * 4. Rewrite multi-case code to take patterns in terms of expression_ref's that might be seen from the parser.
+ *     + Allows moving towards 16 incrementally.
+ * 5. Handle 'where' clauses (e.g. in "alt")
+ * 6. Handle guards clauses (e.g. in gdrhs, and gdpat)
+ *     + I *think* that guards cannot fail in a way that makes the rule fail and move to the next rule.
+ *       (The 'otherwise' rule might be special, though??)
+ *     + If failure of all guards leads to failure, then can the guards can be processed as a special RHS?
+ *     6b. Handle as-patterns.
+ *        case v of x@pat -> body => case v of pat -> (\x->body) v
+ *     6c. Handle irrefutable patterns that use ~.
+ *        case v of ~h:t -> body
+ *     6d. What does it mean (if its true) that irrefutable bindings are only irrefutable at the top level?
+ * 7. Compute the entire probability expression at once, instead of adding pieces incrementally.
+ * 8. Make Context load an entire program, instead of adding pieces incrementally.
+ * 9. Move the Program from Context to reg_heap.
+
+ * 10. Allow fixing parameters. (e.g. to test the branch-site model under ML)
+ * 11. How to specify default priors if model creation is an IO operation?
+ * 12. Optimizations
+ *     - Perform applications if expression is used only once?
+ *     - Remove let bindings for unused variables?
+ *     - Merge let bidings with identical bodies?
+ *     - Simplify some case expressions based on knowledge of let-bound variable?
+ * 13. Print out simpler names than Test.i for parameter i.
+ *     - I think parameters are in a separate namespace?
+ *     - Perhaps put a '*' on the beginning of the name when comparing with the Haskell namespace?
+ * 14. Eliminate make_Prelude.
+*
+ * 15. Allow adding transition kernels from haskell
  *
- * 4. Move unchangeable name mappings out of context and into reg_heap.
- *   - That is, separate name bindings into (a) dependent and (b) non-dependent vars?
+ * 16. Allow specifying the sampling rate from haskell
  *
- * 5. Translate code from calls to parser?
+ * 17. Build expressions for caching the probability.
  *
- * 6. Now that we can stop triggering on imodel parameters, can we somehow attach objects to Changeable nodes
- *    as triggers?  Perhaps each changeable node needs a list of triggers that "fire" when it is invalidated?
+ * 18. Add ability to change the prior on variables.
  *
- * 7. Allow addressing anonymous parameters by setting structures containing parameters to things.  For example,
- *    setting [x,y] to [1,2] would set x to 1 and y to 2.
- *    - But sometimes we do want to change z=[x,y] to (say) [].
- *    - And how about setting [x=[a,b],y] to [[1,2],[3,4]]. Do we change x here, or not?
- *    - Will we only try to set parameter values for leaves?
- *    - Perhaps we need to be more explicit about the procedure for setting a list of parameters to a list of values.
- *      + Perhaps we could say to walk the list and find the parameters (which works, because it evaluates each list entry
- *        until it becomes a parameter!) and to then set each entry to the corresonding list entry.
+ * 19. Add the ability to store newtype definitions.
  *
- * 8. Define a haskell tree class.
+ * 20. Move to only loading entire programs into a context, where programs are entire module collections.
  *
- * 9. Define moves on the tree based on the idea that some entries are parameters.
+ * 21. Compare the monadic interface with Acar's interface.
  *
- * 10. Compare the monadic interface with Acar's interface.
- *
- * 12. Make loading of data easier
+ * 22.
  *     - Handle sequences with lengths not divisible by 3.
  *     - Handle loading alignments with codons not together.
  *     - Handle guessing of alphabets based on frequencies.
  *     - Handle loading of letters like K for DNA -- change to N.
  *     - Could we actually handle all SEEN codon triplets?
  *
- * 13. 
+ * 23. Store alignments in a more sparse format?
+ *
+ * 24. Allow generating an alignment (sparse or dense) only when we need it?
+ *
+ * 25. Eliminate the need for re-evaluate in the substitution likelihood?
  */
 
 bool use_internal_index = true;
