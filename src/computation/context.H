@@ -1,8 +1,7 @@
 #ifndef CONTEXT_H
 
-#include "cow-ptr.H"
-#include "computation/program.H"
 #include "computation/closure.H"
+#include "computation/program.H"
 #include "mytypes.H"
 
 class reg;
@@ -24,7 +23,6 @@ class context
 
   // FIXME:speed - This is going to be really slow to copy around all the time!
   // FIXME:speed - Instead, wrap in cow_ptr< >.
-  cow_ptr<Program> P;
 
   int context_index;
 
@@ -55,21 +53,18 @@ private:
   /// Find the modifiable that parameter_reg points to.
   int find_parameter_modifiable_reg(int i) const;
 
-  /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
-  expression_ref translate_refs(const expression_ref& R, std::vector<int>&) const;
-  /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
-  closure translate_refs(closure&& C) const;
-
   /// Check if a compute expression is computed.
   bool reg_is_fully_up_to_date(int r) const;
 
   closure preprocess(const closure& C) const;
 
+  Program& get_Program();
+
 public:
 
   int get_context_index() const {return context_index;}
 
-  const std::vector<Module>& get_Program() const {return *P;}
+  const std::vector<Module>& get_Program() const;
 
   reg& access(int i) const;
 

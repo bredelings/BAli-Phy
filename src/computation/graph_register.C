@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <fstream>
 #include "util.H"
+#include "module.H"
+#include "let-float.H"
 
 using std::string;
 using std::vector;
@@ -328,6 +330,7 @@ bool mapping::empty() const
 
 void reg_heap::register_probability(int r)
 {
+  probability_index = -1;
   probability_heads.push_back(r);
 }
 
@@ -341,14 +344,33 @@ int reg_heap::register_probability(closure&& C)
 
 efloat_t reg_heap::probability_for_context(int c)
 {
-  efloat_t Pr = 1.0;
-  for(int r: probability_heads)
+  if (probability_index == -1)
   {
-    object_ref x = get_reg_value_in_context(r, c);
-    efloat_t X = *convert<const Log_Double>(x);
-    Pr *= X;
+    if (probability_heads.empty()) return 1.0;
+
+    vector<expression_ref> E;
+    for(int r: probability_heads)
+    {
+      get_reg_value_in_context(r, c);
+      E.push_back(reg_var(r));
+    }
+
+    while(E.size() > 1)
+    {
+      vector<expression_ref> E2;
+      for(int i=0;i<E.size()/2;i++)
+	E2.push_back( (identifier("*"),E[2*i],E[2*i+1]) );
+      if (E.size() % 2)
+	E2.push_back(E.back());
+      std::swap(E,E2);
+    }
+    assert(E.size() == 1);
+    probability_index = allocate();
+    set_C(probability_index, preprocess(E[0]));
   }
-  return Pr;
+
+  object_ref x = get_reg_value_in_context(probability_index, c);
+  return *convert<const Log_Double>(x);
 }
 
 const vector<int>& reg_heap::random_modifiables() const
@@ -1296,6 +1318,8 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 {
   insert_at_end(scan, temp);
   insert_at_end(scan, heads);
+  if (probability_index != -1)
+    scan.push_back(probability_index);
   insert_at_end(scan, probability_heads);
   insert_at_end(scan, random_modifiables_);
   for(int j=0;j<parameters.size();j++)
@@ -1723,7 +1747,7 @@ void reg_heap::find_all_regs_in_context_no_check(int t, bool keep_identifiers, v
 {
   vector<int>& scan = get_scratch_list();
 
-  get_roots(scan);
+  get_roots(scan, keep_identifiers);
 
   find_all_regs_in_context_no_check(t,scan,unique);
 }
@@ -2215,8 +2239,6 @@ int reg_heap::get_modifiable_value_in_context(int R, int c)
 
 int reg_heap::add_identifier(const string& name)
 {
-  map<string,int>& identifiers = get_identifiers();
-
   // if there's already an 's', then complain
   if (identifiers.count(name))
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
@@ -2230,6 +2252,7 @@ int reg_heap::add_identifier(const string& name)
 reg_heap::reg_heap()
   :base_pool_t(1),
    computations(1),
+   P(new Program),
    tokens(1)
 { 
   //  computations.collect_garbage = [this](){collect_garbage();};
@@ -3088,3 +3111,127 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
   }
   o<<"}"<<std::endl;
 }
+
+closure let_float(closure&& C)
+{
+  C.exp = let_float(expression_ref(C.exp));
+  return C;
+}
+
+closure graph_normalize(closure&& C)
+{
+  C.exp = graph_normalize(expression_ref(C.exp));
+  return C;
+}
+
+closure indexify(closure&& C)
+{
+  C.exp = indexify(expression_ref(C.exp));
+  return C;
+}
+
+closure trim_normalize(closure&& C)
+{
+  C.exp = trim_normalize(expression_ref(C.exp));
+  return C;
+}
+
+closure resolve_refs(const vector<Module>& P, closure&& C)
+{
+  C.exp = resolve_refs(P, C.exp);
+  return C;
+}
+
+closure reg_heap::preprocess(const closure& C)
+{
+  assert(C.exp);
+  assert(let_float(C.exp)->print() == let_float(let_float(C.exp))->print());
+  //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
+  return trim_normalize( indexify( graph_normalize( let_float( translate_refs( resolve_refs(*P, closure(C) ) ) ) ) ) );
+}
+
+expression_ref reg_heap::translate_refs(const expression_ref& E, vector<int>& Env)
+{
+  int reg = -1;
+
+  // Replace parameters with the appropriate reg_var: of value parameter( )
+  if (object_ptr<const parameter> p = is_a<parameter>(E))
+  {
+    string qualified_name = p->parameter_name;
+
+    int param_index = find_parameter(qualified_name);
+    
+    if (param_index == -1)
+      throw myexception()<<"Can't translate undefined parameter '"<<qualified_name<<"' ('"<<p->parameter_name<<"') in expression!";
+
+    reg = parameters[param_index].second;
+  }
+
+  // Replace parameters with the appropriate reg_var: of value whatever
+  if (object_ptr<const identifier> V = is_a<identifier>(E))
+  {
+    string qualified_name = V->name;
+    assert(is_qualified_symbol(qualified_name) or is_haskell_builtin_con_name(qualified_name));
+    auto loc = identifiers.find( qualified_name );
+    if (loc == identifiers.end())
+    {
+      if (is_haskell_builtin_con_name(V->name))
+      {
+	symbol_info S = Module::lookup_builtin_symbol(V->name);
+	add_identifier(S.name);
+      
+	// get the root for each identifier
+	loc = identifiers.find(S.name);
+	assert(loc != identifiers.end());
+	
+	int R = loc->second;
+	
+	assert(R != -1);
+	set_C(R, preprocess(S.body) );
+      }
+      else
+	throw myexception()<<"Can't translate undefined identifier '"<<V->name<<"' in expression!";
+    }
+
+    reg = loc->second;
+  }
+
+  // Replace parameters with the appropriate reg_var: of value whatever
+  if (object_ptr<const reg_var> RV = is_a<reg_var>(E))
+    reg = RV->target;
+
+  if (reg != -1)
+  {
+    int index = Env.size();
+    Env.insert(Env.begin(), reg);
+
+    return new index_var(index);
+  }
+
+  // Other constants have no parts, and don't need to be translated
+  if (not E->size()) return E;
+
+  // Translate the parts of the expression
+  object_ptr<expression> V ( new expression(*E) );
+  for(int i=0;i<V->size();i++)
+    V->sub[i] = translate_refs(V->sub[i], Env);
+
+  return V;
+}
+
+closure reg_heap::translate_refs(closure&& C)
+{
+  closure C2 = C;
+  C2.exp = translate_refs(C2.exp, C2.Env);
+  return C2;
+}
+
+int reg_heap::find_parameter(const string& s) const
+{
+  for(int i=0;i<parameters.size();i++)
+    if (parameters[i].first == s)
+      return i;
+
+  return -1;
+}
+

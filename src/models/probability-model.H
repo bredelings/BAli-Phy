@@ -30,6 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <string>
 #include "models/model.H"
 #include "mytypes.H"
+#include "cow-ptr.H"
 
 // If we add a distribution class, note that we may need to have distribution EXPRESSIONS,
 // so that we an construct a distribution by plugging into parameters or constant to the

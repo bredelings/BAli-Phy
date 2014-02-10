@@ -10,6 +10,8 @@
 #include "closure.H"
 #include "pool.H"
 #include "mytypes.H"
+#include "program.H"
+#include <boost/shared_ptr.hpp>
 
 struct computation
 {
@@ -190,6 +192,18 @@ public:
   
   /// Probably this would be non-parameter identifiers
   std::map<std::string, int> identifiers;
+  
+  boost::shared_ptr<Program> P;
+
+  /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
+  expression_ref translate_refs(const expression_ref& R, std::vector<int>&);
+  /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
+  closure translate_refs(closure&& C);
+
+  closure preprocess(const closure& C);
+
+  /// Lookup the index for the named parameter s
+  int find_parameter(const std::string& s) const;
 
   /*----- Modifiable ranges ----*/
   bool parameter_is_modifiable(int index);

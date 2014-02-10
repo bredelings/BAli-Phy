@@ -12,39 +12,10 @@ using std::vector;
 using std::map;
 using std::pair;
 using std::set;
+using boost::dynamic_pointer_cast;
 
 using std::cerr;
 using std::endl;
-
-closure let_float(closure&& C)
-{
-  C.exp = let_float(expression_ref(C.exp));
-  return C;
-}
-
-closure graph_normalize(closure&& C)
-{
-  C.exp = graph_normalize(expression_ref(C.exp));
-  return C;
-}
-
-closure indexify(closure&& C)
-{
-  C.exp = indexify(expression_ref(C.exp));
-  return C;
-}
-
-closure trim_normalize(closure&& C)
-{
-  C.exp = trim_normalize(expression_ref(C.exp));
-  return C;
-}
-
-closure resolve_refs(const vector<Module>& P, closure&& C)
-{
-  C.exp = resolve_refs(P, C.exp);
-  return C;
-}
 
 object_ptr<reg_heap>& context::memory() const {return memory_;}
 
@@ -77,10 +48,7 @@ int context::allocate() const {return memory()->allocate();}
 
 closure context::preprocess(const closure& C) const
 {
-  assert(C.exp);
-  assert(let_float(C.exp)->print() == let_float(let_float(C.exp))->print());
-  //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
-  return trim_normalize( indexify( graph_normalize( let_float( translate_refs( resolve_refs(*P, closure(C) ) ) ) ) ) );
+  return memory()->preprocess(C);
 }
 
 string context::parameter_name(int i) const
@@ -287,11 +255,7 @@ int context::n_parameters() const
 
 int context::find_parameter(const string& s) const
 {
-  for(int i=0;i<n_parameters();i++)
-    if (parameter_name(i) == s)
-      return i;
-
-  return -1;
+  return memory()->find_parameter(s);
 }
 
 int context::add_parameter(const string& full_name, const expression_ref& value)
@@ -423,82 +387,6 @@ void context::collect_garbage() const
   memory()->collect_garbage();
 }
 
-expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env) const
-{
-  int reg = -1;
-
-  // Replace parameters with the appropriate reg_var: of value parameter( )
-  if (object_ptr<const parameter> p = is_a<parameter>(E))
-  {
-    string qualified_name = p->parameter_name;
-
-    int param_index = find_parameter(qualified_name);
-    
-    if (param_index == -1)
-      throw myexception()<<"Can't translate undefined parameter '"<<qualified_name<<"' ('"<<p->parameter_name<<"') in expression!";
-
-    reg = get_parameter_reg(param_index);
-  }
-
-  // Replace parameters with the appropriate reg_var: of value whatever
-  if (object_ptr<const identifier> V = is_a<identifier>(E))
-  {
-    string qualified_name = V->name;
-    assert(is_qualified_symbol(qualified_name) or is_haskell_builtin_con_name(qualified_name));
-    auto loc = identifiers().find( qualified_name );
-    if (loc == identifiers().end())
-    {
-      if (is_haskell_builtin_con_name(V->name))
-      {
-	symbol_info S = Module::lookup_builtin_symbol(V->name);
-	add_identifier(S.name);
-      
-	// get the root for each identifier
-	loc = identifiers().find(S.name);
-	assert(loc != identifiers().end());
-	
-	int R = loc->second;
-	
-	assert(R != -1);
-	set_C(R, preprocess(S.body) );
-      }
-      else
-	throw myexception()<<"Can't translate undefined identifier '"<<V->name<<"' in expression!";
-    }
-
-    reg = loc->second;
-  }
-
-  // Replace parameters with the appropriate reg_var: of value whatever
-  if (object_ptr<const reg_var> RV = is_a<reg_var>(E))
-    reg = RV->target;
-
-  if (reg != -1)
-  {
-    int index = Env.size();
-    Env.insert(Env.begin(), reg);
-
-    return new index_var(index);
-  }
-
-  // Other constants have no parts, and don't need to be translated
-  if (not E->size()) return E;
-
-  // Translate the parts of the expression
-  object_ptr<expression> V ( new expression(*E) );
-  for(int i=0;i<V->size();i++)
-    V->sub[i] = translate_refs(V->sub[i], Env);
-
-  return V;
-}
-
-closure context::translate_refs(closure&& C) const
-{
-  closure C2 = C;
-  C2.exp = translate_refs(C2.exp, C2.Env);
-  return C2;
-}
-
 const module_loader& context::get_module_loader() const
 {
   return loader;
@@ -516,7 +404,7 @@ const vector<string>& context::get_builtins_path() const
 
 context& context::operator+=(const string& module_name)
 {
-  if (not contains_module(*P, module_name))
+  if (not contains_module(get_Program(), module_name))
     (*this) += get_module_loader().load_module(module_name);
 
   return *this;
@@ -535,7 +423,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
   for(const auto& name: module_names)
   {
-    const Module& M = get_module(*P, name);
+    const Module& M = get_module(get_Program(), name);
 
     for(const auto& s: M.get_symbols())
     {
@@ -556,7 +444,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
   // 3. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
   for(const auto& name: module_names)
   {
-    const Module& M = get_module(*P, name);
+    const Module& M = get_module(get_Program(), name);
 
     for(const auto& s: M.get_symbols())
     {
@@ -583,7 +471,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 // \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
 context& context::operator+=(const Module& M)
 {
-  Program& PP = *P.modify();
+  Program& PP = get_Program();
 
   // Get module_names, but in a set<string>
   set<string> old_module_names = module_names_set(PP);
@@ -618,7 +506,6 @@ context& context::operator=(const context& C)
   memory_ = C.memory_;
   context_index = memory_->copy_context(C.context_index);
   perform_io_head = C.perform_io_head;
-  P = C.P;
 
   return *this;
 }
@@ -629,7 +516,6 @@ context::context(const module_loader& L)
 
 context::context(const module_loader& L, const vector<Module>& Ps)
   :memory_(new reg_heap()),
-   P(new Program),
    context_index(memory_->get_unused_context()),
    loader(L)
 {
@@ -650,7 +536,6 @@ context::context(const module_loader& L, const vector<string>& module_names)
 
 context::context(const context& C)
   :memory_(C.memory_),
-   P(C.P),
    context_index(memory_->copy_context(C.context_index)),
    perform_io_head(C.perform_io_head),
    loader(C.loader)
@@ -695,3 +580,12 @@ std::ostream& operator<<(std::ostream& o, const context& C)
   return o;
 }
 
+Program& context::get_Program()
+{
+  return *(memory()->P);
+}
+
+const Program& context::get_Program() const
+{
+  return *(memory()->P);
+}
