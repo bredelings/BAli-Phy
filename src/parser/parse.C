@@ -699,10 +699,9 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  |  eps [clear(_a) ] >> infixexp[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("BoolGuard"), _a) ];
 
 	/*----- Section 3.14 -----*/
-	stmts = exp[push_back(_a,_1)] >> -tok.SemiColon >> tok.RightCurly [ _val = new_<expression>(AST_node("Stmts"), _a) ]
-	  | eps [clear(_a) ] >> stmt[push_back(_a,_1)] > stmts[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Stmts"), _a) ];
-	stmt =  exp[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("SimpleStmt"), _a) ]
-	  | eps [clear(_a) ] >> pat[push_back(_a,_1)] >> tok.LeftArrow > exp[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("PatStmt"), _a) ]
+	stmts = *(stmt[push_back(_a,_1)]) >> exp[push_back(_a,_1)] >> -tok.SemiColon >> tok.RightCurly [ _val = new_<expression>(AST_node("Stmts"), _a) ];
+	stmt = pat[push_back(_a,_1)] >> tok.LeftArrow > exp[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("PatStmt"), _a) ]
+	  | eps [clear(_a) ] >> exp[push_back(_a,_1)] >> tok.SemiColon >> !tok.RightCurly >> eps[ _val = new_<expression>(AST_node("SimpleStmt"), _a) ]
 	  | eps [clear(_a) ] >> let_decls[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("LetStmt"), _a) ]
 	  | eps [clear(_a) ] >> tok.SemiColon [ _val = new_<expression>(AST_node("EmptyStmt"), _a) ];
 
