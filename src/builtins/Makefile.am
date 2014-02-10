@@ -19,7 +19,8 @@ pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la
 		c_fst.la c_snd.la c_pair.la evaluate.la Modifiables.la\
 		show.la rs07_branch_HMM.la rs07_lengthp.la pairwise_alignment_length1.la \
 		pairwise_alignment_length2.la transition_counts.la pairwise_alignment_probability_from_counts.la \
-		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la
+		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la \
+                Vector.la
 
 if HOST_MINGW32
 EXTRADEPENDENCIES = $(top_builddir)/bali-phy.exe
@@ -182,3 +183,6 @@ show_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 sum_out_coals_la_SOURCES = sum_out_coals.C
 sum_out_coals_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
+
+Vector_la_SOURCES = Vector.C
+Vector_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
