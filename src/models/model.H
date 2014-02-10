@@ -59,11 +59,6 @@ class Model;
 ///
 class Model: public context
 {
-protected:
-
-  int add_parameter(const std::string&);
-  int add_parameter(const std::string&,const object_ref&);
-  
   /// \brief Recalculate internal data based on current parameters
   ///
   ////  \param indices The indices of the parameters that changed.

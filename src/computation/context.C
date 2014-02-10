@@ -294,47 +294,33 @@ int context::find_parameter(const string& s) const
   return -1;
 }
 
-void context::add_parameter_(const string& name)
+int context::add_parameter(const string& full_name, const expression_ref& value)
 {
-  assert(find_parameter(name) == -1);
-
-  int R = allocate();
-
-  parameters().push_back( {name, R} );
-}
-
-int context::add_parameter(const string& full_name)
-{
-  expression_ref initializer = (identifier("unsafePerformIO"),identifier("new_modifiable"));
-  return add_parameter(full_name, initializer);
-}
-
-int context::add_parameter_with_dist(const string& full_name,const expression_ref& dist)
-{
-  expression_ref E = (identifier("structure_for_dist"), dist);
-  E = (identifier("unsafePerformIO"), E);
-  E = (identifier("evaluate"),-1,E);
-  return add_parameter(full_name, E);
-}
-
-int context::add_parameter(const string& full_name, const expression_ref& initializer)
-{
-  // 0. Check that we don't already have a parameter with that name
+  // 1. Check that we don't already have a parameter with that name
   for(int i=0;i<n_parameters();i++)
     if (parameter_name(i) == full_name)
       throw myexception()<<"A parameter with name '"<<full_name<<"' already exists - cannot add another one.";
 
   assert(full_name.size() != 0);
 
-  int index = n_parameters();
+  // 2. Allocate space for the parameter
+  int R = allocate();
 
-  add_parameter_(full_name);
+  parameters().push_back( {full_name, R} );
 
-  int R = parameters().back().second;
+  // 3. Set its value to new_modifiable
+  expression_ref E = identifier("new_modifiable");
+  E = (identifier("unsafePerformIO"), E);
+  E = (identifier("evaluate"),-1,E);
 
-  set_C(R, preprocess( initializer) );
+  set_C(R, preprocess( E ) );
 
-  return index;
+  // 4. Set the value of the parameter
+  int p = n_parameters()-1;
+
+  set_parameter_value(p, value);
+
+  return p;
 }
 
 const vector<int>& context::random_modifiables() const

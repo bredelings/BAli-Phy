@@ -509,7 +509,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
 
   string prefix = "P"+convertToString(i+1)+".";
   for(int b=0;b<pairwise_alignment_for_branch.size();b++)
-    pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b));
+    pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b),0);
 
   if (variable_alignment())
     for(int b=0;b<T().n_branches();b++)
@@ -1180,7 +1180,7 @@ Parameters::Parameters(const module_loader& L,
   for(int n=0; n < T().n_nodes(); n++)
   {
     string name = "MyTree.nodeBranches"+convertToString(n);
-    add_parameter(name);
+    add_parameter(name,0);
     node_branches.push_back( (identifier("list_from_vector"), parameter(name)) );
   }
   expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
@@ -1189,7 +1189,7 @@ Parameters::Parameters(const module_loader& L,
   for(int b=0; b < 2*T().n_branches(); b++)
   {
     string name = "MyTree.branchNodes"+convertToString(b); 
-    add_parameter(name);
+    add_parameter(name,0);
     branch_nodes.push_back( (identifier("pair_from_c"), parameter(name)) );
   }
   expression_ref branch_nodes_array = (identifier("listArray'"),get_list(branch_nodes));

@@ -170,19 +170,9 @@ public:
 
   object_ref get_parameter_range(int p) const;
 
-protected:
-  /// Create a new parameter named s
-  void add_parameter_(const std::string& s);
-
 public:
   /// Create a new parameter named s
-  int add_parameter(const std::string& s);
-
-  /// Create a new parameter named s
-  int add_parameter(const std::string& s, const expression_ref& initializer);
-
-  /// Create a new parameter named s
-  int add_parameter_with_dist(const std::string& s, const expression_ref& dist);
+  int add_parameter(const std::string& s, const expression_ref& value);
 
   /// Reserve an identifier with name s
   int add_identifier(const std::string& s) const;
