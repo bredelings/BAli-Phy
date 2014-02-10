@@ -51,6 +51,15 @@ using std::map;
  * 13. [DONE] Replace recalc indices with trigers.
  * 14. [DONE] Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
  * 15. [DONE] Allow printing ints w/o decimal points.
+ * 16. [DONE] Make a model-creation monad.
+ * 17. [DONE] Eliminate formula_expression_ref.
+ * 18. [DONE] Eliminate all notes.
+ * 19. [DONE] Add Lexer => allows comments.
+ * 20. [DONE] Eliminate module renaming.
+ * 21. [DONE] Allow distributions on structures with variable components.
+ * 22. [DONE] Name pieces of structures intelligently -- e.g. piA instead of pi!!0
+ * 23. [DONE] Allow model files to create models where dimension of parameter depeonds on argument to model.
+ * 24. [DONE] Allow creation of parameters in their own namespace.
  */
 
 /* \todo: List of things to do to clean up programs.
@@ -59,149 +68,40 @@ using std::map;
  * See list in models/parameters.C 
  * See list in models/module.C
  *
- * -3. Merging Model::add_submodel(Model_Notes&) and add_submodel(Context&, vector<expression_ref>&)
- *     - Distribution notes need to be present BEFORE parameters are added, because they determine the structure.
- *     - Distribution notes need to be added AFTER parameters, since they set prior_index for the parameter.
- *     - This is related to setting prior_index in both process_note( ) and add_probability_expression( ).
- *
- * -1. Make a model-creation monad.  This could allow us to modify the model after creating it, thus
- *    allowing the specification of default parameters.
- *
- *    - Our primary goal here is to eliminate formula_expression_ref in favor of writing 
- *      readable Haskell model descriptions.
- *    - Model descriptions probably need to be functions, since they need to take arguments.
- *    - These arguments could then affect  e.g. the dimension of distributions and the
- *       dimension of random lists created by the model.
- *
- * 0. Fix the parser to give meaningful error messages, instead of just saying that the entire body doesn't parse.
- *    - This is related to adding a lexer.  Which would also allow comments in the code.
- *
  * 1. Efficiently recalculate the probability when only a few densities change.
  *    - Will this require signals? (Signals might also help us to recalculate mu*t to see if anything changed.)
  *    - This will allow us to avoid maintaining a Markov blanket.
- * 2. (?) Rewrite module loading routines to load modules 1-at-a-time.
- * 3. Make sure we don't read alignments with ^@ characters in the sequences!
- * 4. Eliminate duplication between Model::add_note( ) and add_probability_expression( )
- *    4a. Computing things all at once would be nice, and make balanced *-trees easy.
- *    4b. Doing things incrementally is more monad-like, though.
- * 5. Allow distributions on structures with variable components
- *    5a. Make the computation of default values delayed, so that they can depend on parameters not yet set?
- *    5b. Perform MCMC on structures dynamically, inside the machine.
- *        - This move would walk the parameter, and apply sub-moves to its pieces.
- *          + This method would allow situations where parameters change size.
- *          + The method would also allow determine the bounds for slice moves dynamically.
- *        - We'd like to set the bounds dynamically, instead of only once, statically, before starting MCMC.
- *        - Hmm... If proposals depend on the bounds, that would make the proposals dynamic too!
- *    5c. Log structures with variable components intelligently.
- *        - How shall we name the pieces?  We want piA instead of pi!0.
+ * 2. Make sure we don't read alignments with ^@ characters in the sequences!
  *
- * 7. Allow model files to create models where dimension of parameter depends on argument to model.
-
- * 8. Rationalize Model_Notes, formula_expression_ref, and program?
- *    - I note that a "model" compresses a complex expression into Model.main.
- *    - Remove Model_Notes from Module.
- *    - Allowing the creation of parameters in their own namespace, instead of having names in modules?
- *    - Define some (all?) things in a Module instead of a formula_expression_ref.
- *    - Eliminate import and import_submodel notes.
- *    - Eliminate parameter definition notes in formula_expression_ref?
- *    - [DONE] Allow creating formula_expression_ref's from modules => refer to Module.main, and import the Module.
- *    - The problem with a f.e.r. is that it doesn't have arguments you can substitute into.
- *    - Perhaps when prefixing a module, we don't want to prefix its FUNCTIONS,
- *      just its parameters and notes?
- *    - No, we do want to prefix its functions, because they might refer to parameters.
- *    - Problem:  Models need to be able to take arguments in order to affect distributions and their dimension.
- *        + Therefore, models should be functions!
- *        + Models might be implemented as functions of some internal random state.  We might want to log
- *          functions of the random state, and not the random state itself.  For example, w/ DPP, or a
- *          random tree of with the truncated DPP, etc.
-
- * 9. Try to rewrite models into BUGS modules/models.
- *    - M8b? [ Issue - how many sub-categories, though? ]
- *    - branch-site [ Issue - how to specify F3x4, HKY?  Issue - how to specify number of conservation categories? ]
- *    - branch-site [ Issue - how to make the weight on "neutral" not *depend* on the number of conservation categories? ]
- *    - Problems: 
- *      + [PROBLEM] Allowing the dimension of distributions to depend on arguments.
- *      + Frequency defaults - how can we specify these?
- *      + Submodel parameters in the M+M+M formulation - these need separate parsing to coerce them to the right type.
- *        - But is that a problem?
-
- * 10. Eliminate the need for set_branch_mean_tricky( )
+ * 3. Eliminate the need for set_branch_mean_tricky( )
  *    - Implement setting D!b only when the change is large enough.
-
- * 11. [SPEED] For bali-phy 5d.fasta --seed=0 --iter=1000
- *      + Split parameter names out of token roots?  Identifier names also? Program also?
- *      + Speed up remap_reg?  Make sure its inlined?  Make access(R).temp = R so we need no condition?
- *      - Spending 3.5% in evaluate_reg_to_object( ) to do nothing!
- *      - Spending 2% in case calling dynamic_cast from Object->compare( ).
- *      - Spending 1.3% in data_patition::copy()
- *      - Spending 1% in evaluate_reg_to_object() --- why?
- *      - Spending 1% in pop_temp_head()
- *      - Spending 1% in rs07_branch_HMM copying strings!
- *      - Spending 0.5% copying parameter names.
- *      + ------------------------------------------- +
- *      + Why is set_reg_value spending so much time in incremental_evaluate?
- *      + Spending 7.7% in _List_node_base::_M_transfer
- *        - accounts for 6.5% out of 11.81% of reg_heap::release_token( ).
- *      + Spending 1.7% deleting counted_base
- *      + ------------------------------------------- +
- *        + Also calling dynamic_cast from MH_move_iterate.  Total dynamic_cast about 5%.
- *      - MH_Move::iterate( ): 4.5% of CPU time spent checking way too many parameters to see if they are in range.
- *      - data_partition::[copy]: 3.7% total copying things.  For example, suba_index, even if it won't change.
- *      - trace_and_reclaim_unreachable( ) spends 5.1% out of 7.4% in operator new?
- *        + thus, perhaps 
- *      - (We are spending 20% of the time in operator new.)
- *      - We are spending 7% of the time in __ieee754_log_avx.
- *        - There should be a better way to multiply lots of doubles together while avoiding underflow.
- *      - Remove timer_stack things, in hopes that perf will supersed them.
- *      - push_temp_head( ) iterates over all 64 possible tokens??
- *        + Doesn't seem to actually take that much time, though!
- *      - 1% of CPU to spend on memory allocation from vector::vector in three_way_topology_sample?
- *      + We have a problem with needing to remap all heads - there are too many to scan!
- *      - [DONE?] Clear identifiers after loading programs -- Model::compile();
- *      - [DONE] Model::keys: 1% copying this every time we set a parameter.
- *      - [DONE] 3x speed-up by implementing C++ version of vector_from_list
- *      - [DONE] 15% speedup by eliminating roots() in favor of just scanning all the heads in token_roots.
- *      - [DONE] Vector into something that can be used like vector.
-
- * 13. Rationalize Programs, Modules.
- *     13a. [DONE] Allow loading stuff from files.
- *     13b. [DONE] Allow importing, desugaring, and thus resolving symbols after modules are (jointly) loaded into the machine.
- *     13c. Remove any earlier attempts at importing.
- * 14. Rewrite multi-case code to take patterns in terms of expression_ref's that might be seen from the parser.
+ * 4. Rewrite multi-case code to take patterns in terms of expression_ref's that might be seen from the parser.
  *     + Allows moving towards 16 incrementally.
- * 15. Handle 'where' clauses (e.g. in "alt")
- * 16. Handle guards clauses (e.g. in gdrhs, and gdpat)
+ * 5. Handle 'where' clauses (e.g. in "alt")
+ * 6. Handle guards clauses (e.g. in gdrhs, and gdpat)
  *     + I *think* that guards cannot fail in a way that makes the rule fail and move to the next rule.
  *       (The 'otherwise' rule might be special, though??)
  *     + If failure of all guards leads to failure, then can the guards can be processed as a special RHS?
- *     16b. Handle as-patterns.
+ *     6b. Handle as-patterns.
  *        case v of x@pat -> body => case v of pat -> (\x->body) v
- *     16c. Handle irrefutable patterns that use ~.
+ *     6c. Handle irrefutable patterns that use ~.
  *        case v of ~h:t -> body
- *     16d. What does it mean (if its true) that irrefutable bindings are only irrefutable at the top level?
- * 17. Compute the entire probability expression at once, instead of adding pieces incrementally.
- * 18. Make Context load an entire program, instead of adding pieces incrementally.
- * 19. Move the Program from Context to reg_heap.
- * 20. [DONE] Load builtins from a file.
- *     20a. Convert builtins to new framework.
- * 21. [DONE] Add computed loggers.
- *     (This will allow us to e.g. select min/max functions for logging.)
- *     21a. [DONE] Find a haskell expression to log [p1,p2,p3] based on the order of [q1,q2,q3]
- * 23. (?) Print expressions with fixity.
+ *     6d. What does it mean (if its true) that irrefutable bindings are only irrefutable at the top level?
+ * 7. Compute the entire probability expression at once, instead of adding pieces incrementally.
+ * 8. Make Context load an entire program, instead of adding pieces incrementally.
+ * 9. Move the Program from Context to reg_heap.
 
- * 27. Allow fixing parameters. (e.g. to test the branch-site model under ML)
- * 28. Make model creation into an IO operation?
- *     - Hmm.... but how would we specify default priors, then?
- * 29. Optimizations
+ * 10. Allow fixing parameters. (e.g. to test the branch-site model under ML)
+ * 11. How to specify default priors if model creation is an IO operation?
+ * 12. Optimizations
  *     - Perform applications if expression is used only once?
  *     - Remove let bindings for unused variables?
  *     - Merge let bidings with identical bodies?
  *     - Simplify some case expressions based on knowledge of let-bound variable?
- * 30. Can we also maintain parameter/distribution pairs?
- *     - This will allow us to determine the bounds on a parameter, for example.
- * 31. Print out simpler names than Test.i for parameter i.
+ * 13. Print out simpler names than Test.i for parameter i.
  *     - I think parameters are in a separate namespace?
  *     - Perhaps put a '*' on the beginning of the name when comparing with the Haskell namespace?
+ * 14. Eliminate make_Prelude.
  */
 
 
