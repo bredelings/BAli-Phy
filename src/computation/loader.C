@@ -35,18 +35,9 @@ void make_Prelude(Module& P)
   //  P += "{enumFromThen x y = ... }";
   //  P += "{enumFromThenTo x y z = ... }";
 
-  //--------------------------------------- listFromVectorInt ----------------------------------------//
-  P.def_function("getVectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<int,Int>() ) ); 
-
   //--------------------------------------- listFromString ----------------------------------------//
   P.def_function("getStringElement", lambda_expression( BuiltinGetStringIndexOp() ) ); 
   P.def_function("sizeOfString", lambda_expression( StringSizeOp() ) );
-
-  //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
-  P.def_function("getVectorVectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<Vector<int>,Vector<int>>() ) ); 
-
-  //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
-  P.def_function("getVectorvectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<vector<int>,Vector<int>>() ) ); 
 
   //--------------------------------------- listToVectorInt ---------------------------------------//
 
