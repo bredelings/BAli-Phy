@@ -141,13 +141,7 @@ void add(const module_loader& L, std::vector<Module>& P, const std::string& name
     add(L, P, L.load_module(name));
 }
 
-void add_renamed(const module_loader& L, std::vector<Module>& P, const std::pair<std::string, std::string>& names)
-{
-  if (not contains_module(P,names.second))
-    add(L, P, L.load_and_rename_module(names.first, names.second));
-}
-
-void add(const module_loader& L, vector<Module>& P, const vector<string>& module_names, const vector<pair<string,string>>& submodule_names)
+void add(const module_loader& L, vector<Module>& P, const vector<string>& module_names)
 {
   vector<Module> modules;
 
@@ -155,9 +149,6 @@ void add(const module_loader& L, vector<Module>& P, const vector<string>& module
   for(const auto& name: module_names)
     add(L, P, name);
 
-  // Load the modules to be renamed
-  for(const auto& names: submodule_names)
-    add_renamed(L, P, names);
 }
 
 bool is_declared(const vector<Module>& modules, const string& qvar)
@@ -205,53 +196,6 @@ map<string,string> get_simplified_names(const set<string>& names)
   return simplified;
 }
 
-map<string,string> get_simplified_names(const vector<Module>& P)
-{
-  vector<string> parameter_names;
-
-  // 1. Find all parameters and variables
-  set<string> names;
-  for(const auto& module: P)
-    for(const auto& S: module.get_symbols())
-      if (S.second.scope == local_scope)
-      {
-	string name = S.first;
-	symbol_type_t T = S.second.symbol_type;
-	if (T == parameter_symbol)
-	  parameter_names.push_back(name);
-	if (T == variable_symbol or T == parameter_symbol or T == constructor_symbol)
-	  names.insert(name);
-      }
-
-  // 2. Map qualified names to their unqualified versions IF there is only one occurrence of the unqualified version.
-  map<string,string> simplified = get_simplified_names(names);
-
-  // 3. Map long parameter names to their shortened equivalent
-  // \todo FIXME:extend This doesn't handle parameter names clashing with variable names
-  vector<string> short_names = short_parameter_names(parameter_names);
-  for(int i=0;i<parameter_names.size();i++)
-  {
-    // If the short name isn't shorter, then stop recording a simplification
-    if (short_names[i] == parameter_names[i])
-    {
-      auto loc = simplified.find(parameter_names[i]);
-      if (loc != simplified.end())
-	simplified.erase(parameter_names[i]);
-    }
-    // If we simplify down to a short name, then either 
-    //  (a) We are already using that short name, or 
-    //  (b) its ambiguous.
-    // In both cases, don't do anything different.
-    else if (not is_qualified_symbol(short_names[i]))
-      ;
-    // If we simplified, but left some prefix components, then check that there isn't any variable named this.
-    // FIXME:extend Actually, if this is a parameter, then its OK. So, look up the symbol, and check if its a var.
-    else if (not is_declared(P, short_names[i]))
-      simplified[parameter_names[i]] = short_names[i];
-  }
-
-  return simplified;
-}
 
 expression_ref map_symbol_names(const expression_ref& E, const std::map<string,string>& simplify)
 {
@@ -265,14 +209,6 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<string,s
       else
 	return E;
     }
-    else if (auto P = is_a<parameter>(E))
-    {
-      auto loc = simplify.find(P->parameter_name);
-      if (loc != simplify.end())
-	return parameter(loc->second);
-      else
-	return E;
-    }
     else
       return E;
   }
@@ -281,9 +217,4 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<string,s
   for(int i=0;i<E->size();i++)
     V->sub[i] = map_symbol_names(V->sub[i], simplify);
   return V;
-}
-
-expression_ref simplify_names(const expression_ref& E, const vector<Module>& P)
-{
-  return map_symbol_names(E, get_simplified_names(P) );
 }

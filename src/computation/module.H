@@ -10,7 +10,7 @@
 #include <iostream>
 
 enum fixity_t {unknown_fix=0, non_fix=1, left_fix=2, right_fix=3};
-enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, parameter_symbol = 2, type_symbol = 3, unknown_symbol = 4};
+enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, type_symbol = 3, unknown_symbol = 4};
 enum scope_t {local_scope, external_scope, global_scope, unknown_scope};
 
 struct symbol_info
@@ -108,10 +108,6 @@ public:
 
   void declare_symbol(const symbol_info&);
 
-  void declare_parameter(const std::string& name);
-
-  void declare_parameter(const std::string& name, const expression_ref& type);
-
   void add_import(bool qualified, const std::string&);
 
   void add_import_as(bool qualified, const std::string&, const std::string&);
@@ -140,10 +136,6 @@ public:
 
   symbol_info get_operator(const std::string& name) const;
 
-  std::vector<std::string> parameter_names() const;
-
-  int n_parameters() const;
-
   explicit Module(const std::string&);
 
   explicit Module(const char*);
@@ -154,8 +146,4 @@ public:
 std::ostream& operator<<(std::ostream&, const Module&);
 
 expression_ref resolve_refs(const std::vector<Module>&, const expression_ref&);
-
-// Rename parts of the AST!
-std::string rename_module(const std::string& s, const std::string& modid1, const std::string& modid2);
-expression_ref rename_module(const expression_ref&, const std::string&, const std::string&);
 #endif

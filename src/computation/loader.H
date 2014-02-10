@@ -20,12 +20,10 @@ public:
   /// Add the hard-coded elements to the module.
   Module load_module_from_file(const std::string&) const;
   Module load_module(const std::string&) const;
-  Module load_and_rename_module(const std::string&, const std::string&) const;
 };
 
 std::vector<Module> load_modules(const module_loader&, const std::vector<std::string>&);
 std::vector<Module> load_modules(const module_loader&, const std::set<std::string>&);
-std::vector<Module> load_and_rename_modules(const module_loader&, const std::map<std::string,std::string>&);
 
 expression_ref load_builtin(const module_loader& L, const std::string& symbol_name, const std::string& filename, int n, const std::string& fname);
 expression_ref load_builtin(const std::string& symbol_name, const std::string& filename, int n, const std::string& fname);

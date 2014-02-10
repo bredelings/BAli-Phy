@@ -618,10 +618,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       {
 	const symbol_info& S = m.lookup_symbol(n->value);
 	string qualified_name = S.name;
-	if (S.symbol_type == parameter_symbol)
-	  return parameter(qualified_name);
-	else
-	  return identifier(qualified_name);
+	return identifier(qualified_name);
       }
       else
 	throw myexception()<<"Can't find id '"<<n->value<<"'";
@@ -940,18 +937,6 @@ expression_ref parse_haskell_line(const Module& P, const string& line)
   return desugar(P, parse_haskell_line(line));
 }
 
-expression_ref parse_bugs_line(const Module& P, const string& line)
-{
-  expression_ref cmd = parse_bugs_line(line);
-
-  std::cerr<<"BUGS phrase parse: "<<cmd<<"\n";
-  cmd = desugar(P, cmd);
-  std::cerr<<"        processed: "<<cmd<<"\n";
-  std::cerr<<std::endl;
-
-  return cmd;
-}
-
 bool is_all_space(const string& line)
 {
   for(int i=0;i<line.size();i++)
@@ -959,23 +944,17 @@ bool is_all_space(const string& line)
   return true;
 }
 
-Module read_model(const Parameters& P, const string& filename)
+Module read_model(const string& filename)
 {
   // 1. Read module
   Module Model ( module_loader().read_module_from_file(filename) );
-
-  // 2. Import all parameter symbols from other modules.
-  for(const auto& M:P.get_Program())
-    for(const auto& S:M.get_symbols())
-      if (S.second.symbol_type == parameter_symbol)
-	Model.import_symbol(S.second, M.name,true);
 
   return Model;
 }
 
 void add_model(Parameters& P, const std::string& filename)
 {
-  auto m = read_model(P, filename);
+  auto m = read_model(filename);
 
   P += m;
   P.perform_expression((identifier("gen_model"),identifier(m.name+".main")));

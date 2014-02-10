@@ -356,11 +356,8 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
       KW_Safe = "safe";
       KW_Unsafe = "unsafe";
 
+      // This is not a haskell keyword
       KW_Builtin = "builtin";
-      KW_External= "external";
-      KW_Note = "note";
-      KW_Parameter = "parameter";
-      KW_Submodel = "submodel";
 
       // whitespace
       WHITESPACE = "{whitespace}";
@@ -383,10 +380,6 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 	| BackQuote
 
 	| KW_Builtin
-	| KW_External
-	| KW_Note
-	| KW_Parameter
-	| KW_Submodel
 
 	// underscore - part of reservedid?
 	| Underscore
@@ -526,10 +519,6 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
   lex::token_def<> KW_Unsafe;
 
   lex::token_def<> KW_Builtin;
-  lex::token_def<> KW_External;
-  lex::token_def<> KW_Note;
-  lex::token_def<> KW_Parameter;
-  lex::token_def<> KW_Submodel;
 
   //  lex::token_def<std::string> WHITESPACE; For multi-stage lexing, we will actually need the matched string
   lex::token_def<lex::omit> WHITESPACE;
@@ -779,7 +768,6 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  //	  | tok.KW_Default >> *type
 	  //	  | tok.KW_Foreign >> fdecl
 	  | tok.KW_Builtin > (var|varop)[ push_back(_a,construct<String>(_1)) ] >> literal_int[push_back(_a,_1)] >> quoted_string[push_back(_a,_1)] >> -quoted_string[push_back(_a,_1)] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
-	  | tok.KW_Note > bugs_line [_val = _1]
 	  | decl [_val = _1]
 	  ;
 
@@ -889,9 +877,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	
 	/*------ Section 5.3 -------*/
 	impdecl = tok.KW_Import > -tok.KW_Qualified[push_back(_a,"qualified")] 
-	                   > -tok.KW_Submodel[push_back(_a,"submodel")] 
 	                   > modid[push_back(_a,construct<String>(_1))] 
-                           >> -(tok.KW_In[push_back(_a,"as")] > modid[push_back(_a,construct<String>(_1))])
 			   >> /*-impspec >>*/ eps [ _val = new_<expression>(AST_node("ImpDecl"), _a)  ];
 
 	//	impspec = 
@@ -906,15 +892,6 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  | tycon >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> cname %"," >> tok.RightParen)
 	  | tycls >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> var %"," >> tok.RightParen);
 	*/
-
-	/*----------- Rules for notes and related processing - not Haskell --------------*/
-	bugs_dist = tok.KW_Data >> exp[push_back(_a,_1)] >> tok.Tilde > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDataDist"), _a)  ] 
-	  | eps [clear(_a) ] >> tok.KW_External >> exp[push_back(_a,_1)] >> tok.Tilde > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsExternalDist"), _a)  ]
-	  | eps [clear(_a) ] >> exp[push_back(_a,_1)] >> tok.Tilde > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
-	bugs_note = fexp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
-	bugs_parameter = tok.KW_Parameter >> varid [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Parameter"), _a)  ];
-
-	bugs_line %= bugs_parameter | bugs_dist | bugs_note;
 
 #define add_error_handler(node) on_error<fail>(node,\
 	error_handler_function(error_handler)(\
@@ -939,8 +916,6 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	add_error_handler(lpat);
 	add_error_handler(apat);
 	add_error_handler(literal);
-	add_error_handler(bugs_line);
-	add_error_handler(bugs_dist);
 
 	BOOST_SPIRIT_DEBUG_NODE(varid);
 	BOOST_SPIRIT_DEBUG_NODE(qvarid);
@@ -1026,10 +1001,6 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	fixity.name("fixity");
 	gcon.name("gcon");
 	literal.name("literal");
-
-	bugs_parameter.name("bugs_parameter");
-	bugs_dist.name("bugs_dist");
-	bugs_note.name("bugs_note");
     }
   qi::rule<Iterator, std::string()> varid;
   qi::rule<Iterator, std::string()> qvarid;
@@ -1167,15 +1138,6 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> impdecl;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> impspec;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> import;
-
-  /*----------- Rules for notes and related processing - not Haskell --------------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> bugs_dist;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> bugs_default_value;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> bugs_note;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> bugs_parameter;
-
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> bugs_line;
-
 };
 
 //-----------------------------------------------------------------------//
@@ -1249,38 +1211,7 @@ expression_ref parse_haskell_decls(const string& line)
   return cmd;
 }
 
-expression_ref parse_bugs_line(const string& line)
-{
-  std::stringstream line_stream(line);
-  line_stream.unsetf(std::ios::skipws);
-
-  StreamIter beg = StreamIter(line_stream), end;
-
-  HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
-  HParser<HTokens<Lexer>::iterator_type> haskell_parser(error_handler,lexer1);
-
-  {
-    for(auto i = lexer1.begin(beg, end); i != lexer1.end() and (*i).is_valid(); i++)
-    {
-      auto& t = *i;
-      std::cout<<"'"<<t.value()<<"'\n";;
-    }
-  }
-
-  /*----------------------------------------------------------------------------*/
-
-  expression_ref cmd;
-  StreamIter iter = beg;
-  if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.bugs_line, cmd))
-    throw myexception()<<"HBUGS line parse failed!";
-
-  if (iter != end)
-    throw myexception()<<"HBUGS line parse only parsed:\n "<<string(beg,iter)<<"\n";
-
-  return cmd;
-}
-
-expression_ref parse_bugs_file(const string& lines)
+expression_ref parse_module_file(const string& lines)
 {
   std::stringstream line_stream(lines);
   line_stream.unsetf(std::ios::skipws);

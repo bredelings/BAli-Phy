@@ -226,13 +226,9 @@ public:
 
   void allocate_identifiers_for_modules(const std::vector<std::string>& module_names);
 
-  void initialize_parameter_structures_for_modules(const std::vector<std::string>& module_names);
-
   context& operator+=(const Module& M);
 
   context& operator+=(const std::string& module_name);
-
-  context& operator+=(const std::pair<std::string,std::string>& module_name);
 
   context& operator+=(const std::vector<Module>& D);
 
@@ -240,15 +236,13 @@ public:
 
   context& operator=(const context& c);
 
-  context(const module_loader&);
-
   context(const context&);
 
-  context(const module_loader&, const std::vector<expression_ref>&);
+  context(const module_loader&);
 
-  context(const module_loader&, const std::vector<expression_ref>&, const std::vector<Module>& P);
+  context(const module_loader&, const std::vector<Module>& P);
 
-  context(const module_loader&, const std::vector<expression_ref>&, const std::vector<std::string>& module_names);
+  context(const module_loader&, const std::vector<std::string>& module_names);
 
   ~context();
 };

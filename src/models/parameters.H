@@ -249,6 +249,8 @@ class Parameters: public Probability_Model
   std::vector<int> parameter_for_tree_node;
   std::vector<int> parameter_for_tree_branch;
 
+  int tree_head = -1;
+
 public:
 
   /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
@@ -274,6 +276,8 @@ public:
   double get_beta() const;
 
   const SequenceTree& T() const;
+
+  expression_ref my_tree() const;
 
   void reconnect_branch(int s1, int t1, int t2);
   void set_tree(const SequenceTree& T);

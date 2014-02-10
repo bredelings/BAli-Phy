@@ -267,7 +267,7 @@ expression_ref module_loader::read_module_from_file(const string& filename) cons
     if (not modules.count(filename))
     {
       string file_contents = read_file(filename,"module");
-      modules[filename] = parse_bugs_file(file_contents);
+      modules[filename] = parse_module_file(file_contents);
     }
 
     return modules[filename];
@@ -353,42 +353,9 @@ vector<Module> load_modules(const module_loader& L, const set<string>& module_na
   return P;
 }
 
-vector<Module> load_and_rename_modules(const module_loader& L, const map<string,string>& module_names)
-{
-  vector<Module> P;
-  for(const auto& x: module_names)
-    P.push_back(L.load_and_rename_module(x.first, x.second));
-  return P;
-}
-
 Module module_loader::load_module(const string& module_name) const
 {
   return load_module_from_file(find_module(module_name));
-}
-
-Module module_loader::load_and_rename_module(const string& modid1, const string& modid2) const
-{
-  try
-  {
-    // FIXME! This is based on the assumption that renamed modules aren't fixed up after loading from disk.
-    expression_ref module = read_module_from_file(find_module(modid1));
-
-    Module M1(module);
-
-    if (M1.name != modid1)
-      throw myexception()<<"Module file '"<<modid1<<".hs' contains different module '"<<M1.name<<"'";
-
-    module = rename_module(module, modid1, modid2);
-
-    Module M2(module);
-
-    return M2;
-  }
-  catch (myexception& e)
-  {
-    e.prepend("Loading module '"+modid1+"' as '"+modid2+":\n  ");
-    throw e;
-  }
 }
 
 #include <dlfcn.h>

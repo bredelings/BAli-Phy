@@ -319,40 +319,12 @@ int context::add_parameter_with_dist(const string& full_name,const expression_re
 
 int context::add_parameter(const string& full_name, const expression_ref& initializer)
 {
-  if (not is_haskell_var_name(full_name))
-    throw myexception()<<"Parameter name '"<<full_name<<"' is not a Haskell variable name";
-
   // 0. Check that we don't already have a parameter with that name
   for(int i=0;i<n_parameters();i++)
     if (parameter_name(i) == full_name)
       throw myexception()<<"A parameter with name '"<<full_name<<"' already exists - cannot add another one.";
 
-  // 1. Determine module name and extension of parameter name.
-  string module_name = get_module_name(full_name);
-  string var_name = get_unqualified_name(full_name);
-  if (module_name.empty())
-    throw myexception()<<"Trying to add parameter with unqualified name '"<<full_name<<"'!";
-  assert(module_name + "." + var_name == full_name);
-
-  // 2. Add it to some module.
-  bool found = false;
-  for(auto& module: *P.modify())
-    if (module.name == module_name)
-    {
-      module.declare_parameter(var_name);
-      found = true;
-    }
-
-  if (not found)
-  {
-    Module module(module_name);
-    module.declare_parameter(var_name);
-    P.modify()->push_back(module);
-    // FIXME:maybe-works - Do all other modules now need to import this??
-  }
-
   assert(full_name.size() != 0);
-  assert(find_parameter(full_name) == -1);
 
   int index = n_parameters();
 
@@ -564,14 +536,6 @@ context& context::operator+=(const string& module_name)
   return *this;
 }
 
-context& context::operator+=(const pair<string,string>& module_names)
-{
-  if (not contains_module(*P, module_names.second))
-    (*this) += get_module_loader().load_and_rename_module(module_names.first, module_names.second);
-
-  return *this;
-}
-
 context& context::operator+=(const vector<string>& module_names)
 {
   for(const auto& name: module_names)
@@ -600,8 +564,6 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 
 	add_identifier(S.name);
       }
-      else if (S.symbol_type == parameter_symbol)
-	add_parameter_(S.name);
     }
   }
       
@@ -615,8 +577,6 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
       const symbol_info& S = s.second;
 
       if (S.scope != local_scope) continue;
-
-      if (S.symbol_type == parameter_symbol) continue; // we handle this in initialize_parameter_structures_from_notes( )
 
       if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
 
@@ -634,36 +594,10 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
   }
 }
 
-void context::initialize_parameter_structures_for_modules(const vector<string>& module_names)
-{
-  // 3. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
-  for(const auto& name: module_names)
-  {
-    const Module& M = get_module(*P, name);
-
-    for(const auto& s: M.get_symbols())
-    {
-      const symbol_info& S = s.second;
-
-      if (S.scope != local_scope) continue;
-
-      if (S.symbol_type == parameter_symbol)
-      {
-	int R = get_parameter_reg( find_parameter(S.name) );
-	expression_ref E = (identifier("unsafePerformIO"), identifier("new_modifiable") );
-	E = (identifier("evaluate"),-1,E);
-	set_C(R, preprocess( E ) );
-      }
-    }
-  }
-}
-
 // \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
 context& context::operator+=(const Module& M)
 {
   Program& PP = *P.modify();
-
-  int first_module = PP.size();
 
   // Get module_names, but in a set<string>
   set<string> old_module_names = module_names_set(PP);
@@ -679,9 +613,6 @@ context& context::operator+=(const Module& M)
 
   allocate_identifiers_for_modules(new_module_names);
 
-  // 4. Create a structure containing modifiables for each parameter
-  initialize_parameter_structures_for_modules(new_module_names);
-  
   return *this;
 }
 
@@ -707,14 +638,10 @@ context& context::operator=(const context& C)
 }
 
 context::context(const module_loader& L)
-  :context(L,vector<expression_ref>{},vector<Module>{})
-{  }
-
-context::context(const module_loader& L, const vector<expression_ref>& N)
-  :context(L, N,vector<Module>{})
+  :context(L, vector<Module>{})
 { }
 
-context::context(const module_loader& L, const vector<expression_ref>& N, const vector<Module>& Ps)
+context::context(const module_loader& L, const vector<Module>& Ps)
   :memory_(new reg_heap()),
    P(new Program),
    context_index(memory_->get_unused_context()),
@@ -728,8 +655,8 @@ context::context(const module_loader& L, const vector<expression_ref>& N, const 
   perform_io_head = add_compute_expression(identifier("unsafePerformIO"));
 }
 
-context::context(const module_loader& L, const vector<expression_ref>& N, const vector<string>& module_names)
-  :context(L,N)
+context::context(const module_loader& L, const vector<string>& module_names)
+  :context(L)
 {
   for(const auto& name: module_names)
     (*this) += name;

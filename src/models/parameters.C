@@ -579,7 +579,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       alignment_prior_for_branch[b] = p->add_compute_expression( (identifier("alignment_branch_pr"),as,hmms,b) );
     }
 
-    expression_ref tree = identifier("MyTree.tree");
+    expression_ref tree = p->my_tree();
 
     alignment_prior_index = p->add_compute_expression( (identifier("alignment_pr"), as, tree, hmms, model) );
 
@@ -1127,6 +1127,11 @@ double Parameters::get_branch_subst_rate(int p, int /* b */) const
   return get_parameter_value_as<Double>(branch_mean_index(s));
 }
 
+expression_ref Parameters::my_tree() const
+{
+  return get_expression(tree_head);
+}
+
 Parameters::Parameters(const module_loader& L,
 		       const vector<alignment>& A, const SequenceTree& t,
 		       const vector<expression_ref>& SMs,
@@ -1171,46 +1176,40 @@ Parameters::Parameters(const module_loader& L,
   }
 
   /*------------------------- Create the tree structure -----------------------*/
-  Module tree_module("MyTree");
-
   vector<expression_ref> node_branches;
   for(int n=0; n < T().n_nodes(); n++)
   {
-    string name = "nodeBranches"+convertToString(n);
-    tree_module.declare_parameter("nodeBranches"+convertToString(n));
-    expression_ref param = parameter("MyTree." + name);
-    node_branches.push_back( (identifier("list_from_vector"),param) );
+    string name = "MyTree.nodeBranches"+convertToString(n);
+    add_parameter(name);
+    node_branches.push_back( (identifier("list_from_vector"), parameter(name)) );
   }
   expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
 
   vector<expression_ref> branch_nodes;
   for(int b=0; b < 2*T().n_branches(); b++)
   {
-    string name = "branchNodes"+convertToString(b); 
-    tree_module.declare_parameter(name);
-    branch_nodes.push_back( (identifier("pair_from_c"), parameter("MyTree."+name)) );
+    string name = "MyTree.branchNodes"+convertToString(b); 
+    add_parameter(name);
+    branch_nodes.push_back( (identifier("pair_from_c"), parameter(name)) );
   }
   expression_ref branch_nodes_array = (identifier("listArray'"),get_list(branch_nodes));
 
   expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
 
-  tree_module.add_import(false, "Tree");
-  tree_module.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T().n_nodes(), T().n_branches()));
-
-  (*this) += tree_module;
+  tree_head = add_compute_expression( (tree_con, node_branches_array, branch_nodes_array, T().n_nodes(), T().n_branches()));
 
   // Determine the parameter index for branches adjoining a tree node
   for(int n=0; n < T().n_nodes(); n++)
   {
-    string parameter_name = "MyTree.nodeBranches"+convertToString(n);
-    parameter_for_tree_node.push_back ( find_parameter(parameter_name) );
+    string name = "MyTree.nodeBranches"+convertToString(n);
+    parameter_for_tree_node.push_back ( find_parameter(name) );
     assert( parameter_for_tree_node.back() != -1);
   }
   // Determine the parameter index for nodes at the endpoint of a branch
   for(int b=0; b < 2*T().n_branches(); b++)
   {
-    string parameter_name = "MyTree.branchNodes"+convertToString(b);
-    parameter_for_tree_branch.push_back( find_parameter(parameter_name) );
+    string name = "MyTree.branchNodes"+convertToString(b);
+    parameter_for_tree_branch.push_back( find_parameter(name) );
     assert( parameter_for_tree_branch.back() != -1);
   }
 
@@ -1218,12 +1217,12 @@ Parameters::Parameters(const module_loader& L,
 
   check_h_tree();
 
-  evaluate_expression( (identifier("numNodes"), identifier("MyTree.tree")));
-  evaluate_expression( (identifier("numBranches"), identifier("MyTree.tree")));
-  evaluate_expression( (identifier("edgesOutOfNode"), identifier("MyTree.tree"), 0));
-  evaluate_expression( (identifier("neighbors"), identifier("MyTree.tree"), 0));
-  evaluate_expression( (identifier("nodesForEdge"),identifier("MyTree.tree"), 0));
-  int nn = *convert<const Int>(evaluate_expression( (identifier("edgeForNodes"), identifier("MyTree.tree"), (identifier("nodesForEdge"),identifier("MyTree.tree"), 0))));
+  evaluate_expression( (identifier("numNodes"), my_tree()));
+  evaluate_expression( (identifier("numBranches"), my_tree()));
+  evaluate_expression( (identifier("edgesOutOfNode"), my_tree(), 0));
+  evaluate_expression( (identifier("neighbors"), my_tree(), 0));
+  evaluate_expression( (identifier("nodesForEdge"),my_tree(), 0));
+  int nn = *convert<const Int>(evaluate_expression( (identifier("edgeForNodes"), my_tree(), (identifier("nodesForEdge"),my_tree(), 0))));
   for(int b=0; b < 2*T().n_branches(); b++)
   {
     vector<const_branchview> branch_list;
@@ -1232,7 +1231,7 @@ Parameters::Parameters(const module_loader& L,
     for(auto b: branch_list)
       branch_list_.push_back(b);
 
-    vector<int> b2 = *convert<const Vector<int>>(evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),identifier("MyTree.tree"),b)))));
+    vector<int> b2 = *convert<const Vector<int>>(evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),my_tree(),b)))));
     assert(b2.size() == branch_list_.size());
     for( int i: branch_list_)
       assert(includes(b2,i));
@@ -1262,11 +1261,12 @@ Parameters::Parameters(const module_loader& L,
 
     imodels_.push_back(perform_exp(IMs[i],prefix));
   }
+
+  add_parameter("IModels.training", false);
+
   Module imodels_program("IModels");
   imodels_program.def_function("models", (identifier("listArray'"), get_list(imodels_)));
-  imodels_program.declare_parameter("training");
   (*this) += imodels_program;
-  context::set_parameter_value(find_parameter("IModels.training"), false);
   
   // check that we only map existing smodels to data partitions
   for(int i=0;i<smodel_for_partition.size();i++) {

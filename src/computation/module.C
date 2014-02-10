@@ -178,16 +178,6 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
   S.fixity = fixity;
 }
 
-void Module::declare_parameter(const std::string& pname)
-{
-  declare_parameter(pname, {});
-}
-
-void Module::declare_parameter(const std::string& pname, const expression_ref& type)
-{
-  declare_symbol({pname, parameter_symbol, local_scope, -1, -1, unknown_fix, parameter(pname),type});
-}
-
 void Module::add_import(bool qualified, const string& modid)
 {
   vector<expression_ref> sub;
@@ -792,25 +782,6 @@ Module& Module::operator+=(const expression_ref& E)
       }
     }
       
-  // 3. Find explicitly and implicitly-declared parameters
-  set<string> parameters;
-  for(const auto& cmd: decls->sub)
-  {
-    // This doesn't happen for BugsExternalDist or BugsDataDist
-    if (is_AST(cmd,"BugsDist"))
-      add(parameters, find_all_ids(cmd->sub[0]));
-    else if (is_AST(cmd,"Parameter"))
-    {
-      string name = *(cmd->sub[0].assert_is_a<String>());
-      parameters.insert(name);
-    }
-  }
-  
-  // 4. Actually declare the parameters
-  for(const auto& name: parameters)
-    if (not is_declared(name))
-      declare_parameter(name);
-
   if (module) return *this;
 
   if (not topdecls)
@@ -903,20 +874,6 @@ expression_ref Module::get_function(const std::string& fname) const
   return lookup_symbol(fname).body;
 }
 
-vector<string> Module::parameter_names() const
-{
-  vector<string> names;
-  for(const auto& x:get_symbols())
-    if (x.second.symbol_type == parameter_symbol and x.second.scope == local_scope)
-      names.push_back(x.first);
-  return names;
-}
-
-int Module::n_parameters() const
-{
-  return parameter_names().size();
-}
-
 // A name of "" means that we are defining a top-level program, or a piece of a top-level program.
 Module::Module(const string& n)
   :name(n)
@@ -951,21 +908,6 @@ std::ostream& operator<<(std::ostream& o, const Module& D)
 
 expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
 {
-  // Replace parameters with the appropriate reg_var: of value parameter( )
-  if (object_ptr<const parameter> p = is_a<parameter>(E))
-  {
-    string name = p->parameter_name;
-    if (not is_qualified_symbol(name))
-      for(const auto& module: P)
-	if (module.is_declared(name))
-	{
-	  symbol_info S = module.lookup_symbol(name);
-	  assert(S.symbol_type = parameter_symbol);
-	  string qualified_name = S.name;
-	  return parameter(qualified_name);
-	}
-  }
-
   // Replace parameters with the appropriate reg_var: of value whatever
   if (object_ptr<const identifier> V = is_a<identifier>(E))
   {
@@ -976,7 +918,6 @@ expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
 	if (module.is_declared(name))
 	{
 	  symbol_info S = module.lookup_symbol(name);
-	  assert(S.symbol_type = parameter_symbol);
 	  string qualified_name = S.name;
 	  return identifier(qualified_name);
 	}
@@ -1009,55 +950,3 @@ string rename_module(const string& s, const string& modid1, const string& modid2
 }
 
 
-// Rename parts of the AST!
-expression_ref rename_module(const expression_ref& E, const std::string& modid1, const std::string& modid2)
-{
-  if (object_ptr<const AST_node> n = E.is_a<AST_node>())
-  {
-    if (n->type == "Module")
-    {
-      vector<expression_ref> sub = E->sub;
-      if (sub.size() == 1)
-	sub[0] = rename_module(sub[1], modid1, modid2);
-      else if (sub.size() == 2)
-      {
-	string modid = *sub[0].is_a<String>();
-	if (modid == modid1) modid = modid2;
-	sub[0] = String(modid);
-	sub[1] = rename_module(sub[1], modid1, modid2);
-      }
-      return {AST_node("Module"),sub};
-    }
-    // Rename ids
-    if (n->type == "id")
-      return AST_node("id",rename_module(n->value, modid1, modid2));
-  }
-
-  // Rename parameters
-  else if (auto p = is_a<parameter>(E))
-    return parameter( rename_module(p->parameter_name, modid1, modid2) );
-
-  // Rename vars
-  else if (auto V = is_a<identifier>(E))
-    return identifier( rename_module(V->name, modid1, modid2) );
-
-  // Rename dummies
-  else if (auto D = is_a<dummy>(E))
-  {
-    dummy d2 = *D;
-    if (d2.name.size() and is_qualified_symbol(d2.name))
-      d2.name = rename_module(d2.name, modid1, modid2);
-    return d2;
-  }
-
-  // Other constants have no parts, and don't need to be resolved
-  if (not E->size()) return E;
-
-  // Resolve the parts of the expression
-  object_ptr<expression> V ( new expression(*E) );
-  for(int i=0;i<V->size();i++)
-    V->sub[i] = rename_module(V->sub[i], modid1, modid2);
-
-  return V;
-
-}
