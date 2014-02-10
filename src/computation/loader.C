@@ -23,43 +23,6 @@ using std::map;
   const string plugin_extension = ".so";
 #endif
 
-void make_Prelude(Module& P)
-{
-  // See http://www.haskell.org/onlinereport/standard-prelude.html
-
-
-  // [ We could do this as two nested fmaps, instead. ]
-  // [ We could factor out to_double(v2), and 1.0/to_double(v2)
-
-  // FIXME - we have an problem with types here.  This will only work for Int, as-is.
-  //  P += "{enumFromThen x y = ... }";
-  //  P += "{enumFromThenTo x y z = ... }";
-
-  //--------------------------------------- listFromString ----------------------------------------//
-  P.def_function("getStringElement", lambda_expression( BuiltinGetStringIndexOp() ) ); 
-  P.def_function("sizeOfString", lambda_expression( StringSizeOp() ) );
-
-  //--------------------------------------- listToVectorInt ---------------------------------------//
-
-  P.def_function("builtinNewVectorInt", lambda_expression( BuiltinNewVectorOp<int>() ) ); 
-  P.def_function("builtinSetVectorIndexInt", lambda_expression( BuiltinSetVectorIndexOp<int,Int>() ) ); 
-
-  //--------------------------------------- listToString ---------------------------------------//
-
-  P.def_function("builtinNewString", lambda_expression( BuiltinNewStringOp() ) ); 
-  P.def_function("builtinSetStringIndexInt", lambda_expression( BuiltinSetStringIndexOp() ) );
-
-  //--------------------------------------- listToVectorDouble ---------------------------------------//
-
-  P.def_function("builtinNewVectorDouble", lambda_expression( BuiltinNewVectorOp<double>() ) ); 
-  P.def_function("builtinSetVectorIndexDouble", lambda_expression( BuiltinSetVectorIndexOp<double,Double>() ) ); 
-
-  //--------------------------------------- listToVectorMatrix ---------------------------------------//
-
-  P.def_function("builtinNewVectorMatrix", lambda_expression( BuiltinNewVectorOp<Matrix>() ) ); 
-  P.def_function("builtinSetVectorIndexMatrix", lambda_expression( BuiltinSetVectorIndexOp<Matrix,MatrixObject>() ) ); 
-}
-
 expression_ref module_loader::read_module_from_file(const string& filename) const
 {
   try
@@ -125,9 +88,6 @@ Module module_loader::load_module_from_file(const string& filename) const
 
     Module M(module);
     
-    if (M.name == "Prelude")
-      make_Prelude(M);
-
     return M;
   }
   catch (myexception& e)

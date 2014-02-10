@@ -121,8 +121,7 @@ using std::ostream;
  * 13. Print out simpler names than Test.i for parameter i.
  *     - I think parameters are in a separate namespace?
  *     - Perhaps put a '*' on the beginning of the name when comparing with the Haskell namespace?
- * 14. Eliminate make_Prelude.
-*
+ *
  * 15. Allow adding transition kernels from haskell
  *
  * 16. Allow specifying the sampling rate from haskell

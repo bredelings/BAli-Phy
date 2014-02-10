@@ -60,3 +60,99 @@ extern "C" closure builtin_function_getVectorvectorIntElement(OperationArgs& Arg
 {
   return GetVectorElement<vector<int>,Vector<int>>(Args);
 }
+
+extern "C" closure builtin_function_sizeOfString(OperationArgs& Args)
+{
+  const std::string& s = *Args.evaluate_as<String>(0);
+  
+  return Int(s.size());
+}
+
+extern "C" closure builtin_function_getStringElement(OperationArgs& Args)
+{
+  const std::string& s = *Args.evaluate_as<String>(0);
+  int i = *Args.evaluate_as<Int>(1);
+  
+  return Char(s[i]);
+}
+
+extern "C" closure builtin_function_NewString(OperationArgs& Args)
+{
+  const int& length = *Args.evaluate_as<Int>(0);
+
+  object_ptr<String> v (new String);
+
+  v->resize(length);
+
+  return v;
+}
+
+extern "C" closure builtin_function_SetStringIndex(OperationArgs& Args)
+{
+  object_ptr<const String> v = Args.evaluate_as<String>(0);
+  int i = *Args.evaluate_as<Int>(1);
+  char x = *Args.evaluate_as<Char>(2);
+
+  const String* vv = &(*v);
+  String* vvv = const_cast<String*>(vv);
+  (*vvv)[i] = x;
+
+  return constructor("()",0);
+}
+
+template <class T>
+closure NewVector(OperationArgs& Args)
+{
+  object_ptr<const Int> length = Args.evaluate_as<Int>(0);
+
+  object_ptr<Vector<T>> v (new Vector<T>);
+
+  v->resize(*length);
+
+  return v;
+}
+
+extern "C" closure builtin_function_NewVectorInt(OperationArgs& Args)
+{
+  return NewVector<int>(Args);
+}
+
+extern "C" closure builtin_function_NewVectorDouble(OperationArgs& Args)
+{
+  return NewVector<double>(Args);
+}
+
+extern "C" closure builtin_function_NewVectorMatrix(OperationArgs& Args)
+{
+  return NewVector<Matrix>(Args);
+}
+
+template <typename T, typename U>
+closure SetVectorIndex(OperationArgs& Args)
+{
+  object_ptr<const Vector<T>> v = Args.evaluate_as<Vector<T>>(0);
+  int i = *Args.evaluate_as<Int>(1);
+  U x = *Args.evaluate_as<U>(2);
+
+  const Vector<T>* vv = &(*v);
+  Vector<T>* vvv = const_cast<Vector<T>*>(vv);
+  (*vvv)[i] = x;
+
+  return constructor("()",0);
+}
+
+extern "C" closure builtin_function_SetVectorIndexInt(OperationArgs& Args)
+{
+  return SetVectorIndex<int,Int>(Args);
+}
+
+extern "C" closure builtin_function_SetVectorIndexDouble(OperationArgs& Args)
+{
+  return SetVectorIndex<double,Double>(Args);
+}
+
+extern "C" closure builtin_function_SetVectorIndexMatrix(OperationArgs& Args)
+{
+  return SetVectorIndex<Matrix,MatrixObject>(Args);
+}
+
