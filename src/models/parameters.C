@@ -126,8 +126,6 @@ using std::ostream;
  *
  * 16. Allow specifying the sampling rate from haskell
  *
- * 17. Build expressions for caching the probability.
- *
  * 18. Add ability to change the prior on variables.
  *
  * 19. Add the ability to store newtype definitions.
