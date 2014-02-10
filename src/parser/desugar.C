@@ -726,16 +726,15 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     }
     else if (n->type == "Do")
     {
-      assert(is_AST(E->sub[0],"Stmts"));
-      vector<expression_ref> stmts = E->sub[0]->sub;
+      expression_ref stmts = E->sub[0];
+      assert(is_AST(stmts,"Stmts"));
 
       // do { e }  =>  e
-      if (stmts.size() == 1) 
-	return desugar(m,stmts[0],bound);
+      if (stmts->size() == 1) 
+	return desugar(m,stmts->sub[0],bound);
 
-      expression_ref first = stmts[0];
-      stmts.erase(stmts.begin());
-      expression_ref do_stmts = {AST_node("Do"),{{AST_node("Stmts"),stmts}}};
+      expression_ref first = stmts->sub[0];
+      expression_ref do_stmts = {AST_node("Do"),{stmts->sub[1]}};
       expression_ref result;
       
       // do {e ; stmts }  =>  e >> do { stmts }
