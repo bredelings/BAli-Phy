@@ -909,6 +909,8 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	add_error_handler(impdecl);
 	add_error_handler(decls);
 	add_error_handler(decl);
+	add_error_handler(stmts);
+	add_error_handler(stmt);
 	add_error_handler(topdecls);
 	add_error_handler(topdecl);
 	add_error_handler(module);
@@ -954,6 +956,8 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	BOOST_SPIRIT_DEBUG_NODE(decl);
 	BOOST_SPIRIT_DEBUG_NODE(gendecl);
 	BOOST_SPIRIT_DEBUG_NODE(decls);
+	BOOST_SPIRIT_DEBUG_NODE(stmts);
+	BOOST_SPIRIT_DEBUG_NODE(stmt);
 	BOOST_SPIRIT_DEBUG_NODE(pat);
 	BOOST_SPIRIT_DEBUG_NODE(lpat);
 	BOOST_SPIRIT_DEBUG_NODE(apat);
