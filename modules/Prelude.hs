@@ -99,6 +99,7 @@ builtin builtinNewVectorDouble 1 "NewVectorDouble" "Vector";
 builtin builtinSetVectorIndexDouble 3 "SetVectorIndexDouble" "Vector";
 builtin builtinNewVectorMatrix 1 "NewVectorMatrix" "Vector";
 builtin builtinSetVectorIndexMatrix 3 "SetVectorIndexMatrix" "Vector";
+builtin vector_Matrix_From_List 1 "Vector_Matrix_From_List" "Vector";
 
 builtin c_fst 1 "c_fst";
 builtin c_snd 1 "c_snd";
