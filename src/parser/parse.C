@@ -627,7 +627,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  | eps[clear(_a)] >> let_decls[push_back(_a,_1)] >> tok.KW_In > exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ]
 	  | tok.KW_If [clear(_a)] > exp[push_back(_a,_1)] > -tok.SemiColon >> tok.KW_Then > exp[push_back(_a,_1)] > -tok.SemiColon > tok.KW_Else > exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ]
 	  | tok.KW_Case[clear(_a)] > exp[push_back(_a,_1)] > tok.KW_Of > tok.LeftCurly >> alts[push_back(_a,_1)] >> tok.RightCurly >> eps [ _val = new_<expression>(AST_node("Case"), _a)  ]
-	  | tok.KW_Do[clear(_a)] > tok.LeftCurly >> stmts[push_back(_a,_1)] >> tok.RightCurly [ _val = new_<expression>(AST_node("Do"), _a)  ]
+	  | tok.KW_Do[clear(_a)] > tok.LeftCurly > stmts[push_back(_a,_1)] >> tok.RightCurly [ _val = new_<expression>(AST_node("Do"), _a)  ]
 	  | fexp [_val = _1]
 	  ;
 
