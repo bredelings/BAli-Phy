@@ -361,14 +361,8 @@ void context::pop_temp_head() const
   memory()->pop_temp_head();
 }
 
-void context::release_identifiers()
-{
-  memory()->release_identifiers();
-}
-
 void context::compile()
 {
-  release_identifiers();
 }
 
 efloat_t context::get_probability() const

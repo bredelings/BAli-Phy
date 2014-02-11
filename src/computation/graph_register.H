@@ -270,9 +270,6 @@ public:
 
   int degree_of_token(int) const;
 
-  /// Release just the identifiers for a token
-  void release_identifiers();
-
   /// Acquire a copy of a token
   int copy_token(int);
 

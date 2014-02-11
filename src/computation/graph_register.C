@@ -1834,12 +1834,6 @@ void reg_heap::find_all_regs_in_context(int t, bool keep_identifiers, vector<int
 #endif
 }
 
-/// Remove the roots for the identifiers of graph t
-void reg_heap::release_identifiers()
-{
-  identifiers.clear();
-}
-
 void reg_heap::try_release_token(int t)
 {
   assert(token_is_used(t));

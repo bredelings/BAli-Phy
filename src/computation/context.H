@@ -41,8 +41,6 @@ public:
         std::vector<int>& triggers();
 
 private:
-  void release_identifiers();
-
   int push_temp_head() const;
   void pop_temp_head() const;
 
