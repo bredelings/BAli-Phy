@@ -59,7 +59,7 @@ bool parse_let_expression(const expression_ref& E, vector<expression_ref>& vars,
   vars.clear();
   bodies.clear();
 
-  if (not is_a<let_obj>(E)) return false;
+  if (E->head->type() != let_type) return false;
 
   // There should be an odd number of arguments.
   assert(E->sub.size()%2 == 1);

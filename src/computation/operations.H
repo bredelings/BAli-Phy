@@ -48,6 +48,8 @@ struct Case: public Operation
 
   std::string name() const;
 
+  int type() const {return case_type;}
+
   Case():Operation(2) {}
 };
 

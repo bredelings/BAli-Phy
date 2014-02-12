@@ -29,6 +29,8 @@ enum type_number {none=0,
 		  index_var_type,
 		  dummy_type,
 		  trim_type,
+		  let_type,
+		  case_type,
 		  let2_type,
 		  constructor_type,
 		  lambda_type,
@@ -218,6 +220,8 @@ struct let_obj: public Object
   let_obj* clone() const {return new let_obj(*this);}
 
   tribool compare(const Object& o) const;
+
+  int type() const {return let_type;}
 
   std::string print() const;
 };
