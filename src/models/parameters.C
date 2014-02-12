@@ -150,6 +150,7 @@ using std::ostream;
  * 26. We see to have lost a lot of speed (factor of 2) compared to:
 VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *     Perhaps this is entirely related to module loading time?
+ *     A lot of the time seems to come from substituting for global identifiers in Module::resolve_symbols
  *
  *  27. Clean up intermediate representations.
  *      - Speed up get_free_indices.
@@ -158,7 +159,7 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *      - Speed up let floating.
  *      - Handle dummies.
  *      - Eliminate dynamic casting.
- *      - 
+ *
  */
 
 bool use_internal_index = true;
