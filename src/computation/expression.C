@@ -12,6 +12,7 @@
 using std::vector;
 using std::string;
 using std::set;
+using std::multiset;
 
 using boost::dynamic_pointer_cast;
 
@@ -1241,6 +1242,63 @@ void alpha_rename(object_ptr<expression>& E, const expression_ref& x, const expr
   // std::cout<<"    "<<E->print()<<"\n";
 }
 
+
+void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dummy>& free)
+{
+  // fv x = { x }
+  if (object_ptr<const dummy> D = is_a<dummy>(E)) 
+  {
+    if (not is_wildcard(E) and (bound.find(*D) == bound.end()))
+      free.insert(*D);
+    return;
+  }
+
+  // fv c = { }
+  if (not E->size()) return;
+
+  // for case expressions get_bound_indices doesn't work correctly.
+  if (is_a<Case>(E))
+  {
+    get_free_indices2(E->sub[0], bound, free);
+
+    const int L = (E->size()-1)/2;
+
+    for(int i=0;i<L;i++)
+    {
+      std::set<dummy> bound_ = get_free_indices(E->sub[1+2*i]);
+      for(const auto& d: bound_)
+	bound.insert(d);
+      get_free_indices2(E->sub[2+2*i], bound, free);
+      for(const auto& d: bound_)
+      {
+	auto it = bound.find(d);
+	bound.erase(it);
+      }
+    }
+
+    return;
+  }
+
+  std::set<dummy> bound_ = get_bound_indices(E);
+  for(const auto& d: bound_)
+    bound.insert(d);
+  for(int i=0;i<E->size();i++)
+    get_free_indices2(E->sub[i], bound, free);
+  for(const auto& d: bound_)
+  {
+    auto it = bound.find(d);
+    bound.erase(it);
+  }
+}
+
+std::set<dummy> get_free_indices_(const expression_ref& E)
+{
+  multiset<dummy> bound;
+  set<dummy> free;
+  get_free_indices2(E, bound, free);
+  return free;
+}
+
 std::set<dummy> get_free_indices(const expression_ref& E)
 {
   std::set<dummy> S;
@@ -1284,6 +1342,10 @@ std::set<dummy> get_free_indices(const expression_ref& E)
 
   for(const auto& s: S)
     assert(not is_wildcard(s));
+
+  auto S2 = get_free_indices_(E);
+
+  assert(S2 == S);
 
   return S;
 }
