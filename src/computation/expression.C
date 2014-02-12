@@ -1291,63 +1291,12 @@ void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dumm
   }
 }
 
-std::set<dummy> get_free_indices_(const expression_ref& E)
+std::set<dummy> get_free_indices(const expression_ref& E)
 {
   multiset<dummy> bound;
   set<dummy> free;
   get_free_indices2(E, bound, free);
   return free;
-}
-
-std::set<dummy> get_free_indices(const expression_ref& E)
-{
-  std::set<dummy> S;
-
-  // fv x = { x }
-  if (object_ptr<const dummy> D = is_a<dummy>(E)) 
-    if (not is_wildcard(E))
-      return {*D};
-
-  // fv c = { }
-  if (not E->size()) return S;
-
-  // for case expressions get_bound_indices doesn't work correctly.
-  if (is_a<Case>(E))
-  {
-    S = get_free_indices(E->sub[0]);
-
-    const int L = (E->size()-1)/2;
-
-    for(int i=0;i<L;i++)
-    {
-      std::set<dummy> bound_i = get_free_indices(E->sub[1+2*i]);
-      std::set<dummy> free_i = get_free_indices(E->sub[2+2*i]);
-      for(const auto& b: bound_i)
-	free_i.erase(b);
-
-      add(S,free_i);
-    }
-    for(const auto& s: S)
-      assert(not is_wildcard(s));
-
-    return S;
-  }
-
-  for(int i=0;i<E->size();i++)
-    add(S, get_free_indices(E->sub[i]));
-
-  std::set<dummy> bound = get_bound_indices(E);
-  for(const auto& b: bound)
-    S.erase(b);
-
-  for(const auto& s: S)
-    assert(not is_wildcard(s));
-
-  auto S2 = get_free_indices_(E);
-
-  assert(S2 == S);
-
-  return S;
 }
 
 /// Return the min of v
