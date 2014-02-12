@@ -1194,25 +1194,23 @@ std::set<dummy> get_bound_indices(const expression_ref& E)
   if (not E->size()) return bound;
 
   // Make sure we don't try to substitute for lambda-quantified dummies
-  if (object_ptr<const lambda> L = is_a<lambda>(E))
+  if (E->head->type() == lambda_type)
   {
     if (object_ptr<const dummy> D  = is_a<dummy>(E->sub[0]))
       bound.insert(*D);
   }
   else 
   {
-    vector<expression_ref> vars;
-    vector<expression_ref> bodies;
-    expression_ref T;
-    if (parse_let_expression(E, vars, bodies, T))
+    if (E->head->type() == let_type)
     {
-      // Don't substitute into local variables.
-      for(int i=0;i<vars.size();i++)
-	if (object_ptr<const dummy> D = is_a<dummy>(vars[i]))
+      const int L = (E->sub.size()-1)/2;
+      for(int i=0;i<L;i++)
+      {
+	if (object_ptr<const dummy> D = is_a<dummy>(E->sub[1+2*i]))
 	  bound.insert(*D);
+      }
     }
-    else if (is_a<Case>(E))
-      std::abort();
+    assert(not is_a<Case>(E));
   }
 
   return bound;
@@ -1246,10 +1244,11 @@ void alpha_rename(object_ptr<expression>& E, const expression_ref& x, const expr
 void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dummy>& free)
 {
   // fv x = { x }
-  if (object_ptr<const dummy> D = is_a<dummy>(E)) 
+  if (is_dummy(E))
   {
-    if (not is_wildcard(E) and (bound.find(*D) == bound.end()))
-      free.insert(*D);
+    dummy d = *assert_is_a<dummy>(E);
+    if (not is_wildcard(E) and (bound.find(d) == bound.end()))
+      free.insert(d);
     return;
   }
 
@@ -1257,7 +1256,7 @@ void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dumm
   if (not E->size()) return;
 
   // for case expressions get_bound_indices doesn't work correctly.
-  if (is_a<Case>(E))
+  if (E->head->type() == case_type)
   {
     get_free_indices2(E->sub[0], bound, free);
 
@@ -2233,7 +2232,7 @@ bool is_index_var(const expression_ref& E)
 
 bool is_dummy(const expression_ref& E)
 {
-  return (bool)is_a<dummy>(E);
+  return (E->head->type() == dummy_type);
 }
 
 bool is_parameter(const expression_ref& E)
@@ -2271,10 +2270,11 @@ bool is_wildcard(const dummy& d)
 // Remove in favor of is_dummy?
 bool is_wildcard(const expression_ref& E)
 {
-  if (object_ptr<const dummy> D = is_a<dummy>(E))
+  if (is_dummy(E))
   {
     assert(not E->size());
-    return is_wildcard(*D);
+    dummy d = *assert_is_a<dummy>(E);
+    return is_wildcard(d);
   }
   else
     return false;
