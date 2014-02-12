@@ -213,19 +213,6 @@ bool is_wildcard(const expression_ref&);
 
 bool is_irrefutable_pattern(const expression_ref& E);
 
-struct match: public Object
-{
-  int index;
-
-  match* clone() const {return new match(*this);}
-
-  tribool compare(const Object& o) const;
-  
-  std::string print() const;
-
-  match(int i):index(i) { }
-};
-
 struct let_obj: public Object
 {
   let_obj* clone() const {return new let_obj(*this);}
@@ -258,11 +245,6 @@ struct AST_node: public Object
   AST_node(const std::string&);
   AST_node(const std::string& t, const std::string& v);
 };
-
-// This no longer needs to be a virtual member function, because we can now walk the expression from outside.
-int n_match_results(const expression_ref&);
-
-bool find_match(const expression_ref& pattern,const expression_ref& E, std::vector< expression_ref >& results);
 
 struct constructor: public Operator
 {

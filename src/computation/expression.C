@@ -414,23 +414,6 @@ bool dummy::operator<(const dummy& D) const
     return index < D.index;
 }
 
-tribool match::compare(const Object& o) const 
-{
-  const match* E = dynamic_cast<const match*>(&o);
-  if (not E) 
-    return false;
-
-  return index == E->index;
-}
-
-string match::print() const 
-{
-  if (index == -1) 
-    return "_";
-  else
-    return string("_")+convertToString(index);
-}
-
 tribool let_obj::compare(const Object& o) const 
 {
   const let_obj* T = dynamic_cast<const let_obj*>(&o);
@@ -483,42 +466,6 @@ AST_node::AST_node(const string& t)
 AST_node::AST_node(const string& t, const string& v)
   :type(t), value(v)
 { }
-
-// How would we handle lambda expressions, here?
-bool find_match(const expression_ref& pattern, const expression_ref& E, vector< expression_ref >& results)
-{
-  //  results.clear();
-  // If this is a match expression, then succeed, and store E as the result of the match
-  object_ptr<const match> M = is_a<match>(pattern);
-  if (M) 
-  {
-    if (M->index >= 0)
-    {
-      if (results.size() < M->index+1) results.resize(M->index+1);
-
-      if (results[M->index]) throw myexception()<<"Match expression contains match index "<<M->index<<"' more than once!";
-
-      results[M->index] = E;
-    }
-
-    return true;
-  }
-
-  // Expressions must have the same number of arguments
-  if (pattern->size() != E->size()) return false;
-
-  // Check if the heads are equal
-  tribool b = same_head(pattern, E);
-  assert(not indeterminate(b));
-  if (not b) return false;
-
-  // Sub-expressions must match
-  for(int i=0;i<pattern->size();i++)
-    if (not find_match(pattern->sub[i], E->sub[i], results))
-      return false;
-
-  return true;
-}
 
 tribool parameter::compare(const Object& o) const 
 {
@@ -638,17 +585,6 @@ constructor right_assoc_constructor(const std::string& s,int prec)
   f.prec = prec;
   f.assoc = assoc_right;
   return f;
-}
-
-/// Do the substitutions match(i) -> replace[i] for all i where replace[i] is not null.
-expression_ref substitute(const expression_ref& R, const vector<expression_ref>& replace)
-{
-  expression_ref R2 = R;
-  for(int i=0;i<replace.size();i++)
-    if (replace[i])
-      R2 = substitute(R2, match(i), replace[i]);
-
-  return R2;
 }
 
 expression_ref substitute(const expression_ref& R1, int dummy_index, const expression_ref& R2)
