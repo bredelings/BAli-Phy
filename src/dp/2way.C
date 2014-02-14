@@ -465,11 +465,13 @@ ublas::matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& 
       M(column,r) = i;
     }
 
+#ifndef NDEBUG
   for(int b=0;b<2*T.n_branches();b++)
   {
     pairwise_alignment_t a = A2::get_pairwise_alignment(M, T.directed_branch(b).source(), T.directed_branch(b).target());
     assert(A[b] == a);
   }
+#endif
 
   return M;
 }
