@@ -80,6 +80,8 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   const Tree& T = P.T();
   alignment& A = *P.A.modify();
 
+  alignment old = A;
+
   int node1 = T.branch(b).target();
   int node2 = T.branch(b).source();
 
@@ -138,9 +140,13 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
   path.erase(path.begin()+path.size()-1);
 
-  *P.A.modify() = construct(A,path,node1,node2,T,seq1,seq2);
   P.LC.invalidate_branch_alignment(T,b);
   P.set_pairwise_alignment(T.directed_branch(node1,node2), A2::get_pairwise_alignment_from_path(path));
+
+  vector<pairwise_alignment_t> As;
+  for(int b=0;b<2*T.n_branches();b++)
+    As.push_back(P.get_pairwise_alignment(b,false));
+  *P.A.modify() = get_alignment(old, *P.sequences, construct(T, As));
 
 #ifndef NDEBUG_DP
   assert(valid(*P.A));
