@@ -47,7 +47,7 @@ using boost::dynamic_bitset;
 using boost::shared_ptr;
 
 shared_ptr<DParrayConstrained>
-sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector<int>& nodes, const vector<int>& nodes0)
+sample_two_nodes_base(data_partition& P, const data_partition& P0, const vector<int>& nodes, const vector<int>& nodes0)
 {
   const Tree& T = P.T();
   alignment& A = *P.A.modify();
@@ -153,7 +153,7 @@ sample_two_nodes_base2(data_partition& P, const data_partition& P0, const vector
 }
 
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
-int sample_two_nodes_multi2(vector<Parameters>& p,const vector< vector<int> >& nodes_,
+int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 			   const vector<efloat_t>& rho_,bool do_OS,bool do_OP) 
 {
 
@@ -186,7 +186,7 @@ int sample_two_nodes_multi2(vector<Parameters>& p,const vector< vector<int> >& n
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment())
       {
-	Matrices[i].push_back(sample_two_nodes_base2(p[i][j], p[0][j], nodes[i], nodes[0]));
+	Matrices[i].push_back(sample_two_nodes_base(p[i][j], p[0][j], nodes[i], nodes[0]));
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][4]);
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
@@ -340,7 +340,7 @@ int sample_two_nodes_multi2(vector<Parameters>& p,const vector< vector<int> >& n
 }
 
 
-void sample_two_nodes2(Parameters& P,int b) 
+void sample_two_nodes(Parameters& P,int b) 
 {
   vector<Parameters> p(1,P);
 
@@ -349,7 +349,7 @@ void sample_two_nodes2(Parameters& P,int b)
 
   vector<efloat_t> rho(1,1);
 
-  int C = sample_two_nodes_multi2(p,nodes,rho,false,false);
+  int C = sample_two_nodes_multi(p,nodes,rho,false,false);
 
   if (C != -1) {
     P = p[C];

@@ -62,7 +62,7 @@ void sample_tri_one(owned_ptr<Probability_Model>& P, MoveStats&,int b)
   if (node1 < T.n_leaves())
     std::swap(node1,node2);
     
-  tri_sample_alignment2(*PP,node1,node2);
+  tri_sample_alignment(*PP,node1,node2);
 }
 
 void sample_tri_branch_one(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
@@ -89,7 +89,7 @@ void sample_tri_branch_one(owned_ptr<Probability_Model>& P, MoveStats& Stats,int
   double length2 = length1 + gaussian(0,sigma);
   if (length2 < 0) length2 = -length2;
 
-  if (tri_sample_alignment_branch2(*PP,node1,node2,b,1,length2)) {
+  if (tri_sample_alignment_branch(*PP,node1,node2,b,1,length2)) {
     result.totals[0] = 1;
     result.totals[1] = std::abs(length2 - length1);
   }
@@ -146,7 +146,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Probability_Model>& P, M
   if (not range.in_range(v2)) return;
 
 
-  if (tri_sample_alignment_and_parameter2(*PP,node1,node2,p,1,v2)) {
+  if (tri_sample_alignment_and_parameter(*PP,node1,node2,p,1,v2)) {
     result.totals[0] = 1;
     result.totals[1] = std::abs(v2 - v1);
   }
@@ -174,7 +174,7 @@ void sample_tri_branch_type_one(owned_ptr<Probability_Model>& P, MoveStats& Stat
   if (node1 < T.n_leaves())
     std::swap(node1,node2);
     
-  if (tri_sample_alignment_branch_model2(*PP,node1,node2)) {
+  if (tri_sample_alignment_branch_model(*PP,node1,node2)) {
     result.totals[0] = 1;
   }
 
@@ -214,7 +214,7 @@ void sample_two_nodes_move(owned_ptr<Probability_Model>& P, MoveStats&,int n0)
 
   int b = PP->T().branch(n0,n1);
 
-  sample_two_nodes2(*PP,b);
+  sample_two_nodes(*PP,b);
 }
 
 vector<int> get_cost(const Tree& T) {

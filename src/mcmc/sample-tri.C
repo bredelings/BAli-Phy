@@ -72,7 +72,7 @@ vector<int> get_column_order(const alignment& A, const vector<HMM::bitmask_t>& a
   return combined_columns;
 }
 
-boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition& P, const data_partition& P0, 
+boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P, const data_partition& P0, 
 								  const vector<int>& nodes, const vector<int>& nodes0,
 								  int bandwidth)
 {
@@ -267,7 +267,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base2(data_partition
   return Matrices;
 }
 
-sample_tri_multi_calculation2::sample_tri_multi_calculation2(vector<Parameters>& p,const vector< vector<int> >& nodes_,
+sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 							     bool do_OS,bool do_OP, int b)
   :
 #ifndef NDEBUG_DP
@@ -300,7 +300,7 @@ sample_tri_multi_calculation2::sample_tri_multi_calculation2(vector<Parameters>&
   {
     for(int j=0;j<p[i].n_data_partitions();j++) {
       if (p[i][j].variable_alignment())
-	Matrices[i].push_back( tri_sample_alignment_base2(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth) );
+	Matrices[i].push_back( tri_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth) );
       else
 	Matrices[i].push_back( boost::shared_ptr<DPmatrixConstrained>());
     }
@@ -345,7 +345,7 @@ sample_tri_multi_calculation2::sample_tri_multi_calculation2(vector<Parameters>&
   assert(Pr[0] > 0.0);
 }
 
-void sample_tri_multi_calculation2::set_proposal_probabilities(const vector<efloat_t>& r)
+void sample_tri_multi_calculation::set_proposal_probabilities(const vector<efloat_t>& r)
 {
   rho.resize(Pr.size());
   for(int i=0;i<Pr.size();i++) 
@@ -357,7 +357,7 @@ void sample_tri_multi_calculation2::set_proposal_probabilities(const vector<eflo
   assert(Pr[0] > 0.0);
 }
 
-int sample_tri_multi_calculation2::choose(vector<Parameters>& p, bool correct)
+int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
 {
   assert(p.size() == nodes.size());
 
@@ -497,11 +497,11 @@ int sample_tri_multi_calculation2::choose(vector<Parameters>& p, bool correct)
 // Consider making into object! That would make it easier to mix
 // and match parts of the routine, while saving state.
 
-int sample_tri_multi2(vector<Parameters>& p,const vector< vector<int> >& nodes,
+int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 		     const vector<efloat_t>& rho, bool do_OS,bool do_OP) 
 {
   try {
-    sample_tri_multi_calculation2 tri(p, nodes, do_OS, do_OP);
+    sample_tri_multi_calculation tri(p, nodes, do_OS, do_OP);
 
     // The DP matrix construction didn't work.
     if (tri.Pr[0] <= 0.0) return -1;
@@ -516,7 +516,7 @@ int sample_tri_multi2(vector<Parameters>& p,const vector< vector<int> >& nodes,
   }
 }
 
-int sample_tri_multi2(vector<Parameters>& p,const vector< vector<int> >& nodes,
+int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 		      const vector<efloat_t>& rho, bool do_OS,bool do_OP, int bandwidth) 
 {
   assert(bandwidth >= 0);
@@ -524,7 +524,7 @@ int sample_tri_multi2(vector<Parameters>& p,const vector< vector<int> >& nodes,
     vector<Parameters> p2 = p;
 
     //----------------- Part 1: Forward -----------------//
-    sample_tri_multi_calculation2 tri1(p, nodes, do_OS, do_OP, bandwidth);
+    sample_tri_multi_calculation tri1(p, nodes, do_OS, do_OP, bandwidth);
 
     // The DP matrix construction didn't work.
     if (tri1.Pr[0] <= 0.0) return -1;
@@ -545,7 +545,7 @@ int sample_tri_multi2(vector<Parameters>& p,const vector< vector<int> >& nodes,
       for(int j=0;j<p2[i].n_data_partitions();j++)
 	p2[i][j].A = p[C1][j].A;
 
-    sample_tri_multi_calculation2 tri2(p2, nodes, do_OS, do_OP, bandwidth);
+    sample_tri_multi_calculation tri2(p2, nodes, do_OS, do_OP, bandwidth);
 
     // The DP matrix construction didn't work.
     if (tri2.Pr[0] <= 0.0) return -1;
@@ -568,7 +568,7 @@ int sample_tri_multi2(vector<Parameters>& p,const vector< vector<int> >& nodes,
 }
 
 
-void tri_sample_alignment2(Parameters& P,int node1,int node2) 
+void tri_sample_alignment(Parameters& P,int node1,int node2) 
 {
   int bandwidth = P.load_value("bandwidth",-1.0);
 
@@ -594,9 +594,9 @@ void tri_sample_alignment2(Parameters& P,int node1,int node2)
 
   int C = -1;
   if (bandwidth >= 0)
-    C = sample_tri_multi2(p,nodes,rho,false,false, bandwidth);
+    C = sample_tri_multi(p,nodes,rho,false,false, bandwidth);
   else
-    C = sample_tri_multi2(p,nodes,rho,false,false);
+    C = sample_tri_multi(p,nodes,rho,false,false);
 
   if (C != -1) {
     P = p[C];
@@ -618,7 +618,7 @@ void tri_sample_alignment2(Parameters& P,int node1,int node2)
 /// Assumptions:
 ///  We assume that the probability of the other branch alignments is unaffected...
 
-bool tri_sample_alignment_branch2(Parameters& P,
+bool tri_sample_alignment_branch(Parameters& P,
 				 int node1,int node2,int b,
 				 double rho_,double length2)
 {
@@ -632,7 +632,7 @@ bool tri_sample_alignment_branch2(Parameters& P,
   rho[0] = 1;
   rho[1] = rho_;
 
-  int C = sample_tri_multi2(p,nodes,rho,false,false);
+  int C = sample_tri_multi(p,nodes,rho,false,false);
 
   if (C != -1) {
     P = p[C];
@@ -641,7 +641,7 @@ bool tri_sample_alignment_branch2(Parameters& P,
   return (C > 0);
 }
 
-bool tri_sample_alignment_and_parameter2(Parameters& P,
+bool tri_sample_alignment_and_parameter(Parameters& P,
 					 int node1,int node2,int p_index,
 					 double rho_,double v2)
 {
@@ -655,7 +655,7 @@ bool tri_sample_alignment_and_parameter2(Parameters& P,
   rho[0] = 1;
   rho[1] = rho_;
 
-  int C = sample_tri_multi2(p,nodes,rho,false,false);
+  int C = sample_tri_multi(p,nodes,rho,false,false);
 
   if (C != -1) {
     P = p[C];
@@ -665,7 +665,7 @@ bool tri_sample_alignment_and_parameter2(Parameters& P,
 }
 
 
-bool tri_sample_alignment_branch_model2(Parameters& P,int node1,int node2)
+bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
 {
   //----------- Generate the Different Matrices ---------//
   vector<Parameters> p(2,P);
@@ -677,7 +677,7 @@ bool tri_sample_alignment_branch_model2(Parameters& P,int node1,int node2)
 
   vector<efloat_t> rho(2,1.0);
 
-  int C = sample_tri_multi2(p,nodes,rho,false,false);
+  int C = sample_tri_multi(p,nodes,rho,false,false);
 
   if (C != -1) {
     P = p[C];

@@ -35,25 +35,25 @@ void change_branch_length_multi(owned_ptr<Probability_Model>&, MCMC::MoveStats&,
 void sample_alignment(Parameters&,int b);
 
 /// Resample the 3-star alignment, holding the n2/n3 order constant.
-void tri_sample_alignment2(Parameters& P,int node1,int node2);
+void tri_sample_alignment(Parameters& P,int node1,int node2);
 
 /// Resample the 3-star alignment and branch length, holding the n2/n3 order constant.
-bool tri_sample_alignment_branch2(Parameters&,
+bool tri_sample_alignment_branch(Parameters&,
 				 int node1,int node2,int b,double rho,double length2);
 
 /// Resample the 3-star alignment and branch length, holding the n2/n3 order constant.
-bool tri_sample_alignment_and_parameter2(Parameters&,
+bool tri_sample_alignment_and_parameter(Parameters&,
 					int node1,int node2,int p,double rho,double v2);
 
 /// Resample the 3-star alignment and branch TYPE, holding the n2/n3 order constant.
-bool tri_sample_alignment_branch_model2(Parameters&,
+bool tri_sample_alignment_branch_model(Parameters&,
 				       int node1,int node2);
 
 /// Resample gap/non-gap for internal nodes, where not already determined
 void sample_node(Parameters&,int node);
 
 /// Resample gap/non-gap for 2 adjacent internal nodes, where not already determined
-void sample_two_nodes2(Parameters& P,int b);
+void sample_two_nodes(Parameters& P,int b);
 
 /// Resample between 3 NNI topologies around branch b
 bool three_way_topology_sample(Parameters& P1,const Parameters& P2,const Parameters& P3,int b);
