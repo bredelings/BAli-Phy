@@ -42,50 +42,6 @@ namespace A5 {
   // std::vector<int> get_nodes(const Tree& T,int b);
   std::vector<int> get_nodes_random(const Tree& T,int b);
 
-  // 21 bits used total:
-  // bits 5,4,3,2,1,0     = node present mask
-  // bits 15,14,13/12,11/10,9/8,7/6    = sub-alignment state
-  // bits 20,19,18,17,16    = sub-alignment not-present mask
-  
-  const unsigned int leafbitsmask = (1<<4)-1;
-  const unsigned int bitsmask = (1<<6)-1;
-
-  /// construct the list of states
-  std::vector<int> construct_states();
-
-  /// Get the std::vector of start probabilities
-  std::vector<double> get_start_P(const std::vector<indel::PairHMM>& P);
-
-  int bits_to_substates(int bits);
-
-  /// What is the index (and therefore, name) of state 'state'
-  int findstate(int state,const std::vector<int>& states);
-
-  /// Compute the probability of moving from state #S1 to state #S2
-  double getQ(int S1,int S2,const std::vector<indel::PairHMM>& P,
-		const std::vector<int>& states);
-
-  /// Update the full transition matrix
-  void updateQ(Matrix& Q,const std::vector<indel::PairHMM>& P,const std::vector<int>& states);
-  /// Full the full transition matrix
-  void fillQ(Matrix& Q,const std::vector<indel::PairHMM>& P,const std::vector<int>& states);
-  /// Create the full transition matrix
-  Matrix createQ(const std::vector<indel::PairHMM>& P,const std::vector<int>& states);
-
-  /// Construct a new alignment, from alignment 'old' and 5way alignment 'path'
-  alignment construct(const alignment& old, const std::vector<int>& path, 
-		      const std::vector<int>& nodes,const Tree& T,
-		      const std::vector< std::vector<int> >& seqs,
-		      const std::vector<int>& states_list);
-
-  /// Get the ordered list of columns present in 5way alignment of 'nodes'
-  std::vector<int> getorder(const alignment& A,const std::vector<int>& nodes);
-
-  alignment project(const alignment& A,const std::vector<int>& nodes);
-
-  /// What path does 'A' determine through the 5way HMM?
-  std::vector<int> get_path(const alignment& A,const std::vector<int>& nodes,const std::vector<int>& states);
-
   /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)
   efloat_t correction(const data_partition& P,const std::vector<int>& nodes);
 
@@ -93,8 +49,6 @@ namespace A5 {
 
   efloat_t acceptance_ratio(const Parameters& P1,const std::vector<int>&,
 			      const Parameters& P2,const std::vector<int>&);
-
-  extern std::vector<int> states_list;
 
   std::vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const std::vector<int>& nodes);
 }
