@@ -190,8 +190,6 @@ int remove_empty_columns(alignment&);
 
 /// Construct a path through the A2 HMM based on the alignment of nodes n1 and n2
 std::vector<int> get_path(const alignment& A,int n1,int n2);
-/// Construct a path through the A3 HMM based on the alignment of nodes n1 and n2
-std::vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3);
 
 /// Return the names of the sequences for alignment A
 std::vector<std::string> sequence_names(const alignment& A);
