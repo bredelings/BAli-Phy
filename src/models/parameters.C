@@ -152,14 +152,17 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *     Perhaps this is entirely related to module loading time?
  *     A lot of the time seems to come from substituting for global identifiers in Module::resolve_symbols
  *
- *  27. Clean up intermediate representations.
+ * 27. Clean up intermediate representations.
  *      - Speed up get_free_indices.
  *      - Make get_bound_indices simpler.
  *      - Make Case statements different in the different representations.
  *      - Speed up let floating.
- *      - Handle dummies.
  *      - Eliminate dynamic casting.
  *
+ *
+ * 28. Eliminate named dummies in favor of identifiers.
+ *
+ * 29. Eliminate old construct( ) from mcmc/alignment-sample.C and alignment/alignment.{H,C}
  */
 
 bool use_internal_index = true;
