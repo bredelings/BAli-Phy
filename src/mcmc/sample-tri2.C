@@ -594,9 +594,9 @@ void tri_sample_alignment2(Parameters& P,int node1,int node2)
 
   int C = -1;
   if (bandwidth >= 0)
-    C = sample_tri_multi(p,nodes,rho,false,false, bandwidth);
+    C = sample_tri_multi2(p,nodes,rho,false,false, bandwidth);
   else
-    C = sample_tri_multi(p,nodes,rho,false,false);
+    C = sample_tri_multi2(p,nodes,rho,false,false);
 
   if (C != -1) {
     P = p[C];

@@ -53,27 +53,9 @@ efloat_t other_subst(const data_partition& P, const std::vector<int>& nodes);
 efloat_t other_prior(const data_partition& P, const std::vector<int>& nodes);
 
 
-/// Routine for simultaneously sampling between several Parameter choices, and summing out a node
-int sample_node_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		      const std::vector<efloat_t>& rho, bool do_OS,bool do_OP);
-
-/// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-int sample_two_nodes_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-			   const std::vector<efloat_t>& rho, bool do_OS,bool do_OP);
-
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_two_nodes_multi2(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
 			   const std::vector<efloat_t>& rho, bool do_OS,bool do_OP);
-
-/// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		     const std::vector<efloat_t>& rho, bool do_OS,bool do_OP);
-
-
-/// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		     const std::vector<efloat_t>& rho, bool do_OS,bool do_OP, int bandwidth);
-
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_tri_multi2(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
@@ -84,28 +66,6 @@ int sample_tri_multi2(std::vector<Parameters>& p,const std::vector< std::vector<
 int sample_tri_multi2(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
 		      const std::vector<efloat_t>& rho, bool do_OS,bool do_OP, int bandwidth);
 
-
-struct sample_tri_multi_calculation
-{
-#ifndef NDEBUG_DP
-  const Parameters P0;
-#endif
-  std::vector<std::vector<int> > nodes;
-  std::vector<efloat_t> rho;
-  std::vector<std::vector<boost::shared_ptr<DPmatrixConstrained> > > Matrices;
-  std::vector< std::vector<efloat_t> > OS;
-  std::vector< std::vector<efloat_t> > OP;
-  std::vector<efloat_t> Pr;
-  efloat_t C1;
-  int bandwidth;
-
-  sample_tri_multi_calculation(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes_,
-			       bool do_OS,bool do_OP,int b=-1);
-
-  void set_proposal_probabilities(const std::vector<efloat_t>&);
-
-  int choose(std::vector<Parameters>& p, bool=true);
-};
 
 struct sample_tri_multi_calculation2
 {

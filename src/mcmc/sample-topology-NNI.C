@@ -657,7 +657,7 @@ void three_way_topology_and_alignment_sample(owned_ptr<Probability_Model>& P, Mo
 
   int C = -1;
   try {
-    C = sample_tri_multi(p,nodes,rho,true,true);
+    C = sample_tri_multi2(p,nodes,rho,true,true);
   }
   catch (choose_exception<efloat_t>& c)
   {
