@@ -162,7 +162,7 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *
  * 28. Eliminate named dummies in favor of identifiers.
  *
- * 29. Eliminate old construct( ) from mcmc/alignment-sample.C and alignment/alignment.{H,C}
+ * 29. Eliminate old construct( ) from mcmc/alignment-sample.C and dp/2way.{H,C}
  */
 
 bool use_internal_index = true;
