@@ -1009,7 +1009,6 @@ vector<const_branchview> branches_from_node(const Tree& T,int n) {
 
   get_branches_after(branch_list);
 
-  std::reverse(branch_list.begin(),branch_list.end());
   return branch_list;
 }  
 
@@ -1068,6 +1067,7 @@ vector<const_branchview> branches_from_leaves(const Tree& T)
 void Tree::compute_partitions() const 
 {
   vector<const_branchview> branch_list = branches_from_node(*this,nodes_[0]->node_attributes->name);
+  std::reverse(branch_list.begin(), branch_list.end());
 
   // set up cached partition masks
   cached_partitions.resize(2*n_branches());
