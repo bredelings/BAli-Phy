@@ -166,12 +166,18 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  * 29. Remove sequence data from the alignment!
  *      - Or, at least the alignment we use in Parameters.
  *      - What INTERFACES does the alignment class need to implement?
+ *      - Clearing the sequence data seems to work.
  *
  * 30. When do we need to know the alignment MATRIX to construct alignment indices?
  *
  * 31. Split up graph_register.C
  *
  * 32. Rename reg_heap -> something more descriptive/attractive.
+ *
+ * 33. Begin adding node-based information to new tree class.
+ *
+ * 34. Try to eliminate the use of the alignment matrix in more areas.
+ *     - Then we won't have to construct it right...
  */
 
 bool use_internal_index = true;
