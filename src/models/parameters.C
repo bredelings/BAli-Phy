@@ -82,6 +82,7 @@ using std::ostream;
  * 22. [DONE] Name pieces of structures intelligently -- e.g. piA instead of pi!!0
  * 23. [DONE] Allow model files to create models where dimension of parameter depeonds on argument to model.
  * 24. [DONE] Allow creation of parameters in their own namespace.
+ * 25. [DONE] Compute the entire probability expression at once, instead of adding pieces incrementally.
  */
 
 /* \todo: List of things to do to clean up programs.
@@ -107,8 +108,8 @@ using std::ostream;
  *     6c. Handle irrefutable patterns that use ~.
  *        case v of ~h:t -> body
  *     6d. What does it mean (if its true) that irrefutable bindings are only irrefutable at the top level?
- * 7. Compute the entire probability expression at once, instead of adding pieces incrementally.
  * 8. Make Context load an entire program, instead of adding pieces incrementally.
+ *
  * 9. Move the Program from Context to reg_heap.
 
  * 10. Allow fixing parameters. (e.g. to test the branch-site model under ML)
@@ -161,6 +162,16 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *
  *
  * 28. Eliminate named dummies in favor of identifiers.
+ *
+ * 29. Remove sequence data from the alignment!
+ *      - Or, at least the alignment we use in Parameters.
+ *      - What INTERFACES does the alignment class need to implement?
+ *
+ * 30. When do we need to know the alignment MATRIX to construct alignment indices?
+ *
+ * 31. Split up graph_register.C
+ *
+ * 32. Rename reg_heap -> something more descriptive/attractive.
  */
 
 bool use_internal_index = true;
