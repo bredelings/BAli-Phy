@@ -36,6 +36,8 @@ struct pairwise_alignment_t: public std::vector<int>, public Object
   int length1() const;
   int length2() const;
 
+  int count(int s) const;
+
   pairwise_alignment_t(const std::vector<int>&);
   pairwise_alignment_t(const pairwise_alignment_t&);
   pairwise_alignment_t();

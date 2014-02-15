@@ -55,6 +55,15 @@ int pairwise_alignment_t::length2() const
   return total;
 }
 
+int pairwise_alignment_t::count(int s) const
+{
+  int total = 0;
+  for(int i=0;i<size();i++)
+    if ((*this)[i] == s)
+      total++;
+  return total;
+}
+
 pairwise_alignment_t::pairwise_alignment_t()
 { }
 
