@@ -24,6 +24,15 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using namespace std;
 
+
+sequence_info::sequence_info(const string& n)
+  :name(n)
+{}
+
+sequence_info::sequence_info(const string& n,const string& c)
+  :name(n),comment(c) 
+{}
+
 void sequence::strip_gaps() {
   string ungapped;
 
@@ -37,8 +46,12 @@ void sequence::strip_gaps() {
   string::operator=(ungapped);
 }
 
+sequence::sequence(const sequence_info& si)
+  :sequence_info(si)
+{}
+
 sequence::sequence(const string& n,const string& c)
-  :name(n),comment(c) 
+  :sequence_info(n,c)
 {}
 
 bool operator==(const sequence& s1,const sequence& s2) {

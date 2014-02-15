@@ -21,14 +21,24 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define SEQUENCE_H
 #include <string>
 
-struct sequence: public std::string 
+struct sequence_info
 {
   std::string name;
   std::string comment;
+  sequence_info() {}
 
+  sequence_info(const std::string& n);
+
+  sequence_info(const std::string& n,const std::string& c);
+};
+
+struct sequence: public std::string, public sequence_info
+{
   void strip_gaps();
 
   sequence() {}
+
+  sequence(const sequence_info&);
 
   sequence(const std::string& n,const std::string& c);
 };
