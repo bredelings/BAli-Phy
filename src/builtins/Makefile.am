@@ -18,7 +18,7 @@ pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la
 		set_vector_index.la new_vector.la get_vector_index.la vector_size.la \
 		c_fst.la c_snd.la c_pair.la evaluate.la Modifiables.la\
 		show.la rs07_branch_HMM.la rs07_lengthp.la pairwise_alignment_length1.la \
-		pairwise_alignment_length2.la transition_counts.la pairwise_alignment_probability_from_counts.la \
+		pairwise_alignment_length2.la transition_counts.la Alignment.la \
 		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la \
                 Vector.la
 
@@ -157,8 +157,8 @@ pairwise_alignment_length2_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 transition_counts_la_SOURCES = transition_counts.C
 transition_counts_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-pairwise_alignment_probability_from_counts_la_SOURCES = pairwise_alignment_probability_from_counts.C
-pairwise_alignment_probability_from_counts_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
+Alignment_la_SOURCES = Alignment.C
+Alignment_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 popgen_la_SOURCES = popgen.C
 popgen_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
