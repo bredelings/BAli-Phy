@@ -2,6 +2,13 @@
 
 using boost::dynamic_pointer_cast;
 
+extern "C" closure builtin_function_exp(OperationArgs& Args)
+{
+  double x = *Args.evaluate_as<Double>(0);
+
+  return new Double(exp(x));
+}
+
 extern "C" closure builtin_function_log(OperationArgs& Args)
 {
   object_ref x = Args.evaluate(0);
@@ -222,6 +229,27 @@ extern "C" closure builtin_function_divide(OperationArgs& Args)
     throw myexception()<<"Divide: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
 }
 
+extern "C" closure builtin_function_mod(OperationArgs& Args)
+{
+  using boost::dynamic_pointer_cast;
+
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return Int( *xi % *yi );
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return Char( *xc % *yc );
+  }
+  else
+    throw myexception()<<"Mod: object '"<<x->print()<<"' is not Int, or Char'";
+}
+
 extern "C" closure builtin_function_subtract(OperationArgs& Args)
 {
   object_ref x = Args.evaluate(0);
@@ -249,4 +277,200 @@ extern "C" closure builtin_function_subtract(OperationArgs& Args)
   }
   else
     throw myexception()<<"Minus: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
+extern "C" closure builtin_function_negate(OperationArgs& Args)
+{
+  object_ref x = Args.evaluate(0);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+    return -(*xd);
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+    return -(*xi);
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+    return -(*xld);
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+    return -(*xc);
+  else
+    throw myexception()<<"Negate: object '"<<x->print()<<"' is not Double, Int, Log_Double, or Char'";
+}
+
+extern "C" closure builtin_function_equals(OperationArgs& Args)
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return {(*xd) == (*yd)};
+  }
+
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return {(*xi) == (*yi)};
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return {(*xld) == (*yld)};
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return {(*xc) == (*yc)};
+  }
+  else
+    throw myexception()<<"==: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
+extern "C" closure builtin_function_notequals(OperationArgs& Args)
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return {(*xd) != (*yd)};
+  }
+
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return {(*xi) != (*yi)};
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return {(*xld) != (*yld)};
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return {(*xc) != (*yc)};
+  }
+  else
+    throw myexception()<<"/=: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
+extern "C" closure builtin_function_greaterthan(OperationArgs& Args)
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return {(*xd) > (*yd)};
+  }
+
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return {(*xi) > (*yi)};
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return {(*xld) > (*yld)};
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return {(*xc) > (*yc)};
+  }
+  else
+    throw myexception()<<">: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
+extern "C" closure builtin_function_greaterthanorequal(OperationArgs& Args)
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return {(*xd) >= (*yd)};
+  }
+
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return {(*xi) >= (*yi)};
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return {(*xld) >= (*yld)};
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return {(*xc) >= (*yc)};
+  }
+  else
+    throw myexception()<<">=: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
+extern "C" closure builtin_function_lessthan(OperationArgs& Args)
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return {(*xd) < (*yd)};
+  }
+
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return {(*xi) < (*yi)};
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return {(*xld) < (*yld)};
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return {(*xc) < (*yc)};
+  }
+  else
+    throw myexception()<<"<: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
+extern "C" closure builtin_function_lessthanorequal(OperationArgs& Args)
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return {(*xd) <= (*yd)};
+  }
+
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return {(*xi) <= (*yi)};
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return {(*xld) <= (*yld)};
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return {(*xc) <= (*yc)};
+  }
+  else
+    throw myexception()<<"<=: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
 }

@@ -9,11 +9,9 @@
 
 AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src
 
-pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la \
-		arraySize.la getIndex.la mkArray.la intToDouble.la negate.la \
-		exp.la doubleToLogDouble.la \
-		equals.la notequals.la greaterthan.la greaterthanorequal.la lessthan.la \
-		lessthanorequal.la plus_gwF.la Alphabet.la \
+pkglib_LTLIBRARIES = Prelude.la builtinError.la seq.la join.la reapply.la \
+		arraySize.la getIndex.la mkArray.la intToDouble.la \
+		doubleToLogDouble.la plus_gwF.la Alphabet.la \
 		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la \
 		c_fst.la c_snd.la c_pair.la evaluate.la Modifiables.la\
 		show.la Alignment.la \
