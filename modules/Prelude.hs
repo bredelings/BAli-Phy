@@ -60,7 +60,7 @@ builtin builtinError 1 "builtinError";
 builtin seq 2 "seq";
 builtin join 2 "join";
 builtin reapply 2 "reapply";
-builtin arraySize 1 "arraySize";
+builtin arraySize 1 "arraySize" "Array";
 builtin ! 2 "getIndex";
 builtin mkArray 2 "mkArray";
 builtin intToDouble 1 "intToDouble";

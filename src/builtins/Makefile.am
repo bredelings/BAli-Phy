@@ -10,7 +10,7 @@
 AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src
 
 pkglib_LTLIBRARIES = Prelude.la builtinError.la seq.la join.la reapply.la \
-		arraySize.la getIndex.la mkArray.la intToDouble.la \
+		Array.la getIndex.la mkArray.la intToDouble.la \
 		doubleToLogDouble.la plus_gwF.la Alphabet.la \
 		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la \
 		c_fst.la c_snd.la c_pair.la evaluate.la Modifiables.la\
@@ -51,8 +51,8 @@ join_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 reapply_la_SOURCES = reapply.C
 reapply_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-arraySize_la_SOURCES = arraySize.C
-arraySize_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
+Array_la_SOURCES = Array.C
+Array_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 getIndex_la_SOURCES = getIndex.C
 getIndex_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
