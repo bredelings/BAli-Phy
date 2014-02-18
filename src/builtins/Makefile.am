@@ -17,8 +17,7 @@ pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la
 		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la \
 		set_vector_index.la new_vector.la get_vector_index.la vector_size.la \
 		c_fst.la c_snd.la c_pair.la evaluate.la Modifiables.la\
-		show.la rs07_branch_HMM.la rs07_lengthp.la pairwise_alignment_length1.la \
-		pairwise_alignment_length2.la transition_counts.la Alignment.la \
+		show.la Alignment.la \
 		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la \
                 Vector.la
 
