@@ -1,7 +1,7 @@
 #include <vector>
 #include "computation/computation.H"
 #include "myexception.H"
-#include "computation/graph_register.H"
+#include "mytypes.H"
 
 using boost::dynamic_pointer_cast;
 using std::vector;
