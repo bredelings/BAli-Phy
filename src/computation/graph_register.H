@@ -195,6 +195,8 @@ public:
   
   boost::shared_ptr<Program> P;
 
+  std::vector<std::string> args;
+
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
   expression_ref translate_refs(const expression_ref& R, std::vector<int>&);
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references

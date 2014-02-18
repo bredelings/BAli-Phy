@@ -583,3 +583,13 @@ const Program& context::get_Program() const
 {
   return *(memory()->P);
 }
+
+const vector<string>& context::get_args() const
+{
+  return memory()->args;
+}
+
+void context::set_args(const vector<string>& a)
+{
+  memory()->args = a;
+}
