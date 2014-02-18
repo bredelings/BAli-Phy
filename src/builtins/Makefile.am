@@ -13,7 +13,7 @@ pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la
 		arraySize.la getIndex.la mkArray.la intToDouble.la negate.la \
 		exp.la doubleToLogDouble.la \
 		equals.la notequals.la greaterthan.la greaterthanorequal.la lessthan.la \
-		lessthanorequal.la getNucleotides.la plus_gwF.la Alphabet.la \
+		lessthanorequal.la plus_gwF.la Alphabet.la \
 		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la \
 		set_vector_index.la new_vector.la get_vector_index.la vector_size.la \
 		c_fst.la c_snd.la c_pair.la evaluate.la Modifiables.la\
@@ -96,9 +96,6 @@ lessthan_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 lessthanorequal_la_SOURCES = lessthanorequal.C
 lessthanorequal_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-getNucleotides_la_SOURCES = getNucleotides.C
-getNucleotides_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 plus_gwF_la_SOURCES = plus_gwF.C
 plus_gwF_la_DEPENDENCIES = $(EXTRADEPENDENCIES)

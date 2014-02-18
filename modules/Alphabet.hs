@@ -1,6 +1,6 @@
 module Alphabet where
 {
-builtin getNucleotides 1 "getNucleotides";
+builtin getNucleotides 1 "getNucleotides" "Alphabet";
 builtin alphabetSize 1 "alphabetSize" "Alphabet";
 builtin builtin_alphabet_letters 1 "alphabet_letters" "Alphabet";
 
