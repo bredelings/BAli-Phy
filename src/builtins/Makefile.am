@@ -10,13 +10,12 @@
 AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src
 
 pkglib_LTLIBRARIES = Prelude.la builtinError.la seq.la join.la reapply.la \
-		Array.la getIndex.la mkArray.la intToDouble.la \
-		doubleToLogDouble.la plus_gwF.la Alphabet.la \
+		Array.la intToDouble.la doubleToLogDouble.la plus_gwF.la Alphabet.la \
 		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la \
 		c_fst.la c_snd.la c_pair.la evaluate.la Modifiables.la\
-		show.la Alignment.la \
-		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la \
-                Vector.la
+		show.la Alignment.la Vector.la \
+		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la
+
 
 if HOST_MINGW32
 EXTRADEPENDENCIES = $(top_builddir)/bali-phy.exe
@@ -36,9 +35,6 @@ endif
 
 LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 
-mod_la_SOURCES = mod.C
-mod_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
 builtinError_la_SOURCES = builtinError.C
 builtinError_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
@@ -54,12 +50,6 @@ reapply_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 Array_la_SOURCES = Array.C
 Array_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-getIndex_la_SOURCES = getIndex.C
-getIndex_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-mkArray_la_SOURCES = mkArray.C
-mkArray_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
 intToDouble_la_SOURCES = intToDouble.C
 intToDouble_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
@@ -74,24 +64,6 @@ exp_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 Prelude_la_SOURCES = Prelude.C
 Prelude_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-equals_la_SOURCES = equals.C
-equals_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-notequals_la_SOURCES = notequals.C
-notequals_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-greaterthan_la_SOURCES = greaterthan.C
-greaterthan_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-greaterthanorequal_la_SOURCES = greaterthanorequal.C
-greaterthanorequal_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-lessthan_la_SOURCES = lessthan.C
-lessthan_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-lessthanorequal_la_SOURCES = lessthanorequal.C
-lessthanorequal_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 plus_gwF_la_SOURCES = plus_gwF.C
 plus_gwF_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
@@ -125,21 +97,6 @@ evaluate_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 Modifiables_la_SOURCES = Modifiables.C
 Modifiables_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-rs07_branch_HMM_la_SOURCES = rs07_branch_HMM.C
-rs07_branch_HMM_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-rs07_lengthp_la_SOURCES = rs07_lengthp.C
-rs07_lengthp_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-pairwise_alignment_length1_la_SOURCES = pairwise_alignment_length1.C
-pairwise_alignment_length1_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-pairwise_alignment_length2_la_SOURCES = pairwise_alignment_length2.C
-pairwise_alignment_length2_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-transition_counts_la_SOURCES = transition_counts.C
-transition_counts_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 Alignment_la_SOURCES = Alignment.C
 Alignment_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
