@@ -1520,6 +1520,7 @@ int main(int argc,char* argv[])
 
     //-------------Create the Parameters object--------------//
     Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
+    P.set_args(trailing_args(argc,argv,trailing_args_separator));
 
     // Write out a tree with branch numbers as branch lengths
     write_branch_numbers(out_cache, T);

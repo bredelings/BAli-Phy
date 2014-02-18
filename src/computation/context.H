@@ -58,10 +58,10 @@ private:
 
   Program& get_Program();
 
+public:
+
   const std::vector<std::string>& get_args() const;
   void set_args(const std::vector<std::string>& args);
-
-public:
 
   int get_context_index() const {return context_index;}
 
