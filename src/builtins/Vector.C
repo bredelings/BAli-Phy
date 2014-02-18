@@ -187,3 +187,41 @@ extern "C" closure builtin_function_Vector_Matrix_From_List(OperationArgs& Args)
 {
   return Vector_From_List<Matrix,MatrixObject>(Args);
 }
+
+extern "C" closure builtin_function_new_vector(OperationArgs& Args)
+{
+  int length = *Args.evaluate_as<Int>(0);
+
+  object_ptr<OVector> v = new OVector(length);
+
+  return v;
+}
+
+extern "C" closure builtin_function_vector_size(OperationArgs& Args)
+{
+  const Vector<object_ref>& v = *Args.evaluate_as<Vector<object_ref>>(0);
+
+  return Int(v.size());
+}
+
+extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
+{
+  const Vector<object_ref>& v = *Args.evaluate_as<Vector<object_ref>>(0);
+  int i = *Args.evaluate_as<Int>(1);
+  object_ref x = Args.evaluate(2);
+
+  const Vector<object_ref>* vv = &v;
+  Vector<object_ref>* vvv = const_cast<Vector<object_ref>*>(vv);
+  (*vvv)[i] = x;
+
+  return constructor("()",0);
+}
+
+extern "C" closure builtin_function_get_vector_index(OperationArgs& Args)
+{
+  int i = *Args.evaluate_as<Int>(1);
+  const OVector& v = *Args.evaluate_as<OVector>(0);
+
+  return v[i];
+}
+

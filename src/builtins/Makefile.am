@@ -15,7 +15,6 @@ pkglib_LTLIBRARIES = mod.la Prelude.la builtinError.la seq.la join.la reapply.la
 		equals.la notequals.la greaterthan.la greaterthanorequal.la lessthan.la \
 		lessthanorequal.la plus_gwF.la Alphabet.la \
 		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la \
-		set_vector_index.la new_vector.la get_vector_index.la vector_size.la \
 		c_fst.la c_snd.la c_pair.la evaluate.la Modifiables.la\
 		show.la Alignment.la \
 		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la \
@@ -113,18 +112,6 @@ gtr_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 m0_la_SOURCES = m0.C
 m0_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-set_vector_index_la_SOURCES = set_vector_index.C
-set_vector_index_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-new_vector_la_SOURCES = new_vector.C
-new_vector_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-get_vector_index_la_SOURCES = get_vector_index.C
-get_vector_index_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-vector_size_la_SOURCES = vector_size.C
-vector_size_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 c_fst_la_SOURCES = c_fst.C
 c_fst_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
