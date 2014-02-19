@@ -10,10 +10,9 @@
 AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src
 
 pkglib_LTLIBRARIES = Prelude.la builtinError.la seq.la join.la reapply.la \
-		Array.la intToDouble.la doubleToLogDouble.la plus_gwF.la Alphabet.la \
-		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la \
-		c_fst.la c_snd.la c_pair.la evaluate.la Modifiables.la\
-		show.la Alignment.la Vector.la \
+		Array.la intToDouble.la doubleToLogDouble.la Alphabet.la \
+		iotaUnsigned.la show.la Alignment.la Vector.la \
+		c_fst.la c_snd.la c_pair.la evaluate.la Modifiables.la \
 		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la
 
 
@@ -56,32 +55,14 @@ intToDouble_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 doubleToLogDouble_la_SOURCES = doubleToLogDouble.C
 doubleToLogDouble_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-negate_la_SOURCES = negate.C
-negate_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-exp_la_SOURCES = exp.C
-exp_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
 Prelude_la_SOURCES = Prelude.C
 Prelude_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-plus_gwF_la_SOURCES = plus_gwF.C
-plus_gwF_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 Alphabet_la_SOURCES = Alphabet.C
 Alphabet_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 iotaUnsigned_la_SOURCES = iotaUnsigned.C
 iotaUnsigned_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-f3x4_frequencies_la_SOURCES = f3x4_frequencies.C
-f3x4_frequencies_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-gtr_la_SOURCES = gtr.C
-gtr_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-m0_la_SOURCES = m0.C
-m0_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 c_fst_la_SOURCES = c_fst.C
 c_fst_la_DEPENDENCIES = $(EXTRADEPENDENCIES)

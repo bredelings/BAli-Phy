@@ -2,10 +2,12 @@
 #include "math/exponential.H"
 #include "sequence/alphabet.H"
 #include "io.H"
+#include <valarray>
 
 using std::vector;
 using std::istringstream;
 using std::istream;
+using std::valarray;
 
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
@@ -586,3 +588,138 @@ extern "C" closure builtin_function_lg(OperationArgs& Args)
   return WAG_Exchange_Function(*a);
 }
 
+extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
+{
+  auto T = Args.evaluate_as<Triplets>(0);
+  // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
+
+  auto pi1 = Args.evaluate_as<Vector<double>>(1);
+
+  auto pi2 = Args.evaluate_as<Vector<double>>(2);
+
+  auto pi3 = Args.evaluate_as<Vector<double>>(3);
+
+  Vector<double> pi;
+  pi.resize(T->size());
+  for(int i=0;i<T->size();i++)
+    pi[i] = (*pi1)[T->sub_nuc(i,0)] * (*pi2)[T->sub_nuc(i,1)] * (*pi3)[T->sub_nuc(i,2)];
+
+  // Some triplets may be missing from the triplet alphabet (e.g. stop codons).  So renormalize.
+
+  double scale = 1.0/sum(pi);
+  for(double& d : pi)
+    d *= scale;
+
+  assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
+
+  return pi;
+}
+
+extern "C" closure builtin_function_gtr(OperationArgs& Args)
+{
+  object_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
+  double AG = *Args.evaluate_as<Double>(1);
+  double AT = *Args.evaluate_as<Double>(2);
+  double AC = *Args.evaluate_as<Double>(3);
+  double GT = *Args.evaluate_as<Double>(4);
+  double GC = *Args.evaluate_as<Double>(5);
+  double TC = *Args.evaluate_as<Double>(6);
+
+  assert(N->size()==4);
+
+  object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+
+  (*R).resize(N->size());
+
+  double total = AG + AT + AC + GT + GC + TC;
+
+  (*R)(0,1) = AG/total;
+  (*R)(0,2) = AT/total;
+  (*R)(0,3) = AC/total;
+
+  (*R)(1,2) = GT/total;
+  (*R)(1,3) = GC/total;
+
+  (*R)(2,3) = TC/total;
+
+  return R;
+}
+
+extern "C" closure builtin_function_m0(OperationArgs& Args)
+{
+  object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
+  object_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(1);
+  double omega = *Args.evaluate_as<Double>(2);
+
+  object_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject );
+
+  (*R).resize(C->size());
+
+  for(int i=0;i<C->size();i++) 
+  {
+    for(int j=0;j<i;j++) {
+      int nmuts=0;
+      int pos=-1;
+      for(int p=0;p<3;p++)
+	if (C->sub_nuc(i,p) != C->sub_nuc(j,p)) {
+	  nmuts++;
+	  pos=p;
+	}
+      assert(nmuts>0);
+      assert(pos >= 0 and pos < 3);
+
+      double rate=0.0;
+
+      if (nmuts == 1) 
+      {
+	int l1 = C->sub_nuc(i,pos);
+	int l2 = C->sub_nuc(j,pos);
+	assert(l1 != l2);
+
+	rate = (*S)(l1,l2);
+
+	if (C->translate(i) != C->translate(j))
+	  rate *= omega;	
+      }
+
+      (*R)(i,j) = (*R)(j,i) = rate;
+    }
+  }
+
+  return R;
+}
+
+extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
+{
+  const alphabet& a = *Args.evaluate_as<alphabet>(0);
+
+  double f = *Args.evaluate_as<Double>(1);
+
+  object_ptr< const Vector<double> > pi_ = Args.evaluate_as< Vector<double> >(2);
+
+  object_ptr<MatrixObject> R( new MatrixObject );
+
+  const int n = a.size();
+
+  R->resize(n, n);
+
+  // compute frequencies
+  vector<double> pi = *pi_;
+  normalize(pi);
+  assert(a.size() == pi.size());
+    
+  // compute transition rates
+  valarray<double> pi_f(n);
+  for(int i=0;i<n;i++)
+    pi_f[i] = pow(pi[i],f);
+
+  for(int i=0;i<n;i++)
+    for(int j=0;j<n;j++)
+      (*R)(i,j) = pi_f[i]/pi[i] * pi_f[j];
+
+  // diagonal entries should have no effect
+  for(int i=0;i<n;i++)
+    (*R)(i,i) = 0;
+
+  return R;
+}

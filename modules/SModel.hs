@@ -3,11 +3,11 @@ module SModel where
 import Distributions;
 import Alphabet;
 
-builtin f3x4_frequencies 4 "f3x4_frequencies";
+builtin f3x4_frequencies 4 "f3x4_frequencies" "SModel";
 builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
-builtin plus_gwF 3 "plus_gwF";
-builtin gtr 7 "gtr";
-builtin m0 3 "m0";
+builtin plus_gwF 3 "plus_gwF" "SModel";
+builtin gtr 7 "gtr" "SModel";
+builtin m0 3 "m0" "SModel";
 builtin lExp 3 "lExp" "SModel";
 builtin reversible_rate_matrix 2 "reversible_rate_matrix" "SModel";
 builtin get_eigensystem 2 "get_eigensystem" "SModel";
