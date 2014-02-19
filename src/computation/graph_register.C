@@ -1322,6 +1322,7 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
     scan.push_back(probability_index);
   insert_at_end(scan, probability_heads);
   insert_at_end(scan, random_modifiables_);
+  insert_at_end(scan, transition_kernels_);
   for(int j=0;j<parameters.size();j++)
     scan.push_back(parameters[j].second);
   if (keep_identifiers)
@@ -3229,3 +3230,12 @@ int reg_heap::find_parameter(const string& s) const
   return -1;
 }
 
+const vector<int>& reg_heap::transition_kernels() const
+{
+  return transition_kernels_;
+}
+
+int reg_heap::add_transition_kernel(int r)
+{
+  transition_kernels_.push_back(r);
+}

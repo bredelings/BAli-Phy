@@ -187,6 +187,12 @@ public:
 
   int add_random_modifiable(int);
 
+  std::vector<int> transition_kernels_;
+
+  const std::vector<int>& transition_kernels() const;
+
+  int add_transition_kernel(int);
+
   /// The register indices of the named parameters.
   std::vector<std::pair<std::string,int>> parameters;
   
