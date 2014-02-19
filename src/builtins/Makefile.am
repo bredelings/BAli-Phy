@@ -11,7 +11,8 @@ AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src
 
 pkglib_LTLIBRARIES = Prelude.la Array.la Alphabet.la \
 		Alignment.la Vector.la Pair.la Modifiables.la \
-		popgen.la Distribution.la Range.la SModel.la sum_out_coals.la
+		PopGen.la Distribution.la Range.la SModel.la MCMC.la \
+		Environment.la
 
 
 if HOST_MINGW32
@@ -50,8 +51,8 @@ Modifiables_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 Alignment_la_SOURCES = Alignment.C
 Alignment_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-popgen_la_SOURCES = popgen.C
-popgen_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
+PopGen_la_SOURCES = PopGen.C
+PopGen_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 Distribution_la_SOURCES = Distribution.C
 Distribution_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
@@ -62,8 +63,11 @@ Range_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 SModel_la_SOURCES = SModel.C
 SModel_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-sum_out_coals_la_SOURCES = sum_out_coals.C
-sum_out_coals_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
+MCMC_la_SOURCES = MCMC.C
+MCMC_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 Vector_la_SOURCES = Vector.C
 Vector_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
+
+Environment_la_SOURCES = Environment.C
+Environment_la_DEPENDENCIES = $(EXTRADEPENDENCIES)

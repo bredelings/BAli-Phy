@@ -3,15 +3,15 @@ module PopGen where
 import Distributions;
 import Range;
 
-builtin builtin_read_phase_file 1 "read_phase_file" "popgen";
-builtin remove_2nd_allele 1 "remove_2nd_allele" "popgen";
-builtin allele_frequency_spectrum 1 "allele_frequency_spectrum" "popgen";
-builtin ewens_sampling_group_probability 2 "ewens_sampling_group_probability" "popgen";
-builtin ewens_sampling_probability 2 "ewens_sampling_probability" "popgen";
-builtin builtin_ewens_sampling_mixture_probability 3 "ewens_sampling_mixture_probability" "popgen";
-builtin builtin_ewens_diploid_probability 3 "ewens_diploid_probability" "popgen";
-builtin builtin_selfing_coalescence_probability 3 "selfing_coalescence_probability" "popgen";
-builtin builtin_sum_out_coals 4 "sum_out_coals" "sum_out_coals";
+builtin builtin_read_phase_file 1 "read_phase_file" "PopGen";
+builtin remove_2nd_allele 1 "remove_2nd_allele" "PopGen";
+builtin allele_frequency_spectrum 1 "allele_frequency_spectrum" "PopGen";
+builtin ewens_sampling_group_probability 2 "ewens_sampling_group_probability" "PopGen";
+builtin ewens_sampling_probability 2 "ewens_sampling_probability" "PopGen";
+builtin builtin_ewens_sampling_mixture_probability 3 "ewens_sampling_mixture_probability" "PopGen";
+builtin builtin_ewens_diploid_probability 3 "ewens_diploid_probability" "PopGen";
+builtin builtin_selfing_coalescence_probability 3 "selfing_coalescence_probability" "PopGen";
+builtin builtin_sum_out_coals 4 "sum_out_coals" "MCMC";
 
 
 sum_out_coals x y pr c = IOAction4 builtin_sum_out_coals x y pr c;
