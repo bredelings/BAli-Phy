@@ -3237,5 +3237,7 @@ const vector<int>& reg_heap::transition_kernels() const
 
 int reg_heap::add_transition_kernel(int r)
 {
+  int i = transition_kernels_.size();
   transition_kernels_.push_back(r);
+  return i;
 }

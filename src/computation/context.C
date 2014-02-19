@@ -151,6 +151,13 @@ object_ref context::perform_expression(const expression_ref& E,bool ec) const
   return evaluate_expression_( preprocess(E2), ec);
 }
 
+void context::perform_transition_kernel(int i)
+{
+  int r = memory()->transition_kernels()[i];
+  expression_ref E = (reg_var(r), get_context_index());
+  perform_expression(E);
+}
+
 bool context::parameter_is_modifiable(int index) const
 {
   return memory()->parameter_is_modifiable(index);

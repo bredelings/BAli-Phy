@@ -212,6 +212,8 @@ public:
 
   void allocate_identifiers_for_modules(const std::vector<std::string>& module_names);
 
+  void perform_transition_kernel(int i);
+
   context& operator+=(const Module& M);
 
   context& operator+=(const std::string& module_name);
