@@ -10,8 +10,8 @@
 AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src
 
 pkglib_LTLIBRARIES = Prelude.la Array.la Alphabet.la \
-		Alignment.la Vector.la Pair.la evaluate.la Modifiables.la \
-		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la
+		Alignment.la Vector.la Pair.la Modifiables.la \
+		popgen.la Distribution.la Range.la SModel.la sum_out_coals.la
 
 
 if HOST_MINGW32
@@ -32,26 +32,8 @@ endif
 
 LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 
-builtinError_la_SOURCES = builtinError.C
-builtinError_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-seq_la_SOURCES = seq.C
-seq_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-join_la_SOURCES = join.C
-join_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-reapply_la_SOURCES = reapply.C
-reapply_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
 Array_la_SOURCES = Array.C
 Array_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-intToDouble_la_SOURCES = intToDouble.C
-intToDouble_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-doubleToLogDouble_la_SOURCES = doubleToLogDouble.C
-doubleToLogDouble_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 Prelude_la_SOURCES = Prelude.C
 Prelude_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
@@ -59,14 +41,8 @@ Prelude_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 Alphabet_la_SOURCES = Alphabet.C
 Alphabet_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-iotaUnsigned_la_SOURCES = iotaUnsigned.C
-iotaUnsigned_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
 Pair_la_SOURCES = Pair.C
 Pair_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-evaluate_la_SOURCES = evaluate.C
-evaluate_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 Modifiables_la_SOURCES = Modifiables.C
 Modifiables_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
@@ -77,9 +53,6 @@ Alignment_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 popgen_la_SOURCES = popgen.C
 popgen_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-trigger_la_SOURCES = trigger.C
-trigger_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
 Distribution_la_SOURCES = Distribution.C
 Distribution_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
@@ -88,9 +61,6 @@ Range_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 SModel_la_SOURCES = SModel.C
 SModel_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
-
-show_la_SOURCES = show.C
-show_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 sum_out_coals_la_SOURCES = sum_out_coals.C
 sum_out_coals_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
