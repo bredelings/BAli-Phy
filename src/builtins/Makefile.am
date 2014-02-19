@@ -12,7 +12,7 @@ AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src
 pkglib_LTLIBRARIES = Prelude.la builtinError.la seq.la join.la reapply.la \
 		Array.la intToDouble.la doubleToLogDouble.la Alphabet.la \
 		iotaUnsigned.la show.la Alignment.la Vector.la \
-		c_fst.la c_snd.la c_pair.la evaluate.la Modifiables.la \
+		Pair.la c_snd.la c_pair.la evaluate.la Modifiables.la \
 		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la
 
 
@@ -64,8 +64,8 @@ Alphabet_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 iotaUnsigned_la_SOURCES = iotaUnsigned.C
 iotaUnsigned_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-c_fst_la_SOURCES = c_fst.C
-c_fst_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
+Pair_la_SOURCES = Pair.C
+Pair_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
 c_snd_la_SOURCES = c_snd.C
 c_snd_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
