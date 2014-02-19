@@ -9,10 +9,8 @@
 
 AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src
 
-pkglib_LTLIBRARIES = Prelude.la builtinError.la seq.la join.la reapply.la \
-		Array.la intToDouble.la doubleToLogDouble.la Alphabet.la \
-		iotaUnsigned.la show.la Alignment.la Vector.la \
-		Pair.la evaluate.la Modifiables.la \
+pkglib_LTLIBRARIES = Prelude.la Array.la Alphabet.la \
+		Alignment.la Vector.la Pair.la evaluate.la Modifiables.la \
 		popgen.la Distribution.la Range.la SModel.la trigger.la sum_out_coals.la
 
 

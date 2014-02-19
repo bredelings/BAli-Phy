@@ -474,3 +474,103 @@ extern "C" closure builtin_function_lessthanorequal(OperationArgs& Args)
   else
     throw myexception()<<"<=: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
 }
+
+#include "conversion.H"
+
+extern "C" closure builtin_function_doubleToLogDouble(OperationArgs& Args)
+{
+  return numeric_conversion_function<double,log_double_t>(Args);
+}
+
+extern "C" closure builtin_function_intToDouble(OperationArgs& Args)
+{
+  return numeric_conversion_function<int,double>(Args);
+}
+
+#include "iota.H"
+
+extern "C" closure builtin_function_iotaUnsigned(OperationArgs& Args)
+{
+  return iota_function<unsigned>(Args);
+}
+
+extern "C" closure builtin_function_join(OperationArgs& Args)
+{
+  Args.evaluate_slot_to_reg(0);
+  int R = Args.evaluate_slot_to_reg(1);
+
+  return {index_var(0),{R}};
+}
+
+extern "C" closure builtin_function_seq(OperationArgs& Args)
+{
+  Args.evaluate_slot_no_record(0);
+
+  int index = assert_is_a<index_var>(Args.reference(1))->index;
+  int R = Args.current_closure().lookup_in_env( index);
+
+  return {index_var(0),{R}};
+}
+
+extern "C" closure builtin_function_show(OperationArgs& Args)
+{
+  object_ref x = Args.evaluate(0);
+  
+  object_ptr<String> v (new String);
+
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+    *v = convertToString<double>(*xd);
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+    *v = convertToString<int>(*xi);
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    log_double_t ld = *xld;
+    *v = "LD"+convertToString<double>(ld.log());
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    std::string s;
+    s = *xc;
+    *v = s;
+  }
+  else if (object_ptr<const String> xs = dynamic_pointer_cast<const String>(x))
+    *v = *xs;
+  else
+    throw myexception()<<"Add: object '"<<x->print()<<"' is not Double, Int, Log_Double, Char, or String'";
+
+  return v;
+}
+
+extern "C" closure builtin_function_builtinError(OperationArgs& Args)
+{
+  std::string message = *Args.evaluate_as<String>(0);
+  
+  throw myexception()<<message;
+}
+
+extern "C" closure builtin_function_reapply(OperationArgs& Args)
+{
+  int index1 = assert_is_a<index_var>(Args.reference(0))->index;
+  int R1 = Args.current_closure().lookup_in_env( index1 );
+
+  int index2 = assert_is_a<index_var>(Args.reference(1))->index;
+  int R2 = Args.current_closure().lookup_in_env( index2 );
+
+  expression_ref apply_E;
+  {
+    expression_ref fE = index_var(1);
+    expression_ref argE = index_var(0);
+    apply_E = (fE, argE);
+  }
+
+  // %1 %0 {R1,R2}
+  int apply_reg = Args.allocate({apply_E,{R1, R2}});
+
+  // FIXME - aren't we trying to eliminate general evaluation of regs that aren't children?  See below:
+
+  // Evaluate the newly create application reg - and depend upon it!
+  if (Args.current_token())
+    Args.evaluate_reg_to_object(apply_reg);
+
+  return {index_var(0),{apply_reg}};
+}
