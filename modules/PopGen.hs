@@ -11,10 +11,10 @@ builtin ewens_sampling_probability 2 "ewens_sampling_probability" "PopGen";
 builtin builtin_ewens_sampling_mixture_probability 3 "ewens_sampling_mixture_probability" "PopGen";
 builtin builtin_ewens_diploid_probability 3 "ewens_diploid_probability" "PopGen";
 builtin builtin_selfing_coalescence_probability 3 "selfing_coalescence_probability" "PopGen";
-builtin builtin_sum_out_coals 4 "sum_out_coals" "MCMC";
+builtin builtin_sum_out_coals 3 "sum_out_coals" "MCMC";
 
 
-sum_out_coals x y pr c = IOAction4 builtin_sum_out_coals x y pr c;
+sum_out_coals x y c = IOAction3 builtin_sum_out_coals x y c;
 
 read_phase_file = builtin_read_phase_file . listToString;
 
