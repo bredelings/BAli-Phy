@@ -214,6 +214,8 @@ public:
 
   void perform_transition_kernel(int i);
 
+  int n_transition_kernels() const;
+
   context& operator+=(const Module& M);
 
   context& operator+=(const std::string& module_name);

@@ -804,11 +804,13 @@ void MoveArg::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int i)
 #ifndef NDEBUG
     clog<<" [IO Move] move = "<<head<<endl;
 #endif
-    expression_ref E = P->get_expression(head);
-    E = (E,P->get_context_index());
-    P->perform_expression(E);
+    P->perform_transition_kernel(head);
   }
 
+  IOMove::IOMove(int h)
+    :Move("IOMove"+convertToString(h)),head(h) 
+  { }
+  
 void MoveEach::add(double l,const MoveArg& m,bool enabled) {
   MoveGroupBase::add(l,m,enabled);
 

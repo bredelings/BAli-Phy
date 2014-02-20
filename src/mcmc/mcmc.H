@@ -506,7 +506,7 @@ namespace MCMC {
     void iterate(owned_ptr<Probability_Model>&,MoveStats&);
     void iterate(owned_ptr<Probability_Model>&,MoveStats&,int);
 
-    IOMove(const std::string& name, int h):Move(name),head(h) { }
+    IOMove(int h);
   };
 
 

@@ -158,6 +158,11 @@ void context::perform_transition_kernel(int i)
   perform_expression(E);
 }
 
+int context::n_transition_kernels() const
+{
+  return memory()->transition_kernels().size();
+}
+
 bool context::parameter_is_modifiable(int index) const
 {
   return memory()->parameter_is_modifiable(index);

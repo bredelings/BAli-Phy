@@ -415,13 +415,9 @@ MCMC::MoveAll get_h_moves(Parameters& P)
 
   MoveAll h_moves("haskell_moves");
 
-  /*
-    for each expression...
+  for(int i=0;i<P.n_transition_kernels();i++)
+    h_moves.add(1,IOMove(i));
 
-    int head = P.add_compute_expression(E);
-    
-    h_moves.add(1,IOMove(name, head));
-  */
   return h_moves;
 }
 
