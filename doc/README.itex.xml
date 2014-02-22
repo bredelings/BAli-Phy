@@ -46,6 +46,8 @@
 
   <section xml:id="installation"><info><title>Installation</title></info>
 
+  <para>You can install BAli-Phy by downloading compiled executables from the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/download.php">website</link>.</para>
+  <para>On OSX 10.8 or higher, you could also install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 5 compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
   <section xml:id="pre-requisites"><info><title>Hardware requirements</title></info>
     
     <para>We recommend running BAli-Phy on a computing cluster for long runs.
@@ -99,7 +101,8 @@ While running the Cygwin installer
     </section>
 
     <section><info><title>Mac OS X requirements</title></info>
-      <para>We recommend Mac OS X version 10.6 (or higher).</para>
+    <para>We recommend Mac OS X version 10.6 (or higher).</para>
+    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 5 compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
     </section>
 
     <section><info><title>Linux requirements</title></info>
@@ -320,10 +323,8 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 <note>Note that you must add the option <userinput>CXXFLAGS=-ftemplate-depth=256</userinput> to the configure script when using clang.  The default template depth of 128 is too low.  See below on how to add this option.
     </note>
     </para>
-    <para>If you have 10.7 or below, you can't install XCode 5.  However, you can use <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh">homebrew</link> to install gcc 4.8.  The gcc_48 recipe is not available by default, so you must add the 'versions' tap.
-    </para>
     
-    <para>There will soon be a homebrew recipe for building bali-phy 2.2.0.  Currently the recipe builds version 2.1.1.</para>
+    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have XCode 5.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
 
     </section>
     
