@@ -50,6 +50,8 @@ std::vector<std::bitset<64>> convert_to_bits(const pairwise_alignment_t&, int ,i
 
 matrix<int> construct(const Tree& T, const std::vector<pairwise_alignment_t>& A);
 
+alignment get_alignment(const alphabet& a, const std::vector<sequence>&, const std::vector< std::vector<int>>& sequences, const matrix<int>& M);
+
 alignment get_alignment(const alignment& A1, const std::vector< std::vector<int>>& sequences, const matrix<int>& M);
 
 namespace A2 {

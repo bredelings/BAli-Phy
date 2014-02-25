@@ -72,7 +72,7 @@ pairwise_alignment_t::pairwise_alignment_t(const vector<int>& pi)
 { }
 
 pairwise_alignment_t::pairwise_alignment_t(const pairwise_alignment_t& pi)
-  :vector<int>(pi)
+  :vector<int>(pi),Object()
 { }
 
 bool operator==(const pairwise_alignment_t& pi1, const pairwise_alignment_t& pi2)
@@ -465,7 +465,13 @@ alignment get_alignment(const alignment& A1, const vector< vector<int>>& sequenc
 {
   assert(A1.n_sequences() == M.size2());
 
-  alignment A2 = blank_copy(A1, M.size1());
+  return get_alignment(A1.get_alphabet(), A1.seqs(), sequences, M);
+}
+
+alignment get_alignment(const alphabet& a, const vector<sequence>& seqs, const vector< vector<int>>& sequences, const matrix<int>& M)
+{
+  alignment A2(a,seqs);
+  A2.changelength(M.size1());
 
   // Overwrite the values in A2
   for(int i=0;i<M.size1();i++)
