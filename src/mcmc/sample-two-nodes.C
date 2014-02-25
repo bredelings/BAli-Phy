@@ -49,10 +49,6 @@ shared_ptr<DParrayConstrained>
 sample_two_nodes_base(data_partition& P, const data_partition& P0, const vector<int>& nodes, const vector<int>& nodes0)
 {
   const Tree& T = P.T();
-  alignment& A = *P.A_.modify();
-  alignment old = A;
-
-  //  std::cerr<<"old = "<<old<<endl;
 
   int b1 = T.directed_branch(nodes[0],nodes[4]);
   int b2 = T.directed_branch(nodes[4],nodes[1]);
@@ -139,13 +135,10 @@ sample_two_nodes_base(data_partition& P, const data_partition& P0, const vector<
   P.set_pairwise_alignment(T.directed_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 3, 5), false);
   P.set_pairwise_alignment(T.directed_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 4, 5), false);
 
-  vector<pairwise_alignment_t> As;
-  for(int b=0;b<2*T.n_branches();b++)
-    As.push_back(P.get_pairwise_alignment(b,false));
-  *P.A_.modify() = get_alignment(old, *P.sequences, construct(T,As));
+  P.A_.reset();
   
 #ifndef NDEBUG_DP
-  check_alignment(A,T,"sample_two_nodes_base:out");
+  check_alignment(P.A(), T, "sample_two_nodes_base:out");
 #endif
 
   return Matrices;

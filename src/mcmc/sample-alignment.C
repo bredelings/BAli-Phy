@@ -78,9 +78,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, P.A());
 
   const Tree& T = P.T();
-  alignment& A = *P.A_.modify();
-
-  alignment old = A;
+  const alignment& A = P.A();
 
   int node1 = T.branch(b).target();
   int node2 = T.branch(b).source();
@@ -124,7 +122,6 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 	      );
 
   //------------------ Compute the DP matrix ---------------------//
-  vector<int> path_old = get_path(A,node1,node2);
   vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,~group1,seq1,seq2);
 
   Matrices->forward_constrained(pins);
@@ -143,10 +140,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   P.LC.invalidate_branch_alignment(T,b);
   P.set_pairwise_alignment(T.directed_branch(node1,node2), A2::get_pairwise_alignment_from_path(path), false);
 
-  vector<pairwise_alignment_t> As;
-  for(int b=0;b<2*T.n_branches();b++)
-    As.push_back(P.get_pairwise_alignment(b,false));
-  *P.A_.modify() = get_alignment(old, *P.sequences, construct(T, As));
+  P.A_.reset();
 
 #ifndef NDEBUG_DP
   assert(valid(P.A()));
