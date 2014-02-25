@@ -482,6 +482,30 @@ vector<int> get_sparse_alignment_row(const alignment& A, int i)
   return columns;
 }
 
+int homology_matrix::seqlength(int i) const
+{
+  int count =0;
+  for(int column=0;column<length();column++) {
+    if (character(column,i))
+      count++;
+  }
+  return count;
+}
+
+vector<int> homology_matrix::get_columns_for_characters(int row) const
+{
+  vector<int> columns;
+
+  columns.resize(length());
+  int l=0;
+  for(int c=0;c<length();c++)
+    if (character(c,row))
+      columns[l++] = c;
+  columns.resize(l);
+
+  return columns;
+}
+
 int sparse_increasing_index_matrix::length() const
 {
   return L;

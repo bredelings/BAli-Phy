@@ -201,6 +201,21 @@ std::vector<int> get_sparse_alignment_row(const alignment& A, int i);
 // Consider making an iterator type for moving forward through the sparse
 // matrix and ignoring columns that are empty for some subset of rows.
 
+class homology_matrix: public matrix<int>
+{
+  bool character(int c, int s) const {return operator()(c,s) >= 0;}
+  bool gap(int c, int s) const {return not character(c,s);}
+  int operator()(int c, int s) const {return matrix<int>::operator()(c,s);}
+  int& operator()(int c, int s)  = delete;
+  void set_cell(int c, int s, int v) {matrix<int>::operator()(c,s) = v;}
+  int seqlength(int s) const;
+  std::vector<int> get_columns_for_characters(int row) const;
+  int length() const {return size1();}
+  int n_sequences() const {return size2();}
+
+  using matrix<int>::matrix;
+};
+
 class sparse_increasing_index_matrix
 {
   int L;
