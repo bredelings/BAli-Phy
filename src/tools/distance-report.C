@@ -1,5 +1,6 @@
 #include "statistics.H"
 
+#include <iostream>
 #include <boost/program_options.hpp>
 #include "matrix.H"
 

@@ -19,6 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "distance-methods.H"
 
+#include <iostream>
 #include <list>
 #include <valarray>
 #include "boost/tuple/tuple.hpp"

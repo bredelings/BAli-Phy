@@ -175,19 +175,14 @@ if test "$GXX" = yes ; then
 
   # --enable-bounds-checking
   if test "$bounds_checking" = yes ; then
-      CXXFLAGS="$CXXFLAGS -D_GLIBCXX_DEBUG"
+      CXXFLAGS="$CXXFLAGS -D_GLIBCXX_DEBUG -DDEBUG_BOUNDS_CHECK=1"
       if test "$use_system_boost" = yes ; then
           echo "Error: cannot bounds check STL if compiled with system BOOST libraries"
           exit 1
       fi  
-  elif test "$bounds_checking" = no ; then
-      if test "$debug" != no ; then
-          CXXFLAGS="$CXXFLAGS -DBOOST_UBLAS_INLINE=inline"
-          CXXFLAGS="$CXXFLAGS -DBOOST_UBLAS_CHECK_ENABLE=0"
-          CXXFLAGS="$CXXFLAGS -DBOOST_UBLAS_TYPE_CHECK=0"
-          CXXFLAGS="$CXXFLAGS -DTNT_BOUNDS_CHECK"
-      fi
-  elif test "$bounds_checking" != boost ; then
+  elif test "$bounds_checking" = boost ; then
+      CXXFLAGS="$CXXFLAGS -DDEBUG_BOUNDS_CHECK=1"
+  elif test "$bounds_checking" != no ; then
       echo "I don't recognize --enable-bounds-checking=$bounds_checking."
       echo "Please use values yes,no, or boost"
       exit 1
