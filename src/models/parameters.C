@@ -187,6 +187,9 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *     - Perform write_match and write_insertions w/ function calls in construct( )
  *
  * 37. Avoid constructing an alignment for (some?) common index-matrix operations.
+ *
+ * 38. We still need to alignment -- not just the As -- to compute column likelihoods in sample-tri
+ *     when the tree changes.
  * 
  */
 
