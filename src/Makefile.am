@@ -41,7 +41,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            tools/colors.H tools/joint-A-T.H  tools/stats-table.H \
            tools/distance-methods.H tools/optimize.H tools/tree-dist.H \
            tools/findroot.H tools/parsimony.H tools/mctree.H \
-           version.H cow-ptr.H tools/index-matrix.H cached_value.H \
+           version.H cow-ptr.H alignment/index-matrix.H cached_value.H \
 	   tools/consensus-tree.H tools/partition.H mcmc/slice-sampling.H \
 	   timer_stack.H mcmc/setup.H models/probability-model.H owned-ptr.H \
 	   bounds.H io.H parser/parse.H \
@@ -193,13 +193,13 @@ alignment_median_SOURCES = tools/alignment-median.C alignment/alignment.C sequen
 
 alignment_consensus_SOURCES = tools/alignment-consensus.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C \
 	tree/tree.C tree/sequencetree.C util-random.C tools/statistics.C \
-	sequence/sequence-format.C alignment/alignment-util.C tools/index-matrix.C io.C
+	sequence/sequence-format.C alignment/alignment-util.C alignment/index-matrix.C io.C
 
 #---------------------------------------------------------------
 
 alignment_max_SOURCES = tools/alignment-max.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C \
 	tree/tree.C tree/sequencetree.C util-random.C tools/statistics.C \
-	sequence/sequence-format.C alignment/alignment-util.C tools/index-matrix.C io.C
+	sequence/sequence-format.C alignment/alignment-util.C alignment/index-matrix.C io.C
 
 #---------------------------------------------------------------
 
@@ -211,14 +211,14 @@ alignment_compare_SOURCES = tools/alignment-compare.C alignment/alignment.C sequ
 
 alignment_identity_SOURCES = tools/alignment-identity.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C \
 	tree/tree.C tree/sequencetree.C util-random.C tools/statistics.C \
-	sequence/sequence-format.C alignment/alignment-util.C tools/index-matrix.C io.C
+	sequence/sequence-format.C alignment/alignment-util.C alignment/index-matrix.C io.C
 
 #---------------------------------------------------------------
 
 alignment_thin_SOURCES = tools/alignment-thin.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C \
 	tree/tree.C tree/sequencetree.C setup.C sequence/sequence-format.C tree/randomtree.C \
 	alignment/alignment-util.C alignment/alignment-random.C tree/tree-util.C \
-	tools/distance-methods.C tools/inverse.C tools/index-matrix.C io.C
+	tools/distance-methods.C tools/inverse.C alignment/index-matrix.C io.C
 
 #---------------------------------------------------------------
 

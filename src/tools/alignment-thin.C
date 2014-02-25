@@ -28,7 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "setup.H"
 #include "distance-methods.H"
 #include <utility>
-#include "index-matrix.H"
+#include "alignment/index-matrix.H"
 
 using std::pair;
 using std::vector;
