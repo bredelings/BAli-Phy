@@ -180,11 +180,13 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *     - Then we won't have to construct it right...
  *
  * 35. We are spending 7% of CPU time in read_h_tree.
- *     - Change it to only update things that have actually changed!
+ *     - Stop calling set_tree( ) in sample-topology-SPR.C!
+ *     - Why can't we just remove the call?
  *
  * 36. We are spending 7.5% of CPU time in construct 
  *     - Perform write_match and write_insertions w/ function calls in construct( )
  *
+ * 37. Avoid constructing an alignment for (some?) common index-matrix operations.
  * 
  */
 
