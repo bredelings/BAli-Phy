@@ -25,7 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <map>
 #include <cmath>
 #include <fstream>
-#include <boost/numeric/ublas/matrix.hpp>
+#include "matrix.H"
 #include "statistics.H"
 
 #include "tree/sequencetree.H"
@@ -36,7 +36,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/program_options.hpp>
 #include "distance-report.H"
 
-namespace ublas = boost::numeric::ublas;
 namespace po = boost::program_options;
 using po::variables_map;
 

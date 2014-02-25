@@ -28,7 +28,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// \author Benjamin Redelings
 /// 
 
-#include <boost/numeric/ublas/io.hpp>
 #include <iostream>
 #include <algorithm>
 

@@ -23,7 +23,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <cmath>
 #include <fstream>
-#include <boost/numeric/ublas/io.hpp>
 
 #include "myexception.H"
 #include "tree/sequencetree.H"
