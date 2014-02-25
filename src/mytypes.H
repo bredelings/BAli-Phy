@@ -32,16 +32,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <valarray>
 
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/symmetric.hpp>
 
 #include "object.H"
 namespace ublas = boost::numeric::ublas;
 //namespace atlas = boost::numeric::bindings::atlas;
 
 typedef ublas::matrix<double> Matrix;
-typedef ublas::symmetric_matrix<double> SymmetricMatrix;
 typedef Box<Matrix> MatrixObject;
-typedef Box<SymmetricMatrix> SymmetricMatrixObject;
 
 // template <typename T>
 // using Vector<T> = typedef POD<std::vector<T> >
