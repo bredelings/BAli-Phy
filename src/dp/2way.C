@@ -383,7 +383,7 @@ int write_insertions(int b0, int& c, vector<int>& pos, vector<int>& L,
   };
 }
 
-ublas::matrix<int> construct2(const Tree& T, const vector<pairwise_alignment_t>& A)
+ublas::matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& A)
 {
   using namespace A2;
 
@@ -441,7 +441,7 @@ ublas::matrix<int> construct2(const Tree& T, const vector<pairwise_alignment_t>&
 
 // http://www.boost.org/doc/libs/1_49_0/libs/graph/doc/adjacency_list.html
 
-ublas::matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& A)
+ublas::matrix<int> construct2(const Tree& T, const vector<pairwise_alignment_t>& A)
 {
   graph_alignment a(T.n_nodes());
 
