@@ -439,63 +439,6 @@ ublas::matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& 
   return M;
 }
 
-// http://www.boost.org/doc/libs/1_49_0/libs/graph/doc/adjacency_list.html
-
-ublas::matrix<int> construct2(const Tree& T, const vector<pairwise_alignment_t>& A)
-{
-  graph_alignment a(T.n_nodes());
-
-  // Add the first sequence
-  {
-    int b0 = (*T.node(0).branches_out()).name();
-    int L0 = A[b0].length1();
-    for(int i=0;i<L0;i++)
-      a.add_row_character_to_new_column(0);
-  }
-
-  vector<const_branchview> branches = branches_from_node(T, 0);
-  for(int i=0;i<branches.size();i++)
-  {
-    int b = branches[i];
-
-    a.add_pairwise_alignment(branches[i].source(), branches[i].target(), A[b]);
-  }
-
-  a.link_all_columns();
-
-  // maps rank -> column_name
-  vector<int> order = a.sort();
-  // maps column_name -> rank
-  order = invert(order);
-
-  // Add the columns for sequence 0
-  ublas::matrix<int> M(a.length(), a.n_rows());
-  for(int i=0;i<M.size1();i++)
-    for(int j=0;j<M.size2();j++)
-      M(i,j) = -1;
-
-  for(int r=0;r<a.n_rows();r++)
-    for(int i=0;i<a.seq_length(r);i++)
-    {
-      // find the column name
-      int column = a.get_column(r,i);
-      // find the rank of this column name
-      column = order[column];
-      // set the corresponding value.
-      M(column,r) = i;
-    }
-
-#ifndef NDEBUG
-  for(int b=0;b<2*T.n_branches();b++)
-  {
-    pairwise_alignment_t a = A2::get_pairwise_alignment(M, T.directed_branch(b).source(), T.directed_branch(b).target());
-    assert(A[b] == a);
-  }
-#endif
-
-  return M;
-}
-
 alignment get_alignment(const alignment& A1, const vector< vector<int>>& sequences, const ublas::matrix<int>& M)
 {
   assert(A1.n_sequences() == M.size2());
