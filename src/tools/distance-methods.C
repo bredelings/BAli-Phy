@@ -109,8 +109,6 @@ bool A(const Tree& T,int k,int i,int j)
   return partition[i] != partition[j];
 }
 
-typedef ublas::matrix<double,ublas::column_major> MatrixC;
-
 vector<double> LeastSquares(const Tree& T, const Matrix & D, const Matrix& W,
 			    const vector<vector<int> >& leaf_sets) 
 {
@@ -127,11 +125,11 @@ vector<double> LeastSquares(const Tree& T, const Matrix & D, const Matrix& W,
       WD(i,j) *= W(i,j);
 
   vector<double> M2v = FastMTM(T,WD,leaf_sets);
-  MatrixC M2(B,1);
+  Matrix M2(B,1);
   for(int i=0;i<B;i++)
     M2(i,0) = M2v[i];
 
-  MatrixC M1(B,B);
+  Matrix M1(B,B);
   for(int l=0;l<B;l++) 
   {
 
@@ -148,7 +146,7 @@ vector<double> LeastSquares(const Tree& T, const Matrix & D, const Matrix& W,
       M1(k,l) = column[k];
   }
 
-  MatrixC x = solve(M1,M2);
+  Matrix x = solve(M1,M2);
 
   assert(x.size1() == B);
   assert(x.size2() == 1);

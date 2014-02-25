@@ -21,24 +21,43 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "myexception.H"
 #include <iostream>
 
-typedef ublas::matrix<double,ublas::column_major> MatrixC;
+#include <Eigen/Dense>
+#include <Eigen/LU>
 
-
-MatrixC solve(const MatrixC& A,const MatrixC& B) {
-  MatrixC A1 = A;
-  MatrixC B1 = B;
-
-#ifdef WITH_ATLAS
-  atlas::gesv (A1, B1);
-#else
-  throw myexception()<<"Can't invert a matrix: not compiled with ATLAS.";
-#endif
-
-  return B1;
+Eigen::MatrixXd copy(const Matrix& M)
+{
+  Eigen::MatrixXd M2(M.size1(), M.size2());
+  for(int i=0;i<M.size1();i++)
+    for(int j=0;j<M.size2();j++)
+      M2(i,j) = M(i,j);
+  return M2;
 }
 
-MatrixC inverse(const MatrixC& M) {
-  MatrixC I(M.size1(),M.size2());
+Matrix copy(const Eigen::MatrixXd& M)
+{
+  Matrix M2(M.rows(), M.cols());
+  for(int i=0;i<M.rows();i++)
+    for(int j=0;j<M.cols();j++)
+      M2(i,j) = M(i,j);
+  return M2;
+}
+
+Matrix solve(const Matrix& A,const Matrix& B) 
+{
+  auto A1 = copy(A);
+  auto B1 = copy(B);
+
+  Eigen::FullPivLU<Eigen::MatrixXd> LU(A1);
+  Eigen::MatrixXd S = LU.solve(B1);
+  return copy(S);
+}
+
+Matrix inverse(const Matrix& M) 
+{
+  int n = M.size1();
+  assert( n == M.size2());
+
+  Matrix I(n,n);
   for(int i=0;i<I.size1();i++)
     for(int j=0;j<I.size2();j++)
       if (i==j)

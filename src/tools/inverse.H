@@ -22,12 +22,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "matrix.H"
 
-namespace ublas = boost::numeric::ublas;
-
 /// Compute A^-1
-ublas::matrix<double,ublas::column_major> inverse(const ublas::matrix<double,ublas::column_major>& A);
+Matrix inverse(const Matrix& A);
 
 /// Solve A X = B (e.g. return X)
-ublas::matrix<double,ublas::column_major> solve(const ublas::matrix<double,ublas::column_major>& A,const ublas::matrix<double,ublas::column_major>& B);
+Matrix solve(const Matrix& A, const Matrix& B);
 
 #endif
