@@ -18,8 +18,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "math/eigenvalue.H"
-#include <eigen3/Eigen/Eigenvalues>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Eigenvalues>
+#include <Eigen/Dense>
 
 EigenValues::EigenValues(const Matrix& M)
   :O(M.size1(),M.size2()),D(M.size1())
