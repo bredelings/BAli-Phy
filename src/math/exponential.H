@@ -28,16 +28,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef EXPONENTIAL_H
 #define EXPONENTIAL_H
 #include "mytypes.H"
-#include "math/eigenvalue.H"
 
-#include <boost/numeric/ublas/symmetric.hpp>
-typedef ublas::symmetric_matrix<double> SMatrix;
-
+class EigenValues;
 Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);
-Matrix exp(const SMatrix& S,const std::vector<double>& D,double t=1.0);
-Matrix exp(const SMatrix& M,const double t=1.0);
-
-Matrix gamma_exp(const SMatrix& S,const std::vector<double>& D,double alpha,double beta);
-Matrix gamma_exp(const SMatrix& M,double alpha,double beta);
 
 #endif

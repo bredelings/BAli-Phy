@@ -1,6 +1,7 @@
 #define DEBUG_RATE_MATRIX
 #include "computation/computation.H"
 #include "math/exponential.H"
+#include "math/eigenvalue.H"
 #include "sequence/alphabet.H"
 #include "io.H"
 #include <valarray>
