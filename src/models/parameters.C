@@ -181,6 +181,11 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *
  * 35. We are spending 7% of CPU time in read_h_tree.
  *     - Change it to only update things that have actually changed!
+ *
+ * 36. We are spending 7.5% of CPU time in construct 
+ *     - Perform write_match and write_insertions w/ function calls in construct( )
+ *
+ * 
  */
 
 bool use_internal_index = true;
