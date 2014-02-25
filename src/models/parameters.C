@@ -190,7 +190,8 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *
  * 38. We still need to alignment -- not just the As -- to compute column likelihoods in sample-tri
  *     when the tree changes.
- * 
+ *     - Instead of fixing this immediately, first just compute A() from H().
+ *     - Use H() in substitution.C and index-matrix.C
  */
 
 bool use_internal_index = true;
