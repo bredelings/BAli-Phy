@@ -60,10 +60,6 @@ shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<i
 
   assert(P.variable_alignment());
 
-  alignment old = P.A();
-
-  //  std::cerr<<"old = "<<old<<endl;
-
   int b1 = T.directed_branch(nodes[1],nodes[0]);
   int b2 = T.directed_branch(nodes[0],nodes[2]);
   int b3 = T.directed_branch(nodes[0],nodes[3]);
@@ -138,10 +134,7 @@ shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<i
     P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
   }
 
-  vector<pairwise_alignment_t> As;
-  for(int b=0;b<2*T.n_branches();b++)
-    As.push_back(P.get_pairwise_alignment(b,false));
-  *P.A_.modify() = get_alignment(old, *P.sequences, construct(T, As));
+  P.A_.reset(); P.A();
 
   assert(valid(P.A()));
 

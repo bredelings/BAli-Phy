@@ -77,12 +77,10 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 								  int bandwidth)
 {
   const Tree& T = P.T();
-  alignment& A = *P.A_.modify();
+  const alignment& A = P.A();
 
   const Tree& T0 = P0.T();
   assert(P.variable_alignment());
-
-  alignment old = A;
 
   assert(T.is_connected(nodes[0],nodes[1]));
   assert(T.is_connected(nodes[0],nodes[2]));
@@ -250,13 +248,10 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
     P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
   }
 
-  vector<pairwise_alignment_t> As;
-  for(int b=0;b<2*T.n_branches();b++)
-    As.push_back(P.get_pairwise_alignment(b,false));
-  *P.A_.modify() = get_alignment(old, *P.sequences, construct(T, As));
+  P.A_.reset(); P.A();
 
 #ifndef NDEBUG_DP
-  check_alignment(A,T,"sample_tri_base:out");
+  check_alignment(P.A(),T,"sample_tri_base:out");
 #else
   Matrices->clear();
 #endif
