@@ -179,7 +179,8 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  * 34. Try to eliminate the use of the alignment matrix in more areas.
  *     - Then we won't have to construct it right...
  *
- * 35. Why does alternative construct (e.g. construct2) lead to different MCMC paths?
+ * 35. We are spending 7% of CPU time in read_h_tree.
+ *     - Change it to only update things that have actually changed!
  */
 
 bool use_internal_index = true;
