@@ -638,7 +638,7 @@ double fraction_non_gap(const Parameters& P)
   double total_cell = 0;
   for(int i=0;i<P.n_data_partitions();i++)
   {
-    const alignment& A = *P[i].A;
+    const alignment& A = P[i].A();
     total_char += sum(sequence_lengths(A));
     total_cell += A.n_sequences()*A.length();
   }
@@ -831,7 +831,7 @@ void do_sampling(const variables_map& args,
 
   if (has_imodel) {
     for(int i=0;i<PP.n_data_partitions();i++)
-      check_internal_nodes_connected(*PP[i].A,PP[i].T());
+      check_internal_nodes_connected(PP[i].A(), PP[i].T());
   }
 
   //----------------------- alignment -------------------------//
@@ -892,7 +892,7 @@ void do_sampling(const variables_map& args,
 
   for(int i=0;i<PP.n_data_partitions();i++) 
   {
-    dynamic_bitset<> s2 = constraint_satisfied(PP[i].alignment_constraint,*PP[i].A);
+    dynamic_bitset<> s2 = constraint_satisfied(PP[i].alignment_constraint, PP[i].A());
     dynamic_bitset<> s1(s2.size());
     report_constraints(s1,s2,i);
   } 

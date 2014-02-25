@@ -55,7 +55,7 @@ log_double_t other_prior(const data_partition& P,const vector<int>& nodes)
     if (includes(nodes,target) and includes(nodes,source))
       continue;
 
-    p *= prior_branch(*P.A, P.get_branch_HMM(b), target, source);
+    p *= prior_branch(P.A(), P.get_branch_HMM(b), target, source);
   }
 
 
@@ -74,7 +74,7 @@ log_double_t other_prior(const data_partition& P,const vector<int>& nodes)
 	continue;
     }
 
-    p /= pow(P.sequence_length_pr(P.A->seqlength(n)) , 2.0);
+    p /= pow(P.sequence_length_pr(P.A().seqlength(n)) , 2.0);
   }
 
   return p;
@@ -86,7 +86,7 @@ log_double_t other_prior(const data_partition& P,const vector<int>& nodes)
 vector< Matrix > distributions_star(const data_partition& P,
 				    const vector<int>& seq,int,const dynamic_bitset<>& group)
 {
-  const alignment& A = *P.A;
+  const alignment& A = P.A();
   const alphabet& a = A.get_alphabet();
   const SequenceTree& T = P.T();
 
@@ -207,7 +207,7 @@ void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, co
   if ( (std::abs(log(qs) - log(ls)) > 1.0e-9) or 
        (std::abs(log(qp) - log(lp)) > 1.0e-9) or 
        (std::abs(log(qt) - log(lt)) > 1.0e-9)) {
-    cerr<<*P.A<<endl;
+    cerr<<P.A()<<endl;
     cerr<<"Can't match up DP probabilities to real probabilities!\n"<<show_stack_trace();
     std::abort();
   }

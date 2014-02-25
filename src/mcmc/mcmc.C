@@ -1160,7 +1160,7 @@ void mcmc_init(Parameters& P, ostream& s_out)
   // Check that the Alignments and Tree are properly linked
   for(int i=0;i<P.n_data_partitions();i++) 
   {
-    const alignment& A = *P[i].A;
+    const alignment& A = P[i].A();
     if (P[i].has_IModel())
       assert(A.n_sequences() == T.n_nodes() and P[i].variable_alignment()); 
     else
@@ -1175,7 +1175,7 @@ void mcmc_init(Parameters& P, ostream& s_out)
   /// Output extra initial frequences if we have a triplets alphabet
   for(int i=0;i<P.n_data_partitions();i++)
   {
-    const alignment& A = *P[i].A;
+    const alignment& A = P[i].A();
     if (const Triplets* T = dynamic_cast<const Triplets*>(&A.get_alphabet()) ) 
       {
 	s_out<<"observed nucleotide frequencies = "<<endl;

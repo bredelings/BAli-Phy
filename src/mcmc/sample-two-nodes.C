@@ -49,7 +49,7 @@ shared_ptr<DParrayConstrained>
 sample_two_nodes_base(data_partition& P, const data_partition& P0, const vector<int>& nodes, const vector<int>& nodes0)
 {
   const Tree& T = P.T();
-  alignment& A = *P.A.modify();
+  alignment& A = *P.A_.modify();
   alignment old = A;
 
   //  std::cerr<<"old = "<<old<<endl;
@@ -142,7 +142,7 @@ sample_two_nodes_base(data_partition& P, const data_partition& P0, const vector<
   vector<pairwise_alignment_t> As;
   for(int b=0;b<2*T.n_branches();b++)
     As.push_back(P.get_pairwise_alignment(b,false));
-  *P.A.modify() = get_alignment(old, *P.sequences, construct(T,As));
+  *P.A_.modify() = get_alignment(old, *P.sequences, construct(T,As));
   
 #ifndef NDEBUG_DP
   check_alignment(A,T,"sample_two_nodes_base:out");
@@ -190,7 +190,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
 	if (i==0) 
-	  check_subA(*P0[j].subA, *P0[j].A, *p[0][j].subA, *p[0][j].A, p[0].T());
+	  check_subA(*P0[j].subA, P0[j].A(), *p[0][j].subA, p[0][j].A(), p[0].T());
 	p[i][j].likelihood();  // check the likelihood calculation
 #endif
       }
@@ -262,10 +262,10 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
   // Check that our constraints are met
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (not A_constant(*P0[j].A, *p[i][j].A, ignore)) {
-	std::cerr<<*P0[j].A<<endl;
-	std::cerr<<*p[i][j].A<<endl;
-	assert(A_constant(*P0[j].A, *p[i][j].A, ignore));
+      if (not A_constant(P0[j].A(), p[i][j].A(), ignore)) {
+	std::cerr<<P0[j].A()<<endl;
+	std::cerr<<p[i][j].A()<<endl;
+	assert(A_constant(P0[j].A(), p[i][j].A(), ignore));
       }
 
   // Add another entry for the incoming configuration

@@ -229,25 +229,25 @@ string GetProbabilityFunction::operator()(const owned_ptr<Probability_Model>& P,
 string Get_Alignment_Length_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
-  return convertToString(PP[p].A->length());
+  return convertToString(PP[p].A().length());
 }
 
 string Get_Num_Substitutions_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
-  return convertToString(n_mutations(*PP[p].A, PP[p].T(), cost_matrix));
+  return convertToString(n_mutations(PP[p].A(), PP[p].T(), cost_matrix));
 }
 
 string Get_Num_Indels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
-  return convertToString(n_indels(*PP[p].A, PP[p].T()));
+  return convertToString(n_indels(PP[p].A(), PP[p].T()));
 }
 
 string Get_Total_Length_Indels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
-  return convertToString(total_length_indels(*PP[p].A, PP[p].T()));
+  return convertToString(total_length_indels(PP[p].A(), PP[p].T()));
 }
 //
 string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Probability_Model>& P, long)
@@ -256,7 +256,7 @@ string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Probabili
 
   int total = 0;
   for(int p=0;p<PP.n_data_partitions();p++)
-    total += PP[p].A->length();
+    total += PP[p].A().length();
   return convertToString(total);
 }
 
@@ -266,7 +266,7 @@ string Get_Total_Num_Substitutions_Function::operator()(const owned_ptr<Probabil
 
   int total = 0;
   for(int p=0;p<PP.n_data_partitions();p++)
-    total += n_mutations(*PP[p].A, PP[p].T());
+    total += n_mutations(PP[p].A(), PP[p].T());
   return convertToString(total);
 }
 
@@ -276,7 +276,7 @@ string Get_Total_Num_Indels_Function::operator()(const owned_ptr<Probability_Mod
 
   int total = 0;
   for(int p=0;p<PP.n_data_partitions();p++)
-    total += n_indels(*PP[p].A, PP[p].T());
+    total += n_indels(PP[p].A(), PP[p].T());
   return convertToString(total);
 }
 
@@ -286,7 +286,7 @@ string Get_Total_Total_Length_Indels_Function::operator()(const owned_ptr<Probab
 
   int total = 0;
   for(int p=0;p<PP.n_data_partitions();p++)
-    total += total_length_indels(*PP[p].A, PP[p].T());
+    total += total_length_indels(PP[p].A(), PP[p].T());
   return convertToString(total);
 }
 
@@ -296,7 +296,7 @@ double mu_scale(const Parameters& P)
   
   valarray<double> weights(P.n_data_partitions());
   for(int i=0;i<weights.size();i++)
-    weights[i] = max(sequence_lengths(*P[i].A, P.T().n_leaves()));
+    weights[i] = max(sequence_lengths(P[i].A(), P.T().n_leaves()));
   weights /= weights.sum();
   
   // FIXME - we are just looking at branch 0!
@@ -401,7 +401,7 @@ string AlignmentFunction::operator()(const owned_ptr<Probability_Model>& P, long
 {
   const Parameters& PP = *P.as<Parameters>();
   std::ostringstream output;
-  output<<*PP[p].A<<"\n";
+  output<<PP[p].A()<<"\n";
   return output.str();
 }
 
@@ -443,7 +443,7 @@ string Ancestral_Sequences_Function::operator()(const owned_ptr<Probability_Mode
 
   const alphabet& a = PP[p].get_alphabet();
 
-  alignment A = *PP[p].A;
+  alignment A = PP[p].A();
 
   const vector<unsigned> smap = PP[p].state_letters();
 

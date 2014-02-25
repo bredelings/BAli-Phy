@@ -203,7 +203,7 @@ int source)
 /// Probability of a multiple alignment if branch alignments independent
 log_double_t prior_HMM_nogiven(const data_partition& P) 
 {
-  const alignment& A = *P.A;
+  const alignment& A = P.A();
   const Tree& T = P.T();
 
 #ifndef NDEBUG
@@ -229,7 +229,7 @@ log_double_t prior_HMM_rootless_scale(const data_partition& P)
 
 #ifndef NDEBUG
   assert(P.has_IModel());
-  check_internal_nodes_connected(*P.A,T);
+  check_internal_nodes_connected(P.A(),T);
 #endif
   
   log_double_t Pr = 1;

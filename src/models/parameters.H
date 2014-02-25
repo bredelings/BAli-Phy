@@ -98,7 +98,9 @@ public:
   cow_ptr< std::vector< std::vector<int> > > sequences;
 
   /// The alignment data of this partition
-  cow_ptr<alignment> A;
+  cow_ptr<alignment> A_;
+
+  const alignment& A() const;
 
   const SequenceTree& T() const;
 
@@ -139,7 +141,7 @@ public:
   double get_beta() const;
 
   // get the alphabet for partition i
-  const alphabet& get_alphabet() const {return A->get_alphabet();}
+  const alphabet& get_alphabet() const {return A().get_alphabet();}
 
   /// Recalculate all the cached transition matrices
   void recalc_smodel();

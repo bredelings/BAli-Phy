@@ -192,6 +192,11 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
 
 bool use_internal_index = true;
 
+const alignment& data_partition::A() const
+{
+  return *A_;
+}
+
 const SequenceTree& data_partition::T() const
 {
   return P->T();
@@ -208,31 +213,31 @@ void data_partition::variable_alignment(bool b)
   variable_alignment_ = b;
 
   // Ignore requests to turn on alignment variation when there is no imodel or internal nodes
-  if (not has_IModel() or A->n_sequences() != T().n_nodes())
+  if (not has_IModel() or A().n_sequences() != T().n_nodes())
     variable_alignment_ = false;
 
   // turning OFF alignment variation
   if (not variable_alignment()) 
   {
-    subA = new subA_index_leaf(A->length()+1, T().n_branches()*2);
+    subA = new subA_index_leaf(A().length()+1, T().n_branches()*2);
 
     // We just changed the subA index type
     LC.invalidate_all();
 
-    if (A->n_sequences() == T().n_nodes())
-      if (not check_leaf_characters_minimally_connected(*A,T()))
+    if (A().n_sequences() == T().n_nodes())
+      if (not check_leaf_characters_minimally_connected(A(),T()))
 	throw myexception()<<"Failing to turn off alignment variability: non-default internal node states";
   }
   // turning ON alignment variation
   else 
   {
     if (use_internal_index)
-      subA = new subA_index_internal(A->length()+1, T().n_branches()*2);
+      subA = new subA_index_internal(A().length()+1, T().n_branches()*2);
     else
-      subA = new subA_index_leaf(A->length()+1, T().n_branches()*2);
+      subA = new subA_index_leaf(A().length()+1, T().n_branches()*2);
 
-    assert(has_IModel() and A->n_sequences() == T().n_nodes());
-    minimally_connect_leaf_characters(*A.modify(), T());
+    assert(has_IModel() and A().n_sequences() == T().n_nodes());
+    minimally_connect_leaf_characters(*A_.modify(), T());
     note_alignment_changed();
 
     // reset the pairwise alignments.
@@ -240,7 +245,7 @@ void data_partition::variable_alignment(bool b)
     {
       int n1 = T().directed_branch(b).source();
       int n2 = T().directed_branch(b).target();
-      set_pairwise_alignment(b, A2::get_pairwise_alignment(*A,n1,n2));
+      set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2));
     }
 
     // Minimally connecting leaf characters may remove empty columns, in theory.
@@ -358,7 +363,7 @@ int data_partition::seqlength(int n) const
 {
   int l = *P->evaluate_as<Int>(sequence_length_indices[n]);
 
-  assert(l == A->seqlength(n));
+  assert(l == A().seqlength(n));
 
   return l;
 }
@@ -402,8 +407,8 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
 #ifndef NDEBUG
   if (subA->may_have_invalid_branches())
   {
-    subA->check_footprint(*A, T());
-    check_regenerate(*subA, *A, T());
+    subA->check_footprint(A(), T());
+    check_regenerate(*subA, A(), T());
   }  
 #endif
 
@@ -412,8 +417,8 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
 #ifndef NDEBUG
   if (not subA->may_have_invalid_branches())
   {
-    subA->check_footprint(*A, T());
-    check_regenerate(*subA, *A, T());
+    subA->check_footprint(A(), T());
+    check_regenerate(*subA, A(), T());
   }  
 #endif
 }
@@ -443,8 +448,8 @@ void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& 
   {
     int n1 = T().directed_branch(b).source();
     int n2 = T().directed_branch(b).target();
-    assert(get_pairwise_alignment(b,false) == A2::get_pairwise_alignment(*A,n1,n2));
-    assert(get_pairwise_alignment(B,false) == A2::get_pairwise_alignment(*A,n2,n1));
+    assert(get_pairwise_alignment(b,false) == A2::get_pairwise_alignment(A(),n1,n2));
+    assert(get_pairwise_alignment(B,false) == A2::get_pairwise_alignment(A(),n2,n1));
   }
 }
 
@@ -468,8 +473,8 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b, bool r
   {
     int n1 = T().directed_branch(b).source();
     int n2 = T().directed_branch(b).target();
-    assert(get_pairwise_alignment(b,false) == A2::get_pairwise_alignment(*A,n1,n2));
-    assert(get_pairwise_alignment(B,false) == A2::get_pairwise_alignment(*A,n2,n1));
+    assert(get_pairwise_alignment(b,false) == A2::get_pairwise_alignment(A(),n1,n2));
+    assert(get_pairwise_alignment(B,false) == A2::get_pairwise_alignment(A(),n2,n1));
   }
 #endif
 
@@ -486,7 +491,7 @@ void data_partition::recompute_pairwise_alignment(int b, bool require_match_A)
 {
   int n1 = T().directed_branch(b).source();
   int n2 = T().directed_branch(b).target();
-  set_pairwise_alignment(b, A2::get_pairwise_alignment(*A,n1,n2), require_match_A);
+  set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2), require_match_A);
 }
 
 void data_partition::invalidate_pairwise_alignment_for_branch(int b) const
@@ -592,7 +597,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
    transition_p_method_indices(T().n_branches(),-1),
    variable_alignment_( has_IModel() ),
    sequences( alignment_letters(a,T().n_leaves()) ),
-   A(a),
+   A_(a),
    LC(T(), *this),
    branch_HMM_type(T().n_branches(),0)
 {
@@ -612,7 +617,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
     {
       int n1 = T().directed_branch(b).source();
       int n2 = T().directed_branch(b).target();
-      set_pairwise_alignment(b, A2::get_pairwise_alignment(*A,n1,n2));
+      set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2));
     }
 
   // Add method indices for calculating transition matrices.
@@ -681,7 +686,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
 
     for(int n=0;n<T().n_nodes();n++)
     {
-      expression_ref L = A->seqlength(n);
+      expression_ref L = A().seqlength(n);
       if (variable_alignment())
 	L = (identifier("seqlength"),as,tree,n);
       sequence_length_indices[n] = p->add_compute_expression( L );

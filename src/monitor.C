@@ -116,7 +116,7 @@ void print_stats(std::ostream& o, const Parameters& P, bool /* print_alignment *
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
   for(int i=0;i<P.n_data_partitions();i++)
-    check_alignment(*P[i].A, P.T(), "print_stats:end");
+    check_alignment(P[i].A(), P.T(), "print_stats:end");
 #endif
 }
 

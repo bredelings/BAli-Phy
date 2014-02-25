@@ -77,7 +77,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 								  int bandwidth)
 {
   const Tree& T = P.T();
-  alignment& A = *P.A.modify();
+  alignment& A = *P.A_.modify();
 
   const Tree& T0 = P0.T();
   assert(P.variable_alignment());
@@ -253,7 +253,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   vector<pairwise_alignment_t> As;
   for(int b=0;b<2*T.n_branches();b++)
     As.push_back(P.get_pairwise_alignment(b,false));
-  *P.A.modify() = get_alignment(old, *P.sequences, construct(T, As));
+  *P.A_.modify() = get_alignment(old, *P.sequences, construct(T, As));
 
 #ifndef NDEBUG_DP
   check_alignment(A,T,"sample_tri_base:out");
@@ -392,12 +392,12 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
   // Check that our constraints are met
   for(int i=0;i<p.size();i++) {
     for(int j=0;j<p[i].n_data_partitions();j++) {
-      if (not(A_constant(*P0[j].A, *p[i][j].A, ignore1))) {
-	std::cerr<<P0[j].A<<endl;
-	std::cerr<<p[i][j].A<<endl;
-	assert(A_constant(*P0[j].A, *p[i][j].A, ignore1));
+      if (not(A_constant(P0[j].A(), p[i][j].A(), ignore1))) {
+	std::cerr<<P0[j].A()<<endl;
+	std::cerr<<p[i][j].A()<<endl;
+	assert(A_constant(P0[j].A(), p[i][j].A(), ignore1));
       }
-      assert(A_constant(*P0[j].A, *p[i][j].A, ignore2));
+      assert(A_constant(P0[j].A(), p[i][j].A(), ignore2));
     }
   }
     
@@ -543,7 +543,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
     //
     for(int i=0;i<p2.size();i++)
       for(int j=0;j<p2[i].n_data_partitions();j++)
-	p2[i][j].A = p[C1][j].A;
+	p2[i][j].A_ = p[C1][j].A_;
 
     sample_tri_multi_calculation tri2(p2, nodes, do_OS, do_OP, bandwidth);
 
@@ -578,9 +578,9 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
   for(int i=0;i<P.n_data_partitions();i++) 
   {
     s1[i].resize(P[i].alignment_constraint.size1());
-    s1[i] = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+    s1[i] = constraint_satisfied(P[i].alignment_constraint, P[i].A());
 #ifndef NDEBUG
-    check_alignment(*P[i].A, P[i].T(), "tri_sample_alignment:in");
+    check_alignment(P[i].A(), P[i].T(), "tri_sample_alignment:in");
 #endif
   }
 
@@ -605,10 +605,10 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
   for(int i=0;i<P.n_data_partitions();i++) 
   {
 #ifndef NDEBUG
-    check_alignment(*P[i].A, P[i].T(),"tri_sample_alignment:out");
+    check_alignment(P[i].A(), P[i].T(),"tri_sample_alignment:out");
 #endif
 
-    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
     report_constraints(s1[i],s2,i);
   }
 }

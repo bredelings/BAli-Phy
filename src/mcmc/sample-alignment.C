@@ -75,10 +75,10 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 {
   assert(P.variable_alignment());
 
-  dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, *P.A);
+  dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, P.A());
 
   const Tree& T = P.T();
-  alignment& A = *P.A.modify();
+  alignment& A = *P.A_.modify();
 
   alignment old = A;
 
@@ -146,12 +146,12 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   vector<pairwise_alignment_t> As;
   for(int b=0;b<2*T.n_branches();b++)
     As.push_back(P.get_pairwise_alignment(b,false));
-  *P.A.modify() = get_alignment(old, *P.sequences, construct(T, As));
+  *P.A_.modify() = get_alignment(old, *P.sequences, construct(T, As));
 
 #ifndef NDEBUG_DP
-  assert(valid(*P.A));
+  assert(valid(P.A()));
 
-  vector<int> path_new = get_path(*P.A, node1, node2);
+  vector<int> path_new = get_path(P.A(), node1, node2);
   path.push_back(3);
   assert(path_new == path);
 #endif
@@ -170,9 +170,9 @@ void sample_alignment(Parameters& P,int b)
   for(int i=0;i<P.n_data_partitions();i++) 
   {
     s1[i].resize(P[i].alignment_constraint.size1());
-    s1[i] = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+    s1[i] = constraint_satisfied(P[i].alignment_constraint, P[i].A());
 #ifndef NDEBUG
-    check_alignment(*P[i].A, P[i].T(), "tri_sample_alignment:in");
+    check_alignment(P[i].A(), P[i].T(), "tri_sample_alignment:in");
 #endif
   }
 
@@ -191,7 +191,7 @@ void sample_alignment(Parameters& P,int b)
 	Matrices[i].push_back(sample_alignment_base(p[i][j], b));
 	// If Pr_sum_all_paths() == 0, then the alignment for this partition will be unchanged.
 #ifndef NDEBUG
-	check_subA(*P0[j].subA, *P0[j].A, *p[i][j].subA, *p[i][j].A, p[0].T());
+	check_subA(*P0[j].subA, P0[j].A(), *p[i][j].subA, p[i][j].A(), p[0].T());
 	p[i][j].likelihood();  // check the likelihood calculation
 #endif
       }
@@ -221,7 +221,7 @@ void sample_alignment(Parameters& P,int b)
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment())
       {
-	paths[i].push_back( get_path(*p[i][j].A, node1, node2) );
+	paths[i].push_back( get_path(p[i][j].A(), node1, node2) );
     
 	OS[i].push_back( other_subst(p[i][j],nodes) );
 	OP[i].push_back( other_prior(p[i][j],nodes) );
@@ -291,10 +291,10 @@ void sample_alignment(Parameters& P,int b)
   for(int i=0;i<P.n_data_partitions();i++) 
   {
 #ifndef NDEBUG
-    check_alignment(*P[i].A, P[i].T(),"tri_sample_alignment:out");
+    check_alignment(P[i].A(), P[i].T(),"tri_sample_alignment:out");
 #endif
 
-    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
     report_constraints(s1[i],s2,i);
   }
 }

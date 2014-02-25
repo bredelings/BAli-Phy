@@ -89,8 +89,8 @@ namespace A5 {
     if (P.variable_alignment())
     {
       // get lengths of two internal nodes
-      int length1 = P.A->seqlength(nodes[4]);
-      int length2 = P.A->seqlength(nodes[5]);
+      int length1 = P.A().seqlength(nodes[4]);
+      int length2 = P.A().seqlength(nodes[5]);
       
       return pow( P.sequence_length_pr(length1) * P.sequence_length_pr(length2), 2);
     }

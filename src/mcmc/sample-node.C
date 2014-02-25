@@ -60,7 +60,7 @@ shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<i
 
   assert(P.variable_alignment());
 
-  alignment old = *P.A;
+  alignment old = P.A();
 
   //  std::cerr<<"old = "<<old<<endl;
 
@@ -141,9 +141,9 @@ shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<i
   vector<pairwise_alignment_t> As;
   for(int b=0;b<2*T.n_branches();b++)
     As.push_back(P.get_pairwise_alignment(b,false));
-  *P.A.modify() = get_alignment(old, *P.sequences, construct(T, As));
+  *P.A_.modify() = get_alignment(old, *P.sequences, construct(T, As));
 
-  assert(valid(*P.A));
+  assert(valid(P.A()));
 
   return Matrices;
 }
@@ -250,10 +250,10 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   // Check that our constraints are met
   for(int i=0;i<p.size();i++) 
     for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (not A_constant(*P0[j].A, *p[i][j].A, ignore)) {
-	std::cerr<<*P0[j].A<<endl;
-	std::cerr<<*p[i][j].A<<endl;
-	assert(A_constant(*P0[j].A, *p[i][j].A, ignore));
+      if (not A_constant(P0[j].A(), p[i][j].A(), ignore)) {
+	std::cerr<<P0[j].A()<<endl;
+	std::cerr<<p[i][j].A()<<endl;
+	assert(A_constant(P0[j].A(), p[i][j].A(), ignore));
       }
 
   // Add another entry for the incoming configuration
