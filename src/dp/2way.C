@@ -327,10 +327,75 @@ vector<int> graph_alignment::sort()
   return order;
 }
 
+struct Construct
+{
+  int c=0;
+  const vector<pairwise_alignment_t>& A;
+  const Tree& T;
+  vector<int> pos;
+  vector<int> L;
+  vector<vector<const_branchview>> children;
+  matrix<int> M;
+  int write_insertions(int b0);
+  void write_match(int b0);
+  Construct(const vector<pairwise_alignment_t>& a, const Tree& t)
+    :A(a),
+     T(t),
+     pos(2*T.n_branches(),1),
+     L(T.n_nodes(),0),
+     children(2*T.n_branches())
+  { 
+    using namespace A2;
+
+    // 1. Record child branches for each branch
+    vector<const_branchview> branches = branches_from_node(T, 0);
+
+    for(int b=0;b<2*T.n_branches();b++)
+      append(T.directed_branch(b).branches_after(),children[b]);
+
+    // 2. Compute total number of alignment columns
+    int b0 = branches[0];
+    int node0 = T.directed_branch(b0).source();
+    int AL = A[b0].length1();
+    for(const auto& b: branches)
+      AL += A[b].count(states::G1);
+
+    // 3. Initialize index matrix with all -1
+    M.resize(AL, T.n_nodes(), -1);
+
+    // Iterate through columns of A[b0]
+    while (true)
+    {
+      // Emit insertions that come before the current column, and the current state
+      int S = write_insertions(b0);
+      
+      // Read the child until it reads from the parent -- that is, finds a non-insert state
+      write_match(b0);
+      
+      if (S == states::E) break;
+      
+      // If this state emits a character at node0, then write it out in column c
+      assert(S == states::M or S == states::G2);
+      M(c, node0) = L[node0]++;
+      c++;
+    }
+    assert(c == AL);
+
+#ifndef NDEBUG
+    // 5. Check that the resulting matrix yields the correct pairwise alignments
+    for(int b=0;b<2*T.n_branches();b++)
+    {
+      pairwise_alignment_t a = A2::get_pairwise_alignment(M, T.directed_branch(b).source(), T.directed_branch(b).target());
+      assert(A[b] == a);
+    }
+#endif
+  }
+};
+    
+    
+
 // Read a state and optionally pass it down to our children.
-void write_match(int b0, int& c, vector<int>& pos, vector<int>& L,
-		 const vector<pairwise_alignment_t>& A, 
-		 vector<vector<const_branchview>>& children, matrix<int>& M, const Tree& T)
+void Construct::write_match(int b0)
 {
   using namespace A2;
 
@@ -345,7 +410,7 @@ void write_match(int b0, int& c, vector<int>& pos, vector<int>& L,
   if (S == states::M or S == states::E)
   {
     for(const auto& b: children[b0])
-      write_match(b, c, pos, L, A, children, M, T);
+      write_match(b);
   }
 
   // If we read a match, write a character, and make our children read something
@@ -355,9 +420,7 @@ void write_match(int b0, int& c, vector<int>& pos, vector<int>& L,
 
 // Write out the columns of this pairwise alignment until the first in-tick (M, I, or E)
 // But first write out the columns of all insertions in children that occur before this column.
-int write_insertions(int b0, int& c, vector<int>& pos, vector<int>& L,
-		      const vector<pairwise_alignment_t>& A, 
-		      vector<vector<const_branchview>>& children, matrix<int>& M, const Tree& T)
+int Construct::write_insertions(int b0)
 {
   using namespace A2;
 
@@ -370,13 +433,13 @@ int write_insertions(int b0, int& c, vector<int>& pos, vector<int>& L,
 
     // Add child insertions that come before this column
     for(const auto& b: children[b0])
-      write_insertions(b, c, pos, L, A, children, M, T);
+      write_insertions(b);
 
     if (S != states::G1) return S;
 
     // Emit the current column
     for(const auto& b: children[b0])
-      write_match(b, c, pos, L, A, children, M, T);
+      write_match(b);
     M(c, node0) = L[node0]++;
     c++;
     pos[b0]++;
@@ -387,56 +450,9 @@ matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& A)
 {
   using namespace A2;
 
-  // 1. Record child branches for each branch
-  vector<const_branchview> branches = branches_from_node(T, 0);
+  Construct C(A,T);
 
-  vector<vector<const_branchview>> children(2*T.n_branches());
-  for(int b=0;b<2*T.n_branches();b++)
-    append(T.directed_branch(b).branches_after(),children[b]);
-
-  // 2. Compute total number of alignment columns
-  int b0 = branches[0];
-  int node0 = T.directed_branch(b0).source();
-  int AL = A[b0].length1();
-  for(const auto& b: branches)
-    AL += A[b].count(states::G1);
-
-  // 3. Initialize index matrix with all -1
-  matrix<int> M(AL, T.n_nodes(), -1);
-
-  // 4. Walk through each column in pairwise alignment A[b0]
-  vector<int> pos(2*branches.size(),1);   // Skip the start state
-  vector<int> L(T.n_nodes(), 0);
-
-  // Iterate through columns of A[b0]
-  int c = 0;
-  while (true)
-  {
-    // Emit insertions that come before the current column, and the current state
-    int S = write_insertions(b0, c, pos, L, A, children, M, T);
-
-    // Read the child until it reads from the parent -- that is, finds a non-insert state
-    write_match(b0, c, pos, L, A, children, M, T);
-
-    if (S == states::E) break;
-
-    // If this state emits a character at node0, then write it out in column c
-    assert(S == states::M or S == states::G2);
-    M(c, node0) = L[node0]++;
-    c++;
-  }
-  assert(c == AL);
-
-#ifndef NDEBUG
-  // 5. Check that the resulting matrix yields the correct pairwise alignments
-  for(int b=0;b<2*T.n_branches();b++)
-  {
-    pairwise_alignment_t a = A2::get_pairwise_alignment(M, T.directed_branch(b).source(), T.directed_branch(b).target());
-    assert(A[b] == a);
-  }
-#endif
-
-  return M;
+  return C.M;
 }
 
 alignment get_alignment(const alignment& A1, const vector< vector<int>>& sequences, const matrix<int>& M)
