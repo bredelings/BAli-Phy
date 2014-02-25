@@ -227,7 +227,7 @@ expression_ref coerce_to_EM(const module_loader& L,
 
   expression_ref S = get_smodel_(L,smodel, a, frequencies);
 
-  if (S and dynamic_pointer_cast<const SymmetricMatrixObject>(result(S,L,vector<string>{"SModel","Distributions","Range"})))
+  if (S and dynamic_pointer_cast<const MatrixObject>(result(S,L,vector<string>{"SModel","Distributions","Range"})))
     return S;
 
   throw myexception()<<": '"<<smodel<<"' is not an exchange model.";
@@ -527,7 +527,7 @@ expression_ref coerce_to_RA(const module_loader& L,
     if (is_exactly(result, "SModel.ReversibleFrequency"))
       throw myexception()<<"Cannot construct CTMC model from frequency model alone!";
 
-    if (boost::dynamic_pointer_cast<const SymmetricMatrixObject>(result))
+    if (boost::dynamic_pointer_cast<const MatrixObject>(result))
     {
       // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
       expression_ref r = model_expression({identifier("plus_f_model"),*a});

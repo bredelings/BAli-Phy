@@ -1,3 +1,4 @@
+#define DEBUG_RATE_MATRIX
 #include "computation/computation.H"
 #include "math/exponential.H"
 #include "sequence/alphabet.H"
@@ -8,6 +9,9 @@ using std::vector;
 using std::istringstream;
 using std::istream;
 using std::valarray;
+
+using std::cerr;
+using std::endl;
 
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
@@ -23,8 +27,8 @@ extern "C" closure builtin_function_lExp(OperationArgs& Args)
 
 extern "C" closure builtin_function_reversible_rate_matrix(OperationArgs& Args)
 {
-  object_ptr<const SymmetricMatrixObject> S_ = Args.evaluate_as<SymmetricMatrixObject>(0);
-  const SymmetricMatrix& S = *S_;
+  object_ptr<const MatrixObject> S_ = Args.evaluate_as<MatrixObject>(0);
+  const Matrix& S = *S_;
 
   object_ptr<const MatrixObject> R_ = Args.evaluate_as<MatrixObject>(1);
   const Matrix& R = *R_;
@@ -33,9 +37,8 @@ extern "C" closure builtin_function_reversible_rate_matrix(OperationArgs& Args)
   assert(S.size1() == R.size1());
   assert(S.size1() == R.size2());
 
-  object_ptr<MatrixObject> Q_(new MatrixObject);
+  object_ptr<MatrixObject> Q_(new MatrixObject(N,N));
   Matrix& Q = *Q_;
-  Q.resize(N,N);
 
   for(int i=0;i<N;i++) {
     double sum=0;
@@ -70,8 +73,6 @@ extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
   assert(Q.size2() == Q.size1());
 
 #ifdef DEBUG_RATE_MATRIX
-  cerr<<"scale = "<<rate()<<endl;
-
   assert(std::abs(sum(pi)-1.0) < 1.0e-6);
   for(int i=0;i<n;i++) {
     double sum = 0;
@@ -90,10 +91,10 @@ extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
   }
 
   //--------------- Calculate eigensystem -----------------//
-  ublas::symmetric_matrix<double> S(n,n);
+  Matrix S(n,n);
   for(int i=0;i<n;i++)
     for(int j=0;j<=i;j++) {
-      S(i,j) = Q(i,j) * sqrt_pi[i] * inverse_sqrt_pi[j];
+      S(j,i) = S(i,j) = Q(i,j) * sqrt_pi[i] * inverse_sqrt_pi[j];
 
 #ifdef DEBUG_RATE_MATRIX
       // check reversibility of rate matrix
@@ -102,6 +103,8 @@ extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
 	double p12 = Q(i,j)*pi[i];
 	double p21 = Q(j,i)*pi[j];
 	assert (abs(p12-p21) < 1.0e-12*(1.0+abs(p12)));
+	if (i > j)
+	  assert( abs(S(i,j) - S(j,i)) < 1.0e-13 );
       }
       else
 	assert (Q(i,j) <= 0);
@@ -159,14 +162,14 @@ extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& A
   object_ptr<const Triplets> T_ = Args.evaluate_as<Triplets>(0);
   const Triplets& T = *T_;
 
-  object_ptr<const SymmetricMatrixObject> S_ = Args.evaluate_as<SymmetricMatrixObject>(1);
-  const SymmetricMatrix& S2 = *S_;
+  object_ptr<const MatrixObject> S_ = Args.evaluate_as<MatrixObject>(1);
+  const Matrix& S2 = *S_;
 
   int N = T.size();
 
-  object_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject(N) );
+  object_ptr<MatrixObject> R ( new MatrixObject(N,N) );
 
-  SymmetricMatrix& S = *R;
+  Matrix& S = *R;
 
   for(int i=0;i<T.size();i++)
     for(int j=0;j<i;j++) 
@@ -181,7 +184,7 @@ extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& A
       assert(nmuts>0);
       assert(pos >= 0 and pos < 3);
 	
-      S(i,j) = 0;
+      S(j,i) = S(i,j) = 0;
 
       if (nmuts == 1) {
 
@@ -189,7 +192,7 @@ extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& A
 	int l2 = T.sub_nuc(j,pos);
 	assert(l1 != l2);
 
-	S(i,j) = S2(l1,l2);
+	S(j,i) = S(i,j) = S2(l1,l2);
       }
     }
 
@@ -217,11 +220,10 @@ extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
   assert(R3.size1() == 4);
   assert(R3.size2() == 4);
 
-  object_ptr<MatrixObject> R( new MatrixObject );
-
   const int n = T->size();
 
-  R->resize(n, n);
+  object_ptr<MatrixObject> R( new MatrixObject(n,n) );
+
   for(int i=0;i<n;i++)
     for(int j=0;j<n;j++)
     {
@@ -258,9 +260,7 @@ extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
 
 object_ptr<Object> SimpleExchangeFunction(double rho, int n)
 {
-  object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
-
-  R->resize(n);
+  object_ptr<MatrixObject> R(new MatrixObject(n,n));
 
   for(int i=0;i<n;i++) {
     for(int j=0;j<n;j++)
@@ -274,9 +274,7 @@ object_ptr<Object> SimpleExchangeFunction(double rho, int n)
 
 object_ptr<const Object> EQU_Exchange_Function(int n)
 {
-  object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
-
-  R->resize(n);
+  object_ptr<MatrixObject> R(new MatrixObject(n,n));
 
   // Calculate S matrix
   for(int i=0;i<n;i++)
@@ -432,11 +430,9 @@ extern "C" closure builtin_function_equ(OperationArgs& Args)
 
 object_ref Empirical_Exchange_Function(const alphabet& a, istream& ifile)
 {
-  object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
-
   int n = a.size();
 
-  R->resize(n);
+  object_ptr<MatrixObject> R(new MatrixObject(n,n));
   
   for(int i=0;i<n;i++)
     for(int j=0;j<i;j++) {
@@ -627,20 +623,18 @@ extern "C" closure builtin_function_gtr(OperationArgs& Args)
 
   assert(N->size()==4);
 
-  object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
-
-  (*R).resize(N->size());
+  object_ptr<MatrixObject> R(new MatrixObject(N->size(),N->size()));
 
   double total = AG + AT + AC + GT + GC + TC;
 
-  (*R)(0,1) = AG/total;
-  (*R)(0,2) = AT/total;
-  (*R)(0,3) = AC/total;
+  (*R)(1,0) = (*R)(0,1) = AG/total;
+  (*R)(2,0) = (*R)(0,2) = AT/total;
+  (*R)(3,0) = (*R)(0,3) = AC/total;
 
-  (*R)(1,2) = GT/total;
-  (*R)(1,3) = GC/total;
+  (*R)(2,1) = (*R)(1,2) = GT/total;
+  (*R)(3,1) = (*R)(1,3) = GC/total;
 
-  (*R)(2,3) = TC/total;
+  (*R)(3,2) = (*R)(2,3) = TC/total;
 
   return R;
 }
@@ -648,14 +642,14 @@ extern "C" closure builtin_function_gtr(OperationArgs& Args)
 extern "C" closure builtin_function_m0(OperationArgs& Args)
 {
   object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
-  object_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(1);
+  object_ptr<const MatrixObject> S = Args.evaluate_as<MatrixObject>(1);
   double omega = *Args.evaluate_as<Double>(2);
 
-  object_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject );
+  int n = C->size();
 
-  (*R).resize(C->size());
+  object_ptr<MatrixObject> R ( new MatrixObject(n,n) );
 
-  for(int i=0;i<C->size();i++) 
+  for(int i=0;i<n;i++) 
   {
     for(int j=0;j<i;j++) {
       int nmuts=0;
@@ -697,11 +691,9 @@ extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
 
   object_ptr< const Vector<double> > pi_ = Args.evaluate_as< Vector<double> >(2);
 
-  object_ptr<MatrixObject> R( new MatrixObject );
-
   const int n = a.size();
 
-  R->resize(n, n);
+  object_ptr<MatrixObject> R( new MatrixObject(n,n) );
 
   // compute frequencies
   vector<double> pi = *pi_;
