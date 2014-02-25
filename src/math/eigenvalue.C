@@ -18,55 +18,33 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "math/eigenvalue.H"
-
-using namespace ublas;
-using namespace TNT;
-using namespace JAMA;
-
-void EigenValues::get_diagonal(JAMA::Eigenvalue<double>& E) {
-
-  Array1D<double> D2;
-  E.getRealEigenvalues(D2);
-
-  for(int i=0;i<D.size();i++)
-    D[i] = D2[i];
-}
-
-void EigenValues::get_rotation(JAMA::Eigenvalue<double>& E) {
-  Array2D<double> O2;
-  E.getV(O2);
-
-  for(int i=0;i<O.size1();i++)
-    for(int j=0;j<O.size2();j++)
-      O(i,j) = O2[i][j];
-}
-
-EigenValues::EigenValues(int n)
-  :O(n,n),D(n)
-{ }
+#include <eigen3/Eigen/Eigenvalues>
+#include <eigen3/Eigen/Dense>
 
 EigenValues::EigenValues(const Matrix& M)
   :O(M.size1(),M.size2()),D(M.size1())
 {
+  int n = M.size1();
   assert(M.size1() == M.size2());
 
-  // Make a TNT array from M
-  Array2D<double> A(M.size1(),M.size2());
-  for(int i=0;i<M.size1();i++)
-    for(int j=0;j<M.size2();j++)
-      A[i][j] = M(i,j);
+  // 1. Make an eigen array from M
+  Eigen::MatrixXd M2(n,n);
+  for(int i=0;i<n;i++)
+    for(int j=0;j<n;j++)
+      M2(i,j) = M(i,j);
 
-  // solve the eigenvalue problem
-  JAMA::Eigenvalue<double> solution(A);
+  // 2. Solve the eigenvalue problem
+  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solution(M2,Eigen::ComputeEigenvectors);
 
-#ifndef NDEBUG        //Make sure no imag eigenvalues
-  Array1D<double> D4;
-  solution.getImagEigenvalues(D4);
-  for(int i=0;i<size();i++)
-    assert(D4[i] == 0);
-#endif
+  // 3. Copy values back into current data structures
+  auto d = solution.eigenvalues();
+  for(int i=0;i<n;i++)
+    D[i] = d[i];
 
-  get_diagonal(solution);
-  get_rotation(solution);
+  auto o = solution.eigenvectors();
+
+  for(int i=0;i<n;i++)
+    for(int j=0;j<n;j++)
+      O(i,j) = o(i,j);
 }
 

@@ -21,17 +21,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define EIGENVALUE_H
 
 #include "mytypes.H"
-#include "tnt/tnt_array2d.h"
-#include "tnt/jama_eig.h"
-#include <boost/numeric/ublas/banded.hpp>
 #include "object.H"
 
-class EigenValues: public Object {
+class EigenValues: public Object 
+{
   Matrix O;
   std::vector<double> D;
 
-  void get_diagonal(JAMA::Eigenvalue<double>& E);
-  void get_rotation(JAMA::Eigenvalue<double>& E);
 public:
   EigenValues* clone() const {return new EigenValues(*this);}
 
@@ -43,7 +39,6 @@ public:
   const Matrix& Rotation() const {return O;}
 
   EigenValues(const Matrix& M);
-  EigenValues(int n);
 };
 
 #endif
