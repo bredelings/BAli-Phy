@@ -94,11 +94,16 @@ public:
 
   data_partition* clone() const {return new data_partition(*this);}
 
+  /// The names and comments for the sequences
+  cow_ptr< std::vector< sequence > > seqs;
+
   /// The leaf sequence data of this partition
   cow_ptr< std::vector< std::vector<int> > > sequences;
 
+  boost::shared_ptr<alphabet> a;
+
   /// The alignment data of this partition
-  cow_ptr<alignment> A_;
+  mutable cow_ptr<alignment> A_;
 
   const alignment& A() const;
 
@@ -141,7 +146,7 @@ public:
   double get_beta() const;
 
   // get the alphabet for partition i
-  const alphabet& get_alphabet() const {return A().get_alphabet();}
+  const alphabet& get_alphabet() const {return *a;}
 
   /// Recalculate all the cached transition matrices
   void recalc_smodel();

@@ -194,6 +194,16 @@ bool use_internal_index = true;
 
 const alignment& data_partition::A() const
 {
+  if (not A_)
+  {
+    assert( variable_alignment_ );
+
+    vector<pairwise_alignment_t> As;
+    for(int b=0;b<2*T().n_branches();b++)
+      As.push_back(get_pairwise_alignment(b,false));
+    
+    A_ = cow_ptr<alignment>( get_alignment(get_alphabet(), *seqs, *sequences, construct(T(), As)) );
+  }
   return *A_;
 }
 
@@ -510,10 +520,6 @@ void data_partition::note_alignment_changed_on_branch(int b)
   invalidate_pairwise_alignment_for_branch(b);
   invalidate_pairwise_alignment_for_branch(B);
 
-  const Tree& TT = T();
-  int target = TT.branch(b).target();
-  int source = TT.branch(b).source();
-
   // If the alignment changes AT ALL, then the mapping from subA columns to alignment columns is broken.
   // Therefore we always mark it as out-of-date and needing to be recomputed.
   invalidate_subA_index_all();
@@ -588,25 +594,26 @@ log_double_t data_partition::heated_likelihood() const
     return pow(likelihood(),get_beta());
 }
 
-data_partition::data_partition(Parameters* p, int i, const alignment& a)
+data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   :P(p),
    partition_index(i),
    pairwise_alignment_for_branch(2*T().n_branches()),
    alignment_prior_for_branch(T().n_branches()),
-   sequence_length_indices(a.n_sequences(),-1),
+   sequence_length_indices(AA.n_sequences(),-1),
    transition_p_method_indices(T().n_branches(),-1),
    variable_alignment_( has_IModel() ),
-   sequences( alignment_letters(a,T().n_leaves()) ),
-   A_(a),
+   sequences( alignment_letters(AA, T().n_leaves()) ),
+   a(AA.get_alphabet().clone()),
+   A_(AA),
    LC(T(), *this),
    branch_HMM_type(T().n_branches(),0)
 {
   int B = T().n_branches();
 
   if (variable_alignment() and use_internal_index)
-    subA = new subA_index_internal(a.length()+1, B*2);
+    subA = new subA_index_internal(AA.length()+1, B*2);
   else
-    subA = new subA_index_leaf(a.length()+1, B*2);
+    subA = new subA_index_leaf(AA.length()+1, B*2);
 
   string prefix = "P"+convertToString(i+1)+".";
   for(int b=0;b<pairwise_alignment_for_branch.size();b++)
@@ -1323,7 +1330,7 @@ Parameters::Parameters(const module_loader& L,
   evaluate_expression( (identifier("edgesOutOfNode"), my_tree(), 0));
   evaluate_expression( (identifier("neighbors"), my_tree(), 0));
   evaluate_expression( (identifier("nodesForEdge"),my_tree(), 0));
-  int nn = *convert<const Int>(evaluate_expression( (identifier("edgeForNodes"), my_tree(), (identifier("nodesForEdge"),my_tree(), 0))));
+  *convert<const Int>(evaluate_expression( (identifier("edgeForNodes"), my_tree(), (identifier("nodesForEdge"),my_tree(), 0))));
   for(int b=0; b < 2*T().n_branches(); b++)
   {
     vector<const_branchview> branch_list;
