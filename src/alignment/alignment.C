@@ -350,17 +350,17 @@ alignment::alignment(const alphabet& a1)
 {}
 
 alignment::alignment(const alphabet& a1,int n,int L)
-  :sequences(vector<sequence>(n)),array(L,n),a(a1.clone())
+  :array(L,n),sequences(vector<sequence>(n)),a(a1.clone())
 {
 }
 
 alignment::alignment(const alphabet& a1,int n)
-  :sequences(vector<sequence>(n)),array(0,n),a(a1.clone())
+  :array(0,n),sequences(vector<sequence>(n)),a(a1.clone())
 {
 }
 
 alignment::alignment(const alphabet& a1, const vector<sequence>& S) 
-  :sequences(S),array(0,S.size()),a(a1.clone())
+  :array(0,S.size()),sequences(S),a(a1.clone())
 {}
 
 alignment::alignment(const alphabet& a1,const string& filename) 

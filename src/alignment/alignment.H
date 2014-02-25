@@ -73,6 +73,8 @@ public:
   /// The i-th sequence
   sequence& seq(int i) { return sequences[i];}
 
+  std::vector<sequence> seqs() const {return sequences;}
+
   /// Remove sequence 'i' from the alignment
   void del_sequence(int);
   /// Remove a bunch of sequences' from the alignment
