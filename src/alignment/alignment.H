@@ -42,12 +42,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// A multiple sequence alignment
 class alignment 
 {
-  /// The unaligned sequences on which the alignment is based.
-  std::vector<sequence> sequences;
-
   /// The homology array - accessed through operator()
   matrix<int> array;
   
+  /// The unaligned sequences on which the alignment is based.
+  std::vector<sequence> sequences;
+
   /// Reset the alignment: no sequences, an empty array.
   void clear();
 
@@ -126,9 +126,6 @@ public:
   bool unknown(int i,int j) const {return array(i,j)==alphabet::unknown;}
   /// Does sequence i have an character at position j ?
   bool character(int i,int j) const {return not gap(i,j) and not unknown(i,j);}
-
-  /// The assignment operator
-  alignment& operator=(const alignment&);
 
   /// Number of columns
   int length() const {return array.size1();}

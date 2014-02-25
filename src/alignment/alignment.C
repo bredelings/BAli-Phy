@@ -130,17 +130,6 @@ int alignment::seqlength(int i) const {
   return count;
 }
 
-alignment& alignment::operator=(const alignment& A) {
-  a = A.a;
-
-  sequences = A.sequences;
-
-  array.resize(A.array.size1(),A.array.size2());
-  array = A.array;
-
-  return *this;
-}
-
 void alignment::add_row(const vector<int>& v) 
 {
   int new_length = std::max(length(),(int)v.size());
