@@ -19,7 +19,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "substitution.H"
 #include "substitution-index.H"
-#include "smodel/objects.H"
 #include "matcache.H"
 #include "rng.H"
 #include <cmath>
@@ -61,6 +60,10 @@ using std::pair;
 //
 // * 
 
+struct F81_Object: public Object
+{
+  double alpha_;
+};
 
 inline void element_assign(Matrix& M1,double d)
 {
@@ -557,6 +560,7 @@ namespace substitution {
 
     cache[b0].other_subst = 1;
   }
+
 
   void peel_leaf_branch_F81(int b0, subA_index_t& I, Likelihood_Cache& cache,
 			    const vector<int>& sequence, const alignment& A, const Tree& T, 

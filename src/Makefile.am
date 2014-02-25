@@ -44,7 +44,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            version.H cow-ptr.H tools/index-matrix.H cached_value.H \
 	   tools/consensus-tree.H tools/partition.H mcmc/slice-sampling.H \
 	   timer_stack.H mcmc/setup.H models/probability-model.H owned-ptr.H \
-	   bounds.H io.H smodel/objects.H parser/parse.H \
+	   bounds.H io.H parser/parse.H \
            parser/AST.H computation/computation.H computation/closure.H \
            computation/context.H computation/expression.H computation/formula_expression.H \
 	   computation/bithash.H computation/graph_register.H computation/let-float.H \
@@ -111,7 +111,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  tools/partition.C mcmc/proposals.C n_indels.C \
 	  tools/parsimony.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
-	  imodel/setup.C smodel/objects.C computation/computation.C \
+	  imodel/setup.C computation/computation.C \
 	  computation/graph_register.C computation/module.C \
 	  computation/formula_expression.C \
 	  computation/operations.C computation/loader.C computation/context.C \
