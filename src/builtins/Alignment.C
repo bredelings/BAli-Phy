@@ -48,9 +48,7 @@ extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
 {
   const pairwise_alignment_t& A = *Args.evaluate_as<pairwise_alignment_t>(0);
 
-  Box<matrix<int>> counts;
-  counts.resize(5,5);
-  counts.clear();
+  Box<matrix<int>> counts(5,5,0);
 
   using namespace A2;
 

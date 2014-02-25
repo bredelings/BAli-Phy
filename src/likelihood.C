@@ -134,8 +134,7 @@ matrix<int> get_path_counts(const alignment& A,int node1, int node2)
 
   int state1 = states::S;
 
-  matrix<int> counts(5,5);
-  counts.clear();
+  matrix<int> counts(5,5,0);
 
   for(int column=0;column<A.length();column++) 
   {

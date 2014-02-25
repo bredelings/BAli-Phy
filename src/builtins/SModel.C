@@ -20,25 +20,24 @@ extern "C" closure builtin_function_lExp(OperationArgs& Args)
   auto pi = Args.evaluate_as< Vector<double> >(1);
   double t = *Args.evaluate_as<Double>(2);
 
-  Matrix E = exp(*L, *pi, t);
-  MatrixObject* M = new MatrixObject;
-  M->assign_temporary(E);
+  Box<Matrix>* M = new Box<Matrix>;
+  *M = exp(*L, *pi, t);
   return M;
 }
 
 extern "C" closure builtin_function_reversible_rate_matrix(OperationArgs& Args)
 {
-  object_ptr<const MatrixObject> S_ = Args.evaluate_as<MatrixObject>(0);
+  object_ptr<const Box<Matrix>> S_ = Args.evaluate_as<Box<Matrix>>(0);
   const Matrix& S = *S_;
 
-  object_ptr<const MatrixObject> R_ = Args.evaluate_as<MatrixObject>(1);
+  object_ptr<const Box<Matrix>> R_ = Args.evaluate_as<Box<Matrix>>(1);
   const Matrix& R = *R_;
     
   const unsigned N = S.size1();
   assert(S.size1() == R.size1());
   assert(S.size1() == R.size2());
 
-  object_ptr<MatrixObject> Q_(new MatrixObject(N,N));
+  object_ptr<Box<Matrix>> Q_(new Box<Matrix>(N,N));
   Matrix& Q = *Q_;
 
   for(int i=0;i<N;i++) {
@@ -64,7 +63,7 @@ extern "C" closure builtin_function_reversible_rate_matrix(OperationArgs& Args)
 
 extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
 {
-  object_ptr<const MatrixObject> Q_ = Args.evaluate_as<MatrixObject>(0);
+  object_ptr<const Box<Matrix>> Q_ = Args.evaluate_as<Box<Matrix>>(0);
   const Matrix& Q = *Q_;
 
   object_ptr<const Vector<double>> pi_ = Args.evaluate_as< Vector<double> >(1);
@@ -125,7 +124,7 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
   object_ptr<const Vector<unsigned> > smap_ = Args.evaluate_as< Vector<unsigned> >(1);
   const vector<unsigned>& smap = *smap_;
 
-  object_ptr<const MatrixObject > Q_ = Args.evaluate_as< MatrixObject >(2);
+  object_ptr<const Box<Matrix> > Q_ = Args.evaluate_as< Box<Matrix> >(2);
   const Matrix& Q = *Q_;
 
   object_ptr<const Vector<double> > pi_ = Args.evaluate_as< Vector<double> >(3);
@@ -163,12 +162,12 @@ extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& A
   object_ptr<const Triplets> T_ = Args.evaluate_as<Triplets>(0);
   const Triplets& T = *T_;
 
-  object_ptr<const MatrixObject> S_ = Args.evaluate_as<MatrixObject>(1);
+  object_ptr<const Box<Matrix>> S_ = Args.evaluate_as<Box<Matrix>>(1);
   const Matrix& S2 = *S_;
 
   int N = T.size();
 
-  object_ptr<MatrixObject> R ( new MatrixObject(N,N) );
+  object_ptr<Box<Matrix>> R ( new Box<Matrix>(N,N) );
 
   Matrix& S = *R;
 
@@ -204,13 +203,13 @@ extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
 {
   auto T = Args.evaluate_as<Triplets>(0);
   
-  auto R1_ = Args.evaluate_as<MatrixObject>(1);
+  auto R1_ = Args.evaluate_as<Box<Matrix>>(1);
   const Matrix& R1 = *R1_;
 
-  auto R2_ = Args.evaluate_as<MatrixObject>(2);
+  auto R2_ = Args.evaluate_as<Box<Matrix>>(2);
   const Matrix& R2 = *R2_;
 
-  auto R3_ = Args.evaluate_as<MatrixObject>(3);
+  auto R3_ = Args.evaluate_as<Box<Matrix>>(3);
   const Matrix& R3 = *R3_;
 
   // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
@@ -223,7 +222,7 @@ extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
 
   const int n = T->size();
 
-  object_ptr<MatrixObject> R( new MatrixObject(n,n) );
+  object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
 
   for(int i=0;i<n;i++)
     for(int j=0;j<n;j++)
@@ -261,7 +260,7 @@ extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
 
 object_ptr<Object> SimpleExchangeFunction(double rho, int n)
 {
-  object_ptr<MatrixObject> R(new MatrixObject(n,n));
+  object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
 
   for(int i=0;i<n;i++) {
     for(int j=0;j<n;j++)
@@ -275,7 +274,7 @@ object_ptr<Object> SimpleExchangeFunction(double rho, int n)
 
 object_ptr<const Object> EQU_Exchange_Function(int n)
 {
-  object_ptr<MatrixObject> R(new MatrixObject(n,n));
+  object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
 
   // Calculate S matrix
   for(int i=0;i<n;i++)
@@ -433,7 +432,7 @@ object_ref Empirical_Exchange_Function(const alphabet& a, istream& ifile)
 {
   int n = a.size();
 
-  object_ptr<MatrixObject> R(new MatrixObject(n,n));
+  object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
   
   for(int i=0;i<n;i++)
     for(int j=0;j<i;j++) {
@@ -624,7 +623,7 @@ extern "C" closure builtin_function_gtr(OperationArgs& Args)
 
   assert(N->size()==4);
 
-  object_ptr<MatrixObject> R(new MatrixObject(N->size(),N->size()));
+  object_ptr<Box<Matrix>> R(new Box<Matrix>(N->size(),N->size()));
 
   double total = AG + AT + AC + GT + GC + TC;
 
@@ -643,12 +642,12 @@ extern "C" closure builtin_function_gtr(OperationArgs& Args)
 extern "C" closure builtin_function_m0(OperationArgs& Args)
 {
   object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
-  object_ptr<const MatrixObject> S = Args.evaluate_as<MatrixObject>(1);
+  object_ptr<const Box<Matrix>> S = Args.evaluate_as<Box<Matrix>>(1);
   double omega = *Args.evaluate_as<Double>(2);
 
   int n = C->size();
 
-  object_ptr<MatrixObject> R ( new MatrixObject(n,n) );
+  object_ptr<Box<Matrix>> R ( new Box<Matrix>(n,n) );
 
   for(int i=0;i<n;i++) 
   {
@@ -694,7 +693,7 @@ extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
 
   const int n = a.size();
 
-  object_ptr<MatrixObject> R( new MatrixObject(n,n) );
+  object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
 
   // compute frequencies
   vector<double> pi = *pi_;

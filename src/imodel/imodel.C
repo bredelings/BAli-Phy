@@ -175,15 +175,12 @@ namespace indel
   }
 
   PairTransducer::PairTransducer(int s,int e,const vector<int>& v1, const vector<int>& v2)
-    :Matrix(v1.size(),v1.size()),e1(v1),e2(v2),start_(s),end_(e)
+    :Matrix(v1.size(), v1.size(), 0.0),e1(v1),e2(v2),start_(s),end_(e)
   {
     assert(e1.size() == n_states());
     assert(e2.size() == n_states());
 
     n_letters_ = 1+std::max(max(v1),max(v2));
-
-    // set all entries in the transition matrix to zero.
-    clear();
   }
 }
 

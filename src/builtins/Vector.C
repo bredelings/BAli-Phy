@@ -153,7 +153,7 @@ extern "C" closure builtin_function_SetVectorIndexDouble(OperationArgs& Args)
 
 extern "C" closure builtin_function_SetVectorIndexMatrix(OperationArgs& Args)
 {
-  return SetVectorIndex<Matrix,MatrixObject>(Args);
+  return SetVectorIndex<Matrix,Box<Matrix>>(Args);
 }
 
 template<typename T, typename U>
@@ -185,7 +185,7 @@ closure Vector_From_List(OperationArgs& Args)
 
 extern "C" closure builtin_function_Vector_Matrix_From_List(OperationArgs& Args)
 {
-  return Vector_From_List<Matrix,MatrixObject>(Args);
+  return Vector_From_List<Matrix,Box<Matrix>>(Args);
 }
 
 extern "C" closure builtin_function_new_vector(OperationArgs& Args)

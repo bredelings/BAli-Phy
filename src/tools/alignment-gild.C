@@ -171,7 +171,9 @@ Matrix counts_to_probability(const Tree& T,const vector<int>& column,
       assert(pseudocount(i,j) > 0);
 
   // initialize the matrix - add a pseudocount to avoid P=0 or P=1
-  Matrix Pr_align_pair = 0.1*0.5*pseudocount;
+  Matrix Pr_align_pair = pseudocount;
+  for(double& d: Pr_align_pair)
+    d *= 0.1 * 0.5;
 
   // For each label, count all present pairs
   for(int i=0;i<N;i++) 

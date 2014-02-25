@@ -67,11 +67,7 @@ struct F81_Object: public Object
 
 inline void element_assign(Matrix& M1,double d)
 {
-  const int size = M1.data().size();
-  double * __restrict__ m1 = M1.data().begin();
-  
-  for(int i=0;i<size;i++)
-    m1[i] = d;
+  M1.fill(d);
 }
 
 inline void element_assign(Matrix& M1,const Matrix& M2)
@@ -79,9 +75,9 @@ inline void element_assign(Matrix& M1,const Matrix& M2)
   assert(M1.size1() == M2.size1());
   assert(M1.size2() == M2.size2());
   
-  const int size = M1.data().size();
-  double * __restrict__ m1 = M1.data().begin();
-  const double * __restrict__ m2 = M2.data().begin();
+  const int size = M1.size();
+  double * __restrict__ m1 = M1.begin();
+  const double * __restrict__ m2 = M2.begin();
   
   for(int i=0;i<size;i++)
     m1[i] = m2[i];
@@ -92,9 +88,9 @@ inline void element_prod_modify(Matrix& M1,const Matrix& M2)
   assert(M1.size1() == M2.size1());
   assert(M1.size2() == M2.size2());
   
-  const int size = M1.data().size();
-  double * __restrict__ m1 = M1.data().begin();
-  const double * __restrict__ m2 = M2.data().begin();
+  const int size = M1.size();
+  double * __restrict__ m1 = M1.begin();
+  const double * __restrict__ m2 = M2.begin();
   
   for(int i=0;i<size;i++)
     m1[i] *= m2[i];
@@ -108,10 +104,10 @@ inline void element_prod_assign(Matrix& M1,const Matrix& M2,const Matrix& M3)
   assert(M1.size1() == M3.size1());
   assert(M1.size2() == M3.size2());
   
-  const int size = M1.data().size();
-  double * __restrict__ m1 = M1.data().begin();
-  const double * __restrict__ m2 = M2.data().begin();
-  const double * __restrict__ m3 = M3.data().begin();
+  const int size = M1.size();
+  double * __restrict__ m1 = M1.begin();
+  const double * __restrict__ m2 = M2.begin();
+  const double * __restrict__ m3 = M3.begin();
   
   for(int i=0;i<size;i++)
     m1[i] = m2[i]*m3[i];
@@ -119,8 +115,8 @@ inline void element_prod_assign(Matrix& M1,const Matrix& M2,const Matrix& M3)
 
 inline double element_sum(const Matrix& M1)
 {
-  const int size = M1.data().size();
-  const double * __restrict__ m1 = M1.data().begin();
+  const int size = M1.size();
+  const double * __restrict__ m1 = M1.begin();
   
   double sum = 0;
   for(int i=0;i<size;i++)
@@ -134,9 +130,9 @@ inline double element_prod_sum(Matrix& M1,const Matrix& M2)
   assert(M1.size1() == M2.size1());
   assert(M1.size2() == M2.size2());
   
-  const int size = M1.data().size();
-  const double * __restrict__ m1 = M1.data().begin();
-  const double * __restrict__ m2 = M2.data().begin();
+  const int size = M1.size();
+  const double * __restrict__ m1 = M1.begin();
+  const double * __restrict__ m2 = M2.begin();
 
   double sum = 0;
   for(int i=0;i<size;i++)
@@ -153,10 +149,10 @@ inline double element_prod_sum(Matrix& M1,const Matrix& M2,const Matrix& M3)
   assert(M1.size1() == M3.size1());
   assert(M1.size2() == M3.size2());
   
-  const int size = M1.data().size();
-  const double * __restrict__ m1 = M1.data().begin();
-  const double * __restrict__ m2 = M2.data().begin();
-  const double * __restrict__ m3 = M3.data().begin();
+  const int size = M1.size();
+  const double * __restrict__ m1 = M1.begin();
+  const double * __restrict__ m2 = M2.begin();
+  const double * __restrict__ m3 = M3.begin();
 
   double sum = 0;
   for(int i=0;i<size;i++)
@@ -176,11 +172,11 @@ inline double element_prod_sum(Matrix& M1,const Matrix& M2,const Matrix& M3,cons
   assert(M1.size1() == M4.size1());
   assert(M1.size2() == M4.size2());
   
-  const int size = M1.data().size();
-  const double * __restrict__ m1 = M1.data().begin();
-  const double * __restrict__ m2 = M2.data().begin();
-  const double * __restrict__ m3 = M3.data().begin();
-  const double * __restrict__ m4 = M4.data().begin();
+  const int size = M1.size();
+  const double * __restrict__ m1 = M1.begin();
+  const double * __restrict__ m2 = M2.begin();
+  const double * __restrict__ m3 = M3.begin();
+  const double * __restrict__ m4 = M4.begin();
 
   double sum = 0;
   for(int i=0;i<size;i++)

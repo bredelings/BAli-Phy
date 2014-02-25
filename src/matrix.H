@@ -22,6 +22,7 @@ class matrix
     {
       delete data_;
       data_ = new T[s];
+      size_ = s;
     }
   }
 
@@ -51,7 +52,8 @@ public:
 
   matrix& operator=(const matrix<T>& m2)
   {
-    allocate(m2.size1()*m2.size2());
+    resize(m2.size1(), m2.size2());
+
     for(int i=0;i<m2.size();i++)
       data_[i] = m2.data_[i];
     return *this;
@@ -81,6 +83,20 @@ public:
     for(int i=0;i<size();i++)
       data_[i] = t;
   }
+
+  matrix<T>& operator/=(T t) {
+    for(int i=0;i<size();i++)
+      data_[i] /= t;
+    return *this;
+  }
+
+  matrix<T>& operator+=(const matrix<T>& M2) 
+  {
+    for(int i=0;i<size();i++)
+      data_[i] += M2.begin()[i];
+    return *this;
+  }
+    
 
   matrix() {}
 
@@ -113,9 +129,7 @@ public:
 
 }
 
-#include <boost/numeric/ublas/matrix.hpp>
-
-using boost::numeric::ublas::matrix;
+using bali_phy::matrix;
 
 typedef matrix<double> Matrix;
 

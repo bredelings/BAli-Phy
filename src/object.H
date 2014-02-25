@@ -8,7 +8,6 @@
 #include "util.H"
 
 #include "math/log-double.H"
-#include "matrix.H"
 
 using boost::logic::tribool;
 using boost::logic::indeterminate;
@@ -330,7 +329,6 @@ using Pair = Box<std::pair<T1,T2>>;
 typedef Vector<object_ref> OVector;
 typedef std::pair<object_ref,object_ref> Opair;
 typedef Pair<object_ref,object_ref> OPair;
-typedef Box<Matrix> MatrixObject;
 
 template <typename T>
 object_ptr<T> ptr(const T& t) {return object_ptr<T>(t.clone());}
