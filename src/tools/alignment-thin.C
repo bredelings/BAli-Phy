@@ -93,7 +93,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
-std::pair<int,int> argmin(ublas::matrix<int>& M)
+std::pair<int,int> argmin(matrix<int>& M)
 {
   double mvalue = M(0,0);
   int m1 = 0;
@@ -112,7 +112,7 @@ std::pair<int,int> argmin(ublas::matrix<int>& M)
 
 /// Find a pair m1,m2 such that D(m1,m2) is smallest among the sequences not yet removed (keep[]==0) and such that 
 /// m1 is not protected (keep[m1]==
-std::pair<int,int> argmin(ublas::matrix<int>& M, const vector<int>& keep)
+std::pair<int,int> argmin(matrix<int>& M, const vector<int>& keep)
 {
   double mvalue = -1;
   int m1 = -1;
@@ -130,7 +130,7 @@ std::pair<int,int> argmin(ublas::matrix<int>& M, const vector<int>& keep)
   return std::pair<int,int>(m1,m2);
 }
 
-int argmin_row(ublas::matrix<int>& M, int i, const vector<int>& keep)
+int argmin_row(matrix<int>& M, int i, const vector<int>& keep)
 {
   double mvalue = -1;
   int m2 = -1;
@@ -194,11 +194,11 @@ int n_positive(const vector<int>& v)
   return count;
 }
 
-ublas::matrix<int> asymmetric_distance_matrix(const alignment& A)
+matrix<int> asymmetric_distance_matrix(const alignment& A)
 {
   const int N = A.n_sequences();
 
-  ublas::matrix<int> D(N,N);
+  matrix<int> D(N,N);
 
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++)
@@ -207,11 +207,11 @@ ublas::matrix<int> asymmetric_distance_matrix(const alignment& A)
   return D;
 }
 
-ublas::matrix<int> symmetric_distance_matrix(const alignment& A)
+matrix<int> symmetric_distance_matrix(const alignment& A)
 {
   const int N = A.n_sequences();
 
-  ublas::matrix<int> D(N,N);
+  matrix<int> D(N,N);
 
   for(int i=0;i<N;i++)
     for(int j=0;j<=i;j++)
@@ -220,11 +220,11 @@ ublas::matrix<int> symmetric_distance_matrix(const alignment& A)
   return D;
 }
 
-ublas::matrix<int> symmetric_overlap_matrix(const alignment& A)
+matrix<int> symmetric_overlap_matrix(const alignment& A)
 {
   const int N = A.n_sequences();
 
-  ublas::matrix<int> D(N,N);
+  matrix<int> D(N,N);
 
   for(int i=0;i<N;i++)
     for(int j=0;j<=i;j++)
@@ -414,16 +414,16 @@ int main(int argc,char* argv[])
     }
 
     //------- Find the most redundant --------//
-    ublas::matrix<int> D;
+    matrix<int> D;
 
     // report distances to specified taxa
     if (args.count("find-dups"))
     {
       D = asymmetric_distance_matrix(A);
-      ublas::matrix<int> DS = symmetric_distance_matrix(A);
-      ublas::matrix<int> DO = symmetric_overlap_matrix(A);
+      matrix<int> DS = symmetric_distance_matrix(A);
+      matrix<int> DO = symmetric_overlap_matrix(A);
 
-      ublas::matrix<double> DEV(D.size1(),D.size2());
+      matrix<double> DEV(D.size1(),D.size2());
       for(int i=0;i<DEV.size1();i++) 
 	for(int j=0;j<DEV.size2();j++)
 	  if (not DO(i,j))
@@ -482,7 +482,7 @@ int main(int argc,char* argv[])
 	down_to = args["down-to"].as<int>();
 
       D = asymmetric_distance_matrix(A);
-      ublas::matrix<int> DS = symmetric_distance_matrix(A);
+      matrix<int> DS = symmetric_distance_matrix(A);
       
       vector<int> removed;
 

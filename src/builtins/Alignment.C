@@ -4,12 +4,12 @@
 
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
 {
-  const ublas::matrix<int>& counts = *Args.evaluate_as<Box<ublas::matrix<int>>>(0);
+  const matrix<int>& counts = *Args.evaluate_as<Box<matrix<int>>>(0);
   const indel::PairHMM& Q = *Args.evaluate_as<indel::PairHMM>(1);
 
   using namespace A2;
 
-  efloat_t P=1;
+  log_double_t P=1;
 
   // Account for S-? start probability
   for(int i=0;i<Q.size2();i++)
@@ -19,7 +19,7 @@ extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(O
   // Account for the mass of transitions
   for(int i=0;i<3;i++)
     for(int j=0;j<3;j++) {
-      efloat_t Qij = Q(i,j);
+      log_double_t Qij = Q(i,j);
       // FIXME - if we propose really bad indel parameters, we can get log(Q_ij) where Qij == 0
       if (counts(i,j))
 	P *= pow(Qij,counts(i,j));
@@ -48,7 +48,7 @@ extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
 {
   const pairwise_alignment_t& A = *Args.evaluate_as<pairwise_alignment_t>(0);
 
-  Box<ublas::matrix<int>> counts;
+  Box<matrix<int>> counts;
   counts.resize(5,5);
   counts.clear();
 

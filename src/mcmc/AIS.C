@@ -16,14 +16,14 @@ void AIS_Sampler::sample_from_beta(double beta, owned_ptr<Probability_Model>& P,
   }
 }
 
-void show_weights(const vector<vector<efloat_t> >& weights, std::ostream& o)
+void show_weights(const vector<vector<log_double_t> >& weights, std::ostream& o)
 {
   o<<std::endl;
   for(int l=0;l<weights.size();l++)
   {
-    const vector<efloat_t> w = weights[l];
-    efloat_t sum = 0;
-    efloat_t sum2 = 0;
+    const vector<log_double_t> w = weights[l];
+    log_double_t sum = 0;
+    log_double_t sum2 = 0;
     for(int i=0;i<w.size();i++)
     {
       sum += w[i];
@@ -32,8 +32,8 @@ void show_weights(const vector<vector<efloat_t> >& weights, std::ostream& o)
     sum /= w.size();
     sum2 /= w.size();
 
-    efloat_t var_plus_1 = sum2/(sum*sum);
-    efloat_t ESS = double(w.size())/var_plus_1;
+    log_double_t var_plus_1 = sum2/(sum*sum);
+    log_double_t ESS = double(w.size())/var_plus_1;
     o<<"level = "<<l<<"   Pmarg = "<<sum<<"   var = "<<double(var_plus_1)-1.0<<"   ESS = "<<double(ESS)<<std::endl;
   }
   o<<std::endl;
@@ -53,12 +53,12 @@ void AIS_Sampler::go(owned_ptr<Probability_Model>& P, std::ostream& o, std::vect
   sample_from_beta(beta.back(), P, 100, Samplers.back());
 
   // Generate our sequences
-  vector<vector<efloat_t> > weights(beta.size()-1);
+  vector<vector<log_double_t> > weights(beta.size()-1);
   vector<owned_ptr<Probability_Model> > X;
   for(int i=0;i<1000;i++)
   {
     owned_ptr<Probability_Model> P2;
-    efloat_t weight = 1;
+    log_double_t weight = 1;
     for(int level=beta.size()-1; level >=0 ;level--)
     {
       if (level == beta.size() - 1) {
@@ -69,7 +69,7 @@ void AIS_Sampler::go(owned_ptr<Probability_Model>& P, std::ostream& o, std::vect
 
       sample_from_beta(beta[level], P2, n, Samplers[level]);
       
-      efloat_t L = P2->likelihood();
+      log_double_t L = P2->likelihood();
 
       o<<"i = "<<i<<"  level = "<<level<<"  beta = "<<beta[level]<<" L = "<<L<<" w = "<<weight<<std::endl;
       weight *= pow(L,beta[level]-beta[level+1]);

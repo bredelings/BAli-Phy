@@ -930,7 +930,7 @@ void MoveArgSingle::operator()(owned_ptr<Probability_Model>& P,MoveStats& Stats,
 
 
 std::ostream& operator<<(std::ostream& o,const Matrix& M) {
-  ublas::operator<<(o,M);
+  operator<<(o,M);
   return o;
 }
 
@@ -1047,7 +1047,7 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
   if (not P.all_betas.size()) return;
 
   // Determine the probability of this chain at each temperature
-  efloat_t Pr1 = P.heated_probability();
+  log_double_t Pr1 = P.heated_probability();
   vector<double> Pr;
   for(int i=0;i<P.all_betas.size();i++)
   {
@@ -1055,7 +1055,7 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
     Pr.push_back(log(P.heated_probability()));
   }
   P.set_beta(P.all_betas[P.beta_index]);
-  efloat_t Pr2 = P.heated_probability();
+  log_double_t Pr2 = P.heated_probability();
 
   assert(std::abs(log(Pr1)-log(Pr2)) < 1.0e-9);
 

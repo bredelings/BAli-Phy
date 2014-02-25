@@ -26,7 +26,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef FIVEWAY_H
 #define FIVEWAY_H
 
-#include "mytypes.H"
 #include "alignment/alignment.H"
 #include "models/parameters.H"
 #include "2way.H"
@@ -43,11 +42,11 @@ namespace A5 {
   std::vector<int> get_nodes_random(const Tree& T,int b);
 
   /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)
-  efloat_t correction(const data_partition& P,const std::vector<int>& nodes);
+  log_double_t correction(const data_partition& P,const std::vector<int>& nodes);
 
-  efloat_t correction(const Parameters& P,const std::vector<int>& nodes);
+  log_double_t correction(const Parameters& P,const std::vector<int>& nodes);
 
-  efloat_t acceptance_ratio(const Parameters& P1,const std::vector<int>&,
+  log_double_t acceptance_ratio(const Parameters& P1,const std::vector<int>&,
 			      const Parameters& P2,const std::vector<int>&);
 
   std::vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const std::vector<int>& nodes);

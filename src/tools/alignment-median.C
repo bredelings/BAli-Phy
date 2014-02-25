@@ -25,7 +25,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <numeric>
 #include "myexception.H"
 #include "alignment/alignment.H"
-#include "mytypes.H"
 #include "math/logsum.H"
 #include "optimize.H"
 #include "findroot.H"
@@ -36,9 +35,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "io.H"
 
 #include <boost/program_options.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
 
-namespace ublas = boost::numeric::ublas;
 namespace po = boost::program_options;
 using po::variables_map;
 
@@ -113,14 +110,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
-typedef long int (*distance_fn)(const ublas::matrix<int>& ,const vector< vector<int> >&,const ublas::matrix<int>& ,const vector< vector<int> >&);
+typedef long int (*distance_fn)(const matrix<int>& ,const vector< vector<int> >&,const matrix<int>& ,const vector< vector<int> >&);
 
-ublas::matrix<double> distances(const vector<ublas::matrix<int> >& Ms,
+matrix<double> distances(const vector<matrix<int> >& Ms,
 				const vector< vector< vector<int> > >& column_indices,
 				distance_fn distance)
 {
   assert(Ms.size() == column_indices.size());
-  ublas::matrix<double> D(Ms.size(),Ms.size());
+  matrix<double> D(Ms.size(),Ms.size());
 
   for(int i=0;i<D.size1();i++) 
     for(int j=0;j<D.size2();j++)
@@ -129,7 +126,7 @@ ublas::matrix<double> distances(const vector<ublas::matrix<int> >& Ms,
   return D;
 }
 
-double diameter(const ublas::matrix<double>& D)
+double diameter(const matrix<double>& D)
 {
   double total = 0;
   for(int i=0;i<D.size1();i++)
@@ -142,7 +139,7 @@ double diameter(const ublas::matrix<double>& D)
 }
 
 /// The number of letters in sequence i that are aligned against different letters in sequence j
-int pairwise_alignment_distance_asymmetric(int i, int j, const ublas::matrix<int>& M1 ,const vector< vector<int> >& CI1,const ublas::matrix<int>& M2, const vector< vector<int> >& CI2)
+int pairwise_alignment_distance_asymmetric(int i, int j, const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
 {
   int Li = CI1[i].size();
   assert(Li == CI2[i].size());
@@ -158,7 +155,7 @@ int pairwise_alignment_distance_asymmetric(int i, int j, const ublas::matrix<int
   return diff;
 }
 
-double pairwise_alignment_distance(int i, int j, const ublas::matrix<int>& M1 ,const vector< vector<int> >& CI1,const ublas::matrix<int>& M2, const vector< vector<int> >& CI2)
+double pairwise_alignment_distance(int i, int j, const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
 {
   int total_diff = pairwise_alignment_distance_asymmetric(i,j,M1,CI1,M2,CI2) + pairwise_alignment_distance_asymmetric(j,i,M1,CI1,M2,CI2);
 
@@ -168,7 +165,7 @@ double pairwise_alignment_distance(int i, int j, const ublas::matrix<int>& M1 ,c
   return double(total_diff)/(Li+Lj);
 }
 
-Matrix pairwise_alignment_distances(const ublas::matrix<int>& M1 ,const vector< vector<int> >& CI1,const ublas::matrix<int>& M2, const vector< vector<int> >& CI2)
+Matrix pairwise_alignment_distances(const matrix<int>& M1 ,const vector< vector<int> >& CI1,const matrix<int>& M2, const vector< vector<int> >& CI2)
 {
   int N = CI1.size();
   Matrix D(N,N);
@@ -182,7 +179,7 @@ Matrix pairwise_alignment_distances(const ublas::matrix<int>& M1 ,const vector< 
 struct alignment_sample
 {
   vector<alignment> alignments;
-  vector<ublas::matrix<int> > Ms;
+  vector<matrix<int> > Ms;
   vector< vector< vector<int> > >  column_indices;
 
   void load(list<alignment>& As);
@@ -278,7 +275,7 @@ void alignment_sample::load(const variables_map& args, const vector<string>& seq
   load(As);
 }
 
-ublas::matrix<double> distances(const alignment_sample& A, distance_fn distance)
+matrix<double> distances(const alignment_sample& A, distance_fn distance)
 {
   return distances(A.Ms, A.column_indices, distance);
 }
@@ -314,7 +311,7 @@ int main(int argc,char* argv[])
       check_supplied_filenames(1,files,false);
 
       alignment_sample As(args, files[0]);
-      ublas::matrix<double> D = distances(As.Ms, As.column_indices, metric_fn);
+      matrix<double> D = distances(As.Ms, As.column_indices, metric_fn);
 
       for(int i=0;i<D.size1();i++) {
 	vector<double> v(D.size2());
@@ -369,7 +366,7 @@ int main(int argc,char* argv[])
       both.load(args, files[1]);
       int N2 = both.size() - N1;
 
-      ublas::matrix<double> D  = distances(both,metric_fn);
+      matrix<double> D  = distances(both,metric_fn);
 
       report_compare(args, D, N1, N2);
     }
@@ -379,7 +376,7 @@ int main(int argc,char* argv[])
 
       alignment_sample As(args, files[0]);
 
-      ublas::matrix<double> D = distances(As, metric_fn);
+      matrix<double> D = distances(As, metric_fn);
 
       //----------- accumulate distances ------------- //
       vector<double> ave_distances( As.size() , 0);
@@ -425,7 +422,7 @@ int main(int argc,char* argv[])
 
       alignment_sample As(args, files[0]);
 
-      ublas::matrix<double> D = distances(As, metric_fn);
+      matrix<double> D = distances(As, metric_fn);
 
       diameter(D,"1",args);
     }
@@ -433,7 +430,7 @@ int main(int argc,char* argv[])
     {
       alignment_sample As(args, files[0]);
 
-      ublas::matrix<double> D = distances(As, metric_fn);
+      matrix<double> D = distances(As, metric_fn);
 
       //----------- accumulate distances ------------- //
       vector<double> ave_distances( As.size() , 0);

@@ -212,8 +212,8 @@ void sample_alignment(Parameters& P,int b)
   p.push_back(P0);
   Matrices.push_back(Matrices[0]);
 
-  vector< vector< efloat_t > > OS(p.size());
-  vector< vector< efloat_t > > OP(p.size());
+  vector< vector< log_double_t > > OS(p.size());
+  vector< vector< log_double_t > > OP(p.size());
   vector< vector< vector<int> > > paths(p.size());
 
   //------------------- Check offsets from path_Q -> P -----------------//
@@ -235,12 +235,12 @@ void sample_alignment(Parameters& P,int b)
       }
   
   //--------- Compute path probabilities and sampling probabilities ---------//
-  vector< vector<efloat_t> > PR(p.size());
+  vector< vector<log_double_t> > PR(p.size());
 
   for(int i=0;i<p.size();i++)
   {
     // sample_P(p[i][j], 1, 1, paths[i][j], *Matrices[j]);
-    PR[i] = vector<efloat_t>(4,1);
+    PR[i] = vector<log_double_t>(4,1);
     PR[i][0] = p[i].heated_probability();
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment())
@@ -269,11 +269,11 @@ void sample_alignment(Parameters& P,int b)
       " diff = "<<diff<<std::endl;
 
     if (diff < -10) {
-      efloat_t L1 = p[1].likelihood();
-      efloat_t L2 = p[0].likelihood();
+      log_double_t L1 = p[1].likelihood();
+      log_double_t L2 = p[0].likelihood();
       
-      efloat_t prior1 = p[1].prior();
-      efloat_t prior2 = p[0].prior();
+      log_double_t prior1 = p[1].prior();
+      log_double_t prior2 = p[0].prior();
       
       std::cerr<<"Yelp!\n";
       

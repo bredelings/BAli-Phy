@@ -32,14 +32,14 @@ using std::vector;
 using std::cerr;
 using std::endl;
 
-efloat_t DPengine::Pr_sum_all_paths() const {
+log_double_t DPengine::Pr_sum_all_paths() const {
   return Pr_total;
 }
 
 void DPengine::check_sampling_probability(const vector<int>& g_path) const
 {
-  efloat_t P = path_P(g_path);
-  efloat_t ratio = path_Q(g_path)/Pr_sum_all_paths();
+  log_double_t P = path_P(g_path);
+  log_double_t ratio = path_Q(g_path)/Pr_sum_all_paths();
   double diff = std::abs(log(ratio) - log(P));
   if (std::abs(diff) > 1.0e-9) {
     throw myexception()

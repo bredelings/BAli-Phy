@@ -30,7 +30,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <string>
 #include <valarray>
 #include "sequence/alphabet.H"
-#include "mytypes.H"
 #include "tree/sequencetree.H"
 #include "models/probability-model.H"
 #include "imodel/imodel.H"
@@ -79,7 +78,7 @@ class data_partition: public Mat_Cache
 
   std::vector<int> frequencies_indices;
 
-  ublas::matrix<int> base_model_indices;
+  matrix<int> base_model_indices;
 
   void branch_mean_changed();
 
@@ -135,7 +134,7 @@ public:
   std::vector<int> branch_HMM_type;
 
   /// Alignment constraint
-  ublas::matrix<int> alignment_constraint;
+  matrix<int> alignment_constraint;
 
   double get_beta() const;
 
@@ -175,16 +174,16 @@ public:
   void note_alignment_changed();
 
   // The prior, likelihood, and probability
-  efloat_t prior_no_alignment() const;
-  efloat_t prior_alignment() const;
+  log_double_t prior_no_alignment() const;
+  log_double_t prior_alignment() const;
 
-  efloat_t prior() const;
-  efloat_t likelihood() const;
+  log_double_t prior() const;
+  log_double_t likelihood() const;
 
-  efloat_t heated_likelihood() const;
+  log_double_t heated_likelihood() const;
 
-  efloat_t heated_prior() const {return prior();}
-  efloat_t heated_probability() const {return heated_prior() * heated_likelihood();}
+  log_double_t heated_prior() const {return prior();}
+  log_double_t heated_probability() const {return heated_prior() * heated_likelihood();}
 
   data_partition(Parameters* P, int i, const alignment&);
 };
@@ -238,7 +237,7 @@ class Parameters: public Probability_Model
 
   std::vector< std::vector<int> > branch_length_indices;
 
-  ublas::matrix<int> branch_transition_p_indices;
+  matrix<int> branch_transition_p_indices;
 
   /// The alignments and cached computations
   mutable std::vector<data_partition> data_partitions;
@@ -304,7 +303,7 @@ public:
 
   /// Tree partitions to weight
   std::vector<Partition> partitions;
-  std::vector<efloat_t> partition_weights;
+  std::vector<log_double_t> partition_weights;
 
   /// Is pinning enabled or not?
   std::vector<double> constants;
@@ -314,13 +313,13 @@ public:
   double branch_length_max;
 
   // The prior, likelihood, and probability
-  efloat_t prior_no_alignment() const;
-  efloat_t prior_alignment() const;
-  efloat_t prior() const;
-  efloat_t likelihood() const;
-  efloat_t probability() const { return prior() * likelihood(); }
+  log_double_t prior_no_alignment() const;
+  log_double_t prior_alignment() const;
+  log_double_t prior() const;
+  log_double_t likelihood() const;
+  log_double_t probability() const { return prior() * likelihood(); }
 
-  efloat_t heated_likelihood() const;
+  log_double_t heated_likelihood() const;
 
   /// How many substitution models?
   int n_smodels() const {return SModels.size();}

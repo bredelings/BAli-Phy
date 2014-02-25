@@ -26,8 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef HMM_H
 #define HMM_H
 
-#include "mytypes.H"
-#include "math/logsum.H"
+#include "math/log-double.H"
 #include <bitset>
 #include "2way.H"
 
@@ -82,7 +81,7 @@ public:
   int endstate() const {return end;}
 
   /// Calculates the (log) product of each move, according to the generalized HMM
-  efloat_t path_Q_path(const std::vector<int>& path) const;
+  log_double_t path_Q_path(const std::vector<int>& path) const;
 
   HMM() = default;
 

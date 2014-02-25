@@ -77,21 +77,21 @@ namespace substitution {
   get_leaf_seq_likelihoods(const data_partition& P, int n, int delta);
 
   /// Full likelihood - all columns, all rates
-  efloat_t Pr(const data_partition&);
+  log_double_t Pr(const data_partition&);
 
-  efloat_t other_subst(const data_partition&, const std::vector<int>& nodes);
+  log_double_t other_subst(const data_partition&, const std::vector<int>& nodes);
   
-  efloat_t Pr(const std::vector< std::vector<int> >& sequences, const alignment& A, subA_index_t& I,
+  log_double_t Pr(const std::vector< std::vector<int> >& sequences, const alignment& A, subA_index_t& I,
 	      const Mat_Cache& MC,const Tree& T,::Likelihood_Cache& cache);
 
-  efloat_t Pr(const data_partition&,Likelihood_Cache& LC);
+  log_double_t Pr(const data_partition&,Likelihood_Cache& LC);
 
   std::vector<std::vector<double> > get_model_likelihoods_by_alignment_column(const data_partition&);
 
   std::vector<std::vector<double> > get_model_probabilities_by_alignment_column(const data_partition&);
 
   // Full likelihood - if some seemingly aligned sequences at the root have + -> - -> +
-  efloat_t Pr_unaligned_root(const data_partition&);
+  log_double_t Pr_unaligned_root(const data_partition&);
 
   extern int total_peel_leaf_branches;
   extern int total_peel_internal_branches;

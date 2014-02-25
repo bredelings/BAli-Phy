@@ -1,9 +1,8 @@
-#include <boost/numeric/ublas/matrix.hpp>
 #include "statistics.H"
 
 #include <boost/program_options.hpp>
+#include "matrix.H"
 
-namespace ublas = boost::numeric::ublas;
 namespace po = boost::program_options;
 using po::variables_map;
 
@@ -47,7 +46,7 @@ void report_distances(const valarray<double>& distances,
 //  If t[i] and t[j] have the same distribution then #2 == #3.
 //  Also, #4 is constant so it is not really a distribution.
 
-void diameter(const ublas::matrix<double>& D,const string& name,variables_map& args)
+void diameter(const matrix<double>& D,const string& name,variables_map& args)
 {
   if (D.size1() == 1)
   {
@@ -83,17 +82,17 @@ double fair_probability_x_less_than_y(const valarray<double>& x,const valarray<d
 }
 
 
-void report_compare(variables_map& args, const ublas::matrix<double>& D, int N1, int N2)
+void report_compare(variables_map& args, const matrix<double>& D, int N1, int N2)
 {
   assert(N1+N2 == D.size1());
   assert(D.size1() == D.size2());
 
-  ublas::matrix<double> D1(N1,N1);
+  matrix<double> D1(N1,N1);
   for(int i=0;i<N1;i++)
     for(int j=0;j<N1;j++)
       D1(i,j) = D(i,j);
 
-  ublas::matrix<double> D2(N2,N2);
+  matrix<double> D2(N2,N2);
   for(int i=0;i<N2;i++)
     for(int j=0;j<N2;j++)
       D2(i,j) = D(N1+i,N1+j);

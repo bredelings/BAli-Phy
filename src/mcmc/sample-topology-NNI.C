@@ -98,7 +98,7 @@ void NNI_inc(MoveStats& Stats, const string& name, MCMC::Result result,const Tre
 
 ///Sample between 2 topologies, ignoring gap priors on each case
 
-int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, int b) 
+int two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rho, int b) 
 {
   assert(p[0].variable_alignment() == p[1].variable_alignment());
   for(int j=0;j<p[0].n_data_partitions();j++)
@@ -111,7 +111,7 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, i
   try {
     return sample_two_nodes_multi(p,nodes,rho,true,false);
   }
-  catch (choose_exception<efloat_t>& c)
+  catch (choose_exception<log_double_t>& c)
   {
     c.prepend(__PRETTY_FUNCTION__);
     throw c;
@@ -255,7 +255,7 @@ void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, 
   //  double Pr1 = log(p[0].probability());
   //  double Pr2 = log(p[1].probability());
 
-  vector<efloat_t> rho(2,1);
+  vector<log_double_t> rho(2,1);
 
   // Because we would select between topologies before selecting
   // internal node states, the reverse distribution cannot depend on 
@@ -314,7 +314,7 @@ void two_way_NNI_SPR_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, i
   p[1].setlength(p[1].T().branch(nodes[4],nodes[5]),LC*uniform());
   p[1].setlength(p[1].T().branch(nodes[5],nodes[3]),LC - p[1].T().branch(nodes[4],nodes[5]).length());
 
-  vector<efloat_t> rho(2,1);
+  vector<log_double_t> rho(2,1);
   rho[1] = LC/(LA+LB);
 
   int C = two_way_topology_sample(p,rho,b);
@@ -394,7 +394,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Probability_Model>& P, MoveStats&
   }
 
 
-  vector<efloat_t> rho(2);
+  vector<log_double_t> rho(2);
   rho[0] = 1.0;
   rho[1] = ratio;
 
@@ -435,7 +435,7 @@ void two_way_NNI_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b
 
 /// This has to be Gibbs, and use the same substitution::Model in each case...
 
-int three_way_topology_sample(vector<Parameters>& p, const vector<efloat_t>& rho, int b) 
+int three_way_topology_sample(vector<Parameters>& p, const vector<log_double_t>& rho, int b) 
 {
   assert(p[0].variable_alignment() == p[1].variable_alignment());
   assert(p[1].variable_alignment() == p[2].variable_alignment());
@@ -448,7 +448,7 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<efloat_t>& rho
   try {
     return sample_two_nodes_multi(p,nodes,rho,true,false);
   }
-  catch (choose_exception<efloat_t>& c)
+  catch (choose_exception<log_double_t>& c)
   {
     c.prepend(__PRETTY_FUNCTION__);
     throw c;
@@ -493,15 +493,15 @@ void three_way_topology_sample_slice(owned_ptr<Probability_Model>& P, MoveStats&
   if (not extends(p[2].T(), *PP.TC))
     return;
 
-  const vector<efloat_t> rho(3,1);
+  const vector<log_double_t> rho(3,1);
 
   double L = PP.T().directed_branch(b).length();
 
 #ifndef NDEBUG
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
-  efloat_t Pr1 = p[0].heated_probability();
-  efloat_t Pr2 = p[1].heated_probability();
-  efloat_t Pr3 = p[2].heated_probability();
+  log_double_t Pr1 = p[0].heated_probability();
+  log_double_t Pr2 = p[1].heated_probability();
+  log_double_t Pr3 = p[2].heated_probability();
 #endif
 
   branch_length_slice_function logp1(p[0],b);
@@ -588,7 +588,7 @@ void three_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats
   if (not extends(p[2].T(), *PP.TC))
     return;
 
-  const vector<efloat_t> rho(3,1);
+  const vector<log_double_t> rho(3,1);
 
   //------ Resample alignments and select topology -----//
   int C = three_way_topology_sample(p,rho,b);
@@ -653,13 +653,13 @@ void three_way_topology_and_alignment_sample(owned_ptr<Probability_Model>& P, Mo
   for(int i=0;i<p.size();i++)
     nodes.push_back(A3::get_nodes_branch_random(p[i].T(), two_way_nodes[4], two_way_nodes[0]) );
 
-  const vector<efloat_t> rho(3,1);
+  const vector<log_double_t> rho(3,1);
 
   int C = -1;
   try {
     C = sample_tri_multi(p,nodes,rho,true,true);
   }
-  catch (choose_exception<efloat_t>& c)
+  catch (choose_exception<log_double_t>& c)
   {
     c.prepend(__PRETTY_FUNCTION__);
     throw c;

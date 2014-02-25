@@ -122,9 +122,9 @@ vector< vector<int> > column_lookup(const alignment& A,int nleaves)
 }
 
 /// Replace each letter with its position in its sequence
-ublas::matrix<int> M(const alignment& A1) 
+matrix<int> M(const alignment& A1) 
 {
-  ublas::matrix<int> A2(A1.length(),A1.n_sequences());
+  matrix<int> A2(A1.length(),A1.n_sequences());
   for(int i=0;i<A2.size2();i++) {
     int pos=0;
     for(int column=0;column<A2.size1();column++) {
@@ -142,8 +142,8 @@ ublas::matrix<int> M(const alignment& A1)
 }
 
 /// Is the homology A1(column,s1)::A1(column,s2) preserved in A2 ?
-bool A_match(const ublas::matrix<int>& M1, int column, int s1, int s2, 
-	     const ublas::matrix<int>& M2,
+bool A_match(const matrix<int>& M1, int column, int s1, int s2, 
+	     const matrix<int>& M2,
 	     const vector< vector< int> >& column_indices) 
 {
   if (M1(column,s1) == alphabet::gap and M1(column,s2)==alphabet::gap)
@@ -166,8 +166,8 @@ bool A_constant(alignment A1, alignment A2, const dynamic_bitset<>& ignore) {
   assert(A1.n_sequences() <= ignore.size());
 
   // convert to feature-number notation
-  ublas::matrix<int> M1 = M(A1);
-  ublas::matrix<int> M2 = M(A2);
+  matrix<int> M1 = M(A1);
+  matrix<int> M2 = M(A2);
 
   // lookup and cache the column each feature is in
   vector< vector< int> > column_indices = column_lookup(A2);
@@ -480,8 +480,8 @@ vector<const_branchview> branches_toward_from_node(const Tree& T,int n) {
 }
 
 
-ublas::matrix<int> get_SM(const alignment& A,const Tree& T) {
-  ublas::matrix<int> SM(A.length(),2*T.n_branches());
+matrix<int> get_SM(const alignment& A,const Tree& T) {
+  matrix<int> SM(A.length(),2*T.n_branches());
     
   vector<const_branchview> branches = branches_toward_from_node(T,T.n_leaves());
 
@@ -519,8 +519,8 @@ ublas::matrix<int> get_SM(const alignment& A,const Tree& T) {
 
 long int asymmetric_pairs_distance(const alignment& A1,const alignment& A2) {
 
-  ublas::matrix<int> M1 = M(A1);
-  ublas::matrix<int> M2 = M(A2);
+  matrix<int> M1 = M(A1);
+  matrix<int> M2 = M(A2);
 
   // lookup and cache the column each feature is in
   vector< vector< int> > column_indices2 = column_lookup(A2);
@@ -529,7 +529,7 @@ long int asymmetric_pairs_distance(const alignment& A1,const alignment& A2) {
 }
 
 
-long int asymmetric_pairs_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+long int asymmetric_pairs_distance(const matrix<int>& M1,const matrix<int>& M2,
 				    const vector< vector<int> >& column_indices2)
 {
   int mismatch=0;
@@ -555,7 +555,7 @@ long int asymmetric_pairs_distance(const ublas::matrix<int>& M1,const ublas::mat
   return mismatch;
 }
 
-long int homologies_total(const ublas::matrix<int>& M1) 
+long int homologies_total(const matrix<int>& M1) 
 {
   long int total=0;
 
@@ -567,7 +567,7 @@ long int homologies_total(const ublas::matrix<int>& M1)
   return total;
 }
 
-long int homologies_preserved(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+long int homologies_preserved(const matrix<int>& M1,const matrix<int>& M2,
 				    const vector< vector<int> >& column_indices2)
 {
   long int match=0;
@@ -590,16 +590,16 @@ long int homologies_preserved(const ublas::matrix<int>& M1,const ublas::matrix<i
   return match;
 }
 
-double homologies_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+double homologies_distance(const matrix<int>& M1,const matrix<int>& M2,
 			   const vector< vector<int> >& column_indices2)
 {
   unsigned total = homologies_total(M1);
   unsigned match = homologies_preserved(M1,M2,column_indices2);
   return double(total-match)/total;
 }
-vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
+vector<int> get_splitgroup_columns(const matrix<int>& M1,
 				   int column,
-				   const ublas::matrix<int>& /* M2 */,
+				   const matrix<int>& /* M2 */,
 				   const vector< vector<int> >& columns) 
 {
   vector<int> label(M1.size2());
@@ -631,8 +631,8 @@ vector<int> get_splitgroup_columns(const ublas::matrix<int>& M1,
 long int asymmetric_splits_distance(const alignment& A1,const alignment& A2) 
 {
 
-  ublas::matrix<int> M1 = M(A1);
-  ublas::matrix<int> M2 = M(A2);
+  matrix<int> M1 = M(A1);
+  matrix<int> M2 = M(A2);
 
   // lookup and cache the column each feature is in
   vector< vector< int> > column_indices2 = column_lookup(A2);
@@ -643,8 +643,8 @@ long int asymmetric_splits_distance(const alignment& A1,const alignment& A2)
 long int asymmetric_splits_distance2(const alignment& A1,const alignment& A2) 
 {
 
-  ublas::matrix<int> M1 = M(A1);
-  ublas::matrix<int> M2 = M(A2);
+  matrix<int> M1 = M(A1);
+  matrix<int> M2 = M(A2);
 
   // lookup and cache the column each feature is in
   vector< vector< int> > column_indices2 = column_lookup(A2);
@@ -652,7 +652,7 @@ long int asymmetric_splits_distance2(const alignment& A1,const alignment& A2)
   return asymmetric_splits_distance2(M1,M2,column_indices2);
 }
 
-long int asymmetric_splits_distance(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+long int asymmetric_splits_distance(const matrix<int>& M1,const matrix<int>& M2,
 				    const vector< vector<int> >& column_indices2)
 {
   int distance=0;
@@ -677,7 +677,7 @@ long int asymmetric_splits_distance(const ublas::matrix<int>& M1,const ublas::ma
   return distance;
 }
 
-long int asymmetric_splits_distance2(const ublas::matrix<int>& M1,const ublas::matrix<int>& M2,
+long int asymmetric_splits_distance2(const matrix<int>& M1,const matrix<int>& M2,
 				    const vector< vector<int> >& column_indices2)
 {
   int distance=0;
@@ -707,8 +707,8 @@ long int pairs_distance(const alignment& A1,const alignment& A2)
   return asymmetric_pairs_distance(A1,A2) + asymmetric_pairs_distance(A2,A1);
 }
 
-long int pairs_distance(const ublas::matrix<int>& M1,const vector< vector<int> >& column_indices1,
-			const ublas::matrix<int>& M2,const vector< vector<int> >& column_indices2)
+long int pairs_distance(const matrix<int>& M1,const vector< vector<int> >& column_indices1,
+			const matrix<int>& M2,const vector< vector<int> >& column_indices2)
 {
   return asymmetric_pairs_distance(M1,M2,column_indices2)
     + asymmetric_pairs_distance(M2,M1,column_indices1);
@@ -725,15 +725,15 @@ long int splits_distance2(const alignment& A1,const alignment& A2)
   return asymmetric_splits_distance2(A1,A2)+asymmetric_splits_distance2(A2,A1);
 }
 
-long int splits_distance(const ublas::matrix<int>& M1,const vector< vector<int> >& column_indices1,
-			const ublas::matrix<int>& M2,const vector< vector<int> >& column_indices2)
+long int splits_distance(const matrix<int>& M1,const vector< vector<int> >& column_indices1,
+			const matrix<int>& M2,const vector< vector<int> >& column_indices2)
 {
   return asymmetric_splits_distance(M1,M2,column_indices2)
     + asymmetric_splits_distance(M2,M1,column_indices1);
 }
 
-long int splits_distance2(const ublas::matrix<int>& M1,const vector< vector<int> >& column_indices1,
-			const ublas::matrix<int>& M2,const vector< vector<int> >& column_indices2)
+long int splits_distance2(const matrix<int>& M1,const vector< vector<int> >& column_indices1,
+			const matrix<int>& M2,const vector< vector<int> >& column_indices2)
 {
   return asymmetric_splits_distance2(M1,M2,column_indices2)
     + asymmetric_splits_distance2(M2,M1,column_indices1);

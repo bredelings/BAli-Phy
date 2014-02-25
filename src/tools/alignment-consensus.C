@@ -115,7 +115,7 @@ int main(int argc,char* argv[])
     
     //------------ Load alignment and tree ----------//
     vector<alignment> alignments;
-    vector<ublas::matrix<int> > Ms;
+    vector<matrix<int> > Ms;
 
     do_setup(args,alignments);
     for(int i=0;i<alignments.size();i++)
@@ -177,7 +177,7 @@ int main(int argc,char* argv[])
 
     //-------- Construct Build a beginning alignment --------//
 
-    ublas::matrix<int> M2 = get_ordered_matrix(M);
+    matrix<int> M2 = get_ordered_matrix(M);
 
     alignment consensus = get_alignment(M2,alignments[0]);
 

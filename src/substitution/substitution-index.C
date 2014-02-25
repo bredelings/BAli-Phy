@@ -48,7 +48,7 @@ static inline bool any_present(const alignment& A,int c, const vector<int>& node
 }
 
 
-int n_non_null_entries(const ublas::matrix<int>& m)
+int n_non_null_entries(const matrix<int>& m)
 {
   int total = 0;
   for(int i=0;i<m.size1();i++)
@@ -58,7 +58,7 @@ int n_non_null_entries(const ublas::matrix<int>& m)
   return total;
 }
 
-int n_non_empty_columns(const ublas::matrix<int>& m)
+int n_non_empty_columns(const matrix<int>& m)
 {
   int total = 0;
   for(int i=0;i<m.size1();i++)
@@ -78,7 +78,7 @@ int subA_index_t::n_rows() const
   return indices.size();
 }
 
-bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2) {
+bool subA_identical(const matrix<int>& I1,const matrix<int>& I2) {
   bool error = false;
   if (I1.size1() != I2.size1()) error=true;
   if (I1.size2() != I2.size2()) error=true;
@@ -144,7 +144,7 @@ int next_column(const vector< vector<pair<int,int> > >& indices, const vector<in
 }
 
 /// Select rows for branches \a branches, removing columns with all entries == -1
-ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, bool with_columns) const
+matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, bool with_columns) const
 {
   // Compute the total length of branch indices.
   // Also check that the indices are up-to-date.
@@ -157,7 +157,7 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, boo
   }
 
   // The alignment of sub alignments
-  ublas::matrix<int> subA3(total_length, branches.size() + (with_columns?1:0));
+  matrix<int> subA3(total_length, branches.size() + (with_columns?1:0));
 
   vector<int> I(branches.size(),0);
   int L = 0;
@@ -187,7 +187,7 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, boo
     L++;
   }
 
-  ublas::matrix<int> subA4(L, subA3.size2() );
+  matrix<int> subA4(L, subA3.size2() );
   for(int i=0;i<subA4.size1();i++)
     for(int j=0;j<subA4.size2();j++)
       subA4(i,j) = subA3(i,j);
@@ -196,7 +196,7 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, boo
 }
 
 /// Select rows for branches \a branches, removing columns with all entries == -1
-ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, const alignment& A,const Tree& T, bool with_columns)
+matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, const alignment& A,const Tree& T, bool with_columns)
 {
   // copy sub-A indices for each branch
   for(int j=0;j<branches.size();j++) 
@@ -211,7 +211,7 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, con
 }
 
 /// align sub-alignments corresponding to branches in b
-ublas::matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& branches,const vector<vector<int>>& sequence_indices, bool with_columns)
+matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& branches,const vector<vector<int>>& sequence_indices, bool with_columns)
 {
    // Compute the total length of branch indices.
   // Also check that the indices are up-to-date.
@@ -225,7 +225,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int
 
   // The alignment of sub alignments
   int C = sequence_indices.size() + branches.size();
-  ublas::matrix<int> subA3(total_length, branches.size() + sequence_indices.size() + (with_columns?1:0));
+  matrix<int> subA3(total_length, branches.size() + sequence_indices.size() + (with_columns?1:0));
 
   vector<int> I(branches.size()+sequence_indices.size(),0);
   int L = 0;
@@ -269,7 +269,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int
     L++;
   }
 
-  ublas::matrix<int> subA4(L, subA3.size2() );
+  matrix<int> subA4(L, subA3.size2() );
   for(int i=0;i<subA4.size1();i++)
     for(int j=0;j<subA4.size2();j++)
       subA4(i,j) = subA3(i,j);
@@ -278,7 +278,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int
 }
 
 /// align sub-alignments corresponding to branches in b
-ublas::matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& branches,const std::vector<int>& nodes, const alignment& A,const Tree& T, bool with_columns)
+matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& branches,const std::vector<int>& nodes, const alignment& A,const Tree& T, bool with_columns)
 {
   // copy sub-A indices for each branch
   for(int j=0;j<branches.size();j++) 
@@ -297,7 +297,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int
 }
 
 /// Compute subA index for branches point to \a node.
-ublas::matrix<int> subA_index_t::get_subA_index(int node,const alignment& A,const Tree& T) 
+matrix<int> subA_index_t::get_subA_index(int node,const alignment& A,const Tree& T) 
 {
   // compute node branches
   vector<int> b;
@@ -308,7 +308,7 @@ ublas::matrix<int> subA_index_t::get_subA_index(int node,const alignment& A,cons
 }
 
 /// Sort columns according to value in last row, removing columns with -1 in last row
-ublas::matrix<int> subA_select(const ublas::matrix<int>& subA1) {
+matrix<int> subA_select(const matrix<int>& subA1) {
   const int I = subA1.size2()-1;
 
   // count the number of columns to keep
@@ -316,7 +316,7 @@ ublas::matrix<int> subA_select(const ublas::matrix<int>& subA1) {
   for(int c=0;c<subA1.size1();c++)
     if (subA1(c,I) != alphabet::gap) L++;
 
-  ublas::matrix<int> subA2(L,I);
+  matrix<int> subA2(L,I);
 
   for(int c=0;c<subA1.size1();c++) {
     int c2 = subA1(c,I);
@@ -330,9 +330,9 @@ ublas::matrix<int> subA_select(const ublas::matrix<int>& subA1) {
 }
 
 /// Sort columns according to value in last row, removing columns with -1 in last row
-ublas::matrix<int> subA_remove_last_row(const ublas::matrix<int>& subA1) 
+matrix<int> subA_remove_last_row(const matrix<int>& subA1) 
 {
-  ublas::matrix<int> subA2(subA1.size1(), (int)subA1.size2() - 1);
+  matrix<int> subA2(subA1.size1(), (int)subA1.size2() - 1);
 
   for(int i=0;i<subA2.size1();i++) 
     for(int j=0;j<subA2.size2();j++)
@@ -342,10 +342,10 @@ ublas::matrix<int> subA_remove_last_row(const ublas::matrix<int>& subA1)
 }
 
 /// Select rows for branches \a b, and toss columns where the last branch has entry -1
-ublas::matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b) const
+matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b) const
 {
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index(b);
+  matrix<int> subA = get_subA_index(b);
 
   // return processed indices
   return subA_select(subA);
@@ -353,10 +353,10 @@ ublas::matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b) con
 
 
 /// Select rows for branches \a b, and toss columns where the last branch has entry -1
-ublas::matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b,const alignment& A,const Tree& T) 
+matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b,const alignment& A,const Tree& T) 
 {
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index(b,A,T);
+  matrix<int> subA = get_subA_index(b,A,T);
 
   // return processed indices
   return subA_select(subA);
@@ -364,10 +364,10 @@ ublas::matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b,cons
 
 
 /// Select rows for branches \a b, and toss columns where the last branch has entry -1
-ublas::matrix<int> subA_index_t::get_subA_index_vanishing(const vector<int>& b,const alignment& A,const Tree& T) 
+matrix<int> subA_index_t::get_subA_index_vanishing(const vector<int>& b,const alignment& A,const Tree& T) 
 {
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index(b,A,T);
+  matrix<int> subA = get_subA_index(b,A,T);
 
   const int B = b.size()-1;
   int l=0;
@@ -390,11 +390,11 @@ ublas::matrix<int> subA_index_t::get_subA_index_vanishing(const vector<int>& b,c
 
 
 /// Select rows for branches \a b, and toss columns unless at least one character in \a nodes is present.
-ublas::matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
+matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
 						    const vector<int>& nodes) 
 {
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index(b,A,T,true);
+  matrix<int> subA = get_subA_index(b,A,T,true);
 
   // select and order the columns we want to keep
   const int B = b.size();
@@ -412,11 +412,11 @@ ublas::matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const a
 }
 
 /// Select rows for branches \a b, but exclude columns in which nodes \a nodes are present.
-ublas::matrix<int> subA_index_t::get_subA_index_none(const vector<int>& b,const alignment& A,const Tree& T,
+matrix<int> subA_index_t::get_subA_index_none(const vector<int>& b,const alignment& A,const Tree& T,
 						     const vector<int>& nodes) 
 {
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index(b,A,T,true);
+  matrix<int> subA = get_subA_index(b,A,T,true);
 
   // select and order the columns we want to keep
   const int B = b.size();
@@ -441,14 +441,14 @@ ublas::matrix<int> subA_index_t::get_subA_index_none(const vector<int>& b,const 
 // present characters, should end up as (-,-,-) for calc_root( ) and (+,+,+) for calc_root_unaligned( ).
 
 /// Select rows for branches \a b, and toss ENTRIES where the character at the base of the branch is absent
-ublas::matrix<int> subA_index_t::get_subA_index_aligned(const vector<int>& b,const alignment& A,const Tree& T, bool present)
+matrix<int> subA_index_t::get_subA_index_aligned(const vector<int>& b,const alignment& A,const Tree& T, bool present)
 {
   vector<int> nodes;
   for(int i=0;i<b.size();i++)
     nodes.push_back(T.directed_branch(b[i]).source());
 
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index(b,A,T,true);
+  matrix<int> subA = get_subA_index(b,A,T,true);
 
   // select and order the columns we want to keep
   const int B = b.size();
@@ -469,7 +469,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_aligned(const vector<int>& b,con
 
 
 /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
-ublas::matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,const alignment& A,const Tree& T,
+matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,const alignment& A,const Tree& T,
 							const vector<int>& index_to_columns) 
 {
   // select and order the columns we want to keep
@@ -486,10 +486,10 @@ ublas::matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,con
   }
 
   // The alignment of non-empty columns in b
-  ublas::matrix<int> subA1 = get_subA_index(b,A,T,true);
+  matrix<int> subA1 = get_subA_index(b,A,T,true);
 
   // The alignment of indices from branches \a b from columns in the order 
-  ublas::matrix<int> subA2(columns.size(), B);
+  matrix<int> subA2(columns.size(), B);
   for(int i=0;i<subA2.size1();i++)
     for(int j=0;j<subA2.size2();j++)
       subA2(i,j) = -2;
@@ -521,7 +521,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,con
 }
 
 
-std::ostream& print_subA(std::ostream& o,const ublas::matrix<int>& I)
+std::ostream& print_subA(std::ostream& o,const matrix<int>& I)
 {
   o<<"["<<I.size1()<<","<<I.size2()<<"]\n";
   for(int j=0;j<I.size2();j++) 
@@ -557,8 +557,8 @@ void check_subA(const subA_index_t& I1_, const alignment& A1,const subA_index_t&
     vector<int> b2 = branches;
     b2.push_back(b);
 	
-    ublas::matrix<int> I1 = I1_.get_subA_index_select(b2);
-    ublas::matrix<int> I2 = I2_.get_subA_index_select(b2);
+    matrix<int> I1 = I1_.get_subA_index_select(b2);
+    matrix<int> I2 = I2_.get_subA_index_select(b2);
 
     if (not subA_identical(I1,I2)) 
     {

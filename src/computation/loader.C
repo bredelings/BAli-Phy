@@ -3,7 +3,6 @@
 #include "computation/module.H"
 #include "computation/operations.H"
 #include "computation/graph_register.H"
-#include "mytypes.H"
 #include <boost/filesystem/operations.hpp>
 
 #include "io.H"

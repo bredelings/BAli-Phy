@@ -53,9 +53,9 @@ string clean(const string& in) {
   return out;
 }
     
-ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree& T) 
+matrix<int> load_alignment_constraint(const string& filename,SequenceTree& T) 
 {
-  ublas::matrix<int> constraint(0,T.n_leaves());
+  matrix<int> constraint(0,T.n_leaves());
 
   if (filename.size()) {
     // Load constraint file
@@ -154,7 +154,7 @@ ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree
   return constraint;
 }
 
-bool constrained(const dynamic_bitset<>& group,const ublas::matrix<int>& constraint,int c) 
+bool constrained(const dynamic_bitset<>& group,const matrix<int>& constraint,int c) 
 {
   bool present = false;
   for(int i=0;i<constraint.size2();i++)
@@ -166,7 +166,7 @@ bool constrained(const dynamic_bitset<>& group,const ublas::matrix<int>& constra
 // This procedure bases the constraint columns ENTIRELY on the leaf sequence alignment!
 // Therefore these constrained columns may be unalignable, depending on the internal node
 //  states!
-vector<int> constraint_columns(const ublas::matrix<int>& constraint,const alignment& A) 
+vector<int> constraint_columns(const matrix<int>& constraint,const alignment& A) 
 {
   // determine which constraints are satisfied, and can be enforced
   vector<int> columns(constraint.size1(),-1);
@@ -277,7 +277,7 @@ vector< pair<int,int> > get_y_ranges_for_band(int D, const vector<int>& seq1, co
 // By considering constraints between seq1 and seq2 in the order of seq12 we can guarantee this,
 //  or bail out if it is impossible.
 
-vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignment& A,
+vector< vector<int> > get_pins(const matrix<int>& constraint,const alignment& A,
 			       const dynamic_bitset<>& group1,const dynamic_bitset<>& group2,
 			       const vector<int>& seq1,const vector<int>& seq2)
 {
@@ -356,7 +356,7 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
 }
 
 
-dynamic_bitset<> constraint_satisfied(const ublas::matrix<int>& constraint,const alignment& A) 
+dynamic_bitset<> constraint_satisfied(const matrix<int>& constraint,const alignment& A) 
 {
   vector<int> columns = constraint_columns(constraint,A);
 

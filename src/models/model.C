@@ -137,7 +137,7 @@ void Model::set_parameter_values(const vector<int>& indices,const vector<object_
   recalc();
 }
 
-efloat_t Model::prior() const
+log_double_t Model::prior() const
 {
   return get_probability();
 }

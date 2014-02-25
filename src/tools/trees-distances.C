@@ -44,7 +44,7 @@ using namespace std;
 using namespace statistics;
 
 template <typename T>
-void print_matrix(const ublas::matrix<T>& M, char space=' ', char eol='\n')
+void print_matrix(const matrix<T>& M, char space=' ', char eol='\n')
 {
   for(int i=0;i<M.size1();i++) {
     vector<double> v(M.size2());
@@ -54,7 +54,7 @@ void print_matrix(const ublas::matrix<T>& M, char space=' ', char eol='\n')
   }
 }
 
-ublas::matrix<double> remove_duplicates(const ublas::matrix<double>& D)
+matrix<double> remove_duplicates(const matrix<double>& D)
 {
   assert(D.size1() == D.size2());
   int N = D.size1();
@@ -88,7 +88,7 @@ ublas::matrix<double> remove_duplicates(const ublas::matrix<double>& D)
   }
 
   // construct the new matrix
-  ublas::matrix<double> D2(indices.size(),indices.size());
+  matrix<double> D2(indices.size(),indices.size());
 
   for(int i=0;i<D2.size1();i++)
     for(int j=0;j<D2.size2();j++)
@@ -170,10 +170,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 typedef double (*tree_metric_fn)(const tree_record&,const tree_record&);
 
-ublas::matrix<double> leaf_distances(const Tree& T)
+matrix<double> leaf_distances(const Tree& T)
 {
   const int n = T.n_leaves();
-  ublas::matrix<double> D(n, n);
+  matrix<double> D(n, n);
 
   // calculate the pairwise distances
   for(int i=0;i<n;i++)
@@ -186,11 +186,11 @@ ublas::matrix<double> leaf_distances(const Tree& T)
   return D;
 }
 
-ublas::matrix<double> distances(const vector<tree_record>& trees, 
+matrix<double> distances(const vector<tree_record>& trees, 
 				tree_metric_fn metric_fn
 				)
 {
-    ublas::matrix<double> D(trees.size(),trees.size());
+    matrix<double> D(trees.size(),trees.size());
 
     // calculate the pairwise distances
     for(int i=0;i<trees.size();i++) {
@@ -253,7 +253,7 @@ struct hungarian_data
 {
   int N;
 
-  ublas::matrix<int> cost;
+  matrix<int> cost;
 
   vector<int> lx;
   vector<int> ly;
@@ -296,7 +296,7 @@ struct hungarian_data
     return cost(x,y) - lx[x] - ly[y];
   }
 
-  hungarian_data(const ublas::matrix<int>& M)
+  hungarian_data(const matrix<int>& M)
     :N(M.size1()),
      cost(M),
      lx(N),
@@ -499,7 +499,7 @@ vector<int> hungarian_data::perfect_matching()
   }
 }
 
-int min_perfect_matching_cost(const ublas::matrix<int>& C)
+int min_perfect_matching_cost(const matrix<int>& C)
 {
   vector<int> x_to_y = hungarian_data(C).perfect_matching();
 
@@ -536,7 +536,7 @@ double matching_distance(const tree_record& t1, const tree_record& t2)
 
   const int N = std::max(t1.n_internal_branches(), t2.n_internal_branches());
 
-  ublas::matrix<int> C(N,N);
+  matrix<int> C(N,N);
 
   for(int i=0;i<t1.n_internal_branches();i++)
     for(int j=0;j<t2.n_internal_branches();j++)
@@ -655,7 +655,7 @@ int main(int argc,char* argv[])
 	  std::cerr<<"Read "<<count<<" trees from '"<<files[i]<<"'"<<std::endl;
       }
 
-      ublas::matrix<double> D = distances(all_trees,metric_fn);
+      matrix<double> D = distances(all_trees,metric_fn);
 
       if (args.count("remove-duplicates"))
 	D = remove_duplicates(D);
@@ -668,7 +668,7 @@ int main(int argc,char* argv[])
       check_supplied_filenames(1,files);
       tree_sample trees(files[0],skip,subsample,max);
 
-      ublas::matrix<double> D = distances(trees,metric_fn);
+      matrix<double> D = distances(trees,metric_fn);
       
       // set the window size
       int max_lag = int( double(trees.size()/10.0 + 1.0 ) );
@@ -700,7 +700,7 @@ int main(int argc,char* argv[])
       if (trees.size() < 2)
 	throw myexception()<<"diameter: only 1 point in set.";
 
-      ublas::matrix<double> D = distances(trees,metric_fn);
+      matrix<double> D = distances(trees,metric_fn);
       
       diameter(D,"1",args);
     }
@@ -738,7 +738,7 @@ int main(int argc,char* argv[])
 	  for(int b=0;b<T.n_branches();b++)
 	    T.branch(b).set_length(1.0);
 
-	ublas::matrix<double> D = leaf_distances(T);
+	matrix<double> D = leaf_distances(T);
 	
 	cout<<join(trees.names(), '\t')<<"\n";
 	vector<double> v(D.size2());
@@ -760,7 +760,7 @@ int main(int argc,char* argv[])
       tree_sample both = trees1;
       both.append_trees(trees2);
 
-      ublas::matrix<double> D  = distances(both,metric_fn);
+      matrix<double> D  = distances(both,metric_fn);
       report_compare(args, D, trees1.size(), trees2.size());
     }
 
@@ -787,7 +787,7 @@ int main(int argc,char* argv[])
       tree_sample trees1(files[0],skip,subsample,max);
       tree_sample trees2(files[1],0,0,-1);
       
-      ublas::matrix<double> D2 = distances(trees2,metric_fn);
+      matrix<double> D2 = distances(trees2,metric_fn);
       valarray<double> distances(0.0, trees2.size());
       for(int i=0;i<D2.size1();i++)
         for(int j=0;j<i;j++) {

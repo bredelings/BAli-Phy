@@ -94,9 +94,9 @@ void show_smodels(std::ostream& o, const Parameters& P)
 
 void print_stats(std::ostream& o, const Parameters& P, bool /* print_alignment */) 
 {
-  efloat_t Pr_prior = P.prior();
-  efloat_t Pr_likelihood = P.likelihood();
-  efloat_t Pr = Pr_prior * Pr_likelihood;
+  log_double_t Pr_prior = P.prior();
+  log_double_t Pr_likelihood = P.likelihood();
+  log_double_t Pr = Pr_prior * Pr_likelihood;
 
   o<<"    prior = "<<Pr_prior;
   for(int i=0;i<P.n_data_partitions();i++) 

@@ -3,6 +3,9 @@
 
 #include <utility>
 
+namespace bali_phy
+{
+
 template <typename T>
 class matrix
 {
@@ -107,5 +110,13 @@ public:
     delete data_;
   }
 };
+
+}
+
+#include <boost/numeric/ublas/matrix.hpp>
+
+using boost::numeric::ublas::matrix;
+
+typedef matrix<double> Matrix;
 
 #endif /* MATRIX_H */

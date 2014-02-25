@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <string>
 #include "tree-dist.H"
-#include "mytypes.H"
+#include "matrix.H"
 
 bool partition_wanders_over(const Partition& p1,const Partition& p2);
 
@@ -85,15 +85,15 @@ public:
   std::vector<int> mapping;
 
   // partition properties
-  ublas::matrix<int> left_of;                // i<j
-  ublas::matrix<int> wanders_over;           // right end wanders
-  ublas::matrix<int> directly_left_of;       // i<j
-  ublas::matrix<int> directly_wanders_over;  // right end (group2)
-  ublas::matrix<int> connected_to;           // right end
+  matrix<int> left_of;                // i<j
+  matrix<int> wanders_over;           // right end wanders
+  matrix<int> directly_left_of;       // i<j
+  matrix<int> directly_wanders_over;  // right end (group2)
+  matrix<int> connected_to;           // right end
   std::vector<int> directly_wanders;              // right end
 
   // node properties
-  ublas::matrix<int> connected;
+  matrix<int> connected;
 
   // list of unique branches
   std::vector<int> branch_order;

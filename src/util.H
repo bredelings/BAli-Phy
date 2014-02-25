@@ -648,10 +648,10 @@ std::vector<std::pair<int,int> > convert_to_column_index_list(const std::vector<
 
 extern int log_verbose;
 
-#include <boost/numeric/ublas/matrix.hpp>
+#include "matrix.H"
 
 template <typename T>
-std::ostream& operator<<(std::ostream& o, const boost::numeric::ublas::matrix<T>& M)
+std::ostream& operator<<(std::ostream& o, const matrix<T>& M)
 {
   for(int i=0;i<M.size1();i++)
   {

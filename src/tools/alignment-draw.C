@@ -348,7 +348,7 @@ string latex_rgb(const vector<int>& RGB) {
 }
 
 
-ublas::matrix<double> read_alignment_certainty(const alignment& A, const string& filename) 
+matrix<double> read_alignment_certainty(const alignment& A, const string& filename) 
 {
   checked_ifstream colorfile(filename,"alignment annotation file");
 
@@ -367,7 +367,7 @@ ublas::matrix<double> read_alignment_certainty(const alignment& A, const string&
   mapping.push_back(mapping.size());
 
   //------------------ Read in the colors ------------------------//
-  ublas::matrix<double> colors(A.length(),A.n_sequences()+1);
+  matrix<double> colors(A.length(),A.n_sequences()+1);
   for(int column=0;column<colors.size1();column++) 
   { 
     // read a line
@@ -669,7 +669,7 @@ int main(int argc,char* argv[])
     owned_ptr<ColorScheme> color_scheme = get_color_scheme(args);
 
     //---------- Read alignment uncertainty, if available --------------//
-    ublas::matrix<double> colors(A.length(),A.n_sequences()+1);
+    matrix<double> colors(A.length(),A.n_sequences()+1);
     
     if (args.count("AU"))
       colors = read_alignment_certainty(A,args["AU"].as<string>());

@@ -90,7 +90,7 @@ class DParray : public DPengine, public state_array {
   /// Length of the DP array
   int length;
 public:
-  efloat_t path_Q_subst(const std::vector<int>&) const {return 1;}
+  log_double_t path_Q_subst(const std::vector<int>&) const {return 1;}
 
   /// Does state S emit?
   bool di(int S) const {return (state_emit[S]&~hidden_bits).any();}
@@ -98,7 +98,7 @@ public:
   /// Return the size of the array
   unsigned size() const {return length;}
 
-  virtual efloat_t path_P(const std::vector<int>& path) const;
+  virtual log_double_t path_P(const std::vector<int>& path) const;
 
   /// compute FP for the whole array
   void forward();
@@ -110,7 +110,7 @@ public:
   virtual std::vector<int> sample_path() const;
 
   /// Compute the probability of all possible paths through theHMM
-  efloat_t Pr_sum_all_paths() const;
+  log_double_t Pr_sum_all_paths() const;
 
   /// Change length
   virtual void set_length(int l);
@@ -140,7 +140,7 @@ public:
   /// Compute the forward probabilities for one cell
   void forward(int);
 
-  efloat_t path_P(const std::vector<int>& path) const;
+  log_double_t path_P(const std::vector<int>& path) const;
 
   /// Sample a path from the HMM
   std::vector<int> sample_path() const;
@@ -148,7 +148,7 @@ public:
   void prune();
 
   /// Compute the probability of all possible paths through theHMM
-  efloat_t Pr_sum_all_paths() const;
+  log_double_t Pr_sum_all_paths() const;
 
   /// Change length
   void set_length(int l);

@@ -235,7 +235,7 @@ void DPmatrix::compute_Pr_sum_all_paths()
   for(int state1=0;state1<n_dp_states();state1++)
     total += (*this)(I,J,state1)*GQ(state1,endstate());
 
-  Pr_total = pow(efloat_t(2.0),scale(I,J)) * total;
+  Pr_total = pow(log_double_t(2.0),scale(I,J)) * total;
   assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 }
 
@@ -283,13 +283,13 @@ void DPmatrix::forward_constrained(const vector< vector<int> >& pins)
   compute_Pr_sum_all_paths();
 }
 
-efloat_t DPmatrix::path_P(const vector<int>& path) const 
+log_double_t DPmatrix::path_P(const vector<int>& path) const 
 {
   const int I = size1()-1;
   const int J = size2()-1;
   int i = I;
   int j = J;
-  efloat_t Pr=1.0;
+  log_double_t Pr=1.0;
 
   int l = path.size()-1;
   int state2 = path[l];
@@ -483,9 +483,9 @@ inline double DPmatrixEmit::emit__(int,int) const {
   return 1.0;
 }
 
-efloat_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const 
+log_double_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const 
 {
-  efloat_t P_sub=1.0;
+  log_double_t P_sub=1.0;
   int i=1,j=1;
   for(int l=0;l<path.size();l++) 
   {
@@ -728,11 +728,11 @@ void DPmatrixConstrained::compute_Pr_sum_all_paths()
     total += (*this)(I,J,S1)*GQ(S1,endstate());
   }
 
-  Pr_total = pow(efloat_t(2.0),scale(I,J)) * total;
+  Pr_total = pow(log_double_t(2.0),scale(I,J)) * total;
   assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 }
 
-efloat_t DPmatrixConstrained::path_P(const vector<int>& path) const 
+log_double_t DPmatrixConstrained::path_P(const vector<int>& path) const 
 {
   const int I = size1()-1;
   const int J = size2()-1;
@@ -744,7 +744,7 @@ efloat_t DPmatrixConstrained::path_P(const vector<int>& path) const
 
   int l = path.size()-1;
 
-  efloat_t Pr=1.0;
+  log_double_t Pr=1.0;
 
   vector<double> transition(n_dp_states());
 

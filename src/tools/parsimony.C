@@ -21,9 +21,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "parsimony.H"
 using namespace std;
 
-ublas::matrix<int> unit_cost_matrix(unsigned size)
+matrix<int> unit_cost_matrix(unsigned size)
 {
-  ublas::matrix<int> cost(size,size);
+  matrix<int> cost(size,size);
   for(int i=0;i<size;i++) {
     cost(i,i) = 0;
     for(int j=0;j<i;j++)
@@ -32,7 +32,7 @@ ublas::matrix<int> unit_cost_matrix(unsigned size)
   return cost;
 }
 
-ublas::matrix<int> unit_cost_matrix(const alphabet& a)
+matrix<int> unit_cost_matrix(const alphabet& a)
 {
   return unit_cost_matrix(a.size());
 }
@@ -46,9 +46,9 @@ unsigned n_nuc_differences(const Triplets& T,int i,int j)
   return n;
 }
 
-ublas::matrix<int> nucleotide_cost_matrix(const Triplets& T)
+matrix<int> nucleotide_cost_matrix(const Triplets& T)
 {
-  ublas::matrix<int> cost(T.size(), T.size());
+  matrix<int> cost(T.size(), T.size());
 
   for(int i=0;i<cost.size1();i++)
     for(int j=0;j<cost.size2();j++)
@@ -58,9 +58,9 @@ ublas::matrix<int> nucleotide_cost_matrix(const Triplets& T)
 }
 
 
-ublas::matrix<int> amino_acid_cost_matrix(const Codons& C)
+matrix<int> amino_acid_cost_matrix(const Codons& C)
 {
-  ublas::matrix<int> cost(C.size(), C.size());
+  matrix<int> cost(C.size(), C.size());
 
   for(int i=0;i<cost.size1();i++)
     for(int j=0;j<cost.size2();j++)
@@ -73,7 +73,7 @@ ublas::matrix<int> amino_acid_cost_matrix(const Codons& C)
 }
 
 template <class B>
-B row_min(const ublas::matrix<B>& M,int row)
+B row_min(const matrix<B>& M,int row)
 {
   B min=M(row,0);
   for(int i=1;i<M.size2();i++)
@@ -92,7 +92,7 @@ B row_min(const ublas::matrix<B>& M,int row)
 
 template <class B>
 void peel_n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,
-		      const ublas::matrix<B>& cost,ublas::matrix<B>& n_muts,
+		      const matrix<B>& cost,matrix<B>& n_muts,
 		      const vector<const_branchview>& branches)
 {
   const int A = a.size();
@@ -152,8 +152,8 @@ void peel_n_mutations(const alphabet& a, const vector<int>& letters, const Seque
 }
 
 template <class B>
-B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const ublas::matrix<B>& cost,
-	      ublas::matrix<B>& n_muts, const vector<const_branchview>& branches)
+B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const matrix<B>& cost,
+	      matrix<B>& n_muts, const vector<const_branchview>& branches)
 {
   int root = T.directed_branch(0).target();
 
@@ -163,29 +163,29 @@ B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree&
 }
 
 template <class B>
-B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const ublas::matrix<B>& cost)
+B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const matrix<B>& cost)
 {
   int root = T.directed_branch(0).target();
 
   vector<const_branchview> branches = branches_toward_node(T,root);
 
-  ublas::matrix<B> n_muts(T.n_nodes(), a.size());
+  matrix<B> n_muts(T.n_nodes(), a.size());
 
   return n_mutations(a,letters,T,cost,n_muts,branches);
 }
 
-template int n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const ublas::matrix<int>& cost);
+template int n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const matrix<int>& cost);
 
-template int n_mutations(const alignment& A, const SequenceTree& T,const ublas::matrix<int>& cost);
+template int n_mutations(const alignment& A, const SequenceTree& T,const matrix<int>& cost);
 
-template double n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const ublas::matrix<double>& cost);
+template double n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const matrix<double>& cost);
 
 
 vector<int> get_parsimony_letters(const alphabet& a, const vector<int>& letters, const SequenceTree& T,
-				  const ublas::matrix<int>& cost)
+				  const matrix<int>& cost)
 {
   int root = T.directed_branch(0).target();
-  ublas::matrix<int> n_muts(T.n_nodes(),a.size());
+  matrix<int> n_muts(T.n_nodes(),a.size());
 
   peel_n_mutations(a,letters,T,cost,n_muts, branches_toward_node(T,root) );
 
@@ -222,11 +222,11 @@ vector<int> get_parsimony_letters(const alphabet& a, const vector<int>& letters,
 
 
 vector<vector<int> > get_all_parsimony_letters(const alphabet& a, const vector<int>& letters, const SequenceTree& T,
-					       const ublas::matrix<int>& cost)
+					       const matrix<int>& cost)
 {
   int root = T.directed_branch(0).target();
 
-  ublas::matrix<int> n_muts(T.n_nodes(), a.size());
+  matrix<int> n_muts(T.n_nodes(), a.size());
   peel_n_mutations(a,letters,T,cost,n_muts, branches_toward_node(T,root) );
 
   // get an order list of branches point away from the root;
@@ -285,7 +285,7 @@ B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree&
 
 
 template <class B>
-B n_mutations(const alignment& A, const SequenceTree& T,const ublas::matrix<B>& cost)
+B n_mutations(const alignment& A, const SequenceTree& T,const matrix<B>& cost)
 {
   const alphabet& a = A.get_alphabet();
 
@@ -295,7 +295,7 @@ B n_mutations(const alignment& A, const SequenceTree& T,const ublas::matrix<B>& 
 
   vector<const_branchview> branches = branches_toward_node(T,root);
 
-  ublas::matrix<B> n_muts(T.n_nodes(), a.size());
+  matrix<B> n_muts(T.n_nodes(), a.size());
 
   double tree_length = 0;
   for(int c=0;c<A.length();c++) {

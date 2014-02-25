@@ -32,7 +32,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <utility>
 
-#include "mytypes.H"
 #include "bounds.H"
 #include "object.H"
 #include "computation/computation.H"
@@ -70,7 +69,7 @@ public:
   virtual Model* clone() const {return new Model(*this);}
 
   /// the prior for the model, on the same scale as proposal densities
-  virtual efloat_t prior() const;
+  virtual log_double_t prior() const;
 
   bool has_bounds(int i) const;
   const Bounds<double>& get_bounds(int i) const;

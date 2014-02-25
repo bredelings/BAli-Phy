@@ -142,7 +142,6 @@ namespace mpi = boost::mpi;
 
 #include "substitution/substitution.H"
 #include "myexception.H"
-#include "mytypes.H"
 #include "tree/sequencetree.H"
 #include "alignment/alignment.H"
 #include "rng.H"
@@ -1021,7 +1020,7 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
       cerr<<p<<"      P = "<<o<<endl;
       if (o > n) {
 	double w = n/(1-n)*(1-o)/o;
-	efloat_t w2 = w;
+	log_double_t w2 = w;
 	
 	P.partitions.push_back(p);
 	P.partition_weights.push_back(w2);

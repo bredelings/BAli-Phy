@@ -239,7 +239,7 @@ void change_branch_length_and_T(owned_ptr<Probability_Model>& P,MoveStats& Stats
 
     p[1].invalidate_subA_index_branch(b);
 
-    vector<efloat_t> rho(2,1);
+    vector<log_double_t> rho(2,1);
     rho[1] = ratio;
 
     //------ Sample the Different Topologies ------//
@@ -372,8 +372,8 @@ void slide_node(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b0)
 
 void check_caching(const Parameters& P1,Parameters& P2)
 {
-  efloat_t pi1 = P1.probability();
-  efloat_t pi2 = P2.probability();
+  log_double_t pi1 = P1.probability();
+  log_double_t pi2 = P2.probability();
   
   double diff = std::abs(log(pi1)-log(pi2));
   if (diff > 1.0e-9) {
@@ -461,8 +461,8 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
 #ifndef NDEBUG
   owned_ptr<Parameters> P3 = P2;
   P3->recalc_smodels();
-  efloat_t L1 = PP->likelihood();
-  efloat_t L2 = P3->likelihood();
+  log_double_t L1 = PP->likelihood();
+  log_double_t L2 = P3->likelihood();
   double diff = std::abs(log(L1)-log(L2));
   if (diff > 1.0e-9) {
     std::cerr<<"scale_mean_only: likelihood diff = "<<diff<<std::endl;
@@ -471,11 +471,11 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
 #endif
 
   //--------- Compute proposal ratio ---------//
-  efloat_t p_ratio = pow(efloat_t(scale),P2->n_data_partitions()-P2->T().n_branches());
-  efloat_t a_ratio = P2->prior_no_alignment()/PP->prior_no_alignment()*p_ratio;
+  log_double_t p_ratio = pow(log_double_t(scale),P2->n_data_partitions()-P2->T().n_branches());
+  log_double_t a_ratio = P2->prior_no_alignment()/PP->prior_no_alignment()*p_ratio;
 
 #ifndef NDEBUG
-  efloat_t a_ratio2 = P2->probability()/PP->probability()*p_ratio;
+  log_double_t a_ratio2 = P2->probability()/PP->probability()*p_ratio;
   double diff2 = std::abs(log(a_ratio2)-log(a_ratio));
   if (diff2 > 1.0e-9) {
     std::cerr<<"scale_mean_only: a_ratio diff = "<<diff2<<std::endl;

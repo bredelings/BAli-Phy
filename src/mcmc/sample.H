@@ -20,7 +20,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef SAMPLE_H
 #define SAMPLE_H
 
-#include "mytypes.H"
 #include "tree/tree.H"
 #include "models/parameters.H"
 #include "mcmc.H"
@@ -59,7 +58,7 @@ void sample_two_nodes(Parameters& P,int b);
 bool three_way_topology_sample(Parameters& P1,const Parameters& P2,const Parameters& P3,int b);
 
 /// Resample between 2 NNI topologies around branch b
-int two_way_topology_sample(std::vector<Parameters>& p,const std::vector<efloat_t>& rho,int b);
+int two_way_topology_sample(std::vector<Parameters>& p,const std::vector<log_double_t>& rho,int b);
 
 
 /*-------------- Top Level Sampling Routines -----------*/

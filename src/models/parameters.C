@@ -530,7 +530,7 @@ void data_partition::branch_mean_changed()
   recalc_smodel();
 }
 
-efloat_t data_partition::prior_no_alignment() const 
+log_double_t data_partition::prior_no_alignment() const 
 {
   return 1.0;
 }
@@ -541,32 +541,32 @@ efloat_t data_partition::prior_no_alignment() const
 // (c) the number of times log( ) is called
 // This should give a further 6% speedup.
 
-efloat_t data_partition::prior_alignment() const 
+log_double_t data_partition::prior_alignment() const 
 {
   if (not variable_alignment()) return 1;
 
   for(int i=0;i<T().n_branches()*2;i++)
     assert(P->get_parameter_value(pairwise_alignment_for_branch[i]));
 
-  efloat_t Pr = *P->evaluate_as<Log_Double>(alignment_prior_index);
+  log_double_t Pr = *P->evaluate_as<Log_Double>(alignment_prior_index);
 
   assert(not different(Pr, ::prior_HMM(*this)));
 
   return Pr;
 }
 
-efloat_t data_partition::prior() const 
+log_double_t data_partition::prior() const 
 {
   return prior_alignment() * prior_no_alignment();
 }
 
 
-efloat_t data_partition::likelihood() const 
+log_double_t data_partition::likelihood() const 
 {
     return substitution::Pr(*this);
 }
 
-efloat_t data_partition::heated_likelihood() const 
+log_double_t data_partition::heated_likelihood() const 
 {
   // Don't waste time calculating likelihood if we're sampling from the prior.
   if (get_beta() == 0)
@@ -909,9 +909,9 @@ void Parameters::check_h_tree() const
 #endif
 }
 
-efloat_t Parameters::prior_no_alignment() const 
+log_double_t Parameters::prior_no_alignment() const 
 {
-  efloat_t Pr = Model::prior();
+  log_double_t Pr = Model::prior();
 
   // prior on the topology and branch lengths
   Pr *= ::prior(*this, T(), 1.0);
@@ -928,9 +928,9 @@ efloat_t Parameters::prior_no_alignment() const
   {
     const double p_unaligned = load_value("P_aligned",0.0);
 
-    efloat_t pNA = p_unaligned;
+    log_double_t pNA = p_unaligned;
 
-    efloat_t pA = (1.0 - p_unaligned);
+    log_double_t pA = (1.0 - p_unaligned);
 
     for(int b=0;b<T().n_branches();b++)
       if (not branch_HMM_type[b])
@@ -946,9 +946,9 @@ efloat_t Parameters::prior_no_alignment() const
   return Pr;
 }
 
-efloat_t Parameters::prior_alignment() const 
+log_double_t Parameters::prior_alignment() const 
 {
-  efloat_t Pr = 1;
+  log_double_t Pr = 1;
 
   for(int i=0;i<n_data_partitions();i++) 
     Pr *= get_data_partition(i).prior_alignment();
@@ -956,22 +956,22 @@ efloat_t Parameters::prior_alignment() const
   return Pr;
 }
 
-efloat_t Parameters::prior() const 
+log_double_t Parameters::prior() const 
 {
   return prior_no_alignment() * prior_alignment();
 }
 
-efloat_t Parameters::likelihood() const 
+log_double_t Parameters::likelihood() const 
 {
-  efloat_t Pr = 1;
+  log_double_t Pr = 1;
   for(int i=0;i<n_data_partitions();i++) 
     Pr *= get_data_partition(i).likelihood();
   return Pr;
 }
 
-efloat_t Parameters::heated_likelihood() const 
+log_double_t Parameters::heated_likelihood() const 
 {
-  efloat_t Pr = 1;
+  log_double_t Pr = 1;
 
   for(int i=0;i<n_data_partitions();i++) 
     Pr *= get_data_partition(i).heated_likelihood();
@@ -1469,10 +1469,10 @@ Parameters::Parameters(const module_loader& L,
 
 bool accept_MH(const Probability_Model& P1,const Probability_Model& P2,double rho)
 {
-  efloat_t p1 = P1.heated_probability();
-  efloat_t p2 = P2.heated_probability();
+  log_double_t p1 = P1.heated_probability();
+  log_double_t p2 = P2.heated_probability();
 
-  efloat_t ratio = efloat_t(rho)*(p2/p1);
+  log_double_t ratio = log_double_t(rho)*(p2/p1);
 
   if (ratio >= 1.0 or uniform() < ratio) 
     return true;

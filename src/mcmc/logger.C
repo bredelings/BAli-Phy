@@ -312,14 +312,14 @@ double mu_scale(const Parameters& P)
     if (parameter == -1) std::abort();
 
     owned_ptr<Probability_Model> P2 = P;
-    vector<efloat_t> Prs;
-    efloat_t total = 0;
+    vector<log_double_t> Prs;
+    log_double_t total = 0;
 
     // Record probabilities
     for(const auto& v: values)
     {
       P2->set_parameter_value(parameter,v);
-      efloat_t Pr = P2->probability();
+      log_double_t Pr = P2->probability();
       total += Pr;
       Prs.push_back(Pr);
     }
@@ -329,12 +329,12 @@ double mu_scale(const Parameters& P)
       Pr /= total;
 
     // Compute expectation
-    efloat_t result = 0;
+    log_double_t result = 0;
     for(int i=0;i<values.size();i++)
     {
       const auto& v = values[i];
-      efloat_t Pr = Prs[i];
-      efloat_t value = 0;
+      log_double_t Pr = Prs[i];
+      log_double_t value = 0;
       if (object_ptr<const constructor> b = dynamic_pointer_cast<const constructor>(v))
       {
 	if (b->f_name == "Prelude.True")
@@ -382,7 +382,7 @@ string MAP_Function::operator()(const owned_ptr<Probability_Model>& P, long t)
 {
   std::ostringstream output;
 
-  efloat_t Pr = P->probability();
+  log_double_t Pr = P->probability();
   if (Pr < MAP_score)
     goto out;
 

@@ -30,9 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-
-namespace ublas = boost::numeric::ublas;
+#include "matrix.H"
 
 // TODO - This kind of alignment requires searching every row to find the characters
 //        in that row.
@@ -48,7 +46,7 @@ class alignment
   std::vector<sequence> sequences;
 
   /// The homology array - accessed through operator()
-  ublas::matrix<int> array;
+  matrix<int> array;
   
   /// Reset the alignment: no sequences, an empty array.
   void clear();

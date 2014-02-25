@@ -24,13 +24,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree/sequencetree.H"
 #include "io.H"
 
-ublas::matrix<int> load_alignment_constraint(const std::string& filename,SequenceTree& T);
+matrix<int> load_alignment_constraint(const std::string& filename,SequenceTree& T);
 
-std::vector< std::vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignment& A,
+std::vector< std::vector<int> > get_pins(const matrix<int>& constraint,const alignment& A,
 					 const boost::dynamic_bitset<>& group1,const boost::dynamic_bitset<>& group2,
 					 const std::vector<int>& seq1,const std::vector<int>& seq2);
 
-boost::dynamic_bitset<> constraint_satisfied(const ublas::matrix<int>& constraint,const alignment& A);
+boost::dynamic_bitset<> constraint_satisfied(const matrix<int>& constraint,const alignment& A);
 
 void report_constraints(const boost::dynamic_bitset<>& s1, const boost::dynamic_bitset<>& s2, int p);
 

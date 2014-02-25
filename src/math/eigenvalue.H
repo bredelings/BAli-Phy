@@ -20,7 +20,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef EIGENVALUE_H
 #define EIGENVALUE_H
 
-#include "mytypes.H"
+#include <vector>
+#include "matrix.H"
 #include "object.H"
 
 class EigenValues: public Object 

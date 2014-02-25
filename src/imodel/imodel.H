@@ -26,7 +26,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef IMODEL_H
 #define IMODEL_H
 
-#include "mytypes.H"
 #include "models/model.H"
 #include "object.H"
 #include "computation/operation.H"
@@ -99,9 +98,9 @@ namespace indel {
 // The indices i and j range from L1 (0), L2 (1), ... , E (n_letters())
 struct transducer_state_info
 {
-  ublas::matrix<int> M;
-  ublas::matrix<int> D;
-  ublas::matrix<int> I;
+  matrix<int> M;
+  matrix<int> D;
+  matrix<int> I;
   transducer_state_info(const indel::PairTransducer& P);
 };
 
@@ -116,7 +115,7 @@ public:
   virtual IndelModel* clone() const =0;
 
   /// Probability that an alignment has a sequence with length 'i'
-  virtual efloat_t lengthp(int i) const=0;
+  virtual log_double_t lengthp(int i) const=0;
 
   /// Alignment distribution for a branch of time t
   virtual indel::PairHMM get_branch_HMM(double t) const=0;
@@ -145,11 +144,11 @@ protected:
   Matrix QE;
 
 public:
-  efloat_t prior() const;
+  log_double_t prior() const;
 
   SimpleIndelModel* clone() const {return new SimpleIndelModel(*this);}
 
-  efloat_t lengthp(int i) const;
+  log_double_t lengthp(int i) const;
 
   indel::PairHMM get_branch_HMM(double t) const;
 
@@ -164,11 +163,11 @@ class TKF1: public IndelModel
   bool time_dependant;
 public:
 
-  efloat_t prior() const;
+  log_double_t prior() const;
   
   TKF1* clone() const {return new TKF1(*this);}
 
-  efloat_t lengthp(int i) const;
+  log_double_t lengthp(int i) const;
   indel::PairHMM get_branch_HMM(double t) const;
 
   std::string name() const;
@@ -181,11 +180,11 @@ class TKF2: public IndelModel
   bool time_dependant;
 public:
 
-  efloat_t prior() const;
+  log_double_t prior() const;
   
   TKF2* clone() const {return new TKF2(*this);}
 
-  efloat_t lengthp(int i) const;
+  log_double_t lengthp(int i) const;
   indel::PairHMM get_branch_HMM(double t) const;
 
   std::string name() const;
@@ -218,7 +217,7 @@ class TKF1_Transducer: public TransducerIndelModel
 public:
   Matrix root_chain() const;
 
-  efloat_t prior() const;
+  log_double_t prior() const;
   TKF1_Transducer* clone() const {return new TKF1_Transducer(*this);}
   indel::PairTransducer get_branch_Transducer(double t) const;
   std::string name() const;
@@ -232,7 +231,7 @@ class FS_Transducer: public TransducerIndelModel
 public:
   Matrix root_chain() const;
 
-  efloat_t prior() const;
+  log_double_t prior() const;
   FS_Transducer* clone() const {return new FS_Transducer(*this);}
   indel::PairTransducer get_branch_Transducer(double t) const;
   std::string name() const;

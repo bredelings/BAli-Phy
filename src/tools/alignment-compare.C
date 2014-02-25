@@ -26,7 +26,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <set>
 #include "myexception.H"
 #include "alignment/alignment.H"
-#include "mytypes.H"
 #include "math/logsum.H"
 #include "optimize.H"
 #include "findroot.H"
@@ -158,13 +157,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
-ublas::matrix<double> get_counts(int s1,int s2,int L1,int L2,
-			      const vector<ublas::matrix<int> >& Ms)
+matrix<double> get_counts(int s1,int s2,int L1,int L2,
+			      const vector<matrix<int> >& Ms)
 {
   const double unit = 1.0/Ms.size();
 
   // Initialize the count matrix
-  ublas::matrix<double> count(L1+1,L2+1);
+  matrix<double> count(L1+1,L2+1);
   for(int i=0;i<count.size1();i++)
     for(int j=0;j<count.size2();j++)
       count(i,j) = 0;
@@ -172,7 +171,7 @@ ublas::matrix<double> get_counts(int s1,int s2,int L1,int L2,
   // get counts of each against each
   for(int i=0;i<Ms.size();i++) 
   {
-    const ublas::matrix<int>& M = Ms[i];
+    const matrix<int>& M = Ms[i];
 
     for(int c=0;c<M.size1();c++) {
       int index1 = M(c,s1);
@@ -185,7 +184,7 @@ ublas::matrix<double> get_counts(int s1,int s2,int L1,int L2,
   return count;
 }
 
-double compute_tv_12(int x,const ublas::matrix<double>& count1,const ublas::matrix<double>& count2)
+double compute_tv_12(int x,const matrix<double>& count1,const matrix<double>& count2)
 {
   x++;
 
@@ -205,7 +204,7 @@ double compute_tv_12(int x,const ublas::matrix<double>& count1,const ublas::matr
 }
 
 
-double compute_tv_21(int y,const ublas::matrix<double>& count1,const ublas::matrix<double>& count2)
+double compute_tv_21(int y,const matrix<double>& count1,const matrix<double>& count2)
 {
   y++;
 
@@ -227,11 +226,11 @@ double compute_tv_21(int y,const ublas::matrix<double>& count1,const ublas::matr
 
 void compute_tv(int i,int j,int L1,int L2,
 		vector<vector<vector<double> > >&  TV,
-		const vector<ublas::matrix<int> >& M1,
-		const vector<ublas::matrix<int> >& M2)
+		const vector<matrix<int> >& M1,
+		const vector<matrix<int> >& M2)
 {
-  ublas::matrix<double> count1 = get_counts(i,j,L1,L2,M1);
-  ublas::matrix<double> count2 = get_counts(i,j,L1,L2,M2);
+  matrix<double> count1 = get_counts(i,j,L1,L2,M1);
+  matrix<double> count2 = get_counts(i,j,L1,L2,M2);
 
   for(int x=0;x<L1;x++)
     TV[i][x][j] = compute_tv_12(x,count1,count2);
@@ -240,7 +239,7 @@ void compute_tv(int i,int j,int L1,int L2,
     TV[j][y][i] = compute_tv_21(y,count1,count2);
 }
 
-alignment get_alignment(const ublas::matrix<int>& M, alignment& A1) 
+alignment get_alignment(const matrix<int>& M, alignment& A1) 
 {
   alignment A2 = A1;
   A2.changelength(M.size1());
@@ -293,8 +292,8 @@ int main(int argc,char* argv[])
     //------------ Load alignment and tree ----------//
     vector<alignment> alignments1;
     vector<alignment> alignments2;
-    vector<ublas::matrix<int> > M1;
-    vector<ublas::matrix<int> > M2;
+    vector<matrix<int> > M1;
+    vector<matrix<int> > M2;
 
     do_setup(args,alignments1,alignments2);
 
@@ -345,7 +344,7 @@ int main(int argc,char* argv[])
 
     vector<int> pi = compute_mapping(sequence_names(A),sequence_names(alignments1[0]));
 
-    ublas::matrix<double> m(A.length(),A.n_sequences());
+    matrix<double> m(A.length(),A.n_sequences());
     for(int i=0;i<A.n_sequences();i++) {
       int x=0;
       for(int c=0;c<A.length();c++) {

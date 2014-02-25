@@ -2,7 +2,7 @@
 
 #include "computation/closure.H"
 #include "computation/program.H"
-#include "mytypes.H"
+#include "math/log-double.H"
 
 class reg;
 
@@ -190,7 +190,7 @@ public:
 
   void compile();
 
-  efloat_t get_probability() const;
+  log_double_t get_probability() const;
 
   int add_probability_factor(const expression_ref& E);
 

@@ -348,7 +348,7 @@ void fragmentize(Matrix& Q,double e)
 
 // f_M(s) = [ ME  + s(MGxGE - MExGG) ] / [ 1 - s(GG + MM) + s^2(MMxGG - MGxGM) ]
 
-efloat_t SimpleIndelModel::lengthp(int l) const 
+log_double_t SimpleIndelModel::lengthp(int l) const 
 {
   using namespace states;
 
@@ -464,10 +464,10 @@ void SimpleIndelModel::recalc()
   QE = Q1;
 }
 
-efloat_t SimpleIndelModel::prior() const 
+log_double_t SimpleIndelModel::prior() const 
 {
   double D = 0.5;
-  efloat_t Pr = 1;
+  log_double_t Pr = 1;
 
   // Calculate prior on lambda_O
   double lambda_O = get_parameter_value_as<Double>(0);
@@ -564,9 +564,9 @@ indel::PairHMM RS07_branch_HMM_(double e, double D, double heat, bool in_trainin
   return Q;
 }
 
-efloat_t TKF1::prior() const 
+log_double_t TKF1::prior() const 
 {
-  efloat_t Pr = 1;
+  log_double_t Pr = 1;
 
   // Calculate prior on lambda
   Pr *= laplace_pdf(get_parameter_value_as<Double>(0),get_parameter_value_as<Double>(2), get_parameter_value_as<Double>(3));
@@ -648,13 +648,13 @@ string TKF1::name() const
   return "TKF1";
 }
 
-efloat_t TKF1::lengthp(int l) const 
+log_double_t TKF1::lengthp(int l) const 
 {
   double mean_length = get_parameter_value_as<Double>(1);
 
   double sigma = mean_length/(1.0 + mean_length);
 
-  return (1.0-sigma)*pow(efloat_t(sigma),l);
+  return (1.0-sigma)*pow(log_double_t(sigma),l);
 }
 
 TKF1::TKF1(const module_loader& L, bool b)
@@ -668,9 +668,9 @@ TKF1::TKF1(const module_loader& L, bool b)
 }
 
 
-efloat_t TKF2::prior() const 
+log_double_t TKF2::prior() const 
 {
-  efloat_t Pr = 1;
+  log_double_t Pr = 1;
 
   // Calculate prior on lambda
   Pr *= laplace_pdf(get_parameter_value_as<Double>(0),get_parameter_value_as<Double>(3), get_parameter_value_as<Double>(4));
@@ -713,7 +713,7 @@ string TKF2::name() const
   return "TKF2";
 }
 
-efloat_t TKF2::lengthp(int l) const 
+log_double_t TKF2::lengthp(int l) const 
 {
   // FIXME -  this is wrong
   std::abort();
@@ -721,7 +721,7 @@ efloat_t TKF2::lengthp(int l) const
 
   double sigma = mean_length/(1.0 + mean_length);
 
-  return (1.0-sigma)*pow(efloat_t(sigma),l);
+  return (1.0-sigma)*pow(log_double_t(sigma),l);
 }
 
 TKF2::TKF2(const module_loader& L, bool b)
@@ -742,9 +742,9 @@ TransducerIndelModel::TransducerIndelModel(const module_loader& module_path)
 
 TransducerIndelModel::~TransducerIndelModel() {}
 
-efloat_t TKF1_Transducer::prior() const 
+log_double_t TKF1_Transducer::prior() const 
 {
-  efloat_t Pr = 1;
+  log_double_t Pr = 1;
 
   // Calculate prior on lambda
   Pr *= laplace_pdf(get_parameter_value_as<Double>(0),get_parameter_value_as<Double>(2), get_parameter_value_as<Double>(3));
@@ -901,9 +901,9 @@ Matrix FS_Transducer::root_chain() const
   return M;
 }
 
-efloat_t FS_Transducer::prior() const 
+log_double_t FS_Transducer::prior() const 
 {
-  efloat_t Pr = 1;
+  log_double_t Pr = 1;
 
   // Calculate prior on indel rate
   double lambda_s = get_parameter_value_as<Double>(0);

@@ -24,7 +24,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <list>
 #include "myexception.H"
 #include "alignment/alignment.H"
-#include "mytypes.H"
 #include "math/logsum.H"
 #include "optimize.H"
 #include "findroot.H"
@@ -108,7 +107,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
-int score(const ublas::matrix<int>& M1, const ublas::matrix<int>& M2, int c1, int c2)
+int score(const matrix<int>& M1, const matrix<int>& M2, int c1, int c2)
 {
   assert(M1.size2() == M2.size2());
   const int N = M1.size2();
@@ -158,8 +157,8 @@ int main(int argc,char* argv[])
     alignment A1 = load_alignment(filename1,load_alphabets(args));
     alignment A2 = load_alignment(filename2,load_alphabets(args));
 
-    ublas::matrix<int> M1 = M(A1);
-    ublas::matrix<int> M2 = M(A2);
+    matrix<int> M1 = M(A1);
+    matrix<int> M2 = M(A2);
 
     int fill = alphabet::gap;
     if (args.count("fill") and args["fill"].as<string>() == "unknown")
@@ -183,7 +182,7 @@ int main(int argc,char* argv[])
 
     //--------- Construct Forward Matrix ---------//
 
-    ublas::matrix<int> F(A1.length()+1,A2.length()+1);
+    matrix<int> F(A1.length()+1,A2.length()+1);
 
     for(int i=0;i<F.size1();i++)
       for(int j=0;j<F.size2();j++) {
@@ -249,8 +248,8 @@ int main(int argc,char* argv[])
     alignment A1b = stretch(A1,columns1,fill);
     alignment A2b = stretch(A2,columns2,fill);
 
-    ublas::matrix<int> M1b = M(A1b);
-    ublas::matrix<int> M2b = M(A2b);
+    matrix<int> M1b = M(A1b);
+    matrix<int> M2b = M(A2b);
 
     if (args.count("merge")) 
     {
@@ -277,7 +276,7 @@ int main(int argc,char* argv[])
 
 	//	cerr<<"N = "<<N<<"  O is "<<O.n_sequences()<<" x "<<O.length()<<endl;
 	// construct difference matrix C in AU format
-	ublas::matrix<int> D(O.length(), O.n_sequences()+1);
+	matrix<int> D(O.length(), O.n_sequences()+1);
 	for(int c=0;c<D.size1();c++) {
 	  D(c,N)=0;
 	  D(c,2*N+1)=0;

@@ -25,16 +25,16 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::vector;
 
-int choose2(efloat_t x, efloat_t y) 
+int choose2(log_double_t x, log_double_t y) 
 {
-  std::vector<efloat_t> Pr(2);
+  std::vector<log_double_t> Pr(2);
   Pr[0] = x;
   Pr[1] = y;
 
   return choose_scratch(Pr);
 }
 
-template <> choose_exception<efloat_t>::choose_exception(int i, const std::vector<efloat_t>& V)
+template <> choose_exception<log_double_t>::choose_exception(int i, const std::vector<log_double_t>& V)
   :Pr(V)
 {
   (*this)<<"No option chosen! (current = "<<i<<")\n";

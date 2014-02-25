@@ -28,7 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 
-#include "mytypes.H"
+#include "math/log-double.H"
 #include "dp-engine.H"
 #include "alignment/alignment.H"
 #include "models/parameters.H"
@@ -47,24 +47,24 @@ std::vector< Matrix > distributions_tree(const data_partition& P,const std::vect
 
 
 /// Sum of likelihoods for columns which don't contain any characters in sequences mentioned in 'nodes'
-efloat_t other_subst(const data_partition& P, const std::vector<int>& nodes);
+log_double_t other_subst(const data_partition& P, const std::vector<int>& nodes);
 
 /// Sum of branch priors for branches not connected to no
-efloat_t other_prior(const data_partition& P, const std::vector<int>& nodes);
+log_double_t other_prior(const data_partition& P, const std::vector<int>& nodes);
 
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_two_nodes_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-			   const std::vector<efloat_t>& rho, bool do_OS,bool do_OP);
+			   const std::vector<log_double_t>& rho, bool do_OS,bool do_OP);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		      const std::vector<efloat_t>& rho, bool do_OS,bool do_OP);
+		      const std::vector<log_double_t>& rho, bool do_OS,bool do_OP);
 
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		      const std::vector<efloat_t>& rho, bool do_OS,bool do_OP, int bandwidth);
+		      const std::vector<log_double_t>& rho, bool do_OS,bool do_OP, int bandwidth);
 
 
 struct sample_tri_multi_calculation
@@ -73,30 +73,30 @@ struct sample_tri_multi_calculation
   const Parameters P0;
 #endif
   std::vector<std::vector<int> > nodes;
-  std::vector<efloat_t> rho;
+  std::vector<log_double_t> rho;
   std::vector<std::vector<boost::shared_ptr<DPmatrixConstrained> > > Matrices;
-  std::vector< std::vector<efloat_t> > OS;
-  std::vector< std::vector<efloat_t> > OP;
-  std::vector<efloat_t> Pr;
-  efloat_t C1;
+  std::vector< std::vector<log_double_t> > OS;
+  std::vector< std::vector<log_double_t> > OP;
+  std::vector<log_double_t> Pr;
+  log_double_t C1;
   int bandwidth;
 
   sample_tri_multi_calculation(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes_,
 			       bool do_OS,bool do_OP,int b=-1);
 
-  void set_proposal_probabilities(const std::vector<efloat_t>&);
+  void set_proposal_probabilities(const std::vector<log_double_t>&);
 
   int choose(std::vector<Parameters>& p, bool=true);
 };
 
 //------------------- Checking Routines ------------------------//
 
-void check_match_P(const data_partition& P, efloat_t OS, efloat_t OP, const std::vector<int>& path, const DPengine& Matrices);
+void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, const std::vector<int>& path, const DPengine& Matrices);
 
 
-std::vector<efloat_t> sample_P(const data_partition& P, efloat_t P_choice, efloat_t rho,
+std::vector<log_double_t> sample_P(const data_partition& P, log_double_t P_choice, log_double_t rho,
 			  const std::vector<int>& path, const DPengine& Matrices);
 
-void check_sampling_probabilities(const std::vector< std::vector<efloat_t> >& PR);
+void check_sampling_probabilities(const std::vector< std::vector<log_double_t> >& PR);
 
 #endif

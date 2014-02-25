@@ -121,7 +121,7 @@ std::pair<vector<int>,vector<int> > find_major_character(const alignment& A,int 
   return std::pair<vector<int>,vector<int> >(majority,safe);
 }
 
-int n_characters_in_column(const ublas::matrix<int>& M,int c)
+int n_characters_in_column(const matrix<int>& M,int c)
 {
   int count = 0;
   for(int s=0;s<M.size2();s++)
@@ -164,8 +164,8 @@ int main(int argc,char* argv[])
 
     vector<unsigned> L = sequence_lengths(A);
 
-    ublas::matrix<int> MA = M(A);
-    ublas::matrix<int> MA2 = MA;
+    matrix<int> MA = M(A);
+    matrix<int> MA2 = MA;
 
     //------- Write the sequence names ------//
     for(int i=0;i<A.n_sequences();i++) {

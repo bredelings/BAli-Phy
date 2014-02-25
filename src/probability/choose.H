@@ -22,9 +22,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 #include "rng.H"
-#include "mytypes.H"
 #include "myexception.H"
 #include "util.H"
+#include "math/log-double.H"
 
 template <typename F>
 class choose_exception: public myexception {
@@ -49,10 +49,10 @@ public:
   ~choose_exception() throw() {}
 };
 
-template <> choose_exception<efloat_t>::choose_exception(int i, const std::vector<efloat_t>& V);
+template <> choose_exception<log_double_t>::choose_exception(int i, const std::vector<log_double_t>& V);
 
 /// Select from choice 0 or 1 in proportion to the probabilities given.
-int choose2(efloat_t, efloat_t);
+int choose2(log_double_t, log_double_t);
 
 /// Select from choices [0,P.size-1] in proportion to the probabilities given, using pre-allocated scratch space.
 template <typename F>

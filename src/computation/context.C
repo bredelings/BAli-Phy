@@ -377,7 +377,7 @@ void context::compile()
 {
 }
 
-efloat_t context::get_probability() const
+log_double_t context::get_probability() const
 {
   return memory()->probability_for_context(context_index);
 }

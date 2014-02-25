@@ -158,11 +158,11 @@ namespace MCMC {
   struct Get_Num_Substitutions_Function: public LoggerFunction<std::string>
   {
     int p;
-    ublas::matrix<int> cost_matrix;
+    matrix<int> cost_matrix;
   public:
     Get_Num_Substitutions_Function* clone() const {return new Get_Num_Substitutions_Function(*this);}
     std::string operator()(const owned_ptr<Probability_Model>& P, long t);
-    Get_Num_Substitutions_Function(int i, const ublas::matrix<int>& C):p(i), cost_matrix(C) {}
+    Get_Num_Substitutions_Function(int i, const matrix<int>& C):p(i), cost_matrix(C) {}
   };
 
   struct Get_Num_Indels_Function: public LoggerFunction<std::string>
@@ -237,7 +237,7 @@ namespace MCMC {
 
   class MAP_Function: public LoggerFunction<std::string>
   {
-    efloat_t MAP_score;
+    log_double_t MAP_score;
     owned_ptr<LoggerFunction<std::string> > F;
   public:
     MAP_Function* clone() const {return new MAP_Function(*this);}

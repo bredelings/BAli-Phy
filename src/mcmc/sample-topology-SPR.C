@@ -78,7 +78,7 @@ void SPR_inc(MoveStats& Stats, MCMC::Result result,const string& name,double L)
     Stats.inc(name+"-2.0+", result);
 }
 
-int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1, int n2) 
+int topology_sample_SPR(vector<Parameters>& p,const vector<log_double_t>& rho,int n1, int n2) 
 {
   assert(p.size() == 2);
   assert(p[0].variable_alignment() == p[1].variable_alignment());
@@ -91,7 +91,7 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1
   try {
     return sample_tri_multi(p,nodes,rho,true,true);
   }
-  catch (choose_exception<efloat_t>& c)
+  catch (choose_exception<log_double_t>& c)
   {
     c.prepend(__PRETTY_FUNCTION__);
     throw c;
@@ -276,7 +276,7 @@ int choose_SPR_target(const SequenceTree& T1, int b1_)
 
     return b2;
   }
-  catch (choose_exception<efloat_t>& c)
+  catch (choose_exception<log_double_t>& c)
   {
     c.prepend(__PRETTY_FUNCTION__);
     throw c;
@@ -463,7 +463,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   else {
 
     //------------- change connecting branch length ----------------//
-    vector<efloat_t> rho(2,1);
+    vector<log_double_t> rho(2,1);
 
     //----------- sample alignments and choose topology -----------//
     C = topology_sample_SPR(p,rho,n1,n2);
@@ -550,9 +550,9 @@ void sample_SPR_flat_one(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b1
   }
 }
 
-efloat_t likelihood_unaligned_root(const Parameters& P)
+log_double_t likelihood_unaligned_root(const Parameters& P)
 {
-  efloat_t Pr = 1;
+  log_double_t Pr = 1;
 
   bool old = P.contains_key("no_unaligned_root");
 
@@ -564,7 +564,7 @@ efloat_t likelihood_unaligned_root(const Parameters& P)
   return Pr;
 }
 
-efloat_t heated_likelihood_unaligned_root(const Parameters& P)
+log_double_t heated_likelihood_unaligned_root(const Parameters& P)
 {
   return pow(likelihood_unaligned_root(P), P.get_beta());
 }
@@ -589,9 +589,9 @@ struct spr_attachment_points: public map<tree_edge,double>
 };
 
 /// Represent the probability of attaching to a branch
-struct spr_attachment_probabilities: public map<tree_edge,efloat_t>
+struct spr_attachment_probabilities: public map<tree_edge,log_double_t>
 {
-  map<tree_edge,efloat_t> LLL;
+  map<tree_edge,log_double_t> LLL;
 };
 
 /// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
@@ -843,8 +843,8 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
 #ifdef DEBUG_SPR_ALL
   Pr.LLL[I.B0] = P.heated_likelihood();
 
-  efloat_t PR1 = P.heated_likelihood();
-  efloat_t PR2 = heated_likelihood_unaligned_root(P);
+  log_double_t PR1 = P.heated_likelihood();
+  log_double_t PR2 = heated_likelihood_unaligned_root(P);
     
   assert(std::abs(PR1.log() - PR2.log()) < 1.0e-8);
 #endif
@@ -906,9 +906,9 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     // **3. RECORD** the tree and likelihood
     Pr[B2] = heated_likelihood_unaligned_root(P) * P.prior_no_alignment();
 #ifdef DEBUG_SPR_ALL
-    efloat_t PR2 = heated_likelihood_unaligned_root(P);
+    log_double_t PR2 = heated_likelihood_unaligned_root(P);
     Pr.LLL[B2] = PR2;
-    //    efloat_t PR1 = P.heated_likelihood();
+    //    log_double_t PR1 = P.heated_likelihood();
     //    cerr<<"  PR1 = "<<PR1.log()<<"  PR2 = "<<PR2.log()<<"   diff = "<<PR2.log() - PR1.log()<<endl;
 #endif
 
@@ -930,8 +930,8 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
 
 /// This just computes nodes and calls sample_tri_multi
 bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
-					const vector<efloat_t>& Pr,
-					const vector<efloat_t>& PrL,
+					const vector<log_double_t>& Pr,
+					const vector<log_double_t>& PrL,
 					const spr_info& I, int C,
 					const spr_attachment_points& locations
 					)
@@ -953,14 +953,14 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 
   //--------- Compute PrL2: reverse proposal probabilities ---------//
 
-  vector<efloat_t> PrL2 = PrL;
+  vector<log_double_t> PrL2 = PrL;
 #ifndef DEBUG_SPR_ALL
   if (P.variable_alignment())
 #endif
   {
     Parameters P_temp = p[1];
     spr_attachment_probabilities PrB2 = SPR_search_attachment_points(P_temp, b1, locations, I.BM);
-    vector<efloat_t> Pr2 = I.convert_to_vector(PrB2);
+    vector<log_double_t> Pr2 = I.convert_to_vector(PrB2);
     
     if (not P.variable_alignment())
       for(int i=0;i<Pr.size();i++)
@@ -972,7 +972,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
   }
 
   //----------------- Specify proposal probabilities -----------------//
-  vector<efloat_t> rho(2,1);
+  vector<log_double_t> rho(2,1);
   rho[0] = L[0]*choose_MH_P(0, C, PrL ); // Pr(proposing 0->C)
   rho[1] = L[C]*choose_MH_P(C, 0, PrL2); // Pr(proposing C->0)
   
@@ -1092,14 +1092,14 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], b1, locations, I.BM);
 
-  vector<efloat_t> Pr = I.convert_to_vector(PrB);
+  vector<log_double_t> Pr = I.convert_to_vector(PrB);
 #ifdef DEBUG_SPR_ALL
-  vector<efloat_t> LLL = I.convert_to_vector(PrB.LLL);
+  vector<log_double_t> LLL = I.convert_to_vector(PrB.LLL);
 #endif
 
   // Step N-2: CHOOSE an attachment point
 
-  vector<efloat_t> PrL = Pr;
+  vector<log_double_t> PrL = Pr;
   for(int i=0;i<PrL.size();i++)
     PrL[i] *= L[i];
 
@@ -1107,7 +1107,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   try {
     C = choose_MH(0,PrL);
   }
-  catch (choose_exception<efloat_t>& c)
+  catch (choose_exception<log_double_t>& c)
   {
     c.prepend(__PRETTY_FUNCTION__);
     throw c;
@@ -1143,7 +1143,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 #ifdef DEBUG_SPR_ALL
   // The likelihood for attaching at a particular place should not
   // depend on the initial attachment point.
-  efloat_t L_1 = heated_likelihood_unaligned_root(p[1]);
+  log_double_t L_1 = heated_likelihood_unaligned_root(p[1]);
   assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
 #endif
 

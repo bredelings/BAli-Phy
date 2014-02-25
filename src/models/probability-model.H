@@ -29,7 +29,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <map>
 #include <string>
 #include "models/model.H"
-#include "mytypes.H"
 #include "cow-ptr.H"
 
 // If we add a distribution class, note that we may need to have distribution EXPRESSIONS,
@@ -62,12 +61,12 @@ public:
 
   // The prior, likelihood, and probability
   //  (We inherit 'this->prior()' from class Model)
-  virtual efloat_t probability() const {return prior() * likelihood();}
-  virtual efloat_t likelihood() const {return 1.0;}
+  virtual log_double_t probability() const {return prior() * likelihood();}
+  virtual log_double_t likelihood() const {return 1.0;}
 
-  virtual efloat_t heated_prior() const {return prior();}
-  virtual efloat_t heated_likelihood() const {return likelihood();}
-  virtual efloat_t heated_probability() const {return heated_prior() * heated_likelihood();}
+  virtual log_double_t heated_prior() const {return prior();}
+  virtual log_double_t heated_likelihood() const {return likelihood();}
+  virtual log_double_t heated_probability() const {return heated_prior() * heated_likelihood();}
 
   Probability_Model(const module_loader& L)
     :Model(L),keys(new std::map<std::string,double>)

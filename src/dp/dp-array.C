@@ -32,7 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 using std::vector;
 
 // We can ignore scale(i) here, because it factors out.
-efloat_t DParray::path_P(const vector<int>& g_path) const 
+log_double_t DParray::path_P(const vector<int>& g_path) const 
 {
   const int I = size()-1;
   int i=I;
@@ -41,7 +41,7 @@ efloat_t DParray::path_P(const vector<int>& g_path) const
 
   vector<double> transition(n_dp_states());
 
-  efloat_t Pr=1.0;
+  log_double_t Pr=1.0;
   while (l>0) 
   {
     for(int state1=0;state1<n_dp_states();state1++)
@@ -126,14 +126,14 @@ vector<int> DParray::sample_path() const {
   return path;
 }
 
-efloat_t DParray::Pr_sum_all_paths() const {
+log_double_t DParray::Pr_sum_all_paths() const {
   const int I = size()-1;
 
   double total = 0.0;
   for(int state1=0;state1<n_dp_states();state1++)
     total += (*this)(I,state1) * GQ(state1,endstate());
 
-  return pow(efloat_t(2.0),scale(I)) * total;
+  return pow(log_double_t(2.0),scale(I)) * total;
 }
 
 /// Here we set the SEQUENCE length 'l'.  This gives rise to a
@@ -168,7 +168,7 @@ DParray::DParray(int l, const HMM& H)
 }
 
 // We can ignore scale(i) here, because it factors out.
-efloat_t DParrayConstrained::path_P(const vector<int>& g_path) const 
+log_double_t DParrayConstrained::path_P(const vector<int>& g_path) const 
 {
   const int I = size()-1;
   int i=I;
@@ -177,7 +177,7 @@ efloat_t DParrayConstrained::path_P(const vector<int>& g_path) const
 
   vector<double> transition(n_dp_states());
 
-  efloat_t Pr=1.0;
+  log_double_t Pr=1.0;
   while (l>0) 
   {
     transition.resize(states(i).size());
@@ -368,7 +368,7 @@ void DParrayConstrained::prune() {
   std::cerr<<" order1 = "<<order1<<"    order2 = "<<order2<<"  fraction = "<<double(order2)/double(order1)<<std::endl;
 }
 
-efloat_t DParrayConstrained::Pr_sum_all_paths() const 
+log_double_t DParrayConstrained::Pr_sum_all_paths() const 
 {
   const int I = size()-1;
 
@@ -378,7 +378,7 @@ efloat_t DParrayConstrained::Pr_sum_all_paths() const
     total += (*this)(I,state1) * GQ(state1,endstate());
   }
 
-  return pow(efloat_t(2.0),scale(I)) * total;
+  return pow(log_double_t(2.0),scale(I)) * total;
 }
 
 void DParrayConstrained::set_length(int l)

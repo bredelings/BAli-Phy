@@ -25,7 +25,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <fstream>
 #include <boost/numeric/ublas/io.hpp>
 
-#include "mytypes.H"
 #include "myexception.H"
 #include "tree/sequencetree.H"
 #include "util.H"

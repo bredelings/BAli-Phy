@@ -342,7 +342,7 @@ int reg_heap::register_probability(closure&& C)
   return r;
 }
 
-efloat_t reg_heap::probability_for_context(int c)
+log_double_t reg_heap::probability_for_context(int c)
 {
   if (probability_index == -1)
   {

@@ -25,6 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment.H"
 #include "tree/tree.H"
 #include "object.H"
+#include "matrix.H"
 
 struct pairwise_alignment_t: public std::vector<int>, public Object
 {
@@ -47,9 +48,9 @@ bool operator==(const pairwise_alignment_t&, const pairwise_alignment_t&);
 
 std::vector<std::bitset<64>> convert_to_bits(const pairwise_alignment_t&, int ,int );
 
-ublas::matrix<int> construct(const Tree& T, const std::vector<pairwise_alignment_t>& A);
+matrix<int> construct(const Tree& T, const std::vector<pairwise_alignment_t>& A);
 
-alignment get_alignment(const alignment& A1, const std::vector< std::vector<int>>& sequences, const ublas::matrix<int>& M);
+alignment get_alignment(const alignment& A1, const std::vector< std::vector<int>>& sequences, const matrix<int>& M);
 
 namespace A2 {
 
@@ -65,7 +66,7 @@ namespace A2 {
 
   pairwise_alignment_t get_pairwise_alignment(const alignment& A, int n1, int n2);
 
-  pairwise_alignment_t get_pairwise_alignment(const ublas::matrix<int>& A, int n1, int n2);
+  pairwise_alignment_t get_pairwise_alignment(const matrix<int>& A, int n1, int n2);
 
   pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path);
 }

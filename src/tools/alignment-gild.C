@@ -24,7 +24,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <list>
 #include "myexception.H"
 #include "alignment/alignment.H"
-#include "mytypes.H"
 #include "math/logsum.H"
 #include "optimize.H"
 #include "findroot.H"
@@ -133,7 +132,7 @@ unsigned count_homology(int s1, int i1, int s2, int i2,
 }
 
 // character i of species s1 is not homologous to any character of species s2
-unsigned count_non_homology(int s1, int i1, int s2, const vector<ublas::matrix<int> >& Ms,
+unsigned count_non_homology(int s1, int i1, int s2, const vector<matrix<int> >& Ms,
 			    const vector< vector< vector<int> > >& column_indices) 
 {
   unsigned count = 0;
@@ -150,7 +149,7 @@ unsigned count_non_homology(int s1, int i1, int s2, const vector<ublas::matrix<i
 //   - v[i][j] represents the column of the feature j in alignment i.
 //   - so if v[i][j] == v[i][k] then j and k are paired in alignment i.
 Matrix counts_to_probability(const Tree& T,const vector<int>& column, 
-			     const vector<ublas::matrix<int> >& Ms,
+			     const vector<matrix<int> >& Ms,
 			     const vector< vector< vector<int> > >& column_indices) 
 {
   assert(T.n_leaves() == column.size());
@@ -273,9 +272,7 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
 }
 
 
-//using namespace boost::numeric::ublas;
-
-vector<int> get_column(const ublas::matrix<int>& MA,int c,int nleaves) {
+vector<int> get_column(const matrix<int>& MA,int c,int nleaves) {
   vector<int> column(nleaves);
   for(int i=0;i<nleaves;i++)
     column[i] = MA(c,i);
@@ -523,7 +520,7 @@ int main(int argc,char* argv[]) {
     alignment A;
     RootedSequenceTree RT;
     list<alignment> alignments;
-    vector<ublas::matrix<int> > Ms;
+    vector<matrix<int> > Ms;
     do_setup(args,alignments,A,RT);
     foreach(i,alignments)
       Ms.push_back(M(*i));
@@ -547,7 +544,7 @@ int main(int argc,char* argv[]) {
       column_indexes.push_back( column_lookup(*i,T.n_leaves()) );
 
     //------- Convert template to index form-------//
-    ublas::matrix<int> MA = M(A);
+    matrix<int> MA = M(A);
 
     //--------- Compute full entire column probabilities -------- */
     vector<double> column_probabilities(A.length());

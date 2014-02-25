@@ -28,11 +28,9 @@ using std::string;
 using std::vector;
 using std::endl;
 
-namespace ublas = boost::numeric::ublas;
-
-void resize(ublas::matrix<int>& M1,int s1,int s2,int clear=0)
+void resize(matrix<int>& M1,int s1,int s2,int clear=0)
 {
-  ublas::matrix<int> M2(s1,s2);
+  matrix<int> M2(s1,s2);
 
   for(int i=0;i<M2.size1();i++)
     for(int j=0;j<M2.size2();j++)
@@ -111,7 +109,7 @@ void alignment::delete_column(int column) {
   for(int i=0;i<n_sequences();i++) 
     assert(array(column,i) == alphabet::gap);
 
-  ublas::matrix<int> array2(array.size1()-1,array.size2());
+  matrix<int> array2(array.size1()-1,array.size2());
   
   for(int i=0;i<array2.size1();i++)
     for(int j=0;j<array2.size2();j++) {
@@ -161,7 +159,7 @@ void alignment::del_sequence(int ds) {
   sequences.erase(sequences.begin()+ds);
 
   //-------------- Alter the matrix ---------------//
-  ublas::matrix<int> array2(array.size1(),array.size2()-1);
+  matrix<int> array2(array.size1(),array.size2()-1);
   
   for(int i=0;i<array2.size1();i++)
     for(int j=0;j<array2.size2();j++) {

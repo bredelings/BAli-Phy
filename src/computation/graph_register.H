@@ -9,7 +9,6 @@
 #include <utility>
 #include "closure.H"
 #include "pool.H"
-#include "mytypes.H"
 #include "program.H"
 #include <boost/shared_ptr.hpp>
 
@@ -175,7 +174,7 @@ public:
 
   int register_probability(closure&& C);
 
-  efloat_t probability_for_context(int c);
+  log_double_t probability_for_context(int c);
 
   // where is the location of the probability expression
   int probability_index = -1;

@@ -86,17 +86,17 @@ int Edges::index_in_sequence(int s1,int x1,int s2) const
 }
 
 
-void add_edges(Edges& E, const vector< ublas::matrix<int> >& Ms,
+void add_edges(Edges& E, const vector< matrix<int> >& Ms,
 	       int s1,int s2,int L1, int L2,double cutoff) 
 { 
-  ublas::matrix<int> count(L1+1,L2+1);
+  matrix<int> count(L1+1,L2+1);
   for(int i=0;i<count.size1();i++)
     for(int j=0;j<count.size2();j++)
       count(i,j) = 0;
 
   // get counts of each against each
   for(int i=0;i<Ms.size();i++) {
-    const ublas::matrix<int>& M = Ms[i];
+    const matrix<int>& M = Ms[i];
 
     for(int c=0;c<M.size1();c++) {
       int index1 = M(c,s1);
@@ -155,7 +155,7 @@ index_matrix unaligned_matrix(const vector<int>& L)
 }
 
 index_matrix::index_matrix(const alignment& A)
-  :ublas::matrix<int>(M(A)),
+  :matrix<int>(M(A)),
    column_index(A.n_sequences()),
    columns(A.length()),
    unknowns(0)
@@ -902,7 +902,7 @@ map<unsigned,pair<unsigned,unsigned> > index_matrix::merge2(const Edges& E,doubl
 
     
 
-bool skips(const ublas::matrix<int>& M,int c,const vector<int>& index) 
+bool skips(const matrix<int>& M,int c,const vector<int>& index) 
 {
   for(int i=0;i<M.size2();i++) 
   {
@@ -919,7 +919,7 @@ bool skips(const ublas::matrix<int>& M,int c,const vector<int>& index)
 
 // There is a better algorithm in Section 7 "The mathematics of 
 // distance-based alignment" in the text S1 supplement of the the FSA paper.
-ublas::matrix<int> get_ordered_matrix(const index_matrix& M)
+matrix<int> get_ordered_matrix(const index_matrix& M)
 {
 #ifndef NDEBUG
   M.check_column_indices();
@@ -971,7 +971,7 @@ ublas::matrix<int> get_ordered_matrix(const index_matrix& M)
     
   }
 
-  ublas::matrix<int> M2(columns.size(),M.size2());
+  matrix<int> M2(columns.size(),M.size2());
 
   for(int i=0;i<M2.size1();i++) {
     for(int j=0;j<M2.size2();j++)
@@ -981,7 +981,7 @@ ublas::matrix<int> get_ordered_matrix(const index_matrix& M)
   return M2;
 }
 
-alignment get_alignment(const ublas::matrix<int>& M, const alignment& A1) 
+alignment get_alignment(const matrix<int>& M, const alignment& A1) 
 {
   alignment A2 = A1;
   A2.changelength(M.size1());

@@ -135,7 +135,7 @@ namespace A2 {
     else return s;
   }
 
-  pairwise_alignment_t get_pairwise_alignment(const ublas::matrix<int>& M, int n1, int n2)
+  pairwise_alignment_t get_pairwise_alignment(const matrix<int>& M, int n1, int n2)
   {
     pairwise_alignment_t pi;
     pi.reserve(M.size1()+2);
@@ -330,7 +330,7 @@ vector<int> graph_alignment::sort()
 // Read a state and optionally pass it down to our children.
 void write_match(int b0, int& c, vector<int>& pos, vector<int>& L,
 		 const vector<pairwise_alignment_t>& A, 
-		 vector<vector<const_branchview>>& children, ublas::matrix<int>& M, const Tree& T)
+		 vector<vector<const_branchview>>& children, matrix<int>& M, const Tree& T)
 {
   using namespace A2;
 
@@ -357,7 +357,7 @@ void write_match(int b0, int& c, vector<int>& pos, vector<int>& L,
 // But first write out the columns of all insertions in children that occur before this column.
 int write_insertions(int b0, int& c, vector<int>& pos, vector<int>& L,
 		      const vector<pairwise_alignment_t>& A, 
-		      vector<vector<const_branchview>>& children, ublas::matrix<int>& M, const Tree& T)
+		      vector<vector<const_branchview>>& children, matrix<int>& M, const Tree& T)
 {
   using namespace A2;
 
@@ -383,7 +383,7 @@ int write_insertions(int b0, int& c, vector<int>& pos, vector<int>& L,
   };
 }
 
-ublas::matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& A)
+matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& A)
 {
   using namespace A2;
 
@@ -402,7 +402,7 @@ ublas::matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& 
     AL += A[b].count(states::G1);
 
   // 3. Initialize index matrix with all -1
-  ublas::matrix<int> M(AL, T.n_nodes(), -1);
+  matrix<int> M(AL, T.n_nodes(), -1);
 
   // 4. Walk through each column in pairwise alignment A[b0]
   vector<int> pos(2*branches.size(),1);   // Skip the start state
@@ -439,7 +439,7 @@ ublas::matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& 
   return M;
 }
 
-alignment get_alignment(const alignment& A1, const vector< vector<int>>& sequences, const ublas::matrix<int>& M)
+alignment get_alignment(const alignment& A1, const vector< vector<int>>& sequences, const matrix<int>& M)
 {
   assert(A1.n_sequences() == M.size2());
 

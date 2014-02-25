@@ -84,7 +84,7 @@ namespace A5 {
   // What happens if we care about alignments that aren't part of the 3way?
   // Does this block stuff?  I think it did...
 
-  efloat_t correction(const data_partition& P,const vector<int>& nodes) 
+  log_double_t correction(const data_partition& P,const vector<int>& nodes) 
   {
     if (P.variable_alignment())
     {
@@ -99,15 +99,15 @@ namespace A5 {
   }
 
 
-  efloat_t correction(const Parameters& P,const vector<int>& nodes) 
+  log_double_t correction(const Parameters& P,const vector<int>& nodes) 
   {
-    efloat_t C = 1.0;
+    log_double_t C = 1.0;
     for(int i=0;i<P.n_data_partitions();i++)
       C *= correction(P[i],nodes);
     return C;
   }
     
-  efloat_t acceptance_ratio(const Parameters& P1,const vector<int>& nodes1,
+  log_double_t acceptance_ratio(const Parameters& P1,const vector<int>& nodes1,
 			      const Parameters& P2,const vector<int>& nodes2) 
   {
     return correction(P1,nodes1)/correction(P2,nodes2);

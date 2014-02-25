@@ -2344,7 +2344,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
     /*
       Identify cycles of size > 1...
       But what is the optimal behavior in that case?
-    ublas::matrix<int> U(vars.size(), vars.size());
+    matrix<int> U(vars.size(), vars.size());
     for(int i=0;i<vars.size();i++)
     {
       std::set<dummy> free = get_free_indices(bodies[i]);

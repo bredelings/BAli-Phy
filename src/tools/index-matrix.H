@@ -20,7 +20,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <map>
 #include <set>
 #include <vector>
-#include "mytypes.H"
 #include "alignment/alignment.H"
 
 struct Edge 
@@ -54,10 +53,10 @@ public:
   Edges(const std::vector<int>& L);
 };
 
-void add_edges(Edges& E, const std::vector< ublas::matrix<int> >& Ms,
+void add_edges(Edges& E, const std::vector< matrix<int> >& Ms,
 	       int s1,int s2,int L1, int L2,double cutoff);
 
-class index_matrix: public ublas::matrix<int> 
+class index_matrix: public matrix<int> 
 {
   std::vector<std::vector<int> > column_index;
 
@@ -91,7 +90,7 @@ public:
   unsigned n_columns() const;
 
   index_matrix(int C, const std::vector<int>& L)
-    :ublas::matrix<int>(C,L.size()),columns(C),unknowns(0)
+    :matrix<int>(C,L.size()),columns(C),unknowns(0)
   {
     for(int i=0;i<L.size();i++)
       column_index.push_back(std::vector<int>(L[i]));
@@ -104,9 +103,9 @@ index_matrix unaligned_matrix(const std::vector<int>& L);
 
 unsigned count_unknowns(const index_matrix& M,int c);
 
-ublas::matrix<int> get_ordered_matrix(const index_matrix& M);
+matrix<int> get_ordered_matrix(const index_matrix& M);
 
-alignment get_alignment(const ublas::matrix<int>& M, const alignment& A);
+alignment get_alignment(const matrix<int>& M, const alignment& A);
 
 alignment get_ordered_alignment(const alignment& A);
 

@@ -18,7 +18,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "mctree.H"
-#include "mytypes.H"
 #include "rng.H"
 
 using namespace std;
@@ -92,7 +91,7 @@ vector<int> MC_tree::map_graph_nodes_to_tree_nodes()
 // Actually, this assumes that connected-ness is a clique relation.
 // This function doesn't find cliques in a general connectedness matrix.
 
-vector<int> get_cliques(const ublas::matrix<int>& connected)
+vector<int> get_cliques(const matrix<int>& connected)
 {
   const int N = connected.size1();
   vector<int> mapping(N,-1);
@@ -546,7 +545,7 @@ bool is_leaf_partition(const Partition& p)
   return p.full() and (p.group1.count() == 1 or (p.group2.count() == 1));
 }
 
-int get_n_conflicts(const ublas::matrix<int>& conflicts,
+int get_n_conflicts(const matrix<int>& conflicts,
 		    int n,
 		    const dynamic_bitset<>& mask)
 {
@@ -573,8 +572,8 @@ int get_n_conflicts(const ublas::matrix<int>& conflicts,
 // number of BF trees extending it...
 
 
-std::pair<dynamic_bitset<>, int> solve_conflicts(const ublas::matrix<int>& conflicts,
-				 const ublas::matrix<int>& dominates,
+std::pair<dynamic_bitset<>, int> solve_conflicts(const matrix<int>& conflicts,
+				 const matrix<int>& dominates,
 				 dynamic_bitset<> invincible,
 				 const vector<int>& goodness)
 {
@@ -675,8 +674,8 @@ vector<Partition> get_moveable_tree(vector<Partition> partitions)
   const int N = partitions.size();
 
   // create and zero conflict matrix
-  ublas::matrix<int> conflict(N,N);
-  ublas::matrix<int> dominates(N,N);
+  matrix<int> conflict(N,N);
+  matrix<int> dominates(N,N);
 
   for(int i=0;i<N;i++)
     for(int j=0;j<N;j++) {

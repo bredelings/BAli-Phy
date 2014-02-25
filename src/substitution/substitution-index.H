@@ -20,7 +20,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef SUBSTITUTION_INDEX_H
 #define SUBSTITUTION_INDEX_H
 
-#include "mytypes.H"
 #include <iostream>
 #include <vector>
 #include "alignment/alignment.H"
@@ -230,41 +229,41 @@ public:
   const std::vector<std::pair<int,int> > operator[](int r) const {return indices[r];}
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> get_subA_index(const std::vector<int>& b,const alignment& A,const Tree& T,bool=false);
+  matrix<int> get_subA_index(const std::vector<int>& b,const alignment& A,const Tree& T,bool=false);
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> get_subA_index_with_nodes(const std::vector<int>& b,const std::vector<std::vector<int>>& s,bool=false);
+  matrix<int> get_subA_index_with_nodes(const std::vector<int>& b,const std::vector<std::vector<int>>& s,bool=false);
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> get_subA_index_with_nodes(const std::vector<int>& b,const std::vector<int>& n, const alignment& A,const Tree& T,bool=false);
+  matrix<int> get_subA_index_with_nodes(const std::vector<int>& b,const std::vector<int>& n, const alignment& A,const Tree& T,bool=false);
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> get_subA_index(const std::vector<int>& b,bool=false) const;
+  matrix<int> get_subA_index(const std::vector<int>& b,bool=false) const;
 
   /// align sub-alignments corresponding to branches in b, but only keep entries corresponding to present/absent characters
-  ublas::matrix<int> get_subA_index_aligned(const std::vector<int>& b,const alignment& A,const Tree& T, bool present);
+  matrix<int> get_subA_index_aligned(const std::vector<int>& b,const alignment& A,const Tree& T, bool present);
 
   /// align sub-alignments corresponding to branches pointing to node
-  ublas::matrix<int> get_subA_index(int node,const alignment& A,const Tree& T); 
+  matrix<int> get_subA_index(int node,const alignment& A,const Tree& T); 
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> get_subA_index_select(const std::vector<int>& b,const alignment& A,const Tree& T);
+  matrix<int> get_subA_index_select(const std::vector<int>& b,const alignment& A,const Tree& T);
 
   /// select sub-alignments columns in branches (b-b.back()) that are aligned to nothing in b.back()
-  ublas::matrix<int> get_subA_index_vanishing(const std::vector<int>& b,const alignment& A,const Tree& T);
+  matrix<int> get_subA_index_vanishing(const std::vector<int>& b,const alignment& A,const Tree& T);
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> get_subA_index_select(const std::vector<int>& b) const;
+  matrix<int> get_subA_index_select(const std::vector<int>& b) const;
 
   /// align sub-alignments corresponding to branches in b, and select columns with a node in \a nodes
-  ublas::matrix<int> get_subA_index_any(const std::vector<int>& b,const alignment& A,const Tree& T,const std::vector<int>& nodes);
+  matrix<int> get_subA_index_any(const std::vector<int>& b,const alignment& A,const Tree& T,const std::vector<int>& nodes);
 
   /// align sub-alignments corresponding to branches in b, and reject columns with a node in \a nodes
-  ublas::matrix<int> get_subA_index_none(const std::vector<int>& b,const alignment& A, const Tree& T,
+  matrix<int> get_subA_index_none(const std::vector<int>& b,const alignment& A, const Tree& T,
 					 const std::vector<int>& nodes);
 
   /// align sub-alignments corresponding to branches in b, and select columns in 'seq'
-  ublas::matrix<int> get_subA_index_columns(const std::vector<int>& b,const alignment& A, const Tree& T,
+  matrix<int> get_subA_index_columns(const std::vector<int>& b,const alignment& A, const Tree& T,
 					    const std::vector<int>& seq);
 
   void invalidate_one_branch(int b);
@@ -319,12 +318,12 @@ void check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T,i
 
 
 /// Count the number of entries in a subA index that are not null
-int n_non_null_entries(const ublas::matrix<int>&);
+int n_non_null_entries(const matrix<int>&);
 
 /// Count the number of columns in a subA index that are not empty.
-int n_non_empty_columns(const ublas::matrix<int>&);
+int n_non_empty_columns(const matrix<int>&);
 
-std::ostream& print_subA(std::ostream& o,const ublas::matrix<int>& I);
+std::ostream& print_subA(std::ostream& o,const matrix<int>& I);
 
 void check_subA(const subA_index_t& I1, const alignment& A1,const subA_index_t& I2, const alignment& A2,const Tree& T);
 #endif

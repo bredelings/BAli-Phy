@@ -19,7 +19,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #ifndef INVERSE_H
 #define INVERSE_H
-#include "mytypes.H"
+
+#include "matrix.H"
+
+namespace ublas = boost::numeric::ublas;
 
 /// Compute A^-1
 ublas::matrix<double,ublas::column_major> inverse(const ublas::matrix<double,ublas::column_major>& A);

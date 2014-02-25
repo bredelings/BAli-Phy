@@ -26,9 +26,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "dp/2way.H"
 
-efloat_t topology_weight(const Parameters& P, const SequenceTree& T) 
+log_double_t topology_weight(const Parameters& P, const SequenceTree& T) 
 {
-  efloat_t p = 1;
+  log_double_t p = 1;
   
   for(int i=0;i<P.partitions.size();i++) {
     if (implies(T,P.partitions[i])) {
@@ -45,9 +45,9 @@ efloat_t topology_weight(const Parameters& P, const SequenceTree& T)
 
 
 /// Tree prior: topology & branch lengths (exponential)
-efloat_t prior_exponential(const SequenceTree& T,double branch_mean) 
+log_double_t prior_exponential(const SequenceTree& T,double branch_mean) 
 {
-  efloat_t p = 1;
+  log_double_t p = 1;
 
   // --------- uniform prior on topologies --------//
   if (T.n_leaves()>3)
@@ -61,9 +61,9 @@ efloat_t prior_exponential(const SequenceTree& T,double branch_mean)
 }
 
 /// Tree prior: topology & branch lengths (gamma)
-efloat_t prior_gamma(const SequenceTree& T,double branch_mean) 
+log_double_t prior_gamma(const SequenceTree& T,double branch_mean) 
 {
-  efloat_t p = 1;
+  log_double_t p = 1;
 
   // --------- uniform prior on topologies --------//
   if (T.n_leaves()>3)
@@ -80,9 +80,9 @@ efloat_t prior_gamma(const SequenceTree& T,double branch_mean)
 }
 
 /// Tree prior: topology & branch lengths (dirichlet)
-efloat_t prior_dirichlet(const SequenceTree& T,double branch_mean) 
+log_double_t prior_dirichlet(const SequenceTree& T,double branch_mean) 
 {
-  efloat_t p = 1;
+  log_double_t p = 1;
 
   // --------- uniform prior on topologies --------//
   if (T.n_leaves()>3)
@@ -110,9 +110,9 @@ efloat_t prior_dirichlet(const SequenceTree& T,double branch_mean)
 }
 
 /// Tree prior: branch lengths & topology
-efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean) 
+log_double_t prior(const Parameters& P, const SequenceTree& T,double branch_mean) 
 {
-  efloat_t p = 1;
+  log_double_t p = 1;
 
   if (P.branch_prior_type == 0)
     p *= prior_exponential(T,branch_mean);
@@ -128,13 +128,13 @@ efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean)
   return p;
 }
 
-ublas::matrix<int> get_path_counts(const alignment& A,int node1, int node2) 
+matrix<int> get_path_counts(const alignment& A,int node1, int node2) 
 {
   using namespace A2;
 
   int state1 = states::S;
 
-  ublas::matrix<int> counts(5,5);
+  matrix<int> counts(5,5);
   counts.clear();
 
   for(int column=0;column<A.length();column++) 
@@ -163,11 +163,11 @@ ublas::matrix<int> get_path_counts(const alignment& A,int node1, int node2)
 }
 
 /// Probability of a pairwise alignment
-efloat_t prior_branch_from_counts(const ublas::matrix<int>& counts,const indel::PairHMM& Q)
+log_double_t prior_branch_from_counts(const matrix<int>& counts,const indel::PairHMM& Q)
 {
   using namespace A2;
 
-  efloat_t P=1;
+  log_double_t P=1;
 
   // Account for S-? start probability
   for(int i=0;i<Q.size2();i++)
@@ -177,7 +177,7 @@ efloat_t prior_branch_from_counts(const ublas::matrix<int>& counts,const indel::
   // Account for the mass of transitions
   for(int i=0;i<3;i++)
     for(int j=0;j<3;j++) {
-      efloat_t Qij = Q(i,j);
+      log_double_t Qij = Q(i,j);
       // FIXME - if we propose really bad indel parameters, we can get log(Q_ij) where Qij == 0
       if (counts(i,j))
 	P *= pow(Qij,counts(i,j));
@@ -193,16 +193,16 @@ efloat_t prior_branch_from_counts(const ublas::matrix<int>& counts,const indel::
 }
 
 /// Probability of a pairwise alignment
-efloat_t prior_branch(const alignment& A,const indel::PairHMM& Q,int target,
+log_double_t prior_branch(const alignment& A,const indel::PairHMM& Q,int target,
 int source) 
 {
-  ublas::matrix<int> counts = get_path_counts(A,target,source);
+  matrix<int> counts = get_path_counts(A,target,source);
 
   return prior_branch_from_counts(counts,Q);
 }
 
 /// Probability of a multiple alignment if branch alignments independent
-efloat_t prior_HMM_nogiven(const data_partition& P) 
+log_double_t prior_HMM_nogiven(const data_partition& P) 
 {
   const alignment& A = *P.A;
   const Tree& T = P.T();
@@ -212,7 +212,7 @@ efloat_t prior_HMM_nogiven(const data_partition& P)
   check_internal_nodes_connected(A,T);
 #endif
   
-  efloat_t Pr = 1;
+  log_double_t Pr = 1;
 
   for(int b=0;b<T.n_branches();b++) {
     int target = T.branch(b).target();
@@ -224,7 +224,7 @@ efloat_t prior_HMM_nogiven(const data_partition& P)
 }
 
 
-efloat_t prior_HMM_rootless_scale(const data_partition& P)
+log_double_t prior_HMM_rootless_scale(const data_partition& P)
 {
   const Tree& T = P.T();
 
@@ -233,11 +233,11 @@ efloat_t prior_HMM_rootless_scale(const data_partition& P)
   check_internal_nodes_connected(*P.A,T);
 #endif
   
-  efloat_t Pr = 1;
+  log_double_t Pr = 1;
 
   for(int i=T.n_leaves();i<T.n_nodes();i++) {
     int l = P.seqlength(i);
-    efloat_t temp = P.sequence_length_pr(l);
+    log_double_t temp = P.sequence_length_pr(l);
     Pr /= (temp*temp);
   }
 
@@ -246,7 +246,7 @@ efloat_t prior_HMM_rootless_scale(const data_partition& P)
 
 //NOTE  - this will have to change if we ever have sequences at internal nodes
 //        that have other than 3 neighbors
-efloat_t prior_HMM(const data_partition& P) 
+log_double_t prior_HMM(const data_partition& P) 
 {
   return prior_HMM_nogiven(P) * prior_HMM_rootless_scale(P);
 }

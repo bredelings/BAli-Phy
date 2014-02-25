@@ -148,8 +148,8 @@ Matrix aligned_fraction(const variables_map& args,unsigned N,const vector<int>& 
 			    const alignment& A, const Edges& E, double cutoff)
 {
   Matrix fraction_aligned(N,N);
-  ublas::matrix<int> Matches(N,N);
-  ublas::matrix<int> Gaps(N,N);
+  matrix<int> Matches(N,N);
+  matrix<int> Gaps(N,N);
   
   
   for(int s1=0;s1<N;s1++) {
@@ -192,17 +192,17 @@ Matrix aligned_fraction(const variables_map& args,unsigned N,const vector<int>& 
   return fraction_aligned;
 }
 
-double ave_aligned_fraction(const vector< ublas::matrix<int> >& Ms, 
+double ave_aligned_fraction(const vector< matrix<int> >& Ms, 
 			    int s1,int s2,int L1, int L2) 
 {
-  ublas::matrix<int> count(L1+1,L2+1);
+  matrix<int> count(L1+1,L2+1);
   for(int i=0;i<count.size1();i++)
     for(int j=0;j<count.size2();j++)
       count(i,j) = 0;
 
   // get counts of each against each
   for(int i=0;i<Ms.size();i++) {
-    const ublas::matrix<int>& M = Ms[i];
+    const matrix<int>& M = Ms[i];
 
     for(int c=0;c<M.size1();c++) {
       int index1 = M(c,s1);
@@ -256,7 +256,7 @@ int main(int argc,char* argv[])
     
     //------------ Load alignments ---- ----------//
     vector<alignment> alignments;
-    vector<ublas::matrix<int> > Ms;
+    vector<matrix<int> > Ms;
 
     do_setup(args,alignments);
     for(int i=0;i<alignments.size();i++)
@@ -417,7 +417,7 @@ int main(int argc,char* argv[])
 
     M.merge(E,cutoff,strict);
 
-    ublas::matrix<int> M2 = get_ordered_matrix(M);
+    matrix<int> M2 = get_ordered_matrix(M);
 
     alignment consensus = get_alignment(M2,alignments[0]);
 

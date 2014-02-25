@@ -25,7 +25,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "myexception.H"
 #include "alignment/alignment.H"
 #include "arguments.H"
-#include "mytypes.H"
 
 using std::map;
 using std::cin;

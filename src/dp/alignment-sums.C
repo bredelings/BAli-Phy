@@ -33,19 +33,19 @@ using std::vector;
 using std::cerr;
 using std::endl;
 
-efloat_t other_subst(const data_partition& P, const vector<int>& nodes) 
+log_double_t other_subst(const data_partition& P, const vector<int>& nodes) 
 {
   return substitution::other_subst(P,nodes);
 }
 
-efloat_t other_prior(const data_partition& P,const vector<int>& nodes) 
+log_double_t other_prior(const data_partition& P,const vector<int>& nodes) 
 {
   if (not P.variable_alignment()) 
     return 1;
 
   const SequenceTree& T = P.T();
 
-  efloat_t p = 1;
+  log_double_t p = 1;
 
   // Add in the branch alignments
   for(int b=0;b<T.n_branches();b++) {
@@ -175,28 +175,28 @@ vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& s
 }
 
 /// Check offset between (HMM path probabilities) and P (true probabilities) 
-void check_match_P(const data_partition& P, efloat_t OS, efloat_t OP, const vector<int>& path, const DPengine& Matrices) 
+void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, const vector<int>& path, const DPengine& Matrices) 
 {
   vector<int> path_g = Matrices.generalize(path);
 
   //--- Compare path emission probability VS likelihood
-  efloat_t qs = Matrices.path_Q_subst(path_g) * pow(OS,P.get_beta());
-  efloat_t ls = pow(P.likelihood(), P.get_beta());
+  log_double_t qs = Matrices.path_Q_subst(path_g) * pow(OS,P.get_beta());
+  log_double_t ls = pow(P.likelihood(), P.get_beta());
   
   //--- Compare the path probability (Q) and collapsed/generalized path probability (GQ)
-  efloat_t qpGQ = Matrices.path_GQ_path(path_g) *  Matrices.generalize_P(path);
-  efloat_t qpQ  = Matrices.path_Q_path(path);
+  log_double_t qpGQ = Matrices.path_GQ_path(path_g) *  Matrices.generalize_P(path);
+  log_double_t qpQ  = Matrices.path_Q_path(path);
 
   cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
   assert(std::abs(log(qpGQ)-log(qpQ)) < 1.0e-9);
   
   //--- Compare the path transition probabilities (Q) and the alignment prior
-  efloat_t qp = Matrices.path_Q_path(path) * OP;
-  efloat_t lp = P.prior_alignment();
+  log_double_t qp = Matrices.path_Q_path(path) * OP;
+  log_double_t lp = P.prior_alignment();
 
   //--- Compare the offset path probability and the true heated probability
-  efloat_t qt = qs * qp * P.prior_no_alignment();
-  efloat_t lt = P.heated_probability();
+  log_double_t qt = qs * qp * P.prior_no_alignment();
+  log_double_t lt = P.heated_probability();
 
   cerr<<"ls = "<<ls<<"    qs = "<<qs<<endl;
   cerr<<"lp = "<<lp<<"    qp = "<<qp
@@ -215,11 +215,11 @@ void check_match_P(const data_partition& P, efloat_t OS, efloat_t OP, const vect
 }
 
 /// Computes true, sampling, and proposal probabilities
-vector<efloat_t> sample_P(const data_partition& P,
-			  efloat_t ratio, efloat_t rho,
+vector<log_double_t> sample_P(const data_partition& P,
+			  log_double_t ratio, log_double_t rho,
 			  const vector<int>& path, const DPengine& Matrices) 
 {
-  vector<efloat_t> PR(4);
+  vector<log_double_t> PR(4);
 
   vector<int> path_g = Matrices.generalize(path);
 
@@ -246,17 +246,17 @@ vector<efloat_t> sample_P(const data_partition& P,
 
 /// Check that [ pi(A,i) * rho[i] / P(A|i) ] * P(i,0)/P(0,i) = [ pi(A`,0) * rho[0] / P(A`|0) ]
 
-void check_sampling_probabilities(const vector< vector<efloat_t> >& PR) 
+void check_sampling_probabilities(const vector< vector<log_double_t> >& PR) 
 {
-  const vector<efloat_t>& P1 = PR.back();
-  efloat_t ratio1 = P1[0]*P1[2]/P1[1];
+  const vector<log_double_t>& P1 = PR.back();
+  log_double_t ratio1 = P1[0]*P1[2]/P1[1];
 
   if (PR.back()[0] == 0.0 or PR[0][0] == 0.0)
     throw myexception()<<"check_sampling_probabilities: Default choice should not be impossible!";
 
   for(int i=0;i<PR.size();i++) 
   {
-    const vector<efloat_t>& P2 = PR[i];
+    const vector<log_double_t>& P2 = PR[i];
     
     if (P2[0] == 0.0) continue;
 
@@ -267,7 +267,7 @@ void check_sampling_probabilities(const vector< vector<efloat_t> >& PR)
 
     cerr<<" PrS1 = "<<P1[1]<<"    PrS2 = "<<P2[1]<<"    PrS2 - PrS1 = "<<P2[1] / PR.back()[1]<<endl;
     
-    efloat_t ratio2 = (P2[0]*P2[2]/P2[1]) / P2[3];
+    log_double_t ratio2 = (P2[0]*P2[2]/P2[1]) / P2[3];
     double diff = log(ratio2/ratio1);
 
     cerr<<"diff = "<<diff<<endl;

@@ -22,14 +22,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <boost/shared_ptr.hpp>
 #include <vector>
-#include "mytypes.H"
 #include "tree/tree.H"
 #include "matcache.H"
 
 /// An object to store cached conditional likelihoods for a single branch
 struct Likelihood_Cache_Branch: public std::vector< Matrix >
 {
-  efloat_t other_subst;
+  log_double_t other_subst;
   Likelihood_Cache_Branch(int C,int M, int S)
     :std::vector<Matrix>(C,Matrix(M,S)),
      other_subst(1) 
@@ -161,7 +160,7 @@ class Likelihood_Cache {
 
 public:
   /// Previously computed likelihood.
-  efloat_t cached_value;
+  log_double_t cached_value;
 
   /// Can we re-use our previously computed likelihood?
   int  cv_up_to_date() const {return cache->cv_up_to_date(token);}

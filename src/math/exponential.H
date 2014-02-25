@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #ifndef EXPONENTIAL_H
 #define EXPONENTIAL_H
-#include "mytypes.H"
+#include "matrix.H"
 
 class EigenValues;
 Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);

@@ -217,8 +217,8 @@ namespace substitution {
     peeling_info(const Tree&T) { reserve(T.n_branches()); }
   };
 
-  efloat_t calc_root_probability(const alignment&, const Tree& T,Likelihood_Cache& cache,
-				 const Mat_Cache& MC,const vector<int>& rb,const ublas::matrix<int>& index) 
+  log_double_t calc_root_probability(const alignment&, const Tree& T,Likelihood_Cache& cache,
+				 const Mat_Cache& MC,const vector<int>& rb,const matrix<int>& index) 
   {
     total_calc_root_prob++;
 
@@ -249,7 +249,7 @@ namespace substitution {
     for(int i=0;i<rb.size();i++)
       branch_cache.push_back(&cache[rb[i]]);
     
-    efloat_t total = 1;
+    log_double_t total = 1;
     for(int i=0;i<index.size1();i++)
     {
       double p_col = 1;
@@ -314,8 +314,8 @@ namespace substitution {
     return total;
   }
 
-  efloat_t calc_root_probability2(const alignment&, const Tree& T,Likelihood_Cache& cache,
-				  const Mat_Cache& MC,const vector<int>& rb,const ublas::matrix<int>& index) 
+  log_double_t calc_root_probability2(const alignment&, const Tree& T,Likelihood_Cache& cache,
+				  const Mat_Cache& MC,const vector<int>& rb,const matrix<int>& index) 
   {
     total_calc_root_prob++;
 
@@ -344,7 +344,7 @@ namespace substitution {
     for(int i=0;i<rb.size();i++)
       branch_cache.push_back(&cache[rb[i]]);
     
-    efloat_t total = 1;
+    log_double_t total = 1;
     for(int i=0;i<index.size1();i++)
     {
       double p_col = 1;
@@ -404,8 +404,8 @@ namespace substitution {
     return total;
   }
 
-  efloat_t calc_root_probability_unaligned(const alignment&,const Tree& T,Likelihood_Cache& cache,
-					   const Mat_Cache& MC,const vector<int>& rb,const ublas::matrix<int>& index) 
+  log_double_t calc_root_probability_unaligned(const alignment&,const Tree& T,Likelihood_Cache& cache,
+					   const Mat_Cache& MC,const vector<int>& rb,const matrix<int>& index) 
   {
     total_calc_root_prob++;
 
@@ -432,7 +432,7 @@ namespace substitution {
     for(int i=0;i<rb.size();i++)
       branch_cache.push_back(&cache[rb[i]]);
     
-    efloat_t total = 1;
+    log_double_t total = 1;
     for(int i=0;i<index.size1();i++)
     {
       double p_col = 1;
@@ -472,8 +472,8 @@ namespace substitution {
     return total;
   }
 
-  efloat_t calc_root_probability(const data_partition& P,const vector<int>& rb,
-			       const ublas::matrix<int>& index) 
+  log_double_t calc_root_probability(const data_partition& P,const vector<int>& rb,
+			       const matrix<int>& index) 
   {
     return calc_root_probability(*P.A, P.T(), P.LC, P, rb, index);
   }
@@ -694,7 +694,7 @@ namespace substitution {
   /// (ii) "going away" in terms of the node not being present at b.back().source()?
   ///
   /// Answer: Yes, because which columns "go away" is computed and then passed in via \a index.
-  efloat_t collect_vanishing_internal(const vector<int>& b, ublas::matrix<int>& index, Likelihood_Cache& cache,
+  log_double_t collect_vanishing_internal(const vector<int>& b, matrix<int>& index, Likelihood_Cache& cache,
 				      const Mat_Cache& MC)
   {
     assert(b.size() == 3);
@@ -716,7 +716,7 @@ namespace substitution {
     for(int i=0;i<2;i++)
       branch_cache[i] = &cache[b[i]];
     
-    efloat_t total = 1;
+    log_double_t total = 1;
     for(int i=0;i<index.size1();i++)
     {
       double p_col = 1;
@@ -754,7 +754,7 @@ namespace substitution {
   }
 
   /// Get the total likelihood for columns behind b0 that have been deleted before b0.source (e.g. and so b0.source is -).
-  efloat_t get_other_subst_behind_branch(int b0, const alignment& A, const Tree& T, subA_index_t& I, Likelihood_Cache& cache,
+  log_double_t get_other_subst_behind_branch(int b0, const alignment& A, const Tree& T, subA_index_t& I, Likelihood_Cache& cache,
 					 const Mat_Cache& MC)
   {
     // This only makes sense if we have presence/absence information to sequences at internal nodes
@@ -773,7 +773,7 @@ namespace substitution {
       // Get an alignment of subA indices on branches b[0] and b[1] where b0.source is not present
       int node = T.directed_branch(b0).source();
 
-      ublas::matrix<int> index_vanishing = I.get_subA_index_none(b,A,T, vector<int>(1,node));
+      matrix<int> index_vanishing = I.get_subA_index_none(b,A,T, vector<int>(1,node));
 
       b.push_back(b0);
       return collect_vanishing_internal(b, index_vanishing, cache, MC);
@@ -781,7 +781,7 @@ namespace substitution {
     else if (I.kind() == subA_index_t::internal_index)
     {
       b.push_back(b0);
-      ublas::matrix<int> index_vanishing = I.get_subA_index_vanishing(b,A,T);
+      matrix<int> index_vanishing = I.get_subA_index_vanishing(b,A,T);
 
       return collect_vanishing_internal(b, index_vanishing, cache, MC);
     }
@@ -789,7 +789,7 @@ namespace substitution {
       std::abort();
   }
 
-  void peel_internal_branch(const vector<int>& b,ublas::matrix<int>& index, Likelihood_Cache& cache,
+  void peel_internal_branch(const vector<int>& b,matrix<int>& index, Likelihood_Cache& cache,
 			    const vector<Matrix>& transition_P,const Mat_Cache& IF_DEBUG(MC))
   {
     assert(b.size() == 3);
@@ -864,7 +864,7 @@ namespace substitution {
     b.push_back(b0);
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
-    ublas::matrix<int> index = I.get_subA_index_select(b,A,T);
+    matrix<int> index = I.get_subA_index_select(b,A,T);
     assert(index.size1() == I.branch_index_length(b0));
     // the call to I.get_subA-index_select ( ) updates the index for branches in b.
     assert(I.branch_index_valid(b0));
@@ -875,7 +875,7 @@ namespace substitution {
     /*-------------------- Do the other_subst collection part -------------------*/
     if (I.kind() == subA_index_t::internal_index)
     {
-      ublas::matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
+      matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
       cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
     }
     else if (I.kind() == subA_index_t::leaf_index)
@@ -897,7 +897,7 @@ namespace substitution {
     b.push_back(b0);
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
-    ublas::matrix<int> index = I.get_subA_index_select(b,A,T);
+    matrix<int> index = I.get_subA_index_select(b,A,T);
     assert(index.size1() == I.branch_index_length(b0));
     assert(I.branch_index_valid(b0));
 
@@ -976,7 +976,7 @@ namespace substitution {
     /*-------------------- Do the other_subst collection part -------------b-------*/
     if (I.kind() == subA_index_t::internal_index)
     {
-      ublas::matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
+      matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
       cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
     }
     else if (I.kind() == subA_index_t::leaf_index)
@@ -1232,7 +1232,7 @@ namespace substitution {
     LC.root = root;
 
     // select columns with at least one node in 'required_nodes', and re-order them according to the permutation 'ordered_columns'
-    ublas::matrix<int> index = I.get_subA_index_columns(b,A,T,ordered_columns);
+    matrix<int> index = I.get_subA_index_columns(b,A,T,ordered_columns);
 
     IF_DEBUG_S(int n_br = ) calculate_caches_for_node(LC.root, P);
 
@@ -1315,7 +1315,7 @@ namespace substitution {
   }
 
   /// Get the total likelihood for columns behind b0 that have been deleted before b0.source (e.g. and so b0.source is -).
-  efloat_t other_subst_behind_branch(int b0, const vector< vector<int> >& sequences, const alignment& A, const Tree& T, 
+  log_double_t other_subst_behind_branch(int b0, const vector< vector<int> >& sequences, const alignment& A, const Tree& T, 
 				     subA_index_t& I, Likelihood_Cache& LC,
 				     const Mat_Cache& MC)
   {
@@ -1336,7 +1336,7 @@ namespace substitution {
   /// Instead we could simply apply equilibrium frequencies to them right
   /// at the leaf branches of the subtree.
   ///
-  efloat_t other_subst(const data_partition& P, const vector<int>& nodes) 
+  log_double_t other_subst(const data_partition& P, const vector<int>& nodes) 
   {
     const vector< vector<int> >& sequences = *P.sequences;
     const alignment& A = *P.A;
@@ -1352,7 +1352,7 @@ namespace substitution {
 
     vector<int> leaf_branch_list = get_leaf_branches_from_subtree_nodes(T,nodes);
 
-    efloat_t Pr3 = 1;
+    log_double_t Pr3 = 1;
     for(int i=0;i<leaf_branch_list.size();i++)
       Pr3 *= other_subst_behind_branch(leaf_branch_list[i], sequences, A, T, I, LC, MC);
 
@@ -1390,15 +1390,15 @@ namespace substitution {
     // get the relationships with the sub-alignments
     if (dynamic_pointer_cast<subA_index_leaf>(P.subA))
     {
-      ublas::matrix<int> index1 = I.get_subA_index_none(rb,A,T,nodes);
-      efloat_t Pr1 = calc_root_probability(P,rb,index1);
+      matrix<int> index1 = I.get_subA_index_none(rb,A,T,nodes);
+      log_double_t Pr1 = calc_root_probability(P,rb,index1);
       assert(std::abs(log(Pr1) - log(Pr3) ) < 1.0e-9);
 
-      ublas::matrix<int> index2 = I.get_subA_index_any(rb,A,T,nodes);
-      ublas::matrix<int> index  = I.get_subA_index(rb,A,T);
+      matrix<int> index2 = I.get_subA_index_any(rb,A,T,nodes);
+      matrix<int> index  = I.get_subA_index(rb,A,T);
 
-      efloat_t Pr2 = calc_root_probability(P,rb,index2);
-      efloat_t Pr  = calc_root_probability(P,rb,index);
+      log_double_t Pr2 = calc_root_probability(P,rb,index2);
+      log_double_t Pr  = calc_root_probability(P,rb,index);
 
       assert(std::abs(log(Pr1 * Pr2) - log(Pr) ) < 1.0e-9);
     }
@@ -1437,8 +1437,8 @@ namespace substitution {
     else
       std::cerr<<"branch "<<b<<": cached conditional likelihoods are NOT equal"<<std::endl;
 
-    efloat_t other_subst_current = LC1[b].other_subst;
-    efloat_t other_subst_recomputed = LC2[b].other_subst;
+    log_double_t other_subst_current = LC1[b].other_subst;
+    log_double_t other_subst_recomputed = LC2[b].other_subst;
     bool other_subst_equal = (std::abs(other_subst_current.log() - other_subst_recomputed.log()) < 1.0e-9);
     if (other_subst_equal)
       ; //std::cerr<<"branch "<<b<<": other_subst valies are equal"<<endl;
@@ -1470,7 +1470,7 @@ namespace substitution {
 
   }
 
-  efloat_t branch_total(int b0, const subA_index_t& I, const Likelihood_Cache& cache, const Mat_Cache& MC)
+  log_double_t branch_total(int b0, const subA_index_t& I, const Likelihood_Cache& cache, const Mat_Cache& MC)
   {
     // scratch matrix 
     const int n_models = cache.n_models();
@@ -1480,9 +1480,9 @@ namespace substitution {
     Matrix F(n_models,n_states);
     MC.WeightedFrequencyMatrix(F);
 
-    ublas::matrix<int> index = I.get_subA_index(vector<int>(1,b0));
+    matrix<int> index = I.get_subA_index(vector<int>(1,b0));
 
-    efloat_t total = 1;
+    log_double_t total = 1;
     for(int i=0;i<index.size1();i++)
     {
       double p_col = 1;
@@ -1522,11 +1522,11 @@ namespace substitution {
       assert(LC1.up_to_date(b));
       assert(LC2.up_to_date(b));
 
-      efloat_t branch_total1 = branch_total(b,I1,LC1,MC);
-      efloat_t other_subst1 = get_other_subst_behind_branch(b, A, T, I1, LC1, MC);
+      log_double_t branch_total1 = branch_total(b,I1,LC1,MC);
+      log_double_t other_subst1 = get_other_subst_behind_branch(b, A, T, I1, LC1, MC);
 
-      efloat_t branch_total2 = branch_total(b,I2,LC2,MC);
-      efloat_t other_subst2 = get_other_subst_behind_branch(b, A, T, I2, LC2, MC);
+      log_double_t branch_total2 = branch_total(b,I2,LC2,MC);
+      log_double_t other_subst2 = get_other_subst_behind_branch(b, A, T, I2, LC2, MC);
 
       assert(std::abs(log(other_subst1) - log(other_subst2)) < 1.0e-9);
       assert(std::abs(log(branch_total1) - log(branch_total2)) < 1.0e-9);
@@ -1543,7 +1543,7 @@ namespace substitution {
   /// only happen at the substitution root.  This is actually true when called from
   /// the SPR_all routines, but may not make sense otherwise.
   ///
-  efloat_t Pr_unaligned_root(const vector< vector<int> >& sequences, const alignment& A,
+  log_double_t Pr_unaligned_root(const vector< vector<int> >& sequences, const alignment& A,
 			     subA_index_t& I, const Mat_Cache& MC,const Tree& T,Likelihood_Cache& LC)
   {
     total_likelihood++;
@@ -1565,12 +1565,12 @@ namespace substitution {
       rb.push_back(*i);
 
     // Combine the likelihoods from present nodes
-    ublas::matrix<int> index_aligned   = I.get_subA_index_aligned(rb,A,T,true);
-    efloat_t Pr = calc_root_probability(A,T,LC,MC,rb,index_aligned);
+    matrix<int> index_aligned   = I.get_subA_index_aligned(rb,A,T,true);
+    log_double_t Pr = calc_root_probability(A,T,LC,MC,rb,index_aligned);
 
     // FIXME - The problem is that this includes other_subst TWICE
     // Probably we need to factor other_subst collection out of calc_root_probability.
-    ublas::matrix<int> index_unaligned = I.get_subA_index_aligned(rb,A,T,false);
+    matrix<int> index_unaligned = I.get_subA_index_aligned(rb,A,T,false);
     if (I.kind() == subA_index_t::leaf_index)
     {
       // Combine the likelihoods from absent nodes
@@ -1584,7 +1584,7 @@ namespace substitution {
     int n2 = n_non_null_entries(index_unaligned);
     int l2 = n_non_empty_columns(index_unaligned);
 
-    ublas::matrix<int> index = I.get_subA_index(rb,A,T);
+    matrix<int> index = I.get_subA_index(rb,A,T);
     int n3 = n_non_null_entries(index);
     int l3 = n_non_empty_columns(index);
 
@@ -1600,7 +1600,7 @@ namespace substitution {
 
     if (unaligned == 0) 
     {
-      efloat_t Pr2 = calc_root_probability(A,T,LC,MC,rb,index);
+      log_double_t Pr2 = calc_root_probability(A,T,LC,MC,rb,index);
       assert(std::abs(Pr.log() - Pr2.log()) < 1.0e-9);
     }
 #endif
@@ -1608,15 +1608,15 @@ namespace substitution {
     return Pr;
   }
 
-  efloat_t Pr_unaligned_root(const data_partition& P,Likelihood_Cache& LC) {
+  log_double_t Pr_unaligned_root(const data_partition& P,Likelihood_Cache& LC) {
     return Pr_unaligned_root(*P.sequences, *P.A, *P.subA, P, P.T(), LC);
   }
 
-  efloat_t Pr_unaligned_root(const data_partition& P) {
+  log_double_t Pr_unaligned_root(const data_partition& P) {
     return Pr_unaligned_root(P, P.LC);
   }
 
-  efloat_t Pr(const vector< vector<int> >& sequences, const alignment& A,subA_index_t& I, 
+  log_double_t Pr(const vector< vector<int> >& sequences, const alignment& A,subA_index_t& I, 
 	      const Mat_Cache& MC,const Tree& T,Likelihood_Cache& LC)
   {
     total_likelihood++;
@@ -1655,10 +1655,10 @@ namespace substitution {
     }
 
     // get the relationships with the sub-alignments
-    ublas::matrix<int> index = I.get_subA_index(rb,A,T);
+    matrix<int> index = I.get_subA_index(rb,A,T);
 
     // get the probability
-    efloat_t Pr = 1;
+    log_double_t Pr = 1;
     if (T.n_nodes() == 2)
       Pr = calc_root_probability2(A,T,LC,MC,rb,index);
     else
@@ -1676,14 +1676,14 @@ namespace substitution {
     return Pr;
   }
 
-  efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) 
+  log_double_t Pr(const data_partition& P,Likelihood_Cache& LC) 
   {
     return Pr(*P.sequences, *P.A, *P.subA, P, P.T(), LC);
   }
 
 
 
-  efloat_t Pr_from_scratch_leaf(data_partition P)
+  log_double_t Pr_from_scratch_leaf(data_partition P)
   {
     subA_index_leaf subA(P.A->length()+1, P.T().n_branches()*2);
 
@@ -1695,7 +1695,7 @@ namespace substitution {
 
 
 
-  efloat_t Pr_from_scratch_internal(data_partition P)
+  log_double_t Pr_from_scratch_internal(data_partition P)
   {
     assert(P.variable_alignment());
 
@@ -1709,8 +1709,8 @@ namespace substitution {
     return Pr(*P.sequences, *P.A, subA, P, P.T(), LC);
   }
 
-  efloat_t Pr(const data_partition& P) {
-    efloat_t result = Pr(P, P.LC);
+  log_double_t Pr(const data_partition& P) {
+    log_double_t result = Pr(P, P.LC);
 
 #ifdef DEBUG_CACHING
     data_partition P2 = P;
@@ -1718,7 +1718,7 @@ namespace substitution {
     P2.invalidate_subA_index_all();
     for(int i=0;i<P2.T().n_branches();i++)
       P2.setlength(i);
-    efloat_t result2 = Pr(P2, P2.LC);
+    log_double_t result2 = Pr(P2, P2.LC);
 
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
@@ -1728,11 +1728,11 @@ namespace substitution {
 #endif
 
 #ifdef DEBUG_INDEXING
-    efloat_t result3 = Pr_from_scratch_leaf(P);
+    log_double_t result3 = Pr_from_scratch_leaf(P);
 
     if (P.variable_alignment())
     {
-      efloat_t result4 = Pr_from_scratch_internal(P);
+      log_double_t result4 = Pr_from_scratch_internal(P);
 
       //      compare_branch_totals(subA3,subA4,LC3,LC4, P.T(), *P.A, P);
       assert(std::abs(log(result3) - log(result4)) < 1.0e-9);
@@ -1744,9 +1744,9 @@ namespace substitution {
     return result;
   }
 
-  efloat_t combine_likelihoods(const vector<Matrix>& likelihoods)
+  log_double_t combine_likelihoods(const vector<Matrix>& likelihoods)
   {
-    efloat_t Pr = 1;
+    log_double_t Pr = 1;
     for(int i=0;i<likelihoods.size();i++)
       Pr *= element_sum(likelihoods[i]);
     return Pr;
@@ -1806,7 +1806,7 @@ namespace substitution {
       vector<int> nodes;
       if (has_internal_nodes)
 	nodes = {root};
-      ublas::matrix<int> index = I.get_subA_index_with_nodes(rb, nodes, A, T);
+      matrix<int> index = I.get_subA_index_with_nodes(rb, nodes, A, T);
 
       // FIXME - this doesn't handle case where tree has only 2 leaves.
       for(int i=0;i<index.size1();i++)
@@ -1873,7 +1873,7 @@ namespace substitution {
 	nodes = {node};
 
       // FIXME - but what if node is internal and A doesn't have internal sequences?
-      ublas::matrix<int> index = I.get_subA_index_with_nodes(local_branches, nodes, A, T);
+      matrix<int> index = I.get_subA_index_with_nodes(local_branches, nodes, A, T);
       
       for(int i=0;i<index.size1();i++)
       {
@@ -1990,7 +1990,7 @@ namespace substitution {
     // 2. Record likelihoods for disappearing columns
     vector<const_branchview> branches = branches_toward_node(T, cache.root);
 
-    IF_DEBUG_S(efloat_t other_subst1 = 1);
+    IF_DEBUG_S(log_double_t other_subst1 = 1);
     /*
     for(int i=0;i<branches.size();i++)
     {
@@ -2066,13 +2066,13 @@ namespace substitution {
     // Is there some way of iterating over matrices cache(index,branch) where EITHER
     // this (index,branch) goes away OR this branch.target() == cache.root ?
 #ifdef DEBUG_SUBSTITUTION
-    efloat_t other_subst2 = 1;
+    log_double_t other_subst2 = 1;
     for(int i=0;i<root_branches.size();i++)
     {
       assert(cache.up_to_date(root_branches[i]));
-      efloat_t L1 = cache[root_branches[i]].other_subst;
+      log_double_t L1 = cache[root_branches[i]].other_subst;
       other_subst2 *= L1;
-      //      efloat_t L2 = other_subst3[root_branches[i]];
+      //      log_double_t L2 = other_subst3[root_branches[i]];
       //      assert(std::abs(log(L2) - log(L1)) < 1.0e-9);
     }
 
@@ -2089,10 +2089,10 @@ namespace substitution {
     vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, *P.A, *P.subA, P, P.T(), P.LC);
 
 #ifdef DEBUG_SUBSTITUTION
-    efloat_t L1 = combine_likelihoods(likelihoods);
-    efloat_t L2 = Pr_from_scratch_leaf(P);
+    log_double_t L1 = combine_likelihoods(likelihoods);
+    log_double_t L2 = Pr_from_scratch_leaf(P);
     if (P.variable_alignment()) {
-      efloat_t L3 = Pr_from_scratch_internal(P);
+      log_double_t L3 = Pr_from_scratch_internal(P);
       assert(std::abs(log(L3) - log(L2)) < 1.0e-9);
     }
 

@@ -33,23 +33,23 @@ along with BAli-Phy; see the file COPYING.  If not see
 class DPengine: public dp_HMM 
 {
 protected:
-  efloat_t Pr_total;
+  log_double_t Pr_total;
 
 public:
   /// Sample a path from the HMM
   virtual std::vector<int> sample_path() const =0;
 
   /// Calculates the (log) probability of all possible paths through theHMM
-  virtual efloat_t Pr_sum_all_paths() const;
+  virtual log_double_t Pr_sum_all_paths() const;
 
   /// Calculates the (log) probability that this path is sampled by the generalized HMM
-  virtual efloat_t path_P(const std::vector<int>& g_path) const =0;
+  virtual log_double_t path_P(const std::vector<int>& g_path) const =0;
 
   /// Calculate the (log) substitution probability along the path
-  virtual efloat_t path_Q_subst(const std::vector<int>& g_path) const=0;
+  virtual log_double_t path_Q_subst(const std::vector<int>& g_path) const=0;
 
   /// Calculate the (log) probability of this path
-  virtual efloat_t path_Q(const std::vector<int>& g_path) const {
+  virtual log_double_t path_Q(const std::vector<int>& g_path) const {
     return path_GQ_path(g_path) * this->path_Q_subst(g_path);
   }
 

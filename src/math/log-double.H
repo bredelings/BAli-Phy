@@ -21,6 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define LOG_DOUBLE_H
 
 #include <cassert>
+#include <iostream>
 #include "math/logsum.H"
 
 /// A class for handling positive real number in terms of their natural log.
@@ -209,5 +210,9 @@ template<> inline log_double_t exp<log_double_t>(double x) {
 //   y.log() = p * ::log(x);
 //   return y;
 // }
+
+inline std::ostream& operator<<(std::ostream& o,const log_double_t& e) {
+  return o<<log(e);
+}
 
 #endif

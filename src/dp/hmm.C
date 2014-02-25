@@ -35,9 +35,9 @@ using std::vector;
 //      else
 //	Pr += log(1.0-exp(Q(S1,S1)));
 
-efloat_t HMM::path_Q_path(const vector<int>& path) const 
+log_double_t HMM::path_Q_path(const vector<int>& path) const 
 {
-  efloat_t Pr = 0.0;
+  log_double_t Pr = 0.0;
   for(int S=0;S<n_states()-1;S++)
     if (not silent(S))
       Pr += start_P[S] * Q(S,path[0]);

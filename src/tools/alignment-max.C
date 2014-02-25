@@ -102,7 +102,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 
 /// Extract column @c from the index-matrix @M
-vector<int> get_column(const ublas::matrix<int>& M, int c)
+vector<int> get_column(const matrix<int>& M, int c)
 {
   vector<int> column(M.size2(),-1);
 
@@ -160,7 +160,7 @@ vector<int> emitted_before(const emitted_column& c)
   return emitted;
 }
 
-bool get_emitted_column(emitted_column& C,const ublas::matrix<int>& m, int c)
+bool get_emitted_column(emitted_column& C,const matrix<int>& m, int c)
 {
   // the "emitted" value carries over from the previous iteration.
   C.column = get_column(m,c);
@@ -459,7 +459,7 @@ void MPD::add_alignment(const alignment& A)
 
   emitted_column C(N);
 
-  ublas::matrix<int> m = M(A);
+  matrix<int> m = M(A);
 
   for(int c=0; c<m.size1(); c++)
   {
@@ -586,7 +586,7 @@ alignment MPD::get_best_alignment(int type)
   vector<int> path = get_best_path(score);
   
   //---------------- Create alignment matrix -------------------//
-  ublas::matrix<int> M(path.size()-2, L.size());
+  matrix<int> M(path.size()-2, L.size());
   
   for(int i=0;i<M.size1();i++) {
     int S = path[i+1];
@@ -603,7 +603,7 @@ vector<double> MPD::get_column_probabilities(const alignment& A) const
 {
   vector<double> column_pr(A.length(), 0);
       
-  ublas::matrix<int> m = ::M(A);
+  matrix<int> m = ::M(A);
 
   for(int c=0; c<A.length(); c++)
   {

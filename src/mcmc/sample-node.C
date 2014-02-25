@@ -149,10 +149,10 @@ shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<i
 }
 
 int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
-		      const vector<efloat_t>& rho_, bool do_OS,bool do_OP) 
+		      const vector<log_double_t>& rho_, bool do_OS,bool do_OP) 
 {
   vector<vector<int> > nodes = nodes_;
-  vector<efloat_t> rho = rho_; 
+  vector<log_double_t> rho = rho_; 
   assert(p.size() == nodes.size());
  
   //------------ Check the alignment branch constraints ------------//
@@ -167,7 +167,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   }
 
   //----------- Generate the different states and Matrices ---------//
-  efloat_t C1 = A3::correction(p[0],nodes[0]);
+  log_double_t C1 = A3::correction(p[0],nodes[0]);
 #if !defined(NDEBUG_DP) || !defined(NDEBUG)
   const Parameters P0 = p[0];
 #endif
@@ -183,8 +183,8 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 
   //-------- Calculate corrections to path probabilities ---------//
 
-  vector< vector<efloat_t> > OS(p.size());
-  vector< vector<efloat_t> > OP(p.size());
+  vector< vector<log_double_t> > OS(p.size());
+  vector< vector<log_double_t> > OP(p.size());
 
   for(int i=0; i<p.size(); i++) 
   {
@@ -195,17 +195,17 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 	else
 	  OS[i].push_back( 1 );
     else
-      OS[i] = vector<efloat_t>(p[i].n_data_partitions(),efloat_t(1));
+      OS[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
     
     if (do_OP)
       for(int j=0;j<p[i].n_data_partitions();j++)
 	OP[i].push_back( other_prior(p[i][j],nodes[i]) );
     else
-      OP[i] = vector<efloat_t>(p[i].n_data_partitions(),efloat_t(1));
+      OP[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
   }
 
   //---------------- Calculate choice probabilities --------------//
-  vector<efloat_t> Pr(p.size());
+  vector<log_double_t> Pr(p.size());
 
   for(int i=0;i<Pr.size();i++) 
   {
@@ -232,7 +232,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   try {
     C = choose_MH(0,Pr);
   }
-  catch (choose_exception<efloat_t>& c)
+  catch (choose_exception<log_double_t>& c)
   {
     c.prepend(__PRETTY_FUNCTION__);
     throw c;
@@ -276,7 +276,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 	OS[i][j] = p[i][j].likelihood();
 	OP[i][j] = other_prior(p[i][j],nodes[i]);
 	
-	efloat_t OP_i = OP[i][j] / A3::correction(p[i][j],nodes[i]);
+	log_double_t OP_i = OP[i][j] / A3::correction(p[i][j],nodes[i]);
 	
 	check_match_P(p[i][j], OS[i][j], OP_i, paths[i][j], *Matrices[i][j]);
       }
@@ -284,11 +284,11 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 	paths[i].push_back( vector<int>() );
 
   //--------- Compute path probabilities and sampling probabilities ---------//
-  vector< vector<efloat_t> > PR(p.size());
+  vector< vector<log_double_t> > PR(p.size());
 
   for(int i=0;i<p.size();i++) 
   {
-    efloat_t choice_ratio = 1;
+    log_double_t choice_ratio = 1;
     if (i<Pr.size())
       choice_ratio = choose_MH_P(0,i,Pr)/choose_MH_P(i,0,Pr);
     else
@@ -297,7 +297,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     
     //    sample_P(p[i], choice_ratio, rho[i], paths[i], Matrices[i]) );
     //    PR[i][j][0] *= A3::correction(p[i][j],nodes[i]);
-    PR[i] = vector<efloat_t>(4,1);
+    PR[i] = vector<log_double_t>(4,1);
     PR[i][0] = p[i].heated_probability();
     PR[i][2] = rho[i];
     PR[i][3] = choice_ratio;
@@ -319,7 +319,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   // if we reject the move, then don't do anything
   //FIXME - PARTITION - compute and cache P0 part before changing p[0], then we can
   //                     throw P0 away if we want to.
-  efloat_t C2 = A3::correction(p[C],nodes[C]);
+  log_double_t C2 = A3::correction(p[C],nodes[C]);
   if (uniform() > double(C1/C2))
     return -1;
 
@@ -339,7 +339,7 @@ void sample_node(Parameters& P,int node)
   vector< vector<int> > nodes(1);
   nodes[0] = A3::get_nodes_random(T,node);
 
-  vector<efloat_t> rho(1,1);
+  vector<log_double_t> rho(1,1);
 
   int C = sample_node_multi(p,nodes,rho,false,false);
 

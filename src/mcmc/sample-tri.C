@@ -318,13 +318,13 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
 	  OS[i].push_back( 1 );
       }
     else
-      OS[i] = vector<efloat_t>(p[i].n_data_partitions(),efloat_t(1));
+      OS[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
 
     if (do_OP)
       for(int j=0;j<p[i].n_data_partitions();j++) 
 	OP[i].push_back( other_prior(p[i][j],nodes[i]) );
     else
-      OP[i] = vector<efloat_t>(p[i].n_data_partitions(),efloat_t(1));
+      OP[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
   }
 
   //---------------- Calculate choice probabilities --------------//
@@ -345,7 +345,7 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
   assert(Pr[0] > 0.0);
 }
 
-void sample_tri_multi_calculation::set_proposal_probabilities(const vector<efloat_t>& r)
+void sample_tri_multi_calculation::set_proposal_probabilities(const vector<log_double_t>& r)
 {
   rho.resize(Pr.size());
   for(int i=0;i<Pr.size();i++) 
@@ -367,7 +367,7 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
   try {
     C = choose_MH(0,Pr);
   }
-  catch (choose_exception<efloat_t>& c)
+  catch (choose_exception<log_double_t>& c)
   {
     c.prepend(__PRETTY_FUNCTION__);
     throw c;
@@ -434,7 +434,7 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
 	OS[i][j] = other_subst(p[i][j],nodes[i]);
 	OP[i][j] = other_prior(p[i][j],nodes[i]);
 	
-	efloat_t OP_i = OP[i][j] / A3::correction(p[i][j],nodes[i]);
+	log_double_t OP_i = OP[i][j] / A3::correction(p[i][j],nodes[i]);
 	
 	check_match_P(p[i][j], OS[i][j], OP_i, paths[i][j], *Matrices[i][j]);
       }
@@ -443,7 +443,7 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
   }
 
   //--------- Compute path probabilities and sampling probabilities ---------//
-  vector< vector<efloat_t> > PR(p.size());
+  vector< vector<log_double_t> > PR(p.size());
 
   for(int i=0;i<p.size();i++)
   {
@@ -459,14 +459,14 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
       continue;
     }
 
-    efloat_t choice_ratio = 1;
+    log_double_t choice_ratio = 1;
     if (i<Pr.size())
       choice_ratio = choose_MH_P(0,i,Pr)/choose_MH_P(i,0,Pr);
     else
       choice_ratio = 1;
 
     //    sample_P(p[i], choice_ratio, rho[i], paths[i], Matrices[i]) );
-    PR[i] = vector<efloat_t>(4,1);
+    PR[i] = vector<log_double_t>(4,1);
     PR[i][0] = p[i].heated_probability();
     PR[i][2] = rho[i];
     PR[i][3] = choice_ratio;
@@ -486,7 +486,7 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
   //---------------- Adjust for length of n4 and n5 changing --------------------//
   // See Appendix A of Redelings & Suchard (2007) for an explanation.
 
-  efloat_t C2 = A3::correction(p[C],nodes[C]);
+  log_double_t C2 = A3::correction(p[C],nodes[C]);
   // If we reject the proposed move, then don't do anything.
   if (correct and uniform() > double(C1/C2))
     return -1;
@@ -498,7 +498,7 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
 // and match parts of the routine, while saving state.
 
 int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		     const vector<efloat_t>& rho, bool do_OS,bool do_OP) 
+		     const vector<log_double_t>& rho, bool do_OS,bool do_OP) 
 {
   try {
     sample_tri_multi_calculation tri(p, nodes, do_OS, do_OP);
@@ -517,7 +517,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 }
 
 int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		      const vector<efloat_t>& rho, bool do_OS,bool do_OP, int bandwidth) 
+		      const vector<log_double_t>& rho, bool do_OS,bool do_OP, int bandwidth) 
 {
   assert(bandwidth >= 0);
   try {
@@ -552,7 +552,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
     tri2.set_proposal_probabilities(rho);
 
-    efloat_t ratio = tri1.Pr[C1]*choose_MH_P(0,C1,tri1.Pr)/(tri2.Pr[0]*choose_MH_P(C1,0,tri2.Pr));
+    log_double_t ratio = tri1.Pr[C1]*choose_MH_P(0,C1,tri1.Pr)/(tri2.Pr[0]*choose_MH_P(C1,0,tri2.Pr));
 
     ratio *= tri1.C1 / tri2.C1;
 
@@ -590,7 +590,7 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
   vector< vector<int> > nodes(1);
   nodes[0] = A3::get_nodes_branch_random(P.T(),node1,node2);
 
-  vector<efloat_t> rho(1,1);
+  vector<log_double_t> rho(1,1);
 
   int C = -1;
   if (bandwidth >= 0)
@@ -628,7 +628,7 @@ bool tri_sample_alignment_branch(Parameters& P,
 
   vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.T(),node1,node2) );
 
-  vector<efloat_t> rho(2);
+  vector<log_double_t> rho(2);
   rho[0] = 1;
   rho[1] = rho_;
 
@@ -651,7 +651,7 @@ bool tri_sample_alignment_and_parameter(Parameters& P,
 
   vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.T(),node1,node2) );
 
-  vector<efloat_t> rho(2);
+  vector<log_double_t> rho(2);
   rho[0] = 1;
   rho[1] = rho_;
 
@@ -675,7 +675,7 @@ bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
 
   vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.T(), node1,node2) );
 
-  vector<efloat_t> rho(2,1.0);
+  vector<log_double_t> rho(2,1.0);
 
   int C = sample_tri_multi(p,nodes,rho,false,false);
 

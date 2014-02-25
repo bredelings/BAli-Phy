@@ -129,7 +129,7 @@ public:
   /// Sample a path from the HMM
   std::vector<int> sample_path() const;
 
-  efloat_t path_P(const std::vector<int>& path) const;
+  log_double_t path_P(const std::vector<int>& path) const;
 
   DPmatrix(int i1, int i2, const HMM& M);
 
@@ -143,7 +143,7 @@ public:
   /// Compute the forward probabilities for a cell
   void forward_cell(int,int);
 
-  efloat_t path_Q_subst(const std::vector<int>&) const {return 1;}
+  log_double_t path_Q_subst(const std::vector<int>&) const {return 1;}
 
   using DPmatrix::DPmatrix;
 
@@ -173,7 +173,7 @@ public:
   /// The number of different rates
   int nrates() const {return dists1[0].size1();}
 
-  efloat_t path_Q_subst(const std::vector<int>& path) const;
+  log_double_t path_Q_subst(const std::vector<int>& path) const;
 
   /// Emission probabilities for ++
   double emitMM(int i,int j) const;
@@ -216,7 +216,7 @@ class DPmatrixConstrained: public DPmatrixEmit
   virtual void compute_Pr_sum_all_paths();
 public:
 
-  efloat_t path_P(const std::vector<int>& path) const;
+  log_double_t path_P(const std::vector<int>& path) const;
 
 
   /// Sample a path from the HMM

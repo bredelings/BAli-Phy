@@ -2117,12 +2117,12 @@ vector<int> nodes_after(const MC_tree& MC,int b1)
   return nodes;
 }
 
-ublas::matrix<int> edge_crossing_matrix(const graph_layout& GL)
+matrix<int> edge_crossing_matrix(const graph_layout& GL)
 {
   const unsigned n_edges = GL.MC.edges.size();
 
   //--- check all edge pairs to see if they cross ---//
-  ublas::matrix<int> e_cross(n_edges,n_edges);
+  matrix<int> e_cross(n_edges,n_edges);
   for(int i=0;i<e_cross.size1();i++)
     for(int j=0;j<e_cross.size2();j++)
       if (i==j)
@@ -2135,7 +2135,7 @@ ublas::matrix<int> edge_crossing_matrix(const graph_layout& GL)
 
 vector<bool> edge_crossing_vector(const graph_layout& GL)
 {
-  ublas::matrix<int> e_cross = edge_crossing_matrix(GL);
+  matrix<int> e_cross = edge_crossing_matrix(GL);
 
   vector<bool> e_cross_v(e_cross.size1(),false);
 
@@ -2149,9 +2149,9 @@ vector<bool> edge_crossing_vector(const graph_layout& GL)
   return e_cross_v;  
 }
 
-ublas::matrix<int> crossed_nodes_matrix(const graph_layout& GL)
+matrix<int> crossed_nodes_matrix(const graph_layout& GL)
 {
-  ublas::matrix<int> e_cross = edge_crossing_matrix(GL);
+  matrix<int> e_cross = edge_crossing_matrix(GL);
 
   const MC_tree_with_lengths& MC = GL.MC;
 
@@ -2159,7 +2159,7 @@ ublas::matrix<int> crossed_nodes_matrix(const graph_layout& GL)
 
   const unsigned n_nodes = MC.n_nodes();
 
-  ublas::matrix<int> n_cross(n_nodes,n_nodes);
+  matrix<int> n_cross(n_nodes,n_nodes);
   for(int i=0;i<n_nodes;i++)
     for(int j=0;j<n_nodes;j++)
       n_cross(i,j) = 0;
@@ -2200,7 +2200,7 @@ ublas::matrix<int> crossed_nodes_matrix(const graph_layout& GL)
 
 vector<bool> crossed_nodes_vector(const graph_layout& GL)
 {
-  ublas::matrix<int> n_cross = crossed_nodes_matrix(GL);
+  matrix<int> n_cross = crossed_nodes_matrix(GL);
 
   vector<bool> n_cross_v(n_cross.size1(),false);
 
@@ -2240,7 +2240,7 @@ struct energy2: public graph_energy_function
     const unsigned n_nodes = MC.n_nodes();
 
     //--- check all edge pairs to see if they cross ---//
-    //    ublas::matrix<int> n_cross = crossed_nodes_matrix(GL);
+    //    matrix<int> n_cross = crossed_nodes_matrix(GL);
 
     //--------------- resize and zero D ---------------//
     if (D.size() != n_nodes) D.resize(n_nodes);
@@ -2924,7 +2924,7 @@ void graph_plotter::operator()(cairo_t* cr)
 {
   vector<bool> e_cross_v = edge_crossing_vector(L);
 
-  //  ublas::matrix<int> n_cross = crossed_nodes_matrix(L);
+  //  matrix<int> n_cross = crossed_nodes_matrix(L);
 
   //  vector<bool> n_cross_v = crossed_nodes_vector(L);
 
