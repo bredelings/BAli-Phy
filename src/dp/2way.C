@@ -443,8 +443,7 @@ alignment get_alignment(const alignment& A1, const vector< vector<int>>& sequenc
 {
   assert(A1.n_sequences() == M.size2());
 
-  alignment A2 = A1;
-  A2.changelength(M.size1());
+  alignment A2 = blank_copy(A1, M.size1());
 
   // Overwrite the values in A2
   for(int i=0;i<M.size1();i++)
