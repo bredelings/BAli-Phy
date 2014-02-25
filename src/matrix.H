@@ -39,8 +39,23 @@ public:
 
   int size() const {return size1_ * size2_;}
 
-        T& operator()(int i, int j)       {return data_[size2_*i + j];}
-  const T& operator()(int i, int j) const {return data_[size2_*i + j];}
+        T& operator()(int i, int j)       
+  {
+#ifdef DEBUG_BOUNDS_CHECK
+    assert( 0 <= i and i < size1() );
+    assert( 0 <= j and j < size2() );
+#endif
+    return data_[size2_*i + j];
+  }
+
+  const T& operator()(int i, int j) const
+  {
+#ifdef DEBUG_BOUNDS_CHECK
+    assert( 0 <= i and i < size1() );
+    assert( 0 <= j and j < size2() );
+#endif
+    return data_[size2_*i + j];
+  }
 
   void swap(matrix<T>& m2)
   {
