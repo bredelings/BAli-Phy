@@ -9,9 +9,9 @@ builtin is_modifiable 1 "is_modifiable" "Modifiables";
 builtin get_modifiable_index 1 "get_modifiable_index" "Modifiables";
 builtin builtin_new_modifiable 1 "new_modifiable" "Modifiables";
 builtin builtin_new_random_modifiable 3 "new_random_modifiable" "Modifiables";
-builtin evaluate 2 "evaluate";
+builtin evaluate 2 "evaluate" "Modifiables";
 builtin get_modifiable_value 2 "get_modifiable_value" "Modifiables";
-builtin builtin_trigger 1 "trigger";
+builtin builtin_trigger 1 "trigger" "Modifiables";
 builtin builtin_add_parameter 2 "add_parameter" "Modifiables";
 builtin builtin_register_probability 1 "register_probability" "Modifiables";
 
