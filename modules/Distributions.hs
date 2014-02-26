@@ -138,7 +138,7 @@ do_crp'' alpha n bins counts = let { inc (c:cs) 0 = (c+1:cs);
                                      inc (c:cs) i = c:(inc (i-1) cs);
                                      p alpha counts = normalize (map f counts);
                                      nzeros = length (filter (==0) counts);
-                                     f 0 = (intToDouble alpha)/(intToDouble nzeros);
+                                     f 0 = alpha/(intToDouble nzeros);
                                      f i = intToDouble i}
                                in 
                                do { c <- categorical [0.5,0.5];
@@ -150,7 +150,7 @@ do_crp' alpha n bins counts = let { inc (c:cs) 0 = (c+1:cs);
                                     inc (c:cs) i = c:(inc (i-1) cs);
                                     p alpha counts = normalize (map f counts);
                                     nzeros = length (filter (==0) counts);
-                                    f 0 = (intToDouble alpha)/(intToDouble nzeros);
+                                    f 0 = alpha/(intToDouble nzeros);
                                     f i = intToDouble i}
                               in 
                               do {
