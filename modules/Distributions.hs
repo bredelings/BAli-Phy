@@ -135,10 +135,14 @@ normalize v = map (/total) v where {total=sum v};
 do_crp alpha n d = do_crp'' alpha n bins (replicate bins 0) where {bins=n+d};
 do_crp'' alpha 0 bins counts = return [];
 do_crp'' alpha n bins counts = let { inc (c:cs) 0 = (c+1:cs);
-                                     inc (c:cs) i = c:(inc (i-1) cs)}
+                                     inc (c:cs) i = c:(inc (i-1) cs);
+                                     p alpha counts = normalize (map f counts);
+                                     nzeros = length (filter (==0) counts);
+                                     f 0 = (intToDouble alpha)/(intToDouble nzeros);
+                                     f i = intToDouble i}
                                in 
                                do { c <- categorical [0.5,0.5];
-                                    cs <- do_crp'' alpha (n-1) bins counts; 
+                                    cs <- do_crp'' alpha (n-1) bins (inc counts c); 
                                     return (c:cs)};
                                     
 do_crp' alpha 0 bins counts = return [];
