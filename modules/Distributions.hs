@@ -130,6 +130,23 @@ exponential_quantile mu p = gamma_quantile 1.0 mu p;
 sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
 exponential mu = ProbDensity (exponential_density mu) (exponential_quantile mu) (sample_exponential mu) (above 0.0);
 
+normalize v = map (/total) v where {total=sum v};
+
+do_crp alpha n d = do_crp' alpha n bins (replicate bins 0) where {bins=n+d};
+do_crp' alpha 0 bins counts = return [];
+do_crp' alpha n bins counts = let { inc (c:cs) 0 = (c+1:cs);
+                                    inc (c:cs) i = c:(inc (i-1) cs);
+                                    p alpha counts = normalize (map f counts);
+                                    nzeros = length (filter (==0) counts);
+                                    f 0 = (intToDouble alpha)/(intToDouble nzeros);
+                                    f i = intToDouble i}
+                              in 
+                              do {
+                                   c <- categorical (p alpha counts);
+                                   cs <- do_crp alpha (n-1) bins (inc c counts);
+                                   return (c:cs);
+                                 };
+
 builtin crp_density 4 "CRP_density" "Distribution";
 builtin sample_crp_vector 3 "sample_CRP" "Distribution";
 sample_crp alpha n d = Random $ do { v <- (IOAction3 sample_crp_vector alpha n d); return $ list_from_vector v};
