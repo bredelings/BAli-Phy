@@ -1018,6 +1018,7 @@ void pivot_mapping(mapping& vm1, mapping& vm2)
 
 void reg_heap::reroot_at(int t)
 {
+  assert(t > 0);
   if (is_root_token(t)) return;
 
 #ifdef DEBUG_MACHINE
@@ -1075,6 +1076,7 @@ void reg_heap::reroot_at(int t)
 
 void reg_heap::mark_completely_dirty(int t)
 {
+  assert(t > 0);
   int& version = tokens[t].version;
   for(int t2:tokens[t].children)
     version = std::max(version, tokens[t2].version+1);
@@ -1082,6 +1084,7 @@ void reg_heap::mark_completely_dirty(int t)
 
 bool reg_heap::is_dirty(int t) const
 {
+  assert(t > 0);
   for(int t2:tokens[t].children)
     if (tokens[t].version > tokens[t2].version)
       return true;
@@ -1940,6 +1943,7 @@ bool reg_heap::is_terminal_token(int t) const
 
 bool reg_heap::is_root_token(int t) const
 {
+  assert(t > 0);
   assert(root_token != -1);
   assert((t==root_token) == (tokens[t].parent == -1));
   assert(token_is_used(t));
@@ -2038,7 +2042,10 @@ int reg_heap::get_n_contexts() const
 
 int reg_heap::token_for_context(int c) const
 {
-  return token_for_context_[c];
+  assert(c >= 0);
+  int t = token_for_context_[c];
+  assert(t != 0);
+  return t;
 }
 
 int reg_heap::unset_token_for_context(int c)
