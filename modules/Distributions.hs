@@ -135,7 +135,7 @@ normalize v = map (/total) v where {total=sum v};
 do_crp alpha n d = do_crp'' alpha n bins (replicate bins 0) where {bins=n+d};
 do_crp'' alpha 0 bins counts = return [];
 do_crp'' alpha n bins counts = let { inc (c:cs) 0 = (c+1:cs);
-                                     inc (c:cs) i = c:(inc (i-1) cs);
+                                     inc (c:cs) i = c:(inc cs (i-1));
                                      p alpha counts = normalize (map f counts);
                                      nzeros = length (filter (==0) counts);
                                      f 0 = alpha/(intToDouble nzeros);
