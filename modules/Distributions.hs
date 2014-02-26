@@ -132,7 +132,10 @@ exponential mu = ProbDensity (exponential_density mu) (exponential_quantile mu) 
 
 normalize v = map (/total) v where {total=sum v};
 
-do_crp alpha n d = do_crp' alpha n bins (replicate bins 0) where {bins=n+d};
+do_crp alpha n d = do_crp'' alpha n bins (replicate bins 0) where {bins=n+d};
+do_crp'' alpha 0 bins counts = return [];
+do_crp'' alpha n bins counts = do { c <- categorical [0.5,0.5];cs <- do_crp'' alpha (n-1) bins counts; return (c:cs)};
+                                    
 do_crp' alpha 0 bins counts = return [];
 do_crp' alpha n bins counts = let { inc (c:cs) 0 = (c+1:cs);
                                     inc (c:cs) i = c:(inc (i-1) cs);
@@ -142,7 +145,7 @@ do_crp' alpha n bins counts = let { inc (c:cs) 0 = (c+1:cs);
                                     f i = intToDouble i}
                               in 
                               do {
-                                   c <- categorical (p alpha counts);
+                                   c <- categorical [0.5, 0.5]; --(p alpha counts);
                                    cs <- do_crp alpha (n-1) bins (inc c counts);
                                    return (c:cs);
                                  };
@@ -150,7 +153,7 @@ do_crp' alpha n bins counts = let { inc (c:cs) 0 = (c+1:cs);
 builtin crp_density 4 "CRP_density" "Distribution";
 builtin sample_crp_vector 3 "sample_CRP" "Distribution";
 sample_crp alpha n d = Random $ do { v <- (IOAction3 sample_crp_vector alpha n d); return $ list_from_vector v};
-crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (sample_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1));
+crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1));
 
 mixtureRange ((_,dist1):_) = distRange dist1;
 mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x);
