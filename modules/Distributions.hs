@@ -138,7 +138,6 @@ do_crp'' alpha n bins counts = let { inc (c:cs) 0 = (c+1:cs);
                                      inc (c:cs) i = c:(inc cs (i-1));
                                      p alpha counts = normalize (map f counts);
                                      nzeros = length (filter (==0) counts);
-                                     f x = 1.0;
                                      f 0 = alpha/(intToDouble nzeros);
                                      f i = intToDouble i}
                                in 
