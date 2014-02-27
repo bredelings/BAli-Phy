@@ -224,4 +224,45 @@ logExponential mu = expTransform $  exponential mu;
 logGamma a b = expTransform $ gamma a b;
 logLaplace m s = expTransform $ laplace m s;
 logCauchy m s = expTransform $ cauchy m s;
+
+safe_exp x = if (x < (-20.0)) then
+               exp (-20.0);
+             else if (x > 20.0) then
+               exp 20.0;
+             else
+               exp x;
+
+dpm n mean_dist noise_dist= Prefix "DPM" $ do 
+{
+    let {delta = 4};
+
+    mean <- iid (n+delta) mean_dist;
+    sigmaOverMu <- iid (n+delta) noise_dist;
+    alpha <- gamma 0.5 0.05;
+    Log "alpha" alpha;
+
+    category <- crp alpha n delta;
+    Log "category" category;
+
+    z <- iid n (normal 0.0 1.0);
+
+    return [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n [0..], let {k=category!!i}];
+};
+
+dp n mean_dist = Prefix "DP" $ do 
+{
+    let {delta = 4};
+
+    mean <- iid (n+delta) mean_dist;
+    alpha <- gamma 0.5 0.05;
+    Log "alpha" alpha;
+
+    category <- crp alpha n delta;
+    Log "category" category;
+
+    z <- iid n (normal 0.0 1.0);
+
+    return [ mean!!k | i <- take n [0..], let {k=category!!i}];
+};
+
 }
