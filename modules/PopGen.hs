@@ -34,7 +34,7 @@ afs2 thetas ps = ProbDensity (ewens_diploid_probability thetas ps) (error "afs2 
 
 selfing_coalescence n_loci s = ProbDensity (selfing_coalescence_probability n_loci s) (error "selfing_coalescence has no quantile") (replicate n_loci False) (ListRange (replicate n_loci TrueFalseRange));
 
-diploid_afs n_individuals n_loci s theta_effective = do 
+diploid_afs n_individuals n_loci s theta_effective = Prefix "DiploidAFS" $ do 
   { 
 --     This MAY have mixing issues.
 --          f' <- beta 1.0 3.0;
