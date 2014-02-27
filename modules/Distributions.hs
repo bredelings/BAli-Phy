@@ -260,8 +260,6 @@ dp n mean_dist = Prefix "DP" $ do
     category <- crp alpha n delta;
     Log "category" category;
 
-    z <- iid n (normal 0.0 1.0);
-
     return [ mean!!k | i <- take n [0..], let {k=category!!i}];
 };
 
