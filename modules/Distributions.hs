@@ -243,6 +243,7 @@ dpm n mean_dist noise_dist= Prefix "DPM" $ do
 
     category <- crp alpha n delta;
     Log "category" category;
+    Log "n_categories" (length (nub category));
 
     z <- iid n (normal 0.0 1.0);
 
@@ -259,6 +260,7 @@ dp n mean_dist = Prefix "DP" $ do
 
     category <- crp alpha n delta;
     Log "category" category;
+    Log "n_categories" (length (nub category));
 
     return [ mean!!k | i <- take n [0..], let {k=category!!i}];
 };
