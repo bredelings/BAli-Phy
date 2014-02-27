@@ -34,7 +34,7 @@ afs2 thetas ps = ProbDensity (ewens_diploid_probability thetas ps) (error "afs2 
 
 selfing_coalescence n_loci s = ProbDensity (selfing_coalescence_probability n_loci s) (error "selfing_coalescence has no quantile") (replicate n_loci False) (ListRange (replicate n_loci TrueFalseRange));
 
-diploid_afs alleles n_individuals n_loci s theta_effective = do 
+diploid_afs n_individuals n_loci s theta_effective = do 
   { 
 --     This MAY have mixing issues.
 --          f' <- beta 1.0 3.0;
@@ -52,9 +52,8 @@ diploid_afs alleles n_individuals n_loci s theta_effective = do
        i <- plate n_individuals (\k->iid n_loci (rbernoulli (0.5**t!!k*(1.0-f))) );
        Log "i" i;
 
-       Observe alleles $ plate n_loci (\l -> afs2 (theta_effective!!l) (map (!!l) i));
-
        AddMove (\c -> mapM_ (\k-> sum_out_coals (t!!k) (i!!k) c) [0..n_individuals-1]);
-       return ();
+
+       return $ plate n_loci (\l -> afs2 (theta_effective!!l) (map (!!l) i));
   };
 }
