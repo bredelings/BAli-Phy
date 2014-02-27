@@ -25,13 +25,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <cmath>
 #include "imodel/imodel.H"
-#include "math/logsum.H"
 #include "rng.H"
 #include "myexception.H"
 #include "probability/probability.H"
 #include "util.H"
 #include "dp/2way.H"
-#include "math/logsum.H"
 
 using std::vector;
 using std::string;

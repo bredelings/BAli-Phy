@@ -20,7 +20,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <cmath>
 
-#include "math/logsum.H"
 #include "probability/choose.H"
 #include "util.H"
 #include "rng.H"

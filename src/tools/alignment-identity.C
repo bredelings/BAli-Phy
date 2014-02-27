@@ -24,7 +24,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <list>
 #include <numeric>
 #include "myexception.H"
-#include "math/logsum.H"
 #include "optimize.H"
 #include "findroot.H"
 #include "util.H"
