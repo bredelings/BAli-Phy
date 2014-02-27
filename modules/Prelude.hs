@@ -339,4 +339,5 @@ unzip [(x,y),l] = ([x:xs],[y:ys]) where {z = unzip l; xs = fst z; ys = snd z};
 
 nub = nubBy (==);
 nubBy eq (x:xs) = x:nubBy eq (filter (\y -> not (eq x y)) xs);
+nubBy eq [] = [];
 }
