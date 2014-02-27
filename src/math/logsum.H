@@ -23,9 +23,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cmath>
 #include <cassert>
 
-using std::exp;
-using std::log;
-
 const double max_float = 3.40282347e+38F;
 const double log_limit = -max_float/100;
 const double log_0 = -max_float;
