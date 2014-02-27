@@ -16,7 +16,7 @@ builtin builtin_sum_out_coals 3 "sum_out_coals" "MCMC";
 
 sum_out_coals x y c = IOAction3 builtin_sum_out_coals x y c;
 
-read_phase_file = builtin_read_phase_file . listToString;
+read_phase_file filename = map list_from_vector $ list_from_vector $ builtin_read_phase_file $ listToString filename;
 
 ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_probability (listToVectorDouble thetas) (listToVectorDouble ps) x;
 
