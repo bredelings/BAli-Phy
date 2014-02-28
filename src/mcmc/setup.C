@@ -240,6 +240,12 @@ void add_integer_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
     auto range = P.get_range_for_reg(r);
     auto bounds = dynamic_pointer_cast<const Bounds<int>>(range);
     if (not bounds) continue;
+
+    // FIXME: righteousness.
+    // We need a more intelligent way of determining when we should do this.
+    // For example, we do not want to do this for categorical-type variables.
+    if (bounds->has_upper_bound and bounds->has_lower_bound) continue;
+
     string name = "m_int_"+convertToString<int>(r);
     M.add( 1.0, MCMC::Integer_Modifiable_Slice_Move(name, r, *bounds, 1.0) );
   }
