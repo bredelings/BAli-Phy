@@ -192,6 +192,12 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *     when the tree changes.
  *     - Instead of fixing this immediately, first just compute A() from H().
  *     - Use H() in substitution.C and index-matrix.C
+ *
+ * 39. Fix memory usage.  We have all these vector<T>'s, and we clear them, but they never
+ *     actually shrink.  So, they get bigger and bigger and bigger...
+ *
+ * 40. Fix memory usage (2). Furthermore, reallocating space is really time-consuming.
+ *
  */
 
 bool use_internal_index = true;
