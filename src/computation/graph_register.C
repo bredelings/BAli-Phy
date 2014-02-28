@@ -676,10 +676,17 @@ int count(const std::vector<int>& v, int I)
   return c;
 }
 
-
 void reg_heap::clear_used_inputs(int rc1)
 {
-  computations.access_unused(rc1).used_inputs.clear();
+  auto& u = computations.access_unused(rc1).used_inputs;
+
+  if (u.size() > 32)
+  {
+    vector<int> v(32);
+    u.swap(v);
+  }
+  else
+    u.clear();
 }
 
 void reg_heap::clear_used_inputs_for_reg(int t, int R)
