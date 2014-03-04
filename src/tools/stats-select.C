@@ -79,6 +79,43 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 template <typename T>
+class table
+{
+  /// The list of column names
+  std::vector<std::string> names_;
+
+  /// List of data for each column
+  std::vector< std::vector<T> > data_;
+
+  /// Load data from a file
+  void load_file(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
+public:
+  /// Access the column names
+  const std::vector<std::string>& names() const {return names_;}
+
+  /// Access the data for the i-th column
+  const std::vector<T>& column(int i) const {return data_[i];}
+
+  /// Add a row of data
+  void add_row(const std::vector<double>& row);
+
+  /// How many rows does the table contain?
+  int n_rows() const {return data_[0].size();}
+
+  /// How many columns does the table contain?
+  int n_columns() const {return names_.size();}
+
+  /// Remove burnin samples
+  void chop_first_rows(int n);
+
+  /// Load the table from a file
+  table(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
+
+  /// Load the table from a file by name
+  table(const std::string&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
+};
+
+template <typename T>
 struct table_row_function
 {
   virtual table_row_function* clone() const =0;
@@ -179,6 +216,7 @@ key_value_condition::key_value_condition(const stats_table& t, const string& con
 
 int main(int argc,char* argv[]) 
 { 
+  std::cout.precision(15);
   try {
     //----------- Parse command line  -----------//
     variables_map args = parse_cmd_line(argc,argv);

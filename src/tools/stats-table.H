@@ -23,46 +23,106 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <string>
 #include <iostream>
+#include <boost/lexical_cast.hpp>
+#include "util.H"
+#include "io.H"
 
-/// Load and store a table of doubles with named columns
-class stats_table
+template <typename T>
+class Table
 {
   /// The list of column names
   std::vector<std::string> names_;
 
   /// List of data for each column
-  std::vector< std::vector<double> > data_;
+  std::vector< std::vector<T> > data_;
 
   /// Load data from a file
   void load_file(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
-
 public:
   /// Access the column names
   const std::vector<std::string>& names() const {return names_;}
 
   /// Access the data for the i-th column
-  const std::vector<double>& column(int i) const {return data_[i];}
+  const std::vector<T>& column(int i) const {return data_[i];}
 
   int find_column_index(const std::string& s) const;
 
   /// Add a row of data
-  void add_row(const std::vector<double>& row);
+  void add_row(const std::vector<T>& row);
 
-  /// How many rows does the table contain?
+  /// How many rows does the Table contain?
   int n_rows() const {return data_[0].size();}
 
-  /// How many columns does the table contain?
+  /// How many columns does the Table contain?
   int n_columns() const {return names_.size();}
 
   /// Remove burnin samples
   void chop_first_rows(int n);
 
-  /// Load the table from a file
-  stats_table(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
+  /// Load the Table from a file
+  Table(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
 
-  /// Load the table from a file by name
-  stats_table(const std::string&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
+  /// Load the Table from a file by name
+  Table(const std::string&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
 };
+
+template <typename T>
+int Table<T>::find_column_index(const std::string& s) const
+{
+  return find_index(names_, s);
+}
+
+template <typename T>
+void Table<T>::add_row(const std::vector<T>& row)
+{
+  assert(row.size() == n_columns());
+
+  for(int i=0;i<row.size();i++)
+    data_[i].push_back(row[i]);
+}
+
+template <typename T>
+void Table<T>::chop_first_rows(int n)
+{
+  for(int i=0;i<data_.size();i++)
+    data_[i].erase(data_[i].begin(), data_[i].begin()+n);
+}
+
+template <typename T>
+void Table<T>::load_file(std::istream& file, int skip, int subsample, int max,
+			 const std::vector<std::string>& ignore,const std::vector<std::string>& select)
+{
+  Table<std::string> t(file, skip, subsample, max, ignore, select);
+  names_ = t.names();
+
+  data_.resize(t.n_columns());
+  for(int i=0;i<t.n_columns();i++)
+  {
+    auto& col = data_[i];
+    col.resize(t.n_rows());
+    for(int j=0;j<col.size();j++)
+      col[j] = boost::lexical_cast<T>(t.column(i)[j]);
+  }
+}
+
+template<> void Table<std::string>::load_file(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
+
+template <typename T>
+Table<T>::Table(std::istream& file, int skip, int subsample, int max, const std::vector<std::string>& ignore, const std::vector<std::string>& select)
+{
+  load_file(file,skip,subsample,max,ignore,select);
+}
+
+template <typename T>
+Table<T>::Table(const std::string& filename, int skip, int subsample, int max, const std::vector<std::string>& ignore, const std::vector<std::string>& select)
+{
+  checked_ifstream file(filename,"statistics file");
+
+  load_file(file,skip,subsample,max,ignore,select);
+}
+
+/// Load and store a table of doubles with named columns
+typedef Table<double> stats_table;
 
 std::vector<std::string> parse_header(const std::string&);
 

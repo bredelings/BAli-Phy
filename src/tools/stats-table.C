@@ -77,19 +77,6 @@ void write_header(std::ostream& o, const vector<string>& headers)
   }
 }
 
-int stats_table::find_column_index(const string& s) const
-{
-  return find_index(names_, s);
-}
-
-void stats_table::add_row(const vector<double>& row)
-{
-  assert(row.size() == n_columns());
-
-  for(int i=0;i<row.size();i++)
-    data_[i].push_back(row[i]);
-}
-
 dynamic_bitset<>
 get_mask(const vector<string>& strings,const vector<string>& names)
 {
@@ -140,7 +127,7 @@ vector<int> get_indices_from_mask(const dynamic_bitset<>& mask)
   return indices;
 }
 
-bool read_entries(const string& line, const vector<int>& indices, char delim, vector<double>& entries)
+bool read_entries(const string& line, const vector<int>& indices, char delim, vector<string>& entries)
 {
   int i=0; // position in line
   int j=0; // which field
@@ -150,16 +137,11 @@ bool read_entries(const string& line, const vector<int>& indices, char delim, ve
     // Locate the character after the end of the current field
     int i2 = line.find(delim,i+1);
     if (i2 == -1)
-    {
       i2 = line.size();
-    }
 
     // If the current field is the next field we want, convert it to double.
     if (j == indices[k])
-    {
-      entries[k] = lexical_cast<double>(line.data() + i, i2-i);
-      k++;
-    }
+      entries[k++] = line.substr(i,i2-i);
 
     if (i2 == line.size() and k < indices.size())
       throw myexception()<<"Only read "<<k<<" entries!";
@@ -172,8 +154,9 @@ bool read_entries(const string& line, const vector<int>& indices, char delim, ve
 }
 
 
-void stats_table::load_file(istream& file,int skip,int subsample, int max,
-			    const vector<string>& ignore, const vector<string>& select)
+template<> 
+void Table<string>::load_file(istream& file,int skip,int subsample, int max,
+			      const vector<string>& ignore, const vector<string>& select)
 {
   // Read in headers from file
   names_ = read_header(file);
@@ -196,7 +179,7 @@ void stats_table::load_file(istream& file,int skip,int subsample, int max,
   // Read in data
   int n_lines=0;
   string line;
-  vector<double> v(names_.size());
+  vector<string> v(names_.size());
   for(int line_number=0;portable_getline(file,line);line_number++) 
   {
     // don't start if we haven't skipped enough trees
@@ -230,37 +213,4 @@ void stats_table::load_file(istream& file,int skip,int subsample, int max,
 
     n_lines++;
   }
-}
-
-void remove_first_elements(vector<double>& v,int n)
-{
-  if (n >= v.size()) {
-    v.clear();
-    return;
-  }
-
-  for(int i=0;i<v.size()-n;i++)
-    v[i] = v[i+n];
-
-  v.resize(v.size()-n);
-}
-
-void stats_table::chop_first_rows(int n)
-{
-  for(int i=0;i<data_.size();i++)
-    remove_first_elements(data_[i],n);
-}
-
-stats_table::stats_table(istream& file, int skip, int subsample, int max, const vector<string>& ignore, const vector<string>& select)
-{
-  load_file(file,skip,subsample,max,ignore,select);
-  if (log_verbose) cerr<<"STDIN: Read in "<<n_rows()<<" lines.\n";
-}
-
-stats_table::stats_table(const string& filename, int skip, int subsample, int max, const vector<string>& ignore, const vector<string>& select)
-{
-  checked_ifstream file(filename,"statistics file");
-
-  load_file(file,skip,subsample,max,ignore,select);
-  if (log_verbose) cerr<<filename<<": Read in "<<n_rows()<<" lines.\n";
 }
