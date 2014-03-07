@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <sstream>
 #include <iostream>
 #include "util.H"
+#include "io.H"
 
 #include <boost/program_options.hpp>
 
@@ -99,7 +100,7 @@ int main(int argc,char* argv[]) {
     string line;
 
     bool in_interval = not is_min;
-    while(getline(std::cin,line)) {
+    while(portable_getline(std::cin,line)) {
 
       // look for the pattern
       int where = line.find(pattern);

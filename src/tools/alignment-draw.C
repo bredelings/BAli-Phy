@@ -355,7 +355,7 @@ matrix<double> read_alignment_certainty(const alignment& A, const string& filena
   vector<int> mapping;
   {
     string line;
-    getline(colorfile,line);
+    portable_getline(colorfile,line);
     vector<string> colornames = split(line,' ');
     vector<string> leafnames;
     for(int i=0;i<A.n_sequences();i++)
@@ -372,7 +372,7 @@ matrix<double> read_alignment_certainty(const alignment& A, const string& filena
   { 
     // read a line
     string line;
-    getline(colorfile,line);
+    portable_getline(colorfile,line);
 
     // collect the non-empty words
     vector<string> words = split(line,' ');

@@ -54,7 +54,7 @@ void do_setup(Arguments& args,vector<alignment>& alignments) {
     tag = args["tag"];
 
   string line;
-  while(getline(cin,line)) {
+  while(portable_getline(cin,line)) {
     if (match_tag(line,tag)) {
       alignment A;
       A.load_phylip(alphabets,cin);

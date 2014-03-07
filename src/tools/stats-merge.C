@@ -111,7 +111,7 @@ int main(int argc,char* argv[])
     vector<string> sublines(filestreams.size());
     while (ok) {
       for(int i=0;i<filestreams.size();i++)
-	getline((*filestreams[i]),sublines[i]);
+	portable_getline((*filestreams[i]),sublines[i]);
 
       ok = (bool)*filestreams[0];
       bool error = false;
