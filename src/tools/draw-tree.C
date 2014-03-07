@@ -281,7 +281,7 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
 
   while(file) 
   {
-    while (getline(file,line) and not line.size()) {}
+    while (portable_getline(file,line) and not line.size()) {}
     if (not line.size()) break;
 
     if (first_line and line[0] == '(') 
@@ -307,7 +307,7 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
     if (words.size() == 2 and words[0] == "branch")
     {
       // get the next line
-      if (not file or not getline(file,line))
+      if (not file or not portable_getline(file,line))
 	throw myexception()<<"Missing partition after 'branch'!";
 
       if (not line.size())
@@ -322,7 +322,7 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
     else if (words.size() == 2 and words[0] == "node")
     {
       // get the next line
-      if (not file or not getline(file,line))
+      if (not file or not portable_getline(file,line))
 	throw myexception()<<"Missing partition after 'node'!";
 
       if (not line.size())
@@ -339,7 +339,7 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
     else if (words.size() == 2 and words[0] == "mini-branch")
     {
       // get the next line
-      if (not file or not getline(file,line))
+      if (not file or not portable_getline(file,line))
 	throw myexception()<<"Missing partition after 'mini-branch'!";
 
       if (not line.size())

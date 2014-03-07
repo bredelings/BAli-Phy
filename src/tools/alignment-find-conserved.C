@@ -97,7 +97,7 @@ vector<sequence_group> load_groups(const alignment& A,const string& filename)
 
   checked_ifstream file(filename);
   string line;
-  for(int g=1;getline(file,line);g++)
+  for(int g=1;portable_getline(file,line);g++)
   {
     if (not groups.size() or groups.back().taxa.size())
       groups.push_back(sequence_group());

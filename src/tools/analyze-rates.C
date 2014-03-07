@@ -192,7 +192,7 @@ int main(int argc,char* argv[])
 
     int line_number=0;
     string line;
-    while(getline(cin,line)) 
+    while(portable_getline(cin,line)) 
     {
       line_number++;
 
