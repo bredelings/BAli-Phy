@@ -197,6 +197,12 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *     actually shrink.  So, they get bigger and bigger and bigger...
  *
  * 40. Fix memory usage (2). Furthermore, reallocating space is really time-consuming.
+ * 
+ * 41. Why do we allocate 36G of virtual space, on nucleus?
+ *
+ * 42. Different results for 25.fasta versus 2.2.0!
+ *
+ * 43. Not printing RS07 model parameters??
  *
  */
 
