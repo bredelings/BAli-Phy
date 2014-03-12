@@ -400,7 +400,7 @@ void load_partitions(const string& filename, vector<vector<Partition> >& partiti
   while(file) {
     vector<Partition> P;
 
-    while(getline(file,line) and line.size()) {
+    while(portable_getline(file,line) and line.size()) {
       if (line[0] == '(') {
 	SequenceTree T = standardized(line);
 	vector<Partition> TP = all_partitions_from_tree(T);

@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cassert>
 #include "myexception.H"
 #include "util.H"
+#include "io.H"
 
 #include <boost/program_options.hpp>
 
@@ -51,7 +52,7 @@ string get_multivalue(const string& line1,int pos1,std::istream& file)
 {
   string result = line1.substr(pos1);
   string line;
-  while (getline(file,line) and line.size()) {
+  while (portable_getline(file,line) and line.size()) {
     result += "\n";
     result += line;
   }
@@ -128,7 +129,7 @@ int main(int argc,char* argv[])
     string line;
     vector<int> matches(patterns.size());  
     vector<string> words(patterns.size());
-    while(getline(cin,line)) 
+    while(portable_getline(cin,line)) 
     {
       // Locate each occurrence in the line
       bool linematches=true;

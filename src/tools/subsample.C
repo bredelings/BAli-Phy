@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <string>
 #include "util.H"
+#include "io.H"
 
 #include <boost/program_options.hpp>
 
@@ -73,7 +74,7 @@ int main(int argc,char* argv[])
 
     if (args.count("header")) {
       // print header
-      getline(cin,line);
+      portable_getline(cin,line);
       cout<<line<<endl;
     }
 
@@ -86,7 +87,7 @@ int main(int argc,char* argv[])
     // print selected lines
     int lines=0;
     int count=0;
-    while(getline(cin,line)) 
+    while(portable_getline(cin,line)) 
     {
       if (skip > 0)
 	skip--;

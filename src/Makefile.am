@@ -311,15 +311,15 @@ tree_reroot_SOURCES = tools/tree-reroot.C tree/tree.C tree/sequencetree.C tree/t
 
 #---------------------------------------------------------------
 
-pickout_SOURCES = tools/pickout.C util.C
+pickout_SOURCES = tools/pickout.C util.C io.C
 
 #---------------------------------------------------------------
 
-subsample_SOURCES = tools/subsample.C
+subsample_SOURCES = tools/subsample.C io.C
 
 #---------------------------------------------------------------
 
-cut_range_SOURCES = tools/cut-range.C util.C
+cut_range_SOURCES = tools/cut-range.C util.C io.C
 
 #---------------------------------------------------------------
 
