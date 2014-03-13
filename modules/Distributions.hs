@@ -232,14 +232,12 @@ safe_exp x = if (x < (-20.0)) then
              else
                exp x;
 
-dpm n mean_dist noise_dist= Prefix "DPM" $ do 
+dpm n alpha mean_dist noise_dist= Prefix "DPM" $ do 
 {
     let {delta = 4};
 
     mean <- iid (n+delta) mean_dist;
     sigmaOverMu <- iid (n+delta) noise_dist;
-    alpha <- gamma 0.5 0.05;
-    Log "alpha" alpha;
 
     category <- crp alpha n delta;
     Log "category" category;
@@ -247,20 +245,22 @@ dpm n mean_dist noise_dist= Prefix "DPM" $ do
 
     z <- iid n (normal 0.0 1.0);
 
+    AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
+
     return [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n [0..], let {k=category!!i}];
 };
 
-dp n mean_dist = Prefix "DP" $ do 
+dp n alpha mean_dist = Prefix "DP" $ do 
 {
     let {delta = 4};
 
     mean <- iid (n+delta) mean_dist;
-    alpha <- gamma 0.5 0.05;
-    Log "alpha" alpha;
 
     category <- crp alpha n delta;
     Log "category" category;
     Log "n_categories" (length (nub category));
+
+    AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
 
     return [ mean!!k | i <- take n [0..], let {k=category!!i}];
 };
