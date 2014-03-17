@@ -31,7 +31,7 @@ sample' ps l (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;}
                                               m <- new_random_modifiable r v;
                                               register_probability (p m);
                                               return m };
-sample' ps l (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequence $ repeat n (new_random_modifiable r' v);
+sample' ps l (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequence $ replicate n (new_random_modifiable r' v);
                                                               register_probability (p xs);
                                                               return xs };
 sample' ps l (ProbDensity p q s r) = sample' ps l s;
@@ -151,7 +151,9 @@ do_crp'' alpha n bins counts = let { inc (c:cs) 0 = (c+1:cs);
 builtin crp_density 4 "CRP_density" "Distribution";
 builtin sample_crp_vector 3 "sample_CRP" "Distribution";
 sample_crp alpha n d = Random $ do { v <- (IOAction3 sample_crp_vector alpha n d); return $ list_from_vector v};
-crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1));
+--crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1));
+crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (Exchangeable n subrange 0) (ListRange $ replicate n subrange)
+                  where {subrange = integer_between 0 (n+d-1)};
 
 mixtureRange ((_,dist1):_) = distRange dist1;
 mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x);
