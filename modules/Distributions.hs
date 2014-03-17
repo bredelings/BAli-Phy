@@ -237,35 +237,35 @@ safe_exp x = if (x < (-20.0)) then
 
 dpm n alpha mean_dist noise_dist= Prefix "DPM" $ do 
 {
-    let {delta = 4};
+  let {delta = 4};
 
-    mean <- iid (n+delta) mean_dist;
-    sigmaOverMu <- iid (n+delta) noise_dist;
+  mean <- iid (n+delta) mean_dist;
+  sigmaOverMu <- iid (n+delta) noise_dist;
 
-    category <- crp alpha n delta;
-    Log "category" category;
-    Log "n_categories" (length (nub category));
+  category <- crp alpha n delta;
+  Log "category" category;
+  Log "n_categories" (length (nub category));
 
-    z <- iid n (normal 0.0 1.0);
+  z <- iid n (normal 0.0 1.0);
 
-    AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
+  AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
 
-    return [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n [0..], let {k=category!!i}];
+  return [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n [0..], let {k=category!!i}];
 };
 
 dp n alpha mean_dist = Prefix "DP" $ do 
 {
-    let {delta = 4};
+  let {delta = 4};
 
-    mean <- iid (n+delta) mean_dist;
+  mean <- iid (n+delta) mean_dist;
 
-    category <- crp alpha n delta;
-    Log "category" category;
-    Log "n_categories" (length (nub category));
+  category <- crp alpha n delta;
+  Log "category" category;
+  Log "n_categories" (length (nub category));
 
-    AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
+  AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
 
-    return [ mean!!k | i <- take n [0..], let {k=category!!i}];
+  return [ mean!!k | i <- take n [0..], let {k=category!!i}];
 };
 
 }
