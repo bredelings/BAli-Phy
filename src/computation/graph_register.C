@@ -344,6 +344,23 @@ int reg_heap::register_probability(closure&& C)
 
 log_double_t reg_heap::probability_for_context(int c)
 {
+  /*
+    This version doesn't really change the amount of time in incremental_evaluate.
+    However, it drastically increases the amount of time spent in reg_has_result( 30% ),
+    get_reg_value_in_context( 13% ), and probability_for_context( 3% ).
+
+    With those removed, this could be comparable, or even faster.
+
+  log_double_t Pr = 1.0;
+  for(int r: probability_heads)
+  {
+    object_ref x = get_reg_value_in_context(r, c);
+    log_double_t X = *convert<const Log_Double>(x);
+    Pr *= X;
+  }
+  return Pr;
+  */
+
   if (probability_index == -1)
   {
     if (probability_heads.empty()) return 1.0;
