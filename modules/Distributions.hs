@@ -12,7 +12,7 @@ sampler (ProbDensity _ _ s _) = s;
 distRange (ProbDensity _ _ _ r) = r;
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = Random a | NoLog a | Prefix a b | Log a b | Observe a b | AddMove (Int->a);
+data Random a = Random a | Exchangeable Int Range a | NoLog a | Prefix a b | Log a b | Observe a b | AddMove (Int->a);
 
 sample (IOReturn v) = IOReturn v;
 sample (IOAndPass f g) = IOAndPass (sample f) (\x -> sample $ g x);
@@ -31,6 +31,9 @@ sample' ps l (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;}
                                               m <- new_random_modifiable r v;
                                               register_probability (p m);
                                               return m };
+sample' ps l (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequence $ repeat n (new_random_modifiable r' v);
+                                                              register_probability (p xs);
+                                                              return xs };
 sample' ps l (ProbDensity p q s r) = sample' ps l s;
 
 sample' ps l (NoLog a) = sample' ps False a;
