@@ -19,7 +19,7 @@ add_parameter name x = IOAction2 builtin_add_parameter (listToString name) x;
 
 register_probability pr = IOAction1 builtin_register_probability pr;
 
-new_random_modifiable range value = IOAction3 builtin_new_random_modifiable range (c_range range) value;
+new_random_modifiable range value rate = IOAction3 builtin_new_random_modifiable range (c_range range) value;
 
 c_range (OpenInterval a b) = getBounds (OpenInterval a b);
 c_range (IntegerInterval a b) = getIntegerBounds (IntegerInterval a b);
