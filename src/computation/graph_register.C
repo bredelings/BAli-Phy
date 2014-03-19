@@ -436,11 +436,21 @@ object_ref reg_heap::get_parameter_range(int c, int p)
 
 object_ref reg_heap::get_range_for_reg(int c, int r)
 {
-  if (access(r).C.Env.size() < 2)
+  if (access(r).C.Env.size() < 3)
     return {};
 
-  int r2 = access(r).C.lookup_in_env(1);
+  int r2 = access(r).C.lookup_in_env(2);
   return get_reg_value_in_context(r2,c);
+}
+
+double reg_heap::get_rate_for_reg(int r)
+{
+  if (access(r).C.Env.size() < 3)
+    return {};
+
+  int r3 = access(r).C.lookup_in_env(0);
+  r3 = incremental_evaluate(r3,0);
+  return *convert<const Double>(access(r3).C.exp->head);
 }
 
 const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t));return tokens[t].triggers;}

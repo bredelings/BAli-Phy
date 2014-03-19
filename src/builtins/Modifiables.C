@@ -37,9 +37,11 @@ extern "C" closure builtin_function_new_random_modifiable(OperationArgs& Args)
 
   int V = Args.reg_for_slot(2);
 
+  int rate = Args.reg_for_slot(3);
+
   // Allocate a reg, and fill it with a modifiable of the correct index
-  expression_ref E(new expression(modifiable(),{index_var(1),index_var(0)}));
-  closure C{E,{R2,R1}};
+  expression_ref E(new expression(modifiable(),{index_var(2),index_var(1),index_var(0)}));
+  closure C{E,{R2,R1,rate}};
   int r = Args.allocate(std::move(C));
   M.make_reg_changeable(r);
   M.set_shared_value(r,V);

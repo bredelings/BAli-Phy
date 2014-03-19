@@ -221,6 +221,8 @@ public:
 
   object_ref get_range_for_reg(int c, int r);
 
+  double get_rate_for_reg(int r);
+
   /*----- Token manager ------*/
 
   struct Token

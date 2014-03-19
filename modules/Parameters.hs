@@ -8,7 +8,7 @@ builtin is_changeable 1 "is_changeable" "Modifiables";
 builtin is_modifiable 1 "is_modifiable" "Modifiables";
 builtin get_modifiable_index 1 "get_modifiable_index" "Modifiables";
 builtin builtin_new_modifiable 1 "new_modifiable" "Modifiables";
-builtin builtin_new_random_modifiable 3 "new_random_modifiable" "Modifiables";
+builtin builtin_new_random_modifiable 4 "new_random_modifiable" "Modifiables";
 builtin evaluate 2 "evaluate" "Modifiables";
 builtin get_modifiable_value 2 "get_modifiable_value" "Modifiables";
 builtin builtin_trigger 1 "trigger" "Modifiables";
@@ -19,7 +19,7 @@ add_parameter name x = IOAction2 builtin_add_parameter (listToString name) x;
 
 register_probability pr = IOAction1 builtin_register_probability pr;
 
-new_random_modifiable range value rate = IOAction3 builtin_new_random_modifiable range (c_range range) value;
+new_random_modifiable range value rate = IOAction4 builtin_new_random_modifiable range (c_range range) value rate;
 
 c_range (OpenInterval a b) = getBounds (OpenInterval a b);
 c_range (IntegerInterval a b) = getIntegerBounds (IntegerInterval a b);
