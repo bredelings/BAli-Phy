@@ -166,6 +166,8 @@ public:
 
   object_ref get_parameter_range(int p) const;
 
+  double get_rate_for_reg(int r) const;
+
 public:
   /// Create a new parameter named s
   int add_parameter(const std::string& s, const expression_ref& value);

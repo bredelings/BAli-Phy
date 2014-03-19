@@ -309,6 +309,11 @@ object_ref context::get_range_for_reg(int r) const
   return memory()->get_range_for_reg(context_index, r);
 }
 
+double context::get_rate_for_reg(int r) const
+{
+  return memory()->get_rate_for_reg(r);
+}
+
 object_ref context::get_parameter_range(int p) const
 {
   return memory()->get_parameter_range(context_index, p);

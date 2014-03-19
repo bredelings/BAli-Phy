@@ -194,10 +194,11 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
   for(int r: P.random_modifiables())
   {
     auto range = P.get_range_for_reg(r);
+    double rate = P.get_rate_for_reg(r);
     auto bounds = dynamic_pointer_cast<const Bounds<double>>(range);
     if (not bounds) continue;
     string name = "m_real_"+convertToString<int>(r);
-    M.add( 1.0, MCMC::Modifiable_Slice_Move(name, r, *bounds, 1.0) );
+    M.add( rate , MCMC::Modifiable_Slice_Move(name, r, *bounds, 1.0) );
   }
 }
 
