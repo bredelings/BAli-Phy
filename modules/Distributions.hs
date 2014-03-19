@@ -24,27 +24,27 @@ sample (Prefix _ a) = sample a;
 sample (Log _ a) = sample a;
 sample (AddMove m) = return ();
 
-sample' ps l (IOReturn v) = IOReturn v;
-sample' ps l (IOAndPass f g) = IOAndPass (sample' ps l f) (\x -> sample' ps l $ g x);
-sample' ps l (IOAnd f g) = IOAnd (sample' ps l f) (sample' ps l g);
-sample' ps l (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;};
+sample' ps l rate (IOReturn v) = IOReturn v;
+sample' ps l rate (IOAndPass f g) = IOAndPass (sample' ps l rate f) (\x -> sample' ps l rate $ g x);
+sample' ps l rate (IOAnd f g) = IOAnd (sample' ps l rate f) (sample' ps l rate g);
+sample' ps l rate (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;};
                                               m <- new_random_modifiable r v;
                                               register_probability (p m);
                                               return m };
-sample' ps l (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequence $ replicate n (new_random_modifiable r' v);
+sample' ps l rate (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequence $ replicate n (new_random_modifiable r' v);
                                                               register_probability (p xs);
                                                               return xs };
-sample' ps l (ProbDensity p q s r) = sample' ps l s;
+sample' ps l rate (ProbDensity p q s r) = sample' ps l rate s;
 
-sample' ps l (NoLog a) = sample' ps False a;
-sample' ps l (Prefix p a) = sample' (p:ps) l a;
-sample' ps l (Observe v dist) = register_probability (density dist v);
-sample' ps l (AddMove m) = register_transition_kernel m;
-sample' ps True (Log name x) = add_parameter (prefix_name ps name) x;
-sample' ps False (Log name x) = return ();
+sample' ps l rate (NoLog a) = sample' ps False rate a;
+sample' ps l rate (Prefix p a) = sample' (p:ps) l rate a;
+sample' ps l rate (Observe v dist) = register_probability (density dist v);
+sample' ps l rate (AddMove m) = register_transition_kernel m;
+sample' ps True rate (Log name x) = add_parameter (prefix_name ps name) x;
+sample' ps False rate (Log name x) = return ();
 
 add_prefix p m = Prefix p m;
-gen_model m = sample' [] True m;
+gen_model m = sample' [] True 1.0 m;
 
 prefix_name ps name = foldl (\a b -> b++"."++a) name ps;
 name ~~ dist = do { x <- dist ; Log name x ; return x};
