@@ -50,7 +50,7 @@ diploid_afs n_individuals n_loci s theta_effective = Prefix "DiploidAFS" $ do
        Log "t" t;
 
        i <- plate n_individuals (\k->iid n_loci (rbernoulli (0.5**t!!k*(1.0-f))) );
-       Log "i" i;
+--       Log "i" i;
 
        AddMove (\c -> mapM_ (\k-> sum_out_coals (t!!k) (i!!k) c) [0..n_individuals-1]);
 
