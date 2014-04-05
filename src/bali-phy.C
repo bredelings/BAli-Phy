@@ -1194,10 +1194,10 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 
   for(int i=0;i<P.n_smodels();i++)
     //    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
-    out_cache<<"subst model"<<i+1<<" = "<<smodels[i]<<endl<<endl;
+    out_cache<<"subst model"<<i+1<<" = "<<smodels.unique(i)<<endl<<endl;
 
   for(int i=0;i<P.n_imodels();i++)
-    out_cache<<"indel model"<<i+1<<" = "<<imodels[i]<<endl<<endl;
+    out_cache<<"indel model"<<i+1<<" = "<<imodels.unique(i)<<endl<<endl;
 
   out_screen<<"\n";
   for(int i=0;i<P.n_data_partitions();i++) {
