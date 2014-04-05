@@ -344,6 +344,23 @@ int reg_heap::register_probability(closure&& C)
 
 log_double_t reg_heap::probability_for_context(int c)
 {
+  /*
+    This version doesn't really change the amount of time in incremental_evaluate.
+    However, it drastically increases the amount of time spent in reg_has_result( 30% ),
+    get_reg_value_in_context( 13% ), and probability_for_context( 3% ).
+
+    With those removed, this could be comparable, or even faster.
+
+  log_double_t Pr = 1.0;
+  for(int r: probability_heads)
+  {
+    object_ref x = get_reg_value_in_context(r, c);
+    log_double_t X = *convert<const Log_Double>(x);
+    Pr *= X;
+  }
+  return Pr;
+  */
+
   if (probability_index == -1)
   {
     if (probability_heads.empty()) return 1.0;
@@ -419,11 +436,21 @@ object_ref reg_heap::get_parameter_range(int c, int p)
 
 object_ref reg_heap::get_range_for_reg(int c, int r)
 {
-  if (access(r).C.Env.size() < 2)
+  if (access(r).C.Env.size() < 3)
     return {};
 
-  int r2 = access(r).C.lookup_in_env(1);
+  int r2 = access(r).C.lookup_in_env(2);
   return get_reg_value_in_context(r2,c);
+}
+
+double reg_heap::get_rate_for_reg(int r)
+{
+  if (access(r).C.Env.size() < 3)
+    return {};
+
+  int r3 = access(r).C.lookup_in_env(0);
+  r3 = incremental_evaluate(r3,0);
+  return *convert<const Double>(access(r3).C.exp->head);
 }
 
 const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t));return tokens[t].triggers;}

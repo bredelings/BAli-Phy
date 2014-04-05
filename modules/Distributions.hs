@@ -12,7 +12,7 @@ sampler (ProbDensity _ _ s _) = s;
 distRange (ProbDensity _ _ _ r) = r;
 
 -- This implements the Random monad by transforming it into the IO monad.
-data Random a = Random a | NoLog a | Prefix a b | Log a b | Observe a b | AddMove (Int->a);
+data Random a = Random a | Exchangeable Int Range a | NoLog a | Prefix a b | Log a b | Observe a b | AddMove (Int->a) | SamplingRate Double a;
 
 sample (IOReturn v) = IOReturn v;
 sample (IOAndPass f g) = IOAndPass (sample f) (\x -> sample $ g x);
@@ -24,24 +24,28 @@ sample (Prefix _ a) = sample a;
 sample (Log _ a) = sample a;
 sample (AddMove m) = return ();
 
-sample' ps l (IOReturn v) = IOReturn v;
-sample' ps l (IOAndPass f g) = IOAndPass (sample' ps l f) (\x -> sample' ps l $ g x);
-sample' ps l (IOAnd f g) = IOAnd (sample' ps l f) (sample' ps l g);
-sample' ps l (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;};
-                                              m <- new_random_modifiable r v;
+sample' ps l rate (IOReturn v) = IOReturn v;
+sample' ps l rate (IOAndPass f g) = IOAndPass (sample' ps l rate f) (\x -> sample' ps l rate $ g x);
+sample' ps l rate (IOAnd f g) = IOAnd (sample' ps l rate f) (sample' ps l rate g);
+sample' ps l rate (ProbDensity p q (Random a) r) = do { let {v = unsafePerformIO' a;};
+                                              m <- new_random_modifiable r v rate;
                                               register_probability (p m);
                                               return m };
-sample' ps l (ProbDensity p q s r) = sample' ps l s;
+sample' ps l rate (ProbDensity p q (Exchangeable n r' v) r) = do { xs <- sequence $ replicate n (new_random_modifiable r' v rate);
+                                                              register_probability (p xs);
+                                                              return xs };
+sample' ps l rate (ProbDensity p q s r) = sample' ps l rate s;
 
-sample' ps l (NoLog a) = sample' ps False a;
-sample' ps l (Prefix p a) = sample' (p:ps) l a;
-sample' ps l (Observe v dist) = register_probability (density dist v);
-sample' ps l (AddMove m) = register_transition_kernel m;
-sample' ps True (Log name x) = add_parameter (prefix_name ps name) x;
-sample' ps False (Log name x) = return ();
+sample' ps l rate (NoLog a) = sample' ps False rate a;
+sample' ps l rate (Prefix p a) = sample' (p:ps) l rate a;
+sample' ps l rate (Observe v dist) = register_probability (density dist v);
+sample' ps l rate (AddMove m) = register_transition_kernel m;
+sample' ps True rate (Log name x) = add_parameter (prefix_name ps name) x;
+sample' ps False rate (Log name x) = return ();
+sample' ps l rate (SamplingRate rate2 a) = sample' ps l rate2 a;
 
 add_prefix p m = Prefix p m;
-gen_model m = sample' [] True m;
+gen_model m = sample' [] True 1.0 m;
 
 prefix_name ps name = foldl (\a b -> b++"."++a) name ps;
 name ~~ dist = do { x <- dist ; Log name x ; return x};
@@ -148,7 +152,9 @@ do_crp'' alpha n bins counts = let { inc (c:cs) 0 = (c+1:cs);
 builtin crp_density 4 "CRP_density" "Distribution";
 builtin sample_crp_vector 3 "sample_CRP" "Distribution";
 sample_crp alpha n d = Random $ do { v <- (IOAction3 sample_crp_vector alpha n d); return $ list_from_vector v};
-crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1));
+--crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (do_crp alpha n d) (ListRange $ replicate n $ integer_between 0 (n+d-1));
+crp alpha n d = ProbDensity (crp_density alpha n d) (no_quantile "crp") (Exchangeable n subrange 0) (ListRange $ replicate n subrange)
+                  where {subrange = integer_between 0 (n+d-1)};
 
 mixtureRange ((_,dist1):_) = distRange dist1;
 mixture_density ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mixture_density l x);
@@ -234,35 +240,35 @@ safe_exp x = if (x < (-20.0)) then
 
 dpm n alpha mean_dist noise_dist= Prefix "DPM" $ do 
 {
-    let {delta = 4};
+  let {delta = 4};
 
-    mean <- iid (n+delta) mean_dist;
-    sigmaOverMu <- iid (n+delta) noise_dist;
+  mean <- iid (n+delta) mean_dist;
+  sigmaOverMu <- iid (n+delta) noise_dist;
 
-    category <- crp alpha n delta;
-    Log "category" category;
-    Log "n_categories" (length (nub category));
+  category <- crp alpha n delta;
+  Log "category" category;
+  Log "n_categories" (length (nub category));
 
-    z <- iid n (normal 0.0 1.0);
+  z <- iid n (normal 0.0 1.0);
 
-    AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
+  AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
 
-    return [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n [0..], let {k=category!!i}];
+  return [ mean!!k * safe_exp (z!!i * sigmaOverMu!!k) | i <- take n [0..], let {k=category!!i}];
 };
 
 dp n alpha mean_dist = Prefix "DP" $ do 
 {
-    let {delta = 4};
+  let {delta = 4};
 
-    mean <- iid (n+delta) mean_dist;
+  mean <- iid (n+delta) mean_dist;
 
-    category <- crp alpha n delta;
-    Log "category" category;
-    Log "n_categories" (length (nub category));
+  category <- crp alpha n delta;
+  Log "category" category;
+  Log "n_categories" (length (nub category));
 
-    AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
+  AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
 
-    return [ mean!!k | i <- take n [0..], let {k=category!!i}];
+  return [ mean!!k | i <- take n [0..], let {k=category!!i}];
 };
 
 }

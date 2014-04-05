@@ -50,7 +50,7 @@ protected:
   int first_free = -1;
   int first_used = -1;
 
-
+public:
   int size() const
   {
     return memory.size();
@@ -79,6 +79,7 @@ protected:
     return n_null_;
   }
 
+public:
   virtual void expand_memory(int s)
   {
     assert(memory.size() == n_used() + n_free() + n_null());

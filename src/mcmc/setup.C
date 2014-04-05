@@ -180,64 +180,69 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
   for(int r: P.random_modifiables())
   {
     auto range = P.get_range_for_reg(r);
+    double rate = P.get_rate_for_reg(r);
     auto con = dynamic_pointer_cast<const constructor>(range);
     if (not con) continue;
     if (con->f_name != "TrueFalseRange") continue;
     string name = "m_bool_flip_"+convertToString<int>(r);
-    add_modifiable_MH_move(name, bit_flip, r, vector<double>{}, M, weight);
+    add_modifiable_MH_move(name, bit_flip, r, vector<double>{}, M, weight*rate);
   }
 }
 
 /// Find parameters with distribution name Dist
-void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
+void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
 {
   for(int r: P.random_modifiables())
   {
     auto range = P.get_range_for_reg(r);
+    double rate = P.get_rate_for_reg(r);
     auto bounds = dynamic_pointer_cast<const Bounds<double>>(range);
     if (not bounds) continue;
     string name = "m_real_"+convertToString<int>(r);
-    M.add( 1.0, MCMC::Modifiable_Slice_Move(name, r, *bounds, 1.0) );
+    M.add( rate*weight , MCMC::Modifiable_Slice_Move(name, r, *bounds, 1.0) );
   }
 }
 
 /// Find parameters with distribution name Dist
-void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
+void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
 {
   for(int r: P.random_modifiables())
   {
     auto range = P.get_range_for_reg(r);
+    double rate = P.get_rate_for_reg(r);
     auto bounds = dynamic_pointer_cast<const Bounds<double>>(range);
     if (not bounds) continue;
     string name = "m_real_cauchy_"+convertToString<int>(r);
     if (bounds->has_lower_bound and bounds->lower_bound >= 0.0)
-      add_modifiable_MH_move(name, Reflect(*bounds, log_scaled(Between(-20,20,shift_cauchy))), r, {1.0}, M, 0.01);
+      add_modifiable_MH_move(name, Reflect(*bounds, log_scaled(Between(-20,20,shift_cauchy))), r, {1.0}, M, weight*rate);
     else
-      add_modifiable_MH_move(name, Reflect(*bounds, shift_cauchy), r, {1.0}, M, 0.1);
+      add_modifiable_MH_move(name, Reflect(*bounds, shift_cauchy), r, {1.0}, M, weight*rate);
   }
 }
 
 /// Find parameters with distribution name Dist
-void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
+void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
 {
   for(int r: P.random_modifiables())
   {
     auto range = P.get_range_for_reg(r);
+    double rate = P.get_rate_for_reg(r);
     auto bounds = dynamic_pointer_cast<const Bounds<int>>(range);
     if (not bounds) continue;
     if (not bounds->has_lower_bound or not bounds->has_upper_bound) continue;
     string name = "m_int_uniform_"+convertToString<int>(r);
     double l = (int)bounds->lower_bound;
     double u = (int)bounds->upper_bound;
-    add_modifiable_MH_move(name, discrete_uniform, r, {double(l),double(u)}, M, 0.1);
+    add_modifiable_MH_move(name, discrete_uniform, r, {double(l),double(u)}, M, weight*rate);
   }
 }
 
-void add_integer_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
+void add_integer_slice_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
 {
   for(int r: P.random_modifiables())
   {
     auto range = P.get_range_for_reg(r);
+    double rate = P.get_rate_for_reg(r);
     auto bounds = dynamic_pointer_cast<const Bounds<int>>(range);
     if (not bounds) continue;
 
@@ -247,7 +252,7 @@ void add_integer_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
     if (bounds->has_upper_bound and bounds->has_lower_bound) continue;
 
     string name = "m_int_"+convertToString<int>(r);
-    M.add( 1.0, MCMC::Integer_Modifiable_Slice_Move(name, r, *bounds, 1.0) );
+    M.add( 1.0, MCMC::Integer_Modifiable_Slice_Move(name, r, *bounds, rate * weight) );
   }
 }
 
@@ -336,8 +341,8 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     add_slice_moves(P, "*.mu"+convertToString(i+1), slice_moves);
 
   // Add slice moves for continuous 1D distributions
-  add_real_slice_moves(P, slice_moves);
-  add_integer_slice_moves(P, slice_moves);
+  add_real_slice_moves(P, slice_moves, 1.0);
+  add_integer_slice_moves(P, slice_moves, 1.0);
 
   // imodel parameters
   add_slice_moves(P, "*.delta", slice_moves, 10);
@@ -549,10 +554,10 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
 
   add_boolean_MH_moves(P, parameter_moves, 1.5);
-  add_integer_uniform_MH_moves(P, parameter_moves);
+  add_integer_uniform_MH_moves(P, parameter_moves, 0.1);
 
   // Actually there ARE slice moves for this, but they don't jump modes!
-  add_real_MH_moves(P, parameter_moves);
+  add_real_MH_moves(P, parameter_moves, 0.1);
 
   // FIXME - we need a proposal that sorts after changing
   //         then we can un-hack the recalc function in smodel.C
