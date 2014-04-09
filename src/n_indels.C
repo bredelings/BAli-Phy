@@ -27,6 +27,8 @@ namespace states = A2::states;
 
 vector<int> get_indel_lengths(const alignment& A,const Tree& T, int b)
 {
+  if (A.n_sequences() != T.n_nodes()) return vector<int>{};
+
   vector<int> indels;
 
   vector<int> pairwiseA = get_path(A, T.branch(b).target(), T.branch(b).source());
