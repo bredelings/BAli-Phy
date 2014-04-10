@@ -1494,6 +1494,9 @@ Parameters::Parameters(const module_loader& L,
   // create data partitions
   for(int i=0;i<A.size();i++) 
     data_partitions.push_back( data_partition(this, i, A[i]) );
+
+  // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
+  probability();
 }
 
 Parameters::Parameters(const module_loader& L,
