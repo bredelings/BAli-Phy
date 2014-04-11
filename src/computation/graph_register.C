@@ -1471,6 +1471,13 @@ void reg_heap::trace_and_reclaim_unreachable()
     next_scan2.clear();
   }
 
+  // Avoid memory leaks.
+  for(auto& rc: computations)
+  {
+    clean_weak_refs(rc.used_by, computations);
+    clean_weak_refs(rc.called_by, computations);
+  }
+
 #ifdef DEBUG_MACHINE
   check_used_regs();
 #endif
