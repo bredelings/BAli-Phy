@@ -52,6 +52,18 @@ using std::endl;
  *    - we need to incorporate them into the PDF
  */
 
+template<typename T>
+void truncate(vector<T>& v, int s)
+{
+  if (v.size() > s)
+  {
+    vector<T> v2(s);
+    v.swap(v2);
+  }
+  else
+    v.clear();
+}
+
 expression_ref graph_normalize(const expression_ref& E)
 {
   if (not E) return E;
@@ -162,9 +174,9 @@ void computation::clear()
   source = -1;
   result = 0;
   call = 0;
-  used_inputs.clear();
-  used_by.clear();
-  called_by.clear();
+  truncate(used_inputs,32);
+  truncate(used_by,32);
+  truncate(called_by,32);
 
   // This should already be cleared.
   assert(temp == -1);
@@ -707,13 +719,7 @@ void reg_heap::clear_used_inputs(int rc1)
 {
   auto& u = computations.access_unused(rc1).used_inputs;
 
-  if (u.size() > 32)
-  {
-    vector<int> v(32);
-    u.swap(v);
-  }
-  else
-    u.clear();
+  truncate(u,32);
 }
 
 void reg_heap::clear_used_inputs_for_reg(int t, int R)
@@ -1469,6 +1475,13 @@ void reg_heap::trace_and_reclaim_unreachable()
     }
     std::swap(scan2,next_scan2);
     next_scan2.clear();
+  }
+
+  // Avoid memory leaks.
+  for(auto& rc: computations)
+  {
+    clean_weak_refs(rc.used_by, computations);
+    clean_weak_refs(rc.called_by, computations);
   }
 
 #ifdef DEBUG_MACHINE
