@@ -545,6 +545,8 @@ vector<shared_ptr<ostream>> init_files(int proc_id, const string& dirname,
   print_version_info(s_out);
   s_out<<"directory: "<<fs::initial_path().string()<<endl;
   s_out<<"subdirectory: "<<dirname<<endl;
+  if (getenv("SLURM_JOBID"))
+    s_out<<"SLURM_JOBID: "<<getenv("SLURM_JOBID")<<endl;
   if (getenv("JOB_ID"))
     s_out<<"JOB_ID: "<<getenv("JOB_ID")<<endl;
   if (getenv("LSB_JOBID"))

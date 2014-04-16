@@ -2228,6 +2228,8 @@ object_ref reg_heap::get_parameter_value_in_context(int p, int c)
 
 object_ref reg_heap::get_reg_value_in_context(int& R, int c)
 {
+  //  if (access(R).type == constant) return access(R).C.exp->head;
+
   int t = token_for_context(c);
   reroot_at(t);
 
