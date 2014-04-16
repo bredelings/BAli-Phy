@@ -2432,6 +2432,5 @@ sub translate_cygwin
 	print "Translating '$arg' to '$new_arg'\n";
 	$arg = $new_arg;
     }
-    exit 0;
     return $arg;
 }
