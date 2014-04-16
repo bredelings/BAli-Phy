@@ -39,6 +39,8 @@ use POSIX;
 
 my $home = $ENV{'HOME'};
 
+my $verbose = 0;
+
 #----------------------------- SETUP 1 --------------------------#
 
 if (! is_in_path("trees-consensus")) {
@@ -179,7 +181,7 @@ $subsample_string = "" if ($subsample == 1);
 if ($personality =~ "bali-phy.*" || $personality eq "beast" || $personality eq "phylobayes") {
     print "Summarizing distribution of numerical parameters...";
     if (! more_recent_than_all_of("Results/Report",[@parameter_files])) {
-	`statreport $subsample_string $max_arg $skip @parameter_files > Results/Report`;
+	exec_show("statreport $subsample_string $max_arg $skip @parameter_files > Results/Report");
     }
     print "done.\n";
 }
@@ -210,8 +212,7 @@ if (-z "Results/consensus" || ! more_recent_than_all_of("Results/consensus",[@tr
     my $select_trees_arg = "$max_arg $skip $subsample_string $prune_arg";
     my $levels_arg = "--support-levels=Results/c-levels.plot";
     $levels_arg = "$levels_arg --extended-support-levels=Results/extended-c-levels.plot" if ($sub_partitions);
-    `trees-consensus @tree_files $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg --map-tree=Results/MAP.tree --greedy-consensus=Results/greedy.tree --report=Results/consensus`;
-
+    exec_show("trees-consensus @tree_files $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg --map-tree=Results/MAP.tree --greedy-consensus=Results/greedy.tree --report=Results/consensus");
 }
 print "done.\n";
 
@@ -231,7 +232,7 @@ print "\nComputing mean branch lengths ... ";
 	if (! more_recent_than("Results/$tree.ltree",$tree_files[0])) 
 	{
 	    $prune_arg2 = "--prune $prune" if (defined($prune));
-	    `tree-mean-lengths Results/$tree.tree --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg2 < $tree_files[0] > Results/$tree.ltree`;
+	    exec_show("tree-mean-lengths Results/$tree.tree --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg2 < $tree_files[0] > Results/$tree.ltree");
  	}
     }
 print "done.\n";
@@ -281,7 +282,7 @@ my $marginal_prob = &compute_marginal_likelihood();
 
 # 13. Get # of topologies sampled
 
-my $n_topologies = `pickout n_topologies -n < Results/consensus`;
+my $n_topologies = exec_show("pickout n_topologies -n < Results/consensus");
 
 my $n_topologies_95;
 
@@ -703,11 +704,11 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
 
     $section .= '<p><a href="convergence-PP.pdf">Variation in split frequency estimates</a></p>'."\n" if (-f "Results/convergence-PP.pdf");
 
-my $tne_string = `pickout -n Ne < Results/partitions.bs`;
+my $tne_string = exec_show("pickout -n Ne < Results/partitions.bs");
 my @tne_array = split(/\n/,$tne_string);
 @tne_array = sort {$a <=> $b} @tne_array;
 #my $min_tNe = $tne_array[0];
-my $min_tNe = `pickout -n 'min Ne' < Results/partitions.bs`;
+my $min_tNe = exec_show("pickout -n 'min Ne' < Results/partitions.bs");
 
 my @sne = sort {$a <=> $b} values(%Ne);
     $min_Ne = $sne[0];
@@ -865,7 +866,7 @@ sub Rexec
 
     my $args = shift;
 
-    `R --slave --vanilla --args $args < $script`;
+    exec_show("R --slave --vanilla --args $args < $script");
 }
 
 sub parse_command_line
@@ -879,6 +880,9 @@ sub parse_command_line
 	}
 	elsif ($arg =~ /--burnin=(.+)/) {
 	    $burnin = $1;
+	}
+	elsif ($arg =~ /--verbose/) {
+	    $verbose = 1;
 	}
 	elsif ($arg =~ /--fast/) {
 	    $speed = 2;
@@ -1069,19 +1073,19 @@ sub draw_trees
 	if ($speed < 2)
 	{
 	    if (-e $filename2 && ! more_recent_than("Results/$tree-mctree.svg",$filename2)) {
-		`draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --output=svg --draw-clouds=only`;
+		exec_show("draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --output=svg --draw-clouds=only");
 	    }
 	    if (-e $filename2 && ! more_recent_than("Results/$tree-mctree.pdf",$filename2)) {
-		`draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --draw-clouds=only`;
+		exec_show("draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --draw-clouds=only");
 	    }
 	}
 	
 	if (! more_recent_than("Results/$tree-tree.pdf",$filename1)) {
-	    `cd Results ; draw-tree $tree.ltree --layout=equal-daylight --no-shade`;
+	    exec_show("cd Results ; draw-tree $tree.ltree --layout=equal-daylight --no-shade");
 	}
 	
 	if (! more_recent_than("Results/$tree-tree.svg",$filename1)) {
-	    `cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg --no-shade`;
+	    exec_show("cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg --no-shade");
 	}
 	
 	print "$tree ";
@@ -1090,11 +1094,11 @@ sub draw_trees
 	
     }
 
-    `cd Results ; draw-tree greedy.tree --layout=equal-daylight --no-shade` if (-e 'Results/greedy.tree');
-    `cd Results ; draw-tree greedy.tree --layout=equal-daylight --no-shade --output=svg ` if (-e 'Results/greedy.tree');
+    exec_show("cd Results ; draw-tree greedy.tree --layout=equal-daylight --no-shade") if (-e 'Results/greedy.tree');
+    exec_show("cd Results ; draw-tree greedy.tree --layout=equal-daylight --no-shade --output=svg ") if (-e 'Results/greedy.tree');
 
-    `cd Results ; draw-tree MAP.tree --layout=equal-daylight --no-shade` if (-e 'Results/MAP.tree');
-    `cd Results ; draw-tree MAP.tree --layout=equal-daylight --no-shade --output=svg ` if (-e 'Results/MAP.tree');
+    exec_show("cd Results ; draw-tree MAP.tree --layout=equal-daylight --no-shade") if (-e 'Results/MAP.tree');
+    exec_show("cd Results ; draw-tree MAP.tree --layout=equal-daylight --no-shade --output=svg ") if (-e 'Results/MAP.tree');
 
     print "done.\n";
 }
@@ -1105,14 +1109,14 @@ sub mixing_diagnostics
     print "\nGenerate mixing diagnostics for topologies ... ";
 
     if (!more_recent_than("Results/partitions","Results/consensus")) {
-	`pickout --no-header --large pi < Results/consensus > Results/partitions`;
+	exec_show("pickout --no-header --large pi < Results/consensus > Results/partitions");
     }
     if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
-	`perl -e 'while(<>) {s/\$/\\n/;print;}' < Results/partitions > Results/partitions.pred`;
+	exec_show("perl -e 'while(<>) {s/\$/\\n/;print;}' < Results/partitions > Results/partitions.pred");
     }
 
     if (!more_recent_than_all_of("Results/partitions.bs",[@tree_files])) {
-	`trees-bootstrap $max_arg @tree_files $skip $subsample_string --pred Results/partitions.pred --LOD-table=Results/LOD-table --pseudocount 1 > Results/partitions.bs`;
+	exec_show("trees-bootstrap $max_arg @tree_files $skip $subsample_string --pred Results/partitions.pred --LOD-table=Results/LOD-table --pseudocount 1 > Results/partitions.bs");
     }
     print "done.\n";
 
@@ -1130,7 +1134,7 @@ sub SRQ_plots
 # 12. Mixing diagnostics - SRQ plots
     print "Generate SRQ plot for partitions ... ";
     if (!more_recent_than_all_of("Results/partitions.SRQ",[@tree_files])) {
-	`trees-to-SRQ Results/partitions.pred $max_arg $skip $subsample_string --max-points=1000 < $tree_files[0] > Results/partitions.SRQ`;
+	exec_show("trees-to-SRQ Results/partitions.pred $max_arg $skip $subsample_string --max-points=1000 < $tree_files[0] > Results/partitions.SRQ");
     }
     print "done.\n";
     
@@ -1138,7 +1142,7 @@ sub SRQ_plots
 
     print "Generate SRQ plot for c50 tree ... ";
     if (!more_recent_than_all_of("Results/c50.SRQ",[@tree_files])) {
-	`trees-to-SRQ Results/c50.tree $max_arg $subsample_string $skip --max-points=1000 < $tree_files[0] > Results/c50.SRQ`;
+	exec_show("trees-to-SRQ Results/c50.tree $max_arg $subsample_string $skip --max-points=1000 < $tree_files[0] > Results/c50.SRQ");
     }
     print "done.\n";
     
@@ -1202,13 +1206,13 @@ sub compute_initial_alignments
 		# Version > 2.1.1
 		if (-e $initial_name)
 		{
-		    `cp $initial_name Results/Work/$name-unordered.fasta`;
+		    exec_show("cp $initial_name Results/Work/$name-unordered.fasta");
 		}
 		else
 		{
-		    `alignment-find --first < $partition_samples[0][$i] > Results/Work/$name-unordered.fasta 2>/dev/null`;
+		    exec_show("alignment-find --first < $partition_samples[0][$i] > Results/Work/$name-unordered.fasta 2>/dev/null");
 		    if ($? && $n_chains==1 && defined($MAP_file)) {
-			`alignment-find --first < $MAP_file > Results/Work/$name-unordered.fasta`;
+			exec_show("alignment-find --first < $MAP_file > Results/Work/$name-unordered.fasta");
 		    }
 		}
 	    }
@@ -1227,7 +1231,7 @@ sub compute_muscle_alignment
 		my $p = ($i+1);
 		my $name = "P$p-muscle";
 		if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
-		    `muscle -in Results/Work/P$p-initial-unordered.fasta -out Results/Work/$name-unordered.fasta -quiet`;
+		    exec_show("muscle -in Results/Work/P$p-initial-unordered.fasta -out Results/Work/$name-unordered.fasta -quiet");
 		}
 		push @alignments,$name;
 		$alignment_names{$name} = "MUSCLE";
@@ -1256,11 +1260,11 @@ sub compute_probcons_alignment
 		if ($alphabet =~ /RNA nucleotides/) {
 		    print "got here\n";
 		    if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
-			`probcons-RNA Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null`;
+			exec_show("probcons-RNA Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null");
 		    }
 		}
 		elsif (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
-		    `probcons Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null`;
+		    exec_show("probcons Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null");
 		}
 		push @alignments,$name;
 		$alignment_names{$name} = "ProbCons";
@@ -1286,7 +1290,7 @@ sub compute_wpd_alignments
 	    my $name = "P$p-max";
 	    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ||
 		! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ) {
-		`cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta`;
+		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta");
 	    }
 	    push @alignments,$name;
 	    $alignment_names{$name} = "Best (WPD)";
@@ -1313,7 +1317,7 @@ sub compute_consensus_alignments
 	    my $name = "P$p-consensus-$value";
 	    print "c$value ";
 	    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile)) {
-		`cut-range --skip=$burnin $size_arg < $infile | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta`;
+		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta");
 	    }
 	    push @alignments,$name;
 	    $alignment_names{$name} = "$value% consensus";
@@ -1332,14 +1336,14 @@ sub draw_alignments
     {
 	if (! more_recent_than("Results/$alignment.fasta","Results/Work/$alignment-unordered.fasta") ||
 	    ! more_recent_than("Results/$alignment.fasta","Results/c50.tree")) {
-	    `alignment-cat Results/Work/$alignment-unordered.fasta --reorder-by-tree=Results/c50.tree > Results/$alignment.fasta`;
+	    exec_show("alignment-cat Results/Work/$alignment-unordered.fasta --reorder-by-tree=Results/c50.tree > Results/$alignment.fasta");
 	}
 	
 	if (! more_recent_than("Results/$alignment.html","Results/$alignment.fasta")) {
-	    `alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null`;
+	    exec_show("alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null");
 	    
 	    if ($?) {
-		`alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment.html`;
+		exec_show("alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment.html");
 	    }
 	}
     }
@@ -1361,11 +1365,11 @@ sub draw_alignments
 	if (! more_recent_than("Results/$alignment-diff.fasta","Results/$alignment.fasta") || 
 	    ! more_recent_than("Results/$alignment-diff.AU","Results/$alignment.fasta") )
 	{
-	    `alignments-diff Results/$alignment.fasta Results/P$p-max.fasta --merge --fill=unknown -d Results/$alignment-diff.AU > Results/$alignment-diff.fasta`;
+	    exec_show("alignments-diff Results/$alignment.fasta Results/P$p-max.fasta --merge --fill=unknown -d Results/$alignment-diff.AU > Results/$alignment-diff.fasta");
 	}
 	
 	if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.fasta")) {
-	    `alignment-draw Results/$alignment-diff.fasta --scale=invert --AU Results/$alignment-diff.AU --show-ruler --color-scheme=Rainbow+fade[1,0]+contrast > Results/$alignment-diff.html`;
+	    exec_show("alignment-draw Results/$alignment-diff.fasta --scale=invert --AU Results/$alignment-diff.AU --show-ruler --color-scheme=Rainbow+fade[1,0]+contrast > Results/$alignment-diff.html");
 	}
     }
     print "done.\n";
@@ -1381,12 +1385,12 @@ sub compute_and_draw_AU_plots
 	    my $infile = $partition_samples[0][$p-1];
 	    
 	    if (!more_recent_than("Results/$alignment-AU.prob",$infile)) {
-		`cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob`;
+		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob");
 	    }
 	    print "done.\n";
-	    `alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null`;
+	    exec_show("alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null");
 	    if ($?) {
-		`alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=AA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html`;
+		exec_show("alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=AA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html");
 	    }
 	}
     }
@@ -1402,7 +1406,7 @@ sub compute_marginal_likelihood
 	if (!more_recent_than_all_of("Results/Pmarg",[@parameter_files])) {
 	    my $likelihood = "likelihood";
 	    $likelihood = "loglik" if ($personality eq "phylobayes");
-	    `stats-select $likelihood --no-header < $parameter_files[0] | tail -n+$burnin | model_P > Results/Pmarg`;
+	    exec_show("stats-select $likelihood --no-header < $parameter_files[0] | tail -n+$burnin | model_P > Results/Pmarg");
 	}
 	print "done.\n";
 	$marginal_prob = `cat Results/Pmarg`;
@@ -1465,14 +1469,14 @@ sub generate_trace_plots
 	    
 	    my $file1 = "Results/Work/T1.p.$i";
 	    if ($personality =~ "bali-phy.*") {
-		`stats-select iter '$var' --no-header < $parameter_files[0] > $file1`;
+		exec_show("stats-select iter '$var' --no-header < $parameter_files[0] > $file1");
 	    }
 	    elsif ($personality =~ "phylobayes.*") {
-		`stats-select time '$var' --no-header < $parameter_files[0] > $file1`;
+		exec_show("stats-select time '$var' --no-header < $parameter_files[0] > $file1");
 	    }
 	    elsif ($personality =~ "beast.*")
 	    {
-		`stats-select state '$var' --no-header < $parameter_files[0] > $file1`;
+		exec_show("stats-select state '$var' --no-header < $parameter_files[0] > $file1");
 	    }
 	    
 	    my $file2 = $file1.".2";
@@ -1483,7 +1487,7 @@ sub generate_trace_plots
 	    
 	    my $factor = ceil(($n_iterations[0] - $burnin) / $N);
 	    
-	    `subsample --skip=$burnin $factor < $file1 > $file2`;
+	    exec_show("subsample --skip=$burnin $factor < $file1 > $file2");
 	
 	    `gnuplot <<EOF
 set terminal png size 800,600
@@ -2375,13 +2379,13 @@ sub compute_tree_and_parameter_files_for_heated_chains
 	
 	if (! more_recent_than_all_of("Results/C$i.t",[@tree_files]))
 	{
-	    `echo "tree" > Results/C$i.t`;
-	    `cat C$i.trees >> Results/C$i.t`;
+	    exec_show("echo 'tree' > Results/C$i.t");
+	    exec_show("cat C$i.trees >> Results/C$i.t");
 	}
 	
 	if (! more_recent_than_all_of("Results/C$i.pt",[@tree_files, @parameter_files]))
 	{
-	    `stats-merge C$i.p Results/C$i.t > Results/C$i.pt 2>/dev/null`;
+	    exec_show("stats-merge C$i.p Results/C$i.t > Results/C$i.pt 2>/dev/null");
 	}
 	
 	if (! more_recent_than("Results/C${i}T1.pt","Results/C$i.pt")) 
@@ -2389,7 +2393,7 @@ sub compute_tree_and_parameter_files_for_heated_chains
 	    my $use_header = "";
 	    $use_header = "--no-header" if ($i != 1);
 	    
-	    `subsample --header --skip=$burnin < Results/C$i.pt | stats-select -s beta=1 $use_header > Results/C${i}T1.pt`;
+	    exec_show("subsample --header --skip=$burnin < Results/C$i.pt | stats-select -s beta=1 $use_header > Results/C${i}T1.pt");
 	}
     }
     
@@ -2402,17 +2406,17 @@ sub compute_tree_and_parameter_files_for_heated_chains
 	}
     }
     $cmd = "$cmd > Results/T1.pt";
-    `$cmd` if ($rerun);
+    exec_show("$cmd") if ($rerun);
     
     if (! more_recent_than("Results/T1.trees","Results/T1.pt")) {
-	`stats-select tree --no-header < Results/T1.pt > Results/T1.trees`;
+	exec_show("stats-select tree --no-header < Results/T1.pt > Results/T1.trees");
     }
     
     if (! more_recent_than("Results/T1.p","Results/T1.pt")) {
-	`stats-select -r tree < Results/T1.pt > Results/T1.p`;
+	exec_show("stats-select -r tree < Results/T1.pt > Results/T1.p");
 	
 #       This messes up the printing of statistics
-#	`stats-select -i -r tree < Results/T1.pt > Results/T1.p`;
+#	exec_show("stats-select -i -r tree < Results/T1.pt > Results/T1.p");
 	
     }
     
@@ -2433,4 +2437,11 @@ sub translate_cygwin
 	$arg = $new_arg;
     }
     return $arg;
+}
+
+sub exec_show
+{
+    my $cmd = shift;
+    print STDERR "\n\t$cmd\n\n" if ($verbose);
+    return `$cmd`;
 }
