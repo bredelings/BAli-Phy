@@ -928,6 +928,7 @@ sub parse_command_line
 	}
 	else
 	{
+	    $arg = translate_cygwin($arg);
 	    push @subdirectories, $arg;
 	}
     }
@@ -2419,3 +2420,18 @@ sub compute_tree_and_parameter_files_for_heated_chains
     @parameter_files = ("Results/T1.p");
 }
 
+# Replace /cydrive/LETTER{STUFF} with LETTER:{STUFF}
+sub translate_cygwin
+{
+    my $arg = shift;
+    my $new_arg = $arg;
+    $new_arg =~ s|^/cygdrive/([^/]*)(.*)$|$1:$2|;
+
+    if ($new_arg ne $arg)
+    {
+	print "Translating '$arg' to '$new_arg'\n";
+	$arg = $new_arg;
+    }
+    exit 0;
+    return $arg;
+}
