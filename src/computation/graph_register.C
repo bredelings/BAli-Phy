@@ -55,9 +55,9 @@ using std::endl;
 template<typename T>
 void truncate(vector<T>& v, int s)
 {
-  if (v.size() > s)
+  if (v.capacity() > s)
   {
-    vector<T> v2(s);
+    vector<T> v2;
     v.swap(v2);
   }
   else
