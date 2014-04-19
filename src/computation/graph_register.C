@@ -708,20 +708,6 @@ int count(const std::vector<int>& v, int I)
   return c;
 }
 
-void reg_heap::clear_used_inputs(int rc1)
-{
-  auto& u = computations.access_unused(rc1).used_inputs;
-
-  truncate(u);
-}
-
-void reg_heap::clear_used_inputs_for_reg(int t, int R)
-{
-  int rc = computation_index_for_reg(t,R);
-  if (rc > 0)
-    clear_used_inputs(rc);
-}
-
 void reg_heap::set_call(int t, int R1, int R2)
 {
   assert(reg_is_changeable(R1));
@@ -2637,7 +2623,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 	  assert(not reg_has_call(t,R) );
 	  assert(not reg_has_result(t,R));
 	  assert(computation_for_reg(t,R).used_inputs.empty());
-	  //	  clear_used_inputs_for_reg(t,R);
 	  set_C(R, std::move(result) );
 	}
 	// Otherwise, set the reduction result.
