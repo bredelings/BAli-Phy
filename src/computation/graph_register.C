@@ -53,6 +53,14 @@ using std::endl;
  */
 
 template<typename T>
+void shrink(vector<T>& v)
+{
+  if (v.capacity() < 4*(v.size()+1)) return;
+  vector<T> v2 = v;
+  v.swap(v2);
+}
+
+template<typename T>
 void truncate(vector<T>& v)
 {
   vector<T> v2;
@@ -1460,7 +1468,9 @@ void reg_heap::trace_and_reclaim_unreachable()
   for(auto& rc: computations)
   {
     clean_weak_refs(rc.used_by, computations);
+    shrink(rc.used_by);
     clean_weak_refs(rc.called_by, computations);
+    shrink(rc.called_by);
   }
 
 #ifdef DEBUG_MACHINE
