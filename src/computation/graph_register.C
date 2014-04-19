@@ -53,15 +53,10 @@ using std::endl;
  */
 
 template<typename T>
-void truncate(vector<T>& v, int s)
+void truncate(vector<T>& v)
 {
-  if (v.capacity() > s)
-  {
-    vector<T> v2;
-    v.swap(v2);
-  }
-  else
-    v.clear();
+  vector<T> v2;
+  v.swap(v2);
 }
 
 expression_ref graph_normalize(const expression_ref& E)
@@ -174,9 +169,9 @@ void computation::clear()
   source = -1;
   result = 0;
   call = 0;
-  truncate(used_inputs,32);
-  truncate(used_by,32);
-  truncate(called_by,32);
+  truncate(used_inputs);
+  truncate(used_by);
+  truncate(called_by);
 
   // This should already be cleared.
   assert(temp == -1);
@@ -717,7 +712,7 @@ void reg_heap::clear_used_inputs(int rc1)
 {
   auto& u = computations.access_unused(rc1).used_inputs;
 
-  truncate(u,32);
+  truncate(u);
 }
 
 void reg_heap::clear_used_inputs_for_reg(int t, int R)
