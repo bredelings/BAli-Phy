@@ -667,7 +667,9 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
     vector<string> names_ = parameter_names(P);
     set<string> names(names_.begin(), names_.end());
 
-    map<string,string> simplify = get_simplified_names(names);
+    // FIXME: Using short_parameter_names should be nice... but
+    //          we are now logging EXPRESSIONS as well as actual parameters
+    //        This makes such simplification difficult.
 
     for(int i=0;i<P.n_parameters();i++)
     {
