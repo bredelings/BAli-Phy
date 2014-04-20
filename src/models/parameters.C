@@ -632,11 +632,12 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   else
     subA = new subA_index_leaf(AA.length()+1, B*2);
 
-  string prefix = "P"+convertToString(i+1)+".";
-  for(int b=0;b<pairwise_alignment_for_branch.size();b++)
-    pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b),0);
-
   if (variable_alignment())
+  {
+    string prefix = "P"+convertToString(i+1)+".";
+    for(int b=0;b<pairwise_alignment_for_branch.size();b++)
+      pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b),0);
+
     for(int b=0;b<T().n_branches();b++)
     {
       int n1 = T().directed_branch(b).source();
