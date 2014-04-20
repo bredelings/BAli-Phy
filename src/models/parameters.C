@@ -644,6 +644,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
       int n2 = T().directed_branch(b).target();
       set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2));
     }
+  }
 
   // Add method indices for calculating transition matrices.
   const int n_models = n_base_models();
