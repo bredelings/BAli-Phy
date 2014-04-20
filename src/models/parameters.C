@@ -682,7 +682,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
     // D = Params.substitutionBranchLengths!scale_index
     expression_ref D = (identifier("!"),identifier("Params.substitutionBranchLengths"),scale_index);
     expression_ref heat = parameter("Heat.beta");
-    expression_ref training = parameter("IModels.training");
+    expression_ref training = parameter("*IModels.training");
     expression_ref model = (identifier("!"),identifier("IModels.models"),i_index);
 
     vector<expression_ref> as_;
@@ -1389,7 +1389,7 @@ Parameters::Parameters(const module_loader& L,
     imodels_.push_back(perform_exp(IMs[i],prefix));
   }
 
-  add_parameter("IModels.training", false);
+  add_parameter("*IModels.training", false);
 
   Module imodels_program("IModels");
   imodels_program.def_function("models", (identifier("listArray'"), get_list(imodels_)));
@@ -1411,7 +1411,7 @@ Parameters::Parameters(const module_loader& L,
   // Add and initialize variables for branch *lengths*: scale<s>.D<b>
   for(int s=0;s<n_scales;s++)
   {
-    string prefix= "Scale" + convertToString(s+1);
+    string prefix= "*Scale" + convertToString(s+1);
     branch_length_indices.push_back(vector<int>());
     for(int b=0;b<T().n_branches();b++)
     {
@@ -1428,7 +1428,7 @@ Parameters::Parameters(const module_loader& L,
   vector<expression_ref> branch_categories;
   for(int b=0;b<T().n_branches();b++)
   {
-    string name = "Main.branchCat" + convertToString(b+1);
+    string name = "*Main.branchCat" + convertToString(b+1);
     add_parameter(name, Int(0));
     branch_categories.push_back(parameter(name));
   }
@@ -1439,7 +1439,7 @@ Parameters::Parameters(const module_loader& L,
     vector<expression_ref> SBLL;
     for(int s=0;s < n_branch_means(); s++)
     {
-      string prefix= "Scale" + convertToString(s+1);
+      string prefix= "*Scale" + convertToString(s+1);
       // Get a list of the branch LENGTH (not time) parameters
       vector<expression_ref> D;
       for(int b=0;b<T().n_branches();b++)
@@ -1483,7 +1483,7 @@ Parameters::Parameters(const module_loader& L,
   for(int i=0;i<n_imodels();i++) 
   {
     imodel_methods& I = IModel_methods[i];
-    string prefix = "I" + convertToString(i+1);
+    string prefix = "*I" + convertToString(i+1);
 
     I.length_arg_param_index = add_parameter(prefix+".lengthpArg", Int(1));
     expression_ref lengthp = (identifier("snd"),(identifier("!"),identifier("IModels.models"),i));

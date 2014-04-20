@@ -1261,7 +1261,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
       //	if (PP.T->branch(i).length() > PP.branch_length_max)
       //	  PP.setlength(i, PP.branch_length_max);
 
-      PP.set_parameter_value(PP.find_parameter("IModels.training"), new constructor("Prelude.True",0));
+      PP.set_parameter_value(PP.find_parameter("*IModels.training"), new constructor("Prelude.True",0));
     }
   }
 
@@ -1273,7 +1273,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     // Free temporarily fixed parameters at iteration 5
     if (iterations == alignment_burnin_iterations)
     {
-      PP.set_parameter_value(PP.find_parameter("IModels.training"), new constructor("Prelude.False",0));
+      PP.set_parameter_value(PP.find_parameter("*IModels.training"), new constructor("Prelude.False",0));
 
       PP.branch_length_max = -1;
     }
