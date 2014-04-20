@@ -674,6 +674,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
     for(int i=0;i<P.n_parameters();i++)
     {
       string name = P.parameter_name(i);
+      if (name.size() and name[0] == '*' and not log_verbose) continue;
 
       int index = P.add_compute_expression(parameter(name));
 
