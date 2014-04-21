@@ -480,7 +480,6 @@ tribool parameter::compare(const Object& o) const
 parameter::parameter(const std::string& s)
  :parameter_name(s)
 {
-  assert(is_haskell_var_name(s));
 }
 
 string modifiable::print() const 
