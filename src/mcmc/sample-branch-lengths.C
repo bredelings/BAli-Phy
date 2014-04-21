@@ -232,7 +232,7 @@ void change_branch_length_and_T(owned_ptr<Probability_Model>& P,MoveStats& Stats
     
     const SequenceTree& T2 = p[1].T();
     
-    vector<int> nodes = A5::get_nodes_random(T2,b);
+    vector<int> nodes = A5::get_nodes_random(T2,b).nodes;
     int b1 = T2.directed_branch(nodes[4],nodes[1]);
     int b2 = T2.directed_branch(nodes[5],nodes[2]);
     p[1].exchange_subtrees(b1,b2);

@@ -26,6 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef FIVEWAY_H
 #define FIVEWAY_H
 
+#include <vector>
 #include "alignment/alignment.H"
 #include "models/parameters.H"
 #include "2way.H"
@@ -38,20 +39,27 @@ namespace A5 {
   namespace states = A2::states;
   typedef HMM::bitmask_t bitmask_t;
 
-  // std::vector<int> get_nodes(const Tree& T,int b);
-  std::vector<int> get_nodes_random(const Tree& T,int b);
+  struct hmm_order
+  {
+    std::vector<int> nodes;
+    int topology = -1;
+    hmm_order() {}
+    hmm_order(const std::vector<int>& n, int t):nodes(n),topology(t) {}
+  };
+
+  hmm_order get_nodes_random(const Tree& T,int b);
 
   /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)
-  log_double_t correction(const data_partition& P,const std::vector<int>& nodes);
+  log_double_t correction(const data_partition& P, const hmm_order& order);
 
-  log_double_t correction(const Parameters& P,const std::vector<int>& nodes);
+  log_double_t correction(const Parameters& P, const hmm_order& nodes);
 
-  log_double_t acceptance_ratio(const Parameters& P1,const std::vector<int>&,
-			      const Parameters& P2,const std::vector<int>&);
+  log_double_t acceptance_ratio(const Parameters& P1, const hmm_order&,
+				const Parameters& P2, const hmm_order);
 
-  HMM get_HMM(const data_partition& P, const std::vector<int>& nodes);
+  HMM get_HMM(const data_partition& P, const hmm_order& nodes);
 
-  std::vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const std::vector<int>& nodes);
+  std::vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const hmm_order& nodes);
 }
 
 

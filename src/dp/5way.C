@@ -38,7 +38,8 @@ using std::pair;
 namespace A5 {
 
   /// Which 5 nodes are adjacent to this branch?
-  vector<int> get_nodes(const Tree& T,int b) {
+  hmm_order get_nodes(const Tree& T,int b) 
+  {
     assert(T.directed_branch(b).is_internal_branch());
 
     vector<const_branchview> branches;
@@ -56,21 +57,22 @@ namespace A5 {
     nodes[4] = T.directed_branch(b).source();
     nodes[5] = T.directed_branch(b).target();
     
-    return nodes;
+    return {nodes,0};
   }
 
-  vector<int> get_nodes_random(const Tree& T, int b) {
-    vector<int> nodes = get_nodes(T,b);
+  hmm_order get_nodes_random(const Tree& T, int b) 
+  {
+    hmm_order order = get_nodes(T,b);
     if (uniform() < 0.5)
-      std::swap(nodes[0],nodes[1]);
+      std::swap(order.nodes[0], order.nodes[1]);
     if (uniform() < 0.5)
-      std::swap(nodes[2],nodes[3]);
+      std::swap(order.nodes[2], order.nodes[3]);
     if (uniform() < 0.5) {
-      std::swap(nodes[0],nodes[2]);
-      std::swap(nodes[1],nodes[3]);
-      std::swap(nodes[4],nodes[5]);
+      std::swap(order.nodes[0], order.nodes[2]);
+      std::swap(order.nodes[1], order.nodes[3]);
+      std::swap(order.nodes[4], order.nodes[5]);
     }
-    return nodes;
+    return order;
   }
 
 
@@ -83,13 +85,13 @@ namespace A5 {
   // What happens if we care about alignments that aren't part of the 3way?
   // Does this block stuff?  I think it did...
 
-  log_double_t correction(const data_partition& P,const vector<int>& nodes) 
+  log_double_t correction(const data_partition& P,const hmm_order& order) 
   {
     if (P.variable_alignment())
     {
       // get lengths of two internal nodes
-      int length1 = P.A().seqlength(nodes[4]);
-      int length2 = P.A().seqlength(nodes[5]);
+      int length1 = P.A().seqlength(order.nodes[4]);
+      int length2 = P.A().seqlength(order.nodes[5]);
       
       return pow( P.sequence_length_pr(length1) * P.sequence_length_pr(length2), 2);
     }
@@ -98,23 +100,25 @@ namespace A5 {
   }
 
 
-  log_double_t correction(const Parameters& P,const vector<int>& nodes) 
+  log_double_t correction(const Parameters& P,const hmm_order& order) 
   {
     log_double_t C = 1.0;
     for(int i=0;i<P.n_data_partitions();i++)
-      C *= correction(P[i],nodes);
+      C *= correction(P[i], order);
     return C;
   }
     
-  log_double_t acceptance_ratio(const Parameters& P1,const vector<int>& nodes1,
-			      const Parameters& P2,const vector<int>& nodes2) 
+  log_double_t acceptance_ratio(const Parameters& P1, const hmm_order& order1,
+				const Parameters& P2, const hmm_order& order2) 
   {
-    return correction(P1,nodes1)/correction(P2,nodes2);
+    return correction(P1,order1)/correction(P2,order2);
   }
 
-  HMM get_HMM(const data_partition& P, const vector<int>& nodes)
+  HMM get_HMM(const data_partition& P, const hmm_order& order)
   {
     const Tree& T = P.T();
+
+    const auto& nodes = order.nodes;
 
     int b1 = T.directed_branch(nodes[0],nodes[4]);
     int b2 = T.directed_branch(nodes[4],nodes[1]);
@@ -142,9 +146,11 @@ namespace A5 {
   }
 
 
-  vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const vector<int>& nodes)
+  vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const hmm_order& order)
   {
     const Tree& T = P.T();
+
+    const auto& nodes = order.nodes;
 
     int b1 = T.directed_branch(nodes[0],nodes[4]);
     int b2 = T.directed_branch(nodes[4],nodes[1]);

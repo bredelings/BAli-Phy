@@ -34,6 +34,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "models/parameters.H"
 #include "dp-matrix.H"
 #include <boost/dynamic_bitset.hpp>
+#include "dp/5way.H"
 
 /// Define type for a function which return the distributions for each column and rate give SOME leaves
 typedef std::vector< Matrix > (*distributions_t)(const data_partition&,const std::vector<int>&,int,const boost::dynamic_bitset<>&);
@@ -54,7 +55,7 @@ log_double_t other_prior(const data_partition& P, const std::vector<int>& nodes)
 
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-int sample_two_nodes_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
+int sample_two_nodes_multi(std::vector<Parameters>& p,const std::vector< A5::hmm_order >& orders,
 			   const std::vector<log_double_t>& rho, bool do_OS,bool do_OP);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes

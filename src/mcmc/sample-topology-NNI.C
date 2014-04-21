@@ -103,12 +103,12 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rh
   for(int j=0;j<p[0].n_data_partitions();j++)
     assert(p[0][j].variable_alignment() == p[1][j].variable_alignment());
 
-  vector< vector<int> > nodes(2);
-  nodes[0] = A5::get_nodes_random(p[0].T(), b);
-  nodes[1] = A5::get_nodes_random(p[1].T(), b);
+  vector< A5::hmm_order > orders(2);
+  orders[0] = A5::get_nodes_random(p[0].T(), b);
+  orders[1] = A5::get_nodes_random(p[1].T(), b);
 
   try {
-    return sample_two_nodes_multi(p,nodes,rho,true,false);
+    return sample_two_nodes_multi(p,orders,rho,true,false);
   }
   catch (choose_exception<log_double_t>& c)
   {
@@ -159,7 +159,8 @@ void two_way_topology_slice_sample(owned_ptr<Probability_Model>& P, MoveStats& S
 
   Tree T0 = PP.T();
 
-  vector<int> nodes = A5::get_nodes_random(PP.T(), b);
+  A5::hmm_order order = A5::get_nodes_random(PP.T(), b);
+  const auto& nodes = order.nodes;
 
   PP.select_root(b);
   // P.likelihood();  Why does this not make a difference in speed?
@@ -232,7 +233,8 @@ void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, 
     return;
   }
 
-  vector<int> nodes = A5::get_nodes_random(PP.T(), b);
+  A5::hmm_order order = A5::get_nodes_random(PP.T(), b);
+  const auto& nodes = order.nodes;
 
   PP.select_root(b);
   // PP.likelihood();  Why does this not make a difference in speed?
@@ -287,7 +289,8 @@ void two_way_NNI_SPR_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, i
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
-  vector<int> nodes = A5::get_nodes_random(PP.T(), b);
+  A5::hmm_order order = A5::get_nodes_random(PP.T(), b);
+  const auto& nodes = order.nodes;
 
   PP.select_root(b);
   // PP.likelihood();  Why does this not make a difference in speed?
@@ -358,7 +361,8 @@ void two_way_NNI_and_branches_sample(owned_ptr<Probability_Model>& P, MoveStats&
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
-  vector<int> nodes = A5::get_nodes_random(PP.T(),b);
+  A5::hmm_order order = A5::get_nodes_random(PP.T(),b);
+  const auto& nodes = order.nodes;
 
   PP.select_root(b);
   // PP.likelihood();  Why does this not make a difference in speed?
@@ -439,13 +443,13 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<log_double_t>&
   assert(p[0].variable_alignment() == p[1].variable_alignment());
   assert(p[1].variable_alignment() == p[2].variable_alignment());
 
-  vector< vector<int> > nodes(3);
-  nodes[0] = A5::get_nodes_random(p[0].T(), b);
-  nodes[1] = A5::get_nodes_random(p[1].T(), b);
-  nodes[2] = A5::get_nodes_random(p[2].T(), b);
+  vector< A5::hmm_order > orders(3);
+  orders[0] = A5::get_nodes_random(p[0].T(), b);
+  orders[1] = A5::get_nodes_random(p[1].T(), b);
+  orders[2] = A5::get_nodes_random(p[2].T(), b);
 
   try {
-    return sample_two_nodes_multi(p,nodes,rho,true,false);
+    return sample_two_nodes_multi(p,orders,rho,true,false);
   }
   catch (choose_exception<log_double_t>& c)
   {
@@ -464,7 +468,8 @@ void three_way_topology_sample_slice(owned_ptr<Probability_Model>& P, MoveStats&
 
   Tree T0 = PP.T();
 
-  vector<int> nodes = A5::get_nodes_random(PP.T(),b);
+  A5::hmm_order order = A5::get_nodes_random(PP.T(),b);
+  const auto& nodes = order.nodes;
 
   //------ Generate Topologies and alter caches ------///
   PP.select_root(b);
@@ -559,7 +564,8 @@ void three_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats
     return;
   }
 
-  vector<int> nodes = A5::get_nodes_random(PP.T(),b);
+  A5::hmm_order order = A5::get_nodes_random(PP.T(),b);
+  const auto& nodes = order.nodes;
 
   //------ Generate Topologies and alter caches ------///
   PP.select_root(b);
@@ -616,7 +622,8 @@ void three_way_topology_and_alignment_sample(owned_ptr<Probability_Model>& P, Mo
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1)
     return;
 
-  vector<int> two_way_nodes = A5::get_nodes_random(PP.T(), b);
+  A5::hmm_order order = A5::get_nodes_random(PP.T(), b);
+  const auto& two_way_nodes = order.nodes;
 
   //--------- Generate the Different Topologies -------//
   // We ALWAYS resample the connection between two_way_nodes [0] and [4].
