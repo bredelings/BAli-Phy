@@ -68,7 +68,9 @@ void NNI_inc(MoveStats& Stats, const string& name, MCMC::Result result,const Tre
 
   double L = T.directed_branch(b).length();
 
-  if (L < 0.065)
+  if (L < 0.0325)
+    Stats.inc(name+"-0.0325", result);
+  else if (L < 0.065)
     Stats.inc(name+"-0.065", result);
   else if (L < 0.125)
     Stats.inc(name+"-0.125", result);
