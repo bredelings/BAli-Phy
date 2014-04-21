@@ -51,11 +51,11 @@ sample_two_nodes_base(data_partition& P, const data_partition& P0, const vector<
 
   HMM m12345 = A5::get_HMM(P,nodes);
 
-  /*
-    OK, so, what does it mean to get the column order from the first alignment?
-    I guess it means that we used (A0,T0,nodes0) to get an order.  We then keep that order
-    for use with (A[i],T[i],nodes[i]).
-   */
+  /*------- Get column order from (A0,T0,nodes) --------*/
+
+  /*  OK, so, what does it mean to get the column order from the first alignment?
+      I guess it means that we used (A0,T0,nodes0) to get an order.  We then keep that order
+      for use with (A[i],T[i],nodes[i]).  */
 
   vector<HMM::bitmask_t> a123456 = A5::get_bitpath(P0, nodes0);
   a123456 = remap_bitpath(a123456, nodes0, nodes);
