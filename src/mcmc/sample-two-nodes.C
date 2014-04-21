@@ -129,6 +129,9 @@ sample_two_nodes_base(data_partition& P, const data_partition& P0, const A5::hmm
 int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
 			   const vector<log_double_t>& rho_,bool do_OS,bool do_OP) 
 {
+  for(int i=1;i<p.size();i++)
+    for(int j=0;j<p[0].n_data_partitions();j++)
+      assert(p[0][j].variable_alignment() == p[i][j].variable_alignment());
 
   vector<A5::hmm_order> order = order_;
   vector<log_double_t> rho = rho_;

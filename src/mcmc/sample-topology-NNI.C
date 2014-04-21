@@ -99,10 +99,6 @@ void NNI_inc(MoveStats& Stats, const string& name, MCMC::Result result,const Tre
 
 int two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rho, int b) 
 {
-  assert(p[0].variable_alignment() == p[1].variable_alignment());
-  for(int j=0;j<p[0].n_data_partitions();j++)
-    assert(p[0][j].variable_alignment() == p[1][j].variable_alignment());
-
   vector< A5::hmm_order > orders(2);
   orders[0] = A5::get_nodes_random(p[0].T(), b);
   orders[1] = A5::get_nodes_random(p[1].T(), b);
