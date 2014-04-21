@@ -258,7 +258,19 @@ void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, 
   // internal node states, the reverse distribution cannot depend on 
   // the internal node state of the proposed new topology/alignment
 
-  int C = two_way_topology_sample(p,rho,b);
+  vector< A5::hmm_order > orders(2);
+  orders[0] = A5::get_nodes_random(p[0].T(), b);
+  orders[1] = A5::get_nodes_random(p[1].T(), b);
+
+  int C = -1;
+  try {
+    C = sample_two_nodes_multi(p,orders,rho,true,false);
+  }
+  catch (choose_exception<log_double_t>& c)
+  {
+    c.prepend(__PRETTY_FUNCTION__);
+    throw c;
+  }
 
   if (C != -1) {
     PP = p[C];
