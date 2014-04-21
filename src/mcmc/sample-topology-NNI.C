@@ -264,6 +264,31 @@ void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, 
   orders[0] = A5::get_nodes_random(p[0].T(), b);
   orders[1] = A5::get_nodes_random(p[1].T(), b);
 
+  bool smart = (uniform() < 0.5);
+  if (smart)
+  {
+    //    std::cerr<<"order = "<<order.nodes<<"\n";
+    orders[0] = order;
+    orders[0].topology = 0;
+    std::swap(orders[0].nodes[2], orders[0].nodes[3]);
+    vector<int> v1 = {orders[0].nodes[0],
+		      orders[0].nodes[1],
+		      orders[0].nodes[2],
+		      orders[0].nodes[3]};
+    
+    //    std::cerr<<"v1 = "<<v1<<"\n";
+    orders[1] = order;
+    std::swap(orders[1].nodes[1], orders[1].nodes[2]);
+    orders[1].topology = 1;
+    vector<int> v2 = {orders[1].nodes[0],
+		      orders[1].nodes[2],
+		      orders[1].nodes[3],
+		      orders[1].nodes[1]};
+
+    //    std::cerr<<"v2 = "<<v2<<"\n";
+    assert(v1 == v2);
+  }
+
   int C = -1;
   try {
     C = sample_two_nodes_multi(p,orders,rho,true,false);
@@ -289,7 +314,10 @@ void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, 
   else
     result.counts[1] = 0;
 
-  NNI_inc(Stats,"NNI (2-way)", result,p[0].T(),b);
+  if (smart)
+    NNI_inc(Stats,"NNI (2-way smart)", result,p[0].T(),b);
+  else
+    NNI_inc(Stats,"NNI (2-way stupid)", result,p[0].T(),b);
 }
 
 void two_way_NNI_SPR_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
