@@ -137,7 +137,14 @@ namespace A5 {
     HMM m5 = P.get_branch_HMM(b5);
     m5.remap_bits({5,3});
 
-    HMM m12345 = Glue(m1,Glue(m2,Glue(m3,Glue(m4,m5))));
+    HMM m12345;
+    if (order.topology == 0)
+      m12345 = Glue(m1,Glue(m2,Glue(m3,Glue(m4,m5))));
+    else if (order.topology == 1)
+      m12345 = Glue(m1,Glue(Glue(m3,Glue(m4,m5)),m2));
+    else
+      std::abort();
+
     m12345.hidden_bits.set(4);
     m12345.hidden_bits.set(5);
     m12345.B = P.get_beta();
@@ -164,8 +171,11 @@ namespace A5 {
     vector<HMM::bitmask_t> a4 = convert_to_bits(P.get_pairwise_alignment(b4),5,2);
     vector<HMM::bitmask_t> a5 = convert_to_bits(P.get_pairwise_alignment(b5),5,3);
 
-    vector<HMM::bitmask_t> a12345 = Glue_A(a1, Glue_A(a2, Glue_A(a3, Glue_A(a4, a5))));
-
-    return a12345;
+    if (order.topology == 0)
+      return Glue_A(a1, Glue_A(a2, Glue_A(a3, Glue_A(a4, a5))));
+    else if (order.topology == 1)
+      return Glue_A(a1, Glue_A(Glue_A(a3, Glue_A(a4, a5)), a2));
+    else
+      std::abort();
   }
 }
