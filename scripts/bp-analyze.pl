@@ -2451,8 +2451,12 @@ sub exec_show
 	my $code = $?>>8;
 	my $message = `cat err`; 
 	print STDERR "Subcommand failed! (code $code)\n";
+	print LOG    "Subcommand failed! (code $code)\n";
+
 	print STDERR "\n  command:  $cmd\n";
+
 	print STDERR "\n  message:  $message\n";
+	print LOG    "\n  message:  $message\n";
 	exit($code);
     }
     elsif ($verbose)
