@@ -379,9 +379,6 @@ gamma_inv_model base n = Prefix "GammaINV"
      sigmaOverMu <- logLaplace (-3.0) 1.0;
      Log "sigmaOverMu" sigmaOverMu;
 
-     pInv <- beta 1.0 2.0;
-     Log "pInv" pInv;
-
      let {a = 1.0/b; 
           b = sigmaOverMu^2;
           dist = uniformDiscretize (quantile (gamma a b)) n};
