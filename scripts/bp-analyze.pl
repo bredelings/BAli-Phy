@@ -167,7 +167,7 @@ elsif ($speed == 2) {
 &initialize_results_directory();
 
 open LOG, ">>Results/bp-analyze.log";
-print LOG, "------------------------------------------------\n";
+print LOG "------------------------------------------------\n";
 
 &compute_tree_and_parameter_files_for_heated_chains();
 
