@@ -13,7 +13,6 @@ builtin reversible_rate_matrix 2 "reversible_rate_matrix" "SModel";
 builtin get_eigensystem 2 "get_eigensystem" "SModel";
 builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel";
 builtin singlet_to_triplet_exchange 2 "singlet_to_triplet_exchange" "SModel";
-builtin equ 1 "equ" "SModel";
 builtin empirical 2 "empirical" "SModel";
 builtin pam 1 "pam" "SModel";
 builtin jtt 1 "jtt" "SModel";
@@ -28,7 +27,7 @@ data F81 = F81 a b c d;
 data MixtureModel = MixtureModel a;
 data MixtureModels = MixtureModels a;
 
-
+equ a = gtr a 1.0 1.0 1.0 1.0 1.0 1.0;
 hky a k = gtr a k 1.0 1.0 1.0 1.0 k;
 tn a k1 k2 = gtr a k1 1.0 1.0 1.0 1.0 k2;
 
@@ -82,6 +81,8 @@ unwrapMM (MixtureModel dd) = dd;
 mixMixtureModels l dd = MixtureModel (mixDiscreteDistributions l (map unwrapMM dd));
 
 --
+equ_model nuca = return $ equ nuca;
+
 hky_model nuca = Prefix "HKY" 
   (do {
      kappa <- logLaplace (log 2.0) 0.25 ;

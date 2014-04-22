@@ -256,7 +256,15 @@ expression_ref process_stack_Markov(const module_loader& L,
   }
   */
 
-  if (model_args[0] == "HKY")
+  if (model_args[0] == "EQU")
+  {
+    const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
+    if (not N)
+      throw myexception()<<"EQU: '"<<a->name<<"' is not a nucleotide alphabet.";
+
+    return model_expression({identifier("equ_model"),*a});
+  }
+  else if (model_args[0] == "HKY")
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)
