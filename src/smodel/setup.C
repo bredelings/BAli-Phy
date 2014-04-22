@@ -53,6 +53,7 @@ const vector<vector<string>> default_arguments =
     {"LG"},
     {"Empirical",""},
     {"M0","HKY"},
+    {"INV",""},
     {"gamma","","4"},
     {"gamma_inv","","4"},
     {"log-normal","","4"},
@@ -645,6 +646,12 @@ expression_ref process_stack_Multi(const module_loader& L,
     int n = convertTo<int>(model_args[2]);
 
     return model_expression({identifier("gamma_inv_model"), base, n});
+  }
+  else if (model_args[0] == "INV") 
+  {
+    expression_ref base = coerce_to_RA(L, model_args[1], a,frequencies);
+
+    return model_expression({identifier("inv_model"), base});
   }
   else if (model_args[0] == "log-normal") 
   {
