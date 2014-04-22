@@ -166,6 +166,8 @@ elsif ($speed == 2) {
 # create a new directory, decide whether or not to reuse existing directory
 &initialize_results_directory();
 
+open LOG, ">Results/bp-analyze.log";
+
 &compute_tree_and_parameter_files_for_heated_chains();
 
 # 5. Summarize scalar parameters
@@ -2442,6 +2444,19 @@ sub translate_cygwin
 sub exec_show
 {
     my $cmd = shift;
-    print STDERR "\n\t$cmd\n\n" if ($verbose);
-    return `$cmd`;
+    print LOG "\ncommand:  $cmd\n\n";
+    my $result = `$cmd 2>err`;
+    if ($? != 0)
+    {
+	my $code = $?>>8;
+	my $message = `cat err`; 
+	print STDERR "Subcommand failed! (code $code)\n";
+	print STDERR "\n  command:  $cmd\n";
+	print STDERR "\n  message:  $message\n";
+	exit($code);
+    }
+    elsif ($verbose)
+    {
+	print STDERR "\n\t$cmd\n\n" if ($verbose);
+    }
 }
