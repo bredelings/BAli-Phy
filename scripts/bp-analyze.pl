@@ -166,7 +166,8 @@ elsif ($speed == 2) {
 # create a new directory, decide whether or not to reuse existing directory
 &initialize_results_directory();
 
-open LOG, ">Results/bp-analyze.log";
+open LOG, ">>Results/bp-analyze.log";
+print LOG, "------------------------------------------------\n";
 
 &compute_tree_and_parameter_files_for_heated_chains();
 
