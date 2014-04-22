@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "2.2.0"         >
+<!ENTITY  version        "2.3.0"         >
 <!ENTITY  source.url     "http://www.bali-phy.org/bali-phy-&version;.tar.gz"         >
 <!ENTITY  install.prefix     "~/Applications"         >
 <!ENTITY  install.path     "&install.prefix;/bali-phy-&version;"         >
