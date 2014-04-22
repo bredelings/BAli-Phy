@@ -104,8 +104,11 @@ namespace statistics {
   double quantile_sorted(const std::vector<double>& values, double Q);
   double fraction_in_interval(std::vector<double> values,double L, double R);
 
-  std::pair<double,double> confidence_interval(const std::valarray<double>& values, double P);
-  std::pair<double,double> confidence_interval(std::vector<double> values, double P);
+  std::pair<double,double> central_confidence_interval(const std::valarray<double>& values, double P);
+  std::pair<double,double> central_confidence_interval(std::vector<double> values, double P);
+
+  std::pair<double,double> HPD_confidence_interval(const std::valarray<double>& values, double P);
+  std::pair<double,double> HPD_confidence_interval(std::vector<double> values, double P);
 
   std::valarray<bool> add_pseudocount(const std::valarray<bool>& sample1,int pseudocount);
 

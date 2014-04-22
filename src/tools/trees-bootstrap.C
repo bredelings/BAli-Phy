@@ -269,7 +269,7 @@ void var_stats::calculate(double pseudocount, double confidence)
 
   //---------- Confidence Interval -------------//
   if (distributions.size()) {
-    CI = statistics::confidence_interval(distributions, confidence);
+    CI = statistics::central_confidence_interval(distributions, confidence);
     log_CI.first = log10(odds(CI.first));
     log_CI.second = log10(odds(CI.second));
 
