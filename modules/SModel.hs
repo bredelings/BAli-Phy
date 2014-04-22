@@ -374,6 +374,15 @@ plus_inv_model dist = do
   return $ extendDiscreteDistribution dist pInv 0.0
 };
 
+inv_model base = Prefix "INV" $ do
+{
+     let {dist = DiscreteDistribution [(1.0,1.0)]};
+
+     dist2 <- plus_inv_model dist;
+
+     return $ multiRate base dist2
+};
+
 gamma_inv_model base n = Prefix "GammaINV"
   (do {
      sigmaOverMu <- logLaplace (-3.0) 1.0;
