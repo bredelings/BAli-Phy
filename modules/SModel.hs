@@ -192,8 +192,8 @@ m7_omega_dist n_bins = do
        a = n*mu;
        b = n*(1.0 - mu)};
 
-  Log "a";
-  Log "b";
+  Log "a" a;
+  Log "b" b;
 
   return $ uniformDiscretize (quantile (beta a b)) n_bins;
 };
