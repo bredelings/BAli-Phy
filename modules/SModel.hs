@@ -158,9 +158,9 @@ m2a_test_omega_dist () = do
   posSelection <- bernoulli 0.5;
   Log "posSelection" posSelection;
 
-  let {w' = if (posSelection == 1) then posW else 1.0};
+  let {posP' = if (posSelection == 1) then posP else 0.0};
 
-  return $ extendDiscreteDistribution dist posP w';
+  return $ extendDiscreteDistribution dist posP' posW;
 };
 
 -- The M7 is just a beta distribution
@@ -238,9 +238,9 @@ m8b_test_omega_dist n_bins = do
   posSelection <- bernoulli 0.5;
   Log "posSelection" posSelection;
 
-  let {w' = if (posSelection == 1) then posW else 1.0};
+  let {posP' = if (posSelection == 1) then posP else 0.0};
 
-  return $ extendDiscreteDistribution dist posP w';
+  return $ extendDiscreteDistribution dist posP' posW;
 };
 
 m1a_model codona s r = Prefix "M1a" $ do
