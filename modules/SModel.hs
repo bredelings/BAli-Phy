@@ -123,13 +123,13 @@ m0_function codona s r = \omega -> reversible_markov (m0 codona s omega) r;
 m1a_omega_dist () = do
 {
   [f1, f2] <- dirichlet [1.0, 1.0];
-  Log "f0" f1;
-  Log "f1" f2;
+  Log "f1" f1;
+  Log "f2" f2;
 
-  w0 <- uniform 0.0 1.0;
-  Log "w0" w0;
+  w1 <- uniform 0.0 1.0;
+  Log "w1" w1;
 
-  return $ DiscreteDistribution [(f1,w0),(f2, 1.0)];
+  return $ DiscreteDistribution [(f1,w1),(f2, 1.0)];
 };
 
 m2a_omega_dist () = do
@@ -199,19 +199,19 @@ m8_omega_dist n_bins = do
   return $ extendDiscreteDistribution beta_dist posP posW;
 };
 
--- The M8a is has f0 of sites in a beta distribution, and f1 are neutral.
+-- The M8a is has f1 of sites in a beta distribution, and f2 are neutral.
 m8a_omega_dist n_bins = do
 {
   beta_dist <- m7_omega_dist n_bins;
 
-  [f0,f1] <- dirichlet' 2 1.0;
-  Log "f0" f0;
+  [f1,f2] <- dirichlet' 2 1.0;
   Log "f1" f1;
+  Log "f2" f2;
 
-  return $ extendDiscreteDistribution beta_dist f1 1.0;
+  return $ extendDiscreteDistribution beta_dist f2 1.0;
 };
 
--- The M8a is has f0 of sites in a beta distribution, and f1 are neutral.
+-- The M8a is has f1 of sites in a beta distribution, and f2 are neutral.
 m8b_omega_dist n_bins = do
 {
   dist <- m8a_omega_dist n_bins;
@@ -317,15 +317,15 @@ branch_site_test_model codona n_bins s r = Prefix "BranchSiteTest"
 
   let {posW' = if (posSelection == 1) then posW else 1.0};
 
-  [f0,f1] <- dirichlet' 2 1.0;
-  Log "f0" f0;
+  [f1,f2] <- dirichlet' 2 1.0;
   Log "f1" f1;
+  Log "f2" f2;
 
-  w0 <- uniform 0.0 1.0;
-  Log "w0" w0;
+  w1 <- uniform 0.0 1.0;
+  Log "w1" w1;
 
-  let {d1 = DiscreteDistribution [(f0,w0),(f1,1.0)];
-       d2 = DiscreteDistribution [(f0,posW'),(f1,posW')]};
+  let {d1 = DiscreteDistribution [(f1,w1),(f2,1.0)];
+       d2 = DiscreteDistribution [(f1,posW'),(f2,posW')]};
 
   posP <- beta 1.0 10.0;
   Log "posP" posP;
