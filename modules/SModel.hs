@@ -342,9 +342,11 @@ gtrx3_model a = x3_model gtr_model;
 frequencies_model a = do {
   let {n_letters = alphabetSize a;
        letters = alphabet_letters a};
-  pi <- dirichlet' n_letters 1.0;
-  sequence_ $ zipWith (\p l -> Log ("pi"++l) p) pi letters;
-  return pi
+  SamplingRate (1.0/intToDouble n_letters) $ do {
+     pi <- dirichlet' n_letters 1.0;
+     sequence_ $ zipWith (\p l -> Log ("pi"++l) p) pi letters;
+     return pi
+  }
 };
 
 plus_f_model a = Prefix "F" (do {
