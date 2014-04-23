@@ -120,61 +120,48 @@ m0_model codona s = Prefix "M0"
 
 m0_function codona s r = \omega -> reversible_markov (m0 codona s omega) r;
 
-m1a_model codona s r = Prefix "M1a" 
-(do {
-  [fConserved, fNeutral] <- dirichlet [10.0, 11.0];
-  Log "fConserved" fConserved;
-  Log "fNeutral" fNeutral;
+m1a_omega_dist () = do
+{
+  [f1, f2] <- dirichlet [1.0, 1.0];
+  Log "f0" f1;
+  Log "f1" f2;
 
-  omega1 <- uniform 0.0 1.0;
-  Log "omega1" omega1;
+  w0 <- uniform 0.0 1.0;
+  Log "w0" w0;
 
-  let {dist = DiscreteDistribution [(fConserved,omega1),(fNeutral, 1.0)]};
-  let {m0w w = reversible_markov (m0 codona s w) r};
-  return $ multiParameter m0w dist
-});
+  return $ DiscreteDistribution [(f1,w0),(f2, 1.0)];
+};
 
-m2a_model codona s r = Prefix "M2a" 
-(do {
-  [fConserved, fNeutral, fSelection] <- dirichlet [10.0, 10.0, 1.0];
-  Log "fConserved" fConserved;
-  Log "fNeutral" fNeutral;
-  Log "fSelection" fSelection;
+m2a_omega_dist () = do
+{
+  dist <- m1a_omega_dist ();
 
-  omega1 <- uniform 0.0 1.0;
-  Log "omega1" omega1;
+  posW <- logGamma 4.0 0.25;
+  Log "posW" posW;
 
-  omega3 <- logGamma 4.0 0.25;
-  Log "omega3" omega3;
+  posP <- beta 1.0 10.0;
+  Log "posP" posP;
 
-  let {dist = DiscreteDistribution [(fConserved,omega1),(fNeutral, 1.0),(fSelection,omega3)]};
-  let {m0w w = reversible_markov (m0 codona s w) r};
-  return $ multiParameter m0w dist
-});
+  return $ extendDiscreteDistribution dist posP posW;
+};
 
-m2a_test_model codona s r = Prefix "M2a_Test" 
-(do {
-  [fConserved, fNeutral, fSelection] <- dirichlet [10.0, 10.0, 1.0];
-  Log "fConserved" fConserved;
-  Log "fNeutral" fNeutral;
-  Log "fSelection" fSelection;
+m2a_test_omega_dist () = do
+{
+  dist <- m1a_omega_dist ();
 
-  omega1 <- uniform 0.0 1.0;
-  Log "omega1" omega1;
+  posW <- logGamma 4.0 0.25;
+  Log "posW" posW;
 
-  omega3 <- logGamma 4.0 0.25;
-  Log "omega3" omega3;
+  posP <- beta 1.0 10.0;
+  Log "posP" posP;
 
-  pos_selection <- bernoulli 0.5;
-  Log "pos_selection" pos_selection;
+  posSelection <- bernoulli 0.5;
+  Log "posSelection" posSelection;
 
-  let {omega3' = if pos_selection then omega3 else 1.0};
+  let {w' = if (posSelection == 1) then posW else 1.0};
 
-  let {dist = DiscreteDistribution [(fConserved,omega1),(fNeutral, 1.0),(fSelection,omega3')]};
-  let {m0w w = reversible_markov (m0 codona s w) r};
-  return $ multiParameter m0w dist
-});
-
+  return $ extendDiscreteDistribution dist posP w';
+};
 
 -- The M7 is just a beta distribution
 m7_omega_dist n_bins = do 
@@ -256,7 +243,29 @@ m8b_test_omega_dist n_bins = do
   return $ extendDiscreteDistribution dist posP w';
 };
 
+m1a_model codona s r = Prefix "M1a" $ do
+{
+  dist <- m1a_omega_dist ();
 
+  let {m0w w = reversible_markov (m0 codona s w) r};
+  return $ multiParameter m0w dist
+};
+
+m2a_model codona s r = Prefix "M2a" $ do
+{
+  dist <- m2a_omega_dist ();
+
+  let {m0w w = reversible_markov (m0 codona s w) r};
+  return $ multiParameter m0w dist
+};
+
+m2a_test_model codona s r = Prefix "M2a_Test" $ do
+{
+  dist <- m2a_test_omega_dist ();
+
+  let {m0w w = reversible_markov (m0 codona s w) r};
+  return $ multiParameter m0w dist
+};
 
 m7_model codona n_bins s r = Prefix "M7" $ do
 {
