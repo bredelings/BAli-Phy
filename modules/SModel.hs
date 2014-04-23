@@ -113,7 +113,7 @@ gtr_model nuca = Prefix "GTR"
 
 m0_model codona s = Prefix "M0"
   (do {
-     omega <- logLaplace 0.0 0.25;
+     omega <- uniform 0.0 1.0;
      Log "omega" omega;
      return $ m0 codona s omega
   });
