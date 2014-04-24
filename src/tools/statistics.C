@@ -127,16 +127,16 @@ namespace statistics {
   }
 
   /// FIXME - this could be faster by a factor of 2 - we are sorting TWICE!
-  pair<double,double> confidence_interval(const valarray<double>& values,double P) 
+  pair<double,double> central_confidence_interval(const valarray<double>& values,double P) 
   {
     vector<double> values2(values.size());
     for(int i=0;i<values.size();i++)
       values2[i] = values[i];
 
-    return confidence_interval(values2,P);
+    return central_confidence_interval(values2,P);
   }
 
-  pair<double,double> confidence_interval(vector<double> values,double P) 
+  pair<double,double> central_confidence_interval(vector<double> values,double P) 
   {
     double alpha = (1.0-P)/2.0;
 
@@ -147,6 +147,43 @@ namespace statistics {
     interval.second = quantile_sorted(values,1.0-alpha);
     
     return interval;
+  }
+
+  /// FIXME - this could be faster by a factor of 2 - we are sorting TWICE!
+  pair<double,double> HPD_confidence_interval(const valarray<double>& values,double P) 
+  {
+    vector<double> values2(values.size());
+    for(int i=0;i<values.size();i++)
+      values2[i] = values[i];
+
+    return HPD_confidence_interval(values2,P);
+  }
+
+  pair<double,double> HPD_confidence_interval(vector<double> values,double P) 
+  {
+    if (values.empty()) return pair<double,double>{0,0};
+
+    sort(values.begin(),values.end());
+
+    int N = values.size();
+    int delta = ceil( P*N )-1;
+    int ways = N - delta - 1;
+
+    // scan for the interval with the smallest width
+    double width = values.back() - values[0];
+    int best = 0;
+    for(int i=0;i<ways;i++)
+    {
+      assert(i+delta < N);
+      double w = values[i+delta] - values[i];
+      if (w < width)
+      {
+	best = i;
+	w = width;
+      }
+    }
+
+    return pair<double,double>{values[best],values[best+delta]};
   }
 
   valarray<bool> add_pseudocount(const valarray<bool>& sample1,int pseudocount) {

@@ -64,6 +64,9 @@ const vector<vector<string>> default_arguments =
     {"M3u","3","HKY","F61"},
     {"M3","3","HKY","F61"},
     {"M7","4","HKY","F61"},
+    {"M8","4","HKY","F61"},
+    {"M8a","4","HKY","F61"},
+    {"M8b","4","HKY","F61"},
     {"M8b_Test","4","HKY","F61"},
     {"branch-site","2","HKY","F61"}
   };
@@ -818,21 +821,6 @@ expression_ref process_stack_Multi(const module_loader& L,
 
     return model_expression({identifier("m2a_test_model"),a,S,R});
   }
-  else if (model_args[0] == "M8b_Test") // M8b[n,S,F]
-  {
-    int n = convertTo<int>(model_args[1]);
-
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    if (not C)
-      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-    const Nucleotides& N = C->getNucleotides();
-
-    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
-
-    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
-
-    return model_expression({identifier("m8b_test_model"),a,n,S,R});
-  }
   else if (model_args[0] == "M7")
   {
     int n = convertTo<int>(model_args[1]);
@@ -847,6 +835,66 @@ expression_ref process_stack_Multi(const module_loader& L,
     expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
 
     return model_expression({identifier("m7_model"),a,n,S,R});
+  }
+  else if (model_args[0] == "M8")
+  {
+    int n = convertTo<int>(model_args[1]);
+
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    if (not C)
+      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
+    const Nucleotides& N = C->getNucleotides();
+
+    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+
+    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+
+    return model_expression({identifier("m8_model"),a,n,S,R});
+  }
+  else if (model_args[0] == "M8a")
+  {
+    int n = convertTo<int>(model_args[1]);
+
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    if (not C)
+      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
+    const Nucleotides& N = C->getNucleotides();
+
+    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+
+    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+
+    return model_expression({identifier("m8a_model"),a,n,S,R});
+  }
+  else if (model_args[0] == "M8b")
+  {
+    int n = convertTo<int>(model_args[1]);
+
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    if (not C)
+      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
+    const Nucleotides& N = C->getNucleotides();
+
+    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+
+    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+
+    return model_expression({identifier("m8b_model"),a,n,S,R});
+  }
+  else if (model_args[0] == "M8b_Test") // M8b[n,S,F]
+  {
+    int n = convertTo<int>(model_args[1]);
+
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    if (not C)
+      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
+    const Nucleotides& N = C->getNucleotides();
+
+    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+
+    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+
+    return model_expression({identifier("m8b_test_model"),a,n,S,R});
   }
   else if (model_args[0] == "branch-site")  // branch-site-test[n,S,F]
   {

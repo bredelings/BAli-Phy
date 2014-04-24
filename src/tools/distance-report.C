@@ -32,7 +32,7 @@ void report_distances(const valarray<double>& distances,
   }
   if (show_median) {
     double P = args["CI"].as<double>();
-    pair<double,double> interval = confidence_interval(distances,P);
+    pair<double,double> interval = central_confidence_interval(distances,P);
     cout<<"    "<<name<<" ~ "<<median(distances);
     cout<<"   ("<<interval.first<<", "<<interval.second<<")"<<endl;
   }
