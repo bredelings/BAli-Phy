@@ -191,7 +191,6 @@ vector<int> get_parsimony_letters(const alphabet& a, const vector<int>& letters,
 
   // get an order list of branches point away from the root;
   vector<const_branchview> branches = branches_from_node(T,root);
-  std::reverse(branches.begin(),branches.end());
   
   // Allocate space to store the letter for each node
   vector<int> node_letters(T.n_nodes(),-1);
@@ -231,7 +230,6 @@ vector<vector<int> > get_all_parsimony_letters(const alphabet& a, const vector<i
 
   // get an order list of branches point away from the root;
   vector<const_branchview> branches = branches_from_node(T,root);
-  std::reverse(branches.begin(),branches.end());
   
   // Allocate space to store the letters for each node
   vector<vector<int> > node_letters(T.n_nodes());

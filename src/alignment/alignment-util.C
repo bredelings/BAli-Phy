@@ -469,7 +469,6 @@ vector<const_branchview> branches_toward_from_node(const Tree& T,int n) {
   branches.reserve(2*T.n_branches());
 
   branches = branches_from_node(T,n);
-  std::reverse(branches.begin(),branches.end());
   for(int i=0;i<T.n_branches();i++)
     branches.push_back(branches[i]);
 
