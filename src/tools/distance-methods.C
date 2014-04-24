@@ -48,9 +48,10 @@ vector<double> FastMTM(const Tree& T,const Matrix& D,
 	sum += D(i,j);
     d[i] = sum;
   }
-  
+
   vector<const_branchview> branches = branches_from_node(T,T.n_leaves());
-  
+  std::reverse(branches.begin(), branches.end());
+
   for(int b=0;b<branches.size();b++) 
   {
     if (branches[b].is_leaf_branch()) continue;
