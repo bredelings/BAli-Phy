@@ -37,6 +37,8 @@ use Carp;
 
 use POSIX;
 
+use File::Temp qw(tempfile);
+
 my $home = $ENV{'HOME'};
 
 my $verbose = 0;
@@ -2446,11 +2448,13 @@ sub exec_show
 {
     my $cmd = shift;
     print LOG "\ncommand:  $cmd\n\n";
-    my $result = `$cmd 2>err`;
+    my ($tmp_fh,$tmp_filename) = tempfile();
+
+    my $result = `$cmd 2>$tmp_filename`;
     if ($? != 0)
     {
 	my $code = $?>>8;
-	my $message = `cat err`; 
+	my $message = `cat $tmp_filename`; 
 	print STDERR "Subcommand failed! (code $code)\n";
 	print LOG    "Subcommand failed! (code $code)\n";
 
@@ -2464,4 +2468,6 @@ sub exec_show
     {
 	print STDERR "\n\t$cmd\n\n" if ($verbose);
     }
+    close $tmp_fh;
+    return $result;
 }
