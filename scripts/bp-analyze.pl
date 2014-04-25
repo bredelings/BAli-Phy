@@ -1395,9 +1395,9 @@ sub draw_alignments
 	}
 	
 	if (! more_recent_than("Results/$alignment.html","Results/$alignment.fasta")) {
-	    exec_show("alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null");
+	    my $result = exec_result("alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=DNA+contrast > Results/$alignment.html 2>/dev/null");
 	    
-	    if ($?) {
+	    if ($result) {
 		exec_show("alignment-draw Results/$alignment.fasta --show-ruler --color-scheme=AA+contrast > Results/$alignment.html");
 	    }
 	}
@@ -1443,8 +1443,8 @@ sub compute_and_draw_AU_plots
 		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob");
 	    }
 	    print "done.\n";
-	    exec_show("alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null");
-	    if ($?) {
+	    my $result = exec_result("alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null");
+	    if ($result) {
 		exec_show("alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=AA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html");
 	    }
 	}
@@ -2527,4 +2527,15 @@ sub exec_show
     }
     close $tmp_fh;
     return $result;
+}
+
+sub exec_result
+{
+    my $cmd = shift;
+    print LOG "\ncommand:  $cmd\n\n";
+
+    print STDERR "\n\t$cmd\n\n" if ($verbose);
+
+    my $result = `$cmd`;
+    return $?;
 }
