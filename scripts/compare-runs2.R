@@ -1,9 +1,8 @@
 # read filename from the command line
 args = commandArgs(trailingOnly=T)
 filename = args[1]
-outfile = args[2]
-
-pdf(file=outfile,height=10,width=7) 
+outfile1 = args[2]
+outfile2 = args[3]
 
 # read file
 LOD = read.table(filename,header=F)
@@ -24,10 +23,9 @@ avePP  = as.vector( PP[,N])
 LOD = LOD[,1:N-1]
 PP  = PP[,1:N-1]
 
-# set up the two plotting surfaces
-par(mfrow=c(2,1))
 
 #-------------- Plot 1 -------------------
+svg(file=outfile1,height=5,width=7) 
 
 plot(avePP,xlab="Split",ylab="PP",type="n",ylim=c(0,1),xaxt="n")
 axis(side=1,at=1:L,1:L)
@@ -46,6 +44,7 @@ for(i in 1:L) {
 lines(avePP,col=hsv(1,1,1),lwd=2)
 
 #-------------- Plot 2 -------------------
+svg(file=outfile2,height=5,width=7) 
 
 plot(aveLOD,xlab="Split",ylab="LOD10", type="n",xaxt="n")
 axis(side=1,at=1:L,1:L)

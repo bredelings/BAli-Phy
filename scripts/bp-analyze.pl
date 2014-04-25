@@ -306,6 +306,8 @@ my @var_names = ();
 my %median = ();
 my %CI_low = ();
 my %CI_high = ();
+my %PSRF_CI80 = ();
+my %PSRF_RCF = ();
 my %ACT = ();
 my %Ne = ();
 my %Burnin = ();
@@ -346,6 +348,7 @@ sub html_header
 '    <style type="text/css">
       ol li {padding-bottom:0.5em}
 
+      th {padding-left: 0.5em; padding-right:0.5em}
       td {padding: 0.1em;}
       td {padding-left: 0.3em;}
       td {padding-right: 0.3em;}
@@ -670,8 +673,6 @@ $section .= '<img src="partitions.SRQ.png" class="r_floating_picture" alt="SRQ p
 #$section .= '<embed class="r_floating_picture" src="partitions.SRQ.svg" type="image/svg+xml" height="200" />';
 $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for supprt of 50% consensus tree."/>';
 
-
-
     $section .= "<h2><a name=\"mixing\">Mixing</a></h2>\n";
     
     $section .= "<ol>\n";
@@ -679,8 +680,11 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     for my $srq (@SRQ) {
 	$section .= "<li><a href=\"$srq.SRQ.png\">SRQ plot: $srq</a></li>\n";
     }
+    $section .= '<li><a href="convergence-PP.pdf">Variation in split frequency estimates</a></li>'."\n" if (-f "Results/convergence-PP.pdf");
     $section .= "</ol>\n";
     
+
+
     my $burnin_before;
     if ($#parameter_files != -1)
     {
@@ -707,7 +711,9 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     $section .= "<p><i>PSRF-80%CI</i> = $psrf_80</p>\n" if defined ($asdsf);
     $section .= "<p><i>PSRF-RCF</i> = $psrf_rcf</p>\n" if defined ($msdsf);
 
-    $section .= '<p><a href="convergence-PP.pdf">Variation in split frequency estimates</a></p>'."\n" if (-f "Results/convergence-PP.pdf");
+    $section .= html_svg("convergence1-PP.svg","500pt","400pt",[]);
+    $section .= html_svg("convergence2-PP.svg","500pt","400pt",["r_floating_picture"]);
+
 
 my $tne_string = exec_show("pickout -n Ne < Results/partitions.bs");
 my @tne_array = split(/\n/,$tne_string);
@@ -818,7 +824,7 @@ if ($#var_names != -1) {
     print $index "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
 
     print $index "<table>\n";
-    print $index "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th><th>burnin</th></tr>\n";
+    print $index "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th><th>burnin</th><th title=\"Potential Scale Reduction Factor based on width of 80% credible interval\">PSRF80</th><th>PSRFI</th></tr>\n";
 }
     
 for(my $i=1;$i <= $#var_names; $i++) 
@@ -846,6 +852,28 @@ for(my $i=1;$i <= $#var_names; $i++)
 	$style = "";
 	$style = ' style="color:red"' if ($Burnin{$var} eq "Not Converged!");
 	print $index "<td $style>$Burnin{$var}</td>\n";
+	if (defined($PSRF_CI80{$var}))
+	{
+	    my $style = "";
+	    $style = ' style = "color:orange"' if ($PSRF_CI80{$var} >= 1.05);
+	    $style = ' style = "color:red"' if ($PSRF_CI80{$var} >= 1.2);
+	    print $index "<td $style>$PSRF_CI80{$var}</td>";
+	}
+	else
+	{
+	    print $index "<td>NA</td>";
+	}
+	if (defined($PSRF_RCF{$var}))
+	{
+	    my $style = "";
+	    $style = ' style = "color:orange"' if ($PSRF_RCF{$var} >= 1.05);
+	    $style = ' style = "color:red"' if ($PSRF_RCF{$var} >= 1.2);
+	    print $index "<td $style>$PSRF_RCF{$var}</td>";
+	}
+	else
+	{
+	    print $index "<td>NA</td>";
+	}
 	print $index "<td><a href=\"$i.trace.png\">Trace</a></td>\n" if ($do_trace_plots);
     }
     else {
@@ -1125,11 +1153,19 @@ sub mixing_diagnostics
     }
     print "done.\n";
 
-    if (!more_recent_than_all_of("Results/convergence-PP.pdf",[@tree_files]) and $#tree_files > 0)
+    return if ($#tree_files <= 0);
+    if (!more_recent_than_all_of("Results/convergence-PP.pdf",[@tree_files]))
     {
 	my $script = find_in_path("compare-runs.R");
-	die "can't find script!" if (!defined($script));
+	die "can't find script $script!" if (!defined($script));
 	Rexec($script,"Results/LOD-table Results/convergence-PP.pdf");
+    }
+    if (!more_recent_than_all_of("Results/convergence1-PP.svg",[@tree_files]) or 
+	!more_recent_than_all_of("Results/convergence2-PP.svg",[@tree_files]))
+    {
+	my $script = find_in_path("compare-runs2.R");
+	die "can't find script $script!" if (!defined($script));
+	Rexec($script,"Results/LOD-table Results/convergence1-PP.svg Results/convergence2-PP.svg");
     }
 }
 
@@ -1448,12 +1484,19 @@ sub generate_trace_plots
 		$median{$var} = $2;
 		$CI_low{$var} = $3;
 		$CI_high{$var} = $4;
+
 		$line = <REPORT>;
-		
 		$line =~ /t @ (.+)\s+Ne = ([^ ]+)\s+burnin = (Not Converged!|[^ ]+)/;
 		$ACT{$var} = $1;
 		$Ne{$var} = $2;
 		$Burnin{$var} = $3;
+
+		$line = <REPORT>;
+		if ($line =~ /PSRF-80%CI = ([^ ]+)\s+PSRF-RCF = ([^ ]+)/)
+		{
+		    $PSRF_CI80{$var} = $1;
+		    $PSRF_RCF{$var} = $2;
+		}
 	    }
 	    elsif ($line =~ /\s+(.+) = (.+)/) {
 		my $var = $1;
