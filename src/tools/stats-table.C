@@ -77,6 +77,29 @@ void write_header(std::ostream& o, const vector<string>& headers)
   }
 }
 
+bool is_numeric_range(const string& s, unsigned n, unsigned& start, unsigned& end)
+{
+  vector<string> bounds = split(s,':');
+
+  if (bounds.size() != 2) return false;
+
+  start = 1;
+  end = n;
+
+  if (bounds[0].size())
+  {
+    if (not can_be_converted_to<unsigned>(bounds[0],start)) return false;
+  }
+
+  if (bounds[1].size())
+  {
+    if (not can_be_converted_to<unsigned>(bounds[1],end)) return true;
+  }
+
+  start = max(1U,start);
+  end = min(n,end);
+}
+
 dynamic_bitset<>
 get_mask(const vector<string>& strings,const vector<string>& names)
 {
@@ -86,33 +109,27 @@ get_mask(const vector<string>& strings,const vector<string>& names)
   {
     const string& s = strings[i];
 
-    // This is a field name
-    if (s.find(':') == -1) 
+    int index = find_index(names,s);
+
+    if (index != -1)
     {
-      int index = find_index(names,s);
-      if (index == -1)
-	throw myexception()<<"No field named '"<<s<<"'";
+      // This is a field name
       mask[index] = true;
+      continue;
     }
-    // This is a numeric range of fields
-    else {
-      vector<string> bounds = split(s,':');
-      if (bounds.size() != 2) 
-	throw myexception()<<"Can't understand the column range '"<<s<<"'.";
 
-      unsigned start = 1;
-      unsigned end = mask.size();
-      if (bounds[0].size())
-	start = convertTo<unsigned>(bounds[0]);
-      if (bounds[1].size())
-	start = convertTo<unsigned>(bounds[1]);
-      start = max(1U,start);
-      end = min((unsigned)(mask.size()),end);
-
+    unsigned start = -1;
+    unsigned end = -1;
+    if (is_numeric_range(s, mask.size(), start, end))
+    {
+      // This is a numeric range of fields
       for(int i=0;i<mask.size();i++)
 	if (start <=i+1 and i+1 <= end)
 	  mask[i]=true;
+      continue;
     }
+
+    throw myexception()<<"No field named '"<<s<<"', and its not a numeric range either.";
   }
 
   return mask;
