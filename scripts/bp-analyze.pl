@@ -721,7 +721,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     $section .= "<td>$psrf_rcf</td>";
 
     $section .= "</tr>";
-    $section .= "</table>";
+    $section .= "</table>\n";
 
     if (-e "Results/convergence1-PP.svg" or -e "Results/convergence2-PP.svg")
     {
