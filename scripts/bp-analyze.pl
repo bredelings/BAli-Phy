@@ -1311,7 +1311,6 @@ sub compute_probcons_alignment
 		my $alphabet = $alphabets[$i];
 		
 		if ($alphabet =~ /RNA nucleotides/) {
-		    print "got here\n";
 		    if (! more_recent_than("Results/Work/$name-unordered.fasta", "Results/Work/P$p-initial-unordered.fasta")) {
 			exec_show("probcons-RNA Results/Work/P$p-initial-unordered.fasta > Results/Work/$name-unordered.fasta 2>/dev/null");
 		    }
