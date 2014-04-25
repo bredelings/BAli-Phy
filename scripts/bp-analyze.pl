@@ -841,7 +841,7 @@ if ($#var_names != -1) {
     print $index "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
 
     print $index "<table>\n";
-    print $index "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th><th>burnin</th><th title=\"Potential Scale Reduction Factor based on width of 80% credible interval\">PSRF80</th><th>PSRFI</th></tr>\n";
+    print $index "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th><th>burnin</th><th title=\"Potential Scale Reduction Factor based on width of 80% credible interval\">PSRF-CI80%</th><th>PSRF-RCF</th></tr>\n";
 }
     
 for(my $i=1;$i <= $#var_names; $i++) 
