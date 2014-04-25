@@ -528,8 +528,8 @@ sub html_svg_img
 
     my $svg = "<img src=\"$url\" class=\"$class\"";
 
-    $svg = "$svg width=\"$width\"" if (defined($width));
-    $svg = "$svg height=\"$height\"" if (defined($height));
+    $svg = "$svg width=\"$width\"" if (defined($width) and ($width ne ""));
+    $svg = "$svg height=\"$height\"" if (defined($height) and ($height ne ""));
     $svg = "$svg $extra" if (defined($extra));
     $svg = "$svg />";
 
@@ -711,8 +711,8 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     $section .= "<p><i>PSRF-80%CI</i> = $psrf_80</p>\n" if defined ($asdsf);
     $section .= "<p><i>PSRF-RCF</i> = $psrf_rcf</p>\n" if defined ($msdsf);
 
-    $section .= html_svg("convergence1-PP.svg","500pt","400pt",[]);
-    $section .= html_svg("convergence2-PP.svg","500pt","400pt",["r_floating_picture"]);
+    $section .= html_svg("convergence1-PP.svg","45%","",[]);
+    $section .= html_svg("convergence2-PP.svg","45%","",["r_floating_picture"]);
 
 
 my $tne_string = exec_show("pickout -n Ne < Results/partitions.bs");
