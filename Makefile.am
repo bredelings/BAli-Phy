@@ -10,7 +10,7 @@ endif
 SUBDIRS = $(MAYBE_BOOST) src/ 
 
 # Install these scripts in bin/
-bin_SCRIPTS = scripts/bali-phy-sge scripts/bp-analyze.pl scripts/compare-runs.R
+bin_SCRIPTS = scripts/bali-phy-sge scripts/bp-analyze.pl scripts/compare-runs.R scripts/compare-runs2.R
 
 # Used to build, but not distributed
 noinst_SCRIPTS = scripts/git_version.sh
