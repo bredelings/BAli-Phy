@@ -723,7 +723,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     $section .= "</tr>";
     $section .= "</table>";
 
-    if (-e "convergence1-PP.svg" or -e "convergence2-PP.svg")
+    if (-e "Results/convergence1-PP.svg" or -e "Results/convergence2-PP.svg")
     {
 	$section .= html_svg("convergence1-PP.svg","45%","",[]);
 	$section .= html_svg("convergence2-PP.svg","45%","",["r_floating_picture"]);
