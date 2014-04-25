@@ -2523,7 +2523,7 @@ sub exec_show
     }
     elsif ($verbose)
     {
-	print STDERR "\n\t$cmd\n\n" if ($verbose);
+	print STDERR "\n\t$cmd\n\n";
     }
     close $tmp_fh;
     return $result;
