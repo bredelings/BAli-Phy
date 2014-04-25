@@ -544,9 +544,9 @@ sub html_svg
 sub section_phylogeny_distribution
 {
     my $section = "";
+    $section .= html_svg("c-levels.svg","35%","",["r_floating_picture"]);
     $section .= "<h2><a name=\"topology\">Phylogeny Distribution</a></h2>\n";
 
-    $section .= html_svg("c-levels.svg","400pt","300pt",["r_floating_picture"]);
 
     $section .= '<table>'."\n";
     $section .= "<tr><td>Partition support: <a href=\"consensus\">Summary</a></td></tr>\n";
@@ -684,32 +684,44 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     $section .= "</ol>\n";
     
 
+    $section .= "<table>";
+    $section .= "<tr><th>burnin (scalar)</th><th>Ne (scalar)</th><th>Ne (partition)</th><th>ASDSF</th><th>MSDSF</th><th>PSRF-CI80%</th><th>PSRF-RCF</th></tr>";
+    $section .= "<tr>";
 
-    my $burnin_before;
+    my $burnin_before = "NA";
+    my $min_NE = "NA";
     if ($#parameter_files != -1)
     {
 	$burnin_before = get_value_from_file('Results/Report','min burnin <=');
 	$burnin_before = "Not Converged!" if ($burnin_before eq "Not");
-	$section .= "<p><i>burn-in (scalar)</i> = $burnin_before</p>\n" if defined ($burnin_before);
-	$section .= "<p><i>min Ne (scalar)</i> = ".get_value_from_file('Results/Report','Ne  >=')."</p\n";
+	$min_NE = get_value_from_file('Results/Report','Ne  >=');
     }
     
-    $section .= "<p><i>min Ne (partition)</i> = ".get_value_from_file('Results/partitions.bs','min Ne =')."</p>\n";
-    
+    $section .= "<td>$burnin_before</td>";
+    $section .= "<td>$min_NE</td>";
+    my $min_NE_partition = get_value_from_file('Results/partitions.bs','min Ne =');
+    $section .= "<td>$min_NE_partition</td>";
+
     my $asdsf = get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =');
+    $asdsf = "NA" if (!defined($asdsf));
+    $section .= "<td>$asdsf</td>";
+
     my $msdsf = get_value_from_file('Results/partitions.bs','MSDSF =');
-    $section .= "<p><i>ASDSF</i> = $asdsf</p>\n" if defined ($asdsf);
-    $section .= "<p><i>MSDSF</i> = $msdsf</p>\n" if defined ($msdsf);
-    
-    my $psrf_80;
-    my $psrf_rcf;
+    $msdsf = "NA" if (!defined($msdsf));
+    $section .= "<td>$msdsf</td>";
+
+    my $psrf_80 = "NA";
+    my $psrf_rcf = "NA";
     if ($#parameter_files != -1)
     {
         $psrf_80 = get_value_from_file('Results/Report','PSRF-80%CI <=');
 	$psrf_rcf = get_value_from_file('Results/Report','PSRF-RCF <=');
     }
-    $section .= "<p><i>PSRF-80%CI</i> = $psrf_80</p>\n" if defined ($asdsf);
-    $section .= "<p><i>PSRF-RCF</i> = $psrf_rcf</p>\n" if defined ($msdsf);
+    $section .= "<td>$psrf_80</td>";
+    $section .= "<td>$psrf_rcf</td>";
+
+    $section .= "</tr>";
+    $section .= "</table>";
 
     $section .= html_svg("convergence1-PP.svg","45%","",[]);
     $section .= html_svg("convergence2-PP.svg","45%","",["r_floating_picture"]);
@@ -801,7 +813,7 @@ sub print_index_html
     print $index &topbar();
 
 print $index "<h1>$title</h1>\n";
-print $index html_svg("c50-tree.svg","200pt","",["floating_picture"]);
+print $index html_svg("c50-tree.svg","25%","",["floating_picture"]);
 #print $index "<p>Samples were created by the following command line:</p>";
 for(my $i=0; $i<= $#subdirs; $i++)
 {
