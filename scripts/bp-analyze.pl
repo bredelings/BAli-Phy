@@ -712,7 +712,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
 
     my $psrf_80 = "NA";
     my $psrf_rcf = "NA";
-    if ($#parameter_files != -1)
+    if ($#parameter_files != 0)
     {
         $psrf_80 = get_value_from_file('Results/Report','PSRF-80%CI <=');
 	$psrf_rcf = get_value_from_file('Results/Report','PSRF-RCF <=');
