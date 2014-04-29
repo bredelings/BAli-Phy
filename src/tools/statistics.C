@@ -179,7 +179,7 @@ namespace statistics {
       if (w < width)
       {
 	best = i;
-	w = width;
+	width = w;
       }
     }
 
