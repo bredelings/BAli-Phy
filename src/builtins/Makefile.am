@@ -16,8 +16,8 @@ pkglib_LTLIBRARIES = Prelude.la Array.la Alphabet.la \
 
 
 if HOST_MINGW32
-EXTRADEPENDENCIES = $(top_builddir)/bali-phy.exe
-EXTRALDFLAGS = -no-undefined --enable-runtime-pseudo-reloc -L$(top_builddir) -Wl,libbali-phy.dll.a
+EXTRADEPENDENCIES = $(top_builddir)/src/bali-phy.exe
+EXTRALDFLAGS = -no-undefined --enable-runtime-pseudo-reloc -L$(top_builddir)/src -Wl,libbali-phy.dll.a
 else
 if HOST_DARWIN
 # I think -no-undefined leads to the creation of bundles, which then need a bundle_loader argument
