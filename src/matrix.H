@@ -2,6 +2,7 @@
 #define MATRIX_H
 
 #include <utility>
+#include <cassert>
 
 namespace bali_phy
 {
