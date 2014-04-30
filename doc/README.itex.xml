@@ -403,9 +403,9 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	  <userinput>--prefix=<replaceable>dir</replaceable></userinput>.
 	  For example, in order to install
 	  <application>BAli-Phy</application> under
-	  <filename>~/local</filename>, you can enter:
+	  <filename>~/Applications/bali-phy-&version;/</filename>, you can enter:
 
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure --prefix=&#36;HOME/local</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
 	</para>
 
       </section>
@@ -454,7 +454,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	<para>
           All these options to <command>configure</command> can be
 	  combined, as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure --prefix=&#36;HOME/local CXX=g++-4.8 CXXFLAGS="-march=native -g"</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CXX=g++-4.8 CXXFLAGS="-march=native -g"</userinput></screen>
 	</para>
       </section>
     </section>
@@ -477,8 +477,9 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
         If your system has multiple versions of automake, then you may
 	have to type e.g. <userinput>automake-1.14 -a</userinput> and
 	<userinput>aclocal-1.14</userinput> instead in order to specify which
-	version to use.
-      </para>
+	version to use.  On Mac, you may need to replace the <command>libtoolize</command> with 
+<screen><prompt>%</prompt> <userinput>glibtoolize</userinput></screen>
+</para>
     </section>
 
 
