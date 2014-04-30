@@ -39,6 +39,20 @@ tr { margin: 0.2em; padding: 0.2em; }
 
 table td { vertical-align:top; padding: 0.5em;}
 
+/* Save some space */
+table td p { padding: 0; margin: 0}
+
+/* Save space for term list */
+table td .variablelist {padding: 0; margin: 0}
+
+table td .variablelist table {padding: 0; margin: 0}
+
+table td .variablelist table tr {padding: 0; margin: 0}
+
+table td .variablelist table tr td {padding: 0; margin: 0} 
+
+/* End term list stuff */
+
 td { background-color: #F0F0F0;  }
 
 .toc {

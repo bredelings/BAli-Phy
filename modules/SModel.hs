@@ -164,6 +164,7 @@ m2a_test_omega_dist () = do
 };
 
 -- The M7 is just a beta distribution
+-- gamma' = var(x)/(mu*(1-mu)) = 1/(a+b+1) = 1/(n+1)
 m7_omega_dist n_bins = do 
 {
   mu <- uniform 0.0 1.0;
@@ -438,6 +439,8 @@ gamma_model base n = Prefix "Gamma"
      let {a = 1.0/b; 
           b = sigmaOverMu^2;
           discretize n = uniformDiscretize (quantile (gamma a b)) n};
+     Log "a" a;
+     Log "b" b;
      return $ multiRate base (discretize n)
 });
 
@@ -465,6 +468,8 @@ gamma_inv_model base n = Prefix "GammaINV"
      let {a = 1.0/b; 
           b = sigmaOverMu^2;
           dist = uniformDiscretize (quantile (gamma a b)) n};
+     Log "a" a;
+     Log "b" b;
 
      dist2 <- plus_inv_model dist;
 

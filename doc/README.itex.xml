@@ -1397,8 +1397,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
        <application>BAli-Phy</application> are specified using a
        stack, as follows: <userinput>Model[arg]+Model[arg]+...+Model[arg]</userinput>
         where each model uses the previous models as input.  For
-	example, <userinput>LG+gamma_inv[4]</userinput>. Arguments
-	are optional.</para>
+	example, <userinput>LG+gamma_inv[4]</userinput>. Some arguments are optional.</para>
 
 	<note>
 	  <para>
@@ -1442,16 +1441,14 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
 	  
-	  <tgroup cols="4">
+	  <tgroup cols="3">
 	    <colspec colnum="1" colname="col1" colwidth="1*"/>
 	    <colspec colnum="2" colname="col2" colwidth="1*"/>
 	    <colspec colnum="3" colname="col3" colwidth="1*"/>
-	    <colspec colnum="4" colname="col4" colwidth="1*"/>
 	    <thead><row>
 		<entry>Model</entry>
 		<entry>Alphabet</entry>
 		<entry>Parameters</entry>
-		<entry>Description</entry>
 	    </row></thead>
 
 	    <tbody>
@@ -1459,7 +1456,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<entry><userinput>EQU</userinput></entry>
 		<entry>any</entry>
 		<entry>none</entry>
-		<entry>$S_{ij} = 1$ for every $i$ and $j$.</entry>
 	      </row>
 
 	      <row>
@@ -1469,10 +1465,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		</entry>
 		<entry>DNA or RNA</entry>
 		<entry>$\kappa$: the ts/tv ratio.</entry>
-		<entry>
-		  <para>$S_{ij} = 1$ for transversions.</para>
-		  <para>$S_{ij} = \kappa$ for transitions.</para>
-		</entry>
 	      </row>
 
 	      <row>
@@ -1482,11 +1474,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		  <para>$\kappa_1$: the purine ts/tv ratio.</para>
 		  <para>$\kappa_2$: the pyrimidine ts/tv ratio.</para>
 		</entry>
-		<entry>
-		  <para>$S_{ij} = 1$ for transversions.</para>
-		  <para>$S_{ij} = \kappa_1$ for purine transitions.</para>
-		  <para>$S_{ij} = \kappa_2$ for pyrimidine transitions.</para>
-		</entry>
 	      </row>
 
 	      <row>
@@ -1494,10 +1481,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<entry>DNA or RNA</entry>
 		<entry>
 		  <para>$S_{i \ne j}$</para>
-		</entry>
-		<entry>
-		  <para>$\sum_{i \ne j}S_{ij}=1$.</para><para>(5 degrees of freedom).</para>
-
 		</entry>
 	      </row>
 
@@ -1510,7 +1493,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<entry>
 		  <para>none.</para>
 		</entry>
-		<entry/>
 	      </row>
 
 	      <row>
@@ -1522,7 +1504,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<entry>
 		  <para>none.</para>
 		</entry>
-		<entry/>
 	      </row>
 
 	      <row>
@@ -1533,8 +1514,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<entry>Amino-Acids</entry>
 		<entry>
 		  <para>none.</para>
-		</entry>
-		<entry/>
+		  </entry>
 	      </row>
 
 	      <row>
@@ -1544,12 +1524,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<entry>Amino-Acids</entry>
 		<entry>
 		  <para>none.</para>
-		</entry>
-		<entry>
-		  <para>A user-specified empirical exchangeability matrix may be used.</para>
-		  <para>The lower-triangular part of the symmetric
-		  matrix is given, followed by the estimated
-		  equilibrium frequencies.</para>
 		</entry>
 	      </row>
 
@@ -1563,13 +1537,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<entry>
 		  <para><replaceable>nuc-model</replaceable> parameters.</para>
 		</entry>
-		<entry>
-		  <para>If the nuc-model has transition matrix
-		    $S^\prime_{ij}$ on nucleotides, then:</para>
-
-		  <para>$S_{\alpha\beta} = 0$ for changes of more than one nucleotide.</para>
-		  <para>$S_{\alpha\beta} = S^\prime_{ij}$ for single nucleotide  changes $i \to j$.</para>
-		</entry> 
 	      </row>
 
 	      <row>
@@ -1582,34 +1549,20 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		  <para>$\kappa$: the ts/tv ratio.</para>
 		  <para>$\omega$: the dN/dS ratio.</para>
 		</entry>
-		<entry>
-		  <para>$S_{\alpha\beta} = 0$ for changes of more than one nucleotide.</para>
-		  <para>$S_{\alpha\beta} = 1$ for synonymous transversions.</para>
-		  <para>$S_{\alpha\beta} = \omega$ for non-synonymous transversions.</para>
-
-		  <para>$S_{\alpha\beta} = \kappa$ for synonymous transitions.</para>
-		  <para>$S_{\alpha\beta} = \omega\kappa$ for non-synonymous transitions.</para>
-		</entry> 
 	      </row>
 
 	      <row>
 		<entry>
-		  <para><userinput>M0[<replaceable>nuc-model=HKY</replaceable>]</userinput></para>
+		  <para><userinput>M0</userinput></para>
+		  <para><userinput>M0[HKY]</userinput> (default)</para>
+		  <para><userinput>M0[GTR]</userinput></para>
 		  <para>Nielsen and Yang (1998)</para>
 		</entry>
 		<entry>Codons</entry>
 		<entry>
 		  <para><replaceable>nuc-model</replaceable> parameters.</para>
-		  <para>$\omega$: the dn/ds ratio</para>
+		  <para>\omega: the dn/ds ratio</para>
 		</entry>
-		<entry>
-		  <para>If the nuc-model has transition matrix
-		    $S^\prime_{ij}$ on nucleotides, then:</para>
-
-		  <para>$S_{\alpha\beta} = 0$ for changes of more than one nucleotide.</para>
-		  <para>$S_{\alpha\beta} = S^\prime_{ij}$ for synonymous changes.</para>
-		  <para>$S_{\alpha\beta} = \omega S^\prime_{ij}$ for non-synonymous changes.</para>
-		</entry> 
 	      </row>
 	    </tbody>
 	  </tgroup>
@@ -1798,10 +1751,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       or have different parameters (e.g. an M2 codon model).
     </para>
 
-      <para>Model modifiers are gamma, log-normal, INV, M2, M3, and M7.</para>
-
-
-      <table frame="none" rowsep="1"><info><title>CTMC Mixture Models</title></info>
+      <table frame="none" rowsep="1" class="abc"><info><title>CTMC Mixture Models</title></info>
 	
 	<tgroup cols="3">
 	  <thead><row>
@@ -1813,140 +1763,167 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>sub-model</replaceable> + INV</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + INV</userinput></para>
 	      </entry>
-	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
+	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
-		<para>$pInv$: Fraction of invariant sites.</para>
+		<para>pInv: Fraction of invariant sites.</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>sub-model</replaceable> + gamma</userinput></para>
-		<para><userinput><replaceable>sub-model</replaceable> + gamma[4]</userinput> (default options)</para>
-		<para><userinput><replaceable>sub-model</replaceable> + gamma[<replaceable>n</replaceable>]</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + gamma</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + gamma[4]</userinput> (default)</para>
 		<para>Yang (1994)</para>
 	      </entry>
-	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
+	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
-		<para>sigmaOverMu: noise to signal ratio for $\Gamma$.  Also equal to 1/sqrt($\alpha$).</para>
-		<para><replaceable>n</replaceable>: Number of bins for discrete $\Gamma$.</para>
+		<para>sigmaOverMu: noise to signal ratio for Gamma(a,b).  Also equal to 1/sqrt(a).</para>
+		<para>a: parameter for Gamma(a,b)</para>
+		<para>b: parameter for Gamma(a,b)</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>sub-model</replaceable> + gamma_inv</userinput></para>
-		<para><userinput><replaceable>sub-model</replaceable> + gamma_inv[4]</userinput> (default options)</para>
-		<para><userinput><replaceable>sub-model</replaceable> + gamma_inv[<replaceable>n</replaceable>]</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + gamma_inv</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + gamma_inv[4]</userinput> (default)</para>
 		<para>Yang (1994)</para>
 	      </entry>
-	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
+	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
-		<para>sigmaOverMu: noise to signal ratio for $\Gamma$.  Also equal to 1/sqrt($\alpha$).</para>
-		<para><replaceable>n</replaceable>: Number of bins for discrete $\Gamma$.</para>
-		<para>$pInv$: Fraction of invariant sites.</para>
+		<para>sigmaOverMu: noise to signal ratio for Gamma(a,b).  Also equal to 1/sqrt(a).</para>
+		<para>a: parameter for Gamma(a,b)</para>
+		<para>b: parameter for Gamma(a,b)</para>
+		<para>pInv: Fraction of invariant sites.</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>sub-model</replaceable> + log-normal</userinput></para>
-		<para><userinput><replaceable>sub-model</replaceable> + log-normal[4]</userinput> (default options)</para>
-		<para><userinput><replaceable>sub-model</replaceable> + log-normal[<replaceable>n</replaceable>]</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + log-normal</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + log-normal[4]</userinput> (default)</para>
 	      </entry>
-	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
+	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
-		<para>sigmaOverMu: $\sigma/\mu$: noise to signal ratio for $\log Normal$.</para>
-		<para><replaceable>n</replaceable>: Number of bins for discrete $\log Normal$.</para>
-		<para>$p$: Fraction of invariant sites.</para>
+		<para>sigmaOverMu: noise to signal ratio for $\log Normal$.</para>
+		<para>pInv: Fraction of invariant sites.</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>sub-model</replaceable> + log-normal_inv</userinput></para>
-		<para><userinput><replaceable>sub-model</replaceable> + log-normal_inv[4]</userinput> (default options)</para>
-		<para><userinput><replaceable>sub-model</replaceable> + log-normal_inv[<replaceable>n</replaceable>]</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + log-normal_inv</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + log-normal_inv[4]</userinput> (default)</para>
 	      </entry>
-	      <entry><replaceable>sub-model</replaceable> alphabet</entry>
+	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
-		<para>$\sigma/\mu$: noise to signal ratio for $\log Normal$.</para>
-		<para><replaceable>n</replaceable>: Number of bins for discrete $\log Normal$.</para>
-		<para>$p$: Fraction of invariant sites.</para>
+		<para>sigmaOverMu: noise to signal ratio for $\log Normal$.</para>
+		<para>pInv: Fraction of invariant sites.</para>
 	      </entry>
 	    </row>
-<!-- M7, branch-site, M8b_Test, M2a_Test, M2a, M1a,  -->
 
 	    <row>
 	      <entry>
 		<para><userinput>M1a</userinput></para>
-		<para><userinput>M1a[HKY,gwF]</userinput> (default options)</para>
+		<para><userinput>M1a[HKY,gwF]</userinput> (default)</para>
 		<para><userinput>M1a[GTR,F3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>kappa: the transition/transversion ratio</para>
-		<para>omega1: the conserved dN/dS ratio</para>
-		<para>fConserved: the fraction of conserved sites</para>
-		<para>fNeutral: the fraction of neutral sites</para>
+		<para>w1: the conserved dN/dS ratio</para>
+		<para>f1: the fraction of conserved sites among non-positively selected sites</para>
+		<para>f2: the fraction of neutral sites among non-positively selected sites</para>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
 		<para><userinput>M2a</userinput></para>
-		<para><userinput>M2a[HKY,gwF]</userinput> (default options)</para>
+		<para><userinput>M2a[HKY,gwF]</userinput> (default)</para>
 		<para><userinput>M2a[GTR,F3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>kappa: the transition/transversion ratio</para>
-		<para>omega1: the conserved dN/dS ratio</para>
-		<para>omega3: the positively selected dN/dS ratio</para>
-		<para>fConserved: the fraction of conserved sites</para>
-		<para>fNeutral: the fraction of neutral sites</para>
-		<para>fSelection: the fraction of neutral sites</para>
+		<variablelist>
+		  <varlistentry> <term>w1</term> <listitem> <para>the conserved dN/dS ratio</para> </listitem> </varlistentry>
+		  <varlistentry> <term>f1</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
+		  <varlistentry> <term>f2</term> <listitem> <para>the fraction of neutral sites among non-positively selected sites</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites</para> </listitem> </varlistentry>
+		</variablelist>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
 		<para><userinput>M2a_Test</userinput></para>
-		<para><userinput>M2a_Test[HKY,gwF]</userinput> (default options)</para>
+		<para><userinput>M2a_Test[HKY,gwF]</userinput> (default)</para>
 		<para><userinput>M2a_Test[GTR,F3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>kappa: the transition/transversion ratio</para>
-		<para>omega1: the conserved dN/dS ratio</para>
-		<para>omega3: the positively selected dN/dS ratio</para>
-		<para>fConserved: the fraction of conserved sites</para>
-		<para>fNeutral: the fraction of neutral sites</para>
-		<para>fSelection: the fraction of neutral sites</para>
-		<para>pos_selection: model selector (1 if positive selection, 0 if not).</para>
+		<para>w1: the conserved dN/dS ratio</para>
+		<para>f1: the fraction of conserved sites among non-positively selected sites</para>
+		<para>f2: the fraction of neutral sites among non-positively selected sites</para>
+		<para>posW: the positively selected dN/dS ratio</para>
+		<para>posP: the fraction of positively selected sites.</para>
+		<para>posSelection: model selector (1 if positive selection, 0 if not).</para>
 	      </entry>
 	    </row>
 
-	    <!-- row>
+	    <row>
 	      <entry>
-		<para><userinput>M7[<replaceable>n</replaceable>]</userinput></para>
-		<para><userinput><replaceable>sm</replaceable> + M7[<replaceable>n</replaceable>]</userinput></para>
+		<para><userinput>M7</userinput></para>
+		<para><userinput>M7[4,HKY,gwF]</userinput> (default)</para>
+		<para><userinput>M7[6,GTR,F3x4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>$\mu$: mean of the Beta distribution.</para>
-		<para>$\sigma/\mu$: noise to signal ratio for Beta.</para>
+		<para>mu: mean of the Beta(a,b) distribution.</para>
+		<para>a: parameter of Beta(a,b) distribution</para>
+		<para>b: parameter of Beta(a,b) distribution</para>
 	      </entry>
+	    </row>
+
+	    <row>
 	      <entry>
-		<para>$\Omega \sim Beta(\mu,\sigma)$.</para>
-		<para>A discrete approximation to the Beta with <replaceable>n</replaceable>
-     	          bins is used.</para>
+		<para><userinput>M8</userinput></para>
+		<para><userinput>M8[4,HKY,gwF]</userinput> (default)</para>
+		<para><userinput>M8[6,GTR,F3x4]</userinput></para>
+		<para>Yang, et. al. (2000)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<para>mu: mean of the Beta(a,b) distribution.</para>
+		<para>a: parameter of Beta(a,b) distribution</para>
+		<para>b: parameter of Beta(a,b) distribution</para>
+		<para>posW: the positively selected dN/dS ratio</para>
+		<para>posP: the fraction of positively selected sites.</para>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput>M8b</userinput></para>
+		<para><userinput>M8b[4,HKY,gwF]</userinput> (default)</para>
+		<para><userinput>M8b[6,GTR,F3x4]</userinput></para>
+		<para>Yang, et. al. (2000)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<para>f1: the fraction of conserved sites among non-positively selected sites</para>
+		<para>f2: the fraction of neutral sites among non-positively selected sites</para>
+		<para>mu: mean of the Beta(a,b) distribution.</para>
+		<para>a: parameter of Beta(a,b) distribution</para>
+		<para>b: parameter of Beta(a,b) distribution</para>
+		<para>posW: the positively selected dN/dS ratio</para>
+		<para>posP: the fraction of positively selected sites.</para>
 	      </entry>
 	    </row>
 
@@ -1954,38 +1931,36 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>
 		<para><userinput>M8b_Test</userinput></para>
 		<para><userinput><replaceable>sm</replaceable> + M8b_Test</userinput></para>
-		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>$\kappa$: the ts/tv ratio</para>
-		<para>$p_1, p_2, p_3$: bin frequencies.</para>
-		<para>$\omega_3$: value of $\omega$ in bin 2.</para>
+		<para>f1: the fraction of conserved sites among non-positively selected sites</para>
+		<para>f2: the fraction of neutral sites among non-positively selected sites</para>
+		<para>mu: mean of the Beta(a,b) distribution.</para>
+		<para>a: parameter of Beta(a,b) distribution</para>
+		<para>b: parameter of Beta(a,b) distribution</para>
+		<para>posW: the positively selected dN/dS ratio</para>
+		<para>posP: the fraction of positively selected sites.</para>
+		<para>posSelection: model selector (1 if positive selection, 0 if not).</para>
 	      </entry>
-	      <entry>
-		<para>$\Omega=\omega_i$ with probability $p_i$.</para>
-		<para>$\omega_1 = 0$, $\omega_2 = 1$.</para>
-		<para>The default for <replaceable>sm</replaceable> is M0.</para>
-	      </entry>
-	    </row -->
+	    </row>
 
 	    <row>
 	      <entry>
 		<para><userinput>branch-site</userinput></para>
-		<para><userinput>branch-site[2,HKY,gwF]</userinput>(default options)</para>
+		<para><userinput>branch-site[2,HKY,gwF]</userinput> (default)</para>
 		<para><userinput>branch-site[,HKY,F3x4]</userinput></para>
 		<para><userinput>branch-site[3,GTR,F61]</userinput></para>
 		<para>Zhang, et. al. (2005)</para>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>f0: the fraction of sites conserved on background branches.</para>
-		<para>f1: the fraction of sites neutral on background branches.</para>
-		<para>posP: the fraction of sites (neutral or
-		conserved) that switch to positive selection on
-		foreground branches.</para>
-		<para>w0: the conserved dN/dS ratio.</para>
+		<para>f1: the fraction of conserved sites on background branches.</para>
+		<para>f2: the fraction of neutral sites on background branches.</para>
+		<para>w1: the conserved dN/dS ratio.</para>
 		<para>posW: the positively selected dN/dS ratio.</para>
+		<para>posP: the fraction of sites (neutral or conserved) that switch to positive selection on
+		foreground branches.</para>
 		<para>posSelection: model selector (1 if positive selection, 0 if not).</para>
 	      </entry>
 	    </row>
