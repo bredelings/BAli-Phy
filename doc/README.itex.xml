@@ -1157,7 +1157,7 @@ allows you to view the resulting tree file graphically.)
 You can (and should) pool results from different MCMC runs by adding
 multiple tree sample files on the command line.  The different MCMC
 runs should have the same input files and parameters.
-<screen><prompt>%</prompt> trees-consensus <replaceable>dir1</replaceable>/C1.trees <replaceable>dir2</replaceable>/C1.trees &gt; <filename>c50.PP.tree</filename></screen>
+<screen><prompt>%</prompt> trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees &gt; <filename>c50.PP.tree</filename></screen>
 By default, the first 10% of tree samples are skipped as burn-in.  You
 can specify the number of samples (e.g. 1000) to skip by adding the
 options <userinput>-s1000</userinput> or
@@ -1213,7 +1213,7 @@ The MAP topology may be used instead of a consensus tree when a fully resolved (
       <section><info><title>Checking topology convergence (<filename>C1.trees</filename>)</title></info>
 	
 <para>
-<screen><prompt>%</prompt> trees-bootstrap <replaceable>dir1</replaceable>/C1.trees <replaceable>dir2</replaceable>/C1.trees</screen>	
+<screen><prompt>%</prompt> trees-bootstrap <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees</screen>	
 This command computes the effective sample size for the posterior probability of each split.  It also computes the Average Standard Deviation of Split Frequencies (ASDSF) between two or more independent runs.</para>
 
 <para>See <xref linkend="mixing_and_convergence"/> for more information.
@@ -1226,7 +1226,7 @@ This command computes the effective sample size for the posterior probability of
 This command gives a median and confidence interval, ESS, and a stabilization time:
 <screen><prompt>%</prompt> statreport C1.p &gt; Report </screen>	
 This command compares multiple runs to give PSRF and joint ESS values as well:
-<screen><prompt>%</prompt> statreport C1.p C2.p &gt; Report </screen>	
+<screen><prompt>%</prompt> statreport <replaceable>dir-1</replaceable>/C1.p <replaceable>dir-2</replaceable>/C1.p &gt; Report </screen>	
 The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</link> allows you to view the same summaries graphically.</para>
 
 <para>See <xref linkend="mixing_and_convergence"/> for more information.
@@ -1838,7 +1838,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>M1a</userinput></para>
-		<para><userinput>M1a[HKY,gwF]</userinput> (default)</para>
+		<para><userinput>M1a[HKY,F61]</userinput> (default)</para>
 		<para><userinput>M1a[GTR,F3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
@@ -1855,7 +1855,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>M2a</userinput></para>
-		<para><userinput>M2a[HKY,gwF]</userinput> (default)</para>
+		<para><userinput>M2a[HKY,F61]</userinput> (default)</para>
 		<para><userinput>M2a[GTR,F3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
@@ -1874,7 +1874,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>M2a_Test</userinput></para>
-		<para><userinput>M2a_Test[HKY,gwF]</userinput> (default)</para>
+		<para><userinput>M2a_Test[HKY,F61]</userinput> (default)</para>
 		<para><userinput>M2a_Test[GTR,F3x4]</userinput></para>
 		<para>Wong, et. al. (2004)</para>
 	      </entry>
@@ -1894,7 +1894,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>M7</userinput></para>
-		<para><userinput>M7[4,HKY,gwF]</userinput> (default)</para>
+		<para><userinput>M7[4,HKY,F61]</userinput> (default)</para>
 		<para><userinput>M7[6,GTR,F3x4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
@@ -1911,7 +1911,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>M8</userinput></para>
-		<para><userinput>M8[4,HKY,gwF]</userinput> (default)</para>
+		<para><userinput>M8[4,HKY,F61]</userinput> (default)</para>
 		<para><userinput>M8[6,GTR,F3x4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
@@ -1927,10 +1927,10 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	    </row>
 
-	    <row>
+	    <!-- row>
 	      <entry>
 		<para><userinput>M8b</userinput></para>
-		<para><userinput>M8b[4,HKY,gwF]</userinput> (default)</para>
+		<para><userinput>M8b[4,HKY,F61]</userinput> (default)</para>
 		<para><userinput>M8b[6,GTR,F3x4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
@@ -1967,14 +1967,13 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  		</variablelist>
     </entry>
 	    </row>
-
+-->
 	    <row>
 	      <entry>
 			<variablelist>
 	<para><userinput>branch-site</userinput></para>
-		<para><userinput>branch-site[2,HKY,gwF]</userinput> (default)</para>
-		<para><userinput>branch-site[,HKY,F3x4]</userinput></para>
-		<para><userinput>branch-site[3,GTR,F61]</userinput></para>
+		<para><userinput>branch-site[2,HKY,F61]</userinput> (default)</para>
+		<para><userinput>branch-site[,GTR,F3x4]</userinput></para>
 		<para>Zhang, et. al. (2005)</para>
 		</variablelist>
 	      </entry>
@@ -2127,7 +2126,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 		</entry>
 		<entry>
 		  <para>Gap lengths are geometrically distributed with extension probability $\epsilon$.</para>
-		  <para>This probability of an indel event depends on the branch length in this model.</para>
+		  <para>The probability of an indel event depends on the branch length in this model.</para>
 		</entry>
 	      </row>
 	      
@@ -2251,20 +2250,6 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
       </para>
     </section>
 
-    <section><info><title>Diagnostics and multiple independent chains</title></info>
-      
-    <para>
-      Many of the following diagnostic measures require that you run the MCMC a number of
-      different times.  In the text that follows, we refer to the
-      different parameter files
-      as <filename>C1.p</filename>, <filename>C2.p</filename>, 
-      ..., <filename>C<replaceable>n</replaceable>.p</filename> and the
-      different tree samples as <filename>C1.trees</filename>, <filename>C2.trees</filename>,
-      ..., <filename>C<replaceable>n</replaceable>.trees</filename>.
-      Substitute the actual names of the files.
-    </para>
-    </section>
-
     
     <section><info><title>Diagnostics: Variation in split frequencies across runs (ASDSF/MSDSF)</title></info>
       
@@ -2272,7 +2257,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 	
 <para>
 To calculate the ASDSF and MSDSF run:
-<screen><prompt>%</prompt> trees-bootstrap C1.trees C2.trees ... C<replaceable>n</replaceable>.trees &gt; partitions.bs</screen>	
+<screen><prompt>%</prompt> trees-bootstrap <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees ... <replaceable>dir-n</replaceable>/C1.trees &gt; partitions.bs</screen>	
 For each split, the SDSF value is just the standard deviation across
 runs of the Posterior Probabilities for that split.  By averaging the
 resulting SDSF values across splits, we may obtain the ASDSF value
@@ -2288,7 +2273,7 @@ acceptable if it is &lt; 0.01.
       <section><info><title>Split-frequency comparison plot</title></info>
 	
 	<para>To generate the split-frequency comparison plot, you must have R installed.  Locate the script <filename>compare-runs.R</filename>.  Then run:
-<screen><prompt>%</prompt> trees-bootstrap C1.trees C2.trees ... C<replaceable>n</replaceable>.trees --LOD-table=LOD-table &gt; partitions.bs 
+<screen><prompt>%</prompt> trees-bootstrap <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees ... <replaceable>dir-n</replaceable>/C1.trees --LOD-table=LOD-table &gt; partitions.bs 
 <prompt>%</prompt> R --slave --vanilla --args LOD-table compare-SF.pdf &lt; compare-runs.R</screen>
 	  Following <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://dx.doi.org/10.1080/10635150600812544">Beiko et al (2006)</link>, this displays the variation in
 	  estimates of split frequencies across runs.  Splits are
@@ -2309,7 +2294,7 @@ similar posterior distributions.  Only numerical variables may have a
 PSRF. To calculate the PSRF for each
 numerical parameter, you may run: 
 
-<screen><prompt>%</prompt> statreport C1.p C2.p ... C<replaceable>n</replaceable>.p &gt; Report </screen>
+<screen><prompt>%</prompt> statreport <replaceable>dir-1</replaceable>/C1.p <replaceable>dir-2</replaceable>/C2.p ... <replaceable>dir-n</replaceable>/C1.p &gt; Report </screen>
 The PSRF is a ratio of the width of the pooled distribution to the
 average width of each distribution, and should ideally be 1.  The PSRF
 is customarily considered to be small enough if it is less than 1.01.
@@ -2344,7 +2329,7 @@ adequately mix between modes.</para>
       <section><info><title>ESS for numerical values</title></info>
 	
       <para>To calculate the split ESS values, run:
-<screen><prompt>%</prompt> statreport C1.p C2.p ... C<replaceable>n</replaceable>.p &gt; Report </screen>
+<screen><prompt>%</prompt> statreport <replaceable>dir-1</replaceable>/C1.p <replaceable>dir-2</replaceable>/C1.p ... <replaceable>dir-n</replaceable>/C1.p &gt; Report </screen>
       We calculate effective sample sizes based on integrated
       autocorrelation times.  This method has the nice property that
       simply duplicating every sample does not increase the ESS.
@@ -2358,7 +2343,7 @@ adequately mix between modes.</para>
       <section><info><title>ESS for split frequencies</title></info>
 	
       <para>To calculate the split ESS values, run:
-<screen><prompt>%</prompt> trees-bootstrap C1.trees C2.trees ... C<replaceable>n</replaceable>.trees &gt; partitions.bs</screen>
+<screen><prompt>%</prompt> trees-bootstrap <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees ... <replaceable>dir-n</replaceable>/C1.trees &gt; partitions.bs</screen>
       To compute the ESS for a split, we consider the presence or absence
       of a split in each iteration as a series of binary values.  We
       compute the integrated autocorrelation time for this binary
@@ -2398,7 +2383,7 @@ values in the sequence.</para>
 
 <orderedlist inheritnum="ignore" continuation="restarts">
 <listitem><para>To report the average distances within and between two tree samples:
-<screen><prompt>%</prompt> trees-distances --skip=<replaceable>burnin</replaceable> --sub-sample=<replaceable>factor</replaceable> compare <filename>C1.trees</filename> <filename>C2.trees</filename></screen>
+<screen><prompt>%</prompt> trees-distances --skip=<replaceable>burnin</replaceable> --sub-sample=<replaceable>factor</replaceable> compare <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees</screen>
 </para></listitem>
 
 <listitem><para>To compute the distance from each tree in C1.trees to all trees equilibrium.trees, as a time series:
