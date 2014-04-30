@@ -1,6 +1,18 @@
 <!DOCTYPE book [
 <!ENTITY  version        "2.3.0"         >
-<!ENTITY  source.url     "http://www.bali-phy.org/bali-phy-&version;.tar.gz"         >
+
+<!ENTITY  source.file    "bali-phy-&version;.tar.gz"         >
+<!ENTITY  linux64.file   "bali-phy-&version;-linux64.tar.gz"         >
+<!ENTITY  win32.file     "bali-phy-&version;-win32.tar.gz"         >
+<!ENTITY  win64.file     "bali-phy-&version;-win64.tar.gz"         >
+<!ENTITY  mac64.file     "bali-phy-&version;-mac64.tar.gz"         >
+
+<!ENTITY  source.url     "http://www.bali-phy.org/&source.file;"         >
+<!ENTITY  linux64.url     "http://www.bali-phy.org/&linux64.file;"         >
+<!ENTITY  win32.url     "http://www.bali-phy.org/&win32.file;"         >
+<!ENTITY  win64.url     "http://www.bali-phy.org/&win64.file;"         >
+<!ENTITY  mac64.url     "http://www.bali-phy.org/&mac64.file;"         >
+
 <!ENTITY  install.prefix     "~/Applications"         >
 <!ENTITY  install.path     "&install.prefix;/bali-phy-&version;"         >
 <!ENTITY  exe.path     "&install.path;/bin/bali-phy"         >
@@ -47,7 +59,7 @@
   <section xml:id="installation"><info><title>Installation</title></info>
 
   <para>You can install BAli-Phy by downloading compiled executables from the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/download.php">website</link>.</para>
-  <para>On OSX 10.8 or higher, you could also install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 5 compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
+  <para>On OSX 10.8 or higher, you could also install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 5.1 compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
   <section xml:id="pre-requisites"><info><title>Hardware requirements</title></info>
     
     <para>We recommend running BAli-Phy on a computing cluster for long runs.
@@ -92,17 +104,19 @@ While running the Cygwin installer
       desktop in case you want to run it again, since you can use it
       to install additional packages later.</para>
 
-      <para>In order to access your Windows files from inside cygwin, note
-      that <filename>C:/</filename> is accessed as
-      <filename>/cygdrive/c/</filename>.  Thus, for example, you can
-      access downloaded files at <filename>/cygdrive/c/Documents\ and\
-      Settings/<replaceable>username</replaceable>/Downloads/</filename>.
+      <para>BAli-Phy refers to windows files using the normal
+      <filename>C:/</filename> method.  However, cygwin programs refer
+      to <filename>C:/</filename> as <filename>/cygdrive/c/</filename>.
+      Thus, for example, you can access downloaded files at
+      <filename>/cygdrive/c/Documents\ and\ Settings/<replaceable>username</replaceable>/Downloads/</filename>. 
+      If you run BAli-Phy using cygwin filenames, then it will
+      complain that the files cannot be found.
       </para>
     </section>
 
     <section><info><title>Mac OS X requirements</title></info>
-    <para>We recommend Mac OS X version 10.6 (or higher).</para>
-    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 5 compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
+    <para>We recommend Mac OS X version 10.8 (or higher).</para>
+    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 5.1 compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
     </section>
 
     <section><info><title>Linux requirements</title></info>
@@ -131,16 +145,22 @@ or
 
     <listitem><para><link xmlns:xlink="http://www.w3.org/1999/xlink"
     xlink:href="http://www.bali-phy.org/download.php">Download</link> 
-BAli-Phy executables for your operating system from the web site using your browser.  Choose the 64-bit executables unless you're operating system can only run 32-bit executables.  Save them to the <filename>&install.prefix;</filename> directory that you just created on the command line. Then check to see that the file is there:
+BAli-Phy executables for your operating system from the web site using your browser.  Choose the 64-bit executables unless your operating system can only run 32-bit executables.  Save them to the <filename>&install.prefix;</filename> directory that you just created on the command line. Then check to see that the file is there.  Make sure it is the correct file for Mac, Linux, or Windows:
 <screen><prompt>%</prompt> <userinput>ls &install.prefix;</userinput>
-bali-phy-&version;.tgz
+&linux64.file;
 </screen>
 </para>
 <para>Alternatively, you can download the file directly from the command line using <userinput>wget</userinput> if you know the URL:
 <screen><prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
-<prompt>%</prompt> <userinput>wget &source.url;</userinput>
+<prompt>%</prompt> <userinput>wget &win64.url;</userinput>
 <prompt>%</prompt> <userinput>ls</userinput>
-bali-phy-&version;.tgz
+&win64.file;
+</screen>
+On Mac, you can use <command>curl</command> instead of <command>wget</command>:
+<screen><prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
+<prompt>%</prompt> <userinput>curl -O &mac64.url;</userinput>
+<prompt>%</prompt> <userinput>ls</userinput>
+&mac64.file;
 </screen>
 </para>
 </listitem>
@@ -148,19 +168,19 @@ bali-phy-&version;.tgz
     <listitem><para>Extract the compressed archive on the Unix (or
     Cygwin) command line using the <command>tar</command> command:
 <screen><prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
-<prompt>%</prompt> <userinput>tar -zxf bali-phy-&version;.tgz</userinput>
+<prompt>%</prompt> <userinput>tar -zxf &linux64.file;</userinput>
 <prompt>%</prompt> <userinput>ls</userinput>
-bali-phy-&version;.tgz  bali-phy-&version;/
+bali-phy-&version;/   &linux64.file;
 </screen>
     </para></listitem>
 
     <listitem><para>Finally, test that the program can be run.
 <screen><prompt>%</prompt> <userinput>&exe.path; -v</userinput>
-VERSION: 2.2.0  [2.2 commit 814e5134+]  (Dec 20 2013 20:24:02)
-BUILD: Dec 20 2013 20:28:12
+VERSION: 2.3.0  [master commit 9e551ef0]  (Apr 29 2014 18:04:25)
+BUILD: Apr 29 2014 18:05:33
 ARCH: x86_64-unknown-linux-gnu
-COMPILER: GCC 4.8.2
-FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops -std=c++11 -finline-limit=1000   -pipe -O3
+COMPILER: GCC 4.8.1 20130424 (prerelease)
+FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops -std=c++11 -finline-limit=1000 -pipe -O3
 </screen>
 </para></listitem>
     </orderedlist>
@@ -272,19 +292,14 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
     <link xmlns:xlink="http://www.w3.org/1999/xlink"
 	  xlink:href="http://http://mxcl.github.com/homebrew/">homebrew</link>
     on Macintosh systems, but installing these package managers
-    requires first installing Xcode Developer Tools, which requires an Apple Developer
-    ID, and is not trivial.
+    requires first installing Xcode Developer Tools.
     </para>
 
-    <para>
-      For those who wish to install macports, a <application>bali-phy</application> package is available.
-    </para>
-      
     </section>
 
     <section xml:id="tests"><info><title>Testing the installed software</title></info>
     <para>In order to determine that the software has been correctly installed, and the <envar>PATH</envar> has been correctly set, run the following commands:
-<screen><prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=50</userinput>
+<screen><prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=150</userinput>
 <prompt>%</prompt> <userinput>bp-analyze.pl 5d-1/</userinput></screen>
     </para>
     <para>Furthermore, the directory <filename>5d-1</filename> should contain a file called <filename>C1.p</filename>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</para>
@@ -319,17 +334,15 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
     </section>
 
     <section><info><title>Compilers: Mac</title></info>
-    <para>On Mac 10.8 and above, the simplest method is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 5.0 (or newer).  Then you can use the default compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link>).
-<note>Note that you must add the option <userinput>CXXFLAGS=-ftemplate-depth=256</userinput> to the configure script when using clang.  The default template depth of 128 is too low.  See below on how to add this option.
-    </note>
+    <para>On Mac 10.8 and above, the simplest method is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 5.1 (or newer).  Then you can use the default compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link>).
     </para>
     
-    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have XCode 5.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
+    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have XCode 5.1.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
 
     </section>
     
     <section><info><title>Compilers: Windows</title></info>
-    <para>On Windows we recommended the mingw-64 GCC 4.8 compiler.  This compiler can build both 32-bit and 64-bit executables.  You can install it through the compiler through <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/">Cygwin</link>.  The compiled executables can be run anywhere, and do not need Cygwin to run.
+    <para>On Windows we recommended the mingw-64 GCC 4.8 compiler.  The compiled executables can be run anywhere, and do not need Cygwin to run.  However, they do not understand cygwin-type filenames like <filename>/cygdrive/c/</filename>. The mingw-64 compiler can build both 32-bit and 64-bit executables.  You can install it through <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/">Cygwin</link>.  It is also possible to build windows executables by running the mingw-64 GCC 4.8 compiler from Linux.
     </para>
     </section>
 
@@ -356,13 +369,13 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	extract the source code archive, using a graphical archive
 	manager, or the command-line tool <command>tar</command>:
 	
-	<screen><prompt>%</prompt> <userinput>tar -zxf bali-phy-2.2.0.tgz</userinput></screen>
+	<screen><prompt>%</prompt> <userinput>tar -zxf &source.file;</userinput></screen>
 	Then create a <emphasis>separate</emphasis> build directory, enter it, and run the
 	configure command:
 
 	<screen><prompt>%</prompt> <userinput>mkdir build</userinput>
 <prompt>%</prompt> <userinput>cd build</userinput>
-<prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/Applications/bali-phy-&version;/ CXXFLAGS=-ftemplate-depth=256</userinput></screen>
+<prompt>%</prompt> <userinput>../bali-phy-&version;/configure --prefix=&#36;HOME/Applications/bali-phy-&version;/</userinput></screen>
 	
 	If this command succeeds, then you can simply type
 
@@ -392,7 +405,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	  <application>BAli-Phy</application> under
 	  <filename>~/local</filename>, you can enter:
 
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/local</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure --prefix=&#36;HOME/local</userinput></screen>
 	</para>
 
       </section>
@@ -424,7 +437,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	  <command>g++-4.8</command> as the C++ compiler when compiling
 	  <application>BAli-Phy</application>, you would set the CXX
 	  environment variable as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure CXX=g++-4.8</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure CXX=g++-4.8</userinput></screen>
 	</para>
       </section>
 
@@ -432,7 +445,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	
 	
 	<para>You can pass flags to the C++ compiler by setting the CXXFLAGS variable:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure CXXFLAGS="-march=native -g"</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure CXXFLAGS="-march=native -g"</userinput></screen>
 	</para>
       </section>
 
@@ -441,7 +454,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	<para>
           All these options to <command>configure</command> can be
 	  combined, as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.2.0/configure --prefix=&#36;HOME/local CXX=g++-4.8 CXXFLAGS="-march=native -g"</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure --prefix=&#36;HOME/local CXX=g++-4.8 CXXFLAGS="-march=native -g"</userinput></screen>
 	</para>
       </section>
     </section>
