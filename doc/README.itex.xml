@@ -1754,7 +1754,9 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
-		<para>pInv: Fraction of invariant sites.</para>
+		<variablelist>
+		  <varlistentry> <term>pInv</term> <listitem> <para>Fraction of invariant sites.</para> </listitem> </varlistentry>
+		</variablelist>
 	      </entry>
 	    </row>
 
@@ -1766,9 +1768,11 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
-		<para>sigmaOverMu: noise to signal ratio for Gamma(a,b).  Also equal to 1/sqrt(a).</para>
-		<para>a: parameter for Gamma(a,b)</para>
-		<para>b: parameter for Gamma(a,b)</para>
+		<variablelist>
+		  <varlistentry> <term>sigmaOverMu</term> <listitem> <para>noise to signal ratio for Gamma(a,b).  Also equal to 1/sqrt(a).</para> </listitem> </varlistentry>
+		  <varlistentry> <term>a</term> <listitem> <para>parameter for Gamma(a,b)</para> </listitem> </varlistentry>
+		  <varlistentry> <term>b</term> <listitem> <para>parameter for Gamma(a,b)</para> </listitem> </varlistentry>
+		</variablelist>
 	      </entry>
 	    </row>
 
@@ -1780,10 +1784,12 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
-		<para>sigmaOverMu: noise to signal ratio for Gamma(a,b).  Also equal to 1/sqrt(a).</para>
-		<para>a: parameter for Gamma(a,b)</para>
-		<para>b: parameter for Gamma(a,b)</para>
-		<para>pInv: Fraction of invariant sites.</para>
+		<variablelist>
+		  <varlistentry> <term>sigmaOverMu</term> <listitem> <para>noise to signal ratio for Gamma(a,b).  Also equal to 1/sqrt(a).</para> </listitem> </varlistentry>
+		  <varlistentry> <term>a</term> <listitem> <para>parameter for Gamma(a,b)</para> </listitem> </varlistentry>
+		  <varlistentry> <term>b</term> <listitem> <para>parameter for Gamma(a,b)</para> </listitem> </varlistentry>
+		  <varlistentry> <term>pInv</term> <listitem> <para>Fraction of invariant sites.</para> </listitem> </varlistentry>
+		</variablelist>
 	      </entry>
 	    </row>
 
@@ -1794,8 +1800,10 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
-		<para>sigmaOverMu: noise to signal ratio for $\log Normal$.</para>
-		<para>pInv: Fraction of invariant sites.</para>
+		<variablelist>
+		  <varlistentry> <term>sigmaOverMu</term> <listitem> <para>noise to signal ratio for $\log Normal$.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>pInv</term> <listitem> <para>Fraction of invariant sites.</para> </listitem> </varlistentry>
+		</variablelist>
 	      </entry>
 	    </row>
 
@@ -1806,8 +1814,10 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
-		<para>sigmaOverMu: noise to signal ratio for $\log Normal$.</para>
-		<para>pInv: Fraction of invariant sites.</para>
+		<variablelist>
+		  <varlistentry> <term>sigmaOverMu</term> <listitem> <para>noise to signal ratio for $\log Normal$.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>pInv</term> <listitem> <para>Fraction of invariant sites.</para> </listitem> </varlistentry>
+		</variablelist>
 	      </entry>
 	    </row>
 
@@ -1820,9 +1830,11 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>w1: the conserved dN/dS ratio</para>
-		<para>f1: the fraction of conserved sites among non-positively selected sites</para>
-		<para>f2: the fraction of neutral sites among non-positively selected sites</para>
+		<variablelist>
+		  <varlistentry> <term>w1</term> <listitem> <para>the conserved dN/dS ratio</para> </listitem> </varlistentry>
+		  <varlistentry> <term>f1</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
+		  <varlistentry> <term>f2</term> <listitem> <para>the fraction of neutral sites among non-positively selected sites</para> </listitem> </varlistentry>
+		</variablelist>
 	      </entry>
 	    </row>
 
@@ -1854,12 +1866,14 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>w1: the conserved dN/dS ratio</para>
-		<para>f1: the fraction of conserved sites among non-positively selected sites</para>
-		<para>f2: the fraction of neutral sites among non-positively selected sites</para>
-		<para>posW: the positively selected dN/dS ratio</para>
-		<para>posP: the fraction of positively selected sites.</para>
-		<para>posSelection: model selector (1 if positive selection, 0 if not).</para>
+		<variablelist>
+		  <varlistentry> <term>w1</term> <listitem> <para>the conserved dN/dS ratio</para> </listitem> </varlistentry>
+		  <varlistentry> <term>f1</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
+		  <varlistentry> <term>f2</term> <listitem> <para>the fraction of neutral sites among non-positively selected sites</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posSelection</term> <listitem> <para>model selector (1 if positive selection, 0 if not).</para> </listitem> </varlistentry>
+		</variablelist>
 	      </entry>
 	    </row>
 
@@ -1872,9 +1886,11 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>mu: mean of the Beta(a,b) distribution.</para>
-		<para>a: parameter of Beta(a,b) distribution</para>
-		<para>b: parameter of Beta(a,b) distribution</para>
+		<variablelist>
+		  <varlistentry> <term>mu</term> <listitem> <para>mean of the Beta(a,b) distribution.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>a</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+		  <varlistentry> <term>b</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+		</variablelist>
 	      </entry>
 	    </row>
 
@@ -1887,11 +1903,13 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>mu: mean of the Beta(a,b) distribution.</para>
-		<para>a: parameter of Beta(a,b) distribution</para>
-		<para>b: parameter of Beta(a,b) distribution</para>
-		<para>posW: the positively selected dN/dS ratio</para>
-		<para>posP: the fraction of positively selected sites.</para>
+			<variablelist>
+	<varlistentry> <term>mu</term> <listitem> <para>mean of the Beta(a,b) distribution.</para> </listitem> </varlistentry>
+		<varlistentry> <term>a</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+		<varlistentry> <term>b</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+		<varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
+		<varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites.</para> </listitem> </varlistentry>
+		</variablelist>
 	      </entry>
 	    </row>
 
@@ -1904,13 +1922,15 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>f1: the fraction of conserved sites among non-positively selected sites</para>
-		<para>f2: the fraction of neutral sites among non-positively selected sites</para>
-		<para>mu: mean of the Beta(a,b) distribution.</para>
-		<para>a: parameter of Beta(a,b) distribution</para>
-		<para>b: parameter of Beta(a,b) distribution</para>
-		<para>posW: the positively selected dN/dS ratio</para>
-		<para>posP: the fraction of positively selected sites.</para>
+		<variablelist>
+		  <varlistentry> <term>f1</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
+		  <varlistentry> <term>f2</term> <listitem> <para>the fraction of neutral sites among non-positively selected sites</para> </listitem> </varlistentry>
+		  <varlistentry> <term>mu</term> <listitem> <para>mean of the Beta(a,b) distribution.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>a</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+		  <varlistentry> <term>b</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites.</para> </listitem> </varlistentry>
+	  	</variablelist>
 	      </entry>
 	    </row>
 
@@ -1921,34 +1941,40 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>f1: the fraction of conserved sites among non-positively selected sites</para>
-		<para>f2: the fraction of neutral sites among non-positively selected sites</para>
-		<para>mu: mean of the Beta(a,b) distribution.</para>
-		<para>a: parameter of Beta(a,b) distribution</para>
-		<para>b: parameter of Beta(a,b) distribution</para>
-		<para>posW: the positively selected dN/dS ratio</para>
-		<para>posP: the fraction of positively selected sites.</para>
-		<para>posSelection: model selector (1 if positive selection, 0 if not).</para>
-	      </entry>
+			<variablelist>
+	<varlistentry> <term>f1</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
+		<varlistentry> <term>f2</term> <listitem> <para>the fraction of neutral sites among non-positively selected sites</para> </listitem> </varlistentry>
+		<varlistentry> <term>mu</term> <listitem> <para>mean of the Beta(a,b) distribution.</para> </listitem> </varlistentry>
+		<varlistentry> <term>a</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+		<varlistentry> <term>b</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+		<varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
+		<varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites.</para> </listitem> </varlistentry>
+		<varlistentry> <term>posSelection</term> <listitem> <para>model selector (1 if positive selection, 0 if not).</para> </listitem> </varlistentry>
+	  		</variablelist>
+    </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput>branch-site</userinput></para>
+			<variablelist>
+	<para><userinput>branch-site</userinput></para>
 		<para><userinput>branch-site[2,HKY,gwF]</userinput> (default)</para>
 		<para><userinput>branch-site[,HKY,F3x4]</userinput></para>
 		<para><userinput>branch-site[3,GTR,F61]</userinput></para>
 		<para>Zhang, et. al. (2005)</para>
+		</variablelist>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>f1: the fraction of conserved sites on background branches.</para>
-		<para>f2: the fraction of neutral sites on background branches.</para>
-		<para>w1: the conserved dN/dS ratio.</para>
-		<para>posW: the positively selected dN/dS ratio.</para>
-		<para>posP: the fraction of sites (neutral or conserved) that switch to positive selection on
-		foreground branches.</para>
-		<para>posSelection: model selector (1 if positive selection, 0 if not).</para>
+		<variablelist>
+		  <varlistentry> <term>f1</term> <listitem> <para>the fraction of conserved sites on background branches.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>f2</term> <listitem> <para>the fraction of neutral sites on background branches.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>w1</term> <listitem> <para>the conserved dN/dS ratio.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of sites (neutral or conserved) that switch to positive selection on
+		  foreground branches.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posSelection</term> <listitem> <para>model selector (1 if positive selection, 0 if not).</para> </listitem> </varlistentry>
+	  	</variablelist>
 	      </entry>
 	    </row>
 
@@ -1960,9 +1986,9 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>$\kappa$: the ts/tv ratio</para>
-		<para>$p_1, p_2, p_3$: bin frequencies.</para>
-		<para>$\omega_3$: value of $\omega$ in bin 2.</para>
+		<varlistentry> <term>$\kappa$</term> <listitem> <para>the ts/tv ratio</para> </listitem> </varlistentry>
+		<varlistentry> <term>$p_1, p_2, p_3$</term> <listitem> <para>bin frequencies.</para> </listitem> </varlistentry>
+		<varlistentry> <term>$\omega_3$</term> <listitem> <para>value of $\omega$ in bin 2.</para> </listitem> </varlistentry>
 	      </entry>
 	      <entry>
 		<para>$\Omega=\omega_i$ with probability $p_i$.</para>
@@ -1979,9 +2005,9 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-		<para>$\kappa$: the ts/tv ratio</para>
-		<para>$p_1, \ldots, p_n$: bin frequencies.</para>
-		<para>$\omega_1, \ldots, \omega_n$: values of $\omega$.</para>
+		<varlistentry> <term>$\kappa$</term> <listitem> <para>the ts/tv ratio</para> </listitem> </varlistentry>
+		<varlistentry> <term>$p_1, \ldots, p_n$</term> <listitem> <para>bin frequencies.</para> </listitem> </varlistentry>
+		<varlistentry> <term>$\omega_1, \ldots, \omega_n$</term> <listitem> <para>values of $\omega$.</para> </listitem> </varlistentry>
 	      </entry>
 	      <entry>
 		<para>$\Omega=\omega_i$ with probability $p_i$.</para>
