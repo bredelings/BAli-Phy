@@ -318,15 +318,16 @@ branch_site_test_model codona n_bins s r = Prefix "BranchSiteTest"
 
   let {posW' = if (posSelection == 1) then posW else 1.0};
 
-  [f1,f2] <- dirichlet' 2 1.0;
-  Log "f1" f1;
-  Log "f2" f2;
+  fs <- dirichlet' n_bins 1.0;
+  sequence_ $ zipWith (\f i -> Log ("f"++show i) f) fs [1..];
 
-  w1 <- uniform 0.0 1.0;
-  Log "w1" w1;
+  ws' <- iid (n_bins-1) (uniform 0.0 1.0);
+  sequence_ $ zipWith (\f i -> Log ("w"++show i) f) ws' [1..];
 
-  let {d1 = DiscreteDistribution [(f1,w1),(f2,1.0)];
-       d2 = DiscreteDistribution [(f1,posW'),(f2,posW')]};
+  let {ws = ws' ++ [1.0]};
+
+  let {d1 = DiscreteDistribution $ zip fs ws;
+       d2 = DiscreteDistribution $ zip fs (repeat posW')};
 
   posP <- beta 1.0 10.0;
   Log "posP" posP;
