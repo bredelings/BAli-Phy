@@ -138,7 +138,7 @@ public:
 
   ~matrix()
   {
-    delete data_;
+    delete[] data_;
   }
 };
 
