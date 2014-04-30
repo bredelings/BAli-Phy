@@ -428,6 +428,8 @@ bool reg_heap::parameter_is_modifiable(int index)
 
 int reg_heap::find_parameter_modifiable_reg(int index)
 {
+  assert(index >= 0);
+
   int R = parameters[index].second;
 
   int R2 = incremental_evaluate(R,0);

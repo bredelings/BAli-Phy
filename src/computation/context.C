@@ -240,6 +240,8 @@ void context::set_parameter_value_expression(int index, const expression_ref& O)
 
 void context::set_parameter_value_(int index, closure&& C)
 {
+  assert(index >= 0);
+
   int P = find_parameter_modifiable_reg(index);
 
   set_reg_value(P, std::move(C) );
