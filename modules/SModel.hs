@@ -390,7 +390,7 @@ f1x4_model triplet_a = Prefix "F1x4"
        return $ ReversibleFrequency triplet_a (iotaUnsigned n_letters) pi' (plus_gwF triplet_a 1.0 pi')
 });
 
-f3x4_model triplet_a = Prefix "F1x4" 
+f3x4_model triplet_a = Prefix "F3x4" 
  (do {
        let {nuc_a = getNucleotides triplet_a};
        nuc_pi1 <- Prefix "Site1" $ frequencies_model nuc_a;
