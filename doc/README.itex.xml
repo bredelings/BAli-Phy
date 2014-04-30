@@ -1464,15 +1464,15 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		  <para>Hasegawa, Kishino, Yano (1985)</para>
 		</entry>
 		<entry>DNA or RNA</entry>
-		<entry>$\kappa$: the ts/tv ratio.</entry>
+		<entry>kappa: the ts/tv ratio.</entry>
 	      </row>
 
 	      <row>
 		<entry><para><userinput>TN</userinput></para><para>Tamura, Nei (1993)</para></entry>
 		<entry>DNA or RNA</entry>
 		<entry>
-		  <para>$\kappa_1$: the purine ts/tv ratio.</para>
-		  <para>$\kappa_2$: the pyrimidine ts/tv ratio.</para>
+		  <para>kappaPur: the purine ts/tv ratio.</para>
+		  <para>kappaPyr: the pyrimidine ts/tv ratio.</para>
 		</entry>
 	      </row>
 
@@ -1542,26 +1542,13 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <row>
 		<entry>
 		  <para><userinput>M0</userinput></para>
-		  <para>Nielsen and Yang (1998)</para>
-		</entry>
-		<entry>Codons</entry>
-		<entry>
-		  <para>$\kappa$: the ts/tv ratio.</para>
-		  <para>$\omega$: the dN/dS ratio.</para>
-		</entry>
-	      </row>
-
-	      <row>
-		<entry>
-		  <para><userinput>M0</userinput></para>
 		  <para><userinput>M0[HKY]</userinput> (default)</para>
 		  <para><userinput>M0[GTR]</userinput></para>
 		  <para>Nielsen and Yang (1998)</para>
 		</entry>
 		<entry>Codons</entry>
 		<entry>
-		  <para><replaceable>nuc-model</replaceable> parameters.</para>
-		  <para>\omega: the dn/ds ratio</para>
+		  <para>omega: the dN/dS ratio</para>
 		</entry>
 	      </row>
 	    </tbody>
