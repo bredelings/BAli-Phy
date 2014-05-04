@@ -143,6 +143,72 @@ alignment stretch(const alignment& A1, const vector<int>& columns,int fill)
   return A2;
 }
 
+void align_alignments(const matrix<int>& M1, const matrix<int>& M2, vector<int>& columns1, vector<int>& columns2)
+{
+  //--------- Construct Forward Matrix ---------//
+
+  matrix<int> F(M1.size1()+1, M2.size1()+1);
+
+  for(int i=0;i<F.size1();i++)
+    for(int j=0;j<F.size2();j++) {
+      F(i,j) = 0;
+      if (i>0)         F(i,j) = std::max(F(i,j),F(i-1,j  ));
+      if (j>0)         F(i,j) = std::max(F(i,j),F(i  ,j-1));
+      if (i>0 and j>0) F(i,j) = std::max(F(i,j),F(i-1,j-1)+score(M1,M2,i-1,j-1));
+    }
+
+  //-------------- Find best path --------------//
+
+  int i=F.size1()-1;
+  int j=F.size2()-1;
+
+  vector<int> S(3);
+  while (i>0 or j>0) 
+  {
+    if (i>0) 
+      S[0] = F(i-1,j);
+    else
+      S[0] = -1;
+
+    if (j>0)
+      S[1] = F(i,j-1);
+    else
+      S[1] = -1;
+
+    if (i>0 and j>0)
+      S[2] = F(i-1,j-1)+score(M1,M2,i-1,j-1);
+    else
+      S[2] = -1;
+
+    int C = argmax(S);
+
+    // cerr<<i<<"  "<<j<<"   C="<<C<<"    "<<S[0]<<" "<<S[1]<<" "<<S[2]<<endl;
+
+    if (C == 0) {
+      i--;
+      columns1.push_back(i);
+      columns2.push_back(-1);
+    }
+    else if (C == 1)
+    {
+      j--;
+      columns1.push_back(-1);
+      columns2.push_back(j);
+    }
+    else {
+      assert(C==2);
+      i--;
+      j--;
+      columns1.push_back(i);
+      columns2.push_back(j);
+    }
+  }
+
+  std::reverse(columns1.begin(),columns1.end());
+  std::reverse(columns2.begin(),columns2.end());
+}
+
+
 int main(int argc,char* argv[]) 
 { 
   try {
@@ -154,7 +220,10 @@ int main(int argc,char* argv[])
     string filename2 = args["alignment2"].as<string>();
 
     alignment A1 = load_alignment(filename1,load_alphabets(args));
+    check_names_unique(A1);
+
     alignment A2 = load_alignment(filename2,load_alphabets(args));
+    A2 = reorder_sequences(A2, sequence_names(A1));
 
     matrix<int> M1 = M(A1);
     matrix<int> M2 = M(A2);
@@ -163,85 +232,9 @@ int main(int argc,char* argv[])
     if (args.count("fill") and args["fill"].as<string>() == "unknown")
       fill = alphabet::unknown;
 
-    //----------- Check input --------------------//
-    if (A1.n_sequences() != A2.n_sequences())
-      throw myexception()<<"Alignments have different number of sequences! ("
-			 <<A1.n_sequences()<<" vs "<<A2.n_sequences()<<")";
-
-    for(int i=0;i<A1.n_sequences();i++) 
-    {
-      string name1 = A1.seq(i).name;
-      string name2 = A2.seq(i).name;
-      if (name1 != name2)
-	throw myexception()<<"Sequence names different for sequence "<<i+1<<": "
-			   <<name1<<" vs "<<name2;
-      if (A1.seqlength(i) != A2.seqlength(i))
-	throw myexception()<<"Sequence lengths different for sequence '"<<name1<<"'";
-    }
-
-    //--------- Construct Forward Matrix ---------//
-
-    matrix<int> F(A1.length()+1,A2.length()+1);
-
-    for(int i=0;i<F.size1();i++)
-      for(int j=0;j<F.size2();j++) {
-	F(i,j) = 0;
-	if (i>0)         F(i,j) = std::max(F(i,j),F(i-1,j  ));
-	if (j>0)         F(i,j) = std::max(F(i,j),F(i  ,j-1));
-	if (i>0 and j>0) F(i,j) = std::max(F(i,j),F(i-1,j-1)+score(M1,M2,i-1,j-1));
-      }
-
-    //-------------- Find best path --------------//
     vector<int> columns1;
     vector<int> columns2;
-
-    int i=F.size1()-1;
-    int j=F.size2()-1;
-
-    vector<int> S(3);
-    while (i>0 or j>0) 
-    {
-      if (i>0) 
-	S[0] = F(i-1,j);
-      else
-	S[0] = -1;
-
-      if (j>0)
-	S[1] = F(i,j-1);
-      else
-	S[1] = -1;
-
-      if (i>0 and j>0)
-	S[2] = F(i-1,j-1)+score(M1,M2,i-1,j-1);
-      else
-	S[2] = -1;
-
-      int C = argmax(S);
-
-      // cerr<<i<<"  "<<j<<"   C="<<C<<"    "<<S[0]<<" "<<S[1]<<" "<<S[2]<<endl;
-
-      if (C == 0) {
-	i--;
-	columns1.push_back(i);
-	columns2.push_back(-1);
-      }
-      else if (C == 1)
-      {
-	j--;
-	columns1.push_back(-1);
-	columns2.push_back(j);
-      }
-      else {
-	assert(C==2);
-	i--;
-	j--;
-	columns1.push_back(i);
-	columns2.push_back(j);
-      }
-    }
-
-    std::reverse(columns1.begin(),columns1.end());
-    std::reverse(columns2.begin(),columns2.end());
+    align_alignments(M1, M2, columns1, columns2);
 
     //----------- Write out Results ----------//
     alignment A1b = stretch(A1,columns1,fill);

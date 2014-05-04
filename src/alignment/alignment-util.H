@@ -42,6 +42,8 @@ alignment chop_internal(alignment A,bool keep_empty_columns=false);
 // Add sequences to A corresponding to internal nodes in T
 alignment add_internal(alignment A,const SequenceTree& T);
 
+alignment reorder_sequences(const alignment& A, const std::vector<std::string>& names);
+
 /// Load an alignment from command line args --align=filename
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
 
