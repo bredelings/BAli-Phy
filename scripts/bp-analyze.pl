@@ -69,7 +69,7 @@ my $have_R = 1;
 
 if (! is_in_path("R")) {
     print "Program 'R' not found.  Some mixing graphs will not be generated.\n\n";
-    $have_gnuplot = 0;
+    $have_R = 0;
 }
 
 # These things can be different between runs of the MCMC chain
