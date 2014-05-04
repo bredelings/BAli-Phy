@@ -75,6 +75,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("alignment2", value<string>(),"Second alignment")
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("merge","Stack the two alignments into one alignment with duplicate names")
+    ("dual","Write out the two aligned alignments separately")
     ("fill",value<string>()->default_value("gap"),"blank columns filled with: gap or unknown")
     ("differences-file,d",value<string>(),"Filename to store differences in AU format")
     ;
@@ -305,9 +306,47 @@ int main(int argc,char* argv[])
 	}
       }
     }
-    else {
+    else if (args.count("dual")) {
       cout<<A1b<<endl<<endl;
       cout<<A2b<<endl<<endl;
+    }
+    else
+    {
+      // Add 1 column for the ruler
+      matrix<int> D(A1.length(), A1.n_sequences()+1, 0.0);
+      for(int i=0;i<columns1.size();i++)
+      {
+	int c1 = columns1[i];
+	int c2 = columns2[i];
+
+	if (c1 == -1 or c2 == -1) continue;
+
+	bool any_different = false;
+	for(int k=0;k<A1.n_sequences();k++)
+	{
+	  if (M1(c1,k) == M2(c2,k) and M1(c1,k) >=0) 
+	    D(c1,k) = 1.0;
+	  else
+	    any_different = true;
+	}
+
+	// Mark the ruler as unchanged if the whole column is unchanged
+	if (not any_different) D(c1, A1.n_sequences()) = 1.0;
+      }
+
+      // write out header: sequence names
+      cout<<join(sequence_names(A1),' ')<<"\n";
+
+      // write out D matrix
+      for(int c=0;c<D.size1();c++) 
+      {
+	for(int j=0;j<D.size2();j++) 
+	{
+	  cout<<D(c,j);
+	  cout<<((j+1==D.size2())?'\n':' ');
+	}
+      }
+      
     }
   }
   catch (std::exception& e) {
