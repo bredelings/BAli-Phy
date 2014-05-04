@@ -324,10 +324,10 @@ int main(int argc,char* argv[])
 	bool any_different = false;
 	for(int k=0;k<A1.n_sequences();k++)
 	{
+	  if (M1(c1,k) != M2(c2,k)) any_different = true;
+
 	  if (M1(c1,k) == M2(c2,k) and M1(c1,k) >=0) 
 	    D(c1,k) = 1.0;
-	  else
-	    any_different = true;
 	}
 
 	// Mark the ruler as unchanged if the whole column is unchanged
