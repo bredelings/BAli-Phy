@@ -1422,11 +1422,11 @@ sub draw_alignments
 	if (! more_recent_than("Results/$alignment-diff.fasta","Results/$alignment.fasta") || 
 	    ! more_recent_than("Results/$alignment-diff.AU","Results/$alignment.fasta") )
 	{
-	    exec_show("alignments-diff Results/$alignment.fasta Results/P$p-max.fasta --merge --fill=unknown -d Results/$alignment-diff.AU > Results/$alignment-diff.fasta");
+	    exec_show("alignments-diff Results/$alignment.fasta Results/P$p-max.fasta > Results/$alignment-diff.AU");
 	}
 	
-	if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.fasta")) {
-	    exec_show("alignment-draw Results/$alignment-diff.fasta --scale=invert --AU Results/$alignment-diff.AU --show-ruler --color-scheme=Rainbow+fade[1,0]+contrast > Results/$alignment-diff.html");
+	if (! more_recent_than("Results/$alignment-diff.html","Results/$alignment-diff.AU")) {
+	    exec_show("alignment-draw Results/$alignment.fasta --scale=invert --AU Results/$alignment-diff.AU --show-ruler --color-scheme=Rainbow+fade[1,0]+contrast > Results/$alignment-diff.html");
 	}
     }
     print "done.\n";
