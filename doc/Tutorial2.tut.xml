@@ -38,6 +38,8 @@ Go into the <filename>alignment_files</filename> directory:
 % cd alignment_files
 Download the example alignment files:
 % wget http://nucleus.biology.duke.edu/~bredelings/examples.tgz
+Alternatively, you can use <command>curl</command>
+% curl -O http://nucleus.biology.duke.edu/~bredelings/examples.tgz
 Extract the compressed archive:
 % tar -zxf examples.tgz
 Take a look inside the <filename>examples</filename> directory:
@@ -93,11 +95,11 @@ When the data set contains amino acids, the default is amino acids:
 <para>
 What alphabet is used here?  What substitution model?
 % bali-phy HIV/chain-2005/env-clustal-codons.fasta --show-only
-What happens when trying to use the M0 model (e.g. positive selection)?
+What happens when trying to use the Nielsen and Yang (1998) M0 model (e.g. dN/dS)?
 % bali-phy HIV/chain-2005/env-clustal-codons.fasta --show-only --smodel=M0 
 The M0 model requires a codon alphabet:
 % bali-phy HIV/chain-2005/env-clustal-codons.fasta --show-only --smodel=M0 --alphabet=Codons 
-The M0 model takes a <emphasis>nucleotide</emphasis> exchange model as a parameter.  This parameter is optional, and the default is HKY, which you could specify as <userinput>M0[HKY]</userinput>.  But you can change this to be more flexible:
+The M0 model takes a <emphasis>nucleotide</emphasis> exchange model as a parameter.  This parameter is optional, and the default is HKY, which you could specify as <userinput>M0[HKY]</userinput>.  You can change this to be more flexible:
 % bali-phy HIV/chain-2005/env-clustal-codons.fasta --show-only --smodel=M0[GTR] --alphabet=Codons 
 The M7 model is a mixture of M0 codon models:
 % bali-phy Globins/bglobin.fasta --show-only --smodel=M7 --alphabet=Codons 
@@ -132,17 +134,19 @@ See how many iterations have been completed so far:
 Wait a second, and repeat the command.
 % wc -l 25-muscle-1/C1.p 25-muscle-2/C1.p
 See if you can determine the following information from the beginning of the C1.out file:
-What command was run?
-When was it run?
-Which computer was it run on?
-Which directory was it run in?
-Which directory contains the output files?
-What was the process id (PID) of the running bali-phy program?
-What random seed was used?
-What was the input file?
-What alphabet was used to read in the file?
-What substitution model was used to analyze the file?
-What insertion/deletion model was used to analyze the file?
+<orderedlist>
+  <listitem>What command was run?</listitem>
+  <listitem>When was it run?</listitem>
+  <listitem>Which computer was it run on?</listitem>
+  <listitem>Which directory was it run in?</listitem>
+  <listitem>Which directory contains the output files?</listitem>
+  <listitem>What was the process id (PID) of the running bali-phy program?</listitem>
+  <listitem>What random seed was used?</listitem>
+  <listitem>What was the input file?</listitem>
+  <listitem>What alphabet was used to read in the sequence data?</listitem>
+  <listitem>What substitution model was used to analyze the sequence data?</listitem>
+  <listitem>What insertion/deletion model was used to analyze the sequence data?</listitem>
+</orderedlist>
 % less 25-muscle-1/C1.out
 Examine the file containing the sampled trees:
 % less 25-muscle-1/C1.trees
@@ -169,7 +173,7 @@ Now lets compute the consensus tree for these two runs:
 % trees-consensus 25-muscle-1/C1.trees 25-muscle-2/C1.trees --report=consensus > c50.PP.tree
 % less consensus
 % figtree c50.PP.tree &#38;
-Now lets see if there is evidence that the two runs have not converged yet:
+Now lets see if there is evidence that the two runs have not converged yet.
 % trees-bootstrap --help
 % trees-bootstrap 25-muscle-1/C1.trees 25-muscle-2/C1.trees > partitions.bs
 % less partitions.bs
@@ -257,7 +261,7 @@ typing some things multiple times.
 </para>
 <para>
 We've also specified different substitution models for each
-partitions.  Take a look at the <filename>C1.p</filename> file for
+partition.  Take a look at the <filename>C1.p</filename> file for
 this analysis to see what parameters appear.
 </para>
 </section>
@@ -277,7 +281,7 @@ We can also specify that some partitions with the same model also share the
 same parameters for the model:
 % bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --smodel=1,3:GTR --imodel=1,3:RS07 --smodel=2:TN --imodel=2:none --show-only
 This means that the information is pooled between the partitions to
-inferm the shared parameters.
+estimate the shared parameters.
 </section>
 <section><info><title>Sharing substitution rates between partitions</title></info>
 We can also specify that some partitions with the same model also share the
