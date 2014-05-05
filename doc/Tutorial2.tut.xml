@@ -68,24 +68,24 @@ Analyze a data set, but don't begin MCMC.  (This is useful to know if the analys
 compute likelihoods, etc.)
 % cd ~/alignment_files/examples
 % bali-phy --show-only 5S-rRNA/5d.fasta
-Finally, run an analysis!  (This is just 10 iterations, so its not a real run.)
-% bali-phy 5S-rRNA/5d.fasta --iterations=10
+Finally, run an analysis!  (This is just 50 iterations, so its not a real run.)
+% bali-phy 5S-rRNA/5d.fasta --iterations=50
 If you specify <parameter>--imodel=none</parameter>, then the alignment won't be estimated, and indels will be ignored (just like <application>MrBayes</application>).
-% bali-phy 5S-rRNA/5d.fasta --iterations=10 --imodel=none
+% bali-phy 5S-rRNA/5d.fasta --iterations=50 --imodel=none
 You can specify the alphabet, substitution model, insertion/deletion model, etc.
 Defaults are used if you don't specify.
-% bali-phy 5S-rRNA/5d.fasta --iterations=10 --alphabet=DNA --smodel=TN --imodel=RS07 
+% bali-phy 5S-rRNA/5d.fasta --iterations=50 --alphabet=DNA --smodel=TN --imodel=RS07 
 You can change this to the GTR, if you want:
-% bali-phy 5S-rRNA/5d.fasta --iterations=10 --alphabet=DNA --smodel=GTR --imodel=RS07 
+% bali-phy 5S-rRNA/5d.fasta --iterations=50 --alphabet=DNA --smodel=GTR --imodel=RS07 
 You can add gamma[4]+INV rate heterogeneity:
-% bali-phy 5S-rRNA/5d.fasta --iterations=10 --alphabet=DNA --smodel=GTR+gamma_inv[4] --imodel=RS07
+% bali-phy 5S-rRNA/5d.fasta --iterations=50 --alphabet=DNA --smodel=GTR+gamma_inv[4] --imodel=RS07
 </para>
 </section>
 
 <section ><info><title>Amino Acids</title></info>
 <para>
 When the data set contains amino acids, the default is amino acids:
-% bali-phy EF-Tu/12d.fasta --iterations=10
+% bali-phy EF-Tu/12d.fasta --iterations=50
 </para>
 </section>
 
@@ -97,6 +97,14 @@ What happens when trying to use the M0 model (e.g. positive selection)?
 % bali-phy HIV/chain-2005/env-clustal-codons.fasta --show-only --smodel=M0 
 The M0 model requires a codon alphabet:
 % bali-phy HIV/chain-2005/env-clustal-codons.fasta --show-only --smodel=M0 --alphabet=Codons 
+The M0 model takes a <emphasis>nucleotide</emphasis> exchange model as a parameter.  This parameter is optional, and the default is HKY, which you could specify as <userinput>M0[HKY]</userinput>.  But you can change this to be more flexible:
+% bali-phy HIV/chain-2005/env-clustal-codons.fasta --show-only --smodel=M0[GTR] --alphabet=Codons 
+The M7 model is a mixture of M0 codon models:
+% bali-phy Globins/bglobin.fasta --show-only --smodel=M7 --alphabet=Codons 
+The M7 model has parameters as well.  Here are the defaults:
+% bali-phy Globins/bglobin.fasta --show-only --smodel=M7[4,HKY,F61] --alphabet=Codons 
+It is possible to specify some of the parameters and leave others at their default value:
+% bali-phy Globins/bglobin.fasta --show-only --smodel=M7[,TN] --alphabet=Codons 
 </para>
 </section>
   </section>
