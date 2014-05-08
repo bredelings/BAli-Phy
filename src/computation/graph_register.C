@@ -2180,6 +2180,24 @@ bool reg_heap::reg_is_fully_up_to_date_in_context(int R, int c)
 
 bool reg_heap::reg_is_fully_up_to_date(int R, int t) const
 {
+  // 1. Handle index_var nodes!
+  int type = access(R).C.exp->head->type();
+  if (type == index_var_type)
+  {
+    assert( not reg_is_changeable(R) );
+
+    assert( not reg_has_result(t,R) );
+
+    assert( not reg_has_call(t,R) );
+
+    int index = assert_is_a<index_var>(access(R).C.exp)->index;
+
+    int R2 = access(R).C.lookup_in_env( index );
+
+    return reg_is_fully_up_to_date(R2, t);
+  }
+
+  // 2. If we've never been evaluated OR we're not constant and have no result, then return false;
   if (not reg_has_result(t,R)) return false;
 
   const closure& result = access_result_for_reg(t,R);
