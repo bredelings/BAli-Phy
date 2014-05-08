@@ -1143,8 +1143,7 @@ void Parameters::recalc()
   }
   triggers().clear();
 
-  // Check if any substitution models have changed.
-  // This (probably?) works because it recursively check the up-to-date-ness of the entire structure.
+  // Check if any computions that likelihood caches depend on have changed.
   for(int p=0;p<n_data_partitions();p++)
   {
     bool everything_changed = false;
