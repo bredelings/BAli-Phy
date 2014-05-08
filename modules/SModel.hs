@@ -122,19 +122,19 @@ m0_function codona s r = \omega -> reversible_markov (m0 codona s omega) r;
 
 m1a_omega_dist () = do
 {
-  [f1, f2] <- dirichlet [1.0, 1.0];
-  Log "f1" f1;
-  Log "f2" f2;
-
   w1 <- uniform 0.0 1.0;
   Log "w1" w1;
 
-  return $ DiscreteDistribution [(f1,w1),(f2, 1.0)];
+  posP <- beta 1.0 10.0;
+  Log "posP" posP;
+
+  return $ DiscreteDistribution [(1.0-posP,w1), (posP,1.0)];
 };
 
 m2a_omega_dist () = do
 {
-  dist <- m1a_omega_dist ();
+  w1 <- uniform 0.0 1.0;
+  Log "w1" w1;
 
   posW <- logGamma 4.0 0.25;
   Log "posW" posW;
@@ -142,12 +142,13 @@ m2a_omega_dist () = do
   posP <- beta 1.0 10.0;
   Log "posP" posP;
 
-  return $ extendDiscreteDistribution dist posP posW;
+  return $ DiscreteDistribution [(1.0-posP,w1), (posP,posW)];
 };
 
 m2a_test_omega_dist () = do
 {
-  dist <- m1a_omega_dist ();
+  w1 <- uniform 0.0 1.0;
+  Log "w1" w1;
 
   posW <- logGamma 4.0 0.25;
   Log "posW" posW;
@@ -158,9 +159,9 @@ m2a_test_omega_dist () = do
   posSelection <- bernoulli 0.5;
   Log "posSelection" posSelection;
 
-  let {posP' = if (posSelection == 1) then posP else 0.0};
+  let {posW' = if (posSelection == 1) then posW else 1.0};
 
-  return $ extendDiscreteDistribution dist posP' posW;
+  return $ DiscreteDistribution [(1.0-posP,w1), (posP,posW')];
 };
 
 -- The M7 is just a beta distribution
@@ -205,30 +206,15 @@ m8a_omega_dist n_bins = do
 {
   beta_dist <- m7_omega_dist n_bins;
 
-  [f1,f2] <- dirichlet' 2 1.0;
-  Log "f1" f1;
-  Log "f2" f2;
-
-  return $ extendDiscreteDistribution beta_dist f2 1.0;
-};
-
--- The M8a is has f1 of sites in a beta distribution, and f2 are neutral.
-m8b_omega_dist n_bins = do
-{
-  dist <- m8a_omega_dist n_bins;
-
-  posW <- logGamma 4.0 0.25;
-  Log "posW" posW;
-
   posP <- beta 1.0 10.0;
   Log "posP" posP;
 
-  return $ extendDiscreteDistribution dist posP posW;
+  return $ extendDiscreteDistribution beta_dist posP 1.0;
 };
 
 m8b_test_omega_dist n_bins = do
 {
-  dist <- m8a_omega_dist n_bins;
+  beta_dist <- m7_omega_dist n_bins;
 
   posW <- logGamma 4.0 0.25;
   Log "posW" posW;
@@ -239,9 +225,9 @@ m8b_test_omega_dist n_bins = do
   posSelection <- bernoulli 0.5;
   Log "posSelection" posSelection;
 
-  let {posP' = if (posSelection == 1) then posP else 0.0};
+  let {posW' = if (posSelection == 1) then posW else 0.0};
 
-  return $ extendDiscreteDistribution dist posP' posW;
+  return $ extendDiscreteDistribution beta_dist posP posW';
 };
 
 m1a_model codona s r = Prefix "M1a" $ do
@@ -292,15 +278,7 @@ m8a_model codona n_bins s r = Prefix "M8a" $ do
   return $ multiParameter m0w dist
 };
 
-m8b_model codona n_bins s r = Prefix "M8b" $ do
-{
-  dist <- m8b_omega_dist n_bins;
-
-  let {m0w w = reversible_markov (m0 codona s w) r};
-  return $ multiParameter m0w dist
-};
-
-m8b_test_model codona n_bins s r = Prefix "M8b_Test" $ do
+m8a_test_model codona n_bins s r = Prefix "M8a_Test" $ do
 {
   dist <- m8b_test_omega_dist n_bins;
 

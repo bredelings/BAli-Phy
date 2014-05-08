@@ -66,8 +66,7 @@ const vector<vector<string>> default_arguments =
     {"M7","4","HKY","F61"},
     {"M8","4","HKY","F61"},
     {"M8a","4","HKY","F61"},
-    {"M8b","4","HKY","F61"},
-    {"M8b_Test","4","HKY","F61"},
+    {"M8a_Test","4","HKY","F61"},
     {"branch-site","2","HKY","F61"}
   };
 
@@ -881,7 +880,7 @@ expression_ref process_stack_Multi(const module_loader& L,
 
     return model_expression({identifier("m8b_model"),a,n,S,R});
   }
-  else if (model_args[0] == "M8b_Test") // M8b[n,S,F]
+  else if (model_args[0] == "M8a_Test") // M8b[n,S,F]
   {
     int n = convertTo<int>(model_args[1]);
 
@@ -894,7 +893,7 @@ expression_ref process_stack_Multi(const module_loader& L,
 
     expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
 
-    return model_expression({identifier("m8b_test_model"),a,n,S,R});
+    return model_expression({identifier("m8a_test_model"),a,n,S,R});
   }
   else if (model_args[0] == "branch-site")  // branch-site-test[n,S,F]
   {
