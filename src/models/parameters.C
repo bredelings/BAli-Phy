@@ -83,6 +83,7 @@ using std::ostream;
  * 23. [DONE] Allow model files to create models where dimension of parameter depeonds on argument to model.
  * 24. [DONE] Allow creation of parameters in their own namespace.
  * 25. [DONE] Compute the entire probability expression at once, instead of adding pieces incrementally.
+ * 26. [DONE] Move the Program from Context to reg_heap.
  */
 
 /* \todo: List of things to do to clean up programs.
@@ -110,8 +111,6 @@ using std::ostream;
  *     6d. What does it mean (if its true) that irrefutable bindings are only irrefutable at the top level?
  * 8. Make Context load an entire program, instead of adding pieces incrementally.
  *
- * 9. Move the Program from Context to reg_heap.
-
  * 10. Allow fixing parameters. (e.g. to test the branch-site model under ML)
  * 11. How to specify default priors if model creation is an IO operation?
  * 12. Optimizations
