@@ -84,6 +84,9 @@ using std::ostream;
  * 24. [DONE] Allow creation of parameters in their own namespace.
  * 25. [DONE] Compute the entire probability expression at once, instead of adding pieces incrementally.
  * 26. [DONE] Move the Program from Context to reg_heap.
+ * 27. [DONE] Allow adding transition kernels from haskell
+ * 28. [DONE] specifying the sampling rate from haskell
+ *
  */
 
 /* \todo: List of things to do to clean up programs.
@@ -122,10 +125,6 @@ using std::ostream;
  *     - I think parameters are in a separate namespace?
  *     - Perhaps put a '*' on the beginning of the name when comparing with the Haskell namespace?
  *
- * 15. Allow adding transition kernels from haskell
- *
- * 16. Allow specifying the sampling rate from haskell
- *
  * 18. Add ability to change the prior on variables.
  *
  * 19. Add the ability to store newtype definitions.
@@ -147,7 +146,7 @@ using std::ostream;
  *
  * 25. Eliminate the need for re-evaluate in the substitution likelihood?
  *
- * 26. We see to have lost a lot of speed (factor of 2) compared to:
+ * 26. We seem to have lost a lot of speed (factor of 2) compared to:
 VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *     Perhaps this is entirely related to module loading time?
  *     A lot of the time seems to come from substituting for global identifiers in Module::resolve_symbols
@@ -158,7 +157,6 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *      - Make Case statements different in the different representations.
  *      - Speed up let floating.
  *      - Eliminate dynamic casting.
- *
  *
  * 28. Eliminate named dummies in favor of identifiers.
  *
@@ -187,22 +185,18 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *
  * 37. Avoid constructing an alignment for (some?) common index-matrix operations.
  *
- * 38. We still need to alignment -- not just the As -- to compute column likelihoods in sample-tri
+ * 38. We still need the alignment -- not just the As -- to compute column likelihoods in sample-tri
  *     when the tree changes.
  *     - Instead of fixing this immediately, first just compute A() from H().
  *     - Use H() in substitution.C and index-matrix.C
  *
- * 39. Fix memory usage.  We have all these vector<T>'s, and we clear them, but they never
- *     actually shrink.  So, they get bigger and bigger and bigger...
- *
- * 40. Fix memory usage (2). Furthermore, reallocating space is really time-consuming.
- * 
- * 41. Why do we allocate 36G of virtual space, on nucleus?
- *
  * 42. Different results for 25.fasta versus 2.2.0!
+ *     - Really?
+ *     - Check when this comment (#42) was added.
  *
  * 43. Not printing RS07 model parameters??
- *
+ *     - To force all names to be generated before the layout for C1.p is constructed,
+ *       I compute the probability at the end of Parameters::Parameters( ).
  */
 
 bool use_internal_index = true;
