@@ -1145,9 +1145,26 @@ void Parameters::recalc()
 
   // Check if any substitution models have changed.
   // This (probably?) works because it recursively check the up-to-date-ness of the entire structure.
-  for(int s=0;s<n_smodels();s++)
-    if (not compute_expression_is_up_to_date(SModels[s].main))
-      recalc_smodel(s);
+  for(int p=0;p<n_data_partitions();p++)
+  {
+    bool everything_changed = false;
+    for(int f_index: get_data_partition(p).frequencies_indices)
+      if (not compute_expression_is_up_to_date(f_index))
+	everything_changed = true;
+
+    if (everything_changed)
+      get_data_partition(p).recalc_smodel();
+    else
+    {
+      const vector<int>& v = get_data_partition(p).transition_p_method_indices;
+      for(int b = 0; b < v.size(); b++)
+      {
+	int tp_index = v[b];
+	if (not compute_expression_is_up_to_date(tp_index))
+	  get_data_partition(p).setlength(b); // just invalidate caches
+      }
+    }
+  }
 }
 
 object_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
