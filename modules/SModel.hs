@@ -125,16 +125,16 @@ m1a_omega_dist () = do
   w1 <- uniform 0.0 1.0;
   Log "w1" w1;
 
-  posP <- beta 1.0 10.0;
-  Log "posP" posP;
+  [f1, f2] <- dirichlet' 2 1.0;
+  Log "f1" f1;
+  Log "f2" f2;
 
-  return $ DiscreteDistribution [(1.0-posP,w1), (posP,1.0)];
+  return $ DiscreteDistribution [(f1,w1), (f2,1.0)];
 };
 
 m2a_omega_dist () = do
 {
-  w1 <- uniform 0.0 1.0;
-  Log "w1" w1;
+  dist <- m1a_omega_dist ();
 
   posW <- logGamma 4.0 0.25;
   Log "posW" posW;
@@ -142,13 +142,12 @@ m2a_omega_dist () = do
   posP <- beta 1.0 10.0;
   Log "posP" posP;
 
-  return $ DiscreteDistribution [(1.0-posP,w1), (posP,posW)];
+  return $ extendDiscreteDistribution dist posP posW;
 };
 
 m2a_test_omega_dist () = do
 {
-  w1 <- uniform 0.0 1.0;
-  Log "w1" w1;
+  dist <- m1a_omega_dist ();
 
   posW <- logGamma 4.0 0.25;
   Log "posW" posW;
@@ -161,7 +160,7 @@ m2a_test_omega_dist () = do
 
   let {posW' = if (posSelection == 1) then posW else 1.0};
 
-  return $ DiscreteDistribution [(1.0-posP,w1), (posP,posW')];
+  return $ extendDiscreteDistribution dist posP posW';
 };
 
 -- The M7 is just a beta distribution
