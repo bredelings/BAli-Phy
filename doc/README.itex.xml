@@ -1910,6 +1910,24 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
+		<para><userinput>M8a</userinput></para>
+		<para><userinput>M8a[4,HKY,F61]</userinput> (default)</para>
+		<para><userinput>M8a[6,GTR,F3x4]</userinput></para>
+		<para>Yang, et. al. (2000)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<variablelist>
+		  <varlistentry> <term>mu</term> <listitem> <para>mean of the Beta(a,b) distribution.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>a</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+		  <varlistentry> <term>b</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of neutral sites.</para> </listitem> </varlistentry>
+		</variablelist>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
 		<para><userinput>M8</userinput></para>
 		<para><userinput>M8[4,HKY,F61]</userinput> (default)</para>
 		<para><userinput>M8[6,GTR,F3x4]</userinput></para>
@@ -1917,57 +1935,36 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-			<variablelist>
-	<varlistentry> <term>mu</term> <listitem> <para>mean of the Beta(a,b) distribution.</para> </listitem> </varlistentry>
-		<varlistentry> <term>a</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
-		<varlistentry> <term>b</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
-		<varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
-		<varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites.</para> </listitem> </varlistentry>
-		</variablelist>
-	      </entry>
-	    </row>
-
-	    <!-- row>
-	      <entry>
-		<para><userinput>M8b</userinput></para>
-		<para><userinput>M8b[4,HKY,F61]</userinput> (default)</para>
-		<para><userinput>M8b[6,GTR,F3x4]</userinput></para>
-		<para>Yang, et. al. (2000)</para>
-	      </entry>
-	      <entry>Codons</entry>
-	      <entry>
 		<variablelist>
-		  <varlistentry> <term>f1</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
-		  <varlistentry> <term>f2</term> <listitem> <para>the fraction of neutral sites among non-positively selected sites</para> </listitem> </varlistentry>
 		  <varlistentry> <term>mu</term> <listitem> <para>mean of the Beta(a,b) distribution.</para> </listitem> </varlistentry>
 		  <varlistentry> <term>a</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
 		  <varlistentry> <term>b</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
 		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
 		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites.</para> </listitem> </varlistentry>
-	  	</variablelist>
+		</variablelist>
 	      </entry>
 	    </row>
 
 	    <row>
 	      <entry>
-		<para><userinput>M8b_Test</userinput></para>
-		<para><userinput><replaceable>sm</replaceable> + M8b_Test</userinput></para>
+		<para><userinput>M8a_Test</userinput></para>
+		<para><userinput>M8a_Test[4,HKY,F61]</userinput> (default)</para>
+		<para><userinput>M8a_Test[6,GTR,F3x4]</userinput></para>
+		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
-			<variablelist>
-	<varlistentry> <term>f1</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
-		<varlistentry> <term>f2</term> <listitem> <para>the fraction of neutral sites among non-positively selected sites</para> </listitem> </varlistentry>
-		<varlistentry> <term>mu</term> <listitem> <para>mean of the Beta(a,b) distribution.</para> </listitem> </varlistentry>
-		<varlistentry> <term>a</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
-		<varlistentry> <term>b</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
-		<varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
-		<varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites.</para> </listitem> </varlistentry>
-		<varlistentry> <term>posSelection</term> <listitem> <para>model selector (1 if positive selection, 0 if not).</para> </listitem> </varlistentry>
-	  		</variablelist>
-    </entry>
+		<variablelist>
+		  <varlistentry> <term>mu</term> <listitem> <para>mean of the Beta(a,b) distribution.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>a</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+		  <varlistentry> <term>b</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posSelection</term> <listitem> <para>model selector (1 if positive selection, 0 if not).</para> </listitem> </varlistentry>
+		</variablelist>
+	      </entry>
 	    </row>
--->
+
 	    <row>
 	      <entry>
 			<variablelist>

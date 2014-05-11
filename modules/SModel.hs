@@ -211,7 +211,7 @@ m8a_omega_dist n_bins = do
   return $ extendDiscreteDistribution beta_dist posP 1.0;
 };
 
-m8b_test_omega_dist n_bins = do
+m8a_test_omega_dist n_bins = do
 {
   beta_dist <- m7_omega_dist n_bins;
 
@@ -279,7 +279,7 @@ m8a_model codona n_bins s r = Prefix "M8a" $ do
 
 m8a_test_model codona n_bins s r = Prefix "M8a_Test" $ do
 {
-  dist <- m8b_test_omega_dist n_bins;
+  dist <- m8a_test_omega_dist n_bins;
 
   let {m0w w = reversible_markov (m0 codona s w) r};
   return $ multiParameter m0w dist
