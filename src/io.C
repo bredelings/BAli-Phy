@@ -73,6 +73,14 @@ istream& portable_getline(istream& file,string& s)
   return file;
 }
 
+int num_lines(istream& file)
+{
+  string s;
+  int count = 0;
+  while(portable_getline(file,s))
+    count++;
+  return count;
+}
 
 void scan_lines(istream& file,int skip,int subsample, int max, 
 		accumulator<string>& op)

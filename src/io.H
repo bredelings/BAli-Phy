@@ -10,6 +10,8 @@
 // this should actually be templatized... <class charT,Alloc,Traits>
 std::istream& portable_getline(std::istream&,std::string&);
 
+int num_lines(std::istream& file);
+
 template <class T>
 struct accumulator
 {
