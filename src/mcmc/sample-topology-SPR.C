@@ -653,6 +653,9 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   double total_length_after = tree_length(P.T());
   assert(std::abs(total_length_after - total_length_before) < 1.0e-9);
 
+  // this is bidirectional, but does not propagate
+  P.invalidate_subA_index_one_branch(BM);
+
   // Return the branch name that moved to the new attachment location.
   return BM;
 }
@@ -913,8 +916,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     P.LC_invalidate_one_branch(b2);                                      // ... mark likelihood caches for recomputing.
     P.LC_invalidate_one_branch(P.T().directed_branch(b2).reverse());      // ... mark likelihood caches for recomputing.
 
-    // this is bidirectional, but does not propagate
-    P.invalidate_subA_index_one_branch(I.BM);
   }
 
   // We had better not let this get changed!
