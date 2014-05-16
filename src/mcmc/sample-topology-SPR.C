@@ -878,9 +878,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
 
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
     assert(std::abs(P.T().branch(I.B1).length() - L[0]) < 1.0e-9);
-    P.setlength_no_invalidate_LC(I.B1,L[0]);   // The likelihood caches (and subA indices) should be correct for
-                                               //  the situation we are setting up here -- no need to invalidate.
-    /// \todo  - do we need to recompute this EVERY time, or just the first time?
 
     // We want caches for each directed branch that is not in the PRUNED subtree to be accurate
     //   for the situation that the PRUNED subtree is not behind them.
