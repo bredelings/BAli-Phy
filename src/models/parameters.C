@@ -859,6 +859,9 @@ int Parameters::SPR(int br1, int br2, int branch_to_move)
   int n1 = T().directed_branch(br2).source();
   int n2 = T().directed_branch(br2).target();
 
+  // If we are already attached to br2, then return.
+  if (n1 == x1 or n2 == x1) return -1;
+
   //-------------------- Correctly order m1 and m2 ----------------------//
   // Preserve the name of the branch with the smaller name (to avoid renaming leaf branches!)
   // (The name of the x<--->n1 branch gets preserved)
