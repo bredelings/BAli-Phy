@@ -889,8 +889,8 @@ int Parameters::SPR(int br1, int br2, int branch_to_move)
   //------ Merge the branches (m1,x1) and (x1,m2) -------//
   int dead_branch = T().directed_branch(m2,x1).undirected_name();
 
-  setlength_unsafe( T().directed_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
-  setlength_unsafe( T().directed_branch(m2,x1), 0.0);
+  setlength_no_invalidate_LC( T().directed_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
+  setlength_no_invalidate_LC( T().directed_branch(m2,x1), 0.0);
 
   //------------ Reconnect the branches ---------------//
 
@@ -1201,6 +1201,7 @@ void Parameters::variable_alignment(bool b)
 
 void Parameters::setlength_no_invalidate_LC(int b,double l) 
 {
+  // this is setlength_unsafe( ) .. but computes the undirected name.
   b = T().directed_branch(b).undirected_name();
   T_.modify()->directed_branch(b).set_length(l);
 
