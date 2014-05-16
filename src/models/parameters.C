@@ -842,7 +842,7 @@ void Parameters::exchange_subtrees(int br1, int br2)
 /// for the attachment branch, it may be pointing either towards or away
 /// from the attachment point.
 ///
-/// Got m1<--->x<--->m2 and n1<--->n2, and trying to move x onto (n1,n2)
+/// Got m1<--->x1<--->m2 and n1<--->n2, and trying to move x1 onto (n1,n2)
 int Parameters::SPR(int br1, int br2, int branch_to_move)
 {
   check_h_tree();
