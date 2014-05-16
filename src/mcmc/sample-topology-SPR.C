@@ -631,8 +631,8 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   double L1 = L*U;
   double L2 = L - L1;
 
-  P.setlength_unsafe(b1, L1);
-  P.setlength_unsafe(b2, L2);
+  P.setlength_no_invalidate_LC(b1, L1);
+  P.setlength_no_invalidate_LC(b2, L2);
 
   double total_length_after = tree_length(P.T());
   assert(std::abs(total_length_after - total_length_before) < 1.0e-9);
