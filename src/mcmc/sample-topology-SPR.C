@@ -892,11 +892,9 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
 
     // We want to suppress the bidirectional propagation of invalidation for all branches after this branch.
     // It would be nice to save the old exp(tB) and switch back to it later.
-    P.setlength_no_invalidate_LC(b2,P.T().directed_branch(b2).length());     // Recompute the transition matrix
     P.LC_invalidate_one_branch(b2);                                         //  ... mark likelihood caches for recomputing.
     P.LC_invalidate_one_branch(P.T().directed_branch(b2).reverse());         //  ... mark likelihood caches for recomputing.
 
-    P.setlength_no_invalidate_LC(I.BM,P.T().directed_branch(I.BM).length()); // Recompute the transition matrix
     P.LC_invalidate_one_branch(I.BM);                                       //  ... mark likelihood caches for recomputing.
     P.LC_invalidate_one_branch(P.T().directed_branch(I.BM).reverse());       //  ... mark likelihood caches for recomputing.
 
