@@ -941,6 +941,17 @@ void Parameters::check_h_tree() const
 #endif
 }
 
+void Parameters::show_h_tree() const
+{
+  for(int b=0; b < 2*T().n_branches(); b++)
+  {
+    object_ref p = get_parameter_value(parameter_for_tree_branch[b]);
+    object_ref s = convert<const OPair>(p)->first;
+    object_ref t = convert<const OPair>(p)->second;
+    std::cerr<<"branch "<<b<<": "<<p->print()<<"\n";
+  }
+}
+
 log_double_t Parameters::prior_no_alignment() const 
 {
   log_double_t Pr = Model::prior();

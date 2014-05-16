@@ -291,6 +291,7 @@ public:
   int SPR(int b1, int b2, int bm=-1);
   void read_h_tree();
   void check_h_tree() const;
+  void show_h_tree() const;
 
   /// Topology and Branch-Length Constraint
   cow_ptr<SequenceTree> TC;
