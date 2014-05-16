@@ -631,8 +631,24 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   double L1 = L*U;
   double L2 = L - L1;
 
+  // ** 2. INVALIDATE ** the branch that we just landed on and altered
+
+  /// \todo Do I really need to invalidate BOTH directions of b2?  Or, do I just not know WHICH direction to invalidate?
+  /// You'd think I'd just need to invalidate the direction pointing TOWARD the root.
+
+  /// \todo Can I temporarily associate the branch with a NEW token, or copy the info to a new location?
+  ///       This is basically what I'd get by copying the context to insert in the new location.
+  ///       However, if we copy the context, we have to do O(B) invalidations for each branch...
+
+  // We want to suppress the bidirectional propagation of invalidation for all branches after this branch.
+  // It would be nice to save the old exp(tB) and switch back to it later.
   P.setlength_no_invalidate_LC(b1, L1);
+  P.LC_invalidate_one_branch(b1);                                          //  ... mark likelihood caches for recomputing.
+  P.LC_invalidate_one_branch(P.T().directed_branch(b1).reverse());         //  ... mark likelihood caches for recomputing.
+
   P.setlength_no_invalidate_LC(b2, L2);
+  P.LC_invalidate_one_branch(b2);                                          //  ... mark likelihood caches for recomputing.
+  P.LC_invalidate_one_branch(P.T().directed_branch(b2).reverse());         //  ... mark likelihood caches for recomputing.
 
   double total_length_after = tree_length(P.T());
   assert(std::abs(total_length_after - total_length_before) < 1.0e-9);
@@ -882,21 +898,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     // We want caches for each directed branch that is not in the PRUNED subtree to be accurate
     //   for the situation that the PRUNED subtree is not behind them.
 
-
-    // ** 2. INVALIDATE ** the branch that we just landed on and altered
-
-    /// \todo Do I really need to invalidate BOTH directions of b2?  Or, do I just not know WHICH direction to invalidate?
-    /// You'd think I'd just need to invalidate the direction pointing TOWARD the root.
-
-    /// \todo Can I temporarily associate the branch with a NEW token, or copy the info to a new location?
-
-    // We want to suppress the bidirectional propagation of invalidation for all branches after this branch.
-    // It would be nice to save the old exp(tB) and switch back to it later.
-    P.LC_invalidate_one_branch(b2);                                         //  ... mark likelihood caches for recomputing.
-    P.LC_invalidate_one_branch(P.T().directed_branch(b2).reverse());         //  ... mark likelihood caches for recomputing.
-
-    P.LC_invalidate_one_branch(I.BM);                                       //  ... mark likelihood caches for recomputing.
-    P.LC_invalidate_one_branch(P.T().directed_branch(I.BM).reverse());       //  ... mark likelihood caches for recomputing.
 
     // **3. RECORD** the tree and likelihood
     Pr[B2] = heated_likelihood_unaligned_root(P) * P.prior_no_alignment();
