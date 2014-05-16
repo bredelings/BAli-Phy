@@ -951,7 +951,7 @@ void Parameters::show_h_tree() const
     object_ref p = get_parameter_value(parameter_for_tree_branch[b]);
     object_ref s = convert<const OPair>(p)->first;
     object_ref t = convert<const OPair>(p)->second;
-    std::cerr<<"branch "<<b<<": "<<p->print()<<"\n";
+    std::cerr<<"branch "<<b<<": "<<p->print()<<"     "<<T().directed_branch(b).length()<<"\n";
   }
 }
 
