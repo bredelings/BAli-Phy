@@ -319,7 +319,7 @@ Nucleotides::Nucleotides(const string& s, char c)
   insert_class("Y",t+"C");    // pYrimidine
   insert_class("R","AG");     // puRine
   insert_class("W",t+"A");    // Weak
-  insert_class("S","GC");     // String
+  insert_class("S","GC");     // Strong
   // insert_class("K",t+"G"); // Ketone
   // insert_class("M","AC");  // aMino
 
