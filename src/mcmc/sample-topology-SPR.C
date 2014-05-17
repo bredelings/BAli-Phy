@@ -891,7 +891,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     tree_edge B2 = I.get_tree_edge(b2);
 
     // ** 1. SPR ** : alter the tree.
-    P.set_tree(T0);
     int BM2 = SPR_at_location(P, b1, b2, locations, I.BM);
     assert(BM2 == I.BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
 
@@ -911,11 +910,13 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     //    cerr<<"  PR1 = "<<PR1.log()<<"  PR2 = "<<PR2.log()<<"   diff = "<<PR2.log() - PR1.log()<<endl;
 #endif
 
-    // **4. INVALIDATE** the DIRECTED branch that we just landed on and altered
-    P.setlength_no_invalidate_LC(b2,L[i]);                               // Put back the old transition matrix
-    P.LC_invalidate_one_branch(b2);                                      // ... mark likelihood caches for recomputing.
-    P.LC_invalidate_one_branch(P.T().directed_branch(b2).reverse());      // ... mark likelihood caches for recomputing.
-
+    if (i == branch_names.size()-1)
+    {
+      // **4. INVALIDATE** the DIRECTED branch that we just landed on and altered
+      P.setlength_no_invalidate_LC(b2,L[i]);                               // Put back the old transition matrix
+      P.LC_invalidate_one_branch(b2);                                      // ... mark likelihood caches for recomputing.
+      P.LC_invalidate_one_branch(P.T().directed_branch(b2).reverse());      // ... mark likelihood caches for recomputing.
+    }
   }
 
   // We had better not let this get changed!

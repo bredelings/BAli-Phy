@@ -890,7 +890,12 @@ int Parameters::SPR(int br1, int br2, int branch_to_move)
   int dead_branch = T().directed_branch(m2,x1).undirected_name();
 
   setlength_no_invalidate_LC( T().directed_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
+  LC_invalidate_one_branch(T().directed_branch(m1,x1) );
+  LC_invalidate_one_branch(T().directed_branch(x1,m1) );
+
   setlength_no_invalidate_LC( T().directed_branch(m2,x1), 0.0);
+  LC_invalidate_one_branch(T().directed_branch(m2,x1) );
+  LC_invalidate_one_branch(T().directed_branch(x1,m2) );
 
   //------------ Reconnect the branches ---------------//
 
