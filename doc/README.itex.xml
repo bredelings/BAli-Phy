@@ -54,6 +54,9 @@
 	    xlink:href="http://www.rain.org/~mkummel/unix.html">Unix
       cheat sheet</link> handy while you work.
     </para>
+
+    <para>In addition to the main <command>bali-phy</command> executable, <application>BAli-Phy</application> comes with a collection of small command-line utilities such as <command>alignment-cat</command>, <command>trees-consensus</command>, etc.  These utilities can be used to process alignments, assemble data sets, and summarize the results of MCMC.
+    </para>
   </section>
 
   <section xml:id="installation"><info><title>Installation</title></info>
@@ -2421,73 +2424,80 @@ The stabilization criterion is the same one described above for numerical values
   </section>
 
 
-  <section xml:id="auxiliary_tools"><info><title>Auxiliary tools</title></info>
+  <section xml:id="alignment-utilities"><info><title>Alignment utilities</title></info>
     
 
     <para>Most of these tools will describe their options if given the "<userinput>--help</userinput>" argument on the command line.</para>
 
-    <section><info><title>alignment-find</title></info>
-      
-      <para>Usage: alignment-find [OPTIONS] &lt; <replaceable>alignments-file</replaceable></para>
-      <para>Find the last (or first) FastA alignment in a file.</para>
-    </section>
-
-    <section><info><title>alignment-draw</title></info>
-      
-
-      <para>alignment-draw <replaceable>alignment-file</replaceable> [<replaceable>AU-file</replaceable>] [OPTIONS]</para>
-      <para>Draw an alignment to HTML, optionally coloring residues by AU.</para>
-    </section>
-
-    <section><info><title>alignment-thin</title></info>
-      
-      <para>alignment-thin <replaceable>alignment-file</replaceable> <replaceable>tree-file</replaceable> [OPTIONS]</para>
-      <para>Remove taxa from an alignment to preserve the most
-	sequence diversity, as measured by the  total length of the tree
-	for the remaining taxa.</para> 
-    </section>
-
-    <section><info><title>alignment-chop-internal</title></info>
-      
-      <para>alignment-chop-internal <replaceable>alignment-file</replaceable> [OPTIONS]</para>
-      <para>Remove ancestral sequences from an alignment.  (This
-	probably only works for alignments output by bali-phy.) </para>
-    </section>
-
     <section><info><title>alignment-info</title></info>
       
-      <para>alignment-info <replaceable>alignment-file</replaceable> <replaceable>tree-file</replaceable> [OPTIONS]</para>
-      <para>Display basic information about the alignment, including
-	its length, the number of sequences, columns that are constant
-	or informative, letter frequencies, etc.</para>
-      <para>If a tree is supplied, then the unweighted parsimony score
-	is given as well.</para>
-    </section>
-    
-    <section><info><title>alignment-indices</title></info>
-      
-      <para>alignment-indices <replaceable>alignment-file</replaceable> [OPTIONS]</para>
-      <para>Show the alignment in terms of the index of each character
-	in its sequence.  Each line in this file corresponds to one
-	alignment column.  This can be useful in producing alignment
-	constraint files.</para>
-      <para>Also, you can specify which columns to keep using the
-	--columns option.
-      </para>
+      <para>Show basic information about the alignment:</para>
+<screen><prompt>%</prompt> alignment-info file.fasta
+<prompt>%</prompt> alignment-info file.fasta file.tree</screen>
     </section>
     
     <section><info><title>alignment-cat</title></info>
       
-      <para>alignment-cat <replaceable>file1</replaceable>
-	[<replaceable>file2</replaceable> ...]</para>
-      <para>Concatenate several alignments (with the same sequence
-	names) end-to-end.</para>
+      <para>To select columns from an alignment:</para>
+<screen><prompt>%</prompt> alignment-cat -c1-10,50-100,600- file.fasta > result.fasta
+<prompt>%</prompt> alignment-cat -c5-250/3 file.fasta > first_codon_position.fasta
+<prompt>%</prompt> alignment-cat -c6-250/3 file.fasta > second_codon_position.fasta</screen>
+
+  <para>To concatenate two or more alignments:</para>
+<screen><prompt>%</prompt> alignment-cat file1.fasta file2.fasta > all.fasta</screen>
     </section>
+    
+    <section><info><title>alignment-thin</title></info>
+      
+      <para>Remove columns without a minimum number of letters:</para> 
+<screen><prompt>%</prompt> alignment-thin --min-letters=5 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-thinned.fasta</screen>
+      <para>Remove sequences:</para>
+<screen><prompt>%</prompt> alignment-thin --remove=seq1,seq2 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>2.fasta</screen>
+      <para>Remove short sequences:</para>
+<screen><prompt>%</prompt> alignment-thin --longer-than=250 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-long.fasta</screen>
+      <para>Remove sequences while preserving sequence diversity:</para> 
+<screen><prompt>%</prompt> alignment-thin --down-to=30 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-30taxa.fasta
+<prompt>%</prompt> alignment-thin --down-to=30 <replaceable>file</replaceable>.fasta --keep=seq1,seq2 > <replaceable>file</replaceable>-30taxa.fasta</screen>
+      <para>Remove sequences that are missing conserved columns:</para> 
+<screen><prompt>%</prompt> alignment-thin --remove-crazy=10 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>2.fasta</screen>
+    </section>
+
+    <section><info><title>alignment-draw</title></info>
+      
+      <para>Draw an alignment to HTML, optionally coloring residues by AU.</para>
+<screen><prompt>%</prompt>  alignment-draw <replaceable>file</replaceable>.fasta --show-ruler --color-scheme=DNA+contrast > <replaceable>file</replaceable>.html
+<prompt>%</prompt>  alignment-draw <replaceable>file</replaceable>.fasta --show-ruler --AU=<replaceable>file</replaceable>-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > <replaceable>file</replaceable>-AU.html</screen>
+    </section>
+
+    <section><info><title>alignment-find</title></info>
+      
+      <para>Find the last (or first) FastA alignment in a file.</para>
+<screen><prompt>%</prompt> alignment-find --first &lt; <replaceable>file</replaceable>.fastas &gt; first.fasta
+<prompt>%</prompt> alignment-find &lt; <replaceable>file</replaceable>.fastas &gt; last.fasta</screen>
+    </section>
+
+    <section><info><title>alignment-indices</title></info>
+      
+      <para>Turn columns from a template alignment into alignment constraints:</para>
+<screen><prompt>%</prompt> alignment-indices template.fasta > constraints.txt
+<prompt>%</prompt> alignment-indices -c100-110,200,300- template.fasta > constraints.txt</screen>
+
+      <para>Each line in this file corresponds to one
+	alignment column.</para>
+    </section>
+
+    <section><info><title>alignment-chop-internal</title></info>
+      
+      <para>Remove internal-node ancestral sequences from an alignment.  (This
+	probably only works for alignments output by bali-phy.) </para>
+<screen><prompt>%</prompt> alignment-chop-internal <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-chopped.fasta</screen>
+    </section>
+
+  </section>
+  <section xml:id="tree-utilities"><info><title>Tree utilities</title></info>
     
     <section><info><title>trees-consensus</title></info>
       
-      <para>Usage: trees-consensus <replaceable>file</replaceable>
-	[OPTIONS] </para>
       <para>This program analyzes the tree sample contained in
 	<replaceable>file</replaceable>.  It reports the MAP topology, the
 	supported taxa partitions (including partial partitions), and the
