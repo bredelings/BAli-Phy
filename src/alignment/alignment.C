@@ -214,16 +214,23 @@ void alignment::load(const vector<sequence>& seqs)
   // Add the sequences to the alignment
   for(int i=0;i<seqs.size();i++)
   {
-    vector<int> v = (*a)(seqs[i]);
-    assert(v.size() <= array.size1());
-    int k=0;
-    for(;k<v.size();k++)
-      array(k,i) = v[k];
-    for(;k<array.size1();k++)
-      array(k,i) = alphabet::gap;
-
-    sequences.push_back(seqs[i]);
-    sequences.back().strip_gaps();
+    try {
+      vector<int> v = (*a)(seqs[i]);
+      assert(v.size() <= array.size1());
+      int k=0;
+      for(;k<v.size();k++)
+	array(k,i) = v[k];
+      for(;k<array.size1();k++)
+	array(k,i) = alphabet::gap;
+      
+      sequences.push_back(seqs[i]);
+      sequences.back().strip_gaps();
+    }
+    catch (bad_letter& e)
+    {
+      e.prepend("In sequence "+seqs[i].name+":\n ");
+      throw e;
+    }
   }
 
 }
