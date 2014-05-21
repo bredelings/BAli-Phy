@@ -329,7 +329,7 @@ vector<alignment> load_As(const variables_map& args)
     if (alphabet_name.size())
       alignments.push_back( load_alignment(filenames[i], load_alphabets(alphabet_name) ) );
     else
-      alignments.push_back( load_alignment(filenames[i], load_alphabets() ) );
+      alignments.push_back( load_alignment(filenames[i]) );
   }
 
   return alignments;
