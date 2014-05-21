@@ -368,7 +368,9 @@ alignment::alignment(const alphabet& a1,int n)
 
 alignment::alignment(const alphabet& a1, const vector<sequence>& S) 
   :array(0,S.size()),sequences(S),a(a1.clone())
-{}
+{
+  load(S);
+}
 
 alignment::alignment(const alphabet& a1,const string& filename) 
     :a(a1.clone())
