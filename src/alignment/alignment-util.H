@@ -47,7 +47,7 @@ alignment reorder_sequences(const alignment& A, const std::vector<std::string>& 
 /// Load an alignment from command line args --align=filename
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
 
-/// Load an alignment from command line args align=filename
+/// Load an alignment from file
 alignment load_alignment(const std::string& filename, const std::vector<object_ptr<const alphabet> >& alphabets);
 
 /// Load alignments from command line args align=filename
