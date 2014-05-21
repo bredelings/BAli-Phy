@@ -807,6 +807,9 @@ object_ptr<const alphabet> guess_alphabet(const vector<sequence>& sequences)
   else if (AUGCN > 0.95)
     return new RNA;
 
+  if (std::max(ATGCN,AUGCN) > 0.5)
+    throw myexception()<<"Can't guess alphabet";
+
   if (letter_count("*",sequences) > 0)
     return new AminoAcidsWithStop;
   else
@@ -817,18 +820,24 @@ alignment load_alignment(const string& filename)
 {
   vector<sequence> sequences = sequence_format::load_from_file(filename);
 
-  object_ptr<const alphabet> a = guess_alphabet(sequences);
+  try {
+    object_ptr<const alphabet> a = guess_alphabet(sequences);
 
-  alignment A(*a, sequences);
-  
-  int n_empty = remove_empty_columns(A);
-  if (n_empty)
-    if (log_verbose) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
-  
-  if (A.n_sequences() == 0)
-    throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
-
-  return A;
+    alignment A(*a, sequences);
+    
+    int n_empty = remove_empty_columns(A);
+    if (n_empty)
+      if (log_verbose) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
+    
+    if (A.n_sequences() == 0)
+      throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
+    
+    return A;
+  }
+  catch (myexception& e)
+  {
+    throw e<<" for file "<<filename<<".  Please specify RNA, DNA, or AminoAcids.";
+  }
 }
 
 /// Load an alignment from command line args "--align filename"
