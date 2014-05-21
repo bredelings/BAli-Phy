@@ -769,6 +769,68 @@ alignment load_alignment(const string& filename,const vector<object_ptr<const al
   return A;
 }
 
+int letter_count(const string& letters, const string& s)
+{
+  int count = 0;
+  for(int i=0;i<s.size();i++)
+    if (letters.find(s[i]) != std::string::npos)
+      count++;
+  return count;
+}
+
+double letter_count(const string& letters, const vector<sequence>& sequences)
+{
+  int count = 0;
+  for(const auto& sequence: sequences)
+    count += letter_count(letters, sequence);
+  return count;
+}
+
+double letter_fraction(const string& letters, const string& gaps, const vector<sequence>& sequences)
+{
+  int count = 0;
+  int total = 0;
+  for(const auto& sequence: sequences)
+  {
+    count += letter_count(letters, sequence);
+    total += sequence.size() - letter_count(sequence, gaps);
+  }
+  return double(count)/total;
+}
+
+object_ptr<const alphabet> guess_alphabet(const vector<sequence>& sequences)
+{
+  double ATGCN = letter_fraction("ATGCN","-?",sequences);
+  double AUGCN = letter_fraction("AUGCN","-?",sequences);
+  if (ATGCN > 0.95 and AUGCN <= ATGCN)
+    return new DNA;
+  else if (AUGCN > 0.95)
+    return new RNA;
+
+  if (letter_count("*",sequences) > 0)
+    return new AminoAcidsWithStop;
+  else
+    return new AminoAcids;
+}
+
+alignment load_alignment(const string& filename)
+{
+  vector<sequence> sequences = sequence_format::load_from_file(filename);
+
+  object_ptr<const alphabet> a = guess_alphabet(sequences);
+
+  alignment A(*a, sequences);
+  
+  int n_empty = remove_empty_columns(A);
+  if (n_empty)
+    if (log_verbose) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
+  
+  if (A.n_sequences() == 0)
+    throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
+
+  return A;
+}
+
 /// Load an alignment from command line args "--align filename"
 alignment load_A(const variables_map& args,bool keep_internal) 
 {
