@@ -753,11 +753,11 @@ vector<object_ptr<const alphabet> > load_alphabets(const variables_map& args)
 
 alignment load_alignment(const string& filename,const vector<object_ptr<const alphabet> >& alphabets)
 {
+  vector<sequence> sequences = sequence_format::load_from_file(filename);
+
   alignment A;
 
-  istream_or_ifstream file(std::cin, "-", filename, "alignment-file");
-
-  A.load(alphabets, sequence_format::read_guess, file);
+  A.load(alphabets, sequences);
   
   int n_empty = remove_empty_columns(A);
   if (n_empty)
@@ -767,7 +767,6 @@ alignment load_alignment(const string& filename,const vector<object_ptr<const al
     throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
 
   return A;
-
 }
 
 vector<alignment> load_alignments(const vector<string>& filenames,const vector<object_ptr<const alphabet> >& alphabets)

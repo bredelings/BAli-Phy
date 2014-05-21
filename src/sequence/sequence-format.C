@@ -378,9 +378,8 @@ namespace sequence_format {
 
   vector<sequence> load_from_file(loader_t loader,const string& filename) 
   {
-    checked_ifstream file(filename,"alignment file");
-    vector<sequence> sequences = loader(file);
-    return sequences;
+    istream_or_ifstream file(std::cin, "-", filename, "alignment-file");
+    return loader(file);
   }
 
   string get_extension(const string& s) 
