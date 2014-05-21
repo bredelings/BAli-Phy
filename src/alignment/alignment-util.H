@@ -50,10 +50,6 @@ alignment load_A(const boost::program_options::variables_map& args,bool keep_int
 /// Load an alignment from file
 alignment load_alignment(const std::string& filename, const std::vector<object_ptr<const alphabet> >& alphabets);
 
-/// Load alignments from command line args align=filename
-std::vector<alignment> load_alignments(const std::vector<std::string>& filenames,
-				       const std::vector<object_ptr<const alphabet> >& alphabets);
-
 /// Construct a mapping of letters to columns for each leaf sequence
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);
 

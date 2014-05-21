@@ -769,17 +769,6 @@ alignment load_alignment(const string& filename,const vector<object_ptr<const al
   return A;
 }
 
-vector<alignment> load_alignments(const vector<string>& filenames,const vector<object_ptr<const alphabet> >& alphabets)
-{
-  vector<alignment> alignments;
-
-  for(int i=0;i<filenames.size();i++) 
-    alignments.push_back( load_alignment(filenames[i],alphabets) );
-
-  return alignments;
-
-}
-
 /// Load an alignment from command line args "--align filename"
 alignment load_A(const variables_map& args,bool keep_internal) 
 {
