@@ -507,7 +507,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
   <listitem>You can combine the samples, leading to faster run times.</listitem>
   <listitem>You can compare the runs to determine if the chains have converged.</listitem>
 </orderedlist>
-
+ 
 This can be done simply by starting several instances of the program, and does not require using MPI or special command-line options.
 </para>
 
@@ -565,7 +565,30 @@ Finally, you may specify the option <userinput>--traditional</userinput>, or its
       </para>
     </section>
 
-    <section><info><title>Option files (Scripts)</title></info>
+    <section xml:id="cluster"><info><title>Running on computing clusters</title></info>
+    <para>
+      Running <command>bali-phy</command> on a computing cluster is
+      not necessary, but can speed up the analysis dramatically.
+      This is because a cluster allows you to run several
+      <emphasis>independent</emphasis> MCMC chains simultaneously and
+      pool the resulting samples.  You can run multiple chains
+      simultaneously simply by starting several different instances of
+      <command>bali-phy</command>.  Each instance of bali-phy runs
+      only one chain and does not require using MPI or special
+    command-line options.</para>   
+
+      <para>This approach to parallel computation is sometimes more
+      efficient than MCMCMC-based parallelism involving heated chains.
+      It is equivalent to running MCMCMC with no temperature
+      difference between chains, with the exception that it allows
+      results from <emphasis>all</emphasis> chains to be used, instead
+      of just results from the single "cold" chain.  Thus, if you run
+      10 independent chains in parallel, then you may gather samples
+      10 times faster that a single chain. 
+      </para>
+    </section>
+
+   <section><info><title>Option files (Scripts)</title></info>
       
       <para>
 	In addition to using the command line, you may also specify
@@ -722,28 +745,7 @@ traditional = traditional
 	that you've converged!)
       </para>
 
-      <note><info><title>Computing clusters can speed up
-      MCMC analysis</title></info>
-      <para>
-	Running <command>bali-phy</command> on a computing cluster is
-	not necessary, but can speed up the analysis dramatically.
-	This is because a cluster allows you to run several
-	<emphasis>independent</emphasis> MCMC chains in parallel and pool the resulting
-      samples.  This can be done simply by starting several instances
-      of <command>bali-phy</command>, and does not require using MPI
-      or special command-line options.</para> 
-
-	<para>This approach to parallel
-	computation is sometimes more efficient than MCMCMC-based
-	parallelism involving heated chains.  It is equivalent to
-	running MCMCMC with no temperature difference between
-	chains, with the exception that it allows results from
-	<emphasis>all</emphasis> chains to be used, instead of just
-	results from the single "cold" chain.  Thus, if you run 10
-	independent chains in parallel, then you may gather
-	samples 10 times faster that a single chain.
-      </para>
-      </note>
+      <para>See also <xref linkend="cluster"/>.</para>
 
       <section><info><title>Too many taxa?</title></info>
 	
