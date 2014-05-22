@@ -546,6 +546,8 @@ namespace substitution {
 	}
       else if (a.is_letter_class(l2)) 
       {
+	// FIXME - why is the sum(Q,l1,l2,a) function so much slower?
+	// FIXME - would this slowness affect the modulated peeling functions also?
 	const alphabet::fmask_t& fmask = a.letter_fmask(l2);
 	for(int m=0;m<n_models;m++) 
 	{
