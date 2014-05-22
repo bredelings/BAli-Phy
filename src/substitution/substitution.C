@@ -538,16 +538,25 @@ namespace substitution {
       int l2 = sequence[i];
 
       if (a.is_letter(l2))
-	for(int m=0;m<n_models;m++) {
+	for(int m=0;m<n_models;m++) 
+	{
 	  const Matrix& Q = transition_P[m];
 	  for(int s1=0;s1<n_states;s1++)
 	    R(m,s1) = Q(s1,l2);
 	}
-      else if (a.is_letter_class(l2)) {
-	for(int m=0;m<n_models;m++) {
+      else if (a.is_letter_class(l2)) 
+      {
+	const alphabet::fmask_t& fmask = a.letter_fmask(l2);
+	for(int m=0;m<n_models;m++) 
+	{
 	  const Matrix& Q = transition_P[m];
 	  for(int s1=0;s1<n_states;s1++)
-	    R(m,s1) = sum(Q,s1,l2,a);
+	  {
+	    double sum = 0.0;
+	    for(int s2=0;s2<n_states;s2++)
+	      sum += Q(s1,s2) * fmask[s2];
+	    R(m,s1) = sum;
+	  }
 	}
       }
       else

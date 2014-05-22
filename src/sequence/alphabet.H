@@ -55,6 +55,7 @@ class alphabet: public Object
 {
 public:
   typedef boost::dynamic_bitset<> bitmask_t;
+  typedef std::vector<double> fmask_t;
 
 private:
 
@@ -66,6 +67,9 @@ private:
 
   /// The masks for the letter_classes
   std::vector<bitmask_t> letter_masks_;
+
+  /// The 0.0 / 1.0 masks for the letter_classes
+  std::vector<fmask_t> letter_fmasks_;
 
 protected:
 
@@ -118,7 +122,7 @@ public:
   /// Index of an letter whose value is missing ('N' or 'X')
   static const int not_gap = -2;
 
-  /// Index of unknown ('?'): an ambiguous 'gap or not_gap' symbol.
+   /// Index of unknown ('?'): an ambiguous 'gap or not_gap' symbol.
   static const int unknown = -3;
 
 
@@ -147,6 +151,13 @@ public:
     assert(i>=0 and i < letter_masks_.size()); 
     assert(letter_masks_.size() == letter_classes_.size());
     return letter_masks_[i];
+  }
+
+  /// The i-th letter mask
+  const fmask_t& letter_fmask(int i) const {
+    assert(i>=0 and i < letter_fmasks_.size()); 
+    assert(letter_fmasks_.size() == letter_classes_.size());
+    return letter_fmasks_[i];
   }
 
   /// Returns true if the letter i1 is part of the letter class i2

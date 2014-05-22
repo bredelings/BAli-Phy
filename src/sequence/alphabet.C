@@ -193,6 +193,10 @@ void alphabet::setup_letter_classes()
   letter_masks_ = vector< bitmask_t >(n_letters(), bitmask_t(n_letters()) );
   for(int i=0;i<n_letters();i++)
     letter_masks_[i].set(i);
+
+  letter_fmasks_ = vector< fmask_t >(n_letters(), fmask_t(n_letters(),0.0) );
+  for(int i=0;i<n_letters();i++)
+    letter_fmasks_[i][i] = 1.0;
 }
 
 void alphabet::insert_class(const string& l, const bitmask_t& mask) 
@@ -202,6 +206,13 @@ void alphabet::insert_class(const string& l, const bitmask_t& mask)
 
   letter_classes_.push_back(l);
   letter_masks_.push_back(mask);
+
+  fmask_t fmask(n_letters(), 0.0);
+  for(int i=0;i<n_letters();i++)
+    if (mask.test(i))
+      fmask[i] = 1.0;
+
+  letter_fmasks_.push_back(fmask);
 }
 
 /// Add a letter class to the alphabet
