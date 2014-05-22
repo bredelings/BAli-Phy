@@ -29,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <string>
 #include <cassert>
+#include <boost/dynamic_bitset.hpp>
 #include "myexception.H"
 #include "object.H"
 #include "owned-ptr.H"
@@ -52,6 +53,11 @@ struct bad_letter:public myexception
 /// Converts between a list of letters, and their integer indices
 class alphabet: public Object
 {
+public:
+  typedef boost::dynamic_bitset<> bitmask_t;
+
+private:
+
   /// The letters of the alphabet
   std::vector<std::string> letters_;
 
@@ -59,7 +65,7 @@ class alphabet: public Object
   std::vector<std::string> letter_classes_;
 
   /// The masks for the letter_classes
-  std::vector<std::vector<bool> > letter_masks_;
+  std::vector<bitmask_t> letter_masks_;
 
 protected:
 
@@ -82,7 +88,7 @@ protected:
   void insert_class(const std::string& l,const std::vector<std::string>&);
 
   /// Add a letter class to the alphabet
-  void insert_class(const std::string& l,const std::vector<bool>&);
+  void insert_class(const std::string& l, const bitmask_t&);
 
   /// Add a letter class to the alphabet
   void remove_class(const std::string& l);
@@ -137,7 +143,7 @@ public:
     return letter_classes_[i];
   }
   /// The i-th letter mask
-  const std::vector<bool>& letter_mask(int i) const {
+  const bitmask_t& letter_mask(int i) const {
     assert(i>=0 and i < letter_masks_.size()); 
     assert(letter_masks_.size() == letter_classes_.size());
     return letter_masks_[i];

@@ -1921,9 +1921,9 @@ namespace substitution {
 	  else
 	  {
 	    assert(a.is_letter_class(l));
-	    vector<bool> letters = a.letter_mask(l);
+	    alphabet::bitmask_t letters = a.letter_mask(l);
 	    for(int l=0;l<letters.size();l++)
-	      if (letters[l])
+	      if (letters.test(l))
 		for(int s=0;s<n_states;s++)
 		  if (smap[s] != l)
 		    for(int m=0;m<n_models;m++)

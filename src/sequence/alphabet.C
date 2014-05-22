@@ -174,26 +174,29 @@ void alphabet::insert(const string& l)
   setup_letter_classes();
 }
 
-void alphabet::remove(const string& l) {
+void alphabet::remove(const string& l)
+{
   int index = find_letter(l);
   remove(index);
 }
 
-void alphabet::remove(int index) {
+void alphabet::remove(int index)
+{
   letters_.erase(letters_.begin()+index);
   setup_letter_classes();
 }
 
-void alphabet::setup_letter_classes() {
+void alphabet::setup_letter_classes()
+{
   letter_classes_ = letters_;
   
-  letter_masks_ = vector< vector<bool> >(n_letters(), vector<bool>(n_letters(),false) );
+  letter_masks_ = vector< bitmask_t >(n_letters(), bitmask_t(n_letters()) );
   for(int i=0;i<n_letters();i++)
-    letter_masks_[i][i] = true;
+    letter_masks_[i].set(i);
 }
 
-
-void alphabet::insert_class(const string& l,const vector<bool>& mask) {
+void alphabet::insert_class(const string& l, const bitmask_t& mask) 
+{
   if (includes(letters_,l))
     throw myexception()<<"Can't use letter name '"<<sanitize(l)<<"' as letter class name.";
 
@@ -204,12 +207,10 @@ void alphabet::insert_class(const string& l,const vector<bool>& mask) {
 /// Add a letter class to the alphabet
 void alphabet::insert_class(const std::string& l,const vector<string>& letters) 
 {
-  vector<bool> mask(size(),false);
-  for(int i=0;i<letters.size();i++) {
-    int index = find_letter(letters[i]);
+  bitmask_t mask(size());
 
-    mask[index] = true;
-  }
+  for(const auto& letter: letters)
+    mask.set(find_letter(letter));
 
   insert_class(l,mask);
 }
@@ -448,8 +449,8 @@ void Triplets::setup_letter_classes()
   vector<string> w = getTriplets(v);
   
   // construct letter class masks
-  vector<bool> empty_mask(size(),false);
-  vector<bool> mask(size());
+  bitmask_t empty_mask(size());
+  bitmask_t mask(size());
 
   for(int i=0;i<w.size();i++) {
     if (contains(w[i])) continue;
