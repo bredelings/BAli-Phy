@@ -2153,9 +2153,13 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 
       <orderedlist inheritnum="ignore" continuation="restarts">
 	<listitem><para>Use the argument
-	    <userinput>--align-constraint <replaceable>filename</replaceable></userinput></para></listitem> 
+	<userinput>--align-constraint <replaceable>filename</replaceable></userinput></para></listitem> 
 
-	<listitem><para>The filename refers to a file in which each
+	<listitem><para>For multiple partitions, list multiple filenames separated by colons.  If a partition doesn't have a constraint, then use an empty filename.  For example, to specify constraints for partitions 1 and 3, write:
+	<userinput>--align-constraint <replaceable>filename1</replaceable>::<replaceable>filename3</replaceable></userinput></para></listitem> 
+
+
+	<listitem><para>Each filename refers to a file in which each
 	    line represents a constraint.</para></listitem> 
 
       </orderedlist>
