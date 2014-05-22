@@ -507,6 +507,8 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
   <listitem>You can combine the samples, leading to faster run times.</listitem>
   <listitem>You can compare the runs to determine if the chains have converged.</listitem>
 </orderedlist>
+
+This can be done simply by starting several instances of the program, and does not require using MPI or special command-line options.
 </para>
 
     <section><info><title>Quick Start</title></info>
@@ -681,162 +683,6 @@ traditional = traditional
     </example>
   </section>
 
-  <section xml:id="command_line_options"><info><title>Command-line options: An overview</title></info>
-    
-
-    <para>You can get an up-to-date overview of these command line options by running <command> bali-phy --help</command>.</para>
-    <section><info><title>General options</title></info>
-      
-      
-      <variablelist>
-
-	<varlistentry>
-	  <term><option>-h, --help</option></term>
-	  <listitem><para>Show help message.</para></listitem>
-	</varlistentry>
-
-
-	<varlistentry>
-	  <term><option>-v, --version</option></term>
-	  <listitem><para>Show version information.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>-c <replaceable>file</replaceable>, --config <replaceable>file</replaceable></option></term>
-	  <listitem><para>Option file to read.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--show-only</option></term>
-	  <listitem><para>Analyze initial values and exit.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--seed <replaceable>seed</replaceable></option></term>
-	  <listitem><para>Use the specified seed to initialize the
-	      random number generator.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--name <replaceable>string</replaceable></option></term>
-	  <listitem><para>Specify the name for the analysis directory.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>-t, --traditional</option></term>
-	  <listitem><para>Fix the alignment and don't model indels.</para></listitem>
-	</varlistentry>
-
-      </variablelist>
-    </section>
-
-    <section><info><title>MCMC options</title></info>
-      
-
-      <variablelist>
-	<varlistentry>
-	  <term><option>-i, --iterations <replaceable>number=100000</replaceable></option></term>
-	  <listitem><para>Specify the number of iterations to run.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--pre-burnin <replaceable>iterations=3</replaceable></option></term>
-	  <listitem><para>Iterations to refine initial tree.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--subsample <replaceable>factor=1</replaceable></option></term>
-	  <listitem><para>Specify a factor by which to subsample.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--enable <replaceable>move</replaceable></option></term>
-	  <listitem>
-	    <para>Enable a comma-separated list of transition kernels.</para>
-	  </listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--disable <replaceable>move</replaceable></option></term>
-	  <listitem>
-	    <para>Disable a comma-separated list of transition kernels.</para>
-	</listitem></varlistentry>
-
-      </variablelist>
-    </section>
-
-
-    <section><info><title>Parameter options</title></info>
-      
-      <variablelist>
-	<varlistentry>
-	  <term><option>--randomize-alignment</option></term>
-	  <listitem><para>Randomly re-align sequences before use.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--tree <replaceable>file</replaceable></option></term>
-	  <listitem><para>Specify file with initial tree.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--set <replaceable>key=value</replaceable></option></term>
-	  <listitem><para>Set <replaceable>key</replaceable>=<replaceable>value</replaceable>.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--initial-value <replaceable>parameter[=value]</replaceable></option></term>
-	  <listitem><para>Set <replaceable>parameter</replaceable>=<replaceable>initial value</replaceable>.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--frequencies <replaceable>frequencies</replaceable></option></term>
-	  <listitem><para>Specify initial frequencies: 'uniform','nucleotides', or a comma-separated list of frequencies.</para></listitem>
-	</varlistentry>
-
-      </variablelist>
-
-    </section>
-
-    <section><info><title>Model options</title></info>
-      
-
-      <variablelist>
-	<varlistentry>
-	  <term><option>--alphabet <replaceable>name</replaceable></option></term>
-	  <listitem><para>Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons + stop.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--smodel <replaceable>name</replaceable></option></term>
-	  <listitem><para>Specify the substitution model.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--imodel <replaceable>name</replaceable></option></term>
-	  <listitem><para>Specify the indel model.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--branch-prior <replaceable>name</replaceable></option></term>
-	  <listitem><para>Exponential or Gamma.</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--same-scale <replaceable>specification</replaceable></option></term>
-	  <listitem><para>Which partitions have the same scale?</para></listitem>
-	</varlistentry>
-
-	<varlistentry>
-	  <term><option>--align-constraint <replaceable>filename</replaceable></option></term>
-	  <listitem><para>File with alignment constraints.</para></listitem>
-	</varlistentry>
-
-      </variablelist>
-
-    </section>
-
-    </section>
   </section>
 
   <section xml:id="input"><info><title>Input</title></info>
@@ -883,7 +729,9 @@ traditional = traditional
 	not necessary, but can speed up the analysis dramatically.
 	This is because a cluster allows you to run several
 	<emphasis>independent</emphasis> MCMC chains in parallel and pool the resulting
-      samples.</para> 
+      samples.  This can be done simply by starting several instances
+      of <command>bali-phy</command>, and does not require using MPI
+      or special command-line options.</para> 
 
 	<para>This approach to parallel
 	computation is sometimes more efficient than MCMCMC-based
