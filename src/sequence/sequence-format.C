@@ -202,12 +202,9 @@ namespace sequence_format {
     while(sequences.size() < ntaxa or not interleaved) 
     {
       string name;
-      string line_letters;
+      string line;
 
-      bool empty_line = not phylip_header_line(file,name,line_letters);
-
-      if (not sequences.size() and empty_line)
-	empty_line = not phylip_header_line(file,name,line_letters);
+      bool empty_line = not phylip_header_line(file,name,line);
 
       // parse line, and return false it empty;
       if (empty_line) break;
@@ -229,7 +226,7 @@ namespace sequence_format {
 	  std::cerr<<"[Warning reading PHYLIP alignment]: taxon "<<sequences.size()+1<<" has an empty name!\n";
       }
 
-      sequences.back() += line_letters;
+      sequences.back() += strip(line," \t");
     }
 
 
