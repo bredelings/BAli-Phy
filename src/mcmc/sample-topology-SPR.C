@@ -317,8 +317,8 @@ MCMC::Result SPR_stats(const Tree& T1, const Tree& T2, bool success, int bins, i
     append(T2.directed_branch(n2,n1).branches_after(),connected2);
  
     bool same_topology = (
-			  (connected1[0] == connected2[0] and connected1[1] == connected2[1]) or
-			  (connected1[0] == connected2[1] and connected1[1] == connected2[0])
+			  (connected1[0].target() == connected2[0].target() and connected1[1].target() == connected2[1].target()) or
+			  (connected1[0].target() == connected2[1].target() and connected1[1].target() == connected2[0].target())
 			  );
 
     if (same_topology)
