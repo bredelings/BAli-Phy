@@ -600,6 +600,11 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
 {
   double total_length_before = tree_length(P.T());
 
+  // If we are already at b_target, then its one of the branches after b_subtree.  Then do nothing.
+  if (P.T().directed_branch(b_subtree).target() == P.T().directed_branch(b_target).source() or
+      P.T().directed_branch(b_subtree).target() == P.T().directed_branch(b_target).target())
+    return -1;
+
   // unbroken target branch
   /// \todo Correctly handle moving to the same topology -- but allow branch lengths to change.
   double L = P.T().directed_branch(b_target).length();
@@ -1104,9 +1109,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   }
 
   // Step N-1: ATTACH to that point
-
-  if (branch_names[C] != branch_names.back() )
-    SPR_at_location(p[1], b1, branch_names[C], locations);
+  SPR_at_location(p[1], b1, branch_names[C], locations);
 
   // enforce tree constraints
   if (not extends(p[1].T(), *P.TC))
