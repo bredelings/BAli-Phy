@@ -193,12 +193,14 @@ namespace sequence_format {
   }
 
   /// Read the first phylip section, including names
-  bool phylip_header_section(std::istream& file,int ntaxa, vector<sequence>& sequences) {
+  bool phylip_header_section(std::istream& file,int ntaxa, vector<sequence>& sequences)
+  {
     bool interleaved=true;
 
     sequences.clear();
 
-    while(sequences.size() < ntaxa or not interleaved) {
+    while(sequences.size() < ntaxa or not interleaved) 
+    {
       string name;
       string line_letters;
 
