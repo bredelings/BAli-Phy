@@ -827,7 +827,8 @@ alignment load_alignment(const string& filename)
   try {
     object_ptr<const alphabet> a = guess_alphabet(sequences);
 
-    alignment A(*a, sequences);
+    alignment A(*a);
+    A.load(sequences);
     
     int n_empty = remove_empty_columns(A);
     if (n_empty)
