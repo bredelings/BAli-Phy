@@ -370,6 +370,11 @@ namespace sequence_format {
   vector<sequence> read_guess(std::istream& file) 
   {
     char c = file.peek();
+    while(c == ' ')
+    {
+      file.get();
+      c = file.peek();
+    }
     if (c >= '0' and c <= '9')
       return read_phylip(file);
     else
