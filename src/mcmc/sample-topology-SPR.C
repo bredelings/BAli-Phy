@@ -909,14 +909,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     //    log_double_t PR1 = P.heated_likelihood();
     //    cerr<<"  PR1 = "<<PR1.log()<<"  PR2 = "<<PR2.log()<<"   diff = "<<PR2.log() - PR1.log()<<endl;
 #endif
-
-    if (i == branch_names.size()-1)
-    {
-      // **4. INVALIDATE** the DIRECTED branch that we just landed on and altered
-      P.setlength_no_invalidate_LC(b2,L[i]);                               // Put back the old transition matrix
-      P.LC_invalidate_one_branch(b2);                                      // ... mark likelihood caches for recomputing.
-      P.LC_invalidate_one_branch(P.T().directed_branch(b2).reverse());      // ... mark likelihood caches for recomputing.
-    }
   }
 
   // We had better not let this get changed!
@@ -1113,8 +1105,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   // Step N-1: ATTACH to that point
 
-  p[1].set_tree(T0);
-  if (C != 0)
+  if (branch_names[C] != branch_names.back() )
     SPR_at_location(p[1], b1, branch_names[C], locations);
 
   // enforce tree constraints
