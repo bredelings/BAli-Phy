@@ -206,6 +206,9 @@ namespace sequence_format {
 
       bool empty_line = not phylip_header_line(file,name,line_letters);
 
+      if (not sequences.size() and empty_line)
+	empty_line = not phylip_header_line(file,name,line_letters);
+
       // parse line, and return false it empty;
       if (empty_line) break;
 
@@ -235,7 +238,7 @@ namespace sequence_format {
 
     for(int i=1;i<sequences.size();i++) 
       if (sequences[i].size() != sequences[0].size())
-	throw myexception()<<"[Error reading PHYLIP alignment] Sequence '"<<sequences[i].name<<"' has only "<<sequences[i].size()<<" out of "<<sequences[0].size()<<"letters in the first stanza";
+	throw myexception()<<"[Error reading PHYLIP alignment] Sequence '"<<sequences[i].name<<"' has only "<<sequences[i].size()<<" out of "<<sequences[0].size()<<" letters in the first stanza";
 
     return interleaved;
   }
