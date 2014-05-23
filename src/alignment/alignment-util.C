@@ -769,6 +769,14 @@ alignment load_alignment(const string& filename,const vector<object_ptr<const al
   return A;
 }
 
+int total_length(const vector<sequence>& sequences)
+{
+  int count = 0;
+  for(const auto& sequence: sequences)
+    count += sequence.size();
+  return count;
+}
+
 int letter_count(const string& letters, const string& s)
 {
   int count = 0;
@@ -788,13 +796,9 @@ double letter_count(const string& letters, const vector<sequence>& sequences)
 
 double letter_fraction(const string& letters, const string& gaps, const vector<sequence>& sequences)
 {
-  int count = 0;
-  int total = 0;
-  for(const auto& sequence: sequences)
-  {
-    count += letter_count(letters, sequence);
-    total += sequence.size() - letter_count(sequence, gaps);
-  }
+  int count = letter_count(letters, sequences);
+  int total = total_length(sequences) - letter_count(gaps, sequences);
+
   return double(count)/total;
 }
 
