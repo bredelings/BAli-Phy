@@ -312,23 +312,23 @@ void add_unique(list<dynamic_bitset<> >& masks,const dynamic_bitset<>& mask)
 }
 
 
-/// find out which partitions imply the sub-partitions, prefering the most likely.
-vector<int> match(const vector<pair<Partition,unsigned> >& full_partitions,
-		  const vector<pair<Partition,unsigned> >& sub_partitions)
+/// find out which splits imply the partial-splits, prefering the most likely.
+vector<int> match(const vector<pair<Partition,unsigned> >& full_splits,
+		  const vector<pair<Partition,unsigned> >& partial_splits)
 {
-  vector<int> m(sub_partitions.size(),-1);
+  vector<int> m(partial_splits.size(),-1);
 
-  for(int i=0;i<sub_partitions.size();i++)
-    for(int j=0;j<full_partitions.size();j++) 
+  for(int i=0;i<partial_splits.size();i++)
+    for(int j=0;j<full_splits.size();j++) 
     {
       // things that imply us cannot have a higher probability
-      if (full_partitions[j].second > sub_partitions[i].second)
+      if (full_splits[j].second > partial_splits[i].second)
 	continue;
 
       // skip this possible parent if it isn't as good as one we've found so far.
-      if (m[i] == -1 or full_partitions[j].second > full_partitions[m[i]].second)
+      if (m[i] == -1 or full_splits[j].second > full_splits[m[i]].second)
       {
-	if (implies(full_partitions[j].first,sub_partitions[i].first))
+	if (implies(full_splits[j].first,partial_splits[i].first))
 	  m[i] = j;
       }
     }
