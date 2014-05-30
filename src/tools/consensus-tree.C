@@ -360,7 +360,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 
   // construct beginning masks
   list<dynamic_bitset<> > new_masks = unit_masks;
-  list<dynamic_bitset<> > old_masks = unit_masks;
+  list<dynamic_bitset<> > old_masks;
 
   // start collecting partitions at M[l]
   vector<pair<Partition,unsigned> > partitions = get_Ml_partitions_and_counts(sample,l,mask);
