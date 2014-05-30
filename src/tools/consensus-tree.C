@@ -455,35 +455,30 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 
     if (depth == 0) break;
 
-    // FIXME!! We need to find a way to consider only masks which are
-    // 'close' togther - defined in terms of the number and support 
-    // of branches that are in the between them.
-
-    // fixme - do a convolution here - e.g. 2->1+1 3->1+2 4 ->1+3,2+2
-    // otherwise we do 1  - 1,2 - 1,2,3,4 - 1,2,3,4,5,6,7,8
-
+    // 4. good_masks += (good_masks + new_good_masks) * new_good_masks
+    // Rationale: pull out every combination of masks known to be "good"
     new_masks = new_unit_masks;
     for(const auto& i: new_good_masks)
       for(const auto& j: good_masks)
         if (i != j)
           add_unique(new_masks,masks,i & j);
 
-    // what will we operate on next time? 
-    // - perhaps change to look at pairs of branches connected to a node
-    // - perhaps depth 3 could be pairs of branches of distance 1
-    // - should I use the M[0.5] tree here, or the M[l] tree?
     if (iterations >= depth-1) continue;
 
+    // 5. new_masks += masks * unit_masks = (masks + new_masks) * (unit_masks + new_unit_masks)
+    // Rationale: Pull out every combination of (depth+1) unit_masks together.
     for(const auto& i: masks)
       for(const auto& j: unit_masks)
 	add_unique(new_masks,masks,i & j);
 
     // old good_masks were considered with unit_masks last_time
+    // Rationale: Pull out every combination (depth+1) unit_masks together with every good_mask.
     for(const auto& i: new_good_masks)
       for(const auto& j: unit_masks)
 	add_unique(new_masks,masks,i & j);
 
     // old good_masks were considered with unit_masks already
+    // Rationale: Pull out every combination (depth+1) unit_masks together with every unit_mask.
     for(const auto& i: masks)
       for(const auto& j: new_good_masks)
 	add_unique(new_masks,masks,i & j);
@@ -493,7 +488,6 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 
     //cerr<<"   new good masks = "<<new_good_masks.size()<<"    new unit masks = "<<new_unit_masks.size()<<endl;
     //cerr<<"       good masks = "<<good_masks.size()    <<"       total masks = "<<masks.size()<<"       found = "<<splits.size()<<endl;
-
 
   }
 
