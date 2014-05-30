@@ -376,33 +376,33 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     list<dynamic_bitset<> > new_unit_masks;
 
     // get sub-splits for each mask
-    vector<Partition> all_sub_splits;
+    vector<Partition> all_partial_splits;
     for(const auto& mask: new_masks)
     {
       // get sub-splits of mask
-      vector<pair<Partition,unsigned> > sub_splits = get_Ml_partitions_and_counts(sample,l,mask);
+      vector<pair<Partition,unsigned> > partial_splits = get_Ml_partitions_and_counts(sample,l,mask);
     
       // match up sub-splits and full splits
       // FIXME - aren't we RE-doing a lot of work, here?
-      vector<int> parents = match(full_splits,sub_splits);
+      vector<int> parents = match(full_splits,partial_splits);
 
       // check for splits with increased support when mask is unplugged
       double rooting=1.0;
-      for(int i=0;i<sub_splits.size();i++) 
+      for(int i=0;i<partial_splits.size();i++) 
       {
-	if (not informative(sub_splits[i].first))
+	if (not informative(partial_splits[i].first))
 	  continue;
 	    
 	double r = 1;
 	if (parents[i] == -1) {
-	  r = (l*sample.size())/double(sub_splits[i].second);
+	  r = (l*sample.size())/double(partial_splits[i].second);
 	}
 	else {
-	  r = full_splits[parents[i]].second/double(sub_splits[i].second);
+	  r = full_splits[parents[i]].second/double(partial_splits[i].second);
 	  assert(r <= 1.0);
 	}
 
-	double OD = statistics::odds(sub_splits[i].second-5,sample.size(),10);
+	double OD = statistics::odds(partial_splits[i].second-5,sample.size(),10);
 
 	// actually, considering bad rooting of low-probability edges may be a better (or alternate)
 	// strategy to unplugging edges that are only slightly bad.
@@ -415,19 +415,19 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 
 	// What happens when we consider unplugging ratios for branches (now) supported at level l<0.5?
 	if (r < min_rooting and OD > 0.5) {
-	  add_unique(new_unit_masks,unit_masks,sub_splits[i].first.group1);
-	  add_unique(new_unit_masks,unit_masks,sub_splits[i].first.group2);
+	  add_unique(new_unit_masks,unit_masks,partial_splits[i].first.group1);
+	  add_unique(new_unit_masks,unit_masks,partial_splits[i].first.group2);
 	  rooting = std::min(rooting,r);
 	}
 
 	// Store the new sub-splits we found
 	if (r < 0.999 or 
-	    (parents[i] != -1 and statistics::odds_ratio(sub_splits[i].second,
+	    (parents[i] != -1 and statistics::odds_ratio(partial_splits[i].second,
 							 full_splits[parents[i]].second,
 							 sample.size(),
 							 10) > 1.1)
 	    )
-	  splits.push_back(sub_splits[i]);
+	  splits.push_back(partial_splits[i]);
       }
 
       // check if any of our branches make this branch badly rooted
