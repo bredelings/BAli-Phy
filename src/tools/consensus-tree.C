@@ -362,47 +362,47 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
   list<dynamic_bitset<> > new_masks = unit_masks;
   list<dynamic_bitset<> > masks;
 
-  // start collecting partitions at M[l]
-  vector<pair<Partition,unsigned> > partitions = get_Ml_partitions_and_counts(sample,l,mask);
+  // start collecting splits at M[l]
+  vector<pair<Partition,unsigned> > splits = get_Ml_partitions_and_counts(sample,l,mask);
 
   // any good mask should be combined w/ other good masks
   list<dynamic_bitset<> > good_masks;
   for(int iterations=0;not new_masks.empty();iterations++)
   {
-    vector<pair<Partition,unsigned> > full_partitions = partitions;
+    vector<pair<Partition,unsigned> > full_splits = splits;
 
     if (log_verbose) cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   new_masks: "<<new_masks.size()<<endl;
     list<dynamic_bitset<> > new_good_masks;
     list<dynamic_bitset<> > new_unit_masks;
 
-    // get sub-partitions for each mask
-    vector<Partition> all_sub_partitions;
+    // get sub-splits for each mask
+    vector<Partition> all_sub_splits;
     for(const auto& mask: new_masks)
     {
-      // get sub-partitions of mask
-      vector<pair<Partition,unsigned> > sub_partitions = get_Ml_partitions_and_counts(sample,l,mask);
+      // get sub-splits of mask
+      vector<pair<Partition,unsigned> > sub_splits = get_Ml_partitions_and_counts(sample,l,mask);
     
-      // match up sub-partitions and full partitions
+      // match up sub-splits and full splits
       // FIXME - aren't we RE-doing a lot of work, here?
-      vector<int> parents = match(full_partitions,sub_partitions);
+      vector<int> parents = match(full_splits,sub_splits);
 
-      // check for partitions with increased support when mask is unplugged
+      // check for splits with increased support when mask is unplugged
       double rooting=1.0;
-      for(int i=0;i<sub_partitions.size();i++) 
+      for(int i=0;i<sub_splits.size();i++) 
       {
-	if (not informative(sub_partitions[i].first))
+	if (not informative(sub_splits[i].first))
 	  continue;
 	    
 	double r = 1;
 	if (parents[i] == -1) {
-	  r = (l*sample.size())/double(sub_partitions[i].second);
+	  r = (l*sample.size())/double(sub_splits[i].second);
 	}
 	else {
-	  r = full_partitions[parents[i]].second/double(sub_partitions[i].second);
+	  r = full_splits[parents[i]].second/double(sub_splits[i].second);
 	  assert(r <= 1.0);
 	}
 
-	double OD = statistics::odds(sub_partitions[i].second-5,sample.size(),10);
+	double OD = statistics::odds(sub_splits[i].second-5,sample.size(),10);
 
 	// actually, considering bad rooting of low-probability edges may be a better (or alternate)
 	// strategy to unplugging edges that are only slightly bad.
@@ -410,24 +410,24 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 	// Determination of rooting probabilities seems to have the largest effect on computation time
 	//  - thus, in the long run, new_good_masks has a larger effect than new_unit_masks.
 	//  - actually, this makes kind of makes sense...
-	//    + new_unit_masks can add partitions they reveal under fairly weak conditions.
+	//    + new_unit_masks can add splits they reveal under fairly weak conditions.
 	//    + however, unless a new unit mask ends up being a good_mask, it won't trigger the quadratic behavior.
 
 	// What happens when we consider unplugging ratios for branches (now) supported at level l<0.5?
 	if (r < min_rooting and OD > 0.5) {
-	  add_unique(new_unit_masks,unit_masks,sub_partitions[i].first.group1);
-	  add_unique(new_unit_masks,unit_masks,sub_partitions[i].first.group2);
+	  add_unique(new_unit_masks,unit_masks,sub_splits[i].first.group1);
+	  add_unique(new_unit_masks,unit_masks,sub_splits[i].first.group2);
 	  rooting = std::min(rooting,r);
 	}
 
-	// Store the new sub-partitions we found
+	// Store the new sub-splits we found
 	if (r < 0.999 or 
-	    (parents[i] != -1 and statistics::odds_ratio(sub_partitions[i].second,
-							 full_partitions[parents[i]].second,
+	    (parents[i] != -1 and statistics::odds_ratio(sub_splits[i].second,
+							 full_splits[parents[i]].second,
 							 sample.size(),
 							 10) > 1.1)
 	    )
-	  partitions.push_back(sub_partitions[i]);
+	  splits.push_back(sub_splits[i]);
       }
 
       // check if any of our branches make this branch badly rooted
@@ -477,12 +477,12 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     }
 
     //cerr<<"   new good masks = "<<new_good_masks.size()<<"    new unit masks = "<<new_unit_masks.size()<<endl;
-    //cerr<<"       good masks = "<<good_masks.size()    <<"       total masks = "<<masks.size()<<"       found = "<<partitions.size()<<endl;
+    //cerr<<"       good masks = "<<good_masks.size()    <<"       total masks = "<<masks.size()<<"       found = "<<splits.size()<<endl;
 
 
   }
 
-  return partitions;
+  return splits;
 }
 
 vector<pair<Partition,unsigned> > 
