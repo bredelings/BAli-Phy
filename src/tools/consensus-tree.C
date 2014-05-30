@@ -295,11 +295,11 @@ void add_unique(list<dynamic_bitset<> >& masks,const list<dynamic_bitset<> >& ol
   if (mask.count() < 4) return;
 
   // don't add the mask if we already have that mask
-  foreach(m,masks)
-    if (*m == mask) return;
+  for(const auto& m: masks)
+    if (m == mask) return;
 
-  foreach(m,old_masks)
-    if (*m == mask) return;
+  for(const auto& m: masks)
+    if (m == mask) return;
 
   // otherwise, add the mask
   masks.push_front(mask);
@@ -377,16 +377,16 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 
     // get sub-partitions for each mask
     vector<Partition> all_sub_partitions;
-    foreach(m,masks) 
+    for(const auto& mask: masks)
     {
-      // get sub-partitions of *m 
-      vector<pair<Partition,unsigned> > sub_partitions = get_Ml_partitions_and_counts(sample,l,*m);
+      // get sub-partitions of mask
+      vector<pair<Partition,unsigned> > sub_partitions = get_Ml_partitions_and_counts(sample,l,mask);
     
       // match up sub-partitions and full partitions
       // FIXME - aren't we RE-doing a lot of work, here?
       vector<int> parents = match(full_partitions,sub_partitions);
 
-      // check for partitions with increased support when *m is unplugged
+      // check for partitions with increased support when mask is unplugged
       double rooting=1.0;
       for(int i=0;i<sub_partitions.size();i++) 
       {
@@ -432,7 +432,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 
       // check if any of our branches make this branch badly rooted
       if (rooting < min_rooting)
-	new_good_masks.push_front(*m);
+	new_good_masks.push_front(mask);
     }
 
     old_masks.insert(old_masks.end(),masks.begin(),masks.end());
