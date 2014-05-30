@@ -435,11 +435,15 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 	new_good_masks.push_front(mask);
     }
 
-    masks.insert(masks.end(),new_masks.begin(),new_masks.end());
-
-    new_masks = new_unit_masks;
-
     if (log_verbose) cerr<<"new unit_masks = "<<new_unit_masks.size()<<endl;
+
+    // 1. masks += new_masks
+    masks.insert(masks.end(),new_masks.begin(),new_masks.end());
+    new_masks.clear();
+
+    // 2. good_masks += new_good_masks
+    good_masks.insert(good_masks.end(),new_good_masks.begin(),new_good_masks.end());
+    //    new_good_masks.clear();
 
     if (depth == 0) continue;
 
@@ -449,7 +453,8 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 
     // fixme - do a convolution here - e.g. 2->1+1 3->1+2 4 ->1+3,2+2
     // otherwise we do 1  - 1,2 - 1,2,3,4 - 1,2,3,4,5,6,7,8
-    good_masks.insert(good_masks.end(),new_good_masks.begin(),new_good_masks.end());
+
+    new_masks = new_unit_masks;
     for(const auto& i: new_good_masks)
       for(const auto& j: good_masks)
         if (i != j)
