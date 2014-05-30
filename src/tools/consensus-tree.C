@@ -450,10 +450,10 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     // fixme - do a convolution here - e.g. 2->1+1 3->1+2 4 ->1+3,2+2
     // otherwise we do 1  - 1,2 - 1,2,3,4 - 1,2,3,4,5,6,7,8
     good_masks.insert(good_masks.end(),new_good_masks.begin(),new_good_masks.end());
-    foreach(i,new_good_masks)
-      foreach(j,good_masks)
-        if (*i != *j)
-          add_unique(masks,old_masks,*i & *j);
+    for(const auto& i: new_good_masks)
+      for(const auto& j: good_masks)
+        if (i != j)
+          add_unique(masks,old_masks,i & j);
 
     // what will we operate on next time? 
     // - perhaps change to look at pairs of branches connected to a node
@@ -461,19 +461,19 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     // - should I use the M[0.5] tree here, or the M[l] tree?
     if (iterations < depth-1) {
 
-      foreach(i,old_masks)
-	foreach(j,unit_masks)
-	  add_unique(masks,old_masks,*i & *j);
+      for(const auto& i: old_masks)
+	for(const auto& j: unit_masks)
+	  add_unique(masks,old_masks,i & j);
 
       // old good_masks were considered with unit_masks last_time
-      foreach(i,new_good_masks)
-      	foreach(j,unit_masks)
-      	  add_unique(masks,old_masks,*i & *j);
+      for(const auto& i: new_good_masks)
+      	for(const auto& j: unit_masks)
+      	  add_unique(masks,old_masks,i & j);
 
       // old good_masks were considered with unit_masks already
-      foreach(i,old_masks)
-	foreach(j,new_good_masks)
-	  add_unique(masks,old_masks,*i & *j);
+      for(const auto& i: old_masks)
+	for(const auto& j: new_good_masks)
+	  add_unique(masks,old_masks,i & j);
     }
 
     //cerr<<"   new good masks = "<<new_good_masks.size()<<"    new unit masks = "<<new_unit_masks.size()<<endl;
