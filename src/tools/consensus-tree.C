@@ -295,7 +295,7 @@ void add_unique(list<dynamic_bitset<> >& masks,const list<dynamic_bitset<> >& ol
   if (mask.count() < 4) return;
 
   // don't add the mask if we already have that mask
-  for(const auto& m: masks)
+  for(const auto& m: old_masks)
     if (m == mask) return;
 
   for(const auto& m: masks)
