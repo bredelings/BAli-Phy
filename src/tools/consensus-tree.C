@@ -360,7 +360,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 
   // construct beginning masks
   list<dynamic_bitset<> > new_masks = unit_masks;
-  list<dynamic_bitset<> > old_masks;
+  list<dynamic_bitset<> > masks;
 
   // start collecting partitions at M[l]
   vector<pair<Partition,unsigned> > partitions = get_Ml_partitions_and_counts(sample,l,mask);
@@ -435,7 +435,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 	new_good_masks.push_front(mask);
     }
 
-    old_masks.insert(old_masks.end(),new_masks.begin(),new_masks.end());
+    masks.insert(masks.end(),new_masks.begin(),new_masks.end());
     new_masks.clear();
     new_masks = new_unit_masks;
 
@@ -453,7 +453,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     for(const auto& i: new_good_masks)
       for(const auto& j: good_masks)
         if (i != j)
-          add_unique(new_masks,old_masks,i & j);
+          add_unique(new_masks,masks,i & j);
 
     // what will we operate on next time? 
     // - perhaps change to look at pairs of branches connected to a node
@@ -461,23 +461,23 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     // - should I use the M[0.5] tree here, or the M[l] tree?
     if (iterations < depth-1) {
 
-      for(const auto& i: old_masks)
+      for(const auto& i: masks)
 	for(const auto& j: unit_masks)
-	  add_unique(new_masks,old_masks,i & j);
+	  add_unique(new_masks,masks,i & j);
 
       // old good_masks were considered with unit_masks last_time
       for(const auto& i: new_good_masks)
       	for(const auto& j: unit_masks)
-      	  add_unique(new_masks,old_masks,i & j);
+      	  add_unique(new_masks,masks,i & j);
 
       // old good_masks were considered with unit_masks already
-      for(const auto& i: old_masks)
+      for(const auto& i: masks)
 	for(const auto& j: new_good_masks)
-	  add_unique(new_masks,old_masks,i & j);
+	  add_unique(new_masks,masks,i & j);
     }
 
     //cerr<<"   new good masks = "<<new_good_masks.size()<<"    new unit masks = "<<new_unit_masks.size()<<endl;
-    //cerr<<"       good masks = "<<good_masks.size()    <<"       total masks = "<<old_masks.size()<<"       found = "<<partitions.size()<<endl;
+    //cerr<<"       good masks = "<<good_masks.size()    <<"       total masks = "<<masks.size()<<"       found = "<<partitions.size()<<endl;
 
 
   }
