@@ -305,6 +305,13 @@ void add_unique(list<dynamic_bitset<> >& masks,const list<dynamic_bitset<> >& ol
   masks.push_front(mask);
 }
 
+void add_unique(list<dynamic_bitset<> >& masks,const list<dynamic_bitset<> >& old_masks,
+		const list<dynamic_bitset<> >& new_masks)
+{
+  for(const auto& mask: new_masks)
+    add_unique(masks, old_masks, mask);
+}
+
 
 void add_unique(list<dynamic_bitset<> >& masks,const dynamic_bitset<>& mask) 
 {
@@ -438,7 +445,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     if (log_verbose) cerr<<"new unit_masks = "<<new_unit_masks.size()<<endl;
 
     // 1. masks += new_masks
-    masks.insert(masks.end(),new_masks.begin(),new_masks.end());
+    add_unique(masks, {}, new_masks);
     new_masks.clear();
 
     // 2. good_masks += new_good_masks
