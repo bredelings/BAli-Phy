@@ -443,9 +443,11 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 
     // 2. good_masks += new_good_masks
     good_masks.insert(good_masks.end(),new_good_masks.begin(),new_good_masks.end());
-    //    new_good_masks.clear();
 
-    if (depth == 0) continue;
+    // 3. unit_masks += new_unit_masks
+    unit_masks.insert(unit_masks.end(),new_unit_masks.begin(),new_unit_masks.end());
+
+    if (depth == 0) break;
 
     // FIXME!! We need to find a way to consider only masks which are
     // 'close' togther - defined in terms of the number and support 
@@ -480,6 +482,8 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
       for(const auto& j: new_good_masks)
 	add_unique(new_masks,masks,i & j);
 
+    new_good_masks.clear();
+    new_unit_masks.clear();
 
     //cerr<<"   new good masks = "<<new_good_masks.size()<<"    new unit masks = "<<new_unit_masks.size()<<endl;
     //cerr<<"       good masks = "<<good_masks.size()    <<"       total masks = "<<masks.size()<<"       found = "<<splits.size()<<endl;
