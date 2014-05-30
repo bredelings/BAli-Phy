@@ -359,7 +359,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     add_unique(unit_masks, mask & branch_partition(c50,branches[b]) );
 
   // construct beginning masks
-  list<dynamic_bitset<> > masks = unit_masks;
+  list<dynamic_bitset<> > new_masks = unit_masks;
   list<dynamic_bitset<> > old_masks = unit_masks;
 
   // start collecting partitions at M[l]
@@ -367,17 +367,17 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 
   // any good mask should be combined w/ other good masks
   list<dynamic_bitset<> > good_masks;
-  for(int iterations=0;not masks.empty();iterations++)
+  for(int iterations=0;not new_masks.empty();iterations++)
   {
     vector<pair<Partition,unsigned> > full_partitions = partitions;
 
-    if (log_verbose) cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   masks: "<<masks.size()<<endl;
+    if (log_verbose) cerr<<"iteration: "<<iterations<<"   depth: "<<depth<<"   new_masks: "<<new_masks.size()<<endl;
     list<dynamic_bitset<> > new_good_masks;
     list<dynamic_bitset<> > new_unit_masks;
 
     // get sub-partitions for each mask
     vector<Partition> all_sub_partitions;
-    for(const auto& mask: masks)
+    for(const auto& mask: new_masks)
     {
       // get sub-partitions of mask
       vector<pair<Partition,unsigned> > sub_partitions = get_Ml_partitions_and_counts(sample,l,mask);
@@ -435,9 +435,9 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 	new_good_masks.push_front(mask);
     }
 
-    old_masks.insert(old_masks.end(),masks.begin(),masks.end());
-    masks.clear();
-    masks = new_unit_masks;
+    old_masks.insert(old_masks.end(),new_masks.begin(),new_masks.end());
+    new_masks.clear();
+    new_masks = new_unit_masks;
 
     if (log_verbose) cerr<<"new unit_masks = "<<new_unit_masks.size()<<endl;
 
@@ -453,7 +453,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     for(const auto& i: new_good_masks)
       for(const auto& j: good_masks)
         if (i != j)
-          add_unique(masks,old_masks,i & j);
+          add_unique(new_masks,old_masks,i & j);
 
     // what will we operate on next time? 
     // - perhaps change to look at pairs of branches connected to a node
@@ -463,17 +463,17 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 
       for(const auto& i: old_masks)
 	for(const auto& j: unit_masks)
-	  add_unique(masks,old_masks,i & j);
+	  add_unique(new_masks,old_masks,i & j);
 
       // old good_masks were considered with unit_masks last_time
       for(const auto& i: new_good_masks)
       	for(const auto& j: unit_masks)
-      	  add_unique(masks,old_masks,i & j);
+      	  add_unique(new_masks,old_masks,i & j);
 
       // old good_masks were considered with unit_masks already
       for(const auto& i: old_masks)
 	for(const auto& j: new_good_masks)
-	  add_unique(masks,old_masks,i & j);
+	  add_unique(new_masks,old_masks,i & j);
     }
 
     //cerr<<"   new good masks = "<<new_good_masks.size()<<"    new unit masks = "<<new_unit_masks.size()<<endl;
