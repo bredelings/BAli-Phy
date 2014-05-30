@@ -436,7 +436,7 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     }
 
     masks.insert(masks.end(),new_masks.begin(),new_masks.end());
-    new_masks.clear();
+
     new_masks = new_unit_masks;
 
     if (log_verbose) cerr<<"new unit_masks = "<<new_unit_masks.size()<<endl;
@@ -459,22 +459,22 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     // - perhaps change to look at pairs of branches connected to a node
     // - perhaps depth 3 could be pairs of branches of distance 1
     // - should I use the M[0.5] tree here, or the M[l] tree?
-    if (iterations < depth-1) {
+    if (iterations >= depth-1) continue;
 
-      for(const auto& i: masks)
-	for(const auto& j: unit_masks)
-	  add_unique(new_masks,masks,i & j);
+    for(const auto& i: masks)
+      for(const auto& j: unit_masks)
+	add_unique(new_masks,masks,i & j);
 
-      // old good_masks were considered with unit_masks last_time
-      for(const auto& i: new_good_masks)
-      	for(const auto& j: unit_masks)
-      	  add_unique(new_masks,masks,i & j);
+    // old good_masks were considered with unit_masks last_time
+    for(const auto& i: new_good_masks)
+      for(const auto& j: unit_masks)
+	add_unique(new_masks,masks,i & j);
 
-      // old good_masks were considered with unit_masks already
-      for(const auto& i: masks)
-	for(const auto& j: new_good_masks)
-	  add_unique(new_masks,masks,i & j);
-    }
+    // old good_masks were considered with unit_masks already
+    for(const auto& i: masks)
+      for(const auto& j: new_good_masks)
+	add_unique(new_masks,masks,i & j);
+
 
     //cerr<<"   new good masks = "<<new_good_masks.size()<<"    new unit masks = "<<new_unit_masks.size()<<endl;
     //cerr<<"       good masks = "<<good_masks.size()    <<"       total masks = "<<masks.size()<<"       found = "<<splits.size()<<endl;
