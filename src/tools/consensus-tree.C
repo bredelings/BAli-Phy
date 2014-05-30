@@ -446,13 +446,12 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
 
     // 1. masks += new_masks
     add_unique(masks, {}, new_masks);
-    new_masks.clear();
 
     // 2. good_masks += new_good_masks
-    good_masks.insert(good_masks.end(),new_good_masks.begin(),new_good_masks.end());
+    add_unique(good_masks, {}, new_good_masks);
 
     // 3. unit_masks += new_unit_masks
-    unit_masks.insert(unit_masks.end(),new_unit_masks.begin(),new_unit_masks.end());
+    add_unique(unit_masks, {}, new_unit_masks);
 
     if (depth == 0) break;
 
