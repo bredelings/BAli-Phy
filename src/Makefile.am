@@ -113,7 +113,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  tools/parsimony.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
 	  imodel/setup.C computation/computation.C \
-	  computation/graph_register.C computation/module.C \
+	  computation/graph_register.C computation/show_graph.C computation/module.C \
 	  computation/formula_expression.C \
 	  computation/operations.C computation/loader.C computation/context.C \
 	  substitution/matcache.C computation/closure.C \
