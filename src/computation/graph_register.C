@@ -56,6 +56,8 @@ using std::endl;
  * 2. Start recording created regs.
  *
  * 3. Separate the computation from the computed_result.
+ *
+ * 4. Make let into an operation.
  */
 
 /*
