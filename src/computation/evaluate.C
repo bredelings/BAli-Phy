@@ -60,6 +60,17 @@ public:
 
   int allocate(closure&& C)
   {
+    if (C.exp->head->type() == index_var_type)
+    {
+      int index = convert<const index_var>(C.exp->head)->index;
+
+      int r = C.lookup_in_env( index );
+    
+      assert(is_used(r));
+
+      return r;
+    }
+
     int r = M.push_temp_head();
     M.set_C(r, std::move(C) );
     n_allocated++;
