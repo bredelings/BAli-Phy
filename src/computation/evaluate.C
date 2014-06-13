@@ -341,6 +341,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 	// Otherwise, set the reduction result.
 	else
 	{
+	  // If the reg is changeable and this is token 0, then it is in normal form, and we are done.
 	  if (not t)
 	  {
 	    remove_shared_computation(t,R);
