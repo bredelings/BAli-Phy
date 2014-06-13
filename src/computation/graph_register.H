@@ -359,10 +359,6 @@ public:
   std::vector<int> find_all_regs_in_context_no_check(int, bool) const;
 
   /*----- Virtual memory ------*/
-  int abs_computation_index_for_reg(int t, int r) const;
-  const computation& abs_computation_for_reg(int t, int r) const ;
-        computation& abs_computation_for_reg(int t, int r);
-
   int computation_index_for_reg_(int t, int r) const;
   const computation& computation_for_reg_(int t, int r) const;
         computation& computation_for_reg_(int t, int r);
