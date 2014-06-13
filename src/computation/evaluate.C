@@ -340,9 +340,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 	closure result = (*O)(Args);
 	total_reductions++;
 	
-	// NOTE: While not all used_inputs are E-children, they SHOULD all be E-descendents.
-	//       How could we assert that?
-	
 	// If the reduction doesn't depend on modifiable, then replace E with the result.
 	if (not reg_is_changeable(R))
 	{
@@ -352,16 +349,15 @@ int reg_heap::incremental_evaluate(int R, int t)
 	  assert(computation_for_reg(t,R).used_inputs.empty());
 	  set_C(R, std::move(result) );
 	}
+	// If the reg is changeable and this is token 0, then it is in normal form, and we are done.
+	else if (not t)
+	{
+	  remove_shared_computation(t,R);
+	  return R;
+	}
 	// Otherwise, set the reduction result.
 	else
 	{
-	  // If the reg is changeable and this is token 0, then it is in normal form, and we are done.
-	  if (not t)
-	  {
-	    remove_shared_computation(t,R);
-	    return R;
-	  }
-	  
 	  int r2 = Args.allocate(std::move(result));
 
 	  int r3 = incremental_evaluate(r2, t);
