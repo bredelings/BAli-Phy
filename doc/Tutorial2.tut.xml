@@ -177,10 +177,15 @@ Now lets see if there is evidence that the two runs have not converged yet.
 % trees-bootstrap --help
 % trees-bootstrap 25-muscle-1/C1.trees 25-muscle-2/C1.trees > partitions.bs
 % less partitions.bs
-
+</para>
+</section>
+<section ><info><title>Generating an HTML Report</title></info>
+<para>
 Now lets use the analysis script to run all the summaries and make a report:
 % bp-analyze.pl 25-muscle-1/ 25-muscle-2/
 % firefox Results/index.html &#38;
+This PERL script runs <application>statreport</application> and <application>trees-consensus</application> for you.  Take a look at what commands were run:
+% less Results/bp-analyze.log
 </para>
 </section>
 </section>
@@ -308,5 +313,39 @@ You can run the analysis like this:
 % bali-phy -c analysis1.script &#38;
 </section>
 
+<section><info><title>Dataset preparation</title></info>
+<section><info><title>Splitting and Merging Alignments</title></info>
+<para>BAli-Phy generally wants you to split concatenated gene regions in order to analyze them.
+% cd ~/alignment-files/examples/ITS/
+% alignment-cat -c1-223 ITS-region.fasta > 1.fasta
+% alignment-cat -c224-379 ITS-region.fasta > 2.fasta
+% alignment-cat -c378-551 ITS-region.fasta > 3.fasta
+</para>
+Later you might want to put them back together again:
+% alignment-cat 1.fasta 2.fasta 3.fasta > 123.fasta
+</section>
+
+<section><info><title>Shrinking the data set</title></info>
+<para>
+You might want to reduce the number of taxa while attempting to preserve phylogenetic diversity:
+% alignment-thin --down-to=30 ITS-region.fasta > ITS-region-thinned.fasta
+</para>
+<para>
+You can specify that certain sequences should not be removed:
+% alignment-thin --down-to=30 --keep=Csaxicola420 ITS-region.fasta > ITS-region-thinned.fasta
+</para>
+</section>
+
+<section><info><title>Cleaning the data set</title></info>
+Keep only columns with a minimum number of residues:
+% alignment-thin --min-letters=5 ITS-region.fasta > ITS-region-censored.fasta
+Keep only sequences that are not too short:
+% alignment-thin --longer-than=250 ITS-region.fasta > ITS-region-long.fasta
+Remove 10 sequences with the smallest number of conserved residues:
+% alignment-thin --remove-crazy=10 ITS-region.fasta > ITS-region-sane.fasta
+</section>
+
+
+</section>
 </article>
 
