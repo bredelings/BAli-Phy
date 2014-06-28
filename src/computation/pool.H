@@ -24,9 +24,11 @@ public:
       return r;
     }
 
+    bool is_null() const {return r==0 and version == 0;}
+
     int get_unsafe() const {return r;}
 
-    void reset() {version = 1;}
+    void reset() {r = 0; version = 0;}
 
     weak_ref() = default;
     weak_ref(int a, unsigned b):r(a),version(b) {}
