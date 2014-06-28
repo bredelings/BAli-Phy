@@ -84,14 +84,9 @@ public:
     data.reset();
   }
 
-  // For conversion to unspecified bool
-  typedef cow_ptr<X> this_type;
-
-  typedef void (this_type::*unspecified_bool_type)();
-
-  operator unspecified_bool_type() const // never throws
+  explicit operator bool() const // never throws
   {
-    return data == 0? 0: &this_type::copy;
+    return (bool)data;
   }
 
   operator boost::shared_ptr<const X>() const
@@ -195,14 +190,9 @@ public:
     data.reset();
   }
 
-  // For conversion to unspecified bool
-  typedef polymorphic_cow_ptr<X> this_type;
-
-  typedef void (this_type::*unspecified_bool_type)();
-
-  operator unspecified_bool_type() const // never throws
+  explicit operator bool() const // never throws
   {
-    return data == 0? 0: &this_type::copy;
+    return (bool)data;
   }
 
   operator boost::shared_ptr<const X>() const

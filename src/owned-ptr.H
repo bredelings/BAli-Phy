@@ -94,17 +94,9 @@ public:
   }
 
   /// Check if non-NULL
-  typedef owned_ptr<X> this_type;
-
   explicit operator bool() const // never throws
   {
     return (bool)data;
-  }
-
-  /// Check if NULL
-  bool operator !() const 
-  {
-    return !data;
   }
 
   void swap(owned_ptr<X>& other) {data.swap(other.data);}
