@@ -66,7 +66,7 @@ public:
 
       int r = C.lookup_in_env( index );
     
-      assert(is_used(r));
+      assert(M.is_used(r));
 
       return r;
     }
