@@ -193,7 +193,7 @@ expression_ref graph_normalize(const expression_ref& E)
 void computation::clear()
 {
   source_token = -1;
-  source = -1;
+  source_reg = -1;
   result = 0;
   call = 0;
   truncate(used_inputs);
@@ -216,7 +216,8 @@ void computation::check_cleared()
 computation& computation::operator=(computation&& R) noexcept
 {
   result = R.result;
-  source = R.source;
+  source_token = R.source_token;
+  source_reg = R.source_reg;
   call = R.call;
   used_inputs  = std::move( R.used_inputs );
   used_by = std::move( R.used_by );
@@ -228,7 +229,7 @@ computation& computation::operator=(computation&& R) noexcept
 
 computation::computation(computation&& R) noexcept
 :source_token(R.source_token),
-  source(R.source),
+  source_reg(R.source_reg),
   result (R.result), 
   call ( R.call ),
   used_inputs ( std::move(R.used_inputs) ),
@@ -1088,7 +1089,7 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
       int rc2 = wrc2.get(computations);
 
       computation& RC2 = computations[rc2];
-      int r2 = RC2.source;
+      int r2 = RC2.source_reg;
 
       // If this computation is not used in t2, we don't need to unshare it.
       if (computation_index_for_reg_(t2,r2) != rc2) continue;
@@ -1122,7 +1123,7 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
       int rc2 = wrc2.get(computations);
 
       computation& RC2 = computations[rc2];
-      int r2 = RC2.source;
+      int r2 = RC2.source_reg;
 
       // If this computation is not used in t2, we don't need to unshare it.
       if (computation_index_for_reg_(t2,r2) != rc2) continue;
@@ -1193,6 +1194,7 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     {
       int rc1 = rc2;
       tokens[t1].vm_relative.add_value(r, rc1);
+      RC.source_token = t1;
       int rc2 = new_computation_for_reg(t2, r);
       tokens[t2].vm_relative.set_value(r, rc2);
       duplicate_computation(rc1,rc2); // but not the result
@@ -1258,7 +1260,7 @@ std::vector<int> reg_heap::used_regs_for_reg(int t, int r) const
   if (not has_computation(t,r)) return U;
 
   for(int rc: computation_for_reg(t,r).used_inputs)
-    U.push_back(computations[rc].source);
+    U.push_back(computations[rc].source_reg);
 
   return U;
 }
@@ -1399,8 +1401,8 @@ void reg_heap::trace_and_reclaim_unreachable()
       const computation& RC = computations[rc];
       
       // Count the reg that references us
-      assert(RC.source);
-      scan1.push_back(RC.source);
+      assert(RC.source_reg);
+      scan1.push_back(RC.source_reg);
       
       // Count also the computation we call
       if (RC.call) 
@@ -1544,7 +1546,7 @@ bool reg_heap::reg_is_used_by(int t, int r1, int r2) const
 bool reg_heap::computation_is_referenced(int t,int rc) const
 {
   assert(rc);
-  int r = computations[rc].source;
+  int r = computations[rc].source_reg;
   if (computation_index_for_reg_(t,r) == rc) return true;
   int p = parent_token(t);
   if (p != -1)
@@ -1614,7 +1616,7 @@ void reg_heap::check_used_reg(int index) const
       assert( computation_is_used_by(index_c, rc2) );
 
       // Used computations should be mapped computation for the current token, if we are at the root
-      int R2 = computations[rc2].source;
+      int R2 = computations[rc2].source_reg;
       assert(reg_is_changeable(R2));
 
       // The used computation should be referenced somewhere more root-ward
@@ -1660,7 +1662,7 @@ int reg_heap::new_computation_for_reg(int t, int r) const
 {
   int rc = computations.allocate();
   computations[rc].source_token = t;
-  computations[rc].source = r;
+  computations[rc].source_reg = r;
   return rc;
 }
 
