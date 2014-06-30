@@ -23,10 +23,10 @@
   <info><title><application>BAli-Phy</application> Tutorial</title>
     <author><personname><firstname>Benjamin</firstname><surname>Redelings</surname></personname></author>
   </info>
-    
+
   <section xml:id="intro"><info><title>Introduction</title></info>
 <para>
-This tutorial contains step-by-step commands, assuming that you have already installed bali-phy.  The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html">manual</link> contains more detailed explanations for many things, so you might want to refer to it during the tutorial.</para>
+Before you start this tutorial, please <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/download.php">download</link> and install bali-phy, following the installation instructions in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html">manual</link>.</para>
   </section>
   <section xml:id="work_directory"><info><title>Setting up the <filename>~/alignment_files</filename> directory</title></info>
 
