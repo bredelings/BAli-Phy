@@ -192,6 +192,7 @@ expression_ref graph_normalize(const expression_ref& E)
 
 void computation::clear()
 {
+  source_token = -1;
   source = -1;
   result = 0;
   call = 0;
@@ -226,7 +227,8 @@ computation& computation::operator=(computation&& R) noexcept
 }
 
 computation::computation(computation&& R) noexcept
-:source(R.source),
+:source_token(R.source_token),
+  source(R.source),
   result (R.result), 
   call ( R.call ),
   used_inputs ( std::move(R.used_inputs) ),

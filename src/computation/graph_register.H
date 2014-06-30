@@ -14,6 +14,8 @@
 
 struct computation
 {
+  int source_token = -1;
+
   int source = -1;
 
   /// What final WHNF does this computation reduce to?
