@@ -1193,9 +1193,9 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     {
       int rc1 = rc2;
       tokens[t1].vm_relative.add_value(r, rc1);
-      int rc2 = new_computation_for_reg(r);
-      duplicate_computation(rc1,rc2); // but not the result
+      int rc2 = new_computation_for_reg(t2, r);
       tokens[t2].vm_relative.set_value(r, rc2);
+      duplicate_computation(rc1,rc2); // but not the result
     }
     else
       RC.result = 0;
@@ -1656,9 +1656,10 @@ int reg_heap::remove_shared_computation(int t, int r)
     return tokens[t].vm_relative.set_value(r,-1);
 }
 
-int reg_heap::new_computation_for_reg(int r) const
+int reg_heap::new_computation_for_reg(int t, int r) const
 {
   int rc = computations.allocate();
+  computations[rc].source_token = t;
   computations[rc].source = r;
   return rc;
 }
@@ -1678,7 +1679,7 @@ int reg_heap::add_shared_computation(int t, int r)
 {
   assert(tokens[t].vm_relative[r] <= 0);
 
-  int rc = new_computation_for_reg(r);
+  int rc = new_computation_for_reg(t, r);
 
   tokens[t].vm_relative.set_value(r, rc);
 
