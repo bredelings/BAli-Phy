@@ -403,6 +403,8 @@ public:
 
   int add_shared_computation(int t, int r);
 
+  void clear_computation(int t, int r);
+
   int move_computation(int t1, int t2, int r);
 
   bool computation_is_referenced(int,int) const;
@@ -422,7 +424,6 @@ public:
   void set_reg_value(int index, closure&&, int t);
   void set_shared_value(int r, int v);
   bool reg_is_shared(int t, int r) const;
-  int share_and_clear(int t, int r);
   void invalidate_shared_regs(int t1, int t2);
   void mark_completely_dirty(int t);
   bool is_completely_dirty(int t) const;

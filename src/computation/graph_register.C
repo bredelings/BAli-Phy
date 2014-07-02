@@ -884,9 +884,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     assert(not is_modifiable(access(R).C.exp));
 
-    int rc = share_and_clear(token,R);
-    if (rc > 0)
-      computations.reclaim_used(rc);
+    clear_computation(token,R);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
@@ -1283,9 +1281,7 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     if (not computation_index_for_reg_(t1,r))
       move_computation(t2, t1, r);
     else
-    {
-      share_and_clear(t2,r);
-    }
+      clear_computation(t2, r);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(r).re_evaluate)
@@ -1774,11 +1770,14 @@ int reg_heap::add_shared_computation(int t, int r)
   return rc;
 }
 
-int reg_heap::share_and_clear(int t, int r)
+void reg_heap::clear_computation(int t, int r)
 {
-  assert(t);
+  int rc = remove_shared_computation(t,r);
 
-  return remove_shared_computation(t,r);
+  if (rc > 0)
+  {
+    computations.reclaim_used(rc);
+  }
 }
 
 void reg_heap::release_child_token(int t)
