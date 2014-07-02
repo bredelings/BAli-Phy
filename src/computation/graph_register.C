@@ -892,10 +892,12 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   }
 
   if (has_computation_(token,P))
+  {
     computation_for_reg_(token,P).temp = -1;
+    clear_computation(token,P);
+  }
 
   // Finally set the new value.
-  tokens[token].vm_relative.set_value(P,-1);
   add_shared_computation(token,P);
   assert(has_computation_(token,P));
   set_reduction_result(token, P, std::move(C) );
