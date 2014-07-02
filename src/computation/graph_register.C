@@ -1183,8 +1183,8 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   for(int r:result_may_be_changed)
   {
-    int rc2 = computation_index_for_reg_(t2,r);
-    auto& RC = computations[rc2];
+    int rc1 = computation_index_for_reg_(t2,r);
+    auto& RC = computations[rc1];
 
     if (RC.temp > mark_result) continue;
 
@@ -1192,7 +1192,6 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
     if (not computation_index_for_reg_(t1,r))
     {
-      int rc1 = rc2;
       tokens[t1].vm_relative.add_value(r, rc1);
       RC.source_token = t1;
       int rc2 = new_computation_for_reg(t2, r);
