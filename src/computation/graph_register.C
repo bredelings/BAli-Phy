@@ -1252,11 +1252,14 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
     if (not computation_index_for_reg_(t1,r))
     {
+      // Move rc1 from t2 -> t1.
       move_computation(t2, t1, r);
 
-      int rc2 = new_computation_for_reg(t2, r);
-      tokens[t2].vm_relative.set_value(r, rc2);
-      duplicate_computation(rc1,rc2); // but not the result
+      // Make a new computation in t2.
+      int rc2 = add_shared_computation(t2,r);
+
+      // Copy the computation-step part, but not the result
+      duplicate_computation(rc1,rc2);
     }
     else
       RC.result = 0;
