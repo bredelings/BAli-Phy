@@ -1677,12 +1677,19 @@ void reg_heap::duplicate_computation(int rc1, int rc2) const
     computations[rcu].used_by.push_back(computations.get_weak_ref(rc2));
 }
 
+// Add a shared computation at (t,r) -- assuming there isn't one already
 int reg_heap::add_shared_computation(int t, int r)
 {
   assert(tokens[t].vm_relative[r] <= 0);
 
-  int rc = new_computation_for_reg(t, r);
+  // 1. Get a new computation
+  int rc = computations.allocate();
 
+  // 2. Set the source of the computation
+  computations[rc].source_token = t;
+  computations[rc].source_reg = r;
+
+  // 3. Link it in to the mapping
   tokens[t].vm_relative.set_value(r, rc);
 
 #if DEBUG_MACHINE >= 3
