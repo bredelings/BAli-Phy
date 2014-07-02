@@ -899,9 +899,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   // Finally set the new value.
   add_shared_computation(token,P);
-  assert(has_computation_(token,P));
   set_reduction_result(token, P, std::move(C) );
-  assert(has_computation_(token,P));
 
   release_scratch_list();
   release_scratch_list();
@@ -923,9 +921,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 void reg_heap::set_shared_value(int r, int v)
 {
   // add a new computation
-  assert(not has_computation_(root_token, r));
   add_shared_computation(root_token, r);
-  assert(has_computation_(root_token, r));
 
   // set the value
   set_call(root_token, r, v);
