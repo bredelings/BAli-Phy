@@ -1690,14 +1690,8 @@ int reg_heap::add_shared_computation(int t, int r)
 int reg_heap::share_and_clear(int t, int r)
 {
   assert(t);
-  int rc1 = computation_index_for_reg_(t,r);
 
-  if (is_root_token(t))
-    tokens[t].vm_relative.erase_value(r);
-  else
-    tokens[t].vm_relative.set_value(r,-1);
-
-  return rc1;
+  return remove_shared_computation(t,r);
 }
 
 void reg_heap::release_token(int t)
