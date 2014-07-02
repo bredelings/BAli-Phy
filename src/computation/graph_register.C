@@ -1766,6 +1766,7 @@ void reg_heap::clear_computation(int t, int r)
 
   if (rc > 0)
   {
+    computations.inc_version();
     computations.reclaim_used(rc);
   }
 }

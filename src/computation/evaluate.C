@@ -260,7 +260,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     {
       access(R).type = reg::type_t::constant;
       if (has_computation(t,R))
-	remove_shared_computation(t,R);
+	clear_computation(t,R);
     }
 
 #ifndef NDEBUG
@@ -352,7 +352,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 	// If the reg is changeable and this is token 0, then it is in normal form, and we are done.
 	else if (not t)
 	{
-	  remove_shared_computation(t,R);
+	  clear_computation(t,R);
 	  return R;
 	}
 	// Otherwise, set the reduction result.
