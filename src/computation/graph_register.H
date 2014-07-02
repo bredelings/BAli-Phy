@@ -397,8 +397,6 @@ public:
 
   int remove_shared_computation(int t, int r);
 
-  int new_computation_for_reg(int,int) const;
-
   void duplicate_computation(int rc1, int rc2) const;
 
   int add_shared_computation(int t, int r);
