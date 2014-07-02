@@ -403,6 +403,8 @@ public:
 
   int add_shared_computation(int t, int r);
 
+  int move_computation(int t1, int t2, int r);
+
   bool computation_is_referenced(int,int) const;
 
   int result_for_reg(int t, int r) const;

@@ -1252,8 +1252,8 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
     if (not computation_index_for_reg_(t1,r))
     {
-      tokens[t1].vm_relative.add_value(r, rc1);
-      RC.source_token = t1;
+      move_computation(t2, t1, r);
+
       int rc2 = new_computation_for_reg(t2, r);
       tokens[t2].vm_relative.set_value(r, rc2);
       duplicate_computation(rc1,rc2); // but not the result
@@ -1278,12 +1278,7 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     RC.temp = -1;
 
     if (not computation_index_for_reg_(t1,r))
-    {
-      // Move rc2 from t2 to t1+}
-      tokens[t1].vm_relative.add_value(r, rc2);
-      computations[rc2].source_token = t1;
-      share_and_clear(t2,r);
-    }
+      move_computation(t2, t1, r);
     else
     {
       share_and_clear(t2,r);
@@ -1730,6 +1725,16 @@ int reg_heap::new_computation_for_reg(int t, int r) const
   int rc = computations.allocate();
   computations[rc].source_token = t;
   computations[rc].source_reg = r;
+  return rc;
+}
+
+int reg_heap::move_computation(int t1, int t2, int r)
+{
+  int rc = computation_index_for_reg_(t1, r);
+  computations[rc].source_token = t2;
+  tokens[t2].vm_relative.add_value(r, rc);
+
+  remove_shared_computation(t1,r);
   return rc;
 }
 
