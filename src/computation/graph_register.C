@@ -1999,16 +1999,14 @@ void reg_heap::release_context(int c)
 
 std::vector<int>& reg_heap::triggers_for_context(int c)
 {
-  int t = token_for_context(c);
-  reroot_at(t);
-  return triggers(t);
+  reroot_at(token_for_context(c));
+  return triggers(root_token);
 }
 
 bool reg_heap::reg_is_fully_up_to_date_in_context(int R, int c)
 {
-  int t = token_for_context(c);
-  reroot_at(t);
-  return reg_is_fully_up_to_date(R,t);
+  reroot_at(token_for_context(c));
+  return reg_is_fully_up_to_date(R,root_token);
 }
 
 bool reg_heap::reg_is_fully_up_to_date(int R, int t) const
@@ -2072,19 +2070,18 @@ object_ref reg_heap::get_reg_value_in_context(int& R, int c)
 {
   //  if (access(R).type == constant) return access(R).C.exp->head;
 
-  int t = token_for_context(c);
-  reroot_at(t);
+  reroot_at(token_for_context(c));
 
-  if (not reg_has_result(t,R))
+  if (not reg_has_result(root_token,R))
   {
     // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-    if (is_modifiable(access(R).C.exp) and not reg_has_call(t,R)) return object_ref();
+    if (is_modifiable(access(R).C.exp) and not reg_has_call(root_token,R)) return object_ref();
 
     // If the value needs to be computed (e.g. its a call expression) then compute it.
     R = incremental_evaluate_in_context(R,c);
   }
 
-  return access_result_for_reg(t,R).exp->head;
+  return access_result_for_reg(root_token, R).exp->head;
 }
 
 void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
@@ -2098,19 +2095,17 @@ void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
 
 int reg_heap::incremental_evaluate_in_context(int R, int c)
 {
-  int t = token_for_context(c);
-  reroot_at(t);
-  mark_completely_dirty(t);
-  return incremental_evaluate(R, t);
+  reroot_at(token_for_context(c));
+  mark_completely_dirty(root_token);
+  return incremental_evaluate(R, root_token);
 }
 
 const closure& reg_heap::lazy_evaluate(int& R, int c)
 {
-  int t = token_for_context(c);
-  reroot_at(t);
-  mark_completely_dirty(t);
-  R = incremental_evaluate(R, t);
-  return access_result_for_reg(t,R);
+  reroot_at(token_for_context(c));
+  mark_completely_dirty(root_token);
+  R = incremental_evaluate(R, root_token);
+  return access_result_for_reg(root_token, R);
 }
 
 const closure& reg_heap::lazy_evaluate_unchangeable(int& R)
@@ -2124,10 +2119,9 @@ int reg_heap::get_modifiable_value_in_context(int R, int c)
   assert( access(R).C.exp->head->type() == modifiable_type);
   assert( reg_is_changeable(R) );
 
-  int t = token_for_context(c);
-  reroot_at(t);
+  reroot_at(token_for_context(c));
 
-  return call_for_reg(R,t);
+  return call_for_reg(R,root_token);
 }
 
 int reg_heap::add_identifier(const string& name)
