@@ -399,6 +399,8 @@ public:
 
   void reroot_at(int t);
 
+  void reroot_at_context(int c);
+
   /*----- Graph splitting -----*/
   /// Update the value of a non-constant, non-computed index
   void set_reg_value(int index, closure&&, int t);

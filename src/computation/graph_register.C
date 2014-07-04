@@ -992,6 +992,10 @@ void pivot_mapping(mapping& vm1, mapping& vm2)
   std::swap(vm1,vm2);
 }
 
+void reg_heap::reroot_at_context(int c)
+{
+  reroot_at(token_for_context(c));
+}
 
 void reg_heap::reroot_at(int t)
 {
@@ -1999,13 +2003,13 @@ void reg_heap::release_context(int c)
 
 std::vector<int>& reg_heap::triggers_for_context(int c)
 {
-  reroot_at(token_for_context(c));
+  reroot_at_context(c);
   return triggers(root_token);
 }
 
 bool reg_heap::reg_is_fully_up_to_date_in_context(int R, int c)
 {
-  reroot_at(token_for_context(c));
+  reroot_at_context(c);
   return reg_is_fully_up_to_date(R,root_token);
 }
 
@@ -2070,7 +2074,7 @@ object_ref reg_heap::get_reg_value_in_context(int& R, int c)
 {
   //  if (access(R).type == constant) return access(R).C.exp->head;
 
-  reroot_at(token_for_context(c));
+  reroot_at_context(c);
 
   if (not reg_has_result(root_token,R))
   {
@@ -2095,14 +2099,14 @@ void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
 
 int reg_heap::incremental_evaluate_in_context(int R, int c)
 {
-  reroot_at(token_for_context(c));
+  reroot_at_context(c);
   mark_completely_dirty(root_token);
   return incremental_evaluate(R, root_token);
 }
 
 const closure& reg_heap::lazy_evaluate(int& R, int c)
 {
-  reroot_at(token_for_context(c));
+  reroot_at_context(c);
   mark_completely_dirty(root_token);
   R = incremental_evaluate(R, root_token);
   return access_result_for_reg(root_token, R);
@@ -2119,7 +2123,7 @@ int reg_heap::get_modifiable_value_in_context(int R, int c)
   assert( access(R).C.exp->head->type() == modifiable_type);
   assert( reg_is_changeable(R) );
 
-  reroot_at(token_for_context(c));
+  reroot_at_context(c);
 
   return call_for_reg(R,root_token);
 }
