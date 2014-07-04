@@ -1910,6 +1910,44 @@ int reg_heap::switch_to_child_token(int c)
   return t2;
 }
 
+void reg_heap::swap_tokens(int t1, int t2)
+{
+  // 1. Check that tokens are active parent and child
+  assert(t1 > 0);
+  assert(t2 > 0);
+  assert(tokens[t1].used);
+  assert(tokens[t2].used);
+  assert(t1 == tokens[t2].parent);
+
+  // 2. Switch the contexts of the two tokens
+  for(int& t: token_for_context_)
+  {
+    if (t == t1)
+      t = t2;
+    else if (t == t2)
+      t = t1;
+  }
+
+  // 3. Switch parent relationships
+  vector<int> a = tokens[t1].children;
+  int index = remove_element(a,t2);
+  assert(index != -1);
+  vector<int> b = tokens[t2].children;
+  b.push_back(t2);
+
+  tokens[t1].children = b;
+  for(int t: tokens[t1].children)
+    tokens[t].parent = t1;
+  tokens[t2].children = a;
+  for(int t: tokens[t2].children)
+    tokens[t].parent = t2;
+
+  // 4. Switch other fields
+  std::swap(tokens[t1].triggers, tokens[t2].triggers);
+  std::swap(tokens[t1].referenced, tokens[t2].referenced);
+  std::swap(tokens[t1].version, tokens[t2].version);
+}
+
 int reg_heap::get_n_contexts() const
 {
   return token_for_context_.size();
