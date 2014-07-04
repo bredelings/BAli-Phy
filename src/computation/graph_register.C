@@ -459,8 +459,8 @@ double reg_heap::get_rate_for_reg(int r)
   return *convert<const Double>(access(r3).C.exp->head);
 }
 
-const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t));return tokens[t].triggers;}
-      std::vector<int>& reg_heap::triggers(int t)       {assert(is_root_token(t));return tokens[t].triggers;}
+const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t));return tokens[root_token].triggers;}
+      std::vector<int>& reg_heap::triggers(int t)       {assert(is_root_token(t));return tokens[root_token].triggers;}
 
 int reg_heap::computation_index_for_reg(int t, int r) const 
 {
@@ -903,16 +903,13 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
 void reg_heap::set_shared_value(int r, int v)
 {
-  assert(root_token != -1);
-  int token = root_token;
-
   // add a new computation
-  assert(not has_computation_(token, r));
-  add_shared_computation(token, r);
-  assert(has_computation_(token, r));
+  assert(not has_computation_(root_token, r));
+  add_shared_computation(root_token, r);
+  assert(has_computation_(root_token, r));
 
   // set the value
-  set_call(token, r, v);
+  set_call(root_token, r, v);
 }
 
 void swap_value(mapping& vm1, mapping& vm2, int r)
@@ -1499,8 +1496,6 @@ int reg_heap::get_unused_token()
 
   int t = unused_tokens.back();
   unused_tokens.pop_back();
-  if (root_token == -1)
-    root_token = t;
 
   assert(not token_is_used(t));
 
@@ -1744,10 +1739,7 @@ void reg_heap::try_release_token(int t)
   release_token(t);
 
   if (t == root_token)
-  {
     assert(not n_children);
-    root_token = -1;
-  }
 
   // Any context must be either referenced or have more than 1 child context.
   if (parent != -1)
@@ -1810,7 +1802,6 @@ bool reg_heap::is_terminal_token(int t) const
 bool reg_heap::is_root_token(int t) const
 {
   assert(t > 0);
-  assert(root_token != -1);
   assert((t==root_token) == (tokens[t].parent == -1));
   assert(token_is_used(t));
 

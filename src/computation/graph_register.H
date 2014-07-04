@@ -242,7 +242,7 @@ public:
     int version = 0;
   };
 private:
-  int root_token = -1;
+  const int root_token = 1;
 
   /// The roots for each token
   std::vector<Token> tokens;
