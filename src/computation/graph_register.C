@@ -989,7 +989,6 @@ void pivot_mapping(mapping& vm1, mapping& vm2)
     vm1.set_value(r,rc1);
     vm2.set_value(r,rc2);
   }
-  std::swap(vm1,vm2);
 }
 
 void reg_heap::reroot_at_context(int c)
@@ -1012,20 +1011,14 @@ void reg_heap::reroot_at(int t)
 
   // re-rooting to the parent context shouldn't release its token.
   int parent = parent_token(t);
-  assert(token_is_used(parent));
-  assert(is_root_token(parent));
+  assert(parent == root_token);
 
   // 2. Change the relative mappings
   pivot_mapping(tokens[parent].vm_relative, tokens[t].vm_relative);
 
   // 3. Alter the inheritance tree
-  tokens[parent].parent = t;
-  int index = remove_element(tokens[parent].children, t);
-  assert(index != -1);
-
-  tokens[t].parent = -1;
-  tokens[t].children.push_back(parent);
-  root_token = t;
+  swap_tokens(parent,t);
+  std::swap(parent,t);
 
   // 4. Invalidate regs in t that reference(d) computations from parent
   assert(tokens[parent].version >= tokens[t].version);
