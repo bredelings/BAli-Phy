@@ -988,12 +988,12 @@ bool reg_heap::merge_split_mapping(int t1, int t2)
 	vm2.replace_value(r,rc1);
 	if (rc1 > 0)
 	{
-	  //	  assert(computations[rc1].source_token == t1);
+	  assert(computations[rc1].source_token == t1);
 	  computations[rc1].source_token = t2;
 	}
 	if (rc2 > 0)
 	{
-	  //	  assert(computations[rc2].source_token == t2);
+	  assert(computations[rc2].source_token == t2);
 	  computations[rc2].source_token = t1;
 	}
 
@@ -1006,7 +1006,7 @@ bool reg_heap::merge_split_mapping(int t1, int t2)
 	vm2.erase_value(r);
 	if (rc > 0)
 	{
-	  //	  assert(computations[rc].source_token == t2);
+	  assert(computations[rc].source_token == t2);
 	  computations[rc].source_token = t1;
 	}
       }
