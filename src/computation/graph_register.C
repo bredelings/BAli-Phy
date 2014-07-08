@@ -1717,8 +1717,10 @@ int reg_heap::share_and_clear(int t, int r)
   return remove_shared_computation(t,r);
 }
 
-void reg_heap::release_token(int t)
+void reg_heap::release_child_token(int t)
 {
+  destroy_all_computations_in_token(t);
+
   int parent = parent_token(t);
 
   assert(tokens[t].children.empty());
@@ -1779,10 +1781,9 @@ void reg_heap::try_release_token(int t)
   if (n_children > 1 or tokens[t].referenced)
     return;
 
-  int child_token = -1;
   if (n_children)
   {
-    child_token = tokens[t].children[0];
+    int child_token = tokens[t].children[0];
 
     // handle the case when we are trying to release the root
     if (is_root_token(t))
@@ -1799,8 +1800,7 @@ void reg_heap::try_release_token(int t)
   }
 
   // clear only the mappings that were actually updated here.
-  destroy_all_computations_in_token(t);
-  release_token(t);
+  release_child_token(t);
 
   // If we just released a terminal token, maybe it's parent is not terminal also.
   if (parent != -1)
