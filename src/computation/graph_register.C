@@ -1741,6 +1741,9 @@ void reg_heap::try_release_token(int t)
   if (n_children > 1 or tokens[t].referenced)
     return;
 
+  // mark token for this context unused
+  int parent = parent_token(t);
+
   int child_token = -1;
   if (n_children)
   {
@@ -1756,20 +1759,15 @@ void reg_heap::try_release_token(int t)
     merge_split_mapping(tokens[t].vm_relative, tokens[child_token].vm_relative);
 
     invalidate_shared_regs(t, child_token);
-  }
 
-  // mark token for this context unused
-  int parent = parent_token(t);
 
-  if (t == root_token)
-    assert(not n_children);
+    if (t == root_token)
+      assert(not n_children);
 
-  // Any context must be either referenced or have more than 1 child context.
-  if (parent != -1)
-    assert(tokens[parent].referenced or tokens[parent].children.size() > 1);
+    // Any context must be either referenced or have more than 1 child context.
+    if (parent != -1)
+      assert(tokens[parent].referenced or tokens[parent].children.size() > 1);
 
-  if (n_children == 1)
-  {
     assert(not t != root_token);
 
     // make parent point to child
@@ -1784,6 +1782,7 @@ void reg_heap::try_release_token(int t)
   }
   else if (parent != -1)
   {
+    // mark token for this context unused
     int index = remove_element(tokens[parent].children, t);
     assert(index != -1);
   }
