@@ -265,6 +265,8 @@ public:
   /// Release the token if its unreferenced and has no children.
   void try_release_token(int);
 
+  void release_token(int);
+
   bool is_terminal_token(int) const;
 
   bool is_root_token(int) const;

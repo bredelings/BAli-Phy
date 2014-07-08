@@ -1702,6 +1702,15 @@ int reg_heap::share_and_clear(int t, int r)
   return rc1;
 }
 
+void reg_heap::release_token(int t)
+{
+  tokens[t].used = false;
+  tokens[t].children.clear();  
+  tokens[t].parent = -1;
+
+  unused_tokens.push_back(t);
+}
+
 void reg_heap::try_release_token(int t)
 {
   assert(token_is_used(t));
@@ -1735,12 +1744,10 @@ void reg_heap::try_release_token(int t)
   }
 
   // mark token for this context unused
-  tokens[t].used = false;
-  tokens[t].children.clear();  
-  unused_tokens.push_back(t);
-
   int parent = parent_token(t);
-  tokens[t].parent = -1;
+
+  release_token(t);
+
   if (t == root_token)
   {
     assert(not n_children);
