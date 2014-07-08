@@ -964,7 +964,7 @@ bool reg_heap::merge_split_mapping(int t1, int t2)
 	vm2.add_value(r,rc);
 	if (rc > 0)
 	{
-	  //	  assert(computations[rc].source_token == t1);
+	  assert(computations[rc].source_token == t1);
 	  computations[rc].source_token = t2;
 	}
       }
