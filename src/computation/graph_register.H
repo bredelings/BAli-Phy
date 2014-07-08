@@ -291,6 +291,8 @@ public:
   /// Interchange the contexts and children of the two tokens
   void swap_tokens(int, int);
 
+  bool merge_split_mapping(int, int);
+
   /*------------- Stuff for context indices -----------*/
   std::vector<int> unused_contexts;
 

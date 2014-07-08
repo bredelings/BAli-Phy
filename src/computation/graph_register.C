@@ -941,8 +941,10 @@ void swap_value(mapping& vm1, mapping& vm2, int r)
 
 // Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
-bool merge_split_mapping(mapping& vm1, mapping& vm2)
+bool reg_heap::merge_split_mapping(int t1, int t2)
 {
+  auto& vm1 = tokens[t1].vm_relative;
+  auto& vm2 = tokens[t2].vm_relative;
   if (vm1.modified().size() < vm2.modified().size())
   {
     for(int i=0;i<vm1.modified().size();)
@@ -954,6 +956,11 @@ bool merge_split_mapping(mapping& vm1, mapping& vm2)
 	// transfer mapping from v1[r] -> v2[r]
 	int rc = vm1.erase_value(r);
 	vm2.add_value(r,rc);
+	if (rc > 0)
+	{
+	  //	  assert(computations[rc].source_token == t1);
+	  computations[rc].source_token = t2;
+	}
       }
       else
 	i++;
@@ -969,13 +976,33 @@ bool merge_split_mapping(mapping& vm1, mapping& vm2)
 
       if (vm1[r])
       {
-	swap_value(vm1, vm2, r);
+	int rc1 = vm1[r];
+	int rc2 = vm2[r];
+	vm1.replace_value(r,rc2);
+	vm2.replace_value(r,rc1);
+	if (rc1 > 0)
+	{
+	  //	  assert(computations[rc1].source_token == t1);
+	  computations[rc1].source_token = t2;
+	}
+	if (rc2 > 0)
+	{
+	  //	  assert(computations[rc2].source_token == t2);
+	  computations[rc2].source_token = t1;
+	}
+
 	i++;
       }
       else
       {
-	vm1.add_value(r,vm2[r]);
+	int rc = vm2[r];
+	vm1.add_value(r,rc);
 	vm2.erase_value(r);
+	if (rc > 0)
+	{
+	  //	  assert(computations[rc].source_token == t2);
+	  computations[rc].source_token = t1;
+	}
       }
     }
     return true;
@@ -1801,7 +1828,7 @@ void reg_heap::try_release_token(int t)
       return;
     }
 
-    if (merge_split_mapping(tokens[t].vm_relative, tokens[child_token].vm_relative))
+    if (merge_split_mapping(t, child_token))
     {
       swap_tokens(t, child_token);
       std::swap(t, child_token);
