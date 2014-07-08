@@ -1719,11 +1719,43 @@ int reg_heap::share_and_clear(int t, int r)
 
 void reg_heap::release_token(int t)
 {
+  int parent = parent_token(t);
+
+  assert(tokens[t].children.empty());
+
   tokens[t].used = false;
-  tokens[t].children.clear();  
-  tokens[t].parent = -1;
+  
+  if (parent != -1)
+  {
+    // mark token for this context unused
+    int index = remove_element(tokens[parent_token(t)].children, t);
+    assert(index != -1);
+    tokens[t].parent = -1;
+  }
 
   unused_tokens.push_back(t);
+}
+
+void reg_heap::capture_parent_token(int t2)
+{
+  int t1 = parent_token(t2);
+  assert(t1 != -1);
+
+  int parent = parent_token(t1);
+  assert(parent != -1);
+
+  // make parent point to t2 instead of t1
+  int index = replace_element(tokens[parent].children, t1, t2);
+  assert(index != -1);
+
+  // connect t2 to the parent and to t1
+  tokens[t2].parent = parent;
+  tokens[t2].children.push_back(t1);
+
+  // token t1 is now a leaf token
+  tokens[t1].parent = t2;
+  index = remove_element(tokens[t1].children, t2);
+  assert(index != -1);
 }
 
 void reg_heap::try_release_token(int t)
@@ -1763,20 +1795,7 @@ void reg_heap::try_release_token(int t)
 
     invalidate_shared_regs(t, child_token);
 
-    assert(parent != -1);
-
-    // make parent point to child
-    int index = replace_element(tokens[parent].children, t, child_token);
-    assert(index != -1);
-
-    // make child point to parent
-    tokens[child_token].parent = parent;
-  }
-  else if (parent != -1)
-  {
-    // mark token for this context unused
-    int index = remove_element(tokens[parent].children, t);
-    assert(index != -1);
+    capture_parent_token(child_token);
   }
 
   // clear only the mappings that were actually updated here.

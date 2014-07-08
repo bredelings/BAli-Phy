@@ -270,6 +270,8 @@ public:
 
   void release_token(int);
 
+  void capture_parent_token(int);
+
   bool is_terminal_token(int) const;
 
   bool is_root_token(int) const;
