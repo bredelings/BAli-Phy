@@ -1737,12 +1737,15 @@ void reg_heap::try_release_token(int t)
   // FIXME: we can have temp heads here from performing an IO action from outside...
   //  assert(temp.empty());
 
+  int parent = parent_token(t);
+
+  // Check invariant that any context must be either referenced or have more than 1 child context.
+  if (parent != -1)
+    assert(tokens[parent].referenced or tokens[parent].children.size() > 1);
+
   int n_children = tokens[t].children.size();
   if (n_children > 1 or tokens[t].referenced)
     return;
-
-  // mark token for this context unused
-  int parent = parent_token(t);
 
   int child_token = -1;
   if (n_children)
@@ -1763,10 +1766,6 @@ void reg_heap::try_release_token(int t)
 
     if (t == root_token)
       assert(not n_children);
-
-    // Any context must be either referenced or have more than 1 child context.
-    if (parent != -1)
-      assert(tokens[parent].referenced or tokens[parent].children.size() > 1);
 
     assert(not t != root_token);
 
