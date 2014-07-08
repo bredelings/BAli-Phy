@@ -1032,10 +1032,18 @@ void reg_heap::reroot_at(int t)
 
   // 2. Change the relative mappings
   pivot_mapping(tokens[parent].vm_relative, tokens[t].vm_relative);
-
-  // 3. Alter the inheritance tree
   swap_tokens(parent,t);
   std::swap(parent,t);
+
+  // 3. Alter the inheritance tree
+  tokens[parent].parent = t;
+  int index = remove_element(tokens[parent].children, t);
+  assert(index != -1);
+
+  tokens[t].parent = -1;
+  tokens[t].children.push_back(parent);
+
+  assert(t == root_token);
 
   // 4. Invalidate regs in t that reference(d) computations from parent
   assert(tokens[parent].version >= tokens[t].version);
@@ -1924,6 +1932,16 @@ int reg_heap::switch_to_child_token(int c)
   return t2;
 }
 
+int interchange(int x, int t1, int t2)
+{
+  if (x == t1)
+    return t2;
+  else if (x == t2)
+    return t1;
+  else
+    return x;
+}
+
 void reg_heap::swap_tokens(int t1, int t2)
 {
   // 1. Check that tokens are active parent and child
@@ -1935,26 +1953,37 @@ void reg_heap::swap_tokens(int t1, int t2)
 
   // 2. Switch the contexts of the two tokens
   for(int& t: token_for_context_)
-  {
-    if (t == t1)
-      t = t2;
-    else if (t == t2)
-      t = t1;
-  }
+    t = interchange(t, t1, t2);
+
+  if (tokens[t1].parent == t2)
+    std::swap(t1,t2);
 
   // 3. Switch parent relationships
-  vector<int> a = tokens[t1].children;
-  int index = remove_element(a,t2);
-  assert(index != -1);
-  vector<int> b = tokens[t2].children;
-  b.push_back(t2);
+  std::swap(tokens[t1].children, tokens[t2].children);
+  std::swap(tokens[t1].parent, tokens[t2].parent);
 
-  tokens[t1].children = b;
-  for(int t: tokens[t1].children)
-    tokens[t].parent = t1;
-  tokens[t2].children = a;
-  for(int t: tokens[t2].children)
-    tokens[t].parent = t2;
+  if (tokens[t1].parent == t1)
+  {
+    tokens[t1].parent = t2;
+
+    replace_element(tokens[t2].children, t2, t1);
+  }
+
+  {
+    for(int t: tokens[t1].children)
+      tokens[t].parent = t1;
+
+    for(int t: tokens[t2].children)
+      tokens[t].parent = t2;
+
+    int p1 = tokens[t1].parent;
+    if (p1 != -1)
+      replace_element(tokens[p1].children, t2, t1);
+
+    int p2 = tokens[t2].parent;
+    if (p2 != -1)
+      replace_element(tokens[p2].children, t1, t2);
+  }
 
   // 4. Switch other fields
   std::swap(tokens[t1].triggers, tokens[t2].triggers);
