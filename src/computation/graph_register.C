@@ -1803,7 +1803,8 @@ void reg_heap::try_release_token(int t)
 
     if (merge_split_mapping(tokens[t].vm_relative, tokens[child_token].vm_relative))
     {
-      std::swap(tokens[t].vm_relative, tokens[child_token].vm_relative);
+      swap_tokens(t, child_token);
+      std::swap(t, child_token);
     }
 
     invalidate_shared_regs(t, child_token);
