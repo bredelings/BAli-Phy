@@ -1763,10 +1763,6 @@ void reg_heap::try_release_token(int t)
 
     invalidate_shared_regs(t, child_token);
 
-
-    if (t == root_token)
-      assert(not n_children);
-
     assert(not t != root_token);
 
     // make parent point to child
