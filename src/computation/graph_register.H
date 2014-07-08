@@ -293,6 +293,8 @@ public:
 
   bool merge_split_mapping(int, int);
 
+  void pivot_mapping(int, int);
+
   /*------------- Stuff for context indices -----------*/
   std::vector<int> unused_contexts;
 

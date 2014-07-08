@@ -1011,8 +1011,10 @@ bool reg_heap::merge_split_mapping(int t1, int t2)
 
 // Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
 // where (m2,v2) is at the root and (m1,v1) is relative.
-void pivot_mapping(mapping& vm1, mapping& vm2)
+void reg_heap::pivot_mapping(int t1, int t2)
 {
+  auto& vm1 = tokens[t1].vm_relative;
+  auto& vm2 = tokens[t2].vm_relative;
   for(int i=0;i<vm2.modified().size();i++)
   {
     int r = vm2.modified()[i];
@@ -1031,7 +1033,17 @@ void pivot_mapping(mapping& vm1, mapping& vm2)
     if (rc1 == -1) rc1 = 0;
 
     vm1.set_value(r,rc1);
+    if (rc1 > 0)
+    {
+      assert(computations[rc1].source_token == t2);
+      computations[rc1].source_token = t1;
+    }
     vm2.set_value(r,rc2);
+    if (rc2 > 0)
+    {
+      assert(computations[rc2].source_token == t1);
+      computations[rc2].source_token = t2;
+    }
   }
 }
 
@@ -1058,7 +1070,7 @@ void reg_heap::reroot_at(int t)
   assert(parent == root_token);
 
   // 2. Change the relative mappings
-  pivot_mapping(tokens[parent].vm_relative, tokens[t].vm_relative);
+  pivot_mapping(parent, t);
   swap_tokens(parent,t);
   std::swap(parent,t);
 
