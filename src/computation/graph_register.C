@@ -1763,14 +1763,11 @@ void reg_heap::try_release_token(int t)
 
     invalidate_shared_regs(t, child_token);
 
-    assert(not t != root_token);
+    assert(parent != -1);
 
     // make parent point to child
-    if (parent != -1)
-    {
-      int index = replace_element(tokens[parent].children, t, child_token);
-      assert(index != -1);
-    }
+    int index = replace_element(tokens[parent].children, t, child_token);
+    assert(index != -1);
 
     // make child point to parent
     tokens[child_token].parent = parent;
