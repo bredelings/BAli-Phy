@@ -1492,6 +1492,11 @@ void reg_heap::trace_and_reclaim_unreachable()
   release_scratch_list();
 }
 
+bool reg_heap::reg_is_constant(int r) const
+{
+  return access(r).type == reg::type_t::constant;
+}
+
 bool reg_heap::reg_is_changeable(int r) const
 {
   return access(r).type == reg::type_t::changeable;
