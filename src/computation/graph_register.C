@@ -1835,8 +1835,6 @@ bool reg_heap::token_is_used(int t) const
 int reg_heap::copy_token(int t)
 {
 #ifdef DEBUG_MACHINE
-  check_tokens();
-
   check_used_regs();
 #endif
 
@@ -1876,8 +1874,6 @@ int reg_heap::copy_token(int t)
   */
 #ifdef DEBUG_MACHINE
   check_used_regs();
-
-  check_tokens();
 #endif
 
   return t2;
@@ -1885,10 +1881,15 @@ int reg_heap::copy_token(int t)
 
 int reg_heap::switch_to_child_token(int c)
 {
+  check_tokens();
+
   int t1 = token_for_context(c);
   int t2 = copy_token(t1);
   unset_token_for_context(c);
   set_token_for_context(c,t2);
+
+  check_tokens();
+
   return t2;
 }
 
