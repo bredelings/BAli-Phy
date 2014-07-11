@@ -2127,9 +2127,7 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
 
 const closure& reg_heap::lazy_evaluate(int& R, int c)
 {
-  reroot_at_context(c);
-  mark_completely_dirty(root_token);
-  R = incremental_evaluate(R, root_token);
+  R = incremental_evaluate_in_context(R,c);
   return access_result_for_reg(root_token, R);
 }
 
