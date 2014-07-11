@@ -315,6 +315,8 @@ public:
 
   int incremental_evaluate_in_context(int R, int c);
 
+  int incremental_evaluate_unchangeable(int R);
+
   object_ref get_parameter_value_in_context(int R, int c);
 
   object_ref get_reg_value_in_context(int& R, int c);

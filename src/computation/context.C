@@ -41,7 +41,7 @@ int context::incremental_evaluate(int R) const
 
 int context::incremental_evaluate_unchangeable(int R) const 
 {
-  return memory()->incremental_evaluate(R,0);
+  return memory()->incremental_evaluate_unchangeable(R);
 }
 
 int context::allocate() const {return memory()->allocate();}

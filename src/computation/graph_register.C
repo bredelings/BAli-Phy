@@ -410,7 +410,7 @@ bool reg_heap::parameter_is_modifiable(int index)
 {
   int R = parameters[index].second;
 
-  int R2 = incremental_evaluate(R,0);
+  int R2 = incremental_evaluate_unchangeable(R);
 
   return is_modifiable(access(R2).C.exp);
 }
@@ -421,7 +421,7 @@ int reg_heap::find_parameter_modifiable_reg(int index)
 
   int R = parameters[index].second;
 
-  int R2 = incremental_evaluate(R,0);
+  int R2 = incremental_evaluate_unchangeable(R);
 
   if (R != R2)
     parameters[index].second = R2;
@@ -455,7 +455,7 @@ double reg_heap::get_rate_for_reg(int r)
     return {};
 
   int r3 = access(r).C.lookup_in_env(0);
-  r3 = incremental_evaluate(r3,0);
+  r3 = incremental_evaluate_unchangeable(r3);
   return *convert<const Double>(access(r3).C.exp->head);
 }
 
@@ -2123,6 +2123,11 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
   reroot_at_context(c);
   mark_completely_dirty(root_token);
   return incremental_evaluate(R, root_token);
+}
+
+int reg_heap::incremental_evaluate_unchangeable(int R)
+{
+  return incremental_evaluate(R, 0);
 }
 
 const closure& reg_heap::lazy_evaluate(int& R, int c)
