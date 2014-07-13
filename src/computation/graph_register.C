@@ -1679,6 +1679,10 @@ int reg_heap::add_shared_computation(int t, int r)
 
   tokens[t].vm_relative.set_value(r, rc);
 
+#if DEBUG_MACHINE >= 3
+  check_used_reg(r);
+#endif
+
   return rc;
 }
 
