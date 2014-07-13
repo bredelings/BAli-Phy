@@ -899,7 +899,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       incremental_evaluate(R,token);
     regs_to_re_evaluate.clear();
   }
-#ifdef DEBUG_MACHINE >= 2
+#if DEBUG_MACHINE >= 2
   check_used_regs();
 #endif
 }
@@ -2123,7 +2123,7 @@ void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
 
 int reg_heap::incremental_evaluate_in_context(int R, int c)
 {
-#ifdef DEBUG_MACHINE >= 2
+#if DEBUG_MACHINE >= 2
   check_used_regs();
 #endif
 
@@ -2131,7 +2131,7 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
   mark_completely_dirty(root_token);
   R = incremental_evaluate(R, root_token);
 
-#ifdef DEBUG_MACHINE >= 2
+#if DEBUG_MACHINE >= 2
   check_used_regs();
 #endif
 
@@ -2140,13 +2140,13 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
 
 int reg_heap::incremental_evaluate_unchangeable(int R)
 {
-#ifdef DEBUG_MACHINE >= 2
+#if DEBUG_MACHINE >= 2
   check_used_regs();
 #endif
 
   R = incremental_evaluate(R, 0);
 
-#ifdef DEBUG_MACHINE >= 2
+#if DEBUG_MACHINE >= 2
   check_used_regs();
 #endif
 
