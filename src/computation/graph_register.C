@@ -899,6 +899,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       incremental_evaluate(R,token);
     regs_to_re_evaluate.clear();
   }
+#ifdef DEBUG_MACHINE >= 2
+  check_used_regs();
+#endif
 }
 
 void reg_heap::set_shared_value(int r, int v)
