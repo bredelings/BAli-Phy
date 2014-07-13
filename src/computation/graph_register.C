@@ -2120,14 +2120,34 @@ void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
 
 int reg_heap::incremental_evaluate_in_context(int R, int c)
 {
+#ifdef DEBUG_MACHINE >= 2
+  check_used_regs();
+#endif
+
   reroot_at_context(c);
   mark_completely_dirty(root_token);
-  return incremental_evaluate(R, root_token);
+  R = incremental_evaluate(R, root_token);
+
+#ifdef DEBUG_MACHINE >= 2
+  check_used_regs();
+#endif
+
+  return R;
 }
 
 int reg_heap::incremental_evaluate_unchangeable(int R)
 {
-  return incremental_evaluate(R, 0);
+#ifdef DEBUG_MACHINE >= 2
+  check_used_regs();
+#endif
+
+  R = incremental_evaluate(R, 0);
+
+#ifdef DEBUG_MACHINE >= 2
+  check_used_regs();
+#endif
+
+  return R;
 }
 
 const closure& reg_heap::lazy_evaluate(int& R, int c)
