@@ -28,9 +28,7 @@ class context
 
   int perform_io_head = -1;
 
-  std::vector<int>& temp_heads() const;
-
-  std::vector<int>& heads() const;
+  const std::vector<int>& heads() const;
 
   std::vector<std::pair<std::string,int>>& parameters() const;
 

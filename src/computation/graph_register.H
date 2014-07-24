@@ -356,6 +356,12 @@ public:
   const std::vector<int>& triggers(int t) const;
         std::vector<int>& triggers(int t);
 
+  /// Make heads[index] point to r
+  int set_head(int index, int r);
+
+  /// Allocate a reg in context t and put it on the top of the head stack.
+  int allocate_head();
+
   /// Allocate a reg in context t and put it on the top of the temporary-head stack.
   int push_temp_head();
 
@@ -438,6 +444,8 @@ public:
   int incremental_evaluate(int R, int t);
 
   const closure& lazy_evaluate(int& R, int c);
+
+  const closure& lazy_evaluate_head(int h, int c);
 
   const closure& lazy_evaluate_unchangeable(int& R);
 

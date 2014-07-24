@@ -19,7 +19,7 @@ using std::endl;
 
 object_ptr<reg_heap>& context::memory() const {return memory_;}
 
-std::vector<int>& context::heads() const {return memory()->get_heads();}
+const std::vector<int>& context::heads() const {return memory()->get_heads();}
 
 std::vector<std::pair<std::string,int>>& context::parameters() const {return memory()->get_parameters();}
 
@@ -84,9 +84,7 @@ bool context::compute_expression_is_up_to_date(int index) const
 /// Return the value of a particular index, computing it if necessary
 closure context::lazy_evaluate(int index) const
 {
-  int& H = heads()[index];
-
-  return memory()->lazy_evaluate(H, context_index);
+  return memory()->lazy_evaluate_head(index, context_index);
 }
 
 /// Return the value of a particular index, computing it if necessary
@@ -330,9 +328,7 @@ int context::add_compute_expression(const expression_ref& E)
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression_(closure&& C)
 {
-  int R = allocate();
-
-  heads().push_back( R);
+  int R = memory()->allocate_head();
 
   set_C( R, std::move(C) );
 
@@ -350,7 +346,7 @@ void context::set_compute_expression_(int i, closure&& C)
 {
   int R = allocate();
 
-  heads()[i] = R;
+  memory()->set_head(i, R);
 
   set_C( R, std::move(C) );
 }
@@ -358,8 +354,8 @@ void context::set_compute_expression_(int i, closure&& C)
 /// Should the ith compute expression be re_evaluated when invalidated?
 void context::set_re_evaluate(int i, bool b)
 {
-  int& R = heads()[i];
-  R = incremental_evaluate(R);
+  memory()->lazy_evaluate_head(i, context_index);
+  int R = heads()[i];
   if (memory()->reg_is_changeable(R))
     access(R).re_evaluate = b;
 }

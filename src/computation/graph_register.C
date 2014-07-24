@@ -1399,6 +1399,30 @@ int reg_heap::dec_heads(int R)
   return access(R).n_heads;
 }
 
+int reg_heap::set_head(int index, int R2)
+{
+  int R1 = heads[index];
+
+  inc_heads(R2);
+
+  heads[index] = R2;
+
+  dec_heads(R1);
+
+  return R1;
+}
+
+int reg_heap::allocate_head()
+{
+  int R = allocate();
+
+  heads.push_back(R);
+
+  inc_heads(R);
+
+  return R;
+}
+
 int reg_heap::push_temp_head()
 {
   int R = allocate();
@@ -2299,6 +2323,16 @@ const closure& reg_heap::lazy_evaluate(int& R, int c)
 {
   R = incremental_evaluate_in_context(R,c);
   return access_result_for_reg(root_token, R);
+}
+
+const closure& reg_heap::lazy_evaluate_head(int index, int c)
+{
+  int R1 = heads[index];
+  int R2 = incremental_evaluate_in_context(R1,c);
+  if (R2 != R1)
+    set_head(index, R2);
+
+  return access_result_for_reg(root_token, R2);
 }
 
 const closure& reg_heap::lazy_evaluate_unchangeable(int& R)
