@@ -256,13 +256,16 @@ reg& reg::operator=(reg&& R) noexcept
 
   type = R.type;
 
+  n_heads = R.n_heads;
+
   return *this;
 }
 
 reg::reg(reg&& R) noexcept
 :C( std::move(R.C) ),
   re_evaluate( R.re_evaluate ),
-  type ( R.type )
+  type ( R.type ),
+  n_heads( R.n_heads )
 { }
 
 void reg::clear()
@@ -270,6 +273,7 @@ void reg::clear()
   C.clear();
   re_evaluate = false;
   type = type_t::unknown;
+  assert(n_heads == 0);
 }
 
 void reg::check_cleared()
@@ -277,6 +281,7 @@ void reg::check_cleared()
   assert(not C);
   assert(not re_evaluate);
   assert(type == type_t::unknown);
+  assert(n_heads == 0);
 }
 
 bool mapping::has_value(int r) const {return operator[](r);}
@@ -377,6 +382,8 @@ bool mapping::empty() const
 void reg_heap::register_probability(int r)
 {
   probability_heads.push_back(r);
+
+  inc_heads(r);
 }
 
 int reg_heap::register_probability(closure&& C)
@@ -1377,17 +1384,38 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
       scan.push_back(i.second);
 }
 
+int reg_heap::inc_heads(int R)
+{
+  assert( access(R).n_heads >= 0);
+  access(R).n_heads++;
+  return access(R).n_heads;
+}
+
+int reg_heap::dec_heads(int R)
+{
+  assert( access(R).n_heads >= 0);
+  access(R).n_heads--;
+  assert( access(R).n_heads >= 0);
+  return access(R).n_heads;
+}
+
 int reg_heap::push_temp_head()
 {
   int R = allocate();
 
   temp.push_back(R);
 
+  inc_heads(R);
+
   return R;
 }
 
 void reg_heap::pop_temp_head()
 {
+  int R = temp.back();
+
+  dec_heads(R);
+
   temp.pop_back();
 }
 
