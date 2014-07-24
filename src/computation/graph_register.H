@@ -342,10 +342,8 @@ public:
   /*------------------------------------------------*/
 
   const std::vector<int>& get_temp_heads() const {return temp;}
-        std::vector<int>& get_temp_heads()       {return temp;}
 
   const std::vector<int>& get_heads() const {return heads;}
-        std::vector<int>& get_heads()       {return heads;}
 
   const std::vector<std::pair<std::string,int>>& get_parameters() const {return parameters;}
         std::vector<std::pair<std::string,int>>& get_parameters()       {return parameters;}
