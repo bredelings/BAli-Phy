@@ -462,9 +462,6 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
         if (i != j)
           add_unique(new_masks,masks,i & j);
 
-    new_good_masks.clear();
-    new_unit_masks.clear();
-
     //cerr<<"   new good masks = "<<new_good_masks.size()<<"    new unit masks = "<<new_unit_masks.size()<<endl;
     //cerr<<"       good masks = "<<good_masks.size()    <<"       total masks = "<<masks.size()<<"       found = "<<splits.size()<<endl;
 
