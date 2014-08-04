@@ -383,7 +383,6 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
     list<dynamic_bitset<> > new_unit_masks;
 
     // get sub-splits for each mask
-    vector<Partition> all_partial_splits;
     for(const auto& mask: new_masks)
     {
       // get sub-splits of mask
