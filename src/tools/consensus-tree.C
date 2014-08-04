@@ -462,26 +462,6 @@ get_Ml_sub_partitions_and_counts(const tree_sample& sample,double l,const dynami
         if (i != j)
           add_unique(new_masks,masks,i & j);
 
-    if (iterations >= depth-1) continue;
-
-    // 5. new_masks += masks * unit_masks = (masks + new_masks) * (unit_masks + new_unit_masks)
-    // Rationale: Pull out every combination of (depth+1) unit_masks together.
-    for(const auto& i: masks)
-      for(const auto& j: unit_masks)
-	add_unique(new_masks,masks,i & j);
-
-    // old good_masks were considered with unit_masks last_time
-    // Rationale: Pull out every combination (depth+1) unit_masks together with every good_mask.
-    for(const auto& i: new_good_masks)
-      for(const auto& j: unit_masks)
-	add_unique(new_masks,masks,i & j);
-
-    // old good_masks were considered with unit_masks already
-    // Rationale: Pull out every combination (depth+1) unit_masks together with every unit_mask.
-    for(const auto& i: masks)
-      for(const auto& j: new_good_masks)
-	add_unique(new_masks,masks,i & j);
-
     new_good_masks.clear();
     new_unit_masks.clear();
 
