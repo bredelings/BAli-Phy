@@ -8,6 +8,8 @@ using std::set;
 #include "operations.H"
 #include "computation.H"
 
+int total_reductions = 0;
+
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
 class RegOperationArgs: public OperationArgs
 {
@@ -336,6 +338,7 @@ int reg_heap::incremental_evaluate(int R, int t)
       {
 	RegOperationArgs Args(R, *this, t);
 	closure result = (*O)(Args);
+	total_reductions++;
 	
 	// NOTE: While not all used_inputs are E-children, they SHOULD all be E-descendents.
 	//       How could we assert that?

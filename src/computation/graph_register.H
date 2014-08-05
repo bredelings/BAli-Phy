@@ -439,4 +439,6 @@ void dot_graph_for_token(const reg_heap& C, int t);
 struct no_context: public std::exception
 {
 };
+
+extern int total_reductions;
 #endif

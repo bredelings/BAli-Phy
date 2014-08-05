@@ -225,6 +225,8 @@ void show_ending_messages()
     cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
     cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
     cout<<"total branches peeled = "<<substitution::total_peel_branches<<endl;
+    extern int total_reductions;
+    cout<<"total reduction steps = "<<total_reductions<<endl;
   }
 }
 
