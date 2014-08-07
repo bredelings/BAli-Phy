@@ -57,6 +57,10 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& scan, vecto
   for(int i=0;i<scan.size();i++)
   {
     int r = scan[i];
+
+    // This is a hack, but allows drawing graphs when we have edges to missing regs
+    if (is_free(r)) continue;
+
     assert(is_used(r) or is_marked(r));
     if (is_marked(r)) continue;
 
@@ -466,6 +470,8 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     {
       for(int R2: targets)
       {
+	if (not C.is_used(R2)) continue;
+
 	string name2 = "n" + convertToString(R2);
 	bool used = false;
 	for(int i: C.used_regs_for_reg(t,R))
@@ -487,6 +493,8 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     {
       for(int R2: C.access(R).C.Env)
       {
+	if (not C.is_used(R2)) continue;
+
 	string name2 = "n" + convertToString(R2);
 	bool used = false;
 	for(int i: C.used_regs_for_reg(t,R))
