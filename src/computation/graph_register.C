@@ -534,7 +534,8 @@ int reg_heap::call_for_reg_(int t, int r) const
   return computation_for_reg_(t,r).call;
 }
 
-vector<pool<computation>::weak_ref>& clean_weak_refs(vector<pool<computation>::weak_ref>& v, const pool<computation>& P)
+template <typename T>
+vector<typename pool<T>::weak_ref>& clean_weak_refs(vector<typename pool<T>::weak_ref>& v, const pool<T>& P)
 {
   for(int i=0; i < v.size();)
   {
