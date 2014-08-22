@@ -1442,12 +1442,12 @@ int main(int argc,char* argv[])
     variables_map args = parse_cmd_line(argc,argv);
 
     //------ Capture copy of 'cerr' output in 'err_cache' ------//
-    if (not args.count("show-only")) {
+    if (not args.count("show-only"))
       cerr.rdbuf(err_both.rdbuf());
-    }
-    else {
-      if (proc_id) return 0;
 
+    //------ Print version info for show-only ------//
+    if (args.count("show-only") and proc_id == 0)
+    {
       cout<<"command: "<<get_command_line(argc,argv)<<endl<<endl;
       print_version_info(cout);
       cout<<endl;
