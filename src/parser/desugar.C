@@ -900,10 +900,10 @@ Module read_model(const string& filename)
   return Model;
 }
 
-void add_model(Parameters& P, const std::string& filename)
+void add_model(Model& M, const std::string& filename)
 {
   auto m = read_model(filename);
 
-  P += m;
-  P.perform_expression((identifier("gen_model"),identifier(m.name+".main")));
+  M += m;
+  M.perform_expression((identifier("gen_model"),identifier(m.name+".main")));
 }

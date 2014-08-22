@@ -358,7 +358,7 @@ int parameter_with_extension(const Model& M, const string& name)
   throw e;
 }
 
-void set_key_values(Parameters& P, const variables_map& args)
+void set_key_values(Probability_Model& M, const variables_map& args)
 {
   if (not args.count("set")) return;
 
@@ -374,19 +374,19 @@ void set_key_values(Parameters& P, const variables_map& args)
 
     double value = convertTo<double>(parse[1]);
     
-    (*P.keys.modify())[key] = value;
+    (*M.keys.modify())[key] = value;
   }
 }
 
 /// Parse command line arguments of the form --fix X=x or --unfix X=x or --set X=x and modify P
-void set_initial_parameter_values(Parameters& P, const variables_map& args) 
+void set_initial_parameter_values(Model& M, const variables_map& args) 
 {
   //-------------- Specify fixed parameters ----------------//
   vector<string> doset;
   if (args.count("initial-value"))
     doset = args["initial-value"].as<vector<string> >();
 
-  vector<string> short_names = short_parameter_names(P);
+  vector<string> short_names = short_parameter_names(M);
 
   // set parameters
   for(const auto& arg: doset)
@@ -409,13 +409,13 @@ void set_initial_parameter_values(Parameters& P, const variables_map& args)
       throw e;
     }
 
-    int p_index = P.find_parameter(name);
+    int p_index = M.find_parameter(name);
     if (p_index == -1)
       p_index = find_index(short_names,name);
     if (p_index == -1)
       throw myexception()<<"Can't find parameter '"<<name<<"' to set value '"<<parse[1]<<"'";
 
-    P.set_parameter_value(p_index,value);
+    M.set_parameter_value(p_index,value);
   }
 }
 
@@ -599,10 +599,10 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, cons
   return indices;
 }
 
-void find_sub_loggers(Parameters& P, int& index, const string& name, vector<int>& logged_computations, vector<string>& logged_names)
+void find_sub_loggers(const owned_ptr<Probability_Model>& M, int& index, const string& name, vector<int>& logged_computations, vector<string>& logged_names)
 {
   assert(index != -1);
-  object_ref result = P.evaluate(index);
+  object_ref result = M->evaluate(index);
   if ((bool)dynamic_pointer_cast<const Double>(result) or (bool)dynamic_pointer_cast<const Int>(result))
   {
     logged_computations.push_back(index);
@@ -626,19 +626,19 @@ void find_sub_loggers(Parameters& P, int& index, const string& name, vector<int>
 
     if (c->f_name == ":")
     {
-      expression_ref L = P.get_expression(index);
+      expression_ref L = M->get_expression(index);
       expression_ref E = (identifier("Prelude.length"),L);
-      int length = *convert<const Int>(P.evaluate_expression(E));
+      int length = *convert<const Int>(M->evaluate_expression(E));
       int index2 = -1;
       for(int i=0;i<length;i++)
       {
 	expression_ref E2 = (identifier("Prelude.!!"),L,i) ;
 	if (index2 == -1)
-	  index2 = P.add_compute_expression(E2);
+	  index2 = M->add_compute_expression(E2);
 	else
-	  P.set_compute_expression(index2, E2);
+	  M->set_compute_expression(index2, E2);
 
-	find_sub_loggers(P, index2, name+"!!"+convertToString(i), logged_computations, logged_names);
+	find_sub_loggers(M, index2, name+"!!"+convertToString(i), logged_computations, logged_names);
       }
     }
   }
@@ -647,16 +647,19 @@ void find_sub_loggers(Parameters& P, int& index, const string& name, vector<int>
 
 
 
-owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, const vector<string>& Rao_Blackwellize)
+owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Probability_Model>& M, const vector<string>& Rao_Blackwellize)
 {
+  owned_ptr<Parameters> P = M.as<Parameters>();
+
   using namespace MCMC;
   owned_ptr<TableGroupFunction<string> > TL = claim(new TableGroupFunction<string>);
   
   TL->add_field("iter", ConvertToStringFunction<long>( IterationsFunction() ) );
   TL->add_field("prior", GetPriorFunction() );
-  for(int i=0;i<P.n_data_partitions();i++)
-    if (P[i].variable_alignment())
-      TL->add_field("prior_A"+convertToString(i+1), GetAlignmentPriorFunction(i) );
+  if (P)
+    for(int i=0;i<P->n_data_partitions();i++)
+      if ((*P)[i].variable_alignment())
+	TL->add_field("prior_A"+convertToString(i+1), GetAlignmentPriorFunction(i) );
   TL->add_field("likelihood", GetLikelihoodFunction() );
   TL->add_field("logp", GetProbabilityFunction() );
   
@@ -664,21 +667,21 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
     vector<int> logged_computations;
     vector<string> logged_names;
 
-    vector<string> names_ = parameter_names(P);
+    vector<string> names_ = parameter_names(*M);
     set<string> names(names_.begin(), names_.end());
 
     // FIXME: Using short_parameter_names should be nice... but
     //          we are now logging EXPRESSIONS as well as actual parameters
     //        This makes such simplification difficult.
 
-    for(int i=0;i<P.n_parameters();i++)
+    for(int i=0;i<M->n_parameters();i++)
     {
-      string name = P.parameter_name(i);
+      string name = M->parameter_name(i);
       if (name.size() and name[0] == '*' and not log_verbose) continue;
 
-      int index = P.add_compute_expression(parameter(name));
+      int index = M->add_compute_expression(parameter(name));
 
-      find_sub_loggers(P, index, name, logged_computations, logged_names);
+      find_sub_loggers(*M, index, name, logged_computations, logged_names);
     }
 
     TableGroupFunction<object_ref> T1;
@@ -689,29 +692,40 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
       T1.add_field(name, GetComputationFunction(index) );
     }
 
-    SortedTableFunction T2(T1, get_un_identifiable_indices(P, logged_names));
+    SortedTableFunction T2(T1, get_un_identifiable_indices(*M, logged_names));
 
     TL->add_fields( ConvertTableToStringFunction<object_ref>( T2 ) );
   }
 
-  
-  for(int i=0;i<P.n_data_partitions();i++)
+  for(const auto& p: Rao_Blackwellize)
+  {
+    int p_index = M->find_parameter(p);
+    if (p_index == -1)
+      throw myexception()<<"No such parameter '"<<p<<"' to Rao-Blackwellize";
+
+    vector<object_ref> values = {Int(0),Int(1)};
+    TL->add_field("RB-"+p, Get_Rao_Blackwellized_Parameter_Function(p_index, values));
+  }
+
+  if (not P) return TL;
+
+  for(int i=0;i<P->n_data_partitions();i++)
+  {
+    if ((*P)[i].variable_alignment())
     {
-      if (P[i].variable_alignment())
-	{
-	  TL->add_field("|A"+convertToString(i+1)+"|", Get_Alignment_Length_Function(i) );
-	  TL->add_field("#indels"+convertToString(i+1), Get_Num_Indels_Function(i) );
-	  TL->add_field("|indels"+convertToString(i+1)+"|", Get_Total_Length_Indels_Function(i) );
-	}
-      const alphabet& a = P[i].get_alphabet();
-      TL->add_field("#substs"+convertToString(i+1), Get_Num_Substitutions_Function(i, unit_cost_matrix(a)) );
-      if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
-	TL->add_field("#substs(nuc)"+convertToString(i+1), Get_Num_Substitutions_Function(i, nucleotide_cost_matrix(*Tr)) );
-      if (const Codons* C = dynamic_cast<const Codons*>(&a))
-	TL->add_field("#substs(aa)"+convertToString(i+1), Get_Num_Substitutions_Function(i, amino_acid_cost_matrix(*C)) );
+      TL->add_field("|A"+convertToString(i+1)+"|", Get_Alignment_Length_Function(i) );
+      TL->add_field("#indels"+convertToString(i+1), Get_Num_Indels_Function(i) );
+      TL->add_field("|indels"+convertToString(i+1)+"|", Get_Total_Length_Indels_Function(i) );
     }
+    const alphabet& a = (*P)[i].get_alphabet();
+    TL->add_field("#substs"+convertToString(i+1), Get_Num_Substitutions_Function(i, unit_cost_matrix(a)) );
+    if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
+      TL->add_field("#substs(nuc)"+convertToString(i+1), Get_Num_Substitutions_Function(i, nucleotide_cost_matrix(*Tr)) );
+    if (const Codons* C = dynamic_cast<const Codons*>(&a))
+      TL->add_field("#substs(aa)"+convertToString(i+1), Get_Num_Substitutions_Function(i, amino_acid_cost_matrix(*C)) );
+  }
   
-  if (P.variable_alignment()) {
+  if (P->variable_alignment()) {
     TL->add_field("|A|", Get_Total_Alignment_Length_Function() );
     TL->add_field("#indels", Get_Total_Num_Indels_Function() );
     TL->add_field("|indels|", Get_Total_Total_Length_Indels_Function() );
@@ -720,31 +734,25 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
   
   TL->add_field("|T|", Get_Tree_Length_Function() );
 
-  for(const auto& p: Rao_Blackwellize)
-  {
-    int p_index = P.find_parameter(p);
-    if (p_index == -1)
-      throw myexception()<<"No such parameter '"<<p<<"' to Rao-Blackwellize";
-
-    vector<object_ref> values = {Int(0),Int(1)};
-    TL->add_field("RB-"+p, Get_Rao_Blackwellized_Parameter_Function(p_index, values));
-  }
-
   return TL;
 }
 
-vector<owned_ptr<MCMC::Logger> > construct_loggers(Parameters& P, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
+vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Probability_Model>& M, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
 {
   using namespace MCMC;
   vector<owned_ptr<Logger> > loggers;
 
+  owned_ptr<Parameters> P = M.as<Parameters>();
+
   string base = dir_name + "/" + "C" + convertToString(proc_id+1);
 
-  owned_ptr<TableFunction<string> > TF = construct_table_function(P, Rao_Blackwellize);
+  owned_ptr<TableFunction<string> > TF = construct_table_function(M, Rao_Blackwellize);
 
   // Write out scalar numerical variables (and functions of them) to C<>.p
   loggers.push_back( TableLogger(base +".p", TF) );
   
+  if (not P) return loggers;
+
   // Write out the (scaled) tree each iteration to C<>.trees
   loggers.push_back( FunctionLogger(base + ".trees", TreeFunction()<<"\n" ) );
   
@@ -753,28 +761,28 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(Parameters& P, const vector<s
     ConcatFunction F; 
     F<<TableViewerFunction(TF)<<"\n";
     F<<Show_SModels_Function()<<"\n";
-    for(int i=0;i<P.n_data_partitions();i++)
-      if (P[i].variable_alignment())
+    for(int i=0;i<P->n_data_partitions();i++)
+      if ((*P)[i].variable_alignment())
 	F<<AlignmentFunction(i)<<"\n\n";
     F<<TreeFunction()<<"\n\n";
     loggers.push_back( FunctionLogger(base + ".MAP", MAP_Function(F)) );
   }
 
   // Write out the probability that each column is in a particular substitution component to C<>.P<>.CAT
-  if (P.contains_key("log-categories"))
-    for(int i=0;i<P.n_data_partitions();i++)
+  if (P->contains_key("log-categories"))
+    for(int i=0;i<P->n_data_partitions();i++)
       loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
 					Mixture_Components_Function(i) ) );
 
   // Write out ancestral sequences
-  if (P.contains_key("log-ancestral"))
-    for(int i=0;i<P.n_data_partitions();i++)
+  if (P->contains_key("log-ancestral"))
+    for(int i=0;i<P->n_data_partitions();i++)
       loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".ancestral.fastas", 
 					Ancestral_Sequences_Function(i) ) );
 
   // Write out the alignments for each (variable) partition to C<>.P<>.fastas
-  for(int i=0;i<P.n_data_partitions();i++)
-    if (P[i].variable_alignment()) 
+  for(int i=0;i<P->n_data_partitions();i++)
+    if ((*P)[i].variable_alignment()) 
     {
       string filename = base + ".P" + convertToString(i+1)+".fastas";
 
@@ -1232,8 +1240,15 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     out_both<<"(Each partition i has a separate 'Main.mu<i>' except where specified by --same-scale.)"<<endl;
 }
 
-void write_initial_alignments(const vector<alignment>& A, int proc_id, string dir_name)
+void write_initial_alignments(const owned_ptr<Probability_Model>& M, int proc_id, string dir_name)
 {
+  owned_ptr<Parameters> P = M.as<Parameters>();
+  if (not P) return;
+
+  vector<alignment> A;
+  for(int i=0;i<P->n_data_partitions();i++)
+    A.push_back((*P)[i].A());
+
   string base = dir_name + "/" + "C" + convertToString(proc_id+1);
   for(int i=0;i<A.size();i++)
   {
@@ -1345,6 +1360,136 @@ struct restore
  * 3. Improve the method for proposing new SPR attachment sites.
  *  3a. Can we walk along the tree making characters present?
  */
+
+owned_ptr<Probability_Model> create_A_and_T_model(variables_map& args, const module_loader& L,
+						  ostream& out_cache, ostream& out_screen, ostream& out_both,
+						  int proc_id)
+{
+  if (args["subA-index"].as<string>() == "leaf")
+    use_internal_index = false;
+
+  //------ Determine number of partitions ------//
+  vector<string> filenames = args["align"].as<vector<string> >();
+  const int n_partitions = filenames.size();
+
+  //-------------Choose an indel model--------------//
+  //FIXME - make a shared_items-like class that also holds the items to we can put the whole state in one object.
+  //FIXME - make bali-phy.C a more focussed and readable file - remove setup junk to other places? (where?)
+  vector<int> imodel_mapping(n_partitions, -1);
+  shared_items<string> imodel_names_mapping(vector<string>(),imodel_mapping);
+
+  if (args.count("traditional")) {
+    if (args.count("imodel"))
+      throw myexception()<<"Error: you specified both --imodel <arg> and --traditional";
+  }
+  else {
+    imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
+
+    for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
+      if (imodel_names_mapping.unique(i) == "")
+	imodel_names_mapping.unique(i) = "RS07";
+      
+    imodel_mapping = imodel_names_mapping.item_for_partition;
+  }
+
+  //----------- Load alignments and tree ---------//
+  vector<alignment> A;
+  SequenceTree T;
+  // FIXME - do I want to allow/remove internal node sequences here?
+  vector<bool> internal_sequences(n_partitions);
+  for(int i=0;i<internal_sequences.size();i++)
+    internal_sequences[i] = (imodel_mapping[i] != -1);
+
+  //       - and only if there is an indel model?
+  if (args.count("tree"))
+    load_As_and_T(args,A,T,internal_sequences);
+  else
+    load_As_and_random_T(args,A,T,internal_sequences);
+
+  for(int i=0;i<A.size();i++) {
+    check_alignment_names(A[i]);
+    check_alignment_values(A[i],filenames[i]);
+  }
+
+  //--------- Handle branch lengths <= 0 --------//
+  sanitize_branch_lengths(T);
+
+  //--------- Do we have enough sequences? ------//
+  //    if (T.n_leaves() < 3)
+  //      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".";
+
+  //--------- Set up the substitution model --------//
+
+  // FIXME - change to return a (model, standardized name) pair.
+  vector<expression_ref> full_imodels = get_imodels(imodel_names_mapping, T);
+
+  //--------- Set up the substitution model --------//
+  shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
+    
+  vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
+
+  // FIXME - change to return a (model, standardized name) pair.
+  vector<expression_ref> full_smodels = get_smodels(L,args,A,smodel_names_mapping);
+
+  //-------------- Which partitions share a scale? -----------//
+  shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
+
+  vector<int> scale_mapping = scale_names_mapping.item_for_partition;
+
+  //-------------Create the Parameters object--------------//
+  Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
+
+  // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
+  set_foreground_branches(P);
+
+  //------------- Set the branch prior type --------------//
+  string branch_prior = args["branch-prior"].as<string>();
+  if (branch_prior == "Exponential")  
+    P.branch_prior_type = 0;
+  else if (branch_prior == "Gamma") 
+    P.branch_prior_type = 1;
+  else if (branch_prior == "Dirichlet") 
+    P.branch_prior_type = 2;
+  else
+    throw myexception()<<"I don't understand --branch-prior argument '"<<branch_prior<<"'.\n  Only 'Exponential' and 'Gamma' are allowed.";
+
+  //------------- Write out a tree with branch numbers as branch lengths------------- //
+  write_branch_numbers(out_cache, T);
+
+  //-------------------- Log model -------------------------//
+  log_summary(out_cache,out_screen,out_both,imodel_names_mapping,smodel_names_mapping,P,args);
+
+  //----------------- Tree-based constraints ----------------//
+  if (args.count("t-constraint"))
+    P.TC = cow_ptr<SequenceTree>(load_constraint_tree(args["t-constraint"].as<string>(), T.get_leaf_labels()));
+
+  if (args.count("a-constraint"))
+    P.AC = load_alignment_branch_constraints(args["a-constraint"].as<string>(),*P.TC);
+
+  if (not extends(T, *P.TC))
+    throw myexception()<<"Initial tree violates topology constraints.";
+
+  //---------- Alignment constraint (horizontal) -----------//
+  vector<string> ac_filenames(P.n_data_partitions(),"");
+  if (args.count("align-constraint")) 
+  {
+    ac_filenames = split(args["align-constraint"].as<string>(),':');
+
+    if (ac_filenames.size() != P.n_data_partitions())
+      throw myexception()<<"Need "<<P.n_data_partitions()<<" alignment constraints (possibly empty) separated by colons, but got "<<ac_filenames.size();
+  }
+
+  for(int i=0;i<P.n_data_partitions();i++)
+    P[i].alignment_constraint = load_alignment_constraint(ac_filenames[i],T);
+
+  //------------------- Handle heating ---------------------//
+  setup_heating(proc_id,args,P);
+
+  // read and store partitions and weights, if any.
+  setup_partition_weights(args,P);
+
+  return P;
+}
 
 module_loader setup_module_loader(variables_map& args, const string& filename)
 {
@@ -1461,146 +1606,25 @@ int main(int argc,char* argv[])
     
     out_cache<<"random seed = "<<seed<<endl<<endl;
 
-    if (args["subA-index"].as<string>() == "leaf")
-      use_internal_index = false;
-
-    //------ Determine number of partitions ------//
-    vector<string> filenames = args["align"].as<vector<string> >();
-    const int n_partitions = filenames.size();
-
-    //-------------Choose an indel model--------------//
-    //FIXME - make a shared_items-like class that also holds the items to we can put the whole state in one object.
-    //FIXME - make bali-phy.C a more focussed and readable file - remove setup junk to other places? (where?)
-    vector<int> imodel_mapping(n_partitions, -1);
-    shared_items<string> imodel_names_mapping(vector<string>(),imodel_mapping);
-
-    if (args.count("traditional")) {
-      if (args.count("imodel"))
-	throw myexception()<<"Error: you specified both --imodel <arg> and --traditional";
-    }
-    else {
-      imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
-
-      for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
-	if (imodel_names_mapping.unique(i) == "")
-	  imodel_names_mapping.unique(i) = "RS07";
-      
-      imodel_mapping = imodel_names_mapping.item_for_partition;
-    }
-
-    //----------- Load alignments and tree ---------//
-    vector<alignment> A;
-    SequenceTree T;
-    // FIXME - do I want to allow/remove internal node sequences here?
-    vector<bool> internal_sequences(n_partitions);
-    for(int i=0;i<internal_sequences.size();i++)
-      internal_sequences[i] = (imodel_mapping[i] != -1);
-
-    //       - and only if there is an indel model?
-    if (args.count("tree"))
-      load_As_and_T(args,A,T,internal_sequences);
-    else
-      load_As_and_random_T(args,A,T,internal_sequences);
-
-    for(int i=0;i<A.size();i++) {
-      check_alignment_names(A[i]);
-      check_alignment_values(A[i],filenames[i]);
-    }
-
-    //--------- Handle branch lengths <= 0 --------//
-    sanitize_branch_lengths(T);
-
-    //--------- Do we have enough sequences? ------//
-    //    if (T.n_leaves() < 3)
-    //      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".";
-
-    //--------- Set up the substitution model --------//
-
-    // FIXME - change to return a (model, standardized name) pair.
-    vector<expression_ref> full_imodels = get_imodels(imodel_names_mapping, T);
-
-    //--------- Set up the substitution model --------//
-    shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
-    
-    vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
-
-    // FIXME - change to return a (model, standardized name) pair.
-    vector<expression_ref> full_smodels = get_smodels(L,args,A,smodel_names_mapping);
-
-    //-------------- Which partitions share a scale? -----------//
-    shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
-
-    vector<int> scale_mapping = scale_names_mapping.item_for_partition;
-
-    //-------------Create the Parameters object--------------//
-    Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
-    P.set_args(trailing_args(argc,argv,trailing_args_separator));
-
-    // Write out a tree with branch numbers as branch lengths
-    write_branch_numbers(out_cache, T);
-
-    // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
-    set_foreground_branches(P);
-
-    //------------- Set the branch prior type --------------//
-    string branch_prior = args["branch-prior"].as<string>();
-    if (branch_prior == "Exponential")  
-      P.branch_prior_type = 0;
-    else if (branch_prior == "Gamma") 
-      P.branch_prior_type = 1;
-    else if (branch_prior == "Dirichlet") 
-      P.branch_prior_type = 2;
-    else
-      throw myexception()<<"I don't understand --branch-prior argument '"<<branch_prior<<"'.\n  Only 'Exponential' and 'Gamma' are allowed.";
+    owned_ptr<Probability_Model> M = create_A_and_T_model(args, L, out_cache, out_screen, out_both, proc_id);
+    M->set_args(trailing_args(argc,argv,trailing_args_separator));
 
     //------------- Parse the Hierarchical Model description -----------//
     if (args.count("model"))
     {
       const string filename = args["model"].as<string>();
-      add_model(P,filename);
+      add_model(*M,filename);
     }
       
-    set_initial_parameter_values(P,args);
+    set_initial_parameter_values(*M,args);
 
-    set_key_values(P,args);
-
-    //-------------------- Log model -------------------------//
-    log_summary(out_cache,out_screen,out_both,imodel_names_mapping,smodel_names_mapping,P,args);
-
-    //----------------- Tree-based constraints ----------------//
-    if (args.count("t-constraint"))
-      P.TC = cow_ptr<SequenceTree>(load_constraint_tree(args["t-constraint"].as<string>(), T.get_leaf_labels()));
-
-    if (args.count("a-constraint"))
-      P.AC = load_alignment_branch_constraints(args["a-constraint"].as<string>(),*P.TC);
-
-    if (not extends(T, *P.TC))
-      throw myexception()<<"Initial tree violates topology constraints.";
-
-    //---------- Alignment constraint (horizontal) -----------//
-    vector<string> ac_filenames(P.n_data_partitions(),"");
-    if (args.count("align-constraint")) 
-    {
-      ac_filenames = split(args["align-constraint"].as<string>(),':');
-
-      if (ac_filenames.size() != P.n_data_partitions())
-	throw myexception()<<"Need "<<P.n_data_partitions()<<" alignment constraints (possibly empty) separated by colons, but got "<<ac_filenames.size();
-    }
-
-    for(int i=0;i<P.n_data_partitions();i++)
-      P[i].alignment_constraint = load_alignment_constraint(ac_filenames[i],T);
-
-    //------------------- Handle heating ---------------------//
-    setup_heating(proc_id,args,P);
-
-    // read and store partitions and weights, if any.
-    setup_partition_weights(args,P);
+    set_key_values(*M,args);
 
     //---------------Do something------------------//
     if (args.count("show-only"))
     {
       // FIXME ! How do we print the tree to stdout?
-      print_stats(cout,P);
+      print_stats(cout,*M);
       // Separate the tree printer from the file writer?
     }
     else {
@@ -1651,9 +1675,9 @@ int main(int argc,char* argv[])
 	  vector<string> Rao_Blackwellize;
 	  if (args.count("Rao-Blackwellize"))
 	      Rao_Blackwellize = split(args["Rao-Blackwellize"].as<string>(),',');
-	  loggers = construct_loggers(P,Rao_Blackwellize,proc_id,dir_name);
+	  loggers = construct_loggers(M, Rao_Blackwellize, proc_id, dir_name);
 	}
-	write_initial_alignments(A,proc_id, dir_name);
+	write_initial_alignments(*M, proc_id, dir_name);
       }
       else {
 	files.push_back(shared_ptr<ostream>(new ostream(cout.rdbuf())));
@@ -1672,15 +1696,14 @@ int main(int argc,char* argv[])
       clog.flush() ; clog.rdbuf(files[1]->rdbuf());
 
       //------ Redirect output to files -------//
-      owned_ptr<Probability_Model> Ptr(P);
 
       // Force the creation of parameters
-      for(int i=0;i<Ptr->n_parameters();i++)
-	Ptr->parameter_is_modifiable(i);
+      for(int i=0;i<M->n_parameters();i++)
+	M->parameter_is_modifiable(i);
 
-      avoid_zero_likelihood(Ptr, *files[0], out_both);
+      avoid_zero_likelihood(M, *files[0], out_both);
 
-      do_pre_burnin(args, Ptr, *files[0], out_both);
+      do_pre_burnin(args, M, *files[0], out_both);
 
       out_screen<<"\nBeginning "<<max_iterations<<" iterations of MCMC computations."<<endl;
       out_screen<<"   - Future screen output sent to '"<<dir_name<<"/C1.out'"<<endl;
@@ -1694,7 +1717,7 @@ int main(int argc,char* argv[])
       out_screen<<"See the manual for further information."<<endl;
 
       //-------- Start the MCMC  -----------//
-      do_sampling(args,Ptr ,max_iterations, *files[0], loggers);
+      do_sampling(args, M ,max_iterations, *files[0], loggers);
 
       // Close all the streams, and write a notification that we finished all the iterations.
       // close_files(files);
