@@ -1668,12 +1668,12 @@ int main(int argc,char* argv[])
       cerr.flush() ; cerr.rdbuf(files[1]->rdbuf());
       clog.flush() ; clog.rdbuf(files[1]->rdbuf());
 
-      // Force the creation of parameters
-      for(int i=0;i<P.n_parameters();i++)
-	P.parameter_is_modifiable(i);
-
       //------ Redirect output to files -------//
       owned_ptr<Probability_Model> Ptr(P);
+
+      // Force the creation of parameters
+      for(int i=0;i<Ptr->n_parameters();i++)
+	Ptr->parameter_is_modifiable(i);
 
       avoid_zero_likelihood(Ptr, *files[0], out_both);
 
