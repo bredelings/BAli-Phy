@@ -15,8 +15,8 @@ bin_SCRIPTS = scripts/bali-phy-sge scripts/bp-analyze.pl scripts/compare-runs.R 
 # Used to build, but not distributed
 noinst_SCRIPTS = scripts/git_version.sh
 
-modulesdir = $(libdir)/@PACKAGE@/modules/
-modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude.hs modules/Range.hs modules/SModel.hs \
+modulesdir = $(libdir)/@PACKAGE@/
+nobase_modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude.hs modules/Range.hs modules/SModel.hs \
 		modules/Tree.hs modules/Alphabet.hs modules/Parameters.hs modules/Alignment.hs \
 		modules/MCMC.hs modules/IModel.hs modules/System/Environment.hs
 

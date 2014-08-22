@@ -1,4 +1,4 @@
-module Environment where
+module System.Environment where
 {
 builtin builtin_getArgs 1 "getArgs" "Environment";
 

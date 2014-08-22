@@ -114,7 +114,11 @@ vector<Module> load_modules(const module_loader& L, const set<string>& module_na
 
 Module module_loader::load_module(const string& module_name) const
 {
-  return load_module_from_file(find_module(module_name));
+  string filename = find_module(module_name);
+  Module M = load_module_from_file(filename);
+  if (M.name != module_name)
+    throw myexception()<<"Loading module file '"<<filename<<"'\n  Expected module '"<<module_name<<"'\n  Found module    '"<<M.name<<"'";
+  return M;
 }
 
 #include <dlfcn.h>
