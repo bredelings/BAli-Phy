@@ -1383,6 +1383,15 @@ module_loader setup_module_loader(variables_map& args, const string& filename)
   return L;
 }
 
+string get_command_line(int argc, char* argv[])
+{
+  vector<string> args;
+  for(int i=0;i<argc;i++)
+    args.push_back(argv[i]);
+
+  return join(args," ");
+}
+
 int main(int argc,char* argv[])
 { 
   int n_procs = 1;
@@ -1439,13 +1448,7 @@ int main(int argc,char* argv[])
     else {
       if (proc_id) return 0;
 
-      cout<<"command: ";
-      for(int i=0;i<argc;i++) {
-	cout<<argv[i];
-	if (i != argc-1) cout<<" ";
-      }
-      cout<<endl;
-      cout<<endl;
+      cout<<"command: "<<get_command_line(argc,argv)<<endl<<endl;
       print_version_info(cout);
       cout<<endl;
     }
