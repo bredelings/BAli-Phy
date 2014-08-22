@@ -1346,6 +1346,43 @@ struct restore
  *  3a. Can we walk along the tree making characters present?
  */
 
+module_loader setup_module_loader(variables_map& args, const string& filename)
+{
+  module_loader L;
+  if (args.count("modules-path"))
+    L.modules_path = split(args["modules-path"].as<string>(),':');
+  else
+  {
+    fs::path modules = find_exe_path(filename);
+    if (not modules.empty())
+    {
+      modules.remove_filename();
+      modules = modules / "lib" / "bali-phy" / "modules";
+    }
+    if (modules.empty() or not fs::exists(modules/"Prelude.hs"))
+      throw myexception()<<"No module paths are specified!.  Use --modules-path=<path> to specify the directory containing Prelude.hs.";
+
+    L.modules_path = {modules.string()};
+  }
+      
+  if (args.count("builtins-path"))
+    L.builtins_path = split(args["builtins-path"].as<string>(),':');
+  else
+  {
+    fs::path builtins = find_exe_path(filename);
+    if (not builtins.empty())
+    {
+      builtins.remove_filename();
+      builtins = builtins / "lib" / "bali-phy";
+    }
+    if (builtins.empty() or not fs::exists(builtins/("Prelude"+plugin_extension)))
+      throw myexception()<<"No paths to find builtins are specified!.  Use --builtins-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
+
+    L.builtins_path = {builtins.string()};
+  }
+  return L;
+}
+
 int main(int argc,char* argv[])
 { 
   int n_procs = 1;
@@ -1395,9 +1432,6 @@ int main(int argc,char* argv[])
     //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    if (args["subA-index"].as<string>() == "leaf")
-      use_internal_index = false;
-
     //------ Capture copy of 'cerr' output in 'err_cache' ------//
     if (not args.count("show-only")) {
       cerr.rdbuf(err_both.rdbuf());
@@ -1416,10 +1450,16 @@ int main(int argc,char* argv[])
       cout<<endl;
     }
 
+    //------------- Setup module loader -------------//
+    module_loader L = setup_module_loader(args, argv[0]);
+
     //---------- Initialize random seed -----------//
     unsigned long seed = init_rng_and_get_seed(args);
     
     out_cache<<"random seed = "<<seed<<endl<<endl;
+
+    if (args["subA-index"].as<string>() == "leaf")
+      use_internal_index = false;
 
     //------ Determine number of partitions ------//
     vector<string> filenames = args["align"].as<vector<string> >();
@@ -1470,39 +1510,6 @@ int main(int argc,char* argv[])
     //--------- Do we have enough sequences? ------//
     //    if (T.n_leaves() < 3)
     //      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".";
-
-    module_loader L;
-    if (args.count("modules-path"))
-      L.modules_path = split(args["modules-path"].as<string>(),':');
-    else
-    {
-      fs::path modules = find_exe_path(argv[0]);
-      if (not modules.empty())
-      {
-	modules.remove_filename();
-	modules = modules / "lib" / "bali-phy" / "modules";
-      }
-      if (modules.empty() or not fs::exists(modules/"Prelude.hs"))
-	throw myexception()<<"No module paths are specified!.  Use --modules-path=<path> to specify the directory containing Prelude.hs.";
-
-      L.modules_path = {modules.string()};
-    }
-      
-    if (args.count("builtins-path"))
-      L.builtins_path = split(args["builtins-path"].as<string>(),':');
-    else
-    {
-      fs::path builtins = find_exe_path(argv[0]);
-      if (not builtins.empty())
-      {
-	builtins.remove_filename();
-	builtins = builtins / "lib" / "bali-phy";
-      }
-      if (builtins.empty() or not fs::exists(builtins/("Prelude"+plugin_extension)))
-	throw myexception()<<"No paths to find builtins are specified!.  Use --builtins-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
-
-      L.builtins_path = {builtins.string()};
-    }
 
     //--------- Set up the substitution model --------//
 
