@@ -277,7 +277,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>")
     ("set",value<vector<string> >()->composing(),"Set key=<value>")
     ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.")
-    ("model",value<string>(),"File containing hierarchical model description.")
+    ("model,m",value<string>(),"File containing hierarchical model description.")
     ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
     ;
 
