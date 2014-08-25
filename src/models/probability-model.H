@@ -53,7 +53,7 @@ public:
       return v;
   }
 
-  virtual Probability_Model* clone() const =0;
+  virtual Probability_Model* clone() const { return new Probability_Model(*this);}
 
   virtual double get_beta() const {return 1.0;}
 
