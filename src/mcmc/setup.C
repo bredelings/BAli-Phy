@@ -100,7 +100,7 @@ void add_MH_move(Probability_Model& P,const Proposal_Fn& proposal, const string&
 }
 
 
-double default_sampling_rate(const Model& M, const string& parameter_name)
+double default_sampling_rate(const Model& /*M*/, const string& /*parameter_name*/)
 {
   return 1.0;
 }
@@ -277,12 +277,13 @@ MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
 ///
 /// \param P   The model and state.
 ///
-MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
+MCMC::MoveAll get_parameter_MH_moves(Probability_Model& M)
 {
   MCMC::MoveAll MH_moves("parameters:MH");
 
-  for(int i=0;i<P.n_branch_means();i++)
-    add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
+  if (Parameters* P = dynamic_cast<Parameters*>(&M))
+    for(int i=0;i<P->n_branch_means();i++)
+      add_MH_move(M, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
 
 
   /*
@@ -310,15 +311,16 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, log_scaled(Between(-20,0,shift_cauchy)),    "*.Beta.varOverMu", "beta.Var_scale_sigma",  0.25, MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.LogNormal.sigma_over_mu","log-normal.sigma_scale_sigma",  0.25, MH_moves);
 */
-  MH_moves.add(4,MCMC::SingleMove(scale_means_only,
-				  "scale_means_only", std::set<int>{/*FIXME*/}, "mean")
-		      );
+  if (Parameters* P = dynamic_cast<Parameters*>(&M))
+    MH_moves.add(4,MCMC::SingleMove(scale_means_only,
+				    "scale_means_only", std::set<int>{/*FIXME*/}, "mean")
+		 );
   
-  add_MH_move(P, shift_delta,                  "b*.delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
-  add_MH_move(P, Between(-40,0,shift_cauchy),  "*.logLambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
-  add_MH_move(P, more_than(0.0, shift_cauchy), "*.meanIndelLengthMinus1",     "epsilon_shift_sigma",   0.1, MH_moves, 10);
+  add_MH_move(M, shift_delta,                  "b*.delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
+  add_MH_move(M, Between(-40,0,shift_cauchy),  "*.logLambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
+  add_MH_move(M, more_than(0.0, shift_cauchy), "*.meanIndelLengthMinus1",     "epsilon_shift_sigma",   0.1, MH_moves, 10);
 
-  add_MH_move(P, Between(-20,20,shift_cauchy), "logLambdaScale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
+  add_MH_move(M, Between(-20,20,shift_cauchy), "logLambdaScale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
 
   return MH_moves;
 }
@@ -335,25 +337,28 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
 ///
 /// \param P   The model and state.
 ///
-MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
+MCMC::MoveAll get_parameter_slice_moves(Probability_Model& M)
 {
   MCMC::MoveAll slice_moves("parameters:slice");
 
-  // scale parameters
-  for(int i=0;i<P.n_branch_means();i++)
-    add_slice_moves(P, "*.mu"+convertToString(i+1), slice_moves);
+  if (Parameters* P = dynamic_cast<Parameters*>(&M))
+  {
+    // scale parameters
+    for(int i=0;i<P->n_branch_means();i++)
+      add_slice_moves(*P, "*.mu"+convertToString(i+1), slice_moves);
+
+    // imodel parameters
+    add_slice_moves(*P, "*.delta", slice_moves, 10);
+
+    add_slice_moves(*P, "lambdaScale", slice_moves, 10);
+    add_slice_moves(*P, "*.M3.omega*", slice_moves);
+
+    slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));
+  }
 
   // Add slice moves for continuous 1D distributions
-  add_real_slice_moves(P, slice_moves, 1.0);
-  add_integer_slice_moves(P, slice_moves, 1.0);
-
-  // imodel parameters
-  add_slice_moves(P, "*.delta", slice_moves, 10);
-
-  add_slice_moves(P, "lambdaScale", slice_moves, 10);
-  add_slice_moves(P, "*.M3.omega*", slice_moves);
-
-  slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));
+  add_real_slice_moves(M, slice_moves, 1.0);
+  add_integer_slice_moves(M, slice_moves, 1.0);
 
   return slice_moves;
 }
@@ -544,7 +549,7 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 ///
 /// \param P   The model and state.
 ///
-MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
+MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Probability_Model& M)
 {
   using namespace MCMC;
 
@@ -556,11 +561,11 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   //  - Note that this should only be an issue when this does not affect the likelihood.
   // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
 
-  add_boolean_MH_moves(P, parameter_moves, 1.5);
-  add_integer_uniform_MH_moves(P, parameter_moves, 0.1);
+  add_boolean_MH_moves(M, parameter_moves, 1.5);
+  add_integer_uniform_MH_moves(M, parameter_moves, 0.1);
 
   // Actually there ARE slice moves for this, but they don't jump modes!
-  add_real_MH_moves(P, parameter_moves, 0.1);
+  add_real_MH_moves(M, parameter_moves, 0.1);
 
   // FIXME - we need a proposal that sorts after changing
   //         then we can un-hack the recalc function in smodel.C
@@ -570,25 +575,25 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
 
   for(int i=0;;i++) {
     string name = "M3.omega" + convertToString(i+1);
-    if (not has_parameter(P,name))
+    if (not has_parameter(M,name))
       break;
     
-    add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)), name, "omega_scale_sigma", 1, parameter_moves);
+    add_MH_move(M, log_scaled(Between(-20,20,shift_cauchy)), name, "omega_scale_sigma", 1, parameter_moves);
     //    Proposal2 m(log_scaled(shift_cauchy), name, vector<string>(1,"omega_scale_sigma"), P);
     //    parameter_moves.add(1, MCMC::MH_Move(m,"sample_M3.omega"));
   }
 
   {
-    int index = P.find_parameter("lambdaScaleBranch");
-    if (index != -1 and (P.get_parameter_value_as<Int>(index) != -1 or P.contains_key("lambda_search_all")))
+    int index = M.find_parameter("lambdaScaleBranch");
+    if (index != -1 and (M.get_parameter_value_as<Int>(index) != -1 or M.contains_key("lambda_search_all")))
     {
-      P.set_parameter_value(index, object_ref(Int(0)));
+      M.set_parameter_value(index, object_ref(Int(0)));
       Generic_Proposal m(move_scale_branch,{index});
       parameter_moves.add(1.0, MCMC::MH_Move(m,"sample_lambdaScaleBranch"));
     }
   }
 
-  if (P.contains_key("sample_foreground_branch"))
+  if (M.contains_key("sample_foreground_branch"))
   {
     Generic_Proposal m(move_subst_type_branch);
     parameter_moves.add(1.0, MCMC::MH_Move(m,"sample_foreground_branch"));
@@ -857,6 +862,10 @@ void do_sampling(const variables_map& args,
   // full sampler
   Sampler sampler("sampler");
 
+  MoveAll slice_moves = get_parameter_slice_moves(*P);
+  MoveAll MH_but_no_slice_moves = get_parameter_MH_but_no_slice_moves(*P);
+  MoveAll MH_moves = get_parameter_MH_moves(*P);
+
   if (PP)
   {
     //----------------------- alignment -------------------------//
@@ -866,10 +875,6 @@ void do_sampling(const variables_map& args,
     MoveAll tree_moves = get_tree_moves(*PP);
     
     //-------------- parameters (parameters_moves) --------------//
-    MoveAll MH_but_no_slice_moves = get_parameter_MH_but_no_slice_moves(*PP);
-    MoveAll slice_moves = get_parameter_slice_moves(*PP);
-    MoveAll MH_moves = get_parameter_MH_moves(*PP);
-    
     if (PP->variable_alignment())
     {
       double factor = P->load_value("alignment_sampling_factor",1.0);
@@ -887,11 +892,16 @@ void do_sampling(const variables_map& args,
       sampler.add(5 + log(PP->T().n_branches()),MH_moves);
     else
       sampler.add(1,MH_moves);
-
-    // Question: how are these moves intermixed with the other ones?
-    if (P->load_value("disable_slice_sampling", 0.0) < 0.5)
-      sampler.add(1,slice_moves);
   }
+  else
+  {
+    sampler.add(5, MH_but_no_slice_moves);
+    sampler.add(1, MH_moves);
+  }
+
+  // Add slice moves.
+  if (P->load_value("disable_slice_sampling", 0.0) < 0.5)
+    sampler.add(1,slice_moves);
 
   //------------------- Add moves defined via notes ---------------------------//
   sampler.add(1, get_h_moves(*P));
