@@ -499,16 +499,31 @@ string hostname()
 }
 #endif
 
+string run_name(const variables_map& args)
+{
+  string name;
+  if (args.count("name"))
+    name = args["name"].as<string>();
+  else if (args.count("align"))
+  {
+    vector<string> alignment_filenames = args["align"].as<vector<string> >();
+    for(int i=0;i<alignment_filenames.size();i++)
+      alignment_filenames[i] = remove_extension( fs::path( alignment_filenames[i] ).leaf().string() );
+    name = join(alignment_filenames,'-');
+  }
+  else if (args.count("model"))
+  {
+    name = args["model"].as<string>();
+    name = remove_extension( fs::path( name ).leaf().string() );
+  }
+
+  return name;
+}
+
 /// Create the directory for output files and return the name
 string init_dir(const variables_map& args)
 {
-  vector<string> alignment_filenames = args["align"].as<vector<string> >();
-  for(int i=0;i<alignment_filenames.size();i++)
-    alignment_filenames[i] = remove_extension( fs::path( alignment_filenames[i] ).leaf().string() );
-
-  string name = join(alignment_filenames,'-');
-  if (args.count("name"))
-    name = args["name"].as<string>();
+  string name = run_name(args);
     
   string dirname = open_dir(name);
   cerr<<"Created directory '"<<dirname<<"/' for output files."<<endl;
@@ -567,11 +582,11 @@ vector<shared_ptr<ostream>> init_files(int proc_id, const string& dirname,
 }
 
 /// Determine the parameters of model \a M that must be sorted in order to enforce identifiability.
-vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, const vector<string>& names)
+vector< vector< vector<int> > > get_un_identifiable_indices(const Parameters& P, const vector<string>& names)
 {
   vector< vector< vector<int> > > indices;
 
-  int n_smodels = dynamic_cast<const Parameters&>(M).n_smodels();
+  int n_smodels = P.n_smodels();
 
   for(int i=0;i<n_smodels+1;i++) 
   {
@@ -692,9 +707,12 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Proba
       T1.add_field(name, GetComputationFunction(index) );
     }
 
-    SortedTableFunction T2(T1, get_un_identifiable_indices(*M, logged_names));
+    if (P)
+    {
+      SortedTableFunction T2(T1, get_un_identifiable_indices(*P, logged_names));
 
-    TL->add_fields( ConvertTableToStringFunction<object_ref>( T2 ) );
+      TL->add_fields( ConvertTableToStringFunction<object_ref>( T2 ) );
+    }
   }
 
   for(const auto& p: Rao_Blackwellize)
