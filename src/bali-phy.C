@@ -1606,7 +1606,11 @@ int main(int argc,char* argv[])
     
     out_cache<<"random seed = "<<seed<<endl<<endl;
 
-    owned_ptr<Probability_Model> M = create_A_and_T_model(args, L, out_cache, out_screen, out_both, proc_id);
+    owned_ptr<Probability_Model> M;
+    if (args.count("align"))
+      M = create_A_and_T_model(args, L, out_cache, out_screen, out_both, proc_id);
+    else
+      M = Probability_Model(L);
     M->set_args(trailing_args(argc,argv,trailing_args_separator));
 
     //------------- Parse the Hierarchical Model description -----------//
