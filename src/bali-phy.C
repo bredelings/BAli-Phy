@@ -1730,8 +1730,11 @@ int main(int argc,char* argv[])
       out_screen<<"\nBeginning "<<max_iterations<<" iterations of MCMC computations."<<endl;
       out_screen<<"   - Future screen output sent to '"<<dir_name<<"/C1.out'"<<endl;
       out_screen<<"   - Future debugging output sent to '"<<dir_name<<"/C1.err'"<<endl;
-      out_screen<<"   - Sampled trees logged to '"<<dir_name<<"/C1.trees'"<<endl;
-      out_screen<<"   - Sampled alignments logged to '"<<dir_name<<"/C1.P<partition>.fastas'"<<endl;
+      if (M.as<Parameters>())
+      {
+	out_screen<<"   - Sampled trees logged to '"<<dir_name<<"/C1.trees'"<<endl;
+	out_screen<<"   - Sampled alignments logged to '"<<dir_name<<"/C1.P<partition>.fastas'"<<endl;
+      }
       out_screen<<"   - Sampled numerical parameters logged to '"<<dir_name<<"/C1.p'"<<endl;
       out_screen<<endl;
       out_screen<<"You can examine 'C1.p' using BAli-Phy tool statreport (command-line)"<<endl;
@@ -1739,7 +1742,7 @@ int main(int argc,char* argv[])
       out_screen<<"See the manual for further information."<<endl;
 
       //-------- Start the MCMC  -----------//
-      do_sampling(args, M ,max_iterations, *files[0], loggers);
+      do_sampling(args, M, max_iterations, *files[0], loggers);
 
       // Close all the streams, and write a notification that we finished all the iterations.
       // close_files(files);
