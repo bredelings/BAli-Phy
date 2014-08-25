@@ -332,8 +332,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   load_bali_phy_rc(args,all);
 
-  if (not args.count("align")) 
-    throw myexception()<<"No sequence files given.\n\nTry `"<<argv[0]<<" --help' for more information.";
+  if (args.count("align") and args.count("model"))
+    throw myexception()<<"You cannot specify both sequence files and a generic model.\n\nTry `"<<argv[0]<<" --help' for more information.";
+
+  if (not args.count("align") and not args.count("model"))
+    throw myexception()<<"You must specify alignment files or a generic model (--model).\n\nTry `"<<argv[0]<<" --help' for more information.";
 
   if (not args.count("iterations"))
     throw myexception()<<"The number of iterations was not specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
@@ -582,8 +585,11 @@ vector<shared_ptr<ostream>> init_files(int proc_id, const string& dirname,
 }
 
 /// Determine the parameters of model \a M that must be sorted in order to enforce identifiability.
-vector< vector< vector<int> > > get_un_identifiable_indices(const Parameters& P, const vector<string>& names)
+vector< vector< vector<int> > > get_un_identifiable_indices(const Probability_Model& M, const vector<string>& names)
 {
+  if (not dynamic_cast<const Parameters*>(&M)) return {};
+
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
   vector< vector< vector<int> > > indices;
 
   int n_smodels = P.n_smodels();
@@ -614,10 +620,10 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Parameters& P,
   return indices;
 }
 
-void find_sub_loggers(const owned_ptr<Probability_Model>& M, int& index, const string& name, vector<int>& logged_computations, vector<string>& logged_names)
+void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& logged_computations, vector<string>& logged_names)
 {
   assert(index != -1);
-  object_ref result = M->evaluate(index);
+  object_ref result = M.evaluate(index);
   if ((bool)dynamic_pointer_cast<const Double>(result) or (bool)dynamic_pointer_cast<const Int>(result))
   {
     logged_computations.push_back(index);
@@ -641,26 +647,23 @@ void find_sub_loggers(const owned_ptr<Probability_Model>& M, int& index, const s
 
     if (c->f_name == ":")
     {
-      expression_ref L = M->get_expression(index);
+      expression_ref L = M.get_expression(index);
       expression_ref E = (identifier("Prelude.length"),L);
-      int length = *convert<const Int>(M->evaluate_expression(E));
+      int length = *convert<const Int>(M.evaluate_expression(E));
       int index2 = -1;
       for(int i=0;i<length;i++)
       {
 	expression_ref E2 = (identifier("Prelude.!!"),L,i) ;
 	if (index2 == -1)
-	  index2 = M->add_compute_expression(E2);
+	  index2 = M.add_compute_expression(E2);
 	else
-	  M->set_compute_expression(index2, E2);
+	  M.set_compute_expression(index2, E2);
 
 	find_sub_loggers(M, index2, name+"!!"+convertToString(i), logged_computations, logged_names);
       }
     }
   }
 }
-
-
-
 
 owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Probability_Model>& M, const vector<string>& Rao_Blackwellize)
 {
@@ -707,12 +710,9 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Proba
       T1.add_field(name, GetComputationFunction(index) );
     }
 
-    if (P)
-    {
-      SortedTableFunction T2(T1, get_un_identifiable_indices(*P, logged_names));
+    SortedTableFunction T2(T1, get_un_identifiable_indices(*P, logged_names));
 
-      TL->add_fields( ConvertTableToStringFunction<object_ref>( T2 ) );
-    }
+    TL->add_fields( ConvertTableToStringFunction<object_ref>( T2 ) );
   }
 
   for(const auto& p: Rao_Blackwellize)

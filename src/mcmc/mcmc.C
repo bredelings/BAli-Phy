@@ -1198,7 +1198,7 @@ void mcmc_init(Parameters& P, ostream& s_out)
   }
 }
 
-void mcmc_log(long iterations, long max_iter, int subsample, Parameters& P, ostream& s_out, 
+void mcmc_log(long iterations, long max_iter, int subsample, Probability_Model& P, ostream& s_out, 
 	      const MoveStats& S, const vector<owned_ptr<Logger> >& loggers)
 {
   s_out<<"iterations = "<<iterations<<"\n";
@@ -1243,12 +1243,11 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
 
   int alignment_burnin_iterations = (int)P->load_value("alignment-burnin",10.0);
 
+  if (owned_ptr<Parameters> PP = P.as<Parameters>())
   {
-    Parameters& PP = *P.as<Parameters>();
+    const SequenceTree& T = PP->T();
 
-    const SequenceTree& T = PP.T();
-
-    mcmc_init(PP,s_out);
+    mcmc_init(*PP,s_out);
 
     //--------- Determine some values for this chain -----------//
     if (subsample <= 0) subsample = 2*int(log(T.n_leaves()))+1;
@@ -1261,37 +1260,38 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
       //	if (PP.T->branch(i).length() > PP.branch_length_max)
       //	  PP.setlength(i, PP.branch_length_max);
 
-      PP.set_parameter_value(PP.find_parameter("*IModels.training"), new constructor("Prelude.True",0));
+      PP->set_parameter_value(PP->find_parameter("*IModels.training"), new constructor("Prelude.True",0));
     }
   }
 
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max_iter; iterations++) 
   {
-    Parameters& PP = *P.as<Parameters>();
-
-    // Free temporarily fixed parameters at iteration 5
-    if (iterations == alignment_burnin_iterations)
+    if (owned_ptr<Parameters> PP = P.as<Parameters>())
     {
-      PP.set_parameter_value(PP.find_parameter("*IModels.training"), new constructor("Prelude.False",0));
+      // Free temporarily fixed parameters at iteration 5
+      if (iterations == alignment_burnin_iterations)
+      {
+	PP->set_parameter_value(PP->find_parameter("*IModels.training"), new constructor("Prelude.False",0));
 
-      PP.branch_length_max = -1;
+	PP->branch_length_max = -1;
+      }
+
+      // Change the temperature according to the pattern suggested
+      if (iterations < PP->beta_series.size())
+	PP->set_beta( PP->beta_series[iterations] );
+
+      // Start learning step sizes at iteration 5
+      if (iterations == 5)
+	start_learning(100);
     }
-
-    // Change the temperature according to the pattern suggested
-    if (iterations < PP.beta_series.size())
-      PP.set_beta( PP.beta_series[iterations] );
-
-    // Start learning step sizes at iteration 5
-    if (iterations == 5)
-      start_learning(100);
 
     // Stop learning step sizes at iteration 500
     if (iterations == 500)
       stop_learning(0);
 
     //------------------ record statistics ---------------------//
-    mcmc_log(iterations, max_iter, subsample, *P.as<Parameters>(), s_out, *this, loggers);
+    mcmc_log(iterations, max_iter, subsample, *P, s_out, *this, loggers);
 
     //------------------- move to new position -----------------//
     iterate(P,*this);
@@ -1305,7 +1305,8 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     // This move doesn't respect up/down at the moment
     //exchange_random_pairs(iterations,P,*this);
 
-    exchange_adjacent_pairs(iterations,*P.as<Parameters>(),*this);
+    if (P.as<Parameters>())
+      exchange_adjacent_pairs(iterations,*P.as<Parameters>(),*this);
 #endif
   }
 

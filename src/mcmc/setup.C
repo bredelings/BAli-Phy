@@ -259,9 +259,12 @@ void add_integer_slice_moves(const Probability_Model& P, MCMC::MoveAll& M, doubl
 MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
 {
   MCMC::MoveAll MH_moves("parameters:scale:MH");
-  for(int i=0;i<P.as<Parameters>()->n_branch_means();i++)
-    add_MH_move(*P, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),
-		"mu_scale_sigma",     0.6,  MH_moves);
+  if (P.as<Parameters>())
+  {
+    for(int i=0;i<P.as<Parameters>()->n_branch_means();i++)
+      add_MH_move(*P, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),
+		  "mu_scale_sigma",     0.6,  MH_moves);
+  }
   return MH_moves;
 }
 
@@ -420,13 +423,13 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
   return alignment_moves;
 }
 
-MCMC::MoveAll get_h_moves(Parameters& P)
+MCMC::MoveAll get_h_moves(Model& M)
 {
   using namespace MCMC;
 
   MoveAll h_moves("haskell_moves");
 
-  for(int i=0;i<P.n_transition_kernels();i++)
+  for(int i=0;i<M.n_transition_kernels();i++)
     h_moves.add(1,IOMove(i));
 
   return h_moves;
@@ -631,6 +634,8 @@ void set_min_branch_length(Parameters& P, double min_branch)
 
 void avoid_zero_likelihood(owned_ptr<Probability_Model>& P, ostream& out_log,ostream& /* out_both */)
 {
+  if (not P.as<Parameters>()) return;
+
   Parameters& PP = *P.as<Parameters>();
 
   for(int i=0;i<20 and P->likelihood() == 0.0;i++)
@@ -661,6 +666,8 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 {
   using namespace MCMC;
   using namespace boost::chrono;
+
+  if (not P.as<Parameters>()) return;
 
   int n_pre_burnin = args["pre-burnin"].as<int>();
 
@@ -836,79 +843,84 @@ void do_sampling(const variables_map& args,
 {
   using namespace MCMC;
 
-  Parameters& PP = *P.as<Parameters>();
+  owned_ptr<Parameters> PP = P.as<Parameters>();
 
-  bool has_imodel = PP.variable_alignment();
-
-  if (has_imodel) {
-    for(int i=0;i<PP.n_data_partitions();i++)
-      check_internal_nodes_connected(PP[i].A(), PP[i].T());
+  if (PP and PP->variable_alignment())
+  {
+    for(int i=0;i<PP->n_data_partitions();i++)
+      check_internal_nodes_connected((*PP)[i].A(), (*PP)[i].T());
   }
-
-  //----------------------- alignment -------------------------//
-  MoveAll alignment_moves = get_alignment_moves(PP);
-
-  //------------------------- tree ----------------------------//
-  MoveAll tree_moves = get_tree_moves(PP);
-
-  //-------------- parameters (parameters_moves) --------------//
-  MoveAll MH_but_no_slice_moves = get_parameter_MH_but_no_slice_moves(PP);
-  MoveAll slice_moves = get_parameter_slice_moves(PP);
-  MoveAll MH_moves = get_parameter_MH_moves(PP);
 
   //------------------ Construct the sampler  -----------------//
   int subsample = args["subsample"].as<int>();
-
+  
   // full sampler
   Sampler sampler("sampler");
 
-  for(int i=0;i<loggers.size();i++)
-    sampler.add_logger(loggers[i]);
-  if (has_imodel)
+  if (PP)
   {
-    double factor = P->load_value("alignment_sampling_factor",1.0);
-    std::cerr<<"alignment sampling factor = "<<factor<<"\n";
-    sampler.add(factor,alignment_moves);
+    //----------------------- alignment -------------------------//
+    MoveAll alignment_moves = get_alignment_moves(*PP);
+    
+    //------------------------- tree ----------------------------//
+    MoveAll tree_moves = get_tree_moves(*PP);
+    
+    //-------------- parameters (parameters_moves) --------------//
+    MoveAll MH_but_no_slice_moves = get_parameter_MH_but_no_slice_moves(*PP);
+    MoveAll slice_moves = get_parameter_slice_moves(*PP);
+    MoveAll MH_moves = get_parameter_MH_moves(*PP);
+    
+    if (PP->variable_alignment())
+    {
+      double factor = P->load_value("alignment_sampling_factor",1.0);
+      std::cerr<<"alignment sampling factor = "<<factor<<"\n";
+      sampler.add(factor,alignment_moves);
+    }
+    sampler.add(2,tree_moves);
+
+    // FIXME - We certainly don't want to do MH_sample_mu[i] O(branches) times
+    // - It does call the likelihood function, doesn't it?
+    // FIXME -   However, it is probably not so important to resample most parameters in a way that is interleaved with stuff... (?)
+    // FIXME -   Certainly, we aren't going to be interleaved with branches, anyway!
+    sampler.add(5 + log(PP->T().n_branches()), MH_but_no_slice_moves);
+    if (P->load_value("enable_MH_sampling",0.0) > 0.5)
+      sampler.add(5 + log(PP->T().n_branches()),MH_moves);
+    else
+      sampler.add(1,MH_moves);
+
+    // Question: how are these moves intermixed with the other ones?
+    if (P->load_value("disable_slice_sampling", 0.0) < 0.5)
+      sampler.add(1,slice_moves);
   }
-  sampler.add(2,tree_moves);
-
-  // FIXME - We certainly don't want to do MH_sample_mu[i] O(branches) times
-  // - It does call the likelihood function, doesn't it?
-  // FIXME -   However, it is probably not so important to resample most parameters in a way that is interleaved with stuff... (?)
-  // FIXME -   Certainly, we aren't going to be interleaved with branches, anyway!
-  sampler.add(5 + log(PP.T().n_branches()), MH_but_no_slice_moves);
-  if (P->load_value("enable_MH_sampling",0.0) > 0.5)
-    sampler.add(5 + log(PP.T().n_branches()),MH_moves);
-  else
-    sampler.add(1,MH_moves);
-  // Question: how are these moves intermixed with the other ones?
-
-  if (P->load_value("disable_slice_sampling", 0.0) < 0.5)
-    sampler.add(1,slice_moves);
 
   //------------------- Add moves defined via notes ---------------------------//
-  sampler.add(1, get_h_moves(PP));
+  sampler.add(1, get_h_moves(*P));
+
+  for(int i=0;i<loggers.size();i++)
+    sampler.add_logger(loggers[i]);
 
   //------------------- Enable and Disable moves ---------------------------//
   enable_disable_transition_kernels(sampler,args);
 
   //------------------ Report status before starting MCMC -------------------//
-  
   sampler.show_enabled(s_out);
   s_out<<"\n";
 
-  //-------------------- Report alignment alignments -----------------------//
-  for(int i=0;i<PP.n_data_partitions();i++)
-    std::cout<<"Partition "<<i+1<<": using "<<PP[i].alignment_constraint.size1()<<" constraints.\n";
-
-  for(int i=0;i<PP.n_data_partitions();i++) 
+  if (PP)
   {
-    dynamic_bitset<> s2 = constraint_satisfied(PP[i].alignment_constraint, PP[i].A());
-    dynamic_bitset<> s1(s2.size());
-    report_constraints(s1,s2,i);
-  } 
-
-  if (PP.load_value("AIS",0.0) > 0.5) 
+    //-------------------- Report alignment alignments -----------------------//
+    for(int i=0;i<PP->n_data_partitions();i++)
+      std::cout<<"Partition "<<i+1<<": using "<<(*PP)[i].alignment_constraint.size1()<<" constraints.\n";
+    
+    for(int i=0;i<PP->n_data_partitions();i++) 
+    {
+      dynamic_bitset<> s2 = constraint_satisfied((*PP)[i].alignment_constraint, (*PP)[i].A());
+      dynamic_bitset<> s1(s2.size());
+      report_constraints(s1,s2,i);
+    } 
+  }
+    
+  if (P->load_value("AIS",0.0) > 0.5) 
   {
     // before we do this, just run 20 iterations of a sampler that keeps the alignment fixed
     // - first, we need a way to change the tree on a sampler that has internal node sequences?
