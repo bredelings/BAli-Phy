@@ -1282,7 +1282,7 @@ void Sampler::go(owned_ptr<Model>& P,int subsample,const int max_iter, ostream& 
 
   s_out<<(const MoveStats&)(*this);
 
-  mcmc_log(max_iter, max_iter, subsample, *P.as<Parameters>(), s_out, *this, loggers);
+  mcmc_log(max_iter, max_iter, subsample, *P, s_out, *this, loggers);
 
   s_out<<"total samples = "<<max_iter<<endl;
 }
