@@ -107,12 +107,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "config.h"
 #endif
 
-#ifdef HAVE_SYS_RESOURCE_H
-extern "C" {
-#include <sys/resource.h>
-}
-#endif
-
 #ifdef HAVE_FENV_H
 extern "C" {
 #include "fenv.h"
@@ -139,7 +133,6 @@ namespace mpi = boost::mpi;
 #include <boost/filesystem/operations.hpp>
 #include <boost/chrono.hpp>
 
-#include "startup/A-T-model.H"
 #include "substitution/substitution.H"
 #include "myexception.H"
 #include "rng.H"
@@ -155,9 +148,12 @@ namespace mpi = boost::mpi;
 #include "io.H"
 #include "parser/desugar.H"
 #include "computation/module.H"
+
+#include "startup/A-T-model.H"
 #include "startup/files.H"
 #include "startup/loggers.H"
 #include "startup/io.H"
+#include "startup/system.H"
 
 namespace fs = boost::filesystem;
 namespace chrono = boost::chrono;
@@ -437,41 +433,6 @@ unsigned long init_rng_and_get_seed(const variables_map& args)
 
   return seed;
 }
-
-#if defined(HAVE_SYS_RESOURCE_H)
-string rlim_minutes(rlim_t val)
-{
-  if (val == RLIM_INFINITY)
-    return "unlimited";
-  else
-    return convertToString<>(val/60) + " minutes";
-}
-
-void raise_cpu_limit(ostream& o)
-{
-  rlimit limits;
-
-  getrlimit(RLIMIT_CPU,&limits);
-
-  if (log_verbose) {
-    o<<endl;
-    o<<"OLD cpu time limits = "<<rlim_minutes(limits.rlim_cur)<<" / "<<rlim_minutes(limits.rlim_max)<<endl;
-  }
-
-  limits.rlim_cur = RLIM_INFINITY;
-
-  setrlimit(RLIMIT_CPU,&limits);
-  getrlimit(RLIMIT_CPU,&limits);
-
-  if (log_verbose)
-    o<<"NEW cpu time limits = "<<rlim_minutes(limits.rlim_cur)<<" / "<<rlim_minutes(limits.rlim_max)<<endl;
-}
-#else
-void raise_cpu_limit(ostream& o) 
-{
-  o<<"Not checking CPU time limits..."<<endl;
-}
-#endif
 
 chrono::system_clock::time_point start_time = chrono::system_clock::now();
 
