@@ -18,6 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include <ctime>
+#include <cassert>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -117,7 +118,13 @@ double gamma(double a, double b) {
 }
 
 unsigned poisson(double mu) {
-  return std::poisson_distribution<>(mu)(standard);
+  if (mu == 0)
+    return 0;
+  else
+  {
+    assert(mu > 0.0);
+    return std::poisson_distribution<>(mu)(standard);
+  }
 }
 
 unsigned geometric(double p) {
