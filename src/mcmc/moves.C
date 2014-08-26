@@ -33,22 +33,22 @@ using MCMC::MoveStats;
 using std::valarray;
 using std::vector;
 
-void slide_node_move(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
+void slide_node_move(owned_ptr<Model>& P, MoveStats& Stats,int b) 
 {
   slide_node(P,Stats,b);
 }
 
-void change_branch_length_move(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
+void change_branch_length_move(owned_ptr<Model>& P, MoveStats& Stats,int b) 
 {
   change_branch_length(P,Stats,b);
 }
 
-void change_branch_length_multi_move(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
+void change_branch_length_multi_move(owned_ptr<Model>& P, MoveStats& Stats,int b) 
 {
   change_branch_length_multi(P,Stats,b);
 }
 
-void sample_tri_one(owned_ptr<Probability_Model>& P, MoveStats&,int b) 
+void sample_tri_one(owned_ptr<Model>& P, MoveStats&,int b) 
 {
   Parameters* PP = P.as<Parameters>();
   const SequenceTree& T = PP->T();
@@ -65,7 +65,7 @@ void sample_tri_one(owned_ptr<Probability_Model>& P, MoveStats&,int b)
   tri_sample_alignment(*PP,node1,node2);
 }
 
-void sample_tri_branch_one(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
+void sample_tri_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b) 
 {
   Parameters* PP = P.as<Parameters>();
 
@@ -98,7 +98,7 @@ void sample_tri_branch_one(owned_ptr<Probability_Model>& P, MoveStats& Stats,int
 }
 
 
-void sample_parameter_and_alignment_on_branch(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
+void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& Stats,int b) 
 {
   Parameters* PP = P.as<Parameters>();
 
@@ -155,7 +155,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Probability_Model>& P, M
 }
 
 
-void sample_tri_branch_type_one(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
+void sample_tri_branch_type_one(owned_ptr<Model>& P, MoveStats& Stats,int b) 
 {
   Parameters* PP = P.as<Parameters>();
 
@@ -182,7 +182,7 @@ void sample_tri_branch_type_one(owned_ptr<Probability_Model>& P, MoveStats& Stat
 }
 
 
-void sample_alignments_one(owned_ptr<Probability_Model>& P, MoveStats&,int b) 
+void sample_alignments_one(owned_ptr<Model>& P, MoveStats&,int b) 
 {
   Parameters* PP = P.as<Parameters>();
   assert(PP->variable_alignment()); 
@@ -190,7 +190,7 @@ void sample_alignments_one(owned_ptr<Probability_Model>& P, MoveStats&,int b)
   sample_alignment(*PP,b);
 }
 
-void sample_node_move(owned_ptr<Probability_Model>& P, MoveStats&,int node) 
+void sample_node_move(owned_ptr<Model>& P, MoveStats&,int node) 
 {
   Parameters* PP = P.as<Parameters>();
   assert(PP->variable_alignment()); 
@@ -198,7 +198,7 @@ void sample_node_move(owned_ptr<Probability_Model>& P, MoveStats&,int node)
   sample_node(*PP,node);
 }
 
-void sample_two_nodes_move(owned_ptr<Probability_Model>& P, MoveStats&,int n0) 
+void sample_two_nodes_move(owned_ptr<Model>& P, MoveStats&,int n0) 
 {
   Parameters* PP = P.as<Parameters>();
   assert(PP->variable_alignment()); 
@@ -322,7 +322,7 @@ vector<int> walk_tree_path(const Tree& T,int root) {
   return branches2;
 }
 
-void sample_branch_length_(owned_ptr<Probability_Model>& P,  MoveStats& Stats, int b)
+void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
 {
   //std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
@@ -359,7 +359,7 @@ void sample_branch_length_(owned_ptr<Probability_Model>& P,  MoveStats& Stats, i
   }
 }
 
-void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Probability_Model>& P, MoveStats& Stats) 
+void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
   vector<int> branches = walk_tree_path(PP.T(), PP[0].LC.root);
@@ -391,7 +391,7 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Probability_Model>& P, Mo
 }
 
 
-void walk_tree_sample_NNI(owned_ptr<Probability_Model>& P, MoveStats& Stats)
+void walk_tree_sample_NNI(owned_ptr<Model>& P, MoveStats& Stats)
 {
   Parameters& PP = *P.as<Parameters>();
   vector<int> branches = walk_tree_path(PP.T(), PP[0].LC.root);
@@ -407,7 +407,7 @@ void walk_tree_sample_NNI(owned_ptr<Probability_Model>& P, MoveStats& Stats)
 }
 
 
-void walk_tree_sample_NNI_and_A(owned_ptr<Probability_Model>& P, MoveStats& Stats) 
+void walk_tree_sample_NNI_and_A(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   double NNI_A_fraction = P->load_value("NNI+A_fraction",0.01);
 
@@ -428,7 +428,7 @@ void walk_tree_sample_NNI_and_A(owned_ptr<Probability_Model>& P, MoveStats& Stat
 }
 
 
-void walk_tree_sample_alignments(owned_ptr<Probability_Model>& P, MoveStats& Stats) 
+void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
   vector<int> branches = walk_tree_path(PP.T(), PP[0].LC.root);
@@ -452,7 +452,7 @@ void walk_tree_sample_alignments(owned_ptr<Probability_Model>& P, MoveStats& Sta
   }
 }
 
-void walk_tree_sample_branch_lengths(owned_ptr<Probability_Model>& P, MoveStats& Stats) 
+void walk_tree_sample_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
   vector<int> branches = walk_tree_path(PP.T(), PP[0].LC.root);
