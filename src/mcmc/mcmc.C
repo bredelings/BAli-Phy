@@ -142,15 +142,6 @@ namespace MCMC {
     lambda.push_back(l);
   }
 
-  std::set<int> MoveGroup::get_affected_parameters(const owned_ptr<Model>& P) const
-  {
-    std::set<int> affected;
-    for(const auto& m: moves)
-      ::add(affected, m->get_affected_parameters(P) );
-
-    return affected;
-  }
-
   /// Calculate the sum of the weights of enabled moves in this group
   double MoveGroup::sum() const 
   {
@@ -676,13 +667,6 @@ namespace MCMC {
     Stats.inc(name,result);
   }
 
-  std::set<int> Dirichlet_Slice_Move::get_affected_parameters(const owned_ptr<Model>&) const
-  {
-    std::set<int> affected;
-    affected.insert(indices.begin(), indices.end());
-    return affected;
-  }
-
   Dirichlet_Slice_Move::Dirichlet_Slice_Move(const string& s, const vector<int>& indices_, int n_)
     :Slice_Move(s,0.2/indices_.size()),indices(indices_),n(n_)
   { }
@@ -708,23 +692,9 @@ namespace MCMC {
     Stats.inc(name,result);
   }
 
-  std::set<int> Dirichlet_Modifiable_Slice_Move::get_affected_parameters(const owned_ptr<Model>&) const
-  {
-    return std::set<int>{};
-  }
-
   Dirichlet_Modifiable_Slice_Move::Dirichlet_Modifiable_Slice_Move(const string& s, const vector<int>& indices_, int n_)
     :Slice_Move(s,0.2/indices_.size()),indices(indices_),n(n_)
   { }
-
-  std::set<int> Scale_Means_Only_Slice_Move::get_affected_parameters(const owned_ptr<Model>& P) const
-  {
-    const Parameters& PP = *P.as<const Parameters>();
-    std::set<int> affected;
-    for(int i=0;i<PP.n_branch_means();i++)
-      affected.insert(PP.branch_mean_index(i));
-    return affected;
-  }
 
   void Scale_Means_Only_Slice_Move::iterate(owned_ptr<Model>& P, MoveStats& Stats,int)
   {
