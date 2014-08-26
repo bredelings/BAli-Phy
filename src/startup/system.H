@@ -5,4 +5,6 @@
 
 void raise_cpu_limit(std::ostream& o);
 
+void block_signals();
+
 #endif

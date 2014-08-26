@@ -11,9 +11,12 @@ extern "C" {
 #endif
 
 #include <string>
+#include <signal.h>
 
 #include "util.H"
 
+using std::cerr;
+using std::cout;
 using std::string;
 using std::ostream;
 using std::endl;
@@ -49,7 +52,39 @@ void raise_cpu_limit(ostream& o)
 #else
 void raise_cpu_limit(ostream& o) 
 {
-  o<<"Not checking CPU time limits..."<<endl;
+  //  o<<"Not checking CPU time limits..."<<endl;
 }
 #endif
 
+void show_ending_messages();
+
+void die_on_signal(int sig)
+{
+  // Throwing exceptions from signal handlers is not allowed.  Bummer.
+  cout<<"received signal "<<sig<<".  Dying."<<endl;
+  cerr<<"received signal "<<sig<<".  Dying."<<endl;
+
+  show_ending_messages();
+
+  exit(3);
+}
+
+void block_signals()
+{
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+  signal(SIGHUP,SIG_IGN);
+  signal(SIGXCPU,SIG_IGN);
+      
+  struct sigaction sa_old;
+  struct sigaction sa_new;
+  sa_new.sa_handler = &die_on_signal;
+
+  sigaction(SIGINT,NULL,&sa_old);
+  if (sa_old.sa_handler != SIG_IGN)
+    sigaction(SIGINT,&sa_new,NULL);
+
+  sigaction(SIGTERM,NULL,&sa_old);
+  if (sa_old.sa_handler != SIG_IGN)
+    sigaction(SIGTERM,&sa_new,NULL);
+#endif
+}

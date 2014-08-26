@@ -40,7 +40,6 @@ namespace mpi = boost::mpi;
 #include <iostream>
 #include <sstream>
 #include <new>
-#include <signal.h>
 #include <map>
 
 #include <boost/program_options.hpp>
@@ -229,17 +228,6 @@ void show_ending_messages()
   }
 }
 
-void die_on_signal(int sig)
-{
-  // Throwing exceptions from signal handlers is not allowed.  Bummer.
-  cout<<"received signal "<<sig<<".  Dying."<<endl;
-  cerr<<"received signal "<<sig<<".  Dying."<<endl;
-
-  show_ending_messages();
-
-  exit(3);
-}
-
 /* 
  * 1. Add a PRANK-like initial algorithm.
  * 2. Add some kind of constraint.
@@ -378,26 +366,11 @@ int main(int argc,char* argv[])
       print_stats(cout,*M);
       // Separate the tree printer from the file writer?
     }
-    else {
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
+    else 
+    {
       raise_cpu_limit(err_both);
 
-      signal(SIGHUP,SIG_IGN);
-      signal(SIGXCPU,SIG_IGN);
-      
-      struct sigaction sa_old;
-      struct sigaction sa_new;
-      sa_new.sa_handler = &die_on_signal;
-
-      sigaction(SIGINT,NULL,&sa_old);
-      if (sa_old.sa_handler != SIG_IGN)
-	sigaction(SIGINT,&sa_new,NULL);
-
-      sigaction(SIGTERM,NULL,&sa_old);
-      if (sa_old.sa_handler != SIG_IGN)
-	sigaction(SIGTERM,&sa_new,NULL);
-
-#endif
+      block_signals();
 
       long int max_iterations = args["iterations"].as<long int>();
 
