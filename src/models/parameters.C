@@ -1295,7 +1295,7 @@ Parameters::Parameters(const module_loader& L,
 		       const vector<expression_ref>& IMs,
 		       const vector<int>& i_mapping,
 		       const vector<int>& scale_mapping)
-  :Probability_Model(L),
+  :Model(L),
    smodel_for_partition(s_mapping),
    IModel_methods(IMs.size()),
    imodel_for_partition(i_mapping),
@@ -1538,7 +1538,7 @@ Parameters::Parameters(const module_loader& L,
   :Parameters(L, A, t, SMs, s_mapping, vector<expression_ref>{}, vector<int>{}, scale_mapping)
 { }
 
-bool accept_MH(const Probability_Model& P1,const Probability_Model& P2,double rho)
+bool accept_MH(const Model& P1,const Model& P2,double rho)
 {
   log_double_t p1 = P1.heated_probability();
   log_double_t p2 = P2.heated_probability();

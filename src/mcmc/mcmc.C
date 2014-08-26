@@ -142,7 +142,7 @@ namespace MCMC {
     lambda.push_back(l);
   }
 
-  std::set<int> MoveGroup::get_affected_parameters(const owned_ptr<Probability_Model>& P) const
+  std::set<int> MoveGroup::get_affected_parameters(const owned_ptr<Model>& P) const
   {
     std::set<int> affected;
     for(const auto& m: moves)
@@ -179,14 +179,14 @@ namespace MCMC {
       moves[i]->disable(s);
   }
 
-  void MoveGroup::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) {
+  void MoveGroup::iterate(owned_ptr<Model>& P,MoveStats& Stats) {
     reset(1.0);
     for(int i=0;i<order.size();i++)
       iterate(P,Stats,i);
   }
 
 
-  void MoveGroup::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int i) 
+  void MoveGroup::iterate(owned_ptr<Model>& P,MoveStats& Stats,int i) 
   {
     assert(i < order.size());
 
@@ -310,7 +310,7 @@ namespace MCMC {
     return l + poisson(lambda);
   }
 
-  void SingleMove::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int) 
+  void SingleMove::iterate(owned_ptr<Model>& P,MoveStats& Stats,int) 
   {
 #ifndef NDEBUG
     clog<<" [single] move = "<<name<<endl;
@@ -335,7 +335,7 @@ namespace MCMC {
     return l + poisson(lambda);
   }
 
-  void MH_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int) 
+  void MH_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int) 
   {
 #ifndef NDEBUG
     clog<<" [MH] move = "<<name<<endl;
@@ -343,7 +343,7 @@ namespace MCMC {
 
     iterations++;
 
-    owned_ptr<Probability_Model> P2 = P;
+    owned_ptr<Model> P2 = P;
 
     double ratio = 1;
     try {
@@ -425,7 +425,7 @@ namespace MCMC {
     Stats.inc(name,result);
   }
 
-  double Slice_Move::sample(Probability_Model& P, slice_function& slice_levels, double v1)
+  double Slice_Move::sample(Model& P, slice_function& slice_levels, double v1)
   {
 #ifndef NDEBUG
     clog<<" [Slice] move = "<<name<<endl;
@@ -526,7 +526,7 @@ namespace MCMC {
      total_movement(0)
   {}
 
-  void Parameter_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
+  void Parameter_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
   {
     double v1 = P->get_parameter_value_as<Double>(index);
 
@@ -566,7 +566,7 @@ namespace MCMC {
     :Slice_Move(s,v,W_,f1,f2),index(i)
   {}
 
-  void Modifiable_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
+  void Modifiable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
   {
 #ifndef NDEBUG
     clog<<" [modifiable slice] move = "<<m_index<<endl;
@@ -610,7 +610,7 @@ namespace MCMC {
     :Slice_Move(s,v,W_,f1,f2), m_index(m), bounds(b)
   {}
 
-  void Integer_Modifiable_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
+  void Integer_Modifiable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
   {
 #ifndef NDEBUG
     clog<<" [integer modifiable slice] move = "<<m_index<<endl;
@@ -655,7 +655,7 @@ namespace MCMC {
     :Slice_Move(s,v,W_,f1,f2), m_index(m), bounds(b)
   {}
 
-  void Dirichlet_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
+  void Dirichlet_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
   {
 #ifndef NDEBUG
     clog<<" [dirichlet slice] move"<<endl;
@@ -676,7 +676,7 @@ namespace MCMC {
     Stats.inc(name,result);
   }
 
-  std::set<int> Dirichlet_Slice_Move::get_affected_parameters(const owned_ptr<Probability_Model>&) const
+  std::set<int> Dirichlet_Slice_Move::get_affected_parameters(const owned_ptr<Model>&) const
   {
     std::set<int> affected;
     affected.insert(indices.begin(), indices.end());
@@ -687,7 +687,7 @@ namespace MCMC {
     :Slice_Move(s,0.2/indices_.size()),indices(indices_),n(n_)
   { }
 
-  void Dirichlet_Modifiable_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
+  void Dirichlet_Modifiable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
   {
 #ifndef NDEBUG
     clog<<" [dirichlet modifiable slice] move"<<endl;
@@ -708,7 +708,7 @@ namespace MCMC {
     Stats.inc(name,result);
   }
 
-  std::set<int> Dirichlet_Modifiable_Slice_Move::get_affected_parameters(const owned_ptr<Probability_Model>&) const
+  std::set<int> Dirichlet_Modifiable_Slice_Move::get_affected_parameters(const owned_ptr<Model>&) const
   {
     return std::set<int>{};
   }
@@ -717,7 +717,7 @@ namespace MCMC {
     :Slice_Move(s,0.2/indices_.size()),indices(indices_),n(n_)
   { }
 
-  std::set<int> Scale_Means_Only_Slice_Move::get_affected_parameters(const owned_ptr<Probability_Model>& P) const
+  std::set<int> Scale_Means_Only_Slice_Move::get_affected_parameters(const owned_ptr<Model>& P) const
   {
     const Parameters& PP = *P.as<const Parameters>();
     std::set<int> affected;
@@ -726,7 +726,7 @@ namespace MCMC {
     return affected;
   }
 
-  void Scale_Means_Only_Slice_Move::iterate(owned_ptr<Probability_Model>& P, MoveStats& Stats,int)
+  void Scale_Means_Only_Slice_Move::iterate(owned_ptr<Model>& P, MoveStats& Stats,int)
   {
 #ifndef NDEBUG
     clog<<" [scale means only slice] move"<<endl;
@@ -782,23 +782,23 @@ int MoveArg::reset(double l)
   return order.size();
 }
 
-void MoveArg::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) {
+void MoveArg::iterate(owned_ptr<Model>& P,MoveStats& Stats) {
   for(int i=0;i<order.size();i++)
     iterate(P,Stats,i);
 }
 
-void MoveArg::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int i) 
+void MoveArg::iterate(owned_ptr<Model>& P,MoveStats& Stats,int i) 
 {
   (*this)(P,Stats,order[i]);
 }
 
 
-  void IOMove::iterate(owned_ptr<Probability_Model>& P, MoveStats& M)
+  void IOMove::iterate(owned_ptr<Model>& P, MoveStats& M)
   {
     iterate(P,M,0);
   }
 
-  void IOMove::iterate(owned_ptr<Probability_Model>& P, MoveStats& M,int)
+  void IOMove::iterate(owned_ptr<Model>& P, MoveStats& M,int)
   {
 #ifndef NDEBUG
     clog<<" [IO Move] move = "<<head<<endl;
@@ -889,7 +889,7 @@ int MoveEach::choose(int arg) const {
   return i;
 }
 
-void MoveEach::operator()(owned_ptr<Probability_Model>& P,MoveStats& Stats,int arg) {
+void MoveEach::operator()(owned_ptr<Model>& P,MoveStats& Stats,int arg) {
   iterations += 1.0/args.size();
   int m = choose(arg);
   MoveArg* temp = dynamic_cast<MoveArg*>(&*moves[m]);
@@ -907,7 +907,7 @@ void MoveEach::show_enabled(ostream& o,int depth) const {
     moves[i]->show_enabled(o,depth+1);
 }
 
-void MoveArgSingle::operator()(owned_ptr<Probability_Model>& P,MoveStats& Stats,int arg) 
+void MoveArgSingle::operator()(owned_ptr<Model>& P,MoveStats& Stats,int arg) 
 {
 #ifndef NDEBUG
   clog<<" [single] move = "<<name<<endl;
@@ -1198,7 +1198,7 @@ void mcmc_init(Parameters& P, ostream& s_out)
   }
 }
 
-void mcmc_log(long iterations, long max_iter, int subsample, Probability_Model& P, ostream& s_out, 
+void mcmc_log(long iterations, long max_iter, int subsample, Model& P, ostream& s_out, 
 	      const MoveStats& S, const vector<owned_ptr<Logger> >& loggers)
 {
   s_out<<"iterations = "<<iterations<<"\n";
@@ -1235,7 +1235,7 @@ void Sampler::add_logger(const owned_ptr<Logger>& L)
   loggers.push_back(L);
 }
 
-void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_iter, ostream& s_out)
+void Sampler::go(owned_ptr<Model>& P,int subsample,const int max_iter, ostream& s_out)
 {
 #ifdef NDEBUG
   P->compile();

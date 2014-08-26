@@ -53,7 +53,7 @@ void add_modifiable_MH_move(const string& name, const Proposal_Fn& proposal, int
 }
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
-void add_MH_move(Probability_Model& P, const Proposal_Fn& proposal, const vector<string>& names, 
+void add_MH_move(Model& P, const Proposal_Fn& proposal, const vector<string>& names, 
 		 const vector<string>& pnames, const vector<double>& pvalues,
 		 MCMC::MoveAll& M, double weight=1)
 {
@@ -88,7 +88,7 @@ void add_MH_move(Probability_Model& P, const Proposal_Fn& proposal, const vector
 /// \param M       The group of moves to which to add the newly-created sub-move
 /// \param weight  How often to run this move.
 ///
-void add_MH_move(Probability_Model& P,const Proposal_Fn& proposal, const string& name, const string& pname,double sigma, 
+void add_MH_move(Model& P,const Proposal_Fn& proposal, const string& name, const string& pname,double sigma, 
 		 MCMC::MoveAll& M,double weight=1)
 {
   vector<int> indices = parameters_with_extension(P,name);
@@ -113,7 +113,7 @@ double default_sampling_rate(const Model& /*M*/, const string& /*parameter_name*
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
-void add_slice_move(Probability_Model& P, const string& parameter_name, MCMC::MoveAll& M, double rate)
+void add_slice_move(Model& P, const string& parameter_name, MCMC::MoveAll& M, double rate)
 {
   int index = P.find_parameter(parameter_name);
 
@@ -128,7 +128,7 @@ void add_slice_move(Probability_Model& P, const string& parameter_name, MCMC::Mo
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
-void add_slice_move(Probability_Model& P, const string& parameter_name, MCMC::MoveAll& M)
+void add_slice_move(Model& P, const string& parameter_name, MCMC::MoveAll& M)
 {
   double rate = default_sampling_rate(P, parameter_name);
 
@@ -143,7 +143,7 @@ void add_slice_move(Probability_Model& P, const string& parameter_name, MCMC::Mo
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
-void add_slice_moves(Probability_Model& P, const string& name, 
+void add_slice_moves(Model& P, const string& name, 
 		     MCMC::MoveAll& M,
 		     double weight)
 {
@@ -163,7 +163,7 @@ void add_slice_moves(Probability_Model& P, const string& name,
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
-void add_slice_moves(Probability_Model& P, const string& name, 
+void add_slice_moves(Model& P, const string& name, 
 		     MCMC::MoveAll& M)
 {
   vector<int> indices = parameters_with_extension(P,name);
@@ -175,7 +175,7 @@ void add_slice_moves(Probability_Model& P, const string& name,
   }
 }
 
-void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
+void add_boolean_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
 {
   for(int r: P.random_modifiables())
   {
@@ -190,7 +190,7 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
 }
 
 /// Find parameters with distribution name Dist
-void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
+void add_real_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
 {
   for(int r: P.random_modifiables())
   {
@@ -204,7 +204,7 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
 }
 
 /// Find parameters with distribution name Dist
-void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
+void add_real_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
 {
   for(int r: P.random_modifiables())
   {
@@ -221,7 +221,7 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double weig
 }
 
 /// Find parameters with distribution name Dist
-void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
+void add_integer_uniform_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
 {
   for(int r: P.random_modifiables())
   {
@@ -237,7 +237,7 @@ void add_integer_uniform_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, 
   }
 }
 
-void add_integer_slice_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
+void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
 {
   for(int r: P.random_modifiables())
   {
@@ -256,7 +256,7 @@ void add_integer_slice_moves(const Probability_Model& P, MCMC::MoveAll& M, doubl
   }
 }
 
-MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
+MCMC::MoveAll get_scale_MH_moves(owned_ptr<Model>& P)
 {
   MCMC::MoveAll MH_moves("parameters:scale:MH");
   if (P.as<Parameters>())
@@ -277,7 +277,7 @@ MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
 ///
 /// \param P   The model and state.
 ///
-MCMC::MoveAll get_parameter_MH_moves(Probability_Model& M)
+MCMC::MoveAll get_parameter_MH_moves(Model& M)
 {
   MCMC::MoveAll MH_moves("parameters:MH");
 
@@ -337,7 +337,7 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
 ///
 /// \param P   The model and state.
 ///
-MCMC::MoveAll get_parameter_slice_moves(Probability_Model& M)
+MCMC::MoveAll get_parameter_slice_moves(Model& M)
 {
   MCMC::MoveAll slice_moves("parameters:slice");
 
@@ -549,7 +549,7 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 ///
 /// \param P   The model and state.
 ///
-MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Probability_Model& M)
+MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Model& M)
 {
   using namespace MCMC;
 
@@ -637,7 +637,7 @@ void set_min_branch_length(Parameters& P, double min_branch)
       P.setlength(b, min_branch);
 }
 
-void avoid_zero_likelihood(owned_ptr<Probability_Model>& P, ostream& out_log,ostream& /* out_both */)
+void avoid_zero_likelihood(owned_ptr<Model>& P, ostream& out_log,ostream& /* out_both */)
 {
   if (not P.as<Parameters>()) return;
 
@@ -666,7 +666,7 @@ double fraction_non_gap(const Parameters& P)
   return total_char/total_cell;
 }
 
-void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
+void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 		   ostream& out_log,ostream& out_both)
 {
   using namespace MCMC;
@@ -841,7 +841,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 /// \param files           Files to log output into
 ///
 void do_sampling(const variables_map& args,
-		 owned_ptr<Probability_Model>& P,
+		 owned_ptr<Model>& P,
 		 long int max_iterations,
 		 ostream& s_out,
 		 const vector<owned_ptr<MCMC::Logger> >& loggers)

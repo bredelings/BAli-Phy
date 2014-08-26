@@ -31,7 +31,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <valarray>
 #include "sequence/alphabet.H"
 #include "tree/sequencetree.H"
-#include "models/probability-model.H"
+#include "models/model.H"
 #include "imodel/imodel.H"
 #include "alignment/alignment.H"
 #include "substitution/matcache.H"
@@ -224,7 +224,7 @@ struct smodel_methods
 };
 
 /// A class to contain all the MCMC state except the alignment
-class Parameters: public Probability_Model
+class Parameters: public Model
 {
   friend class data_partition;
 
@@ -406,7 +406,7 @@ public:
 	     const std::vector<int>&);
 };
 
-bool accept_MH(const Probability_Model& P1,const Probability_Model& P2,double rho);
+bool accept_MH(const Model& P1,const Model& P2,double rho);
 
 
 #endif

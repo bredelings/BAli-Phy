@@ -372,7 +372,7 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
 }
 
 
-owned_ptr<Probability_Model> create_A_and_T_model(variables_map& args, const module_loader& L,
+owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& L,
 						  ostream& out_cache, ostream& out_screen, ostream& out_both,
 						  int proc_id)
 {
@@ -502,7 +502,7 @@ owned_ptr<Probability_Model> create_A_and_T_model(variables_map& args, const mod
   return P;
 }
 
-void write_initial_alignments(const owned_ptr<Probability_Model>& M, int proc_id, string dir_name)
+void write_initial_alignments(const owned_ptr<Model>& M, int proc_id, string dir_name)
 {
   owned_ptr<Parameters> P = M.as<Parameters>();
   if (not P) return;

@@ -43,13 +43,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "proposals.H"
 
 
-void avoid_zero_likelihood(owned_ptr<Probability_Model>& P,std::ostream&, std::ostream&);
+void avoid_zero_likelihood(owned_ptr<Model>& P,std::ostream&, std::ostream&);
 
 void do_pre_burnin(const boost::program_options::variables_map& args,
-		   owned_ptr<Probability_Model>& P,std::ostream&, std::ostream&);
+		   owned_ptr<Model>& P,std::ostream&, std::ostream&);
 
 void do_sampling(const boost::program_options::variables_map& args,
-		 owned_ptr<Probability_Model>& P,
+		 owned_ptr<Model>& P,
 		 long int max_iterations,
 		 std::ostream& files,
 		 const std::vector<owned_ptr<MCMC::Logger> >&);

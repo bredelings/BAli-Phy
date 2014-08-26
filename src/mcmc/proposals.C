@@ -523,7 +523,7 @@ sorted::sorted(const Proposal_Fn& P)
   :proposal(P)
 { }
 
-double Proposal2::operator()(Probability_Model& P) const
+double Proposal2::operator()(Model& P) const
 {
   //  vector< object_ref > parameters = P.get_parameter_values();
 
@@ -550,7 +550,7 @@ double Proposal2::operator()(Probability_Model& P) const
   return ratio;
 }
 
-std::set<int> Proposal2::get_affected_parameters(const owned_ptr<Probability_Model>&) const
+std::set<int> Proposal2::get_affected_parameters(const owned_ptr<Model>&) const
 {
   std::set<int> affected_parameters;
   for(int i: indices)
@@ -559,7 +559,7 @@ std::set<int> Proposal2::get_affected_parameters(const owned_ptr<Probability_Mod
 }
 
 Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<string>& v,
-	  const Probability_Model& P)
+	  const Model& P)
   :proposal(p),
    pnames(v)
 {
@@ -571,7 +571,7 @@ Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vecto
 
 
 Proposal2::Proposal2(const Proposal_Fn& p,const vector<std::string>& s, const std::vector<string>& v,
-	  const Probability_Model& P)
+	  const Model& P)
   :proposal(p),
    pnames(v)
 {
@@ -583,7 +583,7 @@ Proposal2::Proposal2(const Proposal_Fn& p,const vector<std::string>& s, const st
   }
 }
 
-double Proposal2M::operator()(Probability_Model& P) const
+double Proposal2M::operator()(Model& P) const
 {
   if (not indices.size())
     throw myexception()<<"Proposal2M::operator() - No modifiables to alter!";
@@ -602,7 +602,7 @@ double Proposal2M::operator()(Probability_Model& P) const
   return ratio;
 }
 
-std::set<int> Proposal2M::get_affected_parameters(const owned_ptr<Probability_Model>&) const
+std::set<int> Proposal2M::get_affected_parameters(const owned_ptr<Model>&) const
 {
   return std::set<int>{};
 }
@@ -619,7 +619,7 @@ Proposal2M::Proposal2M(const Proposal_Fn& p,const vector<int>& s, const vector<d
 { }
 
 
-double move_scale_branch(Probability_Model& P)
+double move_scale_branch(Model& P)
 {
   Parameters& PP = dynamic_cast<Parameters&>(P);
 
@@ -654,7 +654,7 @@ double move_scale_branch(Probability_Model& P)
   return 1.0;
 }
 
-double move_subst_type_branch(Probability_Model& P)
+double move_subst_type_branch(Model& P)
 {
   Parameters& PP = dynamic_cast<Parameters&>(P);
 

@@ -82,8 +82,8 @@ namespace MCMC {
   };
 
   //---------------------- Simple Move  ---------------------//
-  typedef void (*atomic_move)(owned_ptr<Probability_Model>&,MoveStats&);
-  typedef void (*atomic_move_arg)(owned_ptr<Probability_Model>&,MoveStats&,int);
+  typedef void (*atomic_move)(owned_ptr<Model>&,MoveStats&);
+  typedef void (*atomic_move_arg)(owned_ptr<Model>&,MoveStats&,int);
 
   //---------------- Move's w/ sub-moves --------------------//
   class Move: public Object
@@ -95,7 +95,7 @@ namespace MCMC {
 
     std::vector<std::string> attributes;
 
-    virtual std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const = 0;
+    virtual std::set<int> get_affected_parameters(const owned_ptr<Model>&) const = 0;
 
     double iterations;
 
@@ -127,10 +127,10 @@ namespace MCMC {
     virtual int reset(double l);
 
     /// Do a complete iteration (a top-level routine)
-    virtual void iterate(owned_ptr<Probability_Model>&,MoveStats&) =0;
+    virtual void iterate(owned_ptr<Model>&,MoveStats&) =0;
 
     /// Do the i-th iteration for this round (not a top-level routine)
-    virtual void iterate(owned_ptr<Probability_Model>&,MoveStats&,int i) =0;
+    virtual void iterate(owned_ptr<Model>&,MoveStats&,int i) =0;
 
     /// Show enabled-ness for this move and submoves
     virtual void show_enabled(std::ostream&,int depth=0) const;
@@ -184,7 +184,7 @@ namespace MCMC {
 
     MoveGroup* clone() const =0;
 
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const;
+    std::set<int> get_affected_parameters(const owned_ptr<Model>&) const;
 
     void enable(const std::string&);
     void disable(const std::string&);
@@ -195,8 +195,8 @@ namespace MCMC {
     void stop_learning(int);
 
     int reset(double);
-    void iterate(owned_ptr<Probability_Model>&,MoveStats&);
-    void iterate(owned_ptr<Probability_Model>&,MoveStats&,int);
+    void iterate(owned_ptr<Model>&,MoveStats&);
+    void iterate(owned_ptr<Model>&,MoveStats&,int);
 
     void show_enabled(std::ostream&,int depth=0) const;
 
@@ -235,15 +235,15 @@ namespace MCMC {
     atomic_move m;
     std::set<int> affected_parameters;
   public:
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return affected_parameters;}
+    std::set<int> get_affected_parameters(const owned_ptr<Model>&) const {return affected_parameters;}
 
     SingleMove* clone() const {return new SingleMove(*this);}
 
     int reset(double lambda);
 
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
+    void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
 
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats&,int);
+    void iterate(owned_ptr<Model>& P,MoveStats&,int);
 
     SingleMove(atomic_move m1,const std::string& s, const std::set<int>& a)
       :Move(s),m(m1),affected_parameters(a) {}
@@ -257,7 +257,7 @@ namespace MCMC {
     owned_ptr<Proposal> proposal;
     std::set<int> affected_parameters;
   public:
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>& P) const {
+    std::set<int> get_affected_parameters(const owned_ptr<Model>& P) const {
       return proposal->get_affected_parameters(P);
     }
 
@@ -265,10 +265,10 @@ namespace MCMC {
 
     int reset(double lambda);
 
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
+    void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
 
     // FIXME, can I get rid of this for all groups that aren't using it?
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats&,int);
+    void iterate(owned_ptr<Model>& P,MoveStats&,int);
 
     MH_Move(const Proposal& P,const std::string& s)
       :Move(s),proposal(P) {}
@@ -292,7 +292,7 @@ namespace MCMC {
   public:
     Slice_Move* clone() const=0;
 
-    double sample(Probability_Model& P, slice_function& f, double);
+    double sample(Model& P, slice_function& f, double);
 
     void start_learning(int);
 
@@ -317,13 +317,13 @@ namespace MCMC {
     int index;
 
   public:
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return {index};}
+    std::set<int> get_affected_parameters(const owned_ptr<Model>&) const {return {index};}
 
     Parameter_Slice_Move* clone() const {return new Parameter_Slice_Move(*this);}
 
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
+    void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
 
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats&,int);
+    void iterate(owned_ptr<Model>& P,MoveStats&,int);
 
     Parameter_Slice_Move(const std::string& s,int i, double W_);
 
@@ -331,10 +331,10 @@ namespace MCMC {
 			 double W_);
 
     Parameter_Slice_Move(const std::string& s,int i,
-			 double (*W_)(const Probability_Model&));
+			 double (*W_)(const Model&));
 
     Parameter_Slice_Move(const std::string& s, const std::string& v,int i,
-			 double (*W_)(const Probability_Model&));
+			 double (*W_)(const Model&));
 
     Parameter_Slice_Move(const std::string& s,int i,
 			 double W_,
@@ -353,13 +353,13 @@ namespace MCMC {
     Bounds<double> bounds;
 
   public:
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return std::set<int>{};}
+    std::set<int> get_affected_parameters(const owned_ptr<Model>&) const {return std::set<int>{};}
     
     Modifiable_Slice_Move* clone() const {return new Modifiable_Slice_Move(*this);}
     
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
+    void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
     
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats&,int);
+    void iterate(owned_ptr<Model>& P,MoveStats&,int);
     
     Modifiable_Slice_Move(const std::string& s,int m, const Bounds<double>& b, double W_);
     
@@ -367,10 +367,10 @@ namespace MCMC {
 			  const Bounds<double>& b, double W_);
     
     Modifiable_Slice_Move(const std::string& s,int m,
-			  const Bounds<double>& b, double (*W_)(const Probability_Model&));
+			  const Bounds<double>& b, double (*W_)(const Model&));
     
     Modifiable_Slice_Move(const std::string& s, const std::string& v,int m,
-			  const Bounds<double>& b, double (*W_)(const Probability_Model&));
+			  const Bounds<double>& b, double (*W_)(const Model&));
     
     Modifiable_Slice_Move(const std::string& s,int m,
 			  const Bounds<double>& b, double W_,
@@ -389,13 +389,13 @@ namespace MCMC {
     Bounds<int> bounds;
 
   public:
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return std::set<int>{};}
+    std::set<int> get_affected_parameters(const owned_ptr<Model>&) const {return std::set<int>{};}
     
     Integer_Modifiable_Slice_Move* clone() const {return new Integer_Modifiable_Slice_Move(*this);}
     
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
+    void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
     
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats&,int);
+    void iterate(owned_ptr<Model>& P,MoveStats&,int);
     
     Integer_Modifiable_Slice_Move(const std::string& s,int m, const Bounds<int>& b, double W_);
     
@@ -403,10 +403,10 @@ namespace MCMC {
 			  const Bounds<int>& b, double W_);
     
     Integer_Modifiable_Slice_Move(const std::string& s,int m,
-			  const Bounds<int>& b, double (*W_)(const Probability_Model&));
+			  const Bounds<int>& b, double (*W_)(const Model&));
     
     Integer_Modifiable_Slice_Move(const std::string& s, const std::string& v,int m,
-			  const Bounds<int>& b, double (*W_)(const Probability_Model&));
+			  const Bounds<int>& b, double (*W_)(const Model&));
     
     Integer_Modifiable_Slice_Move(const std::string& s,int m,
 			  const Bounds<int>& b, double W_,
@@ -426,13 +426,13 @@ namespace MCMC {
     int n;
 
   public:
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const;
+    std::set<int> get_affected_parameters(const owned_ptr<Model>&) const;
 
     Dirichlet_Slice_Move* clone() const {return new Dirichlet_Slice_Move(*this);}
 
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
+    void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
 
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats&,int);
+    void iterate(owned_ptr<Model>& P,MoveStats&,int);
 
     Dirichlet_Slice_Move(const std::string&, const std::vector<int>&, int);
   };
@@ -444,13 +444,13 @@ namespace MCMC {
     int n;
 
   public:
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const;
+    std::set<int> get_affected_parameters(const owned_ptr<Model>&) const;
 
     Dirichlet_Modifiable_Slice_Move* clone() const {return new Dirichlet_Modifiable_Slice_Move(*this);}
 
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
+    void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
 
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats&,int);
+    void iterate(owned_ptr<Model>& P,MoveStats&,int);
 
     Dirichlet_Modifiable_Slice_Move(const std::string&, const std::vector<int>&, int);
   };
@@ -460,11 +460,11 @@ namespace MCMC {
   public:
     Scale_Means_Only_Slice_Move* clone() const {return new Scale_Means_Only_Slice_Move(*this);}
  
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const;
+    std::set<int> get_affected_parameters(const owned_ptr<Model>&) const;
 
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
+    void iterate(owned_ptr<Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
 
-    void iterate(owned_ptr<Probability_Model>& P,MoveStats&,int);
+    void iterate(owned_ptr<Model>& P,MoveStats&,int);
 
     Scale_Means_Only_Slice_Move(const std::string&, double);
   };
@@ -477,17 +477,17 @@ namespace MCMC {
   public:
     MoveArg* clone() const=0;
 
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return std::set<int>{};}
+    std::set<int> get_affected_parameters(const owned_ptr<Model>&) const {return std::set<int>{};}
 
     /// A list of arguments to be passed to submoves
     std::vector<int> args;
 
     int reset(double);
-    void iterate(owned_ptr<Probability_Model>&,MoveStats&);
-    void iterate(owned_ptr<Probability_Model>&,MoveStats&,int);
+    void iterate(owned_ptr<Model>&,MoveStats&);
+    void iterate(owned_ptr<Model>&,MoveStats&,int);
 
     /// Operate on the 'a'-th arg
-    virtual void operator()(owned_ptr<Probability_Model>&,MoveStats&,int a)=0;
+    virtual void operator()(owned_ptr<Model>&,MoveStats&,int a)=0;
 
     MoveArg(const std::string& s):Move(s) { }
     MoveArg(const std::string& s, const std::string& v):Move(s,v) { }
@@ -501,10 +501,10 @@ namespace MCMC {
   public:
     IOMove* clone() const {return new IOMove(*this);}
 
-    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return std::set<int>{};}
+    std::set<int> get_affected_parameters(const owned_ptr<Model>&) const {return std::set<int>{};}
 
-    void iterate(owned_ptr<Probability_Model>&,MoveStats&);
-    void iterate(owned_ptr<Probability_Model>&,MoveStats&,int);
+    void iterate(owned_ptr<Model>&,MoveStats&);
+    void iterate(owned_ptr<Model>&,MoveStats&,int);
 
     IOMove(int h);
   };
@@ -535,7 +535,7 @@ namespace MCMC {
     void enable(const std::string&);
     void disable(const std::string&);
 
-    void operator()(owned_ptr<Probability_Model>&,MoveStats&,int);
+    void operator()(owned_ptr<Model>&,MoveStats&,int);
     
     void show_enabled(std::ostream&,int depth=0) const;
 
@@ -551,7 +551,7 @@ namespace MCMC {
   public:
     MoveArgSingle* clone() const {return new MoveArgSingle(*this);}
 
-    void operator()(owned_ptr<Probability_Model>&,MoveStats&,int);
+    void operator()(owned_ptr<Model>&,MoveStats&,int);
 
     MoveArgSingle(const std::string& s,atomic_move_arg m1,const std::vector<int>& a)
       :MoveArg(s),m(m1) 
@@ -571,7 +571,7 @@ namespace MCMC {
 
   public:
     /// Run the sampler for 'max' iterations
-    void go(owned_ptr<Probability_Model>& P, int subsample, int max, std::ostream&);
+    void go(owned_ptr<Model>& P, int subsample, int max, std::ostream&);
 
     int n_loggers() const {return loggers.size();}
 

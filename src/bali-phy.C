@@ -122,7 +122,7 @@ int parameter_with_extension(const Model& M, const string& name)
 
 // How to record that the user said e.g. "fix the alignment"?  Or, fix parameter X?  Should we?
 
-void set_key_values(Probability_Model& M, const variables_map& args)
+void set_key_values(Model& M, const variables_map& args)
 {
   if (not args.count("set")) return;
 
@@ -342,11 +342,11 @@ int main(int argc,char* argv[])
     out_cache<<"random seed = "<<seed<<endl<<endl;
 
     //---------- Create model object -----------//
-    owned_ptr<Probability_Model> M;
+    owned_ptr<Model> M;
     if (args.count("align"))
       M = create_A_and_T_model(args, L, out_cache, out_screen, out_both, proc_id);
     else
-      M = Probability_Model(L);
+      M = Model(L);
     M->set_args(trailing_args(argc, argv, trailing_args_separator));
 
     //------------- Parse the Hierarchical Model description -----------//

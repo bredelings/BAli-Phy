@@ -66,7 +66,7 @@ struct parameter_slice_function:public slice_function
 {
   int count;
 
-  Probability_Model& P;
+  Model& P;
 
   int n;
 
@@ -81,8 +81,8 @@ struct parameter_slice_function:public slice_function
   // function to go from the value on which the prior is to the stored value.
   double (*inverse)(double);
 
-  parameter_slice_function(Probability_Model&,int);
-  parameter_slice_function(Probability_Model&,int,double(*)(double),double(*)(double));
+  parameter_slice_function(Model&,int);
+  parameter_slice_function(Model&,int,double(*)(double),double(*)(double));
 };
 
 /// A slice_function for slice-sampling a single parameter
@@ -90,7 +90,7 @@ struct modifiable_slice_function:public slice_function
 {
   int count;
 
-  Probability_Model& P;
+  Model& P;
 
   /// The modifiable index.
   int m;
@@ -106,8 +106,8 @@ struct modifiable_slice_function:public slice_function
   // function to go from the value on which the prior is to the stored value.
   double (*inverse)(double);
 
-  modifiable_slice_function(Probability_Model&,int,const Bounds<double>&);
-  modifiable_slice_function(Probability_Model&,int,const Bounds<double>&,double(*)(double),double(*)(double));
+  modifiable_slice_function(Model&,int,const Bounds<double>&);
+  modifiable_slice_function(Model&,int,const Bounds<double>&,double(*)(double),double(*)(double));
 };
 
 
@@ -116,7 +116,7 @@ struct integer_modifiable_slice_function:public slice_function
 {
   int count;
 
-  Probability_Model& P;
+  Model& P;
 
   /// The modifiable index.
   int m;
@@ -134,8 +134,8 @@ struct integer_modifiable_slice_function:public slice_function
   // function to go from the value on which the prior is to the stored value.
   double (*inverse)(double);
 
-  integer_modifiable_slice_function(Probability_Model&,int,const Bounds<int>&);
-  integer_modifiable_slice_function(Probability_Model&,int,const Bounds<int>&,double(*)(double),double(*)(double));
+  integer_modifiable_slice_function(Model&,int,const Bounds<int>&);
+  integer_modifiable_slice_function(Model&,int,const Bounds<int>&,double(*)(double),double(*)(double));
 };
 
 
@@ -226,7 +226,7 @@ struct constant_sum_slice_function:public slice_function
   int n;
 
   /// The object whose parameters we are sampling
-  Probability_Model& P;
+  Model& P;
 
   /// return the probability * mu^(B-1)
   double operator()(double);
@@ -235,7 +235,7 @@ struct constant_sum_slice_function:public slice_function
 
   double current_value() const;
 
-  constant_sum_slice_function(Probability_Model&,const std::vector<int>&,int);
+  constant_sum_slice_function(Model&,const std::vector<int>&,int);
 };
 
 /// \brief A slice_function for resampling \f$x_n\f$ when \f$\sum_i x_i=C\f$
@@ -259,7 +259,7 @@ struct constant_sum_modifiable_slice_function:public slice_function
   int n;
 
   /// The object whose parameters we are sampling
-  Probability_Model& P;
+  Model& P;
 
   /// return the probability * mu^(B-1)
   double operator()(double);
@@ -268,7 +268,7 @@ struct constant_sum_modifiable_slice_function:public slice_function
 
   double current_value() const;
 
-  constant_sum_modifiable_slice_function(Probability_Model&,const std::vector<int>&,int);
+  constant_sum_modifiable_slice_function(Model&,const std::vector<int>&,int);
 };
 
 double transform_epsilon(double);

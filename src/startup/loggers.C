@@ -8,7 +8,7 @@ using std::string;
 using std::set;
 
 /// Determine the parameters of model \a M that must be sorted in order to enforce identifiability.
-vector< vector< vector<int> > > get_un_identifiable_indices(const Probability_Model& M, const vector<string>& names)
+vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, const vector<string>& names)
 {
   if (not dynamic_cast<const Parameters*>(&M)) return {};
 
@@ -88,7 +88,7 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
   }
 }
 
-owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Probability_Model>& M, const vector<string>& Rao_Blackwellize)
+owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Model>& M, const vector<string>& Rao_Blackwellize)
 {
   owned_ptr<Parameters> P = M.as<Parameters>();
 
@@ -178,7 +178,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Proba
   return TL;
 }
 
-vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Probability_Model>& M, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
+vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
 {
   using namespace MCMC;
   vector<owned_ptr<Logger> > loggers;

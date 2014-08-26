@@ -30,12 +30,12 @@ double scale_gaussian(double& x,double sigma);
 
 class Proposal: public Object {
 public:
-  virtual std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const = 0;
+  virtual std::set<int> get_affected_parameters(const owned_ptr<Model>&) const = 0;
   Proposal* clone() const =0;
-  virtual double operator()(Probability_Model& P) const=0;
+  virtual double operator()(Model& P) const=0;
 };
 
-typedef double (*generic_proposal)(Probability_Model& P);
+typedef double (*generic_proposal)(Model& P);
 
 class Generic_Proposal: public Proposal
 {
@@ -44,8 +44,8 @@ class Generic_Proposal: public Proposal
   
 public:
   Generic_Proposal* clone() const {return new Generic_Proposal(*this);}
-  std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return affected_parameters;}
-  double operator()(Probability_Model& P) const {return proposal(P);}
+  std::set<int> get_affected_parameters(const owned_ptr<Model>&) const {return affected_parameters;}
+  double operator()(Model& P) const {return proposal(P);}
   Generic_Proposal(generic_proposal gp):proposal(gp) {}
   Generic_Proposal(generic_proposal gp,const std::set<int>& a):proposal(gp),affected_parameters(a) {}
 };
@@ -148,13 +148,13 @@ class Proposal2: public Proposal
 
 public:
   const std::vector<int>& get_indices() const {return indices;}
-  std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const;
+  std::set<int> get_affected_parameters(const owned_ptr<Model>&) const;
   Proposal2* clone() const {return new Proposal2(*this);}
-  double operator()(Probability_Model& P) const;
+  double operator()(Model& P) const;
   Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<std::string>& v,
-	    const Probability_Model& P);
+	    const Model& P);
   Proposal2(const Proposal_Fn& p,const std::vector<std::string>& s, const std::vector<std::string>& v,
-	    const Probability_Model& P);
+	    const Model& P);
 };
 
 
@@ -166,9 +166,9 @@ class Proposal2M: public Proposal
 
 public:
   const std::vector<int>& get_indices() const {return indices;}
-  std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const;
+  std::set<int> get_affected_parameters(const owned_ptr<Model>&) const;
   Proposal2M* clone() const {return new Proposal2M(*this);}
-  double operator()(Probability_Model& P) const;
+  double operator()(Model& P) const;
   Proposal2M(const Proposal_Fn& p,int, const std::vector<double>& v);
   Proposal2M(const Proposal_Fn& p,const std::vector<int>&, const std::vector<double>& v);
 };
@@ -192,8 +192,8 @@ double bit_flip(std::vector< object_ref >& x, const std::vector<double>& p);
 
 double discrete_uniform(std::vector< object_ref >& x, const std::vector<double>& p);
 
-double move_scale_branch(Probability_Model& P);
+double move_scale_branch(Model& P);
 
-double move_subst_type_branch(Probability_Model& P);
+double move_subst_type_branch(Model& P);
 
 #endif

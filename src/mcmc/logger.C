@@ -106,7 +106,7 @@ vector<object_ref> make_identifiable(const vector<object_ref>& v,const vector< v
   return v2;
 }
 
-vector<object_ref> SortedTableFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
+vector<object_ref> SortedTableFunction::operator()(const owned_ptr<Model>& P, long t)
 {
   vector<object_ref> v = (*F)(P,t);
 
@@ -147,7 +147,7 @@ vector<string> TableLogger::field_names() const
   return TF->field_names();
 }
 
-void TableLogger::operator()(const owned_ptr<Probability_Model>& P, long t)
+void TableLogger::operator()(const owned_ptr<Model>& P, long t)
 {
   if (t==0)
     *log_file<<join(field_names(),'\t')<<endl;
@@ -160,7 +160,7 @@ TableLogger::TableLogger(const string& name, const owned_ptr<TableFunction<strin
   :FileLogger(name), TF(tf)
 { }
 
-string TableViewerFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
+string TableViewerFunction::operator()(const owned_ptr<Model>& P, long t)
 {
   vector<string> fields = function->field_names();
   vector<string> values = (*function)(P,t);
@@ -180,7 +180,7 @@ TableViewerFunction::TableViewerFunction(const owned_ptr<TableFunction<string> >
   :function(f)
 { }
 
-object_ref GetComputationFunction::operator()(const owned_ptr<Probability_Model>& P, long)
+object_ref GetComputationFunction::operator()(const owned_ptr<Model>& P, long)
 {
   object_ref result = P->evaluate(index);
 
@@ -205,52 +205,52 @@ GetComputationFunction::GetComputationFunction(int i)
   :index(i)
 { }
 
-string GetPriorFunction::operator()(const owned_ptr<Probability_Model>& P, long)
+string GetPriorFunction::operator()(const owned_ptr<Model>& P, long)
 {
   return convertToString(log(P->prior()));
 }
 
-string GetAlignmentPriorFunction::operator()(const owned_ptr<Probability_Model>& P, long)
+string GetAlignmentPriorFunction::operator()(const owned_ptr<Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
   return convertToString(log(PP[p].prior_alignment()));
 }
 
-string GetLikelihoodFunction::operator()(const owned_ptr<Probability_Model>& P, long)
+string GetLikelihoodFunction::operator()(const owned_ptr<Model>& P, long)
 {
   return convertToString(log(P->likelihood()));
 }
 
-string GetProbabilityFunction::operator()(const owned_ptr<Probability_Model>& P, long)
+string GetProbabilityFunction::operator()(const owned_ptr<Model>& P, long)
 {
   return convertToString(log(P->probability()));
 }
 
-string Get_Alignment_Length_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+string Get_Alignment_Length_Function::operator()(const owned_ptr<Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
   return convertToString(PP[p].A().length());
 }
 
-string Get_Num_Substitutions_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+string Get_Num_Substitutions_Function::operator()(const owned_ptr<Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
   return convertToString(n_mutations(PP[p].A(), PP[p].T(), cost_matrix));
 }
 
-string Get_Num_Indels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+string Get_Num_Indels_Function::operator()(const owned_ptr<Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
   return convertToString(n_indels(PP[p].A(), PP[p].T()));
 }
 
-string Get_Total_Length_Indels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+string Get_Total_Length_Indels_Function::operator()(const owned_ptr<Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
   return convertToString(total_length_indels(PP[p].A(), PP[p].T()));
 }
 //
-string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
 
@@ -260,7 +260,7 @@ string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Probabili
   return convertToString(total);
 }
 
-string Get_Total_Num_Substitutions_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+string Get_Total_Num_Substitutions_Function::operator()(const owned_ptr<Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
 
@@ -270,7 +270,7 @@ string Get_Total_Num_Substitutions_Function::operator()(const owned_ptr<Probabil
   return convertToString(total);
 }
 
-string Get_Total_Num_Indels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+string Get_Total_Num_Indels_Function::operator()(const owned_ptr<Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
 
@@ -280,7 +280,7 @@ string Get_Total_Num_Indels_Function::operator()(const owned_ptr<Probability_Mod
   return convertToString(total);
 }
 
-string Get_Total_Total_Length_Indels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+string Get_Total_Total_Length_Indels_Function::operator()(const owned_ptr<Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
 
@@ -307,11 +307,11 @@ double mu_scale(const Parameters& P)
   return mu_scale;
 }
 
-  string Get_Rao_Blackwellized_Parameter_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+  string Get_Rao_Blackwellized_Parameter_Function::operator()(const owned_ptr<Model>& P, long)
   {
     if (parameter == -1) std::abort();
 
-    owned_ptr<Probability_Model> P2 = P;
+    owned_ptr<Model> P2 = P;
     vector<log_double_t> Prs;
     log_double_t total = 0;
 
@@ -357,14 +357,14 @@ double mu_scale(const Parameters& P)
     :parameter(p), values(v)
   { }
 
-string Get_Tree_Length_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+string Get_Tree_Length_Function::operator()(const owned_ptr<Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
 
   return convertToString( mu_scale(PP) * tree_length(PP.T()) );
 }
 
-string TreeFunction::operator()(const owned_ptr<Probability_Model>& P, long)
+string TreeFunction::operator()(const owned_ptr<Model>& P, long)
 {
   const Parameters& PP = *P.as<Parameters>();
 
@@ -378,7 +378,7 @@ string TreeFunction::operator()(const owned_ptr<Probability_Model>& P, long)
   return T.write();
 }
 
-string MAP_Function::operator()(const owned_ptr<Probability_Model>& P, long t)
+string MAP_Function::operator()(const owned_ptr<Model>& P, long t)
 {
   std::ostringstream output;
 
@@ -397,7 +397,7 @@ string MAP_Function::operator()(const owned_ptr<Probability_Model>& P, long t)
 
 
 
-string AlignmentFunction::operator()(const owned_ptr<Probability_Model>& P, long)
+string AlignmentFunction::operator()(const owned_ptr<Model>& P, long)
 {
   const Parameters& PP = *P.as<Parameters>();
   std::ostringstream output;
@@ -405,7 +405,7 @@ string AlignmentFunction::operator()(const owned_ptr<Probability_Model>& P, long
   return output.str();
 }
 
-string Show_SModels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+string Show_SModels_Function::operator()(const owned_ptr<Model>& P, long)
 {
   const Parameters& PP = *P.as<Parameters>();
   std::ostringstream output;
@@ -414,7 +414,7 @@ string Show_SModels_Function::operator()(const owned_ptr<Probability_Model>& P, 
   return output.str();
 }
 
-string Subsample_Function::operator()(const owned_ptr<Probability_Model>& P, long t)
+string Subsample_Function::operator()(const owned_ptr<Model>& P, long t)
 {
   if (t%subsample == 0) 
     return (*function)(P,t);
@@ -422,7 +422,7 @@ string Subsample_Function::operator()(const owned_ptr<Probability_Model>& P, lon
     return "";
 }
 
-string Mixture_Components_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+string Mixture_Components_Function::operator()(const owned_ptr<Model>& P, long)
 {
   std::ostringstream output;
   const Parameters& PP = *P.as<Parameters>();
@@ -435,7 +435,7 @@ string Mixture_Components_Function::operator()(const owned_ptr<Probability_Model
   return output.str();
 }
 
-string Ancestral_Sequences_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+string Ancestral_Sequences_Function::operator()(const owned_ptr<Model>& P, long)
 {
   std::ostringstream output;
 
@@ -472,7 +472,7 @@ string Ancestral_Sequences_Function::operator()(const owned_ptr<Probability_Mode
   return output.str();
 }
 
-void FunctionLogger::operator()(const owned_ptr<Probability_Model>& P, long t)
+void FunctionLogger::operator()(const owned_ptr<Model>& P, long t)
 {
   (*log_file)<<((*function)(P,t));
 }
@@ -481,7 +481,7 @@ FunctionLogger::FunctionLogger(const std::string& filename, const owned_ptr<Logg
   :FileLogger(filename),function(L)
 { }
 
-string ConcatFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
+string ConcatFunction::operator()(const owned_ptr<Model>& P, long t)
 {
   string output;
 

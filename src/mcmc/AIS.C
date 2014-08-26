@@ -7,7 +7,7 @@ using std::vector;
 // * Its possible to weight subsequences x[n] ... x[i] also.
 // This yields weighted sample w(x[n]...x[i]) at level x[i], including i=0.
 
-void AIS_Sampler::sample_from_beta(double beta, owned_ptr<Probability_Model>& P, int n, MCMC::Sampler& S0)
+void AIS_Sampler::sample_from_beta(double beta, owned_ptr<Model>& P, int n, MCMC::Sampler& S0)
 {
   P->set_beta(beta);
   for(int i=0;i<n;i++) {
@@ -40,7 +40,7 @@ void show_weights(const vector<vector<log_double_t> >& weights, std::ostream& o)
 }
 
 
-void AIS_Sampler::go(owned_ptr<Probability_Model>& P, std::ostream& o, std::vector<double> beta, int n)
+void AIS_Sampler::go(owned_ptr<Model>& P, std::ostream& o, std::vector<double> beta, int n)
 {
   o<<"Starting AIS:\n";
   assert(beta.size());
@@ -54,10 +54,10 @@ void AIS_Sampler::go(owned_ptr<Probability_Model>& P, std::ostream& o, std::vect
 
   // Generate our sequences
   vector<vector<log_double_t> > weights(beta.size()-1);
-  vector<owned_ptr<Probability_Model> > X;
+  vector<owned_ptr<Model> > X;
   for(int i=0;i<1000;i++)
   {
-    owned_ptr<Probability_Model> P2;
+    owned_ptr<Model> P2;
     log_double_t weight = 1;
     for(int level=beta.size()-1; level >=0 ;level--)
     {

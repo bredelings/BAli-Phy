@@ -92,7 +92,7 @@ void show_smodels(std::ostream& o, const Parameters& P)
   }
 }
 
-void print_stats(std::ostream& o, const Probability_Model& M, bool /* print_alignment */) 
+void print_stats(std::ostream& o, const Model& M, bool /* print_alignment */) 
 {
   const Parameters* P = dynamic_cast<const Parameters*>(&M);
   log_double_t Pr_prior = M.prior();

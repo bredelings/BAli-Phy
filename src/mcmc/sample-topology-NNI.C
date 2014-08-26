@@ -148,7 +148,7 @@ int HMM_type_for_branch(const Parameters& P, int b)
   return P.branch_HMM_type[b];
 }
 
-void two_way_topology_slice_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
+void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
   if (PP.T().directed_branch(b).is_leaf_branch()) return;
@@ -217,7 +217,7 @@ void two_way_topology_slice_sample(owned_ptr<Probability_Model>& P, MoveStats& S
   NNI_inc(Stats,"NNI (2-way,slice)", result, T0, b);
 }
 
-void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
+void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
   if (PP.T().directed_branch(b).is_leaf_branch()) return;
@@ -320,7 +320,7 @@ void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, 
     NNI_inc(Stats,"NNI (2-way stupid)", result,p[0].T(),b);
 }
 
-void two_way_NNI_SPR_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
+void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
   if (PP.T().directed_branch(b).is_leaf_branch()) return;
@@ -392,7 +392,7 @@ vector<int> NNI_branches(const Tree& T, int b)
   return branches2;
 }
 
-void two_way_NNI_and_branches_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
+void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
   if (PP.T().directed_branch(b).is_leaf_branch()) return;
@@ -457,7 +457,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Probability_Model>& P, MoveStats&
   NNI_inc(Stats,"NNI (2-way) + branches", result, p[0].T(), b);
 }
 
-void two_way_NNI_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
+void two_way_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
   if (PP.T().directed_branch(b).is_leaf_branch()) return;
@@ -497,7 +497,7 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<log_double_t>&
 }
 
 
-void three_way_topology_sample_slice(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
+void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
   if (PP.T().directed_branch(b).is_leaf_branch()) return;
@@ -587,7 +587,7 @@ void three_way_topology_sample_slice(owned_ptr<Probability_Model>& P, MoveStats&
   NNI_inc(Stats,"NNI (3-way,slice)", result, T0, b);
 }
 
-void three_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
+void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
   if (PP.T().directed_branch(b).is_leaf_branch()) return;
@@ -652,7 +652,7 @@ void three_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats
   NNI_inc(Stats,"NNI (3-way)", result, p[0].T(), b);
 }
 
-void three_way_topology_and_alignment_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
+void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
   if (PP.T().directed_branch(b).is_leaf_branch()) return;

@@ -26,7 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "models/model.H"
 #include "substitution/matcache.H"
 
-void print_stats(std::ostream& o,const Probability_Model& M,bool=true);
+void print_stats(std::ostream& o,const Model& M,bool=true);
 
 void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<double>&);
 void show_frequencies(std::ostream& o,const Mat_Cache& MModel);

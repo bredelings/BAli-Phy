@@ -43,7 +43,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            tools/findroot.H tools/parsimony.H tools/mctree.H \
            version.H cow-ptr.H alignment/index-matrix.H cached_value.H \
 	   tools/consensus-tree.H tools/partition.H mcmc/slice-sampling.H \
-	   timer_stack.H mcmc/setup.H models/probability-model.H owned-ptr.H \
+	   timer_stack.H mcmc/setup.H owned-ptr.H \
 	   bounds.H io.H parser/parse.H \
            parser/AST.H computation/computation.H computation/closure.H \
            computation/context.H computation/expression.H computation/formula_expression.H \

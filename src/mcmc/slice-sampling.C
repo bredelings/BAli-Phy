@@ -56,11 +56,11 @@ double parameter_slice_function::current_value() const
   return P.get_parameter_value_as<Double>(n);
 }
 
-parameter_slice_function::parameter_slice_function(Probability_Model& P_,int n_)
+parameter_slice_function::parameter_slice_function(Model& P_,int n_)
   :parameter_slice_function(P_, n_, slice_sampling::identity, slice_sampling::identity)
 { }
 
-parameter_slice_function::parameter_slice_function(Probability_Model& P_,int n_,
+parameter_slice_function::parameter_slice_function(Model& P_,int n_,
 						   double(*f1)(double),
 						   double(*f2)(double))
   :slice_function(P_.get_bounds(n_)),
@@ -92,11 +92,11 @@ double modifiable_slice_function::current_value() const
   return P.get_modifiable_value_as<Double>(m);
 }
 
-modifiable_slice_function::modifiable_slice_function(Probability_Model& P_,int m_, const Bounds<double>& bounds)
+modifiable_slice_function::modifiable_slice_function(Model& P_,int m_, const Bounds<double>& bounds)
   :modifiable_slice_function(P_, m_, bounds, slice_sampling::identity, slice_sampling::identity)
 { }
 
-modifiable_slice_function::modifiable_slice_function(Probability_Model& P_,int m_, const Bounds<double>& bounds,
+modifiable_slice_function::modifiable_slice_function(Model& P_,int m_, const Bounds<double>& bounds,
 						     double(*f1)(double),
 						     double(*f2)(double))
   :slice_function(bounds),
@@ -146,11 +146,11 @@ Bounds<double> convert_bounds(const Bounds<int>& int_bounds)
   return double_bounds;
 }
 
-integer_modifiable_slice_function::integer_modifiable_slice_function(Probability_Model& P_,int m_, const Bounds<int>& bounds)
+integer_modifiable_slice_function::integer_modifiable_slice_function(Model& P_,int m_, const Bounds<int>& bounds)
   :integer_modifiable_slice_function(P_, m_, bounds, slice_sampling::identity, slice_sampling::identity)
 { }
 
-integer_modifiable_slice_function::integer_modifiable_slice_function(Probability_Model& P_,int m_, const Bounds<int>& bounds,
+integer_modifiable_slice_function::integer_modifiable_slice_function(Model& P_,int m_, const Bounds<int>& bounds,
 						     double(*f1)(double),
 						     double(*f2)(double))
   :slice_function(convert_bounds(bounds)),
@@ -377,7 +377,7 @@ double constant_sum_slice_function::current_value() const
 }
 
 
-constant_sum_slice_function::constant_sum_slice_function(Probability_Model& P_, const vector<int>& indices_,int n_)
+constant_sum_slice_function::constant_sum_slice_function(Model& P_, const vector<int>& indices_,int n_)
   :count(0),
    indices(indices_),
    n(n_),
@@ -439,7 +439,7 @@ double constant_sum_modifiable_slice_function::current_value() const
 }
 
 
-constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(Probability_Model& P_, const vector<int>& indices_,int n_)
+constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(Model& P_, const vector<int>& indices_,int n_)
   :count(0),
    indices(indices_),
    n(n_),

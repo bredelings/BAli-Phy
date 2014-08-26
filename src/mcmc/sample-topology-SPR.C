@@ -528,7 +528,7 @@ int choose_subtree_branch_uniform2(const Tree& T)
 }
 
 
-void sample_SPR_flat_one(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b1) 
+void sample_SPR_flat_one(owned_ptr<Model>& P,MoveStats& Stats,int b1) 
 {
   Parameters& PP = *P.as<Parameters>();
 
@@ -1165,7 +1165,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   return ((C != 0) and accepted);
 }
 
-void sample_SPR_all(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
+void sample_SPR_all(owned_ptr<Model>& P,MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
   int n = n_SPR_moves(PP);
@@ -1189,7 +1189,7 @@ void sample_SPR_all(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   }
 }
 
-void sample_SPR_search_all(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
+void sample_SPR_search_all(owned_ptr<Model>& P,MoveStats& Stats) 
 {
   int B = P.as<Parameters>()->T().n_branches();
 
@@ -1201,7 +1201,7 @@ void sample_SPR_search_all(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   }
 }
 
-void sample_SPR_A_search_all(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
+void sample_SPR_A_search_all(owned_ptr<Model>& P,MoveStats& Stats) 
 {
   int B = P.as<Parameters>()->T().n_branches();
 
@@ -1314,7 +1314,7 @@ void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2)
   b2 = T.branch(path[C2],path[C3]);
 }
 
-void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
+void sample_SPR_flat(owned_ptr<Model>& P,MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
   int n = n_SPR_moves(PP);
@@ -1337,7 +1337,7 @@ void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   }
 }
 
-void sample_SPR_nodes(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
+void sample_SPR_nodes(owned_ptr<Model>& P,MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
   int n = n_SPR_moves(PP);

@@ -30,11 +30,11 @@ void log_summary(std::ostream& out_cache, std::ostream& out_screen,std::ostream&
 
 void set_foreground_branches(Parameters& P);
 
-owned_ptr<Probability_Model> create_A_and_T_model(boost::program_options::variables_map& args, const module_loader& L,
+owned_ptr<Model> create_A_and_T_model(boost::program_options::variables_map& args, const module_loader& L,
 						  std::ostream& out_cache, std::ostream& out_screen, std::ostream& out_both,
 						  int proc_id);
 
-void write_initial_alignments(const owned_ptr<Probability_Model>& M, int proc_id, std::string dir_name);
+void write_initial_alignments(const owned_ptr<Model>& M, int proc_id, std::string dir_name);
 
 
 #endif

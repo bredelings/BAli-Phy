@@ -32,8 +32,8 @@ using MCMC::MoveStats;
 using std::vector;
 using std::string;
 
-bool do_MH_move(owned_ptr<Probability_Model>& P,
-		const owned_ptr<Probability_Model>& P2,
+bool do_MH_move(owned_ptr<Model>& P,
+		const owned_ptr<Model>& P2,
 		double rho) 
 {
   bool success = accept_MH(*P,*P2,rho);
@@ -59,7 +59,7 @@ double branch_twiddle_positive(double& T,double sigma) {
   return ratio;
 }
 
-MCMC::Result change_branch_length_(owned_ptr<Probability_Model>& P,int b,double sigma,
+MCMC::Result change_branch_length_(owned_ptr<Model>& P,int b,double sigma,
 				   double (*twiddle)(double&,double)) 
 {
   MCMC::Result result(3);
@@ -73,7 +73,7 @@ MCMC::Result change_branch_length_(owned_ptr<Probability_Model>& P,int b,double 
   //---------- Construct proposed Tree ----------//
   P.as<Parameters>()->select_root(b);
 
-  owned_ptr<Probability_Model> P2  = P;
+  owned_ptr<Model> P2  = P;
 
   P2.as<Parameters>()->setlength(b,newlength);
 
@@ -88,7 +88,7 @@ MCMC::Result change_branch_length_(owned_ptr<Probability_Model>& P,int b,double 
 }
 
 
-void change_branch_length_flat(owned_ptr<Probability_Model>& P,
+void change_branch_length_flat(owned_ptr<Model>& P,
 			       MoveStats& Stats,int b,double sigma)
 {
   Parameters& PP = *P.as<Parameters>();
@@ -109,7 +109,7 @@ void change_branch_length_flat(owned_ptr<Probability_Model>& P,
     Stats.inc("branch-length 4",result);
 }
 
-void change_branch_length_log_scale(owned_ptr<Probability_Model>& P,
+void change_branch_length_log_scale(owned_ptr<Model>& P,
 				    MoveStats& Stats,
 				    int b,
 				    double sigma)
@@ -132,7 +132,7 @@ void change_branch_length_log_scale(owned_ptr<Probability_Model>& P,
 
 #include "slice-sampling.H"
 
-void slice_sample_branch_length(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b)
+void slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
 {
   Parameters& PP = *P.as<Parameters>();
   PP.select_root(b);
@@ -167,7 +167,7 @@ void slice_sample_branch_length(owned_ptr<Probability_Model>& P,MoveStats& Stats
     Stats.inc("branch-length (slice) 4",result);
 }
 
-void change_branch_length(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b)
+void change_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
 {
   if (uniform() < 0.5)
   {
@@ -180,7 +180,7 @@ void change_branch_length(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b
   }
 }
 
-void change_branch_length_multi(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b) 
+void change_branch_length_multi(owned_ptr<Model>& P,MoveStats& Stats,int b) 
 {
   const int n=3;
 
@@ -188,7 +188,7 @@ void change_branch_length_multi(owned_ptr<Probability_Model>& P,MoveStats& Stats
     change_branch_length(P,Stats,b);
 }
 
-void change_branch_length_and_T(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b) 
+void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b) 
 {
   Parameters& PP = *P.as<Parameters>();
   MCMC::Result result(5,0);
@@ -209,7 +209,7 @@ void change_branch_length_and_T(owned_ptr<Probability_Model>& P,MoveStats& Stats
     //---------- Construct proposed Tree ----------//
     PP.select_root(b);
 
-    owned_ptr<Probability_Model> P2 = P;
+    owned_ptr<Model> P2 = P;
 
     P2.as<Parameters>()->setlength(b,newlength);
 
@@ -282,7 +282,7 @@ double slide_node_expand_branch(vector<double>& lengths,double sigma)
   return ratio*ratio;
 }
 
-bool slide_node(owned_ptr<Probability_Model>& P,
+bool slide_node(owned_ptr<Model>& P,
 		const vector<const_branchview>& b,
 		double (*slide)(vector<double>&,double)
 		) 
@@ -303,7 +303,7 @@ bool slide_node(owned_ptr<Probability_Model>& P,
   double ratio = slide(lengths,sigma);
 
   //---------------- Propose new lengths ---------------//
-  owned_ptr<Probability_Model> P2 = P;
+  owned_ptr<Model> P2 = P;
 
   P2.as<Parameters>()->setlength(b[1].undirected_name(), lengths[0]);
   P2.as<Parameters>()->setlength(b[2].undirected_name(), lengths[1]);
@@ -314,7 +314,7 @@ bool slide_node(owned_ptr<Probability_Model>& P,
 }
 
 
-void slide_node(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b0)
+void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b0)
 {
   Parameters* PP = P.as<Parameters>();
 
@@ -404,7 +404,7 @@ void check_caching(const Parameters& P1,Parameters& P2)
   }
 }
 
-void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
+void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
 {
   Parameters* PP = P.as<Parameters>();
   // If any of the partition rates are fixed, then we're out of luck
@@ -500,7 +500,7 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
 }
 
 /// Propose three neighboring branch lengths all anti-correlated
-void change_3_branch_lengths(owned_ptr<Probability_Model>& P,MoveStats& Stats,int n) 
+void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n) 
 {
   Parameters* PP = P.as<Parameters>();
   MCMC::Result result(2);
@@ -555,7 +555,7 @@ void change_3_branch_lengths(owned_ptr<Probability_Model>& P,MoveStats& Stats,in
   //----------- Construct proposed Tree -----------//
   PP->set_root(n);
   
-  owned_ptr<Probability_Model> P2 = P;
+  owned_ptr<Model> P2 = P;
   P2.as<Parameters>()->setlength(b1,T1_);
   P2.as<Parameters>()->setlength(b2,T2_);
   P2.as<Parameters>()->setlength(b3,T3_);
