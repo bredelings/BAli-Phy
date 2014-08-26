@@ -21,7 +21,7 @@ main = Prefix "Line" $ do
 
   let {y_hat x = m*x + b};
 
-  sequence_ [Observe y (normal (y_hat x) s) | (x,y) <- zip xs ys];
+  sequence_ [Observe y (normal y' s) | (x,y) <- zip xs ys, let {y' = y_hat x}];
 };
 
 }
