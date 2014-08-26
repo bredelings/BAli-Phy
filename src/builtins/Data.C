@@ -14,11 +14,11 @@ extern "C" closure builtin_function_read_file(OperationArgs& Args)
 
   checked_ifstream text_file(filename,"text file");
 
-  object_ptr<OVector> v(new OVector);
+  OVector v;
 
   string line;
   while(portable_getline(text_file, line))
-    (*v).push_back(new String(line));
+    v.push_back(new String(line));
 
   return v;
 }
@@ -26,5 +26,5 @@ extern "C" closure builtin_function_read_file(OperationArgs& Args)
 extern "C" closure builtin_function_string_to_double(OperationArgs& Args)
 {
   object_ptr<const String> s = Args.evaluate_as<String>(0);
-  object_ptr<const Double> d = new Double(convertTo<double>(*s));
+  return Double(convertTo<double>(*s));
 }
