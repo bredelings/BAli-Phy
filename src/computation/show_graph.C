@@ -325,9 +325,10 @@ expression_ref untranslate_vars(const expression_ref& E, const map<string, int>&
 
 void dot_graph_for_token(const reg_heap& C, int t)
 {
-  std::ofstream f("token.dot");
-  dot_graph_for_token(C, t, f);
-  f.close();
+  string filename = "token" + convertToString(t)+".dot";
+  std::ofstream file(filename);
+  dot_graph_for_token(C, t, file);
+  file.close();
 }
 
 /* TODO - to make graph more readable:
