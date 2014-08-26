@@ -130,7 +130,6 @@ namespace mpi = boost::mpi;
 #include <cmath>
 #include <ctime>
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <new>
 #include <signal.h>
@@ -157,6 +156,7 @@ namespace mpi = boost::mpi;
 #include "tools/parsimony.H"
 #include "parser/desugar.H"
 #include "computation/module.H"
+#include "startup/files.H"
 
 namespace fs = boost::filesystem;
 namespace chrono = boost::chrono;
@@ -412,168 +412,6 @@ void set_initial_parameter_values(Model& M, const variables_map& args)
 
     M.set_parameter_value(p_index,value);
   }
-}
-
-/// Close the files.
-void close_files(vector<shared_ptr<ofstream>>& files)
-{
-  for(int i=0;i<files.size();i++)
-    files[i]->close();
-  files.clear();
-}
-
-/// Delete the files specified by 'filenames'
-void delete_files(vector<string>& filenames)
-{
-  for(int i=0;i<filenames.size();i++)
-    fs::remove(filenames[i]);
-  filenames.clear();
-}
-
-vector<shared_ptr<ofstream>> open_files(int proc_id, const string& name, vector<string>& names)
-{
-  vector<shared_ptr<ofstream>> files;
-  vector<string> filenames;
-
-  for(int j=0;j<names.size();j++) 
-  {
-    string filename = name + "C" + convertToString(proc_id+1)+"."+names[j];
-      
-    if (fs::exists(filename)) {
-      close_files(files);
-      delete_files(filenames);
-      throw myexception()<<"Trying to open '"<<filename<<"' but it already exists!";
-    }
-    else {
-      files.push_back(shared_ptr<ofstream>(new ofstream(filename.c_str())));
-      filenames.push_back(filename);
-    }
-  }
-
-  names = filenames;
-
-  return files;
-}
-
-string open_dir(const string& dirbase)
-{
-  for(int i=1;;i++) {
-    string dirname = dirbase + "-" + convertToString(i);
-
-    if (not fs::exists(dirname)) {
-      fs::create_directories(dirname);
-      return dirname;
-    }
-  }
-}
-
-#if defined _MSC_VER || defined __MINGW32__
-#include <windows.h>
-#include <errno.h>
-#include <process.h>
-
-string hostname() 
-{
-  // We have to use MAX_COMPUTERNAME_LENGTH+1 so it doesn't fail in Win9x
-  char temp[MAX_COMPUTERNAME_LENGTH + 1];
-  DWORD size =  sizeof (temp);
-
-  if (!GetComputerName (temp, &size))
-    return "unknown";
-
-  return string(temp);
-}
-#else
-string hostname()
-{
-  string hostname="";
-  char temp[256];
-  if (not gethostname(temp,256))
-    hostname = temp;
-  return hostname;
-}
-#endif
-
-string run_name(const variables_map& args)
-{
-  string name;
-  if (args.count("name"))
-    name = args["name"].as<string>();
-  else if (args.count("align"))
-  {
-    vector<string> alignment_filenames = args["align"].as<vector<string> >();
-    for(int i=0;i<alignment_filenames.size();i++)
-      alignment_filenames[i] = remove_extension( fs::path( alignment_filenames[i] ).leaf().string() );
-    name = join(alignment_filenames,'-');
-  }
-  else if (args.count("model"))
-  {
-    name = args["model"].as<string>();
-    name = remove_extension( fs::path( name ).leaf().string() );
-  }
-
-  return name;
-}
-
-/// Create the directory for output files and return the name
-string init_dir(const variables_map& args)
-{
-  string name = run_name(args);
-    
-  string dirname = open_dir(name);
-  cerr<<"Created directory '"<<dirname<<"/' for output files."<<endl;
-  return dirname;
-}
-
-/// Create output files for thread 'proc_id' in directory 'dirname'
-vector<shared_ptr<ostream>> init_files(int proc_id, const string& dirname,
-			    int argc,char* argv[])
-{
-  vector<shared_ptr<ostream>> files;
-
-  vector<string> filenames;
-  filenames.push_back("out");
-  filenames.push_back("err");
-
-  vector<shared_ptr<ofstream>> files2 = open_files(proc_id, dirname+"/",filenames);
-  files.clear();
-  for(int i=0;i<files2.size();i++)
-    files.push_back(files2[i]);
-
-  ostream& s_out = *files[0];
-    
-  s_out<<"command: ";
-  for(int i=0;i<argc;i++) {
-    s_out<<argv[i];
-    if (i != argc-1) s_out<<" ";
-  }
-  s_out<<endl;
-  {
-    time_t now = time(NULL);
-    s_out<<"start time: "<<ctime(&now)<<endl;
-  }
-  print_version_info(s_out);
-  s_out<<"directory: "<<fs::initial_path().string()<<endl;
-  s_out<<"subdirectory: "<<dirname<<endl;
-  if (getenv("SLURM_JOBID"))
-    s_out<<"SLURM_JOBID: "<<getenv("SLURM_JOBID")<<endl;
-  if (getenv("JOB_ID"))
-    s_out<<"JOB_ID: "<<getenv("JOB_ID")<<endl;
-  if (getenv("LSB_JOBID"))
-    s_out<<"LSB_JOBID: "<<getenv("LSB_JOBID")<<endl;
-  s_out<<"hostname: "<<hostname()<<endl;
-  s_out<<"PID: "<<getpid()<<endl;
-#ifdef HAVE_MPI
-  mpi::communicator world;
-  s_out<<"MPI_RANK: "<<world.rank()<<endl;
-  s_out<<"MPI_SIZE: "<<world.size()<<endl;
-#endif
-  s_out<<endl;
-
-  //  files[0]->precision(10);
-  //  cerr.precision(10);
-
-  return files;
 }
 
 /// Determine the parameters of model \a M that must be sorted in order to enforce identifiability.
