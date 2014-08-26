@@ -190,7 +190,7 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, const ve
   owned_ptr<TableFunction<string> > TF = construct_table_function(M, Rao_Blackwellize);
 
   // Write out scalar numerical variables (and functions of them) to C<>.p
-  loggers.push_back( TableLogger(base +".p", TF) );
+  loggers.push_back( TableLogger(base +".p", *TF) );
   
   if (not P) return loggers;
 
@@ -200,7 +200,7 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, const ve
   // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
   {
     ConcatFunction F; 
-    F<<TableViewerFunction(TF)<<"\n";
+    F<<TableViewerFunction(*TF)<<"\n";
     F<<Show_SModels_Function()<<"\n";
     for(int i=0;i<P->n_data_partitions();i++)
       if ((*P)[i].variable_alignment())

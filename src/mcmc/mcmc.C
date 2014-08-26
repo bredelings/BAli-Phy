@@ -1198,8 +1198,8 @@ void mcmc_init(Parameters& P, ostream& s_out)
   }
 }
 
-void mcmc_log(long iterations, long max_iter, int subsample, Model& P, ostream& s_out, 
-	      const MoveStats& S, vector<owned_ptr<Logger> >& loggers)
+void mcmc_log(long iterations, long /* max_iter*/, int subsample, Model& P, ostream& s_out, 
+	      const MoveStats& /* S */, vector<owned_ptr<Logger> >& loggers)
 {
   s_out<<"iterations = "<<iterations<<"\n";
   clog<<"iterations = "<<iterations<<"\n";
@@ -1208,7 +1208,7 @@ void mcmc_log(long iterations, long max_iter, int subsample, Model& P, ostream& 
   //  - Its hard to separate alignments from different partitions.
   if (iterations%subsample == 0)
     // FIXME - There are now only 2 calls to print_stats left: the other is in bali-phy.C
-    ;
+  { }
     //    print_stats(s_out, P, iterations%(10*subsample) == 0);
 
   for(int i=0;i<loggers.size();i++)

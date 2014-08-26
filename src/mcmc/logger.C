@@ -106,9 +106,9 @@ vector<object_ref> make_identifiable(const vector<object_ref>& v,const vector< v
   return v2;
 }
 
-vector<object_ref> SortedTableFunction::operator()(const owned_ptr<Model>& P, long t)
+vector<object_ref> SortedTableFunction::operator()(const Model& M, long t)
 {
-  vector<object_ref> v = (*F)(P,t);
+  vector<object_ref> v = (*F)(M,t);
 
   for(int i=0;i<indices.size();i++)
     v = make_identifiable(v, indices[i]);
@@ -116,8 +116,8 @@ vector<object_ref> SortedTableFunction::operator()(const owned_ptr<Model>& P, lo
   return v;
 }
 
-SortedTableFunction::SortedTableFunction(const owned_ptr<TableFunction<object_ref> >& f, const std::vector< std::vector< std::vector< int> > >& i_)
-  :F(f), indices(i_), sorted_index(f->n_fields(),-1)
+SortedTableFunction::SortedTableFunction(const TableFunction<object_ref>& f, const std::vector< std::vector< std::vector< int> > >& i_)
+  :F(f), indices(i_), sorted_index(f.n_fields(),-1)
 { 
   for(int i=0;i<indices.size();i++)
     for(int j=0;j<indices[i].size();j++)
@@ -147,23 +147,23 @@ vector<string> TableLogger::field_names() const
   return TF->field_names();
 }
 
-void TableLogger::operator()(const owned_ptr<Model>& P, long t)
+void TableLogger::operator()(const Model& M, long t)
 {
   if (t==0)
     *log_file<<join(field_names(),'\t')<<endl;
 
-  vector<string> values = (*TF)(P,t);
+  vector<string> values = (*TF)(M,t);
   *log_file<<join(values,'\t')<<endl;
 }
 
-TableLogger::TableLogger(const string& name, const owned_ptr<TableFunction<string> >& tf)
+TableLogger::TableLogger(const string& name, const TableFunction<string>& tf)
   :FileLogger(name), TF(tf)
 { }
 
-string TableViewerFunction::operator()(const owned_ptr<Model>& P, long t)
+string TableViewerFunction::operator()(const Model& M, long t)
 {
   vector<string> fields = function->field_names();
-  vector<string> values = (*function)(P,t);
+  vector<string> values = (*function)(M,t);
   std::stringstream output;
 
   for(int i=0;i<values.size();i++)
@@ -176,13 +176,13 @@ string TableViewerFunction::operator()(const owned_ptr<Model>& P, long t)
   return output.str();
 }
 
-TableViewerFunction::TableViewerFunction(const owned_ptr<TableFunction<string> >& f)
+TableViewerFunction::TableViewerFunction(const TableFunction<string>& f)
   :function(f)
 { }
 
-object_ref GetComputationFunction::operator()(const owned_ptr<Model>& P, long)
+object_ref GetComputationFunction::operator()(const Model& M, long)
 {
-  object_ref result = P->evaluate(index);
+  object_ref result = M.evaluate(index);
 
   if (auto D = dynamic_pointer_cast<const Double>(result))
     return result;
@@ -205,88 +205,88 @@ GetComputationFunction::GetComputationFunction(int i)
   :index(i)
 { }
 
-string GetPriorFunction::operator()(const owned_ptr<Model>& P, long)
+string GetPriorFunction::operator()(const Model& M, long)
 {
-  return convertToString(log(P->prior()));
+  return convertToString(log(M.prior()));
 }
 
-string GetAlignmentPriorFunction::operator()(const owned_ptr<Model>& P, long)
+string GetAlignmentPriorFunction::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<const Parameters>();
-  return convertToString(log(PP[p].prior_alignment()));
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
+  return convertToString(log(P[p].prior_alignment()));
 }
 
-string GetLikelihoodFunction::operator()(const owned_ptr<Model>& P, long)
+string GetLikelihoodFunction::operator()(const Model& M, long)
 {
-  return convertToString(log(P->likelihood()));
+  return convertToString(log(M.likelihood()));
 }
 
-string GetProbabilityFunction::operator()(const owned_ptr<Model>& P, long)
+string GetProbabilityFunction::operator()(const Model& M, long)
 {
-  return convertToString(log(P->probability()));
+  return convertToString(log(M.probability()));
 }
 
-string Get_Alignment_Length_Function::operator()(const owned_ptr<Model>& P, long)
+string Get_Alignment_Length_Function::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<const Parameters>();
-  return convertToString(PP[p].A().length());
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
+  return convertToString(P[p].A().length());
 }
 
-string Get_Num_Substitutions_Function::operator()(const owned_ptr<Model>& P, long)
+string Get_Num_Substitutions_Function::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<const Parameters>();
-  return convertToString(n_mutations(PP[p].A(), PP[p].T(), cost_matrix));
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
+  return convertToString(n_mutations(P[p].A(), P[p].T(), cost_matrix));
 }
 
-string Get_Num_Indels_Function::operator()(const owned_ptr<Model>& P, long)
+string Get_Num_Indels_Function::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<const Parameters>();
-  return convertToString(n_indels(PP[p].A(), PP[p].T()));
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
+  return convertToString(n_indels(P[p].A(), P[p].T()));
 }
 
-string Get_Total_Length_Indels_Function::operator()(const owned_ptr<Model>& P, long)
+string Get_Total_Length_Indels_Function::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<const Parameters>();
-  return convertToString(total_length_indels(PP[p].A(), PP[p].T()));
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
+  return convertToString(total_length_indels(P[p].A(), P[p].T()));
 }
 //
-string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Model>& P, long)
+string Get_Total_Alignment_Length_Function::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<const Parameters>();
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
 
   int total = 0;
-  for(int p=0;p<PP.n_data_partitions();p++)
-    total += PP[p].A().length();
+  for(int p=0;p<P.n_data_partitions();p++)
+    total += P[p].A().length();
   return convertToString(total);
 }
 
-string Get_Total_Num_Substitutions_Function::operator()(const owned_ptr<Model>& P, long)
+string Get_Total_Num_Substitutions_Function::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<const Parameters>();
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
 
   int total = 0;
-  for(int p=0;p<PP.n_data_partitions();p++)
-    total += n_mutations(PP[p].A(), PP[p].T());
+  for(int p=0;p<P.n_data_partitions();p++)
+    total += n_mutations(P[p].A(), P[p].T());
   return convertToString(total);
 }
 
-string Get_Total_Num_Indels_Function::operator()(const owned_ptr<Model>& P, long)
+string Get_Total_Num_Indels_Function::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<const Parameters>();
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
 
   int total = 0;
-  for(int p=0;p<PP.n_data_partitions();p++)
-    total += n_indels(PP[p].A(), PP[p].T());
+  for(int p=0;p<P.n_data_partitions();p++)
+    total += n_indels(P[p].A(), P[p].T());
   return convertToString(total);
 }
 
-string Get_Total_Total_Length_Indels_Function::operator()(const owned_ptr<Model>& P, long)
+string Get_Total_Total_Length_Indels_Function::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<const Parameters>();
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
 
   int total = 0;
-  for(int p=0;p<PP.n_data_partitions();p++)
-    total += total_length_indels(PP[p].A(), PP[p].T());
+  for(int p=0;p<P.n_data_partitions();p++)
+    total += total_length_indels(P[p].A(), P[p].T());
   return convertToString(total);
 }
 
@@ -307,19 +307,19 @@ double mu_scale(const Parameters& P)
   return mu_scale;
 }
 
-  string Get_Rao_Blackwellized_Parameter_Function::operator()(const owned_ptr<Model>& P, long)
+  string Get_Rao_Blackwellized_Parameter_Function::operator()(const Model& M, long)
   {
     if (parameter == -1) std::abort();
 
-    owned_ptr<Model> P2 = P;
+    owned_ptr<Model> M2 = M;
     vector<log_double_t> Prs;
     log_double_t total = 0;
 
     // Record probabilities
     for(const auto& v: values)
     {
-      P2->set_parameter_value(parameter,v);
-      log_double_t Pr = P2->probability();
+      M2->set_parameter_value(parameter,v);
+      log_double_t Pr = M2->probability();
       total += Pr;
       Prs.push_back(Pr);
     }
@@ -357,20 +357,20 @@ double mu_scale(const Parameters& P)
     :parameter(p), values(v)
   { }
 
-string Get_Tree_Length_Function::operator()(const owned_ptr<Model>& P, long)
+string Get_Tree_Length_Function::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<const Parameters>();
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
 
-  return convertToString( mu_scale(PP) * tree_length(PP.T()) );
+  return convertToString( mu_scale(P) * tree_length(P.T()) );
 }
 
-string TreeFunction::operator()(const owned_ptr<Model>& P, long)
+string TreeFunction::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<const Parameters>();
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
 
-  SequenceTree T = PP.T();
+  SequenceTree T = P.T();
     
-  double scale = mu_scale(PP);
+  double scale = mu_scale(P);
 
   for(int b=0;b<T.n_branches();b++)
     T.branch(b).set_length(scale*T.branch(b).length());
@@ -378,18 +378,18 @@ string TreeFunction::operator()(const owned_ptr<Model>& P, long)
   return T.write();
 }
 
-string MAP_Function::operator()(const owned_ptr<Model>& P, long t)
+string MAP_Function::operator()(const Model& M, long t)
 {
   std::ostringstream output;
 
-  log_double_t Pr = P->probability();
+  log_double_t Pr = M.probability();
   if (Pr < MAP_score)
     goto out;
 
   MAP_score = Pr;
 
   output<<"iterations = "<<t<<"       MAP = "<<MAP_score<<"\n";
-  output<<(*F)(P,t)<<"\n";
+  output<<(*F)(M,t)<<"\n";
   
  out:
   return output.str();
@@ -397,36 +397,36 @@ string MAP_Function::operator()(const owned_ptr<Model>& P, long t)
 
 
 
-string AlignmentFunction::operator()(const owned_ptr<Model>& P, long)
+string AlignmentFunction::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<Parameters>();
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
   std::ostringstream output;
-  output<<PP[p].A()<<"\n";
+  output<<P[p].A()<<"\n";
   return output.str();
 }
 
-string Show_SModels_Function::operator()(const owned_ptr<Model>& P, long)
+string Show_SModels_Function::operator()(const Model& M, long)
 {
-  const Parameters& PP = *P.as<Parameters>();
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
   std::ostringstream output;
-  show_smodels(output, PP);
+  show_smodels(output, P);
   output<<"\n";
   return output.str();
 }
 
-string Subsample_Function::operator()(const owned_ptr<Model>& P, long t)
+string Subsample_Function::operator()(const Model& M, long t)
 {
   if (t%subsample == 0) 
-    return (*function)(P,t);
+    return (*function)(M,t);
   else
     return "";
 }
 
-string Mixture_Components_Function::operator()(const owned_ptr<Model>& P, long)
+string Mixture_Components_Function::operator()(const Model& M, long)
 {
   std::ostringstream output;
-  const Parameters& PP = *P.as<Parameters>();
-  vector<vector<double> > model_pr = substitution::get_model_probabilities_by_alignment_column(PP[p]);
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
+  vector<vector<double> > model_pr = substitution::get_model_probabilities_by_alignment_column(P[p]);
   for(int i=0;i<model_pr.size();i++)
     output<<join(model_pr[i],' ')<<"\n";
 
@@ -435,19 +435,19 @@ string Mixture_Components_Function::operator()(const owned_ptr<Model>& P, long)
   return output.str();
 }
 
-string Ancestral_Sequences_Function::operator()(const owned_ptr<Model>& P, long)
+string Ancestral_Sequences_Function::operator()(const Model& M, long)
 {
   std::ostringstream output;
 
-  const Parameters& PP = *P.as<Parameters>();
+  const Parameters& P = dynamic_cast<const Parameters&>(M);
 
-  const alphabet& a = PP[p].get_alphabet();
+  const alphabet& a = P[p].get_alphabet();
 
-  alignment A = PP[p].A();
+  alignment A = P[p].A();
 
-  const vector<unsigned> smap = PP[p].state_letters();
+  const vector<unsigned> smap = P[p].state_letters();
 
-  vector<vector<pair<int,int> > > states = substitution::sample_ancestral_states(PP[p]);
+  vector<vector<pair<int,int> > > states = substitution::sample_ancestral_states(P[p]);
     
   for(int i=0;i<A.n_sequences();i++)
   {
@@ -472,26 +472,26 @@ string Ancestral_Sequences_Function::operator()(const owned_ptr<Model>& P, long)
   return output.str();
 }
 
-void FunctionLogger::operator()(const owned_ptr<Model>& P, long t)
+void FunctionLogger::operator()(const Model& M, long t)
 {
-  (*log_file)<<((*function)(P,t));
+  (*log_file)<<((*function)(M,t));
 }
 
-FunctionLogger::FunctionLogger(const std::string& filename, const owned_ptr<LoggerFunction<string> >& L)
+FunctionLogger::FunctionLogger(const std::string& filename, const LoggerFunction<string>& L)
   :FileLogger(filename),function(L)
 { }
 
-string ConcatFunction::operator()(const owned_ptr<Model>& P, long t)
+string ConcatFunction::operator()(const Model& M, long t)
 {
   string output;
 
   for(int i=0;i<functions.size();i++)
-    output += (*functions[i])(*P,t);
+    output += (*functions[i])(M,t);
 
   return output;
 }
 
-ConcatFunction& operator<<(ConcatFunction& CF,const owned_ptr<LoggerFunction<string> >& F)
+ConcatFunction& operator<<(ConcatFunction& CF,const LoggerFunction<string>& F)
 {
   CF.add_function(F);
   return CF;
@@ -503,7 +503,7 @@ ConcatFunction& operator<<(ConcatFunction& CF,const string& s)
   return CF;
 }
 
-ConcatFunction operator<<(const ConcatFunction& CF,const owned_ptr<LoggerFunction<string> >& F)
+ConcatFunction operator<<(const ConcatFunction& CF,const LoggerFunction<string>& F)
 {
   ConcatFunction CF2 = CF;
   return CF2<<F;
@@ -515,7 +515,7 @@ ConcatFunction operator<<(const ConcatFunction& CF,const string& s)
   return CF2<<s;
 }
 
-ConcatFunction operator<<(const LoggerFunction<string>& F1,const owned_ptr<LoggerFunction<string> >& F2)
+ConcatFunction operator<<(const LoggerFunction<string>& F1,const LoggerFunction<string>& F2)
 {
   ConcatFunction CF;
   CF<<F1<<F2;
