@@ -157,6 +157,7 @@ namespace mpi = boost::mpi;
 #include "computation/module.H"
 #include "startup/files.H"
 #include "startup/loggers.H"
+#include "startup/io.H"
 
 namespace fs = boost::filesystem;
 namespace chrono = boost::chrono;
@@ -353,6 +354,15 @@ int parameter_with_extension(const Model& M, const string& name)
   throw e;
 }
 
+string get_command_line(int argc, char* argv[])
+{
+  vector<string> args;
+  for(int i=0;i<argc;i++)
+    args.push_back(argv[i]);
+
+  return join(args," ");
+}
+
 void set_key_values(Probability_Model& M, const variables_map& args)
 {
   if (not args.count("set")) return;
@@ -413,39 +423,6 @@ void set_initial_parameter_values(Model& M, const variables_map& args)
     M.set_parameter_value(p_index,value);
   }
 }
-
-/// A stringbuf that write to 2 streambufs
-class teebuf: public std::stringbuf
-{
-protected:
-  std::streambuf* sb1;
-  std::streambuf* sb2;
-
-public:
-  
-  int sync() {
-    string s = str();
-    sb1->sputn(s.c_str(), s.length());
-    sb2->sputn(s.c_str(), s.length());
-    int rc = sb1->pubsync();
-    rc = sb2->pubsync();
-    str(string());
-    return rc;
-  } 
-
-  std::streambuf* rdbuf1() {return sb1;}
-  std::streambuf* rdbuf2() {return sb2;}
-
-  void setbuf1(std::streambuf* sb) {sb1 = sb;}
-  void setbuf2(std::streambuf* sb) {sb2 = sb;}
-
-  teebuf(std::streambuf* s1, std::streambuf* s2):
-    sb1(s1),
-    sb2(s2)
-  {}
-
-  ~teebuf() {sync();}
-};
 
 /// Initialize the default random number generator and return the seed
 unsigned long init_rng_and_get_seed(const variables_map& args)
@@ -538,21 +515,6 @@ void die_on_signal(int sig)
   exit(3);
 }
 
-struct restore 
-{
-  ostream* stream;
-  std::streambuf * old;
-
-  restore(ostream& s)
-    : stream(&s), old( stream->rdbuf() )
-  { }
-
-  ~restore( ) 
-  {
-    stream->rdbuf( old );
-  }
-};
-
 /* 
  * 1. Add a PRANK-like initial algorithm.
  * 2. Add some kind of constraint.
@@ -595,15 +557,6 @@ module_loader setup_module_loader(variables_map& args, const string& filename)
     L.builtins_path = {builtins.string()};
   }
   return L;
-}
-
-string get_command_line(int argc, char* argv[])
-{
-  vector<string> args;
-  for(int i=0;i<argc;i++)
-    args.push_back(argv[i]);
-
-  return join(args," ");
 }
 
 int main(int argc,char* argv[])
