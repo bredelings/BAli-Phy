@@ -67,9 +67,9 @@ public:
 
   /// Perform a dynamic_cast
   template <typename Y> 
-  Y* as() const
+  const Y* as() const
   {
-    return dynamic_cast<Y*>(get());
+    return dynamic_cast<const Y*>(get());
   }
 
   /// Perform a dynamic_cast
@@ -79,9 +79,13 @@ public:
     return dynamic_cast<Y*>(get());
   }
 
-  X* get()         const  {return data.get();}
-  X* operator->()  const  {return get();}
-  X& operator*()   const  {return *get();}
+  const X* get()         const  {return data.get();}
+  const X* operator->()  const  {return get();}
+  const X& operator*()   const  {return *get();}
+    
+  X* get()         {return data.get();}
+  X* operator->()  {return get();}
+  X& operator*()   {return *get();}
     
   /// Destroy object (if any) and set to NULL
   void reset()
@@ -92,11 +96,9 @@ public:
   /// Check if non-NULL
   typedef owned_ptr<X> this_type;
 
-  typedef X * (this_type::*unspecified_bool_type)() const;
-
-  operator unspecified_bool_type() const // never throws
+  explicit operator bool() const // never throws
   {
-    return data == 0? 0: &this_type::get;
+    return (bool)data;
   }
 
   /// Check if NULL

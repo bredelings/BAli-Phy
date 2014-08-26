@@ -798,7 +798,7 @@ void MoveArg::iterate(owned_ptr<Model>& P,MoveStats& Stats,int i)
     iterate(P,M,0);
   }
 
-  void IOMove::iterate(owned_ptr<Model>& P, MoveStats& M,int)
+  void IOMove::iterate(owned_ptr<Model>& P, MoveStats& /* M */, int)
   {
 #ifndef NDEBUG
     clog<<" [IO Move] move = "<<head<<endl;
@@ -1199,7 +1199,7 @@ void mcmc_init(Parameters& P, ostream& s_out)
 }
 
 void mcmc_log(long iterations, long max_iter, int subsample, Model& P, ostream& s_out, 
-	      const MoveStats& S, const vector<owned_ptr<Logger> >& loggers)
+	      const MoveStats& S, vector<owned_ptr<Logger> >& loggers)
 {
   s_out<<"iterations = "<<iterations<<"\n";
   clog<<"iterations = "<<iterations<<"\n";

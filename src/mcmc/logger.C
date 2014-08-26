@@ -212,7 +212,7 @@ string GetPriorFunction::operator()(const owned_ptr<Model>& P, long)
 
 string GetAlignmentPriorFunction::operator()(const owned_ptr<Model>& P, long)
 {
-  Parameters& PP = *P.as<Parameters>();
+  const Parameters& PP = *P.as<const Parameters>();
   return convertToString(log(PP[p].prior_alignment()));
 }
 
@@ -228,31 +228,31 @@ string GetProbabilityFunction::operator()(const owned_ptr<Model>& P, long)
 
 string Get_Alignment_Length_Function::operator()(const owned_ptr<Model>& P, long)
 {
-  Parameters& PP = *P.as<Parameters>();
+  const Parameters& PP = *P.as<const Parameters>();
   return convertToString(PP[p].A().length());
 }
 
 string Get_Num_Substitutions_Function::operator()(const owned_ptr<Model>& P, long)
 {
-  Parameters& PP = *P.as<Parameters>();
+  const Parameters& PP = *P.as<const Parameters>();
   return convertToString(n_mutations(PP[p].A(), PP[p].T(), cost_matrix));
 }
 
 string Get_Num_Indels_Function::operator()(const owned_ptr<Model>& P, long)
 {
-  Parameters& PP = *P.as<Parameters>();
+  const Parameters& PP = *P.as<const Parameters>();
   return convertToString(n_indels(PP[p].A(), PP[p].T()));
 }
 
 string Get_Total_Length_Indels_Function::operator()(const owned_ptr<Model>& P, long)
 {
-  Parameters& PP = *P.as<Parameters>();
+  const Parameters& PP = *P.as<const Parameters>();
   return convertToString(total_length_indels(PP[p].A(), PP[p].T()));
 }
 //
 string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Model>& P, long)
 {
-  Parameters& PP = *P.as<Parameters>();
+  const Parameters& PP = *P.as<const Parameters>();
 
   int total = 0;
   for(int p=0;p<PP.n_data_partitions();p++)
@@ -262,7 +262,7 @@ string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Model>& P
 
 string Get_Total_Num_Substitutions_Function::operator()(const owned_ptr<Model>& P, long)
 {
-  Parameters& PP = *P.as<Parameters>();
+  const Parameters& PP = *P.as<const Parameters>();
 
   int total = 0;
   for(int p=0;p<PP.n_data_partitions();p++)
@@ -272,7 +272,7 @@ string Get_Total_Num_Substitutions_Function::operator()(const owned_ptr<Model>& 
 
 string Get_Total_Num_Indels_Function::operator()(const owned_ptr<Model>& P, long)
 {
-  Parameters& PP = *P.as<Parameters>();
+  const Parameters& PP = *P.as<const Parameters>();
 
   int total = 0;
   for(int p=0;p<PP.n_data_partitions();p++)
@@ -282,7 +282,7 @@ string Get_Total_Num_Indels_Function::operator()(const owned_ptr<Model>& P, long
 
 string Get_Total_Total_Length_Indels_Function::operator()(const owned_ptr<Model>& P, long)
 {
-  Parameters& PP = *P.as<Parameters>();
+  const Parameters& PP = *P.as<const Parameters>();
 
   int total = 0;
   for(int p=0;p<PP.n_data_partitions();p++)
@@ -359,14 +359,14 @@ double mu_scale(const Parameters& P)
 
 string Get_Tree_Length_Function::operator()(const owned_ptr<Model>& P, long)
 {
-  Parameters& PP = *P.as<Parameters>();
+  const Parameters& PP = *P.as<const Parameters>();
 
   return convertToString( mu_scale(PP) * tree_length(PP.T()) );
 }
 
 string TreeFunction::operator()(const owned_ptr<Model>& P, long)
 {
-  const Parameters& PP = *P.as<Parameters>();
+  const Parameters& PP = *P.as<const Parameters>();
 
   SequenceTree T = PP.T();
     

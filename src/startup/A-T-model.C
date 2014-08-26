@@ -504,7 +504,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
 
 void write_initial_alignments(const owned_ptr<Model>& M, int proc_id, string dir_name)
 {
-  owned_ptr<Parameters> P = M.as<Parameters>();
+  const Parameters* P = M.as<const Parameters>();
   if (not P) return;
 
   vector<alignment> A;
