@@ -31,12 +31,14 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <string>
 #include <iostream>
 #include <utility>
+#include <map>
 
 #include "bounds.H"
 #include "object.H"
 #include "computation/computation.H"
 #include "computation/operation.H"
 #include "computation/context.H"
+#include "cow-ptr.H"
 
 class Model;
 
@@ -65,11 +67,35 @@ class Model: public context
 
 public:
 
+  /// An object for key-value pairs.
+  cow_ptr< std::map<std::string,double> > keys;
+
+  bool contains_key(const std::string& key) const { return keys->count(key);}
+  double lookup_key(const std::string& key) const { return keys->find(key)->second;}
+  double load_value(const std::string& key,double v) const 
+  { 
+    auto loc = keys->find(key);
+    if (loc != keys->end())
+      return loc->second;
+    else
+      return v;
+  }
+
   /// Make a copy of this object
   virtual Model* clone() const {return new Model(*this);}
 
+  virtual double get_beta() const {return 1.0;}
+
+  virtual void set_beta(double) {std::abort();}
+
   /// the prior for the model, on the same scale as proposal densities
   virtual log_double_t prior() const;
+  virtual log_double_t probability() const {return prior() * likelihood();}
+  virtual log_double_t likelihood() const {return 1.0;}
+
+  virtual log_double_t heated_prior() const {return prior();}
+  virtual log_double_t heated_likelihood() const {return likelihood();}
+  virtual log_double_t heated_probability() const {return heated_prior() * heated_likelihood();}
 
   bool has_bounds(int i) const;
   const Bounds<double>& get_bounds(int i) const;

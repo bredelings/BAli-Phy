@@ -143,7 +143,7 @@ log_double_t Model::prior() const
 }
 
 Model::Model(const module_loader& L)
-  :context(L)
+  :context(L),keys(new std::map<std::string,double>)
 { }
 
 void show_parameters(std::ostream& o,const Model& M) {
