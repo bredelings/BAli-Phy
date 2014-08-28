@@ -232,10 +232,11 @@ extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
 
 extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
 {
-  double p = *Args.evaluate_as_<Double>(0);
-  double n = *Args.evaluate_as_<Int>(1);
+  double mu = *Args.evaluate_as<Double>(0);
+  int n = *Args.evaluate_as<Int>(1);
   
-  return object_ptr<Log_Double> (new Log_Double( ::poisson_pdf(p,n) ) );
+  Log_Double result = poisson_pdf(mu,n);
+  return object_ptr<Log_Double> (result.clone());
 }
 
 extern "C" closure builtin_function_sample_poisson(OperationArgs& Args)
