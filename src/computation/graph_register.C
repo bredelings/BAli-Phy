@@ -363,7 +363,6 @@ bool mapping::empty() const
 
 void reg_heap::register_probability(int r)
 {
-  probability_index = -1;
   probability_heads.push_back(r);
 }
 
@@ -383,6 +382,7 @@ log_double_t reg_heap::probability_for_context(int c)
     get_reg_value_in_context( 13% ), and probability_for_context( 3% ).
 
     With those removed, this could be comparable, or even faster.
+  */
 
   log_double_t Pr = 1.0;
   for(int r: probability_heads)
@@ -392,35 +392,6 @@ log_double_t reg_heap::probability_for_context(int c)
     Pr *= X;
   }
   return Pr;
-  */
-
-  if (probability_index == -1)
-  {
-    if (probability_heads.empty()) return 1.0;
-
-    vector<expression_ref> E;
-    for(int r: probability_heads)
-    {
-      get_reg_value_in_context(r, c);
-      E.push_back(reg_var(r));
-    }
-
-    while(E.size() > 1)
-    {
-      vector<expression_ref> E2;
-      for(int i=0;i<E.size()/2;i++)
-	E2.push_back( (identifier("*"),E[2*i],E[2*i+1]) );
-      if (E.size() % 2)
-	E2.push_back(E.back());
-      std::swap(E,E2);
-    }
-    assert(E.size() == 1);
-    probability_index = allocate();
-    set_C(probability_index, preprocess(E[0]));
-  }
-
-  object_ref x = get_reg_value_in_context(probability_index, c);
-  return *convert<const Log_Double>(x);
 }
 
 const vector<int>& reg_heap::random_modifiables() const
@@ -1351,8 +1322,6 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 {
   insert_at_end(scan, temp);
   insert_at_end(scan, heads);
-  if (probability_index != -1)
-    scan.push_back(probability_index);
   insert_at_end(scan, probability_heads);
   insert_at_end(scan, random_modifiables_);
   insert_at_end(scan, transition_kernels_);

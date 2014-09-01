@@ -175,9 +175,6 @@ public:
 
   log_double_t probability_for_context(int c);
 
-  // where is the location of the probability expression
-  int probability_index = -1;
-
   // the list of modifiables
   std::vector<int> random_modifiables_;
   
