@@ -362,29 +362,12 @@ int reg_heap::incremental_evaluate(int R, int t)
 	    return R;
 	  }
 	  
-	  bool result_is_index_var = result.exp->head->type() == index_var_type;
+	  int r2 = Args.allocate(std::move(result));
 
-	  int r2=0;
-	  if (result_is_index_var)
-	  {
-	    int index = convert<const index_var>(result.exp->head)->index;
-
-	    r2 = result.lookup_in_env( index );
-    
-	    assert(is_used(r2));
-	  }
-	  else
-	  {
-	    r2 = push_temp_head();
-	    set_C(r2, std::move(result) );
-	  }
 	  int r3 = incremental_evaluate(r2, t);
 
 	  set_call(t, R, r3);
 	  set_computation_result_for_reg(t, R);
-
-	  if (not result_is_index_var)
-	    pop_temp_head();
 	}
       }
       catch (no_context&)
