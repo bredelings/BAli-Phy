@@ -389,8 +389,6 @@ public:
 
   int add_shared_computation(int t, int r);
 
-  int find_computation_for_reg(int t, int r) const;
-
   bool computation_is_referenced(int,int) const;
 
   int result_for_reg(int t, int r) const;

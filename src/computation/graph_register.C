@@ -563,30 +563,6 @@ bool reg_heap::has_computation_(int t, int r) const
   return computation_index_for_reg_(t,r)>0;
 }
 
-int reg_heap::find_computation_for_reg(int t, int r) const
-{
-  if (not t)
-    return tokens[t].vm_relative[r];
-
-  int rc = 0;
-
-  while(true)
-  {
-    assert(token_is_used(t));
-    rc = tokens[t].vm_relative[r];
-    if (rc < 0)
-    {
-      rc = 0;
-      break;
-    }
-    else if (rc or t == root_token) break;
-    t = parent_token(t);
-    assert(t != -1);
-  }
-
-  return rc;
-}
-
 const computation& reg_heap::computation_for_reg_(int t, int r) const 
 { 
   int rc = computation_index_for_reg_(t,r);
