@@ -1702,19 +1702,6 @@ int reg_heap::share_and_clear(int t, int r)
   return rc1;
 }
 
-int reg_heap::replace_shared_computation(int t, int r)
-{
-  assert(t);
-  int rc1 = computation_index_for_reg(t,r);
-  assert(rc1);
-
-  int rc2 = new_computation_for_reg(r);
-
-  tokens[t].vm_relative.set_value(r, rc2);
-  
-  return rc1;
-}
-
 void reg_heap::try_release_token(int t)
 {
   assert(token_is_used(t));

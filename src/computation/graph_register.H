@@ -379,8 +379,6 @@ public:
 
   const closure& access_result_for_reg(int t, int R1) const;
 
-  int replace_shared_computation(int t, int r);
-
   int remove_shared_computation(int t, int r);
 
   int new_computation_for_reg(int) const;
