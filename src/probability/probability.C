@@ -272,7 +272,11 @@ static double pointChi2(double prob, double v)
   double xx, c, ch, a = 0, q = 0, p1 = 0, p2 = 0, t = 0, x = 0, b = 0, s1, s2, s3, s4, s5, s6;
     
   if (v <= 0)
-    throw myexception()<<"Arguments out of range: alpha = "<<a;
+  {
+    std::cerr<<"Warning: can't handle 2*a = "<<v<<" in gamma quantile: using 0.000002";
+    v = 0.000002;
+    //    throw myexception()<<"Arguments out of range: v = "<<v;
+  }
 
   assert(p >= 0 and p <= 1);
 
