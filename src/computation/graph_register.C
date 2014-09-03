@@ -1006,15 +1006,13 @@ void reg_heap::reroot_at(int t)
   check_used_regs();
 #endif
 
-  int parent = parent_token(t);
-
   // 1. If this context isn't a direct child of the root, then make it one
-  if (not is_root_token(parent))
-    reroot_at(parent);
+  if (not is_root_token(parent_token(t)))
+    reroot_at(parent_token(t));
 
   // re-rooting to the parent context shouldn't release its token.
+  int parent = parent_token(t);
   assert(token_is_used(parent));
-  // Now this context should be a direct child of the root
   assert(is_root_token(parent));
 
   // 2. Change the relative mappings
