@@ -36,18 +36,18 @@ int OperationArgs::evaluate_slot_to_reg(int slot)
 const closure& OperationArgs::evaluate_reg_to_closure(int R2)
 {
   int R3 = evaluate_reg_to_reg(R2);
-  int t = current_token();
-  if (not t and memory().access(R3).type == reg::type_t::changeable)
+  if (not evaluate_changeables() and memory().access(R3).type == reg::type_t::changeable)
     throw no_context();
+  int t = current_token();
   return memory().access_result_for_reg(t,R3);
 }
 
 const closure& OperationArgs::evaluate_reg_to_closure_(int R2)
 {
   int R3 = evaluate_reg_no_record(R2);
-  int t = current_token();
-  if (not t and memory().access(R3).type == reg::type_t::changeable)
+  if (not evaluate_changeables() and memory().access(R3).type == reg::type_t::changeable)
     throw no_context();
+  int t = current_token();
   return memory().access_result_for_reg(t,R3);
 }
 

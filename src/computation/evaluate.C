@@ -166,6 +166,7 @@ map<int,string> get_constants(const reg_heap& C, int t);
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
 int reg_heap::incremental_evaluate(int R, int t)
 {
+  assert(t>0);
   assert(not t or is_root_token(t));
   assert(not t or is_completely_dirty(t));
   assert(is_valid_address(R));
@@ -384,6 +385,71 @@ int reg_heap::incremental_evaluate(int R, int t)
   return R;
 }
 
+/// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
+class RegOperationArgsUnchangeable: public OperationArgs
+{
+  const int R;
+
+  reg_heap& M;
+
+  int n_allocated;
+
+  int current_token() const {return 0;}
+
+  reg_heap& memory() {return M;}
+
+  const closure& current_closure() const {return M[R].C;}
+
+  bool evaluate_changeables() const {return false;}
+
+  /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
+  int evaluate_reg_no_record(int R2)
+  {
+    return M.incremental_evaluate_unchangeable(R2);
+  }
+
+  /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
+  int evaluate_reg_to_reg(int R2)
+  {
+    // Compute the result, and follow index_var chains (which are not changeable).
+    return M.incremental_evaluate_unchangeable(R2);
+  }
+
+public:
+
+  int allocate(closure&& C)
+  {
+    if (C.exp->head->type() == index_var_type)
+    {
+      int index = convert<const index_var>(C.exp->head)->index;
+
+      int r = C.lookup_in_env( index );
+    
+      assert(M.is_used(r));
+
+      return r;
+    }
+
+    int r = M.push_temp_head();
+    M.set_C(r, std::move(C) );
+    n_allocated++;
+    return r;
+  }
+
+  RegOperationArgsUnchangeable* clone() const {return new RegOperationArgsUnchangeable(*this);}
+
+  RegOperationArgsUnchangeable(int r, reg_heap& m)
+    :R(r),M(m), n_allocated(0)
+  { 
+  }
+
+  ~RegOperationArgsUnchangeable()
+  {
+    for(int i=0;i<n_allocated;i++)
+      M.pop_temp_head();
+  }
+};
+
 int reg_heap::incremental_evaluate_unchangeable(int R)
 {
   assert(is_valid_address(R));
@@ -461,7 +527,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
 
       try
       {
-	RegOperationArgs Args(R, *this, 0);
+	RegOperationArgsUnchangeable Args(R, *this);
 	closure result = (*O)(Args);
 	total_reductions++;
 	

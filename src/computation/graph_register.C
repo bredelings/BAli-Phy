@@ -2317,7 +2317,7 @@ const closure& reg_heap::lazy_evaluate_head(int index, int c)
 
 const closure& reg_heap::lazy_evaluate_unchangeable(int& R)
 {
-  R = incremental_evaluate(R, 0);
+  R = incremental_evaluate_unchangeable(R);
   return access(R).C;
 }
 
