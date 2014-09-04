@@ -640,7 +640,7 @@ void reg_heap::set_computation_result_for_reg(int r1)
   computation_for_reg(call).called_by.push_back(computations.get_weak_ref(rc1));
 }
 
-void reg_heap::set_used_input(int t, int R1, int R2)
+void reg_heap::set_used_input(int R1, int R2)
 {
   assert(is_root_token(t));
 
@@ -668,7 +668,7 @@ void reg_heap::set_used_input(int t, int R1, int R2)
   computations[rc2].used_by.push_back(computations.get_weak_ref(rc1));
 
   assert(computation_is_used_by(rc1,rc2));
-  assert(reg_is_used_by(t,R1,R2));
+  //  assert(reg_is_used_by(t,R1,R2));
 }
 
 int count(const std::vector<int>& v, int I)
@@ -678,6 +678,31 @@ int count(const std::vector<int>& v, int I)
     if (i == I)
       c++;
   return c;
+}
+
+void reg_heap::set_call(int R1, int R2)
+{
+  assert(reg_is_changeable(R1));
+  // R2 might be of UNKNOWN changeableness
+
+  // Check that R1 is legal
+  assert(is_used(R1));
+
+  // Check that R2 is legal
+  assert(is_used(R2));
+
+  // Only modify the call for the current context;
+  assert(has_computation(R1));
+
+  // Don't override an *existing* call
+  assert(not reg_has_call(R1));
+
+  // Check that we aren't overriding an existing *result*
+  assert(not reg_has_result(R1));
+
+  // Set the call
+  int rc1 = computation_index_for_reg(R1);
+  computations[rc1].call = R2;
 }
 
 void reg_heap::set_call(int t, int R1, int R2)
@@ -920,7 +945,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     if (regs_to_re_evaluate.size())
       mark_completely_dirty(token);
     for(int R: regs_to_re_evaluate)
-      incremental_evaluate(R,token);
+      incremental_evaluate(R);
     regs_to_re_evaluate.clear();
   }
 #if DEBUG_MACHINE >= 2
@@ -1109,7 +1134,7 @@ void reg_heap::reroot_at(int t)
   if (tokens[t].regs_to_re_evaluate.size())
     mark_completely_dirty(t);
   for(int R: tokens[t].regs_to_re_evaluate)
-    incremental_evaluate(R,t);
+    incremental_evaluate(R);
   tokens[t].regs_to_re_evaluate.clear();
 
   // 6. Now, try to remove the parent if its unreferenced.
@@ -1315,9 +1340,8 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   assert(n_active_scratch_lists == 0);
 }
 
-std::vector<int> reg_heap::used_regs_for_reg(int t, int r) const
+std::vector<int> reg_heap::used_regs_for_reg(int r) const
 {
-  assert(t == root_token);
   vector<int> U;
   if (not has_computation(r)) return U;
 
@@ -2283,7 +2307,7 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
 
   reroot_at_context(c);
   mark_completely_dirty(root_token);
-  R = incremental_evaluate(R, root_token);
+  R = incremental_evaluate(R);
 
 #if DEBUG_MACHINE >= 2
   check_used_regs();

@@ -158,8 +158,9 @@ public:
   bool reg_is_constant(int r) const;
   void make_reg_changeable(int r);
 
-  void set_used_input(int t, int R1, int R2);
+  void set_used_input(int R1, int R2);
   void set_call(int t, int R1, int R2);
+  void set_call(int R1, int R2);
   void destroy_all_computations_in_token(int t);
   void clear_call(int rc);
   void clear_call_for_reg(int R);
@@ -327,10 +328,6 @@ public:
 
   bool reg_is_fully_up_to_date(int r) const;
 
-  int incremental_evaluate_in_context(int R, int c);
-
-  int incremental_evaluate_unchangeable(int R);
-
   object_ref get_parameter_value_in_context(int R, int c);
 
   object_ref get_reg_value_in_context(int& R, int c);
@@ -420,7 +417,7 @@ public:
 
   void set_computation_result_for_reg(int r1);
 
-  std::vector<int> used_regs_for_reg(int t, int r) const;
+  std::vector<int> used_regs_for_reg(int r) const;
 
   void reroot_at(int t);
 
@@ -438,7 +435,11 @@ public:
   void find_callers(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
   void find_users(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
 
-  int incremental_evaluate(int R, int t);
+  int incremental_evaluate_in_context(int R, int c);
+
+  int incremental_evaluate(int R);
+
+  int incremental_evaluate_unchangeable(int R);
 
   const closure& lazy_evaluate(int& R, int c);
 

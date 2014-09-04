@@ -474,7 +474,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
 	string name2 = "n" + convertToString(R2);
 	bool used = false;
-	for(int i: C.used_regs_for_reg(t,R))
+	for(int i: C.used_regs_for_reg(R))
 	  if (i == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
@@ -497,7 +497,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
 	string name2 = "n" + convertToString(R2);
 	bool used = false;
-	for(int i: C.used_regs_for_reg(t,R))
+	for(int i: C.used_regs_for_reg(R))
 	  if (i == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
@@ -526,7 +526,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
 
     // used_inputs
-    for(int R2: C.used_regs_for_reg(t,R))
+    for(int R2: C.used_regs_for_reg(R))
     {
       bool is_ref_edge_also = false;
       for(int R3: C.access(R).C.Env)

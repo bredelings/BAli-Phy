@@ -18,10 +18,6 @@ class RegOperationArgs: public OperationArgs
 {
   const int R;
 
-  const int t;
-
-  int current_token() const {return t;}
-
   const closure& current_closure() const {return memory()[R].C;}
 
   bool evaluate_changeables() const {return true;}
@@ -29,14 +25,14 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_reg_no_record(int R2)
   {
-    return memory().incremental_evaluate(R2, t);
+    return memory().incremental_evaluate(R2);
   }
 
   /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
   int evaluate_reg_to_reg(int R2)
   {
     // Compute the result, and follow index_var chains (which are not changeable).
-    int R3 = M.incremental_evaluate(R2, t);
+    int R3 = M.incremental_evaluate(R2);
 
     if (M.reg_is_changeable(R3))
     {
@@ -49,7 +45,7 @@ class RegOperationArgs: public OperationArgs
 
       // Note that although R2 is newly used, R3 might be already used if it was 
       // found from R2 through a non-changeable reg_var chain.
-      M.set_used_input(t, R, R3);
+      M.set_used_input(R, R3);
     }
 
     return R3;
@@ -71,8 +67,8 @@ public:
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-  RegOperationArgs(int r, reg_heap& m, int T)
-    :OperationArgs(m), R(r), t(T)
+  RegOperationArgs(int r, reg_heap& m)
+    :OperationArgs(m), R(r)
   { 
     // I think these should already be cleared.
     assert(memory().computation_for_reg(R).used_inputs.empty());
@@ -148,11 +144,10 @@ map<int,string> get_constants(const reg_heap& C, int t);
 
 /// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
-int reg_heap::incremental_evaluate(int R, int t)
+int reg_heap::incremental_evaluate(int R)
 {
   assert(t>0);
-  assert(is_root_token(t));
-  assert(is_completely_dirty(t));
+  assert(is_completely_dirty(root_token));
   assert(is_valid_address(R));
   assert(is_used(R));
 
@@ -194,14 +189,14 @@ int reg_heap::incremental_evaluate(int R, int t)
       if (reg_has_call(R))
       {
 	// Evaluate S, looking through unchangeable redirections
-	int call = incremental_evaluate(call_for_reg(R), t);
+	int call = incremental_evaluate(call_for_reg(R));
 
 	// If computation_for_reg(R).call can be evaluated to refer to S w/o moving through any changable operations, 
 	// then it should be safe to change computation_for_reg(R).call to refer to S, even if R is changeable.
 	if (call != call_for_reg(R))
 	{
 	  clear_call_for_reg(R);
-	  set_call(t, R, call);
+	  set_call(R, call);
 	}
 	
 	// R gets its result from S.
@@ -235,7 +230,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 
       int R2 = access(R).C.lookup_in_env( index );
 
-      int R3 = incremental_evaluate(R2, t);
+      int R3 = incremental_evaluate(R2);
 
       // If we point to R3 through an intermediate index_var chain, then change us to point to the end
       if (R3 != R2)
@@ -249,7 +244,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     {
       access(R).type = reg::type_t::constant;
       if (has_computation(R))
-	clear_computation(t,R);
+	clear_computation(root_token,R);
     }
 
 #ifndef NDEBUG
@@ -263,13 +258,13 @@ int reg_heap::incremental_evaluate(int R, int t)
     // A modifiable has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
     else if (type == modifiable_type)
-      throw myexception()<<"Reg "<<R<<": Modifiable '"<<access(R).C.exp<<"' with no result?! (token = "<<t<<"   Changeable = "<<reg_is_changeable(R)<<")";
+      throw myexception()<<"Reg "<<R<<": Modifiable '"<<access(R).C.exp<<"' with no result?! (token = "<<root_token<<"   Changeable = "<<reg_is_changeable(R)<<")";
 
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
       if (not has_computation(R))
-	add_shared_computation(t,R);
+	add_shared_computation(root_token, R);
 
       object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
 
@@ -287,7 +282,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 
       try
       {
-	RegOperationArgs Args(R, *this, t);
+	RegOperationArgs Args(R, *this);
 	closure result = (*O)(Args);
 	total_reductions++;
 	
@@ -305,31 +300,31 @@ int reg_heap::incremental_evaluate(int R, int t)
 	{
 	  int r2 = Args.allocate(std::move(result));
 
-	  int r3 = incremental_evaluate(r2, t);
+	  int r3 = incremental_evaluate(r2);
 
-	  set_call(t, R, r3);
+	  set_call(R, r3);
 	  set_computation_result_for_reg( R);
 	}
       }
       catch (myexception& e)
       {
-	dot_graph_for_token(*this, t);
+	dot_graph_for_token(*this, root_token);
 
 	string SS  = compact_graph_expression(*this, R, get_identifiers())->print();
 	string SSS = unlet(untranslate_vars(
 					    untranslate_vars(deindexify(trim_unnormalize(access(R).C)), get_identifiers()),
-					    get_constants(*this,t)
+					    get_constants(*this,root_token)
 					    )
 			   )->print();
 	std::ostringstream o;
-	o<<"evaluating reg # "<<R<<" in token "<<t<<": "<<SSS<<"\n\n";
+	o<<"evaluating reg # "<<R<<" in token "<<root_token<<": "<<SSS<<"\n\n";
 	e.prepend(o.str());
 	throw e;
       }
       catch (const std::exception& e)
       {
-	std::cerr<<"evaluating reg # "<<R<<" in token "<<t<<std::endl;
-	dot_graph_for_token(*this, t);
+	std::cerr<<"evaluating reg # "<<R<<" in token "<<root_token<<std::endl;
+	dot_graph_for_token(*this, root_token);
 	throw e;
       }
 
@@ -359,8 +354,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 class RegOperationArgsUnchangeable: public OperationArgs
 {
   const int R;
-
-  int current_token() const {return 0;}
 
   const closure& current_closure() const {return memory()[R].C;}
 
@@ -501,13 +494,13 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
 					    )
 			   )->print();
 	std::ostringstream o;
-	o<<"evaluating reg # "<<R<<" in token "<<0<<": "<<SSS<<"\n\n";
+	o<<"evaluating reg # "<<R<<" (unchangeable): "<<SSS<<"\n\n";
 	e.prepend(o.str());
 	throw e;
       }
       catch (const std::exception& e)
       {
-	std::cerr<<"evaluating reg # "<<R<<" in token "<<0<<std::endl;
+	std::cerr<<"evaluating reg # "<<R<<" (unchangeable)"<<std::endl;
 	dot_graph_for_token(*this, 0);
 	throw e;
       }

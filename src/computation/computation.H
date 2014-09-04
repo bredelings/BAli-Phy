@@ -17,8 +17,6 @@ protected:
 public:
   virtual OperationArgs* clone() const = 0;
 
-  virtual int current_token() const = 0;
-
   reg_heap& memory() {return M;}
 
   const reg_heap& memory() const {return M;}

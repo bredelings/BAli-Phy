@@ -173,7 +173,7 @@ extern "C" closure builtin_function_evaluate(OperationArgs& Args)
   int R2 = 0;
 
   if (c < 0)
-    R2 = M.incremental_evaluate(R1, 0);
+    R2 = M.incremental_evaluate_unchangeable(R1);
   else
     R2 = M.incremental_evaluate_in_context(R1, c);
 
