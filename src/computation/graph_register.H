@@ -155,6 +155,7 @@ public:
 
   void set_used_input(int t, int R1, int R2);
   void set_call(int t, int R1, int R2);
+  void destroy_all_computations_in_token(int t);
   void clear_call(int rc);
   void clear_call_for_reg(int t, int R);
   void clear_C(int R);
