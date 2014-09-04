@@ -1278,8 +1278,16 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     RC.temp = -1;
 
     if (not computation_index_for_reg_(t1,r))
+    {
+      // Move rc2 from t2 to t1+}
       tokens[t1].vm_relative.add_value(r, rc2);
-    share_and_clear(t2,r);
+      computations[rc2].source_token = t1;
+      share_and_clear(t2,r);
+    }
+    else
+    {
+      share_and_clear(t2,r);
+    }
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(r).re_evaluate)
