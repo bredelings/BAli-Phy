@@ -85,7 +85,7 @@ public:
     :R(r),M(m),t(T), n_allocated(0)
   { 
     // I think these should already be cleared.
-    assert(M.computation_for_reg(t,R).used_inputs.empty());
+    assert(not evaluate_changeables() or M.computation_for_reg(t,R).used_inputs.empty());
   }
 
   ~RegOperationArgs()
@@ -380,6 +380,126 @@ int reg_heap::incremental_evaluate(int R, int t)
     assert(is_WHNF(E));
   }
 #endif
+
+  return R;
+}
+
+int reg_heap::incremental_evaluate_unchangeable(int R)
+{
+  assert(is_valid_address(R));
+  assert(is_used(R));
+
+#ifndef NDEBUG
+  assert(not is_a<expression>(access(R).C.exp));
+#endif
+
+  while (1)
+  {
+    assert(access(R).C.exp);
+
+    reg::type_t reg_type = access(R).type;
+
+    if (reg_type == reg::type_t::constant or reg_type == reg::type_t::changeable)
+      break;
+
+    else if (reg_type == reg::type_t::index_var)
+    {
+      int index = assert_is_a<index_var>(access(R).C.exp)->index;
+      int R2 = access(R).C.lookup_in_env( index );
+      R = R2;
+      continue;
+    }
+    else
+      assert(reg_type == reg::type_t::unknown);
+
+    /*---------- Below here, there is no call, and no result. ------------*/
+    const int type = access(R).C.exp->head->type();
+    if (type == index_var_type)
+    {
+      access(R).type = reg::type_t::index_var;
+
+      int index = assert_is_a<index_var>(access(R).C.exp)->index;
+
+      int R2 = access(R).C.lookup_in_env( index );
+
+      int R3 = incremental_evaluate_unchangeable( R2 );
+
+      // If we point to R3 through an intermediate index_var chain, then change us to point to the end
+      if (R3 != R2)
+	set_C(R, closure(index_var(0),{R3}));
+
+      return R3;
+    }
+
+    // Check for WHNF *OR* heap variables
+    else if (is_WHNF(access(R).C.exp))
+      access(R).type = reg::type_t::constant;
+
+#ifndef NDEBUG
+    else if (is_a<Trim>(access(R).C.exp))
+      std::abort();
+    else if (access(R).C.exp->head->type() == parameter_type)
+      std::abort();
+#endif
+
+    // 3. Reduction: Operation (includes @, case, +, etc.)
+    else
+    {
+      object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
+
+      // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable result.
+      // Therefore, we cannot do "assert(not computation_for_reg(t,R).changeable);" here.
+
+#ifdef DEBUG_MACHINE
+      string SS = "";
+      SS = compact_graph_expression(*this, R, get_identifiers())->print();
+      string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
+				    get_identifiers())->print();
+      if (log_verbose)
+	dot_graph_for_token(*this, 0);
+#endif
+
+      try
+      {
+	RegOperationArgs Args(R, *this, 0);
+	closure result = (*O)(Args);
+	total_reductions++;
+	
+	set_C(R, std::move(result) );
+      }
+      catch (no_context&)
+      {
+	access(R).type = reg::type_t::changeable;
+	return R;
+      }
+      catch (myexception& e)
+      {
+	dot_graph_for_token(*this, 0);
+
+	string SS  = compact_graph_expression(*this, R, get_identifiers())->print();
+	string SSS = unlet(untranslate_vars(
+					    untranslate_vars(deindexify(trim_unnormalize(access(R).C)), get_identifiers()),
+					    get_constants(*this,0)
+					    )
+			   )->print();
+	std::ostringstream o;
+	o<<"evaluating reg # "<<R<<" in token "<<0<<": "<<SSS<<"\n\n";
+	e.prepend(o.str());
+	throw e;
+      }
+      catch (const std::exception& e)
+      {
+	std::cerr<<"evaluating reg # "<<R<<" in token "<<0<<std::endl;
+	dot_graph_for_token(*this, 0);
+	throw e;
+      }
+
+#ifdef DEBUG_MACHINE
+      //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
+      std::cerr<<"   + Executing statement {"<<O<<"}:  "<<SS<<"\n\n";
+#endif
+    }
+  }
 
   return R;
 }

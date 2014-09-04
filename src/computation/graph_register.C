@@ -2299,21 +2299,6 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
   return R;
 }
 
-int reg_heap::incremental_evaluate_unchangeable(int R)
-{
-#if DEBUG_MACHINE >= 2
-  check_used_regs();
-#endif
-
-  R = incremental_evaluate(R, 0);
-
-#if DEBUG_MACHINE >= 2
-  check_used_regs();
-#endif
-
-  return R;
-}
-
 const closure& reg_heap::lazy_evaluate(int& R, int c)
 {
   R = incremental_evaluate_in_context(R,c);
