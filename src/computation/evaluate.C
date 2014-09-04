@@ -196,9 +196,11 @@ int reg_heap::incremental_evaluate(int R, int t)
     //    std::cerr<<"   statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
 
-    if (access(R).type == reg::type_t::constant) break;
+    reg::type_t reg_type = access(R).type;
 
-    else if (reg_is_changeable(R))
+    if (reg_type == reg::type_t::constant) break;
+
+    else if (reg_type == reg::type_t::changeable)
     {
       // Changeable is a normal form, so we are done.
       if (not t) break;
@@ -209,12 +211,6 @@ int reg_heap::incremental_evaluate(int R, int t)
       // If we know what to call, then call it and use it to set the result
       if (reg_has_call(t,R))
       {
-	// This should only be an Operation or a modifiable.
-	assert(reg_is_changeable(R));
-	
-	// Only changeable regs have calls, and changeable regs are in normal form unless evaluate_changeable==true.
-	assert(t);
-	
 	// Evaluate S, looking through unchangeable redirections
 	int call = incremental_evaluate(call_for_reg(t,R), t);
 
@@ -231,6 +227,15 @@ int reg_heap::incremental_evaluate(int R, int t)
 	break;
       }
     }
+    else if (reg_type == reg::type_t::index_var)
+    {
+      int index = assert_is_a<index_var>(access(R).C.exp)->index;
+      int R2 = access(R).C.lookup_in_env( index );
+      R = R2;
+      continue;
+    }
+    else
+      assert(reg_type == reg::type_t::unknown);
 
     /*---------- Below here, there is no call, and no result. ------------*/
     const int type = access(R).C.exp->head->type();
@@ -241,6 +246,8 @@ int reg_heap::incremental_evaluate(int R, int t)
       assert( not reg_has_result(t,R) );
 
       assert( not reg_has_call(t,R) );
+
+      access(R).type = reg::type_t::index_var;
 
       int index = assert_is_a<index_var>(access(R).C.exp)->index;
 
