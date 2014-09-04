@@ -18,7 +18,7 @@ using boost::dynamic_pointer_cast;
 
 expression_ref indexed_let_expression(const vector<expression_ref>& bodies, const expression_ref& T)
 {
-  expression* E = new expression( let2_obj() );
+  expression* E = new expression( Let() );
 
   E->sub.push_back(T);
 
@@ -425,18 +425,6 @@ string let_obj::print() const
 {
   return "let";
 }
-
-tribool let2_obj::compare(const Object& o) const 
-{
-  const let2_obj* T = dynamic_cast<const let2_obj*>(&o);
-  return T;
-}
-
-string let2_obj::print() const 
-{
-  return "let";
-}
-
 
 tribool AST_node::compare(const Object& o) const 
 {

@@ -53,4 +53,23 @@ struct Case: public Operation
   Case():Operation(2) {}
 };
 
+struct Let: public Operation
+{
+  virtual Let* clone() const {return new Let(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Let* E = dynamic_cast<const Let*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const;
+
+  int type() const {return let2_type;}
+
+  Let():Operation(2) {}
+};
+
 #endif

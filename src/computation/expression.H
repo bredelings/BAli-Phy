@@ -226,17 +226,6 @@ struct let_obj: public Object
   std::string print() const;
 };
 
-struct let2_obj: public Object
-{
-  let2_obj* clone() const {return new let2_obj(*this);}
-
-  tribool compare(const Object& o) const;
-
-  int type() const {return let2_type;}
-
-  std::string print() const;
-};
-
 struct AST_node: public Object
 {
   AST_node* clone() const {return new AST_node(*this);}

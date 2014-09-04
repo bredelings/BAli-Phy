@@ -218,3 +218,41 @@ std::string Case::name() const {
   return "case";
 }
 
+closure Let::operator()(OperationArgs& Args) const
+{
+  reg_heap& M = Args.memory();
+
+  vector<int>& local_env = M.get_scratch_list();
+
+  const closure& C = Args.current_closure();
+
+  const vector<expression_ref>& A = C.exp->sub;
+
+  const expression_ref& T = A[0];
+
+  int n_bodies = int(A.size())-1;
+
+  local_env = C.Env;
+
+  int start = local_env.size();
+
+  for(int i=0;i<n_bodies;i++)
+    local_env.push_back( M.push_temp_head() );
+      
+  // Substitute the new heap vars for the dummy vars in expression T and in the bodies
+  for(int i=0;i<n_bodies;i++)
+    M.set_C(local_env[start+i], get_trimmed({A[i+1],local_env}));
+
+  // Remove the new heap vars from the list of temp heads in reverse order.
+  for(int i=0;i<n_bodies; i++)
+    M.pop_temp_head();
+      
+  M.release_scratch_list();
+
+  return get_trimmed({T, local_env});
+}
+
+std::string Let::name() const {
+  return "let";
+}
+

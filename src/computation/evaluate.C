@@ -276,44 +276,6 @@ int reg_heap::incremental_evaluate(int R, int t)
     else if (type == modifiable_type)
       throw myexception()<<"Reg "<<R<<": Modifiable '"<<access(R).C.exp<<"' with no result?! (token = "<<t<<"   Changeable = "<<reg_is_changeable(R)<<")";
 
-    // Reduction: let expression
-    else if (type == let2_type)
-    {
-      assert( not reg_is_changeable(R) );
-
-      vector<int>& local_env = get_scratch_list();
-
-      const vector<expression_ref>& A = access(R).C.exp->sub;
-
-      const expression_ref& T = A[0];
-
-      int n_bodies = int(A.size())-1;
-
-      local_env = access(R).C.Env;
-
-      int start = local_env.size();
-
-      for(int i=0;i<n_bodies;i++)
-	local_env.push_back( push_temp_head() );
-      
-      // Substitute the new heap vars for the dummy vars in expression T and in the bodies
-      for(int i=0;i<n_bodies;i++)
-	set_C(local_env[start+i], get_trimmed({A[i+1],local_env}));
-
-      set_C(R, get_trimmed({T, local_env}));
-
-      assert( not reg_is_changeable(R) );
-
-      // Remove the new heap vars from the list of temp heads in reverse order.
-      for(int i=0;i<n_bodies; i++)
-	pop_temp_head();
-      
-      release_scratch_list();
-
-      assert(not t or not reg_has_call(t,R) );
-      assert(not t or not reg_has_result(t,R) );
-    }
-    
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
