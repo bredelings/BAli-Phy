@@ -27,7 +27,7 @@ class RegOperationArgs: public OperationArgs
 
   const closure& current_closure() const {return M[R].C;}
 
-  bool evaluate_changeables() const {return t != 0;}
+  bool evaluate_changeables() const {return true;}
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_reg_no_record(int R2)
@@ -41,7 +41,7 @@ class RegOperationArgs: public OperationArgs
     // Compute the result, and follow index_var chains (which are not changeable).
     int R3 = M.incremental_evaluate(R2, t);
 
-    if (M.reg_is_changeable(R3) and t)
+    if (M.reg_is_changeable(R3))
     {
       // If R2 -> result was changeable, then R -> result will be changeable as well.
       if (not M.reg_is_changeable(R))
@@ -167,14 +167,14 @@ map<int,string> get_constants(const reg_heap& C, int t);
 int reg_heap::incremental_evaluate(int R, int t)
 {
   assert(t>0);
-  assert(not t or is_root_token(t));
-  assert(not t or is_completely_dirty(t));
+  assert(is_root_token(t));
+  assert(is_completely_dirty(t));
   assert(is_valid_address(R));
   assert(is_used(R));
 
 #ifndef NDEBUG
   assert(not is_a<expression>(access(R).C.exp));
-  if (t and reg_has_result(t,R))
+  if (reg_has_result(t,R))
   {
     expression_ref E = access_result_for_reg(t,R).exp;
     assert(is_WHNF(E));
@@ -203,9 +203,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 
     else if (reg_type == reg::type_t::changeable)
     {
-      // Changeable is a normal form, so we are done.
-      if (not t) break;
-
       // We have a result, so we are done.
       if (reg_has_result(t,R)) break;
 
@@ -318,12 +315,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 	  assert(not reg_has_result(t,R));
 	  assert(computation_for_reg(t,R).used_inputs.empty());
 	  set_C(R, std::move(result) );
-	}
-	// If the reg is changeable and this is token 0, then it is in normal form, and we are done.
-	else if (not t)
-	{
-	  clear_computation(t,R);
-	  return R;
 	}
 	// Otherwise, set the reduction result.
 	else
