@@ -146,7 +146,6 @@ map<int,string> get_constants(const reg_heap& C, int t);
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
 int reg_heap::incremental_evaluate(int R)
 {
-  assert(t>0);
   assert(is_completely_dirty(root_token));
   assert(is_valid_address(R));
   assert(is_used(R));

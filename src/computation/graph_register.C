@@ -51,13 +51,13 @@ using std::endl;
  */
 
 /*
- * 1. Make the root token into token 0.
+ * 1. [DONE] Make the root token into token 0.
  *
- * 2. Make the unchangeable token into token -1.
+ * 2. [DONE] Remove the idea of an unchangable token.
  *
- * 3. Make let into an operation.
+ * 3. [DONE] Make let into an operation.
  *
- * 4. Remove t argument from computation_index_for_reg(int t, int r) 
+ * 4. [DONE] Remove t argument from computation_index_for_reg(int t, int r) 
  *
  * 5. Move call and used_inputs into computation_info
  *
@@ -642,8 +642,6 @@ void reg_heap::set_computation_result_for_reg(int r1)
 
 void reg_heap::set_used_input(int R1, int R2)
 {
-  assert(is_root_token(t));
-
   assert(reg_is_changeable(R1));
   assert(reg_is_changeable(R2));
 
@@ -1085,7 +1083,6 @@ void reg_heap::reroot_at_context(int c)
 
 void reg_heap::reroot_at(int t)
 {
-  assert(t > 0);
   if (is_root_token(t)) return;
 
 #ifdef DEBUG_MACHINE
@@ -1143,7 +1140,6 @@ void reg_heap::reroot_at(int t)
 
 void reg_heap::mark_completely_dirty(int t)
 {
-  assert(t > 0);
   int& version = tokens[t].version;
   for(int t2:tokens[t].children)
     version = std::max(version, tokens[t2].version+1);
@@ -1151,7 +1147,6 @@ void reg_heap::mark_completely_dirty(int t)
 
 bool reg_heap::is_dirty(int t) const
 {
-  assert(t > 0);
   for(int t2:tokens[t].children)
     if (tokens[t].version > tokens[t2].version)
       return true;
@@ -1691,7 +1686,7 @@ void reg_heap::check_tokens() const
   for(int c=0;c<get_n_contexts();c++)
   {
     int t = token_for_context(c);
-    if (t > 0)
+    if (t >= 0)
     {
       assert(tokens[t].referenced);
       assert(tokens[t].used);
@@ -1710,7 +1705,7 @@ void reg_heap::check_tokens() const
 
 void reg_heap::check_used_reg(int index) const
 {
-  for(int t=1;t<get_n_tokens();t++)
+  for(int t=0;t<get_n_tokens();t++)
   {
     if (not token_is_used(t)) continue;
 
@@ -1814,7 +1809,6 @@ void reg_heap::duplicate_computation(int rc1, int rc2) const
 /// Add a shared computation at (t,r) -- assuming there isn't one already
 int reg_heap::add_shared_computation(int t, int r)
 {
-  assert(t > 0);
   assert(tokens[t].vm_relative[r] <= 0);
 
   // 1. Get a new computation
@@ -1960,7 +1954,6 @@ bool reg_heap::is_terminal_token(int t) const
 
 bool reg_heap::is_root_token(int t) const
 {
-  assert(t > 0);
   assert((t==root_token) == (tokens[t].parent == -1));
   assert(token_is_used(t));
 
@@ -2065,8 +2058,6 @@ int interchange(int x, int t1, int t2)
 void reg_heap::swap_tokens(int t1, int t2)
 {
   // 1. Check that tokens are active parent and child
-  assert(t1 > 0);
-  assert(t2 > 0);
   assert(tokens[t1].used);
   assert(tokens[t2].used);
   assert(t1 == tokens[t2].parent);
@@ -2119,9 +2110,7 @@ int reg_heap::get_n_contexts() const
 int reg_heap::token_for_context(int c) const
 {
   assert(c >= 0);
-  int t = token_for_context_[c];
-  assert(t != 0);
-  return t;
+  return token_for_context_[c];
 }
 
 int reg_heap::unset_token_for_context(int c)
@@ -2362,15 +2351,11 @@ int reg_heap::add_identifier(const string& name)
 reg_heap::reg_heap()
   :base_pool_t(1),
    computations(1),
-   P(new Program),
-   tokens(1)
+   P(new Program)
 { 
   //  computations.collect_garbage = [this](){collect_garbage();};
   computations.collect_garbage = [](){};
   computations.clear_references = [](int){};
-  tokens[0].vm_relative.resize(1);
-  tokens[0].used = true;
-  tokens[0].referenced = true;
 }
 
 void reg_heap::release_scratch_list() const
