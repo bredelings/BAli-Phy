@@ -474,56 +474,54 @@ double reg_heap::get_rate_for_reg(int r)
   return *convert<const Double>(access(r3).C.exp->head);
 }
 
-const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t));return tokens[root_token].triggers;}
-      std::vector<int>& reg_heap::triggers(int t)       {assert(is_root_token(t));return tokens[root_token].triggers;}
+const std::vector<int>& reg_heap::triggers() const {return tokens[root_token].triggers;}
+      std::vector<int>& reg_heap::triggers()       {return tokens[root_token].triggers;}
 
-int reg_heap::computation_index_for_reg(int t, int r) const 
+int reg_heap::computation_index_for_reg(int r) const 
 {
-  assert(is_root_token(t));
-  return computation_index_for_reg_(t,r);
+  return tokens[root_token].vm_relative[r];
 }
 
-const computation& reg_heap::computation_for_reg(int t, int r) const 
+const computation& reg_heap::computation_for_reg(int r) const 
 { 
-  int rc = computation_index_for_reg(t,r);
+  int rc = computation_index_for_reg(r);
   return computations.access_unused(rc);
 }
 
-computation& reg_heap::computation_for_reg(int t, int r)
+computation& reg_heap::computation_for_reg(int r)
 { 
-  int rc = computation_index_for_reg(t,r);
+  int rc = computation_index_for_reg(r);
   return computations.access_unused(rc);
 }
 
-const closure& reg_heap::access_result_for_reg(int t, int R1) const
+const closure& reg_heap::access_result_for_reg(int R1) const
 {
-  assert(is_root_token(t));
-  int R2 = result_for_reg(t,R1);
+  int R2 = result_for_reg(R1);
   assert(R2);
   return access(R2).C;
 }
 
-bool reg_heap::reg_has_result(int t, int r) const
+bool reg_heap::reg_has_result(int r) const
 {
   if (access(r).type == reg::type_t::constant)
     return true;
   else
-    return reg_has_computation_result(t,r);
+    return reg_has_computation_result(r);
 }
 
-bool reg_heap::reg_has_computation_result(int t, int r) const
+bool reg_heap::reg_has_computation_result(int r) const
 {
-  return has_computation(t,r) and computation_result_for_reg(t,r);
+  return has_computation(r) and computation_result_for_reg(r);
 }
 
-bool reg_heap::reg_has_call(int t, int r) const
+bool reg_heap::reg_has_call(int r) const
 {
-  return has_computation(t,r) and call_for_reg(t,r);
+  return has_computation(r) and call_for_reg(r);
 }
 
-int reg_heap::call_for_reg(int t, int r) const
+int reg_heap::call_for_reg(int r) const
 {
-  return computation_for_reg(t,r).call;
+  return computation_for_reg(r).call;
 }
 
 bool reg_heap::reg_has_result_(int t, int r) const
@@ -569,9 +567,9 @@ vector<typename pool<T>::weak_ref>& clean_weak_refs(vector<typename pool<T>::wea
   return v;
 }
 
-bool reg_heap::has_computation(int t, int r) const
+bool reg_heap::has_computation(int r) const
 {
-  return computation_index_for_reg(t,r)>0;
+  return computation_index_for_reg(r)>0;
 }
 
 bool reg_heap::has_computation_(int t, int r) const
@@ -596,11 +594,11 @@ int reg_heap::computation_index_for_reg_(int t, int r) const
   return tokens[t].vm_relative[r];
 }
 
-int reg_heap::result_for_reg(int t, int r) const 
+int reg_heap::result_for_reg(int r) const 
 {
   assert(not is_index_var(access(r).C.exp));
   if (access(r).type == reg::type_t::changeable)
-    return computation_result_for_reg(t,r);
+    return computation_result_for_reg(r);
   else
   {
     assert(access(r).type == reg::type_t::constant);
@@ -608,9 +606,9 @@ int reg_heap::result_for_reg(int t, int r) const
   }
 }
 
-int reg_heap::computation_result_for_reg(int t, int r) const 
+int reg_heap::computation_result_for_reg(int r) const 
 {
-  return computation_for_reg(t,r).result;
+  return computation_for_reg(r).result;
 }
 
 int reg_heap::computation_result_for_reg_(int t, int r) const 
@@ -618,34 +616,34 @@ int reg_heap::computation_result_for_reg_(int t, int r) const
   return computation_for_reg_(t,r).result;
 }
 
-void reg_heap::set_computation_result_for_reg(int t, int r1)
+void reg_heap::set_computation_result_for_reg(int r1)
 {
-  assert(not t or is_root_token(t));
-
-  int call = call_for_reg(t,r1);
+  int call = call_for_reg(r1);
 
   assert(call);
 
-  int result = result_for_reg(t,call);
+  int result = result_for_reg(call);
 
   assert(result);
 
-  computation_for_reg(t,r1).result = result;
+  computation_for_reg(r1).result = result;
 
   // If R2 is WHNF then we are done
   if (access(call).type == reg::type_t::constant) return;
 
   // If R2 doesn't have a computation, add one to hold the called-by edge.
-  assert(has_computation(t,call));
+  assert(has_computation(call));
 
-  int rc1 = computation_index_for_reg(t,r1);
+  int rc1 = computation_index_for_reg(r1);
 
   // Add a called-by edge to R2.
-  computation_for_reg(t,call).called_by.push_back(computations.get_weak_ref(rc1));
+  computation_for_reg(call).called_by.push_back(computations.get_weak_ref(rc1));
 }
 
 void reg_heap::set_used_input(int t, int R1, int R2)
 {
+  assert(is_root_token(t));
+
   assert(reg_is_changeable(R1));
   assert(reg_is_changeable(R2));
 
@@ -655,16 +653,16 @@ void reg_heap::set_used_input(int t, int R1, int R2)
   assert(access(R1).C);
   assert(access(R2).C);
 
-  assert(has_computation(t,R1));
-  assert(has_computation(t,R2));
-  assert(computation_result_for_reg(t,R2));
+  assert(has_computation(R1));
+  assert(has_computation(R2));
+  assert(computation_result_for_reg(R2));
 
   // An index_var's result only changes if the thing the index-var points to also changes.
   // So, we may as well forbid using an index_var as an input.
   assert(access(R2).C.exp->head->type() != index_var_type);
 
-  int rc1 = computation_index_for_reg(t,R1);
-  int rc2 = computation_index_for_reg(t,R2);
+  int rc1 = computation_index_for_reg(R1);
+  int rc2 = computation_index_for_reg(R2);
 
   computations[rc1].used_inputs.push_back(rc2);
   computations[rc2].used_by.push_back(computations.get_weak_ref(rc1));
@@ -724,9 +722,9 @@ void reg_heap::clear_call(int rc)
   computations.access_unused(rc).call = 0;
 }
 
-void reg_heap::clear_call_for_reg(int t, int R)
+void reg_heap::clear_call_for_reg(int R)
 {
-  int rc = computation_index_for_reg(t,R);
+  int rc = computation_index_for_reg(R);
   if (rc > 0)
     clear_call( rc );
 }
@@ -1317,20 +1315,13 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   assert(n_active_scratch_lists == 0);
 }
 
-bool reg_heap::reg_is_shared_with_parent(int t, int r) const
-{
-  assert(t);
-  if (is_root_token(t)) return false;
-  int p = parent_token(t);
-  return computation_index_for_reg(t,r) == computation_index_for_reg(p,r);
-}
-
 std::vector<int> reg_heap::used_regs_for_reg(int t, int r) const
 {
+  assert(t == root_token);
   vector<int> U;
-  if (not has_computation(t,r)) return U;
+  if (not has_computation(r)) return U;
 
-  for(int rc: computation_for_reg(t,r).used_inputs)
+  for(int rc: computation_for_reg(r).used_inputs)
     U.push_back(computations[rc].source_reg);
 
   return U;
@@ -1653,8 +1644,9 @@ bool reg_heap::computation_is_used_by(int rc1, int rc2) const
 
 bool reg_heap::reg_is_used_by(int t, int r1, int r2) const
 {
-  int rc1 = computation_index_for_reg(t,r1);
-  int rc2 = computation_index_for_reg(t,r2);
+  assert(t == root_token);
+  int rc1 = computation_index_for_reg(r1);
+  int rc2 = computation_index_for_reg(r2);
 
   return computation_is_used_by(rc1,rc2);
 }
@@ -1748,14 +1740,14 @@ void reg_heap::check_used_reg(int index) const
     // Regs with results should have back-references from their call.
     if (result and access(call).type != reg::type_t::constant)
     {
-      assert( has_computation(t,call) );
-      int rc2 = computation_index_for_reg(t,call);
+      assert( has_computation(call) );
+      int rc2 = computation_index_for_reg(call);
       assert( computation_is_called_by(index_c, rc2) );
     }
 
     // If we have a result, then our call should have a result
     if (result)
-      assert(reg_has_result(t,call));
+      assert(reg_has_result(call));
   }
 }
 
@@ -2190,16 +2182,16 @@ void reg_heap::release_context(int c)
 std::vector<int>& reg_heap::triggers_for_context(int c)
 {
   reroot_at_context(c);
-  return triggers(root_token);
+  return triggers();
 }
 
 bool reg_heap::reg_is_fully_up_to_date_in_context(int R, int c)
 {
   reroot_at_context(c);
-  return reg_is_fully_up_to_date(R,root_token);
+  return reg_is_fully_up_to_date(R);
 }
 
-bool reg_heap::reg_is_fully_up_to_date(int R, int t) const
+bool reg_heap::reg_is_fully_up_to_date(int R) const
 {
   // 1. Handle index_var nodes!
   int type = access(R).C.exp->head->type();
@@ -2207,21 +2199,21 @@ bool reg_heap::reg_is_fully_up_to_date(int R, int t) const
   {
     assert( not reg_is_changeable(R) );
 
-    assert( not reg_has_result(t,R) );
+    assert( not reg_has_result(R) );
 
-    assert( not reg_has_call(t,R) );
+    assert( not reg_has_call(R) );
 
     int index = assert_is_a<index_var>(access(R).C.exp)->index;
 
     int R2 = access(R).C.lookup_in_env( index );
 
-    return reg_is_fully_up_to_date(R2, t);
+    return reg_is_fully_up_to_date(R2);
   }
 
   // 2. If we've never been evaluated OR we're not constant and have no result, then return false;
-  if (not reg_has_result(t,R)) return false;
+  if (not reg_has_result(R)) return false;
 
-  const closure& result = access_result_for_reg(t,R);
+  const closure& result = access_result_for_reg(R);
 
   // NOTE! result cannot be an index_var.
   const expression_ref& E = result.exp;
@@ -2242,7 +2234,7 @@ bool reg_heap::reg_is_fully_up_to_date(int R, int t) const
     object_ptr<const index_var> V = assert_is_a<index_var>(E->sub[i]);
     int R2 = result.lookup_in_env( V->index );
     
-    if (not reg_is_fully_up_to_date(R2,t)) return false;
+    if (not reg_is_fully_up_to_date(R2)) return false;
   }
 
   // All the components must be fully up-to-date, so R is fully up-to-date.
@@ -2262,16 +2254,16 @@ object_ref reg_heap::get_reg_value_in_context(int& R, int c)
 
   reroot_at_context(c);
 
-  if (not reg_has_result(root_token,R))
+  if (not reg_has_result(R))
   {
     // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-    if (is_modifiable(access(R).C.exp) and not reg_has_call(root_token,R)) return object_ref();
+    if (is_modifiable(access(R).C.exp) and not reg_has_call(R)) return object_ref();
 
     // If the value needs to be computed (e.g. its a call expression) then compute it.
     R = incremental_evaluate_in_context(R,c);
   }
 
-  return access_result_for_reg(root_token, R).exp->head;
+  return access_result_for_reg(R).exp->head;
 }
 
 void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
@@ -2303,7 +2295,7 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
 const closure& reg_heap::lazy_evaluate(int& R, int c)
 {
   R = incremental_evaluate_in_context(R,c);
-  return access_result_for_reg(root_token, R);
+  return access_result_for_reg(R);
 }
 
 const closure& reg_heap::lazy_evaluate_head(int index, int c)
@@ -2313,7 +2305,7 @@ const closure& reg_heap::lazy_evaluate_head(int index, int c)
   if (R2 != R1)
     set_head(index, R2);
 
-  return access_result_for_reg(root_token, R2);
+  return access_result_for_reg(R2);
 }
 
 const closure& reg_heap::lazy_evaluate_unchangeable(int& R)
@@ -2329,7 +2321,7 @@ int reg_heap::get_modifiable_value_in_context(int R, int c)
 
   reroot_at_context(c);
 
-  return call_for_reg(R,root_token);
+  return call_for_reg(R);
 }
 
 int reg_heap::add_identifier(const string& name)

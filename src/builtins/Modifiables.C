@@ -188,9 +188,9 @@ extern "C" closure builtin_function_trigger(OperationArgs& Args)
 
   reg_heap& M = Args.memory();
 
-  int token = Args.current_token();
+  // We should be executing in the root token
 
-  M.triggers(token).push_back(i);
+  M.triggers().push_back(i);
 
   return constructor("()",0);
 }

@@ -58,13 +58,13 @@ class RegOperationArgs: public OperationArgs
   const closure& evaluate_reg_to_closure(int R2)
   {
     int R3 = evaluate_reg_to_reg(R2);
-    return M.access_result_for_reg(t,R3);
+    return M.access_result_for_reg(R3);
   }
   
   const closure& evaluate_reg_to_closure_(int R2)
   {
     int R3 = evaluate_reg_no_record(R2);
-    return M.access_result_for_reg(t,R3);
+    return M.access_result_for_reg(R3);
   }
 
 public:
@@ -75,7 +75,7 @@ public:
     :OperationArgs(m), R(r), t(T)
   { 
     // I think these should already be cleared.
-    assert(memory().computation_for_reg(t,R).used_inputs.empty());
+    assert(memory().computation_for_reg(R).used_inputs.empty());
   }
 };
 
@@ -158,19 +158,19 @@ int reg_heap::incremental_evaluate(int R, int t)
 
 #ifndef NDEBUG
   assert(not is_a<expression>(access(R).C.exp));
-  if (reg_has_result(t,R))
+  if (reg_has_result(R))
   {
-    expression_ref E = access_result_for_reg(t,R).exp;
+    expression_ref E = access_result_for_reg(R).exp;
     assert(is_WHNF(E));
     assert(not is_a<expression>(E));
     assert(not is_a<index_var>(E));
   }
   if (is_index_var(access(R).C.exp))
-    assert(not reg_has_result(t,R));
+    assert(not reg_has_result(R));
 #endif
 
 #ifndef NDEBUG
-  //  if (not reg_has_result(t,R)) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
+  //  if (not reg_has_result(R)) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
 
   while (1)
@@ -188,24 +188,24 @@ int reg_heap::incremental_evaluate(int R, int t)
     else if (reg_type == reg::type_t::changeable)
     {
       // We have a result, so we are done.
-      if (reg_has_result(t,R)) break;
+      if (reg_has_result(R)) break;
 
       // If we know what to call, then call it and use it to set the result
-      if (reg_has_call(t,R))
+      if (reg_has_call(R))
       {
 	// Evaluate S, looking through unchangeable redirections
-	int call = incremental_evaluate(call_for_reg(t,R), t);
+	int call = incremental_evaluate(call_for_reg(R), t);
 
-	// If computation_for_reg(t,R).call can be evaluated to refer to S w/o moving through any changable operations, 
-	// then it should be safe to change computation_for_reg(t,R).call to refer to S, even if R is changeable.
-	if (call != call_for_reg(t,R))
+	// If computation_for_reg(R).call can be evaluated to refer to S w/o moving through any changable operations, 
+	// then it should be safe to change computation_for_reg(R).call to refer to S, even if R is changeable.
+	if (call != call_for_reg(R))
 	{
-	  clear_call_for_reg(t,R);
+	  clear_call_for_reg(R);
 	  set_call(t, R, call);
 	}
 	
 	// R gets its result from S.
-	set_computation_result_for_reg(t, R);
+	set_computation_result_for_reg( R);
 	break;
       }
     }
@@ -225,9 +225,9 @@ int reg_heap::incremental_evaluate(int R, int t)
     {
       assert( not reg_is_changeable(R) );
 
-      assert( not reg_has_result(t,R) );
+      assert( not reg_has_result(R) );
 
-      assert( not reg_has_call(t,R) );
+      assert( not reg_has_call(R) );
 
       access(R).type = reg::type_t::index_var;
 
@@ -248,7 +248,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     else if (is_WHNF(access(R).C.exp))
     {
       access(R).type = reg::type_t::constant;
-      if (has_computation(t,R))
+      if (has_computation(R))
 	clear_computation(t,R);
     }
 
@@ -268,7 +268,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
-      if (not has_computation(t,R))
+      if (not has_computation(R))
 	add_shared_computation(t,R);
 
       object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
@@ -295,9 +295,9 @@ int reg_heap::incremental_evaluate(int R, int t)
 	if (not reg_is_changeable(R))
 	{
 	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
-	  assert(not reg_has_call(t,R) );
-	  assert(not reg_has_result(t,R));
-	  assert(computation_for_reg(t,R).used_inputs.empty());
+	  assert(not reg_has_call(R) );
+	  assert(not reg_has_result(R));
+	  assert(computation_for_reg(R).used_inputs.empty());
 	  set_C(R, std::move(result) );
 	}
 	// Otherwise, set the reduction result.
@@ -308,7 +308,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 	  int r3 = incremental_evaluate(r2, t);
 
 	  set_call(t, R, r3);
-	  set_computation_result_for_reg(t, R);
+	  set_computation_result_for_reg( R);
 	}
       }
       catch (myexception& e)
@@ -343,9 +343,9 @@ int reg_heap::incremental_evaluate(int R, int t)
 
 #ifndef NDEBUG
   assert(not is_a<index_var>(access(R).C.exp));
-  if (reg_has_result(t,R))
+  if (reg_has_result(R))
   {
-    expression_ref E = access_result_for_reg(t,R).exp;
+    expression_ref E = access_result_for_reg(R).exp;
     assert(not is_a<index_var>(E));
     assert(not is_a<expression>(E));
     assert(is_WHNF(E));

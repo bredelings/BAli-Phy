@@ -162,7 +162,7 @@ public:
   void set_call(int t, int R1, int R2);
   void destroy_all_computations_in_token(int t);
   void clear_call(int rc);
-  void clear_call_for_reg(int t, int R);
+  void clear_call_for_reg(int R);
   void clear_C(int R);
   void set_C(int R, closure&& C);
   void set_reduction_result(int t, int R, closure&& C);
@@ -325,7 +325,7 @@ public:
 
   bool reg_is_fully_up_to_date_in_context(int c, int r);
 
-  bool reg_is_fully_up_to_date(int t, int r) const;
+  bool reg_is_fully_up_to_date(int r) const;
 
   int incremental_evaluate_in_context(int R, int c);
 
@@ -351,8 +351,8 @@ public:
   const std::map<std::string,int>& get_identifiers() const {return identifiers;}
         std::map<std::string,int>& get_identifiers()       {return identifiers;}
 
-  const std::vector<int>& triggers(int t) const;
-        std::vector<int>& triggers(int t);
+  const std::vector<int>& triggers() const;
+        std::vector<int>& triggers();
 
   /// Make heads[index] point to r
   int set_head(int index, int r);
@@ -392,17 +392,17 @@ public:
   bool reg_has_call_(int t, int r) const;
   int call_for_reg_(int t, int r) const;
 
-  int computation_index_for_reg(int t, int r) const;
-  const computation& computation_for_reg(int t, int r) const ;
-        computation& computation_for_reg(int t, int r);
-  bool has_computation(int t, int r) const;
-  bool reg_has_result(int t, int r) const;
-  bool reg_has_computation_result(int t, int r) const;
-  int computation_result_for_reg(int t, int r) const;
-  bool reg_has_call(int t, int r) const;
-  int call_for_reg(int t, int r) const;
+  int computation_index_for_reg(int r) const;
+  const computation& computation_for_reg(int r) const ;
+        computation& computation_for_reg(int r);
+  bool has_computation(int r) const;
+  bool reg_has_result(int r) const;
+  bool reg_has_computation_result(int r) const;
+  int computation_result_for_reg(int r) const;
+  bool reg_has_call(int r) const;
+  int call_for_reg(int r) const;
 
-  const closure& access_result_for_reg(int t, int R1) const;
+  const closure& access_result_for_reg(int R1) const;
 
   int remove_shared_computation(int t, int r);
 
@@ -416,9 +416,9 @@ public:
 
   bool computation_is_referenced(int,int) const;
 
-  int result_for_reg(int t, int r) const;
+  int result_for_reg(int r) const;
 
-  void set_computation_result_for_reg(int t, int r1);
+  void set_computation_result_for_reg(int r1);
 
   std::vector<int> used_regs_for_reg(int t, int r) const;
 
@@ -437,7 +437,6 @@ public:
   bool is_dirty(int t) const;
   void find_callers(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
   void find_users(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
-  bool reg_is_shared_with_parent(int t, int r) const;
 
   int incremental_evaluate(int R, int t);
 
