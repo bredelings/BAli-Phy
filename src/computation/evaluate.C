@@ -301,11 +301,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 	  set_computation_result_for_reg(t, R);
 	}
       }
-      catch (no_context&)
-      {
-	access(R).type = reg::type_t::changeable;
-	return R;
-      }
       catch (myexception& e)
       {
 	dot_graph_for_token(*this, t);
