@@ -7,13 +7,20 @@
 struct expression_ref;
 class reg_heap;
 
-struct OperationArgs: public Object
+class OperationArgs: public Object
 {
+  reg_heap& M;
+
+  int n_allocated = 0;
+
+public:
   virtual OperationArgs* clone() const = 0;
 
   virtual int current_token() const = 0;
 
-  virtual reg_heap& memory() = 0;
+  reg_heap& memory() {return M;}
+
+  const reg_heap& memory() const {return M;}
 
   virtual const closure& current_closure() const = 0;
 
@@ -65,12 +72,11 @@ struct OperationArgs: public Object
     return convert<const T>( evaluate_(slot) );
   }
 
-  virtual int allocate(closure&&) 
-  { 
-    std::abort();
-  }
+  int allocate(closure&&);
 
-  virtual ~OperationArgs() {}
+  OperationArgs(reg_heap& m);
+
+  virtual ~OperationArgs();
 };
 
 #endif

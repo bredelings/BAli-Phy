@@ -91,3 +91,31 @@ const object_ptr<const Object>& OperationArgs::evaluate_(int slot)
   return evaluate_slot_to_object_(slot);
 }
 
+int OperationArgs::allocate(closure&& C)
+{
+  if (C.exp->head->type() == index_var_type)
+  {
+    int index = convert<const index_var>(C.exp->head)->index;
+
+    int r = C.lookup_in_env( index );
+    
+    assert(M.is_used(r));
+
+    return r;
+  }
+
+  int r = M.push_temp_head();
+  M.set_C(r, std::move(C) );
+  n_allocated++;
+  return r;
+}
+
+OperationArgs::OperationArgs(reg_heap& m)
+  :M(m)
+{ }
+
+OperationArgs::~OperationArgs()
+{
+  for(int i=0;i<n_allocated;i++)
+    M.pop_temp_head();
+}

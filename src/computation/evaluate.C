@@ -1,3 +1,6 @@
+//#ifdef NDEBUG
+//#undef NDEBUG
+//#endif
 #include "graph_register.H"
 
 using std::string;
@@ -15,29 +18,25 @@ class RegOperationArgs: public OperationArgs
 {
   const int R;
 
-  reg_heap& M;
-
   const int t;
-
-  int n_allocated;
 
   int current_token() const {return t;}
 
-  reg_heap& memory() {return M;}
-
-  const closure& current_closure() const {return M[R].C;}
+  const closure& current_closure() const {return memory()[R].C;}
 
   bool evaluate_changeables() const {return true;}
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_reg_no_record(int R2)
   {
-    return M.incremental_evaluate(R2, t);
+    return memory().incremental_evaluate(R2, t);
   }
 
   /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
   int evaluate_reg_to_reg(int R2)
   {
+    reg_heap& M = memory();
+
     // Compute the result, and follow index_var chains (which are not changeable).
     int R3 = M.incremental_evaluate(R2, t);
 
@@ -60,38 +59,13 @@ class RegOperationArgs: public OperationArgs
 
 public:
 
-  int allocate(closure&& C)
-  {
-    if (C.exp->head->type() == index_var_type)
-    {
-      int index = convert<const index_var>(C.exp->head)->index;
-
-      int r = C.lookup_in_env( index );
-    
-      assert(M.is_used(r));
-
-      return r;
-    }
-
-    int r = M.push_temp_head();
-    M.set_C(r, std::move(C) );
-    n_allocated++;
-    return r;
-  }
-
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
   RegOperationArgs(int r, reg_heap& m, int T)
-    :R(r),M(m),t(T), n_allocated(0)
+    :OperationArgs(m), R(r), t(T)
   { 
     // I think these should already be cleared.
-    assert(not evaluate_changeables() or M.computation_for_reg(t,R).used_inputs.empty());
-  }
-
-  ~RegOperationArgs()
-  {
-    for(int i=0;i<n_allocated;i++)
-      M.pop_temp_head();
+    assert(memory().computation_for_reg(t,R).used_inputs.empty());
   }
 };
 
@@ -381,64 +355,32 @@ class RegOperationArgsUnchangeable: public OperationArgs
 {
   const int R;
 
-  reg_heap& M;
-
-  int n_allocated;
-
   int current_token() const {return 0;}
 
-  reg_heap& memory() {return M;}
-
-  const closure& current_closure() const {return M[R].C;}
+  const closure& current_closure() const {return memory()[R].C;}
 
   bool evaluate_changeables() const {return false;}
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_reg_no_record(int R2)
   {
-    return M.incremental_evaluate_unchangeable(R2);
+    return memory().incremental_evaluate_unchangeable(R2);
   }
 
   /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
   int evaluate_reg_to_reg(int R2)
   {
     // Compute the result, and follow index_var chains (which are not changeable).
-    return M.incremental_evaluate_unchangeable(R2);
+    return memory().incremental_evaluate_unchangeable(R2);
   }
 
 public:
 
-  int allocate(closure&& C)
-  {
-    if (C.exp->head->type() == index_var_type)
-    {
-      int index = convert<const index_var>(C.exp->head)->index;
-
-      int r = C.lookup_in_env( index );
-    
-      assert(M.is_used(r));
-
-      return r;
-    }
-
-    int r = M.push_temp_head();
-    M.set_C(r, std::move(C) );
-    n_allocated++;
-    return r;
-  }
-
   RegOperationArgsUnchangeable* clone() const {return new RegOperationArgsUnchangeable(*this);}
 
   RegOperationArgsUnchangeable(int r, reg_heap& m)
-    :R(r),M(m), n_allocated(0)
-  { 
-  }
-
-  ~RegOperationArgsUnchangeable()
-  {
-    for(int i=0;i<n_allocated;i++)
-      M.pop_temp_head();
-  }
+    :OperationArgs(m),R(r)
+  { }
 };
 
 int reg_heap::incremental_evaluate_unchangeable(int R)
