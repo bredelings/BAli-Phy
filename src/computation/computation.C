@@ -33,24 +33,6 @@ int OperationArgs::evaluate_slot_to_reg(int slot)
   return evaluate_reg_to_reg(reg_for_slot(slot));
 }
 
-const closure& OperationArgs::evaluate_reg_to_closure(int R2)
-{
-  int R3 = evaluate_reg_to_reg(R2);
-  if (not evaluate_changeables() and memory().access(R3).type == reg::type_t::changeable)
-    throw no_context();
-  int t = current_token();
-  return memory().access_result_for_reg(t,R3);
-}
-
-const closure& OperationArgs::evaluate_reg_to_closure_(int R2)
-{
-  int R3 = evaluate_reg_no_record(R2);
-  if (not evaluate_changeables() and memory().access(R3).type == reg::type_t::changeable)
-    throw no_context();
-  int t = current_token();
-  return memory().access_result_for_reg(t,R3);
-}
-
 const object_ptr<const Object>& OperationArgs::evaluate_reg_to_object(int R2)
 {
   const object_ptr<const Object>& result = evaluate_reg_to_closure(R2).exp->head;

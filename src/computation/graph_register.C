@@ -479,7 +479,7 @@ const std::vector<int>& reg_heap::triggers(int t) const {assert(is_root_token(t)
 
 int reg_heap::computation_index_for_reg(int t, int r) const 
 {
-  assert(not t or is_root_token(t));
+  assert(is_root_token(t));
   return computation_index_for_reg_(t,r);
 }
 
@@ -497,7 +497,7 @@ computation& reg_heap::computation_for_reg(int t, int r)
 
 const closure& reg_heap::access_result_for_reg(int t, int R1) const
 {
-  assert(not t or is_root_token(t));
+  assert(is_root_token(t));
   int R2 = result_for_reg(t,R1);
   assert(R2);
   return access(R2).C;
@@ -1799,6 +1799,7 @@ void reg_heap::duplicate_computation(int rc1, int rc2) const
 /// Add a shared computation at (t,r) -- assuming there isn't one already
 int reg_heap::add_shared_computation(int t, int r)
 {
+  assert(t > 0);
   assert(tokens[t].vm_relative[r] <= 0);
 
   // 1. Get a new computation

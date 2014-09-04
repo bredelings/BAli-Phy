@@ -35,8 +35,6 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
   int evaluate_reg_to_reg(int R2)
   {
-    reg_heap& M = memory();
-
     // Compute the result, and follow index_var chains (which are not changeable).
     int R3 = M.incremental_evaluate(R2, t);
 
@@ -55,6 +53,18 @@ class RegOperationArgs: public OperationArgs
     }
 
     return R3;
+  }
+
+  const closure& evaluate_reg_to_closure(int R2)
+  {
+    int R3 = evaluate_reg_to_reg(R2);
+    return M.access_result_for_reg(t,R3);
+  }
+  
+  const closure& evaluate_reg_to_closure_(int R2)
+  {
+    int R3 = evaluate_reg_no_record(R2);
+    return M.access_result_for_reg(t,R3);
   }
 
 public:
@@ -367,6 +377,20 @@ class RegOperationArgsUnchangeable: public OperationArgs
   {
     // Compute the result, and follow index_var chains (which are not changeable).
     return memory().incremental_evaluate_unchangeable(R2);
+  }
+
+  const closure& evaluate_reg_to_closure(int R2)
+  {
+    int R3 = evaluate_reg_to_reg(R2);
+    if (M.access(R3).type == reg::type_t::changeable)
+      throw no_context();
+    assert(M.access(R3).type == reg::type_t::constant);
+    return M.access(R3).C;
+  }
+
+  const closure& evaluate_reg_to_closure_(int R2)
+  {
+    return evaluate_reg_to_closure_(R2);
   }
 
 public:

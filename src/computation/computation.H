@@ -9,6 +9,7 @@ class reg_heap;
 
 class OperationArgs: public Object
 {
+protected:
   reg_heap& M;
 
   int n_allocated = 0;
@@ -40,9 +41,9 @@ public:
   
   int evaluate_slot_to_reg(int);
 
-  const closure& evaluate_reg_to_closure(int);
+  virtual const closure& evaluate_reg_to_closure(int) = 0;
 
-  const closure& evaluate_reg_to_closure_(int);
+  virtual const closure& evaluate_reg_to_closure_(int) = 0;
 
   const closure& evaluate_slot_to_closure(int);
 
