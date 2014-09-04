@@ -668,7 +668,7 @@ void reg_heap::set_used_input(int R1, int R2)
   computations[rc2].used_by.push_back(computations.get_weak_ref(rc1));
 
   assert(computation_is_used_by(rc1,rc2));
-  //  assert(reg_is_used_by(t,R1,R2));
+  assert(reg_is_used_by(R1,R2));
 }
 
 int count(const std::vector<int>& v, int I)
@@ -1666,9 +1666,8 @@ bool reg_heap::computation_is_used_by(int rc1, int rc2) const
   return false;
 }
 
-bool reg_heap::reg_is_used_by(int t, int r1, int r2) const
+bool reg_heap::reg_is_used_by(int r1, int r2) const
 {
-  assert(t == root_token);
   int rc1 = computation_index_for_reg(r1);
   int rc2 = computation_index_for_reg(r2);
 

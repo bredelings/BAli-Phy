@@ -140,7 +140,7 @@ class reg_heap: public Object, public checked_pool<reg>
 
   bool computation_is_called_by(int, int) const;
   bool computation_is_used_by(int, int) const;
-  bool reg_is_used_by(int, int, int) const;
+  bool reg_is_used_by(int, int) const;
 
   int inc_heads(int R);
   int dec_heads(int R);

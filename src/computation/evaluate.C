@@ -285,7 +285,7 @@ int reg_heap::incremental_evaluate(int R)
 	RegOperationArgs Args(R, *this);
 	closure result = (*O)(Args);
 	total_reductions++;
-	
+
 	// If the reduction doesn't depend on modifiable, then replace E with the result.
 	if (not reg_is_changeable(R))
 	{
