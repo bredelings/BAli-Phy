@@ -13,6 +13,25 @@ using std::set;
 
 int total_reductions = 0;
 
+expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>&);
+expression_ref untranslate_vars(const expression_ref& E, const map<string, int>& ids);
+expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& ids);
+map<int,string> get_constants(const reg_heap& C, int t);
+
+void throw_reg_exception(reg_heap& M, int R, myexception& e)
+{
+  string SS  = compact_graph_expression(M, R, M.get_identifiers())->print();
+  string SSS = unlet(untranslate_vars(
+				      untranslate_vars(deindexify(trim_unnormalize(M.access(R).C)), M.get_identifiers()),
+				      get_constants(M,0)
+				      )
+		     )->print();
+  std::ostringstream o;
+  o<<"evaluating reg # "<<R<<" (unchangeable): "<<SSS<<"\n\n";
+  e.prepend(o.str());
+  throw e;
+}
+
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
 class RegOperationArgs: public OperationArgs
 {
@@ -74,11 +93,6 @@ public:
     assert(memory().computation_for_reg(R).used_inputs.empty());
   }
 };
-
-expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>&);
-expression_ref untranslate_vars(const expression_ref& E, const map<string, int>& ids);
-expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& ids);
-map<int,string> get_constants(const reg_heap& C, int t);
 
   /*
    * incremental_eval R1
@@ -307,24 +321,13 @@ int reg_heap::incremental_evaluate(int R)
       }
       catch (myexception& e)
       {
-	dot_graph_for_token(*this, root_token);
-
-	string SS  = compact_graph_expression(*this, R, get_identifiers())->print();
-	string SSS = unlet(untranslate_vars(
-					    untranslate_vars(deindexify(trim_unnormalize(access(R).C)), get_identifiers()),
-					    get_constants(*this,root_token)
-					    )
-			   )->print();
-	std::ostringstream o;
-	o<<"evaluating reg # "<<R<<" in token "<<root_token<<": "<<SSS<<"\n\n";
-	e.prepend(o.str());
-	throw e;
+	throw_reg_exception(*this, R, e);
       }
-      catch (const std::exception& e)
+      catch (const std::exception& ee)
       {
-	std::cerr<<"evaluating reg # "<<R<<" in token "<<root_token<<std::endl;
-	dot_graph_for_token(*this, root_token);
-	throw e;
+	myexception e;
+	e<<ee.what();
+	throw_reg_exception(*this, R, e);
       }
 
 #ifdef DEBUG_MACHINE
@@ -484,24 +487,13 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
       }
       catch (myexception& e)
       {
-	dot_graph_for_token(*this, 0);
-
-	string SS  = compact_graph_expression(*this, R, get_identifiers())->print();
-	string SSS = unlet(untranslate_vars(
-					    untranslate_vars(deindexify(trim_unnormalize(access(R).C)), get_identifiers()),
-					    get_constants(*this,0)
-					    )
-			   )->print();
-	std::ostringstream o;
-	o<<"evaluating reg # "<<R<<" (unchangeable): "<<SSS<<"\n\n";
-	e.prepend(o.str());
-	throw e;
+	throw_reg_exception(*this, R, e);
       }
-      catch (const std::exception& e)
+      catch (const std::exception& ee)
       {
-	std::cerr<<"evaluating reg # "<<R<<" (unchangeable)"<<std::endl;
-	dot_graph_for_token(*this, 0);
-	throw e;
+	myexception e;
+	e<<ee.what();
+	throw_reg_exception(*this, R, e);
       }
 
 #ifdef DEBUG_MACHINE
