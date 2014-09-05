@@ -235,6 +235,7 @@ double normal_quantile(double p, double mu, double sigma)
   assert(p >= 0);
   assert(p <= 1);
   assert(sigma >= 0);
+  if (sigma == 0.0) return mu;
   return quantile(normal_distribution<>(mu,sigma),p);
 }
 
