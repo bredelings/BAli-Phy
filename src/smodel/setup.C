@@ -416,39 +416,39 @@ expression_ref process_stack_Frequencies(const module_loader& L,
     if (a->size() != 61)
       throw myexception()<<"Cannot use 'F61' frequency model since alphabet contains "<<a->size()<<" letters.";
     model_args[0] = "F";
-    return process_stack_Frequencies(L,model_args,a,frequencies);
+    R = process_stack_Frequencies(L,model_args,a,frequencies);
   }
   else if (model_args[0] == "F") 
-    return model_expression({identifier("plus_f_model"),a});
+    R = model_expression({identifier("plus_f_model"),a});
   else if (model_args[0] == "gwF") 
-    return model_expression({identifier("plus_gwf_model"),a});
+    R = model_expression({identifier("plus_gwf_model"),a});
   else if (model_args[0] == "F=uniform") 
-    return (identifier("uniform_f_model"),a);
+    R = (identifier("uniform_f_model"),a);
   else if (model_args[0] == "F1x4")
   {
     if (not dynamic_cast<const Triplets*>(&*a))
       throw myexception()<<"+F1x4: '"<<a->name<<"' is not a triplet alphabet.";
-    return model_expression({identifier("f1x4_model"),a});
+    R = model_expression({identifier("f1x4_model"),a});
   }
   else if (model_args[0] == "F3x4") 
   {
     if (not dynamic_cast<const Triplets*>(&*a))
       throw myexception()<<"+F1x4: '"<<a->name<<"' is not a triplet alphabet.";
-    return model_expression({identifier("f3x4_model"),a});
+    R = model_expression({identifier("f3x4_model"),a});
   }
   else if (model_args[0] == "MG94") 
   {
     if (not dynamic_cast<const Triplets*>(&*a))
       throw myexception()<<"+MG94w9: '"<<a->name<<"' is not a triplet alphabet.";
 
-    return model_expression({identifier("mg94_model"),a});
+    R = model_expression({identifier("mg94_model"),a});
   }
   else if (model_args[0] == "MG94w9") 
   {
     if (not dynamic_cast<const Triplets*>(&*a))
       throw myexception()<<"+MG94w9: '"<<a->name<<"' is not a triplet alphabet.";
 
-    return model_expression({identifier("mg94w9_model"),a});
+    R = model_expression({identifier("mg94w9_model"),a});
   }
   /*
   else if (model_args[0] == "F=amino-acids") 
@@ -457,7 +457,7 @@ expression_ref process_stack_Frequencies(const module_loader& L,
     if (not C)
       throw myexception()<<"+F=amino-acids: '"<<a->name<<"' is not a codon alphabet.";
 
-    return AACodonFrequencyModel(*C);
+    R = AACodonFrequencyModel(*C);
   }
   else if (model_args[0] == "F=triplets") 
   {
@@ -465,7 +465,7 @@ expression_ref process_stack_Frequencies(const module_loader& L,
     if (not T)
       throw myexception()<<"+F=triplets: '"<<a->name<<"' is not a triplet alphabet.";
 
-    return TripletsFrequencyModel(*T);
+    R = TripletsFrequencyModel(*T);
   }
   else if (model_args[0] == "F=codons") 
   {
@@ -473,7 +473,7 @@ expression_ref process_stack_Frequencies(const module_loader& L,
     if (not C)
       throw myexception()<<"+F=codons: '"<<a->name<<"' is not a codon alphabet.";
 
-    return CodonsFrequencyModel(*C);
+    R = CodonsFrequencyModel(*C);
   }
   else if (model_args[0] == "F=codons2") 
   {
@@ -481,7 +481,7 @@ expression_ref process_stack_Frequencies(const module_loader& L,
     if (not C)
       throw myexception()<<"+F=codons2: '"<<a->name<<"' is not a codon alphabet.";
 
-    return CodonsFrequencyModel2(*C);
+    R = CodonsFrequencyModel2(*C);
   }
   */
 
