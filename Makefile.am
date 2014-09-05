@@ -98,7 +98,7 @@ nobase_examples_DATA = examples/EF-Tu/5d.fasta examples/EF-Tu/12d.fasta examples
 EXTRA_HEADERS = @top_srcdir@/include/Eigen
 
 EXTRA_DIST = $(doc_DATA) $(EXTRA_HEADERS) $(bin_SCRIPTS) $(noinst_SCRIPTS) \
-             $(nobase_doc_SCRIPTS) $(nobase_examples_DATA) doc/Doxyfile $(modules_DATA)
+             $(nobase_doc_SCRIPTS) $(nobase_examples_DATA) doc/Doxyfile $(nobase_modules_DATA)
 
 dist-hook:
 	rm -rf `find $(distdir) -name TODO`
