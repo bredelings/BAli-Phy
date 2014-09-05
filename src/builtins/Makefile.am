@@ -36,6 +36,9 @@ LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 Array_la_SOURCES = Array.C
 Array_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
+Data_la_SOURCES = Data.C
+Data_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
+
 Prelude_la_SOURCES = Prelude.C
 Prelude_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
