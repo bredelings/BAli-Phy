@@ -1779,7 +1779,7 @@ void reg_heap::check_used_regs() const
 // This routine should only be called by other routines.  It is not safe to call directly.
 int reg_heap::remove_shared_computation(int t, int r)
 {
-  if (not t or is_root_token(t))
+  if (is_root_token(t))
     return tokens[t].vm_relative.erase_value(r);
   else
     return tokens[t].vm_relative.set_value(r,-1);
