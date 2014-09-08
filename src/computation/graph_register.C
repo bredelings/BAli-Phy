@@ -1846,6 +1846,7 @@ void reg_heap::release_child_token(int t)
   int parent = parent_token(t);
 
   assert(tokens[t].children.empty());
+  assert(not tokens[t].referenced);
 
   tokens[t].used = false;
   
