@@ -1920,9 +1920,9 @@ void reg_heap::try_release_token(int t)
       std::swap(t, child_token);
     }
 
-    invalidate_shared_regs(t, child_token);
-
     capture_parent_token(child_token);
+
+    invalidate_shared_regs(t, child_token);
   }
 
   // clear only the mappings that were actually updated here.
