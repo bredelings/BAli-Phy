@@ -265,6 +265,8 @@ $tree_name{"greedy"} = "greedy";
 
 my @SRQ = &SRQ_plots();
 
+my $tree_MDS = &tree_MDS();
+
 my @alignments = ();
 my %alignment_names = ();
 my @AU_alignments = ();
@@ -2503,6 +2505,19 @@ sub translate_cygwin
     return $arg;
 }
 
+sub tree_MDS
+{
+    print "\nGenerate MDS plots of topology burnin ... ";
+    my $script = find_in_path("tree-plot1.R");
+    foreach my $tree_file (@tree_files)
+    {
+	my $matfile = "Results/${tree_file}.M";
+	my $outfile = "Results/${tree_file}.svg";
+	exec_show("trees-distances matrix --max=300 $tree_file > $matfile");
+	Rexec($script,"$matfile $outfile");
+    }
+}
+
 sub exec_show
 {
     my $cmd = shift;
@@ -2541,3 +2556,4 @@ sub exec_result
     my $result = `$cmd`;
     return $?;
 }
+
