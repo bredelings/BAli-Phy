@@ -226,7 +226,11 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   }
   catch (choose_exception<log_double_t>& c)
   {
-    c.prepend(__PRETTY_FUNCTION__);
+    c.prepend(string(__PRETTY_FUNCTION__)+"\n");
+
+    c<<show_parameters(p[0]);
+    c<<p[0].probability()<<" = "<<p[0].likelihood()<<" + "<<p[0].prior()<<"\n";
+
     throw c;
   }
 

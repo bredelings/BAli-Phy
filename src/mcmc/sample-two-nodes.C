@@ -224,7 +224,11 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
   }
   catch (choose_exception<log_double_t>& c)
   {
-    c.prepend(__PRETTY_FUNCTION__);
+    c.prepend(string(__PRETTY_FUNCTION__)+"\n");
+
+    c<<show_parameters(p[0]);
+    c<<p[0].probability()<<" = "<<p[0].likelihood()<<" + "<<p[0].prior()<<"\n";
+
     throw c;
   }
 

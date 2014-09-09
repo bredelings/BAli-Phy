@@ -363,7 +363,11 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
   }
   catch (choose_exception<log_double_t>& c)
   {
-    c.prepend(__PRETTY_FUNCTION__);
+    c.prepend(string(__PRETTY_FUNCTION__)+"\n");
+
+    c<<show_parameters(p[0]);
+    c<<p[0].probability()<<" = "<<p[0].likelihood()<<" + "<<p[0].prior()<<"\n";
+
     throw c;
   }
   

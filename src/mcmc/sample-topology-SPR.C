@@ -93,21 +93,7 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<log_double_t>& rho,in
   }
   catch (choose_exception<log_double_t>& c)
   {
-    c.prepend(__PRETTY_FUNCTION__);
-    c.prepend("\n");
-    {
-      std::ostringstream oss;
-      show_parameters(oss,p[0]);
-      c.prepend(oss.str());
-      c.prepend("\n");
-    }
-
-    {
-      std::ostringstream oss;
-      show_parameters(oss,p[1]);
-      c.prepend(oss.str());
-      c.prepend("\n");
-    }
+    c.prepend(string(__PRETTY_FUNCTION__)+"\n");
 
     throw c;
   }
