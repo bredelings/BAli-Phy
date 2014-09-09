@@ -2304,6 +2304,13 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
   return R;
 }
 
+const closure& reg_heap::lazy_evaluate(int& R)
+{
+  mark_completely_dirty(root_token);
+  R = incremental_evaluate(R);
+  return access_result_for_reg(R);
+}
+
 const closure& reg_heap::lazy_evaluate(int& R, int c)
 {
   R = incremental_evaluate_in_context(R,c);

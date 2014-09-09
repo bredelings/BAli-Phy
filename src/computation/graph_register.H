@@ -441,6 +441,8 @@ public:
 
   int incremental_evaluate_unchangeable(int R);
 
+  const closure& lazy_evaluate(int& R);
+
   const closure& lazy_evaluate(int& R, int c);
 
   const closure& lazy_evaluate_head(int h, int c);
