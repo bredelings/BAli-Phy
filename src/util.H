@@ -106,7 +106,7 @@ struct bad_mapping: public myexception
 
   void gen_message()
   {
-    why.clear();
+    clear();
     if (from == 0)
       (*this)<<"Vector v2 (size="<<size2
 	     <<") does not contain all elements of v1 (size="<<size1<<")!";
