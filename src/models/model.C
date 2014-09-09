@@ -162,6 +162,13 @@ void show_parameters(std::ostream& o,const Model& M) {
   o<<"\n";
 }
 
+std::string show_parameters(const Model& M)
+{
+  std::ostringstream oss;
+  show_parameters(oss,M);
+  return oss.str();
+}
+
 /// \brief Check if the model M has a parameter called name
 ///
 /// \param M      The model

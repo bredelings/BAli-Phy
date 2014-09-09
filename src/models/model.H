@@ -180,6 +180,8 @@ public:
 
 void show_parameters(std::ostream& o,const Model& M);
 
+std::string show_parameters(const Model& M);
+
 bool has_parameter(const Model& M, const std::string& name);
 
 std::vector<std::string> parameter_names(const Model& M);
