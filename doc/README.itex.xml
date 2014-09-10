@@ -2443,15 +2443,14 @@ The stabilization criterion is the same one described above for numerical values
 	<question><para>Does BAli-Phy accept the characters "R" and "Y", etc.?</para></question>
 	  <answer>
 	    <para>
-	      Yes.  BAli-Phy accepts the characters "Y", "R", "W", and "S" for
-	      DNA, RNA, and Codon alphabets.  However, it does not
-	      accept the characters "K", "M", "B", "D", "H",  and "V".
-	      BAli-Phy also accepts the characters "B", "Z", and "J" 
+	      Yes.  BAli-Phy accepts the characters Y, R, W, S, K, M,
+	      B, D, H, and V for DNA, RNA, and Codon alphabets.
+	      BAli-Phy also accepts the characters B, Z, and J 
 	      for amino acids.  These characters indicate partial
-	      knowledge about a letter.  For example, "R" indicates
-	      that a nucleotide is present, and is a puRine ("A" or
-	      "G"). "J" indicates that an amino acid is present and is
-	      either "I" or "L".  
+	      knowledge about a letter.  For example, R indicates
+	      that a nucleotide is present, and is a puRine (A or
+	      G). J indicates that an amino acid is present and is
+	      either I or L.  
 	    </para>
 
 	    <para>
