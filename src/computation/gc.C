@@ -52,6 +52,7 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
   remap[r] = remap[r2];
 
   assert(remap[r] != r);
+  assert(remap[remap[r]] == remap[r]);
 }
 
 void reg_heap::trace_and_reclaim_unreachable()
