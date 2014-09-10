@@ -40,6 +40,11 @@ void reg_heap::trace_and_reclaim_unreachable()
 
   //  vector<int>& tokens = get_scratch_list();
 
+  vector<int>& remap = get_scratch_list();
+  remap.resize(size());
+  for(int i=0;i<remap.size();i++)
+    remap[i] = 0;
+
   vector<int>& scan1 = get_scratch_list();
   vector<int>& next_scan1 = get_scratch_list();
   vector<int>& scan2 = get_scratch_list();
@@ -118,6 +123,7 @@ void reg_heap::trace_and_reclaim_unreachable()
 #endif
 
   //  release_scratch_list();
+  release_scratch_list();
   release_scratch_list();
   release_scratch_list();
   release_scratch_list();
