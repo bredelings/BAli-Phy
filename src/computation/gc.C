@@ -37,7 +37,7 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
 
   const closure& C = M.access(r).C;
 
-  if (not C.exp->head->type() == index_var_type)
+  if (not C.exp or C.exp->head->type() != index_var_type)
   {
     remap[r] = r;
     return;
@@ -50,6 +50,8 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
   do_remap(M, remap, r2);
 
   remap[r] = remap[r2];
+
+  assert(remap[r] != r);
 }
 
 void reg_heap::trace_and_reclaim_unreachable()
@@ -83,6 +85,7 @@ void reg_heap::trace_and_reclaim_unreachable()
       if (is_marked(r)) continue;
       
       set_mark(r);
+      do_remap(*this, remap, r);
       
       reg& R = access(r);
       
