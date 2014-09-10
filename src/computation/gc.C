@@ -31,6 +31,26 @@ void reg_heap::collect_garbage()
 #endif
 }
 
+void do_remap(const reg_heap& M, vector<int>& remap, int r)
+{
+  if (remap[r]) return;
+
+  const closure& C = M.access(r).C;
+
+  if (not C.exp->head->type() == index_var_type)
+  {
+    remap[r] = r;
+    return;
+  }
+
+  int index = assert_is_a<index_var>(C.exp)->index;
+
+  int r2 = C.lookup_in_env( index );
+
+  do_remap(M, remap, r2);
+
+  remap[r] = remap[r2];
+}
 
 void reg_heap::trace_and_reclaim_unreachable()
 {
