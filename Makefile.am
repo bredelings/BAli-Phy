@@ -30,69 +30,73 @@ doc_DATA = doc/README.html doc/README.xhtml doc/docbook.css doc/README.pdf \
 
 
 examplesdir = $(datadir)/@PACKAGE@/
-nobase_examples_DATA = examples/EF-Tu/5d.fasta examples/EF-Tu/12d.fasta examples/EF-Tu/48b.fasta \
+nobase_examples_DATA = examples/Sequences/EF-Tu/5d.fasta examples/Sequences/EF-Tu/12d.fasta examples/Sequences/EF-Tu/48b.fasta \
 		\
-		examples/5S-rRNA/5d.fasta examples/5S-rRNA/5d-muscle.fasta \
-		examples/5S-rRNA/5d-clustalw.fasta examples/5S-rRNA/5d-clustalw.dnd \
-                examples/5S-rRNA/25.fasta examples/5S-rRNA/25-muscle.fasta \
-		examples/5S-rRNA/25-clustalw.fasta examples/5S-rRNA/25-clustalw.dnd \
-                examples/5S-rRNA/48.fasta examples/5S-rRNA/48-muscle.fasta \
-		examples/5S-rRNA/48-clustalw.fasta examples/5S-rRNA/48-clustalw.dnd \
+		examples/Sequences/5S-rRNA/5d.fasta examples/Sequences/5S-rRNA/5d-muscle.fasta \
+		examples/Sequences/5S-rRNA/5d-clustalw.fasta examples/Sequences/5S-rRNA/5d-clustalw.dnd \
+                examples/Sequences/5S-rRNA/25.fasta examples/Sequences/5S-rRNA/25-muscle.fasta \
+		examples/Sequences/5S-rRNA/25-clustalw.fasta examples/Sequences/5S-rRNA/25-clustalw.dnd \
+                examples/Sequences/5S-rRNA/48.fasta examples/Sequences/5S-rRNA/48-muscle.fasta \
+		examples/Sequences/5S-rRNA/48-clustalw.fasta examples/Sequences/5S-rRNA/48-clustalw.dnd \
 		\
-		examples/Feng-Doolittle-1987/globins.fasta \
-		examples/Feng-Doolittle-1987/globins-muscle.fasta \
-		examples/Feng-Doolittle-1987/globins-mafft.fasta \
-		examples/Feng-Doolittle-1987/globins-fsa.fasta \
-		examples/Feng-Doolittle-1987/globins-prank.1.fasta \
-		examples/Feng-Doolittle-1987/globins-prank.1.dnd \
-		examples/Feng-Doolittle-1987/globins-prank.2.fasta \
-		examples/Feng-Doolittle-1987/globins-prank.2.dnd \
-		examples/Feng-Doolittle-1987/globins-bali-phy-C20-gamma4.fasta \
-		examples/Feng-Doolittle-1987/globins-bali-phy-C20-gamma4-c50.PP.tree \
-		examples/Feng-Doolittle-1987/globins-bali-phy-C20-gamma4.MAP.tree \
-		examples/Feng-Doolittle-1987/sod.fasta \
-		examples/Feng-Doolittle-1987/sod-muscle.fasta \
-		examples/Feng-Doolittle-1987/sod-mafft.fasta \
-		examples/Feng-Doolittle-1987/sod-fsa.fasta \
-		examples/Feng-Doolittle-1987/sod-prank.1.fasta \
-		examples/Feng-Doolittle-1987/sod-prank.1.dnd \
-		examples/Feng-Doolittle-1987/sod-prank.2.fasta \
-		examples/Feng-Doolittle-1987/sod-prank.2.dnd \
-		examples/Feng-Doolittle-1987/sod-bali-phy-C20-gamma4.fasta \
-		examples/Feng-Doolittle-1987/sod-bali-phy-C20-gamma4-c50.PP.tree \
-		examples/Feng-Doolittle-1987/sod-bali-phy-C20-gamma4.MAP.tree \
-		examples/Feng-Doolittle-1987/v-src.fasta \
-		examples/Feng-Doolittle-1987/v-src-muscle.fasta \
-		examples/Feng-Doolittle-1987/v-src-mafft.fasta \
-		examples/Feng-Doolittle-1987/v-src-fsa.fasta \
+		examples/Sequences/Feng-Doolittle-1987/globins.fasta \
+		examples/Sequences/Feng-Doolittle-1987/globins-muscle.fasta \
+		examples/Sequences/Feng-Doolittle-1987/globins-mafft.fasta \
+		examples/Sequences/Feng-Doolittle-1987/globins-fsa.fasta \
+		examples/Sequences/Feng-Doolittle-1987/globins-prank.1.fasta \
+		examples/Sequences/Feng-Doolittle-1987/globins-prank.1.dnd \
+		examples/Sequences/Feng-Doolittle-1987/globins-prank.2.fasta \
+		examples/Sequences/Feng-Doolittle-1987/globins-prank.2.dnd \
+		examples/Sequences/Feng-Doolittle-1987/globins-bali-phy-C20-gamma4.fasta \
+		examples/Sequences/Feng-Doolittle-1987/globins-bali-phy-C20-gamma4-c50.PP.tree \
+		examples/Sequences/Feng-Doolittle-1987/globins-bali-phy-C20-gamma4.MAP.tree \
+		examples/Sequences/Feng-Doolittle-1987/sod.fasta \
+		examples/Sequences/Feng-Doolittle-1987/sod-muscle.fasta \
+		examples/Sequences/Feng-Doolittle-1987/sod-mafft.fasta \
+		examples/Sequences/Feng-Doolittle-1987/sod-fsa.fasta \
+		examples/Sequences/Feng-Doolittle-1987/sod-prank.1.fasta \
+		examples/Sequences/Feng-Doolittle-1987/sod-prank.1.dnd \
+		examples/Sequences/Feng-Doolittle-1987/sod-prank.2.fasta \
+		examples/Sequences/Feng-Doolittle-1987/sod-prank.2.dnd \
+		examples/Sequences/Feng-Doolittle-1987/sod-bali-phy-C20-gamma4.fasta \
+		examples/Sequences/Feng-Doolittle-1987/sod-bali-phy-C20-gamma4-c50.PP.tree \
+		examples/Sequences/Feng-Doolittle-1987/sod-bali-phy-C20-gamma4.MAP.tree \
+		examples/Sequences/Feng-Doolittle-1987/v-src.fasta \
+		examples/Sequences/Feng-Doolittle-1987/v-src-muscle.fasta \
+		examples/Sequences/Feng-Doolittle-1987/v-src-mafft.fasta \
+		examples/Sequences/Feng-Doolittle-1987/v-src-fsa.fasta \
 		\
-		examples/Globins/many.fasta \
-		examples/Globins/few.fasta \
-		examples/Globins/few-clustalw.fasta \
-		examples/Globins/few-clustalw.dnd \
-		examples/Globins/few-muscle.fasta \
-		examples/Globins/bglobin.fasta \
+		examples/Sequences/Globins/many.fasta \
+		examples/Sequences/Globins/few.fasta \
+		examples/Sequences/Globins/few-clustalw.fasta \
+		examples/Sequences/Globins/few-clustalw.dnd \
+		examples/Sequences/Globins/few-muscle.fasta \
+		examples/Sequences/Globins/bglobin.fasta \
 		\
-		examples/Miklos-2008/annexin.fasta \
-		examples/Miklos-2008/haloperoxidase.fasta \
-		examples/Miklos-2008/lectin.fasta \
-		examples/Miklos-2008/legume_lectin.fasta \
-		examples/Miklos-2008/lysozyme.fasta \
-		examples/Miklos-2008/papain.fasta \
-		examples/Miklos-2008/parvalbumin-like.fasta \
-		examples/Miklos-2008/rr_receiver.fasta \
-		examples/Miklos-2008/Src_homology_2_domains.fasta \
-		examples/Miklos-2008/Starch_binding_domain.fasta \
-		examples/Miklos-2008/xylose_isomerase.fasta \
+		examples/Sequences/Miklos-2008/annexin.fasta \
+		examples/Sequences/Miklos-2008/haloperoxidase.fasta \
+		examples/Sequences/Miklos-2008/lectin.fasta \
+		examples/Sequences/Miklos-2008/legume_lectin.fasta \
+		examples/Sequences/Miklos-2008/lysozyme.fasta \
+		examples/Sequences/Miklos-2008/papain.fasta \
+		examples/Sequences/Miklos-2008/parvalbumin-like.fasta \
+		examples/Sequences/Miklos-2008/rr_receiver.fasta \
+		examples/Sequences/Miklos-2008/Src_homology_2_domains.fasta \
+		examples/Sequences/Miklos-2008/Starch_binding_domain.fasta \
+		examples/Sequences/Miklos-2008/xylose_isomerase.fasta \
 		\
-		examples/Enolase/enolase-38.fasta \
-		examples/Enolase/enolase-38-trimmed.fasta \
+		examples/Sequences/Enolase/enolase-38.fasta \
+		examples/Sequences/Enolase/enolase-38-trimmed.fasta \
 		\
-		examples/HIV/chain-2005/env-clustal-codons.fasta \
-		examples/HIV/chain-2005/env-clustal.fasta \
-		examples/HIV/chain-2005/env.fasta \
-		examples/HIV/chain-2005/pol-clustal.fasta \
-		examples/HIV/chain-2005/pol.fasta
+		examples/Sequences/HIV/chain-2005/env-clustal-codons.fasta \
+		examples/Sequences/HIV/chain-2005/env-clustal.fasta \
+		examples/Sequences/HIV/chain-2005/env.fasta \
+		examples/Sequences/HIV/chain-2005/pol-clustal.fasta \
+		examples/Sequences/HIV/chain-2005/pol.fasta \
+		examples/Models/Airline.hs \
+		examples/Models/CoalMine.hs \
+		examples/Models/Demo.hs \
+		examples/Models/Line.hs examples/Models/xs examples/Models/ys
 
 
 EXTRA_HEADERS = @top_srcdir@/include/Eigen
