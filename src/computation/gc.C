@@ -146,6 +146,15 @@ void reg_heap::trace_and_reclaim_unreachable()
   check_used_regs();
 #endif
 
+  // remap closures not to point through index_vars
+  for(reg& R: *this)
+    for(int& r2: R.C.Env)
+    {
+      assert(is_used(r2));
+      r2 = remap[r2];
+      assert(is_used(r2));
+    }
+
   //  release_scratch_list();
   release_scratch_list();
   release_scratch_list();
