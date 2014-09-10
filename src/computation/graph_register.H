@@ -330,7 +330,7 @@ public:
 
   object_ref get_parameter_value_in_context(int R, int c);
 
-  object_ref get_reg_value_in_context(int& R, int c);
+  const object_ref& get_reg_value_in_context(int& R, int c);
 
   void set_reg_value_in_context(int index, closure&& C, int c);
 

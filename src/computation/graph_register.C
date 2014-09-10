@@ -394,7 +394,7 @@ log_double_t reg_heap::probability_for_context(int c)
   log_double_t Pr = 1.0;
   for(int r: probability_heads)
   {
-    object_ref x = get_reg_value_in_context(r, c);
+    const object_ref& x = get_reg_value_in_context(r, c);
     log_double_t X = *convert<const Log_Double>(x);
     Pr *= X;
   }
@@ -2121,7 +2121,7 @@ object_ref reg_heap::get_parameter_value_in_context(int p, int c)
   return get_reg_value_in_context(R, c);
 }
 
-object_ref reg_heap::get_reg_value_in_context(int& R, int c)
+const object_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 {
   //  if (access(R).type == constant) return access(R).C.exp->head;
 
