@@ -677,7 +677,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 
   // If we've gotten this far, just transform the sub-expressions.
   // (This could be: Op, constructor, 
-  expression* V = new expression(*E.ptr());
+  expression* V = E.clone_expression();
   for(int i=0;i<V->size();i++)
     V->sub[i] = indexify(V->sub[i], variables);
   return V;
@@ -786,7 +786,7 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
 
   // If we've gotten this far, just transform the sub-expressions.
   // (This could be: Op, constructor, 
-  expression* V = new expression(*E.ptr());
+  expression* V = E.clone_expression();
   for(int i=0;i<V->size();i++)
     V->sub[i] = deindexify(V->sub[i], variables);
   return V;
@@ -946,7 +946,7 @@ expression_ref trim_normalize(const expression_ref& E)
   }
   else
   {
-    expression* V = new expression(*E.ptr());
+    expression* V = E.clone_expression();
     for(int i=0;i<E.size();i++)
       V->sub[i] = trim_normalize(V->sub[i]);
 
@@ -1071,7 +1071,7 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
   }
   else
   {
-    expression* V = new expression(*E.ptr());
+    expression* V = E.clone_expression();
     for(int i=0;i<E.size();i++)
       V->sub[i] = remap_free_indices(V->sub[i], mapping, depth);
     return V;
@@ -1145,7 +1145,7 @@ expression_ref trim_unnormalize(const expression_ref& E)
   }
   else
   {
-    expression* V = new expression(*E.ptr());
+    expression* V = E.clone_expression();
     for(int i=0;i<V->size();i++)
       V->sub[i] = trim_unnormalize(untrim(V->sub[i]));
 
@@ -2279,7 +2279,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
   if (L)
   {
     assert(E.size() == 2);
-    expression* V = new expression(*E.ptr());
+    expression* V = E.clone_expression();
     V->sub[1] = launchbury_unnormalize(E.sub()[1]);
 
     if (V->sub[1].ptr() == E.sub()[1].ptr())
@@ -2390,7 +2390,7 @@ expression_ref unlet(const expression_ref& E)
   if (L)
   {
     assert(E.size() == 2);
-    expression* V = new expression(*E.ptr());
+    expression* V = E.clone_expression();
     V->sub[1] = unlet(E.sub()[1]);
 
     if (V->sub[1].ptr() == E.sub()[1].ptr())
