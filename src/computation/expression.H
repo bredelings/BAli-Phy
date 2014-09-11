@@ -432,8 +432,8 @@ public:
 
 inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
 {
-  if (E.ptr())
-    return o<<E.ptr()->print();
+  if (E)
+    return o<<E.print();
   else
     return o<<"[NULL]";
 }
