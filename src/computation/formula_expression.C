@@ -65,7 +65,7 @@ expression_ref translate_model(const expression_ref& E)
       index = std::max(index,get_safe_binder_index(F));
 
     expression_ref E2 = E.sub()[0];
-    int A = E.sub().size()-1;
+    int A = E.size()-1;
     for(int i=0;i<A;i++)
       E2 = (E2,dummy(index+i));
     for(int i=A-1;i>=0;i--)

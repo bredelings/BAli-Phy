@@ -9,7 +9,7 @@ int OperationArgs::reg_for_slot(int slot) const
   return current_closure().lookup_in_env(index);
 }
 
-int OperationArgs::n_args() const {return current_closure().exp.sub().size();}
+int OperationArgs::n_args() const {return current_closure().exp.size();}
 
 const expression_ref& OperationArgs::reference(int slot) const {return current_closure().exp.sub()[slot];}
 

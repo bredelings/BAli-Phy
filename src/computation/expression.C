@@ -63,10 +63,10 @@ bool parse_let_expression(const expression_ref& E, vector<expression_ref>& vars,
   if (E.head()->type() != let_type) return false;
 
   // There should be an odd number of arguments.
-  assert(E.sub().size()%2 == 1);
+  assert(E.size()%2 == 1);
 
   T = E.sub()[0];
-  const int L = (E.sub().size()-1)/2;
+  const int L = (E.size()-1)/2;
   for(int i=0;i<L;i++)
   {
     vars.push_back(E.sub()[1+2*i]);
@@ -84,7 +84,7 @@ bool parse_indexed_let_expression(const expression_ref& E, vector<expression_ref
   if (E.head()->type() != let2_type) return false;
 
   T = E.sub()[0];
-  const int L = E.sub().size()-1;
+  const int L = E.size()-1;
   bodies.resize(L);
   for(int i=0;i<L;i++)
     bodies[i] = E.sub()[i+1];
@@ -101,7 +101,7 @@ bool parse_case_expression(const expression_ref& E, expression_ref& T, vector<ex
   if (E.head()->type() != case_type) return false;
 
   T = E.sub()[0];
-  const int L = (E.sub().size()-1)/2;
+  const int L = (E.size()-1)/2;
   patterns.resize(L);
   bodies.resize(L);
   for(int i=0;i<L;i++)
@@ -1190,7 +1190,7 @@ std::set<dummy> get_bound_indices(const expression_ref& E)
   {
     if (E.head()->type() == let_type)
     {
-      const int L = (E.sub().size()-1)/2;
+      const int L = (E.size()-1)/2;
       for(int i=0;i<L;i++)
       {
 	if (object_ptr<const dummy> D = is_a<dummy>(E.sub()[1+2*i]))

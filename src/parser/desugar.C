@@ -23,7 +23,7 @@ bool is_irrefutable_pat(const expression_ref& E)
 {
   assert(E.assert_is_a<AST_node>()->type == "pat");
 
-  if (E.sub().size() == 1 and E.sub()[0].assert_is_a<AST_node>()->type == "apat_var")
+  if (E.size() == 1 and E.sub()[0].assert_is_a<AST_node>()->type == "apat_var")
     return true;
   else
     return false;
@@ -312,7 +312,7 @@ vector<expression_ref> get_patterns(const expression_ref& decl)
 expression_ref get_body(const expression_ref& decl)
 {
   expression_ref rhs = decl.sub()[1];
-  assert(rhs.sub().size() == 1);
+  assert(rhs.size() == 1);
   return rhs.sub()[0];
 }
 
@@ -347,7 +347,7 @@ expression_ref translate_funlhs(const expression_ref& E)
   {
     expression_ref fun1 = translate_funlhs(E.sub()[0]);
     vector<expression_ref> args = fun1.sub();
-    for(int i=1;i<E.sub().size();i++)
+    for(int i=1;i<E.size();i++)
       fun1 = append(fun1,E.sub()[i]);
     return fun1;
   }
@@ -537,7 +537,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     }
     else if (n->type == "rhs")
     {
-      if (E.sub().size() == 2)
+      if (E.size() == 2)
       {
 	expression_ref decls = E.sub()[1];
 	assert(is_AST(decls,"Decls"));
@@ -831,13 +831,13 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	patterns.push_back(desugar(m, alt.sub()[0], bound2) );
 
 	// Handle where-clause.
-	assert(alt.sub().size() == 2 or alt.sub().size() == 3);
+	assert(alt.size() == 2 or alt.size() == 3);
 	expression_ref body = alt.sub()[1];
 
 	if (is_AST(body,"GdPat"))
 	  throw myexception()<<"Guard patterns not yet implemented!";
 
-	if (alt.sub().size() == 3)
+	if (alt.size() == 3)
 	{
 	  assert(is_AST(alt.sub()[2],"Decls"));
 	  body = {AST_node("Let"),{alt.sub()[2],body}};

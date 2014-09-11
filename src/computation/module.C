@@ -243,7 +243,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
     
       string imp_module_name = *impdecl.sub()[i++].is_a<String>();
       
-      assert(i == impdecl.sub().size());
+      assert(i == impdecl.size());
       
       Module M = find_module(imp_module_name,P);
 
@@ -303,7 +303,7 @@ void Module::load_builtins(const module_loader& L)
       string symbol_name = *decl.sub()[2].assert_is_a<String>();
       string plugin_name = symbol_name;
 
-      if (decl.sub().size() > 3)
+      if (decl.size() > 3)
 	plugin_name = *decl.sub()[3].assert_is_a<String>();
 
       function_name = lookup_symbol(function_name).name;
@@ -609,7 +609,7 @@ Module& Module::operator+=(const expression_ref& E)
     module = E;
 
     // 1. module = [optional name] + body
-    if (module.sub().size() == 1)
+    if (module.size() == 1)
       body = module.sub()[0];
     else
     {
@@ -641,10 +641,10 @@ Module& Module::operator+=(const expression_ref& E)
 	string imp_module_name = *impdecl.sub()[i++].is_a<String>();
 
 	string imp_module_name_as = imp_module_name;
-	if (i < impdecl.sub().size() and *impdecl.sub()[i++].is_a<String>() == "as")
+	if (i < impdecl.size() and *impdecl.sub()[i++].is_a<String>() == "as")
 	  imp_module_name_as = *impdecl.sub()[i++].is_a<String>();
 
-	assert(i == impdecl.sub().size());
+	assert(i == impdecl.size());
       }
     }
 
@@ -674,7 +674,7 @@ Module& Module::operator+=(const expression_ref& E)
 
       // Determine precedence.
       int precedence = 9;
-      if (decl.sub().size() == 3)
+      if (decl.size() == 3)
 	precedence = *decl.sub()[1].assert_is_a<Int>();
 
       // Find op names and declare fixity and precedence.
@@ -717,7 +717,7 @@ Module& Module::operator+=(const expression_ref& E)
     }
     else if (is_AST(decl,"Decl:data"))
     {
-      if (decl.sub().size() >= 2)
+      if (decl.size() >= 2)
       {
 	expression_ref constrs = decl.sub()[1];
 	assert(is_AST(constrs,"constrs"));
@@ -726,7 +726,7 @@ Module& Module::operator+=(const expression_ref& E)
 	  if (is_AST(constr,"constr"))
 	  {
 	    string name = *constr.sub()[0].is_a<String>();
-	    int arity = constr.sub().size() - 1;
+	    int arity = constr.size() - 1;
 	    def_constructor(name,arity);
 	  }
 	  else if (is_AST(constr,"constr_op"))
