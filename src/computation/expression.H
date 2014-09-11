@@ -384,6 +384,8 @@ public:
 
   expression* clone() const {return E->clone();}
 
+  expression* clone_expression() const {return E->clone();}
+
   // Default
   expression_ref() {}
 

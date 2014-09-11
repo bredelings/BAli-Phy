@@ -98,7 +98,7 @@ expression_ref move_lets(bool scope, const expression_ref E,
 
     /******************** alpha-rename E -> EE ********************/
     
-    object_ptr<expression> EE ( E.ptr()->clone() );                  // Make a copy of E that we can alpha-rename.
+    object_ptr<expression> EE = E.clone_expression();                  // Make a copy of E that we can alpha-rename.
     
     for(int index: unbound_indices)
     {
@@ -294,7 +294,7 @@ expression_ref let_float(const expression_ref& E)
   else if (object_ptr<const Operator> O =  is_a<Operator>(E))
   {
     // First float lets in sub-expressions
-    object_ptr<expression> V ( E.ptr()->clone() );
+    object_ptr<expression> V = E.clone_expression();
     
     vector<expression_ref> vars;
     vector<expression_ref> bodies;

@@ -755,7 +755,7 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
     {
       assert(not patterns[i].size());
       // Make a new expression so we can add variables to the pattern if its a constructor
-      object_ptr<expression> P = patterns[i].ptr()->clone();
+      object_ptr<expression> P = patterns[i].clone_expression();
       expression_ref& B = bodies[i];
 
       // Find the number of arguments in the constructor
@@ -1465,7 +1465,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
       int new_index = std::max(max_index(fv2),max_index(bound))+1;
 
       // Do the alpha renaming
-      object_ptr<expression> E1_ (E1.ptr()->clone());
+      object_ptr<expression> E1_ (E1.clone_expression());
       for(const auto& i:overlap)
 	alpha_rename(E1_, dummy(i), dummy(new_index++));
       E1 = E1_;
@@ -1482,7 +1482,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
   }
 
   // Since this is an expression, substitute into sub-expressions
-  object_ptr<expression> E1_ (E1.ptr()->clone());
+  object_ptr<expression> E1_ (E1.clone_expression());
   for(int i=0;i<E1_->size();i++)
     changed = (do_substitute(E1_->sub[i], D, E2) or changed);
 
@@ -2292,7 +2292,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
   object_ptr<const Case> IsCase = is_a<Case>(E);
   if (IsCase)
   {
-    expression* V = E.ptr()->clone();
+    expression* V = E.clone_expression();
 
     // Unormalize the object
     V->sub[0] = launchbury_unnormalize(V->sub[0]);
@@ -2308,7 +2308,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
   // 4. Constructor
   if (is_a<constructor>(E) or is_a<Operation>(E))
   {
-    expression* V = E.ptr()->clone();
+    expression* V = E.clone_expression();
     for(int i=0;i<E.size();i++)
       V->sub[i] = launchbury_unnormalize(E.sub()[i]);
     return V;
@@ -2403,7 +2403,7 @@ expression_ref unlet(const expression_ref& E)
   object_ptr<const Case> IsCase = is_a<Case>(E);
   if (IsCase)
   {
-    expression* V = E.ptr()->clone();
+    expression* V = E.clone_expression();
 
     // Unormalize the object
     V->sub[0] = unlet(V->sub[0]);
@@ -2419,7 +2419,7 @@ expression_ref unlet(const expression_ref& E)
   // 4. Constructor
   if (is_a<constructor>(E) or is_a<Operation>(E))
   {
-    expression* V = E.ptr()->clone();
+    expression* V = E.clone_expression();
     for(int i=0;i<E.size();i++)
       V->sub[i] = unlet(E.sub()[i]);
     return V;
@@ -2523,7 +2523,7 @@ expression_ref char_list(const string& s)
 
 expression_ref operator+(const expression_ref& E1, const expression_ref&E2)
 {
-  expression* E3 = E1.ptr()->clone();
+  expression* E3 = E1.clone_expression();
   E3->sub.push_back(E2);
   return E3;
 }

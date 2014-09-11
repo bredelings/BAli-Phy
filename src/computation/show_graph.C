@@ -256,7 +256,7 @@ expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& 
       return E;
   }
 
-  object_ptr<expression> V = E.ptr()->clone();
+  object_ptr<expression> V = E.clone_expression();
   for(int i=0;i<E.size();i++)
     V->sub[i] = untranslate_vars(V->sub[i], ids);
   return V;

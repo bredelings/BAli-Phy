@@ -213,7 +213,7 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<string,s
       return E;
   }
 
-  object_ptr<expression> V = E.ptr()->clone();
+  object_ptr<expression> V = E.clone_expression();
   for(int i=0;i<E.size();i++)
     V->sub[i] = map_symbol_names(V->sub[i], simplify);
   return V;
