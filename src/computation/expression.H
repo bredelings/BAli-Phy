@@ -333,8 +333,6 @@ struct lambda2: public Object
   std::string print() const;
 };
 
-class formula_expression_ref;
-
 struct expression_ref: public object_ptr<const expression>
 {
   expression_ref operator()(const std::vector<expression_ref>& args) const
