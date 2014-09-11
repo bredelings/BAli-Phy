@@ -9,9 +9,9 @@ int OperationArgs::reg_for_slot(int slot) const
   return current_closure().lookup_in_env(index);
 }
 
-int OperationArgs::n_args() const {return current_closure().exp->sub.size();}
+int OperationArgs::n_args() const {return current_closure().exp.sub().size();}
 
-const expression_ref& OperationArgs::reference(int slot) const {return current_closure().exp->sub[slot];}
+const expression_ref& OperationArgs::reference(int slot) const {return current_closure().exp.sub()[slot];}
 
 const closure& OperationArgs::evaluate_slot_to_closure(int slot)
 {
@@ -35,7 +35,7 @@ int OperationArgs::evaluate_slot_to_reg(int slot)
 
 const object_ptr<const Object>& OperationArgs::evaluate_reg_to_object(int R2)
 {
-  const object_ptr<const Object>& result = evaluate_reg_to_closure(R2).exp->head;
+  const object_ptr<const Object>& result = evaluate_reg_to_closure(R2).exp.head();
 #ifndef NDEBUG
   if (is_a<lambda2>(expression_ref(result)))
     throw myexception()<<"Evaluating lambda as object: "<<result->print();
@@ -45,7 +45,7 @@ const object_ptr<const Object>& OperationArgs::evaluate_reg_to_object(int R2)
 
 const object_ptr<const Object>& OperationArgs::evaluate_reg_to_object_(int R2)
 {
-  const object_ptr<const Object>& result = evaluate_reg_to_closure_(R2).exp->head;
+  const object_ptr<const Object>& result = evaluate_reg_to_closure_(R2).exp.head();
 #ifndef NDEBUG
   if (is_a<lambda2>(expression_ref(result)))
     throw myexception()<<"Evaluating lambda as object: "<<result->print();
@@ -75,9 +75,9 @@ const object_ptr<const Object>& OperationArgs::evaluate_(int slot)
 
 int OperationArgs::allocate(closure&& C)
 {
-  if (C.exp->head->type() == index_var_type)
+  if (C.exp.head()->type() == index_var_type)
   {
-    int index = convert<const index_var>(C.exp->head)->index;
+    int index = convert<const index_var>(C.exp.head())->index;
 
     int r = C.lookup_in_env( index );
     

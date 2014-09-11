@@ -88,27 +88,27 @@ expression_ref graph_normalize(const expression_ref& E)
 
   // 1. Var
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-  if (not E->size()) return E;
+  if (not E.size()) return E;
   
   // 2. Lambda
   object_ptr<const lambda> L = is_a<lambda>(E);
   if (L)
   {
-    assert(E->size() == 2);
-    object_ptr<expression> V ( new expression(*E) );
-    V->sub[1] = graph_normalize(E->sub[1]);
+    assert(E.size() == 2);
+    object_ptr<expression> V ( new expression(*E.ptr()) );
+    V->sub[1] = graph_normalize(E.sub()[1]);
 
-    if (V->sub[1] == E->sub[1])
+    if (V->sub[1].ptr() == E.sub()[1].ptr())
       return E;
     else
       return V;
   }
 
   // 6. Case
-  object_ptr<const Case> IsCase = is_a<Case>(E);
+  object_ptr<const Case> IsCase = E.is_a<Case>();
   if (IsCase)
   {
-    object_ptr<expression> V ( E->clone() );
+    object_ptr<expression> V ( E.ptr()->clone() );
 
     // Normalize the object
     V->sub[0] = graph_normalize(V->sub[0]);
@@ -136,14 +136,14 @@ expression_ref graph_normalize(const expression_ref& E)
   {
     int var_index = get_safe_binder_index(E);
 
-    object_ptr<expression> E2 ( E->clone() );
+    object_ptr<expression> E2 ( E.ptr()->clone() );
 
-    // Actually we probably just need x[i] not to be free in E->sub[i]
+    // Actually we probably just need x[i] not to be free in E.sub()[i]
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     for(int i=0;i<E2->size();i++)
     {
-      E2->sub[i] = graph_normalize(E->sub[i]);
+      E2->sub[i] = graph_normalize(E.sub()[i]);
 
       if (not is_reglike(E2->sub[i]))
       {
@@ -151,7 +151,7 @@ expression_ref graph_normalize(const expression_ref& E)
 
 	// 1. Let-bind the argument expression
        	vars.push_back( var );
-	bodies.push_back( E->sub[i] );
+	bodies.push_back( E.sub()[i] );
 
 	// 2. Replace the argument expression with the let var.
 	E2->sub[i] = var;
@@ -164,7 +164,7 @@ expression_ref graph_normalize(const expression_ref& E)
   // 5. Let 
   if (object_ptr<const let_obj> Let = is_a<let_obj>(E))
   {
-    object_ptr<expression> V ( new expression(*E) );
+    object_ptr<expression> V ( new expression(*E.ptr()) );
 
     // Normalize the object
     V->sub[0] = graph_normalize(V->sub[0]);
@@ -178,7 +178,7 @@ expression_ref graph_normalize(const expression_ref& E)
     return V;
   }
 
-  throw myexception()<<"graph_normalize: I don't recognize expression '"+ E->print() + "'";
+  throw myexception()<<"graph_normalize: I don't recognize expression '"+ E.print() + "'";
 }
 
 
@@ -257,10 +257,10 @@ reg::reg(reg&& R) noexcept
 
 void reg::clear()
 {
+  assert(n_heads == 0);
   C.clear();
   re_evaluate = false;
   type = type_t::unknown;
-  assert(n_heads == 0);
 }
 
 void reg::check_cleared()
@@ -463,7 +463,7 @@ double reg_heap::get_rate_for_reg(int r)
 
   int r3 = access(r).C.lookup_in_env(0);
   r3 = incremental_evaluate_unchangeable(r3);
-  return *convert<const Double>(access(r3).C.exp->head);
+  return *convert<const Double>(access(r3).C.exp.head());
 }
 
 const std::vector<int>& reg_heap::triggers() const {return tokens[root_token].triggers;}
@@ -629,7 +629,7 @@ void reg_heap::set_used_input(int R1, int R2)
 
   // An index_var's result only changes if the thing the index-var points to also changes.
   // So, we may as well forbid using an index_var as an input.
-  assert(access(R2).C.exp->head->type() != index_var_type);
+  assert(access(R2).C.exp.head()->type() != index_var_type);
 
   int rc1 = computation_index_for_reg(R1);
   int rc2 = computation_index_for_reg(R2);
@@ -757,9 +757,9 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   if (not result) return;
 
   // If the value is a pre-existing reg_var, then call it.
-  if (result.exp->head->type() == index_var_type)
+  if (result.exp.head()->type() == index_var_type)
   {
-    int index = convert<const index_var>(result.exp->head)->index;
+    int index = convert<const index_var>(result.exp.head())->index;
 
     int Q = result.lookup_in_env( index );
     
@@ -2067,7 +2067,7 @@ bool reg_heap::reg_is_fully_up_to_date_in_context(int R, int c)
 bool reg_heap::reg_is_fully_up_to_date(int R) const
 {
   // 1. Handle index_var nodes!
-  int type = access(R).C.exp->head->type();
+  int type = access(R).C.exp.head()->type();
   if (type == index_var_type)
   {
     assert( not reg_is_changeable(R) );
@@ -2092,19 +2092,19 @@ bool reg_heap::reg_is_fully_up_to_date(int R) const
   const expression_ref& E = result.exp;
 
   // Therefore, if the result is atomic, then R is up-to-date.
-  if (not E->size()) return true;
+  if (not E.size()) return true;
 
   // If the result is a lambda function, then R is up-to-date.
-  if (E->head->type() != constructor_type) return true;
+  if (E.head()->type() != constructor_type) return true;
 
   // If we get here, this had better be a constructor!
   assert(is_a<constructor>(E));
 
   // Check each component that is a index_var to see if its out of date.
-  for(int i=0;i<E->size();i++)
+  for(int i=0;i<E.size();i++)
   {
     // assert_cast
-    object_ptr<const index_var> V = assert_is_a<index_var>(E->sub[i]);
+    object_ptr<const index_var> V = assert_is_a<index_var>(E.sub()[i]);
     int R2 = result.lookup_in_env( V->index );
     
     if (not reg_is_fully_up_to_date(R2)) return false;
@@ -2123,7 +2123,7 @@ object_ref reg_heap::get_parameter_value_in_context(int p, int c)
 
 const object_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 {
-  //  if (access(R).type == constant) return access(R).C.exp->head;
+  //  if (access(R).type == constant) return access(R).C.exp.head();
 
   reroot_at_context(c);
 
@@ -2136,7 +2136,7 @@ const object_ref& reg_heap::get_reg_value_in_context(int& R, int c)
     R = incremental_evaluate_in_context(R,c);
   }
 
-  return access_result_for_reg(R).exp->head;
+  return access_result_for_reg(R).exp.head();
 }
 
 void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
@@ -2196,7 +2196,7 @@ const closure& reg_heap::lazy_evaluate_unchangeable(int& R)
 
 int reg_heap::get_modifiable_value_in_context(int R, int c)
 {
-  assert( access(R).C.exp->head->type() == modifiable_type);
+  assert( access(R).C.exp.head()->type() == modifiable_type);
   assert( reg_is_changeable(R) );
 
   reroot_at_context(c);
@@ -2276,7 +2276,7 @@ closure resolve_refs(const vector<Module>& P, closure&& C)
 closure reg_heap::preprocess(const closure& C)
 {
   assert(C.exp);
-  assert(let_float(C.exp)->print() == let_float(let_float(C.exp))->print());
+  assert(let_float(C.exp).print() == let_float(let_float(C.exp)).print());
   //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
   return trim_normalize( indexify( graph_normalize( let_float( translate_refs( resolve_refs(*P, closure(C) ) ) ) ) ) );
 }
@@ -2340,10 +2340,10 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, vector<int>& En
   }
 
   // Other constants have no parts, and don't need to be translated
-  if (not E->size()) return E;
+  if (not E/size()) return E;
 
   // Translate the parts of the expression
-  object_ptr<expression> V ( new expression(*E) );
+  object_ptr<expression> V ( new expression(*E.ptr()) );
   for(int i=0;i<V->size();i++)
     V->sub[i] = translate_refs(V->sub[i], Env);
 

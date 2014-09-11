@@ -60,17 +60,17 @@ bool parse_let_expression(const expression_ref& E, vector<expression_ref>& vars,
   vars.clear();
   bodies.clear();
 
-  if (E->head->type() != let_type) return false;
+  if (E.head()->type() != let_type) return false;
 
   // There should be an odd number of arguments.
-  assert(E->sub.size()%2 == 1);
+  assert(E.sub().size()%2 == 1);
 
-  T = E->sub[0];
-  const int L = (E->sub.size()-1)/2;
+  T = E.sub()[0];
+  const int L = (E.sub().size()-1)/2;
   for(int i=0;i<L;i++)
   {
-    vars.push_back(E->sub[1+2*i]);
-    bodies.push_back(E->sub[2+2*i]);
+    vars.push_back(E.sub()[1+2*i]);
+    bodies.push_back(E.sub()[2+2*i]);
   }
 
   return true;
@@ -81,13 +81,13 @@ bool parse_indexed_let_expression(const expression_ref& E, vector<expression_ref
 {
   bodies.clear();
 
-  if (E->head->type() != let2_type) return false;
+  if (E.head()->type() != let2_type) return false;
 
-  T = E->sub[0];
-  const int L = E->sub.size()-1;
+  T = E.sub()[0];
+  const int L = E.sub().size()-1;
   bodies.resize(L);
   for(int i=0;i<L;i++)
-    bodies[i] = E->sub[i+1];
+    bodies[i] = E.sub()[i+1];
 
   return true;
 }
@@ -98,16 +98,16 @@ bool parse_case_expression(const expression_ref& E, expression_ref& T, vector<ex
   patterns.clear();
   bodies.clear();
 
-  if (E->head->type() != case_type) return false;
+  if (E.head()->type() != case_type) return false;
 
-  T = E->sub[0];
-  const int L = (E->sub.size()-1)/2;
+  T = E.sub()[0];
+  const int L = (E.sub().size()-1)/2;
   patterns.resize(L);
   bodies.resize(L);
   for(int i=0;i<L;i++)
   {
-    patterns[i] = E->sub[1 + 2*i];
-    bodies[i] = E->sub[2 + 2*i];
+    patterns[i] = E.sub()[1 + 2*i];
+    bodies[i] = E.sub()[2 + 2*i];
   }
 
   return true;
@@ -128,14 +128,14 @@ string print_list(const expression_ref& E)
   expression_ref E2 = E;
   while(is_exactly(E2,":"))
   {
-    assert(E2->size() == 2);
-    V.push_back(E2->sub[0]->print());
-    E2 = E2->sub[1];
+    assert(E2.size() == 2);
+    V.push_back(E2.sub()[0].print());
+    E2 = E2.sub()[1];
   }
   if (is_exactly(E2,"[]"))
     return "["+join(V,", ")+"]";
   else {
-    V.push_back(E2->print());
+    V.push_back(E2.ptr()->print());
     return join(V,":");
   }
 
@@ -159,8 +159,8 @@ string expression::print() const
 
     if (is_a<lambda2>())
     {
-      result = sub[0]->print();
-      if (sub[0]->is_a<lambda2>())
+      result = sub[0].print();
+      if (sub[0].is_a<lambda2>())
 	result = "/\\" + result;
       else
 	result = "/\\." + result;
@@ -173,10 +173,10 @@ string expression::print() const
       vector<string> vars;
       while (body.is_a<lambda>())
       {
-	vars.push_back(body->sub[0]->print());
-	body = body->sub[1];
+	vars.push_back(body.sub()[0].print());
+	body = body.sub()[1];
       }
-      result = "\\" + join(vars,' ') + " -> "+ body->print();
+      result = "\\" + join(vars,' ') + " -> "+ body.print();
       return result;
     }
 
@@ -185,9 +185,9 @@ string expression::print() const
       result = "let {";
       vector<string> parts;
       for(int i=0;i<vars.size();i++)
-	parts.push_back(vars[i]->print() + " = " + bodies[i]->print());
+	parts.push_back(vars[i].print() + " = " + bodies[i].print());
       result += join(parts,", ");
-      result += "} in " + T->print();
+      result += "} in " + T.print();
       return result;
     }
 
@@ -195,7 +195,7 @@ string expression::print() const
     {
       result = "let {";
       result += join(bodies,", ");
-      result += "} in " + T->print();
+      result += "} in " + T.print();
       return result;
     }
 
@@ -203,16 +203,16 @@ string expression::print() const
     {
       object_ptr<const Vector<int>> V = ::is_a<Vector<int>>(sub[0]);
 
-      result = "Trim {"+join(*V,",")+"} " + sub[1]->print();
+      result = "Trim {"+join(*V,",")+"} " + sub[1].print();
       return result;
     }
 
     if (parse_case_expression(this, T, vars, bodies))
     {
-      result = "case " + T->print() + " of {";
+      result = "case " + T.print() + " of {";
       vector<string> parts;
       for(int i=0;i<vars.size();i++)
-	parts.push_back( vars[i]->print() + " -> " + bodies[i]->print() );
+	parts.push_back( vars[i].print() + " -> " + bodies[i].print() );
       result += join(parts,',');
       result += "}";
       return result;
@@ -223,17 +223,17 @@ string expression::print() const
   vector<string> args(1+size());
   args[0] = head->print();
   for(int i=0;i<size();i++)
-    args[1+i] = sub[i]->print();
+    args[1+i] = sub[i].print();
 
   vector<string> pargs = args;
   for(int i=1;i<pargs.size();i++)
   {
-    if (not sub[i-1]->size()) continue;
+    if (not sub[i-1].size()) continue;
 
     object_ptr<const Operator> O = ::is_a<Operator>(sub[i-1]);
 
     // Don't parenthesize tuple arguments.
-    if (O and is_tuple_name(O->name()) and sub[i-1]->size() == O->n_args()) continue;
+    if (O and is_tuple_name(O->name()) and sub[i-1].size() == O->n_args()) continue;
 
     // Don't parenthesize list arguments.
     if (O and O->name() == ":") continue;
@@ -255,17 +255,17 @@ string expression::print() const
     }
     else if (O->precedence() > -1 and size() == 2)
     {
-      if (sub[0]->size())
+      if (sub[0].size())
       {
-	if (sub[0]->is_exactly(*O) and O->associativity()==assoc_left)
+	if (sub[0].is_exactly(*O) and O->associativity()==assoc_left)
 	  pargs[1] = args[1];
 	else if (object_ptr<const Operator> O2 = ::is_a<Operator>(sub[0]))
 	  if (O2->precedence() > O->precedence())
 	    pargs[1] = args[1];
       }
-      if (sub[1]->size())
+      if (sub[1].size())
       {
-	if (sub[1]->is_exactly(*O) and O->associativity()==assoc_right)
+	if (sub[1].is_exactly(*O) and O->associativity()==assoc_right)
 	  pargs[2] = args[2];
 	else if (object_ptr<const Operator> O2 = ::is_a<Operator>(sub[1]))
 	  if (O2->precedence() > O->precedence())
@@ -310,7 +310,7 @@ tribool expression::operator==(const expression& E) const
 
   for(int i=0;i<size();i++) 
   {
-    tribool b = sub[i]->compare(*E.sub[i]);
+    tribool b = sub[i].ptr()->compare(*E.sub[i].ptr());
 
     if (indeterminate(b))
       std::cerr<<"Warning: '"<<sub[i]<<"' and '"<<E.sub[i]<<"' are unsure if they are equal.\n\n";
@@ -598,7 +598,7 @@ expression_ref make_indexed_lambda(const expression_ref& R)
 /// Convert to using de Bruijn indices.
 expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 {
-  if (not E->size())
+  if (not E.size())
   {
     // Indexed Variable - This is assumed to be a free variable, so just shift it.
     if (object_ptr<const index_var> V = is_a<index_var>(E))
@@ -624,8 +624,8 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
   if (object_ptr<const lambda> L = is_a<lambda>(E))
   {
     vector<dummy> variables2 = variables;
-    variables2.push_back(*assert_is_a<dummy>(E->sub[0]));
-    return make_indexed_lambda( indexify(E->sub[1], variables2) );
+    variables2.push_back(*assert_is_a<dummy>(E.sub()[0]));
+    return make_indexed_lambda( indexify(E.sub()[1], variables2) );
   }
 
   // Let expression
@@ -659,8 +659,8 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
       expression_ref& B = bodies[i];
 
       vector<dummy> variables2 = variables;
-      for(int j=0;j<P->size();j++)
-	variables2.push_back(*assert_is_a<dummy>(P->sub[j]));
+      for(int j=0;j<P.size();j++)
+	variables2.push_back(*assert_is_a<dummy>(P.sub()[j]));
 
 #ifndef NDEBUG
       // FIXME - I guess this doesn't handle case a of b -> f(b)?
@@ -668,7 +668,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 	assert(is_wildcard(P));
 #endif
 
-      P = P->head;
+      P = P.head();
       B = indexify(B, variables2);
     }
 
@@ -677,7 +677,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 
   // If we've gotten this far, just transform the sub-expressions.
   // (This could be: Op, constructor, 
-  expression* V = new expression(*E);
+  expression* V = new expression(*E.ptr());
   for(int i=0;i<V->size();i++)
     V->sub[i] = indexify(V->sub[i], variables);
   return V;
@@ -699,7 +699,7 @@ dummy get_named_dummy(int n)
 /// Convert to using de Bruijn indices.
 expression_ref deindexify(const expression_ref& E, const vector<object_ref>& variables)
 {
-  if (not E->size())
+  if (not E.size())
   {
     // Indexed Variable - This is assumed to be a free variable, so just shift it.
     if (object_ptr<const index_var> V = is_a<index_var>(E))
@@ -720,7 +720,7 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
     vector<object_ref> variables2 = variables;
     dummy d = get_named_dummy(variables.size());
     variables2.push_back(d);
-    return lambda_quantify(d,deindexify(E->sub[0],variables2));
+    return lambda_quantify(d,deindexify(E.sub()[0],variables2));
   }
 
   // Let expression
@@ -753,9 +753,9 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
 
     for(int i=0;i<bodies.size();i++)
     {
-      assert(not patterns[i]->size());
+      assert(not patterns[i].size());
       // Make a new expression so we can add variables to the pattern if its a constructor
-      object_ptr<expression> P = patterns[i]->clone();
+      object_ptr<expression> P = patterns[i].ptr()->clone();
       expression_ref& B = bodies[i];
 
       // Find the number of arguments in the constructor
@@ -786,7 +786,7 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
 
   // If we've gotten this far, just transform the sub-expressions.
   // (This could be: Op, constructor, 
-  expression* V = new expression(*E);
+  expression* V = new expression(*E.ptr());
   for(int i=0;i<V->size();i++)
     V->sub[i] = deindexify(V->sub[i], variables);
   return V;
@@ -837,7 +837,7 @@ vector<int> merge_vars(const vector<int>& v1, const vector<int>& v2)
 
 vector<int> get_free_index_vars(const expression_ref& E)
 {
-  if (not E->size()) 
+  if (not E.size()) 
   {
     // Variable
     if (object_ptr<const index_var> D = is_a<index_var>(E))
@@ -860,10 +860,10 @@ vector<int> get_free_index_vars(const expression_ref& E)
   {
     // Which vars are we not throwing away?
     // This should also be an assert.
-    vars = *is_a<Vector<int>>(E->sub[0]);
+    vars = *is_a<Vector<int>>(E.sub()[0]);
     
 #ifndef NDEBUG
-    vector<int> vars2 = get_free_index_vars(E->sub[1]);
+    vector<int> vars2 = get_free_index_vars(E.sub()[1]);
     assert(vars.size() == vars2.size());
     for(int i=0;i<vars.size();i++)
       assert(vars2[i] == i);
@@ -871,7 +871,7 @@ vector<int> get_free_index_vars(const expression_ref& E)
   }
   // Lambda expression - /\x.e
   else if (object_ptr<const lambda2> L = is_a<lambda2>(E))
-    vars = pop_vars(1, get_free_index_vars(E->sub[0]));
+    vars = pop_vars(1, get_free_index_vars(E.sub()[0]));
 
   // Let expression
   else if (parse_indexed_let_expression(E, bodies, T))
@@ -902,8 +902,8 @@ vector<int> get_free_index_vars(const expression_ref& E)
   }
   else
   {
-    for(int i=0;i<E->size();i++)
-      vars = merge_vars(vars, get_free_index_vars(E->sub[i]) );
+    for(int i=0;i<E.size();i++)
+      vars = merge_vars(vars, get_free_index_vars(E.sub()[i]) );
   }
 
   //  std::cerr<<"fv("<<R<<"): "<<join(vars,",")<<"\n";
@@ -914,7 +914,7 @@ vector<int> get_free_index_vars(const expression_ref& E)
 expression_ref trim_normalize(const expression_ref& E)
 {
   // Already normalized (though not trimmed)
-  if (not E->size()) return E;
+  if (not E.size()) return E;
 
   vector<expression_ref> bodies;
   vector<expression_ref> patterns;
@@ -946,8 +946,8 @@ expression_ref trim_normalize(const expression_ref& E)
   }
   else
   {
-    expression* V = new expression(*E);
-    for(int i=0;i<E->size();i++)
+    expression* V = new expression(*E.ptr());
+    for(int i=0;i<E.size();i++)
       V->sub[i] = trim_normalize(V->sub[i]);
 
     return V;
@@ -973,7 +973,7 @@ expression_ref make_trim(const expression_ref& E, const vector<int>& indices)
 // This compresses free variables according to the supplied mapping.
 expression_ref remap_free_indices(const expression_ref& E, const vector<int>& mapping, int depth)
 {
-  if (not E->size())
+  if (not E.size())
   {
     // Variable
     if (object_ptr<const index_var> D = is_a<index_var>(E))
@@ -1006,7 +1006,7 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
   {
     // Which vars are we not throwing away?
     // This should also be an assert.
-    vars = *is_a<Vector<int>>(E->sub[0]);
+    vars = *is_a<Vector<int>>(E.sub()[0]);
 
     // remap free vars
     for(auto& var:vars)
@@ -1022,20 +1022,20 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
     }
     
 #ifndef NDEBUG
-    vector<int> vars2 = get_free_index_vars(E->sub[1]);
+    vector<int> vars2 = get_free_index_vars(E.sub()[1]);
     assert(vars.size() == vars2.size());
     for(int i=0;i<vars.size();i++)
       assert(vars2[i] == i);
 #endif
 
-    return make_trim(E->sub[1], vars);
+    return make_trim(E.sub()[1], vars);
 
   }
   // Lambda expression - /\x.e
   else if (object_ptr<const lambda2> L = is_a<lambda2>(E))
   {
     expression* V = new expression(lambda2());
-    V->sub.push_back(remap_free_indices(E->sub[0], mapping, depth+1));
+    V->sub.push_back(remap_free_indices(E.sub()[0], mapping, depth+1));
     return V;
   }
 
@@ -1071,8 +1071,8 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
   }
   else
   {
-    expression* V = new expression(*E);
-    for(int i=0;i<E->size();i++)
+    expression* V = new expression(*E.ptr());
+    for(int i=0;i<E.size();i++)
       V->sub[i] = remap_free_indices(V->sub[i], mapping, depth);
     return V;
   }
@@ -1099,9 +1099,9 @@ expression_ref untrim(const expression_ref& E)
 {
   if (object_ptr<const Trim> T = is_a<Trim>(E))
   {
-    object_ptr<const Vector<int>> V = ::is_a<Vector<int>>(E->sub[0]);
+    object_ptr<const Vector<int>> V = ::is_a<Vector<int>>(E.sub()[0]);
 
-    return remap_free_indices(E->sub[1], *V, 0);
+    return remap_free_indices(E.sub()[1], *V, 0);
   }
   else
     return E;
@@ -1113,7 +1113,7 @@ expression_ref untrim(const expression_ref& E)
 expression_ref trim_unnormalize(const expression_ref& E)
 {
   // Already normalized (though not trimmed)
-  if (not E->size()) return E;
+  if (not E.size()) return E;
 
   vector<expression_ref> bodies;
   vector<expression_ref> patterns;
@@ -1145,8 +1145,8 @@ expression_ref trim_unnormalize(const expression_ref& E)
   }
   else
   {
-    expression* V = new expression(*E);
-    for(int i=0;i<E->size();i++)
+    expression* V = new expression(*E.ptr());
+    for(int i=0;i<V->size();i++)
       V->sub[i] = trim_unnormalize(untrim(V->sub[i]));
 
     return V;
@@ -1178,22 +1178,22 @@ std::set<dummy> get_bound_indices(const expression_ref& E)
 {
   std::set<dummy> bound;
 
-  if (not E->size()) return bound;
+  if (not E.size()) return bound;
 
   // Make sure we don't try to substitute for lambda-quantified dummies
-  if (E->head->type() == lambda_type)
+  if (E.head()->type() == lambda_type)
   {
-    if (object_ptr<const dummy> D  = is_a<dummy>(E->sub[0]))
+    if (object_ptr<const dummy> D  = is_a<dummy>(E.sub()[0]))
       bound.insert(*D);
   }
   else 
   {
-    if (E->head->type() == let_type)
+    if (E.head()->type() == let_type)
     {
-      const int L = (E->sub.size()-1)/2;
+      const int L = (E.sub().size()-1)/2;
       for(int i=0;i<L;i++)
       {
-	if (object_ptr<const dummy> D = is_a<dummy>(E->sub[1+2*i]))
+	if (object_ptr<const dummy> D = is_a<dummy>(E.sub()[1+2*i]))
 	  bound.insert(*D);
       }
     }
@@ -1240,21 +1240,21 @@ void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dumm
   }
 
   // fv c = { }
-  if (not E->size()) return;
+  if (not E.size()) return;
 
   // for case expressions get_bound_indices doesn't work correctly.
-  if (E->head->type() == case_type)
+  if (E.head()->type() == case_type)
   {
-    get_free_indices2(E->sub[0], bound, free);
+    get_free_indices2(E.sub()[0], bound, free);
 
-    const int L = (E->size()-1)/2;
+    const int L = (E.size()-1)/2;
 
     for(int i=0;i<L;i++)
     {
-      std::set<dummy> bound_ = get_free_indices(E->sub[1+2*i]);
+      std::set<dummy> bound_ = get_free_indices(E.sub()[1+2*i]);
       for(const auto& d: bound_)
 	bound.insert(d);
-      get_free_indices2(E->sub[2+2*i], bound, free);
+      get_free_indices2(E.sub()[2+2*i], bound, free);
       for(const auto& d: bound_)
       {
 	auto it = bound.find(d);
@@ -1268,8 +1268,8 @@ void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dumm
   std::set<dummy> bound_ = get_bound_indices(E);
   for(const auto& d: bound_)
     bound.insert(d);
-  for(int i=0;i<E->size();i++)
-    get_free_indices2(E->sub[i], bound, free);
+  for(int i=0;i<E.size();i++)
+    get_free_indices2(E.sub()[i], bound, free);
   for(const auto& d: bound_)
   {
     auto it = bound.find(d);
@@ -1346,7 +1346,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
   assert(not is_wildcard(D));
 
   // If this is the relevant dummy, then substitute
-  if (E1->size() == 0)
+  if (E1.size() == 0)
   {
     if (same_head(E1,D))
     {
@@ -1375,7 +1375,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 
 	bool D_is_bound = false;
 	for(const auto& b: bound)
-	  if (D->is_exactly(b)) D_is_bound=true;
+	  if (D.is_exactly(b)) D_is_bound=true;
 	if (D_is_bound) continue;
 
 	// 2. If some of the free variables in E2 are bound in patterns[i], then do 
@@ -1441,7 +1441,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
   {
     // Don't substitute into local variables
     for(const auto& b: bound)
-      if (D->is_exactly(b)) return false;
+      if (D.is_exactly(b)) return false;
     
     std::set<dummy> fv2 = get_free_indices(E2);
     std::set<dummy> overlap = intersection(bound,fv2);
@@ -1465,7 +1465,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
       int new_index = std::max(max_index(fv2),max_index(bound))+1;
 
       // Do the alpha renaming
-      object_ptr<expression> E1_ (E1->clone());
+      object_ptr<expression> E1_ (E1.ptr()->clone());
       for(const auto& i:overlap)
 	alpha_rename(E1_, dummy(i), dummy(new_index++));
       E1 = E1_;
@@ -1482,14 +1482,14 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
   }
 
   // Since this is an expression, substitute into sub-expressions
-  object_ptr<expression> E1_ (E1->clone());
+  object_ptr<expression> E1_ (E1.ptr()->clone());
   for(int i=0;i<E1_->size();i++)
     changed = (do_substitute(E1_->sub[i], D, E2) or changed);
 
   if (changed)
     E1 = E1_;
 
-  assert((E1 != orig) == changed);
+  assert((E1.ptr() != orig.ptr()) == changed);
   return changed;
 }
 
@@ -1498,7 +1498,7 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
   assert(not is_wildcard(D));
 
   // If this is the relevant dummy, then substitute
-  if (E1->size() == 0)
+  if (E1.size() == 0)
   {
     if (same_head(E1,D))
       return 1;
@@ -1516,7 +1516,7 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
     {
       int count = n_free_occurrences(T, D);
 
-      const int L = (E1->size()-1)/2;
+      const int L = (E1.size()-1)/2;
 
       for(int i=0;i<L;i++)
       {
@@ -1525,7 +1525,7 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
 
 	bool D_is_bound = false;
 	for(const auto& b: bound)
-	  if (D->is_exactly(b)) D_is_bound=true;
+	  if (D.is_exactly(b)) D_is_bound=true;
 
 	if (not D_is_bound)
 	  count += n_free_occurrences(bodies[i], D);
@@ -1540,12 +1540,12 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
 
   // Don't substitute into local variables
   for(const auto& b: bound)
-    if (D->is_exactly(b)) return 0;
+    if (D.is_exactly(b)) return 0;
     
   // Since this is an expression, count occurrences in sub-expressions
   int count = 0;
-  for(int i=0;i<E1->size();i++)
-    count += n_free_occurrences(E1->sub[i], D);
+  for(int i=0;i<E1.size();i++)
+    count += n_free_occurrences(E1.sub()[i], D);
 
   return count;
 }
@@ -1610,14 +1610,14 @@ void find_named_parameters(const expression_ref& E, std::set<string>& names)
   // If this is a parameter, then makes sure we've got its name.
   if (object_ptr<const parameter> n = is_a<parameter>(E))
   {
-    assert(not E->size());
+    assert(not E.size());
     if (names.find(n->parameter_name) == names.end())
       names.insert(n->parameter_name);
   }
 
   // Check the sub-objects of this expression.
-  for(int i=0;i<E->size();i++)
-    find_named_parameters(E->sub[i], names);
+  for(int i=0;i<E.size();i++)
+    find_named_parameters(E.sub()[i], names);
 }
 
 set<string> find_named_parameters(const expression_ref& e)
@@ -1688,9 +1688,9 @@ vector<expression_ref> get_ref_vector_from_list(const expression_ref& E)
   expression_ref E2 = E;
   while(is_exactly(E2,":"))
   {
-    assert(E2->size() == 2);
-    V.push_back(E2->sub[0]);
-    E2 = E2->sub[1];
+    assert(E2.size() == 2);
+    V.push_back(E2.sub()[0]);
+    E2 = E2.sub()[1];
   }
   assert(is_exactly(E2,"[]"));
 
@@ -1765,13 +1765,13 @@ bool is_simple_pattern(const expression_ref& E)
   if (is_irrefutable_pattern(E)) return true;
 
   // (b) Is this a constant with no arguments? (This can't be an irrefutable pattern, since we've already bailed on dummy variables.)
-  if (not E->size()) return true;
+  if (not E.size()) return true;
 
   assert(is_a<constructor>(E));
 
   // Arguments of multi-arg constructors must all be irrefutable patterns
-  for(int j=0;j<E->size();j++)
-    if (not is_irrefutable_pattern(E->sub[j]))
+  for(int j=0;j<E.size();j++)
+    if (not is_irrefutable_pattern(E.sub()[j]))
       return false;
 
   // (c) Is this a constructor who arguments are irrefutable patterns?
@@ -1877,7 +1877,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
       continue;
     }
 
-    object_ref C = p[j][0]->head;
+    object_ref C = p[j][0].head();
     int which = find_object(constants, C);
 
     if (which == -1)
@@ -2000,11 +2000,11 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 
       // Add the pattern
       p2.push_back(vector<expression_ref>{});
-      assert(p[r][0]->size() == arity);
+      assert(p[r][0].size() == arity);
 
       // Add sub-patterns of p[r][1]
       for(int k=0;k<arity;k++)
-	p2.back().push_back(p[r][0]->sub[k]);
+	p2.back().push_back(p[r][0].sub()[k]);
 
       p2.back().insert(p2.back().end(), p[r].begin()+1, p[r].end());
 
@@ -2153,7 +2153,7 @@ expression_ref def_function(const vector<expression_ref>& pattern, const vector<
       patterns.back().push_back(p);
     else
       for(int i=0;i<p->size();i++)
-	patterns.back().push_back(p->sub[i]);
+	patterns.back().push_back(p.sub()[i]);
   }
 
   return def_function(patterns, bodies);
@@ -2191,8 +2191,8 @@ expression_ref def_function(const expression_ref& pattern, const expression_ref&
 
 bool is_WHNF(const expression_ref& E)
 {
-  int type = E->head->type();
-  if (E->size())
+  int type = E.head()->type();
+  if (E.size())
   {
     assert(not is_a<lambda>(E));
 
@@ -2219,7 +2219,7 @@ bool is_index_var(const expression_ref& E)
 
 bool is_dummy(const expression_ref& E)
 {
-  return (E->head->type() == dummy_type);
+  return (E.head()->type() == dummy_type);
 }
 
 bool is_parameter(const expression_ref& E)
@@ -2229,7 +2229,7 @@ bool is_parameter(const expression_ref& E)
 
 bool is_modifiable(const expression_ref& E)
 {
-  bool result = E->head->type() == modifiable_type;
+  bool result = E.head()->type() == modifiable_type;
   assert(result == (bool)is_a<modifiable>(E));
   return result;
 }
@@ -2259,7 +2259,7 @@ bool is_wildcard(const expression_ref& E)
 {
   if (is_dummy(E))
   {
-    assert(not E->size());
+    assert(not E.size());
     dummy d = *assert_is_a<dummy>(E);
     return is_wildcard(d);
   }
@@ -2271,18 +2271,18 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 {
   // 1. Var
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-  if (not E->size() or is_modifiable(E))
+  if (not E.size() or is_modifiable(E))
     return E;
 
   // 2. Lambda
   object_ptr<const lambda> L = is_a<lambda>(E);
   if (L)
   {
-    assert(E->size() == 2);
-    expression* V = new expression(*E);
-    V->sub[1] = launchbury_unnormalize(E->sub[1]);
+    assert(E.size() == 2);
+    expression* V = new expression(*E.ptr());
+    V->sub[1] = launchbury_unnormalize(E.sub()[1]);
 
-    if (V->sub[1] == E->sub[1])
+    if (V->sub[1].ptr() == E.sub()[1].ptr())
       return E;
     else
       return V;
@@ -2292,7 +2292,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
   object_ptr<const Case> IsCase = is_a<Case>(E);
   if (IsCase)
   {
-    expression* V = E->clone();
+    expression* V = E.ptr()->clone();
 
     // Unormalize the object
     V->sub[0] = launchbury_unnormalize(V->sub[0]);
@@ -2308,9 +2308,9 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
   // 4. Constructor
   if (is_a<constructor>(E) or is_a<Operation>(E))
   {
-    expression* V = E->clone();
-    for(int i=0;i<E->size();i++)
-      V->sub[i] = launchbury_unnormalize(E->sub[i]);
+    expression* V = E.ptr()->clone();
+    for(int i=0;i<E.size();i++)
+      V->sub[i] = launchbury_unnormalize(E.sub()[i]);
     return V;
   }
 
@@ -2374,7 +2374,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
     return let_expression(vars, bodies, T);
   }
 
-  std::cerr<<"I don't recognize expression '"+ E->print() + "'\n";
+  std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";
   return E;
 }
 
@@ -2382,18 +2382,18 @@ expression_ref unlet(const expression_ref& E)
 {
   // 1. Var
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-  if (not E->size() or is_modifiable(E))
+  if (not E.size() or is_modifiable(E))
     return E;
   
   // 2. Lambda
   object_ptr<const lambda> L = is_a<lambda>(E);
   if (L)
   {
-    assert(E->size() == 2);
-    expression* V = new expression(*E);
-    V->sub[1] = unlet(E->sub[1]);
+    assert(E.size() == 2);
+    expression* V = new expression(*E.ptr());
+    V->sub[1] = unlet(E.sub()[1]);
 
-    if (V->sub[1] == E->sub[1])
+    if (V->sub[1].ptr() == E.sub()[1].ptr())
       return E;
     else
       return V;
@@ -2403,7 +2403,7 @@ expression_ref unlet(const expression_ref& E)
   object_ptr<const Case> IsCase = is_a<Case>(E);
   if (IsCase)
   {
-    expression* V = E->clone();
+    expression* V = E.ptr()->clone();
 
     // Unormalize the object
     V->sub[0] = unlet(V->sub[0]);
@@ -2419,9 +2419,9 @@ expression_ref unlet(const expression_ref& E)
   // 4. Constructor
   if (is_a<constructor>(E) or is_a<Operation>(E))
   {
-    expression* V = E->clone();
-    for(int i=0;i<E->size();i++)
-      V->sub[i] = unlet(E->sub[i]);
+    expression* V = E.ptr()->clone();
+    for(int i=0;i<E.size();i++)
+      V->sub[i] = unlet(E.sub()[i]);
     return V;
   }
 
@@ -2476,13 +2476,13 @@ expression_ref unlet(const expression_ref& E)
     return let_expression(vars, bodies, T);
   }
 
-  std::cerr<<"I don't recognize expression '"+ E->print() + "'\n";
+  std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";
   return E;
 }
 
 bool is_exactly(const expression_ref& E, const Object& O)
 {
-  return E->is_exactly(O);
+  return E.is_exactly(O);
 }
 
 bool is_exactly(const expression_ref& E, const string& s)
@@ -2492,7 +2492,7 @@ bool is_exactly(const expression_ref& E, const string& s)
 
 bool same_head(const expression_ref& E1, const expression_ref& E2)
 {
-  if (E1->head->compare(*E2->head))
+  if (E1.head()->compare(*E2.head()))
     return true;
   else
     return false;
@@ -2523,7 +2523,7 @@ expression_ref char_list(const string& s)
 
 expression_ref operator+(const expression_ref& E1, const expression_ref&E2)
 {
-  expression* E3 = E1->clone();
+  expression* E3 = E1.ptr()->clone();
   E3->sub.push_back(E2);
   return E3;
 }
@@ -2534,8 +2534,8 @@ expression_ref operator*(const expression_ref& E, const expression_ref&arg)
 
   if (object_ptr<const lambda> L = is_a<lambda>(E))
   {
-    assert(E->size());
-    return substitute(E->sub[1], E->sub[0], arg);
+    assert(E.size());
+    return substitute(E.sub()[1], E.sub()[0], arg);
   }
 
   // Allow applying non-lambda expressions to arguments.

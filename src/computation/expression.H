@@ -333,8 +333,27 @@ struct lambda2: public Object
   std::string print() const;
 };
 
-struct expression_ref: public object_ptr<const expression>
+class expression_ref
 {
+  object_ptr<const expression> E;
+
+public:
+  /*
+  bool operator==(const expression_ref& E2) const
+  {
+    return E->maybe_equals(*E2.E);
+  }
+  */
+  void clear() {E.reset();}
+
+  inline const object_ptr<const Object>& head() const {return E->head;}
+  //        object_ptr<const Object>& head()       {return E->head;}
+
+  inline const std::vector<expression_ref>& sub() const {return E->sub;}
+  //        object_ptr<const Object>& sub()       {return E->sub;}
+
+  inline int size() const {return sub().size();}
+
   expression_ref operator()(const std::vector<expression_ref>& args) const
   {
     return apply(*this,args);
@@ -343,31 +362,39 @@ struct expression_ref: public object_ptr<const expression>
   template <typename T>
   object_ptr<const T> is_a() const
   {
-    return boost::dynamic_pointer_cast<const T>((*this)->head);
+    return boost::dynamic_pointer_cast<const T>(head());
   }
 
   template <typename T>
   object_ptr<const T> assert_is_a() const
   {
-    return convert<const T>((*this)->head);
+    return convert<const T>(head());
   }
 
   bool is_exactly(const Object& O) const
   {
-    return (*this)->is_exactly(O);
+    return E->is_exactly(O);
   }
+
+  inline const object_ptr<const expression>& ptr() const {return E;}
+
+  inline explicit operator bool() const {return (bool)E;}
+
+  std::string print() const {return E->print();}
+
+  expression* clone() const {return E->clone();}
 
   // Default
   expression_ref() {}
 
   // Expression arguments
-  expression_ref(expression* e):object_ptr<const expression>(e) { }
+  expression_ref(expression* e):E(e) { }
 
-  expression_ref(const expression* e):object_ptr<const expression>(e) { }
+  expression_ref(const expression* e):E(e) { }
 
-  expression_ref(const object_ptr<const expression>& e):object_ptr<const expression>(e) { }
+  expression_ref(const object_ptr<const expression>& e):E(e) { }
 
-  expression_ref(const object_ptr<expression>& e):object_ptr<const expression>(e) { }
+  expression_ref(const object_ptr<expression>& e):E(e) { }
 
   // Object arguments
   expression_ref(Object* v):expression_ref(new expression(v)) { }
@@ -400,6 +427,15 @@ struct expression_ref: public object_ptr<const expression>
   expression_ref(const char& c):expression_ref(new Char(c)) {}
   expression_ref(const String& s):expression_ref(new expression(s)) {}
 };
+
+inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
+{
+  if (E.ptr())
+    return o<<E.ptr()->print();
+  else
+    return o<<"[NULL]";
+}
+
 
 template <typename T>
 object_ptr<const T> is_a(const expression& E)
@@ -520,16 +556,16 @@ std::valarray<T> get_varray(const expression_ref& E)
   if (not E)
     return std::valarray<T>();
 
-  if (not E->size())
+  if (not E.size())
   {
     std::valarray<T> v2(1);
     v2[0] = *assert_is_a<U>(E);
     return v2;
   }
 
-  std::valarray<T> v2(E->size());
+  std::valarray<T> v2(E.size());
   for(int i=0;i<v2.size();i++)
-    v2[i] = *assert_is_a<U>(E->sub[i]);
+    v2[i] = *assert_is_a<U>(E.sub()[i]);
   return v2;
 }
 
@@ -539,16 +575,16 @@ std::vector<T> get_vector(const expression_ref& E)
   if (not E)
     return std::vector<T>();
 
-  if (not E->size())
+  if (not E.size())
   {
     std::vector<T> v2(1);
     v2[0] = *assert_is_a<U>(E);
     return v2;
   }
     
-  std::vector<T> v2(E->size());
+  std::vector<T> v2(E.size());
   for(int i=0;i<v2.size();i++)
-    v2[i] = *assert_is_a<U>(E->sub[i]);
+    v2[i] = *assert_is_a<U>(E.sub()[i]);
   return v2;
 }
 

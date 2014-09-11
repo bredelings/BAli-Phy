@@ -46,8 +46,7 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 
 extern "C" closure builtin_function_arraySize(OperationArgs& Args)
 {
-  object_ptr<const expression> A = convert<const expression>( Args.evaluate_slot_to_closure(0).exp );
-  int N = A->sub.size()-1;
+  int N = Args.evaluate_slot_to_closure(0).exp.size() - 1;
 
   return Int(N);
 }
@@ -58,8 +57,8 @@ extern "C" closure builtin_function_getIndex(OperationArgs& Args)
   // Do this second, so that evaluation of the 1st argument can't call expand_memory afterwards.
   const closure& C = Args.evaluate_slot_to_closure(0);
 
-  int N = C.exp->size();
-  assert(C.Env.size() == C.exp->size());
+  int N = C.exp.size();
+  assert(C.Env.size() == C.exp.size());
 
   if (n < 0 or n >= N)
     throw myexception()<<"Trying to access index "<<n<<" in array of size "<<N<<".";

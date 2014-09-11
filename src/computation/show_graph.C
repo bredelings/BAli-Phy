@@ -128,15 +128,15 @@ void reg_heap::find_all_regs_in_context(int t, bool keep_identifiers, vector<int
 // Here we have handled neither depths, nor trim.
 expression_ref subst_referenced_vars(const expression_ref& E, const vector<int>& Env, const map<int, expression_ref>& names)
 {
-  if (E->size())
+  if (E.size())
   {
     bool different = false;
-    object_ptr<expression> E2 ( new expression(E->head) );
-    E2->sub.resize(E->size());
-    for(int i=0;i<E->size();i++)
+    object_ptr<expression> E2 ( new expression(E.head()) );
+    E2->sub.resize(E.size());
+    for(int i=0;i<E.size();i++)
     {
-      E2->sub[i] = subst_referenced_vars(E->sub[i], Env, names);
-      if (E2->sub[i] != E->sub[i])
+      E2->sub[i] = subst_referenced_vars(E.sub()[i], Env, names);
+      if (E2->sub[i].ptr() != E.sub()[i].ptr())
 	different = true;
     }
     if (different)
@@ -242,7 +242,7 @@ string wrap(const string& s, int w)
 
 expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& ids)
 {
-  if (not E->size())
+  if (not E.size())
   {
     if (object_ptr<const reg_var> RV = is_a<reg_var>(E))
     {
@@ -256,8 +256,8 @@ expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& 
       return E;
   }
 
-  object_ptr<expression> V = E->clone();
-  for(int i=0;i<E->size();i++)
+  object_ptr<expression> V = E.ptr()->clone();
+  for(int i=0;i<E.size();i++)
     V->sub[i] = untranslate_vars(V->sub[i], ids);
   return V;
 }
@@ -311,9 +311,9 @@ map<int,string> get_constants(const reg_heap& C, int t)
 
     if (is_modifiable(C.access(R).C.exp)) continue;
 
-    if (C.access(R).C.exp->size() == 0)
+    if (C.access(R).C.exp.size() == 0)
     {
-      string name = C.access(R).C.exp->print();
+      string name = C.access(R).C.exp.print();
       if (name.size() < 20)
 	constants[R] = name;
     }
@@ -375,7 +375,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     expression_ref F = C.access(R).C.exp;
 
     bool print_record = false;
-    if (F->head->type() == operation_type or F->head->type() == constructor_type)
+    if (F.head()->type() == operation_type or F.head()->type() == constructor_type)
     {
       if (not is_a<Case>(F) and not is_a<Apply>(F))
       {
@@ -396,10 +396,10 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       label = escape(label);
 
       label += " |";
-      label += escape(F->head->print());
-      for(const expression_ref& E: F->sub)
+      label += escape(F.head()->print());
+      for(const expression_ref& E: F.sub())
       {
-	int index = assert_is_a<index_var>(E)->index;
+	int index = E.assert_is_a<index_var>()->index;
 	int R2 = C.access(R).C.lookup_in_env( index );
 	targets.push_back(R2);
 
@@ -416,7 +416,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	label += "| <" + convertToString(R2) + "> " + escape(reg_name) + " ";
       }
     }
-    else if (F->head->type() == index_var_type)
+    else if (F.head()->type() == index_var_type)
     {
       int index = assert_is_a<index_var>(F)->index;
 
@@ -436,7 +436,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	
       //      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names));
       //      E = map_symbol_names(E, simplify);
-      //      label += E->print();
+      //      label += E.print();
       label = escape(wrap(label,40));
     }
     else
@@ -445,7 +445,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
       E = map_symbol_names(E, simplify);
 
-      label += E->print();
+      label += E.print();
       label = escape(wrap(label,40));
     }
 
@@ -459,7 +459,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       o<<",fillcolor=\"#007700\",fontcolor=white";
     else if (C.reg_is_changeable(R))
       o<<",fillcolor=\"#770000\",fontcolor=white";
-    else if (C.access(R).C.exp->head->type() == index_var_type)
+    else if (C.access(R).C.exp.head()->type() == index_var_type)
       o<<",fillcolor=\"#77bbbb\"";
     else if (C.reg_is_constant(R))
       o<<",fillcolor=\"#bbbb77\"";

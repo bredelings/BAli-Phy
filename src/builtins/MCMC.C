@@ -37,15 +37,15 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
   int next_reg = Args.reg_for_slot(1);
   const closure* top = &M.lazy_evaluate(next_reg, c);
-  while(top->exp->size())
+  while(top->exp.size())
   {
     assert(is_exactly(top->exp,":"));
-    assert(top->exp->size() == 2);
+    assert(top->exp.size() == 2);
 
-    int element_index = assert_is_a<index_var>(top->exp->sub[0])->index;
+    int element_index = assert_is_a<index_var>(top->exp.sub()[0])->index;
     int element_reg = top->lookup_in_env( element_index );
 
-    int next_index = assert_is_a<index_var>(top->exp->sub[1])->index;
+    int next_index = assert_is_a<index_var>(top->exp.sub()[1])->index;
     next_reg = top->lookup_in_env( next_index );
 
     // evaluate the list element in token 0
@@ -60,7 +60,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
   //------------- 2. Figure out t and the next t ------------//
 
-  int x1 = *convert<const Int>(M.lazy_evaluate(R_X, c).exp->head);
+  int x1 = *convert<const Int>(M.lazy_evaluate(R_X, c).exp.head());
   int x2 = x1 + 1;
   if (uniform() < 0.5)
   {

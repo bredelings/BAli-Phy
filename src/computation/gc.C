@@ -37,7 +37,7 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
 
   const closure& C = M.access(r).C;
 
-  if (not C.exp or C.exp->head->type() != index_var_type)
+  if (not C.exp or C.exp.head()->type() != index_var_type)
   {
     remap[r] = r;
     return;

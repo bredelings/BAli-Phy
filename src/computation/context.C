@@ -90,7 +90,7 @@ closure context::lazy_evaluate(int index) const
 /// Return the value of a particular index, computing it if necessary
 object_ref context::evaluate(int index) const
 {
-  return lazy_evaluate(index).exp->head;
+  return lazy_evaluate(index).exp.head();
 }
 
 /// Return the value of a particular index, computing it if necessary
@@ -128,9 +128,9 @@ object_ref context::evaluate_expression_(closure&& C,bool ec) const
   expression_ref result = lazy_evaluate_expression_(std::move(C),ec).exp;
 #ifndef NDEBUG
   if (is_a<lambda2>(result))
-    throw myexception()<<"Evaluating lambda as object: "<<result->print();
+    throw myexception()<<"Evaluating lambda as object: "<<result.print();
 #endif
-  return result->head;
+  return result.head();
 }
 
 closure context::lazy_evaluate_expression(const expression_ref& E, bool ec) const
@@ -206,8 +206,8 @@ void context::set_modifiable_value_(int index, closure&& C)
 
 void context::set_modifiable_value(int index, const expression_ref& O)
 {
-  object_ref v = O->head;
-  assert(not O->size());
+  object_ref v = O.head();
+  assert(not O.size());
   assert(not dynamic_pointer_cast<const index_var>(v));
   assert(not dynamic_pointer_cast<const reg_var>(v));
   assert(not dynamic_pointer_cast<const identifier>(v));
@@ -216,8 +216,8 @@ void context::set_modifiable_value(int index, const expression_ref& O)
 
 void context::set_parameter_value(int index, const expression_ref& O)
 {
-  object_ref v = O->head;
-  assert(not O->size());
+  object_ref v = O.head();
+  assert(not O.size());
   assert(not dynamic_pointer_cast<const index_var>(v));
   assert(not dynamic_pointer_cast<const reg_var>(v));
   assert(not dynamic_pointer_cast<const identifier>(v));

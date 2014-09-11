@@ -7,13 +7,13 @@ using std::string;
 
 void closure::clear()
 {
-  exp.reset();
+  exp.clear();
   Env.clear();
 }
 
 string closure::print() const
 {
-  string result = exp->print();
+  string result = exp.print();
   if (Env.size())
     result += " {" + join(Env,", ") + "}";
   return result;
@@ -27,12 +27,12 @@ closure get_trimmed(const closure& C)
 
 closure get_trimmed(closure&& C)
 {
-  if (C.exp->head->type() == trim_type)
+  if (C.exp.head()->type() == trim_type)
   {
     expression_ref old = C.exp;
-    const vector<int>& keep = *assert_is_a<Vector<int>>(old->sub[0]);
+    const vector<int>& keep = *assert_is_a<Vector<int>>(old.sub()[0]);
 
-    C.exp = C.exp->sub[1];
+    C.exp = C.exp.sub()[1];
 
     // Since environments are indexed backwards
     for(int i=0;i<keep.size();i++)

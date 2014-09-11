@@ -98,7 +98,7 @@ expression_ref move_lets(bool scope, const expression_ref E,
 
     /******************** alpha-rename E -> EE ********************/
     
-    object_ptr<expression> EE ( E->clone() );                  // Make a copy of E that we can alpha-rename.
+    object_ptr<expression> EE ( E.ptr()->clone() );                  // Make a copy of E that we can alpha-rename.
     
     for(int index: unbound_indices)
     {
@@ -120,8 +120,8 @@ expression_ref move_lets(bool scope, const expression_ref E,
     {
 #ifndef NDEBUG
       // Check that we aren't duplicating any variables in the higher-level environment
-      for(int j=0;j<vars.size();j++)
-	assert(not includes(vars, E_vars[index]));
+      //      for(int j=0;j<vars.size();j++)
+      //	assert(not includes(vars, E_vars[index]));
 #endif
       vars.push_back(E_vars[index]);
       bodies.push_back(E_bodies[index]);
@@ -200,7 +200,7 @@ expression_ref let_float(const expression_ref& E)
 
   // 1. Dummy variable
   // 2. Literal constants.  Treat as 0-arg constructor.
-  if (not E->size()) return E;
+  if (not E.size()) return E;
   
   set<dummy> free_in_E = get_free_indices(E);
 
@@ -214,10 +214,10 @@ expression_ref let_float(const expression_ref& E)
   if (object_ptr<const lambda> L = is_a<lambda>(E))
   {
     // Find the new let-bound set.
-    dummy D = *assert_is_a<dummy>(E->sub[0]);
+    dummy D = *assert_is_a<dummy>(E.sub()[0]);
 
     // First float lets in sub-expressions
-    expression_ref M = let_float(E->sub[1]);
+    expression_ref M = let_float(E.sub()[1]);
 
     // Determine the bound indices
     set<dummy> bound;
@@ -294,13 +294,13 @@ expression_ref let_float(const expression_ref& E)
   else if (object_ptr<const Operator> O =  is_a<Operator>(E))
   {
     // First float lets in sub-expressions
-    object_ptr<expression> V ( E->clone() );
+    object_ptr<expression> V ( E.ptr()->clone() );
     
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     
     // Move lets from arguments into (vars,bodies)
-    for(int i=0;i<E->size();i++)
+    for(int i=0;i<E.size();i++)
     {
       V->sub[i] = let_float(V->sub[i]);
       V->sub[i] = move_lets(true, V->sub[i], vars, bodies, set<dummy>(), free_in_E);

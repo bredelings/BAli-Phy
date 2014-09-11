@@ -39,7 +39,7 @@ bool operator==(const symbol_info&S1, const symbol_info& S2)
 {
   return (S1.name == S2.name) and (S1.symbol_type == S2.symbol_type) and (S1.scope == S2.scope) and
     (S1.arity == S2.arity) and (S1.precedence == S2.precedence) and (S1.fixity == S2.fixity) and
-    (S1.body == S2.body) and (S1.type == S2.type);
+    (S1.body.ptr() == S2.body.ptr()) and (S1.type.ptr() == S2.type.ptr());
 }
 
 bool operator!=(const symbol_info&S1, const symbol_info& S2)
@@ -163,7 +163,7 @@ void Module::add_impdecl(const expression_ref& impdecl)
 {
   vector<expression_ref> sub;
   if (impdecls)
-    sub = impdecls->sub;
+    sub = impdecls.sub();
   sub.push_back(impdecl);
   impdecls = {AST_node("impdecls"),sub};
 }
@@ -215,13 +215,13 @@ std::set<std::string> Module::dependencies() const
   
   set<string> module_names;
 
-  for(const auto& impdecl:impdecls->sub)
+  for(const auto& impdecl:impdecls.sub())
   {
     int i=0;
-    bool qualified = *impdecl->sub[0].is_a<String>() == "qualified";
+    bool qualified = *impdecl.sub()[0].is_a<String>() == "qualified";
     if (qualified) i++;
 
-    string imp_module_name = *impdecl->sub[i++].is_a<String>();
+    string imp_module_name = *impdecl.sub()[i++].is_a<String>();
     module_names.insert(imp_module_name);
   }
 
@@ -235,15 +235,15 @@ void Module::resolve_symbols(const std::vector<Module>& P)
 
   bool saw_Prelude = false;
   if (impdecls)
-    for(const auto& impdecl:impdecls->sub)
+    for(const auto& impdecl:impdecls.sub())
     {
       int i=0;
-      bool qualified = *impdecl->sub[0].is_a<String>() == "qualified";
+      bool qualified = *impdecl.sub()[0].is_a<String>() == "qualified";
       if (qualified) i++;
     
-      string imp_module_name = *impdecl->sub[i++].is_a<String>();
+      string imp_module_name = *impdecl.sub()[i++].is_a<String>();
       
-      assert(i == impdecl->sub.size());
+      assert(i == impdecl.sub().size());
       
       Module M = find_module(imp_module_name,P);
 
@@ -265,7 +265,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
   expression_ref decls = desugar(*this,topdecls);
   
   // 2. Convert top-level dummies into global vars, in both decls AND notes.
-  vector<expression_ref> decls_sub = decls->sub;
+  vector<expression_ref> decls_sub = decls.sub();
   for(auto& decl: decls_sub)
     for(auto& p: symbols)
     {
@@ -284,8 +284,8 @@ void Module::resolve_symbols(const std::vector<Module>& P)
   for(const auto& decl: decls_sub)
     if (is_AST(decl,"Decl"))
     {
-      string name = decl->sub[0].assert_is_a<identifier>()->name;
-      symbols.at(name).body = decl->sub[1];
+      string name = decl.sub()[0].assert_is_a<identifier>()->name;
+      symbols.at(name).body = decl.sub()[1];
     }
 }
 
@@ -295,16 +295,16 @@ void Module::load_builtins(const module_loader& L)
 
   if (not topdecls) return;
 
-  for(const auto& decl: topdecls->sub)
+  for(const auto& decl: topdecls.sub())
     if (is_AST(decl,"Builtin"))
     {
-      string function_name = *decl->sub[0].assert_is_a<String>();
-      int n = *decl->sub[1].assert_is_a<Int>();
-      string symbol_name = *decl->sub[2].assert_is_a<String>();
+      string function_name = *decl.sub()[0].assert_is_a<String>();
+      int n = *decl.sub()[1].assert_is_a<Int>();
+      string symbol_name = *decl.sub()[2].assert_is_a<String>();
       string plugin_name = symbol_name;
 
-      if (decl->sub.size() > 3)
-	plugin_name = *decl->sub[3].assert_is_a<String>();
+      if (decl.sub().size() > 3)
+	plugin_name = *decl.sub()[3].assert_is_a<String>();
 
       function_name = lookup_symbol(function_name).name;
 
@@ -391,11 +391,11 @@ void parse_combinator_application(const expression_ref& E, string& name, vector<
   assert_is_a<Apply>(E);
   
   // 1. Find the head.  This should be a var, not an apply.
-  object_ptr<const identifier> V = assert_is_a<identifier>(E->sub[0]);
+  object_ptr<const identifier> V = assert_is_a<identifier>(E.sub()[0]);
 
   // 2. Look through the arguments
-  for(int i=1;i<E->size();i++)
-    patterns.push_back(E->sub[i]);
+  for(int i=1;i<E.size();i++)
+    patterns.push_back(E.sub()[i]);
 
   if (not V)
     throw myexception()<<"Combinator definition '"<<E<<"' does not start with variable!";
@@ -578,19 +578,19 @@ string get_function_name(const expression_ref& E)
 {
   if (is_AST(E,"funlhs1"))
   {
-    expression_ref f = E->sub[0];
+    expression_ref f = E.sub()[0];
     assert(is_AST(f,"id"));
 
     return f.assert_is_a<AST_node>()->value;
   }
   else if (is_AST(E,"funlhs2"))
   {
-    expression_ref f = E->sub[1];
+    expression_ref f = E.sub()[1];
     assert(is_AST(f,"id"));
     return f.assert_is_a<AST_node>()->value;
   }
   else if (is_AST(E,"funlhs3"))
-    return get_function_name(E->sub[0]);
+    return get_function_name(E.sub()[0]);
   std::abort();
 }
 
@@ -609,21 +609,21 @@ Module& Module::operator+=(const expression_ref& E)
     module = E;
 
     // 1. module = [optional name] + body
-    if (module->sub.size() == 1)
-      body = module->sub[0];
+    if (module.sub().size() == 1)
+      body = module.sub()[0];
     else
     {
-      string module_name2 = *module->sub[0].is_a<String>();
+      string module_name2 = *module.sub()[0].is_a<String>();
       if (not name.empty() and name != module_name2)
 	throw myexception()<<"Overwriting module name '"<<name<<"' with '"<<module_name2<<"'";
       name = module_name2;
 
-      body = module->sub[1];
+      body = module.sub()[1];
     }
     assert(is_AST(body,"Body"));
 
     // 2. body = impdecls + [optional topdecls]
-    for(const auto& E: body->sub)
+    for(const auto& E: body.sub())
       if (is_AST(E,"TopDecls"))
 	topdecls = E;
       else if (is_AST(E,"impdecls"))
@@ -632,19 +632,19 @@ Module& Module::operator+=(const expression_ref& E)
     // 3. Do imports.
     if (impdecls)
     {
-      for(const auto& impdecl:impdecls->sub)
+      for(const auto& impdecl:impdecls.sub())
       {
 	int i=0;
-	bool qualified = *impdecl->sub[0].is_a<String>() == "qualified";
+	bool qualified = *impdecl.sub()[0].is_a<String>() == "qualified";
 	if (qualified) i++;
 
-	string imp_module_name = *impdecl->sub[i++].is_a<String>();
+	string imp_module_name = *impdecl.sub()[i++].is_a<String>();
 
 	string imp_module_name_as = imp_module_name;
-	if (i < impdecl->sub.size() and *impdecl->sub[i++].is_a<String>() == "as")
-	  imp_module_name_as = *impdecl->sub[i++].is_a<String>();
+	if (i < impdecl.sub().size() and *impdecl.sub()[i++].is_a<String>() == "as")
+	  imp_module_name_as = *impdecl.sub()[i++].is_a<String>();
 
-	assert(i == impdecl->sub.size());
+	assert(i == impdecl.sub().size());
       }
     }
 
@@ -657,11 +657,11 @@ Module& Module::operator+=(const expression_ref& E)
   assert(is_AST(decls,"Decls") or is_AST(decls,"TopDecls"));
 
   // 0. Get names that are being declared.
-  for(const auto& decl: decls->sub)
+  for(const auto& decl: decls.sub())
     if (is_AST(decl,"FixityDecl"))
     {
       // Determine fixity.
-      string f = *decl->sub[0].assert_is_a<String>();
+      string f = *decl.sub()[0].assert_is_a<String>();
       fixity_t fixity = unknown_fix;
       if (f == "infixl")
 	fixity = left_fix;
@@ -674,11 +674,11 @@ Module& Module::operator+=(const expression_ref& E)
 
       // Determine precedence.
       int precedence = 9;
-      if (decl->sub.size() == 3)
-	precedence = *decl->sub[1].assert_is_a<Int>();
+      if (decl.sub().size() == 3)
+	precedence = *decl.sub()[1].assert_is_a<Int>();
 
       // Find op names and declare fixity and precedence.
-      for(const auto& op: decl->sub.back()->sub)
+      for(const auto& op: decl.sub().back().sub())
       {
 	string name = *op.assert_is_a<String>();
 	declare_fixity(name, precedence, fixity);
@@ -686,7 +686,7 @@ Module& Module::operator+=(const expression_ref& E)
     }
     else if (is_AST(decl,"Decl"))
     {
-      expression_ref lhs = decl->sub[0];
+      expression_ref lhs = decl.sub()[0];
       set<string> vars;
       if (is_AST(lhs,"funlhs1") or is_AST(lhs,"funlhs2") or is_AST(lhs,"funlhs3"))
 	vars.insert( get_function_name(lhs) );
@@ -712,26 +712,26 @@ Module& Module::operator+=(const expression_ref& E)
     }
     else if (is_AST(decl,"Builtin"))
     {
-      string bname = *decl->sub[0].assert_is_a<String>();
+      string bname = *decl.sub()[0].assert_is_a<String>();
       def_function(bname,{});
     }
     else if (is_AST(decl,"Decl:data"))
     {
-      if (decl->sub.size() >= 2)
+      if (decl.sub().size() >= 2)
       {
-	expression_ref constrs = decl->sub[1];
+	expression_ref constrs = decl.sub()[1];
 	assert(is_AST(constrs,"constrs"));
-	for(const auto& constr: constrs->sub)
+	for(const auto& constr: constrs.sub())
 	{
 	  if (is_AST(constr,"constr"))
 	  {
-	    string name = *constr->sub[0].is_a<String>();
-	    int arity = constr->sub.size() - 1;
+	    string name = *constr.sub()[0].is_a<String>();
+	    int arity = constr.sub().size() - 1;
 	    def_constructor(name,arity);
 	  }
 	  else if (is_AST(constr,"constr_op"))
 	  {
-	    string name = *constr->sub[1].is_a<String>();
+	    string name = *constr.sub()[1].is_a<String>();
 	    int arity = 2;
 	    def_constructor(name,arity);
 	  }
@@ -748,7 +748,7 @@ Module& Module::operator+=(const expression_ref& E)
 
   // This means that operator::+=() can only be called once with a module, and once without.
   // \todo FIXME:cleanup - Make this part of the function body then, and allow constructing the module from it.
-  assert(decls == topdecls);
+  assert(decls.ptr() == topdecls.ptr());
 
   return *this;
 }
@@ -885,10 +885,10 @@ expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
   }
 
   // Other constants have no parts, and don't need to be resolved
-  if (not E->size()) return E;
+  if (not E.size()) return E;
 
   // Resolve the parts of the expression
-  object_ptr<expression> V ( new expression(*E) );
+  object_ptr<expression> V ( new expression(*E.ptr()) );
   for(int i=0;i<V->size();i++)
     V->sub[i] = resolve_refs(P, V->sub[i]);
 

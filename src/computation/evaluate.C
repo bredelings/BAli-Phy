@@ -20,12 +20,12 @@ map<int,string> get_constants(const reg_heap& C, int t);
 
 void throw_reg_exception(reg_heap& M, int R, myexception& e)
 {
-  string SS  = compact_graph_expression(M, R, M.get_identifiers())->print();
+  string SS  = compact_graph_expression(M, R, M.get_identifiers()).print();
   string SSS = unlet(untranslate_vars(
 				      untranslate_vars(deindexify(trim_unnormalize(M.access(R).C)), M.get_identifiers()),
 				      get_constants(M,0)
 				      )
-		     )->print();
+		     ).print();
   std::ostringstream o;
   o<<"evaluating reg # "<<R<<" (unchangeable): "<<SSS<<"\n\n";
   e.prepend(o.str());
@@ -178,7 +178,7 @@ int reg_heap::incremental_evaluate(int R)
 #endif
 
 #ifndef NDEBUG
-  //  if (not reg_has_result(R)) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
+  //  if (not reg_has_result(R)) std::cerr<<"Statement: "<<R<<":   "<<access(R).E.print()<<std::endl;
 #endif
 
   while (1)
@@ -186,7 +186,7 @@ int reg_heap::incremental_evaluate(int R)
     assert(access(R).C.exp);
 
 #ifndef NDEBUG
-    //    std::cerr<<"   statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
+    //    std::cerr<<"   statement: "<<R<<":   "<<access(R).E.print()<<std::endl;
 #endif
 
     reg::type_t reg_type = access(R).type;
@@ -228,7 +228,7 @@ int reg_heap::incremental_evaluate(int R)
       assert(reg_type == reg::type_t::unknown);
 
     /*---------- Below here, there is no call, and no result. ------------*/
-    const int type = access(R).C.exp->head->type();
+    const int type = access(R).C.exp.head()->type();
     if (type == index_var_type)
     {
       assert( not reg_is_changeable(R) );
@@ -263,7 +263,7 @@ int reg_heap::incremental_evaluate(int R)
 #ifndef NDEBUG
     else if (is_a<Trim>(access(R).C.exp))
       std::abort();
-    else if (access(R).C.exp->head->type() == parameter_type)
+    else if (access(R).C.exp.head()->type() == parameter_type)
       std::abort();
 #endif
 
@@ -286,9 +286,9 @@ int reg_heap::incremental_evaluate(int R)
 
 #ifdef DEBUG_MACHINE
       string SS = "";
-      SS = compact_graph_expression(*this, R, get_identifiers())->print();
+      SS = compact_graph_expression(*this, R, get_identifiers()).print();
       string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
-				    get_identifiers())->print();
+				    get_identifiers()).print();
       if (log_verbose)
 	dot_graph_for_token(*this, t);
 #endif
@@ -426,7 +426,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
       assert(reg_type == reg::type_t::unknown);
 
     /*---------- Below here, there is no call, and no result. ------------*/
-    const int type = access(R).C.exp->head->type();
+    const int type = access(R).C.exp.head()->type();
     if (type == index_var_type)
     {
       access(R).type = reg::type_t::index_var;
@@ -451,7 +451,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
 #ifndef NDEBUG
     else if (is_a<Trim>(access(R).C.exp))
       std::abort();
-    else if (access(R).C.exp->head->type() == parameter_type)
+    else if (access(R).C.exp.head()->type() == parameter_type)
       std::abort();
 #endif
 
@@ -465,9 +465,9 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
 
 #ifdef DEBUG_MACHINE
       string SS = "";
-      SS = compact_graph_expression(*this, R, get_identifiers())->print();
+      SS = compact_graph_expression(*this, R, get_identifiers()).print();
       string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
-				    get_identifiers())->print();
+				    get_identifiers()).print();
       if (log_verbose)
 	dot_graph_for_token(*this, 0);
 #endif

@@ -199,7 +199,7 @@ map<string,string> get_simplified_names(const set<string>& names)
 
 expression_ref map_symbol_names(const expression_ref& E, const std::map<string,string>& simplify)
 {
-  if (not E->size())
+  if (not E.size())
   {
     if (auto V = is_a<identifier>(E))
     {
@@ -213,8 +213,8 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<string,s
       return E;
   }
 
-  object_ptr<expression> V = E->clone();
-  for(int i=0;i<E->size();i++)
+  object_ptr<expression> V = E.ptr()->clone();
+  for(int i=0;i<E.size();i++)
     V->sub[i] = map_symbol_names(V->sub[i], simplify);
   return V;
 }
