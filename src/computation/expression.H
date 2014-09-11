@@ -335,7 +335,7 @@ struct lambda2: public Object
 
 class expression_ref
 {
-  object_ptr<const expression> E;
+  object_ptr<const Object> O;
 
 public:
   /*
@@ -344,15 +344,38 @@ public:
     return E->maybe_equals(*E2.E);
   }
   */
-  void clear() {E.reset();}
+  void clear() {O.reset();}
 
-  inline const object_ptr<const Object>& head() const {return E->head;}
+  bool is_atomic() const
+  {
+    return not dynamic_cast<const expression*>(O.get());
+  }
+
+  const expression& E() const
+  {
+    assert(not is_atomic());
+    return *dynamic_cast<const expression*>(O.get());
+  }
+
+  inline const object_ptr<const Object>& head() const 
+  {
+    if (is_atomic())
+      return O;
+    else
+      return E().head;
+  }
   //        object_ptr<const Object>& head()       {return E->head;}
 
-  inline const std::vector<expression_ref>& sub() const {return E->sub;}
+  inline const std::vector<expression_ref>& sub() const {return E().sub;}
   //        object_ptr<const Object>& sub()       {return E->sub;}
 
-  inline int size() const {return sub().size();}
+  inline int size() const 
+  {
+    if (is_atomic())
+      return 0;
+    else
+      return sub().size();
+  }
 
   expression_ref operator()(const std::vector<expression_ref>& args) const
   {
@@ -373,30 +396,28 @@ public:
 
   bool is_exactly(const Object& O) const
   {
-    return E->is_exactly(O);
+    return head()->compare(O);
   }
 
-  inline const object_ptr<const expression>& ptr() const {return E;}
+  inline const object_ptr<const Object>& ptr() const {return O;}
 
-  inline explicit operator bool() const {return (bool)E;}
+  inline explicit operator bool() const {return (bool)O;}
 
-  std::string print() const {return E->print();}
+  std::string print() const {return O->print();}
 
-  expression* clone() const {return E->clone();}
-
-  expression* clone_expression() const {return E->clone();}
+  expression* clone_expression() const {return E().clone();}
 
   // Default
   expression_ref() {}
 
   // Expression arguments
-  expression_ref(expression* e):E(e) { }
+  expression_ref(expression* e):O(e) { }
 
-  expression_ref(const expression* e):E(e) { }
+  expression_ref(const expression* e):O(e) { }
 
-  expression_ref(const object_ptr<const expression>& e):E(e) { }
+  expression_ref(const object_ptr<const expression>& e):O(e) { }
 
-  expression_ref(const object_ptr<expression>& e):E(e) { }
+  expression_ref(const object_ptr<expression>& e):O(e) { }
 
   // Object arguments
   expression_ref(Object* v):expression_ref(new expression(v)) { }
