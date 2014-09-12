@@ -2123,18 +2123,21 @@ object_ref reg_heap::get_parameter_value_in_context(int p, int c)
 
 const object_ptr<const Object>& reg_heap::get_reg_value_in_context(int& R, int c)
 {
-  //  if (access(R).type == constant) return access(R).C.exp.head();
+  if (access(R).type == reg::type_t::constant) return access(R).C.exp.head();
 
   reroot_at_context(c);
 
-  if (not reg_has_result(R))
+  if (has_computation(R))
   {
-    // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-    if (is_modifiable(access(R).C.exp) and not reg_has_call(R)) return object_ref();
-
-    // If the value needs to be computed (e.g. its a call expression) then compute it.
-    R = incremental_evaluate_in_context(R,c);
+    int R2 = computation_result_for_reg(R);
+    if (R2) return access(R2).C.exp.head();
   }
+
+  // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
+  if (is_modifiable(access(R).C.exp) and not reg_has_call(R)) return object_ref();
+
+  // If the value needs to be computed (e.g. its a call expression) then compute it.
+  R = incremental_evaluate_in_context(R,c);
 
   return access_result_for_reg(R).exp.head();
 }
