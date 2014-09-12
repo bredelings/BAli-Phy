@@ -199,6 +199,7 @@ void computation::clear()
 
   // This should already be cleared.
   assert(temp == -1);
+  assert(flags == 0);
 }
 
 void computation::check_cleared()
@@ -209,6 +210,7 @@ void computation::check_cleared()
   assert(called_by.empty());
   assert(used_by.empty());
   assert(temp == -1);
+  assert(flags == 0);
 }
 
 computation& computation::operator=(computation&& R) noexcept
@@ -221,6 +223,7 @@ computation& computation::operator=(computation&& R) noexcept
   used_by = std::move( R.used_by );
   called_by = std::move( R.called_by );
   temp = R.temp;
+  flags = R.flags;
 
   return *this;
 }
@@ -233,7 +236,8 @@ computation::computation(computation&& R) noexcept
   used_inputs ( std::move(R.used_inputs) ),
   used_by ( std::move( R.used_by) ),
   called_by ( std::move( R.called_by) ),
-  temp ( R.temp )
+  temp ( R.temp ),
+  flags ( R.flags )
 { }
 
 reg& reg::operator=(reg&& R) noexcept

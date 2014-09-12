@@ -35,6 +35,8 @@ struct computation
 
   int temp = -1;
 
+  unsigned flags = 0;
+
   void clear();
 
   void check_cleared();
