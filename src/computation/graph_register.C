@@ -208,6 +208,7 @@ void computation::check_cleared()
   assert(used_inputs.empty());
   assert(called_by.empty());
   assert(used_by.empty());
+  assert(temp == -1);
 }
 
 computation& computation::operator=(computation&& R) noexcept
