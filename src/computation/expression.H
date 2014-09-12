@@ -346,9 +346,14 @@ public:
   */
   void clear() {O.reset();}
 
+  bool is_expression() const
+  {
+    return dynamic_cast<const expression*>(O.get());
+  }
+
   bool is_atomic() const
   {
-    return not dynamic_cast<const expression*>(O.get());
+    return not is_expression();
   }
 
   const expression& E() const
@@ -419,27 +424,21 @@ public:
 
   expression_ref(const object_ptr<expression>& e):O(e) { }
 
-  // Object arguments
-  expression_ref(Object* v):expression_ref(new expression(v)) { }
-
-  expression_ref(const object_ref& o):expression_ref(new expression(o)) { }
-
   expression_ref(const object_ref& o, const std::initializer_list<expression_ref> v):expression_ref(new expression(o,v)) { }
 
   expression_ref(const object_ref& o, const std::vector<expression_ref>& v):expression_ref(new expression(o,v)) { }
 
-  expression_ref(const object_ptr<Object>& v)
-    :expression_ref(new expression(object_ref(v)))
-  {}
+  // Object arguments
+  expression_ref(Object* v):O(v) { }
+
+  expression_ref(const object_ref& o):O(o) { }
+
+  expression_ref(const object_ptr<Object>& v):O(object_ref(v)) { }
 
   template <typename T>
-  expression_ref(const object_ptr<T>& v)
-    :expression_ref(new expression(v))
-  {}
+  expression_ref(const object_ptr<T>& v):O(v) { }
 
-  expression_ref(const Object& o)
-  :expression_ref(new expression(o))
-  {}
+  expression_ref(const Object& o):expression_ref(o.clone()) { }
 
   // Builin-type arguments
   expression_ref(const int& i):expression_ref(new Int(i)) {}
@@ -448,7 +447,7 @@ public:
   expression_ref(const std::string& s);
   expression_ref(const char* s);
   expression_ref(const char& c):expression_ref(new Char(c)) {}
-  expression_ref(const String& s):expression_ref(new expression(s)) {}
+  expression_ref(const String& s):expression_ref(s.clone()) { }
 };
 
 inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)

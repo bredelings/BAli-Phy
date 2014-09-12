@@ -2523,7 +2523,9 @@ expression_ref char_list(const string& s)
 
 expression_ref operator+(const expression_ref& E1, const expression_ref&E2)
 {
-  expression* E3 = E1.clone_expression();
+  expression* E3 = new expression(E1.head());
+  if (not E1.is_atomic())
+    E3->sub = E1.sub();
   E3->sub.push_back(E2);
   return E3;
 }

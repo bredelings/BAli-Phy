@@ -218,8 +218,10 @@ set<string> find_bound_vars(const expression_ref& E)
     }
   }
 
+  if (not E.size()) return set<string>();
+
   set<string> bound;
-  for(const auto& e:E.sub())
+  for(const auto& e: E.sub())
     add(bound, find_bound_vars(e));
 
   return bound;
@@ -235,6 +237,8 @@ set<string> find_all_ids(const expression_ref& E)
       return {n->value};
     }
   }
+
+  if (E.is_atomic()) return set<string>();
 
   set<string> bound;
   for(const auto& e:E.sub())
@@ -435,7 +439,9 @@ expression_ref get_fresh_id(const string& s, const expression_ref& E)
 
 expression_ref desugar(const Module& m, const expression_ref& E, const set<string>& bound)
 {
-  vector<expression_ref> v = E.sub();
+  vector<expression_ref> v;
+  if (E.is_expression())
+    v = E.sub();
       
   if (object_ptr<const AST_node> n = E.is_a<AST_node>())
   {
