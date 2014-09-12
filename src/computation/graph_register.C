@@ -368,6 +368,9 @@ bool mapping::empty() const
 
 void reg_heap::register_probability(int r)
 {
+  mark_completely_dirty(root_token);
+  r = incremental_evaluate(r);
+
   probability_heads.push_back(r);
 
   inc_heads(r);
