@@ -395,7 +395,7 @@ log_double_t reg_heap::probability_for_context(int c)
   for(int r: probability_heads)
   {
     const object_ref& x = get_reg_value_in_context(r, c);
-    log_double_t X = *convert<const Log_Double>(x);
+    log_double_t X = *convert<const Log_Double>(x.get());
     Pr *= X;
   }
   return Pr;
