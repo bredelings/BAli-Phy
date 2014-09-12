@@ -2340,7 +2340,7 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, vector<int>& En
   }
 
   // Other constants have no parts, and don't need to be translated
-  if (not E/size()) return E;
+  if (not E.size()) return E;
 
   // Translate the parts of the expression
   object_ptr<expression> V = E.clone_expression();
