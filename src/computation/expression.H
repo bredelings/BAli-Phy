@@ -336,7 +336,7 @@ struct lambda2: public Object
 class expression_ref
 {
   object_ptr<const Object> O;
-
+  int type = 0;
 public:
   /*
   bool operator==(const expression_ref& E2) const
@@ -344,11 +344,16 @@ public:
     return E->maybe_equals(*E2.E);
   }
   */
-  void clear() {O.reset();}
+  void clear() {O.reset();type=0;}
 
   bool is_expression() const
   {
-    return dynamic_cast<const expression*>(O.get());
+    assert(type > 0);
+#ifndef NDEBUG
+    bool e = dynamic_cast<const expression*>(O.get());
+    assert(e == (type==1));
+#endif
+    return (type == 1);
   }
 
   bool is_atomic() const
@@ -359,7 +364,11 @@ public:
   const expression& E() const
   {
     assert(not is_atomic());
+#ifndef NDEBUG
     return *dynamic_cast<const expression*>(O.get());
+#else
+    return *static_cast<const expression*>(O.get());
+#endif
   }
 
   inline const object_ptr<const Object>& head() const 
@@ -416,27 +425,29 @@ public:
   expression_ref() {}
 
   // Expression arguments
-  expression_ref(expression* e):O(e) { }
+  expression_ref(expression* e):O(e),type(1) { }
 
-  expression_ref(const expression* e):O(e) { }
+  expression_ref(const expression* e):O(e),type(1) { }
 
-  expression_ref(const object_ptr<const expression>& e):O(e) { }
+  expression_ref(const object_ptr<const expression>& e):expression_ref(e.get()) { }
 
-  expression_ref(const object_ptr<expression>& e):O(e) { }
+  expression_ref(const object_ptr<expression>& e):expression_ref(e.get()) { }
 
   expression_ref(const object_ref& o, const std::initializer_list<expression_ref> v):expression_ref(new expression(o,v)) { }
 
   expression_ref(const object_ref& o, const std::vector<expression_ref>& v):expression_ref(new expression(o,v)) { }
 
   // Object arguments
-  expression_ref(Object* v):O(v) { }
+  expression_ref(Object* v):O(v),type(2) { }
 
-  expression_ref(const object_ref& o):O(o) { }
+  expression_ref(const Object* v):O(v),type(2) { }
 
-  expression_ref(const object_ptr<Object>& v):O(object_ref(v)) { }
+  expression_ref(const object_ref& o):expression_ref(o.get()) { }
+
+  expression_ref(const object_ptr<Object>& v):expression_ref(v.get()) { }
 
   template <typename T>
-  expression_ref(const object_ptr<T>& v):O(v) { }
+  expression_ref(const object_ptr<T>& v):expression_ref(v.get()) { }
 
   expression_ref(const Object& o):expression_ref(o.clone()) { }
 
