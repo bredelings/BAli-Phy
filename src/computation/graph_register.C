@@ -2121,7 +2121,7 @@ object_ref reg_heap::get_parameter_value_in_context(int p, int c)
   return get_reg_value_in_context(R, c);
 }
 
-const object_ref& reg_heap::get_reg_value_in_context(int& R, int c)
+const object_ptr<const Object>& reg_heap::get_reg_value_in_context(int& R, int c)
 {
   //  if (access(R).type == constant) return access(R).C.exp.head();
 
