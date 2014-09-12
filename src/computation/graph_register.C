@@ -1118,6 +1118,20 @@ void reg_heap::reroot_at(int t)
   try_release_token(parent);
 }
 
+/*
+ * If parent token's version is greater than its child, this means that there could
+ * be computations in the parent that are shared into the child that should not be.
+ *
+ * This occurs EITHER if we perform computation in the parent, OR of we alter a modifiable
+ * value in the child.  Therefore, we increase the root version (mark_completely_dirty)
+ * before executing in the root token, and decrease the child version when changing its 
+ * modifiable values.
+ *
+ * Computations that are improperly shared into the child have dependencies on computations
+ * in the parent context even though these computations are overridden in the child context.
+ * We detect and invalidate such computations in invalidate_shared_regs( ).
+ */
+
 void reg_heap::mark_completely_dirty(int t)
 {
   int& version = tokens[t].version;
