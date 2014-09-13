@@ -180,9 +180,23 @@ public:
 
   std::vector<int> probability_heads;
 
+  log_double_t total_pr = 1.0;
+
+  int zeros = 0;
+
+  std::vector<int> prs_list;
+
   void register_probability(int r);
 
   int register_probability(closure&& C);
+
+  void dec_probability_for_reg(int r);
+
+  void inc_probability_for_reg(int r);
+
+  void dec_probability(int rc);
+
+  void inc_probability(int rc);
 
   log_double_t probability_for_context(int c);
 

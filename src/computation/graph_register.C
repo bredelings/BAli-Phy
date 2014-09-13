@@ -376,9 +376,24 @@ void reg_heap::register_probability(int r)
   mark_completely_dirty(root_token);
   r = incremental_evaluate(r);
 
-  probability_heads.push_back(r);
+  if (reg_is_constant(r))
+  {
+    log_double_t pr = *convert<const Log_Double>(access(r).C.exp.head().get());
+    total_pr *= pr;
+  }
+  else
+  {
+    assert(reg_is_changeable(r));
 
-  inc_heads(r);
+    int rc = computation_index_for_reg(r);
+    assert(rc > 0);
+
+    probability_heads.push_back(r);
+
+    inc_heads(r);
+
+    prs_list.push_back(r);
+  }
 }
 
 int reg_heap::register_probability(closure&& C)
@@ -387,6 +402,56 @@ int reg_heap::register_probability(closure&& C)
   set_C(r, std::move(C));
   register_probability(r);
   return r;
+}
+
+void reg_heap::inc_probability_for_reg(int r)
+{
+  assert(reg_is_changeable(r));
+  int rc = computation_index_for_reg(r);
+
+  if (rc > 0 and computations[rc].flags) return; // already included
+
+  incremental_evaluate(r);
+  rc = computation_index_for_reg(r);
+
+  inc_probability(rc);
+}
+
+void reg_heap::dec_probability_for_reg(int r)
+{
+  int rc = computation_index_for_reg(r);
+
+  if (rc > 0 and computations[rc].flags)
+    dec_probability(rc);
+}
+
+void reg_heap::inc_probability(int rc)
+{
+  assert(rc > 0);
+  int r2 = computations[rc].result;
+  assert(r2 > 0);
+  log_double_t pr = *convert<const Log_Double>(access(r2).C.exp.head().get());
+
+  if (pr.log() < -1.0e7)
+    zeros++;
+  else
+    total_pr *= pr;
+  computations[rc].flags = 1;
+}
+
+void reg_heap::dec_probability(int rc)
+{
+  assert(rc > 0);
+  int r2 = computations[rc].result;
+  assert(r2 > 0);
+  log_double_t pr = *convert<const Log_Double>(access(r2).C.exp.head().get());
+
+  if (pr.log() < -1.0e7)
+    zeros--;
+  else
+    total_pr /= pr;
+  computations[rc].flags = 0;
+  prs_list.push_back(computations[rc].source_reg);
 }
 
 log_double_t reg_heap::probability_for_context(int c)
@@ -406,6 +471,23 @@ log_double_t reg_heap::probability_for_context(int c)
     log_double_t X = *convert<const Log_Double>(x.get());
     Pr *= X;
   }
+
+  if (not prs_list.empty())
+  {
+    reroot_at_context(c);
+    mark_completely_dirty(root_token);
+
+    for(int r: prs_list)
+      inc_probability_for_reg(r);
+    prs_list.clear();
+  }
+
+  log_double_t Pr2 = total_pr;
+
+  double diff = Pr.log() - Pr2.log();
+  //  std::cerr<<"diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<total_pr<<"  zeros = "<<zeros<<std::endl;
+  assert(zeros or fabs(diff) < 1.0e-6);
+
   return Pr;
 }
 
@@ -856,6 +938,14 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   //  std::cerr<<" result: "<<result_may_be_changed.size()<<"\n";
 
+  if (token == root_token)
+  {
+    for(int r: result_may_be_changed)
+      dec_probability_for_reg(r);
+    for(int r: call_and_result_may_be_changed)
+      dec_probability_for_reg(r);
+  }
+
   // Clear the marks: 1a
   for(int R: result_may_be_changed)
   {
@@ -928,6 +1018,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   }
 #if DEBUG_MACHINE >= 2
   check_used_regs();
+  check_tokens();
 #endif
 }
 
@@ -1095,6 +1186,13 @@ void reg_heap::reroot_at(int t)
   // 4. Invalidate regs in t that reference(d) computations from parent
   assert(tokens[parent].version >= tokens[t].version);
 
+  for(int r: tokens[parent].vm_relative.modified())
+  {
+    int rc = tokens[parent].vm_relative[r];
+    if (rc > 0 and computations[rc].flags)
+      dec_probability(rc);
+  }
+
   invalidate_shared_regs(parent,t);
 
   // Mark this context as not having computations that need to be unshared
@@ -1259,6 +1357,14 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     find_users(t2, t2, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
     find_callers(t2, t2, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
     i = call_and_result_may_be_changed.size();
+  }
+
+  if (t2 == root_token)
+  {
+    for(int r: result_may_be_changed)
+      dec_probability_for_reg(r);
+    for(int r: call_and_result_may_be_changed)
+      dec_probability_for_reg(r);
   }
 
   for(int r:result_may_be_changed)
@@ -1604,6 +1710,9 @@ void reg_heap::check_used_reg(int index) const
 
     int call = call_for_reg_(t,index);
     int result = computation_result_for_reg_(t,index);
+
+    if (computations[computation_index_for_reg_(t,index)].flags)
+      assert(is_root_token(t));
 
     if (result)
       assert(call);
