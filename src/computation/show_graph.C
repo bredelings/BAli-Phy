@@ -397,24 +397,25 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
       label += " |";
       label += escape(F.head()->print());
-      for(const expression_ref& E: F.sub())
-      {
-	int index = E.assert_is_a<index_var>()->index;
-	int R2 = C.access(R).C.lookup_in_env( index );
-	targets.push_back(R2);
-
-	string reg_name = "<" + convertToString(R2) + ">";
-	if (reg_names.count(R2))
+      if (F.is_expression())
+	for(const expression_ref& E: F.sub())
 	{
-	  reg_name = reg_names[R2];
-	  auto loc = simplify.find(reg_name);
-	  if (loc != simplify.end())
-	    reg_name = loc->second;
+	  int index = E.assert_is_a<index_var>()->index;
+	  int R2 = C.access(R).C.lookup_in_env( index );
+	  targets.push_back(R2);
+	  
+	  string reg_name = "<" + convertToString(R2) + ">";
+	  if (reg_names.count(R2))
+	  {
+	    reg_name = reg_names[R2];
+	    auto loc = simplify.find(reg_name);
+	    if (loc != simplify.end())
+	      reg_name = loc->second;
+	  }
+	  else if (constants.count(R2))
+	    reg_name = constants[R2] + " " + reg_name;
+	  label += "| <" + convertToString(R2) + "> " + escape(reg_name) + " ";
 	}
-	else if (constants.count(R2))
-	  reg_name = constants[R2] + " " + reg_name;
-	label += "| <" + convertToString(R2) + "> " + escape(reg_name) + " ";
-      }
     }
     else if (F.head()->type() == index_var_type)
     {
