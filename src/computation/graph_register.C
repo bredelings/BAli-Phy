@@ -1832,6 +1832,15 @@ void reg_heap::clear_computation(int t, int r)
 
 void reg_heap::release_child_token(int t)
 {
+  // clear flags of computations in the root token before destroying the root token!
+  if (t == root_token)
+    for(int r: tokens[root_token].vm_relative.modified())
+    {
+      int rc = tokens[root_token].vm_relative[r];
+      if (rc > 0 and computations[rc].flags)
+	dec_probability(rc);
+    }
+
   destroy_all_computations_in_token(t);
 
   int parent = parent_token(t);
