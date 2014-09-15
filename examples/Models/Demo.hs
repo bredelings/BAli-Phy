@@ -25,9 +25,18 @@ main = do
   x <- iid 10 (normal 0.0 1.0);
   Log "x" x;
  
+  -- Random array indices.
+  -- You can't do this in BUGS: it makes a dynamic graph!
+  c <- iid 10 (categorical (replicate 10 0.1));
+
+  let {w = [x!!(c!!i) | i <- [0..9]]};
+  Log "w" w;
+
+  -- y[i] depends on x[i]
   y <- list [normal (x!!i) 1.0 | i <- [0..9]];
   Log "y" y;
 
+  -- Brownian-bridge-like
   z <- random_walk 0.0 10 (\mu -> normal mu 1.0);
   Log "z" z;
 
