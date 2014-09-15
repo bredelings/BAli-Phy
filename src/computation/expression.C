@@ -755,7 +755,7 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
     {
       assert(not patterns[i].size());
       // Make a new expression so we can add variables to the pattern if its a constructor
-      object_ptr<expression> P = patterns[i].clone_expression();
+      expression_ref P = patterns[i];
       expression_ref& B = bodies[i];
 
       // Find the number of arguments in the constructor
@@ -769,7 +769,7 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
       {
 	dummy d = get_named_dummy(variables2.size());
 	variables2.push_back( d );
-	P->sub.push_back( d );
+	P = P + d;
       }
 
 #ifndef NDEBUG
