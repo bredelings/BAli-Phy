@@ -20,6 +20,7 @@ map<int,string> get_constants(const reg_heap& C, int t);
 
 void throw_reg_exception(reg_heap& M, int R, myexception& e)
 {
+  dot_graph_for_token(M, 0);
   string SS  = compact_graph_expression(M, R, M.get_identifiers()).print();
   string SSS = unlet(untranslate_vars(
 				      untranslate_vars(deindexify(trim_unnormalize(M.access(R).C)), M.get_identifiers()),
