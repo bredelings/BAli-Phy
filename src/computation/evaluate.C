@@ -268,12 +268,6 @@ int reg_heap::incremental_evaluate(int R)
       std::abort();
 #endif
 
-    // If we are not evaluating changeable regs, then we shouldn't even get here.
-    // A modifiable has a result that is not computed by reducing an expression.
-    //       The result must be set.  Therefore, complain if the result is missing.
-    else if (type == modifiable_type)
-      throw myexception()<<"Reg "<<R<<": Modifiable '"<<access(R).C.exp<<"' with no result?! (token = "<<root_token<<"   Changeable = "<<reg_is_changeable(R)<<")";
-
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {

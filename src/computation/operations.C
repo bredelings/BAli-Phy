@@ -256,3 +256,15 @@ std::string Let::name() const {
   return "let";
 }
 
+closure modifiable::operator()(OperationArgs&) const
+{
+  // A modifiable has a result that is not computed by reducing an expression.
+  //       The result must be set.  Therefore, complain if the result is missing.
+
+  throw myexception()<<"Evaluating modifiable with no result.";
+}
+
+string modifiable::name() const 
+{
+  return "modifiable";
+}

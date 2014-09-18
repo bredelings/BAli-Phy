@@ -72,4 +72,23 @@ struct Let: public Operation
   Let():Operation(2) {}
 };
 
+struct modifiable: public Operation
+{
+  modifiable* clone() const {return new modifiable(*this);}
+
+  tribool compare(const Object& o) const
+  {
+    const modifiable* E = dynamic_cast<const modifiable*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const;
+
+  int type() const {return modifiable_type;}
+
+  modifiable():Operation(2) {}
+};
+
 #endif

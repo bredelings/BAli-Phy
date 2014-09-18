@@ -470,16 +470,6 @@ parameter::parameter(const std::string& s)
 {
 }
 
-string modifiable::print() const 
-{
-  return "modifiable";
-}
-
-tribool modifiable::compare(const Object& o) const 
-{
-  return dynamic_cast<const modifiable*>(&o);
-}
-
 string lambda::print() const {
   return "lambda";
 }
