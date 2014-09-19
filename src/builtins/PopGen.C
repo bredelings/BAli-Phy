@@ -227,20 +227,18 @@ double process_allele(int& count, int& total, double theta)
 
 extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Args)
 {
-  // This is the theta = 2*N*mu
+  // 0. This is the theta = 2*N*mu
   const double theta = *Args.evaluate_as<Double>(0);
 
   const int missing = 0;
 
   assert(theta > 0);
 
-  // These are indicators of coalescence
-  object_ptr<const OVector> I_ = Args.evaluate_as<OVector>(1);
-  const vector<object_ref>& I = *I_;
+  // 1. These are indicators of coalescence
+  const vector<object_ref>& I = *Args.evaluate_as<OVector>(1);
 
-  // These are the alleles
-  object_ptr<const OVector> alleles_ = Args.evaluate_as<OVector>(2);
-  const vector<object_ref>& alleles = *alleles_;
+  // 2. These are the alleles
+  const vector<object_ref>& alleles = *Args.evaluate_as<OVector>(2);
 
   // How many times has each allele been seen?
   map<int,int> counts;
@@ -272,19 +270,20 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
     {
       assert(s == 2);
       bool coalesced = ( *convert<const Int>(I[i]) == 1);
+      bool heterozygote = (a1 != a2);
 
       // Heterozygotes coalesce before outbreeding with probability 0.
-      if (a1 != a2 and coalesced)
+      if (heterozygote and coalesced)
       {
 	Pr = 0.0;
 	break;
       }
-      
+
       Pr *= process_allele(counts[a1], total, theta);
-      
+
       // Don't count the second allele if they coalesced.
       if (coalesced) continue;
-      
+
       Pr *= process_allele(counts[a2], total, theta);
     }
   }
