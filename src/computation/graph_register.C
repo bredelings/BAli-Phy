@@ -478,7 +478,7 @@ void reg_heap::dec_probability(int rc)
 
 double id(double x) {return x;}
 
-log_double_t reg_heap::probability_for_context(int c)
+log_double_t reg_heap::probability_for_context_full(int c)
 {
   /*
     This version doesn't really change the amount of time in incremental_evaluate.
@@ -501,6 +501,20 @@ log_double_t reg_heap::probability_for_context(int c)
   }
   log_double_t Pr;
   Pr.log() = log_pr;
+  return Pr;
+}
+
+log_double_t reg_heap::probability_for_context(int c)
+{
+  /*
+    This version doesn't really change the amount of time in incremental_evaluate.
+    However, it drastically increases the amount of time spent in reg_has_result( 30% ),
+    get_reg_value_in_context( 13% ), and probability_for_context( 3% ).
+
+    With those removed, this could be comparable, or even faster.
+  */
+
+  log_double_t Pr = probability_for_context_full(c);
 
   // re-multiply all probabilities
   if (total_error > 1.0e-9)

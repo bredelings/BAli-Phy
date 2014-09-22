@@ -204,6 +204,8 @@ public:
 
   bool inc_probability(int rc);
 
+  log_double_t probability_for_context_full(int c);
+
   log_double_t probability_for_context(int c);
 
   // the list of modifiables
