@@ -504,18 +504,8 @@ log_double_t reg_heap::probability_for_context_full(int c)
   return Pr;
 }
 
-log_double_t reg_heap::probability_for_context(int c)
+log_double_t reg_heap::probability_for_context_diff(int c)
 {
-  /*
-    This version doesn't really change the amount of time in incremental_evaluate.
-    However, it drastically increases the amount of time spent in reg_has_result( 30% ),
-    get_reg_value_in_context( 13% ), and probability_for_context( 3% ).
-
-    With those removed, this could be comparable, or even faster.
-  */
-
-  log_double_t Pr = probability_for_context_full(c);
-
   // re-multiply all probabilities
   if (total_error > 1.0e-9)
   {
@@ -549,6 +539,22 @@ log_double_t reg_heap::probability_for_context(int c)
   }
 
   log_double_t Pr2 = variable_pr*constant_pr*unhandled_pr;
+  return Pr2;
+}
+
+log_double_t reg_heap::probability_for_context(int c)
+{
+  /*
+    This version doesn't really change the amount of time in incremental_evaluate.
+    However, it drastically increases the amount of time spent in reg_has_result( 30% ),
+    get_reg_value_in_context( 13% ), and probability_for_context( 3% ).
+
+    With those removed, this could be comparable, or even faster.
+  */
+
+  log_double_t Pr = probability_for_context_full(c);
+
+  log_double_t Pr2 = probability_for_context_diff(c);
 
   double diff = Pr.log() - Pr2.log();
   // std::cerr<<"diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<variable_pr<<"  zeros = "<<zeros<<"   error = "<<total_error<<std::endl;
