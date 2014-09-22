@@ -274,7 +274,8 @@ int reg_heap::incremental_evaluate(int R)
       if (not has_computation(R))
 	add_shared_computation(root_token, R);
 
-      const Operation& O = *convert<Operation>( access(R).C.exp.ptr().get() );
+      // Incrementing the ref count wastes time, but avoids a crash.
+      object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
 
       // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable result.
       // Therefore, we cannot do "assert(not computation_for_reg(t,R).changeable);" here.
@@ -291,7 +292,7 @@ int reg_heap::incremental_evaluate(int R)
       try
       {
 	RegOperationArgs Args(R, *this);
-	closure result = O(Args);
+	closure result = (*O)(Args);
 	total_reductions++;
 
 	// If the reduction doesn't depend on modifiable, then replace E with the result.
