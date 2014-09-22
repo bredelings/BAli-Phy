@@ -546,7 +546,7 @@ log_double_t reg_heap::probability_for_context(int c)
   log_double_t Pr = probability_for_context_diff(c);
 
 #ifndef NDEBUG  
-  log_double_t Pr = probability_for_context_full(c);
+  log_double_t Pr2 = probability_for_context_full(c);
   double diff = Pr.log() - Pr2.log();
   // std::cerr<<"diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<variable_pr<<"  zeros = "<<zeros<<"   error = "<<total_error<<std::endl;
   assert(zeros or fabs(diff) < 1.0e-6);
