@@ -379,7 +379,7 @@ void reg_heap::register_probability(int r)
   if (reg_is_constant(r))
   {
     log_double_t pr = *convert<const Log_Double>(access(r).C.exp.head().get());
-    total_pr *= pr;
+    constant_pr *= pr;
   }
   else
   {
@@ -404,17 +404,17 @@ int reg_heap::register_probability(closure&& C)
   return r;
 }
 
-void reg_heap::inc_probability_for_reg(int r)
+bool reg_heap::inc_probability_for_reg(int r)
 {
   assert(reg_is_changeable(r));
   int rc = computation_index_for_reg(r);
 
-  if (rc > 0 and computations[rc].flags) return; // already included
+  if (rc > 0 and computations[rc].flags) return true; // already included
 
   incremental_evaluate(r);
   rc = computation_index_for_reg(r);
 
-  inc_probability(rc);
+  return inc_probability(rc);
 }
 
 void reg_heap::dec_probability_for_reg(int r)
@@ -425,18 +425,36 @@ void reg_heap::dec_probability_for_reg(int r)
     dec_probability(rc);
 }
 
-void reg_heap::inc_probability(int rc)
+const double pr_limit = -1.0e17;
+
+bool reg_heap::inc_probability(int rc)
 {
   assert(rc > 0);
   int r2 = computations[rc].result;
   assert(r2 > 0);
   log_double_t pr = *convert<const Log_Double>(access(r2).C.exp.head().get());
 
-  if (pr.log() < -1.0e7)
+  if (pr.log() < pr_limit)
+  {
     zeros++;
-  else
-    total_pr *= pr;
+    computations[rc].flags = 1;
+    return true;
+  }
+
+  log_double_t new_total = variable_pr * pr;
+  log_double_t new_old_total = new_total / pr;
+  double error = std::abs( new_old_total.log() - variable_pr.log());
+
+  if (error > 1.0e-8)
+  {
+    unhandled_pr *= pr;
+    return false;
+  }
+
+  total_error += error;
+  variable_pr  = new_total;
   computations[rc].flags = 1;
+  return true;
 }
 
 void reg_heap::dec_probability(int rc)
@@ -446,13 +464,19 @@ void reg_heap::dec_probability(int rc)
   assert(r2 > 0);
   log_double_t pr = *convert<const Log_Double>(access(r2).C.exp.head().get());
 
-  if (pr.log() < -1.0e7)
+  if (pr.log() < pr_limit)
     zeros--;
   else
-    total_pr /= pr;
+    variable_pr /= pr;
   computations[rc].flags = 0;
-  prs_list.push_back(computations[rc].source_reg);
+
+  int r = computations[rc].source_reg;
+  assert(reg_is_changeable(r));
+  assert(access(r).n_heads > 0);
+  prs_list.push_back(r);
 }
+
+double id(double x) {return x;}
 
 log_double_t reg_heap::probability_for_context(int c)
 {
@@ -464,31 +488,59 @@ log_double_t reg_heap::probability_for_context(int c)
     With those removed, this could be comparable, or even faster.
   */
 
-  log_double_t Pr = 1.0;
+  double log_pr = 0.0;
+  double C = 0.0;
   for(int r: probability_heads)
   {
     const object_ref& x = get_reg_value_in_context(r, c);
     log_double_t X = *convert<const Log_Double>(x.get());
-    Pr *= X;
+    double y = X.log() - C;
+    double t = log_pr + y;
+    C = (t - log_pr) - y;
+    log_pr = t;
+  }
+  log_double_t Pr;
+  Pr.log() = log_pr;
+
+  // re-multiply all probabilities
+  if (total_error > 1.0e-9)
+  {
+    reroot_at_context(c);
+    for(int r: tokens[root_token].vm_relative.modified())
+    {
+      int rc = tokens[root_token].vm_relative[r];
+      if (rc > 0 and computations[rc].flags)
+	dec_probability(rc);
+    }
+    //    std::cerr<<"unwinding all prs: varable_pr = "<<variable_pr<<std::endl;
+    total_error = 0;
+    variable_pr.log() = 0;
   }
 
   if (not prs_list.empty())
   {
+    unhandled_pr.log() = 0.0;
+
     reroot_at_context(c);
     mark_completely_dirty(root_token);
 
-    for(int r: prs_list)
-      inc_probability_for_reg(r);
-    prs_list.clear();
+    int j=0;
+    for(int i=0;i<prs_list.size();i++)
+    {
+      int r = prs_list[i];
+      if (not inc_probability_for_reg(r))
+	prs_list[j++] = r;
+    }
+    prs_list.resize(j);
   }
 
-  log_double_t Pr2 = total_pr;
+  log_double_t Pr2 = variable_pr*constant_pr*unhandled_pr;
 
   double diff = Pr.log() - Pr2.log();
-  //  std::cerr<<"diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<total_pr<<"  zeros = "<<zeros<<std::endl;
+  // std::cerr<<"diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<variable_pr<<"  zeros = "<<zeros<<"   error = "<<total_error<<std::endl;
   assert(zeros or fabs(diff) < 1.0e-6);
 
-  return Pr;
+  return Pr2;
 }
 
 const vector<int>& reg_heap::random_modifiables() const

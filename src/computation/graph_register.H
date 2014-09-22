@@ -180,7 +180,13 @@ public:
 
   std::vector<int> probability_heads;
 
-  log_double_t total_pr = 1.0;
+  log_double_t constant_pr = 1.0;
+
+  log_double_t variable_pr = 1.0;
+
+  log_double_t unhandled_pr = 1.0;
+
+  double total_error = 0.0;
 
   int zeros = 0;
 
@@ -192,11 +198,11 @@ public:
 
   void dec_probability_for_reg(int r);
 
-  void inc_probability_for_reg(int r);
+  bool inc_probability_for_reg(int r);
 
   void dec_probability(int rc);
 
-  void inc_probability(int rc);
+  bool inc_probability(int rc);
 
   log_double_t probability_for_context(int c);
 
