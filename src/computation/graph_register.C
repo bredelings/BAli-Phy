@@ -508,7 +508,7 @@ log_double_t reg_heap::probability_for_context_diff(int c)
       if (rc > 0 and computations[rc].flags)
 	dec_probability(rc);
     }
-    //    std::cerr<<"unwinding all prs: variable_pr = "<<variable_pr<<std::endl;
+    // std::cerr<<"unwinding all prs: variable_pr = "<<variable_pr<<"  error_pr = "<<error_pr<<std::endl;
     assert(variable_pr.log() < 1.0e-6);
     assert(prs_list.size() == probability_heads.size());
     total_error = 0;
