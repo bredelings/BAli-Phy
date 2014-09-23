@@ -537,7 +537,10 @@ log_double_t reg_heap::probability_for_context_diff(int c)
     prs_list.resize(j);
   }
 
-  return variable_pr * constant_pr * unhandled_pr;
+  if (zeros)
+    return log_double_t();
+  else
+    return variable_pr * constant_pr * unhandled_pr;
 }
 
 log_double_t reg_heap::probability_for_context(int c)
