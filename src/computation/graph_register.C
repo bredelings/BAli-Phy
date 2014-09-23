@@ -536,6 +536,7 @@ log_double_t reg_heap::probability_for_context_diff(int c)
 log_double_t reg_heap::probability_for_context(int c)
 {
   log_double_t Pr = probability_for_context_diff(c);
+  // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<variable_pr<<"  unhandled = "<<unhandled_pr<<std::endl;
 
 #ifndef NDEBUG  
   log_double_t Pr2 = probability_for_context_full(c);
