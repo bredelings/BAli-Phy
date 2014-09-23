@@ -425,8 +425,6 @@ void reg_heap::dec_probability_for_reg(int r)
     dec_probability(rc);
 }
 
-const double pr_limit = -1.0e17;
-
 bool reg_heap::inc_probability(int rc)
 {
   assert(rc > 0);
