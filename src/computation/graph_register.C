@@ -431,10 +431,11 @@ bool reg_heap::inc_probability(int rc)
   int r2 = computations[rc].result;
   assert(r2 > 0);
   log_double_t pr = *convert<const Log_Double>(access(r2).C.exp.head().get());
+  pr /= error_pr;
 
   log_double_t new_total = variable_pr * pr;
   log_double_t new_old_total = new_total / pr;
-  double error = std::abs( new_old_total.log() - variable_pr.log());
+  double error = new_old_total.log() - variable_pr.log();
 
   if (error > 1.0e-8)
   {
@@ -442,8 +443,9 @@ bool reg_heap::inc_probability(int rc)
     return false;
   }
 
-  total_error += error;
-  variable_pr  = new_total;
+  total_error += std::abs(error);
+  error_pr.log() = error;
+  variable_pr = new_total;
   computations[rc].flags = 1;
   return true;
 }
@@ -511,6 +513,7 @@ log_double_t reg_heap::probability_for_context_diff(int c)
     assert(prs_list.size() == probability_heads.size());
     total_error = 0;
     variable_pr.log() = 0;
+    error_pr.log() = 0;
   }
 
   if (not prs_list.empty())
@@ -527,7 +530,7 @@ log_double_t reg_heap::probability_for_context_diff(int c)
     prs_list.resize(j);
   }
 
-  return variable_pr * constant_pr * unhandled_pr;
+  return variable_pr * constant_pr * unhandled_pr / error_pr;
 }
 
 log_double_t reg_heap::probability_for_context(int c)

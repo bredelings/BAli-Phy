@@ -186,6 +186,8 @@ public:
 
   log_double_t unhandled_pr = 1.0;
 
+  log_double_t error_pr = 1.0;
+
   double total_error = 0.0;
 
   std::vector<int> prs_list;
