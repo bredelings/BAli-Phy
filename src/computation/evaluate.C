@@ -244,13 +244,10 @@ int reg_heap::incremental_evaluate(int R)
 
       int R2 = access(R).C.lookup_in_env( index );
 
-      int R3 = incremental_evaluate(R2);
+      // Return the end of the index_var chain.
+      // We used to update the index_var to point to the end of the chain.
 
-      // If we point to R3 through an intermediate index_var chain, then change us to point to the end
-      if (R3 != R2 and is_used(R))
-	set_C(R, closure(index_var(0),{R3}));
-
-      return R3;
+      return incremental_evaluate(R2);
     }
 
     // Check for WHNF *OR* heap variables
