@@ -178,10 +178,6 @@ int reg_heap::incremental_evaluate(int R)
     assert(not reg_has_result(R));
 #endif
 
-#ifndef NDEBUG
-  //  if (not reg_has_result(R)) std::cerr<<"Statement: "<<R<<":   "<<access(R).E.print()<<std::endl;
-#endif
-
   while (1)
   {
     assert(access(R).C.exp);
