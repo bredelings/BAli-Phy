@@ -434,13 +434,6 @@ bool reg_heap::inc_probability(int rc)
   assert(r2 > 0);
   log_double_t pr = *convert<const Log_Double>(access(r2).C.exp.head().get());
 
-  if (pr.log() < pr_limit)
-  {
-    zeros++;
-    computations[rc].flags = 1;
-    return true;
-  }
-
   log_double_t new_total = variable_pr * pr;
   log_double_t new_old_total = new_total / pr;
   double error = std::abs( new_old_total.log() - variable_pr.log());
@@ -464,10 +457,7 @@ void reg_heap::dec_probability(int rc)
   assert(r2 > 0);
   log_double_t pr = *convert<const Log_Double>(access(r2).C.exp.head().get());
 
-  if (pr.log() < pr_limit)
-    zeros--;
-  else
-    variable_pr /= pr;
+  variable_pr /= pr;
   computations[rc].flags = 0;
 
   int r = computations[rc].source_reg;
@@ -539,10 +529,7 @@ log_double_t reg_heap::probability_for_context_diff(int c)
     prs_list.resize(j);
   }
 
-  if (zeros)
-    return log_double_t();
-  else
-    return variable_pr * constant_pr * unhandled_pr;
+  return variable_pr * constant_pr * unhandled_pr;
 }
 
 log_double_t reg_heap::probability_for_context(int c)
@@ -552,8 +539,8 @@ log_double_t reg_heap::probability_for_context(int c)
 #ifndef NDEBUG  
   log_double_t Pr2 = probability_for_context_full(c);
   double diff = Pr.log() - Pr2.log();
-  // std::cerr<<"diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<variable_pr<<"  zeros = "<<zeros<<"   error = "<<total_error<<std::endl;
-  assert(zeros or fabs(diff) < 1.0e-6);
+  // std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<variable_pr<<"  unhandled = "<<unhandled_pr<<std::endl;
+  assert(fabs(diff) < 1.0e-6);
 #endif
 
   return Pr;

@@ -188,8 +188,6 @@ public:
 
   double total_error = 0.0;
 
-  int zeros = 0;
-
   std::vector<int> prs_list;
 
   void register_probability(int r);
