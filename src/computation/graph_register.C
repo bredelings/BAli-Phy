@@ -512,13 +512,15 @@ log_double_t reg_heap::probability_for_context_diff(int c)
   // re-multiply all probabilities
   if (total_error > 1.0e-9)
   {
-    for(int r: tokens[root_token].vm_relative.modified())
+    for(int r: probability_heads)
     {
       int rc = tokens[root_token].vm_relative[r];
       if (rc > 0 and computations[rc].flags)
 	dec_probability(rc);
     }
     //    std::cerr<<"unwinding all prs: variable_pr = "<<variable_pr<<std::endl;
+    assert(variable_pr.log() < 1.0e-6);
+    assert(prs_list.size() == probability_heads.size());
     total_error = 0;
     variable_pr.log() = 0;
   }
