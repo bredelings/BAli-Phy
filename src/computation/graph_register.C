@@ -506,10 +506,12 @@ log_double_t reg_heap::probability_for_context_full(int c)
 
 log_double_t reg_heap::probability_for_context_diff(int c)
 {
+  reroot_at_context(c);
+  unhandled_pr.log() = 0.0;
+
   // re-multiply all probabilities
   if (total_error > 1.0e-9)
   {
-    reroot_at_context(c);
     for(int r: tokens[root_token].vm_relative.modified())
     {
       int rc = tokens[root_token].vm_relative[r];
@@ -523,9 +525,6 @@ log_double_t reg_heap::probability_for_context_diff(int c)
 
   if (not prs_list.empty())
   {
-    unhandled_pr.log() = 0.0;
-
-    reroot_at_context(c);
     mark_completely_dirty(root_token);
 
     int j=0;
