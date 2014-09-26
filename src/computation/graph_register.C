@@ -437,7 +437,7 @@ bool reg_heap::inc_probability(int rc)
   log_double_t new_old_total = new_total / pr;
   double error = new_old_total.log() - variable_pr.log();
 
-  if (error > 1.0e-8)
+  if (std::abs(error) > 1.0e-8)
   {
     unhandled_pr *= pr;
     return false;
