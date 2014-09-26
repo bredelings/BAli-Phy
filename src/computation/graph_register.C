@@ -430,26 +430,29 @@ bool reg_heap::inc_probability(int rc)
   assert(rc > 0);
   int r2 = computations[rc].result;
   assert(r2 > 0);
-  log_double_t pr1 = *convert<const Log_Double>(access(r2).C.exp.head().get());
-  log_double_t pr2 = pr1 / error_pr;
+  log_double_t pr = *convert<const Log_Double>(access(r2).C.exp.head().get());
 
-  log_double_t new_total = variable_pr * (pr1 / error_pr);
-  //  if (std::abs(pr1) > std::abs(pr2))
-  //    new_total = (variable_pr / error_pr) * pr1;
-  double error1 = (((new_total / variable_pr) / pr1) * error_pr).log();
-  double error2 = (((new_total / pr1) / variable_pr) * error_pr).log();
-
-  if (std::abs(error1) > 1.0e-8 or std::abs(error2) > 1.0e-8)
+  log_double_t new_total;
+  double error;
+  if (std::abs(pr.log()) > std::abs(variable_pr.log()))
   {
-    unhandled_pr *= pr1;
+    new_total = (variable_pr / error_pr) * pr;
+    error = (((new_total / pr) / variable_pr) * error_pr).log();
+  }
+  else
+  {
+    new_total = variable_pr * (pr / error_pr);
+    error = (((new_total / variable_pr) / pr) * error_pr).log();
+  }
+    
+  if (std::abs(error) > 1.0e-9)
+  {
+    unhandled_pr *= pr;
     return false;
   }
 
-  total_error += std::abs(error1) + std::abs(error2);
-  if (std::abs(error1) > std::abs(error2))
-    error_pr.log() = error1;
-  else
-    error_pr.log() = error2;
+  total_error += std::abs(error);
+  error_pr.log() = error;
   variable_pr = new_total;
   computations[rc].flags = 1;
   return true;
