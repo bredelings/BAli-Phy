@@ -559,7 +559,7 @@ log_double_t reg_heap::probability_for_context(int c)
   log_double_t Pr2 = probability_for_context_full(c);
   double diff = Pr.log() - Pr2.log();
   // std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<variable_pr<<"  unhandled = "<<unhandled_pr<<std::endl;
-  assert(fabs(diff) < 1.0e-6);
+  //  assert(fabs(diff) < 1.0e-6);
 #endif
 
   return Pr;
