@@ -489,10 +489,19 @@ log_double_t reg_heap::probability_for_context_full(int c)
   {
     const auto& x = get_reg_value_in_context(r, c);
     log_double_t X = *convert<const Log_Double>(x.get());
-    double y = X.log() - C;
-    double t = log_pr + y;
-    C = (t - log_pr) - y;
-    log_pr = t;
+
+    if (std::abs(X.log()) > std::abs(log_pr))
+    {
+      double t = (log_pr - C) + X.log();
+      C = ((t - X.log()) - log_pr) + C;
+      log_pr = t;
+    }
+    else
+    {
+      double t = log_pr + (X.log() - C);
+      double C = ((t - log_pr) - X.log()) + C;
+      log_pr = t;
+    }
   }
   log_double_t Pr;
   Pr.log() = log_pr;
