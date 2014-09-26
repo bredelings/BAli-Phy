@@ -433,9 +433,11 @@ bool reg_heap::inc_probability(int rc)
   log_double_t pr1 = *convert<const Log_Double>(access(r2).C.exp.head().get());
   log_double_t pr2 = pr1 / error_pr;
 
-  log_double_t new_total = variable_pr * pr2;
-  double error1 = ((new_total / variable_pr) / pr2).log();
-  double error2 = ((new_total / pr2) / variable_pr).log();
+  log_double_t new_total = variable_pr * (pr1 / error_pr);
+  //  if (std::abs(pr1) > std::abs(pr2))
+  //    new_total = (variable_pr / error_pr) * pr1;
+  double error1 = (((new_total / variable_pr) / pr1) * error_pr).log();
+  double error2 = (((new_total / pr1) / variable_pr) * error_pr).log();
 
   if (std::abs(error1) > 1.0e-8 or std::abs(error2) > 1.0e-8)
   {
