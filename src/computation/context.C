@@ -34,16 +34,6 @@ reg& context::operator[](int i) const {return memory()->access(i);}
 
 void context::set_C(int R, closure&& c) const {memory()->set_C(R,std::move(c));}
 
-int context::incremental_evaluate(int R) const 
-{
-  return memory()->incremental_evaluate_in_context(R, context_index);
-}
-
-int context::incremental_evaluate_unchangeable(int R) const 
-{
-  return memory()->incremental_evaluate_unchangeable(R);
-}
-
 int context::allocate() const {return memory()->allocate();}
 
 closure context::preprocess(const closure& C) const

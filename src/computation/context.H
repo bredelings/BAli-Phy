@@ -196,8 +196,6 @@ public:
 
 protected:  
   void set_C(int R, closure&& c) const;
-  int incremental_evaluate(int R) const;
-  int incremental_evaluate_unchangeable(int R) const;
   int allocate() const;
 
   module_loader loader;
