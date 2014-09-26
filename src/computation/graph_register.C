@@ -430,21 +430,24 @@ bool reg_heap::inc_probability(int rc)
   assert(rc > 0);
   int r2 = computations[rc].result;
   assert(r2 > 0);
-  log_double_t pr = *convert<const Log_Double>(access(r2).C.exp.head().get());
-  pr /= error_pr;
+  log_double_t pr1 = *convert<const Log_Double>(access(r2).C.exp.head().get());
+  log_double_t pr2 = pr1 / error_pr;
 
-  log_double_t new_total = variable_pr * pr;
-  log_double_t new_old_total = new_total / pr;
-  double error = new_old_total.log() - variable_pr.log();
+  log_double_t new_total = variable_pr * pr2;
+  double error1 = ((new_total / variable_pr) / pr2).log();
+  double error2 = ((new_total / pr2) / variable_pr).log();
 
-  if (std::abs(error) > 1.0e-8)
+  if (std::abs(error1) > 1.0e-8 or std::abs(error2) > 1.0e-8)
   {
-    unhandled_pr *= pr;
+    unhandled_pr *= pr1;
     return false;
   }
 
-  total_error += std::abs(error);
-  error_pr.log() = error;
+  total_error += std::abs(error1) + std::abs(error2);
+  if (std::abs(error1) > std::abs(error2))
+    error_pr.log() = error1;
+  else
+    error_pr.log() = error2;
   variable_pr = new_total;
   computations[rc].flags = 1;
   return true;
@@ -508,8 +511,8 @@ log_double_t reg_heap::probability_for_context_diff(int c)
       if (rc > 0 and computations[rc].flags)
 	dec_probability(rc);
     }
-    // std::cerr<<"unwinding all prs: variable_pr = "<<variable_pr<<"  error_pr = "<<error_pr<<std::endl;
-    assert(variable_pr.log() < 1.0e-6);
+    // std::cerr<<"unwinding all prs: total_error = "<<total_error<<" variable_pr = "<<variable_pr<<"  error_pr = "<<error_pr<<"   variable_pr/error_pr = "<<variable_pr/error_pr<<std::endl;
+    assert((variable_pr/error_pr).log() < 1.0e-6);
     assert(prs_list.size() == probability_heads.size());
     total_error = 0;
     variable_pr.log() = 0;
