@@ -437,12 +437,16 @@ bool reg_heap::inc_probability(int rc)
   if (std::abs(pr.log()) > std::abs(variable_pr.log()))
   {
     new_total = (variable_pr / error_pr) * pr;
-    error = (((new_total / pr) / variable_pr) * error_pr).log();
+    volatile double a1 = new_total.log() - pr.log();
+    volatile double a2 = a1 - variable_pr.log();
+    error = a2 + error_pr.log();
   }
   else
   {
     new_total = variable_pr * (pr / error_pr);
-    error = (((new_total / variable_pr) / pr) * error_pr).log();
+    volatile double a1 = new_total.log() - variable_pr.log();
+    volatile double a2 = a1 - pr.log();
+    error = a2 + error_pr.log();
   }
     
   if (std::abs(error) > 1.0e-9)
@@ -493,18 +497,22 @@ log_double_t reg_heap::probability_for_context_full(int c)
     const auto& x = get_reg_value_in_context(r, c);
     log_double_t X = *convert<const Log_Double>(x.get());
 
+    double t;
     if (std::abs(X.log()) > std::abs(log_pr))
     {
-      double t = (log_pr - C) + X.log();
-      C = ((t - X.log()) - log_pr) + C;
-      log_pr = t;
+      t = (log_pr - C) + X.log();
+      volatile double a1 = t - X.log();
+      volatile double a2 = a1 - log_pr;
+      C = a2 + C;
     }
     else
     {
-      double t = log_pr + (X.log() - C);
-      double C = ((t - log_pr) - X.log()) + C;
-      log_pr = t;
+      t = log_pr + (X.log() - C);
+      volatile double a1 = t - log_pr;
+      volatile double a2 = a1 - X.log();
+      C = a2 + C;
     }
+    log_pr = t;
   }
   log_double_t Pr;
   Pr.log() = log_pr;
