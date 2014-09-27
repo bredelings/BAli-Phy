@@ -463,7 +463,7 @@ public:
 
   int incremental_evaluate_in_context(int R, int c);
 
-  int incremental_evaluate(int R);
+  std::pair<int,int> incremental_evaluate(int R);
 
   int incremental_evaluate_unchangeable(int R);
 

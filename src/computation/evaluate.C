@@ -45,14 +45,14 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_reg_no_record(int R2)
   {
-    return memory().incremental_evaluate(R2);
+    return memory().incremental_evaluate(R2).first;
   }
 
   /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
   int evaluate_reg_to_reg(int R2)
   {
     // Compute the result, and follow index_var chains (which are not changeable).
-    int R3 = M.incremental_evaluate(R2);
+    int R3 = M.incremental_evaluate(R2).first;
 
     if (M.reg_is_changeable(R3))
     {
@@ -159,7 +159,7 @@ public:
 
 /// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
-int reg_heap::incremental_evaluate(int R)
+std::pair<int,int> reg_heap::incremental_evaluate(int R)
 {
   assert(is_completely_dirty(root_token));
   assert(is_valid_address(R));
@@ -199,7 +199,7 @@ int reg_heap::incremental_evaluate(int R)
       if (reg_has_call(R))
       {
 	// Evaluate S, looking through unchangeable redirections
-	int call = incremental_evaluate(call_for_reg(R));
+	int call = incremental_evaluate(call_for_reg(R)).first;
 
 	// If computation_for_reg(R).call can be evaluated to refer to S w/o moving through any changable operations, 
 	// then it should be safe to change computation_for_reg(R).call to refer to S, even if R is changeable.
@@ -302,10 +302,10 @@ int reg_heap::incremental_evaluate(int R)
 	{
 	  int r2 = Args.allocate(std::move(result));
 
-	  int r3 = incremental_evaluate(r2);
+	  int r3 = incremental_evaluate(r2).first;
 
 	  set_call(R, r3);
-	  set_computation_result_for_reg( R);
+	  set_computation_result_for_reg(R);
 	}
       }
       catch (myexception& e)
@@ -338,7 +338,7 @@ int reg_heap::incremental_evaluate(int R)
   }
 #endif
 
-  return R;
+  return {R,access_result_for_reg(R)};
 }
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).

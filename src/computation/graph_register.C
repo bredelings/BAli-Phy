@@ -374,7 +374,7 @@ bool mapping::empty() const
 void reg_heap::register_probability(int r)
 {
   mark_completely_dirty(root_token);
-  r = incremental_evaluate(r);
+  r = incremental_evaluate(r).first;
 
   if (reg_is_constant(r))
   {
@@ -2378,7 +2378,7 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
 
   reroot_at_context(c);
   mark_completely_dirty(root_token);
-  R = incremental_evaluate(R);
+  R = incremental_evaluate(R).first;
 
 #if DEBUG_MACHINE >= 2
   check_used_regs();
@@ -2390,7 +2390,7 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
 const closure& reg_heap::lazy_evaluate(int& R)
 {
   mark_completely_dirty(root_token);
-  R = incremental_evaluate(R);
+  R = incremental_evaluate(R).first;
   return access_result_for_reg(R);
 }
 
