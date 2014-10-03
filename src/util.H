@@ -671,4 +671,7 @@ std::ostream& operator<<(std::ostream& o, const std::vector<T>& v)
   
   return o;
 }
+
+std::string sanitize_string(const std::string& s1);
+
 #endif

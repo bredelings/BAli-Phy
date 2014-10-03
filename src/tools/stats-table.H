@@ -95,14 +95,23 @@ void Table<T>::load_file(std::istream& file, int skip, int subsample, int max,
   Table<std::string> t(file, skip, subsample, max, ignore, select);
   names_ = t.names();
 
+  // Create space for the results
   data_.resize(t.n_columns());
   for(int i=0;i<t.n_columns();i++)
-  {
-    auto& col = data_[i];
-    col.resize(t.n_rows());
-    for(int j=0;j<col.size();j++)
-      col[j] = boost::lexical_cast<T>(t.column(i)[j]);
-  }
+    data_[i].resize(t.n_rows());
+
+  for(int row=0;row<t.n_rows();row++)
+    for(int column=0;column<t.n_columns();column++)
+	try{
+	  data_[column][row] = boost::lexical_cast<T>(t.column(column)[row]);
+	}
+	catch (const std::exception& ee)
+	{
+	  for(int i=0;i<t.n_columns();i++)
+	    data_[i].resize(row);
+	  
+	  std::cerr<<"On line "<<row+1<<", column "<<column+1<<": can't convert the following entry to a number:\n '"<<(t.column(column)[row])<<"'\n Skipping rest of file.\n  ";
+	}
 }
 
 template<> void Table<std::string>::load_file(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);

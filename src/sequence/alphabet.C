@@ -28,27 +28,12 @@ using std::string;
 using std::valarray;
 using std::istream;
 
-namespace {
-string sanitize(const string& s1)
-{
-  string s2;
-  for(int i=0;i<s1.size();i++) {
-    char c = s1[i];
-    if (c >=32 and c<= 126)
-      s2 += c;
-    else
-      s2 = s2 + "[" + convertToString((int)c) + "]";
-  }
-  return s2;
-}
-}
-
 bad_letter::bad_letter(const string& l)
-  :myexception(string("Letter '") + sanitize(l) + string("' not in alphabet.")),letter(l)
+  :myexception(string("Letter '") + sanitize_string(l) + string("' not in alphabet.")),letter(l)
 {}
 
 bad_letter::bad_letter(const string& l,const string& name)
-  :myexception(string("Letter '") + sanitize(l) + string("' not in alphabet '") + name + "'."),letter(l)
+  :myexception(string("Letter '") + sanitize_string(l) + string("' not in alphabet '") + name + "'."),letter(l)
 {}
 
 // Legally, we have to define this to give them a location.
@@ -77,7 +62,7 @@ int alphabet::find_letter(const string& l) const {
     if (letter(i)==l)
       return i;
   }
-  throw myexception()<<"Alphabet '"<<name<<"' doesn't contain letter '"<<sanitize(l)<<"'";
+  throw myexception()<<"Alphabet '"<<name<<"' doesn't contain letter '"<<sanitize_string(l)<<"'";
 }
 
 
@@ -92,7 +77,7 @@ int alphabet::find_letter_class(const string& l) const {
     if (letter_class(i)==l)
       return i;
   }
-  throw myexception()<<"Alphabet '"<<name<<"' doesn't contain letter class '"<<sanitize(l)<<"'";
+  throw myexception()<<"Alphabet '"<<name<<"' doesn't contain letter class '"<<sanitize_string(l)<<"'";
 }
 
 int alphabet::operator[](char l) const {
@@ -202,7 +187,7 @@ void alphabet::setup_letter_classes()
 void alphabet::insert_class(const string& l, const bitmask_t& mask) 
 {
   if (includes(letters_,l))
-    throw myexception()<<"Can't use letter name '"<<sanitize(l)<<"' as letter class name.";
+    throw myexception()<<"Can't use letter name '"<<sanitize_string(l)<<"' as letter class name.";
 
   letter_classes_.push_back(l);
   letter_masks_.push_back(mask);
@@ -245,7 +230,7 @@ void alphabet::remove_class(const std::string& l)
       letter_classes_.erase(letter_classes_.begin()+i);
       return;
     }
-  throw myexception()<<"Can't find letter class '"<<sanitize(l)<<"'";
+  throw myexception()<<"Can't find letter class '"<<sanitize_string(l)<<"'";
 }
 
 valarray<double> alphabet::get_frequencies_from_counts(const valarray<double>& counts,double pseudocount) const {

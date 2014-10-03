@@ -93,11 +93,12 @@ bool is_numeric_range(const string& s, unsigned n, unsigned& start, unsigned& en
 
   if (bounds[1].size())
   {
-    if (not can_be_converted_to<unsigned>(bounds[1],end)) return true;
+    if (not can_be_converted_to<unsigned>(bounds[1],end)) return false;
   }
 
   start = max(1U,start);
   end = min(n,end);
+  return true;
 }
 
 dynamic_bitset<>
