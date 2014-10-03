@@ -2355,9 +2355,6 @@ const object_ptr<const Object>& reg_heap::get_reg_value_in_context(int& R, int c
     if (R2) return access(R2).C.exp.head();
   }
 
-  // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-  if (is_modifiable(access(R).C.exp) and not reg_has_call(R)) return object_ref();
-
   // If the value needs to be computed (e.g. its a call expression) then compute it.
   R = incremental_evaluate_in_context(R,c);
 

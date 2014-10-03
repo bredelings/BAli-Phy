@@ -61,6 +61,8 @@ class data_partition: public Mat_Cache
   /// The pairwise alignment for each branch
   std::vector<int> pairwise_alignment_for_branch;
 
+  bool pairwise_alignment_for_branch_is_valid(int) const;
+
   /// The pairwise alignment probability for each branch
   std::vector<int> alignment_prior_for_branch;
 

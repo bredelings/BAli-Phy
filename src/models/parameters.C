@@ -227,6 +227,16 @@ double data_partition::get_beta() const
   return P->get_beta();
 }
 
+bool data_partition::pairwise_alignment_for_branch_is_valid(int b) const
+{
+  object_ref o = P->get_parameter_value(pairwise_alignment_for_branch[b]);
+
+  if (dynamic_cast<const Int*>(o.get()))
+    return false;
+  else
+    return true;
+}
+
 void data_partition::variable_alignment(bool b)
 {
   variable_alignment_ = b;
@@ -450,15 +460,17 @@ void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& 
 
   int B = T().directed_branch(b).reverse();
 
-  if (P->get_parameter_value(pairwise_alignment_for_branch[b]))
+#ifndef NDEBUG
+  if (pairwise_alignment_for_branch_is_valid(b))
   {
     assert(pi == get_pairwise_alignment(b,false));
     assert(pi.flipped() == get_pairwise_alignment(B,false));
   }
   else
   {
-    assert(not P->get_parameter_value(pairwise_alignment_for_branch[B]));
+    assert(not pairwise_alignment_for_branch_is_valid(B));
   }
+#endif
 
   const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[b], new pairwise_alignment_t(pi));
   const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[B], new pairwise_alignment_t(pi.flipped()));
@@ -482,9 +494,8 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b, bool r
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: what pairwise alignment are you referring to?";
 
-  if (not P->get_parameter_value(pairwise_alignment_for_branch[b]))
-    std::abort();
-  //  assert(P->get_parameter_value(pairwise_alignment_for_branch[b]));
+  //  if (not pairwise_alignment_for_branch_is_valid(b)) std::abort();
+  assert(pairwise_alignment_for_branch_is_valid(b));
 
 #ifndef NDEBUG
   int B = T().directed_branch(b).reverse();
@@ -515,7 +526,8 @@ void data_partition::recompute_pairwise_alignment(int b, bool require_match_A)
 
 void data_partition::invalidate_pairwise_alignment_for_branch(int b) const
 {
-  const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[b], object_ref());
+  object_ptr<const Object> o(new Int(0));
+  const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[b], o);
 }
 
 void data_partition::note_alignment_changed_on_branch(int b)
@@ -574,7 +586,7 @@ log_double_t data_partition::prior_alignment() const
   if (not variable_alignment()) return 1;
 
   for(int i=0;i<T().n_branches()*2;i++)
-    assert(P->get_parameter_value(pairwise_alignment_for_branch[i]));
+    assert(pairwise_alignment_for_branch_is_valid(i));
 
   log_double_t Pr = *P->evaluate_as<Log_Double>(alignment_prior_index);
 
@@ -629,7 +641,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   {
     string prefix = "P"+convertToString(i+1)+".";
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
-      pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b),0);
+      pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b),Int(0));
 
     for(int b=0;b<T().n_branches();b++)
     {
