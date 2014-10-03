@@ -2507,14 +2507,18 @@ sub translate_cygwin
 
 sub tree_MDS
 {
+    return;
+
     print "\nGenerate MDS plots of topology burnin ... ";
     my $script = find_in_path("tree-plot1.R");
+    my $i=1;
     foreach my $tree_file (@tree_files)
     {
-	my $matfile = "Results/${tree_file}.M";
-	my $outfile = "Results/${tree_file}.svg";
+	my $matfile = "Results/tree${i}.M";
+	my $outfile = "Results/tree${i}.svg";
 	exec_show("trees-distances matrix --max=300 $tree_file > $matfile");
 	Rexec($script,"$matfile $outfile");
+	$i++;
     }
 }
 
