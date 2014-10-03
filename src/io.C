@@ -147,6 +147,12 @@ void checked_filebuf::report_open_error(const string& filename, ios_base::openmo
 
   close();
 
+  if (fs::is_directory(filename))
+  {
+    e<<"Refusing to open '"<<filename<<"' because it is a directory.";
+    throw e;
+  }
+
   if ((mode&ios_base::out) and not (mode&ios_base::in))
     e<<"Failed to write to "<<description<<" '"<<filename<<"'";
   else if ((mode&ios_base::in) and not (mode&ios_base::out))
@@ -179,10 +185,11 @@ void checked_filebuf::report_open_error(const string& filename, ios_base::openmo
 checked_filebuf * checked_filebuf::open ( const std::string& filename, std::ios_base::openmode mode )
 {
   bool already_existed = fs::exists(filename);
+  bool is_dir = fs::is_directory(filename);
   std::filebuf* buf = 0;
 
   // open the file if either we're not going to overwrite it, or we're opening the truncate flag
-  if (!already_existed or not (mode&ios_base::out) or (mode&ios_base::trunc))
+  if (!is_dir and (!already_existed or not (mode&ios_base::out) or (mode&ios_base::trunc)))
       buf = std::filebuf::open(filename.c_str(), mode);
 
   if (!buf)
