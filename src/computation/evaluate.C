@@ -310,10 +310,13 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	{
 	  int r2 = Args.allocate(std::move(result));
 
-	  int r3 = incremental_evaluate(r2).first;
+	  auto p = incremental_evaluate(r2);
+	  int r3 = p.first;
+	  int result = p.second;
 
 	  set_call(R, r3);
 	  set_computation_result_for_reg(R);
+	  return {R, result};
 	}
       }
       catch (myexception& e)
