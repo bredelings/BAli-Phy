@@ -45,14 +45,16 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_reg_no_record(int R2)
   {
-    return memory().incremental_evaluate(R2).first;
+    return memory().incremental_evaluate(R2).second;
   }
 
   /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
   int evaluate_reg_to_reg(int R2)
   {
     // Compute the result, and follow index_var chains (which are not changeable).
-    int R3 = M.incremental_evaluate(R2).first;
+    auto p = M.incremental_evaluate(R2);
+    int R3 = p.first;
+    int result = p.second;
 
     if (M.reg_is_changeable(R3))
     {
@@ -68,19 +70,19 @@ class RegOperationArgs: public OperationArgs
       M.set_used_input(R, R3);
     }
 
-    return R3;
+    return result;
   }
 
   const closure& evaluate_reg_to_closure(int R2)
   {
     int R3 = evaluate_reg_to_reg(R2);
-    return M.access_result_for_reg(R3);
+    return M.access(R3).C;
   }
   
   const closure& evaluate_reg_to_closure_(int R2)
   {
     int R3 = evaluate_reg_no_record(R2);
-    return M.access_result_for_reg(R3);
+    return M.access(R3).C;
   }
 
 public:
