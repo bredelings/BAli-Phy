@@ -538,12 +538,12 @@ int reg_heap::find_parameter_modifiable_reg(int index)
   return R2;
 }
 
-object_ref reg_heap::get_parameter_range(int c, int p)
+const object_ptr<const Object>& reg_heap::get_parameter_range(int c, int p)
 {
   return get_range_for_reg(c, find_parameter_modifiable_reg(p));
 }
 
-object_ref reg_heap::get_range_for_reg(int c, int r)
+const object_ptr<const Object>& reg_heap::get_range_for_reg(int c, int r)
 {
   if (access(r).C.Env.size() < 3)
     return {};
@@ -2260,7 +2260,7 @@ bool reg_heap::reg_is_fully_up_to_date(int R) const
   return true;
 }
 
-object_ref reg_heap::get_parameter_value_in_context(int p, int c)
+const object_ptr<const Object>& reg_heap::get_parameter_value_in_context(int p, int c)
 {
   int& R = parameters[p].second;
 

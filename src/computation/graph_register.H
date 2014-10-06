@@ -248,9 +248,9 @@ public:
 
   int find_parameter_modifiable_reg(int i);
 
-  object_ref get_parameter_range(int c, int r);
+  const object_ptr<const Object>& get_parameter_range(int c, int r);
 
-  object_ref get_range_for_reg(int c, int r);
+  const object_ptr<const Object>& get_range_for_reg(int c, int r);
 
   double get_rate_for_reg(int r);
 
@@ -354,7 +354,7 @@ public:
 
   bool reg_is_fully_up_to_date(int r) const;
 
-  object_ref get_parameter_value_in_context(int R, int c);
+  const object_ptr<const Object>& get_parameter_value_in_context(int R, int c);
 
   const object_ptr<const Object>& get_reg_value_in_context(int& R, int c);
 
