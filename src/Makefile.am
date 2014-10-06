@@ -156,8 +156,8 @@ BUILT_SOURCES = version.C git_version.stamp
 
 noinst_LIBRARIES = libsums.a
 libsums_a_SOURCES = computation/sums.C
-libsums_a_CXXFLAGS = ${AM_CXXFLAGS} -fno-associative-math
-libsums_a_CFLAGS = ${AM_CFLAGS} -fno-associative-math
+libsums_a_CXXFLAGS = ${AM_CXXFLAGS} -fno-fast-math
+libsums_a_CFLAGS = ${AM_CFLAGS} -fno-fast-math
 
 #-----------------------------------------------------------------
 
