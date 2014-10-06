@@ -461,7 +461,7 @@ public:
   void find_callers(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
   void find_users(int t1, int t2, int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
 
-  int incremental_evaluate_in_context(int R, int c);
+  std::pair<int,int> incremental_evaluate_in_context(int R, int c);
 
   std::pair<int,int> incremental_evaluate(int R);
 

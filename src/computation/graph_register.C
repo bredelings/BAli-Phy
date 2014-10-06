@@ -2356,9 +2356,11 @@ const object_ptr<const Object>& reg_heap::get_reg_value_in_context(int& R, int c
   }
 
   // If the value needs to be computed (e.g. its a call expression) then compute it.
-  R = incremental_evaluate_in_context(R,c);
+  auto p = incremental_evaluate_in_context(R,c);
+  R = p.first;
+  int result = p.second;
 
-  return access_result_for_reg(R).exp.head();
+  return access(result).C.exp.head();
 }
 
 void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
@@ -2370,7 +2372,7 @@ void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
   set_reg_value(P, std::move(C), t);
 }
 
-int reg_heap::incremental_evaluate_in_context(int R, int c)
+pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 {
 #if DEBUG_MACHINE >= 2
   check_used_regs();
@@ -2378,13 +2380,13 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
 
   reroot_at_context(c);
   mark_completely_dirty(root_token);
-  R = incremental_evaluate(R).first;
+  auto p = incremental_evaluate(R);
 
 #if DEBUG_MACHINE >= 2
   check_used_regs();
 #endif
 
-  return R;
+  return p;
 }
 
 const closure& reg_heap::lazy_evaluate(int& R)
@@ -2398,18 +2400,22 @@ const closure& reg_heap::lazy_evaluate(int& R)
 
 const closure& reg_heap::lazy_evaluate(int& R, int c)
 {
-  R = incremental_evaluate_in_context(R,c);
-  return access_result_for_reg(R);
+  auto p = incremental_evaluate_in_context(R,c);
+  R = p.first;
+  int result = p.second;
+  return access(result).C;
 }
 
 const closure& reg_heap::lazy_evaluate_head(int index, int c)
 {
   int R1 = heads[index];
-  int R2 = incremental_evaluate_in_context(R1,c);
+  auto p = incremental_evaluate_in_context(R1,c);
+  int R2 = p.first;
+  int result = p.second;
   if (R2 != R1)
     set_head(index, R2);
 
-  return access_result_for_reg(R2);
+  return access(result).C;
 }
 
 const closure& reg_heap::lazy_evaluate_unchangeable(int& R)

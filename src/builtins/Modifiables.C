@@ -176,7 +176,7 @@ extern "C" closure builtin_function_evaluate(OperationArgs& Args)
   if (c < 0)
     R2 = M.incremental_evaluate_unchangeable(R1);
   else
-    R2 = M.incremental_evaluate_in_context(R1, c);
+    R2 = M.incremental_evaluate_in_context(R1, c).first;
 
   assert( R2 );
 
