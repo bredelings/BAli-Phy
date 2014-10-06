@@ -200,14 +200,16 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	int result = computations[rc].result;
 
 	if (result)
-	  return {R,result};
+	  return {R, result};
       }
 
       // If we know what to call, then call it and use it to set the result
       if (reg_has_call(R))
       {
 	// Evaluate S, looking through unchangeable redirections
-	int call = incremental_evaluate(call_for_reg(R)).first;
+	auto p = incremental_evaluate(call_for_reg(R));
+	int call = p.first;
+	int result = p.second;
 
 	// If computation_for_reg(R).call can be evaluated to refer to S w/o moving through any changable operations, 
 	// then it should be safe to change computation_for_reg(R).call to refer to S, even if R is changeable.
@@ -219,7 +221,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	
 	// R gets its result from S.
 	set_computation_result_for_reg( R);
-	break;
+	return {R, result};
       }
     }
     else if (reg_type == reg::type_t::index_var)
