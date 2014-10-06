@@ -50,7 +50,7 @@ esac
 
 if test "${host_os_noversion}" = darwin ; then 
 
-  CXXFLAGS="$CXXFLAGS -fvisibility=default"
+  AM_CXXFLAGS="$AM_CXXFLAGS -fvisibility=default"
 
 elif test "${host_os_noversion}" = darwin ; then 
 
@@ -58,14 +58,14 @@ AC_LIBTOOL_WIN32_DLL
 
 fi
 
-CXXFLAGS="-std=c++11 $CXXFLAGS"
+AM_CXXFLAGS="-std=c++11 $AM_CXXFLAGS"
 AC_SUBST(extra_includes)
 AC_SUBST(extra_libs2)
 
 #Defining CPPFLAGS includes these twice - and they don't include boost!
 #FIXME - What is the proper way to include boost - w/o using 
 #         the variable $(top_srcdir) to refer to the location of boost?
-CPPFLAGS="$CPPFLAGS $extra_includes"
+AM_CPPFLAGS="$AM_CPPFLAGS $extra_includes"
 
 LDFLAGS="$LDFLAGS $extra_libs"
 
@@ -84,8 +84,8 @@ AC_PROG_CPP
 AC_PROG_LIBTOOL
 AC_PROG_INSTALL
 
-CFLAGS=$ORIG_CFLAGS
-CXXFLAGS=$ORIG_CXXFLAGS
+#CFLAGS=$ORIG_CFLAGS
+#AM_CXXFLAGS=$ORIG_CXXFLAGS
 
 # Set language
 AC_LANG_CPLUSPLUS
@@ -157,31 +157,31 @@ fi
 # we only add extra flags if we recognize the compiler (g++)
 if test "$GXX" = yes ; then
 
-  CXXFLAGS="$CXXFLAGS -pipe"
+  AM_CXXFLAGS="$AM_CXXFLAGS -pipe"
 
   # --with-openmp
   if test "$use_openmp" != no ; then
-      CXXFLAGS="$CXXFLAGS -fopenmp"
+      AM_CXXFLAGS="$AM_CXXFLAGS -fopenmp"
       LDFLAGS="$LDFLAGS -fopenmp"
   fi
 
   # --enable-profile
   if test "$profile" = yes ; then
-      CXXFLAGS="$CXXFLAGS -pg"
+      AM_CXXFLAGS="$AM_CXXFLAGS -pg"
       LDFLAGS="$LDFLAGS -pg"
   elif test "$profile" = oprofile ; then
-      CXXFLAGS="$CXXFLAGS -g -fno-omit-frame-pointer -fkeep-inline-functions"
+      AM_CXXFLAGS="$AM_CXXFLAGS -g -fno-omit-frame-pointer -fkeep-inline-functions"
   fi
 
   # --enable-bounds-checking
   if test "$bounds_checking" = yes ; then
-      CXXFLAGS="$CXXFLAGS -D_GLIBCXX_DEBUG -DDEBUG_BOUNDS_CHECK=1"
+      AM_CXXFLAGS="$AM_CXXFLAGS -D_GLIBCXX_DEBUG -DDEBUG_BOUNDS_CHECK=1"
       if test "$use_system_boost" = yes ; then
           echo "Error: cannot bounds check STL if compiled with system BOOST libraries"
           exit 1
       fi  
   elif test "$bounds_checking" = boost ; then
-      CXXFLAGS="$CXXFLAGS -DDEBUG_BOUNDS_CHECK=1"
+      AM_CXXFLAGS="$AM_CXXFLAGS -DDEBUG_BOUNDS_CHECK=1"
   elif test "$bounds_checking" != no ; then
       echo "I don't recognize --enable-bounds-checking=$bounds_checking."
       echo "Please use values yes,no, or boost"
@@ -191,22 +191,22 @@ if test "$GXX" = yes ; then
   # --enable-debug
   #   If $enableval !=yes and !=no, then the user can specify their own optimization flags.
   if test "$debug" != no ; then
-      CXXFLAGS="$CXXFLAGS -g"
+      AM_CXXFLAGS="$AM_CXXFLAGS -g"
       # no -ffast-math because it affects handling of NaNs, which result from
       # uninitialized values, among other things
   fi
 
   if test "$debug" = no ; then
-      CXXFLAGS="$CXXFLAGS -O3"
-      CXXFLAGS="-funroll-loops $CXXFLAGS"
-      CXXFLAGS="-DNDEBUG -DNDEBUG_DP $CXXFLAGS"
-      CXXFLAGS="-ffast-math $CXXFLAGS"
+      AM_CXXFLAGS="$AM_CXXFLAGS -O3"
+      AM_CXXFLAGS="-funroll-loops $AM_CXXFLAGS"
+      AM_CXXFLAGS="-DNDEBUG -DNDEBUG_DP $AM_CXXFLAGS"
+      AM_CXXFLAGS="-ffast-math $AM_CXXFLAGS"
   elif test "$debug" = O ; then
-      CXXFLAGS="$CXXFLAGS -O"
+      AM_CXXFLAGS="$AM_CXXFLAGS -O"
   elif test "$debug" = Og ; then
-      CXXFLAGS="$CXXFLAGS -Og"
+      AM_CXXFLAGS="$AM_CXXFLAGS -Og"
   elif test "$debug" = O2 ; then
-      CXXFLAGS="$CXXFLAGS -O2"
+      AM_CXXFLAGS="$AM_CXXFLAGS -O2"
   fi
 
   # also set the LDFLAGS for a static build
@@ -258,11 +258,11 @@ AC_CHECK_LIB(m,main)
 
 if test "${host_os_noversion}" = mingw32 ; then 
   libdl_includes="-isystem \$(top_srcdir)/src/dlfcn-win32/"
-  CXXFLAGS="$libdl_includes $CXXFLAGS"
+  AM_CXXFLAGS="$libdl_includes $AM_CXXFLAGS"
 else
 echo "------------------------------------------"
 echo " * Looking for libdl headers..."
-AC_CHECK_HEADERS([dlfcn.h],[],[echo "Error: I can't find <dlfcn.h> (CXXFLAGS='$CXXFLAGS').  If libdl is installed in a non-standard location you may need to specify --with-extra-includes=DIR to tell the configure script to look for it in directory DIR"])
+AC_CHECK_HEADERS([dlfcn.h],[],[echo "Error: I can't find <dlfcn.h> (AM_CXXFLAGS='$AM_CXXFLAGS').  If libdl is installed in a non-standard location you may need to specify --with-extra-includes=DIR to tell the configure script to look for it in directory DIR"])
 
 echo " * Looking for the libdl library..."
 AC_CHECK_LIB(dl, main, [], [echo "Error: I can't find the libdl lirary! (-ldl LIBS='$LIBS')  If libdl is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
@@ -317,8 +317,8 @@ if test "$use_mpi" != no ; then
    AC_DEFINE([HAVE_MPI],[] ,[You have a working OpenMPI implementation.])
    AC_SUBST(MPI_CXXFLAGS)   
    AC_SUBST(MPI_LDFLAGS)   
-   CXXFLAGS="$CXXFLAGS $MPI_CXXFLAGS"
-   CPPFLAGS="$CPPFLAGS $MPI_CPPFLAGS"
+   AM_CXXFLAGS="$AM_CXXFLAGS $MPI_CXXFLAGS"
+   AM_CPPFLAGS="$AM_CPPFLAGS $MPI_CPPFLAGS"
 fi
 
 #---------------------- Check for BOOST ------------------#
@@ -394,7 +394,7 @@ else
 
   boost_includes="-isystem \$(top_srcdir)/boost/include"
 
-  CXXFLAGS="$boost_includes $CXXFLAGS"
+  AM_CXXFLAGS="$boost_includes $AM_CXXFLAGS"
 fi
 libs=$LIBS
 AC_SUBST(libs)
@@ -419,9 +419,10 @@ if test "${host_os_noversion}" = "linux" ; then
 ldflags="$ldflags '-Wl,-rpath,\$\$ORIGIN/../lib/bali-phy/' -Wl,--enable-new-dtags"
 fi
 AC_SUBST(ldflags)
+AC_SUBST(AM_CXXFLAGS)
 
 # Write our compilation flags to config.h so that we can report them with the version info.
-AC_DEFINE_UNQUOTED([CONFIG_FLAGS],["$CXXFLAGS"] , ["CXXFLAGS that we used to compile."])
+AC_DEFINE_UNQUOTED([CONFIG_FLAGS],["$AM_CXXFLAGS"] , ["AM_CXXFLAGS that we used to compile."])
 AC_DEFINE_UNQUOTED([_ARCH_],["$host"] , ["Host architecture."])
 
 AC_OUTPUT([
@@ -441,7 +442,9 @@ AC_OUTPUT([
 
 echo ""
 echo "CPPFLAGS = $CPPFLAGS"
+echo "AM_CPPFLAGS = $AM_CPPFLAGS"
 echo "CXXFLAGS = $CXXFLAGS"
+echo "AM_CXXFLAGS = $AM_CXXFLAGS"
 echo "LDFLAGS = $LDFLAGS"
 echo "ldflags = $ldflags"
 echo "LIBS = $LIBS"
@@ -449,6 +452,8 @@ if test -n "$cairo" && test "$cairo" != "no"; then
   echo "CAIRO_CFLAGS = $CAIRO_CFLAGS"
   echo "CAIRO_LIBS = $CAIRO_LIBS"
 fi
+AC_SUBST(AM_CPPFLAGS)
+AC_SUBST(AM_CXXFLAGS)
 
 
 # Release instructions:

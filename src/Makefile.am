@@ -58,13 +58,14 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 
 LDFLAGS = @ldflags@ 
 
-AM_CPPFLAGS = -I@top_srcdir@/include -I@top_srcdir@/src
+AM_CPPFLAGS = @AM_CPPFLAGS@ -I@top_srcdir@/include -I@top_srcdir@/src
+AM_CXXFLAGS = @AM_CXXFLAGS@
 
 if GCC
 
-#CXXFLAGS += -pedantic @MPI_CXXFLAGS@ ${CAIRO_CFLAGS}
-CXXFLAGS += -pedantic ${CAIRO_CFLAGS}
-CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing
+#AM_CXXFLAGS += -pedantic @MPI_CXXFLAGS@ ${CAIRO_CFLAGS}
+AM_CXXFLAGS += -pedantic ${CAIRO_CFLAGS}
+AM_CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing
 
 endif
 
