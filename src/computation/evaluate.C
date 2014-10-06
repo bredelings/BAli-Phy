@@ -341,19 +341,8 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     }
   }
 
-
-#ifndef NDEBUG
-  assert(not is_a<index_var>(access(R).C.exp));
-  if (reg_has_result(R))
-  {
-    expression_ref E = access_result_for_reg(R).exp;
-    assert(not is_a<index_var>(E));
-    assert(not is_a<expression>(E));
-    assert(is_WHNF(E));
-  }
-#endif
-
-  return {R,access_result_for_reg(R)};
+  std::cerr<<"incremental_evaluate: unreachable?";
+  std::abort();
 }
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
