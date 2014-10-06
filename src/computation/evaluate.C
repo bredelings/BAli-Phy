@@ -192,8 +192,16 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 
     else if (reg_type == reg::type_t::changeable)
     {
-      // We have a result, so we are done.
-      if (reg_has_result(R)) break;
+      int rc = computation_index_for_reg(R);
+
+      // If we have a result, then we are done.
+      if (rc > 0)
+      {
+	int result = computations[rc].result;
+
+	if (result)
+	  return {R,result};
+      }
 
       // If we know what to call, then call it and use it to set the result
       if (reg_has_call(R))
