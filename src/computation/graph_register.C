@@ -2390,8 +2390,10 @@ int reg_heap::incremental_evaluate_in_context(int R, int c)
 const closure& reg_heap::lazy_evaluate(int& R)
 {
   mark_completely_dirty(root_token);
-  R = incremental_evaluate(R).first;
-  return access_result_for_reg(R);
+  auto p = incremental_evaluate(R);
+  R = p.first;
+  int result = p.second;
+  return access(result).C;
 }
 
 const closure& reg_heap::lazy_evaluate(int& R, int c)
