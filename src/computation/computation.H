@@ -4,7 +4,7 @@
 #include "object.H"
 #include "closure.H"
 
-struct expression_ref;
+class expression_ref;
 class reg_heap;
 
 class OperationArgs: public Object

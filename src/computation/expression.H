@@ -10,7 +10,7 @@
 #include "computation/operator.H"
 
 /// An S-expression: An Object, and possibly an array of Objects.
-struct expression_ref;
+class expression_ref;
 
 /// This represents function application: a,b,c = a(b)(c) and not a(b(c)). The precedence is 18 (low).
 expression_ref operator,(const expression_ref&, const expression_ref&);
