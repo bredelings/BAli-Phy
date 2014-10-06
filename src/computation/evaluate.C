@@ -188,7 +188,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 
     reg::type_t reg_type = access(R).type;
 
-    if (reg_type == reg::type_t::constant) break;
+    if (reg_type == reg::type_t::constant) return {R,R};
 
     else if (reg_type == reg::type_t::changeable)
     {
