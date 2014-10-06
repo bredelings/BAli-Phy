@@ -121,7 +121,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  substitution/matcache.C computation/closure.C \
 	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C object.C \
 	  parser/AST.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
-	  startup/loggers.C startup/system.C startup/cmd_line.C computation/sums.C
+	  startup/loggers.C startup/system.C startup/cmd_line.C
 
 if HOST_MINGW32
 bali_phy_SOURCES += dlfcn-win32/dlfcn.c
@@ -139,19 +139,25 @@ bali_phy_LDFLAGS = @ldflags@
 endif
 endif
 
-
 if WITH_MPI
-bali_phy_LDADD = ${LDADD} @MPI_LDFLAGS@ 
+bali_phy_LDADD = ${LDADD} libsums.a @MPI_LDFLAGS@ 
 if NO_SYSTEM_BOOST
 bali_phy_LDADD += ../boost/lib/libboost_myparts_mpi.la
 else
 bali_phy_LDADD += ${LIBS} -lboost_mpi${BOOST_SUFFIX} -lboost_serialization${BOOST_SUFFIX}
 endif
+else
+bali_phy_LDADD = ${LDADD} libsums.a
 endif
 
 
 # always "rebuild" these
 BUILT_SOURCES = version.C git_version.stamp
+
+noinst_LIBRARIES = libsums.a
+libsums_a_SOURCES = computation/sums.C
+libsums_a_CXXFLAGS = ${AM_CXXFLAGS} -fno-associative-math
+libsums_a_CFLAGS = ${AM_CFLAGS} -fno-associative-math
 
 #-----------------------------------------------------------------
 
