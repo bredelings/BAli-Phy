@@ -82,25 +82,25 @@ public:
   const closure& lazy_evaluate(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
-  object_ref evaluate(int index) const;
+  const object_ptr<const Object>& evaluate(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
-  object_ref perform(int index) const;
+  const object_ptr<const Object>& perform(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
   const closure& lazy_evaluate_expression_(closure&&,bool=true) const;
 
   /// Return the value of a particular index, computing it if necessary
-  object_ref evaluate_expression_(closure&&,bool=true) const;
+  const object_ptr<const Object>& evaluate_expression_(closure&&,bool=true) const;
 
   /// Return the value of a particular index, computing it if necessary
   const closure& lazy_evaluate_expression(const expression_ref&,bool=true) const;
 
   /// Return the value of a particular index, computing it if necessary
-  object_ref evaluate_expression(const expression_ref&,bool=true) const;
+  const object_ptr<const Object>& evaluate_expression(const expression_ref&,bool=true) const;
 
   /// Return the value of a particular index, computing it if necessary
-  object_ref perform_expression(const expression_ref&,bool=false) const;
+  const object_ptr<const Object>& perform_expression(const expression_ref&,bool=false) const;
 
   template <typename T>
   object_ptr<const T> evaluate_as(int index) const
@@ -121,16 +121,16 @@ public:
   void rename_parameter(int i, const std::string& s);
 
   /// Get the value of a modifiable - by its location in memory
-  object_ref get_reg_value(int R) const;
+  const object_ptr<const Object>& get_reg_value(int R) const;
 
   /// Get the value of a modifiable
-  object_ref get_modifiable_value(int index) const;
+  const object_ptr<const Object>& get_modifiable_value(int index) const;
 
   /// Get the value of a parameter
-  object_ref get_parameter_value(int index) const;
+  const object_ptr<const Object>& get_parameter_value(int index) const;
 
   /// Get the value of a parameter
-  object_ref get_parameter_value(const std::string&) const;
+  const object_ptr<const Object>& get_parameter_value(const std::string&) const;
 
   /// Update the value of a modifiable - by its location in memory
   void set_reg_value(int R, closure&&);
@@ -160,9 +160,9 @@ public:
 
   const std::vector<int>& random_modifiables() const;
 
-  object_ref get_range_for_reg(int r) const;
+  const object_ptr<const Object>& get_range_for_reg(int r) const;
 
-  object_ref get_parameter_range(int p) const;
+  const object_ptr<const Object>& get_parameter_range(int p) const;
 
   double get_rate_for_reg(int r) const;
 

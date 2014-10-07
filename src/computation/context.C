@@ -78,13 +78,13 @@ const closure& context::lazy_evaluate(int index) const
 }
 
 /// Return the value of a particular index, computing it if necessary
-object_ref context::evaluate(int index) const
+const object_ptr<const Object>& context::evaluate(int index) const
 {
   return lazy_evaluate(index).exp.head();
 }
 
 /// Return the value of a particular index, computing it if necessary
-object_ref context::perform(int index) const
+const object_ptr<const Object>& context::perform(int index) const
 {
   int H = heads()[index];
 
@@ -109,7 +109,7 @@ const closure& context::lazy_evaluate_expression_(closure&& C, bool ec) const
   }
 }
 
-object_ref context::evaluate_expression_(closure&& C,bool ec) const
+const object_ptr<const Object>& context::evaluate_expression_(closure&& C,bool ec) const
 {
   expression_ref result = lazy_evaluate_expression_(std::move(C),ec).exp;
 #ifndef NDEBUG
@@ -124,12 +124,12 @@ const closure& context::lazy_evaluate_expression(const expression_ref& E, bool e
   return lazy_evaluate_expression_( preprocess(E), ec);
 }
 
-object_ref context::evaluate_expression(const expression_ref& E,bool ec) const
+const object_ptr<const Object>& context::evaluate_expression(const expression_ref& E,bool ec) const
 {
   return evaluate_expression_( preprocess(E), ec);
 }
 
-object_ref context::perform_expression(const expression_ref& E,bool ec) const
+const object_ptr<const Object>& context::perform_expression(const expression_ref& E,bool ec) const
 {
   expression_ref E2 = (get_expression(perform_io_head),E);
   return evaluate_expression_( preprocess(E2), ec);
@@ -154,13 +154,13 @@ bool context::parameter_is_modifiable(int index) const
 
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-object_ref context::get_reg_value(int R) const
+const object_ptr<const Object>& context::get_reg_value(int R) const
 {
   return memory()->get_reg_value_in_context(R, context_index);
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-object_ref context::get_modifiable_value(int index) const
+const object_ptr<const Object>& context::get_modifiable_value(int index) const
 {
   int R = get_modifiable_reg(index);
 
@@ -168,13 +168,13 @@ object_ref context::get_modifiable_value(int index) const
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-object_ref context::get_parameter_value(int index) const
+const object_ptr<const Object>& context::get_parameter_value(int index) const
 {
   return memory()->get_parameter_value_in_context(index, context_index);
 }
 
 /// Get the value of a non-constant, non-computed index
-object_ref context::get_parameter_value(const std::string& name) const
+const object_ptr<const Object>& context::get_parameter_value(const std::string& name) const
 {
   int index = find_parameter(name);
   if (index == -1)
@@ -192,7 +192,7 @@ void context::set_modifiable_value_(int index, closure&& C)
 
 void context::set_modifiable_value(int index, const expression_ref& O)
 {
-  object_ref v = O.head();
+  auto& v = O.head();
   assert(not O.size());
   assert(not dynamic_pointer_cast<const index_var>(v));
   assert(not dynamic_pointer_cast<const reg_var>(v));
@@ -202,7 +202,7 @@ void context::set_modifiable_value(int index, const expression_ref& O)
 
 void context::set_parameter_value(int index, const expression_ref& O)
 {
-  object_ref v = O.head();
+  auto& v = O.head();
   assert(not O.size());
   assert(not dynamic_pointer_cast<const index_var>(v));
   assert(not dynamic_pointer_cast<const reg_var>(v));
@@ -290,7 +290,7 @@ const vector<int>& context::random_modifiables() const
   return memory()->random_modifiables();
 }
 
-object_ref context::get_range_for_reg(int r) const
+const object_ptr<const Object>& context::get_range_for_reg(int r) const
 {
   return memory()->get_range_for_reg(context_index, r);
 }
@@ -300,7 +300,7 @@ double context::get_rate_for_reg(int r) const
   return memory()->get_rate_for_reg(r);
 }
 
-object_ref context::get_parameter_range(int p) const
+const object_ptr<const Object>& context::get_parameter_range(int p) const
 {
   return memory()->get_parameter_range(context_index, p);
 }
