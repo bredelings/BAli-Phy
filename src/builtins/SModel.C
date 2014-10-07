@@ -428,7 +428,7 @@ extern "C" closure builtin_function_equ(OperationArgs& Args)
 */
 
 
-object_ref Empirical_Exchange_Function(const alphabet& a, istream& ifile)
+object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, istream& ifile)
 {
   int n = a.size();
 
@@ -440,10 +440,10 @@ object_ref Empirical_Exchange_Function(const alphabet& a, istream& ifile)
       (*R)(j,i) = (*R)(i,j);
     }
 
-  return object_ref(R);
+  return object_ptr<const Object>(R);
 }
 
-object_ref Empirical_Exchange_Function(const alphabet& a, const String& filename)
+object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, const String& filename)
 {
   checked_ifstream ifile(filename, "empirical rate matrix file");
   return Empirical_Exchange_Function(a,ifile);
@@ -456,7 +456,7 @@ extern "C" closure builtin_function_empirical(OperationArgs& Args)
   return Empirical_Exchange_Function(*a, *S);
 }
 
-object_ref PAM_Exchange_Function(const alphabet& a)
+object_ptr<const Object> PAM_Exchange_Function(const alphabet& a)
 {
   istringstream file(
 		     "27                                                                         \
@@ -488,7 +488,7 @@ extern "C" closure builtin_function_pam(OperationArgs& Args)
   return PAM_Exchange_Function(*a);
 }
 
-object_ref JTT_Exchange_Function(const alphabet& a)
+object_ptr<const Object> JTT_Exchange_Function(const alphabet& a)
 {
   istringstream file(
 		     " 58                                                                        \
@@ -520,7 +520,7 @@ extern "C" closure builtin_function_jtt(OperationArgs& Args)
   return JTT_Exchange_Function(*a);
 }
 
-object_ref WAG_Exchange_Function(const alphabet& a)
+object_ptr<const Object> WAG_Exchange_Function(const alphabet& a)
 {
   istringstream file(
 		     "0.551571 \
@@ -552,7 +552,7 @@ extern "C" closure builtin_function_wag(OperationArgs& Args)
   return WAG_Exchange_Function(*a);
 }
 
-object_ref LG_Exchange_Function(const alphabet& a)
+object_ptr<const Object> LG_Exchange_Function(const alphabet& a)
 {
   istringstream file(
 		     "0.425093 \
