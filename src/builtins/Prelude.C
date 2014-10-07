@@ -11,7 +11,7 @@ extern "C" closure builtin_function_exp(OperationArgs& Args)
 
 extern "C" closure builtin_function_log(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
+  auto x = Args.evaluate(0);
 
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
@@ -36,8 +36,8 @@ extern "C" closure builtin_function_log(OperationArgs& Args)
 
 extern "C" closure builtin_function_pow(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
-  object_ref y = Args.evaluate(1);
+  auto x = Args.evaluate(0);
+  auto y = Args.evaluate(1);
 
   double yy = 0;
   if (object_ptr<const Double> yd = dynamic_pointer_cast<const Double>(y))
@@ -142,8 +142,8 @@ extern "C" closure builtin_function_vector_from_list(OperationArgs& Args)
 
 extern "C" closure builtin_function_add(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
-  object_ref y = Args.evaluate(1);
+  auto x = Args.evaluate(0);
+  auto y = Args.evaluate(1);
   
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
@@ -171,8 +171,8 @@ extern "C" closure builtin_function_add(OperationArgs& Args)
 
 extern "C" closure builtin_function_multiply(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
-  object_ref y = Args.evaluate(1);
+  auto x = Args.evaluate(0);
+  auto y = Args.evaluate(1);
   
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
@@ -201,8 +201,8 @@ extern "C" closure builtin_function_multiply(OperationArgs& Args)
 
 extern "C" closure builtin_function_divide(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
-  object_ref y = Args.evaluate(1);
+  auto x = Args.evaluate(0);
+  auto y = Args.evaluate(1);
   
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
@@ -233,8 +233,8 @@ extern "C" closure builtin_function_mod(OperationArgs& Args)
 {
   using boost::dynamic_pointer_cast;
 
-  object_ref x = Args.evaluate(0);
-  object_ref y = Args.evaluate(1);
+  auto x = Args.evaluate(0);
+  auto y = Args.evaluate(1);
   
   if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
   {
@@ -252,8 +252,8 @@ extern "C" closure builtin_function_mod(OperationArgs& Args)
 
 extern "C" closure builtin_function_subtract(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
-  object_ref y = Args.evaluate(1);
+  auto x = Args.evaluate(0);
+  auto y = Args.evaluate(1);
   
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
@@ -281,7 +281,7 @@ extern "C" closure builtin_function_subtract(OperationArgs& Args)
 
 extern "C" closure builtin_function_negate(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
+  auto x = Args.evaluate(0);
   
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
     return -(*xd);
@@ -297,8 +297,8 @@ extern "C" closure builtin_function_negate(OperationArgs& Args)
 
 extern "C" closure builtin_function_equals(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
-  object_ref y = Args.evaluate(1);
+  auto x = Args.evaluate(0);
+  auto y = Args.evaluate(1);
   
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
@@ -327,8 +327,8 @@ extern "C" closure builtin_function_equals(OperationArgs& Args)
 
 extern "C" closure builtin_function_notequals(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
-  object_ref y = Args.evaluate(1);
+  auto x = Args.evaluate(0);
+  auto y = Args.evaluate(1);
   
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
@@ -357,8 +357,8 @@ extern "C" closure builtin_function_notequals(OperationArgs& Args)
 
 extern "C" closure builtin_function_greaterthan(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
-  object_ref y = Args.evaluate(1);
+  auto x = Args.evaluate(0);
+  auto y = Args.evaluate(1);
   
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
@@ -387,8 +387,8 @@ extern "C" closure builtin_function_greaterthan(OperationArgs& Args)
 
 extern "C" closure builtin_function_greaterthanorequal(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
-  object_ref y = Args.evaluate(1);
+  auto x = Args.evaluate(0);
+  auto y = Args.evaluate(1);
   
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
@@ -417,8 +417,8 @@ extern "C" closure builtin_function_greaterthanorequal(OperationArgs& Args)
 
 extern "C" closure builtin_function_lessthan(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
-  object_ref y = Args.evaluate(1);
+  auto x = Args.evaluate(0);
+  auto y = Args.evaluate(1);
   
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
@@ -447,8 +447,8 @@ extern "C" closure builtin_function_lessthan(OperationArgs& Args)
 
 extern "C" closure builtin_function_lessthanorequal(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
-  object_ref y = Args.evaluate(1);
+  auto x = Args.evaluate(0);
+  auto y = Args.evaluate(1);
   
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
@@ -514,7 +514,7 @@ extern "C" closure builtin_function_seq(OperationArgs& Args)
 
 extern "C" closure builtin_function_show(OperationArgs& Args)
 {
-  object_ref x = Args.evaluate(0);
+  auto x = Args.evaluate(0);
   
   object_ptr<String> v (new String);
 
