@@ -72,7 +72,7 @@ bool context::compute_expression_is_up_to_date(int index) const
 }
 
 /// Return the value of a particular index, computing it if necessary
-closure context::lazy_evaluate(int index) const
+const closure& context::lazy_evaluate(int index) const
 {
   return memory()->lazy_evaluate_head(index, context_index);
 }
@@ -91,17 +91,13 @@ object_ref context::perform(int index) const
   return perform_expression(reg_var(H));
 }
 
-closure context::lazy_evaluate_expression_(closure&& C, bool ec) const
+const closure& context::lazy_evaluate_expression_(closure&& C, bool ec) const
 {
   try {
     int R = push_temp_head();
     set_C(R, std::move(C) );
 
-    closure result;
-    if (ec)
-      result = memory()->lazy_evaluate(R, context_index);
-    else
-      result = memory()->lazy_evaluate_unchangeable(R);
+    const closure& result = ec?memory()->lazy_evaluate(R, context_index) : memory()->lazy_evaluate_unchangeable(R);
     
     pop_temp_head();
     return result;
@@ -123,7 +119,7 @@ object_ref context::evaluate_expression_(closure&& C,bool ec) const
   return result.head();
 }
 
-closure context::lazy_evaluate_expression(const expression_ref& E, bool ec) const
+const closure& context::lazy_evaluate_expression(const expression_ref& E, bool ec) const
 {
   return lazy_evaluate_expression_( preprocess(E), ec);
 }

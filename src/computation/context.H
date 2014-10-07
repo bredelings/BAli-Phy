@@ -79,7 +79,7 @@ public:
   bool compute_expression_is_up_to_date(int i) const;
 
   /// Return the value of a particular index, computing it if necessary
-  closure lazy_evaluate(int index) const;
+  const closure& lazy_evaluate(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
   object_ref evaluate(int index) const;
@@ -88,13 +88,13 @@ public:
   object_ref perform(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
-  closure lazy_evaluate_expression_(closure&&,bool=true) const;
+  const closure& lazy_evaluate_expression_(closure&&,bool=true) const;
 
   /// Return the value of a particular index, computing it if necessary
   object_ref evaluate_expression_(closure&&,bool=true) const;
 
   /// Return the value of a particular index, computing it if necessary
-  closure lazy_evaluate_expression(const expression_ref&,bool=true) const;
+  const closure& lazy_evaluate_expression(const expression_ref&,bool=true) const;
 
   /// Return the value of a particular index, computing it if necessary
   object_ref evaluate_expression(const expression_ref&,bool=true) const;
