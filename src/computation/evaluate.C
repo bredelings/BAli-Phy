@@ -276,6 +276,8 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
+      // We keep the (same) computation here, until we prove that we don't need one.
+      // We don't need one if we evaluate to WHNF, and then we remove it.
       if (not has_computation(R))
 	add_shared_computation(root_token, R);
 
