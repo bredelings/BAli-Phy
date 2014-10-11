@@ -11,6 +11,7 @@
 #include "pool.H"
 #include "program.H"
 #include <boost/shared_ptr.hpp>
+#include <bitset>
 
 struct computation
 {
@@ -35,7 +36,7 @@ struct computation
 
   int temp = -1;
 
-  unsigned flags = 0;
+  std::bitset<64> flags;
 
   void clear();
 

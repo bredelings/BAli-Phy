@@ -199,7 +199,7 @@ void computation::clear()
 
   // This should already be cleared.
   assert(temp == -1);
-  assert(flags == 0);
+  assert(flags.none());
 }
 
 void computation::check_cleared()
@@ -210,7 +210,7 @@ void computation::check_cleared()
   assert(called_by.empty());
   assert(used_by.empty());
   assert(temp == -1);
-  assert(flags == 0);
+  assert(flags.none());
 }
 
 computation& computation::operator=(computation&& R) noexcept
@@ -409,7 +409,7 @@ bool reg_heap::inc_probability_for_reg(int r)
   assert(reg_is_changeable(r));
   int rc = computation_index_for_reg(r);
 
-  if (rc > 0 and computations[rc].flags) return true; // already included
+  if (rc > 0 and computations[rc].flags.test(0)) return true; // already included
 
   incremental_evaluate(r);
   rc = computation_index_for_reg(r);
@@ -421,7 +421,7 @@ void reg_heap::dec_probability_for_reg(int r)
 {
   int rc = computation_index_for_reg(r);
 
-  if (rc > 0 and computations[rc].flags)
+  if (rc > 0 and computations[rc].flags.test(0))
     dec_probability(rc);
 }
 
@@ -433,7 +433,7 @@ void reg_heap::dec_probability(int rc)
   log_double_t pr = *convert<const Log_Double>(access(r2).C.exp.head().get());
 
   variable_pr /= pr;
-  computations[rc].flags = 0;
+  computations[rc].flags.reset(0);
 
   int r = computations[rc].source_reg;
   assert(reg_is_changeable(r));
@@ -454,7 +454,7 @@ log_double_t reg_heap::probability_for_context_diff(int c)
     for(int r: probability_heads)
     {
       int rc = tokens[root_token].vm_relative[r];
-      if (rc > 0 and computations[rc].flags)
+      if (rc > 0 and computations[rc].flags.test(0))
 	dec_probability(rc);
     }
     // std::cerr<<"unwinding all prs: total_error = "<<total_error<<" variable_pr = "<<variable_pr<<"  error_pr = "<<error_pr<<"   variable_pr/error_pr = "<<variable_pr/error_pr<<std::endl;
@@ -1195,7 +1195,7 @@ void reg_heap::reroot_at(int t)
   for(int r: tokens[parent].vm_relative.modified())
   {
     int rc = tokens[parent].vm_relative[r];
-    if (rc > 0 and computations[rc].flags)
+    if (rc > 0 and computations[rc].flags.test(0))
       dec_probability(rc);
   }
 
@@ -1717,7 +1717,7 @@ void reg_heap::check_used_reg(int index) const
     int call = call_for_reg_(t,index);
     int result = computation_result_for_reg_(t,index);
 
-    if (computations[computation_index_for_reg_(t,index)].flags)
+    if (computations[computation_index_for_reg_(t,index)].flags.test(0))
       assert(is_root_token(t));
 
     if (result)
@@ -1843,7 +1843,7 @@ void reg_heap::release_child_token(int t)
     for(int r: tokens[root_token].vm_relative.modified())
     {
       int rc = tokens[root_token].vm_relative[r];
-      if (rc > 0 and computations[rc].flags)
+      if (rc > 0 and computations[rc].flags.test(0))
 	dec_probability(rc);
     }
 
