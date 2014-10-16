@@ -21,7 +21,7 @@ class matrix
   {
     if (s > size_)
     {
-      delete data_;
+      delete[] data_;
       data_ = new T[s];
       size_ = s;
     }
