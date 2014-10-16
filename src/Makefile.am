@@ -23,7 +23,7 @@ dist-hook: git_version.stamp
 			"git_version.h" > "$(distdir)/git_version.h"; \
 	fi
 
-SUBDIRS = builtins/
+SUBDIRS = . builtins/
 
 #-----------------------------------------------------------------
 
