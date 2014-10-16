@@ -16,7 +16,7 @@ using std::vector;
 using std::set;
 using std::map;
 
-#if defined _MSC_VER || defined __MINGW32__
+#if defined _MSC_VER || defined __MINGW32__ || defined __CYGWIN__
   const string plugin_extension = ".dll";
 #else
   const string plugin_extension = ".so";
