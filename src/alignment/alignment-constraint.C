@@ -327,7 +327,7 @@ vector< vector<int> > get_pins(const matrix<int>& constraint,const alignment& A,
            because we can only pin matches, and the second one
 	   would be a gap. */
 
-  for(int x=0,y=0;;)
+  for(int x=0,y=0;;x++,y++)
   {
     for(;x<seq1.size() and x_constraints[x].empty();x++)
       ;
