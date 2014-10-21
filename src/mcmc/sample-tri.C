@@ -441,7 +441,7 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
   }
 
   //--------- Compute path probabilities and sampling probabilities ---------//
-  vector< vector<log_double_t> > PR(p.size());
+  vector< vector<log_double_t> > PR(p.size(), vector<log_double_t>(4,1));
 
   for(int i=0;i<p.size();i++)
   {
@@ -464,7 +464,6 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
       choice_ratio = 1;
 
     //    sample_P(p[i], choice_ratio, rho[i], paths[i], Matrices[i]) );
-    PR[i] = vector<log_double_t>(4,1);
     PR[i][0] = p[i].heated_probability();
     PR[i][2] = rho[i];
     PR[i][3] = choice_ratio;
