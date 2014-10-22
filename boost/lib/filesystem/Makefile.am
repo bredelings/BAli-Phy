@@ -12,7 +12,7 @@ libboost_filesystem_la_SOURCES = src/operations.cpp \
 				src/codecvt_error_category.cpp
 
 if HOST_CYGWIN
-CPPFLAGS += -DBOOST_POSIX
+CPPFLAGS += -DBOOST_POSIX_API
 endif
 
 #     lib_LTLIBRARIES = libtop.la
