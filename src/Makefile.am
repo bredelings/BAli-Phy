@@ -132,7 +132,7 @@ nodist_bali_phy_SOURCES = git_version.h
 if HOST_LINUX
 bali_phy_LDFLAGS = @ldflags@ -rdynamic
 else
-if HOST_MINGW32
+if HOST_WIN_ALL
 bali_phy_LDFLAGS = @ldflags@ -Wl,--export-all-symbols,--out-implib=libbali-phy.dll.a
 else
 bali_phy_LDFLAGS = @ldflags@
