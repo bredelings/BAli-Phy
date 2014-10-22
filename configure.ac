@@ -230,6 +230,7 @@ AM_CONDITIONAL(WITH_MPI, test "$use_mpi" != no)
 #determine the OS that is being targeted
 AM_CONDITIONAL(HOST_MINGW32,test "${host_os_noversion}" = mingw32)
 AM_CONDITIONAL(HOST_CYGWIN,test "${host_os_noversion}" = cygwin)
+AM_CONDITIONAL(HOST_WIN_ALL,test "${host_os_noversion}" = cygwin -o "${host_os_noversion}" = mingw32)
 AM_CONDITIONAL(HOST_LINUX,test "${host_os_noversion}" = linux)
 AM_CONDITIONAL(HOST_DARWIN,test "${host_os_noversion}" = darwin)
 
