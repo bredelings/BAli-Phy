@@ -120,13 +120,6 @@ AC_ARG_ENABLE([profile],
              [profile=$enableval],
              [profile=no])
 
-echo "force_static = $force_static"
-AC_ARG_ENABLE([force_static],
-              AS_HELP_STRING([--force-static], [Link statically]),
-             [force_static=$enablevals],
-             [force_static=no])
-echo "force_static = $force_static"
-
 AC_ARG_ENABLE([cairo],
               AS_HELP_STRING([--enable-cairo], [Build drawing programs that depend on libcairo]),
              [cairo=yes],
@@ -212,17 +205,11 @@ if test "$GXX" = yes ; then
       AM_CXXFLAGS="$AM_CXXFLAGS -O2"
   fi
 
-  # also set the LDFLAGS for a static build
-  if test "${host_os_noversion}" != "darwin" && test "$force_static" = yes ; then
-    LDFLAGS="$LDFLAGS -static"
-  fi
-
 fi
 
 
 AM_CONDITIONAL(GCC, test "$GXX" = yes)
 AM_CONDITIONAL(DEBUG, test "$debug" = yes)
-AM_CONDITIONAL(STATIC, test "$force_static" = yes)
 AM_CONDITIONAL(SYSTEM_BOOST, test "$use_system_boost" = yes)
 AM_CONDITIONAL(NO_SYSTEM_BOOST, test "$use_system_boost" = no)
 AM_CONDITIONAL(WITH_MPI, test "$use_mpi" != no)
@@ -409,9 +396,6 @@ echo "------------------------------------------"
 cairo_progs=""
 if test -n "$cairo" && test "$cairo" != "no"; then
    temp=""
-   if test "$force_static" == "yes" ; then
-     temp="--static"
-   fi
    PKG_CHECK_MODULES(CAIRO,"cairo $temp")
    AC_SUBST(CAIRO_CFLAGS)
    AC_SUBST(CAIRO_LIBS)
