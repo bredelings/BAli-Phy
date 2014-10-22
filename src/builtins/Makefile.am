@@ -15,11 +15,7 @@ pkglib_LTLIBRARIES = Prelude.la Array.la Alphabet.la \
 		Environment.la Data.la
 
 
-if HOST_MINGW32
-EXTRADEPENDENCIES = $(top_builddir)/src/bali-phy.exe
-EXTRALDFLAGS = -no-undefined --enable-runtime-pseudo-reloc  -Wl,$(top_builddir)/src/libbali-phy.dll.a
-else
-if HOST_CYGWIN
+if HOST_WIN_ALL
 EXTRADEPENDENCIES = $(top_builddir)/src/bali-phy.exe
 EXTRALDFLAGS = -no-undefined --enable-runtime-pseudo-reloc  -Wl,$(top_builddir)/src/libbali-phy.dll.a
 else
@@ -32,7 +28,6 @@ EXTRALDFLAGS =
 else
 EXTRADEPENDENCIES =
 EXTRALDFLAGS =
-endif
 endif
 endif
 
