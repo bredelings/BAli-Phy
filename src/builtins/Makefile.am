@@ -19,6 +19,10 @@ if HOST_MINGW32
 EXTRADEPENDENCIES = $(top_builddir)/src/bali-phy.exe
 EXTRALDFLAGS = -no-undefined --enable-runtime-pseudo-reloc  -Wl,$(top_builddir)/src/libbali-phy.dll.a
 else
+if HOST_CYGWIN
+EXTRADEPENDENCIES = $(top_builddir)/src/bali-phy.exe
+EXTRALDFLAGS = -no-undefined --enable-runtime-pseudo-reloc  -Wl,$(top_builddir)/src/libbali-phy.dll.a
+else
 if HOST_DARWIN
 # I think -no-undefined leads to the creation of bundles, which then need a bundle_loader argument
 # See http://www.opensource.apple.com/source/X11server/X11server-46/xorg-server-X11R7.2-1.2.0/hw/darwin/Makefile.am 
@@ -28,6 +32,7 @@ EXTRALDFLAGS =
 else
 EXTRADEPENDENCIES =
 EXTRALDFLAGS =
+endif
 endif
 endif
 
