@@ -1,10 +1,10 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.59)
-AC_INIT(BAli-Phy, 2.3.5, benjamin.redelings@duke.edu)
-AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE([1.9 foreign subdir-objects tar-ustar])
+AC_PREREQ([2.69])
+AC_INIT([BAli-Phy],[2.3.5],[benjamin.redelings@duke.edu])
+AC_CANONICAL_TARGET
+AM_INIT_AUTOMAKE([1.11 foreign subdir-objects tar-ustar])
 AC_CONFIG_SRCDIR([src/bali-phy.C])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -50,13 +50,17 @@ esac
 
 if test "${host_os_noversion}" = darwin ; then 
 
-  AM_CXXFLAGS="$AM_CXXFLAGS -fvisibility=default"
-
-elif test "${host_os_noversion}" = darwin ; then 
-
-AC_LIBTOOL_WIN32_DLL
+AM_CXXFLAGS="$AM_CXXFLAGS -fvisibility=default"
 
 fi
+
+#elif test "${host_os_noversion}" = darwin ; then 
+#
+#AC_REQUIRE(AC_CANONICAL_HOST)_LT_SET_OPTION([LT_INIT],[win32-dll])
+#AC_DIAGNOSE([obsolete],[AC_LIBTOOL_WIN32_DLL: Remove this warning and the call to _LT_SET_OPTION when you
+#put the `win32-dll' option into LT_INIT's first parameter.])
+
+
 
 AM_CXXFLAGS="-std=c++11 $AM_CXXFLAGS"
 AC_SUBST(extra_includes)
@@ -81,15 +85,14 @@ ORIG_CXXFLAGS=$CXXFLAGS
 
 AC_PROG_CXX
 AC_PROG_CPP
-AC_PROG_LIBTOOL
+LT_INIT([win32-dll])
 AC_PROG_INSTALL
 
 #CFLAGS=$ORIG_CFLAGS
 #AM_CXXFLAGS=$ORIG_CXXFLAGS
 
 # Set language
-AC_LANG_CPLUSPLUS
-AC_LANG(C++)
+AC_LANG([C++])
 
 # check to see how to make objects in subdirs
 AM_PROG_CC_C_O
@@ -425,7 +428,7 @@ AC_SUBST(AM_CXXFLAGS)
 AC_DEFINE_UNQUOTED([CONFIG_FLAGS],["$AM_CXXFLAGS"] , ["AM_CXXFLAGS that we used to compile."])
 AC_DEFINE_UNQUOTED([_ARCH_],["$host"] , ["Host architecture."])
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
   Makefile 
   src/Makefile 
   src/builtins/Makefile 
@@ -439,6 +442,7 @@ AC_OUTPUT([
   boost/lib/serialization/Makefile
   boost/lib/mpi/Makefile
 ])
+AC_OUTPUT
 
 echo ""
 echo "CPPFLAGS = $CPPFLAGS"
