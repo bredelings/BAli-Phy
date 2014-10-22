@@ -11,10 +11,6 @@ libboost_filesystem_la_SOURCES = src/operations.cpp \
 				src/windows_file_codecvt.cpp \
 				src/codecvt_error_category.cpp
 
-if HOST_CYGWIN
-CPPFLAGS += -DBOOST_POSIX_API
-endif
-
 #     lib_LTLIBRARIES = libtop.la
 #     libtop_la_SOURCES =
 #     # Dummy C++ source to cause C++ linking.
