@@ -1288,6 +1288,9 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
       computation& RC2 = computations[rc2];
       int r2 = RC2.source_reg;
 
+      // This computation is out of date.  Anything that references it must ALSO be out of date.
+      if (RC2.flags.test(1)) continue;
+
       // If this computation is not used in t2, we don't need to unshare it.
       if (computation_index_for_reg_(t2,r2) != rc2) continue;
 
@@ -1321,6 +1324,9 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
 
       computation& RC2 = computations[rc2];
       int r2 = RC2.source_reg;
+
+      // This computation is out of date.  Anything that references it must ALSO be out of date.
+      if (RC2.flags.test(1)) continue;
 
       // If this computation is not used in t2, we don't need to unshare it.
       if (computation_index_for_reg_(t2,r2) != rc2) continue;
