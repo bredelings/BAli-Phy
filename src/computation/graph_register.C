@@ -199,7 +199,10 @@ void computation::clear()
 
   // This should already be cleared.
   assert(temp == -1);
-  assert(flags.none());
+  // The 'active-pr' flags should already be cleared.
+  assert(not flags.test(0));
+  // But the invalid computation flag might not be cleared.
+  flags.reset();
 }
 
 void computation::check_cleared()
