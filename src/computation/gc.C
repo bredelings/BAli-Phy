@@ -122,9 +122,10 @@ void reg_heap::trace_and_reclaim_unreachable()
       next_scan1.insert(next_scan1.end(), RC.used_inputs.begin(), RC.used_inputs.end());
 
       // Count the reg that references us
-      assert(RC.source_reg);
-      scan1.push_back(RC.source_reg);
-      
+      assert(RC.source_reg > 0);
+      if (RC.source_token > 0)
+	scan1.push_back(RC.source_reg);
+
       // Count also the computation we call
       if (RC.call) 
 	scan1.push_back(RC.call);
