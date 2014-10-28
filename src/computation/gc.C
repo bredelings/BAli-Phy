@@ -1,6 +1,8 @@
 #include "graph_register.H"
 
 using std::vector;
+using std::cerr;
+using std::endl;
 
 
 template<typename T>
