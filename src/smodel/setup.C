@@ -485,7 +485,7 @@ expression_ref process_stack_Frequencies(const module_loader& L,
   }
   */
 
-  if (R and model_args[1] != "")
+  if (R and model_args.size()>1 and model_args[1] != "")
   {
     // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
     expression_ref s = coerce_to_EM(L,model_args[1], a, frequencies);
