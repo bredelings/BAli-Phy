@@ -62,7 +62,6 @@ fi
 
 
 
-AM_CXXFLAGS="-std=c++11 $AM_CXXFLAGS"
 AC_SUBST(extra_includes)
 AC_SUBST(extra_libs2)
 
@@ -88,6 +87,7 @@ AC_PROG_CPP
 LT_PREREQ([2.4.2])
 LT_INIT([win32-dll])
 AC_PROG_INSTALL
+AX_CXX_COMPILE_STDCXX_11(,[mandatory])
 
 #CFLAGS=$ORIG_CFLAGS
 #AM_CXXFLAGS=$ORIG_CXXFLAGS
