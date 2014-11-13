@@ -549,9 +549,9 @@ int main(int argc,char* argv[])
 	burnin[i][j] = b;
 	worst_burnin.check_max(j,b);
       }
-      tables[i].chop_first_rows(skip);
-      if (not tables[i].n_rows())
+      if (tables[i].n_rows() <= skip)
 	throw myexception()<<"File '"<<filenames[i]<<"' has no samples left after removal of burn-in!";
+      tables[i].chop_first_rows(skip);
     }
 
     
