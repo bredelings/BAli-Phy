@@ -279,6 +279,24 @@ void show_mean(const string& name, const vector<stats_table>& tables, int index,
     cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
 }
 
+void show_log_mean(const string& name, const vector<stats_table>& tables, int index, const vector<double>& total, bool show_individual)
+{
+  using namespace statistics;
+
+  if (tables.size() > 1 and show_individual)
+    for(int i=0;i<tables.size();i++)
+    {
+      const vector<double>& values = tables[i].column(index);
+      cout<<" log E exp "<<name<<" ["<<i+1<<"] = "<<log_average_exp(values);
+    }
+  
+  const vector<double>& values = total;
+  if (show_individual)
+    cout<<" log E exp "<<name<<"     = "<<log_average_exp(values);
+  else
+    cout<<" log E exp "<<name<<" = "<<log_average_exp(values);
+}
+
 var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int index,const vector<vector<int> >& burnin, bool HPD)
 {
   const string& name = tables[0].names()[index];
@@ -325,21 +343,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
   // Print out log(E(exp(X)))
   if (args.count("log-mean"))
-  {
-    if (tables.size() > 1 and show_individual)
-      for(int i=0;i<tables.size();i++)
-      {
-	const vector<double>& values = tables[i].column(index);
-	cout<<" log E exp "<<name<<" ["<<i+1<<"] = "<<log_average_exp(values);
-      }
-
-    const vector<double>& values = total;
-    if (show_individual)
-      cout<<" log E exp "<<name<<"     = "<<log_average_exp(values);
-    else
-      cout<<" log E exp "<<name<<" = "<<log_average_exp(values);
-  }
-
+    show_log_mean(name, tables, index, total, show_individual);
 
   // Print out median and confidence interval
   double sum_CI=0;
