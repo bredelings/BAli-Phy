@@ -143,5 +143,9 @@ namespace statistics {
     return m;
   }
 
+  double bias(const std::vector<double>& x, double truth);
+  double overestimate(const std::vector<double>& x, double truth);
+  double abs_error(const std::vector<double>& x, double truth);
+  double rms_error(const std::vector<double>& x, double truth);
 }
 #endif

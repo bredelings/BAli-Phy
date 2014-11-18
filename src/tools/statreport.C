@@ -60,6 +60,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("individual,i","Show results for individual files separately also.")
     ("skip,s",value<string>()->default_value("10%"),"Number of initial lines to skip.")
     ("sub-sample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
+    ("truth",value<double>(),"True value")
     ("max,m",value<int>(),"Maximum number of lines to read.")
     ("mean", "Show mean and standard deviation.")
     ("log-mean", "Show log mean of X given log X.")
@@ -354,6 +355,23 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
     cout<<"  (NA,NA)"<<endl;
 }
 
+void show_error(variables_map& args, const string& name, const vector<stats_table>& tables, int index, const vector<double>& total)
+{
+  double truth = args["truth"].as<double>();
+
+  using namespace statistics;
+
+  double bias = statistics::bias(total, truth);
+  double bias_overestimate = statistics::overestimate(total, truth);
+  double abs_error = statistics::abs_error(total, truth);
+  double rms_error = statistics::rms_error(total, truth);
+  cout<<"  bias = "<<bias<<endl;
+  cout<<"  high = "<<bias_overestimate<<endl;
+  cout<<"  absE = "<<abs_error<<endl;
+  cout<<"  rmsE = "<<rms_error<<endl;
+  cout<<endl;
+}
+
 var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int index,const vector<vector<int> >& burnin)
 {
   const string& name = tables[0].names()[index];
@@ -406,6 +424,9 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   double sum_fraction_contained=0;
   if (args.count("median") or not args.count("mean"))
     show_median(args, name, tables, index, total, show_individual, sum_CI, total_CI, sum_fraction_contained);
+
+  if (args.count("truth"))
+    show_error(args, name, tables, index, total);
 
   // Print out autocorrelation times, Ne, and minimum burn-in
   double sum_tau=0;

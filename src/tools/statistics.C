@@ -364,5 +364,45 @@ namespace statistics {
     }
     return FX.sum()/FX.size();
   }
+
+  double bias(const vector<double>& x, double truth)
+  {
+    return average(x) - truth;
+  }
+  
+  double overestimate(const vector<double>& xs, double truth)
+  {
+    int count = 0;
+    for(double x:xs)
+      if (x > truth)
+	count++;
+
+    double O = double(count)/xs.size();
+    return O - 0.5;
+  }
+  
+  double abs_error(const vector<double>& xs, double truth)
+  {
+    double E = 0;
+    for(double x:xs)
+      E += abs(x - truth);
+
+    E /= xs.size();
+
+    return E;
+  }
+  
+  double rms_error(const vector<double>& xs, double truth)
+  {
+    double E = 0;
+    for(double x:xs)
+    {
+      double e = x - truth;
+      E += e*e;
+    }
+
+    E /= xs.size();
+    return sqrt(E);
+  }
 }
 
