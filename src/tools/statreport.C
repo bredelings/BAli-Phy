@@ -297,13 +297,68 @@ void show_log_mean(const string& name, const vector<stats_table>& tables, int in
     cout<<" log E exp "<<name<<" = "<<log_average_exp(values);
 }
 
-var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int index,const vector<vector<int> >& burnin, bool HPD)
+const double compare_level=0.8;
+
+
+void show_median(variables_map& args, const string& name, const vector<stats_table>& tables, int index, const vector<double>& total,
+		 bool show_individual, double& sum_CI, double& total_CI, double& sum_fraction_contained)
+{
+  using namespace statistics;
+
+  // Print out median and confidence interval
+  double P = args["confidence"].as<double>();
+  
+  bool HPD = args.count("HPD");
+
+  if (tables.size() > 1)
+    for(int i=0;i<tables.size();i++) {
+      const vector<double>& values = tables[i].column(index);
+    
+      if (tables.size() > 1)
+      {
+	pair<double,double> interval_80 = central_confidence_interval(values,compare_level);
+	double x = fraction_in_interval(values,interval_80.first,interval_80.second)/
+	  fraction_in_interval(tables.back().column(index),interval_80.first,interval_80.second);
+
+	sum_fraction_contained += x;
+	sum_CI += std::abs(interval_80.second - interval_80.first);
+      }
+      pair<double,double> interval = HPD?HPD_confidence_interval(values,P):central_confidence_interval(values,P);
+      if (show_individual) {
+	cout<<"   "<<name<<" ["<<i+1<<"] ~ "<<median(values);
+
+	if ((1.0-P)*values.size() >= 10.0)
+	  cout<<"  ("<<interval.first<<","<<interval.second<<")"<<endl;
+	else
+	  cout<<"  (NA,NA)"<<endl;
+      }
+    }
+  const vector<double>& values = total;
+    
+  if (tables.size() > 1)
+  {
+    pair<double,double> interval_compare = central_confidence_interval(values,compare_level);
+    total_CI = std::abs(interval_compare.second - interval_compare.first);
+    sum_CI /= tables.size();
+    sum_fraction_contained /= tables.size();
+  }
+  pair<double,double> interval = HPD?HPD_confidence_interval(values,P):central_confidence_interval(values,P);
+  if (show_individual)
+    cout<<"   "<<name<<"     ~ "<<median(values);
+  else
+    cout<<"   "<<name<<" ~ "<<median(values);
+    
+  if ((1.0-P)*values.size() >= 10.0)
+    cout<<"  ("<<interval.first<<","<<interval.second<<")"<<endl;
+  else
+    cout<<"  (NA,NA)"<<endl;
+}
+
+var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int index,const vector<vector<int> >& burnin)
 {
   const string& name = tables[0].names()[index];
 
   using namespace statistics;
-
-  double compare_level=0.8;
 
   bool show_individual = (args.count("individual")>0) and (tables.size() >1);
 
@@ -349,52 +404,8 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   double sum_CI=0;
   double total_CI=0;
   double sum_fraction_contained=0;
-  if (args.count("median") or not args.count("mean")) {
-    double P = args["confidence"].as<double>();
-
-    if (tables.size() > 1)
-      for(int i=0;i<tables.size();i++) {
-	const vector<double>& values = tables[i].column(index);
-    
-	if (tables.size() > 1)
-	{
-	  pair<double,double> interval_80 = central_confidence_interval(values,compare_level);
-	  double x = fraction_in_interval(values,interval_80.first,interval_80.second)/
-	    fraction_in_interval(tables.back().column(index),interval_80.first,interval_80.second);
-
-	  sum_fraction_contained += x;
-	  sum_CI += std::abs(interval_80.second - interval_80.first);
-	}
-	pair<double,double> interval = HPD?HPD_confidence_interval(values,P):central_confidence_interval(values,P);
-	if (show_individual) {
-	  cout<<"   "<<name<<" ["<<i+1<<"] ~ "<<median(values);
-
-	  if ((1.0-P)*values.size() >= 10.0)
-	    cout<<"  ("<<interval.first<<","<<interval.second<<")"<<endl;
-	  else
-	    cout<<"  (NA,NA)"<<endl;
-	}
-      }
-    const vector<double>& values = total;
-    
-    if (tables.size() > 1)
-    {
-      pair<double,double> interval_compare = central_confidence_interval(values,compare_level);
-      total_CI = std::abs(interval_compare.second - interval_compare.first);
-      sum_CI /= tables.size();
-      sum_fraction_contained /= tables.size();
-    }
-    pair<double,double> interval = HPD?HPD_confidence_interval(values,P):central_confidence_interval(values,P);
-    if (show_individual)
-      cout<<"   "<<name<<"     ~ "<<median(values);
-    else
-      cout<<"   "<<name<<" ~ "<<median(values);
-    
-    if ((1.0-P)*values.size() >= 10.0)
-      cout<<"  ("<<interval.first<<","<<interval.second<<")"<<endl;
-    else
-      cout<<"  (NA,NA)"<<endl;
-  }
+  if (args.count("median") or not args.count("mean"))
+    show_median(args, name, tables, index, total, show_individual, sum_CI, total_CI, sum_fraction_contained);
 
   // Print out autocorrelation times, Ne, and minimum burn-in
   double sum_tau=0;
@@ -476,8 +487,6 @@ int main(int argc,char* argv[])
     variables_map args = parse_cmd_line(argc,argv);
 
     cout.precision(args["precision"].as<unsigned>());
-
-    bool HPD = args.count("HPD");
 
     int subsample=args["sub-sample"].as<int>();
 
@@ -574,7 +583,7 @@ int main(int argc,char* argv[])
     vector<string> decreasing_names;
     for(int i=0;i<n_columns;i++) 
     {
-      var_stats S = show_stats(args, tables, i, burnin, HPD);
+      var_stats S = show_stats(args, tables, i, burnin);
       cout<<endl;
 
       if (not S.ignored) {
