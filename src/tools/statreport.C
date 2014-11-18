@@ -259,6 +259,25 @@ double log_average_exp(const vector<double>& xs)
   return log(total);
 }
 
+void show_mean(const string& name, const vector<stats_table>& tables, int index, const vector<double>& total, bool show_individual)
+{
+  using namespace statistics;
+
+  if (tables.size() > 1 and show_individual)
+      for(int i=0;i<tables.size();i++) 
+      {
+	const vector<double>& values = tables[i].column(index);
+	cout<<" E "<<name<<" ["<<i+1<<"] = "<<average(values);
+	cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
+      }
+
+    const vector<double>& values = total;
+    if (show_individual)
+      cout<<" E "<<name<<"     = "<<average(values);
+    else
+      cout<<" E "<<name<<" = "<<average(values);
+    cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
+}
 
 var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int index,const vector<vector<int> >& burnin, bool HPD)
 {
@@ -299,24 +318,10 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   }
 
   bool integers = is_integers(total);
+
   // Print out mean and standard deviation
   if (args.count("mean"))
-  {
-    if (tables.size() > 1 and show_individual)
-      for(int i=0;i<tables.size();i++) 
-      {
-	const vector<double>& values = tables[i].column(index);
-	cout<<" E "<<name<<" ["<<i+1<<"] = "<<average(values);
-	cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
-      }
-
-    const vector<double>& values = total;
-    if (show_individual)
-      cout<<" E "<<name<<"     = "<<average(values);
-    else
-      cout<<" E "<<name<<" = "<<average(values);
-    cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
-  }
+    show_mean(name, tables, index, total, show_individual);
 
   // Print out log(E(exp(X)))
   if (args.count("log-mean"))
