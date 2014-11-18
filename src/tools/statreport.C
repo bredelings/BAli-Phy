@@ -65,7 +65,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("mean", "Show mean and standard deviation.")
     ("log-mean", "Show log mean of X given log X.")
     ("median", "Show median and confidence level.")
-    ("confidence",value<double>()->default_value(0.95,"0.95"),"Confidence interval level.")
+    ("confidence",value<string>()->default_value("0.95"),"Confidence interval levels (colon-separated).")
     ("HPD", "Show HPD credible intervals")
     ("precision,p", value<unsigned>()->default_value(4),"Number of significant figures.")
     ("verbose,v","Output more log messages on stderr.")
@@ -307,7 +307,8 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
   using namespace statistics;
 
   // Print out median and confidence interval
-  double P = args["confidence"].as<double>();
+  vector<double> Ps = split<double>(args["confidence"].as<string>(),':');
+  sort(Ps.begin(), Ps.end());
   
   bool HPD = args.count("HPD");
 
@@ -324,14 +325,25 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
 	sum_fraction_contained += x;
 	sum_CI += std::abs(interval_80.second - interval_80.first);
       }
-      pair<double,double> interval = HPD?HPD_confidence_interval(values,P):central_confidence_interval(values,P);
-      if (show_individual) {
-	cout<<"   "<<name<<" ["<<i+1<<"] ~ "<<median(values);
 
-	if ((1.0-P)*values.size() >= 10.0)
-	  cout<<"  ("<<interval.first<<","<<interval.second<<")"<<endl;
-	else
-	  cout<<"  (NA,NA)"<<endl;
+      for(int i=0;i<Ps.size();i++)
+      {
+	double P = Ps[i];
+	pair<double,double> interval = HPD?HPD_confidence_interval(values,P):central_confidence_interval(values,P);
+	if (show_individual)
+	{
+	  if (i==0)
+	    cout<<"   "<<name<<" ["<<i+1<<"] ~ "<<median(values);
+	  else
+	    cout<<"    ";
+	  
+	  if ((1.0-P)*values.size() >= 10.0)
+	    cout<<"  ("<<interval.first<<","<<interval.second<<")";
+	  else
+	    cout<<"  (NA,NA)"<<endl;
+
+	  cout<<" @ "<<P*100<<"%"<<endl;
+	}
       }
     }
   const vector<double>& values = total;
@@ -343,16 +355,28 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
     sum_CI /= tables.size();
     sum_fraction_contained /= tables.size();
   }
-  pair<double,double> interval = HPD?HPD_confidence_interval(values,P):central_confidence_interval(values,P);
-  if (show_individual)
-    cout<<"   "<<name<<"     ~ "<<median(values);
-  else
-    cout<<"   "<<name<<" ~ "<<median(values);
+
+  for(int i=0;i<Ps.size();i++)
+  {
+    double P = Ps[i];
+    pair<double,double> interval = HPD?HPD_confidence_interval(values,P):central_confidence_interval(values,P);
+
+    if (i==0)
+    {
+      if (show_individual)
+	cout<<"   "<<name<<"     ~ "<<median(values);
+      else
+	cout<<"   "<<name<<" ~ "<<median(values);
+    }
+    else
+      cout<<"     ";
     
-  if ((1.0-P)*values.size() >= 10.0)
-    cout<<"  ("<<interval.first<<","<<interval.second<<")"<<endl;
-  else
-    cout<<"  (NA,NA)"<<endl;
+    if ((1.0-P)*values.size() >= 10.0)
+      cout<<"  ("<<interval.first<<","<<interval.second<<")";
+    else
+      cout<<"  (NA,NA)";
+    cout<<" @ "<<P*100<<"%"<<endl;
+  }
 }
 
 void show_error(variables_map& args, const string& name, const vector<stats_table>& tables, int index, const vector<double>& total)
