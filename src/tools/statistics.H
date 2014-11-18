@@ -99,9 +99,13 @@ namespace statistics {
 
   double median(const std::vector<double>& values);
   double median(const std::valarray<double>& values);
+
   double quantile(const std::valarray<double>& values, double Q);
   double quantile(std::vector<double> values, double Q);
   double quantile_sorted(const std::vector<double>& values, double Q);
+
+  std::pair<double,double> mode(std::vector<double> values);
+
   double fraction_in_interval(std::vector<double> values,double L, double R);
 
   std::pair<double,double> central_confidence_interval(const std::valarray<double>& values, double P);

@@ -28,6 +28,8 @@ using std::pair;
 //FIXME - add 'hat'?
 namespace statistics {
 
+  using std::abs;
+
   double fraction(const valarray<bool>& v) {
     return fraction(count(v),v.size(),0);
   }
@@ -159,14 +161,11 @@ namespace statistics {
     return HPD_confidence_interval(values2,P);
   }
 
-  pair<double,double> HPD_confidence_interval(vector<double> values,double P) 
+
+  int find_smallest_interval(const vector<double>& values, int delta)
   {
-    if (values.empty()) return pair<double,double>{0,0};
-
-    sort(values.begin(),values.end());
-
-    int N = values.size();
-    int delta = ceil( P*N )-1;
+    const int N = values.size();
+    
     int ways = N - delta - 1;
 
     // scan for the interval with the smallest width
@@ -183,9 +182,40 @@ namespace statistics {
       }
     }
 
+    return best;
+  }
+
+  pair<double,double> HPD_confidence_interval(vector<double> values,double P) 
+  {
+    if (values.empty()) return pair<double,double>{0,-1};
+
+    sort(values.begin(),values.end());
+
+    int N = values.size();
+    int delta = ceil( P*N )-1;
+
+    int best = find_smallest_interval(values, delta);
+    
     return pair<double,double>{values[best],values[best+delta]};
   }
 
+  pair<double,double> mode(vector<double> values)
+  {
+    if (values.size() < 20)
+      return pair<double,double>(0, -1);
+
+    std::sort(values.begin(),values.end());
+
+    const int delta = sqrt(values.size()*1.6);
+
+    int best = find_smallest_interval(values, delta);
+    
+    double x1 = values[best];
+    double x2 = values[best+delta];
+    
+    return pair<double,double>(0.5*(x1+x2),abs(x2-x1));
+  }
+  
   valarray<bool> add_pseudocount(const valarray<bool>& sample1,int pseudocount) {
     valarray<bool> sample2(sample1.size() + 2*pseudocount);
     
