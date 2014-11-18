@@ -61,6 +61,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("skip,s",value<string>()->default_value("10%"),"Number of initial lines to skip.")
     ("sub-sample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
     ("truth",value<double>(),"True value")
+    ("min",value<int>(),"Required minimum number of lines to read.")
     ("max,m",value<int>(),"Maximum number of lines to read.")
     ("mean", "Show mean and standard deviation.")
     ("log-mean", "Show log mean of X given log X.")
@@ -539,6 +540,10 @@ int main(int argc,char* argv[])
     if (args.count("max"))
       max = args["max"].as<int>();
 
+    int min_rows = -1;
+    if (args.count("min"))
+      min_rows = args["min"].as<int>();
+    
     vector<string> ignore;
     if (args.count("ignore"))
       ignore = args["ignore"].as<vector<string> >();
@@ -612,9 +617,11 @@ int main(int argc,char* argv[])
 	burnin[i][j] = b;
 	worst_burnin.check_max(j,b);
       }
-      tables[i].chop_first_rows(skip);
-      if (not tables[i].n_rows())
+      if (tables[i].n_rows() < min_rows)
+	throw myexception()<<"File '"<<filenames[i]<<"' has only "<<tables[i].n_rows()<<" rows, but "<<min_rows<<" are required!";
+      if (tables[i].n_rows() <= skip)
 	throw myexception()<<"File '"<<filenames[i]<<"' has no samples left after removal of burn-in!";
+      tables[i].chop_first_rows(skip);
     }
 
     

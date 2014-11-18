@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.68])
 AC_INIT([BAli-Phy],[2.3.5],[benjamin.redelings@duke.edu])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([1.11 foreign subdir-objects tar-ustar])
@@ -62,7 +62,6 @@ fi
 
 
 
-AM_CXXFLAGS="-std=c++11 $AM_CXXFLAGS"
 AC_SUBST(extra_includes)
 AC_SUBST(extra_libs2)
 
@@ -85,8 +84,10 @@ ORIG_CXXFLAGS=$CXXFLAGS
 
 AC_PROG_CXX
 AC_PROG_CPP
+LT_PREREQ([2.4.2])
 LT_INIT([win32-dll])
 AC_PROG_INSTALL
+AX_CXX_COMPILE_STDCXX_11(,[mandatory])
 
 #CFLAGS=$ORIG_CFLAGS
 #AM_CXXFLAGS=$ORIG_CXXFLAGS
