@@ -64,6 +64,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("min",value<int>(),"Required minimum number of lines to read.")
     ("max,m",value<int>(),"Maximum number of lines to read.")
     ("mean", "Show mean and standard deviation.")
+    ("mode", "Show mode (with precision)")
     ("log-mean", "Show log mean of X given log X.")
     ("median", "Show median and confidence level.")
     ("confidence",value<string>()->default_value("0.95"),"Confidence interval levels (colon-separated).")
@@ -281,6 +282,15 @@ void show_mean(const string& name, const vector<stats_table>& tables, int index,
     cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
 }
 
+void show_mode(const string& name, const vector<stats_table>& tables, int index, const vector<double>& total, bool show_individual)
+{
+  using namespace statistics;
+
+  auto m = mode(total);
+  cout<<"   "<<name<<" ^ "<<m.first<<"  [+- "<<m.second<<"]"<<endl;
+  cout<<endl;
+}
+
 void show_log_mean(const string& name, const vector<stats_table>& tables, int index, const vector<double>& total, bool show_individual)
 {
   using namespace statistics;
@@ -436,6 +446,9 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   bool integers = is_integers(total);
 
   // Print out mean and standard deviation
+  if (args.count("mode"))
+    show_mode(name, tables, index, total, show_individual);
+
   if (args.count("mean"))
     show_mean(name, tables, index, total, show_individual);
 
