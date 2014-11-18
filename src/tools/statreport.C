@@ -290,7 +290,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
     return V;
   }
 
-  if (monotonic_increasing(tables,index))
+  if (monotonic_decreasing(tables,index))
   {
     cout<<"   "<<name<<" = [decreasing]"<<endl;
     var_stats V;
