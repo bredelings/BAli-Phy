@@ -45,7 +45,7 @@ diploid_afs_modified n_individuals n_loci s theta_effective = Prefix "DiploidAFS
 --
 --     This has mixing issues in the case where s ~ 0.33, and we estimate f ~ 0.045 (0.022,0.067).
 --      * ACT ~ \infty ?
---      * We take 500-1000 generations to accept extra_pop_structure=1.
+--      * We take 500-1000 generations to accept extra_pop_structure=1. (Why? This might be the real problem.)
 --      * We never propose moving back to extra_pop_structure=0.
 --      * It seems that f and s are not very correlated.
 --     
