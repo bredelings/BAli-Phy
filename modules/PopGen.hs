@@ -36,19 +36,19 @@ selfing_coalescence n_loci s = ProbDensity (selfing_coalescence_probability n_lo
 
 diploid_afs_modified n_individuals n_loci s theta_effective = Prefix "DiploidAFS" $ do 
   { 
+--     extra_pop_structure -- 
 --     This has mixing issues in the case where s ~ 0.95, and we estimate f as like uniform [0,0.75], with a bump at 0.6.
---      * ACT ~ 65
+--      * ACT ~ 45
 --      * It seems that f and s are not very correlated when f is in [0, 0.4], but starts making a different when is in [0.4,0.7].
 --      * Perhaps we should co-propose f and s, since both affect the coalescence probability.
 --      * However, perhaps the I_{lk} has a bigger effect, since f affects how individual-specific Pr(I_{lk}) is.
 --
 --     This has mixing issues in the case where s ~ 0.33, and we estimate f ~ 0.045 (0.022,0.067).
 --      * ACT ~ \infty ?
---      * We never propose moving back to f=0.
+--      * We take 500-1000 generations to accept extra_pop_structure=1.
+--      * We never propose moving back to extra_pop_structure=0.
 --      * It seems that f and s are not very correlated.
 --     
-
-
 --       extra_pop_structure <- bernoulli 0.5;
 --       Log "extra-pop-structure" extra_pop_structure;
        f <- beta 1.0 5.0;
