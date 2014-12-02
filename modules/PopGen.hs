@@ -36,12 +36,23 @@ selfing_coalescence n_loci s = ProbDensity (selfing_coalescence_probability n_lo
 
 diploid_afs_modified n_individuals n_loci s theta_effective = Prefix "DiploidAFS" $ do 
   { 
---     This MAY have mixing issues.
 --          f' <- beta 1.0 3.0;
---          has_biparental_inbreeding <- bernoulli 0.5;
---          Log "biparental_inbreeding" has_biparental_inbreeding;
---          let {f = if (has_biparental_inbreeding == 1) then f' else 0.0};
+--          extra_pop_structure <- bernoulli 0.5;
+--          Log "extra_pop_structure" extra_pop_structure;
+--          let {f = if (extra_pop_structure == 1) then f' else 0.0};
 --          Log "f'" f';
+--
+--     This has mixing issues in the case where s ~ 0.95, and we estimate f as like uniform [0,0.75], with a bump at 0.6.
+--      * ACT ~ 65
+--      * It seems that f and s are not very correlated when f is in [0, 0.4], but starts making a different when is in [0.4,0.7].
+--      * Perhaps we should co-propose f and s, since both affect the coalescence probability.
+--      * However, perhaps the I_{lk} has a bigger effect, since f affects how individual-specific Pr(I_{lk}) is.
+--
+--     This has mixing issues in the case where s ~ 0.33, and we estimate f ~ 0.045 (0.022,0.067).
+--      * ACT ~ \infty ?
+--      * We never propose moving back to f=0.
+--      * It seems that f and s are not very correlated.
+--     
 
        f <- beta 1.0 5.0;
        Log "f" f;
