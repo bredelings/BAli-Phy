@@ -36,12 +36,6 @@ selfing_coalescence n_loci s = ProbDensity (selfing_coalescence_probability n_lo
 
 diploid_afs_modified n_individuals n_loci s theta_effective = Prefix "DiploidAFS" $ do 
   { 
---          f' <- beta 1.0 3.0;
---          extra_pop_structure <- bernoulli 0.5;
---          Log "extra_pop_structure" extra_pop_structure;
---          let {f = if (extra_pop_structure == 1) then f' else 0.0};
---          Log "f'" f';
---
 --     This has mixing issues in the case where s ~ 0.95, and we estimate f as like uniform [0,0.75], with a bump at 0.6.
 --      * ACT ~ 65
 --      * It seems that f and s are not very correlated when f is in [0, 0.4], but starts making a different when is in [0.4,0.7].
@@ -54,7 +48,12 @@ diploid_afs_modified n_individuals n_loci s theta_effective = Prefix "DiploidAFS
 --      * It seems that f and s are not very correlated.
 --     
 
+
+--       extra_pop_structure <- bernoulli 0.5;
+--       Log "extra-pop-structure" extra_pop_structure;
        f <- beta 1.0 5.0;
+--       let {f = if (extra_pop_structure == 1) then f' else 0.0};
+--       Log "f'" f';
        Log "f" f;
 
        t <- iid n_individuals (rgeometric s);
