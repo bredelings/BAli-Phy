@@ -47,6 +47,10 @@ diploid_afs_modified n_individuals n_loci s theta_effective = Prefix "DiploidAFS
 --      * ACT ~ \infty ?
 --      * We take 500-1000 generations to accept extra_pop_structure=1. (Why? This might be the real problem.)
 --      * We never propose moving back to extra_pop_structure=0.
+--        + Well, of course!  If f=0 and T_k=0, then coalescence is absolutely not allowed.
+--        + If we set f=0, then we need to set I_lk=0 for every individual with no selfing.
+--        + I guess we would like to (a) choose a random order for the individuals.
+--                                   (b) resample I_lk for individuals k = 1, 2, 3, ... , n.
 --      * It seems that f and s are not very correlated.
 --     
 --       extra_pop_structure <- bernoulli 0.5;
