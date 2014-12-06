@@ -451,6 +451,8 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     assert(branches2.size() == 2);
     int leaving1 = branches2[0].target();
     int leaving2 = branches2[1].target();
+    // Is this necessary? Since it references the alignment MATRIX, we'd like to remove it.
+    // - See sample-tri.C line 146: P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2), false);
     p[1].recompute_pairwise_alignment(p[1].T().directed_branch(leaving1,leaving2));
   }
 
