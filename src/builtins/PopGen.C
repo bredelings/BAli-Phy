@@ -16,6 +16,8 @@ T get_line_of(std::istream& i)
   return convertTo<T>(line);
 }
 
+const int missing = -1;
+
 extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
 {
   const string& filename = *Args.evaluate_as<String>(0);
@@ -50,10 +52,17 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
     vector<int> loci;
     for(const auto& word: words)
     {
-      if (word == "" or word == "NA")
-	loci.push_back(0);
-      else
-	loci.push_back(convertTo<int>(word));
+      if (word == "NA")
+      {
+	loci.push_back(-1);
+	continue;
+      }
+
+      int allele = convertTo<int>(word);
+      if (allele <= 0)
+	throw myexception()<<"read_phase_file: Allele values must be > 0, but read allele '"<<allele<<"'!\n  Use \"NA\" to indicate missing data.";
+
+      loci.push_back(allele);
     }
     if (loci.size() != 2*n_loci)
       throw myexception()<<"Reading file '"<<filename<<"': expecting "<<2*n_loci<<" alleles for individual '"<<individual_name<<"', but actually got "<<loci.size()<<".";
