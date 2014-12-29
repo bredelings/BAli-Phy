@@ -451,7 +451,9 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
 
     o<<"label = \""<<label<<"\"";
-    if (C.access(R).re_evaluate)
+    if (C.access(R).n_heads)
+      o<<",style=\"dashed,filled\",color=orange";
+    else if (C.access(R).re_evaluate)
       o<<",style=\"dashed,filled\",color=yellow";
     else if (C.reg_is_changeable(R))
       o<<",style=\"dashed,filled\",color=red";
