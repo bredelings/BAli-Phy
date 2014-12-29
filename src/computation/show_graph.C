@@ -203,7 +203,7 @@ string escape(const string& s)
       continue;
     }
 
-    bool escape_next = (s[i] == '\\') or (s[i] == '\n') or (s[i] == '"') or (s[i] == '<') or (s[i] == '>');
+    bool escape_next = (s[i] == '\\') or (s[i] == '\n') or (s[i] == '"') or (s[i] == '<') or (s[i] == '>') or (s[i] == '{') or (s[i] == '}');
 
     if (escape_next)
       s2[l++] = '\\';
