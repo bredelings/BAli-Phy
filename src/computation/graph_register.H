@@ -410,6 +410,7 @@ public:
   const computation& computation_for_reg_(int t, int r) const;
         computation& computation_for_reg_(int t, int r);
   bool has_computation_(int t, int r) const;
+  bool has_valid_computation_(int t, int r) const;
   bool reg_has_result_(int t, int r) const;
   bool reg_has_computation_result_(int t, int r) const;
   int computation_result_for_reg_(int t, int r) const;
@@ -420,6 +421,7 @@ public:
   const computation& computation_for_reg(int r) const ;
         computation& computation_for_reg(int r);
   bool has_computation(int r) const;
+  bool has_valid_computation(int r) const;
   bool reg_has_result(int r) const;
   bool reg_has_computation_result(int r) const;
   int computation_result_for_reg(int r) const;

@@ -599,12 +599,12 @@ bool reg_heap::reg_has_result(int r) const
 
 bool reg_heap::reg_has_computation_result(int r) const
 {
-  return has_computation(r) and computation_result_for_reg(r);
+  return has_valid_computation(r) and computation_result_for_reg(r);
 }
 
 bool reg_heap::reg_has_call(int r) const
 {
-  return has_computation(r) and call_for_reg(r);
+  return has_valid_computation(r) and call_for_reg(r);
 }
 
 int reg_heap::call_for_reg(int r) const
@@ -622,12 +622,12 @@ bool reg_heap::reg_has_result_(int t, int r) const
 
 bool reg_heap::reg_has_computation_result_(int t, int r) const
 {
-  return has_computation_(t,r) and computation_result_for_reg_(t,r);
+  return has_valid_computation_(t,r) and computation_result_for_reg_(t,r);
 }
 
 bool reg_heap::reg_has_call_(int t, int r) const
 {
-  return has_computation_(t,r) and call_for_reg_(t,r);
+  return has_valid_computation_(t,r) and call_for_reg_(t,r);
 }
 
 int reg_heap::call_for_reg_(int t, int r) const
@@ -640,9 +640,21 @@ bool reg_heap::has_computation(int r) const
   return computation_index_for_reg(r)>0;
 }
 
+bool reg_heap::has_valid_computation(int r) const
+{
+  int rc = computation_index_for_reg(r);
+  return (rc>0) and not computations[rc].flags.test(1);
+}
+
 bool reg_heap::has_computation_(int t, int r) const
 {
   return computation_index_for_reg_(t,r)>0;
+}
+
+bool reg_heap::has_valid_computation_(int t, int r) const
+{
+  int rc = computation_index_for_reg_(t,r);
+  return (rc>0) and not computations[rc].flags.test(1);
 }
 
 const computation& reg_heap::computation_for_reg_(int t, int r) const 
@@ -700,7 +712,7 @@ void reg_heap::set_computation_result_for_reg(int r1)
   if (access(call).type == reg::type_t::constant) return;
 
   // If R2 doesn't have a computation, add one to hold the called-by edge.
-  assert(has_computation(call));
+  assert(has_valid_computation(call));
 
   int rc1 = computation_index_for_reg(r1);
 
@@ -719,8 +731,8 @@ void reg_heap::set_used_input(int R1, int R2)
   assert(access(R1).C);
   assert(access(R2).C);
 
-  assert(has_computation(R1));
-  assert(has_computation(R2));
+  assert(has_valid_computation(R1));
+  assert(has_valid_computation(R2));
   assert(computation_result_for_reg(R2));
 
   // An index_var's result only changes if the thing the index-var points to also changes.
@@ -758,7 +770,7 @@ void reg_heap::set_call(int R1, int R2)
   assert(is_used(R2));
 
   // Only modify the call for the current context;
-  assert(has_computation(R1));
+  assert(has_valid_computation(R1));
 
   // Don't override an *existing* call
   assert(not reg_has_call(R1));
@@ -783,7 +795,7 @@ void reg_heap::set_call(int t, int R1, int R2)
   assert(is_used(R2));
 
   // Only modify the call for the current context;
-  assert(has_computation_(t,R1));
+  assert(has_valid_computation_(t,R1));
 
   // Don't override an *existing* call
   assert(not reg_has_call_(t,R1));
@@ -840,7 +852,7 @@ void reg_heap::clear_C(int R)
 
 void reg_heap::set_reduction_result(int t, int R, closure&& result)
 {
-  assert( has_computation_(t,R) );
+  assert( has_valid_computation_(t,R) );
 
   // Check that there is no result we are overriding
   assert(not reg_has_result_(t,R) );
@@ -909,6 +921,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // If we have a RELATIVE computation, we need to take care of its users new to this token.
   if (has_computation_(token,P))
   {
+    assert(has_valid_computation_(token,P));
     call_and_result_may_be_changed.push_back(P);
     computation_for_reg_(token,P).temp = mark_modified;
     result_may_be_changed.push_back(P);
@@ -955,7 +968,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Clear the marks: 1a
   for(int R: result_may_be_changed)
   {
-    assert(has_computation_(token,R));
+    assert(has_valid_computation_(token,R));
 
     //    assert(computation_result_for_reg(token,R) or reg_is_shared(token,R));
 
@@ -978,7 +991,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Clear the marks: 2a
   for(int R: call_and_result_may_be_changed)
   {
-    assert(has_computation_(token,R));
+    assert(has_valid_computation_(token,R));
 
     // Put this back when we stop making spurious used_by edges
     //    assert(reg_has_call(token,R));
@@ -1444,7 +1457,7 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
 {
   vector<int> U;
-  if (not has_computation(r)) return U;
+  if (not has_valid_computation(r)) return U;
 
   for(int rc: computation_for_reg(r).used_inputs)
     U.push_back(computations[rc].source_reg);
@@ -1710,9 +1723,9 @@ void reg_heap::check_used_reg(int index) const
       assert(tokens[t].vm_relative[index] != tokens[parent_token(t)].vm_relative[index]);
 
     if (access(index).type == reg::type_t::constant)
-      assert(not has_computation_(t,index));
+      assert(not has_valid_computation_(t,index));
 
-    if (not has_computation_(t, index)) continue;
+    if (not has_valid_computation_(t, index)) continue;
 
     int call = call_for_reg_(t,index);
     int result = computation_result_for_reg_(t,index);
@@ -1755,7 +1768,7 @@ void reg_heap::check_used_reg(int index) const
     // Regs with results should have back-references from their call.
     if (result and access(call).type != reg::type_t::constant)
     {
-      assert( has_computation(call) );
+      assert( has_valid_computation(call) );
       int rc2 = computation_index_for_reg(call);
       assert( computation_is_called_by(index_c, rc2) );
     }
@@ -1814,6 +1827,8 @@ int reg_heap::add_shared_computation(int t, int r)
   // 2. Set the source of the computation
   computations[rc].source_token = t;
   computations[rc].source_reg = r;
+
+  assert(computations[rc].flags.none());
 
   // 3. Link it in to the mapping
   tokens[t].vm_relative.set_value(r, rc);
@@ -2027,8 +2042,8 @@ int reg_heap::copy_token(int t)
 
   for(int r: tokens[t].modified)
   {
-    assert(has_computation(t,r));
-    assert(has_computation(t2,r));
+    assert(has_valid_computation(t,r));
+    assert(has_valid_computation(t2,r));
   }
   */
 #ifdef DEBUG_MACHINE
@@ -2273,7 +2288,7 @@ const object_ptr<const Object>& reg_heap::get_reg_value_in_context(int& R, int c
 
   reroot_at_context(c);
 
-  if (has_computation(R))
+  if (has_valid_computation(R))
   {
     int R2 = computation_result_for_reg(R);
     if (R2) return access(R2).C.exp.head();
