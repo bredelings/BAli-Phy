@@ -326,12 +326,14 @@ int main(int argc,char* argv[])
     //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
 
+    bool show_only = args.count("show-only") or args.count("show-graph");
+
     //------ Capture copy of 'cerr' output in 'err_cache' ------//
-    if (not args.count("show-only"))
+    if (not show_only)
       cerr.rdbuf(err_both.rdbuf());
 
     //------ Print version info for show-only ------//
-    if (args.count("show-only") and proc_id == 0)
+    if (show_only and proc_id == 0)
     {
       cout<<"command: "<<get_command_line(argc,argv)<<endl<<endl;
       print_version_info(cout);
@@ -366,11 +368,12 @@ int main(int argc,char* argv[])
     set_key_values(*M,args);
 
     //---------------Do something------------------//
-    if (args.count("show-only"))
+    if (show_only)
     {
-      // FIXME ! How do we print the tree to stdout?
       print_stats(cout,*M);
-      // Separate the tree printer from the file writer?
+
+      if (args.count("show-graph"))
+	M->show_graph();
     }
     else 
     {

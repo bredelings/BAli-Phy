@@ -202,6 +202,8 @@ protected:
 
   void collect_garbage() const;
 public:
+  void show_graph() const;
+  
   const module_loader& get_module_loader() const;
 
   const std::vector<std::string>& get_module_path() const;

@@ -382,6 +382,13 @@ void context::collect_garbage() const
   memory()->collect_garbage();
 }
 
+void context::show_graph() const
+{
+  get_probability();
+  collect_garbage();
+  dot_graph_for_token(*memory(),0);
+}
+
 const module_loader& context::get_module_loader() const
 {
   return loader;
