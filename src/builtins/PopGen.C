@@ -270,9 +270,16 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
   assert(n == I.size());
 
   double Pr = 1.0;
+  log_double_t Pr2 = 1.0;
   int n_theta_pow = 0;
   for(int i=0,total=0;i<n;i++)
   {
+    if (Pr < 1.0e-30)
+    {
+      Pr2 *= Pr;
+      Pr = 1.0;
+    }
+
     int a1 = *convert<const Int>(alleles[2*i]);
     int a2 = *convert<const Int>(alleles[2*i+1]);
 
@@ -306,8 +313,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
     }
   }
 
-  log_double_t Pr2 = pow(log_double_t(theta), n_theta_pow);
-  Pr2 *= Pr;
+  Pr2 *= Pr * pow(log_double_t(theta), n_theta_pow);
   
   assert(Pr > 0.0);
   assert(Pr2 > 0.0);
