@@ -283,10 +283,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 
       // Heterozygotes coalesce before outbreeding with probability 0.
       if (heterozygote and coalesced)
-      {
-	Pr = 0.0;
-	break;
-      }
+	return Log_Double(0.0);           // We *could* do Pr = 0.0 to accumulate zeros, thus penalizing them.
 
       Pr *= process_allele(counts[a1], total, theta);
 
