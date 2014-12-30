@@ -212,7 +212,7 @@ extern "C" closure builtin_function_ewens_sampling_mixture_probability(Operation
 
 // The probability should be theta/(theta+total) is its new, and n/(theta+total) otherwise.
 // Here the total and the count do not include the current allele;
-double process_allele(int& count, int& total, double theta)
+double process_allele(int& count, int& total, int& n_theta_pow, double theta)
 {
   double Pr;
 
@@ -220,8 +220,10 @@ double process_allele(int& count, int& total, double theta)
   {
     if (total == 0)
       Pr = 1.0;
-    else
-      Pr = theta/(theta + total);
+    else {
+      Pr = 1.0/(theta + total);
+      n_theta_pow++;
+    }
   }
   else if ( count > 0 )
     Pr = double(count)/(theta + total);
@@ -259,6 +261,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
   assert(n == I.size());
 
   double Pr = 1.0;
+  int n_theta_pow = 0;
   for(int i=0,total=0;i<n;i++)
   {
     int a1 = *convert<const Int>(alleles[2*i]);
@@ -273,7 +276,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
     else if (s == 1)
     {
       if (a1 == missing) std::swap(a1,a2);
-      Pr *= process_allele(counts[a1], total, theta);
+      Pr *= process_allele(counts[a1], total, n_theta_pow, theta);
     }
     else 
     {
@@ -285,15 +288,19 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
       if (heterozygote and coalesced)
 	return Log_Double(0.0);           // We *could* do Pr = 0.0 to accumulate zeros, thus penalizing them.
 
-      Pr *= process_allele(counts[a1], total, theta);
+      Pr *= process_allele(counts[a1], total, n_theta_pow, theta);
 
       // Don't count the second allele if they coalesced.
       if (coalesced) continue;
 
-      Pr *= process_allele(counts[a2], total, theta);
+      Pr *= process_allele(counts[a2], total, n_theta_pow, theta);
     }
   }
 
+  Pr *= pow(log_double_t(theta), n_theta_pow);
+  
+  assert(Pr > 0.0);
+  
   return Log_Double(Pr);
 }
 
