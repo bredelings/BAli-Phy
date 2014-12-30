@@ -216,20 +216,29 @@ double process_allele(int& count, int& total, int& n_theta_pow, double theta)
 {
   double Pr;
 
-  if (count == 0)
+  if (theta < total)
   {
-    if (total == 0)
-      Pr = 1.0;
-    else {
+    if (count == 0)
+    {
       Pr = 1.0/(theta + total);
       n_theta_pow++;
     }
+    else
+      Pr = double(count)/(theta + total);
   }
-  else if ( count > 0 )
-    Pr = double(count)/(theta + total);
   else
-    throw myexception()<<"GEM process: counts should not be negative!";
+  {
+    if (count == 0)
+      Pr = 1.0/(1.0 + total/theta);
+    else if (count > 0)
+    {
+      n_theta_pow--;
+      Pr = double(count)/(1.0 + total/theta);
+    }
+  }
 
+  if (count < 0) throw myexception()<<"GEM process: counts should not be negative!";
+  
   count++;
   total++;
 
@@ -297,11 +306,13 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
     }
   }
 
-  Pr *= pow(log_double_t(theta), n_theta_pow);
+  log_double_t Pr2 = pow(log_double_t(theta), n_theta_pow);
+  Pr2 *= Pr;
   
   assert(Pr > 0.0);
+  assert(Pr2 > 0.0);
   
-  return Log_Double(Pr);
+  return Log_Double(Pr2);
 }
 
 // Pr(I|s) = \sum_t=0^\infty s^t (1-s) (1/2^t)^(L-n) (1-(1/2^t))^n
