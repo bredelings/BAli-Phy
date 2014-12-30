@@ -1009,7 +1009,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     assert(not is_modifiable(access(R).C.exp));
 
-    clear_computation(token,R);
+    RC.flags.set(1);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
@@ -1437,7 +1437,7 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     if (not computation_index_for_reg_(t1,r))
       move_computation(t2, t1, r);
     else
-      clear_computation(t2, r);
+      RC.flags.set(1);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(r).re_evaluate)
