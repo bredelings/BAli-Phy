@@ -342,6 +342,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	    assert(old_rc > 0);
 	    assert(computation_stack.back() == old_rc);
 	    computation_stack.pop_back();
+	    // This saves 25% of CPU time:
 	    computations.inc_version();
 	    computations.reclaim_used(old_rc);
 	  }
