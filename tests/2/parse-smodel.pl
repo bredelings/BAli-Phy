@@ -63,6 +63,7 @@ show_only("dna.fasta --smodel=HKY+gwF+gamma_inv[4]");
 
 show_only("aa.fasta --smodel WAG");
 show_only("aa.fasta --smodel WAG+F");
+show_only("aa.fasta --smodel LG+DP[4]");
 
 show_only("codons.fasta --alphabet=Codons");
 show_only("codons.fasta --alphabet=Codons --smodel=M0+F1x4");

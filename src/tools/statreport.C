@@ -287,8 +287,10 @@ void show_mode(const string& name, const vector<stats_table>& tables, int index,
   using namespace statistics;
 
   auto m = mode(total);
-  cout<<"   "<<name<<" ^ "<<m.first<<"  [+- "<<m.second<<"]"<<endl;
-  cout<<endl;
+  if (m.second >= 0)
+    cout<<"   "<<name<<" ^ "<<m.first<<"  [+- "<<m.second<<"]"<<endl;
+  else
+    cout<<"   "<<name<<" ^ NA"<<endl;
 }
 
 void show_log_mean(const string& name, const vector<stats_table>& tables, int index, const vector<double>& total, bool show_individual)

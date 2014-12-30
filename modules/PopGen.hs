@@ -36,14 +36,28 @@ selfing_coalescence n_loci s = ProbDensity (selfing_coalescence_probability n_lo
 
 diploid_afs_modified n_individuals n_loci s theta_effective = Prefix "DiploidAFS" $ do 
   { 
---     This MAY have mixing issues.
---          f' <- beta 1.0 3.0;
---          has_biparental_inbreeding <- bernoulli 0.5;
---          Log "biparental_inbreeding" has_biparental_inbreeding;
---          let {f = if (has_biparental_inbreeding == 1) then f' else 0.0};
---          Log "f'" f';
-
+--     extra_pop_structure -- 
+--     This has mixing issues in the case where s ~ 0.95, and we estimate f as like uniform [0,0.75], with a bump at 0.6.
+--      * ACT ~ 45
+--      * It seems that f and s are not very correlated when f is in [0, 0.4], but starts making a different when is in [0.4,0.7].
+--      * Perhaps we should co-propose f and s, since both affect the coalescence probability.
+--      * However, perhaps the I_{lk} has a bigger effect, since f affects how individual-specific Pr(I_{lk}) is.
+--
+--     This has mixing issues in the case where s ~ 0.33, and we estimate f ~ 0.045 (0.022,0.067).
+--      * ACT ~ \infty ?
+--      * We take 500-1000 generations to accept extra_pop_structure=1. (Why? This might be the real problem.)
+--      * We never propose moving back to extra_pop_structure=0.
+--        + Well, of course!  If f=0 and T_k=0, then coalescence is absolutely not allowed.
+--        + If we set f=0, then we need to set I_lk=0 for every individual with no selfing.
+--        + I guess we would like to (a) choose a random order for the individuals.
+--                                   (b) resample I_lk for individuals k = 1, 2, 3, ... , n.
+--      * It seems that f and s are not very correlated.
+--     
+--       extra_pop_structure <- bernoulli 0.5;
+--       Log "extra-pop-structure" extra_pop_structure;
        f <- beta 1.0 5.0;
+--       let {f = if (extra_pop_structure == 1) then f' else 0.0};
+--       Log "f'" f';
        Log "f" f;
 
        t <- iid n_individuals (rgeometric s);
