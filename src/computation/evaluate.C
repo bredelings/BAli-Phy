@@ -283,11 +283,14 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     {
       // We keep the (same) computation here, until we prove that we don't need one.
       // We don't need one if we evaluate to WHNF, and then we remove it.
+      int old_rc = -1;
       if (not has_computation(R))
 	add_shared_computation(root_token, R);
       else if (not has_valid_computation(R))
       {
-	clear_computation(root_token, R);
+	old_rc = remove_shared_computation(root_token, R);
+	computations[old_rc].source_token = -1;
+	computation_stack.push_back(old_rc);
 	add_shared_computation(root_token, R);
       }
 
@@ -319,6 +322,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	  assert(not reg_has_call(R) );
 	  assert(not reg_has_result(R));
 	  assert(computation_for_reg(R).used_inputs.empty());
+	  assert(old_rc == -1);
 	  set_C(R, std::move(result) );
 	}
 	// Otherwise, set the reduction result.
@@ -333,6 +337,14 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	  set_call(R, r3);
 	  set_computation_result_for_reg(R);
 	  assert(has_valid_computation(R));
+	  if (old_rc != -1)
+	  {
+	    assert(old_rc > 0);
+	    assert(computation_stack.back() == old_rc);
+	    computation_stack.pop_back();
+	    computations.inc_version();
+	    computations.reclaim_used(old_rc);
+	  }
 	  return {R, result};
 	}
       }
