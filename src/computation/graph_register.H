@@ -173,6 +173,8 @@ public:
 
   void get_roots(std::vector<int>&, bool keep_identifiers=true) const;
 
+  std::vector<int> computation_stack;
+
   // the list of expressions that we are temporarily evaluating
   std::vector<int> temp;
   

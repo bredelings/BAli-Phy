@@ -79,6 +79,7 @@ void reg_heap::trace_and_reclaim_unreachable()
   //  tokens.push_back(root_token);
 
   get_roots(scan1);
+  scan2 = computation_stack;
   
   while (not scan1.empty() or not scan2.empty())
   {
