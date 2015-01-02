@@ -339,13 +339,13 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
 	sum_CI += std::abs(interval_80.second - interval_80.first);
       }
 
-      for(int i=0;i<Ps.size();i++)
+      for(int j=0;j<Ps.size();j++)
       {
-	double P = Ps[i];
+	double P = Ps[j];
 	pair<double,double> interval = HPD?HPD_confidence_interval(values,P):central_confidence_interval(values,P);
 	if (show_individual)
 	{
-	  if (i==0)
+	  if (j==0)
 	    cout<<"   "<<name<<" ["<<i+1<<"] ~ "<<median(values);
 	  else
 	    cout<<"    ";
