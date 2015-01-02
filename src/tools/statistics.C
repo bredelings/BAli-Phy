@@ -56,7 +56,7 @@ namespace statistics {
     if (values.size() == 1)
       return values[0];
 
-    // sort compute indices
+    // compute indices
     double index = Q*values.size() - 0.5;
     int index1 = (int)index;
     int index2 = index1+1;
