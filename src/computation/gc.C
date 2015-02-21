@@ -112,7 +112,9 @@ void reg_heap::trace_and_reclaim_unreachable()
 
     for(int rc: scan2)
     {
-      assert(not computations.is_free(rc));
+      // This is only possible for the used inputs or calls of invalid computations.
+      if (computations.is_free(rc)) continue;
+
       if (computations.is_marked(rc)) continue;
       
       computations.set_mark(rc);
