@@ -38,7 +38,7 @@ sample' ps l rate (ProbDensity p q s r) = sample' ps l rate s;
 
 sample' ps l rate (NoLog a) = sample' ps False rate a;
 sample' ps l rate (Prefix p a) = sample' (p:ps) l rate a;
-sample' ps l rate (Observe v dist) = register_probability (density dist v);
+sample' ps l rate (Observe datum dist) = register_probability (density dist datum);
 sample' ps l rate (AddMove m) = register_transition_kernel m;
 sample' ps True rate (Log name x) = add_parameter (prefix_name ps name) x;
 sample' ps False rate (Log name x) = return ();
