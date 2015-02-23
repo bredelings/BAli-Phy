@@ -795,7 +795,7 @@ extern "C" closure builtin_function_fMutSel_pi(OperationArgs& Args)
   const Vector<double>& codon_w = *codon_w_;
   assert(codon_w.size() == N);
 
-  object_ptr< const Vector<double> > nuc_pi_ = Args.evaluate_as< Vector<double> >(1);
+  object_ptr< const Vector<double> > nuc_pi_ = Args.evaluate_as< Vector<double> >(2);
   const Vector<double>& nuc_pi = *nuc_pi_;
   assert(nuc_pi.size() == C.getNucleotides().size());
 
