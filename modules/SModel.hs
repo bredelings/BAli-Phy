@@ -45,6 +45,7 @@ qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t;
 branchTransitionP (MixtureModel (DiscreteDistribution l)) t = let {r = rate (MixtureModel (DiscreteDistribution l))} 
                                                               in map (\x -> qExp (scale (t/r) (snd x))) l;
 
+-- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 reversible_markov' a smap q pi = ReversibleMarkov a smap q pi (get_eigensystem q pi) 1.0 (get_equilibrium_rate a smap q pi);
 
 reversible_markov s (ReversibleFrequency a smap pi r) = reversible_markov' a smap (reversible_rate_matrix s r) pi;
@@ -340,24 +341,24 @@ frequencies_model a = do {
 
 plus_f_model a = Prefix "F" (do {
   pi <- frequencies_model a;
-  let {n_letters = alphabetSize a};
   let {pi' = listToVectorDouble pi};
-  return (ReversibleFrequency a (iotaUnsigned n_letters) pi' (plus_gwF a 1.0 pi'))
+  return (ReversibleFrequency a (simple_smap a) pi' (plus_gwF a 1.0 pi'))
 });
+
+simple_smap a = iotaUnsigned (alphabetSize a);
 
 plus_gwf_model a = Prefix "GWF" (do {
   pi <- frequencies_model a;
   f <- uniform 0.0 1.0;
   Log "f" f;
-  let {n_letters = alphabetSize a};
   let {pi' = listToVectorDouble pi};
-  return (ReversibleFrequency a (iotaUnsigned n_letters) pi' (plus_gwF a 1.0 pi'))
+  return (ReversibleFrequency a (simple_smap a) pi' (plus_gwF a 1.0 pi'))
 });
 
 uniform_f_model a = let {n_letters = alphabetSize a;
                          pi = replicate n_letters (1.0/intToDouble n_letters);
                          pi' = listToVectorDouble pi} in 
-                    ReversibleFrequency a (iotaUnsigned n_letters) pi' (plus_gwF a 1.0 pi');
+                    ReversibleFrequency a (simple_smap a) pi' (plus_gwF a 1.0 pi');
 
 f1x4_model triplet_a = Prefix "F1x4" 
  (do {
@@ -366,7 +367,7 @@ f1x4_model triplet_a = Prefix "F1x4"
        let {nuc_pi' = listToVectorDouble nuc_pi;
             pi' = f3x4_frequencies triplet_a nuc_pi' nuc_pi' nuc_pi';
             n_letters = alphabetSize triplet_a};
-       return $ ReversibleFrequency triplet_a (iotaUnsigned n_letters) pi' (plus_gwF triplet_a 1.0 pi')
+       return $ ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (plus_gwF triplet_a 1.0 pi')
 });
 
 f3x4_model triplet_a = Prefix "F3x4" 
@@ -378,9 +379,8 @@ f3x4_model triplet_a = Prefix "F3x4"
        let {nuc_pi1' = listToVectorDouble nuc_pi1;
             nuc_pi2' = listToVectorDouble nuc_pi2;
             nuc_pi3' = listToVectorDouble nuc_pi3;
-            pi' = f3x4_frequencies triplet_a nuc_pi1' nuc_pi2' nuc_pi3';
-            n_letters = alphabetSize triplet_a};
-       return $ ReversibleFrequency triplet_a (iotaUnsigned n_letters) pi' (plus_gwF triplet_a 1.0 pi')
+            pi' = f3x4_frequencies triplet_a nuc_pi1' nuc_pi2' nuc_pi3'};
+       return $ ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (plus_gwF triplet_a 1.0 pi')
 });
 
 mg94_model triplet_a = Prefix "MG94" 
@@ -389,9 +389,8 @@ mg94_model triplet_a = Prefix "MG94"
        nuc_pi <- frequencies_model nuc_a;
        let {nuc_pi' = listToVectorDouble nuc_pi;
             pi' = f3x4_frequencies triplet_a nuc_pi' nuc_pi' nuc_pi';
-            nuc_r = plus_gwF nuc_a 1.0 nuc_pi';
-            n_letters = alphabetSize triplet_a};
-       return $ ReversibleFrequency triplet_a (iotaUnsigned n_letters) pi' (muse_gaut_matrix triplet_a nuc_r nuc_r nuc_r)
+            nuc_r = plus_gwF nuc_a 1.0 nuc_pi'};
+       return $ ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (muse_gaut_matrix triplet_a nuc_r nuc_r nuc_r)
 });
 
 mg94w9_model triplet_a = Prefix "MG94w9" 
@@ -406,9 +405,8 @@ mg94w9_model triplet_a = Prefix "MG94w9"
             nuc_r1   = plus_gwF nuc_a 1.0 nuc_pi1';
             nuc_r2   = plus_gwF nuc_a 1.0 nuc_pi2';
             nuc_r3   = plus_gwF nuc_a 1.0 nuc_pi3';
-            pi' = f3x4_frequencies triplet_a nuc_pi1' nuc_pi2' nuc_pi3';
-            n_letters = alphabetSize triplet_a};
-       return $ ReversibleFrequency triplet_a (iotaUnsigned n_letters) pi' (muse_gaut_matrix triplet_a nuc_r1 nuc_r2 nuc_r3)
+            pi' = f3x4_frequencies triplet_a nuc_pi1' nuc_pi2' nuc_pi3'};
+       return $ ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (muse_gaut_matrix triplet_a nuc_r1 nuc_r2 nuc_r3)
 });
 
 gamma_model base n = Prefix "Gamma"
