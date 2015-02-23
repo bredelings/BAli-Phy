@@ -372,6 +372,9 @@ fMutSel_model codon_a nuc_rm = Prefix "fMutSel" $ do
   return $ fMutSel codon_a ws omega nuc_rm;
 };
 
+-- Issue: bad mixing on fMutSel model
+-- Issue: how to make M2/M8/branchsite/etc versions of fMutSel model?
+
 plus_gwf_model a = Prefix "GWF" (do {
   pi <- frequencies_model a;
   f <- uniform 0.0 1.0;
