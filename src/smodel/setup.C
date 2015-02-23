@@ -23,6 +23,28 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// \brief Create substitution models from strings of the form model[arg,arg]+...+model[arg,arg].
 ///
 
+
+// TODO:
+// 1. Why aren't the frequency models in the default_arguments list?
+//
+// 2. When the user supplies HKY, report this as HKY+F (somehow).
+//   - We could either use typed arguments to correct this BEFORE processing (faster).
+//     + So the coerce functions would work on the strings instead
+//     + And we need a rule to make +F evaluate to frequencies, but HKY+F evaluate to a rate matrix.
+//       (See process_stack_frequencies).
+//       (I guess this means that gwF[] and gwF[arg] have different types!
+//         + For ALL frequency models!
+//
+// 3. Remove setting of frequencies from the construction of the model.
+//   - Could this allow us to determine the alphabet from the model, so that we don't need to
+//     write --smodel=M0 --alphabet=Codons?
+//   - When no smodel is supplied, we would still have to try parsing the alignment
+//   - Also, codons of DNA, or codons of RNA?
+
+//   - So, maybe an INITIAL parse, only to DNA, RNA, or AA, just to determine alphabet?
+//   - Then 
+
+
 #include <vector>
 #include <boost/program_options.hpp>
 #include "smodel/setup.H"
