@@ -355,6 +355,23 @@ fMutSel codon_a codon_w omega (ReversibleMarkov _ _ nuc_q nuc_pi _ _ _) =
         pi = fMutSel_pi codon_a codon_w' nuc_pi}
    in reversible_markov' codon_a smap q pi;
 
+fMutSel_model codon_a nuc_rm = Prefix "fMutSel" $ do
+{
+  omega <- uniform 0.0 1.0;
+  Log "omega" omega;
+
+  let {n_letters = alphabetSize codon_a;
+       letters = alphabet_letters codon_a};
+
+  ws <- SamplingRate (1.0/sqrt(intToDouble n_letters)) $ do {
+     ws <- dirichlet' n_letters 1.0;
+     sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws letters;
+     return ws
+  };
+
+  return $ fMutSel codon_a ws omega nuc_rm;
+};
+
 plus_gwf_model a = Prefix "GWF" (do {
   pi <- frequencies_model a;
   f <- uniform 0.0 1.0;
