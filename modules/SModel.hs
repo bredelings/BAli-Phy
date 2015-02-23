@@ -19,7 +19,7 @@ builtin jtt 1 "jtt" "SModel";
 builtin wag 1 "wag" "SModel";
 builtin lg 1 "lg" "SModel";
 builtin fMutSel_q 4 "fMutSel_q" "SModel";
-builtin fMutSel_pi 3 "fMutSel_q" "SModel";
+builtin fMutSel_pi 3 "fMutSel_pi" "SModel";
 
 data ReversibleMarkov = ReversibleMarkov a b c d e f g;
 data ReversibleFrequency = ReversibleFrequency a b c d;
