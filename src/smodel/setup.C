@@ -234,6 +234,50 @@ expression_ref coerce_to_EM(const module_loader& L,
   throw myexception()<<": '"<<smodel<<"' is not an exchange model.";
 }
 
+/// \brief Construct a ReversibleMarkovModel from model \a M
+expression_ref coerce_to_RA(const module_loader& L,
+			    const expression_ref& M,
+			    const object_ptr<const alphabet>& a)
+{
+  object_ref result = ::result(M, L, {"SModel", "Distributions","Range"});
+
+  if (is_exactly(result, "SModel.F81"))
+    return M;
+
+  if (is_exactly(result, "SModel.ReversibleMarkov"))
+    return M;
+
+  try 
+  {
+    if (is_exactly(result, "SModel.ReversibleFrequency"))
+      throw myexception()<<"Cannot construct CTMC model from frequency model alone!";
+
+    if (boost::dynamic_pointer_cast<const Box<Matrix>>(result))
+    {
+      // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
+      expression_ref r = model_expression({identifier("plus_f_model"),*a});
+      expression_ref s = M;
+      expression_ref mm = model_expression({identifier("reversible_markov_model"), s, r});
+      return mm;
+    }
+    throw myexception()<<": Can't construct a SimpleReversibleMarkovModel from '"<<M<<"\n";
+  }
+  catch (std::exception& e) { 
+    throw myexception()<<": Can't construct a SimpleReversibleMarkovModel from '"<<M<<"':\n "<<e.what();
+  }
+}
+
+/// \brief Construct a ReversibleMarkovModel from model \a M
+expression_ref coerce_to_RA(const module_loader& L,
+			    string smodel,
+			    const object_ptr<const alphabet>& a,
+			    const shared_ptr< const valarray<double> >& frequencies)
+{
+  expression_ref M = get_smodel_(L, smodel, a, frequencies);
+
+  return coerce_to_RA(L, M, a);
+}
+
 /// \brief Construct a model from the top of the string stack
 ///
 /// \param string_stack The list of strings representing the substitution model.
@@ -517,50 +561,6 @@ expression_ref coerce_to_frequency_model(const module_loader& L,
   return coerce_to_frequency_model(L, M, a,  frequencies);
 }
 
-
-/// \brief Construct a ReversibleMarkovModel from model \a M
-expression_ref coerce_to_RA(const module_loader& L,
-			    const expression_ref& M,
-			    const object_ptr<const alphabet>& a)
-{
-  object_ref result = ::result(M, L, {"SModel", "Distributions","Range"});
-
-  if (is_exactly(result, "SModel.F81"))
-    return M;
-
-  if (is_exactly(result, "SModel.ReversibleMarkov"))
-    return M;
-
-  try 
-  {
-    if (is_exactly(result, "SModel.ReversibleFrequency"))
-      throw myexception()<<"Cannot construct CTMC model from frequency model alone!";
-
-    if (boost::dynamic_pointer_cast<const Box<Matrix>>(result))
-    {
-      // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
-      expression_ref r = model_expression({identifier("plus_f_model"),*a});
-      expression_ref s = M;
-      expression_ref mm = model_expression({identifier("reversible_markov_model"), s, r});
-      return mm;
-    }
-    throw myexception()<<": Can't construct a SimpleReversibleMarkovModel from '"<<M<<"\n";
-  }
-  catch (std::exception& e) { 
-    throw myexception()<<": Can't construct a SimpleReversibleMarkovModel from '"<<M<<"':\n "<<e.what();
-  }
-}
-
-/// \brief Construct a ReversibleMarkovModel from model \a M
-expression_ref coerce_to_RA(const module_loader& L,
-			    string smodel,
-			    const object_ptr<const alphabet>& a,
-			    const shared_ptr< const valarray<double> >& frequencies)
-{
-  expression_ref M = get_smodel_(L, smodel, a, frequencies);
-
-  return coerce_to_RA(L, M, a);
-}
 
 /// \brief Construct a MultiModel from model \a M
 expression_ref coerce_to_MM(const module_loader& L,
