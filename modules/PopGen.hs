@@ -71,16 +71,6 @@ robust_diploid_afs n_individuals n_loci s f theta_effective = Prefix "DiploidAFS
        return $ plate n_loci (\l -> afs2 (theta_effective!!l) (map (!!l) i));
   };
 
-diploid_afs n_individuals n_loci s theta_effective = Prefix "DiploidAFS" $ do 
-  { 
-       t <- iid n_individuals (rgeometric s);
-       Log "t" t;
+diploid_afs n_individuals n_loci s theta_effective = robust_diploid_afs n_individuals n_loci s 0.0 theta_effective;
 
-       i <- plate n_individuals (\k->iid n_loci (rbernoulli (0.5**t!!k)) );
---       Log "i" i;
-
-       AddMove (\c -> mapM_ (\k-> sum_out_coals (t!!k) (i!!k) c) [0..n_individuals-1]);
-
-       return $ plate n_loci (\l -> afs2 (theta_effective!!l) (map (!!l) i));
-  };
 }
