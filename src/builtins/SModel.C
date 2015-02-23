@@ -746,6 +746,8 @@ extern "C" closure builtin_function_fMutSel_q(OperationArgs& Args)
     double sum = 0;
     for(int j=0;j<N;j++)
     {
+      if (i==j) continue;
+
       int nmuts=0;
       int pos=-1;
       for(int p=0;p<3;p++)
