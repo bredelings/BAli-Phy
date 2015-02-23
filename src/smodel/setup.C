@@ -53,6 +53,7 @@ const vector<vector<string>> default_arguments =
     {"LG"},
     {"Empirical",""},
     {"M0","HKY"},
+    {"fMutSel",""},
     {"INV",""},
     {"gamma","","4"},
     {"gamma_inv","","4"},
@@ -424,6 +425,17 @@ expression_ref process_stack_Markov(const module_loader& L,
     expression_ref S = coerce_to_EM(L,model_args[1], const_ptr(N), {});
 
     return model_expression({identifier("m0_model"), a , S});
+  }
+  else if (model_args[0] == "fMutSel")
+  {
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    if (not C)
+      throw myexception()<<"fMutSel: '"<<a->name<<"' is not a 'Codons' alphabet";
+    const Nucleotides& N = C->getNucleotides();
+
+    expression_ref nuc_rm = coerce_to_RA(L,model_args[1], const_ptr(N), {});
+
+    return model_expression({identifier("fMutSel_model"), a , nuc_rm});
   }
 
   return {};
