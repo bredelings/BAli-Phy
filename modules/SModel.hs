@@ -18,8 +18,8 @@ builtin pam 1 "pam" "SModel";
 builtin jtt 1 "jtt" "SModel";
 builtin wag 1 "wag" "SModel";
 builtin lg 1 "lg" "SModel";
-
-
+builtin fMutSel_q 4 "fMutSel_q" "SModel";
+builtin fMutSel_pi 3 "fMutSel_q" "SModel";
 
 data ReversibleMarkov = ReversibleMarkov a b c d e f g;
 data ReversibleFrequency = ReversibleFrequency a b c d;
@@ -346,6 +346,14 @@ plus_f_model a = Prefix "F" (do {
 });
 
 simple_smap a = iotaUnsigned (alphabetSize a);
+
+fMutSel codon_a codon_w omega (ReversibleMarkov _ _ nuc_q nuc_pi _ _ _) =
+   let {nuc_a = getNucleotides codon_a;
+        smap = simple_smap codon_a;
+        codon_w' = listToVectorDouble codon_w;
+        q  = fMutSel_q  codon_a codon_w' omega nuc_q;
+        pi = fMutSel_pi codon_a codon_w' nuc_pi}
+   in reversible_markov' codon_a smap q pi;
 
 plus_gwf_model a = Prefix "GWF" (do {
   pi <- frequencies_model a;
