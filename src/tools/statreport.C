@@ -369,20 +369,24 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
     sum_fraction_contained /= tables.size();
   }
 
-  for(int i=0;i<Ps.size();i++)
+  for(int i=0,padding=0;i<Ps.size();i++)
   {
     double P = Ps[i];
     pair<double,double> interval = HPD?HPD_confidence_interval(values,P):central_confidence_interval(values,P);
 
     if (i==0)
     {
+      std::ostringstream o;
       if (show_individual)
-	cout<<"   "<<name<<"     ~ "<<median(values);
+	o<<"   "<<name<<"     ~ "<<median(values);
       else
-	cout<<"   "<<name<<" ~ "<<median(values);
+	o<<"   "<<name<<" ~ "<<median(values);
+      cout<<o.str();
+      padding = o.str().size();
     }
     else
-      cout<<"     ";
+      for(int j=0;j<padding;j++)
+	cout<<" ";
     
     if ((1.0-P)*values.size() >= 10.0)
       cout<<"  ("<<interval.first<<","<<interval.second<<")";
