@@ -168,10 +168,16 @@ expression_ref load_builtin(const string& symbol_name, const string& filename, i
   return load_builtin_(filename, symbol_name, n, function_name);
 }
 
+string module_loader::find_plugin(const string& plugin_name) const
+{
+  fs::path filepath = find_file_in_path(builtins_path, plugin_name + plugin_extension);
+  return filepath.string();
+}
+
 expression_ref load_builtin(const module_loader& L, const string& symbol_name, const string& plugin_name, int n, const string& function_name)
 {
-  // Presumably on windows we don't need to search separate for ".DLL", since the FS isn't case sensitive.
-  fs::path filepath = find_file_in_path(L.builtins_path, plugin_name + plugin_extension);
-  return load_builtin(symbol_name, filepath.string(), n, function_name);
+  // Presumably on windows we don't need to search separately for ".DLL", since the FS isn't case sensitive.
+  string filename = L.find_plugin(plugin_name);
+  return load_builtin(symbol_name, filename, n, function_name);
 }
 

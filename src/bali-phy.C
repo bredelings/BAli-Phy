@@ -240,39 +240,92 @@ void show_ending_messages()
  *  3a. Can we walk along the tree making characters present?
  */
 
+fs::path get_system_lib_path(const string& exe_name)
+{
+  fs::path system_lib_path = find_exe_path(exe_name);
+  if (not system_lib_path.empty())
+  {
+    system_lib_path.remove_filename();
+    system_lib_path = system_lib_path / "lib" / "bali-phy";
+
+    if (not fs::exists(system_lib_path))
+      system_lib_path = "";
+  }
+  return system_lib_path;
+}
+
+fs::path get_user_lib_path()
+{
+  fs::path user_lib_path;
+  if (getenv("HOME"))
+  {
+    user_lib_path = getenv("HOME");
+    user_lib_path = user_lib_path / ".local" / "share" / "bali-phy";
+
+    if (not fs::exists(user_lib_path))
+      user_lib_path = "";
+  }
+  return user_lib_path;
+}
+
 module_loader setup_module_loader(variables_map& args, const string& filename)
 {
-  module_loader L;
-  if (args.count("modules-path"))
-    L.modules_path = split(args["modules-path"].as<string>(),':');
-  else
-  {
-    fs::path modules = find_exe_path(filename);
-    if (not modules.empty())
-    {
-      modules.remove_filename();
-      modules = modules / "lib" / "bali-phy" / "modules";
-    }
-    if (modules.empty() or not fs::exists(modules/"Prelude.hs"))
-      throw myexception()<<"No module paths are specified!.  Use --modules-path=<path> to specify the directory containing Prelude.hs.";
+  fs::path system_lib_path = get_system_lib_path(filename);
+  fs::path user_lib_path = get_user_lib_path();
 
-    L.modules_path = {modules.string()};
-  }
-      
-  if (args.count("builtins-path"))
-    L.builtins_path = split(args["builtins-path"].as<string>(),':');
-  else
+  module_loader L;
   {
-    fs::path builtins = find_exe_path(filename);
-    if (not builtins.empty())
+    if (args.count("modules-path"))
+      L.modules_path = split(args["modules-path"].as<string>(),':');
+
+    if (not user_lib_path.empty())
     {
-      builtins.remove_filename();
-      builtins = builtins / "lib" / "bali-phy";
+      fs::path user_module_path = user_lib_path/"modules";
+      if (fs::exists(user_module_path))
+	L.modules_path.push_back( user_module_path.string() );
     }
-    if (builtins.empty() or not fs::exists(builtins/("Prelude"+plugin_extension)))
+
+    if (not system_lib_path.empty())
+    {
+      fs::path system_module_path = system_lib_path/"modules";
+      if (fs::exists(system_module_path))
+	L.modules_path.push_back( system_module_path.string() );
+    }
+
+    if (L.modules_path.empty())
+      throw myexception()<<"No module paths are specified!.  Use --modules-path=<path> to specify the directory containing 'Prelude.hs'.";
+
+    try
+    {
+      L.find_module("Prelude");
+    }
+    catch (...)
+    {
+      throw myexception()<<"Can't find Prelude in module path.  Use --modules-path=<path> to specify the directory containing 'Prelude.hs'.";
+    }
+  }
+
+  {
+    if (args.count("builtins-path"))
+      L.builtins_path = split(args["builtins-path"].as<string>(),':');
+
+    if (not user_lib_path.empty())
+      L.builtins_path.push_back( user_lib_path.string() );
+
+    if (not system_lib_path.empty())
+      L.builtins_path.push_back( system_lib_path.string() );
+
+    if (L.builtins_path.empty())
       throw myexception()<<"No paths to find builtins are specified!.  Use --builtins-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
 
-    L.builtins_path = {builtins.string()};
+    try
+    {
+      L.find_plugin("Prelude");
+    }
+    catch (...)
+    {
+      throw myexception()<<"Can't find Prelude plugin.  Use --builtins-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
+    }
   }
   return L;
 }

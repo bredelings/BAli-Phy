@@ -15,6 +15,7 @@ public:
   std::vector<std::string> builtins_path;
 
   std::string find_module(const std::string& modid) const;
+  std::string find_plugin(const std::string& plugin_name) const;
   /// Load the module file from disk.
   expression_ref read_module_from_file(const std::string&) const;
   /// Add the hard-coded elements to the module.
