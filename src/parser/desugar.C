@@ -7,6 +7,7 @@
 #include "models/parameters.H"
 #include "computation/loader.H"
 #include "AST.H"
+#include "desugar.H"
 
 using std::string;
 using std::vector;
@@ -427,7 +428,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
   return decls;
 }
 
-expression_ref get_fresh_id(const string& s, const expression_ref& E)
+expression_ref get_fresh_id(const string& s, const expression_ref& /* E */)
 {
   return AST_node("id",s);
 }
@@ -901,15 +902,20 @@ bool is_all_space(const string& line)
 Module read_model(const string& filename)
 {
   // 1. Read module
-  Module Model ( module_loader().read_module_from_file(filename) );
+  Module M ( module_loader().read_module_from_file(filename) );
 
-  return Model;
+  return M;
 }
 
-void add_model(Model& M, const std::string& filename)
+void read_add_model(Model& M, const std::string& filename)
 {
   auto m = read_model(filename);
-
   M += m;
-  M.perform_expression((identifier("gen_model"),identifier(m.name+".main")));
+  add_model(M, m.name);
+}
+
+void add_model(Model& M, const std::string& name)
+{
+  M += name;
+  M.perform_expression((identifier("gen_model"),identifier(name+".main")));
 }

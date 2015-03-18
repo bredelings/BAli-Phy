@@ -86,6 +86,11 @@ string run_name(const variables_map& args)
     name = args["model"].as<string>();
     name = remove_extension( fs::path( name ).leaf().string() );
   }
+  else if (args.count("Model"))
+  {
+    name = args["Model"].as<string>();
+    name = remove_extension( fs::path( name ).leaf().string() );
+  }
 
   return name;
 }

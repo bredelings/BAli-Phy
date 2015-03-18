@@ -90,6 +90,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("set",value<vector<string> >()->composing(),"Set key=<value>")
     ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.")
     ("model,m",value<string>(),"File containing hierarchical model description.")
+    ("Model,M",value<string>(),"Module containing hierarchical model description.")
     ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
     ;
 
@@ -101,8 +102,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("branch-prior",value<string>()->default_value("Gamma"),"Exponential, Gamma, or Dirichlet.")
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
-    ("modules-path",value<string>(),"Directories to search for modules (: separated)")
-    ("builtins-path",value<string>(),"Directories to search for modules (: separated)")
+    ("plugins-path",value<string>(),"Directories to search for plugins (':'-separated)")
     ;
   options_description all("All options");
   all.add(general).add(mcmc).add(parameters).add(model).add(advanced);
@@ -144,11 +144,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   load_bali_phy_rc(args,all);
 
-  if (args.count("align") and args.count("model"))
-    throw myexception()<<"You cannot specify both sequence files and a generic model.\n\nTry `"<<argv[0]<<" --help' for more information.";
+  if (args.count("align") and (args.count("model") or args.count("Model")))
+      throw myexception()<<"You cannot specify both sequence files and a generic model.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
-  if (not args.count("align") and not args.count("model"))
-    throw myexception()<<"You must specify alignment files or a generic model (--model).\n\nTry `"<<argv[0]<<" --help' for more information.";
+  if (not args.count("align") and not args.count("model") and not args.count("Model"))
+    throw myexception()<<"You must specify alignment files or a generic model (--model or --Model).\n\nTry `"<<argv[0]<<" --help' for more information.";
+
+  if (args.count("model") and args.count("Model"))
+    throw myexception()<<"You cannot specify both --model and --Model.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
   if (not args.count("iterations"))
     throw myexception()<<"The number of iterations was not specified.\n\nTry `"<<argv[0]<<" --help' for more information.";

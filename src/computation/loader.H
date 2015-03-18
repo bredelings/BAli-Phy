@@ -11,9 +11,10 @@ class module_loader
 {
   mutable std::map<std::string, expression_ref> modules;
 public:
-  std::vector<std::string> modules_path;
-  std::vector<std::string> builtins_path;
+  std::vector<std::string> plugins_path;
 
+  bool try_add_plugin_path(const std::string& path);
+  
   std::string find_module(const std::string& modid) const;
   std::string find_plugin(const std::string& plugin_name) const;
   /// Load the module file from disk.

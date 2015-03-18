@@ -41,6 +41,17 @@ expression_ref module_loader::read_module_from_file(const string& filename) cons
   }
 }
 
+bool module_loader::try_add_plugin_path(const string& path)
+{
+  if (fs::exists(path))
+  {
+    plugins_path.push_back(path);
+    return true;
+  }
+  else
+    return false;
+}
+
 fs::path find_file_in_path(const vector<string>& paths, const fs::path& file_path)
 {
   for(const string& prefix: paths)
@@ -68,8 +79,8 @@ string module_loader::find_module(const string& modid) const
   {
     fs::path path = get_relative_path_from_haskell_id(modid);
     path.replace_extension(".hs");
-
-    fs::path filename = find_file_in_path(modules_path, path );
+    
+    fs::path filename = find_file_in_path(plugins_path, "modules"/path );
     return filename.string();
   }
   catch (myexception& e)
@@ -170,7 +181,7 @@ expression_ref load_builtin(const string& symbol_name, const string& filename, i
 
 string module_loader::find_plugin(const string& plugin_name) const
 {
-  fs::path filepath = find_file_in_path(builtins_path, plugin_name + plugin_extension);
+  fs::path filepath = find_file_in_path(plugins_path, plugin_name + plugin_extension);
   return filepath.string();
 }
 

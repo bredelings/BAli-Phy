@@ -394,16 +394,6 @@ const module_loader& context::get_module_loader() const
   return loader;
 }
 
-const vector<string>& context::get_module_path() const
-{
-  return loader.modules_path;
-}
-
-const vector<string>& context::get_builtins_path() const
-{
-  return loader.builtins_path;
-}
-
 context& context::operator+=(const string& module_name)
 {
   if (not contains_module(get_Program(), module_name))

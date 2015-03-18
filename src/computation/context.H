@@ -206,10 +206,6 @@ public:
   
   const module_loader& get_module_loader() const;
 
-  const std::vector<std::string>& get_module_path() const;
-
-  const std::vector<std::string>& get_builtins_path() const;
-
   void allocate_identifiers_for_modules(const std::vector<std::string>& module_names);
 
   void perform_transition_kernel(int i);
