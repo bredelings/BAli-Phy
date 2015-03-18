@@ -716,7 +716,7 @@ extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
   return R;
 }
 
-// codon_a nuc_s nuc_pi codon_w
+// codon_a codon_w omega nuc_q
 extern "C" closure builtin_function_fMutSel_q(OperationArgs& Args)
 {
   object_ptr<const Codons> C_ = Args.evaluate_as<Codons>(0);
