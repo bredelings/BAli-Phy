@@ -27,12 +27,12 @@ extern "C" closure builtin_function_getNucleotides(OperationArgs& Args)
   return N;
 }
 
-extern "C" closure builtin_function_amino_acids_for_codons(OperationArgs& Args)
+extern "C" closure builtin_function_translate(OperationArgs& Args)
 {
   object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
-  object_ptr<OVector> v(new OVector);
-  for(int codon=0;codon<C->size();codon++)
-    v->push_back(Int(C->translate(codon)));
+  int codon = *Args.evaluate_as<Int>(1);
 
-  return v;
+  Int amino_acid = C->translate(codon);
+
+  return amino_acid;
 }
