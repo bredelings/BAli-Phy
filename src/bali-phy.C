@@ -380,7 +380,7 @@ int main(int argc,char* argv[])
     //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    bool show_only = args.count("show-only") or args.count("show-graph");
+    bool show_only = args.count("test");
 
     //------ Capture copy of 'cerr' output in 'err_cache' ------//
     if (not show_only)
@@ -431,8 +431,7 @@ int main(int argc,char* argv[])
     {
       print_stats(cout,*M);
 
-      if (args.count("show-graph"))
-	M->show_graph();
+      M->show_graph();
     }
     else 
     {
@@ -446,7 +445,7 @@ int main(int argc,char* argv[])
       vector<owned_ptr<MCMC::Logger> > loggers;
 
       string dir_name="";
-      if (not args.count("show-only")) {
+      if (not args.count("test")) {
 #ifdef HAVE_MPI
 	if (not proc_id) {
 	  dir_name = init_dir(args);
