@@ -772,7 +772,7 @@ extern "C" closure builtin_function_fMutSel_q(OperationArgs& Args)
 	// x = wj/wi    log(x)/(1-1/x)
 	// y = wi/wj   -log(y)/(1-y)
 	// 1+z = y     -log(1+z)/-z = log1p(z)/z   z = y-1 = (wi/wj)-1
-	double z = codon_w[i]/codon_w[j] - 1.0;
+	double z = (codon_w[i] - codon_w[j])/codon_w[j];
 	if (std::abs(z) < 0.0001)
 	  rate *= ( 1.0 - z/2.0 + (z*z)/3.0 - (z*z*z)/4.0 );
 	else
