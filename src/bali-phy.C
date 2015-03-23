@@ -275,9 +275,9 @@ module_loader setup_module_loader(variables_map& args, const string& filename)
 
   module_loader L;
 
-  // 1. Add user-specified plugin paths
-  if (args.count("plugins-path"))
-    for(const string& path: split(args["plugins-path"].as<string>(),':'))
+  // 1. Add user-specified package paths
+  if (args.count("package-path"))
+    for(const string& path: split(args["package-path"].as<string>(),':'))
       L.try_add_plugin_path(path);
 
   // 2. Add default user path
@@ -306,7 +306,7 @@ module_loader setup_module_loader(variables_map& args, const string& filename)
 
   // 5a. Check for empty paths
   if (L.plugins_path.empty())
-      throw myexception()<<"No plugin paths are specified!.  Use --plugins-path=<path> to specify the directory containing 'Prelude.so'.";
+      throw myexception()<<"No plugin paths are specified!.  Use --package-path=<path> to specify the directory containing 'Prelude.so'.";
 
   // 5b. Check for Prelude.so
   try
@@ -315,7 +315,7 @@ module_loader setup_module_loader(variables_map& args, const string& filename)
   }
   catch (...)
   {
-    throw myexception()<<"Can't find Prelude plugin.  Use --plugins-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
+    throw myexception()<<"Can't find Prelude plugin.  Use --package-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
   }
 
   // 5c. Check for Prelude.hs
@@ -325,7 +325,7 @@ module_loader setup_module_loader(variables_map& args, const string& filename)
   }
   catch (...)
   {
-    throw myexception()<<"Can't find Prelude in module path.  Use --plugins-path=<path> to specify the directory containing 'modules/Prelude.hs'.";
+    throw myexception()<<"Can't find Prelude in module path.  Use --package-path=<path> to specify the directory containing 'modules/Prelude.hs'.";
   }
 
   return L;

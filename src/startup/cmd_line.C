@@ -48,15 +48,26 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description advanced("Advanced options");
   advanced.add_options()
-    ("beta",value<string>(),"MCMCMC temperature")
-    ("dbeta",value<string>(),"MCMCMC temperature changes")
+    ("Help,H", "Print advanced usage information.")
+    ("subsample",value<int>()->default_value(1),"Factor by which to subsample.")
+    ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
+    ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
+    ("randomize-alignment","Randomly realign the sequences before use.")
+    ("unalign-all,U","Unalign all sequences before use.")
+    ("package-path,P",value<string>(),"Directories to search for packages (':'-separated)")
     ("internal",value<string>(),"If set to '+', then make all internal node entries wildcards")
-    ("partition-weights",value<string>(),"File containing tree with partition weights")
-    ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
-    ("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
-    ("subA-index",value<string>()->default_value("internal"),"What kind of subA index to use?")
     ;
 
+  options_description developer("Developer options");
+  developer.add_options()
+    ("subA-index",value<string>()->default_value("internal"),"What kind of subA index to use?")
+    ("partition-weights",value<string>(),"File containing tree with partition weights")
+    ("beta",value<string>(),"MCMCMC temperature")
+    ("dbeta",value<string>(),"MCMCMC temperature changes")
+    ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
+    ("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
+    ;
+    
   // named options
   options_description general("General options");
   general.add_options()
@@ -72,8 +83,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description mcmc("MCMC options");
   mcmc.add_options()
     ("iterations,i",value<long int>()->default_value(100000),"The number of iterations to run.")
-    ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
-    ("subsample",value<int>()->default_value(1),"Factor by which to subsample.")
     ("enable",value<string>(),"Comma-separated list of kernels to enable.")
     ("disable",value<string>(),"Comma-separated list of kernels to disable.")
     ;
@@ -81,15 +90,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description parameters("Parameter options");
   parameters.add_options()
     ("align", value<vector<string> >()->composing(),"Files with sequences and initial alignment.")
-    ("randomize-alignment","Randomly realign the sequences before use.")
-    ("unalign-all","Unalign all sequences before use.")
     ("tree",value<string>(),"File with initial tree")
     ("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>")
     ("set",value<vector<string> >()->composing(),"Set key=<value>")
     ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.")
     ("model,m",value<string>(),"File containing hierarchical model description.")
     ("Model,M",value<string>(),"Module containing hierarchical model description.")
-    ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
     ;
 
   options_description model("Model options");
@@ -101,10 +107,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("branch-prior",value<string>()->default_value("Gamma"),"Exponential, Gamma, or Dirichlet.")
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
-    ("plugins-path",value<string>(),"Directories to search for plugins (':'-separated)")
     ;
   options_description all("All options");
-  all.add(general).add(mcmc).add(parameters).add(model).add(advanced);
+  all.add(general).add(mcmc).add(parameters).add(model).add(advanced).add(developer);
   options_description some("All options");
   some.add(general).add(mcmc).add(parameters).add(model);
 
@@ -126,6 +131,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
   if (args.count("verbose"))
     log_verbose = 1;
 
+  if (args.count("Help"))
+  {
+    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
+    cout<<all<<"\n";
+    exit(0);
+  }
   if (args.count("help")) {
     cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
     cout<<some<<"\n";
