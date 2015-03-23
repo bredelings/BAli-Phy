@@ -260,7 +260,7 @@ fs::path get_user_lib_path()
   if (getenv("HOME"))
   {
     user_lib_path = getenv("HOME");
-    user_lib_path = user_lib_path / ".local" / "share" / "bali-phy";
+    user_lib_path = user_lib_path / ".local" / "share" / "bali-phy" / "packages";
 
     if (not fs::exists(user_lib_path))
       user_lib_path = "";
