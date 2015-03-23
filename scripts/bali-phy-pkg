@@ -4,17 +4,47 @@ use strict;
 use Cwd 'abs_path';
 use File::Basename;
 use Archive::Extract;
-use File::Path 'make_path';
+use Archive::Tar;
+use File::Path qw(make_path rmtree);
+use JSON;
+use version;
 
 my $cmd = shift;
 
 my $arg = shift;
 
+my $user_dir = get_user_dir();
+make_path ($user_dir);
+
+my $packages_dir = $user_dir."/packages/";
+make_path ($packages_dir);
+
+my $info_dir = $user_dir."/info/";
+make_path ($info_dir);
+
 if ($cmd eq "install")
 {
-    print "Installing package $arg...";
+    print "Installing package $arg...\n";
     install_package($arg);
     print "done.\n";
+}
+elsif ($cmd eq "uninstall")
+{
+    print "Uninstalling package $arg...";
+    uninstall_package($arg);
+    print "done.\n";
+}
+elsif ($cmd eq "info")
+{
+    package_info($arg);
+}
+elsif ($cmd eq "list")
+{
+    list_installed_packages();
+}
+elsif ($cmd eq "files")
+{
+    list_files_for_package($arg);
 }
 else
 {
@@ -22,31 +52,223 @@ else
 }
 
 
+sub get_user_dir
+{
+    my $home = $ENV{"HOME"};
+    die "Home directory unset or does not exist!" if (! -d $home);
+    
+    my $user_dir = $home."/.local/share/bali-phy/";
+    return $user_dir;
+}
+
+# update to use JSON
+sub get_package_info
+{
+    my $filename = shift;
+    my $tar = Archive::Tar->new($filename);
+    my $data = $tar->get_content("control.json");
+    my $control = decode_json($data);
+    return $control;
+}
+
+sub check_installed_version()
+{
+    my $name = shift;
+    my $version = shift;
+}
+
+# put installed files BOTH in a separate dir, AND in a combined dir?
 sub install_package
 {
     my $filename = shift;
-    $filename = &abs_path($filename);
-    my $base_name = &basename($filename);
-    my $name = undef;
-    my $version = undef;
-    if ($base_name =~ /([^_]*)_([^_]*)\.t(|ar\.)gz/)
+    my $package_info = get_package_info($filename);
+    my $name = ${$package_info}{"Package"};
+    my $version = ${$package_info}{"Version"};
+
+    #1. Handle installed versions
+    if (is_package_broken($name))
     {
-	$name = $1;
-	$version = $2;
+	die "Package $name is in a broken state";
     }
-    else
+    
+    if (is_package_installed($name))
     {
-	die "Package name '$base_name' doesn't make sense - should be <name>_<version>.tgz";
+	my $installed_version = get_package_version($name);
+	if (version->parse($installed_version) >= version->parse($version))
+	{
+	    die "Version $version not newer than installed version $version";
+	}
+	print " Uninstalling old version $installed_version...";
+	uninstall_package($name);
+	print "done.\n";
     }
+    
+    my $tar = Archive::Tar->new($filename);
+    my $package_info_dir = $info_dir."/$name/";
+    make_path($package_info_dir);
+    $tar->extract_file("control.json",$package_info_dir."/control.json");
+    open(FILES,">",$package_info_dir."/Files");
+    chdir $package_info_dir;
+#    $tar->extract();
 
-    my $home = $ENV{"HOME"};
-    die "Home directory unset or does not exist!" if (! -d $home);
+    my @filenames = $tar->list_files;
+    my @Files;
+    for my $filename (@filenames)
+    {
+	if ($filename =~ s|^files/||)
+	{
+	    my $new_name = $packages_dir."/".$filename;
+	    print "$filename -> $new_name\n";
+	    next if ($filename eq "");
+	    if ($filename !~ m|/$|)
+	    {
+		print FILES "$filename\n";
+		$tar->extract_file("files/".$filename,$new_name);
+	    }
+	}
+    }
+}
 
-    my $package_dir = $home."/.local/share/bali-phy/packages/$name/$version/";
-    make_path ($package_dir);
-    chdir $package_dir;
-    $tar->Archive::Tar->new($filename);
-    $tar->extract();
+sub uninstall_package
+{
+    my $name = shift;
+    die "Package $name is not installed" if (!is_package_installed($name));
+    if (-e "$info_dir/$name/Files")
+    {
+	open(FILES,"$info_dir/$name/Files");
+	while(my$file = <FILES>)
+	{
+	    print "$file\n";
+	    my $filename = $packages_dir."/".$file;
+	    unlink $filename or warn "Could not unlink $filename: $!";
+	}
+    }
+    rmtree("$info_dir/$name/");
+}
 
-    print "$package_dir \n";
+sub list_installed_packages
+{
+    opendir(DIR, $info_dir) or die $!;
+    while (my $file = readdir(DIR)) 
+    {
+	next if ($file eq ".");
+	next if ($file eq "..");
+	my $version = "broken";
+	if (!is_package_broken($file))
+	{
+	    $version = get_package_version($file);
+	}
+	print "$file $version\n";
+    }
+}
+
+sub read_JSON_file
+{
+    my $filename = shift;
+
+    my $json;
+    {
+	local $/; # Enable 'slurp' mode
+	open my $fh, "<", $filename or die("Can't open \"$filename\": $!\n");
+	$json = <$fh>;
+	close $fh;
+    };
+    
+    return decode_json($json);
+}
+
+sub write_JSON_file
+{
+    my $data = shift;
+    my $filename = shift;
+    open my $fh, ">", $filename;
+    print $fh encode_json($data);
+    close $fh;
+}
+
+sub read_installed_package_info
+{
+    my $name = shift;
+    
+    return read_JSON_file($info_dir."/$name/control.json");
+}
+
+sub write_installed_package_info
+{
+    my $name = shift;
+    my $data = shift;
+    return write_JSON_file($data, $info_dir."/$name/control.json");
+}
+
+sub files_filename()
+{
+   my $user_dir = get_user_dir();
+   my $filename = $user_dir."/Files";
+   return $filename;
+}
+
+sub read_installed_files
+{
+    return read_JSON_file(files_filename());
+}
+
+sub write_installed_files
+{
+    my $data = shift;
+    return write_JSON_file($data, files_filename());
+}
+
+sub is_package_installed
+{
+    my $name = shift;
+    my $dirname = $info_dir."/$name/";
+    return 1 if (-d $dirname);
+    return 0;
+}
+
+sub is_package_broken
+{
+    my $name = shift;
+    my $dirname = $info_dir."/$name/";
+    if (-d $dirname) {
+	return 1 if (! -e $dirname."/control.json");
+	return 1 if (! -e $dirname."/Files");
+    }
+    return 0;
+}
+
+sub get_package_version
+{
+    my $name = shift;
+    
+    my $pkg = read_installed_package_info($name);
+    return ${$pkg}{"Version"};
+}
+
+# change to storing info/package.files, info/package.info
+sub get_installed_files_for_package
+{
+    my $name = shift;
+
+    my $Files = $info_dir."/$name/Files";
+    
+    open my $fh,"<",$Files;
+
+    my @filenames = ();
+    for my $filename (<$fh>)
+    {
+	chomp $filename;
+	push @filenames, $filename;
+    }
+    return [@filenames];
+}
+
+sub list_files_for_package
+{
+    my $name = shift;
+    my $files = get_installed_files_for_package($name);
+    for my $filename (@$files)
+    {
+	print "$filename\n";
+    }
 }
