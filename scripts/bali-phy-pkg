@@ -46,6 +46,11 @@ elsif ($cmd eq "install")
 }
 elsif ($cmd eq "uninstall")
 {
+    if (!defined($arg))
+    {
+	print STDERR "Error: no package name given.\n";
+	exit(1);
+    }
     if (!is_package_installed($arg))
     {
 	print STDERR "Package $arg is not installed.\n";
@@ -57,16 +62,26 @@ elsif ($cmd eq "uninstall")
 }
 elsif ($cmd eq "info")
 {
+    if (!defined($arg))
+    {
+	print STDERR "Error: no package name given.\n";
+	exit(1);
+    }
     package_info($arg);
+}
+elsif ($cmd eq "files")
+{
+    if (!defined($arg))
+    {
+	print STDERR "Error: no package name given.\n";
+	exit(1);
+    }
+    die "command \"files\" needs an argument" if (!defined($arg));
+    list_files_for_package($arg);
 }
 elsif ($cmd eq "packages")
 {
     list_installed_packages();
-}
-elsif ($cmd eq "files")
-{
-    die "command \"files\" needs an argument" if (!defined($arg));
-    list_files_for_package($arg);
 }
 elsif ($cmd eq "untracked")
 {
