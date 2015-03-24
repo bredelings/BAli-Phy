@@ -151,19 +151,30 @@ sub uninstall_package
     rmtree("$info_dir/$name/");
 }
 
-sub list_installed_packages
+sub installed_packages
 {
+    my @packages = ();
     opendir(DIR, $info_dir) or die $!;
-    while (my $file = readdir(DIR)) 
+    while (my $file = readdir(DIR))
     {
 	next if ($file eq ".");
 	next if ($file eq "..");
+	push @packages, $file;
+    }
+    return [@packages];
+}
+
+sub list_installed_packages
+{
+    my $packages = installed_packages();
+    for my $pkg (@$packages)
+    {
 	my $version = "broken";
-	if (!is_package_broken($file))
+	if (!is_package_broken($pkg))
 	{
-	    $version = get_package_version($file);
+	    $version = get_package_version($pkg);
 	}
-	print "$file $version\n";
+	print "$pkg $version\n";
     }
 }
 
@@ -205,22 +216,15 @@ sub write_installed_package_info
     return write_JSON_file($data, $info_dir."/$name/control.json");
 }
 
-sub files_filename()
+sub installed_files
 {
-   my $user_dir = get_user_dir();
-   my $filename = $user_dir."/Files";
-   return $filename;
-}
-
-sub read_installed_files
-{
-    return read_JSON_file(files_filename());
-}
-
-sub write_installed_files
-{
-    my $data = shift;
-    return write_JSON_file($data, files_filename());
+    my @files = ();
+    my $packages = installed_packages();
+    for my $pkg (@$packages)
+    {
+	@files = (@files,installed_files_for_package($pkg));
+    }
+    return @files;
 }
 
 sub is_package_installed
@@ -251,7 +255,7 @@ sub get_package_version
 }
 
 # change to storing info/package.files, info/package.info
-sub get_installed_files_for_package
+sub installed_files_for_package
 {
     my $name = shift;
 
@@ -265,14 +269,22 @@ sub get_installed_files_for_package
 	chomp $filename;
 	push @filenames, $filename;
     }
-    return [@filenames];
+    return @filenames;
 }
 
 sub list_files_for_package
 {
     my $name = shift;
-    my $files = get_installed_files_for_package($name);
-    for my $filename (@$files)
+    for my $filename (installed_files_for_package($name))
+    {
+	print "$filename\n";
+    }
+}
+
+sub list_installed_files
+{
+    my $name = shift;
+    for my $filename (installed_files())
     {
 	print "$filename\n";
     }
