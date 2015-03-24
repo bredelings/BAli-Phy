@@ -3,6 +3,7 @@
 use strict;
 use Cwd 'abs_path';
 use File::Basename;
+use File::Find;
 use Archive::Extract;
 use Archive::Tar;
 use File::Path qw(make_path rmtree);
@@ -22,8 +23,23 @@ make_path ($packages_dir);
 my $info_dir = $user_dir."/info/";
 make_path ($info_dir);
 
-if ($cmd eq "install")
+if (!defined($cmd))
 {
+    &show_help();
+    exit(1);
+}
+elsif ($cmd eq "help" or $cmd eq "--help" or $cmd eq "-h")
+{
+    &show_help();
+    exit(0);
+}
+elsif ($cmd eq "install")
+{
+    if (!defined($arg))
+    {
+	print STDERR "Error: no package name given.\n";
+	exit(1);
+    }
     print "Installing package $arg...\n";
     install_package($arg);
     print "done.\n";
@@ -52,13 +68,24 @@ elsif ($cmd eq "files")
     die "command \"files\" needs an argument" if (!defined($arg));
     list_files_for_package($arg);
 }
+elsif ($cmd eq "untracked")
+{
+    list_untracked_files();
+}
 elsif ($cmd eq "all-files")
 {
     list_installed_files();
 }
+elsif ($cmd eq "help")
+{
+    &show_help();
+    exit(0);
+}
 else
 {
-    die "I don't understand command '$cmd'";
+    print STDERR "I don't understand command '$cmd'";
+    &show_help();
+    exit(1);
 }
 
 
@@ -382,4 +409,38 @@ sub list_installed_files
     {
 	print "$filename\n";
     }
+}
+
+sub present_files
+{
+    my @files;
+    
+    find(sub {if (! -d $File::Find::name) {push @files, $File::Find::name}},$packages_dir);
+    return @files;
+}
+
+sub untracked_files
+{
+    my %files = map { $_ => 1 } installed_files();
+    
+    my @untracked = ();
+    foreach my $file (present_files())
+    {
+	push @untracked, $file if (!exists($files{$file}));
+    }
+    return @untracked;
+}
+
+sub list_untracked_files
+{
+    foreach my $file (untracked_files())
+    {
+	print "$file\n";
+    }
+}
+
+sub show_help()
+{
+    print "Usage: bali-phy-pkg <command> [arg]\n";
+    print "Commands are: install, uninstall, info, packages, files, untracked, all-files, help\n";
 }
