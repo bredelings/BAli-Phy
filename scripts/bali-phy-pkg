@@ -55,7 +55,11 @@ elsif ($cmd eq "untracked")
 {
     list_untracked_files();
 }
-elsif ($cmd eq "all-files")
+elsif ($cmd eq "missing")
+{
+    list_missing_files();
+}
+elsif ($cmd eq "installed")
 {
     list_installed_files();
 }
@@ -91,20 +95,6 @@ sub get_package_info
     return $control;
 }
 
-sub show_package_info
-{
-    my $pkg = shift;
-    if (!defined($pkg))
-    {
-	error_exit("info: No package name given.");
-    }
-    my $info = get_package_info($pkg);
-    for my $field (keys(%$info))
-    {
-	my $value = ${$info}{$field};
-	print "$field: $value\n";
-    }
-}
 sub check_installed_version()
 {
     my $name = shift;
@@ -337,6 +327,21 @@ sub write_installed_package_info
     return write_JSON_file($data, $info_dir."/$name/control.json");
 }
 
+sub show_package_info
+{
+    my $pkg = shift;
+    if (!defined($pkg))
+    {
+	error_exit("info: No package name given.");
+    }
+    my $info = read_installed_package_info($pkg);
+    for my $field (keys(%$info))
+    {
+	my $value = ${$info}{$field};
+	print "$field: $value\n";
+    }
+}
+
 sub installed_files
 {
     my @files = ();
@@ -456,10 +461,30 @@ sub list_untracked_files
     }
 }
 
+sub missing_files
+{
+    my %files = map { $_ => 1 } present_files();
+    
+    my @missing = ();
+    foreach my $file (installed_files())
+    {
+	push @missing, $file if (!exists($files{$file}));
+    }
+    return @missing;
+}
+
+sub list_missing_files
+{
+    foreach my $file (missing_files())
+    {
+	print "$file\n";
+    }
+}
+
 sub show_help()
 {
     print "Usage: bali-phy-pkg <command> [arg]\n";
-    print "Commands are: install, uninstall, info, packages, files, untracked, all-files, help\n";
+    print "Commands are: install, uninstall, info, packages, files, untracked, missing, installed, help\n";
 }
 
 sub error_exit
