@@ -166,6 +166,26 @@ sub install_package
     close(FILES);
 }
 
+sub all_files_removed
+{
+    my $name = shift;
+    my @files1 =  read_file_lines($info_dir."/$name/Files");
+    my %files1_ = map {$_ => 1} @files1;
+    my @files2 =  read_file_lines($info_dir."/$name/Files");
+    my %files2_ = map {$_ => 1} @files2;
+
+    my $n1 = scalar(@files1);
+    my $n2 = scalar(@files2);
+    return 0 if ($n2 < $n1);
+    die "Remove $n2 files out of $n1.  How could that happen?\n" if ($n1 > $n2);
+
+    foreach my $file1 (@files1)
+    {
+	return 0 if (!exists($files2_{$file1}));
+    }
+
+}
+
 sub uninstall_package
 {
     my $name = shift;
@@ -173,14 +193,25 @@ sub uninstall_package
     if (-e "$info_dir/$name/Files")
     {
 	open(FILES,"$info_dir/$name/Files");
+	open(RM,">>","$info_dir/$name/FilesRemoved");
 	while(my $file = <FILES>)
 	{
 	    chomp $file;
 	    my $filename = $packages_dir."/".$file;
-	    unlink $filename or warn "Could not unlink $filename: $!";
+	    if (unlink $filename)
+	    {
+		print RM $filename;
+	    }
+	    else
+	    {
+		warn "Could not unlink $filename: $!";
+	    }
 	}
     }
-    rmtree("$info_dir/$name/");
+    if (all_files_removed($name))
+    {
+	rmtree("$info_dir/$name/");
+    }
 }
 
 sub installed_packages
@@ -269,9 +300,11 @@ sub is_package_broken
 {
     my $name = shift;
     my $dirname = $info_dir."/$name/";
-    if (-d $dirname) {
+    if (-d $dirname) 
+    {
 	return 1 if (! -e $dirname."/control.json");
 	return 1 if (! -e $dirname."/Files");
+	return 1 if ( -e $dirname."/FilesRemoved");
     }
     return 0;
 }
@@ -284,22 +317,27 @@ sub get_package_version
     return ${$pkg}{"Version"};
 }
 
+sub read_file_lines
+{
+    my $filename = shift;
+
+    open my $fh,"<",$filename;
+
+    my @lines = ();
+    for my $line (<$fh>)
+    {
+	chomp $line;
+	push @lines, $line;
+    }
+    return @lines;
+}
+
 # change to storing info/package.files, info/package.info
 sub installed_files_for_package
 {
     my $name = shift;
 
-    my $Files = $info_dir."/$name/Files";
-    
-    open my $fh,"<",$Files;
-
-    my @filenames = ();
-    for my $filename (<$fh>)
-    {
-	chomp $filename;
-	push @filenames, $filename;
-    }
-    return @filenames;
+    return read_file_lines($info_dir."/$name/Files");
 }
 
 sub list_files_for_package
