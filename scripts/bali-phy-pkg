@@ -44,11 +44,16 @@ elsif ($cmd eq "list")
 }
 elsif ($cmd eq "files")
 {
+    die "command \"files\" needs an argument" if (!defined($arg));
     list_files_for_package($arg);
+}
+elsif ($cmd eq "all-files")
+{
+    list_installed_files();
 }
 else
 {
-    die "I don't understand command '$cmd $arg'.";
+    die "I don't understand command '$cmd'";
 }
 
 
