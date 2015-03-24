@@ -12,8 +12,6 @@ use version;
 
 my $cmd = shift;
 
-my $arg = shift;
-
 my $user_dir = get_user_dir();
 make_path ($user_dir);
 
@@ -35,49 +33,19 @@ elsif ($cmd eq "help" or $cmd eq "--help" or $cmd eq "-h")
 }
 elsif ($cmd eq "install")
 {
-    if (!defined($arg))
-    {
-	print STDERR "Error: no package name given.\n";
-	exit(1);
-    }
-    print "Installing package $arg...\n";
-    install_package($arg);
-    print "done.\n";
+    install_package(@ARGV);
 }
 elsif ($cmd eq "uninstall")
 {
-    if (!defined($arg))
-    {
-	print STDERR "Error: no package name given.\n";
-	exit(1);
-    }
-    if (!is_package_installed($arg))
-    {
-	print STDERR "Package $arg is not installed.\n";
-	exit(1);
-    }
-    print "Uninstalling package $arg...";
-    uninstall_package($arg);
-    print "done.\n";
+    uninstall_package(@ARGV);
 }
 elsif ($cmd eq "info")
 {
-    if (!defined($arg))
-    {
-	print STDERR "Error: no package name given.\n";
-	exit(1);
-    }
-    package_info($arg);
+    show_package_info(@ARGV);
 }
 elsif ($cmd eq "files")
 {
-    if (!defined($arg))
-    {
-	print STDERR "Error: no package name given.\n";
-	exit(1);
-    }
-    die "command \"files\" needs an argument" if (!defined($arg));
-    list_files_for_package($arg);
+    list_files_for_package(@ARGV);
 }
 elsif ($cmd eq "packages")
 {
@@ -98,7 +66,7 @@ elsif ($cmd eq "help")
 }
 else
 {
-    print STDERR "I don't understand command '$cmd'";
+    print STDERR "Error: I don't understand command '$cmd'.\n\n";
     &show_help();
     exit(1);
 }
@@ -123,6 +91,20 @@ sub get_package_info
     return $control;
 }
 
+sub show_package_info
+{
+    my $pkg = shift;
+    if (!defined($pkg))
+    {
+	error_exit("info: No package name given.");
+    }
+    my $info = get_package_info($pkg);
+    for my $field (keys(%$info))
+    {
+	my $value = ${$info}{$field};
+	print "$field: $value\n";
+    }
+}
 sub check_installed_version()
 {
     my $name = shift;
@@ -163,8 +145,7 @@ sub check_overwrite
 	{
 	    if (exists($pkg_files{$file})) 
 	    {
-		print STDERR "Package '$pkg' contains conflicting file '$file'.\nAborting installation.\n";
-		exit(1);
+		error_exit("install: Package '$pkg' contains conflicting file '$file'.\nAborting installation.");
 	    }
 	}
     }
@@ -174,8 +155,7 @@ sub check_overwrite
 	my $fullname = $packages_dir."/".$filename;
 	if (-e $fullname)
 	{
-	    print STDERR "Refusing to overwrite untracked file \"$filename\".\nAborting installation.\n";
-	    exit(1);
+	    error_exit("install: Refusing to overwrite untracked file \"$filename\".\nAborting installation.");
 	}
     }
 }
@@ -184,6 +164,10 @@ sub check_overwrite
 sub install_package
 {
     my $archive = shift;
+    if (!defined($archive))
+    {
+	error_exit("install: no package name given.");
+    }
     my $package_info = get_package_info($archive);
     my $name = ${$package_info}{"Package"};
     my $version = ${$package_info}{"Version"};
@@ -247,7 +231,14 @@ sub all_files_removed
 sub uninstall_package
 {
     my $name = shift;
-    die "Package $name is not installed" if (!is_package_installed($name));
+    if (!defined($name))
+    {
+	error_exit("uninstall: No package name given.");
+    }
+    if (!is_package_installed($name))
+    {
+	error_exit("uninstall: Package $name is not installed.");
+    }
     if (-e "$info_dir/$name/Files")
     {
 	open(FILES,"$info_dir/$name/Files");
@@ -411,6 +402,17 @@ sub installed_files_for_package
 sub list_files_for_package
 {
     my $name = shift;
+
+    if (!defined($name))
+    {
+	error_exit("files: No package name given.");
+    }
+
+    if (!is_package_installed($name))
+    {
+	error_exit("files: No package named \"$name\" is currently installed.");
+    }
+    
     for my $filename (installed_files_for_package($name))
     {
 	print "$filename\n";
@@ -458,4 +460,11 @@ sub show_help()
 {
     print "Usage: bali-phy-pkg <command> [arg]\n";
     print "Commands are: install, uninstall, info, packages, files, untracked, all-files, help\n";
+}
+
+sub error_exit
+{
+    my $msg = shift;
+    print "Error: $msg\n";
+    exit(1);
 }
