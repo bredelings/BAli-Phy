@@ -4,10 +4,9 @@ use strict;
 use Cwd 'abs_path';
 use File::Basename;
 use File::Find;
-use Archive::Extract;
 use Archive::Tar;
 use File::Path qw(make_path rmtree);
-use JSON;
+use JSON::PP;
 use version;
 
 my $cmd = shift;
@@ -349,8 +348,7 @@ sub installed_files
     {
 	@files = (@files,installed_files_for_package($pkg));
     }
-    return @files;
-}
+    return @files;}
 
 sub is_package_installed
 {
@@ -438,6 +436,10 @@ sub present_files
     my @files;
     
     find(sub {if (! -d $File::Find::name) {push @files, $File::Find::name}},$packages_dir);
+    foreach my $file (@files)
+    {
+	$file =~ s/^$packages_dir//;
+    }
     return @files;
 }
 
@@ -463,12 +465,12 @@ sub list_untracked_files
 
 sub missing_files
 {
-    my %files = map { $_ => 1 } present_files();
+    my %present = map { $_ => 1 } present_files();
     
     my @missing = ();
     foreach my $file (installed_files())
     {
-	push @missing, $file if (!exists($files{$file}));
+	push @missing, $file if (!exists($present{$file}));
     }
     return @missing;
 }
