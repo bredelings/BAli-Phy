@@ -48,7 +48,7 @@ sub exec_result
 
 sub show_only
 {
-    exec_show("bali-phy --show-only @_");
+    exec_show("bali-phy --test @_");
 }
 
 show_only("rna.fasta");
