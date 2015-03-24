@@ -209,7 +209,10 @@ sub uninstall_package
 	{
 	    chomp $file;
 	    my $filename = $packages_dir."/".$file;
-	    if (unlink $filename or ! -e $filename)
+	    if (! -e $filename)
+	    {
+	    }
+	    elsif (unlink $filename)
 	    {
 		print RM "$file\n";
 	    }
@@ -218,10 +221,17 @@ sub uninstall_package
 		warn "Could not unlink $filename: $!";
 	    }
 	}
+	close RM;
+	close FILES;
     }
     if (all_files_removed($name))
     {
 	rmtree("$info_dir/$name/");
+    }
+    else
+    {
+	print STDERR "Failed to uninstall $name!\n";
+	exit(1);
     }
 }
 
