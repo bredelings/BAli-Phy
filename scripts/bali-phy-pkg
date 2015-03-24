@@ -38,7 +38,7 @@ elsif ($cmd eq "info")
 {
     package_info($arg);
 }
-elsif ($cmd eq "list")
+elsif ($cmd eq "packages")
 {
     list_installed_packages();
 }
