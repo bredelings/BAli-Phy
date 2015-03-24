@@ -30,6 +30,11 @@ if ($cmd eq "install")
 }
 elsif ($cmd eq "uninstall")
 {
+    if (!is_package_installed($arg))
+    {
+	print STDERR "Package $arg is not installed.\n";
+	exit(1);
+    }
     print "Uninstalling package $arg...";
     uninstall_package($arg);
     print "done.\n";
