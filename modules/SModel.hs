@@ -373,7 +373,7 @@ fMutSel_model codon_a nuc_rm = Prefix "fMutSel" $ do
        letters = alphabet_letters codon_a};
 
   ws <- SamplingRate (1.0/sqrt(intToDouble n_letters)) $ do {
-     ws <- dirichlet' n_letters 1.0;
+     ws <- dirichlet' n_letters 3.0;
      sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws letters;
      return ws
   };
@@ -394,7 +394,7 @@ fMutSel0_model codon_a nuc_rm = Prefix "fMutSel0" $ do
        letters = alphabet_letters amino_a};
 
   ws <- SamplingRate (1.0/sqrt(intToDouble n_letters)) $ do {
-     ws <- dirichlet' n_letters 1.0;
+     ws <- dirichlet' n_letters 3.0;
      sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws letters;
      return ws
   };
