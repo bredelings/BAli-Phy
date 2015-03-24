@@ -816,3 +816,88 @@ extern "C" closure builtin_function_fMutSel_pi(OperationArgs& Args)
   normalize(pi);
   return pi;
 }
+
+/*
+// codon_a nuc_pi omega nuc_q nuc_pi
+extern "C" closure builtin_function_fMutSel_q2(OperationArgs& Args)
+{
+  object_ptr<const Codons> C_ = Args.evaluate_as<Codons>(0);
+  const Codons& C = *C_;
+  int N = C.size();
+  
+  object_ptr< const Vector<double> > codon_pi_ = Args.evaluate_as< Vector<double> >(1);
+  const Vector<double>& codon_pi = *codon_pi_;
+  assert(codon_pi.size() == N);
+
+  vector<double> nuc_log_pi;
+  for(int i=0;i<n;i++)
+    nuc_log_pi[i] = log(nuc_log_pi[i]);
+
+  // codon_pi[i] = nuc_pi[i1] * nuc_pi[i2] * nuc_pi[i3] * exp(codon_w[i]) * C;
+  // codon_w[i] - log(C) = log(codon_pi[i]) - log(nuc_pi[i1]) - log(nuc_pi[i2]) - log(nuc_pi[i3]
+  vector<double> codon_w(N);
+  for(int i=0;i<N;i++)
+  {
+    double x = log(codon_pi[i]);
+    for(int j=0;j<3;j++)
+      x -= nuc_log_pi[C.sub_nuc(i,j)];
+    codon_w[i] = x;
+  }
+  
+  double omega = *Args.evaluate_as<Double>(2);
+
+  object_ptr<const Box<Matrix>> nuc_Q_ = Args.evaluate_as<Box<Matrix>>(3);
+  const Matrix& nuc_Q = *nuc_Q_;
+  assert(nuc_Q.size1() == nuc_Q.size2());
+  assert(nuc_Q.size1() == C.getNucleotides().size());
+
+  vector<double> log_codon_w(N);
+  for(int i=0;i<N;i++)
+    log_codon_w[i] = log(codon_w[i]);
+  
+  object_ptr<Box<Matrix>> Q_(new Box<Matrix>(N,N));
+  Matrix& Q = *Q_;
+
+  for(int i=0;i<N;i++)
+  {
+    double sum = 0;
+    for(int j=0;j<N;j++)
+    {
+      if (i==j) continue;
+
+      int nmuts=0;
+      int pos=-1;
+      for(int p=0;p<3;p++)
+	if (C.sub_nuc(i,p) != C.sub_nuc(j,p)) {
+	  nmuts++;
+	  pos=p;
+	}
+      assert(nmuts>0);
+      assert(pos >= 0 and pos < 3);
+
+      double rate=0.0;
+
+      if (nmuts == 1) 
+      {
+	int l1 = C.sub_nuc(i,pos);
+	int l2 = C.sub_nuc(j,pos);
+	assert(l1 != l2);
+
+	rate = nuc_Q(l1,l2);
+
+	rate *= (log_codon_w[j] - log_codon_w[i])/(codon_w[j] - codon_w[i])*codon_w[j];
+
+	if (C.translate(i) != C.translate(j))
+	  rate *= omega;	
+      }
+
+      Q(i,j) = rate;
+      
+      sum += Q(i,j);
+    }
+    Q(i,i) = -sum;
+  }
+
+  return Q_;
+}
+*/

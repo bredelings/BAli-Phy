@@ -355,6 +355,15 @@ fMutSel codon_a codon_w omega (ReversibleMarkov _ _ nuc_q nuc_pi _ _ _) =
         pi = fMutSel_pi codon_a codon_w' nuc_pi}
    in reversible_markov' codon_a smap q pi;
 
+-- \#1->let {w' = listAray' #1} in \#2 #3->fMutSel #0 codon_w #2 #3
+-- The whole body of the function is let-floated up in round 2, and w' is eliminated.
+fMutSel0 a w omega nuc_q  = fMutSel a codon_w omega nuc_q
+--replicate n_letters (1.0/intToDouble n_letters);
+where {codon_w = [w'!aa| codon <- codons,let {aa = translate a codon}];
+         w' = listArray' w;
+         codons = take n_letters [0..];
+         n_letters = alphabetSize a};
+
 fMutSel_model codon_a nuc_rm = Prefix "fMutSel" $ do
 {
   omega <- uniform 0.0 1.0;
@@ -374,6 +383,24 @@ fMutSel_model codon_a nuc_rm = Prefix "fMutSel" $ do
 
 -- Issue: bad mixing on fMutSel model
 -- Issue: how to make M2/M8/branchsite/etc versions of fMutSel model?
+
+fMutSel0_model codon_a nuc_rm = Prefix "fMutSel0" $ do
+{
+  omega <- uniform 0.0 1.0;
+  Log "omega" omega;
+
+  let {amino_a = getAminoAcids codon_a;
+       n_letters = alphabetSize amino_a;
+       letters = alphabet_letters amino_a};
+
+  ws <- SamplingRate (1.0/sqrt(intToDouble n_letters)) $ do {
+     ws <- dirichlet' n_letters 1.0;
+     sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws letters;
+     return ws
+  };
+
+  return $ fMutSel0 codon_a ws omega nuc_rm;
+};
 
 plus_gwf_model a = Prefix "GWF" (do {
   pi <- frequencies_model a;
