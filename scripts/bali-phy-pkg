@@ -121,6 +121,16 @@ sub check_overwrite
 	    }
 	}
     }
+
+    for my $filename (@files)
+    {
+	my $fullname = $packages_dir."/".$filename;
+	if (-e $fullname)
+	{
+	    print STDERR "Refusing to overwrite untracked file \"$filename\".\nAborting installation.\n";
+	    exit(1);
+	}
+    }
 }
 
 # put installed files BOTH in a separate dir, AND in a combined dir?
