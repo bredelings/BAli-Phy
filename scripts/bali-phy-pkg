@@ -3,50 +3,495 @@
 use strict;
 use Cwd 'abs_path';
 use File::Basename;
-use Archive::Extract;
-use File::Path 'make_path';
+use File::Find;
+use Archive::Tar;
+use File::Path qw(make_path rmtree);
+use JSON::PP;
+use version;
 
 my $cmd = shift;
 
-my $arg = shift;
+my $user_dir = get_user_dir();
+make_path ($user_dir);
 
-if ($cmd eq "install")
+my $packages_dir = $user_dir."/packages/";
+make_path ($packages_dir);
+
+my $info_dir = $user_dir."/info/";
+make_path ($info_dir);
+
+if (!defined($cmd))
 {
-    print "Installing package $arg...";
-    install_package($arg);
-    print "done.\n";
+    &show_help();
+    exit(1);
+}
+elsif ($cmd eq "help" or $cmd eq "--help" or $cmd eq "-h")
+{
+    &show_help();
+    exit(0);
+}
+elsif ($cmd eq "install")
+{
+    install_package(@ARGV);
+}
+elsif ($cmd eq "uninstall")
+{
+    uninstall_package(@ARGV);
+}
+elsif ($cmd eq "info")
+{
+    show_package_info(@ARGV);
+}
+elsif ($cmd eq "files")
+{
+    list_files_for_package(@ARGV);
+}
+elsif ($cmd eq "packages")
+{
+    list_installed_packages();
+}
+elsif ($cmd eq "untracked")
+{
+    list_untracked_files();
+}
+elsif ($cmd eq "missing")
+{
+    list_missing_files();
+}
+elsif ($cmd eq "installed")
+{
+    list_installed_files();
+}
+elsif ($cmd eq "help")
+{
+    &show_help();
+    exit(0);
 }
 else
 {
-    die "I don't understand command '$cmd $arg'.";
+    print STDERR "Error: I don't understand command '$cmd'.\n\n";
+    &show_help();
+    exit(1);
 }
 
 
-sub install_package
+sub get_user_dir
+{
+    my $home = $ENV{"HOME"};
+    die "Home directory unset or does not exist!" if (! -d $home);
+    
+    my $user_dir = $home."/.local/share/bali-phy/";
+    return $user_dir;
+}
+
+# update to use JSON
+sub get_package_info
 {
     my $filename = shift;
-    $filename = &abs_path($filename);
-    my $base_name = &basename($filename);
-    my $name = undef;
-    my $version = undef;
-    if ($base_name =~ /([^_]*)_([^_]*)\.t(|ar\.)gz/)
+    my $tar = Archive::Tar->new($filename);
+    my $data = $tar->get_content("control.json");
+    my $control = decode_json($data);
+    return $control;
+}
+
+sub check_installed_version()
+{
+    my $name = shift;
+    my $version = shift;
+}
+
+sub files_for_archive
+{
+    my $archive = shift;
+    my @filenames = ();
+    my $tar = Archive::Tar->new($archive);
+    for my $filename ($tar->list_files)
     {
-	$name = $1;
-	$version = $2;
+	if ($filename =~ s|^files/||)
+	{
+	    my $new_name = $packages_dir."/".$filename;
+
+	    next if ($filename eq "");
+	    if ($filename !~ m|/$|)
+	    {
+		push @filenames, $filename;
+	    }
+	}
+    }
+    return @filenames;
+}
+
+sub check_overwrite
+{
+    my $archive = shift;
+    my @files = files_for_archive($archive);
+
+    for my $pkg (installed_packages())
+    {
+	my @pkg_files_ = installed_files_for_package($pkg);
+	my %pkg_files = map { $_ => 1 } @pkg_files_;
+	for my $file (@files)
+	{
+	    if (exists($pkg_files{$file})) 
+	    {
+		error_exit("install: Package '$pkg' contains conflicting file '$file'.\nAborting installation.");
+	    }
+	}
+    }
+
+    for my $filename (@files)
+    {
+	my $fullname = $packages_dir."/".$filename;
+	if (-e $fullname)
+	{
+	    error_exit("install: Refusing to overwrite untracked file \"$filename\".\nAborting installation.");
+	}
+    }
+}
+
+# put installed files BOTH in a separate dir, AND in a combined dir?
+sub install_package
+{
+    my $archive = shift;
+    if (!defined($archive))
+    {
+	error_exit("install: no package name given.");
+    }
+    my $package_info = get_package_info($archive);
+    my $name = ${$package_info}{"Package"};
+    my $version = ${$package_info}{"Version"};
+
+    #1. Handle installed versions
+    if (is_package_broken($name))
+    {
+	die "Package $name is in a broken state";
+    }
+    
+    if (is_package_installed($name))
+    {
+	my $installed_version = get_package_version($name);
+	if (version->parse($installed_version) >= version->parse($version))
+	{
+	    die "Version $version not newer than installed version $version";
+	}
+	print " Uninstalling old version $installed_version...";
+	uninstall_package($name);
+	print "done.\n";
+    }
+
+    check_overwrite($archive);
+    
+    my $tar = Archive::Tar->new($archive);
+    my $package_info_dir = $info_dir."/$name/";
+    make_path($package_info_dir);
+    $tar->extract_file("control.json",$package_info_dir."/control.json");
+    open(FILES,">",$package_info_dir."/Files");
+
+    for my $filename (files_for_archive($archive))
+    {
+	my $new_name = $packages_dir."/".$filename;
+	print FILES "$filename\n";
+	$tar->extract_file("files/".$filename,$new_name);
+    }
+    close(FILES);
+}
+
+sub all_files_removed
+{
+    my $name = shift;
+    my @files1 =  read_file_lines($info_dir."/$name/Files");
+    my %files1_ = map {$_ => 1} @files1;
+    my @files2 =  read_file_lines($info_dir."/$name/Files");
+    my %files2_ = map {$_ => 1} @files2;
+
+    my $n1 = scalar(@files1);
+    my $n2 = scalar(@files2);
+    return 0 if ($n2 < $n1);
+    die "Remove $n2 files out of $n1.  How could that happen?\n" if ($n1 > $n2);
+
+    foreach my $file1 (@files1)
+    {
+	return 0 if (!exists($files2_{$file1}));
+    }
+
+    return 1;
+}
+
+sub uninstall_package
+{
+    my $name = shift;
+    if (!defined($name))
+    {
+	error_exit("uninstall: No package name given.");
+    }
+    if (!is_package_installed($name))
+    {
+	error_exit("uninstall: Package $name is not installed.");
+    }
+    if (-e "$info_dir/$name/Files")
+    {
+	open(FILES,"$info_dir/$name/Files");
+	open(RM,">>","$info_dir/$name/FilesRemoved");
+	while(my $file = <FILES>)
+	{
+	    chomp $file;
+	    my $filename = $packages_dir."/".$file;
+	    if (! -e $filename)
+	    {
+	    }
+	    elsif (unlink $filename)
+	    {
+		print RM "$file\n";
+	    }
+	    else
+	    {
+		warn "Could not unlink $filename: $!";
+	    }
+	}
+	close RM;
+	close FILES;
+    }
+    if (all_files_removed($name))
+    {
+	rmtree("$info_dir/$name/");
     }
     else
     {
-	die "Package name '$base_name' doesn't make sense - should be <name>_<version>.tgz";
+	print STDERR "Failed to uninstall $name!\n";
+	exit(1);
+    }
+}
+
+sub installed_packages
+{
+    my @packages = ();
+    opendir(DIR, $info_dir) or die $!;
+    while (my $file = readdir(DIR))
+    {
+	next if ($file eq ".");
+	next if ($file eq "..");
+	push @packages, $file;
+    }
+    return @packages;
+}
+
+sub list_installed_packages
+{
+    for my $pkg (installed_packages())
+    {
+	my $version = "broken";
+	if (!is_package_broken($pkg))
+	{
+	    $version = get_package_version($pkg);
+	}
+	print "$pkg $version\n";
+    }
+}
+
+sub read_JSON_file
+{
+    my $filename = shift;
+
+    my $json;
+    {
+	local $/; # Enable 'slurp' mode
+	open my $fh, "<", $filename or die("Can't open \"$filename\": $!\n");
+	$json = <$fh>;
+	close $fh;
+    };
+    
+    return decode_json($json);
+}
+
+sub write_JSON_file
+{
+    my $data = shift;
+    my $filename = shift;
+    open my $fh, ">", $filename;
+    print $fh encode_json($data);
+    close $fh;
+}
+
+sub read_installed_package_info
+{
+    my $name = shift;
+    
+    return read_JSON_file($info_dir."/$name/control.json");
+}
+
+sub write_installed_package_info
+{
+    my $name = shift;
+    my $data = shift;
+    return write_JSON_file($data, $info_dir."/$name/control.json");
+}
+
+sub show_package_info
+{
+    my $pkg = shift;
+    if (!defined($pkg))
+    {
+	error_exit("info: No package name given.");
+    }
+    my $info = read_installed_package_info($pkg);
+    for my $field (keys(%$info))
+    {
+	my $value = ${$info}{$field};
+	print "$field: $value\n";
+    }
+}
+
+sub installed_files
+{
+    my @files = ();
+    for my $pkg (installed_packages())
+    {
+	@files = (@files,installed_files_for_package($pkg));
+    }
+    return @files;}
+
+sub is_package_installed
+{
+    my $name = shift;
+    my $dirname = $info_dir."/$name/";
+    return 1 if (-d $dirname);
+    return 0;
+}
+
+sub is_package_broken
+{
+    my $name = shift;
+    my $dirname = $info_dir."/$name/";
+    if (-d $dirname) 
+    {
+	return 1 if (! -e $dirname."/control.json");
+	return 1 if (! -e $dirname."/Files");
+	return 1 if ( -e $dirname."/FilesRemoved");
+    }
+    return 0;
+}
+
+sub get_package_version
+{
+    my $name = shift;
+    
+    my $pkg = read_installed_package_info($name);
+    return ${$pkg}{"Version"};
+}
+
+sub read_file_lines
+{
+    my $filename = shift;
+
+    open my $fh,"<",$filename;
+
+    my @lines = ();
+    for my $line (<$fh>)
+    {
+	chomp $line;
+	push @lines, $line;
+    }
+    return @lines;
+}
+
+# change to storing info/package.files, info/package.info
+sub installed_files_for_package
+{
+    my $name = shift;
+
+    return read_file_lines($info_dir."/$name/Files");
+}
+
+sub list_files_for_package
+{
+    my $name = shift;
+
+    if (!defined($name))
+    {
+	error_exit("files: No package name given.");
     }
 
-    my $home = $ENV{"HOME"};
-    die "Home directory unset or does not exist!" if (! -d $home);
+    if (!is_package_installed($name))
+    {
+	error_exit("files: No package named \"$name\" is currently installed.");
+    }
+    
+    for my $filename (installed_files_for_package($name))
+    {
+	print "$filename\n";
+    }
+}
 
-    my $package_dir = $home."/.local/share/bali-phy/packages/$name/$version/";
-    make_path ($package_dir);
-    chdir $package_dir;
-    $tar->Archive::Tar->new($filename);
-    $tar->extract();
+sub list_installed_files
+{
+    my $name = shift;
+    for my $filename (installed_files())
+    {
+	print "$filename\n";
+    }
+}
 
-    print "$package_dir \n";
+sub present_files
+{
+    my @files;
+    
+    find(sub {if (! -d $File::Find::name) {push @files, $File::Find::name}},$packages_dir);
+    foreach my $file (@files)
+    {
+	$file =~ s/^$packages_dir//;
+    }
+    return @files;
+}
+
+sub untracked_files
+{
+    my %files = map { $_ => 1 } installed_files();
+    
+    my @untracked = ();
+    foreach my $file (present_files())
+    {
+	push @untracked, $file if (!exists($files{$file}));
+    }
+    return @untracked;
+}
+
+sub list_untracked_files
+{
+    foreach my $file (untracked_files())
+    {
+	print "$file\n";
+    }
+}
+
+sub missing_files
+{
+    my %present = map { $_ => 1 } present_files();
+    
+    my @missing = ();
+    foreach my $file (installed_files())
+    {
+	push @missing, $file if (!exists($present{$file}));
+    }
+    return @missing;
+}
+
+sub list_missing_files
+{
+    foreach my $file (missing_files())
+    {
+	print "$file\n";
+    }
+}
+
+sub show_help()
+{
+    print "Usage: bali-phy-pkg <command> [arg]\n";
+    print "Commands are: install, uninstall, info, packages, files, untracked, missing, installed, help\n";
+}
+
+sub error_exit
+{
+    my $msg = shift;
+    print "Error: $msg\n";
+    exit(1);
 }
