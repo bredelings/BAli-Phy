@@ -199,9 +199,9 @@ sub uninstall_package
 	{
 	    chomp $file;
 	    my $filename = $packages_dir."/".$file;
-	    if (unlink $filename)
+	    if (unlink $filename or ! -e $filename)
 	    {
-		print RM $filename;
+		print RM "$file\n";
 	    }
 	    else
 	    {
