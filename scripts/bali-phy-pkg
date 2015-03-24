@@ -82,11 +82,51 @@ sub check_installed_version()
     my $version = shift;
 }
 
+sub files_for_archive
+{
+    my $archive = shift;
+    my @filenames = ();
+    my $tar = Archive::Tar->new($archive);
+    for my $filename ($tar->list_files)
+    {
+	if ($filename =~ s|^files/||)
+	{
+	    my $new_name = $packages_dir."/".$filename;
+
+	    next if ($filename eq "");
+	    if ($filename !~ m|/$|)
+	    {
+		push @filenames, $filename;
+	    }
+	}
+    }
+    return @filenames;
+}
+
+sub check_overwrite
+{
+    my $archive = shift;
+    my @files = files_for_archive($archive);
+
+    for my $pkg (installed_packages())
+    {
+	my @pkg_files_ = installed_files_for_package($pkg);
+	my %pkg_files = map { $_ => 1 } @pkg_files_;
+	for my $file (@files)
+	{
+	    if (exists($pkg_files{$file})) 
+	    {
+		die "Package '$pkg' contains conflicting file '$file'";
+	    }
+	}
+    }
+}
+
 # put installed files BOTH in a separate dir, AND in a combined dir?
 sub install_package
 {
-    my $filename = shift;
-    my $package_info = get_package_info($filename);
+    my $archive = shift;
+    my $package_info = get_package_info($archive);
     my $name = ${$package_info}{"Package"};
     my $version = ${$package_info}{"Version"};
 
@@ -107,31 +147,22 @@ sub install_package
 	uninstall_package($name);
 	print "done.\n";
     }
+
+    check_overwrite($archive);
     
-    my $tar = Archive::Tar->new($filename);
+    my $tar = Archive::Tar->new($archive);
     my $package_info_dir = $info_dir."/$name/";
     make_path($package_info_dir);
     $tar->extract_file("control.json",$package_info_dir."/control.json");
     open(FILES,">",$package_info_dir."/Files");
-    chdir $package_info_dir;
-#    $tar->extract();
 
-    my @filenames = $tar->list_files;
-    my @Files;
-    for my $filename (@filenames)
+    for my $filename (files_for_archive($archive))
     {
-	if ($filename =~ s|^files/||)
-	{
-	    my $new_name = $packages_dir."/".$filename;
-	    print "$filename -> $new_name\n";
-	    next if ($filename eq "");
-	    if ($filename !~ m|/$|)
-	    {
-		print FILES "$filename\n";
-		$tar->extract_file("files/".$filename,$new_name);
-	    }
-	}
+	my $new_name = $packages_dir."/".$filename;
+	print FILES "$filename\n";
+	$tar->extract_file("files/".$filename,$new_name);
     }
+    close(FILES);
 }
 
 sub uninstall_package
@@ -141,9 +172,9 @@ sub uninstall_package
     if (-e "$info_dir/$name/Files")
     {
 	open(FILES,"$info_dir/$name/Files");
-	while(my$file = <FILES>)
+	while(my $file = <FILES>)
 	{
-	    print "$file\n";
+	    chomp $file;
 	    my $filename = $packages_dir."/".$file;
 	    unlink $filename or warn "Could not unlink $filename: $!";
 	}
@@ -161,13 +192,12 @@ sub installed_packages
 	next if ($file eq "..");
 	push @packages, $file;
     }
-    return [@packages];
+    return @packages;
 }
 
 sub list_installed_packages
 {
-    my $packages = installed_packages();
-    for my $pkg (@$packages)
+    for my $pkg (installed_packages())
     {
 	my $version = "broken";
 	if (!is_package_broken($pkg))
@@ -219,8 +249,7 @@ sub write_installed_package_info
 sub installed_files
 {
     my @files = ();
-    my $packages = installed_packages();
-    for my $pkg (@$packages)
+    for my $pkg (installed_packages())
     {
 	@files = (@files,installed_files_for_package($pkg));
     }
