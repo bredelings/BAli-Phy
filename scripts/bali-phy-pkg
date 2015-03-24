@@ -116,7 +116,8 @@ sub check_overwrite
 	{
 	    if (exists($pkg_files{$file})) 
 	    {
-		die "Package '$pkg' contains conflicting file '$file'";
+		print STDERR "Package '$pkg' contains conflicting file '$file'.\nAborting installation.\n";
+		exit(1);
 	    }
 	}
     }
