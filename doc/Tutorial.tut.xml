@@ -64,7 +64,7 @@ Some options have a short form which is a single letter:
 <para>
 Analyze a data set, but don't begin MCMC.  (This is useful to know if the analysis works, what model will be used,
 compute likelihoods, etc.)
-% bali-phy --show-only examples/5S-rRNA/5d.fasta
+% bali-phy --test examples/5S-rRNA/5d.fasta
 Finally, run an analysis!  (This is just 10 iterations, so its not a real run.)
 % bali-phy examples/5S-rRNA/5d.fasta --iterations=10
 If you specify <parameter>--imodel=none</parameter>, then the alignment won't be estimated, and indels will be ignored (just like <application>MrBayes</application>).
@@ -89,11 +89,11 @@ When the data set contains amino acids, the default is amino acids:
 <section ><info><title>Codons</title></info>
 <para>
 What alphabet is used here?  What substitution model?
-% bali-phy examples/HIV/chain-2005/env-clustal-codons.fasta --show-only
+% bali-phy examples/HIV/chain-2005/env-clustal-codons.fasta --test
 What happens when trying to use the M0 model (e.g. positive selection)?
-% bali-phy examples/HIV/chain-2005/env-clustal-codons.fasta --show-only --smodel=M0 
+% bali-phy examples/HIV/chain-2005/env-clustal-codons.fasta --test --smodel=M0 
 The M0 model requires a codon alphabet:
-% bali-phy examples/HIV/chain-2005/env-clustal-codons.fasta --show-only --smodel=M0 --alphabet=Codons 
+% bali-phy examples/HIV/chain-2005/env-clustal-codons.fasta --test --smodel=M0 --alphabet=Codons 
 </para>
 </section>
   </section>
@@ -178,7 +178,7 @@ Download HIV env and pol alignments with the same sequence names:
 % wget http://nucleus.biology.duke.edu/~bredelings/alignment_files/env-common.fasta
 % wget http://nucleus.biology.duke.edu/~bredelings/alignment_files/pol-common.fasta
 Try to analyze these genes jointly under a codon model:
-% bali-phy --show-only --alphabet Codons env-common.fasta pol-common.fasta --smodel M0
+% bali-phy --test --alphabet Codons env-common.fasta pol-common.fasta --smodel M0
 Take a look at the lengths of these files, to see whether the sequencealignment lengths are multiples of 3:
 % alignment-info pol-common.fasta
 % alignment-info env-common.fasta
@@ -186,9 +186,9 @@ Now edit the fasta files so that the lengths are a multiple of three:
 % alignment-cat -c1-951 env-common.fasta > env-common2.fasta
 % alignment-cat -c1-1068 pol-common.fasta > pol-common2.fasta
 Try running bali-phy again:
-% bali-phy --show-only --alphabet Codons env-common2.fasta pol-common2.fasta --smodel M0
+% bali-phy --test --alphabet Codons env-common2.fasta pol-common2.fasta --smodel M0
 Now open the fasta files in an editor and replace all nucleotide ambiguity codes K and M with N.  This time the run should succeed:
-% bali-phy --show-only --alphabet Codons env-common2.fasta pol-common2.fasta --smodel M0
+% bali-phy --test --alphabet Codons env-common2.fasta pol-common2.fasta --smodel M0
 By default, the M0 substitution model will be selected for both genes.  However, each gene will have a separate instance of the model with its own gene-specific values for the model parameters.  Try specifying that both genes share one instance of the model parameters:
 % bali-phy --iterations=10 --alphabet Codons env-common2.fasta pol-common2.fasta --smodel=1,2:M0
 Now try reading one gene as Codons, and the other as DNA:
