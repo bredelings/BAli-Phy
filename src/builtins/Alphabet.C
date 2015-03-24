@@ -27,6 +27,14 @@ extern "C" closure builtin_function_getNucleotides(OperationArgs& Args)
   return N;
 }
 
+extern "C" closure builtin_function_getAminoAcids(OperationArgs& Args)
+{
+  object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
+  const AminoAcids& A = C->getAminoAcids();
+
+  return A;
+}
+
 extern "C" closure builtin_function_translate(OperationArgs& Args)
 {
   object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
