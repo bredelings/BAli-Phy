@@ -48,6 +48,9 @@ case "${host_os}" in
   *) ;;
 esac
 
+#AM_CXXFLAGS += -pedantic @MPI_CXXFLAGS@ ${CAIRO_CFLAGS}
+AM_CXXFLAGS="$AM_CXXFLAGS -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing"
+
 if test "${host_os_noversion}" = darwin ; then 
 
 AM_CXXFLAGS="$AM_CXXFLAGS -fvisibility=default"
@@ -401,6 +404,7 @@ if test -n "$cairo" && test "$cairo" != "no"; then
    AC_SUBST(CAIRO_CFLAGS)
    AC_SUBST(CAIRO_LIBS)
 fi
+AM_CXXFLAGS="$AM_CXXFLAGS -pedantic $CAIRO_CFLAGS"
 AC_SUBST(cairo_progs)
 
 ldflags=$LDFLAGS
@@ -411,7 +415,7 @@ AC_SUBST(ldflags)
 AC_SUBST(AM_CXXFLAGS)
 
 # Write our compilation flags to config.h so that we can report them with the version info.
-AC_DEFINE_UNQUOTED([CONFIG_FLAGS],["$AM_CXXFLAGS"] , ["AM_CXXFLAGS that we used to compile."])
+AC_DEFINE_UNQUOTED([CONFIG_FLAGS],["$AM_CXXFLAGS $CXXFLAGS"] , ["AM_CXXFLAGS that we used to compile."])
 AC_DEFINE_UNQUOTED([_ARCH_],["$host"] , ["Host architecture."])
 
 AC_CONFIG_FILES([
@@ -444,6 +448,7 @@ if test -n "$cairo" && test "$cairo" != "no"; then
 fi
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CXXFLAGS)
+echo "yo!"
 
 
 # Release instructions:

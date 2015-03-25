@@ -61,14 +61,6 @@ LDFLAGS = @ldflags@
 AM_CPPFLAGS = @AM_CPPFLAGS@ -I@top_srcdir@/include -I@top_srcdir@/src
 AM_CXXFLAGS = @AM_CXXFLAGS@
 
-if GCC
-
-#AM_CXXFLAGS += -pedantic @MPI_CXXFLAGS@ ${CAIRO_CFLAGS}
-AM_CXXFLAGS += -pedantic ${CAIRO_CFLAGS}
-AM_CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing
-
-endif
-
 LIBS = @libs@
 if NO_SYSTEM_BOOST
 LIBS += ../boost/lib/libboost_myparts.la
