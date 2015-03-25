@@ -165,6 +165,33 @@ m2a_test_omega_dist () = do
   return $ extendDiscreteDistribution dist posP posW';
 };
 
+m3_omega_dist n_bins = do
+{
+  omegas <- iid n_bins (uniform 0.0 1.0);
+  ps <- dirichlet' n_bins (intToDouble n_bins/2.0);
+  Log "omega" omegas;
+  Log "f" ps;
+  return $ DiscreteDistribution $ zip ps omegas;
+};
+
+m3_test_omega_dist n_bins = do
+{
+  dist <- m3_omega_dist n_bins;
+
+  posW <- logGamma 4.0 0.25;
+  Log "posW" posW;
+
+  posP <- beta 1.0 10.0;
+  Log "posP" posP;
+
+  posSelection <- bernoulli 0.5;
+  Log "posSelection" posSelection;
+
+  let {posW' = if (posSelection == 1) then posW else 1.0};
+
+  return $ extendDiscreteDistribution dist posP posW';
+};
+
 -- The M7 is just a beta distribution
 -- gamma' = var(x)/(mu*(1-mu)) = 1/(a+b+1) = 1/(n+1)
 m7_omega_dist n_bins = do 
@@ -231,6 +258,22 @@ m8a_test_omega_dist n_bins = do
   return $ extendDiscreteDistribution beta_dist posP posW';
 };
 
+dp_omega_dist n_bins = do 
+{
+  mu <- uniform 0.0 1.0;
+  Log "mu" mu;
+
+  omegas <- dirichlet' n_bins 1.0;
+  let {p = 1.0/(intToDouble n_bins);
+       ave = sum(omegas)*p;
+       scale = mu/ave;
+       omegas' = map (*scale) omegas};
+
+  Log "omegas" (map (min 1.0) omegas');
+
+  return $ DiscreteDistribution [(p,min omega 1.0)| omega <- omegas'];
+};
+
 m1a_model codona s r = Prefix "M1a" $ do
 {
   dist <- m1a_omega_dist ();
@@ -250,6 +293,22 @@ m2a_model codona s r = Prefix "M2a" $ do
 m2a_test_model codona s r = Prefix "M2a_Test" $ do
 {
   dist <- m2a_test_omega_dist ();
+
+  let {m0w w = reversible_markov (m0 codona s w) r};
+  return $ multiParameter m0w dist
+};
+
+m3_model codona n_bins s r = Prefix "M3" $ do
+{
+  dist <- m3_omega_dist n_bins;
+
+  let {m0w w = reversible_markov (m0 codona s w) r};
+  return $ multiParameter m0w dist
+};
+
+m3_test_model codona n_bins s r = Prefix "M3_Test" $ do
+{
+  dist <- m3_test_omega_dist n_bins;
 
   let {m0w w = reversible_markov (m0 codona s w) r};
   return $ multiParameter m0w dist
@@ -282,6 +341,14 @@ m8a_model codona n_bins s r = Prefix "M8a" $ do
 m8a_test_model codona n_bins s r = Prefix "M8a_Test" $ do
 {
   dist <- m8a_test_omega_dist n_bins;
+
+  let {m0w w = reversible_markov (m0 codona s w) r};
+  return $ multiParameter m0w dist
+};
+
+dp_omega_model codona n_bins s r = Prefix "DP_omega" $ do
+{
+  dist <- dp_omega_dist n_bins;
 
   let {m0w w = reversible_markov (m0 codona s w) r};
   return $ multiParameter m0w dist
