@@ -68,6 +68,8 @@ show_only("aa.fasta --smodel LG+DP[4]");
 show_only("codons.fasta --alphabet=Codons");
 show_only("codons.fasta --alphabet=Codons --smodel=M0+F1x4");
 show_only("codons.fasta --alphabet=Codons --smodel=M0[GTR]+F1x4");
+show_only("codons.fasta --alphabet=Codons --smodel=M3[4,GTR,MG94]");
+show_only("codons.fasta --alphabet=Codons --smodel=M3_Test");
 show_only("codons.fasta --alphabet=Codons --smodel=M8");
 show_only("codons.fasta --alphabet=Codons --smodel=M8[,HKY,F61]");
 
