@@ -184,7 +184,7 @@ sub install_package
 
     check_overwrite($archive);
     
-    print "Installing $name $version...\n";
+    print "Installing $name version $version...\n";
     my $tar = Archive::Tar->new($archive);
     my $package_info_dir = $info_dir."/$name/";
     make_path($package_info_dir);
@@ -235,7 +235,8 @@ sub uninstall_package
     }
     if (-e "$info_dir/$name/Files")
     {
-	print " Uninstalling old version $installed_version...";
+	my $installed_version = get_package_version($name);
+	print "Uninstalling $name version $installed_version...";
 	open(FILES,"$info_dir/$name/Files");
 	open(RM,">>","$info_dir/$name/FilesRemoved");
 	while(my $file = <FILES>)
@@ -285,7 +286,8 @@ sub installed_packages
 
 sub list_installed_packages
 {
-    for my $pkg (installed_packages())
+    my @packages = installed_packages();
+    for my $pkg (@packages)
     {
 	my $version = "broken";
 	if (!is_package_broken($pkg))
@@ -294,6 +296,7 @@ sub list_installed_packages
 	}
 	print "$pkg $version\n";
     }
+    print "No packages installed.\n" if (!@packages);
 }
 
 sub read_JSON_file
