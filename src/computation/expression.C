@@ -174,7 +174,9 @@ string expression::print() const
       while (body.is_a<lambda>())
       {
 	vars.push_back(body.sub()[0].print());
-	body = body.sub()[1];
+	// Keep a reference 'body.sub()[1]' here, so it is not destroyed!
+	expression_ref tmp = body.sub()[1];
+	body = tmp;
       }
       result = "\\" + join(vars,' ') + " -> "+ body.print();
       return result;
