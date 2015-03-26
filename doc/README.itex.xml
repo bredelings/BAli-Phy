@@ -1751,6 +1751,41 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
+		<para><userinput>M3</userinput></para>
+		<para><userinput>M3[4,HKY,F61]</userinput> (default)</para>
+		<para><userinput>M3[4,GTR,MG94]</userinput></para>
+		<para>Yang, et. al. (2000)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<variablelist>
+		  <varlistentry> <term>M3.omega!!i</term> <listitem> <para>the conserved dN/dS ratio for category i</para> </listitem> </varlistentry>
+		  <varlistentry> <term>M3.f!!i</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
+		</variablelist>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
+		<para><userinput>M3_Test</userinput></para>
+		<para><userinput>M3_Test[4,HKY,F61]</userinput> (default)</para>
+		<para><userinput>M3_Test[4,GTR,MG94]</userinput></para>
+		<para>Yang, et. al. (2000)</para>
+	      </entry>
+	      <entry>Codons</entry>
+	      <entry>
+		<variablelist>
+		  <varlistentry> <term>M3.omega!!i</term> <listitem> <para>the conserved dN/dS ratio for category i</para> </listitem> </varlistentry>
+		  <varlistentry> <term>M3.f!!i</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>posSelection</term> <listitem> <para>model selector (1 if positive selection, 0 if not).</para> </listitem> </varlistentry>
+		</variablelist>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry>
 		<para><userinput>M7</userinput></para>
 		<para><userinput>M7[4,HKY,F61]</userinput> (default)</para>
 		<para><userinput>M7[6,GTR,F3x4]</userinput></para>
