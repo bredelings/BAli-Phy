@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "2.3.5"         >
+<!ENTITY  version        "2.3.6"         >
 
 <!ENTITY  source.file    "bali-phy-&version;.tar.gz"         >
 <!ENTITY  linux64.file   "bali-phy-&version;-linux64.tar.gz"         >
@@ -506,7 +506,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
   <section xml:id="running"><info><title>Running the program</title></info>
     
 
-    <para>Here are some examples and explanations of how to run <command>bali-phy</command>.  You can get an overview of command line options (see <xref linkend="command_line_options"/>) by running <command> bali-phy --help</command>.</para>
+    <para>Here are some examples and explanations of how to run <command>bali-phy</command>.  You can get an overview of command line options by running <command> bali-phy --help</command>.</para>
 <para>We recommend running multiple chains in parallel for each command, because 
 <orderedlist>
   <listitem>You can combine the samples, leading to faster run times.</listitem>
