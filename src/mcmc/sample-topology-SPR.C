@@ -202,7 +202,8 @@ vector<double> effective_lengths(const Tree& T)
       for(int j=0;j<pre_b.size();j++)
 	Pr_change_on_all *= (1.0-exp(-lengths[pre_b[j].name()]));
       double Pr_no_change_on_at_least_1 = 1.0-Pr_change_on_all;
-      lengths[branches[i]] += -log(Pr_no_change_on_at_least_1);
+      if (Pr_no_change_on_at_least_1 > 0)
+	lengths[branches[i]] += -log(Pr_no_change_on_at_least_1);
       assert(lengths[branches[i]] >= branches[i].length());
     }
   }
