@@ -68,7 +68,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("log-mean", "Show log mean of X given log X.")
     ("median", "Show median and confidence level.")
     ("confidence",value<string>()->default_value("0.95"),"Confidence interval levels (colon-separated).")
-    ("HPD", "Show HPD credible intervals")
+    ("BCI", value<string>()->default_value("HPD"),"Type of Bayesian Credible Interval (BCI): HPD or central")
     ("precision,p", value<unsigned>()->default_value(4),"Number of significant figures.")
     ("verbose,v","Output more log messages on stderr.")
     ;
@@ -323,7 +323,7 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
   vector<double> Ps = split<double>(args["confidence"].as<string>(),':');
   sort(Ps.begin(), Ps.end());
   
-  bool HPD = args.count("HPD");
+  bool HPD = (args["BCI"].as<string>() == "HPD");
 
   if (tables.size() > 1)
     for(int i=0;i<tables.size();i++) {
