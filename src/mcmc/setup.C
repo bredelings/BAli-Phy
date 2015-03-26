@@ -343,15 +343,9 @@ MCMC::MoveAll get_parameter_slice_moves(Model& M)
 
   if (Parameters* P = dynamic_cast<Parameters*>(&M))
   {
-    // scale parameters
+    // scale parameters - do we need this?
     for(int i=0;i<P->n_branch_means();i++)
       add_slice_moves(*P, "*.mu"+convertToString(i+1), slice_moves);
-
-    // imodel parameters
-    add_slice_moves(*P, "*.delta", slice_moves, 10);
-
-    add_slice_moves(*P, "lambdaScale", slice_moves, 10);
-    add_slice_moves(*P, "*.M3.omega*", slice_moves);
 
     slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));
   }
