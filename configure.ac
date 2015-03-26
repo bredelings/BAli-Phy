@@ -448,7 +448,6 @@ if test -n "$cairo" && test "$cairo" != "no"; then
 fi
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CXXFLAGS)
-echo "yo!"
 
 
 # Release instructions:
