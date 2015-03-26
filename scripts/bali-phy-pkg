@@ -78,7 +78,7 @@ else
 sub get_user_dir
 {
     my $home = $ENV{"HOME"};
-    die "Home directory unset or does not exist!" if (! -d $home);
+    error_exit("Home directory unset or does not exist!") if (! -d $home);
     
     my $user_dir = $home."/.local/share/bali-phy/";
     return $user_dir;
@@ -161,10 +161,15 @@ sub install_package
     my $name = ${$package_info}{"Package"};
     my $version = ${$package_info}{"Version"};
 
+    if (! -e $archive)
+    {
+	error_exit("install: archive \"$archive\" not found!\nAborting installation.");
+    }
+
     #1. Handle installed versions
     if (is_package_broken($name))
     {
-	die "Package $name is in a broken state";
+	error_exit("install: Package $name is in a broken state. Try uninstalling first.");
     }
     
     if (is_package_installed($name))
@@ -172,15 +177,14 @@ sub install_package
 	my $installed_version = get_package_version($name);
 	if (version->parse($installed_version) >= version->parse($version))
 	{
-	    die "Version $version not newer than installed version $version";
+	    error_exit("install: Version $version not newer than installed version $version.\nAborting installation.");
 	}
-	print " Uninstalling old version $installed_version...";
 	uninstall_package($name);
-	print "done.\n";
     }
 
     check_overwrite($archive);
     
+    print "Installing $name $version...\n";
     my $tar = Archive::Tar->new($archive);
     my $package_info_dir = $info_dir."/$name/";
     make_path($package_info_dir);
@@ -194,6 +198,7 @@ sub install_package
 	$tar->extract_file("files/".$filename,$new_name);
     }
     close(FILES);
+    print "done.\n";
 }
 
 sub all_files_removed
@@ -230,6 +235,7 @@ sub uninstall_package
     }
     if (-e "$info_dir/$name/Files")
     {
+	print " Uninstalling old version $installed_version...";
 	open(FILES,"$info_dir/$name/Files");
 	open(RM,">>","$info_dir/$name/FilesRemoved");
 	while(my $file = <FILES>)
@@ -254,6 +260,7 @@ sub uninstall_package
     if (all_files_removed($name))
     {
 	rmtree("$info_dir/$name/");
+	print "done.\n";
     }
     else
     {
@@ -272,6 +279,7 @@ sub installed_packages
 	next if ($file eq "..");
 	push @packages, $file;
     }
+    close DIR;
     return @packages;
 }
 
@@ -295,7 +303,7 @@ sub read_JSON_file
     my $json;
     {
 	local $/; # Enable 'slurp' mode
-	open my $fh, "<", $filename or die("Can't open \"$filename\": $!\n");
+	open my $fh, "<", $filename or error_exit("Can't open \"$filename\": $!");
 	$json = <$fh>;
 	close $fh;
     };
