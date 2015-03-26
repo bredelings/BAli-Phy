@@ -538,12 +538,12 @@ int reg_heap::find_parameter_modifiable_reg(int index)
   return R2;
 }
 
-const object_ptr<const Object>& reg_heap::get_parameter_range(int c, int p)
+const object_ptr<const Object> reg_heap::get_parameter_range(int c, int p)
 {
   return get_range_for_reg(c, find_parameter_modifiable_reg(p));
 }
 
-const object_ptr<const Object>& reg_heap::get_range_for_reg(int c, int r)
+const object_ptr<const Object> reg_heap::get_range_for_reg(int c, int r)
 {
   if (access(r).C.Env.size() < 3)
     return {};

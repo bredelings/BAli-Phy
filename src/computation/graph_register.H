@@ -249,9 +249,9 @@ public:
 
   int find_parameter_modifiable_reg(int i);
 
-  const object_ptr<const Object>& get_parameter_range(int c, int r);
+  const object_ptr<const Object> get_parameter_range(int c, int r);
 
-  const object_ptr<const Object>& get_range_for_reg(int c, int r);
+  const object_ptr<const Object> get_range_for_reg(int c, int r);
 
   double get_rate_for_reg(int r);
 

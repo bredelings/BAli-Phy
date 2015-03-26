@@ -160,9 +160,9 @@ public:
 
   const std::vector<int>& random_modifiables() const;
 
-  const object_ptr<const Object>& get_range_for_reg(int r) const;
+  const object_ptr<const Object> get_range_for_reg(int r) const;
 
-  const object_ptr<const Object>& get_parameter_range(int p) const;
+  const object_ptr<const Object> get_parameter_range(int p) const;
 
   double get_rate_for_reg(int r) const;
 

@@ -66,14 +66,21 @@ bool Model::has_bounds(int i) const
 {
   object_ref o = get_parameter_range(i);
 
-  object_ptr<const Bounds<double>> b = dynamic_pointer_cast<const Bounds<double>>(o);
+  if (o)
+  {
+    object_ptr<const Bounds<double>> b = dynamic_pointer_cast<const Bounds<double>>(o);
 
-  return (bool)b;
+    return (bool)b;
+  }
+  else
+    return false;
 }
 
 const Bounds<double>& Model::get_bounds(int i) const 
 {
   object_ref o = get_parameter_range(i);
+
+  assert(o);
 
   object_ptr<const Bounds<double>> b = dynamic_pointer_cast<const Bounds<double>>(o);
 

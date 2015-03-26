@@ -290,7 +290,7 @@ const vector<int>& context::random_modifiables() const
   return memory()->random_modifiables();
 }
 
-const object_ptr<const Object>& context::get_range_for_reg(int r) const
+const object_ptr<const Object> context::get_range_for_reg(int r) const
 {
   return memory()->get_range_for_reg(context_index, r);
 }
@@ -300,7 +300,7 @@ double context::get_rate_for_reg(int r) const
   return memory()->get_rate_for_reg(r);
 }
 
-const object_ptr<const Object>& context::get_parameter_range(int p) const
+const object_ptr<const Object> context::get_parameter_range(int p) const
 {
   return memory()->get_parameter_range(context_index, p);
 }
