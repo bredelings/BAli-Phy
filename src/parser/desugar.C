@@ -801,11 +801,36 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     }
     else if (n->type == "Let")
     {
+      expression_ref decls_ = v[0];
+      assert(is_AST(decls_,"Decls"));
+      expression_ref body = v[1];
+      {
+	expression_ref decl = decls_.sub()[0];
+	if (is_AST(decl,"Decl"))
+	{
+	  expression_ref pat = decl.sub()[0];
+	  expression_ref rhs = decl.sub()[1];
+	  // let pat = rhs in body -> case rhs of {pat->body}
+	  if (is_AST(pat,"pat"))
+	  {
+	    assert(is_AST(rhs,"rhs"));
+	    expression_ref pat0 = pat.sub()[0];
+	    if (is_AST(pat0,"Tuple"))
+	    {
+	      if (decls_.size() != 1) throw myexception()<<"Can't currently handle pattern let with more than one decl.";
+	      expression_ref alt = {AST_node("alt"),{pat, body}};
+	      expression_ref alts = {AST_node("alts"),{alt}};
+	      expression_ref EE = {AST_node("Case"), {rhs.sub()[0], alts}};
+	      return desugar(m, EE, bound);
+	    }
+	  }
+	}
+      }
+
       // parse the decls and bind declared names internally to the decls.
       v[0] = desugar(m, v[0], bound);
 
       vector<expression_ref> decls = v[0].sub();
-      expression_ref body = v[1];
 
       // find the bound var names + construct arguments to let_obj()
       vector<expression_ref> w = {body};
