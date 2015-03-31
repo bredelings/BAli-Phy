@@ -8,6 +8,7 @@ use Archive::Tar;
 use File::Path qw(make_path rmtree);
 use JSON::PP;
 use version;
+use LWP::UserAgent;
 
 my $cmd = shift;
 
@@ -61,6 +62,10 @@ elsif ($cmd eq "missing")
 elsif ($cmd eq "installed")
 {
     list_installed_files();
+}
+elsif ($cmd eq "available")
+{
+    &list_available_packages();
 }
 elsif ($cmd eq "help")
 {
@@ -505,4 +510,32 @@ sub error_exit
     my $msg = shift;
     print "Error: $msg\n";
     exit(1);
+}
+
+sub available_packages()
+{
+    my $uri = 'https://raw.githubusercontent.com/bredelings/bali-phy-packages/master/Packages';
+    my $ua = LWP::UserAgent->new( ssl_opts => {verify_hostname => 0} );
+    my $response = $ua->get($uri);
+
+    error_exit($response->status_line) if (!$response->is_success);
+
+    my $data = $response->decoded_content;
+
+    my $packages = decode_json($data);
+    return $packages;
+}
+
+sub list_available_packages()
+{
+    my $packages = available_packages();
+    for my $pkg (@$packages)
+    {
+	my $name = ${$pkg}{"Package"};
+	my $version = ${$pkg}{"Version"};
+	my $source = ${$pkg}{"Source"};
+	my $filename = "${name}_${version}.tar.gz";
+	my $url = "$source/$filename";
+	print "$name\t$version\t$url\n";
+    }
 }
