@@ -3,6 +3,8 @@
 #include "util.H"
 #include "myexception.H"
 #include "version.H"
+#include "computation/module.H"
+#include "computation/loader.H"
 
 using std::cerr;
 using std::endl;
@@ -83,13 +85,15 @@ string run_name(const variables_map& args)
   }
   else if (args.count("model"))
   {
-    name = args["model"].as<string>();
-    name = remove_extension( fs::path( name ).leaf().string() );
+    string filename = args["model"].as<string>();
+    Module M ( module_loader().read_module_from_file(filename) );
+    name = M.name;
+    name = get_unqualified_name(name);
   }
   else if (args.count("Model"))
   {
     name = args["Model"].as<string>();
-    name = remove_extension( fs::path( name ).leaf().string() );
+    name = get_unqualified_name(name);
   }
 
   return name;
