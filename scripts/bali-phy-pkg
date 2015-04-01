@@ -101,12 +101,6 @@ sub get_package_info
     return $control;
 }
 
-sub check_installed_version()
-{
-    my $name = shift;
-    my $version = shift;
-}
-
 sub files_for_archive
 {
     my $archive = shift;
@@ -131,10 +125,12 @@ sub files_for_archive
 sub check_overwrite
 {
     my $archive = shift;
+    my $ignore_pkg = shift;
     my @files = files_for_archive($archive);
 
     for my $pkg (installed_packages())
     {
+	next if (defined($ignore_pkg) && ($pkg eq $ignore_pkg));
 	my @pkg_files_ = installed_files_for_package($pkg);
 	my %pkg_files = map { $_ => 1 } @pkg_files_;
 	for my $file (@files)
@@ -146,10 +142,10 @@ sub check_overwrite
 	}
     }
 
+    my %untracked = map {$_ => 1} untracked_files();
     for my $filename (@files)
     {
-	my $fullname = $packages_dir."/".$filename;
-	if (-e $fullname)
+	if (exists($untracked{$filename})) 
 	{
 	    error_exit("install: Refusing to overwrite untracked file \"$filename\".\nAborting installation.");
 	}
@@ -179,19 +175,17 @@ sub install_package
 	error_exit("install: Package $name is in a broken state. Try uninstalling first.");
     }
     
-    if (is_package_installed($name))
+    if (!is_new_version($name,$version))
     {
 	my $installed_version = get_package_version($name);
-	if (version->parse($installed_version) >= version->parse($version))
-	{
-	    error_exit("install: Version $version not newer than installed version $version.\nAborting installation.");
-	}
-	uninstall_package($name);
+	error_exit("install: Version $version not newer than installed version $installed_version.\nAborting installation.");
     }
 
-    check_overwrite($archive);
+    check_overwrite($archive,$name);
     
-    print "Installing $name version $version...\n";
+    uninstall_package($name) if (is_package_installed($name));
+
+    print "Installing $name version $version ... ";
     my $tar = Archive::Tar->new($archive);
     my $package_info_dir = $info_dir."/$name/";
     make_path($package_info_dir);
@@ -243,7 +237,7 @@ sub uninstall_package
     if (-e "$info_dir/$name/Files")
     {
 	my $installed_version = get_package_version($name);
-	print "Uninstalling $name version $installed_version...";
+	print "Uninstalling $name version $installed_version ... ";
 	open(FILES,"$info_dir/$name/Files");
 	open(RM,">>","$info_dir/$name/FilesRemoved");
 	while(my $file = <FILES>)
@@ -541,6 +535,17 @@ sub list_available_packages()
 	print "$name\t$version\t$url\n";
     }
 }
+
+sub is_new_version
+{
+    my $name = shift;
+    my $version = shift;
+    return 1 if (!is_package_installed($name));
+
+    my $installed_version = get_package_version($name);
+    return (version->parse($version) > version->parse($installed_version));
+}
+
 sub shasum
 {
     my $arg = shift;
