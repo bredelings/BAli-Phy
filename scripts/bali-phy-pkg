@@ -3,7 +3,9 @@
 use strict;
 use Cwd 'abs_path';
 use File::Basename;
+use File::Fetch;
 use File::Find;
+use File::Temp;
 use Archive::Tar;
 use File::Path qw(make_path rmtree);
 use JSON::PP;
@@ -32,6 +34,10 @@ elsif ($cmd eq "help" or $cmd eq "--help" or $cmd eq "-h")
 {
     &show_help();
     exit(0);
+}
+elsif ($cmd eq "install-archive")
+{
+    install_archive(@ARGV);
 }
 elsif ($cmd eq "install")
 {
@@ -153,7 +159,7 @@ sub check_overwrite
 }
 
 # put installed files BOTH in a separate dir, AND in a combined dir?
-sub install_package
+sub install_archive
 {
     my $archive = shift;
     if (!defined($archive))
@@ -498,7 +504,7 @@ sub list_missing_files
 sub show_help()
 {
     print "Usage: bali-phy-pkg <command> [arg]\n";
-    print "Commands are: install, uninstall, info, packages, files, untracked, missing, installed, help\n";
+    print "Commands are: install, install-archive, available, uninstall, info, packages, files, untracked, missing, installed, help\n";
 }
 
 sub error_exit
@@ -524,6 +530,17 @@ sub remote_packages_info()
     return $packages;
 }
 
+sub remote_package_info
+{
+    my $name = shift;
+    my $packages = remote_packages_info();
+    for my $pkg (@$packages)
+    {
+	return $pkg if (${$pkg}{"Package"} eq $name);
+    }
+    return undef;
+}
+
 sub list_available_packages()
 {
     my $packages = remote_packages_info();
@@ -546,6 +563,38 @@ sub is_new_version
 
     my $installed_version = get_package_version($name);
     return (version->parse($version) > version->parse($installed_version));
+}
+
+
+sub install_package
+{
+    my $name = shift;
+    print "Fetching package list ... ";
+    my $pkg = remote_package_info($name);
+    print "done.\n";
+    error_exit("Package '$name' not found!") if (!defined($pkg));
+
+    my $version = ${$pkg}{"Version"};
+    my $source  = ${$pkg}{"Source"};
+    my $filename = "${name}_${version}.tar.gz";
+    my $url = "$source/$filename";
+
+    if (!is_new_version($name,$version))
+    {
+	error_exit("install: Remote Version $version not newer than installed version $version.\nAborting installation.");
+    }
+
+    print "Downloading package for $name version $version ... ";
+    my $fetcher = File::Fetch->new(uri => "$url");
+    my $data;
+    my $where = $fetcher->fetch( to => \$data );
+    print "done.\n";
+
+    error_exit("Package has wrong SHA1!") if (${$pkg}{"SHA1"} ne shasum(1,$where));
+    error_exit("Package has wrong SHA256!") if (${$pkg}{"SHA256"} ne shasum(256,$where));
+    error_exit("Package has wrong MD5sum!") if (${$pkg}{"MD5sum"} ne md5sum($where));
+    
+    install_archive($where);
 }
 
 sub shasum
