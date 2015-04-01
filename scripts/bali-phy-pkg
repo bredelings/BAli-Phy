@@ -510,7 +510,9 @@ sub error_exit
 
 sub remote_packages_info()
 {
-    my $uri = 'https://raw.githubusercontent.com/bredelings/bali-phy-packages/master/Packages';
+#   HTTPS isn't part of the PERL core.
+#    my $uri = 'https://raw.githubusercontent.com/bredelings/bali-phy-packages/master/Packages';
+    my $uri = 'http://www.bali-phy.org/packages/Packages';
     my $ua = LWP::UserAgent->new( ssl_opts => {verify_hostname => 0} );
     my $response = $ua->get($uri);
 
