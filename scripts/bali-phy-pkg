@@ -508,7 +508,7 @@ sub error_exit
     exit(1);
 }
 
-sub available_packages()
+sub remote_packages_info()
 {
     my $uri = 'https://raw.githubusercontent.com/bredelings/bali-phy-packages/master/Packages';
     my $ua = LWP::UserAgent->new( ssl_opts => {verify_hostname => 0} );
@@ -524,7 +524,7 @@ sub available_packages()
 
 sub list_available_packages()
 {
-    my $packages = available_packages();
+    my $packages = remote_packages_info();
     for my $pkg (@$packages)
     {
 	my $name = ${$pkg}{"Package"};
