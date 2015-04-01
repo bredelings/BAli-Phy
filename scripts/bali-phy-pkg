@@ -9,6 +9,8 @@ use File::Path qw(make_path rmtree);
 use JSON::PP;
 use version;
 use LWP::UserAgent;
+use Digest::SHA;
+use Digest::MD5;
 
 my $cmd = shift;
 
@@ -539,3 +541,36 @@ sub list_available_packages()
 	print "$name\t$version\t$url\n";
     }
 }
+sub shasum
+{
+    my $arg = shift;
+    my $filename = shift;
+    my $fh;
+    unless (open $fh,$filename) {
+	print STDERR "$0: open $filename: $!";
+	exit(1);
+    }
+
+    my $sha1 = Digest::SHA->new($arg);
+    $sha1->addfile($fh);
+    my $digest = $sha1->hexdigest;
+    close $fh;
+    return $digest;
+}
+    
+sub md5sum
+{
+    my $filename = shift;
+    my $fh;
+    unless (open $fh,$filename) {
+	print STDERR "$0: open $filename: $!";
+	exit(1);
+    }
+
+    my $md5 = Digest::MD5->new();
+    $md5->addfile($fh);
+    my $digest = $md5->hexdigest;
+    close $fh;
+    return $digest;
+}
+    
