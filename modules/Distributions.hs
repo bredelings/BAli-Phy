@@ -246,7 +246,7 @@ dpm n alpha mean_dist noise_dist= Prefix "DPM" $ do
   sigmaOverMu <- iid (n+delta) noise_dist;
 
   category <- crp alpha n delta;
-  Log "category" category;
+--  Log "category" category;
   Log "n_categories" (length (nub category));
 
   z <- iid n (normal 0.0 1.0);
@@ -263,7 +263,7 @@ dp n alpha mean_dist = Prefix "DP" $ do
   mean <- iid (n+delta) mean_dist;
 
   category <- crp alpha n delta;
-  Log "category" category;
+--  Log "category" category;
   Log "n_categories" (length (nub category));
 
   AddMove (\c -> mapM_ (\l-> gibbs_sample_categorical (category!!l) (n+delta) c) [0..n-1]);
