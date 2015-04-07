@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>BAli-Phy Tutorial</title><link rel="stylesheet" type="text/css" href="docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /></head><body><div xml:lang="en" class="article" lang="en"><div class="titlepage"><div><div><h1 class="title"><a id="idp62575264"></a><span class="application">BAli-Phy</span> Tutorial</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Benjamin</span> <span class="surname">Redelings</span></h3></div></div></div><hr /></div><div class="toc"><p><strong>Table of Contents</strong></p><dl class="toc"><dt><span class="section"><a href="#intro">1. Introduction</a></span></dt><dt><span class="section"><a href="#work_directory">2. Setting up the <code class="filename">~/alignment_files</code> directory</a></span></dt><dt><span class="section"><a href="#command_line_options">3. Command line options</a></span></dt><dd><dl><dt><span class="section"><a href="#idp62670432">3.1. RNA</a></span></dt><dt><span class="section"><a href="#idp63561536">3.2. Amino Acids</a></span></dt><dt><span class="section"><a href="#idp63563584">3.3. Codons</a></span></dt></dl></dd><dt><span class="section"><a href="#idp63573408">4. Output</a></span></dt><dd><dl><dt><span class="section"><a href="#idp63578480">4.1. Inspecting output files</a></span></dt><dt><span class="section"><a href="#idp63592928">4.2. Summarizing the output</a></span></dt><dt><span class="section"><a href="#idp63606832">4.3. Generating an HTML Report</a></span></dt></dl></dd><dt><span class="section"><a href="#idp63611664">5. Starting and stopping the program</a></span></dt><dt><span class="section"><a href="#idp63615344">6. Multi-gene analyses</a></span></dt><dd><dl><dt><span class="section"><a href="#idp63617296">6.1. A simple multi-gene analysis</a></span></dt><dt><span class="section"><a href="#idp63631360">6.2. Using different models in different
+partitions</a></span></dt><dt><span class="section"><a href="#idp63635456">6.3. Using different indel models models</a></span></dt><dt><span class="section"><a href="#idp63638288">6.4. Sharing model parameter between partitions</a></span></dt><dt><span class="section"><a href="#idp63640464">6.5. Sharing substitution rates between partitions</a></span></dt></dl></dd><dt><span class="section"><a href="#idp63642800">7. Option files</a></span></dt><dt><span class="section"><a href="#idp63645520">8. Dataset preparation</a></span></dt><dd><dl><dt><span class="section"><a href="#idp63646160">8.1. Splitting and Merging Alignments</a></span></dt><dt><span class="section"><a href="#idp63651520">8.2. Shrinking the data set</a></span></dt><dt><span class="section"><a href="#idp63655072">8.3. Cleaning the data set</a></span></dt></dl></dd></dl></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="intro"></a>1. Introduction</h2></div></div></div><p>
+Before you start this tutorial, please <a class="link" href="http://www.bali-phy.org/download.php" target="_top">download</a> and install bali-phy, following the installation instructions in the <a class="link" href="http://www.bali-phy.org/README.html" target="_top">manual</a>.</p></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="work_directory"></a>2. Setting up the <code class="filename">~/alignment_files</code> directory</h2></div></div></div><p>Go to your home directory:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>cd ~</code></strong>
+</pre><p>Make a directory called alignment_files inside it:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>mkdir alignment_files</code></strong>
+</pre><p>Go into the <code class="filename">alignment_files</code> directory:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>cd alignment_files</code></strong>
+</pre><p>Download the example alignment files:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>wget http://nucleus.biology.duke.edu/~bredelings/examples.tgz</code></strong>
+</pre><p>Alternatively, you can use <span class="command"><strong>curl</strong></span>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>curl -O http://nucleus.biology.duke.edu/~bredelings/examples.tgz</code></strong>
+</pre><p>Extract the compressed archive:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>tar -zxf examples.tgz</code></strong>
+</pre><p>Take a look inside the <code class="filename">examples</code> directory:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>ls examples</code></strong>
+</pre><p>Take a look at an input file:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>less examples/5S-rRNA/5d.fasta</code></strong>
+</pre><p>Get some information about the alignment:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>alignment-info examples/5S-rRNA/5d.fasta</code></strong>
+</pre></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="command_line_options"></a>3. Command line options</h2></div></div></div><p>
+What version of bali-phy are you running?  When was it compiled?  Which compiler?  For what computer type?
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy -v</code></strong>
+</pre><p>Look at the list of command line options:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy --help </code></strong>
+</pre><p>Look at them with the ability to scroll back:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy --help | less</code></strong>
+</pre><p>Some options have a short form which is a single letter:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy -h | less</code></strong>
+</pre><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp62670432"></a>3.1. RNA</h3></div></div></div><p>
+Analyze a data set, but don't begin MCMC.  (This is useful to know if the analysis works, what model will be used,
+compute likelihoods, etc.)
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>cd ~/alignment_files/examples</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>bali-phy --test 5S-rRNA/5d.fasta</code></strong>
+</pre><p>Finally, run an analysis!  (This is just 50 iterations, so its not a real run.)
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy 5S-rRNA/5d.fasta --iterations=50</code></strong>
+</pre><p>If you specify <em class="parameter"><code>--imodel=none</code></em>, then the alignment won't be estimated, and indels will be ignored (just like <span class="application">MrBayes</span>).
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy 5S-rRNA/5d.fasta --iterations=50 --imodel=none</code></strong>
+</pre><p>You can specify the alphabet, substitution model, insertion/deletion model, etc.
+Defaults are used if you don't specify.
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy 5S-rRNA/5d.fasta --iterations=50 --alphabet=DNA --smodel=TN --imodel=RS07 </code></strong>
+</pre><p>You can change this to the GTR, if you want:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy 5S-rRNA/5d.fasta --iterations=50 --alphabet=DNA --smodel=GTR --imodel=RS07 </code></strong>
+</pre><p>You can add gamma[4]+INV rate heterogeneity:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy 5S-rRNA/5d.fasta --iterations=50 --alphabet=DNA --smodel=GTR+gamma_inv[4] --imodel=RS07</code></strong>
+</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63561536"></a>3.2. Amino Acids</h3></div></div></div><p>
+When the data set contains amino acids, the default is amino acids:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy EF-Tu/12d.fasta --iterations=50</code></strong>
+</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63563584"></a>3.3. Codons</h3></div></div></div><p>
+What alphabet is used here?  What substitution model?
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy HIV/chain-2005/env-clustal-codons.fasta --test</code></strong>
+</pre><p>What happens when trying to use the Nielsen and Yang (1998) M0 model (e.g. dN/dS)?
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy HIV/chain-2005/env-clustal-codons.fasta --test --smodel=M0 </code></strong>
+</pre><p>The M0 model requires a codon alphabet:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy HIV/chain-2005/env-clustal-codons.fasta --test --smodel=M0 --alphabet=Codons </code></strong>
+</pre><p>The M0 model takes a <span class="emphasis"><em>nucleotide</em></span> exchange model as a parameter.  This parameter is optional, and the default is HKY, which you could specify as <strong class="userinput"><code>M0[HKY]</code></strong>.  You can change this to be more flexible:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy HIV/chain-2005/env-clustal-codons.fasta --test --smodel=M0[GTR] --alphabet=Codons </code></strong>
+</pre><p>The M7 model is a mixture of M0 codon models:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy Globins/bglobin.fasta --test --smodel=M7 --alphabet=Codons </code></strong>
+</pre><p>The M7 model has parameters as well.  Here are the defaults:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy Globins/bglobin.fasta --test --smodel=M7[4,HKY,F61] --alphabet=Codons </code></strong>
+</pre><p>It is possible to specify some of the parameters and leave others at their default value:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy Globins/bglobin.fasta --test --smodel=M7[,TN] --alphabet=Codons </code></strong>
+</pre></div></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp63573408"></a>4. Output</h2></div></div></div><p>
+See <a class="link" href="http://www.bali-phy.org/README.html#output" target="_top">Section 6: Output</a> of the manual for more information about this section.
+</p><p>
+Try running an analysis with a few more iterations.
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy 5S-rRNA/25-muscle.fasta &amp;</code></strong>
+</pre><p>Run another copy of the same analysis:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy 5S-rRNA/25-muscle.fasta &amp;</code></strong>
+</pre><p>You can take a look at your running jobs:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>jobs</code></strong>
+</pre><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63578480"></a>4.1. Inspecting output files</h3></div></div></div><p>
+Look at the directories that were created to store the output files:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>ls</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>ls 25-muscle-1/</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>ls 25-muscle-2/</code></strong>
+</pre><p>See how many iterations have been completed so far:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>wc -l 25-muscle-1/C1.p 25-muscle-2/C1.p</code></strong>
+</pre><p>Wait a second, and repeat the command.
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>wc -l 25-muscle-1/C1.p 25-muscle-2/C1.p</code></strong>
+</pre><p>See if you can determine the following information from the beginning of the C1.out file:
+</p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem">What command was run?</li><li class="listitem">When was it run?</li><li class="listitem">Which computer was it run on?</li><li class="listitem">Which directory was it run in?</li><li class="listitem">Which directory contains the output files?</li><li class="listitem">What was the process id (PID) of the running bali-phy program?</li><li class="listitem">What random seed was used?</li><li class="listitem">What was the input file?</li><li class="listitem">What alphabet was used to read in the sequence data?</li><li class="listitem">What substitution model was used to analyze the sequence data?</li><li class="listitem">What insertion/deletion model was used to analyze the sequence data?</li></ol></div><p>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>less 25-muscle-1/C1.out</code></strong>
+</pre><p>Examine the file containing the sampled trees:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>less 25-muscle-1/C1.trees</code></strong>
+</pre><p>Examine the file containing the sampled alignments:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>less 25-muscle-1/C1.P1.fastas</code></strong>
+</pre><p>Examine the file containing the successive best alignment/tree pairs visited:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>less 25-muscle-1/C1.MAP</code></strong>
+</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63592928"></a>4.2. Summarizing the output</h3></div></div></div><p>
+Try summarizing the sampled numerical parameters (e.g. not trees and alignments):
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>statreport --help</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>statreport 25-muscle-1/C1.p 25-muscle-2/C1.p &gt; Report</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>statreport 25-muscle-1/C1.p 25-muscle-2/C1.p --mean &gt; Report</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>statreport 25-muscle-1/C1.p 25-muscle-2/C1.p --mean --median &gt; Report</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>less Report</code></strong>
+</pre><p>Now lets examine the summaries using a graphical program.  If you are using Windows or Mac, run Tracer, and press the <span class="guilabel">+</span> button to add these files.  What kind of ESS do you get?  If you are using Linux, do 
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>tracer 25-muscle-1/C1.p 25-muscle-2/C1.p &amp;</code></strong>
+</pre><p>Now lets compute the consensus tree for these two runs:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>trees-consensus --help</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>trees-consensus 25-muscle-1/C1.trees 25-muscle-2/C1.trees &gt; c50.PP.tree</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>trees-consensus 25-muscle-1/C1.trees 25-muscle-2/C1.trees --report=consensus &gt; c50.PP.tree</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>less consensus</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>figtree c50.PP.tree &amp;</code></strong>
+</pre><p>Now lets see if there is evidence that the two runs have not converged yet.
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>trees-bootstrap --help</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>trees-bootstrap 25-muscle-1/C1.trees 25-muscle-2/C1.trees &gt; partitions.bs</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>less partitions.bs</code></strong>
+</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63606832"></a>4.3. Generating an HTML Report</h3></div></div></div><p>
+Now lets use the analysis script to run all the summaries and make a report:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bp-analyze.pl 25-muscle-1/ 25-muscle-2/</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>firefox Results/index.html &amp;</code></strong>
+</pre><p>This PERL script runs <span class="application">statreport</span> and <span class="application">trees-consensus</span> for you.  Take a look at what commands were run:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>less Results/bp-analyze.log</code></strong>
+</pre></div></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp63611664"></a>5. Starting and stopping the program</h2></div></div></div><p>We didn't specify the number of iterations to run in the section above, so the two analyses will run for
+100,000 iterations, or until you stop them yourself.  See <a class="link" href="http://www.bali-phy.org/README.html#mixing_and_convergence" target="_top">Section
+10: Convergence and Mixing: Is it done yet?</a> of the manual for
+more information about when to stop an analysis.</p><p>In order to stop a running job, you need to kill it. One way of stopping
+bali-phy analyses is this:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>killall bali-phy</code></strong>
+</pre><p>However, beware: if you are running multiple analyses, this will
+terminate all of them.
+</p></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp63615344"></a>6. Multi-gene analyses</h2></div></div></div><p>In this section we'll practice running analyses with multiple
+partitions.  Dividing the data into multiple partitions is useful
+because different partitions can have different models, or can have
+different parameters for the same model. This is described in more
+detail in section 4.3 of the <a class="link" href="http://www.bali-phy.org/README.html" target="_top">manual</a>.</p><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63617296"></a>6.1. A simple multi-gene analysis</h3></div></div></div><p>Let's look at a data set that is divided into three partitions:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>alignment-info ITS/ITS1-trimmed.fasta</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>alignment-info ITS/5.8S.fasta</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>alignment-info ITS/ITS2-trimmed.fasta</code></strong>
+</pre><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp63620752"></a>6.1.1. Running the analysis</h4></div></div></div><p>
+We can run an analysis of this partitioned data simply by supplying a
+number of different alignment files as input to bali-phy.  Let's run an analysis
+of these three alignment files:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --smodel=TN --imodel=RS07 &amp;</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --smodel=TN --imodel=RS07 &amp;</code></strong>
+</pre><p>You could leave off the <strong class="userinput"><code>--smodel=TN --imodel=RS07</code></strong>
+part of the command line:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta &amp;</code></strong>
+</pre><p>This would give the same output, since TN and RS07 are the defaults.
+</p></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp63625888"></a>6.1.2. What did the analysis do?</h4></div></div></div><p>Now, lets look at sampled continuous parameters:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>statreport ITS1-trimmed-5.8S-ITS2-trimmed-1/C1.p | less</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>tracer ITS1-trimmed-5.8S-ITS2-trimmed-1/C1.p &amp;</code></strong>
+</pre><p>You'll see that each partition has a TN (Tamura-Nei) substitution
+model, as well as an RS07 indel model.  Each partition has its own
+copy of the TN parameters and the RS07 parameters.</p></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp63629136"></a>6.1.3. Question</h4></div></div></div><p>The partitions share a common tree shape, including the same
+relative branch lengths.  However, the size of the tree for each
+partition is different.  We scale the whole shared tree by
+mu1 in partition 1, mu2 in partition 2, etc.  The mu parameters give
+the average branch length in that partition.  Thus, partitions with a
+smaller mu value have slower evolution.</p><p>Do the different partitions of this data set have the same
+evolutionary rates? Do the different partitions of this data set have
+the same base frequencies?</p></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63631360"></a>6.2. Using different models in different
+partitions</h3></div></div></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="idp63632000"></a>6.2.1. Using different substitution models</h4></div></div></div><p>
+Now lets try to specify different models for different partitions.
+Here we've used a command-line trick with curly braces {} to avoid
+typing some things multiple times.
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --smodel=1:GTR --smodel=2:HKY --smodel=3:TN &amp;</code></strong>
+</pre><p>
+We've also specified different substitution models for each
+partition.  Take a look at the <code class="filename">C1.p</code> file for
+this analysis to see what parameters appear.
+</p></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63635456"></a>6.3. Using different indel models models</h3></div></div></div><p>
+We can also specify different indel models for each partition:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --imodel=1:RS07 --imodel=2:none --imodel=3:RS07 --test</code></strong>
+</pre><p>There are only two indel models: RS07, and none.  Specifying
+<strong class="userinput"><code>--imodel=none</code></strong> removes the insertion-deletion
+model and parameters for a partition.  It also disables alignment estimation for that partition.
+</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63638288"></a>6.4. Sharing model parameter between partitions</h3></div></div></div>
+We can also specify that some partitions with the same model also share the
+same parameters for the model:
+<pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --smodel=1,3:GTR --imodel=1,3:RS07 --smodel=2:TN --imodel=2:none --test</code></strong>
+</pre>This means that the information is pooled between the partitions to
+estimate the shared parameters.
+</div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63640464"></a>6.5. Sharing substitution rates between partitions</h3></div></div></div>
+We can also specify that some partitions with the same model also share the
+same parameters for the model:
+<pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ITS/{ITS1-trimmed,5.8S,ITS2-trimmed}.fasta --smodel=1,3:GTR --imodel=1,3:RS07 --smodel=2:TN --imodel=2:none --same-scale=1,3:mu1 --test</code></strong>
+</pre>This means that the branch lengths for partitions 1 and 3 are the
+same, instead of being independently estimated.
+</div></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp63642800"></a>7. Option files</h2></div></div></div>
+You can collect command line options into a file for later use.  Make
+a text file called <code class="filename">analysis1.script</code>:
+<pre class="programlisting">
+align = ITS/ITS1-trimmed.fasta
+align = ITS/5.8S.fasta
+align = ITS/ITS2-trimmed.fasta
+smodel = 1,3:TN+DP[3]
+smodel = 2:TN
+imodel = 2:none
+same-scale = 1,3:mu1
+</pre>
+You can run the analysis like this:
+<pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy -c analysis1.script &amp;</code></strong>
+</pre></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="idp63645520"></a>8. Dataset preparation</h2></div></div></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63646160"></a>8.1. Splitting and Merging Alignments</h3></div></div></div><p>BAli-Phy generally wants you to split concatenated gene regions in order to analyze them.
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>cd ~/alignment-files/examples/ITS/</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>alignment-cat -c1-223 ITS-region.fasta &gt; 1.fasta</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>alignment-cat -c224-379 ITS-region.fasta &gt; 2.fasta</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>alignment-cat -c378-551 ITS-region.fasta &gt; 3.fasta</code></strong>
+</pre>
+Later you might want to put them back together again:
+<pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>alignment-cat 1.fasta 2.fasta 3.fasta &gt; 123.fasta</code></strong>
+</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63651520"></a>8.2. Shrinking the data set</h3></div></div></div><p>
+You might want to reduce the number of taxa while attempting to preserve phylogenetic diversity:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>alignment-thin --down-to=30 ITS-region.fasta &gt; ITS-region-thinned.fasta</code></strong>
+</pre><p>
+You can specify that certain sequences should not be removed:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>alignment-thin --down-to=30 --keep=Csaxicola420 ITS-region.fasta &gt; ITS-region-thinned.fasta</code></strong>
+</pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idp63655072"></a>8.3. Cleaning the data set</h3></div></div></div>
+Keep only columns with a minimum number of residues:
+<pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>alignment-thin --min-letters=5 ITS-region.fasta &gt; ITS-region-censored.fasta</code></strong>
+</pre>Keep only sequences that are not too short:
+<pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>alignment-thin --longer-than=250 ITS-region.fasta &gt; ITS-region-long.fasta</code></strong>
+</pre>Remove 10 sequences with the smallest number of conserved residues:
+<pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>alignment-thin --remove-crazy=10 ITS-region.fasta &gt; ITS-region-sane.fasta</code></strong>
+</pre></div></div></div></body></html>
