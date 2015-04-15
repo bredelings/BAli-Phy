@@ -290,7 +290,9 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
       SequenceTree T = standardized(line);
       for(int b=0;b<T.n_branches();b++) {
 	Partition P = partition_from_branch(T,b);
-	double L = T.branch(b).length();
+	double L = 1.0;
+	if (T.branch(b).has_length())
+	  L = T.branch(b).length();
 	if (L < 0)
 	  L = 1;
 	else
