@@ -869,7 +869,7 @@ void Parameters::exchange_subtrees(int br1, int br2)
 /// from the attachment point.
 ///
 /// Got m1<--->x1<--->m2 and n1<--->n2, and trying to move x1 onto (n1,n2)
-int Parameters::SPR(int br1, int br2, int branch_to_move)
+int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
 {
   check_h_tree();
 
@@ -928,16 +928,16 @@ int Parameters::SPR(int br1, int br2, int branch_to_move)
   // Reconnect (m1,x) to m2, making x a degree-2 node
   // This leaves m1 connected to its branch, so m1 can be a leaf.
   assert(not T().node(m2).is_leaf_node());
-  reconnect_branch(m1, x1, m2, false);
+  reconnect_branch(m1, x1, m2, safe);
 
   // Reconnect (x,m2) to n2, leaving x a degree-2 node
   assert(not T().node(m2).is_leaf_node());
-  reconnect_branch(x1, m2, n2, false);
+  reconnect_branch(x1, m2, n2, safe);
 
   // Reconnect (n1,n2) to x, making x a degree-3 node again.
   // This leaves n1 connected to its branch, so n1 can be a leaf.
   assert(not T().node(n2).is_leaf_node());
-  reconnect_branch(n1, n2, x1, false);
+  reconnect_branch(n1, n2, x1, safe);
 
   return dead_branch;
 }

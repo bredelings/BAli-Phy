@@ -161,7 +161,7 @@ double do_SPR(Parameters& P, int b1_,int b2)
       P.T().directed_branch(b2).source() == b1.target()) 
     ;
   else
-    P.SPR(b1.reverse(),b2);
+    P.SPR(b1.reverse(),b2,false);
 
   //------ Find the two new branches ------//
   vector<const_branchview> connected2;
@@ -627,7 +627,7 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   int n0 = P.T().directed_branch(b_subtree).target();
 
   // Perform the SPR operation (specified by a branch TOWARD the pruned subtree)
-  int BM = P.SPR(P.T().directed_branch(b_subtree).reverse(), b_target, branch_to_move);
+  int BM = P.SPR(P.T().directed_branch(b_subtree).reverse(), b_target, false, branch_to_move);
 
   // Find the names of the branches
   assert(P.T().is_connected(B_unbroken_target.node1, n0));
