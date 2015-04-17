@@ -817,7 +817,6 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   {
     LC_invalidate_branch(b1);
     invalidate_subA_index_branch(b1);
-    invalidate_pairwise_alignment_for_branch(b1);
   }
   
   T_.modify()->reconnect_branch(s1,t1,t2);
@@ -831,7 +830,6 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   {
     LC_invalidate_branch(b1);
     invalidate_subA_index_branch(b1);
-    invalidate_pairwise_alignment_for_branch(b1);
   }
   
   check_h_tree();
@@ -1253,13 +1251,6 @@ void Parameters::recompute_pairwise_alignment(int b, bool check_A)
   for(int i=0;i<n_data_partitions();i++)
     if (get_data_partition(i).variable_alignment())
       get_data_partition(i).recompute_pairwise_alignment(b, check_A);
-}
-
-void Parameters::invalidate_pairwise_alignment_for_branch(int b) const
-{
-  for(int i=0;i<n_data_partitions();i++)
-    if (get_data_partition(i).variable_alignment())
-      get_data_partition(i).invalidate_pairwise_alignment_for_branch(b);
 }
 
 void Parameters::note_alignment_changed()
