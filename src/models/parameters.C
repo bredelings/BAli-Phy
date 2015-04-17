@@ -804,7 +804,7 @@ void Parameters::set_tree(const SequenceTree& T2)
   check_h_tree();
 }
 
-void Parameters::reconnect_branch(int s1, int t1, int t2)
+void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 {
   uniquify_subA_indices();
 
@@ -813,6 +813,12 @@ void Parameters::reconnect_branch(int s1, int t1, int t2)
   int b1 = T().directed_branch(s1,t1);
   int b2 = T().directed_branch(t1,s1);
 
+  if (safe)
+  {
+    LC_invalidate_branch(b1);
+    invalidate_subA_index_branch(b1);
+  }
+  
   T_.modify()->reconnect_branch(s1,t1,t2);
 
   context::set_parameter_value(parameter_for_tree_branch[b1], OPair(Opair{Int(T().directed_branch(b1).source()), Int(T().directed_branch(b1).target())}) );
@@ -820,6 +826,12 @@ void Parameters::reconnect_branch(int s1, int t1, int t2)
   context::set_parameter_value(parameter_for_tree_node[t1], edges_connecting_to_node(T(),t1));
   context::set_parameter_value(parameter_for_tree_node[t2], edges_connecting_to_node(T(),t2));
 
+  if (safe)
+  {
+    LC_invalidate_branch(b1);
+    invalidate_subA_index_branch(b1);
+  }
+  
   check_h_tree();
 }
 
@@ -839,8 +851,8 @@ void Parameters::exchange_subtrees(int br1, int br2)
   assert(not T().subtree_contains(br1,s2));
   assert(not T().subtree_contains(br2,s1));
 
-  reconnect_branch(s1,t1,t2);
-  reconnect_branch(s2,t2,t1);
+  reconnect_branch(s1,t1,t2,true);
+  reconnect_branch(s2,t2,t1,true);
 }
 
 /// SPR: move the subtree b1 into branch b2
@@ -914,16 +926,16 @@ int Parameters::SPR(int br1, int br2, int branch_to_move)
   // Reconnect (m1,x) to m2, making x a degree-2 node
   // This leaves m1 connected to its branch, so m1 can be a leaf.
   assert(not T().node(m2).is_leaf_node());
-  reconnect_branch(m1, x1, m2);
+  reconnect_branch(m1, x1, m2, false);
 
   // Reconnect (x,m2) to n2, leaving x a degree-2 node
   assert(not T().node(m2).is_leaf_node());
-  reconnect_branch(x1, m2, n2);
+  reconnect_branch(x1, m2, n2, false);
 
   // Reconnect (n1,n2) to x, making x a degree-3 node again.
   // This leaves n1 connected to its branch, so n1 can be a leaf.
   assert(not T().node(n2).is_leaf_node());
-  reconnect_branch(n1, n2, x1);
+  reconnect_branch(n1, n2, x1, false);
 
   return dead_branch;
 }
