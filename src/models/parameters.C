@@ -915,13 +915,23 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
   //------ Merge the branches (m1,x1) and (x1,m2) -------//
   int dead_branch = T().directed_branch(m2,x1).undirected_name();
 
-  setlength_no_invalidate_LC( T().directed_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
-  LC_invalidate_one_branch(T().directed_branch(m1,x1) );
-  LC_invalidate_one_branch(T().directed_branch(x1,m1) );
+  if (safe)
+    setlength( T().directed_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
+  else
+  {
+    setlength_no_invalidate_LC( T().directed_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
+    LC_invalidate_one_branch(T().directed_branch(m1,x1) );
+    LC_invalidate_one_branch(T().directed_branch(x1,m1) );
+  }
 
-  setlength_no_invalidate_LC( T().directed_branch(m2,x1), 0.0);
-  LC_invalidate_one_branch(T().directed_branch(m2,x1) );
-  LC_invalidate_one_branch(T().directed_branch(x1,m2) );
+  if (safe)
+    setlength( T().directed_branch(m2,x1), 0.0);
+  else
+  {
+    setlength_no_invalidate_LC( T().directed_branch(m2,x1), 0.0);
+    LC_invalidate_one_branch(T().directed_branch(m2,x1) );
+    LC_invalidate_one_branch(T().directed_branch(x1,m2) );
+  }
 
   //------------ Reconnect the branches ---------------//
 

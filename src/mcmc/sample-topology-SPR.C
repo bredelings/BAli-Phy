@@ -161,7 +161,7 @@ double do_SPR(Parameters& P, int b1_,int b2)
       P.T().directed_branch(b2).source() == b1.target()) 
     ;
   else
-    P.SPR(b1.reverse(),b2,false);
+    P.SPR(b1.reverse(),b2,true);
 
   //------ Find the two new branches ------//
   vector<const_branchview> connected2;
