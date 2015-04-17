@@ -817,6 +817,7 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   {
     LC_invalidate_branch(b1);
     invalidate_subA_index_branch(b1);
+    note_alignment_changed_on_branch(T_->directed_branch(s1,t1));
   }
   
   T_.modify()->reconnect_branch(s1,t1,t2);
@@ -830,6 +831,7 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   {
     LC_invalidate_branch(b1);
     invalidate_subA_index_branch(b1);
+    note_alignment_changed_on_branch(T_->directed_branch(s1,t2));
   }
   
   check_h_tree();
