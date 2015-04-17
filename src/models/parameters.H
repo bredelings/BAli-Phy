@@ -373,6 +373,8 @@ public:
 
   void note_alignment_changed_on_branch(int b);
 
+  void invalidate_pairwise_alignment_for_branch(int b) const;
+
   void recompute_pairwise_alignment(int b, bool=true);
 
   void note_alignment_changed();
