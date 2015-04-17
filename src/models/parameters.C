@@ -838,7 +838,7 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 }
 
 // This could create loops it we don't check that the subtrees are disjoint.
-// br{1,2} point into the subtrees.  b{1,2} point out of the subtrees, towards the other subtree.
+// br{1,2} point out of the subtrees.  b{1,2} point into the subtrees, towards the other subtree.
 void Parameters::exchange_subtrees(int br1, int br2)
 {
   const_branchview b1 = T().directed_branch(br1).reverse();
