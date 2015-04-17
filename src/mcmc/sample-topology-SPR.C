@@ -148,7 +148,7 @@ int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b)
 }
 
 /// Do a SPR move on T1, moving the subtree behind b1_ to branch b2
-double do_SPR(Parameters& P, int b1_,int b2) 
+double do_SPR(Parameters& P, int b1_,int b2)
 {
   const_branchview b1 = P.T().directed_branch(b1_);
 
@@ -174,8 +174,8 @@ double do_SPR(Parameters& P, int b1_,int b2)
   double L1 = connected1[0].length() + connected1[1].length();
   double L2 = connected2[0].length() + connected2[1].length();
 
-  P.setlength_unsafe(P.T().directed_branch(connected2[0]), uniform() * L2 );
-  P.setlength_unsafe(P.T().directed_branch(connected2[1]), L2 - P.T().directed_branch(connected2[0]).length() );
+  P.setlength(P.T().directed_branch(connected2[0]), uniform() * L2 );
+  P.setlength(P.T().directed_branch(connected2[1]), L2 - P.T().directed_branch(connected2[0]).length() );
 
   return L2/L1;
 }
@@ -427,19 +427,9 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     branches.push_back((*i).undirected_name());
 
   remove_duplicates(branches);
-    
+
   //----------- invalidate caches for changed branches -----------//
   assert(branches.size() <= 3);
-  for(int i=0;i<branches.size();i++) {
-    int bi = branches[i];
-    p[1].setlength(bi,p[1].T().directed_branch(bi).length());     // bidirectional effect
-    if (tree_changed)
-    {
-      p[1].invalidate_subA_index_branch(bi);              // bidirectional effect
-      if (p[1].variable_alignment()) 
-	p[1].note_alignment_changed_on_branch(bi); 
-    }
-  }
 
   // If we reattach on a different branch than we pulled out of...
   assert(tree_changed == (branches.size() != 2));
