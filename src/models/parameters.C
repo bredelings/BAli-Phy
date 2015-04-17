@@ -857,6 +857,102 @@ void Parameters::exchange_subtrees(int br1, int br2)
   reconnect_branch(s2,t2,t1,true);
 }
 
+#include "dp/hmm.H"
+#include "dp/5way.H"
+
+void disconnect(vector<HMM::bitmask_t>& a123456)
+{
+  for(auto& col:a123456)
+  {
+    col.set(4,false);
+    col.set(5,false);
+  }
+}
+
+void minimally_connect(vector<HMM::bitmask_t>& a123456)
+{
+  for(auto& col:a123456)
+  {
+    if ((col.test(0) or col.test(1)) and (col.test(2) or col.test(3)))
+    {
+      col.set(4);
+      col.set(5);
+    }
+
+    if (col.test(0) and col.test(1))
+      col.set(4);
+
+    if (col.test(2) and col.test(3))
+      col.set(5);
+  }
+}
+
+// br1/b1 and br2/b2 point outwards, away from the other subtrees.
+void Parameters::NNI(int br1, int br2)
+{
+  const_branchview b1 = T().directed_branch(br1);
+  const_branchview b2 = T().directed_branch(br2);
+
+  int s1 = b1.source();
+  int t1 = b1.target();
+
+  int s2 = b2.source();
+  int t2 = b2.target();
+
+  assert(T().is_connected(s1,s2));
+  int b45 = T().directed_branch(s1,s2);
+
+  // 1. Get alignments of sequences 123456
+  auto order = A5::get_nodes(T(),b45);
+  auto& nodes = order.nodes;
+  assert(nodes[4] == s1);
+  assert(nodes[5] == s2);
+
+  if (nodes[0] != t1) std::swap(nodes[0],nodes[1]);
+  assert(nodes[0] == t1);
+  
+  if (nodes[2] != t2) std::swap(nodes[2],nodes[3]);
+  assert(nodes[2] == t2);
+
+  // OK, br1 is nodes[0]<->nodes[4] and br2 is nodes[2]<->nodes[5]
+  
+  vector<vector<HMM::bitmask_t>> a123456(n_data_partitions());
+  for(int i=0;i<n_data_partitions();i++)
+    if (get_data_partition(i).variable_alignment())
+      a123456[i] = A5::get_bitpath((*this)[i], order);
+
+  // 3. Perform NNI
+  exchange_subtrees(br1, br2);  // alter tree
+  std::swap(nodes[0],nodes[2]); // alter nodes
+  for(int i=0;i<n_data_partitions();i++)
+    if (get_data_partition(i).variable_alignment())
+      for(auto& col: a123456[i]) // alter matrix
+      {
+	auto col2 = col;
+	col.set(0,col2.test(2));
+	col.set(2,col2.test(0));
+      }
+    
+  // 4. Fix-up the alignment matrix
+  for(int i=0;i<n_data_partitions();i++)
+    if (get_data_partition(i).variable_alignment())
+    {
+      disconnect(a123456[i]);
+      minimally_connect(a123456[i]);
+    }
+
+  // 5. Set the pairwise alignments.
+  for(int i=0;i<n_data_partitions();i++)
+    if (get_data_partition(i).variable_alignment())
+    {
+      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 0, 4), false);
+      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 1, 4), false);
+      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 2, 5), false);
+      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 3, 5), false);
+      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 4, 5), false);
+    }
+}
+
 /// SPR: move the subtree b1 into branch b2
 ///
 /// When two branches are merged into one as the pruned subtree is removed,
