@@ -400,9 +400,6 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   vector<Parameters> p(2,P);
 
   //---------------- find the changed branches ------------------//
-  vector<int> branches;
-  for(const_edges_after_iterator i=p[1].T().directed_branch(n2,n1).branches_after();i;i++)
-    branches.push_back((*i).undirected_name());
   //  std::cerr<<"before = "<<p[1].T<<endl;
 
   // FIXME - do we need to USE the ratio anywhere?
@@ -423,17 +420,9 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     return MCMC::Result(2+bins,0);
 
   //  std::cerr<<"after = "<<p[1].T<<endl;
-  for(const_edges_after_iterator i=p[1].T().directed_branch(n2,n1).branches_after();i;i++)
-    branches.push_back((*i).undirected_name());
-
-  remove_duplicates(branches);
-
-  //----------- invalidate caches for changed branches -----------//
-  assert(branches.size() <= 3);
 
   // If we reattach on a different branch than we pulled out of...
-  assert(tree_changed == (branches.size() != 2));
-  if (branches.size() != 2)
+  if (tree_changed)
   {
     // ... then set the pairwise alignment of the branch we pulled out of.
     vector<const_branchview> branches2;
