@@ -590,7 +590,7 @@ struct spr_attachment_probabilities: public map<tree_edge,log_double_t>
 
 /// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
 ///  and choose the point on the branch specified in \a locations.
-int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attachment_points& locations, int branch_to_move = -1)
+int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attachment_points& locations, bool safe, int branch_to_move = -1)
 {
   double total_length_before = tree_length(P.T());
 
@@ -617,7 +617,7 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   int n0 = P.T().directed_branch(b_subtree).target();
 
   // Perform the SPR operation (specified by a branch TOWARD the pruned subtree)
-  int BM = P.SPR(P.T().directed_branch(b_subtree).reverse(), b_target, false, branch_to_move);
+  int BM = P.SPR(P.T().directed_branch(b_subtree).reverse(), b_target, safe, branch_to_move);
 
   // Find the names of the branches
   assert(P.T().is_connected(B_unbroken_target.node1, n0));
@@ -641,13 +641,23 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
 
   // We want to suppress the bidirectional propagation of invalidation for all branches after this branch.
   // It would be nice to save the old exp(tB) and switch back to it later.
-  P.setlength_no_invalidate_LC(b1, L1);
-  P.LC_invalidate_one_branch(b1);                                          //  ... mark likelihood caches for recomputing.
-  P.LC_invalidate_one_branch(P.T().directed_branch(b1).reverse());         //  ... mark likelihood caches for recomputing.
+  if (safe)
+    P.setlength(b1, L1);
+  else
+  {
+    P.setlength_no_invalidate_LC(b1, L1);
+    P.LC_invalidate_one_branch(b1);                                          //  ... mark likelihood caches for recomputing.
+    P.LC_invalidate_one_branch(P.T().directed_branch(b1).reverse());         //  ... mark likelihood caches for recomputing.
+  }
 
-  P.setlength_no_invalidate_LC(b2, L2);
-  P.LC_invalidate_one_branch(b2);                                          //  ... mark likelihood caches for recomputing.
-  P.LC_invalidate_one_branch(P.T().directed_branch(b2).reverse());         //  ... mark likelihood caches for recomputing.
+  if (safe)
+    P.setlength(b2, L2);
+  else
+  {
+    P.setlength_no_invalidate_LC(b2, L2);
+    P.LC_invalidate_one_branch(b2);                                          //  ... mark likelihood caches for recomputing.
+    P.LC_invalidate_one_branch(P.T().directed_branch(b2).reverse());         //  ... mark likelihood caches for recomputing.
+  }
 
   double total_length_after = tree_length(P.T());
   assert(std::abs(total_length_after - total_length_before) < 1.0e-9);
@@ -890,7 +900,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     tree_edge B2 = I.get_tree_edge(b2);
 
     // ** 1. SPR ** : alter the tree.
-    int BM2 = SPR_at_location(P, b1, b2, locations, I.BM);
+    int BM2 = SPR_at_location(P, b1, b2, locations, false, I.BM);
     assert(BM2 == I.BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
 
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
@@ -1103,7 +1113,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   }
 
   // Step N-1: ATTACH to that point
-  SPR_at_location(p[1], b1, branch_names[C], locations);
+  SPR_at_location(p[1], b1, branch_names[C], locations, false);
 
   // enforce tree constraints
   if (not extends(p[1].T(), *P.TC))
