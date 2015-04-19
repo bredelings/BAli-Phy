@@ -536,7 +536,7 @@ struct spr_attachment_probabilities: public map<tree_edge,log_double_t>
 
 /// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
 ///  and choose the point on the branch specified in \a locations.
-int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attachment_points& locations, bool safe, int branch_to_move = -1)
+int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attachment_points& locations, int branch_to_move = -1)
 {
 #ifndef NDEBUG
   double total_length_before = tree_length(P.t());
@@ -565,7 +565,7 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   int n0 = P.t().target(b_subtree);
 
   // Perform the SPR operation (specified by a branch TOWARD the pruned subtree)
-  int BM = P.SPR(P.t().reverse(b_subtree), b_target, safe, branch_to_move);
+  int BM = P.SPR(P.t().reverse(b_subtree), b_target, true, branch_to_move);
 
   // Find the names of the branches
   int b1 = P.t().find_branch(B_unbroken_target.node1, n0);
@@ -576,34 +576,8 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   double L1 = L*U;
   double L2 = L - L1;
 
-  // ** 2. INVALIDATE ** the branch that we just landed on and altered
-
-  /// \todo Do I really need to invalidate BOTH directions of b2?  Or, do I just not know WHICH direction to invalidate?
-  /// You'd think I'd just need to invalidate the direction pointing TOWARD the root.
-
-  /// \todo Can I temporarily associate the branch with a NEW token, or copy the info to a new location?
-  ///       This is basically what I'd get by copying the context to insert in the new location.
-  ///       However, if we copy the context, we have to do O(B) invalidations for each branch...
-
-  // We want to suppress the bidirectional propagation of invalidation for all branches after this branch.
-  // It would be nice to save the old exp(tB) and switch back to it later.
-  if (safe)
-    P.setlength(b1, L1);
-  else
-  {
-    P.setlength_no_invalidate_LC(b1, L1);
-    P.LC_invalidate_one_branch(b1);                                          //  ... mark likelihood caches for recomputing.
-    P.LC_invalidate_one_branch(P.t().reverse(b1));         //  ... mark likelihood caches for recomputing.
-  }
-
-  if (safe)
-    P.setlength(b2, L2);
-  else
-  {
-    P.setlength_no_invalidate_LC(b2, L2);
-    P.LC_invalidate_one_branch(b2);                                          //  ... mark likelihood caches for recomputing.
-    P.LC_invalidate_one_branch(P.t().reverse(b2));         //  ... mark likelihood caches for recomputing.
-  }
+  P.setlength(b1, L1);
+  P.setlength(b2, L2);
 
 #ifndef NDEBUG
   double total_length_after = tree_length(P.t());
@@ -853,8 +827,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, int b1, 
   assert(std::abs(PR1.log() - PR2.log()) < 1.0e-8);
 #endif
 
-  /*----------- Begin invalidating caches and subA-indices to reflect the pruned state -------------*/
-
   // At this point, caches for branches pointing to B1 and BM are accurate -- but everything after them
   //  still assumes we haven't pruned and is therefore inaccurate.
 
@@ -885,7 +857,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, int b1, 
     assert(Ps.size() == i+1);
     auto& p = Ps.back();
     int b2 = p.t().find_branch(B2);
-    int BM2 = SPR_at_location(p, b1, b2, locations, false, I.BM);
+    int BM2 = SPR_at_location(p, b1, b2, locations, I.BM);
     assert(BM2 == I.BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
 
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
@@ -1024,24 +996,6 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
   *
   */
 
-/**
- * Sample from a number of SPR attachment points - one per branch.
- * 
- * The tricky idea here is that we want cached (likelihood, subA index) for each directed branch
- * not in the PRUNED subtree to be accurate for the situation that the PRUNED subtree is not
- * behind them.
-
- * Then we make the attachment point the likelihood root, and all branches that point towards
- * the root are valid... branches that do not point toward the root are not used, but may
- * be used when we attach somewhere else.
- *
- * FIXME - How can we keep the information for upwards-pointing branches cached, and then restore it
- *         after we un-regraft from an attachment branch and move on to the next one? (30% speedup)
- *         
- *         It would seem that most other people have (the possibility of) two caches per branch (or node)
- *         and toggle them if an MH move is rejected.  I should add that capability to the caching object.
- *         Then I could use it here.
- */
 
 bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1) 
 {
@@ -1096,7 +1050,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   }
 
   // Step N-1: ATTACH to that point
-  SPR_at_location(p[1], b1, branch_names[C], locations, true);
+  SPR_at_location(p[1], b1, branch_names[C], locations);
 
   // enforce tree constraints
   //  if (not extends(p[1].t(), P.PC->TC))
