@@ -401,19 +401,6 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
 
   //  std::cerr<<"after = "<<p[1].T<<endl;
 
-  // If we reattach on a different branch than we pulled out of...
-  if (tree_changed)
-  {
-    // ... then set the pairwise alignment of the branch we pulled out of.
-    vector<int> branches2 = p[0].t().branches_after( p[0].t().find_branch(n2,n1) );
-    assert(branches2.size() == 2);
-    int leaving1 = p[0].t().target(branches2[0]);
-    int leaving2 = p[0].t().target(branches2[1]);
-    // Is this necessary? Since it references the alignment MATRIX, we'd like to remove it.
-    // - See sample-tri.C line 146: P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2), false);
-    p[1].recompute_pairwise_alignment(p[1].t().find_branch(leaving1,leaving2));
-  }
-
   int C;
   if (slice)
   {
