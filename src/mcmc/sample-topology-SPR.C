@@ -851,7 +851,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, int b1, 
     int prev_i = BB.first;
     tree_edge B2 = BB.second;
     
-    // ** 1. SPR ** : alter the tree.
     if (prev_i != 0) assert(I.attachment_branch_pairs[prev_i].second.node2 == B2.node1);
     Ps.push_back(Ps[prev_i]);
     assert(Ps.size() == i+1);
@@ -860,14 +859,8 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, int b1, 
     int BM2 = SPR_at_location(p, b1, b2, locations, I.BM);
     assert(BM2 == I.BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
 
-    // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
     assert(std::abs(p.t().branch_length(I.B1) - L[0]) < 1.0e-9);
 
-    // We want caches for each directed branch that is not in the PRUNED subtree to be accurate
-    //   for the situation that the PRUNED subtree is not behind them.
-
-
-    // **3. RECORD** the tree and likelihood
     Pr[B2] = heated_likelihood_unaligned_root(p) * p.prior_no_alignment();
 #ifdef DEBUG_SPR_ALL
     log_double_t PR2 = heated_likelihood_unaligned_root(p);
