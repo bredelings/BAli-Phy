@@ -1065,7 +1065,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   }
 
   // Step N-1: ATTACH to that point
-  SPR_at_location(p[1], b1, branch_names[C], locations, false);
+  SPR_at_location(p[1], b1, branch_names[C], locations, true);
 
   // enforce tree constraints
   //  if (not extends(p[1].t(), P.PC->TC))
