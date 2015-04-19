@@ -1118,6 +1118,9 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
 
   end_modify_topology();
 
+  if (safe)
+    recompute_pairwise_alignment(t().find_branch(m1,m2));
+
   return dead_branch;
 }
 
