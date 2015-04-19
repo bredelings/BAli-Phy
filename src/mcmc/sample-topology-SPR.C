@@ -825,18 +825,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, int b1, 
   assert(std::abs(PR1.log() - PR2.log()) < 1.0e-8);
 #endif
 
-  // At this point, caches for branches pointing to B1 and BM are accurate -- but everything after them
-  //  still assumes we haven't pruned and is therefore inaccurate.
-
-  P.LC_invalidate_branch(I.B1);          // invalidate caches       for B1, B1^t and ALL BRANCHES AFTER THEM.
-  P.invalidate_subA_index_branch(I.B1);  // invalidate subA-indices for B1, B1^t and ALL BRANCHES AFTER THEM.
-
-  P.LC_invalidate_branch(I.BM);          // invalidate caches       for BM, BM^t and ALL BRANCHES AFTER THEM.
-  P.invalidate_subA_index_branch(I.BM);  // invalidate subA-indices for BM, BM^t and ALL BRANCHES AFTER THEM.
-
-  // Temporarily stop checking subA indices of branches that point away from the cache root
-  P.subA_index_allow_invalid_branches(true);
-
   // Compute the probability of each attachment point
   // After this point, the LC root will now be the same node: the attachment point.
   vector<Parameters> Ps;
