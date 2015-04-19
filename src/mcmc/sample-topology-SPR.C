@@ -285,16 +285,6 @@ int choose_SPR_target(const SequenceTree& T1, int b1_)
   }
 }
 
-void remove_duplicates(vector<int>& v) {
-  for(int i=v.size()-1;i>=0;i--) {
-    bool dup=false;
-    for(int j=0;j<i and not dup;j++)
-      if (v[j] == v[i]) dup=true;
-    if (dup)
-      v.erase(v.begin()+i);
-  }
-}
-
 MCMC::Result SPR_stats(const Tree& T1, const Tree& T2, bool success, int bins, int b1 = -1)
 {
   MCMC::Result result(2+bins,0);
