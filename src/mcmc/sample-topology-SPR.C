@@ -1065,13 +1065,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   vector<int> btemp = {I.B1, I.BM, branch_names[C]};
   // (These effects go out from the old location (the merged branch B1)
   //  and the new location (the split branches BM and branch_names[C]) )
-  for(int i=0;i<btemp.size();i++) {
-    int bi = btemp[i];
-    p[1].setlength(bi, p[1].t().branch_length(bi));   // bidirectional effect
-    p[1].invalidate_subA_index_branch(bi);         // bidirectional effect
-    if (p[1].variable_alignment()) 
-      p[1].note_alignment_changed_on_branch(bi); 
-  }
   p[1].recompute_pairwise_alignment(I.B1);
   p[1].subA_index_allow_invalid_branches(false);
 
