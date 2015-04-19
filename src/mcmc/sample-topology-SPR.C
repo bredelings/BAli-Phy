@@ -1060,12 +1060,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   // Step N: INVALIDATE subA indices and also likelihood caches that are no longer valid.
 
-  // Note that bi-directional invalidation of BM invalidates b1^t and similarly directed branches in the pruned subtree.
-  // (BM is an undirected name, so all effects in the loop below MUST be bi-directional.)
-  vector<int> btemp = {I.B1, I.BM, branch_names[C]};
-  // (These effects go out from the old location (the merged branch B1)
-  //  and the new location (the split branches BM and branch_names[C]) )
-  p[1].recompute_pairwise_alignment(I.B1);
+  // FIXME: Does the invalidation need to proceed outward from the original attachment location?
   p[1].subA_index_allow_invalid_branches(false);
 
 #ifdef DEBUG_SPR_ALL
