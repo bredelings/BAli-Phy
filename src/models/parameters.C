@@ -1037,7 +1037,7 @@ void Parameters::NNI(int b1, int b2)
 /// from the attachment point.
 ///
 /// Got m1<--->x1<--->m2 and n1<--->n2, and trying to move x1 onto (n1,n2)
-int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
+int Parameters::SPR(int br1, int br2, int branch_to_move)
 {
   int x1 = t().source(br1);
   int x2 = t().target(br1);
@@ -1080,23 +1080,9 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
   //------ Merge the branches (m1,x1) and (x1,m2) -------//
   int dead_branch = t().undirected(t().find_branch(m2,x1));
 
-  if (safe)
-    setlength( t().find_branch(m1,x1), t().branch_length(t().find_branch(m1,x1)) + t().branch_length(t().find_branch(m2,x1)) );
-  else
-  {
-    setlength_no_invalidate_LC( t().find_branch(m1,x1), t().branch_length(t().find_branch(m1,x1)) + t().branch_length(t().find_branch(m2,x1)) );
-    LC_invalidate_one_branch(t().find_branch(m1,x1) );
-    LC_invalidate_one_branch(t().find_branch(x1,m1) );
-  }
+  setlength( t().find_branch(m1,x1), t().branch_length(t().find_branch(m1,x1)) + t().branch_length(t().find_branch(m2,x1)) );
 
-  if (safe)
-    setlength( t().find_branch(m2,x1), 0.0);
-  else
-  {
-    setlength_no_invalidate_LC( t().find_branch(m2,x1), 0.0);
-    LC_invalidate_one_branch(t().find_branch(m2,x1) );
-    LC_invalidate_one_branch(t().find_branch(x1,m2) );
-  }
+  setlength( t().find_branch(m2,x1), 0.0);
 
   //------------ Reconnect the branches ---------------//
 
@@ -1105,21 +1091,20 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
   // Reconnect (m1,x) to m2, making x a degree-2 node
   // This leaves m1 connected to its branch, so m1 can be a leaf.
   assert(not t().is_leaf_node(m2) );
-  reconnect_branch(m1, x1, m2, safe);
+  reconnect_branch(m1, x1, m2, true);
 
   // Reconnect (x,m2) to n2, leaving x a degree-2 node
   assert(not t().is_leaf_node(m2));
-  reconnect_branch(x1, m2, n2, safe);
+  reconnect_branch(x1, m2, n2, true);
 
   // Reconnect (n1,n2) to x, making x a degree-3 node again.
   // This leaves n1 connected to its branch, so n1 can be a leaf.
   assert(not t().is_leaf_node(n2));
-  reconnect_branch(n1, n2, x1, safe);
+  reconnect_branch(n1, n2, x1, true);
 
   end_modify_topology();
 
-  if (safe)
-    recompute_pairwise_alignment(t().find_branch(m1,m2));
+  recompute_pairwise_alignment(t().find_branch(m1,m2));
 
   return dead_branch;
 }
