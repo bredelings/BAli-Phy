@@ -1,0 +1,2021 @@
+//
+LOCUS       mt.A.turri   3788 bp    RNA             RNA       ~?~????
+DEFINITION  Albinaria turrita.
+ACCESSION   X71393,X71394
+KEYWORDS    No information.
+SOURCE      Albinaria turrita.
+  ORGANISM  Albinaria turrita.
+REFERENCE   1
+  AUTHORS   No information
+  JOURNAL   No information
+  TITLE     No information
+  STANDARD  No information
+COMMENTS    Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: X71394,X71393
+            LOCUS       MTATSEGI      747 bp    DNA             INV       04-MAY-1993
+            DEFINITION  A.turrita mitochondrial DNA, segment I
+            ACCESSION   X71393
+            KEYWORDS    COI gene; cytochrome oxidase subunit I;
+                        large subunit ribosomal RNA; lrRNA gene.
+            SOURCE      Albinaria turrita
+              ORGANISM  Albinaria turrita
+                        Eukaryota; Animalia; Eumetazoa; Mollusca; Gastropoda; Pulmonata;
+                        Stylommatophora; Mesurethra; Clausilacea; Clausiliidae.
+            REFERENCE   1  (bases 1 to 747)
+              AUTHORS   Rodakis,G.C.
+              TITLE     Direct Submission
+              JOURNAL   Submitted (08-APR-1993) G.C. Rodakis, University of Athens, Dept of
+                        Biochemistry, Cell & Molecular Biology & Genetics, Athens 15701,
+                        GREECE
+              STANDARD  full automatic
+            REFERENCE   2  (bases 1 to 747)
+              AUTHORS   Lecanidou,R., Douris,V. and Rodakis,G.C.
+              JOURNAL   Unpublished
+              STANDARD  full automatic
+            COMMENT
+                        NCBI gi: 297162
+            FEATURES               Location/Qualifiers
+                 source          1..747
+                                 /organism="Albinaria turrita"
+                                 /chromosome="mtDNA segment I"
+                 CDS             <1..589
+                                 /codon_start=2
+                                 /gene="COI"
+                                 /product="cytochrome oxidase, subunit I"
+                                 /note="4 stops when translation attempted, frame 2, code
+                                 0"
+                 CDS             589..>747
+                                 /gene="lrRNA"
+                                 /product="large subunit ribosomal RNA"
+                                 /note="putative 5'end; 1 stop when translation attempted,
+                                 frame 1, code 0"
+            BASE COUNT      223 a    104 c    120 g    300 t
+            ORIGIN      
+            LOCUS       MTATSEGII    1410 bp    DNA             INV       04-MAY-1993
+            DEFINITION  A.turrita mitochondrial DNA, segment II
+            ACCESSION   X71394
+            KEYWORDS    large subunit ribosomal RNA; lrRNA gene; ND6 gene;
+                        transfer RNA-Ala; transfer RNA-Leu-cun; transfer RNA-Pro.
+            SOURCE      Albinaria turrita
+              ORGANISM  Albinaria turrita
+                        Eukaryota; Animalia; Eumetazoa; Mollusca; Gastropoda; Pulmonata;
+                        Stylommatophora; Mesurethra; Clausilacea; Clausiliidae.
+            REFERENCE   1  (bases 1 to 1410)
+              AUTHORS   Rodakis,G.C.
+              TITLE     Direct Submission
+              JOURNAL   Submitted (08-APR-1993) G.C. Rodakis, University of Athens, Dept of
+                        Biochemistry, Cell & Molecular Biology & Genetics, Athens 15701,
+                        GREECE
+              STANDARD  full automatic
+            REFERENCE   2  (bases 1 to 1410)
+              AUTHORS   Lecanidou,R., Douris,V. and Rodakis,G.C.
+              JOURNAL   Unpublished
+              STANDARD  full automatic
+            COMMENT
+                        NCBI gi: 297163
+            FEATURES               Location/Qualifiers
+                 source          <1..>1410
+                                 /organism="Albinaria turrita"
+                                 /chromosome="mtDNA segment II"
+                 tRNA            923..984
+                                 /product="transfer RNA-Leu"
+                 tRNA            985..1049
+                                 /product="transfer RNA-Pro"
+                 tRNA            1049..1113
+                                 /product="transfer RNA-Ala"
+                 CDS             <1..922
+                                 /gene="lrRNA"
+                                 /product="large subunit ribosomal RNA"
+                                 /note="putative 3'end; 24 stops when translation
+                                 attempted, frame 3, code 0"
+                 CDS             1121..>1410
+                                 /gene="ND6"
+                                 /note="NCBI gi: 297164"
+                                 /codon_start=1
+                                 /translation="MISLSFILGLIFPVFFIFTLANPISLLLLLLIIRLCAVLWLGSI
+                                 IRSWFAYILFIVYIGGILVLFIYVCIIRSNYITGLYKYKTLLYVGIVVALIS"
+            BASE COUNT      475 a    167 c    237 g    531 t
+            ORIGIN      
+BASE COUNT     388 a    139 c    167 g    383 t   2711 others
+ORIGIN
+        1 |~~~~~~~~~ ~~~~~~~~~~ ~~auacuca- ---------- uuu|aca-au g|agc-----
+       61 -|-------- ---|----(- -----)-|-- ---------- --|------( -------)--
+      121 ---------- ---------- -------(-- --)---|--- ----(----) ----------
+      181 ---------( -----)---- ---------< ---------- ---------- ----------
+      241 ---------- ---->----- |--------- ---(----)- ---------- ----------
+      301 -----(---- )-----|--- ---------( -----)---- ---------- -----<----
+      361 ---------- ---------- -------->- ---------- ---------- ----------
+      421 -----(---- )--------| -(---)---- -(-------) ---------- ----------
+      481 ---------- ---------- --------(- --------)- ---------- --------(-
+      541 -----)---- ---------- ---------- ---------- -----aaguu cc(uaauu)g
+      601 gaa---guuu uauu------ ---------- ---------a uauuacaauu gcauuacauu
+      661 g<-------- ---------- ------c>ug uaugagauu- acu----(au auca-)----
+      721 aguaaaucGU ACCUU(UUGC AUA)AUGGUG A-UACUAAAc uac-uauaa- ----------
+      781 --------(- ----)----- --------(- ---)---<-- ---auau>-- ---(-----)
+      841 ---------- ---------u uuaacUCCCG AAAAUAA-AA GAUCUAAUUU ACCAau----
+      901 ---------- (-----auga uauuaga)-- ---------a aauuaaguG- C-UAUU(GUG
+      961 GCAU-A)ACU A-GCauu-aG AUGGAAAAUU AGUAGU(GAA AC)GCUcuca c-UUUUAUUG
+     1021 AUAACUGGAU AUAGAAUAA- AUAUAU(UAA GU)AUAAAaa --------<- ----------
+     1081 ---------- ---------- ---------- -------->- ----|----- -|------|-
+     1141 ---------- ---------- --(-----)< ---------- ---------- ----------
+     1201 ----->---- ---------- ---------- ------|--- ---------- ---------c
+     1261 ca-uucuugg aagc(gauaa g)guuacaag aa-augaaau (uau-cau)g uuguaauauc
+     1321 caucacuauu uaaua----- ---------- ---------- ---------- ----------
+     1381 ---------- <--------- ---------- ------>aua uu--agu(ug gugaua-u)a
+     1441 uuu-uaua|c (aca)-|ua- aau(uuauua )ac|uaa--- ----<auuca uuuauau---
+     1501 ---------- ---------- ------->-- ---------| ---------- ----------
+     1561 ---------| ---------| ----|----- ----(----) ---------- ucuauucuac
+     1621 |ua-uguauu ---------- ---------( ------)<uc auu------- ->--------
+     1681 --------|- aguguauuGA UAAUGU-AUC A|AUUAGUA- aaauuu---- ----(-----
+     1741 )-------|- ---------- --------|- ---------- (-----)--| ----------
+     1801 ---------- ---------- --(----)<- ---------- ---------- ----------
+     1861 ---------- ---------- -------->- ---------- ---------- -(--------
+     1921 )-----|--| ---------- -|-------- ---------- ---------- -------(--
+     1981 --------)- -----|---- ---------- |--------- ---(-----) --|-------
+     2041 ---------- ---------- -------(-- --)------- ---------- ----------
+     2101 ---------- ----<----- ---------- ----->---- ---------- ----------
+     2161 -|-------- -(------)- -|-------- --(-----)- ---------- ||auauuua-
+     2221 -aaAUGUUGA UAAGGAACUC GACAAG---- ---------( ----)----- ------|---
+     2281 ---------- --------(- ----)----- ---------- ----|-(--- )----auaaa
+     2341 UGUUUA|CGA CUGUUU(AAC AA)AAACAUA GCCAUUAA|- ------(gag aug-------
+     2401 )--------- -UUUAU-GUG UUAUCUGCCC AGC|UGA--- ---------- ----------
+     2461 -(--aaac)- ---------- ---------- |--uu-UAAC |GGaC|CGGC AGU(AC-CUU
+     2521 G)ACUGUG|C (AAA)GG-UA GCAUAAUCAC UU|GACUUU( UAAUU)GGAG CC|UGGAAUG
+     2581 AAUGAAAUAA CG-UAGACAG -CUUGUCUCA UUAAUAGuac -ucUU-AAAU U|G|CUAUAG
+     2641 G-AG(UGAAA AUA)CUCUUU AauuuaAAAA UAGACGAGAA GACCCUU-AG -|-AAUUUUG
+     2701 AAAA-|-u-g uaaaagg-|< -------->- ---------- ---------- ----------
+     2761 ---------- ---------- <uauu----- ---------- ---------- ----------
+     2821 ---------- ---------- --->(----) ---------- ---------- ----------
+     2881 -|-------- ---------- ---------- ---(-----) ---------- ---ucuuuua
+     2941 -u---a-aaU UUUUGUUG(G GG)GAACA|A UAUUU(---- -----caug- --uaau-)AA
+     3001 AUAU|u|a|- ---------- -|-------- -(-------) ---------- -|--(-|---
+     3061 --)------- ---------- --------(- ------)--- ---------- ----------
+     3121 --<------- ---------- ------u>|- au-agaauga uagg------ ---(----uc
+     3181 ga)--|---u uuaAUAAUUA |uag-UUAAA UUACCU|AAG G|GAUAACAG |C-AUAAuuu
+     3241 ---------- (uauuag-)- ---------a agcUUGUGAC CUCGAUGUU| GGAC|U|AGG
+     3301 UA|CUAU-UA AGGCUA(AU- CG)UUUUAAU AUA-AUA|UG UUC(UGUUC) GAAC-UUUAC
+     3361 UACCUACAUG AUCUGAGUUC AGACC|GGC( GUAA)-cgAG GUCAGUUUCU AUCU|UUUUA
+     3421 ---|-<---- ----uuu>-- ---------- ------g-cu uacaa(UAGU AC(GAAA)GG
+     3481 ACC)cugua- agcacuuu-- ---------- ---|------ -(ucu-)--- ----------
+     3541 --------aa aguaua~~~~ ~~~~~~~~(~ ~~~~~~~~~~ ~~~)~~~~~~ ~~~~~~~~~~
+     3601 ~~~~~~~~~~ ~~~~~<~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~>
+     3661 ~~|~~~~~~( ~~~)~~~~~~ ~~~~~~~~~| ~~~~~(~~~~ ~~~)~~~~~~ ~~~~~~|~~~
+     3721 ~~~~~~~~~~ ~~~~~(~~~~ )~~~~~~~~~ ~~~|~|~~~~ ~~~~~~~~~~ ~~~~~~~~~~
+     3781 ~~~~~~~|
+//
+LOCUS       mt.A.coeru   3788 bp    RNA             RNA       ~?~????
+DEFINITION  Mitochondrion Albinaria coerulea.
+ACCESSION   X83390
+KEYWORDS    No information.
+SOURCE      Mitochondrion Albinaria coerulea.
+  ORGANISM  Mitochondrion Albinaria coerulea.
+REFERENCE   1
+  AUTHORS   No information
+  JOURNAL   No information
+  TITLE     No information
+  STANDARD  No information
+COMMENTS    Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: X83390
+            LOCUS       MIACDNA     14130 bp    DNA             UNA       05-SEP-1995
+            DEFINITION  A.coerulea complete mitochondrial DNA.
+            ACCESSION   X83390
+            KEYWORDS    ATPase 6; ATPase 8; COI gene; COII gene; COIII gene; cytb gene; 
+                        lrRNA; ND1 gene; ND3 gene; ND4 gene; ND4L gene; ND5 gene; 
+                        ND6 gene; srRNA; tRNA-Ala; tRNA-Arg; tRNA-Asn; tRNA-Asp; 
+                        tRNA-Cys; tRNA-Gln; tRNA-Glu; tRNA-Gly; tRNA-His; tRNA-Ile; 
+                        tRNA-Leu; tRNA-Lys; tRNA-Met; tRNA-Phe; tRNA-Pro; tRNA-Ser; 
+                        tRNA-Thr; tRNA-Trp; tRNA-Tyr; tRNA-Val.
+            SOURCE      Albinaria coerulea.
+              ORGANISM  Mitochondrion Albinaria coerulea
+                        Eukaryota; Animalia; Eumetazoa; Mollusca; Gastropoda; Pulmonata;
+                        Stylommatophora; Mesurethra; Clausiliacea; Clausiliidae.
+            REFERENCE   1  (bases 1 to 14130)
+              AUTHORS   Hatzoglou,E., Rodakis,G.C. and Lecanidou,R.
+              TITLE     The complete sequence of the mitochondrial genome of the land
+                        snail Albinaria coerulea
+              JOURNAL   Genetics 140, 1353-1366 (1995)
+            REFERENCE   2  (bases 1 to 14130)
+              AUTHORS   Rodakis,G.C.
+              TITLE     Direct Submission
+              JOURNAL   Submitted (12-DEC-1994) to the EMBL/GenBank/DDBJ databases. G.C.
+                        Rodakis, Univ.of Athens, Dep. of Biochemistry, Cell and Mol.
+                        Biology and Genetics, Panepistimiopolis, Athens 157 01, GREECE
+            COMMENT
+                        NCBI gi: 975668
+            FEATURES               Location/Qualifiers
+                 source          1..14130
+                                 /organism="Albinaria coerulea"
+                                 /mitochondrion
+                 CDS             11..1648
+                                 /gene="ND5"
+                                 /note="starting codon=ATT, termination codon=TAG;
+                                 pid:e197105;  NCBI gi: 975669"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MLLGVLCAIMGVIYMVLNMQNSSYLLMFNLFSTQSVNFNLALIC
+                                 DKVSTSFLVVVLLISSCVFLFANEYMSEDHYNIRFGWILISFVASMGILILSGSIFTL
+                                 LLGWDGLGLTSFALIAYYDNYNASSSAFLTLMTNRLGDVLIIATFSVILVTGLTVHFP
+                                 PYTLVWLSSILFTIASFTKSAQYPFSAWLPAAMAAPTPVSALVHSSTLVTAGIYLMIR
+                                 CFMVDGAPAEMYSLMGLVGSITCLLGGSVALFEYDLKKVIALSTLSQLGVMMYSLSLN
+                                 LPYLALLHLYGHAMFKAMLFLGAGLILMMSYGTQDLRLLGSLLYSSPIVISLLNISML
+                                 CLMGFPFVSSFYSKHLILEKMLDMNCNFFTSMMFMLGTLLTGMYSIRLMKFLCWGNNN
+                                 NKPSYCNMSWQSKMSMFPLAALAVLSGQLMSYLDSSYMTFSWSTNQYNLILWGVLFLS
+                                 IFFGIVMKFGNFYPTLMSSMMFLGPTSYNLLHYTKSLLIYMKRIDLSISEPNWVMSNL
+                                 MYSSSWRVMSLFNWLTNYMLVTWFLLVWLMIMSILMW"
+                 CDS             1642..2541
+                                 /gene="ND1"
+                                 /note="starting codon=ATG, termination codon=TAA;
+                                 pid:e197094;  NCBI gi: 975670"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MVVFKSLLLNLCILLSVAFYTLLERKVLSSMQIRKGPNKVGLYG
+                                 IIQPIADALKLFLKEFFIPVNSNSFMFMILPLLGLTLSLMLWAVFPSMWMFNFHSYLL
+                                 MLFVALTGTFVYVIIFAGWSSNSKYSFLGGMRAAAQTISYEVSMLLLLFFAVLMYRTY
+                                 SWYEAGLSSPIGIIIFIIMFIWFASCLAETNRAPFDFAEGESELVSGFNIEYYGGMFA
+                                 LLFLAEYSSILFMCMMSTVWFLYSDMIFIMTLLILLIAMAFLFARGVYPRHRYDLLMN
+                                 LCWKSFLPFSLCCICYSMLLWIV"
+                 CDS             2549..2846
+                                 /gene="ND4L"
+                                 /note="incomplete termination codon=T; pid:e197095;  NCBI
+                                 gi: 975671"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MTIYSYLLLLCMVMFVTFFTQKNNILSLMVVLESLMLITLSSVA
+                                 VSLNYMAGSSMVMILLLCFAAAEAALSLSLLVCFIQVNSSCEMLAMNKILFAKKS"
+                 CDS             2847..3949
+                                 /gene="cytb"
+                                 /note="starting codon=ATA incomplete termimnation
+                                 codon=TA; pid:e197101;  NCBI gi: 975672"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MAESMLSLPTPLNISIWWNMGSILGMILGLQLLTGILLSMHYSS
+                                 QLEMAFSSIIHIIRDVPGGWFLRLLHANGASLFFLFMYAHIGRGLYYQSYIIHPRVWM
+                                 VGVTIFLVSMATAFLGYVLPWGQMSFWGATVITNLLSAVPYFGPSMVEWVWGGFSVGH
+                                 ATLNRFFSLHFLLPFLISGLALLHIIFLHDKGSSNPLGNLFHLSKKPFHPYFTIKDSV
+                                 GFLMVFGVLLMITFFSPSLLLDPENYISANPMVTPTHIQPEWYFLFAYAILRSIPSKL
+                                 GGVVALLMSILILYFLPLSSYGKSIPVSMNIIYQVLFWILVVTFIILTWLGACEIEEP
+                                 YLSLAGPLTLLYFLMFLLLGMSNNLNFNLIQLK"
+                 tRNA            3950..4016
+                                 /anticodon=(pos:3981..3983,aa:Asp)
+                                 /product="tRNA-Asp"
+                 tRNA            4012..4079
+                                 /anticodon=(pos:4044..4046,aa:Cys)
+                                 /product="tRNA-Cys"
+                 tRNA            4080..4149
+                                 /anticodon=(pos:4115..4117,aa:Phe)
+                                 /product="tRNA=Phe"
+                 CDS             4153..4827
+                                 /gene="COII"
+                                 /note="pid:e197096;  NCBI gi: 975673"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MSTWGQINLMDPASPIQMEMMLFHDHAMAILIGIFTLVSLLGVK
+                                 LCFNTLSTRTMHEAQLLETLWTILPAFLLVWLALPSLRLLYLLDEQGSEGIILKAIGH
+                                 QWYWSYEMPSMNISNFDSYMIPEEDLKPGDYRLLEVDNRPMVPYGLDINVITTSADVI
+                                 HAWALPSMGVKMDAVPGRLNSMGFHANLPGIYYGQCSEICGANHSFMPITVEAIDVKD
+                                 FIKMCN"
+                 tRNA            4849..4912
+                                 /anticodon=(pos:4879..4881,aa:Tyr)
+                                 /product="tRNA-Tyr"
+                 tRNA            4908..4975
+                                 /anticodon=(pos:4939..4941,aa:Trp)
+                                 /product="tRNA-Trp"
+                 tRNA            4977..5043
+                                 /anticodon=(pos:5008..5010,aa:Gly)
+                                 /product="tRNA-Gly"
+                 tRNA            5040..5107
+                                 /anticodon=(pos:5072..5074,aa:His)
+                                 /product="tRNA-His"
+                 tRNA            complement(5112..5172)
+                                 /anticodon=(pos:5142..5144,aa:Gln)
+                                 /product="tRNA-Gln"
+                 tRNA            complement(5171..5237)
+                                 /anticodon=(pos:5204..5206,aa:Leu)
+                                 /product="tRNA=Leu(UUR)"
+                 CDS             complement(5254..5421)
+                                 /gene="ATPase8"
+                                 /note="start codon=CAT, termination codon=CTA;
+                                 pid:e197106;  NCBI gi: 975674"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MPQLSPMNGLLIMFSVTLMLLIVLVINHFMLTPMASPLLASHLK
+                                 TKKSGGEKLYY"
+                 tRNA            complement(5423..5483)
+                                 /anticodon=(pos:5453..5455,aa:Asn)
+                                 /product="tRNA=Asn"
+                 CDS             complement(5484..6126)
+                                 /gene="ATPase6"
+                                 /note="start codon=CAT, incomplete termination codon=A;
+                                 pid:e197103;  NCBI gi: 975675"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MMVDLFSSLDGMTSLWSWLTPMFLSVFMIWNKTWSMDQNNIIKY
+                                 LAASNWNNSTYNLTKSLLTIMMVLIIFNNLLGMAPFTYGITTSLWVNMTLALLLWGLI
+                                 LLSGYIKSPKKSLAHLAPSGAPLLLLPFLILIESISIMIRPLTLTVRLVANMSAGHII
+                                 LALMASVLSSNLSNTSLSLSYLIMVGYYLFEFFVCFIQAYIFTLLLSLYMNEHP"
+                 tRNA            complement(6128..6194)
+                                 /anticodon=(pos:6162..6164,aa:Arg)
+                                 /product="tRNA-Arg"
+                 tRNA            complement(6198..6269)
+                                 /anticodon=(pos:6133..6235,aa:Glu)
+                                 /product="tRNA-Glu"
+                 rRNA            complement(6270..7028)
+                                 /product="srRNA"
+                 tRNA            complement(7029..7089)
+                                 /anticodon=(pos:7057..7059,aa:Met)
+                                 /product="tRNA-Met"
+                 CDS             complement(7090..7441)
+                                 /gene="ND3"
+                                 /note="starting codon=TAT, incomplete termination codon=A;
+                                 pid:e197097;  NCBI gi: 975676"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MILYVLPTSLSLCLLLMIIYLLTANLFKFASYELKTPFECGFDP
+                                 LSNMRSPMTTRFFILTVLFLIFDVEVVLLFPVLSMVSFMTSPLIIMSIILFMMVLLIG
+                                 LLYEMYYGVLDWVLN"
+                 tRNA            complement(7451..7518)
+                                 /anticodon=(pos:7486..7488,aa:Ser)
+                                 /product="tRNA-Ser(UNC)"
+                 tRNA            complement(7507..7564)
+                                 /anticodon=(pos:7528..7530,aa:Ser)
+                                 /product="tRNA-Ser(AGN)"
+                 CDS             7565..8878
+                                 /gene="ND4"
+                                 /note="pid:e197102;  NCBI gi: 975677"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MTYLILLGASICLFPFWEVTMLTLAFIIPMSLTYLNINFTFSFS
+                                 SELIWLTPIGTALIFLTLMVTLLVLIGTYNIKNYKYIGCLSSLNLVLMMAFCVCDFLT
+                                 FYVMFEVSLIPTLLLILLWGYQPERMQAGFYLMLYTVTASLPLLLLLLYLYYTVGSLN
+                                 FYIIMVYYSFNNNPLMLVGLMMAFLVKLPIYTCHLWLPKAHVEAPLGGSMVLAGVLLK
+                                 LGGYGLYMLINFIISKSSSLVISVIITLSLWGAVIASIICIQQVDIKALVAYSSVAHM
+                                 SLVSAGILMMSNWSYTCAKMTMIAHGYTSSALFVLANLSYLKIKSRSLMFMKGLLAIF
+                                 PAMAFYWFLFSCMNMAAPPTLNFIGELLIIPSMYIASYMLLILMCIIMFISAGYSLYM
+                                 YMTVNHGELGLYITPSIQLKNVDYHVLTAHLLPTFILLIPQLFSV"
+                 tRNA            complement(8888..8953)
+                                 /anticodon=(pos:8919..8921,aa:Thr)
+                                 /product="tRNA-Thr"
+                 CDS             complement(8961..9740)
+                                 /gene="COIII"
+                                 /note="start codon=CAT, termination codon=TAA;
+                                 pid:e197104;  NCBI gi: 975678"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MQKTPFHLVEYSPWPLLVSLSLTSMPLGLIYYIRFGSIYLLLYG
+                                 MLLTSIIAYMWWRDIVREATYQGHHTTYVVKGLKLGMALFILSEVCFFFAFFWAYFHS
+                                 SLAPSIEIGSVWPPIGITVLNVFQVPLLNTSVLLLSGVSITWAHHALTEGKYYSTLSG
+                                 LFFTVLLGVYFLMLQYGEYNETSFSIADGVYGSTFFMATGFHGLHVMVGTLFLFVNLV
+                                 RTYYYHFSTTHHVGFLAAAWYWHFVDVVWLFLYISIYWWGS"
+                 tRNA            9783..9849
+                                 /anticodon=(pos:9814..9816,aa:Ile)
+                                 /product="tRNA-Ile"
+                 CDS             9850..10773
+                                 /gene="ND2"
+                                 /note="pid:e197099;  NCBI gi: 975679"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MTLQSVLLGAMIILGPILSMTSSNWIIIWIGLEISLLGFVSYYM
+                                 LMKKIMSGEGIMMYFLIQSVSSTVMLLNGLYIFVNHASSYIYLFIFITMLMLKIGMFP
+                                 LHFWIIPVYSKLSYLNIGIVGLLLKIVPMWILMHMGCITSEMLNLITMLSVTSMLFGA
+                                 LIGMNLSKMRMVLGASTITHNGWLGMSCISGSLFKYFITYGFSLVILLVFLYLGDKMS
+                                 ISLSLLSLSGLPPFMLFIGKINVLLMMMETNLWFIVLVFAILSAVISLVYYLKFSVMF
+                                 FMNMKNNYLKHYKMAMFLLVNVTFGMLLFLT"
+                 tRNA            10774..10840
+                                 /anticodon=(pos:10805..10807,aa:Lys)
+                                 /product="tRNA-Lys"
+                 CDS             10834..12363
+                                 /note="start codon=TTG, incomplete terminition codon=TA;
+                                 pid:e197098;  NCBI gi: 975680"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MRWFYSTNHKDIGTLYMLFGIWCGMVGTGLSLLIRLELGTSGTL
+                                 TDDHFYNVIVTAHAFVMIFFMVMPIMIGGFGNWMVPLLIGAPDMSFPRMNNMSFWLLP
+                                 PAFILLICSSMVEGGAGTGWTVYPPLSSSLAHSGASVDLAIFSLHLAGMSSILGAINF
+                                 ITTIFNMRSPGMTMERVSLFVWSILVTVFLLLLSLPVLAGAITMLLTDRNFNTSFFDP
+                                 AGGGDPILYQHLFWFFGHPEVYILILPGFGMISHILGNSAMKQPFGTLGMIYAMISIG
+                                 ILGFIVWAHHMFTVGMDVDTRAYFTAATMIIAIPTGIKVFSWLMTIYGSKVQYTASMY
+                                 WVLGFIFLFTLGGLTGIVLSNSSLDIMLHDTYYVVAHFHYVLSMGAVFAIFAGFNFWF
+                                 PVMTGLILHERLAKAQFVVMFIAVNMTFFPQHFLGLAGMPRRYSDYPDSYFMWNQLSS
+                                 YGSLMSVFAVLLFVLIVWEAFLSQRSLLFVDATLYSREWSDGYFPPDFHSNIYQSYIT
+                                 I"
+                 tRNA            12363..12427
+                                 /anticodon=(pos:12395..12397,aa:Val)
+                                 /product="tRNA-Val"
+                 rRNA            12428..13462
+                                 /product="lrRNA"
+                 tRNA            13463..13526
+                                 /anticodon=(pos:13491..13493,aa:Leu)
+                                 /product="tRNA-Leu(CUN)"
+                 tRNA            13523..13587
+                                 /anticodon=(pos:13552..13554,aa:Pro)
+                                 /product="tRNA-Pro"
+                 tRNA            13586..13655
+                                 /anticodon=(pos:13617..13619,aa:Ala)
+                                 /product="tRNA-Ala"
+                 CDS             13663..14130
+                                 /gene="ND6"
+                                 /note="pid:e197100;  NCBI gi: 975681"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /translation="MMSLTFMAGLIFPVFMMLKGINPMSLLLALLTLSLCAVLWLGSF
+                                 MSSWYAYILFIVYIGGILVLFIYVCMISSNYIASQHMYKSLLYAWGAVMLMSLTMETD
+                                 TFIILGSNMMYTSVNIPMTILIFLSIYLLIVFFAVVNLMVNMTSILMVESSQV"
+                 misc_feature    10834..12362
+                                 /gene="COI"
+            BASE COUNT     4628 a   1951 c   2196 g   5355 t
+            ORIGIN      
+BASE COUNT     398 a    128 c    150 g    359 t   2753 others
+ORIGIN
+        1 |~~~~~~~~~ ~~~~~~~~~a aaucuaaau- ---------- --a|uua-ac -|--------
+       61 -|-------- ---|----(- -----)-|-- ---------- --|------( -------)--
+      121 ---------- ---------- -------(-- --)---|--- ----(----) ----------
+      181 ---------( -----)---- ---------< ---------- ---------- ----------
+      241 ---------- ---->----- |--------- ---(----)- ---------- ----------
+      301 -----(---- )-----|--- ---------( -----)---- ---------- -----<----
+      361 ---------- ---------- -------->- ---------- ---------- ----------
+      421 -----(---- )--------| -(---)---- -(-------) ---------- ----------
+      481 ---------- ---------- --------(- --------)- ---------- --------(-
+      541 -----)---- ---------- ---------- ---------- ------aaua cu(gguga)a
+      601 gauc--aa-- ---------- ---------- ---------- ---------- --------ca
+      661 u<-------- ---------- ------->-- aaaaagu--- -------(-- -aaa-)----
+      721 ------acAU ACCUU(UUGC AUA)AUGGUG A-UACUAAAu uu--auucua a---------
+      781 --------(- ----)----- --------(- ---)---<-- ---gauu>-- ---(-----)
+      841 ---------- ------uuau -au-uuCCCG AAAAUAA-AA GAUCUAACUU UUCAUg----
+      901 ---------- (----cgaaa uuauuag)-- ---------a acacaaaau- c-UAUU(GUG
+      961 GCAU-A)AAU A-gaccu-cA AUGAAAAGUU AGUAGU(GAA AC)ACUuuca c-UUUUAUUG
+     1021 AUAUCUGGau auagaaUAA- AUAUAU(uua gu)AUAUAaa --------<- ----------
+     1081 ---------- ---------- ---------- -------->- ----|----- -|------|-
+     1141 ---------- ---------- --(-----)< ---------- ---------- ----------
+     1201 ----->---- ---------- ---------- ------|--- ---------- ---------u
+     1261 acauucuuaa a-gc(gauaa g)guuuuaag cg-aagaauu (uua-uau)a acaguaaaaa
+     1321 uuu--cuaau uaaua----- ---------- ---------- ---------- ----------
+     1381 ---------- <--------- ---------- ------>aua uu--aac(ug guaguuuu)a
+     1441 uug--aua|u (aca)-|ua- uau(uuauau )au|uaa--- ----<auucc uu--------
+     1501 ---------- ---------- ------->-- ---------| ---------- ----------
+     1561 ---------| ---------| ----|----- ----(----) ---------- gaaauucuau
+     1621 |uuauauauu --ac------ ---------( ------)<aa ccg------- ->--------
+     1681 ------gu|c aguauacuaA UAAUGU-AUC A|AUUAGUA- aauagg---- ----(-----
+     1741 )-------|- ---------- --------|- ---------- (-----)--| ----------
+     1801 ---------- ---------- --(----)<- ---------- ---------- ----------
+     1861 ---------- ---------- -------->- ---------- ---------- -(--------
+     1921 )-----|--| ---------- -|-------- ---------- ---------- -------(--
+     1981 --------)- -----|---- ---------- |--------- ---(-----) --|-------
+     2041 ---------- ---------- -------(-- --)------- ---------- ----------
+     2101 ---------- ----<----- ---------- ----->---- ---------- ----------
+     2161 -|-------- -(------)- -|-------- --(-----)- ---------- ||-uauaau-
+     2221 -aaAUAUUAG UAAGGAACUC GACAAA---- ---------( ----)----- ------|---
+     2281 ---------- --------(- ----)----- ---------- ----|-(--- )-----uaau
+     2341 UGCUUA|CGA CUGUUU(AUC AA)AAACAUA GCCAAAAG|- ------(uag aua-------
+     2401 )--------- -UUUUUGGUG UUAUCUGCCC AGU|GAA--- ---------- ----------
+     2461 -(---aaa)- ---------- ---------- |--UUUUAAC |GG-C|C-GC AGU(AC-CUU
+     2521 G)ACUGUG|C (AAA)GG-UA GCAUAAUAAU UU|GACUUU( UAAAU)GGAG CC|UAGAAUG
+     2581 AAAGAAAGAA CG-UAUGCAA -CUUGUCUCA UUGAUAUuac -u-uuaaauu U|A|AUGGUU
+     2641 G-AG(UGAAA AUA)CUCAUA auuuuaauAA UAGACGAGAA GACCCUU-AG -|-AAUUUUu
+     2701 AAAag|-c-a auaagua-|< -------->- ---------- ---------- ----------
+     2761 ---------- ---------- <--------- ---------- ---------- ----------
+     2821 ---------- ---------- --->(----) ---------- ---------- ----------
+     2881 -|-------- ---------- ---------- ---(-----) ---------- --auucuuau
+     2941 -ua--g-aUU UUUUGUUG(G GG)CAACA|A UAUUU(---- -----caaa- --uaau-)AA
+     3001 AUAU|a|u|u a--------- -|-------- -(-------) ---------- -|--(-|---
+     3061 --)------- ---------- --------(- ------)--- ---------- ----------
+     3121 --<------- ---------- ------a>|- ug-aaaguaa uaag------ ---(----uc
+     3181 ga)--|---u uaaAUAAUUa |uag-AAAAA UUACCU|AAG G|GAUAACAG |C-AUAAuuu
+     3241 ---------- (uauuaau)- ---------a agcUUGUGAC CUCGAUGUU| GGAC|U|AGG
+     3301 UA|CUAU-UA AGGCUA(AU- CG)UUUUAAU AUA-AUA|UG UUC(UGUUC) GAAC-UUUGU
+     3361 UACCUACAUG AUCUGAGUUC AGACC|GGC( GUAA)GCCAG GUCAGUUUCU AUCU|UUuau
+     3421 ---|-<---- ----cug>-- ---------- ------g-cc uauaa(UAGU AC(GAAA)GG
+     3481 ACC)uuaua- ggcacuua-- ---------- ---|------ -(uuca)--- ----------
+     3541 --------ua aguaua~~~~ ~~~~~~~~(~ ~~~~~~~~~~ ~~~)~~~~~~ ~~~~~~~~~~
+     3601 ~~~~~~~~~~ ~~~~~<~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~>
+     3661 ~~|~~~~~~( ~~~)~~~~~~ ~~~~~~~~~| ~~~~~(~~~~ ~~~)~~~~~~ ~~~~~~|~~~
+     3721 ~~~~~~~~~~ ~~~~~(~~~~ )~~~~~~~~~ ~~~|~|~~~~ ~~~~~~~~~~ ~~~~~~~~~~
+     3781 ~~~~~~~|
+//
+LOCUS       mt.E.herkl   3788 bp    RNA             RNA       02-DEC-1996
+DEFINITION  Euhadra herklotsi; cytochrome oxidase; large subunit ribosomal RNA;
+            NADH dehydrogenase; transfer RNA-Ala; transfer RNA-Leu; transfer
+            RNA-Pro; transfer RNA-Val.
+ACCESSION   Z71693
+KEYWORDS    cytochrome oxidase; large subunit ribosomal RNA;
+            NADH dehydrogenase; transfer RNA-Ala; transfer RNA-Leu;
+            transfer RNA-Pro; transfer RNA-Val.
+SOURCE      Euhadra herklotsi.
+  ORGANISM  Euhadra herklotsi.
+REFERENCE   1  (bases 1 to 2051)
+  AUTHORS   Segawa,R., Kobayashi,T., Numachi,K., Ueda,T., Nishikawa,K.,
+            Watanabe,K. and Thomas,R.H. Yamazaki,N., Ueshima,R., Terrett,J.A.,
+            Yokobori,S., Kaifu,M.,
+  TITLE     and Albinaria and implications of unusual tRNA secondary
+            structures Evolution of pulmonate gastropod mitochondrial genomes:
+            comparisons of complete gene organization of Euhadra, Cepaea
+  JOURNAL   Unpublished
+  STANDARD  No information
+REFERENCE   2  (bases 1 to 2051)
+  AUTHORS   Yokobori,S.
+  TITLE     Direct Submission
+  JOURNAL   Submitted (20-MAY-1996) Shin-ichi Yokobori, Institute of Zoology,
+            University of Munich, Luisenstrasse 14, Munich, D80333, Germany
+  STANDARD  No information
+COMMENTS    Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: Z71693
+BASE COUNT     367 a    124 c    153 g    378 t   2766 others
+ORIGIN
+        1 |~~~~~~~~~ ~~~~~----- ----uauau- ---------- uua|aca-ua u|u-------
+       61 -|-------- ---|----(- -----)-|-- ---------- --|------( -------)--
+      121 ---------- ---------- -------(-- --)---|--- ----(----) ----------
+      181 ---------( -----)---- ---------< ---------- ---------- ----------
+      241 ---------- ---->----- |--------- ---(----)- ---------- ----------
+      301 -----(---- )-----|--- ---------( -----)---- ---------- -----<----
+      361 ---------- ---------- -------->- ---------- ---------- ----------
+      421 -----(---- )--------| -(---)---- -(-------) ---------- ----------
+      481 ---------- ---------- --------(- --------)- ---------- --------(-
+      541 -----)---- ---------- ---------- ---------- -guuuauaua uu(-auau)a
+      601 auauacuagc gguau----- ---------- ---------- ---------- ------uuaa
+      661 u<-------- ---------- ------->-- cuaauagcuu -------(-- auua-)----
+      721 --a-aguuAU ACCUU(UUGC AUA)AUGGAU U-AACUAUA- ----ag-gu- ----------
+      781 --------(- ----)----- --------(- ---)---<aa caaaaua>-- ---(-----)
+      841 ---------- ---------g uuu-uaCACG AAUUAGU-UU GAGCUAAAUA CGAUa-uaau
+      901 ---------- (--------- auuagcu)-- ---------g uua----aa- auuGGU(GUU
+      961 GCAU-A)ACC u-uucauaaa aGUCAUAUUU AGGAGU(GAU AG)GCCucuc aaAAACUAAG
+     1021 AUAUCUUGAU UCUAAUUAA- ACGUAU(-uu a-)guacaau u-------<- ----------
+     1081 ---------- ---------- ---------- -------->- ----|----- -|------|-
+     1141 ---------- ---------- --(-----)< ---------- ---------- ----------
+     1201 ----->---- ---------- ---------- ------|--- ---------- -------aau
+     1261 acaUUUAUUG A-GU(GCUUA G)GCUUAAUA AA-aa--uau (uaa-uuu)a uaguauuucu
+     1321 u--------- ---------- ---------- ---------- ---------- ----------
+     1381 ---------- <--------- ---------- ------>aua uuaaggu(uu aaua----)a
+     1441 cua-aaua|u (aca)-|uau uau(aauaac )au|uaa--- ----<acugu uuuaaauuua
+     1501 uauuu----- ---------- ------->-- ---------| ---------- ----------
+     1561 ---------| ---------| ----|----- ----(----) ---------- aguaauuagu
+     1621 |aa-uaguua a--------- ---------( ------)<gu uuaaa----- ->--------
+     1681 --------|u uu-cuuUUGA UAAUGU-UUA U|AUUAGUA- uaaa------ ----(-----
+     1741 )-------|- ---------- --------|- ---------- (-----)--| ----------
+     1801 ---------- ---------- --(----)<- ---------- ---------- ----------
+     1861 ---------- ---------- -------->- ---------- ---------- -(--------
+     1921 )-----|--| ---------- -|-------- ---------- ---------- -------(--
+     1981 --------)- -----|---- ---------- |--------- ---(-----) --|-------
+     2041 ---------- ---------- -------(-- --)------- ---------- ----------
+     2101 ---------- ----<----- ---------- ----->---- ---------- ----------
+     2161 -|-------- -(------)- -|-------- --(-----)- ---------- ||---cgac-
+     2221 -auACUUCUA UAAUGAACUC GGCAAA---- ---------( ----)----- ------|---
+     2281 ---------- --------(- ----)----- ---------- ----|-(--- )---auauuc
+     2341 UCUUCU|CAA CUGUUU(AUC AA)AAACAUA ACUGUGUG|- ------(uac uaa-------
+     2401 )--------- -UACAUAGCA UUUUCuGCUC AAU|GNU--- ---------- ----------
+     2461 -(---uau)- ---------- ---------- |--AUUAAAU |AG-C|C-GC AGU(AU-UUU
+     2521 G)ACUGUG|C (AAA)GG-UA GCAUAAUCAA UU|GACUUA( UAAUU)GAAG UC|UGGAAUG
+     2581 AAUGAAAGUA UG-GGGAGUC -UCUGUAUCA UUUAGGUaaa ---UUUGAAU U|A|CUUAGG
+     2641 U-AG(UGAAA AUU)CUACUG u-aaaaaUAA UAGACGAGAA GACCCUA-GA -|-AAAUUUa
+     2701 aguaa|uc-u auau----|< -------->- ---------- ---------- ----------
+     2761 ---------- ---------- <--------- ---------- ---------- ----------
+     2821 ---------- ---------- --->(----) ---------- ---------- ----------
+     2881 -|-------- ---------- ---------- ---(-----) ---------- --uauaguau
+     2941 -au--c-aaU UUUUGUUG(G --)CGACA|U AGuag(---- -----caua- --aaac-)cu
+     3001 acuu|a|a|u g--------- -|-------- -(-------) ---------- -|--(-|---
+     3061 --)------- ---------- --------(- ------)--- ---------- ----------
+     3121 --<------- ---------- ------->|- ----aaaacc agca------ ---(-----c
+     3181 ca)--|---u guuuugugu- |gugaAAAAU UUACUC|UAG G|GAUAACAG |C-AUNAuau
+     3241 ---------- (u--uaa-)- ---------a agUUUGUGAC CUCGAUGUU| GGAC|U|AGG
+     3301 AA|A-UA-AU AGCCu-(-a- aa)-AGGUUU UUUAUAU|UG CUC(UGUUC) GAGCAUAAAA
+     3361 CUCCUACAUG AUCUGAGUUC AGACC|GGC( GUGA)GCCAG GUCAGUUUCU AUCU|UUAAA
+     3421 ---|-<---- ----uuu>-- ---------- ------u-cu uauaa(UAGU AC(GAAA)GG
+     3481 AAU)uuauu- gguugc---- ---------- ---|------ -(aau-)--- ----------
+     3541 ---------- gcaugc~~~~ ~~~~~~~~(~ ~~~~~~~~~~ ~~~)~~~~~~ ~~~~~~~~~~
+     3601 ~~~~~~~~~~ ~~~~~<~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~>
+     3661 ~~|~~~~~~( ~~~)~~~~~~ ~~~~~~~~~| ~~~~~(~~~~ ~~~)~~~~~~ ~~~~~~|~~~
+     3721 ~~~~~~~~~~ ~~~~~(~~~~ )~~~~~~~~~ ~~~|~|~~~~ ~~~~~~~~~~ ~~~~~~~~~~
+     3781 ~~~~~~~|
+//
+LOCUS       mt.C.nemor   3788 bp    RNA             RNA       ~?~????
+DEFINITION  Cepaea nemoralis.
+ACCESSION   U23045
+KEYWORDS    No information.
+SOURCE      Cepaea nemoralis.
+  ORGANISM  Cepaea nemoralis.
+REFERENCE   1
+  AUTHORS   No information
+  JOURNAL   No information
+  TITLE     No information
+  STANDARD  No information
+COMMENTS    Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: U23045
+            ID   MICNMU230  standard; circular DNA; ORG; 14100 BP.
+            XX
+            AC   U23045;
+            XX
+            DT   19-MAY-1995 (Rel. 43, Created)
+            DT   19-MAY-1995 (Rel. 43, Last updated, Version 1)
+            XX
+            DE   Cepaea nemoralis complete mitochondrial genome.
+            XX
+            KW   .
+            XX
+            OS   Cepaea nemoralis
+            OC   Eukaryota; Animalia; Eumetazoa; Mollusca; Gastropoda; Pulmonata;
+            OC   Stylommatophora; Sigmurethra; Holopoda; Helicacea; Helicidae.
+            XX
+            OG   Mitochondrion
+            XX
+            RN   [1]
+            RP   1-14100
+            RA   Terrett J.A., Miles S., Thomas R.H.;
+            RT   "Complete DNA sequence of the mitochondrial genome of Cepaea 
+            RT   nemoralis (Gastropoda: Pulmonata)"; 
+            RL   Unpublished.
+            XX
+            RN   [2]
+            RP   1-14100
+            RA   Thomas R.H.;
+            RT   ;
+            RL   Submitted (18-MAR-1995) to the EMBL/GenBank/DDBJ databases.
+            RL   Richard H. Thomas, Department of Zoology, The Natural History
+            RL   Museum, Cromwell Road, London, SW7 5BD, England
+            XX
+            CC   NCBI gi: 733433
+            XX
+            FH   Key             Location/Qualifiers
+            FH
+            FT   source          1..14100
+            FT                   /organism="Cepaea nemoralis"
+            FT                   /tissue_type="hepatopancreas"
+            FT                   /dev_stage="Adult"
+            FT                   /mitochondrion
+            FT   CDS             1..1530
+            FT                   /note="NCBI gi: 733434"
+            FT                   /codon_start=1
+            FT                   /product="cytochrome oxidase subunit 1"
+            FT   tRNA            1531..1590
+            FT                   /anticodon=(pos:1561..1563,aa:Val)
+            FT                   /product="tRNA-Val"
+            FT   rRNA            1586..2800
+            FT                   /note="16S rRNA"
+            FT   tRNA            2805..2864
+            FT                   /anticodon=(pos:2834..2836,aa:Leu)
+            FT                   /product="tRNA-Leu(CUN)"
+            FT   tRNA            2866..2927
+            FT                   /anticodon=(pos:2896..2898,aa:Ala)
+            FT                   /product="tRNA-Ala"
+            FT   CDS             2922..>3413
+            FT                   /note="followed by putative incomplete stop codon 'TA';
+            FT                   NCBI gi: 733435"
+            FT                   /codon_start=1
+            FT                   /product="NADH dehydrogenase subunit 6"
+            FT   tRNA            3417..3479
+            FT                   /anticodon=(pos:3446..3448,aa:Pro)
+            FT                   /product="tRNA-Pro"
+            FT   CDS             3638..5167
+            FT                   /note="NCBI gi: 733436"
+            FT                   /codon_start=1
+            FT                   /product="NADH dehydrogenase subunit 5"
+            FT   CDS             5176..>6057
+            FT                   /note="followed by putative incomplete stop codon 'TA';
+            FT                   NCBI gi: 733437"
+            FT                   /codon_start=1
+            FT                   /product="NADH dehydrogenase subunit 1"
+            FT   CDS             6062..>6298
+            FT                   /note="followed by putative incomplete stop codon 'TA';
+            FT                   NCBI gi: 733438"
+            FT                   /codon_start=1
+            FT                   /product="NADH dehydrogenase subunit 4L"
+            FT   CDS             6298..7440
+            FT                   /note="NCBI gi: 733439"
+            FT                   /codon_start=1
+            FT                   /product="cytochrome b"
+            FT   tRNA            7477..7536
+            FT                   /anticodon=(pos:7507..7509,aa:Cys)
+            FT                   /product="tRNA-Cys"
+            FT   tRNA            7539..7599
+            FT                   /anticodon=(pos:7569..7571,aa:Phe)
+            FT                   /product="tRNA-Phe"
+            FT   CDS             7599..8252
+            FT                   /note="NCBI gi: 733440"
+            FT                   /codon_start=1
+            FT                   /product="cytochrome oxidase subunit II"
+            FT   tRNA            8245..8301
+            FT                   /anticodon=(pos:8272..8274,aa:Tyr)
+            FT                   /product="tRNA-Tyr"
+            FT   tRNA            complement(8473..8530)
+            FT                   /anticodon=(pos:8499..8501,aa:Gln)
+            FT                   /product="tRNA-Gln"
+            FT   CDS             complement(8581..8742)
+            FT                   /note="NCBI gi: 733441"
+            FT                   /codon_start=1
+            FT                   /product="ATPase subunit 8"
+            FT   tRNA            complement(8744..8804)
+            FT                   /anticodon=(pos:8764..8766,aa:Asn)
+            FT                   /product="tRNA-Asn"
+            FT   CDS             complement(<8828..9385)
+            FT                   /note="followed by putative incomplete stop codon 'TA';
+            FT                   NCBI gi: 733442"
+            FT                   /codon_start=1
+            FT                   /product="ATPase subunit 6"
+            FT   tRNA            complement(9427..9489)
+            FT                   /anticodon=(pos:9457..9459,aa:Arg)
+            FT                   /product="tRNA-Arg"
+            FT   tRNA            complement(9484..9545)
+            FT                   /anticodon=(pos:9512..9514,aa:Glu)
+            FT                   /product="tRNA-Glu"
+            FT   rRNA            complement(9553..10262)
+            FT                   /product="12S rRNA"
+            FT   CDS             complement(10272..10676)
+            FT                   /note="NCBI gi: 733443"
+            FT                   /codon_start=1
+            FT                   /product="NADH dehydrogenase subunit 3"
+            FT   tRNA            complement(10691..10750)
+            FT                   /anticodon=(pos:10718..10720,aa:Thr)
+            FT                   /product="tRNA-Thr"
+            FT   CDS             complement(<10752..11564)
+            FT                   /note="followed by putative incomplete stop codon 'TA';
+            FT                   NCBI gi: 733444"
+            FT                   /codon_start=1
+            FT                   /product="cytochrome oxidase subunit III"
+            FT   tRNA            11723..11777
+            FT                   /note="tRNA-Ser(AGN)"
+            FT                   /anticodon=(pos:11746..11748,aa:Ser)
+            FT   CDS             11813..>13061
+            FT                   /note="followed by putative incomplete stop codon 'TA';
+            FT                   NCBI gi: 733445"
+            FT                   /codon_start=1
+            FT                   /product="NADH dehydrogenase subunit 4"
+            FT   tRNA            13069..13128
+            FT                   /note="tRNA-Ile"
+            FT                   /anticodon=(pos:13096..13098,aa:Ile)
+            FT   CDS             13154..>14098
+            FT                   /note="followed by putative incomplete stop codon 'TA';
+            FT                   NCBI gi: 733446"
+            FT                   /codon_start=1
+            FT                   /product="NADH dehydrogenase subunit 2"
+            XX
+            SQ   Sequence 14100 BP; 3689 A; 2671 C; 2998 G; 4742 T; 0 other;
+BASE COUNT     298 a    167 c    221 g    318 t   2784 others
+ORIGIN
+        1 |~~~~~~~~~ ~~~~~----- ---uaaugu- --------uu aca|aca-uu a|caau----
+       61 -|-------- ---|----(- -----)-|-- ---------- --|------( -------)--
+      121 ---------- ---------- -------(-- --)---|--- ----(----) ----------
+      181 ---------( -----)---- ---------< ---------- ---------- ----------
+      241 ---------- ---->----- |--------- ---(----)- ---------- ----------
+      301 -----(---- )-----|--- ---------( -----)---- ---------- -----<----
+      361 ---------- ---------- -------->- ---------- ---------- ----------
+      421 -----(---- )--------| -(---)---- -(-------) ---------- ----------
+      481 ---------- ---------- --------(- --------)- ---------- --------(-
+      541 -----)---- ---------- ---------- ---------- ---------- cg(-ggaa)c
+      601 gugcuuagua ugcuu----- ---------- ---------- ----uuaaug aucuuacuca
+      661 c<-------- ---------- ------->ua auaucuauug cuaagac(gu aaaac)---g
+      721 uuu-aauaUU UACUU(UUGC AUC)AUGGGU C-AAUUAA-- ----aa-uuu uc--------
+      781 --------(- ----)----- --------(- ---)---<-- -cugauc>-- ---(-----)
+      841 ---------- ---------g uuu-uuCGCG AAGCCGC-AG GAGCUAGUUA Caagc--uau
+      901 ---------- (--------u uaggcuu)-- ---------g ua-----gg- agGUAC(GUG
+      961 GCAU-U)GUG C-ucua---u acgUGUAGUU AGGAGU(GAU AG)GCCuauc aaCUGCGUGG
+     1021 AUAUCUCGAU gcacacgaa- aauaug(-ua g-)uauaauu --------<- ----------
+     1081 ---------- ---------- ---------- -------->- ----|----- -|------|-
+     1141 ---------- ---------- --(-----)< ---------- ---------- ----------
+     1201 ----->---- ---------- ---------- ------|--- ---------- ----------
+     1261 ccggacuacg a-aa(guuaa g)ccucguag ua-uauacaa (aua-uua)g uguauc----
+     1321 -------uuu uaacggcc-- ---------- ---------- ---------- ----------
+     1381 ---------- <--------- ---------- ------>cua ac-cguc(ua uuauuuug)g
+     1441 gca-auca|u (a-u)-|uua ugu(ugagcu )au|guu--- ----<guaac au--------
+     1501 ---------- ---------- ------->-- ---------| ---------- ----------
+     1561 ---------| ---------| ----|----- ----(----) ---------- acuagugugc
+     1621 |cg-cggg-u g--------- ---------( ------)<uu uauu------ ->--------
+     1681 --------|u guuuugUUGA UAAUGU-UGU C|AUAAGUA- GC-------- ----(-----
+     1741 )-------|- ---------- --------|- ---------- (-----)--| ----------
+     1801 ---------- ---------- --(----)<- ---------- ---------- ----------
+     1861 ---------- ---------- -------->- ---------- ---------- -(--------
+     1921 )-----|--| ---------- -|-------- ---------- ---------- -------(--
+     1981 --------)- -----|---- ---------- |--------- ---(-----) --|-------
+     2041 ---------- ---------- -------(-- --)------- ---------- ----------
+     2101 ---------- ----<----- ---------- ----->---- ---------- ----------
+     2161 -|-------- -(------)- -|-------- --(-----)- ---------- ||-acau-u-
+     2221 -aaauagCCU GAAGGAACUC GGCAAA---- ---------( ----)----- ------|---
+     2281 ---------- --------(- ----)----- ---------- ----|-(--- )------ucu
+     2341 GCUUCU|CAC CUGUUU(AUC AA)AAACAGC GCUGUAUG|- ------(uaa uuga------
+     2401 )--------- -CGUAUGGUA C-UUCUGCUC CAU|GG---- ---------- ----------
+     2461 -(--uaug)- ---------- ---------- |---CUAAAU |AG-C|C-GC AGU(AC-UCU
+     2521 G)ACUGUG|C (AAA)GG-UA GCAUAAUAAU UU|GGCUUA( UAAUU)GAAG UC|UGGCUCG
+     2581 AAAGAAUUAA UG-GGAAGCA -GCUGUCUCC AGGgguacua -guACAAAAU U|A|GUAAGU
+     2641 A-AG(UGAAA AUA)CUUGCG G-gaagAAAA UAGACGAGAA GACCCUA-GA -|-AGCUUG-
+     2701 -----|---- --------|< uuauuugu>- ---------- ---------- ----------
+     2761 ---------- ---------- <--------- ---------- ---------- ----------
+     2821 ---------- ---------- --->(----) ---------- ---------- ----------
+     2881 -|-------- ---------- ---------- ---(-----) ---------- ----------
+     2941 ---------- -UUUGUUG(G GG)CGACA|G AAUUG(---- -----caug- --gaac-)CA
+     3001 AUUU|u|a|u ---------- -|-------- -(-------) ---------- -|--(-|---
+     3061 --)------- ---------- --------(- ------)--- ---------- ----------
+     3121 --<------- ---------- ------->|- --------gg aug------- ---(-----u
+     3181 ga)--|---- cguAUAGCAg |gaaauuAAG CUACUC|UAG G|GAUAACAG |C-AUAAuua
+     3241 ---------- (---aac-)- ---------u uguUUGUGAC CUCGAUGUU| GGAC|U|AGG
+     3301 UA|GAAU-AG UCCCU-(-a- ga)-AGGGAC UAA-AAA|UG CUC(UGUUC) GAGCA-gcuU
+     3361 AACCUACAUG AUCUGAGU-C AGACC|GGC( GUAA)GCCAG GUCAGUUUCU AUCU|UUUUA
+     3421 ---|-<---- ----aua>-- ---------- ------a-ua cuugc(UAGU AC(GAAA)GG
+     3481 ACC)guagg- uugcauua-- ---------- ---|------ -(auac)--- ----------
+     3541 --------ua ~~~~~~~~~~ ~~~~~~~~(~ ~~~~~~~~~~ ~~~)~~~~~~ ~~~~~~~~~~
+     3601 ~~~~~~~~~~ ~~~~~<~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~>
+     3661 ~~|~~~~~~( ~~~)~~~~~~ ~~~~~~~~~| ~~~~~(~~~~ ~~~)~~~~~~ ~~~~~~|~~~
+     3721 ~~~~~~~~~~ ~~~~~(~~~~ )~~~~~~~~~ ~~~|~|~~~~ ~~~~~~~~~~ ~~~~~~~~~~
+     3781 ~~~~~~~|
+//
+LOCUS       mt.Cac.lac   3788 bp    RNA             RNA       22-JAN-1997
+DEFINITION  Cacozeliana lacertina.
+ACCESSION   AF101007
+KEYWORDS    No information.
+SOURCE      Cacozeliana lacertina.
+  ORGANISM  Cacozeliana lacertina.
+REFERENCE   1  (bases 1 to 2051)
+  AUTHORS   Charles Lydeard, Wallace Holznagel
+  JOURNAL   No information
+  STANDARD  No information
+COMMENTS    Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: UNP00167
+BASE COUNT     465 a    213 c    276 g    388 t   2446 others
+ORIGIN
+        1 |~~~~~~~~~ ~~~~~~~~~~ ~~~auauggc -------uga auu|acu-ug u|uaa-----
+       61 -|-------- ---|----(- -----)-|-- ---------- --|------( -------)--
+      121 ---------- ---------- -------(-- --)---|--- ----(----) ----------
+      181 ---------( -----)---- ---------< aaauucuaga uagauauu-- ----------
+      241 ---------- ---->----- |--------- uga(aaca)u cuauugu--- ----------
+      301 -----(---- )-----|--- cuuaguaaa( ggcga)aaga aa-------- -----<ggaa
+      361 aauuaau--- ---------- -------->- ---------- ---------- ----------
+      421 -----(---- )--------| -(---)---- -(-------) ---------- ----------
+      481 ---------- ---------- --------(- --------)- ---------- --------(-
+      541 -----)---- ---------- ---------- ---------- -auuaaagua cc(-gaga)g
+      601 ggaacaauaa aag------- ---------- ---------- ---------- ------cuuc
+      661 u<-------- ---------- ------a>aa aaacaACU-- -------(-- aaau-)----
+      721 -----AGUGU ACUUU(UCGC AUC)ACGGCC U-AGCAAGA- ----guaaa- ----------
+      781 --------(- ----)----- --------(- ---)---<-- auuugaa>-- ---(-----)
+      841 ---------- --------uu aacuuuCUCG AAAGCCG-GC GAGCUAUCUU UUUCu--ggu
+      901 ---------- (uuuuuagaa cauuuau)-- ---------g cu----auua A-AAAU(GUG
+      961 GCAA-A)AUU U-Uaaua-aa aGGAAAAGAU AGCUGU(AAU AC)GCUuuuc gCGCUGGU-G
+     1021 AUAGCUAGUU CUUCCAAAA- AGGUAU(-AU AA)GUGCCGA ggc-gagu<g aaaugccuaa
+     1081 ggcu(aaaa) agcuagcaaa gguuuc---- -------->- ----|----- -|------|-
+     1141 ---------- ---------- --(-----)< ---------- ---------- ----------
+     1201 ----->---- ---------- ---------- ------|--- ---------- cucagcc--u
+     1261 aaaaAGACUU A-AG(GAUAA G)CUUAAGUC UA---aaacg (gaa-aau)a guagug----
+     1321 ------uuau uaacuc---- ---------- ---------- ---------- ----------
+     1381 ---------- <--------- ---------- ------>aau gu-aggc(uu gaaacu-a)g
+     1441 cca-gcau|a (u-a)-|aag ucu(guuaua )ag|aua--- ----<guucu auaagaaaaa
+     1501 agauuuauuu acucaccucu ccguaaa>-- ---------| ---------- ----------
+     1561 ---------| ---------| ----|----- ----(----) ---------- agaaUGGAAG
+     1621 |ua-uaguuu u-u------- ---------( ------)<aa uau------- ->--------
+     1681 -------a|a aaacuuaugc uAAUGC-UAG G|AUGAGUA- UUUu------ ----(-----
+     1741 )-------|- ---------- --------|- ---------- (-----)--| ----------
+     1801 ---------- ---------- --(----)<a ccaguu-ggu -aucgcgggc uaauacauua
+     1861 aauuaugccc uauuuuucua uaaaaac->- ---------- ---------- -(--------
+     1921 )-----|--| ---------- -|-------- ---------- ---------- -------(--
+     1981 --------)- -----|---- ---------- |--------- ---(-----) --|-------
+     2041 ---------- ---------- -------(-- --)------- ---------- ----------
+     2101 ---------- ----<----- ---------- ----->---- ---------- ----------
+     2161 -|-------- -(------)- -|-------- --(-----)- ---------- ||--uuuua-
+     2221 -aauUAGGAA GAAGGAACUC GGCAAC---- ---------( ----)----- ------|---
+     2281 ---------- --------(- ----)----- ---------- ----|-(--- )------aau
+     2341 augccu|cgC CUGUUU(AGC AA)AAACAUG GCUCUUUG|A ------(aaa aaac------
+     2401 )------UAA -UAAAGAGUC GGACCUGCCC AGU|GA---- ---------- ----------
+     2461 -(---agu)- ---------- ---------- |---UUUAAC |GG-C|C-GC GGU(AC-UCU
+     2521 G)ACCGUG|C (AAA)GG-UA GCAUAAUCAC UU|GCCUUA( UAAUU)GAAG GC|UGGUAUG
+     2581 AAUGGUUUGA CGAGGGCAUA -ACUGUCUCC UUCCUAauua -u-UAGAAUU U|G|ACCUGU
+     2641 G-GG(UGAAG AGG)CCCAUa u-aaAACUGA AGGACGAGAA GACCCUGUCG -|-AGCUUU-
+     2701 agaag|--aa aguag---|< -------->- ---------- ---------- ----------
+     2761 ---------- ---------- <gcuaaaaua uauaaguaac uauaaag--- ----------
+     2821 ---------- ---------- --->(----) ---------- ---------- ----------
+     2881 -|-------- ---------- ---------- ---(-----) ---------- -----cuacu
+     2941 cuu--a-uuc aUUGGUUG(G GG)CGACA|A GGGAA(---- -----caau- agaagc-)UU
+     3001 CCCU|u|a|a ua-------- -|-------- -(-------) ---------- -|--(-|---
+     3061 --)------- ---------- --------(- ------)--- ---------- ----------
+     3121 --<------- ----aauaaa cauauau>|- gu-aagGAUC cagg------ ---(-----a
+     3181 uu)--|---c cugAUUACA- |aaa-AUUAG UUACCG|CAG G|GAUAACAG |C-AUAAUCU
+     3241 UUUUUGAGAG (A--CCUU)A UCGAAAAGGG GGGUUGUGAC CUCGAUGUU| GGAC|U|AGG
+     3301 AU|AUCC-CG AAGGUG(CA- GA)AGCCUUC GAU-GGU|UG GUC(UGUUC) GACCAUUAAA
+     3361 AUCCUACAUG AUCUGAGUUC AGACC|GGC( GUGA)GCCAG GUCAGUUUCU AUCC|UCAGU
+     3421 ---|-<---- -uuuuua>-- ---------- ------c-uc aggcc(UAGU AC(GAAA)GG
+     3481 AUC)gggcu- ggggaaa--- ---------- ---|------ -(aaa-)--- ----------
+     3541 ---------u uucuau---- --------(- ---------- ---)------ ----------
+     3601 ---------- -----<agua gaaaagauau aauuuuuaac uuaagauuau u~~~~~~~~>
+     3661 ~~|~~~~~~( ~~~)~~~~~~ ~~~~~~~~~| ~~~~~(~~~~ ~~~)~~~~~~ ~~~~~~|~~~
+     3721 ~~~~~~~~~~ ~~~~~(~~~~ )~~~~~~~~~ ~~~|~|~~~~ ~~~~~~~~~~ ~~~~~~~~~~
+     3781 ~~~~~~~|
+//
+LOCUS       mt.P.palud   3788 bp    RNA             RNA       22-JAN-1997
+DEFINITION  Paracrostoma paludiformis subsp. was Brotia.
+ACCESSION   AF101008 
+KEYWORDS    No information.
+SOURCE      Paracrostoma paludiformis subsp. was Brotia.
+  ORGANISM  Paracrostoma paludiformis.
+REFERENCE   1  (bases 1 to 2051)
+  AUTHORS   Wally Holznagel, Chuck Lydeard
+  JOURNAL   No information
+  STANDARD  No information
+COMMENTS    Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: UNP00166
+BASE COUNT     490 a    194 c    254 g    421 t   2429 others
+ORIGIN
+        1 |~~~~~~~~~ ~~~~~~~~~u uaagaacaug aauu----uu aau|acu-aa a|uga-----
+       61 -|-------- ---|----(- -----)-|-- ---------- --|------( -------)--
+      121 ---------- ---------- -------(-- --)---|--- ----(----) ----------
+      181 ---------( -----)---- ---------< ---------- ---------- ----------
+      241 ---------- ---->----- |uuuuauuuu uga(agca)u caaaaag--- ----------
+      301 -----(---- )-----|--- ccuaguaau( ggaga)aaga aa-------- -----<cuug
+      361 gug------- ---------- -------->- ---------- ---------- ----------
+      421 -----(---- )--------| -(---)---- -(-------) ---------- ----------
+      481 ---------- ---------- --------(- --------)- ---------- --------(-
+      541 -----)---- ---------- ---------- --ugcuaaga aagaagagua cu(-gcaa)a
+      601 ggaau-auug uu-------- ---------- ---------- ---------- ----aauuaa
+      661 g<-------- ---------- ------c>ca uagcagcua- -------(-- aaga-)----
+      721 ----uagcGU ACUUU(UUGC AUC)ACGGUU U-AGCAAGAg aa--uaucga ----------
+      781 --------(- ----)----- --------(- ---)---<-- ---agcu>-- ---(-----)
+      841 ---------- -------ucg -ug-cuCUCG AAAACUG-GU GAGCUAUUCU UUUUc-aagu
+      901 ---------- (--------- ---uuua)-- ---------g cuuuuuacua A-AAGU(GUA
+      961 GCAA-A)ACU U-Ugguu-aa aAAAAAGGAU AGAUAU(GAG AU)Uuuaucc gcACCGGU-G
+     1021 AUAGCUAGUU cccuuagaa- AAGCAU(-AG AA)GUGCUAA aguaaaga<c agauuaguga
+     1081 g(aaauaaga )cuuaauaau uug------- -------->- ----|----- -|------|-
+     1141 ---------- ---------- --(-----)< ---------- ---------- ----------
+     1201 ----->---- ---------- ---------- ------|--- ---------- uuuuaca-uu
+     1261 auaGUUUAUU A-AG(GAUAA G)CUUAAUAA AA-guacagg (aaa-aag)a cauauacu--
+     1321 -----uuaau gggu------ ---------- ---------- ---------- ----------
+     1381 ---------- <--------- ---------- ------>uac uu-gggc(uu gaaauu-a)g
+     1441 cca-uuau|a (acg)-|aaa uuu(guuaua )aa|aua--- ----<auucu uucaauuaag
+     1501 aggauuccua uguuuuuguu cugcucg>-- ---------| ---------- ----------
+     1561 ---------| ---------| ----|----- ----(----) ---------- acaaUAAGGG
+     1621 |UA-aaa-ag u--------- ---------( ------)<aa aacuaauaa- ->--------
+     1681 --------|g cucaauuuau uUAUGC-UAA A|AUGAGUA- UUUucac--- ----(-----
+     1741 )-------|- ---------- --------|- ---------- (-----)--| ----------
+     1801 ---------- ---------- --(----)<a cccacaugua ggu-aaacac uaaagguacc
+     1861 uauaguaaua uagcuuaaaa ag------>- ---------- ---------- -(--------
+     1921 )-----|--| ---------- -|-------- ---------- ---------- -------(--
+     1981 --------)- -----|---- ---------- |--------- ---(-----) --|-------
+     2041 ---------- ---------- -------(-- --)------- ---------- ----------
+     2101 ---------- ----<----- ---------- ----->---- ---------- ----------
+     2161 -|-------- -(------)- -|-------- --(-----)- ---------- ||----uua-
+     2221 -aaaUAAAAA GAAGGAACUC GGCAAA---- ---------( ----)----- ------|---
+     2281 ---------- --------(- ----)----- ---------- ----|-(--- )-------uu
+     2341 uuacnu|cgC CUGUUU(AUC AA)AAACAUG GCUCUUUG|U ug----(uuu ----------
+     2401 )----uaAUA -UAAAGAGUC AGGCCUGCCC AGU|GAA--- ---------- ----------
+     2461 -(---aac)- ---------- ---------- |--UUUUAAC |GG-C|C-GC GGU(AC-CCU
+     2521 G)ACCGUG|C (AAA)GG-UA GCAUAAUCAU UU|GCCUUA( UAAUU)GAAG GC|UUGUAUG
+     2581 AAUGGUUCAA CGAAAGCACU -GCUGUCUCC UUUUUAauag -a-UAGAAUU U|G|ACUUCU
+     2641 A-GG(UGAAG AGG)CCUAGa u-auAAUUGA AAGACAAAAA GACCCUGUCG -|-AGCUUUa
+     2701 aaagu|ca-a guuagaaa|< -------->- ---------- ---------- ----------
+     2761 ---------- ---------- <uacuuauaa aauaauuuag aucuagca-- ----------
+     2821 ---------- ---------- --->(----) ---------- ---------- ----------
+     2881 -|-------- ---------- ---------- ---(-----) ---------- -----cuaac
+     2941 -ugu-u-cuu uUUGGUUG(G GG)CGACC|A AGGAA(---- -----caau- aaaagc-)UU
+     3001 CCUU|u|u|c ua-------- -|-------- -(-------) ---------- -|--(-|---
+     3061 --)------- ---------- --------(- ------)--- ---------- ----------
+     3121 --<------- ----auuuaa cuuauag>|- gu-acUGAUC cagc------ ---(---aua
+     3181 aa)--|---g cugAUUGAA- |aaa-AUUAG UUACCG|CAG G|GAUAACAG |C-AUAAUCU
+     3241 CUCUUGAGAG (A--CCAA)A UCGAAAGGGG GGGUUGUGAC CUCGAUGUU| GGAC|U|AGA
+     3301 AU|GUCC-UA AAGAUG(CA- GA)AGUCUUU AAA-GGU|UG GUC(UGUUC) GACCAUUAAA
+     3361 AUUCUACAUG AUCUGAGUUC AGACC|GGC( GUGA)GCCAG GUCAGUUUCU AUCU|UCAAU
+     3421 ---|-<---- -uauuag>-- ---------- ------u-uu aauuu(UAGU AC(GAAA)GG
+     3481 AUC)ggauu- aaagaaa--- ---------- ---|------ -(uua-)--- ----------
+     3541 ---------u uuugaa---- --------(- ---------- ---)------ ----------
+     3601 ---------- -----<uuga gaaaaaauau aauacaaaaa uaaaucacau uuucuuaaa>
+     3661 ~~|~~~~~~( ~~~)~~~~~~ ~~~~~~~~~| ~~~~~(~~~~ ~~~)~~~~~~ ~~~~~~|~~~
+     3721 ~~~~~~~~~~ ~~~~~(~~~~ )~~~~~~~~~ ~~~|~|~~~~ ~~~~~~~~~~ ~~~~~~~~~~
+     3781 ~~~~~~~|
+//
+LOCUS       mt.L.bleek   3788 bp    RNA             RNA       25-DEC-1997
+DEFINITION  Mitochondrion Loligo bleekeri.; tRNASerGCU; tRNA-Lys; tRNA-Trp;
+            12s rRNA; tRNA-Val; 16s rRNA; tRNA-Ile; tRNA-Gln; NADH
+            dehydrogenase 1; tRNA-Pro; NADH dehydrogenase 6; cytochrome b
+            apoenzyme; tRNA-Ser; NADH dehydrogenase 3; cytochrome c oxidase 2.
+ACCESSION   AB009838
+KEYWORDS    tRNASerGCU; tRNA-Lys; tRNA-Trp; 12s rRNA; tRNA-Val; 16s rRNA;
+            tRNA-Ile; tRNA-Gln; NADH dehydrogenase 1; tRNA-Pro;
+            NADH dehydrogenase 6; cytochrome b apoenzyme; tRNA-Ser;
+            NADH dehydrogenase 3; cytochrome c oxidase 2.
+SOURCE      Mitochondrion Loligo bleekeri.
+  ORGANISM  Mitochondrion Loligo bleekeri.
+REFERENCE   1  (bases 1 to 8148)
+  AUTHORS   Tomita,K., Ueda,T. and Watanabe,K.
+  TITLE     sequencing Completing of squid (Loligo breekeri) mitochondiral
+            genome
+  JOURNAL   Unpublished (1998)
+  STANDARD  No information
+REFERENCE   2  (bases 1 to 8148)
+  AUTHORS   Tomita,K.
+  TITLE     Direct Submission
+  JOURNAL   Submitted (15-DEC-1997) to the DDBJ/EMBL/GenBank databases. Kozo
+            Tomita, University of Tokyo, Department of Chemistry &
+            Biotechnology; 7-3-1, Hongo, Bunkyo-ku, Tokyo 113, Japan (E-mail:
+            tomita@kwl.t.u-tokyo.ac.jp, Tel: 03-3812-2111, Fax:03-5800-6950)
+  STANDARD  No information
+COMMENTS    Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: AB009838
+BASE COUNT     448 a     98 c    235 g    521 t   2486 others
+ORIGIN
+        1 |~~~~~~~~~ ~uaaagaauu aaguuacaaa gug-----uu gua|uuuuaa u|gua-----
+       61 -|-------- ---|----(- -----)-|-- ---------- --|------( -------)--
+      121 ---------- ---------- -------(-- --)---|--- ----(----) ----------
+      181 ---------( -----)---- ---------< ---------- ---------- ----------
+      241 ---------- ---->----- |--------- -au(aaaa)a u--------- ----------
+      301 -----(---- )-----|--- ---------( -----)---- ---------- -----<uguu
+      361 uauuauuuag guauuaauag cauagaua>- ---------- ---------- ----------
+      421 -----(---- )--------| -(---)---- -(-------) ---------- ----------
+      481 ---------- ---------- --------(- --------)- ---------- --------(-
+      541 -----)---- ---------- ---------- ----aauuuu gguuuaagua cu(-guaa)a
+      601 ggaua-gaag ua-------- ---------- ---------- ---------- --uauuuguu
+      661 u<-------- ---------- ------->uu uaguaaagau -------(-- -aaa-)----
+      721 ---auuuuGU ACCUU(UUGU AUA)AUGGGU U-GAUgauau uauuag-uu- ----------
+      781 --------(- ----)----- --------(- ---)---<-g uuuauag>-- ---(-----)
+      841 ---------- ---------a gcu-auCUCG AAUUGAA-AG GAUUUAUUUG Auaau-----
+      901 ---------- (--------- -------)-- ---------- -----auau- guUAAC(GUG
+      961 GUAA-A)GUU A-uaugu-uG AUUAUUGAAU GGUAAU(GAA AU)GUUuauc guUUUUCAGU
+     1021 AUAGCUAGUU UAUUAGUGAU AAGUAU(-uu aa)GUACUau aguguu--<g uguaaaua(a
+     1081 aaauuua)ua uuua------ ---------- -------->- ----|----- -|------|-
+     1141 ---------- ---------- --(-----)< ---------- ---------- ----------
+     1201 ----->---- ---------- ---------- ------|--- ---------- -aacauuagu
+     1261 uuauUGUAUG A-GG(GAUAA G)CUUUAUAU AA-gaaugua (gaauauu)u agua------
+     1321 ----guaaua uuuauuauaa uu-------- ---------- ---------- ----------
+     1381 ---------- <--------- ---------- ------>uaa guagggu-ua aagauauu-g
+     1441 uuuuucuu|a (aug)-|auu uaa(guuuua )ug|u----- ----<augua uauguauuca
+     1501 ggua------ ---------- ------->-- ---------| ---------- ----------
+     1561 ---------| ---------| ----|----- ----(----) ---------- gaagUUAAUA
+     1621 |aa-ugguua uu-------- ---------( ------)<aa ugua------ ->--------
+     1681 -------a|g uaacuaaauA UAAUGU-UAA U|AUGAGUA- Uuaggu---- ----(-----
+     1741 )-------|- ---------- --------|- ---------- (-----)--| ----------
+     1801 ---------- ---------- --(----)<a aacaua(uuu a)uauguuug uggugguuau
+     1861 aauug(uaaa )uaguuauaa guuuugua>- ---------- ---------- -(--------
+     1921 )-----|--| ---------- -|-------- ---------- ---------- -------(--
+     1981 --------)- -----|---- ---------- |--------- ---(-----) --|-------
+     2041 ---------- ---------- -------(-- --)------- ---------- ----------
+     2101 ---------- ----<----- ---------- ----->---- ---------- ----------
+     2161 -|-------- -(------)- -|-------- --(-----)- ---------- ||-uaagua-
+     2221 -aaaUAAAAU AAAGGAAUUC GGCAAA---- ---------( ----)----- ------|---
+     2281 ---------- --------(- ----)----- ---------- ----|-(--- )------uaG
+     2341 UAAUCU|CGC CUGUUU(AUC AA)AAACAUC UCUCUUUG|U ------(aau uuau------
+     2401 )------AUA -UAAGGAGUU GGGCCUGCUC GGU|GA---- ---------- ----------
+     2461 -(--aaau)- ---------- ---------- |---UUUAAC |AG-C|U-GC GGU(AU-UUU
+     2521 A)ACUGUA|C (UAA)GG-UA GCAUAAUAAU UU|GCCUUA( UAAUU)UGAG GC|UAGAAUG
+     2581 AAUGGUUUGA CGAAGGUUAA -UCUGUCUCU AUUUUAuuuc -u-UAGAAAU U|A|AUUUUC
+     2641 AUAG(UGAAA AAG)CUUGAA U-ucuUUAAA GGGACGAGAA GACCCUAUau u|uAAUUcu-
+     2701 uau--|u--a uuu-----|< uuuu---->- ---------- ---------- ----------
+     2761 ---------- ---------- <--------- ---------- ---------- ----------
+     2821 ---------- ---------- --->(----) ---------- ---------- ----------
+     2881 -|-------- ---------- ---------- ---(-----) ---------- -------aga
+     2941 -u---u-uau uUUAAUUG(G GG)UGAUU|A AGGAA(uaaa guauauuagu uaguaac)UU
+     3001 CCUU|a|g|u ag-------- -|-------- -(-------) ---------- -|--(-|---
+     3061 --)------- ---------- --------(- ------)--- ---------- ----------
+     3121 --<------- -----gauau auuguug>|a auaaaguaac cgauauuacg ---(uauaga
+     3181 ac)-c|guau auugcuuau- |-aa-UAUAG UUACCA|UAG G|GAUAACAG |C-GUAAUUU
+     3241 AUUUAGAGAG (U--UCUU)A UUGAAAAAUA AGAUUGCGAC CUCGAUGUU| GGAU|U|AAA
+     3301 GU|AACC-UU AAGGUG(CA- GA)AGCUUUA AUA-GGU|AA AUC(UGUUC) GAUUUUUAAA
+     3361 ACUUUACAUG AUCUGAGUUC AGACC|GGC( GUGA)GCCAG GUUGGUUUCU AUCU|UUUAA
+     3421 ---|-<agau uguuauu>-- ---------- ------g-cu ucuuu(UAGU AC(GAAA)GG
+     3481 AUC)gaagaa agcuaaa--- ---------- ---|------ -(guu-)--- ----------
+     3541 ---------u uuau------ ---uaaac(g ugaauaaaau aa-)guuua- ----------
+     3601 ---------- -----<uuc~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~>
+     3661 ~~|~~~~~~( ~~~)~~~~~~ ~~~~~~~~~| ~~~~~(~~~~ ~~~)~~~~~~ ~~~~~~|~~~
+     3721 ~~~~~~~~~~ ~~~~~(~~~~ )~~~~~~~~~ ~~~|~|~~~~ ~~~~~~~~~~ ~~~~~~~~~~
+     3781 ~~~~~~~|
+//
+LOCUS       mt.M.eduli   3788 bp    RNA             RNA       ~?~????
+DEFINITION  Mitochondrion Mytilus edulis.
+ACCESSION   M83756
+KEYWORDS    No information.
+SOURCE      Mitochondrion Mytilus edulis.
+  ORGANISM  Mitochondrion Mytilus edulis.
+REFERENCE   1
+  AUTHORS   No information
+  JOURNAL   No information
+  TITLE     No information
+  STANDARD  No information
+COMMENTS    Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: M83756
+            LOCUS       MSLMTFR1A    5314 bp ds-DNA             ORG       09-JUL-1992
+            DEFINITION  Mytilus edulis mitochondrial NADH dehydrogenase subunit 5 (ND5)
+                        gene, 3' end; NADH dehydrogenase subunit 6 (ND6) gene, complete
+                        cds; and cytochrome b (cyt b), 5' end.
+            ACCESSION   M83756
+            KEYWORDS    NADH dehydrogenase subunit 5; NADH dehydrogenase subunit 6;
+                        cytochrome b; large subunit ribosomal RNA;
+                        small subunit ribosomal RNA; transfer RNA-Asn; transfer RNA-Asp;
+                        transfer RNA-Cys; transfer RNA-Gln; transfer RNA-Glu;
+                        transfer RNA-Gly; transfer RNA-Ile; transfer RNA-Phe;
+                        transfer RNA-Tyr.
+            SOURCE      Mitochondrion Mytilus edulis (chromosome Mitochondrion Mytilus
+                        edulis) adult DNA.
+              ORGANISM  Mitochondrion Mytilus edulis
+                        Eukaryota; Animalia; Eumetazoa; Mollusca; Bivalvia;
+                        Isofilibranchia; Mytiloida; Mytilaceae; Mytilidae.
+            REFERENCE   1  (bases 1 to 5314)
+              AUTHORS   Brown,W.M., Boore,J.L. and Hoffmann,R.J.
+              TITLE     A novel mitochondrial genome organization for the blue mussel,
+                        Mytilus edulis
+              JOURNAL   Genetics 131, 397-412 (1992)
+              STANDARD  full staff_review
+            FEATURES             Location/Qualifiers
+                 CDS             <1..245
+                                 /product="NADH dehydrogenase subunit 5"
+                                 /gene="ND5"
+                                 /note="putative"
+                                 /codon_start=1
+                                 /translation="EDVVYRKFNFSSWEGVFFKGSRTVAQSLDQGWLELLGPQGVHAG
+                                 LGQFSCLNEIVQKNYFTYQLVVWGLLVAGGVSLIIFM"
+                                 /citation=[1]
+                 CDS             246..722
+                                 /product="NADH dehydrogenase subunit 6"
+                                 /gene="ND6"
+                                 /note="putative"
+                                 /codon_start=1
+                                 /translation="MRVMIMCVSLMSVFSIVLIAKQPISLGLVFIEGSMIACVEIALE
+                                 VRSLLGFLLFLTYVRGVMVLFLYVLSIYPNEVYRFNLEFVMIVRRCCAMMGLVGLMNY
+                                 EYVEISGSIIFKVYGWRKGVKPMYPNSRRFAVCDVSGVVFVYKNHSAFAKSKMRSR"
+                                 /citation=[1]
+                 tRNA            725..792
+                                 /anticodon=(pos:755..757,aa:Phe)
+                                 /product="tRNA-Phe"
+                                 /note="putative"
+                                 /citation=[1]
+                 rRNA            793..1737
+                                 /note="Location of 5' and 3' ends imprecisely known.
+                                 Nucleotides 997-1539 not determined from both DNA
+                                 strands."
+                                 /product="small subunit rRNA"
+                                 /note="putative"
+                                 /citation=[1]
+                 tRNA            1738..1803
+                                 /anticodon=(pos:1769..1771,aa:Gly)
+                                 /product="tRNA-Gly"
+                                 /note="putative"
+                                 /citation=[1]
+                 tRNA            1804..1868
+                                 /anticodon=(pos:1835..1837,aa:Asn)
+                                 /product="tRNA-Asn"
+                                 /note="putative"
+                                 /citation=[1]
+                 tRNA            1869..1933
+                                 /anticodon=(pos:1899..1901,aa:Glu)
+                                 /product="tRNA-Glu"
+                                 /note="putative"
+                                 /citation=[1]
+                 tRNA            1935..2002
+                                 /anticodon=(pos:1969..1971,aa:Cys)
+                                 /product="tRNA-Cys"
+                                 /note="putative"
+                                 /citation=[1]
+                 tRNA            2003..2069
+                                 /anticodon=(pos:2034..2036,aa:Ile)
+                                 /product="tRNA-Ile"
+                                 /note="putative"
+                                 /citation=[1]
+                 tRNA            2085..2151
+                                 /anticodon=(pos:2114..2116,aa:Gln)
+                                 /product="tRNA-Gln"
+                                 /note="putative"
+                                 /citation=[1]
+                 tRNA            2157..2221
+                                 /anticodon=(pos:2187..2189,aa:Asp)
+                                 /product="tRNA-Asp"
+                                 /note="putative"
+                                 /citation=[1]
+                 rRNA            2222..3465
+                                 /note="Locations of 5' and 3' ends imprecisely known.
+                                 Nucleotides 2222-3293 not determined from both DNA
+                                 strands."
+                                 /product="large subunit rRNA"
+                                 /note="putative"
+                                 /citation=[1]
+                 misc_feature    3466..4623
+                                 /function="unknown"
+                                 /note="May contain replication origin. No known coding
+                                 function."
+                                 /note="putative"
+                                 /citation=[1]
+                 tRNA            4624..4690
+                                 /anticodon=(pos:4655..4657,aa:Tyr)
+                                 /product="tRNA-Tyr"
+                                 /note="putative"
+                                 /citation=[1]
+                                 /partial
+                 CDS             4692..>5314
+                                 /gene="cyt b"
+                                 /note="putative"
+                                 /codon_start=1
+                                 /translation="MVGNNTAYNTNAPKRVGPWRSTNKLVKIMNDRFYDLPCPVNLNA
+                                 WWRFGSMLGLCLVIQLLRGLLLSAHYTAHEDMAFDSVVHIMRNVEKGWMLRNIHANGS
+                                 SMFFICIYAHIARGLYYGSYLDKTVWYFGVHLFLLTMAEAFLGYTLPWGQMSYWGATV
+                                 ITNMLRVRPVVGERMLRYVWGGXTVCNATLKRFYTLHFLLPFCNSGG"
+            BASE COUNT     1620 a    727 c   1236 g   1727 t      4 others
+            ORIGIN
+BASE COUNT     397 a    165 c    265 g    415 t   2546 others
+ORIGIN
+        1 |~~~~~~~~~ ~~~~~~~~~~ ~~~~~aaguu ---------- --a|ucu-uu -|--------
+       61 -|-------- ---|----(- -----)-|-- ---------- --|------( -------)--
+      121 ---------- ---------- -------(-- --)---|--- ----(----) ----------
+      181 ---------( -----)---- ---------< ---------- ---------- ----------
+      241 ---------- ---->----- |--------- acu(aaaa)a g--------- ----------
+      301 -----(---- )-----|--- -----acgu( gcaua)auu- ---------- -----<----
+      361 ---------- ---------- -------->- ---------- ---------- ----------
+      421 -----(---- )--------| -(---)---- -(-------) ---------- ----------
+      481 ---------- ---------- --------(- --------)- ---------- --------(-
+      541 -----)---- ---------- ---------- ---------- -------guu uu(-guga)a
+      601 aagug-gac- ---------- ---------- ---------- ---------- -----uugaa
+      661 c<-------- ---------- ----aaa>gu uaguaUAA-- -------(au aaauu)----
+      721 -----UUAGU ACCUU(UUGC AUA)AGGGUU U-UUCAAGAu c---aa-uuu a-a-------
+      781 --------(- ----)----- --------(- ---)---<-- ---gaau>-- ---(-----)
+      841 ---------- ------uu-a auu-uuCCCG AAUAAAA-GA GAGUUAUUUU UUUGag----
+      901 ---------- (--------- -------)-- ---------- ----uuagg- A-AAUC(GUG
+      961 GUAG-A)GAU U-Ugauu-aa ACUAAAGAAU GGCGGC(UAG AU)ACUAUUC GCGCUUUUAG
+     1021 AUAUCUGGnn GGCUUAAAA- AAAUGU(-GU AA)GCAUUUU cuuuaa--<c uag-------
+     1081 ---------- ---------- ---------- -------->- ----|----- -|------|-
+     1141 ---------- ---------- --(-----)< ---------- ---------- ----------
+     1201 ----->---- ---------- ---------- ------|--- ---------- -uuaagg-gg
+     1261 uaaAAUUUUU U-GG(GUUAA G)CUGAAAAA UG--gugaaa (uug-aug)u uua-aaaa-u
+     1321 uu------uu gguu------ ---------- ---------- ---------- ----------
+     1381 ---------- <--------- ---------- ------>ucu aucaggc(uu uaaacu-g)g
+     1441 cua-uuag|g (uau)-|uag ugu(auuuua )ac|uaa--- ----<aacca aacggagaaa
+     1501 aagauuaauu ggggucauca ucu---->-- ---------| ---------- ----------
+     1561 ---------| ---------| auuu|a---- ----(----) ---------- aaaaUAAGCC
+     1621 |UA-UGAUC- ---------- ---------( ------)<gg ag-------- ->--------
+     1681 --------|- -GGUCAGUAA UUAUGAuAAA A|ACGAGUA- AAAAUAu--- ----(-----
+     1741 )-------|- ---------- --------|- ---------- (-----)--| ----------
+     1801 ---------- ---------- --(----)<u auuuuuuugg uaucacuguu uuguuuuacc
+     1861 uuaaaagauu gacggc---- -------->- ---------- ---------- -(--------
+     1921 )-----|--| ---------- -|-------- ---------- ---------- -------(--
+     1981 --------)- -----|---- ---------- |--------- ---(-----) --|-------
+     2041 ---------- ---------- -------(-- --)------- ---------- ----------
+     2101 ---------- ----<----- ---------- ----->---- ---------- ----------
+     2161 -|-------- -(------)- -|-------- --(-----)- ---------- ||-uaaaUA-
+     2221 -AAGGUUUUU AAAUGAACUC GGCAAA---- ---------( ----)----- ------|---
+     2281 ---------- --------(- ----)----- ---------- ----|-(--- )-----cuaA
+     2341 ACUUCU|CGA CUGUUU(AAC AA)AAACAUU UCCUUUUG|- ------(aug uaag------
+     2401 )--------- -UAAAAGGUA GUCCCUGCCC AGU|GCAac- ---------- -------uag
+     2461 a(guaaug)u cu-------- ---------- |guUGUAAAC |GG-C|G-GC GUU(AA-CGU
+     2521 G)AGCGUC|C (UAA)GG-UA GCGCGAUAAU UU|GCUUUU( CAAUU)GAAG GA|UGGUAUG
+     2581 AAAGGGUUAA CGAAGAAGGU -GCUGUGUCU AAAAAUUC-a -auuu-AAAC U|A|ACUUUA
+     2641 A-GG(UGAAG AGG)CCUUUA U-GUAAAAGA AGGACGACAA GACCCUAUGA -|-AGCUUU-
+     2701 AUCUU|aa-u uggagcu-|< -------->- ---------- ---------- ----------
+     2761 ---------- ---------- <cuca----- ---------- ---------- ----------
+     2821 ---------- ---------- --->(----) ---------- ---------- ----------
+     2881 -|-------- ---------- ---------- ---(-----) ---------- ---ggcucuu
+     2941 -au--A-CGA UUUUGAUG(G GA)GAUCA|G UAGAA(---- -----auaa- ---guc-)UU
+     3001 CUAC|U|a|u c--------- -|-------- -(-------) ---------- -|--(-|---
+     3061 --)------- ---------- --------(- ------)--- ---------- ----------
+     3121 --<-----au auuaaucuua cuaguau>|- ------uucc ua-------- ---(----ac
+     3181 uu)--|---- -ua-UAUgu- |gug-GCUAG CUACUC|UAG G|GAUAACAG |C-GCAAUUU
+     3241 CUCCCGAAAG (A--UGGU)A UUGGAGGGGA AGAUUGCGAC CUCGAUGUU| GGCU|U|UAG
+     3301 AU|AUCC-UA GAGGCG(GA- GA)AGCUUCU GAU-GGU|GG GUC(UGUUC) GCCCUUUAAA
+     3361 AUCUAACAUG AGCUGAGUUC AGAAC|GGC( GUGA)GCUAG UUCAGUUUCU AUCC|UCUUU
+     3421 ---|-<---u ugaaaug>-- ---------- ------a-gc uaauu(UUGU AC(GAAA)GG
+     3481 ACU)uuuuc- gcuaaagc-- ---------- ---|------ -(aau-)--- ----------
+     3541 --------gc uuuguc--ac aaaucugu(g guugc-auaa aua)auagg- ----------
+     3601 ---------- -----<guau aauagguuga uua------- ---------- --------->
+     3661 --|------( ---)------ ---------| gccu-(auag gaa)-ggguu a~~~~~|~~~
+     3721 ~~~~~~~~~~ ~~~~~(~~~~ )~~~~~~~~~ ~~~|~|~~~~ ~~~~~~~~~~ ~~~~~~~~~~
+     3781 ~~~~~~~|
+//
+LOCUS       mt.P.maxim   3788 bp    RNA             RNA       30-SEP-1996
+DEFINITION  Mitochondrion Pecten maximus.; 12S ribosomal RNA; 16S ribosomal
+            RNA; COI gene; cytochrome oxidase subunit 1; NADH dehydrogenase
+            subunit 1; ND1 gene; transfer RNA-Ala; transfer RNA-Asn; transfer
+            RNA-Gly; transfer RNA-Ile; transfer RNA-Lys; tRNA-Ala gene;
+            tRNA-Asn gene; tRNA-Gly gene; tRNA-Ile gene.
+ACCESSION   X92688
+KEYWORDS    12S ribosomal RNA; 16S ribosomal RNA; COI gene;
+            cytochrome oxidase subunit 1; NADH dehydrogenase subunit 1;
+            ND1 gene; transfer RNA-Ala; transfer RNA-Asn; transfer RNA-Gly;
+            transfer RNA-Ile; transfer RNA-Lys; tRNA-Ala gene; tRNA-Asn gene;
+            tRNA-Gly gene; tRNA-Ile gene.
+SOURCE      Mitochondrion Pecten maximus.
+  ORGANISM  Mitochondrion Pecten maximus.
+REFERENCE   1  (bases 1 to 5529)
+  AUTHORS   Sellos,D., Mommerot,M. and Rigaa,A.
+  TITLE     Molecular cloning and sequencing of a 5.5kbp fragment flanking the
+            putative origin of replication
+  JOURNAL   Unpublished
+  STANDARD  No information
+REFERENCE   2  (bases 1 to 5529)
+  AUTHORS   Sellos,D.Y.
+  TITLE     Direct Submission
+  JOURNAL   Submitted (31-OCT-1995) D.Y. Sellos, College de France/CNRS,
+            Laboratoire de Biologie Marine, BP 225, 29182 Concarneau Cedex,
+            FRANCE
+  STANDARD  No information
+COMMENTS    Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: X92688
+            Related sequences: X67246, X82501, X80659 &amp; X80660.
+BASE COUNT     396 a    195 c    372 g    448 t   2377 others
+ORIGIN
+        1 |~~~~~~~~~ ~~~~~~~~~~ ~gguaaauca -------uuu uuu|auu-gu -|--------
+       61 -|-------- ---|----(- -----)-|-- ---------- --|------( -------)--
+      121 ---------- ---------- -------(-- --)---|--- ----(----) ----------
+      181 ---------( -----)---- ---------< ---------- ---------- ----------
+      241 ---------- ---->----- |--------- -cu(uagu)a gaggaga--- ----uagaau
+      301 u----(---- )-----|aga cguuuaagc( ggcga)ua-- ---------- -----<----
+      361 ---------- ---------- -------->- ---------- ---------- ----------
+      421 -----(---- )--------| -(---)---- -(-------) ---------- ----------
+      481 ---------- ---------- --------(- --------)- ---------- --------(-
+      541 -----)---- ---------- ---------- ------gaua auagauagua gc(-guga)g
+      601 ugaag-guua aauaa----- ---------- ---------- ---------a uuaaacagug
+      661 a<-------- ---------- ------->ag uaucgguggu -------(-- gagc-)----
+      721 ---acu-cGC ACCUU(UUGC AUC)AUGGCU UaUACUACU- ----uu-uu- ----------
+      781 --------(- ----)----- --------(- ---)---<-a ugcugag>-- ---(-----)
+      841 ---------- ---------g aaguauCCCG AAAGUUUUGU GAUCUACUUU CUUAcuu---
+      901 ---------- (--------- -------)-- ---------- ----uaCAG- GuUGGC(GUU
+      961 AUAUuU)GCU A-UCUGG-AG AUGGGGAGAU AGUGGC(GAA AU)ACUuuuc gcACUGGUUG
+     1021 AUAGCUGGUU AUUCCGGAA- AUAUAU(-UU AA)GUAUAg- ucuucggu<u gaugggguuu
+     1081 acaguuuga( uaauucuaa) uaguauuugg gcuguuuu>- ----|----- -|------|-
+     1141 ---------- ---------- --(-----)< ---------- ---------- ----------
+     1201 ----->---- ---------- ---------- ------|--- ---------- ucgaagg-gg
+     1261 ucaGCCCCCU C-AG(GCUAA G)CUGAGGGG GCuauuuuaa (aggaugg)u uaauuaag-a
+     1321 augga---aa ggcuaa---- ---------- ---------- ---------- ----------
+     1381 ---------- <--------- ---------- ------>gaa gu-gggc(uu gaagg--a)g
+     1441 uua-ucuu|u (aug)-|gag ugg(guuaaa )cc|aca--- ----<aauga gccuuguaua
+     1501 auaaauuaaa uuuuaucua- ------->-- ---------| ---------- ----------
+     1561 ---------| ---------| ucuu|ugugu ----(----) ---------- uguaCGGAAU
+     1621 |cu-cuuuuu -ga------- ---------( ------)<aa caauaa---- ->--------
+     1681 ------uu|- auagagguGA UAAUGU-AAA G|AUGAGUA- GUcgaga--- ----(-----
+     1741 )-------|- ---------- --------|- ---------- (-----)--| ----------
+     1801 ---------- ---------- --(----)<- -aguuguaag uguuuuaagg ucggggaaag
+     1861 aaacguaagg uuauguuccg u------->- ---------- ---------- -(--------
+     1921 )-----|--| ---------- -|-------- ---------- ---------- -------(--
+     1981 --------)- -----|---- ---------- |--------- ---(-----) --|-------
+     2041 ---------- ---------- -------(-- --)------- ---------- ----------
+     2101 ---------- ----<----- ---------- ----->---- ---------- ----------
+     2161 -|-------- -(------)- -|-------- --(-----)- ---------- ||auuuuua-
+     2221 -aaaaAAGCU AAAGGAACUC GGCAAA---- ---------( ----)----- ------|---
+     2281 ---------- --------(- ----)----- ---------- ----|-(--- )------uaa
+     2341 GGGGAC|CGC CUGUUU(AUC AA)AAACAUG GCUCCCUG|- ------(agc aaua------
+     2401 )--------- -UGGGGGGUC GUGCCUUCCC GGU|GAGcu- ---------- ----------
+     2461 -(--ugcg)- ---------- ---------- |ggcuuAAAC |GG-A|C-GC GGU(AA---A
+     2521 G)--CGUG|C (UAA)GG-UA GCUAAAUUau g-|GCCUAU( UAAUU)GUAG GU|CC-ugUG
+     2581 AAUGGUUUGA CGAGUUUCCA -ACUGUCUCU AGUUUUUuuu -g-GUGAACU U|G|AAUUGG
+     2641 A-UG(UGCAA AUG)CUUCCA U-GGGUAAGA AAGACGAGAA GACCCCGUGA -|-AGUUaga
+     2701 aauuu|aa-g uuauuggg|< -------->- ---------- ---------- ----------
+     2761 ---------- ---------- <aaguuccaa ggcuauuugu ggccgaaucg uugaggagca
+     2821 cuagaacuua guguuucaga agg>(----) ---------- ---------- ----------
+     2881 -|-------- ---------- ---------- ---(-----) ---------- -ggugaauaa
+     2941 -uag-c-AGU UUUGGCUG(G GG)CAGCA|A AGGAG(---- -----caaa- -gcuaga)CU
+     3001 CCUU|u|a|g gg-------- -|-------- -(-------) ---------- -|--(-|---
+     3061 --)------- ---------- --------(- ------)--- ---------- ----------
+     3121 --<uguaaaa cagauguguu acgaccc>|- ac-aaac--- auua------ ---(---agg
+     3181 ug)--|---u gau-uauca- |-ga-AGAAG UUACUC|CGG G|GAUAACAG |C-GUAAUCU
+     3241 GUCUUGAUAG (U--UCUU)A UAGAUGGGCG GGUUUGCGAC CUCGAUGUU| GGCU|C|UGG
+     3301 AU|AUCC-UA AGGCUU(gua gg)CGGUCUU GAG-GGU|UG GUU(CGUUC) GCCCAUAAAA
+     3361 AUCUGACGUG AGCUGAGUUC AGAUC|GGU( GAAA)GCUAG GUCGGUUUCU AUCU|UCUUU
+     3421 ---|-<cuuu uaaaauu>-- ---------- ------g-gg cuuua(GGGU AC(GAAA)GG
+     3481 ACA)uuuag- uuccaggu-- ---------- ---|------ -(gaug)--- ----------
+     3541 --------gc cuguagugug ugauuuua(g aauaauuuua aua)uaaaa- ----------
+     3601 ---------- -----<aagu uuaucuauaa ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~>
+     3661 ~~|~~~~~~( ~~~)~~~~~~ ~~~~~~~~~| ~~~~~(~~~~ ~~~)~~~~~~ ~~~~~~|~~~
+     3721 ~~~~~~~~~~ ~~~~~(~~~~ )~~~~~~~~~ ~~~|~|~~~~ ~~~~~~~~~~ ~~~~~~~~~~
+     3781 ~~~~~~~|
+//
+LOCUS       mt.K.tunic   3788 bp    RNA             RNA       12-OCT-1994
+DEFINITION  Mitochondrion Katharina tunicata.; .
+ACCESSION   U09810
+KEYWORDS    .
+SOURCE      Mitochondrion Katharina tunicata.
+  ORGANISM  Mitochondrion Katharina tunicata.
+REFERENCE   1  (bases 1 to 15532)
+  AUTHORS   Boore,J.L. and Brown,W.M.
+  TITLE     Complete DNA sequence of the mitochondrial genome of the black
+            chiton, Katharina tunicata
+  JOURNAL   Genetics 138, 423-443 (1994)
+  STANDARD  No information
+REFERENCE   2  (bases 1 to 15532)
+  AUTHORS   Boore,J.L.
+  TITLE     Direct Submission
+  JOURNAL   Submitted (17-MAY-1994) Jeffrey L. Boore, Cell Biology and
+            Neuroanatomy, University of Minnesota, 321 Church St. SE,
+            Minneapolis, MN 55455, USA
+  STANDARD  full automatic
+COMMENTS    Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: U09810
+            NCBI gi: 557273
+BASE COUNT     511 a    163 c    168 g    433 t   2513 others
+ORIGIN
+        1 |~~~~~~~~~ ~~~~~~~~~~ ~~~~accuu- -------cca aua|aca-au u|aca-----
+       61 -|-------- ---|----(- -----)-|-- ---------- --|------( -------)--
+      121 ---------- ---------- -------(-- --)---|--- ----(----) ----------
+      181 ---------( -----)---- ---------< aauuuuuuaa uucaaaaccc uu--------
+      241 ---------- ---->----- |--------- ---(----)- ---------- ----aua---
+      301 -----(---- )-----|uaa auuaguauc( caaa-)aaaa ac-uuua--- -----<----
+      361 ---------- ---------- -------->- ---------- ---------- ----------
+      421 -----(---- )--------| -(---)---- -(-------) ---------- ----------
+      481 ---------- ---------- --------(- --------)- ---------- --------(-
+      541 -----)---- ---------- ---------- -----auuua aacaacagua cu(-guaa)a
+      601 ggaaua---- ---------- ---------- ---------- ---------a augaaguaca
+      661 g<-------- ---------- ------->ua aaguAUAG-- -------(au uaaca)----
+      721 -----CUAGU ACCUU(UUGC AUU)AUGGUU U-AACGAGAu u---au-uuu a-u-------
+      781 --------(- ----)----- --------(- ---)---<-- ----auu>-- ---(-----)
+      841 ---------- -----aua-a uau-caCUAG AAAAAAA-AG GAGCUAUAUA UAAAC-----
+      901 ---------- (--------- -------)-- ---------- -----uuua- u-UAAU(GUA
+      961 GCAA-A)AUU Aaauuaa-uG AUUUAUUUAU AGAAGU(UAA AU)GCAUGCC GUCUUUUUUG
+     1021 AUAGCUAGUU AAAAGAGAA- AAGUAU(-AU AA)GUACUaa uuuaaau-<u acuaaaaauu
+     1081 auuuuuuaau auaccgua-- ---------- -------->- ----|----- -|------|-
+     1141 ---------- ---------- --(-----)< ---------- ---------- ----------
+     1201 ----->---- ---------- ---------- ------|--- ---------- auuuaaa-uu
+     1261 acaAUUUUAU U-AG(GCUAA G)CUAAUAAA AU--uuaaaa (gaa-aau)u guuaacc---
+     1321 ---------- uuuaauu--- ---------- ---------- ---------- ----------
+     1381 ---------- <--------- ---------- ------>aau gu-aagc(uu aauagu-a)g
+     1441 cua-ucau|a (uua)a|ua- -gu(ucuuua )ac|aaa--- ----<uaaaa ucaaaaauua
+     1501 uaccuaauuu cuuuuu---- ------->-- ---------| ---------- ----------
+     1561 ---------| ---------| ----|----- ----(----) ---------- aauaUCUUUU
+     1621 |cuuauuuaa ---------- ---------( ------)<aa uuuaaaaac- ->--------
+     1681 --------|- uuaaauuagu uUAUGU-UAA A|AUGAGUA- uuaaaa-u-- ----(-----
+     1741 )-------|- ---------- --------|- ---------- (-----)--| ----------
+     1801 ---------- ---------- --(----)<c aaauauaguu uauaaagccc aagaauaaaa
+     1861 acuuuuaaac aaaaaaa--- -------->- ---------- ---------- -(--------
+     1921 )-----|--| ---------- -|-------- ---------- ---------- -------(--
+     1981 --------)- -----|---- ---------- |--------- ---(-----) --|-------
+     2041 ---------- ---------- -------(-- --)------- ---------- ----------
+     2101 ---------- ----<----- ---------- ----->---- ---------- ----------
+     2161 -|-------- -(------)- -|-------- --(-----)- ---------- ||-uauuau-
+     2221 -aaAUGUAAA AAAGGAACUC GGCAAA---- ---------( ----)----- ------|---
+     2281 ---------- --------(- ----)----- ---------- ----|-(--- )------uuc
+     2341 UAGCCC|CGC CUGUUU(AUC AA)AAACAUC GCUCUUUG|A ------(aaa uuau------
+     2401 )------UAA -UAAAGAGUC GUGCCUGCCC AGU|GA---- ---------- ----------
+     2461 -(--aauu)- ---------- ---------- |---UUAAAC |GG-C|C-GC AGU(AC-CCU
+     2521 G)ACUGUG|C (UAA)GG-UA GCAUAAUAAC UU|GUUUUU( UAAUU)GAAA GC|UUGUAUG
+     2581 AAUGGCUUGA CGUGGGCAAG -ACUGUCUCU AUUACAUUaa -auaa-aaAU U|A|AUUUUU
+     2641 A-AG(UGAAG AAG)CUUAAA U-AAUCUCAA AAGACGAAAA GACCCUAUCG -|-AGCUUU-
+     2701 AAAUU|ua-u guauaaa-|< -------->- ---------- ---------- ----------
+     2761 ---------- ---------- <uaaaaucuu uuagaaaaac aaa------- ----------
+     2821 ---------- ---------- --->(----) ---------- ---------- ----------
+     2881 -|-------- ---------- ---------- ---(-----) ---------- ----auuuau
+     2941 -auc-C-AUU UUUAGUUG(G GG)CGACA|A AAGAA(---- -----caaa- uaaagc-)UU
+     3001 CUUU|U|u|a uu-------- -|-------- -(-------) ---------- -|--(-|---
+     3061 --)------- ---------- --------(- ------)--- ---------- ----------
+     3121 --<------- -auguaaauu uauaaau>|- uu-auaGAGC cau------- ---(----aa
+     3181 uu)--|---- augAUUAAA- |AGA-AAAAG CUACCG|UAG G|GAUAACAG |CaGUuAUUU
+     3241 UUUCAGAGAG (U--CCUA)A UCGAAGAAAA AGUUUGCGAC CUCGAUGUU| GGAU|U|AAA
+     3301 GU|AACU-UU UAAGUG(CA- GA)AGCUUAA AAUaAGU|GG GUC(UGUUC) GACCCUUAAA
+     3361 CCUUUACAUG AUCUGAGUUC AGACC|GGC( GUAA)GCCAG GUUGGUUUCU AUCU|UUGAG
+     3421 ---|-<---c uaauuau>-- ---------- ------u-ua uGUUU(UAGU AC(GAAA)GG
+     3481 ACC)AAACa- uaacaaa--- ---------- ---|------ -(uaa-)--- ----------
+     3541 ---------u uugccc-acu au~~~~~~(~ ~~~~~~~~~~ ~~~)~~~~~~ ~~~~~~~~~~
+     3601 ~~~~~~~~~~ ~~~~~<~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~>
+     3661 ~~|~~~~~~( ~~~)~~~~~~ ~~~~~~~~~| ~~~~~(~~~~ ~~~)~~~~~~ ~~~~~~|~~~
+     3721 ~~~~~~~~~~ ~~~~~(~~~~ )~~~~~~~~~ ~~~|~|~~~~ ~~~~~~~~~~ ~~~~~~~~~~
+     3781 ~~~~~~~|
+//
+LOCUS       mt.L.terre   3788 bp    RNA             RNA       ~?~????
+DEFINITION  Lumbricus terrestris.
+ACCESSION   U24570
+KEYWORDS    No information.
+SOURCE      Lumbricus terrestris.
+  ORGANISM  Lumbricus terrestris.
+REFERENCE   1
+  AUTHORS   No information
+  JOURNAL   No information
+  TITLE     No information
+  STANDARD  No information
+COMMENTS    Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: U24570
+            LOCUS       LTU24570    14998 bp    DNA   circular  INV       09-SEP-1995
+            DEFINITION  Lumbricus terrestris mitochondrion, complete genome.
+            ACCESSION   U24570
+            KEYWORDS    .
+            SOURCE      common earthworm.
+              ORGANISM  Mitochondrion Lumbricus terrestris
+                        Eukaryotae; mitochondrial eukaryotes; Metazoa; Annelida;
+                        Oligochaeta; Haplotaxida; Lumbricina; Lumbricidae; Lumbricus.
+            REFERENCE   1  (bases 1 to 14998)
+              AUTHORS   Boore,J.L. and Brown,W.M.
+              TITLE     Complete sequence of the mitochondrial DNA of the annelid worm
+                        Lumbricus terrestris
+              JOURNAL   Genetics 141, 305-319 (1995)
+            REFERENCE   2  (bases 1 to 14998)
+              AUTHORS   Boore,J.L. and Brown,W.M.
+              TITLE     Direct Submission
+              JOURNAL   Submitted (10-APR-1995) Jeffrey L. Boore, Cell Biology and
+                        Neuroanatomy, University of Minnesota, 321 Church St. SE, 4-135
+                        Jackson Hall, Minneapolis, MN 55455, USA
+            COMMENT
+                        NCBI gi: 984290
+            FEATURES               Location/Qualifiers
+                 source          1..14998
+                                 /organism="Lumbricus terrestris"
+                                 /mitochondrion
+                 CDS             1..>1540
+                                 /gene="COI"
+                                 /note="translation is inferred to terminate on an
+                                 abbreviated stop codon which is completed by
+                                 polyadenylation; Method: conceptual translation supplied
+                                 by author.  Author-given protein sequence differs from the
+                                 conceptual translation for reasons explained in citation. 
+                                 NCBI gi: 984291"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="cytochrome oxidase subunit I"
+                                 /translation="MRWFYSTNHKDIGTLYFILGVWAGMVGAGMSLLIRIELSQPGAF
+                                 LGSDQLYNTIVTAHXFVMIFFLVMPVFIGGFGNWLLPLMLGAPDMAFPRLNNMSFWLL
+                                 PPSLILLVSSAAVEKGAGTGWTVYPPLASNLAHAGPSVDLAIFSLHLAGASSILGAIN
+                                 FITTVINMRWSGLRLERIPLFVWAVLITVVLLLLSLPVLAGAITMLLTDRNLNTSFFD
+                                 PAGGGDPILYQHLFWFFGHPEVYILILPGFGAISHIVSHYTAKLEPFGALGMIYAMLG
+                                 IAVLGFIVWAHHMFTVGLDVDTRAYFTAVTMIIAVPTGIKVFSWLATIHGSKIKYETP
+                                 VLWALGFIFLFTTGGLTGIILSNSSLDIILHDTYYVVAHFHYVLSMGAVFAIFAAFTH
+                                 WFPLLTGLTLHHRWANAQFFLMFLGVNTTFFPQHFLGLSGMPRRYSDYPDAFMKWNVV
+                                 SSFGSLLSFVALMLFIFILWEAFASQRSVISSPHMSSALEWSDPILPLDFHNLSETGI
+                                 ITYPK"
+                 tRNA            1541..1601
+                                 /product="tRNA-Asn"
+                 CDS             1603..>2288
+                                 /gene="COII"
+                                 /note="translation is inferred to terminate on an
+                                 abbreviated stop codon which is completed by
+                                 polyadenylation; Method: conceptual translation supplied
+                                 by author.  Author-given protein sequence differs from the
+                                 conceptual translation for reasons explained in citation. 
+                                 NCBI gi: 984292"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="cytochrome oxidase subunit II"
+                                 /translation="MPNWGQVMFQDAASSVMLQLVSFHDHALLVLTLVLTVVGYALLA
+                                 LMLNKQVNRYIMEAQTVETIWTILPALILLVLALPSLRILYITDEVSQPSITVKTIGH
+                                 QWYWSYEYTDFLNVEMDSYMLPTSDLLPGDYRLLEVDNRMVVPMQLEIRMLITAADVI
+                                 HSWTVPALGVKVDAVPGRLNQIGFTTTQPGVFYGQCSEICGANHSFMPIAVEAINTKS
+                                 FMSWVSNFKP"
+                 tRNA            2289..2349
+                                 /product="tRNA-Asp"
+                 CDS             2350..>2509
+                                 /gene="ATPase8"
+                                 /note="translation is inferred to terminate on an
+                                 abbreviated stop codon which is completed by
+                                 polyadenylation; Method: conceptual translation supplied
+                                 by author.  Author-given protein sequence differs from the
+                                 conceptual translation for reasons explained in citation. 
+                                 NCBI gi: 984293"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="ATP synthase subunit 8"
+                                 /translation="MPHLSPMSWITSMLMFWISVSILFSTLWWSNNYLFSSKMTNCAP
+                                 KSLTPWNWL"
+                 tRNA            2510..2573
+                                 /product="tRNA-Tyr"
+                 tRNA            2572..2633
+                                 /product="tRNA-Gly"
+                 CDS             2635..>3413
+                                 /gene="COIII"
+                                 /note="translation is inferred to terminate on an
+                                 abbreviated stop codon which is completed by
+                                 polyadenylation; Method: conceptual translation supplied
+                                 by author.  Author-given protein sequence differs from the
+                                 conceptual translation for reasons explained in citation. 
+                                 NCBI gi: 984294"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="cytochrome oxidase subunit III"
+                                 /translation="MIRQPFHLVEYSPWPLTSSIGAFTLAIGLASWFHNHGFLCLTLA
+                                 AFLIIVSMIQWWRDVVREGTYMGHHTSLVTTGLRWGMILFITSEVMFFLAFFWAFFHS
+                                 SLSPTPEIGCSWPPTGIHPLNPFSVPLLNTAVLLASGVTVTWAHHSLMSGKRIDATQA
+                                 LILTVCLGAYFTFLQAGEYMAAPFSIADSVYGTTFFVATGFHGLHVLIGSSFLAICLA
+                                 RTWSHHFSAGHHFGFEAAAWYWHFVDVVWICLYLCIYWWGS"
+                 tRNA            3414..3482
+                                 /product="tRNA-Gln"
+                 CDS             3483..>3951
+                                 /gene="ND6"
+                                 /note="translation is inferred to terminate on an
+                                 abbreviated stop codon which is completed by
+                                 polyadenylation; Method: conceptual translation supplied
+                                 by author.  Author-given protein sequence differs from the
+                                 conceptual translation for reasons explained in citation. 
+                                 NCBI gi: 984295"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="NADH dehydrogenase subunit 6"
+                                 /translation="MILTSFMLMMIATTFTLYLASTPIVLGVNILMMALLLASTFASF
+                                 MSSWFAFLIFLIYIGGMLVMFAYFLALTPNQQISNFNIMPYALITLLTFSALTYTTNI
+                                 KIPTFSDISQGNSILYMSSTAPFLILLALILLLTMVIVVKLTSRSSGPLRPFSP"
+                 CDS             3952..>5089
+                                 /gene="cytb"
+                                 /note="translation is inferred to terminate on an
+                                 abbreviated stop codon which is completed by
+                                 polyadenylation; Method: conceptual translation supplied
+                                 by author.  Author-given protein sequence differs from the
+                                 conceptual translation for reasons explained in citation. 
+                                 NCBI gi: 984296"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="cytochrome b apoenzyme"
+                                 /translation="MFKPIRTTHPAIKIINSTLIDLPAPNNISIWWNYGSLLGLCLVI
+                                 QVLTGLFLSMHYVPNIEMAFSSVALISRDVNYGWLLRSIHANGASMFFLFIYLHAGRG
+                                 LYYGSYNLSETWNIGVILFLLTMATAFMGYVLPWGQMSFWGATVITNLFSAIPYIGKT
+                                 LVEWIWGGFAVDNATLNRFFAFHFILPFAIMGATILHIMFLHESGSNNPIGLNADSDR
+                                 IPFHPYYSIKDTLGYTLAISALSLMVLFEPNLFTDPENFLMANPLVTPIHIKPEWYFL
+                                 WMYAILRSIPNKLGGVMALFAAIVILFIPPLTSVMNKRSLSFYPLNKTMFWGLVASWA
+                                 ILTWIGGRPVEDPFIIIGQVFTSLYFIYFISSPTISKLWDDSIII"
+                 tRNA            5156..5217
+                                 /product="tRNA-Trp"
+                 CDS             5220..>5913
+                                 /gene="ATPase6"
+                                 /note="translation is inferred to terminate on an
+                                 abbreviated stop codon which is completed by
+                                 polyadenylation; Method: conceptual translation supplied
+                                 by author.  Author-given protein sequence differs from the
+                                 conceptual translation for reasons explained in citation. 
+                                 NCBI gi: 984297"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="ATP synthase subunit 6"
+                                 /translation="MMPDIFSSFDPYMFNTLFPLNSLFLVTNTAIILMIQSSFWVLNA
+                                 RTSAFKSPVNDTIFTQLSRTSTTHLKGLSTPLSTIFFMLVMINLMGLIPYMFSTSSHL
+                                 VFTLSLGFPIWLSLMISTFAHSPKKSTAHFLPDGAPDWLNPFLVLIETTSVFVRPLTL
+                                 SFRLAANMSAGHIVLSLMGIYCAAAWFSSVSSTALLILTAIGYILFEVAICLIQAYIF
+                                 CLLLSLYSDDHAH"
+                 tRNA            5914..5980
+                                 /product="tRNA-Arg"
+                 misc_feature    5981..6364
+                                 /note="Large unassigned region"
+                 tRNA            6365..6426
+                                 /product="tRNA-His"
+                 CDS             6427..>8150
+                                 /gene="ND5"
+                                 /note="translation is inferred to terminate on an
+                                 abbreviated stop codon which is completed by
+                                 polyadenylation; Method: conceptual translation supplied
+                                 by author.  Author-given protein sequence differs from the
+                                 conceptual translation for reasons explained in citation. 
+                                 NCBI gi: 984298"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="NADH dehydrogenase subunit 5"
+                                 /translation="MLRMFNTSLVASKLMWVIFTGMLAPTLYMVHCNSTLLLEWNLFS
+                                 ISSTPMMMTIILDPLGLMFSCTVVMISANILKFSTIYMKEDKFINRFTVLVLLFVLSM
+                                 NMLIFFPHLIILLLGWDGLGIVSFILVIYYQNPKSLAAGMITALTNRIGDVMLLLAIA
+                                 WTLNQGHWNILHMWAVDENMYQALVIIIAAMTKSAQMPFSSWLPAAMAAPTPVSALVH
+                                 SSTLVTAGVFLLIRFYNFLSSVWWFTTFLLFVAVSTTLMAGLSASSECDMKKIIALST
+                                 LSQLGMMMAAMGLGMAHMAFFHMVTHAMFKALLFVCAGSFIHSHMHSQDLRWMGNLTK
+                                 QMPTTTSCLIMANLALCGFPFMSGFYSKDMIVEASLYYPHNSLMINLILFAVGLTAFY
+                                 STRFTMCVVLSPNNCGPYMHLEESNSLTSPMLLLASMSVISGSALTWILPLKQEMMMI
+                                 PLDQKLKTLMLVTLGALMSWFFLTTTNMTKTCLYIRHPIINYFSCTMWFLVPLSSQFM
+                                 MKLPMYVSHNYLKLTDQSWLELLGGQGINNVSSKASNIYLASLKSTPMNYLMMSSMLL
+                                 LVATLVAI"
+                 tRNA            8151..8212
+                                 /product="tRNA-Phe"
+                 tRNA            8213..8277
+                                 /product="tRNA-Glu"
+                 tRNA            8276..8337
+                                 /product="tRNA-Pro"
+                 tRNA            8338..8401
+                                 /product="tRNA-Thr"
+                 CDS             8402..8698
+                                 /gene="ND4L"
+                                 /note="Method: conceptual translation supplied by author. 
+                                 NCBI gi: 984299"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="NADH dehydrogenase subunit 4L"
+                                 /translation="MYSSIMSLVFLLPIVAVVNLISNQSHFLMTLLSLEGITLSLVLF
+                                 VPISLSIMSASNVSISVILLTFGACEASLGLSLMVLMSRSYGTDMLNSLTANKC"
+                 CDS             8692..>10048
+                                 /gene="ND4"
+                                 /note="translation is inferred to terminate on an
+                                 abbreviated stop codon which is completed by
+                                 polyadenylation; Method: conceptual translation supplied
+                                 by author.  Author-given protein sequence differs from the
+                                 conceptual translation for reasons explained in citation. 
+                                 NCBI gi: 984300"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="NADH dehydrogenase subunit 4"
+                                 /translation="MLKLQMVLMSLLLLPLIVNLYPWIIALTLSALLLPTCFNLVNSA
+                                 SYSMFTEYMSSDMMSFTLSALTIWVTVMMILASTKIMHLNMYPKMFMTNLVILLIILI
+                                 NCFLSPNLIMFYIWFEASLIPTMVLIMTWGYQPERSQASMYLMIYTVAASLPMLMVLC
+                                 KIFIVSKTAMMPMFMNMEFPMDYPSMALAWVLTLGGFLVKLPMFTVHLWLPKAHVEAP
+                                 IAGSMILAAILLKLGGYGILRMLSLFHYMAKSTSSLLSSVALVGAVSTSLICLRQSDL
+                                 KSLIAYSSVGHMGLMVAGALMSSNWGFQAALAMMIAHGLSSSALFVMANMNYELTHTR
+                                 SLFLMKGLLVLAPTLTMWWFLFTASNMAAPPSINLLSEIMLITSILKMSTSAFILLGL
+                                 TSFFTAAYCLYMYTSMHHGPLMLTSNPIPQFKVKDLTLMTMHLVPTILIIFKPELITS
+                                 WS"
+                 tRNA            10049..10113
+                                 /product="tRNA-Cys"
+                 tRNA            10114..10176
+                                 /product="tRNA-Met"
+                 rRNA            10177..10961
+                                 /product="small ribosomal subunit RNA"
+                 tRNA            10962..11023
+                                 /product="tRNA-Val"
+                 rRNA            11025..12269
+                                 /product="large ribosomal subunit RNA"
+                 tRNA            12270..12330
+                                 /product="tRNA-Leu(CUN)"
+                 tRNA            12331..12392
+                                 /product="tRNA-Ala"
+                 tRNA            12393..12455
+                                 /product="tRNA-Ser(UCN)"
+                 tRNA            12457..12521
+                                 /product="tRNA-Leu(UUR)"
+                 CDS             12523..>13447
+                                 /gene="ND1"
+                                 /note="translation is inferred to terminate on an
+                                 abbreviated stop codon which is completed by
+                                 polyadenylation; Method: conceptual translation supplied
+                                 by author.  Author-given protein sequence differs from the
+                                 conceptual translation for reasons explained in citation. 
+                                 NCBI gi: 984301"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="NADH dehydrogenase subunit 1"
+                                 /translation="MNIPFFTSVLMSLVLALLAMAFYTLMERKFLGYFHLRKGPNKVG
+                                 LMGLPQPFADAIKLFVKEQAKPNPSNQTPFLFAPTMGLVLALLMWVIYPHSHQSFFIQ
+                                 FSVLYFLCVSSMNVYTTFLAGWSSNSKYALLGALRGVAQTISYEVSMSLILLSSLIIL
+                                 STMDFTKMFSYSWILFMFIPLAVVWFITNLAETNRTPFDFAEGESELVSGFNVEYSAG
+                                 LFALIFMAEYANILIMSLFTSVIFMSTCASGMASDLVLILQTITLAMLFVWVRATYPR
+                                 MRYDHLMNLTWKSFLPLSLALLMMSIPIAMML"
+                 tRNA            13448..13512
+                                 /product="tRNA-Ile"
+                 tRNA            13513..13576
+                                 /product="tRNA-Lys"
+                 CDS             13577..>13928
+                                 /gene="ND3"
+                                 /note="translation is inferred to terminate on an
+                                 abbreviated stop codon which is completed by
+                                 polyadenylation; Method: conceptual translation supplied
+                                 by author.  Author-given protein sequence differs from the
+                                 conceptual translation for reasons explained in citation. 
+                                 NCBI gi: 984302"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="NADH dehydrogenase subunit 3"
+                                 /translation="MILTALSSAIALLVPIIILGAAWVLASRSTEDREKSSPFECGFD
+                                 PKSTARIPFSTRFFLLAIIFIVFDIEIVLLMPLPTILHTSDVFTTVTTSVLFLMILLI
+                                 GLIHEWKEGSLDWSS"
+                 tRNA            13929..13992
+                                 /product="tRNA-Ser(AGN)"
+                 CDS             13993..>14998
+                                 /gene="ND2"
+                                 /note="translation is inferred to terminate on an
+                                 abbreviated stop codon which is completed by
+                                 polyadenylation; Method: conceptual translation supplied
+                                 by author.  Author-given protein sequence differs from the
+                                 conceptual translation for reasons explained in citation. 
+                                 NCBI gi: 984303"
+                                 /codon_start=1
+                                 /transl_table=5
+                                 /product="NADH dehydrogenase subunit 2"
+                                 /translation="MKYIKSPTMALAMSTLIMSTLMAVSSANWMFLWGAMELNLLSFI
+                                 PIMMQSNNNQETEGAVKYFLAQALGSALLLMSSTSMWMTFSMISNFMPLTLMAAIMLK
+                                 LGSVPCHFWYPSVMASISWVSCLILSSWQKLAPLSILAFLLPQKNMNFMLSMAAMNAL
+                                 LGGVIGMNQTQLRTIMAYSSIGHIGWMMSLAAVYKPSSCIMYFVVYCILITPLFMTMG
+                                 YLNMFSTKHMSKLSSYSSTVHMALLMVLLSLGGLPPFTGFMPKLMTIMLLMQSMKIIL
+                                 LILIAGSIMNLFFYLNIIISSMPLPPHLKNVDSTDIKCSLKFVIPICTLSLGLSPFIM
+                                 L"
+            BASE COUNT     4476 a   3382 c   2370 g   4766 t      4 others
+            ORIGIN      
+BASE COUNT     460 a    243 c    193 g    349 t   2543 others
+ORIGIN
+        1 |~~~~~~~~~ ~~~~~~~~~~ ~~~gcc-uau guu------- ---|uau-cu u|auaaauaa
+       61 a|aacu---- ---|----(- -----)-|-- ---------- --|------( -------)--
+      121 ---------- ---------- -------(-- --)---|--- ----(----) ----------
+      181 ---------( -----)---- ---------< ---------- ---------- ----------
+      241 ---------- ---->----- |-----aaua aaa(acac)u u--------- ----------
+      301 -----(---- )-----|--- --aaacuga( uaauu)ucau aa-------- -----<uaaa
+      361 u--------- ---------- -------->- ---------- ---------- ----------
+      421 -----(---- )--------| -(---)---- -(-------) ---------- ----------
+      481 ---------- ---------- --------(- --------)- ---------- --------(-
+      541 -----)---- ---------- ---------- -------cuu uacaauagua cu(-auag)a
+      601 ggaag-ua-- ---------- ---------- ---------- ---------- --gucaacau
+      661 a<-------- ---------- -----au>aa agua-gug-- -------(gu uuaua)----
+      721 -----cacGU ACCUU(GUGC AUC)AUGGUU U-UACAAGCc uc--aaauu- ----------
+      781 --------(- ----)----- --------(- ---)---<-- ------->-- ---(-----)
+      841 ---------- -----aauaa uau-uaCCCG AAUUCUAAGC GAGCUGUCCC UUCAUAGCU-
+      901 ---------- (--------- ----aag)-- ---------- AGCCCACCA- CUAGUU(GUA
+      961 GCAU-C)AAC U-UUGGA-AA AUGGGGGGAU AGGGGC(uac au)aCCaauc gcGCUAGAAA
+     1021 AUCUCUGGUU uucaguaaa- a-uuua(-cc aa)uaaaaca uguagcgu<- ccac------
+     1081 ---------- ---------- ---------- -------->- ----|----- -|------|-
+     1141 ---------- ---------- --(-----)< ---------- ---------- ----------
+     1201 ----->---- ---------- ---------- ------|--- ---------- --cuacacug
+     1261 caaGACUACA G-AG(GAUAA G)CCCUGUAU UC-------- (-------)- ----------
+     1321 ---------- ---------- ---------- ---------- ---------- ----------
+     1381 ---------- <aaaaacuag auaugcccuc cuucca>-gU Au-aGGC(CU AAAAAC-A)G
+     1441 CCA-CUAA|- (---)-|UAG UAC(CUCACC )GU|AAA--- ----<cacca uuaaauuaau
+     1501 ucuauacccu guucaa---- ------->-- ---------| ---------- ----------
+     1561 ---------| ---------| ----|----- ----(----) ---------- auaaacugaa
+     1621 |au-uuuuga ---------- ---------( ------)<ca aaccuuaaau c>--------
+     1681 --------|- uuaaaa--ua uUAUGU-AAA A|AUAAGUAu uaauuuuaua a---(-----
+     1741 )-------|- ---------- --------|- ---------- (-----)--| ----------
+     1801 ---------- ---------- --(----)<- --ccuaagu- ---------- ----------
+     1861 ---------- ---------- -------->- ---------- ---------- -(--------
+     1921 )-----|--| ---------- -|-------- ---------- ---------- -------(--
+     1981 --------)- -----|---- ---------- |--------- ---(-----) --|-------
+     2041 ---------- ---------- -------(-- --)------- ---------- ----------
+     2101 ---------- ----<----- ---------- ----->---- ---------- ----------
+     2161 -|---uacag c(uaccau)g u|augu---- --(-----)- ----auuau- ||-auauuu-
+     2221 -acaaCUUAU AAAGGAACUU GGCAAA---- ---------( ----)----- ------|---
+     2281 ---------- --------(- ----)----- ---------- ----|-(--- )------uuc
+     2341 UUAUUU|CGA CUGUUU(AAC AA)AAACAUU GCUCUcAG|u a-----(acc uua-------
+     2401 )--------- aUUaAGAGUA ACUCCUGCCC AGU|GA---- ---------- ----------
+     2461 -(--guaa)- ---------- ---------- |---UUCAAC |GG-C|C-GC GGU(AU-CCU
+     2521 A)ACCGUG|C (AAA)GG-UA GCAUAAUCAC UU|GCCCAU( UAAUU)GUGG GC|UAGAAUG
+     2581 AA-GGAUAAA CG-AAAUAAa uACUGUCUCU AUAAGccg-c --uuAAAAA- U|A|CCCUCU
+     2641 A-AC(CGAAG AGU)GUUAGA U-agcGUCGA AGGACAAGAA GACCCUAUAG -|-AGCUUA-
+     2701 auuua|-aau aaau----|< augaaaaa>- ---------- ---------- ----------
+     2761 ---------- ---------- <--------- ---------- ---------- ----------
+     2821 ---------- ---------- --->(----) ---------- ---------- ----------
+     2881 -|-------- ---------- ---------- ---(-----) ---------- ------auuu
+     2941 -ac--uaaaa uUCGGUUG(G GG)CGACC|a ggga-(---- -----auuac cca-uca)-u
+     3001 cccu|A|a|a ---------- -|-------- -(-------) ---------- -|--(-|---
+     3061 --)------- ---------- --------(- ------)--- ---------- ----------
+     3121 --<----caa aagauaaaug uaucaaa>|- -acacUGACC CUU------- ---(----cu
+     3181 ac)--|---- AAGAUCAUU- |AAA-ACAAG CUACCU|UAG G|GAUAACAG |G-CUAAUCU
+     3241 CACUAGAGAG (U--CCUU)A UCAAUAGUGA GGAUUGGCCC CUCGAUGUU| GGCU|U|AGG
+     3301 Ga|AUCU-CU AUGACG(CA- AA)AGUCAUA UAA-AGA|UG GUU(UGUUC) AACCAAUAAC
+     3361 ACCCUACAUG AGCUGAGUUC AGACC|GCG( UAAG)C-CAG GUUAGUUUCU AUCC|UCGAU
+     3421 ---|-<---- -cacuuu>-- ---------- -----aU-CU AUUUA(UAGU AC(GAAA)GG
+     3481 ACC)UAAUU- AGaguaa--- ---------- ---|------ -(uau-)--- ----------
+     3541 ---------u uac----aca cagggaau(a aauau--aa- acc)auucua ag--------
+     3601 ---------- -----<uaaa auaaaucaua aacuaug~~~ ~~~~~~~~~~ ~~~~~~~~~>
+     3661 ~~|~~~~~~( ~~~)~~~~~~ ~~~~~~~~~| ~~~~~(~~~~ ~~~)~~~~~~ ~~~~~~|~~~
+     3721 ~~~~~~~~~~ ~~~~~(~~~~ )~~~~~~~~~ ~~~|~|~~~~ ~~~~~~~~~~ ~~~~~~~~~~
+     3781 ~~~~~~~|
+//
+LOCUS       mt.D.melan   3788 bp    RNA             RNA       ~?~????
+DEFINITION  Mitochondria Drosophila melanogaster (fruit fly).
+ACCESSION   X53506
+KEYWORDS    No information.
+SOURCE      Mitochondria Drosophila melanogaster (fruit fly).
+  ORGANISM  Mitochondria Drosophila melanogaster (fruit fly).
+REFERENCE   1
+  AUTHORS   No information
+  JOURNAL   No information
+  TITLE     No information
+  STANDARD  No information
+COMMENTS    Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: X53506
+            ID   DM16SR     standard; RNA; ORG; 1324 BP.
+            XX
+            AC   X53506;
+            XX
+            DT   10-AUG-1990 (annotation)
+            XX
+            DE   Drosophila mRNA to mitochondrial 16S ribosomal RNA gene
+            XX
+            KW   16S ribosomal RNA; ribosomal RNA.
+            XX
+            OS   Mitochondrion Drosophila melanogaster (fruit fly)
+            OC   Eukaryota; Animalia; Metazoa; Arthropoda; Uniramia; Insecta;
+            OC   Pterygota; Neoptera; Holometabola; Diptera; Brachycera;
+            OC   Cyclorrhapha; Schizophora; Drosophiloidea; Drosophilidae.
+            XX
+            RN   [1] (bases 1-1324)
+            RA   Kobayashi S.;
+            RT   ;
+            RL   Submitted (22-JUN-1990) on tape to the EMBL Data Library by:
+            RL   Kobayashi S., Institute of Biological Sciences, The University of
+            RL   Tsukuba, Tsukuba, Ibaraki, 305 Japan.
+            XX
+            RN   [2] (bases 1-1324)
+            RA   Kobayashi S., Okada M.;
+            RT   "Complete cDNA sequence encoding mitochondrial large ribosomal RNA
+            RT   of Drosophila melanogaster.";
+            RL   Nucleic Acids Res. 18:4592-4592(1990).
+            XX
+            CC   *source: strain=Oregon-R; developmental stage=embryo;
+            CC   *source: clone=pGF221r2; library=pDE20.
+            CC   see Y00610 for overlapping sequence.
+            XX
+            FH   Key             Location/Qualifiers
+            FH
+            FT   rRNA            1..1324
+            FT                   /note="16S ribosomal RNA"
+            XX
+            XX
+            SQ   Sequence  1324 BP;  537 A; 79 C; 149 G; 559 T; 0 other;
+BASE COUNT     537 a     79 c    149 g    559 t   2464 others
+ORIGIN
+        1 |~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~|~~~~~~ ~|~~~~~~~~
+       61 ~|~~~~~~~~ ~~~|~~~~(~ ~~~~~)~|~~ ~~~~~~~~~~ ~~|~~~~~~( ~~~~~~~)~~
+      121 ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~(~~ ~~)~~~|~~~ ~~~~(~~~~) ~~~~~~~~~~
+      181 ~~~~~~~~~( ~~~~~)~~~~ ~~~~~~~~~< guuaguuuuu auuuauuaau uuuuauuauu
+      241 uuuuagaaaa uuau>----- |---uagaa- -au(aacu)a uaaa------ ----uuuaa-
+      301 -----(---- )-----|agu uuUAGUAUU( GUUUA)AAGA AAaaau---- -----<aauu
+      361 uuaauaauag uuuauu---- -------->- ---------- ---------- ----------
+      421 -----(---- )--------| -(---)---- -(-------) ---------- ----------
+      481 ---------- ---------- --------(- --------)- ---------- --------(-
+      541 -----)---- ---------- ---------- ---------- ------AGUA UU(-GUAA)A
+      601 AGAAA-AUUG ---------- ---------- ---------- ---------- ----------
+      661 -<aaauaguu ugaaaaaauu uuauuuu>aa aagaaaau-- -------(uu aauuu)----
+      721 -----auuGU ACCUU(GUGU AUC)AGUGUU U-AUUAAAUa a---aa-aau aa--------
+      781 --------(- ----)----- --------(- ---)---<-- ---auau>-- ---(-----)
+      841 ---------- ------uuau uuu--uCUCG AUUUUAA-AA GAGUUAAUAU AAUAU-----
+      901 ---------- (--------- -------)-- ---------- -----uUAA- GUUAAU(GUG
+      961 AUAA-A)AUU A-UUUA--UA AUAUUAUAUU AGAAAU(GAA AU)GUUAUUC GUUUUUAAAG
+     1021 GUAUCUAGUU UUUUAAGAA- AUAAAU(-UU A-)AUUUAGA AAUUAUA-<- ----------
+     1081 ---------- ---------- ---------- -------->- ----|----- -|------|-
+     1141 ---------- ---------- --(-----)< aauuuacuua auua(uuuau u)uaauuaau
+     1201 uaauu>---- ---------- ---------- ------|--- ---------- UAUAAUU--U
+     1261 UAAUGUUUUA U-GG(GAUAA G)CUAUAAAA UA-aauu--- (-------)- -----uuu-a
+     1321 --aaaaua-- ---------- ---------- ---------- ---------- ----------
+     1381 ---------- <--------- uuaaauagau uuaaua>AAU AU-AUGC(UU AGAAUU-A)G
+     1441 CAA-UUAU|U (AAA)-|AAA UGU(GUUAUA )AU|UUA--- ----<uuuua uaaauuaaau
+     1501 ---------- ---------- ------->-- ---------| ---------- ----------
+     1561 ---------| --uauuuau| uaaa|----- ----(----) -uuuuaauua uuuaUUAAAA
+     1621 |UG-UUAGUU uua------- ---------( a-uuau)<-- ---------- ->--------
+     1681 ------ua|a aAUUAAGUAA UAAUGA-UAA A|AUUAGUA- UA-------- ----(-----
+     1741 )-------|- ---------- --------|- ---------- (-----)--| ----------
+     1801 ---------- ---------- --(----)<- ---------- ---------- ----------
+     1861 ---------- ---------- -------->- ---------- ---------- -(--------
+     1921 )-----|--| ---------- -|-------- ---------- ---------- -------(--
+     1981 --------)- -----|---- ---------- |--------- ---(-----) --|-------
+     2041 ---------- ---------- -------(-- --)------- ---------- ----------
+     2101 ---------- ----<uaaua auguuaaaau uaauu>---- ---------- ----------
+     2161 -|-------- -(------)- -|-------- --(-----)- ---------- ||-uauauga
+     2221 aaaGUUUAAA UAAAGAAUUC GGCAAA---- ---------( ----)----- ------|---
+     2281 ---------- --------(- ----)----- ---------- ----|-(--- )------aaU
+     2341 AAUAUU|CGC CUGUUU(AAC AA)AAACAUG UCUUU---|- ------(uug aauuauauau
+     2401 )--------- ----AAAGUC UAACCUGCCC ACU|GAA--- ---------- ----------
+     2461 -(---aau)- ---------- ---------- |--UUUAAAU |GG-C|C-GC AGU(AU-UUU
+     2521 G)ACUGUG|C (AAA)GGuuA GCAUAAUCAU UA|GUCUUU( UAAUU)GAAG GC|UGGAAUG
+     2581 AAUGGUUGGA CGAAAUAUUA -ACUGUUUCA UUUAAAAUUU UUAUAGAAUU U|U|AUUUUU
+     2641 U-AG(UCAAA AAG)CUAAAA U-UUAUUUAA AAGACGAGAA GACCCUAUAA -|-AUCUUU-
+     2701 AUAUU|-Uuu uuu-auu-|< -------->- ---------- ---------- ----------
+     2761 ---------- ---------- <uuaauuaua uagauuaauu aaauuuu--- ----------
+     2821 ---------- ---------- --->(----) ---------- ---------- ----------
+     2881 -|-------- ---------- ---------- ---(-----) ---------- ---aauaaau
+     2941 -aaa-A-AUA UUUUAUUG(G GG)UGAUA|U UAAAA(---- -----UUUAA -AAAAC-)UU
+     3001 UUAA|U|U|- ---------- -|-------- -(-------) ---------- -|--(-|---
+     3061 --)------- ---------u uuuaaaaa(c a-uaaa)uuu au-gaa---- ----------
+     3121 --<------- ---------- -----ua>|- ---uuUGAUC cauu------ ---(----aa
+     3181 u-)--|---a auGAUUAAA- |AAA-UUAAG UUACUU|UAG G|GAUAACAG |C-GUAAUUU
+     3241 UUUUGGAGAG (U--UCAU)A UCGAUAAAAA AGAUUGCGAC CUCGAUGUU| GGAU|U|AAG
+     3301 AU|AUAAUUU UGGGUG(UA- GC)CGUUCAA A-U-UUU|AA GUC(UGUUC) GACUUUUAAA
+     3361 UUCUUACAUG AUCUGAGUUC AAACC|GGU( GUAA)GCCAG GUUGGUUUCU AUCU|UUAAA
+     3421 ---|-<---- -aaauua>-- ---------- -------uGA UAUUU(UAGU AC(GAAA)GG
+     3481 ACC)AAAUA- UCaaaaua-- ---------- ---|------ -(auua)--- ----------
+     3541 --------ua uuuu------ ---uuaua(a gaaua-uuau uaa)uauaaa a------~~~
+     3601 ~~~~~~~~~~ ~~~~~<~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~~ ~~~~~~~~~>
+     3661 ~~|~~~~~~( ~~~)~~~~~~ ~~~~~~~~~| ~~~~~(~~~~ ~~~)~~~~~~ ~~~~~~|~~~
+     3721 ~~~~~~~~~~ ~~~~~(~~~~ )~~~~~~~~~ ~~~|~|~~~~ ~~~~~~~~~~ ~~~~~~~~~~
+     3781 ~~~~~~~|
+//
+LOCUS       E.coli       3788 bp    RNA             RNA       11-JAN-1980
+DEFINITION  Escherichia coli.
+ACCESSION   J01695 
+KEYWORDS    No information.
+SOURCE      Escherichia coli.
+  ORGANISM  Escherichia coli.
+REFERENCE   1  (bases 1 to 15532)
+  AUTHORS   No information
+  JOURNAL   E.coli:who:Published
+  STANDARD  No information
+COMMENTS    Organism information
+              Culture collection: ?
+            Sequence information (bases 1 to 3788)
+              Corresponding GenBank entry: J01695
+BASE COUNT     762 a    639 c    912 g    591 t    884 others
+ORIGIN
+        1 |GGUUAAGCG A--------- ---CUAAGCG UACACGGUGG AUG|CCC-UG G|CAGUCAGA
+       61 G|gcgaugAA GGA|CGUG(C UAAUC)U|GC GAUAAGCGUC GG|UAAGGU( GAUAUGA)AC
+      121 CGUUAUAACC GGCGAUUUCC GAAUGGG(GA AA)CCC|AGU GUGU(UUCG) ACACACUAUC
+      181 AUUAACUGA( AUCCA)UAGG UUAAUGAGG< ---------- ---------- ----------
+      241 ---------- ---->cGAAC |CGGGGGAAC UGA(AACA)U CUAAGUACCC CGAGGAAAAG
+      301 AAAUC(AACC )GAGAU|UCC CCCAGUAGC( GGCGA)GCGA ACGGGGAGCA GCCCA<----
+      361 ---------- ---------- -------->g agccugaauc agugugugug uuaguggaaG
+      421 CGUCU(GGAA )AGGCGCGC| G(AUA)CAGG G(UGACAGC) CCCguacaca aaaaugcaca
+      481 ugcugugagc ucgauGAGUA GGGCGGGA(c acguggua)U CCUGUCUGAA UauGGGGG(G
+      541 ACCAU)CCUC CAAGGCUAAA UACUCCUGAC UGACCGAUAG UGAACCAGUA CC(-GUGA)G
+      601 GGAAA-GGCG AAAAGAACCC C(GGCGA)GG GGAGUGAAAA AGAACCUGAA ACCGUGUACG
+      661 U<-------- ---------- ------->AC AAGCAGUGGG AGCACGC(-- -uuag)GCGU
+      721 GUGACUGCGU ACCUU(UUGU AUA)AUGGGU C-AGCGACU- ----UA-UAU UCUGUAGCAA
+      781 gguuaacc(g aaua)gggga gccGAAGG(G AAA)CCG<-- ------->AG UCU(UAACU)
+      841 GGGCGUUAAG UUGCA-GGGU AUA-GACCCG AAACCCG-GU GAUCUAGCCA UGGGCAGGUU
+      901 GAAGGUUGGG (--------- ---uaac)AC UAACUGGAGG ACCGAACCG- ACUAAU(GUU
+      961 GAAA-A)AUU A-GCGGA-UG ACUUGUGGCU GGGGGU(GAA AG)GCCAAUC AAACCGGGAG
+     1021 AUAGCUGGUU CUCCCCGAA- AGCUAU(-UU AG)GUAGCGC CUCGUGAA<- ----------
+     1081 ---------- ---------- ---------- -------->U UCAU|CUCCG G|GGGUAG|A
+     1141 GCACUGUUUC Ggcaaggggg uc(auccc)< ---------- ---------- ----------
+     1201 ----->gacu uaccaaccCG AUGCAAACUG CGAAUA|CCG GAGAAUGUUA UCACGGG-AG
+     1261 ACACACGGCG G-GU(GCUAA C)GUCCGUCG UG-AAGAGGG (AAA-CAA)C CCAGACCG-C
+     1321 -CA-GC-UAA -----GGU-C CCAAAGUCAU GGUUAAGUGG GAAACGAUGU GGGAAGGCCC
+     1381 AGACAGCCAG <--------- ---------- ------>GAU GU-UGGC(UU AGAAGC-A)G
+     1441 CCA-UCAU|U (UAA)A|GAA AGC(GUAAUA )GC|UCACUG GUCG<----- ----------
+     1501 ---------- ---------- ------->AG UCGGCCUGC| GCGGAAGAUG UAACGGGGCU
+     1561 AAACCAUGC| ACCGAAGCU| GCGG|CAGcg acgc(uuau) gcguug-UUG GGUAGGGGAG
+     1621 |CG-UUCUGU AAGCCUGCGA AGGUGUGCU( GUGA--)<-- ---------- ->GGCAUGCU
+     1681 GGAGGU--|A UCAGAAGUGC GAAUGC-UGA C|AUAAGUA- ACGAUAAAGC GGGU(gaaaa
+     1741 )GCCCGCU|C GCCGGAAGAC CAAGGGUU|C CUGUCCAACG (UUAAU)CG| GGGCAGGGUG
+     1801 AGUCGACCCC UAAGGCGAGG CC(GAAA)<- ---------- ---------- ----------
+     1861 ---------- ---------- -------->G GCGUAGUCGA UGGGAAACAG G(uuaauauu
+     1921 )CCUGU|AC| UUGGUGUUAC U|GCGAAGGG GGGACGGAGA AGGCUAUGUU GGCCGGG(CG
+     1981 ACGGUUGU)C CCGGU|UUAA GCGUGUAGGC |UGGUUUUCC AGG(CAAAU) CC|GGAAAAU
+     2041 CAAGGCUGAG GCGUGAUGAC GAGGCAC(UA CG)GUGCUGA AGCAACAAAU GCCCUGCUUC
+     2101 CAGGAAAAGC CUCU<----- ---------- ----->AAGC AUCAGGUAAC AUCAAAUCGU
+     2161 A|CCCCAAAC C(GACACA)G G|UGGUCAGG UA(GAGAA)U ACCAAGGCGC ||UUGAGAG-
+     2221 -AACUCGGGU GAAGGAACUA GGCAAAAUGG UGCCGUAAC( UUCG)GGAGA AGGCAC|GCU
+     2281 GAUAUGUAGG UGAGGUCC(C UCGC)GGAUG GAGCUGAAAU CAGU|C(GAA )GAUACCAGC
+     2341 UGGCUG|CAA CUGUUU(AUU AA)AAACACA GCACUGUG|C AAACAC(-GA AA--------
+     2401 )GUGGACGUA -UACGGUGUG ACGCCUGCCC GGU|GCCGGA AGGUUAAUUG AUGGGGUUAG
+     2461 C(--GCAA)G CGAAGCUCUU GAUCGAAGCC |CCGGUAAAC |GG-C|G-GC CGU(AACUAU
+     2521 A)ACGGUC|C (UAA)GG-UA GCGAAAUUCC UU|GUCGGG( UAAGU)UCCG AC|CUGCACG
+     2581 AAUGGCGUAA UGAUGGCCAG -GCUGUCUCC ACCCGAGACU -CAGUGAAAU U|G|AACUCG
+     2641 C-UG(UGAAG AUG)CAGUGU A-CCCGCGGC AAGACGGAAA GACCCCGUGA -|-ACCUUU-
+     2701 ACUAU|-AGC UUGACACU|< -------->G AACAUUGAGC CUUGAUGUGU AGGAUAGGUG
+     2761 GGAGGCUUUG AAGUGUGGAC <--------- ---------- ---------- ----------
+     2821 ---------- ---------- --->(GCCA) GUCUGCAUGG AGCCGACCUU GAAAUACCAC
+     2881 C|cuUUAAUG UUUGAUGUUC UAACGUUGAC CCG(UAAUC) CGGGUUGCGG ACAGUGUCUG
+     2941 -GUGGG-UAG UUUGACUG(G GG)CGGUC|U CCUCC(---- -----UAAAG AGUAAC-)GG
+     3001 AGGA|G|C|A CGAAGGUUGG C|UAAUCCUG G(ucggaca) UCAGGAGGUU A|GU(G|CAA
+     3061 UG)GCAUAAG CCAGCUUGAC UGCGAGCG(u gacgg-)CGC GAGCAGGUGC (GAAA)GCAG
+     3121 GU<------- ---------- ------->|- CAUAGUGAUC CGGUGGU--- UCU(GAAUGG
+     3181 AA)GG|GCCA UCGCUCAAC- |GGAUAAAAG GUACUC|CGG G|GAUAACAG |G-CUGAUAC
+     3241 CGCCCAAGAG (U--UCAU)A UCGACGGCGG UGUUUGGCAC CUCGAUGUC| GGCU|C|AUC
+     3301 AC|AUCC-UG GGGCUG(AA- GU)AGGUCCC AAG-GGU|AU GGC(UGUUC) GCCAUUUAAA
+     3361 GUGGUACGCG AGCUGGGUUU AGAAC|GUC( GUGA)GACAG UUCGGUCCCU AUCU|GCCGU
+     3421 GGG|C<---- ------->GC UGGAGAACUG AGGGGGG-CU GCUCC(UAGU AC(GAGA)GG
+     3481 ACC)GGAGU- GGACGCAUCA CUGGUGUUCG GGU|UGU-CA U(GCCA)AUG GCACUGCCCG
+     3541 GUAGCUAAAU GCGGAAGAGA UAAGUGCU(G AAAGC--AU- CUA)AGCACG AAACUUGCCC
+     3601 CGAGAUGAGU UCUCC<---- ---------- ---------- ---------- --------->
+     3661 CU|GACCCU( UUA)AGGGUC cugaaggAA| CGUUG(AAGA CGA)CGACGU UGAUAG|GCC
+     3721 GGGUGUGUAA GCGCA(GCGA )UGCGUUGAG CUA|A|CCGG UACUAAUgaa ccguGAGGCU
+     3781 UAACCuu|
+//
