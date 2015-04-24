@@ -169,9 +169,7 @@ void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   int b2 = p[1].T().directed_branch(nodes[5],nodes[2]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  p[1].exchange_subtrees(b1, b2);
-  p[1].LC_invalidate_branch(b);
-  p[1].invalidate_subA_index_branch(b);
+  p[1].NNI(b1, b2);
   
   if (not extends(p[1].T(), *PP.TC))
     return;
@@ -243,9 +241,7 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   int b2 = p[1].T().directed_branch(nodes[5],nodes[2]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  p[1].exchange_subtrees(b1, b2);
-  p[1].LC_invalidate_branch(b);
-  p[1].invalidate_subA_index_branch(b);
+  p[1].NNI(b1, b2);
   
   if (not extends(p[1].T(), *PP.TC))
     return;
@@ -339,9 +335,7 @@ void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   int b2 = p[1].T().directed_branch(nodes[5],nodes[2]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  p[1].exchange_subtrees(b1, b2);
-  p[1].LC_invalidate_branch(b);
-  p[1].invalidate_subA_index_branch(b);
+  p[1].NNI(b1, b2);
   
   if (not extends(p[1].T(), *PP.TC))
     return;
@@ -412,9 +406,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
   int b2 = p[1].T().directed_branch(nodes[5],nodes[2]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  p[1].exchange_subtrees(b1, b2);
-  p[1].LC_invalidate_branch(b);
-  p[1].invalidate_subA_index_branch(b);
+  p[1].NNI(b1, b2);
   
   if (not extends(p[1].T(), *PP.TC))
     return;
@@ -520,17 +512,13 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
   int b3 = PP.T().directed_branch(nodes[5],nodes[3]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  p[1].exchange_subtrees(b1, b2);
-  p[1].LC_invalidate_branch(b);
-  p[1].invalidate_subA_index_branch(b);
+  p[1].NNI(b1, b2);
 
   if (not extends(p[1].T(), *PP.TC))
     return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
-  p[2].exchange_subtrees(b1, b3);
-  p[2].LC_invalidate_branch(b);
-  p[2].invalidate_subA_index_branch(b);
+  p[2].NNI(b1, b3);
   
   if (not extends(p[2].T(), *PP.TC))
     return;
@@ -616,17 +604,13 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   int b3 = PP.T().directed_branch(nodes[5],nodes[3]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  p[1].exchange_subtrees(b1, b2);
-  p[1].LC_invalidate_branch(b);
-  p[1].invalidate_subA_index_branch(b);
+  p[1].NNI(b1, b2);
 
   if (not extends(p[1].T(), *PP.TC))
     return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
-  p[2].exchange_subtrees(b1, b3);
-  p[2].LC_invalidate_branch(b);
-  p[2].invalidate_subA_index_branch(b);
+  p[2].NNI(b1, b3);
   
   if (not extends(p[2].T(), *PP.TC))
     return;
@@ -673,8 +657,6 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].exchange_subtrees(b1, b2);
-  p[1].LC_invalidate_branch(b);
-  p[1].invalidate_subA_index_branch(b);
  
   p[1].recompute_pairwise_alignment(b1);
   p[1].note_alignment_changed_on_branch(b2);
@@ -684,8 +666,6 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
   p[2].exchange_subtrees(b1, b3);
-  p[2].LC_invalidate_branch(b);
-  p[2].invalidate_subA_index_branch(b);
 
   p[2].recompute_pairwise_alignment(b1);
   p[2].note_alignment_changed_on_branch(b3);

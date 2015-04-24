@@ -804,7 +804,7 @@ void Parameters::set_tree(const SequenceTree& T2)
   check_h_tree();
 }
 
-void Parameters::reconnect_branch(int s1, int t1, int t2)
+void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 {
   uniquify_subA_indices();
 
@@ -813,6 +813,13 @@ void Parameters::reconnect_branch(int s1, int t1, int t2)
   int b1 = T().directed_branch(s1,t1);
   int b2 = T().directed_branch(t1,s1);
 
+  if (safe)
+  {
+    LC_invalidate_branch(b1);
+    invalidate_subA_index_branch(b1);
+    note_alignment_changed_on_branch(T_->directed_branch(s1,t1));
+  }
+  
   T_.modify()->reconnect_branch(s1,t1,t2);
 
   context::set_parameter_value(parameter_for_tree_branch[b1], OPair(Opair{Int(T().directed_branch(b1).source()), Int(T().directed_branch(b1).target())}) );
@@ -820,11 +827,18 @@ void Parameters::reconnect_branch(int s1, int t1, int t2)
   context::set_parameter_value(parameter_for_tree_node[t1], edges_connecting_to_node(T(),t1));
   context::set_parameter_value(parameter_for_tree_node[t2], edges_connecting_to_node(T(),t2));
 
+  if (safe)
+  {
+    LC_invalidate_branch(b1);
+    invalidate_subA_index_branch(b1);
+    note_alignment_changed_on_branch(T_->directed_branch(s1,t2));
+  }
+  
   check_h_tree();
 }
 
 // This could create loops it we don't check that the subtrees are disjoint.
-// br{1,2} point into the subtrees.  b{1,2} point out of the subtrees, towards the other subtree.
+// br{1,2} point out of the subtrees.  b{1,2} point into the subtrees, towards the other subtree.
 void Parameters::exchange_subtrees(int br1, int br2)
 {
   const_branchview b1 = T().directed_branch(br1).reverse();
@@ -839,8 +853,104 @@ void Parameters::exchange_subtrees(int br1, int br2)
   assert(not T().subtree_contains(br1,s2));
   assert(not T().subtree_contains(br2,s1));
 
-  reconnect_branch(s1,t1,t2);
-  reconnect_branch(s2,t2,t1);
+  reconnect_branch(s1,t1,t2,true);
+  reconnect_branch(s2,t2,t1,true);
+}
+
+#include "dp/hmm.H"
+#include "dp/5way.H"
+
+void disconnect(vector<HMM::bitmask_t>& a123456)
+{
+  for(auto& col:a123456)
+  {
+    col.set(4,false);
+    col.set(5,false);
+  }
+}
+
+void minimally_connect(vector<HMM::bitmask_t>& a123456)
+{
+  for(auto& col:a123456)
+  {
+    if ((col.test(0) or col.test(1)) and (col.test(2) or col.test(3)))
+    {
+      col.set(4);
+      col.set(5);
+    }
+
+    if (col.test(0) and col.test(1))
+      col.set(4);
+
+    if (col.test(2) and col.test(3))
+      col.set(5);
+  }
+}
+
+// br1/b1 and br2/b2 point outwards, away from the other subtrees.
+void Parameters::NNI(int br1, int br2)
+{
+  const_branchview b1 = T().directed_branch(br1);
+  const_branchview b2 = T().directed_branch(br2);
+
+  int s1 = b1.source();
+  int t1 = b1.target();
+
+  int s2 = b2.source();
+  int t2 = b2.target();
+
+  assert(T().is_connected(s1,s2));
+  int b45 = T().directed_branch(s1,s2);
+
+  // 1. Get alignments of sequences 123456
+  auto order = A5::get_nodes(T(),b45);
+  auto& nodes = order.nodes;
+  assert(nodes[4] == s1);
+  assert(nodes[5] == s2);
+
+  if (nodes[0] != t1) std::swap(nodes[0],nodes[1]);
+  assert(nodes[0] == t1);
+  
+  if (nodes[2] != t2) std::swap(nodes[2],nodes[3]);
+  assert(nodes[2] == t2);
+
+  // OK, br1 is nodes[0]<->nodes[4] and br2 is nodes[2]<->nodes[5]
+  
+  vector<vector<HMM::bitmask_t>> a123456(n_data_partitions());
+  for(int i=0;i<n_data_partitions();i++)
+    if (get_data_partition(i).variable_alignment())
+      a123456[i] = A5::get_bitpath((*this)[i], order);
+
+  // 3. Perform NNI
+  exchange_subtrees(br1, br2);  // alter tree
+  std::swap(nodes[0],nodes[2]); // alter nodes
+  for(int i=0;i<n_data_partitions();i++)
+    if (get_data_partition(i).variable_alignment())
+      for(auto& col: a123456[i]) // alter matrix
+      {
+	auto col2 = col;
+	col.set(0,col2.test(2));
+	col.set(2,col2.test(0));
+      }
+    
+  // 4. Fix-up the alignment matrix
+  for(int i=0;i<n_data_partitions();i++)
+    if (get_data_partition(i).variable_alignment())
+    {
+      disconnect(a123456[i]);
+      minimally_connect(a123456[i]);
+    }
+
+  // 5. Set the pairwise alignments.
+  for(int i=0;i<n_data_partitions();i++)
+    if (get_data_partition(i).variable_alignment())
+    {
+      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 0, 4), false);
+      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 1, 4), false);
+      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 2, 5), false);
+      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 3, 5), false);
+      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 4, 5), false);
+    }
 }
 
 /// SPR: move the subtree b1 into branch b2
@@ -855,7 +965,7 @@ void Parameters::exchange_subtrees(int br1, int br2)
 /// from the attachment point.
 ///
 /// Got m1<--->x1<--->m2 and n1<--->n2, and trying to move x1 onto (n1,n2)
-int Parameters::SPR(int br1, int br2, int branch_to_move)
+int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
 {
   check_h_tree();
 
@@ -901,29 +1011,39 @@ int Parameters::SPR(int br1, int br2, int branch_to_move)
   //------ Merge the branches (m1,x1) and (x1,m2) -------//
   int dead_branch = T().directed_branch(m2,x1).undirected_name();
 
-  setlength_no_invalidate_LC( T().directed_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
-  LC_invalidate_one_branch(T().directed_branch(m1,x1) );
-  LC_invalidate_one_branch(T().directed_branch(x1,m1) );
+  if (safe)
+    setlength( T().directed_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
+  else
+  {
+    setlength_no_invalidate_LC( T().directed_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
+    LC_invalidate_one_branch(T().directed_branch(m1,x1) );
+    LC_invalidate_one_branch(T().directed_branch(x1,m1) );
+  }
 
-  setlength_no_invalidate_LC( T().directed_branch(m2,x1), 0.0);
-  LC_invalidate_one_branch(T().directed_branch(m2,x1) );
-  LC_invalidate_one_branch(T().directed_branch(x1,m2) );
+  if (safe)
+    setlength( T().directed_branch(m2,x1), 0.0);
+  else
+  {
+    setlength_no_invalidate_LC( T().directed_branch(m2,x1), 0.0);
+    LC_invalidate_one_branch(T().directed_branch(m2,x1) );
+    LC_invalidate_one_branch(T().directed_branch(x1,m2) );
+  }
 
   //------------ Reconnect the branches ---------------//
 
   // Reconnect (m1,x) to m2, making x a degree-2 node
   // This leaves m1 connected to its branch, so m1 can be a leaf.
   assert(not T().node(m2).is_leaf_node());
-  reconnect_branch(m1, x1, m2);
+  reconnect_branch(m1, x1, m2, safe);
 
   // Reconnect (x,m2) to n2, leaving x a degree-2 node
   assert(not T().node(m2).is_leaf_node());
-  reconnect_branch(x1, m2, n2);
+  reconnect_branch(x1, m2, n2, safe);
 
   // Reconnect (n1,n2) to x, making x a degree-3 node again.
   // This leaves n1 connected to its branch, so n1 can be a leaf.
   assert(not T().node(n2).is_leaf_node());
-  reconnect_branch(n1, n2, x1);
+  reconnect_branch(n1, n2, x1, safe);
 
   return dead_branch;
 }

@@ -148,7 +148,7 @@ int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b)
 }
 
 /// Do a SPR move on T1, moving the subtree behind b1_ to branch b2
-double do_SPR(Parameters& P, int b1_,int b2) 
+double do_SPR(Parameters& P, int b1_,int b2)
 {
   const_branchview b1 = P.T().directed_branch(b1_);
 
@@ -161,7 +161,7 @@ double do_SPR(Parameters& P, int b1_,int b2)
       P.T().directed_branch(b2).source() == b1.target()) 
     ;
   else
-    P.SPR(b1.reverse(),b2);
+    P.SPR(b1.reverse(),b2,true);
 
   //------ Find the two new branches ------//
   vector<const_branchview> connected2;
@@ -174,8 +174,8 @@ double do_SPR(Parameters& P, int b1_,int b2)
   double L1 = connected1[0].length() + connected1[1].length();
   double L2 = connected2[0].length() + connected2[1].length();
 
-  P.setlength_unsafe(P.T().directed_branch(connected2[0]), uniform() * L2 );
-  P.setlength_unsafe(P.T().directed_branch(connected2[1]), L2 - P.T().directed_branch(connected2[0]).length() );
+  P.setlength(P.T().directed_branch(connected2[0]), uniform() * L2 );
+  P.setlength(P.T().directed_branch(connected2[1]), L2 - P.T().directed_branch(connected2[0]).length() );
 
   return L2/L1;
 }
@@ -400,9 +400,6 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   vector<Parameters> p(2,P);
 
   //---------------- find the changed branches ------------------//
-  vector<int> branches;
-  for(const_edges_after_iterator i=p[1].T().directed_branch(n2,n1).branches_after();i;i++)
-    branches.push_back((*i).undirected_name());
   //  std::cerr<<"before = "<<p[1].T<<endl;
 
   // FIXME - do we need to USE the ratio anywhere?
@@ -423,27 +420,9 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     return MCMC::Result(2+bins,0);
 
   //  std::cerr<<"after = "<<p[1].T<<endl;
-  for(const_edges_after_iterator i=p[1].T().directed_branch(n2,n1).branches_after();i;i++)
-    branches.push_back((*i).undirected_name());
-
-  remove_duplicates(branches);
-    
-  //----------- invalidate caches for changed branches -----------//
-  assert(branches.size() <= 3);
-  for(int i=0;i<branches.size();i++) {
-    int bi = branches[i];
-    p[1].setlength(bi,p[1].T().directed_branch(bi).length());     // bidirectional effect
-    if (tree_changed)
-    {
-      p[1].invalidate_subA_index_branch(bi);              // bidirectional effect
-      if (p[1].variable_alignment()) 
-	p[1].note_alignment_changed_on_branch(bi); 
-    }
-  }
 
   // If we reattach on a different branch than we pulled out of...
-  assert(tree_changed == (branches.size() != 2));
-  if (branches.size() != 2)
+  if (tree_changed)
   {
     // ... then set the pairwise alignment of the branch we pulled out of.
     vector<const_branchview> branches2;
@@ -600,7 +579,7 @@ struct spr_attachment_probabilities: public map<tree_edge,log_double_t>
 
 /// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
 ///  and choose the point on the branch specified in \a locations.
-int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attachment_points& locations, int branch_to_move = -1)
+int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attachment_points& locations, bool safe, int branch_to_move = -1)
 {
   double total_length_before = tree_length(P.T());
 
@@ -627,7 +606,7 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   int n0 = P.T().directed_branch(b_subtree).target();
 
   // Perform the SPR operation (specified by a branch TOWARD the pruned subtree)
-  int BM = P.SPR(P.T().directed_branch(b_subtree).reverse(), b_target, branch_to_move);
+  int BM = P.SPR(P.T().directed_branch(b_subtree).reverse(), b_target, safe, branch_to_move);
 
   // Find the names of the branches
   assert(P.T().is_connected(B_unbroken_target.node1, n0));
@@ -651,13 +630,23 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
 
   // We want to suppress the bidirectional propagation of invalidation for all branches after this branch.
   // It would be nice to save the old exp(tB) and switch back to it later.
-  P.setlength_no_invalidate_LC(b1, L1);
-  P.LC_invalidate_one_branch(b1);                                          //  ... mark likelihood caches for recomputing.
-  P.LC_invalidate_one_branch(P.T().directed_branch(b1).reverse());         //  ... mark likelihood caches for recomputing.
+  if (safe)
+    P.setlength(b1, L1);
+  else
+  {
+    P.setlength_no_invalidate_LC(b1, L1);
+    P.LC_invalidate_one_branch(b1);                                          //  ... mark likelihood caches for recomputing.
+    P.LC_invalidate_one_branch(P.T().directed_branch(b1).reverse());         //  ... mark likelihood caches for recomputing.
+  }
 
-  P.setlength_no_invalidate_LC(b2, L2);
-  P.LC_invalidate_one_branch(b2);                                          //  ... mark likelihood caches for recomputing.
-  P.LC_invalidate_one_branch(P.T().directed_branch(b2).reverse());         //  ... mark likelihood caches for recomputing.
+  if (safe)
+    P.setlength(b2, L2);
+  else
+  {
+    P.setlength_no_invalidate_LC(b2, L2);
+    P.LC_invalidate_one_branch(b2);                                          //  ... mark likelihood caches for recomputing.
+    P.LC_invalidate_one_branch(P.T().directed_branch(b2).reverse());         //  ... mark likelihood caches for recomputing.
+  }
 
   double total_length_after = tree_length(P.T());
   assert(std::abs(total_length_after - total_length_before) < 1.0e-9);
@@ -900,7 +889,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     tree_edge B2 = I.get_tree_edge(b2);
 
     // ** 1. SPR ** : alter the tree.
-    int BM2 = SPR_at_location(P, b1, b2, locations, I.BM);
+    int BM2 = SPR_at_location(P, b1, b2, locations, false, I.BM);
     assert(BM2 == I.BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
 
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
@@ -1113,7 +1102,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   }
 
   // Step N-1: ATTACH to that point
-  SPR_at_location(p[1], b1, branch_names[C], locations);
+  SPR_at_location(p[1], b1, branch_names[C], locations, false);
 
   // enforce tree constraints
   if (not extends(p[1].T(), *P.TC))
