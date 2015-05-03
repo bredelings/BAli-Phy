@@ -364,6 +364,7 @@ public:
   void exchange_subtrees(int b1, int b2);
   void NNI(int b1, int b2);
   int SPR(int b1, int b2, int bm=-1);
+  int SPR(const tree_edge& b1, const tree_edge& b2, int bm=-1);
   void show_h_tree() const;
 
   /// Did we most recently hit beta==1 (1) or beta=0 (0)

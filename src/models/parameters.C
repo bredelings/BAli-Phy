@@ -1025,6 +1025,13 @@ void Parameters::NNI(int b1, int b2)
     }
 }
 
+int Parameters::SPR(const tree_edge& B1, const tree_edge& B2, int branch_to_move)
+{
+  int b1 = t().find_branch(B1);
+  int b2 = t().find_branch(B2);
+  return SPR(b1, b2, branch_to_move);
+}
+
 /// SPR: move the subtree b1 into branch b2
 ///
 /// When two branches are merged into one as the pruned subtree is removed,
