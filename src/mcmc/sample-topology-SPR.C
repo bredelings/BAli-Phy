@@ -739,10 +739,10 @@ public:
     assert(M.size() == n_attachment_branches());
     vector<U> v(n_attachment_branches());
 
-    for(typename map<tree_edge,U>::const_iterator i=M.begin();i != M.end(); i++)
+    for(const auto& m: M)
     {
-      int index = tree_edge_to_index(i->first);
-      v[index] = i->second;
+      int index = tree_edge_to_index(m.first);
+      v[index] = m.second;
     }
 
     return v;
