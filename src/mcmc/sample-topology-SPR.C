@@ -585,7 +585,13 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
 #endif
 
   // this is bidirectional, but does not propagate
-  P.invalidate_subA_index_branch(BM);
+  // I think this was only ever needed to prepare for the last move -- to the chosen branch?
+  // P.invalidate_subA_index_branch(BM); 
+
+  //  FIXME - Eliminate BM
+  //  FIXME - Switch to tree_edge for more things
+  //  FIXME - Stop using branch_names[C] after choose_MH??
+  //  FIXME - Iterate over attachment_branch_pairs instead of branch_names
 
   // Return the branch name that moved to the new attachment location.
   return BM;
