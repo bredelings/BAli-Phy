@@ -916,7 +916,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
   if (P.variable_alignment())
 #endif
   {
-    spr_attachment_probabilities PrB2 = SPR_search_attachment_points(p[1], b1, locations, I.BM);
+    spr_attachment_probabilities PrB2 = SPR_search_attachment_points(p[1], b1, locations);
     vector<log_double_t> Pr2 = I.convert_to_vector(PrB2);
     
     if (not P.variable_alignment())
