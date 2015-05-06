@@ -724,8 +724,8 @@ spr_info::spr_info(const TreeInterface& T_, int b)
   child_branches = sort_and_randomize(T.branches_after(b_parent));
   assert(child_branches.size() == 2);
 
-  B1 = std::min(T.undirected(child_branches[0]), T.undirected(child_branches[1]));
-  BM = std::max(T.undirected(child_branches[0]), T.undirected(child_branches[1]));
+  B1 = child_branches[0];
+  BM = child_branches[1];
   B0 = tree_edge(T.target(child_branches[0]), T.target(child_branches[1]));
 
   /*----------- get the list of possible attachment points, with [0] being the current one.------- */
@@ -740,7 +740,7 @@ spr_info::spr_info(const TreeInterface& T_, int b)
 
   // remove the moving branch name (BM) from the list of attachment branches
   for(int i=attachment_branches.size()-1;i>=0;i--)
-    if (T.undirected(attachment_branches[i]) == BM)
+    if (attachment_branches[i] == BM or T.reverse(attachment_branches[i]) == BM)
       attachment_branches.erase(attachment_branches.begin()+i);
 
   // convert the const_branchview's to int names
@@ -854,9 +854,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, int b1, 
     assert(Ps.size() == i+1);
     auto& p = Ps.back();
     int b2 = p.t().find_branch(B2);
-    int BM2 = SPR_at_location(p, b1, b2, locations);
-
-    assert(std::abs(p.t().branch_length(I.B1) - L[0]) < 1.0e-9);
+    SPR_at_location(p, b1, b2, locations);
 
     Pr[B2] = heated_likelihood_unaligned_root(p) * p.prior_no_alignment();
 #ifdef DEBUG_SPR_ALL
