@@ -594,12 +594,10 @@ void SPR_at_location(Parameters& P, const tree_edge& b_subtree, const tree_edge&
   assert(std::abs(total_length_after - total_length_before) < 1.0e-9);
 #endif
 
-  // this is bidirectional, but does not propagate
-  // I think this was only ever needed to prepare for the last move -- to the chosen branch?
-
-  //  FIXME - Switch to tree_edge for more things
+  //  FIXME - switch SPR_at_location( ) to use NNI.
   //  FIXME - Stop using branch_names[C] after choose_MH??
-  //  FIXME - Iterate over attachment_branch_pairs instead of branch_names
+  //  FIXME - split spr_search routines into separate file?
+  //  FIXME - Don't send a variable parameters object into spr_search_attachment_points
 }
 
 /// A struct to compute and store information about attachment points their branch names
