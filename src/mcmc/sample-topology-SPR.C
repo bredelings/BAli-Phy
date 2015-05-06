@@ -723,10 +723,6 @@ spr_info::spr_info(const TreeInterface& T_, int b)
 {
   child_branches = sort_and_randomize(T.branches_after(b_parent));
   assert(child_branches.size() == 2);
-  B1 = T.undirected(child_branches[0]);
-  BM = T.undirected(child_branches[1]);
-
-  if (BM < B1) std::swap(B1,BM);
 
   B1 = std::min(T.undirected(child_branches[0]), T.undirected(child_branches[1]));
   BM = std::max(T.undirected(child_branches[0]), T.undirected(child_branches[1]));
