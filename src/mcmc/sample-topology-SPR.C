@@ -1028,7 +1028,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   // convert the const_branchview's to int names
   vector<int> branch_names = I.attachment_branches;
 
-  spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], b1, locations, I.BM);
+  spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], b1, locations);
 
   vector<log_double_t> Pr = I.convert_to_vector(PrB);
 #ifdef DEBUG_SPR_ALL
