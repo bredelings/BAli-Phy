@@ -536,7 +536,7 @@ struct spr_attachment_probabilities: public map<tree_edge,log_double_t>
 
 /// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
 ///  and choose the point on the branch specified in \a locations.
-int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attachment_points& locations, int branch_to_move = -1)
+int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attachment_points& locations)
 {
 #ifndef NDEBUG
   double total_length_before = tree_length(P.t());
@@ -565,7 +565,7 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   int n0 = P.t().target(b_subtree);
 
   // Perform the SPR operation (specified by a branch TOWARD the pruned subtree)
-  int BM = P.SPR(P.t().reverse(b_subtree), b_target, branch_to_move);
+  int BM = P.SPR(P.t().reverse(b_subtree), b_target);
 
   // Find the names of the branches
   int b1 = P.t().find_branch(B_unbroken_target.node1, n0);
