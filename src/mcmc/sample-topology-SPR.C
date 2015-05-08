@@ -878,7 +878,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     Ps.push_back(Ps[prev_i]);
     assert(Ps.size() == i+1);
     auto& p = Ps.back();
-    SPR_at_location(p, B1, B2, locations, false);
+    SPR_at_location(p, B1, B2, locations, true);
 
     Pr[B2] = heated_likelihood_unaligned_root(p) * p.prior_no_alignment();
 #ifdef DEBUG_SPR_ALL
