@@ -962,6 +962,13 @@ void minimally_connect(vector<HMM::bitmask_t>& a123456)
   }
 }
 
+void Parameters::NNI(const tree_edge& B1, const tree_edge& B2)
+{
+  int b1 = t().find_branch(B1);
+  int b2 = t().find_branch(B2);
+  NNI(b1, b2);
+}
+
 // br1/b1 and br2/b2 point outwards, away from the other subtrees.
 void Parameters::NNI(int b1, int b2)
 {
