@@ -935,12 +935,44 @@ void Parameters::exchange_subtrees(int br1, int br2)
 #include "dp/hmm.H"
 #include "dp/5way.H"
 
+void disconnect(alignment& A, const vector<int>& nodes)
+{
+  for(int c=0; c<A.length(); c++)
+  {
+    A.set_value(c,nodes[4],alphabet::gap);
+    A.set_value(c,nodes[5],alphabet::gap);
+  }
+}
+
 void disconnect(vector<HMM::bitmask_t>& a123456)
 {
   for(auto& col:a123456)
   {
     col.set(4,false);
     col.set(5,false);
+  }
+}
+
+void minimally_connect(alignment& A, const vector<int>& nodes)
+{
+  for(int c=0; c<A.length(); c++)
+  {
+    bool n0 = A.character(c, nodes[0]);
+    bool n1 = A.character(c, nodes[1]);
+    bool n2 = A.character(c, nodes[2]);
+    bool n3 = A.character(c, nodes[3]);
+
+    if ((n0 or n1) and (n2 or n3))
+    {
+      A.set_value(c, nodes[4], alphabet::not_gap);
+      A.set_value(c, nodes[5], alphabet::not_gap);
+    }
+
+    if (n0 and n1)
+      A.set_value(c, nodes[4], alphabet::not_gap);
+
+    if (n2 and n3)
+      A.set_value(c, nodes[5], alphabet::not_gap);
   }
 }
 
@@ -968,6 +1000,8 @@ void Parameters::NNI(const tree_edge& B1, const tree_edge& B2)
   int b2 = t().find_branch(B2);
   NNI(b1, b2);
 }
+
+
 
 // br1/b1 and br2/b2 point outwards, away from the other subtrees.
 void Parameters::NNI(int b1, int b2)
@@ -1012,7 +1046,17 @@ void Parameters::NNI(int b1, int b2)
 	col.set(2,col2.test(0));
       }
     
-  // 4. Fix-up the alignment matrix
+  // 4. Update the alignment matrix (alignment)
+  for(int i=0;i<n_data_partitions();i++)
+    if (get_data_partition(i).variable_alignment())
+    {
+      alignment* A = get_data_partition(i).A().clone();
+      disconnect(*A,nodes);
+      minimally_connect(*A,nodes);
+      get_data_partition(i).set_alignment(*A);
+    }
+  /*
+  // 5. Fix-up the alignment matrix (bits)
   for(int i=0;i<n_data_partitions();i++)
     if (get_data_partition(i).variable_alignment())
     {
@@ -1020,15 +1064,28 @@ void Parameters::NNI(int b1, int b2)
       minimally_connect(a123456[i]);
     }
 
-  // 5. Set the pairwise alignments.
+  // 6. Set the pairwise alignments.
   for(int i=0;i<n_data_partitions();i++)
     if (get_data_partition(i).variable_alignment())
     {
-      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 0, 4), false);
-      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 1, 4), false);
-      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 2, 5), false);
-      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 3, 5), false);
-      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 4, 5), false);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 0, 4), true);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 1, 4), true);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 2, 5), true);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 3, 5), true);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 4, 5), true);
+    }
+  */
+
+  // 6. Set the pairwise alignments.
+  for(int i=0;i<n_data_partitions();i++)
+    if (get_data_partition(i).variable_alignment())
+    {
+      const alignment& A = get_data_partition(i).A();
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[0],nodes[4]), A2::get_pairwise_alignment(A, nodes[0], nodes[4]), false);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[1],nodes[4]), A2::get_pairwise_alignment(A, nodes[1], nodes[4]), false);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[2],nodes[5]), A2::get_pairwise_alignment(A, nodes[2], nodes[5]), false);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[3],nodes[5]), A2::get_pairwise_alignment(A, nodes[3], nodes[5]), false);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[4],nodes[5]), A2::get_pairwise_alignment(A, nodes[4], nodes[5]), false);
     }
 }
 
