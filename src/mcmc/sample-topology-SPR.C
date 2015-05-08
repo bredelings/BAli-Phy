@@ -636,6 +636,8 @@ void SPR_at_location(Parameters& P, const tree_edge& b_subtree, const tree_edge&
   //  FIXME - Stop using branch_names[C] after choose_MH??
   //  FIXME - split spr_search routines into separate file?
   //  FIXME - Don't send a variable parameters object into spr_search_attachment_points
+  //  NOTE - The NNI doesn't actually change the alignment MATRIX.
+  //         Since we are actually using the MATRIX, perhaps we should fix this.
 }
 
 /// A struct to compute and store information about attachment points their branch names
