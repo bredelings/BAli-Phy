@@ -510,25 +510,6 @@ void sample_SPR_flat_one(owned_ptr<Model>& P,MoveStats& Stats,int b1)
   }
 }
 
-log_double_t likelihood_unaligned_root(const Parameters& P)
-{
-  log_double_t Pr = 1;
-
-  bool old = P.contains_key("no_unaligned_root");
-
-  for(int i=0;i<P.n_data_partitions();i++)
-    if (P[i].variable_alignment() and not old)
-      Pr *= substitution::Pr_unaligned_root(P[i]);
-    else
-      Pr *= P[i].likelihood();
-  return Pr;
-}
-
-log_double_t heated_likelihood_unaligned_root(const Parameters& P)
-{
-  return pow(likelihood_unaligned_root(P), P.get_beta());
-}
-
 std::ostream& operator<<(std::ostream& o, const tree_edge& b)
 {
   o<<"["<<b.node1<<","<<b.node2<<"]";
@@ -855,11 +836,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 
 #ifdef DEBUG_SPR_ALL
   Pr.LLL[I.B0] = P.heated_likelihood();
-
-  log_double_t PR1 = P.heated_likelihood();
-  log_double_t PR2 = heated_likelihood_unaligned_root(P);
-    
-  assert(std::abs(PR1.log() - PR2.log()) < 1.0e-8);
 #endif
 
   // Compute the probability of each attachment point
@@ -1078,7 +1054,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& B1)
 #ifdef DEBUG_SPR_ALL
   // The likelihood for attaching at a particular place should not
   // depend on the initial attachment point.
-  log_double_t L_1 = heated_likelihood_unaligned_root(p[1]);
+  log_double_t L_1 = p[1].heated_likelihood();
   assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
 #endif
 
