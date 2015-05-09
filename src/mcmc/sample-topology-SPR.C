@@ -1023,7 +1023,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& B1)
   vector<log_double_t> LLL = I.convert_to_vector(PrB.LLL);
 #endif
 
-  // Step N-2: CHOOSE an attachment point
+  // Step N-1: CHOOSE an attachment point
 
   vector<log_double_t> PrL = Pr;
   for(int i=0;i<PrL.size();i++)
@@ -1039,17 +1039,12 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& B1)
     throw c;
   }
 
-  // Step N-1: ATTACH to that point
+  // Step N: ATTACH to that point
   SPR_at_location(p[1], B1, p[1].t().edge(branch_names[C]), locations, false);
 
   // enforce tree constraints
   //  if (not extends(p[1].t(), P.PC->TC))
   //    return false;
-
-  // Step N: INVALIDATE subA indices and also likelihood caches that are no longer valid.
-
-  // FIXME: Does the invalidation need to proceed outward from the original attachment location?
-  p[1].subA_index_allow_invalid_branches(false);
 
 #ifdef DEBUG_SPR_ALL
   // The likelihood for attaching at a particular place should not
