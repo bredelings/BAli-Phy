@@ -465,41 +465,6 @@ matrix<int> subA_index_t::get_subA_index_none(const vector<int>& b,const alignme
   return subA_select(subA);
 }
 
-// Idea is that columns which are (+,+,+) in terms of having leaves, but (+,+,-) in terms of having
-// present characters should get separated into (+,+,-) and (-,-,+), and we should use calc_root( )
-// on the first one, and a new calc_root_unaligned( ) on the second one.
-
-// So, for example if they are (+,+,+) in terms of having leaves, and (-,-,-) in terms of having 
-// present characters, should end up as (-,-,-) for calc_root( ) and (+,+,+) for calc_root_unaligned( ).
-
-/// Select rows for branches \a b, and toss ENTRIES where the character at the base of the branch is absent
-matrix<int> subA_index_t::get_subA_index_aligned(const vector<int>& b,const alignment& A, const TreeInterface& t, bool present)
-{
-  vector<int> nodes;
-  for(int i=0;i<b.size();i++)
-    nodes.push_back(t.source(b[i]));
-
-  // the alignment of sub alignments
-  matrix<int> subA = get_subA_index(b,A,t,true);
-
-  // select and order the columns we want to keep
-  const int B = b.size();
-  for(int i=0;i<subA.size1();i++)
-  {
-    int c = subA(i,B);
-    for(int j=0;j<nodes.size();j++)
-    {
-      // zero out entries if the character is absent (if present==true) or present (if present==false)
-      if ((not A.character(c,nodes[j])) xor (not present))
-	subA(i, j) = alphabet::gap;
-    }
-  }
-
-  // return processed indices
-  return subA_remove_last_row(subA);
-}
-
-
 /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
 matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,const alignment& A, const TreeInterface& t,
 							const vector<int>& index_to_columns) 

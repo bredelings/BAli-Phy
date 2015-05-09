@@ -90,9 +90,6 @@ namespace substitution {
 
   std::vector<std::vector<double> > get_model_probabilities_by_alignment_column(const data_partition&);
 
-  // Full likelihood - if some seemingly aligned sequences at the root have + -> - -> +
-  log_double_t Pr_unaligned_root(const data_partition&);
-
   extern int total_peel_leaf_branches;
   extern int total_peel_internal_branches;
   extern int total_peel_branches;
