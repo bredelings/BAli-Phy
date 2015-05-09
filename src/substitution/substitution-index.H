@@ -252,9 +252,6 @@ public:
   /// align sub-alignments corresponding to branches in b
   matrix<int> get_subA_index(const std::vector<int>& b,bool=false) const;
 
-  /// align sub-alignments corresponding to branches in b, but only keep entries corresponding to present/absent characters
-  matrix<int> get_subA_index_aligned(const std::vector<int>& b,const alignment& A, const TreeInterface& t, bool present);
-
   /// align sub-alignments corresponding to branches pointing to node
   matrix<int> get_subA_index(int node,const alignment& A, const TreeInterface& t); 
 
