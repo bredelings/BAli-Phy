@@ -449,25 +449,6 @@ void data_partition::invalidate_subA_index_all()
   subA().invalidate_all_branches();
 }
 
-void data_partition::subA_index_allow_invalid_branches(bool b)
-{
-  uniquify_subA_index();
-
-#ifndef NDEBUG
-  if (not subA().may_have_invalid_branches())
-    check_regenerate(subA(), A(), t());
-  subA().check_footprint(A(), t());
-#endif
-
-  subA().allow_invalid_branches(b);
-
-#ifndef NDEBUG
-  if (not subA().may_have_invalid_branches())
-    check_regenerate(subA(), A(), t());
-  subA().check_footprint(A(), t());
-#endif
-}
-
 /// Set the pairwise alignment value, but don't mark the alignment & sequence lengths as changed.
 void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& pi,bool require_match_A) const
 {
@@ -1324,12 +1305,6 @@ void Parameters::invalidate_subA_index_all()
 {
   for(int i=0;i<n_data_partitions();i++)
     get_data_partition(i).invalidate_subA_index_all();
-}
-
-void Parameters::subA_index_allow_invalid_branches(bool b)
-{
-  for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).subA_index_allow_invalid_branches(b);
 }
 
 void Parameters::note_alignment_changed_on_branch(int b)
