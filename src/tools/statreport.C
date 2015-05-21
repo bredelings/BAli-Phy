@@ -377,6 +377,7 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
     if (i==0)
     {
       std::ostringstream o;
+      o.precision(args["precision"].as<unsigned>());
       if (show_individual)
 	o<<"   "<<name<<"     ~ "<<median(values);
       else
