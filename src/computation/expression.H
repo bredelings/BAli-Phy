@@ -412,7 +412,11 @@ public:
 
   int as_int() const
   {
+#ifndef NDEBUG
     return *boost::dynamic_pointer_cast<const Int>(head());
+#else
+    return *boost::static_pointer_cast<const Int>(head());
+#endif
   }
 
   bool is_double() const
@@ -422,7 +426,11 @@ public:
 
   double as_double() const
   {
+#ifndef NDEBUG
     return *boost::dynamic_pointer_cast<const Double>(head());
+#else
+    return *boost::static_pointer_cast<const Double>(head());
+#endif
   }
 
   bool is_char() const
@@ -432,7 +440,11 @@ public:
 
   char as_char() const
   {
+#ifndef NDEBUG
     return *boost::dynamic_pointer_cast<const Char>(head());
+#else
+    return *boost::static_pointer_cast<const Char>(head());
+#endif
   }
 
   bool is_log_double() const
@@ -442,7 +454,11 @@ public:
 
   log_double_t as_log_double() const
   {
+#ifndef NDEBUG
     return *boost::dynamic_pointer_cast<const Log_Double>(head());
+#else
+    return *boost::static_pointer_cast<const Log_Double>(head());
+#endif
   }
   
   inline const object_ptr<const Object>& ptr() const {return O;}
