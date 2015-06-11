@@ -164,6 +164,7 @@ Try summarizing the sampled numerical parameters (e.g. not trees and alignments)
 % statreport 25-muscle-1/C1.p 25-muscle-2/C1.p > Report
 % statreport 25-muscle-1/C1.p 25-muscle-2/C1.p --mean > Report
 % statreport 25-muscle-1/C1.p 25-muscle-2/C1.p --mean --median > Report
+% statreport 25-muscle-1/C1.p 25-muscle-2/C1.p --mean --median --mode > Report
 % less Report
 Now lets examine the summaries using a graphical program.  If you are using Windows or Mac, run Tracer, and press the <guilabel>+</guilabel> button to add these files.  What kind of ESS do you get?  If you are using Linux, do 
 % tracer 25-muscle-1/C1.p 25-muscle-2/C1.p &#38;
