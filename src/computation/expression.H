@@ -405,6 +405,46 @@ public:
     return head()->compare(O);
   }
 
+  bool is_int() const
+  {
+    return (bool)boost::dynamic_pointer_cast<const Int>(head());
+  }
+
+  int as_int() const
+  {
+    return *boost::dynamic_pointer_cast<const Int>(head());
+  }
+
+  bool is_double() const
+  {
+    return (bool)boost::dynamic_pointer_cast<const Double>(head());
+  }
+
+  double as_double() const
+  {
+    return *boost::dynamic_pointer_cast<const Double>(head());
+  }
+
+  bool is_char() const
+  {
+    return (bool)boost::dynamic_pointer_cast<const Char>(head());
+  }
+
+  char as_char() const
+  {
+    return *boost::dynamic_pointer_cast<const Char>(head());
+  }
+
+  bool is_log_double() const
+  {
+    return (bool)boost::dynamic_pointer_cast<const Log_Double>(head());
+  }
+
+  log_double_t as_log_double() const
+  {
+    return *boost::dynamic_pointer_cast<const Log_Double>(head());
+  }
+  
   inline const object_ptr<const Object>& ptr() const {return O;}
 
   inline explicit operator bool() const {return (bool)O;}
