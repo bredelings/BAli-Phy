@@ -6,7 +6,7 @@
 
 #include "object.H"
 
-struct OperationArgs;
+class OperationArgs;
 
 #include "operator.H"
 #include "closure.H"
