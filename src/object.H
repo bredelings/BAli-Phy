@@ -403,42 +403,42 @@ object_ptr<T> convert(const object_ptr<const Object>& o)
 
 object_ref parse_object(const std::string& s);
 
-bool object_ref::is_int() const
+inline bool object_ref::is_int() const
 {
   return (bool)boost::dynamic_pointer_cast<const Int>(*this);
 }
 
-int object_ref::as_int() const
+inline int object_ref::as_int() const
 {
   return *boost::dynamic_pointer_cast<const Int>(*this);
 }
 
-bool object_ref::is_double() const
+inline bool object_ref::is_double() const
 {
   return (bool)boost::dynamic_pointer_cast<const Double>(*this);
 }
 
-double object_ref::as_double() const
+inline double object_ref::as_double() const
 {
   return *boost::dynamic_pointer_cast<const Double>(*this);
 }
 
-bool object_ref::is_char() const
+inline bool object_ref::is_char() const
 {
   return (bool)boost::dynamic_pointer_cast<const Char>(*this);
 }
 
-char object_ref::as_char() const
+inline char object_ref::as_char() const
 {
   return *boost::dynamic_pointer_cast<const Char>(*this);
 }
 
-bool object_ref::is_log_double() const
+inline bool object_ref::is_log_double() const
 {
   return (bool)boost::dynamic_pointer_cast<const Log_Double>(*this);
 }
 
-log_double_t object_ref::as_log_double() const
+inline log_double_t object_ref::as_log_double() const
 {
   return *boost::dynamic_pointer_cast<const Log_Double>(*this);
 }
