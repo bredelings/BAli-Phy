@@ -410,11 +410,7 @@ inline bool object_ref::is_int() const
 
 inline int object_ref::as_int() const
 {
-#ifndef NDEBUG
-  return *boost::dynamic_pointer_cast<const Int>(*this);
-#else  
-  return *boost::static_pointer_cast<const Int>(*this);
-#endif  
+  return *convert<Int>(get());
 }
 
 inline bool object_ref::is_double() const
@@ -424,11 +420,7 @@ inline bool object_ref::is_double() const
 
 inline double object_ref::as_double() const
 {
-#ifndef NDEBUG
-  return *boost::dynamic_pointer_cast<const Double>(*this);
-#else  
-  return *boost::static_pointer_cast<const Double>(*this);
-#endif  
+  return *convert<Double>(get());
 }
 
 inline bool object_ref::is_char() const
@@ -438,11 +430,7 @@ inline bool object_ref::is_char() const
 
 inline char object_ref::as_char() const
 {
-#ifndef NDEBUG
-  return *boost::dynamic_pointer_cast<const Char>(*this);
-#else  
-  return *boost::static_pointer_cast<const Char>(*this);
-#endif  
+  return *convert<Char>(get());
 }
 
 inline bool object_ref::is_log_double() const
@@ -452,11 +440,7 @@ inline bool object_ref::is_log_double() const
 
 inline log_double_t object_ref::as_log_double() const
 {
-#ifndef NDEBUG
-  return *boost::dynamic_pointer_cast<const Log_Double>(*this);
-#else  
-  return *boost::static_pointer_cast<const Log_Double>(*this);
-#endif  
+  return *convert<Log_Double>(get());
 }
 
 #endif
