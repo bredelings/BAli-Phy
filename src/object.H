@@ -405,7 +405,7 @@ object_ref parse_object(const std::string& s);
 
 bool object_ref::is_int() const
 {
-return (bool)boost::dynamic_pointer_cast<const Int>(*this);
+  return (bool)boost::dynamic_pointer_cast<const Int>(*this);
 }
 
 int object_ref::as_int() const
