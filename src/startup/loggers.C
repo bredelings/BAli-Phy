@@ -133,7 +133,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Model
       T1.add_field(name, GetComputationFunction(index) );
     }
 
-    SortedTableFunction T2(T1, get_un_identifiable_indices(*P, logged_names));
+    SortedTableFunction T2(T1, get_un_identifiable_indices(*M, logged_names));
 
     TL->add_fields( ConvertTableToStringFunction<object_ref>( T2 ) );
   }
