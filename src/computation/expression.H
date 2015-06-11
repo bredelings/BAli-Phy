@@ -356,11 +356,7 @@ public:
   const expression& E() const
   {
     assert(not is_atomic());
-#ifndef NDEBUG
-    return *dynamic_cast<const expression*>(O.get());
-#else
-    return *static_cast<const expression*>(O.get());
-#endif
+    return *convert<expression>(O.get());
   }
 
   inline const object_ptr<const Object>& head() const 
