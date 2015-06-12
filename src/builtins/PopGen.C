@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include "computation/computation.H"
 #include "io.H"
 
@@ -105,7 +106,7 @@ extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Arg
   assert(n_individuals > 0);
 
   // 1. Count the alleles of each type
-  map<int,int> allele_counts;
+  std::unordered_map<int,int> allele_counts;
   for(const auto& a: *alleles)
   {
     int aa = *convert<const Int>(a);
@@ -261,7 +262,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
   const vector<object_ref>& alleles = *Args.evaluate_as<OVector>(2);
 
   // How many times has each allele been seen?
-  map<int,int> counts;
+  std::unordered_map<int,int> counts;
 
   // Determine number of individuals
   int n = alleles.size();
