@@ -109,7 +109,7 @@ extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Arg
   std::unordered_map<int,int> allele_counts;
   for(const auto& a: *alleles)
   {
-    int aa = *convert<const Int>(a);
+    int aa = a.as_int();
     allele_counts[aa]++;
   }
 
@@ -176,7 +176,7 @@ extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Ar
 
   vector<int> afs;
   for(const auto& count: *afs_)
-    afs.push_back(*convert<const Int>(count));
+    afs.push_back(count.as_int());
 
   log_double_t Pr = ewens_sampling_probability(theta,afs);
 
@@ -281,8 +281,8 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
       Pr = 1.0;
     }
 
-    int a1 = *convert<const Int>(alleles[2*i]);
-    int a2 = *convert<const Int>(alleles[2*i+1]);
+    int a1 = alleles[2*i].as_int();
+    int a2 = alleles[2*i+1].as_int();
 
     int s1 = (a1 != missing)?1:0;
     int s2 = (a2 != missing)?1:0;
@@ -298,7 +298,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
     else 
     {
       assert(s == 2);
-      bool coalesced = ( *convert<const Int>(I[i]) == 1);
+      bool coalesced = ( I[i].as_int() == 1);
       bool heterozygote = (a1 != a2);
 
       // Heterozygotes coalesce before outbreeding with probability 0.
@@ -341,7 +341,7 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
   int n = 0;
   for(int l=0;l<L;l++)
   {
-    bool coalesced = ( *convert<const Int>(I[l]) == 1);
+    bool coalesced = ( I[l].as_int() == 1);
     if (coalesced)
       n++;
   }

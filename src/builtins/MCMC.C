@@ -60,7 +60,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
   //------------- 2. Figure out t and the next t ------------//
 
-  int x1 = *convert<const Int>(M.lazy_evaluate(R_X, c).exp.head());
+  int x1 = M.lazy_evaluate(R_X, c).exp.as_int();
   int x2 = x1 + 1;
   if (uniform() < 0.5)
   {
