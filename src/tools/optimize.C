@@ -28,7 +28,7 @@ using std::vector;
 using std::cerr;
 using std::endl;
 using std::ostream;
-
+using std::abs;
 
 namespace optimize {
 
