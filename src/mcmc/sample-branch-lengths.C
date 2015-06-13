@@ -31,6 +31,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 using MCMC::MoveStats;
 using std::vector;
 using std::string;
+using std::abs;
 
 bool do_MH_move(owned_ptr<Model>& P,
 		const owned_ptr<Model>& P2,
