@@ -636,25 +636,6 @@ auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5
 
 
 template <typename T,typename U>
-std::valarray<T> get_varray(const expression_ref& E)
-{
-  if (not E)
-    return std::valarray<T>();
-
-  if (not E.size())
-  {
-    std::valarray<T> v2(1);
-    v2[0] = *assert_is_a<U>(E);
-    return v2;
-  }
-
-  std::valarray<T> v2(E.size());
-  for(int i=0;i<v2.size();i++)
-    v2[i] = *assert_is_a<U>(E.sub()[i]);
-  return v2;
-}
-
-template <typename T,typename U>
 std::vector<T> get_vector(const expression_ref& E) 
 {
   if (not E)
