@@ -56,7 +56,7 @@ double branch_twiddle(double& T,double sigma) {
 
 double branch_twiddle_positive(double& T,double sigma) {
   double ratio = branch_twiddle(T,sigma);
-  T = std::abs(T);
+  T = abs(T);
   return ratio;
 }
 
@@ -81,8 +81,8 @@ MCMC::Result change_branch_length_(owned_ptr<Model>& P,int b,double sigma,
   //--------- Do the M-H step if OK--------------//
   if (do_MH_move(P,P2,ratio)) {
     result.totals[0] = 1;
-    result.totals[1] = std::abs(length - newlength);
-    result.totals[2] = std::abs(log(length/newlength));
+    result.totals[1] = abs(length - newlength);
+    result.totals[2] = abs(log(length/newlength));
   }
 
   return result;
@@ -153,8 +153,8 @@ void slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
   double L2 = slice_sample(L,logp,w,100);
 
   //---------- Record Statistics - -------------//
-  result.totals[0] = std::abs(L2 - L);
-  result.totals[1] = std::abs(log(L2/L));
+  result.totals[0] = abs(L2 - L);
+  result.totals[1] = abs(log(L2/L));
   result.totals[2] = logp.count;
 
   Stats.inc("branch-length (slice) *",result);
@@ -218,7 +218,7 @@ void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b)
     if (do_MH_move(P,P2,ratio)) {
       result.totals[0] = 1;
       result.totals[1] = 1;
-      result.totals[3] = std::abs(newlength - length);
+      result.totals[3] = abs(newlength - length);
     }
   }
 
@@ -253,7 +253,7 @@ void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b)
     if (C > 0) {
       result.totals[0] = 1;
       result.totals[2] = 1;
-      result.totals[4] = std::abs(length - newlength);
+      result.totals[4] = abs(length - newlength);
     }
   }
 
@@ -346,7 +346,7 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b0)
     double L1b = slice_sample(logp,w,100);
     
     MCMC::Result result(2);
-    result.totals[0] = 2.0*std::abs(L1b-L1a);
+    result.totals[0] = 2.0*abs(L1b-L1a);
     result.totals[1] = logp.count;
     Stats.inc("slide_node_slice",result);
   }
@@ -366,7 +366,7 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b0)
 
     MCMC::Result result(2);
     result.totals[0] = success?1:0;
-    result.totals[1] = std::abs(L1b-L1a) + std::abs(L2b-L2a);
+    result.totals[1] = abs(L1b-L1a) + abs(L2b-L2a);
     Stats.inc(name,result);
   }
 }
@@ -376,7 +376,7 @@ void check_caching(const Parameters& P1,Parameters& P2)
   log_double_t pi1 = P1.probability();
   log_double_t pi2 = P2.probability();
   
-  double diff = std::abs(log(pi1)-log(pi2));
+  double diff = abs(log(pi1)-log(pi2));
   if (diff > 1.0e-9) {
     std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
     std::abort();
@@ -387,7 +387,7 @@ void check_caching(const Parameters& P1,Parameters& P2)
   pi1 = P1.probability();
   pi2 = P2.probability();
     
-  diff = std::abs(log(pi1)-log(pi2));
+  diff = abs(log(pi1)-log(pi2));
   if (diff > 1.0e-9) {
     std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
     std::abort();
@@ -398,7 +398,7 @@ void check_caching(const Parameters& P1,Parameters& P2)
   pi1 = P1.probability();
   pi2 = P2.probability();
     
-  diff = std::abs(log(pi1)-log(pi2));
+  diff = abs(log(pi1)-log(pi2));
   if (diff > 1.0e-9) {
     std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
     std::abort();
@@ -464,7 +464,7 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
   P3->recalc_smodels();
   log_double_t L1 = PP->likelihood();
   log_double_t L2 = P3->likelihood();
-  double diff = std::abs(log(L1)-log(L2));
+  double diff = abs(log(L1)-log(L2));
   if (diff > 1.0e-9) {
     std::cerr<<"scale_mean_only: likelihood diff = "<<diff<<std::endl;
     std::abort();
@@ -477,7 +477,7 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
 
 #ifndef NDEBUG
   log_double_t a_ratio2 = P2->probability()/PP->probability()*p_ratio;
-  double diff2 = std::abs(log(a_ratio2)-log(a_ratio));
+  double diff2 = abs(log(a_ratio2)-log(a_ratio));
   if (diff2 > 1.0e-9) {
     std::cerr<<"scale_mean_only: a_ratio diff = "<<diff2<<std::endl;
     std::cerr<<"probability ratio = "<<log(P2->probability()/PP->probability())<<std::endl;
@@ -494,7 +494,7 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
   {
     P=P2;
     result.totals[0] = 1;
-    result.totals[1] = std::abs(log(scale));
+    result.totals[1] = abs(log(scale));
   }
 
   Stats.inc("branch-means-only",result);
