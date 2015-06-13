@@ -119,6 +119,10 @@ struct object_ref: public object_ptr<const Object>
     :object_ptr<const Object>(o)
   { }
 
+  object_ref(object_ptr<const Object>&& o)
+    :object_ptr<const Object>(std::move(o))
+  { }
+
   template <typename T>
   object_ref(const object_ptr<T>& o)
     :object_ptr<const Object>(boost::static_pointer_cast<const Object>(o))
