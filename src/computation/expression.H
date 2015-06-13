@@ -68,6 +68,12 @@ struct expression: public Object
     return convert<const T>(head);
   }
 
+  template <typename T>
+  const T& as_() const
+  {
+    return *convert<const T>(head);
+  }
+
   bool is_exactly(const Object& O) const;
 
   expression() {}
@@ -396,6 +402,12 @@ public:
     return convert<const T>(head());
   }
 
+  template <typename T>
+  const T& as_() const
+  {
+    return *convert<const T>(head());
+  }
+
   bool is_exactly(const Object& O) const
   {
     return head()->compare(O);
@@ -520,6 +532,18 @@ template <typename T>
 object_ptr<const T> assert_is_a(const expression_ref& E)
 { 
   return E.assert_is_a<T>();
+}
+
+template <typename T>
+const T& as_(const expression& E)
+{ 
+  return E.as_<T>();
+}
+
+template <typename T>
+const T& as_(const expression_ref& E)
+{ 
+  return E.as_<T>();
 }
 
 bool is_exactly(const expression_ref&, const std::string&);
