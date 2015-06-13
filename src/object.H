@@ -377,7 +377,10 @@ object_ptr<T> convert_and_check(const object_ptr<const Object>& o)
   assert(o);
   object_ptr<T> converted =  boost::dynamic_pointer_cast<const T>(o);
   if (not converted)
-    throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<demangle(typeid(*o.get()).name())<<" to type "<<demangle(typeid(T).name());
+  {
+    const Object* oo = o.get();
+    throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<demangle(typeid(*oo).name())<<" to type "<<demangle(typeid(T).name());
+  }
   return converted;
 }
 
