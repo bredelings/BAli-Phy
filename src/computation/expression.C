@@ -203,9 +203,9 @@ string expression::print() const
 
     if (is_a<Trim>())
     {
-      object_ptr<const Vector<int>> V = ::is_a<Vector<int>>(sub[0]);
+      auto& V = ::as_<Vector<int>>(sub[0]);
 
-      result = "Trim {"+join(*V,",")+"} " + sub[1].print();
+      result = "Trim {"+join(V,",")+"} " + sub[1].print();
       return result;
     }
 
@@ -232,50 +232,55 @@ string expression::print() const
   {
     if (not sub[i-1].size()) continue;
 
-    object_ptr<const Operator> O = ::is_a<Operator>(sub[i-1]);
+    if (::is_a<Operator>(sub[i-1]))
+    {
+      auto& O = ::as_<Operator>(sub[i-1]);
 
-    // Don't parenthesize tuple arguments.
-    if (O and is_tuple_name(O->name()) and sub[i-1].size() == O->n_args()) continue;
+      // Don't parenthesize tuple arguments.
+      if (is_tuple_name(O.name()) and sub[i-1].size() == O.n_args()) continue;
 
-    // Don't parenthesize list arguments.
-    if (O and O->name() == ":") continue;
+      // Don't parenthesize list arguments.
+      if (O.name() == ":") continue;
+    }
 
     pargs[i] = "(" + args[i] + ")";
   }
   
-  if (object_ptr<const Operator> O = is_a<Operator>())
+  if (is_a<Operator>())
   {
-    string O_name = O->name();
-    if (dynamic_pointer_cast<const Apply>(O))
+    auto& O = as_<Operator>();
+
+    string O_name = O.name();
+    if (::is_a<Apply>(O))
     {
       pargs.erase(pargs.begin());
-      return O->print_expression( pargs );
+      return O.print_expression( pargs );
     }
-    else if (O->name() == ":" and size() == 2)
+    else if (O.name() == ":" and size() == 2)
     {
       return print_list(this);
     }
-    else if (O->precedence() > -1 and size() == 2)
+    else if (O.precedence() > -1 and size() == 2)
     {
       if (sub[0].size())
       {
-	if (sub[0].is_exactly(*O) and O->associativity()==assoc_left)
+	if (sub[0].is_exactly(O) and O.associativity()==assoc_left)
 	  pargs[1] = args[1];
-	else if (object_ptr<const Operator> O2 = ::is_a<Operator>(sub[0]))
-	  if (O2->precedence() > O->precedence())
+	else if (::is_a<Operator>(sub[0]))
+	  if (::as_<Operator>(sub[0]).precedence() > O.precedence())
 	    pargs[1] = args[1];
       }
       if (sub[1].size())
       {
-	if (sub[1].is_exactly(*O) and O->associativity()==assoc_right)
+	if (sub[1].is_exactly(O) and O.associativity()==assoc_right)
 	  pargs[2] = args[2];
-	else if (object_ptr<const Operator> O2 = ::is_a<Operator>(sub[1]))
-	  if (O2->precedence() > O->precedence())
+	else if (::is_a<Operator>(sub[1]))
+	  if (::as_<Operator>(sub[1]).precedence() > O.precedence())
 	    pargs[2] = args[2];
       }
       return pargs[1] + O_name + pargs[2];
     }
-    else if (is_tuple_name(O->name()) and size() == O->n_args())
+    else if (is_tuple_name(O.name()) and size() == O.n_args())
     {
       // Should Tuple's parenthesis sub-expressions?
       vector<string> sub_names;
@@ -284,7 +289,7 @@ string expression::print() const
       return "(" + join(sub_names,", ") + ")";
     }
       
-    return O->print_expression( pargs );
+    return O.print_expression( pargs );
   }
 
   return print_operator_expression( pargs );
@@ -593,15 +598,16 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
   if (not E.size())
   {
     // Indexed Variable - This is assumed to be a free variable, so just shift it.
-    if (object_ptr<const index_var> V = is_a<index_var>(E))
-      return index_var(V->index + variables.size());
+    if (is_a<index_var>(E))
+      return index_var(as_<index_var>(E).index + variables.size());
 
     // Variable
-    else if (object_ptr<const dummy> D = is_a<dummy>(E))
+    else if (is_a<dummy>(E))
     {
+      auto& D = as_<dummy>(E);
       assert(not is_wildcard(E));
 
-      int index = find_index_backward(variables, *D);
+      int index = find_index_backward(variables, D);
       if (index == -1)
 	throw myexception()<<"Dummy '"<<D<<"' is apparently not a bound variable in '"<<E<<"'?";
       else
@@ -694,12 +700,13 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
   if (not E.size())
   {
     // Indexed Variable - This is assumed to be a free variable, so just shift it.
-    if (object_ptr<const index_var> V = is_a<index_var>(E))
+    if (is_a<index_var>(E))
     {
-      if (V->index >= variables.size())
-	return new index_var(V->index - variables.size());
+      auto& V = as_<index_var>(E);
+      if (V.index >= variables.size())
+	return new index_var(V.index - variables.size());
 
-      return variables[variables.size()-1 - V->index];
+      return variables[variables.size()-1 - V.index];
     }
     // Constant
     else
@@ -752,8 +759,8 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
 
       // Find the number of arguments in the constructor
       int n_args = 0;
-      if (object_ptr<const constructor> C = is_a<constructor>(P))
-	n_args = C->n_args();
+      if (is_a<constructor>(P))
+	n_args = as_<constructor>(P).n_args();
 
       // Add n_arg variables to the stack and to the pattern
       vector<object_ref> variables2 = variables;
@@ -832,10 +839,11 @@ vector<int> get_free_index_vars(const expression_ref& E)
   if (not E.size()) 
   {
     // Variable
-    if (object_ptr<const index_var> D = is_a<index_var>(E))
+    if (is_a<index_var>(E))
     {
-      assert(not is_wildcard(*D));
-      return {D->index};
+      auto& D = as_<index_var>(E);
+      assert(not is_wildcard(D));
+      return {D.index};
     }
     // Constant
     else
@@ -852,7 +860,7 @@ vector<int> get_free_index_vars(const expression_ref& E)
   {
     // Which vars are we not throwing away?
     // This should also be an assert.
-    vars = *is_a<Vector<int>>(E.sub()[0]);
+    vars = as_<Vector<int>>(E.sub()[0]);
     
 #ifndef NDEBUG
     vector<int> vars2 = get_free_index_vars(E.sub()[1]);
@@ -886,8 +894,8 @@ vector<int> get_free_index_vars(const expression_ref& E)
       int n = 0;
 
       // Handle c[i] x[i][1..n] -> body[i]
-      if (object_ptr<const constructor> C = is_a<constructor>(patterns[i]))
-	n = C->n_args();
+      if (is_a<constructor>(patterns[i]))
+	n = as_<constructor>(patterns[i]).n_args();
 
       vars = merge_vars(vars, pop_vars(n, get_free_index_vars(bodies[i])) );
     }
@@ -968,10 +976,11 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
   if (not E.size())
   {
     // Variable
-    if (object_ptr<const index_var> D = is_a<index_var>(E))
+    if (is_a<index_var>(E))
     {
-      assert(not is_wildcard(*D));
-      int delta = D->index - depth;
+      auto& D = as_<index_var>(E);
+      assert(not is_wildcard(D));
+      int delta = D.index - depth;
       if (delta >= 0)
       {
 	assert(delta < mapping.size());
@@ -998,7 +1007,7 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
   {
     // Which vars are we not throwing away?
     // This should also be an assert.
-    vars = *is_a<Vector<int>>(E.sub()[0]);
+    vars = as_<Vector<int>>(E.sub()[0]);
 
     // remap free vars
     for(auto& var:vars)
@@ -1053,8 +1062,8 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
       int n = 0;
 
       // Handle c[i] x[i][1..n] -> body[i]
-      if (object_ptr<const constructor> C = is_a<constructor>(patterns[i]))
-	n = C->n_args();
+      if (is_a<constructor>(patterns[i]))
+	n = as_<constructor>(patterns[i]).n_args();
 
       bodies[i] = remap_free_indices(bodies[i], mapping, depth + n);
     }
@@ -1089,12 +1098,8 @@ expression_ref trim(const expression_ref& E)
 
 expression_ref untrim(const expression_ref& E)
 {
-  if (object_ptr<const Trim> T = is_a<Trim>(E))
-  {
-    object_ptr<const Vector<int>> V = ::is_a<Vector<int>>(E.sub()[0]);
-
-    return remap_free_indices(E.sub()[1], *V, 0);
-  }
+  if (is_a<Trim>(E))
+    return remap_free_indices(E.sub()[1], as_<Vector<int>>(E.sub()[0]), 0);
   else
     return E;
 }
@@ -1175,8 +1180,8 @@ std::set<dummy> get_bound_indices(const expression_ref& E)
   // Make sure we don't try to substitute for lambda-quantified dummies
   if (E.head()->type() == lambda_type)
   {
-    if (object_ptr<const dummy> D  = is_a<dummy>(E.sub()[0]))
-      bound.insert(*D);
+    if (is_a<dummy>(E.sub()[0]))
+      bound.insert(as_<dummy>(E.sub()[0]));
   }
   else 
   {
@@ -1185,8 +1190,8 @@ std::set<dummy> get_bound_indices(const expression_ref& E)
       const int L = (E.size()-1)/2;
       for(int i=0;i<L;i++)
       {
-	if (object_ptr<const dummy> D = is_a<dummy>(E.sub()[1+2*i]))
-	  bound.insert(*D);
+	if (is_a<dummy>(E.sub()[1+2*i]))
+	  bound.insert(as_<dummy>(E.sub()[1+2*i]));
       }
     }
     assert(not is_a<Case>(E));
@@ -1385,9 +1390,9 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 	  
 	  // If bodies[i] does not contain D, we won't do any substitution anyway, so avoid alpha renaming.
 	  // Since D is not bound by patterns, we just need to check if D is in fv1 = fv(body)-fv(pattern).
-	  if (object_ptr<const dummy> D2 = is_a<dummy>(D))
+	  if (is_a<dummy>(D))
 	  {
-	    if (fv1.find(*D2) == fv1.end()) continue;
+	    if (fv1.find(as_<dummy>(D)) == fv1.end()) continue;
 	  }
 	  
 	  // Compute the total set of free variables to avoid clashes with when alpha renaming.
@@ -1445,10 +1450,8 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
       std::set<dummy> fv1 = get_free_indices(E1);
 
       // If E1 does not contain D, then we won't do any substitution anyway, so avoid alpha renaming.
-      if (object_ptr<const dummy> D2 = is_a<dummy>(D))
-      {
-	if (fv1.find(*D2) == fv1.end()) return false;
-      }
+      if (is_a<dummy>(D))
+	if (fv1.find(as_<dummy>(D)) == fv1.end()) return false;
 
       // Compute the total set of free variables to avoid clashes with when alpha renaming.
       add(fv2, fv1);
@@ -1600,11 +1603,12 @@ void find_named_parameters(const expression_ref& E, std::set<string>& names)
 {
   assert(E);
   // If this is a parameter, then makes sure we've got its name.
-  if (object_ptr<const parameter> n = is_a<parameter>(E))
+  if (is_a<parameter>(E))
   {
+    auto& n = as_<parameter>(E);
     assert(not E.size());
-    if (names.find(n->parameter_name) == names.end())
-      names.insert(n->parameter_name);
+    if (names.find(n.parameter_name) == names.end())
+      names.insert(n.parameter_name);
   }
 
   // Check the sub-objects of this expression.
@@ -1895,14 +1899,15 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 
       b2.push_back(b[r]);
 
-      object_ptr<const dummy> d = is_a<dummy>(p[r][0]);
       if (is_wildcard(p[r][0]))
 	// This is a dummy.
 	; //assert(d->name.size() == 0);
       else
+      {
 	// FIXME! What if x[0] isn't a var?
 	// Then if *d occurs twice, then we should use a let expression, right?
-	b2[i] = substitute(b2[i], *d, x[0]);
+	b2[i] = substitute(b2[i], as_<dummy>(p[r][0]), x[0]);
+      }
     }
       
     if (x2.empty())
@@ -2331,12 +2336,11 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 
       for(int i=vars.size()-1; i>=0; i--)
       {
-	object_ptr<const dummy> V = is_a<dummy>(vars[i]);
-	assert(V);
+	auto& V = as_<dummy>(vars[i]);
 	std::set<dummy> free = get_free_indices(bodies[i]);
 
 	// if V references itself then don't substitute it.
-	if (free.count(*V)) continue;
+	if (free.count(V)) continue;
 	
 	changed = true;
 	
