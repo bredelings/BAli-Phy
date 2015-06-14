@@ -201,7 +201,7 @@ string expression::print() const
       return result;
     }
 
-    if (object_ptr<const Trim> T = is_a<Trim>())
+    if (is_a<Trim>())
     {
       object_ptr<const Vector<int>> V = ::is_a<Vector<int>>(sub[0]);
 
@@ -613,7 +613,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
   }
   
   // Lambda expression - /\x.e
-  if (object_ptr<const lambda> L = is_a<lambda>(E))
+  if (is_a<lambda>(E))
   {
     vector<dummy> variables2 = variables;
     variables2.push_back(as_<dummy>(E.sub()[0]));
@@ -707,7 +707,7 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
   }
   
   // Lambda expression - /\x.e
-  if (object_ptr<const lambda2> L = is_a<lambda2>(E))
+  if (is_a<lambda2>(E))
   {
     vector<object_ref> variables2 = variables;
     dummy d = get_named_dummy(variables.size());
@@ -862,7 +862,7 @@ vector<int> get_free_index_vars(const expression_ref& E)
 #endif
   }
   // Lambda expression - /\x.e
-  else if (object_ptr<const lambda2> L = is_a<lambda2>(E))
+  else if (is_a<lambda2>(E))
     vars = pop_vars(1, get_free_index_vars(E.sub()[0]));
 
   // Let expression
@@ -1024,7 +1024,7 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
 
   }
   // Lambda expression - /\x.e
-  else if (object_ptr<const lambda2> L = is_a<lambda2>(E))
+  else if (is_a<lambda2>(E))
   {
     expression* V = new expression(lambda2());
     V->sub.push_back(remap_free_indices(E.sub()[0], mapping, depth+1));
@@ -1203,7 +1203,7 @@ void alpha_rename(object_ptr<expression>& E, const expression_ref& x, const expr
 
   // std::cout<<" replacing "<<x<<" with "<<y<<" in "<<E->print()<<":\n";
   // Make sure we don't try to substitute for lambda-quantified dummies
-  if (object_ptr<const lambda> L = is_a<lambda>(E))
+  if (is_a<lambda>(E))
   {
     assert(same_head(E->sub[0], x));
     E->sub[0] = y;
@@ -1823,13 +1823,6 @@ int find_object(const vector<object_ref>& v, const object_ref& O)
   return -1;
 }
 
-object_ref get_constructor(const expression_ref& E)
-{
-  object_ref C = is_a<constructor>(E);
-  assert(C);
-  return C;
-}
- 
 // FIXME: we perform 3 case operations in the case of zip x:xs [] because we create an 'otherwise' let-var that
 //        performs a case on y:ys that has already been done.
 
@@ -2267,8 +2260,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
     return E;
 
   // 2. Lambda
-  object_ptr<const lambda> L = is_a<lambda>(E);
-  if (L)
+  if (is_a<lambda>(E))
   {
     assert(E.size() == 2);
     expression* V = E.clone_expression();
@@ -2281,8 +2273,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
   }
 
   // 6. Case
-  object_ptr<const Case> IsCase = is_a<Case>(E);
-  if (IsCase)
+  if (is_a<Case>(E))
   {
     expression* V = E.clone_expression();
 
@@ -2307,8 +2298,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
   }
 
   // 5. Let 
-  object_ptr<const let_obj> Let = is_a<let_obj>(E);
-  if (Let)
+  if (is_a<let_obj>(E))
   {
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
@@ -2378,8 +2368,7 @@ expression_ref unlet(const expression_ref& E)
     return E;
   
   // 2. Lambda
-  object_ptr<const lambda> L = is_a<lambda>(E);
-  if (L)
+  if (is_a<lambda>(E))
   {
     assert(E.size() == 2);
     expression* V = E.clone_expression();
@@ -2392,8 +2381,7 @@ expression_ref unlet(const expression_ref& E)
   }
 
   // 6. Case
-  object_ptr<const Case> IsCase = is_a<Case>(E);
-  if (IsCase)
+  if (is_a<Case>(E))
   {
     expression* V = E.clone_expression();
 
@@ -2418,8 +2406,7 @@ expression_ref unlet(const expression_ref& E)
   }
 
   // 5. Let 
-  object_ptr<const let_obj> Let = is_a<let_obj>(E);
-  if (Let)
+  if (is_a<let_obj>(E))
   {
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
@@ -2439,8 +2426,7 @@ expression_ref unlet(const expression_ref& E)
 
       for(int i=vars.size()-1; i>=0; i--)
       {
-	object_ptr<const dummy> V = is_a<dummy>(vars[i]);
-	assert(V);
+	assert(is_a<dummy>(vars[i]));
 
 	if (n_free_occurrences(bodies[i],vars[i])) continue;
 
@@ -2526,7 +2512,7 @@ expression_ref operator*(const expression_ref& E, const expression_ref&arg)
 {
   assert(E);
 
-  if (object_ptr<const lambda> L = is_a<lambda>(E))
+  if (is_a<lambda>(E))
   {
     assert(E.size());
     return substitute(E.sub()[1], E.sub()[0], arg);
