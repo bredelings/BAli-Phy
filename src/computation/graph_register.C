@@ -91,8 +91,7 @@ expression_ref graph_normalize(const expression_ref& E)
   if (not E.size()) return E;
   
   // 2. Lambda
-  object_ptr<const lambda> L = is_a<lambda>(E);
-  if (L)
+  if (is_a<lambda>(E))
   {
     assert(E.size() == 2);
     object_ptr<expression> V = E.clone_expression();
@@ -105,8 +104,7 @@ expression_ref graph_normalize(const expression_ref& E)
   }
 
   // 6. Case
-  object_ptr<const Case> IsCase = E.is_a<Case>();
-  if (IsCase)
+  if (is_a<Case>(E))
   {
     object_ptr<expression> V = E.clone_expression();
 
@@ -162,7 +160,7 @@ expression_ref graph_normalize(const expression_ref& E)
   }
 
   // 5. Let 
-  if (object_ptr<const let_obj> Let = is_a<let_obj>(E))
+  if (is_a<let_obj>(E))
   {
     object_ptr<expression> V = E.clone_expression();
 
@@ -2438,29 +2436,31 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, vector<int>& En
   int reg = -1;
 
   // Replace parameters with the appropriate reg_var: of value parameter( )
-  if (object_ptr<const parameter> p = is_a<parameter>(E))
+  if (is_a<parameter>(E))
   {
-    string qualified_name = p->parameter_name;
+    string name = as_<parameter>(E).parameter_name;
+    string qualified_name = name;
 
     int param_index = find_parameter(qualified_name);
     
     if (param_index == -1)
-      throw myexception()<<"Can't translate undefined parameter '"<<qualified_name<<"' ('"<<p->parameter_name<<"') in expression!";
+      throw myexception()<<"Can't translate undefined parameter '"<<qualified_name<<"' ('"<<name<<"') in expression!";
 
     reg = parameters[param_index].second;
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
-  if (object_ptr<const identifier> V = is_a<identifier>(E))
+  if (is_a<identifier>(E))
   {
-    string qualified_name = V->name;
+    string name = as_<identifier>(E).name;
+    string qualified_name = name;
     assert(is_qualified_symbol(qualified_name) or is_haskell_builtin_con_name(qualified_name));
     auto loc = identifiers.find( qualified_name );
     if (loc == identifiers.end())
     {
-      if (is_haskell_builtin_con_name(V->name))
+      if (is_haskell_builtin_con_name(name))
       {
-	symbol_info S = Module::lookup_builtin_symbol(V->name);
+	symbol_info S = Module::lookup_builtin_symbol(name);
 	add_identifier(S.name);
       
 	// get the root for each identifier
@@ -2473,15 +2473,15 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, vector<int>& En
 	set_C(R, preprocess(S.body) );
       }
       else
-	throw myexception()<<"Can't translate undefined identifier '"<<V->name<<"' in expression!";
+	throw myexception()<<"Can't translate undefined identifier '"<<name<<"' in expression!";
     }
 
     reg = loc->second;
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
-  if (object_ptr<const reg_var> RV = is_a<reg_var>(E))
-    reg = RV->target;
+  if (is_a<reg_var>(E))
+    reg = as_<reg_var>(E).target;
 
   if (reg != -1)
   {

@@ -4,15 +4,13 @@ using std::string;
 
 bool is_AST(const expression_ref& E, const string& type)
 {
-  auto ast = E.is_a<AST_node>();
-  if (not ast) return false;
-  return ast->type == type;
+  if (not is_a<AST_node>(E)) return false;
+  return as_<AST_node>(E).type == type;
 }
 
 bool is_AST(const expression_ref& E, const string& type, const string& value)
 {
-  auto ast = E.is_a<AST_node>();
-  if (not ast) return false;
-  return ast->type == type and ast->value == value;
+  if (not is_a<AST_node>(E)) return false;
+  return (as_<AST_node>(E).type == type) and (as_<AST_node>(E).value == value);
 }
 

@@ -218,10 +218,10 @@ std::set<std::string> Module::dependencies() const
   for(const auto& impdecl:impdecls.sub())
   {
     int i=0;
-    bool qualified = *impdecl.sub()[0].is_a<String>() == "qualified";
+    bool qualified = impdecl.sub()[0].as_<String>() == "qualified";
     if (qualified) i++;
 
-    string imp_module_name = *impdecl.sub()[i++].is_a<String>();
+    string imp_module_name = impdecl.sub()[i++].as_<String>();
     module_names.insert(imp_module_name);
   }
 
@@ -238,10 +238,10 @@ void Module::resolve_symbols(const std::vector<Module>& P)
     for(const auto& impdecl:impdecls.sub())
     {
       int i=0;
-      bool qualified = *impdecl.sub()[0].is_a<String>() == "qualified";
+      bool qualified = impdecl.sub()[0].as_<String>() == "qualified";
       if (qualified) i++;
     
-      string imp_module_name = *impdecl.sub()[i++].is_a<String>();
+      string imp_module_name = impdecl.sub()[i++].as_<String>();
       
       assert(i == impdecl.size());
       
@@ -614,7 +614,7 @@ Module& Module::operator+=(const expression_ref& E)
       body = module.sub()[0];
     else
     {
-      string module_name2 = *module.sub()[0].is_a<String>();
+      string module_name2 = module.sub()[0].as_<String>();
       if (not name.empty() and name != module_name2)
 	throw myexception()<<"Overwriting module name '"<<name<<"' with '"<<module_name2<<"'";
       name = module_name2;
@@ -636,14 +636,14 @@ Module& Module::operator+=(const expression_ref& E)
       for(const auto& impdecl:impdecls.sub())
       {
 	int i=0;
-	bool qualified = *impdecl.sub()[0].is_a<String>() == "qualified";
+	bool qualified = impdecl.sub()[0].as_<String>() == "qualified";
 	if (qualified) i++;
 
-	string imp_module_name = *impdecl.sub()[i++].is_a<String>();
+	string imp_module_name = impdecl.sub()[i++].as_<String>();
 
 	string imp_module_name_as = imp_module_name;
-	if (i < impdecl.size() and *impdecl.sub()[i++].is_a<String>() == "as")
-	  imp_module_name_as = *impdecl.sub()[i++].is_a<String>();
+	if (i < impdecl.size() and impdecl.sub()[i++].as_<String>() == "as")
+	  imp_module_name_as = impdecl.sub()[i++].as_<String>();
 
 	assert(i == impdecl.size());
       }
@@ -726,13 +726,13 @@ Module& Module::operator+=(const expression_ref& E)
 	{
 	  if (is_AST(constr,"constr"))
 	  {
-	    string name = *constr.sub()[0].is_a<String>();
+	    string name = constr.sub()[0].as_<String>();
 	    int arity = constr.size() - 1;
 	    def_constructor(name,arity);
 	  }
 	  else if (is_AST(constr,"constr_op"))
 	  {
-	    string name = *constr.sub()[1].is_a<String>();
+	    string name = constr.sub()[1].as_<String>();
 	    int arity = 2;
 	    def_constructor(name,arity);
 	  }
@@ -869,9 +869,9 @@ std::ostream& operator<<(std::ostream& o, const Module& D)
 expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
 {
   // Replace parameters with the appropriate reg_var: of value whatever
-  if (object_ptr<const identifier> V = is_a<identifier>(E))
+  if (is_a<identifier>(E))
   {
-    string name = V->name;
+    string name = as_<identifier>(E).name;
     if (not is_qualified_symbol(name))
     {
       for(const auto& module: P)

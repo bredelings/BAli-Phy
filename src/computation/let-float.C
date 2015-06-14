@@ -211,7 +211,7 @@ expression_ref let_float(const expression_ref& E)
   expression_ref E2;
 
   // 3. Lambda expressions
-  if (object_ptr<const lambda> L = is_a<lambda>(E))
+  if (is_a<lambda>(E))
   {
     // Find the new let-bound set.
     dummy D = as_<dummy>(E.sub()[0]);
@@ -291,7 +291,7 @@ expression_ref let_float(const expression_ref& E)
   }
 
   // 6. Handle application, constructors, and operations.
-  else if (object_ptr<const Operator> O =  is_a<Operator>(E))
+  else if (is_a<Operator>(E))
   {
     // First float lets in sub-expressions
     object_ptr<expression> V = E.clone_expression();

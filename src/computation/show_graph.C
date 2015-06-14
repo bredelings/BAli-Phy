@@ -144,9 +144,9 @@ expression_ref subst_referenced_vars(const expression_ref& E, const vector<int>&
     else
       return E;
   }
-  else if (object_ptr<const index_var> V = is_a<index_var>(E) )
+  else if ( is_a<index_var>(E) )
   {
-    const auto loc = names.find( lookup_in_env(Env, V->index) );
+    const auto loc = names.find( lookup_in_env(Env, as_<index_var>(E).index) );
     if (loc == names.end())
       return E;
     else
@@ -244,9 +244,9 @@ expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& 
 {
   if (not E.size())
   {
-    if (object_ptr<const reg_var> RV = is_a<reg_var>(E))
+    if (is_a<reg_var>(E))
     {
-      auto loc = ids.find(RV->target);
+      auto loc = ids.find(as_<reg_var>(E).target);
       if (loc != ids.end())
 	return identifier(loc->second);
       else
