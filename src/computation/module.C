@@ -284,7 +284,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
   for(const auto& decl: decls_sub)
     if (is_AST(decl,"Decl"))
     {
-      string name = decl.sub()[0].assert_is_a<identifier>()->name;
+      string name = decl.sub()[0].as_<identifier>().name;
       symbols.at(name).body = decl.sub()[1];
     }
 }
@@ -298,13 +298,13 @@ void Module::load_builtins(const module_loader& L)
   for(const auto& decl: topdecls.sub())
     if (is_AST(decl,"Builtin"))
     {
-      string function_name = *decl.sub()[0].assert_is_a<String>();
-      int n = *decl.sub()[1].assert_is_a<Int>();
-      string symbol_name = *decl.sub()[2].assert_is_a<String>();
+      string function_name = decl.sub()[0].as_<String>();
+      int n = decl.sub()[1].as_<Int>();
+      string symbol_name = decl.sub()[2].as_<String>();
       string plugin_name = symbol_name;
 
       if (decl.size() > 3)
-	plugin_name = *decl.sub()[3].assert_is_a<String>();
+	plugin_name = decl.sub()[3].as_<String>();
 
       function_name = lookup_symbol(function_name).name;
 
@@ -388,18 +388,19 @@ void parse_combinator_application(const expression_ref& E, string& name, vector<
 {
   expression_ref E2 = E;
 
-  assert_is_a<Apply>(E);
+  assert(is_a<Apply>(E));
   
   // 1. Find the head.  This should be a var, not an apply.
-  object_ptr<const identifier> V = assert_is_a<identifier>(E.sub()[0]);
+#ifndef NDEBUG
+  if (not is_a<identifier>(E.sub()[0]))
+    throw myexception()<<"Combinator definition '"<<E<<"' does not start with variable!";
+#endif  
+
+  name = as_<identifier>(E.sub()[0]).name;
 
   // 2. Look through the arguments
   for(int i=1;i<E.size();i++)
     patterns.push_back(E.sub()[i]);
-
-  if (not V)
-    throw myexception()<<"Combinator definition '"<<E<<"' does not start with variable!";
-  name = V->name;
 }
 
 vector<string> haskell_name_path(const std::string& s)
@@ -581,13 +582,13 @@ string get_function_name(const expression_ref& E)
     expression_ref f = E.sub()[0];
     assert(is_AST(f,"id"));
 
-    return f.assert_is_a<AST_node>()->value;
+    return f.as_<AST_node>().value;
   }
   else if (is_AST(E,"funlhs2"))
   {
     expression_ref f = E.sub()[1];
     assert(is_AST(f,"id"));
-    return f.assert_is_a<AST_node>()->value;
+    return f.as_<AST_node>().value;
   }
   else if (is_AST(E,"funlhs3"))
     return get_function_name(E.sub()[0]);
@@ -661,7 +662,7 @@ Module& Module::operator+=(const expression_ref& E)
     if (is_AST(decl,"FixityDecl"))
     {
       // Determine fixity.
-      string f = *decl.sub()[0].assert_is_a<String>();
+      string f = decl.sub()[0].as_<String>();
       fixity_t fixity = unknown_fix;
       if (f == "infixl")
 	fixity = left_fix;
@@ -675,12 +676,12 @@ Module& Module::operator+=(const expression_ref& E)
       // Determine precedence.
       int precedence = 9;
       if (decl.size() == 3)
-	precedence = *decl.sub()[1].assert_is_a<Int>();
+	precedence = decl.sub()[1].as_<Int>();
 
       // Find op names and declare fixity and precedence.
       for(const auto& op: decl.sub().back().sub())
       {
-	string name = *op.assert_is_a<String>();
+	string name = op.as_<String>();
 	declare_fixity(name, precedence, fixity);
       }
     }
@@ -712,7 +713,7 @@ Module& Module::operator+=(const expression_ref& E)
     }
     else if (is_AST(decl,"Builtin"))
     {
-      string bname = *decl.sub()[0].assert_is_a<String>();
+      string bname = decl.sub()[0].as_<String>();
       def_function(bname,{});
     }
     else if (is_AST(decl,"Decl:data"))

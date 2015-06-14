@@ -2222,7 +2222,7 @@ bool reg_heap::reg_is_fully_up_to_date(int R) const
 
     assert( not reg_has_call(R) );
 
-    int index = assert_is_a<index_var>(access(R).C.exp)->index;
+    int index = as_<index_var>(access(R).C.exp).index;
 
     int R2 = access(R).C.lookup_in_env( index );
 
@@ -2249,9 +2249,7 @@ bool reg_heap::reg_is_fully_up_to_date(int R) const
   // Check each component that is a index_var to see if its out of date.
   for(int i=0;i<E.size();i++)
   {
-    // assert_cast
-    object_ptr<const index_var> V = assert_is_a<index_var>(E.sub()[i]);
-    int R2 = result.lookup_in_env( V->index );
+    int R2 = result.lookup_in_env( as_<index_var>(E.sub()[i]).index );
     
     if (not reg_is_fully_up_to_date(R2)) return false;
   }

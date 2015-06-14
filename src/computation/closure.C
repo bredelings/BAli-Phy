@@ -30,7 +30,7 @@ closure get_trimmed(closure&& C)
   if (C.exp.head()->type() == trim_type)
   {
     expression_ref old = C.exp;
-    const vector<int>& keep = *assert_is_a<Vector<int>>(old.sub()[0]);
+    const vector<int>& keep = as_<Vector<int>>(old.sub()[0]);
 
     C.exp = C.exp.sub()[1];
 

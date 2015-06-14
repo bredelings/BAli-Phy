@@ -22,9 +22,9 @@ using std::pair;
 
 bool is_irrefutable_pat(const expression_ref& E)
 {
-  assert(E.assert_is_a<AST_node>()->type == "pat");
+  assert(E.as_<AST_node>().type == "pat");
 
-  if (E.size() == 1 and E.sub()[0].assert_is_a<AST_node>()->type == "apat_var")
+  if (E.size() == 1 and E.sub()[0].as_<AST_node>().type == "apat_var")
     return true;
   else
     return false;
@@ -393,7 +393,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 					 }
 				     )
 		      );
-    else if (v[i].sub()[0].assert_is_a<AST_node>()->type == "funlhs1")
+    else if (v[i].sub()[0].as_<AST_node>().type == "funlhs1")
     {
       vector<vector<expression_ref> > patterns;
       vector<expression_ref> bodies;
@@ -522,7 +522,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     else if (n->type == "Decl")
     {
       // Is this a set of function bindings?
-      if (v[0].assert_is_a<AST_node>()->type == "funlhs1")
+      if (v[0].as_<AST_node>().type == "funlhs1")
       {
 	set<string> bound2 = bound;
 	for(const auto& e: v[0].sub())
@@ -624,9 +624,9 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	v.erase(v.begin()+1);
 	E2 = {E.head(),v};
 
-	if (B.assert_is_a<AST_node>()->type == "SimpleQual")
+	if (B.as_<AST_node>().type == "SimpleQual")
 	  E2 = {AST_node("If"),{B.sub()[0],E2,AST_node("id","[]")}};
-	else if (B.assert_is_a<AST_node>()->type == "PatQual")
+	else if (B.as_<AST_node>().type == "PatQual")
 	{
 	  expression_ref p = B.sub()[0];
 	  expression_ref l = B.sub()[1];
@@ -654,7 +654,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    E2 = {AST_node("Let"),{decls,body}};
 	  }
 	}
-	else if (B.assert_is_a<AST_node>()->type == "LetQual")
+	else if (B.as_<AST_node>().type == "LetQual")
 	  E2 = {AST_node("Let"),{B.sub()[0],E2}};
       }
       return desugar(m,E2,bound);
@@ -746,7 +746,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     }
     else if (n->type == "constructor_pattern")
     {
-      string gcon = *v[0].assert_is_a<String>();
+      string gcon = v[0].as_<String>();
       v.erase(v.begin());
 
       // If the variable is free, then try top-level names.
@@ -839,7 +839,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       {
 	if (is_AST(decl,"EmptyDecl")) continue;
 
-	bound2.insert(decl.sub()[0].assert_is_a<dummy>()->name);
+	bound2.insert(decl.sub()[0].as_<dummy>().name);
 	w.push_back(decl.sub()[0]);
 	w.push_back(decl.sub()[1]);
       }

@@ -13,7 +13,7 @@ bool find_let_statements_with_bound_vars(const vector<expression_ref>& let_vars,
 {
   set<dummy> let_bound;
   for(int i=0;i<let_vars.size();i++)
-    let_bound.insert(*assert_is_a<dummy>(let_vars[i]));
+    let_bound.insert(as_<dummy>(let_vars[i]));
 
   // Find the set of bound variables that could be free in let_bodies
   set<dummy> visible_bound = bound;
@@ -39,7 +39,7 @@ bool find_let_statements_with_bound_vars(const vector<expression_ref>& let_vars,
       int index = unbound_indices[i];
       if (not intersection(free_vars[index], new_bound).empty())
       {
-	new_bound_next.insert(*assert_is_a<dummy>(let_vars[index]));
+	new_bound_next.insert(as_<dummy>(let_vars[index]));
 	bound_indices.push_back(index);
 	unbound_indices.erase( unbound_indices.begin() + i);
       }
@@ -74,7 +74,7 @@ expression_ref move_lets(bool scope, const expression_ref E,
   set<dummy> avoid = free;
   for(int i=0;i<vars.size();i++)
   {
-    dummy D = *assert_is_a<dummy>(vars[i]);
+    dummy D = as_<dummy>(vars[i]);
     avoid.insert(D);
     add(avoid, get_free_indices(bodies[i]));
   }
@@ -92,7 +92,7 @@ expression_ref move_lets(bool scope, const expression_ref E,
     // Adjust the new indices to avoid hitting any of the other let-binder-variables in E
     for(int i=0;i<E_vars.size();i++)
     {
-      dummy D = *assert_is_a<dummy>(E_vars[i]);
+      dummy D = as_<dummy>(E_vars[i]);
       new_index = std::max(new_index, D.index + 1);
     }
 
@@ -102,7 +102,7 @@ expression_ref move_lets(bool scope, const expression_ref E,
     
     for(int index: unbound_indices)
     {
-      dummy D = *assert_is_a<dummy>(E_vars[index]);
+      dummy D = as_<dummy>(E_vars[index]);
       if (includes(avoid, D))
       {
 	dummy D2(new_index++);
@@ -214,7 +214,7 @@ expression_ref let_float(const expression_ref& E)
   if (object_ptr<const lambda> L = is_a<lambda>(E))
   {
     // Find the new let-bound set.
-    dummy D = *assert_is_a<dummy>(E.sub()[0]);
+    dummy D = as_<dummy>(E.sub()[0]);
 
     // First float lets in sub-expressions
     expression_ref M = let_float(E.sub()[1]);
@@ -264,7 +264,7 @@ expression_ref let_float(const expression_ref& E)
     // Return let_float(T) if T doesn't mention any of the newly let-bound variables
     set<dummy> bound_vars_let;
     for(int i=0;i<vars.size();i++)
-      bound_vars_let.insert(*assert_is_a<dummy>(vars[i]));
+      bound_vars_let.insert(as_<dummy>(vars[i]));
 
     set<dummy> free_vars_T = get_free_indices(T);
     if (intersection(bound_vars_let, free_vars_T).empty()) 

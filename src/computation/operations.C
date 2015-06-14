@@ -87,7 +87,7 @@ closure Apply::operator()(OperationArgs& Args) const
   closure C = Args.evaluate_slot_to_closure(0);
   int n_args_given = Args.n_args()-1;
 
-  assert_is_a<lambda2>(C.exp);
+  assert(is_a<lambda2>(C.exp));
   int n_args_needed = get_n_lambdas(C.exp);
   assert(n_args_needed >= 1);
   assert(n_args_given >= 1);
@@ -96,8 +96,7 @@ closure Apply::operator()(OperationArgs& Args) const
   C.exp = peel_n_lambdas(C.exp, n_args_applied);
   for(int i=0;i<n_args_applied;i++)
   {
-    object_ptr<const index_var> V = assert_is_a<index_var>(Args.reference(i+1));
-    int arg = Args.current_closure().lookup_in_env( V->index );
+    int arg = Args.current_closure().lookup_in_env( as_<index_var>(Args.reference(i+1)).index);
     C.Env.push_back(arg);
   }
 
@@ -114,8 +113,7 @@ closure Apply::operator()(OperationArgs& Args) const
 
     for(int i=n_args_needed;i<n_args_given;i++)
     {
-      object_ptr<const index_var> V = assert_is_a<index_var>(Args.reference(i+1));
-      int arg = Args.current_closure().lookup_in_env( V->index );
+      int arg = Args.current_closure().lookup_in_env( as_<index_var>(Args.reference(i+1)).index );
       Env.push_back(arg);
 
       args.push_back(index_var(n_args_given - i -1));
@@ -182,9 +180,8 @@ closure Case::operator()(OperationArgs& Args) const
 #ifndef NDEBUG
 	if (obj.exp.size())
 	{
-	  object_ptr<const constructor> C = assert_is_a<constructor>(obj.exp);
 	  // The number of constructor fields is the same the for case pattern and the case object.
-	  assert(obj.exp.size() == C->n_args());
+	  assert(obj.exp.size() == as_<constructor>(obj.exp).n_args());
 	  // The number of entries in the environment is the same as the number of constructor fields.
 	  assert(obj.exp.size() == obj.Env.size());
 	}
@@ -193,8 +190,8 @@ closure Case::operator()(OperationArgs& Args) const
 	
 	for(int j=0;j<obj.exp.size();j++)
 	{
-	  // FIXME! Don't do a dynamic cast here.
-	  int index = assert_is_a<index_var>(obj.exp.sub()[j])->index;
+	  // Don't do a dynamic cast here!
+	  int index = as_<index_var>(obj.exp.sub()[j]).index;
 	  
 	  result.Env.push_back( obj.lookup_in_env( index ) );
 	}

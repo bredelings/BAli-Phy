@@ -4,7 +4,7 @@
 
 int OperationArgs::reg_for_slot(int slot) const
 {
-  int index = assert_is_a<index_var>(reference(slot))->index;
+  int index = as_<index_var>(reference(slot)).index;
 
   return current_closure().lookup_in_env(index);
 }

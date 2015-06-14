@@ -400,7 +400,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       if (F.is_expression())
 	for(const expression_ref& E: F.sub())
 	{
-	  int index = E.assert_is_a<index_var>()->index;
+	  int index = E.as_<index_var>().index;
 	  int R2 = C.access(R).C.lookup_in_env( index );
 	  targets.push_back(R2);
 	  
@@ -419,7 +419,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
     else if (F.head()->type() == index_var_type)
     {
-      int index = assert_is_a<index_var>(F)->index;
+      int index = as_<index_var>(F).index;
 
       int R2 = C.access(R).C.lookup_in_env( index );
 

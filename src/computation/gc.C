@@ -43,7 +43,7 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
     return;
   }
 
-  int index = assert_is_a<index_var>(C.exp)->index;
+  int index = as_<index_var>(C.exp).index;
 
   int r2 = C.lookup_in_env( index );
 

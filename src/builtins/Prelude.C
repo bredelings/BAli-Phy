@@ -124,10 +124,10 @@ extern "C" closure builtin_function_vector_from_list(OperationArgs& Args)
     assert(is_exactly(top->exp,":"));
     assert(top->exp.size() == 2);
 
-    int element_index = assert_is_a<index_var>(top->exp.sub()[0])->index;
+    int element_index = as_<index_var>(top->exp.sub()[0]).index;
     int element_reg = top->lookup_in_env( element_index );
 
-    int next_index = assert_is_a<index_var>(top->exp.sub()[1])->index;
+    int next_index = as_<index_var>(top->exp.sub()[1]).index;
     int next_reg = top->lookup_in_env( next_index );
 
     // Add the element to the list.
@@ -506,7 +506,7 @@ extern "C" closure builtin_function_seq(OperationArgs& Args)
 {
   Args.evaluate_slot_no_record(0);
 
-  int index = assert_is_a<index_var>(Args.reference(1))->index;
+  int index = as_<index_var>(Args.reference(1)).index;
   int R = Args.current_closure().lookup_in_env( index);
 
   return {index_var(0),{R}};
@@ -550,10 +550,10 @@ extern "C" closure builtin_function_builtinError(OperationArgs& Args)
 
 extern "C" closure builtin_function_reapply(OperationArgs& Args)
 {
-  int index1 = assert_is_a<index_var>(Args.reference(0))->index;
+  int index1 = as_<index_var>(Args.reference(0)).index;
   int R1 = Args.current_closure().lookup_in_env( index1 );
 
-  int index2 = assert_is_a<index_var>(Args.reference(1))->index;
+  int index2 = as_<index_var>(Args.reference(1)).index;
   int R2 = Args.current_closure().lookup_in_env( index2 );
 
   expression_ref apply_E;

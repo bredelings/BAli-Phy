@@ -616,7 +616,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
   if (object_ptr<const lambda> L = is_a<lambda>(E))
   {
     vector<dummy> variables2 = variables;
-    variables2.push_back(*assert_is_a<dummy>(E.sub()[0]));
+    variables2.push_back(as_<dummy>(E.sub()[0]));
     return make_indexed_lambda( indexify(E.sub()[1], variables2) );
   }
 
@@ -628,7 +628,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
   {
     vector<dummy> variables2 = variables;
     for(const auto& var: vars)
-      variables2.push_back(*assert_is_a<dummy>(var));
+      variables2.push_back(as_<dummy>(var));
 
     for(auto& body: bodies)
       body = indexify(body, variables2);
@@ -652,7 +652,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 
       vector<dummy> variables2 = variables;
       for(int j=0;j<P.size();j++)
-	variables2.push_back(*assert_is_a<dummy>(P.sub()[j]));
+	variables2.push_back(as_<dummy>(P.sub()[j]));
 
 #ifndef NDEBUG
       // FIXME - I guess this doesn't handle case a of b -> f(b)?
@@ -1225,7 +1225,7 @@ void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dumm
   // fv x = { x }
   if (is_dummy(E))
   {
-    dummy d = *assert_is_a<dummy>(E);
+    dummy d = as_<dummy>(E);
     if (not is_wildcard(E) and (bound.find(d) == bound.end()))
       free.insert(d);
     return;
@@ -2252,7 +2252,7 @@ bool is_wildcard(const expression_ref& E)
   if (is_dummy(E))
   {
     assert(not E.size());
-    dummy d = *assert_is_a<dummy>(E);
+    dummy d = as_<dummy>(E);
     return is_wildcard(d);
   }
   else
