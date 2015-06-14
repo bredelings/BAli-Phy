@@ -57,9 +57,9 @@ struct expression: public Object
   tribool operator==(const expression& E) const;
 
   template <typename T>
-  object_ptr<const T> is_a() const
+  bool is_a() const
   {
-    return boost::dynamic_pointer_cast<const T>(head);
+    return (bool)boost::dynamic_pointer_cast<const T>(head);
   }
 
   template <typename T>
@@ -391,9 +391,9 @@ public:
   }
 
   template <typename T>
-  object_ptr<const T> is_a() const
+  bool is_a() const
   {
-    return boost::dynamic_pointer_cast<const T>(head());
+    return (bool)boost::dynamic_pointer_cast<const T>(head());
   }
 
   template <typename T>
@@ -511,13 +511,13 @@ inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
 
 
 template <typename T>
-object_ptr<const T> is_a(const expression& E)
+bool is_a(const expression& E)
 { 
   return E.is_a<T>();
 }
 
 template <typename T>
-object_ptr<const T> is_a(const expression_ref& E)
+bool is_a(const expression_ref& E)
 { 
   return E.is_a<T>();
 }
