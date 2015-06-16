@@ -374,7 +374,7 @@ namespace MCMC {
     {
       if (not P->parameter_is_modifiable(i)) continue;
 
-      if (not P->parameter_has_type<Double>(i)) continue;
+      if (not P->get_parameter_value(i).is_double()) continue;
 
       if (not P->has_bounds(i)) continue;
 	
@@ -391,13 +391,14 @@ namespace MCMC {
       result.totals[0] = 1;
       if (n == 2) {
 	int first_index = p2->get_indices()[0];
-	if (n_indices == 1 and P->parameter_has_type<Double>(first_index)) {
-	  double v1 = P->get_parameter_value_as<Double>(first_index);
-	  double v2 = P2->get_parameter_value_as<Double>(first_index);
+	if (n_indices == 1 and P->get_parameter_value(first_index).is_double()) 
+	{
+	  double v1 = P->get_parameter_value(first_index).as_double();
+	  double v2 = P2->get_parameter_value(first_index).as_double();
 	  //      cerr<<"v1 = "<<v1<<"   v2 = "<<v2<<"\n";
 	  result.totals[1] = std::abs(v2-v1);
 	}
-	else if (n_indices > 1 and P->parameter_has_type<Double>(first_index)) //currently this can only be a dirichlet proposal
+	else if (n_indices > 1 and P->get_parameter_value(first_index).is_double()) //currently this can only be a dirichlet proposal
 	{
 	  double total = 0;
 	  for(int i=0;i<n_indices;i++) 

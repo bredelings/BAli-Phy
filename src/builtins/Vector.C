@@ -174,7 +174,7 @@ closure Vector_From_List(OperationArgs& Args)
     int next_reg = top->lookup_in_env( next_index );
 
     // Add the element to the list.
-    v->push_back( *convert<const U>(Args.evaluate_reg_to_object(element_reg)) );
+    v->push_back( *convert<const U>(Args.evaluate_reg_to_object(element_reg).ptr()) );
     // Move to the next element or end
     top = &Args.evaluate_reg_to_closure(next_reg);
   }
@@ -190,7 +190,7 @@ extern "C" closure builtin_function_Vector_Matrix_From_List(OperationArgs& Args)
 
 extern "C" closure builtin_function_new_vector(OperationArgs& Args)
 {
-  int length = *Args.evaluate_as<Int>(0);
+  int length = Args.evaluate(0).as_int();
 
   object_ptr<OVector> v = new OVector(length);
 
@@ -199,16 +199,16 @@ extern "C" closure builtin_function_new_vector(OperationArgs& Args)
 
 extern "C" closure builtin_function_vector_size(OperationArgs& Args)
 {
-  const Vector<object_ref>& v = *Args.evaluate_as<Vector<object_ref>>(0);
+  const Vector<object_ref>& v = Args.evaluate(0).as_<Vector<object_ref>>();
 
   return Int(v.size());
 }
 
 extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
 {
-  const Vector<object_ref>& v = *Args.evaluate_as<Vector<object_ref>>(0);
-  int i = *Args.evaluate_as<Int>(1);
-  auto x = Args.evaluate(2);
+  const Vector<object_ref>& v = Args.evaluate(0).as_<Vector<object_ref>>();
+  int i = Args.evaluate(1).as_int();
+  auto x = Args.evaluate(2).ptr();
 
   const Vector<object_ref>* vv = &v;
   Vector<object_ref>* vvv = const_cast<Vector<object_ref>*>(vv);

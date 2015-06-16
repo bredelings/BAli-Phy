@@ -90,12 +90,12 @@ namespace MCMC {
     long operator()(const Model&,long t) {return t;}
   };
 
-  class GetComputationFunction: public LoggerFunction<object_ref>
+  class GetComputationFunction: public LoggerFunction<expression_ref>
   {
     int index;
   public:
     GetComputationFunction* clone() const {return new GetComputationFunction(*this);}
-    object_ref operator()(const Model& M,long t);
+    expression_ref operator()(const Model& M,long t);
     GetComputationFunction(int i);
   };
 
@@ -216,11 +216,11 @@ namespace MCMC {
   struct Get_Rao_Blackwellized_Parameter_Function: public LoggerFunction<std::string>
   {
     int parameter;
-    std::vector<object_ref> values;
+    std::vector<expression_ref> values;
 
     Get_Rao_Blackwellized_Parameter_Function* clone() const {return new Get_Rao_Blackwellized_Parameter_Function(*this);}
     std::string operator()(const Model& M, long t);
-    Get_Rao_Blackwellized_Parameter_Function(int p, const std::vector<object_ref>& v);
+    Get_Rao_Blackwellized_Parameter_Function(int p, const std::vector<expression_ref>& v);
   };
 
   struct Get_Tree_Length_Function: public LoggerFunction<std::string>
@@ -285,9 +285,9 @@ namespace MCMC {
     { }
   };
 
-  class SortedTableFunction: public TableFunction<object_ref>
+  class SortedTableFunction: public TableFunction<expression_ref>
   {
-    owned_ptr<TableFunction<object_ref> > F;
+    owned_ptr<TableFunction<expression_ref> > F;
     std::vector< std::vector< std::vector< int > > > indices;
     std::vector<int> sorted_index;
   public:
@@ -296,9 +296,9 @@ namespace MCMC {
     int n_fields() const;
     std::vector<std::string> field_names() const;
 
-    std::vector<object_ref> operator()(const Model& M, long t);
+    std::vector<expression_ref> operator()(const Model& M, long t);
 
-    SortedTableFunction(const TableFunction<object_ref>&, const std::vector< std::vector< std::vector< int> > >& );
+    SortedTableFunction(const TableFunction<expression_ref>&, const std::vector< std::vector< std::vector< int> > >& );
   };
 
   template <typename T>
@@ -381,13 +381,13 @@ namespace MCMC {
   };
 
   template<> 
-  inline std::vector<std::string> ConvertTableToStringFunction<object_ref>::operator()(const Model& M, long t)
+  inline std::vector<std::string> ConvertTableToStringFunction<expression_ref>::operator()(const Model& M, long t)
   {
-    std::vector<object_ref> values = (*F)(M,t);
+    std::vector<expression_ref> values = (*F)(M,t);
 
     std::vector<std::string> output(values.size());
     for(int i=0;i<values.size();i++)
-      output[i] = values[i]->print();
+      output[i] = values[i].print();
     
     return output;
   }

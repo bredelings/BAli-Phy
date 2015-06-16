@@ -103,10 +103,10 @@ public:
   /// Get the value of a modifiable
   template <typename T>
   const T& get_modifiable_value_as(int i) const {
-    return *convert<const T>(get_modifiable_value(i));
+    return get_modifiable_value(i).as_<T>();
   }
   /// Get SOME model modifiable values
-  std::vector<object_ref> get_modifiable_values(const std::vector<int>&) const;
+  std::vector<expression_ref> get_modifiable_values(const std::vector<int>&) const;
 
   /// Get SOME model modifiable values
   template <typename T>
@@ -122,12 +122,8 @@ public:
 
   /// Get A model parameter value
   template <typename T>
-  bool parameter_has_type(int index) const {return (bool)boost::dynamic_pointer_cast<const T>(get_parameter_value(index));}
-
-  /// Get A model parameter value
-  template <typename T>
   const T& get_parameter_value_as(int i) const {
-    return *convert<const T>(get_parameter_value(i));
+    return get_parameter_value(i).as_<T>();
   }
   /// Get SOME model parameter values
   template <typename T>
@@ -142,7 +138,7 @@ public:
   }
 
   /// Get SOME model parameter values
-  std::vector<object_ptr<const Object> > get_parameter_values(const std::vector<int>&) const;
+  std::vector<expression_ref> get_parameter_values(const std::vector<int>&) const;
 
   /// Get ALL model parameter values
   template <typename T>
@@ -156,7 +152,7 @@ public:
     return values;  
   }
   /// Get ALL model parameter values
-  std::vector<object_ptr<const Object> > get_parameter_values() const;
+  std::vector<expression_ref > get_parameter_values() const;
 
   /// Set the value of a modifiable
   void set_modifiable_value(int m, const object_ref& value);
@@ -171,6 +167,8 @@ public:
           void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
   /// Set SOME of the model parameter values
           void set_parameter_values(const std::vector<int>& indices,const std::vector<object_ptr<const Object> >& p);
+  /// Set SOME of the model parameter values
+          void set_parameter_values(const std::vector<int>& indices,const std::vector<expression_ref>& p);
 
   /// Construct an empty model
   Model(const module_loader&);

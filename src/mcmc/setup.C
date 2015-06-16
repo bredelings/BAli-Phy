@@ -181,9 +181,10 @@ void add_boolean_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
   {
     auto range = P.get_range_for_reg(r);
     double rate = P.get_rate_for_reg(r);
-    auto con = dynamic_pointer_cast<const constructor>(range);
-    if (not con) continue;
-    if (con->f_name != "TrueFalseRange") continue;
+
+    if (not range.is_a<constructor>()) continue;
+    if (range.as_<constructor>().f_name != "TrueFalseRange") continue;
+
     string name = "m_bool_flip_"+convertToString<int>(r);
     add_modifiable_MH_move(name, bit_flip, r, vector<double>{}, M, weight*rate);
   }
@@ -196,10 +197,10 @@ void add_real_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
   {
     auto range = P.get_range_for_reg(r);
     double rate = P.get_rate_for_reg(r);
-    auto bounds = dynamic_pointer_cast<const Bounds<double>>(range);
-    if (not bounds) continue;
+    if (not range.is_a<Bounds<double>>()) continue;
+    auto& bounds = range.as_<Bounds<double>>();
     string name = "m_real_"+convertToString<int>(r);
-    M.add( rate*weight , MCMC::Modifiable_Slice_Move(name, r, *bounds, 1.0) );
+    M.add( rate*weight , MCMC::Modifiable_Slice_Move(name, r, bounds, 1.0) );
   }
 }
 
@@ -210,13 +211,14 @@ void add_real_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
   {
     auto range = P.get_range_for_reg(r);
     double rate = P.get_rate_for_reg(r);
-    auto bounds = dynamic_pointer_cast<const Bounds<double>>(range);
-    if (not bounds) continue;
+    if (not is_a<Bounds<double>>(range)) continue;
+
+    auto& bounds = range.as_<Bounds<double>>();
     string name = "m_real_cauchy_"+convertToString<int>(r);
-    if (bounds->has_lower_bound and bounds->lower_bound >= 0.0)
-      add_modifiable_MH_move(name, Reflect(*bounds, log_scaled(Between(-20,20,shift_cauchy))), r, {1.0}, M, weight*rate);
+    if (bounds.has_lower_bound and bounds.lower_bound >= 0.0)
+      add_modifiable_MH_move(name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), r, {1.0}, M, weight*rate);
     else
-      add_modifiable_MH_move(name, Reflect(*bounds, shift_cauchy), r, {1.0}, M, weight*rate);
+      add_modifiable_MH_move(name, Reflect(bounds, shift_cauchy), r, {1.0}, M, weight*rate);
   }
 }
 
@@ -227,12 +229,13 @@ void add_integer_uniform_MH_moves(const Model& P, MCMC::MoveAll& M, double weigh
   {
     auto range = P.get_range_for_reg(r);
     double rate = P.get_rate_for_reg(r);
-    auto bounds = dynamic_pointer_cast<const Bounds<int>>(range);
-    if (not bounds) continue;
-    if (not bounds->has_lower_bound or not bounds->has_upper_bound) continue;
+    if (not is_a<Bounds<int>>(range)) continue;
+
+    auto& bounds = range.as_<Bounds<int>>();
+    if (not bounds.has_lower_bound or not bounds.has_upper_bound) continue;
     string name = "m_int_uniform_"+convertToString<int>(r);
-    double l = (int)bounds->lower_bound;
-    double u = (int)bounds->upper_bound;
+    double l = (int)bounds.lower_bound;
+    double u = (int)bounds.upper_bound;
     add_modifiable_MH_move(name, discrete_uniform, r, {double(l),double(u)}, M, weight*rate);
   }
 }
@@ -243,16 +246,16 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
   {
     auto range = P.get_range_for_reg(r);
     double rate = P.get_rate_for_reg(r);
-    auto bounds = dynamic_pointer_cast<const Bounds<int>>(range);
-    if (not bounds) continue;
+    if (not is_a<Bounds<int>>(range)) continue;
 
     // FIXME: righteousness.
     // We need a more intelligent way of determining when we should do this.
     // For example, we do not want to do this for categorical-type variables.
-    if (bounds->has_upper_bound and bounds->has_lower_bound) continue;
+    auto& bounds = range.as_<Bounds<int>>();
+    if (bounds.has_upper_bound and bounds.has_lower_bound) continue;
 
     string name = "m_int_"+convertToString<int>(r);
-    M.add( 1.0, MCMC::Integer_Modifiable_Slice_Move(name, r, *bounds, rate * weight) );
+    M.add( 1.0, MCMC::Integer_Modifiable_Slice_Move(name, r, bounds, rate * weight) );
   }
 }
 

@@ -46,8 +46,8 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, cons
 void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& logged_computations, vector<string>& logged_names)
 {
   assert(index != -1);
-  object_ref result = M.evaluate(index);
-  if ((bool)dynamic_pointer_cast<const Double>(result) or (bool)dynamic_pointer_cast<const Int>(result))
+  auto result = M.evaluate(index);
+  if (result.is_double() or result.is_int())
   {
     logged_computations.push_back(index);
     logged_names.push_back(name);
@@ -55,9 +55,10 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
     return;
   }
 
-  if (auto c = dynamic_pointer_cast<const constructor>(result))
+  if (result.is_a<constructor>())
   {
-    if (c->f_name == "Prelude.True" or c->f_name == "Prelude.False")
+    auto& c = result.as_<constructor>();
+    if (c.f_name == "Prelude.True" or c.f_name == "Prelude.False")
     {
       logged_computations.push_back(index);
       logged_names.push_back(name);
@@ -65,14 +66,14 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
       return;
     }
 
-    if (c->f_name == "[]")
+    if (c.f_name == "[]")
       return;
 
-    if (c->f_name == ":")
+    if (c.f_name == ":")
     {
       expression_ref L = M.get_expression(index);
       expression_ref E = (identifier("Prelude.length"),L);
-      int length = *convert<const Int>(M.evaluate_expression(E));
+      int length = M.evaluate_expression(E).as_int();
       int index2 = -1;
       for(int i=0;i<length;i++)
       {
@@ -125,7 +126,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Model
       find_sub_loggers(*M, index, name, logged_computations, logged_names);
     }
 
-    TableGroupFunction<object_ref> T1;
+    TableGroupFunction<expression_ref> T1;
     for(int i=0;i<logged_computations.size();i++)
     {
       int index = logged_computations[i];
@@ -135,7 +136,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Model
 
     SortedTableFunction T2(T1, get_un_identifiable_indices(*M, logged_names));
 
-    TL->add_fields( ConvertTableToStringFunction<object_ref>( T2 ) );
+    TL->add_fields( ConvertTableToStringFunction<expression_ref>( T2 ) );
   }
 
   for(const auto& p: Rao_Blackwellize)
@@ -144,7 +145,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Model
     if (p_index == -1)
       throw myexception()<<"No such parameter '"<<p<<"' to Rao-Blackwellize";
 
-    vector<object_ref> values = {Int(0),Int(1)};
+    vector<expression_ref> values = {Int(0),Int(1)};
     TL->add_field("RB-"+p, Get_Rao_Blackwellized_Parameter_Function(p_index, values));
   }
 

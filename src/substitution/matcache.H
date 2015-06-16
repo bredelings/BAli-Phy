@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include "object.H"
 #include "sequence/alphabet.H"
+#include "computation/expression.H"
 
 struct Mat_Cache
 {
@@ -38,7 +39,7 @@ struct Mat_Cache
 
   virtual std::vector<double> distribution() const = 0;
 
-  virtual object_ptr<const Object> base_model(int m, int b) const = 0;
+  virtual expression_ref base_model(int m, int b) const = 0;
 
   virtual std::vector<double> frequencies(int m) const = 0;
 

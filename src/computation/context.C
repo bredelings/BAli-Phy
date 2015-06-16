@@ -78,13 +78,13 @@ const closure& context::lazy_evaluate(int index) const
 }
 
 /// Return the value of a particular index, computing it if necessary
-const object_ptr<const Object>& context::evaluate(int index) const
+const expression_ref& context::evaluate(int index) const
 {
-  return lazy_evaluate(index).exp.head();
+  return lazy_evaluate(index).exp;
 }
 
 /// Return the value of a particular index, computing it if necessary
-const object_ptr<const Object>& context::perform(int index) const
+const expression_ref& context::perform(int index) const
 {
   int H = heads()[index];
 
@@ -109,14 +109,14 @@ const closure& context::lazy_evaluate_expression_(closure&& C, bool ec) const
   }
 }
 
-const object_ptr<const Object>& context::evaluate_expression_(closure&& C,bool ec) const
+const expression_ref& context::evaluate_expression_(closure&& C,bool ec) const
 {
   const expression_ref& result = lazy_evaluate_expression_(std::move(C),ec).exp;
 #ifndef NDEBUG
   if (is_a<lambda2>(result))
     throw myexception()<<"Evaluating lambda as object: "<<result.print();
 #endif
-  return result.head();
+  return result;
 }
 
 const closure& context::lazy_evaluate_expression(const expression_ref& E, bool ec) const
@@ -124,12 +124,12 @@ const closure& context::lazy_evaluate_expression(const expression_ref& E, bool e
   return lazy_evaluate_expression_( preprocess(E), ec);
 }
 
-const object_ptr<const Object>& context::evaluate_expression(const expression_ref& E,bool ec) const
+const expression_ref& context::evaluate_expression(const expression_ref& E,bool ec) const
 {
   return evaluate_expression_( preprocess(E), ec);
 }
 
-const object_ptr<const Object>& context::perform_expression(const expression_ref& E,bool ec) const
+const expression_ref& context::perform_expression(const expression_ref& E,bool ec) const
 {
   expression_ref E2 = (get_expression(perform_io_head),E);
   return evaluate_expression_( preprocess(E2), ec);
@@ -154,13 +154,13 @@ bool context::parameter_is_modifiable(int index) const
 
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-const object_ptr<const Object>& context::get_reg_value(int R) const
+const expression_ref& context::get_reg_value(int R) const
 {
   return memory()->get_reg_value_in_context(R, context_index);
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-const object_ptr<const Object>& context::get_modifiable_value(int index) const
+const expression_ref& context::get_modifiable_value(int index) const
 {
   int R = get_modifiable_reg(index);
 
@@ -168,13 +168,13 @@ const object_ptr<const Object>& context::get_modifiable_value(int index) const
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-const object_ptr<const Object>& context::get_parameter_value(int index) const
+const expression_ref& context::get_parameter_value(int index) const
 {
   return memory()->get_parameter_value_in_context(index, context_index);
 }
 
 /// Get the value of a non-constant, non-computed index
-const object_ptr<const Object>& context::get_parameter_value(const std::string& name) const
+const expression_ref& context::get_parameter_value(const std::string& name) const
 {
   int index = find_parameter(name);
   if (index == -1)
@@ -290,7 +290,7 @@ const vector<int>& context::random_modifiables() const
   return memory()->random_modifiables();
 }
 
-const object_ptr<const Object> context::get_range_for_reg(int r) const
+const expression_ref context::get_range_for_reg(int r) const
 {
   return memory()->get_range_for_reg(context_index, r);
 }
@@ -300,7 +300,7 @@ double context::get_rate_for_reg(int r) const
   return memory()->get_rate_for_reg(r);
 }
 
-const object_ptr<const Object> context::get_parameter_range(int p) const
+const expression_ref context::get_parameter_range(int p) const
 {
   return memory()->get_parameter_range(context_index, p);
 }

@@ -376,7 +376,7 @@ void reg_heap::register_probability(int r)
 
   if (reg_is_constant(r))
   {
-    log_double_t pr = *convert<const Log_Double>(access(r).C.exp.head().get());
+    log_double_t pr = access(r).C.exp.as_log_double();
     constant_pr *= pr;
   }
   else
@@ -428,7 +428,7 @@ void reg_heap::dec_probability(int rc)
   assert(rc > 0);
   int r2 = computations[rc].result;
   assert(r2 > 0);
-  log_double_t pr = *convert<const Log_Double>(access(r2).C.exp.head().get());
+  log_double_t pr = access(r2).C.exp.as_log_double();
 
   variable_pr /= pr;
   computations[rc].flags.reset(0);
@@ -536,12 +536,12 @@ int reg_heap::find_parameter_modifiable_reg(int index)
   return R2;
 }
 
-const object_ptr<const Object> reg_heap::get_parameter_range(int c, int p)
+const expression_ref reg_heap::get_parameter_range(int c, int p)
 {
   return get_range_for_reg(c, find_parameter_modifiable_reg(p));
 }
 
-const object_ptr<const Object> reg_heap::get_range_for_reg(int c, int r)
+const expression_ref reg_heap::get_range_for_reg(int c, int r)
 {
   if (access(r).C.Env.size() < 3)
     return {};
@@ -557,7 +557,7 @@ double reg_heap::get_rate_for_reg(int r)
 
   int r3 = access(r).C.lookup_in_env(0);
   r3 = incremental_evaluate_unchangeable(r3);
-  return *convert<const Double>(access(r3).C.exp.head());
+  return access(r3).C.exp.as_double();
 }
 
 const std::vector<int>& reg_heap::triggers() const {return tokens[root_token].triggers;}
@@ -853,7 +853,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   // If the value is a pre-existing reg_var, then call it.
   if (result.exp.head()->type() == index_var_type)
   {
-    int index = convert<const index_var>(result.exp.head())->index;
+    int index = result.exp.as_<index_var>().index;
 
     int Q = result.lookup_in_env( index );
     
@@ -2256,23 +2256,23 @@ bool reg_heap::reg_is_fully_up_to_date(int R) const
   return true;
 }
 
-const object_ptr<const Object>& reg_heap::get_parameter_value_in_context(int p, int c)
+const expression_ref& reg_heap::get_parameter_value_in_context(int p, int c)
 {
   int& R = parameters[p].second;
 
   return get_reg_value_in_context(R, c);
 }
 
-const object_ptr<const Object>& reg_heap::get_reg_value_in_context(int& R, int c)
+const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 {
-  if (access(R).type == reg::type_t::constant) return access(R).C.exp.head();
+  if (access(R).type == reg::type_t::constant) return access(R).C.exp;
 
   reroot_at_context(c);
 
   if (has_computation(R))
   {
     int R2 = computation_result_for_reg(R);
-    if (R2) return access(R2).C.exp.head();
+    if (R2) return access(R2).C.exp;
   }
 
   // If the value needs to be computed (e.g. its a call expression) then compute it.
@@ -2280,7 +2280,7 @@ const object_ptr<const Object>& reg_heap::get_reg_value_in_context(int& R, int c
   R = p.first;
   int result = p.second;
 
-  return access(result).C.exp.head();
+  return access(result).C.exp;
 }
 
 void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)

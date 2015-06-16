@@ -34,18 +34,18 @@ expression_ref perform_exp(const expression_ref& F, const string& prefix)
   return E;
 }
 
-object_ptr<const Object> result(const expression_ref& E, const module_loader& L)
+expression_ref result(const expression_ref& E, const module_loader& L)
 {
   return result(E, L,vector<Module>{});
 }
 
-object_ptr<const Object> result(const expression_ref& E, const module_loader& L, const vector<Module>& Ps)
+expression_ref result(const expression_ref& E, const module_loader& L, const vector<Module>& Ps)
 {
   context C(L, Ps);
   return C.evaluate_expression(perform_exp(E));
 }
 
-object_ptr<const Object> result(const expression_ref& E, const module_loader& L, const vector<string>& module_names)
+expression_ref result(const expression_ref& E, const module_loader& L, const vector<string>& module_names)
 {
   context C(L, module_names);
   return C.evaluate_expression(perform_exp(E));

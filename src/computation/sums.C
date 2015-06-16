@@ -5,7 +5,7 @@ bool reg_heap::inc_probability(int rc)
   assert(rc > 0);
   int r2 = computations[rc].result;
   assert(r2 > 0);
-  log_double_t pr = *convert<const Log_Double>(access(r2).C.exp.head().get());
+  log_double_t pr = access(r2).C.exp.as_log_double();
 
   log_double_t new_total;
   double error;
@@ -52,7 +52,7 @@ log_double_t reg_heap::probability_for_context_full(int c)
   for(int r: probability_heads)
   {
     const auto& x = get_reg_value_in_context(r, c);
-    log_double_t X = *convert<const Log_Double>(x.get());
+    log_double_t X = x.as_log_double();
 
     double t;
     if (std::abs(X.log()) > std::abs(log_pr))

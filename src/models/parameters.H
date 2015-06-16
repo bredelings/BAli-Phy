@@ -124,7 +124,7 @@ public:
   
   std::vector<double> distribution() const;
 
-  object_ptr<const Object> base_model(int m, int b) const;
+  expression_ref base_model(int m, int b) const;
 
   std::vector<double> frequencies(int m) const;
 
@@ -168,7 +168,7 @@ public:
   // invalidate subA indices for all branches
   void invalidate_subA_index_all();
 
-  object_ptr<const Object> get_pairwise_alignment_(int b) const;
+  expression_ref get_pairwise_alignment_(int b) const;
 
   const pairwise_alignment_t& get_pairwise_alignment(int b,bool=true) const;
 

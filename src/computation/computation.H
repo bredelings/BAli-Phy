@@ -47,28 +47,28 @@ public:
 
   const closure& evaluate_slot_to_closure_(int);
 
-  const object_ptr<const Object>& evaluate_reg_to_object(int);
+  const expression_ref& evaluate_reg_to_object(int);
 
-  const object_ptr<const Object>& evaluate_reg_to_object_(int);
+  const expression_ref& evaluate_reg_to_object_(int);
 
-  const object_ptr<const Object>& evaluate_slot_to_object(int);
+  const expression_ref& evaluate_slot_to_object(int);
 
-  const object_ptr<const Object>& evaluate_slot_to_object_(int);
+  const expression_ref& evaluate_slot_to_object_(int);
 
-  const object_ptr<const Object>& evaluate(int);
+  const expression_ref& evaluate(int);
 
-  const object_ptr<const Object>& evaluate_(int);
+  const expression_ref& evaluate_(int);
 
   template <typename T>
   object_ptr<const T> evaluate_as(int slot)
   {
-    return convert<const T>( evaluate(slot) );
+    return convert<const T>( evaluate(slot).ptr() );
   }
 
   template <typename T>
   object_ptr<const T> evaluate_as_(int slot)
   {
-    return convert<const T>( evaluate_(slot) );
+    return convert<const T>( evaluate_(slot).ptr() );
   }
 
   int allocate(closure&&);

@@ -229,9 +229,9 @@ double data_partition::get_beta() const
 
 bool data_partition::pairwise_alignment_for_branch_is_valid(int b) const
 {
-  object_ref o = P->get_parameter_value(pairwise_alignment_for_branch[b]);
+  expression_ref E = P->get_parameter_value(pairwise_alignment_for_branch[b]);
 
-  if (dynamic_cast<const Int*>(o.get()))
+  if (E.is_int())
     return false;
   else
     return true;
@@ -294,44 +294,40 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   b = T().directed_branch(b).undirected_name();
   assert(b >= 0 and b < T().n_branches());
 
-  return *P->evaluate_as<Box<vector<Matrix>>>( transition_p_method_indices[b] );
+  return P->evaluate( transition_p_method_indices[b] ).as_<Vector<Matrix>>();
 }
 
 int data_partition::n_base_models() const
 {
   int s = P->smodel_for_partition[partition_index];
-  object_ref O = P->evaluate(P->SModels[s].n_base_models);
-  return *convert<const Int>(O);
+  return P->evaluate(P->SModels[s].n_base_models).as_int();
 }
 
 int data_partition::n_states() const
 {
   int s = P->smodel_for_partition[partition_index];
-  object_ref O = P->evaluate(P->SModels[s].n_states);
-  return *convert<const Int>(O);
+  return P->evaluate(P->SModels[s].n_states).as_int();
 }
 
 vector<double> data_partition::distribution() const
 {
   // Add Op to convert list to vector<Double>
   int s = P->smodel_for_partition[partition_index];
-  object_ref O = P->evaluate(P->SModels[s].distribution);
-  return *convert<const Box<vector<double>>>(O);
+  return P->evaluate(P->SModels[s].distribution).as_<Box<vector<double>>>();
 }
 
 vector<unsigned> data_partition::state_letters() const
 {
   int s = P->smodel_for_partition[partition_index];
-  object_ref O = P->evaluate(P->SModels[s].state_letters);
-  return *convert<const Box<vector<unsigned> > >(O);
+  return P->evaluate(P->SModels[s].state_letters).as_<Box<vector<unsigned>>>();
 }
 
 vector<double> data_partition::frequencies(int m) const
 {
-  return *P->evaluate_as<Vector<double>>( frequencies_indices[m] );
+  return P->evaluate( frequencies_indices[m] ).as_<Vector<double>>();
 }
 
-object_ptr<const Object> data_partition::base_model(int m, int b) const
+expression_ref data_partition::base_model(int m, int b) const
 {
   b = T().directed_branch(b).undirected_name();
 
@@ -344,7 +340,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 
   b = T().directed_branch(b).undirected_name();
 
-  return *P->evaluate_as<indel::PairHMM>( branch_HMM_indices[b] );
+  return P->evaluate( branch_HMM_indices[b] ).as_<indel::PairHMM>();
 }
 
 vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) const
@@ -365,7 +361,7 @@ double data_partition::sequence_length_pr(int l) const
 
   const_cast<Parameters*>(P)->set_parameter_value(arg_param_index, new Int(l) );
 
-  return *P->evaluate_as<Double>( P->IModel_methods[m].length_p );
+  return P->evaluate( P->IModel_methods[m].length_p ).as_double();
 }
 
 /// \brief Recalculate cached values relating to the substitution model.
@@ -390,7 +386,7 @@ void data_partition::setlength(int b)
 
 int data_partition::seqlength(int n) const
 {
-  int l = *P->evaluate_as<Int>(sequence_length_indices[n]);
+  int l = P->evaluate(sequence_length_indices[n]).as_int();
 
   assert(l == A().seqlength(n));
 
@@ -484,7 +480,7 @@ void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& 
   }
 }
 
-object_ptr<const Object> data_partition::get_pairwise_alignment_(int b) const
+expression_ref data_partition::get_pairwise_alignment_(int b) const
 {
   return P->get_parameter_value(pairwise_alignment_for_branch[b]);
 }
@@ -508,7 +504,7 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b, bool r
   }
 #endif
 
-  return P->get_parameter_value_as<pairwise_alignment_t>(pairwise_alignment_for_branch[b]);
+  return P->get_parameter_value(pairwise_alignment_for_branch[b]).as_<pairwise_alignment_t>();
 }
 
 void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi, bool require_match_A)
@@ -588,7 +584,7 @@ log_double_t data_partition::prior_alignment() const
   for(int i=0;i<T().n_branches()*2;i++)
     assert(pairwise_alignment_for_branch_is_valid(i));
 
-  log_double_t Pr = *P->evaluate_as<Log_Double>(alignment_prior_index);
+  log_double_t Pr = P->evaluate(alignment_prior_index).as_log_double();
 
   assert(not different(Pr, ::prior_HMM(*this)));
 
@@ -765,7 +761,7 @@ void Parameters::set_beta(double b)
 
 double Parameters::get_beta() const
 {
-  return get_parameter_value_as<Double>(0);
+  return get_parameter_value(0).as_double();
 }
 
 const SequenceTree& Parameters::T() const
@@ -1053,19 +1049,19 @@ void Parameters::check_h_tree() const
 #ifndef NDEBUG
   for(int b=0; b < 2*T().n_branches(); b++)
   {
-    object_ref p = get_parameter_value(parameter_for_tree_branch[b]);
-    object_ref s = convert<const OPair>(p)->first;
-    object_ref t = convert<const OPair>(p)->second;
-    assert(T().directed_branch(b).source() == *convert<const Int>(s));
-    assert(T().directed_branch(b).target() == *convert<const Int>(t));
+    auto p = get_parameter_value(parameter_for_tree_branch[b]);
+    auto s = p.as_<OPair>().first;
+    auto t = p.as_<OPair>().second;
+    assert(T().directed_branch(b).source() == s.as_int());
+    assert(T().directed_branch(b).target() == t.as_int());
   }
 
   for(int n=0; n < n*T().n_nodes(); n++)
   {
-    object_ptr<const OVector> V = convert<const OVector>(get_parameter_value(parameter_for_tree_node[n]));
+    object_ptr<const OVector> V = get_parameter_value(parameter_for_tree_node[n]).assert_is_a<OVector>();
     vector<int> VV;
     for(const auto& elem: *V)
-      VV.push_back(*convert<const Int>(elem));
+      VV.push_back(elem.as_int());
 
     vector<const_branchview> v = branches_from_node(T(), n);
     vector<int> vv;
@@ -1085,10 +1081,10 @@ void Parameters::show_h_tree() const
 {
   for(int b=0; b < 2*T().n_branches(); b++)
   {
-    object_ref p = get_parameter_value(parameter_for_tree_branch[b]);
-    object_ref s = convert<const OPair>(p)->first;
-    object_ref t = convert<const OPair>(p)->second;
-    std::cerr<<"branch "<<b<<": "<<p->print()<<"     "<<T().directed_branch(b).length()<<"\n";
+    auto p = get_parameter_value(parameter_for_tree_branch[b]);
+    auto s = p.as_<OPair>().first;
+    auto t = p.as_<OPair>().second;
+    std::cerr<<"branch "<<b<<": "<<p.print()<<"     "<<T().directed_branch(b).length()<<"\n";
   }
 }
 
@@ -1278,7 +1274,7 @@ void Parameters::recalc()
       assert(branch_length_indices[s].size() == T().n_branches());
       for(int b=0;b<T().n_branches();b++)
       {
-	double rate = *convert<const Double>(get_parameter_value(branch_mean_index(s)));
+	double rate = get_parameter_value(branch_mean_index(s)).as_double();;
 	double delta_t = T().branch(b).length();
 
 	context::set_parameter_value(branch_length_indices[s][b], Double(rate*delta_t));
@@ -1319,7 +1315,7 @@ void Parameters::recalc()
 
 object_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
 {
-  return convert<const alphabet>(evaluate(SModels[s].get_alphabet));
+  return evaluate(SModels[s].get_alphabet).assert_is_a<alphabet>();
 }
 
 bool Parameters::variable_alignment() const
@@ -1345,7 +1341,7 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
   // Update D parameters
   for(int s=0; s<n_scales; s++) 
   {
-    double rate = *convert<const Double>(get_parameter_value(branch_mean_index(s)));
+    double rate = get_parameter_value(branch_mean_index(s)).as_double();
     double delta_t = T().branch(b).length();
     
     context::set_parameter_value(branch_length_indices[s][b], rate * delta_t);
@@ -1366,7 +1362,7 @@ void Parameters::setlength(int b,double l)
   // Update D parameters
   for(int s=0; s<n_scales; s++) 
   {
-    double rate = *convert<const Double>(get_parameter_value(branch_mean_index(s)));
+    double rate = get_parameter_value(branch_mean_index(s)).as_double();
     double delta_t = T().branch(b).length();
     
     context::set_parameter_value(branch_length_indices[s][b], rate * delta_t);
@@ -1412,7 +1408,7 @@ void Parameters::branch_mean_tricky(int i,double x)
 double Parameters::get_branch_subst_rate(int p, int /* b */) const
 {
   int s = scale_for_partition[p];
-  return get_parameter_value_as<Double>(branch_mean_index(s));
+  return get_parameter_value(branch_mean_index(s)).as_double();
 }
 
 expression_ref Parameters::my_tree() const
@@ -1510,7 +1506,7 @@ Parameters::Parameters(const module_loader& L,
   evaluate_expression( (identifier("edgesOutOfNode"), my_tree(), 0));
   evaluate_expression( (identifier("neighbors"), my_tree(), 0));
   evaluate_expression( (identifier("nodesForEdge"),my_tree(), 0));
-  *convert<const Int>(evaluate_expression( (identifier("edgeForNodes"), my_tree(), (identifier("nodesForEdge"),my_tree(), 0))));
+  evaluate_expression( (identifier("edgeForNodes"), my_tree(), (identifier("nodesForEdge"),my_tree(), 0))).as_int();
   for(int b=0; b < 2*T().n_branches(); b++)
   {
     vector<const_branchview> branch_list;
@@ -1519,7 +1515,7 @@ Parameters::Parameters(const module_loader& L,
     for(auto b: branch_list)
       branch_list_.push_back(b);
 
-    vector<int> b2 = *convert<const Vector<int>>(evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),my_tree(),b)))));
+    vector<int> b2 = evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),my_tree(),b)))).as_<Vector<int>>();
     assert(b2.size() == branch_list_.size());
     for( int i: branch_list_)
       assert(includes(b2,i));
@@ -1576,7 +1572,7 @@ Parameters::Parameters(const module_loader& L,
     branch_length_indices.push_back(vector<int>());
     for(int b=0;b<T().n_branches();b++)
     {
-      double rate = *convert<const Double>(get_parameter_value(branch_mean_index(s)));
+      double rate = get_parameter_value(branch_mean_index(s)).as_double();
       double delta_t = T().branch(b).length();
 
       string name = "d" + convertToString(b+1);

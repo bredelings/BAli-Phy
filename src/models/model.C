@@ -42,9 +42,9 @@ vector<expression_ref> model_parameter_expressions(const Model& M)
   return sub;
 }
 
-std::vector< object_ptr<const Object> > Model::get_parameter_values() const
+std::vector< expression_ref > Model::get_parameter_values() const
 {
-  std::vector< object_ptr<const Object> > values(n_parameters());
+  std::vector< expression_ref > values(n_parameters());
 
   for(int i=0;i<values.size();i++)
     values[i] = get_parameter_value(i);
@@ -52,9 +52,9 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values() const
   return values;  
 }
 
-std::vector< object_ptr<const Object> > Model::get_parameter_values(const std::vector<int>& indices) const
+std::vector< expression_ref > Model::get_parameter_values(const std::vector<int>& indices) const
 {
-  std::vector< object_ptr<const Object> > values(indices.size());
+  std::vector< expression_ref > values(indices.size());
     
   for(int i=0;i<values.size();i++)
     values[i] = get_parameter_value(indices[i]);
@@ -64,35 +64,26 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values(const std::v
 
 bool Model::has_bounds(int i) const 
 {
-  object_ref o = get_parameter_range(i);
+  auto e = get_parameter_range(i);
 
-  if (o)
-  {
-    object_ptr<const Bounds<double>> b = dynamic_pointer_cast<const Bounds<double>>(o);
-
-    return (bool)b;
-  }
-  else
-    return false;
+  return (e and e.is_a<Bounds<double>>());
 }
 
 const Bounds<double>& Model::get_bounds(int i) const 
 {
-  object_ref o = get_parameter_range(i);
+  auto e = get_parameter_range(i);
 
-  assert(o);
+  assert(e);
 
-  object_ptr<const Bounds<double>> b = dynamic_pointer_cast<const Bounds<double>>(o);
-
-  if (not b)
+  if (not e.is_a<Bounds<double>>())
     throw myexception()<<"parameter '"<<parameter_name(i)<<"' doesn't have Bounds<double>.";
 
-  return *b;
+  return e.as_<Bounds<double>>();
 }
 
-std::vector< object_ref > Model::get_modifiable_values(const std::vector<int>& indices) const
+std::vector< expression_ref > Model::get_modifiable_values(const std::vector<int>& indices) const
 {
-  std::vector< object_ref > values(indices.size());
+  std::vector< expression_ref > values(indices.size());
     
   for(int i=0;i<values.size();i++)
     values[i] = get_modifiable_value(indices[i]);
@@ -144,6 +135,16 @@ void Model::set_parameter_values(const vector<int>& indices,const vector<object_
   recalc();
 }
 
+void Model::set_parameter_values(const vector<int>& indices,const vector<expression_ref>& p)
+{
+  assert(indices.size() == p.size());
+
+  for(int i=0;i<indices.size();i++)
+    context::set_parameter_value(indices[i], p[i]);
+
+  recalc();
+}
+
 log_double_t Model::prior() const
 {
   return get_probability();
@@ -160,7 +161,7 @@ void show_parameters(std::ostream& o,const Model& M) {
     string output="[NULL]";
     if (M.get_parameter_value(i))
     {
-      output=M.get_parameter_value(i)->print();
+      output=M.get_parameter_value(i).print();
       if (output.find(10) != string::npos or output.find(13) != string::npos)
 	output = "[multiline]";
     }

@@ -494,6 +494,7 @@ public:
   // Builin-type arguments
   expression_ref(const int& i):expression_ref(new Int(i)) {}
   expression_ref(const double& d):expression_ref(new Double(d)) {}
+  expression_ref(const log_double_t& ld):expression_ref(new Log_Double(ld)) {}
   expression_ref(const bool& b);
   expression_ref(const std::string& s);
   expression_ref(const char* s);

@@ -16,8 +16,8 @@ extern "C" closure builtin_function_c_snd(OperationArgs& Args)
 
 extern "C" closure builtin_function_c_pair(OperationArgs& Args)
 {
-  auto fst = Args.evaluate(0);
-  auto snd = Args.evaluate(1);
+  auto fst = Args.evaluate(0).ptr();
+  auto snd = Args.evaluate(1).ptr();
 
   return OPair(Opair{fst,snd});
 }

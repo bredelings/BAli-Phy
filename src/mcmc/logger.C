@@ -76,19 +76,19 @@ vector<string> SortedTableFunction::field_names() const
 /// Parameter values indexed by indices[i] are sorted so that the parameter values indexed
 /// by indices[0] are in increasing order.
 ///
-vector<object_ref> make_identifiable(const vector<object_ref>& v,const vector< vector<int> >& indices)
+vector<expression_ref> make_identifiable(const vector<expression_ref>& v,const vector< vector<int> >& indices)
 {
   assert(indices.size());
   int N = indices[0].size();
 
-  vector<object_ref> v_sub = select(v,indices[0]);
+  vector<expression_ref> v_sub = select(v,indices[0]);
 
   vector<int> O = iota(N);
   std::sort(O.begin(),O.end(), 
 	    [&v_sub](int i, int j) 
 	    {
-	      double di = *convert<const Double>(v_sub[i]);
-	      double dj = *convert<const Double>(v_sub[j]);
+	      double di = v_sub[i].as_double();
+	      double dj = v_sub[j].as_double();
 	      return di < dj;
 	    });
 
@@ -101,14 +101,14 @@ vector<object_ref> make_identifiable(const vector<object_ref>& v,const vector< v
       O_all[indices[i][j]] = indices[i][O[j]];
     }
   }
-  vector<object_ref> v2 = apply_mapping(v,invert(O_all));
+  vector<expression_ref> v2 = apply_mapping(v,invert(O_all));
 
   return v2;
 }
 
-vector<object_ref> SortedTableFunction::operator()(const Model& M, long t)
+vector<expression_ref> SortedTableFunction::operator()(const Model& M, long t)
 {
-  vector<object_ref> v = (*F)(M,t);
+  vector<expression_ref> v = (*F)(M,t);
 
   for(int i=0;i<indices.size();i++)
     v = make_identifiable(v, indices[i]);
@@ -116,7 +116,7 @@ vector<object_ref> SortedTableFunction::operator()(const Model& M, long t)
   return v;
 }
 
-SortedTableFunction::SortedTableFunction(const TableFunction<object_ref>& f, const std::vector< std::vector< std::vector< int> > >& i_)
+SortedTableFunction::SortedTableFunction(const TableFunction<expression_ref>& f, const std::vector< std::vector< std::vector< int> > >& i_)
   :F(f), indices(i_), sorted_index(f.n_fields(),-1)
 { 
   for(int i=0;i<indices.size();i++)
@@ -180,19 +180,20 @@ TableViewerFunction::TableViewerFunction(const TableFunction<string>& f)
   :function(f)
 { }
 
-object_ref GetComputationFunction::operator()(const Model& M, long)
+expression_ref GetComputationFunction::operator()(const Model& M, long)
 {
-  object_ref result = M.evaluate(index);
+  expression_ref result = M.evaluate(index);
 
-  if (auto D = dynamic_pointer_cast<const Double>(result))
+  if (result.is_double())
     return result;
-  else if (auto I = dynamic_pointer_cast<const Int>(result))
+  else if (result.is_int())
     return result;
-  else if (auto c = dynamic_pointer_cast<const constructor>(result))
+  else if (result.is_a<constructor>())
   {
-    if (c->f_name == "Prelude.True")
+    auto& c = result.as_<constructor>();
+    if (c.f_name == "Prelude.True")
       return Int(1);
-    else if (c->f_name == "Prelude.False")
+    else if (c.f_name == "Prelude.False")
       return Int(0);
     else
       return Int(-1);
@@ -318,7 +319,7 @@ double mu_scale(const Parameters& P)
     // Record probabilities
     for(const auto& v: values)
     {
-      M2->set_parameter_value(parameter,v);
+      M2->set_parameter_value(parameter,v.ptr());
       log_double_t Pr = M2->probability();
       total += Pr;
       Prs.push_back(Pr);
@@ -335,17 +336,18 @@ double mu_scale(const Parameters& P)
       const auto& v = values[i];
       log_double_t Pr = Prs[i];
       log_double_t value = 0;
-      if (object_ptr<const constructor> b = dynamic_pointer_cast<const constructor>(v))
+      if (v.is_a<constructor>())
       {
-	if (b->f_name == "Prelude.True")
+	auto& b = v.as_<constructor>();
+	if (b.f_name == "Prelude.True")
 	  value = 1;
-	else if (b->f_name == "Prelude.False")
+	else if (b.f_name == "Prelude.False")
 	  value = 0;
       }
-      else if (object_ptr<const Int> i = dynamic_pointer_cast<const Int>(v))
-	value = *i;
-      else if (object_ptr<const Double> d = dynamic_pointer_cast<const Double>(v))
-	value = *d;
+      else if (v.is_int())
+	value = v.as_int();
+      else if (v.is_double())
+	value = v.as_double();
 
       result += Pr*value;
     }
@@ -353,7 +355,7 @@ double mu_scale(const Parameters& P)
     return convertToString( result );
   }
 
-  Get_Rao_Blackwellized_Parameter_Function::Get_Rao_Blackwellized_Parameter_Function(int p, const vector<object_ref>& v)
+  Get_Rao_Blackwellized_Parameter_Function::Get_Rao_Blackwellized_Parameter_Function(int p, const vector<expression_ref>& v)
     :parameter(p), values(v)
   { }
 
