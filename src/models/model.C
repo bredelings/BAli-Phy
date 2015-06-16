@@ -91,48 +91,33 @@ std::vector< expression_ref > Model::get_modifiable_values(const std::vector<int
   return values;  
 }
 
-void Model::set_modifiable_value(int m, const object_ref& value) 
+void Model::set_modifiable_value(int m, const expression_ref& value) 
 {
   context::set_modifiable_value(m, value);
   recalc();
 }
 
-void Model::set_parameter_value(int i,Double value) 
+void Model::set_parameter_value(int i,const expression_ref& value) 
 {
-  set_parameter_value(i, object_ptr<const Object>( value.clone()) );
+  set_parameter_values({i}, {value});
 }
 
-void Model::set_parameter_value(int i,const object_ptr<const Object>& value) 
-{
-  set_parameter_values(vector<int>(1,i), vector< object_ptr<const Object> >(1, value) );
-}
-
-void Model::set_parameter_value(const string& p_name,const object_ptr<const Object>& value) 
+void Model::set_parameter_value(const string& p_name,const expression_ref& value) 
 {
   int i = find_parameter(p_name);
   if (i == -1)
     throw myexception()<<"Cannot find parameter called '"<<p_name<<"'";
     
-  set_parameter_values(vector<int>(1,i), vector< object_ptr<const Object> >(1, value) );
+  set_parameter_values({i},{value});
 }
 
 void Model::set_parameter_values(const vector<int>& indices,const vector<Double>& p)
 {
-  vector< object_ptr<const Object> > p2(p.size());
+  vector< expression_ref > p2(p.size());
   for(int i=0;i<p.size();i++)
-    p2[i] = object_ptr<const Object>( p[i].clone() );
+    p2[i] = double(p[i]);
 
   set_parameter_values(indices,p2);
-}
-
-void Model::set_parameter_values(const vector<int>& indices,const vector<object_ptr<const Object> >& p)
-{
-  assert(indices.size() == p.size());
-
-  for(int i=0;i<indices.size();i++)
-    context::set_parameter_value(indices[i], p[i]);
-
-  recalc();
 }
 
 void Model::set_parameter_values(const vector<int>& indices,const vector<expression_ref>& p)
