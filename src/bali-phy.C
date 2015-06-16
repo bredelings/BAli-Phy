@@ -161,7 +161,7 @@ void set_initial_parameter_values(Model& M, const variables_map& args)
       throw myexception()<<"Ill-formed initial condition '"<<arg<<"'.";
 
     string name = parse[0];
-    object_ref value;
+    expression_ref value;
     try {
       value = parse_object(parse[1]);
     }

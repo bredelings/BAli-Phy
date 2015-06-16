@@ -2526,3 +2526,26 @@ expression_ref operator*(const expression_ref& E, const expression_ref&arg)
   // We need this to apply variables that turn out to be functions.
   return apply_expression(E,arg);
 }
+
+expression_ref parse_object(const string& s)
+{
+  bool bool_value;
+  int int_value;
+  double double_value;
+
+  if (can_be_converted_to<int>(s, int_value))
+    return int_value;
+  else if (can_be_converted_to<double>(s, double_value))
+    return double_value;
+  else if (can_be_converted_to<bool>(s, bool_value))
+  {
+    if (bool_value)
+      return constructor("Prelude.True",0);
+    else
+      return constructor("Prelude.False",0);
+  }
+  else if (s.size() >= 2 and s[0] == '"' and s[s.size()-1] == '"')
+    return String(s.substr(1,s.size()-2));
+  else
+    throw myexception()<<"Can't convert '"<<s<<"' to Bool, Int, Double, or String!";
+}

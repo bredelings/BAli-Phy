@@ -753,4 +753,6 @@ expression_ref operator+(const expression_ref& E1, const expression_ref& E2);
 
 expression_ref operator*(const expression_ref& E1, const expression_ref& E2);
 
+expression_ref parse_object(const std::string& s);
+
 #endif

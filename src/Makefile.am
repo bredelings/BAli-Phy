@@ -111,7 +111,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  computation/formula_expression.C computation/evaluate.C computation/gc.C \
 	  computation/operations.C computation/loader.C computation/context.C \
 	  substitution/matcache.C computation/closure.C \
-	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C object.C \
+	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C \
 	  parser/AST.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
 	  startup/loggers.C startup/system.C startup/cmd_line.C
 

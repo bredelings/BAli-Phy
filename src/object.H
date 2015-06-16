@@ -408,8 +408,6 @@ object_ptr<T> convert(const object_ptr<const Object>& o)
 #endif
 }
 
-object_ref parse_object(const std::string& s);
-
 inline bool object_ref::is_int() const
 {
   return (bool)boost::dynamic_pointer_cast<const Int>(*this);
