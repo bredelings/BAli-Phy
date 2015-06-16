@@ -10,7 +10,7 @@ using std::string;
 
 extern "C" closure builtin_function_read_file(OperationArgs& Args)
 {
-  const string& filename = *Args.evaluate_as<String>(0);
+  const string filename = Args.evaluate(0).as_<String>();
 
   checked_ifstream text_file(filename,"text file");
 
@@ -25,6 +25,6 @@ extern "C" closure builtin_function_read_file(OperationArgs& Args)
 
 extern "C" closure builtin_function_string_to_double(OperationArgs& Args)
 {
-  object_ptr<const String> s = Args.evaluate_as<String>(0);
-  return Double(convertTo<double>(*s));
+  string s = Args.evaluate(0).as_<String>();
+  return {convertTo<double>(s)};
 }

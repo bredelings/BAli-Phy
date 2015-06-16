@@ -13,25 +13,26 @@ using std::valarray;
 
 using std::cerr;
 using std::endl;
+using std::abs;
 
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
-  auto L = Args.evaluate_as<EigenValues>(0);
-  auto pi = Args.evaluate_as< Vector<double> >(1);
-  double t = *Args.evaluate_as<Double>(2);
+  auto L = Args.evaluate(0);
+  auto pi = Args.evaluate(1);
+  double t = Args.evaluate(2).as_double();
 
   Box<Matrix>* M = new Box<Matrix>;
-  *M = exp(*L, *pi, t);
+  *M = exp(L.as_<EigenValues>(), pi.as_<Vector<double>>(), t);
   return M;
 }
 
 extern "C" closure builtin_function_reversible_rate_matrix(OperationArgs& Args)
 {
-  object_ptr<const Box<Matrix>> S_ = Args.evaluate_as<Box<Matrix>>(0);
-  const Matrix& S = *S_;
+  auto S_ = Args.evaluate(0);
+  const Matrix& S = S_.as_<Box<Matrix>>();
 
-  object_ptr<const Box<Matrix>> R_ = Args.evaluate_as<Box<Matrix>>(1);
-  const Matrix& R = *R_;
+  auto R_ = Args.evaluate(1);
+  const Matrix& R = R_.as_<Box<Matrix>>();
     
   const unsigned N = S.size1();
   assert(S.size1() == R.size1());
@@ -153,7 +154,7 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
     }
   }
 
-  return object_ptr<const Double>(new Double(scale/a.width()));
+  return {scale/a.width()};
 }
 
 
@@ -286,7 +287,7 @@ object_ptr<const Object> EQU_Exchange_Function(int n)
 
 extern "C" closure builtin_function_equ(OperationArgs& Args)
 {
-  int n = *Args.evaluate_as<Int>(0);
+  int n = Args.evaluate(0).as_int();
     
   return EQU_Exchange_Function(n);
 }
@@ -614,12 +615,12 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 extern "C" closure builtin_function_gtr(OperationArgs& Args)
 {
   object_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
-  double AG = *Args.evaluate_as<Double>(1);
-  double AT = *Args.evaluate_as<Double>(2);
-  double AC = *Args.evaluate_as<Double>(3);
-  double GT = *Args.evaluate_as<Double>(4);
-  double GC = *Args.evaluate_as<Double>(5);
-  double TC = *Args.evaluate_as<Double>(6);
+  double AG = Args.evaluate(1).as_double();
+  double AT = Args.evaluate(2).as_double();
+  double AC = Args.evaluate(3).as_double();
+  double GT = Args.evaluate(4).as_double();
+  double GC = Args.evaluate(5).as_double();
+  double TC = Args.evaluate(6).as_double();
 
   assert(N->size()==4);
 
@@ -643,7 +644,7 @@ extern "C" closure builtin_function_m0(OperationArgs& Args)
 {
   object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
   object_ptr<const Box<Matrix>> S = Args.evaluate_as<Box<Matrix>>(1);
-  double omega = *Args.evaluate_as<Double>(2);
+  double omega = Args.evaluate(2).as_double();
 
   int n = C->size();
 
@@ -687,7 +688,7 @@ extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
 {
   const alphabet& a = *Args.evaluate_as<alphabet>(0);
 
-  double f = *Args.evaluate_as<Double>(1);
+  double f = Args.evaluate(1).as_double();
 
   object_ptr< const Vector<double> > pi_ = Args.evaluate_as< Vector<double> >(2);
 
@@ -727,7 +728,7 @@ extern "C" closure builtin_function_fMutSel_q(OperationArgs& Args)
   const Vector<double>& codon_w = *codon_w_;
   assert(codon_w.size() == N);
 
-  double omega = *Args.evaluate_as<Double>(2);
+  double omega = Args.evaluate(2).as_double();
 
   object_ptr<const Box<Matrix>> nuc_Q_ = Args.evaluate_as<Box<Matrix>>(3);
   const Matrix& nuc_Q = *nuc_Q_;
@@ -844,7 +845,7 @@ extern "C" closure builtin_function_fMutSel_q2(OperationArgs& Args)
     codon_w[i] = x;
   }
   
-  double omega = *Args.evaluate_as<Double>(2);
+  double omega = Args.evaluate(2).as_double();
 
   object_ptr<const Box<Matrix>> nuc_Q_ = Args.evaluate_as<Box<Matrix>>(3);
   const Matrix& nuc_Q = *nuc_Q_;

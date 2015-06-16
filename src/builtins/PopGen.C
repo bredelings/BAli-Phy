@@ -159,19 +159,19 @@ log_double_t ewens_sampling_probability(double theta, const vector<int>& a)
 
 extern "C" closure builtin_function_ewens_sampling_group_probability(OperationArgs& Args)
 {
-  const double theta = *Args.evaluate_as<Double>(0);
+  const double theta = Args.evaluate(0).as_double();
   const vector<Vector<int>>& afs = *Args.evaluate_as<Vector<Vector<int>>>(1);
 
   log_double_t Pr = 1;
   for(const auto& a: afs)
     Pr *= ewens_sampling_probability(theta,a);
 
-  return Log_Double(Pr);
+  return {Pr};
 }
 
 extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Args)
 {
-  const double theta = *Args.evaluate_as<Double>(0);
+  const double theta = Args.evaluate(0).as_double();
   object_ptr<const OVector> afs_ = Args.evaluate_as<OVector>(1);
 
   vector<int> afs;
@@ -180,7 +180,7 @@ extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Ar
 
   log_double_t Pr = ewens_sampling_probability(theta,afs);
 
-  return Log_Double(Pr);
+  return {Pr};
 }
 
 extern "C" closure builtin_function_ewens_sampling_mixture_probability(OperationArgs& Args)
@@ -208,7 +208,7 @@ extern "C" closure builtin_function_ewens_sampling_mixture_probability(Operation
     Pr *= pr;
   }
 
-  return Log_Double(Pr);
+  return {Pr};
 }
 
 // The probability should be theta/(theta+total) is its new, and n/(theta+total) otherwise.
@@ -249,7 +249,7 @@ double process_allele(int& count, int& total, int& n_theta_pow, double theta)
 extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Args)
 {
   // 0. This is the theta = 2*N*mu
-  const double theta = *Args.evaluate_as<Double>(0);
+  const double theta = Args.evaluate(0).as_double();
 
   const int missing = 0;
 
@@ -303,7 +303,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 
       // Heterozygotes coalesce before outbreeding with probability 0.
       if (heterozygote and coalesced)
-	return Log_Double(0.0);           // We *could* do Pr = 0.0 to accumulate zeros, thus penalizing them.
+	return {log_double_t(0.0)};           // We *could* do Pr = 0.0 to accumulate zeros, thus penalizing them.
 
       Pr *= process_allele(counts[a1], total, n_theta_pow, theta);
 
@@ -319,7 +319,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
   assert(Pr > 0.0);
   assert(Pr2 > 0.0);
   
-  return Log_Double(Pr2);
+  return {Pr2};
 }
 
 // Pr(I|s) = \sum_t=0^\infty s^t (1-s) (1/2^t)^(L-n) (1-(1/2^t))^n
@@ -329,7 +329,7 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
   int L = *Args.evaluate_as<Int>(0);
 
   // The selfing rate
-  const double s = *Args.evaluate_as<Double>(1);
+  const double s = Args.evaluate(1).as_double();
 
   assert(s >= 0 and s <= 1);
 
@@ -350,9 +350,9 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
   if (s == 0.0)
   {
     if (n == 0)
-      return Log_Double(1.0);
+      return {log_double_t(1.0)};
     else
-      return Log_Double(0.0);
+      return {log_double_t(0.0)};
   }
 
 
@@ -375,6 +375,6 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
 
   sum *= (1.0 - s);
 
-  return Log_Double(sum);
+  return {log_double_t(sum)};
 }
 

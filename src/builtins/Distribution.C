@@ -15,125 +15,112 @@ using std::valarray;
 
 extern "C" closure builtin_function_exponential_density(OperationArgs& Args)
 {
-  double mu = *Args.evaluate_as<Double>(0);
-  double x = *Args.evaluate_as<Double>(1);
+  double mu = Args.evaluate(0).as_double();
+  double x = Args.evaluate(1).as_double();
   
-  Log_Double result = exponential_pdf(x,mu);
-  return object_ptr<const Object>(result.clone());
+  return { exponential_pdf(x,mu) };
 }
 
 extern "C" closure builtin_function_sample_exponential(OperationArgs& Args)
 {
-  double mu = *Args.evaluate_as_<Double>(0);
+  double mu = Args.evaluate_(0).as_double();
   
-  Double result = exponential(mu);
-  return object_ptr<const Object>(result.clone());
+  return { exponential(mu) };
 }
 
 extern "C" closure builtin_function_gamma_density(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
-  double x = *Args.evaluate_as<Double>(2);
+  double a1 = Args.evaluate(0).as_double();
+  double a2 = Args.evaluate(1).as_double();
+  double x = Args.evaluate(2).as_double();
   
-  Log_Double result = gamma_pdf(x, a1, a2);
-  return object_ptr<const Object>(result.clone());
+  return { gamma_pdf(x, a1, a2) };
 }
 
 extern "C" closure builtin_function_sample_gamma(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as_<Double>(0);
-  double a2 = *Args.evaluate_as_<Double>(1);
+  double a1 = Args.evaluate_(0).as_double();
+  double a2 = Args.evaluate_(1).as_double();
   
-  Double result = gamma(a1, a2);
-  return object_ptr<const Object>(result.clone());
+  return { gamma(a1, a2) };
 }
 
 extern "C" closure builtin_function_gamma_quantile(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
-  double p  = *Args.evaluate_as<Double>(2);
+  double a1 = Args.evaluate(0).as_double();
+  double a2 = Args.evaluate(1).as_double();
+  double p  = Args.evaluate(2).as_double();
 
-  Double result = gamma_quantile(p, a1, a2);
-  return object_ptr<const Object>(result.clone());
+  return { gamma_quantile(p, a1, a2) };
 }
 
 extern "C" closure builtin_function_beta_density(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
-  double x  = *Args.evaluate_as<Double>(2);
+  double a1 = Args.evaluate(0).as_double();
+  double a2 = Args.evaluate(1).as_double();
+  double x  = Args.evaluate(2).as_double();
   
-  Log_Double result = beta_pdf(x, a1, a2);
-  return object_ptr<const Object>(result.clone());
+  return { beta_pdf(x, a1, a2) };
 }
 
 extern "C" closure builtin_function_sample_beta(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as_<Double>(0);
-  double a2 = *Args.evaluate_as_<Double>(1);
+  double a1 = Args.evaluate_(0).as_double();
+  double a2 = Args.evaluate_(1).as_double();
   
-  Double result = beta(a1, a2);
-  return object_ptr<const Object>(result.clone());
+  return { beta(a1, a2) };
 }
 
 extern "C" closure builtin_function_beta_quantile(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
-  double p  = *Args.evaluate_as<Double>(2);
+  double a1 = Args.evaluate(0).as_double();
+  double a2 = Args.evaluate(1).as_double();
+  double p  = Args.evaluate(2).as_double();
   
-  Double result = beta_quantile(p, a1, a2);
-  return object_ptr<const Object>(result.clone());
+  return { beta_quantile(p, a1, a2) };
 }
 
 extern "C" closure builtin_function_normal_density(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
-  double x  = *Args.evaluate_as<Double>(2);
+  double a1 = Args.evaluate(0).as_double();
+  double a2 = Args.evaluate(1).as_double();
+  double x  = Args.evaluate(2).as_double();
   
-  Log_Double result = normal_pdf(x, a1, a2);
-  return object_ptr<const Object>(result.clone());
+  return { normal_pdf(x, a1, a2) };
 }
  
 extern "C" closure builtin_function_sample_normal(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as_<Double>(0);
-  double a2 = *Args.evaluate_as_<Double>(1);
+  double a1 = Args.evaluate_(0).as_double();
+  double a2 = Args.evaluate_(1).as_double();
   
-  Double result = gaussian(a1, a2);
-  return object_ptr<const Object>(result.clone());
+  return { gaussian(a1, a2) };
 }
  
 extern "C" closure builtin_function_normal_quantile(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
-  double p  = *Args.evaluate_as<Double>(2);
+  double a1 = Args.evaluate(0).as_double();
+  double a2 = Args.evaluate(1).as_double();
+  double p  = Args.evaluate(2).as_double();
 
-  Double result = normal_quantile(p, a1 ,a2);
-  return object_ptr<const Object>(result.clone());
+  return { normal_quantile(p, a1 ,a2) };
 }
 
 extern "C" closure builtin_function_cauchy_density(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
-  double x  = *Args.evaluate_as<Double>(2);
+  double a1 = Args.evaluate(0).as_double();
+  double a2 = Args.evaluate(1).as_double();
+  double x  = Args.evaluate(2).as_double();
 
-  Log_Double result = cauchy_pdf(x, a1, a2);
-  return object_ptr<const Object>(result.clone());
+  return { cauchy_pdf(x, a1, a2) };
 }
 
 extern "C" closure builtin_function_sample_cauchy(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as_<Double>(0);
-  double a2 = *Args.evaluate_as_<Double>(1);
+  double a1 = Args.evaluate_(0).as_double();
+  double a2 = Args.evaluate_(1).as_double();
 
-  Double result = cauchy(a1, a2);
-  return object_ptr<const Object>(result.clone());
+  return { cauchy(a1, a2) };
 }
 
 // First convert N from tuple to list...
@@ -144,107 +131,98 @@ extern "C" closure builtin_function_dirichlet_density(OperationArgs& Args)
   object_ptr<const Vector<double>> n = Args.evaluate_as<Vector<double>>(0);
   object_ptr<const Vector<double>> x = Args.evaluate_as<Vector<double>>(1);
   
-  object_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(*x,*n) ) );
-  
-  return R;
+  return { ::dirichlet_pdf(*x,*n) };
 }
 
 extern "C" closure builtin_function_laplace_density(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
-  double x  = *Args.evaluate_as<Double>(2);
+  double a1 = Args.evaluate(0).as_double();
+  double a2 = Args.evaluate(1).as_double();
+  double x  = Args.evaluate(2).as_double();
   
-  return object_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x, a1, a2) ) );
+  return { ::laplace_pdf(x, a1, a2) };
 }
 
 extern "C" closure builtin_function_sample_laplace(OperationArgs& Args)
 {
-  double m = *Args.evaluate_as_<Double>(0);
-  double s = *Args.evaluate_as_<Double>(1);
+  double m = Args.evaluate_(0).as_double();
+  double s = Args.evaluate_(1).as_double();
   
-  Double result = laplace(m,s);
-  return object_ptr<const Object> (result.clone());
+  return { laplace(m,s) };
 }
 
 extern "C" closure builtin_function_uniform_density(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
-  double x  = *Args.evaluate_as<Double>(2);
+  double a1 = Args.evaluate(0).as_double();
+  double a2 = Args.evaluate(1).as_double();
+  double x  = Args.evaluate(2).as_double();
   
-  return object_ptr<Log_Double> (new Log_Double( ::uniform_pdf(x,a1,a2) ) );
+  return { ::uniform_pdf(x,a1,a2) };
 }
 
 extern "C" closure builtin_function_sample_uniform(OperationArgs& Args)
 {
-  double a1 = *Args.evaluate_as_<Double>(0);
-  double a2 = *Args.evaluate_as_<Double>(1);
+  double a1 = Args.evaluate_(0).as_double();
+  double a2 = Args.evaluate_(1).as_double();
 
   assert(a1 < a2);
 
-  Double result = a1 + (a2-a1)*uniform();
-  return object_ptr<const Object> (result.clone());
+  return { a1 + (a2-a1)*uniform() };
 }
 
 extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
 {
   int n = *Args.evaluate_as<Int>(0);
-  double p = *Args.evaluate_as<Double>(1);
+  double p = Args.evaluate(1).as_double();
   int k = *Args.evaluate_as<Int>(2);
   
-  return object_ptr<Log_Double> (new Log_Double( ::binomial_pdf(n,p,k) ) );
+  return { ::binomial_pdf(n,p,k) };
 }
 
 extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
 {
   int n = *Args.evaluate_as_<Int>(0);
-  double p = *Args.evaluate_as_<Double>(1);
+  double p = Args.evaluate_(1).as_double();
 
-  Int result = binomial(n,p);
-  return object_ptr<const Object>(result.clone());
+  return { (int)binomial(n,p) };
 }
 
 extern "C" closure builtin_function_sample_bernoulli(OperationArgs& Args)
 {
-  double p = *Args.evaluate_as_<Double>(0);
+  double p = Args.evaluate_(0).as_double();
 
-  Int result = bernoulli(p);
-  return object_ptr<const Object>(result.clone());
+  return { (int)bernoulli(p) };
 }
 
 extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
 {
-  double p_fail = *Args.evaluate_as<Double>(0);
-  double p_success = *Args.evaluate_as<Double>(1);
+  double p_fail = Args.evaluate(0).as_double();
+  double p_success = Args.evaluate(1).as_double();
   double n = *Args.evaluate_as<Int>(2);
   
-  return object_ptr<Log_Double> (new Log_Double( ::geometric_pdf(p_fail, p_success, n) ) );
+  return { ::geometric_pdf(p_fail, p_success, n) };
 }
 
 extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
 {
-  double p = *Args.evaluate_as_<Double>(0);
+  double p = Args.evaluate_(0).as_double();
 
-  Int result = geometric(p);
-  return object_ptr<const Object>(result.clone());
+  return { (int)geometric(p) };
 }
 
 extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
 {
-  double mu = *Args.evaluate_as<Double>(0);
+  double mu = Args.evaluate(0).as_double();
   int n = *Args.evaluate_as<Int>(1);
   
-  Log_Double result = poisson_pdf(mu,n);
-  return object_ptr<Log_Double> (result.clone());
+  return { poisson_pdf(mu,n) };
 }
 
 extern "C" closure builtin_function_sample_poisson(OperationArgs& Args)
 {
-  double mu = *Args.evaluate_as_<Double>(0);
+  double mu = Args.evaluate_(0).as_double();
 
-  Int result = poisson(mu);
-  return object_ptr<const Object>(result.clone());
+  return { (int)poisson(mu) };
 }
 
 
@@ -288,14 +266,14 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
   // ?? assert(not Args.evaluate_changeables());
 
   //------------- 1. Get arguments alpha, N, D -----------------
-  double alpha = *Args.evaluate_as<Double>(0);
+  double alpha = Args.evaluate(0).as_double();
   int N = *Args.evaluate_as<Int>(1);
   int D = *Args.evaluate_as<Int>(2);
 
   //------------- 2. Get argument Z -----------------
   vector<int> z = get_vector_from_list<int,Int>(Args,3);
 
-  return object_ptr<Log_Double> (new Log_Double( ::CRP_pdf(alpha,N,D,z) ) );
+  return { ::CRP_pdf(alpha,N,D,z) };
 }
 
 #include "probability/choose.H"
@@ -306,7 +284,7 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
   // ?? assert(not Args.evaluate_changeables());
 
   //------------- 1. Get arguments alpha, N, D -----------------
-  double alpha = *Args.evaluate_as_<Double>(0);
+  double alpha = Args.evaluate_(0).as_double();
   int N = *Args.evaluate_as_<Int>(1);
   int D = *Args.evaluate_as_<Int>(2);
 
@@ -358,6 +336,5 @@ extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
   //------------- 1. Get argument p -----------------
   vector<double> z = get_vector_from_list_<double,Double>(Args,0);
 
-  Int result = choose_scratch(z);
-  return object_ptr<const Object>(result.clone());
+  return { choose_scratch(z) };
 }
