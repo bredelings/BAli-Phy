@@ -1444,7 +1444,7 @@ Parameters::Parameters(const module_loader& L,
 
   constants.push_back(-1);
 
-  add_parameter("Heat.beta", Double(1.0));
+  add_parameter("Heat.beta", 1.0);
 
   // Add a Main.mu<i> parameter for each scale.
   {
@@ -1576,7 +1576,7 @@ Parameters::Parameters(const module_loader& L,
       double delta_t = T().branch(b).length();
 
       string name = "d" + convertToString(b+1);
-      int index = add_parameter(prefix+"."+name, Double(rate * delta_t));
+      int index = add_parameter(prefix+"."+name, rate * delta_t);
       branch_length_indices[s].push_back(index);
     }
   }
