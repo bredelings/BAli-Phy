@@ -77,7 +77,7 @@ parameter_slice_function::parameter_slice_function(Model& P_,int n_,
 double modifiable_slice_function::operator()(double x)
 {
   count++;
-  P.set_modifiable_value(m, Double(inverse(x)));
+  P.set_modifiable_value(m, inverse(x));
   return log(P.heated_probability());
 }
 
@@ -411,7 +411,7 @@ double constant_sum_modifiable_slice_function::operator()(double t)
   assert(std::abs(sum(x) - total) < 1.0e-9);
 
   for(int i=0;i<N;i++)
-    P.set_modifiable_value(indices[i], Double(x[i]) );
+    P.set_modifiable_value(indices[i], x[i] );
 
   return operator()();
 }

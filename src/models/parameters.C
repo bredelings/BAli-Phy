@@ -1277,7 +1277,7 @@ void Parameters::recalc()
 	double rate = get_parameter_value(branch_mean_index(s)).as_double();;
 	double delta_t = T().branch(b).length();
 
-	context::set_parameter_value(branch_length_indices[s][b], Double(rate*delta_t));
+	context::set_parameter_value(branch_length_indices[s][b], rate*delta_t);
       }
 
       // notify partitions with scale 'p' that their branch mean changed
@@ -1402,7 +1402,7 @@ void Parameters::branch_mean(int i, double x)
 // I think we do it by not going through set_parameter_value( ) as above.
 void Parameters::branch_mean_tricky(int i,double x)
 {
-  context::set_parameter_value(branch_mean_index(i), Double(x) );
+  context::set_parameter_value(branch_mean_index(i), x );
 }
 
 double Parameters::get_branch_subst_rate(int p, int /* b */) const

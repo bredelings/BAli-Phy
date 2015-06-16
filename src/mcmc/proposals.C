@@ -551,7 +551,7 @@ double Proposal2M::operator()(Model& P) const
   double ratio = (*proposal)(x,parameters);
 
   for(int i=0;i<y.size();i++)
-    P.set_modifiable_value(indices[i], x[i].ptr());
+    P.set_modifiable_value(indices[i], x[i]);
 
   return ratio;
 }
@@ -579,7 +579,7 @@ double move_scale_branch(Model& P)
 
   int index = PP.find_parameter("lambdaScaleBranch");
 
-  Int scale_branch = PP.get_parameter_value_as<Int>(index);
+  int scale_branch = PP.get_parameter_value_as<Int>(index);
 
   assert( scale_branch != -1);
 
@@ -603,7 +603,7 @@ double move_scale_branch(Model& P)
     scale_branch = branches[i];
   }
 
-  PP.set_parameter_value(index, object_ref(scale_branch));
+  PP.set_parameter_value(index, scale_branch);
 
   return 1.0;
 }
@@ -634,8 +634,8 @@ double move_subst_type_branch(Model& P)
     int index1 = P.find_parameter("Main.branchCat" + convertToString(which_branch+1));
     int index2 = P.find_parameter("Main.branchCat" + convertToString(new_branch+1));
 
-    P.set_parameter_value(index1, object_ref(Int(0)));
-    P.set_parameter_value(index2, object_ref(Int(1)));
+    P.set_parameter_value(index1, 0);
+    P.set_parameter_value(index2, 1);
     std::cerr<<"Moved subst type 1 from branch "<<which_branch<<" to branch "<<new_branch<<"\n";
   }
 

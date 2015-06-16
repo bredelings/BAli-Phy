@@ -319,7 +319,7 @@ double mu_scale(const Parameters& P)
     // Record probabilities
     for(const auto& v: values)
     {
-      M2->set_parameter_value(parameter,v.ptr());
+      M2->set_parameter_value(parameter, v);
       log_double_t Pr = M2->probability();
       total += Pr;
       Prs.push_back(Pr);

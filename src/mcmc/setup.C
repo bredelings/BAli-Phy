@@ -584,7 +584,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Model& M)
     int index = M.find_parameter("lambdaScaleBranch");
     if (index != -1 and (M.get_parameter_value_as<Int>(index) != -1 or M.contains_key("lambda_search_all")))
     {
-      M.set_parameter_value(index, object_ref(Int(0)));
+      M.set_parameter_value(index, 0);
       Generic_Proposal m(move_scale_branch,{index});
       parameter_moves.add(1.0, MCMC::MH_Move(m,"sample_lambdaScaleBranch"));
     }
