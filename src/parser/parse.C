@@ -527,12 +527,12 @@ ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 
 expression_ref to_int(const string& s)
 {
-  return Int(convertTo<int>(s));
+  return convertTo<int>(s);
 }
 
 expression_ref to_float(const string& s)
 {
-  return Double(convertTo<double>(s));
+  return convertTo<double>(s);
 }
 
 expression_ref to_char(const string& s)

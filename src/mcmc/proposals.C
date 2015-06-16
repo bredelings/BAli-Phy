@@ -27,14 +27,6 @@ using std::valarray;
 using std::vector;
 using std::string;
 
-valarray<double> convert_to_valarray(const vector<Double>& v1)
-{
-  valarray<double> v2(v1.size());
-  for(int i=0;i<v1.size();i++)
-    v2[i] = v1[i];
-  return v2;
-}
-
 valarray<double> convert_to_valarray(const vector< expression_ref >& v1)
 {
   valarray<double> v2(v1.size());
@@ -385,7 +377,7 @@ double Reflect::operator()(std::vector< expression_ref >& x,const std::vector<do
   for(int i=0;i<x.size();i++)
   {
     double X = x[i].as_double();
-    x[i] = Double ( reflect(bounds, X ) );
+    x[i] = reflect(bounds, X );
   }
   return ratio;
 }
@@ -419,7 +411,7 @@ double log_scaled::operator()(std::vector< expression_ref >& x,const std::vector
   x2 = wrap<double>(x2,-500,500);
   x2 = exp(x2);
 
-  x[0] = Double( x2 );
+  x[0] = x2;
 
   // return the scaled proposal ratio
   return r * x2/x1;
@@ -443,7 +435,7 @@ double LOD_scaled::operator()(std::vector< expression_ref >& x,const std::vector
     throw myexception()<<"LOD_scaled: x[0] is zero!";
 
   // LOD-transform x[0], but not x1
-  x[0] = Double( log(x1/(1-x1)) );
+  x[0] = log(x1/(1-x1));
 
   // perform the proposal on the LOD-scale
   double r = (*proposal)(x,p);
@@ -452,7 +444,7 @@ double LOD_scaled::operator()(std::vector< expression_ref >& x,const std::vector
   double x2 = x[0].as_double();
   x2 = exp(x2)/(1+exp(x2));
 
-  x[0] = Double( x2 );
+  x[0] = x2;
 
   // return the scaled proposal ratio
   return r * x2*(1.0-x2)/(x1*(1.0-x1));

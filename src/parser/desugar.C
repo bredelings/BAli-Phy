@@ -127,10 +127,10 @@ expression_ref infixpat_parse_neg(const Module& m, const symbol_info& op1, deque
   {
     if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
-    Double D = E1.sub()[0].as_<Double>();
-    D = -D;
+    double d = E1.sub()[0].as_double();
+    d = -d;
 
-    return infixpat_parse(m, op1, D, T);
+    return infixpat_parse(m, op1, d, T);
   }
   // We are starting with a Neg integer
   else if (E1.head()->compare(AST_node("neg_h_integer")))

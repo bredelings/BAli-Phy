@@ -135,7 +135,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& St
   int p = indices[uniform(0,indices.size()-1)];
   std::string pname = PP->parameter_name(p);
 
-  double v1 = PP->get_parameter_value_as<Double>(p);
+  double v1 = PP->get_parameter_value(p).as_double();
   // is this right for epsilon?  Shouldn't we use shift_epsilon?
   double v2 = v1 + cauchy(0,sigma);
 

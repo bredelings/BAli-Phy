@@ -53,7 +53,7 @@ double parameter_slice_function::operator()()
 
 double parameter_slice_function::current_value() const
 {
-  return P.get_parameter_value_as<Double>(n);
+  return P.get_parameter_value(n).as_double();
 }
 
 parameter_slice_function::parameter_slice_function(Model& P_,int n_)
@@ -247,7 +247,7 @@ double sum_of_means(const Parameters& P)
 {
   double sum = 0;
   for(int i=0;i<P.n_branch_means();i++) 
-    sum += P.get_parameter_value_as<Double>(P.branch_mean_index(i));
+    sum += P.get_parameter_value(P.branch_mean_index(i)).as_double();
   return sum;
 }
 
@@ -263,7 +263,7 @@ double set_sum_of_means_tricky(Parameters& P, double t)
   double sum = sum_of_means(P);
   double scale = t/sum;
   for(int i=0;i<P.n_branch_means();i++) 
-    P.branch_mean_tricky(i,P.get_parameter_value_as<Double>(P.branch_mean_index(i))*scale);
+    P.branch_mean_tricky(i,P.get_parameter_value(P.branch_mean_index(i)).as_double() * scale);
 
   return scale;
 }
@@ -318,13 +318,13 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
     if (b2.has_lower_bound and b2.lower_bound > 0)
     {
       b2.has_lower_bound = true;
-      b2.lower_bound = log(b2.lower_bound) - log(P.get_parameter_value_as<Double>(P.branch_mean_index(i)));
+      b2.lower_bound = log(b2.lower_bound) - log(P.get_parameter_value(P.branch_mean_index(i)).as_double());
     }
     else
       b2.has_lower_bound = false;
 
     if (b2.has_upper_bound)
-      b2.upper_bound = log(b2.upper_bound) - log(P.get_parameter_value_as<Double>(P.branch_mean_index(i)));
+      b2.upper_bound = log(b2.upper_bound) - log(P.get_parameter_value(P.branch_mean_index(i)).as_double());
 
     b = b and b2;
   }
@@ -373,7 +373,7 @@ double constant_sum_slice_function::operator()()
 
 double constant_sum_slice_function::current_value() const
 {
-  return P.get_parameter_value_as<Double>(indices[n]);
+  return P.get_parameter_value(indices[n]).as_double();
 }
 
 

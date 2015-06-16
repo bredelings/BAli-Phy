@@ -379,10 +379,10 @@ namespace MCMC {
       if (not P->has_bounds(i)) continue;
 	
       Bounds<double> range = P->get_bounds(i);
-      if (not range.in_range(P->get_parameter_value_as<Double>(i)))
-	throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value_as<Double>(i)<<" is NOT in range "<<range;
-      if (not range.in_range(P2->get_parameter_value_as<Double>(i)))
-	throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value_as<Double>(i)<<" is NOT in range "<<range;
+      if (not range.in_range(P->get_parameter_value(i).as_double()))
+	throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value(i).as_double()<<" is NOT in range "<<range;
+      if (not range.in_range(P2->get_parameter_value(i).as_double()))
+	throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value(i).as_double()<<" is NOT in range "<<range;
     }
 #endif
 
@@ -404,8 +404,8 @@ namespace MCMC {
 	  for(int i=0;i<n_indices;i++) 
 	  {
 	    int j = p2->get_indices()[i];
-	    double v1 = P->get_parameter_value_as<Double>(j);
-	    double v2 = P2->get_parameter_value_as<Double>(j);
+	    double v1 = P->get_parameter_value(j).as_double();
+	    double v2 = P2->get_parameter_value(j).as_double();
 	    total += std::abs(log(v1/v2));
 	  }
 	  result.totals[1] = total;
@@ -520,7 +520,7 @@ namespace MCMC {
 
   void Parameter_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
   {
-    double v1 = P->get_parameter_value_as<Double>(index);
+    double v1 = P->get_parameter_value(index).as_double();
 
     parameter_slice_function logp(*P,index,transform,inverse);
 
@@ -564,7 +564,7 @@ namespace MCMC {
     clog<<" [modifiable slice] move = "<<m_index<<endl;
 #endif
 
-    double v1 = P->get_modifiable_value_as<Double>(m_index);
+    double v1 = P->get_modifiable_value(m_index).as_double();
 
     modifiable_slice_function logp(*P, m_index, bounds, transform, inverse);
 
@@ -652,7 +652,7 @@ namespace MCMC {
 #ifndef NDEBUG
     clog<<" [dirichlet slice] move"<<endl;
 #endif
-    double v1 = P->get_parameter_value_as<Double>(indices[n]);
+    double v1 = P->get_parameter_value(indices[n]).as_double();
     constant_sum_slice_function slice_levels_function(*P,indices,n);
 
     double v2 = sample(*P,slice_levels_function,v1);
@@ -677,7 +677,7 @@ namespace MCMC {
 #ifndef NDEBUG
     clog<<" [dirichlet modifiable slice] move"<<endl;
 #endif
-    double v1 = P->get_modifiable_value_as<Double>(indices[n]);
+    double v1 = P->get_modifiable_value(indices[n]).as_double();
     constant_sum_modifiable_slice_function slice_levels_function(*P,indices,n);
 
     double v2 = sample(*P,slice_levels_function,v1);
