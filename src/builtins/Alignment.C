@@ -31,7 +31,7 @@ extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(O
       if (counts(i,states::E))
        P *= Q(i,states::E);
 
-  return Log_Double(P);  
+  return {P};
 }
 
 extern "C" closure builtin_function_pairwise_alignment_length1(OperationArgs& Args)
@@ -62,22 +62,22 @@ using std::vector;
 
 extern "C" closure builtin_function_rs07_lengthp(OperationArgs& Args)
 {
-  double e = *Args.evaluate_as<Double>(0);
+  double e = Args.evaluate(0).as_double();
   int l = *Args.evaluate_as<Int>(1);
 
   if (l < 0)
-    return Double(0);
+    return {0.0};
   else if (l==0)
-    return Double(1.0);
+    return {1.0};
   else
-    return Double(1.0-e);
+    return {1.0-e};
 }
 
 extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
 {
-  double e = *Args.evaluate_as<Double>(0);
-  double D = *Args.evaluate_as<Double>(1);
-  double heat = *Args.evaluate_as<Double>(2);
+  double e = Args.evaluate(0).as_double();
+  double D = Args.evaluate(1).as_double();
+  double heat = Args.evaluate(2).as_double();
   constructor in_training_c = *Args.evaluate_as<constructor>(3);
   bool in_training = true;
   if (in_training_c.f_name == "Prelude.False")
