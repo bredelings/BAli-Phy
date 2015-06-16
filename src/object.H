@@ -94,45 +94,6 @@ public:
 template <typename T>
 using object_ptr = boost::intrusive_ptr<T>;
 
-struct object_ref: public object_ptr<const Object>
-{
-  bool is_int() const;
-  int as_int() const;
-
-  bool is_double() const;
-  double as_double() const;
-
-  bool is_char() const;
-  char as_char() const;
-
-  bool is_log_double() const;
-  log_double_t as_log_double() const;
-
-  object_ref()
-  { }
-
-  object_ref(Object *o)
-  : object_ptr<const Object>(o)
-  { }
-
-  object_ref(const object_ptr<const Object>& o)
-    :object_ptr<const Object>(o)
-  { }
-
-  object_ref(object_ptr<const Object>&& o)
-    :object_ptr<const Object>(std::move(o))
-  { }
-
-  template <typename T>
-  object_ref(const object_ptr<T>& o)
-    :object_ptr<const Object>(boost::static_pointer_cast<const Object>(o))
-  { }
-
-  object_ref(const Object& o)
-    :object_ptr<const Object>(o.clone())
-  { }
-};
-
 template<typename T>
 class Box: public Object, public T
 {
@@ -300,26 +261,6 @@ inline std::string POD_math<char>::print() const
   return std::string("'")+t+"'";
 }
 
-template<> 
-inline std::string Box<std::vector<object_ref>>::print() const
-{
-  std::string s = "{";
-  for(int i=0;i<size()-1;i++) {
-    s += (*this)[i]->print();
-    s += ",";
-  }
-  s += this->back()->print() + "}";
-  return s;
-}
-
-template<> 
-inline std::string Box<std::pair<object_ref,object_ref>>::print() const
-{
-  return std::string("(") + first->print() + "," + second->print() + ")";
-}
-
-
-
 template <typename T>
 bool unshare(object_ptr<T>& ptr)
 {
@@ -402,46 +343,6 @@ object_ptr<T> convert(const object_ptr<const Object>& o)
 #else
   return convert_and_check<T>(o);
 #endif
-}
-
-inline bool object_ref::is_int() const
-{
-  return (bool)boost::dynamic_pointer_cast<const Int>(*this);
-}
-
-inline int object_ref::as_int() const
-{
-  return *convert<Int>(get());
-}
-
-inline bool object_ref::is_double() const
-{
-  return (bool)boost::dynamic_pointer_cast<const Double>(*this);
-}
-
-inline double object_ref::as_double() const
-{
-  return *convert<Double>(get());
-}
-
-inline bool object_ref::is_char() const
-{
-  return (bool)boost::dynamic_pointer_cast<const Char>(*this);
-}
-
-inline char object_ref::as_char() const
-{
-  return *convert<Char>(get());
-}
-
-inline bool object_ref::is_log_double() const
-{
-  return (bool)boost::dynamic_pointer_cast<const Log_Double>(*this);
-}
-
-inline log_double_t object_ref::as_log_double() const
-{
-  return *convert<Log_Double>(get());
 }
 
 #endif

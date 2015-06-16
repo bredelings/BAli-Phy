@@ -338,20 +338,22 @@ tribool expression::compare(const Object& o) const
   return operator==(*E);
 }
 
-expression::expression(const object_ref& H)
-  :head(H)
+expression::expression(const expression_ref& H)
+  :head(H.ptr())
 { 
-  assert(not dynamic_pointer_cast<const expression>(H));
+  assert(H.is_atomic());
 }
 
-expression::expression(const object_ref& H, const std::initializer_list< expression_ref > S)
+expression::expression(const expression_ref& H, const std::initializer_list< expression_ref > S)
   :expression(H,std::vector<expression_ref>(S))
-{ }
+{
+  assert(H.is_atomic());
+}
 
-expression::expression(const object_ref& H, const std::vector< expression_ref >& S)
-  :head(H),sub(S)
+expression::expression(const expression_ref& H, const std::vector< expression_ref >& S)
+  :head(H.ptr()),sub(S)
 { 
-  assert(not dynamic_pointer_cast<const expression>(H));
+  assert(H.is_atomic());
 }
 
 tribool index_var::compare(const Object& o) const 

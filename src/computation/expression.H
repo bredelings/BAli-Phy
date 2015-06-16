@@ -77,11 +77,12 @@ struct expression: public Object
   bool is_exactly(const Object& O) const;
 
   expression() {}
-  expression(const object_ref&);
 
-  expression(const object_ref&, const std::initializer_list< expression_ref > S);
+  expression(const expression_ref&);
 
-  expression(const object_ref&, const std::vector< expression_ref >& S);
+  expression(const expression_ref&, const std::initializer_list< expression_ref > S);
+
+  expression(const expression_ref&, const std::vector< expression_ref >& S);
 
   virtual ~expression() {}
 };
@@ -473,16 +474,14 @@ public:
 
   expression_ref(const object_ptr<expression>& e):expression_ref(e.get()) { }
 
-  expression_ref(const object_ref& o, const std::initializer_list<expression_ref> v):expression_ref(new expression(o,v)) { }
+  expression_ref(const expression_ref& e, const std::initializer_list<expression_ref> v):expression_ref(new expression(e,v)) { }
 
-  expression_ref(const object_ref& o, const std::vector<expression_ref>& v):expression_ref(new expression(o,v)) { }
+  expression_ref(const expression_ref& e, const std::vector<expression_ref>& v):expression_ref(new expression(e,v)) { }
 
   // Object arguments
   expression_ref(Object* v):O(v),type(2) { }
 
   expression_ref(const Object* v):O(v),type(2) { }
-
-  expression_ref(const object_ref& o):expression_ref(o.get()) { }
 
   expression_ref(const object_ptr<Object>& v):expression_ref(v.get()) { }
 
@@ -758,5 +757,23 @@ expression_ref parse_object(const std::string& s);
 typedef Vector<expression_ref> EVector;
 typedef std::pair<expression_ref,expression_ref> Epair;
 typedef Pair<expression_ref,expression_ref> EPair;
+
+template<> 
+inline std::string Box<std::vector<expression_ref>>::print() const
+{
+  std::string s = "{";
+  for(int i=0;i<size()-1;i++) {
+    s += (*this)[i].print();
+    s += ",";
+  }
+  s += this->back().print() + "}";
+  return s;
+}
+
+template<> 
+inline std::string Box<std::pair<expression_ref,expression_ref>>::print() const
+{
+  return std::string("(") + first.print() + "," + second.print() + ")";
+}
 
 #endif
