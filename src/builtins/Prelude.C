@@ -116,7 +116,7 @@ extern "C" closure builtin_function_doubleToInt(OperationArgs& Args)
 
 extern "C" closure builtin_function_vector_from_list(OperationArgs& Args)
 {
-  object_ptr<OVector> v (new OVector);
+  object_ptr<EVector> v (new EVector);
 
   const closure* top = &Args.evaluate_slot_to_closure(0);
   while(top->exp.size())
@@ -131,7 +131,7 @@ extern "C" closure builtin_function_vector_from_list(OperationArgs& Args)
     int next_reg = top->lookup_in_env( next_index );
 
     // Add the element to the list.
-    v->push_back( Args.evaluate_reg_to_object(element_reg).ptr() );
+    v->push_back( Args.evaluate_reg_to_object(element_reg) );
     // Move to the next element or end
     top = &Args.evaluate_reg_to_closure(next_reg);
   }

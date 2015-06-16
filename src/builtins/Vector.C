@@ -9,21 +9,17 @@ using std::vector;
 template<typename T>
 closure VectorSize(OperationArgs& Args)
 {
-  object_ptr<const Box<std::vector<T> > > v = Args.evaluate_as<Box<std::vector<T> > >(0);
-  
-  const std::vector<T>& v2 = *v;
-  object_ptr<const Int> r ( new Int(v2.size() ) );
-  
-  return r;
+  auto v = Args.evaluate(0);
+  return {(int)v.as_<Box<std::vector<T> > >().size()};
 }
 
 template<typename T, typename U>
 closure GetVectorElement(OperationArgs& Args)
 {
-  object_ptr<const Vector<T>> v = Args.evaluate_as<Vector<T>>(0);
-  int i = *Args.evaluate_as<Int>(1);
+  auto v = Args.evaluate(0);
+  int i = Args.evaluate(1).as_int();
   
-  return U((*v)[i]);
+  return {U(v.as_<Vector<T>>()[i])};
 }
 
 extern "C" closure builtin_function_sizeOfVectorUnsigned(OperationArgs& Args)
@@ -174,7 +170,7 @@ closure Vector_From_List(OperationArgs& Args)
     int next_reg = top->lookup_in_env( next_index );
 
     // Add the element to the list.
-    v->push_back( *convert<const U>(Args.evaluate_reg_to_object(element_reg).ptr()) );
+    v->push_back( Args.evaluate_reg_to_object(element_reg).as_<U>() );
     // Move to the next element or end
     top = &Args.evaluate_reg_to_closure(next_reg);
   }
@@ -192,26 +188,26 @@ extern "C" closure builtin_function_new_vector(OperationArgs& Args)
 {
   int length = Args.evaluate(0).as_int();
 
-  object_ptr<OVector> v = new OVector(length);
+  object_ptr<EVector> v = new EVector(length);
 
   return v;
 }
 
 extern "C" closure builtin_function_vector_size(OperationArgs& Args)
 {
-  const Vector<object_ref>& v = Args.evaluate(0).as_<Vector<object_ref>>();
+  const Vector<expression_ref>& v = Args.evaluate(0).as_<Vector<expression_ref>>();
 
   return Int(v.size());
 }
 
 extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
 {
-  const Vector<object_ref>& v = Args.evaluate(0).as_<Vector<object_ref>>();
+  const EVector& v = Args.evaluate(0).as_<EVector>();
   int i = Args.evaluate(1).as_int();
-  auto x = Args.evaluate(2).ptr();
+  auto x = Args.evaluate(2);
 
-  const Vector<object_ref>* vv = &v;
-  Vector<object_ref>* vvv = const_cast<Vector<object_ref>*>(vv);
+  const EVector* vv = &v;
+  EVector* vvv = const_cast<EVector*>(vv);
   (*vvv)[i] = x;
 
   return constructor("()",0);
@@ -219,8 +215,8 @@ extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
 
 extern "C" closure builtin_function_get_vector_index(OperationArgs& Args)
 {
-  int i = *Args.evaluate_as<Int>(1);
-  const OVector& v = *Args.evaluate_as<OVector>(0);
+  int i = Args.evaluate(1).as_int();
+  const EVector& v = Args.evaluate(0).as_<EVector>();
 
   return v[i];
 }

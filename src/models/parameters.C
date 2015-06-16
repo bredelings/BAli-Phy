@@ -359,7 +359,7 @@ double data_partition::sequence_length_pr(int l) const
 
   int arg_param_index = P->IModel_methods[m].length_arg_param_index;
 
-  const_cast<Parameters*>(P)->set_parameter_value(arg_param_index, new Int(l) );
+  const_cast<Parameters*>(P)->set_parameter_value(arg_param_index, l );
 
   return P->evaluate( P->IModel_methods[m].length_p ).as_double();
 }
@@ -522,8 +522,7 @@ void data_partition::recompute_pairwise_alignment(int b, bool require_match_A)
 
 void data_partition::invalidate_pairwise_alignment_for_branch(int b) const
 {
-  object_ptr<const Object> o(new Int(0));
-  const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[b], o);
+  const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[b], 0);
 }
 
 void data_partition::note_alignment_changed_on_branch(int b)
@@ -637,7 +636,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   {
     string prefix = "P"+convertToString(i+1)+".";
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
-      pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b),Int(0));
+      pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b), 0);
 
     for(int b=0;b<T().n_branches();b++)
     {
@@ -769,14 +768,14 @@ const SequenceTree& Parameters::T() const
   return *T_;
 }
 
-OVector edges_connecting_to_node(const Tree& T, int n)
+EVector edges_connecting_to_node(const Tree& T, int n)
 {
   vector<const_branchview> branch_list;
   append(T.node(n).branches_out(),branch_list);
   
-  OVector branch_list_;
+  EVector branch_list_;
   for(auto b: branch_list)
-    branch_list_.push_back(Int(int(b)));
+    branch_list_.push_back(int(b));
 
   return branch_list_;
 }
@@ -787,7 +786,7 @@ void Parameters::read_h_tree()
     context::set_parameter_value(parameter_for_tree_node[n], edges_connecting_to_node(T(),n));
 
   for(int b=0; b < 2*T().n_branches(); b++)
-    context::set_parameter_value(parameter_for_tree_branch[b], OPair(Opair{Int(T().directed_branch(b).source()), Int(T().directed_branch(b).target())}) );
+    context::set_parameter_value(parameter_for_tree_branch[b], EPair((int)T().directed_branch(b).source(), (int)T().directed_branch(b).target()) );
 }
 void Parameters::set_tree(const SequenceTree& T2)
 {
@@ -818,8 +817,8 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   
   T_.modify()->reconnect_branch(s1,t1,t2);
 
-  context::set_parameter_value(parameter_for_tree_branch[b1], OPair(Opair{Int(T().directed_branch(b1).source()), Int(T().directed_branch(b1).target())}) );
-  context::set_parameter_value(parameter_for_tree_branch[b2], OPair(Opair{Int(T().directed_branch(b2).source()), Int(T().directed_branch(b2).target())}) );
+  context::set_parameter_value(parameter_for_tree_branch[b1], EPair((int)T().directed_branch(b1).source(), (int)T().directed_branch(b1).target()) );
+  context::set_parameter_value(parameter_for_tree_branch[b2], EPair((int)T().directed_branch(b2).source(), (int)T().directed_branch(b2).target()) );
   context::set_parameter_value(parameter_for_tree_node[t1], edges_connecting_to_node(T(),t1));
   context::set_parameter_value(parameter_for_tree_node[t2], edges_connecting_to_node(T(),t2));
 
@@ -1050,15 +1049,15 @@ void Parameters::check_h_tree() const
   for(int b=0; b < 2*T().n_branches(); b++)
   {
     auto p = get_parameter_value(parameter_for_tree_branch[b]);
-    auto s = p.as_<OPair>().first;
-    auto t = p.as_<OPair>().second;
+    auto s = p.as_<EPair>().first;
+    auto t = p.as_<EPair>().second;
     assert(T().directed_branch(b).source() == s.as_int());
     assert(T().directed_branch(b).target() == t.as_int());
   }
 
   for(int n=0; n < n*T().n_nodes(); n++)
   {
-    object_ptr<const OVector> V = get_parameter_value(parameter_for_tree_node[n]).assert_is_a<OVector>();
+    object_ptr<const EVector> V = get_parameter_value(parameter_for_tree_node[n]).assert_is_a<EVector>();
     vector<int> VV;
     for(const auto& elem: *V)
       VV.push_back(elem.as_int());
@@ -1082,8 +1081,8 @@ void Parameters::show_h_tree() const
   for(int b=0; b < 2*T().n_branches(); b++)
   {
     auto p = get_parameter_value(parameter_for_tree_branch[b]);
-    auto s = p.as_<OPair>().first;
-    auto t = p.as_<OPair>().second;
+    auto s = p.as_<EPair>().first;
+    auto t = p.as_<EPair>().second;
     std::cerr<<"branch "<<b<<": "<<p.print()<<"     "<<T().directed_branch(b).length()<<"\n";
   }
 }
@@ -1586,7 +1585,7 @@ Parameters::Parameters(const module_loader& L,
   for(int b=0;b<T().n_branches();b++)
   {
     string name = "*Main.branchCat" + convertToString(b+1);
-    add_parameter(name, Int(0));
+    add_parameter(name, 0);
     branch_categories.push_back(parameter(name));
   }
   expression_ref branch_cat_list = get_expression( add_compute_expression( (get_list(branch_categories) ) ) );
@@ -1642,7 +1641,7 @@ Parameters::Parameters(const module_loader& L,
     imodel_methods& I = IModel_methods[i];
     string prefix = "*I" + convertToString(i+1);
 
-    I.length_arg_param_index = add_parameter(prefix+".lengthpArg", Int(1));
+    I.length_arg_param_index = add_parameter(prefix+".lengthpArg", 1);
     expression_ref lengthp = (identifier("snd"),(identifier("!"),identifier("IModels.models"),i));
     expression_ref lengthp_arg = parameter(prefix+".lengthpArg");
     I.length_p = add_compute_expression( (lengthp, lengthp_arg) );

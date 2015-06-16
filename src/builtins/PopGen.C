@@ -72,13 +72,13 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
 
   assert(matrix[0].size() == 2*n_loci);
 
-  OVector result;
+  EVector result;
   for(int l=0;l<n_loci;l++)
   {
-    OVector locus;
+    EVector locus;
     for(int i=0;i<n_individuals;i++) {
-      locus.push_back(Int(matrix[i][2*l]));
-      locus.push_back(Int(matrix[i][2*l+1]));
+      locus.push_back(matrix[i][2*l]);
+      locus.push_back(matrix[i][2*l+1]);
     }
     result.push_back(locus);
   }
@@ -88,9 +88,9 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
 
 extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
 {
-  object_ptr<const OVector> alleles = Args.evaluate_as<OVector>(0);
+  object_ptr<const EVector> alleles = Args.evaluate_as<EVector>(0);
 
-  OVector alleles2;
+  EVector alleles2;
 
   for(int i=0;i<alleles->size();i+=2)
     alleles2.push_back((*alleles)[i]);
@@ -100,7 +100,7 @@ extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
 
 extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Args)
 {
-  object_ptr<const OVector> alleles = Args.evaluate_as<OVector>(0);
+  object_ptr<const EVector> alleles = Args.evaluate_as<EVector>(0);
 
   int n_individuals = alleles->size();
   assert(n_individuals > 0);
@@ -118,10 +118,10 @@ extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Arg
   for(const auto& allele_and_count: allele_counts)
     spectrum[allele_and_count.second-1]++;
   
-  // 3. Convert vector<int> to OVector
-  OVector afs;
+  // 3. Convert vector<int> to EVector
+  EVector afs;
   for(int count: spectrum)
-    afs.push_back(Int(count));
+    afs.push_back(count);
 
   return afs;
 }
@@ -172,7 +172,7 @@ extern "C" closure builtin_function_ewens_sampling_group_probability(OperationAr
 extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Args)
 {
   const double theta = Args.evaluate(0).as_double();
-  object_ptr<const OVector> afs_ = Args.evaluate_as<OVector>(1);
+  object_ptr<const EVector> afs_ = Args.evaluate_as<EVector>(1);
 
   vector<int> afs;
   for(const auto& count: *afs_)
@@ -256,10 +256,10 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
   assert(theta > 0);
 
   // 1. These are indicators of coalescence
-  const vector<object_ref>& I = *Args.evaluate_as<OVector>(1);
+  const vector<expression_ref>& I = *Args.evaluate_as<EVector>(1);
 
   // 2. These are the alleles
-  const vector<object_ref>& alleles = *Args.evaluate_as<OVector>(2);
+  const vector<expression_ref>& alleles = *Args.evaluate_as<EVector>(2);
 
   // How many times has each allele been seen?
   std::unordered_map<int,int> counts;
@@ -334,8 +334,8 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
   assert(s >= 0 and s <= 1);
 
   // These are indicators of coalescence
-  object_ptr<const OVector> I_ = Args.evaluate_as<OVector>(2);
-  const vector<object_ref>& I = *I_;
+  object_ptr<const EVector> I_ = Args.evaluate_as<EVector>(2);
+  const vector<expression_ref>& I = *I_;
 
   // Determine number of coalescences;
   int n = 0;

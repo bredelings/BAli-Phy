@@ -12,9 +12,9 @@ extern "C" closure builtin_function_alphabet_letters(OperationArgs& Args)
 {
   const alphabet& a = *Args.evaluate_as<alphabet>(0);
 
-  object_ptr<OVector> v(new OVector);
+  object_ptr<EVector> v(new EVector);
   for(int i=0;i<a.n_letters();i++)
-    v->push_back(new String(a.letter(i)));
+    v->push_back(String(a.letter(i)));
   
   return v;
 }

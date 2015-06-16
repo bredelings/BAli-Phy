@@ -273,7 +273,7 @@ void set_foreground_branches(Parameters& P)
 
       int foreground_level = convertTo<int>( boost::any_cast<string>( value) );
 
-      P.set_parameter_value( P.find_parameter("*Main.branchCat"+convertToString(b+1)), object_ref(Int(foreground_level)));
+      P.set_parameter_value( P.find_parameter("*Main.branchCat"+convertToString(b+1)), foreground_level);
       std::cerr<<"Setting branch '"<<b<<"' to foreground level "<<foreground_level<<"\n";;
     }
   }

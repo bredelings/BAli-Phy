@@ -51,7 +51,7 @@ closure get_trimmed(closure&& C)
 
 expression_ref deindexify(const closure& C)
 {
-  vector<object_ref> variables;
+  vector<expression_ref> variables;
   for(int R: C.Env)
     variables.push_back(reg_var(R));
   

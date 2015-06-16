@@ -295,7 +295,7 @@ expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref
 
 expression_ref indexify(const expression_ref&);
 
-expression_ref deindexify(const expression_ref&, const std::vector<object_ref>&);
+expression_ref deindexify(const expression_ref&, const std::vector<expression_ref>&);
 expression_ref deindexify(const expression_ref&);
 
 expression_ref trim_normalize(const expression_ref&);
@@ -754,5 +754,9 @@ expression_ref operator+(const expression_ref& E1, const expression_ref& E2);
 expression_ref operator*(const expression_ref& E1, const expression_ref& E2);
 
 expression_ref parse_object(const std::string& s);
+
+typedef Vector<expression_ref> EVector;
+typedef std::pair<expression_ref,expression_ref> Epair;
+typedef Pair<expression_ref,expression_ref> EPair;
 
 #endif

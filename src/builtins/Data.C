@@ -14,11 +14,11 @@ extern "C" closure builtin_function_read_file(OperationArgs& Args)
 
   checked_ifstream text_file(filename,"text file");
 
-  OVector v;
+  EVector v;
 
   string line;
   while(portable_getline(text_file, line))
-    v.push_back(new String(line));
+    v.push_back(String(line));
 
   return v;
 }

@@ -298,7 +298,7 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
   int n_seen=0;
 
   // The series of sampled categories
-  object_ptr<OVector> S (new OVector);
+  object_ptr<EVector> S (new EVector);
 
   for(int i=0;i<N;i++)
   {

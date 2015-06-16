@@ -695,7 +695,7 @@ dummy get_named_dummy(int n)
 }
 
 /// Convert to using de Bruijn indices.
-expression_ref deindexify(const expression_ref& E, const vector<object_ref>& variables)
+expression_ref deindexify(const expression_ref& E, const vector<expression_ref>& variables)
 {
   if (not E.size())
   {
@@ -716,7 +716,7 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
   // Lambda expression - /\x.e
   if (is_a<lambda2>(E))
   {
-    vector<object_ref> variables2 = variables;
+    vector<expression_ref> variables2 = variables;
     dummy d = get_named_dummy(variables.size());
     variables2.push_back(d);
     return lambda_quantify(d,deindexify(E.sub()[0],variables2));
@@ -727,7 +727,7 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
   expression_ref T;
   if (parse_indexed_let_expression(E, bodies, T))
   {
-    vector<object_ref> variables2 = variables;
+    vector<expression_ref> variables2 = variables;
     vector<expression_ref> vars;
     for(int i=0;i<bodies.size();i++)
     {
@@ -763,7 +763,7 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
 	n_args = as_<constructor>(P).n_args();
 
       // Add n_arg variables to the stack and to the pattern
-      vector<object_ref> variables2 = variables;
+      vector<expression_ref> variables2 = variables;
       for(int j=0;j<n_args;j++)
       {
 	dummy d = get_named_dummy(variables2.size());
@@ -793,7 +793,7 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
 
 expression_ref deindexify(const expression_ref& E)
 {
-  return deindexify(E,vector<object_ref>{});
+  return deindexify(E,vector<expression_ref>{});
 }
 
 vector<int> pop_vars(int n, vector<int> vars)
@@ -1819,10 +1819,10 @@ expression_ref make_case_expression(const expression_ref& T, const vector<expres
   return E;
 }
 
-int find_object(const vector<object_ref>& v, const object_ref& O)
+int find_object(const vector<expression_ref>& v, const expression_ref& E)
 {
   for(int i=0;i<v.size();i++)
-    if (O->compare(*v[i]))
+    if (E.ptr()->compare(*v[i].ptr()))
       return i;
   return -1;
 }
@@ -1855,7 +1855,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
     return b[0];
 
   // 1. Categorize each rule according to the type of its top-level pattern
-  vector<object_ref> constants;
+  vector<expression_ref> constants;
   vector< vector<int> > rules;
   vector<int> irrefutable_rules;
   for(int j=0;j<M;j++)
@@ -1866,7 +1866,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
       continue;
     }
 
-    object_ref C = p[j][0].head();
+    expression_ref C = p[j][0].head();
     int which = find_object(constants, C);
 
     if (which == -1)
@@ -1957,11 +1957,11 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
   {
     // Find the arity of the constructor
     int arity = 0;
-    if (object_ptr<const constructor> C = dynamic_pointer_cast<const constructor>(constants[c]))
-      arity = C->n_args();
+    if (constants[c].is_a<constructor>())
+      arity = constants[c].as_<constructor>().n_args();
 
     // Construct the simple pattern for constant C
-    object_ref H = constants[c];
+    expression_ref H = constants[c];
 
     vector<expression_ref> S(arity);
     for(int j=0;j<arity;j++)
@@ -1969,7 +1969,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 
     int r0 = rules[c][0];
 
-    simple_patterns.push_back(new expression{H,S});
+    simple_patterns.push_back(expression_ref{H.ptr(),S});
     simple_bodies.push_back({});
     
     // Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
