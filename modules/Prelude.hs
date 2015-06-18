@@ -105,6 +105,8 @@ builtin c_fst 1 "c_fst" "Pair";
 builtin c_snd 1 "c_snd" "Pair";
 builtin c_pair' 2 "c_pair" "Pair";
 builtin builtin_show 1 "show" "Prelude";
+builtin builtin_read_int 1 "read_int" "Prelude";
+builtin builtin_read_double 1 "read_double" "Prelude";
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));
@@ -318,6 +320,14 @@ show [] = "[]";
 show (x:y) = "["++show x++show' y++"]" where {show' [] = "";
                                               show' (x:y) = ","++show x++show' y};
 show x     = listFromString $ builtin_show x;
+
+read_int [] = error "Can't convert empty string to int.";
+read_int (h:t) = builtin_read_int (listToString (h:t));
+read_int s = builtin_read_int s;
+
+read_double [] = error "Can't convert empty string to double.";
+read_double (h:t) = builtin_read_double (listToString (h:t));
+read_double s = builtin_read_double s;
 
 sequence [] = return [];
 sequence (a:as) = do { x <- a;

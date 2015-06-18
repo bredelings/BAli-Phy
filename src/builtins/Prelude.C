@@ -1,6 +1,7 @@
 #include "computation/computation.H"
 
 using boost::dynamic_pointer_cast;
+using std::string;
 
 extern "C" closure builtin_function_exp(OperationArgs& Args)
 {
@@ -435,3 +436,22 @@ extern "C" closure builtin_function_reapply(OperationArgs& Args)
 
   return {index_var(0),{apply_reg}};
 }
+
+extern "C" closure builtin_function_read_int(OperationArgs& Args)
+{
+  string s = Args.evaluate(0).as_<String>();
+  int i;
+  if (can_be_converted_to(s,i))
+    return {i};
+  throw myexception()<<"Cannot convert String '"<<s<<"' to int!";
+}
+
+extern "C" closure builtin_function_read_double(OperationArgs& Args)
+{
+  string s = Args.evaluate(0).as_<String>();
+  double d;
+  if (can_be_converted_to(s,d))
+    return {d};
+  throw myexception()<<"Cannot convert String '"<<s<<"' to double!";
+}
+
