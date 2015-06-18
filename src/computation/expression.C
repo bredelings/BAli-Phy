@@ -135,7 +135,7 @@ string print_list(const expression_ref& E)
   if (is_exactly(E2,"[]"))
     return "["+join(V,", ")+"]";
   else {
-    V.push_back(E2.ptr()->print());
+    V.push_back(E2.print());
     return join(V,":");
   }
 
