@@ -202,7 +202,7 @@ double discrete_uniform(vector< expression_ref >& x, const vector<double>& v)
   
   int i2 = l+(u-l+1)*uniform();
 
-  x[0] = Int(i2);
+  x[0] = i2;
 
   return 1;
 }

@@ -114,7 +114,7 @@ double integer_modifiable_slice_function::operator()(double x)
   count++;
   current_x = x;
   int x_integer = (int)floor(current_x);
-  P.set_modifiable_value(m, Int(x_integer));
+  P.set_modifiable_value(m, x_integer);
 
   return log(P.heated_probability());
 }

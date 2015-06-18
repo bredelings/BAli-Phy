@@ -192,14 +192,14 @@ expression_ref GetComputationFunction::operator()(const Model& M, long)
   {
     auto& c = result.as_<constructor>();
     if (c.f_name == "Prelude.True")
-      return Int(1);
+      return 1;
     else if (c.f_name == "Prelude.False")
-      return Int(0);
+      return 0;
     else
-      return Int(-1);
+      return -1;
   }
   else
-    return Int(-1);
+    return -1;
 }
 
 GetComputationFunction::GetComputationFunction(int i)

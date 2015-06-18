@@ -61,7 +61,7 @@ extern "C" closure builtin_function_sizeOfString(OperationArgs& Args)
 {
   const std::string& s = Args.evaluate(0).as_<String>();
   
-  return Int(s.size());
+  return {(int)s.size()};
 }
 
 extern "C" closure builtin_function_getStringElement(OperationArgs& Args)
@@ -69,7 +69,7 @@ extern "C" closure builtin_function_getStringElement(OperationArgs& Args)
   const std::string& s = Args.evaluate(0).as_<String>();
   int i = Args.evaluate(1).as_int();
   
-  return Char(s[i]);
+  return {s[i]};
 }
 
 extern "C" closure builtin_function_NewString(OperationArgs& Args)
@@ -87,7 +87,7 @@ extern "C" closure builtin_function_SetStringIndex(OperationArgs& Args)
 {
   object_ptr<const String> v = Args.evaluate(0).assert_is_a<String>();
   int i = Args.evaluate(1).as_int();
-  char x = Args.evaluate(2).as_<Char>();
+  char x = Args.evaluate(2).as_char();
 
   const String* vv = &(*v);
   String* vvv = const_cast<String*>(vv);
@@ -197,7 +197,7 @@ extern "C" closure builtin_function_vector_size(OperationArgs& Args)
 {
   const Vector<expression_ref>& v = Args.evaluate(0).as_<Vector<expression_ref>>();
 
-  return Int(v.size());
+  return {(int)v.size()};
 }
 
 extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
