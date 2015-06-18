@@ -5,7 +5,7 @@ extern "C" closure builtin_function_alphabetSize(OperationArgs& Args)
 {
   const alphabet& a = Args.evaluate(0).as_<alphabet>();
 
-  return Int(a.n_letters());
+  return {a.n_letters()};
 }
 
 extern "C" closure builtin_function_alphabet_letters(OperationArgs& Args)

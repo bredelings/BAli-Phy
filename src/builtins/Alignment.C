@@ -36,12 +36,12 @@ extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(O
 
 extern "C" closure builtin_function_pairwise_alignment_length1(OperationArgs& Args)
 {
-  return Int(Args.evaluate(0).as_<pairwise_alignment_t>().length1());
+  return {Args.evaluate(0).as_<pairwise_alignment_t>().length1()};
 }
 
 extern "C" closure builtin_function_pairwise_alignment_length2(OperationArgs& Args)
 {
-  return Int(Args.evaluate(0).as_<pairwise_alignment_t>().length2());
+  return {Args.evaluate(0).as_<pairwise_alignment_t>().length2()};
 }
 
 extern "C" closure builtin_function_transition_counts(OperationArgs& Args)

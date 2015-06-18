@@ -325,7 +325,7 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 
     // The index we've chosen is now valid.
     counts[index] += 1.0;
-    S->push_back(new Int(categories[index]));
+    S->push_back(categories[index]);
   }
 
   return S;

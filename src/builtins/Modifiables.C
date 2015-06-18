@@ -98,7 +98,7 @@ extern "C" closure builtin_function_get_modifiable_index(OperationArgs& Args)
 
   assert(is_modifiable(M.access(R1).C.exp));
 
-  return Int(R1);
+  return {R1};
 }
 
 extern "C" closure builtin_function_set_modifiable_value(OperationArgs& Args)
