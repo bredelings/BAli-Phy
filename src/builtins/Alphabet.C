@@ -3,16 +3,16 @@
 
 extern "C" closure builtin_function_alphabetSize(OperationArgs& Args)
 {
-  const alphabet& a = *Args.evaluate_as<alphabet>(0);
+  const alphabet& a = Args.evaluate(0).as_<alphabet>();
 
   return Int(a.n_letters());
 }
 
 extern "C" closure builtin_function_alphabet_letters(OperationArgs& Args)
 {
-  const alphabet& a = *Args.evaluate_as<alphabet>(0);
+  const alphabet& a = Args.evaluate(0).as_<alphabet>();
 
-  object_ptr<EVector> v(new EVector);
+  auto v = new EVector;
   for(int i=0;i<a.n_letters();i++)
     v->push_back(String(a.letter(i)));
   
@@ -21,26 +21,18 @@ extern "C" closure builtin_function_alphabet_letters(OperationArgs& Args)
 
 extern "C" closure builtin_function_getNucleotides(OperationArgs& Args)
 {
-  object_ptr<const Triplets> T = Args.evaluate_as<Triplets>(0);
-  const Nucleotides& N = T->getNucleotides();
-
-  return N;
+  return Args.evaluate(0).as_<Triplets>().getNucleotides();
 }
 
 extern "C" closure builtin_function_getAminoAcids(OperationArgs& Args)
 {
-  object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
-  const AminoAcids& A = C->getAminoAcids();
-
-  return A;
+  return Args.evaluate(0).as_<Codons>().getAminoAcids();
 }
 
 extern "C" closure builtin_function_translate(OperationArgs& Args)
 {
-  object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
-  int codon = *Args.evaluate_as<Int>(1);
+  auto C = Args.evaluate(0);
+  int codon = Args.evaluate(1).as_int();
 
-  Int amino_acid = C->translate(codon);
-
-  return amino_acid;
+  return {C.as_<Codons>().translate(codon)};
 }

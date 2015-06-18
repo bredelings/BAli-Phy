@@ -30,7 +30,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   //------------- 1a. Get argument X -----------------
   int R_X = Args.evaluate_slot_to_reg(0);
 
-  int c = *Args.evaluate_as<Int>(2);
+  int c = Args.evaluate(2).as_int();
 
   //------------- 1b. Get arguments Y_i  -----------------
   vector<int> M_Y;
@@ -142,10 +142,10 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
   int R_X = Args.evaluate_slot_to_reg(0);
 
   //------------- 1b. Get range [0,n) for X ----------
-  int n = *Args.evaluate_as<Int>(1);
+  int n = Args.evaluate(1).as_int();
 
   //------------- 1c. Get context index --------------
-  int c = *Args.evaluate_as<Int>(2);
+  int c = Args.evaluate(2).as_int();
 
   //------------- 2. Figure out probability of each value of x ------------//
   vector<log_double_t> pr_x(n);

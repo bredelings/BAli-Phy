@@ -340,16 +340,16 @@ extern "C" closure builtin_function_lessthanorequal(OperationArgs& Args)
     throw myexception()<<"<=: object '"<<x.print()<<"' is not Double, Int, Log_double, or Char'";
 }
 
-#include "conversion.H"
-
 extern "C" closure builtin_function_doubleToLogDouble(OperationArgs& Args)
 {
-  return numeric_conversion_function<double,log_double_t>(Args);
+  double d = Args.evaluate(0).as_double();
+  return {log_double_t(d)};
 }
 
 extern "C" closure builtin_function_intToDouble(OperationArgs& Args)
 {
-  return numeric_conversion_function<int,double>(Args);
+  log_double_t d = Args.evaluate(0).as_log_double();
+  return {double(d)};
 }
 
 #include "iota.H"

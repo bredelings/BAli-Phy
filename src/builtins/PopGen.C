@@ -21,7 +21,7 @@ const int missing = -1;
 
 extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
 {
-  const string& filename = *Args.evaluate_as<String>(0);
+  const string& filename = Args.evaluate(0).as_<String>();
 
   checked_ifstream phase_file(filename,"PHASE Input file");
 
@@ -88,26 +88,26 @@ extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
 
 extern "C" closure builtin_function_remove_2nd_allele(OperationArgs& Args)
 {
-  object_ptr<const EVector> alleles = Args.evaluate_as<EVector>(0);
+  const EVector& alleles = Args.evaluate(0).as_<EVector>();
 
   EVector alleles2;
 
-  for(int i=0;i<alleles->size();i+=2)
-    alleles2.push_back((*alleles)[i]);
+  for(int i=0;i<alleles.size();i+=2)
+    alleles2.push_back(alleles[i]);
 
   return alleles2;
 }
 
 extern "C" closure builtin_function_allele_frequency_spectrum(OperationArgs& Args)
 {
-  object_ptr<const EVector> alleles = Args.evaluate_as<EVector>(0);
+  const EVector& alleles = Args.evaluate(0).as_<EVector>();
 
-  int n_individuals = alleles->size();
+  int n_individuals = alleles.size();
   assert(n_individuals > 0);
 
   // 1. Count the alleles of each type
   std::unordered_map<int,int> allele_counts;
-  for(const auto& a: *alleles)
+  for(const auto& a: alleles)
   {
     int aa = a.as_int();
     allele_counts[aa]++;
@@ -160,7 +160,7 @@ log_double_t ewens_sampling_probability(double theta, const vector<int>& a)
 extern "C" closure builtin_function_ewens_sampling_group_probability(OperationArgs& Args)
 {
   const double theta = Args.evaluate(0).as_double();
-  const vector<Vector<int>>& afs = *Args.evaluate_as<Vector<Vector<int>>>(1);
+  const vector<Vector<int>>& afs = Args.evaluate(1).as_<Vector<Vector<int>>>();
 
   log_double_t Pr = 1;
   for(const auto& a: afs)
@@ -172,10 +172,10 @@ extern "C" closure builtin_function_ewens_sampling_group_probability(OperationAr
 extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Args)
 {
   const double theta = Args.evaluate(0).as_double();
-  object_ptr<const EVector> afs_ = Args.evaluate_as<EVector>(1);
+  const EVector& afs_ = Args.evaluate(1).as_<EVector>();
 
   vector<int> afs;
-  for(const auto& count: *afs_)
+  for(const auto& count: afs_)
     afs.push_back(count.as_int());
 
   log_double_t Pr = ewens_sampling_probability(theta,afs);
@@ -185,9 +185,9 @@ extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Ar
 
 extern "C" closure builtin_function_ewens_sampling_mixture_probability(OperationArgs& Args)
 {
-  const vector<double>& thetas = *Args.evaluate_as<Vector<double>>(0);
-  const vector<double>& ps = *Args.evaluate_as<Vector<double>>(1);
-  const vector<Vector<int>>& afs = *Args.evaluate_as<Vector<Vector<int>>>(2);
+  const vector<double>& thetas = Args.evaluate(0).as_<Vector<double>>();
+  const vector<double>& ps = Args.evaluate(1).as_<Vector<double>>();
+  const vector<Vector<int>>& afs = Args.evaluate(2).as_<Vector<Vector<int>>>();
 
 #ifndef NDEBUG
   for(int i=0;i<thetas.size();i++)
@@ -256,10 +256,10 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
   assert(theta > 0);
 
   // 1. These are indicators of coalescence
-  const vector<expression_ref>& I = *Args.evaluate_as<EVector>(1);
+  const vector<expression_ref>& I = Args.evaluate(1).as_<EVector>();
 
   // 2. These are the alleles
-  const vector<expression_ref>& alleles = *Args.evaluate_as<EVector>(2);
+  const vector<expression_ref>& alleles = Args.evaluate(2).as_<EVector>();
 
   // How many times has each allele been seen?
   std::unordered_map<int,int> counts;
@@ -326,7 +326,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 extern "C" closure builtin_function_selfing_coalescence_probability(OperationArgs& Args)
 {
   // The number of loci
-  int L = *Args.evaluate_as<Int>(0);
+  int L = Args.evaluate(0).as_int();
 
   // The selfing rate
   const double s = Args.evaluate(1).as_double();
@@ -334,8 +334,8 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
   assert(s >= 0 and s <= 1);
 
   // These are indicators of coalescence
-  object_ptr<const EVector> I_ = Args.evaluate_as<EVector>(2);
-  const vector<expression_ref>& I = *I_;
+  auto arg2 = Args.evaluate(2);
+  const vector<expression_ref>& I = arg2.as_<EVector>();
 
   // Determine number of coalescences;
   int n = 0;

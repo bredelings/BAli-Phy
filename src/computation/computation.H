@@ -59,18 +59,6 @@ public:
 
   const expression_ref& evaluate_(int);
 
-  template <typename T>
-  object_ptr<const T> evaluate_as(int slot)
-  {
-    return convert<const T>( evaluate(slot).ptr() );
-  }
-
-  template <typename T>
-  object_ptr<const T> evaluate_as_(int slot)
-  {
-    return convert<const T>( evaluate_(slot).ptr() );
-  }
-
   int allocate(closure&&);
 
   OperationArgs(reg_heap& m);

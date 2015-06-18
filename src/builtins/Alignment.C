@@ -4,8 +4,8 @@
 
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
 {
-  const matrix<int>& counts = *Args.evaluate_as<Box<matrix<int>>>(0);
-  const indel::PairHMM& Q = *Args.evaluate_as<indel::PairHMM>(1);
+  const matrix<int>& counts = Args.evaluate(0).as_<Box<matrix<int>>>();
+  const indel::PairHMM& Q = Args.evaluate(1).as_<indel::PairHMM>();
 
   using namespace A2;
 
@@ -36,17 +36,17 @@ extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(O
 
 extern "C" closure builtin_function_pairwise_alignment_length1(OperationArgs& Args)
 {
-  return Int(Args.evaluate_as<pairwise_alignment_t>(0)->length1());
+  return Int(Args.evaluate(0).as_<pairwise_alignment_t>().length1());
 }
 
 extern "C" closure builtin_function_pairwise_alignment_length2(OperationArgs& Args)
 {
-  return Int(Args.evaluate_as<pairwise_alignment_t>(0)->length2());
+  return Int(Args.evaluate(0).as_<pairwise_alignment_t>().length2());
 }
 
 extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
 {
-  const pairwise_alignment_t& A = *Args.evaluate_as<pairwise_alignment_t>(0);
+  const pairwise_alignment_t& A = Args.evaluate(0).as_<pairwise_alignment_t>();
 
   Box<matrix<int>> counts(5,5,0);
 
@@ -63,7 +63,7 @@ using std::vector;
 extern "C" closure builtin_function_rs07_lengthp(OperationArgs& Args)
 {
   double e = Args.evaluate(0).as_double();
-  int l = *Args.evaluate_as<Int>(1);
+  int l = Args.evaluate(1).as_int();
 
   if (l < 0)
     return {0.0};
@@ -78,7 +78,7 @@ extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
   double e = Args.evaluate(0).as_double();
   double D = Args.evaluate(1).as_double();
   double heat = Args.evaluate(2).as_double();
-  constructor in_training_c = *Args.evaluate_as<constructor>(3);
+  constructor in_training_c = Args.evaluate(3).as_<constructor>();
   bool in_training = true;
   if (in_training_c.f_name == "Prelude.False")
     in_training = false;

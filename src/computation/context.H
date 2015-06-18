@@ -102,18 +102,6 @@ public:
   /// Return the value of a particular index, computing it if necessary
   const expression_ref& perform_expression(const expression_ref&,bool=false) const;
 
-  template <typename T>
-  object_ptr<const T> evaluate_as(int index) const
-  {
-    return convert<const T>( evaluate(index) );
-  }
-
-  template <typename T>
-  object_ptr<const T> evaluate_expression_as(const expression_ref& E) const
-  {
-    return convert<const T>( evaluate_expression(E) );
-  }
-
   /// Find the name of the ith named parameter
   std::string parameter_name(int i) const;
 

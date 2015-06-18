@@ -83,7 +83,7 @@ extern "C" closure builtin_function_get_modifiable_for_index(OperationArgs& Args
 {
   assert(not Args.evaluate_changeables());
 
-  int R1 = *Args.evaluate_as<Int>(0);
+  int R1 = Args.evaluate(0).as_int();
 
   return {index_var(0),{R1}};
 }
@@ -105,7 +105,7 @@ extern "C" closure builtin_function_set_modifiable_value(OperationArgs& Args)
 {
   assert(not Args.evaluate_changeables());
 
-  int c = *Args.evaluate_as<Int>(0);
+  int c = Args.evaluate(0).as_int();
 
   int R1 = Args.evaluate_slot_to_reg(1);
   int R2 = Args.evaluate_slot_to_reg(2);
@@ -119,7 +119,7 @@ extern "C" closure builtin_function_get_modifiable_value(OperationArgs& Args)
 {
   assert(not Args.evaluate_changeables());
 
-  int c = *Args.evaluate_as<Int>(0);
+  int c = Args.evaluate(0).as_int();
 
   int R1 = Args.evaluate_slot_to_reg(1);
 
@@ -134,7 +134,7 @@ extern "C" closure builtin_function_add_parameter(OperationArgs& Args)
 {
   assert(not Args.evaluate_changeables());
 
-  const std::string& name = *Args.evaluate_as<String>(0);
+  const std::string name = Args.evaluate(0).as_<String>();
 
   int R = Args.evaluate_slot_to_reg(1);
 
@@ -162,7 +162,7 @@ extern "C" closure builtin_function_evaluate(OperationArgs& Args)
 {
   auto& M = Args.memory();
 
-  int c = *Args.evaluate_as<Int>(0);
+  int c = Args.evaluate(0).as_int();
 
 #ifndef NDEBUG
   if (Args.evaluate_changeables() and c >= 0)
@@ -185,7 +185,7 @@ extern "C" closure builtin_function_evaluate(OperationArgs& Args)
 
 extern "C" closure builtin_function_trigger(OperationArgs& Args)
 {
-  int i = *Args.evaluate_as<Int>(0);
+  int i = Args.evaluate(0).as_int();
 
   reg_heap& M = Args.memory();
 

@@ -59,22 +59,22 @@ extern "C" closure builtin_function_getVectorvectorIntElement(OperationArgs& Arg
 
 extern "C" closure builtin_function_sizeOfString(OperationArgs& Args)
 {
-  const std::string& s = *Args.evaluate_as<String>(0);
+  const std::string& s = Args.evaluate(0).as_<String>();
   
   return Int(s.size());
 }
 
 extern "C" closure builtin_function_getStringElement(OperationArgs& Args)
 {
-  const std::string& s = *Args.evaluate_as<String>(0);
-  int i = *Args.evaluate_as<Int>(1);
+  const std::string& s = Args.evaluate(0).as_<String>();
+  int i = Args.evaluate(1).as_int();
   
   return Char(s[i]);
 }
 
 extern "C" closure builtin_function_NewString(OperationArgs& Args)
 {
-  const int& length = *Args.evaluate_as<Int>(0);
+  const int& length = Args.evaluate(0).as_int();
 
   object_ptr<String> v (new String);
 
@@ -85,9 +85,9 @@ extern "C" closure builtin_function_NewString(OperationArgs& Args)
 
 extern "C" closure builtin_function_SetStringIndex(OperationArgs& Args)
 {
-  object_ptr<const String> v = Args.evaluate_as<String>(0);
-  int i = *Args.evaluate_as<Int>(1);
-  char x = *Args.evaluate_as<Char>(2);
+  object_ptr<const String> v = Args.evaluate(0).assert_is_a<String>();
+  int i = Args.evaluate(1).as_int();
+  char x = Args.evaluate(2).as_<Char>();
 
   const String* vv = &(*v);
   String* vvv = const_cast<String*>(vv);
@@ -99,11 +99,11 @@ extern "C" closure builtin_function_SetStringIndex(OperationArgs& Args)
 template <class T>
 closure NewVector(OperationArgs& Args)
 {
-  object_ptr<const Int> length = Args.evaluate_as<Int>(0);
+  int length = Args.evaluate(0).as_int();
 
-  object_ptr<Vector<T>> v (new Vector<T>);
+  auto v = new Vector<T>;
 
-  v->resize(*length);
+  v->resize(length);
 
   return v;
 }
@@ -126,9 +126,9 @@ extern "C" closure builtin_function_NewVectorMatrix(OperationArgs& Args)
 template <typename T, typename U>
 closure SetVectorIndex(OperationArgs& Args)
 {
-  object_ptr<const Vector<T>> v = Args.evaluate_as<Vector<T>>(0);
-  int i = *Args.evaluate_as<Int>(1);
-  U x = *Args.evaluate_as<U>(2);
+  object_ptr<const Vector<T>> v = Args.evaluate(0).assert_is_a<Vector<T>>();
+  int i = Args.evaluate(1).as_int();
+  U x = Args.evaluate(2).as_<U>();
 
   const Vector<T>* vv = &(*v);
   Vector<T>* vvv = const_cast<Vector<T>*>(vv);

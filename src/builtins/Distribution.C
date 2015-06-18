@@ -128,10 +128,10 @@ extern "C" closure builtin_function_sample_cauchy(OperationArgs& Args)
 // Third convert all the expression_ref's here to "var" and use Distribution_Functions()
 extern "C" closure builtin_function_dirichlet_density(OperationArgs& Args)
 {
-  object_ptr<const Vector<double>> n = Args.evaluate_as<Vector<double>>(0);
-  object_ptr<const Vector<double>> x = Args.evaluate_as<Vector<double>>(1);
+  auto n = Args.evaluate(0);
+  auto x = Args.evaluate(1);
   
-  return { ::dirichlet_pdf(*x,*n) };
+  return { ::dirichlet_pdf(x.as_<Vector<double>>(), n.as_<Vector<double>>()) };
 }
 
 extern "C" closure builtin_function_laplace_density(OperationArgs& Args)
@@ -172,16 +172,16 @@ extern "C" closure builtin_function_sample_uniform(OperationArgs& Args)
 
 extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
 {
-  int n = *Args.evaluate_as<Int>(0);
+  int n = Args.evaluate(0).as_int();
   double p = Args.evaluate(1).as_double();
-  int k = *Args.evaluate_as<Int>(2);
+  int k = Args.evaluate(2).as_int();
   
   return { ::binomial_pdf(n,p,k) };
 }
 
 extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
 {
-  int n = *Args.evaluate_as_<Int>(0);
+  int n = Args.evaluate_(0).as_int();
   double p = Args.evaluate_(1).as_double();
 
   return { (int)binomial(n,p) };
@@ -198,7 +198,7 @@ extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
 {
   double p_fail = Args.evaluate(0).as_double();
   double p_success = Args.evaluate(1).as_double();
-  double n = *Args.evaluate_as<Int>(2);
+  int n = Args.evaluate(2).as_int();
   
   return { ::geometric_pdf(p_fail, p_success, n) };
 }
@@ -213,7 +213,7 @@ extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
 extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
 {
   double mu = Args.evaluate(0).as_double();
-  int n = *Args.evaluate_as<Int>(1);
+  int n = Args.evaluate(1).as_int();
   
   return { poisson_pdf(mu,n) };
 }
@@ -267,8 +267,8 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
 
   //------------- 1. Get arguments alpha, N, D -----------------
   double alpha = Args.evaluate(0).as_double();
-  int N = *Args.evaluate_as<Int>(1);
-  int D = *Args.evaluate_as<Int>(2);
+  int N = Args.evaluate(1).as_int();
+  int D = Args.evaluate(2).as_int();
 
   //------------- 2. Get argument Z -----------------
   vector<int> z = get_vector_from_list<int,Int>(Args,3);
@@ -285,8 +285,8 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 
   //------------- 1. Get arguments alpha, N, D -----------------
   double alpha = Args.evaluate_(0).as_double();
-  int N = *Args.evaluate_as_<Int>(1);
-  int D = *Args.evaluate_as_<Int>(2);
+  int N = Args.evaluate_(1).as_int();
+  int D = Args.evaluate_(2).as_int();
 
   // The entries in [0,n_seen) are the categories we've seen
   vector<int> categories = iota(N+D);

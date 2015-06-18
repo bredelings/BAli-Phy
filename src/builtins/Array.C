@@ -2,7 +2,7 @@
 
 extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 {
-  int n = *Args.evaluate_as<Int>(0);
+  int n = Args.evaluate(0).as_int();
   expression_ref f = Args.reference(1);
 
   const closure& C = Args.current_closure();
@@ -52,7 +52,7 @@ extern "C" closure builtin_function_arraySize(OperationArgs& Args)
 
 extern "C" closure builtin_function_getIndex(OperationArgs& Args)
 {
-  int n = *Args.evaluate_as<Int>(1);
+  int n = Args.evaluate(0).as_int();
   // Do this second, so that evaluation of the 1st argument can't call expand_memory afterwards.
   const closure& C = Args.evaluate_slot_to_closure(0);
 

@@ -21,18 +21,18 @@ extern "C" closure builtin_function_lExp(OperationArgs& Args)
   auto pi = Args.evaluate(1);
   double t = Args.evaluate(2).as_double();
 
-  Box<Matrix>* M = new Box<Matrix>;
+  auto M = new Box<Matrix>;
   *M = exp(L.as_<EigenValues>(), pi.as_<Vector<double>>(), t);
   return M;
 }
 
 extern "C" closure builtin_function_reversible_rate_matrix(OperationArgs& Args)
 {
-  auto S_ = Args.evaluate(0);
-  const Matrix& S = S_.as_<Box<Matrix>>();
+  auto arg0 = Args.evaluate(0);
+  const Matrix& S = arg0.as_<Box<Matrix>>();
 
-  auto R_ = Args.evaluate(1);
-  const Matrix& R = R_.as_<Box<Matrix>>();
+  auto arg1 = Args.evaluate(1);
+  const Matrix& R = arg1.as_<Box<Matrix>>();
     
   const unsigned N = S.size1();
   assert(S.size1() == R.size1());
@@ -64,11 +64,11 @@ extern "C" closure builtin_function_reversible_rate_matrix(OperationArgs& Args)
 
 extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
 {
-  object_ptr<const Box<Matrix>> Q_ = Args.evaluate_as<Box<Matrix>>(0);
-  const Matrix& Q = *Q_;
+  auto arg0 = Args.evaluate(0);
+  const Matrix& Q = arg0.as_< Box<Matrix> >();
 
-  object_ptr<const Vector<double>> pi_ = Args.evaluate_as< Vector<double> >(1);
-  const vector<double>& pi = *pi_;
+  auto arg1 = Args.evaluate(1);
+  const vector<double>& pi = arg1.as_< Vector<double> >();
 
   const unsigned n = Q.size1();
   assert(Q.size2() == Q.size1());
@@ -113,23 +113,23 @@ extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
     }
 
   //---------------- Compute eigensystem ------------------//
-  return object_ptr<const EigenValues>(new EigenValues(S));
+  return {new EigenValues(S)};
 }
 
 
 extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
 {
-  object_ptr<const alphabet> a_ = Args.evaluate_as<alphabet>(0);
-  const alphabet& a = *a_;
+  auto arg0 = Args.evaluate(0);
+  const alphabet& a = arg0.as_<alphabet>();
 
-  object_ptr<const Vector<unsigned> > smap_ = Args.evaluate_as< Vector<unsigned> >(1);
-  const vector<unsigned>& smap = *smap_;
+  auto arg1 = Args.evaluate(1);
+  const vector<unsigned>& smap = arg1.as_< Vector<unsigned> >();
 
-  object_ptr<const Box<Matrix> > Q_ = Args.evaluate_as< Box<Matrix> >(2);
-  const Matrix& Q = *Q_;
+  auto arg2 = Args.evaluate(2);
+  const Matrix& Q = arg2.as_< Box<Matrix> >();
 
-  object_ptr<const Vector<double> > pi_ = Args.evaluate_as< Vector<double> >(3);
-  const vector<double> pi = *pi_;
+  auto arg3 = Args.evaluate(3);
+  const vector<double> pi = arg3.as_< Vector<double> >();
 
   assert(Q.size2() == Q.size1());
   const unsigned N = smap.size();
@@ -160,11 +160,11 @@ extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
 
 extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& Args)
 {
-  object_ptr<const Triplets> T_ = Args.evaluate_as<Triplets>(0);
-  const Triplets& T = *T_;
+  auto arg0 = Args.evaluate(0);
+  const Triplets& T = arg0.as_<Triplets>();
 
-  object_ptr<const Box<Matrix>> S_ = Args.evaluate_as<Box<Matrix>>(1);
-  const Matrix& S2 = *S_;
+  auto arg1 = Args.evaluate(1);
+  const Matrix& S2 = arg1.as_<Box<Matrix>>();
 
   int N = T.size();
 
@@ -202,16 +202,17 @@ extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& A
 
 extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
 {
-  auto T = Args.evaluate_as<Triplets>(0);
+  auto arg0 = Args.evaluate(0);
+  const Triplets& T = arg0.as_<Triplets>();
   
-  auto R1_ = Args.evaluate_as<Box<Matrix>>(1);
-  const Matrix& R1 = *R1_;
+  auto arg1 = Args.evaluate(1);
+  const Matrix& R1 = arg1.as_<Box<Matrix>>();
 
-  auto R2_ = Args.evaluate_as<Box<Matrix>>(2);
-  const Matrix& R2 = *R2_;
+  auto arg2 = Args.evaluate(2);
+  const Matrix& R2 = arg2.as_<Box<Matrix>>();
 
-  auto R3_ = Args.evaluate_as<Box<Matrix>>(3);
-  const Matrix& R3 = *R3_;
+  auto arg3 = Args.evaluate(3);
+  const Matrix& R3 = arg3.as_<Box<Matrix>>();
 
   // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
   assert(R1.size1() == 4);
@@ -221,7 +222,7 @@ extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
   assert(R3.size1() == 4);
   assert(R3.size2() == 4);
 
-  const int n = T->size();
+  const int n = T.size();
 
   object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
 
@@ -233,11 +234,11 @@ extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
       int to=-1;
       int pos=-1;
       for(int p=0;p<3;p++)
-	if (T->sub_nuc(i,p) != T->sub_nuc(j,p)) {
+	if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
 	  nmuts++;
 	  pos = p;
-	  from = T->sub_nuc(i,p);
-	  to = T->sub_nuc(j,p);
+	  from = T.sub_nuc(i,p);
+	  to = T.sub_nuc(j,p);
 	}
 
       double r = 0;
@@ -452,9 +453,9 @@ object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, const St
 
 extern "C" closure builtin_function_empirical(OperationArgs& Args)
 {
-  object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
-  object_ptr<const String> S = Args.evaluate_as<String>(1);
-  return Empirical_Exchange_Function(*a, *S);
+  auto a = Args.evaluate(0);
+  auto S = Args.evaluate(1);
+  return Empirical_Exchange_Function(a.as_<alphabet>(), S.as_<String>());
 }
 
 object_ptr<const Object> PAM_Exchange_Function(const alphabet& a)
@@ -485,8 +486,8 @@ object_ptr<const Object> PAM_Exchange_Function(const alphabet& a)
 
 extern "C" closure builtin_function_pam(OperationArgs& Args)
 {
-  object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
-  return PAM_Exchange_Function(*a);
+  auto a = Args.evaluate(0);
+  return PAM_Exchange_Function(a.as_<alphabet>());
 }
 
 object_ptr<const Object> JTT_Exchange_Function(const alphabet& a)
@@ -517,8 +518,8 @@ object_ptr<const Object> JTT_Exchange_Function(const alphabet& a)
 
 extern "C" closure builtin_function_jtt(OperationArgs& Args)
 {
-  object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
-  return JTT_Exchange_Function(*a);
+  auto a = Args.evaluate(0);
+  return JTT_Exchange_Function(a.as_<alphabet>());
 }
 
 object_ptr<const Object> WAG_Exchange_Function(const alphabet& a)
@@ -549,8 +550,8 @@ object_ptr<const Object> WAG_Exchange_Function(const alphabet& a)
 
 extern "C" closure builtin_function_wag(OperationArgs& Args)
 {
-  object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
-  return WAG_Exchange_Function(*a);
+  auto a = Args.evaluate(0);
+  return WAG_Exchange_Function(a.as_<alphabet>());
 }
 
 object_ptr<const Object> LG_Exchange_Function(const alphabet& a)
@@ -581,25 +582,29 @@ object_ptr<const Object> LG_Exchange_Function(const alphabet& a)
 
 extern "C" closure builtin_function_lg(OperationArgs& Args)
 {
-  object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
-  return WAG_Exchange_Function(*a);
+  auto a = Args.evaluate(0);
+  return WAG_Exchange_Function(a.as_<alphabet>());
 }
 
 extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 {
-  auto T = Args.evaluate_as<Triplets>(0);
+  auto arg0 = Args.evaluate(0);
+  const Triplets& T = arg0.as_<Triplets>();
   // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
-  auto pi1 = Args.evaluate_as<Vector<double>>(1);
+  auto arg1 = Args.evaluate(1);
+  auto pi1 = arg1.as_<Vector<double>>();
 
-  auto pi2 = Args.evaluate_as<Vector<double>>(2);
+  auto arg2 = Args.evaluate(2);
+  auto pi2 = arg2.as_<Vector<double>>();
 
-  auto pi3 = Args.evaluate_as<Vector<double>>(3);
+  auto arg3 = Args.evaluate(3);
+  auto pi3 = arg3.as_<Vector<double>>();
 
   Vector<double> pi;
-  pi.resize(T->size());
-  for(int i=0;i<T->size();i++)
-    pi[i] = (*pi1)[T->sub_nuc(i,0)] * (*pi2)[T->sub_nuc(i,1)] * (*pi3)[T->sub_nuc(i,2)];
+  pi.resize(T.size());
+  for(int i=0;i<T.size();i++)
+    pi[i] = pi1[T.sub_nuc(i,0)] * pi2[T.sub_nuc(i,1)] * pi3[T.sub_nuc(i,2)];
 
   // Some triplets may be missing from the triplet alphabet (e.g. stop codons).  So renormalize.
 
@@ -614,7 +619,8 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 
 extern "C" closure builtin_function_gtr(OperationArgs& Args)
 {
-  object_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
+  auto arg0 = Args.evaluate(0);
+  const Nucleotides& N = arg0.as_<Nucleotides>();
   double AG = Args.evaluate(1).as_double();
   double AT = Args.evaluate(2).as_double();
   double AC = Args.evaluate(3).as_double();
@@ -622,9 +628,9 @@ extern "C" closure builtin_function_gtr(OperationArgs& Args)
   double GC = Args.evaluate(5).as_double();
   double TC = Args.evaluate(6).as_double();
 
-  assert(N->size()==4);
+  assert(N.size()==4);
 
-  object_ptr<Box<Matrix>> R(new Box<Matrix>(N->size(),N->size()));
+  auto R = new Box<Matrix>(N.size(),N.size());
 
   double total = AG + AT + AC + GT + GC + TC;
 
@@ -637,18 +643,22 @@ extern "C" closure builtin_function_gtr(OperationArgs& Args)
 
   (*R)(3,2) = (*R)(2,3) = TC/total;
 
-  return R;
+  return {R};
 }
 
 extern "C" closure builtin_function_m0(OperationArgs& Args)
 {
-  object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
-  object_ptr<const Box<Matrix>> S = Args.evaluate_as<Box<Matrix>>(1);
+  auto arg0 = Args.evaluate(0);
+  const Codons& C = arg0.as_<Codons>();
+
+  auto arg1 = Args.evaluate(1);
+  const Matrix& S = arg1.as_<Box<Matrix>>();
+
   double omega = Args.evaluate(2).as_double();
 
-  int n = C->size();
+  int n = C.size();
 
-  object_ptr<Box<Matrix>> R ( new Box<Matrix>(n,n) );
+  auto R = new Box<Matrix>(n,n);
 
   for(int i=0;i<n;i++) 
   {
@@ -656,7 +666,7 @@ extern "C" closure builtin_function_m0(OperationArgs& Args)
       int nmuts=0;
       int pos=-1;
       for(int p=0;p<3;p++)
-	if (C->sub_nuc(i,p) != C->sub_nuc(j,p)) {
+	if (C.sub_nuc(i,p) != C.sub_nuc(j,p)) {
 	  nmuts++;
 	  pos=p;
 	}
@@ -667,13 +677,13 @@ extern "C" closure builtin_function_m0(OperationArgs& Args)
 
       if (nmuts == 1) 
       {
-	int l1 = C->sub_nuc(i,pos);
-	int l2 = C->sub_nuc(j,pos);
+	int l1 = C.sub_nuc(i,pos);
+	int l2 = C.sub_nuc(j,pos);
 	assert(l1 != l2);
 
-	rate = (*S)(l1,l2);
+	rate = S(l1,l2);
 
-	if (C->translate(i) != C->translate(j))
+	if (C.translate(i) != C.translate(j))
 	  rate *= omega;	
       }
 
@@ -686,18 +696,19 @@ extern "C" closure builtin_function_m0(OperationArgs& Args)
 
 extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
 {
-  const alphabet& a = *Args.evaluate_as<alphabet>(0);
+  const alphabet& a = Args.evaluate(0).as_<alphabet>();
 
   double f = Args.evaluate(1).as_double();
 
-  object_ptr< const Vector<double> > pi_ = Args.evaluate_as< Vector<double> >(2);
+  auto arg2 = Args.evaluate(2);
+  const vector<double>& pi_ = arg2.as_< Vector<double> >();
 
   const int n = a.size();
 
-  object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
+  auto R = new Box<Matrix>(n,n);
 
   // compute frequencies
-  vector<double> pi = *pi_;
+  vector<double> pi = pi_;
   normalize(pi);
   assert(a.size() == pi.size());
     
@@ -720,18 +731,18 @@ extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
 // codon_a codon_w omega nuc_q
 extern "C" closure builtin_function_fMutSel_q(OperationArgs& Args)
 {
-  object_ptr<const Codons> C_ = Args.evaluate_as<Codons>(0);
-  const Codons& C = *C_;
+  auto arg0 = Args.evaluate(0);
+  const Codons& C = arg0.as_<Codons>();
   int N = C.size();
   
-  object_ptr< const Vector<double> > codon_w_ = Args.evaluate_as< Vector<double> >(1);
-  const Vector<double>& codon_w = *codon_w_;
+  auto arg1 = Args.evaluate(1);
+  const Vector<double>& codon_w = arg1.as_< Vector<double> >();
   assert(codon_w.size() == N);
 
   double omega = Args.evaluate(2).as_double();
 
-  object_ptr<const Box<Matrix>> nuc_Q_ = Args.evaluate_as<Box<Matrix>>(3);
-  const Matrix& nuc_Q = *nuc_Q_;
+  auto arg3 = Args.evaluate(3);
+  const Matrix& nuc_Q = arg3.as_< Box<Matrix> >();
   assert(nuc_Q.size1() == nuc_Q.size2());
   assert(nuc_Q.size1() == C.getNucleotides().size());
 
@@ -739,7 +750,7 @@ extern "C" closure builtin_function_fMutSel_q(OperationArgs& Args)
   for(int i=0;i<N;i++)
     log_codon_w[i] = log(codon_w[i]);
   
-  object_ptr<Box<Matrix>> Q_(new Box<Matrix>(N,N));
+  auto Q_ = new Box<Matrix>(N,N);
   Matrix& Q = *Q_;
 
   for(int i=0;i<N;i++)
@@ -796,16 +807,16 @@ extern "C" closure builtin_function_fMutSel_q(OperationArgs& Args)
 // codon_a nuc_pi codon_w
 extern "C" closure builtin_function_fMutSel_pi(OperationArgs& Args)
 {
-  object_ptr<const Codons> C_ = Args.evaluate_as<Codons>(0);
-  const Codons& C = *C_;
+  auto arg0 = Args.evaluate(0);
+  const Codons& C = arg0.as_<Codons>();
   int N = C.size();
   
-  object_ptr< const Vector<double> > codon_w_ = Args.evaluate_as< Vector<double> >(1);
-  const Vector<double>& codon_w = *codon_w_;
+  auto arg1 = Args.evaluate(1);
+  const vector<double>& codon_w = arg1.as_< Vector<double> >();
   assert(codon_w.size() == N);
 
-  object_ptr< const Vector<double> > nuc_pi_ = Args.evaluate_as< Vector<double> >(2);
-  const Vector<double>& nuc_pi = *nuc_pi_;
+  auto arg2 = Args.evaluate(2);
+  const vector<double>& nuc_pi = arg2.as_< Vector<double> >();
   assert(nuc_pi.size() == C.getNucleotides().size());
 
   // compute frequencies
@@ -822,11 +833,11 @@ extern "C" closure builtin_function_fMutSel_pi(OperationArgs& Args)
 // codon_a nuc_pi omega nuc_q nuc_pi
 extern "C" closure builtin_function_fMutSel_q2(OperationArgs& Args)
 {
-  object_ptr<const Codons> C_ = Args.evaluate_as<Codons>(0);
+  object_ptr<const Codons> C_ = Args.evaluate().as_<Codons>(0);
   const Codons& C = *C_;
   int N = C.size();
   
-  object_ptr< const Vector<double> > codon_pi_ = Args.evaluate_as< Vector<double> >(1);
+  object_ptr< const Vector<double> > codon_pi_ = Args.evaluate().as_< Vector<double> >(1);
   const Vector<double>& codon_pi = *codon_pi_;
   assert(codon_pi.size() == N);
 
@@ -847,7 +858,7 @@ extern "C" closure builtin_function_fMutSel_q2(OperationArgs& Args)
   
   double omega = Args.evaluate(2).as_double();
 
-  object_ptr<const Box<Matrix>> nuc_Q_ = Args.evaluate_as<Box<Matrix>>(3);
+  object_ptr<const Box<Matrix>> nuc_Q_ = Args.evaluate().as_<Box<Matrix>>(3);
   const Matrix& nuc_Q = *nuc_Q_;
   assert(nuc_Q.size1() == nuc_Q.size2());
   assert(nuc_Q.size1() == C.getNucleotides().size());
