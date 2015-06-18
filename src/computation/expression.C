@@ -223,7 +223,7 @@ string expression::print() const
 
   // Print the (unparenthesized) sub-expressions
   vector<string> args(1+size());
-  args[0] = head->print();
+  args[0] = head.print();
   for(int i=0;i<size();i++)
     args[1+i] = sub[i].print();
 
@@ -297,7 +297,7 @@ string expression::print() const
 
 bool expression::is_exactly(const Object& O) const
 {
-  if (head->compare(O))
+  if (head.ptr()->compare(O))
     return true;
   else
     return false;
@@ -307,7 +307,7 @@ tribool expression::operator==(const expression& E) const
 {
   tribool same = true;
   {
-    tribool b = is_exactly(*E.head);
+    tribool b = is_exactly(*E.head.ptr());
     if (indeterminate(b))
       std::cerr<<"Warning: '"<<head<<"' and '"<<E.head<<"' are unsure if they are equal.\n\n";
 
@@ -339,7 +339,7 @@ tribool expression::compare(const Object& o) const
 }
 
 expression::expression(const expression_ref& H)
-  :head(H.ptr())
+  :head(H)
 { 
   assert(H.is_atomic());
 }
@@ -351,7 +351,7 @@ expression::expression(const expression_ref& H, const std::initializer_list< exp
 }
 
 expression::expression(const expression_ref& H, const std::vector< expression_ref >& S)
-  :head(H.ptr()),sub(S)
+  :head(H),sub(S)
 { 
   assert(H.is_atomic());
 }
@@ -613,7 +613,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
       if (index == -1)
 	throw myexception()<<"Dummy '"<<D<<"' is apparently not a bound variable in '"<<E<<"'?";
       else
-	return object_ptr<const index_var>(new index_var(index));
+	return new index_var(index);
     }
     // Constant
     else
@@ -1971,7 +1971,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 
     int r0 = rules[c][0];
 
-    simple_patterns.push_back(expression_ref{H.ptr(),S});
+    simple_patterns.push_back({H,S});
     simple_bodies.push_back({});
     
     // Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]

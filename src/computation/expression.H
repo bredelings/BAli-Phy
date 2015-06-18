@@ -10,7 +10,165 @@
 #include "computation/operator.H"
 
 /// An S-expression: An Object, and possibly an array of Objects.
-class expression_ref;
+class expression;
+
+class expression_ref
+{
+  object_ptr<const Object> O;
+  int type = 0;
+public:
+  /*
+  bool operator==(const expression_ref& E2) const
+  {
+    return E->maybe_equals(*E2.E);
+  }
+  */
+  void clear() {O.reset();type=0;}
+
+  bool is_expression() const
+  {
+    assert(type > 0);
+#ifndef NDEBUG
+    bool e = dynamic_cast<const expression*>(O.get());
+    assert(e == (type==1));
+#endif
+    return (type == 1);
+  }
+
+  bool is_atomic() const
+  {
+    return not is_expression();
+  }
+
+  const expression& E() const
+  {
+    assert(not is_atomic());
+    return *convert<expression>(O.get());
+  }
+
+  inline const object_ptr<const Object>& head() const;
+
+  inline const std::vector<expression_ref>& sub() const;
+
+  inline int size() const 
+  {
+    if (is_atomic())
+      return 0;
+    else
+      return sub().size();
+  }
+
+  expression_ref operator()(const std::vector<expression_ref>& args) const;
+
+  template <typename T>
+  bool is_a() const
+  {
+    return (bool)boost::dynamic_pointer_cast<const T>(head());
+  }
+
+  template <typename T>
+  object_ptr<const T> assert_is_a() const
+  {
+    return convert<const T>(head());
+  }
+
+  template <typename T>
+  const T& as_() const
+  {
+    return *convert<const T>(head());
+  }
+
+  bool is_exactly(const Object& O) const
+  {
+    return head()->compare(O);
+  }
+
+  bool is_int() const
+  {
+    return (bool)boost::dynamic_pointer_cast<const Int>(head());
+  }
+
+  int as_int() const
+  {
+    return *convert<Int>(head().get());
+  }
+
+  bool is_double() const
+  {
+    return (bool)boost::dynamic_pointer_cast<const Double>(head());
+  }
+
+  double as_double() const
+  {
+    return *convert<Double>(head().get());
+  }
+
+  bool is_char() const
+  {
+    return (bool)boost::dynamic_pointer_cast<const Char>(head());
+  }
+
+  char as_char() const
+  {
+    return *convert<Char>(head().get());
+  }
+
+  bool is_log_double() const
+  {
+    return (bool)boost::dynamic_pointer_cast<const Log_Double>(head());
+  }
+
+  log_double_t as_log_double() const
+  {
+    return *convert<Log_Double>(head().get());
+  }
+  
+  inline const object_ptr<const Object>& ptr() const {return O;}
+
+  inline explicit operator bool() const {return (bool)O;}
+
+  std::string print() const {return O->print();}
+
+  expression* clone_expression() const;
+
+  // Default
+  expression_ref() {}
+
+  expression_ref(expression* e);
+
+  expression_ref(const expression* e);
+
+  expression_ref(const object_ptr<const expression>& e):expression_ref(e.get()) { }
+
+  expression_ref(const object_ptr<expression>& e):expression_ref(e.get()) { }
+
+  expression_ref(const expression_ref& e, const std::initializer_list<expression_ref> v);
+
+  expression_ref(const expression_ref& e, const std::vector<expression_ref>& v);
+
+  // Object arguments
+  expression_ref(Object* v):O(v),type(2) { }
+
+  expression_ref(const Object* v):O(v),type(2) { }
+
+  expression_ref(const object_ptr<Object>& v):expression_ref(v.get()) { }
+
+  template <typename T>
+  expression_ref(const object_ptr<T>& v):expression_ref(v.get()) { }
+
+  expression_ref(const Object& o):expression_ref(o.clone()) { }
+
+  // Builtin-type arguments
+  expression_ref(const int& i):expression_ref(new Int(i)) {}
+  expression_ref(const double& d):expression_ref(new Double(d)) {}
+  expression_ref(const log_double_t& ld):expression_ref(new Log_Double(ld)) {}
+  expression_ref(const bool& b);
+  expression_ref(const std::string& s);
+  expression_ref(const char* s);
+  expression_ref(const char& c):expression_ref(new Char(c)) {}
+  expression_ref(const String& s):expression_ref(s.clone()) { }
+};
+
 
 /// This represents function application: a,b,c = a(b)(c) and not a(b(c)). The precedence is 18 (low).
 expression_ref operator,(const expression_ref&, const expression_ref&);
@@ -41,7 +199,7 @@ enum type_number {none=0,
 struct expression: public Object
 {
   // The head of the expression.
-  object_ptr<const Object> head;
+  expression_ref head;
 
   // An expression may or may not have sub-expressions
   std::vector< expression_ref > sub;
@@ -59,19 +217,19 @@ struct expression: public Object
   template <typename T>
   bool is_a() const
   {
-    return (bool)boost::dynamic_pointer_cast<const T>(head);
+    return head.is_a<T>();
   }
 
   template <typename T>
   object_ptr<const T> assert_is_a() const
   {
-    return convert<const T>(head);
+    return head.assert_is_a<T>();
   }
 
   template <typename T>
   const T& as_() const
   {
-    return *convert<const T>(head);
+    return head.as_<T>();
   }
 
   bool is_exactly(const Object& O) const;
@@ -86,6 +244,27 @@ struct expression: public Object
 
   virtual ~expression() {}
 };
+
+inline const object_ptr<const Object>& expression_ref::head() const 
+{
+  if (is_atomic())
+    return O;
+  else
+    return E().head.ptr();
+}
+
+inline const std::vector<expression_ref>& expression_ref::sub() const {return E().sub;}
+//        object_ptr<const Object>& sub()       {return E->sub;}
+
+inline expression* expression_ref::clone_expression() const {return E().clone();}
+
+inline expression_ref::expression_ref(expression* e):O(e),type(1) { }
+
+inline expression_ref::expression_ref(const expression* e):O(e),type(1) { }
+
+inline expression_ref::expression_ref(const expression_ref& e, const std::initializer_list<expression_ref> v):expression_ref(new expression(e,v)) { }
+
+inline expression_ref::expression_ref(const expression_ref& e, const std::vector<expression_ref>& v):expression_ref(new expression(e,v)) { }
 
 struct parameter: public Object
 {
@@ -290,6 +469,11 @@ expression_ref apply_expression(const expression_ref& E,const expression_ref& ar
 // Multiple-arg version
 expression_ref apply_expression(const expression_ref& E, const std::vector< expression_ref > args);
 
+inline expression_ref expression_ref::operator()(const std::vector<expression_ref>& args) const
+{
+  return apply(*this,args);
+}
+
 expression_ref lambda_expression(const Operator& O);
 expression_ref lambda_quantify(int dummy_index, const expression_ref& E);
 expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& E);
@@ -330,175 +514,6 @@ struct lambda2: public Object
 
   int type() const {return lambda2_type;}
   std::string print() const;
-};
-
-class expression_ref
-{
-  object_ptr<const Object> O;
-  int type = 0;
-public:
-  /*
-  bool operator==(const expression_ref& E2) const
-  {
-    return E->maybe_equals(*E2.E);
-  }
-  */
-  void clear() {O.reset();type=0;}
-
-  bool is_expression() const
-  {
-    assert(type > 0);
-#ifndef NDEBUG
-    bool e = dynamic_cast<const expression*>(O.get());
-    assert(e == (type==1));
-#endif
-    return (type == 1);
-  }
-
-  bool is_atomic() const
-  {
-    return not is_expression();
-  }
-
-  const expression& E() const
-  {
-    assert(not is_atomic());
-    return *convert<expression>(O.get());
-  }
-
-  inline const object_ptr<const Object>& head() const 
-  {
-    if (is_atomic())
-      return O;
-    else
-      return E().head;
-  }
-  //        object_ptr<const Object>& head()       {return E->head;}
-
-  inline const std::vector<expression_ref>& sub() const {return E().sub;}
-  //        object_ptr<const Object>& sub()       {return E->sub;}
-
-  inline int size() const 
-  {
-    if (is_atomic())
-      return 0;
-    else
-      return sub().size();
-  }
-
-  expression_ref operator()(const std::vector<expression_ref>& args) const
-  {
-    return apply(*this,args);
-  }
-
-  template <typename T>
-  bool is_a() const
-  {
-    return (bool)boost::dynamic_pointer_cast<const T>(head());
-  }
-
-  template <typename T>
-  object_ptr<const T> assert_is_a() const
-  {
-    return convert<const T>(head());
-  }
-
-  template <typename T>
-  const T& as_() const
-  {
-    return *convert<const T>(head());
-  }
-
-  bool is_exactly(const Object& O) const
-  {
-    return head()->compare(O);
-  }
-
-  bool is_int() const
-  {
-    return (bool)boost::dynamic_pointer_cast<const Int>(head());
-  }
-
-  int as_int() const
-  {
-    return *convert<Int>(head().get());
-  }
-
-  bool is_double() const
-  {
-    return (bool)boost::dynamic_pointer_cast<const Double>(head());
-  }
-
-  double as_double() const
-  {
-    return *convert<Double>(head().get());
-  }
-
-  bool is_char() const
-  {
-    return (bool)boost::dynamic_pointer_cast<const Char>(head());
-  }
-
-  char as_char() const
-  {
-    return *convert<Char>(head().get());
-  }
-
-  bool is_log_double() const
-  {
-    return (bool)boost::dynamic_pointer_cast<const Log_Double>(head());
-  }
-
-  log_double_t as_log_double() const
-  {
-    return *convert<Log_Double>(head().get());
-  }
-  
-  inline const object_ptr<const Object>& ptr() const {return O;}
-
-  inline explicit operator bool() const {return (bool)O;}
-
-  std::string print() const {return O->print();}
-
-  expression* clone_expression() const {return E().clone();}
-
-  // Default
-  expression_ref() {}
-
-  // Expression arguments
-  expression_ref(expression* e):O(e),type(1) { }
-
-  expression_ref(const expression* e):O(e),type(1) { }
-
-  expression_ref(const object_ptr<const expression>& e):expression_ref(e.get()) { }
-
-  expression_ref(const object_ptr<expression>& e):expression_ref(e.get()) { }
-
-  expression_ref(const expression_ref& e, const std::initializer_list<expression_ref> v):expression_ref(new expression(e,v)) { }
-
-  expression_ref(const expression_ref& e, const std::vector<expression_ref>& v):expression_ref(new expression(e,v)) { }
-
-  // Object arguments
-  expression_ref(Object* v):O(v),type(2) { }
-
-  expression_ref(const Object* v):O(v),type(2) { }
-
-  expression_ref(const object_ptr<Object>& v):expression_ref(v.get()) { }
-
-  template <typename T>
-  expression_ref(const object_ptr<T>& v):expression_ref(v.get()) { }
-
-  expression_ref(const Object& o):expression_ref(o.clone()) { }
-
-  // Builin-type arguments
-  expression_ref(const int& i):expression_ref(new Int(i)) {}
-  expression_ref(const double& d):expression_ref(new Double(d)) {}
-  expression_ref(const log_double_t& ld):expression_ref(new Log_Double(ld)) {}
-  expression_ref(const bool& b);
-  expression_ref(const std::string& s);
-  expression_ref(const char* s);
-  expression_ref(const char& c):expression_ref(new Char(c)) {}
-  expression_ref(const String& s):expression_ref(s.clone()) { }
 };
 
 inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
