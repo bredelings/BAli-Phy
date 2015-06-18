@@ -608,7 +608,7 @@ namespace MCMC {
     clog<<" [integer modifiable slice] move = "<<m_index<<endl;
 #endif
 
-    int v1 = P->get_modifiable_value_as<Int>(m_index);
+    int v1 = P->get_modifiable_value(m_index).as_int();
     double x1 = double(v1)+uniform();
 
     integer_modifiable_slice_function logp(*P, m_index, bounds, transform, inverse);

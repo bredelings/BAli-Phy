@@ -299,7 +299,7 @@ void Module::load_builtins(const module_loader& L)
     if (is_AST(decl,"Builtin"))
     {
       string function_name = decl.sub()[0].as_<String>();
-      int n = decl.sub()[1].as_<Int>();
+      int n = decl.sub()[1].as_int();
       string symbol_name = decl.sub()[2].as_<String>();
       string plugin_name = symbol_name;
 
@@ -676,7 +676,7 @@ Module& Module::operator+=(const expression_ref& E)
       // Determine precedence.
       int precedence = 9;
       if (decl.size() == 3)
-	precedence = decl.sub()[1].as_<Int>();
+	precedence = decl.sub()[1].as_int();
 
       // Find op names and declare fixity and precedence.
       for(const auto& op: decl.sub().back().sub())

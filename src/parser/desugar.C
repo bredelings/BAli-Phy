@@ -137,7 +137,7 @@ expression_ref infixpat_parse_neg(const Module& m, const symbol_info& op1, deque
   {
     if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
-    Int I = E1.sub()[0].as_<Int>();
+    int I = E1.sub()[0].as_int();
     I = -I;
 
     return infixpat_parse(m, op1, I, T);

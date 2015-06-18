@@ -100,11 +100,6 @@ public:
   bool has_bounds(int i) const;
   const Bounds<double>& get_bounds(int i) const;
 
-  /// Get the value of a modifiable
-  template <typename T>
-  const T& get_modifiable_value_as(int i) const {
-    return get_modifiable_value(i).as_<T>();
-  }
   /// Get SOME model modifiable values
   std::vector<expression_ref> get_modifiable_values(const std::vector<int>&) const;
 
@@ -115,16 +110,11 @@ public:
     std::vector<T> values(indices.size());
     
     for(int i=0;i<values.size();i++)
-      values[i] = get_modifiable_value_as<const T>(indices[i]);
+      values[i] = get_modifiable_value(indices[i]).as_<T>();
     
     return values;  
   }
 
-  /// Get A model parameter value
-  template <typename T>
-  const T& get_parameter_value_as(int i) const {
-    return get_parameter_value(i).as_<T>();
-  }
   /// Get SOME model parameter values
   template <typename T>
   std::vector<T> get_parameter_values_as(const std::vector<int>& indices) const
@@ -132,7 +122,7 @@ public:
     std::vector<T> values(indices.size());
     
     for(int i=0;i<values.size();i++)
-      values[i] = get_parameter_value_as<const T>(indices[i]);
+      values[i] = get_parameter_value(indices[i]).as_<T>();
     
     return values;  
   }
@@ -147,7 +137,7 @@ public:
     std::vector<T> values(n_parameters());
     
     for(int i=0;i<values.size();i++)
-      values[i] = get_parameter_value_as<T>(i);
+      values[i] = get_parameter_value(i).as_<T>();
     
     return values;  
   }

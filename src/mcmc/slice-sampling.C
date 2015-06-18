@@ -89,7 +89,7 @@ double modifiable_slice_function::operator()()
 
 double modifiable_slice_function::current_value() const
 {
-  return P.get_modifiable_value_as<Double>(m);
+  return P.get_modifiable_value(m).as_double();
 }
 
 modifiable_slice_function::modifiable_slice_function(Model& P_,int m_, const Bounds<double>& bounds)
@@ -127,7 +127,7 @@ double integer_modifiable_slice_function::operator()()
 
 double integer_modifiable_slice_function::current_value() const
 {
-  int x_integer = (int)((double)P.get_modifiable_value_as<Double>(m));
+  int x_integer = (int)(P.get_modifiable_value(m).as_double());
   assert(x_integer == (int)floor(current_x));
   return current_x;
 }
@@ -396,7 +396,7 @@ double constant_sum_modifiable_slice_function::operator()(double t)
 
   vector<double> x(N);
   for(int i=0;i<N;i++)
-    x[i] = P.get_modifiable_value_as<Double>(indices[i]);
+    x[i] = P.get_modifiable_value(indices[i]).as_double();
 
   double total = sum(x);
 
@@ -425,7 +425,7 @@ double constant_sum_modifiable_slice_function::operator()()
 
   double total = 0;
   for(int i=0;i<N;i++)
-    total += P.get_modifiable_value_as<Double>(indices[i]);
+    total += P.get_modifiable_value(indices[i]).as_double();
 
   double t = current_value();
 
@@ -435,7 +435,7 @@ double constant_sum_modifiable_slice_function::operator()()
 
 double constant_sum_modifiable_slice_function::current_value() const
 {
-  return P.get_modifiable_value_as<Double>(indices[n]);
+  return P.get_modifiable_value(indices[n]).as_double();
 }
 
 

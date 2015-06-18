@@ -579,7 +579,7 @@ double move_scale_branch(Model& P)
 
   int index = PP.find_parameter("lambdaScaleBranch");
 
-  int scale_branch = PP.get_parameter_value_as<Int>(index);
+  int scale_branch = PP.get_parameter_value(index).as_int();
 
   assert( scale_branch != -1);
 
@@ -617,7 +617,7 @@ double move_subst_type_branch(Model& P)
   for(int b=0;b<B;b++)
   {
     int index = P.find_parameter("Main.branchCat" + convertToString(b+1));
-    int cat = P.get_parameter_value_as<Int>(index);
+    int cat = P.get_parameter_value(index).as_int();
     if (cat == 1)
     {
       assert(which_branch == -1);

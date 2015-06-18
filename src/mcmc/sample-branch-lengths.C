@@ -421,7 +421,7 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
   for(int i=0; i<PP->n_branch_means(); i++)
   {
     Bounds<double> b2 = PP->get_bounds(PP->branch_mean_index(i));
-    double mu = PP->get_parameter_value_as<Double>(PP->branch_mean_index(i));
+    double mu = PP->get_parameter_value(PP->branch_mean_index(i)).as_double();
 
     if (b2.has_lower_bound and b2.lower_bound > 0)
     {
@@ -457,7 +457,7 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
   }
 
   for(int i=0;i<PP->n_branch_means();i++) 
-    P2->branch_mean_tricky(i, P2->get_parameter_value_as<Double>(P2->branch_mean_index(i)) * scale);
+    P2->branch_mean_tricky(i, P2->get_parameter_value(P2->branch_mean_index(i)).as_double() * scale);
   
 #ifndef NDEBUG
   owned_ptr<Parameters> P3 = P2;
