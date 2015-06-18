@@ -72,7 +72,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   //------------- 3. Record base probability and relative probability for x1
   
   for(int R: M_Y)
-    M.set_reg_value_in_context(R, Int(0), c);
+    M.set_reg_value_in_context(R, expression_ref(0), c);
 
   log_double_t pr_base_1 = M.probability_for_context(c);
 
@@ -81,9 +81,9 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   for(int i=0;i<M_Y.size();i++)
   {
     int R = M_Y[i];
-    M.set_reg_value_in_context(R, Int(1), c);
+    M.set_reg_value_in_context(R, expression_ref(1), c);
     log_double_t pr_offset = M.probability_for_context(c);
-    M.set_reg_value_in_context(R, Int(0), c);
+    M.set_reg_value_in_context(R, expression_ref(0), c);
     double delta = log(pr_offset/pr_base_1);
     pr_y_1[i] = exp<log_double_t>(-log1pexp(delta));
     
@@ -92,7 +92,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
   //------------- 4. Record base probability and relative probability for x2
 
-  M.set_reg_value_in_context(R_X, Int(x2), c);
+  M.set_reg_value_in_context(R_X, expression_ref(x2), c);
 
   log_double_t pr_base_2 = M.probability_for_context(c);
 
@@ -101,9 +101,9 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   for(int i=0;i<M_Y.size();i++)
   {
     int R = M_Y[i];
-    M.set_reg_value_in_context(R, Int(1), c);
+    M.set_reg_value_in_context(R, expression_ref(1), c);
     log_double_t pr_offset = M.probability_for_context(c);
-    M.set_reg_value_in_context(R, Int(0), c);
+    M.set_reg_value_in_context(R, expression_ref(0), c);
     double delta = log(pr_offset/pr_base_2);
     pr_y_2[i] = exp<log_double_t>(-log1pexp(delta));
     
@@ -115,7 +115,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
   //------------- 6. Set x depending on the choice
   if (choice == 0)
-    M.set_reg_value_in_context(R_X, Int(x1), c);
+    M.set_reg_value_in_context(R_X, expression_ref(x1), c);
     
   //------------- 7. Sample the Y[i] depending on the choice.
   vector<log_double_t> pr_y = choice?pr_y_2:pr_y_1;
@@ -125,7 +125,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     int R = M_Y[i];
     double pr = 1.0 - double(pr_y[i]);
     if (uniform() < pr)
-      M.set_reg_value_in_context(R, Int(1), c);
+      M.set_reg_value_in_context(R, expression_ref(1), c);
   }
 
   return constructor("()",0);
@@ -151,7 +151,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
   vector<log_double_t> pr_x(n);
   for(int i=0;i<pr_x.size();i++)
   {
-    M.set_reg_value_in_context(R_X, Int(i), c);
+    M.set_reg_value_in_context(R_X, expression_ref(i), c);
 
     pr_x[i] = M.probability_for_context(c);
   }
@@ -160,7 +160,7 @@ extern "C" closure builtin_function_gibbs_sample_categorical(OperationArgs& Args
 
   int x2 = choose(pr_x);
 
-  M.set_reg_value_in_context(R_X, Int(x2), c);
+  M.set_reg_value_in_context(R_X, expression_ref(x2), c);
 
   return constructor("()",0);
 }
