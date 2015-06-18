@@ -52,7 +52,7 @@ extern "C" closure builtin_function_arraySize(OperationArgs& Args)
 
 extern "C" closure builtin_function_getIndex(OperationArgs& Args)
 {
-  int n = Args.evaluate(0).as_int();
+  int n = Args.evaluate(1).as_int();
   // Do this second, so that evaluation of the 1st argument can't call expand_memory afterwards.
   const closure& C = Args.evaluate_slot_to_closure(0);
 
