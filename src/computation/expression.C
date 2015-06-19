@@ -2551,3 +2551,19 @@ expression_ref parse_object(const string& s)
   else
     throw myexception()<<"Can't convert '"<<s<<"' to Bool, Int, Double, or String!";
 }
+
+vector<double> vec_to_double(const std::vector<expression_ref>& v)
+{
+  vector<double> vv(v.size());
+  for(int i=0;i<v.size();i++)
+    vv[i] = v[i].as_double();
+  return vv;
+}
+
+vector<int> vec_to_int(const std::vector<expression_ref>& v)
+{
+  vector<int> vv(v.size());
+  for(int i=0;i<v.size();i++)
+    vv[i] = v[i].as_int();
+  return vv;
+}

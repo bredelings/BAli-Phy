@@ -791,4 +791,7 @@ inline std::string Box<std::pair<expression_ref,expression_ref>>::print() const
   return std::string("(") + first.print() + "," + second.print() + ")";
 }
 
+std::vector<double> vec_to_double(const std::vector<expression_ref>& v);
+std::vector<int> vec_to_int(const std::vector<expression_ref>& v);
+
 #endif

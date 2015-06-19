@@ -4,10 +4,9 @@
 #include "computation/computation.H"
 #include "object.H"
 
-template<typename U, typename V>
-std::vector<U> get_vector_from_list(OperationArgs& Args, int slot)
+inline std::vector<expression_ref> get_vector_from_list(OperationArgs& Args, int slot)
 {
-  std::vector<U> z;
+  std::vector<expression_ref> z;
   const closure* top = &Args.evaluate_slot_to_closure(slot);
   while(top->exp.size())
   {
@@ -21,7 +20,7 @@ std::vector<U> get_vector_from_list(OperationArgs& Args, int slot)
     int next_reg = top->lookup_in_env( next_index );
 
     // Add the element to the list.
-    z.push_back( Args.evaluate_reg_to_object(element_reg).as_<V>() );
+    z.push_back( Args.evaluate_reg_to_object(element_reg) );
 
     // Move to the next element or end
     top = &Args.evaluate_reg_to_closure(next_reg);
@@ -30,10 +29,9 @@ std::vector<U> get_vector_from_list(OperationArgs& Args, int slot)
   return z;
 }
 
-template<typename U, typename V>
-std::vector<U> get_vector_from_list_(OperationArgs& Args, int slot)
+inline std::vector<expression_ref> get_vector_from_list_(OperationArgs& Args, int slot)
 {
-  std::vector<U> z;
+  std::vector<expression_ref> z;
   const closure* top = &Args.evaluate_slot_to_closure_(slot);
   while(top->exp.size())
   {
@@ -47,7 +45,7 @@ std::vector<U> get_vector_from_list_(OperationArgs& Args, int slot)
     int next_reg = top->lookup_in_env( next_index );
 
     // Add the element to the list.
-    z.push_back( Args.evaluate_reg_to_object_(element_reg).as_<V>() );
+    z.push_back( Args.evaluate_reg_to_object_(element_reg) );
 
     // Move to the next element or end
     top = &Args.evaluate_reg_to_closure_(next_reg);

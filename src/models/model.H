@@ -152,8 +152,6 @@ public:
   /// Set A model parameter value
           void set_parameter_value(const std::string& p, const expression_ref& value);
   /// Set SOME of the model parameter values
-          void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
-  /// Set SOME of the model parameter values
           void set_parameter_values(const std::vector<int>& indices,const std::vector<expression_ref>& p);
 
   /// Construct an empty model

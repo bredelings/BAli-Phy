@@ -111,15 +111,6 @@ void Model::set_parameter_value(const string& p_name,const expression_ref& value
   set_parameter_values({i},{value});
 }
 
-void Model::set_parameter_values(const vector<int>& indices,const vector<Double>& p)
-{
-  vector< expression_ref > p2(p.size());
-  for(int i=0;i<p.size();i++)
-    p2[i] = double(p[i]);
-
-  set_parameter_values(indices,p2);
-}
-
 void Model::set_parameter_values(const vector<int>& indices,const vector<expression_ref>& p)
 {
   assert(indices.size() == p.size());
