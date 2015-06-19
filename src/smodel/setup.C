@@ -755,10 +755,10 @@ expression_ref process_stack_Multi(const module_loader& L,
   }
   else if (model_args[0] == "M2") 
   {
-    formula_expression_ref p1 = def_parameter("M2.fAaINV", Double(1.0/3), between(0,1));
-    formula_expression_ref p2 = def_parameter("M2.fNeutral", Double(1.0/3), between(0,1));
-    formula_expression_ref p3 = def_parameter("M2.fSelected", Double(1.0/3), between(0,1));
-    formula_expression_ref m2_omega = def_parameter("M2.omega", Double(1.0), lower_bound(0));
+    formula_expression_ref p1 = def_parameter("M2.fAaINV", 1.0/3, between(0,1));
+    formula_expression_ref p2 = def_parameter("M2.fNeutral", 1.0/3, between(0,1));
+    formula_expression_ref p3 = def_parameter("M2.fSelected", 1.0/3, between(0,1));
+    formula_expression_ref m2_omega = def_parameter("M2.omega", 1.0, lower_bound(0));
     formula_expression_ref D = (identifier("DiscreteDistribution"), Tuple(p1,0.0)&
 						    Tuple(p2,1.0)&
 						    Tuple(p3,m2_omega)&
@@ -782,8 +782,8 @@ expression_ref process_stack_Multi(const module_loader& L,
     {
       string pname_f = "M3.f" + convertToString(i+1);
       string pname_w = "M3.omega" + convertToString(i+1);
-      formula_expression_ref f = def_parameter("M3.f"     + convertToString(i+1), Double(1.0/n), between(0,1));
-      formula_expression_ref w = def_parameter("M3.omega" + convertToString(i+1), Double(1.0), lower_bound(0), (identifier("uniform"), 0.0, 1.0));
+      formula_expression_ref f = def_parameter("M3.f"     + convertToString(i+1), 1.0/n, between(0,1));
+      formula_expression_ref w = def_parameter("M3.omega" + convertToString(i+1), 1.0, lower_bound(0), (identifier("uniform"), 0.0, 1.0));
 
       D = Tuple(f,w)&D;
       F = f&F;
@@ -807,9 +807,9 @@ expression_ref process_stack_Multi(const module_loader& L,
     {
       string pname_f = "M3.f" + convertToString(i+1);
       string pname_w = "M3.omega" + convertToString(i+1);
-      formula_expression_ref f = def_parameter("M3.f"     + convertToString(i+1), Double(1.0/n), between(0,1));
+      formula_expression_ref f = def_parameter("M3.f"     + convertToString(i+1), 1.0/n, between(0,1));
       fraction.insert(fraction.begin(), f.exp());
-      formula_expression_ref w = def_parameter("M3.omega" + convertToString(i+1), Double(1.0), lower_bound(0));
+      formula_expression_ref w = def_parameter("M3.omega" + convertToString(i+1), 1.0, lower_bound(0));
       // P *= ((1-f)*exponential_pdf(-log(w),0.05)/w + f*exponential_pdf(log(w),0.05)/w);
       w.add_expression( constructor(":~",2) + w.exp() + (identifier("logExponential"), 0.05) );
 

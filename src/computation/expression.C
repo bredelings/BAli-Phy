@@ -2549,7 +2549,7 @@ expression_ref parse_object(const string& s)
   else if (s.size() >= 2 and s[0] == '"' and s[s.size()-1] == '"')
     return String(s.substr(1,s.size()-2));
   else
-    throw myexception()<<"Can't convert '"<<s<<"' to Bool, Int, Double, or String!";
+    throw myexception()<<"Can't convert '"<<s<<"' to bool, int, double, or string!";
 }
 
 vector<double> vec_to_double(const std::vector<expression_ref>& v)

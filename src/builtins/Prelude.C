@@ -32,7 +32,7 @@ extern "C" closure builtin_function_log(OperationArgs& Args)
     return {log(xx)};
   }
 
-  throw myexception()<<"log: object '"<<x.print()<<"' is not Double, Int, or Log_Double";
+  throw myexception()<<"log: object '"<<x.print()<<"' is not double, int, or log_double";
 }
 
 extern "C" closure builtin_function_pow(OperationArgs& Args)
@@ -46,7 +46,7 @@ extern "C" closure builtin_function_pow(OperationArgs& Args)
   else if (y.is_int())
     yy = y.as_int();
   else
-    throw myexception()<<"pow: exponent '"<<x.print()<<"' is not Double or Int";
+    throw myexception()<<"pow: exponent '"<<x.print()<<"' is not double or int";
     
   if (x.is_double())
   {
@@ -66,7 +66,7 @@ extern "C" closure builtin_function_pow(OperationArgs& Args)
     return {pow(xx,yy)};
   }
 
-  throw myexception()<<"pow: object '"<<x.print()<<"' is not Double, Int, or Log_Double";
+  throw myexception()<<"pow: object '"<<x.print()<<"' is not double, int, or log_double";
 }
 
 extern "C" closure builtin_function_sqrt(OperationArgs& Args)
@@ -155,7 +155,7 @@ extern "C" closure builtin_function_add(OperationArgs& Args)
   else if (x.is_char())
     return {x.as_char() + y.as_char()};
   else
-    throw myexception()<<"Add: object '"<<x.print()<<"' is not Double, Int, Log_Double, or Char'";
+    throw myexception()<<"Add: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
 extern "C" closure builtin_function_multiply(OperationArgs& Args)
@@ -172,7 +172,7 @@ extern "C" closure builtin_function_multiply(OperationArgs& Args)
   else if (x.is_char())
     return {x.as_char() * y.as_char()};
   else
-    throw myexception()<<"Multiply: object '"<<x.print()<<"' is not Double, Int, Log_double, or Char'";
+    throw myexception()<<"Multiply: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
 extern "C" closure builtin_function_divide(OperationArgs& Args)
@@ -189,7 +189,7 @@ extern "C" closure builtin_function_divide(OperationArgs& Args)
   else if (x.is_char())
     return {x.as_char() / y.as_char()};
   else
-    throw myexception()<<"Divide: object '"<<x.print()<<"' is not Double, Int, Log_double, or Char'";
+    throw myexception()<<"Divide: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
 extern "C" closure builtin_function_mod(OperationArgs& Args)
@@ -204,7 +204,7 @@ extern "C" closure builtin_function_mod(OperationArgs& Args)
   else if (x.is_char())
     return { x.as_char() % y.as_char() };
   else
-    throw myexception()<<"Mod: object '"<<x.print()<<"' is not Int, or Char'";
+    throw myexception()<<"Mod: object '"<<x.print()<<"' is not int, or char'";
 }
 
 extern "C" closure builtin_function_subtract(OperationArgs& Args)
@@ -221,7 +221,7 @@ extern "C" closure builtin_function_subtract(OperationArgs& Args)
   else if (x.is_char())
     return {x.as_char() - y.as_char()};
   else
-    throw myexception()<<"Minus: object '"<<x.print()<<"' is not Double, Int, Log_double, or Char'";
+    throw myexception()<<"Minus: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
 extern "C" closure builtin_function_negate(OperationArgs& Args)
@@ -235,7 +235,7 @@ extern "C" closure builtin_function_negate(OperationArgs& Args)
   else if (x.is_char())
     return {-x.as_char()};
   else
-    throw myexception()<<"Negate: object '"<<x.print()<<"' is not Double, Int, or Char'";
+    throw myexception()<<"Negate: object '"<<x.print()<<"' is not double, int, or char'";
 }
 
 extern "C" closure builtin_function_equals(OperationArgs& Args)
@@ -252,7 +252,7 @@ extern "C" closure builtin_function_equals(OperationArgs& Args)
   else if (x.is_char())
     return {x.as_char() == y.as_char()};
   else
-    throw myexception()<<"==: object '"<<x.print()<<"' is not Double, Int, Log_double, or Char'";
+    throw myexception()<<"==: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
 extern "C" closure builtin_function_notequals(OperationArgs& Args)
@@ -269,7 +269,7 @@ extern "C" closure builtin_function_notequals(OperationArgs& Args)
   else if (x.is_char())
     return {x.as_char() != y.as_char()};
   else
-    throw myexception()<<"/=: object '"<<x.print()<<"' is not Double, Int, Log_double, or Char'";
+    throw myexception()<<"/=: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
 extern "C" closure builtin_function_greaterthan(OperationArgs& Args)
@@ -286,7 +286,7 @@ extern "C" closure builtin_function_greaterthan(OperationArgs& Args)
   else if (x.is_char())
     return {x.as_char() > y.as_char()};
   else
-    throw myexception()<<">: object '"<<x.print()<<"' is not Double, Int, Log_double, or Char'";
+    throw myexception()<<">: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
 extern "C" closure builtin_function_greaterthanorequal(OperationArgs& Args)
@@ -303,7 +303,7 @@ extern "C" closure builtin_function_greaterthanorequal(OperationArgs& Args)
   else if (x.is_char())
     return {x.as_char() >= y.as_char()};
   else
-    throw myexception()<<">=: object '"<<x.print()<<"' is not Double, Int, Log_double, or Char'";
+    throw myexception()<<">=: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
 extern "C" closure builtin_function_lessthan(OperationArgs& Args)
@@ -320,7 +320,7 @@ extern "C" closure builtin_function_lessthan(OperationArgs& Args)
   else if (x.is_char())
     return {x.as_char() < y.as_char()};
   else
-    throw myexception()<<"<: object '"<<x.print()<<"' is not Double, Int, Log_double, or Char'";
+    throw myexception()<<"<: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
 extern "C" closure builtin_function_lessthanorequal(OperationArgs& Args)
@@ -337,7 +337,7 @@ extern "C" closure builtin_function_lessthanorequal(OperationArgs& Args)
   else if (x.is_char())
     return {x.as_char() <= y.as_char()};
   else
-    throw myexception()<<"<=: object '"<<x.print()<<"' is not Double, Int, Log_double, or Char'";
+    throw myexception()<<"<=: object '"<<x.print()<<"' is not double, int, log_double, or char'";
 }
 
 extern "C" closure builtin_function_doubleToLogDouble(OperationArgs& Args)
@@ -398,7 +398,7 @@ extern "C" closure builtin_function_show(OperationArgs& Args)
   else if (x.is_a<String>())
     *v = x.as_<String>();
   else
-    throw myexception()<<"Add: object '"<<x.print()<<"' is not Double, Int, Log_Double, Char, or String'";
+    throw myexception()<<"Add: object '"<<x.print()<<"' is not double, int, log_double, char, or string'";
 
   return v;
 }
@@ -443,7 +443,7 @@ extern "C" closure builtin_function_read_int(OperationArgs& Args)
   int i;
   if (can_be_converted_to(s,i))
     return {i};
-  throw myexception()<<"Cannot convert String '"<<s<<"' to int!";
+  throw myexception()<<"Cannot convert string '"<<s<<"' to int!";
 }
 
 extern "C" closure builtin_function_read_double(OperationArgs& Args)
@@ -452,6 +452,6 @@ extern "C" closure builtin_function_read_double(OperationArgs& Args)
   double d;
   if (can_be_converted_to(s,d))
     return {d};
-  throw myexception()<<"Cannot convert String '"<<s<<"' to double!";
+  throw myexception()<<"Cannot convert string '"<<s<<"' to double!";
 }
 

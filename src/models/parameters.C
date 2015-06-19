@@ -311,15 +311,14 @@ int data_partition::n_states() const
 
 vector<double> data_partition::distribution() const
 {
-  // Add Op to convert list to vector<Double>
   int s = P->smodel_for_partition[partition_index];
-  return P->evaluate(P->SModels[s].distribution).as_<Box<vector<double>>>();
+  return P->evaluate(P->SModels[s].distribution).as_<Vector<double>>();
 }
 
 vector<unsigned> data_partition::state_letters() const
 {
   int s = P->smodel_for_partition[partition_index];
-  return P->evaluate(P->SModels[s].state_letters).as_<Box<vector<unsigned>>>();
+  return P->evaluate(P->SModels[s].state_letters).as_<Vector<unsigned>>();
 }
 
 vector<double> data_partition::frequencies(int m) const
