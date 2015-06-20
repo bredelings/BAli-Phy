@@ -18,7 +18,7 @@ struct closure
   /// Is the closure not empty
   operator bool() const {return exp and exp.head();}
 
-  bool operator==(const closure& C2) const {return exp.ptr()->maybe_equals(*C2.exp.ptr()) and Env == C2.Env;}
+  bool operator==(const closure& C2) const {return exp == C2.exp and Env == C2.Env;}
 
   int lookup_in_env(int i) const {return ::lookup_in_env(Env,i);}
 
