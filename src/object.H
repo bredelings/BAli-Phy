@@ -54,28 +54,6 @@ public:
     return indeterminate;
   }
 
-  bool equals(const Object& O) const
-  {
-    return compare(O) == true;
-  }
-
-  bool not_equals(const Object& O) const
-  {
-    return compare(O) == false;
-  }
-
-  bool maybe_equals(const Object& O) const
-  {
-    tribool m = compare(O);
-    return (m or indeterminate(m));
-  }
-
-  bool maybe_not_equals(const Object& O) const
-  {
-    tribool m = compare(O);
-    return (not m or indeterminate(m));
-  }
-
   int ref_count() const {return _refs;}
 
   virtual int type() const {return 0;}
