@@ -17,12 +17,12 @@ class expression_ref
   object_ptr<const Object> O;
   int type = 0;
 public:
-  /*
-  bool operator==(const expression_ref& E2) const
+
+  tribool operator==(const expression_ref& E2) const
   {
-    return E->maybe_equals(*E2.E);
+    return ptr()->compare(*E2.ptr());
   }
-  */
+
   void clear() {O.reset();type=0;}
 
   bool is_expression() const;
