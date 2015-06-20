@@ -23,6 +23,11 @@ public:
     return ptr()->compare(*E2.ptr());
   }
 
+  tribool operator==(const Object& O) const
+  {
+    return ptr()->compare(O);
+  }
+
   void clear() {O.reset();type=0;}
 
   bool is_expression() const;
