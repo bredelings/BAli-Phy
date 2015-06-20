@@ -10,7 +10,7 @@
 #include "computation/operator.H"
 
 /// An S-expression: An Object, and possibly an array of Objects.
-class expression;
+struct expression;
 
 class expression_ref
 {
@@ -25,15 +25,7 @@ public:
   */
   void clear() {O.reset();type=0;}
 
-  bool is_expression() const
-  {
-    assert(type > 0);
-#ifndef NDEBUG
-    bool e = dynamic_cast<const expression*>(O.get());
-    assert(e == (type==1));
-#endif
-    return (type == 1);
-  }
+  bool is_expression() const;
 
   bool is_atomic() const
   {
@@ -251,6 +243,16 @@ inline const object_ptr<const Object>& expression_ref::head() const
     return O;
   else
     return E().head.ptr();
+}
+
+inline bool expression_ref::is_expression() const
+{
+  assert(type > 0);
+#ifndef NDEBUG
+  bool e = dynamic_cast<const expression*>(O.get());
+  assert(e == (type==1));
+#endif
+  return (type == 1);
 }
 
 inline const std::vector<expression_ref>& expression_ref::sub() const {return E().sub;}
