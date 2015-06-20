@@ -307,7 +307,7 @@ tribool expression::operator==(const expression& E) const
 {
   tribool same = true;
   {
-    tribool b = is_exactly(*E.head.ptr());
+    tribool b = (head == E.head);
     if (indeterminate(b))
       std::cerr<<"Warning: '"<<head<<"' and '"<<E.head<<"' are unsure if they are equal.\n\n";
 
@@ -317,7 +317,7 @@ tribool expression::operator==(const expression& E) const
 
   for(int i=0;i<size();i++) 
   {
-    tribool b = sub[i].ptr()->compare(*E.sub[i].ptr());
+    tribool b = (sub[i] == E.sub[i]);
 
     if (indeterminate(b))
       std::cerr<<"Warning: '"<<sub[i]<<"' and '"<<E.sub[i]<<"' are unsure if they are equal.\n\n";
@@ -1824,7 +1824,7 @@ expression_ref make_case_expression(const expression_ref& T, const vector<expres
 int find_object(const vector<expression_ref>& v, const expression_ref& E)
 {
   for(int i=0;i<v.size();i++)
-    if (E.ptr()->compare(*v[i].ptr()))
+    if (E == v[i])
       return i;
   return -1;
 }

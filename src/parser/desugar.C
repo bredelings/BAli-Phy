@@ -606,7 +606,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       expression_ref True {AST_node("SimpleQual"),{constructor("Prelude.True",0)}};
 
       assert(v.size() >= 2);
-      if (v.size() == 2 and v[1].ptr()->compare(*True.ptr()))
+      if (v.size() == 2 and (v[1] == True))
 	E2 = {AST_node("List"),{v[0]}};
       else if (v.size() == 2)
 	E2 = {E.head(),{v[0],v[1],True}};
