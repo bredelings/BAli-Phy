@@ -43,7 +43,7 @@ public:
     return *convert<expression>(O.get());
   }
 
-  inline const object_ptr<const Object>& head() const;
+  inline const expression_ref& head() const;
 
   inline const std::vector<expression_ref>& sub() const;
 
@@ -60,64 +60,64 @@ public:
   template <typename T>
   bool is_a() const
   {
-    return (bool)boost::dynamic_pointer_cast<const T>(head());
+    return (bool)boost::dynamic_pointer_cast<const T>(head().ptr());
   }
 
   template <typename T>
   object_ptr<const T> assert_is_a() const
   {
-    return convert<const T>(head());
+    return convert<const T>(head().ptr());
   }
 
   template <typename T>
   const T& as_() const
   {
-    return *convert<const T>(head());
+    return *convert<const T>(head().ptr());
   }
 
   bool is_exactly(const Object& O) const
   {
-    return head()->compare(O);
+    return head().ptr()->compare(O);
   }
 
   bool is_int() const
   {
-    return (bool)boost::dynamic_pointer_cast<const Int>(head());
+    return (bool)boost::dynamic_pointer_cast<const Int>(ptr());
   }
 
   int as_int() const
   {
-    return *convert<Int>(head().get());
+    return *convert<Int>(ptr().get());
   }
 
   bool is_double() const
   {
-    return (bool)boost::dynamic_pointer_cast<const Double>(head());
+    return (bool)boost::dynamic_pointer_cast<const Double>(ptr());
   }
 
   double as_double() const
   {
-    return *convert<Double>(head().get());
+    return *convert<Double>(ptr().get());
   }
 
   bool is_char() const
   {
-    return (bool)boost::dynamic_pointer_cast<const Char>(head());
+    return (bool)boost::dynamic_pointer_cast<const Char>(ptr());
   }
 
   char as_char() const
   {
-    return *convert<Char>(head().get());
+    return *convert<Char>(ptr().get());
   }
 
   bool is_log_double() const
   {
-    return (bool)boost::dynamic_pointer_cast<const Log_Double>(head());
+    return (bool)boost::dynamic_pointer_cast<const Log_Double>(ptr());
   }
 
   log_double_t as_log_double() const
   {
-    return *convert<Log_Double>(head().get());
+    return *convert<Log_Double>(ptr().get());
   }
   
   inline const object_ptr<const Object>& ptr() const {return O;}
@@ -242,12 +242,12 @@ struct expression: public Object
   virtual ~expression() {}
 };
 
-inline const object_ptr<const Object>& expression_ref::head() const 
+inline const expression_ref& expression_ref::head() const 
 {
   if (is_atomic())
-    return O;
+    return *this;
   else
-    return E().head.ptr();
+    return E().head;
 }
 
 inline bool expression_ref::is_expression() const

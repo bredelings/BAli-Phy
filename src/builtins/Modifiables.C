@@ -73,7 +73,7 @@ extern "C" closure builtin_function_is_modifiable(OperationArgs& Args)
   int R1 = Args.evaluate_slot_to_reg(0);
 
   const reg_heap& M = Args.memory();
-  if (M.access(R1).C.exp.head()->type() == modifiable_type)
+  if (M.access(R1).C.exp.head().ptr()->type() == modifiable_type)
     return constructor("Prelude.True",0);
   else
     return constructor("Prelude.False",0);

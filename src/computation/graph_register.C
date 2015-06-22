@@ -723,7 +723,7 @@ void reg_heap::set_used_input(int R1, int R2)
 
   // An index_var's result only changes if the thing the index-var points to also changes.
   // So, we may as well forbid using an index_var as an input.
-  assert(access(R2).C.exp.head()->type() != index_var_type);
+  assert(access(R2).C.exp.head().ptr()->type() != index_var_type);
 
   int rc1 = computation_index_for_reg(R1);
   int rc2 = computation_index_for_reg(R2);
@@ -851,7 +851,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   if (not result) return;
 
   // If the value is a pre-existing reg_var, then call it.
-  if (result.exp.head()->type() == index_var_type)
+  if (result.exp.head().ptr()->type() == index_var_type)
   {
     int index = result.exp.as_<index_var>().index;
 
@@ -2211,7 +2211,7 @@ bool reg_heap::reg_is_fully_up_to_date_in_context(int R, int c)
 bool reg_heap::reg_is_fully_up_to_date(int R) const
 {
   // 1. Handle index_var nodes!
-  int type = access(R).C.exp.head()->type();
+  int type = access(R).C.exp.head().ptr()->type();
   if (type == index_var_type)
   {
     assert( not reg_is_changeable(R) );
@@ -2239,7 +2239,7 @@ bool reg_heap::reg_is_fully_up_to_date(int R) const
   if (not E.size()) return true;
 
   // If the result is a lambda function, then R is up-to-date.
-  if (E.head()->type() != constructor_type) return true;
+  if (E.head().ptr()->type() != constructor_type) return true;
 
   // If we get here, this had better be a constructor!
   assert(is_a<constructor>(E));
@@ -2346,7 +2346,7 @@ const closure& reg_heap::lazy_evaluate_unchangeable(int& R)
 
 int reg_heap::get_modifiable_value_in_context(int R, int c)
 {
-  assert( access(R).C.exp.head()->type() == modifiable_type);
+  assert( access(R).C.exp.head().ptr()->type() == modifiable_type);
   assert( reg_is_changeable(R) );
 
   reroot_at_context(c);

@@ -62,7 +62,7 @@ int get_n_lambdas(const expression_ref& E)
 {
   expression_ref E2 = E;
   int n = 0;
-  while(E2.head()->type() == lambda2_type)
+  while(E2.head().ptr()->type() == lambda2_type)
   {
     E2 = E2.sub()[0];
     n++;
@@ -75,7 +75,7 @@ expression_ref peel_n_lambdas(const expression_ref& E, int n)
   expression_ref E2 = E;
   for(int i=0;i<n;i++)
   {
-    assert(E2.head()->type() == lambda2_type);
+    assert(E2.head().ptr()->type() == lambda2_type);
     E2 = E2.sub()[0];
   }
   return E2;
@@ -162,7 +162,7 @@ closure Case::operator()(OperationArgs& Args) const
     const expression_ref& this_body = Args.reference(2 + 2*i);
 
     // If its _, then match it.
-    if (this_case.head()->type() == dummy_type)
+    if (this_case.head().ptr()->type() == dummy_type)
     {
       // We standardize to avoid case x of v -> f(v) so that f cannot reference v.
       assert(is_wildcard(this_case));
@@ -175,7 +175,7 @@ closure Case::operator()(OperationArgs& Args) const
       // FIXME! Convert every pattern head to an integer...
 
       // If we are a constructor, then match iff the the head matches.
-      if (obj.exp.head()->compare(*this_case.head()))
+      if (obj.exp.head() == this_case.head())
       {
 #ifndef NDEBUG
 	if (obj.exp.size())

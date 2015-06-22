@@ -42,7 +42,7 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
   T.pop_front();
 
   // We are starting with a Neg
-  if (E1.head()->compare(AST_node("neg")))
+  if (E1.head() == AST_node("neg"))
   {
     if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
@@ -123,7 +123,7 @@ expression_ref infixpat_parse_neg(const Module& m, const symbol_info& op1, deque
   T.pop_front();
 
   // We are starting with a Neg float
-  if (E1.head()->compare(AST_node("neg_h_float")))
+  if (E1.head() == AST_node("neg_h_float"))
   {
     if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
@@ -133,7 +133,7 @@ expression_ref infixpat_parse_neg(const Module& m, const symbol_info& op1, deque
     return infixpat_parse(m, op1, d, T);
   }
   // We are starting with a Neg integer
-  else if (E1.head()->compare(AST_node("neg_h_integer")))
+  else if (E1.head() == AST_node("neg_h_integer"))
   {
     if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 

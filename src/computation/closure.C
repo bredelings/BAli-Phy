@@ -27,7 +27,7 @@ closure get_trimmed(const closure& C)
 
 closure get_trimmed(closure&& C)
 {
-  if (C.exp.head()->type() == trim_type)
+  if (C.exp.head().ptr()->type() == trim_type)
   {
     expression_ref old = C.exp;
     const vector<int>& keep = as_<Vector<int>>(old.sub()[0]);

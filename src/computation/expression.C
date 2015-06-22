@@ -60,7 +60,7 @@ bool parse_let_expression(const expression_ref& E, vector<expression_ref>& vars,
   vars.clear();
   bodies.clear();
 
-  if (E.head()->type() != let_type) return false;
+  if (E.head().ptr()->type() != let_type) return false;
 
   // There should be an odd number of arguments.
   assert(E.size()%2 == 1);
@@ -81,7 +81,7 @@ bool parse_indexed_let_expression(const expression_ref& E, vector<expression_ref
 {
   bodies.clear();
 
-  if (E.head()->type() != let2_type) return false;
+  if (E.head().ptr()->type() != let2_type) return false;
 
   T = E.sub()[0];
   const int L = E.size()-1;
@@ -98,7 +98,7 @@ bool parse_case_expression(const expression_ref& E, expression_ref& T, vector<ex
   patterns.clear();
   bodies.clear();
 
-  if (E.head()->type() != case_type) return false;
+  if (E.head().ptr()->type() != case_type) return false;
 
   T = E.sub()[0];
   const int L = (E.size()-1)/2;
@@ -1180,14 +1180,14 @@ std::set<dummy> get_bound_indices(const expression_ref& E)
   if (not E.size()) return bound;
 
   // Make sure we don't try to substitute for lambda-quantified dummies
-  if (E.head()->type() == lambda_type)
+  if (E.head().ptr()->type() == lambda_type)
   {
     if (is_a<dummy>(E.sub()[0]))
       bound.insert(as_<dummy>(E.sub()[0]));
   }
   else 
   {
-    if (E.head()->type() == let_type)
+    if (E.head().ptr()->type() == let_type)
     {
       const int L = (E.size()-1)/2;
       for(int i=0;i<L;i++)
@@ -1242,7 +1242,7 @@ void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dumm
   if (not E.size()) return;
 
   // for case expressions get_bound_indices doesn't work correctly.
-  if (E.head()->type() == case_type)
+  if (E.head().ptr()->type() == case_type)
   {
     get_free_indices2(E.sub()[0], bound, free);
 
@@ -1374,7 +1374,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 
 	bool D_is_bound = false;
 	for(const auto& b: bound)
-	  if (D.is_exactly(b)) D_is_bound=true;
+	  if (D == b) D_is_bound=true;
 	if (D_is_bound) continue;
 
 	// 2. If some of the free variables in E2 are bound in patterns[i], then do 
@@ -1440,7 +1440,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
   {
     // Don't substitute into local variables
     for(const auto& b: bound)
-      if (D.is_exactly(b)) return false;
+      if (D == b) return false;
     
     std::set<dummy> fv2 = get_free_indices(E2);
     std::set<dummy> overlap = intersection(bound,fv2);
@@ -1522,7 +1522,7 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
 
 	bool D_is_bound = false;
 	for(const auto& b: bound)
-	  if (D.is_exactly(b)) D_is_bound=true;
+	  if (D == b) D_is_bound=true;
 
 	if (not D_is_bound)
 	  count += n_free_occurrences(bodies[i], D);
@@ -1537,7 +1537,7 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
 
   // Don't substitute into local variables
   for(const auto& b: bound)
-    if (D.is_exactly(b)) return 0;
+    if (D == b) return 0;
     
   // Since this is an expression, count occurrences in sub-expressions
   int count = 0;
@@ -2183,7 +2183,7 @@ expression_ref def_function(const expression_ref& pattern, const expression_ref&
 
 bool is_WHNF(const expression_ref& E)
 {
-  int type = E.head()->type();
+  int type = E.head().ptr()->type();
   if (E.size())
   {
     assert(not is_a<lambda>(E));
@@ -2211,7 +2211,7 @@ bool is_index_var(const expression_ref& E)
 
 bool is_dummy(const expression_ref& E)
 {
-  return (E.head()->type() == dummy_type);
+  return (E.head().ptr()->type() == dummy_type);
 }
 
 bool is_parameter(const expression_ref& E)
@@ -2221,7 +2221,7 @@ bool is_parameter(const expression_ref& E)
 
 bool is_modifiable(const expression_ref& E)
 {
-  bool result = E.head()->type() == modifiable_type;
+  bool result = E.head().ptr()->type() == modifiable_type;
   assert(result == (bool)is_a<modifiable>(E));
   return result;
 }

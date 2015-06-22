@@ -237,7 +237,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       assert(reg_type == reg::type_t::unknown);
 
     /*---------- Below here, there is no call, and no result. ------------*/
-    const int type = access(R).C.exp.head()->type();
+    const int type = access(R).C.exp.head().ptr()->type();
     if (type == index_var_type)
     {
       assert( not reg_is_changeable(R) );
@@ -269,7 +269,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 #ifndef NDEBUG
     else if (is_a<Trim>(access(R).C.exp))
       std::abort();
-    else if (access(R).C.exp.head()->type() == parameter_type)
+    else if (access(R).C.exp.head().ptr()->type() == parameter_type)
       std::abort();
 #endif
 
@@ -421,7 +421,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
       assert(reg_type == reg::type_t::unknown);
 
     /*---------- Below here, there is no call, and no result. ------------*/
-    const int type = access(R).C.exp.head()->type();
+    const int type = access(R).C.exp.head().ptr()->type();
     if (type == index_var_type)
     {
       access(R).type = reg::type_t::index_var;
@@ -446,7 +446,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
 #ifndef NDEBUG
     else if (is_a<Trim>(access(R).C.exp))
       std::abort();
-    else if (access(R).C.exp.head()->type() == parameter_type)
+    else if (access(R).C.exp.head().ptr()->type() == parameter_type)
       std::abort();
 #endif
 

@@ -75,7 +75,7 @@ const expression_ref& OperationArgs::evaluate_(int slot)
 
 int OperationArgs::allocate(closure&& C)
 {
-  if (C.exp.head()->type() == index_var_type)
+  if (C.exp.head().ptr()->type() == index_var_type)
   {
     int index = C.exp.as_<index_var>().index;
 

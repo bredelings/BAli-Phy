@@ -190,24 +190,22 @@ void context::set_modifiable_value_(int index, closure&& C)
   set_reg_value(R, std::move(C) );
 }
 
-void context::set_modifiable_value(int index, const expression_ref& O)
+void context::set_modifiable_value(int index, const expression_ref& E)
 {
-  auto& v = O.head();
-  assert(not O.size());
-  assert(not dynamic_pointer_cast<const index_var>(v));
-  assert(not dynamic_pointer_cast<const reg_var>(v));
-  assert(not dynamic_pointer_cast<const identifier>(v));
-  set_modifiable_value_(index, v);
+  assert(not E.size());
+  assert(not E.is_a<index_var>());
+  assert(not E.is_a<reg_var>());
+  assert(not E.is_a<identifier>());
+  set_modifiable_value_(index, E);
 }
 
-void context::set_parameter_value(int index, const expression_ref& O)
+void context::set_parameter_value(int index, const expression_ref& E)
 {
-  auto& v = O.head();
-  assert(not O.size());
-  assert(not dynamic_pointer_cast<const index_var>(v));
-  assert(not dynamic_pointer_cast<const reg_var>(v));
-  assert(not dynamic_pointer_cast<const identifier>(v));
-  set_parameter_value_(index, v);
+  assert(not E.size());
+  assert(not E.is_a<index_var>());
+  assert(not E.is_a<reg_var>());
+  assert(not E.is_a<identifier>());
+  set_parameter_value_(index, E);
 }
 
 void context::set_parameter_value_expression(int index, const expression_ref& O)
