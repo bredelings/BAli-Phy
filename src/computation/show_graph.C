@@ -375,7 +375,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     expression_ref F = C.access(R).C.exp;
 
     bool print_record = false;
-    if (F.head().ptr()->type() == operation_type or F.head().ptr()->type() == constructor_type)
+    if (F.head().type() == operation_type or F.head().type() == constructor_type)
     {
       if (not is_a<Case>(F) and not is_a<Apply>(F))
       {
@@ -417,7 +417,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	  label += "| <" + convertToString(R2) + "> " + escape(reg_name) + " ";
 	}
     }
-    else if (F.head().ptr()->type() == index_var_type)
+    else if (F.head().type() == index_var_type)
     {
       int index = as_<index_var>(F).index;
 
@@ -462,7 +462,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       o<<",fillcolor=\"#007700\",fontcolor=white";
     else if (C.reg_is_changeable(R))
       o<<",fillcolor=\"#770000\",fontcolor=white";
-    else if (C.access(R).C.exp.head().ptr()->type() == index_var_type)
+    else if (C.access(R).C.exp.head().type() == index_var_type)
       o<<",fillcolor=\"#77bbbb\"";
     else if (C.reg_is_constant(R))
       o<<",fillcolor=\"#bbbb77\"";
