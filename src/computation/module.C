@@ -889,7 +889,7 @@ expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
   if (not E.size()) return E;
 
   // Resolve the parts of the expression
-  object_ptr<expression> V = E.clone_expression();
+  object_ptr<expression> V = E.as_expression().clone();
   for(int i=0;i<V->size();i++)
     V->sub[i] = resolve_refs(P, V->sub[i]);
 

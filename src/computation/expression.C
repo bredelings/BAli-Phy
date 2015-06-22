@@ -669,7 +669,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 
   // If we've gotten this far, just transform the sub-expressions.
   // (This could be: Op, constructor, 
-  expression* V = E.clone_expression();
+  expression* V = E.as_expression().clone();
   for(int i=0;i<V->size();i++)
     V->sub[i] = indexify(V->sub[i], variables);
   return V;
@@ -779,7 +779,7 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
 
   // If we've gotten this far, just transform the sub-expressions.
   // (This could be: Op, constructor, 
-  expression* V = E.clone_expression();
+  expression* V = E.as_expression().clone();
   for(int i=0;i<V->size();i++)
     V->sub[i] = deindexify(V->sub[i], variables);
   return V;
@@ -940,7 +940,7 @@ expression_ref trim_normalize(const expression_ref& E)
   }
   else
   {
-    expression* V = E.clone_expression();
+    expression* V = E.as_expression().clone();
     for(int i=0;i<E.size();i++)
       V->sub[i] = trim_normalize(V->sub[i]);
 
@@ -1066,7 +1066,7 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
   }
   else
   {
-    expression* V = E.clone_expression();
+    expression* V = E.as_expression().clone();
     for(int i=0;i<E.size();i++)
       V->sub[i] = remap_free_indices(V->sub[i], mapping, depth);
     return V;
@@ -1136,7 +1136,7 @@ expression_ref trim_unnormalize(const expression_ref& E)
   }
   else
   {
-    expression* V = E.clone_expression();
+    expression* V = E.as_expression().clone();
     for(int i=0;i<V->size();i++)
       V->sub[i] = trim_unnormalize(untrim(V->sub[i]));
 
@@ -1454,7 +1454,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
       int new_index = std::max(max_index(fv2),max_index(bound))+1;
 
       // Do the alpha renaming
-      object_ptr<expression> E1_ (E1.clone_expression());
+      object_ptr<expression> E1_ (E1.as_expression().clone());
       for(const auto& i:overlap)
 	alpha_rename(E1_, dummy(i), dummy(new_index++));
       E1 = E1_;
@@ -1471,7 +1471,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
   }
 
   // Since this is an expression, substitute into sub-expressions
-  object_ptr<expression> E1_ (E1.clone_expression());
+  object_ptr<expression> E1_ (E1.as_expression().clone());
   for(int i=0;i<E1_->size();i++)
     changed = (do_substitute(E1_->sub[i], D, E2) or changed);
 
@@ -2262,7 +2262,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
   if (is_a<lambda>(E))
   {
     assert(E.size() == 2);
-    expression* V = E.clone_expression();
+    expression* V = E.as_expression().clone();
     V->sub[1] = launchbury_unnormalize(E.sub()[1]);
 
     if (V->sub[1].ptr() == E.sub()[1].ptr())
@@ -2274,7 +2274,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
   // 6. Case
   if (is_a<Case>(E))
   {
-    expression* V = E.clone_expression();
+    expression* V = E.as_expression().clone();
 
     // Unormalize the object
     V->sub[0] = launchbury_unnormalize(V->sub[0]);
@@ -2290,7 +2290,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
   // 4. Constructor
   if (is_a<constructor>(E) or is_a<Operation>(E))
   {
-    expression* V = E.clone_expression();
+    expression* V = E.as_expression().clone();
     for(int i=0;i<E.size();i++)
       V->sub[i] = launchbury_unnormalize(E.sub()[i]);
     return V;
@@ -2369,7 +2369,7 @@ expression_ref unlet(const expression_ref& E)
   if (is_a<lambda>(E))
   {
     assert(E.size() == 2);
-    expression* V = E.clone_expression();
+    expression* V = E.as_expression().clone();
     V->sub[1] = unlet(E.sub()[1]);
 
     if (V->sub[1].ptr() == E.sub()[1].ptr())
@@ -2381,7 +2381,7 @@ expression_ref unlet(const expression_ref& E)
   // 6. Case
   if (is_a<Case>(E))
   {
-    expression* V = E.clone_expression();
+    expression* V = E.as_expression().clone();
 
     // Unormalize the object
     V->sub[0] = unlet(V->sub[0]);
@@ -2397,7 +2397,7 @@ expression_ref unlet(const expression_ref& E)
   // 4. Constructor
   if (is_a<constructor>(E) or is_a<Operation>(E))
   {
-    expression* V = E.clone_expression();
+    expression* V = E.as_expression().clone();
     for(int i=0;i<E.size();i++)
       V->sub[i] = unlet(E.sub()[i]);
     return V;

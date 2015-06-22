@@ -94,7 +94,7 @@ expression_ref graph_normalize(const expression_ref& E)
   if (is_a<lambda>(E))
   {
     assert(E.size() == 2);
-    object_ptr<expression> V = E.clone_expression();
+    object_ptr<expression> V = E.as_expression().clone();
     V->sub[1] = graph_normalize(E.sub()[1]);
 
     if (V->sub[1].ptr() == E.sub()[1].ptr())
@@ -106,7 +106,7 @@ expression_ref graph_normalize(const expression_ref& E)
   // 6. Case
   if (is_a<Case>(E))
   {
-    object_ptr<expression> V = E.clone_expression();
+    object_ptr<expression> V = E.as_expression().clone();
 
     // Normalize the object
     V->sub[0] = graph_normalize(V->sub[0]);
@@ -134,7 +134,7 @@ expression_ref graph_normalize(const expression_ref& E)
   {
     int var_index = get_safe_binder_index(E);
 
-    object_ptr<expression> E2 = E.clone_expression();
+    object_ptr<expression> E2 = E.as_expression().clone();
 
     // Actually we probably just need x[i] not to be free in E.sub()[i]
     vector<expression_ref> vars;
@@ -162,7 +162,7 @@ expression_ref graph_normalize(const expression_ref& E)
   // 5. Let 
   if (is_a<let_obj>(E))
   {
-    object_ptr<expression> V = E.clone_expression();
+    object_ptr<expression> V = E.as_expression().clone();
 
     // Normalize the object
     V->sub[0] = graph_normalize(V->sub[0]);
@@ -2495,7 +2495,7 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, vector<int>& En
   if (not E.size()) return E;
 
   // Translate the parts of the expression
-  object_ptr<expression> V = E.clone_expression();
+  object_ptr<expression> V = E.as_expression().clone();
   for(int i=0;i<V->size();i++)
     V->sub[i] = translate_refs(V->sub[i], Env);
 

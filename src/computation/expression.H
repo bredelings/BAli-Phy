@@ -37,7 +37,7 @@ public:
     return not is_expression();
   }
 
-  const expression& E() const
+  const expression& as_expression() const
   {
     assert(not is_atomic());
     return *convert<expression>(O.get());
@@ -120,8 +120,6 @@ public:
   inline explicit operator bool() const {return (bool)O;}
 
   std::string print() const {return O->print();}
-
-  expression* clone_expression() const;
 
   // Default
   expression_ref() {}
@@ -237,10 +235,10 @@ struct expression: public Object
 
 inline const expression_ref& expression_ref::head() const 
 {
-  if (is_atomic())
-    return *this;
+  if (is_expression())
+    return as_expression().head;
   else
-    return E().head;
+    return *this;
 }
 
 inline bool expression_ref::is_expression() const
@@ -253,10 +251,8 @@ inline bool expression_ref::is_expression() const
   return (type == 1);
 }
 
-inline const std::vector<expression_ref>& expression_ref::sub() const {return E().sub;}
+inline const std::vector<expression_ref>& expression_ref::sub() const {return as_expression().sub;}
 //        object_ptr<const Object>& sub()       {return E->sub;}
-
-inline expression* expression_ref::clone_expression() const {return E().clone();}
 
 inline expression_ref::expression_ref(expression* e):O(e),type(1) { }
 
