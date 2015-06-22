@@ -39,7 +39,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
   const closure* top = &M.lazy_evaluate(next_reg, c);
   while(top->exp.size())
   {
-    assert(is_exactly(top->exp,":"));
+    assert(has_constructor(top->exp,":"));
     assert(top->exp.size() == 2);
 
     int element_index = as_<index_var>(top->exp.sub()[0]).index;
@@ -56,7 +56,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     // Move to the next element or end
     top = &M.lazy_evaluate(next_reg, c);
   }
-  assert(is_exactly(top->exp,"[]"));
+  assert(has_constructor(top->exp,"[]"));
 
   //------------- 2. Figure out t and the next t ------------//
 

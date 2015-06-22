@@ -266,15 +266,15 @@ expression_ref coerce_to_RA(const module_loader& L,
 {
   auto result = ::result(M, L, {"SModel", "Distributions","Range"});
 
-  if (is_exactly(result, "SModel.F81"))
+  if (has_constructor(result, "SModel.F81"))
     return M;
 
-  if (is_exactly(result, "SModel.ReversibleMarkov"))
+  if (has_constructor(result, "SModel.ReversibleMarkov"))
     return M;
 
   try 
   {
-    if (is_exactly(result, "SModel.ReversibleFrequency"))
+    if (has_constructor(result, "SModel.ReversibleFrequency"))
       throw myexception()<<"Cannot construct CTMC model from frequency model alone!";
 
     if (result.is_a<Box<Matrix>>())
@@ -592,7 +592,7 @@ expression_ref coerce_to_frequency_model(const module_loader& L,
 					 const object_ptr<const alphabet>& /* a */,
 					 const shared_ptr< const valarray<double> >& /* frequencies */)
 {
-  if (is_exactly(result(M,L,{"SModel","Distributions","Range"}), "SModel.ReversibleFrequency"))
+  if (has_constructor(result(M,L,{"SModel","Distributions","Range"}), "SModel.ReversibleFrequency"))
     return M;
 
   throw myexception()<<": '"<<M<<"' is not an exchange model.";
@@ -614,7 +614,7 @@ expression_ref coerce_to_MM(const module_loader& L,
 				    const expression_ref& M,
 				    const object_ptr<const alphabet>& a)
 {
-  if (M and is_exactly(result(M, L,{"SModel","Distributions","Range"}), "SModel.MixtureModel"))
+  if (M and has_constructor(result(M, L,{"SModel","Distributions","Range"}), "SModel.MixtureModel"))
     return M;
 
   try { 
@@ -642,7 +642,7 @@ expression_ref coerce_to_MMM(const module_loader& L,
 				     const expression_ref& M,
 				     const object_ptr<const alphabet>& a)
 {
-  if (is_exactly(result(M,L,{"SModel","Distributions","Range"}), "SModel.MixtureModels"))
+  if (has_constructor(result(M,L,{"SModel","Distributions","Range"}), "SModel.MixtureModels"))
     return M;
 
   try { 

@@ -123,16 +123,16 @@ bool is_tuple_name(const string& s)
 string print_list(const expression_ref& E)
 {
   vector<string> V;
-  if (not is_exactly(E,":")) std::abort();
+  if (not has_constructor(E,":")) std::abort();
 
   expression_ref E2 = E;
-  while(is_exactly(E2,":"))
+  while(has_constructor(E2,":"))
   {
     assert(E2.size() == 2);
     V.push_back(E2.sub()[0].print());
     E2 = E2.sub()[1];
   }
-  if (is_exactly(E2,"[]"))
+  if (has_constructor(E2,"[]"))
     return "["+join(V,", ")+"]";
   else {
     V.push_back(E2.print());
@@ -264,7 +264,7 @@ string expression::print() const
     {
       if (sub[0].size())
       {
-	if (sub[0].is_exactly(O) and O.associativity()==assoc_left)
+	if (sub[0].head() == O and O.associativity()==assoc_left)
 	  pargs[1] = args[1];
 	else if (::is_a<Operator>(sub[0]))
 	  if (::as_<Operator>(sub[0]).precedence() > O.precedence())
@@ -272,7 +272,7 @@ string expression::print() const
       }
       if (sub[1].size())
       {
-	if (sub[1].is_exactly(O) and O.associativity()==assoc_right)
+	if (sub[1].head() == O and O.associativity()==assoc_right)
 	  pargs[2] = args[2];
 	else if (::is_a<Operator>(sub[1]))
 	  if (::as_<Operator>(sub[1]).precedence() > O.precedence())
@@ -293,14 +293,6 @@ string expression::print() const
   }
 
   return print_operator_expression( pargs );
-}
-
-bool expression::is_exactly(const Object& O) const
-{
-  if (head == O)
-    return true;
-  else
-    return false;
 }
 
 tribool expression::operator==(const expression& E) const
@@ -1684,13 +1676,13 @@ vector<expression_ref> get_ref_vector_from_list(const expression_ref& E)
   vector<expression_ref> V;
 
   expression_ref E2 = E;
-  while(is_exactly(E2,":"))
+  while(has_constructor(E2,":"))
   {
     assert(E2.size() == 2);
     V.push_back(E2.sub()[0]);
     E2 = E2.sub()[1];
   }
-  assert(is_exactly(E2,"[]"));
+  assert(has_constructor(E2,"[]"));
 
   return V;
 }
@@ -2464,14 +2456,9 @@ expression_ref unlet(const expression_ref& E)
   return E;
 }
 
-bool is_exactly(const expression_ref& E, const Object& O)
+bool has_constructor(const expression_ref& E, const string& s)
 {
-  return E.is_exactly(O);
-}
-
-bool is_exactly(const expression_ref& E, const string& s)
-{
-  return is_exactly(E, constructor(s,-1));
+  return E.head() == constructor(s,-1);
 }
 
 const expression_ref v0 = dummy(0);

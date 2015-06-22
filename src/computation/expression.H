@@ -75,11 +75,6 @@ public:
     return *convert<const T>(head().ptr());
   }
 
-  bool is_exactly(const Object& O) const
-  {
-    return head().ptr()->compare(O);
-  }
-
   bool is_int() const
   {
     return (bool)boost::dynamic_pointer_cast<const Int>(ptr());
@@ -228,8 +223,6 @@ struct expression: public Object
   {
     return head.as_<T>();
   }
-
-  bool is_exactly(const Object& O) const;
 
   expression() {}
 
@@ -568,9 +561,7 @@ const T& as_(const expression_ref& E)
   return E.as_<T>();
 }
 
-bool is_exactly(const expression_ref&, const std::string&);
-
-bool is_exactly(const expression_ref&, const Object& O);
+bool has_constructor(const expression_ref&, const std::string&);
 
 std::string tuple_name(int n);
 bool is_tuple_name(const std::string&);

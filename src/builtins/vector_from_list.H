@@ -10,7 +10,7 @@ inline std::vector<expression_ref> get_vector_from_list(OperationArgs& Args, int
   const closure* top = &Args.evaluate_slot_to_closure(slot);
   while(top->exp.size())
   {
-    assert(is_exactly(top->exp,":"));
+    assert(has_constructor(top->exp,":"));
     assert(top->exp.size() == 2);
 
     int element_index = top->exp.sub()[0].as_<index_var>().index;
@@ -25,7 +25,7 @@ inline std::vector<expression_ref> get_vector_from_list(OperationArgs& Args, int
     // Move to the next element or end
     top = &Args.evaluate_reg_to_closure(next_reg);
   }
-  assert(is_exactly(top->exp,"[]"));
+  assert(has_constructor(top->exp,"[]"));
   return z;
 }
 
@@ -35,7 +35,7 @@ inline std::vector<expression_ref> get_vector_from_list_(OperationArgs& Args, in
   const closure* top = &Args.evaluate_slot_to_closure_(slot);
   while(top->exp.size())
   {
-    assert(is_exactly(top->exp,":"));
+    assert(has_constructor(top->exp,":"));
     assert(top->exp.size() == 2);
 
     int element_index = as_<index_var>(top->exp.sub()[0]).index;
@@ -50,7 +50,7 @@ inline std::vector<expression_ref> get_vector_from_list_(OperationArgs& Args, in
     // Move to the next element or end
     top = &Args.evaluate_reg_to_closure_(next_reg);
   }
-  assert(is_exactly(top->exp,"[]"));
+  assert(has_constructor(top->exp,"[]"));
   return z;
 }
 
