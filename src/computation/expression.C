@@ -297,7 +297,7 @@ string expression::print() const
 
 bool expression::is_exactly(const Object& O) const
 {
-  if (head.ptr()->compare(O))
+  if (head == O)
     return true;
   else
     return false;
@@ -1212,7 +1212,7 @@ void alpha_rename(object_ptr<expression>& E, const expression_ref& x, const expr
   // Make sure we don't try to substitute for lambda-quantified dummies
   if (is_a<lambda>(E))
   {
-    assert(same_head(E->sub[0], x));
+    assert(E->sub[0] == x);
     E->sub[0] = y;
     E->sub[1] = substitute(E->sub[1], x, y);
   }
@@ -1347,7 +1347,7 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
   // If this is the relevant dummy, then substitute
   if (E1.size() == 0)
   {
-    if (same_head(E1,D))
+    if (E1 == D)
     {
       E1 = E2;
       return true;
@@ -1497,7 +1497,7 @@ int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
   // If this is the relevant dummy, then substitute
   if (E1.size() == 0)
   {
-    if (same_head(E1,D))
+    if (E1 == D)
       return 1;
     // If this is any other constant, then it doesn't contain the dummy
     else
@@ -2472,14 +2472,6 @@ bool is_exactly(const expression_ref& E, const Object& O)
 bool is_exactly(const expression_ref& E, const string& s)
 {
   return is_exactly(E, constructor(s,-1));
-}
-
-bool same_head(const expression_ref& E1, const expression_ref& E2)
-{
-  if (E1.head()->compare(*E2.head()))
-    return true;
-  else
-    return false;
 }
 
 const expression_ref v0 = dummy(0);
