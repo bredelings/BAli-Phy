@@ -8,6 +8,7 @@
 #include <initializer_list>
 #include "object.H"
 #include "computation/operator.H"
+#include "computation/type_constant.H"
 
 /// An S-expression: An Object, and possibly an array of Objects.
 struct expression;
@@ -15,7 +16,7 @@ struct expression;
 class expression_ref
 {
   object_ptr<const Object> O;
-  int type = 0;
+  type_constant type_ = null_type;
 public:
 
   tribool operator==(const expression_ref& E2) const
@@ -28,7 +29,7 @@ public:
     return ptr()->compare(O);
   }
 
-  void clear() {O.reset();type=0;}
+  void clear() {O.reset();type_=null_type;}
 
   bool is_expression() const;
 
@@ -37,6 +38,11 @@ public:
     return not is_expression();
   }
 
+  type_constant type() const
+  {
+    return ptr()->type();
+  }
+  
   const expression& as_expression() const
   {
     assert(not is_atomic());
@@ -137,9 +143,9 @@ public:
   expression_ref(const expression_ref& e, const std::vector<expression_ref>& v);
 
   // Object arguments
-  expression_ref(Object* v):O(v),type(2) { }
+  expression_ref(Object* v):O(v),type_(unknown_type) { }
 
-  expression_ref(const Object* v):O(v),type(2) { }
+  expression_ref(const Object* v):O(v),type_(unknown_type) { }
 
   expression_ref(const object_ptr<Object>& v):expression_ref(v.get()) { }
 
@@ -169,21 +175,6 @@ expression_ref operator&(const expression_ref&, const expression_ref&);
  *  By separating out the head from the children, each expression now represents
  *  a node in a directed acyclic graph, where each node has an Object on in.
  */
-
-enum type_number {none=0,
-		  operation_type=1,
-		  parameter_type, 
-		  modifiable_type,
-		  index_var_type,
-		  dummy_type,
-		  trim_type,
-		  let_type,
-		  case_type,
-		  let2_type,
-		  constructor_type,
-		  lambda_type,
-		  lambda2_type,
-};
 
 /// An array of Objects.
 struct expression: public Object
@@ -222,6 +213,8 @@ struct expression: public Object
     return head.as_<T>();
   }
 
+  type_constant type() const {return expression_type;}
+
   expression() {}
 
   expression(const expression_ref&);
@@ -243,20 +236,20 @@ inline const expression_ref& expression_ref::head() const
 
 inline bool expression_ref::is_expression() const
 {
-  assert(type > 0);
+  assert(type_ == expression_type);
 #ifndef NDEBUG
   bool e = dynamic_cast<const expression*>(O.get());
-  assert(e == (type==1));
+  assert(e == (type == expression_type));
 #endif
-  return (type == 1);
+  return (type_ == expression_type);
 }
 
 inline const std::vector<expression_ref>& expression_ref::sub() const {return as_expression().sub;}
 //        object_ptr<const Object>& sub()       {return E->sub;}
 
-inline expression_ref::expression_ref(expression* e):O(e),type(1) { }
+inline expression_ref::expression_ref(expression* e):O(e),type_(expression_type) { }
 
-inline expression_ref::expression_ref(const expression* e):O(e),type(1) { }
+inline expression_ref::expression_ref(const expression* e):O(e),type_(expression_type) { }
 
 inline expression_ref::expression_ref(const expression_ref& e, const std::initializer_list<expression_ref> v):expression_ref(new expression(e,v)) { }
 
@@ -270,7 +263,7 @@ struct parameter: public Object
   std::string print() const {return parameter_name;}
   tribool compare(const Object& o) const;
   
-  int type() const {return parameter_type;}
+  type_constant type() const {return parameter_type;}
 
   parameter(const std::string& s);
 };
@@ -284,7 +277,7 @@ struct index_var: public Object
   std::string print() const;
   tribool compare(const Object& o) const;
   
-  int type() const {return index_var_type;}
+  type_constant type() const {return index_var_type;}
 
   index_var(int i):index(i) {}
 };
@@ -303,7 +296,7 @@ struct dummy: public Object
   
   bool operator<(const dummy&) const;
 
-  int type() const {return dummy_type;}
+  type_constant type() const {return dummy_type;}
 
   dummy(int i):index(i) {}
   dummy(const std::string& s):index(-1),name(s) { assert(name != "_");}
@@ -366,7 +359,7 @@ struct Trim: public Object
   Trim* clone() const {return new Trim(*this);}
   tribool compare(const Object& o) const;
 
-  int type() const {return trim_type;}
+  type_constant type() const {return trim_type;}
 
   std::string print() const;
 };
@@ -395,7 +388,7 @@ struct let_obj: public Object
 
   tribool compare(const Object& o) const;
 
-  int type() const {return let_type;}
+  type_constant type() const {return let_type;}
 
   std::string print() const;
 };
@@ -433,7 +426,7 @@ struct constructor: public Operator
 
   std::string name() const {return f_name;}
 
-  int type() const {return constructor_type;}
+  type_constant type() const {return constructor_type;}
 
   constructor(const std::string&, int n);
 };
@@ -499,7 +492,7 @@ struct lambda: public Object
 {
   lambda* clone() const {return new lambda(*this);}
   tribool compare(const Object& o) const;
-  int type() const {return lambda_type;}
+  type_constant type() const {return lambda_type;}
   std::string print() const;
 };
 
@@ -508,7 +501,7 @@ struct lambda2: public Object
   lambda2* clone() const {return new lambda2(*this);}
   tribool compare(const Object& o) const;
 
-  int type() const {return lambda2_type;}
+  type_constant type() const {return lambda2_type;}
   std::string print() const;
 };
 

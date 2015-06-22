@@ -48,7 +48,7 @@ struct Case: public Operation
 
   std::string name() const;
 
-  int type() const {return case_type;}
+  type_constant type() const {return case_type;}
 
   Case():Operation(2) {}
 };
@@ -67,7 +67,7 @@ struct Let: public Operation
 
   std::string name() const;
 
-  int type() const {return let2_type;}
+  type_constant type() const {return let2_type;}
 
   Let():Operation(2) {}
 };
@@ -86,7 +86,7 @@ struct modifiable: public Operation
 
   std::string name() const;
 
-  int type() const {return modifiable_type;}
+  type_constant type() const {return modifiable_type;}
 
   modifiable():Operation(2) {}
 };

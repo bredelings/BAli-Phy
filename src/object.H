@@ -8,6 +8,7 @@
 #include "util.H"
 
 #include "math/log-double.H"
+#include "computation/type_constant.H"
 
 using boost::logic::tribool;
 using boost::logic::indeterminate;
@@ -56,7 +57,7 @@ public:
 
   int ref_count() const {return _refs;}
 
-  virtual int type() const {return 0;}
+  virtual type_constant type() const {return unknown_type;}
 
   virtual std::string print() const {return std::string("unprintable[")+demangle(typeid(*this).name())+"]";}
 
@@ -114,6 +115,8 @@ public:
   //  template <typename U>
   //  operator POD<U>() const {return t;}
 
+  type_constant type() const {return unknown_type;}
+
   POD<T>& operator=(const POD<T>& p2) {t = p2.t; return *this;}
 
   POD<T>& operator=(const T& t2) {t = t2; return *this;}
@@ -140,6 +143,30 @@ public:
   //  template <typename U>
   //  POD(const boost::enable_if_c<boost::is_convertible<U,T>::type,U>& u):t(u) { }
 };
+
+template<> 
+inline type_constant POD<int>::type() const
+{
+  return int_type;
+}
+
+template<> 
+inline type_constant POD<double>::type() const
+{
+  return double_type;
+}
+
+template<> 
+inline type_constant POD<log_double_t>::type() const
+{
+  return log_double_type;
+}
+
+template<> 
+inline type_constant POD<char>::type() const
+{
+  return char_type;
+}
 
 template<> 
 inline std::string Box<std::string>::print() const

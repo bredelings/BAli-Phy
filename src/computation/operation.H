@@ -10,6 +10,7 @@ class OperationArgs;
 
 #include "operator.H"
 #include "closure.H"
+#include "type_constant.H"
 
 struct Operation: public Operator
 {
@@ -19,7 +20,7 @@ struct Operation: public Operator
   virtual Operation* clone() const=0;
   virtual closure operator()(OperationArgs& Args) const = 0;
 
-  int type() const {return 1;} // See expression.H to change this
+  type_constant type() const {return operation_type;} // See expression.H to change this
   Operation(int n):n_args_(n) { }
 };
 
