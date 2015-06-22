@@ -572,8 +572,6 @@ bool is_exactly(const expression_ref&, const std::string&);
 
 bool is_exactly(const expression_ref&, const Object& O);
 
-bool same_head(const expression_ref&, const expression_ref&);
-
 std::string tuple_name(int n);
 bool is_tuple_name(const std::string&);
 constructor tuple_head(int n);
