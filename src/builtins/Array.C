@@ -10,7 +10,7 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
   // We can't do negative-sized arrays
   assert(n >= 0);
   // The function should be represented as a heap variable...
-  int f_reg = C.lookup_in_env(as_<index_var>(f).index);
+  int f_reg = C.lookup_in_env(f.as_<index_var>().index);
   
   object_ptr<expression> exp = new expression(constructor("Array",n));
   exp->sub.resize(n);

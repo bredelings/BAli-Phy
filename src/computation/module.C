@@ -388,15 +388,15 @@ void parse_combinator_application(const expression_ref& E, string& name, vector<
 {
   expression_ref E2 = E;
 
-  assert(is_a<Apply>(E));
+  assert(E.head().is_a<Apply>());
   
   // 1. Find the head.  This should be a var, not an apply.
 #ifndef NDEBUG
-  if (not is_a<identifier>(E.sub()[0]))
+  if (not E.sub()[0].is_a<identifier>())
     throw myexception()<<"Combinator definition '"<<E<<"' does not start with variable!";
 #endif  
 
-  name = as_<identifier>(E.sub()[0]).name;
+  name = E.sub()[0].as_<identifier>().name;
 
   // 2. Look through the arguments
   for(int i=1;i<E.size();i++)
@@ -869,9 +869,9 @@ std::ostream& operator<<(std::ostream& o, const Module& D)
 expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
 {
   // Replace parameters with the appropriate reg_var: of value whatever
-  if (is_a<identifier>(E))
+  if (E.is_a<identifier>())
   {
-    string name = as_<identifier>(E).name;
+    string name = E.as_<identifier>().name;
     if (not is_qualified_symbol(name))
     {
       for(const auto& module: P)

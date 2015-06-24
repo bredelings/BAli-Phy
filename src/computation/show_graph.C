@@ -144,9 +144,9 @@ expression_ref subst_referenced_vars(const expression_ref& E, const vector<int>&
     else
       return E;
   }
-  else if ( is_a<index_var>(E) )
+  else if ( E.is_a<index_var>() )
   {
-    const auto loc = names.find( lookup_in_env(Env, as_<index_var>(E).index) );
+    const auto loc = names.find( lookup_in_env(Env, E.as_<index_var>().index) );
     if (loc == names.end())
       return E;
     else
@@ -244,9 +244,9 @@ expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& 
 {
   if (not E.size())
   {
-    if (is_a<reg_var>(E))
+    if (E.is_a<reg_var>())
     {
-      auto loc = ids.find(as_<reg_var>(E).target);
+      auto loc = ids.find(E.as_<reg_var>().target);
       if (loc != ids.end())
 	return identifier(loc->second);
       else
@@ -377,7 +377,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     bool print_record = false;
     if (F.head().type() == operation_type or F.head().type() == constructor_type)
     {
-      if (not is_a<Case>(F) and not is_a<Apply>(F))
+      if (not F.head().is_a<Case>() and not F.head().is_a<Apply>())
       {
 	print_record = true;
 	o<<"shape = record, ";
@@ -417,9 +417,9 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	  label += "| <" + convertToString(R2) + "> " + escape(reg_name) + " ";
 	}
     }
-    else if (F.head().type() == index_var_type)
+    else if (F.type() == index_var_type)
     {
-      int index = as_<index_var>(F).index;
+      int index = F.as_<index_var>().index;
 
       int R2 = C.access(R).C.lookup_in_env( index );
 

@@ -211,7 +211,7 @@ void add_real_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
   {
     auto range = P.get_range_for_reg(r);
     double rate = P.get_rate_for_reg(r);
-    if (not is_a<Bounds<double>>(range)) continue;
+    if (not range.is_a<Bounds<double>>()) continue;
 
     auto& bounds = range.as_<Bounds<double>>();
     string name = "m_real_cauchy_"+convertToString<int>(r);
@@ -229,7 +229,7 @@ void add_integer_uniform_MH_moves(const Model& P, MCMC::MoveAll& M, double weigh
   {
     auto range = P.get_range_for_reg(r);
     double rate = P.get_rate_for_reg(r);
-    if (not is_a<Bounds<int>>(range)) continue;
+    if (not range.is_a<Bounds<int>>()) continue;
 
     auto& bounds = range.as_<Bounds<int>>();
     if (not bounds.has_lower_bound or not bounds.has_upper_bound) continue;
@@ -246,7 +246,7 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
   {
     auto range = P.get_range_for_reg(r);
     double rate = P.get_rate_for_reg(r);
-    if (not is_a<Bounds<int>>(range)) continue;
+    if (not range.is_a<Bounds<int>>()) continue;
 
     // FIXME: righteousness.
     // We need a more intelligent way of determining when we should do this.

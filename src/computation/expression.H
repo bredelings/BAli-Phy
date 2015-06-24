@@ -496,42 +496,6 @@ inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
 }
 
 
-template <typename T>
-bool is_a(const expression& E)
-{ 
-  return E.is_a<T>();
-}
-
-template <typename T>
-bool is_a(const expression_ref& E)
-{ 
-  return E.is_a<T>();
-}
-
-template <typename T>
-object_ptr<const T> assert_is_a(const expression& E)
-{ 
-  return E.assert_is_a<T>();
-}
-
-template <typename T>
-object_ptr<const T> assert_is_a(const expression_ref& E)
-{ 
-  return E.assert_is_a<T>();
-}
-
-template <typename T>
-const T& as_(const expression& E)
-{ 
-  return E.as_<T>();
-}
-
-template <typename T>
-const T& as_(const expression_ref& E)
-{ 
-  return E.as_<T>();
-}
-
 bool has_constructor(const expression_ref&, const std::string&);
 
 std::string tuple_name(int n);
@@ -626,13 +590,13 @@ std::vector<T> get_vector(const expression_ref& E)
   if (not E.size())
   {
     std::vector<T> v2(1);
-    v2[0] = as_<U>(E);
+    v2[0] = E.as_<U>();
     return v2;
   }
     
   std::vector<T> v2(E.size());
   for(int i=0;i<v2.size();i++)
-    v2[i] = as_<U>(E.sub()[i]);
+    v2[i] = E.sub()[i].as_<U>();
   return v2;
 }
 
@@ -644,7 +608,7 @@ std::vector<T> get_vector_from_list(const expression_ref& E)
   std::vector<expression_ref> v1 = get_ref_vector_from_list(E);
   std::vector<T> v2;
   for(int i=0;i<v1.size();i++)
-    v2.push_back(as_<U>(v1[i]));
+    v2.push_back(v1[i].as_<U>());
   return v2;
 }
 

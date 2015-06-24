@@ -30,7 +30,7 @@ closure get_trimmed(closure&& C)
   if (C.exp.head().type() == trim_type)
   {
     expression_ref old = C.exp;
-    const vector<int>& keep = as_<Vector<int>>(old.sub()[0]);
+    const vector<int>& keep = old.sub()[0].as_<Vector<int>>();
 
     C.exp = C.exp.sub()[1];
 
@@ -43,7 +43,7 @@ closure get_trimmed(closure&& C)
     C.Env.resize(keep.size());
 
     // Should this ever happen?
-    assert(not is_a<Trim>(C.exp));
+    assert(not C.exp.head().is_a<Trim>());
   }
   
   return std::move(C);

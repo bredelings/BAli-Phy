@@ -201,9 +201,9 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<string,s
 {
   if (not E.size())
   {
-    if (is_a<identifier>(E))
+    if (E.is_a<identifier>())
     {
-      auto loc = simplify.find(as_<identifier>(E).name);
+      auto loc = simplify.find(E.as_<identifier>().name);
       if (loc != simplify.end())
 	return identifier(loc->second);
       else

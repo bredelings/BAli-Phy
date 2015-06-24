@@ -38,10 +38,10 @@ inline std::vector<expression_ref> get_vector_from_list_(OperationArgs& Args, in
     assert(has_constructor(top->exp,":"));
     assert(top->exp.size() == 2);
 
-    int element_index = as_<index_var>(top->exp.sub()[0]).index;
+    int element_index = top->exp.sub()[0].as_<index_var>().index;
     int element_reg = top->lookup_in_env( element_index );
 
-    int next_index = as_<index_var>(top->exp.sub()[1]).index;
+    int next_index = top->exp.sub()[1].as_<index_var>().index;
     int next_reg = top->lookup_in_env( next_index );
 
     // Add the element to the list.

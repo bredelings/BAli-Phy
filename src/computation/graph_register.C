@@ -91,7 +91,7 @@ expression_ref graph_normalize(const expression_ref& E)
   if (not E.size()) return E;
   
   // 2. Lambda
-  if (is_a<lambda>(E))
+  if (E.head().is_a<lambda>())
   {
     assert(E.size() == 2);
     object_ptr<expression> V = E.as_expression().clone();
@@ -104,7 +104,7 @@ expression_ref graph_normalize(const expression_ref& E)
   }
 
   // 6. Case
-  if (is_a<Case>(E))
+  if (E.head().is_a<Case>())
   {
     object_ptr<expression> V = E.as_expression().clone();
 
@@ -130,7 +130,7 @@ expression_ref graph_normalize(const expression_ref& E)
   }
 
   // 4. Constructor
-  if (is_a<constructor>(E) or is_a<Operation>(E))
+  if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
   {
     int var_index = get_safe_binder_index(E);
 
@@ -160,7 +160,7 @@ expression_ref graph_normalize(const expression_ref& E)
   }
 
   // 5. Let 
-  if (is_a<let_obj>(E))
+  if (E.head().is_a<let_obj>())
   {
     object_ptr<expression> V = E.as_expression().clone();
 
@@ -821,7 +821,7 @@ void reg_heap::clear_call_for_reg(int R)
 void reg_heap::set_C(int R, closure&& C)
 {
   assert(C);
-  assert(not is_a<expression>(C.exp));
+  assert(not C.exp.head().is_a<expression>());
   clear_C(R);
 
   access(R).C = std::move(C);
@@ -2220,7 +2220,7 @@ bool reg_heap::reg_is_fully_up_to_date(int R) const
 
     assert( not reg_has_call(R) );
 
-    int index = as_<index_var>(access(R).C.exp).index;
+    int index = access(R).C.exp.as_<index_var>().index;
 
     int R2 = access(R).C.lookup_in_env( index );
 
@@ -2242,12 +2242,12 @@ bool reg_heap::reg_is_fully_up_to_date(int R) const
   if (E.head().type() != constructor_type) return true;
 
   // If we get here, this had better be a constructor!
-  assert(is_a<constructor>(E));
+  assert(E.head().is_a<constructor>());
 
   // Check each component that is a index_var to see if its out of date.
   for(int i=0;i<E.size();i++)
   {
-    int R2 = result.lookup_in_env( as_<index_var>(E.sub()[i]).index );
+    int R2 = result.lookup_in_env( E.sub()[i].as_<index_var>().index );
     
     if (not reg_is_fully_up_to_date(R2)) return false;
   }
@@ -2436,9 +2436,9 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, vector<int>& En
   int reg = -1;
 
   // Replace parameters with the appropriate reg_var: of value parameter( )
-  if (is_a<parameter>(E))
+  if (E.is_a<parameter>())
   {
-    string name = as_<parameter>(E).parameter_name;
+    string name = E.as_<parameter>().parameter_name;
     string qualified_name = name;
 
     int param_index = find_parameter(qualified_name);
@@ -2450,9 +2450,9 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, vector<int>& En
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
-  if (is_a<identifier>(E))
+  if (E.is_a<identifier>())
   {
-    string name = as_<identifier>(E).name;
+    string name = E.as_<identifier>().name;
     string qualified_name = name;
     assert(is_qualified_symbol(qualified_name) or is_haskell_builtin_con_name(qualified_name));
     auto loc = identifiers.find( qualified_name );
@@ -2480,8 +2480,8 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, vector<int>& En
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
-  if (is_a<reg_var>(E))
-    reg = as_<reg_var>(E).target;
+  if (E.is_a<reg_var>())
+    reg = E.as_<reg_var>().target;
 
   if (reg != -1)
   {

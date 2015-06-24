@@ -1900,7 +1900,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
       {
 	// FIXME! What if x[0] isn't a var?
 	// Then if *d occurs twice, then we should use a let expression, right?
-	b2[i] = substitute(b2[i], as_<dummy>(p[r][0]), x[0]);
+	b2[i] = substitute(b2[i], p[r][0].as_<dummy>(), x[0]);
       }
     }
       
@@ -2330,7 +2330,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 
       for(int i=vars.size()-1; i>=0; i--)
       {
-	auto& V = as_<dummy>(vars[i]);
+	auto& V = vars[i].as_<dummy>();
 	std::set<dummy> free = get_free_indices(bodies[i]);
 
 	// if V references itself then don't substitute it.

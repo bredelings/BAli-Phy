@@ -4,7 +4,7 @@
 
 int OperationArgs::reg_for_slot(int slot) const
 {
-  int index = as_<index_var>(reference(slot)).index;
+  int index = reference(slot).as_<index_var>().index;
 
   return current_closure().lookup_in_env(index);
 }
@@ -37,7 +37,7 @@ const expression_ref& OperationArgs::evaluate_reg_to_object(int R2)
 {
   const expression_ref& result = evaluate_reg_to_closure(R2).exp;
 #ifndef NDEBUG
-  if (is_a<lambda2>(expression_ref(result)))
+  if (result.head().is_a<lambda2>())
     throw myexception()<<"Evaluating lambda as object: "<<result.print();
 #endif
   return result;
@@ -47,7 +47,7 @@ const expression_ref& OperationArgs::evaluate_reg_to_object_(int R2)
 {
   const expression_ref& result = evaluate_reg_to_closure_(R2).exp;
 #ifndef NDEBUG
-  if (is_a<lambda2>(expression_ref(result)))
+  if (result.head().is_a<lambda2>())
     throw myexception()<<"Evaluating lambda as object: "<<result.print();
 #endif
   return result;

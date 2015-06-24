@@ -155,10 +155,10 @@ expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const exp
 
   symbol_info op2;
   if (T.front().is_a<identifier>())
-    op2 = m.get_operator( as_<identifier>(T.front()).name );
-  else if (is_a<AST_node>(T.front()))
+    op2 = m.get_operator( T.front().as_<identifier>().name );
+  else if (T.front().is_a<AST_node>())
   {
-    auto& n = as_<AST_node>(T.front());
+    auto& n = T.front().as_<AST_node>();
     // FIXME:correctness - each "Decls"-frame should first add all defined variables to bounds, which should contain symbol_infos.
     if (n.type == "id")
     {
@@ -213,7 +213,7 @@ expression_ref desugar_infixpat(const Module& m, const vector<expression_ref>& T
 set<string> find_bound_vars(const expression_ref& E)
 {
   if (is_AST(E, "apat_var"))
-    return {as_<AST_node>(E).value};
+    return {E.as_<AST_node>().value};
 
   if (not E.size()) return set<string>();
 
@@ -227,7 +227,7 @@ set<string> find_bound_vars(const expression_ref& E)
 set<string> find_all_ids(const expression_ref& E)
 {
   if (is_AST(E,"id"))
-    return {as_<AST_node>(E).value};
+    return {E.as_<AST_node>().value};
 
   if (E.is_atomic()) return set<string>();
 
@@ -282,11 +282,11 @@ string get_func_name(const expression_ref& decl)
   expression_ref name = lhs.sub()[0];
 
   if (name.is_a<dummy>())
-    return as_<dummy>(name).name;
+    return name.as_<dummy>().name;
   else if (name.is_a<AST_node>())
   {
     assert(is_AST(name,"id"));
-    return as_<AST_node>(name).value;
+    return name.as_<AST_node>().value;
   }
   else
     std::abort();
@@ -434,9 +434,9 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
   if (E.is_expression())
     v = E.sub();
       
-  if (is_a<AST_node>(E))
+  if (E.is_a<AST_node>())
   {
-    auto& n = as_<AST_node>(E);
+    auto& n = E.as_<AST_node>();
     if (n.type == "infixexp")
     {
       vector<expression_ref> args = E.sub();
@@ -578,7 +578,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       // For constructors, actually substitute the body
       if (v[0].is_a<identifier>())
       {
-	auto& V = as_<identifier>(v[0]);
+	auto& V = v[0].as_<identifier>();
 	if (m.is_declared(V.name))
 	{
 	  auto S = m.lookup_symbol(V.name);

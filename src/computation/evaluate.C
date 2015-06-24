@@ -168,13 +168,13 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
   assert(is_used(R));
 
 #ifndef NDEBUG
-  assert(not is_a<expression>(access(R).C.exp));
+  assert(not access(R).C.exp.head().is_a<expression>());
   if (reg_has_result(R))
   {
     expression_ref E = access_result_for_reg(R).exp;
     assert(is_WHNF(E));
-    assert(not is_a<expression>(E));
-    assert(not is_a<index_var>(E));
+    assert(not E.head().is_a<expression>());
+    assert(not E.is_a<index_var>());
   }
   if (is_index_var(access(R).C.exp))
     assert(not reg_has_result(R));
@@ -228,7 +228,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     }
     else if (reg_type == reg::type_t::index_var)
     {
-      int index = as_<index_var>(access(R).C.exp).index;
+      int index = access(R).C.exp.as_<index_var>().index;
       int R2 = access(R).C.lookup_in_env( index );
       R = R2;
       continue;
@@ -248,7 +248,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 
       access(R).type = reg::type_t::index_var;
 
-      int index = as_<index_var>(access(R).C.exp).index;
+      int index = access(R).C.exp.as_<index_var>().index;
 
       int R2 = access(R).C.lookup_in_env( index );
 
@@ -267,9 +267,9 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     }
 
 #ifndef NDEBUG
-    else if (is_a<Trim>(access(R).C.exp))
+    else if (access(R).C.exp.head().is_a<Trim>())
       std::abort();
-    else if (access(R).C.exp.head().type() == parameter_type)
+    else if (access(R).C.exp.type() == parameter_type)
       std::abort();
 #endif
 
@@ -282,7 +282,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	add_shared_computation(root_token, R);
 
       // Incrementing the ref count wastes time, but avoids a crash.
-      object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
+      object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
 
       // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable result.
       // Therefore, we cannot do "assert(not computation_for_reg(t,R).changeable);" here.
@@ -398,7 +398,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
   assert(is_used(R));
 
 #ifndef NDEBUG
-  assert(not is_a<expression>(access(R).C.exp));
+  assert(not access(R).C.exp.head().is_a<expression>());
 #endif
 
   while (1)
@@ -412,7 +412,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
 
     else if (reg_type == reg::type_t::index_var)
     {
-      int index = as_<index_var>(access(R).C.exp).index;
+      int index = access(R).C.exp.as_<index_var>().index;
       int R2 = access(R).C.lookup_in_env( index );
       R = R2;
       continue;
@@ -426,7 +426,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
     {
       access(R).type = reg::type_t::index_var;
 
-      int index = as_<index_var>(access(R).C.exp).index;
+      int index = access(R).C.exp.as_<index_var>().index;
 
       int R2 = access(R).C.lookup_in_env( index );
 
@@ -444,16 +444,16 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
       access(R).type = reg::type_t::constant;
 
 #ifndef NDEBUG
-    else if (is_a<Trim>(access(R).C.exp))
+    else if (access(R).C.exp.head().is_a<Trim>())
       std::abort();
-    else if (access(R).C.exp.head().type() == parameter_type)
+    else if (access(R).C.exp.type() == parameter_type)
       std::abort();
 #endif
 
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
-      object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
+      object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
 
       // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable result.
       // Therefore, we cannot do "assert(not computation_for_reg(t,R).changeable);" here.
