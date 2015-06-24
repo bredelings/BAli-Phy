@@ -157,21 +157,21 @@ string expression::print() const
     vector<expression_ref> bodies;
     expression_ref T;
 
-    if (is_a<lambda2>())
+    if (head.is_a<lambda2>())
     {
       result = sub[0].print();
-      if (sub[0].is_a<lambda2>())
+      if (sub[0].head().is_a<lambda2>())
 	result = "/\\" + result;
       else
 	result = "/\\." + result;
       return result;
     }
 
-    if (is_a<lambda>())
+    if (head.is_a<lambda>())
     {
       expression_ref body = new expression(*this);
       vector<string> vars;
-      while (body.is_a<lambda>())
+      while (body.head().is_a<lambda>())
       {
 	vars.push_back(body.sub()[0].print());
 	// Keep a reference 'body.sub()[1]' here, so it is not destroyed!
@@ -201,9 +201,9 @@ string expression::print() const
       return result;
     }
 
-    if (is_a<Trim>())
+    if (head.is_a<Trim>())
     {
-      auto& V = ::as_<Vector<int>>(sub[0]);
+      auto& V = sub[0].as_<Vector<int>>();
 
       result = "Trim {"+join(V,",")+"} " + sub[1].print();
       return result;
@@ -232,9 +232,9 @@ string expression::print() const
   {
     if (not sub[i-1].size()) continue;
 
-    if (sub[i-1].is_a<Operator>())
+    if (sub[i-1].head().is_a<Operator>())
     {
-      auto& O = sub[i-1].as_<Operator>();
+      auto& O = sub[i-1].head().as_<Operator>();
 
       // Don't parenthesize tuple arguments.
       if (is_tuple_name(O.name()) and sub[i-1].size() == O.n_args()) continue;
@@ -248,7 +248,7 @@ string expression::print() const
   
   if (head.is_a<Operator>())
   {
-    auto& O = as_<Operator>();
+    auto& O = head.as_<Operator>();
 
     string O_name = O.name();
     if (head.is_a<Apply>())
@@ -267,7 +267,7 @@ string expression::print() const
 	if (sub[0].head() == O and O.associativity()==assoc_left)
 	  pargs[1] = args[1];
 	else if (sub[0].head().is_a<Operator>())
-	  if (::as_<Operator>(sub[0]).precedence() > O.precedence())
+	  if (sub[0].head().as_<Operator>().precedence() > O.precedence())
 	    pargs[1] = args[1];
       }
       if (sub[1].size())
@@ -275,7 +275,7 @@ string expression::print() const
 	if (sub[1].head() == O and O.associativity()==assoc_right)
 	  pargs[2] = args[2];
 	else if (sub[1].head().is_a<Operator>())
-	  if (::as_<Operator>(sub[1]).precedence() > O.precedence())
+	  if (sub[1].as_<Operator>().precedence() > O.precedence())
 	    pargs[2] = args[2];
       }
       return pargs[1] + O_name + pargs[2];
@@ -593,7 +593,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
   {
     // Indexed Variable - This is assumed to be a free variable, so just shift it.
     if (E.is_a<index_var>())
-      return index_var(as_<index_var>(E).index + variables.size());
+      return index_var(E.as_<index_var>().index + variables.size());
 
     // Variable
     else if (E.is_a<dummy>())
@@ -616,7 +616,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
   if (E.head().is_a<lambda>())
   {
     vector<dummy> variables2 = variables;
-    variables2.push_back(as_<dummy>(E.sub()[0]));
+    variables2.push_back(E.sub()[0].as_<dummy>());
     return make_indexed_lambda( indexify(E.sub()[1], variables2) );
   }
 
@@ -628,7 +628,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
   {
     vector<dummy> variables2 = variables;
     for(const auto& var: vars)
-      variables2.push_back(as_<dummy>(var));
+      variables2.push_back(var.as_<dummy>());
 
     for(auto& body: bodies)
       body = indexify(body, variables2);
@@ -652,7 +652,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 
       vector<dummy> variables2 = variables;
       for(int j=0;j<P.size();j++)
-	variables2.push_back(as_<dummy>(P.sub()[j]));
+	variables2.push_back(P.sub()[j].as_<dummy>());
 
 #ifndef NDEBUG
       // FIXME - I guess this doesn't handle case a of b -> f(b)?
@@ -835,7 +835,7 @@ vector<int> get_free_index_vars(const expression_ref& E)
     // Variable
     if (E.is_a<index_var>())
     {
-      auto& D = as_<index_var>(E);
+      auto& D = E.as_<index_var>();
       assert(not is_wildcard(D));
       return {D.index};
     }
@@ -854,7 +854,7 @@ vector<int> get_free_index_vars(const expression_ref& E)
   {
     // Which vars are we not throwing away?
     // This should also be an assert.
-    vars = as_<Vector<int>>(E.sub()[0]);
+    vars = E.sub()[0].as_<Vector<int>>();
     
 #ifndef NDEBUG
     vector<int> vars2 = get_free_index_vars(E.sub()[1]);
@@ -1001,7 +1001,7 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
   {
     // Which vars are we not throwing away?
     // This should also be an assert.
-    vars = as_<Vector<int>>(E.sub()[0]);
+    vars = E.sub()[0].as_<Vector<int>>();
 
     // remap free vars
     for(auto& var:vars)
@@ -1224,7 +1224,7 @@ void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dumm
   // fv x = { x }
   if (is_dummy(E))
   {
-    dummy d = as_<dummy>(E);
+    dummy d = E.as_<dummy>();
     if (not is_wildcard(E) and (bound.find(d) == bound.end()))
       free.insert(d);
     return;
@@ -2208,24 +2208,24 @@ bool is_dummy(const expression_ref& E)
 
 bool is_parameter(const expression_ref& E)
 {
-  return (bool)E.is_a<parameter>();
+  return E.is_a<parameter>();
 }
 
 bool is_modifiable(const expression_ref& E)
 {
   bool result = E.head().type() == modifiable_type;
-  assert(result == (bool)E.is_a<modifiable>());
+  assert(result == E.is_a<modifiable>());
   return result;
 }
 
 bool is_identifier(const expression_ref& E)
 {
-  return (bool)E.is_a<identifier>();
+  return E.is_a<identifier>();
 }
 
 bool is_reg_var(const expression_ref& E)
 {
-  return (bool)E.is_a<reg_var>();
+  return E.is_a<reg_var>();
 }
 
 bool is_reglike(const expression_ref& E)
@@ -2244,7 +2244,7 @@ bool is_wildcard(const expression_ref& E)
   if (is_dummy(E))
   {
     assert(not E.size());
-    dummy d = as_<dummy>(E);
+    dummy d = E.as_<dummy>();
     return is_wildcard(d);
   }
   else

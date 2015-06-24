@@ -195,24 +195,6 @@ struct expression: public Object
   
   tribool operator==(const expression& E) const;
 
-  template <typename T>
-  bool is_a() const
-  {
-    return head.is_a<T>();
-  }
-
-  template <typename T>
-  object_ptr<const T> assert_is_a() const
-  {
-    return head.assert_is_a<T>();
-  }
-
-  template <typename T>
-  const T& as_() const
-  {
-    return head.as_<T>();
-  }
-
   type_constant type() const {return expression_type;}
 
   expression() {}
