@@ -113,7 +113,7 @@ const expression_ref& context::evaluate_expression_(closure&& C,bool ec) const
 {
   const expression_ref& result = lazy_evaluate_expression_(std::move(C),ec).exp;
 #ifndef NDEBUG
-  if (is_a<lambda2>(result))
+  if (results.head().is_a<lambda2>())
     throw myexception()<<"Evaluating lambda as object: "<<result.print();
 #endif
   return result;

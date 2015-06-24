@@ -188,9 +188,9 @@ expression_ref GetComputationFunction::operator()(const Model& M, long)
     return result;
   else if (result.is_int())
     return result;
-  else if (result.is_a<constructor>())
+  else if (result.head().is_a<constructor>())
   {
-    auto& c = result.as_<constructor>();
+    auto& c = result.head().as_<constructor>();
     if (c.f_name == "Prelude.True")
       return 1;
     else if (c.f_name == "Prelude.False")
@@ -336,9 +336,9 @@ double mu_scale(const Parameters& P)
       const auto& v = values[i];
       log_double_t Pr = Prs[i];
       log_double_t value = 0;
-      if (v.is_a<constructor>())
+      if (v.head().is_a<constructor>())
       {
-	auto& b = v.as_<constructor>();
+	auto& b = v.head().as_<constructor>();
 	if (b.f_name == "Prelude.True")
 	  value = 1;
 	else if (b.f_name == "Prelude.False")

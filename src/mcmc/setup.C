@@ -182,8 +182,8 @@ void add_boolean_MH_moves(const Model& P, MCMC::MoveAll& M, double weight)
     auto range = P.get_range_for_reg(r);
     double rate = P.get_rate_for_reg(r);
 
-    if (not range.is_a<constructor>()) continue;
-    if (range.as_<constructor>().f_name != "TrueFalseRange") continue;
+    if (not range.head().is_a<constructor>()) continue;
+    if (range.head().as_<constructor>().f_name != "TrueFalseRange") continue;
 
     string name = "m_bool_flip_"+convertToString<int>(r);
     add_modifiable_MH_move(name, bit_flip, r, vector<double>{}, M, weight*rate);

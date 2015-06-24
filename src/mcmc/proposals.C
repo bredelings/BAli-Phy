@@ -176,7 +176,7 @@ double bit_flip(vector< expression_ref >& x, const vector<double>&)
   //  if (p.size() != 1) 
   //    throw myexception()<<"shift_epsilon: expected one parameter, got "<<p.size()<<".";
 
-  constructor B = x[0].as_<constructor>();
+  constructor B = x[0].head().as_<constructor>();
 
   if (B.f_name == "Prelude.True")
     B.f_name = "Prelude.False";

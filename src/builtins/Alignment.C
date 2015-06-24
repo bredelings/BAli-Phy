@@ -78,7 +78,7 @@ extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
   double e = Args.evaluate(0).as_double();
   double D = Args.evaluate(1).as_double();
   double heat = Args.evaluate(2).as_double();
-  constructor in_training_c = Args.evaluate(3).as_<constructor>();
+  constructor in_training_c = Args.evaluate(3).head().as_<constructor>();
   bool in_training = true;
   if (in_training_c.f_name == "Prelude.False")
     in_training = false;
