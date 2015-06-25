@@ -144,40 +144,6 @@ public:
   //  POD(const boost::enable_if_c<boost::is_convertible<U,T>::type,U>& u):t(u) { }
 };
 
-template<> 
-inline type_constant POD<int>::type() const
-{
-  return int_type;
-}
-
-template<> 
-inline type_constant POD<double>::type() const
-{
-  return double_type;
-}
-
-template<> 
-inline type_constant POD<log_double_t>::type() const
-{
-  return log_double_type;
-}
-
-template<> 
-inline type_constant POD<char>::type() const
-{
-  return char_type;
-}
-
-template<> 
-inline std::string Box<std::string>::print() const
-{
-  return "\""+(*this)+"\"";
-}
-template<> 
-inline std::string POD<char>::print() const
-{
-  return std::string("'")+t+"'";
-}
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/utility/enable_if.hpp>
 
@@ -207,6 +173,8 @@ public:
 
   POD_math() {}
   POD_math(const T& t2):t(t2) {}
+
+  virtual type_constant type() const {return unknown_type;}
 
   template <typename U>
   POD_math(const POD_math<U>& t2):t(t2) {}
@@ -259,6 +227,36 @@ public:
   bool operator<=(const POD_math<T>& t2) const {return t <= T(t2);}
   bool operator<=(const T& t2)           const {return t <= T(t2);}
 };
+
+template<> 
+inline type_constant POD_math<int>::type() const
+{
+  return int_type;
+}
+
+template<> 
+inline type_constant POD_math<double>::type() const
+{
+  return double_type;
+}
+
+template<> 
+inline type_constant POD_math<log_double_t>::type() const
+{
+  return log_double_type;
+}
+
+template<> 
+inline type_constant POD_math<char>::type() const
+{
+  return char_type;
+}
+
+template<> 
+inline std::string Box<std::string>::print() const
+{
+  return "\""+(*this)+"\"";
+}
 
 template<> 
 inline std::string POD_math<char>::print() const
