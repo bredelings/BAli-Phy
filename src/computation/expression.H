@@ -16,17 +16,40 @@ struct expression;
 class expression_ref
 {
   object_ptr<const Object> O;
+  union
+  {
+    char c;
+    int i;
+    double d;
+    log_double_t ld;
+  };
   type_constant type_ = null_type;
+  bool is_local_type() const {return type_ == int_type or type_ == double_type or type_ == log_double_type or type_ == char_type;}
 public:
 
   tribool operator==(const expression_ref& E2) const
   {
-    return ptr()->compare(*E2.ptr());
+    if (type_ != E2.type())
+      return false;
+    
+    if (type_ == int_type)
+      return (i == E2.as_int());
+    else if (type_ == double_type)
+      return (d == E2.as_double());
+    else if (type_ == log_double_type)
+      return (ld == E2.as_log_double());
+    else if (type_ == char_type)
+      return (c == E2.as_char());
+    else
+      return ptr()->compare(*E2.ptr());
   }
 
   tribool operator==(const Object& O) const
   {
-    return ptr()->compare(O);
+    if (is_local_type() or type_ == null_type)
+      return false;
+    else
+      return ptr()->compare(O);
   }
 
   void clear() {O.reset();type_=null_type;}
@@ -40,7 +63,7 @@ public:
 
   type_constant type() const
   {
-    return ptr()->type();
+    return type_;
   }
   
   const expression& as_expression() const
@@ -83,49 +106,64 @@ public:
 
   bool is_int() const
   {
-    return (bool)boost::dynamic_pointer_cast<const Int>(ptr());
+    return type_ == int_type;
   }
 
   int as_int() const
   {
-    return *convert<Int>(ptr().get());
+    return i;
   }
 
   bool is_double() const
   {
-    return (bool)boost::dynamic_pointer_cast<const Double>(ptr());
+    return type_ == double_type;
   }
 
   double as_double() const
   {
-    return *convert<Double>(ptr().get());
+    return d;
   }
 
   bool is_char() const
   {
-    return (bool)boost::dynamic_pointer_cast<const Char>(ptr());
+    return type_ == char_type;
   }
 
   char as_char() const
   {
-    return *convert<Char>(ptr().get());
+    return c;
   }
 
   bool is_log_double() const
   {
-    return (bool)boost::dynamic_pointer_cast<const Log_Double>(ptr());
+    return type_ == log_double_type;
   }
 
   log_double_t as_log_double() const
   {
-    return *convert<Log_Double>(ptr().get());
+    return ld;
   }
   
   inline const object_ptr<const Object>& ptr() const {return O;}
 
-  inline explicit operator bool() const {return (bool)O;}
+  inline explicit operator bool() const
+  {
+    return (type_ != null_type);
+  }
 
-  std::string print() const {return O->print();}
+  std::string print() const
+  {
+    if (type_ == int_type)
+      return convertToString(i);
+    else if (type_ == double_type)
+      return convertToString(d);
+    else if (type_ == log_double_type)
+      return convertToString(ld);
+    else if (type_ == char_type)
+      return std::string("'")+c+"'";
+    else
+      return O->print();
+  }
 
   // Default
   expression_ref() {}
@@ -143,9 +181,9 @@ public:
   expression_ref(const expression_ref& e, const std::vector<expression_ref>& v);
 
   // Object arguments
-  expression_ref(Object* v):O(v),type_(unknown_type) { }
+  expression_ref(Object* v):O(v),type_(v->type()) { }
 
-  expression_ref(const Object* v):O(v),type_(unknown_type) { }
+  expression_ref(const Object* v):O(v),type_(v->type()) { }
 
   expression_ref(const object_ptr<Object>& v):expression_ref(v.get()) { }
 
@@ -155,13 +193,13 @@ public:
   expression_ref(const Object& o):expression_ref(o.clone()) { }
 
   // Builtin-type arguments
-  expression_ref(const int& i):expression_ref(new Int(i)) {}
-  expression_ref(const double& d):expression_ref(new Double(d)) {}
-  expression_ref(const log_double_t& ld):expression_ref(new Log_Double(ld)) {}
+  expression_ref(const int& i2):i(i2),type_(int_type) {}
+  expression_ref(const double& d2):d(d2),type_(double_type) {}
+  expression_ref(const log_double_t& ld2):ld(ld2),type_(log_double_type) {}
   expression_ref(const bool& b);
   expression_ref(const std::string& s);
   expression_ref(const char* s);
-  expression_ref(const char& c):expression_ref(new Char(c)) {}
+  expression_ref(const char& c2):c(c2),type_(char_type) {}
   expression_ref(const String& s):expression_ref(s.clone()) { }
 };
 
