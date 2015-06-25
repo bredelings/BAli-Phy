@@ -24,7 +24,9 @@ class expression_ref
     log_double_t ld;
   };
   type_constant type_ = null_type;
-  bool is_local_type() const {return type_ == int_type or type_ == double_type or type_ == log_double_type or type_ == char_type;}
+
+  bool is_object_type() const {return type_ > char_type;}
+
 public:
 
   tribool operator==(const expression_ref& E2) const
@@ -46,7 +48,7 @@ public:
 
   tribool operator==(const Object& O) const
   {
-    if (is_local_type() or type_ == null_type)
+    if (not is_object_type())
       return false;
     else
       return ptr()->compare(O);
