@@ -34,16 +34,23 @@ public:
     if (type_ != E2.type())
       return false;
     
-    if (type_ == int_type)
+    switch(type_)
+    {
+    case int_type:
       return (i == E2.as_int());
-    else if (type_ == double_type)
+      break;
+    case double_type:
       return (d == E2.as_double());
-    else if (type_ == log_double_type)
+      break;
+    case log_double_type:
       return (ld == E2.as_log_double());
-    else if (type_ == char_type)
+      break;
+    case char_type:
       return (c == E2.as_char());
-    else
+      break;
+    default:
       return ptr()->compare(*E2.ptr());
+    }
   }
 
   tribool operator==(const Object& O) const
@@ -155,16 +162,25 @@ public:
 
   std::string print() const
   {
-    if (type_ == int_type)
+    switch(type_)
+    {
+    case null_type:
+      return "[NULL]";
+    case int_type:
       return convertToString(i);
-    else if (type_ == double_type)
+      break;
+    case double_type:
       return convertToString(d);
-    else if (type_ == log_double_type)
+      break;
+    case log_double_type:
       return convertToString(ld);
-    else if (type_ == char_type)
+      break;
+    case char_type:
       return std::string("'")+c+"'";
-    else
+      break;
+    default:
       return O->print();
+    }
   }
 
   // Default
