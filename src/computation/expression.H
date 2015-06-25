@@ -218,7 +218,6 @@ inline const expression_ref& expression_ref::head() const
 
 inline bool expression_ref::is_expression() const
 {
-  assert(type_ == expression_type);
 #ifndef NDEBUG
   bool e = dynamic_cast<const expression*>(O.get());
   assert(e == (type_ == expression_type));
