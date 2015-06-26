@@ -25,9 +25,9 @@ class expression_ref
   };
   type_constant type_ = null_type;
 
-  bool is_object_type() const {return type_ > char_type;}
-
 public:
+
+  bool is_object_type() const {return type_ > char_type;}
 
   tribool operator==(const expression_ref& E2) const
   {
