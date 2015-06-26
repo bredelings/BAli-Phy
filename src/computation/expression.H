@@ -15,13 +15,13 @@ struct expression;
 
 class expression_ref
 {
-  object_ptr<const Object> O;
   union
   {
     char c;
     int i;
     double d;
     log_double_t ld;
+    object_ptr<const Object> O;
   };
   type_constant type_ = null_type;
 
@@ -61,7 +61,7 @@ public:
       return ptr()->compare(O);
   }
 
-  void clear() {O.reset();type_=null_type;}
+  void clear() {destroy_ptr();type_=null_type;}
 
   bool is_expression() const;
 
@@ -78,7 +78,7 @@ public:
   const expression& as_expression() const
   {
     assert(not is_atomic());
-    return *convert<expression>(O.get());
+    return *convert<expression>(ptr().get());
   }
 
   inline const expression_ref& head() const;
@@ -187,8 +187,16 @@ public:
       return std::string("'")+c+"'";
       break;
     default:
-      return O->print();
+      return ptr()->print();
     }
+  }
+
+  typedef object_ptr<const Object> otype;
+
+  inline void destroy_ptr()
+  {
+    if (is_object_type())
+      (&O)->~otype();
   }
 
   // Default
@@ -227,6 +235,27 @@ public:
   expression_ref(const char* s);
   expression_ref(const char& c2):c(c2),type_(char_type) {}
   expression_ref(const String& s):expression_ref(s.clone()) { }
+
+  expression_ref& operator=(const expression_ref& E)
+  {
+    destroy_ptr();
+    type_ = E.type_;
+    if (is_object_type())
+      new (&O) otype(E.ptr());
+    else
+      d = E.d;
+    return *this;
+  }
+
+  expression_ref(const expression_ref& E):type_(E.type_)
+  {
+    if (is_object_type())
+      new (&O) otype(E.ptr());
+    else
+      d = E.d;
+  }
+
+  inline ~expression_ref() {destroy_ptr();}
 };
 
 
