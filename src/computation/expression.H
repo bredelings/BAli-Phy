@@ -98,7 +98,10 @@ public:
   template <typename T>
   bool is_a() const
   {
-    return (bool)boost::dynamic_pointer_cast<const T>(head().ptr());
+    if (not is_object_type())
+      return false;
+    else
+      return (bool)boost::dynamic_pointer_cast<const T>(head().ptr());
   }
 
   template <typename T>
@@ -279,10 +282,6 @@ inline const expression_ref& expression_ref::head() const
 
 inline bool expression_ref::is_expression() const
 {
-#ifndef NDEBUG
-  bool e = dynamic_cast<const expression*>(O.get());
-  assert(e == (type_ == expression_type));
-#endif
   return (type_ == expression_type);
 }
 
