@@ -153,7 +153,12 @@ public:
     return ld;
   }
   
-  inline const object_ptr<const Object>& ptr() const {return O;}
+  inline const object_ptr<const Object>& ptr() const
+  {
+    assert(is_object_type());
+    assert((bool)O);
+    return O;
+  }
 
   inline explicit operator bool() const
   {
