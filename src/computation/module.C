@@ -582,13 +582,13 @@ string get_function_name(const expression_ref& E)
     expression_ref f = E.sub()[0];
     assert(is_AST(f,"id"));
 
-    return f.as_<AST_node>().value;
+    return f.head().as_<AST_node>().value;
   }
   else if (is_AST(E,"funlhs2"))
   {
     expression_ref f = E.sub()[1];
     assert(is_AST(f,"id"));
-    return f.as_<AST_node>().value;
+    return f.head().as_<AST_node>().value;
   }
   else if (is_AST(E,"funlhs3"))
     return get_function_name(E.sub()[0]);

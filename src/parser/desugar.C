@@ -22,7 +22,7 @@ using std::pair;
 
 bool is_irrefutable_pat(const expression_ref& E)
 {
-  assert(E.as_<AST_node>().type == "pat");
+  assert(E.head().as_<AST_node>().type == "pat");
 
   if (E.size() == 1 and E.sub()[0].as_<AST_node>().type == "apat_var")
     return true;
@@ -156,9 +156,9 @@ expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const exp
   symbol_info op2;
   if (T.front().is_a<identifier>())
     op2 = m.get_operator( T.front().as_<identifier>().name );
-  else if (T.front().is_a<AST_node>())
+  else if (T.front().head().is_a<AST_node>())
   {
-    auto& n = T.front().as_<AST_node>();
+    auto& n = T.front().head().as_<AST_node>();
     // FIXME:correctness - each "Decls"-frame should first add all defined variables to bounds, which should contain symbol_infos.
     if (n.type == "id")
     {
@@ -283,10 +283,10 @@ string get_func_name(const expression_ref& decl)
 
   if (name.is_a<dummy>())
     return name.as_<dummy>().name;
-  else if (name.is_a<AST_node>())
+  else if (name.head().is_a<AST_node>())
   {
     assert(is_AST(name,"id"));
-    return name.as_<AST_node>().value;
+    return name.head().as_<AST_node>().value;
   }
   else
     std::abort();
@@ -383,7 +383,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 					 }
 				     )
 		      );
-    else if (v[i].sub()[0].as_<AST_node>().type == "funlhs1")
+    else if (v[i].sub()[0].head().as_<AST_node>().type == "funlhs1")
     {
       vector<vector<expression_ref> > patterns;
       vector<expression_ref> bodies;
@@ -434,9 +434,9 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
   if (E.is_expression())
     v = E.sub();
       
-  if (E.is_a<AST_node>())
+  if (E.head().is_a<AST_node>())
   {
-    auto& n = E.as_<AST_node>();
+    auto& n = E.head().as_<AST_node>();
     if (n.type == "infixexp")
     {
       vector<expression_ref> args = E.sub();
@@ -513,7 +513,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     else if (n.type == "Decl")
     {
       // Is this a set of function bindings?
-      if (v[0].as_<AST_node>().type == "funlhs1")
+      if (v[0].head().as_<AST_node>().type == "funlhs1")
       {
 	set<string> bound2 = bound;
 	for(const auto& e: v[0].sub())
@@ -616,9 +616,9 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	v.erase(v.begin()+1);
 	E2 = {E.head(),v};
 
-	if (B.as_<AST_node>().type == "SimpleQual")
+	if (B.head().as_<AST_node>().type == "SimpleQual")
 	  E2 = {AST_node("If"),{B.sub()[0],E2,AST_node("id","[]")}};
-	else if (B.as_<AST_node>().type == "PatQual")
+	else if (B.head().as_<AST_node>().type == "PatQual")
 	{
 	  expression_ref p = B.sub()[0];
 	  expression_ref l = B.sub()[1];
@@ -646,7 +646,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    E2 = {AST_node("Let"),{decls,body}};
 	  }
 	}
-	else if (B.as_<AST_node>().type == "LetQual")
+	else if (B.head().as_<AST_node>().type == "LetQual")
 	  E2 = {AST_node("Let"),{B.sub()[0],E2}};
       }
       return desugar(m,E2,bound);

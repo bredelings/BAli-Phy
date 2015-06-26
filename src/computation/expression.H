@@ -101,19 +101,19 @@ public:
     if (not is_object_type())
       return false;
     else
-      return (bool)boost::dynamic_pointer_cast<const T>(head().ptr());
+      return (bool)boost::dynamic_pointer_cast<const T>(ptr());
   }
 
   template <typename T>
   object_ptr<const T> assert_is_a() const
   {
-    return convert<const T>(head().ptr());
+    return convert<const T>(ptr());
   }
 
   template <typename T>
   const T& as_() const
   {
-    return *convert<const T>(head().ptr());
+    return *convert<const T>(ptr());
   }
 
   bool is_int() const

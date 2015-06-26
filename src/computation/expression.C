@@ -2214,7 +2214,7 @@ bool is_parameter(const expression_ref& E)
 bool is_modifiable(const expression_ref& E)
 {
   bool result = E.head().type() == modifiable_type;
-  assert(result == E.is_a<modifiable>());
+  assert(result == E.head().is_a<modifiable>());
   return result;
 }
 
