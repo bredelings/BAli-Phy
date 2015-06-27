@@ -59,9 +59,15 @@ using std::endl;
  *
  * 4. [DONE] Remove t argument from computation_index_for_reg(int t, int r) 
  *
- * 5. Move call and used_inputs into computation_info
+ * 5. Clean up back-edges to computations when computations are destroyed.
  *
- * 6. Make back-edges from computation_info to computations that use it.
+ * 6. Move call and used_inputs into reduction
+ *
+ * 7. Make back-edges from reduction to computations that use it.
+ *    - remove duplicate_computation( ).
+ *    - HOW does this affect the invalidation algorithm??
+ *
+ * 8. 
  *
  */
 
