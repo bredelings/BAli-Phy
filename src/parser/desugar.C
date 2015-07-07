@@ -22,12 +22,9 @@ using std::pair;
 
 bool is_irrefutable_pat(const expression_ref& E)
 {
-  assert(E.head().as_<AST_node>().type == "pat");
+  assert(is_AST(E,"pat"));
 
-  if (E.size() == 1 and E.sub()[0].head().as_<AST_node>().type == "apat_var")
-    return true;
-  else
-    return false;
+  return (E.size() == 1) and is_AST(E.sub()[0], "apat_var");
 }
 
 
@@ -383,7 +380,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 					 }
 				     )
 		      );
-    else if (v[i].sub()[0].head().as_<AST_node>().type == "funlhs1")
+    else if (is_AST(v[i].sub()[0], "funlhs1"))
     {
       vector<vector<expression_ref> > patterns;
       vector<expression_ref> bodies;
@@ -513,7 +510,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     else if (n.type == "Decl")
     {
       // Is this a set of function bindings?
-      if (v[0].head().as_<AST_node>().type == "funlhs1")
+      if (is_AST(v[0], "funlhs1"))
       {
 	set<string> bound2 = bound;
 	for(const auto& e: v[0].sub())
@@ -616,9 +613,9 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	v.erase(v.begin()+1);
 	E2 = {E.head(),v};
 
-	if (B.head().as_<AST_node>().type == "SimpleQual")
+	if (is_AST(B, "SimpleQual"))
 	  E2 = {AST_node("If"),{B.sub()[0],E2,AST_node("id","[]")}};
-	else if (B.head().as_<AST_node>().type == "PatQual")
+	else if (is_AST(B, "PatQual"))
 	{
 	  expression_ref p = B.sub()[0];
 	  expression_ref l = B.sub()[1];
@@ -646,7 +643,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    E2 = {AST_node("Let"),{decls,body}};
 	  }
 	}
-	else if (B.head().as_<AST_node>().type == "LetQual")
+	else if (is_AST(B, "LetQual"))
 	  E2 = {AST_node("Let"),{B.sub()[0],E2}};
       }
       return desugar(m,E2,bound);
