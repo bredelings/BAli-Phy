@@ -81,11 +81,15 @@ AC_ARG_WITH([system-boost], AS_HELP_STRING([--with-system-boost],[Use the Boost 
   use_system_boost=no
 )
 
-# 1. Checks for programs.
+# 1. Check for compilers, don't add default compile flags
+#       CFLAGs and CXXFLAGS are for users to pass input on.
+#       Avoid AC_PROG_CXX setting CXXFLAGS="-g -O2" when CXXFLAGS is not set.
 ORIG_CFLAGS=$CFLAGS
 ORIG_CXXFLAGS=$CXXFLAGS
-
 AC_PROG_CXX
+CXXFLAGS=$ORIG_CXXFLAGS
+CFLAGS=$ORIG_CFLAGS
+
 AC_PROG_CPP
 LT_PREREQ([2.4.2])
 LT_INIT([win32-dll])
