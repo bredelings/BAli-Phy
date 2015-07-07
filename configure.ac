@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([BAli-Phy],[2.3.7],[benjamin.redelings@duke.edu])
+AC_INIT([BAli-Phy],[2.3.8],[benjamin.redelings@duke.edu])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([1.11 foreign subdir-objects tar-ustar])
 AC_CONFIG_SRCDIR([src/bali-phy.C])
