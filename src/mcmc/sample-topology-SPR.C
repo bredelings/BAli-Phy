@@ -531,8 +531,7 @@ void SPR_by_NNI(Parameters& P, const tree_edge& E1, tree_edge E2)
 {
   const auto& t = P.t();
 
-  int b1 = t.find_branch(E1);
-  vector<int> connected = t.branches_after(t.reverse(b1));
+  vector<int> connected = t.branches_after(t.reverse(t.find_branch(E1)));
   assert(connected.size() == 2);
   tree_edge E3 = t.edge(connected[0]);
   tree_edge E5 = t.edge(connected[1]);
