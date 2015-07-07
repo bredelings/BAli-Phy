@@ -24,7 +24,7 @@ bool is_irrefutable_pat(const expression_ref& E)
 {
   assert(E.head().as_<AST_node>().type == "pat");
 
-  if (E.size() == 1 and E.sub()[0].as_<AST_node>().type == "apat_var")
+  if (E.size() == 1 and E.sub()[0].head().as_<AST_node>().type == "apat_var")
     return true;
   else
     return false;
