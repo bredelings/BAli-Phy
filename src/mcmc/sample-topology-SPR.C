@@ -24,6 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///
 
 #include <cmath>
+#include <cassert>
 #include <iostream>
 #include "sample.H"
 #include "rng.H"
@@ -527,16 +528,55 @@ struct spr_attachment_probabilities: public map<tree_edge,log_double_t>
   map<tree_edge,log_double_t> LLL;
 };
 
+bool points_to(const tree_edge& E1, const tree_edge& E2)
+{
+  return (E1.node2 == E2.node1 or E1.node2 == E2.node2);
+}
+
+bool behind_edge(const TreeInterface& T, const tree_edge& E1, const tree_edge& E2)
+{
+  int b = T.find_branch(E1);
+  return T.partition(b)[E2.node1] and T.partition(b)[E2.node2];
+}
+
+/* We need to NNI to ONE of the 4 grandchild edges */
+// E1, E3, and E5 all point away from E1.node1.
 void SPR_by_NNI(Parameters& P, const tree_edge& E1, tree_edge E2)
 {
   const auto& t = P.t();
+
+  assert(not behind_edge(T,E1,E2));
+
+  if (points_to(E1.reverse(),E2))
+    return; //already attached to edge E2!
 
   vector<int> connected = t.branches_after(t.reverse(t.find_branch(E1)));
   assert(connected.size() == 2);
   tree_edge E3 = t.edge(connected[0]);
   tree_edge E5 = t.edge(connected[1]);
-  if (E3.node2 == E2.node1 or E3.node2 == E2.node2)
+
+  if (points_to(E3, E2))
+  {
+    assert(behind_edge(T, E3, E2));
     std::swap(E3,E5);
+  }
+  else if (points_to(E5, E2))
+  {
+    assert(behind_edge(T, E5, E2));
+    ; // OK
+  }
+  else if (behind_edge(T, E3, E2))
+  {
+    std::abort();
+  }
+  else if (behind_edge(T, E5, E2))
+  {
+    std::abort();
+  }
+  else
+  {
+    std::abort();
+  }
 
   if (E5.node2 == E2.node2)
     E2 = E2.reverse();
