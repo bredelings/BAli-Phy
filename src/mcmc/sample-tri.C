@@ -250,7 +250,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
     P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
   }
 
-  P.A_.reset(); P.A();
+  P.recompute_alignment_matrix_from_pairwise_alignments();
 
 #ifndef NDEBUG_DP
   check_alignment(P.A(),T,"sample_tri_base:out");
