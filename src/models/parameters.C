@@ -203,8 +203,7 @@ bool use_internal_index = true;
 
 const alignment& data_partition::A() const
 {
-  if (not A_)
-    recompute_alignment_matrix_from_pairwise_alignments();
+  assert(A_);
 
   return *A_;
 }
