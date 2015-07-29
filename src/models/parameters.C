@@ -204,16 +204,30 @@ bool use_internal_index = true;
 const alignment& data_partition::A() const
 {
   if (not A_)
-  {
-    assert( variable_alignment_ );
+    recompute_alignment_matrix_from_pairwise_alignments();
 
-    vector<pairwise_alignment_t> As;
-    for(int b=0;b<2*T().n_branches();b++)
-      As.push_back(get_pairwise_alignment(b,false));
-    
-    A_ = cow_ptr<alignment>( get_alignment(get_alphabet(), *seqs, *sequences, construct(T(), As)) );
-  }
   return *A_;
+}
+
+void data_partition::set_alignment(const alignment& A2) const
+{
+  A_ = cow_ptr<alignment>( A2 );
+}
+
+void data_partition::set_alignment(const expression_ref& A2) const
+{
+  A_ = cow_ptr<alignment>( A2.as_<alignment>().clone() );
+}
+
+void data_partition::recompute_alignment_matrix_from_pairwise_alignments() const
+{
+  assert( variable_alignment_ );
+
+  vector<pairwise_alignment_t> As;
+  for(int b=0;b<2*T().n_branches();b++)
+    As.push_back(get_pairwise_alignment(b,false));
+  
+  set_alignment( get_alignment(get_alphabet(), *seqs, *sequences, construct(T(), As)) );
 }
 
 const SequenceTree& data_partition::T() const
@@ -266,7 +280,11 @@ void data_partition::variable_alignment(bool b)
       subA = new subA_index_leaf(A().length()+1, T().n_branches()*2);
 
     assert(has_IModel() and A().n_sequences() == T().n_nodes());
-    minimally_connect_leaf_characters(*A_.modify(), T());
+    {
+      alignment* A2 = A().clone();
+      minimally_connect_leaf_characters(*A2, T());
+      set_alignment(A2);
+    }
     note_alignment_changed();
 
     // reset the pairwise alignments.
@@ -470,10 +488,12 @@ void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& 
 
   if (require_match_A)
   {
+#ifndef NDEBUG
     int n1 = T().directed_branch(b).source();
     int n2 = T().directed_branch(b).target();
     assert(get_pairwise_alignment(b,false) == A2::get_pairwise_alignment(A(),n1,n2));
     assert(get_pairwise_alignment(B,false) == A2::get_pairwise_alignment(A(),n2,n1));
+#endif
   }
 }
 
@@ -490,16 +510,16 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b, bool r
   //  if (not pairwise_alignment_for_branch_is_valid(b)) std::abort();
   assert(pairwise_alignment_for_branch_is_valid(b));
 
-#ifndef NDEBUG
-  int B = T().directed_branch(b).reverse();
   if (require_match_A)
   {
+#ifndef NDEBUG
+    int B = T().directed_branch(b).reverse();
     int n1 = T().directed_branch(b).source();
     int n2 = T().directed_branch(b).target();
     assert(get_pairwise_alignment(b,false) == A2::get_pairwise_alignment(A(),n1,n2));
     assert(get_pairwise_alignment(B,false) == A2::get_pairwise_alignment(A(),n2,n1));
-  }
 #endif
+  }
 
   return P->get_parameter_value(pairwise_alignment_for_branch[b]).as_<pairwise_alignment_t>();
 }
@@ -1585,8 +1605,10 @@ Parameters::Parameters(const module_loader& L,
 
     vector<int> b2 = evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),my_tree(),b)))).as_<Vector<int>>();
     assert(b2.size() == branch_list_.size());
+#ifndef NDEBUG
     for( int i: branch_list_)
       assert(includes(b2,i));
+#endif
   }
 
   // check that smodel mapping has correct size.

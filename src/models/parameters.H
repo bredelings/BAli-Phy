@@ -109,6 +109,12 @@ public:
 
   const alignment& A() const;
 
+  void set_alignment(const expression_ref& A2) const;
+
+  void set_alignment(const alignment& A2) const;
+
+  void recompute_alignment_matrix_from_pairwise_alignments() const;
+  
   const SequenceTree& T() const;
 
   /// Cached Transition Probabilities
