@@ -445,7 +445,7 @@ string Ancestral_Sequences_Function::operator()(const Model& M, long)
     }
   }
 
-  A.print_fasta(output);
+  A.print_fasta_to_stream(output);
   output<<endl;
 
   return output.str();

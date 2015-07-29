@@ -40,7 +40,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 //        of some column.
 
 /// A multiple sequence alignment
-class alignment 
+class alignment: public Object
 {
   /// The homology array - accessed through operator()
   matrix<int> array;
@@ -59,6 +59,8 @@ class alignment
   
 public:
 
+  alignment* clone() const {return new alignment(*this);}
+  
   /// Unsafe - Make a copy of the alignment without preserving the homology array
   friend alignment blank_copy(const alignment&,int length);
 
@@ -106,11 +108,11 @@ public:
   void write_sequences(sequence_format::dumper_t,std::ostream&) const;
 
   /// Print alignment in default format (FASTA)
-  void print(std::ostream&) const;
+  void print_to_stream(std::ostream&) const;
   /// Print alignment in FASTA format
-  void print_fasta(std::ostream&) const;
+  void print_fasta_to_stream(std::ostream&) const;
   /// Print alignment in PHYLIP format
-  void print_phylip(std::ostream&) const;
+  void print_phylip_to_stream(std::ostream&) const;
 
   /// Resize the alignment array
   void changelength(int l);

@@ -301,7 +301,7 @@ void alignment::load(const vector<object_ptr<const alphabet> >& alphabets,const 
   load(alphabets,seqs);
 }
 
-void alignment::print(std::ostream& file) const{
+void alignment::print_to_stream(std::ostream& file) const{
   const alphabet& a = get_alphabet();
   file<<length()<<endl;
   for(int start = 0;start<length();) {
@@ -344,11 +344,11 @@ void alignment::write_sequences(sequence_format::dumper_t method,std::ostream& f
   (*method)(file,seqs);
 }
 
-void alignment::print_fasta(std::ostream& file) const {
+void alignment::print_fasta_to_stream(std::ostream& file) const {
   write_sequences(sequence_format::write_fasta,file);
 }
 
-void alignment::print_phylip(std::ostream& file) const {
+void alignment::print_phylip_to_stream(std::ostream& file) const {
   write_sequences(sequence_format::write_phylip,file);
 }
 
@@ -426,7 +426,7 @@ int remove_empty_columns(alignment& A)
 
 std::ostream& operator<<(std::ostream& file,const alignment& A) 
 {
-  A.print_fasta(file);
+  A.print_fasta_to_stream(file);
   return file;
 }
 

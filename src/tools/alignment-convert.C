@@ -75,9 +75,9 @@ int main(int argc,char* argv[]) {
       throw myexception()<<"Output format not specified";
 
     if (args["output"].as<string>() == "phylip")
-      A.print_phylip(std::cout);
+      A.print_phylip_to_stream(std::cout);
     else if (args["output"].as<string>() == "fasta")
-      A.print_fasta(std::cout);
+      A.print_fasta_to_stream(std::cout);
     else
       throw myexception()<<"Don't recognized requested format '"<<args["output"].as<string>()<<"'";
   }
