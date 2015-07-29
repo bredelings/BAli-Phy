@@ -541,9 +541,12 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
     // This just selects another alignment w/in the range of possible alignments, so the previous
     //   cache invalidations should work for this alignment as well.
     //
-    for(int i=0;i<p2.size();i++)
-      for(int j=0;j<p2[i].n_data_partitions();j++)
-	p2[i][j].A_ = p[C1][j].A_;
+
+    // FIXME: direct access to A_?
+    //    for(int i=0;i<p2.size();i++)
+    //      for(int j=0;j<p2[i].n_data_partitions();j++)
+    //	p2[i][j].A_ = p[C1][j].A_;
+    std::abort();
 
     sample_tri_multi_calculation tri2(p2, nodes, do_OS, do_OP, bandwidth);
 

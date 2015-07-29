@@ -636,10 +636,10 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
    sequence_length_indices(AA.n_sequences(),-1),
    transition_p_method_indices(T().n_branches(),-1),
    variable_alignment_( has_IModel() ),
+   A_(AA),
    seqs(AA.seqs()),
    sequences( alignment_letters(AA, T().n_leaves()) ),
    a(AA.get_alphabet().clone()),
-   A_(AA),
    LC(T(), *this),
    branch_HMM_type(T().n_branches(),0)
 {

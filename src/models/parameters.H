@@ -86,6 +86,9 @@ class data_partition: public Mat_Cache
 
   bool variable_alignment_;
 
+  /// The alignment data of this partition
+  mutable cow_ptr<alignment> A_;
+
 public:
 
   /// Is the alignment allowed to vary?
@@ -103,9 +106,6 @@ public:
   cow_ptr< std::vector< std::vector<int> > > sequences;
 
   boost::shared_ptr<alphabet> a;
-
-  /// The alignment data of this partition
-  mutable cow_ptr<alignment> A_;
 
   const alignment& A() const;
 
