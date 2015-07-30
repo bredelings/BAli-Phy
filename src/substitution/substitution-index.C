@@ -53,9 +53,9 @@ vector<int> convert_to_column_list(const vector<pair<int,int> >& column_indices)
 }
 
 /// Take a sorted list of [column] and convert it to [(column,index)]
-vector<pair<int,int> > convert_to_column_index_list(const vector<int>& column_indices)
+Vector<pair<int,int> > convert_to_column_index_list(const vector<int>& column_indices)
 {
-  vector<pair<int,int> > indices(column_indices.size());
+  Vector<pair<int,int> > indices(column_indices.size());
   for(int i=0;i<column_indices.size();i++)
     indices[i] = {column_indices[i],i};
   
@@ -96,14 +96,24 @@ int n_non_empty_columns(const matrix<int>& m)
   return total;
 }
 
-void subA_index_t::set_row(int r, const vector<pair<int,int>>& index)
+void subA_index_t::set_row(int r, const Vector<pair<int,int>>& index)
 {
-  indices[r] = vector<pair<int,int>>(index);
+  indices[r] = index;
 }
 
-void subA_index_t::set_row(int r,      vector<pair<int,int>>&& index)
+void subA_index_t::set_row(int r, const expression_ref& index)
 {
-  indices[r] = vector<pair<int,int>>(std::move(index));
+  indices[r] = index;
+}
+
+const expression_ref& subA_index_t::row_expression(int r) const
+{
+  return indices[r];
+}
+
+const Vector<std::pair<int,int> >& subA_index_t::row(int r) const
+{
+  return row_expression(r).as_<Vector<pair<int,int>>>();
 }
 
 int subA_index_t::n_rows() const
@@ -125,44 +135,45 @@ bool subA_identical(const matrix<int>& I1,const matrix<int>& I2) {
 }
 
 /// Find the current active (e.g. smallest) column - w/o incrementing I at all.  We could perhaps call this current_column( ).
-int next_column(const vector< vector<pair<int,int> > >& indices, const vector<int>& branches, const vector<int>& I)
+int next_column(const vector< expression_ref >& indices, const vector<int>& I)
 {
   int m = -1;
-  for(int i=0;i<branches.size();i++)
+  for(int i=0;i<indices.size();i++)
   {
-    int B = branches[i];
+    const auto& index = indices[i].as_<Vector<pair<int,int>>>();
 
     int ii = I[i];
-    if (ii >= indices[B].size()) continue;
+    
+    if (ii >= index.size()) continue;
 
     if (m == -1)
-      m = indices[B][ii].first;
+      m = index[ii].first;
     else
-      m = std::min(m, indices[B][ii].first);
+      m = std::min(m, index[ii].first);
   }
   return m;
 }
 
 /// Find the current active (e.g. smallest) column - w/o incrementing I at all.  We could perhaps call this current_column( ).
-int next_column(const vector< vector<pair<int,int> > >& indices, const vector<int>& branches, const vector< vector<int> >& sequence_indices, const vector<int>& I)
+int next_column(const vector< expression_ref >& indices, const vector< vector<int> >& sequence_indices, const vector<int>& I)
 {
   int m = -1;
-  for(int i=0;i<branches.size();i++)
+  for(int i=0;i<indices.size();i++)
   {
-    int B = branches[i];
+    const auto& index = indices[i].as_<Vector<pair<int,int>>>();
 
     int ii = I[i];
-    if (ii >= indices[B].size()) continue;
+    if (ii >= index.size()) continue;
 
     if (m == -1)
-      m = indices[B][ii].first;
+      m = index[ii].first;
     else
-      m = std::min(m, indices[B][ii].first);
+      m = std::min(m, index[ii].first);
   }
 
   for(int n=0;n<sequence_indices.size();n++)
   {
-    int i = n + branches.size();
+    int i = n + indices.size();
 
     int ii = I[i];
     if (ii >= sequence_indices[n].size()) continue;
@@ -192,22 +203,26 @@ matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, bool with_
   // The alignment of sub alignments
   matrix<int> subA3(total_length, branches.size() + (with_columns?1:0));
 
+  vector<expression_ref> sub_indices;
+  for(int b: branches)
+    sub_indices.push_back(row_expression(b));
+
   vector<int> I(branches.size(),0);
   int L = 0;
   while(true)
   {
-    int c = next_column(indices, branches, I);
+    int c = next_column(sub_indices, I);
     if (c == -1) break;
 
-    for(int i=0;i<branches.size();i++)
+    for(int i=0;i<sub_indices.size();i++)
     {
-      int b = branches[i];
+      const auto& index = sub_indices[i].as_<Vector<pair<int,int>>>();
 
       int j = I[i];
 
-      if (j < row(b).size() and row(b)[j].first == c) 
+      if (j < index.size() and index[j].first == c) 
       {
-	subA3(L,i) = row(b)[j].second;
+	subA3(L,i) = index[j].second;
 	I[i]++;
       }
       else
@@ -261,22 +276,26 @@ matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& bran
   int C = sequence_indices.size() + branches.size();
   matrix<int> subA3(total_length, branches.size() + sequence_indices.size() + (with_columns?1:0));
 
+  vector<expression_ref> sub_indices;
+  for(int b: branches)
+    sub_indices.push_back(row_expression(b));
+
   vector<int> I(branches.size()+sequence_indices.size(),0);
   int L = 0;
   while(true)
   {
-    int c = next_column(indices, branches, sequence_indices, I);
+    int c = next_column(sub_indices, sequence_indices, I);
     if (c == -1) break;
 
-    for(int i=0;i<branches.size();i++)
+    for(int i=0;i<sub_indices.size();i++)
     {
-      int b = branches[i];
+      const auto& index = sub_indices[i].as_<Vector<pair<int,int>>>();
 
       int j = I[i];
 
-      if (j < row(b).size() and row(b)[j].first == c) 
+      if (j < index.size() and index[j].first == c) 
       {
-	subA3(L,i) = row(b)[j].second;
+	subA3(L,i) = index[j].second;
 	I[i]++;
       }
       else
@@ -285,7 +304,7 @@ matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& bran
 
     for(int i=0;i<sequence_indices.size();i++)
     {
-      int n = i + branches.size();
+      int n = i + sub_indices.size();
       int j = I[n];
 
       if (j < sequence_indices[i].size() and sequence_indices[i][j] == c)
@@ -573,7 +592,6 @@ void check_subA(const subA_index_t& I1_, const alignment& A1,const subA_index_t&
 void subA_index_t::invalidate_one_branch(int b) 
 {
   up_to_date[b] = false;
-  indices[b].clear();
 }
 
 void subA_index_t::invalidate_all_branches()
@@ -784,12 +802,12 @@ vector<int> indices_to_present_columns(const vector<pair<int,int> >& p1, const v
 }
 
 /// Get the sorted list of columns present in either p1 or p2, with -1 for each index.
-vector<pair<int,int> > combine_columns(const vector<pair<int,int> >& p1, const vector<pair<int,int> >& p2)
+Vector<pair<int,int> > combine_columns(const vector<pair<int,int> >& p1, const vector<pair<int,int> >& p2)
 {
   const int s1 = p1.size();
   const int s2 = p2.size();
 
-  vector<pair<int,int> > p3;
+  Vector<pair<int,int> > p3;
   p3.reserve(s1+s2);
 
   int I1 = 0;
@@ -847,7 +865,7 @@ void subA_index_leaf::update_one_branch(const alignment& A, const TreeInterface&
       std::swap(prev[0],prev[1]);
 
     // get the sorted list of present columns
-    auto index = combine_columns(row(prev[0]), row(prev[1]));
+    Vector<pair<int,int>> index = combine_columns(row(prev[0]), row(prev[1]));
 
     int l=0;
 
@@ -860,7 +878,7 @@ void subA_index_leaf::update_one_branch(const alignment& A, const TreeInterface&
 	  index[k].second = l++;
     }
     assert(l == index.size());
-    set_row(b, std::move(index));
+    set_row(b, index);
   }
 
   up_to_date[b] = true;
