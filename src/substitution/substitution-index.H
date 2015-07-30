@@ -26,6 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree/tree.H"
 #include "models/TreeInterface.H"
 #include "object.H"
+#include "computation/expression.H"
 
 /* The algorithms in this file provide each column in a sub-alignment
  * with a name that persists through alignment and tree changes that
@@ -204,7 +205,7 @@ struct subA_index_t: public Object
 protected:
   subA_index_kind kind_;
 
-  std::vector< std::vector< std::pair<int,int> > > indices;
+  std::vector< expression_ref > indices;
 
   std::vector<bool> up_to_date;
 
@@ -215,8 +216,8 @@ protected:
      they will be valid for a different root/SPR-attachment-point.
    */
 
-  void set_row(int r, const std::vector<std::pair<int,int>>& index);
-  void set_row(int r,       std::vector<std::pair<int,int>>&& index);
+  void set_row(int r, const Vector<std::pair<int,int>>& index);
+  void set_row(int r, const expression_ref& index);
   
 public:
   virtual subA_index_t* clone() const=0;
@@ -236,9 +237,11 @@ public:
     return row(b).size();
   }
 
-  const std::vector<std::pair<int,int> >& operator[](int r) const {return row(r);}
+  const Vector<std::pair<int,int> >& operator[](int r) const {return row(r);}
 
-  const std::vector<std::pair<int,int> >& row(int r) const {return indices[r];}
+  const expression_ref& row_expression(int r) const;
+
+  const Vector<std::pair<int,int> >& row(int r) const;
 
   /// align sub-alignments corresponding to branches in b
   matrix<int> get_subA_index(const std::vector<int>& b,const alignment& A, const TreeInterface& t,bool=false);
