@@ -79,15 +79,18 @@ class Box: public Object, public T
 public:
   Box<T>* clone() const {return new Box<T>(*this);}
 
-  Box<T>& operator=(const Box<T>& t)
+  Box<T>& operator=(const Box<T>& t) = default;
+  Box<T>& operator=(Box<T>&& t) = default;
+
+  Box<T>& operator=(const T& t)
   {
     T::operator=(t);
     return *this;
   }
 
-  Box<T>& operator=(const T& t)
+  Box<T>& operator=(T&& t)
   {
-    T::operator=(t);
+    T::operator=(std::move(t));
     return *this;
   }
 
@@ -97,7 +100,9 @@ public:
 
   Box() = default;
   Box(const Box<T>&) = default;
+  Box(Box<T>&&) = default;
   explicit Box(const T& t):T(t) {}
+  explicit Box(T&& t):T(std::move(t)) {}
 };
 
 template<typename T>
