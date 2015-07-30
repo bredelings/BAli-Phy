@@ -538,7 +538,7 @@ expression_ref to_float(const string& s)
 expression_ref to_char(const string& s)
 {
   assert(s.size() == 3);
-  return Char(s[1]);
+  return s[1];
 }
 
 string remove_quotes(const string& s)

@@ -105,168 +105,14 @@ public:
   explicit Box(T&& t):T(std::move(t)) {}
 };
 
-template<typename T>
-class POD: public Object 
-{
-public:
-  T t;
-
-  typedef T subtype;
-
-  POD<T>* clone() const {return new POD<T>(*this);}
-
-  operator T() const {return t;}
-
-  //  template <typename U>
-  //  operator POD<U>() const {return t;}
-
-  type_constant type() const {return unknown_type;}
-
-  POD<T>& operator=(const POD<T>& p2) {t = p2.t; return *this;}
-
-  POD<T>& operator=(const T& t2) {t = t2; return *this;}
-
-  POD() {}
-  POD(const T& t2):t(t2) {}
-
-  std::string print() const {return convertToString(t);}
-
-  virtual tribool compare(const Object& O) const 
-  {
-    // The same object
-    if (this == &O) return true;
-
-    // The same value
-    const POD<T>* o = dynamic_cast<const POD<T>*>(&O);
-    if (o and t == o->t) return true;
-
-    // Not the same
-    return false;
-  }
-
-  // Doesn't seem to do ANYTHING?  Why not?
-  //  template <typename U>
-  //  POD(const boost::enable_if_c<boost::is_convertible<U,T>::type,U>& u):t(u) { }
-};
-
-#include <boost/type_traits/is_arithmetic.hpp>
-#include <boost/utility/enable_if.hpp>
-
 /***************** Make log_double_t count as an arithmetic type **************/
 
-//typedef POD<bool> Bool;
 typedef Box<std::string> String;
-
-template <typename T>
-class POD_math: public Object
-{
-protected:
-  T t;
-public:
-  typedef T subtype;
-
-  POD_math<T>* clone() const {return new POD_math<T>(*this);}
-
-  operator T() const {return t;}
-
-  //  template <typename U>
-  //  operator POD_math<U>() const {return t;}
-
-  POD_math<T>& operator=(const POD_math<T>& p2) {t = p2.t; return *this;}
-
-  POD_math<T>& operator=(const T& t2) {t = t2; return *this;}
-
-  POD_math() {}
-  POD_math(const T& t2):t(t2) {}
-
-  virtual type_constant type() const {return unknown_type;}
-
-  template <typename U>
-  POD_math(const POD_math<U>& t2):t(t2) {}
-
-  std::string print() const {return convertToString(t);}
-
-  virtual tribool compare(const Object& O) const 
-  {
-    // The same object
-    if (this == &O) return true;
-
-    // The same value and type
-    const POD_math<T>* o = dynamic_cast<const POD_math<T>*>(&O);
-    if (o and t == o->t) return true;
-
-    // Not the same
-    return false;
-  }
-
-  POD_math<T>& operator+=(const POD_math<T>& t2) {t += t2; return *this;}
-  POD_math<T>& operator+=(const T& t2)           {t += t2; return *this;}
-  POD_math<T>& operator-=(const POD_math<T>& t2) {t -= t2; return *this;}
-  POD_math<T>& operator-=(const T& t2)           {t -= t2; return *this;}
-  POD_math<T>& operator*=(const POD_math<T>& t2) {t *= t2; return *this;}
-  POD_math<T>& operator*=(const T& t2)           {t *= t2; return *this;}
-  POD_math<T>& operator/=(const POD_math<T>& t2) {t /= t2; return *this;}
-  POD_math<T>& operator/=(const T& t2)           {t /= t2; return *this;}
-
-  POD_math<T> operator-() const {POD_math<T> t3 = *this; t3.t = -t3.t; return t3;}
-
-  POD_math<T> operator+(const POD_math<T>& t2) const {POD_math<T> t3 = *this; t3+= t2; return t3;}
-  POD_math<T> operator+(const T& t2)           const {POD_math<T> t3 = *this; t3+= t2; return t3;}
-  POD_math<T> operator-(const POD_math<T>& t2) const {POD_math<T> t3 = *this; t3-= t2; return t3;}
-  POD_math<T> operator-(const T& t2)           const {POD_math<T> t3 = *this; t3-= t2; return t3;}
-  POD_math<T> operator*(const POD_math<T>& t2) const {POD_math<T> t3 = *this; t3*= t2; return t3;}
-  POD_math<T> operator*(const T& t2)           const {POD_math<T> t3 = *this; t3*= t2; return t3;}
-  POD_math<T> operator/(const POD_math<T>& t2) const {POD_math<T> t3 = *this; t3/= t2; return t3;}
-  POD_math<T> operator/(const T& t2)           const {POD_math<T> t3 = *this; t3/= t2; return t3;}
-
-  bool operator==(const POD_math<T>& t2) const {return t == T(t2);}
-  bool operator==(const T& t2)           const {return t == T(t2);}
-  bool operator!=(const POD_math<T>& t2) const {return t != T(t2);}
-  bool operator!=(const T& t2)           const {return t != T(t2);}
-  bool operator>(const POD_math<T>& t2)  const {return t > T(t2);}
-  bool operator>(const T& t2)            const {return t > T(t2);}
-  bool operator>=(const POD_math<T>& t2) const {return t >= T(t2);}
-  bool operator>=(const T& t2)           const {return t >= T(t2);}
-  bool operator<(const POD_math<T>& t2)  const {return t < T(t2);}
-  bool operator<(const T& t2)            const {return t < T(t2);}
-  bool operator<=(const POD_math<T>& t2) const {return t <= T(t2);}
-  bool operator<=(const T& t2)           const {return t <= T(t2);}
-};
-
-template<> 
-inline type_constant POD_math<int>::type() const
-{
-  return int_type;
-}
-
-template<> 
-inline type_constant POD_math<double>::type() const
-{
-  return double_type;
-}
-
-template<> 
-inline type_constant POD_math<log_double_t>::type() const
-{
-  return log_double_type;
-}
-
-template<> 
-inline type_constant POD_math<char>::type() const
-{
-  return char_type;
-}
 
 template<> 
 inline std::string Box<std::string>::print() const
 {
   return "\""+(*this)+"\"";
-}
-
-template<> 
-inline std::string POD_math<char>::print() const
-{
-  return std::string("'")+t+"'";
 }
 
 template <typename T>
@@ -278,12 +124,6 @@ bool unshare(object_ptr<T>& ptr)
 
   return true;
 }
-
-typedef POD_math<double> Double;
-typedef POD_math<int> Int;
-typedef POD_math<unsigned> Unsigned;
-typedef POD_math<char> Char;
-typedef POD_math<log_double_t> Log_Double;
 
 template <typename T>
 using Vector = Box<std::vector<T>>;
