@@ -361,18 +361,6 @@ matrix<int> subA_select(const matrix<int>& subA1) {
   return subA2;
 }
 
-/// Sort columns according to value in last row, removing columns with -1 in last row
-matrix<int> subA_remove_last_row(const matrix<int>& subA1) 
-{
-  matrix<int> subA2(subA1.size1(), (int)subA1.size2() - 1);
-
-  for(int i=0;i<subA2.size1();i++) 
-    for(int j=0;j<subA2.size2();j++)
-      subA2(i,j) = subA1(i,j);
-
-  return subA2;
-}
-
 /// Select rows for branches \a b, and toss columns where the last branch has entry -1
 matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b) const
 {
