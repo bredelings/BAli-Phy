@@ -101,8 +101,8 @@ public:
   Box() = default;
   Box(const Box<T>&) = default;
   Box(Box<T>&&) = default;
-  explicit Box(const T& t):T(t) {}
-  explicit Box(T&& t):T(std::move(t)) {}
+  Box(const T& t):T(t) {}
+  Box(T&& t):T(std::move(t)) {}
 };
 
 /***************** Make log_double_t count as an arithmetic type **************/
