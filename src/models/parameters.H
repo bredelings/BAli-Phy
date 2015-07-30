@@ -54,8 +54,10 @@ class data_partition: public Mat_Cache
 {
   friend class Parameters;
 
+public:
   const Parameters* P;
 
+private:
   int partition_index;
 
   /// The pairwise alignment for each branch
@@ -91,6 +93,8 @@ class data_partition: public Mat_Cache
 
 public:
 
+  void set_parameters(const Parameters* P);
+  
   /// Is the alignment allowed to vary?
   bool variable_alignment() const {return variable_alignment_;}
   

@@ -201,6 +201,12 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
 
 bool use_internal_index = true;
 
+void data_partition::set_parameters(const Parameters* p)
+{
+  P = p;
+  subA->P = p;
+}
+
 const alignment& data_partition::A() const
 {
   return P->get_parameter_value(alignment_matrix_index).as_<alignment>();
@@ -255,7 +261,7 @@ void data_partition::variable_alignment(bool b)
   // turning OFF alignment variation
   if (not variable_alignment()) 
   {
-    subA = new subA_index_leaf(A().length()+1, T().n_branches()*2);
+    subA = new subA_index_leaf(P, A().length()+1, T().n_branches()*2);
 
     // We just changed the subA index type
     LC.invalidate_all();
@@ -268,9 +274,9 @@ void data_partition::variable_alignment(bool b)
   else 
   {
     if (use_internal_index)
-      subA = new subA_index_internal(A().length()+1, T().n_branches()*2);
+      subA = new subA_index_internal(P, A().length()+1, T().n_branches()*2);
     else
-      subA = new subA_index_leaf(A().length()+1, T().n_branches()*2);
+      subA = new subA_index_leaf(P, A().length()+1, T().n_branches()*2);
 
     assert(has_IModel() and A().n_sequences() == T().n_nodes());
     {
@@ -638,9 +644,9 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   int B = T().n_branches();
 
   if (variable_alignment() and use_internal_index)
-    subA = new subA_index_internal(AA.length()+1, B*2);
+    subA = new subA_index_internal(P, AA.length()+1, B*2);
   else
-    subA = new subA_index_leaf(AA.length()+1, B*2);
+    subA = new subA_index_leaf(P, AA.length()+1, B*2);
 
   string invisible_prefix = "*P"+convertToString(i+1)+".";
   alignment_matrix_index = p->add_parameter(invisible_prefix + "A", AA);
@@ -755,13 +761,13 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
 
 const data_partition& Parameters::get_data_partition(int i) const
 {
-  data_partitions[i].P = this;
+  data_partitions[i].set_parameters(this);
   return data_partitions[i];
 }
 
 data_partition& Parameters::get_data_partition(int i)
 {
-  data_partitions[i].P = this;
+  data_partitions[i].set_parameters(this);
   return data_partitions[i];
 }
 
