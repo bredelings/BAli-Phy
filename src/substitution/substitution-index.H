@@ -226,7 +226,7 @@ public:
     return indices[b].size();
   }
 
-  const std::vector<std::pair<int,int> > operator[](int r) const {return indices[r];}
+  const std::vector<std::pair<int,int> >& operator[](int r) const {return indices[r];}
 
   /// align sub-alignments corresponding to branches in b
   matrix<int> get_subA_index(const std::vector<int>& b,const alignment& A,const Tree& T,bool=false);
