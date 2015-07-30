@@ -133,7 +133,7 @@ public:
 
   explicit cow_ptr(const X& x)                  : data(new X(x)) {}
 
-  explicit cow_ptr(const X&& x)                  : data(new X(std::move(x))) {}
+  explicit cow_ptr(X&& x)                  : data(new X(std::move(x))) {}
 
   // no need for ~cow_ptr - the counted_ptr takes care of everything.
 };
