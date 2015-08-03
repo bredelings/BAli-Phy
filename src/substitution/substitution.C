@@ -1692,7 +1692,7 @@ namespace substitution {
 
   log_double_t Pr_from_scratch_leaf(data_partition P)
   {
-    subA_index_leaf subA(P.P, P.A().length()+1, P.T().n_branches()*2);
+    subA_index_leaf subA(P.P, P.T().n_branches()*2);
 
     Likelihood_Cache LC(P.T(), P);
     LC.root = P.LC.root;
@@ -1706,7 +1706,7 @@ namespace substitution {
   {
     assert(P.variable_alignment());
 
-    subA_index_internal subA(P.P, P.A().length()+1, P.T().n_branches()*2);
+    subA_index_internal subA(P.P, P.T().n_branches()*2);
 
     Likelihood_Cache LC(P.T(), P);
     LC.root = P.LC.root;

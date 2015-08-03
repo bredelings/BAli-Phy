@@ -217,7 +217,7 @@ protected:
 public:
   virtual subA_index_t* clone() const=0;
   
-  subA_index_t(const Parameters* P, subA_index_kind k, int s1, int s2);
+  subA_index_t(const Parameters* P, subA_index_kind k, int s2);
 
   int n_rows() const;
 
@@ -303,7 +303,7 @@ public:
 
   void check_footprint_for_branch(const alignment& A1,const Tree& T,int b) const;
 
-  subA_index_leaf(const Parameters* P, int s1, int s2);
+  subA_index_leaf(const Parameters* P, int s2);
 };
 
 struct subA_index_internal: public subA_index_t
@@ -316,7 +316,7 @@ public:
 
   void check_footprint_for_branch(const alignment& A1,const Tree& T,int b) const;
 
-  subA_index_internal(const Parameters* P, int s1, int s2);
+  subA_index_internal(const Parameters* P, int s2);
 };
 
 void check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T);

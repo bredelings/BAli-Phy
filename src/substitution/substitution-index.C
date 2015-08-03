@@ -795,7 +795,7 @@ vector<int> subA_index_t::characters_to_indices(int branch, const alignment& A, 
   return suba_for_character;
 }
 
-subA_index_t::subA_index_t(const Parameters* p, subA_index_kind k, int, int s2)
+subA_index_t::subA_index_t(const Parameters* p, subA_index_kind k, int s2)
   :P(p),
    kind_(k),
    indices(s2),
@@ -950,8 +950,8 @@ void subA_index_leaf::check_footprint_for_branch(const alignment& A, const Tree&
   }
 }
 
-subA_index_leaf::subA_index_leaf(const Parameters* p, int s1, int s2)
-  :subA_index_t(p, subA_index_t::leaf_index,s1,s2)
+subA_index_leaf::subA_index_leaf(const Parameters* p, int s2)
+  :subA_index_t(p, subA_index_t::leaf_index,s2)
 {
 }
 
@@ -995,7 +995,7 @@ void subA_index_internal::check_footprint_for_branch(const alignment& A, const T
   }
 }
 
-subA_index_internal::subA_index_internal(const Parameters* p, int s1, int s2)
-  :subA_index_t(p, subA_index_t::internal_index,s1,s2)
+subA_index_internal::subA_index_internal(const Parameters* p, int s2)
+  :subA_index_t(p, subA_index_t::internal_index,s2)
 {
 }

@@ -261,7 +261,7 @@ void data_partition::variable_alignment(bool b)
   // turning OFF alignment variation
   if (not variable_alignment()) 
   {
-    subA = new subA_index_leaf(P, A().length()+1, T().n_branches()*2);
+    subA = new subA_index_leaf(P, T().n_branches()*2);
 
     // We just changed the subA index type
     LC.invalidate_all();
@@ -274,9 +274,9 @@ void data_partition::variable_alignment(bool b)
   else 
   {
     if (use_internal_index)
-      subA = new subA_index_internal(P, A().length()+1, T().n_branches()*2);
+      subA = new subA_index_internal(P, T().n_branches()*2);
     else
-      subA = new subA_index_leaf(P, A().length()+1, T().n_branches()*2);
+      subA = new subA_index_leaf(P, T().n_branches()*2);
 
     assert(has_IModel() and A().n_sequences() == T().n_nodes());
     {
@@ -644,9 +644,9 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   int B = T().n_branches();
 
   if (variable_alignment() and use_internal_index)
-    subA = new subA_index_internal(P, AA.length()+1, B*2);
+    subA = new subA_index_internal(P, B*2);
   else
-    subA = new subA_index_leaf(P, AA.length()+1, B*2);
+    subA = new subA_index_leaf(P, B*2);
 
   string invisible_prefix = "*P"+convertToString(i+1)+".";
   alignment_matrix_index = p->add_parameter(invisible_prefix + "A", AA);
