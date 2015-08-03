@@ -201,10 +201,15 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
 
 bool use_internal_index = true;
 
+subA_index_t& data_partition::subA() const
+{
+  subA_->P = P;
+  return *subA_;
+}
+
 void data_partition::set_parameters(const Parameters* p)
 {
   P = p;
-  subA->P = p;
 }
 
 const alignment& data_partition::A() const
@@ -261,7 +266,7 @@ void data_partition::variable_alignment(bool b)
   // turning OFF alignment variation
   if (not variable_alignment()) 
   {
-    subA = new subA_index_leaf(P, T().n_branches()*2);
+    subA_ = new subA_index_leaf(P, T().n_branches()*2);
 
     // We just changed the subA index type
     LC.invalidate_all();
@@ -274,9 +279,9 @@ void data_partition::variable_alignment(bool b)
   else 
   {
     if (use_internal_index)
-      subA = new subA_index_internal(P, T().n_branches()*2);
+      subA_ = new subA_index_internal(P, T().n_branches()*2);
     else
-      subA = new subA_index_leaf(P, T().n_branches()*2);
+      subA_ = new subA_index_leaf(P, T().n_branches()*2);
 
     assert(has_IModel() and A().n_sequences() == T().n_nodes());
     {
@@ -412,10 +417,10 @@ int data_partition::seqlength(int n) const
 
 void data_partition::uniquify_subA_index()
 {
-  if (subA->ref_count() > 1)
-    subA = subA->clone();
+  if (subA_->ref_count() > 1)
+    subA_ = subA_->clone();
 
-  assert(subA->ref_count() == 1);
+  assert(subA_->ref_count() == 1);
 }
 
 void data_partition::invalidate_subA_index_branch(int b)
@@ -423,7 +428,7 @@ void data_partition::invalidate_subA_index_branch(int b)
   uniquify_subA_index();
 
   // propagates outward in both directions
-  subA->invalidate_branch(T(),b);
+  subA().invalidate_branch(T(),b);
 }
 
 void data_partition::invalidate_subA_index_one_branch(int b)
@@ -431,15 +436,15 @@ void data_partition::invalidate_subA_index_one_branch(int b)
   uniquify_subA_index();
 
   int b2 = T().directed_branch(b).reverse();
-  subA->invalidate_one_branch(b);
-  subA->invalidate_one_branch(b2);
+  subA().invalidate_one_branch(b);
+  subA().invalidate_one_branch(b2);
 }
 
 void data_partition::invalidate_subA_index_all()
 {
   uniquify_subA_index();
 
-  subA->invalidate_all_branches();
+  subA().invalidate_all_branches();
 }
 
 void data_partition::subA_index_allow_invalid_branches(bool b)
@@ -447,17 +452,17 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
   uniquify_subA_index();
 
 #ifndef NDEBUG
-  if (not subA->may_have_invalid_branches())
+  if (not subA().may_have_invalid_branches())
     check_regenerate(*subA, A(), T());
-  subA->check_footprint(A(), T());
+  subA()->check_footprint(A(), T());
 #endif
 
-  subA->allow_invalid_branches(b);
+  subA().allow_invalid_branches(b);
 
 #ifndef NDEBUG
-  if (not subA->may_have_invalid_branches())
+  if (not subA().may_have_invalid_branches())
     check_regenerate(*subA, A(), T());
-  subA->check_footprint(A(), T());
+  subA().check_footprint(A(), T());
 #endif
 }
 
@@ -563,7 +568,7 @@ void data_partition::note_alignment_changed_on_branch(int b)
   // projected to the leaves remain unchanged.  If we only index these columns, then the
   // get_subA_index( ) will not change if we are using subA_index_leaf.
   //
-  if (dynamic_pointer_cast<subA_index_internal>(subA))
+  if (dynamic_pointer_cast<subA_index_internal>(subA_))
     LC.invalidate_branch_alignment(T(),b);
 }
 
@@ -644,9 +649,9 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   int B = T().n_branches();
 
   if (variable_alignment() and use_internal_index)
-    subA = new subA_index_internal(P, B*2);
+    subA_ = new subA_index_internal(P, B*2);
   else
-    subA = new subA_index_leaf(P, B*2);
+    subA_ = new subA_index_leaf(P, B*2);
 
   string invisible_prefix = "*P"+convertToString(i+1)+".";
   alignment_matrix_index = p->add_parameter(invisible_prefix + "A", AA);

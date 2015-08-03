@@ -185,7 +185,7 @@ void sample_alignment(Parameters& P,int b)
 	Matrices[i].push_back(sample_alignment_base(p[i][j], b));
 	// If Pr_sum_all_paths() == 0, then the alignment for this partition will be unchanged.
 #ifndef NDEBUG
-	check_subA(*P0[j].subA, P0[j].A(), *p[i][j].subA, p[i][j].A(), p[0].T());
+	check_subA(P0[j].subA(), P0[j].A(), p[i][j].subA(), p[i][j].A(), p[0].T());
 	p[i][j].likelihood();  // check the likelihood calculation
 #endif
       }

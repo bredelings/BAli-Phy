@@ -167,7 +167,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 	//    p[i][j].LC.invalidate_node(p[i].T,order[i][5]);
 #ifndef NDEBUG
 	if (i==0) 
-	  check_subA(*P0[j].subA, P0[j].A(), *p[0][j].subA, p[0][j].A(), p[0].T());
+	  check_subA(P0[j].subA(), P0[j].A(), p[0][j].subA(), p[0][j].A(), p[0].T());
 	p[i][j].likelihood();  // check the likelihood calculation
 #endif
       }

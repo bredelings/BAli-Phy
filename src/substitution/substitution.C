@@ -1110,7 +1110,7 @@ namespace substitution {
   }
 
   int calculate_caches_for_node(int n, const data_partition& P) {
-    return calculate_caches_for_node(n, *P.sequences, P.A(), *P.subA, P, P.T(), P.LC);
+    return calculate_caches_for_node(n, *P.sequences, P.A(), P.subA(), P, P.T(), P.LC);
   }
 
   static 
@@ -1224,7 +1224,7 @@ namespace substitution {
     const alignment& A = P.A();
     const Tree& T = P.T();
     Likelihood_Cache& LC = P.LC;
-    subA_index_t& I = *P.subA;
+    subA_index_t& I = P.subA();
 
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
@@ -1350,7 +1350,7 @@ namespace substitution {
     const SequenceTree& T = P.T();
     const Mat_Cache& MC = P;
     Likelihood_Cache& LC = P.LC;
-    subA_index_t& I = *P.subA;
+    subA_index_t& I = P.subA();
 
     // compute root branches
     vector<int> rb;
@@ -1395,7 +1395,7 @@ namespace substitution {
     //   to this one.
 
     // get the relationships with the sub-alignments
-    if (dynamic_pointer_cast<subA_index_leaf>(P.subA))
+    if (dynamic_pointer_cast<subA_index_leaf>(&P.subA()))
     {
       matrix<int> index1 = I.get_subA_index_none(rb,A,T,nodes);
       log_double_t Pr1 = calc_root_probability(P,rb,index1);
@@ -1616,7 +1616,7 @@ namespace substitution {
   }
 
   log_double_t Pr_unaligned_root(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr_unaligned_root(*P.sequences, P.A(), *P.subA, P, P.T(), LC);
+    return Pr_unaligned_root(*P.sequences, P.A(), P.subA(), P, P.T(), LC);
   }
 
   log_double_t Pr_unaligned_root(const data_partition& P) {
@@ -1685,7 +1685,7 @@ namespace substitution {
 
   log_double_t Pr(const data_partition& P,Likelihood_Cache& LC) 
   {
-    return Pr(*P.sequences, P.A(), *P.subA, P, P.T(), LC);
+    return Pr(*P.sequences, P.A(), P.subA(), P, P.T(), LC);
   }
 
 
@@ -1729,7 +1729,7 @@ namespace substitution {
 
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
-      compare_caches(*P.subA, *P2.subA, P.LC, P2.LC, P.T());
+      compare_caches(P.subA(), P2.subA(), P.LC, P2.LC, P.T());
       std::abort();
     }
 #endif
@@ -1968,7 +1968,7 @@ namespace substitution {
 
   vector<vector<pair<int,int>>> sample_ancestral_states(const data_partition& P)
   {
-    return sample_subst_history(*P.sequences, P.A(), *P.subA, P, P.T(), P.LC);
+    return sample_subst_history(*P.sequences, P.A(), P.subA(), P, P.T(), P.LC);
   }
 
   vector<Matrix> 
@@ -2093,7 +2093,7 @@ namespace substitution {
 
   vector<Matrix> get_likelihoods_by_alignment_column(const data_partition& P)
   {
-    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, P.A(), *P.subA, P, P.T(), P.LC);
+    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, P.A(), P.subA(), P, P.T(), P.LC);
 
 #ifdef DEBUG_SUBSTITUTION
     log_double_t L1 = combine_likelihoods(likelihoods);

@@ -91,6 +91,9 @@ private:
   /// The alignment data of this partition
   int alignment_matrix_index = -1;
 
+  /// sub-alignment indices;
+  mutable object_ptr<subA_index_t> subA_;
+
 public:
 
   void set_parameters(const Parameters* P);
@@ -139,9 +142,8 @@ public:
   /// Cached Conditional Likelihoods
   mutable Likelihood_Cache LC;
 
-  /// sub-alignment indices;
-  mutable object_ptr<subA_index_t> subA;
-
+  subA_index_t& subA() const;
+  
   /// cached branch HMMs
   const indel::PairHMM& get_branch_HMM(int b) const;
   std::vector<indel::PairHMM> get_branch_HMMs(const std::vector<int>&) const;
