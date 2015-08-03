@@ -568,7 +568,7 @@ void data_partition::note_alignment_changed_on_branch(int b)
   // projected to the leaves remain unchanged.  If we only index these columns, then the
   // get_subA_index( ) will not change if we are using subA_index_leaf.
   //
-  if (dynamic_pointer_cast<subA_index_internal>(subA_))
+  if (subA().kind() == subA_index_t::internal_index)
     LC.invalidate_branch_alignment(T(),b);
 }
 
