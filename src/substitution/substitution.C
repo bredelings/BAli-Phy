@@ -1395,7 +1395,7 @@ namespace substitution {
     //   to this one.
 
     // get the relationships with the sub-alignments
-    if (P.subA().kind() == subA_index_t::internal_index)
+    if (P.subA().kind() == subA_index_t::leaf_index)
     {
       matrix<int> index1 = I.get_subA_index_none(rb,A,T,nodes);
       log_double_t Pr1 = calc_root_probability(P,rb,index1);
