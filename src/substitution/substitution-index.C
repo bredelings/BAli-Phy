@@ -960,7 +960,7 @@ subA_index_leaf::subA_index_leaf(int s1, int s2)
 void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int b) 
 {
   total_subA_index_branch++;
-  assert(not up_to_date[b]);
+  assert(not branch_index_valid(b));
 
   // Actually update the index
   int node = T.directed_branch(b).source();
