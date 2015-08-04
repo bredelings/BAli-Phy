@@ -98,17 +98,19 @@ int n_non_empty_columns(const matrix<int>& m)
 
 void subA_index_t::set_row(int r, const Vector<pair<int,int>>& index)
 {
-  indices[r] = index;
+  const context* C = P;
+  const_cast<context*>(C)->set_parameter_value(row_indices[r], index );
 }
 
 void subA_index_t::set_row(int r, const expression_ref& index)
 {
-  indices[r] = index;
+  const context* C = P;
+  const_cast<context*>(C)->set_parameter_value(row_indices[r], index );
 }
 
 const expression_ref& subA_index_t::row_expression(int r) const
 {
-  return indices[r];
+  return P->get_parameter_value(row_indices[r]);
 }
 
 const Vector<std::pair<int,int> >& subA_index_t::row(int r) const
@@ -118,7 +120,7 @@ const Vector<std::pair<int,int> >& subA_index_t::row(int r) const
 
 int subA_index_t::n_rows() const
 {
-  return indices.size();
+  return row_indices.size();
 }
 
 bool subA_identical(const matrix<int>& I1,const matrix<int>& I2) {
@@ -589,9 +591,27 @@ void check_subA(const subA_index_t& I1_, const alignment& A1,const subA_index_t&
   }
 }
 
+bool subA_index_t::branch_index_valid(int b) const
+{
+  return P->get_parameter_value(up_to_date[b]).as_int();
+}
+
+void subA_index_t::validate_one_branch(int b) 
+{
+  if (not branch_index_valid(b))
+  {
+    const context* C = P;
+    const_cast<context*>(C)->set_parameter_value(up_to_date[b], 1 );
+  }
+}
+
 void subA_index_t::invalidate_one_branch(int b) 
 {
-  up_to_date[b] = false;
+  if (branch_index_valid(b))
+  {
+    const context* C = P;
+    const_cast<context*>(C)->set_parameter_value(up_to_date[b], 0 );
+  }
 }
 
 void subA_index_t::invalidate_all_branches()
@@ -778,11 +798,11 @@ vector<int> subA_index_t::characters_to_indices(int branch, const alignment& A, 
   return suba_for_character;
 }
 
-subA_index_t::subA_index_t(const Parameters* p, subA_index_kind k, int s2)
+subA_index_t::subA_index_t(const Parameters* p, subA_index_kind k, const vector<int>& r, const vector<int>& u, int s2)
   :P(p),
    kind_(k),
-   indices(s2),
-   up_to_date(s2)
+   row_indices(r),
+   up_to_date(u)
 {
   invalidate_all_branches();
 }
@@ -904,7 +924,7 @@ void subA_index_leaf::update_one_branch(const alignment& A, const TreeInterface&
     set_row(b, index);
   }
 
-  up_to_date[b] = true;
+  validate_one_branch(b);
 }
 
 // If branch 'b' is markes as having an up-to-date index, then
@@ -935,13 +955,13 @@ void subA_index_leaf::check_footprint_for_branch(const alignment& A, const TreeI
   }
 }
 
-subA_index_leaf::subA_index_leaf(const Parameters* p, int s2)
-  :subA_index_t(p, subA_index_t::leaf_index,s2)
+subA_index_leaf::subA_index_leaf(const Parameters* p, const vector<int>& r, const vector<int>& u, int s2)
+  :subA_index_t(p, subA_index_t::leaf_index, r, u, s2)
 {
 }
 
 
-void subA_index_internal::update_one_branch(const alignment& A, const TreeInterface& t,int b) 
+void subA_index_internal::update_one_branch(const alignment& A, const TreeInterface& t, int b) 
 {
   total_subA_index_branch++;
   assert(not branch_index_valid(b));
@@ -953,7 +973,7 @@ void subA_index_internal::update_one_branch(const alignment& A, const TreeInterf
 
   assert(row(b).size() == A.seqlength(node));
 
-  up_to_date[b] = true;
+  validate_one_branch(b);
 }
 
 void subA_index_internal::check_footprint_for_branch(const alignment& A, const TreeInterface& t, int b) const
@@ -982,7 +1002,7 @@ void subA_index_internal::check_footprint_for_branch(const alignment& A, const T
   }
 }
 
-subA_index_internal::subA_index_internal(const Parameters* p, int s2)
-  :subA_index_t(p, subA_index_t::internal_index,s2)
+subA_index_internal::subA_index_internal(const Parameters* p, const vector<int>& r,  const vector<int>& u,int s2)
+  :subA_index_t(p, subA_index_t::internal_index, r, u, s2)
 {
 }
