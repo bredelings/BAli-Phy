@@ -205,9 +205,8 @@ struct subA_index_t: public Object
 protected:
   subA_index_kind kind_;
 
-  std::vector< expression_ref > indices;
-
-  std::vector<bool> up_to_date;
+  std::vector< int > row_indices;
+  std::vector< int > up_to_date;
 
   virtual void update_one_branch(const alignment& A, const TreeInterface& t,int b)=0;
 
@@ -222,13 +221,11 @@ protected:
 public:
   virtual subA_index_t* clone() const=0;
   
-  subA_index_t(const Parameters* P, subA_index_kind k, int s2);
+  subA_index_t(const Parameters* P, subA_index_kind k, const std::vector<int>& r, const std::vector<int>& u, int s2);
 
   int n_rows() const;
 
-  bool branch_index_valid(int b) const {
-    return up_to_date[b];
-  }
+  bool branch_index_valid(int b) const;
 
   int branch_index_length(int b) const 
   {
@@ -278,6 +275,7 @@ public:
   matrix<int> get_subA_index_columns(const std::vector<int>& b,const alignment& A, const TreeInterface& t,
 					    const std::vector<int>& seq);
 
+  void validate_one_branch(int b);
   void invalidate_one_branch(int b);
   void invalidate_all_branches();
   void invalidate_directed_branch(const TreeInterface& t,int b);
@@ -307,7 +305,7 @@ public:
 
   void check_footprint_for_branch(const alignment& A1, const TreeInterface& t,int b) const;
 
-  subA_index_leaf(const Parameters* P, int s2);
+  subA_index_leaf(const Parameters* P, const std::vector<int>&, const std::vector<int>&, int s2);
 };
 
 struct subA_index_internal: public subA_index_t
@@ -320,7 +318,7 @@ public:
 
   void check_footprint_for_branch(const alignment& A1, const TreeInterface& t,int b) const;
 
-  subA_index_internal(const Parameters* P, int s2);
+  subA_index_internal(const Parameters* P, const std::vector<int>&, const std::vector<int>&, int s2);
 };
 
 void check_regenerate(const subA_index_t& I, const alignment& A1, const TreeInterface& t);
