@@ -115,12 +115,16 @@ void subA_index_t::set_row(int r, const Vector<pair<int,int>>& index) const
 {
   const context* C = &P();
   const_cast<context*>(C)->set_parameter_value(row_indices[r], index );
+
+  validate_one_branch(r);
 }
 
 void subA_index_t::set_row(int r, const expression_ref& index) const
 {
   const context* C = &P();
   const_cast<context*>(C)->set_parameter_value(row_indices[r], index );
+
+  validate_one_branch(r);
 }
 
 const expression_ref& subA_index_t::row_expression(int r) const
@@ -852,8 +856,6 @@ void subA_index_leaf::update_one_branch(int b) const
     assert(l == index.size());
     set_row(b, index);
   }
-
-  validate_one_branch(b);
 }
 
 // If branch 'b' is markes as having an up-to-date index, then
@@ -902,8 +904,6 @@ void subA_index_internal::update_one_branch(int b) const
   set_row(b, convert_to_column_index_list( A().get_columns_for_characters(node) ));
 
   assert(row(b).size() == A().seqlength(node));
-
-  validate_one_branch(b);
 }
 
 void subA_index_internal::check_footprint_for_branch(int b) const
