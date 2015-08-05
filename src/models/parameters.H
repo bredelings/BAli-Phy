@@ -171,8 +171,6 @@ public:
   /// Recalculate all the cached transition matrices
   void recalc_smodel();
 
-  void uniquify_subA_index();
-
   bool has_IModel() const;
 
   void setlength(int b);
@@ -417,8 +415,6 @@ public:
   // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
   void LC_invalidate_all();
 
-  // make sure we aren't sharing our subA index with any other model.
-  void uniquify_subA_indices();
   // invalidate subA indices on b and b* and all DIRECTED branches after them
   void invalidate_subA_index_branch(int b);
   // invalidate subA indices on DIRECTED branches out from node n
