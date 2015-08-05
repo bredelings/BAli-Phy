@@ -1826,10 +1826,6 @@ namespace substitution {
 	// update conditional likelihoods
 	calculate_caches_for_branch(*j, sequences, A, I, MC, T, cache);
 
-	// update substitution indices
-	if (not I.branch_index_valid(*j))
-	  I.update_branch(A,T,*j);
-
 	// record branch
 	prev.push_back(*j);
       }
@@ -1866,10 +1862,6 @@ namespace substitution {
     {
       // update conditional likelihoods
       calculate_caches_for_branch(*i, sequences, A, I, MC, T, cache);
-
-      // update substitution indices
-      if (not I.branch_index_valid(*i))
-	I.update_branch(A,T,*i);
 
       // record branch
       root_branches.push_back(*i);
