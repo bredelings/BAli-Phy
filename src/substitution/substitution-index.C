@@ -130,6 +130,11 @@ const expression_ref& subA_index_t::row_expression(int r) const
 
 const Vector<std::pair<int,int> >& subA_index_t::row(int r) const
 {
+  IF_DEBUG_I( check_footprint_for_branch(A(), T(), r) );
+
+  if (not branch_index_valid(r))
+    update_branch(A(), T(), r);
+
   return row_expression(r).as_<Vector<pair<int,int>>>();
 }
 
@@ -207,15 +212,6 @@ int next_column(const vector< expression_ref >& indices, const vector< vector<in
 /// Select rows for branches \a branches, removing columns with all entries == -1
 matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, bool with_columns) const
 {
-  // copy sub-A indices for each branch
-  for(int j=0;j<branches.size();j++) 
-  {
-    IF_DEBUG_I( check_footprint_for_branch(A(),T(),branches[j]) );
-
-    if (not branch_index_valid(branches[j]))
-      update_branch(A(),T(),branches[j]);
-  }
-
   // Compute the total length of branch indices.
   // Also check that the indices are up-to-date.
 
