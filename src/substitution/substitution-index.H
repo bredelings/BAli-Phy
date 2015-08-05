@@ -225,6 +225,8 @@ protected:
   void set_row(int r, const Vector<std::pair<int,int>>& index) const;
   void set_row(int r, const expression_ref& index) const;
   
+  bool branch_index_valid(int b) const;
+
 public:
   virtual subA_index_t* clone() const=0;
   
@@ -232,12 +234,9 @@ public:
 
   int n_rows() const;
 
-  bool branch_index_valid(int b) const;
-
   int branch_index_length(int b) const 
   {
     assert(0 <= b and b < n_rows());
-    assert(branch_index_valid(b));
     return row(b).size();
   }
 

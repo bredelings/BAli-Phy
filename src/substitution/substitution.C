@@ -789,7 +789,6 @@ namespace substitution {
     matrix<int> index = I.get_subA_index_select(b);
     assert(index.size1() == I.branch_index_length(b0));
     // the call to I.get_subA-index_select ( ) updates the index for branches in b.
-    assert(I.branch_index_valid(b0));
 
     /*-------------------- Do the peeling part------------- --------------------*/
     peel_internal_branch(b, index, cache, transition_P, MC);
@@ -819,7 +818,6 @@ namespace substitution {
     // get the relationships with the sub-alignments for the (two) branches behind b0
     matrix<int> index = I.get_subA_index_select(b);
     assert(index.size1() == I.branch_index_length(b0));
-    assert(I.branch_index_valid(b0));
 
     assert(b.size() == 3);
 
