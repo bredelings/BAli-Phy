@@ -344,31 +344,22 @@ matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& bran
 }
 
 /// align sub-alignments corresponding to branches in b
-matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& branches,const std::vector<int>& nodes, const alignment& A, const TreeInterface& t, bool with_columns)
+matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& branches,const std::vector<int>& nodes, const alignment&,const TreeInterface&, bool with_columns)
 {
-  // copy sub-A indices for each branch
-  for(int j=0;j<branches.size();j++) 
-  {
-    IF_DEBUG_I( check_footprint_for_branch(A,t,branches[j]) );
-    
-    if (not branch_index_valid(branches[j]))
-      update_branch(A,t,branches[j]);
-  }
-
   vector< vector<int> > sequence_indices;
   for(int n: nodes)
-    sequence_indices.push_back(A.get_columns_for_characters(n));
+    sequence_indices.push_back(A().get_columns_for_characters(n));
 
   return get_subA_index_with_nodes(branches, sequence_indices, with_columns);
 }
 
 /// Compute subA index for branches point to \a node.
-matrix<int> subA_index_t::get_subA_index(int node,const alignment& A, const TreeInterface& t) 
+matrix<int> subA_index_t::get_subA_index_around_node(int node,const alignment&,const TreeInterface&) 
 {
   // compute node branches
-  vector<int> b = t.branches_in(node);
+  vector<int> b = T().branches_in(node);
 
-  return get_subA_index(b,A,t);
+  return get_subA_index(b);
 }
 
 /// Sort columns according to value in last row, removing columns with -1 in last row
@@ -405,10 +396,10 @@ matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b) const
 
 
 /// Select rows for branches \a b, and toss columns where the last branch has entry -1
-matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b,const alignment& A, const TreeInterface& t) 
+matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b,const alignment&,const TreeInterface&) 
 {
   // the alignment of sub alignments
-  matrix<int> subA = get_subA_index(b,A,t);
+  matrix<int> subA = get_subA_index(b);
 
   // return processed indices
   return subA_select(subA);
@@ -416,10 +407,10 @@ matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b,const align
 
 
 /// Select rows for branches \a b, and toss columns where the last branch has entry -1
-matrix<int> subA_index_t::get_subA_index_vanishing(const vector<int>& b,const alignment& A, const TreeInterface& t) 
+matrix<int> subA_index_t::get_subA_index_vanishing(const vector<int>& b,const alignment&,const TreeInterface&) 
 {
   // the alignment of sub alignments
-  matrix<int> subA = get_subA_index(b,A,t);
+  matrix<int> subA = get_subA_index(b);
 
   const int B = b.size()-1;
   int l=0;
@@ -442,18 +433,20 @@ matrix<int> subA_index_t::get_subA_index_vanishing(const vector<int>& b,const al
 
 
 /// Select rows for branches \a b, and toss columns unless at least one character in \a nodes is present.
-matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const alignment& A, const TreeInterface& t,
+matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const alignment&, const TreeInterface&,
 						    const vector<int>& nodes) 
 {
+  const alignment& AA = A();
+  
   // the alignment of sub alignments
-  matrix<int> subA = get_subA_index(b,A,t,true);
+  matrix<int> subA = get_subA_index(b,true);
 
   // select and order the columns we want to keep
   const int B = b.size();
   for(int i=0,l=0;i<subA.size1();i++)
   {
     int c = subA(i,B);
-    if (any_present(A,c,nodes))
+    if (any_present(AA,c,nodes))
       subA(i,B) = l++;
     else
       subA(i,B) = -1;
@@ -464,18 +457,20 @@ matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const alignmen
 }
 
 /// Select rows for branches \a b, but exclude columns in which nodes \a nodes are present.
-matrix<int> subA_index_t::get_subA_index_none(const vector<int>& b,const alignment& A, const TreeInterface& t,
+matrix<int> subA_index_t::get_subA_index_none(const vector<int>& b,const alignment&,const TreeInterface&,
 						     const vector<int>& nodes) 
 {
+  const alignment& AA = A();
+  
   // the alignment of sub alignments
-  matrix<int> subA = get_subA_index(b,A,t,true);
+  matrix<int> subA = get_subA_index(b,true);
 
   // select and order the columns we want to keep
   const int B = b.size();
   for(int i=0,l=0;i<subA.size1();i++)
   {
     int c = subA(i,b.size());
-    if (not any_present(A,c,nodes))
+    if (not any_present(AA,c,nodes))
       subA(i,B) = l++;
     else
       subA(i,B) = -1;
@@ -486,9 +481,11 @@ matrix<int> subA_index_t::get_subA_index_none(const vector<int>& b,const alignme
 }
 
 /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
-matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,const alignment& A, const TreeInterface& t,
+matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,const alignment&,const TreeInterface&,
 							const vector<int>& index_to_columns) 
 {
+  const alignment& AA = A();
+
   // select and order the columns we want to keep
   const int B = b.size();
 
@@ -503,7 +500,7 @@ matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,const alig
   }
 
   // The alignment of non-empty columns in b
-  matrix<int> subA1 = get_subA_index(b,A,t,true);
+  matrix<int> subA1 = get_subA_index(b,true);
 
   // The alignment of indices from branches \a b from columns in the order 
   matrix<int> subA2(columns.size(), B);
@@ -780,17 +777,17 @@ void subA_index_t::check_footprint(const alignment& A, const TreeInterface& t) c
     check_footprint_for_branch(A,t,b);
 }
 
-vector<int> subA_index_t::characters_to_indices(int branch, const alignment& A, const TreeInterface& t)
+vector<int> subA_index_t::characters_to_indices(int branch, const alignment&, const TreeInterface&)
 {
   // Make sure the index for this branch is up to date before we start using it.
-  update_branch(A,t,branch);
+  update_branch(A(),T(),branch);
 
-  int node = t.source(branch);
+  int node = T().source(branch);
 
-  vector<int> suba_for_character(A.seqlength(node), -1);
+  vector<int> suba_for_character(A().seqlength(node), -1);
 
   // walk the alignment row and the subA-index row simultaneously
-  vector<int> columns = A.get_columns_for_characters(node);
+  vector<int> columns = A().get_columns_for_characters(node);
 
   const auto& index = row(branch);
 
@@ -901,21 +898,21 @@ Vector<pair<int,int> > combine_columns(const vector<pair<int,int> >& p1, const v
   return p3;
 }
 
-void subA_index_leaf::update_one_branch(const alignment& A, const TreeInterface& t,int b) const
+void subA_index_leaf::update_one_branch(const alignment&,const TreeInterface&,int b) const
 {
   total_subA_index_branch++;
   assert(not branch_index_valid(b));
 
   // notes for leaf sequences
-  if (b < t.n_leaves()) 
-    set_row(b, convert_to_column_index_list(A.get_columns_for_characters(b)) );
+  if (b < T().n_leaves()) 
+    set_row(b, convert_to_column_index_list(A().get_columns_for_characters(b)) );
   else {
     // get 2 branches leading into this one
-    vector<int> prev = t.branches_before(b);
+    vector<int> prev = T().branches_before(b);
     assert(prev.size() == 2);
 
     // sort branches by rank
-    if (rank(t,prev[0]) > rank(t,prev[1]))
+    if (rank(T(),prev[0]) > rank(T(),prev[1]))
       std::swap(prev[0],prev[1]);
 
     // get the sorted list of present columns
@@ -972,17 +969,17 @@ subA_index_leaf::subA_index_leaf(const data_partition* dp, const vector<int>& r,
 }
 
 
-void subA_index_internal::update_one_branch(const alignment& A, const TreeInterface& t, int b) const
+void subA_index_internal::update_one_branch(const alignment&, const TreeInterface&, int b) const
 {
   total_subA_index_branch++;
   assert(not branch_index_valid(b));
 
   // Actually update the index
-  int node = t.source(b);
+  int node = T().source(b);
 
-  set_row(b, convert_to_column_index_list( A.get_columns_for_characters(node) ));
+  set_row(b, convert_to_column_index_list( A().get_columns_for_characters(node) ));
 
-  assert(row(b).size() == A.seqlength(node));
+  assert(row(b).size() == A().seqlength(node));
 
   validate_one_branch(b);
 }
