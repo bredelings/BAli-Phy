@@ -267,7 +267,7 @@ matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, bool with_
 }
 
 /// Select rows for branches \a branches, removing columns with all entries == -1
-matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, const alignment& A, const TreeInterface& t, bool with_columns)
+matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, const alignment&,const TreeInterface&, bool with_columns)
 {
   return get_subA_index(branches, with_columns);
 }
@@ -629,28 +629,28 @@ void subA_index_t::invalidate_all_branches()
 }
 
 
-void subA_index_t::invalidate_directed_branch(const TreeInterface& t,int b) 
+void subA_index_t::invalidate_directed_branch(const TreeInterface&,int b) 
 {
   if (not branch_index_valid(b)) return;
 
   vector<int> branches;
-  branches.reserve(t.n_branches());
+  branches.reserve(T().n_branches());
   branches.push_back(b);
   for(int i=0;i<branches.size();i++)
   {
     int b2 = branches[i];
     if (branch_index_valid(b2))
     {
-      t.append_branches_after(b2, branches);
+      T().append_branches_after(b2, branches);
       invalidate_one_branch(b2);
     }
   }
 
 #ifndef NDEBUG
-  for(int b: t.all_branches_after_inclusive(b))
+  for(int b: T().all_branches_after_inclusive(b))
   {
     if (not branch_index_valid(b))
-      for(int b2: t.branches_after(b))
+      for(int b2: T().branches_after(b))
 	assert(not branch_index_valid(b2));
   }
 #endif  
@@ -680,21 +680,21 @@ int rank(const TreeInterface& t,int b) {
 }
 
 
-void subA_index_t::update_branch(const alignment& A, const TreeInterface& t,int b) const
+void subA_index_t::update_branch(const alignment&,const TreeInterface&,int b) const
 {
 #ifdef DEBUG_INDEXING
-  check_footprint(A,t);
+  check_footprint(A(),T());
 #endif
 
   // get ordered list of branches to process before this one
   // \todo: FIXME: allocating the memory here takes 1.33% of CPU time.
-  vector<int> branches; branches.reserve(t.n_branches());
+  vector<int> branches; branches.reserve(T().n_branches());
   branches.push_back(b);
   
   for(int i=0;i<branches.size();i++) {
     int b = branches[i];
     if (not branch_index_valid(b))
-      t.append_branches_before(b,branches);
+      T().append_branches_before(b,branches);
   }
   
   std::reverse(branches.begin(),branches.end());
@@ -702,27 +702,27 @@ void subA_index_t::update_branch(const alignment& A, const TreeInterface& t,int 
   // update the branches in order 
   for(int i=0;i<branches.size();i++)
     if (not branch_index_valid(branches[i]))
-      update_one_branch(A,t,branches[i]);
+      update_one_branch(A(),T(),branches[i]);
 
 #ifdef DEBUG_INDEXING
-  check_footprint(A,t);
+  check_footprint(A(),T());
 
   // FIXME - we should check the branches that point to the root, but we
   // don't know the root, so just disable the checking here.
   // FIXME - this could actually be very expensive to check every branch,
   //         probably it would be O(b^2)
-    check_regenerate(*this,A,t);
+  check_regenerate(*this,A(),T());
 #endif
 }
 
-void subA_index_t::recompute_all_branches(const alignment& A, const TreeInterface& t)
+void subA_index_t::recompute_all_branches(const alignment&,const TreeInterface&)
 {
   invalidate_all_branches();
 
-  vector<int> branches = branches_from_leaves(t);
+  vector<int> branches = branches_from_leaves(T());
 
   for(int i=0;i<branches.size();i++) 
-    update_one_branch(A,t, branches[i]);
+    update_one_branch(A(), T(), branches[i]);
 }
 
 void check_consistent(const subA_index_t& I1, const subA_index_t& IF_DEBUG(I2), const vector<int>& branch_names)
@@ -771,10 +771,11 @@ void check_regenerate(const subA_index_t& I1, const alignment& A, const TreeInte
 // Also check that, we do not include in the index any columns for which there are only gaps behind
 // the  branch.
 
-void subA_index_t::check_footprint(const alignment& A, const TreeInterface& t) const
+void subA_index_t::check_footprint(const alignment&,const TreeInterface&) const
 {
-  for(int b=0;b<t.n_branches()*2;b++)
-    check_footprint_for_branch(A,t,b);
+  auto TT = T();
+  for(int b=0;b<TT.n_branches()*2;b++)
+    check_footprint_for_branch(A(),TT,b);
 }
 
 vector<int> subA_index_t::characters_to_indices(int branch, const alignment&, const TreeInterface&)
@@ -939,18 +940,22 @@ void subA_index_leaf::update_one_branch(const alignment&,const TreeInterface&,in
 //  * check that the index includes each column for which there are leaf characters behind the branch ...
 //  * ... and no others. 
 // That is, if a column includes only gaps behind the branch, then it should not be in the branch's index.
-void subA_index_leaf::check_footprint_for_branch(const alignment& A, const TreeInterface& t, int b) const
+void subA_index_leaf::check_footprint_for_branch(const alignment&, const TreeInterface&, int b) const
 {
+  auto TT = T();
+
+  const alignment& AA = A();
+  
   // Don't check here if we're temporarily messing with things, and allowing a funny state.
   if (not branch_index_valid(b)) return;
 
-  for(int c=0,i=0;c<A.length();c++) 
+  for(int c=0,i=0;c<AA.length();c++) 
   {
     // Determine if there are any leaf characters behind branch b in column c
     bool leaf_present = false;
-    const dynamic_bitset<>& leaves = t.partition(t.reverse(b));
-    for(int j=0;j<t.n_leaves();j++)
-      if (leaves[j] and not A.gap(c,j))
+    const dynamic_bitset<>& leaves = TT.partition(TT.reverse(b));
+    for(int j=0;j<TT.n_leaves();j++)
+      if (leaves[j] and not AA.gap(c,j))
 	leaf_present=true;
     
     if (i<row(b).size() and row(b)[i].first == c)
@@ -984,19 +989,23 @@ void subA_index_internal::update_one_branch(const alignment&, const TreeInterfac
   validate_one_branch(b);
 }
 
-void subA_index_internal::check_footprint_for_branch(const alignment& A, const TreeInterface& t, int b) const
+void subA_index_internal::check_footprint_for_branch(const alignment&, const TreeInterface&, int b) const
 {
-  assert(A.n_sequences() == t.n_nodes());
+  auto TT = T();
+
+  const alignment& AA = A();
+  
+  assert(AA.n_sequences() == TT.n_nodes());
 
   // Don't check here if we're temporarily messing with things, and allowing a funny state.
   if (not branch_index_valid(b)) return;
 
-  int node = t.source(b);
+  int node = TT.source(b);
 
-  for(int c=0,i=0;c<A.length();c++) 
+  for(int c=0,i=0;c<AA.length();c++) 
   {
     // Determine if there is an internal node character present at the base of this branch
-    bool internal_node_present = A.character(c,node);
+    bool internal_node_present = AA.character(c,node);
 
     auto& index = row(b);
 
