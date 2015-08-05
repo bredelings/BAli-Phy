@@ -96,8 +96,15 @@ private:
   int alignment_matrix_index = -1;
 
   /// sub-alignment indices;
-  std::vector<int> subA_row_indices;
-  std::vector<int> subA_up_to_date;
+  std::vector<int> subA_row_indices_leaf;
+  std::vector<int> subA_up_to_date_leaf;
+
+  std::vector<int> subA_row_indices_internal;
+  std::vector<int> subA_up_to_date_internal;
+
+  mutable object_ptr<subA_index_t> subA_leaf;
+  mutable object_ptr<subA_index_t> subA_internal;
+
   mutable object_ptr<subA_index_t> subA_;
 
 public:

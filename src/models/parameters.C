@@ -273,7 +273,9 @@ void data_partition::variable_alignment(bool b)
   // turning OFF alignment variation
   if (not variable_alignment()) 
   {
-    subA_ = new subA_index_leaf(this, subA_row_indices, subA_up_to_date, t().n_branches()*2);
+    subA_ = subA_leaf;
+
+    subA().invalidate_all_branches();
 
     // We just changed the subA index type
     LC.invalidate_all();
@@ -286,9 +288,11 @@ void data_partition::variable_alignment(bool b)
   else 
   {
     if (use_internal_index)
-      subA_ = new subA_index_internal(this, subA_row_indices, subA_up_to_date, t().n_branches()*2);
+      subA_ = subA_internal;
     else
-      subA_ = new subA_index_leaf(this, subA_row_indices, subA_up_to_date, t().n_branches()*2);
+      subA_ = subA_leaf;
+
+    subA().invalidate_all_branches();
 
     assert(has_IModel() and A().n_sequences() == t().n_nodes());
     {
@@ -612,8 +616,10 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
    sequence_length_indices(AA.n_sequences(),-1),
    transition_p_method_indices(t().n_branches(),-1),
    variable_alignment_( has_IModel() ),
-   subA_row_indices(t().n_branches()*2),
-   subA_up_to_date(t().n_branches()*2),
+   subA_row_indices_leaf(t().n_branches()*2),
+   subA_up_to_date_leaf(t().n_branches()*2),
+   subA_row_indices_internal(t().n_branches()*2),
+   subA_up_to_date_internal(t().n_branches()*2),
    seqs(AA.seqs()),
    sequences( alignment_letters(AA, t().n_leaves()) ),
    a(AA.get_alphabet().clone()),
@@ -625,16 +631,26 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   string prefix = "P"+convertToString(i+1)+".";
   string invisible_prefix = "*"+prefix;
 
-  for(int i=0;i<subA_row_indices.size();i++)
-    subA_row_indices[i]  = p->add_parameter(invisible_prefix + "subA"+convertToString(i), 0);
+  for(int i=0;i<subA_row_indices_leaf.size();i++)
+    subA_row_indices_leaf[i]  = p->add_parameter(invisible_prefix + "subA.leaf."+convertToString(i), 0);
   
-  for(int i=0;i<subA_row_indices.size();i++)
-    subA_up_to_date[i]  = p->add_parameter(invisible_prefix + "subAU"+convertToString(i), 0);
+  for(int i=0;i<subA_row_indices_leaf.size();i++)
+    subA_up_to_date_leaf[i]  = p->add_parameter(invisible_prefix + "subAU.leaf."+convertToString(i), 0);
+  
+  subA_leaf = new subA_index_leaf(this, subA_row_indices_leaf, subA_up_to_date_leaf, B*2);
+
+  for(int i=0;i<subA_row_indices_internal.size();i++)
+    subA_row_indices_internal[i]  = p->add_parameter(invisible_prefix + "subA.internal."+convertToString(i), 0);
+  
+  for(int i=0;i<subA_row_indices_internal.size();i++)
+    subA_up_to_date_internal[i]  = p->add_parameter(invisible_prefix + "subAU.internal."+convertToString(i), 0);
+
+  subA_internal = new subA_index_internal(this, subA_row_indices_internal, subA_up_to_date_internal, B*2);
   
   if (variable_alignment() and use_internal_index)
-    subA_ = new subA_index_internal(this, subA_row_indices, subA_up_to_date, B*2);
+    subA_ = subA_internal;
   else
-    subA_ = new subA_index_leaf(this, subA_row_indices, subA_up_to_date, B*2);
+    subA_ = subA_leaf;
 
   alignment_matrix_index = p->add_parameter(invisible_prefix + "A", AA);
   if (variable_alignment())
