@@ -455,8 +455,6 @@ matrix<int> subA_index_t::get_subA_index_none(const vector<int>& b, const vector
 /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
 matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b, const vector<int>& index_to_columns) 
 {
-  const alignment& AA = A();
-
   // select and order the columns we want to keep
   const int B = b.size();
 
