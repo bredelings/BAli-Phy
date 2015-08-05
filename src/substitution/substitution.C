@@ -450,9 +450,6 @@ namespace substitution {
 
     const alphabet& a = A.get_alphabet();
 
-    if (not I.branch_index_valid(b0))
-      I.update_branch(A,t,b0);
-
     //    const vector<unsigned>& smap = MC.state_letters();
 
     // Do this before accessing matrices or other_subst
@@ -509,9 +506,6 @@ namespace substitution {
 			    const Mat_Cache& MC)
   {
     total_peel_leaf_branches++;
-
-    if (not I.branch_index_valid(b0))
-      I.update_branch(A,t,b0);
 
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b0);
@@ -598,9 +592,6 @@ namespace substitution {
     assert(n_states >= n_letters and n_states%n_letters == 0);
 
     assert(MC.n_states() == n_states);
-
-    if (not I.branch_index_valid(b0))
-      I.update_branch(A,t,b0);
 
     const vector<unsigned>& smap = MC.state_letters();
 
@@ -714,7 +705,7 @@ namespace substitution {
       // Get an alignment of subA indices on branches b[0] and b[1] where b0.source is not present
       int node = t.source(b0);
 
-      matrix<int> index_vanishing = I.get_subA_index_none(b,A,t, vector<int>(1,node));
+      matrix<int> index_vanishing = I.get_subA_index_none(b, vector<int>(1,node));
 
       b.push_back(b0);
       return collect_vanishing_internal(b, index_vanishing, cache, MC);
@@ -722,7 +713,7 @@ namespace substitution {
     else if (I.kind() == subA_index_t::internal_index)
     {
       b.push_back(b0);
-      matrix<int> index_vanishing = I.get_subA_index_vanishing(b,A,t);
+      matrix<int> index_vanishing = I.get_subA_index_vanishing(b);
 
       return collect_vanishing_internal(b, index_vanishing, cache, MC);
     }
@@ -803,7 +794,7 @@ namespace substitution {
     b.push_back(b0);
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
-    matrix<int> index = I.get_subA_index_select(b,A,t);
+    matrix<int> index = I.get_subA_index_select(b);
     assert(index.size1() == I.branch_index_length(b0));
     // the call to I.get_subA-index_select ( ) updates the index for branches in b.
     assert(I.branch_index_valid(b0));
@@ -814,7 +805,7 @@ namespace substitution {
     /*-------------------- Do the other_subst collection part -------------------*/
     if (I.kind() == subA_index_t::internal_index)
     {
-      matrix<int> index_collect = I.get_subA_index_vanishing(b,A,t);
+      matrix<int> index_collect = I.get_subA_index_vanishing(b);
       cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
     }
     else if (I.kind() == subA_index_t::leaf_index)
@@ -834,7 +825,7 @@ namespace substitution {
     b.push_back(b0);
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
-    matrix<int> index = I.get_subA_index_select(b,A,t);
+    matrix<int> index = I.get_subA_index_select(b);
     assert(index.size1() == I.branch_index_length(b0));
     assert(I.branch_index_valid(b0));
 
@@ -913,7 +904,7 @@ namespace substitution {
     /*-------------------- Do the other_subst collection part -------------b-------*/
     if (I.kind() == subA_index_t::internal_index)
     {
-      matrix<int> index_collect = I.get_subA_index_vanishing(b,A,t);
+      matrix<int> index_collect = I.get_subA_index_vanishing(b);
       cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
     }
     else if (I.kind() == subA_index_t::leaf_index)
@@ -941,9 +932,6 @@ namespace substitution {
     if (t.n_nodes() == 2 and b0 == 1)
     {
       assert(bb == 0);
-      if (not I.branch_index_valid(b0))
-	I.update_branch(A,t,b0);
-
       cache.prepare_branch(b0);
       cache.set_length(I.branch_index_length(b0), b0);
 
@@ -1177,7 +1165,7 @@ namespace substitution {
     assert(not t.is_leaf_node(LC.root));
 
     // select columns with at least one node in 'required_nodes', and re-order them according to the permutation 'ordered_columns'
-    matrix<int> index = I.get_subA_index_columns(b,A,t,ordered_columns);
+    matrix<int> index = I.get_subA_index_columns(b,ordered_columns);
 
     IF_DEBUG_S(int n_br = ) calculate_caches_for_node(LC.root, P);
 
@@ -1332,12 +1320,12 @@ namespace substitution {
     // get the relationships with the sub-alignments
     if (P.subA().kind() == subA_index_t::leaf_index)
     {
-      matrix<int> index1 = I.get_subA_index_none(rb,A,t,nodes);
+      matrix<int> index1 = I.get_subA_index_none(rb,nodes);
       log_double_t Pr1 = calc_root_probability(P,rb,index1);
       assert(std::abs(log(Pr1) - log(Pr3) ) < 1.0e-9);
 
-      matrix<int> index2 = I.get_subA_index_any(rb,A,t,nodes);
-      matrix<int> index  = I.get_subA_index(rb,A,t);
+      matrix<int> index2 = I.get_subA_index_any(rb,nodes);
+      matrix<int> index  = I.get_subA_index(rb);
 
       log_double_t Pr2 = calc_root_probability(P,rb,index2);
       log_double_t Pr  = calc_root_probability(P,rb,index);
@@ -1512,7 +1500,7 @@ namespace substitution {
       rb = t.branches_in(LC.root);
 
     // get the relationships with the sub-alignments
-    matrix<int> index = I.get_subA_index(rb,A,t);
+    matrix<int> index = I.get_subA_index(rb);
 
     // get the probability
     log_double_t Pr = 1;
@@ -1652,8 +1640,6 @@ namespace substitution {
       for(int b: t.branches_in(root))
       {
 	calculate_caches_for_branch(b, sequences, A,I,MC,t,cache);
-	if (not I.branch_index_valid(b))
-	  I.update_branch(A,t,b);
 
 	rb.push_back(b);
 
@@ -1664,7 +1650,7 @@ namespace substitution {
       vector<int> nodes;
       if (has_internal_nodes)
 	nodes = {root};
-      matrix<int> index = I.get_subA_index_with_nodes(rb, nodes, A, t);
+      matrix<int> index = I.get_subA_index_with_nodes(rb, nodes);
 
       // FIXME - this doesn't handle case where tree has only 2 leaves.
       for(int i=0;i<index.size1();i++)
@@ -1714,9 +1700,6 @@ namespace substitution {
       {
 	calculate_caches_for_branch(b, sequences, A,I,MC,t,cache);
 
-	if (not I.branch_index_valid(b))
-	  I.update_branch(A,t,b);
-
 	local_branches.push_back(b);
 
 	subA_index_parent_characters[b] = vector<pair<int,int>>(I.branch_index_length(b), {-1,-1});
@@ -1729,7 +1712,7 @@ namespace substitution {
 	nodes = {node};
 
       // FIXME - but what if node is internal and A doesn't have internal sequences?
-      matrix<int> index = I.get_subA_index_with_nodes(local_branches, nodes, A, t);
+      matrix<int> index = I.get_subA_index_with_nodes(local_branches, nodes);
       
       for(int i=0;i<index.size1();i++)
       {
