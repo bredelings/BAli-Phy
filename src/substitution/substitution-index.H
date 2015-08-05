@@ -206,7 +206,7 @@ struct subA_index_t: public Object
   const alignment& A() const;
 
   TreeInterface T() const;
-  
+
   enum subA_index_kind {leaf_index=1, internal_index=2};
 
 protected:
@@ -215,15 +215,15 @@ protected:
   std::vector< int > row_indices;
   std::vector< int > up_to_date;
 
-  virtual void update_one_branch(const alignment& A, const TreeInterface& t,int b)=0;
+  virtual void update_one_branch(const alignment& A, const TreeInterface& t,int b) const=0;
 
   /* This is for SPR all, where we only need branches pointing towards the
      root to be valid, but we don't want to discard the other ones, because
      they will be valid for a different root/SPR-attachment-point.
    */
 
-  void set_row(int r, const Vector<std::pair<int,int>>& index);
-  void set_row(int r, const expression_ref& index);
+  void set_row(int r, const Vector<std::pair<int,int>>& index) const;
+  void set_row(int r, const expression_ref& index) const;
   
 public:
   virtual subA_index_t* clone() const=0;
@@ -282,14 +282,14 @@ public:
   matrix<int> get_subA_index_columns(const std::vector<int>& b,const alignment& A, const TreeInterface& t,
 					    const std::vector<int>& seq);
 
-  void validate_one_branch(int b);
+  void validate_one_branch(int b) const;
   void invalidate_one_branch(int b);
   void invalidate_all_branches();
   void invalidate_directed_branch(const TreeInterface& t,int b);
   void invalidate_branch(const TreeInterface& t,int b);
   void invalidate_from_node(const TreeInterface& t,int n);
 
-  void update_branch(const alignment& A, const TreeInterface& t,int b);
+  void update_branch(const alignment& A, const TreeInterface& t,int b) const;
   void recompute_all_branches(const alignment& A, const TreeInterface& t);
 
   virtual void check_footprint_for_branch(const alignment& A1, const TreeInterface& t,int b) const=0;
@@ -305,7 +305,7 @@ public:
 struct subA_index_leaf: public subA_index_t
 {
 protected:
-  void update_one_branch(const alignment& A, const TreeInterface& t,int b);
+  void update_one_branch(const alignment& A, const TreeInterface& t,int b) const;
 
 public:
   subA_index_t* clone() const {return new subA_index_leaf(*this);}
@@ -318,7 +318,7 @@ public:
 struct subA_index_internal: public subA_index_t
 {
 protected:
-  void update_one_branch(const alignment& A, const TreeInterface& t,int b);
+  void update_one_branch(const alignment& A, const TreeInterface& t,int b) const;
 
 public:
   subA_index_t* clone() const {return new subA_index_internal(*this);}
