@@ -96,21 +96,26 @@ int n_non_empty_columns(const matrix<int>& m)
   return total;
 }
 
+const Parameters& subA_index_t::P() const
+{
+  return *DP->P;
+}
+
 void subA_index_t::set_row(int r, const Vector<pair<int,int>>& index)
 {
-  const context* C = P;
+  const context* C = &P();
   const_cast<context*>(C)->set_parameter_value(row_indices[r], index );
 }
 
 void subA_index_t::set_row(int r, const expression_ref& index)
 {
-  const context* C = P;
+  const context* C = &P();
   const_cast<context*>(C)->set_parameter_value(row_indices[r], index );
 }
 
 const expression_ref& subA_index_t::row_expression(int r) const
 {
-  return P->get_parameter_value(row_indices[r]);
+  return P().get_parameter_value(row_indices[r]);
 }
 
 const Vector<std::pair<int,int> >& subA_index_t::row(int r) const
@@ -593,14 +598,14 @@ void check_subA(const subA_index_t& I1_, const alignment& A1,const subA_index_t&
 
 bool subA_index_t::branch_index_valid(int b) const
 {
-  return P->get_parameter_value(up_to_date[b]).as_int();
+  return P().get_parameter_value(up_to_date[b]).as_int();
 }
 
 void subA_index_t::validate_one_branch(int b) 
 {
   if (not branch_index_valid(b))
   {
-    const context* C = P;
+    const context* C = &P();
     const_cast<context*>(C)->set_parameter_value(up_to_date[b], 1 );
   }
 }
@@ -609,7 +614,7 @@ void subA_index_t::invalidate_one_branch(int b)
 {
   if (branch_index_valid(b))
   {
-    const context* C = P;
+    const context* C = &P();
     const_cast<context*>(C)->set_parameter_value(up_to_date[b], 0 );
   }
 }
@@ -798,8 +803,8 @@ vector<int> subA_index_t::characters_to_indices(int branch, const alignment& A, 
   return suba_for_character;
 }
 
-subA_index_t::subA_index_t(const Parameters* p, subA_index_kind k, const vector<int>& r, const vector<int>& u, int s2)
-  :P(p),
+subA_index_t::subA_index_t(const data_partition* dp, subA_index_kind k, const vector<int>& r, const vector<int>& u, int s2)
+  :DP(dp),
    kind_(k),
    row_indices(r),
    up_to_date(u)
@@ -955,8 +960,8 @@ void subA_index_leaf::check_footprint_for_branch(const alignment& A, const TreeI
   }
 }
 
-subA_index_leaf::subA_index_leaf(const Parameters* p, const vector<int>& r, const vector<int>& u, int s2)
-  :subA_index_t(p, subA_index_t::leaf_index, r, u, s2)
+subA_index_leaf::subA_index_leaf(const data_partition* dp, const vector<int>& r, const vector<int>& u, int s2)
+  :subA_index_t(dp, subA_index_t::leaf_index, r, u, s2)
 {
 }
 
@@ -1002,7 +1007,7 @@ void subA_index_internal::check_footprint_for_branch(const alignment& A, const T
   }
 }
 
-subA_index_internal::subA_index_internal(const Parameters* p, const vector<int>& r,  const vector<int>& u,int s2)
-  :subA_index_t(p, subA_index_t::internal_index, r, u, s2)
+subA_index_internal::subA_index_internal(const data_partition* dp, const vector<int>& r,  const vector<int>& u,int s2)
+  :subA_index_t(dp, subA_index_t::internal_index, r, u, s2)
 {
 }
