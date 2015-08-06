@@ -111,24 +111,6 @@ TreeInterface subA_index_t::T() const
   return DP->t();
 }
 
-void subA_index_t::set_row(int r, const Vector<pair<int,int>>& index) const
-{
-  std::abort();
-  const context* C = &P();
-  const_cast<context*>(C)->set_parameter_value(row_indices[r], index );
-
-  validate_one_branch(r);
-}
-
-void subA_index_t::set_row(int r, const expression_ref& index) const
-{
-  std::abort();
-  const context* C = &P();
-  const_cast<context*>(C)->set_parameter_value(row_indices[r], index );
-
-  validate_one_branch(r);
-}
-
 const expression_ref& subA_index_t::row_expression(int r) const
 {
   return P().evaluate( row_indices[r] );
@@ -566,135 +548,8 @@ void check_subA(const subA_index_t& I1_, const alignment& A1,const subA_index_t&
   }
 }
 
-bool subA_index_t::branch_index_valid(int b) const
-{
-  std::abort();
-}
-
-void subA_index_t::validate_one_branch(int b) const
-{
-  std::abort();
-}
-
-void subA_index_t::invalidate_one_branch(int b) 
-{
-}
-
-void subA_index_t::invalidate_all_branches()
-{
-  for(int i=0;i<n_rows();i++)
-    invalidate_one_branch(i);
-}
-
-
-void subA_index_t::invalidate_directed_branch(int b) 
-{
-  if (not branch_index_valid(b)) return;
-
-  vector<int> branches;
-  branches.reserve(T().n_branches());
-  branches.push_back(b);
-  for(int i=0;i<branches.size();i++)
-  {
-    int b2 = branches[i];
-    if (branch_index_valid(b2))
-    {
-      T().append_branches_after(b2, branches);
-      invalidate_one_branch(b2);
-    }
-  }
-
-#ifndef NDEBUG
-  for(int b: T().all_branches_after_inclusive(b))
-  {
-    if (not branch_index_valid(b))
-      for(int b2: T().branches_after(b))
-	assert(not branch_index_valid(b2));
-  }
-#endif  
-}
-
-
-void subA_index_t::invalidate_branch(int b) 
-{
-  invalidate_directed_branch(b);
-  invalidate_directed_branch(T().reverse(b));
-}
-
-void subA_index_t::invalidate_from_node(int n)
-{
-  for(int b: T().branches_out(n))
-    invalidate_directed_branch(b);
-}
-
-/// return index of lowest-numbered node behind b
-int rank(const TreeInterface& t,int b) {
-  const dynamic_bitset<>& mask = t.partition(t.reverse(b));
-  for(int i=0;i<mask.size();i++)
-    if (mask[i])
-      return i;
-
-  std::abort();
-}
-
-
-void subA_index_t::update_branch(int b) const
-{
-#ifdef DEBUG_INDEXING
-  check_footprint();
-#endif
-
-  // get ordered list of branches to process before this one
-  // \todo: FIXME: allocating the memory here takes 1.33% of CPU time.
-  vector<int> branches; branches.reserve(T().n_branches());
-  branches.push_back(b);
-  
-  for(int i=0;i<branches.size();i++) {
-    int b = branches[i];
-    if (not branch_index_valid(b))
-      T().append_branches_before(b,branches);
-  }
-  
-  std::reverse(branches.begin(),branches.end());
-
-  // update the branches in order 
-  for(int i=0;i<branches.size();i++)
-    if (not branch_index_valid(branches[i]))
-      update_one_branch(branches[i]);
-
-#ifdef DEBUG_INDEXING
-  check_footprint();
-#endif
-}
-
-void subA_index_t::recompute_all_branches()
-{
-  invalidate_all_branches();
-
-  vector<int> branches = branches_from_leaves(T());
-
-  for(int i=0;i<branches.size();i++) 
-    update_one_branch(branches[i]);
-}
-
-// Check that for each branch that is marked as having an up-to-date index,
-// we include each column in the index for which there are leaf characters that are behind the branch.
-// (We need to propagate conditional likelihoods up to the root, then.)
-// Also check that, we do not include in the index any columns for which there are only gaps behind
-// the  branch.
-
-void subA_index_t::check_footprint() const
-{
-  auto TT = T();
-  for(int b=0;b<TT.n_branches()*2;b++)
-    check_footprint_for_branch(b);
-}
-
 vector<int> subA_index_t::characters_to_indices(int branch)
 {
-  // Make sure the index for this branch is up to date before we start using it.
-  update_branch(branch);
-
   int node = T().source(branch);
 
   vector<int> suba_for_character(A().seqlength(node), -1);
@@ -723,9 +578,7 @@ subA_index_t::subA_index_t(const data_partition* dp, subA_index_kind k, const ve
   :DP(dp),
    kind_(k),
    row_indices(r)
-{
-  invalidate_all_branches();
-}
+{ }
 
 /// Map the indices in p1 to the array indices of p2 which contain the same columns.
 vector<int> indices_to_present_columns(const vector<pair<int,int> >& p1, const vector<pair<int,int> >& p2)
@@ -810,114 +663,9 @@ Vector<pair<int,int> > combine_columns(const vector<pair<int,int> >& p1, const v
   return p3;
 }
 
-void subA_index_leaf::update_one_branch(int b) const
-{
-  total_subA_index_branch++;
-  assert(not branch_index_valid(b));
-
-  // notes for leaf sequences
-  if (b < T().n_leaves()) 
-    set_row(b, convert_to_column_index_list(A().get_columns_for_characters(b)) );
-  else {
-    // get 2 branches leading into this one
-    vector<int> prev = T().branches_before(b);
-    assert(prev.size() == 2);
-
-    // sort branches by rank
-    if (rank(T(),prev[0]) > rank(T(),prev[1]))
-      std::swap(prev[0],prev[1]);
-
-    // get the sorted list of present columns
-    Vector<pair<int,int>> index = combine_columns(row(prev[0]), row(prev[1]));
-
-    int l=0;
-
-    for(int i=0;i<prev.size();i++)
-    {
-      vector<int> index_to_present_columns = indices_to_present_columns(row(prev[i]), index);
-      
-      for(int k : index_to_present_columns)
-	if (index[k].second == -1)
-	  index[k].second = l++;
-    }
-    assert(l == index.size());
-    set_row(b, index);
-  }
-}
-
-// If branch 'b' is markes as having an up-to-date index, then
-//  * check that the index includes each column for which there are leaf characters behind the branch ...
-//  * ... and no others. 
-// That is, if a column includes only gaps behind the branch, then it should not be in the branch's index.
-void subA_index_leaf::check_footprint_for_branch(int b) const
-{
-  auto TT = T();
-
-  const alignment& AA = A();
-  
-  for(int c=0,i=0;c<AA.length();c++) 
-  {
-    // Determine if there are any leaf characters behind branch b in column c
-    bool leaf_present = false;
-    const dynamic_bitset<>& leaves = TT.partition(TT.reverse(b));
-    for(int j=0;j<TT.n_leaves();j++)
-      if (leaves[j] and not AA.gap(c,j))
-	leaf_present=true;
-    
-    if (i<row(b).size() and row(b)[i].first == c)
-    {
-      assert(leaf_present);
-      i++;
-    }
-    else
-      assert(not leaf_present);
-  }
-}
-
 subA_index_leaf::subA_index_leaf(const data_partition* dp, const vector<int>& r)
   :subA_index_t(dp, subA_index_t::leaf_index, r)
 {
-}
-
-
-void subA_index_internal::update_one_branch(int b) const
-{
-  total_subA_index_branch++;
-  assert(not branch_index_valid(b));
-
-  // Actually update the index
-  int node = T().source(b);
-
-  set_row(b, convert_to_column_index_list( A().get_columns_for_characters(node) ));
-
-  assert(row(b).size() == A().seqlength(node));
-}
-
-void subA_index_internal::check_footprint_for_branch(int b) const
-{
-  auto TT = T();
-
-  const alignment& AA = A();
-  
-  assert(AA.n_sequences() == TT.n_nodes());
-
-  int node = TT.source(b);
-
-  for(int c=0,i=0;c<AA.length();c++) 
-  {
-    // Determine if there is an internal node character present at the base of this branch
-    bool internal_node_present = AA.character(c,node);
-
-    auto& index = row(b);
-
-    if (i<index.size() and index[i].first == c)
-    {
-      assert(internal_node_present);
-      i++;
-    }
-    else
-      assert(not internal_node_present);
-  }
 }
 
 subA_index_internal::subA_index_internal(const data_partition* dp, const vector<int>& r)
