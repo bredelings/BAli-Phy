@@ -97,10 +97,10 @@ private:
 
   /// sub-alignment indices;
   std::vector<int> subA_row_indices_leaf;
-  std::vector<int> subA_up_to_date_leaf;
+  int leaf_index;
 
   std::vector<int> subA_row_indices_internal;
-  std::vector<int> subA_up_to_date_internal;
+  int internal_index;
 
   mutable object_ptr<subA_index_t> subA_leaf;
   mutable object_ptr<subA_index_t> subA_internal;

@@ -617,9 +617,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
    transition_p_method_indices(t().n_branches(),-1),
    variable_alignment_( has_IModel() ),
    subA_row_indices_leaf(t().n_branches()*2),
-   subA_up_to_date_leaf(t().n_branches()*2),
    subA_row_indices_internal(t().n_branches()*2),
-   subA_up_to_date_internal(t().n_branches()*2),
    seqs(AA.seqs()),
    sequences( alignment_letters(AA, t().n_leaves()) ),
    a(AA.get_alphabet().clone()),
@@ -631,28 +629,25 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   string prefix = "P"+convertToString(i+1)+".";
   string invisible_prefix = "*"+prefix;
 
+  alignment_matrix_index = p->add_parameter(invisible_prefix + "A", AA);
+  
+  leaf_index = p->add_compute_expression( (identifier("SubAIndex.subA_index_leaf"),P->my_tree(),parameter(invisible_prefix+"A")));
+  expression_ref my_leaf_index = P->get_expression(leaf_index);
   for(int i=0;i<subA_row_indices_leaf.size();i++)
-    subA_row_indices_leaf[i]  = p->add_parameter(invisible_prefix + "subA.leaf."+convertToString(i), 0);
-  
-  for(int i=0;i<subA_row_indices_leaf.size();i++)
-    subA_up_to_date_leaf[i]  = p->add_parameter(invisible_prefix + "subAU.leaf."+convertToString(i), 0);
-  
-  subA_leaf = new subA_index_leaf(this, subA_row_indices_leaf, subA_up_to_date_leaf, B*2);
+    subA_row_indices_leaf[i] = p->add_compute_expression((identifier("!"),my_leaf_index,i));
+  subA_leaf = new subA_index_leaf(this, subA_row_indices_leaf);
 
+  internal_index = p->add_compute_expression( (identifier("SubAIndex.subA_index_internal"),P->my_tree(),parameter(invisible_prefix+"A")));
+  expression_ref my_internal_index = P->get_expression(internal_index);
   for(int i=0;i<subA_row_indices_internal.size();i++)
-    subA_row_indices_internal[i]  = p->add_parameter(invisible_prefix + "subA.internal."+convertToString(i), 0);
-  
-  for(int i=0;i<subA_row_indices_internal.size();i++)
-    subA_up_to_date_internal[i]  = p->add_parameter(invisible_prefix + "subAU.internal."+convertToString(i), 0);
-
-  subA_internal = new subA_index_internal(this, subA_row_indices_internal, subA_up_to_date_internal, B*2);
+    subA_row_indices_internal[i] = p->add_compute_expression((identifier("!"),my_internal_index,i));
+  subA_internal = new subA_index_internal(this, subA_row_indices_internal);
   
   if (variable_alignment() and use_internal_index)
     subA_ = subA_internal;
   else
     subA_ = subA_leaf;
 
-  alignment_matrix_index = p->add_parameter(invisible_prefix + "A", AA);
   if (variable_alignment())
   {
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
@@ -879,7 +874,6 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   if (safe)
   {
     LC_invalidate_node(t1);
-    invalidate_subA_index_node(t1);
     note_alignment_changed_on_branch(t().find_branch(s1,t1));
   }
   
@@ -888,7 +882,6 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   if (safe)
   {
     LC_invalidate_node(t2);
-    invalidate_subA_index_node(t2);
     note_alignment_changed_on_branch(t().find_branch(s1,t2));
   }
   
@@ -1515,7 +1508,7 @@ Parameters::Parameters(const module_loader& L,
    updown(-1)
 {
   // \todo FIXME:cleanup|fragile - Don't touch C here directly!
-  *this += { "SModel","Distributions","Range","PopGen","Alignment","IModel" };
+  *this += { "SModel","Distributions","Range","PopGen","Alignment","IModel", "SubAIndex" };
   
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 
