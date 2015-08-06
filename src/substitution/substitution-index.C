@@ -113,6 +113,7 @@ TreeInterface subA_index_t::T() const
 
 void subA_index_t::set_row(int r, const Vector<pair<int,int>>& index) const
 {
+  std::abort();
   const context* C = &P();
   const_cast<context*>(C)->set_parameter_value(row_indices[r], index );
 
@@ -121,6 +122,7 @@ void subA_index_t::set_row(int r, const Vector<pair<int,int>>& index) const
 
 void subA_index_t::set_row(int r, const expression_ref& index) const
 {
+  std::abort();
   const context* C = &P();
   const_cast<context*>(C)->set_parameter_value(row_indices[r], index );
 
@@ -129,16 +131,11 @@ void subA_index_t::set_row(int r, const expression_ref& index) const
 
 const expression_ref& subA_index_t::row_expression(int r) const
 {
-  return P().get_parameter_value(row_indices[r]);
+  return P().evaluate( row_indices[r] );
 }
 
 const Vector<std::pair<int,int> >& subA_index_t::row(int r) const
 {
-  IF_DEBUG_I( check_footprint_for_branch(r) );
-
-  if (not branch_index_valid(r))
-    update_branch(r);
-
   return row_expression(r).as_<Vector<pair<int,int>>>();
 }
 
@@ -571,25 +568,16 @@ void check_subA(const subA_index_t& I1_, const alignment& A1,const subA_index_t&
 
 bool subA_index_t::branch_index_valid(int b) const
 {
-  return P().get_parameter_value(up_to_date[b]).as_int();
+  std::abort();
 }
 
 void subA_index_t::validate_one_branch(int b) const
 {
-  if (not branch_index_valid(b))
-  {
-    const context* C = &P();
-    const_cast<context*>(C)->set_parameter_value(up_to_date[b], 1 );
-  }
+  std::abort();
 }
 
 void subA_index_t::invalidate_one_branch(int b) 
 {
-  if (branch_index_valid(b))
-  {
-    const context* C = &P();
-    const_cast<context*>(C)->set_parameter_value(up_to_date[b], 0 );
-  }
 }
 
 void subA_index_t::invalidate_all_branches()
@@ -731,11 +719,10 @@ vector<int> subA_index_t::characters_to_indices(int branch)
   return suba_for_character;
 }
 
-subA_index_t::subA_index_t(const data_partition* dp, subA_index_kind k, const vector<int>& r, const vector<int>& u, int s2)
+subA_index_t::subA_index_t(const data_partition* dp, subA_index_kind k, const vector<int>& r)
   :DP(dp),
    kind_(k),
-   row_indices(r),
-   up_to_date(u)
+   row_indices(r)
 {
   invalidate_all_branches();
 }
@@ -887,8 +874,8 @@ void subA_index_leaf::check_footprint_for_branch(int b) const
   }
 }
 
-subA_index_leaf::subA_index_leaf(const data_partition* dp, const vector<int>& r, const vector<int>& u, int s2)
-  :subA_index_t(dp, subA_index_t::leaf_index, r, u, s2)
+subA_index_leaf::subA_index_leaf(const data_partition* dp, const vector<int>& r)
+  :subA_index_t(dp, subA_index_t::leaf_index, r)
 {
 }
 
@@ -933,7 +920,7 @@ void subA_index_internal::check_footprint_for_branch(int b) const
   }
 }
 
-subA_index_internal::subA_index_internal(const data_partition* dp, const vector<int>& r,  const vector<int>& u,int s2)
-  :subA_index_t(dp, subA_index_t::internal_index, r, u, s2)
+subA_index_internal::subA_index_internal(const data_partition* dp, const vector<int>& r)
+  :subA_index_t(dp, subA_index_t::internal_index, r)
 {
 }

@@ -214,7 +214,6 @@ protected:
   subA_index_kind kind_;
 
   std::vector< int > row_indices;
-  std::vector< int > up_to_date;
 
   virtual void update_one_branch(int b) const=0;
 
@@ -231,7 +230,7 @@ protected:
 public:
   virtual subA_index_t* clone() const=0;
   
-  subA_index_t(const data_partition* P, subA_index_kind k, const std::vector<int>& r, const std::vector<int>& u, int s2);
+  subA_index_t(const data_partition* P, subA_index_kind k, const std::vector<int>& r);
 
   int n_rows() const;
 
@@ -301,7 +300,7 @@ public:
 
   void check_footprint_for_branch(int b) const;
 
-  subA_index_leaf(const data_partition*, const std::vector<int>&, const std::vector<int>&, int s2);
+  subA_index_leaf(const data_partition*, const std::vector<int>&);
 };
 
 struct subA_index_internal: public subA_index_t
@@ -314,7 +313,7 @@ public:
 
   void check_footprint_for_branch(int b) const;
 
-  subA_index_internal(const data_partition*, const std::vector<int>&, const std::vector<int>&, int s2);
+  subA_index_internal(const data_partition*, const std::vector<int>&);
 };
 
 Vector<std::pair<int,int> > convert_to_column_index_list(const std::vector<int>& column_indices);
