@@ -1545,7 +1545,6 @@ namespace substitution {
 #ifdef DEBUG_CACHING
     data_partition P2 = P;
     P2.LC.invalidate_all();
-    P2.invalidate_subA_index_all();
     for(int i=0;i<P2.t().n_branches();i++)
       P2.setlength(i);
     log_double_t result2 = Pr(P2, P2.LC);

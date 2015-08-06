@@ -215,18 +215,6 @@ protected:
 
   std::vector< int > row_indices;
 
-  virtual void update_one_branch(int b) const=0;
-
-  /* This is for SPR all, where we only need branches pointing towards the
-     root to be valid, but we don't want to discard the other ones, because
-     they will be valid for a different root/SPR-attachment-point.
-   */
-
-  void set_row(int r, const Vector<std::pair<int,int>>& index) const;
-  void set_row(int r, const expression_ref& index) const;
-  
-  bool branch_index_valid(int b) const;
-
 public:
   virtual subA_index_t* clone() const=0;
   
@@ -270,20 +258,8 @@ public:
   /// align sub-alignments corresponding to branches in b, and select columns in 'seq'
   matrix<int> get_subA_index_columns(const std::vector<int>& b, const std::vector<int>& seq);
 
-  void validate_one_branch(int b) const;
-  void invalidate_one_branch(int b);
-  void invalidate_all_branches();
-  void invalidate_directed_branch(int b);
-  void invalidate_branch(int b);
+  std::vector<int> characters_to_indices(int branch);
   void invalidate_from_node(int n);
-
-  void update_branch(int b) const;
-  void recompute_all_branches();
-
-  virtual void check_footprint_for_branch(int b) const=0;
-  void check_footprint() const;
-
-  virtual std::vector<int> characters_to_indices(int branch);
 
   int kind() const {return kind_;}
 
@@ -292,26 +268,14 @@ public:
 
 struct subA_index_leaf: public subA_index_t
 {
-protected:
-  void update_one_branch(int b) const;
-
-public:
   subA_index_t* clone() const {return new subA_index_leaf(*this);}
-
-  void check_footprint_for_branch(int b) const;
 
   subA_index_leaf(const data_partition*, const std::vector<int>&);
 };
 
 struct subA_index_internal: public subA_index_t
 {
-protected:
-  void update_one_branch(int b) const;
-
-public:
   subA_index_t* clone() const {return new subA_index_internal(*this);}
-
-  void check_footprint_for_branch(int b) const;
 
   subA_index_internal(const data_partition*, const std::vector<int>&);
 };

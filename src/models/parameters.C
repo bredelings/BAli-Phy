@@ -227,7 +227,6 @@ void data_partition::set_alignment_(const expression_ref& A2)
 void data_partition::set_alignment(const expression_ref& A2)
 {
   set_alignment_(A2);
-  invalidate_subA_index_all();
 }
 
 void data_partition::recompute_alignment_matrix_from_pairwise_alignments()
@@ -275,8 +274,6 @@ void data_partition::variable_alignment(bool b)
   {
     subA_ = subA_leaf;
 
-    subA().invalidate_all_branches();
-
     // We just changed the subA index type
     LC.invalidate_all();
 
@@ -291,8 +288,6 @@ void data_partition::variable_alignment(bool b)
       subA_ = subA_internal;
     else
       subA_ = subA_leaf;
-
-    subA().invalidate_all_branches();
 
     assert(has_IModel() and A().n_sequences() == t().n_nodes());
     {
@@ -426,23 +421,6 @@ int data_partition::seqlength(int n) const
   return l;
 }
 
-void data_partition::invalidate_subA_index_branch(int b)
-{
-  // propagates outward in both directions
-  subA().invalidate_branch(b);
-}
-
-void data_partition::invalidate_subA_index_node(int n)
-{
-  // propagates outward in both directions
-  subA().invalidate_from_node(n);
-}
-
-void data_partition::invalidate_subA_index_all()
-{
-  subA().invalidate_all_branches();
-}
-
 /// Set the pairwise alignment value, but don't mark the alignment & sequence lengths as changed.
 void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& pi,bool require_match_A) const
 {
@@ -534,9 +512,6 @@ void data_partition::note_alignment_changed_on_branch(int b)
   int B = t().reverse(b);
   invalidate_pairwise_alignment_for_branch(b);
   invalidate_pairwise_alignment_for_branch(B);
-
-  // If the alignment changes AT ALL, then the mapping from subA columns to alignment columns is broken.
-  // Therefore we always mark it as out-of-date and needing to be recomputed.
 
   // However, LC depends only on the alignment of subA indices from different branches.
   // 
@@ -1286,24 +1261,6 @@ void Parameters::LC_invalidate_all()
 {
   for(int i=0;i<n_data_partitions();i++)
     get_data_partition(i).LC.invalidate_all();
-}
-
-void Parameters::invalidate_subA_index_branch(int b)
-{
-  for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).invalidate_subA_index_branch(b);
-}
-
-void Parameters::invalidate_subA_index_node(int n)
-{
-  for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).invalidate_subA_index_node(n);
-}
-
-void Parameters::invalidate_subA_index_all()
-{
-  for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).invalidate_subA_index_all();
 }
 
 void Parameters::note_alignment_changed_on_branch(int b)

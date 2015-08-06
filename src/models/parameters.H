@@ -184,13 +184,6 @@ public:
 
   int seqlength(int n) const;
 
-  // invalidate subA indices on b and b* and all DIRECTED branches after them
-  void invalidate_subA_index_branch(int b);
-  // invalidate subA indices on DIRECTED branches out from node n
-  void invalidate_subA_index_node(int n);
-  // invalidate subA indices for all branches
-  void invalidate_subA_index_all();
-
   expression_ref get_pairwise_alignment_(int b) const;
 
   const pairwise_alignment_t& get_pairwise_alignment(int b,bool=true) const;
@@ -421,13 +414,6 @@ public:
 
   // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
   void LC_invalidate_all();
-
-  // invalidate subA indices on b and b* and all DIRECTED branches after them
-  void invalidate_subA_index_branch(int b);
-  // invalidate subA indices on DIRECTED branches out from node n
-  void invalidate_subA_index_node(int n);
-  // invalidate subA indices for all branches
-  void invalidate_subA_index_all();
 
   void note_alignment_changed_on_branch(int b);
 

@@ -239,8 +239,6 @@ void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b)
     int b2 = t2.find_branch(nodes[5],nodes[2]);
     p[1].exchange_subtrees(b1,b2);
 
-    p[1].invalidate_subA_index_branch(b);
-
     vector<log_double_t> rho(2,1);
     rho[1] = ratio;
 
