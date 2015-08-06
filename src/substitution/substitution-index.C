@@ -910,12 +910,9 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
     {
       vector<int> index_to_present_columns = indices_to_present_columns(indices[prev[i]], indices[b]);
 
-      for(int j=0;j<index_to_present_columns.size();j++)
-      {
-	int k = index_to_present_columns[j];
+      for(int k : index_to_present_columns)
 	if (indices[b][k].second == -1)
 	  indices[b][k].second = l++;
-      }
     }
     assert(l == indices[b].size());
   }
