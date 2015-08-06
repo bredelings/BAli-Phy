@@ -22,6 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <iostream>
 #include <vector>
+#include <utility>
 #include "alignment/alignment.H"
 #include "tree/tree.H"
 #include "models/TreeInterface.H"
@@ -315,6 +316,10 @@ public:
 
   subA_index_internal(const data_partition*, const std::vector<int>&, const std::vector<int>&, int s2);
 };
+
+Vector<std::pair<int,int> > convert_to_column_index_list(const std::vector<int>& column_indices);
+Vector<std::pair<int,int> > combine_columns(const std::vector<std::pair<int,int> >& p1, const std::vector<std::pair<int,int> >& p2);
+std::vector<int> indices_to_present_columns(const std::vector<std::pair<int,int> >& p1, const std::vector<std::pair<int,int> >& p2);
 
 /// Count the number of entries in a subA index that are not null
 int n_non_null_entries(const matrix<int>&);
