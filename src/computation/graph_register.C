@@ -668,7 +668,7 @@ int reg_heap::computation_index_for_reg_(int t, int r) const
 
 int reg_heap::result_for_reg(int r) const 
 {
-  assert(not is_index_var(access(r).C.exp));
+  assert(not access(r).C.exp.is_index_var());
   if (access(r).type == reg::type_t::changeable)
     return computation_result_for_reg(r);
   else

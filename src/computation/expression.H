@@ -441,8 +441,6 @@ struct Trim: public Object
   std::string print() const;
 };
 
-bool is_index_var(const expression_ref& E);
-
 bool is_dummy(const expression_ref&);
 
 bool is_parameter(const expression_ref&);

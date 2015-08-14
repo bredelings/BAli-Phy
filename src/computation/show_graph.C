@@ -307,7 +307,7 @@ map<int,string> get_constants(const reg_heap& C, int t)
   {
     if (reg_names.count(R)) continue;
 
-    if (is_index_var(C.access(R).C.exp)) continue;
+    if (C.access(R).C.exp.is_index_var()) continue;
 
     if (is_modifiable(C.access(R).C.exp)) continue;
 

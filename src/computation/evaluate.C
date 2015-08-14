@@ -176,7 +176,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     assert(not E.head().is_a<expression>());
     assert(not E.is_a<index_var>());
   }
-  if (is_index_var(access(R).C.exp))
+  if (access(R).C.exp.is_index_var())
     assert(not reg_has_result(R));
 #endif
 

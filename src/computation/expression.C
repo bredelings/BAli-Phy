@@ -2196,11 +2196,6 @@ bool is_WHNF(const expression_ref& E)
   }
 }
 
-bool is_index_var(const expression_ref& E)
-{
-  return E.is_a<index_var>();
-}
-
 bool is_dummy(const expression_ref& E)
 {
   return (E.head().type() == dummy_type);
@@ -2230,7 +2225,7 @@ bool is_reg_var(const expression_ref& E)
 
 bool is_reglike(const expression_ref& E)
 {
-  return is_dummy(E) or is_parameter(E) or is_modifiable(E) or is_reg_var(E) or is_index_var(E) or is_identifier(E);
+  return is_dummy(E) or is_parameter(E) or is_modifiable(E) or is_reg_var(E) or E.is_index_var() or is_identifier(E);
 }
 
 bool is_wildcard(const dummy& d)
