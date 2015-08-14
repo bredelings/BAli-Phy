@@ -859,7 +859,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   // If the value is a pre-existing reg_var, then call it.
   if (result.exp.head().type() == index_var_type)
   {
-    int index = result.exp.as_<index_var>().index;
+    int index = result.exp.as_index_var();
 
     int Q = result.lookup_in_env( index );
     
@@ -2226,7 +2226,7 @@ bool reg_heap::reg_is_fully_up_to_date(int R) const
 
     assert( not reg_has_call(R) );
 
-    int index = access(R).C.exp.as_<index_var>().index;
+    int index = access(R).C.exp.as_index_var();
 
     int R2 = access(R).C.lookup_in_env( index );
 
@@ -2253,7 +2253,7 @@ bool reg_heap::reg_is_fully_up_to_date(int R) const
   // Check each component that is a index_var to see if its out of date.
   for(int i=0;i<E.size();i++)
   {
-    int R2 = result.lookup_in_env( E.sub()[i].as_<index_var>().index );
+    int R2 = result.lookup_in_env( E.sub()[i].as_index_var() );
     
     if (not reg_is_fully_up_to_date(R2)) return false;
   }

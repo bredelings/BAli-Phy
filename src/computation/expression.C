@@ -141,6 +141,11 @@ string print_list(const expression_ref& E)
 
 }
 
+int expression_ref::as_index_var() const
+{
+  return as_<index_var>().index;
+}
+
 // How do I make constructor-specific methods of printing data expressions?
 // Can I move to defining the print function using an expression?
 string expression::print() const 
@@ -593,7 +598,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
   {
     // Indexed Variable - This is assumed to be a free variable, so just shift it.
     if (E.is_a<index_var>())
-      return index_var(E.as_<index_var>().index + variables.size());
+      return index_var(E.as_index_var() + variables.size());
 
     // Variable
     else if (E.is_a<dummy>())
@@ -696,11 +701,11 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
     // Indexed Variable - This is assumed to be a free variable, so just shift it.
     if (E.is_a<index_var>())
     {
-      auto& V = E.as_<index_var>();
-      if (V.index >= variables.size())
-	return new index_var(V.index - variables.size());
+      int index = E.as_index_var();
+      if (index >= variables.size())
+	return new index_var(index - variables.size());
 
-      return variables[variables.size()-1 - V.index];
+      return variables[variables.size()-1 - index];
     }
     // Constant
     else
@@ -834,11 +839,7 @@ vector<int> get_free_index_vars(const expression_ref& E)
   {
     // Variable
     if (E.is_a<index_var>())
-    {
-      auto& D = E.as_<index_var>();
-      assert(not is_wildcard(D));
-      return {D.index};
-    }
+      return {E.as_index_var()};
     // Constant
     else
       return vector<int>{};
@@ -972,9 +973,8 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
     // Variable
     if (E.is_a<index_var>())
     {
-      auto& D = E.as_<index_var>();
-      assert(not is_wildcard(D));
-      int delta = D.index - depth;
+      int index = E.as_index_var();
+      int delta = index - depth;
       if (delta >= 0)
       {
 	assert(delta < mapping.size());

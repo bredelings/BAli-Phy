@@ -4,7 +4,7 @@
 
 int OperationArgs::reg_for_slot(int slot) const
 {
-  int index = reference(slot).as_<index_var>().index;
+  int index = reference(slot).as_index_var();
 
   return current_closure().lookup_in_env(index);
 }
@@ -77,7 +77,7 @@ int OperationArgs::allocate(closure&& C)
 {
   if (C.exp.head().type() == index_var_type)
   {
-    int index = C.exp.as_<index_var>().index;
+    int index = C.exp.as_index_var();
 
     int r = C.lookup_in_env( index );
     

@@ -228,7 +228,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     }
     else if (reg_type == reg::type_t::index_var)
     {
-      int index = access(R).C.exp.as_<index_var>().index;
+      int index = access(R).C.exp.as_index_var();
       int R2 = access(R).C.lookup_in_env( index );
       R = R2;
       continue;
@@ -248,7 +248,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 
       access(R).type = reg::type_t::index_var;
 
-      int index = access(R).C.exp.as_<index_var>().index;
+      int index = access(R).C.exp.as_index_var();
 
       int R2 = access(R).C.lookup_in_env( index );
 
@@ -412,7 +412,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
 
     else if (reg_type == reg::type_t::index_var)
     {
-      int index = access(R).C.exp.as_<index_var>().index;
+      int index = access(R).C.exp.as_index_var();
       int R2 = access(R).C.lookup_in_env( index );
       R = R2;
       continue;
@@ -426,7 +426,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
     {
       access(R).type = reg::type_t::index_var;
 
-      int index = access(R).C.exp.as_<index_var>().index;
+      int index = access(R).C.exp.as_index_var();
 
       int R2 = access(R).C.lookup_in_env( index );
 

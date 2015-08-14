@@ -1,4 +1,4 @@
-#define DEBUG_RATE_MATRIX
+//#define DEBUG_RATE_MATRIX
 #include "computation/computation.H"
 #include "math/exponential.H"
 #include "math/eigenvalue.H"

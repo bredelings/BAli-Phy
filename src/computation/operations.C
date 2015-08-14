@@ -96,7 +96,7 @@ closure Apply::operator()(OperationArgs& Args) const
   C.exp = peel_n_lambdas(C.exp, n_args_applied);
   for(int i=0;i<n_args_applied;i++)
   {
-    int arg = Args.current_closure().lookup_in_env( Args.reference(i+1).as_<index_var>().index);
+    int arg = Args.current_closure().lookup_in_env( Args.reference(i+1).as_index_var());
     C.Env.push_back(arg);
   }
 
@@ -113,7 +113,7 @@ closure Apply::operator()(OperationArgs& Args) const
 
     for(int i=n_args_needed;i<n_args_given;i++)
     {
-      int arg = Args.current_closure().lookup_in_env( Args.reference(i+1).as_<index_var>().index );
+      int arg = Args.current_closure().lookup_in_env( Args.reference(i+1).as_index_var() );
       Env.push_back(arg);
 
       args.push_back(index_var(n_args_given - i -1));
@@ -191,7 +191,7 @@ closure Case::operator()(OperationArgs& Args) const
 	for(int j=0;j<obj.exp.size();j++)
 	{
 	  // Don't do a dynamic cast here!
-	  int index = obj.exp.sub()[j].as_<index_var>().index;
+	  int index = obj.exp.sub()[j].as_index_var();
 	  
 	  result.Env.push_back( obj.lookup_in_env( index ) );
 	}

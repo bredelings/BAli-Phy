@@ -146,7 +146,7 @@ expression_ref subst_referenced_vars(const expression_ref& E, const vector<int>&
   }
   else if ( E.is_a<index_var>() )
   {
-    const auto loc = names.find( lookup_in_env(Env, E.as_<index_var>().index) );
+    const auto loc = names.find( lookup_in_env(Env, E.as_index_var()) );
     if (loc == names.end())
       return E;
     else
@@ -400,7 +400,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       if (F.is_expression())
 	for(const expression_ref& E: F.sub())
 	{
-	  int index = E.as_<index_var>().index;
+	  int index = E.as_index_var();
 	  int R2 = C.access(R).C.lookup_in_env( index );
 	  targets.push_back(R2);
 	  
@@ -419,7 +419,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
     else if (F.type() == index_var_type)
     {
-      int index = F.as_<index_var>().index;
+      int index = F.as_index_var();
 
       int R2 = C.access(R).C.lookup_in_env( index );
 

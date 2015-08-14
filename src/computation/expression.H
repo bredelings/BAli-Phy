@@ -155,7 +155,14 @@ public:
   {
     return ld;
   }
+
+  bool is_index_var() const
+  {
+    return type_ == index_var_type;
+  }
   
+  int as_index_var() const;
+
   inline const object_ptr<const Object>& ptr() const
   {
     assert(is_object_type());
