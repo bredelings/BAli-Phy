@@ -174,7 +174,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     expression_ref E = access_result_for_reg(R).exp;
     assert(is_WHNF(E));
     assert(not E.head().is_a<expression>());
-    assert(not E.is_a<index_var>());
+    assert(not E.is_index_var());
   }
   if (access(R).C.exp.is_index_var())
     assert(not reg_has_result(R));

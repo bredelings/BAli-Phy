@@ -144,7 +144,7 @@ expression_ref subst_referenced_vars(const expression_ref& E, const vector<int>&
     else
       return E;
   }
-  else if ( E.is_a<index_var>() )
+  else if ( E.is_index_var() )
   {
     const auto loc = names.find( lookup_in_env(Env, E.as_index_var()) );
     if (loc == names.end())

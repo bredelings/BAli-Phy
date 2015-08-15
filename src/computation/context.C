@@ -193,7 +193,7 @@ void context::set_modifiable_value_(int index, closure&& C)
 void context::set_modifiable_value(int index, const expression_ref& E)
 {
   assert(not E.size());
-  assert(not E.is_a<index_var>());
+  assert(not E.is_index_var());
   assert(not E.is_a<reg_var>());
   assert(not E.is_a<identifier>());
   set_modifiable_value_(index, E);
@@ -202,7 +202,7 @@ void context::set_modifiable_value(int index, const expression_ref& E)
 void context::set_parameter_value(int index, const expression_ref& E)
 {
   assert(not E.size());
-  assert(not E.is_a<index_var>());
+  assert(not E.is_index_var());
   assert(not E.is_a<reg_var>());
   assert(not E.is_a<identifier>());
   set_parameter_value_(index, E);

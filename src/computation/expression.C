@@ -597,7 +597,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
   if (not E.size())
   {
     // Indexed Variable - This is assumed to be a free variable, so just shift it.
-    if (E.is_a<index_var>())
+    if (E.is_index_var())
       return index_var(E.as_index_var() + variables.size());
 
     // Variable
@@ -699,7 +699,7 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
   if (not E.size())
   {
     // Indexed Variable - This is assumed to be a free variable, so just shift it.
-    if (E.is_a<index_var>())
+    if (E.is_index_var())
     {
       int index = E.as_index_var();
       if (index >= variables.size())
@@ -838,7 +838,7 @@ vector<int> get_free_index_vars(const expression_ref& E)
   if (not E.size()) 
   {
     // Variable
-    if (E.is_a<index_var>())
+    if (E.is_index_var())
       return {E.as_index_var()};
     // Constant
     else
@@ -932,7 +932,7 @@ expression_ref trim_normalize(const expression_ref& E)
   else if (parse_case_expression(E, T, patterns, bodies))
   {
     // T should already be a variable, so don't bother about it.
-    assert(T.is_a<index_var>());
+    assert(T.is_index_var());
 
     for(auto& body: bodies)
       body = trim(trim_normalize(body));
@@ -971,7 +971,7 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
   if (not E.size())
   {
     // Variable
-    if (E.is_a<index_var>())
+    if (E.is_index_var())
     {
       int index = E.as_index_var();
       int delta = index - depth;
@@ -1127,7 +1127,7 @@ expression_ref trim_unnormalize(const expression_ref& E)
   else if (parse_case_expression(E, T, patterns, bodies))
   {
     // T should already be a variable, so don't bother about it.
-    assert(T.is_a<index_var>());
+    assert(T.is_index_var());
 
     for(auto& body: bodies)
       body = trim_unnormalize(untrim(body));
