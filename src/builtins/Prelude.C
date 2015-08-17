@@ -348,8 +348,8 @@ extern "C" closure builtin_function_doubleToLogDouble(OperationArgs& Args)
 
 extern "C" closure builtin_function_intToDouble(OperationArgs& Args)
 {
-  log_double_t d = Args.evaluate(0).as_log_double();
-  return {double(d)};
+  int i = Args.evaluate(0).as_int();
+  return {double(i)};
 }
 
 #include "iota.H"
