@@ -123,6 +123,7 @@ public:
 
   int as_int() const
   {
+    assert(is_int());
     return i;
   }
 
@@ -133,6 +134,7 @@ public:
 
   double as_double() const
   {
+    assert(is_double());
     return d;
   }
 
@@ -143,6 +145,7 @@ public:
 
   char as_char() const
   {
+    assert(is_char());
     return c;
   }
 
@@ -153,6 +156,7 @@ public:
 
   log_double_t as_log_double() const
   {
+    assert(is_log_double());
     return ld;
   }
 
