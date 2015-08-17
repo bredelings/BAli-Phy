@@ -141,11 +141,6 @@ string print_list(const expression_ref& E)
 
 }
 
-int expression_ref::as_index_var() const
-{
-  return as_<index_var>().index;
-}
-
 // How do I make constructor-specific methods of printing data expressions?
 // Can I move to defining the print function using an expression?
 string expression::print() const 
@@ -351,20 +346,6 @@ expression::expression(const expression_ref& H, const std::vector< expression_re
   :head(H),sub(S)
 { 
   assert(H.is_atomic());
-}
-
-tribool index_var::compare(const Object& o) const 
-{
-  const index_var* V = dynamic_cast<const index_var*>(&o);
-  if (not V) 
-    return false;
-
-  return index == V->index;
-}
-
-string index_var::print() const 
-{
-  return string("%")+convertToString(index);
 }
 
 bool dummy::operator==(const dummy& d) const
@@ -610,7 +591,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
       if (index == -1)
 	throw myexception()<<"Dummy '"<<D<<"' is apparently not a bound variable in '"<<E<<"'?";
       else
-	return new index_var(index);
+	return index_var(index);
     }
     // Constant
     else
@@ -703,7 +684,7 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
     {
       int index = E.as_index_var();
       if (index >= variables.size())
-	return new index_var(index - variables.size());
+	return index_var(index - variables.size());
 
       return variables[variables.size()-1 - index];
     }

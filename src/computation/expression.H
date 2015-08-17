@@ -10,6 +10,13 @@
 #include "computation/operator.H"
 #include "computation/type_constant.H"
 
+/// a de Bruijn indexed variable 
+struct index_var
+{
+  int index;
+  index_var(int i):index(i) {}
+};
+
 /// An S-expression: An Object, and possibly an array of Objects.
 struct expression;
 
@@ -27,7 +34,7 @@ class expression_ref
 
 public:
 
-  bool is_object_type() const {return type_ > char_type;}
+  bool is_object_type() const {return type_ > index_var_type;}
 
   tribool operator==(const expression_ref& E2) const
   {
@@ -47,6 +54,9 @@ public:
       break;
     case char_type:
       return (c == E2.as_char());
+      break;
+    case index_var_type:
+      return (i == E2.as_index_var());
       break;
     default:
       return ptr()->compare(*E2.ptr());
@@ -165,7 +175,11 @@ public:
     return type_ == index_var_type;
   }
   
-  int as_index_var() const;
+  int as_index_var() const
+  {
+    assert(is_index_var());
+    return i;
+  }
 
   inline const object_ptr<const Object>& ptr() const
   {
@@ -196,6 +210,9 @@ public:
       break;
     case char_type:
       return std::string("'")+c+"'";
+      break;
+    case index_var_type:
+      return std::string("%")+convertToString(i);
       break;
     default:
       return ptr()->print();
@@ -242,6 +259,7 @@ public:
   expression_ref(const double& d2):d(d2),type_(double_type) {}
   expression_ref(const log_double_t& ld2):ld(ld2),type_(log_double_type) {}
   expression_ref(const bool& b);
+  expression_ref(const index_var& iv):i(iv.index),type_(index_var_type) {}
   expression_ref(const std::string& s);
   expression_ref(const char* s);
   expression_ref(const char& c2):c(c2),type_(char_type) {}
@@ -347,20 +365,6 @@ struct parameter: public Object
   type_constant type() const {return parameter_type;}
 
   parameter(const std::string& s);
-};
-
-/// a de Bruijn indexed variable 
-struct index_var: public Object
-{
-  int index;
-
-  index_var* clone() const {return new index_var(*this);}
-  std::string print() const;
-  tribool compare(const Object& o) const;
-  
-  type_constant type() const {return index_var_type;}
-
-  index_var(int i):index(i) {}
 };
 
 // a dummy variable expression

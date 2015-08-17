@@ -2494,7 +2494,7 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, vector<int>& En
     int index = Env.size();
     Env.insert(Env.begin(), reg);
 
-    return new index_var(index);
+    return index_var(index);
   }
 
   // Other constants have no parts, and don't need to be translated
