@@ -255,7 +255,7 @@ class Parameters: public Model
   cow_ptr<SequenceTree> T_;
 
   std::vector<int> parameter_for_tree_node;
-  std::vector<int> parameter_for_tree_branch;
+  std::vector<std::pair<int,int>> parameters_for_tree_branch;
 
   int tree_head = -1;
 
