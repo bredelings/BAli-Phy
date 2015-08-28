@@ -211,7 +211,10 @@ concat xs = foldr (++) [] xs;
 
 concatMap f = concat . map f;
 
-filter p xs = [ x | x <- xs, p x];
+-- FIXME: how to optimize the list comprehension version appropriately?
+-- filter p xs = [ x | x <- xs, p x];
+filter p [] = [];
+filter p (x:xs) = if (p x) then x:(filter p xs) else (filter p xs);                
 
 listArray n l = mkArray n (\i -> l !! i);
 
