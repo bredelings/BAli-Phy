@@ -275,7 +275,7 @@ string expression::print() const
 	if (sub[1].head() == O and O.associativity()==assoc_right)
 	  pargs[2] = args[2];
 	else if (sub[1].head().is_a<Operator>())
-	  if (sub[1].as_<Operator>().precedence() > O.precedence())
+	  if (sub[1].head().as_<Operator>().precedence() > O.precedence())
 	    pargs[2] = args[2];
       }
       return pargs[1] + O_name + pargs[2];
