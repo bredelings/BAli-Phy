@@ -452,6 +452,11 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
       expression_ref F = M.get_function(S.name);
       assert(F);
 
+#ifdef DEBUG_OPTIMIZE
+      std::cerr<<S.name<<" := "<<F<<"\n\n";
+      std::cerr<<S.name<<" := "<<preprocess(F).exp<<"\n\n\n\n";
+#endif
+
       assert(R != -1);
       set_C(R, preprocess(F) );
     }
