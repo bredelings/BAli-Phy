@@ -253,7 +253,9 @@ string expression::print() const
     string O_name = O.name();
     if (head.is_a<Apply>())
     {
+#ifndef DEBUG_OPTIMIZE
       pargs.erase(pargs.begin());
+#endif
       return O.print_expression( pargs );
     }
     else if (O.name() == ":" and size() == 2)
