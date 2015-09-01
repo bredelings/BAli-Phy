@@ -155,7 +155,7 @@ expression_ref graph_normalize(const expression_ref& E)
 
 	// 1. Let-bind the argument expression
        	vars.push_back( var );
-	bodies.push_back( E.sub()[i] );
+	bodies.push_back( E2->sub[i] );
 
 	// 2. Replace the argument expression with the let var.
 	E2->sub[i] = var;
