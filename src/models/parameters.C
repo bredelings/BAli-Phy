@@ -1476,8 +1476,9 @@ Parameters::Parameters(const module_loader& L,
     string name_target = "*MyTree.branch"+convertToString(b)+"target"; 
     int p_source = add_parameter(name_source,0);
     int p_target = add_parameter(name_target,0);
+    int reverse_branch = T().directed_branch(b).reverse();
     parameters_for_tree_branch.push_back( {p_source,p_target} );
-    branch_nodes.push_back( Tuple(parameter(name_source),parameter(name_target)) );
+    branch_nodes.push_back( Tuple(parameter(name_source), parameter(name_target), reverse_branch) );
   }
   expression_ref branch_nodes_array = (identifier("listArray'"),get_list(branch_nodes));
 
@@ -1502,7 +1503,7 @@ Parameters::Parameters(const module_loader& L,
   evaluate_expression( (identifier("edgesOutOfNode"), my_tree(), 0));
   evaluate_expression( (identifier("neighbors"), my_tree(), 0));
   evaluate_expression( (identifier("nodesForEdge"),my_tree(), 0));
-  evaluate_expression( (identifier("edgeForNodes"), my_tree(), (identifier("nodesForEdge"),my_tree(), 0))).as_int();
+  //  evaluate_expression( (identifier("edgeForNodes"), my_tree(), (identifier("nodesForEdge"),my_tree(), 0))).as_int();
   for(int b=0; b < 2*T().n_branches(); b++)
   {
     vector<const_branchview> branch_list;

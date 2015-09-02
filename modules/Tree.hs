@@ -1,15 +1,15 @@
 module Tree where
 {
-data Tree = Tree (Array [Int]) (Array [Int]) Int Int;  
+data Tree = Tree (Array [Int]) (Array (Int,Int,Int)) Int Int;  
   
 numNodes (Tree _ _ n _) = n;
 numBranches (Tree _ _ _ n) = n;
 edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node;
 nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray ! edgeIndex;
-sourceNode t edge = fst (nodesForEdge t edge);
-targetNode t edge = snd (nodesForEdge t edge);
+sourceNode  t b = case (nodesForEdge t b) of {(s,_,_)->s};
+targetNode  t b = case (nodesForEdge t b) of {(_,t,_)->t};
+reverseEdge t b = case (nodesForEdge t b) of {(_,_,r)->r};
 edgeForNodes t (n1,n2) = head [b | b <- (edgesOutOfNode t n1), (targetNode t b)==n2];
-reverseEdge t b = edgeForNodes t (swap (nodesForEdge t b));
 nodeDegree t n = length (edgesOutOfNode t n);
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n);
 edgesBeforeEdge t b = map (reverseEdge t) $ filter (/=b) $ edgesOutOfNode t (sourceNode t b);
