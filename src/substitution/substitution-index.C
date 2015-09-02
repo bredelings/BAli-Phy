@@ -38,6 +38,8 @@ using std::pair;
 
 using boost::dynamic_bitset;
 
+int total_subA_index_matrix=0;
+int total_subA_index_branch=0;
 
 /// Take a list of [(column,index)] sorted by column and extract the sorted list of columns.
 vector<int> convert_to_column_list(const vector<pair<int,int> >& column_indices)
@@ -212,6 +214,7 @@ matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, bool with_
     for(int j=0;j<subA4.size2();j++)
       subA4(i,j) = subA3(i,j);
 
+  total_subA_index_matrix++;
   return subA4;
 }
 
@@ -881,6 +884,7 @@ vector<pair<int,int> > combine_columns(const vector<pair<int,int> >& p1, const v
 
 void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b) 
 {
+  total_subA_index_branch++;
   assert(not branch_index_valid(b));
 
   // notes for leaf sequences
@@ -955,6 +959,7 @@ subA_index_leaf::subA_index_leaf(int s1, int s2)
 
 void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int b) 
 {
+  total_subA_index_branch++;
   assert(not up_to_date[b]);
 
   // Actually update the index
