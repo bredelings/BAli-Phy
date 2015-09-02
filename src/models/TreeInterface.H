@@ -17,7 +17,6 @@ public:
 
   int n_nodes() const;
   int n_branches() const;
-  int _n_leaves = 0;
   int n_leaves() const;
   int n_leaf_branches() const;
 
