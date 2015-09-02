@@ -2402,6 +2402,7 @@ vector<int>& reg_heap::get_scratch_list() const
 closure let_float(closure&& C)
 {
   C.exp = let_float(expression_ref(C.exp));
+  C.exp = do_optimize_DCE(C.exp);
   return C;
 }
 

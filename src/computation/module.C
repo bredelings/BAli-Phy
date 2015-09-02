@@ -47,6 +47,8 @@ bool operator!=(const symbol_info&S1, const symbol_info& S2)
   return not (S1 == S2);
 }
 
+symbol_info lookup_symbol(const string& name, const vector<Module>& P);
+
 bool Module::symbol_exists(const string& name) const
 {
   auto loc = symbols.find(name);
@@ -287,6 +289,255 @@ void Module::resolve_symbols(const std::vector<Module>& P)
       string name = decl.sub()[0].as_<identifier>().name;
       symbols.at(name).body = decl.sub()[1];
     }
+}
+
+expression_ref func_type(const expression_ref& a, const expression_ref& b)
+{
+  expression_ref Arrow = right_assoc_constructor("->",1);
+  return Arrow+a+b;
+}
+
+void Module::get_types(const vector<Module>& P)
+{
+  expression_ref Star = constructor("*",0);
+  //  std::cerr<<func_type(func_type(Star,Star),Star)<<"\n";
+  //  std::cerr<<func_type(Star,func_type(Star,Star))<<"\n";
+}
+
+vector<expression_ref> peel_lambdas(expression_ref& E)
+{
+  vector<expression_ref> args;
+  while(E.head().type() == lambda_type)
+  {
+    args.push_back(E.sub()[0]);
+    E = E.sub()[1];
+  }
+  return args;
+}
+
+int nodes_size(const expression_ref& E)
+{
+  int total = 1;
+
+  if (E.is_expression())
+    for(const auto& e:E.sub())
+      total += nodes_size(e);
+
+  return total;
+}
+
+expression_ref sapply(const expression_ref& f, const expression_ref& y)
+{
+  if (f.head().type() != lambda_type)
+    return (f,y);
+
+  const expression_ref& x = f.sub()[0];
+  const expression_ref& body = f.sub()[1];
+  return substitute(body,x,y);
+}
+
+expression_ref do_optimize(const expression_ref& E, const vector<Module>& P)
+{
+  // 1. Var
+  // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+  if (not E.size() or is_modifiable(E))
+    return E;
+
+  // 2. Lambda
+  if (E.head().is_a<lambda>())
+  {
+    assert(E.size() == 2);
+    expression* V = E.as_expression().clone();
+    V->sub[1] = do_optimize(E.sub()[1],P);
+
+    if (V->sub[1].ptr() == E.sub()[1].ptr())
+      return E;
+    else
+      return V;
+  }
+
+  // 6. Case
+  if (E.head().is_a<Case>())
+  {
+    expression* V = E.as_expression().clone();
+
+    // Optimize the object
+    V->sub[0] = do_optimize(V->sub[0],P);
+
+    const int L = V->sub.size()/2 - 1;
+    // Optimize the bodies
+    for(int i=0;i<L;i++)
+      V->sub[2+2*i] = do_optimize(V->sub[2+2*i],P);
+    
+    return V;
+  }
+
+  // 4. Constructor/Operation
+  if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+  {
+    expression* V = E.as_expression().clone();
+    for(int i=0;i<E.size();i++)
+      V->sub[i] = do_optimize(E.sub()[i],P);
+
+    // Application
+    if (E.head().is_a<Apply>() and E.sub()[0].is_a<identifier>())
+    {
+      string name = E.sub()[0].as_<identifier>().name;
+      expression_ref body = lookup_symbol(name,P).body;
+      expression_ref body2 = body;
+      vector<expression_ref> args = peel_lambdas(body2);
+      bool valid = (E.size() == args.size()+1);
+      if (valid)
+	;//	std::cerr<<"TRY1: "<<E<<"\n";
+      for(int i=1;i<=args.size() and valid;i++)
+	if (is_reglike(E.sub()[i]))
+	  ;
+	else if (E.sub()[i].is_int())
+	  ;
+	else if (E.head().is_a<constructor>() and E.head().is_atomic())
+	  ;
+	else
+	  valid = false;
+      if (valid)
+      {
+	//	std::cerr<<"TRY2: "<<E<<"\n";
+	//	std::cerr<<"size = "<<nodes_size(body2)<<"\n";
+	//	std::cerr<<"args = "<<args.size()<<"\n";
+      }
+      if (valid) valid = nodes_size(body2) <= (args.size()+1);
+      if (valid)
+      {
+	//	std::cerr<<"TRY3: "<<E<<"\n";
+
+	expression_ref E2 = body;
+	for(int i=0;i<args.size();i++)
+	  E2 = sapply(E2,V->sub[i+1]);
+	//	std::cerr<<"NEW: "<<E2<<"\n";
+	//	return E2;
+      }
+    }
+
+    return V;
+  }
+
+  // 5. Let 
+  if (E.head().is_a<let_obj>())
+  {
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
+    parse_let_expression(E, vars, bodies, T);
+
+    // unnormalize T and the bodies
+    T = do_optimize(T,P);
+    for(int i=0; i<vars.size(); i++)
+      bodies[i] = do_optimize(bodies[i],P);
+
+    return let_expression(vars, bodies, T);
+  }
+
+  std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";
+  return E;
+}
+
+expression_ref do_optimize_DCE(const expression_ref& E)
+{
+  // 1. Var
+  // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+  if (not E.size() or is_modifiable(E))
+    return E;
+
+  // 2. Lambda
+  if (E.head().is_a<lambda>())
+  {
+    assert(E.size() == 2);
+    expression* V = E.as_expression().clone();
+    V->sub[1] = do_optimize_DCE(E.sub()[1]);
+
+    if (V->sub[1].ptr() == E.sub()[1].ptr())
+      return E;
+    else
+      return V;
+  }
+
+  // 6. Case
+  if (E.head().is_a<Case>())
+  {
+    expression* V = E.as_expression().clone();
+
+    // Optimize the object
+    V->sub[0] = do_optimize_DCE(V->sub[0]);
+
+    const int L = V->sub.size()/2 - 1;
+    // Optimize the bodies
+    for(int i=0;i<L;i++)
+      V->sub[2+2*i] = do_optimize_DCE(V->sub[2+2*i]);
+    
+    return V;
+  }
+
+  // 4. Constructor/Operation
+  if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+  {
+    expression* V = E.as_expression().clone();
+    for(int i=0;i<E.size();i++)
+      V->sub[i] = do_optimize_DCE(E.sub()[i]);
+
+    return V;
+  }
+
+  // 5. Let 
+  if (E.head().is_a<let_obj>())
+  {
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
+    parse_let_expression(E, vars, bodies, T);
+
+    // unnormalize T and the bodies
+    T = do_optimize_DCE(T);
+    for(int i=0; i<vars.size(); i++)
+      bodies[i] = do_optimize_DCE(bodies[i]);
+
+    for(int i=vars.size()-1; i>=0; i--)
+    {
+      expression_ref var = vars[i];
+      expression_ref body = bodies[i];
+
+      if (is_reglike(body))
+      {
+	vars.erase(vars.begin()+i);
+	bodies.erase(bodies.begin()+i);
+
+	T = substitute(T,var,body);
+	for(int j=0;j<vars.size();j++)
+	  bodies[j] = substitute(bodies[j],var,body);
+      }
+    }
+    
+    return let_expression(vars, bodies, T);
+  }
+
+  std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";
+  return E;
+}
+
+void Module::optimize(const vector<Module>& P)
+{
+  optimized = true;
+  for(const auto& s: get_symbols())
+  {
+    const auto& S = s.second;
+    expression_ref body = S.body;
+    vector<expression_ref> args = peel_lambdas(body);
+    //    std::cerr<<S.name<<" :=: "<<S.body<<"\n";
+    //    std::cerr<<"args = "<<args.size()<<"\n";
+    //    std::cerr<<"size = "<<nodes_size(body)<<"\n";
+    expression_ref body2 = do_optimize(S.body,P);
+    //    std::cerr<<S.name<<"  => "<<body2<<"\n\n";
+    expression_ref body3 = do_optimize_DCE(body2);
+    //    std::cerr<<S.name<<" ==> "<<body3<<"\n\n";
+  }
 }
 
 void Module::load_builtins(const module_loader& L)
@@ -864,6 +1115,31 @@ std::ostream& operator<<(std::ostream& o, const Module& D)
     }
   }
   return o;
+}
+
+symbol_info lookup_symbol(const string& name, const vector<Module>& P)
+{
+  if (is_haskell_builtin_con_name(name))
+    return Module::lookup_builtin_symbol(name);
+
+  assert(is_qualified_symbol(name));
+  string name1 = get_module_name(name);
+  string name2 = get_unqualified_name(name);
+
+  for(const auto& module: P)
+    if (module.name == name1)
+      return module.lookup_symbol(name);
+
+  std::abort();
+}
+
+void Module::resolve_refs(const vector<Module>& P)
+{
+  for(auto& S: symbols)
+  {
+    expression_ref& body = S.second.body;
+    body = ::resolve_refs(P,body);
+  }
 }
 
 expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)

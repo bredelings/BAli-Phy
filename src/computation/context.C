@@ -1,3 +1,5 @@
+//#define DEBUG_OPTIMIZE
+
 #include "computation/context.H"
 #include "computation/graph_register.H"
 #include "computation/program.H"

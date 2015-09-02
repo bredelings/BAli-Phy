@@ -63,6 +63,8 @@ class Module
 
   bool resolved = false;
 
+  bool optimized = false;
+  
 public:
 
   expression_ref module;
@@ -73,6 +75,8 @@ public:
   std::string name;
 
   bool is_resolved() const {return resolved;}
+
+  bool is_optimized() const {return optimized;}
 
   std::set<std::string> dependencies() const;
 
@@ -122,6 +126,12 @@ public:
 
   void resolve_symbols(const std::vector<Module>&);
 
+  void resolve_refs(const std::vector<Module>&);
+
+  void get_types(const std::vector<Module>&);
+
+  void optimize(const std::vector<Module>&);
+
   void load_builtins(const module_loader&);
 
   bool is_declared(const std::string&) const;
@@ -146,4 +156,6 @@ public:
 std::ostream& operator<<(std::ostream&, const Module&);
 
 expression_ref resolve_refs(const std::vector<Module>&, const expression_ref&);
+
+expression_ref do_optimize_DCE(const expression_ref&);
 #endif

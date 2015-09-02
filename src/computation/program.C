@@ -95,6 +95,8 @@ void add_missing_imports(const module_loader& L, vector<Module>& P)
       try {
 	module.load_builtins(L);
 	module.resolve_symbols(P);
+	module.resolve_refs(P);
+	module.get_types(P);
       }
       catch (myexception& e)
       {
@@ -105,6 +107,9 @@ void add_missing_imports(const module_loader& L, vector<Module>& P)
       }
     }
   
+  for(auto& module: P)
+    if (not module.is_optimized())
+      module.optimize(P);
 }
 
 void add(const module_loader& L, vector<Module>& P, const Module& M)
