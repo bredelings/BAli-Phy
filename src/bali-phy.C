@@ -227,9 +227,15 @@ void show_ending_messages()
     cout<<"total branches peeled = "<<substitution::total_peel_branches<<endl;
   }
   extern int total_reductions;
-  if (total_reductions > 0)
+  extern int total_reg_allocations;
+  extern int total_comp_allocations;
+  extern int total_reroot;
+ if (total_reductions > 0)
   {
     cout<<"total reduction steps = "<<total_reductions<<endl;
+    cout<<"total register allocations = "<<total_reg_allocations<<endl;
+    cout<<"total computation allocatons = "<<total_comp_allocations<<endl;
+    cout<<"total reroot operations = "<<total_reroot<<endl;
   }
 }
 

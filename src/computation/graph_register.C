@@ -17,6 +17,9 @@ using std::multiset;
 using std::cerr;
 using std::endl;
 
+int total_reg_allocations = 0;
+int total_comp_allocations = 0;
+int total_reroot = 0;
 /*
  * Goal: Share computation of WHNF structures between contexts, even when those
  *       stuctures are uncomputed at the time the contexts are split.
@@ -403,6 +406,7 @@ void reg_heap::register_probability(int r)
 int reg_heap::register_probability(closure&& C)
 {
   int r = allocate();
+  total_reg_allocations++;
   set_C(r, std::move(C));
   register_probability(r);
   return r;
@@ -871,6 +875,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   else
   {
     int R2 = allocate();
+    total_reg_allocations++;
 
     set_C(R2, std::move( result ) );
     set_call(t, R, R2);
@@ -1203,6 +1208,8 @@ void reg_heap::reroot_at(int t)
       dec_probability(rc);
   }
 
+  total_reroot++;
+  
   invalidate_shared_regs(parent,t);
 
   // Mark this context as not having computations that need to be unshared
@@ -1530,6 +1537,7 @@ int reg_heap::set_head(int index, int R2)
 int reg_heap::allocate_head()
 {
   int R = allocate();
+  total_reg_allocations++;
 
   heads.push_back(R);
 
@@ -1541,6 +1549,7 @@ int reg_heap::allocate_head()
 int reg_heap::push_temp_head()
 {
   int R = allocate();
+  total_reg_allocations++;
 
   temp.push_back(R);
 
@@ -1814,7 +1823,8 @@ int reg_heap::add_shared_computation(int t, int r)
 
   // 1. Get a new computation
   int rc = computations.allocate();
-
+  total_comp_allocations++;
+  
   // 2. Set the source of the computation
   computations[rc].source_token = t;
   computations[rc].source_reg = r;
@@ -2367,6 +2377,7 @@ int reg_heap::add_identifier(const string& name)
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
 
   int R = allocate();
+  total_reg_allocations++;
 
   identifiers[name] = R;
   return R;

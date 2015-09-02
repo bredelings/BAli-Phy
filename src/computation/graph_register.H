@@ -493,4 +493,8 @@ struct no_context: public std::exception
 };
 
 extern int total_reductions;
+extern int total_reg_allocations;
+extern int total_comp_allocations;
+extern int total_reroot;
+
 #endif
