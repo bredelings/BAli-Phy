@@ -140,7 +140,7 @@ closure Case::operator()(OperationArgs& Args) const
 
   int L = (Args.n_args() - 1)/2;
 
-#ifndef NEDBUG
+#ifndef NDEBUG
   vector<expression_ref> cases(L);
   vector<expression_ref> bodies(L);
   for(int i=0;i<L;i++)
