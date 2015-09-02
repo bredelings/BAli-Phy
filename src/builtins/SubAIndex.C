@@ -6,6 +6,8 @@
 using std::vector;
 using std::pair;
 
+extern int total_subA_index_branch;
+
 extern "C" closure builtin_function_get_column_index_list_for_characters(OperationArgs& Args)
 {
   auto a = Args.evaluate(0);
@@ -28,6 +30,8 @@ extern "C" closure builtin_function_merge_suba_indices(OperationArgs& Args)
     std::swap(r1,r2);
   }
 
+  total_subA_index_branch++;
+  
   // get the sorted list of present columns
   const Vector<pair<int,int>>& I1 = i1.as_<Vector<pair<int,int>>>();
   const Vector<pair<int,int>>& I2 = i2.as_<Vector<pair<int,int>>>();
