@@ -179,7 +179,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Model
   return TL;
 }
 
-vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
+vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subsample, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
 {
   using namespace MCMC;
   vector<owned_ptr<Logger> > loggers;

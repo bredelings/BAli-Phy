@@ -452,7 +452,8 @@ int main(int argc,char* argv[])
       block_signals();
 
       long int max_iterations = args["iterations"].as<long int>();
-
+      int subsample = args["subsample"].as<int>();
+      
       //---------- Open output files -----------//
       vector<owned_ptr<MCMC::Logger> > loggers;
 
@@ -477,7 +478,7 @@ int main(int argc,char* argv[])
 	  vector<string> Rao_Blackwellize;
 	  if (args.count("Rao-Blackwellize"))
 	      Rao_Blackwellize = split(args["Rao-Blackwellize"].as<string>(),',');
-	  loggers = construct_loggers(M, Rao_Blackwellize, proc_id, dir_name);
+	  loggers = construct_loggers(M, subsample, Rao_Blackwellize, proc_id, dir_name);
 	}
 	write_initial_alignments(*M, proc_id, dir_name);
       }
