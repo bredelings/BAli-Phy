@@ -89,7 +89,7 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
   }
 }
 
-owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Model>& M, const vector<string>& Rao_Blackwellize)
+owned_ptr<MCMC::LoggerFunction<std::string>> construct_table_function(owned_ptr<Model>& M, const vector<string>& Rao_Blackwellize)
 {
   owned_ptr<Parameters> P = M.as<Parameters>();
 
@@ -149,7 +149,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Model
     TL->add_field("RB-"+p, Get_Rao_Blackwellized_Parameter_Function(p_index, values));
   }
 
-  if (not P) return TL;
+  if (not P) return TableLogger<string>(*TL);
 
   for(int i=0;i<P->n_data_partitions();i++)
   {
@@ -176,7 +176,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(owned_ptr<Model
   
   TL->add_field("|T|", Get_Tree_Length_Function() );
 
-  return TL;
+  return TableLogger<string>(*TL);
 }
 
 vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subsample, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
@@ -188,10 +188,12 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subs
 
   string base = dir_name + "/" + "C" + convertToString(proc_id+1);
 
-  owned_ptr<TableFunction<string> > TF = construct_table_function(M, Rao_Blackwellize);
+  owned_ptr<LoggerFunction<string> > TF = Subsample_Function(*construct_table_function(M, Rao_Blackwellize),subsample);
 
+  owned_ptr<Logger> s = FunctionLogger(base +".p", *TF);
+  
   // Write out scalar numerical variables (and functions of them) to C<>.p
-  loggers.push_back( TableLogger(base +".p", *TF) );
+  loggers.push_back( s );
   
   if (not P) return loggers;
 
@@ -201,7 +203,7 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subs
   // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
   {
     ConcatFunction F; 
-    F<<TableViewerFunction(*TF)<<"\n";
+    F<<*TF<<"\n";
     F<<Show_SModels_Function()<<"\n";
     for(int i=0;i<P->n_data_partitions();i++)
       if ((*P)[i].variable_alignment())

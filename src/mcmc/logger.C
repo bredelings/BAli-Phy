@@ -137,29 +137,6 @@ FileLogger::FileLogger(const std::ostream& o)
   :log_file(new ostream(o.rdbuf()))
 { }
 
-int TableLogger::n_fields() const
-{
-  return TF->n_fields();
-}
-
-vector<string> TableLogger::field_names() const
-{
-  return TF->field_names();
-}
-
-void TableLogger::operator()(const Model& M, long t)
-{
-  if (t==0)
-    *log_file<<join(field_names(),'\t')<<endl;
-
-  vector<string> values = (*TF)(M,t);
-  *log_file<<join(values,'\t')<<endl;
-}
-
-TableLogger::TableLogger(const string& name, const TableFunction<string>& tf)
-  :FileLogger(name), TF(tf)
-{ }
-
 string TableViewerFunction::operator()(const Model& M, long t)
 {
   vector<string> fields = function->field_names();

@@ -392,20 +392,31 @@ namespace MCMC {
     return output;
   }
 
-  class TableLogger: public FileLogger
+  template <typename T>
+  class TableLogger: public LoggerFunction<std::string>
   {
-    owned_ptr<TableFunction<std::string> > TF;
+    owned_ptr<TableFunction<T> > TF;
+    char separator;
 
   public:
-    TableLogger* clone() const {return new TableLogger(*this);}
+    TableLogger* clone() const {return new TableLogger<T>(*this);}
 
-    int n_fields() const;
+    std::string operator()(const Model& M, long t)
+    {
+      using namespace std;
+      ostringstream output;
+      
+      if (t==0)
+	output<<join(TF->field_names(),'\t')<<endl;
+      
+      vector<T> values = (*TF)(M,t);
+      output<<join(values,separator)<<endl;
+      return output.str();
+    }
 
-    std::vector<std::string> field_names() const;
-
-    void operator()(const Model& M, long t);
-
-    TableLogger(const std::string& filename, const TableFunction<std::string>& tf);
+    TableLogger(const TableFunction<T>& tf, char sep='\t')
+      :TF(tf),separator(sep)
+    { }
   };
 
   class Show_SModels_Function: public LoggerFunction<std::string>
