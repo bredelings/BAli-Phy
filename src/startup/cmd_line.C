@@ -49,7 +49,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description advanced("Advanced options");
   advanced.add_options()
     ("Help,H", "Print advanced usage information.")
-    ("subsample",value<int>()->default_value(1),"Factor by which to subsample.")
     ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
     ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
     ("randomize-alignment","Randomly realign the sequences before use.")
@@ -83,6 +82,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description mcmc("MCMC options");
   mcmc.add_options()
     ("iterations,i",value<long int>()->default_value(100000),"The number of iterations to run.")
+    ("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
     ("enable",value<string>(),"Comma-separated list of kernels to enable.")
     ("disable",value<string>(),"Comma-separated list of kernels to disable.")
     ;
