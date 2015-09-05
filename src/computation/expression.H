@@ -607,19 +607,19 @@ constructor tuple_head(int n);
 expression_ref Tuple(int n);
 
 template <typename First, typename Second>
-auto apply_subst(const First& first, const Second& second) -> decltype (first * second)
+auto apply_subst(const First& first, const Second& second)
 {
   return first * second;
 }
 
 template <typename First, typename Second, typename Third, typename... Rest>
-auto apply_subst(const First& first, const Second& second, const Third& third, const Rest&... rest) -> decltype(  apply_subst(first*second, third, rest...) )
+auto apply_subst(const First& first, const Second& second, const Third& third, const Rest&... rest)
 {
   return apply_subst(first*second, third, rest...);
 }
 
 template <typename First, typename Second, typename... Rest>
-auto Tuple(const First& first, const Second& second, const Rest&... rest) -> decltype( apply_subst(Tuple(2+sizeof...(rest)) ,first,second,rest...) )
+auto Tuple(const First& first, const Second& second, const Rest&... rest)
 {
   return apply_subst(Tuple(2+sizeof...(rest)) ,first,second,rest...);
 }
@@ -631,7 +631,7 @@ First let(const First& first)
 }
 
 template <typename First, typename Second, typename... Rest>
-auto let(const First& first, const Second& second, const Rest&... rest) -> decltype( let_expression(first,second,let(rest...)) )
+auto let(const First& first, const Second& second, const Rest&... rest)
 {
   return let_expression(first,second,let(rest...));
 }
@@ -645,38 +645,38 @@ extern expression_ref ListEnd;
 inline expression_ref List() {return ListEnd;}
 
 template <typename First>
-auto List(const First& first) -> decltype(Cons*first*ListEnd)
+auto List(const First& first)
 {
   return Cons*first*ListEnd;
 }
 
 template <typename First, typename T2>
-auto List(const First& first, const T2& t2) -> decltype(Cons*first*List(t2))
+auto List(const First& first, const T2& t2)
 {
   return Cons*first*List(t2);
 }
 
 template <typename First, typename T2, typename T3>
-auto List(const First& first, const T2& t2, const T3& t3) -> decltype(Cons*first*List(t2,t3))
+auto List(const First& first, const T2& t2, const T3& t3)
 {
   return Cons*first*List(t2,t3);
 }
 
 template <typename First, typename T2, typename T3, typename T4>
-auto List(const First& first, const T2& t2, const T3& t3, const T4& t4) -> decltype(Cons*first*List(t2,t3,t4))
+auto List(const First& first, const T2& t2, const T3& t3, const T4& t4)
 {
   return Cons*first*List(t2,t3,t4);
 }
 
 template <typename First, typename T2, typename T3, typename T4, typename T5>
-auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5& t5) -> decltype(Cons*first*List(t2,t3,t4,t5))
+auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5& t5)
 {
   return Cons*first*List(t2,t3,t4,t5);
 }
 
 
 template <typename First, typename T2, typename T3, typename T4, typename T5, typename T6>
-auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5& t5,const T6& t6) -> decltype(Cons*first*List(t2,t3,t4,t5,t6))
+auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5& t5,const T6& t6)
 {
   return Cons*first*List(t2,t3,t4,t5,t6);
 }
