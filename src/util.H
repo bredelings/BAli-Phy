@@ -326,27 +326,19 @@ std::set<T> intersection(const std::set<T>& S1, const std::set<T>& S2)
 }
 
 
-/// Concatenate members of v, separating by char c
-std::string join(const std::vector<std::string>& v,char c);
-
-std::string join(const std::vector<std::string>& v,const std::string& s);
-
-template<class T>
-std::string join(const std::vector<T>& vT, char c)
+// Print out elements of container v separated by string s
+template<class V,typename S>
+std::string join(const V& v, const S& sep)
 {
-  std::vector<std::string> v;
-  for(int i=0;i<vT.size();i++)
-    v.push_back(convertToString(vT[i]));
-  return join(v,c);
-}
-
-template<class T>
-std::string join(const std::vector<T>& vT, const std::string& s)
-{
-  std::vector<std::string> v;
-  for(int i=0;i<vT.size();i++)
-    v.push_back(convertToString(vT[i]));
-  return join(v,s);
+  std::ostringstream o;
+  int i=0;
+  for(const auto& elem: v)
+  {
+    if (i) o<<sep;
+    o<<elem;
+    i++;
+  }
+  return o.str();
 }
 
 /// Split the line into pieces at c
