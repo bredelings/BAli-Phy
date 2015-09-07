@@ -385,8 +385,8 @@ public:
   checked_pool_callback(int n): checked_pool<T>(n) {}
 };
 
-template <typename T>
-std::vector<typename pool<T>::weak_ref>& clean_weak_refs(std::vector<typename pool<T>::weak_ref>& v, const pool<T>& P)
+template <typename V, typename T>
+V& clean_weak_refs(V& v, const pool<T>& P)
 {
   for(int i=0; i < v.size();)
   {
