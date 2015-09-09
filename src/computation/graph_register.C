@@ -84,10 +84,10 @@ int total_reroot = 0;
  *    loop until no more regs (and thus computations) are being freed.
  */
 
-template<typename T>
-void truncate(vector<T>& v)
+template<typename V>
+void truncate(V& v)
 {
-  vector<T> v2;
+  V v2;
   v.swap(v2);
 }
 
