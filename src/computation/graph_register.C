@@ -87,8 +87,9 @@ int total_reroot = 0;
 template<typename V>
 void truncate(V& v)
 {
+  v.clear();
   V v2;
-  v.swap(v2);
+  v2.swap(v);
 }
 
 expression_ref graph_normalize(const expression_ref& E)
