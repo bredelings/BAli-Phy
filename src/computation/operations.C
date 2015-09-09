@@ -108,7 +108,7 @@ closure Apply::operator()(OperationArgs& Args) const
   else
   {
     int new_head_ref = Args.allocate(std::move(C));
-    vector<int> Env = {new_head_ref};
+    closure::Env_t Env = {new_head_ref};
     vector<expression_ref> args = {index_var(n_args_given - n_args_needed)};
 
     for(int i=n_args_needed;i<n_args_given;i++)
@@ -219,8 +219,6 @@ closure Let::operator()(OperationArgs& Args) const
 {
   reg_heap& M = Args.memory();
 
-  vector<int>& local_env = M.get_scratch_list();
-
   const closure& C = Args.current_closure();
 
   const vector<expression_ref>& A = C.exp.sub();
@@ -229,7 +227,7 @@ closure Let::operator()(OperationArgs& Args) const
 
   int n_bodies = int(A.size())-1;
 
-  local_env = C.Env;
+  auto local_env = C.Env;
 
   int start = local_env.size();
 
@@ -244,8 +242,6 @@ closure Let::operator()(OperationArgs& Args) const
   for(int i=0;i<n_bodies; i++)
     M.pop_temp_head();
       
-  M.release_scratch_list();
-
   return get_trimmed({T, local_env});
 }
 

@@ -3,24 +3,25 @@
 
 #include <vector>
 #include <string>
+#include <boost/container/small_vector.hpp>
 #include "object.H"
 #include "computation/expression.H"
 
-inline int lookup_in_env(const std::vector<int>& Env, int i) {return Env[Env.size() - 1 - i];}
-
 struct closure
 {
+  typedef boost::container::small_vector<int,10> Env_t;
+  
   /// The expression
   expression_ref exp;
   /// The environment (regs bound to free variables of E).
-  std::vector<int> Env;
+  Env_t Env;
 
   /// Is the closure not empty
   operator bool() const {return exp and exp.head();}
 
   bool operator==(const closure& C2) const {return exp == C2.exp and Env == C2.Env;}
 
-  int lookup_in_env(int i) const {return ::lookup_in_env(Env,i);}
+  int lookup_in_env(int i) const;
 
   /// Clear the closure.
   void clear();
@@ -52,31 +53,31 @@ struct closure
     :exp(e)
   { }
 
-  closure(const expression_ref& e, const std::vector<int>& E)
+  closure(const expression_ref& e, const Env_t& E)
     :exp(e), Env(E)
   { }
 
   closure(const expression_ref& e, std::initializer_list<int> E)
-    :closure(e,std::vector<int>(E))
+    :closure(e, Env_t(E))
   { }
 
   // Constructing w/ an environment
-  closure(Object* o, const std::vector<int>& E)
+  closure(Object* o, const Env_t& E)
     :closure(expression_ref(o),E)
   { }
 
-  closure(const object_ptr<const Object>& o, const std::vector<int>& E)
+  closure(const object_ptr<const Object>& o, const Env_t& E)
     :closure(expression_ref(o),E)
   { }
 
   template <typename T>
-  closure(const object_ptr<T>& o, const std::vector<int>& E)
+  closure(const object_ptr<T>& o, const Env_t& E)
     :closure(expression_ref(o),E)
   { }
 
-  closure(const Object& O, const std::vector<int>& E):closure(expression_ref(O),E) { }
+  closure(const Object& O, const Env_t& E):closure(expression_ref(O),E) { }
 
-  closure(const Object& O, std::initializer_list<int> E):closure(O,std::vector<int>(E)) { }
+  closure(const Object& O, std::initializer_list<int> E):closure(O,Env_t(E)) { }
 
   // Constructing w/o an environment
   closure(Object* o)
@@ -96,6 +97,10 @@ struct closure
   :closure(expression_ref(O))
   { }
 };
+
+inline int lookup_in_env(const closure::Env_t& Env, int i) {return Env[Env.size() - 1 - i];}
+
+inline int closure::lookup_in_env(int i) const {return ::lookup_in_env(Env,i);}
 
 closure get_trimmed(const closure& C);
 

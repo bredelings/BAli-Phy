@@ -2449,7 +2449,7 @@ closure reg_heap::preprocess(const closure& C)
   return trim_normalize( indexify( graph_normalize( let_float( translate_refs( resolve_refs(*P, closure(C) ) ) ) ) ) );
 }
 
-expression_ref reg_heap::translate_refs(const expression_ref& E, vector<int>& Env)
+expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t& Env)
 {
   int reg = -1;
 

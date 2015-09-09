@@ -237,7 +237,7 @@ public:
   std::vector<std::string> args;
 
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
-  expression_ref translate_refs(const expression_ref& R, std::vector<int>&);
+  expression_ref translate_refs(const expression_ref& R, closure::Env_t&);
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
   closure translate_refs(closure&& C);
 

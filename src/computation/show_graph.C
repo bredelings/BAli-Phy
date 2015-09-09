@@ -126,7 +126,7 @@ void reg_heap::find_all_regs_in_context(int t, bool keep_identifiers, vector<int
 
 // Fixme!
 // Here we have handled neither depths, nor trim.
-expression_ref subst_referenced_vars(const expression_ref& E, const vector<int>& Env, const map<int, expression_ref>& names)
+expression_ref subst_referenced_vars(const expression_ref& E, const closure::Env_t& Env, const map<int, expression_ref>& names)
 {
   if (E.size())
   {
