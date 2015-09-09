@@ -3,11 +3,11 @@
 using std::vector;
 
 
-template<typename T>
-void shrink(vector<T>& v)
+template<typename V>
+void shrink(V& v)
 {
   if (v.capacity() < 4*(v.size()+1)) return;
-  vector<T> v2 = v;
+  V v2 = v;
   v.swap(v2);
 }
 
