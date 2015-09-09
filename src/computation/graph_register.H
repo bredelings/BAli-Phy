@@ -11,6 +11,7 @@
 #include "pool.H"
 #include "program.H"
 #include <boost/shared_ptr.hpp>
+#include <boost/container/small_vector.hpp>
 #include <bitset>
 
 struct computation
@@ -26,13 +27,14 @@ struct computation
   int call = -1;
 
   /// Which reg's were used to reduce this expression?
-  std::vector< int > used_inputs;
+  //  std::vector< int > used_inputs;
+  boost::container::small_vector< int, 10 > used_inputs;
 
   /// Which pairs (reg,slot) USED the reduction result of C (via an operation)?
-  std::vector< pool<computation>::weak_ref > used_by;
+  boost::container::small_vector< pool<computation>::weak_ref, 10 > used_by;
 
   /// Which reduction results made use of the value of this expression (via call)
-  std::vector< pool<computation>::weak_ref > called_by;
+  boost::container::small_vector< pool<computation>::weak_ref, 10 > called_by;
 
   int temp = -1;
 
