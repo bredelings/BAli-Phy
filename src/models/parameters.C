@@ -785,12 +785,15 @@ EVector edges_connecting_to_node(const Tree& T, int n)
 void Parameters::read_h_tree()
 {
   for(int n=0; n < T().n_nodes(); n++)
-    context::set_parameter_value(parameter_for_tree_node[n], edges_connecting_to_node(T(),n));
+    if (not T().node(n).is_leaf_node())
+      context::set_parameter_value(parameter_for_tree_node[n], edges_connecting_to_node(T(),n));
 
   for(int b=0; b < 2*T().n_branches(); b++)
   {
-    context::set_parameter_value(parameters_for_tree_branch[b].first,  (int)T().directed_branch(b).source());
-    context::set_parameter_value(parameters_for_tree_branch[b].second, (int)T().directed_branch(b).target());
+    if (not T().directed_branch(b).source().is_leaf_node())
+      context::set_parameter_value(parameters_for_tree_branch[b].first,  (int)T().directed_branch(b).source());
+    if (not T().directed_branch(b).target().is_leaf_node())
+      context::set_parameter_value(parameters_for_tree_branch[b].second, (int)T().directed_branch(b).target());
   }
 }
 
@@ -1495,36 +1498,49 @@ Parameters::Parameters(const module_loader& L,
   vector<expression_ref> node_branches;
   for(int n=0; n < T().n_nodes(); n++)
   {
-    string name = "MyTree.nodeBranches"+convertToString(n);
-    add_parameter(name,0);
-    node_branches.push_back( (identifier("list_from_vector"), parameter(name)) );
+    expression_ref node = List(n);
+    int p_node = -1;
+    if (not T().node(n).is_leaf_node())
+    {
+      string name = "*MyTree.nodeBranches"+convertToString(n);
+      p_node = add_parameter(name,0);
+      node = (identifier("list_from_vector"), parameter(name));
+    }
+
+    parameter_for_tree_node.push_back ( p_node );
+    node_branches.push_back( node );
   }
   expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
 
   vector<expression_ref> branch_nodes;
   for(int b=0; b < 2*T().n_branches(); b++)
   {
-    string name_source = "*MyTree.branch"+convertToString(b)+"source"; 
-    string name_target = "*MyTree.branch"+convertToString(b)+"target"; 
-    int p_source = add_parameter(name_source,0);
-    int p_target = add_parameter(name_target,0);
+    expression_ref source = T().directed_branch(b).source().name();
+    int p_source = -1;
+    if (not T().directed_branch(b).source().is_leaf_node())
+    {
+      string name_source = "*MyTree.branch"+convertToString(b)+"source"; 
+      p_source = add_parameter(name_source,0);
+      source = parameter(name_source);
+    }
+
+    expression_ref target = T().directed_branch(b).target().name();
+    int p_target = -1;
+    if (not T().directed_branch(b).target().is_leaf_node())
+    {
+      string name_target = "*MyTree.branch"+convertToString(b)+"target"; 
+      p_target = add_parameter(name_target,0);
+      target = parameter(name_target);
+    }
     int reverse_branch = T().directed_branch(b).reverse();
     parameters_for_tree_branch.push_back( {p_source,p_target} );
-    branch_nodes.push_back( Tuple(parameter(name_source), parameter(name_target), reverse_branch) );
+    branch_nodes.push_back( Tuple(source, target, reverse_branch) );
   }
   expression_ref branch_nodes_array = (identifier("listArray'"),get_list(branch_nodes));
 
   expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
 
   tree_head = add_compute_expression( (tree_con, node_branches_array, branch_nodes_array, T().n_nodes(), T().n_branches()));
-
-  // Determine the parameter index for branches adjoining a tree node
-  for(int n=0; n < T().n_nodes(); n++)
-  {
-    string name = "MyTree.nodeBranches"+convertToString(n);
-    parameter_for_tree_node.push_back ( find_parameter(name) );
-    assert( parameter_for_tree_node.back() != -1);
-  }
 
   read_h_tree();
 
