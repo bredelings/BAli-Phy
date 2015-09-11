@@ -770,12 +770,12 @@ const SequenceTree& Parameters::T() const
   return *T_;
 }
 
-EVector edges_connecting_to_node(const Tree& T, int n)
+vector<int> edges_connecting_to_node(const Tree& T, int n)
 {
   vector<const_branchview> branch_list;
   append(T.node(n).branches_out(),branch_list);
   
-  EVector branch_list_;
+  vector<int> branch_list_;
   for(auto b: branch_list)
     branch_list_.push_back(int(b));
 
@@ -786,7 +786,7 @@ void Parameters::read_h_tree()
 {
   for(int n=0; n < T().n_nodes(); n++)
     if (not T().node(n).is_leaf_node())
-      context::set_parameter_value(parameter_for_tree_node[n], edges_connecting_to_node(T(),n));
+      update_tree_node(n);
 
   for(int b=0; b < 2*T().n_branches(); b++)
   {
@@ -851,7 +851,15 @@ void Parameters::begin_modify_tree()
  */
 void Parameters::update_tree_node(int n)
 {
-  context::set_parameter_value(parameter_for_tree_node[n], edges_connecting_to_node(T(),n));
+  assert(parameters_for_tree_node[n].size() == T().node(n).degree());
+
+  // These are the edges we seek to impose.
+  vector<int> edges = edges_connecting_to_node(T(),n);
+  assert(edges.size() == T().node(n).degree());
+
+  // These are the current edges.
+  for(int i=0;i<edges.size();i++)
+    context::set_parameter_value(parameters_for_tree_node[n][i], edges[i]);
 }
 
 void Parameters::end_modify_tree()
@@ -1086,25 +1094,32 @@ void Parameters::check_h_tree() const
 #ifndef NDEBUG
   for(int b=0; b < 2*T().n_branches(); b++)
   {
-    auto s = get_parameter_value(parameters_for_tree_branch[b].first );
-    auto t = get_parameter_value(parameters_for_tree_branch[b].second);
-    assert(T().directed_branch(b).source() == s.as_int());
-    assert(T().directed_branch(b).target() == t.as_int());
+    if (parameters_for_tree_branch[b].first != -1)
+    {
+      auto s = get_parameter_value(parameters_for_tree_branch[b].first );
+      assert(T().directed_branch(b).source() == s.as_int());
+    }
+    if (parameters_for_tree_branch[b].second != -1)
+    {
+      auto t = get_parameter_value(parameters_for_tree_branch[b].second);
+      assert(T().directed_branch(b).target() == t.as_int());
+    }
   }
 
   for(int n=0; n < n*T().n_nodes(); n++)
   {
-    object_ptr<const EVector> V = get_parameter_value(parameter_for_tree_node[n]).assert_is_a<EVector>();
+    if (T().node(n).is_leaf_node()) continue;
+    
     vector<int> VV;
-    for(const auto& elem: *V)
-      VV.push_back(elem.as_int());
+    for(int p:parameters_for_tree_node[n])
+      VV.push_back(get_parameter_value(p).as_int());
 
     vector<const_branchview> v = branches_from_node(T(), n);
     vector<int> vv;
     for(const auto& bv: v)
       vv.push_back(bv);
 
-    assert(V->size() == v.size());
+    assert(VV.size() == v.size());
     for(int elem: v)
       assert(includes(VV,elem));
     for(int elem: VV)
@@ -1498,16 +1513,28 @@ Parameters::Parameters(const module_loader& L,
   vector<expression_ref> node_branches;
   for(int n=0; n < T().n_nodes(); n++)
   {
-    expression_ref node = List(n);
-    int p_node = -1;
-    if (not T().node(n).is_leaf_node())
+    auto edges = edges_connecting_to_node(T(),n);
+    vector<int> p_node;
+    expression_ref node;
+    
+    if (T().node(n).is_leaf_node())
     {
-      string name = "*MyTree.nodeBranches"+convertToString(n);
-      p_node = add_parameter(name,0);
-      node = (identifier("list_from_vector"), parameter(name));
+      node = List(edges.front());
+      p_node = { -1 };
     }
-
-    parameter_for_tree_node.push_back ( p_node );
+    else
+    {
+      node = List();
+      for(int i=0;i<edges.size();i++)
+      {
+	const auto& edge = edges[i];
+	string name = "*MyTree.nodeBranches"+convertToString(n) + "." + convertToString(i);
+	p_node.push_back( add_parameter(name,edge) );
+	node  = Cons * parameter(name) * node;
+      }
+    }
+    
+    parameters_for_tree_node.push_back ( p_node );
     node_branches.push_back( node );
   }
   expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
