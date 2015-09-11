@@ -1520,7 +1520,7 @@ Parameters::Parameters(const module_loader& L,
     if (not T().directed_branch(b).source().is_leaf_node())
     {
       string name_source = "*MyTree.branch"+convertToString(b)+"source"; 
-      p_source = add_parameter(name_source,0);
+      p_source = add_parameter(name_source,source);
       source = parameter(name_source);
     }
 
@@ -1529,7 +1529,7 @@ Parameters::Parameters(const module_loader& L,
     if (not T().directed_branch(b).target().is_leaf_node())
     {
       string name_target = "*MyTree.branch"+convertToString(b)+"target"; 
-      p_target = add_parameter(name_target,0);
+      p_target = add_parameter(name_target,target);
       target = parameter(name_target);
     }
     int reverse_branch = T().directed_branch(b).reverse();
