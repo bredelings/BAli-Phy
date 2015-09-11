@@ -201,9 +201,9 @@ closure Case::operator()(OperationArgs& Args) const
 
   if (not result)
 #ifdef NDEBUG
-    throw myexception()<<"Case: object '"<<obj<<"' doesn't match any alternative";
+    throw myexception()<<"Case: object '"<<obj.exp<<"' doesn't match any alternative";
 #else
-    throw myexception()<<"Case: object '"<<obj<<"' doesn't match any alternative in '"<<make_case_expression(obj.exp, cases, bodies)<<"'";
+    throw myexception()<<"Case: object '"<<obj.exp<<"' doesn't match any alternative in '"<<make_case_expression(obj.exp, cases, bodies)<<"'";
 #endif
 
   result = get_trimmed(result);
