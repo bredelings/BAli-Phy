@@ -326,16 +326,6 @@ int nodes_size(const expression_ref& E)
   return total;
 }
 
-expression_ref sapply(const expression_ref& f, const expression_ref& y)
-{
-  if (f.head().type() != lambda_type)
-    return (f,y);
-
-  const expression_ref& x = f.sub()[0];
-  const expression_ref& body = f.sub()[1];
-  return substitute(body,x,y);
-}
-
 expression_ref do_optimize(const expression_ref& E, const vector<Module>& P)
 {
   // 1. Var
@@ -411,7 +401,7 @@ expression_ref do_optimize(const expression_ref& E, const vector<Module>& P)
 
 	expression_ref E2 = body;
 	for(int i=0;i<args.size();i++)
-	  E2 = sapply(E2,V->sub[i+1]);
+	  E2 = E2 * V->sub[i+1];
 	//	std::cerr<<"NEW: "<<E2<<"\n";
 	//	return E2;
       }
