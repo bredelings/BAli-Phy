@@ -809,7 +809,6 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 {
   uniquify_subA_indices();
 
-  check_h_tree();
 
   int b1 = T().directed_branch(s1,t1);
   int b2 = T().directed_branch(t1,s1);
@@ -822,11 +821,11 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   }
   
   T_.modify()->reconnect_branch(s1,t1,t2);
-
+  affected_nodes.push_back(t1);
+  affected_nodes.push_back(t2);
+  
   context::set_parameter_value(parameters_for_tree_branch[b1].second, (int)T().directed_branch(b1).target());
   context::set_parameter_value(parameters_for_tree_branch[b2].first,  (int)T().directed_branch(b2).source());
-  context::set_parameter_value(parameter_for_tree_node[t1], edges_connecting_to_node(T(),t1));
-  context::set_parameter_value(parameter_for_tree_node[t2], edges_connecting_to_node(T(),t2));
 
   if (safe)
   {
@@ -835,6 +834,30 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
     note_alignment_changed_on_branch(T_->directed_branch(s1,t2));
   }
   
+}
+
+void Parameters::begin_modify_tree()
+{
+  check_h_tree();
+
+  assert(affected_nodes.empty());
+}
+
+/*
+ * Here, we fix up the nodes in the Haskell tree 
+ */
+void Parameters::update_tree_node(int n)
+{
+  context::set_parameter_value(parameter_for_tree_node[n], edges_connecting_to_node(T(),n));
+}
+
+void Parameters::end_modify_tree()
+{
+  for(int n: affected_nodes)
+    update_tree_node(n);
+  
+  affected_nodes.clear();
+
   check_h_tree();
 }
 
@@ -854,8 +877,10 @@ void Parameters::exchange_subtrees(int br1, int br2)
   assert(not T().subtree_contains(br1,s2));
   assert(not T().subtree_contains(br2,s1));
 
+  begin_modify_tree();
   reconnect_branch(s1,t1,t2,true);
   reconnect_branch(s2,t2,t1,true);
+  end_modify_tree();
 }
 
 #include "dp/hmm.H"
@@ -1032,6 +1057,8 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
 
   //------------ Reconnect the branches ---------------//
 
+  begin_modify_tree();
+
   // Reconnect (m1,x) to m2, making x a degree-2 node
   // This leaves m1 connected to its branch, so m1 can be a leaf.
   assert(not T().node(m2).is_leaf_node());
@@ -1045,6 +1072,8 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
   // This leaves n1 connected to its branch, so n1 can be a leaf.
   assert(not T().node(n2).is_leaf_node());
   reconnect_branch(n1, n2, x1, safe);
+
+  end_modify_tree();
 
   return dead_branch;
 }

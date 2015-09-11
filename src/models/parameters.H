@@ -259,6 +259,8 @@ class Parameters: public Model
 
   int tree_head = -1;
 
+  std::vector<int> affected_nodes;
+
 public:
 
   /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
@@ -288,6 +290,9 @@ public:
   expression_ref my_tree() const;
 
   void reconnect_branch(int s1, int t1, int t2, bool safe);
+  void begin_modify_tree();
+  void update_tree_node(int n);
+  void end_modify_tree();
   void set_tree(const SequenceTree& T);
   void exchange_subtrees(int b1, int b2);
   void NNI(int b1, int b2);
