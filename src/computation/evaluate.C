@@ -12,6 +12,7 @@ using std::set;
 #include "computation.H"
 
 int total_reductions = 0;
+int total_changeable_reductions = 0;
 
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>&);
 expression_ref untranslate_vars(const expression_ref& E, const map<string, int>& ids);
@@ -310,6 +311,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	  assert(not reg_has_result(R));
 	  assert(computation_for_reg(R).used_inputs.empty());
 	  set_C(R, std::move(result) );
+	  total_changeable_reductions++;
 	}
 	// Otherwise, set the reduction result.
 	else
