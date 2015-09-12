@@ -243,7 +243,7 @@ void show_ending_messages()
     cout<<"  changeable reduction steps   = "<<total_changeable_reductions<<endl;
     cout<<"  unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
     cout<<"total register allocations     = "<<total_reg_allocations<<endl;
-    cout<<"total computation allocatons   = "<<total_comp_allocations<<endl;
+    cout<<"total computation allocation   = "<<total_comp_allocations<<endl;
     cout<<"total reroot operations = "<<total_reroot<<endl;
   }
 }
