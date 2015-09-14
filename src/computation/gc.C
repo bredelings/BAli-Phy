@@ -139,15 +139,13 @@ void reg_heap::trace_and_reclaim_unreachable()
 
   vector<int>& scan1 = get_scratch_list();
   vector<int>& next_scan1 = get_scratch_list();
-  vector<int>& scan2 = get_scratch_list();
-  vector<int>& next_scan2 = get_scratch_list();
 
   //  assert(root_token != -1);
   //  tokens.push_back(root_token);
 
   get_roots(scan1);
   
-  while (not scan1.empty() or not scan2.empty())
+  while (not scan1.empty())
   {
     for(int r: scan1)
     {
@@ -170,31 +168,26 @@ void reg_heap::trace_and_reclaim_unreachable()
 	int rc = computation_index_for_reg_(t,r);
 
 	if (rc > 0)
-	  scan2.push_back(rc);
+	{
+	  assert(not computations.is_free(rc));
+	  if (computations.is_marked(rc)) continue;
+
+	  computations.set_mark(rc);
+      
+	  const computation& RC = computations[rc];
+      
+	  // Count the reg that references us
+	  assert(RC.source_reg);
+	  assert(is_marked(RC.source_reg));
+      
+	  // Count also the computation we call
+	  if (RC.call) 
+	    next_scan1.push_back(RC.call);
+	}
       }
     }
     std::swap(scan1,next_scan1);
     next_scan1.clear();
-
-    for(int rc: scan2)
-    {
-      assert(not computations.is_free(rc));
-      if (computations.is_marked(rc)) continue;
-      
-      computations.set_mark(rc);
-      
-      const computation& RC = computations[rc];
-      
-      // Count the reg that references us
-      assert(RC.source_reg);
-      assert(is_marked(RC.source_reg));
-      
-      // Count also the computation we call
-      if (RC.call) 
-	scan1.push_back(RC.call);
-    }
-    std::swap(scan2,next_scan2);
-    next_scan2.clear();
   }
 
   // Avoid memory leaks.
@@ -225,8 +218,6 @@ void reg_heap::trace_and_reclaim_unreachable()
     }
 
   //  release_scratch_list();
-  release_scratch_list();
-  release_scratch_list();
   release_scratch_list();
   release_scratch_list();
   release_scratch_list();
