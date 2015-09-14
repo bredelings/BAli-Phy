@@ -55,6 +55,75 @@ void do_remap(const reg_heap& M, vector<int>& remap, int r)
   assert(remap[remap[r]] == remap[r]);
 }
 
+/*
+void reg_heap::trace_token(int token, vector<int>& remap)
+{
+  assert(token_is_used(token));
+
+  vector<int>& scan1 = get_scratch_list();
+  vector<int>& next_scan1 = get_scratch_list();
+  vector<int>& scan2 = get_scratch_list();
+  vector<int>& next_scan2 = get_scratch_list();
+
+  // Find computations for marked regs
+  const auto& m = tokens[t].vm_relative;
+  {
+    scan2.resize(m.modified().size());
+    int i=0;
+    for(int r: m.vm_relative.modified())
+      if (is_marked(r))
+      {
+	int rc = m[r];
+	if (rc > 0)
+	{
+	  scan2[i++] = rc;
+	  assert(not computations.is_marked(rc));
+	}
+      }
+    scan2.resize(i);
+  }
+
+  while (not scan1.empty() or not scan2.empty())
+  {
+    for(int r: scan1)
+    {
+      assert(not is_free(r));
+      if (is_marked(r)) continue;
+      
+      set_mark(r);
+      do_remap(*this, remap, r);
+      
+      reg& R = access(r);
+      
+      // Count the references from E
+      next_scan1.insert(next_scan1.end(), R.C.Env.begin(), R.C.Env.end());
+      
+      int rc = computation_index_for_reg_(t,r);
+      if (rc > 0)
+      {
+	assert(not computations.is_free(rc));
+	if (computations.is_marked(rc)) continue;
+	
+	computations.set_mark(rc);
+	
+	const computation& RC = computations[rc];
+	
+	// Count the reg that references us
+	assert(RC.source_reg);
+	assert(is_marked(RC.source_reg));
+	//      scan1.push_back(RC.source_reg);
+	
+	// Count also the computation we call
+	if (RC.call) 
+	  scan1.push_back(RC.call);
+      }
+    }
+    std::swap(scan1,next_scan1);
+    next_scan1.clear();
+  }
+}
+*/
+
 void reg_heap::trace_and_reclaim_unreachable()
 {
 #ifdef DEBUG_MACHINE
@@ -98,10 +167,10 @@ void reg_heap::trace_and_reclaim_unreachable()
       {
 	if (not token_is_used(t)) continue;
 	
-	if (not has_computation_(t,r)) continue;
-
 	int rc = computation_index_for_reg_(t,r);
-	scan2.push_back(rc);
+
+	if (rc > 0)
+	  scan2.push_back(rc);
       }
     }
     std::swap(scan1,next_scan1);
