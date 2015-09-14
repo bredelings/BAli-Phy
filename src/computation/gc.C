@@ -118,7 +118,7 @@ void reg_heap::trace_and_reclaim_unreachable()
       
       // Count the reg that references us
       assert(RC.source_reg);
-      scan1.push_back(RC.source_reg);
+      assert(is_marked(RC.source_reg));
       
       // Count also the computation we call
       if (RC.call) 
