@@ -124,19 +124,8 @@ void reg_heap::trace_token(int token, vector<int>& remap)
 }
 */
 
-void reg_heap::trace_and_reclaim_unreachable()
+void reg_heap::trace(vector<int>& remap)
 {
-#ifdef DEBUG_MACHINE
-  check_used_regs();
-#endif
-
-  //  vector<int>& tokens = get_scratch_list();
-
-  vector<int>& remap = get_scratch_list();
-  remap.resize(size());
-  for(int i=0;i<remap.size();i++)
-    remap[i] = 0;
-
   vector<int>& scan1 = get_scratch_list();
   vector<int>& next_scan1 = get_scratch_list();
 
@@ -190,6 +179,25 @@ void reg_heap::trace_and_reclaim_unreachable()
     next_scan1.clear();
   }
 
+  release_scratch_list();
+  release_scratch_list();
+}
+
+void reg_heap::trace_and_reclaim_unreachable()
+{
+#ifdef DEBUG_MACHINE
+  check_used_regs();
+#endif
+
+  //  vector<int>& tokens = get_scratch_list();
+
+  vector<int>& remap = get_scratch_list();
+  remap.resize(size());
+  for(int i=0;i<remap.size();i++)
+    remap[i] = 0;
+
+  trace(remap);
+
   // Avoid memory leaks.
   for(auto& rc: computations)
   {
@@ -218,7 +226,5 @@ void reg_heap::trace_and_reclaim_unreachable()
     }
 
   //  release_scratch_list();
-  release_scratch_list();
-  release_scratch_list();
   release_scratch_list();
 }
