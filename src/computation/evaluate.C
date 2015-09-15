@@ -249,6 +249,9 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 
       access(R).type = reg::type_t::index_var;
 
+      if (has_computation(R))
+	clear_computation(root_token,R);
+
       int index = access(R).C.exp.as_index_var();
 
       int R2 = access(R).C.lookup_in_env( index );
