@@ -13,6 +13,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/container/small_vector.hpp>
 #include <bitset>
+#include "CacheList.H"
 
 struct computation
 {
@@ -26,15 +27,17 @@ struct computation
   /// Does C reduce to another reg that we need to evaluate to get the true result?
   int call = -1;
 
+  std::pair<int,CacheList<int>::iterator> call_edge;
+  
   /// Which reg's were used to reduce this expression?
   //  std::vector< int > used_inputs;
-  boost::container::small_vector< int, 10 > used_inputs;
+  boost::container::small_vector< std::pair<int,CacheList<int>::iterator>, 10 > used_inputs;
 
   /// Which pairs (reg,slot) USED the reduction result of C (via an operation)?
-  boost::container::small_vector< pool<computation>::weak_ref, 10 > used_by;
+  CacheList<int> used_by;
 
   /// Which reduction results made use of the value of this expression (via call)
-  boost::container::small_vector< pool<computation>::weak_ref, 10 > called_by;
+  CacheList<int> called_by;
 
   int temp = -1;
 
@@ -438,6 +441,10 @@ public:
   int add_shared_computation(int t, int r);
 
   void clear_computation(int t, int r);
+
+  void clear_back_edges(int rc);
+
+  void check_back_edges_cleared(int rc);
 
   int move_computation(int t1, int t2, int r);
 

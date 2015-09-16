@@ -200,6 +200,7 @@ void computation::clear()
   source_reg = -1;
   result = 0;
   call = 0;
+  truncate(call_edge);
   truncate(used_inputs);
   truncate(used_by);
   truncate(called_by);
@@ -213,6 +214,7 @@ void computation::check_cleared()
 {
   assert(not result);
   assert(not call);
+  assert(not call_edge.first);
   assert(used_inputs.empty());
   assert(called_by.empty());
   assert(used_by.empty());
@@ -226,6 +228,7 @@ computation& computation::operator=(computation&& R) noexcept
   source_token = R.source_token;
   source_reg = R.source_reg;
   call = R.call;
+  call_edge = R.call_edge;
   used_inputs  = std::move( R.used_inputs );
   used_by = std::move( R.used_by );
   called_by = std::move( R.called_by );
@@ -240,6 +243,7 @@ computation::computation(computation&& R) noexcept
   source_reg(R.source_reg),
   result (R.result), 
   call ( R.call ),
+  call_edge (R.call_edge),
   used_inputs ( std::move(R.used_inputs) ),
   used_by ( std::move( R.used_by) ),
   called_by ( std::move( R.called_by) ),
@@ -713,7 +717,10 @@ void reg_heap::set_computation_result_for_reg(int r1)
   int rc1 = computation_index_for_reg(r1);
 
   // Add a called-by edge to R2.
-  computation_for_reg(call).called_by.push_back(computations.get_weak_ref(rc1));
+  int rc2 = computation_index_for_reg(call);
+  auto back_edge = computations[rc2].called_by.push_back(rc1);
+  computation_for_reg(r1).call_edge.first = rc2;
+  computation_for_reg(r1).call_edge.second = back_edge;
 }
 
 void reg_heap::set_used_input(int R1, int R2)
@@ -738,8 +745,8 @@ void reg_heap::set_used_input(int R1, int R2)
   int rc1 = computation_index_for_reg(R1);
   int rc2 = computation_index_for_reg(R2);
 
-  computations[rc1].used_inputs.push_back(rc2);
-  computations[rc2].used_by.push_back(computations.get_weak_ref(rc1));
+  auto back_edge = computations[rc2].used_by.push_back(rc1);
+  computations[rc1].used_inputs.push_back({rc2,back_edge});
 
   assert(computation_is_used_by(rc1,rc2));
   assert(reg_is_used_by(R1,R2));
@@ -806,6 +813,28 @@ void reg_heap::set_call(int t, int R1, int R2)
 
 void reg_heap::destroy_all_computations_in_token(int t)
 {
+  for(int r: tokens[t].vm_relative.modified())
+  {
+    int rc = tokens[t].vm_relative[r];
+    if (rc > 0)
+    {
+      for(auto& rcp: computations[rc].used_inputs)
+      {
+	computations[rcp.first].used_by.erase(rcp.second);
+	rcp.second = {};
+      }
+      int call = computations[rc].call_edge.first;
+      if (call)
+      {
+	assert(computations[rc].result);
+	auto back_edge = computations[rc].call_edge.second;
+	computations[call].called_by.erase(back_edge);
+	computations[rc].call_edge = {};
+      }
+    }
+    
+  }
+
   computations.inc_version();
   for(int r: tokens[t].vm_relative.modified())
   {
@@ -973,11 +1002,21 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     if (RC.temp > mark_result) continue;
 
     assert(reg_has_call_(token,R));
-
+    assert(RC.call_edge.first);
+    
     RC.temp = -1;
 
-    computation_for_reg_(token,R).result = 0;
+    int call = RC.call_edge.first;
+    if (call)
+    {
+      assert(RC.result);
+      auto back_edge = RC.call_edge.second;
+      computations[call].called_by.erase(back_edge);
+      RC.call_edge = {};
+    }
 
+    RC.result = 0;
+    
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
       regs_to_re_evaluate.push_back(R);
@@ -985,6 +1024,16 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   computations.inc_version();
   // Clear the marks: 2a
+
+  for(int R: call_and_result_may_be_changed)
+  {
+    auto& RC = computation_for_reg_(token,R);
+
+    if (RC.temp > mark_call_result) continue;
+
+    clear_back_edges(computation_index_for_reg_(token,R));
+  }
+  
   for(int R: call_and_result_may_be_changed)
   {
     assert(has_computation_(token,R));
@@ -1012,6 +1061,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   if (has_computation_(token,P))
   {
     computation_for_reg_(token,P).temp = -1;
+    clear_back_edges(computation_index_for_reg_(token,P));
     clear_computation(token,P);
   }
 
@@ -1279,10 +1329,8 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
     auto& RC1 = computation_for_reg_(t1,split[i]);
 
     // Look at computations in t2 that call the old value in t1.
-    for(const auto& wrc2: clean_weak_refs(RC1.called_by, computations))
+    for(int rc2: RC1.called_by)
     {
-      int rc2 = wrc2.get(computations);
-
       computation& RC2 = computations[rc2];
       int r2 = RC2.source_reg;
 
@@ -1313,10 +1361,8 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
     auto& RC1 = computation_for_reg_(t1, split[i]);
 
     // Look at computations in t2 that call the old value in t1.
-    for(const auto& wrc2: clean_weak_refs(RC1.used_by, computations))
+    for(int rc2: RC1.used_by)
     {
-      int rc2 = wrc2.get(computations);
-
       computation& RC2 = computations[rc2];
       int r2 = RC2.source_reg;
 
@@ -1421,6 +1467,19 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
     if (RC.temp > mark_call_result) continue;
 
+    if (computation_index_for_reg_(t1,r))
+      clear_back_edges(computation_index_for_reg_(t2, r));
+  }
+
+  for(int r:call_and_result_may_be_changed)
+  {
+    int rc2 = computation_index_for_reg_(t2,r);
+    auto& RC = computations[rc2];
+
+    assert(not is_modifiable(access(r).C.exp));
+
+    if (RC.temp > mark_call_result) continue;
+
     RC.temp = -1;
 
     if (not computation_index_for_reg_(t1,r))
@@ -1457,8 +1516,8 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
   vector<int> U;
   if (not has_computation(r)) return U;
 
-  for(int rc: computation_for_reg(r).used_inputs)
-    U.push_back(computations[rc].source_reg);
+  for(const auto& rcp: computation_for_reg(r).used_inputs)
+    U.push_back(computations[rcp.first].source_reg);
 
   return U;
 }
@@ -1656,8 +1715,8 @@ int reg_heap::get_unused_token()
 
 bool reg_heap::computation_is_called_by(int rc1, int rc2) const
 {
-  for(const auto& wr: computations[rc2].called_by)
-    if (wr.get(computations) == rc1)
+  for(int rc: computations[rc2].called_by)
+    if (rc == rc1)
       return true;
 
   return false;
@@ -1665,8 +1724,8 @@ bool reg_heap::computation_is_called_by(int rc1, int rc2) const
 
 bool reg_heap::computation_is_used_by(int rc1, int rc2) const
 {
-  for(const auto& wr: computations[rc2].used_by)
-    if (wr.get(computations) == rc1)
+  for(int rc: computations[rc2].used_by)
+    if (rc == rc1)
       return true;
 
   return false;
@@ -1750,8 +1809,10 @@ void reg_heap::check_used_reg(int index) const
 
     const computation& RC = computation_for_reg_(t,index);
 
-    for(int rc2: RC.used_inputs)
+    for(const auto& rcp2: RC.used_inputs)
     {
+      int rc2 = rcp2.first;
+
       // Used regs should have back-references to R
       assert( computation_is_used_by(index_c, rc2) );
 
@@ -1813,11 +1874,15 @@ void reg_heap::duplicate_computation(int rc1, int rc2) const
 {
   assert(not computations[rc2].call);
   computations[rc2].call = computations[rc1].call;
-  computations[rc2].used_inputs = computations[rc1].used_inputs;
 
   // set back-edges for used inputs
-  for(int rcu: computations[rc2].used_inputs)
-    computations[rcu].used_by.push_back(computations.get_weak_ref(rc2));
+  for(const auto& rcpu: computations[rc1].used_inputs)
+  {
+    int rc3 = rcpu.first;
+
+    auto back_edge = computations[rc3].used_by.push_back(rc2);
+    computations[rc2].used_inputs.push_back({rc3,back_edge});
+  }
 }
 
 /// Add a shared computation at (t,r) -- assuming there isn't one already
@@ -1843,12 +1908,39 @@ int reg_heap::add_shared_computation(int t, int r)
   return rc;
 }
 
+void reg_heap::check_back_edges_cleared(int rc)
+{
+  for(auto& rcp:computations.access_unused(rc).used_inputs)
+    assert(rcp.second == CacheList<int>::iterator());
+  assert(computations.access_unused(rc).call_edge.second == CacheList<int>::iterator());
+}
+
+void reg_heap::clear_back_edges(int rc)
+{
+  for(auto& rcp: computations[rc].used_inputs)
+  {
+    computations[rcp.first].used_by.erase(rcp.second);
+    rcp.second = {};
+  }
+  int call = computations[rc].call_edge.first;
+  if (call)
+  {
+    assert(computations[rc].result);
+    auto back_edge = computations[rc].call_edge.second;
+    computations[call].called_by.erase(back_edge);
+    computations[rc].call_edge = {};
+  }
+}
+
 void reg_heap::clear_computation(int t, int r)
 {
   int rc = remove_shared_computation(t,r);
-
+  
   if (rc > 0)
   {
+#ifndef NDEBUG
+    check_back_edges_cleared(rc);
+#endif
     computations.inc_version();
     computations.reclaim_used(rc);
   }
@@ -2395,7 +2487,11 @@ reg_heap::reg_heap()
 { 
   //  computations.collect_garbage = [this](){collect_garbage();};
   computations.collect_garbage = [](){};
-  computations.clear_references = [](int){};
+
+#ifndef NDEBUG
+  computations.clear_references = [this](int rc){check_back_edges_cleared(rc);};
+#endif
+  computations.clear_references = [this](int rc){};
 }
 
 void reg_heap::release_scratch_list() const

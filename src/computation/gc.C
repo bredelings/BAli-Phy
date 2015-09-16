@@ -129,9 +129,6 @@ void reg_heap::trace(vector<int>& remap)
   vector<int>& scan1 = get_scratch_list();
   vector<int>& next_scan1 = get_scratch_list();
 
-  //  assert(root_token != -1);
-  //  tokens.push_back(root_token);
-
   get_roots(scan1);
   
   while (not scan1.empty())
@@ -198,20 +195,18 @@ void reg_heap::trace_and_reclaim_unreachable()
 
   trace(remap);
 
-  // Avoid memory leaks.
-  for(auto& rc: computations)
-  {
-    clean_weak_refs(rc.used_by, computations);
-    shrink(rc.used_by);
-    clean_weak_refs(rc.called_by, computations);
-    shrink(rc.called_by);
-  }
-
 #ifdef DEBUG_MACHINE
   check_used_regs();
 #endif
   reclaim_unmarked();
+
+  // remove all back-edges
+  for(auto i = computations.begin();i != computations.end(); i++)
+    if (not computations.is_marked(i.addr()))
+      clear_back_edges(i.addr());
+
   computations.reclaim_unmarked();
+
 #ifdef DEBUG_MACHINE
   check_used_regs();
 #endif
