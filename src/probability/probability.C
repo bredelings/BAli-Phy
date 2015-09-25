@@ -379,7 +379,9 @@ double gamma_quantile(double p, double a, double b)
   assert(p >= 0);
   assert(p <= 1);
 
-  if (a < 10000)
+  if (b == 0.0)
+    return 1.0;
+  else if (a < 10000)
     return gamma_quantile_no_approx(p,a,b);
   else {
     double M = a*b;
