@@ -274,7 +274,7 @@ static double pointChi2(double prob, double v)
     
   if (v <= 0)
   {
-    std::cerr<<"Warning: can't handle 2*a = "<<v<<" in gamma quantile: using 0.000002";
+    std::cerr<<"Warning: can't handle 2*a = "<<v<<" in gamma quantile: using 0.000002\n";
     v = 0.000002;
     //    throw myexception()<<"Arguments out of range: v = "<<v;
   }
@@ -283,14 +283,14 @@ static double pointChi2(double prob, double v)
 
   if (p < 0.000002) 
   {
-    std::cerr<<"Warning: can't handle p = "<<p<<" in gamma quantile: using 0.000002";
+    std::cerr<<"Warning: can't handle p = "<<p<<" in gamma quantile: using 0.000002\n";
 
     p = 0.000002;
   }
 
   if (p > 0.999998) 
   {
-    std::cerr<<"Warning: can't handle p = "<<p<<" in gamma quantile: using 0.999998";
+    std::cerr<<"Warning: can't handle p = "<<p<<" in gamma quantile: using 0.999998\n";
 
     p = 0.999998;
   }
