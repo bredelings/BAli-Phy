@@ -383,14 +383,11 @@ double gamma_quantile(double p, double a, double b)
     return 1.0;
   else if (a < 10000)
     return gamma_quantile_no_approx(p,a,b);
-  else {
-    double M = a*b;
-    double V = a*b*b;
-
-    // Isn't this the same as log1p(1.0/a)?
-    double sigma2 =  log1p(V/(M*M));
-    double mu = log(M) - sigma2/2.0;
+  else
+  {
+    double sigma2 =  log1p(1.0/a); // log1p(V/(M*M)) , V = a*b*b
     double sigma = sqrt(sigma2);
+    double mu = log(a*b) - sigma2/2.0; // log(M) - sigma2/2.0, M = a*b
 
     // don't go crazy
     sigma = minmax(sigma, 1.0e-5, 1.0e5);
