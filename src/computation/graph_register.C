@@ -84,6 +84,11 @@ int total_reroot = 0;
  *    loop until no more regs (and thus computations) are being freed.
  */
 
+bool null(const CacheList<int>::iterator& i)
+{
+  return (i == CacheList<int>::iterator());
+}
+
 template<typename V>
 void truncate(V& v)
 {
