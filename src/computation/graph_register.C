@@ -2020,6 +2020,25 @@ void reg_heap::check_used_reg(int index) const
   }
 }
 
+void reg_heap::check_no_up_edges(int t1, int t2) const
+{
+  for(int r:tokens[t2].vm_relative.modified())
+  {
+    int rc = tokens[t2].vm_relative[r];
+    if (rc <= 0) continue;
+    for(const auto& rcp: computations[rc].used_inputs)
+    {
+      int rc2 = rcp.first;
+      assert(computations[rc2].source_token != t1);
+    }
+    if (computations[rc].call_edge.first)
+    {
+      int rc2 = computations[rc].call_edge.first;
+      assert(computations[rc2].source_token != t1);
+    }
+  }
+}
+
 void reg_heap::check_back_edges() const
 {
   for(int t=0;t<tokens.size();t++)

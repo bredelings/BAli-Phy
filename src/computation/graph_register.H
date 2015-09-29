@@ -450,6 +450,8 @@ public:
 
   void check_back_edges_cleared(int rc) const;
 
+  void check_no_up_edges(int t1, int t2) const;
+
   int move_computation(int t1, int t2, int r);
 
   bool computation_is_referenced(int,int) const;
