@@ -955,7 +955,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     invalid.push_back(P);
     computations[rc].temp = mark_modified;
 
-    invalidate_shared_regs3(token, invalid);
+    invalidate_regs(token, invalid);
 
     if (has_computation_(token,P))
     {

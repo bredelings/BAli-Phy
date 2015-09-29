@@ -473,7 +473,7 @@ public:
   bool reg_is_shared(int t, int r) const;
   void invalidate_shared_regs1(int t1, int t2);
   void invalidate_shared_regs2(int t1, int t2);
-  void invalidate_shared_regs3(int token, std::vector<int>&);
+  void invalidate_regs(int token, std::vector<int>&);
   void fixup_back_edges(int t1, int t2);
   void mark_completely_dirty(int t);
   bool is_completely_dirty(int t) const;

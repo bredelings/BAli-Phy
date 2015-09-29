@@ -246,7 +246,7 @@ void reg_heap::invalidate_shared_regs1(int t1, int t2)
 
 
 // Find all unshared regs in t2 that use an unshared reg in t1
-void reg_heap::invalidate_shared_regs3(int token, vector<int>& invalid)
+void reg_heap::invalidate_regs(int token, vector<int>& invalid)
 {
   // First find all users or callers of regs where the result is out of date.
   for(int i=0; i<invalid.size(); i++)
@@ -358,7 +358,7 @@ void reg_heap::invalidate_shared_regs2(int t1, int t2)
       invalid.push_back(r1);
   }
 
-  invalidate_shared_regs3(t2, invalid);
+  invalidate_regs(t2, invalid);
 
   release_scratch_list();
   assert(n_active_scratch_lists == 0);
