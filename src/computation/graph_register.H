@@ -159,6 +159,8 @@ public:
 
   void check_used_reg(int) const;
   void check_used_regs() const;
+  void check_back_edges() const;
+  void check_back_edges_for_token(int t) const;
 
   void collect_garbage();
   void trace(std::vector<int>& remap);
@@ -469,6 +471,7 @@ public:
   void invalidate_shared_regs1(int t1, int t2);
   void invalidate_shared_regs2(int t1, int t2);
   void invalidate_shared_regs3(int token, std::vector<int>&);
+  void fixup_back_edges(int t1, int t2);
   void mark_completely_dirty(int t);
   bool is_completely_dirty(int t) const;
   bool is_dirty(int t) const;

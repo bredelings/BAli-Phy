@@ -1745,6 +1745,80 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   */
 }
 
+void reg_heap::fixup_back_edges(int t1, int t2)
+{
+  auto& m1 = tokens[t1].vm_relative;
+  auto& m2 = tokens[t2].vm_relative;
+
+  for(int r: m1.modified())
+  {
+    // Erase back-links from computations in different contexts.
+    int rc = m1[r];
+    if (rc > 0)
+    {
+      auto& RC = computations[rc];
+      assert(RC.source_token == t1);
+
+      for(auto& rcp: RC.used_inputs)
+      {
+	int rc2 = rcp.first;
+	auto& RC2 = computations[rc2];
+	if (not null(rcp.second) and RC2.source_token != t1)
+	{
+	  assert(RC2.source_token == t2);
+	  assert(*rcp.second == rc);
+	  RC2.used_by.erase(rcp.second);
+	  rcp.second = {};
+	}
+      }
+
+      auto& rcp = RC.call_edge;
+      if (rcp.first)
+      {
+	int rc2 = rcp.first;
+	auto& RC2 =  computations[rc2];
+	if (not null(rcp.second) and RC2.source_token != t1)
+	{
+	  assert(RC2.source_token == t2);
+	  assert(*rcp.second == rc);
+	  RC2.called_by.erase(rcp.second);
+	  rcp.second = {};
+	}
+      }
+    }
+
+    // Add missing back-links for the root context.
+    rc = m2[r];
+    if (rc > 0)
+    {
+      auto& RC = computations[rc];
+      assert(RC.source_token == t2);
+
+      for(auto& rcp: RC.used_inputs)
+	if (null(rcp.second))
+	{
+	  int rc2 = rcp.first;
+	  auto& RC2 = computations[rc2];
+	  if (RC2.source_token == t2)
+	    rcp.second = RC2.used_by.push_back(rc);
+	}
+
+      auto& rcp = RC.call_edge;
+      if (rcp.first and null(rcp.second))
+      {
+	int rc2 = rcp.first;
+	auto& RC2 = computations[rc2];
+	if (RC2.source_token == t2)
+	  rcp.second = RC2.called_by.push_back(rc);
+      }
+    }
+  }
+
+#ifdef DEBUG_MACHINE
+  check_back_edges();
+#endif
+}
+
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
 {
   vector<int> U;
@@ -2075,6 +2149,48 @@ void reg_heap::check_used_reg(int index) const
     // If we have a result, then our call should have a result
     if (result)
       assert(reg_has_result(call));
+  }
+}
+
+void reg_heap::check_back_edges() const
+{
+  for(int t=0;t<tokens.size();t++)
+    check_back_edges_for_token(t);
+}
+
+void reg_heap::check_back_edges_for_token(int t) const
+{
+  if (not token_is_used(t)) return;
+
+  for(int r=0;r<size();r++)
+  {
+    int rc = tokens[t].vm_relative[r];
+    if (rc <= 0) continue;
+
+    const auto& RC = computations[rc];
+    for(int rc2: RC.used_by)
+      assert(computations[rc2].source_token == t);
+
+    for(int rc2: RC.called_by)
+      assert(computations[rc2].source_token == t);
+
+    for(const auto& rcp: RC.used_inputs)
+    {
+      int rc2 = rcp.first;
+      if (computations[rc2].source_token == t)
+	assert(not null(rcp.second));
+      else
+	assert(null(rcp.second));
+    }
+
+    if (RC.call_edge.first)
+    {
+      int rc2 = RC.call_edge.first;
+      if (computations[rc2].source_token == t)
+	assert(not null(RC.call_edge.second));
+	else
+	  assert(null(RC.call_edge.second));
+    }
   }
 }
 
