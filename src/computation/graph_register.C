@@ -1238,6 +1238,8 @@ void reg_heap::reroot_at(int t)
   assert(parent == root_token);
 
   // 2. Change the relative mappings
+  invalidate_shared_regs1(parent,t);
+  invalidate_shared_regs2(parent,t);
   pivot_mapping(parent, t);
   swap_tokens(parent,t);
   std::swap(parent,t);
@@ -1386,6 +1388,334 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
       users.push_back(r2);
     }
   }
+}
+
+// Find regs in t1 that are shared into t2, and depend on regs in t1 that are modified in t2.
+void reg_heap::find_shared_callers(int t1, int t2, int r1, vector<int>& modified, int mark)
+{
+  const auto& RC1 = computation_for_reg_(t1,r1);
+
+  // Look at computations in t2 that call the old value in t1.
+  for(int rc2: RC1.called_by)
+  {
+    computation& RC2 = computations[rc2];
+    int r2 = RC2.source_reg;
+
+    // If this computation is not in t1, then ignore it.
+    if (RC2.source_token != t1) continue;
+
+    // Skip this one if its been marked high enough already
+    if (RC2.temp >= mark) continue;
+
+    // If this computation is not shared into t2, then we don't need to unshare it.
+    if (computation_index_for_reg_(t2,r2)) continue;
+
+    // There shouldn't be a back edge to r2, if r2 has no result.
+    // When WOULDN'T there be a back edge?
+    assert(RC2.result);
+    // If the computation has no result, then its called-by edge is out-of-date
+    //      if (not RC2.result) continue;
+
+    assert(computation_index_for_reg_(t1,r2) == rc2);
+
+    // If the reg is completely unmarked, then its not on the modified list yet.
+    if (RC2.temp < 0)
+      modified.push_back(r2);
+
+    RC2.temp = mark;
+  }
+}
+
+// Find regs in t1 that are shared into t2, and depend on regs in t1 that are modified in t2.
+void reg_heap::find_shared_users(int t1, int t2, int r, vector<int>& modified, int mark)
+{
+  const auto& RC1 = computation_for_reg_(t1, r);
+
+  // Look at computations in t2 that call the old value in t1.
+  for(int rc2: RC1.used_by)
+  {
+    computation& RC2 = computations[rc2];
+    int r2 = RC2.source_reg;
+
+    // If this computation is not in t1, then ignore it.
+    if (RC2.source_token != t1) continue;
+
+    // Skip this one if its been marked high enough already
+    if (RC2.temp >= mark) continue;
+
+    // If this computation is not shared into t2, then we don't need to unshare it.
+    if (computation_index_for_reg_(t2,r2)) continue;
+
+    assert(not is_modifiable(access(r2).C.exp));
+
+    // r2 need not necessarily have a result -- there's just a use edge from r2->r1, not a call edge.
+
+    assert(computation_index_for_reg_(t1,r2) == rc2);
+
+    if (RC2.temp < 0)
+      modified.push_back(r2);
+
+    RC2.temp = mark;
+  }
+}
+
+void reg_heap::invalidate_shared_regs1(int t1, int t2)
+{
+  assert(t1 == parent_token(t2));
+  assert(tokens[t1].version >= tokens[t2].version);
+
+  if (tokens[t1].version <= tokens[t2].version) return;
+
+  const int mark_result = 1;
+  const int mark_call_result = 2;
+
+  // find all regs in t1 that are overriden in t2
+  vector<int>& modified = get_scratch_list();
+  for(int r: tokens[t2].vm_relative.modified())
+    if (tokens[t1].vm_relative[r] > 0)
+      modified.push_back(r);
+
+  vector<int>& unshared = get_scratch_list();
+
+  // First find all users or callers of regs where the result is out of date.
+  for(int r: modified)
+  {
+    find_shared_callers(t1, t2, r, unshared, mark_result);
+    find_shared_users(t1, t2, r, unshared, mark_call_result);
+  }
+
+  // Then propagate the unsharedness
+  for(int i=0;i<unshared.size();i++)
+  {
+    int r = unshared[i];
+    find_shared_callers(t1, t2, r, unshared, mark_result);
+    find_shared_users(t1, t2, r, unshared, mark_call_result);
+  }
+
+#ifndef NDEBUG
+  for(int r:modified)
+  {
+    int rc = tokens[t1].vm_relative[r];
+    assert(computations[rc].temp == -1);
+  }
+#endif
+
+  vector< int >& regs_to_re_evaluate = tokens[t2].regs_to_re_evaluate;
+
+  // Unshare the regs that should be unshared
+  for(int r: unshared)
+  {
+    int rc1 = computation_index_for_reg_(t1,r);
+    auto& RC = computations[rc1];
+
+    assert(not is_modifiable(access(r).C.exp));
+    assert(not tokens[t2].vm_relative[r]);
+
+    if (RC.temp == mark_result)
+    {
+      // Make a new computation in t2.
+      int rc2 = add_shared_computation(t2,r);
+
+      // Copy the computation-step part from t1->t2, but not the result
+      duplicate_computation(rc1,rc2);
+    }
+    else
+    {
+      assert(RC.temp == mark_call_result);
+      clear_computation(t2,r);
+    }
+
+    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+    if (access(r).re_evaluate)
+      regs_to_re_evaluate.push_back(r);
+
+    RC.temp = -1;
+  }
+
+  release_scratch_list();
+  release_scratch_list();
+  assert(n_active_scratch_lists == 0);
+
+#ifndef NDEBUG
+  // Check that regs shared from t1 into t2 don't used regs that will be overridden
+  for(int r1: tokens[t1].vm_relative.modified())
+  {
+    int rc1 = tokens[t1].vm_relative[r1];
+
+    // Need an actual computation in t1
+    if (rc1 < 0) continue;
+
+    // Consider only regs t1 -> t2
+    if (tokens[t2].vm_relative[r1]) continue;
+
+    for(const auto& rcp2: computations[rc1].used_inputs)
+    {
+      int rc2 = rcp2.first;
+      int r2 = computations[rc2].source_reg;
+
+      // Only interested in edges from t1 -> t1
+      if (computations[rc2].source_token != t1) continue;
+
+      // The computation we use had better not be over-ridden
+      assert(not tokens[t2].vm_relative[r2]);
+    }
+
+    if (int rc2 = computations[rc1].call_edge.first)
+    {
+      int r2 = computations[rc2].source_reg;
+      assert(r2 == computations[rc1].call);
+
+      // Only interested in edges from t1 -> t1
+      if (computations[rc2].source_token != t1) continue;
+
+      // The computation we use had better not be over-ridden
+      assert(not tokens[t2].vm_relative[r2]);
+    }
+  }
+#endif
+}
+
+// Find all unshared regs in t2 that use an unshared reg in t1
+void reg_heap::invalidate_shared_regs2(int t1, int t2)
+{
+  assert(t1 == parent_token(t2));
+  assert(tokens[t1].version >= tokens[t2].version);
+
+  if (tokens[t1].version <= tokens[t2].version) return;
+
+  const int mark_result = 1;
+  const int mark_call_result = 2;
+
+  // find all regs in t1 that are overriden in t2
+  vector<int>& modified = get_scratch_list();
+  for(int r: tokens[t2].vm_relative.modified())
+    if (tokens[t2].vm_relative[r] > 0)
+      modified.push_back(r);
+
+  vector< int >& call_and_result_may_be_changed = get_scratch_list();
+  vector< int >& result_may_be_changed = get_scratch_list();
+
+  for(int r1: modified)
+  {
+    int rc1 = computation_index_for_reg_(t2,r1);
+    auto& RC1 = computations[rc1];
+    for(const auto& rcp: RC1.used_inputs)
+    {
+      int rc2 = rcp.first;
+      const auto& RC2 = computations[rc2];
+      int r2 = RC2.source_reg;
+
+      if (RC2.source_token != t1) continue;
+
+      if (not tokens[t2].vm_relative[r2]) continue;
+
+      RC1.temp = mark_call_result;
+    }
+
+    if (RC1.temp < 0 and RC1.call_edge.first)
+    {
+      int rc2 = RC1.call_edge.first;
+      const auto& RC2 = computations[rc2];
+      int r2 = RC2.source_reg;
+
+      if (RC2.source_token != t1) continue;
+
+      if (not tokens[t2].vm_relative[r2]) continue;
+
+      RC1.temp = mark_result;
+    }
+
+    if (RC1.temp == mark_result)
+      result_may_be_changed.push_back(r1);
+    else if (RC1.temp == mark_call_result)
+      call_and_result_may_be_changed.push_back(r1);
+  }
+
+  int i=0;
+  int j=0;
+  while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
+  {
+    // First find all users or callers of regs where the result is out of date.
+    find_callers(t2, t2, j, result_may_be_changed, result_may_be_changed, mark_result);
+    find_users(t2, t2, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    j = result_may_be_changed.size();
+
+    // Second find all users or callers of regs where the result AND CALL are out of date.
+    find_users(t2, t2, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers(t2, t2, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
+    i = call_and_result_may_be_changed.size();
+  }
+
+  vector< int >& regs_to_re_evaluate = tokens[t2].regs_to_re_evaluate;
+
+  for(int R: result_may_be_changed)
+  {
+    assert(has_computation_(t2,R));
+
+    //    assert(computation_result_for_reg(token,R) or reg_is_shared(token,R));
+
+    auto& RC = computation_for_reg_(t2,R);
+
+    if (RC.temp > mark_result) continue;
+
+    assert(reg_has_call_(t2,R));
+    assert(RC.call_edge.first);
+    
+    RC.temp = -1;
+
+    int call = RC.call_edge.first;
+    if (call)
+    {
+      assert(RC.result);
+      auto back_edge = RC.call_edge.second;
+      computations[call].called_by.erase(back_edge);
+      RC.call_edge = {};
+    }
+
+    RC.result = 0;
+    
+    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+    if (access(R).re_evaluate)
+      regs_to_re_evaluate.push_back(R);
+  }
+
+  for(int R: call_and_result_may_be_changed)
+  {
+    auto& RC = computation_for_reg_(t2,R);
+
+    if (RC.temp > mark_call_result) continue;
+
+    clear_back_edges(computation_index_for_reg_(t2,R));
+  }
+
+  for(int R: call_and_result_may_be_changed)
+  {
+    assert(has_computation_(t2,R));
+
+    // Put this back when we stop making spurious used_by edges
+    //    assert(reg_has_call(t2,R));
+
+    auto& RC = computation_for_reg_(t2,R);
+
+    if (RC.temp > mark_call_result) continue;
+
+    assert(RC.temp == mark_call_result);
+
+    RC.temp = -1;
+
+    assert(not is_modifiable(access(R).C.exp));
+
+    clear_computation(t2,R);
+
+    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+    if (access(R).re_evaluate)
+      regs_to_re_evaluate.push_back(R);
+  }
+
+  release_scratch_list();
+  release_scratch_list();
+  release_scratch_list();
+  assert(n_active_scratch_lists == 0);
 }
 
 void reg_heap::invalidate_shared_regs(int t1, int t2)
@@ -2034,6 +2364,9 @@ void reg_heap::try_release_token(int t)
       return;
     }
 
+    invalidate_shared_regs1(t, child_token);
+    invalidate_shared_regs2(t, child_token);
+    
     if (merge_split_mapping(t, child_token))
     {
       swap_tokens(t, child_token);
