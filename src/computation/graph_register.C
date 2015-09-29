@@ -1716,6 +1716,37 @@ void reg_heap::invalidate_shared_regs2(int t1, int t2)
   release_scratch_list();
   release_scratch_list();
   assert(n_active_scratch_lists == 0);
+
+#ifndef NDEBUG
+  for(int r1: tokens[t2].vm_relative.modified())
+    if (tokens[t2].vm_relative[r1] > 0)
+    {
+      int rc1 = computation_index_for_reg_(t2,r1);
+      auto& RC1 = computations[rc1];
+      for(const auto& rcp: RC1.used_inputs)
+      {
+	int rc2 = rcp.first;
+	const auto& RC2 = computations[rc2];
+	int r2 = RC2.source_reg;
+
+	if (RC2.source_token != t1) continue;
+
+	assert(not tokens[t2].vm_relative[r2]);
+      }
+
+      if (RC1.call_edge.first)
+      {
+	int rc2 = RC1.call_edge.first;
+	const auto& RC2 = computations[rc2];
+	int r2 = RC2.source_reg;
+
+	if (RC2.source_token != t1) continue;
+
+	assert(not tokens[t2].vm_relative[r2]);
+      }
+    }
+
+#endif  
 }
 
 void reg_heap::invalidate_shared_regs(int t1, int t2)
