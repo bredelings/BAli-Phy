@@ -469,7 +469,6 @@ public:
   void set_reg_value(int index, closure&&, int t);
   void set_shared_value(int r, int v);
   bool reg_is_shared(int t, int r) const;
-  void invalidate_shared_regs(int t1, int t2);
   void invalidate_shared_regs1(int t1, int t2);
   void invalidate_shared_regs2(int t1, int t2);
   void invalidate_shared_regs3(int token, std::vector<int>&);
