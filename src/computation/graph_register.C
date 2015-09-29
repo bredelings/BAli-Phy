@@ -942,8 +942,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   if (not is_root_token(token) and tokens[token].version == tokens[parent_token(token)].version)
     tokens[token].version--;
 
-  // assert(not is_root_token and tokens[token].version < tokens[parent_token(token)].version) 
-
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
 
@@ -957,19 +955,17 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     invalidate_regs(token, invalid);
 
-    if (has_computation_(token,P))
-    {
-      computation_for_reg_(token,P).temp = -1;
-      clear_back_edges(computation_index_for_reg_(token,P));
-      clear_computation(token,P);
-    }
+    assert(computation_index_for_reg_(token,P) == rc);
+    computations[rc].temp = -1;
+    clear_back_edges(rc);
+    clear_computation(token,P);
 
     release_scratch_list();
     assert(n_active_scratch_lists == 0);
   }
 
   // Finally set the new value.
-  add_shared_computation(token,P);
+  add_shared_computation(token, P);
   set_reduction_result(token, P, std::move(C) );
 
   if (token == root_token)
