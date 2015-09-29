@@ -513,6 +513,8 @@ struct no_context: public std::exception
 {
 };
 
+enum {mark_unmarked = -1, mark_result = 1, mark_call_result = 2, mark_modified = 3} mark_t;
+
 extern int total_reductions;
 extern int total_reg_allocations;
 extern int total_comp_allocations;
