@@ -916,6 +916,11 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   }
 }
 
+const int mark_result = 1;
+const int mark_call_result = 2;
+const int mark_modified = 3;
+const int mark_unmarked = -1;
+
 // If we replace a computation at P that is newly defined in this token,
 // there may be computations that call or use it that are also newly
 // defined in this token.  Such computations must be cleared, because they
@@ -941,41 +946,34 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Check that this reg is indeed settable
   assert(is_modifiable(access(P).C.exp));
 
-  const int mark_result = 1;
-  const int mark_call_result = 2;
-  const int mark_modified = 3;
-
-  vector< int >& call_and_result_may_be_changed = get_scratch_list();
-  vector< int >& result_may_be_changed = get_scratch_list();
-  vector< int >& regs_to_re_evaluate = tokens[token].regs_to_re_evaluate;
-
-  // If we have a RELATIVE computation, we need to take care of its users new to this token.
-  if (has_computation_(token,P))
+  int rc = computation_index_for_reg_(token,P);
+  if (rc > 0)
   {
-    call_and_result_may_be_changed.push_back(P);
-    computation_for_reg_(token,P).temp = mark_modified;
-    result_may_be_changed.push_back(P);
-  }
+    vector< int >& invalid = get_scratch_list();
 
-  invalidate_shared_regs3(token, result_may_be_changed, call_and_result_may_be_changed);
+    invalid.push_back(P);
+    computations[rc].temp = mark_modified;
 
-  if (has_computation_(token,P))
-  {
-    computation_for_reg_(token,P).temp = -1;
-    clear_back_edges(computation_index_for_reg_(token,P));
-    clear_computation(token,P);
+    invalidate_shared_regs3(token, invalid);
+
+    if (has_computation_(token,P))
+    {
+      computation_for_reg_(token,P).temp = -1;
+      clear_back_edges(computation_index_for_reg_(token,P));
+      clear_computation(token,P);
+    }
+
+    release_scratch_list();
+    assert(n_active_scratch_lists == 0);
   }
 
   // Finally set the new value.
   add_shared_computation(token,P);
   set_reduction_result(token, P, std::move(C) );
 
-  release_scratch_list();
-  release_scratch_list();
-  assert(n_active_scratch_lists == 0);
-
   if (token == root_token)
   {
+    vector<int>& regs_to_re_evaluate = tokens[token].regs_to_re_evaluate;
     if (regs_to_re_evaluate.size())
       mark_completely_dirty(token);
     for(int R: regs_to_re_evaluate)
@@ -1222,66 +1220,66 @@ bool reg_heap::is_completely_dirty(int t) const
   return true;
 }
   
-// find regs in t2 that call values only active in t1.  We look at regs in split, and append results to callers
-void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split, vector<int>& callers, int mark)
+// Find regs in t1 that are shared into t2, and depend on regs in t1 that are modified in t2.
+void reg_heap::find_callers(int t1, int r1, vector<int>& modified, int mark)
 {
-  for(int i=start;i<split.size();i++)
+  const auto& RC1 = computation_for_reg_(t1,r1);
+
+  // Look at computations in t2 that call the old value in t1.
+  for(int rc2: RC1.called_by)
   {
-    auto& RC1 = computation_for_reg_(t1,split[i]);
+    computation& RC2 = computations[rc2];
+    int r2 = RC2.source_reg;
 
-    // Look at computations in t2 that call the old value in t1.
-    for(int rc2: RC1.called_by)
-    {
-      computation& RC2 = computations[rc2];
-      int r2 = RC2.source_reg;
+    // If this computation is not in t1, then ignore it.
+    if (RC2.source_token != t1) continue;
 
-      // If this computation is not used in t2, we don't need to unshare it.
-      if (computation_index_for_reg_(t2,r2) != rc2) continue;
+    // Skip this one if its been marked high enough already
+    if (RC2.temp >= mark) continue;
 
-      // Skip this one if its been marked high enough already
-      if (RC2.temp >= mark) continue;
+    // There shouldn't be a back edge to r2, if r2 has no result.
+    // When WOULDN'T there be a back edge?
+    assert(RC2.result);
+    // If the computation has no result, then its called-by edge is out-of-date
+    //      if (not RC2.result) continue;
 
-      // If the computation has no result, then its called-by edge is out-of-date
-      if (not RC2.result) continue;
+    assert(computation_index_for_reg_(t1,r2) == rc2);
 
-      // There (usually) shouldn't be a back edge to r2 if r2 has no result.
-      // assert(RC2.result);
+    // If the reg is completely unmarked, then its not on the modified list yet.
+    if (RC2.temp < 0)
+      modified.push_back(r2);
 
-      RC2.temp = mark;
-      assert(computation_index_for_reg_(t2,r2) == rc2);
-      callers.push_back(r2);
-    }
+    RC2.temp = mark;
   }
 }
 
-// find regs in t2 that used values only active in t1.  We look at regs in split, and append results to callers
-void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, vector<int>& users, int mark)
+// Find regs in t1 that are shared into t2, and depend on regs in t1 that are modified in t2.
+void reg_heap::find_users(int t1, int r, vector<int>& modified, int mark)
 {
-  for(int i=start;i<split.size();i++)
+  const auto& RC1 = computation_for_reg_(t1, r);
+
+  // Look at computations in t2 that call the old value in t1.
+  for(int rc2: RC1.used_by)
   {
-    auto& RC1 = computation_for_reg_(t1, split[i]);
+    computation& RC2 = computations[rc2];
+    int r2 = RC2.source_reg;
 
-    // Look at computations in t2 that call the old value in t1.
-    for(int rc2: RC1.used_by)
-    {
-      computation& RC2 = computations[rc2];
-      int r2 = RC2.source_reg;
+    // If this computation is not in t1, then ignore it.
+    if (RC2.source_token != t1) continue;
 
-      // If this computation is not used in t2, we don't need to unshare it.
-      if (computation_index_for_reg_(t2,r2) != rc2) continue;
+    // Skip this one if its been marked high enough already
+    if (RC2.temp >= mark) continue;
 
-      assert(not is_modifiable(access(r2).C.exp));
+    assert(not is_modifiable(access(r2).C.exp));
 
-      // Skip this one if its been marked high enough already
-      if (RC2.temp >= mark) continue;
+    // r2 need not necessarily have a result -- there's just a use edge from r2->r1, not a call edge.
 
-      // There (usually) shouldn't be a back edge to r2 if r2 has no result.
-      //      assert(RC2.result);
+    assert(computation_index_for_reg_(t1,r2) == rc2);
 
-      RC2.temp = mark;
-      assert(computation_index_for_reg_(t2,r2) == rc2);
-      users.push_back(r2);
-    }
+    if (RC2.temp < 0)
+      modified.push_back(r2);
+
+    RC2.temp = mark;
   }
 }
 
@@ -1360,9 +1358,6 @@ void reg_heap::invalidate_shared_regs1(int t1, int t2)
   assert(tokens[t1].version >= tokens[t2].version);
 
   if (tokens[t1].version <= tokens[t2].version) return;
-
-  const int mark_result = 1;
-  const int mark_call_result = 2;
 
   // find all regs in t1 that are overriden in t2
   vector<int>& modified = get_scratch_list();
@@ -1472,93 +1467,42 @@ void reg_heap::invalidate_shared_regs1(int t1, int t2)
 
 
 // Find all unshared regs in t2 that use an unshared reg in t1
-void reg_heap::invalidate_shared_regs3(int token, vector<int>& result_may_be_changed, vector<int>& call_and_result_may_be_changed)
+void reg_heap::invalidate_shared_regs3(int token, vector<int>& invalid)
 {
-  const int mark_result = 1;
-  const int mark_call_result = 2;
-  const int mark_modified = 3;
-
-  int i=0;
-  int j=0;
-  while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
+  // First find all users or callers of regs where the result is out of date.
+  for(int i=0; i<invalid.size(); i++)
   {
-    // First find all users or callers of regs where the result is out of date.
-    find_callers(token, token, j, result_may_be_changed, result_may_be_changed, mark_result);
-    find_users(token, token, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
-    j = result_may_be_changed.size();
-
-    // Second find all users or callers of regs where the result AND CALL are out of date.
-    find_users(token, token, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
-    find_callers(token, token, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
-    i = call_and_result_may_be_changed.size();
+    find_callers(token, invalid[i], invalid, mark_result);
+    find_users(token, invalid[i], invalid, mark_call_result);
   }
 
-#ifndef NDEBUG
-  for(int R: result_may_be_changed)
-    assert(computation_for_reg_(token,R).temp == mark_result or 
-	   computation_for_reg_(token,R).temp == mark_call_result or
-	   computation_for_reg_(token,R).temp == mark_modified
-	   );
-
-  for(int R: call_and_result_may_be_changed)
-    assert(computation_for_reg_(token,R).temp == mark_call_result or
-	   computation_for_reg_(token,R).temp == mark_modified
-	   );
-#endif
-
-  //  std::cerr<<" result: "<<result_may_be_changed.size()<<"\n";
-
+  // Remove out-of-date probabilities from total probability
   if (token == root_token)
-  {
-    for(int r: result_may_be_changed)
+    for(int r: invalid)
       dec_probability_for_reg(r);
-    for(int r: call_and_result_may_be_changed)
-      dec_probability_for_reg(r);
-  }
 
   vector< int >& regs_to_re_evaluate = tokens[token].regs_to_re_evaluate;
 
-  for(int R: result_may_be_changed)
+  // First pass: clear back-edges to these computations
+  for(int R: invalid)
   {
-    assert(has_computation_(token,R));
-
-    //    assert(computation_result_for_reg(token,R) or reg_is_shared(token,R));
-
     auto& RC = computation_for_reg_(token,R);
 
-    if (RC.temp > mark_result) continue;
-
-    assert(reg_has_call_(token,R));
-    assert(RC.call_edge.first);
-    
-    RC.temp = -1;
-
-    int call = RC.call_edge.first;
-    if (call)
+    if (RC.temp == mark_result)
     {
-      assert(RC.result);
+      // clear call_back_edge only
+      int rc = RC.call_edge.first;
+      assert(rc);
       auto back_edge = RC.call_edge.second;
-      computations[call].called_by.erase(back_edge);
-      RC.call_edge = {};
+      computations[rc].called_by.erase(back_edge);
+      RC.call_edge.second = {};
     }
-
-    RC.result = 0;
-    
-    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-    if (access(R).re_evaluate)
-      regs_to_re_evaluate.push_back(R);
+    else if (RC.temp == mark_call_result)
+      clear_back_edges(computation_index_for_reg_(token,R));
   }
 
-  for(int R: call_and_result_may_be_changed)
-  {
-    auto& RC = computation_for_reg_(token,R);
-
-    if (RC.temp > mark_call_result) continue;
-
-    clear_back_edges(computation_index_for_reg_(token,R));
-  }
-
-  for(int R: call_and_result_may_be_changed)
+  // Second pass: clear the computations
+  for(int R: invalid)
   {
     assert(has_computation_(token,R));
 
@@ -1566,17 +1510,24 @@ void reg_heap::invalidate_shared_regs3(int token, vector<int>& result_may_be_cha
     //    assert(reg_has_call(token,R));
 
     auto& RC = computation_for_reg_(token,R);
-
-    if (RC.temp > mark_call_result) continue;
-
-    assert(RC.temp == mark_call_result);
-
-    RC.temp = -1;
-
-    assert(not is_modifiable(access(R).C.exp));
-
-    clear_computation(token,R);
-
+    int mark = RC.temp;
+    RC.temp = mark_unmarked;
+    
+    if (mark == mark_result)
+    {
+      assert(not is_modifiable(access(R).C.exp));
+      assert(RC.result);
+      RC.result = 0;
+      RC.call_edge = {};
+    }
+    else if (mark == mark_call_result)
+    {
+      assert(not is_modifiable(access(R).C.exp));
+      clear_computation(token,R);
+    }
+    else
+      assert(mark == mark_modified);
+    
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
       regs_to_re_evaluate.push_back(R);
@@ -1592,64 +1543,53 @@ void reg_heap::invalidate_shared_regs2(int t1, int t2)
 
   if (tokens[t1].version <= tokens[t2].version) return;
 
-  const int mark_result = 1;
-  const int mark_call_result = 2;
+  vector< int >& invalid = get_scratch_list();
 
-  // find all regs in t1 that are overriden in t2
-  vector<int>& modified = get_scratch_list();
-  for(int r: tokens[t2].vm_relative.modified())
-    if (tokens[t2].vm_relative[r] > 0)
-      modified.push_back(r);
-
-  vector< int >& call_and_result_may_be_changed = get_scratch_list();
-  vector< int >& result_may_be_changed = get_scratch_list();
-
-  for(int r1: modified)
+  // Find regs (r1) from t2 that use/call unshared computations (rc2) in t1
+  const auto& m2 = tokens[t2].vm_relative;
+  for(int r1: m2.modified())
   {
-    int rc1 = computation_index_for_reg_(t2,r1);
+    int rc1 = m2[r1];
+    if (rc1 <= 0) continue;
+
     auto& RC1 = computations[rc1];
+    assert(RC1.temp == mark_unmarked);
+    
     for(const auto& rcp: RC1.used_inputs)
     {
       int rc2 = rcp.first;
       const auto& RC2 = computations[rc2];
       int r2 = RC2.source_reg;
 
-      if (RC2.source_token != t1) continue;
-
-      if (not tokens[t2].vm_relative[r2]) continue;
-
-      RC1.temp = mark_call_result;
+      if (RC2.source_token == t1 and m2[r2])
+      {
+	RC1.temp = mark_call_result;
+	break;
+      }
     }
 
-    if (RC1.temp < 0 and RC1.call_edge.first)
+    if (RC1.temp != mark_call_result and RC1.call_edge.first)
     {
       int rc2 = RC1.call_edge.first;
       const auto& RC2 = computations[rc2];
       int r2 = RC2.source_reg;
 
-      if (RC2.source_token != t1) continue;
-
-      if (not tokens[t2].vm_relative[r2]) continue;
-
-      RC1.temp = mark_result;
+      if (RC2.source_token == t1 and m2[r2])
+	RC1.temp = mark_result;
     }
 
-    if (RC1.temp == mark_result)
-      result_may_be_changed.push_back(r1);
-    else if (RC1.temp == mark_call_result)
-      call_and_result_may_be_changed.push_back(r1);
+    if (RC1.temp != mark_unmarked)
+      invalid.push_back(r1);
   }
 
-  invalidate_shared_regs3(t2, result_may_be_changed, call_and_result_may_be_changed);
+  invalidate_shared_regs3(t2, invalid);
 
-  release_scratch_list();
-  release_scratch_list();
   release_scratch_list();
   assert(n_active_scratch_lists == 0);
 
 #ifndef NDEBUG
-  for(int r1: tokens[t2].vm_relative.modified())
-    if (tokens[t2].vm_relative[r1] > 0)
+  for(int r1: m2.modified())
+    if (m2[r1] > 0)
     {
       int rc1 = computation_index_for_reg_(t2,r1);
       auto& RC1 = computations[rc1];
@@ -1659,9 +1599,8 @@ void reg_heap::invalidate_shared_regs2(int t1, int t2)
 	const auto& RC2 = computations[rc2];
 	int r2 = RC2.source_reg;
 
-	if (RC2.source_token != t1) continue;
-
-	assert(not tokens[t2].vm_relative[r2]);
+	if (RC2.source_token == t1)
+	  assert(not m2[r2]);
       }
 
       if (RC1.call_edge.first)
@@ -1670,17 +1609,16 @@ void reg_heap::invalidate_shared_regs2(int t1, int t2)
 	const auto& RC2 = computations[rc2];
 	int r2 = RC2.source_reg;
 
-	if (RC2.source_token != t1) continue;
-
-	assert(not tokens[t2].vm_relative[r2]);
+	if (RC2.source_token == t1)
+	  assert(not m2[r2]);
       }
     }
-
 #endif  
 }
 
 void reg_heap::invalidate_shared_regs(int t1, int t2)
 {
+  /*
   //  assert(t2 == parent_token(t1));
   assert(tokens[t1].version >= tokens[t2].version);
 
@@ -1804,6 +1742,7 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   release_scratch_list();
   release_scratch_list();
   assert(n_active_scratch_lists == 0);
+  */
 }
 
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
