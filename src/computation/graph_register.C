@@ -2125,6 +2125,7 @@ void reg_heap::swap_tokens(int t1, int t2)
   std::swap(tokens[t1].triggers, tokens[t2].triggers);
   std::swap(tokens[t1].referenced, tokens[t2].referenced);
   std::swap(tokens[t1].version, tokens[t2].version);
+  std::swap(tokens[t1].regs_to_re_evaluate, tokens[t2].regs_to_re_evaluate);
 }
 
 int reg_heap::get_n_contexts() const
