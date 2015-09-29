@@ -1460,11 +1460,9 @@ void reg_heap::invalidate_shared_regs1(int t1, int t2)
       int rc2 = rcp2.first;
       int r2 = computations[rc2].source_reg;
 
-      // Only interested in edges from t1 -> t1
-      if (computations[rc2].source_token != t1) continue;
-
-      // The computation we use had better not be over-ridden
-      assert(not tokens[t2].vm_relative[r2]);
+      // Edges from t1 -> t1 should have have their target computation in t2.
+      if (computations[rc2].source_token == t1)
+	assert(not tokens[t2].vm_relative[r2]);
     }
 
     if (int rc2 = computations[rc1].call_edge.first)
@@ -1472,11 +1470,9 @@ void reg_heap::invalidate_shared_regs1(int t1, int t2)
       int r2 = computations[rc2].source_reg;
       assert(r2 == computations[rc1].call);
 
-      // Only interested in edges from t1 -> t1
-      if (computations[rc2].source_token != t1) continue;
-
-      // The computation we use had better not be over-ridden
-      assert(not tokens[t2].vm_relative[r2]);
+      // Edges from t1 -> t1 should have have their target computation in t2.
+      if (computations[rc2].source_token == t1)
+	assert(not tokens[t2].vm_relative[r2]);
     }
   }
 #endif
