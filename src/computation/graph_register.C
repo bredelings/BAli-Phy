@@ -2301,6 +2301,11 @@ void reg_heap::try_release_token(int t)
       return;
     }
 
+#ifndef NDEBUG
+    check_back_edges_for_token(t);
+    check_back_edges_for_token(child_token);
+#endif
+
     invalidate_shared_regs1(t, child_token);
     invalidate_shared_regs2(t, child_token);
     
