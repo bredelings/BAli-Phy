@@ -1172,11 +1172,11 @@ void reg_heap::reroot_at(int t)
 
   total_reroot++;
   
-  fixup_back_edges(parent,t);
-
 #ifndef NDEBUG  
   check_no_up_edges(parent, t);
 #endif
+
+  fixup_back_edges(parent,t);
 
   // Mark this context as not having computations that need to be unshared
   tokens[t].version = tokens[parent].version;
@@ -2313,11 +2313,11 @@ void reg_heap::try_release_token(int t)
 
     capture_parent_token(child_token);
 
-    fixup_back_edges(t, child_token);
-
 #ifndef NDEBUG  
     check_no_up_edges(t, child_token);
 #endif
+
+    fixup_back_edges(t, child_token);
   }
 
   // clear only the mappings that were actually updated here.
