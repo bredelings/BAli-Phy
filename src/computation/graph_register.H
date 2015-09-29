@@ -444,6 +444,8 @@ public:
 
   void clear_computation(int t, int r);
 
+  void clear_call_back_edge(int rc);
+
   void clear_back_edges(int rc);
 
   void check_back_edges_cleared(int rc);

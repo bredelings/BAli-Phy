@@ -1486,19 +1486,16 @@ void reg_heap::invalidate_shared_regs3(int token, vector<int>& invalid)
   // First pass: clear back-edges to these computations
   for(int R: invalid)
   {
-    auto& RC = computation_for_reg_(token,R);
+    int rc = computation_index_for_reg_(token,R);
+    int mark = computations[rc].temp;
 
-    if (RC.temp == mark_result)
+    if (mark == mark_result)
     {
-      // clear call_back_edge only
-      int rc = RC.call_edge.first;
-      assert(rc);
-      auto back_edge = RC.call_edge.second;
-      computations[rc].called_by.erase(back_edge);
-      RC.call_edge.second = {};
+      assert(computations[rc].call_edge.first);
+      clear_call_back_edge(rc);
     }
-    else if (RC.temp == mark_call_result)
-      clear_back_edges(computation_index_for_reg_(token,R));
+    else if (mark == mark_call_result)
+      clear_back_edges(rc);
   }
 
   // Second pass: clear the computations
@@ -2265,6 +2262,19 @@ void reg_heap::check_back_edges_cleared(int rc)
   assert(null(computations.access_unused(rc).call_edge.second));
 }
 
+inline void reg_heap::clear_call_back_edge(int rc)
+{
+  int call = computations[rc].call_edge.first;
+  if (call)
+  {
+    assert(computations[rc].result);
+    auto back_edge = computations[rc].call_edge.second;
+    assert(*back_edge == rc);
+    computations[call].called_by.erase(back_edge);
+    computations[rc].call_edge.second = {};
+  }
+}
+
 void reg_heap::clear_back_edges(int rc)
 {
   for(auto& rcp: computations[rc].used_inputs)
@@ -2272,14 +2282,7 @@ void reg_heap::clear_back_edges(int rc)
     computations[rcp.first].used_by.erase(rcp.second);
     rcp.second = {};
   }
-  int call = computations[rc].call_edge.first;
-  if (call)
-  {
-    assert(computations[rc].result);
-    auto back_edge = computations[rc].call_edge.second;
-    computations[call].called_by.erase(back_edge);
-    computations[rc].call_edge = {};
-  }
+  clear_call_back_edge(rc);
 }
 
 void reg_heap::clear_computation(int t, int r)
