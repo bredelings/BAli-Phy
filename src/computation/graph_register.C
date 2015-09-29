@@ -840,8 +840,8 @@ void reg_heap::destroy_all_computations_in_token(int t)
 	{
 	  auto back_edge = computations[rc].call_edge.second;
 	  computations[call].called_by.erase(back_edge);
+	  computations[rc].call_edge = {};
 	}
-	computations[rc].call_edge = {};
       }
     }
     
