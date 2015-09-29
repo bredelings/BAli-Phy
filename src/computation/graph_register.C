@@ -2067,9 +2067,10 @@ void reg_heap::check_back_edges_for_token(int t) const
 {
   if (not token_is_used(t)) return;
 
-  for(int r=0;r<size();r++)
+  const auto& vm = tokens[t].vm_relative;
+  for(int r: vm.modified())
   {
-    int rc = tokens[t].vm_relative[r];
+    int rc = vm[r];
     if (rc <= 0) continue;
 
     const auto& RC = computations[rc];
