@@ -2178,8 +2178,11 @@ inline void reg_heap::clear_call_back_edge(int rc)
     assert(computations[rc].result);
     auto back_edge = computations[rc].call_edge.second;
     assert(*back_edge == rc);
-    computations[call].called_by.erase(back_edge);
-    computations[rc].call_edge.second = {};
+    if (not null(back_edge))
+    {
+      computations[call].called_by.erase(back_edge);
+      computations[rc].call_edge.second = {};
+    }
   }
 }
 
@@ -2187,8 +2190,11 @@ void reg_heap::clear_back_edges(int rc)
 {
   for(auto& rcp: computations[rc].used_inputs)
   {
-    computations[rcp.first].used_by.erase(rcp.second);
-    rcp.second = {};
+    if (not null(rcp.second))
+    {
+      computations[rcp.first].used_by.erase(rcp.second);
+      rcp.second = {};
+    }
   }
   clear_call_back_edge(rc);
 }
