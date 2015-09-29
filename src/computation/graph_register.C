@@ -957,110 +957,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     result_may_be_changed.push_back(P);
   }
 
-  int i=0;
-  int j=0;
-  while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
-  {
-    // First find all users or callers of regs where the result is out of date.
-    find_callers(token, token, j, result_may_be_changed, result_may_be_changed, mark_result);
-    find_users(token, token, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
-    j = result_may_be_changed.size();
-
-    // Second find all users or callers of regs where the result AND CALL are out of date.
-    find_users(token, token, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
-    find_callers(token, token, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
-    i = call_and_result_may_be_changed.size();
-  }
-
-#ifndef NDEBUG
-  for(int R: result_may_be_changed)
-    assert(computation_for_reg_(token,R).temp == mark_result or 
-	   computation_for_reg_(token,R).temp == mark_call_result or
-	   computation_for_reg_(token,R).temp == mark_modified
-	   );
-
-  for(int R: call_and_result_may_be_changed)
-    assert(computation_for_reg_(token,R).temp == mark_call_result or
-	   computation_for_reg_(token,R).temp == mark_modified
-	   );
-#endif
-
-  //  std::cerr<<" result: "<<result_may_be_changed.size()<<"\n";
-
-  if (token == root_token)
-  {
-    for(int r: result_may_be_changed)
-      dec_probability_for_reg(r);
-    for(int r: call_and_result_may_be_changed)
-      dec_probability_for_reg(r);
-  }
-
-  // Clear the marks: 1a
-  for(int R: result_may_be_changed)
-  {
-    assert(has_computation_(token,R));
-
-    //    assert(computation_result_for_reg(token,R) or reg_is_shared(token,R));
-
-    auto& RC = computation_for_reg_(token,R);
-
-    if (RC.temp > mark_result) continue;
-
-    assert(reg_has_call_(token,R));
-    assert(RC.call_edge.first);
-    
-    RC.temp = -1;
-
-    int call = RC.call_edge.first;
-    if (call)
-    {
-      assert(RC.result);
-      auto back_edge = RC.call_edge.second;
-      computations[call].called_by.erase(back_edge);
-      RC.call_edge = {};
-    }
-
-    RC.result = 0;
-    
-    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-    if (access(R).re_evaluate)
-      regs_to_re_evaluate.push_back(R);
-  }
-
-  // Clear the marks: 2a
-
-  for(int R: call_and_result_may_be_changed)
-  {
-    auto& RC = computation_for_reg_(token,R);
-
-    if (RC.temp > mark_call_result) continue;
-
-    clear_back_edges(computation_index_for_reg_(token,R));
-  }
-  
-  for(int R: call_and_result_may_be_changed)
-  {
-    assert(has_computation_(token,R));
-
-    // Put this back when we stop making spurious used_by edges
-    //    assert(reg_has_call(token,R));
-
-    auto& RC = computation_for_reg_(token,R);
-
-    if (RC.temp > mark_call_result) continue;
-
-    assert(RC.temp == mark_call_result);
-
-    RC.temp = -1;
-
-    assert(not is_modifiable(access(R).C.exp));
-
-    clear_computation(token,R);
-
-    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-    if (access(R).re_evaluate)
-      regs_to_re_evaluate.push_back(R);
-  }
+  invalidate_shared_regs3(token, result_may_be_changed, call_and_result_may_be_changed);
 
   if (has_computation_(token,P))
   {
@@ -1573,6 +1470,120 @@ void reg_heap::invalidate_shared_regs1(int t1, int t2)
 #endif
 }
 
+
+// Find all unshared regs in t2 that use an unshared reg in t1
+void reg_heap::invalidate_shared_regs3(int token, vector<int>& result_may_be_changed, vector<int>& call_and_result_may_be_changed)
+{
+  const int mark_result = 1;
+  const int mark_call_result = 2;
+  const int mark_modified = 3;
+
+  int i=0;
+  int j=0;
+  while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
+  {
+    // First find all users or callers of regs where the result is out of date.
+    find_callers(token, token, j, result_may_be_changed, result_may_be_changed, mark_result);
+    find_users(token, token, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    j = result_may_be_changed.size();
+
+    // Second find all users or callers of regs where the result AND CALL are out of date.
+    find_users(token, token, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
+    find_callers(token, token, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
+    i = call_and_result_may_be_changed.size();
+  }
+
+#ifndef NDEBUG
+  for(int R: result_may_be_changed)
+    assert(computation_for_reg_(token,R).temp == mark_result or 
+	   computation_for_reg_(token,R).temp == mark_call_result or
+	   computation_for_reg_(token,R).temp == mark_modified
+	   );
+
+  for(int R: call_and_result_may_be_changed)
+    assert(computation_for_reg_(token,R).temp == mark_call_result or
+	   computation_for_reg_(token,R).temp == mark_modified
+	   );
+#endif
+
+  //  std::cerr<<" result: "<<result_may_be_changed.size()<<"\n";
+
+  if (token == root_token)
+  {
+    for(int r: result_may_be_changed)
+      dec_probability_for_reg(r);
+    for(int r: call_and_result_may_be_changed)
+      dec_probability_for_reg(r);
+  }
+
+  vector< int >& regs_to_re_evaluate = tokens[token].regs_to_re_evaluate;
+
+  for(int R: result_may_be_changed)
+  {
+    assert(has_computation_(token,R));
+
+    //    assert(computation_result_for_reg(token,R) or reg_is_shared(token,R));
+
+    auto& RC = computation_for_reg_(token,R);
+
+    if (RC.temp > mark_result) continue;
+
+    assert(reg_has_call_(token,R));
+    assert(RC.call_edge.first);
+    
+    RC.temp = -1;
+
+    int call = RC.call_edge.first;
+    if (call)
+    {
+      assert(RC.result);
+      auto back_edge = RC.call_edge.second;
+      computations[call].called_by.erase(back_edge);
+      RC.call_edge = {};
+    }
+
+    RC.result = 0;
+    
+    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+    if (access(R).re_evaluate)
+      regs_to_re_evaluate.push_back(R);
+  }
+
+  for(int R: call_and_result_may_be_changed)
+  {
+    auto& RC = computation_for_reg_(token,R);
+
+    if (RC.temp > mark_call_result) continue;
+
+    clear_back_edges(computation_index_for_reg_(token,R));
+  }
+
+  for(int R: call_and_result_may_be_changed)
+  {
+    assert(has_computation_(token,R));
+
+    // Put this back when we stop making spurious used_by edges
+    //    assert(reg_has_call(token,R));
+
+    auto& RC = computation_for_reg_(token,R);
+
+    if (RC.temp > mark_call_result) continue;
+
+    assert(RC.temp == mark_call_result);
+
+    RC.temp = -1;
+
+    assert(not is_modifiable(access(R).C.exp));
+
+    clear_computation(token,R);
+
+    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
+    if (access(R).re_evaluate)
+      regs_to_re_evaluate.push_back(R);
+  }
+ 
+}
+
 // Find all unshared regs in t2 that use an unshared reg in t1
 void reg_heap::invalidate_shared_regs2(int t1, int t2)
 {
@@ -1629,86 +1640,7 @@ void reg_heap::invalidate_shared_regs2(int t1, int t2)
       call_and_result_may_be_changed.push_back(r1);
   }
 
-  int i=0;
-  int j=0;
-  while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
-  {
-    // First find all users or callers of regs where the result is out of date.
-    find_callers(t2, t2, j, result_may_be_changed, result_may_be_changed, mark_result);
-    find_users(t2, t2, j, result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
-    j = result_may_be_changed.size();
-
-    // Second find all users or callers of regs where the result AND CALL are out of date.
-    find_users(t2, t2, i, call_and_result_may_be_changed, call_and_result_may_be_changed, mark_call_result);
-    find_callers(t2, t2, i, call_and_result_may_be_changed, result_may_be_changed, mark_result);
-    i = call_and_result_may_be_changed.size();
-  }
-
-  vector< int >& regs_to_re_evaluate = tokens[t2].regs_to_re_evaluate;
-
-  for(int R: result_may_be_changed)
-  {
-    assert(has_computation_(t2,R));
-
-    //    assert(computation_result_for_reg(token,R) or reg_is_shared(token,R));
-
-    auto& RC = computation_for_reg_(t2,R);
-
-    if (RC.temp > mark_result) continue;
-
-    assert(reg_has_call_(t2,R));
-    assert(RC.call_edge.first);
-    
-    RC.temp = -1;
-
-    int call = RC.call_edge.first;
-    if (call)
-    {
-      assert(RC.result);
-      auto back_edge = RC.call_edge.second;
-      computations[call].called_by.erase(back_edge);
-      RC.call_edge = {};
-    }
-
-    RC.result = 0;
-    
-    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-    if (access(R).re_evaluate)
-      regs_to_re_evaluate.push_back(R);
-  }
-
-  for(int R: call_and_result_may_be_changed)
-  {
-    auto& RC = computation_for_reg_(t2,R);
-
-    if (RC.temp > mark_call_result) continue;
-
-    clear_back_edges(computation_index_for_reg_(t2,R));
-  }
-
-  for(int R: call_and_result_may_be_changed)
-  {
-    assert(has_computation_(t2,R));
-
-    // Put this back when we stop making spurious used_by edges
-    //    assert(reg_has_call(t2,R));
-
-    auto& RC = computation_for_reg_(t2,R);
-
-    if (RC.temp > mark_call_result) continue;
-
-    assert(RC.temp == mark_call_result);
-
-    RC.temp = -1;
-
-    assert(not is_modifiable(access(R).C.exp));
-
-    clear_computation(t2,R);
-
-    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-    if (access(R).re_evaluate)
-      regs_to_re_evaluate.push_back(R);
-  }
+  invalidate_shared_regs3(t2, result_may_be_changed, call_and_result_may_be_changed);
 
   release_scratch_list();
   release_scratch_list();
