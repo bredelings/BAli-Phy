@@ -215,7 +215,7 @@ void computation::clear()
   assert(flags.none());
 }
 
-void computation::check_cleared()
+void computation::check_cleared() const
 {
   assert(not result);
   assert(not call);
@@ -284,7 +284,7 @@ void reg::clear()
   type = type_t::unknown;
 }
 
-void reg::check_cleared()
+void reg::check_cleared() const
 {
   assert(not C);
   assert(not re_evaluate);
@@ -2255,7 +2255,7 @@ int reg_heap::add_shared_computation(int t, int r)
   return rc;
 }
 
-void reg_heap::check_back_edges_cleared(int rc)
+void reg_heap::check_back_edges_cleared(int rc) const
 {
   for(auto& rcp:computations.access_unused(rc).used_inputs)
     assert(null(rcp.second));

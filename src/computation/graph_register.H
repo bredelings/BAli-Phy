@@ -45,7 +45,7 @@ struct computation
 
   void clear();
 
-  void check_cleared();
+  void check_cleared() const;
 
   computation& operator=(const computation&) = delete;
   computation& operator=(computation&&) noexcept;
@@ -73,7 +73,7 @@ public:
 
   void clear();
 
-  void check_cleared();
+  void check_cleared() const;
 
   reg& operator=(const reg&) = delete;
   reg& operator=(reg&&) noexcept;
@@ -448,7 +448,7 @@ public:
 
   void clear_back_edges(int rc);
 
-  void check_back_edges_cleared(int rc);
+  void check_back_edges_cleared(int rc) const;
 
   int move_computation(int t1, int t2, int r);
 
