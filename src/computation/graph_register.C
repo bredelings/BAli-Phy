@@ -2496,7 +2496,7 @@ reg_heap::reg_heap()
 #ifndef NDEBUG
   computations.clear_references = [this](int rc){check_back_edges_cleared(rc);};
 #endif
-  computations.clear_references = [this](int rc){};
+  computations.clear_references = [this](int){};
 }
 
 void reg_heap::release_scratch_list() const
