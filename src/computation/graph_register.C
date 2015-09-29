@@ -2136,8 +2136,7 @@ void reg_heap::duplicate_computation(int rc1, int rc2) const
   {
     int rc3 = rcpu.first;
 
-    auto back_edge = computations[rc3].used_by.push_back(rc2);
-    computations[rc2].used_inputs.push_back({rc3,back_edge});
+    computations[rc2].used_inputs.push_back({rc3,{}});
   }
 }
 
