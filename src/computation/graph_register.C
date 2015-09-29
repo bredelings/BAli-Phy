@@ -1266,8 +1266,6 @@ void reg_heap::reroot_at(int t)
 
   total_reroot++;
   
-  invalidate_shared_regs(parent,t);
-
   // Mark this context as not having computations that need to be unshared
   tokens[t].version = tokens[parent].version;
 
@@ -2405,8 +2403,6 @@ void reg_heap::try_release_token(int t)
     }
 
     capture_parent_token(child_token);
-
-    invalidate_shared_regs(t, child_token);
   }
 
   // clear only the mappings that were actually updated here.
