@@ -1916,8 +1916,8 @@ int reg_heap::add_shared_computation(int t, int r)
 void reg_heap::check_back_edges_cleared(int rc)
 {
   for(auto& rcp:computations.access_unused(rc).used_inputs)
-    assert(rcp.second == CacheList<int>::iterator());
-  assert(computations.access_unused(rc).call_edge.second == CacheList<int>::iterator());
+    assert(null(rcp.second));
+  assert(null(computations.access_unused(rc).call_edge.second));
 }
 
 void reg_heap::clear_back_edges(int rc)
