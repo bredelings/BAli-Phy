@@ -14,8 +14,8 @@ void reg_heap::find_callers(int t1, int r1, vector<int>& modified, int mark)
     computation& RC2 = computations[rc2];
     int r2 = RC2.source_reg;
 
-    // If this computation is not in t1, then ignore it.
-    if (RC2.source_token != t1) continue;
+    // All back-edges should be in w/in t1.
+    assert(RC2.source_token == t1);
 
     // Skip this one if its been marked high enough already
     if (RC2.temp >= mark) continue;
@@ -47,8 +47,8 @@ void reg_heap::find_users(int t1, int r, vector<int>& modified, int mark)
     computation& RC2 = computations[rc2];
     int r2 = RC2.source_reg;
 
-    // If this computation is not in t1, then ignore it.
-    if (RC2.source_token != t1) continue;
+    // All back-edges should be in w/in t1.
+    assert(RC2.source_token == t1);
 
     // Skip this one if its been marked high enough already
     if (RC2.temp >= mark) continue;
@@ -77,8 +77,8 @@ void reg_heap::find_shared_callers(int t1, int t2, int r1, vector<int>& modified
     computation& RC2 = computations[rc2];
     int r2 = RC2.source_reg;
 
-    // If this computation is not in t1, then ignore it.
-    if (RC2.source_token != t1) continue;
+    // All back-edges should be in w/in t1.
+    assert(RC2.source_token == t1);
 
     // Skip this one if its been marked high enough already
     if (RC2.temp >= mark) continue;
@@ -113,8 +113,8 @@ void reg_heap::find_shared_users(int t1, int t2, int r, vector<int>& modified, i
     computation& RC2 = computations[rc2];
     int r2 = RC2.source_reg;
 
-    // If this computation is not in t1, then ignore it.
-    if (RC2.source_token != t1) continue;
+    // All back-edges should be in w/in t1.
+    assert(RC2.source_token == t1);
 
     // Skip this one if its been marked high enough already
     if (RC2.temp >= mark) continue;
