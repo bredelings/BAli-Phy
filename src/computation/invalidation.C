@@ -135,7 +135,7 @@ void reg_heap::find_shared_users(int t1, int t2, int r, vector<int>& modified, i
   }
 }
 
-void reg_heap::invalidate_shared_regs1(int t1, int t2)
+void reg_heap::unshare_regs(int t1, int t2)
 {
   assert(t1 == parent_token(t2));
   assert(tokens[t1].version >= tokens[t2].version);
@@ -312,7 +312,7 @@ void reg_heap::invalidate_regs(int token, vector<int>& invalid)
 }
 
 // Find all unshared regs in t2 that use an unshared reg in t1
-void reg_heap::invalidate_shared_regs2(int t1, int t2)
+void reg_heap::invalidate_cross_regs(int t1, int t2)
 {
   assert(t1 == parent_token(t2));
   assert(tokens[t1].version >= tokens[t2].version);

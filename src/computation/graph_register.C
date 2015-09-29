@@ -1139,8 +1139,8 @@ void reg_heap::reroot_at(int t)
   check_back_edges_for_token(t);
 #endif
 
-  invalidate_shared_regs1(parent,t);
-  invalidate_shared_regs2(parent,t);
+  unshare_regs(parent,t);
+  invalidate_cross_regs(parent,t);
   pivot_mapping(parent, t);
   swap_tokens(parent,t);
   std::swap(parent,t);
@@ -1908,8 +1908,8 @@ void reg_heap::try_release_token(int t)
     check_back_edges_for_token(child_token);
 #endif
 
-    invalidate_shared_regs1(t, child_token);
-    invalidate_shared_regs2(t, child_token);
+    unshare_regs(t, child_token);
+    invalidate_cross_regs(t, child_token);
     
     if (merge_split_mapping(t, child_token))
     {
