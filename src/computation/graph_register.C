@@ -826,15 +826,21 @@ void reg_heap::destroy_all_computations_in_token(int t)
     {
       for(auto& rcp: computations[rc].used_inputs)
       {
-	computations[rcp.first].used_by.erase(rcp.second);
-	rcp.second = {};
+	if (not null(rcp.second))
+	{
+	  computations[rcp.first].used_by.erase(rcp.second);
+	  rcp.second = {};
+	}
       }
       int call = computations[rc].call_edge.first;
       if (call)
       {
 	assert(computations[rc].result);
-	auto back_edge = computations[rc].call_edge.second;
-	computations[call].called_by.erase(back_edge);
+	if (not null(computations[rc].call_edge.second))
+	{
+	  auto back_edge = computations[rc].call_edge.second;
+	  computations[call].called_by.erase(back_edge);
+	}
 	computations[rc].call_edge = {};
       }
     }
@@ -1133,6 +1139,11 @@ void reg_heap::reroot_at(int t)
   assert(parent == root_token);
 
   // 2. Change the relative mappings
+#ifndef NDEBUG
+  check_back_edges_for_token(parent);
+  check_back_edges_for_token(t);
+#endif
+
   invalidate_shared_regs1(parent,t);
   invalidate_shared_regs2(parent,t);
   pivot_mapping(parent, t);
@@ -1161,6 +1172,12 @@ void reg_heap::reroot_at(int t)
 
   total_reroot++;
   
+  fixup_back_edges(parent,t);
+
+#ifndef NDEBUG  
+  check_no_up_edges(parent, t);
+#endif
+
   // Mark this context as not having computations that need to be unshared
   tokens[t].version = tokens[parent].version;
 
@@ -1682,8 +1699,9 @@ void reg_heap::fixup_back_edges(int t1, int t2)
     }
   }
 
-#ifdef DEBUG_MACHINE
-  check_back_edges();
+#ifndef NDEBUG
+  check_back_edges_for_token(t1);
+  check_back_edges_for_token(t2);
 #endif
 }
 
@@ -2245,6 +2263,10 @@ void reg_heap::try_release_token(int t)
 {
   assert(token_is_used(t));
 
+#ifndef NDEBUG
+  check_back_edges_for_token(t);
+#endif
+
   // We shouldn't have any temporary heads still on the stack, here!
   // (This should be fast now, no longer proportional to the number of regs in context t.)
   // (But how fast is it?)
@@ -2283,6 +2305,12 @@ void reg_heap::try_release_token(int t)
     }
 
     capture_parent_token(child_token);
+
+    fixup_back_edges(t, child_token);
+
+#ifndef NDEBUG  
+    check_no_up_edges(t, child_token);
+#endif
   }
 
   // clear only the mappings that were actually updated here.
