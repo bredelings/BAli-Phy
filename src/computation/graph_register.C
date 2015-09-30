@@ -824,34 +824,12 @@ void reg_heap::destroy_all_computations_in_token(int t)
     int rc = tokens[t].vm_relative[r];
     if (rc > 0)
     {
-      for(auto& rcp: computations[rc].used_inputs)
-      {
-	if (not null(rcp.second))
-	{
-	  computations[rcp.first].used_by.erase(rcp.second);
-	  rcp.second = {};
-	}
-      }
-      int call = computations[rc].call_edge.first;
-      if (call)
-      {
-	assert(computations[rc].result);
-	if (not null(computations[rc].call_edge.second))
-	{
-	  auto back_edge = computations[rc].call_edge.second;
-	  computations[call].called_by.erase(back_edge);
-	  computations[rc].call_edge = {};
-	}
-      }
-    }
-    
-  }
+      // All back-edges are w/in this token, so just clear them.
+      computations[rc].used_by.clear();
+      computations[rc].called_by.clear();
 
-  for(int r: tokens[t].vm_relative.modified())
-  {
-    int rc = tokens[t].vm_relative[r];
-    if (rc > 0)
       computations.reclaim_used(rc);
+    }
   }
   tokens[t].vm_relative.clear();
 }
