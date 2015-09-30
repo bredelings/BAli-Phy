@@ -375,6 +375,7 @@ void mapping::clear()
 void mapping::resize(int s)
 {
   values.resize(s);
+  modified_.reserve(s);
 }
 
 int mapping::size() const
