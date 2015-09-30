@@ -358,7 +358,8 @@ double data_partition::sequence_length_pr(int l) const
 
   int arg_param_index = P->IModel_methods[m].length_arg_param_index;
 
-  const_cast<Parameters*>(P)->set_parameter_value(arg_param_index, l );
+  const context* C = P;
+  const_cast<context*>(C)->set_parameter_value(arg_param_index, l );
 
   return P->evaluate( P->IModel_methods[m].length_p ).as_double();
 }
@@ -467,8 +468,9 @@ void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& 
   }
 #endif
 
-  const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[b], new pairwise_alignment_t(pi));
-  const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[B], new pairwise_alignment_t(pi.flipped()));
+  const context* C = P;
+  const_cast<context*>(C)->set_parameter_value(pairwise_alignment_for_branch[b], new pairwise_alignment_t(pi));
+  const_cast<context*>(C)->set_parameter_value(pairwise_alignment_for_branch[B], new pairwise_alignment_t(pi.flipped()));
 
   if (require_match_A)
   {
@@ -521,7 +523,8 @@ void data_partition::recompute_pairwise_alignment(int b, bool require_match_A)
 
 void data_partition::invalidate_pairwise_alignment_for_branch(int b) const
 {
-  const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[b], 0);
+  const context* C = P;
+  const_cast<context*>(C)->set_parameter_value(pairwise_alignment_for_branch[b], 0);
 }
 
 void data_partition::note_alignment_changed_on_branch(int b)
