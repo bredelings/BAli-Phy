@@ -1746,7 +1746,7 @@ void reg_heap::check_back_edges_cleared(int rc) const
   assert(null(computations.access_unused(rc).call_edge.second));
 }
 
-inline void reg_heap::clear_call_back_edge(int rc)
+void reg_heap::clear_call_back_edge(int rc)
 {
   int call = computations[rc].call_edge.first;
   if (call)
