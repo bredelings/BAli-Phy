@@ -237,6 +237,7 @@ void show_ending_messages()
   extern int total_reg_allocations;
   extern int total_comp_allocations;
   extern int total_reroot;
+  extern int total_destroy_intermediate_token;
   if (total_reductions > 0)
   {
     cout<<"total reduction steps          = "<<total_reductions<<endl;
@@ -245,6 +246,7 @@ void show_ending_messages()
     cout<<"total register allocations     = "<<total_reg_allocations<<endl;
     cout<<"total computation allocation   = "<<total_comp_allocations<<endl;
     cout<<"total reroot operations = "<<total_reroot<<endl;
+    cout<<"total destroy intermediate token operations = "<<total_destroy_intermediate_token<<endl;
   }
 }
 

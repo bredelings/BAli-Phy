@@ -20,6 +20,7 @@ using std::endl;
 int total_reg_allocations = 0;
 int total_comp_allocations = 0;
 int total_reroot = 0;
+int total_destroy_intermediate_token = 0;
 /*
  * Goal: Share computation of WHNF structures between contexts, even when those
  *       stuctures are uncomputed at the time the contexts are split.
@@ -1898,6 +1899,7 @@ void reg_heap::try_release_token(int t)
 #endif
 
     fixup_back_edges(t, child_token);
+    total_destroy_intermediate_token++;
   }
 
   // clear only the mappings that were actually updated here.

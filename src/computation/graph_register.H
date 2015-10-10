@@ -519,5 +519,6 @@ extern int total_reductions;
 extern int total_reg_allocations;
 extern int total_comp_allocations;
 extern int total_reroot;
+extern int total_destroy_intermediate_token;
 
 #endif
