@@ -1756,9 +1756,9 @@ void reg_heap::clear_call_back_edge(int rc)
   {
     assert(computations[rc].result);
     auto back_edge = computations[rc].call_edge.second;
-    assert(*back_edge == rc);
     if (not null(back_edge))
     {
+      assert(*back_edge == rc);
       computations[call].called_by.erase(back_edge);
       computations[rc].call_edge.second = {};
     }
