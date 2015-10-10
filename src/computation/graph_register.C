@@ -1116,6 +1116,8 @@ void reg_heap::reroot_at(int t)
 
   unshare_regs(parent,t);
   invalidate_cross_regs(parent,t);
+  fixup_back_edges(parent,t);
+
   pivot_mapping(parent, t);
   swap_tokens(parent,t);
   std::swap(parent,t);
@@ -1144,9 +1146,9 @@ void reg_heap::reroot_at(int t)
   
 #ifndef NDEBUG  
   check_no_up_edges(parent, t);
+  check_back_edges_for_token(parent);
+  check_back_edges_for_token(t);
 #endif
-
-  fixup_back_edges(parent,t);
 
   // Mark this context as not having computations that need to be unshared
   tokens[t].version = tokens[parent].version;
@@ -1212,9 +1214,9 @@ void reg_heap::fixup_back_edges(int t1, int t2)
   auto& m1 = tokens[t1].vm_relative;
   auto& m2 = tokens[t2].vm_relative;
 
-  for(int r: m1.modified())
+  for(int r: m2.modified())
   {
-    // Erase back-links from computations in different contexts.
+    // Erase back-links to computations shared from t1 -> t2
     int rc = m1[r];
     if (rc > 0)
     {
@@ -1222,26 +1224,29 @@ void reg_heap::fixup_back_edges(int t1, int t2)
       assert(RC.source_token == t1);
 
       for(auto& rcp: RC.used_inputs)
-      {
-	int rc2 = rcp.first;
-	auto& RC2 = computations[rc2];
-	if (not null(rcp.second) and RC2.source_token != t1)
+	if (not null(rcp.second))
 	{
-	  assert(RC2.source_token == t2);
-	  assert(*rcp.second == rc);
-	  RC2.used_by.erase(rcp.second);
-	  rcp.second = {};
+	  int rc2 = rcp.first;
+	  auto& RC2 = computations[rc2];
+	  int r2 = RC2.source_reg;
+	  assert(RC2.source_token == t1);
+	  if (not m2[r2])
+	  {
+	    assert(*rcp.second == rc);
+	    RC2.used_by.erase(rcp.second);
+	    rcp.second = {};
+	  }
 	}
-      }
 
       auto& rcp = RC.call_edge;
-      if (rcp.first)
+      if (rcp.first and not null(rcp.second))
       {
 	int rc2 = rcp.first;
 	auto& RC2 =  computations[rc2];
-	if (not null(rcp.second) and RC2.source_token != t1)
+	int r2 = RC2.source_reg;
+	assert(RC2.source_token == t1);
+	if (not m2[r2])
 	{
-	  assert(RC2.source_token == t2);
 	  assert(*rcp.second == rc);
 	  RC2.called_by.erase(rcp.second);
 	  rcp.second = {};
@@ -1249,7 +1254,7 @@ void reg_heap::fixup_back_edges(int t1, int t2)
       }
     }
 
-    // Add missing back-links for the root context.
+    // Add missing back-links to computations shared from t1 -> t2
     rc = m2[r];
     if (rc > 0)
     {
@@ -1261,7 +1266,8 @@ void reg_heap::fixup_back_edges(int t1, int t2)
 	{
 	  int rc2 = rcp.first;
 	  auto& RC2 = computations[rc2];
-	  if (RC2.source_token == t2)
+	  int r2 = RC2.source_reg;
+	  if (RC2.source_token == t1 and not m2[r2])
 	    rcp.second = RC2.used_by.push_back(rc);
 	}
 
@@ -1270,16 +1276,12 @@ void reg_heap::fixup_back_edges(int t1, int t2)
       {
 	int rc2 = rcp.first;
 	auto& RC2 = computations[rc2];
-	if (RC2.source_token == t2)
+	int r2 = RC2.source_reg;
+	if (RC2.source_token == t1 and not m2[r2])
 	  rcp.second = RC2.called_by.push_back(rc);
       }
     }
   }
-
-#ifndef NDEBUG
-  check_back_edges_for_token(t1);
-  check_back_edges_for_token(t2);
-#endif
 }
 
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
@@ -1885,6 +1887,7 @@ void reg_heap::try_release_token(int t)
 
     unshare_regs(t, child_token);
     invalidate_cross_regs(t, child_token);
+    fixup_back_edges(t, child_token);
     
     if (merge_split_mapping(t, child_token))
     {
@@ -1896,9 +1899,10 @@ void reg_heap::try_release_token(int t)
 
 #ifndef NDEBUG  
     check_no_up_edges(t, child_token);
+    check_back_edges_for_token(t);
+    check_back_edges_for_token(child_token);
 #endif
 
-    fixup_back_edges(t, child_token);
     total_destroy_intermediate_token++;
   }
 
