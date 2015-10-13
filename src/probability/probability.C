@@ -273,11 +273,7 @@ static double pointChi2(double prob, double v)
   double xx, c, ch, a = 0, q = 0, p1 = 0, p2 = 0, t = 0, x = 0, b = 0, s1, s2, s3, s4, s5, s6;
     
   if (v <= 0)
-  {
-    std::cerr<<"Warning: can't handle 2*a = "<<v<<" in gamma quantile: using 0.000002\n";
-    v = 0.000002;
-    //    throw myexception()<<"Arguments out of range: v = "<<v;
-  }
+    throw myexception()<<"Arguments out of range: v = "<<v;
 
   assert(p >= 0 and p <= 1);
 
@@ -379,20 +375,23 @@ double gamma_quantile(double p, double a, double b)
   assert(p >= 0);
   assert(p <= 1);
 
-  if (b == 0.0)
-    return 1.0;
-  else if (a < 10000)
-    return gamma_quantile_no_approx(p,a,b);
-  else
+  try
   {
-    double sigma2 =  log1p(1.0/a); // log1p(V/(M*M)) , V = a*b*b
-    double sigma = sqrt(sigma2);
-    double mu = log(a*b) - sigma2/2.0; // log(M) - sigma2/2.0, M = a*b
-
-    // don't go crazy
-    sigma = minmax(sigma, 1.0e-5, 1.0e5);
-
-    return log_normal_quantile(p, mu ,sigma);
+    if (a < 10000)
+      return gamma_quantile_no_approx(p,a,b);
+    else
+    {
+      double sigma2 =  log1p(1.0/a); // log1p(V/(M*M)) , V = a*b*b
+      double sigma = sqrt(sigma2);
+      double mu = log(a*b) - sigma2/2.0; // log(M) - sigma2/2.0, M = a*b
+      
+      return log_normal_quantile(p, mu ,sigma);
+    }
+  }
+  catch(const std::exception& e)
+  {
+    std::cerr<<"Warning: gamma_quantile (p="<<p<<", a="<<a<<", b="<<b<<"), "<<e.what()<<std::endl;
+    return 1;
   }
 }
 
