@@ -845,10 +845,11 @@ void do_sampling(const variables_map& args,
 {
   using namespace MCMC;
 
-  owned_ptr<Parameters> PP = P.as<Parameters>();
+  bool is_parameters = P.as<Parameters>();
 
-  if (PP and PP->variable_alignment())
+  if (is_parameters and P.as<Parameters>()->variable_alignment())
   {
+    owned_ptr<Parameters> PP = P.as<Parameters>();
     for(int i=0;i<PP->n_data_partitions();i++)
       check_internal_nodes_connected((*PP)[i].A(), (*PP)[i].T());
   }
@@ -863,8 +864,9 @@ void do_sampling(const variables_map& args,
   MoveAll MH_but_no_slice_moves = get_parameter_MH_but_no_slice_moves(*P);
   MoveAll MH_moves = get_parameter_MH_moves(*P);
 
-  if (PP)
+  if (is_parameters)
   {
+    owned_ptr<Parameters> PP = P.as<Parameters>();
     //----------------------- alignment -------------------------//
     MoveAll alignment_moves = get_alignment_moves(*PP);
     
@@ -913,8 +915,9 @@ void do_sampling(const variables_map& args,
   sampler.show_enabled(s_out);
   s_out<<"\n";
 
-  if (PP)
+  if (is_parameters)
   {
+    owned_ptr<Parameters> PP = P.as<Parameters>();
     //-------------------- Report alignment alignments -----------------------//
     for(int i=0;i<PP->n_data_partitions();i++)
       std::cout<<"Partition "<<i+1<<": using "<<(*PP)[i].alignment_constraint.size1()<<" constraints.\n";
