@@ -10,38 +10,11 @@ class pool
 public:
   enum States {none=0,free=1,used=2,marked=3};
 
-  friend class weak_ref;
-
-  class weak_ref
-  {
-    int r=0;
-    unsigned version=0;
-  public:
-
-    int get(const pool<T>& p) const {
-      const auto& record = p.lookup(r);
-      if (record.version != version) return 0;
-      return r;
-    }
-
-    bool is_null() const {return r==0 and version == 0;}
-
-    int get_unsafe() const {return r;}
-
-    void reset() {r = 0; version = 0;}
-
-    weak_ref() = default;
-    weak_ref(int a, unsigned b):r(a),version(b) {}
-  };
-
 protected:
-
-  unsigned version = 1;
 
   struct record
   {
     States state = none;
-    unsigned version = 0;
     int prev = -1;
     int next = -1;
     T value;
@@ -97,8 +70,6 @@ public:
   virtual int add_to_free_list(int r)
   {
     lookup(r).state = free;
-    assert(lookup(r).version < version);
-    lookup(r).version = version;
     lookup(r).prev = -1;
     lookup(r).next = first_free;
     if (first_free != -1)
@@ -160,9 +131,6 @@ public:
 
 public:
   
-  weak_ref get_weak_ref(int r) const {assert(is_used(r) or is_marked(r)); return {r,memory[r].version};}
-  bool inc_version() {version++; return not version;}
-
   bool is_null(int r) const {assert(is_valid_address(r)); return memory[r].state == none;}
   bool is_free(int r) const {assert(is_valid_address(r)); return memory[r].state == free;}
   bool is_used(int r) const {assert(is_valid_address(r)); return memory[r].state == used;}
@@ -384,25 +352,5 @@ public:
 
   checked_pool_callback(int n): checked_pool<T>(n) {}
 };
-
-template <typename V, typename T>
-V& clean_weak_refs(V& v, const pool<T>& P)
-{
-  for(int i=0; i < v.size();)
-  {
-    int rc = v[i].get(P);
-    if (rc)
-      i++;
-    else
-    {
-      auto wr = v.back();
-      v.pop_back();
-      if (i < v.size())
-	v[i] = wr;
-    }
-  }
-
-  return v;
-}
 
 #endif

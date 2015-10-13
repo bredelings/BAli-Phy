@@ -841,7 +841,6 @@ void reg_heap::destroy_all_computations_in_token(int t)
     
   }
 
-  computations.inc_version();
   for(int r: tokens[t].vm_relative.modified())
   {
     int rc = tokens[t].vm_relative[r];
@@ -1028,7 +1027,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       regs_to_re_evaluate.push_back(R);
   }
 
-  computations.inc_version();
   // Clear the marks: 2a
 
   for(int R: call_and_result_may_be_changed)
@@ -1947,7 +1945,6 @@ void reg_heap::clear_computation(int t, int r)
 #ifndef NDEBUG
     check_back_edges_cleared(rc);
 #endif
-    computations.inc_version();
     computations.reclaim_used(rc);
   }
 }

@@ -13,10 +13,6 @@ void shrink(V& v)
 
 void reg_heap::collect_garbage()
 {
-  // Make sure weak references to anything freed here are invalidated.
-  computations.inc_version();
-  inc_version();
-
 #ifdef DEBUG_MACHINE
   std::cerr<<"***********Garbage Collection******************"<<std::endl;
   check_used_regs();
