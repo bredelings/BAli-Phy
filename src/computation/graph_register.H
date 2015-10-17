@@ -15,6 +15,35 @@
 #include <bitset>
 #include "CacheList.H"
 
+struct Step
+{
+  int source_token = -1;
+
+  int source_reg = -1;
+
+  int call = 0;
+
+  /// Which reg's were used to reduce this expression?
+  //  std::vector< int > used_inputs;
+  boost::container::small_vector< std::pair<int,CacheList<int>::iterator>, 10 > used_inputs;
+
+  int temp = -1;
+
+  std::bitset<64> flags;
+
+  void clear();
+
+  void check_cleared();
+
+  Step& operator=(const Step&) = delete;
+  Step& operator=(Step&&) noexcept;
+
+  Step() = default;
+
+  Step(const Step&) = delete;
+  Step(Step&&) noexcept;
+};
+
 struct computation
 {
   int source_token = -1;
@@ -25,14 +54,8 @@ struct computation
   int result = 0;
 
   /// Does C reduce to another reg that we need to evaluate to get the true result?
-  int call = 0;
-
   std::pair<int,CacheList<int>::iterator> call_edge;
   
-  /// Which reg's were used to reduce this expression?
-  //  std::vector< int > used_inputs;
-  boost::container::small_vector< std::pair<int,CacheList<int>::iterator>, 10 > used_inputs;
-
   /// Which pairs (reg,slot) USED the reduction result of C (via an operation)?
   CacheList<int> used_by;
 
@@ -135,6 +158,8 @@ class reg_heap: public Object, public checked_pool<reg>
 {
   typedef checked_pool<reg> base_pool_t;
 
+  mutable checked_pool_callback<Step> steps;
+
   mutable checked_pool_callback<computation> computations;
 
   mutable int n_active_scratch_lists = 0;
@@ -171,7 +196,7 @@ public:
   void set_call(int t, int R1, int R2);
   void set_call(int R1, int R2);
   void destroy_all_computations_in_token(int t);
-  void clear_call(int rc);
+  void clear_call(int s);
   void clear_call_for_reg(int R);
   void clear_C(int R);
   void set_C(int R, closure&& C);
@@ -276,6 +301,7 @@ public:
 
     /// Mapping from closures to computations/results
     mapping vm_relative;
+    mapping vm_step;
 
     /// These are the regs that must be evaluated when the context becomes active.
     std::vector<int> regs_to_re_evaluate;
@@ -331,8 +357,11 @@ public:
   void swap_tokens(int, int);
 
   bool merge_split_mapping(int, int);
+  void merge_split_step_mapping(int, int, bool);
+  void merge_split_relative_mapping(int, int, bool);
 
-  void pivot_mapping(int, int);
+  void pivot_step_mapping(int, int);
+  void pivot_relative_mapping(int, int);
 
   /*------------- Stuff for context indices -----------*/
   std::vector<int> unused_contexts;
@@ -412,9 +441,13 @@ public:
   std::vector<int> find_all_regs_in_context_no_check(int, bool) const;
 
   /*----- Virtual memory ------*/
+  int step_index_for_reg_(int t, int r) const;
   int computation_index_for_reg_(int t, int r) const;
+  const Step& step_for_reg_(int t, int r) const;
+        Step& step_for_reg_(int t, int r);
   const computation& computation_for_reg_(int t, int r) const;
         computation& computation_for_reg_(int t, int r);
+  bool has_step_(int t, int r) const;
   bool has_computation_(int t, int r) const;
   bool reg_has_result_(int t, int r) const;
   bool reg_has_computation_result_(int t, int r) const;
@@ -422,9 +455,13 @@ public:
   bool reg_has_call_(int t, int r) const;
   int call_for_reg_(int t, int r) const;
 
+  int step_index_for_reg(int r) const;
   int computation_index_for_reg(int r) const;
+  const Step& step_for_reg(int r) const ;
+        Step& step_for_reg(int r);
   const computation& computation_for_reg(int r) const ;
         computation& computation_for_reg(int r);
+  bool has_step(int r) const;
   bool has_computation(int r) const;
   bool reg_has_result(int r) const;
   bool reg_has_computation_result(int r) const;
@@ -434,20 +471,27 @@ public:
 
   const closure& access_result_for_reg(int R1) const;
 
+  int remove_shared_step(int t, int r);
   int remove_shared_computation(int t, int r);
 
-  void duplicate_computation(int rc1, int rc2) const;
+  void duplicate_step(int rc1, int rc2) const;
 
+  int add_shared_step(int t, int r);
   int add_shared_computation(int t, int r);
 
+  void clear_step(int t, int r);
   void clear_computation(int t, int r);
 
-  void clear_back_edges(int rc);
+  void clear_back_edges_for_step(int s);
+  void clear_back_edges_for_computation(int rc);
 
-  void check_back_edges_cleared(int rc);
+  void check_back_edges_cleared_for_step(int rc);
+  void check_back_edges_cleared_for_computation(int rc);
 
+  int move_step(int t1, int t2, int r);
   int move_computation(int t1, int t2, int r);
 
+  bool step_is_referenced(int,int) const;
   bool computation_is_referenced(int,int) const;
 
   int result_for_reg(int r) const;

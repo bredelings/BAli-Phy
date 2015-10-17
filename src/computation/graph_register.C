@@ -18,6 +18,7 @@ using std::cerr;
 using std::endl;
 
 int total_reg_allocations = 0;
+int total_step_allocations = 0;
 int total_comp_allocations = 0;
 int total_reroot = 0;
 /*
@@ -199,14 +200,53 @@ expression_ref graph_normalize(const expression_ref& E)
 // See "From Natural Semantics to C: A Formal Derivation of two STG machines."
 //      by Alberto de la Encina and Ricardo Pena.
 
+void Step::clear()
+{
+  source_token = -1;
+  source_reg = -1;
+  call = 0;
+  truncate(used_inputs);
+
+  // This should already be cleared.
+  assert(temp == -1);
+  assert(flags.none());
+}
+
+void Step::check_cleared()
+{
+  assert(not call);
+  assert(used_inputs.empty());
+  assert(temp == -1);
+  assert(flags.none());
+}
+
+Step& Step::operator=(Step&& S) noexcept
+{
+  source_token = S.source_token;
+  source_reg = S.source_reg;
+  call = S.call;
+  used_inputs  = std::move( S.used_inputs );
+  temp = S.temp;
+  flags = S.flags;
+
+  return *this;
+}
+
+Step::Step(Step&& S) noexcept
+ :source_token( S.source_token),
+  source_reg( S.source_reg),
+  call ( S.call ),
+  used_inputs ( std::move(S.used_inputs) ),
+  temp ( S.temp ),
+  flags ( S.flags )
+{ }
+
 void computation::clear()
 {
   source_token = -1;
   source_reg = -1;
   result = 0;
-  call = 0;
   truncate(call_edge);
-  truncate(used_inputs);
   truncate(used_by);
   truncate(called_by);
 
@@ -218,9 +258,7 @@ void computation::clear()
 void computation::check_cleared()
 {
   assert(not result);
-  assert(not call);
   assert(not call_edge.first);
-  assert(used_inputs.empty());
   assert(called_by.empty());
   assert(used_by.empty());
   assert(temp == -1);
@@ -232,9 +270,7 @@ computation& computation::operator=(computation&& R) noexcept
   result = R.result;
   source_token = R.source_token;
   source_reg = R.source_reg;
-  call = R.call;
   call_edge = R.call_edge;
-  used_inputs  = std::move( R.used_inputs );
   used_by = std::move( R.used_by );
   called_by = std::move( R.called_by );
   temp = R.temp;
@@ -247,9 +283,7 @@ computation::computation(computation&& R) noexcept
 :source_token(R.source_token),
   source_reg(R.source_reg),
   result (R.result), 
-  call ( R.call ),
   call_edge (R.call_edge),
-  used_inputs ( std::move(R.used_inputs) ),
   used_by ( std::move( R.used_by) ),
   called_by ( std::move( R.called_by) ),
   temp ( R.temp ),
@@ -583,9 +617,26 @@ double reg_heap::get_rate_for_reg(int r)
 const std::vector<int>& reg_heap::triggers() const {return tokens[root_token].triggers;}
       std::vector<int>& reg_heap::triggers()       {return tokens[root_token].triggers;}
 
+int reg_heap::step_index_for_reg(int r) const 
+{
+  return tokens[root_token].vm_step[r];
+}
+
 int reg_heap::computation_index_for_reg(int r) const 
 {
   return tokens[root_token].vm_relative[r];
+}
+
+const Step& reg_heap::step_for_reg(int r) const 
+{ 
+  int s = step_index_for_reg(r);
+  return steps.access_unused(s);
+}
+
+Step& reg_heap::step_for_reg(int r)
+{ 
+  int s = step_index_for_reg(r);
+  return steps.access_unused(s);
 }
 
 const computation& reg_heap::computation_for_reg(int r) const 
@@ -622,12 +673,12 @@ bool reg_heap::reg_has_computation_result(int r) const
 
 bool reg_heap::reg_has_call(int r) const
 {
-  return has_computation(r) and call_for_reg(r);
+  return has_step(r) and call_for_reg(r);
 }
 
 int reg_heap::call_for_reg(int r) const
 {
-  return computation_for_reg(r).call;
+  return step_for_reg(r).call;
 }
 
 bool reg_heap::reg_has_result_(int t, int r) const
@@ -650,7 +701,12 @@ bool reg_heap::reg_has_call_(int t, int r) const
 
 int reg_heap::call_for_reg_(int t, int r) const
 {
-  return computation_for_reg_(t,r).call;
+  return step_for_reg_(t,r).call;
+}
+
+bool reg_heap::has_step(int r) const
+{
+  return step_index_for_reg(r)>0;
 }
 
 bool reg_heap::has_computation(int r) const
@@ -658,9 +714,26 @@ bool reg_heap::has_computation(int r) const
   return computation_index_for_reg(r)>0;
 }
 
+bool reg_heap::has_step_(int t, int r) const
+{
+  return step_index_for_reg_(t,r)>0;
+}
+
 bool reg_heap::has_computation_(int t, int r) const
 {
   return computation_index_for_reg_(t,r)>0;
+}
+
+const Step& reg_heap::step_for_reg_(int t, int r) const 
+{ 
+  int rc = step_index_for_reg_(t,r);
+  return steps.access_unused(rc);
+}
+
+Step& reg_heap::step_for_reg_(int t, int r)
+{ 
+  int rc = step_index_for_reg_(t,r);
+  return steps.access_unused(rc);
 }
 
 const computation& reg_heap::computation_for_reg_(int t, int r) const 
@@ -673,6 +746,11 @@ computation& reg_heap::computation_for_reg_(int t, int r)
 { 
   int rc = computation_index_for_reg_(t,r);
   return computations.access_unused(rc);
+}
+
+int reg_heap::step_index_for_reg_(int t, int r) const 
+{
+  return tokens[t].vm_step[r];
 }
 
 int reg_heap::computation_index_for_reg_(int t, int r) const 
@@ -740,7 +818,7 @@ void reg_heap::set_used_input(int R1, int R2)
   assert(access(R1).C);
   assert(access(R2).C);
 
-  assert(has_computation(R1));
+  assert(has_step(R1));
   assert(has_computation(R2));
   assert(computation_result_for_reg(R2));
 
@@ -748,13 +826,13 @@ void reg_heap::set_used_input(int R1, int R2)
   // So, we may as well forbid using an index_var as an input.
   assert(access(R2).C.exp.head().type() != index_var_type);
 
-  int rc1 = computation_index_for_reg(R1);
+  int s1 = step_index_for_reg(R1);
   int rc2 = computation_index_for_reg(R2);
 
-  auto back_edge = computations[rc2].used_by.push_back(rc1);
-  computations[rc1].used_inputs.push_back({rc2,back_edge});
+  auto back_edge = computations[rc2].used_by.push_back(s1);
+  steps[s1].used_inputs.push_back({rc2,back_edge});
 
-  assert(computation_is_used_by(rc1,rc2));
+  assert(computation_is_used_by(s1,rc2));
   assert(reg_is_used_by(R1,R2));
 }
 
@@ -779,7 +857,7 @@ void reg_heap::set_call(int R1, int R2)
   assert(is_used(R2));
 
   // Only modify the call for the current context;
-  assert(has_computation(R1));
+  assert(has_step(R1));
 
   // Don't override an *existing* call
   assert(not reg_has_call(R1));
@@ -788,8 +866,7 @@ void reg_heap::set_call(int R1, int R2)
   assert(not reg_has_result(R1));
 
   // Set the call
-  int rc1 = computation_index_for_reg(R1);
-  computations[rc1].call = R2;
+  step_for_reg(R1).call = R2;
 }
 
 void reg_heap::set_call(int t, int R1, int R2)
@@ -804,7 +881,7 @@ void reg_heap::set_call(int t, int R1, int R2)
   assert(is_used(R2));
 
   // Only modify the call for the current context;
-  assert(has_computation_(t,R1));
+  assert(has_step_(t,R1));
 
   // Don't override an *existing* call
   assert(not reg_has_call_(t,R1));
@@ -813,53 +890,57 @@ void reg_heap::set_call(int t, int R1, int R2)
   assert(not reg_has_result_(t,R1));
 
   // Set the call
-  int rc1 = computation_index_for_reg_(t,R1);
-  computations[rc1].call = R2;
+  step_for_reg_(t,R1).call = R2;
 }
 
 void reg_heap::destroy_all_computations_in_token(int t)
 {
-  for(int r: tokens[t].vm_relative.modified())
+  // Remove use back-edges
+  auto& vm_step = tokens[t].vm_step;
+  auto& vm_relative = tokens[t].vm_relative;
+
+  for(int r: vm_step.modified())
   {
-    int rc = tokens[t].vm_relative[r];
-    if (rc > 0)
-    {
-      for(auto& rcp: computations[rc].used_inputs)
-      {
-	computations[rcp.first].used_by.erase(rcp.second);
-	rcp.second = {};
-      }
-      int call = computations[rc].call_edge.first;
-      if (call)
-      {
-	assert(computations[rc].result);
-	auto back_edge = computations[rc].call_edge.second;
-	computations[call].called_by.erase(back_edge);
-	computations[rc].call_edge = {};
-      }
-    }
-    
+    int s = vm_step[r];
+    if (s > 0)
+      clear_back_edges_for_step(s);
   }
 
-  for(int r: tokens[t].vm_relative.modified())
+  // Remove call back-edges
+  for(int r: vm_relative.modified())
   {
-    int rc = tokens[t].vm_relative[r];
+    int rc = vm_relative[r];
+    if (rc > 0)
+      clear_back_edges_for_computation(rc);
+  }
+
+  for(int r: vm_step.modified())
+  {
+    int s = vm_step[r];
+    if (s > 0)
+      steps.reclaim_used(s);
+  }
+  vm_step.clear();
+
+  for(int r: vm_relative.modified())
+  {
+    int rc = vm_relative[r];
     if (rc > 0)
       computations.reclaim_used(rc);
   }
-  tokens[t].vm_relative.clear();
+  vm_relative.clear();
 }
 
-void reg_heap::clear_call(int rc)
+void reg_heap::clear_call(int s)
 {
-  computations.access_unused(rc).call = 0;
+  steps.access_unused(s).call = 0;
 }
 
 void reg_heap::clear_call_for_reg(int R)
 {
-  int rc = computation_index_for_reg(R);
-  if (rc > 0)
-    clear_call( rc );
+  int s = step_index_for_reg(R);
+  if (s > 0)
+    clear_call( s );
 }
 
 void reg_heap::set_C(int R, closure&& C)
@@ -882,7 +963,7 @@ void reg_heap::clear_C(int R)
 
 void reg_heap::set_reduction_result(int t, int R, closure&& result)
 {
-  assert( has_computation_(t,R) );
+  assert( has_step_(t,R) );
 
   // Check that there is no result we are overriding
   assert(not reg_has_result_(t,R) );
@@ -903,7 +984,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
     
     assert(is_used(Q));
     
-    set_call(t,R,Q);
+    set_call(t, R, Q);
   }
   // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the result and call it.
   else
@@ -950,8 +1031,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   vector< int >& regs_to_re_evaluate = tokens[token].regs_to_re_evaluate;
 
   // If we have a RELATIVE computation, we need to take care of its users new to this token.
-  if (has_computation_(token,P))
+  if (has_step_(token,P))
   {
+    assert(has_computation_(token,P));
     call_and_result_may_be_changed.push_back(P);
     computation_for_reg_(token,P).temp = mark_modified;
     result_may_be_changed.push_back(P);
@@ -1035,7 +1117,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     if (RC.temp > mark_call_result) continue;
 
-    clear_back_edges(computation_index_for_reg_(token,R));
+    clear_back_edges_for_computation(computation_index_for_reg_(token,R));
+    clear_back_edges_for_step(step_index_for_reg_(token,R));
   }
   
   for(int R: call_and_result_may_be_changed)
@@ -1056,6 +1139,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     assert(not is_modifiable(access(R).C.exp));
 
     clear_computation(token,R);
+    clear_step(token,R);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
@@ -1065,11 +1149,14 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   if (has_computation_(token,P))
   {
     computation_for_reg_(token,P).temp = -1;
-    clear_back_edges(computation_index_for_reg_(token,P));
+    clear_back_edges_for_computation(computation_index_for_reg_(token,P));
+    clear_back_edges_for_step(step_index_for_reg_(token,P));
     clear_computation(token,P);
+    clear_step(token,P);
   }
 
   // Finally set the new value.
+  add_shared_step(token,P);
   add_shared_computation(token,P);
   set_reduction_result(token, P, std::move(C) );
 
@@ -1094,6 +1181,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 void reg_heap::set_shared_value(int r, int v)
 {
   // add a new computation
+  add_shared_step(root_token, r);
   add_shared_computation(root_token, r);
 
   // set the value
@@ -1112,9 +1200,87 @@ void swap_value(mapping& vm1, mapping& vm2, int r)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
 bool reg_heap::merge_split_mapping(int t1, int t2)
 {
+  int size1 = tokens[t1].vm_step.modified().size() + tokens[t1].vm_relative.modified().size();
+  int size2 = tokens[t2].vm_step.modified().size() + tokens[t2].vm_relative.modified().size();
+  bool do_swap = (size1 > size2);
+  merge_split_step_mapping(t1, t2, do_swap);
+  merge_split_relative_mapping(t1, t2, do_swap);
+  return do_swap;
+}
+
+void reg_heap::merge_split_step_mapping(int t1, int t2, bool do_swap)
+{
+  auto& vm1 = tokens[t1].vm_step;
+  auto& vm2 = tokens[t2].vm_step;
+  if (not do_swap)
+  {
+    for(int i=0;i<vm1.modified().size();)
+    {
+      int r = vm1.modified()[i];
+      assert(vm1[r]);
+      if (not vm2[r])
+      {
+	// transfer mapping from v1[r] -> v2[r]
+	int s = vm1.erase_value(r);
+	vm2.add_value(r,s);
+	if (s > 0)
+	{
+	  assert(steps[s].source_token == t1);
+	  steps[s].source_token = t2;
+	}
+      }
+      else
+	i++;
+    }
+  }
+  else
+  {
+    for(int i=0;i<vm2.modified().size();)
+    {
+      int r = vm2.modified()[i];
+      assert(vm2[r]);
+
+      if (vm1[r])
+      {
+	int s1 = vm1[r];
+	int s2 = vm2[r];
+	vm1.replace_value(r,s2);
+	vm2.replace_value(r,s1);
+	if (s1 > 0)
+	{
+	  assert(steps[s1].source_token == t1);
+	  steps[s1].source_token = t2;
+	}
+	if (s2 > 0)
+	{
+	  assert(steps[s2].source_token == t2);
+	  steps[s2].source_token = t1;
+	}
+
+	i++;
+      }
+      else
+      {
+	int s = vm2[r];
+	vm1.add_value(r,s);
+	vm2.erase_value(r);
+	if (s > 0)
+	{
+	  assert(steps[s].source_token == t2);
+	  steps[s].source_token = t1;
+	}
+      }
+    }
+  }
+}
+
+// Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
+// and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
+void reg_heap::merge_split_relative_mapping(int t1, int t2, bool do_swap)
+{
   auto& vm1 = tokens[t1].vm_relative;
   auto& vm2 = tokens[t2].vm_relative;
-  if (vm1.modified().size() < vm2.modified().size())
+  if (not do_swap)
   {
     for(int i=0;i<vm1.modified().size();)
     {
@@ -1134,7 +1300,6 @@ bool reg_heap::merge_split_mapping(int t1, int t2)
       else
 	i++;
     }
-    return false;
   }
   else
   {
@@ -1174,16 +1339,55 @@ bool reg_heap::merge_split_mapping(int t1, int t2)
 	}
       }
     }
-    return true;
   }
 }
 
 // Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
 // where (m2,v2) is at the root and (m1,v1) is relative.
-void reg_heap::pivot_mapping(int t1, int t2)
+void reg_heap::pivot_step_mapping(int t1, int t2)
+{
+  auto& vm1 = tokens[t1].vm_step;
+  auto& vm2 = tokens[t2].vm_step;
+
+  for(int i=0;i<vm2.modified().size();i++)
+  {
+    int r = vm2.modified()[i];
+    assert(vm2[r]);
+
+    int s1 = vm1[r];
+    int s2 = vm2[r];
+
+    // switch from root/0 => root/-
+    if (s1 == 0) s1 = -1;
+
+    // switch root positions
+    std::swap(s1,s2);
+
+    // switch from root/0 => root/-
+    if (s1 == -1) s1 = 0;
+
+    vm1.set_value(r,s1);
+    if (s1 > 0)
+    {
+      assert(steps[s1].source_token == t2);
+      steps[s1].source_token = t1;
+    }
+    vm2.set_value(r,s2);
+    if (s2 > 0)
+    {
+      assert(steps[s2].source_token == t1);
+      steps[s2].source_token = t2;
+    }
+  }
+}
+
+// Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
+// where (m2,v2) is at the root and (m1,v1) is relative.
+void reg_heap::pivot_relative_mapping(int t1, int t2)
 {
   auto& vm1 = tokens[t1].vm_relative;
   auto& vm2 = tokens[t2].vm_relative;
+
   for(int i=0;i<vm2.modified().size();i++)
   {
     int r = vm2.modified()[i];
@@ -1238,7 +1442,8 @@ void reg_heap::reroot_at(int t)
   assert(parent == root_token);
 
   // 2. Change the relative mappings
-  pivot_mapping(parent, t);
+  pivot_step_mapping(parent, t);
+  pivot_relative_mapping(parent, t);
   swap_tokens(parent,t);
   std::swap(parent,t);
 
@@ -1446,13 +1651,15 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     if (not computation_index_for_reg_(t1,r))
     {
       // Move rc1 from t2 -> t1.
+      int s1 = move_step(t2, t1, r);
       move_computation(t2, t1, r);
 
       // Make a new computation in t2.
-      int rc2 = add_shared_computation(t2,r);
+      int s2 = add_shared_step(t2,r);
+      add_shared_computation(t2,r);
 
       // Copy the computation-step part, but not the result
-      duplicate_computation(rc1,rc2);
+      duplicate_step(s1,s2);
     }
     else
       RC.result = 0;
@@ -1472,7 +1679,9 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     if (RC.temp > mark_call_result) continue;
 
     if (computation_index_for_reg_(t1,r))
-      clear_back_edges(computation_index_for_reg_(t2, r));
+      clear_back_edges_for_computation(computation_index_for_reg_(t2, r));
+    if (step_index_for_reg_(t1,r))
+      clear_back_edges_for_step(step_index_for_reg_(t2, r));
   }
 
   for(int r:call_and_result_may_be_changed)
@@ -1487,9 +1696,15 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     RC.temp = -1;
 
     if (not computation_index_for_reg_(t1,r))
+    {
+      move_step(t2, t1, r);
       move_computation(t2, t1, r);
+    }
     else
+    {
       clear_computation(t2, r);
+      clear_step(t2, r);
+    }
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(r).re_evaluate)
@@ -1518,9 +1733,9 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
 {
   vector<int> U;
-  if (not has_computation(r)) return U;
+  if (not has_step(r)) return U;
 
-  for(const auto& rcp: computation_for_reg(r).used_inputs)
+  for(const auto& rcp: step_for_reg(r).used_inputs)
     U.push_back(computations[rcp.first].source_reg);
 
   return U;
@@ -1535,6 +1750,8 @@ void reg_heap::reclaim_used(int r)
     {
       if (not token_is_used(t)) continue;
       
+      if (tokens[t].vm_step[r])
+	tokens[t].vm_step.erase_value(r);
       if (tokens[t].vm_relative[r])
 	tokens[t].vm_relative.erase_value(r);
     }
@@ -1644,16 +1861,23 @@ void reg_heap::expand_memory(int s)
 {
   int old_size = size();
   for(int t=0;t<tokens.size();t++)
+  {
+    assert(tokens[t].vm_step.size() == old_size);
     assert(tokens[t].vm_relative.size() == old_size);
+  }
 
   base_pool_t::expand_memory(s);
 
   // Extend virtual mappings, with virtual_mapping[i] = 0;
   for(int t=0;t<tokens.size();t++)
   {
+    tokens[t].vm_step.resize(size());
     tokens[t].vm_relative.resize(size());
     for(int i=old_size;i<size();i++)
+    {
+      assert(tokens[t].vm_step[i] == 0);
       assert(tokens[t].vm_relative[i] == 0);
+    }
   }
 }
 
@@ -1694,13 +1918,20 @@ int reg_heap::get_unused_token()
   {
     unused_tokens.push_back(get_n_tokens());
     tokens.push_back(Token());
+    tokens.back().vm_step.resize(size());
     tokens.back().vm_relative.resize(size());
     for(int i=0;i<size();i++)
+    {
+      assert(tokens.back().vm_step[i] == 0);
       assert(tokens.back().vm_relative[i] == 0);
+    }
   }
 
   for(int i=0;i<tokens.size();i++)
+  {
+    assert(tokens[i].vm_step.size() == size());
     assert(tokens[i].vm_relative.size() == size());
+  }
 
   int t = unused_tokens.back();
   unused_tokens.pop_back();
@@ -1711,6 +1942,7 @@ int reg_heap::get_unused_token()
 
   assert(tokens[t].parent == -1);
   assert(tokens[t].children.empty());
+  assert(tokens[t].vm_step.empty());
   assert(tokens[t].vm_relative.empty());
   assert(not tokens[t].referenced);
 
@@ -1726,10 +1958,10 @@ bool reg_heap::computation_is_called_by(int rc1, int rc2) const
   return false;
 }
 
-bool reg_heap::computation_is_used_by(int rc1, int rc2) const
+bool reg_heap::computation_is_used_by(int s1, int rc2) const
 {
-  for(int rc: computations[rc2].used_by)
-    if (rc == rc1)
+  for(int s: computations[rc2].used_by)
+    if (s == s1)
       return true;
 
   return false;
@@ -1737,10 +1969,22 @@ bool reg_heap::computation_is_used_by(int rc1, int rc2) const
 
 bool reg_heap::reg_is_used_by(int r1, int r2) const
 {
-  int rc1 = computation_index_for_reg(r1);
+  int s1 = step_index_for_reg(r1);
   int rc2 = computation_index_for_reg(r2);
 
-  return computation_is_used_by(rc1,rc2);
+  return computation_is_used_by(s1,rc2);
+}
+
+bool reg_heap::step_is_referenced(int t,int s) const
+{
+  assert(s);
+  int r = steps[s].source_reg;
+  if (step_index_for_reg_(t,r) == s) return true;
+  int p = parent_token(t);
+  if (p != -1)
+    return step_is_referenced(p, s);
+  else
+    return false;
 }
 
 bool reg_heap::computation_is_referenced(int t,int rc) const
@@ -1784,41 +2028,32 @@ void reg_heap::check_used_reg(int index) const
     if (not token_is_used(t)) continue;
 
     if (is_root_token(t))
+    {
+      assert(tokens[t].vm_step[index] != -1);
       assert(tokens[t].vm_relative[index] != -1);
+    }
 
-    if (not is_root_token(t) and tokens[t].vm_relative[index] > 0 and tokens[parent_token(t)].vm_relative[index] > 0)
-      assert(tokens[t].vm_relative[index] != tokens[parent_token(t)].vm_relative[index]);
+    int p = parent_token(t);
+
+    if (not is_root_token(t) and tokens[t].vm_step[index] > 0 and tokens[p].vm_step[index] > 0)
+      assert(tokens[t].vm_step[index] != tokens[p].vm_step[index]);
+
+    if (not is_root_token(t) and tokens[t].vm_relative[index] > 0 and tokens[p].vm_relative[index] > 0)
+      assert(tokens[t].vm_relative[index] != tokens[p].vm_relative[index]);
 
     if (access(index).type == reg::type_t::constant)
       assert(not has_computation_(t,index));
 
-    if (not has_computation_(t, index)) continue;
-
+    if (not has_step_(t, index)) continue;
     int call = call_for_reg_(t,index);
-    int result = computation_result_for_reg_(t,index);
+    int index_s = step_index_for_reg_(t,index);
 
-    if (computations[computation_index_for_reg_(t,index)].flags.test(0))
-      assert(is_root_token(t));
-
-    if (result)
-      assert(call);
-
-    if (call and result == call)
-      assert(access(call).type == reg::type_t::constant);
-
-    if (call and result and access(call).type == reg::type_t::constant)
-      assert(result == call);
-
-    int index_c = computation_index_for_reg_(t,index);
-
-    const computation& RC = computation_for_reg_(t,index);
-
-    for(const auto& rcp2: RC.used_inputs)
+    for(const auto& rcp2: steps[index_s].used_inputs)
     {
       int rc2 = rcp2.first;
 
       // Used regs should have back-references to R
-      assert( computation_is_used_by(index_c, rc2) );
+      assert( computation_is_used_by(index_s, rc2) );
 
       // Used computations should be mapped computation for the current token, if we are at the root
       int R2 = computations[rc2].source_reg;
@@ -1831,6 +2066,23 @@ void reg_heap::check_used_reg(int index) const
       // Used computations should have results
       assert(computations[rc2].result);
     }
+
+    if (not has_computation_(t, index)) continue;
+
+    int index_c = computation_index_for_reg_(t,index);
+    int result = computation_result_for_reg_(t,index);
+
+    if (computations[result].flags.test(0))
+      assert(is_root_token(t));
+
+    if (result)
+      assert(call);
+
+    if (call and result == call)
+      assert(access(call).type == reg::type_t::constant);
+
+    if (call and result and access(call).type == reg::type_t::constant)
+      assert(result == call);
 
     if (t != root_token) continue;
 
@@ -1856,12 +2108,31 @@ void reg_heap::check_used_regs() const
 }
 
 // This routine should only be called by other routines.  It is not safe to call directly.
+int reg_heap::remove_shared_step(int t, int r)
+{
+  if (is_root_token(t))
+    return tokens[t].vm_step.erase_value(r);
+  else
+    return tokens[t].vm_step.set_value(r,-1);
+}
+
+// This routine should only be called by other routines.  It is not safe to call directly.
 int reg_heap::remove_shared_computation(int t, int r)
 {
   if (is_root_token(t))
     return tokens[t].vm_relative.erase_value(r);
   else
     return tokens[t].vm_relative.set_value(r,-1);
+}
+
+int reg_heap::move_step(int t1, int t2, int r)
+{
+  int s = step_index_for_reg_(t1, r);
+  steps[s].source_token = t2;
+  tokens[t2].vm_step.add_value(r, s);
+
+  remove_shared_step(t1,r);
+  return s;
 }
 
 int reg_heap::move_computation(int t1, int t2, int r)
@@ -1874,25 +2145,50 @@ int reg_heap::move_computation(int t1, int t2, int r)
   return rc;
 }
 
-void reg_heap::duplicate_computation(int rc1, int rc2) const
+void reg_heap::duplicate_step(int s1, int s2) const
 {
-  assert(not computations[rc2].call);
-  computations[rc2].call = computations[rc1].call;
+  assert(not steps[s2].call);
+  steps[s2].call = steps[s1].call;
 
   // set back-edges for used inputs
-  for(const auto& rcpu: computations[rc1].used_inputs)
+  for(const auto& rcpu: steps[s1].used_inputs)
   {
     int rc3 = rcpu.first;
 
-    auto back_edge = computations[rc3].used_by.push_back(rc2);
-    computations[rc2].used_inputs.push_back({rc3,back_edge});
+    auto back_edge = computations[rc3].used_by.push_back(s2);
+    steps[s2].used_inputs.push_back({rc3,back_edge});
   }
+}
+
+/// Add a shared computation at (t,r) -- assuming there isn't one already
+int reg_heap::add_shared_step(int t, int r)
+{
+  assert(tokens[t].vm_step[r] <= 0);
+
+  // 1. Get a new computation
+  int s = steps.allocate();
+  total_step_allocations++;
+  
+  // 2. Set the source of the computation
+  steps[s].source_token = t;
+  steps[s].source_reg = r;
+
+  // 3. Link it in to the mapping
+  tokens[t].vm_step.set_value(r, s);
+
+#if DEBUG_MACHINE >= 3
+  check_used_reg(r);
+#endif
+
+  return s;
 }
 
 /// Add a shared computation at (t,r) -- assuming there isn't one already
 int reg_heap::add_shared_computation(int t, int r)
 {
   assert(tokens[t].vm_relative[r] <= 0);
+  // There should already be a step, if there is a computation
+  assert(tokens[t].vm_step[r] > 0);
 
   // 1. Get a new computation
   int rc = computations.allocate();
@@ -1912,20 +2208,30 @@ int reg_heap::add_shared_computation(int t, int r)
   return rc;
 }
 
-void reg_heap::check_back_edges_cleared(int rc)
+void reg_heap::check_back_edges_cleared_for_step(int s)
 {
-  for(auto& rcp:computations.access_unused(rc).used_inputs)
+  for(auto& rcp: steps.access_unused(s).used_inputs)
     assert(null(rcp.second));
+}
+
+void reg_heap::check_back_edges_cleared_for_computation(int rc)
+{
   assert(null(computations.access_unused(rc).call_edge.second));
 }
 
-void reg_heap::clear_back_edges(int rc)
+void reg_heap::clear_back_edges_for_step(int s)
 {
-  for(auto& rcp: computations[rc].used_inputs)
+  for(auto& rcp: steps[s].used_inputs)
   {
     computations[rcp.first].used_by.erase(rcp.second);
     rcp.second = {};
   }
+}
+
+void reg_heap::clear_back_edges_for_computation(int rc)
+{
+  // FIXME! If there is a result, set, there should be a call_edge
+  // FIXME! Should we unmap all results with no .. result/call_edge?
   int call = computations[rc].call_edge.first;
   if (call)
   {
@@ -1936,6 +2242,20 @@ void reg_heap::clear_back_edges(int rc)
   }
 }
 
+void reg_heap::clear_step(int t, int r)
+{
+  assert(not has_computation_(t,r));
+  int s = remove_shared_step(t,r);
+  
+  if (s > 0)
+  {
+#ifndef NDEBUG
+    check_back_edges_cleared_for_step(s);
+#endif
+    steps.reclaim_used(s);
+  }
+}
+
 void reg_heap::clear_computation(int t, int r)
 {
   int rc = remove_shared_computation(t,r);
@@ -1943,7 +2263,7 @@ void reg_heap::clear_computation(int t, int r)
   if (rc > 0)
   {
 #ifndef NDEBUG
-    check_back_edges_cleared(rc);
+    check_back_edges_cleared_for_computation(rc);
 #endif
     computations.reclaim_used(rc);
   }
@@ -2057,9 +2377,13 @@ void reg_heap::try_release_token(int t)
     assert(root_token != -1);
 
 #ifdef DEBUG_MACHINE
+  assert(tokens[t].vm_step.size() == size());
   assert(tokens[t].vm_relative.size() == size());
   for(int i=0;i<size();i++)
+  {
+    assert(not tokens[t].vm_step[i]);
     assert(not tokens[t].vm_relative[i]);
+  }
 
   check_used_regs();
 #endif
@@ -2485,15 +2809,19 @@ int reg_heap::add_identifier(const string& name)
 
 reg_heap::reg_heap()
   :base_pool_t(1),
+   steps(1),
    computations(1),
    P(new Program)
 { 
   //  computations.collect_garbage = [this](){collect_garbage();};
+  steps.collect_garbage = [](){};
   computations.collect_garbage = [](){};
 
 #ifndef NDEBUG
-  computations.clear_references = [this](int rc){check_back_edges_cleared(rc);};
+  steps.clear_references = [this](int s){check_back_edges_cleared_for_step(s);};
+  computations.clear_references = [this](int rc){check_back_edges_cleared_for_step(rc);};
 #endif
+  steps.clear_references = [this](int){};
   computations.clear_references = [this](int){};
 }
 

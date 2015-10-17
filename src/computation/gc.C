@@ -147,7 +147,26 @@ void reg_heap::trace(vector<int>& remap)
       {
 	if (not token_is_used(t)) continue;
 	
+	int s = step_index_for_reg_(t,r);
 	int rc = computation_index_for_reg_(t,r);
+
+	if (s > 0)
+	{
+	  assert(not steps.is_free(s));
+	  if (steps.is_marked(s)) continue;
+
+	  steps.set_mark(s);
+
+	  const Step& S = steps[s];
+
+	  // Count the reg that references us
+	  assert(S.source_reg);
+	  assert(is_marked(S.source_reg));
+
+	  // Count also the computation we call
+	  if (S.call) 
+	    next_scan1.push_back(S.call);
+	}
 
 	if (rc > 0)
 	{
@@ -161,10 +180,6 @@ void reg_heap::trace(vector<int>& remap)
 	  // Count the reg that references us
 	  assert(RC.source_reg);
 	  assert(is_marked(RC.source_reg));
-      
-	  // Count also the computation we call
-	  if (RC.call) 
-	    next_scan1.push_back(RC.call);
 	}
       }
     }
@@ -197,9 +212,16 @@ void reg_heap::trace_and_reclaim_unreachable()
   reclaim_unmarked();
 
   // remove all back-edges
+  for(auto i = steps.begin();i != steps.end(); i++)
+    if (not steps.is_marked(i.addr()))
+      clear_back_edges_for_step(i.addr());
+
+  steps.reclaim_unmarked();
+
+  // remove all back-edges
   for(auto i = computations.begin();i != computations.end(); i++)
     if (not computations.is_marked(i.addr()))
-      clear_back_edges(i.addr());
+      clear_back_edges_for_computation(i.addr());
 
   computations.reclaim_unmarked();
 

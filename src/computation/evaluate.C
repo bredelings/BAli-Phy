@@ -94,7 +94,7 @@ public:
     :OperationArgs(m), R(r)
   { 
     // I think these should already be cleared.
-    assert(memory().computation_for_reg(R).used_inputs.empty());
+    assert(memory().step_for_reg(R).used_inputs.empty());
   }
 };
 
@@ -250,7 +250,10 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       access(R).type = reg::type_t::index_var;
 
       if (has_computation(R))
+      {
 	clear_computation(root_token,R);
+	clear_step(root_token,R);
+      }
 
       int index = access(R).C.exp.as_index_var();
 
@@ -267,7 +270,10 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     {
       access(R).type = reg::type_t::constant;
       if (has_computation(R))
+      {
 	clear_computation(root_token,R);
+	clear_step(root_token,R);
+      }
     }
 
 #ifndef NDEBUG
@@ -283,7 +289,10 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       // We keep the (same) computation here, until we prove that we don't need one.
       // We don't need one if we evaluate to WHNF, and then we remove it.
       if (not has_computation(R))
+      {
+	add_shared_step(root_token, R);
 	add_shared_computation(root_token, R);
+      }
 
       // Incrementing the ref count wastes time, but avoids a crash.
       object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
@@ -312,7 +321,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
 	  assert(not reg_has_call(R) );
 	  assert(not reg_has_result(R));
-	  assert(computation_for_reg(R).used_inputs.empty());
+	  assert(step_for_reg(R).used_inputs.empty());
 	  set_C(R, std::move(result) );
 	  total_changeable_reductions++;
 	}
