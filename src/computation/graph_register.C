@@ -2214,6 +2214,7 @@ void reg_heap::check_back_edges_cleared_for_computation(int rc)
 
 void reg_heap::clear_back_edges_for_step(int s)
 {
+  assert(s > 0);
   for(auto& rcp: steps[s].used_inputs)
   {
     computations[rcp.first].used_by.erase(rcp.second);
@@ -2223,6 +2224,7 @@ void reg_heap::clear_back_edges_for_step(int s)
 
 void reg_heap::clear_back_edges_for_computation(int rc)
 {
+  assert(rc > 0);
   // FIXME! If there is a result, set, there should be a call_edge
   // FIXME! Should we unmap all results with no .. result/call_edge?
   int call = computations[rc].call_edge.first;
