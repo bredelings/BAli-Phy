@@ -1093,15 +1093,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     
     RC.temp = -1;
 
-    int call = RC.call_edge.first;
-    if (call)
-    {
-      assert(RC.result);
-      auto back_edge = RC.call_edge.second;
-      computations[call].called_by.erase(back_edge);
-      RC.call_edge = {};
-    }
 
+    clear_back_edges_for_computation(computation_index_for_reg_(token,R));
     RC.result = 0;
     
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
