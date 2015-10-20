@@ -22,10 +22,10 @@ struct computation
   int source_reg = -1;
 
   /// What final WHNF does this computation reduce to?
-  int result = -1;
+  int result = 0;
 
   /// Does C reduce to another reg that we need to evaluate to get the true result?
-  int call = -1;
+  int call = 0;
 
   std::pair<int,CacheList<int>::iterator> call_edge;
   
