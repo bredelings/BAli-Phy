@@ -1035,8 +1035,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   {
     assert(has_computation_(token,P));
     call_and_result_may_be_changed.push_back(P);
-    computation_for_reg_(token,P).temp = mark_modified;
-    result_may_be_changed.push_back(P);
+    step_for_reg_(token,P).temp = mark_modified;
   }
 
   int i=0;
@@ -1056,14 +1055,11 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
 #ifndef NDEBUG
   for(int R: result_may_be_changed)
-    assert(computation_for_reg_(token,R).temp == mark_result or 
-	   computation_for_reg_(token,R).temp == mark_call_result or
-	   computation_for_reg_(token,R).temp == mark_modified
-	   );
+    assert(computation_for_reg_(token,R).temp == mark_result);
 
   for(int R: call_and_result_may_be_changed)
-    assert(computation_for_reg_(token,R).temp == mark_call_result or
-	   computation_for_reg_(token,R).temp == mark_modified
+    assert(step_for_reg_(token,R).temp == mark_call_result or
+	   step_for_reg_(token,R).temp == mark_modified
 	   );
 #endif
 
@@ -1085,15 +1081,13 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     //    assert(computation_result_for_reg(token,R) or reg_is_shared(token,R));
 
     auto& RC = computation_for_reg_(token,R);
+    RC.temp = -1;
 
-    if (RC.temp > mark_result) continue;
+    if (step_for_reg_(token,R).temp > mark_result) continue;
 
     assert(reg_has_call_(token,R));
     assert(RC.call_edge.first);
     
-    RC.temp = -1;
-
-
     clear_back_edges_for_computation(computation_index_for_reg_(token,R));
     RC.result = 0;
     
@@ -1106,9 +1100,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   for(int R: call_and_result_may_be_changed)
   {
-    auto& RC = computation_for_reg_(token,R);
+    auto& S = step_for_reg_(token,R);
 
-    if (RC.temp > mark_call_result) continue;
+    if (S.temp > mark_call_result) continue;
 
     clear_back_edges_for_computation(computation_index_for_reg_(token,R));
     clear_back_edges_for_step(step_index_for_reg_(token,R));
@@ -1121,13 +1115,13 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     // Put this back when we stop making spurious used_by edges
     //    assert(reg_has_call(token,R));
 
-    auto& RC = computation_for_reg_(token,R);
+    auto& S = step_for_reg_(token,R);
 
-    if (RC.temp > mark_call_result) continue;
+    if (S.temp > mark_call_result) continue;
 
-    assert(RC.temp == mark_call_result);
+    assert(S.temp == mark_call_result);
 
-    RC.temp = -1;
+    S.temp = -1;
 
     assert(not is_modifiable(access(R).C.exp));
 
@@ -1139,9 +1133,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       regs_to_re_evaluate.push_back(R);
   }
 
-  if (has_computation_(token,P))
+  if (has_step_(token,P))
   {
-    computation_for_reg_(token,P).temp = -1;
+    step_for_reg_(token,P).temp = -1;
     clear_back_edges_for_computation(computation_index_for_reg_(token,P));
     clear_back_edges_for_step(step_index_for_reg_(token,P));
     clear_computation(token,P);
@@ -1546,7 +1540,7 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
       if (not RC2.result) continue;
 
       // There (usually) shouldn't be a back edge to r2 if r2 has no result.
-      // assert(RC2.result);
+      assert(RC2.result);
 
       RC2.temp = mark;
       assert(computation_index_for_reg_(t2,r2) == rc2);
@@ -1563,24 +1557,24 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
     auto& RC1 = computation_for_reg_(t1, split[i]);
 
     // Look at computations in t2 that call the old value in t1.
-    for(int rc2: RC1.used_by)
+    for(int s2: RC1.used_by)
     {
-      computation& RC2 = computations[rc2];
-      int r2 = RC2.source_reg;
+      auto& S2 = steps[s2];
+      int r2 = S2.source_reg;
 
       // If this computation is not used in t2, we don't need to unshare it.
-      if (computation_index_for_reg_(t2,r2) != rc2) continue;
+      if (step_index_for_reg_(t2,r2) != s2) continue;
 
       assert(not is_modifiable(access(r2).C.exp));
 
       // Skip this one if its been marked high enough already
-      if (RC2.temp >= mark) continue;
+      if (S2.temp >= mark) continue;
 
       // There (usually) shouldn't be a back edge to r2 if r2 has no result.
       //      assert(RC2.result);
 
-      RC2.temp = mark;
-      assert(computation_index_for_reg_(t2,r2) == rc2);
+      S2.temp = mark;
+      assert(step_index_for_reg_(t2,r2) == s2);
       users.push_back(r2);
     }
   }
@@ -1636,10 +1630,9 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   {
     int rc1 = computation_index_for_reg_(t2,r);
     auto& RC = computations[rc1];
-
-    if (RC.temp > mark_result) continue;
-
     RC.temp = -1;
+    
+    if (step_for_reg_(t2,r).temp > mark_result) continue;
 
     if (not computation_index_for_reg_(t1,r))
     {
@@ -1664,12 +1657,9 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   for(int r:call_and_result_may_be_changed)
   {
-    int rc2 = computation_index_for_reg_(t2,r);
-    auto& RC = computations[rc2];
-
     assert(not is_modifiable(access(r).C.exp));
 
-    if (RC.temp > mark_call_result) continue;
+    if (step_for_reg_(t2,r).temp > mark_call_result) continue;
 
     if (computation_index_for_reg_(t1,r))
       clear_back_edges_for_computation(computation_index_for_reg_(t2, r));
@@ -1679,14 +1669,13 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   for(int r:call_and_result_may_be_changed)
   {
-    int rc2 = computation_index_for_reg_(t2,r);
-    auto& RC = computations[rc2];
+    auto& S = step_for_reg_(t2,r);
 
     assert(not is_modifiable(access(r).C.exp));
+    
+    if (S.temp > mark_call_result) continue;
 
-    if (RC.temp > mark_call_result) continue;
-
-    RC.temp = -1;
+    S.temp = -1;
 
     if (not computation_index_for_reg_(t1,r))
     {
