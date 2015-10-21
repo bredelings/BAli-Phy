@@ -1151,6 +1151,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // Finally set the new value.
   add_shared_step(token,P);
   add_shared_computation(token,P);
+  clear_computation(token,P);
   set_reduction_result(token, P, std::move(C) );
 
   release_scratch_list();
