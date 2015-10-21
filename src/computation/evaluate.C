@@ -221,7 +221,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	  clear_call_for_reg(R);
 	  set_call(R, call);
 	}
-	
+
 	// R gets its result from S.
 	set_computation_result_for_reg( R);
 	return {R, result};
@@ -250,10 +250,9 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       access(R).type = reg::type_t::index_var;
 
       if (has_computation(R))
-      {
 	clear_computation(root_token,R);
+      if (has_step(R))
 	clear_step(root_token,R);
-      }
 
       int index = access(R).C.exp.as_index_var();
 
@@ -270,10 +269,9 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     {
       access(R).type = reg::type_t::constant;
       if (has_computation(R))
-      {
 	clear_computation(root_token,R);
+      if (has_step(R))
 	clear_step(root_token,R);
-      }
     }
 
 #ifndef NDEBUG
