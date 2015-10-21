@@ -1036,7 +1036,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   // If we have a RELATIVE computation, we need to take care of its users new to this token.
   if (has_step_(token,P))
   {
-    assert(has_computation_(token,P));
     call_and_result_may_be_changed.push_back(P);
     step_for_reg_(token,P).temp = mark_modified;
   }
@@ -1103,6 +1102,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   for(int R: call_and_result_may_be_changed)
   {
+    assert(has_step_(token,R));
+
     auto& S = step_for_reg_(token,R);
 
     if (S.temp > mark_call_result) continue;
@@ -1113,7 +1114,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   
   for(int R: call_and_result_may_be_changed)
   {
-    assert(has_computation_(token,R));
+    assert(has_step_(token,R));
 
     // Put this back when we stop making spurious used_by edges
     //    assert(reg_has_call(token,R));
@@ -1139,7 +1140,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   if (has_step_(token,P))
   {
     step_for_reg_(token,P).temp = -1;
-    clear_back_edges_for_computation(computation_index_for_reg_(token,P));
+    int rc = computation_index_for_reg_(token,P);
+    if (rc > 0)
+      clear_back_edges_for_computation(rc);
     clear_back_edges_for_step(step_index_for_reg_(token,P));
     clear_computation(token,P);
     clear_step(token,P);
