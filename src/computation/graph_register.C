@@ -790,7 +790,12 @@ void reg_heap::set_computation_result_for_reg(int r1)
 
   assert(result);
 
-  computation_for_reg(r1).result = result;
+  int rc1 = computation_index_for_reg(r1);
+  if (rc1 <= 0)
+    rc1 = add_shared_computation(root_token, r1);
+  assert(rc1 > 0);
+  auto& RC1 = computations[rc1];
+  RC1.result = result;
 
   // If R2 is WHNF then we are done
   if (access(call).type == reg::type_t::constant) return;
@@ -798,13 +803,11 @@ void reg_heap::set_computation_result_for_reg(int r1)
   // If R2 doesn't have a computation, add one to hold the called-by edge.
   assert(has_computation(call));
 
-  int rc1 = computation_index_for_reg(r1);
-
   // Add a called-by edge to R2.
   int rc2 = computation_index_for_reg(call);
   auto back_edge = computations[rc2].called_by.push_back(rc1);
-  computation_for_reg(r1).call_edge.first = rc2;
-  computation_for_reg(r1).call_edge.second = back_edge;
+  RC1.call_edge.first = rc2;
+  RC1.call_edge.second = back_edge;
 }
 
 void reg_heap::set_used_input(int R1, int R2)
