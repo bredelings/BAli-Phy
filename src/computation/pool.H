@@ -242,7 +242,7 @@ public:
 
   virtual void get_more_memory()
   {
-    if (memory.size() < n_used()*2+10)
+    if (memory.size() < n_used()*2+10 + n_null())
       expand_memory(memory.size()*2+10);
   }
 
