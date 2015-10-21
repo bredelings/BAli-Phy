@@ -1144,6 +1144,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     if (rc > 0)
       clear_back_edges_for_computation(rc);
     clear_back_edges_for_step(step_index_for_reg_(token,P));
+    if (not has_computation_(token,P))
+      add_shared_computation(token,P);
     clear_computation(token,P);
     clear_step(token,P);
   }
