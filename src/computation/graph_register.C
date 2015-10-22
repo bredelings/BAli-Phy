@@ -1144,15 +1144,12 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     if (rc > 0)
       clear_back_edges_for_computation(rc);
     clear_back_edges_for_step(step_index_for_reg_(token,P));
-    if (not has_computation_(token,P))
-      add_shared_computation(token,P);
     clear_computation(token,P);
     clear_step(token,P);
   }
 
   // Finally set the new value.
   add_shared_step(token,P);
-  add_shared_computation(token,P);
   clear_computation(token,P);
   set_reduction_result(token, P, std::move(C) );
 
@@ -2110,7 +2107,12 @@ void reg_heap::check_used_regs() const
 int reg_heap::remove_shared_step(int t, int r)
 {
   if (is_root_token(t))
-    return tokens[t].vm_step.erase_value(r);
+  {
+    if (tokens[t].vm_step[r])
+      return tokens[t].vm_step.erase_value(r);
+    else
+      return 0;
+  }
   else
     return tokens[t].vm_step.set_value(r,-1);
 }
@@ -2119,7 +2121,12 @@ int reg_heap::remove_shared_step(int t, int r)
 int reg_heap::remove_shared_computation(int t, int r)
 {
   if (is_root_token(t))
-    return tokens[t].vm_relative.erase_value(r);
+  {
+    if (tokens[t].vm_relative[r])
+      return tokens[t].vm_relative.erase_value(r);
+    else
+      return 0;
+  }
   else
     return tokens[t].vm_relative.set_value(r,-1);
 }

@@ -249,10 +249,8 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 
       access(R).type = reg::type_t::index_var;
 
-      if (has_computation(R))
-	clear_computation(root_token,R);
-      if (has_step(R))
-	clear_step(root_token,R);
+      clear_computation(root_token,R);
+      clear_step(root_token,R);
 
       int index = access(R).C.exp.as_index_var();
 
@@ -268,10 +266,8 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     else if (is_WHNF(access(R).C.exp))
     {
       access(R).type = reg::type_t::constant;
-      if (has_computation(R))
-	clear_computation(root_token,R);
-      if (has_step(R))
-	clear_step(root_token,R);
+      clear_computation(root_token,R);
+      clear_step(root_token,R);
     }
 
 #ifndef NDEBUG
@@ -288,11 +284,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       // We don't need one if we evaluate to WHNF, and then we remove it.
       if (not has_step(R))
 	add_shared_step(root_token, R);
-      if (not has_computation(R))
-      {
-	add_shared_computation(root_token, R);
-	clear_computation(root_token, R);
-      }
+      clear_computation(root_token, R);
 
       // Incrementing the ref count wastes time, but avoids a crash.
       object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
