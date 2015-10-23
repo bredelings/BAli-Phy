@@ -1067,87 +1067,51 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   //  std::cerr<<" result: "<<result_may_be_changed.size()<<"\n";
 
+  for(int R: call_and_result_may_be_changed)
+    if (has_computation_(token,R) and computation_for_reg_(token,R).temp == -1)
+      result_may_be_changed.push_back(R);
+  
   if (token == root_token)
-  {
     for(int r: result_may_be_changed)
       dec_probability_for_reg(r);
-    for(int r: call_and_result_may_be_changed)
-      dec_probability_for_reg(r);
-  }
 
-  // Clear the marks: 1a
+  // 1a. Clear the back-edges for steps
+  for(int R: call_and_result_may_be_changed)
+    clear_back_edges_for_step(step_index_for_reg_(token,R));
+
+  // 1b. Clear the back-edges for results
+  for(int R: result_may_be_changed)
+    clear_back_edges_for_computation(computation_index_for_reg_(token,R));
+
+  // 2. Invalidate results
   for(int R: result_may_be_changed)
   {
-    assert(has_computation_(token,R));
-
-    //    assert(computation_result_for_reg(token,R) or reg_is_shared(token,R));
-
     auto& RC = computation_for_reg_(token,R);
+
     RC.temp = -1;
 
-    if (step_for_reg_(token,R).temp > mark_result) continue;
-
-    assert(reg_has_call_(token,R));
-    assert(RC.call_edge.first);
-    
-    clear_back_edges_for_computation(computation_index_for_reg_(token,R));
-    RC.result = 0;
+    clear_computation(token,R);
     
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
       regs_to_re_evaluate.push_back(R);
   }
 
-  // Clear the marks: 2a
-
+  // 3. Invalidate steps
   for(int R: call_and_result_may_be_changed)
   {
-    assert(has_step_(token,R));
-
     auto& S = step_for_reg_(token,R);
 
-    if (S.temp > mark_call_result) continue;
-
-    clear_back_edges_for_computation(computation_index_for_reg_(token,R));
-    clear_back_edges_for_step(step_index_for_reg_(token,R));
-  }
-  
-  for(int R: call_and_result_may_be_changed)
-  {
-    assert(has_step_(token,R));
-
-    // Put this back when we stop making spurious used_by edges
-    //    assert(reg_has_call(token,R));
-
-    auto& S = step_for_reg_(token,R);
-
-    if (S.temp > mark_call_result) continue;
-
-    assert(S.temp == mark_call_result);
+    assert(S.temp == mark_modified or not is_modifiable(access(R).C.exp));
 
     S.temp = -1;
 
-    assert(not is_modifiable(access(R).C.exp));
-
-    clear_computation(token,R);
     clear_step(token,R);
-
-    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-    if (access(R).re_evaluate)
-      regs_to_re_evaluate.push_back(R);
   }
 
-  if (has_step_(token,P))
-  {
-    step_for_reg_(token,P).temp = -1;
-    int rc = computation_index_for_reg_(token,P);
-    if (rc > 0)
-      clear_back_edges_for_computation(rc);
-    clear_back_edges_for_step(step_index_for_reg_(token,P));
-    clear_computation(token,P);
-    clear_step(token,P);
-  }
-
+  assert(not has_step_(token,P));
+  assert(not has_computation_(token,P));
+  
   // Finally set the new value.
   add_shared_step(token,P);
   clear_computation(token,P);
@@ -1642,27 +1606,27 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   for(int r:result_may_be_changed)
   {
-    int rc1 = computation_index_for_reg_(t2,r);
-    auto& RC = computations[rc1];
+    assert(has_step_(t2,r)); // false: could be =
+    if (step_for_reg_(t2,r).temp > mark_result) continue;
+
+    int rc = computation_index_for_reg_(t1,r);
+    if (rc)
+      clear_back_edges_for_computation(rc);
+  }
+
+  for(int r:result_may_be_changed)
+  {
+    int rc2 = computation_index_for_reg_(t2,r);
+    auto& RC = computations[rc2];
     RC.temp = -1;
     
+    assert(has_step_(t2,r)); // false: could be =
     if (step_for_reg_(t2,r).temp > mark_result) continue;
 
     if (not computation_index_for_reg_(t1,r))
-    {
-      // Move rc1 from t2 -> t1.
-      int s1 = move_step(t2, t1, r);
       move_computation(t2, t1, r);
-
-      // Make a new computation in t2.
-      int s2 = add_shared_step(t2,r);
-      add_shared_computation(t2,r);
-
-      // Copy the computation-step part, but not the result
-      duplicate_step(s1,s2);
-    }
     else
-      RC.result = 0;
+      clear_computation(t2,r);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(r).re_evaluate)
@@ -1691,16 +1655,15 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
     S.temp = -1;
 
-    if (not computation_index_for_reg_(t1,r))
-    {
-      move_step(t2, t1, r);
+    if (computation_index_for_reg_(t2,r) and not computation_index_for_reg_(t1,r))
       move_computation(t2, t1, r);
-    }
     else
-    {
       clear_computation(t2, r);
+
+    if (not step_index_for_reg_(t1,r))
+      move_step(t2, t1, r);
+    else
       clear_step(t2, r);
-    }
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(r).re_evaluate)
