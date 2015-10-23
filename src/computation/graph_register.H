@@ -474,8 +474,6 @@ public:
   int remove_shared_step(int t, int r);
   int remove_shared_computation(int t, int r);
 
-  void duplicate_step(int rc1, int rc2) const;
-
   int add_shared_step(int t, int r);
   int add_shared_computation(int t, int r);
 

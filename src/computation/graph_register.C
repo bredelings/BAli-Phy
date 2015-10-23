@@ -2086,21 +2086,6 @@ int reg_heap::move_computation(int t1, int t2, int r)
   return rc;
 }
 
-void reg_heap::duplicate_step(int s1, int s2) const
-{
-  assert(not steps[s2].call);
-  steps[s2].call = steps[s1].call;
-
-  // set back-edges for used inputs
-  for(const auto& rcpu: steps[s1].used_inputs)
-  {
-    int rc3 = rcpu.first;
-
-    auto back_edge = computations[rc3].used_by.push_back(s2);
-    steps[s2].used_inputs.push_back({rc3,back_edge});
-  }
-}
-
 /// Add a shared computation at (t,r) -- assuming there isn't one already
 int reg_heap::add_shared_step(int t, int r)
 {
