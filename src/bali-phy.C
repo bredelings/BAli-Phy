@@ -236,6 +236,7 @@ void show_ending_messages()
   extern int total_changeable_reductions;
   extern int total_reg_allocations;
   extern int total_comp_allocations;
+  extern int total_step_allocations;
   extern int total_reroot;
   if (total_reductions > 0)
   {
@@ -243,8 +244,9 @@ void show_ending_messages()
     cout<<"  changeable reduction steps   = "<<total_changeable_reductions<<endl;
     cout<<"  unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
     cout<<"total register allocations     = "<<total_reg_allocations<<endl;
-    cout<<"total computation allocation   = "<<total_comp_allocations<<endl;
-    cout<<"total reroot operations = "<<total_reroot<<endl;
+    cout<<"total computation allocations  = "<<total_comp_allocations<<endl;
+    cout<<"total step allocations         = "<<total_step_allocations<<endl;
+    cout<<"total reroot operations        = "<<total_reroot<<endl;
   }
 }
 
