@@ -1596,33 +1596,28 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     i = call_and_result_may_be_changed.size();
   }
 
+  for(int r:call_and_result_may_be_changed)
+    if (has_computation_(t2,r) and computation_for_reg_(t2,r).temp == -1)
+      result_may_be_changed.push_back(r);
+
   if (t2 == root_token)
-  {
     for(int r: result_may_be_changed)
       dec_probability_for_reg(r);
-    for(int r: call_and_result_may_be_changed)
-      dec_probability_for_reg(r);
-  }
+
+  for(int r:call_and_result_may_be_changed)
+    if (step_index_for_reg_(t1,r))
+      clear_back_edges_for_step(step_index_for_reg_(t2, r));
+
+  for(int r:result_may_be_changed)
+    if (computation_index_for_reg_(t1,r))
+      clear_back_edges_for_computation(computation_index_for_reg_(t2,r));
 
   for(int r:result_may_be_changed)
   {
-    assert(has_step_(t2,r)); // false: could be =
-    if (step_for_reg_(t2,r).temp > mark_result) continue;
+    auto& RC = computation_for_reg_(t2,r);
 
-    int rc = computation_index_for_reg_(t1,r);
-    if (rc)
-      clear_back_edges_for_computation(rc);
-  }
-
-  for(int r:result_may_be_changed)
-  {
-    int rc2 = computation_index_for_reg_(t2,r);
-    auto& RC = computations[rc2];
     RC.temp = -1;
     
-    assert(has_step_(t2,r)); // false: could be =
-    if (step_for_reg_(t2,r).temp > mark_result) continue;
-
     if (not computation_index_for_reg_(t1,r))
       move_computation(t2, t1, r);
     else
@@ -1636,38 +1631,15 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   for(int r:call_and_result_may_be_changed)
   {
     assert(not is_modifiable(access(r).C.exp));
-
-    if (step_for_reg_(t2,r).temp > mark_call_result) continue;
-
-    if (computation_index_for_reg_(t1,r))
-      clear_back_edges_for_computation(computation_index_for_reg_(t2, r));
-    if (step_index_for_reg_(t1,r))
-      clear_back_edges_for_step(step_index_for_reg_(t2, r));
-  }
-
-  for(int r:call_and_result_may_be_changed)
-  {
+    
     auto& S = step_for_reg_(t2,r);
 
-    assert(not is_modifiable(access(r).C.exp));
-    
-    if (S.temp > mark_call_result) continue;
-
     S.temp = -1;
-
-    if (computation_index_for_reg_(t2,r) and not computation_index_for_reg_(t1,r))
-      move_computation(t2, t1, r);
-    else
-      clear_computation(t2, r);
 
     if (not step_index_for_reg_(t1,r))
       move_step(t2, t1, r);
     else
       clear_step(t2, r);
-
-    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-    if (access(r).re_evaluate)
-      regs_to_re_evaluate.push_back(r);
   }
 
   // find all regs in t2 that are not shared from t1.  Nothing needs to be done to these - they are already split.
