@@ -284,7 +284,6 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       // We don't need one if we evaluate to WHNF, and then we remove it.
       if (not has_step(R))
 	add_shared_step(root_token, R);
-      clear_computation(root_token, R);
 
       // Incrementing the ref count wastes time, but avoids a crash.
       object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
