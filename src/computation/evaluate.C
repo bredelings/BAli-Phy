@@ -39,6 +39,8 @@ class RegOperationArgs: public OperationArgs
 {
   const int R;
 
+  const int S;
+
   const closure& current_closure() const {return memory()[R].C;}
 
   bool evaluate_changeables() const {return true;}
@@ -57,19 +59,10 @@ class RegOperationArgs: public OperationArgs
     int R3 = p.first;
     int result = p.second;
 
+    // Note that although R2 is newly used, R3 might be already used if it was 
+    // found from R2 through a non-changeable reg_var chain.
     if (M.reg_is_changeable(R3))
-    {
-      // If R2 -> result was changeable, then R -> result will be changeable as well.
-      if (not M.reg_is_changeable(R))
-      {
-	assert( M.access(R).type == reg::type_t::unknown );
-	M.make_reg_changeable(R);
-      }
-
-      // Note that although R2 is newly used, R3 might be already used if it was 
-      // found from R2 through a non-changeable reg_var chain.
-      M.set_used_input(R, R3);
-    }
+      M.set_used_input(S, R3);
 
     return result;
   }
@@ -90,12 +83,9 @@ public:
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-  RegOperationArgs(int r, reg_heap& m)
-    :OperationArgs(m), R(r)
-  { 
-    // I think these should already be cleared.
-    assert(memory().step_for_reg(R).used_inputs.empty());
-  }
+  RegOperationArgs(int r, int s, reg_heap& m)
+    :OperationArgs(m), R(r), S(s)
+  { }
 };
 
   /*
@@ -284,6 +274,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       // We don't need one if we evaluate to WHNF, and then we remove it.
       if (not has_step(R))
 	add_shared_step(root_token, R);
+      int S = step_index_for_reg(R);
 
       // Incrementing the ref count wastes time, but avoids a crash.
       object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
@@ -302,12 +293,12 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 
       try
       {
-	RegOperationArgs Args(R, *this);
+	RegOperationArgs Args(R, S, *this);
 	closure result = (*O)(Args);
 	total_reductions++;
 
 	// If the reduction doesn't depend on modifiable, then replace E with the result.
-	if (not reg_is_changeable(R))
+	if (steps[S].used_inputs.empty())
 	{
 	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
 	  assert(not reg_has_call(R) );
@@ -319,6 +310,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	// Otherwise, set the reduction result.
 	else
 	{
+	  make_reg_changeable(R);
 	  int r2 = Args.allocate(std::move(result));
 
 	  auto p = incremental_evaluate(r2);

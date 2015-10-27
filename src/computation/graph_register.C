@@ -810,18 +810,14 @@ void reg_heap::set_computation_result_for_reg(int r1)
   RC1.call_edge.second = back_edge;
 }
 
-void reg_heap::set_used_input(int R1, int R2)
+void reg_heap::set_used_input(int s1, int R2)
 {
-  assert(reg_is_changeable(R1));
   assert(reg_is_changeable(R2));
 
-  assert(is_used(R1));
   assert(is_used(R2));
 
-  assert(access(R1).C);
   assert(access(R2).C);
 
-  assert(has_step(R1));
   assert(has_computation(R2));
   assert(computation_result_for_reg(R2));
 
@@ -829,14 +825,12 @@ void reg_heap::set_used_input(int R1, int R2)
   // So, we may as well forbid using an index_var as an input.
   assert(access(R2).C.exp.head().type() != index_var_type);
 
-  int s1 = step_index_for_reg(R1);
   int rc2 = computation_index_for_reg(R2);
 
   auto back_edge = computations[rc2].used_by.push_back(s1);
   steps[s1].used_inputs.push_back({rc2,back_edge});
 
   assert(computation_is_used_by(s1,rc2));
-  assert(reg_is_used_by(R1,R2));
 }
 
 int count(const std::vector<int>& v, int I)
