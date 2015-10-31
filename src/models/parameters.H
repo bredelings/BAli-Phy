@@ -87,7 +87,7 @@ class data_partition: public Mat_Cache
   bool variable_alignment_;
 
   /// The alignment data of this partition
-  mutable cow_ptr<alignment> A_;
+  int alignment_matrix_index = -1;
 
 public:
 
@@ -110,8 +110,6 @@ public:
   const alignment& A() const;
 
   void set_alignment(const expression_ref& A2) const;
-
-  void set_alignment(const alignment& A2) const;
 
   void recompute_alignment_matrix_from_pairwise_alignments() const;
   

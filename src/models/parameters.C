@@ -203,19 +203,13 @@ bool use_internal_index = true;
 
 const alignment& data_partition::A() const
 {
-  assert(A_);
-
-  return *A_;
-}
-
-void data_partition::set_alignment(const alignment& A2) const
-{
-  A_ = cow_ptr<alignment>( A2 );
+  return P->get_parameter_value(alignment_matrix_index).as_<alignment>();
 }
 
 void data_partition::set_alignment(const expression_ref& A2) const
 {
-  A_ = cow_ptr<alignment>( A2.as_<alignment>().clone() );
+  const context* C = P;
+  const_cast<context*>(C)->set_parameter_value(alignment_matrix_index, A2 );
 }
 
 void data_partition::recompute_alignment_matrix_from_pairwise_alignments() const
@@ -635,7 +629,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
    sequence_length_indices(AA.n_sequences(),-1),
    transition_p_method_indices(T().n_branches(),-1),
    variable_alignment_( has_IModel() ),
-   A_(AA),
    seqs(AA.seqs()),
    sequences( alignment_letters(AA, T().n_leaves()) ),
    a(AA.get_alphabet().clone()),
@@ -649,6 +642,8 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   else
     subA = new subA_index_leaf(AA.length()+1, B*2);
 
+  string invisible_prefix = "*P"+convertToString(i+1)+".";
+  alignment_matrix_index = p->add_parameter(invisible_prefix + "A", AA);
   if (variable_alignment())
   {
     string prefix = "P"+convertToString(i+1)+".";
