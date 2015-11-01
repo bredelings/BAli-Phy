@@ -237,7 +237,10 @@ void show_ending_messages()
   extern int total_reg_allocations;
   extern int total_comp_allocations;
   extern int total_step_allocations;
+  extern int total_destroy_context;
   extern int total_reroot;
+  extern int total_set_reg_value;
+  extern int total_context_pr;
   if (total_reductions > 0)
   {
     cout<<"total reduction steps          = "<<total_reductions<<endl;
@@ -247,6 +250,9 @@ void show_ending_messages()
     cout<<"total computation allocations  = "<<total_comp_allocations<<endl;
     cout<<"total step allocations         = "<<total_step_allocations<<endl;
     cout<<"total reroot operations        = "<<total_reroot<<endl;
+    cout<<"total contexts destroyed       = "<<total_destroy_context<<endl;
+    cout<<"total values set               = "<<total_set_reg_value<<endl;
+    cout<<"total context probability      = "<<total_context_pr<<endl;
   }
 }
 

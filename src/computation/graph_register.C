@@ -21,6 +21,10 @@ int total_reg_allocations = 0;
 int total_step_allocations = 0;
 int total_comp_allocations = 0;
 int total_reroot = 0;
+int total_destroy_context = 0;
+int total_set_reg_value = 0;
+int total_context_pr = 0;
+
 /*
  * Goal: Share computation of WHNF structures between contexts, even when those
  *       stuctures are uncomputed at the time the contexts are split.
@@ -536,6 +540,8 @@ log_double_t reg_heap::probability_for_context_diff(int c)
 
 log_double_t reg_heap::probability_for_context(int c)
 {
+  total_context_pr++;
+
   log_double_t Pr = probability_for_context_diff(c);
   // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<variable_pr<<"  unhandled = "<<unhandled_pr<<std::endl;
 
@@ -1007,6 +1013,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
 /// Update the value of a non-constant, non-computed index
 void reg_heap::set_reg_value(int P, closure&& C, int token)
 {
+  total_set_reg_value++;
   assert(not is_dirty(token));
   assert(not children_of_token(token).size());
   assert(reg_is_changeable(P));
@@ -2193,6 +2200,7 @@ void reg_heap::clear_computation(int t, int r)
 
 void reg_heap::release_child_token(int t)
 {
+  total_destroy_context++;
   // clear flags of computations in the root token before destroying the root token!
   if (t == root_token)
     for(int r: tokens[root_token].vm_relative.modified())
