@@ -2737,11 +2737,12 @@ int reg_heap::add_identifier(const string& name)
   return R;
 }
 
-reg_heap::reg_heap()
+reg_heap::reg_heap(const module_loader& L)
   :base_pool_t(1),
    steps(1),
    computations(1),
-   P(new Program)
+   P(new Program),
+   loader(L)
 { 
   //  computations.collect_garbage = [this](){collect_garbage();};
   steps.collect_garbage = [](){};

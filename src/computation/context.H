@@ -186,8 +186,6 @@ protected:
   void set_C(int R, closure&& c) const;
   int allocate() const;
 
-  module_loader loader;
-
   void collect_garbage() const;
 public:
   void show_graph() const;

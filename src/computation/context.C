@@ -391,7 +391,7 @@ void context::show_graph() const
 
 const module_loader& context::get_module_loader() const
 {
-  return loader;
+  return memory()->loader;
 }
 
 context& context::operator+=(const string& module_name)
@@ -474,7 +474,7 @@ context& context::operator+=(const Module& M)
   set<string> old_module_names = module_names_set(PP);
 
   // 1. Add the new modules to the program, add notes, perform imports, and resolve symbols.
-  add(loader, PP, M);
+  add(get_module_loader(), PP, M);
 
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
   vector<string> new_module_names;
@@ -512,9 +512,8 @@ context::context(const module_loader& L)
 { }
 
 context::context(const module_loader& L, const vector<Module>& Ps)
-  :memory_(new reg_heap()),
-   context_index(memory_->get_unused_context()),
-   loader(L)
+  :memory_(new reg_heap(L)),
+   context_index(memory_->get_unused_context())
 {
   (*this) += "Prelude";
   (*this) += "Parameters";
@@ -534,8 +533,7 @@ context::context(const module_loader& L, const vector<string>& module_names)
 context::context(const context& C)
   :memory_(C.memory_),
    context_index(memory_->copy_context(C.context_index)),
-   perform_io_head(C.perform_io_head),
-   loader(C.loader)
+   perform_io_head(C.perform_io_head)
 { }
 
 context::~context()

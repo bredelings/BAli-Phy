@@ -263,6 +263,8 @@ public:
   
   boost::shared_ptr<Program> P;
 
+  module_loader loader;
+
   std::vector<std::string> args;
 
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
@@ -531,7 +533,7 @@ public:
   std::vector<int>& get_scratch_list() const;
   void release_scratch_list() const;
 
-  reg_heap();
+  reg_heap(const module_loader&);
 };
 
 expression_ref graph_normalize(const expression_ref& R);
