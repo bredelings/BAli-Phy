@@ -250,8 +250,8 @@ void show_ending_messages()
   if (total_reductions > 0)
   {
     cout<<"total changeable evals         = "<<total_changeable_eval<<endl;
-    cout<<"   with result                 = "<<total_changeable_eval_with_result<<endl;
-    cout<<"   with call but not result    = "<<total_changeable_eval_with_call<<endl;
+    cout<<"  with result                  = "<<total_changeable_eval_with_result<<endl;
+    cout<<"  with call but not result     = "<<total_changeable_eval_with_call<<endl;
     cout<<"total reduction steps          = "<<total_reductions<<endl;
     cout<<"  changeable reduction steps   = "<<total_changeable_reductions<<endl;
     cout<<"  unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
