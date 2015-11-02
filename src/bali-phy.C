@@ -233,6 +233,9 @@ void show_ending_messages()
     cout<<endl;
   }
   extern int total_reductions;
+  extern int total_changeable_eval;
+  extern int total_changeable_eval_with_result;
+  extern int total_changeable_eval_with_call;
   extern int total_changeable_reductions;
   extern int total_reg_allocations;
   extern int total_comp_allocations;
@@ -240,9 +243,15 @@ void show_ending_messages()
   extern int total_destroy_context;
   extern int total_reroot;
   extern int total_set_reg_value;
+  extern int total_get_reg_value;
+  extern int total_get_reg_value_non_const;
+  extern int total_get_reg_value_non_const_with_result;
   extern int total_context_pr;
   if (total_reductions > 0)
   {
+    cout<<"total changeable evals         = "<<total_changeable_eval<<endl;
+    cout<<"   with result                 = "<<total_changeable_eval_with_result<<endl;
+    cout<<"   with call but not result    = "<<total_changeable_eval_with_call<<endl;
     cout<<"total reduction steps          = "<<total_reductions<<endl;
     cout<<"  changeable reduction steps   = "<<total_changeable_reductions<<endl;
     cout<<"  unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
@@ -252,6 +261,9 @@ void show_ending_messages()
     cout<<"total reroot operations        = "<<total_reroot<<endl;
     cout<<"total contexts destroyed       = "<<total_destroy_context<<endl;
     cout<<"total values set               = "<<total_set_reg_value<<endl;
+    cout<<"total values gotten            = "<<total_get_reg_value<<endl;
+    cout<<"total values gotten variable   = "<<total_get_reg_value_non_const<<endl;
+    cout<<"total values gotten w/ result  = "<<total_get_reg_value_non_const_with_result<<endl;
     cout<<"total context probability      = "<<total_context_pr<<endl;
   }
 }

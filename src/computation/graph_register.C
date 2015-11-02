@@ -23,6 +23,9 @@ int total_comp_allocations = 0;
 int total_reroot = 0;
 int total_destroy_context = 0;
 int total_set_reg_value = 0;
+int total_get_reg_value = 0;
+int total_get_reg_value_non_const = 0;
+int total_get_reg_value_non_const_with_result = 0;
 int total_context_pr = 0;
 
 /*
@@ -2635,12 +2638,15 @@ const expression_ref& reg_heap::get_parameter_value_in_context(int p, int c)
 
 const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 {
+  total_get_reg_value++;
   if (access(R).type == reg::type_t::constant) return access(R).C.exp;
 
+  total_get_reg_value_non_const++;
   reroot_at_context(c);
 
   if (has_computation(R))
   {
+    total_get_reg_value_non_const_with_result++;
     int R2 = computation_result_for_reg(R);
     if (R2) return access(R2).C.exp;
   }

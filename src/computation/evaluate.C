@@ -13,6 +13,9 @@ using std::set;
 
 int total_reductions = 0;
 int total_changeable_reductions = 0;
+int total_changeable_eval = 0;
+int total_changeable_eval_with_result = 0;
+int total_changeable_eval_with_call = 0;
 
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>&);
 expression_ref untranslate_vars(const expression_ref& E, const map<string, int>& ids);
@@ -185,6 +188,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 
     else if (reg_type == reg::type_t::changeable)
     {
+      total_changeable_eval++;
       int rc = computation_index_for_reg(R);
 
       // If we have a result, then we are done.
@@ -193,7 +197,10 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	int result = computations[rc].result;
 
 	if (result)
+	{
+	  total_changeable_eval_with_result++;
 	  return {R, result};
+	}
       }
 
       // If we know what to call, then call it and use it to set the result
@@ -214,6 +221,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 
 	// R gets its result from S.
 	set_computation_result_for_reg( R);
+	total_changeable_eval_with_call++;
 	return {R, result};
       }
     }
