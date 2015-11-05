@@ -981,11 +981,14 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   // Check that there is no previous call we are overriding.
   assert(not reg_has_call_(t,R) );
 
+  assert(not children_of_token(t).size());
+
   // if the result is NULL, just leave the result and call both unset.
   //  (this could happen if we set a parameter value to null.)
   if (not result) return;
 
   // If the value is a pre-existing reg_var, then call it.
+  int s = step_index_for_reg_(t,R);
   if (result.exp.head().type() == index_var_type)
   {
     int index = result.exp.as_index_var();
@@ -994,16 +997,35 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
     
     assert(is_used(Q));
     
+    for(int r2: steps[s].created_regs)
+    {
+      assert(is_WHNF(access(r2).C.exp));
+      assert(not has_step(r2));
+      assert(not has_computation(r2));
+      reclaim_used(r2);
+    }
+    steps[s].created_regs.clear();
+
     set_call(t, R, Q);
   }
   // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the result and call it.
   else
   {
-    int R2 = allocate();
-    total_reg_allocations++;
-
+    int R2 = steps[s].call;
+    if (steps[s].created_regs.size() == 1 and steps[s].created_regs[0] == R2)
+    {
+      assert(is_WHNF(access(R2).C.exp));
+      assert(steps[s].call == R2);
+    }
+    else
+    {
+      R2 = allocate();
+      set_call(t, R, R2);
+      assert(steps[s].created_regs.empty());
+      steps[s].created_regs.push_back(R2);
+      total_reg_allocations++;
+    }
     set_C(R2, std::move( result ) );
-    set_call(t, R, R2);
   }
 }
 
@@ -1112,16 +1134,19 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
     assert(S.temp == mark_modified or not is_modifiable(access(R).C.exp));
 
+    bool modified = (S.temp == mark_modified);
+
     S.temp = -1;
 
-    clear_step(token,R);
+    if (not modified)
+      clear_step(token,R);
   }
 
-  assert(not has_step_(token,P));
   assert(not has_computation_(token,P));
   
   // Finally set the new value.
-  add_shared_step(token,P);
+  if (not has_step_(token,P))
+    add_shared_step(token,P);
   clear_computation(token,P);
   set_reduction_result(token, P, std::move(C) );
 
