@@ -213,6 +213,7 @@ void Step::clear()
   source_reg = -1;
   call = 0;
   truncate(used_inputs);
+  truncate(created_regs);
 
   // This should already be cleared.
   assert(temp == -1);
@@ -223,6 +224,7 @@ void Step::check_cleared()
 {
   assert(not call);
   assert(used_inputs.empty());
+  assert(created_regs.empty());
   assert(temp == -1);
   assert(flags.none());
 }
@@ -233,6 +235,7 @@ Step& Step::operator=(Step&& S) noexcept
   source_reg = S.source_reg;
   call = S.call;
   used_inputs  = std::move( S.used_inputs );
+  created_regs  = std::move( S.created_regs );
   temp = S.temp;
   flags = S.flags;
 
@@ -244,6 +247,7 @@ Step::Step(Step&& S) noexcept
   source_reg( S.source_reg),
   call ( S.call ),
   used_inputs ( std::move(S.used_inputs) ),
+  created_regs ( std::move(S.created_regs) ),
   temp ( S.temp ),
   flags ( S.flags )
 { }

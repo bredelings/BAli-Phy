@@ -24,8 +24,8 @@ struct Step
   int call = 0;
 
   /// Which reg's were used to reduce this expression?
-  //  std::vector< int > used_inputs;
   boost::container::small_vector< std::pair<int,CacheList<int>::iterator>, 10 > used_inputs;
+  boost::container::small_vector< int, 10 > created_regs;
 
   int temp = -1;
 
