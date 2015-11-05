@@ -973,6 +973,9 @@ void reg_heap::clear_C(int R)
 
 void reg_heap::set_reduction_result(int t, int R, closure&& result)
 {
+  if (not has_step_(t,R))
+    add_shared_step(t,R);
+
   assert( has_step_(t,R) );
 
   // Check that there is no result we are overriding
@@ -1007,6 +1010,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
     steps[s].created_regs.clear();
 
     set_call(t, R, Q);
+    clear_computation(t,R);
   }
   // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the result and call it.
   else
@@ -1023,6 +1027,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
       set_call(t, R, R2);
       assert(steps[s].created_regs.empty());
       steps[s].created_regs.push_back(R2);
+      clear_computation(t,R);
       total_reg_allocations++;
     }
     set_C(R2, std::move( result ) );
@@ -1068,6 +1073,11 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   {
     call_and_result_may_be_changed.push_back(P);
     step_for_reg_(token,P).temp = mark_modified;
+  }
+  if (has_computation_(token,P))
+  {
+    result_may_be_changed.push_back(P);
+    computation_for_reg_(token,P).temp = mark_modified;
   }
 
   int i=0;
@@ -1118,9 +1128,12 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   {
     auto& RC = computation_for_reg_(token,R);
 
+    bool modified = (RC.temp == mark_modified);
+
     RC.temp = -1;
 
-    clear_computation(token,R);
+    if (not modified)
+      clear_computation(token,R);
     
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(R).re_evaluate)
@@ -1145,9 +1158,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   assert(not has_computation_(token,P));
   
   // Finally set the new value.
-  if (not has_step_(token,P))
-    add_shared_step(token,P);
-  clear_computation(token,P);
   set_reduction_result(token, P, std::move(C) );
 
   release_scratch_list();
