@@ -11,8 +11,10 @@ void shrink(V& v)
   v.swap(v2);
 }
 
+long total_gc = 0;
 void reg_heap::collect_garbage()
 {
+  total_gc++;
 #ifdef DEBUG_MACHINE
   std::cerr<<"***********Garbage Collection******************"<<std::endl;
   check_used_regs();

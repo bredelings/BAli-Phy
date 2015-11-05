@@ -247,6 +247,7 @@ void show_ending_messages()
   extern int total_get_reg_value_non_const;
   extern int total_get_reg_value_non_const_with_result;
   extern int total_context_pr;
+  extern int total_gc;
   if (total_reductions > 0)
   {
     cout<<"total changeable evals         = "<<total_changeable_eval<<endl;
@@ -255,6 +256,7 @@ void show_ending_messages()
     cout<<"total reduction steps          = "<<total_reductions<<endl;
     cout<<"  changeable reduction steps   = "<<total_changeable_reductions<<endl;
     cout<<"  unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
+    cout<<"total garbage collection runs  = "<<total_gc<<endl;
     cout<<"total register allocations     = "<<total_reg_allocations<<endl;
     cout<<"total computation allocations  = "<<total_comp_allocations<<endl;
     cout<<"total step allocations         = "<<total_step_allocations<<endl;
