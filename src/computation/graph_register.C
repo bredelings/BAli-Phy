@@ -21,7 +21,7 @@ int total_reg_allocations = 0;
 int total_step_allocations = 0;
 int total_comp_allocations = 0;
 int total_reroot = 0;
-int total_destroy_context = 0;
+int total_destroy_token = 0;
 int total_set_reg_value = 0;
 int total_get_reg_value = 0;
 int total_get_reg_value_non_const = 0;
@@ -2242,7 +2242,7 @@ void reg_heap::clear_computation(int t, int r)
 
 void reg_heap::release_child_token(int t)
 {
-  total_destroy_context++;
+  total_destroy_token++;
   // clear flags of computations in the root token before destroying the root token!
   if (t == root_token)
     for(int r: tokens[root_token].vm_relative.modified())

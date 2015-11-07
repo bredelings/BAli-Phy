@@ -19,6 +19,9 @@ using boost::dynamic_pointer_cast;
 using std::cerr;
 using std::endl;
 
+long total_create_context1 = 0;
+long total_create_context2 = 0;
+
 object_ptr<reg_heap>& context::memory() const {return memory_;}
 
 const std::vector<int>& context::heads() const {return memory()->get_heads();}
@@ -498,6 +501,7 @@ context& context::operator+=(const vector<Module>& Ms)
 
 context& context::operator=(const context& C)
 {
+  total_create_context1++;
   memory_->release_context(context_index);
   
   memory_ = C.memory_;
@@ -534,7 +538,9 @@ context::context(const context& C)
   :memory_(C.memory_),
    context_index(memory_->copy_context(C.context_index)),
    perform_io_head(C.perform_io_head)
-{ }
+{
+  total_create_context2++;
+}
 
 context::~context()
 {

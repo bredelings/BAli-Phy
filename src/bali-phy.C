@@ -240,7 +240,9 @@ void show_ending_messages()
   extern int total_reg_allocations;
   extern int total_comp_allocations;
   extern int total_step_allocations;
-  extern int total_destroy_context;
+  extern int total_destroy_token;
+  extern int total_create_context1;
+  extern int total_create_context2;
   extern int total_reroot;
   extern int total_set_reg_value;
   extern int total_get_reg_value;
@@ -248,6 +250,10 @@ void show_ending_messages()
   extern int total_get_reg_value_non_const_with_result;
   extern int total_context_pr;
   extern int total_gc;
+  extern long total_regs;
+  extern long total_steps;
+  extern long total_comps;
+  
   if (total_reductions > 0)
   {
     cout<<"total changeable evals         = "<<total_changeable_eval<<endl;
@@ -256,13 +262,19 @@ void show_ending_messages()
     cout<<"total reduction steps          = "<<total_reductions<<endl;
     cout<<"  changeable reduction steps   = "<<total_changeable_reductions<<endl;
     cout<<"  unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
-    cout<<"total garbage collection runs  = "<<total_gc<<endl;
+    cout<<"\ntotal garbage collection runs  = "<<total_gc<<endl;
     cout<<"total register allocations     = "<<total_reg_allocations<<endl;
     cout<<"total computation allocations  = "<<total_comp_allocations<<endl;
     cout<<"total step allocations         = "<<total_step_allocations<<endl;
-    cout<<"total reroot operations        = "<<total_reroot<<endl;
-    cout<<"total contexts destroyed       = "<<total_destroy_context<<endl;
-    cout<<"total values set               = "<<total_set_reg_value<<endl;
+    cout<<"total regs                     = "<<total_regs<<endl;
+    cout<<"total steps                    = "<<total_steps<<endl;
+    cout<<"total computations             = "<<total_comps<<endl;
+    cout<<"\ntotal reroot operations        = "<<total_reroot<<endl;
+    cout<<"total tokens destroyed         = "<<total_destroy_token<<endl;
+    cout<<"total create context           = "<<total_create_context1+total_create_context2<<endl;
+    cout<<"  operator=                    = "<<total_create_context1<<endl;
+    cout<<"  copy constructor             = "<<total_create_context2<<endl;
+    cout<<"\ntotal values set               = "<<total_set_reg_value<<endl;
     cout<<"total values gotten            = "<<total_get_reg_value<<endl;
     cout<<"total values gotten variable   = "<<total_get_reg_value_non_const<<endl;
     cout<<"total values gotten w/ result  = "<<total_get_reg_value_non_const_with_result<<endl;
