@@ -217,13 +217,14 @@ const alignment& data_partition::A() const
   return P->get_parameter_value(alignment_matrix_index).as_<alignment>();
 }
 
-void data_partition::set_alignment(const expression_ref& A2) const
+void data_partition::set_alignment(const expression_ref& A2)
 {
   const context* C = P;
   const_cast<context*>(C)->set_parameter_value(alignment_matrix_index, A2 );
+  invalidate_subA_index_all();
 }
 
-void data_partition::recompute_alignment_matrix_from_pairwise_alignments() const
+void data_partition::recompute_alignment_matrix_from_pairwise_alignments()
 {
   assert( variable_alignment_ );
 
@@ -560,7 +561,6 @@ void data_partition::note_alignment_changed_on_branch(int b)
 
   // If the alignment changes AT ALL, then the mapping from subA columns to alignment columns is broken.
   // Therefore we always mark it as out-of-date and needing to be recomputed.
-  invalidate_subA_index_all();
 
   // However, LC depends only on the alignment of subA indices from different branches.
   // 

@@ -116,9 +116,9 @@ public:
 
   const alignment& A() const;
 
-  void set_alignment(const expression_ref& A2) const;
+  void set_alignment(const expression_ref& A2);
 
-  void recompute_alignment_matrix_from_pairwise_alignments() const;
+  void recompute_alignment_matrix_from_pairwise_alignments();
   
   const SequenceTree& T() const;
 
