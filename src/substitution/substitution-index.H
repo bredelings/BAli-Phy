@@ -214,6 +214,9 @@ protected:
      they will be valid for a different root/SPR-attachment-point.
    */
   bool allow_invalid_branches_;
+  void set_row(int r, const std::vector<std::pair<int,int>>& index);
+  void set_row(int r,       std::vector<std::pair<int,int>>&& index);
+  
 public:
   virtual subA_index_t* clone() const=0;
   
@@ -229,10 +232,12 @@ public:
   {
     assert(0 <= b and b < n_rows());
     assert(branch_index_valid(b));
-    return indices[b].size();
+    return row(b).size();
   }
 
-  const std::vector<std::pair<int,int> >& operator[](int r) const {return indices[r];}
+  const std::vector<std::pair<int,int> >& operator[](int r) const {return row(r);}
+
+  const std::vector<std::pair<int,int> >& row(int r) const {return indices[r];}
 
   /// align sub-alignments corresponding to branches in b
   matrix<int> get_subA_index(const std::vector<int>& b,const alignment& A,const Tree& T,bool=false);

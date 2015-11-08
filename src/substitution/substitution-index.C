@@ -96,6 +96,16 @@ int n_non_empty_columns(const matrix<int>& m)
   return total;
 }
 
+void subA_index_t::set_row(int r, const vector<pair<int,int>>& index)
+{
+  indices[r] = vector<pair<int,int>>(index);
+}
+
+void subA_index_t::set_row(int r,      vector<pair<int,int>>&& index)
+{
+  indices[r] = vector<pair<int,int>>(std::move(index));
+}
+
 int subA_index_t::n_rows() const
 {
   return indices.size();
@@ -195,9 +205,9 @@ matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, bool with_
 
       int j = I[i];
 
-      if (j < indices[b].size() and indices[b][j].first == c) 
+      if (j < row(b).size() and row(b)[j].first == c) 
       {
-	subA3(L,i) = indices[b][j].second;
+	subA3(L,i) = row(b)[j].second;
 	I[i]++;
       }
       else
@@ -264,9 +274,9 @@ matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& bran
 
       int j = I[i];
 
-      if (j < indices[b].size() and indices[b][j].first == c) 
+      if (j < row(b).size() and row(b)[j].first == c) 
       {
-	subA3(L,i) = indices[b][j].second;
+	subA3(L,i) = row(b)[j].second;
 	I[i]++;
       }
       else
@@ -780,16 +790,19 @@ vector<int> subA_index_t::characters_to_indices(int branch, const alignment& A, 
 
   // walk the alignment row and the subA-index row simultaneously
   vector<int> columns = A.get_columns_for_characters(node);
+
+  const auto& index = row(branch);
+
   for(int i=0,j=0,k=0;j<columns.size();j++)
   {
     int c = columns[j];
 
-    while(i<indices[branch].size() and indices[branch][i].first < c)
+    while(i<index.size() and index[i].first < c)
       i++;
 
     assert(i != -1);
 
-    suba_for_character[k++] = indices[branch][i].second;
+    suba_for_character[k++] = index[i].second;
   }
 
   return suba_for_character;
@@ -891,9 +904,7 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
 
   // notes for leaf sequences
   if (b < T.n_leaves()) 
-  {
-    indices[b] = convert_to_column_index_list(A.get_columns_for_characters(b));
-  }
+    set_row(b, convert_to_column_index_list(A.get_columns_for_characters(b)) );
   else {
     // get 2 branches leading into this one
     vector<const_branchview> prev;
@@ -905,18 +916,20 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
       std::swap(prev[0],prev[1]);
 
     // get the sorted list of present columns
-    indices[b] = combine_columns(indices[prev[0]], indices[prev[1]]);
+    auto index = combine_columns(row(prev[0]), row(prev[1]));
 
     int l=0;
+
     for(int i=0;i<prev.size();i++)
     {
-      vector<int> index_to_present_columns = indices_to_present_columns(indices[prev[i]], indices[b]);
-
+      vector<int> index_to_present_columns = indices_to_present_columns(row(prev[i]), index);
+      
       for(int k : index_to_present_columns)
-	if (indices[b][k].second == -1)
-	  indices[b][k].second = l++;
+	if (index[k].second == -1)
+	  index[k].second = l++;
     }
-    assert(l == indices[b].size());
+    assert(l == index.size());
+    set_row(b, std::move(index));
   }
 
   up_to_date[b] = true;
@@ -940,7 +953,7 @@ void subA_index_leaf::check_footprint_for_branch(const alignment& A, const Tree&
       if (leaves[j] and not A.gap(c,j))
 	leaf_present=true;
     
-    if (i<indices[b].size() and indices[b][i].first == c)
+    if (i<row(b).size() and row(b)[i].first == c)
     {
       assert(leaf_present);
       i++;
@@ -964,9 +977,9 @@ void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int
   // Actually update the index
   int node = T.directed_branch(b).source();
 
-  indices[b] = convert_to_column_index_list( A.get_columns_for_characters(node) );
+  set_row(b, convert_to_column_index_list( A.get_columns_for_characters(node) ));
 
-  assert(indices[b].size() == A.seqlength(node));
+  assert(row(b).size() == A.seqlength(node));
 
   up_to_date[b] = true;
 }
@@ -985,7 +998,9 @@ void subA_index_internal::check_footprint_for_branch(const alignment& A, const T
     // Determine if there is an internal node character present at the base of this branch
     bool internal_node_present = A.character(c,node);
 
-    if (i<indices[b].size() and indices[b][i].first == c)
+    auto& index = row(b);
+
+    if (i<index.size() and index[i].first == c)
     {
       assert(internal_node_present);
       i++;
