@@ -636,7 +636,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   :P(p),
    partition_index(i),
    pairwise_alignment_for_branch(2*T().n_branches()),
-   alignment_prior_for_branch(T().n_branches()),
    sequence_length_indices(AA.n_sequences(),-1),
    transition_p_method_indices(T().n_branches(),-1),
    variable_alignment_( has_IModel() ),
@@ -724,9 +723,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
       // (fst IModels.models!i_index) D b heat training
       int index = p->add_compute_expression( (identifier("!"), hmms, b) );
       branch_HMM_indices.push_back( index );
-      expression_ref hmm = P->get_expression(index);
-
-      alignment_prior_for_branch[b] = p->add_compute_expression( (identifier("alignment_branch_pr"),as,hmms,b) );
     }
 
     expression_ref tree = p->my_tree();
