@@ -29,10 +29,10 @@ log_double_t topology_weight(const Parameters& P, const SequenceTree& T)
 {
   log_double_t p = 1;
   
-  for(int i=0;i<P.partitions.size();i++) {
-    if (implies(T,P.partitions[i])) {
+  for(int i=0;i<P.PC->partitions.size();i++) {
+    if (implies(T,P.PC->partitions[i])) {
       //      std::cerr<<"found!  "<<P.partitions[i]<<std::endl;
-      p *= P.partition_weights[i];
+      p *= P.PC->partition_weights[i];
     }
     else
       { } //      std::cerr<<"not found!  "<<P.partitions[i]<<std::endl;
@@ -113,14 +113,14 @@ log_double_t prior(const Parameters& P, const SequenceTree& T,double branch_mean
 {
   log_double_t p = 1;
 
-  if (P.branch_prior_type == 0)
+  if (P.branch_prior_type() == 0)
     p *= prior_exponential(T,branch_mean);
-  else if (P.branch_prior_type == 1)
+  else if (P.branch_prior_type() == 1)
     p *= prior_gamma(T,branch_mean);
-  else if (P.branch_prior_type == 2)
+  else if (P.branch_prior_type() == 2)
     p *= prior_dirichlet(T,branch_mean);
   else
-    throw myexception()<<"I don't understand branch prior type = "<<P.branch_prior_type;
+    throw myexception()<<"I don't understand branch prior type = "<<P.branch_prior_type();
 
   p *= topology_weight(P,T);
 

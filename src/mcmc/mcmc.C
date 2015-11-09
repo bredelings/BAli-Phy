@@ -1237,8 +1237,8 @@ void Sampler::go(owned_ptr<Model>& P,int subsample,const int max_iter, ostream& 
 	PP->set_parameter_value(PP->find_parameter("*IModels.training"), new constructor("Prelude.False",0));
 
       // Change the temperature according to the pattern suggested
-      if (iterations < PP->beta_series.size())
-	PP->set_beta( PP->beta_series[iterations] );
+      if (iterations < PP->PC->beta_series.size())
+	PP->set_beta( PP->PC->beta_series[iterations] );
 
       // Start learning step sizes at iteration 5
       if (iterations == 5)

@@ -286,7 +286,7 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
     branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][2]));
     branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][3]));
 
-    if (any_branches_constrained(branches, p[i].T(), *p[i].TC, p[i].AC))
+    if (any_branches_constrained(branches, p[i].T(), p[i].PC->TC, p[i].PC->AC))
       return;// -1;
   }
 
@@ -674,7 +674,8 @@ bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
   vector<Parameters> p(2,P);
 
   int b = P.T().branch(node1,node2);
-  p[1].branch_HMM_type[b] = 1 - p[1].branch_HMM_type[b];
+  // need to make this into a parameters if we are sampling it
+  //  p[1].branch_HMM_type[b] = 1 - p[1].branch_HMM_type[b];
 
   vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.T(), node1,node2) );
 

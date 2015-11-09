@@ -261,6 +261,30 @@ struct parameters_constants: public Object
   std::vector<std::vector<int>> parameters_for_tree_node;
   std::vector<std::pair<int,int>> parameters_for_tree_branch;
 
+  /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
+  int branch_prior_type = 0;
+
+  /// Topology and Branch-Length Constraint
+  SequenceTree TC;
+
+  /// Alignment-constrained branches
+  std::vector<int> AC;
+
+  std::vector<int> branch_HMM_type;
+
+  /// Tree partitions to weight
+  std::vector<Partition> partitions;
+  std::vector<log_double_t> partition_weights;
+
+  /// Is pinning enabled or not?
+  std::vector<double> constants;
+  /// Is pinning enabled or not?
+  int features = 0;
+
+  std::vector<double> beta_series;
+
+  std::vector<double> all_betas;
+
   parameters_constants* clone() const {return new parameters_constants(*this);}
 
   parameters_constants(const std::vector<alignment>& A, const SequenceTree&, 
@@ -276,8 +300,12 @@ class Parameters: public Model
 {
   friend class data_partition;
 
+public:
   object_ptr<parameters_constants> PC;
 
+  int beta_index;
+
+private:
   void recalc();
 
   /// The alignments and cached computations
@@ -289,9 +317,6 @@ class Parameters: public Model
   std::vector<int> affected_nodes;
 
 public:
-
-  /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
-  int branch_prior_type;
 
   bool variable_alignment() const;
 
@@ -330,31 +355,14 @@ public:
   void check_h_tree() const;
   void show_h_tree() const;
 
-  /// Topology and Branch-Length Constraint
-  cow_ptr<SequenceTree> TC;
-
-  /// Alignment-constrained branches
-  std::vector<int> AC;
-
-  std::vector<int> branch_HMM_type;
-
-  std::vector<double> beta_series;
-
-  std::vector<double> all_betas;
-  int beta_index;
-
   /// Did we most recently hit beta==1 (1) or beta=0 (0)
   int updown;
-
-  /// Tree partitions to weight
-  std::vector<Partition> partitions;
-  std::vector<log_double_t> partition_weights;
-
-  /// Is pinning enabled or not?
-  std::vector<double> constants;
-  /// Is pinning enabled or not?
-  int features;
-
+  int branch_prior_type() const {return PC->branch_prior_type;}
+  int branch_HMM_type(int b) const {
+    assert(0 <= b and b < PC->branch_HMM_type.size());
+    return PC->branch_HMM_type[b];
+  }
+  
   // The prior, likelihood, and probability
   log_double_t prior_no_alignment() const;
   log_double_t prior_alignment() const;

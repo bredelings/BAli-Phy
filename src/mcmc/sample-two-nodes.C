@@ -147,7 +147,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
     branches.push_back(p[i].T().branch(order[i].nodes[3], order[i].nodes[5]));
     branches.push_back(p[i].T().branch(order[i].nodes[4], order[i].nodes[5]));
 
-    if (any_branches_constrained(branches, p[i].T(), *p[i].TC, p[i].AC))
+    if (any_branches_constrained(branches, p[i].T(), p[i].PC->TC, p[i].PC->AC))
       return -1;
   }
 

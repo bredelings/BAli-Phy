@@ -78,7 +78,7 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
     if (not beta.size())
       beta = split<double>(beta_s,',');
 
-    P.all_betas = beta;
+    P.PC->all_betas = beta;
 
     if (proc_id >= beta.size())
       throw myexception()<<"not enough temperatures given: only got "<<beta.size()<<", wanted at least "<<proc_id+1;
@@ -87,7 +87,7 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 
     P.set_beta(beta[proc_id]);
 
-    P.beta_series.push_back(beta[proc_id]);
+    P.PC->beta_series.push_back(beta[proc_id]);
   }
 
   if (args.count("dbeta")) {
@@ -99,13 +99,13 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
       int D1 = (int)D[0];
       double D2 = D[1];
       for(int i=0;i<D1;i++) {
-	double next = P.beta_series.back() + D2;
+	double next = P.PC->beta_series.back() + D2;
 	next = std::max(0.0,next);
-	P.beta_series.push_back(next);
+	P.PC->beta_series.push_back(next);
       }
     }
   }
-  for(double b:P.beta_series)
+  for(double b:P.PC->beta_series)
     std::cout<<b<<"\n";
 }
 
@@ -129,10 +129,10 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
 	double w = n/(1-n)*(1-o)/o;
 	log_double_t w2 = w;
 	
-	P.partitions.push_back(p);
-	P.partition_weights.push_back(w2);
+	P.PC->partitions.push_back(p);
+	P.PC->partition_weights.push_back(w2);
 	
-	cerr<<P.partitions.back()<<"      weight = "<<w<<endl;
+	cerr<<P.PC->partitions.back()<<"      weight = "<<w<<endl;
       }
     }
   }
@@ -216,11 +216,11 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
   out_screen<<"\n";
 
   out_both<<"Prior on branch lengths T[b]:\n";
-  if (P.branch_prior_type == 0)
+  if (P.branch_prior_type() == 0)
     out_both<<" T[b] ~ Exponential(Main.mu<i>)   [mean=Main.mu<i>, variance=Main.mu<i>^2]"<<endl;
-  else if (P.branch_prior_type == 1)
+  else if (P.branch_prior_type() == 1)
     out_both<<" T[b] ~ Gamma(alpha=0.5, beta=2*Main.mu<i>)   [mean=Main.mu<i>, variance=2*Main.mu<i>^2]"<<endl;
-  else if (P.branch_prior_type == 2)
+  else if (P.branch_prior_type() == 2)
   {
     out_both<<" T[b]/Tree length ~ Dirichlet(alpha=0.5)"<<endl;
     out_both<<" Tree length ~ Gamma(alpha=0.5, beta=2*Main.mu<i>)   [mean=Main.mu<i>, variance=2*Main,mu<i>^2]"<<endl;
@@ -456,11 +456,11 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
   //------------- Set the branch prior type --------------//
   string branch_prior = args["branch-prior"].as<string>();
   if (branch_prior == "Exponential")  
-    P.branch_prior_type = 0;
+    P.PC->branch_prior_type = 0;
   else if (branch_prior == "Gamma") 
-    P.branch_prior_type = 1;
+    P.PC->branch_prior_type = 1;
   else if (branch_prior == "Dirichlet") 
-    P.branch_prior_type = 2;
+    P.PC->branch_prior_type = 2;
   else
     throw myexception()<<"I don't understand --branch-prior argument '"<<branch_prior<<"'.\n  Only 'Exponential' and 'Gamma' are allowed.";
 
@@ -472,12 +472,12 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
 
   //----------------- Tree-based constraints ----------------//
   if (args.count("t-constraint"))
-    P.TC = cow_ptr<SequenceTree>(load_constraint_tree(args["t-constraint"].as<string>(), T.get_leaf_labels()));
+    P.PC->TC = load_constraint_tree(args["t-constraint"].as<string>(), T.get_leaf_labels());
 
   if (args.count("a-constraint"))
-    P.AC = load_alignment_branch_constraints(args["a-constraint"].as<string>(),*P.TC);
+    P.PC->AC = load_alignment_branch_constraints(args["a-constraint"].as<string>(),P.PC->TC);
 
-  if (not extends(T, *P.TC))
+  if (not extends(T, P.PC->TC))
     throw myexception()<<"Initial tree violates topology constraints.";
 
   //---------- Alignment constraint (horizontal) -----------//

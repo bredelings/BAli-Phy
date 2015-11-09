@@ -406,7 +406,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   bool tree_changed = not T1.is_connected(nodes[0],nodes[2]) or not T1.is_connected(nodes[0],nodes[3]);
 
   // enforce tree constraints
-  if (not extends(p[1].T(), *P.TC))
+  if (not extends(p[1].T(), P.PC->TC))
     return MCMC::Result(2+bins,0);
 
   //  std::cerr<<"after = "<<p[1].T<<endl;
@@ -1095,7 +1095,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   SPR_at_location(p[1], b1, branch_names[C], locations, false);
 
   // enforce tree constraints
-  if (not extends(p[1].T(), *P.TC))
+  if (not extends(p[1].T(), P.PC->TC))
     return false;
 
   // Step N: INVALIDATE subA indices and also likelihood caches that are no longer valid.

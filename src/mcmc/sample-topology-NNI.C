@@ -144,8 +144,7 @@ int HMM_type_for_branch(const Parameters& P, int b)
 {
   const Tree& T = P.T();
   b = T.directed_branch(b).undirected_name();
-  assert(0 <= b and b < P.branch_HMM_type.size());
-  return P.branch_HMM_type[b];
+  return P.branch_HMM_type(b);
 }
 
 void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
@@ -171,7 +170,7 @@ void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
   
-  if (not extends(p[1].T(), *PP.TC))
+  if (not extends(p[1].T(), PP.PC->TC))
     return;
 
   double L = PP.T().directed_branch(b).length();
@@ -243,7 +242,7 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
   
-  if (not extends(p[1].T(), *PP.TC))
+  if (not extends(p[1].T(), PP.PC->TC))
     return;
 
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
@@ -337,7 +336,7 @@ void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
   
-  if (not extends(p[1].T(), *PP.TC))
+  if (not extends(p[1].T(), PP.PC->TC))
     return;
 
   double LA = p[0].T().branch(nodes[4],nodes[0]).length();
@@ -408,7 +407,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
   
-  if (not extends(p[1].T(), *PP.TC))
+  if (not extends(p[1].T(), PP.PC->TC))
     return;
 
   //------------- Propose new branch lengths ----------------//
@@ -514,13 +513,13 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
 
-  if (not extends(p[1].T(), *PP.TC))
+  if (not extends(p[1].T(), PP.PC->TC))
     return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
   p[2].NNI(b1, b3);
   
-  if (not extends(p[2].T(), *PP.TC))
+  if (not extends(p[2].T(), PP.PC->TC))
     return;
 
   const vector<log_double_t> rho(3,1);
@@ -606,13 +605,13 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
 
-  if (not extends(p[1].T(), *PP.TC))
+  if (not extends(p[1].T(), PP.PC->TC))
     return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
   p[2].NNI(b1, b3);
   
-  if (not extends(p[2].T(), *PP.TC))
+  if (not extends(p[2].T(), PP.PC->TC))
     return;
 
   const vector<log_double_t> rho(3,1);
@@ -661,7 +660,7 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
   p[1].recompute_pairwise_alignment(b1);
   p[1].note_alignment_changed_on_branch(b2);
 
-  if (not extends(p[1].T(), *PP.TC))
+  if (not extends(p[1].T(), PP.PC->TC))
     return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
@@ -670,7 +669,7 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
   p[2].recompute_pairwise_alignment(b1);
   p[2].note_alignment_changed_on_branch(b3);
 
-  if (not extends(p[2].T(), *PP.TC))
+  if (not extends(p[2].T(), PP.PC->TC))
     return;
 
   vector< vector< int> > nodes;

@@ -1170,7 +1170,7 @@ log_double_t Parameters::prior_no_alignment() const
     log_double_t pA = (1.0 - p_unaligned);
 
     for(int b=0;b<T().n_branches();b++)
-      if (not branch_HMM_type[b])
+      if (not branch_HMM_type(b))
 	Pr *= pA;
       else
 	Pr *= pNA;
@@ -1482,7 +1482,9 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
    IModel_methods(IMs.size()),
    imodel_for_partition(i_mapping),
    scale_for_partition(scale_mapping),
-   n_scales(max(scale_mapping)+1)
+   n_scales(max(scale_mapping)+1),
+   TC(star_tree(t.get_leaf_labels())),
+   branch_HMM_type(t.n_branches(),0)
 {
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())
@@ -1509,18 +1511,14 @@ Parameters::Parameters(const module_loader& L,
   :Model(L),
    PC(new parameters_constants(A,t,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
    T_(t),
-   branch_prior_type(0),
-   TC(star_tree(t.get_leaf_labels())),
-   branch_HMM_type(t.n_branches(),0),
-   updown(-1),
-   features(0)
+   updown(-1)
 {
   // \todo FIXME:cleanup|fragile - Don't touch C here directly!
   *this += { "SModel","Distributions","Range","PopGen","Alignment","IModel" };
   
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 
-  constants.push_back(-1);
+  PC->constants.push_back(-1);
 
   add_parameter("Heat.beta", 1.0);
 
@@ -1650,8 +1648,8 @@ Parameters::Parameters(const module_loader& L,
   
   /*------------------------- Add commands to log all parameters created before this point. ------------------------*/
   // don't constrain any branch lengths
-  for(int b=0;b<TC->n_branches();b++)
-    TC.modify()->branch(b).set_length(-1);
+  for(int b=0;b<PC->TC.n_branches();b++)
+    PC->TC.branch(b).set_length(-1);
 
   // Add and initialize variables for branch *lengths*: scale<s>.D<b>
   for(int s=0;s<n_scales();s++)

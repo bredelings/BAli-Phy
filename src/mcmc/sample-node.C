@@ -154,7 +154,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][2]));
     branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][3]));
 
-    if (any_branches_constrained(branches, p[i].T(), *p[i].TC, p[i].AC))
+    if (any_branches_constrained(branches, p[i].T(), p[i].PC->TC, p[i].PC->AC))
       return -1;
   }
 
