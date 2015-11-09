@@ -248,12 +248,18 @@ struct parameters_constants: public Object
   std::vector<imodel_methods> IModel_methods;
   std::vector<int> imodel_for_partition;
 
-  std::vector<std::vector<int>> parameters_for_tree_node;
-  std::vector<std::pair<int,int>> parameters_for_tree_branch;
-
   // Scale for partition
   std::vector<int> scale_for_partition;
   int n_scales;
+
+  std::vector< std::vector<int> > branch_length_indices;
+
+  matrix<int> branch_transition_p_indices;
+
+  // The tree
+  int tree_head = -1;
+  std::vector<std::vector<int>> parameters_for_tree_node;
+  std::vector<std::pair<int,int>> parameters_for_tree_branch;
 
   parameters_constants* clone() const {return new parameters_constants(*this);}
 
@@ -274,17 +280,11 @@ class Parameters: public Model
 
   void recalc();
 
-  std::vector< std::vector<int> > branch_length_indices;
-
-  matrix<int> branch_transition_p_indices;
-
   /// The alignments and cached computations
   mutable std::vector<data_partition> data_partitions;
 
   /// The Tree - mean branch lengths = 1
   cow_ptr<SequenceTree> T_;
-
-  int tree_head = -1;
 
   std::vector<int> affected_nodes;
 

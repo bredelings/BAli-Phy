@@ -677,7 +677,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
 
   // Add method indices for calculating transition matrices.
   {
-    expression_ref E = P->get_expression(P->branch_transition_p_indices(scale_index, smodel_index));
+    expression_ref E = P->get_expression(P->PC->branch_transition_p_indices(scale_index, smodel_index));
     for(int b=0;b<B;b++)
       transition_p_method_indices[b] = p->add_compute_expression( (identifier("!"), E, b) );
   }
@@ -1329,13 +1329,13 @@ void Parameters::recalc()
       assert(0 <= s and s < n_scales());
       
       // Change branch lengths for the s-th scale
-      assert(branch_length_indices[s].size() == T().n_branches());
+      assert(PC->branch_length_indices[s].size() == T().n_branches());
       for(int b=0;b<T().n_branches();b++)
       {
 	double rate = get_parameter_value(branch_mean_index(s)).as_double();;
 	double delta_t = T().branch(b).length();
 
-	context::set_parameter_value(branch_length_indices[s][b], rate*delta_t);
+	context::set_parameter_value(PC->branch_length_indices[s][b], rate*delta_t);
       }
 
       // notify partitions with scale 'p' that their branch mean changed
@@ -1400,7 +1400,7 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
     double rate = get_parameter_value(branch_mean_index(s)).as_double();
     double delta_t = T().branch(b).length();
     
-    context::set_parameter_value(branch_length_indices[s][b], rate * delta_t);
+    context::set_parameter_value(PC->branch_length_indices[s][b], rate * delta_t);
   }
 }
 
@@ -1421,7 +1421,7 @@ void Parameters::setlength(int b,double l)
     double rate = get_parameter_value(branch_mean_index(s)).as_double();
     double delta_t = T().branch(b).length();
     
-    context::set_parameter_value(branch_length_indices[s][b], rate * delta_t);
+    context::set_parameter_value(PC->branch_length_indices[s][b], rate * delta_t);
   }
 
   // Invalidates conditional likelihoods
@@ -1469,7 +1469,7 @@ double Parameters::get_branch_subst_rate(int p, int /* b */) const
 
 expression_ref Parameters::my_tree() const
 {
-  return get_expression(tree_head);
+  return get_expression(PC->tree_head);
 }
 
 parameters_constants::parameters_constants(const vector<alignment>& A, const SequenceTree& t,
@@ -1595,7 +1595,7 @@ Parameters::Parameters(const module_loader& L,
 
   expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
 
-  tree_head = add_compute_expression( (tree_con, node_branches_array, branch_nodes_array, T().n_nodes(), T().n_branches()));
+  PC->tree_head = add_compute_expression( (tree_con, node_branches_array, branch_nodes_array, T().n_nodes(), T().n_branches()));
 
   read_h_tree();
 
@@ -1657,7 +1657,7 @@ Parameters::Parameters(const module_loader& L,
   for(int s=0;s<n_scales();s++)
   {
     string prefix= "*Scale" + convertToString(s+1);
-    branch_length_indices.push_back(vector<int>());
+    PC->branch_length_indices.push_back(vector<int>());
     for(int b=0;b<T().n_branches();b++)
     {
       double rate = get_parameter_value(branch_mean_index(s)).as_double();
@@ -1665,7 +1665,7 @@ Parameters::Parameters(const module_loader& L,
 
       string name = "d" + convertToString(b+1);
       int index = add_parameter(prefix+"."+name, rate * delta_t);
-      branch_length_indices[s].push_back(index);
+      PC->branch_length_indices[s].push_back(index);
     }
   }
 
@@ -1705,7 +1705,7 @@ Parameters::Parameters(const module_loader& L,
   (*this) += parameter_program;
 
   // register the cached transition_p indices
-  branch_transition_p_indices.resize(n_branch_means(), n_smodels());
+  PC->branch_transition_p_indices.resize(n_branch_means(), n_smodels());
   for(int s=0;s < n_branch_means(); s++)
   {
     // Better yet, make a substitutionBranchLengths!scale!branch that can be referenced elsewhere.
@@ -1720,7 +1720,7 @@ Parameters::Parameters(const module_loader& L,
       //expression_ref I = 0;
       expression_ref I = (identifier("!!"),branch_cat_list,v1);
       expression_ref E = (identifier("mkArray"), T().n_branches(), v1^(V,(identifier("branchTransitionP"), (identifier("getNthMixture"),S,I), (identifier("!"), DL, v1) ) ) );
-      branch_transition_p_indices(s,m) = add_compute_expression(E);
+      PC->branch_transition_p_indices(s,m) = add_compute_expression(E);
     }
   }
 
