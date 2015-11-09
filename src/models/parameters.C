@@ -1162,13 +1162,6 @@ log_double_t Parameters::prior_no_alignment() const
   // prior on the topology and branch lengths
   Pr *= ::prior(*this, T(), 1.0);
 
-  if (branch_length_max > 0)
-    for(int i=0; i<T().n_branches(); i++)
-    {
-      if (T().branch(i).length() > branch_length_max)
-	return 0;
-    }
-
   // prior for each branch being aligned/unaliged
   if (variable_alignment()) 
   {
@@ -1501,8 +1494,7 @@ Parameters::Parameters(const module_loader& L,
    TC(star_tree(t.get_leaf_labels())),
    branch_HMM_type(t.n_branches(),0),
    updown(-1),
-   features(0),
-   branch_length_max(-1)
+   features(0)
 {
   // \todo FIXME:cleanup|fragile - Don't touch C here directly!
   *this += { "SModel","Distributions","Range","PopGen","Alignment","IModel" };

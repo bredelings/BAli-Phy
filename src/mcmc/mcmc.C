@@ -1224,15 +1224,7 @@ void Sampler::go(owned_ptr<Model>& P,int subsample,const int max_iter, ostream& 
     if (subsample <= 0) subsample = 2*int(log(T.n_leaves()))+1;
 
     if (alignment_burnin_iterations > 0)
-    {
-      //      PP.branch_length_max = 2.0;
-      //
-      //      for(int i=0; i<PP.T->n_branches(); i++)
-      //	if (PP.T->branch(i).length() > PP.branch_length_max)
-      //	  PP.setlength(i, PP.branch_length_max);
-
       PP->set_parameter_value(PP->find_parameter("*IModels.training"), new constructor("Prelude.True",0));
-    }
   }
 
   //---------------- Run the MCMC chain -------------------//
@@ -1242,11 +1234,7 @@ void Sampler::go(owned_ptr<Model>& P,int subsample,const int max_iter, ostream& 
     {
       // Free temporarily fixed parameters at iteration 5
       if (iterations == alignment_burnin_iterations)
-      {
 	PP->set_parameter_value(PP->find_parameter("*IModels.training"), new constructor("Prelude.False",0));
-
-	PP->branch_length_max = -1;
-      }
 
       // Change the temperature according to the pattern suggested
       if (iterations < PP->beta_series.size())

@@ -333,8 +333,6 @@ public:
   /// Is pinning enabled or not?
   int features;
 
-  double branch_length_max;
-
   // The prior, likelihood, and probability
   log_double_t prior_no_alignment() const;
   log_double_t prior_alignment() const;
