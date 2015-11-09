@@ -634,6 +634,7 @@ log_double_t data_partition::heated_likelihood() const
 
 data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   :P(p),
+   DPC(new data_partition_constants),
    partition_index(i),
    pairwise_alignment_for_branch(2*T().n_branches()),
    sequence_length_indices(AA.n_sequences(),-1),
@@ -808,9 +809,9 @@ void Parameters::read_h_tree()
   for(int b=0; b < 2*T().n_branches(); b++)
   {
     if (not T().directed_branch(b).source().is_leaf_node())
-      context::set_parameter_value(parameters_for_tree_branch[b].first,  (int)T().directed_branch(b).source());
+      context::set_parameter_value(PC->parameters_for_tree_branch[b].first,  (int)T().directed_branch(b).source());
     if (not T().directed_branch(b).target().is_leaf_node())
-      context::set_parameter_value(parameters_for_tree_branch[b].second, (int)T().directed_branch(b).target());
+      context::set_parameter_value(PC->parameters_for_tree_branch[b].second, (int)T().directed_branch(b).target());
   }
 }
 
@@ -844,8 +845,8 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   affected_nodes.push_back(t1);
   affected_nodes.push_back(t2);
   
-  context::set_parameter_value(parameters_for_tree_branch[b1].second, (int)T().directed_branch(b1).target());
-  context::set_parameter_value(parameters_for_tree_branch[b2].first,  (int)T().directed_branch(b2).source());
+  context::set_parameter_value(PC->parameters_for_tree_branch[b1].second, (int)T().directed_branch(b1).target());
+  context::set_parameter_value(PC->parameters_for_tree_branch[b2].first,  (int)T().directed_branch(b2).source());
 
   if (safe)
   {
@@ -868,7 +869,7 @@ void Parameters::begin_modify_tree()
  */
 void Parameters::update_tree_node(int n)
 {
-  assert(parameters_for_tree_node[n].size() == T().node(n).degree());
+  assert(PC->parameters_for_tree_node[n].size() == T().node(n).degree());
 
   // These are the edges we seek to impose.
   vector<int> edges = edges_connecting_to_node(T(),n);
@@ -876,7 +877,7 @@ void Parameters::update_tree_node(int n)
 
   // These are the current edges.
   for(int i=0;i<edges.size();i++)
-    context::set_parameter_value(parameters_for_tree_node[n][i], edges[i]);
+    context::set_parameter_value(PC->parameters_for_tree_node[n][i], edges[i]);
 }
 
 void Parameters::end_modify_tree()
@@ -1111,14 +1112,14 @@ void Parameters::check_h_tree() const
 #ifndef NDEBUG
   for(int b=0; b < 2*T().n_branches(); b++)
   {
-    if (parameters_for_tree_branch[b].first != -1)
+    if (PC->parameters_for_tree_branch[b].first != -1)
     {
-      auto s = get_parameter_value(parameters_for_tree_branch[b].first );
+      auto s = get_parameter_value(PC->parameters_for_tree_branch[b].first );
       assert(T().directed_branch(b).source() == s.as_int());
     }
-    if (parameters_for_tree_branch[b].second != -1)
+    if (PC->parameters_for_tree_branch[b].second != -1)
     {
-      auto t = get_parameter_value(parameters_for_tree_branch[b].second);
+      auto t = get_parameter_value(PC->parameters_for_tree_branch[b].second);
       assert(T().directed_branch(b).target() == t.as_int());
     }
   }
@@ -1128,7 +1129,7 @@ void Parameters::check_h_tree() const
     if (T().node(n).is_leaf_node()) continue;
     
     vector<int> VV;
-    for(int p:parameters_for_tree_node[n])
+    for(int p:PC->parameters_for_tree_node[n])
       VV.push_back(get_parameter_value(p).as_int());
 
     vector<const_branchview> v = branches_from_node(T(), n);
@@ -1149,8 +1150,8 @@ void Parameters::show_h_tree() const
 {
   for(int b=0; b < 2*T().n_branches(); b++)
   {
-    auto s = get_parameter_value(parameters_for_tree_branch[b].first ).as_int();
-    auto t = get_parameter_value(parameters_for_tree_branch[b].second).as_int();
+    auto s = get_parameter_value(PC->parameters_for_tree_branch[b].first ).as_int();
+    auto t = get_parameter_value(PC->parameters_for_tree_branch[b].second).as_int();
     std::cerr<<"branch "<<b<<": ("<<s<<","<<t<<")     "<<T().directed_branch(b).length()<<"\n";
   }
 }
@@ -1484,6 +1485,7 @@ Parameters::Parameters(const module_loader& L,
 		       const vector<int>& i_mapping,
 		       const vector<int>& scale_mapping)
   :Model(L),
+   PC(new parameters_constants),
    smodel_for_partition(s_mapping),
    IModel_methods(IMs.size()),
    imodel_for_partition(i_mapping),
@@ -1543,7 +1545,7 @@ Parameters::Parameters(const module_loader& L,
       }
     }
     
-    parameters_for_tree_node.push_back ( p_node );
+    PC->parameters_for_tree_node.push_back ( p_node );
     node_branches.push_back( node );
   }
   expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
@@ -1569,7 +1571,7 @@ Parameters::Parameters(const module_loader& L,
       target = parameter(name_target);
     }
     int reverse_branch = T().directed_branch(b).reverse();
-    parameters_for_tree_branch.push_back( {p_source,p_target} );
+    PC->parameters_for_tree_branch.push_back( {p_source,p_target} );
     branch_nodes.push_back( Tuple(source, target, reverse_branch) );
   }
   expression_ref branch_nodes_array = (identifier("listArray'"),get_list(branch_nodes));

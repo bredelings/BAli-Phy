@@ -49,6 +49,11 @@ extern bool use_internal_index;
 
 class Parameters;
 
+struct data_partition_constants: public Object
+{
+  data_partition_constants* clone() const {return new data_partition_constants(*this);}
+};
+
 /// Each data_partition is a model with one parameter: mu (the branch mean)
 class data_partition: public Mat_Cache
 {
@@ -56,6 +61,7 @@ class data_partition: public Mat_Cache
 
 public:
   const Parameters* P;
+  object_ptr<data_partition_constants> DPC;
 
 private:
   int partition_index;
@@ -232,10 +238,20 @@ struct smodel_methods
   smodel_methods(const expression_ref&, context&);
 };
 
+struct parameters_constants: public Object
+{
+  std::vector<std::vector<int>> parameters_for_tree_node;
+  std::vector<std::pair<int,int>> parameters_for_tree_branch;
+
+  parameters_constants* clone() const {return new parameters_constants(*this);}
+};
+
 /// A class to contain all the MCMC state except the alignment
 class Parameters: public Model
 {
   friend class data_partition;
+
+  object_ptr<parameters_constants> PC;
 
   /// The substitution::Model
   std::vector<smodel_methods> SModels;
@@ -260,9 +276,6 @@ class Parameters: public Model
 
   /// The Tree - mean branch lengths = 1
   cow_ptr<SequenceTree> T_;
-
-  std::vector<std::vector<int>> parameters_for_tree_node;
-  std::vector<std::pair<int,int>> parameters_for_tree_branch;
 
   int tree_head = -1;
 
