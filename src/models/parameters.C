@@ -308,7 +308,7 @@ void data_partition::variable_alignment(bool b)
 
 bool data_partition::has_IModel() const
 {
-  int m = P->imodel_for_partition[partition_index];
+  int m = P->imodel_index_for_partition(partition_index);
   return (m != -1);
 }
 
@@ -377,14 +377,14 @@ vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) co
 
 double data_partition::sequence_length_pr(int l) const
 {
-  int m = P->imodel_for_partition[partition_index];
+  int m = P->imodel_index_for_partition(partition_index);
 
-  int arg_param_index = P->IModel_methods[m].length_arg_param_index;
+  int arg_param_index = P->PC->IModel_methods[m].length_arg_param_index;
 
   const context* C = P;
   const_cast<context*>(C)->set_parameter_value(arg_param_index, l );
 
-  return P->evaluate( P->IModel_methods[m].length_p ).as_double();
+  return P->evaluate( P->PC->IModel_methods[m].length_p ).as_double();
 }
 
 /// \brief Recalculate cached values relating to the substitution model.
@@ -697,7 +697,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   }
 
   // Add method indices for calculating branch HMMs
-  int i_index = P->imodel_for_partition[partition_index];
+  int i_index = P->imodel_index_for_partition(partition_index);
   int scale_index = P->scale_for_partition[partition_index];
 
   if (i_index != -1)
@@ -1483,7 +1483,9 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
 					   const vector<expression_ref>& IMs,
 					   const vector<int>& i_mapping,
 					   const vector<int>& scale_mapping)
-  :smodel_for_partition(s_mapping)
+  :smodel_for_partition(s_mapping),
+   IModel_methods(IMs.size()),
+   imodel_for_partition(i_mapping)
 {
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())
@@ -1509,8 +1511,6 @@ Parameters::Parameters(const module_loader& L,
 		       const vector<int>& scale_mapping)
   :Model(L),
    PC(new parameters_constants(A,t,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
-   IModel_methods(IMs.size()),
-   imodel_for_partition(i_mapping),
    scale_for_partition(scale_mapping),
    n_scales(max(scale_mapping)+1),
    T_(t),
@@ -1732,7 +1732,7 @@ Parameters::Parameters(const module_loader& L,
   // Register compute expressions for branch HMMs and sequence length distributions
   for(int i=0;i<n_imodels();i++) 
   {
-    imodel_methods& I = IModel_methods[i];
+    imodel_methods& I = PC->IModel_methods[i];
     string prefix = "*I" + convertToString(i+1);
 
     I.length_arg_param_index = add_parameter(prefix+".lengthpArg", 1);

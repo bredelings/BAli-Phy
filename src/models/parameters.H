@@ -244,6 +244,10 @@ struct parameters_constants: public Object
   std::vector<smodel_methods> SModels;
   std::vector<int> smodel_for_partition;
 
+  /// The IndelModel
+  std::vector<imodel_methods> IModel_methods;
+  std::vector<int> imodel_for_partition;
+
   std::vector<std::vector<int>> parameters_for_tree_node;
   std::vector<std::pair<int,int>> parameters_for_tree_branch;
 
@@ -263,10 +267,6 @@ class Parameters: public Model
   friend class data_partition;
 
   object_ptr<parameters_constants> PC;
-
-  /// The IndelModel
-  std::vector<imodel_methods> IModel_methods;
-  std::vector<int> imodel_for_partition;
 
   // Scale for partition
   std::vector<int> scale_for_partition;
@@ -307,7 +307,7 @@ public:
 
   int smodel_index_for_partition(int i) const {return PC->smodel_for_partition[i];}
 
-  int imodel_index_for_partition(int i) const {return imodel_for_partition[i];}
+  int imodel_index_for_partition(int i) const {return PC->imodel_for_partition[i];}
 
   void set_beta(double b);
   double get_beta() const;
@@ -366,7 +366,7 @@ public:
   int n_smodels() const {return PC->SModels.size();}
   
   /// How many substitution models?
-  int n_imodels() const {return IModel_methods.size();}
+  int n_imodels() const {return PC->IModel_methods.size();}
 
   object_ptr<const alphabet> get_alphabet_for_smodel(int i) const;
 
