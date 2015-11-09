@@ -189,8 +189,8 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
   }
 
   for(int i=0;i<P.n_data_partitions();i++) {
-    out_cache<<"smodel-index"<<i+1<<" = "<<P.get_smodel_index_for_partition(i)<<endl;
-    out_cache<<"imodel-index"<<i+1<<" = "<<P.get_imodel_index_for_partition(i)<<endl;
+    out_cache<<"smodel-index"<<i+1<<" = "<<P.smodel_index_for_partition(i)<<endl;
+    out_cache<<"imodel-index"<<i+1<<" = "<<P.imodel_index_for_partition(i)<<endl;
   }
   out_cache<<endl;
 
@@ -203,11 +203,11 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 
   out_screen<<"\n";
   for(int i=0;i<P.n_data_partitions();i++) {
-    int s_index = P.get_smodel_index_for_partition(i);
+    int s_index = P.smodel_index_for_partition(i);
     //    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
     out_screen<<"#"<<i+1<<": subst ~ "<<smodels[i]<<" ("<<s_index+1<<")    ";
 
-    int i_index = P.get_imodel_index_for_partition(i);
+    int i_index = P.imodel_index_for_partition(i);
     string i_name = "none";
     if (i_index != -1)
       i_name = imodels[i];

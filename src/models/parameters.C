@@ -322,26 +322,26 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
 
 int data_partition::n_base_models() const
 {
-  int s = P->smodel_for_partition[partition_index];
-  return P->evaluate(P->SModels[s].n_base_models).as_int();
+  int s = P->smodel_index_for_partition(partition_index);
+  return P->evaluate(P->PC->SModels[s].n_base_models).as_int();
 }
 
 int data_partition::n_states() const
 {
-  int s = P->smodel_for_partition[partition_index];
-  return P->evaluate(P->SModels[s].n_states).as_int();
+  int s = P->smodel_index_for_partition(partition_index);
+  return P->evaluate(P->PC->SModels[s].n_states).as_int();
 }
 
 vector<double> data_partition::distribution() const
 {
-  int s = P->smodel_for_partition[partition_index];
-  return P->evaluate(P->SModels[s].distribution).as_<Vector<double>>();
+  int s = P->smodel_index_for_partition(partition_index);
+  return P->evaluate(P->PC->SModels[s].distribution).as_<Vector<double>>();
 }
 
 vector<unsigned> data_partition::state_letters() const
 {
-  int s = P->smodel_for_partition[partition_index];
-  return P->evaluate(P->SModels[s].state_letters).as_<Vector<unsigned>>();
+  int s = P->smodel_index_for_partition(partition_index);
+  return P->evaluate(P->PC->SModels[s].state_letters).as_<Vector<unsigned>>();
 }
 
 vector<double> data_partition::frequencies(int m) const
@@ -675,7 +675,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   for(int b=0;b<B;b++)
   {
     int s = P->scale_for_partition[partition_index];
-    int m = P->smodel_for_partition[partition_index];
+    int m = P->smodel_index_for_partition(partition_index);
 
     expression_ref E = P->get_expression(P->branch_transition_p_indices(s,m));
     E = (identifier("!"), E, b);
@@ -687,11 +687,11 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   base_model_indices.resize(n_models, B);
   for(int m=0;m<n_models;m++)
   {
-    int s = P->smodel_for_partition[partition_index];
-    expression_ref F = P->get_expression(P->SModels[s].frequencies);
+    int s = P->scale_for_partition[partition_index];
+    expression_ref F = P->get_expression(P->PC->SModels[s].frequencies);
     frequencies_indices.push_back( p->add_compute_expression( (F,m) ) );
 
-    expression_ref BM = P->get_expression(P->SModels[s].base_model);
+    expression_ref BM = P->get_expression(P->PC->SModels[s].base_model);
     for(int b=0;b<B;b++)
       base_model_indices(m,b) = p->add_compute_expression((BM,m,b));
   }
@@ -1221,7 +1221,7 @@ log_double_t Parameters::heated_likelihood() const
 
 void Parameters::recalc_smodels() 
 {
-  for(int i=0;i<SModels.size();i++)
+  for(int i=0;i<n_smodels();i++)
     recalc_smodel(i);
 }
 
@@ -1229,7 +1229,7 @@ void Parameters::recalc_smodel(int m)
 {
   for(int i=0;i<n_data_partitions();i++) 
   {
-    if (smodel_for_partition[i] == m) 
+    if (smodel_index_for_partition(i) == m) 
     {
       // recompute cached computations
       get_data_partition(i).recalc_smodel();
@@ -1376,7 +1376,7 @@ void Parameters::recalc()
 
 object_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
 {
-  return evaluate(SModels[s].get_alphabet).assert_is_a<alphabet>();
+  return evaluate(PC->SModels[s].get_alphabet).assert_is_a<alphabet>();
 }
 
 bool Parameters::variable_alignment() const
@@ -1477,6 +1477,29 @@ expression_ref Parameters::my_tree() const
   return get_expression(tree_head);
 }
 
+parameters_constants::parameters_constants(const vector<alignment>& A, const SequenceTree& t,
+					   const vector<expression_ref>& SMs,
+					   const vector<int>& s_mapping,
+					   const vector<expression_ref>& IMs,
+					   const vector<int>& i_mapping,
+					   const vector<int>& scale_mapping)
+  :smodel_for_partition(s_mapping)
+{
+  // check that smodel mapping has correct size.
+  if (smodel_for_partition.size() != A.size())
+    throw myexception()<<"There are "<<A.size()
+		       <<" data partitions, but you mapped smodels onto "
+		       <<smodel_for_partition.size();
+
+  // check that we only map existing smodels to data partitions
+  for(int i=0;i<smodel_for_partition.size();i++) {
+    int m = smodel_for_partition[i];
+    if (m >= SMs.size())
+      throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
+			 <<" because there are only "<<SMs.size()<<" smodels.";
+  }
+}
+
 Parameters::Parameters(const module_loader& L,
 		       const vector<alignment>& A, const SequenceTree& t,
 		       const vector<expression_ref>& SMs,
@@ -1485,8 +1508,7 @@ Parameters::Parameters(const module_loader& L,
 		       const vector<int>& i_mapping,
 		       const vector<int>& scale_mapping)
   :Model(L),
-   PC(new parameters_constants),
-   smodel_for_partition(s_mapping),
+   PC(new parameters_constants(A,t,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
    IModel_methods(IMs.size()),
    imodel_for_partition(i_mapping),
    scale_for_partition(scale_mapping),
@@ -1606,12 +1628,6 @@ Parameters::Parameters(const module_loader& L,
 #endif
   }
 
-  // check that smodel mapping has correct size.
-  if (smodel_for_partition.size() != A.size())
-    throw myexception()<<"There are "<<A.size()
-		       <<" data partitions, but you mapped smodels onto "
-		       <<smodel_for_partition.size();
-
   // register the substitution models as sub-models
   for(int i=0;i<SMs.size();i++) 
   {
@@ -1619,7 +1635,7 @@ Parameters::Parameters(const module_loader& L,
 
     expression_ref smodel = SMs[i];
 
-    SModels.push_back( smodel_methods( perform_exp(smodel,prefix), *this) );
+    PC->SModels.push_back( smodel_methods( perform_exp(smodel,prefix), *this) );
   }
 
   // register the indel models as sub-models
@@ -1637,14 +1653,6 @@ Parameters::Parameters(const module_loader& L,
   imodels_program.def_function("models", (identifier("listArray'"), get_list(imodels_)));
   (*this) += imodels_program;
   
-  // check that we only map existing smodels to data partitions
-  for(int i=0;i<smodel_for_partition.size();i++) {
-    int m = smodel_for_partition[i];
-    if (m >= SModels.size())
-      throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
-			 <<" because there are only "<<SModels.size()<<" smodels.";
-  }
-
   /*------------------------- Add commands to log all parameters created before this point. ------------------------*/
   // don't constrain any branch lengths
   for(int b=0;b<TC->n_branches();b++)
@@ -1711,7 +1719,7 @@ Parameters::Parameters(const module_loader& L,
     // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
     for(int m=0;m < n_smodels(); m++)
     {
-      expression_ref S = get_expression(SModels[m].main);
+      expression_ref S = get_expression(PC->SModels[m].main);
       //expression_ref V = identifier("listToVectorMatrix");
       expression_ref V = identifier("vector_Matrix_From_List");
       //expression_ref I = 0;

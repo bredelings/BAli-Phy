@@ -240,10 +240,21 @@ struct smodel_methods
 
 struct parameters_constants: public Object
 {
+  /// The substitution::Model
+  std::vector<smodel_methods> SModels;
+  std::vector<int> smodel_for_partition;
+
   std::vector<std::vector<int>> parameters_for_tree_node;
   std::vector<std::pair<int,int>> parameters_for_tree_branch;
 
   parameters_constants* clone() const {return new parameters_constants(*this);}
+
+  parameters_constants(const std::vector<alignment>& A, const SequenceTree&, 
+		       const std::vector<expression_ref>&,
+		       const std::vector<int>&,
+		       const std::vector<expression_ref>&,
+		       const std::vector<int>&,
+		       const std::vector<int>&);
 };
 
 /// A class to contain all the MCMC state except the alignment
@@ -252,10 +263,6 @@ class Parameters: public Model
   friend class data_partition;
 
   object_ptr<parameters_constants> PC;
-
-  /// The substitution::Model
-  std::vector<smodel_methods> SModels;
-  std::vector<int> smodel_for_partition;
 
   /// The IndelModel
   std::vector<imodel_methods> IModel_methods;
@@ -298,9 +305,9 @@ public:
   const data_partition& operator[](int i) const {return get_data_partition(i);}
         data_partition& operator[](int i)       {return get_data_partition(i);}
 
-  int get_smodel_index_for_partition(int i) const {return smodel_for_partition[i];}
+  int smodel_index_for_partition(int i) const {return PC->smodel_for_partition[i];}
 
-  int get_imodel_index_for_partition(int i) const {return imodel_for_partition[i];}
+  int imodel_index_for_partition(int i) const {return imodel_for_partition[i];}
 
   void set_beta(double b);
   double get_beta() const;
@@ -356,7 +363,7 @@ public:
   log_double_t heated_likelihood() const;
 
   /// How many substitution models?
-  int n_smodels() const {return SModels.size();}
+  int n_smodels() const {return PC->SModels.size();}
   
   /// How many substitution models?
   int n_imodels() const {return IModel_methods.size();}
