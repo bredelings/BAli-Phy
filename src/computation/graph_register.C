@@ -894,10 +894,10 @@ void reg_heap::set_call(int t, int R1, int R2)
   assert(has_step_(t,R1));
 
   // Don't override an *existing* call
-  assert(not reg_has_call_(t,R1));
+  //  assert(not reg_has_call_(t,R1));
 
   // Check that we aren't overriding an existing *result*
-  assert(not reg_has_result_(t,R1));
+  //  assert(not reg_has_result_(t,R1));
 
   // Set the call
   step_for_reg_(t,R1).call = R2;
@@ -975,14 +975,6 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
 {
   if (not has_step_(t,R))
     add_shared_step(t,R);
-
-  assert( has_step_(t,R) );
-
-  // Check that there is no result we are overriding
-  assert(not reg_has_result_(t,R) );
-
-  // Check that there is no previous call we are overriding.
-  assert(not reg_has_call_(t,R) );
 
   assert(not children_of_token(t).size());
 
@@ -1097,7 +1089,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
 #ifndef NDEBUG
   for(int R: result_may_be_changed)
-    assert(computation_for_reg_(token,R).temp == mark_result);
+    assert(computation_for_reg_(token,R).temp == mark_result or
+	   computation_for_reg_(token,R).temp == mark_modified);
 
   for(int R: call_and_result_may_be_changed)
     assert(step_for_reg_(token,R).temp == mark_call_result or
@@ -1155,8 +1148,6 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       clear_step(token,R);
   }
 
-  assert(not has_computation_(token,P));
-  
   // Finally set the new value.
   set_reduction_result(token, P, std::move(C) );
 
