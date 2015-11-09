@@ -454,15 +454,15 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
 
 #ifndef NDEBUG
   if (not subA().may_have_invalid_branches())
-    check_regenerate(*subA, A(), T());
-  subA()->check_footprint(A(), T());
+    check_regenerate(subA(), A(), T());
+  subA().check_footprint(A(), T());
 #endif
 
   subA().allow_invalid_branches(b);
 
 #ifndef NDEBUG
   if (not subA().may_have_invalid_branches())
-    check_regenerate(*subA, A(), T());
+    check_regenerate(subA(), A(), T());
   subA().check_footprint(A(), T());
 #endif
 }
