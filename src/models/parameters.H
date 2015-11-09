@@ -251,6 +251,10 @@ struct parameters_constants: public Object
   std::vector<std::vector<int>> parameters_for_tree_node;
   std::vector<std::pair<int,int>> parameters_for_tree_branch;
 
+  // Scale for partition
+  std::vector<int> scale_for_partition;
+  int n_scales;
+
   parameters_constants* clone() const {return new parameters_constants(*this);}
 
   parameters_constants(const std::vector<alignment>& A, const SequenceTree&, 
@@ -267,10 +271,6 @@ class Parameters: public Model
   friend class data_partition;
 
   object_ptr<parameters_constants> PC;
-
-  // Scale for partition
-  std::vector<int> scale_for_partition;
-  int n_scales;
 
   void recalc();
 
@@ -309,6 +309,8 @@ public:
 
   int imodel_index_for_partition(int i) const {return PC->imodel_for_partition[i];}
 
+  int scale_index_for_partition(int i) const {return PC->scale_for_partition[i];}
+  
   void set_beta(double b);
   double get_beta() const;
 
@@ -367,6 +369,9 @@ public:
   
   /// How many substitution models?
   int n_imodels() const {return PC->IModel_methods.size();}
+
+  /// How many substitution models?
+  int n_scales() const {return PC->n_scales;}
 
   object_ptr<const alphabet> get_alphabet_for_smodel(int i) const;
 

@@ -669,44 +669,41 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
     }
   }
 
-  // Add method indices for calculating transition matrices.
-  const int n_models = n_base_models();
+  const int n_base_smodels = n_base_models();
   //  const int n_states = state_letters().size();
-  for(int b=0;b<B;b++)
+  const int scale_index = P->scale_index_for_partition(partition_index);
+  const int smodel_index = P->smodel_index_for_partition(partition_index);
+  const int imodel_index = P->imodel_index_for_partition(partition_index);
+
+  // Add method indices for calculating transition matrices.
   {
-    int s = P->scale_for_partition[partition_index];
-    int m = P->smodel_index_for_partition(partition_index);
-
-    expression_ref E = P->get_expression(P->branch_transition_p_indices(s,m));
-    E = (identifier("!"), E, b);
-
-    transition_p_method_indices[b] = p->add_compute_expression(E);
+    expression_ref E = P->get_expression(P->branch_transition_p_indices(scale_index, smodel_index));
+    for(int b=0;b<B;b++)
+      transition_p_method_indices[b] = p->add_compute_expression( (identifier("!"), E, b) );
   }
 
   // Add method indices for calculating base models and frequencies
-  base_model_indices.resize(n_models, B);
-  for(int m=0;m<n_models;m++)
+  base_model_indices.resize(n_base_smodels, B);
   {
-    int s = P->scale_for_partition[partition_index];
-    expression_ref F = P->get_expression(P->PC->SModels[s].frequencies);
-    frequencies_indices.push_back( p->add_compute_expression( (F,m) ) );
-
-    expression_ref BM = P->get_expression(P->PC->SModels[s].base_model);
-    for(int b=0;b<B;b++)
-      base_model_indices(m,b) = p->add_compute_expression((BM,m,b));
+    expression_ref F = P->get_expression(P->PC->SModels[smodel_index].frequencies);
+    expression_ref BM = P->get_expression(P->PC->SModels[smodel_index].base_model);
+    for(int m=0;m<n_base_smodels;m++)
+    {
+      frequencies_indices.push_back( p->add_compute_expression( (F,m) ) );
+      for(int b=0;b<B;b++)
+	base_model_indices(m,b) = p->add_compute_expression((BM,m,b));
+    }
   }
 
   // Add method indices for calculating branch HMMs
-  int i_index = P->imodel_index_for_partition(partition_index);
-  int scale_index = P->scale_for_partition[partition_index];
 
-  if (i_index != -1)
+  if (imodel_index != -1)
   {
     // D = Params.substitutionBranchLengths!scale_index
     expression_ref D = (identifier("!"),identifier("Params.substitutionBranchLengths"),scale_index);
     expression_ref heat = parameter("Heat.beta");
     expression_ref training = parameter("*IModels.training");
-    expression_ref model = (identifier("!"),identifier("IModels.models"),i_index);
+    expression_ref model = (identifier("!"),identifier("IModels.models"),imodel_index);
 
     vector<expression_ref> as_;
     for(int b=0;b<2*B;b++)
@@ -721,7 +718,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
 
     for(int b=0;b<B;b++)
     {
-      // (fst IModels.models!i_index) D b heat training
+      // (fst IModels.models!imodel_index) D b heat training
       int index = p->add_compute_expression( (identifier("!"), hmms, b) );
       branch_HMM_indices.push_back( index );
     }
@@ -1324,12 +1321,12 @@ void Parameters::recalc()
   // Check for beta (0) or mu[i] (i+1)
   for(int index: triggers())
   {
-    if (0 <= index and index < n_scales)
+    if (0 <= index and index < n_scales())
     {
       int s = index;
 
       assert(includes(triggers(),s));
-      assert(0 <= s and s < n_scales);
+      assert(0 <= s and s < n_scales());
       
       // Change branch lengths for the s-th scale
       assert(branch_length_indices[s].size() == T().n_branches());
@@ -1342,11 +1339,9 @@ void Parameters::recalc()
       }
 
       // notify partitions with scale 'p' that their branch mean changed
-      for(int p=0;p<n_data_partitions() and p<scale_for_partition.size();p++)
-      {
-	if (scale_for_partition[p] == s)
+      for(int p=0;p<n_data_partitions();p++)
+	if (scale_index_for_partition(p) == s)
 	  get_data_partition(p).branch_mean_changed();
-      }
     }
   }
   triggers().clear();
@@ -1400,7 +1395,7 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
   T_.modify()->directed_branch(b).set_length(l);
 
   // Update D parameters
-  for(int s=0; s<n_scales; s++) 
+  for(int s=0; s<n_scales(); s++) 
   {
     double rate = get_parameter_value(branch_mean_index(s)).as_double();
     double delta_t = T().branch(b).length();
@@ -1421,7 +1416,7 @@ void Parameters::setlength(int b,double l)
   T_.modify()->directed_branch(b).set_length(l);
 
   // Update D parameters
-  for(int s=0; s<n_scales; s++) 
+  for(int s=0; s<n_scales(); s++) 
   {
     double rate = get_parameter_value(branch_mean_index(s)).as_double();
     double delta_t = T().branch(b).length();
@@ -1442,7 +1437,7 @@ double Parameters::branch_mean() const
 
 int Parameters::n_branch_means() const
 {
-  return n_scales;
+  return n_scales();
 }
 
 int Parameters::branch_mean_index(int i) const 
@@ -1468,7 +1463,7 @@ void Parameters::branch_mean_tricky(int i,double x)
 
 double Parameters::get_branch_subst_rate(int p, int /* b */) const
 {
-  int s = scale_for_partition[p];
+  int s = scale_index_for_partition(p);
   return get_parameter_value(branch_mean_index(s)).as_double();
 }
 
@@ -1485,7 +1480,9 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
 					   const vector<int>& scale_mapping)
   :smodel_for_partition(s_mapping),
    IModel_methods(IMs.size()),
-   imodel_for_partition(i_mapping)
+   imodel_for_partition(i_mapping),
+   scale_for_partition(scale_mapping),
+   n_scales(max(scale_mapping)+1)
 {
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())
@@ -1511,8 +1508,6 @@ Parameters::Parameters(const module_loader& L,
 		       const vector<int>& scale_mapping)
   :Model(L),
    PC(new parameters_constants(A,t,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
-   scale_for_partition(scale_mapping),
-   n_scales(max(scale_mapping)+1),
    T_(t),
    branch_prior_type(0),
    TC(star_tree(t.get_leaf_labels())),
@@ -1531,11 +1526,11 @@ Parameters::Parameters(const module_loader& L,
 
   // Add a Main.mu<i> parameter for each scale.
   {
-    expression_ref mus = model_expression({identifier("branch_mean_model"), n_scales});
+    expression_ref mus = model_expression({identifier("branch_mean_model"), n_scales()});
     evaluate_expression( perform_exp(mus) );
   }
 
-  for(int i=0;i<n_scales;i++)
+  for(int i=0;i<n_scales();i++)
   {
     string mu_name = "Main.mu"+convertToString(i+1);
     int trigger = add_compute_expression( (identifier("trigger_on"),parameter(mu_name),i) );
@@ -1659,7 +1654,7 @@ Parameters::Parameters(const module_loader& L,
     TC.modify()->branch(b).set_length(-1);
 
   // Add and initialize variables for branch *lengths*: scale<s>.D<b>
-  for(int s=0;s<n_scales;s++)
+  for(int s=0;s<n_scales();s++)
   {
     string prefix= "*Scale" + convertToString(s+1);
     branch_length_indices.push_back(vector<int>());
