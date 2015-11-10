@@ -928,7 +928,11 @@ void reg_heap::destroy_all_computations_in_token(int t)
   {
     int s = vm_step[r];
     if (s > 0)
+    {
+      for(int r2: steps[s].created_regs)
+	reclaim_used(r2);
       steps.reclaim_used(s);
+    }
   }
   vm_step.clear();
 
