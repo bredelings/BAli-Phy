@@ -55,9 +55,9 @@ vector<int> convert_to_column_list(const vector<pair<int,int> >& column_indices)
 /// Take a sorted list of [column] and convert it to [(column,index)]
 vector<pair<int,int> > convert_to_column_index_list(const vector<int>& column_indices)
 {
-  vector<pair<int,int> > indices;
+  vector<pair<int,int> > indices(column_indices.size());
   for(int i=0;i<column_indices.size();i++)
-    indices.push_back(std::pair<int,int>(column_indices[i],i));
+    indices[i] = {column_indices[i],i};
   
   return indices;
 }
@@ -858,19 +858,23 @@ vector<int> indices_to_present_columns(const vector<pair<int,int> >& p1, const v
 /// Get the sorted list of columns present in either p1 or p2, with -1 for each index.
 vector<pair<int,int> > combine_columns(const vector<pair<int,int> >& p1, const vector<pair<int,int> >& p2)
 {
+  const int s1 = p1.size();
+  const int s2 = p2.size();
+
   vector<pair<int,int> > p3;
+  p3.reserve(s1+s2);
 
   int I1 = 0;
   int I2 = 0;
-  while(I1 < p1.size() or I2 < p2.size())
+  while(I1 < s1 or I2 < s2)
   {
     int c = -1;
-    if (I2 >= p2.size())
+    if (I2 >= s2)
     {
       c = p1[I1].first;
       I1++;
     }
-    else if (I1 >= p1.size())
+    else if (I1 >= s1)
     {
       c = p2[I2].first;
       I2++;
