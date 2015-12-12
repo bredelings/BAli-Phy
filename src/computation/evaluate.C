@@ -83,7 +83,10 @@ class RegOperationArgs: public OperationArgs
   }
 
 public:
-
+  // But what if the reg is de-allocated BEFORE its context is destroyed?
+  // I think we will need a back-link from the reg to its creating context.
+  int allocate(closure&& C) {return OperationArgs::allocate(std::move(C));}
+  
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
   RegOperationArgs(int r, int s, reg_heap& m)
