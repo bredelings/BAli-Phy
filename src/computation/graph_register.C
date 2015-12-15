@@ -1012,7 +1012,7 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
   else
   {
     int R2 = steps[s].call;
-    if (steps[s].created_regs.size() == 1 and steps[s].created_regs[0] == R2)
+    if (steps[s].created_regs.size() == 1 and *steps[s].created_regs.begin() == R2)
     {
       assert(is_WHNF(access(R2).C.exp));
       assert(steps[s].call == R2);
