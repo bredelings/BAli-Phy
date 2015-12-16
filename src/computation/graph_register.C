@@ -1019,16 +1019,23 @@ void reg_heap::set_reduction_result(int t, int R, closure&& result)
     }
     else
     {
-      R2 = allocate();
-      set_call(t, R, R2);
       assert(steps[s].created_regs.empty());
-      steps[s].created_regs.push_back(R2);
+      R2 = create_reg_from_step(s);
+      set_call(t, R, R2);
       clear_computation(t,R);
-      total_reg_allocations++;
     }
     set_C(R2, std::move( result ) );
   }
 }
+
+int reg_heap::create_reg_from_step(int s)
+{
+  total_reg_allocations++;
+  int r = allocate();
+  steps[s].created_regs.push_front(r);
+  return r;
+}
+
 
 // If we replace a computation at P that is newly defined in this token,
 // there may be computations that call or use it that are also newly
