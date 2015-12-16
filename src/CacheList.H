@@ -20,7 +20,7 @@ public:
   typedef typename std::list<T>::iterator iterator;
   typedef typename std::list<T>::const_iterator const_iterator;
 
-  int size() const {std::abort();}
+  int size() const {return L.size();}
 
   const_iterator begin() const 
   {
