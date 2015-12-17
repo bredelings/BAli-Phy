@@ -83,9 +83,27 @@ class RegOperationArgs: public OperationArgs
   }
 
 public:
-  // But what if the reg is de-allocated BEFORE its context is destroyed?
-  // I think we will need a back-link from the reg to its creating context.
-  int allocate(closure&& C) {return OperationArgs::allocate(std::move(C));}
+
+  int allocate(closure&& C)
+  {
+    if (C.exp.head().type() == index_var_type)
+    {
+      int index = C.exp.as_index_var();
+
+      int r = C.lookup_in_env( index );
+    
+      assert(M.is_used(r));
+
+      return r;
+    }
+    else
+    {
+      int r = M.push_temp_head(M.create_reg_from_step(S));
+      n_allocated++;
+      M.set_C(r, std::move(C) );
+      return r;
+    }
+  }
   
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
