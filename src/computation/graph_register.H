@@ -94,6 +94,8 @@ public:
 
   int n_heads = 0;
 
+  std::pair<int, CacheList<int>::iterator> created_by;
+  
   void clear();
 
   void check_cleared();
@@ -424,6 +426,7 @@ public:
 
   /// Allocate a reg in context t and put it on the top of the temporary-head stack.
   int push_temp_head();
+  int push_temp_head(int r);
 
   /// Deallocate the temporary head on the top of the temporary-head stack.
   void pop_temp_head();
@@ -483,6 +486,7 @@ public:
   void clear_step(int t, int r);
   void clear_computation(int t, int r);
 
+  void clear_back_edges_for_reg(int r);
   void clear_back_edges_for_step(int s);
   void clear_back_edges_for_computation(int rc);
 

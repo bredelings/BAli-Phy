@@ -216,12 +216,16 @@ void reg_heap::trace_and_reclaim_unreachable()
 #ifdef DEBUG_MACHINE
   check_used_regs();
 #endif
-  reclaim_unmarked();
-
   // remove all back-edges
   for(auto i = steps.begin();i != steps.end(); i++)
     if (not steps.is_marked(i.addr()))
       clear_back_edges_for_step(i.addr());
+
+  for(auto i = begin();i != end(); i++)
+    if (not is_marked(i.addr()))
+      clear_back_edges_for_reg(i.addr());
+
+  reclaim_unmarked();
 
   steps.reclaim_unmarked();
 
