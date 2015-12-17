@@ -19,7 +19,7 @@ void reg_heap::collect_garbage()
   total_gc++;
   total_regs = size();
   total_steps = steps.size();
-  total_comps = computations.size();
+  total_comps = results.size();
 #ifdef DEBUG_MACHINE
   std::cerr<<"***********Garbage Collection******************"<<std::endl;
   check_used_regs();
@@ -68,7 +68,7 @@ void reg_heap::trace_token(int token, vector<int>& remap)
   vector<int>& scan2 = get_scratch_list();
   vector<int>& next_scan2 = get_scratch_list();
 
-  // Find computations for marked regs
+  // Find results for marked regs
   const auto& m = tokens[t].vm_relative;
   {
     scan2.resize(m.modified().size());
@@ -80,7 +80,7 @@ void reg_heap::trace_token(int token, vector<int>& remap)
 	if (rc > 0)
 	{
 	  scan2[i++] = rc;
-	  assert(not computations.is_marked(rc));
+	  assert(not results.is_marked(rc));
 	}
       }
     scan2.resize(i);
@@ -101,22 +101,22 @@ void reg_heap::trace_token(int token, vector<int>& remap)
       // Count the references from E
       next_scan1.insert(next_scan1.end(), R.C.Env.begin(), R.C.Env.end());
       
-      int rc = computation_index_for_reg_(t,r);
+      int rc = result_index_for_reg_(t,r);
       if (rc > 0)
       {
-	assert(not computations.is_free(rc));
-	if (computations.is_marked(rc)) continue;
+	assert(not results.is_free(rc));
+	if (results.is_marked(rc)) continue;
 	
-	computations.set_mark(rc);
+	results.set_mark(rc);
 	
-	const computation& RC = computations[rc];
+	const result& RC = results[rc];
 	
 	// Count the reg that references us
 	assert(RC.source_reg);
 	assert(is_marked(RC.source_reg));
 	//      scan1.push_back(RC.source_reg);
 	
-	// Count also the computation we call
+	// Count also the result we call
 	if (RC.call) 
 	  scan1.push_back(RC.call);
       }
@@ -149,13 +149,13 @@ void reg_heap::trace(vector<int>& remap)
       // Count the references from E
       next_scan1.insert(next_scan1.end(), R.C.Env.begin(), R.C.Env.end());
       
-      // Count all computations
+      // Count all results
       for(int t=0;t<get_n_tokens();t++)
       {
 	if (not token_is_used(t)) continue;
 	
 	int s = step_index_for_reg_(t,r);
-	int rc = computation_index_for_reg_(t,r);
+	int rc = result_index_for_reg_(t,r);
 
 	if (s > 0)
 	{
@@ -170,19 +170,19 @@ void reg_heap::trace(vector<int>& remap)
 	  assert(S.source_reg);
 	  assert(is_marked(S.source_reg));
 
-	  // Count also the computation we call
+	  // Count also the result we call
 	  if (S.call) 
 	    next_scan1.push_back(S.call);
 	}
 
 	if (rc > 0)
 	{
-	  assert(not computations.is_free(rc));
-	  if (computations.is_marked(rc)) continue;
+	  assert(not results.is_free(rc));
+	  if (results.is_marked(rc)) continue;
 
-	  computations.set_mark(rc);
+	  results.set_mark(rc);
       
-	  const computation& RC = computations[rc];
+	  const result& RC = results[rc];
       
 	  // Count the reg that references us
 	  assert(RC.source_reg);
@@ -230,11 +230,11 @@ void reg_heap::trace_and_reclaim_unreachable()
   steps.reclaim_unmarked();
 
   // remove all back-edges
-  for(auto i = computations.begin();i != computations.end(); i++)
-    if (not computations.is_marked(i.addr()))
-      clear_back_edges_for_computation(i.addr());
+  for(auto i = results.begin();i != results.end(); i++)
+    if (not results.is_marked(i.addr()))
+      clear_back_edges_for_result(i.addr());
 
-  computations.reclaim_unmarked();
+  results.reclaim_unmarked();
 
 #ifdef DEBUG_MACHINE
   check_used_regs();

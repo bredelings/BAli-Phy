@@ -210,12 +210,12 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     else if (reg_type == reg::type_t::changeable)
     {
       total_changeable_eval++;
-      int rc = computation_index_for_reg(R);
+      int rc = result_index_for_reg(R);
 
       // If we have a value, then we are done.
       if (rc > 0)
       {
-	int value = computations[rc].value;
+	int value = results[rc].value;
 
 	if (value)
 	{
@@ -241,7 +241,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	}
 
 	// R gets its value from S.
-	set_computation_value_for_reg( R);
+	set_result_value_for_reg( R);
 	total_changeable_eval_with_call++;
 	return {R, value};
       }
@@ -268,7 +268,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 
       access(R).type = reg::type_t::index_var;
 
-      clear_computation(root_token,R);
+      clear_result(root_token,R);
       clear_step(root_token,R);
 
       int index = access(R).C.exp.as_index_var();
@@ -285,7 +285,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     else if (is_WHNF(access(R).C.exp))
     {
       access(R).type = reg::type_t::constant;
-      clear_computation(root_token,R);
+      clear_result(root_token,R);
       clear_step(root_token,R);
     }
 
@@ -309,7 +309,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
 
       // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
-      // Therefore, we cannot do "assert(not computation_for_reg(t,R).changeable);" here.
+      // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.
 
 #ifdef DEBUG_MACHINE
       string SS = "";
@@ -347,7 +347,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	  int value = p.second;
 
 	  set_call(R, r3);
-	  set_computation_value_for_reg(R);
+	  set_result_value_for_reg(R);
 	  return {R, value};
 	}
       }
@@ -482,7 +482,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
       object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
 
       // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
-      // Therefore, we cannot do "assert(not computation_for_reg(t,R).changeable);" here.
+      // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.
 
 #ifdef DEBUG_MACHINE
       string SS = "";

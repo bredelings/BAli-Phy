@@ -44,7 +44,7 @@ struct Step
   Step(Step&&) noexcept;
 };
 
-struct computation
+struct result
 {
   int source_token = -1;
 
@@ -70,13 +70,13 @@ struct computation
 
   void check_cleared();
 
-  computation& operator=(const computation&) = delete;
-  computation& operator=(computation&&) noexcept;
+  result& operator=(const result&) = delete;
+  result& operator=(result&&) noexcept;
 
-  computation() = default;
+  result() = default;
 
-  computation(const computation&) = delete;
-  computation(computation&&) noexcept;
+  result(const result&) = delete;
+  result(result&&) noexcept;
 };
 
 class reg
@@ -162,7 +162,7 @@ class reg_heap: public Object, public checked_pool<reg>
 
   mutable checked_pool_callback<Step> steps;
 
-  mutable checked_pool_callback<computation> computations;
+  mutable checked_pool_callback<result> results;
 
   mutable int n_active_scratch_lists = 0;
   mutable std::vector< object_ptr<Vector<int> > > scratch_lists;
@@ -173,8 +173,8 @@ class reg_heap: public Object, public checked_pool<reg>
 
   void reclaim_used(int);
 
-  bool computation_is_called_by(int, int) const;
-  bool computation_is_used_by(int, int) const;
+  bool result_is_called_by(int, int) const;
+  bool result_is_used_by(int, int) const;
   bool reg_is_used_by(int, int) const;
 
   int inc_heads(int R);
@@ -304,7 +304,7 @@ public:
     /// A list of signals that have been sent
     std::vector<int> triggers;
 
-    /// Mapping from closures to computations/results
+    /// Mapping from closures to steps/results
     mapping vm_relative;
     mapping vm_step;
 
@@ -448,60 +448,60 @@ public:
 
   /*----- Virtual memory ------*/
   int step_index_for_reg_(int t, int r) const;
-  int computation_index_for_reg_(int t, int r) const;
+  int result_index_for_reg_(int t, int r) const;
   const Step& step_for_reg_(int t, int r) const;
         Step& step_for_reg_(int t, int r);
-  const computation& computation_for_reg_(int t, int r) const;
-        computation& computation_for_reg_(int t, int r);
+  const result& result_for_reg_(int t, int r) const;
+        result& result_for_reg_(int t, int r);
   bool has_step_(int t, int r) const;
-  bool has_computation_(int t, int r) const;
+  bool has_result_(int t, int r) const;
   bool reg_has_value_(int t, int r) const;
-  bool reg_has_computation_value_(int t, int r) const;
-  int computation_value_for_reg_(int t, int r) const;
+  bool reg_has_result_value_(int t, int r) const;
+  int result_value_for_reg_(int t, int r) const;
   bool reg_has_call_(int t, int r) const;
   int call_for_reg_(int t, int r) const;
 
   int step_index_for_reg(int r) const;
-  int computation_index_for_reg(int r) const;
+  int result_index_for_reg(int r) const;
   const Step& step_for_reg(int r) const ;
         Step& step_for_reg(int r);
-  const computation& computation_for_reg(int r) const ;
-        computation& computation_for_reg(int r);
+  const result& result_for_reg(int r) const ;
+        result& result_for_reg(int r);
   bool has_step(int r) const;
-  bool has_computation(int r) const;
+  bool has_result(int r) const;
   bool reg_has_value(int r) const;
-  bool reg_has_computation_value(int r) const;
-  int computation_value_for_reg(int r) const;
+  bool reg_has_result_value(int r) const;
+  int result_value_for_reg(int r) const;
   bool reg_has_call(int r) const;
   int call_for_reg(int r) const;
 
   const closure& access_value_for_reg(int R1) const;
 
   int remove_shared_step(int t, int r);
-  int remove_shared_computation(int t, int r);
+  int remove_shared_result(int t, int r);
 
   int add_shared_step(int t, int r);
-  int add_shared_computation(int t, int r);
+  int add_shared_result(int t, int r);
 
   void clear_step(int t, int r);
-  void clear_computation(int t, int r);
+  void clear_result(int t, int r);
 
   void clear_back_edges_for_reg(int r);
   void clear_back_edges_for_step(int s);
-  void clear_back_edges_for_computation(int rc);
+  void clear_back_edges_for_result(int rc);
 
   void check_back_edges_cleared_for_step(int rc);
-  void check_back_edges_cleared_for_computation(int rc);
+  void check_back_edges_cleared_for_result(int rc);
 
   int move_step(int t1, int t2, int r);
-  int move_computation(int t1, int t2, int r);
+  int move_result(int t1, int t2, int r);
 
   bool step_is_referenced(int,int) const;
-  bool computation_is_referenced(int,int) const;
+  bool result_is_referenced(int,int) const;
 
   int value_for_reg(int r) const;
 
-  void set_computation_value_for_reg(int r1);
+  void set_result_value_for_reg(int r1);
 
   std::vector<int> used_regs_for_reg(int r) const;
 

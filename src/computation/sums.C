@@ -3,7 +3,7 @@
 bool reg_heap::inc_probability(int rc)
 {
   assert(rc > 0);
-  int r2 = computations[rc].value;
+  int r2 = results[rc].value;
   assert(r2 > 0);
   log_double_t pr = access(r2).C.exp.as_log_double();
 
@@ -33,7 +33,7 @@ bool reg_heap::inc_probability(int rc)
   total_error += std::abs(error);
   error_pr.log() = error;
   variable_pr = new_total;
-  computations[rc].flags = 1;
+  results[rc].flags = 1;
   return true;
 }
 

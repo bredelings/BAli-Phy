@@ -83,7 +83,7 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& scan, vecto
       }
     }
 
-    if (not has_computation(r)) continue;
+    if (not has_result(r)) continue;
 
     // Count also the references from the call
     if (reg_has_call(r))
@@ -458,7 +458,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     else if (C.reg_is_changeable(R))
       o<<",style=\"dashed,filled\",color=red";
 
-    if (C.reg_is_changeable(R) and C.reg_has_computation_value(R))
+    if (C.reg_is_changeable(R) and C.reg_has_result_value(R))
       o<<",fillcolor=\"#007700\",fontcolor=white";
     else if (C.reg_is_changeable(R))
       o<<",fillcolor=\"#770000\",fontcolor=white";
