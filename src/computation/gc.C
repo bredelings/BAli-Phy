@@ -69,11 +69,11 @@ void reg_heap::trace_token(int token, vector<int>& remap)
   vector<int>& next_scan2 = get_scratch_list();
 
   // Find results for marked regs
-  const auto& m = tokens[t].vm_relative;
+  const auto& m = tokens[t].vm_result;
   {
     scan2.resize(m.modified().size());
     int i=0;
-    for(int r: m.vm_relative.modified())
+    for(int r: m.vm_result.modified())
       if (is_marked(r))
       {
 	int rc = m[r];

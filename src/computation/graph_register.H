@@ -305,7 +305,7 @@ public:
     std::vector<int> triggers;
 
     /// Mapping from closures to steps/results
-    mapping vm_relative;
+    mapping vm_result;
     mapping vm_step;
 
     /// These are the regs that must be evaluated when the context becomes active.

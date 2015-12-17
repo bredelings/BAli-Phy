@@ -521,7 +521,7 @@ log_double_t reg_heap::probability_for_context_diff(int c)
   {
     for(int r: probability_heads)
     {
-      int rc = tokens[root_token].vm_relative[r];
+      int rc = tokens[root_token].vm_result[r];
       if (rc > 0 and results[rc].flags.test(0))
 	dec_probability(rc);
     }
@@ -642,7 +642,7 @@ int reg_heap::step_index_for_reg(int r) const
 
 int reg_heap::result_index_for_reg(int r) const 
 {
-  return tokens[root_token].vm_relative[r];
+  return tokens[root_token].vm_result[r];
 }
 
 const Step& reg_heap::step_for_reg(int r) const 
@@ -773,7 +773,7 @@ int reg_heap::step_index_for_reg_(int t, int r) const
 
 int reg_heap::result_index_for_reg_(int t, int r) const 
 {
-  return tokens[t].vm_relative[r];
+  return tokens[t].vm_result[r];
 }
 
 int reg_heap::value_for_reg(int r) const 
@@ -912,7 +912,7 @@ void reg_heap::destroy_all_computations_in_token(int t)
 {
   // Remove use back-edges
   auto& vm_step = tokens[t].vm_step;
-  auto& vm_relative = tokens[t].vm_relative;
+  auto& vm_result = tokens[t].vm_result;
 
   for(int r: vm_step.modified())
   {
@@ -922,9 +922,9 @@ void reg_heap::destroy_all_computations_in_token(int t)
   }
 
   // Remove call back-edges
-  for(int r: vm_relative.modified())
+  for(int r: vm_result.modified())
   {
-    int rc = vm_relative[r];
+    int rc = vm_result[r];
     if (rc > 0)
       clear_back_edges_for_result(rc);
   }
@@ -945,13 +945,13 @@ void reg_heap::destroy_all_computations_in_token(int t)
   }
   vm_step.clear();
 
-  for(int r: vm_relative.modified())
+  for(int r: vm_result.modified())
   {
-    int rc = vm_relative[r];
+    int rc = vm_result[r];
     if (rc > 0)
       results.reclaim_used(rc);
   }
-  vm_relative.clear();
+  vm_result.clear();
 }
 
 void reg_heap::clear_call(int s)
@@ -1213,8 +1213,8 @@ void swap_value(mapping& vm1, mapping& vm2, int r)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
 bool reg_heap::merge_split_mapping(int t1, int t2)
 {
-  int size1 = tokens[t1].vm_step.modified().size() + tokens[t1].vm_relative.modified().size();
-  int size2 = tokens[t2].vm_step.modified().size() + tokens[t2].vm_relative.modified().size();
+  int size1 = tokens[t1].vm_step.modified().size() + tokens[t1].vm_result.modified().size();
+  int size2 = tokens[t2].vm_step.modified().size() + tokens[t2].vm_result.modified().size();
   bool do_swap = (size1 > size2);
   merge_split_step_mapping(t1, t2, do_swap);
   merge_split_relative_mapping(t1, t2, do_swap);
@@ -1291,8 +1291,8 @@ void reg_heap::merge_split_step_mapping(int t1, int t2, bool do_swap)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
 void reg_heap::merge_split_relative_mapping(int t1, int t2, bool do_swap)
 {
-  auto& vm1 = tokens[t1].vm_relative;
-  auto& vm2 = tokens[t2].vm_relative;
+  auto& vm1 = tokens[t1].vm_result;
+  auto& vm2 = tokens[t2].vm_result;
   if (not do_swap)
   {
     for(int i=0;i<vm1.modified().size();)
@@ -1398,8 +1398,8 @@ void reg_heap::pivot_step_mapping(int t1, int t2)
 // where (m2,v2) is at the root and (m1,v1) is relative.
 void reg_heap::pivot_relative_mapping(int t1, int t2)
 {
-  auto& vm1 = tokens[t1].vm_relative;
-  auto& vm2 = tokens[t2].vm_relative;
+  auto& vm1 = tokens[t1].vm_result;
+  auto& vm2 = tokens[t2].vm_result;
 
   for(int i=0;i<vm2.modified().size();i++)
   {
@@ -1473,9 +1473,9 @@ void reg_heap::reroot_at(int t)
   // 4. Invalidate regs in t that reference(d) results from parent
   assert(tokens[parent].version >= tokens[t].version);
 
-  for(int r: tokens[parent].vm_relative.modified())
+  for(int r: tokens[parent].vm_result.modified())
   {
-    int rc = tokens[parent].vm_relative[r];
+    int rc = tokens[parent].vm_result[r];
     if (rc > 0 and results[rc].flags.test(0))
       dec_probability(rc);
   }
@@ -1626,8 +1626,8 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   // find all regs in t2 that are not shared from t1
   vector<int>& modified = get_scratch_list();
-  for(int r: tokens[t1].vm_relative.modified())
-    if (tokens[t1].vm_relative[r] > 0)
+  for(int r: tokens[t1].vm_result.modified())
+    if (tokens[t1].vm_result[r] > 0)
       modified.push_back(r);
 
   vector< int >& call_and_value_may_be_changed = get_scratch_list();
@@ -1741,14 +1741,14 @@ void reg_heap::reclaim_used(int r)
       
       if (tokens[t].vm_step[r])
 	tokens[t].vm_step.erase_value(r);
-      if (tokens[t].vm_relative[r])
-	tokens[t].vm_relative.erase_value(r);
+      if (tokens[t].vm_result[r])
+	tokens[t].vm_result.erase_value(r);
     }
 
 #ifndef NDEBUG  
   for(int t=0;t<tokens.size();t++)
   {
-    assert(not tokens[t].vm_relative[r]);
+    assert(not tokens[t].vm_result[r]);
   }
 #endif
 
@@ -1861,7 +1861,7 @@ void reg_heap::expand_memory(int s)
   for(int t=0;t<tokens.size();t++)
   {
     assert(tokens[t].vm_step.size() == old_size);
-    assert(tokens[t].vm_relative.size() == old_size);
+    assert(tokens[t].vm_result.size() == old_size);
   }
 
   base_pool_t::expand_memory(s);
@@ -1870,11 +1870,11 @@ void reg_heap::expand_memory(int s)
   for(int t=0;t<tokens.size();t++)
   {
     tokens[t].vm_step.resize(size());
-    tokens[t].vm_relative.resize(size());
+    tokens[t].vm_result.resize(size());
     for(int i=old_size;i<size();i++)
     {
       assert(tokens[t].vm_step[i] == 0);
-      assert(tokens[t].vm_relative[i] == 0);
+      assert(tokens[t].vm_result[i] == 0);
     }
   }
 }
@@ -1917,18 +1917,18 @@ int reg_heap::get_unused_token()
     unused_tokens.push_back(get_n_tokens());
     tokens.push_back(Token());
     tokens.back().vm_step.resize(size());
-    tokens.back().vm_relative.resize(size());
+    tokens.back().vm_result.resize(size());
     for(int i=0;i<size();i++)
     {
       assert(tokens.back().vm_step[i] == 0);
-      assert(tokens.back().vm_relative[i] == 0);
+      assert(tokens.back().vm_result[i] == 0);
     }
   }
 
   for(int i=0;i<tokens.size();i++)
   {
     assert(tokens[i].vm_step.size() == size());
-    assert(tokens[i].vm_relative.size() == size());
+    assert(tokens[i].vm_result.size() == size());
   }
 
   int t = unused_tokens.back();
@@ -1941,7 +1941,7 @@ int reg_heap::get_unused_token()
   assert(tokens[t].parent == -1);
   assert(tokens[t].children.empty());
   assert(tokens[t].vm_step.empty());
-  assert(tokens[t].vm_relative.empty());
+  assert(tokens[t].vm_result.empty());
   assert(not tokens[t].referenced);
 
   return t;
@@ -2028,7 +2028,7 @@ void reg_heap::check_used_reg(int index) const
     if (is_root_token(t))
     {
       assert(tokens[t].vm_step[index] != -1);
-      assert(tokens[t].vm_relative[index] != -1);
+      assert(tokens[t].vm_result[index] != -1);
     }
 
     int p = parent_token(t);
@@ -2036,8 +2036,8 @@ void reg_heap::check_used_reg(int index) const
     if (not is_root_token(t) and tokens[t].vm_step[index] > 0 and tokens[p].vm_step[index] > 0)
       assert(tokens[t].vm_step[index] != tokens[p].vm_step[index]);
 
-    if (not is_root_token(t) and tokens[t].vm_relative[index] > 0 and tokens[p].vm_relative[index] > 0)
-      assert(tokens[t].vm_relative[index] != tokens[p].vm_relative[index]);
+    if (not is_root_token(t) and tokens[t].vm_result[index] > 0 and tokens[p].vm_result[index] > 0)
+      assert(tokens[t].vm_result[index] != tokens[p].vm_result[index]);
 
     if (access(index).type == reg::type_t::constant)
       assert(not has_result_(t,index));
@@ -2124,13 +2124,13 @@ int reg_heap::remove_shared_result(int t, int r)
 {
   if (is_root_token(t))
   {
-    if (tokens[t].vm_relative[r])
-      return tokens[t].vm_relative.erase_value(r);
+    if (tokens[t].vm_result[r])
+      return tokens[t].vm_result.erase_value(r);
     else
       return 0;
   }
   else
-    return tokens[t].vm_relative.set_value(r,-1);
+    return tokens[t].vm_result.set_value(r,-1);
 }
 
 int reg_heap::move_step(int t1, int t2, int r)
@@ -2147,7 +2147,7 @@ int reg_heap::move_result(int t1, int t2, int r)
 {
   int rc = result_index_for_reg_(t1, r);
   results[rc].source_token = t2;
-  tokens[t2].vm_relative.add_value(r, rc);
+  tokens[t2].vm_result.add_value(r, rc);
 
   remove_shared_result(t1,r);
   return rc;
@@ -2179,7 +2179,7 @@ int reg_heap::add_shared_step(int t, int r)
 /// Add a shared result at (t,r) -- assuming there isn't one already
 int reg_heap::add_shared_result(int t, int r)
 {
-  assert(tokens[t].vm_relative[r] <= 0);
+  assert(tokens[t].vm_result[r] <= 0);
   // There should already be a step, if there is a result
   assert(tokens[t].vm_step[r] > 0);
 
@@ -2192,7 +2192,7 @@ int reg_heap::add_shared_result(int t, int r)
   results[rc].source_reg = r;
 
   // 3. Link it in to the mapping
-  tokens[t].vm_relative.set_value(r, rc);
+  tokens[t].vm_result.set_value(r, rc);
 
 #if DEBUG_MACHINE >= 3
   check_used_reg(r);
@@ -2289,9 +2289,9 @@ void reg_heap::release_child_token(int t)
   total_destroy_token++;
   // clear flags of results in the root token before destroying the root token!
   if (t == root_token)
-    for(int r: tokens[root_token].vm_relative.modified())
+    for(int r: tokens[root_token].vm_result.modified())
     {
-      int rc = tokens[root_token].vm_relative[r];
+      int rc = tokens[root_token].vm_result[r];
       if (rc > 0 and results[rc].flags.test(0))
 	dec_probability(rc);
     }
@@ -2394,11 +2394,11 @@ void reg_heap::try_release_token(int t)
 
 #ifdef DEBUG_MACHINE
   assert(tokens[t].vm_step.size() == size());
-  assert(tokens[t].vm_relative.size() == size());
+  assert(tokens[t].vm_result.size() == size());
   for(int i=0;i<size();i++)
   {
     assert(not tokens[t].vm_step[i]);
-    assert(not tokens[t].vm_relative[i]);
+    assert(not tokens[t].vm_result[i]);
   }
 
   check_used_regs();
