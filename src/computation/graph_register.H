@@ -51,15 +51,15 @@ struct computation
   int source_reg = -1;
 
   /// What final WHNF does this computation reduce to?
-  int result = 0;
+  int value = 0;
 
-  /// Does C reduce to another reg that we need to evaluate to get the true result?
+  /// Does C reduce to another reg that we need to evaluate to get the true value?
   std::pair<int,CacheList<int>::iterator> call_edge;
   
-  /// Which pairs (reg,slot) USED the reduction result of C (via an operation)?
+  /// Which pairs (reg,slot) USED the reduction value of C (via an operation)?
   CacheList<int> used_by;
 
-  /// Which reduction results made use of the value of this expression (via call)
+  /// Which reduction values made use of the value of this expression (via call)
   CacheList<int> called_by;
 
   int temp = -1;
@@ -85,7 +85,7 @@ public:
   /* The closure */
   closure C;
 
-  /// Is C a parameter, or is the reduction result dependent on a parameter value?
+  /// Is C a parameter, or is the reduction value dependent on a parameter value?
   bool re_evaluate = false;
 
   enum class type_t {unknown=0, index_var=1, constant=2, changeable=3};
@@ -202,7 +202,7 @@ public:
   void clear_call_for_reg(int R);
   void clear_C(int R);
   void set_C(int R, closure&& C);
-  void set_reduction_result(int t, int R, closure&& C);
+  void set_reduction_value(int t, int R, closure&& C);
   int create_reg_from_step(int s);
 
   void get_roots(std::vector<int>&, bool keep_identifiers=true) const;
@@ -455,9 +455,9 @@ public:
         computation& computation_for_reg_(int t, int r);
   bool has_step_(int t, int r) const;
   bool has_computation_(int t, int r) const;
-  bool reg_has_result_(int t, int r) const;
-  bool reg_has_computation_result_(int t, int r) const;
-  int computation_result_for_reg_(int t, int r) const;
+  bool reg_has_value_(int t, int r) const;
+  bool reg_has_computation_value_(int t, int r) const;
+  int computation_value_for_reg_(int t, int r) const;
   bool reg_has_call_(int t, int r) const;
   int call_for_reg_(int t, int r) const;
 
@@ -469,13 +469,13 @@ public:
         computation& computation_for_reg(int r);
   bool has_step(int r) const;
   bool has_computation(int r) const;
-  bool reg_has_result(int r) const;
-  bool reg_has_computation_result(int r) const;
-  int computation_result_for_reg(int r) const;
+  bool reg_has_value(int r) const;
+  bool reg_has_computation_value(int r) const;
+  int computation_value_for_reg(int r) const;
   bool reg_has_call(int r) const;
   int call_for_reg(int r) const;
 
-  const closure& access_result_for_reg(int R1) const;
+  const closure& access_value_for_reg(int R1) const;
 
   int remove_shared_step(int t, int r);
   int remove_shared_computation(int t, int r);
@@ -499,9 +499,9 @@ public:
   bool step_is_referenced(int,int) const;
   bool computation_is_referenced(int,int) const;
 
-  int result_for_reg(int r) const;
+  int value_for_reg(int r) const;
 
-  void set_computation_result_for_reg(int r1);
+  void set_computation_value_for_reg(int r1);
 
   std::vector<int> used_regs_for_reg(int r) const;
 

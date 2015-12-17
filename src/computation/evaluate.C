@@ -57,17 +57,17 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
   int evaluate_reg_to_reg(int R2)
   {
-    // Compute the result, and follow index_var chains (which are not changeable).
+    // Compute the value, and follow index_var chains (which are not changeable).
     auto p = M.incremental_evaluate(R2);
     int R3 = p.first;
-    int result = p.second;
+    int value = p.second;
 
     // Note that although R2 is newly used, R3 might be already used if it was 
     // found from R2 through a non-changeable reg_var chain.
     if (M.reg_is_changeable(R3))
       M.set_used_input(S, R3);
 
-    return result;
+    return value;
   }
 
   const closure& evaluate_reg_to_closure(int R2)
@@ -115,15 +115,15 @@ public:
   /*
    * incremental_eval R1
    *
-   *   Note: index_var's never have a result, or call, and are never changeable.
+   *   Note: index_var's never have a value, or call, and are never changeable.
    *   Note: only operations can have a call, and only if the operation uses values of changeable parameters.
    * 
-   *   while(not R1.result) do:
+   *   while(not R1.value) do:
    *
    *   If R1.E = (Op or parameter) with call
    *      assert(R1.changeable == true)
    *      R1.call = incremental_evaluate(R1.call)
-   *      R1.result = R1.call.result
+   *      R1.value = R1.call.value
    *      <break>
    *
    *   If R1.E = <R2>
@@ -136,7 +136,7 @@ public:
    *      <break>
    *
    *   If (R1.E is WHNF)
-   *      R1.result = R1.E
+   *      R1.value = R1.E
    *      <break>
    *
    *   If R1.E = modifiable and no call
@@ -146,22 +146,22 @@ public:
    *      **Execute reduction**
    *      R1.changeable = reduction changeable
    *      If (changeable)
-   *         R1.call = new reg (reduction result)
+   *         R1.call = new reg (reduction value)
    *      Else
-   *         R1.E = reduction result
+   *         R1.E = reduction value
    *      <continue>
    *
    *   If R1.E = let expression
-   *      R1.E = reduction result
+   *      R1.E = reduction value
    *      assert(not changeable)
    *      assert(no call)
-   *      assert(no result)
+   *      assert(no value)
    *      <continue>
    *
-   *   assert(R1 has a result)
-   *   assert(R1.result is WHNF)
-   *   assert(R1.result is not a reg_var <*>)
-   *   assert(R1.result is not an index_var <*>)
+   *   assert(R1 has a value)
+   *   assert(R1.value is WHNF)
+   *   assert(R1.value is not a reg_var <*>)
+   *   assert(R1.value is not an index_var <*>)
    *   return R1
    */
 
@@ -184,15 +184,15 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 
 #ifndef NDEBUG
   assert(not access(R).C.exp.head().is_a<expression>());
-  if (reg_has_result(R))
+  if (reg_has_value(R))
   {
-    expression_ref E = access_result_for_reg(R).exp;
+    expression_ref E = access_value_for_reg(R).exp;
     assert(is_WHNF(E));
     assert(not E.head().is_a<expression>());
     assert(not E.is_index_var());
   }
   if (access(R).C.exp.is_index_var())
-    assert(not reg_has_result(R));
+    assert(not reg_has_value(R));
 #endif
 
   while (1)
@@ -212,25 +212,25 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       total_changeable_eval++;
       int rc = computation_index_for_reg(R);
 
-      // If we have a result, then we are done.
+      // If we have a value, then we are done.
       if (rc > 0)
       {
-	int result = computations[rc].result;
+	int value = computations[rc].value;
 
-	if (result)
+	if (value)
 	{
 	  total_changeable_eval_with_result++;
-	  return {R, result};
+	  return {R, value};
 	}
       }
 
-      // If we know what to call, then call it and use it to set the result
+      // If we know what to call, then call it and use it to set the value
       if (reg_has_call(R))
       {
 	// Evaluate S, looking through unchangeable redirections
 	auto p = incremental_evaluate(call_for_reg(R));
 	int call = p.first;
-	int result = p.second;
+	int value = p.second;
 
 	// If computation_for_reg(R).call can be evaluated to refer to S w/o moving through any changable operations, 
 	// then it should be safe to change computation_for_reg(R).call to refer to S, even if R is changeable.
@@ -240,10 +240,10 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	  set_call(R, call);
 	}
 
-	// R gets its result from S.
-	set_computation_result_for_reg( R);
+	// R gets its value from S.
+	set_computation_value_for_reg( R);
 	total_changeable_eval_with_call++;
-	return {R, result};
+	return {R, value};
       }
     }
     else if (reg_type == reg::type_t::index_var)
@@ -256,13 +256,13 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     else
       assert(reg_type == reg::type_t::unknown);
 
-    /*---------- Below here, there is no call, and no result. ------------*/
+    /*---------- Below here, there is no call, and no value. ------------*/
     const int type = access(R).C.exp.head().type();
     if (type == index_var_type)
     {
       assert( not reg_is_changeable(R) );
 
-      assert( not reg_has_result(R) );
+      assert( not reg_has_value(R) );
 
       assert( not reg_has_call(R) );
 
@@ -308,7 +308,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       // Incrementing the ref count wastes time, but avoids a crash.
       object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
 
-      // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable result.
+      // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
       // Therefore, we cannot do "assert(not computation_for_reg(t,R).changeable);" here.
 
 #ifdef DEBUG_MACHINE
@@ -323,32 +323,32 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       try
       {
 	RegOperationArgs Args(R, S, *this);
-	closure result = (*O)(Args);
+	closure value = (*O)(Args);
 	total_reductions++;
 
-	// If the reduction doesn't depend on modifiable, then replace E with the result.
+	// If the reduction doesn't depend on modifiable, then replace E with the value.
 	if (steps[S].used_inputs.empty())
 	{
 	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
 	  assert(not reg_has_call(R) );
-	  assert(not reg_has_result(R));
+	  assert(not reg_has_value(R));
 	  assert(step_for_reg(R).used_inputs.empty());
-	  set_C(R, std::move(result) );
+	  set_C(R, std::move(value) );
 	  total_changeable_reductions++;
 	}
-	// Otherwise, set the reduction result.
+	// Otherwise, set the reduction value.
 	else
 	{
 	  make_reg_changeable(R);
-	  int r2 = Args.allocate(std::move(result));
+	  int r2 = Args.allocate(std::move(value));
 
 	  auto p = incremental_evaluate(r2);
 	  int r3 = p.first;
-	  int result = p.second;
+	  int value = p.second;
 
 	  set_call(R, r3);
-	  set_computation_result_for_reg(R);
-	  return {R, result};
+	  set_computation_value_for_reg(R);
+	  return {R, value};
 	}
       }
       catch (myexception& e)
@@ -391,7 +391,7 @@ class RegOperationArgsUnchangeable: public OperationArgs
   /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
   int evaluate_reg_to_reg(int R2)
   {
-    // Compute the result, and follow index_var chains (which are not changeable).
+    // Compute the value, and follow index_var chains (which are not changeable).
     return memory().incremental_evaluate_unchangeable(R2);
   }
 
@@ -446,7 +446,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
     else
       assert(reg_type == reg::type_t::unknown);
 
-    /*---------- Below here, there is no call, and no result. ------------*/
+    /*---------- Below here, there is no call, and no value. ------------*/
     const int type = access(R).C.exp.head().type();
     if (type == index_var_type)
     {
@@ -481,7 +481,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
     {
       object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
 
-      // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable result.
+      // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
       // Therefore, we cannot do "assert(not computation_for_reg(t,R).changeable);" here.
 
 #ifdef DEBUG_MACHINE
@@ -496,10 +496,10 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
       try
       {
 	RegOperationArgsUnchangeable Args(R, *this);
-	closure result = (*O)(Args);
+	closure value = (*O)(Args);
 	total_reductions++;
 	
-	set_C(R, std::move(result) );
+	set_C(R, std::move(value) );
       }
       catch (no_context&)
       {

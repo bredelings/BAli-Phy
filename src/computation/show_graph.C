@@ -341,7 +341,7 @@ void dot_graph_for_token(const reg_heap& C, int t)
       (a) First, check WHY we are getting indirection nodes.
       (b) Then Consider eliminating them somehow during garbage collection.
 
-   2. Allow reduction result (call result) on the same level as redex.
+   2. Allow reduction value (call value) on the same level as redex.
 
  */
 
@@ -458,7 +458,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     else if (C.reg_is_changeable(R))
       o<<",style=\"dashed,filled\",color=red";
 
-    if (C.reg_is_changeable(R) and C.reg_has_computation_result(R))
+    if (C.reg_is_changeable(R) and C.reg_has_computation_value(R))
       o<<",fillcolor=\"#007700\",fontcolor=white";
     else if (C.reg_is_changeable(R))
       o<<",fillcolor=\"#770000\",fontcolor=white";
