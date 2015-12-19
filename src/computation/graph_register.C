@@ -1037,13 +1037,21 @@ void reg_heap::set_reduction_value(int t, int R, closure&& value)
   }
 }
 
+void reg_heap::mark_reg_created_by_step(int r, int s)
+{
+  assert(r > 0);
+  assert(s > 0);
+  steps[s].created_regs.push_front(r);
+  assert(access(r).created_by.first == 0);
+  assert(null(access(r).created_by.second));
+  access(r).created_by = {s,steps[s].created_regs.begin()};
+}
+
 int reg_heap::create_reg_from_step(int s)
 {
-  assert(s > 0);
   total_reg_allocations++;
   int r = allocate();
-  steps[s].created_regs.push_front(r);
-  access(r).created_by = {s,steps[s].created_regs.begin()};
+  mark_reg_created_by_step(r,s);
   return r;
 }
 

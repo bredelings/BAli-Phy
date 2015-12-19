@@ -204,6 +204,7 @@ public:
   void set_C(int R, closure&& C);
   void set_reduction_value(int t, int R, closure&& C);
   int create_reg_from_step(int s);
+  void mark_reg_created_by_step(int r, int s);
 
   void get_roots(std::vector<int>&, bool keep_identifiers=true) const;
 
