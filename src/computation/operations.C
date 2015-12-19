@@ -215,6 +215,30 @@ std::string Case::name() const {
   return "case";
 }
 
+/*
+ * Let's are not really 'changeable', but we'd like to stop replacing (contingent) let's with their call.
+ * - instead create a 'step' for them, and record created regs.
+ * - we'd also like to avoid creating a new reg for the let body.
+ *
+ * Hmm... suppose we have let x=1;y=2 in x+y
+ * - this does perform allocation.
+ * - however, it is not 'changeable', so it shouldn't make the input to anything else changeable.
+ * - although there will be a 'step', that step can never be invalidated by changed inputs.  So it would be valid in all contexts. 
+ * - however, ultimately the step should be present in a context precisely if the reg is executed in that context.
+ * - furthermore, we'd like to update the reg with the value '3', as we do currently... what else would we do?
+ * - it seems that we would need to AVOID this for contingent regs.
+ * - if we garbage-collect both x and y, then we could actually replace the reg by its value.
+ *
+ * Part of the goal here is to handle infinite lists, where the amount we examine depends on a variable.
+ * - we want to deallocate parts of the list that are no longer accessed.
+ *
+ * Then there is optimization, we do not want to allocate a new reg for the 'call' when executing a let:
+ * - perform the let's and then continue executing the let body 
+ *
+ * Then there is the issue of contingent execution.
+ * - If the execution is non-contingent, then we would actually like to update the reg 
+ */
+
 closure Let::operator()(OperationArgs& Args) const
 {
   reg_heap& M = Args.memory();
