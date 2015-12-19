@@ -85,9 +85,17 @@ int OperationArgs::allocate(closure&& C)
 
     return r;
   }
+  else
+  {
+    int r = allocate_reg();
+    M.set_C(r, std::move(C));
+    return r;
+  }
+}
 
+int OperationArgs::allocate_reg()
+{
   int r = M.push_temp_head();
-  M.set_C(r, std::move(C) );
   n_allocated++;
   return r;
 }

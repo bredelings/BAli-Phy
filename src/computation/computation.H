@@ -59,7 +59,9 @@ public:
 
   const expression_ref& evaluate_(int);
 
-  virtual int allocate(closure&&);
+  int allocate(closure&&);
+
+  virtual int allocate_reg();
 
   OperationArgs(reg_heap& m);
 

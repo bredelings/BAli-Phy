@@ -84,25 +84,11 @@ class RegOperationArgs: public OperationArgs
 
 public:
 
-  int allocate(closure&& C)
+  int allocate_reg()
   {
-    if (C.exp.head().type() == index_var_type)
-    {
-      int index = C.exp.as_index_var();
-
-      int r = C.lookup_in_env( index );
-    
-      assert(M.is_used(r));
-
-      return r;
-    }
-    else
-    {
-      int r = M.push_temp_head(M.create_reg_from_step(S));
-      n_allocated++;
-      M.set_C(r, std::move(C) );
-      return r;
-    }
+    int r = OperationArgs::allocate_reg();
+    M.mark_reg_created_by_step(r,S);
+    return r;
   }
   
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
