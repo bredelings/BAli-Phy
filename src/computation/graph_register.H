@@ -44,7 +44,7 @@ struct Step
   Step(Step&&) noexcept;
 };
 
-struct result
+struct Result
 {
   int source_token = -1;
 
@@ -70,13 +70,13 @@ struct result
 
   void check_cleared();
 
-  result& operator=(const result&) = delete;
-  result& operator=(result&&) noexcept;
+  Result& operator=(const Result&) = delete;
+  Result& operator=(Result&&) noexcept;
 
-  result() = default;
+  Result() = default;
 
-  result(const result&) = delete;
-  result(result&&) noexcept;
+  Result(const Result&) = delete;
+  Result(Result&&) noexcept;
 };
 
 class reg
@@ -162,7 +162,7 @@ class reg_heap: public Object, public checked_pool<reg>
 
   mutable checked_pool_callback<Step> steps;
 
-  mutable checked_pool_callback<result> results;
+  mutable checked_pool_callback<Result> results;
 
   mutable int n_active_scratch_lists = 0;
   mutable std::vector< object_ptr<Vector<int> > > scratch_lists;
@@ -452,8 +452,8 @@ public:
   int result_index_for_reg_(int t, int r) const;
   const Step& step_for_reg_(int t, int r) const;
         Step& step_for_reg_(int t, int r);
-  const result& result_for_reg_(int t, int r) const;
-        result& result_for_reg_(int t, int r);
+  const Result& result_for_reg_(int t, int r) const;
+        Result& result_for_reg_(int t, int r);
   bool has_step_(int t, int r) const;
   bool has_result_(int t, int r) const;
   bool reg_has_value_(int t, int r) const;
@@ -466,8 +466,8 @@ public:
   int result_index_for_reg(int r) const;
   const Step& step_for_reg(int r) const ;
         Step& step_for_reg(int r);
-  const result& result_for_reg(int r) const ;
-        result& result_for_reg(int r);
+  const Result& result_for_reg(int r) const ;
+        Result& result_for_reg(int r);
   bool has_step(int r) const;
   bool has_result(int r) const;
   bool reg_has_value(int r) const;

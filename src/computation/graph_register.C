@@ -252,7 +252,7 @@ Step::Step(Step&& S) noexcept
   flags ( S.flags )
 { }
 
-void result::clear()
+void Result::clear()
 {
   source_token = -1;
   source_reg = -1;
@@ -266,7 +266,7 @@ void result::clear()
   assert(flags.none());
 }
 
-void result::check_cleared()
+void Result::check_cleared()
 {
   assert(not value);
   assert(not call_edge.first);
@@ -276,7 +276,7 @@ void result::check_cleared()
   assert(flags.none());
 }
 
-result& result::operator=(result&& R) noexcept
+Result& Result::operator=(Result&& R) noexcept
 {
   value = R.value;
   source_token = R.source_token;
@@ -290,7 +290,7 @@ result& result::operator=(result&& R) noexcept
   return *this;
 }
 
-result::result(result&& R) noexcept
+Result::Result(Result&& R) noexcept
 :source_token(R.source_token),
   source_reg(R.source_reg),
   value (R.value), 
@@ -657,13 +657,13 @@ Step& reg_heap::step_for_reg(int r)
   return steps.access_unused(s);
 }
 
-const result& reg_heap::result_for_reg(int r) const 
+const Result& reg_heap::result_for_reg(int r) const 
 { 
   int rc = result_index_for_reg(r);
   return results.access_unused(rc);
 }
 
-result& reg_heap::result_for_reg(int r)
+Result& reg_heap::result_for_reg(int r)
 { 
   int rc = result_index_for_reg(r);
   return results.access_unused(rc);
@@ -754,13 +754,13 @@ Step& reg_heap::step_for_reg_(int t, int r)
   return steps.access_unused(rc);
 }
 
-const result& reg_heap::result_for_reg_(int t, int r) const 
+const Result& reg_heap::result_for_reg_(int t, int r) const 
 { 
   int rc = result_index_for_reg_(t,r);
   return results.access_unused(rc);
 }
 
-result& reg_heap::result_for_reg_(int t, int r)
+Result& reg_heap::result_for_reg_(int t, int r)
 { 
   int rc = result_index_for_reg_(t,r);
   return results.access_unused(rc);
@@ -1565,7 +1565,7 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
     // Look at results in t2 that call the old value in t1.
     for(int rc2: RC1.called_by)
     {
-      result& RC2 = results[rc2];
+      Result& RC2 = results[rc2];
       int r2 = RC2.source_reg;
 
       // If this result is not used in t2, we don't need to unshare it.

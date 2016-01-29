@@ -182,7 +182,7 @@ void reg_heap::trace(vector<int>& remap)
 
 	  results.set_mark(rc);
       
-	  const result& RC = results[rc];
+	  const Result& RC = results[rc];
       
 	  // Count the reg that references us
 	  assert(RC.source_reg);
