@@ -243,8 +243,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       assert(reg_type == reg::type_t::unknown);
 
     /*---------- Below here, there is no call, and no value. ------------*/
-    const int type = access(R).C.exp.head().type();
-    if (type == index_var_type)
+    if (access(R).C.exp.head().is_index_var())
     {
       assert( not reg_is_changeable(R) );
 
