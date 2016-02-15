@@ -311,6 +311,8 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	RegOperationArgs Args(R, S, *this);
 	closure value = (*O)(Args);
 	total_reductions++;
+	if (not steps[S].used_inputs.empty())
+	  total_changeable_reductions++;
 
 	// If the reduction doesn't depend on modifiable, then replace E with the value.
 	if (steps[S].used_inputs.empty())
@@ -320,7 +322,6 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
 	  assert(not reg_has_value(R));
 	  assert(step_for_reg(R).used_inputs.empty());
 	  set_C(R, std::move(value) );
-	  total_changeable_reductions++;
 	}
 	// Otherwise, set the reduction value.
 	else
