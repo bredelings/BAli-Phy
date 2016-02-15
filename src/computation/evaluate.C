@@ -273,6 +273,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       access(R).type = reg::type_t::constant;
       clear_result(root_token,R);
       clear_step(root_token,R);
+      return {R,R};
     }
 
 #ifndef NDEBUG
