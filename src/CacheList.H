@@ -49,7 +49,7 @@ public:
   }
 
   /// Insert the value t *before* loc.
-  iterator insert(iterator loc, const T& t)
+  iterator insert(const_iterator loc, const T& t)
   {
     if (free_pool.empty())
       return L.insert(loc, t);
@@ -65,6 +65,11 @@ public:
 
       return free_loc;
     }
+  }
+
+  void splice(const_iterator loc, CacheList<T>& CL2)
+  {
+    L.splice(loc, CL2.L);
   }
 
   const T& back() const
