@@ -304,7 +304,7 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
 				    get_identifiers()).print();
       if (log_verbose)
-	dot_graph_for_token(*this, t);
+	dot_graph_for_token(*this, 0);
 #endif
 
       try
