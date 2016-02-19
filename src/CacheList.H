@@ -10,15 +10,17 @@
 template <typename T>
 class CacheList
 {
+  using BaseList = std::list<T>;
+
   /// This points to the first free node.
-  static std::list<T> free_pool;
+  static BaseList free_pool;
 
   /// The actual storage.
-  std::list<T> L;
+  BaseList L;
 
 public:
-  typedef typename std::list<T>::iterator iterator;
-  typedef typename std::list<T>::const_iterator const_iterator;
+  typedef typename BaseList::iterator iterator;
+  typedef typename BaseList::const_iterator const_iterator;
 
   int size() const {return L.size();}
 
@@ -132,7 +134,7 @@ public:
     L.swap(CL2.L);
   }
 
-  CacheList<T>& operator=(const std::list<T>& L2)
+  CacheList<T>& operator=(const BaseList& L2)
   {
     clear();
     for(auto i: L2)
@@ -145,7 +147,7 @@ public:
     return operator=(CL2.L);
   }
 
-  CacheList<T>& operator=(std::list<T>&& L2) noexcept
+  CacheList<T>& operator=(BaseList&& L2) noexcept
   {
     clear();
     L.swap(L2);
@@ -159,12 +161,12 @@ public:
 
   CacheList() {}
 
-  CacheList(const std::list<T>& L2)
+  CacheList(const BaseList& L2)
   {
     operator=(L2);
   }
 
-  CacheList(const std::list<T>&& L2)
+  CacheList(const BaseList&& L2)
   { 
     operator=(std::move(L2));
   }
@@ -193,6 +195,6 @@ public:
   }
 };
 
-template<typename T> std::list<T> CacheList<T>::free_pool = std::list<T>{};
+template<typename T> typename CacheList<T>::BaseList CacheList<T>::free_pool = CacheList<T>::BaseList{};
 
 #endif
