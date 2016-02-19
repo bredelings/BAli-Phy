@@ -4,13 +4,14 @@
 #include <list>
 #include <cassert>
 #include <initializer_list>
+#include <boost/container/list.hpp>
 // Currently, since I'm not using T*, this only works for POD type.
 // Perhaps I should clear list entries by setting their x equal to T()?
 
 template <typename T>
 class CacheList
 {
-  using BaseList = std::list<T>;
+  using BaseList = boost::container::list<T>;
 
   /// This points to the first free node.
   static BaseList free_pool;
