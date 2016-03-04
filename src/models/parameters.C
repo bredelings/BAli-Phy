@@ -241,6 +241,12 @@ const SequenceTree& data_partition::T() const
 }
 
 
+const TreeInterface& data_partition::t() const
+{
+  return P->t();
+}
+
+
 double data_partition::get_beta() const
 {
   return P->get_beta();
@@ -758,6 +764,123 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
   transition_p = C.add_compute_expression((identifier("branchTransitionP"), S));
 }
 
+int TreeInterface::n_nodes() const {
+  return P->PC->parameters_for_tree_node.size();
+}
+
+int TreeInterface::n_leaves() const {
+  return _n_leaves;
+}
+
+int TreeInterface::n_branches() const {
+  return P->PC->parameters_for_tree_branch.size()/2;
+}
+
+int TreeInterface::degree(int n) const {
+  return P->PC->parameters_for_tree_node[n].size();
+}
+
+int TreeInterface::branch_out(int n, int i) const {
+  int p = P->PC->parameters_for_tree_node[n][i];
+  if (p == -1)
+    return n;
+  else
+    return P->get_parameter_value(p).as_int();
+}
+
+int TreeInterface::source(int b) const {
+  int p = P->PC->parameters_for_tree_branch[b].first;
+  if (p == -1)
+    return b;
+  else
+    return P->get_parameter_value(p).as_int();
+}
+
+int TreeInterface::target(int b) const {
+  int p = P->PC->parameters_for_tree_branch[b].second;
+  if (p == -1)
+    return b - n_branches();
+  else
+    return P->get_parameter_value(p).as_int();
+}
+  
+int TreeInterface::undirected(int b) const {
+  return (b % n_branches());
+}
+
+bool TreeInterface::is_leaf_node(int n) const {
+  return degree(n) == 1;
+}
+
+bool TreeInterface::is_internal_node(int n) const {
+  return not is_leaf_node(n);
+}
+
+bool TreeInterface::is_leaf_branch(int b) const {
+  return is_leaf_node(source(b)) or is_leaf_node(target(b));
+}
+bool TreeInterface::is_internal_branch(int b) const {
+  return not is_leaf_branch(b);
+}
+  
+int TreeInterface::search_branch(int n1, int n2) const
+{
+  for(int i=0;i<degree(n1);i++)
+  {
+    int b = branch_out(n1,i);
+    int n = target(b);
+    if (n == n2) return b;
+  }
+  return -1;
+}
+
+int TreeInterface::find_branch(int n1, int n2) const
+{
+  int b = search_branch(n1,n2);
+  if (b == -1)
+    std::abort();
+  return b;
+}
+
+int TreeInterface::find_undirected_branch(int n1, int n2) const
+{
+  return undirected(find_branch(n1,n2));
+}
+
+int TreeInterface::find_branch(const tree_edge& e) const
+{
+  return find_branch(e.node1, e.node2);
+}
+
+int TreeInterface::find_undirected_branch(const tree_edge& e) const
+{
+  return undirected(find_branch(e));
+}
+
+tree_edge TreeInterface::edge(int b) const
+{
+  return {source(b), target(b)};
+}
+
+tree_edge TreeInterface::edge(int n1, int n2) const
+{
+  return edge(find_branch(n1,n2));
+}
+
+double TreeInterface::branch_length(int b) const
+{
+  b %= n_branches();
+  return P->get_parameter_value(P->PC->branch_length_parameters[b]).as_double();
+}
+
+TreeInterface::TreeInterface(const Parameters* p)
+  :P(p)
+{
+  for(int n=0;n<n_nodes();n++)
+    if (is_leaf_node(n))
+      _n_leaves++;
+}
+
 const data_partition& Parameters::get_data_partition(int i) const
 {
   data_partitions[i].set_parameters(this);
@@ -783,6 +906,12 @@ double Parameters::get_beta() const
 const SequenceTree& Parameters::T() const
 {
   return *T_;
+}
+
+const TreeInterface& Parameters::t() const
+{
+  t_->P = this;
+  return *t_;
 }
 
 vector<int> edges_connecting_to_node(const Tree& T, int n)
@@ -1394,6 +1523,8 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
   b = T().directed_branch(b).undirected_name();
   T_.modify()->directed_branch(b).set_length(l);
 
+  context::set_parameter_value(PC->branch_length_parameters[b], l);
+
   // Update D parameters
   for(int s=0; s<n_scales(); s++) 
   {
@@ -1408,12 +1539,16 @@ void Parameters::setlength_unsafe(int b,double l)
 {
   b = T().directed_branch(b).undirected_name();
   T_.modify()->directed_branch(b).set_length(l);
+
+  context::set_parameter_value(PC->branch_length_parameters[b], l);
 }
 
 void Parameters::setlength(int b,double l) 
 {
   b = T().directed_branch(b).undirected_name();
   T_.modify()->directed_branch(b).set_length(l);
+
+  context::set_parameter_value(PC->branch_length_parameters[b], l);
 
   // Update D parameters
   for(int s=0; s<n_scales(); s++) 
@@ -1667,6 +1802,12 @@ Parameters::Parameters(const module_loader& L,
     }
   }
 
+  for(int b=0;b<T().n_branches();b++)
+  {
+    int index = add_parameter("*T"+convertToString(b+1), t.branch(b).length());
+    PC->branch_length_parameters.push_back(index);
+  }
+
   // Add and initialize variables for branch *categories*: branch_cat<b>
   vector<expression_ref> branch_categories;
   for(int b=0;b<T().n_branches();b++)
@@ -1739,6 +1880,8 @@ Parameters::Parameters(const module_loader& L,
   // create data partitions
   for(int i=0;i<A.size();i++) 
     data_partitions.push_back( data_partition(this, i, A[i]) );
+
+  t_ = new TreeInterface(this);
 
   // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
   probability();

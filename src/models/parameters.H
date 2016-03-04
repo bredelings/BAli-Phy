@@ -48,6 +48,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 extern bool use_internal_index;
 
 class Parameters;
+class TreeInterface;
 
 struct data_partition_constants: public Object
 {
@@ -124,6 +125,8 @@ public:
   void recompute_alignment_matrix_from_pairwise_alignments();
   
   const SequenceTree& T() const;
+
+  const TreeInterface& t() const;
 
   /// Cached Transition Probabilities
   const std::vector<Matrix>& transition_P(int b) const;
@@ -254,6 +257,8 @@ struct parameters_constants: public Object
 
   std::vector< std::vector<int> > branch_length_indices;
 
+  std::vector<int> branch_length_parameters;
+  
   matrix<int> branch_transition_p_indices;
 
   // The tree
@@ -295,6 +300,45 @@ struct parameters_constants: public Object
 		       const std::vector<int>&);
 };
 
+class TreeInterface: public Object
+{
+public:
+  TreeInterface* clone() const {return new TreeInterface(*this);}
+
+  const Parameters* P;
+
+  int n_nodes() const;
+  int n_branches() const;
+  int _n_leaves = 0;
+  int n_leaves() const;
+
+  int degree(int n) const;
+  int branch_out(int n, int i) const;
+  int source(int b) const;
+  int target(int b) const;
+
+  int undirected(int b) const;
+
+  bool is_leaf_node(int n) const;
+  bool is_internal_node(int n) const;
+  
+  bool is_leaf_branch(int b) const;
+  bool is_internal_branch(int b) const;
+
+  int search_branch(int n1, int n2) const;
+  int find_branch(int n1, int n2) const;
+  int find_undirected_branch(int n1, int n2) const;
+  int find_branch(const tree_edge&) const;
+  int find_undirected_branch(const tree_edge&) const;
+
+  tree_edge edge(int n1, int n2) const;
+  tree_edge edge(int b) const;
+
+  double branch_length(int b) const;
+
+  TreeInterface(const Parameters*);
+};
+
 /// A class to contain all the MCMC state except the alignment
 class Parameters: public Model
 {
@@ -313,6 +357,8 @@ private:
 
   /// The Tree - mean branch lengths = 1
   cow_ptr<SequenceTree> T_;
+
+  object_ptr<TreeInterface> t_;
 
   std::vector<int> affected_nodes;
 
@@ -340,6 +386,8 @@ public:
   double get_beta() const;
 
   const SequenceTree& T() const;
+
+  const TreeInterface& t() const;
 
   expression_ref my_tree() const;
 
