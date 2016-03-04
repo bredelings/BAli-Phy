@@ -274,7 +274,7 @@ double mu_scale(const Parameters& P)
   
   valarray<double> weights(P.n_data_partitions());
   for(int i=0;i<weights.size();i++)
-    weights[i] = max(sequence_lengths(P[i].A(), P.T().n_leaves()));
+    weights[i] = max(sequence_lengths(P[i].A(), P.t().n_leaves()));
   weights /= weights.sum();
   
   // FIXME - we are just looking at branch 0!

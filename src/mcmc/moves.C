@@ -51,15 +51,15 @@ void change_branch_length_multi_move(owned_ptr<Model>& P, MoveStats& Stats,int b
 void sample_tri_one(owned_ptr<Model>& P, MoveStats&,int b) 
 {
   Parameters* PP = P.as<Parameters>();
-  const SequenceTree& T = PP->T();
+  auto& t = PP->t();
 
-  int node1 = T.branch(b).target();
-  int node2 = T.branch(b).source();
-
+  int node1 = t.target(t.undirected(b));
+  int node2 = t.source(t.undirected(b));
+  
   if (uniform() < 0.5)
     std::swap(node1,node2);
 
-  if (node1 < T.n_leaves())
+  if (node1 < t.n_leaves())
     std::swap(node1,node2);
     
   tri_sample_alignment(*PP,node1,node2);
@@ -73,19 +73,19 @@ void sample_tri_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 
   assert(PP->variable_alignment()); 
 
-  const SequenceTree& T = PP->T();
-
-  int node1 = T.branch(b).target();
-  int node2 = T.branch(b).source();
+  auto& t = PP->t();
+  
+  int node1 = t.target(t.undirected(b));
+  int node2 = t.source(t.undirected(b));
 
   if (uniform() < 0.5)
     std::swap(node1,node2);
 
-  if (node1 < T.n_leaves())
+  if (node1 < t.n_leaves())
     std::swap(node1,node2);
     
   const double sigma = 0.3/2;
-  double length1 = T.branch(b).length();
+  double length1 = t.branch_length(b);
   double length2 = length1 + gaussian(0,sigma);
   if (length2 < 0) length2 = -length2;
 
@@ -108,15 +108,15 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& St
 
   assert(PP->variable_alignment()); 
 
-  const SequenceTree& T = PP->T();
+  auto& t = PP->t();
 
-  int node1 = T.branch(b).target();
-  int node2 = T.branch(b).source();
+  int node1 = t.target(t.undirected(b));
+  int node2 = t.source(t.undirected(b));
 
   if (uniform() < 0.5)
     std::swap(node1,node2);
 
-  if (node1 < T.n_leaves())
+  if (node1 < t.n_leaves())
     std::swap(node1,node2);
     
   vector<int> indices;
@@ -163,15 +163,15 @@ void sample_tri_branch_type_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 
   assert(PP->variable_alignment()); 
 
-  const SequenceTree& T = PP->T();
+  auto& t = PP->t();
 
-  int node1 = T.branch(b).target();
-  int node2 = T.branch(b).source();
+  int node1 = t.target(t.undirected(b));
+  int node2 = t.source(t.undirected(b));
 
   if (uniform() < 0.5)
     std::swap(node1,node2);
 
-  if (node1 < T.n_leaves())
+  if (node1 < t.n_leaves())
     std::swap(node1,node2);
     
   if (tri_sample_alignment_branch_model(*PP,node1,node2)) {
@@ -206,13 +206,13 @@ void sample_two_nodes_move(owned_ptr<Model>& P, MoveStats&,int n0)
   vector<int> nodes = A3::get_nodes_random(PP->T(),n0);
   int n1 = -1;
   for(int i=1;i<nodes.size();i++)
-    if ((PP->T()).node( nodes[i] ).is_internal_node()) {
+    if ((PP->t()).is_internal_node( nodes[i] )) {
       n1 = nodes[i];
       break;
     }
   assert(n1 != 1);
 
-  int b = PP->T().branch(n0,n1);
+  int b = PP->t().undirected(PP->t().find_branch(n0,n1));
 
   sample_two_nodes(*PP,b);
 }
@@ -345,7 +345,7 @@ void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
 
   // FIXME - this might move the accumulator off of the current branch (?)
   // TEST and Check Scaling of # of branches peeled
-  if (P.as<Parameters>()->T().n_nodes() > 2)
+  if (P.as<Parameters>()->t().n_nodes() > 2)
   {
     if (uniform() < 0.5)
       slide_node(P,Stats,bv);
@@ -373,7 +373,7 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Sta
     if (U < 0.1)
       slice_sample_branch_length(P,Stats,b);
 
-    if (PP.T().branch(b).is_internal_branch()) 
+    if (PP.t().is_internal_branch(b)) 
     {
       // In theory the 3-way move should have twice the acceptance rate, when the branch length
       // is non-zero, and one of the two other topologies is good while one is bad.
@@ -439,7 +439,7 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
 
     //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
-    if ((uniform() < 0.15) and (PP.T().n_leaves() >2))
+    if ((uniform() < 0.15) and (PP.t().n_leaves() >2))
     {
       // FIXME: don't call sample_parameter_and_alignment_on_branch( ): something is wrong.
       if (uniform() < 0.5 or true)
