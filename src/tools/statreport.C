@@ -255,7 +255,7 @@ double log_average_exp(const vector<double>& xs)
   log_double_t total = 0;
   for(double x:xs)
   {
-    total += exp<log_double_t>(x);
+    total += exp_to<log_double_t>(x);
     //    std::cerr<<"x = "<<x<<"  total = "<<total<<"\n";
   }
   total /= double(xs.size());

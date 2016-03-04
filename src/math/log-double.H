@@ -193,9 +193,9 @@ inline bool different(log_double_t x,log_double_t y,double tol=1.0e-9)
   return true;
 }
 
-template<class T> T exp(double);
+template<class T> T exp_to(double);
 
-template<> inline log_double_t exp<log_double_t>(double x) {
+template<> inline log_double_t exp_to<log_double_t>(double x) {
   log_double_t y;
   y.log() = x;
   return y;

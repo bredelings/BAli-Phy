@@ -85,7 +85,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     log_double_t pr_offset = M.probability_for_context(c);
     M.set_reg_value_in_context(R, expression_ref(0), c);
     double delta = log(pr_offset/pr_base_1);
-    pr_y_1[i] = exp<log_double_t>(-log1pexp(delta));
+    pr_y_1[i] = exp_to<log_double_t>(-log1pexp(delta));
     
     pr_total_1 /= pr_y_1[i];
   }
@@ -105,7 +105,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     log_double_t pr_offset = M.probability_for_context(c);
     M.set_reg_value_in_context(R, expression_ref(0), c);
     double delta = log(pr_offset/pr_base_2);
-    pr_y_2[i] = exp<log_double_t>(-log1pexp(delta));
+    pr_y_2[i] = exp_to<log_double_t>(-log1pexp(delta));
     
     pr_total_2 /= pr_y_2[i];
   }
