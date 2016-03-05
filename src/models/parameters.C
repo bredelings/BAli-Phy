@@ -764,8 +764,90 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
   transition_p = C.add_compute_expression((identifier("branchTransitionP"), S));
 }
 
+vector<int> edges_connecting_to_node(const Tree& T, int n)
+{
+  vector<const_branchview> branch_list;
+  append(T.node(n).branches_out(),branch_list);
+  
+  vector<int> branch_list_;
+  for(auto b: branch_list)
+    branch_list_.push_back(int(b));
+
+  return branch_list_;
+}
+
+tree_constants::tree_constants(Parameters* p, const Tree& T)
+{
+  /*------------------------- Create the tree structure -----------------------*/
+  vector<expression_ref> node_branches;
+  for(int n=0; n < T.n_nodes(); n++)
+  {
+    auto edges = edges_connecting_to_node(T,n);
+    vector<int> p_node;
+    expression_ref node;
+    
+    if (T.node(n).is_leaf_node())
+    {
+      node = List(edges.front());
+      p_node = { -1 };
+    }
+    else
+    {
+      node = List();
+      for(int i=0;i<edges.size();i++)
+      {
+	const auto& edge = edges[i];
+	string name = "*MyTree.nodeBranches"+convertToString(n) + "." + convertToString(i);
+	p_node.push_back( p->add_parameter(name,edge) );
+	node  = Cons * parameter(name) * node;
+      }
+    }
+    
+    parameters_for_tree_node.push_back ( p_node );
+    node_branches.push_back( node );
+  }
+  expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
+
+  vector<expression_ref> branch_nodes;
+  for(int b=0; b < 2*T.n_branches(); b++)
+  {
+    expression_ref source = T.directed_branch(b).source().name();
+    int p_source = -1;
+    if (not T.directed_branch(b).source().is_leaf_node())
+    {
+      string name_source = "*MyTree.branch"+convertToString(b)+"source"; 
+      p_source = p->add_parameter(name_source,source);
+      source = parameter(name_source);
+    }
+
+    expression_ref target = T.directed_branch(b).target().name();
+    int p_target = -1;
+    if (not T.directed_branch(b).target().is_leaf_node())
+    {
+      string name_target = "*MyTree.branch"+convertToString(b)+"target"; 
+      p_target = p->add_parameter(name_target,target);
+      target = parameter(name_target);
+    }
+    int reverse_branch = T.directed_branch(b).reverse();
+    parameters_for_tree_branch.push_back( {p_source,p_target} );
+    branch_nodes.push_back( Tuple(source, target, reverse_branch) );
+  }
+  expression_ref branch_nodes_array = (identifier("listArray'"),get_list(branch_nodes));
+
+  expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
+
+  tree_head = p->add_compute_expression( (tree_con, node_branches_array, branch_nodes_array, T.n_nodes(), T.n_branches()));
+  
+  // Create the parameters that hold branch lengths
+  for(int b=0;b<T.n_branches();b++)
+  {
+    int index = p->add_parameter("*T"+convertToString(b+1), T.branch(b).length());
+    branch_length_parameters.push_back(index);
+  }
+}
+
 int TreeInterface::n_nodes() const {
-  return P->PC->parameters_for_tree_node.size();
+  return P->TC->parameters_for_tree_node.size();
 }
 
 int TreeInterface::n_leaves() const {
@@ -773,15 +855,15 @@ int TreeInterface::n_leaves() const {
 }
 
 int TreeInterface::n_branches() const {
-  return P->PC->parameters_for_tree_branch.size()/2;
+  return P->TC->parameters_for_tree_branch.size()/2;
 }
 
 int TreeInterface::degree(int n) const {
-  return P->PC->parameters_for_tree_node[n].size();
+  return P->TC->parameters_for_tree_node[n].size();
 }
 
 int TreeInterface::branch_out(int n, int i) const {
-  int p = P->PC->parameters_for_tree_node[n][i];
+  int p = P->TC->parameters_for_tree_node[n][i];
   if (p == -1)
     return n;
   else
@@ -789,7 +871,7 @@ int TreeInterface::branch_out(int n, int i) const {
 }
 
 int TreeInterface::source(int b) const {
-  int p = P->PC->parameters_for_tree_branch[b].first;
+  int p = P->TC->parameters_for_tree_branch[b].first;
   if (p == -1)
     return b;
   else
@@ -797,7 +879,7 @@ int TreeInterface::source(int b) const {
 }
 
 int TreeInterface::target(int b) const {
-  int p = P->PC->parameters_for_tree_branch[b].second;
+  int p = P->TC->parameters_for_tree_branch[b].second;
   if (p == -1)
     return b - n_branches();
   else
@@ -870,7 +952,7 @@ tree_edge TreeInterface::edge(int n1, int n2) const
 double TreeInterface::branch_length(int b) const
 {
   b %= n_branches();
-  return P->get_parameter_value(P->PC->branch_length_parameters[b]).as_double();
+  return P->get_parameter_value(P->TC->branch_length_parameters[b]).as_double();
 }
 
 TreeInterface::TreeInterface(const Parameters* p)
@@ -914,18 +996,6 @@ const TreeInterface& Parameters::t() const
   return *t_;
 }
 
-vector<int> edges_connecting_to_node(const Tree& T, int n)
-{
-  vector<const_branchview> branch_list;
-  append(T.node(n).branches_out(),branch_list);
-  
-  vector<int> branch_list_;
-  for(auto b: branch_list)
-    branch_list_.push_back(int(b));
-
-  return branch_list_;
-}
-
 void Parameters::read_h_tree()
 {
   for(int n=0; n < T().n_nodes(); n++)
@@ -935,9 +1005,9 @@ void Parameters::read_h_tree()
   for(int b=0; b < 2*T().n_branches(); b++)
   {
     if (not T().directed_branch(b).source().is_leaf_node())
-      context::set_parameter_value(PC->parameters_for_tree_branch[b].first,  (int)T().directed_branch(b).source());
+      context::set_parameter_value(TC->parameters_for_tree_branch[b].first,  (int)T().directed_branch(b).source());
     if (not T().directed_branch(b).target().is_leaf_node())
-      context::set_parameter_value(PC->parameters_for_tree_branch[b].second, (int)T().directed_branch(b).target());
+      context::set_parameter_value(TC->parameters_for_tree_branch[b].second, (int)T().directed_branch(b).target());
   }
 }
 
@@ -971,8 +1041,8 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   affected_nodes.push_back(t1);
   affected_nodes.push_back(t2);
   
-  context::set_parameter_value(PC->parameters_for_tree_branch[b1].second, (int)T().directed_branch(b1).target());
-  context::set_parameter_value(PC->parameters_for_tree_branch[b2].first,  (int)T().directed_branch(b2).source());
+  context::set_parameter_value(TC->parameters_for_tree_branch[b1].second, (int)T().directed_branch(b1).target());
+  context::set_parameter_value(TC->parameters_for_tree_branch[b2].first,  (int)T().directed_branch(b2).source());
 
   if (safe)
   {
@@ -995,7 +1065,7 @@ void Parameters::begin_modify_tree()
  */
 void Parameters::update_tree_node(int n)
 {
-  assert(PC->parameters_for_tree_node[n].size() == T().node(n).degree());
+  assert(TC->parameters_for_tree_node[n].size() == T().node(n).degree());
 
   // These are the edges we seek to impose.
   vector<int> edges = edges_connecting_to_node(T(),n);
@@ -1003,7 +1073,7 @@ void Parameters::update_tree_node(int n)
 
   // These are the current edges.
   for(int i=0;i<edges.size();i++)
-    context::set_parameter_value(PC->parameters_for_tree_node[n][i], edges[i]);
+    context::set_parameter_value(TC->parameters_for_tree_node[n][i], edges[i]);
 }
 
 void Parameters::end_modify_tree()
@@ -1238,14 +1308,14 @@ void Parameters::check_h_tree() const
 #ifndef NDEBUG
   for(int b=0; b < 2*T().n_branches(); b++)
   {
-    if (PC->parameters_for_tree_branch[b].first != -1)
+    if (TC->parameters_for_tree_branch[b].first != -1)
     {
-      auto s = get_parameter_value(PC->parameters_for_tree_branch[b].first );
+      auto s = get_parameter_value(TC->parameters_for_tree_branch[b].first );
       assert(T().directed_branch(b).source() == s.as_int());
     }
-    if (PC->parameters_for_tree_branch[b].second != -1)
+    if (TC->parameters_for_tree_branch[b].second != -1)
     {
-      auto t = get_parameter_value(PC->parameters_for_tree_branch[b].second);
+      auto t = get_parameter_value(TC->parameters_for_tree_branch[b].second);
       assert(T().directed_branch(b).target() == t.as_int());
     }
   }
@@ -1255,7 +1325,7 @@ void Parameters::check_h_tree() const
     if (T().node(n).is_leaf_node()) continue;
     
     vector<int> VV;
-    for(int p:PC->parameters_for_tree_node[n])
+    for(int p:TC->parameters_for_tree_node[n])
       VV.push_back(get_parameter_value(p).as_int());
 
     vector<const_branchview> v = branches_from_node(T(), n);
@@ -1276,8 +1346,8 @@ void Parameters::show_h_tree() const
 {
   for(int b=0; b < 2*T().n_branches(); b++)
   {
-    auto s = get_parameter_value(PC->parameters_for_tree_branch[b].first ).as_int();
-    auto t = get_parameter_value(PC->parameters_for_tree_branch[b].second).as_int();
+    auto s = get_parameter_value(TC->parameters_for_tree_branch[b].first ).as_int();
+    auto t = get_parameter_value(TC->parameters_for_tree_branch[b].second).as_int();
     std::cerr<<"branch "<<b<<": ("<<s<<","<<t<<")     "<<T().directed_branch(b).length()<<"\n";
   }
 }
@@ -1523,7 +1593,7 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
   b = T().directed_branch(b).undirected_name();
   T_.modify()->directed_branch(b).set_length(l);
 
-  context::set_parameter_value(PC->branch_length_parameters[b], l);
+  context::set_parameter_value(TC->branch_length_parameters[b], l);
 
   // Update D parameters
   for(int s=0; s<n_scales(); s++) 
@@ -1540,7 +1610,7 @@ void Parameters::setlength_unsafe(int b,double l)
   b = T().directed_branch(b).undirected_name();
   T_.modify()->directed_branch(b).set_length(l);
 
-  context::set_parameter_value(PC->branch_length_parameters[b], l);
+  context::set_parameter_value(TC->branch_length_parameters[b], l);
 }
 
 void Parameters::setlength(int b,double l) 
@@ -1548,7 +1618,7 @@ void Parameters::setlength(int b,double l)
   b = T().directed_branch(b).undirected_name();
   T_.modify()->directed_branch(b).set_length(l);
 
-  context::set_parameter_value(PC->branch_length_parameters[b], l);
+  context::set_parameter_value(TC->branch_length_parameters[b], l);
 
   // Update D parameters
   for(int s=0; s<n_scales(); s++) 
@@ -1604,7 +1674,7 @@ double Parameters::get_branch_subst_rate(int p, int /* b */) const
 
 expression_ref Parameters::my_tree() const
 {
-  return get_expression(PC->tree_head);
+  return get_expression(TC->tree_head);
 }
 
 parameters_constants::parameters_constants(const vector<alignment>& A, const SequenceTree& t,
@@ -1637,15 +1707,15 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
 }
 
 Parameters::Parameters(const module_loader& L,
-		       const vector<alignment>& A, const SequenceTree& t,
+		       const vector<alignment>& A, const SequenceTree& tt,
 		       const vector<expression_ref>& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<expression_ref>& IMs,
 		       const vector<int>& i_mapping,
 		       const vector<int>& scale_mapping)
   :Model(L),
-   PC(new parameters_constants(A,t,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
-   T_(t),
+   PC(new parameters_constants(A,tt,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
+   T_(tt),
    updown(-1)
 {
   // \todo FIXME:cleanup|fragile - Don't touch C here directly!
@@ -1670,66 +1740,8 @@ Parameters::Parameters(const module_loader& L,
     set_re_evaluate(trigger, true);
   }
 
-  /*------------------------- Create the tree structure -----------------------*/
-  vector<expression_ref> node_branches;
-  for(int n=0; n < T().n_nodes(); n++)
-  {
-    auto edges = edges_connecting_to_node(T(),n);
-    vector<int> p_node;
-    expression_ref node;
-    
-    if (T().node(n).is_leaf_node())
-    {
-      node = List(edges.front());
-      p_node = { -1 };
-    }
-    else
-    {
-      node = List();
-      for(int i=0;i<edges.size();i++)
-      {
-	const auto& edge = edges[i];
-	string name = "*MyTree.nodeBranches"+convertToString(n) + "." + convertToString(i);
-	p_node.push_back( add_parameter(name,edge) );
-	node  = Cons * parameter(name) * node;
-      }
-    }
-    
-    PC->parameters_for_tree_node.push_back ( p_node );
-    node_branches.push_back( node );
-  }
-  expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
-
-  vector<expression_ref> branch_nodes;
-  for(int b=0; b < 2*T().n_branches(); b++)
-  {
-    expression_ref source = T().directed_branch(b).source().name();
-    int p_source = -1;
-    if (not T().directed_branch(b).source().is_leaf_node())
-    {
-      string name_source = "*MyTree.branch"+convertToString(b)+"source"; 
-      p_source = add_parameter(name_source,source);
-      source = parameter(name_source);
-    }
-
-    expression_ref target = T().directed_branch(b).target().name();
-    int p_target = -1;
-    if (not T().directed_branch(b).target().is_leaf_node())
-    {
-      string name_target = "*MyTree.branch"+convertToString(b)+"target"; 
-      p_target = add_parameter(name_target,target);
-      target = parameter(name_target);
-    }
-    int reverse_branch = T().directed_branch(b).reverse();
-    PC->parameters_for_tree_branch.push_back( {p_source,p_target} );
-    branch_nodes.push_back( Tuple(source, target, reverse_branch) );
-  }
-  expression_ref branch_nodes_array = (identifier("listArray'"),get_list(branch_nodes));
-
-  expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
-
-  PC->tree_head = add_compute_expression( (tree_con, node_branches_array, branch_nodes_array, T().n_nodes(), T().n_branches()));
-
+  TC = new tree_constants(this, tt);
+  
   read_h_tree();
 
 #ifndef NDEBUG
@@ -1741,10 +1753,10 @@ Parameters::Parameters(const module_loader& L,
   evaluate_expression( (identifier("neighbors"), my_tree(), 0));
   evaluate_expression( (identifier("nodesForEdge"),my_tree(), 0));
   //  evaluate_expression( (identifier("edgeForNodes"), my_tree(), (identifier("nodesForEdge"),my_tree(), 0))).as_int();
-  for(int b=0; b < 2*T().n_branches(); b++)
+  for(int b=0; b < 2*tt.n_branches(); b++)
   {
     vector<const_branchview> branch_list;
-    append(T().directed_branch(b).branches_before(),branch_list);
+    append(tt.directed_branch(b).branches_before(),branch_list);
     vector<int> branch_list_;
     for(auto b: branch_list)
       branch_list_.push_back(b);
@@ -1755,13 +1767,6 @@ Parameters::Parameters(const module_loader& L,
       assert(includes(b2,i));
   }
 #endif
-
-  // Create the parameters that hold branch lengths
-  for(int b=0;b<T().n_branches();b++)
-  {
-    int index = add_parameter("*T"+convertToString(b+1), t.branch(b).length());
-    PC->branch_length_parameters.push_back(index);
-  }
 
   // Create the TreeInterface structure
   t_ = new TreeInterface(this);

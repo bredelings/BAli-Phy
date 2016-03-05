@@ -241,6 +241,20 @@ struct smodel_methods
   smodel_methods(const expression_ref&, context&);
 };
 
+struct tree_constants: public Object
+{
+  // The tree
+  int tree_head = -1;
+  std::vector<std::vector<int>> parameters_for_tree_node;
+  std::vector<std::pair<int,int>> parameters_for_tree_branch;
+
+  std::vector<int> branch_length_parameters;
+
+  tree_constants* clone() const {return new tree_constants(*this);}
+
+  tree_constants(Parameters*, const Tree&);
+};
+
 struct parameters_constants: public Object
 {
   /// The substitution::Model
@@ -257,14 +271,7 @@ struct parameters_constants: public Object
 
   std::vector< std::vector<int> > branch_length_indices;
 
-  std::vector<int> branch_length_parameters;
-  
   matrix<int> branch_transition_p_indices;
-
-  // The tree
-  int tree_head = -1;
-  std::vector<std::vector<int>> parameters_for_tree_node;
-  std::vector<std::pair<int,int>> parameters_for_tree_branch;
 
   /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
   int branch_prior_type = 0;
@@ -346,6 +353,7 @@ class Parameters: public Model
 
 public:
   object_ptr<parameters_constants> PC;
+  object_ptr<tree_constants> TC;
 
   int beta_index;
 
@@ -359,6 +367,7 @@ private:
   cow_ptr<SequenceTree> T_;
 
   object_ptr<TreeInterface> t_;
+
 
   std::vector<int> affected_nodes;
 
