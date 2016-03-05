@@ -1732,6 +1732,7 @@ Parameters::Parameters(const module_loader& L,
 
   read_h_tree();
 
+#ifndef NDEBUG
   check_h_tree();
 
   evaluate_expression( (identifier("numNodes"), my_tree()));
@@ -1750,11 +1751,10 @@ Parameters::Parameters(const module_loader& L,
 
     vector<int> b2 = evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),my_tree(),b)))).as_<Vector<int>>();
     assert(b2.size() == branch_list_.size());
-#ifndef NDEBUG
     for( int i: branch_list_)
       assert(includes(b2,i));
-#endif
   }
+#endif
 
   // Create the parameters that hold branch lengths
   for(int b=0;b<T().n_branches();b++)
