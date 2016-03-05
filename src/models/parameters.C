@@ -1756,6 +1756,16 @@ Parameters::Parameters(const module_loader& L,
 #endif
   }
 
+  // Create the parameters that hold branch lengths
+  for(int b=0;b<T().n_branches();b++)
+  {
+    int index = add_parameter("*T"+convertToString(b+1), t.branch(b).length());
+    PC->branch_length_parameters.push_back(index);
+  }
+
+  // Create the TreeInterface structure
+  t_ = new TreeInterface(this);
+
   // register the substitution models as sub-models
   for(int i=0;i<SMs.size();i++) 
   {
@@ -1800,12 +1810,6 @@ Parameters::Parameters(const module_loader& L,
       int index = add_parameter(prefix+"."+name, rate * delta_t);
       PC->branch_length_indices[s].push_back(index);
     }
-  }
-
-  for(int b=0;b<T().n_branches();b++)
-  {
-    int index = add_parameter("*T"+convertToString(b+1), t.branch(b).length());
-    PC->branch_length_parameters.push_back(index);
   }
 
   // Add and initialize variables for branch *categories*: branch_cat<b>
@@ -1880,8 +1884,6 @@ Parameters::Parameters(const module_loader& L,
   // create data partitions
   for(int i=0;i<A.size();i++) 
     data_partitions.push_back( data_partition(this, i, A[i]) );
-
-  t_ = new TreeInterface(this);
 
   // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
   probability();
