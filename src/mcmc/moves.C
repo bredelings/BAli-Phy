@@ -335,22 +335,25 @@ void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
     change_branch_length(P,Stats,b);
     
   // Find a random direction of this branch, conditional on pointing to an internal node.
-  const_branchview bv = P.as<Parameters>()->T().directed_branch(b);
+  const auto& t = P.as<Parameters>()->t();
+  auto e = t.edge(b);
   if (uniform() < 0.5)
-    bv = bv.reverse();
-  if (bv.target().is_leaf_node())
-    bv = bv.reverse();
+    e = e.reverse();
+
+  if (t.is_leaf_node(e.node2))
+    e = e.reverse();
+
   // NOTE! This pointer might be invalidated after the tree is changed by MH!
   //       We would modify T2 and then do T=T2, thus using the copied structue and destroying the original.
 
   // FIXME - this might move the accumulator off of the current branch (?)
   // TEST and Check Scaling of # of branches peeled
-  if (P.as<Parameters>()->t().n_nodes() > 2)
+  if (t.n_nodes() > 2)
   {
     if (uniform() < 0.5)
-      slide_node(P,Stats,bv);
+      slide_node(P, Stats, t.find_branch(e));
     else 
-      change_3_branch_lengths(P,Stats,bv.target());
+      change_3_branch_lengths(P,Stats, e.node2);
   }
 
   if (not do_slice) {
