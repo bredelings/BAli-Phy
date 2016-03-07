@@ -41,14 +41,15 @@ using namespace A2;
 vector< Matrix > distributions_star(const data_partition& P,const vector<int>& seq,int b,bool up) 
 {
   //--------------- Find our branch, and orientation ----------------//
-  const SequenceTree& T = P.T();
-  int root = T.branch(b).target();      //this is an arbitrary choice
+  auto& t = P.t();
+  b = t.undirected(b);
+  int root = t.target(b);      //this is an arbitrary choice
 
-  int node1 = T.branch(b).source();
-  int node2 = T.branch(b).target();
+  int node1 = t.source(b);
+  int node2 = t.target(b);
   if (not up) std::swap(node1,node2);
 
-  dynamic_bitset<> group = T.partition(node1,node2);
+  dynamic_bitset<> group = P.T().partition(node1,node2);
 
   return ::distributions_star(P,seq,root,group);
 }
@@ -56,14 +57,15 @@ vector< Matrix > distributions_star(const data_partition& P,const vector<int>& s
 vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int b,bool up)
 {
   //--------------- Find our branch, and orientation ----------------//
-  const SequenceTree& T = P.T();
-  int root = T.branch(b).target();      //this is an arbitrary choice
+  auto& t = P.t();
+  b = t.undirected(b);
+  int root = t.target(b);      //this is an arbitrary choice
 
-  int node1 = T.branch(b).source();
-  int node2 = T.branch(b).target();
+  int node1 = t.source(b);
+  int node2 = t.target(b);
   if (not up) std::swap(node1,node2);
 
-  dynamic_bitset<> group = T.partition(node1,node2);
+  dynamic_bitset<> group = P.T().partition(node1,node2);
 
   return ::distributions_tree(P,seq,root,group);
 }
@@ -78,10 +80,11 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, P.A());
 
   const Tree& T = P.T();
+  const auto& t = P.t();
   const alignment& A = P.A();
 
-  int node1 = T.branch(b).target();
-  int node2 = T.branch(b).source();
+  int node1 = t.target(t.undirected(b));
+  int node2 = t.source(t.undirected(b));
 
   dynamic_bitset<> group1 = T.partition(node2,node1);
 
@@ -138,7 +141,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   path.erase(path.begin()+path.size()-1);
 
   P.LC.invalidate_branch_alignment(T,b);
-  P.set_pairwise_alignment(T.directed_branch(node1,node2), A2::get_pairwise_alignment_from_path(path), false);
+  P.set_pairwise_alignment(t.find_branch(node1,node2), A2::get_pairwise_alignment_from_path(path), false);
 
   P.recompute_alignment_matrix_from_pairwise_alignments();
 
@@ -196,8 +199,8 @@ void sample_alignment(Parameters& P,int b)
 #ifndef NDEBUG_DP
   std::cerr<<"\n\n----------------------------------------------\n";
 
-  int node1 = P.T().branch(b).target();
-  int node2 = P.T().branch(b).source();
+  int node1 = P.t().target(P.t().undirected(b));
+  int node2 = P.t().source(P.t().undirected(b));
 
   vector<int> nodes;
   nodes.push_back(node1);
