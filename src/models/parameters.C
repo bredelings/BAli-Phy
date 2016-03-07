@@ -229,7 +229,7 @@ void data_partition::recompute_alignment_matrix_from_pairwise_alignments()
   assert( variable_alignment_ );
 
   vector<pairwise_alignment_t> As;
-  for(int b=0;b<2*T().n_branches();b++)
+  for(int b=0;b<2*t().n_branches();b++)
     As.push_back(get_pairwise_alignment(b,false));
   
   set_alignment( get_alignment(get_alphabet(), *seqs, *sequences, construct(T(), As)) );
@@ -267,18 +267,18 @@ void data_partition::variable_alignment(bool b)
   variable_alignment_ = b;
 
   // Ignore requests to turn on alignment variation when there is no imodel or internal nodes
-  if (not has_IModel() or A().n_sequences() != T().n_nodes())
+  if (not has_IModel() or A().n_sequences() != t().n_nodes())
     variable_alignment_ = false;
 
   // turning OFF alignment variation
   if (not variable_alignment()) 
   {
-    subA_ = new subA_index_leaf(P, T().n_branches()*2);
+    subA_ = new subA_index_leaf(P, t().n_branches()*2);
 
     // We just changed the subA index type
     LC.invalidate_all();
 
-    if (A().n_sequences() == T().n_nodes())
+    if (A().n_sequences() == t().n_nodes())
       if (not check_leaf_characters_minimally_connected(A(),T()))
 	throw myexception()<<"Failing to turn off alignment variability: non-default internal node states";
   }
@@ -286,11 +286,11 @@ void data_partition::variable_alignment(bool b)
   else 
   {
     if (use_internal_index)
-      subA_ = new subA_index_internal(P, T().n_branches()*2);
+      subA_ = new subA_index_internal(P, t().n_branches()*2);
     else
-      subA_ = new subA_index_leaf(P, T().n_branches()*2);
+      subA_ = new subA_index_leaf(P, t().n_branches()*2);
 
-    assert(has_IModel() and A().n_sequences() == T().n_nodes());
+    assert(has_IModel() and A().n_sequences() == t().n_nodes());
     {
       alignment* A2 = A().clone();
       minimally_connect_leaf_characters(*A2, T());
@@ -299,7 +299,7 @@ void data_partition::variable_alignment(bool b)
     note_alignment_changed();
 
     // reset the pairwise alignments.
-    for(int b=0;b<T().n_branches();b++)
+    for(int b=0;b<t().n_branches();b++)
     {
       int n1 = T().directed_branch(b).source();
       int n2 = T().directed_branch(b).target();
@@ -321,7 +321,7 @@ bool data_partition::has_IModel() const
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
   b = T().directed_branch(b).undirected_name();
-  assert(b >= 0 and b < T().n_branches());
+  assert(b >= 0 and b < t().n_branches());
 
   return P->evaluate( transition_p_method_indices[b] ).as_<Vector<Matrix>>();
 }
@@ -580,7 +580,7 @@ void data_partition::note_alignment_changed_on_branch(int b)
 
 void data_partition::note_alignment_changed()
 {
-  for(int b=0;b<T().n_branches();b++)
+  for(int b=0;b<t().n_branches();b++)
     note_alignment_changed_on_branch(b);
 
   // this automatically marks all non-leaf sequence lengths for recomputation.
@@ -608,7 +608,7 @@ log_double_t data_partition::prior_alignment() const
 {
   if (not variable_alignment()) return 1;
 
-  for(int i=0;i<T().n_branches()*2;i++)
+  for(int i=0;i<t().n_branches()*2;i++)
     assert(pairwise_alignment_for_branch_is_valid(i));
 
   log_double_t Pr = P->evaluate(alignment_prior_index).as_log_double();
@@ -642,17 +642,17 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   :P(p),
    DPC(new data_partition_constants),
    partition_index(i),
-   pairwise_alignment_for_branch(2*T().n_branches()),
+   pairwise_alignment_for_branch(2*t().n_branches()),
    sequence_length_indices(AA.n_sequences(),-1),
-   transition_p_method_indices(T().n_branches(),-1),
+   transition_p_method_indices(t().n_branches(),-1),
    variable_alignment_( has_IModel() ),
    seqs(AA.seqs()),
-   sequences( alignment_letters(AA, T().n_leaves()) ),
+   sequences( alignment_letters(AA, t().n_leaves()) ),
    a(AA.get_alphabet().clone()),
    LC(T(), *this),
-   branch_HMM_type(T().n_branches(),0)
+   branch_HMM_type(t().n_branches(),0)
 {
-  int B = T().n_branches();
+  int B = t().n_branches();
 
   if (variable_alignment() and use_internal_index)
     subA_ = new subA_index_internal(P, B*2);
@@ -667,7 +667,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
       pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b), 0);
 
-    for(int b=0;b<T().n_branches();b++)
+    for(int b=0;b<t().n_branches();b++)
     {
       int n1 = T().directed_branch(b).source();
       int n2 = T().directed_branch(b).target();
@@ -733,7 +733,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
 
     alignment_prior_index = p->add_compute_expression( (identifier("alignment_pr"), as, tree, hmms, model) );
 
-    for(int n=0;n<T().n_nodes();n++)
+    for(int n=0;n<t().n_nodes();n++)
     {
       expression_ref L = A().seqlength(n);
       if (variable_alignment())
@@ -998,11 +998,11 @@ const TreeInterface& Parameters::t() const
 
 void Parameters::read_h_tree()
 {
-  for(int n=0; n < T().n_nodes(); n++)
+  for(int n=0; n < t().n_nodes(); n++)
     if (not T().node(n).is_leaf_node())
       update_tree_node(n);
 
-  for(int b=0; b < 2*T().n_branches(); b++)
+  for(int b=0; b < 2*t().n_branches(); b++)
   {
     if (not T().directed_branch(b).source().is_leaf_node())
       context::set_parameter_value(TC->parameters_for_tree_branch[b].first,  (int)T().directed_branch(b).source());
@@ -1344,7 +1344,7 @@ void Parameters::check_h_tree() const
 
 void Parameters::show_h_tree() const
 {
-  for(int b=0; b < 2*T().n_branches(); b++)
+  for(int b=0; b < 2*t().n_branches(); b++)
   {
     auto s = get_parameter_value(TC->parameters_for_tree_branch[b].first ).as_int();
     auto t = get_parameter_value(TC->parameters_for_tree_branch[b].second).as_int();
@@ -1368,7 +1368,7 @@ log_double_t Parameters::prior_no_alignment() const
 
     log_double_t pA = (1.0 - p_unaligned);
 
-    for(int b=0;b<T().n_branches();b++)
+    for(int b=0;b<t().n_branches();b++)
       if (not branch_HMM_type(b))
 	Pr *= pA;
       else
@@ -1528,8 +1528,8 @@ void Parameters::recalc()
       assert(0 <= s and s < n_scales());
       
       // Change branch lengths for the s-th scale
-      assert(PC->branch_length_indices[s].size() == T().n_branches());
-      for(int b=0;b<T().n_branches();b++)
+      assert(PC->branch_length_indices[s].size() == t().n_branches());
+      for(int b=0;b<t().n_branches();b++)
       {
 	double rate = get_parameter_value(branch_mean_index(s)).as_double();;
 	double delta_t = T().branch(b).length();
@@ -1742,6 +1742,9 @@ Parameters::Parameters(const module_loader& L,
 
   TC = new tree_constants(this, tt);
   
+  // Create the TreeInterface structure
+  t_ = new TreeInterface(this);
+
   read_h_tree();
 
 #ifndef NDEBUG
@@ -1767,9 +1770,6 @@ Parameters::Parameters(const module_loader& L,
       assert(includes(b2,i));
   }
 #endif
-
-  // Create the TreeInterface structure
-  t_ = new TreeInterface(this);
 
   // register the substitution models as sub-models
   for(int i=0;i<SMs.size();i++) 
@@ -1806,7 +1806,7 @@ Parameters::Parameters(const module_loader& L,
   {
     string prefix= "*Scale" + convertToString(s+1);
     PC->branch_length_indices.push_back(vector<int>());
-    for(int b=0;b<T().n_branches();b++)
+    for(int b=0;b<t().n_branches();b++)
     {
       double rate = get_parameter_value(branch_mean_index(s)).as_double();
       double delta_t = T().branch(b).length();
@@ -1819,7 +1819,7 @@ Parameters::Parameters(const module_loader& L,
 
   // Add and initialize variables for branch *categories*: branch_cat<b>
   vector<expression_ref> branch_categories;
-  for(int b=0;b<T().n_branches();b++)
+  for(int b=0;b<t().n_branches();b++)
   {
     string name = "*Main.branchCat" + convertToString(b+1);
     add_parameter(name, 0);
@@ -1835,7 +1835,7 @@ Parameters::Parameters(const module_loader& L,
       string prefix= "*Scale" + convertToString(s+1);
       // Get a list of the branch LENGTH (not time) parameters
       vector<expression_ref> D;
-      for(int b=0;b<T().n_branches();b++)
+      for(int b=0;b<t().n_branches();b++)
       {
 	string name = "d" + convertToString(b+1);
 	D.push_back(parameter(prefix+"."+name));
@@ -1867,7 +1867,7 @@ Parameters::Parameters(const module_loader& L,
       expression_ref V = identifier("vector_Matrix_From_List");
       //expression_ref I = 0;
       expression_ref I = (identifier("!!"),branch_cat_list,v1);
-      expression_ref E = (identifier("mkArray"), T().n_branches(), v1^(V,(identifier("branchTransitionP"), (identifier("getNthMixture"),S,I), (identifier("!"), DL, v1) ) ) );
+      expression_ref E = (identifier("mkArray"), t().n_branches(), v1^(V,(identifier("branchTransitionP"), (identifier("getNthMixture"),S,I), (identifier("!"), DL, v1) ) ) );
       PC->branch_transition_p_indices(s,m) = add_compute_expression(E);
     }
   }

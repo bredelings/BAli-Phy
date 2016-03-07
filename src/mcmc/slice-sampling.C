@@ -274,7 +274,7 @@ double scale_means_only_slice_function::operator()(double t)
   double scale = set_sum_of_means_tricky(P, initial_sum_of_means * exp(t));
 
   // Scale the tree in the opposite direction
-  for(int b=0;b<P.T().n_branches();b++) 
+  for(int b=0;b<P.t().n_branches();b++) 
   {
     const double L = P.T().branch(b).length();
     P.setlength_unsafe(b, L/scale);
@@ -287,7 +287,7 @@ double scale_means_only_slice_function::operator()()
 {
   count++;
 
-  const int B = P.T().n_branches();
+  const int B = P.t().n_branches();
   const int n = P.n_branch_means();
 
   // return pi * (\sum_i \mu_i)^(n-B)

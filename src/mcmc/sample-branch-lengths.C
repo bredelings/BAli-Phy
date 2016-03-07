@@ -451,7 +451,7 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
   }
 #endif
 
-  for(int b=0;b<P2->T().n_branches();b++) {
+  for(int b=0;b<P2->t().n_branches();b++) {
     const double length = P2->T().branch(b).length();
     P2->setlength_unsafe(b, length/scale);
   }
@@ -472,7 +472,7 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
 #endif
 
   //--------- Compute proposal ratio ---------//
-  log_double_t p_ratio = pow(log_double_t(scale),P2->n_data_partitions()-P2->T().n_branches());
+  log_double_t p_ratio = pow(log_double_t(scale),P2->n_data_partitions()-P2->t().n_branches());
   log_double_t a_ratio = P2->prior_no_alignment()/PP->prior_no_alignment()*p_ratio;
 
 #ifndef NDEBUG

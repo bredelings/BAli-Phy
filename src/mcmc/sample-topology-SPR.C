@@ -60,7 +60,7 @@ int random_int_from_double(double x)
 int n_SPR_moves(const Parameters& P)
 {
   double f = P.load_value("SPR_amount",0.1);
-  int n = random_int_from_double(P.T().n_branches()*f);
+  int n = random_int_from_double(P.t().n_branches()*f);
   return n+1;
 }
 
@@ -1174,7 +1174,7 @@ void sample_SPR_all(owned_ptr<Model>& P,MoveStats& Stats)
 
 void sample_SPR_search_all(owned_ptr<Model>& P,MoveStats& Stats) 
 {
-  int B = P.as<Parameters>()->T().n_branches();
+  int B = P.as<Parameters>()->t().n_branches();
 
   for(int b=0;b<2*B;b++) {
     slice_sample_branch_length(P,Stats,b);
@@ -1186,7 +1186,7 @@ void sample_SPR_search_all(owned_ptr<Model>& P,MoveStats& Stats)
 
 void sample_SPR_A_search_all(owned_ptr<Model>& P,MoveStats& Stats) 
 {
-  int B = P.as<Parameters>()->T().n_branches();
+  int B = P.as<Parameters>()->t().n_branches();
 
   for(int b=0;b<2*B;b++) {
     slice_sample_branch_length(P,Stats,b);

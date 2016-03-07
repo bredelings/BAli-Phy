@@ -236,7 +236,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  dynamic_bitset<> ignore(p[0].T().n_nodes());
+  dynamic_bitset<> ignore(p[0].t().n_nodes());
   ignore[ order[0].nodes[4] ] = true;
   ignore[ order[0].nodes[5] ] = true;
 

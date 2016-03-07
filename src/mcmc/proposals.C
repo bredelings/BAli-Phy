@@ -584,7 +584,7 @@ double move_scale_branch(Model& P)
   assert( scale_branch != -1);
 
   if (P.contains_key("lambda_search_all"))
-    scale_branch = uniform(0, PP.T().n_branches() - 1);
+    scale_branch = uniform(0, PP.t().n_branches() - 1);
   else
   {
     int attribute_index = PP.T().find_undirected_branch_attribute_index_by_name("lambda-scale-branch");  
@@ -592,7 +592,7 @@ double move_scale_branch(Model& P)
     assert(attribute_index != -1);
     
     vector<int> branches;
-    for(int b=0;b<PP.T().n_branches();b++)
+    for(int b=0;b<PP.t().n_branches();b++)
     {
       boost::any value = PP.T().branch(b).undirected_attribute(attribute_index);
       if (not value.empty())
@@ -613,7 +613,7 @@ double move_subst_type_branch(Model& P)
   Parameters& PP = dynamic_cast<Parameters&>(P);
 
   int which_branch = -1;
-  int B = PP.T().n_branches();
+  int B = PP.t().n_branches();
   for(int b=0;b<B;b++)
   {
     int index = P.find_parameter("Main.branchCat" + convertToString(b+1));

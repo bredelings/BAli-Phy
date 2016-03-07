@@ -367,13 +367,13 @@ MCMC::MoveAll get_parameter_slice_moves(Model& M)
 MCMC::MoveAll get_alignment_moves(Parameters& P)
 {
   // args for branch-based stuff
-  vector<int> branches(P.T().n_branches());
+  vector<int> branches(P.t().n_branches());
   for(int i=0;i<branches.size();i++)
     branches[i] = i;
 
   // args for node-based stuff
   vector<int> internal_nodes;
-  for(int i=P.T().n_leaves();i<P.T().n_nodes();i++)
+  for(int i=P.t().n_leaves();i<P.t().n_nodes();i++)
     internal_nodes.push_back(i);
 
   using namespace MCMC;
@@ -388,7 +388,7 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
 					   sample_alignments_one,
 					   branches)
 			     );
-  if (P.T().n_leaves() >2) {
+  if (P.t().n_leaves() >2) {
     alignment_branch_moves.add(0.15,MoveArgSingle("sample_tri","alignment:alignment_branch:nodes",
 						 sample_tri_one,
 						 branches)
@@ -407,12 +407,12 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
 
   //---------- alignment::nodes_master (nodes_moves) ----------//
   MoveEach nodes_moves("nodes_master","alignment:nodes");
-  if (P.T().n_leaves() >= 3)
+  if (P.t().n_leaves() >= 3)
     nodes_moves.add(10,MoveArgSingle("sample_node","alignment:nodes",
 				   sample_node_move,
 				   internal_nodes)
 		   );
-  if (P.T().n_leaves() >= 4)
+  if (P.t().n_leaves() >= 4)
     nodes_moves.add(1,MoveArgSingle("sample_two_nodes","alignment:nodes",
 				   sample_two_nodes_move,
 				   internal_nodes)
@@ -444,13 +444,13 @@ MCMC::MoveAll get_h_moves(Model& M)
 MCMC::MoveAll get_tree_moves(Parameters& P)
 {
   // args for branch-based stuff
-  vector<int> branches(P.T().n_branches());
+  vector<int> branches(P.t().n_branches());
   for(int i=0;i<branches.size();i++)
     branches[i] = i;
 
   // args for branch-based stuff
   vector<int> internal_branches;
-  for(int i=P.T().n_leaves();i<P.T().n_branches();i++)
+  for(int i=P.t().n_leaves();i<P.t().n_branches();i++)
     internal_branches.push_back(i);
 
   using namespace MCMC;
@@ -502,7 +502,7 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 
   topology_move.add(1,NNI_move,false);
   topology_move.add(1,SPR_move);
-  if (P.T().n_leaves() >3)
+  if (P.t().n_leaves() >3)
     tree_moves.add(1,topology_move);
   
   //-------------- tree::lengths (length_moves) -------------//
@@ -753,7 +753,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
     // enable and disable moves
     enable_disable_transition_kernels(pre_burnin,args);
 
-    int n_pre_burnin2 = n_pre_burnin + (int)log(P.as<Parameters>()->T().n_leaves());
+    int n_pre_burnin2 = n_pre_burnin + (int)log(P.as<Parameters>()->t().n_leaves());
     for(int i=0;i<n_pre_burnin2;i++) {
       out_both<<" NNI #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
       out_both<<"   |T| = "<<Get_Tree_Length_Function()(*P,0);
@@ -886,9 +886,9 @@ void do_sampling(const variables_map& args,
     // - It does call the likelihood function, doesn't it?
     // FIXME -   However, it is probably not so important to resample most parameters in a way that is interleaved with stuff... (?)
     // FIXME -   Certainly, we aren't going to be interleaved with branches, anyway!
-    sampler.add(5 + log(PP->T().n_branches()), MH_but_no_slice_moves);
+    sampler.add(5 + log(PP->t().n_branches()), MH_but_no_slice_moves);
     if (P->load_value("enable_MH_sampling",0.0) > 0.5)
-      sampler.add(5 + log(PP->T().n_branches()),MH_moves);
+      sampler.add(5 + log(PP->t().n_branches()),MH_moves);
     else
       sampler.add(1,MH_moves);
   }

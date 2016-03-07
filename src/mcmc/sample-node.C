@@ -240,7 +240,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  dynamic_bitset<> ignore(p[0].T().n_nodes());
+  dynamic_bitset<> ignore(p[0].t().n_nodes());
   ignore[ nodes[0][0] ] = true;
 
   // Check that our constraints are met
