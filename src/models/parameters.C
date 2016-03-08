@@ -960,6 +960,15 @@ vector<int> TreeInterface::all_branches_after_inclusive(int b) const
   return branches;
 }
 
+boost::dynamic_bitset<> TreeInterface::partition(int b) const
+{
+  boost::dynamic_bitset<> nodes(n_nodes());
+  vector<int> branches = all_branches_after_inclusive(b);
+  for(int b: branches)
+    nodes.set(target(b));
+  return nodes;
+}
+
 int TreeInterface::source(int b) const {
   int p = P->TC->parameters_for_tree_branch[b].first;
   if (p == -1)

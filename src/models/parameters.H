@@ -29,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <string>
 #include <valarray>
+#include <boost/dynamic_bitset.hpp>
 #include "sequence/alphabet.H"
 #include "tree/sequencetree.H"
 #include "models/model.H"
@@ -349,6 +350,8 @@ public:
   int find_branch(const tree_edge&) const;
   int find_undirected_branch(const tree_edge&) const;
 
+  boost::dynamic_bitset<> partition(int b) const;
+  
   tree_edge edge(int n1, int n2) const;
   tree_edge edge(int b) const;
 
