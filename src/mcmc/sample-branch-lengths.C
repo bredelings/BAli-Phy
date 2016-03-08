@@ -66,7 +66,7 @@ MCMC::Result change_branch_length_(owned_ptr<Model>& P,int b,double sigma,
   MCMC::Result result(3);
   
   //------------ Propose new length -------------//
-  const double length = P.as<const Parameters>()->T().directed_branch(b).length();
+  const double length = P.as<const Parameters>()->t().branch_length(b);
   double newlength = length;
 
   double ratio = twiddle(newlength,sigma);
@@ -94,7 +94,7 @@ void change_branch_length_flat(owned_ptr<Model>& P,
 {
   Parameters& PP = *P.as<Parameters>();
 
-  const double L = PP.T().directed_branch(b).length();
+  const double L = PP.t().branch_length(b);
   const double mu = PP.branch_mean();
 
   MCMC::Result result = change_branch_length_(P, b, sigma*PP.branch_mean(), branch_twiddle_positive);
@@ -115,7 +115,7 @@ void change_branch_length_log_scale(owned_ptr<Model>& P,
 				    int b,
 				    double sigma)
 {
-  const double L = P.as<Parameters>()->T().directed_branch(b).length();
+  const double L = P.as<Parameters>()->t().branch_length(b);
   const double mu = P.as<Parameters>()->branch_mean();
 
   MCMC::Result result = change_branch_length_(P, b, sigma, scale_gaussian );
@@ -138,7 +138,7 @@ void slice_sample_branch_length(owned_ptr<Model>& P,MoveStats& Stats,int b)
   Parameters& PP = *P.as<Parameters>();
   PP.select_root(b);
   
-  const double L = PP.T().directed_branch(b).length();
+  const double L = PP.t().branch_length(b);
   const double mu = PP.branch_mean();
 
 
@@ -197,7 +197,7 @@ void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b)
   result.counts[0] = 1;
 
   //------------- Propose new length --------------//
-  const double length = PP.T().directed_branch(b).length();
+  const double length = PP.t().branch_length(b);
   double newlength = length;
   double ratio = branch_twiddle(newlength,PP.branch_mean()*0.6);
 
@@ -333,8 +333,8 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b0)
   b0 = b[0].name();
   int b1 = b[1].undirected_name();
   int b2 = b[2].undirected_name();
-  double L1a = PP->T().branch(b1).length();
-  double L2a = PP->T().branch(b2).length();
+  double L1a = PP->t().branch_length(b1);
+  double L2a = PP->t().branch_length(b2);
 
   PP->set_root(b[0].target());
 
@@ -361,8 +361,8 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b0)
       name = "slide_node_expand_branch";
     }
     PP = P.as<Parameters>();
-    double L1b = PP->T().branch(b1).length();
-    double L2b = PP->T().branch(b2).length();
+    double L1b = PP->t().branch_length(b1);
+    double L2b = PP->t().branch_length(b2);
 
     MCMC::Result result(2);
     result.totals[0] = success?1:0;
@@ -452,7 +452,7 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
 #endif
 
   for(int b=0;b<P2->t().n_branches();b++) {
-    const double length = P2->T().branch(b).length();
+    const double length = P2->t().branch_length(b);
     P2->setlength_unsafe(b, length/scale);
   }
 
