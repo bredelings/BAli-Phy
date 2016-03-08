@@ -382,8 +382,8 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
 
   int n1 = P.T().directed_branch(b1).target();
   int n2 = P.T().directed_branch(b1).source();
-  assert(P.T().partition(b1)[P.T().branch(b2).target()]);
-  assert(P.T().partition(b1)[P.T().branch(b2).source()]);
+  assert(P.t().partition(b1)[P.T().branch(b2).target()]);
+  assert(P.t().partition(b1)[P.T().branch(b2).source()]);
 
   //----- Generate the Different Topologies ----//
   P.set_root(n1);

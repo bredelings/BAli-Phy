@@ -119,9 +119,9 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   m123.B = P.get_beta();
 
   //------------- Compute sequence properties --------------//
-  dynamic_bitset<> group1 = T.partition(nodes[0],nodes[1]);
-  dynamic_bitset<> group2 = T.partition(nodes[0],nodes[2]);
-  dynamic_bitset<> group3 = T.partition(nodes[0],nodes[3]);
+  dynamic_bitset<> group1 = P.t().partition(P.t().find_branch(nodes[0],nodes[1]));
+  dynamic_bitset<> group2 = P.t().partition(P.t().find_branch(nodes[0],nodes[2]));
+  dynamic_bitset<> group3 = P.t().partition(P.t().find_branch(nodes[0],nodes[3]));
 
   vector<int> seq1 = A.get_columns_for_characters(nodes[1]);
 
@@ -381,8 +381,8 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  dynamic_bitset<> ignore1A = ~p[0].T().partition(nodes[0][0],nodes[0][1]);
-  dynamic_bitset<> ignore2A = ~(p[0].T().partition(nodes[0][0],nodes[0][2]) | p[0].T().partition(nodes[0][0],nodes[0][3]) );
+  dynamic_bitset<> ignore1A = ~p[0].t().partition(nodes[0][0],nodes[0][1]);
+  dynamic_bitset<> ignore2A = ~(p[0].t().partition(nodes[0][0],nodes[0][2]) | p[0].T().partition(nodes[0][0],nodes[0][3]) );
   dynamic_bitset<> ignore1(p[0].t().n_nodes()); 
   dynamic_bitset<> ignore2(p[0].t().n_nodes()); 
   for(int i=0;i<ignore1.size();i++) {

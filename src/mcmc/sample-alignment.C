@@ -49,7 +49,7 @@ vector< Matrix > distributions_star(const data_partition& P,const vector<int>& s
   int node2 = t.target(b);
   if (not up) std::swap(node1,node2);
 
-  dynamic_bitset<> group = P.T().partition(node1,node2);
+  dynamic_bitset<> group = P.t().partition(P.t().find_branch(node1,node2));
 
   return ::distributions_star(P,seq,root,group);
 }
@@ -65,7 +65,7 @@ vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& s
   int node2 = t.target(b);
   if (not up) std::swap(node1,node2);
 
-  dynamic_bitset<> group = P.T().partition(node1,node2);
+  dynamic_bitset<> group = P.t().partition(P.t().find_branch(node1,node2));
 
   return ::distributions_tree(P,seq,root,group);
 }
@@ -86,7 +86,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   int node1 = t.target(t.undirected(b));
   int node2 = t.source(t.undirected(b));
 
-  dynamic_bitset<> group1 = T.partition(node2,node1);
+  dynamic_bitset<> group1 = t.partition(t.find_branch(node2,node1));
 
   // Find sub-alignments and sequences
   vector<int> seq1;
