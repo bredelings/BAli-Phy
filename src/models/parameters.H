@@ -323,9 +323,16 @@ public:
   int branch_out(int n, int i) const;
   int neighbor(int n, int i) const;
   std::vector<int> neighbors(int n) const;
+  void append_branches_before(int b, std::vector<int>&) const;
+  void append_branches_after(int b, std::vector<int>&) const;
+  std::vector<int> branches_before(int b) const;
+  std::vector<int> branches_after(int b) const;
+  std::vector<int> all_branches_before_inclusive(int b) const;
+  std::vector<int> all_branches_after_inclusive(int b) const;
   int source(int b) const;
   int target(int b) const;
-
+  int reverse(int b) const;
+  
   int undirected(int b) const;
 
   bool is_connected(int n1, int n2) const;
