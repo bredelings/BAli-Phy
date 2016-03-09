@@ -507,8 +507,9 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
   Parameters* PP = P.as<Parameters>();
   MCMC::Result result(2);
 
+  const auto& t = PP->t();
   const Tree& T = PP->T();
-  if (not T.node(n).is_internal_node()) return;
+  if (not t.is_internal_node(n)) return;
 
   //-------------- Find branches ------------------//
   vector<const_branchview> branches = randomized_branches_out(T.node(n));
@@ -517,9 +518,9 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
   int b3 = branches[2].undirected_name();
 
   //------------ Change coordinates ---------------//
-  double T1 = T.branch(b1).length();
-  double T2 = T.branch(b2).length();
-  double T3 = T.branch(b3).length();
+  double T1 = t.branch_length(b1);
+  double T2 = t.branch_length(b2);
+  double T3 = t.branch_length(b3);
 
   double S12 = T1 + T2;
   double S23 = T2 + T3;
