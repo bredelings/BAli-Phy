@@ -321,7 +321,7 @@ void sample_two_nodes(Parameters& P,int b)
   vector<Parameters> p(1,P);
 
   vector< A5::hmm_order > order(1);
-  order[0] = A5::get_nodes_random(P.T(), b);
+  order[0] = A5::get_nodes_random(P.t(), b);
 
   vector<log_double_t> rho(1,1);
 

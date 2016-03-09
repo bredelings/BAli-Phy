@@ -38,31 +38,31 @@ using std::pair;
 namespace A5 {
 
   /// Which 5 nodes are adjacent to this branch?
-  hmm_order get_nodes(const Tree& T,int b) 
+  hmm_order get_nodes(const TreeInterface& t, int b) 
   {
-    assert(T.directed_branch(b).is_internal_branch());
+    assert(t.is_internal_branch(b));
 
-    vector<const_branchview> branches;
-    append(T.directed_branch(b).branches_before(),branches);
-    append(T.directed_branch(b).branches_after(),branches);
+    vector<int> branches;
+    t.append_branches_before(b, branches);
+    t.append_branches_after(b, branches);
 
     vector<int> nodes(6);
     
     // This must be an internal branch
-    nodes[0] = branches[0].source();
-    nodes[1] = branches[1].source();
-    nodes[2] = branches[2].target();
-    nodes[3] = branches[3].target();
+    nodes[0] = t.source(branches[0]);
+    nodes[1] = t.source(branches[1]);
+    nodes[2] = t.target(branches[2]);
+    nodes[3] = t.target(branches[3]);
 
-    nodes[4] = T.directed_branch(b).source();
-    nodes[5] = T.directed_branch(b).target();
+    nodes[4] = t.source(b);
+    nodes[5] = t.target(b);
     
     return {nodes,0};
   }
 
-  hmm_order get_nodes_random(const Tree& T, int b) 
+  hmm_order get_nodes_random(const TreeInterface& t, int b) 
   {
-    hmm_order order = get_nodes(T,b);
+    hmm_order order = get_nodes(t, b);
     if (uniform() < 0.5)
       std::swap(order.nodes[0], order.nodes[1]);
     if (uniform() < 0.5)

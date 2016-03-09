@@ -1258,7 +1258,7 @@ void Parameters::NNI(int br1, int br2)
   int b45 = T().directed_branch(s1,s2);
 
   // 1. Get alignments of sequences 123456
-  auto order = A5::get_nodes(T(),b45);
+  auto order = A5::get_nodes(t(),b45);
   auto& nodes = order.nodes;
   assert(nodes[4] == s1);
   assert(nodes[5] == s2);

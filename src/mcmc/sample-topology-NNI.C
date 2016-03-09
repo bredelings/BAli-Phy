@@ -102,8 +102,8 @@ void NNI_inc(MoveStats& Stats, const string& name, MCMC::Result result,const Tre
 int two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rho, int b) 
 {
   vector< A5::hmm_order > orders(2);
-  orders[0] = A5::get_nodes_random(p[0].T(), b);
-  orders[1] = A5::get_nodes_random(p[1].T(), b);
+  orders[0] = A5::get_nodes_random(p[0].t(), b);
+  orders[1] = A5::get_nodes_random(p[1].t(), b);
 
   try {
     return sample_two_nodes_multi(p,orders,rho,true,false);
@@ -156,7 +156,7 @@ void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
   Tree T0 = PP.T();
 
-  A5::hmm_order order = A5::get_nodes_random(PP.T(), b);
+  A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
   const auto& nodes = order.nodes;
 
   PP.select_root(b);
@@ -228,7 +228,7 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     return;
   }
 
-  A5::hmm_order order = A5::get_nodes_random(PP.T(), b);
+  A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
   const auto& nodes = order.nodes;
 
   PP.select_root(b);
@@ -256,8 +256,8 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   // the internal node state of the proposed new topology/alignment
 
   vector< A5::hmm_order > orders(2);
-  orders[0] = A5::get_nodes_random(p[0].T(), b);
-  orders[1] = A5::get_nodes_random(p[1].T(), b);
+  orders[0] = A5::get_nodes_random(p[0].t(), b);
+  orders[1] = A5::get_nodes_random(p[1].t(), b);
 
   bool smart = (uniform() < 0.5);
   if (smart)
@@ -322,7 +322,7 @@ void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
-  A5::hmm_order order = A5::get_nodes_random(PP.T(), b);
+  A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
   const auto& nodes = order.nodes;
 
   PP.select_root(b);
@@ -392,7 +392,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
-  A5::hmm_order order = A5::get_nodes_random(PP.T(),b);
+  A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
   const auto& nodes = order.nodes;
 
   PP.select_root(b);
@@ -473,9 +473,9 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<log_double_t>&
   assert(p[1].variable_alignment() == p[2].variable_alignment());
 
   vector< A5::hmm_order > orders(3);
-  orders[0] = A5::get_nodes_random(p[0].T(), b);
-  orders[1] = A5::get_nodes_random(p[1].T(), b);
-  orders[2] = A5::get_nodes_random(p[2].T(), b);
+  orders[0] = A5::get_nodes_random(p[0].t(), b);
+  orders[1] = A5::get_nodes_random(p[1].t(), b);
+  orders[2] = A5::get_nodes_random(p[2].t(), b);
 
   try {
     return sample_two_nodes_multi(p,orders,rho,true,false);
@@ -497,7 +497,7 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
 
   Tree T0 = PP.T();
 
-  A5::hmm_order order = A5::get_nodes_random(PP.T(),b);
+  A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
   const auto& nodes = order.nodes;
 
   //------ Generate Topologies and alter caches ------///
@@ -589,7 +589,7 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     return;
   }
 
-  A5::hmm_order order = A5::get_nodes_random(PP.T(),b);
+  A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
   const auto& nodes = order.nodes;
 
   //------ Generate Topologies and alter caches ------///
@@ -643,7 +643,7 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1)
     return;
 
-  A5::hmm_order order = A5::get_nodes_random(PP.T(), b);
+  A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
   const auto& two_way_nodes = order.nodes;
 
   //--------- Generate the Different Topologies -------//

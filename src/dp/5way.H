@@ -47,9 +47,9 @@ namespace A5 {
     hmm_order(const std::vector<int>& n, int t):nodes(n),topology(t) {}
   };
 
-  hmm_order get_nodes_random(const Tree& T,int b);
+  hmm_order get_nodes_random(const TreeInterface& t, int b);
 
-  hmm_order get_nodes(const Tree& T,int b);
+  hmm_order get_nodes(const TreeInterface& t, int b);
 
   /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)
   log_double_t correction(const data_partition& P, const hmm_order& order);
