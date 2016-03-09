@@ -142,15 +142,13 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rh
 // check the HMM type for a DIRECTED branch without going off the end of the array
 int HMM_type_for_branch(const Parameters& P, int b)
 {
-  const Tree& T = P.T();
-  b = T.directed_branch(b).undirected_name();
-  return P.branch_HMM_type(b);
+  return P.branch_HMM_type(P.t().undirected(b));
 }
 
 void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T().directed_branch(b).is_leaf_branch()) return;
+  if (PP.t().is_leaf_branch(b)) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
@@ -164,16 +162,16 @@ void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
   vector<Parameters> p(2,PP);
 
-  int b1 = p[1].T().directed_branch(nodes[4],nodes[1]);
-  int b2 = p[1].T().directed_branch(nodes[5],nodes[2]);
+  int b1 = p[1].t().find_branch(nodes[4],nodes[1]);
+  int b2 = p[1].t().find_branch(nodes[5],nodes[2]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
   
-  if (not extends(p[1].T(), PP.PC->TC))
-    return;
+  //  if (not extends(p[1].T(), PP.PC->TC))
+  //    return;
 
-  double L = PP.T().directed_branch(b).length();
+  double L = PP.t().branch_length(b);
 
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
   //  double Pr1 = log(p[0].probability());
@@ -207,7 +205,7 @@ void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
     result.totals[1] = L;
   else
     result.counts[1] = 0;
-  result.totals[2] = std::abs(PP.T().directed_branch(b).length() - L);
+  result.totals[2] = std::abs(PP.t().branch_length(b) - L);
 
   //  if (C == 1) std::cerr<<"slice-diff = "<<Pr2 - Pr1<<"\n";
 
@@ -217,7 +215,7 @@ void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T().directed_branch(b).is_leaf_branch()) return;
+  if (PP.t().is_leaf_branch(b)) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
@@ -236,14 +234,14 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
   vector<Parameters> p(2,PP);
 
-  int b1 = p[1].T().directed_branch(nodes[4],nodes[1]);
-  int b2 = p[1].T().directed_branch(nodes[5],nodes[2]);
+  int b1 = p[1].t().find_branch(nodes[4],nodes[1]);
+  int b2 = p[1].t().find_branch(nodes[5],nodes[2]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
   
-  if (not extends(p[1].T(), PP.PC->TC))
-    return;
+  //  if (not extends(p[1].T(), PP.PC->TC))
+  //    return;
 
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
   //  double Pr1 = log(p[0].probability());
@@ -305,7 +303,7 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T().directed_branch(b).length();
+    result.totals[1] = p[0].t().branch_length(b);
   else
     result.counts[1] = 0;
 
@@ -318,7 +316,7 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T().directed_branch(b).is_leaf_branch()) return;
+  if (PP.t().is_leaf_branch(b)) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
@@ -330,14 +328,14 @@ void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
   vector<Parameters> p(2,PP);
 
-  int b1 = p[1].T().directed_branch(nodes[4],nodes[1]);
-  int b2 = p[1].T().directed_branch(nodes[5],nodes[2]);
+  int b1 = p[1].t().find_branch(nodes[4],nodes[1]);
+  int b2 = p[1].t().find_branch(nodes[5],nodes[2]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
   
-  if (not extends(p[1].T(), PP.PC->TC))
-    return;
+  //  if (not extends(p[1].T(), PP.PC->TC))
+  //    return;
 
   double LA = p[0].T().branch(nodes[4],nodes[0]).length();
   double LB = p[0].T().branch(nodes[4],nodes[5]).length();
@@ -362,7 +360,7 @@ void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T().directed_branch(b).length();
+    result.totals[1] = p[0].t().branch_length(b);
   else
     result.counts[1] = 0;
   NNI_inc(Stats,"NNI (2-way/SPR)", result, p[0].T(), b);
@@ -388,7 +386,7 @@ vector<int> NNI_branches(const Tree& T, int b)
 void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T().directed_branch(b).is_leaf_branch()) return;
+  if (PP.t().is_leaf_branch(b)) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
@@ -401,8 +399,8 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
   vector<Parameters> p(2,PP);
 
   //---------------- Do the NNI operation -------------------//
-  int b1 = p[1].T().directed_branch(nodes[4],nodes[1]);
-  int b2 = p[1].T().directed_branch(nodes[5],nodes[2]);
+  int b1 = p[1].t().find_branch(nodes[4],nodes[1]);
+  int b2 = p[1].t().find_branch(nodes[5],nodes[2]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
@@ -441,7 +439,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T().directed_branch(b).length();
+    result.totals[1] = p[0].t().branch_length(b);
   else
     result.counts[1] = 0;
 
@@ -451,7 +449,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
 void two_way_NNI_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T().directed_branch(b).is_leaf_branch()) return;
+  if (PP.t().is_leaf_branch(b)) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
@@ -491,7 +489,7 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<log_double_t>&
 void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T().directed_branch(b).is_leaf_branch()) return;
+  if (PP.t().is_leaf_branch(b)) return;
 
   if (PP.variable_alignment()) return;
 
@@ -506,9 +504,9 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
   
   vector<Parameters> p(3,PP);
 
-  int b1 = PP.T().directed_branch(nodes[4],nodes[1]);
-  int b2 = PP.T().directed_branch(nodes[5],nodes[2]);
-  int b3 = PP.T().directed_branch(nodes[5],nodes[3]);
+  int b1 = PP.t().find_branch(nodes[4],nodes[1]);
+  int b2 = PP.t().find_branch(nodes[5],nodes[2]);
+  int b3 = PP.t().find_branch(nodes[5],nodes[3]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
@@ -524,7 +522,7 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
 
   const vector<log_double_t> rho(3,1);
 
-  double L = PP.T().directed_branch(b).length();
+  double L = PP.t().branch_length(b);
 
 #ifndef NDEBUG
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
@@ -564,7 +562,7 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
     result.totals[1] = L;
   else
     result.counts[1] = 0;
-  result.totals[2] = std::abs(PP.T().directed_branch(b).length() - L);
+  result.totals[2] = std::abs(PP.t().branch_length(b) - L);
   result.totals[3] = logp1.count + logp2.count + logp3.count;
 
   //  if (C == 1) std::cerr<<"slice-diff3 = "<<Pr2 - Pr1<<"\n";
@@ -577,7 +575,7 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
 void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T().directed_branch(b).is_leaf_branch()) return;
+  if (PP.t().is_leaf_branch(b)) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1)
     return;
@@ -598,9 +596,9 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
   vector<Parameters> p(3,PP);
 
-  int b1 = PP.T().directed_branch(nodes[4],nodes[1]);
-  int b2 = PP.T().directed_branch(nodes[5],nodes[2]);
-  int b3 = PP.T().directed_branch(nodes[5],nodes[3]);
+  int b1 = PP.t().find_branch(nodes[4],nodes[1]);
+  int b2 = PP.t().find_branch(nodes[5],nodes[2]);
+  int b3 = PP.t().find_branch(nodes[5],nodes[3]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
@@ -628,7 +626,7 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T().directed_branch(b).length();
+    result.totals[1] = p[0].t().branch_length(b);
   else
     result.counts[1] = 0;
 
@@ -638,7 +636,7 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
-  if (PP.T().directed_branch(b).is_leaf_branch()) return;
+  if (PP.t().is_leaf_branch(b)) return;
 
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1)
     return;
@@ -650,9 +648,9 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
   // We ALWAYS resample the connection between two_way_nodes [0] and [4].
 
   vector<Parameters> p(3,PP);
-  int b1 = p[0].T().directed_branch(two_way_nodes[4],two_way_nodes[1]);
-  int b2 = p[0].T().directed_branch(two_way_nodes[5],two_way_nodes[2]);
-  int b3 = p[0].T().directed_branch(two_way_nodes[5],two_way_nodes[3]);
+  int b1 = p[0].t().find_branch(two_way_nodes[4],two_way_nodes[1]);
+  int b2 = p[0].t().find_branch(two_way_nodes[5],two_way_nodes[2]);
+  int b3 = p[0].t().find_branch(two_way_nodes[5],two_way_nodes[3]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].exchange_subtrees(b1, b2);
@@ -697,7 +695,7 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
-    result.totals[1] = p[0].T().directed_branch(b).length();
+    result.totals[1] = p[0].t().branch_length(b);
   else
     result.counts[1] = 0;
   
