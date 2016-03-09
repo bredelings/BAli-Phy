@@ -674,7 +674,7 @@ bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
   //----------- Generate the Different Matrices ---------//
   vector<Parameters> p(2,P);
 
-  int b = P.T().branch(node1,node2);
+  //  int b = P.T().branch(node1,node2);
   // need to make this into a parameters if we are sampling it
   //  p[1].branch_HMM_type[b] = 1 - p[1].branch_HMM_type[b];
 
