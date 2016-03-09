@@ -83,7 +83,7 @@ vector< Matrix > distributions_star(const data_partition& P,
 {
   const alignment& A = P.A();
   const alphabet& a = A.get_alphabet();
-  const SequenceTree& T = P.T();
+  const auto& t = P.t();
 
   //FIXME modify this to add a shift of 2
 
@@ -101,7 +101,7 @@ vector< Matrix > distributions_star(const data_partition& P,
       for(int s=0;s<n_states;s++)
 	dist[column](m,s) = 1.0;
 
-      for(int n=0;n<T.n_leaves();n++) {
+      for(int n=0;n<t.n_leaves();n++) {
 	if (not group[n]) continue;
 
 	int letter = A(seq[column],n);
@@ -140,21 +140,19 @@ vector< Matrix > distributions_star(const data_partition& P,
 /// Distributions function for a full tree
 vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int root,const dynamic_bitset<>& group)
 {
-  const Tree& T = P.T();
+  const auto& t = P.t();
 
   vector<int> branches;
-  vector<const_nodeview> neighbors;
-  append(T.node(root).neighbors(),neighbors);
-  for(int i=0;i<neighbors.size();i++)
-    if (group[neighbors[i]])
-      branches.push_back(T.directed_branch(neighbors[i],root));
+  for(int n: t.neighbors(root))
+    if (group[n])
+      branches.push_back(t.find_branch(n,root));
 
   vector<int> required;
   if (group[root])
     required.push_back(root);
   else {
-    for(int i=0;i<branches.size();i++)
-      required.push_back(T.directed_branch(branches[i]).source());
+    for(int b : branches)
+      required.push_back(t.source(b));
   }
 
   vector< Matrix > dist;
