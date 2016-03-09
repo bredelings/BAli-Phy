@@ -43,14 +43,14 @@ log_double_t other_prior(const data_partition& P,const vector<int>& nodes)
   if (not P.variable_alignment()) 
     return 1;
 
-  const SequenceTree& T = P.T();
+  const auto& t = P.t();
 
   log_double_t p = 1;
 
   // Add in the branch alignments
-  for(int b=0;b<T.n_branches();b++) {
-    int target = T.branch(b).target();
-    int source = T.branch(b).source();
+  for(int b=0;b<t.n_branches();b++) {
+    int target = t.target(b);
+    int source = t.source(b);
 
     if (includes(nodes,target) and includes(nodes,source))
       continue;
@@ -60,17 +60,12 @@ log_double_t other_prior(const data_partition& P,const vector<int>& nodes)
 
 
   // Add in the node length corrections
-  for(int n=0;n<T.n_nodes();n++) {
-    if (T.node(n).is_leaf_node())
+  for(int n=0;n<t.n_nodes();n++) {
+    if (t.is_leaf_node(n))
       continue;
 
     if (includes(nodes,n)) {
-      vector<const_nodeview> neighbors_NV;
-      append(T.node(n).neighbors(),neighbors_NV);
-      vector<int> neighbors(neighbors_NV.size());
-      for(int i=0;i<neighbors.size();i++)
-	neighbors[i] = neighbors_NV[i];
-      if (includes(nodes,neighbors))
+      if (includes(nodes, t.neighbors(n)))
 	continue;
     }
 
