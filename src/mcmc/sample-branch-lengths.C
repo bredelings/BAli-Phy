@@ -284,21 +284,19 @@ double slide_node_expand_branch(vector<double>& lengths,double sigma)
 }
 
 bool slide_node(owned_ptr<Model>& P,
-		const vector<const_branchview>& b,
+		const vector<int>& branches,
 		double (*slide)(vector<double>&,double)
 		) 
 {
+  const auto& t = P.as<Parameters>()->t();
+  
   // check that we've got three branches
-  assert(b.size() == 3);
-
-  // check that the last two are after the first one
-  assert(b[0].target() == b[1].source() and
-	 b[0].target() == b[2].source());
+  assert(branches.size() == 2);
 
   //---------------- Propose new lengths ---------------//
   vector<double> lengths(2);
-  lengths[0] = b[1].length();
-  lengths[1] = b[2].length();
+  lengths[0] = t.branch_length(branches[0]);
+  lengths[1] = t.branch_length(branches[1]);
 
   double sigma = P->load_value("slide_node_sigma",0.3);
   double ratio = slide(lengths,sigma);
@@ -306,8 +304,8 @@ bool slide_node(owned_ptr<Model>& P,
   //---------------- Propose new lengths ---------------//
   owned_ptr<Model> P2 = P;
 
-  P2.as<Parameters>()->setlength(b[1].undirected_name(), lengths[0]);
-  P2.as<Parameters>()->setlength(b[2].undirected_name(), lengths[1]);
+  P2.as<Parameters>()->setlength(branches[0], lengths[0]);
+  P2.as<Parameters>()->setlength(branches[1], lengths[1]);
     
   bool success = do_MH_move(P,P2,ratio);
 
@@ -315,33 +313,27 @@ bool slide_node(owned_ptr<Model>& P,
 }
 
 
-void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b0)
+void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
 {
   Parameters* PP = P.as<Parameters>();
-
-  vector<const_branchview> b;
-  b.push_back( PP->T().directed_branch(b0) );
-
+  const auto& t = PP->t();
+  
   // choose branches to alter
   if (uniform() < 0.5)
-    b[0] = b[0].reverse();
-  if (b[0].target().is_leaf_node())
-    b[0] = b[0].reverse();
-  append(b[0].branches_after(),b);
-  assert(b.size() == 3);
+    b = t.reverse(b);
+  if (t.is_leaf_node(t.target(b)))
+    b = t.reverse(b);
+  vector<int> branches = t.branches_after(b);
 
-  b0 = b[0].name();
-  int b1 = b[1].undirected_name();
-  int b2 = b[2].undirected_name();
-  double L1a = PP->t().branch_length(b1);
-  double L2a = PP->t().branch_length(b2);
+  double L1a = PP->t().branch_length(branches[0]);
+  double L2a = PP->t().branch_length(branches[1]);
 
-  PP->set_root(b[0].target());
+  PP->set_root(t.target(b));
 
   double p = P->load_value("branch_slice_fraction",0.9);
   if (uniform() < p)
   {
-    slide_node_slice_function logp(*PP,b0);
+    slide_node_slice_function logp(*PP,b);
     double w = (logp.x0 + logp.y0) * P->load_value("slide_branch_slice_window",0.3);
     double L1b = slice_sample(logp,w,100);
     
@@ -353,16 +345,16 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b0)
   else {
     bool success; string name;
     if (uniform() < 0.5) {
-      success = slide_node(P, b, slide_node_no_expand_branch);
+      success = slide_node(P, branches, slide_node_no_expand_branch);
       name = "slide_node";
     }
     else {
-      success = slide_node(P, b, slide_node_expand_branch);
+      success = slide_node(P, branches, slide_node_expand_branch);
       name = "slide_node_expand_branch";
     }
     PP = P.as<Parameters>();
-    double L1b = PP->t().branch_length(b1);
-    double L2b = PP->t().branch_length(b2);
+    double L1b = PP->t().branch_length(branches[0]);
+    double L2b = PP->t().branch_length(branches[1]);
 
     MCMC::Result result(2);
     result.totals[0] = success?1:0;
