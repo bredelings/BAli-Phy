@@ -324,6 +324,7 @@ public:
   int branch_out(int n, int i) const;
   int neighbor(int n, int i) const;
   std::vector<int> neighbors(int n) const;
+  std::vector<int> branches_out(int n) const;
   void append_branches_before(int b, std::vector<int>&) const;
   void append_branches_after(int b, std::vector<int>&) const;
   std::vector<int> branches_before(int b) const;

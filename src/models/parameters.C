@@ -881,6 +881,13 @@ vector<int> TreeInterface::neighbors(int n) const {
   return nodes;
 }
 
+vector<int> TreeInterface::branches_out(int n) const {
+  vector<int> branches(degree(n));
+  for(int i=0;i<branches.size();i++)
+    branches[i] = branch_out(n, i);
+  return branches;
+}
+
 int TreeInterface::reverse(int b) const
 {
   int B = n_branches();

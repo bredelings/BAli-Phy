@@ -21,6 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sample.H"
 #include "mcmc.H"
 #include "util.H"
+#include "util-random.H"
 #include "dp/5way.H"
 #include "substitution/substitution-cache.H"
 #include "substitution/substitution-index.H"
@@ -499,19 +500,15 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
   MCMC::Result result(2);
 
   const auto& t = PP->t();
-  const Tree& T = PP->T();
   if (not t.is_internal_node(n)) return;
 
   //-------------- Find branches ------------------//
-  vector<const_branchview> branches = randomized_branches_out(T.node(n));
-  int b1 = branches[0].undirected_name();
-  int b2 = branches[1].undirected_name();
-  int b3 = branches[2].undirected_name();
+  vector<int> branches = randomize(t.branches_out(n));
 
   //------------ Change coordinates ---------------//
-  double T1 = t.branch_length(b1);
-  double T2 = t.branch_length(b2);
-  double T3 = t.branch_length(b3);
+  double T1 = t.branch_length(branches[0]);
+  double T2 = t.branch_length(branches[1]);
+  double T3 = t.branch_length(branches[2]);
 
   double S12 = T1 + T2;
   double S23 = T2 + T3;
@@ -550,9 +547,9 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
   PP->set_root(n);
   
   owned_ptr<Model> P2 = P;
-  P2.as<Parameters>()->setlength(b1,T1_);
-  P2.as<Parameters>()->setlength(b2,T2_);
-  P2.as<Parameters>()->setlength(b3,T3_);
+  P2.as<Parameters>()->setlength(branches[0], T1_);
+  P2.as<Parameters>()->setlength(branches[1], T2_);
+  P2.as<Parameters>()->setlength(branches[2], T3_);
   
   //--------- Do the M-H step if OK--------------//
   if (do_MH_move(P,P2,ratio)) {
