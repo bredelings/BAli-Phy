@@ -116,15 +116,15 @@ namespace A5 {
 
   HMM get_HMM(const data_partition& P, const hmm_order& order)
   {
-    const Tree& T = P.T();
+    const auto& t = P.t();
 
     const auto& nodes = order.nodes;
 
-    int b1 = T.directed_branch(nodes[0],nodes[4]);
-    int b2 = T.directed_branch(nodes[4],nodes[1]);
-    int b3 = T.directed_branch(nodes[4],nodes[5]);
-    int b4 = T.directed_branch(nodes[5],nodes[2]);
-    int b5 = T.directed_branch(nodes[5],nodes[3]);
+    int b1 = t.find_branch(nodes[0],nodes[4]);
+    int b2 = t.find_branch(nodes[4],nodes[1]);
+    int b3 = t.find_branch(nodes[4],nodes[5]);
+    int b4 = t.find_branch(nodes[5],nodes[2]);
+    int b5 = t.find_branch(nodes[5],nodes[3]);
     
     HMM m1 = P.get_branch_HMM(b1);
     m1.remap_bits({0,4});
@@ -155,15 +155,15 @@ namespace A5 {
 
   vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const hmm_order& order)
   {
-    const Tree& T = P.T();
+    const auto& t = P.t();
 
     const auto& nodes = order.nodes;
 
-    int b1 = T.directed_branch(nodes[0],nodes[4]);
-    int b2 = T.directed_branch(nodes[4],nodes[1]);
-    int b3 = T.directed_branch(nodes[4],nodes[5]);
-    int b4 = T.directed_branch(nodes[5],nodes[2]);
-    int b5 = T.directed_branch(nodes[5],nodes[3]);
+    int b1 = t.find_branch(nodes[0],nodes[4]);
+    int b2 = t.find_branch(nodes[4],nodes[1]);
+    int b3 = t.find_branch(nodes[4],nodes[5]);
+    int b4 = t.find_branch(nodes[5],nodes[2]);
+    int b5 = t.find_branch(nodes[5],nodes[3]);
     
     vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,4);
     vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),4,1);
