@@ -381,10 +381,11 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
   std::cerr<<"choice = "<<C<<endl;
 
   // One mask for all p[i] assumes that only ignored nodes can be renamed
-  dynamic_bitset<> ignore1A = ~p[0].t().partition(nodes[0][0],nodes[0][1]);
-  dynamic_bitset<> ignore2A = ~(p[0].t().partition(nodes[0][0],nodes[0][2]) | p[0].T().partition(nodes[0][0],nodes[0][3]) );
-  dynamic_bitset<> ignore1(p[0].t().n_nodes()); 
-  dynamic_bitset<> ignore2(p[0].t().n_nodes()); 
+  const auto& t0 = p[0].t();
+  dynamic_bitset<> ignore1A = ~t0.partition(t0.find_branch(nodes[0][0],nodes[0][1]));
+  dynamic_bitset<> ignore2A = ~(t0.partition(t0.find_branch(nodes[0][0],nodes[0][2])) | t0.partition(t0.find_branch(nodes[0][0],nodes[0][3])) );
+  dynamic_bitset<> ignore1(t0.n_nodes()); 
+  dynamic_bitset<> ignore2(t0.n_nodes()); 
   for(int i=0;i<ignore1.size();i++) {
     ignore1[i] = ignore1A[i];
     ignore2[i] = ignore2A[i];
