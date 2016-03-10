@@ -17,10 +17,16 @@ int TreeInterface::n_branches() const {
 }
 
 int TreeInterface::degree(int n) const {
-  return P->TC->parameters_for_tree_node[n].size();
+  if (P->branches_from_affected_node[n])
+    return P->branches_from_affected_node[n]->size();
+  else
+    return P->TC->parameters_for_tree_node[n].size();
 }
 
 int TreeInterface::branch_out(int n, int i) const {
+  if (P->branches_from_affected_node[n])
+    return (*P->branches_from_affected_node[n])[i];
+  
   int p = P->TC->parameters_for_tree_node[n][i];
   if (p == -1)
     return n;

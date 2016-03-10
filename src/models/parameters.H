@@ -311,7 +311,7 @@ struct parameters_constants: public Object
 class Parameters: public Model
 {
   friend class data_partition;
-
+  friend class TreeInterface;
 public:
   object_ptr<parameters_constants> PC;
   object_ptr<tree_constants> TC;
@@ -329,8 +329,8 @@ private:
 
   object_ptr<TreeInterface> t_;
 
-
   std::vector<int> affected_nodes;
+  std::vector<std::vector<int>*> branches_from_affected_node;
 
 public:
 
@@ -364,6 +364,7 @@ public:
   void reconnect_branch(int s1, int t1, int t2, bool safe);
   void begin_modify_tree();
   void update_tree_node(int n);
+  void update_tree_node2(int n);
   void end_modify_tree();
   void set_tree(const SequenceTree& T);
   void exchange_subtrees(int b1, int b2);

@@ -909,7 +909,6 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 {
   uniquify_subA_indices();
 
-
   int b1 = T().directed_branch(s1,t1);
   int b2 = T().directed_branch(t1,s1);
 
@@ -921,8 +920,27 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   }
   
   T_.modify()->reconnect_branch(s1,t1,t2);
-  affected_nodes.push_back(t1);
-  affected_nodes.push_back(t2);
+
+  if (not branches_from_affected_node[t1])
+  {
+    affected_nodes.push_back(t1);
+    auto v = new vector<int>();
+    for(int i=0; i<t().degree(t1); i++)
+      v->push_back(t().branch_out(t1, i));
+    branches_from_affected_node[t1] = v;
+  }
+  remove_element(*branches_from_affected_node[t1], b2);
+
+  if (not branches_from_affected_node[t2])
+  {
+    affected_nodes.push_back(t2);
+    auto v = new vector<int>();
+    for(int i=0; i<t().degree(t2); i++)
+      v->push_back(t().branch_out(t2, i));
+    branches_from_affected_node[t2] = v;
+  }
+  branches_from_affected_node[t2]->push_back(b2);
+
   
   context::set_parameter_value(TC->parameters_for_tree_branch[b1].second, (int)T().directed_branch(b1).target());
   context::set_parameter_value(TC->parameters_for_tree_branch[b2].first,  (int)T().directed_branch(b2).source());
@@ -940,7 +958,11 @@ void Parameters::begin_modify_tree()
 {
   check_h_tree();
 
+#ifndef NDEBUG
+  for(auto p: branches_from_affected_node)
+    assert(not p);
   assert(affected_nodes.empty());
+#endif
 }
 
 /*
@@ -959,14 +981,35 @@ void Parameters::update_tree_node(int n)
     context::set_parameter_value(TC->parameters_for_tree_node[n][i], edges[i]);
 }
 
+void Parameters::update_tree_node2(int n)
+{
+  assert(branches_from_affected_node[n]);
+  assert(TC->parameters_for_tree_node[n].size() == branches_from_affected_node[n]->size());
+
+  // These are the current edges.
+  const auto& branches = *branches_from_affected_node[n];
+
+  for(int i=0;i<branches.size();i++)
+    context::set_parameter_value(TC->parameters_for_tree_node[n][i], branches[i]);
+
+  delete branches_from_affected_node[n];
+  branches_from_affected_node[n] = nullptr;
+}
+
 void Parameters::end_modify_tree()
 {
   for(int n: affected_nodes)
-    update_tree_node(n);
+    update_tree_node2(n);
   
   affected_nodes.clear();
 
   check_h_tree();
+  
+#ifndef NDEBUG
+  for(auto p: branches_from_affected_node)
+    assert(not p);
+  assert(affected_nodes.empty());
+#endif
 }
 
 // This could create loops it we don't check that the subtrees are disjoint.
@@ -1622,6 +1665,8 @@ Parameters::Parameters(const module_loader& L,
     int trigger = add_compute_expression( (identifier("trigger_on"),parameter(mu_name),i) );
     set_re_evaluate(trigger, true);
   }
+
+  branches_from_affected_node.resize(tt.n_nodes());
 
   TC = new tree_constants(this, tt);
   
