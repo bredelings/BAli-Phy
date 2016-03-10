@@ -904,8 +904,7 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T, const 
     set_row(b, convert_to_column_index_list(A.get_columns_for_characters(b)) );
   else {
     // get 2 branches leading into this one
-    vector<const_branchview> prev;
-    append(T.directed_branch(b).branches_before(),prev);
+    vector<int> prev = t.branches_before(b);
     assert(prev.size() == 2);
 
     // sort branches by rank
