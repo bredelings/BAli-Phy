@@ -1226,7 +1226,6 @@ namespace substitution {
 
     const alignment& A = P.A();
     const auto& t = P.t();
-    const Tree& T = P.T();
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = P.subA();
 
@@ -1293,8 +1292,7 @@ namespace substitution {
     for(int i=0;i<nodes.size();i++)
     {
       const int n = nodes[i];
-      vector<const_branchview> node_branches;
-      append(T.node(n).branches_out(), node_branches);
+      vector<int> node_branches = t.branches_out(n);
 
       if (node_branches.size() == 1) {
 	branch_list.push_back(node_branches[0]);
@@ -1306,7 +1304,7 @@ namespace substitution {
       int which = -1;
       for(int j=0;j<node_branches.size();j++)
       {
-	int target = node_branches[j].target();
+	int target = t.target(node_branches[j]);
 	if (includes(nodes, target))
 	{
 	  which = j;
@@ -1358,9 +1356,7 @@ namespace substitution {
     subA_index_t& I = P.subA();
 
     // compute root branches
-    vector<int> rb;
-    for(const_in_edges_iterator i = T.node(LC.root).branches_in();i;i++)
-      rb.push_back(*i);
+    vector<int> rb = t.branches_in(LC.root);
 
     vector<int> leaf_branch_list = get_leaf_branches_from_subtree_nodes(T,t,nodes);
 
@@ -1467,17 +1463,17 @@ namespace substitution {
   {
     assert(LC1.root == LC2.root);
     
-    vector<const_branchview> branches; branches.reserve(t.n_branches());
-    append(T.node(LC1.root).branches_in(),branches);
+    vector<int> branches = t.branches_in(LC1.root);
+    branches.reserve(t.n_branches());
 
     for(int i=0;i<branches.size();i++)
     {
-	const const_branchview& db = branches[i];
+      int  b = branches[i];
 
-	append(db.branches_before(),branches);
+      t.append_branches_before(b, branches);
 
-	if (LC1.up_to_date(db) and LC2.up_to_date(db))
-	  compare_caches(I1,I2,LC1,LC2,db);
+      if (LC1.up_to_date(b) and LC2.up_to_date(b))
+	compare_caches(I1,I2,LC1,LC2,b);
     }
 
   }
@@ -1573,9 +1569,7 @@ namespace substitution {
 #endif
 
     // compute root branches
-    vector<int> rb;
-    for(const_in_edges_iterator i = T.node(LC.root).branches_in();i;i++)
-      rb.push_back(*i);
+    vector<int> rb = t.branches_in(LC.root);
 
     // Combine the likelihoods from present nodes
     matrix<int> index_aligned   = I.get_subA_index_aligned(rb,A,t,true);
@@ -1662,10 +1656,7 @@ namespace substitution {
       rb.push_back(1);
     }
     else
-    {
-      for(const_in_edges_iterator i = T.node(LC.root).branches_in();i;i++)
-	rb.push_back(*i);
-    }
+      rb = t.branches_in(LC.root);
 
     // get the relationships with the sub-alignments
     matrix<int> index = I.get_subA_index(rb,A,t);
@@ -1802,10 +1793,8 @@ namespace substitution {
     {
       // compute root branches
       vector<int> rb;
-      for(const_in_edges_iterator i = T.node(root).branches_in();i;i++)
+      for(int b: t.branches_in(root))
       {
-	int b = *i;
-
 	calculate_caches_for_branch(b, sequences, A,I,MC,T,t,cache);
 	if (not I.branch_index_valid(b))
 	  I.update_branch(A,t,b);
