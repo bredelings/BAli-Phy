@@ -22,6 +22,7 @@ public:
 
   int degree(int n) const;
   int branch_out(int n, int i) const;
+  int branch_in(int n, int i) const;
   int neighbor(int n, int i) const;
   std::vector<int> neighbors(int n) const;
   std::vector<int> branches_out(int n) const;
@@ -33,6 +34,7 @@ public:
   std::vector<int> all_branches_before_inclusive(int b) const;
   std::vector<int> all_branches_after_inclusive(int b) const;
   std::vector<int> all_branches_from_node(int n) const;
+  std::vector<int> all_branches_toward_node(int n) const;
   int source(int b) const;
   int target(int b) const;
   int reverse(int b) const;

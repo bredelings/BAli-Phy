@@ -34,6 +34,10 @@ int TreeInterface::branch_out(int n, int i) const {
     return P->get_parameter_value(p).as_int();
 }
 
+int TreeInterface::branch_in(int n, int i) const {
+  return reverse(branch_out(n,i));
+}
+
 int TreeInterface::neighbor(int n, int i) const {
   return target(branch_out(n,i));
 }
@@ -148,6 +152,22 @@ vector<int> TreeInterface::all_branches_from_node(int n) const
 
   for(int i=0;i<branches.size();i++)
     append_branches_after(branches[i], branches);
+
+  return branches;
+}
+
+vector<int> TreeInterface::all_branches_toward_node(int n) const
+{
+  vector<int> branches;
+  branches.reserve( n_branches() );
+
+  for(int i=0;i<degree(n);i++)
+    branches.push_back(branch_in(n,i));
+
+  for(int i=0;i<branches.size();i++)
+    append_branches_before(branches[i], branches);
+
+  std::reverse(branches.begin(), branches.end());
 
   return branches;
 }

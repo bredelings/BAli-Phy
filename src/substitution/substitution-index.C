@@ -747,7 +747,7 @@ void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T, 
   vector<int> branch_names = iota<int>(t.n_branches()*2);
 
   if (I1.may_have_invalid_branches())
-    branch_names = directed_names(branches_toward_node(T,root));
+    branch_names = t.all_branches_toward_node(root);
 
   // compare against calculation from scratch
   owned_ptr<subA_index_t> I2 = I1;
