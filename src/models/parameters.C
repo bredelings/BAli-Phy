@@ -301,8 +301,8 @@ void data_partition::variable_alignment(bool b)
     // reset the pairwise alignments.
     for(int b=0;b<t().n_branches();b++)
     {
-      int n1 = T().directed_branch(b).source();
-      int n2 = T().directed_branch(b).target();
+      int n1 = t().source(b);
+      int n2 = t().target(b);
       set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2));
     }
 
@@ -500,8 +500,8 @@ void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& 
   if (require_match_A)
   {
 #ifndef NDEBUG
-    int n1 = T().directed_branch(b).source();
-    int n2 = T().directed_branch(b).target();
+    int n1 = t().source(b);
+    int n2 = t().target(b);
     assert(get_pairwise_alignment(b,false) == A2::get_pairwise_alignment(A(),n1,n2));
     assert(get_pairwise_alignment(B,false) == A2::get_pairwise_alignment(A(),n2,n1));
 #endif
@@ -525,8 +525,8 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b, bool r
   {
 #ifndef NDEBUG
     int B = T().directed_branch(b).reverse();
-    int n1 = T().directed_branch(b).source();
-    int n2 = T().directed_branch(b).target();
+    int n1 = t().source(b);
+    int n2 = t().target(b);
     assert(get_pairwise_alignment(b,false) == A2::get_pairwise_alignment(A(),n1,n2));
     assert(get_pairwise_alignment(B,false) == A2::get_pairwise_alignment(A(),n2,n1));
 #endif
@@ -543,8 +543,8 @@ void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& p
 
 void data_partition::recompute_pairwise_alignment(int b, bool require_match_A)
 {
-  int n1 = T().directed_branch(b).source();
-  int n2 = T().directed_branch(b).target();
+  int n1 = t().source(b);
+  int n2 = t().target(b);
   set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2), require_match_A);
 }
 
@@ -669,8 +669,8 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
 
     for(int b=0;b<t().n_branches();b++)
     {
-      int n1 = T().directed_branch(b).source();
-      int n2 = T().directed_branch(b).target();
+      int n1 = t().source(b);
+      int n2 = t().target(b);
       set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2));
     }
   }
