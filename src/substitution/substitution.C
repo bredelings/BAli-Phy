@@ -1048,17 +1048,18 @@ namespace substitution {
 
 
   /// Compute an ordered list of branches to process
-  inline peeling_info get_branches(const Tree& T, const Likelihood_Cache& LC, vector<const_branchview> branches) 
+  inline peeling_info get_branches(const Tree& T, const Likelihood_Cache& LC, vector<int> branches) 
   {
     //------- Get ordered list of not up_to_date branches ----------///
     peeling_info peeling_operations(T);
 
     for(int i=0;i<branches.size();i++) 
     {
-      const_branchview db = branches[i];
-      if (not LC.up_to_date(db)) {
-	append(db.branches_before(),branches);
-	peeling_operations.push_back(db);
+      int b = branches[i];
+      if (not LC.up_to_date(b)) {
+	for(auto i = T.directed_branch(b).branches_before();i;i++)
+	  branches.push_back((*i).name());
+	peeling_operations.push_back(b);
       }
     }
 
@@ -1070,7 +1071,8 @@ namespace substitution {
   /// Compute an ordered list of branches to process to validate branch b
   inline peeling_info get_branches_for_branch(int b, const Tree& T, const Likelihood_Cache& LC) 
   {
-    vector<const_branchview> branches(1,T.directed_branch(b)); branches.reserve(T.n_branches());
+    vector<int> branches(1,b);
+    branches.reserve(T.n_branches());
 
     return get_branches(T,LC,branches);
   }
@@ -1078,8 +1080,10 @@ namespace substitution {
   /// Compute an ordered list of branches to process
   inline peeling_info get_branches_for_node(int n, const Tree& T, const Likelihood_Cache& LC) 
   {
-    vector<const_branchview> branches; branches.reserve(T.n_branches());
-    append(T.node(n).branches_in(),branches);
+    vector<int> branches;
+    branches.reserve(T.n_branches());
+    for(auto i = T.node(n).branches_in();i;i++)
+      branches.push_back((*i).name());
 
     return get_branches(T, LC, branches);
   }
