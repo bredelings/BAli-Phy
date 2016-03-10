@@ -666,13 +666,13 @@ void subA_index_t::update_branch(const alignment& A,const Tree& T, const TreeInt
 
   // get ordered list of branches to process before this one
   // \todo: FIXME: allocating the memory here takes 1.33% of CPU time.
-  vector<const_branchview> branches; branches.reserve(t.n_branches());
-  branches.push_back(T.directed_branch(b));
+  vector<int> branches; branches.reserve(t.n_branches());
+  branches.push_back(b);
   
   for(int i=0;i<branches.size();i++) {
-    const const_branchview& db = branches[i];
-    if (not branch_index_valid(db))
-      append(db.branches_before(),branches);
+    int b = branches[i];
+    if (not branch_index_valid(b))
+      t.append_branches_before(b,branches);
   }
   
   std::reverse(branches.begin(),branches.end());
@@ -733,7 +733,7 @@ void check_consistent(const subA_index_t& I1, const subA_index_t& I2)
 
 void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T, const TreeInterface& t) 
 {
-  vector<int> branch_names = iota<int>(T.n_branches()*2);
+  vector<int> branch_names = iota<int>(t.n_branches()*2);
 
   // compare against calculation from scratch
   owned_ptr<subA_index_t> I2 = I1;
@@ -744,7 +744,7 @@ void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T, 
 
 void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T, const TreeInterface& t,int root) 
 {
-  vector<int> branch_names = iota<int>(T.n_branches()*2);
+  vector<int> branch_names = iota<int>(t.n_branches()*2);
 
   if (I1.may_have_invalid_branches())
     branch_names = directed_names(branches_toward_node(T,root));
@@ -768,7 +768,7 @@ void subA_index_t::check_footprint(const alignment& A,const Tree& T, const TreeI
   if (may_have_invalid_branches())
     return;
 
-  for(int b=0;b<T.n_branches()*2;b++)
+  for(int b=0;b<t.n_branches()*2;b++)
     check_footprint_for_branch(A,T,t,b);
 }
 
@@ -777,7 +777,7 @@ vector<int> subA_index_t::characters_to_indices(int branch, const alignment& A, 
   // Make sure the index for this branch is up to date before we start using it.
   update_branch(A,T,t,branch);
 
-  int node = T.directed_branch(branch).source();
+  int node = t.source(branch);
 
   vector<int> suba_for_character(A.seqlength(node), -1);
 
@@ -900,7 +900,7 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T, const 
   assert(not branch_index_valid(b));
 
   // notes for leaf sequences
-  if (b < T.n_leaves()) 
+  if (b < t.n_leaves()) 
     set_row(b, convert_to_column_index_list(A.get_columns_for_characters(b)) );
   else {
     // get 2 branches leading into this one
