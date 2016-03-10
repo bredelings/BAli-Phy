@@ -214,7 +214,7 @@ namespace substitution {
   };
 
   log_double_t calc_root_probability(const alignment&, const TreeInterface& t,Likelihood_Cache& cache,
-				 const Mat_Cache& MC,const vector<int>& rb,const matrix<int>& index) 
+				     const Mat_Cache& MC,const vector<int>& rb,const matrix<int>& index) 
   {
     total_calc_root_prob++;
 

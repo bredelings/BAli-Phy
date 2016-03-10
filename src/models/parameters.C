@@ -320,7 +320,7 @@ bool data_partition::has_IModel() const
 
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
-  b = T().directed_branch(b).undirected_name();
+  b = t().undirected(b);
   assert(b >= 0 and b < t().n_branches());
 
   return P->evaluate( transition_p_method_indices[b] ).as_<Vector<Matrix>>();
@@ -357,7 +357,7 @@ vector<double> data_partition::frequencies(int m) const
 
 expression_ref data_partition::base_model(int m, int b) const
 {
-  b = T().directed_branch(b).undirected_name();
+  b = t().undirected(b);
 
   return P->evaluate( base_model_indices(m,b) );
 }
@@ -366,7 +366,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 {
   assert(variable_alignment());
 
-  b = T().directed_branch(b).undirected_name();
+  b = t().undirected(b);
 
   return P->evaluate( branch_HMM_indices[b] ).as_<indel::PairHMM>();
 }
@@ -442,7 +442,7 @@ void data_partition::invalidate_subA_index_one_branch(int b)
 {
   uniquify_subA_index();
 
-  int b2 = T().directed_branch(b).reverse();
+  int b2 = t().reverse(b);
   subA().invalidate_one_branch(b);
   subA().invalidate_one_branch(b2);
 }
@@ -479,7 +479,7 @@ void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& 
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: how can the alignment change?";
 
-  int B = T().directed_branch(b).reverse();
+  int B = t().reverse(b);
 
 #ifndef NDEBUG
   if (pairwise_alignment_for_branch_is_valid(b))
@@ -524,7 +524,7 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b, bool r
   if (require_match_A)
   {
 #ifndef NDEBUG
-    int B = T().directed_branch(b).reverse();
+    int B = t().reverse(b);
     int n1 = t().source(b);
     int n2 = t().target(b);
     assert(get_pairwise_alignment(b,false) == A2::get_pairwise_alignment(A(),n1,n2));
@@ -559,9 +559,9 @@ void data_partition::note_alignment_changed_on_branch(int b)
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: how can the alignment change?";
 
-  b = T().directed_branch(b).undirected_name();
+  b = t().undirected(b);
 
-  int B = T().directed_branch(b).reverse();
+  int B = t().reverse(b);
   invalidate_pairwise_alignment_for_branch(b);
   invalidate_pairwise_alignment_for_branch(B);
 
@@ -909,8 +909,8 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 {
   uniquify_subA_indices();
 
-  int b1 = T().directed_branch(s1,t1);
-  int b2 = T().directed_branch(t1,s1);
+  int b1 = t().find_branch(s1,t1);
+  int b2 = t().reverse(b1);
 
   if (safe)
   {
@@ -941,9 +941,8 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   }
   branches_from_affected_node[t2]->push_back(b2);
 
-  
-  context::set_parameter_value(TC->parameters_for_tree_branch[b1].second, (int)T().directed_branch(b1).target());
-  context::set_parameter_value(TC->parameters_for_tree_branch[b2].first,  (int)T().directed_branch(b2).source());
+  context::set_parameter_value(TC->parameters_for_tree_branch[b1].second, t2);
+  context::set_parameter_value(TC->parameters_for_tree_branch[b2].first,  t2);
 
   if (safe)
   {
@@ -1516,7 +1515,7 @@ void Parameters::variable_alignment(bool b)
 void Parameters::setlength_no_invalidate_LC(int b,double l) 
 {
   // this is setlength_unsafe( ) .. but computes the undirected name.
-  b = T().directed_branch(b).undirected_name();
+  b = t().undirected(b);
   T_.modify()->directed_branch(b).set_length(l);
 
   context::set_parameter_value(TC->branch_length_parameters[b], l);
@@ -1533,7 +1532,7 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
 
 void Parameters::setlength_unsafe(int b,double l) 
 {
-  b = T().directed_branch(b).undirected_name();
+  b = t().undirected(b);
   T_.modify()->directed_branch(b).set_length(l);
 
   context::set_parameter_value(TC->branch_length_parameters[b], l);
@@ -1541,7 +1540,7 @@ void Parameters::setlength_unsafe(int b,double l)
 
 void Parameters::setlength(int b,double l) 
 {
-  b = T().directed_branch(b).undirected_name();
+  b = t().undirected(b);
   T_.modify()->directed_branch(b).set_length(l);
 
   context::set_parameter_value(TC->branch_length_parameters[b], l);
