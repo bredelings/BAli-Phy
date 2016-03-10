@@ -1453,7 +1453,7 @@ void Parameters::recalc()
       for(int b=0;b<t().n_branches();b++)
       {
 	double rate = get_parameter_value(branch_mean_index(s)).as_double();;
-	double delta_t = T().branch(b).length();
+	double delta_t = t().branch_length(b);
 
 	context::set_parameter_value(PC->branch_length_indices[s][b], rate*delta_t);
       }
@@ -1520,7 +1520,7 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
   for(int s=0; s<n_scales(); s++) 
   {
     double rate = get_parameter_value(branch_mean_index(s)).as_double();
-    double delta_t = T().branch(b).length();
+    double delta_t = t().branch_length(b);
     
     context::set_parameter_value(PC->branch_length_indices[s][b], rate * delta_t);
   }
@@ -1545,7 +1545,7 @@ void Parameters::setlength(int b,double l)
   for(int s=0; s<n_scales(); s++) 
   {
     double rate = get_parameter_value(branch_mean_index(s)).as_double();
-    double delta_t = T().branch(b).length();
+    double delta_t = t().branch_length(b);
     
     context::set_parameter_value(PC->branch_length_indices[s][b], rate * delta_t);
   }
@@ -1732,7 +1732,7 @@ Parameters::Parameters(const module_loader& L,
     for(int b=0;b<t().n_branches();b++)
     {
       double rate = get_parameter_value(branch_mean_index(s)).as_double();
-      double delta_t = T().branch(b).length();
+      double delta_t = t().branch_length(b);
 
       string name = "d" + convertToString(b+1);
       int index = add_parameter(prefix+"."+name, rate * delta_t);
