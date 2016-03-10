@@ -63,4 +63,6 @@ public:
   TreeInterface(const Parameters*);
 };
 
+std::vector<int> branches_from_leaves(const TreeInterface& t);
+
 #endif

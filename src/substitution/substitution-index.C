@@ -698,10 +698,10 @@ void subA_index_t::recompute_all_branches(const alignment& A,const Tree& T, cons
 {
   invalidate_all_branches();
 
-  vector<const_branchview> branches = branches_from_leaves(T);
+  vector<int> branches = branches_from_leaves(t);
 
   for(int i=0;i<branches.size();i++) 
-    update_one_branch(A,T, t,branches[i]);
+    update_one_branch(A,T, t, branches[i]);
 }
 
 bool subA_index_t::may_have_invalid_branches() const

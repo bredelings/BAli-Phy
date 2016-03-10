@@ -259,3 +259,45 @@ TreeInterface::TreeInterface(const Parameters* p)
       _n_leaves++;
 }
 
+vector<int> branches_from_leaves(const TreeInterface& t) 
+{
+  vector<int> branch_list;
+  branch_list.reserve(2*t.n_branches());
+  vector<bool> visited(2*t.n_branches(),false);
+
+  for(int i=0;i<t.n_leaves();i++) {
+    branch_list.push_back(i);
+    visited[i] = true;
+  }
+
+  for(int i=0;i<branch_list.size();i++) 
+  {
+    int b = branch_list[i];
+    int rb = t.reverse(b);
+
+    // because we are on the list, we are 'visited'
+    assert(visited[b]);
+
+    // check branches-after to see if any are ready
+    for(int b2: t.branches_after(b))
+    {
+      // if we are already valid, then ignore
+      if (visited[b2]) continue;
+
+      // check if all branches-before are valid
+      bool ready = true;
+      for(int k: t.branches_before(b2))
+	if (not visited[k]) ready = false;
+
+      // if so, then 
+      if (ready) {
+	branch_list.push_back(b2);
+	visited[b2] = true;
+      }
+    }
+  }
+  assert(branch_list.size() == 2*t.n_branches());
+
+  return branch_list;
+}
+
