@@ -1015,17 +1015,17 @@ void Parameters::end_modify_tree()
 // br{1,2} point out of the subtrees.  b{1,2} point into the subtrees, towards the other subtree.
 void Parameters::exchange_subtrees(int br1, int br2)
 {
-  const_branchview b1 = T().directed_branch(br1).reverse();
-  const_branchview b2 = T().directed_branch(br2).reverse();
+  int b1 = t().reverse(br1);
+  int b2 = t().reverse(br2);
 
-  int s1 = b1.source();
-  int t1 = b1.target();
+  int s1 = t().source(b1);
+  int t1 = t().target(b1);
 
-  int s2 = b2.source();
-  int t2 = b2.target();
+  int s2 = t().source(b2);
+  int t2 = t().target(b2);
 
-  assert(not T().subtree_contains(br1,s2));
-  assert(not T().subtree_contains(br2,s1));
+  //  assert(not T().subtree_contains(br1,s2));
+  //  assert(not T().subtree_contains(br2,s1));
 
   begin_modify_tree();
   reconnect_branch(s1,t1,t2,true);
@@ -1064,19 +1064,16 @@ void minimally_connect(vector<HMM::bitmask_t>& a123456)
 }
 
 // br1/b1 and br2/b2 point outwards, away from the other subtrees.
-void Parameters::NNI(int br1, int br2)
+void Parameters::NNI(int b1, int b2)
 {
-  const_branchview b1 = T().directed_branch(br1);
-  const_branchview b2 = T().directed_branch(br2);
+  int s1 = t().source(b1);
+  int t1 = t().target(b1);
 
-  int s1 = b1.source();
-  int t1 = b1.target();
+  int s2 = t().source(b2);
+  int t2 = t().target(b2);
 
-  int s2 = b2.source();
-  int t2 = b2.target();
-
-  assert(T().is_connected(s1,s2));
-  int b45 = T().directed_branch(s1,s2);
+  assert(t().is_connected(s1,s2));
+  int b45 = t().find_branch(s1,s2);
 
   // 1. Get alignments of sequences 123456
   auto order = A5::get_nodes(t(),b45);
@@ -1098,7 +1095,7 @@ void Parameters::NNI(int br1, int br2)
       a123456[i] = A5::get_bitpath((*this)[i], order);
 
   // 3. Perform NNI
-  exchange_subtrees(br1, br2);  // alter tree
+  exchange_subtrees(b1, b2);  // alter tree
   std::swap(nodes[0],nodes[2]); // alter nodes
   for(int i=0;i<n_data_partitions();i++)
     if (get_data_partition(i).variable_alignment())
@@ -1121,11 +1118,11 @@ void Parameters::NNI(int br1, int br2)
   for(int i=0;i<n_data_partitions();i++)
     if (get_data_partition(i).variable_alignment())
     {
-      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 0, 4), false);
-      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 1, 4), false);
-      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 2, 5), false);
-      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 3, 5), false);
-      get_data_partition(i).set_pairwise_alignment(T().directed_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 4, 5), false);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 0, 4), false);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 1, 4), false);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 2, 5), false);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 3, 5), false);
+      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 4, 5), false);
     }
 }
 
@@ -1188,21 +1185,21 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
   int dead_branch = T().directed_branch(m2,x1).undirected_name();
 
   if (safe)
-    setlength( T().directed_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
+    setlength( t().find_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
   else
   {
-    setlength_no_invalidate_LC( T().directed_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
-    LC_invalidate_one_branch(T().directed_branch(m1,x1) );
-    LC_invalidate_one_branch(T().directed_branch(x1,m1) );
+    setlength_no_invalidate_LC( t().find_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
+    LC_invalidate_one_branch(t().find_branch(m1,x1) );
+    LC_invalidate_one_branch(t().find_branch(x1,m1) );
   }
 
   if (safe)
-    setlength( T().directed_branch(m2,x1), 0.0);
+    setlength( t().find_branch(m2,x1), 0.0);
   else
   {
-    setlength_no_invalidate_LC( T().directed_branch(m2,x1), 0.0);
-    LC_invalidate_one_branch(T().directed_branch(m2,x1) );
-    LC_invalidate_one_branch(T().directed_branch(x1,m2) );
+    setlength_no_invalidate_LC( t().find_branch(m2,x1), 0.0);
+    LC_invalidate_one_branch(t().find_branch(m2,x1) );
+    LC_invalidate_one_branch(t().find_branch(x1,m2) );
   }
 
   //------------ Reconnect the branches ---------------//
