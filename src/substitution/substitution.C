@@ -225,9 +225,9 @@ namespace substitution {
 
     const int root = cache.root;
 
-    assert(T.directed_branch(rb[0]).target().name() == root);
+    assert(t.target(rb[0]) == root);
 
-    if (T.node(root).is_leaf_node())
+    if (t.is_leaf_node(root))
       throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
     assert(rb.size() == 3);
 
@@ -322,7 +322,7 @@ namespace substitution {
 
     const int root = cache.root;
 
-    assert(T.directed_branch(rb[0]).target().name() == root);
+    assert(t.target(rb[0]) == root);
 
     assert(rb.size() == 2);
 
@@ -410,11 +410,11 @@ namespace substitution {
     for(int i=0;i<rb.size();i++)
       assert(cache.up_to_date(rb[i]));
 
-    if (T.node(cache.root).is_leaf_node())
+    if (t.is_leaf_node(cache.root))
       throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
     assert(rb.size() == 3);
 
-    assert(T.directed_branch(rb[0]).target().name() == cache.root);
+    assert(t.target(rb[0]) == cache.root);
 
     const int n_models = cache.n_models();
     const int n_states = cache.n_states();
@@ -599,7 +599,7 @@ namespace substitution {
       SubModels[m] = MC.base_model(m,b0).assert_is_a<F81_Object>();
       assert(SubModels[m]);
     }
-    const double L = T.directed_branch(b0).length();
+    const double L = t.branch_length(b0);
 
     valarray<double> exp_a_t(n_models);
     for(int m=0;m<n_models;m++) 
@@ -768,20 +768,18 @@ namespace substitution {
 					 const Mat_Cache& MC)
   {
     // This only makes sense if we have presence/absence information to sequences at internal nodes
-    assert(A.n_sequences() == T.n_nodes());
+    assert(A.n_sequences() == t.n_nodes());
 
     // There are no branches behind a leaf branch
-    if (T.directed_branch(b0).source().is_leaf_node()) return 1;
+    if (t.is_leaf_node(t.source(b0))) return 1;
 
     // find the names of the (two) branches behind b0
-    vector<int> b;
-    for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
-      b.push_back(*i);
+    vector<int> b = t.branches_before(b0);
 
     if (I.kind() == subA_index_t::leaf_index)
     {
       // Get an alignment of subA indices on branches b[0] and b[1] where b0.source is not present
-      int node = T.directed_branch(b0).source();
+      int node = t.source(b0);
 
       matrix<int> index_vanishing = I.get_subA_index_none(b,A,t, vector<int>(1,node));
 
@@ -868,9 +866,7 @@ namespace substitution {
     total_peel_internal_branches++;
 
     // find the names of the (two) branches behind b0
-    vector<int> b;
-    for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
-      b.push_back(*i);
+    vector<int> b = t.branches_before(b0);
     b.push_back(b0);
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
@@ -901,9 +897,7 @@ namespace substitution {
     total_peel_internal_branches++;
 
     // find the names of the (two) branches behind b0
-    vector<int> b;
-    for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
-      b.push_back(*i);
+    vector<int> b = t.branches_before(b0);
     b.push_back(b0);
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
@@ -936,7 +930,7 @@ namespace substitution {
       SubModels[m] = MC.base_model(m,b0).assert_is_a<F81_Object>();
       assert(SubModels[m]);
     }
-    const double L = T.directed_branch(b0).length();
+    const double L = t.branch_length(b0);
 
     valarray<double> exp_a_t(n_models);
     for(int m=0;m<n_models;m++) 
@@ -1007,11 +1001,11 @@ namespace substitution {
     total_peel_branches++;
 
     // compute branches-in
-    int bb = T.directed_branch(b0).branches_before().size();
+    int bb = t.branches_before(b0).size();
 
-    int B0 = T.directed_branch(b0).undirected_name();
+    int B0 = t.undirected(b0);
 
-    if (T.n_nodes() == 2 and b0 == 1)
+    if (t.n_nodes() == 2 and b0 == 1)
     {
       assert(bb == 0);
       if (not I.branch_index_valid(b0))
@@ -1099,7 +1093,7 @@ namespace substitution {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches_for_node(n, t, cache);
 
-    if (T.n_nodes() == 2)
+    if (t.n_nodes() == 2)
     {
       assert(n == 1);
       ops.push_back(1);
@@ -1237,15 +1231,15 @@ namespace substitution {
     subA_index_t& I = P.subA();
 
 #ifdef DEBUG_INDEXING
-    I.check_footprint(A, T);
-    check_regenerate(I, A, T);
+    I.check_footprint(A, t);
+    check_regenerate(I, A, t);
 #endif
 
     //------ Check that all branches point to a 'root' node -----------//
     assert(b.size());
-    int root = T.directed_branch(b[0]).target();
+    int root = t.target(b[0]);
     for(int i=1;i<b.size();i++)
-      assert(T.directed_branch(b[i]).target() == root);
+      assert(t.target(b[i]) == root);
     LC.root = root;
 
     // select columns with at least one node in 'required_nodes', and re-order them according to the permutation 'ordered_columns'
@@ -1339,8 +1333,8 @@ namespace substitution {
     if (LC.up_to_date(b0) and I.kind() == subA_index_t::internal_index)
       return LC[b0].other_subst;
 
-    for(const_in_edges_iterator j = T.directed_branch(b0).branches_before();j;j++)
-      calculate_caches_for_branch(*j, sequences, A, I, MC, T, t, LC);
+    for(int j: t.branches_before(b0))
+      calculate_caches_for_branch(j, sequences, A, I, MC, T, t, LC);
 
     return get_other_subst_behind_branch(b0, A, T, t, I, LC, MC);
   }
@@ -1473,7 +1467,7 @@ namespace substitution {
   {
     assert(LC1.root == LC2.root);
     
-    vector<const_branchview> branches; branches.reserve(T.n_branches());
+    vector<const_branchview> branches; branches.reserve(t.n_branches());
     append(T.node(LC1.root).branches_in(),branches);
 
     for(int i=0;i<branches.size();i++)
@@ -1568,8 +1562,8 @@ namespace substitution {
     total_likelihood++;
 
 #ifdef DEBUG_INDEXING
-    I.check_footprint(A, T);
-    check_regenerate(I, A, T, t, LC.root);
+    I.check_footprint(A, t);
+    check_regenerate(I, A, t, LC.root);
 #endif
 
     IF_DEBUG_S(int n_br = ) calculate_caches_for_node(LC.root, sequences,A,I,MC,T,t,LC);
@@ -1650,8 +1644,8 @@ namespace substitution {
 #endif
 
 #ifdef DEBUG_INDEXING
-    I.check_footprint(A, T);
-    check_regenerate(I, A, T, t, LC.root);
+    I.check_footprint(A, t);
+    check_regenerate(I, A, t, LC.root);
 #endif
 
     IF_DEBUG_S(int n_br =) calculate_caches_for_node(LC.root, sequences, A,I,MC,T,t,LC);
@@ -1661,7 +1655,7 @@ namespace substitution {
 
     // compute root branches
     vector<int> rb;
-    if (T.n_nodes() == 2)
+    if (t.n_nodes() == 2)
     {
       // This is the 
       rb.push_back(0);
@@ -1678,7 +1672,7 @@ namespace substitution {
 
     // get the probability
     log_double_t Pr = 1;
-    if (T.n_nodes() == 2)
+    if (t.n_nodes() == 2)
       Pr = calc_root_probability2(A,T,t,LC,MC,rb,index);
     else
       Pr = calc_root_probability(A,T,t,LC,MC,rb,index);
@@ -1777,8 +1771,8 @@ namespace substitution {
 		       const Tree& T, const TreeInterface& t, Likelihood_Cache& cache)
   {
 #ifdef DEBUG_INDEXING
-    I.check_footprint(A, T);
-    check_regenerate(I, A, T, t, cache.root);
+    I.check_footprint(A, t);
+    check_regenerate(I, A, t, cache.root);
 #endif
 
     const vector<unsigned>& smap = MC.state_letters();
@@ -1794,12 +1788,12 @@ namespace substitution {
     Matrix F(n_models, n_states);
     MC.WeightedFrequencyMatrix(F);
 
-    bool has_internal_nodes = (A.n_sequences() == T.n_nodes());
-    if (not has_internal_nodes) assert(A.n_sequences() == T.n_leaves());
+    bool has_internal_nodes = (A.n_sequences() == t.n_nodes());
+    if (not has_internal_nodes) assert(A.n_sequences() == t.n_leaves());
 
     // 1. Allocate arrays for storing results and temporary results.
     vector<vector<pair<int,int> > > ancestral_characters (A.n_sequences());
-    vector<vector<pair<int,int> > > subA_index_parent_characters (T.n_branches()*2);
+    vector<vector<pair<int,int> > > subA_index_parent_characters (t.n_branches()*2);
     
     // All the (-1,-1)'s should be overwritten with the sampled character.
     for(int i=0;i<A.n_sequences();i++)
@@ -1888,7 +1882,7 @@ namespace substitution {
       assert(local_branches.size() == 3 or local_branches.size() == 1);
 
       vector<int> nodes;
-      if (T.node(node).is_leaf_node() or has_internal_nodes)
+      if (t.is_leaf_node(node) or has_internal_nodes)
 	nodes = {node};
 
       // FIXME - but what if node is internal and A doesn't have internal sequences?
@@ -1961,7 +1955,7 @@ namespace substitution {
 	
 	pair<int,int> state_model = sample(S);
 	
-	if (T.node(node).is_leaf_node() or (has_internal_nodes))
+	if (t.is_leaf_node(node) or (has_internal_nodes))
 	{
 	  int ii = index(i,index.size2()-1);
 	  if (ii != -1)
@@ -1989,8 +1983,8 @@ namespace substitution {
 				      const Tree& T, const TreeInterface& t, Likelihood_Cache& cache)
   {
 #ifdef DEBUG_INDEXING
-    I.check_footprint(A, T);
-    check_regenerate(I, A, T, t, cache.root);
+    I.check_footprint(A, t);
+    check_regenerate(I, A, t, cache.root);
 #endif
 
     // Make sure that all conditional likelihoods have been calculated.
