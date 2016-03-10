@@ -435,7 +435,7 @@ void data_partition::invalidate_subA_index_branch(int b)
   uniquify_subA_index();
 
   // propagates outward in both directions
-  subA().invalidate_branch(T(),t(),b);
+  subA().invalidate_branch(t(),b);
 }
 
 void data_partition::invalidate_subA_index_one_branch(int b)
@@ -460,16 +460,16 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
 
 #ifndef NDEBUG
   if (not subA().may_have_invalid_branches())
-    check_regenerate(subA(), A(), T(), t());
-  subA().check_footprint(A(), T(), t());
+    check_regenerate(subA(), A(), t());
+  subA().check_footprint(A(), t());
 #endif
 
   subA().allow_invalid_branches(b);
 
 #ifndef NDEBUG
   if (not subA().may_have_invalid_branches())
-    check_regenerate(subA(), A(), T(), t());
-  subA().check_footprint(A(), T(),  t());
+    check_regenerate(subA(), A(), t());
+  subA().check_footprint(A(), t());
 #endif
 }
 
