@@ -337,41 +337,38 @@ struct Construct
   matrix<int> M;
   int write_insertions(int n0);
   void write_match(int n0);
-  Construct(const vector<pairwise_alignment_t>& a, const Tree& T)
-    :A(T.n_nodes()),
-     pos(T.n_nodes(),1),
-     L(T.n_nodes(),0),
-     children(T.n_nodes())
+  Construct(const vector<pairwise_alignment_t>& a, const TreeInterface& t)
+    :A(t.n_nodes()),
+     pos(t.n_nodes(),1),
+     L(t.n_nodes(),0),
+     children(t.n_nodes())
   { 
     using namespace A2;
 
     // 1. Record child branches for each branch
-    vector<const_branchview> branches = branches_from_node(T, 0);
+    vector<int> branches = t.all_branches_from_node(0);
 
-    for(const auto& b: branches)
+    for(int b: branches)
     {
-      int target = b.target();
-      vector<const_branchview> c_;
-      append(b.branches_after(),c_);
+      int target = t.target(b);
 
-      vector<int> c;
-      for(const auto& d: c_)
-	c.push_back(d.target());
-
-      children[target] = std::move(c);
       A[target] = a[b];
+
+      children[target] = t.branches_after(b);
+      for(int& x: children[target])
+	x = t.target(x);
     }
 
     // 2. Compute total number of alignment columns
     int b0 = branches[0];
-    int source0 = T.directed_branch(b0).source();
-    int target0 = T.directed_branch(b0).target();
+    int source0 = t.source(b0);
+    int target0 = t.target(b0);
     int AL = a[b0].length1();
     for(const auto& b: branches)
       AL += a[b].count(states::G1);
 
     // 3. Initialize index matrix with all -1
-    M.resize(AL, T.n_nodes(), -1);
+    M.resize(AL, t.n_nodes(), -1);
 
     // Iterate through columns of A[b0]
     while (true)
@@ -393,9 +390,9 @@ struct Construct
 
 #ifndef NDEBUG
     // 5. Check that the resulting matrix yields the correct pairwise alignments
-    for(int b=0;b<2*T.n_branches();b++)
+    for(int b=0;b<2*t.n_branches();b++)
     {
-      pairwise_alignment_t a2 = A2::get_pairwise_alignment(M, T.directed_branch(b).source(), T.directed_branch(b).target());
+      pairwise_alignment_t a2 = A2::get_pairwise_alignment(M, t.source(b), t.target(b));
       assert(a[b] == a2);
     }
 #endif
@@ -452,11 +449,11 @@ int Construct::write_insertions(int node0)
   };
 }
 
-matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& A)
+matrix<int> construct(const TreeInterface& t, const vector<pairwise_alignment_t>& A)
 {
   using namespace A2;
 
-  Construct C(A,T);
+  Construct C(A,t);
 
   return C.M;
 }

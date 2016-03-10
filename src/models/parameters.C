@@ -232,7 +232,7 @@ void data_partition::recompute_alignment_matrix_from_pairwise_alignments()
   for(int b=0;b<2*t().n_branches();b++)
     As.push_back(get_pairwise_alignment(b,false));
   
-  set_alignment( get_alignment(get_alphabet(), *seqs, *sequences, construct(T(), As)) );
+  set_alignment( get_alignment(get_alphabet(), *seqs, *sequences, construct(t(), As)) );
 }
 
 const SequenceTree& data_partition::T() const
