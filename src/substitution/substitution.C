@@ -210,7 +210,7 @@ namespace substitution {
   int total_calc_root_prob=0;
 
   struct peeling_info: public vector<int> {
-    peeling_info(const Tree&T) { reserve(T.n_branches()); }
+    peeling_info(const TreeInterface& t) { reserve(t.n_branches()); }
   };
 
   log_double_t calc_root_probability(const alignment&, const Tree& T,Likelihood_Cache& cache,
@@ -1048,17 +1048,16 @@ namespace substitution {
 
 
   /// Compute an ordered list of branches to process
-  inline peeling_info get_branches(const Tree& T, const Likelihood_Cache& LC, vector<int> branches) 
+  inline peeling_info get_branches(const TreeInterface& t, const Likelihood_Cache& LC, vector<int> branches) 
   {
     //------- Get ordered list of not up_to_date branches ----------///
-    peeling_info peeling_operations(T);
+    peeling_info peeling_operations(t);
 
     for(int i=0;i<branches.size();i++) 
     {
       int b = branches[i];
       if (not LC.up_to_date(b)) {
-	for(auto i = T.directed_branch(b).branches_before();i;i++)
-	  branches.push_back((*i).name());
+	t.append_branches_before(b, branches);
 	peeling_operations.push_back(b);
       }
     }
@@ -1069,23 +1068,23 @@ namespace substitution {
   }
 
   /// Compute an ordered list of branches to process to validate branch b
-  inline peeling_info get_branches_for_branch(int b, const Tree& T, const Likelihood_Cache& LC) 
+  inline peeling_info get_branches_for_branch(int b, const TreeInterface& t, const Likelihood_Cache& LC) 
   {
     vector<int> branches(1,b);
-    branches.reserve(T.n_branches());
+    branches.reserve(t.n_branches());
 
-    return get_branches(T,LC,branches);
+    return get_branches(t,LC,branches);
   }
 
   /// Compute an ordered list of branches to process
-  inline peeling_info get_branches_for_node(int n, const Tree& T, const Likelihood_Cache& LC) 
+  inline peeling_info get_branches_for_node(int n, const TreeInterface& t, const Likelihood_Cache& LC) 
   {
     vector<int> branches;
-    branches.reserve(T.n_branches());
-    for(auto i = T.node(n).branches_in();i;i++)
-      branches.push_back((*i).name());
+    branches.reserve(t.n_branches());
+    for(int i=0;i<t.degree(n);i++)
+      branches.push_back(t.reverse(t.branch_out(n,i)));
 
-    return get_branches(T, LC, branches);
+    return get_branches(t, LC, branches);
   }
 
   static 
@@ -1094,7 +1093,7 @@ namespace substitution {
 				Likelihood_Cache& cache)
   {
     //---------- determine the operations to perform ----------------//
-    peeling_info ops = get_branches_for_node(n, T, cache);
+    peeling_info ops = get_branches_for_node(n, t, cache);
 
     if (T.n_nodes() == 2)
     {
@@ -1124,7 +1123,7 @@ namespace substitution {
 				  Likelihood_Cache& cache)
   {
     //---------- determine the operations to perform ----------------//
-    peeling_info ops = get_branches_for_branch(b, T, cache);
+    peeling_info ops = get_branches_for_branch(b, t, cache);
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
