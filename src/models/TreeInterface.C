@@ -181,6 +181,19 @@ boost::dynamic_bitset<> TreeInterface::partition(int b) const
   return nodes;
 }
 
+  /// Is 'n' contained in the subtree delineated by 'b'?
+bool TreeInterface::subtree_contains(int b,int n) const {
+  return partition(b)[n];
+}
+
+/// Is 'b2' contained in the subtree delineated by 'b1'?
+bool TreeInterface::subtree_contains_branch(int b1,int b2) const 
+{
+  auto p = partition(b1);
+  return p[source(b2)] and p[target(b2)];
+}
+
+
 int TreeInterface::source(int b) const {
   int p = P->TC->parameters_for_tree_branch[b].first;
   if (p == -1)

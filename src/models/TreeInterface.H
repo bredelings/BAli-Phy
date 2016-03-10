@@ -43,6 +43,9 @@ public:
 
   bool is_connected(int n1, int n2) const;
 
+  bool subtree_contains(int b,int n) const;
+  bool subtree_contains_branch(int b1,int b2) const;
+  
   bool is_leaf_node(int n) const;
   bool is_internal_node(int n) const;
   
