@@ -1142,17 +1142,16 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
 {
   check_h_tree();
 
-  int x1 = T().directed_branch(br1).source();
-  int x2 = T().directed_branch(br1).target();
+  int x1 = t().source(br1);
+  int x2 = t().target(br1);
 
-  std::vector<const_branchview> m_branches;
-  append(T().directed_branch(x2,x1).branches_after(), m_branches);
+  std::vector<int> m_branches = t().branches_after(t().find_branch(x2,x1));
   assert(m_branches.size() == 2);
-  int m1 = m_branches[0].target();
-  int m2 = m_branches[1].target();
+  int m1 = t().target(m_branches[0]);
+  int m2 = t().target(m_branches[1]);
 
-  int n1 = T().directed_branch(br2).source();
-  int n2 = T().directed_branch(br2).target();
+  int n1 = t().source(br2);
+  int n2 = t().target(br2);
 
   // If we are already attached to br2, then return.
   if (n1 == x1 or n2 == x1) return -1;
@@ -1162,15 +1161,15 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
   // (The name of the x<--->n1 branch gets preserved)
   if (branch_to_move == -1)
   {
-    if (T().directed_branch(m1,x1).undirected_name() > T().directed_branch(m2,x1).undirected_name() )
+    if (t().undirected(t().find_branch(m1,x1)) > t().undirected(t().find_branch(m2,x1)) )
       std::swap(m1,m2);
   }
   // ensure that (x,m2) is the branch to move
   else
   {
-    if (T().directed_branch(m1,x1).name() == branch_to_move or T().directed_branch(x1,m1).name() == branch_to_move)
+    if (t().find_branch(m1,x1) == branch_to_move or t().find_branch(x1,m1) == branch_to_move)
       std::swap(m1,m2);
-    else if (T().directed_branch(m2,x1).name() == branch_to_move or T().directed_branch(x1,m2).name() == branch_to_move)
+    else if (t().find_branch(m2,x1) == branch_to_move or t().find_branch(x1,m2) == branch_to_move)
       ;
     else
       std::abort(); // we couldn't find the branch to move!
@@ -1182,13 +1181,13 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
     std::swap(n1,n2);
 
   //------ Merge the branches (m1,x1) and (x1,m2) -------//
-  int dead_branch = T().directed_branch(m2,x1).undirected_name();
+  int dead_branch = t().undirected(t().find_branch(m2,x1));
 
   if (safe)
-    setlength( t().find_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
+    setlength( t().find_branch(m1,x1), t().branch_length(t().find_branch(m1,x1)) + t().branch_length(t().find_branch(m2,x1)) );
   else
   {
-    setlength_no_invalidate_LC( t().find_branch(m1,x1), T().directed_branch(m1,x1).length() + T().directed_branch(m2,x1).length() );
+    setlength_no_invalidate_LC( t().find_branch(m1,x1), t().branch_length(t().find_branch(m1,x1)) + t().branch_length(t().find_branch(m2,x1)) );
     LC_invalidate_one_branch(t().find_branch(m1,x1) );
     LC_invalidate_one_branch(t().find_branch(x1,m1) );
   }
@@ -1208,16 +1207,16 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
 
   // Reconnect (m1,x) to m2, making x a degree-2 node
   // This leaves m1 connected to its branch, so m1 can be a leaf.
-  assert(not T().node(m2).is_leaf_node());
+  assert(not t().is_leaf_node(m2) );
   reconnect_branch(m1, x1, m2, safe);
 
   // Reconnect (x,m2) to n2, leaving x a degree-2 node
-  assert(not T().node(m2).is_leaf_node());
+  assert(not t().is_leaf_node(m2));
   reconnect_branch(x1, m2, n2, safe);
 
   // Reconnect (n1,n2) to x, making x a degree-3 node again.
   // This leaves n1 connected to its branch, so n1 can be a leaf.
-  assert(not T().node(n2).is_leaf_node());
+  assert(not t().is_leaf_node(n2));
   reconnect_branch(n1, n2, x1, safe);
 
   end_modify_tree();
