@@ -44,7 +44,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            version.H cow-ptr.H alignment/index-matrix.H cached_value.H \
 	   tools/consensus-tree.H tools/partition.H mcmc/slice-sampling.H \
 	   timer_stack.H mcmc/setup.H owned-ptr.H \
-	   bounds.H io.H parser/parse.H \
+	   bounds.H io.H parser/parse.H models/TreeInterface.H \
            parser/AST.H computation/computation.H computation/closure.H \
            computation/context.H computation/expression.H computation/formula_expression.H \
 	   computation/bithash.H computation/graph_register.H computation/let-float.H \
@@ -95,7 +95,7 @@ endif
 bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substitution/substitution.C mcmc/moves.C \
           rng.C math/exponential.C math/eigenvalue.C models/parameters.C likelihood.C mcmc/mcmc.C \
 	  probability/choose.C tree/sequencetree.C mcmc/sample-branch-lengths.C \
-	  util.C tree/randomtree.C sequence/alphabet.C bali-phy.C \
+	  util.C tree/randomtree.C sequence/alphabet.C bali-phy.C models/TreeInterface.C \
 	  dp/hmm.C dp/dp-engine.C dp/dp-array.C dp/dp-matrix.C dp/3way.C dp/2way.C mcmc/sample-alignment.C \
 	  mcmc/sample-node.C imodel/imodel.C dp/5way.C mcmc/sample-topology-NNI.C \
 	  setup.C mcmc/sample-two-nodes.C sequence/sequence-format.C \
