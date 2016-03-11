@@ -25,24 +25,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "dp/2way.H"
 
-log_double_t topology_weight(const Parameters& P, const SequenceTree& T) 
-{
-  log_double_t p = 1;
-  
-  for(int i=0;i<P.PC->partitions.size();i++) {
-    if (implies(T,P.PC->partitions[i])) {
-      //      std::cerr<<"found!  "<<P.partitions[i]<<std::endl;
-      p *= P.PC->partition_weights[i];
-    }
-    else
-      { } //      std::cerr<<"not found!  "<<P.partitions[i]<<std::endl;
-  }
-  //  std::cerr<<"total_weight = "<<p<<std::endl;
-
-  return p;
-}
-
-
 /// Tree prior: topology & branch lengths (exponential)
 log_double_t prior_exponential(const SequenceTree& T,double branch_mean) 
 {
@@ -121,8 +103,6 @@ log_double_t prior(const Parameters& P, const SequenceTree& T,double branch_mean
     p *= prior_dirichlet(T,branch_mean);
   else
     throw myexception()<<"I don't understand branch prior type = "<<P.branch_prior_type();
-
-  p *= topology_weight(P,T);
 
   return p;
 }

@@ -34,8 +34,6 @@ log_double_t prior_HMM(const data_partition&);
 matrix<int> get_path_counts(const alignment& A,int node1, int node2);
 
 //------------------- Priors ----------------------//
-log_double_t topology_weight(const Parameters& P, const SequenceTree& T);
-
 // Tree prior: branch lengths & topology
 log_double_t prior_exponential(const SequenceTree& T,double branch_mean);
 
