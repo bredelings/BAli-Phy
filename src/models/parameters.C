@@ -1267,9 +1267,9 @@ void Parameters::show_h_tree() const
 {
   for(int b=0; b < 2*t().n_branches(); b++)
   {
-    auto s = get_parameter_value(TC->parameters_for_tree_branch[b].first ).as_int();
-    auto t = get_parameter_value(TC->parameters_for_tree_branch[b].second).as_int();
-    std::cerr<<"branch "<<b<<": ("<<s<<","<<t<<")     "<<T().directed_branch(b).length()<<"\n";
+    auto source = get_parameter_value(TC->parameters_for_tree_branch[b].first ).as_int();
+    auto target = get_parameter_value(TC->parameters_for_tree_branch[b].second).as_int();
+    std::cerr<<"branch "<<b<<": ("<<source<<","<<target<<")     "<<t().branch_length(b)<<"\n";
   }
 }
 
