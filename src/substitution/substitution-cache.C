@@ -365,14 +365,14 @@ Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC)
   cache->copy_token(token,LC.token);
 }
 
-Likelihood_Cache::Likelihood_Cache(const Tree& T, const Mat_Cache& MC,int C)
+Likelihood_Cache::Likelihood_Cache(const TreeInterface& t, const Mat_Cache& MC,int C)
   :cache(new Multi_Likelihood_Cache(MC)),
-   B(T.n_branches()*2),
+   B(t.n_branches()*2),
    token(cache->claim_token(C,B)),
    scratch_matrices(10,Matrix(cache->n_models(),cache->n_states())),
    lengths(B,-1),
    cached_value(0),
-   root(T.n_nodes()-1)
+   root(t.n_nodes()-1)
 {
   cache->init_token(token);
 }
@@ -381,10 +381,10 @@ Likelihood_Cache::~Likelihood_Cache() {
   cache->release_token(token);
 }
 
-void select_root(const Tree& T,int b,Likelihood_Cache& LC) {
-  int r = T.directed_branch(b).reverse();
-  if (T.subtree_contains(r,LC.root))
+void select_root(const TreeInterface& t,int b,Likelihood_Cache& LC) {
+  int r = t.reverse(b);
+  if (t.subtree_contains(r,LC.root))
     b = r;
 
-  LC.root = T.directed_branch(b).target();
+  LC.root = t.target(b);
 }

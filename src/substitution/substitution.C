@@ -1690,7 +1690,7 @@ namespace substitution {
   {
     subA_index_leaf subA(P.P, P.t().n_branches()*2);
 
-    Likelihood_Cache LC(P.T(), P);
+    Likelihood_Cache LC(P.t(), P);
     LC.root = P.LC.root;
 
     return Pr(*P.sequences, P.A(), subA, P, P.t(), LC);
@@ -1704,7 +1704,7 @@ namespace substitution {
 
     subA_index_internal subA(P.P, P.t().n_branches()*2);
 
-    Likelihood_Cache LC(P.T(), P);
+    Likelihood_Cache LC(P.t(), P);
     LC.root = P.LC.root;
 
     check_internal_nodes_connected(P.A(),P.T(),vector<int>(1,LC.root));

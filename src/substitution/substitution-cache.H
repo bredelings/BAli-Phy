@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include "tree/tree.H"
+#include "models/TreeInterface.H"
 #include "matcache.H"
 
 /// An object to store cached conditional likelihoods for a single branch
@@ -259,12 +260,12 @@ public:
   Likelihood_Cache& operator=(const Likelihood_Cache&);
 
   Likelihood_Cache(const Likelihood_Cache& LC);
-  Likelihood_Cache(const Tree& T, const Mat_Cache& M,int l=0);
+  Likelihood_Cache(const TreeInterface& t, const Mat_Cache& M,int l=0);
 
   ~Likelihood_Cache();
 };
 
 /// Set the root to whichever node of b is closer to the current root.
-void select_root(const Tree& T,int b,Likelihood_Cache& LC);
+void select_root(const TreeInterface& t,int b,Likelihood_Cache& LC);
 
 #endif
