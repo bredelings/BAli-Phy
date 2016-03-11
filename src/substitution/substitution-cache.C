@@ -289,14 +289,14 @@ void Likelihood_Cache::invalidate_all() {
   cache->invalidate_all(token);
 }
 
-void Likelihood_Cache::invalidate_directed_branch(const Tree& T,int b) {
-  vector<const_branchview> branch_list = branches_after_inclusive(T,b);
+void Likelihood_Cache::invalidate_directed_branch(const TreeInterface& t,int b) {
+  vector<int> branch_list = t.all_branches_after_inclusive(b);
   for(int i=0;i<branch_list.size();i++)
     cache->invalidate_one_branch(token,branch_list[i]);
 }
 
-void Likelihood_Cache::invalidate_node(const Tree& T,int n) {
-  vector<const_branchview> branch_list = branches_from_node(T,n);
+void Likelihood_Cache::invalidate_node(const TreeInterface& t,int n) {
+  vector<int> branch_list = t.all_branches_from_node(n);
   for(int i=0;i<branch_list.size();i++)
     cache->invalidate_one_branch(token,branch_list[i]);
 }
@@ -305,16 +305,17 @@ void Likelihood_Cache::invalidate_one_branch(int b) {
   cache->invalidate_one_branch(token,b);
 }
 
-void Likelihood_Cache::invalidate_branch(const Tree& T,int b) {
-  invalidate_directed_branch(T,b);
-  invalidate_directed_branch(T,T.directed_branch(b).reverse());
+void Likelihood_Cache::invalidate_branch(const TreeInterface& t,int b) {
+  invalidate_directed_branch(t, b);
+  invalidate_directed_branch(t, t.reverse(b));
 }
 
-void Likelihood_Cache::invalidate_branch_alignment(const Tree& T,int b) {
-  vector<const_branchview> branch_list = branches_after_inclusive(T,b);
+void Likelihood_Cache::invalidate_branch_alignment(const TreeInterface& t,int b) {
+  vector<int> branch_list = t.all_branches_after_inclusive(b);
   for(int i=1;i<branch_list.size();i++)
     cache->invalidate_one_branch(token,branch_list[i]);
-  branch_list = branches_after_inclusive(T,T.directed_branch(b).reverse());
+
+  branch_list = t.all_branches_after_inclusive(t.reverse(b));
   for(int i=1;i<branch_list.size();i++)
     cache->invalidate_one_branch(token,branch_list[i]);
 }

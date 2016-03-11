@@ -184,19 +184,19 @@ public:
   void invalidate_all();
 
   /// Mark cached conditional likelihoods for b and all branches after invalid.
-  void invalidate_directed_branch(const Tree&,int b);
+  void invalidate_directed_branch(const TreeInterface&,int b);
 
   /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
-  void invalidate_branch(const Tree&,int b);
+  void invalidate_branch(const TreeInterface&,int b);
 
   /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
   void invalidate_one_branch(int b);
 
   /// Mark cached conditional likelihoods for all branches after b or b* invalid.
-  void invalidate_branch_alignment(const Tree&,int b);
+  void invalidate_branch_alignment(const TreeInterface&,int b);
 
   /// Mark cached conditional likelihoods all branches after n invalid.
-  void invalidate_node(const Tree&,int n);
+  void invalidate_node(const TreeInterface&,int n);
 
   /// Set the length to l columns.
   void set_length(int l,int b);

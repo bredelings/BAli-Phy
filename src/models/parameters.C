@@ -410,7 +410,7 @@ void data_partition::recalc_smodel()
 
 void data_partition::setlength(int b)
 {
-  LC.invalidate_branch(T(),b);
+  LC.invalidate_branch(t(),b);
 }
 
 int data_partition::seqlength(int n) const
@@ -575,7 +575,7 @@ void data_partition::note_alignment_changed_on_branch(int b)
   // get_subA_index( ) will not change if we are using subA_index_leaf.
   //
   if (subA().kind() == subA_index_t::internal_index)
-    LC.invalidate_branch_alignment(T(),b);
+    LC.invalidate_branch_alignment(t(),b);
 }
 
 void data_partition::note_alignment_changed()
@@ -1369,7 +1369,7 @@ void Parameters::set_root(int node)
 void Parameters::LC_invalidate_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).LC.invalidate_branch(T(),b);
+    get_data_partition(i).LC.invalidate_branch(t(),b);
 }
 
 void Parameters::LC_invalidate_one_branch(int b)

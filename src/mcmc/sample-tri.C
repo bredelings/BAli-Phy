@@ -75,6 +75,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 								  const vector<int>& nodes, const vector<int>& nodes0,
 								  int bandwidth)
 {
+  const auto& t = P.t();
   const Tree& T = P.T();
   const alignment& A = P.A();
 
@@ -259,7 +260,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 #endif
 
   int b = T.branch(nodes[0],nodes[1]);
-  P.LC.invalidate_branch_alignment(T, b);
+  P.LC.invalidate_branch_alignment(t, b);
 
   return Matrices;
 }
