@@ -29,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution/substitution.H"
 #include "substitution/substitution-index.H"
 #include "alignment/alignment-util.H"
+#include "alignment/alignment-util2.H"
 #include "likelihood.H"
 #include "util.H"
 #include "mcmc/proposals.H"
@@ -279,7 +280,7 @@ void data_partition::variable_alignment(bool b)
     LC.invalidate_all();
 
     if (A().n_sequences() == t().n_nodes())
-      if (not check_leaf_characters_minimally_connected(A(),T()))
+      if (not check_leaf_characters_minimally_connected(A(),t()))
 	throw myexception()<<"Failing to turn off alignment variability: non-default internal node states";
   }
   // turning ON alignment variation
@@ -293,7 +294,7 @@ void data_partition::variable_alignment(bool b)
     assert(has_IModel() and A().n_sequences() == t().n_nodes());
     {
       alignment* A2 = A().clone();
-      minimally_connect_leaf_characters(*A2, T());
+      minimally_connect_leaf_characters(*A2, t());
       set_alignment(A2);
     }
     note_alignment_changed();

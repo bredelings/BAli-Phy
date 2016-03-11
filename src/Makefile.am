@@ -43,7 +43,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            tools/findroot.H tools/parsimony.H tools/mctree.H \
            version.H cow-ptr.H alignment/index-matrix.H cached_value.H \
 	   tools/consensus-tree.H tools/partition.H mcmc/slice-sampling.H \
-	   timer_stack.H mcmc/setup.H owned-ptr.H \
+	   timer_stack.H mcmc/setup.H owned-ptr.H alignment/alignment-util2.H \
 	   bounds.H io.H parser/parse.H models/TreeInterface.H \
            parser/AST.H computation/computation.H computation/closure.H \
            computation/context.H computation/expression.H computation/formula_expression.H \
@@ -103,7 +103,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  dp/alignment-sums.C alignment/alignment-util.C probability/probability.C models/model.C \
 	  alignment/alignment-constraint.C substitution/substitution-cache.C \
 	  monitor.C substitution/substitution-index.C tree/tree-util.C myexception.C math/pow2.C \
-	  tools/partition.C mcmc/proposals.C n_indels.C \
+	  tools/partition.C mcmc/proposals.C n_indels.C alignment/alignment-util2.C \
 	  tools/parsimony.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
 	  imodel/setup.C computation/computation.C \
