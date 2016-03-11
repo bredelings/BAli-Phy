@@ -26,53 +26,53 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/2way.H"
 
 /// Tree prior: topology & branch lengths (exponential)
-log_double_t prior_exponential(const SequenceTree& T,double branch_mean) 
+log_double_t prior_exponential(const TreeInterface& t,double branch_mean) 
 {
   log_double_t p = 1;
 
   // --------- uniform prior on topologies --------//
-  if (T.n_leaves()>3)
-    p /= num_topologies(T.n_leaves());
+  if (t.n_leaves()>3)
+    p /= num_topologies(t.n_leaves());
 
   // ---- Exponential prior on branch lengths ---- //
-  for(int i=0;i<T.n_branches();i++) 
-    p *= exponential_pdf(T.branch(i).length(), branch_mean);
+  for(int i=0;i<t.n_branches();i++) 
+    p *= exponential_pdf(t.branch_length(i), branch_mean);
 
   return p;
 }
 
 /// Tree prior: topology & branch lengths (gamma)
-log_double_t prior_gamma(const SequenceTree& T,double branch_mean) 
+log_double_t prior_gamma(const TreeInterface& t,double branch_mean) 
 {
   log_double_t p = 1;
 
   // --------- uniform prior on topologies --------//
-  if (T.n_leaves()>3)
-    p /= num_topologies(T.n_leaves());
+  if (t.n_leaves()>3)
+    p /= num_topologies(t.n_leaves());
 
   // ---- Exponential prior on branch lengths ---- //
   double a = 0.5;
   double b = branch_mean*2;
 
-  for(int i=0;i<T.n_branches();i++) 
-    p *= gamma_pdf(T.branch(i).length(), a, b);
+  for(int i=0;i<t.n_branches();i++) 
+    p *= gamma_pdf(t.branch_length(i), a, b);
 
   return p;
 }
 
 /// Tree prior: topology & branch lengths (dirichlet)
-log_double_t prior_dirichlet(const SequenceTree& T,double branch_mean) 
+log_double_t prior_dirichlet(const TreeInterface& t,double branch_mean) 
 {
   log_double_t p = 1;
 
   // --------- uniform prior on topologies --------//
-  if (T.n_leaves()>3)
-    p /= num_topologies(T.n_leaves());
+  if (t.n_leaves()>3)
+    p /= num_topologies(t.n_leaves());
 
   // ---- Gamma (sum) + Dirichlet (relative lengths) prior on branch lengths ---- //
-  std::valarray<double> branch_lengths(T.n_branches());
+  std::valarray<double> branch_lengths(t.n_branches());
   for(int i=0;i<branch_lengths.size();i++)
-    branch_lengths[i] = T.branch(i).length();
+    branch_lengths[i] = t.branch_length(i);
   double branch_length_sum = branch_lengths.sum();
   branch_lengths /= branch_length_sum;
 
@@ -91,16 +91,16 @@ log_double_t prior_dirichlet(const SequenceTree& T,double branch_mean)
 }
 
 /// Tree prior: branch lengths & topology
-log_double_t prior(const Parameters& P, const SequenceTree& T,double branch_mean) 
+log_double_t prior(const Parameters& P, const TreeInterface& t,double branch_mean) 
 {
   log_double_t p = 1;
 
   if (P.branch_prior_type() == 0)
-    p *= prior_exponential(T,branch_mean);
+    p *= prior_exponential(t, branch_mean);
   else if (P.branch_prior_type() == 1)
-    p *= prior_gamma(T,branch_mean);
+    p *= prior_gamma(t, branch_mean);
   else if (P.branch_prior_type() == 2)
-    p *= prior_dirichlet(T,branch_mean);
+    p *= prior_dirichlet(t, branch_mean);
   else
     throw myexception()<<"I don't understand branch prior type = "<<P.branch_prior_type();
 
@@ -183,18 +183,18 @@ int source)
 log_double_t prior_HMM_nogiven(const data_partition& P) 
 {
   const alignment& A = P.A();
-  const Tree& T = P.T();
+  const auto  t = P.t();
 
 #ifndef NDEBUG
   assert(P.has_IModel());
-  check_internal_nodes_connected(A,T);
+  check_internal_nodes_connected(A,t);
 #endif
   
   log_double_t Pr = 1;
 
-  for(int b=0;b<T.n_branches();b++) {
-    int target = T.branch(b).target();
-    int source  = T.branch(b).source();
+  for(int b=0;b<t.n_branches();b++) {
+    int target = t.target(t.undirected(b));
+    int source  = t.source(t.undirected(b));
     Pr *= prior_branch(A, P.get_branch_HMM(b), target, source);
   }
   
@@ -204,16 +204,16 @@ log_double_t prior_HMM_nogiven(const data_partition& P)
 
 log_double_t prior_HMM_rootless_scale(const data_partition& P)
 {
-  const Tree& T = P.T();
+  const auto& t = P.t();
 
 #ifndef NDEBUG
   assert(P.has_IModel());
-  check_internal_nodes_connected(P.A(),T);
+  check_internal_nodes_connected(P.A(),t);
 #endif
   
   log_double_t Pr = 1;
 
-  for(int i=T.n_leaves();i<T.n_nodes();i++) {
+  for(int i=t.n_leaves();i<t.n_nodes();i++) {
     int l = P.seqlength(i);
     log_double_t temp = P.sequence_length_pr(l);
     Pr /= (temp*temp);

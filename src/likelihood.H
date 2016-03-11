@@ -35,10 +35,10 @@ matrix<int> get_path_counts(const alignment& A,int node1, int node2);
 
 //------------------- Priors ----------------------//
 // Tree prior: branch lengths & topology
-log_double_t prior_exponential(const SequenceTree& T,double branch_mean);
+log_double_t prior_exponential(const TreeInterface& t,double branch_mean);
 
-log_double_t prior_gamma(const SequenceTree& T,double branch_mean);
+log_double_t prior_gamma(const TreeInterface& t,double branch_mean);
 
 // Tree prior: branch lengths & topology
-log_double_t prior(const Parameters& P, const SequenceTree& T,double branch_mean);
+log_double_t prior(const Parameters& P, const TreeInterface& t,double branch_mean);
 #endif
