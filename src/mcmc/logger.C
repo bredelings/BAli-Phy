@@ -270,8 +270,6 @@ string Get_Total_Total_Length_Indels_Function::operator()(const Model& M, long)
 
 double mu_scale(const Parameters& P)
 {
-  SequenceTree T = P.T();
-  
   valarray<double> weights(P.n_data_partitions());
   for(int i=0;i<weights.size();i++)
     weights[i] = max(sequence_lengths(P[i].A(), P.t().n_leaves()));
