@@ -217,12 +217,18 @@ void sample_two_nodes_move(owned_ptr<Model>& P, MoveStats&,int n0)
   sample_two_nodes(*PP,b);
 }
 
-vector<int> get_cost(const Tree& T) {
-  vector<int> cost(T.n_branches()*2,-1);
-  vector<const_branchview> stack1; stack1.reserve(T.n_branches()*2);
-  vector<const_branchview> stack2; stack2.reserve(T.n_branches()*2);
-  for(int i=0;i<T.n_leaves();i++) {
-    const_branchview b = T.directed_branch(i).reverse();
+// cost[b] should be the cost to visit all the branches after b.
+// * the cost is the number of branches we need to move the LC.root across
+// * we don't need to move the root across leaf branches -- we just have to
+//   be on one of the endpoints of the branch
+// * the cost of a non-leaf branch with branches_out={l,r} is 2*cost[l]+cost[r]
+//   if we visit the subtree in front of l first.
+vector<int> get_cost(const TreeInterface& t) {
+  vector<int> cost(t.n_branches()*2,-1);
+  vector<int> stack1; stack1.reserve(t.n_branches()*2);
+  vector<int> stack2; stack2.reserve(t.n_branches()*2);
+  for(int i=0;i<t.n_leaves();i++) {
+    int b = t.reverse(i);
     cost[b] = 0;
     stack1.push_back(b);
   }
@@ -231,22 +237,21 @@ vector<int> get_cost(const Tree& T) {
     // fill 'stack2' with branches before 'stack1'
     stack2.clear();
     for(int i=0;i<stack1.size();i++)
-      append(stack1[i].branches_before(),stack2);
+      t.append_branches_before(stack1[i], stack2);
 
     // clear 'stack1'
     stack1.clear();
 
     for(int i=0;i<stack2.size();i++) {
-      vector<const_branchview> children;
-      append(stack2[i].branches_after(),children);
+      vector<int> children = t.branches_after(stack2[i]);
 
       assert(children.size() == 2);
       int cost_l = cost[children[0]];
       int cost_r = cost[children[1]];
       if (cost_l != -1 and cost_r != -1) {
-	if (not children[0].is_leaf_branch()) cost_l++;
+	if (not t.is_leaf_branch(children[0])) cost_l++;
 
-	if (not children[1].is_leaf_branch()) cost_r++;
+	if (not t.is_leaf_branch(children[1])) cost_r++;
 
 	if (cost_l > cost_r)
 	  std::swap(cost_l,cost_r);
@@ -264,30 +269,53 @@ vector<int> get_cost(const Tree& T) {
   return cost;
 }
 
-vector<int> walk_tree_path(const Tree& T,int root) {
+vector<int> get_distance(const TreeInterface& t, int n)
+{
+  vector<int> D(t.n_nodes(),-1);
+  D[n] = 0;
 
-  vector<int> cost = get_cost(T);
+  vector<int> branches = t.branches_out(n);
+  int d = 0;
+  int i = 0;
+  while(i<branches.size())
+  {
+    d++;
+    int j=branches.size();
+    for(;i<j;i++)
+    {
+      D[t.target(branches[i])] = d;
+      t.append_branches_after(branches[i], branches);
+    }
+  }
+  return D;
+}
 
+
+vector<int> walk_tree_path(const TreeInterface& t, int root)
+{
+  vector<int> cost = get_cost(t);
+
+  vector<int> D = get_distance(t,root);
   vector<int> tcost = cost;
   for(int i=0;i<cost.size();i++)
-    tcost[i] += T.edges_distance(T.directed_branch(i).target(),root);
+    tcost[i] += D[t.target(i)];
 
-  vector<const_branchview> b_stack;
-  b_stack.reserve(T.n_branches());
-  vector<const_branchview> branches;
-  branches.reserve(T.n_branches());
-  vector<const_branchview> children;
+  vector<int> b_stack;
+  b_stack.reserve(t.n_branches());
+  vector<int> branches;
+  branches.reserve(t.n_branches());
+  vector<int> children;
   children.reserve(3);
 
   // get a leaf with minimum 'tcost'
   int leaf = 0;
-  leaf = myrandom(T.n_leaves());
-  for(int b=0;b<T.n_leaves();b++)
-    if (tcost[T.directed_branch(b)] < tcost[T.directed_branch(leaf)])
+  leaf = myrandom(t.n_leaves());
+  for(int b=0;b<t.n_leaves();b++)
+    if (tcost[b] < tcost[leaf])
       leaf = b;
 
-  assert(T.directed_branch(leaf).source() == leaf);
-  b_stack.push_back(T.directed_branch(leaf));
+  assert(t.source(leaf) == leaf);
+  b_stack.push_back(leaf);
 
   while(not b_stack.empty()) {
     // pop stack into list
@@ -295,7 +323,9 @@ vector<int> walk_tree_path(const Tree& T,int root) {
     b_stack.pop_back();
 
     // get children of the result
-    children = randomized_branches_after(branches.back());
+    children = t.branches_after(branches.back());
+    sort(children.begin(), children.end());
+    random_shuffle(children);
 
     // sort children in decrease order of cost
     if (children.size() < 2)
@@ -310,14 +340,15 @@ vector<int> walk_tree_path(const Tree& T,int root) {
     }
       
     // put children onto the stack
-    b_stack.insert(b_stack.end(),children.begin(),children.end());
+    for(int b: children)
+      b_stack.push_back(b);
   }
 
-  assert(branches.size() == T.n_branches());
+  assert(branches.size() == t.n_branches());
 
   vector<int> branches2(branches.size());
   for(int i=0;i<branches.size();i++)
-    branches2[i] = branches[i].undirected_name();
+    branches2[i] = t.undirected(branches[i]);
 
   return branches2;
 }
@@ -365,7 +396,7 @@ void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
 void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
-  vector<int> branches = walk_tree_path(PP.T(), PP[0].LC.root);
+  vector<int> branches = walk_tree_path(PP.t(), PP[0].LC.root);
 
   for(int i=0;i<branches.size();i++)
   {
@@ -397,7 +428,7 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Sta
 void walk_tree_sample_NNI(owned_ptr<Model>& P, MoveStats& Stats)
 {
   Parameters& PP = *P.as<Parameters>();
-  vector<int> branches = walk_tree_path(PP.T(), PP[0].LC.root);
+  vector<int> branches = walk_tree_path(PP.t(), PP[0].LC.root);
 
   for(int i=0;i<branches.size();i++) 
   {
@@ -415,7 +446,7 @@ void walk_tree_sample_NNI_and_A(owned_ptr<Model>& P, MoveStats& Stats)
   double NNI_A_fraction = P->load_value("NNI+A_fraction",0.01);
 
   Parameters& PP = *P.as<Parameters>();
-  vector<int> branches = walk_tree_path(PP.T(), PP[0].LC.root);
+  vector<int> branches = walk_tree_path(PP.t(), PP[0].LC.root);
 
   for(int i=0;i<branches.size();i++) 
   {
@@ -434,7 +465,7 @@ void walk_tree_sample_NNI_and_A(owned_ptr<Model>& P, MoveStats& Stats)
 void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
-  vector<int> branches = walk_tree_path(PP.T(), PP[0].LC.root);
+  vector<int> branches = walk_tree_path(PP.t(), PP[0].LC.root);
 
   for(int i=0;i<branches.size();i++) 
   {
@@ -458,7 +489,7 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
 void walk_tree_sample_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
-  vector<int> branches = walk_tree_path(PP.T(), PP[0].LC.root);
+  vector<int> branches = walk_tree_path(PP.t(), PP[0].LC.root);
 
   for(int i=0;i<branches.size();i++) 
   {
