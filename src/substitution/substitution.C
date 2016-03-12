@@ -25,6 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <valarray>
 #include <vector>
 #include "alignment/alignment-util.H"
+#include "alignment/alignment-util2.H"
 #include "util.H"
 
 // #define DEBUG_SUBSTITUTION
@@ -1707,7 +1708,7 @@ namespace substitution {
     Likelihood_Cache LC(P.t(), P);
     LC.root = P.LC.root;
 
-    check_internal_nodes_connected(P.A(),P.T(),vector<int>(1,LC.root));
+    check_internal_nodes_connected(P.A(),P.t(),vector<int>(1,LC.root));
 
     return Pr(*P.sequences, P.A(), subA, P, P.t(), LC);
   }

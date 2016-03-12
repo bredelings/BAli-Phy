@@ -33,10 +33,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequence/alphabet.H"
 #include "models/TreeInterface.H"
 
-bool all_characters_connected(const TreeInterface& t,boost::dynamic_bitset<> present,const std::vector<int>& ignore);
-
 void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t);
 
 bool check_leaf_characters_minimally_connected(const alignment& A,const TreeInterface& t);
 
+/// Check that internal node states are consistent
+void check_internal_nodes_connected(const alignment& A,const TreeInterface& t,const std::vector<int>& ignore = std::vector<int>());
 #endif

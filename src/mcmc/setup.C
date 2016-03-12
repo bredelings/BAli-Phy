@@ -32,6 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "sample.H"
 #include "alignment/alignment-util.H"
+#include "alignment/alignment-util2.H"
 #include "alignment/alignment-constraint.H"
 #include "timer_stack.H"
 #include "bounds.H"
@@ -627,10 +628,10 @@ double min_branch_length(const SequenceTree& T)
 /// Replace negative or zero branch lengths with saner values.
 void set_min_branch_length(Parameters& P, double min_branch)
 {
-  const SequenceTree& T = P.T();
+  const auto& t = P.t();
 
-  for(int b=0;b<T.n_branches();b++) 
-    if (T.branch(b).length() < min_branch)
+  for(int b=0;b<t.n_branches();b++) 
+    if (t.branch_length(b) < min_branch)
       P.setlength(b, min_branch);
 }
 
@@ -851,7 +852,7 @@ void do_sampling(const variables_map& args,
   {
     owned_ptr<Parameters> PP = P.as<Parameters>();
     for(int i=0;i<PP->n_data_partitions();i++)
-      check_internal_nodes_connected((*PP)[i].A(), (*PP)[i].T());
+      check_internal_nodes_connected((*PP)[i].A(), (*PP)[i].t());
   }
 
   //------------------ Construct the sampler  -----------------//

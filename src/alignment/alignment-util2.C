@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// \brief This file implements alignment utility functions.
 ///
 
-#include "alignment-util.H"
+#include "alignment-util2.H"
 #include "substitution/substitution-index.H"
 #include "util.H"
 #include "setup.H"
@@ -195,3 +195,26 @@ void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
   }
   remove_empty_columns(A);
 }
+
+/// Check that internal node states are consistent
+void check_internal_nodes_connected(const alignment& A,const TreeInterface& t,const vector<int>& ignore) 
+{
+  // Only check if A in fact has internal node sequences.
+  if (A.n_sequences() == t.n_leaves()) return;
+
+  assert(A.n_sequences() == t.n_nodes());
+
+  auto partitions = get_partitions(t);
+  for(int column=0;column<A.length();column++) {
+    dynamic_bitset<> present(t.n_nodes());
+    for(int i=0;i<t.n_nodes();i++) 
+      present[i] = not A.gap(column,i);
+    
+    if (not all_characters_connected(t,partitions,present,ignore)) {
+      cerr<<"Internal node states are inconsistent in column "<<column<<endl;
+      cerr<<A<<endl;
+      throw myexception()<<"Internal node states are inconsistent in column "<<column;
+    }
+  }
+}
+
