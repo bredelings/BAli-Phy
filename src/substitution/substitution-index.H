@@ -24,6 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include "alignment/alignment.H"
 #include "tree/tree.H"
+#include "models/TreeInterface.H"
 #include "object.H"
 
 /* The algorithms in this file provide each column in a sub-alignment
@@ -207,7 +208,7 @@ protected:
 
   std::vector<bool> up_to_date;
 
-  virtual void update_one_branch(const alignment& A,const Tree& T,int b)=0;
+  virtual void update_one_branch(const alignment& A,const Tree& T, const TreeInterface& t,int b)=0;
 
   /* This is for SPR all, where we only need branches pointing towards the
      root to be valid, but we don't want to discard the other ones, because
@@ -240,58 +241,58 @@ public:
   const std::vector<std::pair<int,int> >& row(int r) const {return indices[r];}
 
   /// align sub-alignments corresponding to branches in b
-  matrix<int> get_subA_index(const std::vector<int>& b,const alignment& A,const Tree& T,bool=false);
+  matrix<int> get_subA_index(const std::vector<int>& b,const alignment& A,const Tree& T, const TreeInterface& t,bool=false);
 
   /// align sub-alignments corresponding to branches in b
   matrix<int> get_subA_index_with_nodes(const std::vector<int>& b,const std::vector<std::vector<int>>& s,bool=false);
 
   /// align sub-alignments corresponding to branches in b
-  matrix<int> get_subA_index_with_nodes(const std::vector<int>& b,const std::vector<int>& n, const alignment& A,const Tree& T,bool=false);
+  matrix<int> get_subA_index_with_nodes(const std::vector<int>& b,const std::vector<int>& n, const alignment& A,const Tree& T, const TreeInterface& t,bool=false);
 
   /// align sub-alignments corresponding to branches in b
   matrix<int> get_subA_index(const std::vector<int>& b,bool=false) const;
 
   /// align sub-alignments corresponding to branches in b, but only keep entries corresponding to present/absent characters
-  matrix<int> get_subA_index_aligned(const std::vector<int>& b,const alignment& A,const Tree& T, bool present);
+  matrix<int> get_subA_index_aligned(const std::vector<int>& b,const alignment& A,const Tree& T, const TreeInterface& t, bool present);
 
   /// align sub-alignments corresponding to branches pointing to node
-  matrix<int> get_subA_index(int node,const alignment& A,const Tree& T); 
+  matrix<int> get_subA_index(int node,const alignment& A,const Tree& T, const TreeInterface& t); 
 
   /// align sub-alignments corresponding to branches in b
-  matrix<int> get_subA_index_select(const std::vector<int>& b,const alignment& A,const Tree& T);
+  matrix<int> get_subA_index_select(const std::vector<int>& b,const alignment& A,const Tree& T, const TreeInterface& t);
 
   /// select sub-alignments columns in branches (b-b.back()) that are aligned to nothing in b.back()
-  matrix<int> get_subA_index_vanishing(const std::vector<int>& b,const alignment& A,const Tree& T);
+  matrix<int> get_subA_index_vanishing(const std::vector<int>& b,const alignment& A,const Tree& T, const TreeInterface& t);
 
   /// align sub-alignments corresponding to branches in b
   matrix<int> get_subA_index_select(const std::vector<int>& b) const;
 
   /// align sub-alignments corresponding to branches in b, and select columns with a node in \a nodes
-  matrix<int> get_subA_index_any(const std::vector<int>& b,const alignment& A,const Tree& T,const std::vector<int>& nodes);
+  matrix<int> get_subA_index_any(const std::vector<int>& b,const alignment& A,const Tree& T, const TreeInterface& t,const std::vector<int>& nodes);
 
   /// align sub-alignments corresponding to branches in b, and reject columns with a node in \a nodes
-  matrix<int> get_subA_index_none(const std::vector<int>& b,const alignment& A, const Tree& T,
+  matrix<int> get_subA_index_none(const std::vector<int>& b,const alignment& A, const Tree& T, const TreeInterface& t,
 					 const std::vector<int>& nodes);
 
   /// align sub-alignments corresponding to branches in b, and select columns in 'seq'
-  matrix<int> get_subA_index_columns(const std::vector<int>& b,const alignment& A, const Tree& T,
+  matrix<int> get_subA_index_columns(const std::vector<int>& b,const alignment& A, const Tree& T, const TreeInterface& t,
 					    const std::vector<int>& seq);
 
   void invalidate_one_branch(int b);
   void invalidate_all_branches();
-  void invalidate_directed_branch(const Tree& T,int b);
-  void invalidate_branch(const Tree& T,int b);
+  void invalidate_directed_branch(const Tree& T, const TreeInterface& t,int b);
+  void invalidate_branch(const Tree& T, const TreeInterface& t,int b);
 
-  void update_branch(const alignment& A,const Tree& T,int b);
-  void recompute_all_branches(const alignment& A, const Tree& T);
+  void update_branch(const alignment& A,const Tree& T, const TreeInterface& t,int b);
+  void recompute_all_branches(const alignment& A, const Tree& T, const TreeInterface& t);
 
   bool may_have_invalid_branches() const;
   void allow_invalid_branches(bool allowed);
 
-  virtual void check_footprint_for_branch(const alignment& A1,const Tree& T,int b) const=0;
-  void check_footprint(const alignment& A1,const Tree& T) const;
+  virtual void check_footprint_for_branch(const alignment& A1,const Tree& T, const TreeInterface& t,int b) const=0;
+  void check_footprint(const alignment& A1,const Tree& T, const TreeInterface& t) const;
 
-  virtual std::vector<int> characters_to_indices(int branch, const alignment& A, const Tree& T);
+  virtual std::vector<int> characters_to_indices(int branch, const alignment& A, const Tree& T, const TreeInterface& t);
 
   int kind() const {return kind_;}
 
@@ -301,12 +302,12 @@ public:
 struct subA_index_leaf: public subA_index_t
 {
 protected:
-  void update_one_branch(const alignment& A,const Tree& T,int b);
+  void update_one_branch(const alignment& A,const Tree& T, const TreeInterface& t,int b);
 
 public:
   subA_index_t* clone() const {return new subA_index_leaf(*this);}
 
-  void check_footprint_for_branch(const alignment& A1,const Tree& T,int b) const;
+  void check_footprint_for_branch(const alignment& A1,const Tree& T, const TreeInterface& t,int b) const;
 
   subA_index_leaf(const Parameters* P, int s2);
 };
@@ -314,18 +315,18 @@ public:
 struct subA_index_internal: public subA_index_t
 {
 protected:
-  void update_one_branch(const alignment& A,const Tree& T,int b);
+  void update_one_branch(const alignment& A,const Tree& T, const TreeInterface& t,int b);
 
 public:
   subA_index_t* clone() const {return new subA_index_internal(*this);}
 
-  void check_footprint_for_branch(const alignment& A1,const Tree& T,int b) const;
+  void check_footprint_for_branch(const alignment& A1,const Tree& T, const TreeInterface& t,int b) const;
 
   subA_index_internal(const Parameters* P, int s2);
 };
 
-void check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T);
-void check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T,int root);
+void check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T, const TreeInterface& t);
+void check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T, const TreeInterface& t,int root);
 
 
 /// Count the number of entries in a subA index that are not null
@@ -336,5 +337,5 @@ int n_non_empty_columns(const matrix<int>&);
 
 std::ostream& print_subA(std::ostream& o,const matrix<int>& I);
 
-void check_subA(const subA_index_t& I1, const alignment& A1,const subA_index_t& I2, const alignment& A2,const Tree& T);
+void check_subA(const subA_index_t& I1, const alignment& A1,const subA_index_t& I2, const alignment& A2,const Tree& T, const TreeInterface& t);
 #endif

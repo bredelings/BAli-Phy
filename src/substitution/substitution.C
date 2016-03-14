@@ -213,7 +213,7 @@ namespace substitution {
     peeling_info(const TreeInterface& t) { reserve(t.n_branches()); }
   };
 
-  log_double_t calc_root_probability(const alignment&, const Tree& T,Likelihood_Cache& cache,
+  log_double_t calc_root_probability(const alignment&, const Tree& T, const TreeInterface& t,Likelihood_Cache& cache,
 				 const Mat_Cache& MC,const vector<int>& rb,const matrix<int>& index) 
   {
     total_calc_root_prob++;
@@ -310,7 +310,7 @@ namespace substitution {
     return total;
   }
 
-  log_double_t calc_root_probability2(const alignment&, const Tree& T,Likelihood_Cache& cache,
+  log_double_t calc_root_probability2(const alignment&, const Tree& T, const TreeInterface& t,Likelihood_Cache& cache,
 				  const Mat_Cache& MC,const vector<int>& rb,const matrix<int>& index) 
   {
     total_calc_root_prob++;
@@ -400,7 +400,7 @@ namespace substitution {
     return total;
   }
 
-  log_double_t calc_root_probability_unaligned(const alignment&,const Tree& T,Likelihood_Cache& cache,
+  log_double_t calc_root_probability_unaligned(const alignment&,const Tree& T, const TreeInterface& t,Likelihood_Cache& cache,
 					   const Mat_Cache& MC,const vector<int>& rb,const matrix<int>& index) 
   {
     total_calc_root_prob++;
@@ -471,7 +471,7 @@ namespace substitution {
   log_double_t calc_root_probability(const data_partition& P,const vector<int>& rb,
 			       const matrix<int>& index) 
   {
-    return calc_root_probability(P.A(), P.T(), P.LC, P, rb, index);
+    return calc_root_probability(P.A(), P.T(), P.t(), P.LC, P, rb, index);
   }
 
   inline double sum(const Matrix& Q, const vector<unsigned>& smap, int n_letters, 
@@ -510,6 +510,7 @@ namespace substitution {
 
   void peel_leaf_branch(int b0,subA_index_t& I, Likelihood_Cache& cache,
 			const vector<int>& sequence, const alignment& A, const Tree& T, 
+			const TreeInterface& t,
 			const vector<Matrix>& transition_P,const Mat_Cache& MC)
   {
     total_peel_leaf_branches++;
@@ -517,7 +518,7 @@ namespace substitution {
     const alphabet& a = A.get_alphabet();
 
     if (not I.branch_index_valid(b0))
-      I.update_branch(A,T,b0);
+      I.update_branch(A,T,t,b0);
 
     //    const vector<unsigned>& smap = MC.state_letters();
 
@@ -571,12 +572,13 @@ namespace substitution {
 
   void peel_leaf_branch_F81(int b0, subA_index_t& I, Likelihood_Cache& cache,
 			    const vector<int>& sequence, const alignment& A, const Tree& T, 
+			    const TreeInterface& t,
 			    const Mat_Cache& MC)
   {
     total_peel_leaf_branches++;
 
     if (not I.branch_index_valid(b0))
-      I.update_branch(A,T,b0);
+      I.update_branch(A,T,t,b0);
 
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b0);
@@ -597,11 +599,11 @@ namespace substitution {
       SubModels[m] = MC.base_model(m,b0).assert_is_a<F81_Object>();
       assert(SubModels[m]);
     }
-    const double t = T.directed_branch(b0).length();
+    const double L = T.directed_branch(b0).length();
 
     valarray<double> exp_a_t(n_models);
     for(int m=0;m<n_models;m++) 
-      exp_a_t[m] = exp(-t * SubModels[m]->alpha_);
+      exp_a_t[m] = exp(-L * SubModels[m]->alpha_);
 
     Matrix& F = cache.scratch(1);
     MC.FrequencyMatrix(F); // F(m,l2)
@@ -643,7 +645,8 @@ namespace substitution {
   }
 
   void peel_leaf_branch_modulated(int b0,subA_index_t& I, Likelihood_Cache& cache, 
-				  const vector<int>& sequence, const alignment& A, const Tree& T, 
+				  const vector<int>& sequence, const alignment& A, const Tree& T,
+				  const TreeInterface& t,
 				  const vector<Matrix>& transition_P,const Mat_Cache& MC)
   {
     total_peel_leaf_branches++;
@@ -664,7 +667,7 @@ namespace substitution {
     assert(MC.n_states() == n_states);
 
     if (not I.branch_index_valid(b0))
-      I.update_branch(A,T,b0);
+      I.update_branch(A,T,t,b0);
 
     const vector<unsigned>& smap = MC.state_letters();
 
@@ -761,7 +764,7 @@ namespace substitution {
   }
 
   /// Get the total likelihood for columns behind b0 that have been deleted before b0.source (e.g. and so b0.source is -).
-  log_double_t get_other_subst_behind_branch(int b0, const alignment& A, const Tree& T, subA_index_t& I, Likelihood_Cache& cache,
+  log_double_t get_other_subst_behind_branch(int b0, const alignment& A, const Tree& T, const TreeInterface& t, subA_index_t& I, Likelihood_Cache& cache,
 					 const Mat_Cache& MC)
   {
     // This only makes sense if we have presence/absence information to sequences at internal nodes
@@ -780,7 +783,7 @@ namespace substitution {
       // Get an alignment of subA indices on branches b[0] and b[1] where b0.source is not present
       int node = T.directed_branch(b0).source();
 
-      matrix<int> index_vanishing = I.get_subA_index_none(b,A,T, vector<int>(1,node));
+      matrix<int> index_vanishing = I.get_subA_index_none(b,A,T,t, vector<int>(1,node));
 
       b.push_back(b0);
       return collect_vanishing_internal(b, index_vanishing, cache, MC);
@@ -788,7 +791,7 @@ namespace substitution {
     else if (I.kind() == subA_index_t::internal_index)
     {
       b.push_back(b0);
-      matrix<int> index_vanishing = I.get_subA_index_vanishing(b,A,T);
+      matrix<int> index_vanishing = I.get_subA_index_vanishing(b,A,T,t);
 
       return collect_vanishing_internal(b, index_vanishing, cache, MC);
     }
@@ -859,7 +862,7 @@ namespace substitution {
     }
   }
 
-  void peel_internal_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
+  void peel_internal_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, const TreeInterface& t, 
 			    const vector<Matrix>& transition_P,const Mat_Cache& MC)
   {
     total_peel_internal_branches++;
@@ -871,7 +874,7 @@ namespace substitution {
     b.push_back(b0);
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
-    matrix<int> index = I.get_subA_index_select(b,A,T);
+    matrix<int> index = I.get_subA_index_select(b,A,T,t);
     assert(index.size1() == I.branch_index_length(b0));
     // the call to I.get_subA-index_select ( ) updates the index for branches in b.
     assert(I.branch_index_valid(b0));
@@ -882,7 +885,7 @@ namespace substitution {
     /*-------------------- Do the other_subst collection part -------------------*/
     if (I.kind() == subA_index_t::internal_index)
     {
-      matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
+      matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T,t);
       cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
     }
     else if (I.kind() == subA_index_t::leaf_index)
@@ -891,7 +894,7 @@ namespace substitution {
       throw myexception()<<"subA_index_t is of unrecognized type!";
   }
 
-  void peel_internal_branch_F81(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
+  void peel_internal_branch_F81(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, const TreeInterface& t, 
 				const Mat_Cache& MC)
   {
     //    std::cerr<<"got here! (internal)"<<endl;
@@ -904,7 +907,7 @@ namespace substitution {
     b.push_back(b0);
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
-    matrix<int> index = I.get_subA_index_select(b,A,T);
+    matrix<int> index = I.get_subA_index_select(b,A,T,t);
     assert(index.size1() == I.branch_index_length(b0));
     assert(I.branch_index_valid(b0));
 
@@ -933,11 +936,11 @@ namespace substitution {
       SubModels[m] = MC.base_model(m,b0).assert_is_a<F81_Object>();
       assert(SubModels[m]);
     }
-    const double t = T.directed_branch(b0).length();
+    const double L = T.directed_branch(b0).length();
 
     valarray<double> exp_a_t(n_models);
     for(int m=0;m<n_models;m++) 
-      exp_a_t[m] = exp(-t * SubModels[m]->alpha_);
+      exp_a_t[m] = exp(-L * SubModels[m]->alpha_);
 
     Matrix& F = cache.scratch(1);
     MC.FrequencyMatrix(F); // F(m,l2)
@@ -983,7 +986,7 @@ namespace substitution {
     /*-------------------- Do the other_subst collection part -------------b-------*/
     if (I.kind() == subA_index_t::internal_index)
     {
-      matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
+      matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T,t);
       cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
     }
     else if (I.kind() == subA_index_t::leaf_index)
@@ -998,6 +1001,7 @@ namespace substitution {
 
   void peel_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, 
 		   const vector< vector<int> >& sequences, const alignment& A, const Tree& T, 
+		   const TreeInterface& t,
 		   const Mat_Cache& MC)
   {
     total_peel_branches++;
@@ -1011,7 +1015,7 @@ namespace substitution {
     {
       assert(bb == 0);
       if (not I.branch_index_valid(b0))
-	I.update_branch(A,T,b0);
+	I.update_branch(A,T,t,b0);
 
       cache.prepare_branch(b0);
       cache.set_length(I.branch_index_length(b0), b0);
@@ -1027,18 +1031,18 @@ namespace substitution {
       int n_letters = A.get_alphabet().n_letters();
       if (n_states == n_letters) {
 	if (MC.base_model(0,0).is_a<F81_Object>())
-	  peel_leaf_branch_F81(b0, I, cache, sequences[b0], A, T, MC);
+	  peel_leaf_branch_F81(b0, I, cache, sequences[b0], A, T, t, MC);
 	else
-	  peel_leaf_branch(b0, I, cache, sequences[b0], A, T, MC.transition_P(B0), MC);
+	  peel_leaf_branch(b0, I, cache, sequences[b0], A, T, t, MC.transition_P(B0), MC);
       }
       else
-	peel_leaf_branch_modulated(b0, I, cache, sequences[b0], A, T, MC.transition_P(B0), MC);
+	peel_leaf_branch_modulated(b0, I, cache, sequences[b0], A, T, t, MC.transition_P(B0), MC);
     }
     else if (bb == 2) {
       if (MC.base_model(0,0).is_a<F81_Object>())
-	peel_internal_branch_F81(b0, I, cache, A, T, MC);
+	peel_internal_branch_F81(b0, I, cache, A, T, t, MC);
       else
-	peel_internal_branch(b0, I, cache, A, T, MC.transition_P(B0), MC);
+	peel_internal_branch(b0, I, cache, A, T, t, MC.transition_P(B0), MC);
     }
     else
       std::abort();
@@ -1108,7 +1112,7 @@ namespace substitution {
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],I,cache,sequences,A,T,MC);
+      peel_branch(ops[i],I,cache,sequences,A,T,t,MC);
 
     return ops.size();
   }
@@ -1127,7 +1131,7 @@ namespace substitution {
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],I,cache,sequences,A,T,MC);
+      peel_branch(ops[i],I,cache,sequences,A,T,t,MC);
 
     return ops.size();
   }
@@ -1227,6 +1231,7 @@ namespace substitution {
     const alphabet& a = P.get_alphabet();
 
     const alignment& A = P.A();
+    const auto& t = P.t();
     const Tree& T = P.T();
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = P.subA();
@@ -1244,7 +1249,7 @@ namespace substitution {
     LC.root = root;
 
     // select columns with at least one node in 'required_nodes', and re-order them according to the permutation 'ordered_columns'
-    matrix<int> index = I.get_subA_index_columns(b,A,T,ordered_columns);
+    matrix<int> index = I.get_subA_index_columns(b,A,T,t,ordered_columns);
 
     IF_DEBUG_S(int n_br = ) calculate_caches_for_node(LC.root, P);
 
@@ -1288,7 +1293,7 @@ namespace substitution {
   }
 
   /// Find the leaf branches of a connected subtree of nodes \a nodes instead of tree \a T
-  vector<int> get_leaf_branches_from_subtree_nodes(const Tree& T, const vector<int>& nodes)
+  vector<int> get_leaf_branches_from_subtree_nodes(const Tree& T, const TreeInterface& t, const vector<int>& nodes)
   {
     vector<int> branch_list;
     for(int i=0;i<nodes.size();i++)
@@ -1337,7 +1342,7 @@ namespace substitution {
     for(const_in_edges_iterator j = T.directed_branch(b0).branches_before();j;j++)
       calculate_caches_for_branch(*j, sequences, A, I, MC, T, t, LC);
 
-    return get_other_subst_behind_branch(b0, A, T, I, LC, MC);
+    return get_other_subst_behind_branch(b0, A, T, t, I, LC, MC);
   }
 
   /// This routine requires that nodes denotes a connected subtree.
@@ -1363,7 +1368,7 @@ namespace substitution {
     for(const_in_edges_iterator i = T.node(LC.root).branches_in();i;i++)
       rb.push_back(*i);
 
-    vector<int> leaf_branch_list = get_leaf_branches_from_subtree_nodes(T,nodes);
+    vector<int> leaf_branch_list = get_leaf_branches_from_subtree_nodes(T,t,nodes);
 
     log_double_t Pr3 = 1;
     for(int i=0;i<leaf_branch_list.size();i++)
@@ -1403,12 +1408,12 @@ namespace substitution {
     // get the relationships with the sub-alignments
     if (P.subA().kind() == subA_index_t::leaf_index)
     {
-      matrix<int> index1 = I.get_subA_index_none(rb,A,T,nodes);
+      matrix<int> index1 = I.get_subA_index_none(rb,A,T,t,nodes);
       log_double_t Pr1 = calc_root_probability(P,rb,index1);
       assert(std::abs(log(Pr1) - log(Pr3) ) < 1.0e-9);
 
-      matrix<int> index2 = I.get_subA_index_any(rb,A,T,nodes);
-      matrix<int> index  = I.get_subA_index(rb,A,T);
+      matrix<int> index2 = I.get_subA_index_any(rb,A,T,t,nodes);
+      matrix<int> index  = I.get_subA_index(rb,A,T,t);
 
       log_double_t Pr2 = calc_root_probability(P,rb,index2);
       log_double_t Pr  = calc_root_probability(P,rb,index);
@@ -1464,7 +1469,7 @@ namespace substitution {
   }
 
   void compare_caches(const subA_index_t& I1, const subA_index_t& I2,
-		      const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, const Tree& T)
+		      const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, const Tree& T, const TreeInterface& t)
   {
     assert(LC1.root == LC2.root);
     
@@ -1519,7 +1524,7 @@ namespace substitution {
   }
 
   void compare_branch_totals(subA_index_t& I1, subA_index_t& I2,
-			     Likelihood_Cache& LC1, Likelihood_Cache& LC2, const Tree& T,
+			     Likelihood_Cache& LC1, Likelihood_Cache& LC2, const Tree& T, const TreeInterface& t,
 			     const vector< vector<int> >& sequences, const alignment& A, const Mat_Cache& MC)
   {
     assert(LC1.root == LC2.root);
@@ -1536,10 +1541,10 @@ namespace substitution {
       assert(LC2.up_to_date(b));
 
       log_double_t branch_total1 = branch_total(b,I1,LC1,MC);
-      log_double_t other_subst1 = get_other_subst_behind_branch(b, A, T, I1, LC1, MC);
+      log_double_t other_subst1 = get_other_subst_behind_branch(b, A, T, t, I1, LC1, MC);
 
       log_double_t branch_total2 = branch_total(b,I2,LC2,MC);
-      log_double_t other_subst2 = get_other_subst_behind_branch(b, A, T, I2, LC2, MC);
+      log_double_t other_subst2 = get_other_subst_behind_branch(b, A, T, t, I2, LC2, MC);
 
       assert(std::abs(log(other_subst1) - log(other_subst2)) < 1.0e-9);
       assert(std::abs(log(branch_total1) - log(branch_total2)) < 1.0e-9);
@@ -1564,7 +1569,7 @@ namespace substitution {
 
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
-    check_regenerate(I, A, T, LC.root);
+    check_regenerate(I, A, T, t, LC.root);
 #endif
 
     IF_DEBUG_S(int n_br = ) calculate_caches_for_node(LC.root, sequences,A,I,MC,T,t,LC);
@@ -1579,16 +1584,16 @@ namespace substitution {
       rb.push_back(*i);
 
     // Combine the likelihoods from present nodes
-    matrix<int> index_aligned   = I.get_subA_index_aligned(rb,A,T,true);
-    log_double_t Pr = calc_root_probability(A,T,LC,MC,rb,index_aligned);
+    matrix<int> index_aligned   = I.get_subA_index_aligned(rb,A,T,t,true);
+    log_double_t Pr = calc_root_probability(A,T,t,LC,MC,rb,index_aligned);
 
     // FIXME - The problem is that this includes other_subst TWICE
     // Probably we need to factor other_subst collection out of calc_root_probability.
-    matrix<int> index_unaligned = I.get_subA_index_aligned(rb,A,T,false);
+    matrix<int> index_unaligned = I.get_subA_index_aligned(rb,A,T,t,false);
     if (I.kind() == subA_index_t::leaf_index)
     {
       // Combine the likelihoods from absent nodes
-      Pr *= calc_root_probability_unaligned(A,T,LC,MC,rb,index_unaligned);
+      Pr *= calc_root_probability_unaligned(A,T,t,LC,MC,rb,index_unaligned);
     }
     
 #ifdef DEBUG_INDEXING
@@ -1598,7 +1603,7 @@ namespace substitution {
     int n2 = n_non_null_entries(index_unaligned);
     int l2 = n_non_empty_columns(index_unaligned);
 
-    matrix<int> index = I.get_subA_index(rb,A,T);
+    matrix<int> index = I.get_subA_index(rb,A,T,t);
     int n3 = n_non_null_entries(index);
     int l3 = n_non_empty_columns(index);
 
@@ -1614,7 +1619,7 @@ namespace substitution {
 
     if (unaligned == 0) 
     {
-      log_double_t Pr2 = calc_root_probability(A,T,LC,MC,rb,index);
+      log_double_t Pr2 = calc_root_probability(A,T,t,LC,MC,rb,index);
       assert(std::abs(Pr.log() - Pr2.log()) < 1.0e-9);
     }
 #endif
@@ -1646,7 +1651,7 @@ namespace substitution {
 
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
-    check_regenerate(I, A, T, LC.root);
+    check_regenerate(I, A, T, t, LC.root);
 #endif
 
     IF_DEBUG_S(int n_br =) calculate_caches_for_node(LC.root, sequences, A,I,MC,T,t,LC);
@@ -1669,14 +1674,14 @@ namespace substitution {
     }
 
     // get the relationships with the sub-alignments
-    matrix<int> index = I.get_subA_index(rb,A,T);
+    matrix<int> index = I.get_subA_index(rb,A,T,t);
 
     // get the probability
     log_double_t Pr = 1;
     if (T.n_nodes() == 2)
-      Pr = calc_root_probability2(A,T,LC,MC,rb,index);
+      Pr = calc_root_probability2(A,T,t,LC,MC,rb,index);
     else
-      Pr = calc_root_probability(A,T,LC,MC,rb,index);
+      Pr = calc_root_probability(A,T,t,LC,MC,rb,index);
 
 #ifdef DEBUG_CACHING
     if (LC.cv_up_to_date())
@@ -1773,7 +1778,7 @@ namespace substitution {
   {
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
-    check_regenerate(I, A, T, cache.root);
+    check_regenerate(I, A, T, t, cache.root);
 #endif
 
     const vector<unsigned>& smap = MC.state_letters();
@@ -1809,7 +1814,7 @@ namespace substitution {
 
 	calculate_caches_for_branch(b, sequences, A,I,MC,T,t,cache);
 	if (not I.branch_index_valid(b))
-	  I.update_branch(A,T,b);
+	  I.update_branch(A,T,t,b);
 
 	rb.push_back(b);
 
@@ -1820,7 +1825,7 @@ namespace substitution {
       vector<int> nodes;
       if (has_internal_nodes)
 	nodes = {root};
-      matrix<int> index = I.get_subA_index_with_nodes(rb, nodes, A, T);
+      matrix<int> index = I.get_subA_index_with_nodes(rb, nodes, A, T, t);
 
       // FIXME - this doesn't handle case where tree has only 2 leaves.
       for(int i=0;i<index.size1();i++)
@@ -1873,7 +1878,7 @@ namespace substitution {
 	calculate_caches_for_branch(b, sequences, A,I,MC,T,t,cache);
 
 	if (not I.branch_index_valid(b))
-	  I.update_branch(A,T,b);
+	  I.update_branch(A,T,t,b);
 
 	local_branches.push_back(b);
 
@@ -1887,7 +1892,7 @@ namespace substitution {
 	nodes = {node};
 
       // FIXME - but what if node is internal and A doesn't have internal sequences?
-      matrix<int> index = I.get_subA_index_with_nodes(local_branches, nodes, A, T);
+      matrix<int> index = I.get_subA_index_with_nodes(local_branches, nodes, A, T, t);
       
       for(int i=0;i<index.size1();i++)
       {
@@ -1985,7 +1990,7 @@ namespace substitution {
   {
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
-    check_regenerate(I, A, T, cache.root);
+    check_regenerate(I, A, T, t, cache.root);
 #endif
 
     // Make sure that all conditional likelihoods have been calculated.
