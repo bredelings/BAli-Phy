@@ -103,7 +103,7 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<log_double_t>& rho,in
 
 int topology_sample_SPR_slice_connecting_branch(vector<Parameters>& p,int b) 
 {
-  int b_ = p[0].T().directed_branch(b).undirected_name();
+  int b_ = p[0].t().undirected(b);
 
   branch_length_slice_function logp1(p[0],b_);
   branch_length_slice_function logp2(p[1],b_);
@@ -157,8 +157,8 @@ double do_SPR(Parameters& P, int b1_,int b2)
   append(P.T().directed_branch(b1.source(),b1.target()).branches_after(),connected1);
 
   //------ Generate the new topology ------//
-  if (P.T().directed_branch(b2).target() == b1.target() or 
-      P.T().directed_branch(b2).source() == b1.target()) 
+  if (P.t().target(b2) == b1.target() or 
+      P.t().source(b2) == b1.target()) 
     ;
   else
     P.SPR(b1.reverse(),b2,true);
@@ -380,10 +380,10 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
 {
   const int bins = 6;
 
-  int n1 = P.T().directed_branch(b1).target();
-  int n2 = P.T().directed_branch(b1).source();
-  assert(P.t().partition(b1)[P.T().branch(b2).target()]);
-  assert(P.t().partition(b1)[P.T().branch(b2).source()]);
+  int n1 = P.t().target(b1);
+  int n2 = P.t().source(b1);
+  assert(P.t().partition(b1)[P.t().target(b2)]);
+  assert(P.t().partition(b1)[P.t().source(b2)]);
 
   //----- Generate the Different Topologies ----//
   P.set_root(n1);
@@ -399,15 +399,15 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   const SequenceTree& T1 = p[1].T();
 
   std::vector<int> nodes = A3::get_nodes_branch(p[0].t(),n1,n2);
-  assert(T0.is_connected(nodes[0],nodes[1]));
-  assert(T0.is_connected(nodes[0],nodes[2]));
-  assert(T0.is_connected(nodes[0],nodes[3]));
+  assert(p[0].t().is_connected(nodes[0],nodes[1]));
+  assert(p[0].t().is_connected(nodes[0],nodes[2]));
+  assert(p[0].t().is_connected(nodes[0],nodes[3]));
 
-  bool tree_changed = not T1.is_connected(nodes[0],nodes[2]) or not T1.is_connected(nodes[0],nodes[3]);
+  bool tree_changed = not p[1].t().is_connected(nodes[0],nodes[2]) or not p[1].t().is_connected(nodes[0],nodes[3]);
 
   // enforce tree constraints
-  if (not extends(p[1].T(), P.PC->TC))
-    return MCMC::Result(2+bins,0);
+  //  if (not extends(p[1].t(), P.PC->TC))
+  //    return MCMC::Result(2+bins,0);
 
   //  std::cerr<<"after = "<<p[1].T<<endl;
 
