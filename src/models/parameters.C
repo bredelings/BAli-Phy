@@ -870,6 +870,17 @@ int TreeInterface::branch_out(int n, int i) const {
     return P->get_parameter_value(p).as_int();
 }
 
+int TreeInterface::neighbor(int n, int i) const {
+  return target(branch_out(n,i));
+}
+
+vector<int> TreeInterface::neighbors(int n) const {
+  vector<int> nodes(degree(n));
+  for(int i=0;i<nodes.size();i++)
+    nodes[i] = neighbor(n, i);
+  return nodes;
+}
+
 int TreeInterface::source(int b) const {
   int p = P->TC->parameters_for_tree_branch[b].first;
   if (p == -1)
@@ -888,6 +899,11 @@ int TreeInterface::target(int b) const {
   
 int TreeInterface::undirected(int b) const {
   return (b % n_branches());
+}
+
+bool TreeInterface::is_connected(int n1, int n2) const
+{
+  return (search_branch(n1, n2) != -1);
 }
 
 bool TreeInterface::is_leaf_node(int n) const {

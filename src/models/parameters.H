@@ -321,10 +321,14 @@ public:
 
   int degree(int n) const;
   int branch_out(int n, int i) const;
+  int neighbor(int n, int i) const;
+  std::vector<int> neighbors(int n) const;
   int source(int b) const;
   int target(int b) const;
 
   int undirected(int b) const;
+
+  bool is_connected(int n1, int n2) const;
 
   bool is_leaf_node(int n) const;
   bool is_internal_node(int n) const;
