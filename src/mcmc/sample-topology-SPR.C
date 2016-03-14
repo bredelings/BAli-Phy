@@ -85,8 +85,8 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<log_double_t>& rho,in
 
   //----------- Generate the Different node lists ---------//
   vector< vector<int> > nodes(2);
-  nodes[0] = A3::get_nodes_branch_random(p[0].T(), n1, n2);     // Using two random orders can lead to different total
-  nodes[1] = A3::get_nodes_branch_random(p[1].T(), n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
+  nodes[0] = A3::get_nodes_branch_random(p[0].t(), n1, n2);     // Using two random orders can lead to different total
+  nodes[1] = A3::get_nodes_branch_random(p[1].t(), n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
 
   try {
     return sample_tri_multi(p,nodes,rho,true,true);
@@ -398,7 +398,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   const SequenceTree& T0 = p[0].T();
   const SequenceTree& T1 = p[1].T();
 
-  std::vector<int> nodes = A3::get_nodes_branch(T0,n1,n2);
+  std::vector<int> nodes = A3::get_nodes_branch(p[0].t(),n1,n2);
   assert(T0.is_connected(nodes[0],nodes[1]));
   assert(T0.is_connected(nodes[0],nodes[2]));
   assert(T0.is_connected(nodes[0],nodes[3]));
@@ -925,8 +925,8 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 
   //----------------- Generate the Different node lists ---------------//
   vector< vector<int> > nodes(2);
-  nodes[0] = A3::get_nodes_branch_random(p[0].T(), n1, n2);     // Using two random orders can lead to different total
-  nodes[1] = A3::get_nodes_branch_random(p[1].T(), n1, n2);     //  probabilities for p[0] and p[1] when p[0] == p[1].
+  nodes[0] = A3::get_nodes_branch_random(p[0].t(), n1, n2);     // Using two random orders can lead to different total
+  nodes[1] = A3::get_nodes_branch_random(p[1].t(), n1, n2);     //  probabilities for p[0] and p[1] when p[0] == p[1].
   sample_tri_multi_calculation tri(p, nodes, true, true);
 
   //--------- Compute PrL2: reverse proposal probabilities ---------//

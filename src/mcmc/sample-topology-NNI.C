@@ -674,7 +674,7 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
 
   vector< vector< int> > nodes;
   for(int i=0;i<p.size();i++)
-    nodes.push_back(A3::get_nodes_branch_random(p[i].T(), two_way_nodes[4], two_way_nodes[0]) );
+    nodes.push_back(A3::get_nodes_branch_random(p[i].t(), two_way_nodes[4], two_way_nodes[0]) );
 
   const vector<log_double_t> rho(3,1);
 

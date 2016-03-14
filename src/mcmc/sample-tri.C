@@ -591,7 +591,7 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
-  nodes[0] = A3::get_nodes_branch_random(P.T(),node1,node2);
+  nodes[0] = A3::get_nodes_branch_random(P.t(),node1,node2);
 
   vector<log_double_t> rho(1,1);
 
@@ -629,7 +629,7 @@ bool tri_sample_alignment_branch(Parameters& P,
   vector<Parameters> p(2,P);
   p[1].setlength(b,length2);
 
-  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.T(),node1,node2) );
+  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.t(),node1,node2) );
 
   vector<log_double_t> rho(2);
   rho[0] = 1;
@@ -652,7 +652,7 @@ bool tri_sample_alignment_and_parameter(Parameters& P,
   vector<Parameters> p(2,P);
   p[1].set_parameter_value(p_index,v2);
 
-  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.T(),node1,node2) );
+  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.t(),node1,node2) );
 
   vector<log_double_t> rho(2);
   rho[0] = 1;
@@ -677,7 +677,7 @@ bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
   // need to make this into a parameters if we are sampling it
   //  p[1].branch_HMM_type[b] = 1 - p[1].branch_HMM_type[b];
 
-  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.T(), node1,node2) );
+  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.t(), node1,node2) );
 
   vector<log_double_t> rho(2,1.0);
 

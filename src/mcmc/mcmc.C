@@ -1126,19 +1126,19 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
 
 void mcmc_init(Parameters& P, ostream& s_out)
 {
-  const SequenceTree& T = P.T();
+  const auto& t = P.t();
 
   // Check that the Alignments and Tree are properly linked
   for(int i=0;i<P.n_data_partitions();i++) 
   {
     const alignment& A = P[i].A();
     if (P[i].has_IModel())
-      assert(A.n_sequences() == T.n_nodes() and P[i].variable_alignment()); 
+      assert(A.n_sequences() == t.n_nodes() and P[i].variable_alignment()); 
     else
-      assert(A.n_sequences() == T.n_leaves() and not P[i].variable_alignment());
+      assert(A.n_sequences() == t.n_leaves() and not P[i].variable_alignment());
 
-    for(int j=0;j<A.n_sequences();j++)
-      assert(T.get_label(j) == A.seq(j).name);    
+    //    for(int j=0;j<A.n_sequences();j++)
+    //      assert(T.get_label(j) == A.seq(j).name);    
   }
 
   s_out<<"\n\n\n";
@@ -1216,12 +1216,12 @@ void Sampler::go(owned_ptr<Model>& P,int subsample,const int max_iter, ostream& 
 
   if (owned_ptr<Parameters> PP = P.as<Parameters>())
   {
-    const SequenceTree& T = PP->T();
+    const auto& t = PP->t();
 
     mcmc_init(*PP,s_out);
 
     //--------- Determine some values for this chain -----------//
-    if (subsample <= 0) subsample = 2*int(log(T.n_leaves()))+1;
+    if (subsample <= 0) subsample = 2*int(log(t.n_leaves()))+1;
 
     if (alignment_burnin_iterations > 0)
       PP->set_parameter_value(PP->find_parameter("*IModels.training"), new constructor("Prelude.True",0));

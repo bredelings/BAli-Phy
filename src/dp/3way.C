@@ -39,14 +39,13 @@ using namespace A3;
 
 namespace A3 {
 
-  vector<int> get_nodes(const Tree& T,int n0) {
-    assert(T.node(n0).is_internal_node());
+  vector<int> get_nodes(const TreeInterface& t,int n0) {
+    assert(t.is_internal_node(n0));
     
     vector<int> nodes(4);
     nodes[0] = n0;
     
-    vector<const_nodeview> neighbors;
-    append(T.node(n0).neighbors(),neighbors);
+    vector<int> neighbors = t.neighbors(n0);
     nodes[1] = neighbors[0];
     nodes[2] = neighbors[1];
     nodes[3] = neighbors[2];
@@ -54,8 +53,8 @@ namespace A3 {
     return nodes;
   }
   
-  vector<int> get_nodes_random(const Tree& T,int n0) {
-    vector<int> nodes = get_nodes(T,n0);
+  vector<int> get_nodes_random(const TreeInterface& t,int n0) {
+    vector<int> nodes = get_nodes(t,n0);
     
     vector<int> nodes2;
     nodes2.insert(nodes2.end(),nodes.begin()+1,nodes.end());
@@ -68,11 +67,11 @@ namespace A3 {
   }
 
   /// Setup node names, with nodes[0]=node1 and nodes[1]=node2
-  vector<int> get_nodes_branch(const Tree& T,int node1,int node2) {
+  vector<int> get_nodes_branch(const TreeInterface& t,int node1,int node2) {
 
-    assert( T.is_connected(node1,node2) );
+    assert( t.is_connected(node1,node2) );
 
-    vector<int> nodes = get_nodes(T,node1);
+    vector<int> nodes = get_nodes(t,node1);
     
     // make sure nodes[1] == node2
     if (node2 == nodes[1])
@@ -88,9 +87,9 @@ namespace A3 {
   }
 
   /// Setup node names, with nodes[0]=node1 and nodes[1]=node2
-  vector<int> get_nodes_branch_random(const Tree& T,int node1,int node2) {
+  vector<int> get_nodes_branch_random(const TreeInterface& t,int node1,int node2) {
 
-    vector<int> nodes = get_nodes_branch(T, node1, node2);
+    vector<int> nodes = get_nodes_branch(t, node1, node2);
 
     // randomize the order here
     if (myrandom(2) == 1)
@@ -128,11 +127,11 @@ namespace A3 {
 
   vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const vector<int>& nodes)
   {
-    const Tree& T = P.T();
+    auto& t = P.t();
 
-    int b1 = T.directed_branch(nodes[1],nodes[0]);
-    int b2 = T.directed_branch(nodes[0],nodes[2]);
-    int b3 = T.directed_branch(nodes[0],nodes[3]);
+    int b1 = t.find_branch(nodes[1],nodes[0]);
+    int b2 = t.find_branch(nodes[0],nodes[2]);
+    int b3 = t.find_branch(nodes[0],nodes[3]);
 
     vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,3);
     vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),3,1);

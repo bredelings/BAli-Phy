@@ -328,12 +328,10 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 
 void sample_node(Parameters& P,int node) 
 {
-  const Tree& T = P.T();
-
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
-  nodes[0] = A3::get_nodes_random(T,node);
+  nodes[0] = A3::get_nodes_random(P.t(),node);
 
   vector<log_double_t> rho(1,1);
 

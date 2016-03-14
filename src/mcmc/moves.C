@@ -203,7 +203,7 @@ void sample_two_nodes_move(owned_ptr<Model>& P, MoveStats&,int n0)
   Parameters* PP = P.as<Parameters>();
   assert(PP->variable_alignment()); 
 
-  vector<int> nodes = A3::get_nodes_random(PP->T(),n0);
+  vector<int> nodes = A3::get_nodes_random(PP->t(),n0);
   int n1 = -1;
   for(int i=1;i<nodes.size();i++)
     if ((PP->t()).is_internal_node( nodes[i] )) {
