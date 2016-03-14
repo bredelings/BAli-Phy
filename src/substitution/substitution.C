@@ -1237,10 +1237,12 @@ namespace substitution {
 
     //------ Check that all branches point to a 'root' node -----------//
     assert(b.size());
+    assert(not t.is_leaf_node(LC.root));
     int root = t.target(b[0]);
     for(int i=1;i<b.size();i++)
       assert(t.target(b[i]) == root);
     LC.root = root;
+    assert(not t.is_leaf_node(LC.root));
 
     // select columns with at least one node in 'required_nodes', and re-order them according to the permutation 'ordered_columns'
     matrix<int> index = I.get_subA_index_columns(b,A,t,ordered_columns);
