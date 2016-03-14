@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// \brief This file implements alignment utility functions.
 ///
 
+#include "alignment-util.H"
 #include "alignment-util2.H"
 #include "substitution/substitution-index.H"
 #include "util.H"
@@ -207,5 +208,22 @@ void check_internal_nodes_connected(const alignment& A,const TreeInterface& t,co
       throw myexception()<<"Internal node states are inconsistent in column "<<column;
     }
   }
+}
+
+void check_alignment(const alignment& A,const TreeInterface& t,bool internal_sequences) 
+{
+  // First check that there are no illegal letters
+  check_letters_OK(A);
+
+  // Next check that the internal sequences haven't changed
+  check_leaf_sequences(A,t.n_leaves());
+
+  if (not internal_sequences) return;
+
+  // Next check that only N/X and - are found at internal nodes
+  check_internal_sequences_composition(A,t.n_leaves());
+  
+  // Finally check that the internal node states are consistent
+  check_internal_nodes_connected(A,t);
 }
 

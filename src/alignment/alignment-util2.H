@@ -39,4 +39,6 @@ bool check_leaf_characters_minimally_connected(const alignment& A,const TreeInte
 
 /// Check that internal node states are consistent
 void check_internal_nodes_connected(const alignment& A,const TreeInterface& t,const std::vector<int>& ignore = std::vector<int>());
+
+void check_alignment(const alignment& A,const TreeInterface& t,bool internal_sequences);
 #endif
