@@ -366,21 +366,17 @@ void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   NNI_inc(Stats,"NNI (2-way/SPR)", result, p[0].T(), b);
 }
 
-vector<int> NNI_branches(const Tree& T, int b) 
+vector<int> NNI_branches(const TreeInterface& t, int b) 
 {
-  vector<const_branchview> branches;
-  branches.push_back(T.branch(b));
+  vector<int> branches;
+  branches.push_back(b);
 
-  append(T.branch(b).branches_after(),branches);
-  append(T.branch(b).reverse().branches_after(),branches);
+  t.append_branches_after(b, branches);
+  t.append_branches_before(b, branches);
 
   assert(branches.size() == 5);
 
-  vector<int> branches2;
-  for(int i=0;i<branches.size();i++)
-    branches2.push_back(branches[i].undirected_name());
-
-  return branches2;
+  return branches;
 }
 
 void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int b) 
@@ -410,13 +406,13 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
 
   //------------- Propose new branch lengths ----------------//
   double ratio = 1.0;
-  vector<int> branches = NNI_branches(p[1].T(), b);
+  vector<int> branches = NNI_branches(p[1].t(), b);
 
   for(int i=0;i<branches.size();i++) {
 
     double factor = exp(gaussian(0,0.05));
 
-    double L = p[1].T().directed_branch( branches[i] ).length() * factor;
+    double L = p[1].t().branch_length( branches[i] ) * factor;
 
     p[1].setlength(branches[i], L);
 
