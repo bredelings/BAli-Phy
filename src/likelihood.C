@@ -22,6 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "setup.H"
 #include "probability/probability.H"
 #include "alignment/alignment-util.H"
+#include "alignment/alignment-util2.H"
 #include "util.H"
 #include "dp/2way.H"
 

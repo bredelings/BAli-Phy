@@ -66,43 +66,6 @@ vector<dynamic_bitset<>> get_partitions(const TreeInterface& t)
   return partitions;
 }
 
-/*
-vector<dynamic_bitset<>> get_partitions(const TreeInterface& t)
-{
-  vector<dynamic_bitset<>> partitions(2*t.n_branches());
-  for(int b=0;b<partitions.size();b++)
-    partitions[b] = t.partition(b);
-  return partitions;
-}
-*/
-void connect_all_characters(const TreeInterface& t, const vector<dynamic_bitset<>>& partitions, dynamic_bitset<>& present)
-{
-  assert(present.size() == t.n_nodes());
-  
-  //---------- for each internal node... -------------//
-  for(int n1=t.n_leaves(); n1<t.n_nodes(); n1++) 
-  {
-    if (present[n1]) continue;
-
-    //------- if it is '-' and not ignored ... -------//
-    vector<int> neighbors = t.neighbors(n1);
-    assert(neighbors.size() == 3);
-
-    //---- check the three attatched subtrees ... ----//
-    int total=0;
-    for(int i=0;i<neighbors.size();i++)
-    {
-      dynamic_bitset<> group = partitions[t.find_branch(n1,neighbors[i])];
-      if (present.intersects(group))
-	total++;
-    }
-
-    if (total > 1)
-      present[n1] = true;
-  }
-  assert(all_characters_connected(t,present,vector<int>()));
-}
-
 /// Check that any two present nodes are connected by a path of present nodes
 bool all_characters_connected(const TreeInterface& t, const vector<dynamic_bitset<>>& partitions,
 			      dynamic_bitset<> present,const vector<int>& _ignore)
@@ -141,6 +104,34 @@ bool all_characters_connected(const TreeInterface& t, const vector<dynamic_bitse
   return true;
 }
 
+
+void connect_all_characters(const TreeInterface& t, const vector<dynamic_bitset<>>& partitions, dynamic_bitset<>& present)
+{
+  assert(present.size() == t.n_nodes());
+  
+  //---------- for each internal node... -------------//
+  for(int n1=t.n_leaves(); n1<t.n_nodes(); n1++) 
+  {
+    if (present[n1]) continue;
+
+    //------- if it is '-' and not ignored ... -------//
+    vector<int> neighbors = t.neighbors(n1);
+    assert(neighbors.size() == 3);
+
+    //---- check the three attatched subtrees ... ----//
+    int total=0;
+    for(int i=0;i<neighbors.size();i++)
+    {
+      dynamic_bitset<> group = partitions[t.find_branch(n1,neighbors[i])];
+      if (present.intersects(group))
+	total++;
+    }
+
+    if (total > 1)
+      present[n1] = true;
+  }
+  assert(all_characters_connected(t,partitions,present,vector<int>()));
+}
 
 /// \brief Check if internal node characters are only present between leaf charaters.
 ///
