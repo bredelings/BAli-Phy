@@ -178,7 +178,7 @@ double branch_length_slice_function::operator()()
 
 double branch_length_slice_function::current_value() const
 {
-  return P.T().directed_branch(b).length();
+  return P.t().branch_length(b);
 }
 
 branch_length_slice_function::branch_length_slice_function(Parameters& P_,int b_)
@@ -207,26 +207,22 @@ double slide_node_slice_function::operator()(double x)
 
 double slide_node_slice_function::current_value() const
 {
-  return P.T().branch(b1).length();
+  return P.t().branch_length(b1);
 }
 
 slide_node_slice_function::slide_node_slice_function(Parameters& P_,int b0)
   :count(0),P(P_)
 {
-  vector<const_branchview> b;
-  b.push_back( P.T().directed_branch(b0) );
+  vector<int> b = P.t().branches_after(b0);
 
-  // choose branches to alter
-  append(b[0].branches_after(),b);
-
-  if (b.size() != 3)
+  if (b.size() != 2)
     throw myexception()<<"pointing to leaf node!";
 
-  b1 = b[1].undirected_name();
-  b2 = b[2].undirected_name();
+  b1 = b[0];
+  b2 = b[1];
 
-  x0 = P.T().branch(b1).length();
-  y0 = P.T().branch(b2).length();
+  x0 = P.t().branch_length(b[0]);
+  y0 = P.t().branch_length(b[1]);
 
   set_lower_bound(0);
   set_upper_bound(x0+y0);
@@ -235,8 +231,8 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P_,int b0)
 slide_node_slice_function::slide_node_slice_function(Parameters& P_,int i1,int i2)
   :count(0),b1(i1),b2(i2),P(P_)
 {
-  x0 = P.T().branch(b1).length();
-  y0 = P.T().branch(b2).length();
+  x0 = P.t().branch_length(b1);
+  y0 = P.t().branch_length(b2);
 
   set_lower_bound(0);
   set_upper_bound(x0+y0);
@@ -276,7 +272,7 @@ double scale_means_only_slice_function::operator()(double t)
   // Scale the tree in the opposite direction
   for(int b=0;b<P.t().n_branches();b++) 
   {
-    const double L = P.T().branch(b).length();
+    const double L = P.t().branch_length(b);
     P.setlength_unsafe(b, L/scale);
   }
 
