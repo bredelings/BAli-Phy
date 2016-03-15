@@ -592,11 +592,9 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   int BM = P.SPR(P.t().reverse(b_subtree), b_target, safe, branch_to_move);
 
   // Find the names of the branches
-  assert(P.T().is_connected(B_unbroken_target.node1, n0));
-  assert(P.T().is_connected(n0, B_unbroken_target.node2));
-  int b1 = P.T().directed_branch(B_unbroken_target.node1, n0);
-  int b2 = P.T().directed_branch(n0, B_unbroken_target.node2);
-  assert(P.T().directed_branch(b1).undirected_name() == BM or P.T().directed_branch(b2).undirected_name() == BM);
+  int b1 = P.t().find_branch(B_unbroken_target.node1, n0);
+  int b2 = P.t().find_branch(n0, B_unbroken_target.node2);
+  assert(P.t().undirected(b1) == BM or P.t().undirected(b2) == BM);
 
   // Set the lengths of the two branches
   double L1 = L*U;
@@ -619,7 +617,7 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   {
     P.setlength_no_invalidate_LC(b1, L1);
     P.LC_invalidate_one_branch(b1);                                          //  ... mark likelihood caches for recomputing.
-    P.LC_invalidate_one_branch(P.T().directed_branch(b1).reverse());         //  ... mark likelihood caches for recomputing.
+    P.LC_invalidate_one_branch(P.t().reverse(b1));         //  ... mark likelihood caches for recomputing.
   }
 
   if (safe)
@@ -628,7 +626,7 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   {
     P.setlength_no_invalidate_LC(b2, L2);
     P.LC_invalidate_one_branch(b2);                                          //  ... mark likelihood caches for recomputing.
-    P.LC_invalidate_one_branch(P.T().directed_branch(b2).reverse());         //  ... mark likelihood caches for recomputing.
+    P.LC_invalidate_one_branch(P.t().reverse(b2));         //  ... mark likelihood caches for recomputing.
   }
 
   double total_length_after = tree_length(P.T());
@@ -810,7 +808,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
 {
   // The attachment node for the pruned subtree.
   // This node will move around, but we will always peel up to this node to calculate the likelihood.
-  int root_node = P.T().directed_branch(b1).target(); 
+  int root_node = P.t().target(b1);
   // Because the attachment node keeps its name, this will stay in effect throughout the likelihood calculations.
   P.set_root(root_node);
 
@@ -876,7 +874,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     assert(BM2 == I.BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
 
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
-    assert(std::abs(P.T().branch(I.B1).length() - L[0]) < 1.0e-9);
+    assert(std::abs(P.t().branch_length(I.B1) - L[0]) < 1.0e-9);
 
     // We want caches for each directed branch that is not in the PRUNED subtree to be accurate
     //   for the situation that the PRUNED subtree is not behind them.
@@ -908,8 +906,8 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 					)
 {
   int b1 = I.b_parent;
-  int n1 = P.T().directed_branch(b1).target();
-  int n2 = P.T().directed_branch(b1).source();
+  int n1 = P.t().target(b1);
+  int n2 = P.t().source(b1);
 
   assert(p.size() == 2);
   assert(p[0].variable_alignment() == p[1].variable_alignment());
@@ -1035,11 +1033,11 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 {
   const int bins = 6;
 
-  if (P.T().directed_branch(b1).target().is_leaf_node()) return false;
+  if (P.t().is_leaf_node(P.t().target(b1))) return false;
 
   // The attachment node for the pruned subtree.
   // This node will move around, but we will always peel up to this node to calculate the likelihood.
-  int root_node = P.T().directed_branch(b1).target(); 
+  int root_node = P.t().target(b1);
   // Because the attachment node keeps its name, this will stay in effect throughout the likelihood calculations.
   P.set_root(root_node);
 
@@ -1088,8 +1086,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   SPR_at_location(p[1], b1, branch_names[C], locations, false);
 
   // enforce tree constraints
-  if (not extends(p[1].T(), P.PC->TC))
-    return false;
+  //  if (not extends(p[1].t(), P.PC->TC))
+  //    return false;
 
   // Step N: INVALIDATE subA indices and also likelihood caches that are no longer valid.
 
@@ -1100,7 +1098,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   //  and the new location (the split branches BM and branch_names[C]) )
   for(int i=0;i<btemp.size();i++) {
     int bi = btemp[i];
-    p[1].setlength(bi, p[1].T().directed_branch(bi).length());   // bidirectional effect
+    p[1].setlength(bi, p[1].t().branch_length(bi));   // bidirectional effect
     p[1].invalidate_subA_index_branch(bi);         // bidirectional effect
     if (p[1].variable_alignment()) 
       p[1].note_alignment_changed_on_branch(bi); 
