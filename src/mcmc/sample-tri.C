@@ -26,6 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/3way.H"
 #include "dp/alignment-sums.H"
 #include "alignment/alignment-util.H"
+#include "alignment/alignment-util2.H"
 #include "alignment/alignment-constraint.H"
 #include "likelihood.H"    // for prior()
 #include <boost/shared_ptr.hpp>
@@ -251,7 +252,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   P.recompute_alignment_matrix_from_pairwise_alignments();
 
 #ifndef NDEBUG_DP
-  check_alignment(P.A(),T,"sample_tri_base:out");
+  check_alignment(P.A(),P.t(),"sample_tri_base:out");
 #else
   Matrices->clear();
 #endif
