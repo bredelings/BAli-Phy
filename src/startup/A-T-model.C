@@ -109,35 +109,6 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
     std::cout<<b<<"\n";
 }
 
-void setup_partition_weights(const variables_map& args, Parameters& P) 
-{
-  if (args.count("partition-weights")) {
-
-    string filename = args["partition-weights"].as<string>();
-
-    const double n = 0.6;
-
-    checked_ifstream partitions(filename,"partition weights file");
-    string line;
-    while(portable_getline(partitions,line)) {
-      Partition p(P.T().get_leaf_labels(),line);
-      portable_getline(partitions,line);
-      double o = convertTo<double>(line);
-      
-      cerr<<p<<"      P = "<<o<<endl;
-      if (o > n) {
-	double w = n/(1-n)*(1-o)/o;
-	log_double_t w2 = w;
-	
-	P.PC->partitions.push_back(p);
-	P.PC->partition_weights.push_back(w2);
-	
-	cerr<<P.PC->partitions.back()<<"      weight = "<<w<<endl;
-      }
-    }
-  }
-}
-
 vector<expression_ref>
 get_smodels(const module_loader& L,const variables_map& args, const vector<alignment>& A,
 	    shared_items<string>& smodel_names_mapping)
@@ -258,10 +229,8 @@ void check_alignment_values(const alignment& A,const string& filename)
 }
 
 /// If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
-void set_foreground_branches(Parameters& P)
+void set_foreground_branches(Parameters& P, const SequenceTree& T)
 {
-  const SequenceTree& T = P.T();
-
   if (T.find_undirected_branch_attribute_index_by_name("foreground") != -1)
   {
     int attribute_index = T.find_undirected_branch_attribute_index_by_name("foreground");
@@ -451,7 +420,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
   Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
 
   // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
-  set_foreground_branches(P);
+  set_foreground_branches(P, T);
 
   //------------- Set the branch prior type --------------//
   string branch_prior = args["branch-prior"].as<string>();
@@ -495,9 +464,6 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
 
   //------------------- Handle heating ---------------------//
   setup_heating(proc_id,args,P);
-
-  // read and store partitions and weights, if any.
-  setup_partition_weights(args,P);
 
   return P;
 }

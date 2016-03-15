@@ -28,7 +28,7 @@ void log_summary(std::ostream& out_cache, std::ostream& out_screen,std::ostream&
 		 const shared_items<std::string>& imodels, const shared_items<std::string>& smodels,
 		 const Parameters& P,const boost::program_options::variables_map& args);
 
-void set_foreground_branches(Parameters& P);
+void set_foreground_branches(Parameters& P, const SequenceTree& T);
 
 owned_ptr<Model> create_A_and_T_model(boost::program_options::variables_map& args, const module_loader& L,
 						  std::ostream& out_cache, std::ostream& out_screen, std::ostream& out_both,
