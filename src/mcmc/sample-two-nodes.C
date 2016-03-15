@@ -136,20 +136,22 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
   vector<log_double_t> rho = rho_;
   assert(p.size() == order.size());
   
+/*
   //------------ Check the alignment branch constraints ------------//
   for(int i=0;i<p.size();i++) {
     vector<int> branches;
 
-    branches.push_back(p[i].T().branch(order[i].nodes[0], order[i].nodes[4]));
-    branches.push_back(p[i].T().branch(order[i].nodes[1], order[i].nodes[4]));
-    branches.push_back(p[i].T().branch(order[i].nodes[2], order[i].nodes[5]));
-    branches.push_back(p[i].T().branch(order[i].nodes[3], order[i].nodes[5]));
-    branches.push_back(p[i].T().branch(order[i].nodes[4], order[i].nodes[5]));
+    branches.push_back(p[i].t().branch(order[i].nodes[0], order[i].nodes[4]));
+    branches.push_back(p[i].t().branch(order[i].nodes[1], order[i].nodes[4]));
+    branches.push_back(p[i].t().branch(order[i].nodes[2], order[i].nodes[5]));
+    branches.push_back(p[i].t().branch(order[i].nodes[3], order[i].nodes[5]));
+    branches.push_back(p[i].t().branch(order[i].nodes[4], order[i].nodes[5]));
 
-    if (any_branches_constrained(branches, p[i].T(), p[i].PC->TC, p[i].PC->AC))
+    if (any_branches_constrained(branches, p[i].t(), p[i].PC->TC, p[i].PC->AC))
       return -1;
   }
-
+*/
+  
   //----------- Generate the different states and Matrices ---------//
   log_double_t C1 = A5::correction(p[0],order[0]);
 #if !defined(NDEBUG_DP) || !defined(NDEBUG)
