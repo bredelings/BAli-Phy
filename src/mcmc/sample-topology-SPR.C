@@ -393,9 +393,6 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   // FIXME - do we need to USE the ratio anywhere?
   double ratio = do_SPR(p[1],b1,b2);
 
-  const SequenceTree& T0 = p[0].T();
-  const SequenceTree& T1 = p[1].T();
-
   std::vector<int> nodes = A3::get_nodes_branch(p[0].t(),n1,n2);
   assert(p[0].t().is_connected(nodes[0],nodes[1]));
   assert(p[0].t().is_connected(nodes[0],nodes[2]));
@@ -413,15 +410,13 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   if (tree_changed)
   {
     // ... then set the pairwise alignment of the branch we pulled out of.
-    vector<const_branchview> branches2;
-    for(auto i=p[0].T().directed_branch(n2,n1).branches_after();i;i++)
-      branches2.push_back(*i);
+    vector<int> branches2 = p[0].t().branches_after( p[0].t().find_branch(n2,n1) );
     assert(branches2.size() == 2);
-    int leaving1 = branches2[0].target();
-    int leaving2 = branches2[1].target();
+    int leaving1 = p[0].t().target(branches2[0]);
+    int leaving2 = p[0].t().target(branches2[1]);
     // Is this necessary? Since it references the alignment MATRIX, we'd like to remove it.
     // - See sample-tri.C line 146: P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2), false);
-    p[1].recompute_pairwise_alignment(p[1].T().directed_branch(leaving1,leaving2));
+    p[1].recompute_pairwise_alignment(p[1].t().find_branch(leaving1,leaving2));
   }
 
   int C;
