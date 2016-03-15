@@ -498,7 +498,7 @@ void sample_SPR_flat_one(owned_ptr<Model>& P,MoveStats& Stats,int b1)
 {
   Parameters& PP = *P.as<Parameters>();
 
-  if (PP.T().directed_branch(b1).target().is_leaf_node()) return;
+  if (PP.t().is_leaf_node(PP.t().target(b1))) return;
 
   double p = P->load_value("SPR_slice_fraction",-0.25);
 
@@ -567,13 +567,13 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   double total_length_before = tree_length(P.T());
 
   // If we are already at b_target, then its one of the branches after b_subtree.  Then do nothing.
-  if (P.T().directed_branch(b_subtree).target() == P.T().directed_branch(b_target).source() or
-      P.T().directed_branch(b_subtree).target() == P.T().directed_branch(b_target).target())
+  if (P.t().target(b_subtree) == P.t().source(b_target) or
+      P.t().target(b_subtree) == P.t().target(b_target))
     return -1;
 
   // unbroken target branch
   /// \todo Correctly handle moving to the same topology -- but allow branch lengths to change.
-  double L = P.T().directed_branch(b_target).length();
+  double L = P.t().branch_length(b_target);
   map<tree_edge, double>::const_iterator record = locations.find(get_tree_edge(P.T(),b_target));
   if (record == locations.end())
   {
@@ -586,10 +586,10 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   double U = record->second; 
   
   // node joining the subtree to the rest of the tree
-  int n0 = P.T().directed_branch(b_subtree).target();
+  int n0 = P.t().target(b_subtree);
 
   // Perform the SPR operation (specified by a branch TOWARD the pruned subtree)
-  int BM = P.SPR(P.T().directed_branch(b_subtree).reverse(), b_target, safe, branch_to_move);
+  int BM = P.SPR(P.t().reverse(b_subtree), b_target, safe, branch_to_move);
 
   // Find the names of the branches
   assert(P.T().is_connected(B_unbroken_target.node1, n0));
