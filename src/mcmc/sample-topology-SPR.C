@@ -148,34 +148,32 @@ int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b)
 }
 
 /// Do a SPR move on T1, moving the subtree behind b1_ to branch b2
-double do_SPR(Parameters& P, int b1_,int b2)
+double do_SPR(Parameters& P, int b1,int b2)
 {
-  const_branchview b1 = P.T().directed_branch(b1_);
-
+  const auto& t = P.t();
+  
   //------ Find the two old branches ------//
-  vector<const_branchview> connected1;
-  append(P.T().directed_branch(b1.source(),b1.target()).branches_after(),connected1);
+  vector<int> connected1 = t.branches_after(b1);
 
   //------ Generate the new topology ------//
-  if (P.t().target(b2) == b1.target() or 
-      P.t().source(b2) == b1.target()) 
+  if (t.target(b2) == t.target(b1) or 
+      t.source(b2) == t.target(b1))
     ;
   else
-    P.SPR(b1.reverse(),b2,true);
+    P.SPR(t.reverse(b1),b2,true);
 
   //------ Find the two new branches ------//
-  vector<const_branchview> connected2;
-  append(P.T().directed_branch(b1.source(),b1.target()).branches_after(),connected2);
+  vector<int> connected2 = t.branches_after(b1);
 
   assert(connected1.size() == 2);
   assert(connected2.size() == 2);
 
   //------- Place the split randomly -------//
-  double L1 = connected1[0].length() + connected1[1].length();
-  double L2 = connected2[0].length() + connected2[1].length();
+  double L1 = t.branch_length(connected1[0]) + t.branch_length(connected1[1]);
+  double L2 = t.branch_length(connected2[0]) + t.branch_length(connected2[1]);
 
-  P.setlength(P.T().directed_branch(connected2[0]), uniform() * L2 );
-  P.setlength(P.T().directed_branch(connected2[1]), L2 - P.T().directed_branch(connected2[0]).length() );
+  P.setlength(connected2[0], uniform() * L2 );
+  P.setlength(connected2[1], L2 - t.branch_length(connected2[0]) );
 
   return L2/L1;
 }
