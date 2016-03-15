@@ -25,6 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/alignment-sums.H"
 #include "alignment/alignment-constraint.H"
 #include "alignment/alignment-util.H"
+#include "alignment/alignment-util2.H"
 #include "substitution/substitution.H"
 #include "substitution/substitution-index.H"
 #include "dp/dp-matrix.H"
@@ -79,7 +80,6 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
   dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, P.A());
 
-  const Tree& T = P.T();
   const auto& t = P.t();
   const alignment& A = P.A();
 
@@ -158,8 +158,8 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
 void sample_alignment(Parameters& P,int b)
 {
-  if (any_branches_constrained(vector<int>(1,b), P.T(), P.PC->TC, P.PC->AC))
-    return;
+  //  if (any_branches_constrained(vector<int>(1,b), P.t(), P.PC->TC, P.PC->AC))
+  //    return;
 
   P.select_root(b);
 
@@ -169,7 +169,7 @@ void sample_alignment(Parameters& P,int b)
     s1[i].resize(P[i].alignment_constraint.size1());
     s1[i] = constraint_satisfied(P[i].alignment_constraint, P[i].A());
 #ifndef NDEBUG
-    check_alignment(P[i].A(), P[i].T(), "tri_sample_alignment:in");
+    check_alignment(P[i].A(), P[i].t(), "tri_sample_alignment:in");
 #endif
   }
 
@@ -288,7 +288,7 @@ void sample_alignment(Parameters& P,int b)
   for(int i=0;i<P.n_data_partitions();i++) 
   {
 #ifndef NDEBUG
-    check_alignment(P[i].A(), P[i].T(),"tri_sample_alignment:out");
+    check_alignment(P[i].A(), P[i].t(),"tri_sample_alignment:out");
 #endif
 
     dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
