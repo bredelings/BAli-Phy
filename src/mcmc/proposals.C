@@ -572,9 +572,9 @@ Proposal2M::Proposal2M(const Proposal_Fn& p,const vector<int>& s, const vector<d
   parameters(v)
 { }
 
-
 double move_scale_branch(Model& P)
 {
+/*
   Parameters& PP = dynamic_cast<Parameters&>(P);
 
   int index = PP.find_parameter("lambdaScaleBranch");
@@ -587,14 +587,14 @@ double move_scale_branch(Model& P)
     scale_branch = uniform(0, PP.t().n_branches() - 1);
   else
   {
-    int attribute_index = PP.T().find_undirected_branch_attribute_index_by_name("lambda-scale-branch");  
+    int attribute_index = PP.t().find_undirected_branch_attribute_index_by_name("lambda-scale-branch");  
     
     assert(attribute_index != -1);
     
     vector<int> branches;
     for(int b=0;b<PP.t().n_branches();b++)
     {
-      boost::any value = PP.T().branch(b).undirected_attribute(attribute_index);
+      boost::any value = PP.t().branch(b).undirected_attribute(attribute_index);
       if (not value.empty())
 	branches.push_back(b);
     }
@@ -604,6 +604,7 @@ double move_scale_branch(Model& P)
   }
 
   PP.set_parameter_value(index, scale_branch);
+*/
 
   return 1.0;
 }
