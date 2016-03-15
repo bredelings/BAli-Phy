@@ -55,13 +55,11 @@ using boost::shared_ptr;
 
 shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
 {
-  const Tree& T = P.T();
-
   assert(P.variable_alignment());
 
-  int b1 = T.directed_branch(nodes[1],nodes[0]);
-  int b2 = T.directed_branch(nodes[0],nodes[2]);
-  int b3 = T.directed_branch(nodes[0],nodes[3]);
+  int b1 = P.t().find_branch(nodes[1],nodes[0]);
+  int b2 = P.t().find_branch(nodes[0],nodes[2]);
+  int b3 = P.t().find_branch(nodes[0],nodes[3]);
 
   HMM m1 = P.get_branch_HMM(b1);
   m1.remap_bits({0,3});
@@ -129,7 +127,7 @@ shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<i
   vector<int> path = Matrices->ungeneralize(path_g);
 
   for(int i=0;i<3;i++) {
-    int b = T.directed_branch(nodes[0],nodes[i+1]);
+    int b = P.t().find_branch(nodes[0],nodes[i+1]);
     P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
   }
 
@@ -147,17 +145,19 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   vector<log_double_t> rho = rho_; 
   assert(p.size() == nodes.size());
  
+  /*
   //------------ Check the alignment branch constraints ------------//
   for(int i=0;i<p.size();i++) {
     vector<int> branches;
-    branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][1]));
-    branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][2]));
-    branches.push_back(p[i].T().branch(nodes[i][0],nodes[i][3]));
+    branches.push_back(p[i].t().find_branch(nodes[i][0],nodes[i][1]));
+    branches.push_back(p[i].t().find_branch(nodes[i][0],nodes[i][2]));
+    branches.push_back(p[i].t().find_branch(nodes[i][0],nodes[i][3]));
 
-    if (any_branches_constrained(branches, p[i].T(), p[i].PC->TC, p[i].PC->AC))
+    if (any_branches_constrained(branches, p[i].t(), p[i].PC->TC, p[i].PC->AC))
       return -1;
   }
-
+  */
+  
   //----------- Generate the different states and Matrices ---------//
   log_double_t C1 = A3::correction(p[0],nodes[0]);
 #if !defined(NDEBUG_DP) || !defined(NDEBUG)
