@@ -617,11 +617,11 @@ void enable_disable_transition_kernels(MCMC::MoveAll& sampler, const variables_m
 }
 
 /// Find the minimum branch length
-double min_branch_length(const SequenceTree& T)
+double min_branch_length(const TreeInterface& t)
 {
-  double min_branch = T.branch(0).length();
-  for(int i=1;i<T.n_branches();i++)
-    min_branch = std::min(min_branch,T.branch(i).length());
+  double min_branch = t.branch_length(0);
+  for(int i=1;i<t.n_branches();i++)
+    min_branch = std::min(min_branch, t.branch_length(i));
   return min_branch;
 }
 
@@ -643,7 +643,7 @@ void avoid_zero_likelihood(owned_ptr<Model>& P, ostream& out_log,ostream& /* out
 
   for(int i=0;i<20 and P->likelihood() == 0.0;i++)
   {
-    double min_branch = min_branch_length(PP.T());
+    double min_branch = min_branch_length(PP.t());
     out_log<<"  likelihood = "<<P->likelihood()<<"  min(T[b]) = "<<min_branch<<"\n";
 
     min_branch = std::max(min_branch, 0.0001);
