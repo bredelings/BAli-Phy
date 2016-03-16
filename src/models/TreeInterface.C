@@ -12,6 +12,10 @@ int TreeInterface::n_leaves() const {
   return P->TC->n_leaves;
 }
 
+int TreeInterface::n_leaf_branches() const {
+  return (n_branches() == 1)?1:n_leaves();
+}
+
 int TreeInterface::n_branches() const {
   return P->TC->parameters_for_tree_branch.size()/2;
 }

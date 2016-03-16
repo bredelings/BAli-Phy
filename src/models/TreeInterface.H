@@ -17,6 +17,7 @@ public:
   int n_branches() const;
   int _n_leaves = 0;
   int n_leaves() const;
+  int n_leaf_branches() const;
 
   int degree(int n) const;
   int branch_out(int n, int i) const;
