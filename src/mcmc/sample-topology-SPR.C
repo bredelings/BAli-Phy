@@ -183,54 +183,54 @@ double do_SPR(Parameters& P, int b1,int b2)
 // Consider measuring similarities/differences by counting.
 // Problem: how do we handle multiple partitions?
 
-vector<double> effective_lengths(const Tree& T)
+vector<double> effective_lengths(const TreeInterface& t)
 {
-  vector<double> lengths(2*T.n_branches(),0);
+  vector<double> lengths(2*t.n_branches(),0);
 
-  vector<const_branchview> branches = branches_from_leaves(T);
+  vector<int> branches = branches_from_leaves(t);
 
   for(int i=0;i<branches.size();i++)
   {
-    lengths[branches[i].name()] = branches[i].length();
+    lengths[branches[i]] = t.branch_length(branches[i]);
 
-    vector<const_branchview> pre_b;
-    append(branches[i].branches_before(),pre_b);
+    vector<int> pre_b = t.branches_before(branches[i]);
+
     if (pre_b.size() > 0) {
       double Pr_change_on_all = 1;
       for(int j=0;j<pre_b.size();j++)
-	Pr_change_on_all *= (1.0-exp(-lengths[pre_b[j].name()]));
+	Pr_change_on_all *= (1.0-exp(-lengths[pre_b[j]]));
       double Pr_no_change_on_at_least_1 = 1.0-Pr_change_on_all;
       if (Pr_no_change_on_at_least_1 > 0)
 	lengths[branches[i]] += -log(Pr_no_change_on_at_least_1);
-      assert(lengths[branches[i]] >= branches[i].length());
+      assert(lengths[branches[i]] >= t.branch_length(branches[i]));
     }
   }
 
   return lengths;
 }
 
-double effective_length(const Tree& T, int b)
+double effective_length(const TreeInterface& t, int b)
 {
-  return effective_lengths(T)[b];
+  return effective_lengths(t)[b];
 }
 
-vector<double> effective_lengths_min(const Tree& T)
+vector<double> effective_lengths_min(const TreeInterface& t)
 {
-  vector<double> lengths(2*T.n_branches(),0);
+  vector<double> lengths(2*t.n_branches(),0);
 
-  vector<const_branchview> branches = branches_from_leaves(T);
+  vector<int> branches = branches_from_leaves(t);
 
   for(int i=0;i<branches.size();i++)
   {
-    lengths[branches[i]] = branches[i].length();
+    lengths[branches[i]] = t.branch_length(branches[i]);
 
-    vector<const_branchview> pre_b;
-    append(branches[i].branches_before(),pre_b);
+    vector<int> pre_b = t.branches_before(branches[i]);
+
     if (pre_b.size() > 0) 
     {
-      double min_prev = pre_b[0].length();
+      double min_prev = t.branch_length(pre_b[0]);
       for(int j=1;j<pre_b.size();j++)
-	min_prev = std::min(min_prev, pre_b[j].length());
+	min_prev = std::min(min_prev, t.branch_length(pre_b[j]));
 
       lengths[branches[i]] += min_prev;
     }
@@ -504,7 +504,7 @@ void sample_SPR_flat_one(owned_ptr<Model>& P,MoveStats& Stats,int b1)
 
   int b2 = choose_SPR_target(PP.T(),b1);
 
-  double L_effective = effective_length(PP.T(), b1);
+  double L_effective = effective_length(PP.t(), b1);
 
   if (not PP.variable_alignment() and uniform() < p) {
     MCMC::Result result = sample_SPR(PP,b1,b2,true);
@@ -1133,7 +1133,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
 
   MCMC::Result result = SPR_stats(T0, p[1].T(), accepted, bins, b1);
-  double L_effective = effective_length(P.T(), b1);
+  double L_effective = effective_length(P.t(), b1);
   SPR_inc(Stats, result, "SPR (all)", L_effective);
 
   return ((C != 0) and accepted);
@@ -1157,7 +1157,7 @@ void sample_SPR_all(owned_ptr<Model>& P,MoveStats& Stats)
   if (P->load_value("SPR_longest", 1.0) > 0.5)
   {
     // Try moving the longest or least-determined branch every time.
-    int least_informed_branch = argmax(effective_lengths_min(PP.T()));
+    int least_informed_branch = argmax(effective_lengths_min(PP.t()));
     sample_SPR_flat_one(P, Stats, least_informed_branch);
     sample_SPR_search_one(PP, Stats, least_informed_branch);
   }
@@ -1305,7 +1305,7 @@ void sample_SPR_flat(owned_ptr<Model>& P,MoveStats& Stats)
   if (P->load_value("SPR_longest", 1.0) > 0.5)
   {
     // Try moving the longest or least-determined branch every time.
-    int least_informed_branch = argmax(effective_lengths_min(PP.T()));
+    int least_informed_branch = argmax(effective_lengths_min(PP.t()));
     sample_SPR_flat_one(P, Stats, least_informed_branch);
     sample_SPR_search_one(PP, Stats, least_informed_branch);
   }
@@ -1323,7 +1323,7 @@ void sample_SPR_nodes(owned_ptr<Model>& P,MoveStats& Stats)
     int b1=-1, b2=-1;
     choose_subtree_branch_nodes(PP.T(), b1, b2);
 
-    double L_effective = effective_length(PP.T(), b1);
+    double L_effective = effective_length(PP.t(), b1);
 
     if (not PP.variable_alignment() and uniform()< p) {
       MCMC::Result result = sample_SPR(*P.as<Parameters>(),b1,b2,true);
@@ -1338,7 +1338,7 @@ void sample_SPR_nodes(owned_ptr<Model>& P,MoveStats& Stats)
   if (P->load_value("SPR_longest", 1.0) > 0.5)
   {
     // Try moving the longest or least-determined branch every time.
-    int least_informed_branch = argmax(effective_lengths_min(PP.T()));
+    int least_informed_branch = argmax(effective_lengths_min(PP.t()));
     sample_SPR_flat_one(P, Stats, least_informed_branch);
     sample_SPR_search_one(PP, Stats, least_informed_branch);
   }
