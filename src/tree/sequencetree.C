@@ -500,23 +500,22 @@ unsigned topology_distance(const Tree& T1, const Tree& T2)
   unsigned n1 = T1.n_branches() - l1;
   unsigned n2 = T2.n_branches() - l2;
 
-  vector< dynamic_bitset<> > part1(n1,dynamic_bitset<>(T1.n_leaves()));
-  vector< dynamic_bitset<> > part2(n2,dynamic_bitset<>(T2.n_leaves()));
+  set< dynamic_bitset<> > part1;
+  set< dynamic_bitset<> > part2;
 
   // get partitions and lengths for T1
   for(int i=0;i<n1;i++)
-    part1[i] = branch_partition(T1,i+l1);
+    part1.insert(branch_partition(T1,i+l1));
 
   // get partitions and lengths for T2
   for(int i=0;i<n2;i++)
-    part2[i] = branch_partition(T2,i+l2);
+    part2.insert(branch_partition(T2,i+l2));
 
   // Accumulate distances for T1 partitions
   unsigned shared=0;
-  for(int i=0;i<part1.size();i++) {
-    if (find_partition(part1[i],part2) != -1)
+  for(const auto& part: part1)
+    if (part2.count(part) or part2.count(~part))
       shared++;
-  }
 
   return (n1-shared) + (n2-shared);
 }
