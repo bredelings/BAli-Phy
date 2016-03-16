@@ -447,7 +447,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   return SPR_stats(p[0].t(), p[1].t(), C>0, bins, b1);
 }
 
-int choose_subtree_branch_uniform(const Tree& T) 
+int choose_subtree_branch_uniform(const TreeInterface& T) 
 {
   int b1 = -1;
   while (true)
@@ -455,7 +455,7 @@ int choose_subtree_branch_uniform(const Tree& T)
     b1 = myrandom(T.n_branches()*2);
 
     // forbid branches leaf branches - no attachment point!
-    if (T.directed_branch(b1).target().is_leaf_node()) continue;
+    if (T.is_leaf_node(T.target(b1))) continue;
 
     break;
   }
@@ -463,7 +463,7 @@ int choose_subtree_branch_uniform(const Tree& T)
   return b1;
 }
 
-int choose_subtree_branch_uniform2(const Tree& T) 
+int choose_subtree_branch_uniform2(const TreeInterface& T) 
 {
   int b1 = -1;
   while (true)
@@ -471,14 +471,13 @@ int choose_subtree_branch_uniform2(const Tree& T)
     b1 = myrandom(T.n_branches()*2);
 
     // forbid branches leaf branches - no attachment point!
-    if (T.directed_branch(b1).target().is_leaf_node()) continue;
+    if (T.is_leaf_node(T.target(b1))) continue;
 
     // forbid branches with only 1 attachment point - not very useful.
-    vector<const_branchview> after;
-    append(T.directed_branch(b1).branches_after(), after);
+    vector<int> after = T.branches_after(b1);
     bool ok = false;
-    for(int i=0;i<after.size();i++)
-      if (not after[i].target().is_leaf_node())
+    for(int b: after)
+      if (not T.is_leaf_node(T.target(b)))
 	ok = true;
     if (not ok) continue;
 
@@ -528,14 +527,6 @@ log_double_t likelihood_unaligned_root(const Parameters& P)
 log_double_t heated_likelihood_unaligned_root(const Parameters& P)
 {
   return pow(likelihood_unaligned_root(P), P.get_beta());
-}
-
-/// Express branch \a b of tree \a T in terms of the nodes at either end
-tree_edge get_tree_edge(const Tree& T, int b)
-{
-  int n1 = T.directed_branch(b).source();
-  int n2 = T.directed_branch(b).target();
-  return tree_edge(n1,n2);
 }
 
 std::ostream& operator<<(std::ostream& o, const tree_edge& b)
@@ -1140,7 +1131,7 @@ void sample_SPR_all(owned_ptr<Model>& P,MoveStats& Stats)
   for(int i=0;i<n;i++) 
   {
     // Choose a directed branch to prune and regraft -- pointing away from the pruned subtree.
-    int b1 = choose_subtree_branch_uniform2(PP.T());
+    int b1 = choose_subtree_branch_uniform2(PP.t());
 
     sample_SPR_search_one(PP, Stats, b1);
   }
@@ -1180,7 +1171,7 @@ void sample_SPR_A_search_all(owned_ptr<Model>& P,MoveStats& Stats)
   }
 }
 
-vector<int> path_to(const Tree& T,int n1, int n2) 
+vector<int> path_to(const TreeInterface& T,int n1, int n2) 
 {
   assert(0 <= n1 and n1 < T.n_leaves());
   assert(0 <= n2 and n2 < T.n_leaves());
@@ -1188,16 +1179,16 @@ vector<int> path_to(const Tree& T,int n1, int n2)
 
   vector<int> path; 
   path.push_back(n1);
-  path.push_back(T.branch(n1).target());
+  path.push_back(T.target(T.undirected(n1)));
 
   while(path.back() != n2) 
   {
-    const_branchview b = T.directed_branch(path[path.size()-2], path[path.size()-1]);
+    int b = T.find_branch(path[path.size()-2], path[path.size()-1]);
 
-    for(const_edges_after_iterator i=b.branches_after();i;i++) 
+    for(int i: T.branches_after(b))
     {
-      if (T.partition(*i)[n2]) {
-	path.push_back((*i).target());
+      if (T.partition(i)[n2]) {
+	path.push_back(T.target(i));
 	break;
       }
     }
@@ -1232,7 +1223,7 @@ int jump() {
 
 
 
-void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2) 
+void choose_subtree_branch_nodes(const TreeInterface& T,int & b1, int& b2) 
 {
   //------------------- Choose nodes --------------------//
   int n1 = myrandom(T.n_leaves());
@@ -1247,11 +1238,11 @@ void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2)
   int A = 1+myrandom(N);
 
   b1 = -1;
-  for(const_neighbors_iterator i=T.node(path[A]).neighbors();i;i++) {
-    if (*i == path[A-1]) continue;
-    if (*i == path[A+1]) continue;
+  for(int n: T.neighbors(path[A])) {
+    if (n == path[A-1]) continue;
+    if (n == path[A+1]) continue;
 
-    b1 = T.directed_branch(*i,path[A]);
+    b1 = T.find_branch(n,path[A]);
     break;
   }
   assert(b1 != -1);
@@ -1276,7 +1267,7 @@ void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2)
 
   assert(0 <= C3 and C3 <= path.size()-1);
 
-  b2 = T.branch(path[C2],path[C3]);
+  b2 = T.undirected(T.find_branch(path[C2],path[C3]));
 }
 
 void sample_SPR_flat(owned_ptr<Model>& P,MoveStats& Stats) 
@@ -1288,7 +1279,7 @@ void sample_SPR_flat(owned_ptr<Model>& P,MoveStats& Stats)
 
   for(int i=0;i<n;i++) 
   {
-    int b1 = choose_subtree_branch_uniform(PP.T());
+    int b1 = choose_subtree_branch_uniform(PP.t());
 
     sample_SPR_flat_one(P, Stats, b1);
   }
@@ -1312,7 +1303,7 @@ void sample_SPR_nodes(owned_ptr<Model>& P,MoveStats& Stats)
   for(int i=0;i<n;i++) {
 
     int b1=-1, b2=-1;
-    choose_subtree_branch_nodes(PP.T(), b1, b2);
+    choose_subtree_branch_nodes(PP.t(), b1, b2);
 
     double L_effective = effective_length(PP.t(), b1);
 
