@@ -71,4 +71,6 @@ std::vector<int> branches_from_leaves(const TreeInterface& t);
 
 std::vector<boost::dynamic_bitset<>> get_partitions(const TreeInterface& t);
 
+unsigned topology_distance(const TreeInterface& T1, const TreeInterface& T2);
+
 #endif
