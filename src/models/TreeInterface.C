@@ -172,9 +172,9 @@ vector<int> TreeInterface::all_branches_toward_node(int n) const
   return branches;
 }
 
-boost::dynamic_bitset<> TreeInterface::partition(int b) const
+dynamic_bitset<> TreeInterface::partition(int b) const
 {
-  boost::dynamic_bitset<> nodes(n_nodes());
+  dynamic_bitset<> nodes(n_nodes());
   vector<int> branches = all_branches_after_inclusive(b);
   for(int b: branches)
     nodes.set(target(b));
@@ -298,7 +298,6 @@ vector<int> branches_from_leaves(const TreeInterface& t)
   for(int i=0;i<branch_list.size();i++) 
   {
     int b = branch_list[i];
-    int rb = t.reverse(b);
 
     // because we are on the list, we are 'visited'
     assert(visited[b]);
