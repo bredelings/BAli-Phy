@@ -38,6 +38,13 @@ std::vector<T> randomize(std::vector<T> v)
   random_shuffle(v);
   return v;
 }
+
+template <typename T>
+std::vector<T> sort_and_randomize(std::vector<T> v) 
+{
+  std::sort(v.begin(), v.end());
+  random_shuffle(v);
+  return v;
 }
 
 
