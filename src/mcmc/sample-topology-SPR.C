@@ -240,31 +240,27 @@ vector<double> effective_lengths_min(const TreeInterface& t)
 }
 
 
-int choose_SPR_target(const SequenceTree& T1, int b1_) 
+int choose_SPR_target(const TreeInterface& T1, int b1) 
 {
-  const_branchview b1 = T1.directed_branch(b1_);
-
   //----- Select the branch to move to ------//
-  dynamic_bitset<> subtree_nodes = T1.partition(b1.reverse());
-  subtree_nodes[b1.target()] = true;
+  auto subtree_nodes = T1.partition(T1.reverse(b1));
+  subtree_nodes[T1.target(b1)] = true;
 
   vector<int> branches;
   vector<double> lengths;
 
   for(int i=0;i<T1.n_branches();i++) 
   {
-    const_branchview bi = T1.branch(i);
-
     // skip branch if its contained in the subtree
-    if (subtree_nodes[bi.target()] and 
-	subtree_nodes[bi.source()])
+    if (subtree_nodes[T1.target(i)] and 
+	subtree_nodes[T1.source(i)])
       continue;
 
     double L = 1.0;
 
     // down-weight branch if it is one of the subtree's 2 neighbors
-    if (subtree_nodes[bi.target()] or 
-	subtree_nodes[bi.source()])
+    if (subtree_nodes[T1.target(i)] or 
+	subtree_nodes[T1.source(i)])
       L = 0.5;
 
     branches.push_back(i);
@@ -500,7 +496,7 @@ void sample_SPR_flat_one(owned_ptr<Model>& P,MoveStats& Stats,int b1)
 
   double p = P->load_value("SPR_slice_fraction",-0.25);
 
-  int b2 = choose_SPR_target(PP.T(),b1);
+  int b2 = choose_SPR_target(PP.t(),b1);
 
   double L_effective = effective_length(PP.t(), b1);
 
@@ -572,7 +568,7 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   // unbroken target branch
   /// \todo Correctly handle moving to the same topology -- but allow branch lengths to change.
   double L = P.t().branch_length(b_target);
-  map<tree_edge, double>::const_iterator record = locations.find(get_tree_edge(P.T(),b_target));
+  map<tree_edge, double>::const_iterator record = locations.find(P.t().edge(b_target));
   if (record == locations.end())
   {
     std::cerr<<"Branch not found in spr location object!\n"<<std::endl;
