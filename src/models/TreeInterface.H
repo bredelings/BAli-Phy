@@ -69,4 +69,6 @@ public:
 
 std::vector<int> branches_from_leaves(const TreeInterface& t);
 
+std::vector<boost::dynamic_bitset<>> get_partitions(const TreeInterface& t);
+
 #endif

@@ -329,3 +329,27 @@ vector<int> branches_from_leaves(const TreeInterface& t)
   return branch_list;
 }
 
+vector<dynamic_bitset<>> get_partitions(const TreeInterface& t)
+{
+  vector<int> branch_list = t.all_branches_from_node(0);
+  std::reverse(branch_list.begin(), branch_list.end());
+
+  // set up cached partition masks
+  vector<dynamic_bitset<>> partitions(2*t.n_branches());
+  for(auto& p: partitions)
+    p.resize(t.n_nodes());
+
+  // compute partition masks
+  for(int b: branch_list)
+  {
+    if (not t.is_leaf_node(t.target(b)))
+      for(int b2: t.branches_after(b))
+	partitions[b] |= partitions[b2];
+
+    partitions[b][t.target(b)] = true;
+
+    partitions[t.reverse(b)] = ~partitions[b]; 
+  }
+
+  return partitions;
+}
