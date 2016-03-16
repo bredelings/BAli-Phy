@@ -33,6 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "dp/3way.H"
 #include "tree/tree-util.H"
+#include "util-random.H"
 #include "dp/alignment-sums.H"
 #include "alignment/alignment-constraint.H"
 #include "substitution/substitution-index.H"
@@ -637,14 +638,13 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
 struct spr_info
 {
 public:
-  /// The tree on with we are considering SPR moves
-  const Tree T;
+  const TreeInterface T;
 
   /// The branch pointing AWAY from the subtree to prune
   int b_parent;
 
   /// The two branches that make up the current attachment branch
-  vector<const_branchview> child_branches;
+  vector<int> child_branches;
 
   /// The name of the first child branch -- which will remain here
   int B1;
@@ -656,7 +656,7 @@ public:
   tree_edge B0;
 
   /// A list of attachment branches, where the current branch is B1 at index 0
-  vector<const_branchview> attachment_branches;
+  vector<int> attachment_branches;
 
   /// A mapping of directed branches to their index in attachment_branches
   vector<int> branch_to_index_;
@@ -668,10 +668,10 @@ public:
   vector<double> attachment_branch_lengths() const
   {
     vector<double> L(n_attachment_branches());
-    L[0] = child_branches[0].length() + child_branches[1].length();
+    L[0] = T.branch_length(child_branches[0]) + T.branch_length(child_branches[1]);
 
     for(int i=1;i<n_attachment_branches();i++)
-      L[i] = attachment_branches[i].length();
+      L[i] = T.branch_length(attachment_branches[i]);
     return L;
   }
   
@@ -681,11 +681,11 @@ public:
     if (not T.subtree_contains_branch(b_parent,b))
       throw myexception()<<"spr_info::get_tree_edge( ): Subtree does not contain branch "<<b;
 
-    int n0 = T.directed_branch(b_parent).target();
-    if (T.directed_branch(b).target() == n0 or T.directed_branch(b).source() == n0)
+    int n0 = T.target(b_parent);
+    if (T.target(b) == n0 or T.source(b) == n0)
       return B0;
 
-    return ::get_tree_edge(T,b);
+    return T.edge(b);
   }
 
   /// Convert a branch \a b to its index in attachment_branches
@@ -702,8 +702,7 @@ public:
   {
     if (s == B0)
       return 0;
-    const_branchview b = T.directed_branch(s.node1, s.node2);
-    assert(b.valid());
+    int b = T.find_branch(s.node1, s.node2);
     return branch_to_index(b);
   }
 
@@ -723,16 +722,16 @@ public:
     return v;
   }
 
-  spr_info(const Tree& T_, int b, int branch_to_move = -1);
+  spr_info(const TreeInterface& T, int b, int branch_to_move = -1);
 }; 
 
-spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
+spr_info::spr_info(const TreeInterface& T_, int b, int branch_to_move)
   :T(T_),b_parent(b),B1(-1),BM(-1), branch_to_index_(T.n_branches()*2, -1)
 {
-  child_branches = randomized_branches_after(T.directed_branch(b_parent));
+  child_branches = sort_and_randomize(T.branches_after(b_parent));
   assert(child_branches.size() == 2);
-  B1 = child_branches[0].undirected_name();
-  BM = child_branches[1].undirected_name();
+  B1 = T.undirected(child_branches[0]);
+  BM = T.undirected(child_branches[1]);
 
   if (branch_to_move == -1) {
     if (BM < B1) std::swap(B1,BM);
@@ -742,9 +741,9 @@ spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
       std::swap(B1,BM);
     assert(branch_to_move == BM);
   }
-  B1 = std::min(child_branches[0].undirected_name(), child_branches[1].undirected_name());
-  BM = std::max(child_branches[0].undirected_name(), child_branches[1].undirected_name());
-  B0 = tree_edge(child_branches[0].target(), child_branches[1].target());
+  B1 = std::min(T.undirected(child_branches[0]), T.undirected(child_branches[1]));
+  BM = std::max(T.undirected(child_branches[0]), T.undirected(child_branches[1]));
+  B0 = tree_edge(T.target(child_branches[0]), T.target(child_branches[1]));
 
   /*----------- get the list of possible attachment points, with [0] being the current one.------- */
   // \todo - With tree constraints, or with a variable alignment and alignment constraints,
@@ -752,11 +751,12 @@ spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
 
   // FIXME - in order to make this independent of the circular order, we should make
   // a randomized_all_branches_after, or a sorted_all_branches_after.
-  attachment_branches = branches_after(T,b_parent);
+  attachment_branches = T.all_branches_after_inclusive(b_parent);
+  attachment_branches.erase(attachment_branches.begin());
 
   // remove the moving branch name (BM) from the list of attachment branches
   for(int i=attachment_branches.size()-1;i>=0;i--)
-    if (attachment_branches[i].undirected_name() == BM)
+    if (T.undirected(attachment_branches[i]) == BM)
       attachment_branches.erase(attachment_branches.begin()+i);
 
   // convert the const_branchview's to int names
@@ -766,7 +766,7 @@ spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
   for(int i=0;i<n_attachment_branches();i++)
   {
     int b = attachment_branches[i];
-    int b_t = attachment_branches[i].reverse();
+    int b_t = T.reverse(attachment_branches[i]);
 
     branch_to_index_[b] = i;
     branch_to_index_[b_t] = i;
@@ -774,13 +774,13 @@ spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
 }
 
 /// Get a list of attachment branches, and a location for attachment on each branch
-spr_attachment_points get_spr_attachment_points(const Tree& T, int b1, int branch_to_move = -1)
+spr_attachment_points get_spr_attachment_points(const TreeInterface& T, int b1, int branch_to_move = -1)
 {
   spr_info I(T, b1, branch_to_move);
 
-  tree_edge B0(I.child_branches[0].target(), I.child_branches[1].target());
-  double L0a = I.child_branches[0].length();
-  double L0b = I.child_branches[1].length();
+  tree_edge B0(T.target(I.child_branches[0]), T.target(I.child_branches[1]));
+  double L0a = T.branch_length(I.child_branches[0]);
+  double L0b = T.branch_length(I.child_branches[1]);
 
   // compute attachment location for current branche
   spr_attachment_points locations;
@@ -788,7 +788,7 @@ spr_attachment_points get_spr_attachment_points(const Tree& T, int b1, int branc
 
   // compute attachment locations for non-current branches
   for(int i=1;i<I.attachment_branches.size();i++)
-    locations[get_tree_edge(T, I.attachment_branches[i])] = uniform();
+    locations[T.edge(I.attachment_branches[i])] = uniform();
 
   return locations;
 }
@@ -809,22 +809,20 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
   // Compute and cache conditional likelihoods up to the (likelihood) root node.
   P.heated_likelihood();
 
-  const SequenceTree T0 = P.T();
-
   /* MOVEABLE BRANCH */
   //   One of the two branches (B1) that it (b1) points to will be considered the current attachment branch,
   //    the other branch (BM) will move around to wherever we are currently attaching b1.
   //   This is kind of a limitation of the current SPR routine, which chooses to move the 
   //    branch with the larger name, and leave the other one in place.
 
-  spr_info I(T0, b1, branch_to_move);
+  spr_info I(P.t(), b1, branch_to_move);
 
   if (I.n_attachment_branches() == 1) return spr_attachment_probabilities();
 
   vector<double> L = I.attachment_branch_lengths();
 
   // convert the const_branchview's to int names
-  vector<int> branch_names = directed_names(I.attachment_branches);
+  vector<int> branch_names = I.attachment_branches;
 
   /*----------------------- Initialize likelihood for each attachment point ----------------------- */
 
@@ -1038,12 +1036,11 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   // Compute and cache conditional likelihoods up to the (likelihood) root node.
   P.heated_likelihood();
 
-  spr_attachment_points locations = get_spr_attachment_points(P.T(), b1);
+  spr_attachment_points locations = get_spr_attachment_points(P.t(), b1);
 
-  const SequenceTree T0 = P.T();
   vector<Parameters> p(2,P);
 
-  spr_info I(T0, b1);
+  spr_info I(P.t(), b1);
 
   // Compute total lengths for each of the possible attachment branches
   vector<double> L = I.attachment_branch_lengths();
@@ -1051,7 +1048,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   if (I.n_attachment_branches() == 1) return false;
 
   // convert the const_branchview's to int names
-  vector<int> branch_names = directed_names(I.attachment_branches);
+  vector<int> branch_names = I.attachment_branches;
 
   spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], b1, locations, I.BM);
 
