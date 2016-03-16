@@ -386,7 +386,7 @@ unsigned topology_distance(const TreeInterface& T1, const TreeInterface& T2)
 
   // Accumulate distances for T1 partitions
   unsigned shared=0;
-  for(auto& partition: partitions1)
+  for(const auto& partition: informative1)
     if (informative2.count(partition) or informative2.count(~partition))
       shared++;
 
