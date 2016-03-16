@@ -33,11 +33,11 @@ void random_shuffle(std::vector<T>& v)
 }
 
 template <typename T>
-std::vector<T> randomize(const std::vector<T>& v) 
+std::vector<T> randomize(std::vector<T> v) 
 {
-  std::vector<T> v2 = v;
-  random_shuffle(v2);
-  return v2;
+  random_shuffle(v);
+  return v;
+}
 }
 
 
