@@ -283,7 +283,7 @@ int choose_SPR_target(const SequenceTree& T1, int b1_)
   }
 }
 
-MCMC::Result SPR_stats(const Tree& T1, const Tree& T2, bool success, int bins, int b1 = -1)
+MCMC::Result SPR_stats(const TreeInterface& T1, const TreeInterface& T2, bool success, int bins, int b1 = -1)
 {
   MCMC::Result result(2+bins,0);
 
@@ -295,20 +295,18 @@ MCMC::Result SPR_stats(const Tree& T1, const Tree& T2, bool success, int bins, i
   if (b1 != -1) 
   //---------------- Check if topology changed ----------------//
   {
-    int n1 = T1.directed_branch(b1).target();
-    int n2 = T1.directed_branch(b1).source();
-    assert( n1 == T2.directed_branch(b1).target() );
-    assert( n2 == T2.directed_branch(b1).source() );
+    int n1 = T1.target(b1);
+    int n2 = T1.source(b1);
+    assert( n1 == T2.target(b1) );
+    assert( n2 == T2.source(b1) );
 
-    vector<const_branchview> connected1;
-    append(T1.directed_branch(n2,n1).branches_after(),connected1);
+    vector<int> connected1 = T1.branches_after(T1.find_branch(n2,n1));
 
-    vector<const_branchview> connected2;
-    append(T2.directed_branch(n2,n1).branches_after(),connected2);
+    vector<int> connected2 = T2.branches_after(T2.find_branch(n2,n1));
  
     bool same_topology = (
-			  (connected1[0].target() == connected2[0].target() and connected1[1].target() == connected2[1].target()) or
-			  (connected1[0].target() == connected2[1].target() and connected1[1].target() == connected2[0].target())
+			  (T1.target(connected1[0]) == T2.target(connected2[0]) and T1.target(connected1[1]) == T2.target(connected2[1])) or
+			  (T1.target(connected1[0]) == T2.target(connected2[1]) and T1.target(connected1[1]) == T2.target(connected2[0]))
 			  );
 
     if (same_topology)
@@ -449,7 +447,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     }
   }
 
-  return SPR_stats(p[0].T(), p[1].T(), C>0, bins, b1);
+  return SPR_stats(p[0].t(), p[1].t(), C>0, bins, b1);
 }
 
 int choose_subtree_branch_uniform(const Tree& T) 
@@ -1132,7 +1130,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   }
 
 
-  MCMC::Result result = SPR_stats(T0, p[1].T(), accepted, bins, b1);
+  MCMC::Result result = SPR_stats(p[0].t(), p[1].t(), accepted, bins, b1);
   double L_effective = effective_length(P.t(), b1);
   SPR_inc(Stats, result, "SPR (all)", L_effective);
 
