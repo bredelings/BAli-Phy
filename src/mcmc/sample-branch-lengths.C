@@ -232,7 +232,7 @@ void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b)
     //----- Generate the Different Topologies ------//
     vector<Parameters> p(2,PP);
     
-    const auto& t2 = p[1].t();
+    auto t2 = p[1].t();
     
     vector<int> nodes = A5::get_nodes_random(t2,b).nodes;
     int b1 = t2.find_branch(nodes[4],nodes[1]);
@@ -289,7 +289,7 @@ bool slide_node(owned_ptr<Model>& P,
 		double (*slide)(vector<double>&,double)
 		) 
 {
-  const auto& t = P.as<Parameters>()->t();
+  auto t = P.as<Parameters>()->t();
   
   // check that we've got three branches
   assert(branches.size() == 2);
@@ -317,7 +317,7 @@ bool slide_node(owned_ptr<Model>& P,
 void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
 {
   Parameters* PP = P.as<Parameters>();
-  const auto& t = PP->t();
+  auto t = PP->t();
   
   // choose branches to alter
   if (uniform() < 0.5)
@@ -499,7 +499,7 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
   Parameters* PP = P.as<Parameters>();
   MCMC::Result result(2);
 
-  const auto& t = PP->t();
+  auto t = PP->t();
   if (not t.is_internal_node(n)) return;
 
   //-------------- Find branches ------------------//

@@ -150,7 +150,7 @@ int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b)
 /// Do a SPR move on T1, moving the subtree behind b1_ to branch b2
 double do_SPR(Parameters& P, int b1,int b2)
 {
-  const auto& t = P.t();
+  auto t = P.t();
   
   //------ Find the two old branches ------//
   vector<int> connected1 = t.branches_after(b1);

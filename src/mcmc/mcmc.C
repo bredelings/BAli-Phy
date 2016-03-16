@@ -1126,7 +1126,7 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
 
 void mcmc_init(Parameters& P, ostream& s_out)
 {
-  const auto& t = P.t();
+  auto t = P.t();
 
   // Check that the Alignments and Tree are properly linked
   for(int i=0;i<P.n_data_partitions();i++) 
@@ -1216,7 +1216,7 @@ void Sampler::go(owned_ptr<Model>& P,int subsample,const int max_iter, ostream& 
 
   if (owned_ptr<Parameters> PP = P.as<Parameters>())
   {
-    const auto& t = PP->t();
+    auto t = PP->t();
 
     mcmc_init(*PP,s_out);
 

@@ -205,7 +205,7 @@ log_double_t prior_HMM_nogiven(const data_partition& P)
 
 log_double_t prior_HMM_rootless_scale(const data_partition& P)
 {
-  const auto& t = P.t();
+  auto t = P.t();
 
 #ifndef NDEBUG
   assert(P.has_IModel());

@@ -242,7 +242,7 @@ const SequenceTree& data_partition::T() const
 }
 
 
-const TreeInterface& data_partition::t() const
+TreeInterface data_partition::t() const
 {
   return P->t();
 }
@@ -778,6 +778,7 @@ vector<int> edges_connecting_to_node(const Tree& T, int n)
 }
 
 tree_constants::tree_constants(Parameters* p, const Tree& T)
+  :n_leaves(T.n_leaves())
 {
   /*------------------------- Create the tree structure -----------------------*/
   vector<expression_ref> node_branches;
@@ -874,10 +875,9 @@ const SequenceTree& Parameters::T() const
   return *T_;
 }
 
-const TreeInterface& Parameters::t() const
+TreeInterface Parameters::t() const
 {
-  t_->P = this;
-  return *t_;
+  return {this};
 }
 
 void Parameters::read_h_tree()
@@ -1666,9 +1666,6 @@ Parameters::Parameters(const module_loader& L,
 
   TC = new tree_constants(this, tt);
   
-  // Create the TreeInterface structure
-  t_ = new TreeInterface(this);
-
   read_h_tree();
 
 #ifndef NDEBUG

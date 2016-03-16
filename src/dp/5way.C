@@ -116,7 +116,7 @@ namespace A5 {
 
   HMM get_HMM(const data_partition& P, const hmm_order& order)
   {
-    const auto& t = P.t();
+    auto t = P.t();
 
     const auto& nodes = order.nodes;
 
@@ -155,7 +155,7 @@ namespace A5 {
 
   vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const hmm_order& order)
   {
-    const auto& t = P.t();
+    auto t = P.t();
 
     const auto& nodes = order.nodes;
 

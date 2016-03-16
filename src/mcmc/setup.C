@@ -628,7 +628,7 @@ double min_branch_length(const TreeInterface& t)
 /// Replace negative or zero branch lengths with saner values.
 void set_min_branch_length(Parameters& P, double min_branch)
 {
-  const auto& t = P.t();
+  auto t = P.t();
 
   for(int b=0;b<t.n_branches();b++) 
     if (t.branch_length(b) < min_branch)

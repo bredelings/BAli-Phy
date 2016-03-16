@@ -42,7 +42,7 @@ using namespace A2;
 vector< Matrix > distributions_star(const data_partition& P,const vector<int>& seq,int b,bool up) 
 {
   //--------------- Find our branch, and orientation ----------------//
-  auto& t = P.t();
+  auto t = P.t();
   b = t.undirected(b);
   int root = t.target(b);      //this is an arbitrary choice
 
@@ -58,7 +58,7 @@ vector< Matrix > distributions_star(const data_partition& P,const vector<int>& s
 vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int b,bool up)
 {
   //--------------- Find our branch, and orientation ----------------//
-  auto& t = P.t();
+  auto t = P.t();
   b = t.undirected(b);
   int root = t.target(b);      //this is an arbitrary choice
 
@@ -80,7 +80,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
   dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, P.A());
 
-  const auto& t = P.t();
+  auto t = P.t();
   const alignment& A = P.A();
 
   int node1 = t.target(t.undirected(b));

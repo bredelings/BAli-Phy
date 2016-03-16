@@ -1226,7 +1226,7 @@ namespace substitution {
     const alphabet& a = P.get_alphabet();
 
     const alignment& A = P.A();
-    const auto& t = P.t();
+    auto t = P.t();
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = P.subA();
 
@@ -1352,7 +1352,7 @@ namespace substitution {
   {
     const vector< vector<int> >& sequences = *P.sequences;
     const alignment& A = P.A();
-    const auto& t = P.t();
+    auto t = P.t();
     const Mat_Cache& MC = P;
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = P.subA();

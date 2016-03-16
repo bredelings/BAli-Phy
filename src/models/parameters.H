@@ -126,7 +126,7 @@ public:
   
   const SequenceTree& T() const;
 
-  const TreeInterface& t() const;
+  TreeInterface t() const;
 
   /// Cached Transition Probabilities
   const std::vector<Matrix>& transition_P(int b) const;
@@ -250,6 +250,8 @@ struct tree_constants: public Object
 
   std::vector<int> branch_length_parameters;
 
+  int n_leaves = -1;
+
   tree_constants* clone() const {return new tree_constants(*this);}
 
   tree_constants(Parameters*, const Tree&);
@@ -327,8 +329,6 @@ private:
   /// The Tree - mean branch lengths = 1
   cow_ptr<SequenceTree> T_;
 
-  object_ptr<TreeInterface> t_;
-
   std::vector<int> affected_nodes;
   std::vector<std::vector<int>*> branches_from_affected_node;
 
@@ -357,7 +357,7 @@ public:
 
   const SequenceTree& T() const;
 
-  const TreeInterface& t() const;
+  TreeInterface t() const;
 
   expression_ref my_tree() const;
 

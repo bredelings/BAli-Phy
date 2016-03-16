@@ -9,7 +9,7 @@ int TreeInterface::n_nodes() const {
 }
 
 int TreeInterface::n_leaves() const {
-  return _n_leaves;
+  return P->TC->n_leaves;
 }
 
 int TreeInterface::n_branches() const {
@@ -282,14 +282,6 @@ double TreeInterface::branch_length(int b) const
 {
   b %= n_branches();
   return P->get_parameter_value(P->TC->branch_length_parameters[b]).as_double();
-}
-
-TreeInterface::TreeInterface(const Parameters* p)
-  :P(p)
-{
-  for(int n=0;n<n_nodes();n++)
-    if (is_leaf_node(n))
-      _n_leaves++;
 }
 
 vector<int> branches_from_leaves(const TreeInterface& t) 

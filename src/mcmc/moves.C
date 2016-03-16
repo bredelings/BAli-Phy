@@ -51,7 +51,7 @@ void change_branch_length_multi_move(owned_ptr<Model>& P, MoveStats& Stats,int b
 void sample_tri_one(owned_ptr<Model>& P, MoveStats&,int b) 
 {
   Parameters* PP = P.as<Parameters>();
-  auto& t = PP->t();
+  auto t = PP->t();
 
   int node1 = t.target(t.undirected(b));
   int node2 = t.source(t.undirected(b));
@@ -73,7 +73,7 @@ void sample_tri_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 
   assert(PP->variable_alignment()); 
 
-  auto& t = PP->t();
+  auto t = PP->t();
   
   int node1 = t.target(t.undirected(b));
   int node2 = t.source(t.undirected(b));
@@ -108,7 +108,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& St
 
   assert(PP->variable_alignment()); 
 
-  auto& t = PP->t();
+  auto t = PP->t();
 
   int node1 = t.target(t.undirected(b));
   int node2 = t.source(t.undirected(b));
@@ -163,7 +163,7 @@ void sample_tri_branch_type_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
 
   assert(PP->variable_alignment()); 
 
-  auto& t = PP->t();
+  auto t = PP->t();
 
   int node1 = t.target(t.undirected(b));
   int node2 = t.source(t.undirected(b));
@@ -366,7 +366,7 @@ void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
     change_branch_length(P,Stats,b);
     
   // Find a random direction of this branch, conditional on pointing to an internal node.
-  const auto& t = P.as<Parameters>()->t();
+  const auto t = P.as<Parameters>()->t();
   auto e = t.edge(b);
   if (uniform() < 0.5)
     e = e.reverse();

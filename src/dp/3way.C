@@ -127,7 +127,7 @@ namespace A3 {
 
   vector<HMM::bitmask_t> get_bitpath(const data_partition& P, const vector<int>& nodes)
   {
-    auto& t = P.t();
+    auto t = P.t();
 
     int b1 = t.find_branch(nodes[1],nodes[0]);
     int b2 = t.find_branch(nodes[0],nodes[2]);

@@ -8,11 +8,9 @@
 
 class Parameters;
 
-class TreeInterface: public Object
+class TreeInterface
 {
 public:
-  TreeInterface* clone() const {return new TreeInterface(*this);}
-
   const Parameters* P;
 
   int n_nodes() const;
@@ -65,7 +63,7 @@ public:
 
   double branch_length(int b) const;
 
-  TreeInterface(const Parameters*);
+  constexpr TreeInterface(const Parameters* p):P(p) {};
 };
 
 std::vector<int> branches_from_leaves(const TreeInterface& t);
