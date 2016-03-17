@@ -500,6 +500,39 @@ void TreeInterface::read_tree(const Tree& T)
   }
 }
 
+void TreeInterface::reconnect_branch(int s1, int t1, int t2)
+{
+  int b1 = find_branch(s1,t1);
+  int b2 = reverse(b1);
+
+  auto& affected_nodes = const_cast<Parameters*>(P)->affected_nodes;
+  auto& branches_from_affected_node = const_cast<Parameters*>(P)->branches_from_affected_node;
+  
+  if (not branches_from_affected_node[t1])
+  {
+    affected_nodes.push_back(t1);
+    auto v = new vector<int>();
+    for(int i=0; i<degree(t1); i++)
+      v->push_back(branch_out(t1, i));
+    branches_from_affected_node[t1] = v;
+  }
+  remove_element(*branches_from_affected_node[t1], b2);
+
+  if (not branches_from_affected_node[t2])
+  {
+    affected_nodes.push_back(t2);
+    auto v = new vector<int>();
+    for(int i=0; i<degree(t2); i++)
+      v->push_back(branch_out(t2, i));
+    branches_from_affected_node[t2] = v;
+  }
+  branches_from_affected_node[t2]->push_back(b2);
+
+  // Update branch source and target nodes
+  const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_branch[b1].second, t2);
+  const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_branch[b2].first,  t2);
+}
+
 void check_tree(const Tree& T, const TreeInterface& t)
 {
 #ifndef NDEBUG

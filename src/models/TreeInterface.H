@@ -67,6 +67,8 @@ public:
 
   void read_tree(const Tree&);
 
+  void reconnect_branch(int s1, int t1, int t2);
+
   constexpr TreeInterface(const Parameters* p):P(p) {};
 };
 
