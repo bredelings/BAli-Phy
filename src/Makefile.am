@@ -29,7 +29,7 @@ SUBDIRS = . builtins/
 
 noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3way.H \
            dp/dp-matrix.H setup.H dp/5way.H math/eigenvalue.H \
-           n_indels.H alignment/alignment-constraint.H math/exponential.H \
+           n_indels.H n_indels2.H alignment/alignment-constraint.H math/exponential.H \
            models/parameters.H substitution/substitution-cache.H alignment/alignment.H dp/hmm.H math/pow2.H \
            substitution/substitution.H dp/alignment-sums.H imodel/imodel.H probability/probability.H \
            substitution/substitution-index.H alignment/alignment-util.H likelihood.H mcmc/proposals.H \
@@ -103,7 +103,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  dp/alignment-sums.C alignment/alignment-util.C probability/probability.C models/model.C \
 	  alignment/alignment-constraint.C substitution/substitution-cache.C \
 	  monitor.C substitution/substitution-index.C tree/tree-util.C myexception.C math/pow2.C \
-	  tools/partition.C mcmc/proposals.C n_indels.C alignment/alignment-util2.C \
+	  tools/partition.C mcmc/proposals.C n_indels.C n_indels2.C alignment/alignment-util2.C \
 	  tools/parsimony.C tools/parsimony2.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
 	  imodel/setup.C computation/computation.C \

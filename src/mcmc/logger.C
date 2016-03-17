@@ -37,7 +37,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution/substitution.H"    // for get_model_probabilitiesby_alignment_column( )
 
 #include "monitor.H"         // for show_smodel( )
-#include "n_indels.H"
+#include "n_indels2.H"
 #include "tools/parsimony.H"
 #include "tools/parsimony2.H"
 #include "alignment/alignment-util.H"
@@ -220,13 +220,13 @@ string Get_Num_Substitutions_Function::operator()(const Model& M, long)
 string Get_Num_Indels_Function::operator()(const Model& M, long)
 {
   const Parameters& P = dynamic_cast<const Parameters&>(M);
-  return convertToString(n_indels(P[p].A(), P[p].T()));
+  return convertToString(n_indels(P[p].A(), P[p].t()));
 }
 
 string Get_Total_Length_Indels_Function::operator()(const Model& M, long)
 {
   const Parameters& P = dynamic_cast<const Parameters&>(M);
-  return convertToString(total_length_indels(P[p].A(), P[p].T()));
+  return convertToString(total_length_indels(P[p].A(), P[p].t()));
 }
 //
 string Get_Total_Alignment_Length_Function::operator()(const Model& M, long)
@@ -255,7 +255,7 @@ string Get_Total_Num_Indels_Function::operator()(const Model& M, long)
 
   int total = 0;
   for(int p=0;p<P.n_data_partitions();p++)
-    total += n_indels(P[p].A(), P[p].T());
+    total += n_indels(P[p].A(), P[p].t());
   return convertToString(total);
 }
 
@@ -265,7 +265,7 @@ string Get_Total_Total_Length_Indels_Function::operator()(const Model& M, long)
 
   int total = 0;
   for(int p=0;p<P.n_data_partitions();p++)
-    total += total_length_indels(P[p].A(), P[p].T());
+    total += total_length_indels(P[p].A(), P[p].t());
   return convertToString(total);
 }
 
