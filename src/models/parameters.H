@@ -362,7 +362,6 @@ public:
   void begin_modify_tree();
   void update_tree_node2(int n);
   void end_modify_tree();
-  void set_tree(const SequenceTree& T);
   void exchange_subtrees(int b1, int b2);
   void NNI(int b1, int b2);
   int SPR(int b1, int b2, bool safe, int bm=-1);

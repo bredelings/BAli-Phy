@@ -875,15 +875,6 @@ vector<string> Parameters::get_labels() const
   return TC->node_labels;
 }
 
-void Parameters::set_tree(const SequenceTree& T2)
-{
-  check_tree(T2, t());
-
-  t().read_tree(T2);
-
-  check_tree(T2,t());
-}
-
 void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 {
   uniquify_subA_indices();
@@ -898,28 +889,7 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
     note_alignment_changed_on_branch(t().find_branch(s1,t1));
   }
   
-  if (not branches_from_affected_node[t1])
-  {
-    affected_nodes.push_back(t1);
-    auto v = new vector<int>();
-    for(int i=0; i<t().degree(t1); i++)
-      v->push_back(t().branch_out(t1, i));
-    branches_from_affected_node[t1] = v;
-  }
-  remove_element(*branches_from_affected_node[t1], b2);
-
-  if (not branches_from_affected_node[t2])
-  {
-    affected_nodes.push_back(t2);
-    auto v = new vector<int>();
-    for(int i=0; i<t().degree(t2); i++)
-      v->push_back(t().branch_out(t2, i));
-    branches_from_affected_node[t2] = v;
-  }
-  branches_from_affected_node[t2]->push_back(b2);
-
-  context::set_parameter_value(TC->parameters_for_tree_branch[b1].second, t2);
-  context::set_parameter_value(TC->parameters_for_tree_branch[b2].first,  t2);
+  t().reconnect_branch(s1, t1, t2);
 
   if (safe)
   {
