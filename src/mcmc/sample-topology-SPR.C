@@ -45,6 +45,7 @@ using boost::dynamic_bitset;
 using std::vector;
 using std::string;
 using std::map;
+using std::pair;
 
 using std::cout;
 using std::cerr;
@@ -640,6 +641,8 @@ public:
   /// A list of attachment branches, where the current branch is B1 at index 0
   vector<int> attachment_branches;
 
+  vector<pair<int,tree_edge>> attachment_branch_pairs;
+
   /// A mapping of directed branches to their index in attachment_branches
   vector<int> branch_to_index_;
 
@@ -707,6 +710,34 @@ public:
   spr_info(const TreeInterface& T, int b, int branch_to_move = -1);
 }; 
 
+void branch_pairs_after(const TreeInterface& T, int prev_i, const tree_edge& prev_b, vector<pair<int,tree_edge>>& branch_pairs)
+{
+  for(const auto& b: T.branches_after(T.find_branch(prev_b)))
+  {
+    tree_edge curr_b = T.edge(b);
+    branch_pairs.push_back({prev_i,curr_b});
+    int curr_i = branch_pairs.size()-1;
+    branch_pairs_after(T, curr_i, curr_b, branch_pairs);
+  }
+}
+
+
+vector<pair<int,tree_edge>> branch_pairs_after(const TreeInterface& T, const tree_edge& b_parent)
+{
+  auto child_branches = T.branches_after(T.find_branch(b_parent));
+  auto b1 = T.edge( child_branches[0] );
+  auto b2 = T.edge( child_branches[1] );
+  tree_edge b0 { b1.node2, b2.node2 };
+
+  vector<pair<int,tree_edge>> branch_pairs;
+  branch_pairs.push_back({-1,b0});
+
+  branch_pairs_after(T, 0, b1, branch_pairs);
+  branch_pairs_after(T, 0, b2, branch_pairs);
+
+  return branch_pairs;
+}
+
 spr_info::spr_info(const TreeInterface& T_, int b, int branch_to_move)
   :T(T_),b_parent(b),B1(-1),BM(-1), branch_to_index_(T.n_branches()*2, -1)
 {
@@ -735,6 +766,7 @@ spr_info::spr_info(const TreeInterface& T_, int b, int branch_to_move)
   // a randomized_all_branches_after, or a sorted_all_branches_after.
   attachment_branches = T.all_branches_after_inclusive(b_parent);
   attachment_branches.erase(attachment_branches.begin());
+  attachment_branch_pairs = branch_pairs_after(T, T.edge(b_parent));
 
   // remove the moving branch name (BM) from the list of attachment branches
   for(int i=attachment_branches.size()-1;i>=0;i--)
