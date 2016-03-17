@@ -360,7 +360,6 @@ public:
 
   void reconnect_branch(int s1, int t1, int t2, bool safe);
   void begin_modify_tree();
-  void update_tree_node2(int n);
   void end_modify_tree();
   void exchange_subtrees(int b1, int b2);
   void NNI(int b1, int b2);

@@ -902,40 +902,12 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 
 void Parameters::begin_modify_tree()
 {
-#ifndef NDEBUG
-  for(auto p: branches_from_affected_node)
-    assert(not p);
-  assert(affected_nodes.empty());
-#endif
-}
-
-void Parameters::update_tree_node2(int n)
-{
-  assert(branches_from_affected_node[n]);
-  assert(TC->parameters_for_tree_node[n].size() == branches_from_affected_node[n]->size());
-
-  // These are the current edges.
-  const auto& branches = *branches_from_affected_node[n];
-
-  for(int i=0;i<branches.size();i++)
-    context::set_parameter_value(TC->parameters_for_tree_node[n][i], branches[i]);
-
-  delete branches_from_affected_node[n];
-  branches_from_affected_node[n] = nullptr;
+  t().begin_modify_tree();
 }
 
 void Parameters::end_modify_tree()
 {
-  for(int n: affected_nodes)
-    update_tree_node2(n);
-  
-  affected_nodes.clear();
-
-#ifndef NDEBUG
-  for(auto p: branches_from_affected_node)
-    assert(not p);
-  assert(affected_nodes.empty());
-#endif
+  t().end_modify_tree();
 }
 
 // This could create loops it we don't check that the subtrees are disjoint.
