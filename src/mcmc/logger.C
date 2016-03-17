@@ -338,7 +338,7 @@ string Get_Tree_Length_Function::operator()(const Model& M, long)
 {
   const Parameters& P = dynamic_cast<const Parameters&>(M);
 
-  return convertToString( mu_scale(P) * tree_length(P.T()) );
+  return convertToString( mu_scale(P) * tree_length(P.t()) );
 }
 
 string TreeFunction::operator()(const Model& M, long)
