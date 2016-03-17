@@ -236,12 +236,6 @@ void data_partition::recompute_alignment_matrix_from_pairwise_alignments()
   set_alignment( get_alignment(get_alphabet(), *seqs, *sequences, construct(t(), As)) );
 }
 
-const SequenceTree& data_partition::T() const
-{
-  return P->T();
-}
-
-
 TreeInterface data_partition::t() const
 {
   return P->t();
@@ -871,11 +865,6 @@ double Parameters::get_beta() const
   return get_parameter_value(0).as_double();
 }
 
-const SequenceTree& Parameters::T() const
-{
-  return *T_;
-}
-
 TreeInterface Parameters::t() const
 {
   return {this};
@@ -886,30 +875,30 @@ vector<string> Parameters::get_labels() const
   return TC->node_labels;
 }
 
-void Parameters::read_h_tree()
+void Parameters::read_h_tree(const Tree& T)
 {
   for(int n=0; n < t().n_nodes(); n++)
-    if (not T().node(n).is_leaf_node())
-      update_tree_node(n);
+    if (not T.node(n).is_leaf_node())
+      update_tree_node(T, n);
 
   for(int b=0; b < 2*t().n_branches(); b++)
   {
-    if (not T().directed_branch(b).source().is_leaf_node())
-      context::set_parameter_value(TC->parameters_for_tree_branch[b].first,  (int)T().directed_branch(b).source());
-    if (not T().directed_branch(b).target().is_leaf_node())
-      context::set_parameter_value(TC->parameters_for_tree_branch[b].second, (int)T().directed_branch(b).target());
+    if (not T.directed_branch(b).source().is_leaf_node())
+      context::set_parameter_value(TC->parameters_for_tree_branch[b].first,  (int)T.directed_branch(b).source());
+    if (not T.directed_branch(b).target().is_leaf_node())
+      context::set_parameter_value(TC->parameters_for_tree_branch[b].second, (int)T.directed_branch(b).target());
   }
 }
 
 void Parameters::set_tree(const SequenceTree& T2)
 {
-  check_h_tree();
+  check_h_tree(T2);
 
   *T_.modify() = T2;
 
-  read_h_tree();
+  read_h_tree(T2);
 
-  check_h_tree();
+  check_h_tree(T2);
 }
 
 void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
@@ -962,7 +951,7 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 
 void Parameters::begin_modify_tree()
 {
-  check_h_tree();
+  check_h_tree(*T_);
 
 #ifndef NDEBUG
   for(auto p: branches_from_affected_node)
@@ -974,13 +963,13 @@ void Parameters::begin_modify_tree()
 /*
  * Here, we fix up the nodes in the Haskell tree 
  */
-void Parameters::update_tree_node(int n)
+void Parameters::update_tree_node(const Tree& T, int n)
 {
-  assert(TC->parameters_for_tree_node[n].size() == T().node(n).degree());
+  assert(TC->parameters_for_tree_node[n].size() == T.node(n).degree());
 
   // These are the edges we seek to impose.
-  vector<int> edges = edges_connecting_to_node(T(),n);
-  assert(edges.size() == T().node(n).degree());
+  vector<int> edges = edges_connecting_to_node(T,n);
+  assert(edges.size() == T.node(n).degree());
 
   // These are the current edges.
   for(int i=0;i<edges.size();i++)
@@ -1009,7 +998,7 @@ void Parameters::end_modify_tree()
   
   affected_nodes.clear();
 
-  check_h_tree();
+  check_h_tree(*T_);
   
 #ifndef NDEBUG
   for(auto p: branches_from_affected_node)
@@ -1031,8 +1020,8 @@ void Parameters::exchange_subtrees(int br1, int br2)
   int s2 = t().source(b2);
   int t2 = t().target(b2);
 
-  //  assert(not T().subtree_contains(br1,s2));
-  //  assert(not T().subtree_contains(br2,s1));
+  //  assert(not t().subtree_contains(br1,s2));
+  //  assert(not t().subtree_contains(br2,s1));
 
   begin_modify_tree();
   reconnect_branch(s1,t1,t2,true);
@@ -1147,7 +1136,7 @@ void Parameters::NNI(int b1, int b2)
 /// Got m1<--->x1<--->m2 and n1<--->n2, and trying to move x1 onto (n1,n2)
 int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
 {
-  check_h_tree();
+  check_h_tree(*T_);
 
   int x1 = t().source(br1);
   int x2 = t().target(br1);
@@ -1231,32 +1220,32 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
   return dead_branch;
 }
 
-void Parameters::check_h_tree() const
+void Parameters::check_h_tree(const Tree& T) const
 {
 #ifndef NDEBUG
-  for(int b=0; b < 2*T().n_branches(); b++)
+  for(int b=0; b < 2*T.n_branches(); b++)
   {
     if (TC->parameters_for_tree_branch[b].first != -1)
     {
       auto s = get_parameter_value(TC->parameters_for_tree_branch[b].first );
-      assert(T().directed_branch(b).source() == s.as_int());
+      assert(T.directed_branch(b).source() == s.as_int());
     }
     if (TC->parameters_for_tree_branch[b].second != -1)
     {
       auto t = get_parameter_value(TC->parameters_for_tree_branch[b].second);
-      assert(T().directed_branch(b).target() == t.as_int());
+      assert(T.directed_branch(b).target() == t.as_int());
     }
   }
 
-  for(int n=0; n < n*T().n_nodes(); n++)
+  for(int n=0; n < T.n_nodes(); n++)
   {
-    if (T().node(n).is_leaf_node()) continue;
+    if (T.node(n).is_leaf_node()) continue;
     
     vector<int> VV;
     for(int p:TC->parameters_for_tree_node[n])
       VV.push_back(get_parameter_value(p).as_int());
 
-    vector<const_branchview> v = branches_from_node(T(), n);
+    vector<const_branchview> v = sorted_neighbors(T.node(n));
     vector<int> vv;
     for(const auto& bv: v)
       vv.push_back(bv);
@@ -1672,10 +1661,10 @@ Parameters::Parameters(const module_loader& L,
 
   TC = new tree_constants(this, tt);
   
-  read_h_tree();
+  read_h_tree(*T_);
 
 #ifndef NDEBUG
-  check_h_tree();
+  check_h_tree(*T_);
 
   evaluate_expression( (identifier("numNodes"), my_tree()));
   evaluate_expression( (identifier("numBranches"), my_tree()));

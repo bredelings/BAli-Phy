@@ -124,8 +124,6 @@ public:
 
   void recompute_alignment_matrix_from_pairwise_alignments();
   
-  const SequenceTree& T() const;
-
   TreeInterface t() const;
 
   /// Cached Transition Probabilities
@@ -357,8 +355,6 @@ public:
   void set_beta(double b);
   double get_beta() const;
 
-  const SequenceTree& T() const;
-
   TreeInterface t() const;
 
   std::vector<std::string> get_labels() const;
@@ -367,15 +363,15 @@ public:
 
   void reconnect_branch(int s1, int t1, int t2, bool safe);
   void begin_modify_tree();
-  void update_tree_node(int n);
   void update_tree_node2(int n);
   void end_modify_tree();
   void set_tree(const SequenceTree& T);
   void exchange_subtrees(int b1, int b2);
   void NNI(int b1, int b2);
   int SPR(int b1, int b2, bool safe, int bm=-1);
-  void read_h_tree();
-  void check_h_tree() const;
+  void update_tree_node(const Tree&, int n);
+  void read_h_tree(const Tree&);
+  void check_h_tree(const Tree&) const;
   void show_h_tree() const;
 
   /// Did we most recently hit beta==1 (1) or beta=0 (0)
