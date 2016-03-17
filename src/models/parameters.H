@@ -371,7 +371,6 @@ public:
   int SPR(int b1, int b2, bool safe, int bm=-1);
   void update_tree_node(const Tree&, int n);
   void read_h_tree(const Tree&);
-  void check_h_tree(const Tree&) const;
   void show_h_tree() const;
 
   /// Did we most recently hit beta==1 (1) or beta=0 (0)
@@ -471,6 +470,7 @@ public:
 	     const std::vector<int>&);
 };
 
+void check_tree(const Tree&, const TreeInterface&);
 bool accept_MH(const Model& P1,const Model& P2,double rho);
 
 

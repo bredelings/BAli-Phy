@@ -892,13 +892,13 @@ void Parameters::read_h_tree(const Tree& T)
 
 void Parameters::set_tree(const SequenceTree& T2)
 {
-  check_h_tree(T2);
+  check_tree(T2, t());
 
   *T_.modify() = T2;
 
   read_h_tree(T2);
 
-  check_h_tree(T2);
+  check_tree(T2,t());
 }
 
 void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
@@ -951,7 +951,7 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 
 void Parameters::begin_modify_tree()
 {
-  check_h_tree(*T_);
+  check_tree(*T_, t());
 
 #ifndef NDEBUG
   for(auto p: branches_from_affected_node)
@@ -998,7 +998,7 @@ void Parameters::end_modify_tree()
   
   affected_nodes.clear();
 
-  check_h_tree(*T_);
+  check_tree(*T_, t());
   
 #ifndef NDEBUG
   for(auto p: branches_from_affected_node)
@@ -1136,7 +1136,7 @@ void Parameters::NNI(int b1, int b2)
 /// Got m1<--->x1<--->m2 and n1<--->n2, and trying to move x1 onto (n1,n2)
 int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
 {
-  check_h_tree(*T_);
+  check_tree(*T_, t());
 
   int x1 = t().source(br1);
   int x2 = t().target(br1);
@@ -1220,20 +1220,20 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
   return dead_branch;
 }
 
-void Parameters::check_h_tree(const Tree& T) const
+void check_tree(const Tree& T, const TreeInterface& t)
 {
 #ifndef NDEBUG
   for(int b=0; b < 2*T.n_branches(); b++)
   {
-    assert(T.directed_branch(b).source() == t().source(b));
-    assert(T.directed_branch(b).target() == t().target(b));
+    assert(T.directed_branch(b).source() == t.source(b));
+    assert(T.directed_branch(b).target() == t.target(b));
   }
 
   for(int n=0; n < T.n_nodes(); n++)
   {
     if (T.node(n).is_leaf_node()) continue;
     
-    vector<int> VV = t().branches_out(n);
+    vector<int> VV = t.branches_out(n);
 
     vector<const_branchview> v = sorted_neighbors(T.node(n));
     vector<int> vv;
@@ -1654,7 +1654,7 @@ Parameters::Parameters(const module_loader& L,
   read_h_tree(*T_);
 
 #ifndef NDEBUG
-  check_h_tree(*T_);
+  check_tree(*T_, t());
 
   evaluate_expression( (identifier("numNodes"), my_tree()));
   evaluate_expression( (identifier("numBranches"), my_tree()));
