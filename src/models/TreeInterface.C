@@ -393,3 +393,10 @@ unsigned topology_distance(const TreeInterface& T1, const TreeInterface& T2)
   return (n1-shared) + (n2-shared);
 }
 
+double tree_length(const TreeInterface& t)
+{
+  double total = 0;
+  for(int b=0; b < t.n_branches(); b++)
+    total += t.branch_length(b);
+  return total;
+}

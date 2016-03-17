@@ -67,6 +67,8 @@ public:
   constexpr TreeInterface(const Parameters* p):P(p) {};
 };
 
+double tree_length(const TreeInterface& t);
+
 std::vector<int> branches_from_leaves(const TreeInterface& t);
 
 std::vector<boost::dynamic_bitset<>> get_partitions(const TreeInterface& t);
