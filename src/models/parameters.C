@@ -894,8 +894,6 @@ void Parameters::set_tree(const SequenceTree& T2)
 {
   check_tree(T2, t());
 
-  *T_.modify() = T2;
-
   read_h_tree(T2);
 
   check_tree(T2,t());
@@ -915,8 +913,6 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
     note_alignment_changed_on_branch(t().find_branch(s1,t1));
   }
   
-  T_.modify()->reconnect_branch(s1,t1,t2);
-
   if (not branches_from_affected_node[t1])
   {
     affected_nodes.push_back(t1);
@@ -951,8 +947,6 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 
 void Parameters::begin_modify_tree()
 {
-  check_tree(*T_, t());
-
 #ifndef NDEBUG
   for(auto p: branches_from_affected_node)
     assert(not p);
@@ -998,8 +992,6 @@ void Parameters::end_modify_tree()
   
   affected_nodes.clear();
 
-  check_tree(*T_, t());
-  
 #ifndef NDEBUG
   for(auto p: branches_from_affected_node)
     assert(not p);
@@ -1136,8 +1128,6 @@ void Parameters::NNI(int b1, int b2)
 /// Got m1<--->x1<--->m2 and n1<--->n2, and trying to move x1 onto (n1,n2)
 int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
 {
-  check_tree(*T_, t());
-
   int x1 = t().source(br1);
   int x2 = t().target(br1);
 
@@ -1498,7 +1488,6 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
 {
   // this is setlength_unsafe( ) .. but computes the undirected name.
   b = t().undirected(b);
-  T_.modify()->directed_branch(b).set_length(l);
 
   context::set_parameter_value(TC->branch_length_parameters[b], l);
 
@@ -1515,7 +1504,6 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
 void Parameters::setlength_unsafe(int b,double l) 
 {
   b = t().undirected(b);
-  T_.modify()->directed_branch(b).set_length(l);
 
   context::set_parameter_value(TC->branch_length_parameters[b], l);
 }
@@ -1523,7 +1511,6 @@ void Parameters::setlength_unsafe(int b,double l)
 void Parameters::setlength(int b,double l) 
 {
   b = t().undirected(b);
-  T_.modify()->directed_branch(b).set_length(l);
 
   context::set_parameter_value(TC->branch_length_parameters[b], l);
 
@@ -1622,7 +1609,6 @@ Parameters::Parameters(const module_loader& L,
 		       const vector<int>& scale_mapping)
   :Model(L),
    PC(new parameters_constants(A,tt,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
-   T_(tt),
    updown(-1)
 {
   // \todo FIXME:cleanup|fragile - Don't touch C here directly!
@@ -1651,11 +1637,9 @@ Parameters::Parameters(const module_loader& L,
 
   TC = new tree_constants(this, tt);
   
-  read_h_tree(*T_);
+  read_h_tree(tt);
 
 #ifndef NDEBUG
-  check_tree(*T_, t());
-
   evaluate_expression( (identifier("numNodes"), my_tree()));
   evaluate_expression( (identifier("numBranches"), my_tree()));
   evaluate_expression( (identifier("edgesOutOfNode"), my_tree(), 0));

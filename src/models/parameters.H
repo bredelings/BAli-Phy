@@ -326,9 +326,6 @@ private:
   /// The alignments and cached computations
   mutable std::vector<data_partition> data_partitions;
 
-  /// The Tree - mean branch lengths = 1
-  cow_ptr<SequenceTree> T_;
-
   std::vector<int> affected_nodes;
   std::vector<std::vector<int>*> branches_from_affected_node;
 
