@@ -346,14 +346,17 @@ string TreeFunction::operator()(const Model& M, long)
 {
   const Parameters& P = dynamic_cast<const Parameters&>(M);
 
-  SequenceTree T = P.T();
+  auto T = P.t();
     
   double scale = mu_scale(P);
 
+  vector<double> L;
   for(int b=0;b<T.n_branches();b++)
-    T.branch(b).set_length(scale*T.branch(b).length());
+    L.push_back(scale*T.branch_length(b));
 
-  return T.write();
+  vector<string> names = P.get_labels();
+  
+  return write(T, L, names);
 }
 
 string MAP_Function::operator()(const Model& M, long t)
