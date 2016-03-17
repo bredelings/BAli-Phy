@@ -2,6 +2,7 @@
 #include "models/parameters.H"
 
 using std::vector;
+using std::string;
 using boost::dynamic_bitset;
 
 int TreeInterface::n_nodes() const {
@@ -400,3 +401,69 @@ double tree_length(const TreeInterface& t)
     total += t.branch_length(b);
   return total;
 }
+
+string write_branch(const TreeInterface& T, int b, const vector<string>& names);
+
+string write_branches_and_node(const TreeInterface& T, const vector<int>& branches, int node, const vector<string>& names)
+{
+  string output;
+  
+  if (branches.size())
+  {
+    output = "(";
+    for(int i=0;i<branches.size();i++) {
+      output += write_branch(T, branches[i], names);
+      if (i+1 < branches.size())
+	output += ',';
+    }
+    output += ")";
+  }
+
+  // Print the name (it might be empty)
+  if (names[node].size())
+    output += "'" + names[node] + "'";
+
+  return output;
+}
+
+string write_branch(const TreeInterface& T, int b, const vector<string>& names)
+{
+  // If this is an internal node, then print the subtrees
+  return write_branches_and_node(T, T.branches_after(b), T.target(b), names);
+}
+
+string write(const TreeInterface& T, int root, const vector<string>& names)
+{
+  return write_branches_and_node(T, T.branches_out(root), root, names) + ";";
+}
+
+/// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
+std::string write(const TreeInterface& T, const std::vector<double>& L, const std::vector<std::string>& names)
+{
+  int root = T.target(0);
+
+  vector<int> branches = T.all_branches_from_node(root);
+  vector<string> names2 = names;
+  for(int b: branches)
+  {
+    int n = T.target(b);
+    names2[n] +=  (":" + std::to_string(L[T.undirected(b)]));
+  }
+  return write(T, root, names2);
+}
+
+/// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
+std::string write(const TreeInterface& T, const std::vector<std::string>& names, bool print_lengths)
+{
+  int root = T.target(0);
+  if (print_lengths)
+  {
+    vector<double> L;
+    for(int i=0;i<T.n_branches();i++)
+      L.push_back(T.branch_length(i));
+    return write(T, L, names);
+  }
+  else
+    return write(T, root, names);
+}
+

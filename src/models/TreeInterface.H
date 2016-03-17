@@ -75,4 +75,9 @@ std::vector<boost::dynamic_bitset<>> get_partitions(const TreeInterface& t);
 
 unsigned topology_distance(const TreeInterface& T1, const TreeInterface& T2);
 
+/// Return a Newick string representation of the tree 'T' with names 'names' and branch lengths L.
+std::string write(const TreeInterface& T, const std::vector<double>& L, const std::vector<std::string>& names);
+/// Return a Newick string representation of the tree 'T' with names 'names', including branch lengths by default.
+std::string write(const TreeInterface& T, const std::vector<std::string>& names, bool print_lengths=true); 
+
 #endif
