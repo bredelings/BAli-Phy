@@ -533,6 +533,45 @@ void TreeInterface::reconnect_branch(int s1, int t1, int t2)
   const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_branch[b2].first,  t2);
 }
 
+void TreeInterface::begin_modify_tree()
+{
+#ifndef NDEBUG
+  for(auto p: P->branches_from_affected_node)
+    assert(not p);
+  assert(P->affected_nodes.empty());
+#endif
+}
+
+void TreeInterface::end_modify_tree_node(int n)
+{
+  assert(P->branches_from_affected_node[n]);
+  assert(P->TC->parameters_for_tree_node[n].size() == P->branches_from_affected_node[n]->size());
+
+  // These are the current edges.
+  const auto& branches = *P->branches_from_affected_node[n];
+
+  assert(branches.size() == P->TC->parameters_for_tree_node[n].size());
+  for(int i=0;i<branches.size();i++)
+    const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_node[n][i], branches[i]);
+
+  delete P->branches_from_affected_node[n];
+  const_cast<Parameters*>(P)->branches_from_affected_node[n] = nullptr;
+}
+
+void TreeInterface::end_modify_tree()
+{
+  for(int n: P->affected_nodes)
+    end_modify_tree_node(n);
+  
+  const_cast<Parameters*>(P)->affected_nodes.clear();
+
+#ifndef NDEBUG
+  for(auto p: P->branches_from_affected_node)
+    assert(not p);
+  assert(P->affected_nodes.empty());
+#endif
+}
+
 void check_tree(const Tree& T, const TreeInterface& t)
 {
 #ifndef NDEBUG
