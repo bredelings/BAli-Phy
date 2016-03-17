@@ -875,26 +875,11 @@ vector<string> Parameters::get_labels() const
   return TC->node_labels;
 }
 
-void Parameters::read_h_tree(const Tree& T)
-{
-  for(int n=0; n < t().n_nodes(); n++)
-    if (not T.node(n).is_leaf_node())
-      update_tree_node(T, n);
-
-  for(int b=0; b < 2*t().n_branches(); b++)
-  {
-    if (not T.directed_branch(b).source().is_leaf_node())
-      context::set_parameter_value(TC->parameters_for_tree_branch[b].first,  (int)T.directed_branch(b).source());
-    if (not T.directed_branch(b).target().is_leaf_node())
-      context::set_parameter_value(TC->parameters_for_tree_branch[b].second, (int)T.directed_branch(b).target());
-  }
-}
-
 void Parameters::set_tree(const SequenceTree& T2)
 {
   check_tree(T2, t());
 
-  read_h_tree(T2);
+  t().read_tree(T2);
 
   check_tree(T2,t());
 }
@@ -952,22 +937,6 @@ void Parameters::begin_modify_tree()
     assert(not p);
   assert(affected_nodes.empty());
 #endif
-}
-
-/*
- * Here, we fix up the nodes in the Haskell tree 
- */
-void Parameters::update_tree_node(const Tree& T, int n)
-{
-  assert(TC->parameters_for_tree_node[n].size() == T.node(n).degree());
-
-  // These are the edges we seek to impose.
-  vector<int> edges = edges_connecting_to_node(T,n);
-  assert(edges.size() == T.node(n).degree());
-
-  // These are the current edges.
-  for(int i=0;i<edges.size();i++)
-    context::set_parameter_value(TC->parameters_for_tree_node[n][i], edges[i]);
 }
 
 void Parameters::update_tree_node2(int n)
@@ -1637,7 +1606,7 @@ Parameters::Parameters(const module_loader& L,
 
   TC = new tree_constants(this, tt);
   
-  read_h_tree(tt);
+  t().read_tree(tt);
 
 #ifndef NDEBUG
   evaluate_expression( (identifier("numNodes"), my_tree()));

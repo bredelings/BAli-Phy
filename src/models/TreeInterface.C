@@ -467,3 +467,36 @@ std::string write(const TreeInterface& T, const std::vector<std::string>& names,
     return write(T, root, names);
 }
 
+vector<int> edges_connecting_to_node(const Tree& T, int n);
+
+/*
+ * Here, we fix up the nodes in the Haskell tree 
+ */
+void TreeInterface::read_tree_node(const Tree& T, int n)
+{
+  assert(P->TC->parameters_for_tree_node[n].size() == T.node(n).degree());
+
+  // These are the edges we seek to impose.
+  vector<int> edges = edges_connecting_to_node(T,n);
+  assert(edges.size() == T.node(n).degree());
+
+  // These are the current edges.
+  for(int i=0;i<edges.size();i++)
+    const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_node[n][i], edges[i]);
+}
+
+void TreeInterface::read_tree(const Tree& T)
+{
+  for(int n=0; n < T.n_nodes(); n++)
+    if (not T.node(n).is_leaf_node())
+      read_tree_node(T, n);
+
+  for(int b=0; b < 2*T.n_branches(); b++)
+  {
+    if (not T.directed_branch(b).source().is_leaf_node())
+      const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_branch[b].first,  (int)T.directed_branch(b).source());
+    if (not T.directed_branch(b).target().is_leaf_node())
+      const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_branch[b].second, (int)T.directed_branch(b).target());
+  }
+}
+

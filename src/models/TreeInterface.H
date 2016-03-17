@@ -10,6 +10,7 @@ class Parameters;
 
 class TreeInterface
 {
+  void read_tree_node(const Tree&, int n);
 public:
   const Parameters* P;
 
@@ -63,6 +64,8 @@ public:
   tree_edge edge(int b) const;
 
   double branch_length(int b) const;
+
+  void read_tree(const Tree&);
 
   constexpr TreeInterface(const Parameters* p):P(p) {};
 };
