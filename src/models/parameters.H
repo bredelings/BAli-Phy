@@ -465,7 +465,6 @@ public:
 	     const std::vector<int>&);
 };
 
-void check_tree(const Tree&, const TreeInterface&);
 bool accept_MH(const Model& P1,const Model& P2,double rho);
 
 

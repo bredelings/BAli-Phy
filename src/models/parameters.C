@@ -1179,35 +1179,6 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
   return dead_branch;
 }
 
-void check_tree(const Tree& T, const TreeInterface& t)
-{
-#ifndef NDEBUG
-  for(int b=0; b < 2*T.n_branches(); b++)
-  {
-    assert(T.directed_branch(b).source() == t.source(b));
-    assert(T.directed_branch(b).target() == t.target(b));
-  }
-
-  for(int n=0; n < T.n_nodes(); n++)
-  {
-    if (T.node(n).is_leaf_node()) continue;
-    
-    vector<int> VV = t.branches_out(n);
-
-    vector<const_branchview> v = sorted_neighbors(T.node(n));
-    vector<int> vv;
-    for(const auto& bv: v)
-      vv.push_back(bv);
-
-    assert(VV.size() == v.size());
-    for(int elem: v)
-      assert(includes(VV,elem));
-    for(int elem: VV)
-      assert(includes(vv,elem));
-  }
-#endif
-}
-
 void Parameters::show_h_tree() const
 {
   for(int b=0; b < 2*t().n_branches(); b++)
