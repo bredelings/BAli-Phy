@@ -37,6 +37,7 @@ extern "C" {
 #include "setup.H"
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
+#include "alignment/alignment-util2.H"
 
 using std::valarray;
 using std::vector;
@@ -124,7 +125,7 @@ void print_stats(std::ostream& o, const Model& M, bool /* print_alignment */)
   if (P)
   {
     for(int i=0;i<P->n_data_partitions();i++)
-      check_alignment((*P)[i].A(), P->T(), "print_stats:end");
+      check_alignment((*P)[i].A(), P->t(), "print_stats:end");
   }
 #endif
 }
