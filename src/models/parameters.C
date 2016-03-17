@@ -1225,25 +1225,15 @@ void Parameters::check_h_tree(const Tree& T) const
 #ifndef NDEBUG
   for(int b=0; b < 2*T.n_branches(); b++)
   {
-    if (TC->parameters_for_tree_branch[b].first != -1)
-    {
-      auto s = get_parameter_value(TC->parameters_for_tree_branch[b].first );
-      assert(T.directed_branch(b).source() == s.as_int());
-    }
-    if (TC->parameters_for_tree_branch[b].second != -1)
-    {
-      auto t = get_parameter_value(TC->parameters_for_tree_branch[b].second);
-      assert(T.directed_branch(b).target() == t.as_int());
-    }
+    assert(T.directed_branch(b).source() == t().source(b));
+    assert(T.directed_branch(b).target() == t().target(b));
   }
 
   for(int n=0; n < T.n_nodes(); n++)
   {
     if (T.node(n).is_leaf_node()) continue;
     
-    vector<int> VV;
-    for(int p:TC->parameters_for_tree_node[n])
-      VV.push_back(get_parameter_value(p).as_int());
+    vector<int> VV = t().branches_out(n);
 
     vector<const_branchview> v = sorted_neighbors(T.node(n));
     vector<int> vv;
