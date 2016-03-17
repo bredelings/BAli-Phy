@@ -289,6 +289,12 @@ double TreeInterface::branch_length(int b) const
   return P->get_parameter_value(P->TC->branch_length_parameters[b]).as_double();
 }
 
+void TreeInterface::set_branch_length(int b, double l)
+{
+  b %= n_branches();
+  const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->branch_length_parameters[b], l);
+}
+
 vector<int> branches_from_leaves(const TreeInterface& t) 
 {
   vector<int> branch_list;

@@ -65,6 +65,7 @@ public:
   tree_edge edge(int b) const;
 
   double branch_length(int b) const;
+  void set_branch_length(int b, double l);
 
   void read_tree(const Tree&);
 
