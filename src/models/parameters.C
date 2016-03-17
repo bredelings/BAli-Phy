@@ -1371,7 +1371,7 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
   // this is setlength_unsafe( ) .. but computes the undirected name.
   b = t().undirected(b);
 
-  context::set_parameter_value(TC->branch_length_parameters[b], l);
+  t().set_branch_length(b, l);
 
   // Update D parameters
   for(int s=0; s<n_scales(); s++) 
@@ -1385,16 +1385,14 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
 
 void Parameters::setlength_unsafe(int b,double l) 
 {
-  b = t().undirected(b);
-
-  context::set_parameter_value(TC->branch_length_parameters[b], l);
+  t().set_branch_length(b, l);
 }
 
 void Parameters::setlength(int b,double l) 
 {
   b = t().undirected(b);
 
-  context::set_parameter_value(TC->branch_length_parameters[b], l);
+  t().set_branch_length(b, l);
 
   // Update D parameters
   for(int s=0; s<n_scales(); s++) 
