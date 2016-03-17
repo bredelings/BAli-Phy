@@ -11,7 +11,7 @@ class Parameters;
 class TreeInterface
 {
   void read_tree_node(const Tree&, int n);
-  void end_modify_tree_node(int n);
+  void end_modify_node(int n);
 public:
   const Parameters* P;
 
@@ -68,9 +68,9 @@ public:
 
   void read_tree(const Tree&);
 
-  void begin_modify_tree();
+  void begin_modify_topology();
   void reconnect_branch(int s1, int t1, int t2);
-  void end_modify_tree();
+  void end_modify_topology();
 
   constexpr TreeInterface(const Parameters* p):P(p) {};
 };

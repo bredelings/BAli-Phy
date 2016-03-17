@@ -359,8 +359,8 @@ public:
   expression_ref my_tree() const;
 
   void reconnect_branch(int s1, int t1, int t2, bool safe);
-  void begin_modify_tree();
-  void end_modify_tree();
+  void begin_modify_topology();
+  void end_modify_topology();
   void exchange_subtrees(int b1, int b2);
   void NNI(int b1, int b2);
   int SPR(int b1, int b2, bool safe, int bm=-1);

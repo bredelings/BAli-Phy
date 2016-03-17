@@ -533,7 +533,7 @@ void TreeInterface::reconnect_branch(int s1, int t1, int t2)
   const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_branch[b2].first,  t2);
 }
 
-void TreeInterface::begin_modify_tree()
+void TreeInterface::begin_modify_topology()
 {
 #ifndef NDEBUG
   for(auto p: P->branches_from_affected_node)
@@ -542,7 +542,7 @@ void TreeInterface::begin_modify_tree()
 #endif
 }
 
-void TreeInterface::end_modify_tree_node(int n)
+void TreeInterface::end_modify_node(int n)
 {
   assert(P->branches_from_affected_node[n]);
   assert(P->TC->parameters_for_tree_node[n].size() == P->branches_from_affected_node[n]->size());
@@ -558,10 +558,10 @@ void TreeInterface::end_modify_tree_node(int n)
   const_cast<Parameters*>(P)->branches_from_affected_node[n] = nullptr;
 }
 
-void TreeInterface::end_modify_tree()
+void TreeInterface::end_modify_topology()
 {
   for(int n: P->affected_nodes)
-    end_modify_tree_node(n);
+    end_modify_node(n);
   
   const_cast<Parameters*>(P)->affected_nodes.clear();
 

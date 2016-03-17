@@ -900,14 +900,14 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   
 }
 
-void Parameters::begin_modify_tree()
+void Parameters::begin_modify_topology()
 {
-  t().begin_modify_tree();
+  t().begin_modify_topology();
 }
 
-void Parameters::end_modify_tree()
+void Parameters::end_modify_topology()
 {
-  t().end_modify_tree();
+  t().end_modify_topology();
 }
 
 // This could create loops it we don't check that the subtrees are disjoint.
@@ -926,10 +926,10 @@ void Parameters::exchange_subtrees(int br1, int br2)
   //  assert(not t().subtree_contains(br1,s2));
   //  assert(not t().subtree_contains(br2,s1));
 
-  begin_modify_tree();
+  begin_modify_topology();
   reconnect_branch(s1,t1,t2,true);
   reconnect_branch(s2,t2,t1,true);
-  end_modify_tree();
+  end_modify_topology();
 }
 
 #include "dp/hmm.H"
@@ -1100,7 +1100,7 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
 
   //------------ Reconnect the branches ---------------//
 
-  begin_modify_tree();
+  begin_modify_topology();
 
   // Reconnect (m1,x) to m2, making x a degree-2 node
   // This leaves m1 connected to its branch, so m1 can be a leaf.
@@ -1116,7 +1116,7 @@ int Parameters::SPR(int br1, int br2, bool safe, int branch_to_move)
   assert(not t().is_leaf_node(n2));
   reconnect_branch(n1, n2, x1, safe);
 
-  end_modify_tree();
+  end_modify_topology();
 
   return dead_branch;
 }
