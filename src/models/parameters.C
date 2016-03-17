@@ -777,8 +777,9 @@ vector<int> edges_connecting_to_node(const Tree& T, int n)
   return branch_list_;
 }
 
-tree_constants::tree_constants(Parameters* p, const Tree& T)
-  :n_leaves(T.n_leaves())
+tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
+  :n_leaves(T.n_leaves()),
+   node_labels(T.get_labels())
 {
   /*------------------------- Create the tree structure -----------------------*/
   vector<expression_ref> node_branches;
@@ -878,6 +879,11 @@ const SequenceTree& Parameters::T() const
 TreeInterface Parameters::t() const
 {
   return {this};
+}
+
+vector<string> Parameters::get_labels() const
+{
+  return TC->node_labels;
 }
 
 void Parameters::read_h_tree()

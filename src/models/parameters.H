@@ -252,9 +252,11 @@ struct tree_constants: public Object
 
   int n_leaves = -1;
 
+  std::vector<std::string> node_labels;
+  
   tree_constants* clone() const {return new tree_constants(*this);}
 
-  tree_constants(Parameters*, const Tree&);
+  tree_constants(Parameters*, const SequenceTree&);
 };
 
 struct parameters_constants: public Object
@@ -359,6 +361,8 @@ public:
 
   TreeInterface t() const;
 
+  std::vector<std::string> get_labels() const;
+  
   expression_ref my_tree() const;
 
   void reconnect_branch(int s1, int t1, int t2, bool safe);
