@@ -40,7 +40,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            tools/bootstrap.H tools/inverse.H tools/statistics.H \
            tools/colors.H tools/joint-A-T.H  tools/stats-table.H \
            tools/distance-methods.H tools/optimize.H tools/tree-dist.H \
-           tools/findroot.H tools/parsimony.H tools/mctree.H \
+           tools/findroot.H tools/parsimony.H tools/parsimony2.H tools/mctree.H \
            version.H cow-ptr.H alignment/index-matrix.H cached_value.H \
 	   tools/consensus-tree.H tools/partition.H mcmc/slice-sampling.H \
 	   timer_stack.H mcmc/setup.H owned-ptr.H alignment/alignment-util2.H \
@@ -104,7 +104,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  alignment/alignment-constraint.C substitution/substitution-cache.C \
 	  monitor.C substitution/substitution-index.C tree/tree-util.C myexception.C math/pow2.C \
 	  tools/partition.C mcmc/proposals.C n_indels.C alignment/alignment-util2.C \
-	  tools/parsimony.C version.C mcmc/slice-sampling.C timer_stack.C \
+	  tools/parsimony.C tools/parsimony2.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
 	  imodel/setup.C computation/computation.C \
 	  computation/graph_register.C computation/show_graph.C computation/module.C \
