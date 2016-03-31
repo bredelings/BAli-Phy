@@ -537,7 +537,9 @@ struct spr_attachment_probabilities: public map<tree_edge,log_double_t>
 ///  and choose the point on the branch specified in \a locations.
 int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attachment_points& locations, bool safe, int branch_to_move = -1)
 {
+#ifndef NDEBUG
   double total_length_before = tree_length(P.t());
+#endif
 
   // If we are already at b_target, then its one of the branches after b_subtree.  Then do nothing.
   if (P.t().target(b_subtree) == P.t().source(b_target) or
@@ -602,8 +604,10 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
     P.LC_invalidate_one_branch(P.t().reverse(b2));         //  ... mark likelihood caches for recomputing.
   }
 
+#ifndef NDEBUG
   double total_length_after = tree_length(P.t());
   assert(std::abs(total_length_after - total_length_before) < 1.0e-9);
+#endif
 
   // this is bidirectional, but does not propagate
   P.invalidate_subA_index_one_branch(BM);
