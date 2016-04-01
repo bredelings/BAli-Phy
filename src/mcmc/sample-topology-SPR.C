@@ -559,7 +559,7 @@ int SPR_at_location(Parameters& P, int b_subtree, int b_target, const spr_attach
   // U is the fraction of the way from B_unbroken_target.node1 
   // toward B_unbroken_target.node2 to place the new node.
   double U = record->second; 
-  
+
   // node joining the subtree to the rest of the tree
   int n0 = P.t().target(b_subtree);
 
@@ -837,6 +837,9 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, int b1, 
 
   // Compute the probability of each attachment point
   // After this point, the LC root will now be the same node: the attachment point.
+  vector<Parameters> Ps;
+  Ps.reserve(branch_names.size());
+  Ps.push_back(P);
   for(int i=1;i<branch_names.size();i++) 
   {
     // Define target branch b2 - pointing away from b1
@@ -844,20 +847,22 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, int b1, 
     tree_edge B2 = I.get_tree_edge(b2);
 
     // ** 1. SPR ** : alter the tree.
-    int BM2 = SPR_at_location(P, b1, b2, locations, false, I.BM);
+    Ps.emplace_back(Ps.back());
+    auto& p = Ps.back();
+    int BM2 = SPR_at_location(p, b1, b2, locations, false, I.BM);
     assert(BM2 == I.BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
 
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
-    assert(std::abs(P.t().branch_length(I.B1) - L[0]) < 1.0e-9);
+    assert(std::abs(p.t().branch_length(I.B1) - L[0]) < 1.0e-9);
 
     // We want caches for each directed branch that is not in the PRUNED subtree to be accurate
     //   for the situation that the PRUNED subtree is not behind them.
 
 
     // **3. RECORD** the tree and likelihood
-    Pr[B2] = heated_likelihood_unaligned_root(P) * P.prior_no_alignment();
+    Pr[B2] = heated_likelihood_unaligned_root(p) * p.prior_no_alignment();
 #ifdef DEBUG_SPR_ALL
-    log_double_t PR2 = heated_likelihood_unaligned_root(P);
+    log_double_t PR2 = heated_likelihood_unaligned_root(p);
     Pr.LLL[B2] = PR2;
     //    log_double_t PR1 = P.heated_likelihood();
     //    cerr<<"  PR1 = "<<PR1.log()<<"  PR2 = "<<PR2.log()<<"   diff = "<<PR2.log() - PR1.log()<<endl;
