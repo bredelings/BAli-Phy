@@ -780,7 +780,7 @@ spr_attachment_points get_spr_attachment_points(const TreeInterface& T, int b1, 
 /// After this routine, likelihood caches and subalignment indices for branches in the
 /// non-pruned subtree should reflect the situation where the subtree has been pruned.
 ///
-spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1, const spr_attachment_points& locations, int branch_to_move = -1)
+spr_attachment_probabilities SPR_search_attachment_points(Parameters P, int b1, const spr_attachment_points& locations, int branch_to_move = -1)
 {
   // The attachment node for the pruned subtree.
   // This node will move around, but we will always peel up to this node to calculate the likelihood.
@@ -901,8 +901,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
   if (P.variable_alignment())
 #endif
   {
-    Parameters P_temp = p[1];
-    spr_attachment_probabilities PrB2 = SPR_search_attachment_points(P_temp, b1, locations, I.BM);
+    spr_attachment_probabilities PrB2 = SPR_search_attachment_points(p[1], b1, locations, I.BM);
     vector<log_double_t> Pr2 = I.convert_to_vector(PrB2);
     
     if (not P.variable_alignment())
