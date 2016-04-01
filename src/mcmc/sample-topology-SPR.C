@@ -870,17 +870,21 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, int b1, 
   // Compute the probability of each attachment point
   // After this point, the LC root will now be the same node: the attachment point.
   vector<Parameters> Ps;
-  Ps.reserve(branch_names.size());
+  Ps.reserve(I.attachment_branch_pairs.size());
   Ps.push_back(P);
-  for(int i=1;i<branch_names.size();i++) 
+  for(int i=1;i<I.attachment_branch_pairs.size();i++) 
   {
     // Define target branch b2 - pointing away from b1
-    int b2 = branch_names[i];
-    tree_edge B2 = I.get_tree_edge(b2);
-
+    const auto& BB = I.attachment_branch_pairs[i];
+    int prev_i = BB.first;
+    tree_edge B2 = BB.second;
+    
     // ** 1. SPR ** : alter the tree.
-    Ps.emplace_back(Ps.back());
+    if (prev_i != 0) assert(I.attachment_branch_pairs[prev_i].second.node2 == B2.node1);
+    Ps.push_back(Ps[prev_i]);
+    assert(Ps.size() == i+1);
     auto& p = Ps.back();
+    int b2 = p.t().find_branch(B2);
     int BM2 = SPR_at_location(p, b1, b2, locations, false, I.BM);
     assert(BM2 == I.BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
 
