@@ -394,7 +394,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   assert(p[0].t().is_connected(nodes[0],nodes[2]));
   assert(p[0].t().is_connected(nodes[0],nodes[3]));
 
-  bool tree_changed = not p[1].t().is_connected(nodes[0],nodes[2]) or not p[1].t().is_connected(nodes[0],nodes[3]);
+  //  bool tree_changed = not p[1].t().is_connected(nodes[0],nodes[2]) or not p[1].t().is_connected(nodes[0],nodes[3]);
 
   // enforce tree constraints
   //  if (not extends(p[1].t(), P.PC->TC))
@@ -712,7 +712,7 @@ spr_info::spr_info(const TreeInterface& T_, int b)
   assert(child_branches.size() == 2);
 
   int B1 = child_branches[0];
-  int B2 = child_branches[1];
+  //  int B2 = child_branches[1];
   B0 = tree_edge(T.target(child_branches[0]), T.target(child_branches[1]));
 
   /*----------- get the list of possible attachment points, with [0] being the current one.------- */
