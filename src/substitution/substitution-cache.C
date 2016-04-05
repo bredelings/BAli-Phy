@@ -290,11 +290,31 @@ void Likelihood_Cache::invalidate_all() {
 }
 
 void Likelihood_Cache::invalidate_directed_branch(const TreeInterface& t,int b) {
-  if (not up_to_date(b)) return;
+  
+  cv_up_to_date() = false;
 
-  vector<int> branch_list = t.all_branches_after_inclusive(b);
-  for(int i=0;i<branch_list.size();i++)
-    cache->invalidate_one_branch(token,branch_list[i]);
+  if (up_to_date(b))
+  {
+    vector<int> branches;
+    branches.reserve(t.n_branches());
+    branches.push_back(b);
+    for(int i=0;i<branches.size();i++)
+    {
+      int b2 = branches[i];
+      if (up_to_date(b2) or branch_available(b2))
+      {
+	t.append_branches_after(b2, branches);
+	invalidate_one_branch(b2);
+      }
+    }
+  }
+
+#ifndef NDEBUG
+  for(int b2: t.all_branches_after_inclusive(b))
+      assert(not up_to_date(b2));
+  for(int b2: t.all_branches_after_inclusive(b))
+      assert(not branch_available(b2));
+#endif
 }
 
 void Likelihood_Cache::invalidate_node(const TreeInterface& t,int n) {
