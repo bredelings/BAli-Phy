@@ -296,9 +296,8 @@ void Likelihood_Cache::invalidate_directed_branch(const TreeInterface& t,int b) 
 }
 
 void Likelihood_Cache::invalidate_node(const TreeInterface& t,int n) {
-  vector<int> branch_list = t.all_branches_from_node(n);
-  for(int i=0;i<branch_list.size();i++)
-    cache->invalidate_one_branch(token,branch_list[i]);
+  for(int b: t.branches_out(n))
+    invalidate_directed_branch(t,b);
 }
 
 void Likelihood_Cache::invalidate_one_branch(int b) {

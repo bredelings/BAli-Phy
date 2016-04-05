@@ -407,6 +407,8 @@ public:
 
   // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
   void LC_invalidate_branch(int b);
+  // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
+  void LC_invalidate_node(int n);
 
   // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
   void LC_invalidate_all();
