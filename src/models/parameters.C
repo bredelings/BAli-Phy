@@ -438,15 +438,6 @@ void data_partition::invalidate_subA_index_branch(int b)
   subA().invalidate_branch(t(),b);
 }
 
-void data_partition::invalidate_subA_index_one_branch(int b)
-{
-  uniquify_subA_index();
-
-  int b2 = t().reverse(b);
-  subA().invalidate_one_branch(b);
-  subA().invalidate_one_branch(b2);
-}
-
 void data_partition::invalidate_subA_index_all()
 {
   uniquify_subA_index();
@@ -1275,12 +1266,6 @@ void Parameters::LC_invalidate_branch(int b)
     get_data_partition(i).LC.invalidate_branch(t(),b);
 }
 
-void Parameters::LC_invalidate_one_branch(int b)
-{
-  for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).LC.invalidate_one_branch(b);
-}
-
 void Parameters::LC_invalidate_all()
 {
   for(int i=0;i<n_data_partitions();i++)
@@ -1298,12 +1283,6 @@ void Parameters::invalidate_subA_index_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
     get_data_partition(i).invalidate_subA_index_branch(b);
-}
-
-void Parameters::invalidate_subA_index_one_branch(int b)
-{
-  for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).invalidate_subA_index_one_branch(b);
 }
 
 void Parameters::invalidate_subA_index_all()

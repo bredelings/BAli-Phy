@@ -179,8 +179,6 @@ public:
 
   // invalidate subA indices on b and b* and all DIRECTED branches after them
   void invalidate_subA_index_branch(int b);
-  // invalidate subA indices on b and b*
-  void invalidate_subA_index_one_branch(int b);
   // invalidate subA indices for all branches
   void invalidate_subA_index_all();
 
@@ -412,17 +410,12 @@ public:
   void LC_invalidate_branch(int b);
 
   // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
-  void LC_invalidate_one_branch(int b);
-
-  // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
   void LC_invalidate_all();
 
   // make sure we aren't sharing our subA index with any other model.
   void uniquify_subA_indices();
   // invalidate subA indices on b and b* and all DIRECTED branches after them
   void invalidate_subA_index_branch(int b);
-  // invalidate subA indices on b and b*
-  void invalidate_subA_index_one_branch(int b);
   // invalidate subA indices for all branches
   void invalidate_subA_index_all();
 
