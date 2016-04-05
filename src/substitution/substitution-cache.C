@@ -290,6 +290,8 @@ void Likelihood_Cache::invalidate_all() {
 }
 
 void Likelihood_Cache::invalidate_directed_branch(const TreeInterface& t,int b) {
+  if (not up_to_date(b)) return;
+
   vector<int> branch_list = t.all_branches_after_inclusive(b);
   for(int i=0;i<branch_list.size();i++)
     cache->invalidate_one_branch(token,branch_list[i]);
