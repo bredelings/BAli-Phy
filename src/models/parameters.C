@@ -1266,6 +1266,12 @@ void Parameters::LC_invalidate_branch(int b)
     get_data_partition(i).LC.invalidate_branch(t(),b);
 }
 
+void Parameters::LC_invalidate_node(int n)
+{
+  for(int i=0;i<n_data_partitions();i++)
+    get_data_partition(i).LC.invalidate_node(t(),n);
+}
+
 void Parameters::LC_invalidate_all()
 {
   for(int i=0;i<n_data_partitions();i++)
