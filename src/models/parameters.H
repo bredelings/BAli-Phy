@@ -397,7 +397,6 @@ public:
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength_unsafe(int b, double l);
   void setlength(int b,double l); 
-  void setlength_no_invalidate_LC(int b,double l); 
   
   /// Recalculate all the cached transition matrices
   void recalc_smodels();
