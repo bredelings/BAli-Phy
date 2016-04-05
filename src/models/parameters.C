@@ -1384,23 +1384,6 @@ void Parameters::variable_alignment(bool b)
     get_data_partition(i).variable_alignment(b);
 }
 
-void Parameters::setlength_no_invalidate_LC(int b,double l) 
-{
-  // this is setlength_unsafe( ) .. but computes the undirected name.
-  b = t().undirected(b);
-
-  t().set_branch_length(b, l);
-
-  // Update D parameters
-  for(int s=0; s<n_scales(); s++) 
-  {
-    double rate = get_parameter_value(branch_mean_index(s)).as_double();
-    double delta_t = t().branch_length(b);
-    
-    context::set_parameter_value(PC->branch_length_indices[s][b], rate * delta_t);
-  }
-}
-
 void Parameters::setlength_unsafe(int b,double l) 
 {
   t().set_branch_length(b, l);
