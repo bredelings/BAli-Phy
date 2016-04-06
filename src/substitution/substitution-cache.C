@@ -331,14 +331,13 @@ void Likelihood_Cache::invalidate_branch(const TreeInterface& t,int b) {
   invalidate_directed_branch(t, t.reverse(b));
 }
 
-void Likelihood_Cache::invalidate_branch_alignment(const TreeInterface& t,int b) {
-  vector<int> branch_list = t.all_branches_after_inclusive(b);
-  for(int i=1;i<branch_list.size();i++)
-    cache->invalidate_one_branch(token,branch_list[i]);
+void Likelihood_Cache::invalidate_branch_alignment(const TreeInterface& t,int b)
+{
+  for(int b2: t.branches_after(b))
+    invalidate_directed_branch(t,b2);
 
-  branch_list = t.all_branches_after_inclusive(t.reverse(b));
-  for(int i=1;i<branch_list.size();i++)
-    cache->invalidate_one_branch(token,branch_list[i]);
+  for(int b2: t.branches_after(t.reverse(b)))
+    invalidate_directed_branch(t,b2);
 }
 
 void Likelihood_Cache::set_length(int C,int b) 
