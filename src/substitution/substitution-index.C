@@ -616,7 +616,11 @@ void subA_index_t::invalidate_branch(const TreeInterface& t,int b)
   invalidate_directed_branch(t, t.reverse(b));
 }
 
-
+void subA_index_t::invalidate_from_node(const TreeInterface& t,int n)
+{
+  for(int b: t.branches_out(n))
+    invalidate_directed_branch(t,b);
+}
 
 /// return index of lowest-numbered node behind b
 int rank(const TreeInterface& t,int b) {

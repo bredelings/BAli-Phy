@@ -179,6 +179,8 @@ public:
 
   // invalidate subA indices on b and b* and all DIRECTED branches after them
   void invalidate_subA_index_branch(int b);
+  // invalidate subA indices on DIRECTED branches out from node n
+  void invalidate_subA_index_node(int n);
   // invalidate subA indices for all branches
   void invalidate_subA_index_all();
 
@@ -417,6 +419,8 @@ public:
   void uniquify_subA_indices();
   // invalidate subA indices on b and b* and all DIRECTED branches after them
   void invalidate_subA_index_branch(int b);
+  // invalidate subA indices on DIRECTED branches out from node n
+  void invalidate_subA_index_node(int n);
   // invalidate subA indices for all branches
   void invalidate_subA_index_all();
 

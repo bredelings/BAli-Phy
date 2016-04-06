@@ -438,6 +438,14 @@ void data_partition::invalidate_subA_index_branch(int b)
   subA().invalidate_branch(t(),b);
 }
 
+void data_partition::invalidate_subA_index_node(int n)
+{
+  uniquify_subA_index();
+
+  // propagates outward in both directions
+  subA().invalidate_from_node(t(),n);
+}
+
 void data_partition::invalidate_subA_index_all()
 {
   uniquify_subA_index();
@@ -862,7 +870,7 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   if (safe)
   {
     LC_invalidate_node(t1);
-    invalidate_subA_index_branch(b1);
+    invalidate_subA_index_node(t1);
     note_alignment_changed_on_branch(t().find_branch(s1,t1));
   }
   
@@ -871,7 +879,7 @@ void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
   if (safe)
   {
     LC_invalidate_node(t2);
-    invalidate_subA_index_branch(b1);
+    invalidate_subA_index_node(t2);
     note_alignment_changed_on_branch(t().find_branch(s1,t2));
   }
   
@@ -1289,6 +1297,12 @@ void Parameters::invalidate_subA_index_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
     get_data_partition(i).invalidate_subA_index_branch(b);
+}
+
+void Parameters::invalidate_subA_index_node(int n)
+{
+  for(int i=0;i<n_data_partitions();i++)
+    get_data_partition(i).invalidate_subA_index_node(n);
 }
 
 void Parameters::invalidate_subA_index_all()
