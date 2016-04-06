@@ -282,6 +282,7 @@ public:
   void invalidate_all_branches();
   void invalidate_directed_branch(const TreeInterface& t,int b);
   void invalidate_branch(const TreeInterface& t,int b);
+  void invalidate_from_node(const TreeInterface& t,int n);
 
   void update_branch(const alignment& A, const TreeInterface& t,int b);
   void recompute_all_branches(const alignment& A, const TreeInterface& t);
