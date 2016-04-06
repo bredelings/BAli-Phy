@@ -603,6 +603,8 @@ void subA_index_t::invalidate_all_branches()
 
 void subA_index_t::invalidate_directed_branch(const TreeInterface& t,int b) 
 {
+  if (not branch_index_valid(b)) return;
+
   vector<int> branches = t.all_branches_after_inclusive(b);
 
   for(int i=0;i<branches.size();i++)
