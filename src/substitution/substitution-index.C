@@ -605,10 +605,27 @@ void subA_index_t::invalidate_directed_branch(const TreeInterface& t,int b)
 {
   if (not branch_index_valid(b)) return;
 
-  vector<int> branches = t.all_branches_after_inclusive(b);
-
+  vector<int> branches;
+  branches.reserve(t.n_branches());
+  branches.push_back(b);
   for(int i=0;i<branches.size();i++)
-    invalidate_one_branch(branches[i]);
+  {
+    int b2 = branches[i];
+    if (branch_index_valid(b2))
+    {
+      t.append_branches_after(b2, branches);
+      invalidate_one_branch(b2);
+    }
+  }
+
+#ifndef NDEBUG
+  for(int b: t.all_branches_after_inclusive(b))
+  {
+    if (not branch_index_valid(b))
+      for(int b2: t.branches_after(b))
+	assert(not branch_index_valid(b2));
+  }
+#endif  
 }
 
 
