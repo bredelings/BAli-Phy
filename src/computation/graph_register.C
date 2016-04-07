@@ -2213,6 +2213,12 @@ void reg_heap::check_back_edges_cleared_for_step(int s)
 {
   for(auto& rcp: steps.access_unused(s).used_inputs)
     assert(null(rcp.second));
+  for(auto& r: steps.access_unused(s).created_regs)
+  {
+    auto& created_by = access(r).created_by;
+    assert(created_by.first == 0);
+    assert(null(created_by.second));
+  }
 }
 
 void reg_heap::check_back_edges_cleared_for_result(int rc)
