@@ -122,7 +122,7 @@ bool check_leaf_characters_minimally_connected(const alignment& A,const TreeInte
   {
     // construct leaf presence/absence mask
     dynamic_bitset<> present(t.n_nodes());
-    for(int i=0;i<t.n_nodes();i++)
+    for(int i=0;i<t.n_leaves();i++)
       present[i] = not A.gap(column,i);
     
     // compute presence/absence for internal nodes
@@ -146,7 +146,7 @@ void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
   {
     // construct leaf presence/absence mask
     dynamic_bitset<> present(t.n_nodes());
-    for(int i=0;i<t.n_nodes();i++)
+    for(int i=0;i<t.n_leaves();i++)
       present[i] = not A.gap(column,i);
     
     // compute presence/absence for internal nodes
