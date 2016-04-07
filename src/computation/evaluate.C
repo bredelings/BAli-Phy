@@ -254,6 +254,9 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
       access(R).type = reg::type_t::index_var;
 
       clear_result(root_token,R);
+      int s = step_index_for_reg(R);
+      if (s > 0)
+	clear_back_edges_for_step(s);
       clear_step(root_token,R);
 
       int index = access(R).C.exp.as_index_var();
@@ -271,6 +274,9 @@ std::pair<int,int> reg_heap::incremental_evaluate(int R)
     {
       access(R).type = reg::type_t::constant;
       clear_result(root_token,R);
+      int s = step_index_for_reg(R);
+      if (s > 0)
+	clear_back_edges_for_step(s);
       clear_step(root_token,R);
       return {R,R};
     }
