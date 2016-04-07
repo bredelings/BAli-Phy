@@ -685,9 +685,6 @@ public:
 
   vector<double> L;
 
-  /// A mapping of directed branches to their index in attachment_branches
-  vector<int> branch_to_index_;
-
   /// The number of places we could regraft, including the current site
   unsigned n_attachment_branches() const {return attachment_branch_pairs.size();}
 
@@ -710,24 +707,6 @@ public:
       return B0;
 
     return T.edge(b);
-  }
-
-  /// Convert a branch \a b to its index in attachment_branches
-  int branch_to_index(int b) const
-  {
-    assert(0 <=b and b <= 2*T.n_branches());
-    int index = branch_to_index_[b];
-    assert(0 <= index and index < n_attachment_branches());
-    return index;
-  }
-
-  /// Convert abranch \a s to its index in attachment_branches
-  int tree_edge_to_index(const tree_edge& s) const
-  {
-    if (s == B0)
-      return 0;
-    int b = T.find_branch(s.node1, s.node2);
-    return branch_to_index(b);
   }
 
   /// Express properties of branches as vectors indexed by their position in attachment_branches
@@ -779,7 +758,7 @@ vector<pair<int,tree_edge>> branch_pairs_after(const TreeInterface& T, const tre
 }
 
 spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
-  :T(T_),b_parent(b), branch_to_index_(T.n_branches()*2, -1)
+  :T(T_),b_parent(b)
 {
   child_branches = sort_and_randomize(T.branches_after(T.find_branch(b_parent)));
   assert(child_branches.size() == 2);
@@ -802,16 +781,6 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
   for(int i=attachment_branches.size()-1;i>=0;i--)
     if (attachment_branches[i] == B1 or T.reverse(attachment_branches[i]) == B1)
       attachment_branches.erase(attachment_branches.begin()+i);
-
-  /*--------------Construct a mapping from branch to index -------------*/
-  for(int i=0;i<n_attachment_branches();i++)
-  {
-    int b = attachment_branches[i];
-    int b_t = T.reverse(attachment_branches[i]);
-
-    branch_to_index_[b] = i;
-    branch_to_index_[b_t] = i;
-  }
 
   for(const auto& bp: attachment_branch_pairs)
   {
