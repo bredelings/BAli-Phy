@@ -683,20 +683,17 @@ public:
 
   vector<pair<int,tree_edge>> attachment_branch_pairs;
 
+  vector<double> L;
+
   /// A mapping of directed branches to their index in attachment_branches
   vector<int> branch_to_index_;
 
   /// The number of places we could regraft, including the current site
-  unsigned n_attachment_branches() const {return attachment_branches.size();}
+  unsigned n_attachment_branches() const {return attachment_branch_pairs.size();}
 
   /// The length of each attachment branch, indexed in the same way as attachment_branches
-  vector<double> attachment_branch_lengths() const
+  const vector<double>& attachment_branch_lengths() const
   {
-    vector<double> L(n_attachment_branches());
-    L[0] = T.branch_length(child_branches[0]) + T.branch_length(child_branches[1]);
-
-    for(int i=1;i<n_attachment_branches();i++)
-      L[i] = T.branch_length(attachment_branches[i]);
     return L;
   }
   
@@ -738,12 +735,13 @@ public:
   vector<U> convert_to_vector(const map<tree_edge,U>& M) const
   {
     assert(M.size() == n_attachment_branches());
-    vector<U> v(n_attachment_branches());
+    vector<U> v;
+    v.reserve(n_attachment_branches());
 
-    for(const auto& m: M)
+    for(const auto& bp: attachment_branch_pairs)
     {
-      int index = tree_edge_to_index(m.first);
-      v[index] = m.second;
+      const auto& E = bp.second;
+      v.push_back(M.at(E));
     }
 
     return v;
@@ -805,9 +803,6 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
     if (attachment_branches[i] == B1 or T.reverse(attachment_branches[i]) == B1)
       attachment_branches.erase(attachment_branches.begin()+i);
 
-  // convert the const_branchview's to int names
-  //  vector<int> branch_names = directed_names(branches);
-
   /*--------------Construct a mapping from branch to index -------------*/
   for(int i=0;i<n_attachment_branches();i++)
   {
@@ -816,6 +811,18 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
 
     branch_to_index_[b] = i;
     branch_to_index_[b_t] = i;
+  }
+
+  for(const auto& bp: attachment_branch_pairs)
+  {
+    const auto& E = bp.second;
+
+    if (E == B0)
+      L.push_back(T.branch_length(child_branches[0]) + T.branch_length(child_branches[1]));
+    else if (E == B0.reverse())
+      std::abort();
+    else
+      L.push_back(T.branch_length(T.find_branch(E)));
   }
 }
 
@@ -863,9 +870,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
   if (I.n_attachment_branches() == 1) return spr_attachment_probabilities();
 
   vector<double> L = I.attachment_branch_lengths();
-
-  // convert the const_branchview's to int names
-  vector<int> branch_names = I.attachment_branches;
 
   /*----------------------- Initialize likelihood for each attachment point ----------------------- */
 
@@ -1079,7 +1083,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& B1)
   }
 
   // Step N: ATTACH to that point
-  SPR_at_location(p[1], B1, p[1].t().edge(branch_names[C]), locations, false);
+  if (C != 0)
+    SPR_at_location(p[1], B1, I.attachment_branch_pairs[C].second, locations, false);
 
   // enforce tree constraints
   //  if (not extends(p[1].t(), P.PC->TC))
