@@ -656,7 +656,6 @@ void SPR_at_location(Parameters& P, const tree_edge& b_subtree, const tree_edge&
 #endif
 
   //  FIXME - switch SPR_at_location( ) to use NNI.
-  //  FIXME - Stop using branch_names[C] after choose_MH??
   //  FIXME - split spr_search routines into separate file?
   //  FIXME - Don't send a variable parameters object into spr_search_attachment_points
   //  NOTE - The NNI doesn't actually change the alignment MATRIX.
@@ -677,9 +676,6 @@ public:
 
   /// The current attachment branch, specified in terms of its endpoint nodes
   tree_edge B0;
-
-  /// A list of attachment branches, where the current branch is at index 0
-  vector<int> attachment_branches;
 
   vector<pair<int,tree_edge>> attachment_branch_pairs;
 
@@ -773,14 +769,7 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
 
   // FIXME - in order to make this independent of the circular order, we should make
   // a randomized_all_branches_after, or a sorted_all_branches_after.
-  attachment_branches = T.all_branches_after_inclusive(T.find_branch(b_parent));
-  attachment_branches.erase(attachment_branches.begin());
   attachment_branch_pairs = branch_pairs_after(T, b_parent);
-
-  // remove the one branch name (B1) from the list of attachment branches
-  for(int i=attachment_branches.size()-1;i>=0;i--)
-    if (attachment_branches[i] == B1 or T.reverse(attachment_branches[i]) == B1)
-      attachment_branches.erase(attachment_branches.begin()+i);
 
   for(const auto& bp: attachment_branch_pairs)
   {
@@ -809,8 +798,8 @@ spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tr
   locations[B0] = L0a/(L0a+L0b);
 
   // compute attachment locations for non-current branches
-  for(int i=1;i<I.attachment_branches.size();i++)
-    locations[T.edge(I.attachment_branches[i])] = uniform();
+  for(int i=1;i<I.n_attachment_branches();i++)
+    locations[I.attachment_branch_pairs[i].second] = uniform();
 
   return locations;
 }
@@ -1024,9 +1013,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& B1)
   vector<double> L = I.attachment_branch_lengths();
 
   if (I.n_attachment_branches() == 1) return false;
-
-  // convert the const_branchview's to int names
-  vector<int> branch_names = I.attachment_branches;
 
   spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], B1, locations);
 
