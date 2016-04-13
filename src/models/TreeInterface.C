@@ -427,7 +427,7 @@ string write_branches_and_node(const TreeInterface& T, const vector<int>& branch
 
   // Print the name (it might be empty)
   if (names[node].size())
-    output += "'" + names[node] + "'";
+    output += names[node];
 
   return output;
 }
@@ -453,7 +453,7 @@ std::string write(const TreeInterface& T, const std::vector<double>& L, const st
   for(int b: branches)
   {
     int n = T.target(b);
-    names2[n] +=  (":" + std::to_string(L[T.undirected(b)]));
+    names2[n] = "'" + names2[n] + "':" + std::to_string(L[T.undirected(b)]);
   }
   return write(T, root, names2);
 }
