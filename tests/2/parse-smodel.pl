@@ -56,8 +56,10 @@ show_only("rna.fasta");
 show_only("dna.fasta");
 show_only("dna.fasta --smodel=HKY");
 show_only("dna.fasta --smodel=HKY+F");
+show_only("dna.fasta --smodel=HKY[kappa=2]+F[A=0.1,C=0.2,T=0.3,G=0.4]");
 show_only("dna.fasta --smodel=HKY+gwF");
 show_only("dna.fasta --smodel=HKY+gwF+gamma");
+show_only("dna.fasta --smodel=HKY+gwF+gamma[n=4]");
 show_only("dna.fasta --smodel=HKY+gwF+gamma_inv");
 show_only("dna.fasta --smodel=HKY+gwF+gamma_inv[4]");
 
