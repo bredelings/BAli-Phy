@@ -470,12 +470,14 @@ fMutSel0_model codon_a nuc_rm = Prefix "fMutSel0" $ do
   return $ fMutSel0 codon_a ws omega nuc_rm;
 };
 
+plus_gwf a pi f = let {pi' = listToVectorDouble pi} in 
+                  ReversibleFrequency a (simple_smap a) pi' (plus_gwF a f pi');
+
 plus_gwf_model a = Prefix "GWF" (do {
   pi <- frequencies_model a;
   f <- uniform 0.0 1.0;
   Log "f" f;
-  let {pi' = listToVectorDouble pi};
-  return (ReversibleFrequency a (simple_smap a) pi' (plus_gwF a 1.0 pi'))
+  return (plus_gwf a pi f);
 });
 
 uniform_f_model a = let {n_letters = alphabetSize a;
