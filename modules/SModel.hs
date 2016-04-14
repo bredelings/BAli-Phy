@@ -406,10 +406,11 @@ frequencies_model a = do {
   }
 };
 
+plus_f a pi = let {pi' = listToVectorDouble pi} in ReversibleFrequency a (simple_smap a) pi' (plus_gwF a 1.0 pi');
+
 plus_f_model a = Prefix "F" (do {
   pi <- frequencies_model a;
-  let {pi' = listToVectorDouble pi};
-  return (ReversibleFrequency a (simple_smap a) pi' (plus_gwF a 1.0 pi'))
+  return (plus_f a pi);
 });
 
 simple_smap a = iotaUnsigned (alphabetSize a);
