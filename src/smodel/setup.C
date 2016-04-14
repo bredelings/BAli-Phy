@@ -52,48 +52,79 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "myexception.H"
 #include "computation/module.H"
 #include "computation/loader.H"
+#include <boost/property_tree/ptree.hpp>
+#include <boost/optional.hpp>
+#include <boost/property_tree/info_parser.hpp>
 
+using boost::property_tree::ptree;
+using boost::optional;
 using std::string;
+using std::pair;
 using std::vector;
 using std::valarray;
 using boost::program_options::variables_map;
 using boost::shared_ptr;
 
-const vector<vector<string>> default_arguments = 
+const vector<vector<string>> all_default_arguments = 
   {
+    {"EQU"},
     {"F81"},
-    {"HKY"},
-    {"TN"},
-    {"GTR"},
-    {"HKYx3"},
-    {"TNx3"},
-    {"GTRx3"},
+    {"HKY","kappa"},
+    {"TN","kappaPur","kappaPyr"},
+    {"GTR","ag","at","ac","gt","gc","tc"},
+    {"HKYx3","kappa"},
+    {"TNx3","kappaPur","kappaPyr"},
+    {"GTRx3","ag","at","ac","gt","gc","tc"},
     {"PAM"},
     {"JTT"},
     {"WAG"},
     {"LG"},
-    {"Empirical",""},
-    {"M0","HKY"},
-    {"fMutSel",""},
-    {"fMutSel0",""},
-    {"INV",""},
-    {"gamma","","4"},
-    {"gamma_inv","","4"},
-    {"log-normal","","4"},
-    {"log-normal_inv","","4"},
-    {"M1a","HKY","F61"},
-    {"M2a","HKY","F61"},
-    {"M2a_Test","HKY","F61"},
-    //    {"M3u","3","HKY","F61"},
-    {"M3","4","HKY","F61"},
-    {"M3_Test","4","HKY","F61"},
-    {"M7","4","HKY","F61"},
-    {"M8","4","HKY","F61"},
-    {"M8a","4","HKY","F61"},
-    {"M8a_Test","4","HKY","F61"},
-    {"branch-site","2","HKY","F61"},
-    {"dp_omega","4","HKY","F61"}
+    {"Empirical","filename"},
+    {"M0","submodel=HKY"},
+    {"fMutSel","*submodel"},
+    {"fMutSel0","*submodel"},
+    {"INV","p"},
+    {"DP","n","*submodel"},
+    {"gamma","n=4","alpha","*submodel"},
+    {"gamma_inv","n=4","alpha","p","*submodel"},
+    {"log-normal","n=4","sigmaOverMu","*submodel"},
+    {"log-normal_inv","n=4","sigmaOverMu","p","*submodel"},
+    {"M1a","nuc_model=HKY","freq_model=F61"},
+    {"M2a","nuc_model=HKY","freq_model=F61"},
+    {"M2a_Test","nuc_model=HKY","freq_model=F61"},
+    //    {"M3u","3","nuc_model="HKY","freq_model=F61"},
+    {"M3","n=4","nuc_model=HKY","freq_model=F61"},
+    {"M3_Test","n=4","nuc_model=HKY","freq_model=F61"},
+    {"M7","n=4","nuc_model=HKY","freq_model=F61"},
+    {"M8","n=4","nuc_model=HKY","freq_model=F61"},
+    {"M8a","n=4","nuc_model=HKY","freq_model=F61"},
+    {"M8a_Test","n=4","nuc_model=HKY","freq_model=F61"},
+    {"branch-site","n=2","nuc_model=HKY","freq_model=F61"},
+    {"dp_omega","n=4","nuc_model=HKY","freq_model=F61"}
   };
+
+optional<pair<string,string>> split_keyword(const string& s)
+{
+  int pos = s.find('=');
+  if (pos == -1)
+    return boost::none;
+  else
+    return pair<string,string>({s.substr(0,pos),s.substr(pos+1)});
+}
+
+string show(const ptree& pt, int depth = 0)
+{
+  string result = "";
+  string indent(depth,' ');
+  string indent2(depth+2,' ');
+  result += "'"+pt.get_value<string>()+"'\n";
+  for(auto c: pt)
+  {
+    result += indent2 + c.first + " : ";
+    result += show(c.second,depth+4);
+  }
+  return result;
+}
 
 string show(vector<string> args)
 {
@@ -107,28 +138,69 @@ string show(vector<string> args)
   return output;
 }
 
-void handle_default_args(vector<string>& args, const vector<vector<string>>& D)
+string get_keyword_for_positional_arg(const string& head, int i)
 {
-  for(const auto& d: D)
+  for(const auto& default_arguments: all_default_arguments)
   {
-    if (args[0] != d[0]) continue;
+    if (default_arguments[0] != head) continue;
 
-    if (args.size() > d.size())
-      throw myexception()<<"Too many arguments: "<<show(args);
+    if (i+1 >= default_arguments.size())
+      throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<head<<"', which only has "<<default_arguments.size()-1<<" positional arguments.";
 
-    args.resize(d.size());
+    // Strip leading '*' that indicates required argument
+    string keyword = default_arguments[i+1];
+    if (keyword[0] == '*')
+      keyword = keyword.substr(1);
+    auto keyword_pair = split_keyword(keyword);
+    if (keyword_pair)
+      return (*keyword_pair).first;
+    else
+      return keyword;
+  }
+  throw myexception()<<"No positional arguments for '"<<head<<"'!";
+}
 
-    for(int i=1;i<d.size();i++)
+void set_default_values(ptree& args)
+{
+  const string& head = args.get_value<string>();
+  
+  for(const auto& default_arguments: all_default_arguments)
+  {
+    if (default_arguments[0] != head) continue;
+
+    for(int i=0;i<default_arguments.size()-1;i++)
     {
-      if (not args[i].empty()) continue;
+      string keyword = default_arguments[i+1];
+      if (keyword[0] == '*')
+	keyword = keyword.substr(1);
+      auto keyword_pair = split_keyword(keyword);
+      if (not keyword_pair) continue;
+      
+      if (not args.count(keyword_pair->first))
+	args.push_back({keyword_pair->first, ptree(keyword_pair->second)});
+    }
+  }
+}
 
-      if (not d[i].empty())
-	args[i] = d[i];
-      else
-      {
-	args[i] = "*";
-	throw myexception()<<"Missing argument at *: "<<show(args);
-      }
+void check_required_args(const ptree& args)
+{
+  //  std::cout<<"checkout args:\n";
+  //  write_info(std::cout, args);
+  //  std::cout<<show(args)<<std::endl;
+  const string& head = args.get_value<string>();
+  
+  for(const auto& default_arguments: all_default_arguments)
+  {
+    if (default_arguments[0] != head) continue;
+
+    for(int i=0;i<default_arguments.size()-1;i++)
+    {
+      string keyword = default_arguments[i+1];
+      if (keyword[0] != '*') continue;
+      keyword = keyword.substr(1);
+
+      if (not args.count(keyword))
+	throw myexception()<<"Command '"<<head<<"' missing required argument '"<<keyword<<"'";
     }
   }
 }
@@ -181,7 +253,7 @@ vector<string> split_args(string s)
 /// \param s The model name to match.
 /// \param args The possible argument.
 ///
-vector<string> split_top_level(const string& s)
+pair<optional<string>,string> split_last_plus(const string& s)
 {
   // 1. Find last '+' on the top level
   int split = -1;
@@ -199,20 +271,86 @@ vector<string> split_top_level(const string& s)
   if (depth != 0)
     throw myexception()<<"Too many '[' in string '"<<s<<"'";
   
-  // If there are no plus expressions then we can take the arguments as is.
-  string head = s.substr(split+1,s.size() - split);
+  // 2. If there are no plus expressions then we can take the string as is.
+  if (split == -1)
+    return {boost::none, s};
+  // 3. Otherwise divide the string on the last plus
+  else
+    return {s.substr(0,split), s.substr(split+1)};
+}
 
-  vector<string> args = split_args(head);
+/// Split a string of the form key=value into {key,value}
+ptree parse(const string& s);
 
-  if (split != -1)
+/// Parse strings of the form head[value1, value2, key3=value3, ...]
+ptree parse_no_submodel(const string& s)
+{
+  // 1. Split the head and the arguments
+  auto args = split_args(s);
+
+  // 2. Set the head
+  string head = args.front();
+  args.erase(args.begin());
+
+  ptree result;
+  result.put_value(head);
+  
+  // 3. Attempt to set the supplied arguments
+  bool seen_keyword_arg = false;
+  for(int i=0;i<args.size();i++)
   {
-    string arg0 = s.substr(0,split);
-    args.insert(args.begin()+1, arg0);
+    pair<string,string> key_value;
+
+    // 4. Ignore empty arguments
+    if (args[i].empty()) continue;
+
+    // 5. If we have a keyword argument, remember it
+    if (auto arg = split_keyword(args[i]))
+    {
+      seen_keyword_arg = true;
+      key_value = *arg;
+    }
+    // 6. Otherwise find the keyword for the positional argument
+    else
+    {
+      if (seen_keyword_arg)
+	throw myexception()<<"Positional argument after keyword argument in '"<<s<<"'";
+      key_value = {get_keyword_for_positional_arg(head, i), args[i]};
+    }
+
+    // 7. Set the key = value after parsing the value.
+    if (result.count(key_value.first))
+      throw myexception()<<"Trying to set value for "<<head<<"."<<key_value.first<<" a second time!";
+    result.push_back({key_value.first, parse(key_value.second)});
   }
 
-  handle_default_args(args,default_arguments);
+  return result;
+}
 
-  return args;
+// Parse strings of the form head[args] + head[args] + ... + head[args]
+ptree parse(const string& s)
+{
+  // 1. Get the last head[args]
+  auto ss = split_last_plus(s);
+
+  // 2. Parse the last head[args]
+  auto result = parse_no_submodel(ss.second);
+
+  // 3. Parse the remainder and add it as a "submodel" argument
+  if (ss.first)
+  {
+    if (result.count("submodel"))
+      throw myexception()<<"Trying to specify a submodel with '+' when submodel already specified by keyword!";
+    result.push_back({"submodel",parse(*ss.first)});
+  }
+
+  // 4. Set default values
+  set_default_values(result);
+  
+  // 5. Check that required arguments are specified
+  check_required_args(result);
+
+  return result;
 }
 
 /// \brief Return the default substitution model name for alphabet \a a, and "" if there is no default.
@@ -233,30 +371,33 @@ string default_markov_model(const alphabet& a)
 }
 
 expression_ref
-get_smodel_(const module_loader& L,string smodel,const object_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >&);
+get_smodel_(const module_loader& L,const ptree& model_rep,const object_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >&);
 
 expression_ref
-get_smodel_(const module_loader& L,const string& smodel,const object_ptr<const alphabet>& a);
+get_smodel_(const module_loader& L,const ptree& model_rep,const object_ptr<const alphabet>& a);
 
 expression_ref
-get_smodel_(const module_loader& L,const string& smodel);
+get_smodel_(const module_loader& L,const ptree& model_rep);
 
 /// \brief Construct an AlphabetExchangeModel from string \a smodel.
 expression_ref coerce_to_EM(const module_loader& L,
-				    string smodel,
-				    const object_ptr<const alphabet>& a, 
-				    const shared_ptr< const valarray<double> >& frequencies)
+			    const ptree& model_rep,
+			    const object_ptr<const alphabet>& a, 
+			    const shared_ptr< const valarray<double> >& frequencies)
 
 {
-  if (smodel == "")
+  if (model_rep.empty() and model_rep.data().empty())
+  {
+    std::cout<<show(model_rep)<<std::endl;
     throw myexception()<<"Can't construct substitution model from empty description!";
+  }
 
-  expression_ref S = get_smodel_(L,smodel, a, frequencies);
+  expression_ref S = get_smodel_(L, model_rep, a, frequencies);
 
   if (S and result(S,L,vector<string>{"SModel","Distributions","Range"}).is_a<Box<Matrix>>())
     return S;
 
-  throw myexception()<<": '"<<smodel<<"' is not an exchange model.";
+  throw myexception()<<": '"<<show(model_rep)<<"' is not an exchange model.";
 }
 
 /// \brief Construct a ReversibleMarkovModel from model \a M
@@ -294,11 +435,11 @@ expression_ref coerce_to_RA(const module_loader& L,
 
 /// \brief Construct a ReversibleMarkovModel from model \a M
 expression_ref coerce_to_RA(const module_loader& L,
-			    string smodel,
+			    const ptree& model_rep,
 			    const object_ptr<const alphabet>& a,
 			    const shared_ptr< const valarray<double> >& frequencies)
 {
-  expression_ref M = get_smodel_(L, smodel, a, frequencies);
+  expression_ref M = get_smodel_(L, model_rep, a, frequencies);
 
   return coerce_to_RA(L, M, a);
 }
@@ -310,16 +451,16 @@ expression_ref coerce_to_RA(const module_loader& L,
 /// \param frequencies The initial frequencies for the model.
 ///
 expression_ref process_stack_Markov(const module_loader& L,
-					    vector<string>& model_args,
+				    const ptree& model_rep,
 				    const object_ptr<const alphabet>& a)
 {
   //------ Get the base markov model (Reversible Markov) ------//
   /*
-  if (model_args[0] == "EQU")
+  if (model_rep.get_value<string>() == "EQU")
   {
     return EQU_Model(*a);
   }
-  else if (model_args[0] == "F81")
+  else if (model_rep.get_value<string>() == "F81")
   {
     if (frequencies)
       return F81_Model(*a,*frequencies);
@@ -328,7 +469,7 @@ expression_ref process_stack_Markov(const module_loader& L,
   }
   */
 
-  if (model_args[0] == "EQU")
+  if (model_rep.get_value<string>() == "EQU")
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)
@@ -336,15 +477,21 @@ expression_ref process_stack_Markov(const module_loader& L,
 
     return model_expression({identifier("equ_model"),*a});
   }
-  else if (model_args[0] == "HKY")
+  else if (model_rep.get_value<string>() == "HKY")
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)
       throw myexception()<<"HKY: '"<<a->name<<"' is not a nucleotide alphabet.";
 
-    return model_expression({identifier("hky_model"),*a});
+    if (model_rep.count("kappa"))
+    {
+      double kappa = model_rep.get<double>("kappa");
+      return (identifier("hky"),*a,kappa);
+    }
+    else
+      return model_expression({identifier("hky_model"),*a});
   }
-  else if (model_args[0] == "TN")
+  else if (model_rep.get_value<string>() == "TN")
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)
@@ -352,7 +499,7 @@ expression_ref process_stack_Markov(const module_loader& L,
 
     return model_expression({identifier("tn_model"),*a});
   }
-  else if (model_args[0] == "GTR")
+  else if (model_rep.get_value<string>() == "GTR")
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)
@@ -363,7 +510,7 @@ expression_ref process_stack_Markov(const module_loader& L,
     return model_expression({identifier("gtr_model"),*a});
   }
   /*
-  else if (model_args[0] == "EQUx3")) {
+  else if (model_rep.get_value<string>() == "EQUx3")) {
 
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (T) 
@@ -372,66 +519,66 @@ expression_ref process_stack_Markov(const module_loader& L,
       throw myexception()<<"EQUx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
   */
-  else if (model_args[0] == "HKYx3")
+  else if (model_rep.get_value<string>() == "HKYx3")
   {
     if (dynamic_cast<const Triplets*>(&*a))
       return model_expression({identifier("hkyx3_model"),*a});
     else
       throw myexception()<<"HKYx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
-  else if (model_args[0] == "TNx3")
+  else if (model_rep.get_value<string>() == "TNx3")
   {
     if (dynamic_cast<const Triplets*>(&*a))
       return model_expression({identifier("tnx3_model"),*a});
     else
       throw myexception()<<"TNx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
-  else if (model_args[0] == "GTRx3")
+  else if (model_rep.get_value<string>() == "GTRx3")
   {
     if (dynamic_cast<const Triplets*>(&*a))
       return model_expression({identifier("gtrx3_model"),*a});
     else
       throw myexception()<<"GTRx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
-  else if (model_args[0] == "PAM")
+  else if (model_rep.get_value<string>() == "PAM")
   {
     if (*a != AminoAcids())
       throw myexception()<<"PAM: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     return (identifier("SModel.pam"),a);
   }
-  else if (model_args[0] == "JTT") {
+  else if (model_rep.get_value<string>() == "JTT") {
     if (*a != AminoAcids())
       throw myexception()<<"JTT: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     return (identifier("SModel.jtt"),a);
   }
-  else if (model_args[0] == "WAG") {
+  else if (model_rep.get_value<string>() == "WAG") {
     if (*a != AminoAcids())
       throw myexception()<<"WAG: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     return (identifier("SModel.wag"),a);
   }
-  else if (model_args[0] == "LG") {
+  else if (model_rep.get_value<string>() == "LG") {
     if (*a != AminoAcids())
       throw myexception()<<"LG: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     return (identifier("SModel.lg"),a);
   }
-  else if (model_args[0] == "Empirical") 
+  else if (model_rep.get_value<string>() == "Empirical") 
   {
-    return (identifier("SModel.empirical"),a,model_args[2]);
+    return (identifier("SModel.empirical"),a,model_rep.get<string>("filename"));
   }
   /*
-  else if (model_args[0] == "C10")
+  else if (model_rep.get_value<string>() == "C10")
   {
     if (*a != AminoAcids())
       throw myexception()<<"C20: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     return C10_CAT_FixedFrequencyModel();
   }
-  else if (model_args[0] == "C20")
+  else if (model_rep.get_value<string>() == "C20")
   {
     if (*a != AminoAcids())
       throw myexception()<<"C20: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     return C20_CAT_FixedFrequencyModel();
   }
-  else if (model_args[0] == "CAT-Fix") {
+  else if (model_rep.get_value<string>() == "CAT-Fix") {
     if (*a != AminoAcids())
       throw myexception()<<"CAT-Fix: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     CAT_FixedFrequencyModel M(*a);
@@ -439,36 +586,36 @@ expression_ref process_stack_Markov(const module_loader& L,
     return M;
   }
   */
-  else if (model_args[0] == "M0") //M0[S]
+  else if (model_rep.get_value<string>() == "M0") //M0[S]
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<"M0: '"<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L,model_args[1], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("submodel"), const_ptr(N), {});
 
     return model_expression({identifier("m0_model"), a , S});
   }
-  else if (model_args[0] == "fMutSel")
+  else if (model_rep.get_value<string>() == "fMutSel")
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<"fMutSel: '"<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref nuc_rm = coerce_to_RA(L,model_args[1], const_ptr(N), {});
+    expression_ref nuc_rm = coerce_to_RA(L,model_rep.get_child("submodel"), const_ptr(N), {});
 
     return model_expression({identifier("fMutSel_model"), a , nuc_rm});
   }
-  else if (model_args[0] == "fMutSel0")
+  else if (model_rep.get_value<string>() == "fMutSel0")
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<"fMutSel0: '"<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref nuc_rm = coerce_to_RA(L,model_args[1], const_ptr(N), {});
+    expression_ref nuc_rm = coerce_to_RA(L,model_rep.get_child("submodel"), const_ptr(N), {});
 
     return model_expression({identifier("fMutSel0_model"), a , nuc_rm});
   }
@@ -483,13 +630,13 @@ expression_ref process_stack_Markov(const module_loader& L,
 /// \param frequencies The initial frequencies for the model.
 ///
 expression_ref process_stack_Frequencies(const module_loader& L,
-					 vector<string>& model_args,
+					 const ptree& model_rep,
 					 const object_ptr<const alphabet>& a,
 					 const shared_ptr<const valarray<double> >& frequencies)
 {
   expression_ref R;
 
-  if (model_args[0] == "F=constant") 
+  if (model_rep.get_value<string>() == "F=constant") 
   {
     if (not frequencies)
       throw myexception()<<"F=constant: frequency estimates not available here.";
@@ -502,39 +649,52 @@ expression_ref process_stack_Frequencies(const module_loader& L,
     R = (identifier("ReversibleFrequency"), *a, (identifier("iotaUnsigned"), a->size()), v, (identifier("SModel.plus_gwF"), a, 1.0, v));
   }
 
-  else if (model_args[0] == "F61")
+  else if (model_rep.get_value<string>() == "F61")
   {
     if (a->size() != 61)
       throw myexception()<<"Cannot use 'F61' frequency model since alphabet contains "<<a->size()<<" letters.";
-    model_args[0] = "F";
-    R = process_stack_Frequencies(L,model_args,a,frequencies);
+    auto model_rep2 = model_rep;
+    model_rep2.put_value("F");
+    R = process_stack_Frequencies(L,model_rep2,a,frequencies);
   }
-  else if (model_args[0] == "F") 
-    R = model_expression({identifier("plus_f_model"),a});
-  else if (model_args[0] == "gwF") 
+  else if (model_rep.get_value<string>() == "F")
+  {
+    vector<double> pi;
+    for(int i=0;i<a->size();i++)
+      if (model_rep.count(a->letter(i)))
+	pi.push_back(model_rep.get<double>(a->letter(i)));
+    if (pi.size() > 0 and pi.size() < a->size())
+      throw myexception()<<"For frequency model F, you must specify all letter frequencies, or none!";
+	  
+    if (not pi.empty())
+      R = (identifier("plus_f"), a, get_list(pi));
+    else
+      R = model_expression({identifier("plus_f_model"),a});
+  }
+  else if (model_rep.get_value<string>() == "gwF") 
     R = model_expression({identifier("plus_gwf_model"),a});
-  else if (model_args[0] == "F=uniform") 
+  else if (model_rep.get_value<string>() == "F=uniform") 
     R = (identifier("uniform_f_model"),a);
-  else if (model_args[0] == "F1x4")
+  else if (model_rep.get_value<string>() == "F1x4")
   {
     if (not dynamic_cast<const Triplets*>(&*a))
       throw myexception()<<"+F1x4: '"<<a->name<<"' is not a triplet alphabet.";
     R = model_expression({identifier("f1x4_model"),a});
   }
-  else if (model_args[0] == "F3x4") 
+  else if (model_rep.get_value<string>() == "F3x4") 
   {
     if (not dynamic_cast<const Triplets*>(&*a))
       throw myexception()<<"+F1x4: '"<<a->name<<"' is not a triplet alphabet.";
     R = model_expression({identifier("f3x4_model"),a});
   }
-  else if (model_args[0] == "MG94") 
+  else if (model_rep.get_value<string>() == "MG94") 
   {
     if (not dynamic_cast<const Triplets*>(&*a))
       throw myexception()<<"+MG94w9: '"<<a->name<<"' is not a triplet alphabet.";
 
     R = model_expression({identifier("mg94_model"),a});
   }
-  else if (model_args[0] == "MG94w9") 
+  else if (model_rep.get_value<string>() == "MG94w9") 
   {
     if (not dynamic_cast<const Triplets*>(&*a))
       throw myexception()<<"+MG94w9: '"<<a->name<<"' is not a triplet alphabet.";
@@ -542,7 +702,7 @@ expression_ref process_stack_Frequencies(const module_loader& L,
     R = model_expression({identifier("mg94w9_model"),a});
   }
   /*
-  else if (model_args[0] == "F=amino-acids") 
+  else if (model_rep.get_value<string>() == "F=amino-acids") 
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
@@ -550,7 +710,7 @@ expression_ref process_stack_Frequencies(const module_loader& L,
 
     R = AACodonFrequencyModel(*C);
   }
-  else if (model_args[0] == "F=triplets") 
+  else if (model_rep.get_value<string>() == "F=triplets") 
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (not T)
@@ -558,7 +718,7 @@ expression_ref process_stack_Frequencies(const module_loader& L,
 
     R = TripletsFrequencyModel(*T);
   }
-  else if (model_args[0] == "F=codons") 
+  else if (model_rep.get_value<string>() == "F=codons") 
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
@@ -566,7 +726,7 @@ expression_ref process_stack_Frequencies(const module_loader& L,
 
     R = CodonsFrequencyModel(*C);
   }
-  else if (model_args[0] == "F=codons2") 
+  else if (model_rep.get_value<string>() == "F=codons2") 
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
@@ -576,10 +736,10 @@ expression_ref process_stack_Frequencies(const module_loader& L,
   }
   */
 
-  if (R and model_args.size()>1 and model_args[1] != "")
+  if (R and model_rep.count("submodel"))
   {
     // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
-    expression_ref s = coerce_to_EM(L,model_args[1], a, frequencies);
+    expression_ref s = coerce_to_EM(L,model_rep.get_child("submodel"), a, frequencies);
     expression_ref mm = model_expression({identifier("reversible_markov_model"), s, R});
     return mm;
   }
@@ -599,11 +759,11 @@ expression_ref coerce_to_frequency_model(const module_loader& L,
 }
 
 expression_ref coerce_to_frequency_model(const module_loader& L,
-					 string smodel,
+					 const ptree& model_rep,
 					 const object_ptr<const alphabet>& a,
 					 const shared_ptr< const valarray<double> >& frequencies)
 {
-  expression_ref M = get_smodel_(L, smodel, a, frequencies);
+  expression_ref M = get_smodel_(L, model_rep, a, frequencies);
 
   return coerce_to_frequency_model(L, M, a,  frequencies);
 }
@@ -628,19 +788,19 @@ expression_ref coerce_to_MM(const module_loader& L,
 
 /// \brief Construct a MultiModel from model \a M
 expression_ref coerce_to_MM(const module_loader& L,
-				    string smodel,
-				    const object_ptr<const alphabet>& a, 
-				    const shared_ptr< const valarray<double> >& frequencies)
+			    const ptree& model_rep,
+			    const object_ptr<const alphabet>& a, 
+			    const shared_ptr< const valarray<double> >& frequencies)
 {
-  expression_ref M = get_smodel_(L, smodel, a, frequencies);
+  expression_ref M = get_smodel_(L, model_rep, a, frequencies);
 
   return coerce_to_MM(L, M, a);
 }
 
 /// \brief Construct a MultiModel from model \a M
 expression_ref coerce_to_MMM(const module_loader& L,
-				     const expression_ref& M,
-				     const object_ptr<const alphabet>& a)
+			     const expression_ref& M,
+			     const object_ptr<const alphabet>& a)
 {
   if (has_constructor(result(M,L,{"SModel","Distributions","Range"}), "SModel.MixtureModels"))
     return M;
@@ -656,91 +816,91 @@ expression_ref coerce_to_MMM(const module_loader& L,
 
 /// \brief Construct a MultiModel from model \a M
 expression_ref coerce_to_MMM(const module_loader& L,
-			     string smodel,
+			     const ptree& model_rep,
 			     const object_ptr<const alphabet>& a,
 			     const shared_ptr< const valarray<double> >& frequencies)
 {
-  expression_ref M = get_smodel_(L, smodel, a, frequencies);
+  expression_ref M = get_smodel_(L, model_rep, a, frequencies);
   
   return coerce_to_MMM(L, M, a);
 }
 
 
 expression_ref process_stack_Multi(const module_loader& L,
-				   vector<string>& model_args,
+				   const ptree& model_rep,
 				   const object_ptr<const alphabet>& a,
 				   const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (model_args[0] == "single") 
-    return coerce_to_MM(L,coerce_to_RA(L,model_args[1],a,frequencies),a);
+  if (model_rep.get_value<string>() == "single") 
+    return coerce_to_MM(L,coerce_to_RA(L,model_rep.get_child("submodel"),a,frequencies),a);
 
-  // else if (model_args[0] == "gamma_plus_uniform") {
-  else if (model_args[0] == "gamma") 
+  // else if (model_rep.get_value<string>() == "gamma_plus_uniform") {
+  else if (model_rep.get_value<string>() == "gamma") 
   {
-    expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
+    expression_ref base = coerce_to_RA(L, model_rep.get_child("submodel"),a,frequencies);
 
-    int n = convertTo<int>(model_args[2]);
+    int n = model_rep.get<int>("n");
 
     return model_expression({identifier("gamma_model"), base, n});
   }
-  else if (model_args[0] == "gamma_inv") 
+  else if (model_rep.get_value<string>() == "gamma_inv") 
   {
-    expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
+    expression_ref base = coerce_to_RA(L, model_rep.get_child("submodel"),a,frequencies);
 
-    int n = convertTo<int>(model_args[2]);
+    int n = model_rep.get<int>("n");
 
     return model_expression({identifier("gamma_inv_model"), base, n});
   }
-  else if (model_args[0] == "INV") 
+  else if (model_rep.get_value<string>() == "INV") 
   {
-    expression_ref base = coerce_to_RA(L, model_args[1], a,frequencies);
+    expression_ref base = coerce_to_RA(L, model_rep.get_child("submodel"), a,frequencies);
 
     return model_expression({identifier("inv_model"), base});
   }
-  else if (model_args[0] == "log-normal") 
+  else if (model_rep.get_value<string>() == "log-normal") 
   {
-    expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
+    expression_ref base = coerce_to_RA(L, model_rep.get_child("submodel"),a,frequencies);
 
-    int n = convertTo<int>(model_args[2]);
+    int n = model_rep.get<int>("n");
 
     return model_expression({identifier("log_normal_model"), base, n});
   }
-  else if (model_args[0] == "log-normal_inv") 
+  else if (model_rep.get_value<string>() == "log-normal_inv") 
   {
-    expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
+    expression_ref base = coerce_to_RA(L, model_rep.get_child("submodel"),a,frequencies);
 
-    int n = convertTo<int>(model_args[2]);
+    int n = model_rep.get<int>("n");
 
     return model_expression({identifier("log_normal_inv_model"), base, n});
   }
-  else if (model_args[0] == "multi_freq") {
+  else if (model_rep.get_value<string>() == "multi_freq") {
     // Pr(l|m) = Pr(m|l)*Pr(l)/Pr(m)
     // Idea: store Pr(m|l) = probability a letter is in each model
     //       store Pr(l)   = overall frequencies for each letter
     //       store Pr(m)   = probability of each model
     std::abort();
   }
-  //  else if (model_args[0] == "INV")
+  //  else if (model_rep.get_value<string>() == "INV")
   //  (a) either specify the FREQUENCIES of the model, or
   //  (b) split every model and make a zero-scaled version of it.
 
-  else if (model_args[0] == "DP") 
+  else if (model_rep.get_value<string>() == "DP") 
   {
-    expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
+    expression_ref base = coerce_to_RA(L, model_rep.get_child("submodel"),a,frequencies);
 
-    int n = convertTo<int>(model_args[2]);
+    int n = model_rep.get<int>("n");
 
     return model_expression({identifier("dp_model"), base, n});
   }
   /*
-  else if (model_args[0] == "Modulated")
+  else if (model_rep.get_value<string>() == "Modulated")
   {
-    formula_expression_ref MM = coerce_to_MM(L, model_args[1],a,frequencies);
+    formula_expression_ref MM = coerce_to_MM(L, model_rep.get_child("submodel"),a,frequencies);
 
     //    int n = ... n_base_models();
     //    return Modulated_Markov_E(MM, SimpleExchangeModel(n));
   }
-  else if (model_args[0] == "Mixture")
+  else if (model_rep.get_value<string>() == "Mixture")
   {
     if (model_args.size() < 4)
       throw myexception()<<"Mixture[..] requires at least two sub-models!";
@@ -753,7 +913,7 @@ expression_ref process_stack_Multi(const module_loader& L,
 
     return Mixture_Model(models);
   }
-  else if (model_args[0] == "M2") 
+  else if (model_rep.get_value<string>() == "M2") 
   {
     formula_expression_ref p1 = def_parameter("M2.fAaINV", 1.0/3, between(0,1));
     formula_expression_ref p2 = def_parameter("M2.fNeutral", 1.0/3, between(0,1));
@@ -768,11 +928,11 @@ expression_ref process_stack_Multi(const module_loader& L,
     D.add_expression( constructor(":~",2) + (p1&(p2&(p3&ListEnd))).exp() + (identifier("dirichlet"), List(1.0, 98.0, 1.0)) );
     D.add_expression( constructor(":~",2) + m2_omega.exp() + (identifier("logExponential"), 0.05) );
 
-    formula_expression_ref M0 = get_M0_omega_function(L, a,frequencies,model_args,2);
+    formula_expression_ref M0 = get_M0_omega_function(L, a,frequencies,model_rep,2);
 
     return (identifier("multiParameter"),M0,D);
   }
-  else if (model_args[0] == "M3u") // M3u[n,S,F]
+  else if (model_rep.get_value<string>() == "M3u") // M3u[n,S,F]
   {
     int n = convertTo<int>(model_args[1]);
 
@@ -791,209 +951,182 @@ expression_ref process_stack_Multi(const module_loader& L,
     D = (identifier("DiscreteDistribution"), D);
     D.add_expression( constructor(":~",2) + F.exp() + (identifier("dirichlet'"), n, 4.0));
 
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
-
-    return (identifier("multiParameter"), M0, D);
-  }
-  else if (model_args[0] == "M3") // M3[n,S,F]
-  {
-    throw myexception()<<"The M3 model is not working right now.  Try M3u, with only stabilizing selection.";
-
-    int n = convertTo<int>(model_args[1]);
-
-    formula_expression_ref D = ListEnd;
-    vector<expression_ref> fraction;
-    for(int i=n-1;i>=0;i--)
-    {
-      string pname_f = "M3.f" + convertToString(i+1);
-      string pname_w = "M3.omega" + convertToString(i+1);
-      formula_expression_ref f = def_parameter("M3.f"     + convertToString(i+1), 1.0/n, between(0,1));
-      fraction.insert(fraction.begin(), f.exp());
-      formula_expression_ref w = def_parameter("M3.omega" + convertToString(i+1), 1.0, lower_bound(0));
-      // P *= ((1-f)*exponential_pdf(-log(w),0.05)/w + f*exponential_pdf(log(w),0.05)/w);
-      w.add_expression( constructor(":~",2) + w.exp() + (identifier("logExponential"), 0.05) );
-
-      D = Tuple(f,w)&D;
-    }
-    D = (identifier("DiscreteDistribution"), D);
-    D.add_expression(constructor(":~",2) +  get_list(fraction) + (identifier("dirichlet'"), n, 4.0));
-
-    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_rep,2);
 
     return (identifier("multiParameter"), M0, D);
   }
     */
-  else if (model_args[0] == "M1a") // M2a[S,F]
+  else if (model_rep.get_value<string>() == "M1a") // M2a[S,F]
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L, model_args[1], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(L, model_args[2], a, frequencies);
+    expression_ref R = coerce_to_frequency_model(L, model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m1a_model"),a,S,R});
   }
-  else if (model_args[0] == "M2a") // M2a[S,F]
+  else if (model_rep.get_value<string>() == "M2a") // M2a[S,F]
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L, model_args[1], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(L, model_args[2], a, frequencies);
+    expression_ref R = coerce_to_frequency_model(L, model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m2a_model"),a,S,R});
   }
-  else if (model_args[0] == "M2a_Test") // M2a[S,F]
+  else if (model_rep.get_value<string>() == "M2a_Test") // M2a[S,F]
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L, model_args[1], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(L, model_args[2], a, frequencies);
+    expression_ref R = coerce_to_frequency_model(L, model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m2a_test_model"),a,S,R});
   }
-  else if (model_args[0] == "M3") // M[n,S,F]
+  else if (model_rep.get_value<string>() == "M3") // M[n,S,F]
   {
-    int n = convertTo<int>(model_args[1]);
+    int n = model_rep.get<int>("n");
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+    expression_ref R = coerce_to_frequency_model(L, model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m3_model"),a,n,S,R});
   }
-  else if (model_args[0] == "M3_Test") // M3_Test[n,S,F]
+  else if (model_rep.get_value<string>() == "M3_Test") // M3_Test[n,S,F]
   {
-    int n = convertTo<int>(model_args[1]);
+    int n = model_rep.get<int>("n");
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+    expression_ref R = coerce_to_frequency_model(L, model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m3_test_model"),a,n,S,R});
   }
-  else if (model_args[0] == "M7")
+  else if (model_rep.get_value<string>() == "M7")
   {
-    int n = convertTo<int>(model_args[1]);
+    int n = model_rep.get<int>("n");
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+    expression_ref R = coerce_to_frequency_model(L, model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m7_model"),a,n,S,R});
   }
-  else if (model_args[0] == "M8")
+  else if (model_rep.get_value<string>() == "M8")
   {
-    int n = convertTo<int>(model_args[1]);
+    int n = model_rep.get<int>("n");
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+    expression_ref R = coerce_to_frequency_model(L, model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m8_model"),a,n,S,R});
   }
-  else if (model_args[0] == "M8a")
+  else if (model_rep.get_value<string>() == "M8a")
   {
-    int n = convertTo<int>(model_args[1]);
+    int n = model_rep.get<int>("n");
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+    expression_ref R = coerce_to_frequency_model(L, model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m8a_model"),a,n,S,R});
   }
-  else if (model_args[0] == "M8b")
+  else if (model_rep.get_value<string>() == "M8b")
   {
-    int n = convertTo<int>(model_args[1]);
+    int n = model_rep.get<int>("n");
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+    expression_ref R = coerce_to_frequency_model(L, model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m8b_model"),a,n,S,R});
   }
-  else if (model_args[0] == "M8a_Test") // M8b[n,S,F]
+  else if (model_rep.get_value<string>() == "M8a_Test") // M8b[n,S,F]
   {
-    int n = convertTo<int>(model_args[1]);
+    int n = model_rep.get<int>("n");
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+    expression_ref R = coerce_to_frequency_model(L, model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m8a_test_model"),a,n,S,R});
   }
-  else if (model_args[0] == "branch-site")  // branch-site-test[n,S,F]
+  else if (model_rep.get_value<string>() == "branch-site")  // branch-site-test[n,S,F]
   {
-    int n = convertTo<int>(model_args[1]);
+    int n = model_rep.get<int>("n");
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+    expression_ref R = coerce_to_frequency_model(L, model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("branch_site_test_model"),a,n,S,R});
   }
-  else if (model_args[0] == "dp-omega")  // branch-site-test[n,S,F]
+  else if (model_rep.get_value<string>() == "dp-omega")  // branch-site-test[n,S,F]
   {
-    int n = convertTo<int>(model_args[1]);
+    int n = model_rep.get<int>("n");
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(L, model_args[2], const_ptr(N), {});
+    expression_ref S = coerce_to_EM(L, model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(L, model_args[3], a, frequencies);
+    expression_ref R = coerce_to_frequency_model(L, model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("dp_omega_model"),a,n,S,R});
   }
@@ -1002,37 +1135,42 @@ expression_ref process_stack_Multi(const module_loader& L,
 }
 
 expression_ref 
-get_smodel_(const module_loader& L, string smodel,const object_ptr<const alphabet>& a,const shared_ptr<const valarray<double> >& frequencies) 
+get_smodel_(const module_loader& L, const ptree& model_rep, const object_ptr<const alphabet>& a,const shared_ptr<const valarray<double> >& frequencies) 
 {
-  if (smodel == "")
-    throw myexception()<<"You must specify a substitution model!";
+  if (model_rep.empty() and model_rep.data().empty())
+    throw myexception()<<"Can't construct substitution model from empty description!";
 
-  vector<string> model_args = split_top_level(smodel);
+  //  std::cout<<"smodel = "<<smodel<<std::endl;
+  //  auto result = parse(smodel);
+  //  std::cout<<result.get_value<string>()<<"\n";
+  //  write_info(std::cout, result);
+  //  std::cout<<std::endl;
+  //  ptree model_rep = parse(smodel);
 
   expression_ref m;
 
-  m = process_stack_Markov(L, model_args, a);
+  m = process_stack_Markov(L, model_rep, a);
   if (m) return m;
 
-  m = process_stack_Frequencies(L, model_args, a, frequencies);
+  m = process_stack_Frequencies(L, model_rep, a, frequencies);
   if (m) return m;
 
-  m = process_stack_Multi(L, model_args, a, frequencies);
+  m = process_stack_Multi(L, model_rep, a, frequencies);
   if (m) return m;
 
-  throw myexception()<<"Couldn't process substitution model description \""<<smodel<<"\"";
+  throw myexception()<<"Couldn't process substitution model description \""<<show(model_rep)<<"\"";
 }
 
 expression_ref
-get_smodel_(const module_loader& L,const string& smodel,const object_ptr<const alphabet>& a)
+get_smodel_(const module_loader& L,const ptree& model_rep,const object_ptr<const alphabet>& a)
 {
-  return get_smodel_(L, smodel, a, shared_ptr<const valarray<double> >());
+  return get_smodel_(L, model_rep, a, shared_ptr<const valarray<double> >());
 }
 
 expression_ref
-get_smodel_(const module_loader& L,const string& smodel)
+get_smodel_(const module_loader& L,const ptree& model_rep)
 {
-  return get_smodel_(L, smodel, object_ptr<const alphabet>(),shared_ptr<const valarray<double> >());
+  return get_smodel_(L, model_rep, object_ptr<const alphabet>(),shared_ptr<const valarray<double> >());
 }
 
 
@@ -1046,16 +1184,22 @@ get_smodel_(const module_loader& L,const string& smodel)
 /// \param frequencies The initial letter frequencies in the model.
 ///
 expression_ref
-get_smodel(const module_loader& L, const string& smodel, const object_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >& frequencies) 
+get_smodel(const module_loader& L, const ptree& model_rep, const object_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >& frequencies) 
 {
   assert(frequencies->size() == a->size());
 
   // --------- Convert smodel to MultiMixtureModel ------------//
-  expression_ref full_smodel = coerce_to_MMM(L, smodel,a,frequencies);
+  expression_ref full_smodel = coerce_to_MMM(L, model_rep,a,frequencies);
 
   std::cerr<<"smodel = "<<full_smodel<<"\n";
 
   return full_smodel;
+}
+
+expression_ref
+get_smodel(const module_loader& L, const string& smodel, const object_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >& frequencies) 
+{
+  return get_smodel(L, parse(smodel), a, frequencies);
 }
 
 /// \brief Construct a substitution::MultiModel model for a collection of alignments
