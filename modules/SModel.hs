@@ -406,13 +406,6 @@ frequencies_model a = do {
   }
 };
 
-plus_f a pi = let {pi' = listToVectorDouble pi} in ReversibleFrequency a (simple_smap a) pi' (plus_gwF a 1.0 pi');
-
-plus_f_model a = Prefix "F" (do {
-  pi <- frequencies_model a;
-  return (plus_f a pi);
-});
-
 simple_smap a = iotaUnsigned (alphabetSize a);
 
 fMutSel codon_a codon_w omega (ReversibleMarkov _ _ nuc_q nuc_pi _ _ _) =
@@ -469,6 +462,13 @@ fMutSel0_model codon_a nuc_rm = Prefix "fMutSel0" $ do
 
   return $ fMutSel0 codon_a ws omega nuc_rm;
 };
+
+plus_f a pi = plus_gwf a pi 1.0;
+
+plus_f_model a = Prefix "F" (do {
+  pi <- frequencies_model a;
+  return (plus_f a pi);
+});
 
 plus_gwf a pi f = let {pi' = listToVectorDouble pi} in 
                   ReversibleFrequency a (simple_smap a) pi' (plus_gwF a f pi');
