@@ -2078,7 +2078,7 @@ void reg_heap::check_used_reg(int index) const
     int index_c = result_index_for_reg_(t,index);
     int value = result_value_for_reg_(t,index);
 
-    if (results[value].flags.test(0))
+    if (results[index_c].flags.test(0))
       assert(is_root_token(t));
 
     if (value)
