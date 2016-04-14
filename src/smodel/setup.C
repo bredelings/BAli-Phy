@@ -469,7 +469,9 @@ expression_ref process_stack_Markov(const module_loader& L,
   }
   */
 
-  if (model_rep.get_value<string>() == "EQU")
+  if (model_rep.get_value<string>() == "JC")
+    return (identifier("jukes_cantor"),*a);
+  else if (model_rep.get_value<string>() == "EQU")
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)

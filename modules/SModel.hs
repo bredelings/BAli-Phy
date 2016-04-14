@@ -50,6 +50,8 @@ reversible_markov' a smap q pi = ReversibleMarkov a smap q pi (get_eigensystem q
 
 reversible_markov s (ReversibleFrequency a smap pi r) = reversible_markov' a smap (reversible_rate_matrix s r) pi;
 
+jukes_cantor a = reversible_markov (equ a) (uniform_f_model a);
+
 nBaseModels (MixtureModel (DiscreteDistribution l)) = length l;
 nBaseModels (MixtureModels (m:ms)) = nBaseModels m;
 
