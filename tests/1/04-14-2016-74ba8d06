@@ -1,0 +1,58 @@
+command: bali-phy --test 5d.fasta --tree=1.tree --smodel=HKY[kappa=2]+F[A=0.1,C=0.2,T=0.3,G=0.4] --initial-value Main.mu1=1.0
+
+VERSION: 2.3.8  [master commit 74ba8d06+]  (Apr 14 2016 19:13:38)
+BUILD: Apr 14 2016 19:21:45
+ARCH: x86_64-pc-linux-gnu
+COMPILER: GCC 5.3.1 20160409
+FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops  -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing -pipe -O3 -pedantic -I/usr/include/cairo -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng12 -g -finline-limit=1000 -std=gnu++14
+
+smodel = AST[model] mmm (AST[model] unit_model (AST[model] reversible_markov_model (hky 'DNA nucleotides' 2.000000) (plus_f 'DNA nucleotides' [0.100000, 0.400000, 0.300000, 0.200000])))
+
+#1: subst ~ HKY[kappa=2]+F[A=0.1,C=0.2,T=0.3,G=0.4] (1)     indel ~ RS07 (1)
+
+Prior on branch lengths T[b]:
+ T[b] ~ Gamma(alpha=0.5, beta=2*Main.mu<i>)   [mean=Main.mu<i>, variance=2*Main.mu<i>^2]
+    prior = -42.9103048517453   prior_A1 = -34.9488900287779    likelihood = -910.294173123958    logp = -953.204477975703    beta = 1
+
+    Heat.beta = 1.000000    Main.mu1 = 1.000000    *MyTree.nodeBranches5.0 = 5    *MyTree.nodeBranches5.1 = 8    *MyTree.nodeBranches5.2 = 9    *MyTree.nodeBranches6.0 = 11    *MyTree.nodeBranches6.1 = 7    *MyTree.nodeBranches6.2 = 6    *MyTree.nodeBranches7.0 = 13    *MyTree.nodeBranches7.1 = 12    *MyTree.nodeBranches7.2 = 10    *MyTree.branch0target = 6    *MyTree.branch1target = 5    *MyTree.branch2target = 5    *MyTree.branch3target = 7    *MyTree.branch4target = 6    *MyTree.branch5source = 5    *MyTree.branch5target = 7    *MyTree.branch6source = 6    *MyTree.branch6target = 7    *MyTree.branch7source = 6    *MyTree.branch8source = 5    *MyTree.branch9source = 5    *MyTree.branch10source = 7    *MyTree.branch11source = 6    *MyTree.branch12source = 7    *MyTree.branch12target = 5    *MyTree.branch13source = 7    *MyTree.branch13target = 6    *T1 = 0.041715    *T2 = 0.122842    *T3 = 0.105224    *T4 = 0.004169    *T5 = 1.597380    *T6 = 0.065663    *T7 = 0.933936    *IModels.training = Prelude.False    *Scale1.d1 = 0.041715    *Scale1.d2 = 0.122842    *Scale1.d3 = 0.105224    *Scale1.d4 = 0.004169    *Scale1.d5 = 1.597380    *Scale1.d6 = 0.065663    *Scale1.d7 = 0.933936    *Main.branchCat1 = 0    *Main.branchCat2 = 0    *Main.branchCat3 = 0    *Main.branchCat4 = 0    *Main.branchCat5 = 0    *Main.branchCat6 = 0    *Main.branchCat7 = 0    *I1.lengthpArg = 1    *P1.A = unprintable[alignment]    P1.a0 = unprintable[pairwise_alignment_t]    P1.a1 = unprintable[pairwise_alignment_t]    P1.a2 = unprintable[pairwise_alignment_t]    P1.a3 = unprintable[pairwise_alignment_t]    P1.a4 = unprintable[pairwise_alignment_t]    P1.a5 = unprintable[pairwise_alignment_t]    P1.a6 = unprintable[pairwise_alignment_t]    P1.a7 = unprintable[pairwise_alignment_t]    P1.a8 = unprintable[pairwise_alignment_t]    P1.a9 = unprintable[pairwise_alignment_t]    P1.a10 = unprintable[pairwise_alignment_t]    P1.a11 = unprintable[pairwise_alignment_t]    P1.a12 = unprintable[pairwise_alignment_t]    P1.a13 = unprintable[pairwise_alignment_t]    I1.RS07.logLambda = -3.566589    I1.RS07.meanIndelLength = 4.686460
+
+start time: Thu Apr 14 19:22:11 2016
+
+  end time: Thu Apr 14 19:22:15 2016
+
+total (elapsed) time: 4 seconds
+total (CPU) time: 4 seconds
+
+total likelihood evals = 2
+total calc_root_prob evals = 2
+total branches peeled = 14
+
+total subA branches updated = 0
+total subA matrices computed = 10
+
+total changeable evals         = 1554
+  with result                  = 1417
+  with call but not result     = 77
+total reduction steps          = 6903
+  changeable reduction steps   = 170
+  unchangeable reduction steps = 6733
+
+total garbage collection runs  = 26
+total register allocations     = 5897
+total computation allocations  = 247
+total step allocations         = 1223
+total regs                     = 4369
+total steps                    = 481
+total computations             = 481
+
+total reroot operations        = 2
+total tokens destroyed         = 7
+total create context           = 2
+  operator=                    = 0
+  copy constructor             = 2
+
+total values set               = 136
+total values gotten            = 334
+total values gotten variable   = 334
+total values gotten w/ result  = 292
+total context probability      = 3
