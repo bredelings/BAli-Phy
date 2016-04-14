@@ -431,6 +431,13 @@ int main(int argc,char* argv[])
 
     bool show_only = args.count("test");
 
+    //------ Increase precision for (cout,cerr) if we are testing ------//
+    if (show_only)
+    {
+      cerr.precision(15);
+      cout.precision(15);
+    }
+
     //------ Capture copy of 'cerr' output in 'err_cache' ------//
     if (not show_only)
       cerr.rdbuf(err_both.rdbuf());
