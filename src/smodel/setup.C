@@ -623,6 +623,25 @@ expression_ref process_stack_Markov(const module_loader& L,
   return {};
 }
 
+optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const alphabet& a)
+{
+  vector<double> pi;
+  for(int i=0;i<a.size();i++)
+    if (model_rep.count(a.letter(i)))
+      pi.push_back(model_rep.get<double>(a.letter(i)));
+
+  if (pi.size() > 0 and pi.size() < a.size())
+  {
+    string head = model_rep.get_value<string>();
+    throw myexception()<<"For frequency model '"<<head<<"', you must specify all letter frequencies, or none!";
+  }
+
+  if (pi.empty())
+    return boost::none;
+  else
+    return pi;
+}
+
 /// \brief Construct a model from the top of the string stack
 ///
 /// \param string_stack The list of strings representing the substitution model.
@@ -648,38 +667,38 @@ expression_ref process_stack_Frequencies(const module_loader& L,
 
     R = (identifier("ReversibleFrequency"), *a, (identifier("iotaUnsigned"), a->size()), v, (identifier("SModel.plus_gwF"), a, 1.0, v));
   }
-
-  else if (model_rep.get_value<string>() == "F61")
+  else if (model_rep.get_value<string>() == "F" or model_rep.get_value<string>() == "F61")
   {
-    if (a->size() != 61)
+    if (model_rep.get_value<string>() == "F61" and a->size() != 61)
       throw myexception()<<"Cannot use 'F61' frequency model since alphabet contains "<<a->size()<<" letters.";
-    auto model_rep2 = model_rep;
-    model_rep2.put_value("F");
-    R = process_stack_Frequencies(L,model_rep2,a,frequencies);
-  }
-  else if (model_rep.get_value<string>() == "F")
-  {
-    vector<double> pi;
-    for(int i=0;i<a->size();i++)
-      if (model_rep.count(a->letter(i)))
-	pi.push_back(model_rep.get<double>(a->letter(i)));
-    if (pi.size() > 0 and pi.size() < a->size())
-      throw myexception()<<"For frequency model F, you must specify all letter frequencies, or none!";
-	  
-    if (not pi.empty())
-      R = (identifier("plus_f"), a, get_list(pi));
+
+    if (auto pi = get_frequencies_from_tree(model_rep, *a))
+      R = (identifier("plus_f"), a, get_list(*pi));
     else
       R = model_expression({identifier("plus_f_model"),a});
   }
-  else if (model_rep.get_value<string>() == "gwF") 
-    R = model_expression({identifier("plus_gwf_model"),a});
+  else if (model_rep.get_value<string>() == "gwF")
+  {
+    auto pi = get_frequencies_from_tree(model_rep, *a);
+    if (pi and model_rep.count("f"))
+    {
+      double f = model_rep.get<double>("f");
+      R = (identifier("plus_gwf"), a, get_list(*pi), f);
+    }
+    else
+      R = model_expression({identifier("plus_gwf_model"),a});
+  }
   else if (model_rep.get_value<string>() == "F=uniform") 
     R = (identifier("uniform_f_model"),a);
   else if (model_rep.get_value<string>() == "F1x4")
   {
     if (not dynamic_cast<const Triplets*>(&*a))
       throw myexception()<<"+F1x4: '"<<a->name<<"' is not a triplet alphabet.";
-    R = model_expression({identifier("f1x4_model"),a});
+
+    if (auto nuc_pi = get_frequencies_from_tree(model_rep, dynamic_cast<const Triplets*>(&*a)->getNucleotides()))
+      R = (identifier("f1x4"), a, get_list(*nuc_pi));
+    else
+      R = model_expression({identifier("f1x4_model"), a});
   }
   else if (model_rep.get_value<string>() == "F3x4") 
   {
