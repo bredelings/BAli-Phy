@@ -485,15 +485,24 @@ uniform_f_model a = let {n_letters = alphabetSize a;
                          pi' = listToVectorDouble pi} in 
                     ReversibleFrequency a (simple_smap a) pi' (plus_gwF a 1.0 pi');
 
+f1x4 triplet_a nuc_pi = let {nuc_pi' = listToVectorDouble nuc_pi;
+                             pi' = f3x4_frequencies triplet_a nuc_pi' nuc_pi' nuc_pi';
+                             n_letters = alphabetSize triplet_a} in
+                        ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (plus_gwF triplet_a 1.0 pi');
+
+                                        
 f1x4_model triplet_a = Prefix "F1x4" 
  (do {
        let {nuc_a = getNucleotides triplet_a};
        nuc_pi <- frequencies_model nuc_a;
-       let {nuc_pi' = listToVectorDouble nuc_pi;
-            pi' = f3x4_frequencies triplet_a nuc_pi' nuc_pi' nuc_pi';
-            n_letters = alphabetSize triplet_a};
-       return $ ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (plus_gwF triplet_a 1.0 pi')
+       return (f1x4 triplet_a nuc_pi);
 });
+
+f3x4 triplet_a nuc_pi1 nuc_pi2 nuc_pi3 = let {nuc_pi1' = listToVectorDouble nuc_pi1;
+                                              nuc_pi2' = listToVectorDouble nuc_pi2;
+                                              nuc_pi3' = listToVectorDouble nuc_pi3;
+                                              pi' = f3x4_frequencies triplet_a nuc_pi1' nuc_pi2' nuc_pi3'} in
+                                         ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (plus_gwF triplet_a 1.0 pi');
 
 f3x4_model triplet_a = Prefix "F3x4" 
  (do {
@@ -501,11 +510,7 @@ f3x4_model triplet_a = Prefix "F3x4"
        nuc_pi1 <- Prefix "Site1" $ frequencies_model nuc_a;
        nuc_pi2 <- Prefix "Site2" $ frequencies_model nuc_a;
        nuc_pi3 <- Prefix "Site3" $ frequencies_model nuc_a;
-       let {nuc_pi1' = listToVectorDouble nuc_pi1;
-            nuc_pi2' = listToVectorDouble nuc_pi2;
-            nuc_pi3' = listToVectorDouble nuc_pi3;
-            pi' = f3x4_frequencies triplet_a nuc_pi1' nuc_pi2' nuc_pi3'};
-       return $ ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (plus_gwF triplet_a 1.0 pi')
+       return (f3x4 triplet_a nuc_pi1 nuc_pi2 nuc_pi3);
 });
 
 mg94_model triplet_a = Prefix "MG94" 
