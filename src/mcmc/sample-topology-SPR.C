@@ -679,6 +679,7 @@ public:
 
   vector<pair<int,tree_edge>> attachment_branch_pairs;
 
+  // Lengths of branches
   vector<double> L;
 
   /// The number of places we could regraft, including the current site
@@ -705,19 +706,15 @@ public:
     return T.edge(b);
   }
 
-  /// Express properties of branches as vectors indexed by their position in attachment_branches
+  /// Express properties of branches as vectors indexed by their position in attachment_branch_pairs
   template<typename U>
   vector<U> convert_to_vector(const map<tree_edge,U>& M) const
   {
     assert(M.size() == n_attachment_branches());
     vector<U> v;
     v.reserve(n_attachment_branches());
-
-    for(const auto& bp: attachment_branch_pairs)
-    {
-      const auto& E = bp.second;
-      v.push_back(M.at(E));
-    }
+    for(const auto& bp : attachment_branch_pairs)
+      v.push_back( M.at( bp.second ) );      // Assumes a particular orientation of the edge
 
     return v;
   }
@@ -767,14 +764,11 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
   // \todo - With tree constraints, or with a variable alignment and alignment constraints,
   //          we really should eliminate branches that we couldn't attach to, here.
 
-  // FIXME - in order to make this independent of the circular order, we should make
-  // a randomized_all_branches_after, or a sorted_all_branches_after.
   attachment_branch_pairs = branch_pairs_after(T, b_parent);
 
   for(const auto& bp: attachment_branch_pairs)
   {
     const auto& E = bp.second;
-
     if (E == B0)
       L.push_back(T.branch_length(child_branches[0]) + T.branch_length(child_branches[1]));
     else if (E == B0.reverse())
