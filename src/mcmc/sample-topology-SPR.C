@@ -1031,7 +1031,20 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& B1)
 
   // Step N: ATTACH to that point
   if (C != 0)
-    SPR_at_location(p[1], B1, I.attachment_branch_pairs[C].second, locations, false);
+  {
+    vector<int> indices;
+    indices.push_back(C);
+    for(int i=0;i<indices.size();i++)
+    {
+      int I1 = indices[i];
+      int I2 = I.attachment_branch_pairs[I1].first;
+      if (I2 > 0)
+	indices.push_back(I2);
+    }
+    std::reverse(indices.begin(), indices.end());
+    for(int i: indices)
+      SPR_at_location(p[1], B1, I.attachment_branch_pairs[i].second, locations, false);
+  }
 
   // enforce tree constraints
   //  if (not extends(p[1].t(), P.PC->TC))
