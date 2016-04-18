@@ -692,25 +692,10 @@ namespace substitution {
     // find the names of the (two) branches behind b0
     vector<int> b = t.branches_before(b0);
 
-    if (I.kind() == subA_index_t::leaf_index)
-    {
-      // Get an alignment of subA indices on branches b[0] and b[1] where b0.source is not present
-      int node = t.source(b0);
+    b.push_back(b0);
+    matrix<int> index_vanishing = I.get_subA_index_vanishing(b);
 
-      matrix<int> index_vanishing = I.get_subA_index_none(b, vector<int>(1,node));
-
-      b.push_back(b0);
-      return collect_vanishing_internal(b, index_vanishing, cache, MC);
-    }
-    else if (I.kind() == subA_index_t::internal_index)
-    {
-      b.push_back(b0);
-      matrix<int> index_vanishing = I.get_subA_index_vanishing(b);
-
-      return collect_vanishing_internal(b, index_vanishing, cache, MC);
-    }
-    else
-      std::abort();
+    return collect_vanishing_internal(b, index_vanishing, cache, MC);
   }
 
   void peel_internal_branch(const vector<int>& b,matrix<int>& index, Likelihood_Cache& cache,
@@ -794,15 +779,8 @@ namespace substitution {
     peel_internal_branch(b, index, cache, transition_P, MC);
 
     /*-------------------- Do the other_subst collection part -------------------*/
-    if (I.kind() == subA_index_t::internal_index)
-    {
-      matrix<int> index_collect = I.get_subA_index_vanishing(b);
-      cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
-    }
-    else if (I.kind() == subA_index_t::leaf_index)
-      cache[b0].other_subst = 1;
-    else
-      throw myexception()<<"subA_index_t is of unrecognized type!";
+    matrix<int> index_collect = I.get_subA_index_vanishing(b);
+    cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
   }
 
   void peel_internal_branch_F81(int b0,subA_index_t& I, Likelihood_Cache& cache, const TreeInterface& t, 
@@ -892,15 +870,8 @@ namespace substitution {
     }
 
     /*-------------------- Do the other_subst collection part -------------b-------*/
-    if (I.kind() == subA_index_t::internal_index)
-    {
-      matrix<int> index_collect = I.get_subA_index_vanishing(b);
-      cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
-    }
-    else if (I.kind() == subA_index_t::leaf_index)
-      cache[b0].other_subst = 1;
-    else
-      throw myexception()<<"subA_index_t is of unrecognized type!";
+    matrix<int> index_collect = I.get_subA_index_vanishing(b);
+    cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
   }
 
   vector<Matrix>
@@ -1234,7 +1205,7 @@ namespace substitution {
 					 const TreeInterface& t,
 					 subA_index_t& I, Likelihood_Cache& LC, const Mat_Cache& MC)
   {
-    if (LC.up_to_date(b0) and I.kind() == subA_index_t::internal_index)
+    if (LC.up_to_date(b0))
       return LC[b0].other_subst;
 
     for(int j: t.branches_before(b0))
@@ -1278,43 +1249,6 @@ namespace substitution {
     //    std::cerr<<"other_subst: there are "<<nodes.size()<<" subtree nodes."<<std::endl;
     //    std::cerr<<A<<std::endl;
     //    std::cerr<<T<<std::endl;
-
-    // What would index1 MEAN for subA_index_internal?
-    // - It combines columns that are + at a node next to the root
-    //   unless that column contains character in 'nodes'.
-    //
-    // - For subA_index_leaf, all leaf sub-columns are + everywhere, so it
-    //   just means counts columns that don't contain a character in 'nodes'
-    //
-    // - For subA_index_internal, if would count sub-columns that contain
-    //   a character next to the root, unless it also contains a character 
-    //   'nodes'.  But it would also include other_subst for columns that
-    //   might have a character in 'nodes', as long as they had been
-    //   collected as other subst on branches before the ones leading to
-    //   the root.
-    //  
-    //   Therefore, this doesn't make any sense for subA_index_internal,
-    //   because of they way it handles other_subst.  Instead, we need
-    //   include other subst only on branches that are not inside
-    //   the subtree indicated by 'nodes'.  But that is already the
-    //   complete calculation of other_subst, which does not really relate
-    //   to this one.
-
-    // get the relationships with the sub-alignments
-    if (P.subA().kind() == subA_index_t::leaf_index)
-    {
-      matrix<int> index1 = I.get_subA_index_none(rb,nodes);
-      log_double_t Pr1 = calc_root_probability(P,rb,index1);
-      assert(std::abs(log(Pr1) - log(Pr3) ) < 1.0e-9);
-
-      matrix<int> index2 = I.get_subA_index_any(rb,nodes);
-      matrix<int> index  = I.get_subA_index(rb);
-
-      log_double_t Pr2 = calc_root_probability(P,rb,index2);
-      log_double_t Pr  = calc_root_probability(P,rb,index);
-
-      assert(std::abs(log(Pr1 * Pr2) - log(Pr) ) < 1.0e-9);
-    }
 #endif
 
     return Pr3;

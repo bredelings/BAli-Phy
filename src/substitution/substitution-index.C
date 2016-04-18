@@ -389,52 +389,6 @@ matrix<int> subA_index_t::get_subA_index_vanishing(const vector<int>& b)
 }
 
 
-/// Select rows for branches \a b, and toss columns unless at least one character in \a nodes is present.
-matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b, const vector<int>& nodes) 
-{
-  const alignment& AA = A();
-  
-  // the alignment of sub alignments
-  matrix<int> subA = get_subA_index(b,true);
-
-  // select and order the columns we want to keep
-  const int B = b.size();
-  for(int i=0,l=0;i<subA.size1();i++)
-  {
-    int c = subA(i,B);
-    if (any_present(AA,c,nodes))
-      subA(i,B) = l++;
-    else
-      subA(i,B) = -1;
-  }
-
-  // return processed indices
-  return subA_select(subA);
-}
-
-/// Select rows for branches \a b, but exclude columns in which nodes \a nodes are present.
-matrix<int> subA_index_t::get_subA_index_none(const vector<int>& b, const vector<int>& nodes) 
-{
-  const alignment& AA = A();
-  
-  // the alignment of sub alignments
-  matrix<int> subA = get_subA_index(b,true);
-
-  // select and order the columns we want to keep
-  const int B = b.size();
-  for(int i=0,l=0;i<subA.size1();i++)
-  {
-    int c = subA(i,b.size());
-    if (not any_present(AA,c,nodes))
-      subA(i,B) = l++;
-    else
-      subA(i,B) = -1;
-  }
-
-  // return processed indices
-  return subA_select(subA);
-}
-
 /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
 matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b, const vector<int>& index_to_columns) 
 {

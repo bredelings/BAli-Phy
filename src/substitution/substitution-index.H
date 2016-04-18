@@ -208,7 +208,7 @@ struct subA_index_t: public Object
 
   TreeInterface T() const;
 
-  enum subA_index_kind {leaf_index=1, internal_index=2};
+  enum subA_index_kind {internal_index=2};
 
 protected:
   subA_index_kind kind_;
@@ -248,12 +248,6 @@ public:
 
   /// align sub-alignments corresponding to branches in b
   matrix<int> get_subA_index_select(const std::vector<int>& b) const;
-
-  /// align sub-alignments corresponding to branches in b, and select columns with a node in \a nodes
-  matrix<int> get_subA_index_any(const std::vector<int>& b, const std::vector<int>& nodes);
-
-  /// align sub-alignments corresponding to branches in b, and reject columns with a node in \a nodes
-  matrix<int> get_subA_index_none(const std::vector<int>& b, const std::vector<int>& nodes);
 
   /// align sub-alignments corresponding to branches in b, and select columns in 'seq'
   matrix<int> get_subA_index_columns(const std::vector<int>& b, const std::vector<int>& seq);
