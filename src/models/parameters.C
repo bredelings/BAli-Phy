@@ -267,7 +267,8 @@ void data_partition::variable_alignment(bool b)
   // turning OFF alignment variation
   if (not variable_alignment()) 
   {
-    subA_ = subA_leaf;
+    subA_ = subA_internal;
+    //    subA_ = subA_leaf;
 
     if (A().n_sequences() == t().n_nodes())
       if (not check_leaf_characters_minimally_connected(A(),t()))
@@ -276,10 +277,10 @@ void data_partition::variable_alignment(bool b)
   // turning ON alignment variation
   else 
   {
-    if (use_internal_index)
-      subA_ = subA_internal;
-    else
-      subA_ = subA_leaf;
+    //    if (use_internal_index)
+    subA_ = subA_internal;
+    //    else
+    //      subA_ = subA_leaf;
 
     assert(has_IModel());
     {
@@ -502,8 +503,7 @@ void data_partition::note_alignment_changed_on_branch(int b)
   // projected to the leaves remain unchanged.  If we only index these columns, then the
   // get_subA_index( ) will not change if we are using subA_index_leaf.
   //
-  if (subA().kind() == subA_index_t::internal_index)
-    LC.invalidate_branch_alignment(t(),b);
+  LC.invalidate_branch_alignment(t(),b);
 }
 
 void data_partition::note_alignment_changed()
