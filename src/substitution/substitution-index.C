@@ -663,11 +663,6 @@ Vector<pair<int,int> > combine_columns(const vector<pair<int,int> >& p1, const v
   return p3;
 }
 
-subA_index_leaf::subA_index_leaf(const data_partition* dp, const vector<int>& r)
-  :subA_index_t(dp, subA_index_t::leaf_index, r)
-{
-}
-
 subA_index_internal::subA_index_internal(const data_partition* dp, const vector<int>& r)
   :subA_index_t(dp, subA_index_t::internal_index, r)
 {

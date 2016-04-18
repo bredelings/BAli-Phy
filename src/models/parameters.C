@@ -268,7 +268,6 @@ void data_partition::variable_alignment(bool b)
   if (not variable_alignment()) 
   {
     subA_ = subA_internal;
-    //    subA_ = subA_leaf;
 
     if (A().n_sequences() == t().n_nodes())
       if (not check_leaf_characters_minimally_connected(A(),t()))
@@ -277,10 +276,7 @@ void data_partition::variable_alignment(bool b)
   // turning ON alignment variation
   else 
   {
-    //    if (use_internal_index)
     subA_ = subA_internal;
-    //    else
-    //      subA_ = subA_leaf;
 
     assert(has_IModel());
     {
@@ -574,7 +570,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
    sequence_length_indices(AA.n_sequences(),-1),
    transition_p_method_indices(t().n_branches(),-1),
    variable_alignment_( has_IModel() ),
-   subA_row_indices_leaf(t().n_branches()*2),
    subA_row_indices_internal(t().n_branches()*2),
    seqs(AA.seqs()),
    sequences( alignment_letters(AA, t().n_leaves()) ),
@@ -595,22 +590,13 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
     set_alignment(AAA);
   }
   
-  leaf_index = p->add_compute_expression( (identifier("SubAIndex.subA_index_leaf"),P->my_tree(),parameter(invisible_prefix+"A")));
-  expression_ref my_leaf_index = P->get_expression(leaf_index);
-  for(int i=0;i<subA_row_indices_leaf.size();i++)
-    subA_row_indices_leaf[i] = p->add_compute_expression((identifier("!"),my_leaf_index,i));
-  subA_leaf = new subA_index_leaf(this, subA_row_indices_leaf);
-
   internal_index = p->add_compute_expression( (identifier("SubAIndex.subA_index_internal"),P->my_tree(),parameter(invisible_prefix+"A")));
   expression_ref my_internal_index = P->get_expression(internal_index);
   for(int i=0;i<subA_row_indices_internal.size();i++)
     subA_row_indices_internal[i] = p->add_compute_expression((identifier("!"),my_internal_index,i));
   subA_internal = new subA_index_internal(this, subA_row_indices_internal);
   
-  if (variable_alignment() and use_internal_index)
-    subA_ = subA_internal;
-  else
-    subA_ = subA_leaf;
+  subA_ = subA_internal;
 
   // Create and set pairwise alignment parameters.
   for(int b=0;b<pairwise_alignment_for_branch.size();b++)

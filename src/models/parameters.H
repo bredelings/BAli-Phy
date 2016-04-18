@@ -95,14 +95,9 @@ private:
   /// The alignment data of this partition
   int alignment_matrix_index = -1;
 
-  /// sub-alignment indices;
-  std::vector<int> subA_row_indices_leaf;
-  int leaf_index;
-
   std::vector<int> subA_row_indices_internal;
   int internal_index;
 
-  mutable object_ptr<subA_index_t> subA_leaf;
   mutable object_ptr<subA_index_t> subA_internal;
 
   mutable object_ptr<subA_index_t> subA_;

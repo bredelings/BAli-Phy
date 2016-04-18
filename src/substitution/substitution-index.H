@@ -266,13 +266,6 @@ public:
   virtual ~subA_index_t() {}
 };
 
-struct subA_index_leaf: public subA_index_t
-{
-  subA_index_t* clone() const {return new subA_index_leaf(*this);}
-
-  subA_index_leaf(const data_partition*, const std::vector<int>&);
-};
-
 struct subA_index_internal: public subA_index_t
 {
   subA_index_t* clone() const {return new subA_index_internal(*this);}
