@@ -218,15 +218,10 @@ const alignment& data_partition::A() const
   return P->get_parameter_value(alignment_matrix_index).as_<alignment>();
 }
 
-void data_partition::set_alignment_(const expression_ref& A2)
+void data_partition::set_alignment(const expression_ref& A2)
 {
   const context* C = P;
   const_cast<context*>(C)->set_parameter_value(alignment_matrix_index, A2 );
-}
-
-void data_partition::set_alignment(const expression_ref& A2)
-{
-  set_alignment_(A2);
 }
 
 void data_partition::recompute_alignment_matrix_from_pairwise_alignments()
@@ -1015,7 +1010,7 @@ void Parameters::NNI(int b1, int b2)
       alignment* A = get_data_partition(i).A().clone();
       disconnect(*A,nodes);
       minimally_connect(*A,nodes);
-      get_data_partition(i).set_alignment_(A);
+      get_data_partition(i).set_alignment(A);
     }
   /*
   // 5. Fix-up the alignment matrix (bits)

@@ -131,8 +131,6 @@ public:
 
   void set_alignment(const expression_ref& A2);
 
-  void set_alignment_(const expression_ref& A2);
-
   void recompute_alignment_matrix_from_pairwise_alignments();
   
   TreeInterface t() const;
