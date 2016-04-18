@@ -261,16 +261,13 @@ void data_partition::variable_alignment(bool b)
   variable_alignment_ = b;
 
   // Ignore requests to turn on alignment variation when there is no imodel or internal nodes
-  if (not has_IModel() or A().n_sequences() != t().n_nodes())
+  if (not has_IModel())
     variable_alignment_ = false;
 
   // turning OFF alignment variation
   if (not variable_alignment()) 
   {
     subA_ = subA_leaf;
-
-    // We just changed the subA index type
-    LC.invalidate_all();
 
     if (A().n_sequences() == t().n_nodes())
       if (not check_leaf_characters_minimally_connected(A(),t()))
@@ -284,26 +281,26 @@ void data_partition::variable_alignment(bool b)
     else
       subA_ = subA_leaf;
 
-    assert(has_IModel() and A().n_sequences() == t().n_nodes());
+    assert(has_IModel());
     {
       alignment* A2 = A().clone();
       minimally_connect_leaf_characters(*A2, t());
       set_alignment(A2);
     }
     note_alignment_changed();
-
-    // reset the pairwise alignments.
-    for(int b=0;b<t().n_branches();b++)
-    {
-      int n1 = t().source(b);
-      int n2 = t().target(b);
-      set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2));
-    }
-
-    // Minimally connecting leaf characters may remove empty columns, in theory.
-    // And we just changed the subA index type
-    LC.invalidate_all();
   }
+
+  // reset the pairwise alignments.
+  for(int b=0;b<t().n_branches();b++)
+  {
+    int n1 = t().source(b);
+    int n2 = t().target(b);
+    set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2));
+  }
+
+  // Minimally connecting leaf characters may remove empty columns, in theory.
+  // And we just changed the subA index type
+  LC.invalidate_all();
 }
 
 bool data_partition::has_IModel() const
@@ -419,9 +416,6 @@ int data_partition::seqlength(int n) const
 /// Set the pairwise alignment value, but don't mark the alignment & sequence lengths as changed.
 void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& pi,bool require_match_A) const
 {
-  if (not variable_alignment())
-    throw myexception()<<"Alignment variation is OFF: how can the alignment change?";
-
   int B = t().reverse(b);
 
 #ifndef NDEBUG
@@ -458,9 +452,6 @@ expression_ref data_partition::get_pairwise_alignment_(int b) const
 
 const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b, bool require_match_A) const
 {
-  if (not variable_alignment())
-    throw myexception()<<"Alignment variation is OFF: what pairwise alignment are you referring to?";
-
   //  if (not pairwise_alignment_for_branch_is_valid(b)) std::abort();
   assert(pairwise_alignment_for_branch_is_valid(b));
 
@@ -499,9 +490,6 @@ void data_partition::invalidate_pairwise_alignment_for_branch(int b) const
 
 void data_partition::note_alignment_changed_on_branch(int b)
 {
-  if (not variable_alignment())
-    throw myexception()<<"Alignment variation is OFF: how can the alignment change?";
-
   b = t().undirected(b);
 
   int B = t().reverse(b);
@@ -600,6 +588,12 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   string invisible_prefix = "*"+prefix;
 
   alignment_matrix_index = p->add_parameter(invisible_prefix + "A", AA);
+  if (not has_IModel())
+  {
+    auto AAA = AA;
+    minimally_connect_leaf_characters(AAA, t());
+    set_alignment(AAA);
+  }
   
   leaf_index = p->add_compute_expression( (identifier("SubAIndex.subA_index_leaf"),P->my_tree(),parameter(invisible_prefix+"A")));
   expression_ref my_leaf_index = P->get_expression(leaf_index);
@@ -618,17 +612,15 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   else
     subA_ = subA_leaf;
 
-  if (variable_alignment())
-  {
-    for(int b=0;b<pairwise_alignment_for_branch.size();b++)
-      pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b), 0);
+  // Create and set pairwise alignment parameters.
+  for(int b=0;b<pairwise_alignment_for_branch.size();b++)
+    pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b), 0);
 
-    for(int b=0;b<t().n_branches();b++)
-    {
-      int n1 = t().source(b);
-      int n2 = t().target(b);
-      set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2));
-    }
+  for(int b=0;b<t().n_branches();b++)
+  {
+    int n1 = t().source(b);
+    int n2 = t().target(b);
+    set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2));
   }
 
   const int n_base_smodels = n_base_models();
@@ -692,7 +684,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
     for(int n=0;n<t().n_nodes();n++)
     {
       expression_ref L = A().seqlength(n);
-      if (variable_alignment())
+      if (has_IModel())
 	L = (identifier("seqlength"),as,tree,n);
       sequence_length_indices[n] = p->add_compute_expression( L );
     }
@@ -1020,20 +1012,18 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
 
   vector<vector<HMM::bitmask_t>> a123456(n_data_partitions());
   for(int i=0;i<n_data_partitions();i++)
-    if (get_data_partition(i).variable_alignment())
-      a123456[i] = A5::get_bitpath((*this)[i], order);
+    a123456[i] = A5::get_bitpath((*this)[i], order);
 
   // 3. Perform NNI
   exchange_subtrees(b1, b2);  // alter tree
   std::swap(nodes[0],nodes[2]); // alter nodes
   for(int i=0;i<n_data_partitions();i++)
-    if (get_data_partition(i).variable_alignment())
-      for(auto& col: a123456[i]) // alter matrix
-      {
-	auto col2 = col;
-	col.set(0,col2.test(2));
-	col.set(2,col2.test(0));
-      }
+    for(auto& col: a123456[i]) // alter matrix
+    {
+      auto col2 = col;
+      col.set(0,col2.test(2));
+      col.set(2,col2.test(0));
+    }
     
   // 4. Update the alignment matrix (alignment)
   for(int i=0;i<n_data_partitions();i++)
@@ -1043,19 +1033,20 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
       disconnect_subtree(*A,nodes);
       get_data_partition(i).set_alignment(A);
     }
-    else if (get_data_partition(i).variable_alignment())
+    else
     {
       alignment* A = get_data_partition(i).A().clone();
       disconnect(*A,nodes);
       minimally_connect(*A,nodes);
       get_data_partition(i).set_alignment(A);
     }
+
   /*
   // 5. Fix-up the alignment matrix (bits)
   for(int i=0;i<n_data_partitions();i++)
     if (get_data_partition(i).variable_alignment() and allow_disconnect_subtree)
       disconnect_subtree(a123456[i]);
-    else if (get_data_partition(i).variable_alignment())
+    else
     {
       disconnect(a123456[i]);
       minimally_connect(a123456[i]);
@@ -1075,15 +1066,14 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
 
   // 6. Set the pairwise alignments.
   for(int i=0;i<n_data_partitions();i++)
-    if (get_data_partition(i).variable_alignment())
-    {
-      const alignment& A = get_data_partition(i).A();
-      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[0],nodes[4]), A2::get_pairwise_alignment(A, nodes[0], nodes[4]), false);
-      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[1],nodes[4]), A2::get_pairwise_alignment(A, nodes[1], nodes[4]), false);
-      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[2],nodes[5]), A2::get_pairwise_alignment(A, nodes[2], nodes[5]), false);
-      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[3],nodes[5]), A2::get_pairwise_alignment(A, nodes[3], nodes[5]), false);
-      get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[4],nodes[5]), A2::get_pairwise_alignment(A, nodes[4], nodes[5]), false);
-    }
+  {
+    const alignment& A = get_data_partition(i).A();
+    get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[0],nodes[4]), A2::get_pairwise_alignment(A, nodes[0], nodes[4]), false);
+    get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[1],nodes[4]), A2::get_pairwise_alignment(A, nodes[1], nodes[4]), false);
+    get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[2],nodes[5]), A2::get_pairwise_alignment(A, nodes[2], nodes[5]), false);
+    get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[3],nodes[5]), A2::get_pairwise_alignment(A, nodes[3], nodes[5]), false);
+    get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[4],nodes[5]), A2::get_pairwise_alignment(A, nodes[4], nodes[5]), false);
+  }
 }
 
 int Parameters::SPR(const tree_edge& B1, const tree_edge& B2, int branch_to_move)

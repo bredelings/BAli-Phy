@@ -378,7 +378,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
   // FIXME - do I want to allow/remove internal node sequences here?
   vector<bool> internal_sequences(n_partitions);
   for(int i=0;i<internal_sequences.size();i++)
-    internal_sequences[i] = (imodel_mapping[i] != -1);
+    internal_sequences[i] = true;
 
   //       - and only if there is an indel model?
   if (args.count("tree"))

@@ -48,6 +48,7 @@ using boost::shared_ptr;
 shared_ptr<DParrayConstrained>
 sample_two_nodes_base(data_partition& P, const data_partition& P0, const A5::hmm_order& order, const A5::hmm_order& order0)
 {
+  assert(P.variable_alignment());
   HMM m12345 = A5::get_HMM(P,order);
 
   /*------- Get column order from (A0,T0,nodes) --------*/

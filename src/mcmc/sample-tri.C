@@ -385,22 +385,30 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
   auto t0 = p[0].t();
   dynamic_bitset<> ignore1A = ~t0.partition(t0.find_branch(nodes[0][0],nodes[0][1]));
   dynamic_bitset<> ignore2A = ~(t0.partition(t0.find_branch(nodes[0][0],nodes[0][2])) | t0.partition(t0.find_branch(nodes[0][0],nodes[0][3])) );
-  dynamic_bitset<> ignore1(t0.n_nodes()); 
-  dynamic_bitset<> ignore2(t0.n_nodes()); 
-  for(int i=0;i<ignore1.size();i++) {
-    ignore1[i] = ignore1A[i];
-    ignore2[i] = ignore2A[i];
-  }
 
   // Check that our constraints are met
   for(int i=0;i<p.size();i++) {
     for(int j=0;j<p[i].n_data_partitions();j++) {
+      auto ignore1 = ignore1A;
+      auto ignore2 = ignore2A;
+      // If alignments are fixed, then internal node sequences can change to keep minimal connection.
+      if (not P0[j].variable_alignment())
+	for(int i=t0.n_leaves();i<t0.n_nodes();i++)
+	{
+	  ignore1.set(i);
+	  ignore2.set(i);
+	}
       if (not(A_constant(P0[j].A(), p[i][j].A(), ignore1))) {
 	std::cerr<<P0[j].A()<<endl;
 	std::cerr<<p[i][j].A()<<endl;
 	assert(A_constant(P0[j].A(), p[i][j].A(), ignore1));
       }
-      assert(A_constant(P0[j].A(), p[i][j].A(), ignore2));
+      if (not A_constant(P0[j].A(), p[i][j].A(), ignore2))
+      {
+	std::cerr<<P0[j].A()<<endl;
+	std::cerr<<p[i][j].A()<<endl;
+	assert(A_constant(P0[j].A(), p[i][j].A(), ignore2));
+      }
     }
   }
     
