@@ -546,7 +546,7 @@ bool behind_edge(const TreeInterface& T, const tree_edge& E1, const tree_edge& E
 
 /* We need to NNI to ONE of the 4 grandchild edges */
 // E1, E3, and E5 all point away from E1.node1.
-void SPR_by_NNI(Parameters& P, const tree_edge& E1, const tree_edge& E2, bool close)
+void SPR_by_NNI(Parameters& P, const tree_edge& E1, const tree_edge& E2, bool close, bool disconnect_subtree)
 {
   const auto& t = P.t();
 
@@ -596,7 +596,7 @@ void SPR_by_NNI(Parameters& P, const tree_edge& E1, const tree_edge& E2, bool cl
   double L5 = t.branch_length(t.find_branch(E5));
 
   // 4. Do NNI.
-  P.NNI(E4b, E3); // Source nodes for E4b/E2 and E3 are not moved, but branch names are moved.
+  P.NNI(E3, E4b, disconnect_subtree); // Source nodes for E4b/E2 and E3 are not moved, but branch names are moved.
   std::swap(E4b.node1, E3.node1);
 
   // 5. Fix up branch lengths and source nodes for E4b/E2 and E3.
@@ -606,7 +606,7 @@ void SPR_by_NNI(Parameters& P, const tree_edge& E1, const tree_edge& E2, bool cl
 
 /// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
 ///  and choose the point on the branch specified in \a locations.
-void SPR_at_location(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const spr_attachment_points& locations, bool NNI)
+void SPR_at_location(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const spr_attachment_points& locations, bool NNI, bool disconnect_subtree=false)
 {
 #ifndef NDEBUG
   double total_length_before = tree_length(P.t());
@@ -635,7 +635,7 @@ void SPR_at_location(Parameters& P, const tree_edge& b_subtree, const tree_edge&
 
   // Perform the SPR operation (specified by a branch TOWARD the pruned subtree)
   if (NNI)
-    SPR_by_NNI(P, b_subtree.reverse(), b_target, true);
+    SPR_by_NNI(P, b_subtree.reverse(), b_target, true, disconnect_subtree);
   else
     P.SPR(b_subtree.reverse(), b_target);
 
@@ -1043,7 +1043,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& B1)
     }
     std::reverse(indices.begin(), indices.end());
     for(int i: indices)
-      SPR_at_location(p[1], B1, I.attachment_branch_pairs[i].second, locations, false);
+      SPR_at_location(p[1], B1, I.attachment_branch_pairs[i].second, locations, true, true);
   }
 
   // enforce tree constraints
