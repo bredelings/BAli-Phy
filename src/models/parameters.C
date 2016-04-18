@@ -933,6 +933,25 @@ void minimally_connect(alignment& A, const vector<int>& nodes)
   }
 }
 
+// We want to preserve connectedness, except across the branch n1-n4.
+// Initially, the tree (0,2,3)5 is guaranteed to be connected.
+// We ensure that ((0)4,2,3)5 is connected.
+// However the branch (1,4) may be affected.
+void disconnect_subtree(alignment& A, const vector<int>& nodes)
+{
+  for(int c=0; c<A.length(); c++)
+  {
+    bool n0 = A.character(c, nodes[0]);
+    bool n5 = A.character(c, nodes[5]);
+
+    if (n0 and n5)
+      A.set_value(c, nodes[4], alphabet::not_gap);
+
+    if (not n0 and not n5)
+      A.set_value(c, nodes[4], alphabet::gap);
+  }
+}
+
 void minimally_connect(vector<HMM::bitmask_t>& a123456)
 {
   for(auto& col:a123456)
@@ -951,17 +970,30 @@ void minimally_connect(vector<HMM::bitmask_t>& a123456)
   }
 }
 
-void Parameters::NNI(const tree_edge& B1, const tree_edge& B2)
+void disconnect_subtree(vector<HMM::bitmask_t>& a123456)
+{
+  for(auto& col:a123456)
+  {
+    if (col.test(0) and col.test(5) and not col.test(4))
+      col.set(4);
+
+    if (not col.test(0) and not col.test(5) and col.test(4))
+      col.set(4,false);
+  }
+}
+
+void Parameters::NNI(const tree_edge& B1, const tree_edge& B2, bool allow_disconnect_subtree)
 {
   int b1 = t().find_branch(B1);
   int b2 = t().find_branch(B2);
-  NNI(b1, b2);
+  NNI(b1, b2, allow_disconnect_subtree);
 }
 
 
 
-// br1/b1 and br2/b2 point outwards, away from the other subtrees.
-void Parameters::NNI(int b1, int b2)
+// b1 and b2 point outwards, away from the other subtrees.
+// The (possibly) disconnected subtree is the sibling of b1.
+void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
 {
   int s1 = t().source(b1);
   int t1 = t().target(b1);
@@ -985,7 +1017,7 @@ void Parameters::NNI(int b1, int b2)
   assert(nodes[2] == t2);
 
   // OK, br1 is nodes[0]<->nodes[4] and br2 is nodes[2]<->nodes[5]
-  
+
   vector<vector<HMM::bitmask_t>> a123456(n_data_partitions());
   for(int i=0;i<n_data_partitions();i++)
     if (get_data_partition(i).variable_alignment())
@@ -1005,7 +1037,13 @@ void Parameters::NNI(int b1, int b2)
     
   // 4. Update the alignment matrix (alignment)
   for(int i=0;i<n_data_partitions();i++)
-    if (get_data_partition(i).variable_alignment())
+    if (get_data_partition(i).variable_alignment() and allow_disconnect_subtree)
+    {
+      alignment* A = get_data_partition(i).A().clone();
+      disconnect_subtree(*A,nodes);
+      get_data_partition(i).set_alignment(A);
+    }
+    else if (get_data_partition(i).variable_alignment())
     {
       alignment* A = get_data_partition(i).A().clone();
       disconnect(*A,nodes);
@@ -1015,7 +1053,9 @@ void Parameters::NNI(int b1, int b2)
   /*
   // 5. Fix-up the alignment matrix (bits)
   for(int i=0;i<n_data_partitions();i++)
-    if (get_data_partition(i).variable_alignment())
+    if (get_data_partition(i).variable_alignment() and allow_disconnect_subtree)
+      disconnect_subtree(a123456[i]);
+    else if (get_data_partition(i).variable_alignment())
     {
       disconnect(a123456[i]);
       minimally_connect(a123456[i]);
