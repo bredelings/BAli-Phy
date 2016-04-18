@@ -1107,6 +1107,7 @@ int Parameters::SPR(const tree_edge& B1, const tree_edge& B2, int branch_to_move
 /// Got m1<--->x1<--->m2 and n1<--->n2, and trying to move x1 onto (n1,n2)
 int Parameters::SPR(int br1, int br2, int branch_to_move)
 {
+  std::abort();
   int x1 = t().source(br1);
   int x2 = t().target(br1);
 

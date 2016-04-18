@@ -491,6 +491,8 @@ int choose_subtree_branch_uniform2(const TreeInterface& T)
 
 void sample_SPR_flat_one(owned_ptr<Model>& P,MoveStats& Stats,int b1) 
 {
+  return;
+  
   Parameters& PP = *P.as<Parameters>();
 
   if (PP.t().is_leaf_node(PP.t().target(b1))) return;
@@ -1259,6 +1261,8 @@ void sample_SPR_flat(owned_ptr<Model>& P,MoveStats& Stats)
 
 void sample_SPR_nodes(owned_ptr<Model>& P,MoveStats& Stats) 
 {
+  return;
+
   Parameters& PP = *P.as<Parameters>();
   int n = n_SPR_moves(PP);
 
