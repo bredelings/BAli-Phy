@@ -821,8 +821,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 
   if (I.n_attachment_branches() == 1) return spr_attachment_probabilities();
 
-  vector<double> L = I.attachment_branch_lengths();
-
   /*----------------------- Initialize likelihood for each attachment point ----------------------- */
 
   // The probability of attaching to each branch, w/o the alignment probability
