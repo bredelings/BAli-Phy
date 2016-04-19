@@ -208,17 +208,14 @@ struct subA_index_t: public Object
 
   TreeInterface T() const;
 
-  enum subA_index_kind {internal_index=2};
-
 protected:
-  subA_index_kind kind_;
 
   std::vector< int > row_indices;
 
 public:
   virtual subA_index_t* clone() const=0;
   
-  subA_index_t(const data_partition* P, subA_index_kind k, const std::vector<int>& r);
+  subA_index_t(const data_partition* P, const std::vector<int>& r);
 
   int n_rows() const;
 
@@ -252,11 +249,6 @@ public:
   /// align sub-alignments corresponding to branches in b, and select columns in 'seq'
   matrix<int> get_subA_index_columns(const std::vector<int>& b, const std::vector<int>& seq);
 
-  std::vector<int> characters_to_indices(int branch);
-  void invalidate_from_node(int n);
-
-  int kind() const {return kind_;}
-
   virtual ~subA_index_t() {}
 };
 
@@ -268,14 +260,6 @@ struct subA_index_internal: public subA_index_t
 };
 
 Vector<std::pair<int,int> > convert_to_column_index_list(const std::vector<int>& column_indices);
-Vector<std::pair<int,int> > combine_columns(const std::vector<std::pair<int,int> >& p1, const std::vector<std::pair<int,int> >& p2);
-std::vector<int> indices_to_present_columns(const std::vector<std::pair<int,int> >& p1, const std::vector<std::pair<int,int> >& p2);
-
-/// Count the number of entries in a subA index that are not null
-int n_non_null_entries(const matrix<int>&);
-
-/// Count the number of columns in a subA index that are not empty.
-int n_non_empty_columns(const matrix<int>&);
 
 std::ostream& print_subA(std::ostream& o,const matrix<int>& I);
 

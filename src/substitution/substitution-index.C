@@ -70,32 +70,6 @@ static inline bool any_present(const alignment& A,int c, const vector<int>& node
   return false;
 }
 
-
-int n_non_null_entries(const matrix<int>& m)
-{
-  int total = 0;
-  for(int i=0;i<m.size1();i++)
-    for(int j=0;j<m.size2();j++)
-      if (m(i,j) != -1)
-	total++;
-  return total;
-}
-
-int n_non_empty_columns(const matrix<int>& m)
-{
-  int total = 0;
-  for(int i=0;i<m.size1();i++)
-  {
-    bool empty = true;
-    for(int j=0;j<m.size2() and empty;j++)
-      if (m(i,j) != -1)
-	empty = false;
-    if (not empty)
-      total++;
-  }
-  return total;
-}
-
 const Parameters& subA_index_t::P() const
 {
   return *DP->P;
@@ -502,122 +476,12 @@ void check_subA(const subA_index_t& I1_, const alignment& A1,const subA_index_t&
   }
 }
 
-vector<int> subA_index_t::characters_to_indices(int branch)
-{
-  int node = T().source(branch);
-
-  vector<int> suba_for_character(A().seqlength(node), -1);
-
-  // walk the alignment row and the subA-index row simultaneously
-  vector<int> columns = A().get_columns_for_characters(node);
-
-  const auto& index = row(branch);
-
-  for(int i=0,j=0,k=0;j<columns.size();j++)
-  {
-    int c = columns[j];
-
-    while(i<index.size() and index[i].first < c)
-      i++;
-
-    assert(i != -1);
-
-    suba_for_character[k++] = index[i].second;
-  }
-
-  return suba_for_character;
-}
-
-subA_index_t::subA_index_t(const data_partition* dp, subA_index_kind k, const vector<int>& r)
+subA_index_t::subA_index_t(const data_partition* dp, const vector<int>& r)
   :DP(dp),
-   kind_(k),
    row_indices(r)
 { }
 
-/// Map the indices in p1 to the array indices of p2 which contain the same columns.
-vector<int> indices_to_present_columns(const vector<pair<int,int> >& p1, const vector<pair<int,int> >& p2)
-{
-  vector<int> indices_map(p1.size(), -1);
-
-  int I1 = 0;
-  int I2 = 0;
-  while(I1 < p1.size() or I2 < p2.size())
-  {
-    if (I2 >= p2.size())
-    {
-      I1++;
-    }
-    else if (I1 >= p1.size())
-    {
-      I2++;
-    }
-    else if (p1[I1].first < p2[I2].first)
-    {
-      I1++;
-    }
-    else if (p1[I1].first > p2[I2].first)
-    {
-      I2++;
-    }
-    else  // p1[I1].first == p2[I2].first)
-    {
-      int index = p1[I1].second;
-      indices_map[index] = I2;
-      I1++;
-      I2++;
-    }
-  }
-
-  return indices_map;
-}
-
-/// Get the sorted list of columns present in either p1 or p2, with -1 for each index.
-Vector<pair<int,int> > combine_columns(const vector<pair<int,int> >& p1, const vector<pair<int,int> >& p2)
-{
-  const int s1 = p1.size();
-  const int s2 = p2.size();
-
-  Vector<pair<int,int> > p3;
-  p3.reserve(s1+s2);
-
-  int I1 = 0;
-  int I2 = 0;
-  while(I1 < s1 or I2 < s2)
-  {
-    int c = -1;
-    if (I2 >= s2)
-    {
-      c = p1[I1].first;
-      I1++;
-    }
-    else if (I1 >= s1)
-    {
-      c = p2[I2].first;
-      I2++;
-    }
-    else if (p1[I1].first < p2[I2].first)
-    {
-      c = p1[I1].first;
-      I1++;
-    }
-    else if (p1[I1].first > p2[I2].first)
-    {
-      c = p2[I2].first;
-      I2++;
-    }
-    else  // p1[I1].first == p2[I2].first)
-    {
-      c = p1[I1].first;
-      I1++;
-      I2++;
-    }
-
-    p3.push_back(pair<int,int>(c,-1));
-  }
-  return p3;
-}
-
 subA_index_internal::subA_index_internal(const data_partition* dp, const vector<int>& r)
-  :subA_index_t(dp, subA_index_t::internal_index, r)
+  :subA_index_t(dp, r)
 {
 }
