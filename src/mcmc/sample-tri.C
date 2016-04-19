@@ -123,6 +123,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   dynamic_bitset<> group3 = P.t().partition(P.t().find_branch(nodes[0],nodes[3]));
 
   vector<int> seq1 = A.get_columns_for_characters(nodes[1]);
+  int a1 = P.seqlength(nodes[1]);
 
   vector<int> seq23;
   vector<int> seq123; 
@@ -183,7 +184,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   vector< vector<int> > allowed_states_for_mask(4);
   for(auto& m: allowed_states_for_mask)
     m.reserve(Matrices->n_dp_states());
-  
+
   // Construct the states that are allowed for each emission pattern.
   for(int S2: Matrices->dp_order())
   {
@@ -213,17 +214,21 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   }
 
   //------------------ Compute the DP matrix ---------------------//
-  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23);
+  //  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23);
+  vector<vector<int> > pins(2);
 
-  vector< pair<int,int> > yboundaries = get_y_ranges_for_band(bandwidth, seq23, seq1, seq123);
-
+  //  Note: we don't even HAVE an a123 unless tree_changed == false!
+  //  vector< pair<int,int> > yboundaries = get_y_ranges_for_band(bandwidth, seq23, seq1, seq123);
+  //  vector<pair<int,int>> yboundaries(seq1.size()+1,pair<int,int>(0,seq23.size()));
+  vector<pair<int,int>> yboundaries(a1+1,{0,a23.size()});
+  
   // if the constraints are currently met but cannot be met
   if (pins.size() == 1 and pins[0][0] == -1)
     ; //std::cerr<<"Constraints cannot be expressed in terms of DP matrix paths!"<<std::endl;
   else 
   {
-    const int I = seq1.size()+1;
-    const int J = seq23.size()+1;
+    const int I = a1+1;
+    const int J = a23.size()+1;
     yboundaries = boundaries_intersection(yboundaries, get_yboundaries_from_pins(I, J, pins));
 
     Matrices->forward_band(yboundaries);
