@@ -39,22 +39,6 @@ using std::vector;
 using boost::dynamic_bitset;
 using namespace A2;
 
-vector< Matrix > distributions_star(const data_partition& P,const vector<int>& seq,int b,bool up) 
-{
-  //--------------- Find our branch, and orientation ----------------//
-  auto t = P.t();
-  b = t.undirected(b);
-  int root = t.target(b);      //this is an arbitrary choice
-
-  int node1 = t.source(b);
-  int node2 = t.target(b);
-  if (not up) std::swap(node1,node2);
-
-  dynamic_bitset<> group = P.t().partition(P.t().find_branch(node1,node2));
-
-  return ::distributions_star(P,seq,root,group);
-}
-
 vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int b,bool up)
 {
   //--------------- Find our branch, and orientation ----------------//
@@ -106,8 +90,6 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
   /******** Precompute distributions at node2 from the 2 subtrees **********/
   distributions_t_local distributions = distributions_tree;
-  //  if (not P.smodel_full_tree)
-  //    distributions = distributions_star;
 
   vector< Matrix > dists1 = distributions(P,seq1,b,true);
   vector< Matrix > dists2 = distributions(P,seq2,b,false);
