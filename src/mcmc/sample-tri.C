@@ -31,6 +31,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "likelihood.H"    // for prior()
 #include <boost/shared_ptr.hpp>
 #include "dp/dp-matrix.H"
+#include "substitution/substitution.H"
 
 //Assumptions:
 //  a) we assume that the internal node is the parent sequence in each of the sub-alignments
@@ -41,76 +42,46 @@ using std::pair;
 using std::endl;
 using boost::dynamic_bitset;
 
-/// Figure out which columns in the full alignment correspond to each "column" in the emissions path.
-vector<int> get_column_order(const alignment& A, const vector<HMM::bitmask_t>& a, const vector<int>& bits, const vector<int>& nodes)
-{
-  assert(bits.size() == nodes.size());
-
-  vector<vector<int>> node_columns;
-  for(int n: nodes)
-    node_columns.push_back(A.get_columns_for_characters(n));
-
-  vector<int> I(nodes.size(),0);
-
-  vector<int> combined_columns;
-  for(const auto& m: a)
-  {
-    int column = -1;
-    for(int j=0; j<bits.size(); j++)
-      if (m.test(bits[j]))
-      {
-	column = node_columns[j][I[j]];
-	I[j]++;
-      }
-    if (column >= 0)
-      combined_columns.push_back(column);
-  }
-
-  for(int j=0; j<bits.size(); j++)
-    assert(I[j] == node_columns[j].size());
-
-  return combined_columns;
-}
-
 boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P, const data_partition& P0, 
 								  const vector<int>& nodes, const vector<int>& nodes0,
 								  int bandwidth)
 {
-  const alignment& A = P.A();
-
+  const auto t = P.t();
+  const auto t0 = P0.t();
+  
   assert(P.variable_alignment());
 
-  assert(P.t().is_connected(nodes[0],nodes[1]));
-  assert(P.t().is_connected(nodes[0],nodes[2]));
-  assert(P.t().is_connected(nodes[0],nodes[3]));
+  assert(t.is_connected(nodes[0],nodes[1]));
+  assert(t.is_connected(nodes[0],nodes[2]));
+  assert(t.is_connected(nodes[0],nodes[3]));
 
-  assert(P0.t().is_connected(nodes[0],nodes[1]));
+  assert(t0.is_connected(nodes[0],nodes[1]));
   assert(nodes0[0] == nodes[0]);
-  bool tree_changed = not P0.t().is_connected(nodes[0],nodes[2]) or not P0.t().is_connected(nodes[0],nodes[3]);
+  bool tree_changed = not t0.is_connected(nodes[0],nodes[2]) or not t0.is_connected(nodes[0],nodes[3]);
 
   // If the tree changed, assert that previously nodes 2 and 3 were connected.
   if (tree_changed)
   {
     assert(bandwidth < 0);
-    assert(P0.t().is_connected(nodes[2],nodes[3]));
+    assert(t0.is_connected(nodes[2],nodes[3]));
   }
   else
   {
-    assert(P0.t().is_connected(nodes[0],nodes[2]));
-    assert(P0.t().is_connected(nodes[0],nodes[3]));
+    assert(t0.is_connected(nodes[0],nodes[2]));
+    assert(t0.is_connected(nodes[0],nodes[3]));
   }
 
   // std::cerr<<"A = "<<A<<endl;
 
-  int b1 = P.t().find_branch(nodes[1],nodes[0]);
-  int b2 = P.t().find_branch(nodes[0],nodes[2]);
-  int b3 = P.t().find_branch(nodes[0],nodes[3]);
+  int b1 = t.find_branch(nodes[1],nodes[0]);
+  int b2 = t.find_branch(nodes[2],nodes[0]);
+  int b3 = t.find_branch(nodes[3],nodes[0]);
 
   HMM m1 = P.get_branch_HMM(b1);
   m1.remap_bits({0,3});
-  HMM m2 = P.get_branch_HMM(b2);
+  HMM m2 = P.get_branch_HMM(t.reverse(b2));
   m2.remap_bits({3,1});
-  HMM m3 = P.get_branch_HMM(b3);
+  HMM m3 = P.get_branch_HMM(t.reverse(b3));
   m3.remap_bits({3,2});
 
   HMM m123 = Glue(m1,Glue(m2,m3));
@@ -118,28 +89,27 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   m123.B = P.get_beta();
 
   //------------- Compute sequence properties --------------//
-  dynamic_bitset<> group1 = P.t().partition(P.t().find_branch(nodes[0],nodes[1]));
-  dynamic_bitset<> group2 = P.t().partition(P.t().find_branch(nodes[0],nodes[2]));
-  dynamic_bitset<> group3 = P.t().partition(P.t().find_branch(nodes[0],nodes[3]));
+  dynamic_bitset<> group1 = t.partition(t.find_branch(nodes[0],nodes[1]));
+  dynamic_bitset<> group2 = t.partition(t.find_branch(nodes[0],nodes[2]));
+  dynamic_bitset<> group3 = t.partition(t.find_branch(nodes[0],nodes[3]));
 
-  vector<int> seq1 = A.get_columns_for_characters(nodes[1]);
   int a1 = P.seqlength(nodes[1]);
 
-  vector<int> seq23;
-  vector<int> seq123; 
   vector<HMM::bitmask_t> a23;
+
+  HMM::bitmask_t m23; m23.set(1); m23.set(2);
+
   if (tree_changed)
   {
-    int b4 = P0.t().find_branch(nodes[2],nodes[3]);
+    int b4 = t0.find_branch(nodes[2],nodes[3]);
     // Does this give the right order so that the move is reversible?
     // FIXME: Check that when we project a123_new to a12_new at the end, this does not change!!!
     a23 = convert_to_bits(P0.get_pairwise_alignment(b4),1,2);
-    seq23 = get_column_order(A, a23, {1,2}, {nodes[2], nodes[3]});
 
     // The branch that the subtree was pruned from.
-    int b5 = P.t().find_branch(nodes0[2], nodes0[3]);
-    assert(P0.t().is_connected(nodes0[2],nodes0[0]));
-    assert(P0.t().is_connected(nodes0[3],nodes0[0]));
+    int b5 = t.find_branch(nodes0[2], nodes0[3]);
+    assert(t0.is_connected(nodes0[2],nodes0[0]));
+    assert(t0.is_connected(nodes0[3],nodes0[0]));
 
     // Make sure the column order on the pruned branch matches the projected column order from the original alignment.
     vector<HMM::bitmask_t> b123 = A3::get_bitpath(P0, nodes0);
@@ -151,27 +121,17 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   else
   {
     vector<HMM::bitmask_t> a123 = A3::get_bitpath(P, nodes);
-    HMM::bitmask_t m23; m23.set(1); m23.set(2);
     a23 = remove_silent(a123, m23);
-
-    seq23 = get_column_order(A, a123, {1,2}, {nodes[2], nodes[3]});
-    seq123 = get_column_order(A, a123, {0,1,2}, {nodes[1],nodes[2],nodes[3]});
   }
 
-  // Precompute distributions at nodes[0]
-  distributions_t distributions = distributions_tree;
-  //  if (not P.smodel_full_tree)
-  //    distributions = distributions_star;
-
-  vector< Matrix > dists1 = distributions(P,seq1,nodes[0],group1);
-  vector< Matrix > dists23 = distributions(P,seq23,nodes[0],group2|group3);
-
+  vector< Matrix > dists1 = substitution::get_column_likelihoods(P, {b1}, get_indices_n(P.seqlength(nodes[1])), 2);
+  vector< Matrix > dists23 = substitution::get_column_likelihoods(P, {b2, b3}, get_indices_from_bitpath_w(a23, {1,2}, m23), 2);
 
   //-------------- Create alignment matrices ---------------//
 
   vector<int> branches(3);
   for(int i=0;i<3;i++)
-    branches[i] = P.t().find_branch(nodes[0],nodes[i+1]);
+    branches[i] = t.find_branch(nodes[0],nodes[i+1]);
 
   boost::shared_ptr<DPmatrixConstrained> 
     Matrices(new DPmatrixConstrained(m123,
@@ -250,20 +210,20 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   vector<int> path = Matrices->ungeneralize(path_g);
 
   for(int i=0;i<3;i++) {
-    int b = P.t().find_branch(nodes[0],nodes[i+1]);
+    int b = t.find_branch(nodes[0],nodes[i+1]);
     P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
   }
 
   P.recompute_alignment_matrix_from_pairwise_alignments();
 
 #ifndef NDEBUG_DP
-  check_alignment(P.A(),P.t(),"sample_tri_base:out");
+  check_alignment(P.A(),t,"sample_tri_base:out");
 #else
   Matrices->clear();
 #endif
 
-  int b = P.t().find_branch(nodes[0],nodes[1]);
-  P.LC.invalidate_branch_alignment(P.t(), b);
+  int b = t.find_branch(nodes[0],nodes[1]);
+  P.LC.invalidate_branch_alignment(t, b);
 
   return Matrices;
 }
@@ -592,11 +552,11 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
 
   P.set_root(node1);
 
-  vector<dynamic_bitset<> > s1(P.n_data_partitions());
+  //  vector<dynamic_bitset<> > s1(P.n_data_partitions());
   for(int i=0;i<P.n_data_partitions();i++) 
   {
-    s1[i].resize(P[i].alignment_constraint.size1());
-    s1[i] = constraint_satisfied(P[i].alignment_constraint, P[i].A());
+    //    s1[i].resize(P[i].alignment_constraint.size1());
+    //    s1[i] = constraint_satisfied(P[i].alignment_constraint, P[i].A());
 #ifndef NDEBUG
     check_alignment(P[i].A(), P[i].t(), "tri_sample_alignment:in");
 #endif
@@ -626,8 +586,8 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
     check_alignment(P[i].A(), P[i].t(),"tri_sample_alignment:out");
 #endif
 
-    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
-    report_constraints(s1[i],s2,i);
+    //    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
+    //    report_constraints(s1[i],s2,i);
   }
 }
 
