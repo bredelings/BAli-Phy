@@ -117,4 +117,15 @@ pairwise_alignment_t get_pairwise_alignment_from_bits(const std::vector<HMM::bit
 pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path, const HMM&, int n1, int n2);
 
 std::vector<int> get_path_unique(const std::vector<HMM::bitmask_t>& bit_path, const HMM& H);
+
+matrix<int> get_indices_from_bitpath_w_wo(const std::vector<HMM::bitmask_t>& bit_path, const std::vector<int>& rows, HMM::bitmask_t keep, HMM::bitmask_t exclude);
+
+matrix<int> get_indices_from_bitpath_wo(const std::vector<HMM::bitmask_t>& bit_path, const std::vector<int>& rows, HMM::bitmask_t exclude);
+
+matrix<int> get_indices_from_bitpath_w(const std::vector<HMM::bitmask_t>& bit_path, const std::vector<int>& rows, HMM::bitmask_t keep);
+
+matrix<int> get_indices_from_bitpath(const std::vector<HMM::bitmask_t>& bit_path, const std::vector<int>& rows);
+
+matrix<int> get_indices_n(int n);
+
 #endif

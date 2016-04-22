@@ -526,3 +526,69 @@ vector<int> get_path_unique(const vector<HMM::bitmask_t>& path1, const HMM& H)
   return path2;
 }
 
+matrix<int> get_indices_from_bitpath_w_wo(const vector<HMM::bitmask_t>& bit_path, const vector<int>& rows, HMM::bitmask_t keep, HMM::bitmask_t exclude)
+{
+  matrix<int> index(bit_path.size(), rows.size());
+  vector<int> I(rows.size(), 0);
+  
+  int c = 0;
+  for(int i=0; i<bit_path.size(); i++)
+  {
+    auto bits = bit_path[i];
+
+    if ((bits & keep).any() and (bits & exclude).none())
+    {
+      // Record and advance indices to next column
+      for(int j=0;j<rows.size();j++)
+	if (bits.test(rows[j]))
+	  index(c,j) = I[j]++;
+	else
+	  index(c,j) = -1;
+
+      // Go to next column in index matrix
+      c++;
+    }
+    else
+    {
+      // Just advance indices to next column
+      for(int j=0;j<rows.size();j++)
+	if (bits.test(rows[j]))
+	  I[j]++;
+    }
+  }
+
+  index.resize(c, rows.size());
+
+  return index;
+}
+
+matrix<int> get_indices_from_bitpath_wo(const vector<HMM::bitmask_t>& bit_path, const vector<int>& rows, HMM::bitmask_t exclude)
+{
+  HMM::bitmask_t keep;
+  for(int row: rows)
+    keep.set(row);
+
+  return get_indices_from_bitpath_w_wo(bit_path, rows, keep, exclude);
+}
+
+matrix<int> get_indices_from_bitpath_w(const vector<HMM::bitmask_t>& bit_path, const vector<int>& rows, HMM::bitmask_t keep)
+{
+  HMM::bitmask_t exclude;
+
+  return get_indices_from_bitpath_w_wo(bit_path, rows, keep, exclude);
+}
+
+matrix<int> get_indices_from_bitpath(const vector<HMM::bitmask_t>& bit_path, const vector<int>& rows)
+{
+  HMM::bitmask_t exclude;
+
+  return get_indices_from_bitpath_wo(bit_path, rows, exclude);
+}
+
+matrix<int> get_indices_n(int n)
+{
+  matrix<int> I(n,1);
+  for(int i=0;i<n;i++)
+    I(i,0) = i;
+  return I;
+}
