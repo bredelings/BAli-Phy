@@ -1450,9 +1450,6 @@ namespace substitution {
     Matrix F(n_models, n_states);
     MC.WeightedFrequencyMatrix(F);
 
-    bool has_internal_nodes = (A.n_sequences() == t.n_nodes());
-    if (not has_internal_nodes) assert(A.n_sequences() == t.n_leaves());
-
     // 1. Allocate arrays for storing results and temporary results.
     vector<vector<pair<int,int> > > ancestral_characters (A.n_sequences());
     vector<vector<pair<int,int> > > subA_index_parent_characters (t.n_branches()*2);
@@ -1473,10 +1470,7 @@ namespace substitution {
 	subA_index_parent_characters[b] = vector<pair<int,int>>(P.seqlength(P.t().source(b)), {-1,-1});
       }
 
-      // FIXME - but what if root is internal and A doesn't have internal sequences?
-      vector<int> nodes;
-      if (has_internal_nodes)
-	nodes = {root};
+      vector<int> nodes = {root};
       matrix<int> index = P.subA().get_subA_index_with_nodes(rb, nodes);
 
       // FIXME - this doesn't handle case where tree has only 2 leaves.
@@ -1497,7 +1491,6 @@ namespace substitution {
 
 	pair<int,int> state_model = sample(S);
 
-	if (has_internal_nodes)
 	{
 	  int ii = index(i,3);
 	  if(ii != -1)
@@ -1534,9 +1527,7 @@ namespace substitution {
 
       assert(local_branches.size() == 3 or local_branches.size() == 1);
 
-      vector<int> nodes;
-      if (t.is_leaf_node(node) or has_internal_nodes)
-	nodes = {node};
+      vector<int> nodes = {node};
 
       // FIXME - but what if node is internal and A doesn't have internal sequences?
       matrix<int> index = P.subA().get_subA_index_with_nodes(local_branches, nodes);
@@ -1608,7 +1599,6 @@ namespace substitution {
 	
 	pair<int,int> state_model = sample(S);
 	
-	if (t.is_leaf_node(node) or (has_internal_nodes))
 	{
 	  int ii = index(i,index.size2()-1);
 	  if (ii != -1)
