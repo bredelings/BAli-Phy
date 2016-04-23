@@ -1503,10 +1503,16 @@ namespace substitution {
 
       assert(local_branches.size() == 3 or local_branches.size() == 1);
 
-      vector<int> nodes = {node};
-
-      // FIXME - but what if node is internal and A doesn't have internal sequences?
-      matrix<int> index = P.subA().get_subA_index_with_nodes(local_branches, nodes);
+      matrix<int> index;
+      if (local_branches.size() == 1)
+	index = get_indices_n(P.seqlength(P.t().source(b)));
+      else
+      {
+	auto a1 = convert_to_bits(P.get_pairwise_alignment(local_branches[1]),1,0);
+	auto a2 = convert_to_bits(P.get_pairwise_alignment(local_branches[2]),2,0);
+	auto a012 = Glue_A(a1,a2);
+	index = get_indices_from_bitpath(a012,{0,1,2});
+      }
       
       for(int i=0;i<index.size1();i++)
       {
@@ -1542,7 +1548,7 @@ namespace substitution {
 
 	if (local_branches.size() == 1)
 	{
-	  int ii = index(i,index.size2()-1);
+	  int ii = index(i,0);
 	  int l = sequences[node][ii];
 	  const alphabet& a = A.get_alphabet();
 	  if (l == alphabet::not_gap)
@@ -1576,7 +1582,7 @@ namespace substitution {
 	pair<int,int> state_model = sample(S);
 	
 	{
-	  int ii = index(i,index.size2()-1);
+	  int ii = index(i,0);
 	  if (ii != -1)
 	    ancestral_characters[node][ii] = state_model;
 	}
