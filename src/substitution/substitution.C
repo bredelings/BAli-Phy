@@ -453,14 +453,16 @@ namespace substitution {
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b0);
 
-    cache.set_length(P.subA().branch_index_length(b0), b0);
+    int L0 = P.seqlength(P.t().source(b0));
+    
+    cache.set_length(L0, b0);
 
     const int n_models  = cache.n_models();
     const int n_states  = cache.n_states();
 
     assert(transition_P.back().size1() == n_states);
 
-    for(int i=0;i<P.subA().branch_index_length(b0);i++)
+    for(int i=0;i<L0;i++)
     {
       Matrix& R = cache(i,b0);
       // compute the distribution at the parent node
@@ -507,7 +509,9 @@ namespace substitution {
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b0);
 
-    cache.set_length(P.subA().branch_index_length(b0), b0); 
+    int L0 = P.seqlength(P.t().source(b0));
+
+    cache.set_length(L0, b0); 
 
     const int n_models  = cache.n_models();
     const int n_states  = cache.n_states();
@@ -530,7 +534,7 @@ namespace substitution {
     Matrix& F = cache.scratch(1);
     MC.FrequencyMatrix(F); // F(m,l2)
 
-    for(int i=0;i<P.subA().branch_index_length(b0);i++)
+    for(int i=0;i<L0;i++)
     {
       Matrix& R = cache(i,b0);
       // compute the distribution at the parent node
@@ -575,7 +579,8 @@ namespace substitution {
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b0);
 
-    cache.set_length(P.subA().branch_index_length(b0), b0);
+    int L0 = P.seqlength(P.t().source(b0));
+    cache.set_length(L0, b0);
 
     const int n_models  = cache.n_models();
     const int n_states  = cache.n_states();
@@ -587,7 +592,7 @@ namespace substitution {
 
     const vector<unsigned>& smap = MC.state_letters();
 
-    for(int i=0;i<P.subA().branch_index_length(b0);i++)
+    for(int i=0;i<L0;i++)
     {
       Matrix& R = cache(i,b0);
       // compute the distribution at the parent node
@@ -772,7 +777,7 @@ namespace substitution {
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
     matrix<int> index = P.subA().get_subA_index_select(b);
-    assert(index.size1() == P.subA().branch_index_length(b0));
+    assert(index.size1() == P.seqlength(P.t().source(b0)));
     // the call to P.subA().get_subA-index_select ( ) updates the index for branches in b.
 
     /*-------------------- Do the peeling part------------- --------------------*/
@@ -795,7 +800,8 @@ namespace substitution {
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
     matrix<int> index = P.subA().get_subA_index_select(b);
-    assert(index.size1() == P.subA().branch_index_length(b0));
+    int L0 = P.seqlength(P.t().source(b0));
+    assert(index.size1() == L0);
 
     assert(b.size() == 3);
 
@@ -804,7 +810,7 @@ namespace substitution {
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b0);
 
-    cache.set_length(P.subA().branch_index_length(b0), b0);
+    cache.set_length(L0, b0);
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
@@ -834,7 +840,7 @@ namespace substitution {
     Matrix ones(n_models, n_states);
     element_assign(ones, 1);
     
-    for(int i=0;i<P.subA().branch_index_length(b0);i++) 
+    for(int i=0;i<L0;i++) 
     {
       // compute the source distribution from 2 branch distributions
       int i0 = index(i,0);
@@ -890,15 +896,17 @@ namespace substitution {
 
     int B0 = t.undirected(b0);
 
+    int L0 = P.seqlength(P.t().source(b0));
+
     if (t.n_nodes() == 2 and b0 == 1)
     {
       assert(bb == 0);
       cache.prepare_branch(b0);
-      cache.set_length(P.subA().branch_index_length(b0), b0);
+      cache.set_length(L0, b0);
 
       vector<Matrix> L = get_leaf_seq_likelihoods(sequences[1], A.get_alphabet(), MC, 0);
 
-      for(int i=0;i<P.subA().branch_index_length(b0);i++)
+      for(int i=0;i<L0;i++)
 	cache(i,b0) = L[i];
       cache[b0].other_subst = 1;
     }
@@ -1548,7 +1556,7 @@ namespace substitution {
 
 	rb.push_back(b);
 
-	subA_index_parent_characters[b] = vector<pair<int,int>>(P.subA().branch_index_length(b), {-1,-1});
+	subA_index_parent_characters[b] = vector<pair<int,int>>(P.seqlength(P.t().source(b)), {-1,-1});
       }
 
       // FIXME - but what if root is internal and A doesn't have internal sequences?
@@ -1607,7 +1615,7 @@ namespace substitution {
 
 	local_branches.push_back(b);
 
-	subA_index_parent_characters[b] = vector<pair<int,int>>(P.subA().branch_index_length(b), {-1,-1});
+	subA_index_parent_characters[b] = vector<pair<int,int>>(P.seqlength(P.t().source(b)), {-1,-1});
       }
 
       assert(local_branches.size() == 3 or local_branches.size() == 1);
