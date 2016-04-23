@@ -1376,34 +1376,6 @@ namespace substitution {
   }
 
 
-
-  /*
-  log_double_t Pr_from_scratch_leaf(data_partition P)
-  {
-    subA_index_leaf subA(P.P, P.t().n_branches()*2);
-
-    Likelihood_Cache LC(P.t(), P);
-    LC.root = P.LC.root;
-
-    return Pr(*P.sequences, P.A(), subA, P, P.t(), LC);
-  }
-
-
-
-  log_double_t Pr_from_scratch_internal(data_partition P)
-  {
-    assert(P.variable_alignment());
-
-    subA_index_internal subA(P.P, P.t().n_branches()*2);
-
-    Likelihood_Cache LC(P.t(), P);
-    LC.root = P.LC.root;
-
-    check_internal_nodes_connected(P.A(),P.t(),vector<int>(1,LC.root));
-
-    return Pr(*P.sequences, P.A(), subA, P, P.t(), LC);
-  }
-  */
   log_double_t Pr(const data_partition& P) {
     log_double_t result = Pr(P, P.LC);
 
@@ -1731,17 +1703,6 @@ namespace substitution {
   {
     vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, P.A(), P, P, P.t(), P.LC);
 
-#ifdef DEBUG_SUBSTITUTION
-    log_double_t L1 = combine_likelihoods(likelihoods);
-    log_double_t L2 = Pr_from_scratch_leaf(P);
-    if (P.variable_alignment()) {
-      log_double_t L3 = Pr_from_scratch_internal(P);
-      assert(std::abs(log(L3) - log(L2)) < 1.0e-9);
-    }
-
-    assert(std::abs(log(L1) - log(L2)) < 1.0e-9);
-#endif
-    
     return likelihoods;
   }
   
