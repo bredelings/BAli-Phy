@@ -246,9 +246,6 @@ public:
   /// align sub-alignments corresponding to branches in b
   matrix<int> get_subA_index_select(const std::vector<int>& b) const;
 
-  /// align sub-alignments corresponding to branches in b, and select columns in 'seq'
-  matrix<int> get_subA_index_columns(const std::vector<int>& b, const std::vector<int>& seq);
-
   virtual ~subA_index_t() {}
 };
 

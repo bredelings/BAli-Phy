@@ -1152,23 +1152,6 @@ namespace substitution {
     return L;
   }
 
-  /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
-  vector<Matrix>
-  get_column_likelihoods(const data_partition& P, const vector<int>& b, const vector<int>& ordered_columns,int delta)
-  {
-    // FIXME - this now handles only internal sequences.  But see get_leaf_seq_likelihoods( ).
-    subA_index_t& I = P.subA();
-
-#ifdef DEBUG_INDEXING
-    I.check_footprint();
-#endif
-
-    // select columns with at least one node in 'required_nodes', and re-order them according to the permutation 'ordered_columns'
-    matrix<int> index = I.get_subA_index_columns(b,ordered_columns);
-
-    return get_column_likelihoods(P, b, index, delta);
-  }
-
   /// Find the leaf branches of a connected subtree of nodes \a nodes instead of tree \a T
   vector<int> get_leaf_branches_from_subtree_nodes(const TreeInterface& t, const vector<int>& nodes)
   {

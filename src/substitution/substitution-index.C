@@ -362,59 +362,6 @@ matrix<int> subA_index_t::get_subA_index_vanishing(const vector<int>& b)
   return subA_select(subA);
 }
 
-
-/// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
-matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b, const vector<int>& index_to_columns) 
-{
-  // select and order the columns we want to keep
-  const int B = b.size();
-
-  // Create the sorted column order
-  vector<int> order = iota((int)index_to_columns.size());
-  std::sort(order.begin(), order.end(), sequence_order<int>(index_to_columns));
-  vector<pair<int,int> > columns(index_to_columns.size());
-  for(int i=0;i<columns.size();i++)
-  {
-    columns[i].first = index_to_columns[order[i]];
-    columns[i].second = order[i];
-  }
-
-  // The alignment of non-empty columns in b
-  matrix<int> subA1 = get_subA_index(b,true);
-
-  // The alignment of indices from branches \a b from columns in the order 
-  matrix<int> subA2(columns.size(), B);
-  for(int i=0;i<subA2.size1();i++)
-    for(int j=0;j<subA2.size2();j++)
-      subA2(i,j) = -2;
-
-  // Fill in the entries of the columns in sorted order
-  for(int i=0,k=0;i<columns.size();i++)
-  {
-    int column = columns[i].first;
-    int index = columns[i].second;
-    
-    // Skip unsed columns in subA1.
-    while (k<subA1.size1() and subA1(k, B) < column)
-      k++;
-
-    if (k<subA1.size1() and column == subA1(k, B))
-      for(int j=0;j<B;j++)
-	subA2(index,j) = subA1(k,j);
-    else
-      for(int j=0;j<B;j++)
-	subA2(index,j) = -1;
-  }
-
-  // The alignment of indices from branches \a b from columns in the order 
-  for(int i=0;i<subA2.size1();i++)
-    for(int j=0;j<subA2.size2();j++)
-      assert( subA2(i,j) != -2 );
-
-  return subA2;
-}
-
-
 std::ostream& print_subA(std::ostream& o,const matrix<int>& I)
 {
   o<<"["<<I.size1()<<","<<I.size2()<<"]\n";

@@ -36,17 +36,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/dynamic_bitset.hpp>
 #include "dp/5way.H"
 
-/// Define type for a function which return the distributions for each column and rate give SOME leaves
-typedef std::vector< Matrix > (*distributions_t)(const data_partition&,const std::vector<int>&,int,const boost::dynamic_bitset<>&);
-
-
-/// Distributions function for a star tree
-std::vector< Matrix > distributions_star(const data_partition& P,const std::vector<int>& seq,int root,const boost::dynamic_bitset<>& group);
-
-/// Distributions function for a full tree
-std::vector< Matrix > distributions_tree(const data_partition& P,const std::vector<int>& seq,int root,const boost::dynamic_bitset<>& group);
-
-
 /// Sum of likelihoods for columns which don't contain any characters in sequences mentioned in 'nodes'
 log_double_t other_subst(const data_partition& P, const std::vector<int>& nodes);
 
