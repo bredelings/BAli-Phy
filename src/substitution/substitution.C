@@ -27,6 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
 #include "util.H"
+#include "dp/hmm.H"
 
 // #define DEBUG_SUBSTITUTION
 // #define DEBUG_CACHING
@@ -695,9 +696,13 @@ namespace substitution {
 
     // find the names of the (two) branches behind b0
     vector<int> b = t.branches_before(b0);
-
     b.push_back(b0);
-    matrix<int> index_vanishing = P.subA().get_subA_index_vanishing(b);
+    std::abort();
+    auto a0 = convert_to_bits(P.get_pairwise_alignment(b[0]), 0, 2);
+    auto a1 = convert_to_bits(P.get_pairwise_alignment(b[1]), 1, 2);
+    auto a012 = Glue_A(a0, a1);
+
+    matrix<int> index_vanishing = get_indices_from_bitpath_wo(a012, {0,1}, 4);
 
     return collect_vanishing_internal(b, index_vanishing, cache, MC);
   }
@@ -774,16 +779,19 @@ namespace substitution {
     vector<int> b = t.branches_before(b0);
     b.push_back(b0);
 
+    auto a0 = convert_to_bits(P.get_pairwise_alignment(b[0]), 0, 2);
+    auto a1 = convert_to_bits(P.get_pairwise_alignment(b[1]), 1, 2);
+    auto a012 = Glue_A(a0, a1);
+
     // get the relationships with the sub-alignments for the (two) branches behind b0
-    matrix<int> index = P.subA().get_subA_index_select(b);
+    matrix<int> index = get_indices_from_bitpath_w(a012, {0,1}, 1<<2);
     assert(index.size1() == P.seqlength(P.t().source(b0)));
-    // the call to P.subA().get_subA-index_select ( ) updates the index for branches in b.
 
     /*-------------------- Do the peeling part------------- --------------------*/
     peel_internal_branch(b, index, cache, transition_P, MC);
 
     /*-------------------- Do the other_subst collection part -------------------*/
-    matrix<int> index_collect = P.subA().get_subA_index_vanishing(b);
+    matrix<int> index_collect = get_indices_from_bitpath_wo(a012, {0,1}, 1<<2);
     cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
   }
 
@@ -797,8 +805,12 @@ namespace substitution {
     vector<int> b = t.branches_before(b0);
     b.push_back(b0);
 
+    auto a0 = convert_to_bits(P.get_pairwise_alignment(b[0]), 0, 2);
+    auto a1 = convert_to_bits(P.get_pairwise_alignment(b[1]), 1, 2);
+    auto a012 = Glue_A(a0, a1);
+
     // get the relationships with the sub-alignments for the (two) branches behind b0
-    matrix<int> index = P.subA().get_subA_index_select(b);
+    matrix<int> index = get_indices_from_bitpath_w(a012, {0,1}, 1<<2);
     int L0 = P.seqlength(P.t().source(b0));
     assert(index.size1() == L0);
 
@@ -875,7 +887,7 @@ namespace substitution {
     }
 
     /*-------------------- Do the other_subst collection part -------------b-------*/
-    matrix<int> index_collect = P.subA().get_subA_index_vanishing(b);
+    matrix<int> index_collect = get_indices_from_bitpath_wo(a012, {0,1}, 1<<2);
     cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
   }
 
@@ -1328,24 +1340,25 @@ namespace substitution {
 
     // compute root branches
     vector<int> rb;
-    if (t.n_nodes() == 2)
-    {
-      // This is the 
-      rb.push_back(0);
-      rb.push_back(1);
-    }
-    else
-      rb = t.branches_in(LC.root);
-
-    // get the relationships with the sub-alignments
-    matrix<int> index = P.subA().get_subA_index(rb);
 
     // get the probability
     log_double_t Pr = 1;
     if (t.n_nodes() == 2)
-      Pr = calc_root_probability2(LC,MC,rb,index);
-    else
+    {
+      auto a01 = convert_to_bits(P.get_pairwise_alignment(P.t().find_branch(0,1)),0,1);
+      auto index = get_indices_from_bitpath(a01, {0,1});
       Pr = calc_root_probability(t,LC,MC,rb,index);
+    }
+    else
+    {
+      auto rb = t.branches_in(LC.root);
+      auto a10 = convert_to_bits(P.get_pairwise_alignment(rb[0]),1,0);
+      auto a20 = convert_to_bits(P.get_pairwise_alignment(rb[1]),2,0);
+      auto a30 = convert_to_bits(P.get_pairwise_alignment(rb[2]),3,0);
+      auto a0123 = Glue_A(a10, Glue_A(a20,a30));
+      auto index = get_indices_from_bitpath(a0123, {1,2,3});
+      Pr = calc_root_probability(t,LC,MC,rb,index);
+    }
 
 #ifdef DEBUG_CACHING
     if (LC.cv_up_to_date())
