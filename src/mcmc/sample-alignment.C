@@ -39,60 +39,24 @@ using std::vector;
 using boost::dynamic_bitset;
 using namespace A2;
 
-vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int b,bool up)
-{
-  //--------------- Find our branch, and orientation ----------------//
-  auto t = P.t();
-  b = t.undirected(b);
-  int root = t.target(b);      //this is an arbitrary choice
-
-  int node1 = t.source(b);
-  int node2 = t.target(b);
-  if (not up) std::swap(node1,node2);
-
-  dynamic_bitset<> group = P.t().partition(P.t().find_branch(node1,node2));
-
-  return ::distributions_tree(P,seq,root,group);
-}
-
-typedef vector< Matrix > (*distributions_t_local)(const data_partition&,
-						  const vector<int>&,int,bool);
-
 boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b) 
 {
   assert(P.variable_alignment());
 
-  dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, P.A());
-
   auto t = P.t();
-  const alignment& A = P.A();
 
-  int node1 = t.target(t.undirected(b));
-  int node2 = t.source(t.undirected(b));
+  int bb = t.reverse(b);
 
-  dynamic_bitset<> group1 = t.partition(t.find_branch(node2,node1));
+  vector< Matrix > dists1 = substitution::get_column_likelihoods(P, {b}, get_indices_n(P.seqlength(t.source(b))), 2);
 
-  // Find sub-alignments and sequences
-  vector<int> seq1;
-  vector<int> seq2;
-  vector<int> seq12;
-
-  for(int column=0;column<A.length();column++)
-  {
-    if (not A.gap(column,node1))
-      seq1.push_back(column);
-    if (not A.gap(column,node2))
-      seq2.push_back(column);
-
-    if (not A.gap(column,node1) or A.gap(column,node2))
-      seq12.push_back(column);
-  }
-
-  /******** Precompute distributions at node2 from the 2 subtrees **********/
-  distributions_t_local distributions = distributions_tree;
-
-  vector< Matrix > dists1 = distributions(P,seq1,b,true);
-  vector< Matrix > dists2 = distributions(P,seq2,b,false);
+  vector<int> prev = t.branches_before(bb);
+  assert(prev.size() == 2);
+  auto a0 = convert_to_bits(P.get_pairwise_alignment(prev[0]),0,2);
+  auto a1 = convert_to_bits(P.get_pairwise_alignment(prev[1]),1,2);
+  auto a012 = Glue_A(a0,a1);
+  vector< Matrix > dists2 = substitution::get_column_likelihoods(P, prev, get_indices_from_bitpath_w(a012,{0,1},(1<<2)), 2);
+  //  To handle a 2-node tree, we can do something things for dists2:
+  //      dists2 = substitution::get_leaf_seq_likelihoods(P, root, 2);
 
   vector<HMM::bitmask_t> state_emit(4,0);
   state_emit[0] |= (1<<1)|(1<<0);
@@ -107,7 +71,8 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 	      );
 
   //------------------ Compute the DP matrix ---------------------//
-  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,~group1,seq1,seq2);
+  //  vector<vector<int> > pins= get_pins(P.alignment_constraint,A,group1,~group1,seq1,seq2);
+  vector<vector<int> > pins(2);
 
   Matrices->forward_constrained(pins);
 
@@ -123,17 +88,9 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   path.erase(path.begin()+path.size()-1);
 
   P.LC.invalidate_branch_alignment(t,b);
-  P.set_pairwise_alignment(t.find_branch(node1,node2), A2::get_pairwise_alignment_from_path(path), false);
+  P.set_pairwise_alignment(b, A2::get_pairwise_alignment_from_path(path), false);
 
   P.recompute_alignment_matrix_from_pairwise_alignments();
-
-#ifndef NDEBUG_DP
-  assert(valid(P.A()));
-
-  vector<int> path_new = get_path(P.A(), node1, node2);
-  path.push_back(3);
-  assert(path_new == path);
-#endif
 
   return Matrices;
 }
@@ -145,11 +102,16 @@ void sample_alignment(Parameters& P,int b)
 
   P.select_root(b);
 
-  vector<dynamic_bitset<> > s1(P.n_data_partitions());
+  auto t = P.t();
+
+  if (t.is_leaf_node(t.target(b)))
+    b = t.reverse(b);
+  
+  //  vector<dynamic_bitset<> > s1(P.n_data_partitions());
   for(int i=0;i<P.n_data_partitions();i++) 
   {
-    s1[i].resize(P[i].alignment_constraint.size1());
-    s1[i] = constraint_satisfied(P[i].alignment_constraint, P[i].A());
+    //    s1[i].resize(P[i].alignment_constraint.size1());
+    //    s1[i] = constraint_satisfied(P[i].alignment_constraint, P[i].A());
 #ifndef NDEBUG
     check_alignment(P[i].A(), P[i].t(), "tri_sample_alignment:in");
 #endif
@@ -181,8 +143,8 @@ void sample_alignment(Parameters& P,int b)
 #ifndef NDEBUG_DP
   std::cerr<<"\n\n----------------------------------------------\n";
 
-  int node1 = P.t().target(P.t().undirected(b));
-  int node2 = P.t().source(P.t().undirected(b));
+  int node1 = P.t().source(b);
+  int node2 = P.t().target(b);
 
   vector<int> nodes;
   nodes.push_back(node1);
@@ -273,8 +235,8 @@ void sample_alignment(Parameters& P,int b)
     check_alignment(P[i].A(), P[i].t(),"tri_sample_alignment:out");
 #endif
 
-    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
-    report_constraints(s1[i],s2,i);
+    //    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
+    //    report_constraints(s1[i],s2,i);
   }
 }
 
