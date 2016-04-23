@@ -30,7 +30,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 // #define DEBUG_SUBSTITUTION
 // #define DEBUG_CACHING
-// #define DEBUG_INDEXING
 
 #ifdef NDEBUG
 #define IF_DEBUG(x)
@@ -1241,12 +1240,6 @@ namespace substitution {
     int n_br = calculate_caches_for_node(LC.root, P);
     std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
 #endif
-#ifdef DEBUG_INDEXING
-    //    std::cerr<<"other_subst: there are "<<leaf_branch_list.size()<<" subtree leaf branches."<<std::endl;
-    //    std::cerr<<"other_subst: there are "<<nodes.size()<<" subtree nodes."<<std::endl;
-    //    std::cerr<<A<<std::endl;
-    //    std::cerr<<T<<std::endl;
-#endif
 
     return Pr3;
   }
@@ -1394,10 +1387,6 @@ namespace substitution {
     }
 #endif
 
-#ifdef DEBUG_INDEXING
-    P.subA().check_footprint();
-#endif
-
     IF_DEBUG_S(int n_br =) calculate_caches_for_node(LC.root, sequences, A,P,MC,t,LC);
 #ifdef DEBUG_SUBSTITUTION
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
@@ -1487,22 +1476,6 @@ namespace substitution {
     }
 #endif
 
-    /*
-#ifdef DEBUG_INDEXING
-    log_double_t result3 = Pr_from_scratch_leaf(P);
-
-    if (P.variable_alignment())
-    {
-      log_double_t result4 = Pr_from_scratch_internal(P);
-
-      //      compare_branch_totals(subA3,subA4,LC3,LC4, P.t(), P.A(), P);
-      assert(std::abs(log(result3) - log(result4)) < 1.0e-9);
-    }
-
-    assert(std::abs(log(result) - log(result3)) < 1.0e-9);
-#endif
-    */
-    
     return result;
   }
 
@@ -1519,10 +1492,6 @@ namespace substitution {
 		       const data_partition& P, const Mat_Cache& MC,
 		       const TreeInterface& t, Likelihood_Cache& cache)
   {
-#ifdef DEBUG_INDEXING
-    P.subA().check_footprint();
-#endif
-
     const vector<unsigned>& smap = MC.state_letters();
 
     // scratch matrix 
@@ -1721,10 +1690,6 @@ namespace substitution {
 				      const data_partition& P, const Mat_Cache& MC,
 				      const TreeInterface& t, Likelihood_Cache& cache)
   {
-#ifdef DEBUG_INDEXING
-    P.subA().check_footprint();
-#endif
-
     // Make sure that all conditional likelihoods have been calculated.
     IF_DEBUG_S(int n_br =) calculate_caches_for_node(cache.root, sequences, A,P,MC,t,cache);
 #ifdef DEBUG_SUBSTITUTION
