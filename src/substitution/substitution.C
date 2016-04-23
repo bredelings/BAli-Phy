@@ -1261,20 +1261,19 @@ namespace substitution {
     return (std::abs(x-y) < std::min(x,y)*1.0e-9);
   }
 
-  void compare_caches(const subA_index_t& I1, const subA_index_t& IF_DEBUG(I2),
-		      const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, int b)
+  void compare_caches(const data_partition& P1, const data_partition& P2, int b)
   {
-    int L = I1.branch_index_length(b);
-    assert(L == I2.branch_index_length(b));
+    int L = P1.seqlength(P1.t().source(b));
+    assert(L == P2.seqlength(P2.t().source(b)));
 
-    const int n_models = LC1.n_models();
-    const int n_states = LC1.n_states();
+    const int n_models = P1.LC.n_models();
+    const int n_states = P1.LC.n_states();
 
     bool equal = true;
     for(int i=0;i<L;i++) 
     {
-      const Matrix& M1 = LC1(i,b);
-      const Matrix& M2 = LC2(i,b);
+      const Matrix& M1 = P1.LC(i,b);
+      const Matrix& M2 = P2.LC(i,b);
       
       for(int m=0;m<n_models;m++) 
 	for(int s1=0;s1<n_states;s1++)
@@ -1286,8 +1285,8 @@ namespace substitution {
     else
       std::cerr<<"branch "<<b<<": cached conditional likelihoods are NOT equal"<<std::endl;
 
-    log_double_t other_subst_current = LC1[b].other_subst;
-    log_double_t other_subst_recomputed = LC2[b].other_subst;
+    log_double_t other_subst_current = P1.LC[b].other_subst;
+    log_double_t other_subst_recomputed = P2.LC[b].other_subst;
     bool other_subst_equal = (std::abs(other_subst_current.log() - other_subst_recomputed.log()) < 1.0e-9);
     if (other_subst_equal)
       ; //std::cerr<<"branch "<<b<<": other_subst valies are equal"<<endl;
@@ -1298,25 +1297,24 @@ namespace substitution {
 	" diff = "<<other_subst_recomputed.log() - other_subst_current.log()<<std::endl;
     }
   }
+  
+  void compare_caches(const data_partition& P1, const data_partition& P2)
 
-  void compare_caches(const subA_index_t& I1, const subA_index_t& I2,
-		      const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, const TreeInterface& t)
   {
-    assert(LC1.root == LC2.root);
+    assert(P1.LC.root == P2.LC.root);
     
-    vector<int> branches = t.branches_in(LC1.root);
-    branches.reserve(t.n_branches());
+    vector<int> branches = P1.t().branches_in(P1.LC.root);
+    branches.reserve(P1.t().n_branches());
 
     for(int i=0;i<branches.size();i++)
     {
-      int  b = branches[i];
+      int b = branches[i];
 
-      t.append_branches_before(b, branches);
+      P1.t().append_branches_before(b, branches);
 
-      if (LC1.up_to_date(b) and LC2.up_to_date(b))
-	compare_caches(I1,I2,LC1,LC2,b);
+      if (P1.LC.up_to_date(b) and P2.LC.up_to_date(b))
+	compare_caches(P1,P2,b);
     }
-
   }
 
   log_double_t Pr(const vector< vector<int> >& sequences, const alignment& A, const data_partition& P, 
@@ -1418,7 +1416,7 @@ namespace substitution {
 
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
-      compare_caches(P.subA(), P2.subA(), P.LC, P2.LC, P.t());
+      compare_caches(P, P2);
       std::abort();
     }
 #endif
