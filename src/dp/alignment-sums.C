@@ -147,14 +147,6 @@ vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& s
     if (group[n])
       branches.push_back(t.find_branch(n,root));
 
-  vector<int> required;
-  if (group[root])
-    required.push_back(root);
-  else {
-    for(int b : branches)
-      required.push_back(t.source(b));
-  }
-
   vector< Matrix > dist;
   if (branches.size())
     dist = substitution::get_column_likelihoods(P, branches, seq, 2);
