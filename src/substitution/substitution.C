@@ -1443,7 +1443,11 @@ namespace substitution {
       }
 
       vector<int> nodes = {root};
-      matrix<int> index = P.subA().get_subA_index_with_nodes(rb, nodes);
+      auto a10 = convert_to_bits(P.get_pairwise_alignment(rb[0]),1,0);
+      auto a20 = convert_to_bits(P.get_pairwise_alignment(rb[1]),2,0);
+      auto a30 = convert_to_bits(P.get_pairwise_alignment(rb[2]),3,0);
+      auto a0123 = Glue_A(a10, Glue_A(a20,a30));
+      auto index = get_indices_from_bitpath(a0123, {1,2,3,0});
 
       // FIXME - this doesn't handle case where tree has only 2 leaves.
       for(int i=0;i<index.size1();i++)
