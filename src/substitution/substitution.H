@@ -78,7 +78,7 @@ namespace substitution {
 
   log_double_t other_subst(const data_partition&, const std::vector<int>& nodes);
   
-  log_double_t Pr(const std::vector< std::vector<int> >& sequences, const alignment& A, const data_partition& P,
+  log_double_t Pr(const std::vector< std::vector<int> >& sequences, const data_partition& P,
 		  const Mat_Cache& MC, const TreeInterface& t, ::Likelihood_Cache& cache);
 
   log_double_t Pr(const data_partition&,Likelihood_Cache& LC);

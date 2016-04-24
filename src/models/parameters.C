@@ -641,7 +641,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
 
     for(int n=0;n<t().n_nodes();n++)
     {
-      expression_ref L = A().seqlength(n);
+      expression_ref L = AA.seqlength(n);
       if (has_IModel())
 	L = (identifier("seqlength"),as,tree,n);
       sequence_length_indices[n] = p->add_compute_expression( L );

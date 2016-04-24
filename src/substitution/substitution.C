@@ -687,9 +687,6 @@ namespace substitution {
   log_double_t get_other_subst_behind_branch(int b0, const TreeInterface& t, const data_partition& P, Likelihood_Cache& cache,
 					 const Mat_Cache& MC)
   {
-    // This only makes sense if we have presence/absence information to sequences at internal nodes
-    //    assert(A.n_sequences() == t.n_nodes());
-
     // There are no branches behind a leaf branch
     if (t.is_leaf_node(t.source(b0))) return 1;
 
@@ -914,14 +911,14 @@ namespace substitution {
       cache.prepare_branch(b0);
       cache.set_length(L0, b0);
 
-      vector<Matrix> L = get_leaf_seq_likelihoods(sequences[1], A.get_alphabet(), MC, 0);
+      vector<Matrix> L = get_leaf_seq_likelihoods(sequences[1], P.get_alphabet(), MC, 0);
 
       for(int i=0;i<L0;i++)
 	cache(i,b0) = L[i];
       cache[b0].other_subst = 1;
     }
     else if (bb == 0) {
-      const alphabet& a = A.get_alphabet();
+      const alphabet& a = P.get_alphabet();
       int n_states = cache.scratch(0).size2();
       int n_letters = a.n_letters();
       if (n_states == n_letters) {
@@ -1422,12 +1419,12 @@ namespace substitution {
     MC.WeightedFrequencyMatrix(F);
 
     // 1. Allocate arrays for storing results and temporary results.
-    vector<vector<pair<int,int> > > ancestral_characters (A.n_sequences());
+    vector<vector<pair<int,int> > > ancestral_characters (t.n_nodes());
     vector<vector<pair<int,int> > > subA_index_parent_characters (t.n_branches()*2);
     
     // All the (-1,-1)'s should be overwritten with the sampled character.
-    for(int i=0;i<A.n_sequences();i++)
-      ancestral_characters[i] = vector<pair<int,int>>(A.seqlength(i), {-1,-1});
+    for(int i=0;i<t.n_nodes();i++)
+      ancestral_characters[i] = vector<pair<int,int>>(P.seqlength(i), {-1,-1});
 
     {
       // compute root branches
@@ -1549,7 +1546,7 @@ namespace substitution {
 	{
 	  int ii = index(i,0);
 	  int l = sequences[node][ii];
-	  const alphabet& a = A.get_alphabet();
+	  const alphabet& a = P.get_alphabet();
 	  if (l == alphabet::not_gap)
 	    ;
 	  else if (a.is_letter(l))
@@ -1601,118 +1598,9 @@ namespace substitution {
     return sample_subst_history(*P.sequences, P.A(), P, P, P.t(), P.LC);
   }
 
-  vector<Matrix> 
-  get_likelihoods_by_alignment_column(const vector< vector<int> >& sequences, const alignment& A,
-				      const data_partition& P, const Mat_Cache& MC,
-				      const TreeInterface& t, Likelihood_Cache& cache)
-  {
-    // Make sure that all conditional likelihoods have been calculated.
-    IF_DEBUG_S(int n_br =) calculate_caches_for_node(cache.root, sequences, A,P,MC,t,cache);
-#ifdef DEBUG_SUBSTITUTION
-    std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
-#endif
-
-    // Compute matrix F(m,s) = Pr(m)*Pr(s|m) = p(m)*freq(m,s) 
-    Matrix F;
-    MC.WeightedFrequencyMatrix(F);
-
-    // 1. Initialize with values that are true if all data is missing.
-    vector<Matrix> likelihoods(A.length(), F);
-
-    // 2. Record likelihoods for disappearing columns
-    vector<int> branches = t.all_branches_toward_node(cache.root);
-
-    IF_DEBUG_S(log_double_t other_subst1 = 1);
-    /*
-    for(int i=0;i<branches.size();i++)
-    {
-      int b = branches[i];
-
-      // Get previous branches
-      vector<int> prev;
-      for(const_in_edges_iterator j = branches[i].branches_before();j;j++)
-      {
-	// update conditional likelihoods
-	calculate_caches_for_branch(*j, sequences, A, P, MC, T, cache);
-
-	// record branch
-	prev.push_back(*j);
-      }
-
-      // Ignore leaf branches, since they columns don't disappear on leaf  branches.
-      if (prev.size() == 0) continue;
-
-      // Find the list of columns c where...
-      for(int column=0;column<P.subA().size1()-1;column++)
-      {
-	//  (a) this branch (e.g. b) has no index
-	if (I(column+1,b) != alphabet::gap) continue;
-	
-	//  (b) at least one prev branch 'branch' has an index 'index'.
-	for(int j=0;j<prev.size();j++)
-	{
-	  int branch = prev[j];
-	  int index = I(column+1, branch);
-
-	  if (index == alphabet::gap) continue;
-
-	  element_prod_modify(likelihoods[column],cache(index,branch));
-
-	  IF_DEBUG_S(other_subst1 *= element_sum(likelihoods[column]));
-	  // We should never get here with subA_index_leaf.
-	}
-      }
-    }
-
-    // 3. Record likelihoods for columns that survive to the root.
-
-    vector<int> root_branches;
-    for(const_in_edges_iterator i = T.node(cache.root).branches_in();i;i++)
-    {
-      // update conditional likelihoods
-      calculate_caches_for_branch(*i, sequences, A, P, MC, T, cache);
-
-      // record branch
-      root_branches.push_back(*i);
-    }
-
-    for(int column=0;column<P.subA().size1()-1;column++)
-      for(int j=0;j<root_branches.size();j++)
-      {
-	int branch = root_branches[j];
-	int index = I(column+1,branch);
-
-	if (index == alphabet::gap) continue;
-
-	element_prod_modify(likelihoods[column],cache(index,branch));
-    }
-
-    // Is there some way of iterating over matrices cache(index,branch) where EITHER
-    // this (index,branch) goes away OR this branch.target() == cache.root ?
-#ifdef DEBUG_SUBSTITUTION
-    log_double_t other_subst2 = 1;
-    for(int i=0;i<root_branches.size();i++)
-    {
-      assert(cache.up_to_date(root_branches[i]));
-      log_double_t L1 = cache[root_branches[i]].other_subst;
-      other_subst2 *= L1;
-      //      log_double_t L2 = other_subst3[root_branches[i]];
-      //      assert(std::abs(log(L2) - log(L1)) < 1.0e-9);
-    }
-
-    assert(std::abs(log(other_subst1) - log(other_subst2)) < 1.0e-9);
-#endif
-    */
-    return likelihoods;
-  }
-
-
-
   vector<Matrix> get_likelihoods_by_alignment_column(const data_partition& P)
   {
-    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, P.A(), P, P, P.t(), P.LC);
-
-    return likelihoods;
+    std::abort();
   }
   
 
