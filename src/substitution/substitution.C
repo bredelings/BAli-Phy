@@ -23,8 +23,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cmath>
 #include <valarray>
 #include <vector>
-#include "alignment/alignment-util.H"
-#include "alignment/alignment-util2.H"
 #include "util.H"
 #include "dp/hmm.H"
 
@@ -892,7 +890,7 @@ namespace substitution {
 
 
   void peel_branch(int b0, const data_partition& P, Likelihood_Cache& cache, 
-		   const vector< vector<int> >& sequences, const alignment& A, 
+		   const vector< vector<int> >& sequences,
 		   const TreeInterface& t,
 		   const Mat_Cache& MC)
   {
@@ -984,7 +982,7 @@ namespace substitution {
   }
 
   static 
-  int calculate_caches_for_node(int n, const vector< vector<int> >& sequences, const alignment& A, 
+  int calculate_caches_for_node(int n, const vector< vector<int> >& sequences,
 				const data_partition& P, const Mat_Cache& MC, const TreeInterface& t,
 				Likelihood_Cache& cache)
   {
@@ -1004,17 +1002,17 @@ namespace substitution {
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],P,cache,sequences,A,t,MC);
+      peel_branch(ops[i],P,cache,sequences,t,MC);
 
     return ops.size();
   }
 
   int calculate_caches_for_node(int n, const data_partition& P) {
-    return calculate_caches_for_node(n, *P.sequences, P.A(), P, P, P.t(), P.LC);
+    return calculate_caches_for_node(n, *P.sequences,  P, P, P.t(), P.LC);
   }
 
   static 
-  int calculate_caches_for_branch(int b, const vector< vector<int> >& sequences, const alignment& A, 
+  int calculate_caches_for_branch(int b, const vector< vector<int> >& sequences,
 				  const data_partition& P, const Mat_Cache& MC, const TreeInterface& t,
 				  Likelihood_Cache& cache)
   {
@@ -1023,7 +1021,7 @@ namespace substitution {
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],P,cache,sequences,A,t,MC);
+      peel_branch(ops[i],P,cache,sequences,t,MC);
 
     return ops.size();
   }
@@ -1206,7 +1204,7 @@ namespace substitution {
   }
 
   /// Get the total likelihood for columns behind b0 that have been deleted before b0.source (e.g. and so b0.source is -).
-  log_double_t other_subst_behind_branch(int b0, const vector< vector<int> >& sequences, const alignment& A, 
+  log_double_t other_subst_behind_branch(int b0, const vector< vector<int> >& sequences,
 					 const TreeInterface& t,
 					 const data_partition& P, Likelihood_Cache& LC, const Mat_Cache& MC)
   {
@@ -1214,7 +1212,7 @@ namespace substitution {
       return LC[b0].other_subst;
 
     for(int j: t.branches_before(b0))
-      calculate_caches_for_branch(j, sequences, A, P, MC, t, LC);
+      calculate_caches_for_branch(j, sequences, P, MC, t, LC);
 
     return get_other_subst_behind_branch(b0, t, P, LC, MC);
   }
@@ -1230,7 +1228,6 @@ namespace substitution {
   log_double_t other_subst(const data_partition& P, const vector<int>& nodes) 
   {
     const vector< vector<int> >& sequences = *P.sequences;
-    const alignment& A = P.A();
     auto t = P.t();
     const Mat_Cache& MC = P;
     Likelihood_Cache& LC = P.LC;
@@ -1242,7 +1239,7 @@ namespace substitution {
 
     log_double_t Pr3 = 1;
     for(int i=0;i<leaf_branch_list.size();i++)
-      Pr3 *= other_subst_behind_branch(leaf_branch_list[i], sequences, A, t, P, LC, MC);
+      Pr3 *= other_subst_behind_branch(leaf_branch_list[i], sequences, t, P, LC, MC);
 
 #ifdef DEBUG_SUBSTITUTION
     int n_br = calculate_caches_for_node(LC.root, P);
@@ -1313,7 +1310,7 @@ namespace substitution {
     }
   }
 
-  log_double_t Pr(const vector< vector<int> >& sequences, const alignment& A, const data_partition& P, 
+  log_double_t Pr(const vector< vector<int> >& sequences, const data_partition& P, 
 		  const Mat_Cache& MC,const TreeInterface& t, Likelihood_Cache& LC)
   {
     total_likelihood++;
@@ -1327,7 +1324,7 @@ namespace substitution {
     }
 #endif
 
-    IF_DEBUG_S(int n_br =) calculate_caches_for_node(LC.root, sequences, A,P,MC,t,LC);
+    IF_DEBUG_S(int n_br =) calculate_caches_for_node(LC.root, sequences, P,MC,t,LC);
 #ifdef DEBUG_SUBSTITUTION
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -1368,7 +1365,7 @@ namespace substitution {
 
   log_double_t Pr(const data_partition& P,Likelihood_Cache& LC) 
   {
-    return Pr(*P.sequences, P.A(), P, P, P.t(), LC);
+    return Pr(*P.sequences, P, P, P.t(), LC);
   }
 
 
@@ -1401,7 +1398,7 @@ namespace substitution {
   }
 
   vector<vector<pair<int,int>>> 
-  sample_subst_history(const vector< vector<int> >& sequences, const alignment& A,
+  sample_subst_history(const vector< vector<int> >& sequences,
 		       const data_partition& P, const Mat_Cache& MC,
 		       const TreeInterface& t, Likelihood_Cache& cache)
   {
@@ -1431,7 +1428,7 @@ namespace substitution {
       vector<int> rb;
       for(int b: t.branches_in(root))
       {
-	calculate_caches_for_branch(b, sequences, A,P,MC,t,cache);
+	calculate_caches_for_branch(b, sequences, P,MC,t,cache);
 
 	rb.push_back(b);
 
@@ -1490,7 +1487,7 @@ namespace substitution {
       vector<int> local_branches = {b};
       for(int b: t.branches_before(b))
       {
-	calculate_caches_for_branch(b, sequences, A,P,MC,t,cache);
+	calculate_caches_for_branch(b, sequences, P,MC,t,cache);
 
 	local_branches.push_back(b);
 
@@ -1595,10 +1592,10 @@ namespace substitution {
 
   vector<vector<pair<int,int>>> sample_ancestral_states(const data_partition& P)
   {
-    return sample_subst_history(*P.sequences, P.A(), P, P, P.t(), P.LC);
+    return sample_subst_history(*P.sequences, P, P, P.t(), P.LC);
   }
 
-  vector<Matrix> get_likelihoods_by_alignment_column(const data_partition& P)
+  vector<Matrix> get_likelihoods_by_alignment_column(const data_partition&)
   {
     std::abort();
   }
