@@ -36,7 +36,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment.H"
 #include "substitution/matcache.H"
 #include "substitution/substitution-cache.H"
-#include "substitution/substitution-index.H"
 
 #include "tools/partition.H"
 #include "cow-ptr.H"
@@ -45,8 +44,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "TreeInterface.H"
 
 //------------------------------- parameter-containing class --------------------------//
-
-extern bool use_internal_index;
 
 class Parameters;
 
@@ -94,13 +91,6 @@ private:
 
   /// The alignment data of this partition
   int alignment_matrix_index = -1;
-
-  std::vector<int> subA_row_indices_internal;
-  int internal_index;
-
-  mutable object_ptr<subA_index_t> subA_internal;
-
-  mutable object_ptr<subA_index_t> subA_;
 
 public:
 
@@ -150,8 +140,6 @@ public:
   /// Cached Conditional Likelihoods
   mutable Likelihood_Cache LC;
 
-  subA_index_t& subA() const;
-  
   /// cached branch HMMs
   const indel::PairHMM& get_branch_HMM(int b) const;
   std::vector<indel::PairHMM> get_branch_HMMs(const std::vector<int>&) const;

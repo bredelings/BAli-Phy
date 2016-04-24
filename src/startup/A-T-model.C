@@ -345,9 +345,6 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
 						  ostream& out_cache, ostream& out_screen, ostream& out_both,
 						  int proc_id)
 {
-  if (args["subA-index"].as<string>() == "leaf")
-    use_internal_index = false;
-
   //------ Determine number of partitions ------//
   vector<string> filenames = args["align"].as<vector<string> >();
   const int n_partitions = filenames.size();

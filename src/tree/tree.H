@@ -69,7 +69,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 // - branch_partition: Assumes leaf nodes are named 0..n-1
 // - prune_leaves: assumes need to shift leaf nodes to keep them 0..n-1
 // - add_leaf_node: assumed need to shift leaf nodes to keep them 0..n-1
-// - check_subA( )
 // - extends_map( )
 // - remap_T_leaf_indices( ): assumes leaf nodes numbered 0..n-1
 // - alignment constraints are indexed by leaf index numbered 0...n-1

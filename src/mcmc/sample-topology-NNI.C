@@ -29,7 +29,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/alignment-sums.H"
 #include "alignment/alignment-util.H"
 #include "tree/tree-util.H"
-#include "substitution/substitution-index.H"
 
 #include "dp/3way.H"
 #include "sample.H"

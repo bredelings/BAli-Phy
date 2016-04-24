@@ -32,7 +32,6 @@ struct Mat_Cache;
 class Parameters;
 #include "models/parameters.H"
 #include "substitution-cache.H"
-#include "substitution-index.H"
 
 /// A namespace for functions related to calculating the substitution likelihood.
 namespace substitution {

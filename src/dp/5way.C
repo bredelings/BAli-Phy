@@ -28,7 +28,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "bits.H"
 #include "rng.H"
 #include "alignment/alignment-util.H"
-#include "substitution/substitution-index.H"
 
 using boost::dynamic_bitset;
 using std::vector;

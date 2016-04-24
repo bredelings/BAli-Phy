@@ -27,7 +27,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
 #include "substitution/substitution.H"
-#include "substitution/substitution-index.H"
 #include "dp/dp-matrix.H"
 #include <boost/shared_ptr.hpp>
 
@@ -132,7 +131,6 @@ void sample_alignment(Parameters& P,int b)
 	Matrices[i].push_back(sample_alignment_base(p[i][j], b));
 	// If Pr_sum_all_paths() == 0, then the alignment for this partition will be unchanged.
 #ifndef NDEBUG
-	check_subA(P0[j].subA(), P0[j].A(), p[i][j].subA(), p[i][j].A(), p[0].t());
 	p[i][j].likelihood();  // check the likelihood calculation
 #endif
       }

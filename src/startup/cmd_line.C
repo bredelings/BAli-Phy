@@ -59,7 +59,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description developer("Developer options");
   developer.add_options()
-    ("subA-index",value<string>()->default_value("internal"),"What kind of subA index to use?")
     ("partition-weights",value<string>(),"File containing tree with partition weights")
     ("beta",value<string>(),"MCMCMC temperature")
     ("dbeta",value<string>(),"MCMCMC temperature changes")

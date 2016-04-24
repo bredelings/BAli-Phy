@@ -27,7 +27,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "models/parameters.H"
 #include "rng.H"
 #include "substitution/substitution.H"
-#include "substitution/substitution-index.H"
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
 #include "likelihood.H"
@@ -200,14 +199,6 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *       I compute the probability at the end of Parameters::Parameters( ).
  */
 
-bool use_internal_index = true;
-
-subA_index_t& data_partition::subA() const
-{
-  subA_->DP = this;
-  return *subA_;
-}
-
 void data_partition::set_parameters(const Parameters* p)
 {
   P = p;
@@ -267,8 +258,6 @@ void data_partition::variable_alignment(bool b)
   // turning OFF alignment variation
   if (not variable_alignment()) 
   {
-    subA_ = subA_internal;
-
     if (A().n_sequences() == t().n_nodes())
       if (not check_leaf_characters_minimally_connected(A(),t()))
 	throw myexception()<<"Failing to turn off alignment variability: non-default internal node states";
@@ -276,8 +265,6 @@ void data_partition::variable_alignment(bool b)
   // turning ON alignment variation
   else 
   {
-    subA_ = subA_internal;
-
     assert(has_IModel());
     {
       alignment* A2 = A().clone();
@@ -296,7 +283,6 @@ void data_partition::variable_alignment(bool b)
   }
 
   // Minimally connecting leaf characters may remove empty columns, in theory.
-  // And we just changed the subA index type
   LC.invalidate_all();
 }
 
@@ -494,11 +480,6 @@ void data_partition::note_alignment_changed_on_branch(int b)
   invalidate_pairwise_alignment_for_branch(B);
 
   // However, LC depends only on the alignment of subA indices from different branches.
-  // 
-  // If the projected leaf alignment remains unchanged, then the subA columns
-  // projected to the leaves remain unchanged.  If we only index these columns, then the
-  // get_subA_index( ) will not change if we are using subA_index_leaf.
-  //
   LC.invalidate_branch_alignment(t(),b);
 }
 
@@ -570,7 +551,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
    sequence_length_indices(AA.n_sequences(),-1),
    transition_p_method_indices(t().n_branches(),-1),
    variable_alignment_( has_IModel() ),
-   subA_row_indices_internal(t().n_branches()*2),
    seqs(AA.seqs()),
    sequences( alignment_letters(AA, t().n_leaves()) ),
    a(AA.get_alphabet().clone()),
@@ -590,14 +570,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
     set_alignment(AAA);
   }
   
-  internal_index = p->add_compute_expression( (identifier("SubAIndex.subA_index_internal"),P->my_tree(),parameter(invisible_prefix+"A")));
-  expression_ref my_internal_index = P->get_expression(internal_index);
-  for(int i=0;i<subA_row_indices_internal.size();i++)
-    subA_row_indices_internal[i] = p->add_compute_expression((identifier("!"),my_internal_index,i));
-  subA_internal = new subA_index_internal(this, subA_row_indices_internal);
-  
-  subA_ = subA_internal;
-
   // Create and set pairwise alignment parameters.
   for(int b=0;b<pairwise_alignment_for_branch.size();b++)
     pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b), 0);
@@ -1477,7 +1449,7 @@ Parameters::Parameters(const module_loader& L,
    updown(-1)
 {
   // \todo FIXME:cleanup|fragile - Don't touch C here directly!
-  *this += { "SModel","Distributions","Range","PopGen","Alignment","IModel", "SubAIndex" };
+  *this += { "SModel","Distributions","Range","PopGen","Alignment","IModel" };
   
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 

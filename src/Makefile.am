@@ -32,7 +32,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            n_indels.H n_indels2.H alignment/alignment-constraint.H math/exponential.H \
            models/parameters.H substitution/substitution-cache.H alignment/alignment.H dp/hmm.H math/pow2.H \
            substitution/substitution.H dp/alignment-sums.H imodel/imodel.H probability/probability.H \
-           substitution/substitution-index.H alignment/alignment-util.H likelihood.H mcmc/proposals.H \
+           alignment/alignment-util.H likelihood.H mcmc/proposals.H \
            tree/tree-branchnode.H sequence/alphabet.H math/log-double.H tree/tree.H \
            dp/bits.H math/logsum.H tree/tree-util.H probability/choose.H substitution/matcache.H  \
            rng.H util.H object.H mcmc/mcmc.H mcmc/sample.H util-random.H \
@@ -102,7 +102,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  util-random.C alignment/alignment-random.C smodel/setup.C mcmc/sample-topology-SPR.C \
 	  dp/alignment-sums.C alignment/alignment-util.C probability/probability.C models/model.C \
 	  alignment/alignment-constraint.C substitution/substitution-cache.C \
-	  monitor.C substitution/substitution-index.C tree/tree-util.C myexception.C math/pow2.C \
+	  monitor.C tree/tree-util.C myexception.C math/pow2.C \
 	  tools/partition.C mcmc/proposals.C n_indels.C n_indels2.C alignment/alignment-util2.C \
 	  tools/parsimony.C tools/parsimony2.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \

@@ -37,7 +37,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util-random.H"
 #include "dp/alignment-sums.H"
 #include "alignment/alignment-constraint.H"
-#include "substitution/substitution-index.H"
 #include "substitution/substitution.H"
 
 using MCMC::MoveStats;
@@ -349,12 +348,8 @@ MCMC::Result SPR_stats(const TreeInterface& T1, const TreeInterface& T2, bool su
  * - All subA indices on and after both directions of the now-united branch from which the subtree was pruned.
  * - Likelihood caches and subA indices for the direction of that branch that was pointed away from the pruned subtree.
  * 
- * - SubA indices on all branches that are after (on the result tree) the branch that the pruned subtree is behind.
  * - Likelihood caches on all the same branches.
- * - SubA indices on the pruned tree that are pointing away from the regrafting point.
  * - Likelihood caches on all the same (directed) branches.
-
- * - SubA indices and Likelihood caches on and after both directions of the moving branch.
 
  * Query: is this the same as invalidating all subA indices and likelihood caches on all branches after the attachment node
           (i) first on the initial tree

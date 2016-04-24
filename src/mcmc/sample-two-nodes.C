@@ -35,7 +35,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
 #include "alignment/alignment-constraint.H"
-#include "substitution/substitution-index.H"
 #include "dp/dp-array.H"
 
 using std::vector;
@@ -168,8 +167,6 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 	//    p[i][j].LC.invalidate_node(p[i].T,order[i][4]);
 	//    p[i][j].LC.invalidate_node(p[i].T,order[i][5]);
 #ifndef NDEBUG
-	if (i==0) 
-	  check_subA(P0[j].subA(), P0[j].A(), p[0][j].subA(), p[0][j].A(), p[0].t());
 	p[i][j].likelihood();  // check the likelihood calculation
 #endif
       }

@@ -18,7 +18,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "substitution.H"
-#include "substitution-index.H"
 #include "matcache.H"
 #include "rng.H"
 #include <cmath>

@@ -221,15 +221,10 @@ void show_ending_messages()
     cout<<"total (CPU) time: "<<duration_string( duration_cast<seconds>(total_cpu_time()) )<<endl;
   }
   if (substitution::total_likelihood > 1) {
-    extern int total_subA_index_matrix;
-    extern int total_subA_index_branch;
     cout<<endl;
     cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
     cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
     cout<<"total branches peeled = "<<substitution::total_peel_branches<<endl;
-    cout<<endl;
-    cout<<"total subA branches updated = "<<total_subA_index_branch<<endl;
-    cout<<"total subA matrices computed = "<<total_subA_index_matrix<<endl;
     cout<<endl;
   }
   extern int total_reductions;
