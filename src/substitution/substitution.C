@@ -1169,9 +1169,8 @@ namespace substitution {
   vector<int> get_leaf_branches_from_subtree_nodes(const TreeInterface& t, const vector<int>& nodes)
   {
     vector<int> branch_list;
-    for(int i=0;i<nodes.size();i++)
+    for(int n:nodes)
     {
-      const int n = nodes[i];
       vector<int> node_branches = t.branches_out(n);
 
       if (node_branches.size() == 1) {
