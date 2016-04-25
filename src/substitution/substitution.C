@@ -681,26 +681,6 @@ namespace substitution {
     return cache[b[0]].other_subst * cache[b[1]].other_subst * total;
   }
 
-  /// Get the total likelihood for columns behind b0 that have been deleted before b0.source (e.g. and so b0.source is -).
-  log_double_t get_other_subst_behind_branch(int b0, const TreeInterface& t, const data_partition& P, Likelihood_Cache& cache,
-					 const Mat_Cache& MC)
-  {
-    // There are no branches behind a leaf branch
-    if (t.is_leaf_node(t.source(b0))) return 1;
-
-    // find the names of the (two) branches behind b0
-    vector<int> b = t.branches_before(b0);
-    b.push_back(b0);
-    std::abort();
-    auto a0 = convert_to_bits(P.get_pairwise_alignment(b[0]), 0, 2);
-    auto a1 = convert_to_bits(P.get_pairwise_alignment(b[1]), 1, 2);
-    auto a012 = Glue_A(a0, a1);
-
-    matrix<int> index_vanishing = get_indices_from_bitpath_wo(a012, {0,1}, 4);
-
-    return collect_vanishing_internal(b, index_vanishing, cache, MC);
-  }
-
   void peel_internal_branch(const vector<int>& b,matrix<int>& index, Likelihood_Cache& cache,
 			    const vector<Matrix>& transition_P,const Mat_Cache& IF_DEBUG(MC))
   {
@@ -1202,20 +1182,6 @@ namespace substitution {
     return branch_list;
   }
 
-  /// Get the total likelihood for columns behind b0 that have been deleted before b0.source (e.g. and so b0.source is -).
-  log_double_t other_subst_behind_branch(int b0, const vector< vector<int> >& sequences,
-					 const TreeInterface& t,
-					 const data_partition& P, Likelihood_Cache& LC, const Mat_Cache& MC)
-  {
-    if (LC.up_to_date(b0))
-      return LC[b0].other_subst;
-
-    for(int j: t.branches_before(b0))
-      calculate_caches_for_branch(j, sequences, P, MC, t, LC);
-
-    return get_other_subst_behind_branch(b0, t, P, LC, MC);
-  }
-
   /// This routine requires that nodes denotes a connected subtree.
   /// 
   /// So, technically, we don't need to peel these columns all the way
@@ -1237,13 +1203,15 @@ namespace substitution {
     vector<int> leaf_branch_list = get_leaf_branches_from_subtree_nodes(t,nodes);
 
     log_double_t Pr3 = 1;
-    for(int i=0;i<leaf_branch_list.size();i++)
-      Pr3 *= other_subst_behind_branch(leaf_branch_list[i], sequences, t, P, LC, MC);
-
+    for(int b: leaf_branch_list)
+    {
+      IF_DEBUG_S(int n_br =) calculate_caches_for_branch(b, sequences, P, MC, t, LC);
 #ifdef DEBUG_SUBSTITUTION
-    int n_br = calculate_caches_for_node(LC.root, P);
-    std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
+      std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
 #endif
+      assert(LC.up_to_date(b));
+      Pr3 *= LC[b].other_subst;
+    }
 
     return Pr3;
   }
