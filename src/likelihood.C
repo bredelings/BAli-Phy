@@ -188,7 +188,6 @@ log_double_t prior_HMM_nogiven(const data_partition& P)
 
 #ifndef NDEBUG
   assert(P.has_IModel());
-  check_internal_nodes_connected(A,t);
 #endif
   
   log_double_t Pr = 1;
@@ -209,7 +208,6 @@ log_double_t prior_HMM_rootless_scale(const data_partition& P)
 
 #ifndef NDEBUG
   assert(P.has_IModel());
-  check_internal_nodes_connected(P.A(),t);
 #endif
   
   log_double_t Pr = 1;
