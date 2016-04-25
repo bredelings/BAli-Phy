@@ -1106,7 +1106,8 @@ namespace substitution {
     LC.root = root;
     assert(not t.is_leaf_node(LC.root));
 
-    IF_DEBUG_S(int n_br = ) calculate_caches_for_node(LC.root, P);
+    for(int B: b)
+      calculate_caches_for_branch(B, *P.sequences, P, P, P.t(), P.LC);
 
 #ifdef DEBUG_SUBSTITUTION
     std::clog<<"get_column_likelihoods: Peeled on "<<n_br<<" branches.\n";
