@@ -774,7 +774,6 @@ vector<string> Parameters::get_labels() const
 void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 {
   int b1 = t().find_branch(s1,t1);
-  int b2 = t().reverse(b1);
 
   if (safe)
   {
