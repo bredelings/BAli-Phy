@@ -643,19 +643,13 @@ void three_way_topology_and_alignment_sample(owned_ptr<Model>& P, MoveStats& Sta
   int b3 = p[0].t().find_branch(two_way_nodes[5],two_way_nodes[3]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-  p[1].exchange_subtrees(b1, b2);
- 
-  p[1].recompute_pairwise_alignment(b1);
-  p[1].note_alignment_changed_on_branch(b2);
+  p[1].NNI(b1, b2, true);
 
   //  if (not extends(p[1].t(), PP.PC->TC))
   //    return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
-  p[2].exchange_subtrees(b1, b3);
-
-  p[2].recompute_pairwise_alignment(b1);
-  p[2].note_alignment_changed_on_branch(b3);
+  p[2].NNI(b1, b3, true);
 
   //  if (not extends(p[2].t(), PP.PC->TC))
   //    return;
