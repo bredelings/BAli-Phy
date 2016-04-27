@@ -41,6 +41,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tools/parsimony.H"
 #include "tools/parsimony2.H"
 #include "alignment/alignment-util.H"
+#include "dp/2way.H"
 
 using std::endl;
 using std::pair;
@@ -205,16 +206,74 @@ string GetProbabilityFunction::operator()(const Model& M, long)
   return convertToString(log(M.probability()));
 }
 
+  int n_insertions(const pairwise_alignment_t& a)
+  {
+    using namespace A2;
+
+    int total = 0;
+
+    for(int s: a)
+      if (s == states::G1)
+	total++;
+
+    return total;
+  }
+  
+  int n_indels(const pairwise_alignment_t& a)
+  {
+    using namespace A2;
+
+    int total = 0;
+
+    for(int i=1;i<a.size()-1;i++)
+      if (a[i-1] != a[i])
+	if (a[i] == states::G1 or a[i] == states::G2)
+	  total++;
+
+    return total;
+  }
+  
+  int total_length_indels(const pairwise_alignment_t& a)
+  {
+    using namespace A2;
+
+    int total = 0;
+
+    for(int s: a)
+      if (s == states::G1 or s == states::G2)
+	  total++;
+
+    return total;
+  }
+  
   int alignment_length(const data_partition& P)
   {
     auto branches = P.t().all_branches_from_node(0);
 
     int total = P.seqlength(0);
     for(int b: branches)
-    {
-      auto& a = P.get_pairwise_alignment(b);
-      total += (a.size() - a.length1() - 2);
-    }
+      total += n_insertions( P.get_pairwise_alignment(b) );
+
+    return total;
+  }
+
+  int n_indels(const data_partition& P)
+  {
+    auto branches = P.t().all_branches_from_node(0);
+
+    int total = 0;
+    for(int b: branches)
+	total += n_indels( P.get_pairwise_alignment(b) );
+    return total;
+  }
+
+  int total_length_indels(const data_partition& P)
+  {
+    auto branches = P.t().all_branches_from_node(0);
+
+    int total = 0;
+    for(int b: branches)
+	total += total_length_indels( P.get_pairwise_alignment(b) );
     return total;
   }
 
@@ -233,13 +292,13 @@ string Get_Num_Substitutions_Function::operator()(const Model& M, long)
 string Get_Num_Indels_Function::operator()(const Model& M, long)
 {
   const Parameters& P = dynamic_cast<const Parameters&>(M);
-  return convertToString(n_indels(P[p].A(), P[p].t()));
+  return convertToString(n_indels(P[p]));
 }
 
 string Get_Total_Length_Indels_Function::operator()(const Model& M, long)
 {
   const Parameters& P = dynamic_cast<const Parameters&>(M);
-  return convertToString(total_length_indels(P[p].A(), P[p].t()));
+  return convertToString(total_length_indels(P[p]));
 }
 //
 string Get_Total_Alignment_Length_Function::operator()(const Model& M, long)
@@ -268,7 +327,7 @@ string Get_Total_Num_Indels_Function::operator()(const Model& M, long)
 
   int total = 0;
   for(int p=0;p<P.n_data_partitions();p++)
-    total += n_indels(P[p].A(), P[p].t());
+    total += n_indels(P[p]);
   return convertToString(total);
 }
 
@@ -278,15 +337,23 @@ string Get_Total_Total_Length_Indels_Function::operator()(const Model& M, long)
 
   int total = 0;
   for(int p=0;p<P.n_data_partitions();p++)
-    total += total_length_indels(P[p].A(), P[p].t());
+    total += total_length_indels(P[p]);
   return convertToString(total);
 }
+
+  vector<int> sequence_lengths(const data_partition& P)
+  {
+    vector<int> L(P.t().n_leaves());
+    for(int i=0;i<L.size();i++)
+      L[i] = P.seqlength(i);
+    return L;
+  }
 
 double mu_scale(const Parameters& P)
 {
   valarray<double> weights(P.n_data_partitions());
   for(int i=0;i<weights.size();i++)
-    weights[i] = max(sequence_lengths(P[i].A(), P.t().n_leaves()));
+    weights[i] = max(sequence_lengths(P[i]));
   weights /= weights.sum();
   
   // FIXME - we are just looking at branch 0!
