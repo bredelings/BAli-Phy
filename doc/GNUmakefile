@@ -1,14 +1,14 @@
 all: README.html README.xhtml README.pdf Tutorial.html Tutorial.xhtml Tutorial.pdf Tutorial2.html Tutorial2.xhtml Tutorial2.pdf
 
 clean:
-	-@rm -f README.xhtml README.xml README.fo README.pdf *~
+	-@rm -f *.html *.xhtml REAMDE.xml *.fo *.pdf *~
 
 
 %.xml: %.itex.xml
 	itex2MML < $^ > $@
 
 %.xml: %.tut.xml
-	add_screen.pl < $^ > $@
+	./add_screen.pl < $^ > $@
 
 %.html: %.xml docbook-html.xsl
 	xsltproc --xinclude docbook-html.xsl $*.xml > $@
