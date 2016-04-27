@@ -112,8 +112,8 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
     assert(t0.is_connected(nodes0[3],nodes0[0]));
 
     // Make sure the column order on the pruned branch matches the projected column order from the original alignment.
-    vector<HMM::bitmask_t> b123 = A3::get_bitpath(P0, nodes0);
-    P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2), false);
+    //    vector<HMM::bitmask_t> b123 = A3::get_bitpath(P0, nodes0);
+    //    P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2), false);
 
     // See sample-topology-SPR.C line 439: p[1].recompute_pairwise_alignment(p[1].t().find_branch(leaving1,leaving2));
     // Is the other line necessary?  Since it references the alignment MATRIX, we'd like to remove it.
