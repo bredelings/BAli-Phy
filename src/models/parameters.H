@@ -171,8 +171,6 @@ public:
 
   void set_pairwise_alignment(int b, const pairwise_alignment_t&, bool=true);
 
-  void recompute_pairwise_alignment(int b, bool=true);
-
   void note_alignment_changed_on_branch(int b);
 
   void note_alignment_changed();
@@ -397,8 +395,6 @@ public:
   void LC_invalidate_all();
 
   void note_alignment_changed_on_branch(int b);
-
-  void recompute_pairwise_alignment(int b, bool=true);
 
   void note_alignment_changed();
 

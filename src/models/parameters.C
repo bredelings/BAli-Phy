@@ -450,13 +450,6 @@ void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& p
   set_pairwise_alignment_(b,pi,require_match_A);
 }
 
-void data_partition::recompute_pairwise_alignment(int b, bool require_match_A)
-{
-  int n1 = t().source(b);
-  int n2 = t().target(b);
-  set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2), require_match_A);
-}
-
 void data_partition::invalidate_pairwise_alignment_for_branch(int b) const
 {
   const context* C = P;
@@ -1152,13 +1145,6 @@ void Parameters::note_alignment_changed_on_branch(int b)
   for(int i=0;i<n_data_partitions();i++)
     if (get_data_partition(i).variable_alignment())
       get_data_partition(i).note_alignment_changed_on_branch(b);
-}
-
-void Parameters::recompute_pairwise_alignment(int b, bool check_A)
-{
-  for(int i=0;i<n_data_partitions();i++)
-    if (get_data_partition(i).variable_alignment())
-      get_data_partition(i).recompute_pairwise_alignment(b, check_A);
 }
 
 void Parameters::note_alignment_changed()
