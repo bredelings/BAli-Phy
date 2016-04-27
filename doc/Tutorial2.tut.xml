@@ -2,16 +2,6 @@
 <!ENTITY % sgml.features "IGNORE">
 <!ENTITY % xml.features "INCLUDE">
 
-<!ENTITY % dbcent 
-	 PUBLIC "-//OASIS//ENTITIES DocBook Character Entities V4.5//EN"
-	 "/usr/share/xml/docbook/schema/dtd/4.5/dbcentx.mod">
-%dbcent;
-
-<!ENTITY % xhtml-lat1
-         PUBLIC "-//W3C//ENTITIES Latin 1 for XHTML//EN"
-         "http://www.w3.org/TR/xhtml1/DTD/xhtml-lat1.ent" >
-%xhtml-lat1;
-
 <!ENTITY % ent-mmlalias
       PUBLIC "-//W3C//ENTITIES Aiases for MathML 2.0//EN"
              "/usr/share/xml/schema/w3c/mathml/dtd/mmlalias.ent" >
@@ -37,9 +27,9 @@ Make a directory called alignment_files inside it:
 Go into the <filename>alignment_files</filename> directory:
 % cd alignment_files
 Download the example alignment files:
-% wget http://nucleus.biology.duke.edu/~bredelings/examples.tgz
+% wget http://www.bali-phy.org/examples.tgz
 Alternatively, you can use <command>curl</command>
-% curl -O http://nucleus.biology.duke.edu/~bredelings/examples.tgz
+% curl -O http://www.bali-phy.org/examples.tgz
 Extract the compressed archive:
 % tar -zxf examples.tgz
 Take a look inside the <filename>examples</filename> directory:
@@ -86,7 +76,7 @@ You can add gamma[4]+INV rate heterogeneity:
 
 <section ><info><title>Amino Acids</title></info>
 <para>
-When the data set contains amino acids, the default is amino acids:
+When the data set contains amino acids, the default substitution model is the LG model:
 % bali-phy EF-Tu/12d.fasta --iterations=50
 </para>
 </section>
@@ -109,6 +99,23 @@ It is possible to specify some of the parameters and leave others at their defau
 % bali-phy Globins/bglobin.fasta --test --smodel=M7[,TN] --alphabet=Codons 
 </para>
 </section>
+
+<section><info><title>Multiple Genes</title></info>
+<para>
+You can also run analysis of multiple genes simultaneously:
+% bali-phy ITS/ITS1-trimmed.fasta ITS/5.8S.fasta ITS/ITS2-trimmed.fasta --test
+It is assumed that all genes evolve on the same tree, but with different rates.  
+By default, each gene gets an default substitution model based on whether it
+contains DNA/RNA or amino acids.</para>
+
+<para><xref linkend="multigene"/> describes multigene analyses in more
+detail.  It describes how to specify different models and rates for
+different partitions, and how to fix the alignment for some genes.
+It also describes how to specify that some partitions should share the
+same parameter values.
+</para>
+</section>
+
   </section>
 
 <section ><info><title>Output</title></info>
@@ -205,7 +212,7 @@ terminate all of them.
 </para>
 </section>
 
-<section><info><title>Multi-gene analyses</title></info>
+<section xml:id="multigene"><info><title>Multi-gene analyses</title></info>
 <para>In this section we'll practice running analyses with multiple
 partitions.  Dividing the data into multiple partitions is useful
 because different partitions can have different models, or can have
