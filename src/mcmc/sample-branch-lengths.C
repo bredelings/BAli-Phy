@@ -236,7 +236,7 @@ void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b)
     vector<int> nodes = A5::get_nodes_random(t2,b).nodes;
     int b1 = t2.find_branch(nodes[4],nodes[1]);
     int b2 = t2.find_branch(nodes[5],nodes[2]);
-    p[1].exchange_subtrees(b1,b2);
+    p[1].NNI(b1,b2);
 
     vector<log_double_t> rho(2,1);
     rho[1] = ratio;

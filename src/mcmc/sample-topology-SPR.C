@@ -162,7 +162,7 @@ double do_SPR(Parameters& P, int b1,int b2)
       t.source(b2) == t.target(b1))
     ;
   else
-    P.SPR(t.reverse(b1),b2);
+    std::abort(); //P.SPR(t.reverse(b1),b2);
 
   //------ Find the two new branches ------//
   vector<int> connected2 = t.branches_after(b1);

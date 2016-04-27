@@ -342,11 +342,11 @@ public:
   void reconnect_branch(int s1, int t1, int t2, bool safe);
   void begin_modify_topology();
   void end_modify_topology();
+private:
   void exchange_subtrees(int b1, int b2);
+public:
   void NNI(const tree_edge& b1, const tree_edge& b2, bool disconnect_subtree=false);
   void NNI(int b1, int b2, bool disconnect_subtree=false);
-  int SPR(int b1, int b2, int bm=-1);
-  int SPR(const tree_edge& b1, const tree_edge& b2, int bm=-1);
   void show_h_tree() const;
 
   /// Did we most recently hit beta==1 (1) or beta=0 (0)

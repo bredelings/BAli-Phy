@@ -271,16 +271,8 @@ void data_partition::variable_alignment(bool b)
       minimally_connect_leaf_characters(*A2, t());
       set_alignment(A2);
     }
-    note_alignment_changed();
   }
 
-  // reset the pairwise alignments.
-  for(int b=0;b<t().n_branches();b++)
-  {
-    int n1 = t().source(b);
-    int n2 = t().target(b);
-    set_pairwise_alignment(b, A2::get_pairwise_alignment(A(),n1,n2));
-  }
 
   // Minimally connecting leaf characters may remove empty columns, in theory.
   LC.invalidate_all();
@@ -1032,98 +1024,6 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
     get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[3],nodes[5]), A2::get_pairwise_alignment(A, nodes[3], nodes[5]), false);
     get_data_partition(i).set_pairwise_alignment(t().find_branch(nodes[4],nodes[5]), A2::get_pairwise_alignment(A, nodes[4], nodes[5]), false);
   }
-}
-
-int Parameters::SPR(const tree_edge& B1, const tree_edge& B2, int branch_to_move)
-{
-  int b1 = t().find_branch(B1);
-  int b2 = t().find_branch(B2);
-  return SPR(b1, b2, branch_to_move);
-}
-
-/// SPR: move the subtree b1 into branch b2
-///
-/// When two branches are merged into one as the pruned subtree is removed,
-/// one branch name remains in place, and one is moved.  If branch_to_move is
-/// -1, then the branch with the higher undirected name is the one that moves.
-/// If branch_to_move is not -1 (default) then it specifies the one to move.
-///
-/// The direction of the branches that do not move remains unchanged, but
-/// for the attachment branch, it may be pointing either towards or away
-/// from the attachment point.
-///
-/// Got m1<--->x1<--->m2 and n1<--->n2, and trying to move x1 onto (n1,n2)
-int Parameters::SPR(int br1, int br2, int branch_to_move)
-{
-  std::abort();
-  int x1 = t().source(br1);
-  int x2 = t().target(br1);
-
-  std::vector<int> m_branches = t().branches_after(t().find_branch(x2,x1));
-  assert(m_branches.size() == 2);
-  int m1 = t().target(m_branches[0]);
-  int m2 = t().target(m_branches[1]);
-
-  int n1 = t().source(br2);
-  int n2 = t().target(br2);
-
-  // If we are already attached to br2, then return.
-  if (n1 == x1 or n2 == x1) return -1;
-
-  //-------------------- Correctly order m1 and m2 ----------------------//
-  // Preserve the name of the branch with the smaller name (to avoid renaming leaf branches!)
-  // (The name of the x<--->n1 branch gets preserved)
-  if (branch_to_move == -1)
-  {
-    if (t().undirected(t().find_branch(m1,x1)) > t().undirected(t().find_branch(m2,x1)) )
-      std::swap(m1,m2);
-  }
-  // ensure that (x,m2) is the branch to move
-  else
-  {
-    if (t().find_branch(m1,x1) == branch_to_move or t().find_branch(x1,m1) == branch_to_move)
-      std::swap(m1,m2);
-    else if (t().find_branch(m2,x1) == branch_to_move or t().find_branch(x1,m2) == branch_to_move)
-      ;
-    else
-      std::abort(); // we couldn't find the branch to move!
-  }
-
-  //-------------------- Correctly order n1 and n2 ----------------------//
-  // choose sub-branch to give the new name to. (It will go to the one pointed to by b2)
-  if (n1 > n2)
-    std::swap(n1,n2);
-
-  //------ Merge the branches (m1,x1) and (x1,m2) -------//
-  int dead_branch = t().undirected(t().find_branch(m2,x1));
-
-  setlength( t().find_branch(m1,x1), t().branch_length(t().find_branch(m1,x1)) + t().branch_length(t().find_branch(m2,x1)) );
-
-  setlength( t().find_branch(m2,x1), 0.0);
-
-  //------------ Reconnect the branches ---------------//
-
-  begin_modify_topology();
-
-  // Reconnect (m1,x) to m2, making x a degree-2 node
-  // This leaves m1 connected to its branch, so m1 can be a leaf.
-  assert(not t().is_leaf_node(m2) );
-  reconnect_branch(m1, x1, m2, true);
-
-  // Reconnect (x,m2) to n2, leaving x a degree-2 node
-  assert(not t().is_leaf_node(m2));
-  reconnect_branch(x1, m2, n2, true);
-
-  // Reconnect (n1,n2) to x, making x a degree-3 node again.
-  // This leaves n1 connected to its branch, so n1 can be a leaf.
-  assert(not t().is_leaf_node(n2));
-  reconnect_branch(n1, n2, x1, true);
-
-  end_modify_topology();
-
-  recompute_pairwise_alignment(t().find_branch(m1,m2));
-
-  return dead_branch;
 }
 
 void Parameters::show_h_tree() const
