@@ -205,10 +205,23 @@ string GetProbabilityFunction::operator()(const Model& M, long)
   return convertToString(log(M.probability()));
 }
 
+  int alignment_length(const data_partition& P)
+  {
+    auto branches = P.t().all_branches_from_node(0);
+
+    int total = P.seqlength(0);
+    for(int b: branches)
+    {
+      auto& a = P.get_pairwise_alignment(b);
+      total += (a.size() - a.length1() - 2);
+    }
+    return total;
+  }
+
 string Get_Alignment_Length_Function::operator()(const Model& M, long)
 {
   const Parameters& P = dynamic_cast<const Parameters&>(M);
-  return convertToString(P[p].A().length());
+  return convertToString(alignment_length(P[p]));
 }
 
 string Get_Num_Substitutions_Function::operator()(const Model& M, long)
@@ -235,7 +248,7 @@ string Get_Total_Alignment_Length_Function::operator()(const Model& M, long)
 
   int total = 0;
   for(int p=0;p<P.n_data_partitions();p++)
-    total += P[p].A().length();
+    total += alignment_length(P[p]);
   return convertToString(total);
 }
 
