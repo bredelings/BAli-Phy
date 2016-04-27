@@ -21,17 +21,16 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define LIKELIHOOD_H
 
 #include "imodel/imodel.H"
-#include "alignment/alignment.H"
 #include "models/parameters.H"
 
 //-------------- Alignment Priors -----------------//
 
 log_double_t prior_HMM_rootless_scale(const data_partition& P);
-log_double_t prior_branch(const alignment&,const indel::PairHMM&,int parent,int child);
+log_double_t prior_branch(const pairwise_alignment_t&,const indel::PairHMM&);
 log_double_t prior_branch_from_counts(const matrix<int>& counts, const indel::PairHMM&);
 log_double_t prior_HMM_nogiven(const data_partition&);
 log_double_t prior_HMM(const data_partition&);
-matrix<int> get_path_counts(const alignment& A,int node1, int node2);
+matrix<int> get_path_counts(const pairwise_alignment_t& a,int node1, int node2);
 
 //------------------- Priors ----------------------//
 // Tree prior: branch lengths & topology

@@ -21,8 +21,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution/substitution.H"
 #include "setup.H"
 #include "probability/probability.H"
-#include "alignment/alignment-util.H"
-#include "alignment/alignment-util2.H"
 #include "util.H"
 #include "dp/2way.H"
 
@@ -108,35 +106,14 @@ log_double_t prior(const Parameters& P, const TreeInterface& t,double branch_mea
   return p;
 }
 
-matrix<int> get_path_counts(const alignment& A,int node1, int node2) 
+matrix<int> get_path_counts(const pairwise_alignment_t& a)
 {
   using namespace A2;
 
-  int state1 = states::S;
-
   matrix<int> counts(5,5,0);
 
-  for(int column=0;column<A.length();column++) 
-  {
-    int state2 = -1;
-    if (A.gap(column,node1)) {
-      if (A.gap(column,node2)) 
-       continue;
-      else
-       state2 = states::G1;
-    }
-    else {
-      if (A.gap(column,node2))
-       state2 = states::G2;
-      else
-       state2 = states::M;
-    }
-
-    counts(state1,state2)++;
-    state1 = state2;
-  }
-
-  counts(state1,states::E)++;
+  for(int i=1;i<a.size();i++) 
+    counts(a[i-1], a[i])++;
 
   return counts;
 }
@@ -172,10 +149,9 @@ log_double_t prior_branch_from_counts(const matrix<int>& counts,const indel::Pai
 }
 
 /// Probability of a pairwise alignment
-log_double_t prior_branch(const alignment& A,const indel::PairHMM& Q,int target,
-int source) 
+log_double_t prior_branch(const pairwise_alignment_t& a,const indel::PairHMM& Q) 
 {
-  matrix<int> counts = get_path_counts(A,target,source);
+  matrix<int> counts = get_path_counts(a);
 
   return prior_branch_from_counts(counts,Q);
 }
@@ -183,7 +159,6 @@ int source)
 /// Probability of a multiple alignment if branch alignments independent
 log_double_t prior_HMM_nogiven(const data_partition& P) 
 {
-  const alignment& A = P.A();
   const auto  t = P.t();
 
 #ifndef NDEBUG
@@ -192,11 +167,8 @@ log_double_t prior_HMM_nogiven(const data_partition& P)
   
   log_double_t Pr = 1;
 
-  for(int b=0;b<t.n_branches();b++) {
-    int target = t.target(t.undirected(b));
-    int source  = t.source(t.undirected(b));
-    Pr *= prior_branch(A, P.get_branch_HMM(b), target, source);
-  }
+  for(int b=0;b<t.n_branches();b++)
+    Pr *= prior_branch(P.get_pairwise_alignment(b), P.get_branch_HMM(b));
   
   return Pr;
 }
