@@ -52,9 +52,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
     ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
     ("randomize-alignment","Randomly realign the sequences before use.")
-    ("unalign-all,U","Unalign all sequences before use.")
     ("package-path,P",value<string>(),"Directories to search for packages (':'-separated)")
     ("internal",value<string>(),"If set to '+', then make all internal node entries wildcards")
+    ("align-constraint",value<string>(),"File with alignment constraints.")
+    ("enable",value<string>(),"Comma-separated list of kernels to enable.")
+    ("disable",value<string>(),"Comma-separated list of kernels to disable.")
+    ("model,m",value<string>(),"File containing hierarchical model.")
+    ("Model,M",value<string>(),"Module containing hierarchical model.")
     ;
 
   options_description developer("Developer options");
@@ -70,11 +74,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description general("General options");
   general.add_options()
     ("help,h", "Print usage information.")
+    ("Help,H", "Print advanced usage information.")
     ("version,v", "Print version information.")
     ("config,c", value<string>(),"Config file to read.")
     ("test,T","Analyze the initial values and exit.")
-    ("seed,s", value<unsigned long>(),"Random seed")
-    ("name,n", value<string>(),"Name for the analysis directory to create.")
     ("verbose,V","Print extra output in case of error.")
     ;
   
@@ -82,19 +85,18 @@ variables_map parse_cmd_line(int argc,char* argv[])
   mcmc.add_options()
     ("iterations,i",value<long int>()->default_value(100000),"The number of iterations to run.")
     ("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
-    ("enable",value<string>(),"Comma-separated list of kernels to enable.")
-    ("disable",value<string>(),"Comma-separated list of kernels to disable.")
+    ("seed,s", value<unsigned long>(),"Random seed")
+    ("name,n", value<string>(),"Name for the analysis directory to create.")
     ;
     
   options_description parameters("Parameter options");
   parameters.add_options()
-    ("align", value<vector<string> >()->composing(),"Files with sequences and initial alignment.")
+    ("align", value<vector<string> >()->composing(),"Sequence file & initial alignment.")
     ("tree",value<string>(),"File with initial tree")
     ("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>")
     ("set",value<vector<string> >()->composing(),"Set key=<value>")
+    ("unalign-all,U","Unalign all sequences before use.")
     ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.")
-    ("model,m",value<string>(),"File containing hierarchical model description.")
-    ("Model,M",value<string>(),"Module containing hierarchical model description.")
     ;
 
   options_description model("Model options");
@@ -105,7 +107,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("traditional,t","Fix the alignment and don't model indels.")
     ("branch-prior",value<string>()->default_value("Gamma"),"Exponential, Gamma, or Dirichlet.")
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
-    ("align-constraint",value<string>(),"File with alignment constraints.")
     ;
   options_description all("All options");
   all.add(general).add(mcmc).add(parameters).add(model).add(advanced).add(developer);
