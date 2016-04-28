@@ -71,8 +71,6 @@ private:
 
   void invalidate_pairwise_alignment_for_branch(int b) const;
 
-  void set_pairwise_alignment_(int b, const pairwise_alignment_t&,bool=true) const;
-
   std::vector<int> sequence_length_indices;
 
   std::vector<int> transition_p_method_indices;
@@ -88,9 +86,6 @@ private:
   void branch_mean_changed();
 
   bool variable_alignment_;
-
-  /// The alignment data of this partition
-  int alignment_matrix_index = -1;
 
 public:
 
@@ -112,12 +107,8 @@ public:
 
   boost::shared_ptr<alphabet> a;
 
-  const alignment& A() const;
+  alignment A() const;
 
-  void set_alignment(const expression_ref& A2);
-
-  void recompute_alignment_matrix_from_pairwise_alignments();
-  
   TreeInterface t() const;
 
   /// Cached Transition Probabilities
@@ -167,9 +158,9 @@ public:
 
   expression_ref get_pairwise_alignment_(int b) const;
 
-  const pairwise_alignment_t& get_pairwise_alignment(int b,bool=true) const;
+  const pairwise_alignment_t& get_pairwise_alignment(int b) const;
 
-  void set_pairwise_alignment(int b, const pairwise_alignment_t&, bool=true);
+  void set_pairwise_alignment(int b, const pairwise_alignment_t&);
 
   void note_alignment_changed_on_branch(int b);
 

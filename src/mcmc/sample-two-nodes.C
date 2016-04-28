@@ -109,14 +109,12 @@ sample_two_nodes_base(data_partition& P, const data_partition& P0, const A5::hmm
 
   const auto& nodes = order.nodes;
 
-  P.set_pairwise_alignment(P.t().find_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_path(path, *Matrices, 0, 4), false);
-  P.set_pairwise_alignment(P.t().find_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_path(path, *Matrices, 1, 4), false);
-  P.set_pairwise_alignment(P.t().find_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 2, 5), false);
-  P.set_pairwise_alignment(P.t().find_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 3, 5), false);
-  P.set_pairwise_alignment(P.t().find_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 4, 5), false);
+  P.set_pairwise_alignment(P.t().find_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_path(path, *Matrices, 0, 4));
+  P.set_pairwise_alignment(P.t().find_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_path(path, *Matrices, 1, 4));
+  P.set_pairwise_alignment(P.t().find_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 2, 5));
+  P.set_pairwise_alignment(P.t().find_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 3, 5));
+  P.set_pairwise_alignment(P.t().find_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
 
-  P.recompute_alignment_matrix_from_pairwise_alignments();
-  
 #ifndef NDEBUG_DP
   check_alignment(P.A(), P.t(), "sample_two_nodes_base:out");
 #endif

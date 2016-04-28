@@ -127,10 +127,8 @@ shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<i
 
   for(int i=0;i<3;i++) {
     int b = P.t().find_branch(nodes[0],nodes[i+1]);
-    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
+    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
   }
-
-  P.recompute_alignment_matrix_from_pairwise_alignments();
 
   assert(valid(P.A()));
 

@@ -87,9 +87,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   path.erase(path.begin()+path.size()-1);
 
   P.LC.invalidate_branch_alignment(t,b);
-  P.set_pairwise_alignment(b, A2::get_pairwise_alignment_from_path(path), false);
-
-  P.recompute_alignment_matrix_from_pairwise_alignments();
+  P.set_pairwise_alignment(b, A2::get_pairwise_alignment_from_path(path));
 
   return Matrices;
 }

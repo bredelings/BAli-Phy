@@ -113,7 +113,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 
     // Make sure the column order on the pruned branch matches the projected column order from the original alignment.
     //    vector<HMM::bitmask_t> b123 = A3::get_bitpath(P0, nodes0);
-    //    P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2), false);
+    //    P.set_pairwise_alignment(b5, get_pairwise_alignment_from_bits(b123,1,2));
   }
   else
   {
@@ -208,10 +208,8 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 
   for(int i=0;i<3;i++) {
     int b = t.find_branch(nodes[0],nodes[i+1]);
-    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
+    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
   }
-
-  P.recompute_alignment_matrix_from_pairwise_alignments();
 
 #ifndef NDEBUG_DP
   check_alignment(P.A(),t,"sample_tri_base:out");
