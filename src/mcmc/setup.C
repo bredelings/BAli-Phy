@@ -684,7 +684,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 
   MoveStats Stats;
   // 1. First choose the scale of the tree
-  if (fraction_non_gap(*P.as<Parameters>()) > 1.0/20)
   {
     MoveAll pre_burnin("pre-burnin");
 
@@ -705,12 +704,9 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
       pre_burnin.iterate(P,Stats);
     }
   }
-  else
-    out_both<<"Skipping fixed-alignment tree-size pre-burnin: too many gaps in initial alignment!"<<std::endl;
   out_both<<endl;
 
   // 2. Then do an initial tree search - SPR - ignore indel information
-  if (fraction_non_gap(*P.as<Parameters>()) > 1.0/20)
   {
     MoveAll pre_burnin("pre-burnin");
     pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
@@ -737,11 +733,8 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
     }
     out_both<<endl;
   }
-  else
-    out_both<<"Skipping fixed-alignment SPR pre-burnin: too many gaps in initial alignment!"<<std::endl;
 
-    // 3. Then do a further tree search - NNI - w/ the actual model
-  if (fraction_non_gap(*P.as<Parameters>()) > 1.0/20)
+  // 3. Then do a further tree search - NNI - w/ the actual model
   {
     MoveAll pre_burnin("pre-burnin");
 
@@ -767,8 +760,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
       pre_burnin.iterate(P,Stats);
     }
   }
-  else
-    out_both<<"Skipping fixed-alignment NNI pre-burnin: too many gaps in initial alignment!"<<std::endl;
   out_both<<endl;
 
   // Set all alignments that COULD be variable back to being variable.
