@@ -428,10 +428,10 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     if (C != -1) 
     {
       for(int i=0;i<P.n_data_partitions();i++) {
-	dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
-	dynamic_bitset<> s2 = constraint_satisfied(p[C][i].alignment_constraint, p[C][i].A());
+	//	dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
+	//	dynamic_bitset<> s2 = constraint_satisfied(p[C][i].alignment_constraint, p[C][i].A());
 	
-	report_constraints(s1,s2,i);
+	//	report_constraints(s1,s2,i);
       }
       P = p[C];
 
@@ -925,10 +925,10 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 
   //---------------------- Update P based on choice ------------------//
   for(int i=0;i<P.n_data_partitions();i++) {
-    dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
-    dynamic_bitset<> s2 = constraint_satisfied(p[C2][i].alignment_constraint, p[C2][i].A());
+    //    dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
+    //    dynamic_bitset<> s2 = constraint_satisfied(p[C2][i].alignment_constraint, p[C2][i].A());
     
-    report_constraints(s1,s2,i);
+    //    report_constraints(s1,s2,i);
   }
   P = p[C2];
   
