@@ -391,8 +391,6 @@ void data_partition::note_alignment_changed_on_branch(int b)
   b = t().undirected(b);
 
   int B = t().reverse(b);
-  invalidate_pairwise_alignment_for_branch(b);
-  invalidate_pairwise_alignment_for_branch(B);
 
   // However, LC depends only on the alignment of subA indices from different branches.
   LC.invalidate_branch_alignment(t(),b);
