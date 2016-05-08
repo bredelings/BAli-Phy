@@ -1167,7 +1167,8 @@ expression_ref parse_haskell_line(const string& line)
 
   HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
   HParser<HTokens<Lexer>::iterator_type> haskell_parser(error_handler,lexer1);
-
+  /*
+  Uncommenting this makes the line parse fail!
   {
     for(auto i = lexer1.begin(beg, end); i != lexer1.end() and (*i).is_valid(); i++)
     {
@@ -1175,12 +1176,12 @@ expression_ref parse_haskell_line(const string& line)
       std::cout<<"'"<<t.value()<<"'\n";;
     }
   }
-
+  */
   /*----------------------------------------------------------------------------*/
-  expression_ref cmd;
 
+  expression_ref cmd;
   StreamIter iter = beg;
-  if (not tokenize_and_parse(iter, end, lexer1, haskell_parser, cmd))
+  if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.exp, cmd))
     throw myexception()<<"Haskell line parse failed!";
 
   if (iter != end)
