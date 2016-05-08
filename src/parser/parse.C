@@ -622,14 +622,17 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	  | lexp [ _val = _1 ]
 	  ;
 
-	lexp = 
-	  tok.Backslash > +apat[push_back(_a,_1)] > tok.RightArrow > exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Lambda"), _a)  ]
-	  | eps[clear(_a)] >> let_decls[push_back(_a,_1)] >> tok.KW_In > exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ]
-	  | tok.KW_If [clear(_a)] > exp[push_back(_a,_1)] > -tok.SemiColon >> tok.KW_Then > exp[push_back(_a,_1)] > -tok.SemiColon > tok.KW_Else > exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ]
-	  | tok.KW_Case[clear(_a)] > exp[push_back(_a,_1)] > tok.KW_Of > tok.LeftCurly >> alts[push_back(_a,_1)] >> tok.RightCurly >> eps [ _val = new_<expression>(AST_node("Case"), _a)  ]
-	  | tok.KW_Do[clear(_a)] > tok.LeftCurly > stmts[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Do"), _a)  ]
-	  | fexp [_val = _1]
-	  ;
+	lexp %= lexp_lambda | lexp_let | lexp_if | lexp_case | lexp_do | fexp;
+
+	lexp_lambda = tok.Backslash > +apat[push_back(_a,_1)] > tok.RightArrow > exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Lambda"), _a)  ];
+
+	lexp_let = let_decls[push_back(_a,_1)] >> tok.KW_In > exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ];
+
+	lexp_if = tok.KW_If > exp[push_back(_a,_1)] > -tok.SemiColon >> tok.KW_Then > exp[push_back(_a,_1)] > -tok.SemiColon > tok.KW_Else > exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ];
+
+	lexp_case = tok.KW_Case > exp[push_back(_a,_1)] > tok.KW_Of > tok.LeftCurly >> alts[push_back(_a,_1)] >> tok.RightCurly >> eps [ _val = new_<expression>(AST_node("Case"), _a)  ];
+
+	lexp_do = tok.KW_Do > tok.LeftCurly > stmts[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Do"), _a)  ];
 
 	fexp = +aexp [ push_back(_a,_1) ] >> eps [ _val = new_<expression>(AST_node("Apply"), _a) ]  ; // function application
 
@@ -899,7 +902,14 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
             "Error! Expecting ", _4, _3));\
 
 	add_error_handler(exp);
+	add_error_handler(infixexp);
 	add_error_handler(lexp);
+	add_error_handler(lexp_lambda);
+	add_error_handler(lexp_let);
+	add_error_handler(lexp_if);
+	add_error_handler(lexp_case);
+	add_error_handler(lexp_do);
+	add_error_handler(fexp);
 	add_error_handler(aexp);
 	add_error_handler(funlhs);
 	add_error_handler(gendecl);
@@ -919,6 +929,10 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	add_error_handler(lpat);
 	add_error_handler(apat);
 	add_error_handler(literal);
+	add_error_handler(literal_int);
+	add_error_handler(literal_float);
+	add_error_handler(literal_char);
+	add_error_handler(literal_string);
 
 	BOOST_SPIRIT_DEBUG_NODE(varid);
 	BOOST_SPIRIT_DEBUG_NODE(qvarid);
@@ -949,7 +963,14 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	BOOST_SPIRIT_DEBUG_NODE(topdecl);
 
 	BOOST_SPIRIT_DEBUG_NODE(exp);
+	BOOST_SPIRIT_DEBUG_NODE(infixexp);
+	BOOST_SPIRIT_DEBUG_NODE(fexp);
 	BOOST_SPIRIT_DEBUG_NODE(lexp);
+	BOOST_SPIRIT_DEBUG_NODE(lexp_lambda);
+	BOOST_SPIRIT_DEBUG_NODE(lexp_let);
+	BOOST_SPIRIT_DEBUG_NODE(lexp_if);
+	BOOST_SPIRIT_DEBUG_NODE(lexp_case);
+	BOOST_SPIRIT_DEBUG_NODE(lexp_do);
 	BOOST_SPIRIT_DEBUG_NODE(aexp);
 	BOOST_SPIRIT_DEBUG_NODE(funlhs);
 	BOOST_SPIRIT_DEBUG_NODE(rhs);
@@ -961,6 +982,11 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	BOOST_SPIRIT_DEBUG_NODE(pat);
 	BOOST_SPIRIT_DEBUG_NODE(lpat);
 	BOOST_SPIRIT_DEBUG_NODE(apat);
+	BOOST_SPIRIT_DEBUG_NODE(literal);
+	BOOST_SPIRIT_DEBUG_NODE(literal_int);
+	BOOST_SPIRIT_DEBUG_NODE(literal_float);
+	BOOST_SPIRIT_DEBUG_NODE(literal_char);
+	BOOST_SPIRIT_DEBUG_NODE(literal_string);
 	BOOST_SPIRIT_DEBUG_NODE(var);
 	BOOST_SPIRIT_DEBUG_NODE(varop);
 	BOOST_SPIRIT_DEBUG_NODE(constrs);
@@ -978,6 +1004,11 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	exp.name("exp");
 	infixexp.name("infixexp");
 	lexp.name("lexp");
+	lexp_lambda.name("lexp_lambda");
+	lexp_let.name("lexp_let");
+	lexp_if.name("lexp_if");
+	lexp_case.name("lexp_case");
+	lexp_do.name("lexp_do");
 	fexp.name("fexp");
 	aexp.name("aexp");
 	qual.name("qual");
@@ -1035,6 +1066,11 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
   qi::rule<Iterator, expression_ref()> exp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> infixexp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_lambda;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_if;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_let;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_case;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_do;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> fexp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> aexp;
 
