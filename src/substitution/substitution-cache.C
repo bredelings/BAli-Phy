@@ -390,7 +390,7 @@ Likelihood_Cache::Likelihood_Cache(const TreeInterface& t, const Mat_Cache& MC,i
   :cache(new Multi_Likelihood_Cache(MC)),
    B(t.n_branches()*2),
    token(cache->claim_token(C,B)),
-   scratch_matrices(10,Matrix(MC.n_base_models(),MC.n_states())),
+   scratch_matrices(10,Matrix(MC.n_base_models(), MC.n_states())),
    lengths(B,-1),
    cached_value(0),
    root(t.n_nodes()-1)
