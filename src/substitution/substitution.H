@@ -26,43 +26,14 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef SUBSTITUTION_H
 #define SUBSTITUTION_H
 
-#include "alignment/alignment.H"
-#include "tree/tree.H"
-struct Mat_Cache;
-class Parameters;
-#include "models/parameters.H"
-#include "substitution-cache.H"
+#include <vector>
+#include "matrix.H"
+#include "math/log-double.H"
+
+class data_partition;
 
 /// A namespace for functions related to calculating the substitution likelihood.
 namespace substitution {
-
-  inline double sum(const std::vector<double>& f,int l1,const alphabet& a)
-  {
-    double total=0;
-    for(int l=0;l<a.size();l++)
-      if (a.matches(l,l1))
-	total += f[l];
-    return total;
-  }
-
-  inline double sum(const std::valarray<double>& f,int l1,const alphabet& a)
-  {
-    double total=0;
-    for(int l=0;l<a.size();l++)
-      if (a.matches(l,l1))
-	total += f[l];
-    return total;
-  }
-
-  inline double sum(const Matrix Q,int l1, int l2, const alphabet& a)
-  {
-    double total=0;
-    for(int l=0;l<a.size();l++)
-      if (a.matches(l,l2))
-	total += Q(l1,l);
-    return total;
-  }
-
 
   std::vector<std::vector<std::pair<int,int>>> sample_ancestral_states(const data_partition& P);
 
@@ -78,11 +49,6 @@ namespace substitution {
 
   log_double_t other_subst(const data_partition&, const std::vector<int>& nodes);
   
-  log_double_t Pr(const std::vector< std::vector<int> >& sequences, const data_partition& P,
-		  const Mat_Cache& MC, const TreeInterface& t, ::Likelihood_Cache& cache);
-
-  log_double_t Pr(const data_partition&,Likelihood_Cache& LC);
-
   std::vector<std::vector<double> > get_model_likelihoods_by_alignment_column(const data_partition&);
 
   std::vector<std::vector<double> > get_model_probabilities_by_alignment_column(const data_partition&);

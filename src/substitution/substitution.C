@@ -18,6 +18,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "substitution.H"
+#include "models/parameters.H"
+#include "sequence/alphabet.H"
 #include "matcache.H"
 #include "rng.H"
 #include <cmath>
@@ -206,6 +208,34 @@ namespace substitution {
   int total_peel_branches=0;
   int total_likelihood=0;
   int total_calc_root_prob=0;
+
+  inline double sum(const std::vector<double>& f,int l1,const alphabet& a)
+  {
+    double total=0;
+    for(int l=0;l<a.size();l++)
+      if (a.matches(l,l1))
+	total += f[l];
+    return total;
+  }
+
+  inline double sum(const std::valarray<double>& f,int l1,const alphabet& a)
+  {
+    double total=0;
+    for(int l=0;l<a.size();l++)
+      if (a.matches(l,l1))
+	total += f[l];
+    return total;
+  }
+
+  inline double sum(const Matrix Q,int l1, int l2, const alphabet& a)
+  {
+    double total=0;
+    for(int l=0;l<a.size();l++)
+      if (a.matches(l,l2))
+	total += Q(l1,l);
+    return total;
+  }
+
 
   struct peeling_info: public vector<int> {
     peeling_info(const TreeInterface& t) { reserve(t.n_branches()); }
