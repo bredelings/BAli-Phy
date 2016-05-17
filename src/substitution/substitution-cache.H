@@ -109,11 +109,6 @@ public:
   /// Mark cached conditional likelihoods for token t/branch b up to date.
   void validate_branch(int token,int branch);
 
-  /// Determine the number of CTMC models out model is a mixture of.
-  int n_models() const {return M;}
-  /// The size of the alphabet
-  int n_states() const {return S;}
-
   /// Mark cached conditional likelihoods for token t/branch b invalid, and unshare.
   void invalidate_one_branch(int token,int branch);
   /// Mark cached conditional likelihoods for all branches of token t invalid.
@@ -181,10 +176,6 @@ public:
   int allocated_length() const {return cache->get_length(token);}
   /// The number of undirected branches;
   int n_branches() const {return B/2;}
-  /// The number of CTMC models in our mixture.
-  int n_models() const {return cache->n_models();}
-  /// The number of states in our alphabet.
-  int n_states() const {return cache->n_states();}
 
   /// Mark cached conditional likelihoods for all branches invalid.
   void invalidate_all();

@@ -263,8 +263,8 @@ namespace substitution {
 #ifdef DEBUG_SUBSTITUTION
     Matrix & S = cache.scratch(0);
 #endif
-    const int n_models = cache.n_models();
-    const int n_states = cache.n_states();
+    const int n_models = MC.n_base_models();
+    const int n_states = MC.n_states();
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
@@ -357,8 +357,8 @@ namespace substitution {
 #ifdef DEBUG_SUBSTITUTION    
     Matrix & S = cache.scratch(0);
 #endif    
-    const int n_models = cache.n_models();
-    const int n_states = cache.n_states();
+    const int n_models = MC.n_base_models();
+    const int n_states = MC.n_states();
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
@@ -471,7 +471,7 @@ namespace substitution {
 
   void peel_leaf_branch(int b0, const data_partition& P, Likelihood_Cache& cache,
 			const vector<int>& sequence, const alphabet& a,
-			const vector<Matrix>& transition_P)
+			const Mat_Cache& MC)
   {
     total_peel_leaf_branches++;
 
@@ -484,8 +484,10 @@ namespace substitution {
     
     cache.set_length(L0, b0);
 
-    const int n_models  = cache.n_models();
-    const int n_states  = cache.n_states();
+    const int n_models  = MC.n_base_models();
+    const int n_states  = MC.n_states();
+
+    const auto& transition_P = MC.transition_P(b0);
 
     assert(transition_P.back().size1() == n_states);
 
@@ -540,8 +542,8 @@ namespace substitution {
 
     cache.set_length(L0, b0); 
 
-    const int n_models  = cache.n_models();
-    const int n_states  = cache.n_states();
+    const int n_models  = MC.n_base_models();
+    const int n_states  = MC.n_states();
 
     assert(MC.n_states() == n_states);
 
@@ -609,8 +611,8 @@ namespace substitution {
     int L0 = P.seqlength(P.t().source(b0));
     cache.set_length(L0, b0);
 
-    const int n_models  = cache.n_models();
-    const int n_states  = cache.n_states();
+    const int n_models  = MC.n_base_models();
+    const int n_states  = MC.n_states();
     const int n_letters = a.n_letters();
 
     assert(n_states >= n_letters and n_states%n_letters == 0);
@@ -662,8 +664,8 @@ namespace substitution {
     assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
 
     // scratch matrix 
-    const int n_models = cache.n_models();
-    const int n_states = cache.n_states();
+    const int n_models = MC.n_base_models();
+    const int n_states = MC.n_states();
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
@@ -712,7 +714,7 @@ namespace substitution {
   }
 
   void peel_internal_branch(const vector<int>& b,matrix<int>& index, Likelihood_Cache& cache,
-			    const vector<Matrix>& transition_P,const Mat_Cache& IF_DEBUG(MC))
+			    const vector<Matrix>& transition_P,const Mat_Cache& MC)
   {
     assert(b.size() == 3);
 
@@ -725,8 +727,8 @@ namespace substitution {
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
-    const int n_models = cache.n_models();
-    const int n_states = cache.n_states();
+    const int n_models = MC.n_base_models();
+    const int n_states = MC.n_states();
     assert(MC.n_states() == n_states);
 
     // look up the cache rows now, once, instead of for each column
@@ -829,8 +831,8 @@ namespace substitution {
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
-    const int n_models = cache.n_models();
-    const int n_states = cache.n_states();
+    const int n_models = MC.n_base_models();
+    const int n_states = MC.n_states();
     assert(MC.n_states() == n_states);
 
     // look up the cache rows now, once, instead of for each column
@@ -909,8 +911,6 @@ namespace substitution {
     // compute branches-in
     int bb = t.branches_before(b0).size();
 
-    int B0 = t.undirected(b0);
-
     int L0 = P.seqlength(P.t().source(b0));
 
     if (t.n_nodes() == 2 and b0 == 1)
@@ -933,16 +933,16 @@ namespace substitution {
 	if (MC.base_model(0,0).is_a<F81_Object>())
 	  peel_leaf_branch_F81(b0, P, cache, sequences[b0], a, t, MC);
 	else
-	  peel_leaf_branch(b0, P, cache, sequences[b0], a, MC.transition_P(B0));
+	  peel_leaf_branch(b0, P, cache, sequences[b0], a, MC);
       }
       else
-	peel_leaf_branch_modulated(b0, P, cache, sequences[b0], a, MC.transition_P(B0), MC);
+	peel_leaf_branch_modulated(b0, P, cache, sequences[b0], a, MC.transition_P(b0), MC);
     }
     else if (bb == 2) {
       if (MC.base_model(0,0).is_a<F81_Object>())
 	peel_internal_branch_F81(b0, P, cache, t, MC);
       else
-	peel_internal_branch(b0, P, cache, t, MC.transition_P(B0), MC);
+	peel_internal_branch(b0, P, cache, t, MC.transition_P(b0), MC);
     }
     else
       std::abort();
@@ -1257,6 +1257,7 @@ namespace substitution {
     int L = P1.seqlength(P1.t().source(b));
     assert(L == P2.seqlength(P2.t().source(b)));
 
+#if 0
     const int n_models = P1.LC.n_models();
     const int n_states = P1.LC.n_states();
 
@@ -1287,6 +1288,7 @@ namespace substitution {
 	" recomputed = "<<other_subst_recomputed.log()<<
 	" diff = "<<other_subst_recomputed.log() - other_subst_current.log()<<std::endl;
     }
+#endif
   }
   
   void compare_caches(const data_partition& P1, const data_partition& P2)
@@ -1404,8 +1406,8 @@ namespace substitution {
 
     // scratch matrix 
     Matrix & S = cache.scratch(0);
-    const int n_models = cache.n_models();
-    const int n_states = cache.n_states();
+    const int n_models = MC.n_base_models();
+    const int n_states = MC.n_states();
 
     int root = cache.root;
 
