@@ -202,8 +202,12 @@ public:
   void validate_branch(int b) {cache->validate_branch(token,b);}
   /// Is there is backing store for us to work with?
   bool branch_available(int b) const {return cache->location_allocated(token,b);}
+
   /// Ensure there is backing store for us to work with
-  void prepare_branch(int b) const {cache->allocate_location(token,b);}
+  void prepare_branch(int b, int l) {
+    cache->allocate_location(token,b);
+    set_length(l,b);
+  }
 
   /// Cached conditional likelihoods for branch b
   const Likelihood_Cache_Branch& operator[](int b) const {

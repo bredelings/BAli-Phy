@@ -478,11 +478,9 @@ namespace substitution {
     //    const vector<unsigned>& smap = MC.state_letters();
 
     // Do this before accessing matrices or other_subst
-    cache.prepare_branch(b0);
-
     int L0 = P.seqlength(P.t().source(b0));
-    
-    cache.set_length(L0, b0);
+
+    cache.prepare_branch(b0, L0);
 
     const int n_models  = MC.n_base_models();
     const int n_states  = MC.n_states();
@@ -536,11 +534,8 @@ namespace substitution {
     total_peel_leaf_branches++;
 
     // Do this before accessing matrices or other_subst
-    cache.prepare_branch(b0);
-
     int L0 = P.seqlength(P.t().source(b0));
-
-    cache.set_length(L0, b0); 
+    cache.prepare_branch(b0, L0);
 
     const int n_models  = MC.n_base_models();
     const int n_states  = MC.n_states();
@@ -606,10 +601,8 @@ namespace substitution {
     total_peel_leaf_branches++;
 
     // Do this before accessing matrices or other_subst
-    cache.prepare_branch(b0);
-
     int L0 = P.seqlength(P.t().source(b0));
-    cache.set_length(L0, b0);
+    cache.prepare_branch(b0, L0);
 
     const int n_models  = MC.n_base_models();
     const int n_states  = MC.n_states();
@@ -721,9 +714,7 @@ namespace substitution {
     assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
 
     // Do this before accessing matrices or other_subst
-    cache.prepare_branch(b[2]);
-
-    cache.set_length(index.size1(), b[2]);
+    cache.prepare_branch(b[2], index.size1());
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
@@ -825,9 +816,7 @@ namespace substitution {
     assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
 
     // Do this before accessing matrices or other_subst
-    cache.prepare_branch(b0);
-
-    cache.set_length(L0, b0);
+    cache.prepare_branch(b0, L0);
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
@@ -916,8 +905,7 @@ namespace substitution {
     if (t.n_nodes() == 2 and b0 == 1)
     {
       assert(bb == 0);
-      cache.prepare_branch(b0);
-      cache.set_length(L0, b0);
+      cache.prepare_branch(b0, L0);
 
       vector<Matrix> L = get_leaf_seq_likelihoods(sequences[1], P.get_alphabet(), MC, 0);
 
