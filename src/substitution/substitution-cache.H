@@ -204,7 +204,7 @@ public:
   bool branch_available(int b) const {return cache->location_allocated(token,b);}
 
   /// Ensure there is backing store for us to work with
-  void prepare_branch(int b, int l) {
+  void prepare_branch(int b, int l, int m, int s) {
     cache->allocate_location(token,b);
     set_length(l,b);
   }

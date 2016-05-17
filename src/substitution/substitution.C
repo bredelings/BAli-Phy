@@ -480,10 +480,10 @@ namespace substitution {
     // Do this before accessing matrices or other_subst
     int L0 = P.seqlength(P.t().source(b0));
 
-    cache.prepare_branch(b0, L0);
-
     const int n_models  = MC.n_base_models();
     const int n_states  = MC.n_states();
+
+    cache.prepare_branch(b0, L0, n_models, n_states);
 
     const auto& transition_P = MC.transition_P(b0);
 
@@ -535,12 +535,11 @@ namespace substitution {
 
     // Do this before accessing matrices or other_subst
     int L0 = P.seqlength(P.t().source(b0));
-    cache.prepare_branch(b0, L0);
 
     const int n_models  = MC.n_base_models();
     const int n_states  = MC.n_states();
 
-    assert(MC.n_states() == n_states);
+    cache.prepare_branch(b0, L0, n_models, n_states);
 
     //    const vector<unsigned>& smap = MC.state_letters();
 
@@ -602,15 +601,14 @@ namespace substitution {
 
     // Do this before accessing matrices or other_subst
     int L0 = P.seqlength(P.t().source(b0));
-    cache.prepare_branch(b0, L0);
 
     const int n_models  = MC.n_base_models();
     const int n_states  = MC.n_states();
     const int n_letters = a.n_letters();
 
-    assert(n_states >= n_letters and n_states%n_letters == 0);
+    cache.prepare_branch(b0, L0, n_models, n_states);
 
-    assert(MC.n_states() == n_states);
+    assert(n_states >= n_letters and n_states%n_letters == 0);
 
     const vector<unsigned>& smap = MC.state_letters();
 
@@ -713,14 +711,14 @@ namespace substitution {
 
     assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
 
+    const int n_models = MC.n_base_models();
+    const int n_states = MC.n_states();
+
     // Do this before accessing matrices or other_subst
-    cache.prepare_branch(b[2], index.size1());
+    cache.prepare_branch(b[2], index.size1(), n_models, n_states);
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
-    const int n_models = MC.n_base_models();
-    const int n_states = MC.n_states();
-    assert(MC.n_states() == n_states);
 
     // look up the cache rows now, once, instead of for each column
     vector< vector<Matrix>* > branch_cache;
@@ -815,14 +813,14 @@ namespace substitution {
 
     assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
 
+    const int n_models = MC.n_base_models();
+    const int n_states = MC.n_states();
+
     // Do this before accessing matrices or other_subst
-    cache.prepare_branch(b0, L0);
+    cache.prepare_branch(b0, L0, n_models, n_states);
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
-    const int n_models = MC.n_base_models();
-    const int n_states = MC.n_states();
-    assert(MC.n_states() == n_states);
 
     // look up the cache rows now, once, instead of for each column
     vector< vector<Matrix>* > branch_cache;
@@ -905,7 +903,7 @@ namespace substitution {
     if (t.n_nodes() == 2 and b0 == 1)
     {
       assert(bb == 0);
-      cache.prepare_branch(b0, L0);
+      cache.prepare_branch(b0, L0, MC.n_base_models(), MC.n_states());
 
       vector<Matrix> L = get_leaf_seq_likelihoods(sequences[1], P.get_alphabet(), MC, 0);
 
