@@ -81,7 +81,7 @@ void Multi_Likelihood_Cache::allocate_branch_slots(int s)
   }
 }
 
-void Multi_Likelihood_Cache::allocate_location(int t, int b)
+void Multi_Likelihood_Cache::allocate_location(int t, int b, int l, int m, int s)
 {
   if (not location_allocated(t,b))
     mapping[t][b] = get_unused_location();

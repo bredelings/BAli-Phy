@@ -92,7 +92,7 @@ public:
   int& cv_up_to_date(int t)       {return cv_up_to_date_[t];}
 
   /// Reserve backing store for t/b, and point t/b to it.
-  void allocate_location(int t, int b);
+  void allocate_location(int t, int b, int l, int m, int s);
 
   /// Where do we store caches for token t, branch b?
   int location(int t,int b) const {assert(mapping[t][b] != -1); return mapping[t][b];}
@@ -205,7 +205,7 @@ public:
 
   /// Ensure there is backing store for us to work with
   void prepare_branch(int b, int l, int m, int s) {
-    cache->allocate_location(token,b);
+    cache->allocate_location(token, b, l, m, s);
     set_length(l,b);
   }
 
