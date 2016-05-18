@@ -26,8 +26,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "models/TreeInterface.H"
 
 /// An object to store cached conditional likelihoods for a single branch
-struct Likelihood_Cache_Branch: public std::vector< Matrix >
+struct Likelihood_Cache_Branch
 {
+  std::vector< Matrix > data;
+
   int n_states_;
   int n_models_;
   int n_columns_;
@@ -38,10 +40,13 @@ struct Likelihood_Cache_Branch: public std::vector< Matrix >
   int n_models() const {return n_models_;}
   int n_columns() const {return n_columns_;}
   
-  Matrix& scratch(int i) {return (*this)[n_columns() + i];}
+  double* scratch(int i) {return (*this)[n_columns() + i];}
 
+  double* operator[](int i) {return data[i].begin();} 
+  const double* operator[](int i) const {return data[i].begin();} 
+  
   Likelihood_Cache_Branch(int C,int M, int S)
-    :std::vector<Matrix>(C+2,Matrix(M,S)),
+    :data(C+2,Matrix(M,S)),
      n_states_(S), 
      n_models_(M),
      n_columns_(C),
@@ -215,7 +220,7 @@ public:
   }
 
   /// Cached conditional likelihoods for index i, branch b
-  const Matrix& operator()(int i,int b) const {
+  const double* operator()(int i,int b) const {
     int loc = cache->location(token,b);
     assert(loc != -1);
     assert(0 <= i and i < get_length(b));
@@ -223,7 +228,7 @@ public:
   }
 
   /// Cached conditional likelihoods for index i, branch b
-  Matrix& operator()(int i,int b) {
+  double* operator()(int i,int b) {
     int loc = cache->location(token,b);
     assert(loc != -1);
     assert(0 <= i and i < get_length(b));

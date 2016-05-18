@@ -364,7 +364,7 @@ namespace substitution {
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
-    MC.WeightedFrequencyMatrix(F);
+    MC.WeightedFrequencyMatrix(F.begin());
 
     // look up the cache rows now, once, instead of for each column
     vector< Likelihood_Cache_Branch* > branch_cache;
@@ -384,11 +384,11 @@ namespace substitution {
       int mi=0;
 
       if (i0 != -1)
-	m[mi++] = ((*branch_cache[0])[i0]).begin();
+	m[mi++] = ((*branch_cache[0])[i0]);
       if (i1 != -1)
-	m[mi++] = ((*branch_cache[1])[i1]).begin();
+	m[mi++] = ((*branch_cache[1])[i1]);
       if (i2 != -1)
-	m[mi++] = ((*branch_cache[2])[i2]).begin();
+	m[mi++] = ((*branch_cache[2])[i2]);
 
       if (mi==3)
 	p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
@@ -460,7 +460,7 @@ namespace substitution {
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
-    MC.WeightedFrequencyMatrix(F);
+    MC.WeightedFrequencyMatrix(F.begin());
 
     // look up the cache rows now, once, instead of for each column
     vector< Likelihood_Cache_Branch* > branch_cache;
@@ -479,9 +479,9 @@ namespace substitution {
       int mi=0;
 
       if (i0 != -1)
-	m[mi++] = ((*branch_cache[0])[i0]).begin();
+	m[mi++] = ((*branch_cache[0])[i0]);
       if (i1 != -1)
-	m[mi++] = ((*branch_cache[1])[i1]).begin();
+	m[mi++] = ((*branch_cache[1])[i1]);
 
       if (mi==2)
 	p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
@@ -590,7 +590,7 @@ namespace substitution {
 
     for(int i=0;i<L0;i++)
     {
-      double* R = cache(i,b0).begin();
+      double* R = cache(i,b0);
       // compute the distribution at the parent node
       int l2 = sequence[i];
 
@@ -599,7 +599,7 @@ namespace substitution {
 	{
 	  const Matrix& Q = transition_P[m];
 	  for(int s1=0;s1<n_states;s1++)
-	    R[m*n_models + s1] = Q(s1,l2);
+	    R[m*n_states + s1] = Q(s1,l2);
 	}
       else if (a.is_letter_class(l2)) 
       {
@@ -614,7 +614,7 @@ namespace substitution {
 	    double sum = 0.0;
 	    for(int s2=0;s2<n_states;s2++)
 	      sum += Q(s1,s2) * fmask[s2];
-	    R[m*n_models + s1] = sum;
+	    R[m*n_states + s1] = sum;
 	  }
 	}
       }
@@ -637,6 +637,7 @@ namespace substitution {
 
     const int n_models  = MC.n_base_models();
     const int n_states  = MC.n_states();
+    const int matrix_size = n_models * n_states;
 
     cache.prepare_branch(b0, L0, n_models, n_states);
 
@@ -653,21 +654,21 @@ namespace substitution {
     for(int m=0;m<n_models;m++) 
       exp_a_t[m] = exp(-L * SubModels[m]->alpha_);
 
-    Matrix& F = cache[b0].scratch(1);
+    double* F = cache[b0].scratch(1);
     MC.FrequencyMatrix(F); // F(m,l2)
 
     for(int i=0;i<L0;i++)
     {
-      Matrix& R = cache(i,b0);
+      double* R = cache(i,b0);
       // compute the distribution at the parent node
       int l2 = sequence[i];
 
       if (a.is_letter(l2))
 	for(int m=0;m<n_models;m++) {
-	  double temp = (1.0-exp_a_t[m])*F(m,l2); // move load out of loop for GCC vectorizer
+	  double temp = (1.0-exp_a_t[m])*F[m*n_states + l2]; // move load out of loop for GCC vectorizer
 	  for(int s1=0;s1<n_states;s1++)
-	    R(m,s1) = temp;
-	  R(m,l2) += exp_a_t[m];
+	    R[m*n_states + s1] = temp;
+	  R[m*n_states + l2] += exp_a_t[m];
 	}
       else if (a.is_letter_class(l2)) 
       {
@@ -676,17 +677,17 @@ namespace substitution {
 	  double sum=0;
 	  for(int l=0;l<a.size();l++)
 	    if (a.matches(l,l2))
-	      sum += F(m,l);
+	      sum += F[m*n_states + l];
 	  double temp = (1.0-exp_a_t[m])*sum; // move load out of loop for GCC vectorizer
 	  for(int s1=0;s1<n_states;s1++)
-	    R(m,s1) = temp;
+	    R[m*n_states + s1] = temp;
 	  for(int l=0;l<a.size();l++)
 	    if (a.matches(l,l2))
-	      R(m,l) += exp_a_t[m];
+	      R[m*n_states + l] += exp_a_t[m];
 	}
       }
       else
-	element_assign(R,1);
+	element_assign(R, matrix_size, 1);
     }
 
     cache[b0].other_subst = 1;
@@ -703,6 +704,7 @@ namespace substitution {
 
     const int n_models  = MC.n_base_models();
     const int n_states  = MC.n_states();
+    const int matrix_size = n_models * n_states;
     const int n_letters = a.n_letters();
 
     cache.prepare_branch(b0, L0, n_models, n_states);
@@ -713,7 +715,7 @@ namespace substitution {
 
     for(int i=0;i<L0;i++)
     {
-      Matrix& R = cache(i,b0);
+      double* R = cache(i,b0);
       // compute the distribution at the parent node
       int l2 = sequence[i];
 
@@ -721,17 +723,17 @@ namespace substitution {
 	for(int m=0;m<n_models;m++) {
 	  const Matrix& Q = transition_P[m];
 	  for(int s1=0;s1<n_states;s1++)
-	    R(m,s1) = sum(Q,smap,n_letters,s1,l2);
+	    R[m*n_states + s1] = sum(Q,smap,n_letters,s1,l2);
 	}
       else if (a.is_letter_class(l2)) {
 	for(int m=0;m<n_models;m++) {
 	  const Matrix& Q = transition_P[m];
 	  for(int s1=0;s1<n_states;s1++)
-	    R(m,s1) = sum(Q,smap,s1,l2,a);
+	    R[m*n_states + s1] = sum(Q,smap,s1,l2,a);
 	}
       }
       else
-	element_assign(R,1);
+	element_assign(R, matrix_size, 1);
     }
 
     cache[b0].other_subst = 1;
@@ -755,13 +757,14 @@ namespace substitution {
 
     const int n_models = MC.n_base_models();
     const int n_states = MC.n_states();
+    const int matrix_size = n_models * n_states;
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
-    MC.WeightedFrequencyMatrix(F);
+    MC.WeightedFrequencyMatrix(F.begin());
 
     // look up the cache rows now, once, instead of for each column
-    vector<Matrix>* branch_cache[2];
+    Likelihood_Cache_Branch* branch_cache[2];
     for(int i=0;i<2;i++)
       branch_cache[i] = &cache[b[i]];
     
@@ -776,12 +779,12 @@ namespace substitution {
       if (i0 != alphabet::gap) 
       {
 	assert(i1 == alphabet::gap);
-	p_col = element_prod_sum(F, (*branch_cache[0])[i0] );
+	p_col = element_prod_sum(F.begin(), (*branch_cache[0])[i0], matrix_size );
       }
       else if (i1 != alphabet::gap)
       {
 	assert(i0 == alphabet::gap);
-	p_col = element_prod_sum(F, (*branch_cache[1])[i1] );
+	p_col = element_prod_sum(F.begin(), (*branch_cache[1])[i1], matrix_size );
       }
 
       // Situation: i0 ==-1 and i1 == -1
@@ -811,12 +814,13 @@ namespace substitution {
 
     const int n_models = MC.n_base_models();
     const int n_states = MC.n_states();
-
+    const int matrix_size = n_models * n_states;
+    
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b[2], index.size1(), n_models, n_states);
 
     // scratch matrix
-    Matrix& S = cache[b[2]].scratch(0);
+    double* S = cache[b[2]].scratch(0);
 
     // look up the cache rows now, once, instead of for each column
     vector< Likelihood_Cache_Branch* > branch_cache;
@@ -832,22 +836,22 @@ namespace substitution {
       int i0 = index(i,0);
       int i1 = index(i,1);
 
-      const Matrix* C = &S;
+      double* C = S;
       if (i0 != alphabet::gap and i1 != alphabet::gap)
-	element_prod_assign(S, (*branch_cache[0])[i0], (*branch_cache[1])[i1]);
+	element_prod_assign(S, (*branch_cache[0])[i0], (*branch_cache[1])[i1], matrix_size);
       else if (i0 != alphabet::gap)
-	C = &(*branch_cache[0])[i0];
+	C = (*branch_cache[0])[i0];
       else if (i1 != alphabet::gap)
-	C = &(*branch_cache[1])[i1];
+	C = (*branch_cache[1])[i1];
       else
-	C = &ones;
+	C = ones.begin();
 
       //      else
       //	std::abort(); // columns like this should not be in the index
       // Columns like this would not be in subA_index_leaf, but might be in subA_index_internal
 
       // propagate from the source distribution
-      Matrix& R = (*branch_cache[2])[i];            //name the result matrix
+      double* R = (*branch_cache[2])[i];            //name the result matrix
       for(int m=0;m<n_models;m++) {
 	
 	const Matrix& Q = transition_P[m];
@@ -856,8 +860,8 @@ namespace substitution {
 	for(int s1=0;s1<n_states;s1++) {
 	  double temp=0;
 	  for(int s2=0;s2<n_states;s2++)
-	    temp += Q(s1,s2)*(*C)(m,s2);
-	  R(m,s1) = temp;
+	    temp += Q(s1,s2)*C[m*n_states + s2];
+	  R[m*n_states + s1] = temp;
 	}
       }
     }
@@ -913,12 +917,13 @@ namespace substitution {
 
     const int n_models = MC.n_base_models();
     const int n_states = MC.n_states();
+    const int matrix_size = n_models * n_states;
 
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b0, L0, n_models, n_states);
 
     // scratch matrix
-    Matrix& S = cache[b0].scratch(0);
+    double* S = cache[b0].scratch(0);
 
     // look up the cache rows now, once, instead of for each column
     vector< Likelihood_Cache_Branch* > branch_cache;
@@ -936,7 +941,7 @@ namespace substitution {
     for(int m=0;m<n_models;m++) 
       exp_a_t[m] = exp(-L * SubModels[m]->alpha_);
 
-    Matrix& F = cache[b0].scratch(1);
+    double* F = cache[b0].scratch(1);
     MC.FrequencyMatrix(F); // F(m,l2)
 
     Matrix ones(n_models, n_states);
@@ -948,18 +953,18 @@ namespace substitution {
       int i0 = index(i,0);
       int i1 = index(i,1);
 
-      const Matrix* C = &S;
+      double* C = S;
       if (i0 != alphabet::gap and i1 != alphabet::gap)
-	element_prod_assign(S, (*branch_cache[0])[i0], (*branch_cache[1])[i1]);
+	element_prod_assign(S, (*branch_cache[0])[i0], (*branch_cache[1])[i1], matrix_size);
       else if (i0 != alphabet::gap)
-	C = &(*branch_cache[0])[i0];
+	C = (*branch_cache[0])[i0];
       else if (i1 != alphabet::gap)
-	C = &(*branch_cache[1])[i1];
+	C = (*branch_cache[1])[i1];
       else
-	C = &ones;
+	C = ones.begin();
 
       // propagate from the source distribution
-      Matrix& R = (*branch_cache[2])[i];            //name the result matrix
+      double* R = (*branch_cache[2])[i];            //name the result matrix
       for(int m=0;m<n_models;m++) 
       {
 	// compute the distribution at the target (parent) node - multiple letters
@@ -967,13 +972,13 @@ namespace substitution {
 	//  sum = (1-exp(-a*t))*(\sum[s2] pi[s2]*L[s2])
 	double sum = 0;
 	for(int s2=0;s2<n_states;s2++)
-	  sum += F(m,s2)*(*C)(m,s2);
+	  sum += F[m*n_states + s2]*C[m*n_states + s2];
 	sum *= (1.0 - exp_a_t[m]);
 
 	// L'[s1] = exp(-a*t)L[s1] + sum
 	double temp = exp_a_t[m]; //move load out of loop for GCC 4.5 vectorizer.
 	for(int s1=0;s1<n_states;s1++) 
-	  R(m,s1) = temp*(*C)(m,s1) + sum;
+	  R[m*n_states + s1] = temp*C[m*n_states + s1] + sum;
       }
     }
 
@@ -993,6 +998,10 @@ namespace substitution {
   {
     total_peel_branches++;
 
+    const int n_models = MC.n_base_models();
+    const int n_states = MC.n_states();
+    const int matrix_size = n_models * n_states;
+
     // compute branches-in
     int bb = t.branches_before(b0).size();
 
@@ -1006,7 +1015,7 @@ namespace substitution {
       vector<Matrix> L = get_leaf_seq_likelihoods(sequences[1], P.get_alphabet(), MC, 0);
 
       for(int i=0;i<L0;i++)
-	cache(i,b0) = L[i];
+	element_assign(cache(i,b0), L[i].begin(), matrix_size);
       cache[b0].other_subst = 1;
     }
     else if (bb == 0) {
@@ -1250,7 +1259,7 @@ namespace substitution {
 	int i0 = index(i,j);
 	if (i0 == alphabet::gap) continue;
 
-	element_prod_modify(S.begin(), LC(i0,b[j]).begin(), matrix_size);
+	element_prod_modify(S.begin(), LC(i0,b[j]), matrix_size);
       }
       
       L.push_back(S);
@@ -1489,6 +1498,7 @@ namespace substitution {
 
     const int n_models = MC.n_base_models();
     const int n_states = MC.n_states();
+    const int matrix_size = n_models * n_states;
 
     // scratch matrix 
     Matrix S(n_models, n_states);
@@ -1497,7 +1507,7 @@ namespace substitution {
 
     // Compute matrix F(m,s) = Pr(m)*Pr(s|m) = p(m)*freq(m,s) 
     Matrix F(n_models, n_states);
-    MC.WeightedFrequencyMatrix(F);
+    MC.WeightedFrequencyMatrix(F.begin());
 
     // 1. Allocate arrays for storing results and temporary results.
     vector<vector<pair<int,int> > > ancestral_characters (t.n_nodes());
@@ -1536,11 +1546,11 @@ namespace substitution {
 	S = F;
 
 	if (i0 != -1)
-	  element_prod_modify(S, cache[rb[0]][i0]);
+	  element_prod_modify(S.begin(), cache[rb[0]][i0], matrix_size);
 	if (i1 != -1)
-	  element_prod_modify(S, cache[rb[1]][i1]);
+	  element_prod_modify(S.begin(), cache[rb[1]][i1], matrix_size);
 	if (i2 != -1)
-	  element_prod_modify(S, cache[rb[2]][i2]);
+	  element_prod_modify(S.begin(), cache[rb[2]][i2], matrix_size);
 
 	pair<int,int> state_model = sample(S);
 
@@ -1652,9 +1662,9 @@ namespace substitution {
 	}
 	
 	if (i1 != -1)
-	  element_prod_modify(S, cache[local_branches[1]][i1]);
+	  element_prod_modify(S.begin(), cache[local_branches[1]][i1], matrix_size);
 	if (i2 != -1)
-	  element_prod_modify(S, cache[local_branches[2]][i2]);
+	  element_prod_modify(S.begin(), cache[local_branches[2]][i2], matrix_size);
 	
 	pair<int,int> state_model = sample(S);
 	

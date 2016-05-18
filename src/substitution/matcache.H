@@ -45,11 +45,11 @@ struct Mat_Cache
 
   virtual const alphabet& get_alphabet() const = 0;
 
-  void WeightedFrequencyMatrix(Matrix&) const;
+  void WeightedFrequencyMatrix(double*) const;
 
   Matrix WeightedFrequencyMatrix() const;
 
-  void FrequencyMatrix(Matrix&) const;
+  void FrequencyMatrix(double*) const;
 
   Matrix FrequencyMatrix() const;
 };
