@@ -46,9 +46,11 @@ struct Likelihood_Cache_Branch: public std::vector< Matrix >
 /// Different Likelihood_Cache objects may share the same Likelihood_Cache_Branch
 /// if the cached likelihoods on that branch are the same for both objects.
 ///
-class Multi_Likelihood_Cache: public std::vector< Likelihood_Cache_Branch >
+class Multi_Likelihood_Cache
 {
 protected:
+  std::vector<Likelihood_Cache_Branch*> data;
+  
   int C; // the (maximum) number of columns available per branch
   int M; // number of models
   int S; // number of states
@@ -85,7 +87,8 @@ protected:
   std::vector<int> cv_up_to_date_;
 
 public:
-
+  Likelihood_Cache_Branch& operator[](int b) {return *data[b];}
+  
   /// Can token t re-use its previously computed likelihood?
   int  cv_up_to_date(int t) const {return cv_up_to_date_[t];}
   /// Can token t re-use its previously computed likelihood?
@@ -137,6 +140,7 @@ public:
   void release_token(int token);
   
   Multi_Likelihood_Cache(const Mat_Cache&);
+  ~Multi_Likelihood_Cache();
 };
 
 /// A single view into the shared Multi_Likelihood_Cache

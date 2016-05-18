@@ -28,9 +28,9 @@ int Multi_Likelihood_Cache::get_unused_location()
 {
 #ifdef CONSERVE_MEM
   if (not unused_locations.size()) {
-    double s = size();
+    double s = data.size();
     int ns = int(s*1.1)+4;
-    int delta = ns - size();
+    int delta = ns - data.size();
     assert(delta > 0);
     allocate_branch_slots(delta);
   }
@@ -61,20 +61,20 @@ void Multi_Likelihood_Cache::release_location(int loc)
 /// Allocate space for s new 'branches'
 void Multi_Likelihood_Cache::allocate_branch_slots(int s) 
 {
-  int old_size = size();
+  int old_size = data.size();
   int new_size = old_size + s;
   if (log_verbose) {
     std::cerr<<"Allocating "<<old_size<<" -> "<<new_size<<" branches ("<<s<<")\n";
     std::cerr<<"  Each branch has "<<C<<" columns.\n";
   }
 
-  reserve(new_size);
+  data.reserve(new_size);
   n_uses.reserve(new_size);
   up_to_date_.reserve(new_size);
   unused_locations.reserve(new_size);
 
   for(int i=0;i<s;i++) {
-    push_back(Likelihood_Cache_Branch(C,M,S));
+    data.push_back(new Likelihood_Cache_Branch(C,M,S));
     n_uses.push_back(0);
     up_to_date_.push_back(false);
     unused_locations.push_back(old_size+i);
@@ -146,28 +146,28 @@ void Multi_Likelihood_Cache::set_length(int l)
   // Shrink
   if (l < C)
   {
-    for(int i=0;i<size();i++)
-      (*this)[i].resize(l);
+    for(int i=0;i<data.size();i++)
+      data[i]->resize(l);
   }
   // Grow
   else if (l > C)
   {
     int delta = l-C;
     
-    for(int i=0;i<size();i++)
+    for(int i=0;i<data.size();i++)
       for(int j=0;j<delta;j++)
-	(*this)[i].push_back(Matrix(M,S));
+	data[i]->push_back(Matrix(M,S));
   }
   C = l;
 
   // Report if the length changes
   if (log_verbose and C != C_old)
-    std::clog<<"  MLC now has "<<C<<" columns and "<<size()<<" branches.\n";
+    std::clog<<"  MLC now has "<<C<<" columns and "<<data.size()<<" branches.\n";
 
   // Check that we are long enough, and know how long we are.
-  for(int i=0;i<size();i++) {
-    assert((*this)[i].size() == C);
-    assert((*this)[i].size() >= l);
+  for(int i=0;i<data.size();i++) {
+    assert(data[i]->size() == C);
+    assert(data[i]->size() >= l);
   }
 }
 
@@ -282,6 +282,12 @@ Multi_Likelihood_Cache::Multi_Likelihood_Cache(const Mat_Cache& MC)
    S(MC.n_states()),
    iterations_too_long(0)
 { }
+
+Multi_Likelihood_Cache::~Multi_Likelihood_Cache()
+{
+  for(auto x : data)
+    delete x;
+}
 
 //------------------------------- Likelihood_Cache------------------------------//
 
