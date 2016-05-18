@@ -26,7 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "models/TreeInterface.H"
 
 /// An object to store cached conditional likelihoods for a single branch
-struct Likelihood_Cache_Branch
+class Likelihood_Cache_Branch: public Object
 {
   double* data;
   int matrix_size_;
@@ -34,6 +34,8 @@ struct Likelihood_Cache_Branch
   int n_states_;
   int n_models_;
   int n_columns_;
+public:
+  Likelihood_Cache_Branch* clone() const {std::abort();}
   
   log_double_t other_subst = 1;
 
