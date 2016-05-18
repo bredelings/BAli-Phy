@@ -451,6 +451,7 @@ namespace substitution {
 
     const int n_models = MC.n_base_models();
     const int n_states = MC.n_states();
+    const int matrix_size = n_models * n_states;
 
 #ifdef DEBUG_SUBSTITUTION    
     // scratch matrix
@@ -462,7 +463,7 @@ namespace substitution {
     MC.WeightedFrequencyMatrix(F);
 
     // look up the cache rows now, once, instead of for each column
-    vector< vector<Matrix>* > branch_cache;
+    vector< Likelihood_Cache_Branch* > branch_cache;
     for(int i=0;i<rb.size();i++)
       branch_cache.push_back(&cache[rb[i]]);
     
@@ -474,18 +475,18 @@ namespace substitution {
       int i0 = index(i,0);
       int i1 = index(i,1);
 
-      Matrix* m[2];
+      double* m[2];
       int mi=0;
 
       if (i0 != -1)
-	m[mi++] = &((*branch_cache[0])[i0]);
+	m[mi++] = ((*branch_cache[0])[i0]).begin();
       if (i1 != -1)
-	m[mi++] = &((*branch_cache[1])[i1]);
+	m[mi++] = ((*branch_cache[1])[i1]).begin();
 
       if (mi==2)
-	p_col = element_prod_sum(F, *m[0], *m[1]);
+	p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
       else if (mi==1)
-	p_col = element_prod_sum(F, *m[0]);
+	p_col = element_prod_sum(F.begin(), m[0], matrix_size);
 
 #ifdef DEBUG_SUBSTITUTION
       //-------------- Set letter & model prior probabilities  ---------------//
@@ -495,7 +496,7 @@ namespace substitution {
       for(int j=0;j<rb.size();j++) {
 	int i0 = index(i,j);
 	if (i0 != alphabet::gap)
-	  element_prod_modify(S,(*branch_cache[j])[i0]);
+	  element_prod_modify(S.begin(), (*branch_cache[j])[i0].begin(), matrix_size);
       }
 
       //------------ Check that individual models are not crazy -------------//
@@ -579,6 +580,7 @@ namespace substitution {
 
     const int n_models  = MC.n_base_models();
     const int n_states  = MC.n_states();
+    const int matrix_size = n_models * n_states;
 
     cache.prepare_branch(b0, L0, n_models, n_states);
 
@@ -588,7 +590,7 @@ namespace substitution {
 
     for(int i=0;i<L0;i++)
     {
-      Matrix& R = cache(i,b0);
+      double* R = cache(i,b0).begin();
       // compute the distribution at the parent node
       int l2 = sequence[i];
 
@@ -597,7 +599,7 @@ namespace substitution {
 	{
 	  const Matrix& Q = transition_P[m];
 	  for(int s1=0;s1<n_states;s1++)
-	    R(m,s1) = Q(s1,l2);
+	    R[m*n_models + s1] = Q(s1,l2);
 	}
       else if (a.is_letter_class(l2)) 
       {
@@ -612,12 +614,12 @@ namespace substitution {
 	    double sum = 0.0;
 	    for(int s2=0;s2<n_states;s2++)
 	      sum += Q(s1,s2) * fmask[s2];
-	    R(m,s1) = sum;
+	    R[m*n_models + s1] = sum;
 	  }
 	}
       }
       else
-	element_assign(R,1);
+	element_assign(R, matrix_size, 1);
     }
 
     cache[b0].other_subst = 1;
@@ -817,7 +819,7 @@ namespace substitution {
     Matrix& S = cache[b[2]].scratch(0);
 
     // look up the cache rows now, once, instead of for each column
-    vector< vector<Matrix>* > branch_cache;
+    vector< Likelihood_Cache_Branch* > branch_cache;
     for(int i=0;i<b.size();i++)
       branch_cache.push_back(&cache[b[i]]);
 
@@ -919,7 +921,7 @@ namespace substitution {
     Matrix& S = cache[b0].scratch(0);
 
     // look up the cache rows now, once, instead of for each column
-    vector< vector<Matrix>* > branch_cache;
+    vector< Likelihood_Cache_Branch* > branch_cache;
     for(int i=0;i<b.size();i++)
       branch_cache.push_back(&cache[b[i]]);
     
@@ -1224,7 +1226,10 @@ namespace substitution {
     vector<Matrix> L;
     L.reserve(index.size1()+2);
 
-    Matrix S(P.n_base_models(), P.n_states());
+    const int n_models = P.n_base_models();
+    const int n_states = P.n_states();
+    const int matrix_size = n_models * n_states;
+    Matrix S(n_models, n_states);
 
     //Add the padding matrices
     {
@@ -1245,7 +1250,7 @@ namespace substitution {
 	int i0 = index(i,j);
 	if (i0 == alphabet::gap) continue;
 
-	element_prod_modify(S, LC(i0,b[j]) );
+	element_prod_modify(S.begin(), LC(i0,b[j]).begin(), matrix_size);
       }
       
       L.push_back(S);
