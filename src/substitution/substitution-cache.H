@@ -28,30 +28,33 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// An object to store cached conditional likelihoods for a single branch
 struct Likelihood_Cache_Branch
 {
-  std::vector< Matrix > data;
+  double* data;
+  int matrix_size_;
 
   int n_states_;
   int n_models_;
   int n_columns_;
   
-  log_double_t other_subst;
+  log_double_t other_subst = 1;
 
   int n_states() const {return n_states_;}
   int n_models() const {return n_models_;}
   int n_columns() const {return n_columns_;}
+  int matrix_size() const {return matrix_size_;}
   
   double* scratch(int i) {return (*this)[n_columns() + i];}
 
-  double* operator[](int i) {return data[i].begin();} 
-  const double* operator[](int i) const {return data[i].begin();} 
+  double* operator[](int i) {return data + matrix_size()*i;}
+  const double* operator[](int i) const {return data + matrix_size()*i;}
   
   Likelihood_Cache_Branch(int C,int M, int S)
-    :data(C+2,Matrix(M,S)),
-     n_states_(S), 
+    :data(new double[(C+2)*M*S]),
+     matrix_size_(M*S),
+     n_states_(S),
      n_models_(M),
-     n_columns_(C),
-     other_subst(1) 
+     n_columns_(C)
   {}
+  ~Likelihood_Cache_Branch() {delete[] data;}
 };
 
 
