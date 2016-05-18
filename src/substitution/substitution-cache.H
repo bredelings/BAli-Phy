@@ -24,7 +24,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include "tree/tree.H"
 #include "models/TreeInterface.H"
-#include "matcache.H"
 
 /// An object to store cached conditional likelihoods for a single branch
 struct Likelihood_Cache_Branch: public std::vector< Matrix >
@@ -235,7 +234,7 @@ public:
   Likelihood_Cache& operator=(const Likelihood_Cache&);
 
   Likelihood_Cache(const Likelihood_Cache& LC);
-  Likelihood_Cache(const TreeInterface& t, const Mat_Cache& MC);
+  Likelihood_Cache(const TreeInterface& t);
 
   ~Likelihood_Cache();
 };

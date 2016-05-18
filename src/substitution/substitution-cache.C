@@ -286,7 +286,7 @@ Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC)
   cache->copy_token(token,LC.token);
 }
 
-Likelihood_Cache::Likelihood_Cache(const TreeInterface& t, const Mat_Cache& MC)
+Likelihood_Cache::Likelihood_Cache(const TreeInterface& t)
   :cache(new Multi_Likelihood_Cache),
    B(t.n_branches()*2),
    token(cache->claim_token(B)),
