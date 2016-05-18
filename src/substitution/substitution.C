@@ -367,7 +367,7 @@ namespace substitution {
     MC.WeightedFrequencyMatrix(F);
 
     // look up the cache rows now, once, instead of for each column
-    vector< vector<Matrix>* > branch_cache;
+    vector< Likelihood_Cache_Branch* > branch_cache;
     for(int i=0;i<rb.size();i++)
       branch_cache.push_back(&cache[rb[i]]);
     
@@ -380,22 +380,22 @@ namespace substitution {
       int i1 = index(i,1);
       int i2 = index(i,2);
 
-      Matrix* m[3];
+      double* m[3];
       int mi=0;
 
       if (i0 != -1)
-	m[mi++] = &((*branch_cache[0])[i0]);
+	m[mi++] = ((*branch_cache[0])[i0]).begin();
       if (i1 != -1)
-	m[mi++] = &((*branch_cache[1])[i1]);
+	m[mi++] = ((*branch_cache[1])[i1]).begin();
       if (i2 != -1)
-	m[mi++] = &((*branch_cache[2])[i2]);
+	m[mi++] = ((*branch_cache[2])[i2]).begin();
 
       if (mi==3)
-	p_col = element_prod_sum(F, *m[0], *m[1], *m[2]);
+	p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
       else if (mi==2)
-	p_col = element_prod_sum(F, *m[0], *m[1]);
+	p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
       else if (mi==1)
-	p_col = element_prod_sum(F, *m[0]);
+	p_col = element_prod_sum(F.begin(), m[0], matrix_size);
 
 #ifdef DEBUG_SUBSTITUTION
       //-------------- Set letter & model prior probabilities  ---------------//
@@ -405,7 +405,7 @@ namespace substitution {
       for(int j=0;j<rb.size();j++) {
 	int i0 = index(i,j);
 	if (i0 != alphabet::gap)
-	  element_prod_modify(S,(*branch_cache[j])[i0]);
+	  element_prod_modify(S.begin(),(*branch_cache[j])[i0].begin(), matrix_size);
       }
 
       //------------ Check that individual models are not crazy -------------//
