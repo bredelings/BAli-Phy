@@ -213,7 +213,7 @@ inline void element_assign(double* __restrict__ M1, const double* __restrict__ M
     M1[i] = M2[i];
 }
 
-inline void element_prod_assign(double* __restrict__ M1, const double* __restrict__ M2, int size)
+inline void element_prod_modify(double* __restrict__ M1, const double* __restrict__ M2, int size)
 {
   for(int i=0;i<size;i++)
     M1[i] *= M2[i];
