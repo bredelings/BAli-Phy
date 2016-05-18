@@ -1125,10 +1125,6 @@ namespace substitution {
     for(int B: b)
       calculate_caches_for_branch(B, *P.sequences, P, P, P.t(), P.LC);
 
-#ifdef DEBUG_SUBSTITUTION
-    std::clog<<"get_column_likelihoods: Peeled on "<<n_br<<" branches.\n";
-#endif
-
     vector<Matrix> L;
     L.reserve(index.size1()+2);
 
