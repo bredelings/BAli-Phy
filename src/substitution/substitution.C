@@ -399,7 +399,7 @@ namespace substitution {
 
 #ifdef DEBUG_SUBSTITUTION
       //-------------- Set letter & model prior probabilities  ---------------//
-      element_assign(S.begin(), F.begin(), matrix_size);
+      element_assign(S,F);
 
       //-------------- Propagate and collect information at 'root' -----------//
       for(int j=0;j<rb.size();j++) {
