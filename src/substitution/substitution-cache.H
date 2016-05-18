@@ -39,8 +39,10 @@ struct Likelihood_Cache_Branch: public std::vector< Matrix >
   int n_models() const {return n_models_;}
   int n_columns() const {return n_columns_;}
   
+  Matrix& scratch(int i) {return (*this)[n_columns() + i];}
+
   Likelihood_Cache_Branch(int C,int M, int S)
-    :std::vector<Matrix>(C,Matrix(M,S)),
+    :std::vector<Matrix>(C+2,Matrix(M,S)),
      n_states_(S), 
      n_models_(M),
      n_columns_(C),
@@ -151,9 +153,6 @@ class Likelihood_Cache {
   /// The slot in 'cache' that we use.
   int token;
 
-  /// Some matrices pre-allocated for scratch space
-  std::vector<Matrix> scratch_matrices;
-
   /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
   void invalidate_one_branch(int b);
 
@@ -230,18 +229,6 @@ public:
     assert(loc != -1);
     assert(0 <= i and i < get_length(b));
     return (*cache)[loc][i];
-  }
-
-  /// Scratch matrix i
-  const Matrix& scratch(int i) const 
-  {
-    return scratch_matrices[i];
-  }
-
-  /// Scratch matrix i
-  Matrix& scratch(int i) 
-  {
-    return scratch_matrices[i];
   }
 
   /// Construct a duplicate view to the same conditional likelihood caches

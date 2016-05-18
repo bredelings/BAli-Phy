@@ -259,12 +259,13 @@ namespace substitution {
       throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
     assert(rb.size() == 3);
 
-    // scratch matrix 
-#ifdef DEBUG_SUBSTITUTION
-    Matrix & S = cache.scratch(0);
-#endif
     const int n_models = MC.n_base_models();
     const int n_states = MC.n_states();
+
+#ifdef DEBUG_SUBSTITUTION
+    // scratch matrix 
+    Matrix S(n_models,n_states);
+#endif
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
@@ -353,12 +354,13 @@ namespace substitution {
 
     assert(rb.size() == 2);
 
-    // scratch matrix
-#ifdef DEBUG_SUBSTITUTION    
-    Matrix & S = cache.scratch(0);
-#endif    
     const int n_models = MC.n_base_models();
     const int n_states = MC.n_states();
+
+#ifdef DEBUG_SUBSTITUTION    
+    // scratch matrix
+    Matrix S(n_models,n_states);
+#endif    
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
@@ -554,7 +556,7 @@ namespace substitution {
     for(int m=0;m<n_models;m++) 
       exp_a_t[m] = exp(-L * SubModels[m]->alpha_);
 
-    Matrix& F = cache.scratch(1);
+    Matrix& F = cache[b0].scratch(1);
     MC.FrequencyMatrix(F); // F(m,l2)
 
     for(int i=0;i<L0;i++)
@@ -654,7 +656,6 @@ namespace substitution {
     // Both leaf branches must have valid caches
     assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
 
-    // scratch matrix 
     const int n_models = MC.n_base_models();
     const int n_states = MC.n_states();
 
@@ -718,7 +719,7 @@ namespace substitution {
     cache.prepare_branch(b[2], index.size1(), n_models, n_states);
 
     // scratch matrix
-    Matrix& S = cache.scratch(0);
+    Matrix& S = cache[b[2]].scratch(0);
 
     // look up the cache rows now, once, instead of for each column
     vector< vector<Matrix>* > branch_cache;
@@ -820,7 +821,7 @@ namespace substitution {
     cache.prepare_branch(b0, L0, n_models, n_states);
 
     // scratch matrix
-    Matrix& S = cache.scratch(0);
+    Matrix& S = cache[b0].scratch(0);
 
     // look up the cache rows now, once, instead of for each column
     vector< vector<Matrix>* > branch_cache;
@@ -838,7 +839,7 @@ namespace substitution {
     for(int m=0;m<n_models;m++) 
       exp_a_t[m] = exp(-L * SubModels[m]->alpha_);
 
-    Matrix& F = cache.scratch(1);
+    Matrix& F = cache[b0].scratch(1);
     MC.FrequencyMatrix(F); // F(m,l2)
 
     Matrix ones(n_models, n_states);
@@ -913,7 +914,7 @@ namespace substitution {
     }
     else if (bb == 0) {
       const alphabet& a = P.get_alphabet();
-      int n_states = cache.scratch(0).size2();
+      int n_states = MC.n_states();
       int n_letters = a.n_letters();
       if (n_states == n_letters) {
 	if (MC.base_model(0,0).is_a<F81_Object>())
@@ -1128,7 +1129,7 @@ namespace substitution {
     vector<Matrix> L;
     L.reserve(index.size1()+2);
 
-    Matrix& S = LC.scratch(0);
+    Matrix S(P.n_base_models(), P.n_states());
 
     //Add the padding matrices
     {
@@ -1386,10 +1387,11 @@ namespace substitution {
   {
     const vector<unsigned>& smap = MC.state_letters();
 
-    // scratch matrix 
-    Matrix & S = cache.scratch(0);
     const int n_models = MC.n_base_models();
     const int n_states = MC.n_states();
+
+    // scratch matrix 
+    Matrix S(n_models, n_states);
 
     int root = cache.root;
 

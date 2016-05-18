@@ -271,8 +271,6 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC)
   token = cache->claim_token(B);
   cache->copy_token(token,LC.token);
 
-  scratch_matrices = LC.scratch_matrices;
-
   root = LC.root;
 
   return *this;
@@ -282,7 +280,6 @@ Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC)
   :cache(LC.cache),
    B(LC.B),
    token(cache->claim_token(B)),
-   scratch_matrices(LC.scratch_matrices),
    cached_value(LC.cached_value),
    root(LC.root)
 {
@@ -293,7 +290,6 @@ Likelihood_Cache::Likelihood_Cache(const TreeInterface& t, const Mat_Cache& MC)
   :cache(new Multi_Likelihood_Cache),
    B(t.n_branches()*2),
    token(cache->claim_token(B)),
-   scratch_matrices(10,Matrix(MC.n_base_models(), MC.n_states())),
    cached_value(0),
    root(t.n_nodes()-1)
 {
