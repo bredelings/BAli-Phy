@@ -201,6 +201,100 @@ pair<int,int> sample(const Matrix& M)
   return {-1,-1};
 }
 
+inline void element_assign(double* M1, int size, double d)
+{
+  for(int i=0;i<size;i++)
+    M1[i] = d;
+}
+
+inline void element_assign(double* __restrict__ M1, const double* __restrict__ M2, int size)
+{
+  for(int i=0;i<size;i++)
+    M1[i] = M2[i];
+}
+
+inline void element_prod_assign(double* __restrict__ M1, const double* __restrict__ M2, int size)
+{
+  for(int i=0;i<size;i++)
+    M1[i] *= M2[i];
+}
+
+inline void element_prod_assign(double* __restrict__ M1,
+				const double* __restrict__ M2,
+				const double* __restrict__ M3, int size)
+{
+  for(int i=0;i<size;i++)
+    M1[i] = M2[i]*M3[i];
+}
+
+inline double element_sum(const double* M1, int size)
+{
+  double sum = 0;
+  for(int i=0;i<size;i++)
+    sum += M1[i];
+  return sum;
+}
+
+
+inline double element_prod_sum(const double* __restrict__ M1, const double* __restrict__ M2, int size)
+{
+  double sum = 0;
+  for(int i=0;i<size;i++)
+    sum += M1[i] * M2[i];
+
+  return sum;
+}
+
+inline double element_prod_sum(const double* __restrict__ M1,
+			       const double* __restrict__ M2,
+			       const double* __restrict__ M3,
+			       int size)
+{
+  double sum = 0;
+  for(int i=0;i<size;i++)
+    sum += M1[i] * M2[i] * M3[i];
+
+  return sum;
+}
+
+inline double element_prod_sum(const double* __restrict__ M1,
+			       const double* __restrict__ M2,
+			       const double* __restrict__ M3,
+			       const double* __restrict__ M4,
+			       int size)
+{
+  double sum = 0;
+  for(int i=0;i<size;i++)
+    sum += M1[i] * M2[i] * M3[i] * M4[i];
+
+  return sum;
+}
+
+int sample(const double* M, int size)
+{
+  double total = element_sum(M,size);
+  double r = uniform()*total;
+  double sum = 0;
+  for(int i=0;i<size;i++)
+  {
+    sum += M[i];
+    if (r <= sum)
+      return i;
+  }
+  return -1;
+}
+
+pair<int,int> sample(const double* M, int n_models, int n_states)
+{
+  int size = n_models * n_states;
+  int i = sample(M, size);
+  if (i == -1)
+    return {-1,-1};
+  int m = i / n_states;
+  int s = i % n_states;
+  return {m,s};
+}
+
 namespace substitution {
 
   int total_peel_leaf_branches=0;
@@ -261,6 +355,7 @@ namespace substitution {
 
     const int n_models = MC.n_base_models();
     const int n_states = MC.n_states();
+    const int matrix_size = n_models * n_states;
 
 #ifdef DEBUG_SUBSTITUTION
     // scratch matrix 
@@ -304,7 +399,7 @@ namespace substitution {
 
 #ifdef DEBUG_SUBSTITUTION
       //-------------- Set letter & model prior probabilities  ---------------//
-      element_assign(S,F);
+      element_assign(S.begin(), F.begin(), matrix_size);
 
       //-------------- Propagate and collect information at 'root' -----------//
       for(int j=0;j<rb.size();j++) {
