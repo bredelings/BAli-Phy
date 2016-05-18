@@ -55,7 +55,12 @@ void Multi_Likelihood_Cache::release_location(int loc)
 
   n_uses[loc]--;
   if (not n_uses[loc])
+  {
+    delete data[loc];
+    data[loc] = nullptr;
+
     unused_locations.push_back(loc);
+  }
 }
 
 /// Allocate space for s new 'branches'
@@ -63,18 +68,13 @@ void Multi_Likelihood_Cache::allocate_branch_slots(int s)
 {
   int old_size = data.size();
   int new_size = old_size + s;
-  if (log_verbose) {
-    std::cerr<<"Allocating "<<old_size<<" -> "<<new_size<<" branches ("<<s<<")\n";
-    std::cerr<<"  Each branch has "<<C<<" columns.\n";
-  }
 
-  data.reserve(new_size);
+  data.resize(new_size);
   n_uses.reserve(new_size);
   up_to_date_.reserve(new_size);
   unused_locations.reserve(new_size);
 
   for(int i=0;i<s;i++) {
-    data.push_back(new Likelihood_Cache_Branch(C,M,S));
     n_uses.push_back(0);
     up_to_date_.push_back(false);
     unused_locations.push_back(old_size+i);
@@ -85,6 +85,8 @@ void Multi_Likelihood_Cache::allocate_location(int t, int b, int l, int m, int s
 {
   if (not location_allocated(t,b))
     mapping[t][b] = get_unused_location();
+
+  data[mapping[t][b]] = new Likelihood_Cache_Branch(l, m, s);
 }
 
 
@@ -108,79 +110,6 @@ void Multi_Likelihood_Cache::invalidate_all(int token) {
     invalidate_one_branch(token,b);
 }
 
-// If the length is not the same, this may invalidate the mapping
-void Multi_Likelihood_Cache::request_length(int l)
-{
-  // FIXME - calling of this function is essentially a timer function for garbage collection.
-  if (l < C)
-  {
-    iterations_too_long++;
-
-    if (l < C/2)
-      set_length(C/2);
-    else if (l < C*3/4 and iterations_too_long > 100*n_uses.size() )
-      set_length(C*3/4);
-    else if (l < C*5/6 and iterations_too_long > 200*n_uses.size() )
-      set_length(C*5/6);
-  }
-  else
-    iterations_too_long = 0;
-  
-  // Increase overall length if necessary
-  if (l > C) 
-  {
-    int l2 = 4+(int)(1.1*l);
-    set_length(l2);
-  }
-}
-
-// If the length is not the same, this may invalidate the mapping
-void Multi_Likelihood_Cache::set_length(int l)
-{
-  assert(l >= 0);
-
-  iterations_too_long = 0;
-
-  int C_old = C;
-
-  // Shrink
-  if (l < C)
-  {
-    for(int i=0;i<data.size();i++)
-      data[i]->resize(l);
-  }
-  // Grow
-  else if (l > C)
-  {
-    int delta = l-C;
-    
-    for(int i=0;i<data.size();i++)
-      for(int j=0;j<delta;j++)
-	data[i]->push_back(Matrix(M,S));
-  }
-  C = l;
-
-  // Report if the length changes
-  if (log_verbose and C != C_old)
-    std::clog<<"  MLC now has "<<C<<" columns and "<<data.size()<<" branches.\n";
-
-  // Check that we are long enough, and know how long we are.
-  for(int i=0;i<data.size();i++) {
-    assert(data[i]->size() == C);
-    assert(data[i]->size() >= l);
-  }
-}
-
-// If the length is not the same, this may invalidate the mapping
-void Multi_Likelihood_Cache::set_length(int t,int l) 
-{
-  length[t] = l;
-
-  int new_length = max(length);
-
-  request_length(new_length);
-}
-
 int Multi_Likelihood_Cache::find_free_token() const {
   int token=-1;
   for(int i=0;i<active.size();i++)
@@ -197,7 +126,6 @@ int Multi_Likelihood_Cache::add_token(int B) {
 
   // add the token
   active.push_back(false);
-  length.push_back(0);
   mapping.push_back(std::vector<int>(B));
   cv_up_to_date_.push_back(false);
 
@@ -219,16 +147,13 @@ int countt(const vector<bool>& v) {
   return c;
 }
 
-int Multi_Likelihood_Cache::claim_token(int l,int B) {
+int Multi_Likelihood_Cache::claim_token(int B) {
   //  std::clog<<"claim_token: "<<countt(active)<<"/"<<active.size()<<" -> ";
   int token = find_free_token();
 
   if (token == -1)
     token = add_token(B);
 
-  // set the length correctly
-  set_length(token,l);
-  
   active[token] = true;
 
   //  std::cerr<<"-> "<<countt(active)<<"/"<<active.size()<<std::endl;
@@ -252,10 +177,6 @@ void Multi_Likelihood_Cache::copy_token(int token1, int token2)
   // is the complete likelihood up to date?
   cv_up_to_date_[token1] = cv_up_to_date_[token2];
 
-  // copy the length from token2, and reserve space
-  length[token1] = 0;
-  set_length(token1,length[token2]);
-
   // token one now uses the same slots/locations as token2
   mapping[token1] = mapping[token2];
 
@@ -275,13 +196,6 @@ void Multi_Likelihood_Cache::release_token(int token) {
   //  std::cerr<<"-> "<<countt(active)<<"/"<<active.size()<<std::endl;
 }
 
-
-Multi_Likelihood_Cache::Multi_Likelihood_Cache(const Mat_Cache& MC)
-  :C(0),
-   M(MC.n_base_models()),
-   S(MC.n_states()),
-   iterations_too_long(0)
-{ }
 
 Multi_Likelihood_Cache::~Multi_Likelihood_Cache()
 {
@@ -346,21 +260,6 @@ void Likelihood_Cache::invalidate_branch_alignment(const TreeInterface& t,int b)
     invalidate_directed_branch(t,b2);
 }
 
-void Likelihood_Cache::set_length(int C,int b) 
-{
-  int L = cache->get_length(token);
-
-  lengths[b] = C;
-
-  // Get the new maximum length
-  L = max(lengths);
-
-  // If the length is -1, then we don't know any of the lengths, so don't do anything
-  if (L > -1)
-    cache->set_length(token,L);
-}
-
-
 Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) 
 {
   B = LC.B;
@@ -369,8 +268,7 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC)
 
   cache->release_token(token);
   cache = LC.cache;
-  lengths = LC.lengths;
-  token = cache->claim_token(LC.allocated_length(),B);
+  token = cache->claim_token(B);
   cache->copy_token(token,LC.token);
 
   scratch_matrices = LC.scratch_matrices;
@@ -383,21 +281,19 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC)
 Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC) 
   :cache(LC.cache),
    B(LC.B),
-   token(cache->claim_token(LC.allocated_length(),B)),
+   token(cache->claim_token(B)),
    scratch_matrices(LC.scratch_matrices),
-   lengths(LC.lengths),
    cached_value(LC.cached_value),
    root(LC.root)
 {
   cache->copy_token(token,LC.token);
 }
 
-Likelihood_Cache::Likelihood_Cache(const TreeInterface& t, const Mat_Cache& MC,int C)
-  :cache(new Multi_Likelihood_Cache(MC)),
+Likelihood_Cache::Likelihood_Cache(const TreeInterface& t, const Mat_Cache& MC)
+  :cache(new Multi_Likelihood_Cache),
    B(t.n_branches()*2),
-   token(cache->claim_token(C,B)),
+   token(cache->claim_token(B)),
    scratch_matrices(10,Matrix(MC.n_base_models(), MC.n_states())),
-   lengths(B,-1),
    cached_value(0),
    root(t.n_nodes()-1)
 {

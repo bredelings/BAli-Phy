@@ -29,9 +29,21 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// An object to store cached conditional likelihoods for a single branch
 struct Likelihood_Cache_Branch: public std::vector< Matrix >
 {
+  int n_states_;
+  int n_models_;
+  int n_columns_;
+  
   log_double_t other_subst;
+
+  int n_states() const {return n_states_;}
+  int n_models() const {return n_models_;}
+  int n_columns() const {return n_columns_;}
+  
   Likelihood_Cache_Branch(int C,int M, int S)
     :std::vector<Matrix>(C,Matrix(M,S)),
+     n_states_(S), 
+     n_models_(M),
+     n_columns_(C),
      other_subst(1) 
   {}
 };
@@ -51,10 +63,6 @@ class Multi_Likelihood_Cache
 protected:
   std::vector<Likelihood_Cache_Branch*> data;
   
-  int C; // the (maximum) number of columns available per branch
-  int M; // number of models
-  int S; // number of states
-
   /// mapping[token][branch] -> location
   std::vector<std::vector<int> > mapping;
 
@@ -66,10 +74,6 @@ protected:
 
   /// is each token in use or not?
   std::vector<bool> active;
-
-  /// length of each active cache (in columns)
-  std::vector<int> length;
-  int iterations_too_long;
 
   /// acquire and return an unused location
   int get_unused_location();
@@ -98,7 +102,11 @@ public:
   void allocate_location(int t, int b, int l, int m, int s);
 
   /// Where do we store caches for token t, branch b?
-  int location(int t,int b) const {assert(mapping[t][b] != -1); return mapping[t][b];}
+  int location(int t,int b) const {
+    assert(mapping[t][b] != -1);
+    assert(data[mapping[t][b]]);
+    return mapping[t][b];
+  }
 
   /// Has branch b for token t been allocated a location yet?
   int location_allocated(int t, int b) const {return mapping[t][b] != -1;}
@@ -117,21 +125,12 @@ public:
   /// Mark cached conditional likelihoods for all branches of token t invalid.
   void invalidate_all(int token);
 
-  /// Register that we CURRENTLY don't need more than l columns, and we need at least l
-  void request_length(int l);
-  /// Set the length of token t columns.
-  void set_length(int l);
-  /// Set the length of token t to l columns.
-  void set_length(int token, int l);
-  /// Get the length of token t in columns.
-  int  get_length(int token) const {return length[token];}
-
   /// Return an unused token.
   int find_free_token() const;
   /// Create an unused token.
   int add_token(int B);
   /// Acquire a token for use with C columns and B/2 branches.
-  int claim_token(int C,int B);
+  int claim_token(int B);
   /// Setup token2 to point to cached likelihoods for token1
   void copy_token(int token1,int token2);
   /// Initialize token
@@ -139,7 +138,6 @@ public:
   /// Release token and mark unused.
   void release_token(int token);
   
-  Multi_Likelihood_Cache(const Mat_Cache&);
   ~Multi_Likelihood_Cache();
 };
 
@@ -156,13 +154,14 @@ class Likelihood_Cache {
   /// Some matrices pre-allocated for scratch space
   std::vector<Matrix> scratch_matrices;
 
-  std::vector<int> lengths;
-
   /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
   void invalidate_one_branch(int b);
 
   /// Mark cached conditional likelihoods for b and all branches after invalid.
   void invalidate_directed_branch(const TreeInterface&,int b);
+
+  /// Get the length columns.
+  int get_length(int b) const { return (*this)[b].n_columns(); }
 
 public:
   /// Previously computed likelihood.
@@ -176,8 +175,6 @@ public:
   /// Starting point for our likelihood calculations
   int root;
 
-  /// Number of columns of our alignment
-  int allocated_length() const {return cache->get_length(token);}
   /// The number of undirected branches;
   int n_branches() const {return B/2;}
 
@@ -193,13 +190,6 @@ public:
   /// Mark cached conditional likelihoods all branches after n invalid.
   void invalidate_node(const TreeInterface&,int n);
 
-  /// Set the length to l columns.
-  void set_length(int l,int b);
-  /// Get the length columns.
-  int get_length(int b) const {return lengths[b];}
-  /// Get the length columns.
-  int get_length() const {return cache->get_length(token);}
-
   /// Are cached conditional likelihoods for branch b, up to date?
   bool up_to_date(int b) const {return cache->up_to_date(token,b);}
   /// Mark cached conditional likelihoods for branch b up to date.
@@ -210,7 +200,6 @@ public:
   /// Ensure there is backing store for us to work with
   void prepare_branch(int b, int l, int m, int s) {
     cache->allocate_location(token, b, l, m, s);
-    set_length(l,b);
   }
 
   /// Cached conditional likelihoods for branch b
@@ -231,7 +220,7 @@ public:
   const Matrix& operator()(int i,int b) const {
     int loc = cache->location(token,b);
     assert(loc != -1);
-    assert(0 <= i and i < get_length());
+    assert(0 <= i and i < get_length(b));
     return (*cache)[loc][i];
   }
 
@@ -239,7 +228,7 @@ public:
   Matrix& operator()(int i,int b) {
     int loc = cache->location(token,b);
     assert(loc != -1);
-    assert(0 <= i and i < get_length());
+    assert(0 <= i and i < get_length(b));
     return (*cache)[loc][i];
   }
 
@@ -259,7 +248,7 @@ public:
   Likelihood_Cache& operator=(const Likelihood_Cache&);
 
   Likelihood_Cache(const Likelihood_Cache& LC);
-  Likelihood_Cache(const TreeInterface& t, const Mat_Cache& M,int l=0);
+  Likelihood_Cache(const TreeInterface& t, const Mat_Cache& MC);
 
   ~Likelihood_Cache();
 };
