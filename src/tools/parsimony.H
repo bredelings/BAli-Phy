@@ -21,15 +21,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequence/alphabet.H"
 #include "alignment/alignment.H"
 #include "tree/sequencetree.H"
+#include "substitution/parsimony.H"
 #include "matrix.H"
-
-matrix<int> unit_cost_matrix(unsigned size);
-
-matrix<int> unit_cost_matrix(const alphabet&);
-
-matrix<int> nucleotide_cost_matrix(const Triplets& T);
-
-matrix<int> amino_acid_cost_matrix(const Codons& C);
 
 template <class B>
 B n_mutations(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const matrix<B>& cost);

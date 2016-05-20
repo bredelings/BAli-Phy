@@ -54,7 +54,8 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   builtins/iota.H CacheList.H mcmc/logger.H smodel/setup.H \
            dp/dp_hmm.H imodel/setup.H parser/desugar.H mcmc/AIS.H tools/distance-report.H \
 	   matrix.H builtins/vector_from_list.H startup/A-T-model.H startup/files.H startup/loggers.H \
-	   startup/io.H startup/system.H startup/cmd_line.H computation/type_constant.H
+	   startup/io.H startup/system.H startup/cmd_line.H computation/type_constant.H \
+	   substitution/parsimony.H
 
 LDFLAGS = @ldflags@ 
 
@@ -102,7 +103,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  util-random.C alignment/alignment-random.C smodel/setup.C mcmc/sample-topology-SPR.C \
 	  dp/alignment-sums.C alignment/alignment-util.C probability/probability.C models/model.C \
 	  alignment/alignment-constraint.C substitution/substitution-cache.C \
-	  monitor.C tree/tree-util.C myexception.C math/pow2.C \
+	  monitor.C tree/tree-util.C myexception.C math/pow2.C substitution/parsimony.C \
 	  tools/partition.C mcmc/proposals.C n_indels.C n_indels2.C alignment/alignment-util2.C \
 	  tools/parsimony.C tools/parsimony2.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \

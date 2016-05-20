@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "util.H"
 #include "parsimony.H"
-#include "parsimony2.H"
+#include "substitution/parsimony.H"
 using namespace std;
 
 template <class B>
@@ -74,10 +74,12 @@ void peel_n_mutations(const alphabet& a, const vector<int>& letters, const TreeI
 
     if (a.is_letter_class(L))
       for(int l=0;l<A;l++)
+      {
 	if (a.matches(l,L))
 	  n_muts(s,l) = 0;
 	else
 	  n_muts(s,l) = max_cost;
+      }
   }
 
 
@@ -127,9 +129,6 @@ B n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface
 template int n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface& T,const matrix<int>& cost);
 
 template double n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface& T,const matrix<double>& cost);
-
-template int n_mutations(const alignment& A, const TreeInterface& T,const matrix<int>& cost);
-
 
 vector<int> get_parsimony_letters(const alphabet& a, const vector<int>& letters, const TreeInterface& T,
 				  const matrix<int>& cost)
@@ -255,6 +254,9 @@ B n_mutations(const alignment& A, const TreeInterface& T,const matrix<B>& cost)
 
   return tree_length;
 }
+
+template 
+int n_mutations(const alignment& A, const TreeInterface& T,const matrix<int>& cost);
 
 int n_mutations(const alignment& A, const TreeInterface& T)
 {

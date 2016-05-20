@@ -123,11 +123,13 @@ void peel_n_mutations(const alphabet& a, const vector<int>& letters, const Seque
     int L = letters[s];
 
     if (a.is_letter_class(L))
+    {
       for(int l=0;l<A;l++)
 	if (a.matches(l,L))
 	  n_muts(s,l) = 0;
 	else
 	  n_muts(s,l) = max_cost;
+    }
   }
 
 
