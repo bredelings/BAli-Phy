@@ -38,8 +38,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "monitor.H"         // for show_smodel( )
 #include "n_indels2.H"
-#include "tools/parsimony.H"
-#include "tools/parsimony2.H"
+#include "substitution/parsimony.H"
 #include "alignment/alignment-util.H"
 #include "dp/2way.H"
 
@@ -286,7 +285,7 @@ string Get_Alignment_Length_Function::operator()(const Model& M, long)
 string Get_Num_Substitutions_Function::operator()(const Model& M, long)
 {
   const Parameters& P = dynamic_cast<const Parameters&>(M);
-  return convertToString(n_mutations(P[p].A(), P[p].t(), cost_matrix));
+  return convertToString(n_mutations(P[p], cost_matrix));
 }
 
 string Get_Num_Indels_Function::operator()(const Model& M, long)
@@ -317,7 +316,7 @@ string Get_Total_Num_Substitutions_Function::operator()(const Model& M, long)
 
   int total = 0;
   for(int p=0;p<P.n_data_partitions();p++)
-    total += n_mutations(P[p].A(), P[p].t());
+    total += n_mutations(P[p]);
   return convertToString(total);
 }
 
