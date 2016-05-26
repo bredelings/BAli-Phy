@@ -856,8 +856,13 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
   for(int i=0;i<P.n_data_partitions();i++)
     assert(P[i].LC.root == root_node);
 
+#ifndef NDEBUG
   std::cerr<<"total_peels = "<<substitution::total_peel_branches - initial_peels<<std::endl;
+#endif
 
+  while(not Ps.empty())
+    Ps.pop_back();
+  
   return Pr;
 }
 
