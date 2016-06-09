@@ -598,7 +598,11 @@ int reg_heap::find_parameter_modifiable_reg(int index)
   int R2 = incremental_evaluate_unchangeable(R);
 
   if (R != R2)
+  {
+    dec_heads(R);
+    inc_heads(R2);
     parameters[index].second = R2;
+  }
 
 #ifndef NDEBUG
   if (not is_modifiable(access(R2).C.exp))
