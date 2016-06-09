@@ -435,6 +435,9 @@ public:
   /// Add a new identifier, pointing to a newly allocated location
   int add_identifier(const std::string&);
 
+  /// Add a new parameter, which is a modifiable.
+  int add_parameter(const std::string&);
+
   /*----- Graph walking ------*/
   void find_all_regs_in_context(int, bool, std::vector<int>&) const;
   void find_all_used_regs_in_context(int, bool, std::vector<int>&) const;

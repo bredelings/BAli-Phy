@@ -572,10 +572,11 @@ const vector<int>& reg_heap::random_modifiables() const
   return random_modifiables_;
 }
 
-int reg_heap::add_random_modifiable(int index)
+int reg_heap::add_random_modifiable(int r)
 {
   int i = random_modifiables_.size();
-  random_modifiables_.push_back(index);
+  random_modifiables_.push_back(r);
+  inc_heads(r);
   return i;
 }
 
@@ -1775,15 +1776,15 @@ void insert_at_end(vector<int>& v, const T& t)
 
 void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 {
-  insert_at_end(scan, temp);
-  insert_at_end(scan, heads);
-  insert_at_end(scan, probability_heads);
-  insert_at_end(scan, random_modifiables_);
-  insert_at_end(scan, transition_kernels_);
-  for(int j=0;j<parameters.size();j++)
+  insert_at_end(scan, temp); // inc_heads = yes
+  insert_at_end(scan, heads); // yes
+  insert_at_end(scan, probability_heads); // yes
+  insert_at_end(scan, random_modifiables_); // yes
+  insert_at_end(scan, transition_kernels_); // yes
+  for(int j=0;j<parameters.size();j++) // yes
     scan.push_back(parameters[j].second);
   if (keep_identifiers)
-    for(const auto& i: identifiers)
+    for(const auto& i: identifiers) // no
       scan.push_back(i.second);
 }
 
@@ -3011,5 +3012,31 @@ int reg_heap::add_transition_kernel(int r)
 {
   int i = transition_kernels_.size();
   transition_kernels_.push_back(r);
+  inc_heads(r);
   return i;
+}
+
+int reg_heap::add_parameter(const string& full_name)
+{
+  assert(full_name.size() != 0);
+
+  // 1. Check that we don't already have a parameter with that name
+  for(const auto& parameter: parameters)
+    if (parameter.first == full_name)
+      throw myexception()<<"A parameter with name '"<<full_name<<"' already exists - cannot add another one.";
+
+  // 2. Allocate space for the parameter
+  int r = allocate();
+  parameters.push_back( {full_name, r} );
+  inc_heads(r);
+
+  // 3. Set its value to new_modifiable
+  expression_ref E = identifier("new_modifiable");
+  E = (identifier("unsafePerformIO"), E);
+  E = (identifier("evaluate"),-1,E);
+
+  set_C(r, preprocess( E ) );
+
+
+  return r;
 }

@@ -261,27 +261,8 @@ int context::find_parameter(const string& s) const
 
 int context::add_parameter(const string& full_name, const expression_ref& value)
 {
-  // 1. Check that we don't already have a parameter with that name
-  for(int i=0;i<n_parameters();i++)
-    if (parameter_name(i) == full_name)
-      throw myexception()<<"A parameter with name '"<<full_name<<"' already exists - cannot add another one.";
-
-  assert(full_name.size() != 0);
-
-  // 2. Allocate space for the parameter
-  int R = allocate();
-
-  parameters().push_back( {full_name, R} );
-
-  // 3. Set its value to new_modifiable
-  expression_ref E = identifier("new_modifiable");
-  E = (identifier("unsafePerformIO"), E);
-  E = (identifier("evaluate"),-1,E);
-
-  set_C(R, preprocess( E ) );
-
-  // 4. Set the value of the parameter
-  int p = n_parameters()-1;
+  int p = n_parameters();
+  int r = memory()->add_parameter(full_name);
 
   set_parameter_value(p, value);
 
