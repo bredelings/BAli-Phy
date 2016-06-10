@@ -1755,11 +1755,7 @@ void reg_heap::reclaim_used(int r)
   }
 #endif
 
-  remove_from_used_list(r);
-
-  clear_C(r);
-
-  add_to_free_list(r);
+  pool<reg>::reclaim_used(r);
 }
 
 template <typename T>
