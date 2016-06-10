@@ -198,6 +198,30 @@ void reg_heap::trace(vector<int>& remap)
   release_scratch_list();
 }
 
+template <typename Obj>
+void unmap_unused(mapping& vm, pool<Obj>& Objs, pool<reg>& regs)
+{
+  for(int i=0;i < vm.modified().size();)
+  {
+    int reg = vm.modified()[i];
+    int obj = vm[reg];
+    assert(obj != 0);
+    // if there's a step mapped that is going to be destroyed, then remove the mapping.
+    if (obj > 0 and not Objs.is_marked(obj))
+      vm.erase_value(reg);
+    // if the reg is going to be destroy, and the step is unshared, remove the unsharing mark.
+    else if (obj < 0 and not regs.is_marked(reg))
+      vm.erase_value(reg);
+    else
+    {
+      // if there's a step mapped and its not going to be destroyed, then we should know that the reg is used.
+      if (obj > 0) assert(regs.is_marked(reg));
+      // advance to the next modified reg, if the previous one 
+      i++;
+    }
+  }
+}
+
 void reg_heap::trace_and_reclaim_unreachable()
 {
 #ifdef DEBUG_MACHINE
@@ -216,10 +240,26 @@ void reg_heap::trace_and_reclaim_unreachable()
 #ifdef DEBUG_MACHINE
   check_used_regs();
 #endif
+
+  // unmap all the unused results
+  for(int t=0; t < get_n_tokens(); t++)
+    if (token_is_used(t))
+    {
+      unmap_unused(tokens[t].vm_step, steps, *this);
+      unmap_unused(tokens[t].vm_result, results, *this);
+    }
+
   // remove all back-edges
   for(auto i = steps.begin();i != steps.end(); i++)
     if (not steps.is_marked(i.addr()))
+    {
       clear_back_edges_for_step(i.addr());
+#ifndef NDEBUG      
+      int t = steps[i.addr()].source_token;
+      int r = steps[i.addr()].source_reg;
+      assert(tokens[t].vm_step[r] == 0);
+#endif
+    }
 
   for(auto i = begin();i != end(); i++)
     if (not is_marked(i.addr()))
@@ -232,7 +272,14 @@ void reg_heap::trace_and_reclaim_unreachable()
   // remove all back-edges
   for(auto i = results.begin();i != results.end(); i++)
     if (not results.is_marked(i.addr()))
+    {
       clear_back_edges_for_result(i.addr());
+#ifndef NDEBUG
+      int t = results[i.addr()].source_token;
+      int r = results[i.addr()].source_reg;
+      assert(tokens[t].vm_result[r] == 0);
+#endif
+    }
 
   results.reclaim_unmarked();
 

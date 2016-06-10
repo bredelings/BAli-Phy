@@ -1747,21 +1747,11 @@ void reg_heap::reclaim_used(int r)
   assert(not access(r).created_by.first);
   assert(null(access(r).created_by.second));
   
-  if (access(r).type == reg::type_t::changeable)
-    for(int t=0;t<tokens.size();t++)
-    {
-      if (not token_is_used(t)) continue;
-      
-      if (tokens[t].vm_step[r])
-	tokens[t].vm_step.erase_value(r);
-      if (tokens[t].vm_result[r])
-	tokens[t].vm_result.erase_value(r);
-    }
-
 #ifndef NDEBUG  
   for(int t=0;t<tokens.size();t++)
   {
     assert(not tokens[t].vm_result[r]);
+    assert(not tokens[t].vm_step[r]);
   }
 #endif
 
