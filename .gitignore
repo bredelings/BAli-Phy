@@ -13,3 +13,5 @@ autom4te.cache
 doc/html
 doc/latex
 \#*#
+ltmain.sh
+m4/*.m4
