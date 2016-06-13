@@ -1,5 +1,9 @@
 #!/bin/sh
-autoheader
+set -x
 aclocal -I m4
-automake -a
+libtoolize
+aclocal -I m4 || exit
+libtoolize || exit
+autoheader || exit
+automake -a || exit
 autoconf
