@@ -24,7 +24,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util-random.H"
 #include "dp/5way.H"
 #include "substitution/substitution.H"
-#include "likelihood.H"
 #include "proposals.H"
 
 using MCMC::MoveStats;

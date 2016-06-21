@@ -33,11 +33,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/3way.H"
 #include "sample.H"
 
-
-// for prior_HMM_nogiven
-#include "likelihood.H"
-
-
 using MCMC::MoveStats;
 using std::string;
 using std::vector;

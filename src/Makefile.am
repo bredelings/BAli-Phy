@@ -32,7 +32,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            n_indels.H n_indels2.H alignment/alignment-constraint.H math/exponential.H \
            models/parameters.H substitution/substitution-cache.H alignment/alignment.H dp/hmm.H math/pow2.H \
            substitution/substitution.H dp/alignment-sums.H imodel/imodel.H probability/probability.H \
-           alignment/alignment-util.H likelihood.H mcmc/proposals.H \
+           alignment/alignment-util.H prior.H mcmc/proposals.H \
            tree/tree-branchnode.H sequence/alphabet.H math/log-double.H tree/tree.H \
            dp/bits.H math/logsum.H tree/tree-util.H probability/choose.H substitution/matcache.H  \
            rng.H util.H object.H mcmc/mcmc.H mcmc/sample.H util-random.H \
@@ -94,7 +94,7 @@ endif
 #-----------------------------------------------------------------
 
 bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substitution/substitution.C mcmc/moves.C \
-          rng.C math/exponential.C math/eigenvalue.C models/parameters.C likelihood.C mcmc/mcmc.C \
+          rng.C math/exponential.C math/eigenvalue.C models/parameters.C prior.C mcmc/mcmc.C \
 	  probability/choose.C tree/sequencetree.C mcmc/sample-branch-lengths.C \
 	  util.C tree/randomtree.C sequence/alphabet.C bali-phy.C models/TreeInterface.C \
 	  dp/hmm.C dp/dp-engine.C dp/dp-array.C dp/dp-matrix.C dp/3way.C dp/2way.C mcmc/sample-alignment.C \
@@ -329,7 +329,7 @@ cut_range_SOURCES = tools/cut-range.C util.C io.C
 #analyze_distances_SOURCES = tools/analyze_distances.C alignment/alignment.C sequence/alphabet.C \
 #	sequence/sequence.C tools/distance-methods.C \
 #	util.C tree/sequencetree.C substitution/substitution.C eigenvalue.C tree/tree.C \
-#	exponential.C smodel/setup.C smodel/smodel.C imodel.C rng.C likelihood.C \
+#	exponential.C smodel/setup.C smodel/smodel.C imodel.C rng.C prior.C \
 #	choose.C tools/optimize.C setup.C smodel/rates.C alignment/alignment-util.C \
 #	sequence/sequence-format.C tree/randomtree.C model.C computation/graph_register.C  probability.C \
 #	substitution/substitution-cache.C substitution/substitution-index.C substitution/substitution-star.C tree/tree-util.C \

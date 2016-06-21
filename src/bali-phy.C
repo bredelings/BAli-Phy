@@ -51,7 +51,6 @@ namespace mpi = boost::mpi;
 #include "rng.H"
 #include "models/parameters.H"
 #include "mcmc/mcmc.H"
-#include "likelihood.H"
 #include "util.H"
 #include "setup.H"
 #include "monitor.H"

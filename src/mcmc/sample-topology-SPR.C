@@ -29,7 +29,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sample.H"
 #include "rng.H"
 #include "probability/choose.H"
-#include "likelihood.H"
 #include "probability/probability.H"
 
 #include "dp/3way.H"

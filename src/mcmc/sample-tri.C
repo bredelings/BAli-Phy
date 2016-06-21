@@ -28,7 +28,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
 #include "alignment/alignment-constraint.H"
-#include "likelihood.H"    // for prior()
 #include <boost/shared_ptr.hpp>
 #include "dp/dp-matrix.H"
 #include "substitution/substitution.H"

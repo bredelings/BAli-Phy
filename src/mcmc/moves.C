@@ -23,7 +23,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <algorithm>
 #include "mcmc.H"
 #include "dp/3way.H"
-#include "likelihood.H"
 #include "util-random.H"
 #include "monitor.H"
 #include "alignment/alignment-util.H"

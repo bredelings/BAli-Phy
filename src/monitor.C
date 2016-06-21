@@ -32,7 +32,6 @@ extern "C" {
 
 #include <valarray>
 #include "substitution/substitution.H"
-#include "likelihood.H"
 #include "util.H"
 #include "setup.H"
 #include "alignment/alignment.H"
