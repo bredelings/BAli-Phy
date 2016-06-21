@@ -634,10 +634,10 @@ a_branch_mean_model n =
 (do {
    mu <- gamma 0.5 2.0;
    Log ("mu"++show n) mu;
-   return ()
+   return mu
 });
 
-branch_mean_model n = Prefix "Main" (mapM_ (\i -> a_branch_mean_model i) [1..n]);
+branch_mean_model n = Prefix "Main" (mapM (\i -> a_branch_mean_model i) [1..n]);
 
 reversible_markov_model s r = return $ reversible_markov s r;
 
