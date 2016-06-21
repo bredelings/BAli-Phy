@@ -311,9 +311,6 @@ double data_partition::sequence_length_pr(int l) const
 /// Specifically, we invalidate:
 ///  - cached conditional likelihoods
 ///  - cached transition matrices
-/// We also rescale the substitution model to use branch_mean() as its
-/// rate, which effectively rescales the tree to have mean branch
-/// length \a branch_mean() instead of 1. 
 ///
 void data_partition::recalc_smodel() 
 {
