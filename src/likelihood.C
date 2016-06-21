@@ -25,10 +25,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/2way.H"
 
 /// Tree prior: topology & branch lengths (exponential)
-log_double_t prior_exponential(const TreeInterface& t,double branch_mean) 
+log_double_t prior_exponential(const TreeInterface& t) 
 {
   log_double_t p = 1;
-
+  double branch_mean = 1.0/t.n_branches();
+  
   // --------- uniform prior on topologies --------//
   if (t.n_leaves()>3)
     p /= num_topologies(t.n_leaves());
@@ -41,9 +42,10 @@ log_double_t prior_exponential(const TreeInterface& t,double branch_mean)
 }
 
 /// Tree prior: topology & branch lengths (gamma)
-log_double_t prior_gamma(const TreeInterface& t,double branch_mean) 
+log_double_t prior_gamma(const TreeInterface& t) 
 {
   log_double_t p = 1;
+  double branch_mean = 1.0/t.n_branches();
 
   // --------- uniform prior on topologies --------//
   if (t.n_leaves()>3)
@@ -60,7 +62,7 @@ log_double_t prior_gamma(const TreeInterface& t,double branch_mean)
 }
 
 /// Tree prior: topology & branch lengths (dirichlet)
-log_double_t prior_dirichlet(const TreeInterface& t,double branch_mean) 
+log_double_t prior_dirichlet(const TreeInterface& t) 
 {
   log_double_t p = 1;
 
@@ -76,7 +78,7 @@ log_double_t prior_dirichlet(const TreeInterface& t,double branch_mean)
   branch_lengths /= branch_length_sum;
 
   // The branch-length sum.
-  p *= gamma_pdf(branch_length_sum, 0.5, branch_mean*2.0);
+  p *= gamma_pdf(branch_length_sum, 0.5, 2.0);
 
   // The relative branch lengths.  Probably I should only do the 
   p *= dirichlet_pdf(branch_lengths, 0.5);
@@ -90,16 +92,16 @@ log_double_t prior_dirichlet(const TreeInterface& t,double branch_mean)
 }
 
 /// Tree prior: branch lengths & topology
-log_double_t prior(const Parameters& P, const TreeInterface& t,double branch_mean) 
+log_double_t prior(const Parameters& P, const TreeInterface& t) 
 {
   log_double_t p = 1;
 
   if (P.branch_prior_type() == 0)
-    p *= prior_exponential(t, branch_mean);
+    p *= prior_exponential(t);
   else if (P.branch_prior_type() == 1)
-    p *= prior_gamma(t, branch_mean);
+    p *= prior_gamma(t);
   else if (P.branch_prior_type() == 2)
-    p *= prior_dirichlet(t, branch_mean);
+    p *= prior_dirichlet(t);
   else
     throw myexception()<<"I don't understand branch prior type = "<<P.branch_prior_type();
 

@@ -884,7 +884,7 @@ log_double_t Parameters::prior_no_alignment() const
   log_double_t Pr = Model::prior();
 
   // prior on the topology and branch lengths
-  Pr *= ::prior(*this, t(), 1.0);
+  Pr *= ::prior(*this, t());
 
   // prior for each branch being aligned/unaliged
   if (variable_alignment()) 
@@ -1096,7 +1096,7 @@ void Parameters::setlength(int b,double l)
 
 double Parameters::branch_mean() const 
 {
-  return 1.0;
+  return 1.0/t().n_branches();
 }
 
 

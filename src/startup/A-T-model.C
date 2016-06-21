@@ -185,19 +185,6 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     out_screen<<" indel ~ "<<i_name<<" ("<<i_index+1<<")"<<endl;;
   }
   out_screen<<"\n";
-
-  out_both<<"Prior on branch lengths T[b]:\n";
-  if (P.branch_prior_type() == 0)
-    out_both<<" T[b] ~ Exponential(Main.mu<i>)   [mean=Main.mu<i>, variance=Main.mu<i>^2]"<<endl;
-  else if (P.branch_prior_type() == 1)
-    out_both<<" T[b] ~ Gamma(alpha=0.5, beta=2*Main.mu<i>)   [mean=Main.mu<i>, variance=2*Main.mu<i>^2]"<<endl;
-  else if (P.branch_prior_type() == 2)
-  {
-    out_both<<" T[b]/Tree length ~ Dirichlet(alpha=0.5)"<<endl;
-    out_both<<" Tree length ~ Gamma(alpha=0.5, beta=2*Main.mu<i>)   [mean=Main.mu<i>, variance=2*Main,mu<i>^2]"<<endl;
-  }
-  if (P.n_data_partitions() > 1)
-    out_both<<"(Each partition i has a separate 'Main.mu<i>' except where specified by --same-scale.)"<<endl;
 }
 
 void check_alignment_names(const alignment& A)
