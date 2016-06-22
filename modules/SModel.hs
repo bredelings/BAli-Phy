@@ -2,7 +2,8 @@ module SModel where
 {
 import Distributions;
 import Alphabet;
-
+import Tree;
+    
 builtin f3x4_frequencies 4 "f3x4_frequencies" "SModel";
 builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
 builtin plus_gwF 3 "plus_gwF" "SModel";
@@ -638,6 +639,19 @@ a_branch_mean_model n =
 });
 
 branch_mean_model n = Prefix "Main" (mapM (\i -> a_branch_mean_model i) [1..n]);
+
+a_branch_length_model dist i =
+(do {
+  t <- dist;
+  Log ("*T"++show i) t;
+  return t
+});
+
+iid_branch_length_model t dist = SamplingRate 0.0 $ mapM (\i -> a_branch_length_model dist i) [1..numBranches t];
+
+iid_branch_length_model_exp t = iid_branch_length_model t (exponential (1.0/(intToDouble (numBranches t))));
+
+iid_branch_length_model_gamma t = iid_branch_length_model t (gamma 0.5 (2.0/(intToDouble (numBranches t))));
 
 reversible_markov_model s r = return $ reversible_markov s r;
 

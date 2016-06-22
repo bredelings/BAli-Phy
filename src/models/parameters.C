@@ -610,11 +610,25 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
 
   tree_head = p->add_compute_expression( (tree_con, node_branches_array, branch_nodes_array, T.n_nodes(), T.n_branches()));
   
+  // Add a *T<b> parameter for each branch b.
+  {
+    p->evaluate_expression( p->get_expression(tree_head) );
+    expression_ref mus;
+    if (p->branch_prior_type() == 0)
+      mus = model_expression({identifier("iid_branch_length_model_exp"), p->get_expression(tree_head)});
+    else if (p->branch_prior_type() == 1)
+      mus = model_expression({identifier("iid_branch_length_model_gamma"), p->get_expression(tree_head)});
+    p->evaluate_expression( perform_exp(mus) );
+  }
+
   // Create the parameters that hold branch lengths
   for(int b=0;b<T.n_branches();b++)
   {
-    int index = p->add_parameter("*T"+convertToString(b+1), T.branch(b).length());
+    string name = "*T"+convertToString(b+1);
+    int index = p->find_parameter(name);
     branch_length_parameters.push_back(index);
+    const context* c = p;
+    const_cast<context*>(c)->set_parameter_value(index, T.branch(b).length());
   }
 }
 
@@ -879,9 +893,6 @@ void Parameters::show_h_tree() const
 log_double_t Parameters::prior_no_alignment() const 
 {
   log_double_t Pr = Model::prior();
-
-  // prior on the topology and branch lengths
-  Pr *= ::prior(*this, t());
 
   // prior for each branch being aligned/unaliged
   if (variable_alignment()) 

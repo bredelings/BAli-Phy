@@ -31,13 +31,4 @@ log_double_t prior_branch_from_counts(const matrix<int>& counts, const indel::Pa
 log_double_t prior_HMM_nogiven(const data_partition&);
 log_double_t prior_HMM(const data_partition&);
 matrix<int> get_path_counts(const pairwise_alignment_t& a,int node1, int node2);
-
-//------------------- Priors ----------------------//
-// Tree prior: branch lengths & topology
-log_double_t prior_exponential(const TreeInterface& t);
-
-log_double_t prior_gamma(const TreeInterface& t);
-
-// Tree prior: branch lengths & topology
-log_double_t prior(const Parameters& P, const TreeInterface& t);
 #endif
