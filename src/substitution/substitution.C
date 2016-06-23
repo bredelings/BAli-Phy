@@ -335,42 +335,34 @@ namespace substitution {
     peeling_info(const TreeInterface& t) { reserve(t.n_branches()); }
   };
 
-  log_double_t calc_root_probability(const TreeInterface& t,Likelihood_Cache& cache,
-				     const Mat_Cache& MC,const vector<int>& rb,const matrix<int>& index) 
+  log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
+				     const Likelihood_Cache_Branch* LCB2,
+				     const Likelihood_Cache_Branch* LCB3,
+				     const Matrix& F,
+				     const matrix<int>& index)
   {
     total_calc_root_prob++;
 
-    assert(index.size2() == rb.size());
-
-    for(int i=0;i<rb.size();i++)
-      assert(cache.up_to_date(rb[i]));
-
-    const int root = cache.root;
-
-    assert(t.target(rb[0]) == root);
-
-    if (t.is_leaf_node(root))
-      throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
-    assert(rb.size() == 3);
-
-    const int n_models = MC.n_base_models();
-    const int n_states = MC.n_states();
+    const int n_models = F.size1();
+    const int n_states = F.size2();
     const int matrix_size = n_models * n_states;
+
+    assert(n_models == LCB1->n_models());
+    assert(n_states == LCB1->n_states());
+
+    assert(n_models == LCB2->n_models());
+    assert(n_states == LCB2->n_states());
+
+    assert(n_models == LCB3->n_models());
+    assert(n_states == LCB3->n_states());
+
+    assert(index.size2() == 3);
 
 #ifdef DEBUG_SUBSTITUTION
     // scratch matrix 
     Matrix S(n_models,n_states);
 #endif
 
-    // cache matrix F(m,s) of p(m)*freq(m,l)
-    Matrix F(n_models,n_states);
-    MC.WeightedFrequencyMatrix(F.begin());
-
-    // look up the cache rows now, once, instead of for each column
-    vector< Likelihood_Cache_Branch* > branch_cache;
-    for(int i=0;i<rb.size();i++)
-      branch_cache.push_back(&cache[rb[i]]);
-    
     log_double_t total = 1;
     for(int i=0;i<index.size1();i++)
     {
@@ -380,15 +372,15 @@ namespace substitution {
       int i1 = index(i,1);
       int i2 = index(i,2);
 
-      double* m[3];
+      const double* m[3];
       int mi=0;
 
       if (i0 != -1)
-	m[mi++] = ((*branch_cache[0])[i0]);
+	m[mi++] = ((*LCB1)[i0]);
       if (i1 != -1)
-	m[mi++] = ((*branch_cache[1])[i1]);
+	m[mi++] = ((*LCB2)[i1]);
       if (i2 != -1)
-	m[mi++] = ((*branch_cache[2])[i2]);
+	m[mi++] = ((*LCB3)[i2]);
 
       if (mi==3)
 	p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
@@ -402,11 +394,12 @@ namespace substitution {
       element_assign(S,F);
 
       //-------------- Propagate and collect information at 'root' -----------//
-      for(int j=0;j<rb.size();j++) {
-	int i0 = index(i,j);
-	if (i0 != alphabet::gap)
-	  element_prod_modify(S.begin(),(*branch_cache[j])[i0].begin(), matrix_size);
-      }
+      if (i0 != alphabet::gap)
+	element_prod_modify(S.begin(),(*LCB1)[i0], matrix_size);
+      if (i1 != alphabet::gap)
+	element_prod_modify(S.begin(),(*LCB2)[i1], matrix_size);
+      if (i2 != alphabet::gap)
+	element_prod_modify(S.begin(),(*LCB3)[i2], matrix_size);
 
       //------------ Check that individual models are not crazy -------------//
       for(int m=0;m<n_models;m++) {
@@ -430,8 +423,9 @@ namespace substitution {
       //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
     }
 
-    for(int i=0;i<rb.size();i++)
-      total *= cache[rb[i]].other_subst;
+    total *= LCB1->other_subst;
+    total *= LCB2->other_subst;
+    total *= LCB3->other_subst;
 
     return total;
   }
@@ -459,8 +453,7 @@ namespace substitution {
 #endif    
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
-    Matrix F(n_models,n_states);
-    MC.WeightedFrequencyMatrix(F.begin());
+    Matrix F = MC.WeightedFrequencyMatrix();
 
     // look up the cache rows now, once, instead of for each column
     vector< Likelihood_Cache_Branch* > branch_cache;
@@ -496,7 +489,7 @@ namespace substitution {
       for(int j=0;j<rb.size();j++) {
 	int i0 = index(i,j);
 	if (i0 != alphabet::gap)
-	  element_prod_modify(S.begin(), (*branch_cache[j])[i0].begin(), matrix_size);
+	  element_prod_modify(S.begin(), (*branch_cache[j])[i0], matrix_size);
       }
 
       //------------ Check that individual models are not crazy -------------//
@@ -525,12 +518,6 @@ namespace substitution {
       total *= cache[rb[i]].other_subst;
 
     return total;
-  }
-
-  log_double_t calc_root_probability(const data_partition& P,const vector<int>& rb,
-			       const matrix<int>& index) 
-  {
-    return calc_root_probability(P.t(), P.LC, P, rb, index);
   }
 
   inline double sum(const Matrix& Q, const vector<unsigned>& smap, int n_letters, 
@@ -760,8 +747,7 @@ namespace substitution {
     const int matrix_size = n_models * n_states;
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
-    Matrix F(n_models,n_states);
-    MC.WeightedFrequencyMatrix(F.begin());
+    Matrix F = MC.WeightedFrequencyMatrix();
 
     // look up the cache rows now, once, instead of for each column
     Likelihood_Cache_Branch* branch_cache[2];
@@ -1433,13 +1419,27 @@ namespace substitution {
     }
     else
     {
-      auto rb = t.branches_in(LC.root);
+      int root = LC.root;
+      if (t.is_leaf_node(root))
+	throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
+
+      auto rb = t.branches_in(root);
+      assert(t.target(rb[0]) == root);
+      assert(rb.size() == 3);
+
       auto a10 = convert_to_bits(P.get_pairwise_alignment(rb[0]),1,0);
       auto a20 = convert_to_bits(P.get_pairwise_alignment(rb[1]),2,0);
       auto a30 = convert_to_bits(P.get_pairwise_alignment(rb[2]),3,0);
       auto a0123 = Glue_A(a10, Glue_A(a20,a30));
       auto index = get_indices_from_bitpath(a0123, {1,2,3});
-      Pr = calc_root_probability(t,LC,MC,rb,index);
+
+      for(int i=0;i<rb.size();i++)
+	assert(LC.up_to_date(rb[i]));
+
+      // cache matrix F(m,s) of p(m)*freq(m,l)
+      Matrix F = MC.WeightedFrequencyMatrix();
+
+      Pr = calc_root_probability(&LC[rb[0]], &LC[rb[1]], &LC[rb[2]], F, index);
     }
 
 #ifdef DEBUG_CACHING
@@ -1505,8 +1505,7 @@ namespace substitution {
     int root = cache.root;
 
     // Compute matrix F(m,s) = Pr(m)*Pr(s|m) = p(m)*freq(m,s) 
-    Matrix F(n_models, n_states);
-    MC.WeightedFrequencyMatrix(F.begin());
+    Matrix F = MC.WeightedFrequencyMatrix();
 
     // 1. Allocate arrays for storing results and temporary results.
     vector<vector<pair<int,int> > > ancestral_characters (t.n_nodes());
