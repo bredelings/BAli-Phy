@@ -109,8 +109,8 @@ public:
   /// Can token t re-use its previously computed likelihood?
   int& cv_up_to_date(int t)       {return cv_up_to_date_[t];}
 
-  /// Reserve backing store for t/b, and point t/b to it.
-  void allocate_location(int t, int b, int l, int m, int s);
+  /// Point t/b to object
+  void set_location(int t, int b, Likelihood_Cache_Branch* LCB);
 
   /// Where do we store caches for token t, branch b?
   int location(int t,int b) const {
@@ -207,7 +207,12 @@ public:
 
   /// Ensure there is backing store for us to work with
   void prepare_branch(int b, int l, int m, int s) {
-    cache->allocate_location(token, b, l, m, s);
+    cache->set_location(token, b, new Likelihood_Cache_Branch(l, m, s));
+  }
+
+  /// Ensure there is backing store for us to work with
+  void set_branch(int b, Likelihood_Cache_Branch* LCB) {
+    cache->set_location(token, b, LCB);
   }
 
   /// Cached conditional likelihoods for branch b

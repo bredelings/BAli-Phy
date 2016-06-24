@@ -81,12 +81,12 @@ void Multi_Likelihood_Cache::allocate_branch_slots(int s)
   }
 }
 
-void Multi_Likelihood_Cache::allocate_location(int t, int b, int l, int m, int s)
+void Multi_Likelihood_Cache::set_location(int t, int b, Likelihood_Cache_Branch* LCB)
 {
   if (not location_allocated(t,b))
     mapping[t][b] = get_unused_location();
 
-  data[mapping[t][b]] = new Likelihood_Cache_Branch(l, m, s);
+  data[mapping[t][b]] = LCB;
 }
 
 
