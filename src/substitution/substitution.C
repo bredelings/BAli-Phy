@@ -676,29 +676,27 @@ namespace substitution {
     cache[b0].other_subst = 1;
   }
 
-  void peel_leaf_branch_modulated(int b0, const data_partition& P, Likelihood_Cache& cache, 
-				  const vector<int>& sequence, const alphabet& a,
-				  const vector<Matrix>& transition_P,const Mat_Cache& MC)
+  Likelihood_Cache_Branch*
+  peel_leaf_branch_modulated(const vector<int>& sequence, const alphabet& a,
+			     const vector<Matrix>& transition_P, const vector<unsigned>& smap)
   {
     total_peel_leaf_branches++;
 
     // Do this before accessing matrices or other_subst
-    int L0 = P.seqlength(P.t().source(b0));
+    int L0 = sequence.size();
 
-    const int n_models  = MC.n_base_models();
-    const int n_states  = MC.n_states();
+    const int n_models  = transition_P.size();
+    const int n_states  = transition_P[0].size1();
     const int matrix_size = n_models * n_states;
     const int n_letters = a.n_letters();
 
-    cache.prepare_branch(b0, L0, n_models, n_states);
+    auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
 
     assert(n_states >= n_letters and n_states%n_letters == 0);
 
-    const vector<unsigned>& smap = MC.state_letters();
-
     for(int i=0;i<L0;i++)
     {
-      double* R = cache(i,b0);
+      double* R = (*LCB)[i];
       // compute the distribution at the parent node
       int l2 = sequence[i];
 
@@ -719,7 +717,9 @@ namespace substitution {
 	element_assign(R, matrix_size, 1);
     }
 
-    cache[b0].other_subst = 1;
+    LCB->other_subst = 1;
+
+    return LCB;
   }
 
   /// Apply frequencies and collect probability for subA columns that go away on b.back()
@@ -1011,7 +1011,7 @@ namespace substitution {
 	  cache.set_branch(b0, peel_leaf_branch(sequences[b0], a, MC.transition_P(b0)));
       }
       else
-	peel_leaf_branch_modulated(b0, P, cache, sequences[b0], a, MC.transition_P(b0), MC);
+	cache.set_branch(b0, peel_leaf_branch_modulated(sequences[b0], a, MC.transition_P(b0), MC.state_letters()));
     }
     else if (bb == 2) {
       if (MC.base_model(0,0).is_a<F81_Object>())
