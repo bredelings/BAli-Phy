@@ -608,22 +608,9 @@ namespace substitution {
     return LCB;
   }
 
-
-  void peel_leaf_branch_F81(int b0, const data_partition& P, Likelihood_Cache& cache,
-			    const vector<int>& sequence, const alphabet& a, const TreeInterface& t, 
-			    const Mat_Cache& MC)
+  vector<double> f81_exp_a_t(const Mat_Cache& MC, int b0, double L)
   {
-    total_peel_leaf_branches++;
-
-    // Do this before accessing matrices or other_subst
-    int L0 = P.seqlength(P.t().source(b0));
-
     const int n_models  = MC.n_base_models();
-    const int n_states  = MC.n_states();
-    const int matrix_size = n_models * n_states;
-
-    cache.prepare_branch(b0, L0, n_models, n_states);
-
     //    const vector<unsigned>& smap = MC.state_letters();
 
     vector<object_ptr<const F81_Object> > SubModels(n_models);
@@ -631,18 +618,38 @@ namespace substitution {
       SubModels[m] = MC.base_model(m,b0).assert_is_a<F81_Object>();
       assert(SubModels[m]);
     }
-    const double L = t.branch_length(b0);
+    //    const double L = t.branch_length(b0);
 
-    valarray<double> exp_a_t(n_models);
+    vector<double> exp_a_t(n_models);
     for(int m=0;m<n_models;m++) 
       exp_a_t[m] = exp(-L * SubModels[m]->alpha_);
 
-    double* F = cache[b0].scratch(1);
-    MC.FrequencyMatrix(F); // F(m,l2)
+    return exp_a_t;
+  }
+  
+  Likelihood_Cache_Branch*
+  peel_leaf_branch_F81(const vector<int>& sequence, const alphabet& a, const vector<double>& exp_a_t, const Matrix& FF)
+  {
+    total_peel_leaf_branches++;
+
+    // Do this before accessing matrices or other_subst
+    int L0 = sequence.size();
+
+    const int n_models  = exp_a_t.size();
+    const int n_states  = a.n_letters();
+    const int matrix_size = n_models * n_states;
+
+    auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
+
+    //    const vector<unsigned>& smap = MC.state_letters();
+
+    // This could be wrong, if the code below assumes row or column major incorrectly
+    const double* F = FF.begin();
 
     for(int i=0;i<L0;i++)
     {
-      double* R = cache(i,b0);
+      double* R = (*LCB)[i];
+
       // compute the distribution at the parent node
       int l2 = sequence[i];
 
@@ -673,7 +680,9 @@ namespace substitution {
 	element_assign(R, matrix_size, 1);
     }
 
-    cache[b0].other_subst = 1;
+    LCB->other_subst = 1;
+
+    return LCB;
   }
 
   Likelihood_Cache_Branch*
@@ -1006,7 +1015,7 @@ namespace substitution {
       int n_letters = a.n_letters();
       if (n_states == n_letters) {
 	if (MC.base_model(0,0).is_a<F81_Object>())
-	  peel_leaf_branch_F81(b0, P, cache, sequences[b0], a, t, MC);
+	  cache.set_branch(b0, peel_leaf_branch_F81(sequences[b0], a, f81_exp_a_t(MC, b0, t.branch_length(b0)), MC.FrequencyMatrix()));
 	else
 	  cache.set_branch(b0, peel_leaf_branch(sequences[b0], a, MC.transition_P(b0)));
       }
