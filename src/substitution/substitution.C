@@ -1346,8 +1346,7 @@ namespace substitution {
 
   void compare_caches(const data_partition& P1, const data_partition& P2, int b)
   {
-    int L = P1.seqlength(P1.t().source(b));
-    assert(L == P2.seqlength(P2.t().source(b)));
+    assert(P1.seqlength(P1.t().source(b)) == P2.seqlength(P2.t().source(b)));
 
 #if 0
     const int n_models = P1.LC.n_models();
