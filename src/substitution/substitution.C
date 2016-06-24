@@ -1430,7 +1430,7 @@ namespace substitution {
     {
       auto a01 = convert_to_bits(P.get_pairwise_alignment(P.t().find_branch(0,1)),0,1);
       auto index = get_indices_from_bitpath(a01, {0,1});
-      Pr = calc_root_probability(t,LC,MC,rb,index);
+      Pr = calc_root_probability2(LC,MC,rb,index);
     }
     else
     {
