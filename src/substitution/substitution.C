@@ -456,9 +456,8 @@ namespace substitution {
     Matrix F = MC.WeightedFrequencyMatrix();
 
     // look up the cache rows now, once, instead of for each column
-    vector< const Likelihood_Cache_Branch* > branch_cache;
-    for(int i=0;i<rb.size();i++)
-      branch_cache.push_back(&cache[rb[i]]);
+    auto& LCB1 = cache[rb[0]];
+    auto& LCB2 = cache[rb[1]];
     
     log_double_t total = 1;
     for(int i=0;i<index.size1();i++)
@@ -472,9 +471,9 @@ namespace substitution {
       int mi=0;
 
       if (i0 != -1)
-	m[mi++] = ((*branch_cache[0])[i0]);
+	m[mi++] = LCB1[i0];
       if (i1 != -1)
-	m[mi++] = ((*branch_cache[1])[i1]);
+	m[mi++] = LCB2[i1];
 
       if (mi==2)
 	p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
@@ -514,8 +513,8 @@ namespace substitution {
       //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
     }
 
-    for(int i=0;i<rb.size();i++)
-      total *= cache[rb[i]].other_subst;
+    total *= LCB1.other_subst;
+    total *= LCB2.other_subst;
 
     return total;
   }
