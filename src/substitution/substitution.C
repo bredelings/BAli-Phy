@@ -969,13 +969,14 @@ namespace substitution {
     if (t.n_nodes() == 2 and b0 == 1)
     {
       assert(bb == 0);
-      cache.prepare_branch(b0, L0, MC.n_base_models(), MC.n_states());
+      auto LCB = new Likelihood_Cache_Branch(L0, MC.n_base_models(), MC.n_states());
 
       vector<Matrix> L = get_leaf_seq_likelihoods(sequences[1], P.get_alphabet(), MC, 0);
 
       for(int i=0;i<L0;i++)
-	element_assign(cache(i,b0), L[i].begin(), matrix_size);
-      cache[b0].other_subst = 1;
+	element_assign((*LCB)[i], L[i].begin(), matrix_size);
+      LCB->other_subst = 1;
+      cache.set_branch(b0, LCB);
     }
     else if (bb == 0) {
       const alphabet& a = P.get_alphabet();

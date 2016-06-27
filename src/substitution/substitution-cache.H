@@ -206,11 +206,6 @@ public:
   bool branch_available(int b) const {return cache->location_allocated(token,b);}
 
   /// Ensure there is backing store for us to work with
-  void prepare_branch(int b, int l, int m, int s) {
-    cache->set_location(token, b, new Likelihood_Cache_Branch(l, m, s));
-  }
-
-  /// Ensure there is backing store for us to work with
   void set_branch(int b, Likelihood_Cache_Branch* LCB) {
     cache->set_location(token, b, LCB);
   }
