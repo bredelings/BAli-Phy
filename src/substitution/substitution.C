@@ -878,8 +878,8 @@ namespace substitution {
 			   const pairwise_alignment_t& A0,
 			   const pairwise_alignment_t& A1,
 			   const vector<double>& exp_a_t,
-			   const Matrix& WF,
-			   const Matrix& FF)
+			   const Matrix& FF,
+			   const Matrix& WF)
   {
     //    std::cerr<<"got here! (internal)"<<endl;
     total_peel_internal_branches++;
@@ -1001,7 +1001,7 @@ namespace substitution {
       auto& A1 = P.get_pairwise_alignment(b[1]);
       
       if (MC.base_model(0,0).is_a<F81_Object>())
-	cache.set_branch(b0, peel_internal_branch_F81(LCB1, LCB2, A0, A1, f81_exp_a_t(MC, b0, t.branch_length(b0)), MC.WeightedFrequencyMatrix(), MC.FrequencyMatrix()));
+	cache.set_branch(b0, peel_internal_branch_F81(LCB1, LCB2, A0, A1, f81_exp_a_t(MC, b0, t.branch_length(b0)), MC.FrequencyMatrix(), MC.WeightedFrequencyMatrix()));
       else
       {
 	auto LCB = peel_internal_branch(LCB1, LCB2, A0, A1, MC.transition_P(b0), MC.WeightedFrequencyMatrix());
