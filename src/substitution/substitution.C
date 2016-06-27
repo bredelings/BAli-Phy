@@ -738,27 +738,19 @@ namespace substitution {
   /// (ii) "going away" in terms of the node not being present at b.back().source()?
   ///
   /// Answer: Yes, because which columns "go away" is computed and then passed in via \a index.
-  log_double_t collect_vanishing_internal(const vector<int>& b, matrix<int>& index, Likelihood_Cache& cache,
-				      const Mat_Cache& MC)
+  log_double_t collect_vanishing_internal(const Likelihood_Cache_Branch* LCB1,
+					  const Likelihood_Cache_Branch* LCB2,
+					  const matrix<int>& index,
+					  const Matrix& F)
   {
     assert(b.size() == 3);
     assert(index.size2() == 2);
 
-    // Both leaf branches must have valid caches
-    assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
-
-    const int n_models = MC.n_base_models();
-    const int n_states = MC.n_states();
+    // matrix F(m,s) is p(m)*freq(m,l)
+    const int n_models = F.size1();
+    const int n_states = F.size2();
     const int matrix_size = n_models * n_states;
 
-    // cache matrix F(m,s) of p(m)*freq(m,l)
-    Matrix F = MC.WeightedFrequencyMatrix();
-
-    // look up the cache rows now, once, instead of for each column
-    Likelihood_Cache_Branch* branch_cache[2];
-    for(int i=0;i<2;i++)
-      branch_cache[i] = &cache[b[i]];
-    
     log_double_t total = 1;
     for(int i=0;i<index.size1();i++)
     {
@@ -770,12 +762,12 @@ namespace substitution {
       if (i0 != alphabet::gap) 
       {
 	assert(i1 == alphabet::gap);
-	p_col = element_prod_sum(F.begin(), (*branch_cache[0])[i0], matrix_size );
+	p_col = element_prod_sum(F.begin(), (*LCB1)[i0], matrix_size );
       }
       else if (i1 != alphabet::gap)
       {
 	assert(i0 == alphabet::gap);
-	p_col = element_prod_sum(F.begin(), (*branch_cache[1])[i1], matrix_size );
+	p_col = element_prod_sum(F.begin(), (*LCB2)[i1], matrix_size );
       }
 
       // Situation: i0 ==-1 and i1 == -1
@@ -793,7 +785,7 @@ namespace substitution {
       total *= p_col;
       //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
     }
-    return cache[b[0]].other_subst * cache[b[1]].other_subst * total;
+    return LCB1->other_subst * LCB2->other_subst * total;
   }
 
   void peel_internal_branch(const vector<int>& b,matrix<int>& index, Likelihood_Cache& cache,
@@ -880,7 +872,10 @@ namespace substitution {
 
     /*-------------------- Do the other_subst collection part -------------------*/
     matrix<int> index_collect = get_indices_from_bitpath_wo(a012, {0,1}, 1<<2);
-    cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
+
+    // Both leaf branches must have valid caches
+    assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
+    cache[b[2]].other_subst = collect_vanishing_internal(&cache[b[0]], &cache[b[1]], index_collect, MC.WeightedFrequencyMatrix());
   }
 
   void peel_internal_branch_F81(int b0, const data_partition& P, Likelihood_Cache& cache, const TreeInterface& t, 
@@ -975,7 +970,7 @@ namespace substitution {
 
     /*-------------------- Do the other_subst collection part -------------b-------*/
     matrix<int> index_collect = get_indices_from_bitpath_wo(a012, {0,1}, 1<<2);
-    cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
+    cache[b[2]].other_subst = collect_vanishing_internal(&cache[b[0]], &cache[b[1]], index_collect, MC.WeightedFrequencyMatrix());
   }
 
   vector<Matrix>
