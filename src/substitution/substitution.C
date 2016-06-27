@@ -743,7 +743,6 @@ namespace substitution {
 					  const matrix<int>& index,
 					  const Matrix& F)
   {
-    assert(b.size() == 3);
     assert(index.size2() == 2);
 
     // matrix F(m,s) is p(m)*freq(m,l)
@@ -788,27 +787,21 @@ namespace substitution {
     return LCB1->other_subst * LCB2->other_subst * total;
   }
 
-  void peel_internal_branch(const vector<int>& b,matrix<int>& index, Likelihood_Cache& cache,
-			    const vector<Matrix>& transition_P,const Mat_Cache& MC)
+  Likelihood_Cache_Branch*
+  peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
+		       const Likelihood_Cache_Branch* LCB2,
+		       matrix<int>& index,
+		       const vector<Matrix>& transition_P)
   {
-    assert(b.size() == 3);
-
-    assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
-
-    const int n_models = MC.n_base_models();
-    const int n_states = MC.n_states();
+    const int n_models = transition_P.size();
+    const int n_states = transition_P[0].size1();
     const int matrix_size = n_models * n_states;
     
     // Do this before accessing matrices or other_subst
-    cache.prepare_branch(b[2], index.size1(), n_models, n_states);
+    auto* LCB3 = new Likelihood_Cache_Branch(index.size1(), n_models, n_states);
 
     // scratch matrix
-    double* S = cache[b[2]].scratch(0);
-
-    // look up the cache rows now, once, instead of for each column
-    vector< Likelihood_Cache_Branch* > branch_cache;
-    for(int i=0;i<b.size();i++)
-      branch_cache.push_back(&cache[b[i]]);
+    double* S = LCB3->scratch(0);
 
     Matrix ones(n_models, n_states);
     element_assign(ones, 1);
@@ -819,13 +812,13 @@ namespace substitution {
       int i0 = index(i,0);
       int i1 = index(i,1);
 
-      double* C = S;
+      const double* C = S;
       if (i0 != alphabet::gap and i1 != alphabet::gap)
-	element_prod_assign(S, (*branch_cache[0])[i0], (*branch_cache[1])[i1], matrix_size);
+	element_prod_assign(S, (*LCB1)[i0], (*LCB2)[i1], matrix_size);
       else if (i0 != alphabet::gap)
-	C = (*branch_cache[0])[i0];
+	C = (*LCB1)[i0];
       else if (i1 != alphabet::gap)
-	C = (*branch_cache[1])[i1];
+	C = (*LCB2)[i1];
       else
 	C = ones.begin();
 
@@ -834,7 +827,7 @@ namespace substitution {
       // Columns like this would not be in subA_index_leaf, but might be in subA_index_internal
 
       // propagate from the source distribution
-      double* R = (*branch_cache[2])[i];            //name the result matrix
+      double* R = (*LCB3)[i];            //name the result matrix
       for(int m=0;m<n_models;m++) {
 	
 	const Matrix& Q = transition_P[m];
@@ -848,34 +841,35 @@ namespace substitution {
 	}
       }
     }
-  }
 
-  void peel_internal_branch(int b0, const data_partition& P, Likelihood_Cache& cache, const TreeInterface& t, 
-			    const vector<Matrix>& transition_P,const Mat_Cache& MC)
+    return LCB3;
+  }
+  
+  Likelihood_Cache_Branch*
+  peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
+		       const Likelihood_Cache_Branch* LCB2,
+		       const pairwise_alignment_t& A0,
+		       const pairwise_alignment_t& A1,
+		       const vector<Matrix>& transition_P,
+		       const Matrix& F)
   {
     total_peel_internal_branches++;
 
-    // find the names of the (two) branches behind b0
-    vector<int> b = t.branches_before(b0);
-    b.push_back(b0);
-
-    auto a0 = convert_to_bits(P.get_pairwise_alignment(b[0]), 0, 2);
-    auto a1 = convert_to_bits(P.get_pairwise_alignment(b[1]), 1, 2);
+    auto a0 = convert_to_bits(A0, 0, 2);
+    auto a1 = convert_to_bits(A1, 1, 2);
     auto a012 = Glue_A(a0, a1);
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
     matrix<int> index = get_indices_from_bitpath_w(a012, {0,1}, 1<<2);
-    assert(index.size1() == P.seqlength(P.t().source(b0)));
 
     /*-------------------- Do the peeling part------------- --------------------*/
-    peel_internal_branch(b, index, cache, transition_P, MC);
+    auto LCB3 = peel_internal_branch(LCB1, LCB2, index, transition_P);
 
     /*-------------------- Do the other_subst collection part -------------------*/
     matrix<int> index_collect = get_indices_from_bitpath_wo(a012, {0,1}, 1<<2);
+    LCB3->other_subst = collect_vanishing_internal(LCB1, LCB2, index_collect, F);
 
-    // Both leaf branches must have valid caches
-    assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
-    cache[b[2]].other_subst = collect_vanishing_internal(&cache[b[0]], &cache[b[1]], index_collect, MC.WeightedFrequencyMatrix());
+    return LCB3;
   }
 
   void peel_internal_branch_F81(int b0, const data_partition& P, Likelihood_Cache& cache, const TreeInterface& t, 
@@ -1021,7 +1015,20 @@ namespace substitution {
       if (MC.base_model(0,0).is_a<F81_Object>())
 	peel_internal_branch_F81(b0, P, cache, t, MC);
       else
-	peel_internal_branch(b0, P, cache, t, MC.transition_P(b0), MC);
+      {
+	// find the names of the (two) branches behind b0
+	vector<int> b = t.branches_before(b0);
+	assert(b.size() == 2);
+	assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
+	const Likelihood_Cache_Branch* LCB1 = &cache[b[0]];
+	const Likelihood_Cache_Branch* LCB2 = &cache[b[1]];
+	auto& A0 = P.get_pairwise_alignment(b[0]);
+	auto& A1 = P.get_pairwise_alignment(b[1]);
+
+	auto LCB = peel_internal_branch(LCB1, LCB2, A0, A1, MC.transition_P(b0), MC.WeightedFrequencyMatrix());
+	assert(LCB->n_columns() == P.seqlength(P.t().source(b0)));
+	cache.set_branch(b0, LCB);
+      }
     }
     else
       std::abort();
