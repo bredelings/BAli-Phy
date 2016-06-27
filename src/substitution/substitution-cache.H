@@ -217,23 +217,8 @@ public:
     return (*cache)[loc];
   }
 
-  /// Cached conditional likelihoods for branch b
-  Likelihood_Cache_Branch& operator[](int b) {
-    int loc = cache->location(token,b);
-    assert(loc != -1);
-    return (*cache)[loc];
-  }
-
   /// Cached conditional likelihoods for index i, branch b
   const double* operator()(int i,int b) const {
-    int loc = cache->location(token,b);
-    assert(loc != -1);
-    assert(0 <= i and i < get_length(b));
-    return (*cache)[loc][i];
-  }
-
-  /// Cached conditional likelihoods for index i, branch b
-  double* operator()(int i,int b) {
     int loc = cache->location(token,b);
     assert(loc != -1);
     assert(0 <= i and i < get_length(b));

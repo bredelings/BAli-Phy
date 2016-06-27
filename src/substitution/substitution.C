@@ -456,7 +456,7 @@ namespace substitution {
     Matrix F = MC.WeightedFrequencyMatrix();
 
     // look up the cache rows now, once, instead of for each column
-    vector< Likelihood_Cache_Branch* > branch_cache;
+    vector< const Likelihood_Cache_Branch* > branch_cache;
     for(int i=0;i<rb.size();i++)
       branch_cache.push_back(&cache[rb[i]]);
     
@@ -468,7 +468,7 @@ namespace substitution {
       int i0 = index(i,0);
       int i1 = index(i,1);
 
-      double* m[2];
+      const double* m[2];
       int mi=0;
 
       if (i0 != -1)
