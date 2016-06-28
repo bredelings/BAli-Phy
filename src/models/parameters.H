@@ -67,6 +67,8 @@ private:
   /// The pairwise alignment for each branch
   std::vector<int> pairwise_alignment_for_branch;
 
+  std::vector<int> conditional_likelihoods_for_branch;
+
   std::vector<int> sequence_length_indices;
 
   std::vector<int> transition_p_method_indices;
