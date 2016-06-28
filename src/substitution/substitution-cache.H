@@ -25,6 +25,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree/tree.H"
 #include "models/TreeInterface.H"
 
+class data_partition;
+
 /// An object to store cached conditional likelihoods for a single branch
 class Likelihood_Cache_Branch: public Object
 {
@@ -162,6 +164,8 @@ class Likelihood_Cache {
   /// The slot in 'cache' that we use.
   int token;
 
+  const data_partition* p;
+
   /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
   void invalidate_one_branch(int b);
 
@@ -174,6 +178,11 @@ class Likelihood_Cache {
 public:
   /// Previously computed likelihood.
   log_double_t cached_value;
+
+  void set_dp(const data_partition* p_)
+  {
+    p = p_;
+  }
 
   /// Can we re-use our previously computed likelihood?
   int  cv_up_to_date() const {return cache->cv_up_to_date(token);}

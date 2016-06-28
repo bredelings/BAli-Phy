@@ -1083,7 +1083,7 @@ namespace substitution {
   }
 
   int calculate_caches_for_node(int n, const data_partition& P) {
-    return calculate_caches_for_node(n, *P.sequences,  P, P, P.t(), P.LC);
+    return calculate_caches_for_node(n, *P.sequences,  P, P, P.t(), P.cache());
   }
 
   static 
@@ -1190,7 +1190,7 @@ namespace substitution {
   {
     // FIXME - this now handles only internal sequences.  But see get_leaf_seq_likelihoods( ).
     auto t = P.t();
-    Likelihood_Cache& LC = P.LC;
+    Likelihood_Cache& LC = P.cache();
 
     //------ Check that all branches point to a 'root' node -----------//
     assert(b.size());
@@ -1202,7 +1202,7 @@ namespace substitution {
     assert(not t.is_leaf_node(LC.root));
 
     for(int B: b)
-      calculate_caches_for_branch(B, *P.sequences, P, P, P.t(), P.LC);
+      calculate_caches_for_branch(B, *P.sequences, P, P, P.t(), P.cache());
 
     vector<Matrix> L;
     L.reserve(index.size1()+2);
@@ -1290,7 +1290,7 @@ namespace substitution {
     const vector< vector<int> >& sequences = *P.sequences;
     auto t = P.t();
     const Mat_Cache& MC = P;
-    Likelihood_Cache& LC = P.LC;
+    Likelihood_Cache& LC = P.cache();
 
     // compute root branches
     vector<int> rb = t.branches_in(LC.root);
@@ -1321,14 +1321,14 @@ namespace substitution {
     assert(P1.seqlength(P1.t().source(b)) == P2.seqlength(P2.t().source(b)));
 
 #if 0
-    const int n_models = P1.LC.n_models();
-    const int n_states = P1.LC.n_states();
+    const int n_models = P1.cache().n_models();
+    const int n_states = P1.cache().n_states();
 
     bool equal = true;
     for(int i=0;i<L;i++) 
     {
-      const Matrix& M1 = P1.LC(i,b);
-      const Matrix& M2 = P2.LC(i,b);
+      const Matrix& M1 = P1.cache()(i,b);
+      const Matrix& M2 = P2.cache()(i,b);
       
       for(int m=0;m<n_models;m++) 
 	for(int s1=0;s1<n_states;s1++)
@@ -1340,8 +1340,8 @@ namespace substitution {
     else
       std::cerr<<"branch "<<b<<": cached conditional likelihoods are NOT equal"<<std::endl;
 
-    log_double_t other_subst_current = P1.LC[b].other_subst;
-    log_double_t other_subst_recomputed = P2.LC[b].other_subst;
+    log_double_t other_subst_current = P1.cache()[b].other_subst;
+    log_double_t other_subst_recomputed = P2.cache()[b].other_subst;
     bool other_subst_equal = (std::abs(other_subst_current.log() - other_subst_recomputed.log()) < 1.0e-9);
     if (other_subst_equal)
       ; //std::cerr<<"branch "<<b<<": other_subst valies are equal"<<endl;
@@ -1357,9 +1357,9 @@ namespace substitution {
   void compare_caches(const data_partition& P1, const data_partition& P2)
 
   {
-    assert(P1.LC.root == P2.LC.root);
+    assert(P1.subst_root() == P2.subst_root());
     
-    vector<int> branches = P1.t().branches_in(P1.LC.root);
+    vector<int> branches = P1.t().branches_in(P1.subst_root());
     branches.reserve(P1.t().n_branches());
 
     for(int i=0;i<branches.size();i++)
@@ -1368,7 +1368,7 @@ namespace substitution {
 
       P1.t().append_branches_before(b, branches);
 
-      if (P1.LC.up_to_date(b) and P2.LC.up_to_date(b))
+      if (P1.cache().up_to_date(b) and P2.cache().up_to_date(b))
 	compare_caches(P1,P2,b);
     }
   }
@@ -1447,14 +1447,14 @@ namespace substitution {
 
 
   log_double_t Pr(const data_partition& P) {
-    log_double_t result = Pr(P, P.LC);
+    log_double_t result = Pr(P, P.cache());
 
 #ifdef DEBUG_CACHING
     data_partition P2 = P;
-    P2.LC.invalidate_all();
+    P2.cache().invalidate_all();
     for(int i=0;i<P2.t().n_branches();i++)
       P2.setlength(i);
-    log_double_t result2 = Pr(P2, P2.LC);
+    log_double_t result2 = Pr(P2, P2.cache());
 
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
@@ -1670,7 +1670,7 @@ namespace substitution {
 
   vector<vector<pair<int,int>>> sample_ancestral_states(const data_partition& P)
   {
-    return sample_subst_history(*P.sequences, P, P, P.t(), P.LC);
+    return sample_subst_history(*P.sequences, P, P, P.t(), P.cache());
   }
 
   vector<Matrix> get_likelihoods_by_alignment_column(const data_partition&)

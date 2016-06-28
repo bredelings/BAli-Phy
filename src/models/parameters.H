@@ -123,9 +123,24 @@ public:
   expression_ref base_model(int m, int b) const;
 
   std::vector<double> frequencies(int m) const;
-
+private:
   /// Cached Conditional Likelihoods
   mutable Likelihood_Cache LC;
+
+public:
+  Likelihood_Cache& cache() const
+  {
+    LC.set_dp(this);
+    return LC;
+  }
+
+  int subst_root() const {
+    return LC.root;
+  }
+
+  void set_root(int r) {
+    LC.root = r;
+  }
 
   /// cached branch HMMs
   const indel::PairHMM& get_branch_HMM(int b) const;

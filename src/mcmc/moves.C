@@ -354,7 +354,7 @@ vector<int> walk_tree_path(const TreeInterface& t, int root)
 
 void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
 {
-  //std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+  //std::clog<<"Processing branch "<<b<<" with root "<<P.subst_root()<<endl;
 
   double slice_fraction = P->load_value("branch_slice_fraction",0.9);
 
@@ -395,7 +395,7 @@ void sample_branch_length_(owned_ptr<Model>& P,  MoveStats& Stats, int b)
 void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
-  vector<int> branches = walk_tree_path(PP.t(), PP[0].LC.root);
+  vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
 
   for(int i=0;i<branches.size();i++)
   {
@@ -427,7 +427,7 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<Model>& P, MoveStats& Sta
 void walk_tree_sample_NNI(owned_ptr<Model>& P, MoveStats& Stats)
 {
   Parameters& PP = *P.as<Parameters>();
-  vector<int> branches = walk_tree_path(PP.t(), PP[0].LC.root);
+  vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
 
   for(int i=0;i<branches.size();i++) 
   {
@@ -445,7 +445,7 @@ void walk_tree_sample_NNI_and_A(owned_ptr<Model>& P, MoveStats& Stats)
   double NNI_A_fraction = P->load_value("NNI+A_fraction",0.01);
 
   Parameters& PP = *P.as<Parameters>();
-  vector<int> branches = walk_tree_path(PP.t(), PP[0].LC.root);
+  vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
 
   for(int i=0;i<branches.size();i++) 
   {
@@ -464,13 +464,13 @@ void walk_tree_sample_NNI_and_A(owned_ptr<Model>& P, MoveStats& Stats)
 void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
-  vector<int> branches = walk_tree_path(PP.t(), PP[0].LC.root);
+  vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
 
   for(int i=0;i<branches.size();i++) 
   {
     int b = branches[i];
 
-    //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+    //    std::clog<<"Processing branch "<<b<<" with root "<<P.subst_root()<<endl;
 
     if ((uniform() < 0.15) and (PP.t().n_leaves() >2))
     {
@@ -488,7 +488,7 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
 void walk_tree_sample_branch_lengths(owned_ptr<Model>& P, MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
-  vector<int> branches = walk_tree_path(PP.t(), PP[0].LC.root);
+  vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
 
   for(int i=0;i<branches.size();i++) 
   {
