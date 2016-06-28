@@ -164,7 +164,7 @@ class Likelihood_Cache {
   /// The slot in 'cache' that we use.
   int token;
 
-  const data_partition* p;
+  const data_partition* dp;
 
   /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
   void invalidate_one_branch(int b);
@@ -179,9 +179,9 @@ public:
   /// Previously computed likelihood.
   log_double_t cached_value;
 
-  void set_dp(const data_partition* p_)
+  void set_dp(const data_partition* dp_)
   {
-    p = p_;
+    dp = dp_;
   }
 
   /// Can we re-use our previously computed likelihood?
