@@ -1194,12 +1194,12 @@ namespace substitution {
 
     //------ Check that all branches point to a 'root' node -----------//
     assert(b.size());
-    assert(not t.is_leaf_node(LC.root));
+    //    assert(not t.is_leaf_node(P.subst_root()));
     int root = t.target(b[0]);
     for(int i=1;i<b.size();i++)
       assert(t.target(b[i]) == root);
-    LC.root = root;
-    assert(not t.is_leaf_node(LC.root));
+    P.set_subst_root(root);
+    assert(not t.is_leaf_node(P.subst_root()));
 
     for(int B: b)
       calculate_caches_for_branch(B, *P.sequences, P, P, P.t(), P.cache());
@@ -1293,7 +1293,7 @@ namespace substitution {
     Likelihood_Cache& LC = P.cache();
 
     // compute root branches
-    vector<int> rb = t.branches_in(LC.root);
+    vector<int> rb = t.branches_in(P.subst_root());
 
     vector<int> leaf_branch_list = get_leaf_branches_from_subtree_nodes(t,nodes);
 
@@ -1387,7 +1387,7 @@ namespace substitution {
     }
 #endif
 
-    IF_DEBUG_S(int n_br =) calculate_caches_for_node(LC.root, sequences, P,MC,t,LC);
+    IF_DEBUG_S(int n_br =) calculate_caches_for_node(P.subst_root(), sequences, P,MC,t,LC);
 #ifdef DEBUG_SUBSTITUTION
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -1405,7 +1405,7 @@ namespace substitution {
     }
     else
     {
-      int root = LC.root;
+      int root = P.subst_root();
       if (t.is_leaf_node(root))
 	throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
 
@@ -1488,7 +1488,7 @@ namespace substitution {
     // scratch matrix 
     Matrix S(n_models, n_states);
 
-    int root = cache.root;
+    int root = P.subst_root();
 
     // Compute matrix F(m,s) = Pr(m)*Pr(s|m) = p(m)*freq(m,s) 
     Matrix F = MC.WeightedFrequencyMatrix();
@@ -1553,7 +1553,7 @@ namespace substitution {
       }
     }
 
-    vector<int> branches = t.all_branches_toward_node(cache.root);
+    vector<int> branches = t.all_branches_toward_node(P.subst_root());
     std::reverse(branches.begin(), branches.end());
 
     for(int b: branches)

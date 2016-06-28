@@ -277,8 +277,6 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC)
   token = cache->claim_token(B);
   cache->copy_token(token,LC.token);
 
-  root = LC.root;
-
   return *this;
 }
 
@@ -286,8 +284,7 @@ Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC)
   :cache(LC.cache),
    B(LC.B),
    token(cache->claim_token(B)),
-   cached_value(LC.cached_value),
-   root(LC.root)
+   cached_value(LC.cached_value)
 {
   cache->copy_token(token,LC.token);
 }
@@ -296,8 +293,7 @@ Likelihood_Cache::Likelihood_Cache(const data_partition* dp_)
   :cache(new Multi_Likelihood_Cache),
    B(dp_->t().n_branches()*2),
    token(cache->claim_token(B)),
-   cached_value(0),
-   root(dp_->t().n_nodes()-1)
+   cached_value(0)
 {
   cache->init_token(token);
 }
@@ -306,10 +302,3 @@ Likelihood_Cache::~Likelihood_Cache() {
   cache->release_token(token);
 }
 
-void select_root(const TreeInterface& t,int b,Likelihood_Cache& LC) {
-  int r = t.reverse(b);
-  if (t.subtree_contains(r,LC.root))
-    b = r;
-
-  LC.root = t.target(b);
-}

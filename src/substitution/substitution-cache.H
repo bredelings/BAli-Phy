@@ -189,9 +189,6 @@ public:
   /// Can we re-use our previously computed likelihood?
   int& cv_up_to_date()       {return cache->cv_up_to_date(token);}
 
-  /// Starting point for our likelihood calculations
-  int root;
-
   /// The number of undirected branches;
   int n_branches() const {return B/2;}
 
@@ -242,8 +239,5 @@ public:
 
   ~Likelihood_Cache();
 };
-
-/// Set the root to whichever node of b is closer to the current root.
-void select_root(const TreeInterface& t,int b,Likelihood_Cache& LC);
 
 #endif

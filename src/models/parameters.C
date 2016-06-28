@@ -427,6 +427,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
    sequences( alignment_letters(AA, t().n_leaves()) ),
    a(AA.get_alphabet().clone()),
    LC(this),
+   subst_root_(t().n_nodes()-1),
    branch_HMM_type(t().n_branches(),0)
 {
   int B = t().n_branches();
@@ -975,13 +976,19 @@ void Parameters::recalc_smodel(int m)
 void Parameters::select_root(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    ::select_root(t(), b, get_data_partition(i).LC);
+  {
+    int r = t().reverse(b);
+    if (t().subtree_contains(r, get_data_partition(i).subst_root()))
+      b = r;
+
+    get_data_partition(i).set_subst_root(t().target(b));
+  }
 }
 
 void Parameters::set_root(int node)
 {
   for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).set_root(node);
+    get_data_partition(i).set_subst_root(node);
 }
 
 void Parameters::LC_invalidate_branch(int b)

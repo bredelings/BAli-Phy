@@ -128,7 +128,7 @@ public:
 private:
   /// Cached Conditional Likelihoods
   mutable Likelihood_Cache LC;
-
+  mutable int subst_root_;
 public:
   Likelihood_Cache& cache() const
   {
@@ -137,11 +137,11 @@ public:
   }
 
   int subst_root() const {
-    return LC.root;
+    return subst_root_;
   }
 
-  void set_root(int r) {
-    LC.root = r;
+  void set_subst_root(int r) const {
+    subst_root_ = r;
   }
 
   /// cached branch HMMs
@@ -386,7 +386,7 @@ public:
   void recalc_smodel(int i);
 
   void select_root(int b);
-  void set_root(int b);
+  void set_root(int n);
 
   // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
   void LC_invalidate_branch(int b);
