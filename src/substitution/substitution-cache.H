@@ -189,9 +189,6 @@ public:
   /// Can we re-use our previously computed likelihood?
   int& cv_up_to_date()       {return cache->cv_up_to_date(token);}
 
-  /// The number of undirected branches;
-  int n_branches() const {return B/2;}
-
   /// Mark cached conditional likelihoods for all branches invalid.
   void invalidate_all();
 
@@ -221,14 +218,6 @@ public:
     int loc = cache->location(token,b);
     assert(loc != -1);
     return (*cache)[loc];
-  }
-
-  /// Cached conditional likelihoods for index i, branch b
-  const double* operator()(int i,int b) const {
-    int loc = cache->location(token,b);
-    assert(loc != -1);
-    assert(0 <= i and i < get_length(b));
-    return (*cache)[loc][i];
   }
 
   /// Construct a duplicate view to the same conditional likelihood caches

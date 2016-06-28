@@ -1231,7 +1231,7 @@ namespace substitution {
 	int i0 = index(i,j);
 	if (i0 == alphabet::gap) continue;
 
-	element_prod_modify(S.begin(), LC(i0,b[j]), matrix_size);
+	element_prod_modify(S.begin(), LC[b[j]][i0], matrix_size);
       }
       
       L.push_back(S);
