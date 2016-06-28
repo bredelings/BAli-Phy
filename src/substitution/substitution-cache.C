@@ -19,6 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "substitution-cache.H"
 #include "util.H"
+#include "models/parameters.H"
 
 using std::vector;
 
@@ -209,7 +210,9 @@ void Likelihood_Cache::invalidate_all() {
   cache->invalidate_all(token);
 }
 
-void Likelihood_Cache::invalidate_directed_branch(const TreeInterface& t,int b) {
+void Likelihood_Cache::invalidate_directed_branch(int b) {
+
+  const auto t = dp->t();
   
   cv_up_to_date() = false;
 
@@ -237,27 +240,30 @@ void Likelihood_Cache::invalidate_directed_branch(const TreeInterface& t,int b) 
 #endif
 }
 
-void Likelihood_Cache::invalidate_node(const TreeInterface& t,int n) {
+void Likelihood_Cache::invalidate_node(int n) {
+  const auto t = dp->t();
+  
   for(int b: t.branches_out(n))
-    invalidate_directed_branch(t,b);
+    invalidate_directed_branch(b);
 }
 
 void Likelihood_Cache::invalidate_one_branch(int b) {
   cache->invalidate_one_branch(token,b);
 }
 
-void Likelihood_Cache::invalidate_branch(const TreeInterface& t,int b) {
-  invalidate_directed_branch(t, b);
-  invalidate_directed_branch(t, t.reverse(b));
+void Likelihood_Cache::invalidate_branch(int b) {
+  invalidate_directed_branch(b);
+  invalidate_directed_branch(dp->t().reverse(b));
 }
 
-void Likelihood_Cache::invalidate_branch_alignment(const TreeInterface& t,int b)
+void Likelihood_Cache::invalidate_branch_alignment(int b)
 {
+  const auto t = dp->t();
   for(int b2: t.branches_after(b))
-    invalidate_directed_branch(t,b2);
+    invalidate_directed_branch(b2);
 
   for(int b2: t.branches_after(t.reverse(b)))
-    invalidate_directed_branch(t,b2);
+    invalidate_directed_branch(b2);
 }
 
 Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) 
@@ -286,12 +292,12 @@ Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC)
   cache->copy_token(token,LC.token);
 }
 
-Likelihood_Cache::Likelihood_Cache(const TreeInterface& t)
+Likelihood_Cache::Likelihood_Cache(const data_partition* dp_)
   :cache(new Multi_Likelihood_Cache),
-   B(t.n_branches()*2),
+   B(dp_->t().n_branches()*2),
    token(cache->claim_token(B)),
    cached_value(0),
-   root(t.n_nodes()-1)
+   root(dp_->t().n_nodes()-1)
 {
   cache->init_token(token);
 }

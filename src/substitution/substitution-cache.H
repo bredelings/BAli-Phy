@@ -170,7 +170,7 @@ class Likelihood_Cache {
   void invalidate_one_branch(int b);
 
   /// Mark cached conditional likelihoods for b and all branches after invalid.
-  void invalidate_directed_branch(const TreeInterface&,int b);
+  void invalidate_directed_branch(int b);
 
   /// Get the length columns.
   int get_length(int b) const { return (*this)[b].n_columns(); }
@@ -199,13 +199,13 @@ public:
   void invalidate_all();
 
   /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
-  void invalidate_branch(const TreeInterface&,int b);
+  void invalidate_branch(int b);
 
   /// Mark cached conditional likelihoods for all branches after b or b* invalid.
-  void invalidate_branch_alignment(const TreeInterface&,int b);
+  void invalidate_branch_alignment(int b);
 
   /// Mark cached conditional likelihoods all branches after n invalid.
-  void invalidate_node(const TreeInterface&,int n);
+  void invalidate_node(int n);
 
   /// Are cached conditional likelihoods for branch b, up to date?
   bool up_to_date(int b) const {return cache->up_to_date(token,b);}
@@ -238,7 +238,7 @@ public:
   Likelihood_Cache& operator=(const Likelihood_Cache&);
 
   Likelihood_Cache(const Likelihood_Cache& LC);
-  Likelihood_Cache(const TreeInterface& t);
+  Likelihood_Cache(const data_partition*);
 
   ~Likelihood_Cache();
 };

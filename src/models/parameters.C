@@ -320,7 +320,7 @@ void data_partition::recalc_smodel()
 
 void data_partition::setlength(int b)
 {
-  cache().invalidate_branch(t(),b);
+  cache().invalidate_branch(b);
 }
 
 int data_partition::seqlength(int n) const
@@ -360,10 +360,9 @@ void data_partition::note_alignment_changed_on_branch(int b)
 {
   b = t().undirected(b);
 
-  int B = t().reverse(b);
 
   // However, LC depends only on the alignment of subA indices from different branches.
-  cache().invalidate_branch_alignment(t(),b);
+  cache().invalidate_branch_alignment(b);
 }
 
 /// Set the mean branch length to \a mu
@@ -427,7 +426,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
    seqs(AA.seqs()),
    sequences( alignment_letters(AA, t().n_leaves()) ),
    a(AA.get_alphabet().clone()),
-   LC(t()),
+   LC(this),
    branch_HMM_type(t().n_branches(),0)
 {
   int B = t().n_branches();
@@ -988,13 +987,13 @@ void Parameters::set_root(int node)
 void Parameters::LC_invalidate_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).cache().invalidate_branch(t(),b);
+    get_data_partition(i).cache().invalidate_branch(b);
 }
 
 void Parameters::LC_invalidate_node(int n)
 {
   for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).cache().invalidate_node(t(),n);
+    get_data_partition(i).cache().invalidate_node(n);
 }
 
 void Parameters::LC_invalidate_all()
