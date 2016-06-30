@@ -46,6 +46,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 //------------------------------- parameter-containing class --------------------------//
 
 class Parameters;
+class Likelihood_Cache;
 
 struct data_partition_constants: public Object
 {
@@ -56,7 +57,8 @@ struct data_partition_constants: public Object
 class data_partition: public Mat_Cache
 {
   friend class Parameters;
-
+  friend class Likelihood_Cache;
+  
 public:
   const Parameters* P;
   object_ptr<data_partition_constants> DPC;
