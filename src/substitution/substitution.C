@@ -430,7 +430,7 @@ namespace substitution {
     return total;
   }
 
-  log_double_t calc_root_probability2(Likelihood_Cache& cache, const Mat_Cache& MC,const vector<int>& rb,const matrix<int>& index) 
+  log_double_t calc_root_probability2(Likelihood_Cache cache, const Mat_Cache& MC,const vector<int>& rb,const matrix<int>& index) 
   {
     total_calc_root_prob++;
 
@@ -949,7 +949,7 @@ namespace substitution {
   get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const Mat_Cache& MC, int delta);
 
 
-  void peel_branch(int b0, const data_partition& P, Likelihood_Cache& cache, 
+  void peel_branch(int b0, const data_partition& P, Likelihood_Cache cache, 
 		   const vector< vector<int> >& sequences,
 		   const TreeInterface& t,
 		   const Mat_Cache& MC)
@@ -1015,7 +1015,7 @@ namespace substitution {
 
 
   /// Compute an ordered list of branches to process
-  inline peeling_info get_branches(const TreeInterface& t, const Likelihood_Cache& LC, vector<int> branches) 
+  inline peeling_info get_branches(const TreeInterface& t, const Likelihood_Cache LC, vector<int> branches) 
   {
     //------- Get ordered list of not up_to_date branches ----------///
     peeling_info peeling_operations(t);
@@ -1035,7 +1035,7 @@ namespace substitution {
   }
 
   /// Compute an ordered list of branches to process to validate branch b
-  inline peeling_info get_branches_for_branch(int b, const TreeInterface& t, const Likelihood_Cache& LC) 
+  inline peeling_info get_branches_for_branch(int b, const TreeInterface& t, const Likelihood_Cache LC) 
   {
     vector<int> branches(1,b);
     branches.reserve(t.n_branches());
@@ -1044,7 +1044,7 @@ namespace substitution {
   }
 
   /// Compute an ordered list of branches to process
-  inline peeling_info get_branches_for_node(int n, const TreeInterface& t, const Likelihood_Cache& LC) 
+  inline peeling_info get_branches_for_node(int n, const TreeInterface& t, const Likelihood_Cache LC) 
   {
     vector<int> branches;
     branches.reserve(t.n_branches());
@@ -1057,7 +1057,7 @@ namespace substitution {
   static 
   int calculate_caches_for_node(int n, const vector< vector<int> >& sequences,
 				const data_partition& P, const Mat_Cache& MC, const TreeInterface& t,
-				Likelihood_Cache& cache)
+				Likelihood_Cache cache)
   {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches_for_node(n, t, cache);
@@ -1087,7 +1087,7 @@ namespace substitution {
   static 
   int calculate_caches_for_branch(int b, const vector< vector<int> >& sequences,
 				  const data_partition& P, const Mat_Cache& MC, const TreeInterface& t,
-				  Likelihood_Cache& cache)
+				  Likelihood_Cache cache)
   {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches_for_branch(b, t, cache);
@@ -1188,7 +1188,7 @@ namespace substitution {
   {
     // FIXME - this now handles only internal sequences.  But see get_leaf_seq_likelihoods( ).
     auto t = P.t();
-    Likelihood_Cache& LC = P.cache();
+    Likelihood_Cache LC = P.cache();
 
     //------ Check that all branches point to a 'root' node -----------//
     assert(b.size());
@@ -1288,7 +1288,7 @@ namespace substitution {
     const vector< vector<int> >& sequences = *P.sequences;
     auto t = P.t();
     const Mat_Cache& MC = P;
-    Likelihood_Cache& LC = P.cache();
+    Likelihood_Cache LC = P.cache();
 
     // compute root branches
     vector<int> rb = t.branches_in(P.subst_root());
@@ -1372,7 +1372,7 @@ namespace substitution {
   }
 
   log_double_t Pr(const vector< vector<int> >& sequences, const data_partition& P, 
-		  const Mat_Cache& MC,const TreeInterface& t, Likelihood_Cache& LC)
+		  const Mat_Cache& MC,const TreeInterface& t, Likelihood_Cache LC)
   {
     total_likelihood++;
 
@@ -1420,7 +1420,7 @@ namespace substitution {
     return Pr;
   }
 
-  log_double_t Pr(const data_partition& P,Likelihood_Cache& LC) 
+  log_double_t Pr(const data_partition& P,Likelihood_Cache LC) 
   {
     return Pr(*P.sequences, P, P, P.t(), LC);
   }
@@ -1457,7 +1457,7 @@ namespace substitution {
   vector<vector<pair<int,int>>> 
   sample_subst_history(const vector< vector<int> >& sequences,
 		       const data_partition& P, const Mat_Cache& MC,
-		       const TreeInterface& t, Likelihood_Cache& cache)
+		       const TreeInterface& t, Likelihood_Cache cache)
   {
     const vector<unsigned>& smap = MC.state_letters();
 

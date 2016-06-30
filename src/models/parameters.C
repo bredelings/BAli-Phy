@@ -425,7 +425,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
    seqs(AA.seqs()),
    sequences( alignment_letters(AA, t().n_leaves()) ),
    a(AA.get_alphabet().clone()),
-   LC(this),
    branch_HMM_type(t().n_branches(),0)
 {
   int B = t().n_branches();
