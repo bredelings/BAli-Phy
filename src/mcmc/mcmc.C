@@ -1135,7 +1135,7 @@ void mcmc_init(Parameters& P, ostream& s_out)
     if (P[i].has_IModel())
       assert(A.n_sequences() == t.n_nodes() and P[i].variable_alignment()); 
     else
-      assert(A.n_sequences() == t.n_leaves() and not P[i].variable_alignment());
+      assert(A.n_sequences() == t.n_nodes() and not P[i].variable_alignment());
 
     //    for(int j=0;j<A.n_sequences();j++)
     //      assert(T.get_label(j) == A.seq(j).name);    
