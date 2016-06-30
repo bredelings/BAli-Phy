@@ -197,15 +197,13 @@ public:
   /// Are cached conditional likelihoods for branch b, up to date?
   bool up_to_date(int b) const {return cache->up_to_date(token,b);}
 
-  /// Mark cached conditional likelihoods for branch b up to date.
-  void validate_branch(int b) {cache->validate_branch(token,b);}
-
   /// Is there is backing store for us to work with?
   bool branch_available(int b) const {return cache->location_allocated(token,b);}
 
   /// Ensure there is backing store for us to work with
   void set_branch(int b, Likelihood_Cache_Branch* LCB) {
     cache->set_location(token, b, LCB);
+    cache->validate_branch(token, b);
   }
 
   /// Cached conditional likelihoods for branch b

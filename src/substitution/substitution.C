@@ -1011,8 +1011,6 @@ namespace substitution {
     }
     else
       std::abort();
-
-    cache.validate_branch(b0);
   }
 
 
