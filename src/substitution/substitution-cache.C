@@ -102,8 +102,6 @@ void Multi_Likelihood_Cache::invalidate_one_branch(int token, int b)
   if (location_allocated(token,b))
     release_location(loc);
   mapping[token][b] = -1;
-
-  cv_up_to_date_[token] = false;
 }
 
 void Multi_Likelihood_Cache::invalidate_all(int token) {
@@ -128,7 +126,6 @@ int Multi_Likelihood_Cache::add_token(int B) {
   // add the token
   active.push_back(false);
   mapping.push_back(std::vector<int>(B));
-  cv_up_to_date_.push_back(false);
 
 #ifndef CONSERVE_MEM
   // add space used by the token
@@ -166,17 +163,12 @@ void Multi_Likelihood_Cache::init_token(int token)
   /// Out branches initially don't point to any backing store
   for(int b=0;b<mapping[token].size();b++)
     mapping[token][b] = -1;
-
-  cv_up_to_date_[token] = false;
 }
 
 // initialize token1 mappings from the mappings of token2
 void Multi_Likelihood_Cache::copy_token(int token1, int token2) 
 {
   assert(mapping[token1].size() == mapping[token2].size());
-
-  // is the complete likelihood up to date?
-  cv_up_to_date_[token1] = cv_up_to_date_[token2];
 
   // token one now uses the same slots/locations as token2
   mapping[token1] = mapping[token2];
@@ -214,8 +206,6 @@ void Likelihood_Cache::invalidate_directed_branch(int b) {
 
   const auto t = dp->t();
   
-  cv_up_to_date() = false;
-
   if (up_to_date(b))
   {
     vector<int> branches;
@@ -270,8 +260,6 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC)
 {
   B = LC.B;
 
-  cached_value = LC.cached_value;
-
   cache->release_token(token);
   cache = LC.cache;
   token = cache->claim_token(B);
@@ -283,8 +271,7 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC)
 Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC) 
   :cache(LC.cache),
    B(LC.B),
-   token(cache->claim_token(B)),
-   cached_value(LC.cached_value)
+   token(cache->claim_token(B))
 {
   cache->copy_token(token,LC.token);
 }
@@ -292,8 +279,7 @@ Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC)
 Likelihood_Cache::Likelihood_Cache(const data_partition* dp_)
   :cache(new Multi_Likelihood_Cache),
    B(dp_->t().n_branches()*2),
-   token(cache->claim_token(B)),
-   cached_value(0)
+   token(cache->claim_token(B))
 {
   cache->init_token(token);
 }

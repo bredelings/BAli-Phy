@@ -176,18 +176,11 @@ class Likelihood_Cache {
   int get_length(int b) const { return (*this)[b].n_columns(); }
 
 public:
-  /// Previously computed likelihood.
-  log_double_t cached_value;
 
   void set_dp(const data_partition* dp_)
   {
     dp = dp_;
   }
-
-  /// Can we re-use our previously computed likelihood?
-  int  cv_up_to_date() const {return cache->cv_up_to_date(token);}
-  /// Can we re-use our previously computed likelihood?
-  int& cv_up_to_date()       {return cache->cv_up_to_date(token);}
 
   /// Mark cached conditional likelihoods for all branches invalid.
   void invalidate_all();
@@ -203,8 +196,10 @@ public:
 
   /// Are cached conditional likelihoods for branch b, up to date?
   bool up_to_date(int b) const {return cache->up_to_date(token,b);}
+
   /// Mark cached conditional likelihoods for branch b up to date.
   void validate_branch(int b) {cache->validate_branch(token,b);}
+
   /// Is there is backing store for us to work with?
   bool branch_available(int b) const {return cache->location_allocated(token,b);}
 

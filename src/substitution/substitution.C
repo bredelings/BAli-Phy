@@ -1378,15 +1378,6 @@ namespace substitution {
   {
     total_likelihood++;
 
-#ifndef DEBUG_CACHING
-    if (LC.cv_up_to_date()) {
-#ifdef DEBUG_SUBSTITUTION
-      std::clog<<"Pr: Using cached value "<<log(LC.cached_value)<<"\n";
-#endif
-      return LC.cached_value;
-    }
-#endif
-
     IF_DEBUG_S(int n_br =) calculate_caches_for_node(P.subst_root(), sequences, P,MC,t,LC);
 #ifdef DEBUG_SUBSTITUTION
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
@@ -1427,15 +1418,6 @@ namespace substitution {
 
       Pr = calc_root_probability(&LC[rb[0]], &LC[rb[1]], &LC[rb[2]], F, index);
     }
-
-#ifdef DEBUG_CACHING
-    if (LC.cv_up_to_date())
-    {
-      assert(std::abs(LC.cached_value.log() - Pr.log()) < 1.0e-9);
-    }
-#endif
-    LC.cached_value = Pr;
-    LC.cv_up_to_date() = true;
 
     return Pr;
   }
