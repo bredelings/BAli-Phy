@@ -212,6 +212,14 @@ double data_partition::get_beta() const
   return P->get_beta();
 }
 
+int data_partition::subst_root() const {
+  return P->subst_root();
+}
+
+void data_partition::set_subst_root(int r) const {
+  P->set_root(r);
+}
+
 void data_partition::variable_alignment(bool b)
 {
   variable_alignment_ = b;
@@ -427,7 +435,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
    sequences( alignment_letters(AA, t().n_leaves()) ),
    a(AA.get_alphabet().clone()),
    LC(this),
-   subst_root_(t().n_nodes()-1),
    branch_HMM_type(t().n_branches(),0)
 {
   int B = t().n_branches();
@@ -444,12 +451,12 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
     int n1 = t().source(b);
     int n2 = t().target(b);
     auto pi = A2::get_pairwise_alignment(AAA,n1,n2);
-    pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b), pi);
+    pairwise_alignment_for_branch[b] = p->add_parameter(invisible_prefix+"a"+convertToString(b), pi);
   }
 
   // Create and set conditional likelihoods for each branch
   for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
-    conditional_likelihoods_for_branch[b] = p->add_parameter(prefix+"CL"+convertToString(b), 0);
+    conditional_likelihoods_for_branch[b] = p->add_parameter(invisible_prefix+"CL"+convertToString(b), 0);
 
   const int n_base_smodels = n_base_models();
   //  const int n_states = state_letters().size();
@@ -973,22 +980,25 @@ void Parameters::recalc_smodel(int m)
   }
 }
 
-void Parameters::select_root(int b)
+void Parameters::select_root(int b) const
 {
-  for(int i=0;i<n_data_partitions();i++)
-  {
-    int r = t().reverse(b);
-    if (t().subtree_contains(r, get_data_partition(i).subst_root()))
-      b = r;
+  int r = t().reverse(b);
+  if (t().subtree_contains(r, subst_root()))
+    b = r;
 
-    get_data_partition(i).set_subst_root(t().target(b));
-  }
+  set_root(t().target(b));
 }
 
-void Parameters::set_root(int node)
+void Parameters::set_root(int node) const
 {
-  for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).set_subst_root(node);
+  assert(not t().is_leaf_node(node));
+  const context* C = this;
+  const_cast<context*>(C)->set_parameter_value(subst_root_index, node);
+}
+
+int Parameters::subst_root() const
+{
+  return get_parameter_value(subst_root_index).as_int();
 }
 
 void Parameters::LC_invalidate_branch(int b)
@@ -1223,6 +1233,8 @@ Parameters::Parameters(const module_loader& L,
   TC = new tree_constants(this, tt);
   
   t().read_tree(tt);
+
+  subst_root_index = add_parameter("*subst_root", t().n_nodes()-1);
 
 #ifndef NDEBUG
   evaluate_expression( (identifier("numNodes"), my_tree()));
