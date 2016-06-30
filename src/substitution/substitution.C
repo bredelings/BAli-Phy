@@ -338,10 +338,18 @@ namespace substitution {
   log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
 				     const Likelihood_Cache_Branch* LCB2,
 				     const Likelihood_Cache_Branch* LCB3,
-				     const Matrix& F,
-				     const matrix<int>& index)
+				     const pairwise_alignment_t& A1,
+				     const pairwise_alignment_t& A2,
+				     const pairwise_alignment_t& A3,
+				     const Matrix& F)
   {
     total_calc_root_prob++;
+
+    auto a10 = convert_to_bits(A1,1,0);
+    auto a20 = convert_to_bits(A2,2,0);
+    auto a30 = convert_to_bits(A3,3,0);
+    auto a0123 = Glue_A(a10, Glue_A(a20,a30));
+    auto index = get_indices_from_bitpath(a0123, {1,2,3});
 
     const int n_models = F.size1();
     const int n_states = F.size2();
@@ -1402,11 +1410,9 @@ namespace substitution {
       assert(t.target(rb[0]) == root);
       assert(rb.size() == 3);
 
-      auto a10 = convert_to_bits(P.get_pairwise_alignment(rb[0]),1,0);
-      auto a20 = convert_to_bits(P.get_pairwise_alignment(rb[1]),2,0);
-      auto a30 = convert_to_bits(P.get_pairwise_alignment(rb[2]),3,0);
-      auto a0123 = Glue_A(a10, Glue_A(a20,a30));
-      auto index = get_indices_from_bitpath(a0123, {1,2,3});
+      auto& A1 = P.get_pairwise_alignment(rb[0]);
+      auto& A2 = P.get_pairwise_alignment(rb[1]);
+      auto& A3 = P.get_pairwise_alignment(rb[2]);
 
       for(int i=0;i<rb.size();i++)
 	assert(LC.up_to_date(rb[i]));
@@ -1414,7 +1420,7 @@ namespace substitution {
       // cache matrix F(m,s) of p(m)*freq(m,l)
       Matrix F = MC.WeightedFrequencyMatrix();
 
-      Pr = calc_root_probability(&LC[rb[0]], &LC[rb[1]], &LC[rb[2]], F, index);
+      Pr = calc_root_probability(&LC[rb[0]], &LC[rb[1]], &LC[rb[2]], A1, A2, A3, F);
     }
 
     return Pr;
