@@ -1335,12 +1335,7 @@ Parameters::Parameters(const module_loader& L,
     for(int m=0;m < n_smodels(); m++)
     {
       expression_ref S = get_expression(PC->SModels[m].main);
-      //expression_ref V = identifier("listToVectorMatrix");
-      expression_ref V = identifier("vector_Matrix_From_List");
-      //expression_ref I = 0;
-      expression_ref I = (identifier("!!"),branch_cat_list,v1);
-      expression_ref E = (identifier("mkArray"), t().n_branches(), v1^(V,(identifier("branchTransitionP"), (identifier("getNthMixture"),S,I), (identifier("!"), DL, v1) ) ) );
-      PC->branch_transition_p_indices(s,m) = add_compute_expression(E);
+      PC->branch_transition_p_indices(s,m) = add_compute_expression((identifier("transition_p_index"), my_tree(), S, branch_cat_list, DL));
     }
   }
 

@@ -3,6 +3,7 @@ module SModel where
 import Distributions;
 import Alphabet;
 import Tree;
+import Parameters;
     
 builtin f3x4_frequencies 4 "f3x4_frequencies" "SModel";
 builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
@@ -630,6 +631,18 @@ dp_model base n = Prefix "DP"
 
    return $ multiRate base (DiscreteDistribution dist)
 });
+
+
+branch_transition_p t smodel branch_cat_list ds b = vector_Matrix_From_List $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b);
+
+transition_p_index t smodel branch_cat_list ds = mkArray (numBranches t) (branch_transition_p t smodel branch_cat_list ds);
+
+distance_model scale branch =
+(do {
+   m <- new_modifiable;
+   add_parameter ("*Scale"++show scale++"."++show (branch+1)) m;
+   return m
+   });
 
 a_branch_mean_model n = 
 (do {
