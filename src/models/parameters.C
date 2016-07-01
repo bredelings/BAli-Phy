@@ -239,6 +239,11 @@ bool data_partition::has_IModel() const
   return (m != -1);
 }
 
+const std::vector<int>& data_partition::get_sequence(int i) const
+{
+  return P->evaluate( leaf_sequence_indices[i] ).as_<Vector<int>>();
+}
+
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
   b = t().undirected(b);
@@ -419,6 +424,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
    partition_index(i),
    pairwise_alignment_for_branch(2*t().n_branches()),
    conditional_likelihoods_for_branch(2*t().n_branches()),
+   leaf_sequence_indices(t().n_leaves(),-1),
    sequence_length_indices(AA.n_sequences(),-1),
    transition_p_method_indices(t().n_branches(),-1),
    variable_alignment_( has_IModel() ),
@@ -474,7 +480,10 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
     }
   }
 
-
+  // Add parameters for observed leaf sequence objects
+  for(int i=0; i<leaf_sequence_indices.size(); i++)
+    leaf_sequence_indices[i] = p->add_compute_expression(Vector<int>((*sequences)[i]));
+  
   // Add methods indices for sequence lengths
   vector<expression_ref> as_;
   for(int b=0;b<2*B;b++)

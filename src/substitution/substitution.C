@@ -958,7 +958,6 @@ namespace substitution {
 
 
   void peel_branch(int b0, const data_partition& P, Likelihood_Cache cache, 
-		   const vector< vector<int> >& sequences,
 		   const TreeInterface& t,
 		   const Mat_Cache& MC)
   {
@@ -978,7 +977,7 @@ namespace substitution {
       assert(bb == 0);
       auto LCB = new Likelihood_Cache_Branch(L0, MC.n_base_models(), MC.n_states());
 
-      vector<Matrix> L = get_leaf_seq_likelihoods(sequences[1], P.get_alphabet(), MC, 0);
+      vector<Matrix> L = get_leaf_seq_likelihoods(P.get_sequence(1), P.get_alphabet(), MC, 0);
 
       for(int i=0;i<L0;i++)
 	element_assign((*LCB)[i], L[i].begin(), matrix_size);
@@ -991,12 +990,12 @@ namespace substitution {
       int n_letters = a.n_letters();
       if (n_states == n_letters) {
 	if (MC.base_model(0,0).is_a<F81_Object>())
-	  cache.set_branch(b0, peel_leaf_branch_F81(sequences[b0], a, f81_exp_a_t(MC, b0, t.branch_length(b0)), MC.FrequencyMatrix()));
+	  cache.set_branch(b0, peel_leaf_branch_F81(P.get_sequence(b0), a, f81_exp_a_t(MC, b0, t.branch_length(b0)), MC.FrequencyMatrix()));
 	else
-	  cache.set_branch(b0, peel_leaf_branch(sequences[b0], a, MC.transition_P(b0)));
+	  cache.set_branch(b0, peel_leaf_branch(P.get_sequence(b0), a, MC.transition_P(b0)));
       }
       else
-	cache.set_branch(b0, peel_leaf_branch_modulated(sequences[b0], a, MC.transition_P(b0), MC.state_letters()));
+	cache.set_branch(b0, peel_leaf_branch_modulated(P.get_sequence(b0), a, MC.transition_P(b0), MC.state_letters()));
     }
     else if (bb == 2) {
       // find the names of the (two) branches behind b0
@@ -1063,7 +1062,7 @@ namespace substitution {
   }
 
   static 
-  int calculate_caches_for_node(int n, const vector< vector<int> >& sequences,
+  int calculate_caches_for_node(int n,
 				const data_partition& P, const Mat_Cache& MC, const TreeInterface& t,
 				Likelihood_Cache cache)
   {
@@ -1083,17 +1082,17 @@ namespace substitution {
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],P,cache,sequences,t,MC);
+      peel_branch(ops[i],P,cache,t,MC);
 
     return ops.size();
   }
 
   int calculate_caches_for_node(int n, const data_partition& P) {
-    return calculate_caches_for_node(n, *P.sequences,  P, P, P.t(), P.cache());
+    return calculate_caches_for_node(n, P, P, P.t(), P.cache());
   }
 
   static 
-  int calculate_caches_for_branch(int b, const vector< vector<int> >& sequences,
+  int calculate_caches_for_branch(int b, 
 				  const data_partition& P, const Mat_Cache& MC, const TreeInterface& t,
 				  Likelihood_Cache cache)
   {
@@ -1102,7 +1101,7 @@ namespace substitution {
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],P,cache,sequences,t,MC);
+      peel_branch(ops[i],P,cache,t,MC);
 
     return ops.size();
   }
@@ -1185,7 +1184,7 @@ namespace substitution {
   vector<Matrix>
   get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
   {
-    const vector<int>& sequence = (*P.sequences)[n];
+    const vector<int>& sequence = P.get_sequence(n);
     const alphabet& a = P.get_alphabet();
     return get_leaf_seq_likelihoods(sequence, a, P, delta);
   }
@@ -1208,7 +1207,7 @@ namespace substitution {
     assert(not t.is_leaf_node(P.subst_root()));
 
     for(int B: b)
-      calculate_caches_for_branch(B, *P.sequences, P, P, P.t(), P.cache());
+      calculate_caches_for_branch(B, P, P, P.t(), P.cache());
 
     vector<Matrix> L;
     L.reserve(index.size1()+2);
@@ -1293,7 +1292,6 @@ namespace substitution {
   ///
   log_double_t other_subst(const data_partition& P, const vector<int>& nodes) 
   {
-    const vector< vector<int> >& sequences = *P.sequences;
     auto t = P.t();
     const Mat_Cache& MC = P;
     Likelihood_Cache LC = P.cache();
@@ -1306,7 +1304,7 @@ namespace substitution {
     log_double_t Pr3 = 1;
     for(int b: leaf_branch_list)
     {
-      IF_DEBUG_S(int n_br =) calculate_caches_for_branch(b, sequences, P, MC, t, LC);
+      IF_DEBUG_S(int n_br =) calculate_caches_for_branch(b, P, MC, t, LC);
 #ifdef DEBUG_SUBSTITUTION
       std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -1379,12 +1377,12 @@ namespace substitution {
     }
   }
 
-  log_double_t Pr(const vector< vector<int> >& sequences, const data_partition& P, 
+  log_double_t Pr(const data_partition& P, 
 		  const Mat_Cache& MC,const TreeInterface& t, Likelihood_Cache LC)
   {
     total_likelihood++;
 
-    IF_DEBUG_S(int n_br =) calculate_caches_for_node(P.subst_root(), sequences, P,MC,t,LC);
+    IF_DEBUG_S(int n_br =) calculate_caches_for_node(P.subst_root(), P,MC,t,LC);
 #ifdef DEBUG_SUBSTITUTION
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -1428,7 +1426,7 @@ namespace substitution {
 
   log_double_t Pr(const data_partition& P,Likelihood_Cache LC) 
   {
-    return Pr(*P.sequences, P, P, P.t(), LC);
+    return Pr(P, P, P.t(), LC);
   }
 
 
@@ -1461,8 +1459,7 @@ namespace substitution {
   }
 
   vector<vector<pair<int,int>>> 
-  sample_subst_history(const vector< vector<int> >& sequences,
-		       const data_partition& P, const Mat_Cache& MC,
+  sample_subst_history(const data_partition& P, const Mat_Cache& MC,
 		       const TreeInterface& t, Likelihood_Cache cache)
   {
     const vector<unsigned>& smap = MC.state_letters();
@@ -1492,7 +1489,7 @@ namespace substitution {
       vector<int> rb;
       for(int b: t.branches_in(root))
       {
-	calculate_caches_for_branch(b, sequences, P,MC,t,cache);
+	calculate_caches_for_branch(b, P,MC,t,cache);
 
 	rb.push_back(b);
 
@@ -1545,13 +1542,14 @@ namespace substitution {
     for(int b: branches)
     {
       int node = t.source(b);
+      auto& sequence = P.get_sequence(node);
 
       const vector<Matrix>& transition_P = MC.transition_P(b);
 
       vector<int> local_branches = {b};
       for(int b: t.branches_before(b))
       {
-	calculate_caches_for_branch(b, sequences, P,MC,t,cache);
+	calculate_caches_for_branch(b, P,MC,t,cache);
 
 	local_branches.push_back(b);
 
@@ -1606,7 +1604,7 @@ namespace substitution {
 	if (local_branches.size() == 1)
 	{
 	  int ii = index(i,0);
-	  int l = sequences[node][ii];
+	  int l = sequence[ii];
 	  const alphabet& a = P.get_alphabet();
 	  if (l == alphabet::not_gap)
 	    ;
@@ -1656,7 +1654,7 @@ namespace substitution {
 
   vector<vector<pair<int,int>>> sample_ancestral_states(const data_partition& P)
   {
-    return sample_subst_history(*P.sequences, P, P, P.t(), P.cache());
+    return sample_subst_history(P, P, P.t(), P.cache());
   }
 
   vector<Matrix> get_likelihoods_by_alignment_column(const data_partition&)

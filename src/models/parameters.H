@@ -71,6 +71,8 @@ private:
 
   std::vector<int> conditional_likelihoods_for_branch;
 
+  std::vector<int> leaf_sequence_indices;
+
   std::vector<int> sequence_length_indices;
 
   std::vector<int> transition_p_method_indices;
@@ -114,6 +116,8 @@ public:
   /// Cached Transition Probabilities
   const std::vector<Matrix>& transition_P(int b) const;
   
+  const std::vector<int>& get_sequence(int i) const;
+
   int n_base_models() const;
 
   // Perhaps this should really be per-mixture-component.
