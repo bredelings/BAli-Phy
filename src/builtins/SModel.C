@@ -913,3 +913,48 @@ extern "C" closure builtin_function_fMutSel_q2(OperationArgs& Args)
   return Q_;
 }
 */
+
+extern "C" closure builtin_function_weighted_frequency_matrix(OperationArgs& Args)
+{
+  auto arg0 = Args.evaluate(0);
+  const auto& D = arg0.as_<EVector>();
+
+  auto arg1 = Args.evaluate(1);
+  const auto& F = arg1.as_<EVector>();
+  // cache matrix of frequencies
+
+  assert(D.size() == F.size());
+
+  const int n_models = F.size();
+  const int n_states = F[0].as_<Vector<double>>().size();
+
+  auto *WF = new Box<Matrix>(n_models, n_states);
+
+  for(int m=0;m<n_models;m++) {
+    double p = D[m].as_double();
+    const auto& f = F[m].as_<Vector<double>>();
+    for(int s=0;s<n_states;s++) 
+      (*WF)(m,s) = p*f[s];
+  }
+  return WF;
+}
+
+extern "C" closure builtin_function_frequency_matrix(OperationArgs& Args)
+{
+  auto arg0 = Args.evaluate(0);
+  const auto& F = arg0.as_<EVector>();
+  // cache matrix of frequencies
+
+  const int n_models = F.size();
+  const int n_states = F[0].as_<Vector<double>>().size();
+
+  auto *FF = new Box<Matrix>(n_models, n_states);
+
+  for(int m=0;m<n_models;m++) {
+    const auto& f = F[m].as_<Vector<double>>();
+    for(int s=0;s<n_states;s++) 
+      (*FF)(m,s) = f[s];
+  }
+  return FF;
+}
+

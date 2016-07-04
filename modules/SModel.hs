@@ -22,6 +22,8 @@ builtin wag 1 "wag" "SModel";
 builtin lg 1 "lg" "SModel";
 builtin fMutSel_q 4 "fMutSel_q" "SModel";
 builtin fMutSel_pi 3 "fMutSel_pi" "SModel";
+builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel";
+builtin builtin_frequency_matrix 1 "weighted_frequency_matrix" "SModel";
 
 data ReversibleMarkov = ReversibleMarkov a b c d e f g;
 data ReversibleFrequency = ReversibleFrequency a b c d;
@@ -85,6 +87,15 @@ getNthMixture (MixtureModels l) i = l !! i;
 unwrapMM (MixtureModel dd) = dd;
 
 mixMixtureModels l dd = MixtureModel (mixDiscreteDistributions l (map unwrapMM dd));
+
+weighted_frequency_matrix (MixtureModel d) = let {model = MixtureModel d;
+                                                  dist = list_to_vector $ distribution model;
+                                                  freqs = list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1]}
+                                             in builtin_weighted_frequency_matrix dist freqs;
+weighted_frequency_matrix (MixtureModels (m:ms)) = weighted_frequency_matrix m;
+
+frequency_matrix (MixtureModel d) = builtin_frequency_matrix $ list_to_vector $ map (componentFrequencies (MixtureModel d)) [0..nBaseModels d-1];
+frequency_matrix (MixtureModels (m:ms)) = frequency_matrix m;
 
 --
 equ_model nuca = return $ equ nuca;

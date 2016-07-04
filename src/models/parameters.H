@@ -128,6 +128,10 @@ public:
   
   std::vector<double> distribution() const;
 
+  Matrix WeightedFrequencyMatrix() const;
+
+  Matrix FrequencyMatrix() const;
+
   expression_ref base_model(int m, int b) const;
 
   std::vector<double> frequencies(int m) const;
@@ -201,6 +205,8 @@ struct smodel_methods
   int n_states;
   int state_letters;
   int distribution;
+  int weighted_frequency_matrix;
+  int frequency_matrix;
   int get_alphabet;
   int rate;
 

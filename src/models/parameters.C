@@ -270,6 +270,18 @@ vector<double> data_partition::distribution() const
   return P->evaluate(P->PC->SModels[s].distribution).as_<Vector<double>>();
 }
 
+Matrix data_partition::WeightedFrequencyMatrix() const
+{
+  int s = P->smodel_index_for_partition(partition_index);
+  return P->evaluate(P->PC->SModels[s].weighted_frequency_matrix).as_<Box<Matrix>>();
+}
+
+Matrix data_partition::FrequencyMatrix() const
+{
+  int s = P->smodel_index_for_partition(partition_index);
+  return P->evaluate(P->PC->SModels[s].frequency_matrix).as_<Box<Matrix>>();
+}
+
 vector<unsigned> data_partition::state_letters() const
 {
   int s = P->smodel_index_for_partition(partition_index);
@@ -535,6 +547,8 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
   n_base_models = C.add_compute_expression((identifier("nBaseModels"), S));
   n_states =  C.add_compute_expression((identifier("nStates"), S));
   distribution =  C.add_compute_expression((V,(identifier("distribution"), S)));
+  weighted_frequency_matrix = C.add_compute_expression((identifier("weighted_frequency_matrix"), S));
+  frequency_matrix = C.add_compute_expression((identifier("frequency_matrix"), S));
   get_alphabet = C.add_compute_expression((identifier("getAlphabet"), S));
   state_letters = C.add_compute_expression((identifier("stateLetters"), S));
   n_states = C.add_compute_expression((identifier("nStates"), S));
