@@ -34,7 +34,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "models/model.H"
 #include "imodel/imodel.H"
 #include "alignment/alignment.H"
-#include "substitution/matcache.H"
 #include "substitution/substitution-cache.H"
 
 #include "tools/partition.H"
@@ -54,7 +53,7 @@ struct data_partition_constants: public Object
 };
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)
-class data_partition: public Mat_Cache
+class data_partition
 {
   friend class Parameters;
   friend class Likelihood_Cache;

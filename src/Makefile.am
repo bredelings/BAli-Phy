@@ -34,7 +34,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            substitution/substitution.H dp/alignment-sums.H imodel/imodel.H probability/probability.H \
            alignment/alignment-util.H prior.H mcmc/proposals.H \
            tree/tree-branchnode.H sequence/alphabet.H math/log-double.H tree/tree.H \
-           dp/bits.H math/logsum.H tree/tree-util.H probability/choose.H substitution/matcache.H  \
+           dp/bits.H math/logsum.H tree/tree-util.H probability/choose.H \
            rng.H util.H object.H mcmc/mcmc.H mcmc/sample.H util-random.H \
            models/model.H sequence/sequence-format.H dp/dp-array.H monitor.H sequence/sequence.H \
            tools/bootstrap.H tools/inverse.H tools/statistics.H \
@@ -110,8 +110,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  imodel/setup.C computation/computation.C \
 	  computation/graph_register.C computation/show_graph.C computation/module.C \
 	  computation/formula_expression.C computation/evaluate.C computation/gc.C \
-	  computation/operations.C computation/loader.C computation/context.C \
-	  substitution/matcache.C computation/closure.C \
+	  computation/operations.C computation/loader.C computation/context.C computation/closure.C \
 	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C \
 	  parser/AST.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
 	  startup/loggers.C startup/system.C startup/cmd_line.C

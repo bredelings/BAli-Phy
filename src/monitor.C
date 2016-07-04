@@ -47,12 +47,12 @@ void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<doub
       o<<"f"<<a.lookup(i)<<" = "<<f[i]<<"\n";
 }
 
-void show_frequencies(std::ostream& o,const Mat_Cache& MC)
+void show_frequencies(std::ostream& o,const data_partition& P)
 {
-  const alphabet& a = MC.get_alphabet();
+  const alphabet& a = P.get_alphabet();
 
-  if (MC.n_base_models() == 1) {
-    vector<double> f = MC.frequencies(0);
+  if (P.n_base_models() == 1) {
+    vector<double> f = P.frequencies(0);
     for(int i=0;i<a.size();i++)
       o<<"f"<<a.lookup(i)<<" = "<<f[i]<<"\n";
   }
@@ -60,28 +60,28 @@ void show_frequencies(std::ostream& o,const Mat_Cache& MC)
 
     for(int i=0;i<a.size();i++) {
       double total = 0;
-      for(int m=0;m<MC.n_base_models();m++) {
-	vector<double> f = MC.frequencies(m);
+      for(int m=0;m<P.n_base_models();m++) {
+	vector<double> f = P.frequencies(m);
 	o<<"f"<<a.lookup(i)<<m+1<<" = "<<f[i]<<"     ";
-	total += MC.distribution()[m] * f[i];
+	total += P.distribution()[m] * f[i];
       }
       o<<"f"<<a.lookup(i)<<" = "<<total<<"\n";
     }
   }
 }
 
-void show_smodel(std::ostream& o, const Mat_Cache& MC)
+void show_smodel(std::ostream& o, const data_partition& P)
 {
-  //  for(int i=0;i<MC.n_base_models();i++)
-  //    o<<"    rate"<<i<<" = "<<convert<const substitution::ReversibleAdditiveObject>(MC.base_model(i))->rate();
+  //  for(int i=0;i<P.n_base_models();i++)
+  //    o<<"    rate"<<i<<" = "<<convert<const substitution::ReversibleAdditiveObject>(P.base_model(i))->rate();
   //  o<<"\n\n";
   
-  for(int i=0;i<MC.n_base_models();i++)
-    o<<"    fraction"<<i<<" = "<<MC.distribution()[i];
+  for(int i=0;i<P.n_base_models();i++)
+    o<<"    fraction"<<i<<" = "<<P.distribution()[i];
   o<<"\n\n";
 
   o<<"frequencies = "<<"\n";
-  show_frequencies(o,MC);
+  show_frequencies(o,P);
 }
 
 void show_smodels(std::ostream& o, const Parameters& P)

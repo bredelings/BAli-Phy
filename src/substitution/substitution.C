@@ -20,7 +20,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution.H"
 #include "models/parameters.H"
 #include "sequence/alphabet.H"
-#include "matcache.H"
 #include "rng.H"
 #include <cmath>
 #include <valarray>
@@ -438,7 +437,7 @@ namespace substitution {
     return total;
   }
 
-  log_double_t calc_root_probability2(Likelihood_Cache cache, const Mat_Cache& MC,const vector<int>& rb,const matrix<int>& index) 
+  log_double_t calc_root_probability2(Likelihood_Cache cache, const data_partition& P,const vector<int>& rb,const matrix<int>& index) 
   {
     total_calc_root_prob++;
 
@@ -451,8 +450,8 @@ namespace substitution {
 
     assert(rb.size() == 2);
 
-    const int n_models = MC.n_base_models();
-    const int n_states = MC.n_states();
+    const int n_models = P.n_base_models();
+    const int n_states = P.n_states();
     const int matrix_size = n_models * n_states;
 
 #ifdef DEBUG_SUBSTITUTION    
@@ -461,7 +460,7 @@ namespace substitution {
 #endif    
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
-    Matrix F = MC.WeightedFrequencyMatrix();
+    Matrix F = P.WeightedFrequencyMatrix();
 
     // look up the cache rows now, once, instead of for each column
     auto& LCB1 = cache[rb[0]];
@@ -615,14 +614,14 @@ namespace substitution {
     return LCB;
   }
 
-  vector<double> f81_exp_a_t(const Mat_Cache& MC, int b0, double L)
+  vector<double> f81_exp_a_t(const data_partition& P, int b0, double L)
   {
-    const int n_models  = MC.n_base_models();
-    //    const vector<unsigned>& smap = MC.state_letters();
+    const int n_models  = P.n_base_models();
+    //    const vector<unsigned>& smap = P.state_letters();
 
     vector<object_ptr<const F81_Object> > SubModels(n_models);
     for(int m=0;m<n_models;m++) {
-      SubModels[m] = MC.base_model(m,b0).assert_is_a<F81_Object>();
+      SubModels[m] = P.base_model(m,b0).assert_is_a<F81_Object>();
       assert(SubModels[m]);
     }
     //    const double L = t.branch_length(b0);
@@ -648,7 +647,7 @@ namespace substitution {
 
     auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
 
-    //    const vector<unsigned>& smap = MC.state_letters();
+    //    const vector<unsigned>& smap = P.state_letters();
 
     // This could be wrong, if the code below assumes row or column major incorrectly
     const double* F = FF.begin();
@@ -954,17 +953,16 @@ namespace substitution {
   }
 
   vector<Matrix>
-  get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const Mat_Cache& MC, int delta);
+  get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const data_partition& P, int delta);
 
 
   void peel_branch(int b0, const data_partition& P, Likelihood_Cache cache, 
-		   const TreeInterface& t,
-		   const Mat_Cache& MC)
+		   const TreeInterface& t)
   {
     total_peel_branches++;
 
-    const int n_models = MC.n_base_models();
-    const int n_states = MC.n_states();
+    const int n_models = P.n_base_models();
+    const int n_states = P.n_states();
     const int matrix_size = n_models * n_states;
 
     // compute branches-in
@@ -975,9 +973,9 @@ namespace substitution {
     if (t.n_nodes() == 2 and b0 == 1)
     {
       assert(bb == 0);
-      auto LCB = new Likelihood_Cache_Branch(L0, MC.n_base_models(), MC.n_states());
+      auto LCB = new Likelihood_Cache_Branch(L0, P.n_base_models(), P.n_states());
 
-      vector<Matrix> L = get_leaf_seq_likelihoods(P.get_sequence(1), P.get_alphabet(), MC, 0);
+      vector<Matrix> L = get_leaf_seq_likelihoods(P.get_sequence(1), P.get_alphabet(), P, 0);
 
       for(int i=0;i<L0;i++)
 	element_assign((*LCB)[i], L[i].begin(), matrix_size);
@@ -986,16 +984,16 @@ namespace substitution {
     }
     else if (bb == 0) {
       const alphabet& a = P.get_alphabet();
-      int n_states = MC.n_states();
+      int n_states = P.n_states();
       int n_letters = a.n_letters();
       if (n_states == n_letters) {
-	if (MC.base_model(0,0).is_a<F81_Object>())
-	  cache.set_branch(b0, peel_leaf_branch_F81(P.get_sequence(b0), a, f81_exp_a_t(MC, b0, t.branch_length(b0)), MC.FrequencyMatrix()));
+	if (P.base_model(0,0).is_a<F81_Object>())
+	  cache.set_branch(b0, peel_leaf_branch_F81(P.get_sequence(b0), a, f81_exp_a_t(P, b0, t.branch_length(b0)), P.FrequencyMatrix()));
 	else
-	  cache.set_branch(b0, peel_leaf_branch(P.get_sequence(b0), a, MC.transition_P(b0)));
+	  cache.set_branch(b0, peel_leaf_branch(P.get_sequence(b0), a, P.transition_P(b0)));
       }
       else
-	cache.set_branch(b0, peel_leaf_branch_modulated(P.get_sequence(b0), a, MC.transition_P(b0), MC.state_letters()));
+	cache.set_branch(b0, peel_leaf_branch_modulated(P.get_sequence(b0), a, P.transition_P(b0), P.state_letters()));
     }
     else if (bb == 2) {
       // find the names of the (two) branches behind b0
@@ -1007,11 +1005,11 @@ namespace substitution {
       auto& A0 = P.get_pairwise_alignment(b[0]);
       auto& A1 = P.get_pairwise_alignment(b[1]);
       
-      if (MC.base_model(0,0).is_a<F81_Object>())
-	cache.set_branch(b0, peel_internal_branch_F81(LCB1, LCB2, A0, A1, f81_exp_a_t(MC, b0, t.branch_length(b0)), MC.FrequencyMatrix(), MC.WeightedFrequencyMatrix()));
+      if (P.base_model(0,0).is_a<F81_Object>())
+	cache.set_branch(b0, peel_internal_branch_F81(LCB1, LCB2, A0, A1, f81_exp_a_t(P, b0, t.branch_length(b0)), P.FrequencyMatrix(), P.WeightedFrequencyMatrix()));
       else
       {
-	auto LCB = peel_internal_branch(LCB1, LCB2, A0, A1, MC.transition_P(b0), MC.WeightedFrequencyMatrix());
+	auto LCB = peel_internal_branch(LCB1, LCB2, A0, A1, P.transition_P(b0), P.WeightedFrequencyMatrix());
 	assert(LCB->n_columns() == P.seqlength(P.t().source(b0)));
 	cache.set_branch(b0, LCB);
       }
@@ -1062,9 +1060,7 @@ namespace substitution {
   }
 
   static 
-  int calculate_caches_for_node(int n,
-				const data_partition& P, const Mat_Cache& MC, const TreeInterface& t,
-				Likelihood_Cache cache)
+  int calculate_caches_for_node(int n, const data_partition& P, const TreeInterface& t, Likelihood_Cache cache)
   {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches_for_node(n, t, cache);
@@ -1082,39 +1078,37 @@ namespace substitution {
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],P,cache,t,MC);
+      peel_branch(ops[i],P,cache,t);
 
     return ops.size();
   }
 
   int calculate_caches_for_node(int n, const data_partition& P) {
-    return calculate_caches_for_node(n, P, P, P.t(), P.cache());
+    return calculate_caches_for_node(n, P, P.t(), P.cache());
   }
 
   static 
-  int calculate_caches_for_branch(int b, 
-				  const data_partition& P, const Mat_Cache& MC, const TreeInterface& t,
-				  Likelihood_Cache cache)
+  int calculate_caches_for_branch(int b, const data_partition& P, const TreeInterface& t, Likelihood_Cache cache)
   {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches_for_branch(b, t, cache);
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],P,cache,t,MC);
+      peel_branch(ops[i],P,cache,t);
 
     return ops.size();
   }
 
   /// Construct a likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
-  Matrix get_letter_likelihoods(int l, const alphabet& a, const Mat_Cache& MC)
+  Matrix get_letter_likelihoods(int l, const alphabet& a, const data_partition& P)
   {
     assert(a.is_feature(l));
 
     const int n_letters = a.size();
 
-    const int n_models = MC.n_base_models();
-    const int n_states = MC.n_states();
+    const int n_models = P.n_base_models();
+    const int n_states = P.n_states();
 
     Matrix R(n_models,n_states);
 
@@ -1126,7 +1120,7 @@ namespace substitution {
 
     element_assign(R,0.0);
 
-    const vector<unsigned>& smap = MC.state_letters();
+    const vector<unsigned>& smap = P.state_letters();
 
     if (a.is_letter(l))
     {
@@ -1152,19 +1146,19 @@ namespace substitution {
 
   /// Get the likelihood matrix for each letter l of sequence 'sequence', where the likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
   vector<Matrix>
-  get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const Mat_Cache& MC, int delta)
+  get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const data_partition& P, int delta)
   {
     int L = sequence.size();
 
     const int n_letters = a.size();
 
-    const int n_models = MC.n_base_models();
-    const int n_states = MC.n_states();
+    const int n_models = P.n_base_models();
+    const int n_states = P.n_states();
 
     // Compute the likelihood matrix just one for each letter (not letter classes)
     vector<Matrix> letter_likelihoods;
     for(int l=0;l<n_letters;l++)
-      letter_likelihoods.push_back( get_letter_likelihoods(l, a, MC) );
+      letter_likelihoods.push_back( get_letter_likelihoods(l, a, P) );
 
     // Compute the likelihood matrices for each letter in the sequence
     vector<Matrix> likelihoods(L+delta, Matrix(n_models,n_states));
@@ -1175,7 +1169,7 @@ namespace substitution {
       if (a.is_letter(letter))
 	likelihoods[i+delta] = letter_likelihoods[letter];
       else
-	likelihoods[i+delta] = get_letter_likelihoods(letter, a, MC);
+	likelihoods[i+delta] = get_letter_likelihoods(letter, a, P);
     }
 
     return likelihoods;
@@ -1207,7 +1201,7 @@ namespace substitution {
     assert(not t.is_leaf_node(P.subst_root()));
 
     for(int B: b)
-      calculate_caches_for_branch(B, P, P, P.t(), P.cache());
+      calculate_caches_for_branch(B, P, P.t(), P.cache());
 
     vector<Matrix> L;
     L.reserve(index.size1()+2);
@@ -1293,7 +1287,6 @@ namespace substitution {
   log_double_t other_subst(const data_partition& P, const vector<int>& nodes) 
   {
     auto t = P.t();
-    const Mat_Cache& MC = P;
     Likelihood_Cache LC = P.cache();
 
     // compute root branches
@@ -1304,7 +1297,7 @@ namespace substitution {
     log_double_t Pr3 = 1;
     for(int b: leaf_branch_list)
     {
-      IF_DEBUG_S(int n_br =) calculate_caches_for_branch(b, P, MC, t, LC);
+      IF_DEBUG_S(int n_br =) calculate_caches_for_branch(b, P, t, LC);
 #ifdef DEBUG_SUBSTITUTION
       std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -1377,12 +1370,11 @@ namespace substitution {
     }
   }
 
-  log_double_t Pr(const data_partition& P, 
-		  const Mat_Cache& MC,const TreeInterface& t, Likelihood_Cache LC)
+  log_double_t Pr(const data_partition& P, const TreeInterface& t, Likelihood_Cache LC)
   {
     total_likelihood++;
 
-    IF_DEBUG_S(int n_br =) calculate_caches_for_node(P.subst_root(), P,MC,t,LC);
+    IF_DEBUG_S(int n_br =) calculate_caches_for_node(P.subst_root(), P,t,LC);
 #ifdef DEBUG_SUBSTITUTION
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -1396,7 +1388,7 @@ namespace substitution {
     {
       auto a01 = convert_to_bits(P.get_pairwise_alignment(P.t().find_branch(0,1)),0,1);
       auto index = get_indices_from_bitpath(a01, {0,1});
-      Pr = calc_root_probability2(LC,MC,rb,index);
+      Pr = calc_root_probability2(LC,P,rb,index);
     }
     else
     {
@@ -1416,7 +1408,7 @@ namespace substitution {
 	assert(LC.up_to_date(rb[i]));
 
       // cache matrix F(m,s) of p(m)*freq(m,l)
-      Matrix F = MC.WeightedFrequencyMatrix();
+      Matrix F = P.WeightedFrequencyMatrix();
 
       Pr = calc_root_probability(&LC[rb[0]], &LC[rb[1]], &LC[rb[2]], A1, A2, A3, F);
     }
@@ -1426,7 +1418,7 @@ namespace substitution {
 
   log_double_t Pr(const data_partition& P,Likelihood_Cache LC) 
   {
-    return Pr(P, P, P.t(), LC);
+    return Pr(P, P.t(), LC);
   }
 
 
@@ -1459,13 +1451,12 @@ namespace substitution {
   }
 
   vector<vector<pair<int,int>>> 
-  sample_subst_history(const data_partition& P, const Mat_Cache& MC,
-		       const TreeInterface& t, Likelihood_Cache cache)
+  sample_subst_history(const data_partition& P, const TreeInterface& t, Likelihood_Cache cache)
   {
-    const vector<unsigned>& smap = MC.state_letters();
+    const vector<unsigned>& smap = P.state_letters();
 
-    const int n_models = MC.n_base_models();
-    const int n_states = MC.n_states();
+    const int n_models = P.n_base_models();
+    const int n_states = P.n_states();
     const int matrix_size = n_models * n_states;
 
     // scratch matrix 
@@ -1474,7 +1465,7 @@ namespace substitution {
     int root = P.subst_root();
 
     // Compute matrix F(m,s) = Pr(m)*Pr(s|m) = p(m)*freq(m,s) 
-    Matrix F = MC.WeightedFrequencyMatrix();
+    Matrix F = P.WeightedFrequencyMatrix();
 
     // 1. Allocate arrays for storing results and temporary results.
     vector<vector<pair<int,int> > > ancestral_characters (t.n_nodes());
@@ -1489,7 +1480,7 @@ namespace substitution {
       vector<int> rb;
       for(int b: t.branches_in(root))
       {
-	calculate_caches_for_branch(b, P,MC,t,cache);
+	calculate_caches_for_branch(b, P,t,cache);
 
 	rb.push_back(b);
 
@@ -1544,12 +1535,12 @@ namespace substitution {
       int node = t.source(b);
       auto& sequence = P.get_sequence(node);
 
-      const vector<Matrix>& transition_P = MC.transition_P(b);
+      const vector<Matrix>& transition_P = P.transition_P(b);
 
       vector<int> local_branches = {b};
       for(int b: t.branches_before(b))
       {
-	calculate_caches_for_branch(b, P,MC,t,cache);
+	calculate_caches_for_branch(b, P,t,cache);
 
 	local_branches.push_back(b);
 
@@ -1654,7 +1645,7 @@ namespace substitution {
 
   vector<vector<pair<int,int>>> sample_ancestral_states(const data_partition& P)
   {
-    return sample_subst_history(P, P, P.t(), P.cache());
+    return sample_subst_history(P, P.t(), P.cache());
   }
 
   vector<Matrix> get_likelihoods_by_alignment_column(const data_partition&)
