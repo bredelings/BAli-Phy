@@ -24,6 +24,9 @@ builtin fMutSel_q 4 "fMutSel_q" "SModel";
 builtin fMutSel_pi 3 "fMutSel_pi" "SModel";
 builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel";
 builtin builtin_frequency_matrix 1 "weighted_frequency_matrix" "SModel";
+builtin peel_leaf_branch 3 "peel_leaf_branch" "SModel";
+builtin peel_internal_branch 6 "peel_internal_branch" "SModel";
+builtin calc_root_probability 7 "calc_root_probability" "SModel";
 
 data ReversibleMarkov = ReversibleMarkov a b c d e f g;
 data ReversibleFrequency = ReversibleFrequency a b c d;
@@ -655,6 +658,10 @@ distance_model scale branch =
    return m
    });
 
+distances_model_for_scale numBranches scale = mapM (distance_model scale) [1..numBranches];
+
+distances_model numBranches numScales = mapM (distances_model_for_scale numBranches) [1..numScales];
+
 a_branch_mean_model n = 
 (do {
    mu <- gamma 0.5 2.0;
@@ -683,4 +690,15 @@ unit_model m = return $ MixtureModel (DiscreteDistribution [(1.0,m)]);
 
 mmm m = return $ MixtureModels [m];
 
+cached_conditional_likelihoods t seqs as alpha ps f = let {lc    = mkArray (2*numBranches t) lcf;
+                                                           lcf b = let {bb = b `mod` (numBranches t)} in
+                                                                   case edgesBeforeEdge t b of {
+                                                                       []      -> peel_leaf_branch (seqs!sourceNode t b) alpha (ps!bb);
+                                                                       [b1,b2] -> peel_internal_branch (lc!b1) (lc!b2) (as!b1) (as!b2) (ps!bb) f}
+                                                          }
+                                                      in lc;
+
+peel_likelihood t cl as f root = let {branches_in = map (reverseEdge t) (edgesOutOfNode t root);} in
+                                 case branches_in of {[b1,b2,b3]->
+                                                      calc_root_probability (cl!b1) (cl!b2) (cl!b3) (as!b1) (as!b2) (as!b3) f};
 }
