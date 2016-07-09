@@ -350,12 +350,27 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
 	  set_C(R, std::move(value) );
 	}
 	// Otherwise, set the reduction value.
+	else if (value.exp.head().type() == index_var_type)
+	{
+	  make_reg_changeable(R);
+	  int r2 = value.lookup_in_env( value.exp.as_index_var() );
+
+	  auto p = incremental_evaluate(r2);
+	  int r3 = p.first;
+	  int value = p.second;
+
+	  set_call(R, r3);
+	  set_result_value_for_reg(R);
+	  return {R, value};
+	}
 	else
 	{
 	  make_reg_changeable(R);
 	  int r2 = Args.allocate(std::move(value));
 
-	  auto p = incremental_evaluate(r2);
+	  auto p = (steps[S].used_inputs.size()==1)
+	    ?incremental_evaluate_from_call(R,r2)
+	    :incremental_evaluate(r2);
 	  int r3 = p.first;
 	  int value = p.second;
 
@@ -384,6 +399,21 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
 
   std::cerr<<"incremental_evaluate: unreachable?";
   std::abort();
+}
+
+std::pair<int,int> reg_heap::incremental_evaluate_from_call(int P, int R)
+{
+  stack.push_back(R);
+  inc_heads(R);
+  auto result = incremental_evaluate_from_call_(P,R);
+  dec_heads(R);
+  stack.pop_back();
+  return result;
+}
+
+std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
+{
+  return incremental_evaluate_(R);
 }
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
