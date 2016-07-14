@@ -129,71 +129,149 @@ void reg_heap::trace_token(int token, vector<int>& remap)
 
 void reg_heap::trace(vector<int>& remap)
 {
-  vector<int>& scan1 = get_scratch_list();
-  vector<int>& next_scan1 = get_scratch_list();
+  // 1. Set up lists for used/marked regs, steps, and results.
+  vector<int>& used_regs = get_scratch_list();
+  vector<int>& used_steps = get_scratch_list();
+  vector<int>& used_results = get_scratch_list();
 
-  get_roots(scan1);
-  
-  while (not scan1.empty())
-  {
-    for(int r: scan1)
+  auto mark_reg = [this,&used_regs](int r) {
+    assert(r > 0);
+    if (not is_marked(r))
     {
-      assert(not is_free(r));
-      if (is_marked(r)) continue;
-      
       set_mark(r);
-      do_remap(*this, remap, r);
-      
-      reg& R = access(r);
-      
-      // Count the references from E
-      next_scan1.insert(next_scan1.end(), R.C.Env.begin(), R.C.Env.end());
-      
-      // Count all results
-      for(int t=0;t<get_n_tokens();t++)
+      used_regs.push_back(r);
+    }
+  };
+
+  auto mark_step = [this,&used_steps](int s) {
+    assert(s > 0);
+    if (not steps.is_marked(s))
+    {
+      steps.set_mark(s);
+      used_steps.push_back(s);
+    }
+  };
+
+  auto mark_result = [this,&used_results](int r) {
+    assert(r > 0);
+    if (not results.is_marked(r))
+    {
+      results.set_mark(r);
+      used_results.push_back(r);
+    }
+  };
+
+  // 2. Get the list of root regs
+  vector<int>& roots = get_scratch_list();
+  get_roots(roots);
+
+
+  // 3. Mark all of these regs used
+  for(int reg:roots)
+    mark_reg(reg);
+
+  // 4. Mark all steps/results at heads in the root token.
+  if (get_n_tokens())
+  {
+    for(int reg:roots)
+    {
+      int step = step_index_for_reg(reg);
+      if (step > 0)
+	mark_step(step);
+      int result = result_index_for_reg(reg);
+      if (result > 0)
+	mark_result(result);
+    }
+  }
+  
+  // 5. Mark all steps/results at heads in non-root tokens
+  for(int t=1;t<get_n_tokens();t++)
+  {
+    if (not token_is_used(t)) continue;
+
+    // 5.1 Mark all steps at heads in non-root tokens.
+    // FIXME - We can remove this after we maintain references to invalidated computations.
+    //         Then there should always be a result for every step, valid or invalid.
+    for(const auto& r: tokens[t].vm_step.modified())
+    {
+      if (access(r).n_heads)
       {
-	if (not token_is_used(t)) continue;
-	
-	int s = step_index_for_reg_(t,r);
-	int rc = result_index_for_reg_(t,r);
-
-	if (s > 0)
-	{
-	  assert(not steps.is_free(s));
-	  if (steps.is_marked(s)) continue;
-
-	  steps.set_mark(s);
-
-	  const Step& S = steps[s];
-
-	  // Count the reg that references us
-	  assert(S.source_reg);
-	  assert(is_marked(S.source_reg));
-
-	  // Count also the result we call
-	  if (S.call) 
-	    next_scan1.push_back(S.call);
-	}
-
-	if (rc > 0)
-	{
-	  assert(not results.is_free(rc));
-	  if (results.is_marked(rc)) continue;
-
-	  results.set_mark(rc);
-      
-	  const Result& RC = results[rc];
-      
-	  // Count the reg that references us
-	  assert(RC.source_reg);
-	  assert(is_marked(RC.source_reg));
-	}
+	assert(is_marked(r));
+	int step = step_index_for_reg_(t,r);
+	if (step > 0)
+	  mark_step(step);
       }
     }
-    std::swap(scan1,next_scan1);
-    next_scan1.clear();
+
+    // 5.2 Mark all results at heads in non-root tokens.
+    // NOTE - The corresponding head, whatever it is, must ALSO be marked,
+    //        since we mark all steps at heads.
+    for(const auto& r: tokens[t].vm_result.modified())
+    {
+      if (access(r).n_heads)
+      {
+	assert(is_marked(r));
+	int result = result_index_for_reg_(t,r);
+	if (result > 0)
+	  mark_result(result);
+      }
+    }
   }
 
+  // 6. Trace unwalked steps and results
+  int step_index = 0, result_index = 0;
+
+  while(step_index < used_steps.size() or result_index < used_results.size())
+  {
+    // 6.1 Trace unwalked steps
+    for(;step_index < used_steps.size();step_index++)
+    {
+      const auto& S = steps[used_steps[step_index]];
+      assert(S.source_reg);
+
+      // 6.1.1 Visit called reg
+      if (S.call > 0)
+	mark_reg(S.call);
+
+      // 6.1.2 Visit used results
+      for(const auto& rc: S.used_inputs)
+	mark_result(rc.first);
+    }
+
+    // 6.2 Trace unwalked results
+    for(;result_index < used_results.size();result_index++)
+    {
+      const auto& R = results[used_results[result_index]];
+      assert(R.source_reg);
+
+      // 6.2.1 Visit associated step
+      mark_step(R.source_step);
+
+      // 6.2.2 Visit called_result
+      if (R.call_edge.first > 0)
+	mark_result(R.call_edge.first);
+    }
+  }
+
+  // 7. Mark all regs with steps or results as used.
+  for(int s:used_steps)
+    mark_reg(steps[s].source_reg);
+
+  for(int r:used_results)
+    assert(is_marked(r));
+
+  // 8. Mark regs referenced only by regs as used.
+  for(int reg_index = 0;reg_index < used_regs.size();reg_index++)
+  {
+    int r = used_regs[reg_index];
+    do_remap(*this, remap, r);
+    const auto& R = access(r);
+    for(int r : R.C.Env)
+      mark_reg(r);
+  }
+
+  release_scratch_list();
+  release_scratch_list();
   release_scratch_list();
   release_scratch_list();
 }
