@@ -341,10 +341,10 @@ int data_partition::seqlength(int n) const
 /// Set the pairwise alignment value, but don't mark the alignment & sequence lengths as changed.
 void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi)
 {
-  note_alignment_changed_on_branch(b);
+  // However, LC depends only on the alignment of subA indices from different branches.
+  cache().invalidate_branch_alignment(b);
 
   int B = t().reverse(b);
-
   assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
 
   const context* C = P;
@@ -362,15 +362,6 @@ expression_ref data_partition::get_pairwise_alignment_(int b) const
 const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
 {
   return get_pairwise_alignment_(b).as_<pairwise_alignment_t>();
-}
-
-void data_partition::note_alignment_changed_on_branch(int b)
-{
-  b = t().undirected(b);
-
-
-  // However, LC depends only on the alignment of subA indices from different branches.
-  cache().invalidate_branch_alignment(b);
 }
 
 /// Set the mean branch length to \a mu
@@ -679,19 +670,12 @@ vector<string> Parameters::get_labels() const
 void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
 {
   if (safe)
-  {
     LC_invalidate_node(t1);
-    note_alignment_changed_on_branch(t().find_branch(s1,t1));
-  }
   
   t().reconnect_branch(s1, t1, t2);
 
   if (safe)
-  {
     LC_invalidate_node(t2);
-    note_alignment_changed_on_branch(t().find_branch(s1,t2));
-  }
-  
 }
 
 void Parameters::begin_modify_topology()
@@ -1017,13 +1001,6 @@ void Parameters::LC_invalidate_all()
 {
   for(int i=0;i<n_data_partitions();i++)
     get_data_partition(i).cache().invalidate_all();
-}
-
-void Parameters::note_alignment_changed_on_branch(int b)
-{
-  for(int i=0;i<n_data_partitions();i++)
-    if (get_data_partition(i).variable_alignment())
-      get_data_partition(i).note_alignment_changed_on_branch(b);
 }
 
 void Parameters::recalc()

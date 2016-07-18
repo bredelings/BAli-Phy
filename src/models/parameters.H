@@ -171,8 +171,6 @@ public:
 
   void set_pairwise_alignment(int b, const pairwise_alignment_t&);
 
-  void note_alignment_changed_on_branch(int b);
-
   // The prior, likelihood, and probability
   log_double_t prior_no_alignment() const;
   log_double_t prior_alignment() const;
@@ -394,8 +392,6 @@ public:
 
   // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
   void LC_invalidate_all();
-
-  void note_alignment_changed_on_branch(int b);
 
   int n_branch_means() const;
 

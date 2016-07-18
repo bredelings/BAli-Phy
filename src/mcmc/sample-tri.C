@@ -216,9 +216,6 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   Matrices->clear();
 #endif
 
-  int b = t.find_branch(nodes[0],nodes[1]);
-  P.note_alignment_changed_on_branch(b);
-
   return Matrices;
 }
 
