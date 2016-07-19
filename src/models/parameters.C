@@ -212,16 +212,6 @@ double data_partition::get_beta() const
   return P->get_beta();
 }
 
-bool data_partition::pairwise_alignment_for_branch_is_valid(int b) const
-{
-  expression_ref E = P->get_parameter_value(pairwise_alignment_for_branch[b]);
-
-  if (E.is_int())
-    return false;
-  else
-    return true;
-}
-
 void data_partition::variable_alignment(bool b)
 {
   variable_alignment_ = b;
@@ -350,21 +340,13 @@ void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& p
 
   int B = t().reverse(b);
 
-#ifndef NDEBUG
-  if (pairwise_alignment_for_branch_is_valid(b))
-  {
-    assert(pi == get_pairwise_alignment(b));
-    assert(pi.flipped() == get_pairwise_alignment(B));
-  }
-  else
-  {
-    assert(not pairwise_alignment_for_branch_is_valid(B));
-  }
-#endif
+  assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
 
   const context* C = P;
   const_cast<context*>(C)->set_parameter_value(pairwise_alignment_for_branch[b], new pairwise_alignment_t(pi));
   const_cast<context*>(C)->set_parameter_value(pairwise_alignment_for_branch[B], new pairwise_alignment_t(pi.flipped()));
+
+  assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
 }
 
 expression_ref data_partition::get_pairwise_alignment_(int b) const
@@ -374,16 +356,7 @@ expression_ref data_partition::get_pairwise_alignment_(int b) const
 
 const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
 {
-  //  if (not pairwise_alignment_for_branch_is_valid(b)) std::abort();
-  assert(pairwise_alignment_for_branch_is_valid(b));
-
   return get_pairwise_alignment_(b).as_<pairwise_alignment_t>();
-}
-
-void data_partition::invalidate_pairwise_alignment_for_branch(int b) const
-{
-  const context* C = P;
-  const_cast<context*>(C)->set_parameter_value(pairwise_alignment_for_branch[b], 0);
 }
 
 void data_partition::note_alignment_changed_on_branch(int b)
@@ -394,14 +367,6 @@ void data_partition::note_alignment_changed_on_branch(int b)
 
   // However, LC depends only on the alignment of subA indices from different branches.
   LC.invalidate_branch_alignment(t(),b);
-}
-
-void data_partition::note_alignment_changed()
-{
-  for(int b=0;b<t().n_branches();b++)
-    note_alignment_changed_on_branch(b);
-
-  // this automatically marks all non-leaf sequence lengths for recomputation.
 }
 
 /// Set the mean branch length to \a mu
@@ -425,9 +390,6 @@ log_double_t data_partition::prior_no_alignment() const
 log_double_t data_partition::prior_alignment() const 
 {
   if (not variable_alignment()) return 1;
-
-  for(int i=0;i<t().n_branches()*2;i++)
-    assert(pairwise_alignment_for_branch_is_valid(i));
 
   log_double_t Pr = P->evaluate(alignment_prior_index).as_log_double();
 
@@ -480,16 +442,12 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   
   // Create and set pairwise alignment parameters.
   for(int b=0;b<pairwise_alignment_for_branch.size();b++)
-    pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b), 0);
-
-  for(int b=0;b<t().n_branches();b++)
   {
     int n1 = t().source(b);
     int n2 = t().target(b);
-    set_pairwise_alignment(b, A2::get_pairwise_alignment(AAA,n1,n2));
+    auto pi = A2::get_pairwise_alignment(AAA,n1,n2);
+    pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b), pi);
   }
-  //  for(int b=0;b<2*t().n_branches();b++)
-  //    assert(pairwise_alignment_for_branch_is_valid(b));
 
   const int n_base_smodels = n_base_models();
   //  const int n_states = state_letters().size();
@@ -1037,13 +995,6 @@ void Parameters::note_alignment_changed_on_branch(int b)
   for(int i=0;i<n_data_partitions();i++)
     if (get_data_partition(i).variable_alignment())
       get_data_partition(i).note_alignment_changed_on_branch(b);
-}
-
-void Parameters::note_alignment_changed()
-{
-  for(int i=0;i<n_data_partitions();i++)
-    if (get_data_partition(i).variable_alignment())
-      get_data_partition(i).note_alignment_changed();
 }
 
 void Parameters::recalc()

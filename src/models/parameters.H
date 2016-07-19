@@ -67,10 +67,6 @@ private:
   /// The pairwise alignment for each branch
   std::vector<int> pairwise_alignment_for_branch;
 
-  bool pairwise_alignment_for_branch_is_valid(int) const;
-
-  void invalidate_pairwise_alignment_for_branch(int b) const;
-
   std::vector<int> sequence_length_indices;
 
   std::vector<int> transition_p_method_indices;
@@ -163,8 +159,6 @@ public:
   void set_pairwise_alignment(int b, const pairwise_alignment_t&);
 
   void note_alignment_changed_on_branch(int b);
-
-  void note_alignment_changed();
 
   // The prior, likelihood, and probability
   log_double_t prior_no_alignment() const;
@@ -386,8 +380,6 @@ public:
   void LC_invalidate_all();
 
   void note_alignment_changed_on_branch(int b);
-
-  void note_alignment_changed();
 
   int n_branch_means() const;
 
