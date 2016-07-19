@@ -493,9 +493,8 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
     {
       // We keep the (same) computation here, until we prove that we don't need one.
       // We don't need one if we evaluate to WHNF, and then we remove it.
-      if (not has_step(R))
-	add_shared_step(root_token, R);
-      int S = step_index_for_reg(R);
+      assert(has_step(P));
+      int S = step_index_for_reg(P);
 
       // Incrementing the ref count wastes time, but avoids a crash.
       object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
@@ -515,46 +514,37 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
       try
       {
 	RegOperationArgs Args(R, S, *this);
+
+	int n_used_inputs1 = steps[S].used_inputs.size();
+
 	closure value = (*O)(Args);
+	int n_used_inputs2 = steps[S].used_inputs.size();
+	bool changed = n_used_inputs2 > n_used_inputs1;
+	
 	total_reductions++;
-	if (not steps[S].used_inputs.empty())
+	if (changed)
 	  total_changeable_reductions++;
 
 	// If the reduction doesn't depend on modifiable, then replace E with the value.
-	if (steps[S].used_inputs.empty())
+	if (not changed)
 	{
 	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
-	  assert(not reg_has_call(R) );
-	  assert(not reg_has_value(R));
-	  assert(step_for_reg(R).used_inputs.empty());
+	  assert(not has_step(R) );
 	  set_C(R, std::move(value) );
 	}
 	// Otherwise, set the reduction value.
 	else if (value.exp.head().type() == index_var_type)
 	{
-	  make_reg_changeable(R);
 	  int r2 = value.lookup_in_env( value.exp.as_index_var() );
 
-	  auto p = incremental_evaluate(r2);
-	  int r3 = p.first;
-	  int value = p.second;
-
-	  set_call(R, r3);
-	  set_result_value_for_reg(R);
-	  return {R, value};
+	  return incremental_evaluate(r2);
 	}
 	else
 	{
-	  make_reg_changeable(R);
-	  int r2 = Args.allocate(std::move(value));
-
-	  auto p = incremental_evaluate(r2);
-	  int r3 = p.first;
-	  int value = p.second;
-
-	  set_call(R, r3);
-	  set_result_value_for_reg(R);
-	  return {R, value};
+	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
+	  assert(not has_step(R) );
+	  set_C(R, std::move(value) );
+	  return incremental_evaluate(R);
 	}
       }
       catch (myexception& e)
