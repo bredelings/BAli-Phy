@@ -215,6 +215,9 @@ int n_mutations(const data_partition& P, const matrix<int>& cost)
 
   total += accumulate_root_leaf(branches.back(), P, cost, cache[b_root]);
 
+  for(auto p: cache)
+    delete[] p;
+
   return total;
 }
 
