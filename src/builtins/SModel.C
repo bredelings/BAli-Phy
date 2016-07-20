@@ -958,3 +958,77 @@ extern "C" closure builtin_function_frequency_matrix(OperationArgs& Args)
   return FF;
 }
 
+#include "substitution/substitution-cache.H"
+#include "dp/hmm.H"
+
+namespace substitution {
+Likelihood_Cache_Branch*
+peel_leaf_branch(const vector<int>& sequence, const alphabet& a, const vector<Matrix>& transition_P);
+}
+
+extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
+{
+  auto arg0 = Args.evaluate(0);
+  auto arg1 = Args.evaluate(1);
+  auto arg2 = Args.evaluate(2);
+
+  return substitution::peel_leaf_branch(arg0.as_<Vector<int>>(), arg1.as_<alphabet>(), arg2.as_<Vector<Matrix>>());
+}
+
+
+namespace substitution {
+Likelihood_Cache_Branch*
+peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
+		     const Likelihood_Cache_Branch* LCB2,
+		     const pairwise_alignment_t& A0,
+		     const pairwise_alignment_t& A1,
+		     const vector<Matrix>& transition_P,
+		     const Matrix& F);
+}
+
+extern "C" closure builtin_function_peel_internal_branch(OperationArgs& Args)
+{
+  auto arg0 = Args.evaluate(0);
+  auto arg1 = Args.evaluate(1);
+  auto arg2 = Args.evaluate(2);
+  auto arg3 = Args.evaluate(3);
+  auto arg4 = Args.evaluate(4);
+  auto arg5 = Args.evaluate(5);
+
+  return substitution::peel_internal_branch(&arg0.as_<Likelihood_Cache_Branch>(),
+					    &arg1.as_<Likelihood_Cache_Branch>(),
+					    arg2.as_<pairwise_alignment_t>(),
+					    arg3.as_<pairwise_alignment_t>(),
+					    arg4.as_<Vector<Matrix>>(),
+					    arg5.as_<Box<Matrix>>());
+}
+
+namespace substitution {
+log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
+				   const Likelihood_Cache_Branch* LCB2,
+				   const Likelihood_Cache_Branch* LCB3,
+				   const pairwise_alignment_t& A1,
+				   const pairwise_alignment_t& A2,
+				   const pairwise_alignment_t& A3,
+				   const Matrix& F);
+}
+
+extern "C" closure builtin_function_calc_root_probability(OperationArgs& Args)
+{
+  auto arg0 = Args.evaluate(0);
+  auto arg1 = Args.evaluate(1);
+  auto arg2 = Args.evaluate(2);
+  auto arg3 = Args.evaluate(3);
+  auto arg4 = Args.evaluate(4);
+  auto arg5 = Args.evaluate(5);
+  auto arg6 = Args.evaluate(6);
+
+  log_double_t Pr = substitution::calc_root_probability(&arg0.as_<Likelihood_Cache_Branch>(),
+							&arg1.as_<Likelihood_Cache_Branch>(),
+							&arg2.as_<Likelihood_Cache_Branch>(),
+							arg3.as_<pairwise_alignment_t>(),
+							arg4.as_<pairwise_alignment_t>(),
+							arg5.as_<pairwise_alignment_t>(),
+							arg6.as_<Box<Matrix>>());
+  return {Pr};
+}
