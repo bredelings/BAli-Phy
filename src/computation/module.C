@@ -341,7 +341,10 @@ expression_ref do_optimize(const expression_ref& E, const vector<Module>& P)
     V->sub[1] = do_optimize(E.sub()[1],P);
 
     if (V->sub[1].ptr() == E.sub()[1].ptr())
+    {
+      delete V;
       return E;
+    }
     else
       return V;
   }
@@ -445,7 +448,10 @@ expression_ref do_optimize_DCE(const expression_ref& E)
     V->sub[1] = do_optimize_DCE(E.sub()[1]);
 
     if (V->sub[1].ptr() == E.sub()[1].ptr())
+    {
+      delete V;
       return E;
+    }
     else
       return V;
   }
