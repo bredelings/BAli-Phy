@@ -135,11 +135,14 @@ public:
 
   std::vector<double> frequencies(int m) const;
 
-public:
+private:
   Likelihood_Cache cache() const
   {
     return {this};
   }
+
+public:
+  const Likelihood_Cache_Branch& cache(int b) const;
 
   int subst_root() const;
 

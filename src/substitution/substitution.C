@@ -437,14 +437,14 @@ namespace substitution {
     return total;
   }
 
-  log_double_t calc_root_probability2(Likelihood_Cache cache, const data_partition& P,const vector<int>& rb,const matrix<int>& index) 
+  log_double_t calc_root_probability2(const data_partition& P,const vector<int>& rb,const matrix<int>& index) 
   {
     total_calc_root_prob++;
 
     assert(index.size2() == rb.size());
 
     for(int i=0;i<rb.size();i++)
-      assert(cache.up_to_date(rb[i]));
+      assert(Likelihood_Cache(&P).up_to_date(rb[i]));
 
     //    assert(T.directed_branch(rb[0]).target().name() == cache.root);
 
@@ -463,8 +463,8 @@ namespace substitution {
     Matrix F = P.WeightedFrequencyMatrix();
 
     // look up the cache rows now, once, instead of for each column
-    auto& LCB1 = cache[rb[0]];
-    auto& LCB2 = cache[rb[1]];
+    auto& LCB1 = P.cache(rb[0]);
+    auto& LCB2 = P.cache(rb[1]);
     
     log_double_t total = 1;
     for(int i=0;i<index.size1();i++)
@@ -1000,8 +1000,8 @@ namespace substitution {
       vector<int> b = t.branches_before(b0);
       assert(b.size() == 2);
       assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
-      const Likelihood_Cache_Branch* LCB1 = &cache[b[0]];
-      const Likelihood_Cache_Branch* LCB2 = &cache[b[1]];
+      const Likelihood_Cache_Branch* LCB1 = &P.cache(b[0]);
+      const Likelihood_Cache_Branch* LCB2 = &P.cache(b[1]);
       auto& A0 = P.get_pairwise_alignment(b[0]);
       auto& A1 = P.get_pairwise_alignment(b[1]);
       
@@ -1084,7 +1084,7 @@ namespace substitution {
   }
 
   int calculate_caches_for_node(int n, const data_partition& P) {
-    return calculate_caches_for_node(n, P, P.t(), P.cache());
+    return calculate_caches_for_node(n, P, P.t(), {&P});
   }
 
   static 
@@ -1189,7 +1189,6 @@ namespace substitution {
   {
     // FIXME - this now handles only internal sequences.  But see get_leaf_seq_likelihoods( ).
     auto t = P.t();
-    Likelihood_Cache LC = P.cache();
 
     //------ Check that all branches point to a 'root' node -----------//
     assert(b.size());
@@ -1201,7 +1200,7 @@ namespace substitution {
     assert(not t.is_leaf_node(P.subst_root()));
 
     for(int B: b)
-      calculate_caches_for_branch(B, P, P.t(), P.cache());
+      calculate_caches_for_branch(B, P, P.t(), {&P});
 
     vector<Matrix> L;
     L.reserve(index.size1()+2);
@@ -1219,6 +1218,10 @@ namespace substitution {
 	L.push_back(S);
     }
 
+    vector<const Likelihood_Cache_Branch*> cache;
+    for(int branch: b)
+      cache.push_back(&P.cache(branch));
+
     // For each column in the index (e.g. for each present character at node 'root')
     for(int i=0;i<index.size1();i++) 
     {
@@ -1230,7 +1233,7 @@ namespace substitution {
 	int i0 = index(i,j);
 	if (i0 == alphabet::gap) continue;
 
-	element_prod_modify(S.begin(), LC[b[j]][i0], matrix_size);
+	element_prod_modify(S.begin(), (*cache[j])[i0], matrix_size);
       }
       
       L.push_back(S);
@@ -1287,7 +1290,7 @@ namespace substitution {
   log_double_t other_subst(const data_partition& P, const vector<int>& nodes) 
   {
     auto t = P.t();
-    Likelihood_Cache LC = P.cache();
+    Likelihood_Cache LC(&P);
 
     // compute root branches
     vector<int> rb = t.branches_in(P.subst_root());
@@ -1302,7 +1305,7 @@ namespace substitution {
       std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
 #endif
       assert(LC.up_to_date(b));
-      Pr3 *= LC[b].other_subst;
+      Pr3 *= P.cache(b).other_subst;
     }
 
     return Pr3;
@@ -1365,7 +1368,7 @@ namespace substitution {
 
       P1.t().append_branches_before(b, branches);
 
-      if (P1.cache().up_to_date(b) and P2.cache().up_to_date(b))
+      if (Likelihood_Cache(&P1).up_to_date(b) and Likelihood_Cache(&P2).up_to_date(b))
 	compare_caches(P1,P2,b);
     }
   }
@@ -1388,7 +1391,7 @@ namespace substitution {
     {
       auto a01 = convert_to_bits(P.get_pairwise_alignment(P.t().find_branch(0,1)),0,1);
       auto index = get_indices_from_bitpath(a01, {0,1});
-      Pr = calc_root_probability2(LC,P,rb,index);
+      Pr = calc_root_probability2(P,rb,index);
     }
     else
     {
@@ -1410,7 +1413,7 @@ namespace substitution {
       // cache matrix F(m,s) of p(m)*freq(m,l)
       Matrix F = P.WeightedFrequencyMatrix();
 
-      Pr = calc_root_probability(&LC[rb[0]], &LC[rb[1]], &LC[rb[2]], A1, A2, A3, F);
+      Pr = calc_root_probability(&P.cache(rb[0]), &P.cache(rb[1]), &P.cache(rb[2]), A1, A2, A3, F);
     }
 
     return Pr;
@@ -1423,7 +1426,7 @@ namespace substitution {
 
 
   log_double_t Pr(const data_partition& P) {
-    log_double_t result = Pr(P, P.cache());
+    log_double_t result = Pr(P, {&P});
 
 #ifdef DEBUG_CACHING
     data_partition P2 = P;
@@ -1451,8 +1454,10 @@ namespace substitution {
   }
 
   vector<vector<pair<int,int>>> 
-  sample_subst_history(const data_partition& P, const TreeInterface& t, Likelihood_Cache cache)
+  sample_subst_history(const data_partition& P, const TreeInterface& t)
   {
+    Likelihood_Cache cache(&P);
+
     const vector<unsigned>& smap = P.state_letters();
 
     const int n_models = P.n_base_models();
@@ -1480,12 +1485,16 @@ namespace substitution {
       vector<int> rb;
       for(int b: t.branches_in(root))
       {
-	calculate_caches_for_branch(b, P,t,cache);
+	calculate_caches_for_branch(b, P,t, cache);
 
 	rb.push_back(b);
 
 	subA_index_parent_characters[b] = vector<pair<int,int>>(P.seqlength(P.t().source(b)), {-1,-1});
       }
+
+      const auto& cache0 = P.cache(rb[0]);
+      const auto& cache1 = P.cache(rb[1]);
+      const auto& cache2 = P.cache(rb[2]);
 
       vector<int> nodes = {root};
       auto a10 = convert_to_bits(P.get_pairwise_alignment(rb[0]),1,0);
@@ -1504,11 +1513,11 @@ namespace substitution {
 	S = F;
 
 	if (i0 != -1)
-	  element_prod_modify(S.begin(), cache[rb[0]][i0], matrix_size);
+	  element_prod_modify(S.begin(), cache0[i0], matrix_size);
 	if (i1 != -1)
-	  element_prod_modify(S.begin(), cache[rb[1]][i1], matrix_size);
+	  element_prod_modify(S.begin(), cache1[i1], matrix_size);
 	if (i2 != -1)
-	  element_prod_modify(S.begin(), cache[rb[2]][i2], matrix_size);
+	  element_prod_modify(S.begin(), cache2[i2], matrix_size);
 
 	pair<int,int> state_model = sample(S);
 
@@ -1548,6 +1557,8 @@ namespace substitution {
       }
 
       assert(local_branches.size() == 3 or local_branches.size() == 1);
+      const auto& cache1 = P.cache(local_branches[1]);
+      const auto& cache2 = P.cache(local_branches[2]);
 
       matrix<int> index;
       if (local_branches.size() == 1)
@@ -1621,9 +1632,9 @@ namespace substitution {
 	}
 	
 	if (i1 != -1)
-	  element_prod_modify(S.begin(), cache[local_branches[1]][i1], matrix_size);
+	  element_prod_modify(S.begin(), cache1[i1], matrix_size);
 	if (i2 != -1)
-	  element_prod_modify(S.begin(), cache[local_branches[2]][i2], matrix_size);
+	  element_prod_modify(S.begin(), cache2[i2], matrix_size);
 	
 	pair<int,int> state_model = sample(S);
 	
@@ -1645,7 +1656,7 @@ namespace substitution {
 
   vector<vector<pair<int,int>>> sample_ancestral_states(const data_partition& P)
   {
-    return sample_subst_history(P, P.t(), P.cache());
+    return sample_subst_history(P, P.t());
   }
 
   vector<Matrix> get_likelihoods_by_alignment_column(const data_partition&)

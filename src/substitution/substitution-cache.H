@@ -74,7 +74,7 @@ class Likelihood_Cache {
   void invalidate_directed_branch(int b);
 
   /// Get the length columns.
-  int get_length(int b) const { return (*this)[b].n_columns(); }
+  int get_length(int b) const;
 
 public:
 
@@ -100,9 +100,6 @@ public:
 
   /// Ensure there is backing store for us to work with
   void set_branch(int b, Likelihood_Cache_Branch* LCB);
-
-  /// Cached conditional likelihoods for branch b
-  const Likelihood_Cache_Branch& operator[](int b) const;
 
   Likelihood_Cache(const data_partition*);
 };

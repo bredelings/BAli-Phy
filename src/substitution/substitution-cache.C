@@ -23,6 +23,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::vector;
 
+int Likelihood_Cache::get_length(int b) const
+{
+  return dp->cache(b).n_columns();
+}
 
 void Likelihood_Cache::invalidate_all() {
   int B = dp->t().n_branches();
@@ -95,12 +99,6 @@ void Likelihood_Cache::set_branch(int b, Likelihood_Cache_Branch* LCB)
   assert(LCB);
   const context* C = dp->P;
   const_cast<context*>(C)->set_parameter_value(dp->conditional_likelihoods_for_branch[b], LCB);
-  (*this)[b];
-}
-
-/// Cached conditional likelihoods for branch b
-const Likelihood_Cache_Branch& Likelihood_Cache::operator[](int b) const {
-  return dp->P->get_parameter_value(dp->conditional_likelihoods_for_branch[b]).as_<Likelihood_Cache_Branch>();
 }
 
 Likelihood_Cache::Likelihood_Cache(const data_partition* dp_)

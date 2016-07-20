@@ -415,6 +415,10 @@ log_double_t data_partition::prior() const
   return prior_alignment() * prior_no_alignment();
 }
 
+const Likelihood_Cache_Branch& data_partition::cache(int b) const
+{
+  return P->get_parameter_value(conditional_likelihoods_for_branch[b]).as_<Likelihood_Cache_Branch>();
+}
 
 log_double_t data_partition::likelihood() const 
 {
@@ -1027,8 +1031,9 @@ void Parameters::LC_invalidate_all()
 
 void Parameters::recalc()
 {
+  auto tr = triggers();
   // Check for beta (0) or mu[i] (i+1)
-  for(int index: triggers())
+  for(int index: tr)
   {
     if (0 <= index and index < n_scales())
     {
