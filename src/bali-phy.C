@@ -219,11 +219,11 @@ void show_ending_messages()
     cout<<"total (elapsed) time: "<<duration_string( duration_cast<seconds>(end_time-start_time) )<<endl;
     cout<<"total (CPU) time: "<<duration_string( duration_cast<seconds>(total_cpu_time()) )<<endl;
   }
-  if (substitution::total_likelihood > 1) {
+  if (substitution::total_calc_root_prob > 1) {
     cout<<endl;
     cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
     cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
-    cout<<"total branches peeled = "<<substitution::total_peel_branches<<endl;
+    cout<<"total branches peeled = "<<substitution::total_peel_leaf_branches+substitution::total_peel_internal_branches<<endl;
     cout<<endl;
   }
   extern int total_reductions;
