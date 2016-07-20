@@ -477,10 +477,10 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   const int imodel_index = P->imodel_index_for_partition(partition_index);
 
   // Add method indices for calculating transition matrices.
+  auto transition_ps = P->get_expression(P->PC->branch_transition_p_indices(scale_index, smodel_index));
   {
-    expression_ref E = P->get_expression(P->PC->branch_transition_p_indices(scale_index, smodel_index));
     for(int b=0;b<B;b++)
-      transition_p_method_indices[b] = p->add_compute_expression( (identifier("!"), E, b) );
+      transition_p_method_indices[b] = p->add_compute_expression( (identifier("!"), transition_ps, b) );
   }
 
   // Add method indices for calculating base models and frequencies
