@@ -1728,6 +1728,10 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   release_scratch_list();
   release_scratch_list();
   assert(n_active_scratch_lists == 0);
+
+#if DEBUG_MACHINE >= 2
+  check_used_regs();
+#endif
 }
 
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
