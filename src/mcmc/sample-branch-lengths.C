@@ -359,40 +359,6 @@ void slide_node(owned_ptr<Model>& P, MoveStats& Stats,int b)
   }
 }
 
-void check_caching(const Parameters& P1,Parameters& P2)
-{
-  log_double_t pi1 = P1.probability();
-  log_double_t pi2 = P2.probability();
-  
-  double diff = abs(log(pi1)-log(pi2));
-  if (diff > 1.0e-9) {
-    std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
-    std::abort();
-  }
-    
-  P2.recalc_smodels();
-
-  pi1 = P1.probability();
-  pi2 = P2.probability();
-    
-  diff = abs(log(pi1)-log(pi2));
-  if (diff > 1.0e-9) {
-    std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
-    std::abort();
-  }
-
-  P2.recalc_smodels();
-
-  pi1 = P1.probability();
-  pi2 = P2.probability();
-    
-  diff = abs(log(pi1)-log(pi2));
-  if (diff > 1.0e-9) {
-    std::cerr<<"scale_mean_only: probability diff = "<<diff<<std::endl;
-    std::abort();
-  }
-}
-
 void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
 {
   Parameters* PP = P.as<Parameters>();
@@ -432,13 +398,6 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
   //-------- Change branch lengths and mean -------//
   owned_ptr<Parameters> P2 = PP;
 
-#ifndef NDEBUG
-  {
-    owned_ptr<Parameters> P3 = P2;
-    check_caching(*PP,*P3);
-  }
-#endif
-
   for(int b=0;b<P2->t().n_branches();b++) {
     const double length = P2->t().branch_length(b);
     P2->setlength_unsafe(b, length/scale);
@@ -447,18 +406,6 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
   for(int i=0;i<PP->n_branch_means();i++) 
     P2->branch_mean_tricky(i, P2->get_parameter_value(P2->branch_mean_index(i)).as_double() * scale);
   
-#ifndef NDEBUG
-  owned_ptr<Parameters> P3 = P2;
-  P3->recalc_smodels();
-  log_double_t L1 = PP->likelihood();
-  log_double_t L2 = P3->likelihood();
-  double diff = abs(log(L1)-log(L2));
-  if (diff > 1.0e-9) {
-    std::cerr<<"scale_mean_only: likelihood diff = "<<diff<<std::endl;
-    std::abort();
-  }
-#endif
-
   //--------- Compute proposal ratio ---------//
   log_double_t p_ratio = pow(log_double_t(scale),P2->n_data_partitions()-P2->t().n_branches());
   log_double_t a_ratio = P2->prior_no_alignment()/PP->prior_no_alignment()*p_ratio;

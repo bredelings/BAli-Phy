@@ -331,23 +331,6 @@ double data_partition::sequence_length_pr(int l) const
   return P->evaluate( P->PC->IModel_methods[m].length_p ).as_double();
 }
 
-/// \brief Recalculate cached values relating to the substitution model.
-///
-/// Specifically, we invalidate:
-///  - cached conditional likelihoods
-///  - cached transition matrices
-///
-void data_partition::recalc_smodel() 
-{
-  //invalidate cached conditional likelihoods in case the model has changed
-  cache().invalidate_all();
-}
-
-void data_partition::setlength(int b)
-{
-  cache().invalidate_branch(b);
-}
-
 int data_partition::seqlength(int n) const
 {
   int l = P->evaluate(sequence_length_indices[n]).as_int();
@@ -358,12 +341,8 @@ int data_partition::seqlength(int n) const
 /// Set the pairwise alignment value, but don't mark the alignment & sequence lengths as changed.
 void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi)
 {
-  // However, LC depends only on the alignment of subA indices from different branches.
-  cache().invalidate_branch_alignment(b);
-
   int B = t().reverse(b);
   assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
-
   const context* C = P;
   const_cast<context*>(C)->set_parameter_value(pairwise_alignment_for_branch[b], new pairwise_alignment_t(pi));
   const_cast<context*>(C)->set_parameter_value(pairwise_alignment_for_branch[B], new pairwise_alignment_t(pi.flipped()));
@@ -379,13 +358,6 @@ expression_ref data_partition::get_pairwise_alignment_(int b) const
 const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
 {
   return get_pairwise_alignment_(b).as_<pairwise_alignment_t>();
-}
-
-/// Set the mean branch length to \a mu
-void data_partition::branch_mean_changed()
-{
-  // the scale of the substitution tree changed
-  recalc_smodel();
 }
 
 log_double_t data_partition::prior_no_alignment() const 
@@ -417,12 +389,13 @@ log_double_t data_partition::prior() const
 
 const Likelihood_Cache_Branch& data_partition::cache(int b) const
 {
-  return P->get_parameter_value(conditional_likelihoods_for_branch[b]).as_<Likelihood_Cache_Branch>();
+  return P->evaluate(conditional_likelihoods_for_branch[b]).as_<Likelihood_Cache_Branch>();
 }
 
 log_double_t data_partition::likelihood() const 
 {
-    return substitution::Pr(*this);
+  substitution::total_likelihood++;
+  return P->evaluate(likelihood_index).as_log_double();
 }
 
 log_double_t data_partition::heated_likelihood() const 
@@ -499,6 +472,11 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   // Add parameters for observed leaf sequence objects
   for(int i=0; i<leaf_sequence_indices.size(); i++)
     leaf_sequence_indices[i] = p->add_compute_expression(Vector<int>((*sequences)[i]));
+
+  vector<expression_ref> seqs_;
+  for(int index: leaf_sequence_indices)
+    seqs_.push_back( P->get_expression(index) );
+  auto seqs_array = P->get_expression( p->add_compute_expression((identifier("listArray'"),get_list(seqs_))) );
   
   // Add methods indices for sequence lengths
   vector<expression_ref> as_;
@@ -513,6 +491,17 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   {
     auto L = (identifier("seqlength"), as, p->my_tree(), n);
     sequence_length_indices[n] = p->add_compute_expression( L );
+  }
+
+  {
+    auto t = P->my_tree();
+    auto f = P->get_expression(P->PC->SModels[smodel_index].weighted_frequency_matrix);
+    cl_index = p->add_compute_expression((identifier("cached_conditional_likelihoods"),t,seqs_array,as,*a,transition_ps,f));  // Create and set conditional likelihoods for each branch
+    auto cls = P->get_expression(cl_index);
+    for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
+      conditional_likelihoods_for_branch[b] = p->add_compute_expression((identifier("!"),cls,b));
+    auto root = parameter("*subst_root");
+    likelihood_index = p->add_compute_expression((identifier("peel_likelihood"), t, cls, as, f, root));
   }
 
   // Add method indices for calculating branch HMMs and alignment prior
@@ -693,15 +682,9 @@ vector<string> Parameters::get_labels() const
   return TC->node_labels;
 }
 
-void Parameters::reconnect_branch(int s1, int t1, int t2, bool safe)
+void Parameters::reconnect_branch(int s1, int t1, int t2)
 {
-  if (safe)
-    LC_invalidate_node(t1);
-  
   t().reconnect_branch(s1, t1, t2);
-
-  if (safe)
-    LC_invalidate_node(t2);
 }
 
 void Parameters::begin_modify_topology()
@@ -731,8 +714,8 @@ void Parameters::exchange_subtrees(int br1, int br2)
   //  assert(not t().subtree_contains(br2,s1));
 
   begin_modify_topology();
-  reconnect_branch(s1,t1,t2,true);
-  reconnect_branch(s2,t2,t1,true);
+  reconnect_branch(s1,t1,t2);
+  reconnect_branch(s2,t2,t1);
   end_modify_topology();
 }
 
@@ -972,24 +955,6 @@ log_double_t Parameters::heated_likelihood() const
   return Pr;
 }
 
-void Parameters::recalc_smodels() 
-{
-  for(int i=0;i<n_smodels();i++)
-    recalc_smodel(i);
-}
-
-void Parameters::recalc_smodel(int m) 
-{
-  for(int i=0;i<n_data_partitions();i++) 
-  {
-    if (smodel_index_for_partition(i) == m) 
-    {
-      // recompute cached computations
-      get_data_partition(i).recalc_smodel();
-    }
-  }
-}
-
 void Parameters::select_root(int b) const
 {
   int r = t().reverse(b);
@@ -1009,24 +974,6 @@ void Parameters::set_root(int node) const
 int Parameters::subst_root() const
 {
   return get_parameter_value(subst_root_index).as_int();
-}
-
-void Parameters::LC_invalidate_branch(int b)
-{
-  for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).cache().invalidate_branch(b);
-}
-
-void Parameters::LC_invalidate_node(int n)
-{
-  for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).cache().invalidate_node(n);
-}
-
-void Parameters::LC_invalidate_all()
-{
-  for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).cache().invalidate_all();
 }
 
 void Parameters::recalc()
@@ -1051,36 +998,9 @@ void Parameters::recalc()
 
 	context::set_parameter_value(PC->branch_length_indices[s][b], rate*delta_t);
       }
-
-      // notify partitions with scale 'p' that their branch mean changed
-      for(int p=0;p<n_data_partitions();p++)
-	if (scale_index_for_partition(p) == s)
-	  get_data_partition(p).branch_mean_changed();
     }
   }
   triggers().clear();
-
-  // Check if any computions that likelihood caches depend on have changed.
-  for(int p=0;p<n_data_partitions();p++)
-  {
-    bool everything_changed = false;
-    for(int f_index: get_data_partition(p).frequencies_indices)
-      if (not compute_expression_is_up_to_date(f_index))
-	everything_changed = true;
-
-    if (everything_changed)
-      get_data_partition(p).recalc_smodel();
-    else
-    {
-      const vector<int>& v = get_data_partition(p).transition_p_method_indices;
-      for(int b = 0; b < v.size(); b++)
-      {
-	int tp_index = v[b];
-	if (not compute_expression_is_up_to_date(tp_index))
-	  get_data_partition(p).setlength(b); // just invalidate caches
-      }
-    }
-  }
 }
 
 object_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
@@ -1121,10 +1041,6 @@ void Parameters::setlength(int b,double l)
     
     context::set_parameter_value(PC->branch_length_indices[s][b], rate * delta_t);
   }
-
-  // Invalidates conditional likelihoods
-  for(int p=0;p<n_data_partitions();p++) 
-    get_data_partition(p).setlength(b);
 }
 
 double Parameters::branch_mean() const 

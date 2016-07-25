@@ -68,6 +68,10 @@ private:
   /// The pairwise alignment for each branch
   std::vector<int> pairwise_alignment_for_branch;
 
+  int likelihood_index;
+
+  int cl_index;
+
   std::vector<int> conditional_likelihoods_for_branch;
 
   std::vector<int> leaf_sequence_indices;
@@ -83,8 +87,6 @@ private:
   std::vector<int> frequencies_indices;
 
   matrix<int> base_model_indices;
-
-  void branch_mean_changed();
 
   bool variable_alignment_;
 
@@ -135,13 +137,6 @@ public:
 
   std::vector<double> frequencies(int m) const;
 
-private:
-  Likelihood_Cache cache() const
-  {
-    return {this};
-  }
-
-public:
   const Likelihood_Cache_Branch& cache(int b) const;
 
   int subst_root() const;
@@ -164,12 +159,7 @@ public:
   // get the alphabet for partition i
   const alphabet& get_alphabet() const {return *a;}
 
-  /// Recalculate all the cached transition matrices
-  void recalc_smodel();
-
   bool has_IModel() const;
-
-  void setlength(int b);
 
   int seqlength(int n) const;
 
@@ -345,7 +335,7 @@ public:
   
   expression_ref my_tree() const;
 
-  void reconnect_branch(int s1, int t1, int t2, bool safe);
+  void reconnect_branch(int s1, int t1, int t2);
   void begin_modify_topology();
   void end_modify_topology();
 private:
@@ -387,21 +377,9 @@ public:
   void setlength_unsafe(int b, double l);
   void setlength(int b,double l); 
   
-  /// Recalculate all the cached transition matrices
-  void recalc_smodels();
-  void recalc_smodel(int i);
-
   void select_root(int b) const;
   void set_root(int n) const;
   int subst_root() const;
-
-  // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
-  void LC_invalidate_branch(int b);
-  // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
-  void LC_invalidate_node(int n);
-
-  // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
-  void LC_invalidate_all();
 
   int n_branch_means() const;
 

@@ -22,10 +22,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <boost/shared_ptr.hpp>
 #include <vector>
-#include "tree/tree.H"
-#include "models/TreeInterface.H"
-
-class data_partition;
 
 /// An object to store cached conditional likelihoods for a single branch
 class Likelihood_Cache_Branch: public Object
@@ -46,10 +42,10 @@ public:
   int n_columns() const {return n_columns_;}
   int matrix_size() const {return matrix_size_;}
   
-  double* scratch(int i) {return (*this)[n_columns() + i];}
+  double* scratch(int i) {assert(0 <= i and i<2); return data + matrix_size()*(n_columns() + i);}
 
-  double* operator[](int i) {return data + matrix_size()*i;}
-  const double* operator[](int i) const {return data + matrix_size()*i;}
+  double* operator[](int i) {assert(0 <= i and i < n_columns()); return data + matrix_size()*i;}
+  const double* operator[](int i) const {assert(0 <= i and i < n_columns()); return data + matrix_size()*i;}
   
   Likelihood_Cache_Branch(int C,int M, int S)
     :data(new double[(C+2)*M*S]),
@@ -59,49 +55,6 @@ public:
      n_columns_(C)
   {}
   ~Likelihood_Cache_Branch() {delete[] data;}
-};
-
-
-/// A single view into the shared Multi_Likelihood_Cache
-class Likelihood_Cache {
-
-  const data_partition* dp;
-
-  /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
-  void invalidate_one_branch(int b);
-
-  /// Mark cached conditional likelihoods for b and all branches after invalid.
-  void invalidate_directed_branch(int b);
-
-  /// Get the length columns.
-  int get_length(int b) const;
-
-public:
-
-  void set_dp(const data_partition* dp_)
-  {
-    dp = dp_;
-  }
-
-  /// Mark cached conditional likelihoods for all branches invalid.
-  void invalidate_all();
-
-  /// Mark cached conditional likelihoods for b,b* and all branches after either invalid.
-  void invalidate_branch(int b);
-
-  /// Mark cached conditional likelihoods for all branches after b or b* invalid.
-  void invalidate_branch_alignment(int b);
-
-  /// Mark cached conditional likelihoods all branches after n invalid.
-  void invalidate_node(int n);
-
-  /// Are cached conditional likelihoods for branch b, up to date?
-  bool up_to_date(int b) const;
-
-  /// Ensure there is backing store for us to work with
-  void set_branch(int b, Likelihood_Cache_Branch* LCB);
-
-  Likelihood_Cache(const data_partition*);
 };
 
 #endif

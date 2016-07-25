@@ -443,9 +443,6 @@ namespace substitution {
 
     assert(index.size2() == rb.size());
 
-    for(int i=0;i<rb.size();i++)
-      assert(Likelihood_Cache(&P).up_to_date(rb[i]));
-
     //    assert(T.directed_branch(rb[0]).target().name() == cache.root);
 
     assert(rb.size() == 2);
@@ -956,150 +953,6 @@ namespace substitution {
   get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const data_partition& P, int delta);
 
 
-  void peel_branch(int b0, const data_partition& P, Likelihood_Cache cache, 
-		   const TreeInterface& t)
-  {
-    total_peel_branches++;
-
-    const int n_models = P.n_base_models();
-    const int n_states = P.n_states();
-    const int matrix_size = n_models * n_states;
-
-    // compute branches-in
-    int bb = t.branches_before(b0).size();
-
-    int L0 = P.seqlength(P.t().source(b0));
-
-    if (t.n_nodes() == 2 and b0 == 1)
-    {
-      assert(bb == 0);
-      auto LCB = new Likelihood_Cache_Branch(L0, P.n_base_models(), P.n_states());
-
-      vector<Matrix> L = get_leaf_seq_likelihoods(P.get_sequence(1), P.get_alphabet(), P, 0);
-
-      for(int i=0;i<L0;i++)
-	element_assign((*LCB)[i], L[i].begin(), matrix_size);
-      LCB->other_subst = 1;
-      cache.set_branch(b0, LCB);
-    }
-    else if (bb == 0) {
-      const alphabet& a = P.get_alphabet();
-      int n_states = P.n_states();
-      int n_letters = a.n_letters();
-      if (n_states == n_letters) {
-	if (P.base_model(0,0).is_a<F81_Object>())
-	  cache.set_branch(b0, peel_leaf_branch_F81(P.get_sequence(b0), a, f81_exp_a_t(P, b0, t.branch_length(b0)), P.FrequencyMatrix()));
-	else
-	  cache.set_branch(b0, peel_leaf_branch(P.get_sequence(b0), a, P.transition_P(b0)));
-      }
-      else
-	cache.set_branch(b0, peel_leaf_branch_modulated(P.get_sequence(b0), a, P.transition_P(b0), P.state_letters()));
-    }
-    else if (bb == 2) {
-      // find the names of the (two) branches behind b0
-      vector<int> b = t.branches_before(b0);
-      assert(b.size() == 2);
-      assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
-      const Likelihood_Cache_Branch* LCB1 = &P.cache(b[0]);
-      const Likelihood_Cache_Branch* LCB2 = &P.cache(b[1]);
-      auto& A0 = P.get_pairwise_alignment(b[0]);
-      auto& A1 = P.get_pairwise_alignment(b[1]);
-      
-      if (P.base_model(0,0).is_a<F81_Object>())
-	cache.set_branch(b0, peel_internal_branch_F81(LCB1, LCB2, A0, A1, f81_exp_a_t(P, b0, t.branch_length(b0)), P.FrequencyMatrix(), P.WeightedFrequencyMatrix()));
-      else
-      {
-	auto LCB = peel_internal_branch(LCB1, LCB2, A0, A1, P.transition_P(b0), P.WeightedFrequencyMatrix());
-	assert(LCB->n_columns() == P.seqlength(P.t().source(b0)));
-	cache.set_branch(b0, LCB);
-      }
-    }
-    else
-      std::abort();
-  }
-
-
-  /// Compute an ordered list of branches to process
-  inline peeling_info get_branches(const TreeInterface& t, const Likelihood_Cache LC, vector<int> branches) 
-  {
-    //------- Get ordered list of not up_to_date branches ----------///
-    peeling_info peeling_operations(t);
-
-    for(int i=0;i<branches.size();i++) 
-    {
-      int b = branches[i];
-      if (not LC.up_to_date(b)) {
-	t.append_branches_before(b, branches);
-	peeling_operations.push_back(b);
-      }
-    }
-
-    std::reverse(peeling_operations.begin(),peeling_operations.end());
-
-    return peeling_operations;
-  }
-
-  /// Compute an ordered list of branches to process to validate branch b
-  inline peeling_info get_branches_for_branch(int b, const TreeInterface& t, const Likelihood_Cache LC) 
-  {
-    vector<int> branches(1,b);
-    branches.reserve(t.n_branches());
-
-    return get_branches(t,LC,branches);
-  }
-
-  /// Compute an ordered list of branches to process
-  inline peeling_info get_branches_for_node(int n, const TreeInterface& t, const Likelihood_Cache LC) 
-  {
-    vector<int> branches;
-    branches.reserve(t.n_branches());
-    for(int i=0;i<t.degree(n);i++)
-      branches.push_back(t.reverse(t.branch_out(n,i)));
-
-    return get_branches(t, LC, branches);
-  }
-
-  static 
-  int calculate_caches_for_node(int n, const data_partition& P, const TreeInterface& t, Likelihood_Cache cache)
-  {
-    //---------- determine the operations to perform ----------------//
-    peeling_info ops = get_branches_for_node(n, t, cache);
-
-    if (t.n_nodes() == 2)
-    {
-      assert(n == 1);
-      ops.push_back(1);
-    }
-
-    // FIXME? Currently we require that ALL branches towards this node are up-to-date.
-    // This is used in e.g. get_likelihoods_by_alignment_column( ) but isn't necessary for
-    //  computing likelihoods: if just the branches pointing to the root are up-to-date, then
-    //  we're OK.
-
-    //-------------- Compute the branch likelihoods -----------------//
-    for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],P,cache,t);
-
-    return ops.size();
-  }
-
-  int calculate_caches_for_node(int n, const data_partition& P) {
-    return calculate_caches_for_node(n, P, P.t(), {&P});
-  }
-
-  static 
-  int calculate_caches_for_branch(int b, const data_partition& P, const TreeInterface& t, Likelihood_Cache cache)
-  {
-    //---------- determine the operations to perform ----------------//
-    peeling_info ops = get_branches_for_branch(b, t, cache);
-
-    //-------------- Compute the branch likelihoods -----------------//
-    for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],P,cache,t);
-
-    return ops.size();
-  }
-
   /// Construct a likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
   Matrix get_letter_likelihoods(int l, const alphabet& a, const data_partition& P)
   {
@@ -1199,9 +1052,6 @@ namespace substitution {
     P.set_subst_root(root);
     assert(not t.is_leaf_node(P.subst_root()));
 
-    for(int B: b)
-      calculate_caches_for_branch(B, P, P.t(), {&P});
-
     vector<Matrix> L;
     L.reserve(index.size1()+2);
 
@@ -1290,7 +1140,6 @@ namespace substitution {
   log_double_t other_subst(const data_partition& P, const vector<int>& nodes) 
   {
     auto t = P.t();
-    Likelihood_Cache LC(&P);
 
     // compute root branches
     vector<int> rb = t.branches_in(P.subst_root());
@@ -1299,150 +1148,9 @@ namespace substitution {
 
     log_double_t Pr3 = 1;
     for(int b: leaf_branch_list)
-    {
-      IF_DEBUG_S(int n_br =) calculate_caches_for_branch(b, P, t, LC);
-#ifdef DEBUG_SUBSTITUTION
-      std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
-#endif
-      assert(LC.up_to_date(b));
       Pr3 *= P.cache(b).other_subst;
-    }
 
     return Pr3;
-  }
-
-  bool check_equal(double x, double y)
-  {
-    return (std::abs(x-y) < std::min(x,y)*1.0e-9);
-  }
-
-  void compare_caches(const data_partition& P1, const data_partition& P2, int b)
-  {
-    assert(P1.seqlength(P1.t().source(b)) == P2.seqlength(P2.t().source(b)));
-
-#if 0
-    const int n_models = P1.cache().n_models();
-    const int n_states = P1.cache().n_states();
-
-    bool equal = true;
-    for(int i=0;i<L;i++) 
-    {
-      const Matrix& M1 = P1.cache()(i,b);
-      const Matrix& M2 = P2.cache()(i,b);
-      
-      for(int m=0;m<n_models;m++) 
-	for(int s1=0;s1<n_states;s1++)
-	  equal = equal and check_equal(M1(m,s1), M2(m,s1));
-    }
-
-    if (equal)
-      ; //std::cerr<<"branch "<<b<<": cached conditional likelihoods are equal"<<endl;
-    else
-      std::cerr<<"branch "<<b<<": cached conditional likelihoods are NOT equal"<<std::endl;
-
-    log_double_t other_subst_current = P1.cache()[b].other_subst;
-    log_double_t other_subst_recomputed = P2.cache()[b].other_subst;
-    bool other_subst_equal = (std::abs(other_subst_current.log() - other_subst_recomputed.log()) < 1.0e-9);
-    if (other_subst_equal)
-      ; //std::cerr<<"branch "<<b<<": other_subst valies are equal"<<endl;
-    else {
-      std::cerr<<"branch "<<b<<": other_subst values are NOT equal:"<<
-	" current = "<<other_subst_current.log()<<
-	" recomputed = "<<other_subst_recomputed.log()<<
-	" diff = "<<other_subst_recomputed.log() - other_subst_current.log()<<std::endl;
-    }
-#endif
-  }
-  
-  void compare_caches(const data_partition& P1, const data_partition& P2)
-
-  {
-    assert(P1.subst_root() == P2.subst_root());
-    
-    vector<int> branches = P1.t().branches_in(P1.subst_root());
-    branches.reserve(P1.t().n_branches());
-
-    for(int i=0;i<branches.size();i++)
-    {
-      int b = branches[i];
-
-      P1.t().append_branches_before(b, branches);
-
-      if (Likelihood_Cache(&P1).up_to_date(b) and Likelihood_Cache(&P2).up_to_date(b))
-	compare_caches(P1,P2,b);
-    }
-  }
-
-  log_double_t Pr(const data_partition& P, const TreeInterface& t, Likelihood_Cache LC)
-  {
-    total_likelihood++;
-
-    IF_DEBUG_S(int n_br =) calculate_caches_for_node(P.subst_root(), P,t,LC);
-#ifdef DEBUG_SUBSTITUTION
-    std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
-#endif
-
-    // compute root branches
-    vector<int> rb;
-
-    // get the probability
-    log_double_t Pr = 1;
-    if (t.n_nodes() == 2)
-    {
-      auto a01 = convert_to_bits(P.get_pairwise_alignment(P.t().find_branch(0,1)),0,1);
-      auto index = get_indices_from_bitpath(a01, {0,1});
-      Pr = calc_root_probability2(P,rb,index);
-    }
-    else
-    {
-      int root = P.subst_root();
-      if (t.is_leaf_node(root))
-	throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
-
-      auto rb = t.branches_in(root);
-      assert(t.target(rb[0]) == root);
-      assert(rb.size() == 3);
-
-      auto& A1 = P.get_pairwise_alignment(rb[0]);
-      auto& A2 = P.get_pairwise_alignment(rb[1]);
-      auto& A3 = P.get_pairwise_alignment(rb[2]);
-
-      for(int i=0;i<rb.size();i++)
-	assert(LC.up_to_date(rb[i]));
-
-      // cache matrix F(m,s) of p(m)*freq(m,l)
-      Matrix F = P.WeightedFrequencyMatrix();
-
-      Pr = calc_root_probability(&P.cache(rb[0]), &P.cache(rb[1]), &P.cache(rb[2]), A1, A2, A3, F);
-    }
-
-    return Pr;
-  }
-
-  log_double_t Pr(const data_partition& P,Likelihood_Cache LC) 
-  {
-    return Pr(P, P.t(), LC);
-  }
-
-
-  log_double_t Pr(const data_partition& P) {
-    log_double_t result = Pr(P, {&P});
-
-#ifdef DEBUG_CACHING
-    data_partition P2 = P;
-    P2.cache().invalidate_all();
-    for(int i=0;i<P2.t().n_branches();i++)
-      P2.setlength(i);
-    log_double_t result2 = Pr(P2, P2.cache());
-
-    if (std::abs(log(result) - log(result2))  > 1.0e-9) {
-      std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
-      compare_caches(P, P2);
-      std::abort();
-    }
-#endif
-
-    return result;
   }
 
   log_double_t combine_likelihoods(const vector<Matrix>& likelihoods)
@@ -1456,8 +1164,6 @@ namespace substitution {
   vector<vector<pair<int,int>>> 
   sample_subst_history(const data_partition& P, const TreeInterface& t)
   {
-    Likelihood_Cache cache(&P);
-
     const vector<unsigned>& smap = P.state_letters();
 
     const int n_models = P.n_base_models();
@@ -1485,8 +1191,6 @@ namespace substitution {
       vector<int> rb;
       for(int b: t.branches_in(root))
       {
-	calculate_caches_for_branch(b, P,t, cache);
-
 	rb.push_back(b);
 
 	subA_index_parent_characters[b] = vector<pair<int,int>>(P.seqlength(P.t().source(b)), {-1,-1});
@@ -1549,8 +1253,6 @@ namespace substitution {
       vector<int> local_branches = {b};
       for(int b: t.branches_before(b))
       {
-	calculate_caches_for_branch(b, P,t,cache);
-
 	local_branches.push_back(b);
 
 	subA_index_parent_characters[b] = vector<pair<int,int>>(P.seqlength(P.t().source(b)), {-1,-1});

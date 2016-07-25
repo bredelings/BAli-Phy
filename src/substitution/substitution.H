@@ -44,9 +44,6 @@ namespace substitution {
   std::vector<Matrix>
   get_leaf_seq_likelihoods(const data_partition& P, int n, int delta);
 
-  /// Full likelihood - all columns, all rates
-  log_double_t Pr(const data_partition&);
-
   log_double_t other_subst(const data_partition&, const std::vector<int>& nodes);
   
   std::vector<std::vector<double> > get_model_likelihoods_by_alignment_column(const data_partition&);
