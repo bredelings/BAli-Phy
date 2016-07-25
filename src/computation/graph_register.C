@@ -2022,7 +2022,7 @@ void reg_heap::check_tokens() const
 
 }
 
-void reg_heap::check_used_reg(int index) const
+void reg_heap::check_used_reg(int r) const
 {
   for(int t=0;t<get_n_tokens();t++)
   {
@@ -2030,31 +2030,40 @@ void reg_heap::check_used_reg(int index) const
 
     if (is_root_token(t))
     {
-      assert(tokens[t].vm_step[index] != -1);
-      assert(tokens[t].vm_result[index] != -1);
+      assert(tokens[t].vm_step[r] != -1);
+      assert(tokens[t].vm_result[r] != -1);
     }
 
-    int p = parent_token(t);
+    if (not is_root_token(t))
+    {
+      int p = parent_token(t);
 
-    if (not is_root_token(t) and tokens[t].vm_step[index] > 0 and tokens[p].vm_step[index] > 0)
-      assert(tokens[t].vm_step[index] != tokens[p].vm_step[index]);
+      // If there are + values in adjacent contexts, they should not the be same value
+      if (tokens[t].vm_step[r] > 0 and tokens[p].vm_step[r] > 0)
+	assert(tokens[t].vm_step[r] != tokens[p].vm_step[r]);
 
-    if (not is_root_token(t) and tokens[t].vm_result[index] > 0 and tokens[p].vm_result[index] > 0)
-      assert(tokens[t].vm_result[index] != tokens[p].vm_result[index]);
+      if (tokens[t].vm_result[r] > 0 and tokens[p].vm_result[r] > 0)
+	assert(tokens[t].vm_result[r] != tokens[p].vm_result[r]);
 
-    if (access(index).type == reg::type_t::constant)
-      assert(not has_result_(t,index));
+      // If we have a new step in a token, we should not share the result from out parent.
+      // This would hold for all tokens, except that in the root token "0" means "-" and not "="
+      if (tokens[t].vm_step[r] > 0)
+	assert(tokens[t].vm_result[r] != 0);
+    }
 
-    if (not has_step_(t, index)) continue;
-    int call = call_for_reg_(t,index);
-    int index_s = step_index_for_reg_(t,index);
+    if (access(r).type == reg::type_t::constant)
+      assert(not has_result_(t,r));
 
-    for(const auto& rcp2: steps[index_s].used_inputs)
+    if (not has_step_(t, r)) continue;
+    int call = call_for_reg_(t,r);
+    int r_s = step_index_for_reg_(t,r);
+
+    for(const auto& rcp2: steps[r_s].used_inputs)
     {
       int rc2 = rcp2.first;
 
       // Used regs should have back-references to R
-      assert( result_is_used_by(index_s, rc2) );
+      assert( result_is_used_by(r_s, rc2) );
 
       // Used computations should be mapped computation for the current token, if we are at the root
       int R2 = results[rc2].source_reg;
@@ -2068,12 +2077,12 @@ void reg_heap::check_used_reg(int index) const
       assert(results[rc2].value);
     }
 
-    if (not has_result_(t, index)) continue;
+    if (not has_result_(t, r)) continue;
 
-    int index_c = result_index_for_reg_(t,index);
-    int value = result_value_for_reg_(t,index);
+    int r_c = result_index_for_reg_(t,r);
+    int value = result_value_for_reg_(t,r);
 
-    if (results[index_c].flags.test(0))
+    if (results[r_c].flags.test(0))
       assert(is_root_token(t));
 
     if (value)
@@ -2092,7 +2101,7 @@ void reg_heap::check_used_reg(int index) const
     {
       assert( has_result(call) );
       int rc2 = result_index_for_reg(call);
-      assert( result_is_called_by(index_c, rc2) );
+      assert( result_is_called_by(r_c, rc2) );
     }
 
     // If we have a value, then our call should have a value
