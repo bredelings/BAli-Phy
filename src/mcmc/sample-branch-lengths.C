@@ -478,7 +478,7 @@ void scale_means_only(owned_ptr<Model>& P,MoveStats& Stats)
   }
 #endif
   
-  if (uniform() < double(a_ratio)) 
+  if (a_ratio.log() > 0 or uniform() < double(a_ratio)) 
   {
     P=P2;
     result.totals[0] = 1;
