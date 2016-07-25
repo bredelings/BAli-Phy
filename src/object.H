@@ -59,7 +59,7 @@ public:
 
   virtual type_constant type() const {return unknown_type;}
 
-  virtual std::string print() const {return std::string("unprintable[")+demangle(typeid(*this).name())+"]";}
+  virtual std::string print() const {return std::string("unprintable[")+demangle(typeid(*this).name())+"] "+ convertToString(this);}
 
   Object& operator=(const Object&) {return *this;}
 
