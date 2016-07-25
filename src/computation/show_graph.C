@@ -83,8 +83,6 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& scan, vecto
       }
     }
 
-    if (not has_result(r)) continue;
-
     // Count also the references from the call
     if (reg_has_call(r))
     {
@@ -521,7 +519,9 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     // FIXME:Drawing - doing :w and {rank=same; n -> n} makes the edge drawn over the node icon.
     if (C.reg_has_call(R))
     {
-      string name2 = "n" + convertToString(C.call_for_reg(R));
+      int R2 = C.call_for_reg(R);
+      assert(includes(regs,R2));
+      string name2 = "n" + convertToString(R2);
       o<<name<<":e -> "<<name2<<":w ";
       o<<"[";
       o<<"color=\"#007700\"";
