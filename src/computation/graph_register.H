@@ -216,6 +216,9 @@ public:
 
   std::vector<int> probability_heads;
 
+  // the list of regs that are currently being evaluated
+  std::vector<int> stack;
+
   log_double_t constant_pr = 1.0;
 
   log_double_t variable_pr = 1.0;
@@ -528,7 +531,11 @@ public:
   std::pair<int,int> incremental_evaluate_in_context(int R, int c);
 
   std::pair<int,int> incremental_evaluate(int R);
+private:  
+  std::pair<int,int> incremental_evaluate_(int R);
+  int incremental_evaluate_unchangeable_(int R);
 
+public:
   int incremental_evaluate_unchangeable(int R);
 
   const closure& lazy_evaluate(int& R);

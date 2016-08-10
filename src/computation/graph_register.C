@@ -1782,7 +1782,8 @@ void insert_at_end(vector<int>& v, const T& t)
 
 void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 {
-  insert_at_end(scan, temp); // inc_heads = yes
+  insert_at_end(scan, stack); // inc_heads = yes
+  insert_at_end(scan, temp); // yes
   insert_at_end(scan, heads); // yes
   insert_at_end(scan, probability_heads); // yes
   insert_at_end(scan, random_modifiables_); // yes

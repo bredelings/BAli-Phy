@@ -151,6 +151,27 @@ public:
    *   return R1
    */
 
+
+std::pair<int,int> reg_heap::incremental_evaluate(int R)
+{
+  stack.push_back(R);
+  inc_heads(R);
+  auto result = incremental_evaluate_(R);
+  dec_heads(R);
+  stack.pop_back();
+  return result;
+}
+
+int reg_heap::incremental_evaluate_unchangeable(int R)
+{
+  stack.push_back(R);
+  inc_heads(R);
+  auto result = incremental_evaluate_unchangeable_(R);
+  dec_heads(R);
+  stack.pop_back();
+  return result;
+}
+
 // Perhaps rewrite the expression system to
 // (a) DONE: Separate the head (object_ref) from the other args (expression_ref)
 // (b) Make a constructor take some number of arguments.
@@ -162,7 +183,7 @@ public:
 
 /// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
-std::pair<int,int> reg_heap::incremental_evaluate(int R)
+std::pair<int,int> reg_heap::incremental_evaluate_(int R)
 {
   assert(is_completely_dirty(root_token));
   assert(is_valid_address(R));
@@ -411,7 +432,7 @@ public:
   { }
 };
 
-int reg_heap::incremental_evaluate_unchangeable(int R)
+int reg_heap::incremental_evaluate_unchangeable_(int R)
 {
   assert(is_valid_address(R));
   assert(is_used(R));
