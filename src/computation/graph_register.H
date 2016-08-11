@@ -48,6 +48,8 @@ struct Result
 {
   int source_token = -1;
 
+  int source_step = -1;
+
   int source_reg = -1;
 
   /// What final WHNF does this computation reduce to?
@@ -488,7 +490,7 @@ public:
   int remove_shared_result(int t, int r);
 
   int add_shared_step(int t, int r);
-  int add_shared_result(int t, int r);
+  int add_shared_result(int t, int r, int step);
 
   void clear_step(int t, int r);
   void clear_result(int t, int r);

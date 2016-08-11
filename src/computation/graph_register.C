@@ -255,6 +255,7 @@ Step::Step(Step&& S) noexcept
 void Result::clear()
 {
   source_token = -1;
+  source_step = -1;
   source_reg = -1;
   value = 0;
   truncate(call_edge);
@@ -280,6 +281,7 @@ Result& Result::operator=(Result&& R) noexcept
 {
   value = R.value;
   source_token = R.source_token;
+  source_step = R.source_step;
   source_reg = R.source_reg;
   call_edge = R.call_edge;
   used_by = std::move( R.used_by );
@@ -292,6 +294,7 @@ Result& Result::operator=(Result&& R) noexcept
 
 Result::Result(Result&& R) noexcept
 :source_token(R.source_token),
+  source_step(R.source_step),
   source_reg(R.source_reg),
   value (R.value), 
   call_edge (R.call_edge),
@@ -815,7 +818,7 @@ void reg_heap::set_result_value_for_reg(int r1)
 
   int rc1 = result_index_for_reg(r1);
   if (rc1 <= 0)
-    rc1 = add_shared_result(root_token, r1);
+    rc1 = add_shared_result(root_token, r1, step_index_for_reg(r1));
   assert(rc1 > 0);
   auto& RC1 = results[rc1];
   RC1.value = value;
@@ -1207,8 +1210,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 void reg_heap::set_shared_value(int r, int v)
 {
   // add a new computation
-  add_shared_step(root_token, r);
-  add_shared_result(root_token, r);
+  int step = add_shared_step(root_token, r);
+  add_shared_result(root_token, r, step);
 
   // set the value
   set_call(root_token, r, v);
@@ -2067,6 +2070,9 @@ void reg_heap::check_used_reg(int r) const
     if (access(r).type == reg::type_t::constant)
       assert(not has_result_(t,r));
 
+    // Any checks for result, but no step?
+
+    // Below this we have a step.
     if (not has_step_(t, r)) continue;
     int call = call_for_reg_(t,r);
     int r_s = step_index_for_reg_(t,r);
@@ -2090,9 +2096,11 @@ void reg_heap::check_used_reg(int r) const
       assert(results[rc2].value);
     }
 
+    // Below this we have a step AND a result.
     if (not has_result_(t, r)) continue;
 
     int r_c = result_index_for_reg_(t,r);
+    assert(results[r_c].source_step == r_s);
     int value = result_value_for_reg_(t,r);
 
     if (results[r_c].flags.test(0))
@@ -2202,7 +2210,7 @@ int reg_heap::add_shared_step(int t, int r)
 }
 
 /// Add a shared result at (t,r) -- assuming there isn't one already
-int reg_heap::add_shared_result(int t, int r)
+int reg_heap::add_shared_result(int t, int r, int s)
 {
   assert(tokens[t].vm_result[r] <= 0);
   // There should already be a step, if there is a result
@@ -2214,6 +2222,7 @@ int reg_heap::add_shared_result(int t, int r)
   
   // 2. Set the source of the result
   results[rc].source_token = t;
+  results[rc].source_step = s;
   results[rc].source_reg = r;
 
   // 3. Link it in to the mapping
