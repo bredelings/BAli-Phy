@@ -258,7 +258,12 @@ void reg_heap::trace(vector<int>& remap)
     mark_reg(steps[s].source_reg);
 
   for(int r:used_results)
-    assert(is_marked(r));
+  {
+    const auto& result = results[r];
+    assert(steps.is_marked(result.source_step));
+    assert(result.source_reg == steps[result.source_step].source_reg);
+    assert(is_marked(results[r].source_reg));
+  }
 
   // 8. Mark regs referenced only by regs as used.
   for(int reg_index = 0;reg_index < used_regs.size();reg_index++)
