@@ -257,8 +257,7 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
     {
       int index = access(R).C.exp.as_index_var();
       int R2 = access(R).C.lookup_in_env( index );
-      R = R2;
-      continue;
+      return incremental_evaluate(R2);
     }
     else
       assert(reg_type == reg::type_t::unknown);
@@ -454,8 +453,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
     {
       int index = access(R).C.exp.as_index_var();
       int R2 = access(R).C.lookup_in_env( index );
-      R = R2;
-      continue;
+      return incremental_evaluate_unchangeable(R2);
     }
     else
       assert(reg_type == reg::type_t::unknown);
