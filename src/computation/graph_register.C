@@ -2076,6 +2076,10 @@ void reg_heap::check_used_reg(int r) const
     if (not has_step_(t, r)) continue;
     int call = call_for_reg_(t,r);
     int r_s = step_index_for_reg_(t,r);
+    int r_r = result_index_for_reg_(t,r);
+
+    // If we have a new step, we cannot share a result.  (In the root token 0 means 'unshare', not 'share')
+    assert(t == root_token or r_r != 0);
 
     for(const auto& rcp2: steps[r_s].used_inputs)
     {
@@ -2096,14 +2100,14 @@ void reg_heap::check_used_reg(int r) const
       assert(results[rc2].value);
     }
 
-    // Below this we have a step AND a result.
-    if (not has_result_(t, r)) continue;
 
-    int r_c = result_index_for_reg_(t,r);
-    assert(results[r_c].source_step == r_s);
+    // Below this we have a result.
+    if (r_r <= 0) continue;
+
+    assert(results[r_r].source_step == r_s);
     int value = result_value_for_reg_(t,r);
 
-    if (results[r_c].flags.test(0))
+    if (results[r_r].flags.test(0))
       assert(is_root_token(t));
 
     if (value)
@@ -2122,7 +2126,7 @@ void reg_heap::check_used_reg(int r) const
     {
       assert( has_result(call) );
       int rc2 = result_index_for_reg(call);
-      assert( result_is_called_by(r_c, rc2) );
+      assert( result_is_called_by(r_r, rc2) );
     }
 
     // If we have a value, then our call should have a value
