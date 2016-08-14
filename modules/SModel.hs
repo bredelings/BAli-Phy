@@ -23,7 +23,7 @@ builtin lg 1 "lg" "SModel";
 builtin fMutSel_q 4 "fMutSel_q" "SModel";
 builtin fMutSel_pi 3 "fMutSel_pi" "SModel";
 builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel";
-builtin builtin_frequency_matrix 1 "weighted_frequency_matrix" "SModel";
+builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel";
 builtin peel_leaf_branch 3 "peel_leaf_branch" "SModel";
 builtin peel_internal_branch 6 "peel_internal_branch" "SModel";
 builtin calc_root_probability 7 "calc_root_probability" "SModel";
@@ -97,7 +97,9 @@ weighted_frequency_matrix (MixtureModel d) = let {model = MixtureModel d;
                                              in builtin_weighted_frequency_matrix dist freqs;
 weighted_frequency_matrix (MixtureModels (m:ms)) = weighted_frequency_matrix m;
 
-frequency_matrix (MixtureModel d) = builtin_frequency_matrix $ list_to_vector $ map (componentFrequencies (MixtureModel d)) [0..nBaseModels d-1];
+frequency_matrix (MixtureModel d) = let {model = MixtureModel d} 
+                                    in  builtin_frequency_matrix $ list_to_vector $ map (componentFrequencies model) [0..nBaseModels model-1];
+
 frequency_matrix (MixtureModels (m:ms)) = frequency_matrix m;
 
 --
