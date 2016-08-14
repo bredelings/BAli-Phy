@@ -187,9 +187,20 @@ VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
  *       I compute the probability at the end of Parameters::Parameters( ).
  */
 
-void data_partition::set_parameters(const Parameters* p)
+  /// Is the alignment allowed to vary?
+bool data_partition::variable_alignment() const
 {
-  P = p;
+  return P->variable_alignment() and has_IModel();
+}
+
+const data_partition_constants& data_partition::DPC() const
+{
+  return P->PC->DPC[partition_index];
+}
+
+const alphabet& data_partition::get_alphabet() const
+{
+  return *DPC().a;
 }
 
 alignment data_partition::A() const
@@ -198,7 +209,7 @@ alignment data_partition::A() const
   for(int b=0;b<2*t().n_branches();b++)
     As.push_back(get_pairwise_alignment(b));
   
-  return get_alignment(get_alphabet(), *seqs, *sequences, construct(t(), As));
+  return get_alignment(get_alphabet(), DPC().seqs, DPC().sequences, construct(t(), As));
 }
 
 TreeInterface data_partition::t() const
@@ -216,19 +227,6 @@ int data_partition::subst_root() const {
   return P->subst_root();
 }
 
-void data_partition::variable_alignment(bool b)
-{
-  variable_alignment_ = b;
-
-  // Ignore requests to turn on alignment variation when there is no imodel or internal nodes
-  if (not has_IModel())
-    variable_alignment_ = false;
-
-  // turning ON alignment variation
-  if (variable_alignment())
-    assert(has_IModel());
-}
-
 bool data_partition::has_IModel() const
 {
   int m = P->imodel_index_for_partition(partition_index);
@@ -237,7 +235,7 @@ bool data_partition::has_IModel() const
 
 const std::vector<int>& data_partition::get_sequence(int i) const
 {
-  return P->evaluate( leaf_sequence_indices[i] ).as_<Vector<int>>();
+  return P->evaluate( DPC().leaf_sequence_indices[i] ).as_<Vector<int>>();
 }
 
 const std::vector<Matrix>& data_partition::transition_P(int b) const
@@ -245,7 +243,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   b = t().undirected(b);
   assert(b >= 0 and b < t().n_branches());
 
-  return P->evaluate( transition_p_method_indices[b] ).as_<Vector<Matrix>>();
+  return P->evaluate( DPC().transition_p_method_indices[b] ).as_<Vector<Matrix>>();
 }
 
 int data_partition::n_base_models() const
@@ -286,14 +284,14 @@ vector<unsigned> data_partition::state_letters() const
 
 vector<double> data_partition::frequencies(int m) const
 {
-  return P->evaluate( frequencies_indices[m] ).as_<Vector<double>>();
+  return P->evaluate( DPC().frequencies_indices[m] ).as_<Vector<double>>();
 }
 
 expression_ref data_partition::base_model(int m, int b) const
 {
   b = t().undirected(b);
 
-  return P->evaluate( base_model_indices(m,b) );
+  return P->evaluate( DPC().base_model_indices(m,b) );
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -302,7 +300,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 
   b = t().undirected(b);
 
-  return P->evaluate( branch_HMM_indices[b] ).as_<indel::PairHMM>();
+  return P->evaluate( DPC().branch_HMM_indices[b] ).as_<indel::PairHMM>();
 }
 
 vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) const
@@ -329,7 +327,7 @@ double data_partition::sequence_length_pr(int l) const
 
 int data_partition::seqlength(int n) const
 {
-  int l = P->evaluate(sequence_length_indices[n]).as_int();
+  int l = P->evaluate(DPC().sequence_length_indices[n]).as_int();
 
   return l;
 }
@@ -340,15 +338,20 @@ void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& p
   int B = t().reverse(b);
   assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
   const context* C = P;
-  const_cast<context*>(C)->set_parameter_value(pairwise_alignment_for_branch[b], new pairwise_alignment_t(pi));
-  const_cast<context*>(C)->set_parameter_value(pairwise_alignment_for_branch[B], new pairwise_alignment_t(pi.flipped()));
+  const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[b], new pairwise_alignment_t(pi));
+  const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[B], new pairwise_alignment_t(pi.flipped()));
 
   assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
 }
 
+const matrix<int>& data_partition::alignment_constraint() const
+{
+  return DPC().alignment_constraint;
+}
+
 expression_ref data_partition::get_pairwise_alignment_(int b) const
 {
-  return P->get_parameter_value(pairwise_alignment_for_branch[b]);
+  return P->get_parameter_value(DPC().pairwise_alignment_for_branch[b]);
 }
 
 const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
@@ -371,7 +374,7 @@ log_double_t data_partition::prior_alignment() const
 {
   if (not variable_alignment()) return 1;
 
-  log_double_t Pr = P->evaluate(alignment_prior_index).as_log_double();
+  log_double_t Pr = P->evaluate(DPC().alignment_prior_index).as_log_double();
 
   assert(not different(Pr, ::prior_HMM(*this)));
 
@@ -385,13 +388,13 @@ log_double_t data_partition::prior() const
 
 const Likelihood_Cache_Branch& data_partition::cache(int b) const
 {
-  return P->evaluate(conditional_likelihoods_for_branch[b]).as_<Likelihood_Cache_Branch>();
+  return P->evaluate(DPC().conditional_likelihoods_for_branch[b]).as_<Likelihood_Cache_Branch>();
 }
 
 log_double_t data_partition::likelihood() const 
 {
   substitution::total_likelihood++;
-  return P->evaluate(likelihood_index).as_log_double();
+  return P->evaluate(DPC().likelihood_index).as_log_double();
 }
 
 log_double_t data_partition::heated_likelihood() const 
@@ -403,34 +406,35 @@ log_double_t data_partition::heated_likelihood() const
     return pow(likelihood(),get_beta());
 }
 
-data_partition::data_partition(Parameters* p, int i, const alignment& AA)
-  :P(p),
-   DPC(new data_partition_constants),
-   partition_index(i),
-   pairwise_alignment_for_branch(2*t().n_branches()),
-   conditional_likelihoods_for_branch(2*t().n_branches()),
-   leaf_sequence_indices(t().n_leaves(),-1),
+data_partition::data_partition(const Parameters* p, int i)
+  :P(p),partition_index(i)
+{ }
+
+data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA)
+  :pairwise_alignment_for_branch(2*p->t().n_branches()),
+   conditional_likelihoods_for_branch(2*p->t().n_branches()),
+   leaf_sequence_indices(p->t().n_leaves(),-1),
    sequence_length_indices(AA.n_sequences(),-1),
-   transition_p_method_indices(t().n_branches(),-1),
-   variable_alignment_( has_IModel() ),
+   transition_p_method_indices(p->t().n_branches(),-1),
    seqs(AA.seqs()),
-   sequences( alignment_letters(AA, t().n_leaves()) ),
+   sequences( alignment_letters(AA, p->t().n_leaves()) ),
    a(AA.get_alphabet().clone()),
-   branch_HMM_type(t().n_branches(),0)
+   branch_HMM_type(p->t().n_branches(),0)
 {
-  int B = t().n_branches();
+  const auto& t = p->t();
+  int B = t.n_branches();
 
   string prefix = "P"+convertToString(i+1)+".";
   string invisible_prefix = "*"+prefix;
 
   auto AAA = AA;
-  minimally_connect_leaf_characters(AAA, t());
+  minimally_connect_leaf_characters(AAA, t);
   
   // Create and set pairwise alignment parameters.
   for(int b=0;b<pairwise_alignment_for_branch.size();b++)
   {
-    int n1 = t().source(b);
-    int n2 = t().target(b);
+    int n1 = t.source(b);
+    int n2 = t.target(b);
     auto pi = A2::get_pairwise_alignment(AAA,n1,n2);
     pairwise_alignment_for_branch[b] = p->add_parameter(invisible_prefix+"a"+convertToString(b), pi);
   }
@@ -439,14 +443,14 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
     conditional_likelihoods_for_branch[b] = p->add_parameter(invisible_prefix+"CL"+convertToString(b), 0);
 
-  const int n_base_smodels = n_base_models();
   //  const int n_states = state_letters().size();
-  const int scale_index = P->scale_index_for_partition(partition_index);
-  const int smodel_index = P->smodel_index_for_partition(partition_index);
-  const int imodel_index = P->imodel_index_for_partition(partition_index);
+  const int scale_index = p->scale_index_for_partition(i);
+  const int smodel_index = p->smodel_index_for_partition(i);
+  const int imodel_index = p->imodel_index_for_partition(i);
+  const int n_base_smodels = p->evaluate(p->PC->SModels[smodel_index].n_base_models).as_int();
 
   // Add method indices for calculating transition matrices.
-  auto transition_ps = P->get_expression(P->PC->branch_transition_p_indices(scale_index, smodel_index));
+  auto transition_ps = p->get_expression(p->PC->branch_transition_p_indices(scale_index, smodel_index));
   {
     for(int b=0;b<B;b++)
       transition_p_method_indices[b] = p->add_compute_expression( (identifier("!"), transition_ps, b) );
@@ -455,8 +459,8 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
   // Add method indices for calculating base models and frequencies
   base_model_indices.resize(n_base_smodels, B);
   {
-    expression_ref F = P->get_expression(P->PC->SModels[smodel_index].frequencies);
-    expression_ref BM = P->get_expression(P->PC->SModels[smodel_index].base_model);
+    expression_ref F = p->get_expression(p->PC->SModels[smodel_index].frequencies);
+    expression_ref BM = p->get_expression(p->PC->SModels[smodel_index].base_model);
     for(int m=0;m<n_base_smodels;m++)
     {
       frequencies_indices.push_back( p->add_compute_expression( (F,m) ) );
@@ -467,33 +471,33 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
 
   // Add parameters for observed leaf sequence objects
   for(int i=0; i<leaf_sequence_indices.size(); i++)
-    leaf_sequence_indices[i] = p->add_compute_expression(Vector<int>((*sequences)[i]));
+    leaf_sequence_indices[i] = p->add_compute_expression(Vector<int>(sequences[i]));
 
   vector<expression_ref> seqs_;
   for(int index: leaf_sequence_indices)
-    seqs_.push_back( P->get_expression(index) );
-  auto seqs_array = P->get_expression( p->add_compute_expression((identifier("listArray'"),get_list(seqs_))) );
+    seqs_.push_back( p->get_expression(index) );
+  auto seqs_array = p->get_expression( p->add_compute_expression((identifier("listArray'"),get_list(seqs_))) );
   
   // Add methods indices for sequence lengths
   vector<expression_ref> as_;
   for(int b=0;b<2*B;b++)
   {
-    expression_ref a = parameter( P->parameter_name(pairwise_alignment_for_branch[b]) );
+    expression_ref a = parameter( p->parameter_name(pairwise_alignment_for_branch[b]) );
     as_.push_back(a);
   }
-  expression_ref as = P->get_expression( p->add_compute_expression((identifier("listArray'"),get_list(as_))) );
+  expression_ref as = p->get_expression( p->add_compute_expression((identifier("listArray'"),get_list(as_))) );
 
-  for(int n=0;n<t().n_nodes();n++)
+  for(int n=0;n<t.n_nodes();n++)
   {
     auto L = (identifier("seqlength"), as, p->my_tree(), n);
     sequence_length_indices[n] = p->add_compute_expression( L );
   }
 
   {
-    auto t = P->my_tree();
-    auto f = P->get_expression(P->PC->SModels[smodel_index].weighted_frequency_matrix);
+    auto t = p->my_tree();
+    auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
     cl_index = p->add_compute_expression((identifier("cached_conditional_likelihoods"),t,seqs_array,as,*a,transition_ps,f));  // Create and set conditional likelihoods for each branch
-    auto cls = P->get_expression(cl_index);
+    auto cls = p->get_expression(cl_index);
     for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
       conditional_likelihoods_for_branch[b] = p->add_compute_expression((identifier("!"),cls,b));
     auto root = parameter("*subst_root");
@@ -510,7 +514,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& AA)
     expression_ref model = (identifier("!"),identifier("IModels.models"),imodel_index);
 
     expression_ref hmms = (identifier("branch_hmms"), model, D, heat, training, B);
-    hmms = P->get_expression( p->add_compute_expression(hmms) );
+    hmms = p->get_expression( p->add_compute_expression(hmms) );
 
     // branch HMMs
     for(int b=0;b<B;b++)
@@ -646,16 +650,27 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
   }
 }
 
-const data_partition& Parameters::get_data_partition(int i) const
+bool Parameters::variable_alignment() const
 {
-  data_partitions[i].set_parameters(this);
-  return data_partitions[i];
+  return variable_alignment_;
 }
 
-data_partition& Parameters::get_data_partition(int i)
+void Parameters::variable_alignment(bool b)
 {
-  data_partitions[i].set_parameters(this);
-  return data_partitions[i];
+  variable_alignment_ = b;
+
+  // Ignore requests to turn on alignment variation when there is no imodel or internal nodes
+  if (not n_imodels())
+    variable_alignment_ = false;
+
+  // turning ON alignment variation
+  if (variable_alignment())
+    assert(n_imodels() > 0);
+}
+
+data_partition Parameters::get_data_partition(int i) const
+{
+  return data_partition(this,i);
 }
 
 void Parameters::set_beta(double b)
@@ -872,7 +887,7 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
   // 5. Set the pairwise alignments.
   for(int i=0;i<n_data_partitions();i++)
   {
-    auto& dp = get_data_partition(i);
+    auto dp = get_data_partition(i);
     dp.set_pairwise_alignment(t().find_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 0, 4));
     dp.set_pairwise_alignment(t().find_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_bits(a123456[i], 1, 4));
     dp.set_pairwise_alignment(t().find_branch(nodes[2],nodes[5]), get_pairwise_alignment_from_bits(a123456[i], 2, 5));
@@ -1007,20 +1022,6 @@ object_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
   return evaluate(PC->SModels[s].get_alphabet).assert_is_a<alphabet>();
 }
 
-bool Parameters::variable_alignment() const
-{
-  for(int i=0;i<n_data_partitions();i++)
-    if (get_data_partition(i).variable_alignment())
-      return true;
-  return false;
-}
-
-void Parameters::variable_alignment(bool b)
-{
-  for(int i=0;i<n_data_partitions();i++)
-    get_data_partition(i).variable_alignment(b);
-}
-
 void Parameters::setlength_unsafe(int b,double l) 
 {
   t().set_branch_length(b, l);
@@ -1123,6 +1124,7 @@ Parameters::Parameters(const module_loader& L,
 		       const vector<int>& scale_mapping)
   :Model(L),
    PC(new parameters_constants(A,tt,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
+   variable_alignment_( n_imodels() > 0 ),
    updown(-1)
 {
   // \todo FIXME:cleanup|fragile - Don't touch C here directly!
@@ -1288,8 +1290,8 @@ Parameters::Parameters(const module_loader& L,
   }
 
   // create data partitions
-  for(int i=0;i<A.size();i++) 
-    data_partitions.push_back( data_partition(this, i, A[i]) );
+  for(int i=0;i<A.size();i++)
+    PC->DPC.emplace_back(this,i,A[i]);
 
   // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
   probability();

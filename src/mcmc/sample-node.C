@@ -51,7 +51,7 @@ using std::endl;
 using boost::dynamic_bitset;
 using boost::shared_ptr;
 
-shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
+shared_ptr<DParrayConstrained> sample_node_base(data_partition P,const vector<int>& nodes)
 {
   assert(P.variable_alignment());
 

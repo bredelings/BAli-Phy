@@ -444,7 +444,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
   }
 
   for(int i=0;i<P.n_data_partitions();i++)
-    P[i].alignment_constraint = load_alignment_constraint(ac_filenames[i],T);
+    P.PC->DPC[i].alignment_constraint = load_alignment_constraint(ac_filenames[i],T);
 
   //------------------- Handle heating ---------------------//
   setup_heating(proc_id,args,P);

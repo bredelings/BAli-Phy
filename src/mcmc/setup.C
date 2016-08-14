@@ -912,11 +912,11 @@ void do_sampling(const variables_map& args,
     owned_ptr<Parameters> PP = P.as<Parameters>();
     //-------------------- Report alignment alignments -----------------------//
     for(int i=0;i<PP->n_data_partitions();i++)
-      std::cout<<"Partition "<<i+1<<": using "<<(*PP)[i].alignment_constraint.size1()<<" constraints.\n";
+      std::cout<<"Partition "<<i+1<<": using "<<(*PP)[i].alignment_constraint().size1()<<" constraints.\n";
     
     for(int i=0;i<PP->n_data_partitions();i++) 
     {
-      dynamic_bitset<> s2 = constraint_satisfied((*PP)[i].alignment_constraint, (*PP)[i].A());
+      dynamic_bitset<> s2 = constraint_satisfied((*PP)[i].alignment_constraint(), (*PP)[i].A());
       dynamic_bitset<> s1(s2.size());
       report_constraints(s1,s2,i);
     } 

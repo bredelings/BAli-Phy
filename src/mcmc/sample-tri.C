@@ -41,7 +41,7 @@ using std::pair;
 using std::endl;
 using boost::dynamic_bitset;
 
-boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P, const data_partition& P0, 
+boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition P, const data_partition& P0, 
 								  const vector<int>& nodes, const vector<int>& nodes0,
 								  int bandwidth)
 {

@@ -47,24 +47,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 class Parameters;
 class Likelihood_Cache;
 
-struct data_partition_constants: public Object
+struct data_partition_constants
 {
-  data_partition_constants* clone() const {return new data_partition_constants(*this);}
-};
-
-/// Each data_partition is a model with one parameter: mu (the branch mean)
-class data_partition
-{
-  friend class Parameters;
-  friend class Likelihood_Cache;
-  
-public:
-  const Parameters* P;
-  object_ptr<data_partition_constants> DPC;
-
-private:
-  int partition_index;
-
   /// The pairwise alignment for each branch
   std::vector<int> pairwise_alignment_for_branch;
 
@@ -88,28 +72,40 @@ private:
 
   matrix<int> base_model_indices;
 
-  bool variable_alignment_;
-
-public:
-
-  void set_parameters(const Parameters* P);
-  
-  /// Is the alignment allowed to vary?
-  bool variable_alignment() const {return variable_alignment_;}
-  
-  /// Set alignment variability
-  void variable_alignment(bool b);
-
-  data_partition* clone() const {return new data_partition(*this);}
-
   /// The names and comments for the sequences
-  cow_ptr< std::vector< sequence > > seqs;
+  std::vector< sequence > seqs;
 
   /// The leaf sequence data of this partition
-  cow_ptr< std::vector< std::vector<int> > > sequences;
+  std::vector< std::vector<int> > sequences;
 
   boost::shared_ptr<alphabet> a;
 
+  std::vector<int> branch_HMM_type;
+
+  /// Alignment constraint
+  matrix<int> alignment_constraint;
+
+  data_partition_constants(Parameters* P, int i, const alignment&);
+};
+
+/// Each data_partition is a model with one parameter: mu (the branch mean)
+class data_partition
+{
+  friend class Parameters;
+  
+public:
+  const Parameters* P;
+
+private:
+  int partition_index;
+
+  const data_partition_constants& DPC() const;
+
+public:
+
+  /// Is the alignment allowed to vary?
+  bool variable_alignment() const;
+  
   alignment A() const;
 
   TreeInterface t() const;
@@ -147,15 +143,10 @@ public:
 
   double sequence_length_pr(int l) const;
 
-  std::vector<int> branch_HMM_type;
-
-  /// Alignment constraint
-  matrix<int> alignment_constraint;
-
   double get_beta() const;
 
   // get the alphabet for partition i
-  const alphabet& get_alphabet() const {return *a;}
+  const alphabet& get_alphabet() const;
 
   bool has_IModel() const;
 
@@ -166,6 +157,8 @@ public:
   const pairwise_alignment_t& get_pairwise_alignment(int b) const;
 
   void set_pairwise_alignment(int b, const pairwise_alignment_t&);
+
+  const matrix<int>& alignment_constraint() const;
 
   // The prior, likelihood, and probability
   log_double_t prior_no_alignment() const;
@@ -179,7 +172,7 @@ public:
   log_double_t heated_prior() const {return prior();}
   log_double_t heated_probability() const {return heated_prior() * heated_likelihood();}
 
-  data_partition(Parameters* P, int i, const alignment&);
+  data_partition(const Parameters* P, int i);
 };
 
 struct imodel_methods
@@ -272,6 +265,8 @@ struct parameters_constants: public Object
 
   std::vector<double> all_betas;
 
+  std::vector<data_partition_constants> DPC;
+
   parameters_constants* clone() const {return new parameters_constants(*this);}
 
   parameters_constants(const std::vector<alignment>& A, const SequenceTree&, 
@@ -295,11 +290,10 @@ public:
 
   int subst_root_index;
 
+  bool variable_alignment_;
+
 private:
   void recalc();
-
-  /// The alignments and cached computations
-  mutable std::vector<data_partition> data_partitions;
 
   std::vector<int> affected_nodes;
   std::vector<std::vector<int>*> branches_from_affected_node;
@@ -310,13 +304,11 @@ public:
 
   void variable_alignment(bool b);
 
-  const data_partition& get_data_partition(int i) const;
-        data_partition& get_data_partition(int i);
+  data_partition get_data_partition(int i) const;
 
-  int n_data_partitions() const {return data_partitions.size();}
+  int n_data_partitions() const {return PC->DPC.size();}
 
-  const data_partition& operator[](int i) const {return get_data_partition(i);}
-        data_partition& operator[](int i)       {return get_data_partition(i);}
+  data_partition operator[](int i) const {return get_data_partition(i);}
 
   int smodel_index_for_partition(int i) const {return PC->smodel_for_partition[i];}
 
