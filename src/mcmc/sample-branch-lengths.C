@@ -70,11 +70,10 @@ MCMC::Result change_branch_length_(owned_ptr<Model>& P,int b,double sigma,
   double ratio = twiddle(newlength,sigma);
   
   //---------- Construct proposed Tree ----------//
-  P.as<Parameters>()->select_root(b);
-
   owned_ptr<Model> P2  = P;
 
   P2.as<Parameters>()->setlength(b,newlength);
+  P2.as<Parameters>()->select_root(b);
 
   //--------- Do the M-H step if OK--------------//
   if (do_MH_move(P,P2,ratio)) {
@@ -206,11 +205,10 @@ void change_branch_length_and_T(owned_ptr<Model>& P,MoveStats& Stats,int b)
     result.counts[3] = 1;
 
     //---------- Construct proposed Tree ----------//
-    PP.select_root(b);
-
     owned_ptr<Model> P2 = P;
 
     P2.as<Parameters>()->setlength(b,newlength);
+    P2.as<Parameters>()->select_root(b);
 
     //--------- Do the M-H step if OK--------------//
     if (do_MH_move(P,P2,ratio)) {
@@ -486,12 +484,11 @@ void change_3_branch_lengths(owned_ptr<Model>& P,MoveStats& Stats,int n)
   if (T1_ <= 0.0 or T2_ <= 0.0 or T3_ <= 0.0) return;
 
   //----------- Construct proposed Tree -----------//
-  PP->set_root(n);
-  
   owned_ptr<Model> P2 = P;
   P2.as<Parameters>()->setlength(branches[0], T1_);
   P2.as<Parameters>()->setlength(branches[1], T2_);
   P2.as<Parameters>()->setlength(branches[2], T3_);
+  P2.as<Parameters>()->set_root(n);
   
   //--------- Do the M-H step if OK--------------//
   if (do_MH_move(P,P2,ratio)) {
