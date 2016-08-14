@@ -957,6 +957,9 @@ log_double_t Parameters::heated_likelihood() const
 
 void Parameters::select_root(int b) const
 {
+  if (t().source(b) == subst_root() or t().target(b) == subst_root())
+    return;
+  
   int r = t().reverse(b);
   if (t().subtree_contains(r, subst_root()))
     b = r;
