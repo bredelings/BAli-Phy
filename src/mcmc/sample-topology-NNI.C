@@ -148,7 +148,6 @@ void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
   const auto& nodes = order.nodes;
 
-  PP.select_root(b);
   // P.likelihood();  Why does this not make a difference in speed?
 
   vector<Parameters> p(2,PP);
@@ -158,6 +157,7 @@ void two_way_topology_slice_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
+  p[1].select_root(b);
   
   //  if (not extends(p[1].t(), PP.PC->TC))
   //    return;
@@ -220,7 +220,6 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
   const auto& nodes = order.nodes;
 
-  PP.select_root(b);
   // PP.likelihood();  Why does this not make a difference in speed?
 
   vector<Parameters> p(2,PP);
@@ -230,6 +229,7 @@ void two_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
+  p[1].select_root(b);
   
   //  if (not extends(p[1].t(), PP.PC->TC))
   //    return;
@@ -314,7 +314,6 @@ void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
   const auto& nodes = order.nodes;
 
-  PP.select_root(b);
   // PP.likelihood();  Why does this not make a difference in speed?
 
   vector<Parameters> p(2,PP);
@@ -324,6 +323,7 @@ void two_way_NNI_SPR_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
+  p[1].select_root(b);
   
   //  if (not extends(p[1].t(), PP.PC->TC))
   //    return;
@@ -380,7 +380,6 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
   A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
   const auto& nodes = order.nodes;
 
-  PP.select_root(b);
   // PP.likelihood();  Why does this not make a difference in speed?
 
   vector<Parameters> p(2,PP);
@@ -391,6 +390,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Model>& P, MoveStats& Stats, int 
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
+  p[1].select_root(b);
   
   //  if (not extends(p[1].t(), PP.PC->TC))
   //    return;
@@ -484,7 +484,6 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
   const auto& nodes = order.nodes;
 
   //------ Generate Topologies and alter caches ------///
-  PP.select_root(b);
   // PP.likelihood();  Why does this not make a difference in speed?
   
   vector<Parameters> p(3,PP);
@@ -495,12 +494,14 @@ void three_way_topology_sample_slice(owned_ptr<Model>& P, MoveStats& Stats, int 
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
+  p[1].select_root(b);
 
   //  if (not extends(p[1].t(), PP.PC->TC))
   //    return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
   p[2].NNI(b1, b3);
+  p[2].select_root(b);
   
   //  if (not extends(p[2].t(), PP.PC->TC))
   //    return;
@@ -576,7 +577,6 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
   const auto& nodes = order.nodes;
 
   //------ Generate Topologies and alter caches ------///
-  PP.select_root(b);
   // PP.likelihood();  Why does this not make a difference in speed?
 
   vector<Parameters> p(3,PP);
@@ -587,12 +587,14 @@ void three_way_topology_sample(owned_ptr<Model>& P, MoveStats& Stats, int b)
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   p[1].NNI(b1, b2);
+  p[1].select_root(b);
 
   //  if (not extends(p[1].t(), PP.PC->TC))
   //    return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
   p[2].NNI(b1, b3);
+  p[2].select_root(b);
   
   //  if (not extends(p[2].t(), PP.PC->TC))
   //    return;
