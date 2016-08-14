@@ -141,8 +141,6 @@ public:
 
   int subst_root() const;
 
-  void set_subst_root(int r) const;
-
   /// cached branch HMMs
   const indel::PairHMM& get_branch_HMM(int b) const;
   std::vector<indel::PairHMM> get_branch_HMMs(const std::vector<int>&) const;

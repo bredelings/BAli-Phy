@@ -216,10 +216,6 @@ int data_partition::subst_root() const {
   return P->subst_root();
 }
 
-void data_partition::set_subst_root(int r) const {
-  P->set_root(r);
-}
-
 void data_partition::variable_alignment(bool b)
 {
   variable_alignment_ = b;
