@@ -282,11 +282,6 @@ vector<unsigned> data_partition::state_letters() const
   return P->evaluate(P->PC->SModels[s].state_letters).as_<Vector<unsigned>>();
 }
 
-vector<double> data_partition::frequencies(int m) const
-{
-  return P->evaluate( DPC().frequencies_indices[m] ).as_<Vector<double>>();
-}
-
 expression_ref data_partition::base_model(int m, int b) const
 {
   b = t().undirected(b);
@@ -459,14 +454,10 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
   // Add method indices for calculating base models and frequencies
   base_model_indices.resize(n_base_smodels, B);
   {
-    expression_ref F = p->get_expression(p->PC->SModels[smodel_index].frequencies);
     expression_ref BM = p->get_expression(p->PC->SModels[smodel_index].base_model);
     for(int m=0;m<n_base_smodels;m++)
-    {
-      frequencies_indices.push_back( p->add_compute_expression( (F,m) ) );
       for(int b=0;b<B;b++)
 	base_model_indices(m,b) = p->add_compute_expression((BM,m,b));
-    }
   }
 
   // Add parameters for observed leaf sequence objects

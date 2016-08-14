@@ -68,8 +68,6 @@ struct data_partition_constants
 
   int alignment_prior_index = -1;
 
-  std::vector<int> frequencies_indices;
-
   matrix<int> base_model_indices;
 
   /// The names and comments for the sequences
@@ -130,8 +128,6 @@ public:
   Matrix FrequencyMatrix() const;
 
   expression_ref base_model(int m, int b) const;
-
-  std::vector<double> frequencies(int m) const;
 
   const Likelihood_Cache_Branch& cache(int b) const;
 

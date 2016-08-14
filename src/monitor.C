@@ -51,19 +51,22 @@ void show_frequencies(std::ostream& o,const data_partition& P)
 {
   const alphabet& a = P.get_alphabet();
 
-  if (P.n_base_models() == 1) {
-    vector<double> f = P.frequencies(0);
+  auto F = P.FrequencyMatrix();
+
+  int n_base_models = F.size1();
+  assert(a.size() == F.size2());
+
+  if (n_base_models == 1) {
     for(int i=0;i<a.size();i++)
-      o<<"f"<<a.lookup(i)<<" = "<<f[i]<<"\n";
+      o<<"f"<<a.lookup(i)<<" = "<<F(0,i)<<"\n";
   }
   else {
-
+    auto WF = P.WeightedFrequencyMatrix();
     for(int i=0;i<a.size();i++) {
       double total = 0;
-      for(int m=0;m<P.n_base_models();m++) {
-	vector<double> f = P.frequencies(m);
-	o<<"f"<<a.lookup(i)<<m+1<<" = "<<f[i]<<"     ";
-	total += P.distribution()[m] * f[i];
+      for(int m=0;m<n_base_models;m++) {
+	o<<"f"<<a.lookup(i)<<m+1<<" = "<<F(m,i)<<"     ";
+	total += WF(m,i);
       }
       o<<"f"<<a.lookup(i)<<" = "<<total<<"\n";
     }
