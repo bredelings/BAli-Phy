@@ -1049,7 +1049,7 @@ namespace substitution {
     int root = t.target(b[0]);
     for(int i=1;i<b.size();i++)
       assert(t.target(b[i]) == root);
-    P.set_subst_root(root);
+
     assert(not t.is_leaf_node(P.subst_root()));
 
     vector<Matrix> L;
