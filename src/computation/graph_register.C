@@ -1221,21 +1221,17 @@ void swap_value(mapping& vm1, mapping& vm2, int r)
 
 // Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
-bool reg_heap::merge_split_mapping(int t1, int t2)
+void reg_heap::merge_split_mapping(int t1, int t2)
 {
-  int size1 = tokens[t1].vm_step.modified().size() + tokens[t1].vm_result.modified().size();
-  int size2 = tokens[t2].vm_step.modified().size() + tokens[t2].vm_result.modified().size();
-  bool do_swap = (size1 > size2);
-  merge_split_step_mapping(t1, t2, do_swap);
-  merge_split_relative_mapping(t1, t2, do_swap);
-  return do_swap;
+  merge_split_step_mapping(t1, t2);
+  merge_split_relative_mapping(t1, t2);
 }
 
-void reg_heap::merge_split_step_mapping(int t1, int t2, bool do_swap)
+void reg_heap::merge_split_step_mapping(int t1, int t2)
 {
   auto& vm1 = tokens[t1].vm_step;
   auto& vm2 = tokens[t2].vm_step;
-  if (not do_swap)
+  if (vm1.modified().size() < vm2.modified().size())
   {
     for(int i=0;i<vm1.modified().size();)
     {
@@ -1274,16 +1270,17 @@ void reg_heap::merge_split_step_mapping(int t1, int t2, bool do_swap)
 	vm2.erase_value(r);
       }
     }
+    std::swap(vm1,vm2);
   }
 }
 
 // Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
-void reg_heap::merge_split_relative_mapping(int t1, int t2, bool do_swap)
+void reg_heap::merge_split_relative_mapping(int t1, int t2)
 {
   auto& vm1 = tokens[t1].vm_result;
   auto& vm2 = tokens[t2].vm_result;
-  if (not do_swap)
+  if (vm1.modified().size() < vm2.modified().size())
   {
     for(int i=0;i<vm1.modified().size();)
     {
@@ -1322,6 +1319,7 @@ void reg_heap::merge_split_relative_mapping(int t1, int t2, bool do_swap)
 	vm2.erase_value(r);
       }
     }
+    std::swap(vm1,vm2);
   }
 }
 
@@ -2344,11 +2342,7 @@ void reg_heap::try_release_token(int t)
       return;
     }
 
-    if (merge_split_mapping(t, child_token))
-    {
-      swap_tokens(t, child_token);
-      std::swap(t, child_token);
-    }
+    merge_split_mapping(t, child_token);
 
     capture_parent_token(child_token);
 

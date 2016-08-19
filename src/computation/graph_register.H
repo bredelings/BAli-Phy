@@ -363,9 +363,9 @@ public:
   /// Interchange the contexts and children of the two tokens
   void swap_tokens(int, int);
 
-  bool merge_split_mapping(int, int);
-  void merge_split_step_mapping(int, int, bool);
-  void merge_split_relative_mapping(int, int, bool);
+  void merge_split_mapping(int, int);
+  void merge_split_step_mapping(int, int);
+  void merge_split_relative_mapping(int, int);
 
   void pivot_step_mapping(int, int);
   void pivot_relative_mapping(int, int);
