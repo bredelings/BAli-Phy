@@ -17,8 +17,6 @@
 
 struct Step
 {
-  int source_token = -1;
-
   int source_reg = -1;
 
   int call = 0;
@@ -46,8 +44,6 @@ struct Step
 
 struct Result
 {
-  int source_token = -1;
-
   int source_step = -1;
 
   int source_reg = -1;

@@ -209,7 +209,6 @@ expression_ref graph_normalize(const expression_ref& E)
 
 void Step::clear()
 {
-  source_token = -1;
   source_reg = -1;
   call = 0;
   truncate(used_inputs);
@@ -231,7 +230,6 @@ void Step::check_cleared()
 
 Step& Step::operator=(Step&& S) noexcept
 {
-  source_token = S.source_token;
   source_reg = S.source_reg;
   call = S.call;
   used_inputs  = std::move( S.used_inputs );
@@ -243,8 +241,7 @@ Step& Step::operator=(Step&& S) noexcept
 }
 
 Step::Step(Step&& S) noexcept
- :source_token( S.source_token),
-  source_reg( S.source_reg),
+ :source_reg( S.source_reg),
   call ( S.call ),
   used_inputs ( std::move(S.used_inputs) ),
   created_regs ( std::move(S.created_regs) ),
@@ -254,7 +251,6 @@ Step::Step(Step&& S) noexcept
 
 void Result::clear()
 {
-  source_token = -1;
   source_step = -1;
   source_reg = -1;
   value = 0;
@@ -280,7 +276,6 @@ void Result::check_cleared()
 Result& Result::operator=(Result&& R) noexcept
 {
   value = R.value;
-  source_token = R.source_token;
   source_step = R.source_step;
   source_reg = R.source_reg;
   call_edge = R.call_edge;
@@ -293,8 +288,7 @@ Result& Result::operator=(Result&& R) noexcept
 }
 
 Result::Result(Result&& R) noexcept
-:source_token(R.source_token),
-  source_step(R.source_step),
+:source_step(R.source_step),
   source_reg(R.source_reg),
   value (R.value), 
   call_edge (R.call_edge),
@@ -1252,11 +1246,6 @@ void reg_heap::merge_split_step_mapping(int t1, int t2, bool do_swap)
 	// transfer mapping from v1[r] -> v2[r]
 	int s = vm1.erase_value(r);
 	vm2.add_value(r,s);
-	if (s > 0)
-	{
-	  assert(steps[s].source_token == t1);
-	  steps[s].source_token = t2;
-	}
       }
       else
 	i++;
@@ -1275,16 +1264,6 @@ void reg_heap::merge_split_step_mapping(int t1, int t2, bool do_swap)
 	int s2 = vm2[r];
 	vm1.replace_value(r,s2);
 	vm2.replace_value(r,s1);
-	if (s1 > 0)
-	{
-	  assert(steps[s1].source_token == t1);
-	  steps[s1].source_token = t2;
-	}
-	if (s2 > 0)
-	{
-	  assert(steps[s2].source_token == t2);
-	  steps[s2].source_token = t1;
-	}
 
 	i++;
       }
@@ -1293,11 +1272,6 @@ void reg_heap::merge_split_step_mapping(int t1, int t2, bool do_swap)
 	int s = vm2[r];
 	vm1.add_value(r,s);
 	vm2.erase_value(r);
-	if (s > 0)
-	{
-	  assert(steps[s].source_token == t2);
-	  steps[s].source_token = t1;
-	}
       }
     }
   }
@@ -1320,11 +1294,6 @@ void reg_heap::merge_split_relative_mapping(int t1, int t2, bool do_swap)
 	// transfer mapping from v1[r] -> v2[r]
 	int rc = vm1.erase_value(r);
 	vm2.add_value(r,rc);
-	if (rc > 0)
-	{
-	  assert(results[rc].source_token == t1);
-	  results[rc].source_token = t2;
-	}
       }
       else
 	i++;
@@ -1343,16 +1312,6 @@ void reg_heap::merge_split_relative_mapping(int t1, int t2, bool do_swap)
 	int rc2 = vm2[r];
 	vm1.replace_value(r,rc2);
 	vm2.replace_value(r,rc1);
-	if (rc1 > 0)
-	{
-	  assert(results[rc1].source_token == t1);
-	  results[rc1].source_token = t2;
-	}
-	if (rc2 > 0)
-	{
-	  assert(results[rc2].source_token == t2);
-	  results[rc2].source_token = t1;
-	}
 
 	i++;
       }
@@ -1361,11 +1320,6 @@ void reg_heap::merge_split_relative_mapping(int t1, int t2, bool do_swap)
 	int rc = vm2[r];
 	vm1.add_value(r,rc);
 	vm2.erase_value(r);
-	if (rc > 0)
-	{
-	  assert(results[rc].source_token == t2);
-	  results[rc].source_token = t1;
-	}
       }
     }
   }
@@ -1396,17 +1350,7 @@ void reg_heap::pivot_step_mapping(int t1, int t2)
     if (s1 == -1) s1 = 0;
 
     vm1.set_value(r,s1);
-    if (s1 > 0)
-    {
-      assert(steps[s1].source_token == t2);
-      steps[s1].source_token = t1;
-    }
     vm2.set_value(r,s2);
-    if (s2 > 0)
-    {
-      assert(steps[s2].source_token == t1);
-      steps[s2].source_token = t2;
-    }
   }
 }
 
@@ -1435,17 +1379,7 @@ void reg_heap::pivot_relative_mapping(int t1, int t2)
     if (rc1 == -1) rc1 = 0;
 
     vm1.set_value(r,rc1);
-    if (rc1 > 0)
-    {
-      assert(results[rc1].source_token == t2);
-      results[rc1].source_token = t1;
-    }
     vm2.set_value(r,rc2);
-    if (rc2 > 0)
-    {
-      assert(results[rc2].source_token == t1);
-      results[rc2].source_token = t2;
-    }
   }
 }
 
@@ -2173,7 +2107,6 @@ int reg_heap::remove_shared_result(int t, int r)
 int reg_heap::move_step(int t1, int t2, int r)
 {
   int s = step_index_for_reg_(t1, r);
-  steps[s].source_token = t2;
   tokens[t2].vm_step.add_value(r, s);
 
   remove_shared_step(t1,r);
@@ -2183,7 +2116,6 @@ int reg_heap::move_step(int t1, int t2, int r)
 int reg_heap::move_result(int t1, int t2, int r)
 {
   int rc = result_index_for_reg_(t1, r);
-  results[rc].source_token = t2;
   tokens[t2].vm_result.add_value(r, rc);
 
   remove_shared_result(t1,r);
@@ -2200,7 +2132,6 @@ int reg_heap::add_shared_step(int t, int r)
   total_step_allocations++;
   
   // 2. Set the source of the computation
-  steps[s].source_token = t;
   steps[s].source_reg = r;
 
   // 3. Link it in to the mapping
@@ -2225,7 +2156,6 @@ int reg_heap::add_shared_result(int t, int r, int s)
   total_comp_allocations++;
   
   // 2. Set the source of the result
-  results[rc].source_token = t;
   results[rc].source_step = s;
   results[rc].source_reg = r;
 

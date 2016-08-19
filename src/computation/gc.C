@@ -335,14 +335,7 @@ void reg_heap::trace_and_reclaim_unreachable()
   // remove all back-edges
   for(auto i = steps.begin();i != steps.end(); i++)
     if (not steps.is_marked(i.addr()))
-    {
       clear_back_edges_for_step(i.addr());
-#ifndef NDEBUG      
-      int t = steps[i.addr()].source_token;
-      int r = steps[i.addr()].source_reg;
-      assert(tokens[t].vm_step[r] == 0);
-#endif
-    }
 
   for(auto i = begin();i != end(); i++)
     if (not is_marked(i.addr()))
@@ -355,15 +348,10 @@ void reg_heap::trace_and_reclaim_unreachable()
   // remove all back-edges
   for(auto i = results.begin();i != results.end(); i++)
     if (not results.is_marked(i.addr()))
-    {
       clear_back_edges_for_result(i.addr());
-#ifndef NDEBUG
-      int t = results[i.addr()].source_token;
-      int r = results[i.addr()].source_reg;
-      assert(tokens[t].vm_result[r] == 0);
-#endif
-    }
 
+  // check that no freed computations are mapped?
+  
   results.reclaim_unmarked();
 
 #ifdef DEBUG_MACHINE
