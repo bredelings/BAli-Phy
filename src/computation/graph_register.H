@@ -23,7 +23,7 @@ struct Step
 
   /// Which reg's were used to reduce this expression?
   boost::container::small_vector< std::pair<int,CacheList<int>::iterator>, 10 > used_inputs;
-  CacheList<int> created_regs;
+  int num_created_regs = 0;
 
   int temp = -1;
 
@@ -92,8 +92,6 @@ public:
 
   int n_heads = 0;
 
-  std::pair<int, CacheList<int>::iterator> created_by;
-  
   void clear();
 
   void check_cleared();

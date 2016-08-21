@@ -212,7 +212,7 @@ void Step::clear()
   source_reg = -1;
   call = 0;
   truncate(used_inputs);
-  assert(created_regs.empty());
+  num_created_regs = 0;
 
   // This should already be cleared.
   assert(temp == -1);
@@ -223,7 +223,6 @@ void Step::check_cleared()
 {
   assert(not call);
   assert(used_inputs.empty());
-  assert(created_regs.empty());
   assert(temp == -1);
   assert(flags.none());
 }
@@ -233,7 +232,7 @@ Step& Step::operator=(Step&& S) noexcept
   source_reg = S.source_reg;
   call = S.call;
   used_inputs  = std::move( S.used_inputs );
-  created_regs  = std::move( S.created_regs );
+  num_created_regs  = S.num_created_regs;
   temp = S.temp;
   flags = S.flags;
 
@@ -244,7 +243,7 @@ Step::Step(Step&& S) noexcept
  :source_reg( S.source_reg),
   call ( S.call ),
   used_inputs ( std::move(S.used_inputs) ),
-  created_regs ( std::move(S.created_regs) ),
+  num_created_regs ( S.num_created_regs ),
   temp ( S.temp ),
   flags ( S.flags )
 { }
@@ -308,8 +307,6 @@ reg& reg::operator=(reg&& R) noexcept
 
   n_heads = R.n_heads;
 
-  created_by = std::move(R.created_by);
-
   return *this;
 }
 
@@ -317,8 +314,7 @@ reg::reg(reg&& R) noexcept
 :C( std::move(R.C) ),
   re_evaluate( R.re_evaluate ),
   type ( R.type ),
-  n_heads( R.n_heads ),
-  created_by( std::move(R.created_by) )
+  n_heads( R.n_heads )
 { }
 
 void reg::clear()
@@ -335,8 +331,6 @@ void reg::check_cleared()
   assert(not re_evaluate);
   assert(type == type_t::unknown);
   assert(n_heads == 0);
-  assert(created_by.first == 0);
-  assert(null(created_by.second));
 }
 
 bool mapping::has_value(int r) const {return operator[](r);}
@@ -935,15 +929,7 @@ void reg_heap::destroy_all_computations_in_token(int t)
   {
     int s = vm_step[r];
     if (s > 0)
-    {
-      for(int r: steps[s].created_regs)
-      {
-	access(r).created_by = {0,{}};
-	reclaim_used(r);
-      }
-      steps[s].created_regs.clear();
       steps.reclaim_used(s);
-    }
   }
   vm_step.clear();
 
@@ -998,7 +984,6 @@ void reg_heap::set_reduction_value(int t, int R, closure&& value)
   if (not value) return;
 
   // If the value is a pre-existing reg_var, then call it.
-  int s = step_index_for_reg_(t,R);
   if (value.exp.head().type() == index_var_type)
   {
     int index = value.exp.as_index_var();
@@ -1007,34 +992,18 @@ void reg_heap::set_reduction_value(int t, int R, closure&& value)
     
     assert(is_used(Q));
     
-    for(int r2: steps[s].created_regs)
-    {
-      assert(is_WHNF(access(r2).C.exp));
-      assert(not has_step(r2));
-      assert(not has_result(r2));
-      reclaim_used(r2);
-    }
-    steps[s].created_regs.clear();
-
     set_call(t, R, Q);
     clear_result(t,R);
   }
   // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
   else
   {
-    int R2 = steps[s].call;
-    if (steps[s].created_regs.size() == 1 and *steps[s].created_regs.begin() == R2)
-    {
-      assert(is_WHNF(access(R2).C.exp));
-      assert(steps[s].call == R2);
-    }
-    else
-    {
-      assert(steps[s].created_regs.empty());
-      R2 = create_reg_from_step(s);
-      set_call(t, R, R2);
-      clear_result(t,R);
-    }
+    int s = step_index_for_reg_(t,R);
+    // clear 'reg created' edge from s to old call.
+    steps[s].num_created_regs = 0;
+    int R2 = create_reg_from_step(s);
+    set_call(t, R, R2);
+    clear_result(t,R);
     set_C(R2, std::move( value ) );
   }
 }
@@ -1043,10 +1012,7 @@ void reg_heap::mark_reg_created_by_step(int r, int s)
 {
   assert(r > 0);
   assert(s > 0);
-  steps[s].created_regs.push_front(r);
-  assert(access(r).created_by.first == 0);
-  assert(null(access(r).created_by.second));
-  access(r).created_by = {s,steps[s].created_regs.begin()};
+  steps[s].num_created_regs++;
 }
 
 int reg_heap::create_reg_from_step(int s)
@@ -1695,10 +1661,6 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
 
 void reg_heap::reclaim_used(int r)
 {
-  // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
-  assert(not access(r).created_by.first);
-  assert(null(access(r).created_by.second));
-  
 #ifndef NDEBUG  
   for(int t=0;t<tokens.size();t++)
   {
@@ -2180,12 +2142,6 @@ void reg_heap::check_back_edges_cleared_for_step(int s)
 {
   for(auto& rcp: steps.access_unused(s).used_inputs)
     assert(null(rcp.second));
-  for(auto& r: steps.access_unused(s).created_regs)
-  {
-    auto& created_by = access(r).created_by;
-    assert(created_by.first == 0);
-    assert(null(created_by.second));
-  }
 }
 
 void reg_heap::check_back_edges_cleared_for_result(int rc)
@@ -2195,15 +2151,6 @@ void reg_heap::check_back_edges_cleared_for_result(int rc)
 
 void reg_heap::clear_back_edges_for_reg(int r)
 {
-  assert(r > 0);
-  auto& created_by = access(r).created_by;
-  int s = created_by.first;
-  if (s > 0)
-  {
-    steps[s].created_regs.erase(created_by.second);
-    created_by.first = 0;
-    created_by.second = {};
-  }
 }
 
 void reg_heap::clear_back_edges_for_step(int s)
@@ -2214,13 +2161,6 @@ void reg_heap::clear_back_edges_for_step(int s)
     results[rcp.first].used_by.erase(rcp.second);
     rcp.second = {};
   }
-  for(auto& r: steps[s].created_regs)
-  {
-    auto& created_by = access(r).created_by;
-    created_by.first = 0; // or -1?
-    created_by.second = {};
-  }
-  steps[s].created_regs.clear();
 }
 
 void reg_heap::clear_back_edges_for_result(int rc)
