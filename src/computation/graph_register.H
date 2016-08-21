@@ -317,7 +317,7 @@ public:
     int version = 0;
   };
 private:
-  static constexpr int root_token = 0;
+  int root_token = -1;
 
   /// The roots for each token
   std::vector<Token> tokens;

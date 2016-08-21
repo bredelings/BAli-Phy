@@ -1889,6 +1889,14 @@ int reg_heap::get_unused_token()
 
   tokens[t].used = true;
 
+  if (root_token == -1)
+  {
+    assert(tokens.size() - unused_tokens.size() == 1);
+    root_token = t;
+  }
+  else
+    assert(tokens.size() - unused_tokens.size() > 1);
+
   assert(tokens[t].parent == -1);
   assert(tokens[t].children.empty());
   assert(tokens[t].vm_step.empty());
@@ -2275,17 +2283,26 @@ void reg_heap::release_child_token(int t)
   assert(tokens[t].children.empty());
   assert(not tokens[t].referenced);
 
-  tokens[t].used = false;
+  unused_tokens.push_back(t);
   
   if (parent != -1)
   {
     // mark token for this context unused
+    assert(not is_root_token(t));
+    assert(tokens.size() - unused_tokens.size() > 0);
+
     int index = remove_element(tokens[parent_token(t)].children, t);
     assert(index != -1);
     tokens[t].parent = -1;
   }
+  else
+  {
+    assert(is_root_token(t));
+    root_token = -1;
+    assert(tokens.size() - unused_tokens.size() == 0);
+  }
 
-  unused_tokens.push_back(t);
+  tokens[t].used = false;
 }
 
 void reg_heap::capture_parent_token(int t2)
@@ -2357,7 +2374,7 @@ void reg_heap::try_release_token(int t)
     try_release_token(parent);
 
   // The -1 accounts for the unused token 0.
-  if (tokens.size() - unused_tokens.size() -1 > 0)
+  if (tokens.size() - unused_tokens.size() > 0)
     assert(root_token != -1);
 
 #ifdef DEBUG_MACHINE
