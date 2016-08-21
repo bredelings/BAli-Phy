@@ -360,9 +360,6 @@ public:
   /// Make a child of the current token, and unreference the current token.
   int switch_to_child_token(int);
 
-  /// Interchange the contexts and children of the two tokens
-  void swap_tokens(int, int);
-
   void merge_split_mapping(int, int);
   void merge_split_step_mapping(int, int);
   void merge_split_relative_mapping(int, int);

@@ -1350,6 +1350,7 @@ void reg_heap::pivot_step_mapping(int t1, int t2)
     vm1.set_value(r,s1);
     vm2.set_value(r,s2);
   }
+  std::swap(vm1,vm2);
 }
 
 // Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
@@ -1379,6 +1380,7 @@ void reg_heap::pivot_relative_mapping(int t1, int t2)
     vm1.set_value(r,rc1);
     vm2.set_value(r,rc2);
   }
+  std::swap(vm1,vm2);
 }
 
 void reg_heap::reroot_at_context(int c)
@@ -1405,8 +1407,6 @@ void reg_heap::reroot_at(int t)
   // 2. Change the relative mappings
   pivot_step_mapping(parent, t);
   pivot_relative_mapping(parent, t);
-  std::swap(tokens[parent].vm_step, tokens[t].vm_step);
-  std::swap(tokens[parent].vm_result, tokens[t].vm_result);
 
   // 3. Alter the inheritance tree
   tokens[parent].parent = t;
@@ -2499,54 +2499,6 @@ int interchange(int x, int t1, int t2)
     return t1;
   else
     return x;
-}
-
-void reg_heap::swap_tokens(int t1, int t2)
-{
-  // 1. Check that tokens are active parent and child
-  assert(tokens[t1].used);
-  assert(tokens[t2].used);
-  assert(t1 == tokens[t2].parent);
-
-  // 2. Switch the contexts of the two tokens
-  for(int& t: token_for_context_)
-    t = interchange(t, t1, t2);
-
-  if (tokens[t1].parent == t2)
-    std::swap(t1,t2);
-
-  // 3. Switch parent relationships
-  std::swap(tokens[t1].children, tokens[t2].children);
-  std::swap(tokens[t1].parent, tokens[t2].parent);
-
-  if (tokens[t1].parent == t1)
-  {
-    tokens[t1].parent = t2;
-
-    replace_element(tokens[t2].children, t2, t1);
-  }
-
-  {
-    for(int t: tokens[t1].children)
-      tokens[t].parent = t1;
-
-    for(int t: tokens[t2].children)
-      tokens[t].parent = t2;
-
-    int p1 = tokens[t1].parent;
-    if (p1 != -1)
-      replace_element(tokens[p1].children, t2, t1);
-
-    int p2 = tokens[t2].parent;
-    if (p2 != -1)
-      replace_element(tokens[p2].children, t1, t2);
-  }
-
-  // 4. Switch other fields
-  std::swap(tokens[t1].triggers, tokens[t2].triggers);
-  std::swap(tokens[t1].referenced, tokens[t2].referenced);
-  std::swap(tokens[t1].version, tokens[t2].version);
-  std::swap(tokens[t1].regs_to_re_evaluate, tokens[t2].regs_to_re_evaluate);
 }
 
 int reg_heap::get_n_contexts() const
