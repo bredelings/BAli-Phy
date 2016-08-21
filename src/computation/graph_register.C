@@ -1136,7 +1136,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
     if (has_result_(token,R) and result_for_reg_(token,R).temp == -1)
       value_may_be_changed.push_back(R);
   
-  if (token == root_token)
+  if (is_root_token(token))
     for(int r: value_may_be_changed)
       dec_probability_for_reg(r);
 
@@ -1187,7 +1187,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   release_scratch_list();
   assert(n_active_scratch_lists == 0);
 
-  if (token == root_token)
+  if (is_root_token(token))
   {
     if (regs_to_re_evaluate.size())
       mark_completely_dirty(token);
@@ -1400,7 +1400,7 @@ void reg_heap::reroot_at(int t)
 
   // re-rooting to the parent context shouldn't release its token.
   int parent = parent_token(t);
-  assert(parent == root_token);
+  assert(is_root_token(parent));
 
   // 2. Change the relative mappings
   pivot_step_mapping(parent, t);
@@ -1416,7 +1416,7 @@ void reg_heap::reroot_at(int t)
   tokens[t].parent = -1;
   tokens[t].children.push_back(parent);
 
-  assert(t == root_token);
+  assert(is_root_token(t));
 
   // 4. Invalidate regs in t that reference(d) results from parent
   assert(tokens[parent].version >= tokens[t].version);
@@ -1616,7 +1616,7 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
       value_may_be_changed.push_back(r);
   }
 
-  if (t2 == root_token)
+  if (is_root_token(t2))
     for(int r: value_may_be_changed)
       dec_probability_for_reg(r);
 
@@ -2011,7 +2011,7 @@ void reg_heap::check_used_reg(int r) const
     int r_r = result_index_for_reg_(t,r);
 
     // If we have a new step, we cannot share a result.  (In the root token 0 means 'unshare', not 'share')
-    assert(t == root_token or r_r != 0);
+    assert(is_root_token(t) or r_r != 0);
 
     for(const auto& rcp2: steps[r_s].used_inputs)
     {
@@ -2260,7 +2260,7 @@ void reg_heap::release_child_token(int t)
 {
   total_destroy_token++;
   // clear flags of results in the root token before destroying the root token!
-  if (t == root_token)
+  if (is_root_token(t))
     for(int r: tokens[root_token].vm_result.modified())
     {
       int rc = tokens[root_token].vm_result[r];
