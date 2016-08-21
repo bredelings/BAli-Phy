@@ -185,9 +185,11 @@ void reg_heap::trace(vector<int>& remap)
   }
   
   // 5. Mark all steps/results at heads in non-root tokens
-  for(int t=1;t<get_n_tokens();t++)
+  for(int t=0;t<get_n_tokens();t++)
   {
     if (not token_is_used(t)) continue;
+
+    if (is_root_token(t)) continue;
 
     // 5.1 Mark all steps at heads in non-root tokens.
     // FIXME - We can remove this after we maintain references to invalidated computations.

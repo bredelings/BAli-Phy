@@ -1405,8 +1405,8 @@ void reg_heap::reroot_at(int t)
   // 2. Change the relative mappings
   pivot_step_mapping(parent, t);
   pivot_relative_mapping(parent, t);
-  swap_tokens(parent,t);
-  std::swap(parent,t);
+  std::swap(tokens[parent].vm_step, tokens[t].vm_step);
+  std::swap(tokens[parent].vm_result, tokens[t].vm_result);
 
   // 3. Alter the inheritance tree
   tokens[parent].parent = t;
@@ -1416,6 +1416,7 @@ void reg_heap::reroot_at(int t)
   tokens[t].parent = -1;
   tokens[t].children.push_back(parent);
 
+  root_token = t;
   assert(is_root_token(t));
 
   // 4. Invalidate regs in t that reference(d) results from parent
@@ -2399,8 +2400,8 @@ bool reg_heap::is_terminal_token(int t) const
 
 bool reg_heap::is_root_token(int t) const
 {
-  assert((t==root_token) == (tokens[t].parent == -1));
   assert(token_is_used(t));
+  assert((t==root_token) == (tokens[t].parent == -1));
 
   return t == root_token;
 }
