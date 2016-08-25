@@ -2289,16 +2289,16 @@ void reg_heap::try_release_token(int t)
   if (n_children > 1 or tokens[t].referenced)
     return;
 
+  if (n_children and is_root_token(t))
+  {
+    int child_token = tokens[t].children[0];
+    reroot_at(child_token);
+    return;
+  }
+
   if (n_children)
   {
     int child_token = tokens[t].children[0];
-
-    // handle the case when we are trying to release the root
-    if (is_root_token(t))
-    {
-      reroot_at(child_token);
-      return;
-    }
 
     merge_split_mapping(t, child_token);
 
