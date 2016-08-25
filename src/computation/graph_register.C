@@ -2385,6 +2385,7 @@ int reg_heap::degree_of_token(int t) const
 
 bool reg_heap::token_is_used(int t) const
 {
+  assert(t >= 0 and t < tokens.size());
   return tokens[t].used;
 }
 
