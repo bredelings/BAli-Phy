@@ -237,6 +237,7 @@ void show_ending_messages()
   extern int total_destroy_token;
   extern int total_create_context1;
   extern int total_create_context2;
+  extern int total_tokens;
   extern int total_reroot;
   extern int total_set_reg_value;
   extern int total_get_reg_value;
@@ -264,6 +265,7 @@ void show_ending_messages()
     cout<<"total steps                    = "<<total_steps<<endl;
     cout<<"total computations             = "<<total_comps<<endl;
     cout<<"\ntotal reroot operations        = "<<total_reroot<<endl;
+    cout<<"total tokens                   = "<<total_tokens<<endl;
     cout<<"total tokens destroyed         = "<<total_destroy_token<<endl;
     cout<<"total create context           = "<<total_create_context1+total_create_context2<<endl;
     cout<<"  operator=                    = "<<total_create_context1<<endl;

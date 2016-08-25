@@ -27,6 +27,7 @@ int total_get_reg_value = 0;
 int total_get_reg_value_non_const = 0;
 int total_get_reg_value_non_const_with_result = 0;
 int total_context_pr = 0;
+int total_tokens = 0;
 
 /*
  * Goal: Share computation of WHNF structures between contexts, even when those
@@ -1837,6 +1838,7 @@ int reg_heap::get_unused_token()
       assert(tokens.back().vm_step[i] == 0);
       assert(tokens.back().vm_result[i] == 0);
     }
+    total_tokens = tokens.size();
   }
 
   for(int i=0;i<tokens.size();i++)
