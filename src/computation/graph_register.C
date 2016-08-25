@@ -1841,11 +1841,13 @@ int reg_heap::get_unused_token()
     total_tokens = tokens.size();
   }
 
+#ifndef NDEBUG
   for(int i=0;i<tokens.size();i++)
   {
     assert(tokens[i].vm_step.size() == size());
     assert(tokens[i].vm_result.size() == size());
   }
+#endif
 
   int t = unused_tokens.back();
   unused_tokens.pop_back();
@@ -1923,6 +1925,7 @@ bool reg_heap::result_is_referenced(int t,int rc) const
 
 void reg_heap::check_tokens() const
 {
+#ifndef NDEBUG
   for(int c=0;c<get_n_contexts();c++)
   {
     int t = token_for_context(c);
@@ -1940,7 +1943,7 @@ void reg_heap::check_tokens() const
       for(int t2: children_of_token(t))
 	assert(tokens[t].version >= tokens[t2].version);
     }
-
+#endif
 }
 
 void reg_heap::check_used_reg(int r) const
