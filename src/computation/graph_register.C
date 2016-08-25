@@ -2268,6 +2268,19 @@ void reg_heap::capture_parent_token(int t2)
   assert(index != -1);
 }
 
+void reg_heap::release_knuckle_token(int t)
+{
+  int child_token = tokens[t].children[0];
+
+  merge_split_mapping(t, child_token);
+
+  capture_parent_token(child_token);
+
+  invalidate_shared_regs(t, child_token);
+
+  release_child_token(t);
+}
+
 void reg_heap::try_release_token(int t)
 {
   assert(token_is_used(t));
@@ -2289,6 +2302,7 @@ void reg_heap::try_release_token(int t)
   if (n_children > 1 or tokens[t].referenced)
     return;
 
+  // Handle an unused root with one child.
   if (n_children and is_root_token(t))
   {
     int child_token = tokens[t].children[0];
@@ -2296,15 +2310,11 @@ void reg_heap::try_release_token(int t)
     return;
   }
 
+  // Handle knuckle tokens
   if (n_children)
   {
-    int child_token = tokens[t].children[0];
-
-    merge_split_mapping(t, child_token);
-
-    capture_parent_token(child_token);
-
-    invalidate_shared_regs(t, child_token);
+    release_knuckle_token(t);
+    return;
   }
 
   // clear only the mappings that were actually updated here.

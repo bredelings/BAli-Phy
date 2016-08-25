@@ -338,6 +338,8 @@ public:
   /// Release the token if its unreferenced and has no children.
   void try_release_token(int);
 
+  void release_knuckle_token(int);
+
   void release_child_token(int);
 
   void capture_parent_token(int);
