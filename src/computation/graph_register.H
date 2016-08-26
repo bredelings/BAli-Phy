@@ -338,11 +338,11 @@ public:
   /// Release the token, and also the parent if its an unreferenced knuckle
   void release_tip_token_and_maybe_parent(int);
 
-  /// Merge the knuckle token and release it
-  void release_knuckle_token(int);
-
   /// Release the tip token
   void release_tip_token(int);
+
+  /// Merge the knuckle token and release it
+  void release_knuckle_token(int);
 
   void capture_parent_token(int);
 
