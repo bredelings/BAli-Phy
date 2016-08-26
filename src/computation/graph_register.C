@@ -2317,7 +2317,7 @@ void reg_heap::release_knuckle_token(int t)
   release_tip_token(t);
 }
 
-void reg_heap::try_release_token(int t)
+void reg_heap::release_tip_token_and_maybe_parent(int t)
 {
   assert(token_is_used(t));
 
@@ -2330,12 +2330,8 @@ void reg_heap::try_release_token(int t)
 
   int parent = parent_token(t);
 
-  // Check invariant that any context must be either referenced or have more than 1 child context.
-  if (parent != -1)
-    assert(tokens[parent].referenced or tokens[parent].children.size() > 1);
-
   int n_children = tokens[t].children.size();
-  if (n_children > 0 or tokens[t].referenced) return;
+  assert(n_children == 0 and not tokens[t].referenced);
 
   // clear only the mappings that were actually updated here.
   release_tip_token(t);
@@ -2553,7 +2549,7 @@ void reg_heap::release_context(int c)
   int t = unset_token_for_context(c);
 
   if ((not tokens[t].referenced) and tokens[t].children.size() == 0)
-    try_release_token(t);
+    release_tip_token_and_maybe_parent(t);
   else if ((not tokens[t].referenced) and tokens[t].children.size() == 1)
     release_knuckle_token(t);
 

@@ -336,7 +336,7 @@ public:
   int get_unused_token();
 
   /// Release the token, and also the parent if its an unreferenced knuckle
-  void try_release_token(int);
+  void release_tip_token_and_maybe_parent(int);
 
   /// Merge the knuckle token and release it
   void release_knuckle_token(int);
