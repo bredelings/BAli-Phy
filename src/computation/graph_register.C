@@ -2230,7 +2230,7 @@ void reg_heap::clear_result(int t, int r)
   }
 }
 
-void reg_heap::release_child_token(int t)
+void reg_heap::release_tip_token(int t)
 {
   assert(tokens[t].children.empty());
   assert(not tokens[t].referenced);
@@ -2304,7 +2304,7 @@ void reg_heap::release_knuckle_token(int t)
   if (is_root_token(t))
   {
     reroot_at(child_token);
-    release_child_token(t);
+    release_tip_token(t);
     return;
   }
 
@@ -2314,7 +2314,7 @@ void reg_heap::release_knuckle_token(int t)
 
   invalidate_shared_regs(t, child_token);
 
-  release_child_token(t);
+  release_tip_token(t);
 }
 
 void reg_heap::try_release_token(int t)
@@ -2338,7 +2338,7 @@ void reg_heap::try_release_token(int t)
   if (n_children > 0 or tokens[t].referenced) return;
 
   // clear only the mappings that were actually updated here.
-  release_child_token(t);
+  release_tip_token(t);
 
   // The -1 accounts for the unused token 0.
   if (tokens.size() - unused_tokens.size() > 0)

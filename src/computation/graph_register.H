@@ -342,7 +342,7 @@ public:
   void release_knuckle_token(int);
 
   /// Release the tip token
-  void release_child_token(int);
+  void release_tip_token(int);
 
   void capture_parent_token(int);
 
