@@ -335,11 +335,13 @@ public:
   /// Acquire an unused token
   int get_unused_token();
 
-  /// Release the token if its unreferenced and has no children.
+  /// Release the token, and also the parent if its an unreferenced knuckle
   void try_release_token(int);
 
+  /// Merge the knuckle token and release it
   void release_knuckle_token(int);
 
+  /// Release the tip token
   void release_child_token(int);
 
   void capture_parent_token(int);

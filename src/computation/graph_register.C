@@ -1352,12 +1352,35 @@ void reg_heap::pivot_relative_mapping(int t1, int t2)
 
 void reg_heap::reroot_at_context(int c)
 {
-  reroot_at(token_for_context(c));
+  // 1. Bail if we are already at the root.
+  int t = token_for_context(c);
+  if (is_root_token(t)) return;
+  
+  // 2. Get the tokens on the path to the root.
+  boost::container::small_vector<int,10> path;
+  path.push_back(token_for_context(c));
+  while(true)
+  {
+    int parent = tokens[path.back()].parent;
+    if (parent != -1)
+      path.push_back(parent);
+    else
+      break;
+  }
+
+  // 3. Get the tokens on the path to the root.
+  for(int i=int(path.size())-2; i>=0; i--)
+    reroot_at(path[i]);
+
+  // 4. Clean up old root token if it became a knuckle
+  int old_root = path.back();
+  if ((not tokens[old_root].referenced) and tokens[old_root].children.size() == 1)
+    release_knuckle_token(old_root);
 }
 
 void reg_heap::reroot_at(int t)
 {
-  if (is_root_token(t)) return;
+  assert(not is_root_token(t) and is_root_token(tokens[t].parent));
 
 #ifdef DEBUG_MACHINE
   check_used_regs();
@@ -1416,9 +1439,6 @@ void reg_heap::reroot_at(int t)
   for(int R: tokens[t].regs_to_re_evaluate)
     incremental_evaluate(R);
   tokens[t].regs_to_re_evaluate.clear();
-
-  // 6. Now, try to remove the parent if its unreferenced.
-  try_release_token(parent);
 }
 
 /*
@@ -2212,6 +2232,9 @@ void reg_heap::clear_result(int t, int r)
 
 void reg_heap::release_child_token(int t)
 {
+  assert(tokens[t].children.empty());
+  assert(not tokens[t].referenced);
+
   total_destroy_token++;
   // clear flags of results in the root token before destroying the root token!
   if (is_root_token(t))
@@ -2225,9 +2248,6 @@ void reg_heap::release_child_token(int t)
   destroy_all_computations_in_token(t);
 
   int parent = parent_token(t);
-
-  assert(tokens[t].children.empty());
-  assert(not tokens[t].referenced);
 
   unused_tokens.push_back(t);
   
@@ -2315,26 +2335,18 @@ void reg_heap::try_release_token(int t)
     assert(tokens[parent].referenced or tokens[parent].children.size() > 1);
 
   int n_children = tokens[t].children.size();
-  if (n_children > 1 or tokens[t].referenced)
-    return;
-
-  // Handle knuckle tokens
-  if (n_children)
-  {
-    release_knuckle_token(t);
-    return;
-  }
+  if (n_children > 0 or tokens[t].referenced) return;
 
   // clear only the mappings that were actually updated here.
   release_child_token(t);
 
-  // If we just released a terminal token, maybe it's parent is not terminal also.
-  if (parent != -1)
-    try_release_token(parent);
-
   // The -1 accounts for the unused token 0.
   if (tokens.size() - unused_tokens.size() > 0)
     assert(root_token != -1);
+
+  // If we just released a terminal token, maybe it's parent is not terminal also.
+  if (parent != -1 and (not tokens[parent].referenced) and tokens[parent].children.size() == 1)
+    release_knuckle_token(parent);
 
 #ifdef DEBUG_MACHINE
   assert(tokens[t].vm_step.size() == size());
@@ -2540,7 +2552,10 @@ void reg_heap::release_context(int c)
 
   int t = unset_token_for_context(c);
 
-  try_release_token(t);
+  if ((not tokens[t].referenced) and tokens[t].children.size() == 0)
+    try_release_token(t);
+  else if ((not tokens[t].referenced) and tokens[t].children.size() == 1)
+    release_knuckle_token(t);
 
   // Mark the context as unused
   token_for_context_[c] = -1;
