@@ -2236,7 +2236,8 @@ void reg_heap::release_tip_token(int t)
   assert(not tokens[t].referenced);
 
   total_destroy_token++;
-  // clear flags of results in the root token before destroying the root token!
+
+  // 1. Clear flags of results in the root token before destroying the root token!
   if (is_root_token(t))
     for(int r: tokens[root_token].vm_result.modified())
     {
@@ -2245,8 +2246,10 @@ void reg_heap::release_tip_token(int t)
 	dec_probability(rc);
     }
 
+  // 2. Destroy computations in the token (this is an optimization)
   destroy_all_computations_in_token(t);
 
+  // 3. Adjust the token tree
   int parent = parent_token(t);
 
   unused_tokens.push_back(t);
@@ -2268,7 +2271,20 @@ void reg_heap::release_tip_token(int t)
     assert(tokens.size() - unused_tokens.size() == 0);
   }
 
+  // 4. Set the token to unused
   tokens[t].used = false;
+
+  assert(tokens[t].vm_step.size() == size());
+  assert(tokens[t].vm_result.size() == size());
+
+  // 5. Make sure the token is empty
+#ifdef DEBUG_MACHINE
+  for(int i=0;i<size();i++)
+  {
+    assert(not tokens[t].vm_step[i]);
+    assert(not tokens[t].vm_result[i]);
+  }
+#endif
 }
 
 void reg_heap::capture_parent_token(int t2)
@@ -2332,17 +2348,6 @@ void reg_heap::release_tip_token_and_maybe_parent(int t)
   if (parent != -1 and (not tokens[parent].referenced) and tokens[parent].children.size() == 1)
     release_knuckle_token(parent);
 
-#ifdef DEBUG_MACHINE
-  assert(tokens[t].vm_step.size() == size());
-  assert(tokens[t].vm_result.size() == size());
-  for(int i=0;i<size();i++)
-  {
-    assert(not tokens[t].vm_step[i]);
-    assert(not tokens[t].vm_result[i]);
-  }
-
-  check_used_regs();
-#endif
 }
 
 bool reg_heap::is_terminal_token(int t) const
