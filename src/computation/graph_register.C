@@ -2320,25 +2320,13 @@ void reg_heap::release_knuckle_token(int t)
 void reg_heap::release_tip_token_and_maybe_parent(int t)
 {
   assert(token_is_used(t));
-
-  // We shouldn't have any temporary heads still on the stack, here!
-  // (This should be fast now, no longer proportional to the number of regs in context t.)
-  // (But how fast is it?)
-
-  // FIXME: we can have temp heads here from performing an IO action from outside...
-  //  assert(temp.empty());
+  assert(tokens[t].children.empty());
+  assert(not tokens[t].referenced);
 
   int parent = parent_token(t);
 
-  int n_children = tokens[t].children.size();
-  assert(n_children == 0 and not tokens[t].referenced);
-
   // clear only the mappings that were actually updated here.
   release_tip_token(t);
-
-  // The -1 accounts for the unused token 0.
-  if (tokens.size() - unused_tokens.size() > 0)
-    assert(root_token != -1);
 
   // If we just released a terminal token, maybe it's parent is not terminal also.
   if (parent != -1 and (not tokens[parent].referenced) and tokens[parent].children.size() == 1)
