@@ -235,6 +235,7 @@ void show_ending_messages()
   extern int total_comp_allocations;
   extern int total_step_allocations;
   extern int total_destroy_token;
+  extern int total_release_knuckle;
   extern int total_create_context1;
   extern int total_create_context2;
   extern int total_tokens;
@@ -280,6 +281,7 @@ void show_ending_messages()
     cout<<"  total results invalidated    = "<<total_results_invalidated<<endl;
     cout<<"total tokens                   = "<<total_tokens<<endl;
     cout<<"total tokens destroyed         = "<<total_destroy_token<<endl;
+    cout<<"  total knuckles destroyed     = "<<total_release_knuckle<<endl;
     cout<<"total create context           = "<<total_create_context1+total_create_context2<<endl;
     cout<<"  operator=                    = "<<total_create_context1<<endl;
     cout<<"  copy constructor             = "<<total_create_context2<<endl;

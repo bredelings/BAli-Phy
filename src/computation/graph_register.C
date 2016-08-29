@@ -23,6 +23,7 @@ int total_comp_allocations = 0;
 int total_reroot = 0;
 int total_reroot_one = 0;
 int total_destroy_token = 0;
+int total_release_knuckle = 0;
 int total_set_reg_value = 0;
 int total_get_reg_value = 0;
 int total_get_reg_value_non_const = 0;
@@ -2344,6 +2345,8 @@ void reg_heap::release_knuckle_token(int t)
     return;
   }
 
+  total_release_knuckle++;
+  
   merge_split_mapping(t, child_token);
 
   capture_parent_token(child_token);
