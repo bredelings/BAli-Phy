@@ -1279,10 +1279,22 @@ void reg_heap::reroot_at_context(int c)
   for(int i=int(path.size())-2; i>=0; i--)
     reroot_at(path[i]);
 
-  // 4. Clean up old root token if it became a knuckle
+  // 4. Clean up old root token if it became a tip, and remote intermediate knuckles
   int old_root = path.back();
-  if ((not tokens[old_root].referenced) and tokens[old_root].children.empty())
-    release_tip_token_and_ancestors(old_root);
+  for(int t2 = old_root; t2 != root_token ; )
+  {
+    int p = tokens[t2].parent;
+
+    if (not tokens[t2].referenced)
+    {
+      if (tokens[t2].children.empty())
+	release_tip_token(t2);
+      else if (tokens[t2].children.size() == 1 and t2 != old_root)
+	release_knuckle_token(t2);
+    }
+
+    t2 = p;
+  }
 }
 
 void reg_heap::reroot_at(int t)
