@@ -239,15 +239,22 @@ void show_ending_messages()
   extern int total_create_context2;
   extern int total_tokens;
   extern int total_reroot;
+  extern int total_reroot_one;
   extern int total_set_reg_value;
   extern int total_get_reg_value;
   extern int total_get_reg_value_non_const;
   extern int total_get_reg_value_non_const_with_result;
+  extern int total_invalidate;
+  extern int total_steps_invalidated;
+  extern int total_results_invalidated;
+  extern int total_steps_pivoted;
+  extern int total_results_pivoted;
   extern int total_context_pr;
   extern int total_gc;
   extern long total_regs;
   extern long total_steps;
   extern long total_comps;
+  
   
   if (total_reductions > 0)
   {
@@ -265,6 +272,12 @@ void show_ending_messages()
     cout<<"total steps                    = "<<total_steps<<endl;
     cout<<"total computations             = "<<total_comps<<endl;
     cout<<"\ntotal reroot operations        = "<<total_reroot<<endl;
+    cout<<"  total atomic reroot          = "<<total_reroot_one<<endl;
+    cout<<"  total steps pivoted          = "<<total_steps_pivoted<<endl;
+    cout<<"  total results pivoted        = "<<total_results_pivoted<<endl;
+    cout<<"total invalidations            = "<<total_invalidate<<endl;
+    cout<<"  total steps invalidated      = "<<total_steps_invalidated<<endl;
+    cout<<"  total results invalidated    = "<<total_results_invalidated<<endl;
     cout<<"total tokens                   = "<<total_tokens<<endl;
     cout<<"total tokens destroyed         = "<<total_destroy_token<<endl;
     cout<<"total create context           = "<<total_create_context1+total_create_context2<<endl;

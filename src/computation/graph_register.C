@@ -21,13 +21,19 @@ int total_reg_allocations = 0;
 int total_step_allocations = 0;
 int total_comp_allocations = 0;
 int total_reroot = 0;
+int total_reroot_one = 0;
 int total_destroy_token = 0;
 int total_set_reg_value = 0;
 int total_get_reg_value = 0;
 int total_get_reg_value_non_const = 0;
 int total_get_reg_value_non_const_with_result = 0;
+int total_invalidate = 0;
+int total_steps_invalidated = 0;
+int total_results_invalidated = 0;
 int total_context_pr = 0;
 int total_tokens = 0;
+int total_steps_pivoted = 0;
+int total_results_pivoted = 0;
 
 /*
  * Goal: Share computation of WHNF structures between contexts, even when those
@@ -1147,6 +1153,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
       clear_step(token,R);
   }
 
+  total_results_invalidated += value_may_be_changed.size();
+  total_steps_invalidated += call_and_value_may_be_changed.size();
+
   // Finally set the new value.
   set_reduction_value(token, P, std::move(C) );
 
@@ -1297,6 +1306,8 @@ void reg_heap::pivot_step_mapping(int t1, int t2)
   auto& vm1 = tokens[t1].vm_step;
   auto& vm2 = tokens[t2].vm_step;
 
+  total_steps_pivoted += vm2.modified().size();
+  
   for(int i=0;i<vm2.modified().size();i++)
   {
     int r = vm2.modified()[i];
@@ -1327,6 +1338,8 @@ void reg_heap::pivot_relative_mapping(int t1, int t2)
   auto& vm1 = tokens[t1].vm_result;
   auto& vm2 = tokens[t2].vm_result;
 
+  total_results_pivoted += vm2.modified().size();
+
   for(int i=0;i<vm2.modified().size();i++)
   {
     int r = vm2.modified()[i];
@@ -1355,6 +1368,8 @@ void reg_heap::reroot_at_context(int c)
   // 1. Bail if we are already at the root.
   int t = token_for_context(c);
   if (is_root_token(t)) return;
+
+  total_reroot++;
   
   // 2. Get the tokens on the path to the root.
   boost::container::small_vector<int,10> path;
@@ -1419,7 +1434,7 @@ void reg_heap::reroot_at(int t)
       dec_probability(rc);
   }
 
-  total_reroot++;
+  total_reroot_one++;
   
   invalidate_shared_regs(parent,t);
 
@@ -1557,6 +1572,8 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   if (tokens[t1].version <= tokens[t2].version) return;
 
+  total_invalidate++;
+  
   const int mark_value = 1;
   const int mark_call_value = 2;
 
@@ -1645,6 +1662,9 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     else
       clear_step(t2, r);
   }
+
+  total_results_invalidated += value_may_be_changed.size();
+  total_steps_invalidated += call_and_value_may_be_changed.size();
 
   // find all regs in t2 that are not shared from t1.  Nothing needs to be done to these - they are already split.
   // Anything that uses these needs to be unshared.
