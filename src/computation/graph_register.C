@@ -1390,8 +1390,8 @@ void reg_heap::reroot_at_context(int c)
 
   // 4. Clean up old root token if it became a knuckle
   int old_root = path.back();
-  if ((not tokens[old_root].referenced) and tokens[old_root].children.size() == 1)
-    release_knuckle_token(old_root);
+  if ((not tokens[old_root].referenced) and tokens[old_root].children.empty())
+    release_tip_token_and_ancestors(old_root);
 }
 
 void reg_heap::reroot_at(int t)
@@ -2356,21 +2356,21 @@ void reg_heap::release_knuckle_token(int t)
   release_tip_token(t);
 }
 
-void reg_heap::release_tip_token_and_maybe_parent(int t)
+void reg_heap::release_tip_token_and_ancestors(int t)
 {
   assert(token_is_used(t));
   assert(tokens[t].children.empty());
   assert(not tokens[t].referenced);
 
-  int parent = parent_token(t);
+  while(t != -1 and (not tokens[t].referenced) and tokens[t].children.empty())
+  {
+    int parent = parent_token(t);
 
-  // clear only the mappings that were actually updated here.
-  release_tip_token(t);
+    // clear only the mappings that were actually updated here.
+    release_tip_token(t);
 
-  // If we just released a terminal token, maybe it's parent is not terminal also.
-  if (parent != -1 and (not tokens[parent].referenced) and tokens[parent].children.size() == 1)
-    release_knuckle_token(parent);
-
+    t = parent;
+  }
 }
 
 bool reg_heap::is_terminal_token(int t) const
@@ -2565,9 +2565,7 @@ void reg_heap::release_context(int c)
   int t = unset_token_for_context(c);
 
   if ((not tokens[t].referenced) and tokens[t].children.size() == 0)
-    release_tip_token_and_maybe_parent(t);
-  else if ((not tokens[t].referenced) and tokens[t].children.size() == 1)
-    release_knuckle_token(t);
+    release_tip_token_and_ancestors(t);
 
   // Mark the context as unused
   token_for_context_[c] = -1;
