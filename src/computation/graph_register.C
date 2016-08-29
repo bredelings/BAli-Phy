@@ -2666,9 +2666,7 @@ const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 
 void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
 {
-  int t = token_for_context(c);
-  if (not children_of_token(t).empty())
-    t = switch_to_child_token(c);
+  int t = switch_to_child_token(c);
 
   set_reg_value(P, std::move(C), t);
 }
