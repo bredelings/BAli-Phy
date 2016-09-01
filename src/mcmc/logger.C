@@ -535,6 +535,7 @@ string Ancestral_Sequences_Function::operator()(const Model& M, long)
 void FunctionLogger::operator()(const Model& M, long t)
 {
   (*log_file)<<((*function)(M,t));
+  log_file->flush();
 }
 
 FunctionLogger::FunctionLogger(const std::string& filename, const LoggerFunction<string>& L)
