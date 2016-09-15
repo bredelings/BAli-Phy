@@ -1883,7 +1883,7 @@ void reg_heap::check_tokens() const
   for(int t=0;t<tokens.size();t++)
     if (token_is_used(t))
     {
-      assert(tokens[t].referenced or tokens[t].children.size() > 1);
+      assert(tokens[t].is_referenced() or tokens[t].children.size() >= 1);
       for(int t2: children_of_token(t))
 	assert(tokens[t].version >= tokens[t2].version);
     }
