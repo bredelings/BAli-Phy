@@ -299,7 +299,10 @@ public:
     int parent = -1;
     // Contexts that are derived from this one.
     std::vector<int> children;
-    bool referenced = false;
+
+    // Contexts that point here
+    int n_context_refs = 0;
+    bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0;}
     
     /// A list of signals that have been sent
     std::vector<int> triggers;
@@ -357,7 +360,7 @@ public:
   int degree_of_token(int) const;
 
   /// Acquire a copy of a token
-  int copy_token(int);
+  int make_child_token(int);
 
   /// Make a child of the current token, and unreference the current token.
   int switch_to_child_token(int);

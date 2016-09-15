@@ -1285,7 +1285,7 @@ void reg_heap::reroot_at_context(int c)
   {
     int p = tokens[t2].parent;
 
-    if (not tokens[t2].referenced)
+    if (not tokens[t2].is_referenced())
     {
       if (tokens[t2].children.empty())
 	release_tip_token(t2);
@@ -1812,7 +1812,7 @@ int reg_heap::get_unused_token()
   assert(tokens[t].children.empty());
   assert(tokens[t].vm_step.empty());
   assert(tokens[t].vm_result.empty());
-  assert(not tokens[t].referenced);
+  assert(not tokens[t].is_referenced());
 
   return t;
 }
@@ -1875,7 +1875,7 @@ void reg_heap::check_tokens() const
     int t = token_for_context(c);
     if (t >= 0)
     {
-      assert(tokens[t].referenced);
+      assert(tokens[t].is_referenced());
       assert(tokens[t].used);
     }
   }
@@ -2157,7 +2157,7 @@ void reg_heap::clear_result(int t, int r)
 void reg_heap::release_tip_token(int t)
 {
   assert(tokens[t].children.empty());
-  assert(not tokens[t].referenced);
+  assert(not tokens[t].is_referenced());
 
   total_destroy_token++;
 
@@ -2236,7 +2236,7 @@ void reg_heap::capture_parent_token(int t2)
 void reg_heap::release_knuckle_token(int t)
 {
   assert(token_is_used(t));
-  assert(not tokens[t].referenced);
+  assert(not tokens[t].is_referenced());
   assert(tokens[t].children.size() == 1);
 
   int child_token = tokens[t].children[0];
@@ -2263,9 +2263,9 @@ void reg_heap::release_tip_token_and_ancestors(int t)
 {
   assert(token_is_used(t));
   assert(tokens[t].children.empty());
-  assert(not tokens[t].referenced);
+  assert(not tokens[t].is_referenced());
 
-  while(t != -1 and (not tokens[t].referenced) and tokens[t].children.empty())
+  while(t != -1 and (not tokens[t].is_referenced()) and tokens[t].children.empty())
   {
     int parent = parent_token(t);
 
@@ -2316,7 +2316,7 @@ bool reg_heap::token_is_used(int t) const
   return tokens[t].used;
 }
 
-int reg_heap::copy_token(int t)
+int reg_heap::make_child_token(int t)
 {
 #ifdef DEBUG_MACHINE
   check_used_regs();
@@ -2368,7 +2368,7 @@ int reg_heap::switch_to_child_token(int c)
   check_tokens();
 
   int t1 = token_for_context(c);
-  int t2 = copy_token(t1);
+  int t2 = make_child_token(t1);
   unset_token_for_context(c);
   set_token_for_context(c,t2);
 
@@ -2402,10 +2402,11 @@ int reg_heap::unset_token_for_context(int c)
 {
   int t = token_for_context(c);
   assert(t != -1);
-  assert(tokens[t].referenced);
+  assert(tokens[t].is_referenced());
 
   token_for_context_[c] = -1;
-  tokens[t].referenced = false;
+  tokens[t].n_context_refs--;
+  assert(tokens[t].n_context_refs >= 0);
 
   return t;
 }
@@ -2414,19 +2415,18 @@ void reg_heap::set_token_for_context(int c, int t)
 {
   assert(token_for_context(c) == -1);
   token_for_context_[c] = t;
-  assert(not tokens[t].referenced);
-  tokens[t].referenced = true;
+  assert(tokens[t].n_context_refs >= 0);
+  tokens[t].n_context_refs++;
+  assert(tokens[t].is_referenced());
 }
 
 int reg_heap::copy_context(int c)
 {
   check_tokens();
 
-  int t1 = token_for_context(c);
-
+  int t = token_for_context(c);
   int c2 = get_new_context();
-  int t2 = copy_token(t1);
-  set_token_for_context(c2,t2);
+  set_token_for_context(c2,t);
 
   check_tokens();
   return c2;
@@ -2467,7 +2467,7 @@ void reg_heap::release_context(int c)
 
   int t = unset_token_for_context(c);
 
-  if ((not tokens[t].referenced) and tokens[t].children.size() == 0)
+  if ((not tokens[t].is_referenced()) and tokens[t].children.size() == 0)
     release_tip_token_and_ancestors(t);
 
   // Mark the context as unused
