@@ -31,6 +31,8 @@ int total_get_reg_value_non_const_with_result = 0;
 int total_invalidate = 0;
 int total_steps_invalidated = 0;
 int total_results_invalidated = 0;
+int total_steps_scanned = 0;
+int total_results_scanned = 0;
 int total_context_pr = 0;
 int total_tokens = 0;
 int total_steps_pivoted = 0;
@@ -1596,6 +1598,8 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   total_results_invalidated += value_may_be_changed.size();
   total_steps_invalidated += call_and_value_may_be_changed.size();
+  total_results_scanned += (value_may_be_changed.size() + modified.size());
+  total_steps_scanned += (call_and_value_may_be_changed.size() + modified.size());
 
   // find all regs in t2 that are not shared from t1.  Nothing needs to be done to these - they are already split.
   // Anything that uses these needs to be unshared.

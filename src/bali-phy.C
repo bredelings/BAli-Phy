@@ -248,6 +248,8 @@ void show_ending_messages()
   extern int total_invalidate;
   extern int total_steps_invalidated;
   extern int total_results_invalidated;
+  extern int total_steps_scanned;
+  extern int total_results_scanned;
   extern int total_steps_pivoted;
   extern int total_results_pivoted;
   extern int total_context_pr;
@@ -279,6 +281,8 @@ void show_ending_messages()
     cout<<"total invalidations            = "<<total_invalidate<<endl;
     cout<<"  total steps invalidated      = "<<total_steps_invalidated<<endl;
     cout<<"  total results invalidated    = "<<total_results_invalidated<<endl;
+    cout<<"  total steps scanned          = "<<total_steps_scanned<<endl;
+    cout<<"  total results scanned        = "<<total_results_scanned<<endl;
     cout<<"total tokens                   = "<<total_tokens<<endl;
     cout<<"total tokens destroyed         = "<<total_destroy_token<<endl;
     cout<<"  total knuckles destroyed     = "<<total_release_knuckle<<endl;
