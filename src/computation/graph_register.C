@@ -1572,10 +1572,8 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
     RC.temp = -1;
     
-    if (not result_index_for_reg_(t1,r))
-      move_result(t2, t1, r);
-    else
-      clear_result(t2,r);
+    assert(not result_index_for_reg_(t1,r));
+    move_result(t2, t1, r);
 
     // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
     if (access(r).re_evaluate)
@@ -1590,10 +1588,8 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
     S.temp = -1;
 
-    if (not step_index_for_reg_(t1,r))
-      move_step(t2, t1, r);
-    else
-      clear_step(t2, r);
+    assert(not step_index_for_reg_(t1,r));
+    move_step(t2, t1, r);
   }
 
   total_results_invalidated += value_may_be_changed.size();
