@@ -1076,7 +1076,7 @@ void reg_heap::set_shared_value(int r, int v)
   add_shared_result(root_token, r, step);
 
   // set the value
-  set_call(root_token, r, v);
+  set_call(r, v);
 }
 
 void swap_value(mapping& vm1, mapping& vm2, int r)
@@ -1388,6 +1388,29 @@ bool reg_heap::is_dirty(int t) const
       return true;
   return false;
 }
+
+vector<pair<int,int>> mapping::delta() const
+{
+  vector<pair<int,int>> d(modified_.size());
+  for(int i=0;i<d.size();i++)
+  {
+    int r = modified_[i];
+    d[i].first = r;
+    d[i].second = values[r].value;
+  }
+  return d;
+}
+
+vector<pair<int,int>> reg_heap::Token::delta_result() const
+{
+  return vm_result.delta();
+}
+
+vector<pair<int,int>> reg_heap::Token::delta_step() const
+{
+  return vm_step.delta();
+}
+
 
 // Note that a context can be completely dirty, w/o being dirty :-P
 bool reg_heap::is_completely_dirty(int t) const

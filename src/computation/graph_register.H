@@ -139,6 +139,8 @@ public:
   bool empty() const;
   const std::vector<int>& modified() const {return modified_;}
 
+  std::vector<std::pair<int,int>> delta() const;
+  
   mapping() {}
   mapping(int s) {resize(s);}
   mapping(const mapping&) = default;
@@ -308,6 +310,9 @@ public:
     std::vector<int> triggers;
 
     /// Mapping from closures to steps/results
+    std::vector<std::pair<int,int>> delta_result() const;
+    std::vector<std::pair<int,int>> delta_step() const;
+
     mapping vm_result;
     mapping vm_step;
 
