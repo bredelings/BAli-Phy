@@ -522,7 +522,7 @@ log_double_t reg_heap::probability_for_context_diff(int c)
   {
     for(int r: probability_heads)
     {
-      int rc = tokens[root_token].vm_result[r];
+      int rc = result_index_for_reg(r);
       if (rc > 0 and results[rc].flags.test(0))
 	dec_probability(rc);
     }
