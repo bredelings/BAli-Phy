@@ -915,39 +915,43 @@ void reg_heap::set_call(int t, int R1, int R2)
 void reg_heap::destroy_all_computations_in_token(int t)
 {
   // Remove use back-edges
-  auto& vm_step = tokens[t].vm_step;
-  auto& vm_result = tokens[t].vm_result;
+  auto delta_step = tokens[t].delta_step();
+  auto delta_result = tokens[t].delta_result();
 
-  for(int r: vm_step.modified())
+  for(auto p: delta_step)
   {
-    int s = vm_step[r];
+    int r = p.first;
+    int s = p.second;
     if (s > 0)
       clear_back_edges_for_step(s);
   }
 
   // Remove call back-edges
-  for(int r: vm_result.modified())
+  for(auto p: delta_result)
   {
-    int rc = vm_result[r];
+    int r = p.first;
+    int rc = p.second;
     if (rc > 0)
       clear_back_edges_for_result(rc);
   }
 
-  for(int r: vm_step.modified())
+  for(auto p: delta_step)
   {
-    int s = vm_step[r];
+    int r = p.first;
+    int s = p.second;
     if (s > 0)
       steps.reclaim_used(s);
   }
-  vm_step.clear();
+  tokens[t].vm_step.clear();
 
-  for(int r: vm_result.modified())
+  for(auto p: delta_result)
   {
-    int rc = vm_result[r];
+    int r = p.first;
+    int rc = p.second;
     if (rc > 0)
       results.reclaim_used(rc);
   }
-  vm_result.clear();
+  tokens[t].vm_result.clear();
 }
 
 void reg_heap::clear_call(int s)
