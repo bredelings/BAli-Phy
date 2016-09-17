@@ -1500,7 +1500,7 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
 
 void reg_heap::invalidate_shared_regs(int t1, int t2)
 {
-  //  assert(t2 == parent_token(t1));
+  assert(is_root_token(t2));
   assert(tokens[t1].version >= tokens[t2].version);
 
   if (tokens[t1].version <= tokens[t2].version) return;
@@ -2281,7 +2281,7 @@ void reg_heap::release_knuckle_token(int t)
 
   capture_parent_token(child_token);
 
-  invalidate_shared_regs(t, child_token);
+  assert(tokens[t].version <= tokens[child_token].version);
 
   release_tip_token(t);
 }
