@@ -1428,7 +1428,7 @@ bool reg_heap::is_completely_dirty(int t) const
 }
   
 // find regs in t2 that call values only active in t1.  We look at regs in split, and append values to callers
-void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split, vector<int>& callers, int mark)
+void reg_heap::find_callers(int t1, int start, const vector<int>& split, vector<int>& callers, int mark)
 {
   for(int i=start;i<split.size();i++)
   {
@@ -1438,14 +1438,14 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
     
     auto& RC1 = result_for_reg_(t1, r1);
 
-    // Look at results in t2 that call the old value in t1.
+    // Look at results in the root program that call the old value in t1.
     for(int rc2: RC1.called_by)
     {
       Result& RC2 = results[rc2];
       int r2 = RC2.source_reg;
 
-      // If this result is not used in t2, we don't need to unshare it.
-      if (result_index_for_reg_(t2,r2) != rc2) continue;
+      // If this result is not used in the root, we don't need to unshare it.
+      if (result_index_for_reg(r2) != rc2) continue;
 
       // Skip this one if its been marked high enough already
       if (RC2.temp >= mark) continue;
@@ -1457,14 +1457,14 @@ void reg_heap::find_callers(int t1, int t2, int start, const vector<int>& split,
       assert(RC2.value);
 
       RC2.temp = mark;
-      assert(result_index_for_reg_(t2,r2) == rc2);
+      assert(result_index_for_reg(r2) == rc2);
       callers.push_back(r2);
     }
   }
 }
 
 // find regs in t2 that used values only active in t1.  We look at regs in split, and append values to callers
-void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, vector<int>& users, int mark)
+void reg_heap::find_users(int t1, int start, const vector<int>& split, vector<int>& users, int mark)
 {
   for(int i=start;i<split.size();i++)
   {
@@ -1474,14 +1474,14 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
     
     auto& RC1 = result_for_reg_(t1, r1);
 
-    // Look at computations in t2 that call the old value in t1.
+    // Look at computations in the root program that call the old value in t1.
     for(int s2: RC1.used_by)
     {
       auto& S2 = steps[s2];
       int r2 = S2.source_reg;
 
-      // If this computation is not used in t2, we don't need to unshare it.
-      if (step_index_for_reg_(t2,r2) != s2) continue;
+      // If this computation is not used in the root program, we don't need to unshare it.
+      if (step_index_for_reg(r2) != s2) continue;
 
       assert(not is_modifiable(access(r2).C.exp));
 
@@ -1492,7 +1492,7 @@ void reg_heap::find_users(int t1, int t2, int start, const vector<int>& split, v
       //      assert(RC2.value);
 
       S2.temp = mark;
-      assert(step_index_for_reg_(t2,r2) == s2);
+      assert(step_index_for_reg(r2) == s2);
       users.push_back(r2);
     }
   }
@@ -1524,21 +1524,21 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   vector< int >& value_may_be_changed = get_scratch_list();
   vector< int >& regs_to_re_evaluate = tokens[t2].regs_to_re_evaluate;
 
-  find_callers(t1, t2, 0, modified, value_may_be_changed, mark_value);
-  find_users(t1, t2, 0, modified, call_and_value_may_be_changed, mark_call_value);
+  find_callers(t1, 0, modified, value_may_be_changed, mark_value);
+  find_users(t1, 0, modified, call_and_value_may_be_changed, mark_call_value);
 
   int i=0;
   int j=0;
   while(i < call_and_value_may_be_changed.size() or j < value_may_be_changed.size())
   {
     // First find all users or callers of regs where the value is out of date.
-    find_callers(t2, t2, j, value_may_be_changed, value_may_be_changed, mark_value);
-    find_users(t2, t2, j, value_may_be_changed, call_and_value_may_be_changed, mark_call_value);
+    find_callers(t2, j, value_may_be_changed, value_may_be_changed, mark_value);
+    find_users(t2, j, value_may_be_changed, call_and_value_may_be_changed, mark_call_value);
     j = value_may_be_changed.size();
 
     // Second find all users or callers of regs where the value AND CALL are out of date.
-    find_users(t2, t2, i, call_and_value_may_be_changed, call_and_value_may_be_changed, mark_call_value);
-    find_callers(t2, t2, i, call_and_value_may_be_changed, value_may_be_changed, mark_value);
+    find_users(t2, i, call_and_value_may_be_changed, call_and_value_may_be_changed, mark_call_value);
+    find_callers(t2, i, call_and_value_may_be_changed, value_may_be_changed, mark_value);
     i = call_and_value_may_be_changed.size();
   }
 
