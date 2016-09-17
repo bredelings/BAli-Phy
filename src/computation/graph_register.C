@@ -1562,14 +1562,6 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     for(int r: value_may_be_changed)
       dec_probability_for_reg(r);
 
-  for(int r:call_and_value_may_be_changed)
-    if (step_index_for_reg_(t1,r))
-      clear_back_edges_for_step(step_index_for_reg_(t2, r));
-
-  for(int r:value_may_be_changed)
-    if (result_index_for_reg_(t1,r))
-      clear_back_edges_for_result(result_index_for_reg_(t2,r));
-
   for(int r:value_may_be_changed)
   {
     auto& RC = result_for_reg_(t2,r);
