@@ -1544,12 +1544,11 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   for(int r:call_and_value_may_be_changed)
   {
-    int res2 = result_index_for_reg_(t2,r);
+    int res2 = result_index_for_reg(r);
     if (res2 <= 0 and result_index_for_reg_(t1,r) == 0)
     {
-      // If we have +- in t2 and == in t1, then we want to end up with +- in t1 and -- in t2.
+      // If we have +- in root and == in t1, then we want to end up with +- in t1 and -- in the root
       // Therefore we have to detect this case and set the result to - in t1.
-      assert(res2 < 0 or is_root_token(t2));
       assert(step_index_for_reg_(t1,r) == 0);
       assert(not is_root_token(t1));
       tokens[t1].vm_result.set_value(r,-1);
@@ -1558,13 +1557,12 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
       value_may_be_changed.push_back(r);
   }
 
-  if (is_root_token(t2))
-    for(int r: value_may_be_changed)
-      dec_probability_for_reg(r);
+  for(int r: value_may_be_changed)
+    dec_probability_for_reg(r);
 
   for(int r:value_may_be_changed)
   {
-    auto& RC = result_for_reg_(t2,r);
+    auto& RC = result_for_reg(r);
 
     RC.temp = -1;
     
@@ -1580,7 +1578,7 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   {
     assert(not is_modifiable(access(r).C.exp));
     
-    auto& S = step_for_reg_(t2,r);
+    auto& S = step_for_reg(r);
 
     S.temp = -1;
 
