@@ -1512,9 +1512,13 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   // find all regs in t2 that are not shared from t1
   vector<int>& modified = get_scratch_list();
-  for(int r: tokens[t1].vm_result.modified())
-    if (tokens[t1].vm_result[r] > 0)
+  for(auto p: tokens[t1].delta_result())
+  {
+    int r = p.first;
+    int res = p.second;
+    if (res > 0)
       modified.push_back(r);
+  }
 
   vector< int >& call_and_value_may_be_changed = get_scratch_list();
   vector< int >& value_may_be_changed = get_scratch_list();
