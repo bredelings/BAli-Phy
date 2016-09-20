@@ -1757,6 +1757,17 @@ void reg_heap::expand_memory(int s)
       assert(tokens[t].vm_result[i] == 0);
     }
   }
+
+  // Extend program
+  prog_steps.resize(size());
+  prog_results.resize(size());
+  prog_temp.resize(size());
+  for(int i=old_size;i<size();i++)
+  {
+    assert(prog_steps[i] == 0);
+    assert(prog_results[i] == 0);
+    assert(prog_temp[i] == 0);
+  }
 }
 
 bool reg_heap::reg_is_constant(int r) const

@@ -331,6 +331,10 @@ private:
   /// The list of unused_tokens
   std::vector<int> unused_tokens;
 
+  std::vector<int> prog_steps;
+  std::vector<int> prog_results;
+  std::vector<char> prog_temp;
+  
 public:
   /// Is a particular token unused?
   bool token_is_used(int) const;
