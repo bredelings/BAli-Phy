@@ -189,14 +189,12 @@ public:
   void make_reg_changeable(int r);
 
   void set_used_input(int R1, int R2);
-  void set_call(int t, int R1, int R2);
   void set_call(int R1, int R2);
   void destroy_all_computations_in_token(int t);
   void clear_call(int s);
   void clear_call_for_reg(int R);
   void clear_C(int R);
   void set_C(int R, closure&& C);
-  void set_reduction_value(int t, int R, closure&& C);
   int create_reg_from_step(int s);
   void mark_reg_created_by_step(int r, int s);
 

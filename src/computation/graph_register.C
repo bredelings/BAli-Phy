@@ -882,30 +882,6 @@ void reg_heap::set_call(int R1, int R2)
   step_for_reg(R1).call = R2;
 }
 
-void reg_heap::set_call(int t, int R1, int R2)
-{
-  assert(reg_is_changeable(R1));
-  // R2 might be of UNKNOWN changeableness
-
-  // Check that R1 is legal
-  assert(is_used(R1));
-
-  // Check that R2 is legal
-  assert(is_used(R2));
-
-  // Only modify the call for the current context;
-  assert(has_step_(t,R1));
-
-  // Don't override an *existing* call
-  //  assert(not reg_has_call_(t,R1));
-
-  // Check that we aren't overriding an existing *value*
-  //  assert(not reg_has_value_(t,R1));
-
-  // Set the call
-  step_for_reg_(t,R1).call = R2;
-}
-
 void reg_heap::destroy_all_computations_in_token(int t)
 {
   // Remove use back-edges
@@ -978,42 +954,6 @@ void reg_heap::clear_C(int R)
   access_unused(R).C.clear();
 }
 
-void reg_heap::set_reduction_value(int t, int R, closure&& value)
-{
-  if (not has_step_(t,R))
-    add_shared_step(t,R);
-
-  assert(not children_of_token(t).size());
-
-  // if the value is NULL, just leave the value and call both unset.
-  //  (this could happen if we set a parameter value to null.)
-  if (not value) return;
-
-  // If the value is a pre-existing reg_var, then call it.
-  if (value.exp.head().type() == index_var_type)
-  {
-    int index = value.exp.as_index_var();
-
-    int Q = value.lookup_in_env( index );
-    
-    assert(is_used(Q));
-    
-    set_call(t, R, Q);
-    clear_result(t,R);
-  }
-  // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
-  else
-  {
-    int s = step_index_for_reg_(t,R);
-    // clear 'reg created' edge from s to old call.
-    steps[s].num_created_regs = 0;
-    int R2 = create_reg_from_step(s);
-    set_call(t, R, R2);
-    clear_result(t,R);
-    set_C(R2, std::move( value ) );
-  }
-}
-
 void reg_heap::mark_reg_created_by_step(int r, int s)
 {
   assert(r > 0);
@@ -1041,25 +981,58 @@ int reg_heap::create_reg_from_step(int s)
 // in the current context.  Other computations can be invalidated later.
 
 /// Update the value of a non-constant, non-computed index
-void reg_heap::set_reg_value(int P, closure&& C, int token)
+void reg_heap::set_reg_value(int R, closure&& value, int t)
 {
   total_set_reg_value++;
-  assert(not is_dirty(token));
-  assert(not children_of_token(token).size());
-  assert(reg_is_changeable(P));
+  assert(not is_dirty(t));
+  assert(not children_of_token(t).size());
+  assert(reg_is_changeable(R));
 
-  if (not is_root_token(token) and tokens[token].version == tokens[parent_token(token)].version)
-    tokens[token].version--;
+  if (not is_root_token(t) and tokens[t].version == tokens[parent_token(t)].version)
+    tokens[t].version--;
 
-  // assert(not is_root_token and tokens[token].version < tokens[parent_token(token)].version) 
+  // assert(not is_root_token and tokens[t].version < tokens[parent_token(t)].version) 
 
   // Check that this reg is indeed settable
-  assert(is_modifiable(access(P).C.exp));
+  assert(is_modifiable(access(R).C.exp));
 
-  assert(not is_root_token(token));
+  assert(not is_root_token(t));
 
   // Finally set the new value.
-  set_reduction_value(token, P, std::move(C) );
+  if (not has_step_(t,R))
+    add_shared_step(t,R);
+
+  assert(not children_of_token(t).size());
+
+  // if the value is NULL, just leave the value and call both unset.
+  //  (this could happen if we set a parameter value to null.)
+  if (not value) return;
+
+  // If the value is a pre-existing reg_var, then call it.
+  if (value.exp.head().type() == index_var_type)
+  {
+    int index = value.exp.as_index_var();
+
+    int Q = value.lookup_in_env( index );
+
+    assert(is_used(Q));
+
+    // Set the call
+    step_for_reg_(t,R).call = Q;
+    clear_result(t,R);
+  }
+  // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
+  else
+  {
+    int s = step_index_for_reg_(t,R);
+    // clear 'reg created' edge from s to old call.
+    steps[s].num_created_regs = 0;
+    int R2 = create_reg_from_step(s);
+    // Set the call
+    step_for_reg_(t,R).call = R2;
+    clear_result(t,R);
+    set_C(R2, std::move( value ) );
+  }
 
 #if DEBUG_MACHINE >= 2
   check_used_regs();
