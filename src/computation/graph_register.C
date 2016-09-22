@@ -1960,24 +1960,6 @@ int reg_heap::remove_shared_result(int t, int r)
     return tokens[t].vm_result.set_value(r,-1);
 }
 
-int reg_heap::move_step(int t1, int t2, int r)
-{
-  int s = step_index_for_reg_(t1, r);
-  tokens[t2].vm_step.add_value(r, s);
-
-  remove_shared_step(t1,r);
-  return s;
-}
-
-int reg_heap::move_result(int t1, int t2, int r)
-{
-  int rc = result_index_for_reg_(t1, r);
-  tokens[t2].vm_result.add_value(r, rc);
-
-  remove_shared_result(t1,r);
-  return rc;
-}
-
 /// Add a shared step at (t,r) -- assuming there isn't one already
 int reg_heap::add_shared_step(int t, int r)
 {

@@ -25,8 +25,6 @@ struct Step
   boost::container::small_vector< std::pair<int,CacheList<int>::iterator>, 10 > used_inputs;
   int num_created_regs = 0;
 
-  int temp = -1;
-
   std::bitset<64> flags;
 
   void clear();
@@ -59,8 +57,6 @@ struct Result
 
   /// Which reduction values made use of the value of this expression (via call)
   CacheList<int> called_by;
-
-  int temp = -1;
 
   std::bitset<64> flags;
 
@@ -508,9 +504,6 @@ public:
 
   void check_back_edges_cleared_for_step(int rc);
   void check_back_edges_cleared_for_result(int rc);
-
-  int move_step(int t1, int t2, int r);
-  int move_result(int t1, int t2, int r);
 
   bool step_is_referenced(int,int) const;
   bool result_is_referenced(int,int) const;
