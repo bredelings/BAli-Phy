@@ -1608,10 +1608,16 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     i = call_and_value_may_be_changed.size();
   }
 
+  for(const auto& p: delta_result)
+  {
+    int r = p.first;
+    prog_temp[r] = 1;
+  }
+
   for(int r:call_and_value_may_be_changed)
   {
     int res2 = result_index_for_reg(r);
-    if (res2 <= 0 and result_index_for_reg_(t1,r) == 0)
+    if (res2 <= 0 and prog_temp[r] == 0)
     {
       // If we have +- in root and == in t1, then we want to end up with +- in t1 and -- in the root
       // Therefore we have to detect this case and set the result to - in t1.
@@ -1621,6 +1627,12 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
     }
     else if (res2 > 0 and results[res2].temp == -1)
       value_may_be_changed.push_back(r);
+  }
+
+  for(const auto& p: delta_result)
+  {
+    int r = p.first;
+    prog_temp[r] = 0;
   }
 
   for(int r: value_may_be_changed)
