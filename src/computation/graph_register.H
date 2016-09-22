@@ -530,15 +530,10 @@ public:
   void set_reg_value(int index, closure&&, int t);
   void set_shared_value(int r, int v);
   bool reg_is_shared(int t, int r) const;
-  void invalidate_shared_regs(int t1, int t2);
   void unshare_regs(int t1);
   void mark_completely_dirty(int t);
   bool is_completely_dirty(int t) const;
   bool is_dirty(int t) const;
-  void find_callers(const std::vector<std::pair<int,int>>& split, std::vector<int>& callers, int mark);
-  void find_users(const std::vector<std::pair<int,int>>& split, std::vector<int>& callers, int mark);
-  void find_callers(int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
-  void find_users(int start, const std::vector<int>& split, std::vector<int>& callers, int mark);
 
   std::pair<int,int> incremental_evaluate_in_context(int R, int c);
 

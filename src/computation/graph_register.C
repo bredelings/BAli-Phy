@@ -225,7 +225,6 @@ void Step::clear()
   num_created_regs = 0;
 
   // This should already be cleared.
-  assert(temp == -1);
   assert(flags.none());
 }
 
@@ -233,7 +232,6 @@ void Step::check_cleared()
 {
   assert(not call);
   assert(used_inputs.empty());
-  assert(temp == -1);
   assert(flags.none());
 }
 
@@ -243,7 +241,6 @@ Step& Step::operator=(Step&& S) noexcept
   call = S.call;
   used_inputs  = std::move( S.used_inputs );
   num_created_regs  = S.num_created_regs;
-  temp = S.temp;
   flags = S.flags;
 
   return *this;
@@ -254,7 +251,6 @@ Step::Step(Step&& S) noexcept
   call ( S.call ),
   used_inputs ( std::move(S.used_inputs) ),
   num_created_regs ( S.num_created_regs ),
-  temp ( S.temp ),
   flags ( S.flags )
 { }
 
@@ -268,7 +264,6 @@ void Result::clear()
   truncate(called_by);
 
   // This should already be cleared.
-  assert(temp == -1);
   assert(flags.none());
 }
 
@@ -278,7 +273,6 @@ void Result::check_cleared()
   assert(not call_edge.first);
   assert(called_by.empty());
   assert(used_by.empty());
-  assert(temp == -1);
   assert(flags.none());
 }
 
@@ -290,7 +284,6 @@ Result& Result::operator=(Result&& R) noexcept
   call_edge = R.call_edge;
   used_by = std::move( R.used_by );
   called_by = std::move( R.called_by );
-  temp = R.temp;
   flags = R.flags;
 
   return *this;
@@ -303,7 +296,6 @@ Result::Result(Result&& R) noexcept
   call_edge (R.call_edge),
   used_by ( std::move( R.used_by) ),
   called_by ( std::move( R.called_by) ),
-  temp ( R.temp ),
   flags ( R.flags )
 { }
 
@@ -1315,18 +1307,18 @@ void reg_heap::reroot_at(int t)
   if (not is_root_token(parent_token(t)))
     reroot_at(parent_token(t));
 
-  // 1.5 Unshare regs
-  unshare_regs(t);
-
   // re-rooting to the parent context shouldn't release its token.
   int parent = parent_token(t);
   assert(is_root_token(parent));
 
-  // 2. Change the relative mappings
+  // 2. Unshare regs
+  unshare_regs(t);
+
+  // 3. Change the relative mappings
   pivot_step_mapping(parent, t);
   pivot_relative_mapping(parent, t);
 
-  // 3. Alter the inheritance tree
+  // 4. Alter the inheritance tree
   tokens[parent].parent = t;
   int index = remove_element(tokens[parent].children, t);
   assert(index != -1);
@@ -1337,8 +1329,7 @@ void reg_heap::reroot_at(int t)
   root_token = t;
   assert(is_root_token(t));
 
-  // 4. Invalidate regs in t that reference(d) results from parent
-  assert(tokens[parent].version >= tokens[t].version);
+  // 5. Remove probabilities for invalidated regs from the current probability
 
   for(int r: tokens[parent].vm_result.modified())
   {
@@ -1349,19 +1340,14 @@ void reg_heap::reroot_at(int t)
 
   total_reroot_one++;
   
-  //  invalidate_shared_regs(parent,t);
-
-  // Mark this context as not having computations that need to be unshared
-  //  tokens[t].version = tokens[parent].version;
-
-  assert(tokens[t].version >= tokens[parent].version);
+  assert(tokens[parent].version == tokens[t].version);
 
   for(int t2: tokens[t].children)
     assert(tokens[t2].version <= tokens[t].version);
 
   assert(is_root_token(t));
 
-  // 5. re-evaluate all the regs that need to be up-to-date.
+  // 6. re-evaluate all the regs that need to be up-to-date.
   if (tokens[t].regs_to_re_evaluate.size())
     mark_completely_dirty(t);
   for(int R: tokens[t].regs_to_re_evaluate)
@@ -1430,270 +1416,6 @@ bool reg_heap::is_completely_dirty(int t) const
   return true;
 }
   
-// find regs in the root that call values only active in t1.  We look at regs in split, and append values to callers
-void reg_heap::find_callers(const vector<pair<int,int>>& split, vector<int>& callers, int mark)
-{
-  for(const auto& p: split)
-  {
-    int reg = p.first;
-    int result = p.second;
-
-    if (result <= 0) continue;
-    
-    auto& RC1 = results[result];
-
-    // Look at results in the root program that call the old value in t1.
-    for(int rc2: RC1.called_by)
-    {
-      Result& RC2 = results[rc2];
-      int r2 = RC2.source_reg;
-
-      // If this result is not used in the root, we don't need to unshare it.
-      if (result_index_for_reg(r2) != rc2) continue;
-
-      // Skip this one if its been marked high enough already
-      if (RC2.temp >= mark) continue;
-
-      // If the result has no value, then its called-by edge is out-of-date
-      if (not RC2.value) continue;
-
-      // There (usually) shouldn't be a back edge to r2 if r2 has no value.
-      assert(RC2.value);
-
-      RC2.temp = mark;
-      assert(result_index_for_reg(r2) == rc2);
-      callers.push_back(r2);
-    }
-  }
-}
-
-// find regs in the root that used values only active in t1.  We look at regs in split, and append values to callers
-void reg_heap::find_users(const vector<pair<int,int>>& split, vector<int>& users, int mark)
-{
-  for(const auto& p: split)
-  {
-    int reg = p.first;
-    int result = p.second;
-
-    if (result <= 0) continue;
-    
-    auto& RC1 = results[result];
-
-    // Look at computations in the root program that call the old value in t1.
-    for(int s2: RC1.used_by)
-    {
-      auto& S2 = steps[s2];
-      int r2 = S2.source_reg;
-
-      // If this computation is not used in the root program, we don't need to unshare it.
-      if (step_index_for_reg(r2) != s2) continue;
-
-      assert(not is_modifiable(access(r2).C.exp));
-
-      // Skip this one if its been marked high enough already
-      if (S2.temp >= mark) continue;
-
-      // There (usually) shouldn't be a back edge to r2 if r2 has no value.
-      //      assert(RC2.value);
-
-      S2.temp = mark;
-      assert(step_index_for_reg(r2) == s2);
-      users.push_back(r2);
-    }
-  }
-}
-
-// find regs in the root that call invalid values in the root.  We look at regs in split, and append values to callers
-void reg_heap::find_callers(int start, const vector<int>& split, vector<int>& callers, int mark)
-{
-  for(int i=start;i<split.size();i++)
-  {
-    int r1 = split[i];
-
-    if (not has_result(r1)) continue;
-    
-    auto& RC1 = result_for_reg(r1);
-
-    // Look at results in the root program that call the old value.
-    for(int rc2: RC1.called_by)
-    {
-      Result& RC2 = results[rc2];
-      int r2 = RC2.source_reg;
-
-      // If this result is not used in the root, we don't need to unshare it.
-      if (result_index_for_reg(r2) != rc2) continue;
-
-      // Skip this one if its been marked high enough already
-      if (RC2.temp >= mark) continue;
-
-      // If the result has no value, then its called-by edge is out-of-date
-      if (not RC2.value) continue;
-
-      // There (usually) shouldn't be a back edge to r2 if r2 has no value.
-      assert(RC2.value);
-
-      RC2.temp = mark;
-      assert(result_index_for_reg(r2) == rc2);
-      callers.push_back(r2);
-    }
-  }
-}
-
-// find regs in the root that call invalid values in the root.  We look at regs in split, and append values to callers
-void reg_heap::find_users(int start, const vector<int>& split, vector<int>& users, int mark)
-{
-  for(int i=start;i<split.size();i++)
-  {
-    int r1 = split[i];
-
-    if (not has_result(r1)) continue;
-    
-    auto& RC1 = result_for_reg(r1);
-
-    // Look at computations in the root program that call the old value.
-    for(int s2: RC1.used_by)
-    {
-      auto& S2 = steps[s2];
-      int r2 = S2.source_reg;
-
-      // If this computation is not used in the root program, we don't need to unshare it.
-      if (step_index_for_reg(r2) != s2) continue;
-
-      assert(not is_modifiable(access(r2).C.exp));
-
-      // Skip this one if its been marked high enough already
-      if (S2.temp >= mark) continue;
-
-      // There (usually) shouldn't be a back edge to r2 if r2 has no value.
-      //      assert(RC2.value);
-
-      S2.temp = mark;
-      assert(step_index_for_reg(r2) == s2);
-      users.push_back(r2);
-    }
-  }
-}
-
-void reg_heap::invalidate_shared_regs(int t1, int t2)
-{
-  assert(is_root_token(t2));
-  assert(tokens[t1].version >= tokens[t2].version);
-
-  if (tokens[t1].version <= tokens[t2].version) return;
-
-  total_invalidate++;
-  
-  constexpr int mark_value = 1;
-  constexpr int mark_call_value = 2;
-
-  // find all regs in t2 that are not shared from t1
-  auto delta_result = tokens[t1].delta_result();
-
-  vector< int >& call_and_value_may_be_changed = get_scratch_list();
-  vector< int >& value_may_be_changed = get_scratch_list();
-  vector< int >& regs_to_re_evaluate = tokens[t2].regs_to_re_evaluate;
-
-  find_callers(delta_result, value_may_be_changed, mark_value);
-  find_users(delta_result, call_and_value_may_be_changed, mark_call_value);
-
-  int i=0;
-  int j=0;
-  while(i < call_and_value_may_be_changed.size() or j < value_may_be_changed.size())
-  {
-    // First find all users or callers of regs where the value is out of date.
-    find_callers(j, value_may_be_changed, value_may_be_changed, mark_value);
-    find_users(j, value_may_be_changed, call_and_value_may_be_changed, mark_call_value);
-    j = value_may_be_changed.size();
-
-    // Second find all users or callers of regs where the value AND CALL are out of date.
-    find_users(i, call_and_value_may_be_changed, call_and_value_may_be_changed, mark_call_value);
-    find_callers(i, call_and_value_may_be_changed, value_may_be_changed, mark_value);
-    i = call_and_value_may_be_changed.size();
-  }
-
-  for(const auto& p: delta_result)
-  {
-    int r = p.first;
-    prog_temp[r] = 1;
-  }
-
-  for(int r:call_and_value_may_be_changed)
-  {
-    int res2 = result_index_for_reg(r);
-    if (res2 <= 0 and prog_temp[r] == 0)
-    {
-      // If we have +- in root and == in t1, then we want to end up with +- in t1 and -- in the root
-      // Therefore we have to detect this case and set the result to - in t1.
-      assert(step_index_for_reg_(t1,r) == 0);
-      assert(not is_root_token(t1));
-      tokens[t1].vm_result.set_value(r,-1);
-    }
-    else if (res2 > 0 and results[res2].temp == -1)
-      value_may_be_changed.push_back(r);
-  }
-
-  for(const auto& p: delta_result)
-  {
-    int r = p.first;
-    prog_temp[r] = 0;
-  }
-
-  for(int r: value_may_be_changed)
-    dec_probability_for_reg(r);
-
-  for(int r:value_may_be_changed)
-  {
-    auto& RC = result_for_reg(r);
-
-    RC.temp = -1;
-    
-    assert(not result_index_for_reg_(t1,r));
-    move_result(t2, t1, r);
-
-    // Mark this reg for re_evaluation if it is flagged and hasn't been seen before.
-    if (access(r).re_evaluate)
-      regs_to_re_evaluate.push_back(r);
-  }
-
-  for(int r:call_and_value_may_be_changed)
-  {
-    assert(not is_modifiable(access(r).C.exp));
-    
-    auto& S = step_for_reg(r);
-
-    S.temp = -1;
-
-    assert(not step_index_for_reg_(t1,r));
-    move_step(t2, t1, r);
-  }
-
-  total_results_invalidated += value_may_be_changed.size();
-  total_steps_invalidated += call_and_value_may_be_changed.size();
-  total_results_scanned += (value_may_be_changed.size() + delta_result.size());
-  total_steps_scanned += (call_and_value_may_be_changed.size() + delta_result.size());
-
-  // find all regs in t2 that are not shared from t1.  Nothing needs to be done to these - they are already split.
-  // Anything that uses these needs to be unshared.
-  //  - The local version should be completely cleared.  We can remove the computation.
-  //  - All children should have their computations removed also
-  // Anything that calls these needs to be unshared.
-  //  - The local version should preserve its uses and call, but its value should be cleared.
-  //  - All children should be updated to use the new computation.
-
-  // This is similar to set_reg_value, but not the same.
-  // Should set_reg_value be able to consist of
-  // (a) change the computation for some modifiables
-  // (b) run invalidate_shared_regs?
-
-  release_scratch_list();
-  release_scratch_list();
-  assert(n_active_scratch_lists == 0);
-
-#if DEBUG_MACHINE >= 2
-  check_used_regs();
-#endif
-}
-
 void reg_heap::unshare_regs(int t)
 {
   assert(is_root_token(parent_token(t)));
