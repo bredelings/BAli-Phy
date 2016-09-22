@@ -1315,6 +1315,9 @@ void reg_heap::reroot_at(int t)
   if (not is_root_token(parent_token(t)))
     reroot_at(parent_token(t));
 
+  // 1.5 Unshare regs
+  unshare_regs(t);
+
   // re-rooting to the parent context shouldn't release its token.
   int parent = parent_token(t);
   assert(is_root_token(parent));
@@ -1346,10 +1349,10 @@ void reg_heap::reroot_at(int t)
 
   total_reroot_one++;
   
-  invalidate_shared_regs(parent,t);
+  //  invalidate_shared_regs(parent,t);
 
   // Mark this context as not having computations that need to be unshared
-  tokens[t].version = tokens[parent].version;
+  //  tokens[t].version = tokens[parent].version;
 
   assert(tokens[t].version >= tokens[parent].version);
 
@@ -1690,6 +1693,110 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   check_used_regs();
 #endif
 }
+
+void reg_heap::unshare_regs(int t)
+{
+  assert(is_root_token(parent_token(t)));
+  assert(tokens[root_token].version >= tokens[t].version);
+
+  if (tokens[root_token].version <= tokens[t].version) return;
+
+#if DEBUG_MACHINE >= 2
+  check_used_regs();
+#endif
+
+  total_invalidate++;
+  
+  // find all regs in t that are not shared from the root
+  auto delta_result = tokens[t].delta_result();
+  auto delta_step = tokens[t].delta_step();
+  
+  int n_delta_result0 = delta_result.size();
+  int n_delta_step0 = delta_step.size();
+  
+  for(const auto& p: delta_result)
+  {
+    int r = p.first;
+    prog_temp[r] |= 1;
+  }
+
+  for(const auto& p: delta_step)
+  {
+    int r = p.first;
+    prog_temp[r] |= 2;
+    assert(prog_temp[r] == 3);
+  }
+
+  auto& vm_result = tokens[t].vm_result;
+  auto& vm_step = tokens[t].vm_step;
+  auto& regs_to_re_evaluate = tokens[t].regs_to_re_evaluate;
+
+  for(int i=0;i<delta_result.size();i++)
+  {
+    int r = delta_result[i].first;
+
+    int result = result_index_for_reg(r);
+
+    if (not has_result(r)) continue;
+
+    const auto& Result = result_for_reg(r);
+
+    for(int res2: Result.called_by)
+    {
+      const auto& Result2 = results[res2];
+      int r2 = Result2.source_reg;
+
+      // This result is already unshared
+      if (prog_temp[r2] != 0) continue;
+
+      prog_temp[r2] = 1;
+      delta_result.emplace_back(r2,-1);
+    }
+
+    for(int s2: Result.used_by)
+    {
+      auto& S2 = steps[s2];
+      int r2 = S2.source_reg;
+
+      // This step is already unshared
+      if (prog_temp[r2] == 3) continue;
+
+      if (prog_temp[r2] == 0)
+	delta_result.emplace_back(r2,-1);
+
+      prog_temp[r2] = 3;
+      delta_step.emplace_back(r2,-1);
+      vm_step.add_value(r2,-1);
+    }
+  }
+
+  for(int i=n_delta_result0;i<delta_result.size();i++)
+  {
+    int r = delta_result[i].first;
+    vm_result.add_value(r,-1);
+    if (access(r).re_evaluate)
+      regs_to_re_evaluate.push_back(r);
+  }
+  
+  for(const auto& p: delta_result)
+  {
+    int r = p.first;
+    prog_temp[r] = 0;
+  }
+
+  total_results_invalidated += (delta_result.size() - n_delta_result0);
+  total_steps_invalidated += (delta_step.size() - n_delta_step0);
+
+  total_results_scanned += delta_result.size();
+  total_steps_scanned += delta_step.size();
+
+  tokens[t].version = tokens[root_token].version;
+  
+#if DEBUG_MACHINE >= 2
+  check_used_regs();
+#endif
+}
+
 
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
 {
