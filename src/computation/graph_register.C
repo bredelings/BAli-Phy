@@ -1500,18 +1500,18 @@ void reg_heap::find_users(const vector<pair<int,int>>& split, vector<int>& users
   }
 }
 
-// find regs in the root that call values only active in t1.  We look at regs in split, and append values to callers
-void reg_heap::find_callers(int t1, int start, const vector<int>& split, vector<int>& callers, int mark)
+// find regs in the root that call invalid values in the root.  We look at regs in split, and append values to callers
+void reg_heap::find_callers(int start, const vector<int>& split, vector<int>& callers, int mark)
 {
   for(int i=start;i<split.size();i++)
   {
     int r1 = split[i];
 
-    if (not has_result_(t1,r1)) continue;
+    if (not has_result(r1)) continue;
     
-    auto& RC1 = result_for_reg_(t1, r1);
+    auto& RC1 = result_for_reg(r1);
 
-    // Look at results in the root program that call the old value in t1.
+    // Look at results in the root program that call the old value.
     for(int rc2: RC1.called_by)
     {
       Result& RC2 = results[rc2];
@@ -1536,18 +1536,18 @@ void reg_heap::find_callers(int t1, int start, const vector<int>& split, vector<
   }
 }
 
-// find regs in the root that used values only active in t1.  We look at regs in split, and append values to callers
-void reg_heap::find_users(int t1, int start, const vector<int>& split, vector<int>& users, int mark)
+// find regs in the root that call invalid values in the root.  We look at regs in split, and append values to callers
+void reg_heap::find_users(int start, const vector<int>& split, vector<int>& users, int mark)
 {
   for(int i=start;i<split.size();i++)
   {
     int r1 = split[i];
 
-    if (not has_result_(t1,r1)) continue;
+    if (not has_result(r1)) continue;
     
-    auto& RC1 = result_for_reg_(t1, r1);
+    auto& RC1 = result_for_reg(r1);
 
-    // Look at computations in the root program that call the old value in t1.
+    // Look at computations in the root program that call the old value.
     for(int s2: RC1.used_by)
     {
       auto& S2 = steps[s2];
@@ -1598,13 +1598,13 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   while(i < call_and_value_may_be_changed.size() or j < value_may_be_changed.size())
   {
     // First find all users or callers of regs where the value is out of date.
-    find_callers(t2, j, value_may_be_changed, value_may_be_changed, mark_value);
-    find_users(t2, j, value_may_be_changed, call_and_value_may_be_changed, mark_call_value);
+    find_callers(j, value_may_be_changed, value_may_be_changed, mark_value);
+    find_users(j, value_may_be_changed, call_and_value_may_be_changed, mark_call_value);
     j = value_may_be_changed.size();
 
     // Second find all users or callers of regs where the value AND CALL are out of date.
-    find_users(t2, i, call_and_value_may_be_changed, call_and_value_may_be_changed, mark_call_value);
-    find_callers(t2, i, call_and_value_may_be_changed, value_may_be_changed, mark_value);
+    find_users(i, call_and_value_may_be_changed, call_and_value_may_be_changed, mark_call_value);
+    find_callers(i, call_and_value_may_be_changed, value_may_be_changed, mark_value);
     i = call_and_value_may_be_changed.size();
   }
 
