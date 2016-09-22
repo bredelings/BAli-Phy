@@ -1427,7 +1427,80 @@ bool reg_heap::is_completely_dirty(int t) const
   return true;
 }
   
-// find regs in t2 that call values only active in t1.  We look at regs in split, and append values to callers
+// find regs in the root that call values only active in t1.  We look at regs in split, and append values to callers
+void reg_heap::find_callers(const vector<pair<int,int>>& split, vector<int>& callers, int mark)
+{
+  for(const auto& p: split)
+  {
+    int reg = p.first;
+    int result = p.second;
+
+    if (result <= 0) continue;
+    
+    auto& RC1 = results[result];
+
+    // Look at results in the root program that call the old value in t1.
+    for(int rc2: RC1.called_by)
+    {
+      Result& RC2 = results[rc2];
+      int r2 = RC2.source_reg;
+
+      // If this result is not used in the root, we don't need to unshare it.
+      if (result_index_for_reg(r2) != rc2) continue;
+
+      // Skip this one if its been marked high enough already
+      if (RC2.temp >= mark) continue;
+
+      // If the result has no value, then its called-by edge is out-of-date
+      if (not RC2.value) continue;
+
+      // There (usually) shouldn't be a back edge to r2 if r2 has no value.
+      assert(RC2.value);
+
+      RC2.temp = mark;
+      assert(result_index_for_reg(r2) == rc2);
+      callers.push_back(r2);
+    }
+  }
+}
+
+// find regs in the root that used values only active in t1.  We look at regs in split, and append values to callers
+void reg_heap::find_users(const vector<pair<int,int>>& split, vector<int>& users, int mark)
+{
+  for(const auto& p: split)
+  {
+    int reg = p.first;
+    int result = p.second;
+
+    if (result <= 0) continue;
+    
+    auto& RC1 = results[result];
+
+    // Look at computations in the root program that call the old value in t1.
+    for(int s2: RC1.used_by)
+    {
+      auto& S2 = steps[s2];
+      int r2 = S2.source_reg;
+
+      // If this computation is not used in the root program, we don't need to unshare it.
+      if (step_index_for_reg(r2) != s2) continue;
+
+      assert(not is_modifiable(access(r2).C.exp));
+
+      // Skip this one if its been marked high enough already
+      if (S2.temp >= mark) continue;
+
+      // There (usually) shouldn't be a back edge to r2 if r2 has no value.
+      //      assert(RC2.value);
+
+      S2.temp = mark;
+      assert(step_index_for_reg(r2) == s2);
+      users.push_back(r2);
+    }
+  }
+}
+
+// find regs in the root that call values only active in t1.  We look at regs in split, and append values to callers
 void reg_heap::find_callers(int t1, int start, const vector<int>& split, vector<int>& callers, int mark)
 {
   for(int i=start;i<split.size();i++)
@@ -1463,7 +1536,7 @@ void reg_heap::find_callers(int t1, int start, const vector<int>& split, vector<
   }
 }
 
-// find regs in t2 that used values only active in t1.  We look at regs in split, and append values to callers
+// find regs in the root that used values only active in t1.  We look at regs in split, and append values to callers
 void reg_heap::find_users(int t1, int start, const vector<int>& split, vector<int>& users, int mark)
 {
   for(int i=start;i<split.size();i++)
@@ -1511,21 +1584,14 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   const int mark_call_value = 2;
 
   // find all regs in t2 that are not shared from t1
-  vector<int>& modified = get_scratch_list();
-  for(auto p: tokens[t1].delta_result())
-  {
-    int r = p.first;
-    int res = p.second;
-    if (res > 0)
-      modified.push_back(r);
-  }
+  auto delta_result = tokens[t1].delta_result();
 
   vector< int >& call_and_value_may_be_changed = get_scratch_list();
   vector< int >& value_may_be_changed = get_scratch_list();
   vector< int >& regs_to_re_evaluate = tokens[t2].regs_to_re_evaluate;
 
-  find_callers(t1, 0, modified, value_may_be_changed, mark_value);
-  find_users(t1, 0, modified, call_and_value_may_be_changed, mark_call_value);
+  find_callers(delta_result, value_may_be_changed, mark_value);
+  find_users(delta_result, call_and_value_may_be_changed, mark_call_value);
 
   int i=0;
   int j=0;
@@ -1588,8 +1654,8 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   total_results_invalidated += value_may_be_changed.size();
   total_steps_invalidated += call_and_value_may_be_changed.size();
-  total_results_scanned += (value_may_be_changed.size() + modified.size());
-  total_steps_scanned += (call_and_value_may_be_changed.size() + modified.size());
+  total_results_scanned += (value_may_be_changed.size() + delta_result.size());
+  total_steps_scanned += (call_and_value_may_be_changed.size() + delta_result.size());
 
   // find all regs in t2 that are not shared from t1.  Nothing needs to be done to these - they are already split.
   // Anything that uses these needs to be unshared.
@@ -1604,7 +1670,6 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
   // (a) change the computation for some modifiables
   // (b) run invalidate_shared_regs?
 
-  release_scratch_list();
   release_scratch_list();
   release_scratch_list();
   assert(n_active_scratch_lists == 0);
