@@ -1580,8 +1580,8 @@ void reg_heap::invalidate_shared_regs(int t1, int t2)
 
   total_invalidate++;
   
-  const int mark_value = 1;
-  const int mark_call_value = 2;
+  constexpr int mark_value = 1;
+  constexpr int mark_call_value = 2;
 
   // find all regs in t2 that are not shared from t1
   auto delta_result = tokens[t1].delta_result();
