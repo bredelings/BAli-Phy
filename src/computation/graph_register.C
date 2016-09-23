@@ -999,8 +999,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
   assert(not is_root_token(t));
 
   // Finally set the new value.
-  if (not has_step_(t,R))
-    add_shared_step(t,R);
+  int s = add_shared_step(t,R);
 
   assert(not children_of_token(t).size());
 
@@ -1018,21 +1017,21 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     assert(is_used(Q));
 
     // Set the call
-    step_for_reg_(t,R).call = Q;
-    clear_result(t,R);
+    steps[s].call = Q;
   }
   // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
   else
   {
-    int s = step_index_for_reg_(t,R);
+    int R2 = create_reg_from_step(s);
+
     // clear 'reg created' edge from s to old call.
     steps[s].num_created_regs = 0;
-    int R2 = create_reg_from_step(s);
+    steps[s].call = R2;
+
     // Set the call
-    step_for_reg_(t,R).call = R2;
-    clear_result(t,R);
     set_C(R2, std::move( value ) );
   }
+  clear_result(t,R);
 
 #if DEBUG_MACHINE >= 2
   check_used_regs();
