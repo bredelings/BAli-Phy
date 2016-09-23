@@ -194,12 +194,13 @@ void reg_heap::trace(vector<int>& remap)
     // 5.1 Mark all steps at heads in non-root tokens.
     // FIXME - We can remove this after we maintain references to invalidated computations.
     //         Then there should always be a result for every step, valid or invalid.
-    for(const auto& r: tokens[t].vm_step.modified())
+    for(auto p: tokens[t].delta_step())
     {
+      int r = p.first;
       if (access(r).n_heads)
       {
 	assert(is_marked(r));
-	int step = step_index_for_reg_(t,r);
+	int step = p.second;
 	if (step > 0)
 	  mark_step(step);
       }
@@ -208,12 +209,13 @@ void reg_heap::trace(vector<int>& remap)
     // 5.2 Mark all results at heads in non-root tokens.
     // NOTE - The corresponding head, whatever it is, must ALSO be marked,
     //        since we mark all steps at heads.
-    for(const auto& r: tokens[t].vm_result.modified())
+    for(const auto& p: tokens[t].delta_result())
     {
+      int r = p.first;
       if (access(r).n_heads)
       {
 	assert(is_marked(r));
-	int result = result_index_for_reg_(t,r);
+	int result = p.second;
 	if (result > 0)
 	  mark_result(result);
       }
