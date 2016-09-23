@@ -1068,98 +1068,86 @@ void reg_heap::merge_split_mapping(int t1, int t2)
 
 void reg_heap::merge_split_step_mapping(int t1, int t2)
 {
-  auto& vm1 = tokens[t1].vm_step;
-  auto& vm2 = tokens[t2].vm_step;
-  if (vm1.modified().size() < vm2.modified().size())
-  {
-    for(int i=0;i<vm1.modified().size();)
-    {
-      int r = vm1.modified()[i];
-      assert(vm1[r]);
-      if (not vm2[r])
-      {
-	// transfer mapping from v1[r] -> v2[r]
-	int s = vm1.erase_value(r);
-	vm2.add_value(r,s);
-      }
-      else
-	i++;
-    }
-  }
-  else
-  {
-    for(int i=0;i<vm2.modified().size();)
-    {
-      int r = vm2.modified()[i];
-      assert(vm2[r]);
+    auto& vm1 = tokens[t1].vm_step;
+    auto& vm2 = tokens[t2].vm_step;
 
-      if (vm1[r])
-      {
-	int s1 = vm1[r];
-	int s2 = vm2[r];
-	vm1.replace_value(r,s2);
-	vm2.replace_value(r,s1);
+    auto delta_step1 = vm1.delta();
+    auto delta_step2 = vm2.delta();
 
-	i++;
-      }
-      else
-      {
-	int s = vm2[r];
-	vm1.add_value(r,s);
-	vm2.erase_value(r);
-      }
+    for(auto p: delta_step2)
+    {
+	int r = p.first;
+	prog_temp[r] = 1;
     }
-    std::swap(vm1,vm2);
-  }
+
+    for(int i=0;i<delta_step1.size();)
+    {
+	int r = delta_step1[i].first;
+	int v = delta_step1[i].second;
+
+	if (not prog_temp[r])
+	{
+	    delta_step2.emplace_back(r,v);
+	    vm2.add_value(r,v);
+
+	    if (i < delta_step1.size()) {
+		delta_step1[i] = delta_step1.back();
+		delta_step1.pop_back();
+		vm1.erase_value(r);
+	    }
+	}
+	else
+	    i++;
+    }
+
+    for(auto p: delta_step2)
+    {
+	int r = p.first;
+	prog_temp[r] = 0;
+    }
 }
 
 // Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
 void reg_heap::merge_split_relative_mapping(int t1, int t2)
 {
-  auto& vm1 = tokens[t1].vm_result;
-  auto& vm2 = tokens[t2].vm_result;
-  if (vm1.modified().size() < vm2.modified().size())
-  {
-    for(int i=0;i<vm1.modified().size();)
-    {
-      int r = vm1.modified()[i];
-      assert(vm1[r]);
-      if (not vm2[r])
-      {
-	// transfer mapping from v1[r] -> v2[r]
-	int rc = vm1.erase_value(r);
-	vm2.add_value(r,rc);
-      }
-      else
-	i++;
-    }
-  }
-  else
-  {
-    for(int i=0;i<vm2.modified().size();)
-    {
-      int r = vm2.modified()[i];
-      assert(vm2[r]);
+    auto& vm1 = tokens[t1].vm_result;
+    auto& vm2 = tokens[t2].vm_result;
 
-      if (vm1[r])
-      {
-	int rc1 = vm1[r];
-	int rc2 = vm2[r];
-	vm1.replace_value(r,rc2);
-	vm2.replace_value(r,rc1);
+    auto delta_result1 = vm1.delta();
+    auto delta_result2 = vm2.delta();
 
-	i++;
-      }
-      else
-      {
-	int rc = vm2[r];
-	vm1.add_value(r,rc);
-	vm2.erase_value(r);
-      }
+    for(auto p: delta_result2)
+    {
+	int r = p.first;
+	prog_temp[r] = 1;
     }
-    std::swap(vm1,vm2);
-  }
+
+    for(int i=0;i<delta_result1.size();)
+    {
+	int r = delta_result1[i].first;
+	int v = delta_result1[i].second;
+
+	if (not prog_temp[r])
+	{
+	    delta_result2.emplace_back(r,v);
+	    vm2.add_value(r,v);
+
+	    if (i < delta_result1.size()) {
+		delta_result1[i] = delta_result1.back();
+		delta_result1.pop_back();
+		vm1.erase_value(r);
+	    }
+	}
+	else
+	    i++;
+    }
+
+    for(auto p: delta_result2)
+    {
+	int r = p.first;
+	prog_temp[r] = 0;
+    }
 }
 
 // Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
