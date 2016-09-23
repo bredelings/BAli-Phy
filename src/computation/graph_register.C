@@ -1089,11 +1089,10 @@ void reg_heap::merge_split_step_mapping(int t1, int t2)
 	    delta_step2.emplace_back(r,v);
 	    vm2.add_value(r,v);
 
-	    if (i < delta_step1.size()) {
+	    if (i < delta_step1.size())
 		delta_step1[i] = delta_step1.back();
-		delta_step1.pop_back();
-		vm1.erase_value(r);
-	    }
+	    delta_step1.pop_back();
+	    vm1.erase_value(r);
 	}
 	else
 	    i++;
@@ -1132,11 +1131,10 @@ void reg_heap::merge_split_relative_mapping(int t1, int t2)
 	    delta_result2.emplace_back(r,v);
 	    vm2.add_value(r,v);
 
-	    if (i < delta_result1.size()) {
+	    if (i < delta_result1.size())
 		delta_result1[i] = delta_result1.back();
-		delta_result1.pop_back();
-		vm1.erase_value(r);
-	    }
+	    delta_result1.pop_back();
+	    vm1.erase_value(r);
 	}
 	else
 	    i++;
