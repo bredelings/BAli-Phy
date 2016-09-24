@@ -343,12 +343,13 @@ void mapping::add_value(int r, int v)
   assert(v);
 
   address A(v);
-  A.index = modified_.size();
+  A.index = delta_.size();
 
   values[r] = A;
-  modified_.push_back(r);
+  delta_.emplace_back(r,v);
 
-  assert(modified_[values[r].index] == r);
+  assert(delta_[values[r].index].first == r);
+  assert(delta_[values[r].index].second == v);
 }
 
 int mapping::erase_value(int r)
@@ -358,21 +359,22 @@ int mapping::erase_value(int r)
   // The reg should be mapped.
   assert(v);
 
-  // Check correspondence between modified_ and values
-  assert(modified_[values[r].index] == r);
+  // Check correspondence between delta_ and values
+  assert(delta_[values[r].index].first == r);
 
-  // Lookup the position in modified_ where we mention r
+  // Lookup the position in delta_ where we mention r
   int index = values[r].index;
 
-  int r2 = modified_.back();
-  modified_.pop_back();
+  auto back = delta_.back();
+  int r2 = back.first;
+  delta_.pop_back();
 
   // If we are deleting from the middle, move the last element to the middle
-  if (index < modified_.size())
+  if (index < delta_.size())
   {
-    modified_[index] = r2;
+    delta_[index] = back;
     values[r2].index = index;
-    assert(modified_[values[r2].index] == r2);
+    assert(delta_[values[r2].index].first == r2);
   }
 
   values[r] = {};
@@ -385,6 +387,7 @@ int mapping::replace_value(int r, int v)
   assert(v);
   int v_old = values[r].value;
   values[r].value = v;
+  delta_[values[r].index].second = v;
   return v_old;
 }
 
@@ -410,15 +413,15 @@ int mapping::set_value(int r, int v)
 
 void mapping::clear()
 {
-  for(int r: modified_)
-    values[r] = {};
-  modified_.clear();
+  for(auto p: delta_)
+    values[p.first] = {};
+  delta_.clear();
 }
 
 void mapping::resize(int s)
 {
   values.resize(s);
-  modified_.reserve(s);
+  delta_.reserve(s);
 }
 
 int mapping::size() const
@@ -428,7 +431,7 @@ int mapping::size() const
 
 bool mapping::empty() const
 {
-  return modified_.empty();
+  return delta_.empty();
 }
 
 void reg_heap::register_probability(int r)
@@ -551,8 +554,8 @@ log_double_t reg_heap::probability_for_context(int c)
   // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<variable_pr<<"  unhandled = "<<unhandled_pr<<std::endl;
 
 #ifndef NDEBUG  
-  log_double_t Pr2 = probability_for_context_full(c);
-  double diff = Pr.log() - Pr2.log();
+  // log_double_t Pr2 = probability_for_context_full(c);
+  // double diff = Pr.log() - Pr2.log();
   // std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<variable_pr<<"  unhandled = "<<unhandled_pr<<std::endl;
   //  assert(fabs(diff) < 1.0e-6);
 #endif
@@ -890,7 +893,7 @@ void reg_heap::destroy_all_computations_in_token(int t)
 
   for(auto p: delta_step)
   {
-    int r = p.first;
+//    int r = p.first;
     int s = p.second;
     if (s > 0)
       clear_back_edges_for_step(s);
@@ -899,7 +902,7 @@ void reg_heap::destroy_all_computations_in_token(int t)
   // Remove call back-edges
   for(auto p: delta_result)
   {
-    int r = p.first;
+//    int r = p.first;
     int rc = p.second;
     if (rc > 0)
       clear_back_edges_for_result(rc);
@@ -907,7 +910,7 @@ void reg_heap::destroy_all_computations_in_token(int t)
 
   for(auto p: delta_step)
   {
-    int r = p.first;
+//    int r = p.first;
     int s = p.second;
     if (s > 0)
       steps.reclaim_used(s);
@@ -916,7 +919,7 @@ void reg_heap::destroy_all_computations_in_token(int t)
 
   for(auto p: delta_result)
   {
-    int r = p.first;
+//    int r = p.first;
     int rc = p.second;
     if (rc > 0)
       results.reclaim_used(rc);
@@ -1154,11 +1157,11 @@ void reg_heap::pivot_step_mapping(int t1, int t2)
   auto& vm1 = tokens[t1].vm_step;
   auto& vm2 = tokens[t2].vm_step;
 
-  total_steps_pivoted += vm2.modified().size();
+  total_steps_pivoted += vm2.delta().size();
   
-  for(int i=0;i<vm2.modified().size();i++)
+  for(int i=0;i<vm2.delta().size();i++)
   {
-    int r = vm2.modified()[i];
+    int r = vm2.delta()[i].first;
     assert(vm2[r]);
 
     int s1 = vm1[r];
@@ -1186,11 +1189,11 @@ void reg_heap::pivot_relative_mapping(int t1, int t2)
   auto& vm1 = tokens[t1].vm_result;
   auto& vm2 = tokens[t2].vm_result;
 
-  total_results_pivoted += vm2.modified().size();
+  total_results_pivoted += vm2.delta().size();
 
-  for(int i=0;i<vm2.modified().size();i++)
+  for(int i=0;i<vm2.delta().size();i++)
   {
-    int r = vm2.modified()[i];
+    int r = vm2.delta()[i].first;
     assert(vm2[r]);
 
     int rc1 = vm1[r];
@@ -1289,9 +1292,10 @@ void reg_heap::reroot_at(int t)
 
   // 5. Remove probabilities for invalidated regs from the current probability
 
-  for(int r: tokens[parent].vm_result.modified())
+  for(auto p: tokens[parent].vm_result.delta())
   {
-    int rc = tokens[parent].vm_result[r];
+    int r = p.first;
+    int rc = p.second;  
     if (rc > 0 and results[rc].flags.test(0))
       dec_probability(rc);
   }
@@ -1340,18 +1344,6 @@ bool reg_heap::is_dirty(int t) const
     if (tokens[t].version > tokens[t2].version)
       return true;
   return false;
-}
-
-vector<pair<int,int>> mapping::delta() const
-{
-  vector<pair<int,int>> d(modified_.size());
-  for(int i=0;i<d.size();i++)
-  {
-    int r = modified_[i];
-    d[i].first = r;
-    d[i].second = values[r].value;
-  }
-  return d;
 }
 
 vector<pair<int,int>> reg_heap::Token::delta_result() const
@@ -1415,7 +1407,7 @@ void reg_heap::unshare_regs(int t)
   {
     int r = delta_result[i].first;
 
-    int result = result_index_for_reg(r);
+//    int result = result_index_for_reg(r);
 
     if (not has_result(r)) continue;
 
@@ -1976,7 +1968,7 @@ void reg_heap::check_back_edges_cleared_for_result(int rc)
   assert(null(results.access_unused(rc).call_edge.second));
 }
 
-void reg_heap::clear_back_edges_for_reg(int r)
+void reg_heap::clear_back_edges_for_reg(int /*r*/)
 {
 }
 
@@ -2041,9 +2033,9 @@ void reg_heap::release_tip_token(int t)
 
   // 1. Clear flags of results in the root token before destroying the root token!
   if (is_root_token(t))
-    for(int r: tokens[root_token].vm_result.modified())
+    for(auto p: tokens[root_token].vm_result.delta())
     {
-      int rc = tokens[root_token].vm_result[r];
+      int rc = p.second;
       if (rc > 0 and results[rc].flags.test(0))
 	dec_probability(rc);
     }

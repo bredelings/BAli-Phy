@@ -111,14 +111,14 @@ class mapping
     address(int i1):value(i1) {}
   };
 
-  std::vector<int> modified_;
+  std::vector<std::pair<int,int>> delta_;
   std::vector<address> values;
 public:
   mapping& operator=(mapping&) = default;
 
   mapping& operator=(mapping&& vm) noexcept
   {
-    modified_ = std::move(vm.modified_);
+    delta_ = std::move(vm.delta_);
     values = std::move(vm.values);
     return *this;
   }
@@ -133,15 +133,14 @@ public:
   void resize(int s);
   int size() const;
   bool empty() const;
-  const std::vector<int>& modified() const {return modified_;}
 
-  std::vector<std::pair<int,int>> delta() const;
+  const std::vector<std::pair<int,int>>& delta() const {return delta_;}
   
   mapping() {}
   mapping(int s) {resize(s);}
   mapping(const mapping&) = default;
   mapping(mapping&& vm) noexcept
-  :modified_(std::move(vm.modified_)),
+  :delta_(std::move(vm.delta_)),
     values(std::move(vm.values))
   { }
 };
