@@ -487,8 +487,8 @@ public:
   int add_shared_step(int t, int r);
   int add_shared_result(int t, int r, int step);
 
-  void clear_step(int t, int r);
-  void clear_result(int t, int r);
+  void clear_step(int r);
+  void clear_result(int r);
 
   void clear_back_edges_for_reg(int r);
   void clear_back_edges_for_step(int s);

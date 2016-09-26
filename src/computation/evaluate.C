@@ -273,11 +273,11 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
 
       access(R).type = reg::type_t::index_var;
 
-      clear_result(root_token,R);
+      clear_result(R);
       int s = step_index_for_reg(R);
       if (s > 0)
 	clear_back_edges_for_step(s);
-      clear_step(root_token,R);
+      clear_step(R);
 
       int index = access(R).C.exp.as_index_var();
 
@@ -293,11 +293,11 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
     else if (is_WHNF(access(R).C.exp))
     {
       access(R).type = reg::type_t::constant;
-      clear_result(root_token,R);
+      clear_result(R);
       int s = step_index_for_reg(R);
       if (s > 0)
 	clear_back_edges_for_step(s);
-      clear_step(root_token,R);
+      clear_step(R);
       return {R,R};
     }
 
@@ -453,11 +453,11 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
 
       access(R).type = reg::type_t::index_var;
 
-      clear_result(root_token,R);
+      clear_result(R);
       int s = step_index_for_reg(R);
       if (s > 0)
 	clear_back_edges_for_step(s);
-      clear_step(root_token,R);
+      clear_step(R);
 
       int index = access(R).C.exp.as_index_var();
 
@@ -473,11 +473,11 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
     else if (is_WHNF(access(R).C.exp))
     {
       access(R).type = reg::type_t::constant;
-      clear_result(root_token,R);
+      clear_result(R);
       int s = step_index_for_reg(R);
       if (s > 0)
 	clear_back_edges_for_step(s);
-      clear_step(root_token,R);
+      clear_step(R);
       return {R,R};
     }
 

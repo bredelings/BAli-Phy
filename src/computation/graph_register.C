@@ -1034,7 +1034,7 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     // Set the call
     set_C(R2, std::move( value ) );
   }
-  clear_result(t,R);
+  tokens[t].vm_result.set_value(R,-1);
 
 #if DEBUG_MACHINE >= 2
   check_used_regs();
@@ -1873,10 +1873,10 @@ void reg_heap::clear_back_edges_for_result(int rc)
   }
 }
 
-void reg_heap::clear_step(int t, int r)
+void reg_heap::clear_step(int r)
 {
-  assert(not has_result_(t,r));
-  int s = remove_shared_step(t,r);
+  assert(not has_result(r));
+  int s = remove_shared_step(root_token,r);
   
   if (s > 0)
   {
@@ -1887,9 +1887,9 @@ void reg_heap::clear_step(int t, int r)
   }
 }
 
-void reg_heap::clear_result(int t, int r)
+void reg_heap::clear_result(int r)
 {
-  int rc = remove_shared_result(t,r);
+  int rc = remove_shared_result(root_token,r);
   
   if (rc > 0)
   {
