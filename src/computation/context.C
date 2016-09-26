@@ -64,18 +64,6 @@ void context::rename_parameter(int i, const string& new_name)
   parameters()[i].first = new_name;
 }
 
-bool context::reg_is_fully_up_to_date(int R) const
-{
-  return memory()->reg_is_fully_up_to_date_in_context(R, context_index);
-}
-
-bool context::compute_expression_is_up_to_date(int index) const
-{
-  int H = heads()[index];
-
-  return reg_is_fully_up_to_date(H);
-}
-
 /// Return the value of a particular index, computing it if necessary
 const closure& context::lazy_evaluate(int index) const
 {

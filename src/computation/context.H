@@ -49,9 +49,6 @@ private:
   /// Find the modifiable that parameter_reg points to.
   int find_parameter_modifiable_reg(int i) const;
 
-  /// Check if a compute expression is computed.
-  bool reg_is_fully_up_to_date(int r) const;
-
   closure preprocess(const closure& C) const;
 
   Program& get_Program();
@@ -74,9 +71,6 @@ public:
   context* clone() const {return new context(*this);}
 
   bool parameter_is_modifiable(int p) const;
-
-  /// Check if a compute expression is computed.
-  bool compute_expression_is_up_to_date(int i) const;
 
   /// Return the value of a particular index, computing it if necessary
   const closure& lazy_evaluate(int index) const;

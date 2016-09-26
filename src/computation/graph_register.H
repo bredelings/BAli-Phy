@@ -380,10 +380,6 @@ public:
 
     std::vector<int>& triggers_for_context(int c);
 
-    bool reg_is_fully_up_to_date_in_context(int c, int r);
-
-    bool reg_is_fully_up_to_date(int r) const;
-
     const expression_ref& get_parameter_value_in_context(int R, int c);
 
     const expression_ref& get_reg_value_in_context(int& R, int c);

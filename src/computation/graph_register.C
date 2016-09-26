@@ -1980,16 +1980,6 @@ int reg_heap::switch_to_child_token(int c)
     return t2;
 }
 
-int interchange(int x, int t1, int t2)
-{
-    if (x == t1)
-	return t2;
-    else if (x == t2)
-	return t1;
-    else
-	return x;
-}
-
 int reg_heap::get_n_contexts() const
 {
     return token_for_context_.size();
@@ -2084,60 +2074,6 @@ std::vector<int>& reg_heap::triggers_for_context(int c)
 {
     reroot_at_context(c);
     return triggers();
-}
-
-bool reg_heap::reg_is_fully_up_to_date_in_context(int R, int c)
-{
-    reroot_at_context(c);
-    return reg_is_fully_up_to_date(R);
-}
-
-bool reg_heap::reg_is_fully_up_to_date(int R) const
-{
-    // 1. Handle index_var nodes!
-    int type = access(R).C.exp.head().type();
-    if (type == index_var_type)
-    {
-	assert( not reg_is_changeable(R) );
-
-	assert( not reg_has_value(R) );
-
-	assert( not reg_has_call(R) );
-
-	int index = access(R).C.exp.as_index_var();
-
-	int R2 = access(R).C.lookup_in_env( index );
-
-	return reg_is_fully_up_to_date(R2);
-    }
-
-    // 2. If we've never been evaluated OR we're not constant and have no value, then return false;
-    if (not reg_has_value(R)) return false;
-
-    const closure& value = access_value_for_reg(R);
-
-    // NOTE! value cannot be an index_var.
-    const expression_ref& E = value.exp;
-
-    // Therefore, if the value is atomic, then R is up-to-date.
-    if (not E.size()) return true;
-
-    // If the value is a lambda function, then R is up-to-date.
-    if (E.head().type() != constructor_type) return true;
-
-    // If we get here, this had better be a constructor!
-    assert(E.head().is_a<constructor>());
-
-    // Check each component that is a index_var to see if its out of date.
-    for(int i=0;i<E.size();i++)
-    {
-	int R2 = value.lookup_in_env( E.sub()[i].as_index_var() );
-    
-	if (not reg_is_fully_up_to_date(R2)) return false;
-    }
-
-    // All the components must be fully up-to-date, so R is fully up-to-date.
-    return true;
 }
 
 const expression_ref& reg_heap::get_parameter_value_in_context(int p, int c)
