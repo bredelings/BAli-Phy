@@ -1766,34 +1766,6 @@ void reg_heap::check_used_regs() const
 	    check_used_regs_in_token(t);
 }
 
-// This routine should only be called by other routines.  It is not safe to call directly.
-int reg_heap::remove_shared_step(int t, int r)
-{
-  if (is_root_token(t))
-  {
-    if (tokens[t].vm_step[r])
-      return tokens[t].vm_step.erase_value(r);
-    else
-      return 0;
-  }
-  else
-    return tokens[t].vm_step.set_value(r,-1);
-}
-
-// This routine should only be called by other routines.  It is not safe to call directly.
-int reg_heap::remove_shared_result(int t, int r)
-{
-  if (is_root_token(t))
-  {
-    if (tokens[t].vm_result[r])
-      return tokens[t].vm_result.erase_value(r);
-    else
-      return 0;
-  }
-  else
-    return tokens[t].vm_result.set_value(r,-1);
-}
-
 /// Add a shared step at (t,r) -- assuming there isn't one already
 int reg_heap::add_shared_step(int t, int r)
 {
@@ -1876,7 +1848,9 @@ void reg_heap::clear_back_edges_for_result(int rc)
 void reg_heap::clear_step(int r)
 {
   assert(not has_result(r));
-  int s = remove_shared_step(root_token,r);
+  int s = 0;
+  if (tokens[root_token].vm_step[r])
+      s = tokens[root_token].vm_step.erase_value(r);
   
   if (s > 0)
   {
@@ -1889,15 +1863,17 @@ void reg_heap::clear_step(int r)
 
 void reg_heap::clear_result(int r)
 {
-  int rc = remove_shared_result(root_token,r);
-  
-  if (rc > 0)
-  {
+    int rc = 0;
+    if (tokens[root_token].vm_result[r])
+	rc = tokens[root_token].vm_result.erase_value(r);
+
+    if (rc > 0)
+    {
 #ifndef NDEBUG
-    check_back_edges_cleared_for_result(rc);
+	check_back_edges_cleared_for_result(rc);
 #endif
-    results.reclaim_used(rc);
-  }
+	results.reclaim_used(rc);
+    }
 }
 
 void reg_heap::release_tip_token(int t)

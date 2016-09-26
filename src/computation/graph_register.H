@@ -481,7 +481,6 @@ public:
 
   const closure& access_value_for_reg(int R1) const;
 
-  int remove_shared_step(int t, int r);
   int remove_shared_result(int t, int r);
 
   int add_shared_step(int t, int r);
