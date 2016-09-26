@@ -721,15 +721,6 @@ void reg_heap::set_used_input(int s1, int R2)
     assert(result_is_used_by(s1,rc2));
 }
 
-int count(const std::vector<int>& v, int I)
-{
-    int c = 0;
-    for(int i: v)
-	if (i == I)
-	    c++;
-    return c;
-}
-
 void reg_heap::set_call(int R1, int R2)
 {
     assert(reg_is_changeable(R1));
