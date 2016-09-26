@@ -985,14 +985,6 @@ void reg_heap::set_shared_value(int r, int v)
   set_call(r, v);
 }
 
-void swap_value(mapping& vm1, mapping& vm2, int r)
-{
-  int v1 = vm1[r];
-  int v2 = vm2[r];
-  vm1.replace_value(r,v2);
-  vm2.replace_value(r,v1);
-}
-
 void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
 {
     for(auto p: vm2.delta())
@@ -1327,14 +1319,6 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
 
 void reg_heap::reclaim_used(int r)
 {
-#ifndef NDEBUG  
-  for(int t=0;t<tokens.size();t++)
-  {
-    assert(not tokens[t].vm_result[r]);
-    assert(not tokens[t].vm_step[r]);
-  }
-#endif
-
   pool<reg>::reclaim_used(r);
 }
 
@@ -1440,8 +1424,9 @@ void reg_heap::expand_memory(int s)
   int old_size = size();
   for(int t=0;t<tokens.size();t++)
   {
-    assert(tokens[t].vm_step.size() == old_size);
-    assert(tokens[t].vm_result.size() == old_size);
+      assert(prog_steps.size() == old_size);
+      assert(prog_results.size() == old_size);
+      assert(prog_temp.size() == old_size);
   }
 
   base_pool_t::expand_memory(s);
@@ -1516,14 +1501,6 @@ int reg_heap::get_unused_token()
     }
     total_tokens = tokens.size();
   }
-
-#ifndef NDEBUG
-  for(int i=0;i<tokens.size();i++)
-  {
-    assert(tokens[i].vm_step.size() == size());
-    assert(tokens[i].vm_result.size() == size());
-  }
-#endif
 
   int t = unused_tokens.back();
   unused_tokens.pop_back();
@@ -1881,17 +1858,9 @@ void reg_heap::release_tip_token(int t)
   // 4. Set the token to unused
   tokens[t].used = false;
 
-  assert(tokens[t].vm_step.size() == size());
-  assert(tokens[t].vm_result.size() == size());
-
   // 5. Make sure the token is empty
-#ifdef DEBUG_MACHINE
-  for(int i=0;i<size();i++)
-  {
-    assert(not tokens[t].vm_step[i]);
-    assert(not tokens[t].vm_result[i]);
-  }
-#endif
+  assert(tokens[t].vm_step.empty());
+  assert(tokens[t].vm_result.empty());
 }
 
 void reg_heap::capture_parent_token(int t2)
