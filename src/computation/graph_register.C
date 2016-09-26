@@ -2337,7 +2337,10 @@ reg_heap::reg_heap(const module_loader& L)
    steps(1),
    results(1),
    P(new Program),
-   loader(L)
+   loader(L),
+   prog_steps(1),
+   prog_results(1),
+   prog_temp(1)
 { 
   //  results.collect_garbage = [this](){collect_garbage();};
   steps.collect_garbage = [](){};
