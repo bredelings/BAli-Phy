@@ -1160,9 +1160,13 @@ void reg_heap::unshare_regs(int t)
 
     total_invalidate++;
   
+    auto& vm_result = tokens[t].vm_result;
+    auto& vm_step = tokens[t].vm_step;
+    auto& regs_to_re_evaluate = tokens[t].regs_to_re_evaluate;
+
     // find all regs in t that are not shared from the root
-    auto delta_result = tokens[t].delta_result();
-    auto delta_step = tokens[t].delta_step();
+    const auto& delta_result = vm_result.delta();
+    const auto& delta_step = vm_step.delta();
   
     int n_delta_result0 = delta_result.size();
     int n_delta_step0 = delta_step.size();
@@ -1179,10 +1183,6 @@ void reg_heap::unshare_regs(int t)
 	prog_temp[r] |= 2;
 	assert(prog_temp[r] == 3);
     }
-
-    auto& vm_result = tokens[t].vm_result;
-    auto& vm_step = tokens[t].vm_step;
-    auto& regs_to_re_evaluate = tokens[t].regs_to_re_evaluate;
 
     for(int i=0;i<delta_result.size();i++)
     {
@@ -1203,7 +1203,7 @@ void reg_heap::unshare_regs(int t)
 	    if (prog_temp[r2] != 0) continue;
 
 	    prog_temp[r2] = 1;
-	    delta_result.emplace_back(r2,-1);
+	    vm_result.add_value(r2,-1);
 	}
 
 	for(int s2: Result.used_by)
@@ -1215,10 +1215,9 @@ void reg_heap::unshare_regs(int t)
 	    if (prog_temp[r2] == 3) continue;
 
 	    if (prog_temp[r2] == 0)
-		delta_result.emplace_back(r2,-1);
+		vm_result.add_value(r2,-1);
 
 	    prog_temp[r2] = 3;
-	    delta_step.emplace_back(r2,-1);
 	    vm_step.add_value(r2,-1);
 	}
     }
@@ -1226,7 +1225,6 @@ void reg_heap::unshare_regs(int t)
     for(int i=n_delta_result0;i<delta_result.size();i++)
     {
 	int r = delta_result[i].first;
-	vm_result.add_value(r,-1);
 	if (access(r).re_evaluate)
 	    regs_to_re_evaluate.push_back(r);
     }
