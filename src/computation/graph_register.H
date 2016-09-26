@@ -128,6 +128,7 @@ public:
   void add_value(int r, int v);
   int replace_value(int r, int v);
   int erase_value(int r);
+  int erase_value_at(int index);
   int set_value(int r, int v);
   void clear();
   void resize(int s);

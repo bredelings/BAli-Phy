@@ -288,7 +288,7 @@ void reg_heap::trace(vector<int>& remap)
 template <typename Obj>
 void unmap_unused(mapping& vm, pool<Obj>& Objs, pool<reg>& regs)
 {
-  auto delta = vm.delta();
+  auto& delta = vm.delta();
   for(int i=0; i < delta.size();)
   {
     int reg = delta[i].first;
@@ -296,20 +296,10 @@ void unmap_unused(mapping& vm, pool<Obj>& Objs, pool<reg>& regs)
     assert(obj != 0);
     // if there's a step mapped that is going to be destroyed, then remove the mapping.
     if (obj > 0 and not Objs.is_marked(obj))
-    {
-      if (i < delta.size()-1)
-	delta[i] = delta.back();
-      delta.pop_back();
-      vm.erase_value(reg);
-    }
+      vm.erase_value_at(i);
     // if the reg is going to be destroy, and the step is unshared, remove the unsharing mark.
     else if (obj < 0 and not regs.is_marked(reg))
-    {
-      if (i < delta.size()-1)
-	delta[i] = delta.back();
-      delta.pop_back();
-      vm.erase_value(reg);
-    }
+      vm.erase_value_at(i);
     else
     {
       // if there's a step mapped and its not going to be destroyed, then we should know that the reg is used.

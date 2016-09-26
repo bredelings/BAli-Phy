@@ -354,16 +354,20 @@ void mapping::add_value(int r, int v)
 
 int mapping::erase_value(int r)
 {
-  int v = values[r].value;
+    assert(values[r].value);
+    erase_value_at(values[r].index);
+}
+
+int mapping::erase_value_at(int index)
+{
+  int r = delta_[index].first;
+  int v = delta_[index].second;
 
   // The reg should be mapped.
   assert(v);
 
   // Check correspondence between delta_ and values
   assert(delta_[values[r].index].first == r);
-
-  // Lookup the position in delta_ where we mention r
-  int index = values[r].index;
 
   auto back = delta_.back();
   int r2 = back.first;
@@ -404,7 +408,7 @@ int mapping::set_value(int r, int v)
     }
   }
   else if (has_value(r))
-    return erase_value(r);
+    return erase_value_at(values[r].index);
   else
   {
     return 0;
@@ -1005,7 +1009,7 @@ void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
 	if (not prog_temp[r])
 	{
 	    vm2.add_value(r,v);
-	    vm1.erase_value(r);
+	    vm1.erase_value_at(i);
 	}
 	else
 	    i++;
