@@ -816,8 +816,8 @@ void reg_heap::set_call(int R1, int R2)
 void reg_heap::destroy_all_computations_in_token(int t)
 {
   // Remove use back-edges
-  auto delta_step = tokens[t].delta_step();
-  auto delta_result = tokens[t].delta_result();
+  auto& delta_step = tokens[t].delta_step();
+  auto& delta_result = tokens[t].delta_result();
 
   for(auto p: delta_step)
   {
@@ -1115,8 +1115,8 @@ void reg_heap::reroot_at(int t)
   unshare_regs(t);
 
   // 3. Change the relative mappings
-  total_steps_pivoted += tokens[t].vm_step.delta().size();
-  total_results_pivoted += tokens[t].vm_result.delta().size();
+  total_steps_pivoted += tokens[t].delta_step().size();
+  total_results_pivoted += tokens[t].delta_result().size();
   pivot_mapping(tokens[parent].vm_step, tokens[t].vm_step);
   pivot_mapping(tokens[parent].vm_result, tokens[t].vm_result);
 
@@ -1133,7 +1133,7 @@ void reg_heap::reroot_at(int t)
 
   // 5. Remove probabilities for invalidated regs from the current probability
 
-  for(auto p: tokens[parent].vm_result.delta())
+  for(auto p: tokens[parent].delta_result())
   {
     int rc = p.second;  
     if (rc > 0 and results[rc].flags.test(0))
@@ -1186,12 +1186,12 @@ bool reg_heap::is_dirty(int t) const
   return false;
 }
 
-vector<pair<int,int>> reg_heap::Token::delta_result() const
+const vector<pair<int,int>>& reg_heap::Token::delta_result() const
 {
   return vm_result.delta();
 }
 
-vector<pair<int,int>> reg_heap::Token::delta_step() const
+const vector<pair<int,int>>& reg_heap::Token::delta_step() const
 {
   return vm_step.delta();
 }
@@ -1598,7 +1598,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 {
     assert(token_is_used(t));
 
-    for(auto p: tokens[t].vm_result.delta())
+    for(auto p: tokens[t].delta_result())
     {
 	int r = p.first;
 	assert((prog_temp[r]&1) == 0);
@@ -1607,7 +1607,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 	// No results for constant regs
 	assert(access(r).type != reg::type_t::constant);
     }
-    for(auto p: tokens[t].vm_step.delta())
+    for(auto p: tokens[t].delta_step())
     {
 	int r = p.first;
 	assert((prog_temp[r]&2) == 0);
@@ -1621,7 +1621,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 
     // FIXME - nonlocal. The same result/step are not set in multiple places!
 
-    for(auto p: tokens[t].vm_step.delta())
+    for(auto p: tokens[t].delta_step())
     {
 	int r_s = p.second;
 	if (r_s <= 0) continue;
@@ -1646,7 +1646,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 	}
     }
 
-    for(auto p: tokens[t].vm_result.delta())
+    for(auto p: tokens[t].delta_result())
     {
 	int r = p.first;
 	int r_r = p.second;
@@ -1686,11 +1686,11 @@ void reg_heap::check_used_regs_in_token(int t) const
 	    assert(reg_has_value(call));
     }
 
-    for(auto p: tokens[t].vm_result.delta())
+    for(auto p: tokens[t].delta_result())
 	prog_temp[p.first] = 0;
 
-    for(auto p: tokens[t].vm_result.delta())
-	prog_temp[p.second] = 0;
+    for(auto p: tokens[t].delta_step())
+	prog_temp[p.first] = 0;
 
 }
 
@@ -1842,7 +1842,7 @@ void reg_heap::release_tip_token(int t)
 
   // 1. Clear flags of results in the root token before destroying the root token!
   if (is_root_token(t))
-    for(auto p: tokens[root_token].vm_result.delta())
+    for(auto p: tokens[root_token].delta_result())
     {
       int rc = p.second;
       if (rc > 0 and results[rc].flags.test(0))
