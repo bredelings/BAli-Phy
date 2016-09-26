@@ -963,53 +963,6 @@ void reg_heap::make_reg_changeable(int r)
     access(r).type = reg::type_t::changeable;
 }
 
-/*
- * We would like to know if a reg E[i] ---t--> C[i] that is unreachable in t could
- * be reachable in a child context of t.
- *
- * Let's assume that new regs are only added into contexts where they are reachable
- * at the time.
- * 
- * Then
- * 1. If the reg was reachable when t was duplicated, then t will still be reachable in t.
- * 2. If the reg was unreachable when t was duplicated, then t will be unreach in 
- t & descendants.
- * 3. If the reg was 
- */
-
-int reg_heap::get_unused_token()
-{
-    if (unused_tokens.empty())
-    {
-	unused_tokens.push_back(get_n_tokens());
-	tokens.push_back(Token());
-	total_tokens = tokens.size();
-    }
-
-    int t = unused_tokens.back();
-    unused_tokens.pop_back();
-
-    assert(not token_is_used(t));
-
-    tokens[t].used = true;
-
-    if (root_token == -1)
-    {
-	assert(tokens.size() - unused_tokens.size() == 1);
-	root_token = t;
-    }
-    else
-	assert(tokens.size() - unused_tokens.size() > 1);
-
-    assert(tokens[t].parent == -1);
-    assert(tokens[t].children.empty());
-    assert(tokens[t].vm_step.empty());
-    assert(tokens[t].vm_result.empty());
-    assert(not tokens[t].is_referenced());
-
-    return t;
-}
-
 bool reg_heap::result_is_called_by(int rc1, int rc2) const
 {
     for(int rc: results[rc2].called_by)
