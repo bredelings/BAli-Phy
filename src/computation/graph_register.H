@@ -451,20 +451,6 @@ public:
   std::vector<int> find_all_regs_in_context_no_check(int, bool) const;
 
   /*----- Virtual memory ------*/
-  int step_index_for_reg_(int t, int r) const;
-  int result_index_for_reg_(int t, int r) const;
-  const Step& step_for_reg_(int t, int r) const;
-        Step& step_for_reg_(int t, int r);
-  const Result& result_for_reg_(int t, int r) const;
-        Result& result_for_reg_(int t, int r);
-  bool has_step_(int t, int r) const;
-  bool has_result_(int t, int r) const;
-  bool reg_has_value_(int t, int r) const;
-  bool reg_has_result_value_(int t, int r) const;
-  int result_value_for_reg_(int t, int r) const;
-  bool reg_has_call_(int t, int r) const;
-  int call_for_reg_(int t, int r) const;
-
   int step_index_for_reg(int r) const;
   int result_index_for_reg(int r) const;
   const Step& step_for_reg(int r) const ;

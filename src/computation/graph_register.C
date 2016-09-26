@@ -700,29 +700,6 @@ int reg_heap::call_for_reg(int r) const
   return step_for_reg(r).call;
 }
 
-bool reg_heap::reg_has_value_(int t, int r) const
-{
-  if (access(r).type == reg::type_t::constant)
-    return true;
-  else
-    return reg_has_result_value_(t,r);
-}
-
-bool reg_heap::reg_has_result_value_(int t, int r) const
-{
-  return has_result_(t,r) and result_value_for_reg_(t,r);
-}
-
-bool reg_heap::reg_has_call_(int t, int r) const
-{
-  return has_result_(t,r) and call_for_reg_(t,r);
-}
-
-int reg_heap::call_for_reg_(int t, int r) const
-{
-  return step_for_reg_(t,r).call;
-}
-
 bool reg_heap::has_step(int r) const
 {
   return step_index_for_reg(r)>0;
@@ -731,50 +708,6 @@ bool reg_heap::has_step(int r) const
 bool reg_heap::has_result(int r) const
 {
   return result_index_for_reg(r)>0;
-}
-
-bool reg_heap::has_step_(int t, int r) const
-{
-  return step_index_for_reg_(t,r)>0;
-}
-
-bool reg_heap::has_result_(int t, int r) const
-{
-  return result_index_for_reg_(t,r)>0;
-}
-
-const Step& reg_heap::step_for_reg_(int t, int r) const 
-{ 
-  int rc = step_index_for_reg_(t,r);
-  return steps.access_unused(rc);
-}
-
-Step& reg_heap::step_for_reg_(int t, int r)
-{ 
-  int rc = step_index_for_reg_(t,r);
-  return steps.access_unused(rc);
-}
-
-const Result& reg_heap::result_for_reg_(int t, int r) const 
-{ 
-  int rc = result_index_for_reg_(t,r);
-  return results.access_unused(rc);
-}
-
-Result& reg_heap::result_for_reg_(int t, int r)
-{ 
-  int rc = result_index_for_reg_(t,r);
-  return results.access_unused(rc);
-}
-
-int reg_heap::step_index_for_reg_(int t, int r) const 
-{
-  return tokens[t].vm_step[r];
-}
-
-int reg_heap::result_index_for_reg_(int t, int r) const 
-{
-  return tokens[t].vm_result[r];
 }
 
 int reg_heap::value_for_reg(int r) const 
@@ -792,11 +725,6 @@ int reg_heap::value_for_reg(int r) const
 int reg_heap::result_value_for_reg(int r) const 
 {
   return result_for_reg(r).value;
-}
-
-int reg_heap::result_value_for_reg_(int t, int r) const 
-{
-  return result_for_reg_(t,r).value;
 }
 
 void reg_heap::set_result_value_for_reg(int r1)
