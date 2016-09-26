@@ -497,9 +497,6 @@ public:
   void check_back_edges_cleared_for_step(int rc);
   void check_back_edges_cleared_for_result(int rc);
 
-  bool step_is_referenced(int,int) const;
-  bool result_is_referenced(int,int) const;
-
   int value_for_reg(int r) const;
 
   void set_result_value_for_reg(int r1);

@@ -1643,30 +1643,6 @@ bool reg_heap::reg_is_used_by(int r1, int r2) const
   return result_is_used_by(s1,rc2);
 }
 
-bool reg_heap::step_is_referenced(int t,int s) const
-{
-  assert(s);
-  int r = steps[s].source_reg;
-  if (step_index_for_reg_(t,r) == s) return true;
-  int p = parent_token(t);
-  if (p != -1)
-    return step_is_referenced(p, s);
-  else
-    return false;
-}
-
-bool reg_heap::result_is_referenced(int t,int rc) const
-{
-  assert(rc);
-  int r = results[rc].source_reg;
-  if (result_index_for_reg_(t,r) == rc) return true;
-  int p = parent_token(t);
-  if (p != -1)
-    return result_is_referenced(p, rc);
-  else
-    return false;
-}
-
 void reg_heap::check_tokens() const
 {
 #ifndef NDEBUG
@@ -1735,7 +1711,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 
 	    // The used result should be referenced somewhere more root-ward
 	    // so that this result can be invalidated, and the used result won't be GC-ed.
-	    assert(is_modifiable(access(R2).C.exp) or result_is_referenced(t,rc2));
+            // FIXME - nonlocal.  assert(is_modifiable(access(R2).C.exp) or result_is_referenced(t,rc2));
       
 	    // Used results should have values
 	    assert(results[rc2].value);
