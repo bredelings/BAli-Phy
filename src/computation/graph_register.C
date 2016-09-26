@@ -1206,7 +1206,6 @@ void reg_heap::reroot_at(int t)
 
   for(auto p: tokens[parent].vm_result.delta())
   {
-    int r = p.first;
     int rc = p.second;  
     if (rc > 0 and results[rc].flags.test(0))
       dec_probability(rc);
@@ -1673,6 +1672,7 @@ void reg_heap::check_used_regs_in_token(int t) const
     for(auto p: tokens[t].vm_result.delta())
     {
 	int r = p.first;
+	assert((prog_temp[r]&1) == 0);
 	prog_temp[r] |= 1;
 	if (is_root_token(t)) assert(p.second != -1);
 	// No results for constant regs
@@ -1681,6 +1681,7 @@ void reg_heap::check_used_regs_in_token(int t) const
     for(auto p: tokens[t].vm_step.delta())
     {
 	int r = p.first;
+	assert((prog_temp[r]&2) == 0);
 	prog_temp[r] |= 2;
 	if (is_root_token(t)) assert(p.second != -1);
 	// If the step is set, the result better be set as well.
@@ -1693,11 +1694,9 @@ void reg_heap::check_used_regs_in_token(int t) const
 
     for(auto p: tokens[t].vm_step.delta())
     {
-	int r = p.first;
 	int r_s = p.second;
 	if (r_s <= 0) continue;
 	
-	int call = steps[r_s].call;
 	for(const auto& rcp2: steps[r_s].used_inputs)
 	{
 	    int rc2 = rcp2.first;
@@ -1757,13 +1756,26 @@ void reg_heap::check_used_regs_in_token(int t) const
 	if (value)
 	    assert(reg_has_value(call));
     }
+
+    for(auto p: tokens[t].vm_result.delta())
+	prog_temp[p.first] = 0;
+
+    for(auto p: tokens[t].vm_result.delta())
+	prog_temp[p.second] = 0;
+
 }
 
 void reg_heap::check_used_regs() const
 {
+    for(auto c: prog_temp)
+	assert(not c);
+
     for(int t=0; t< tokens.size(); t++)
 	if (token_is_used(t))
 	    check_used_regs_in_token(t);
+
+    for(auto c: prog_temp)
+	assert(not c);
 }
 
 /// Add a shared step at (t,r) -- assuming there isn't one already
