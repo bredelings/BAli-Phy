@@ -1690,108 +1690,104 @@ void reg_heap::check_tokens() const
 #endif
 }
 
-void reg_heap::check_used_reg(int r) const
+void reg_heap::check_used_regs_in_token(int t) const
 {
-  for(int t=0;t<get_n_tokens();t++)
-  {
-    if (not token_is_used(t)) continue;
+    assert(token_is_used(t));
 
-    if (is_root_token(t))
+    for(auto p: tokens[t].vm_result.delta())
     {
-      assert(tokens[t].vm_step[r] != -1);
-      assert(tokens[t].vm_result[r] != -1);
+	int r = p.first;
+	prog_temp[r] |= 1;
+	if (is_root_token(t)) assert(p.second != -1);
+	// No results for constant regs
+	assert(access(r).type != reg::type_t::constant);
+    }
+    for(auto p: tokens[t].vm_step.delta())
+    {
+	int r = p.first;
+	prog_temp[r] |= 2;
+	if (is_root_token(t)) assert(p.second != -1);
+	// If the step is set, the result better be set as well.
+	assert(prog_temp[r] == 3);
+	// No steps for constant regs
+	assert(access(r).type != reg::type_t::constant);
     }
 
-    if (not is_root_token(t))
+    // FIXME - nonlocal. The same result/step are not set in multiple places!
+
+    for(auto p: tokens[t].vm_step.delta())
     {
-      int p = parent_token(t);
+	int r = p.first;
+	int r_s = p.second;
+	if (r_s <= 0) continue;
+	
+	int call = steps[r_s].call;
+	for(const auto& rcp2: steps[r_s].used_inputs)
+	{
+	    int rc2 = rcp2.first;
 
-      // If there are + values in adjacent contexts, they should not the be same value
-      if (tokens[t].vm_step[r] > 0 and tokens[p].vm_step[r] > 0)
-	assert(tokens[t].vm_step[r] != tokens[p].vm_step[r]);
+	    // Used regs should have back-references to R
+	    assert( result_is_used_by(r_s, rc2) );
 
-      if (tokens[t].vm_result[r] > 0 and tokens[p].vm_result[r] > 0)
-	assert(tokens[t].vm_result[r] != tokens[p].vm_result[r]);
+	    // Used computations should be mapped computation for the current token, if we are at the root
+	    int R2 = results[rc2].source_reg;
+	    assert(reg_is_changeable(R2));
 
-      // If we have a new step in a token, we should not share the result from out parent.
-      // This would hold for all tokens, except that in the root token "0" means "-" and not "="
-      if (tokens[t].vm_step[r] > 0)
-	assert(tokens[t].vm_result[r] != 0);
-    }
-
-    if (access(r).type == reg::type_t::constant)
-      assert(not has_result_(t,r));
-
-    // Any checks for result, but no step?
-
-    // Below this we have a step.
-    if (not has_step_(t, r)) continue;
-    int call = call_for_reg_(t,r);
-    int r_s = step_index_for_reg_(t,r);
-    int r_r = result_index_for_reg_(t,r);
-
-    // If we have a new step, we cannot share a result.  (In the root token 0 means 'unshare', not 'share')
-    assert(is_root_token(t) or r_r != 0);
-
-    for(const auto& rcp2: steps[r_s].used_inputs)
-    {
-      int rc2 = rcp2.first;
-
-      // Used regs should have back-references to R
-      assert( result_is_used_by(r_s, rc2) );
-
-      // Used computations should be mapped computation for the current token, if we are at the root
-      int R2 = results[rc2].source_reg;
-      assert(reg_is_changeable(R2));
-
-      // The used result should be referenced somewhere more root-ward
-      // so that this result can be invalidated, and the used result won't be GC-ed.
-      assert(is_modifiable(access(R2).C.exp) or result_is_referenced(t,rc2));
+	    // The used result should be referenced somewhere more root-ward
+	    // so that this result can be invalidated, and the used result won't be GC-ed.
+	    assert(is_modifiable(access(R2).C.exp) or result_is_referenced(t,rc2));
       
-      // Used results should have values
-      assert(results[rc2].value);
+	    // Used results should have values
+	    assert(results[rc2].value);
+	}
     }
 
-
-    // Below this we have a result.
-    if (r_r <= 0) continue;
-
-    assert(results[r_r].source_step == r_s);
-    int value = result_value_for_reg_(t,r);
-
-    if (results[r_r].flags.test(0))
-      assert(is_root_token(t));
-
-    if (value)
-      assert(call);
-
-    if (call and value == call)
-      assert(access(call).type == reg::type_t::constant);
-
-    if (call and value and access(call).type == reg::type_t::constant)
-      assert(value == call);
-
-    if (t != root_token) continue;
-
-    // Regs with values should have back-references from their call.
-    if (value and access(call).type != reg::type_t::constant)
+    for(auto p: tokens[t].vm_result.delta())
     {
-      assert( has_result(call) );
-      int rc2 = result_index_for_reg(call);
-      assert( result_is_called_by(r_r, rc2) );
-    }
+	int r = p.first;
+	int r_r = p.second;
+	if (r_r <= 0) continue;
 
-    // If we have a value, then our call should have a value
-    if (value)
-      assert(reg_has_value(call));
-  }
+	int r_s = results[r_r].source_step;
+	int call = steps[r_s].call;
+	
+	assert(steps[r_s].source_reg == r);
+	//FIXME! Check that source_step is in same token, for same reg
+	int value = results[r_r].value;
+
+	if (results[r_r].flags.test(0))
+	    assert(is_root_token(t));
+
+	if (value)
+	    assert(call);
+
+	if (call and value == call)
+	    assert(access(call).type == reg::type_t::constant);
+
+	if (call and value and access(call).type == reg::type_t::constant)
+	    assert(value == call);
+
+	if (t != root_token) continue;
+
+	// Regs with values should have back-references from their call.
+	if (value and access(call).type != reg::type_t::constant)
+	{
+	    assert( has_result(call) );
+	    int rc2 = result_index_for_reg(call);
+	    assert( result_is_called_by(r_r, rc2) );
+	}
+
+	// If we have a value, then our call should have a value
+	if (value)
+	    assert(reg_has_value(call));
+    }
 }
 
 void reg_heap::check_used_regs() const
 {
-  // check_used_regs
-  for(auto r = begin(); r != end(); r++)
-    check_used_reg( r.addr() );
+    for(int t=0; t< tokens.size(); t++)
+	if (token_is_used(t))
+	    check_used_regs_in_token(t);
 }
 
 // This routine should only be called by other routines.  It is not safe to call directly.
@@ -1837,10 +1833,6 @@ int reg_heap::add_shared_step(int t, int r)
   // 3. Link it in to the mapping
   tokens[t].vm_step.set_value(r, s);
 
-#if DEBUG_MACHINE >= 3
-  check_used_reg(r);
-#endif
-
   return s;
 }
 
@@ -1861,10 +1853,6 @@ int reg_heap::add_shared_result(int t, int r, int s)
 
   // 3. Link it in to the mapping
   tokens[t].vm_result.set_value(r, rc);
-
-#if DEBUG_MACHINE >= 3
-  check_used_reg(r);
-#endif
 
   return rc;
 }

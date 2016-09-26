@@ -177,7 +177,7 @@ public:
 
   reg_heap* clone() const {std::abort();}
 
-  void check_used_reg(int) const;
+  void check_used_regs_in_token(int) const;
   void check_used_regs() const;
 
   void collect_garbage();
@@ -326,7 +326,7 @@ private:
 
   std::vector<int> prog_steps;
   std::vector<int> prog_results;
-  std::vector<char> prog_temp;
+  mutable std::vector<char> prog_temp;
   
 public:
   /// Is a particular token unused?

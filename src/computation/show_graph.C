@@ -47,8 +47,7 @@ void reg_heap::find_all_used_regs_in_context(int t, bool keep_identifiers, vecto
   find_all_regs_in_context_no_check(t,scan,unique);
 
 #ifndef NDEBUG
-  for(int R: unique)
-    check_used_reg(R);
+  check_used_regs_in_token(t);
 #endif
 }
 
@@ -114,11 +113,7 @@ void reg_heap::find_all_regs_in_context(int t, bool keep_identifiers, vector<int
   find_all_regs_in_context_no_check(t, keep_identifiers, unique);
 
 #ifdef DEBUG_MACHINE
-  for(int R: unique)
-  {
-    assert(reg_is_owned_by(R,t));
-    check_used_reg(R);
-  }
+  check_used_regs_in_token(t);
 #endif
 }
 
