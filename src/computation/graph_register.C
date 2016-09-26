@@ -104,111 +104,111 @@ int total_results_pivoted = 0;
 
 bool null(const CacheList<int>::iterator& i)
 {
-  return (i == CacheList<int>::iterator());
+    return (i == CacheList<int>::iterator());
 }
 
 template<typename V>
 void truncate(V& v)
 {
-  (&v)->~V();
-  new (&v) V;
+    (&v)->~V();
+    new (&v) V;
 }
 
 expression_ref graph_normalize(const expression_ref& E)
 {
-  if (not E) return E;
+    if (not E) return E;
 
-  // 1. Var
-  // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-  if (not E.size()) return E;
+    // 1. Var
+    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+    if (not E.size()) return E;
   
-  // 2. Lambda
-  if (E.head().is_a<lambda>())
-  {
-    assert(E.size() == 2);
-    object_ptr<expression> V = E.as_expression().clone();
-    V->sub[1] = graph_normalize(E.sub()[1]);
+    // 2. Lambda
+    if (E.head().is_a<lambda>())
+    {
+	assert(E.size() == 2);
+	object_ptr<expression> V = E.as_expression().clone();
+	V->sub[1] = graph_normalize(E.sub()[1]);
 
-    if (V->sub[1].ptr() == E.sub()[1].ptr())
-      return E;
-    else
-      return V;
-  }
+	if (V->sub[1].ptr() == E.sub()[1].ptr())
+	    return E;
+	else
+	    return V;
+    }
 
-  // 6. Case
-  if (E.head().is_a<Case>())
-  {
-    object_ptr<expression> V = E.as_expression().clone();
+    // 6. Case
+    if (E.head().is_a<Case>())
+    {
+	object_ptr<expression> V = E.as_expression().clone();
 
-    // Normalize the object
-    V->sub[0] = graph_normalize(V->sub[0]);
+	// Normalize the object
+	V->sub[0] = graph_normalize(V->sub[0]);
 
-    const int L = (V->sub.size()-1)/2;
-    // Just normalize the bodies
-    for(int i=0;i<L;i++)
-      V->sub[2+2*i] = graph_normalize(V->sub[2+2*i]);
+	const int L = (V->sub.size()-1)/2;
+	// Just normalize the bodies
+	for(int i=0;i<L;i++)
+	    V->sub[2+2*i] = graph_normalize(V->sub[2+2*i]);
     
-    if (is_reglike(V->sub[0]))
-      return object_ptr<const expression>(V);
-    else
-    {
-      int var_index = get_safe_binder_index(E);
-      expression_ref x = dummy(var_index);
-      expression_ref obj = V->sub[0];
-      V->sub[0] = x;
+	if (is_reglike(V->sub[0]))
+	    return object_ptr<const expression>(V);
+	else
+	{
+	    int var_index = get_safe_binder_index(E);
+	    expression_ref x = dummy(var_index);
+	    expression_ref obj = V->sub[0];
+	    V->sub[0] = x;
 
-      return let_expression(x,obj,V);
-    }
-  }
-
-  // 4. Constructor
-  if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
-  {
-    int var_index = get_safe_binder_index(E);
-
-    object_ptr<expression> E2 = E.as_expression().clone();
-
-    // Actually we probably just need x[i] not to be free in E.sub()[i]
-    vector<expression_ref> vars;
-    vector<expression_ref> bodies;
-    for(int i=0;i<E2->size();i++)
-    {
-      E2->sub[i] = graph_normalize(E.sub()[i]);
-
-      if (not is_reglike(E2->sub[i]))
-      {
-	expression_ref var = dummy( var_index++ );
-
-	// 1. Let-bind the argument expression
-       	vars.push_back( var );
-	bodies.push_back( E2->sub[i] );
-
-	// 2. Replace the argument expression with the let var.
-	E2->sub[i] = var;
-      }
+	    return let_expression(x,obj,V);
+	}
     }
 
-    return let_expression(vars, bodies, object_ptr<const expression>(E2));
-  }
+    // 4. Constructor
+    if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    {
+	int var_index = get_safe_binder_index(E);
 
-  // 5. Let 
-  if (E.head().is_a<let_obj>())
-  {
-    object_ptr<expression> V = E.as_expression().clone();
+	object_ptr<expression> E2 = E.as_expression().clone();
 
-    // Normalize the object
-    V->sub[0] = graph_normalize(V->sub[0]);
+	// Actually we probably just need x[i] not to be free in E.sub()[i]
+	vector<expression_ref> vars;
+	vector<expression_ref> bodies;
+	for(int i=0;i<E2->size();i++)
+	{
+	    E2->sub[i] = graph_normalize(E.sub()[i]);
 
-    const int L = (V->sub.size()-1)/2;
+	    if (not is_reglike(E2->sub[i]))
+	    {
+		expression_ref var = dummy( var_index++ );
 
-    // Just normalize the bodies, not the vars
-    for(int i=0;i<L;i++)
-      V->sub[2 + 2*i] = graph_normalize(V->sub[2 + 2*i]);
+		// 1. Let-bind the argument expression
+		vars.push_back( var );
+		bodies.push_back( E2->sub[i] );
 
-    return V;
-  }
+		// 2. Replace the argument expression with the let var.
+		E2->sub[i] = var;
+	    }
+	}
 
-  throw myexception()<<"graph_normalize: I don't recognize expression '"+ E.print() + "'";
+	return let_expression(vars, bodies, object_ptr<const expression>(E2));
+    }
+
+    // 5. Let 
+    if (E.head().is_a<let_obj>())
+    {
+	object_ptr<expression> V = E.as_expression().clone();
+
+	// Normalize the object
+	V->sub[0] = graph_normalize(V->sub[0]);
+
+	const int L = (V->sub.size()-1)/2;
+
+	// Just normalize the bodies, not the vars
+	for(int i=0;i<L;i++)
+	    V->sub[2 + 2*i] = graph_normalize(V->sub[2 + 2*i]);
+
+	return V;
+    }
+
+    throw myexception()<<"graph_normalize: I don't recognize expression '"+ E.print() + "'";
 }
 
 
@@ -219,357 +219,357 @@ expression_ref graph_normalize(const expression_ref& E)
 
 void Step::clear()
 {
-  source_reg = -1;
-  call = 0;
-  truncate(used_inputs);
-  num_created_regs = 0;
+    source_reg = -1;
+    call = 0;
+    truncate(used_inputs);
+    num_created_regs = 0;
 
-  // This should already be cleared.
-  assert(flags.none());
+    // This should already be cleared.
+    assert(flags.none());
 }
 
 void Step::check_cleared()
 {
-  assert(not call);
-  assert(used_inputs.empty());
-  assert(flags.none());
+    assert(not call);
+    assert(used_inputs.empty());
+    assert(flags.none());
 }
 
 Step& Step::operator=(Step&& S) noexcept
 {
-  source_reg = S.source_reg;
-  call = S.call;
-  used_inputs  = std::move( S.used_inputs );
-  num_created_regs  = S.num_created_regs;
-  flags = S.flags;
+    source_reg = S.source_reg;
+    call = S.call;
+    used_inputs  = std::move( S.used_inputs );
+    num_created_regs  = S.num_created_regs;
+    flags = S.flags;
 
-  return *this;
+    return *this;
 }
 
 Step::Step(Step&& S) noexcept
- :source_reg( S.source_reg),
-  call ( S.call ),
-  used_inputs ( std::move(S.used_inputs) ),
-  num_created_regs ( S.num_created_regs ),
-  flags ( S.flags )
+:source_reg( S.source_reg),
+			 call ( S.call ),
+			 used_inputs ( std::move(S.used_inputs) ),
+			 num_created_regs ( S.num_created_regs ),
+			 flags ( S.flags )
 { }
 
 void Result::clear()
 {
-  source_step = -1;
-  source_reg = -1;
-  value = 0;
-  truncate(call_edge);
-  truncate(used_by);
-  truncate(called_by);
+    source_step = -1;
+    source_reg = -1;
+    value = 0;
+    truncate(call_edge);
+    truncate(used_by);
+    truncate(called_by);
 
-  // This should already be cleared.
-  assert(flags.none());
+    // This should already be cleared.
+    assert(flags.none());
 }
 
 void Result::check_cleared()
 {
-  assert(not value);
-  assert(not call_edge.first);
-  assert(called_by.empty());
-  assert(used_by.empty());
-  assert(flags.none());
+    assert(not value);
+    assert(not call_edge.first);
+    assert(called_by.empty());
+    assert(used_by.empty());
+    assert(flags.none());
 }
 
 Result& Result::operator=(Result&& R) noexcept
 {
-  value = R.value;
-  source_step = R.source_step;
-  source_reg = R.source_reg;
-  call_edge = R.call_edge;
-  used_by = std::move( R.used_by );
-  called_by = std::move( R.called_by );
-  flags = R.flags;
+    value = R.value;
+    source_step = R.source_step;
+    source_reg = R.source_reg;
+    call_edge = R.call_edge;
+    used_by = std::move( R.used_by );
+    called_by = std::move( R.called_by );
+    flags = R.flags;
 
-  return *this;
+    return *this;
 }
 
 Result::Result(Result&& R) noexcept
 :source_step(R.source_step),
-  source_reg(R.source_reg),
-  value (R.value), 
-  call_edge (R.call_edge),
-  used_by ( std::move( R.used_by) ),
-  called_by ( std::move( R.called_by) ),
-  flags ( R.flags )
+			 source_reg(R.source_reg),
+			 value (R.value), 
+			 call_edge (R.call_edge),
+			 used_by ( std::move( R.used_by) ),
+			 called_by ( std::move( R.called_by) ),
+			 flags ( R.flags )
 { }
 
 reg& reg::operator=(reg&& R) noexcept
 {
-  C = std::move(R.C);
+    C = std::move(R.C);
 
-  re_evaluate = R.re_evaluate;
+    re_evaluate = R.re_evaluate;
 
-  type = R.type;
+    type = R.type;
 
-  n_heads = R.n_heads;
+    n_heads = R.n_heads;
 
-  return *this;
+    return *this;
 }
 
 reg::reg(reg&& R) noexcept
 :C( std::move(R.C) ),
-  re_evaluate( R.re_evaluate ),
-  type ( R.type ),
-  n_heads( R.n_heads )
+			 re_evaluate( R.re_evaluate ),
+			 type ( R.type ),
+			 n_heads( R.n_heads )
 { }
 
 void reg::clear()
 {
-  assert(n_heads == 0);
-  C.clear();
-  re_evaluate = false;
-  type = type_t::unknown;
+    assert(n_heads == 0);
+    C.clear();
+    re_evaluate = false;
+    type = type_t::unknown;
 }
 
 void reg::check_cleared()
 {
-  assert(not C);
-  assert(not re_evaluate);
-  assert(type == type_t::unknown);
-  assert(n_heads == 0);
+    assert(not C);
+    assert(not re_evaluate);
+    assert(type == type_t::unknown);
+    assert(n_heads == 0);
 }
 
 void mapping::add_value(int r, int v) 
 {
-  assert(v);
+    assert(v);
 
-  delta_.emplace_back(r,v);
+    delta_.emplace_back(r,v);
 }
 
 int mapping::erase_value_at(int index)
 {
-  auto back = delta_.back();
-  delta_.pop_back();
+    auto back = delta_.back();
+    delta_.pop_back();
 
-  // If we are deleting from the middle, move the last element to the middle
-  if (index < delta_.size())
-    delta_[index] = back;
+    // If we are deleting from the middle, move the last element to the middle
+    if (index < delta_.size())
+	delta_[index] = back;
 
-  return back.second;
+    return back.second;
 }
 
 void mapping::clear()
 {
-  delta_.clear();
+    delta_.clear();
 }
 
 void mapping::resize(int s)
 {
-  delta_.reserve(s);
+    delta_.reserve(s);
 }
 
 bool mapping::empty() const
 {
-  return delta_.empty();
+    return delta_.empty();
 }
 
 void reg_heap::register_probability(int r)
 {
-  mark_completely_dirty(root_token);
-  r = incremental_evaluate(r).first;
+    mark_completely_dirty(root_token);
+    r = incremental_evaluate(r).first;
 
-  if (reg_is_constant(r))
-  {
-    log_double_t pr = access(r).C.exp.as_log_double();
-    constant_pr *= pr;
-  }
-  else
-  {
-    assert(reg_is_changeable(r));
+    if (reg_is_constant(r))
+    {
+	log_double_t pr = access(r).C.exp.as_log_double();
+	constant_pr *= pr;
+    }
+    else
+    {
+	assert(reg_is_changeable(r));
 
-    int rc = result_index_for_reg(r);
-    assert(rc > 0);
+	int rc = result_index_for_reg(r);
+	assert(rc > 0);
 
-    probability_heads.push_back(r);
+	probability_heads.push_back(r);
 
-    inc_heads(r);
+	inc_heads(r);
 
-    prs_list.push_back(r);
-  }
+	prs_list.push_back(r);
+    }
 }
 
 int reg_heap::register_probability(closure&& C)
 {
-  int r = allocate();
-  total_reg_allocations++;
-  set_C(r, std::move(C));
-  register_probability(r);
-  return r;
+    int r = allocate();
+    total_reg_allocations++;
+    set_C(r, std::move(C));
+    register_probability(r);
+    return r;
 }
 
 bool reg_heap::inc_probability_for_reg(int r)
 {
-  assert(reg_is_changeable(r));
-  int rc = result_index_for_reg(r);
+    assert(reg_is_changeable(r));
+    int rc = result_index_for_reg(r);
 
-  if (rc > 0 and results[rc].flags.test(0)) return true; // already included
+    if (rc > 0 and results[rc].flags.test(0)) return true; // already included
 
-  incremental_evaluate(r);
-  rc = result_index_for_reg(r);
+    incremental_evaluate(r);
+    rc = result_index_for_reg(r);
 
-  return inc_probability(rc);
+    return inc_probability(rc);
 }
 
 void reg_heap::dec_probability_for_reg(int r)
 {
-  int rc = result_index_for_reg(r);
+    int rc = result_index_for_reg(r);
 
-  if (rc > 0 and results[rc].flags.test(0))
-    dec_probability(rc);
+    if (rc > 0 and results[rc].flags.test(0))
+	dec_probability(rc);
 }
 
 void reg_heap::dec_probability(int rc)
 {
-  assert(rc > 0);
-  int r2 = results[rc].value;
-  assert(r2 > 0);
-  log_double_t pr = access(r2).C.exp.as_log_double();
+    assert(rc > 0);
+    int r2 = results[rc].value;
+    assert(r2 > 0);
+    log_double_t pr = access(r2).C.exp.as_log_double();
 
-  variable_pr /= pr;
-  results[rc].flags.reset(0);
+    variable_pr /= pr;
+    results[rc].flags.reset(0);
 
-  int r = results[rc].source_reg;
-  assert(reg_is_changeable(r));
-  assert(access(r).n_heads > 0);
-  prs_list.push_back(r);
+    int r = results[rc].source_reg;
+    assert(reg_is_changeable(r));
+    assert(access(r).n_heads > 0);
+    prs_list.push_back(r);
 }
 
 double id(double x) {return x;}
 
 log_double_t reg_heap::probability_for_context_diff(int c)
 {
-  reroot_at_context(c);
-  unhandled_pr.log() = 0.0;
+    reroot_at_context(c);
+    unhandled_pr.log() = 0.0;
 
-  // re-multiply all probabilities
-  if (total_error > 1.0e-9)
-  {
-    for(int r: probability_heads)
+    // re-multiply all probabilities
+    if (total_error > 1.0e-9)
     {
-      int rc = result_index_for_reg(r);
-      if (rc > 0 and results[rc].flags.test(0))
-	dec_probability(rc);
+	for(int r: probability_heads)
+	{
+	    int rc = result_index_for_reg(r);
+	    if (rc > 0 and results[rc].flags.test(0))
+		dec_probability(rc);
+	}
+	// std::cerr<<"unwinding all prs: total_error = "<<total_error<<" variable_pr = "<<variable_pr<<"  error_pr = "<<error_pr<<"   variable_pr/error_pr = "<<variable_pr/error_pr<<std::endl;
+	assert((variable_pr/error_pr).log() < 1.0e-6);
+	assert(prs_list.size() == probability_heads.size());
+	total_error = 0;
+	variable_pr.log() = 0;
+	error_pr.log() = 0;
     }
-    // std::cerr<<"unwinding all prs: total_error = "<<total_error<<" variable_pr = "<<variable_pr<<"  error_pr = "<<error_pr<<"   variable_pr/error_pr = "<<variable_pr/error_pr<<std::endl;
-    assert((variable_pr/error_pr).log() < 1.0e-6);
-    assert(prs_list.size() == probability_heads.size());
-    total_error = 0;
-    variable_pr.log() = 0;
-    error_pr.log() = 0;
-  }
 
-  if (not prs_list.empty())
-  {
-    mark_completely_dirty(root_token);
-
-    int j=0;
-    for(int i=0;i<prs_list.size();i++)
+    if (not prs_list.empty())
     {
-      int r = prs_list[i];
-      if (not inc_probability_for_reg(r))
-	prs_list[j++] = r;
-    }
-    prs_list.resize(j);
-  }
+	mark_completely_dirty(root_token);
 
-  return variable_pr * constant_pr * unhandled_pr / error_pr;
+	int j=0;
+	for(int i=0;i<prs_list.size();i++)
+	{
+	    int r = prs_list[i];
+	    if (not inc_probability_for_reg(r))
+		prs_list[j++] = r;
+	}
+	prs_list.resize(j);
+    }
+
+    return variable_pr * constant_pr * unhandled_pr / error_pr;
 }
 
 log_double_t reg_heap::probability_for_context(int c)
 {
-  total_context_pr++;
+    total_context_pr++;
 
-  log_double_t Pr = probability_for_context_diff(c);
-  // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<variable_pr<<"  unhandled = "<<unhandled_pr<<std::endl;
+    log_double_t Pr = probability_for_context_diff(c);
+    // std::cerr<<"A:   Pr1 = "<<Pr<<"   error = "<<total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<variable_pr<<"  unhandled = "<<unhandled_pr<<std::endl;
 
 #ifndef NDEBUG  
-  // log_double_t Pr2 = probability_for_context_full(c);
-  // double diff = Pr.log() - Pr2.log();
-  // std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<variable_pr<<"  unhandled = "<<unhandled_pr<<std::endl;
-  //  assert(fabs(diff) < 1.0e-6);
+    // log_double_t Pr2 = probability_for_context_full(c);
+    // double diff = Pr.log() - Pr2.log();
+    // std::cerr<<"B:diff = "<<diff<<"    Pr1 = "<<Pr<<"  Pr2 = "<<Pr2<<"   error = "<<total_error<<"  constant_pr = "<<constant_pr<<"  variable_pr = "<<variable_pr<<"  unhandled = "<<unhandled_pr<<std::endl;
+    //  assert(fabs(diff) < 1.0e-6);
 #endif
 
-  return Pr;
+    return Pr;
 }
 
 const vector<int>& reg_heap::random_modifiables() const
 {
-  return random_modifiables_;
+    return random_modifiables_;
 }
 
 int reg_heap::add_random_modifiable(int r)
 {
-  int i = random_modifiables_.size();
-  random_modifiables_.push_back(r);
-  inc_heads(r);
-  return i;
+    int i = random_modifiables_.size();
+    random_modifiables_.push_back(r);
+    inc_heads(r);
+    return i;
 }
 
 bool reg_heap::parameter_is_modifiable(int index)
 {
-  int R = parameters[index].second;
+    int R = parameters[index].second;
 
-  int R2 = incremental_evaluate_unchangeable(R);
+    int R2 = incremental_evaluate_unchangeable(R);
 
-  return is_modifiable(access(R2).C.exp);
+    return is_modifiable(access(R2).C.exp);
 }
 
 int reg_heap::find_parameter_modifiable_reg(int index)
 {
-  assert(index >= 0);
+    assert(index >= 0);
 
-  int R = parameters[index].second;
+    int R = parameters[index].second;
 
-  int R2 = incremental_evaluate_unchangeable(R);
+    int R2 = incremental_evaluate_unchangeable(R);
 
-  if (R != R2)
-  {
-    dec_heads(R);
-    inc_heads(R2);
-    parameters[index].second = R2;
-  }
+    if (R != R2)
+    {
+	dec_heads(R);
+	inc_heads(R2);
+	parameters[index].second = R2;
+    }
 
 #ifndef NDEBUG
-  if (not is_modifiable(access(R2).C.exp))
-    throw myexception()<<"Parameter is not a modifiable!  Instead its value is '"<<access(R2).C.exp<<"'";
+    if (not is_modifiable(access(R2).C.exp))
+	throw myexception()<<"Parameter is not a modifiable!  Instead its value is '"<<access(R2).C.exp<<"'";
 #endif
 
-  assert(R2>0);
-  return R2;
+    assert(R2>0);
+    return R2;
 }
 
 const expression_ref reg_heap::get_parameter_range(int c, int p)
 {
-  return get_range_for_reg(c, find_parameter_modifiable_reg(p));
+    return get_range_for_reg(c, find_parameter_modifiable_reg(p));
 }
 
 const expression_ref reg_heap::get_range_for_reg(int c, int r)
 {
-  if (access(r).C.Env.size() < 3)
-    return {};
+    if (access(r).C.Env.size() < 3)
+	return {};
 
-  int r2 = access(r).C.lookup_in_env(2);
-  return get_reg_value_in_context(r2,c);
+    int r2 = access(r).C.lookup_in_env(2);
+    return get_reg_value_in_context(r2,c);
 }
 
 double reg_heap::get_rate_for_reg(int r)
 {
-  if (access(r).C.Env.size() < 3)
-    return {};
+    if (access(r).C.Env.size() < 3)
+	return {};
 
-  int r3 = access(r).C.lookup_in_env(0);
-  r3 = incremental_evaluate_unchangeable(r3);
-  return access(r3).C.exp.as_double();
+    int r3 = access(r).C.lookup_in_env(0);
+    r3 = incremental_evaluate_unchangeable(r3);
+    return access(r3).C.exp.as_double();
 }
 
 const std::vector<int>& reg_heap::triggers() const {return tokens[root_token].triggers;}
-      std::vector<int>& reg_heap::triggers()       {return tokens[root_token].triggers;}
+std::vector<int>& reg_heap::triggers()       {return tokens[root_token].triggers;}
 
 int reg_heap::step_index_for_reg(int r) const 
 {
@@ -583,256 +583,256 @@ int reg_heap::result_index_for_reg(int r) const
 
 const Step& reg_heap::step_for_reg(int r) const 
 { 
-  int s = step_index_for_reg(r);
-  return steps.access_unused(s);
+    int s = step_index_for_reg(r);
+    return steps.access_unused(s);
 }
 
 Step& reg_heap::step_for_reg(int r)
 { 
-  int s = step_index_for_reg(r);
-  return steps.access_unused(s);
+    int s = step_index_for_reg(r);
+    return steps.access_unused(s);
 }
 
 const Result& reg_heap::result_for_reg(int r) const 
 { 
-  int rc = result_index_for_reg(r);
-  return results.access_unused(rc);
+    int rc = result_index_for_reg(r);
+    return results.access_unused(rc);
 }
 
 Result& reg_heap::result_for_reg(int r)
 { 
-  int rc = result_index_for_reg(r);
-  return results.access_unused(rc);
+    int rc = result_index_for_reg(r);
+    return results.access_unused(rc);
 }
 
 const closure& reg_heap::access_value_for_reg(int R1) const
 {
-  int R2 = value_for_reg(R1);
-  assert(R2);
-  return access(R2).C;
+    int R2 = value_for_reg(R1);
+    assert(R2);
+    return access(R2).C;
 }
 
 bool reg_heap::reg_has_value(int r) const
 {
-  if (access(r).type == reg::type_t::constant)
-    return true;
-  else
-    return reg_has_result_value(r);
+    if (access(r).type == reg::type_t::constant)
+	return true;
+    else
+	return reg_has_result_value(r);
 }
 
 bool reg_heap::reg_has_result_value(int r) const
 {
-  return has_result(r) and result_value_for_reg(r);
+    return has_result(r) and result_value_for_reg(r);
 }
 
 bool reg_heap::reg_has_call(int r) const
 {
-  return has_step(r) and call_for_reg(r);
+    return has_step(r) and call_for_reg(r);
 }
 
 int reg_heap::call_for_reg(int r) const
 {
-  return step_for_reg(r).call;
+    return step_for_reg(r).call;
 }
 
 bool reg_heap::has_step(int r) const
 {
-  return step_index_for_reg(r)>0;
+    return step_index_for_reg(r)>0;
 }
 
 bool reg_heap::has_result(int r) const
 {
-  return result_index_for_reg(r)>0;
+    return result_index_for_reg(r)>0;
 }
 
 int reg_heap::value_for_reg(int r) const 
 {
-  assert(not access(r).C.exp.is_index_var());
-  if (access(r).type == reg::type_t::changeable)
-    return result_value_for_reg(r);
-  else
-  {
-    assert(access(r).type == reg::type_t::constant);
-    return r;
-  }
+    assert(not access(r).C.exp.is_index_var());
+    if (access(r).type == reg::type_t::changeable)
+	return result_value_for_reg(r);
+    else
+    {
+	assert(access(r).type == reg::type_t::constant);
+	return r;
+    }
 }
 
 int reg_heap::result_value_for_reg(int r) const 
 {
-  return result_for_reg(r).value;
+    return result_for_reg(r).value;
 }
 
 void reg_heap::set_result_value_for_reg(int r1)
 {
-  int call = call_for_reg(r1);
+    int call = call_for_reg(r1);
 
-  assert(call);
+    assert(call);
 
-  int value = value_for_reg(call);
+    int value = value_for_reg(call);
 
-  assert(value);
+    assert(value);
 
-  int rc1 = result_index_for_reg(r1);
-  if (rc1 <= 0)
-    rc1 = add_shared_result(r1, step_index_for_reg(r1));
-  assert(rc1 > 0);
-  auto& RC1 = results[rc1];
-  RC1.value = value;
+    int rc1 = result_index_for_reg(r1);
+    if (rc1 <= 0)
+	rc1 = add_shared_result(r1, step_index_for_reg(r1));
+    assert(rc1 > 0);
+    auto& RC1 = results[rc1];
+    RC1.value = value;
 
-  // If R2 is WHNF then we are done
-  if (access(call).type == reg::type_t::constant) return;
+    // If R2 is WHNF then we are done
+    if (access(call).type == reg::type_t::constant) return;
 
-  // If R2 doesn't have a result, add one to hold the called-by edge.
-  assert(has_result(call));
+    // If R2 doesn't have a result, add one to hold the called-by edge.
+    assert(has_result(call));
 
-  // Add a called-by edge to R2.
-  int rc2 = result_index_for_reg(call);
-  auto back_edge = results[rc2].called_by.push_back(rc1);
-  RC1.call_edge.first = rc2;
-  RC1.call_edge.second = back_edge;
+    // Add a called-by edge to R2.
+    int rc2 = result_index_for_reg(call);
+    auto back_edge = results[rc2].called_by.push_back(rc1);
+    RC1.call_edge.first = rc2;
+    RC1.call_edge.second = back_edge;
 }
 
 void reg_heap::set_used_input(int s1, int R2)
 {
-  assert(reg_is_changeable(R2));
+    assert(reg_is_changeable(R2));
 
-  assert(is_used(R2));
+    assert(is_used(R2));
 
-  assert(access(R2).C);
+    assert(access(R2).C);
 
-  assert(has_result(R2));
-  assert(result_value_for_reg(R2));
+    assert(has_result(R2));
+    assert(result_value_for_reg(R2));
 
-  // An index_var's value only changes if the thing the index-var points to also changes.
-  // So, we may as well forbid using an index_var as an input.
-  assert(access(R2).C.exp.head().type() != index_var_type);
+    // An index_var's value only changes if the thing the index-var points to also changes.
+    // So, we may as well forbid using an index_var as an input.
+    assert(access(R2).C.exp.head().type() != index_var_type);
 
-  int rc2 = result_index_for_reg(R2);
+    int rc2 = result_index_for_reg(R2);
 
-  auto back_edge = results[rc2].used_by.push_back(s1);
-  steps[s1].used_inputs.push_back({rc2,back_edge});
+    auto back_edge = results[rc2].used_by.push_back(s1);
+    steps[s1].used_inputs.push_back({rc2,back_edge});
 
-  assert(result_is_used_by(s1,rc2));
+    assert(result_is_used_by(s1,rc2));
 }
 
 int count(const std::vector<int>& v, int I)
 {
-  int c = 0;
-  for(int i: v)
-    if (i == I)
-      c++;
-  return c;
+    int c = 0;
+    for(int i: v)
+	if (i == I)
+	    c++;
+    return c;
 }
 
 void reg_heap::set_call(int R1, int R2)
 {
-  assert(reg_is_changeable(R1));
-  // R2 might be of UNKNOWN changeableness
+    assert(reg_is_changeable(R1));
+    // R2 might be of UNKNOWN changeableness
 
-  // Check that R1 is legal
-  assert(is_used(R1));
+    // Check that R1 is legal
+    assert(is_used(R1));
 
-  // Check that R2 is legal
-  assert(is_used(R2));
+    // Check that R2 is legal
+    assert(is_used(R2));
 
-  // Only modify the call for the current context;
-  assert(has_step(R1));
+    // Only modify the call for the current context;
+    assert(has_step(R1));
 
-  // Don't override an *existing* call
-  assert(not reg_has_call(R1));
+    // Don't override an *existing* call
+    assert(not reg_has_call(R1));
 
-  // Check that we aren't overriding an existing *value*
-  assert(not reg_has_value(R1));
+    // Check that we aren't overriding an existing *value*
+    assert(not reg_has_value(R1));
 
-  // Set the call
-  step_for_reg(R1).call = R2;
+    // Set the call
+    step_for_reg(R1).call = R2;
 }
 
 void reg_heap::destroy_all_computations_in_token(int t)
 {
-  // Remove use back-edges
-  auto& delta_step = tokens[t].delta_step();
-  auto& delta_result = tokens[t].delta_result();
+    // Remove use back-edges
+    auto& delta_step = tokens[t].delta_step();
+    auto& delta_result = tokens[t].delta_result();
 
-  for(auto p: delta_step)
-  {
+    for(auto p: delta_step)
+    {
 //    int r = p.first;
-    int s = p.second;
-    if (s > 0)
-      clear_back_edges_for_step(s);
-  }
+	int s = p.second;
+	if (s > 0)
+	    clear_back_edges_for_step(s);
+    }
 
-  // Remove call back-edges
-  for(auto p: delta_result)
-  {
+    // Remove call back-edges
+    for(auto p: delta_result)
+    {
 //    int r = p.first;
-    int rc = p.second;
-    if (rc > 0)
-      clear_back_edges_for_result(rc);
-  }
+	int rc = p.second;
+	if (rc > 0)
+	    clear_back_edges_for_result(rc);
+    }
 
-  for(auto p: delta_step)
-  {
+    for(auto p: delta_step)
+    {
 //    int r = p.first;
-    int s = p.second;
-    if (s > 0)
-      steps.reclaim_used(s);
-  }
-  tokens[t].vm_step.clear();
+	int s = p.second;
+	if (s > 0)
+	    steps.reclaim_used(s);
+    }
+    tokens[t].vm_step.clear();
 
-  for(auto p: delta_result)
-  {
+    for(auto p: delta_result)
+    {
 //    int r = p.first;
-    int rc = p.second;
-    if (rc > 0)
-      results.reclaim_used(rc);
-  }
-  tokens[t].vm_result.clear();
+	int rc = p.second;
+	if (rc > 0)
+	    results.reclaim_used(rc);
+    }
+    tokens[t].vm_result.clear();
 }
 
 void reg_heap::clear_call(int s)
 {
-  steps.access_unused(s).call = 0;
+    steps.access_unused(s).call = 0;
 }
 
 void reg_heap::clear_call_for_reg(int R)
 {
-  int s = step_index_for_reg(R);
-  if (s > 0)
-    clear_call( s );
+    int s = step_index_for_reg(R);
+    if (s > 0)
+	clear_call( s );
 }
 
 void reg_heap::set_C(int R, closure&& C)
 {
-  assert(C);
-  assert(not C.exp.head().is_a<expression>());
-  clear_C(R);
+    assert(C);
+    assert(not C.exp.head().is_a<expression>());
+    clear_C(R);
 
-  access(R).C = std::move(C);
+    access(R).C = std::move(C);
 #ifndef NDEBUG
-  for(int r: access(R).C.Env)
-    assert(is_valid_address(r));
+    for(int r: access(R).C.Env)
+	assert(is_valid_address(r));
 #endif
 }
 
 void reg_heap::clear_C(int R)
 {
-  access_unused(R).C.clear();
+    access_unused(R).C.clear();
 }
 
 void reg_heap::mark_reg_created_by_step(int r, int s)
 {
-  assert(r > 0);
-  assert(s > 0);
-  steps[s].num_created_regs++;
+    assert(r > 0);
+    assert(s > 0);
+    steps[s].num_created_regs++;
 }
 
 int reg_heap::create_reg_from_step(int s)
 {
-  total_reg_allocations++;
-  int r = allocate();
-  mark_reg_created_by_step(r,s);
-  return r;
+    total_reg_allocations++;
+    int r = allocate();
+    mark_reg_created_by_step(r,s);
+    return r;
 }
 
 
@@ -849,75 +849,75 @@ int reg_heap::create_reg_from_step(int s)
 /// Update the value of a non-constant, non-computed index
 void reg_heap::set_reg_value(int R, closure&& value, int t)
 {
-  total_set_reg_value++;
-  assert(not is_dirty(t));
-  assert(not children_of_token(t).size());
-  assert(reg_is_changeable(R));
+    total_set_reg_value++;
+    assert(not is_dirty(t));
+    assert(not children_of_token(t).size());
+    assert(reg_is_changeable(R));
 
-  if (not is_root_token(t) and tokens[t].version == tokens[parent_token(t)].version)
-    tokens[t].version--;
+    if (not is_root_token(t) and tokens[t].version == tokens[parent_token(t)].version)
+	tokens[t].version--;
 
-  // assert(not is_root_token and tokens[t].version < tokens[parent_token(t)].version) 
+    // assert(not is_root_token and tokens[t].version < tokens[parent_token(t)].version) 
 
-  // Check that this reg is indeed settable
-  assert(is_modifiable(access(R).C.exp));
+    // Check that this reg is indeed settable
+    assert(is_modifiable(access(R).C.exp));
 
-  assert(not is_root_token(t));
+    assert(not is_root_token(t));
 
-  // Finally set the new value.
-  int s = get_shared_step(R);
+    // Finally set the new value.
+    int s = get_shared_step(R);
 
-  assert(tokens[t].vm_step.empty());
-  tokens[t].vm_step.add_value(R,s);
+    assert(tokens[t].vm_step.empty());
+    tokens[t].vm_step.add_value(R,s);
 
-  assert(tokens[t].vm_result.empty());
-  tokens[t].vm_result.add_value(R,-1);
+    assert(tokens[t].vm_result.empty());
+    tokens[t].vm_result.add_value(R,-1);
 
-  assert(not children_of_token(t).size());
+    assert(not children_of_token(t).size());
 
-  // if the value is NULL, just leave the value and call both unset.
-  //  (this could happen if we set a parameter value to null.)
-  if (not value) return;
+    // if the value is NULL, just leave the value and call both unset.
+    //  (this could happen if we set a parameter value to null.)
+    if (not value) return;
 
-  // If the value is a pre-existing reg_var, then call it.
-  if (value.exp.head().type() == index_var_type)
-  {
-    int index = value.exp.as_index_var();
+    // If the value is a pre-existing reg_var, then call it.
+    if (value.exp.head().type() == index_var_type)
+    {
+	int index = value.exp.as_index_var();
 
-    int Q = value.lookup_in_env( index );
+	int Q = value.lookup_in_env( index );
 
-    assert(is_used(Q));
+	assert(is_used(Q));
 
-    // Set the call
-    steps[s].call = Q;
-  }
-  // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
-  else
-  {
-    int R2 = create_reg_from_step(s);
+	// Set the call
+	steps[s].call = Q;
+    }
+    // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the value and call it.
+    else
+    {
+	int R2 = create_reg_from_step(s);
 
-    // clear 'reg created' edge from s to old call.
-    steps[s].num_created_regs = 0;
-    steps[s].call = R2;
+	// clear 'reg created' edge from s to old call.
+	steps[s].num_created_regs = 0;
+	steps[s].call = R2;
 
-    // Set the call
-    set_C(R2, std::move( value ) );
-  }
+	// Set the call
+	set_C(R2, std::move( value ) );
+    }
 
 #if DEBUG_MACHINE >= 2
-  check_used_regs();
-  check_tokens();
+    check_used_regs();
+    check_tokens();
 #endif
 }
 
 void reg_heap::set_shared_value(int r, int v)
 {
-  // add a new computation
-  int step = add_shared_step(r);
-  add_shared_result(r, step);
+    // add a new computation
+    int step = add_shared_step(r);
+    add_shared_result(r, step);
 
-  // set the value
-  set_call(r, v);
+    // set the value
+    set_call(r, v);
 }
 
 void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
@@ -961,128 +961,128 @@ void reg_heap::merge_split_mapping(int t1, int t2)
 // where (m2,v2) is at the root and (m1,v1) is relative.
 void pivot_mapping(vector<int>& prog1, mapping& vm2)
 {
-  for(int i=0;i<vm2.delta().size();i++)
-  {
-    int r = vm2.delta()[i].first;
+    for(int i=0;i<vm2.delta().size();i++)
+    {
+	int r = vm2.delta()[i].first;
 
-    int& s1 = prog1[r];
-    int& s2 = vm2.delta()[i].second;
+	int& s1 = prog1[r];
+	int& s2 = vm2.delta()[i].second;
 
-    // switch from root/0 => root/-
-    if (s1 == 0) s1 = -1;
+	// switch from root/0 => root/-
+	if (s1 == 0) s1 = -1;
 
-    // switch root positions
-    std::swap(s1,s2);
+	// switch root positions
+	std::swap(s1,s2);
 
-    // switch from root/0 => root/-
-    if (s1 == -1) s1 = 0;
-  }
+	// switch from root/0 => root/-
+	if (s1 == -1) s1 = 0;
+    }
 }
 
 void reg_heap::reroot_at_context(int c)
 {
-  // 1. Bail if we are already at the root.
-  int t = token_for_context(c);
-  if (is_root_token(t)) return;
+    // 1. Bail if we are already at the root.
+    int t = token_for_context(c);
+    if (is_root_token(t)) return;
 
-  total_reroot++;
+    total_reroot++;
   
-  // 2. Get the tokens on the path to the root.
-  boost::container::small_vector<int,10> path;
-  path.push_back(token_for_context(c));
-  while(true)
-  {
-    int parent = tokens[path.back()].parent;
-    if (parent != -1)
-      path.push_back(parent);
-    else
-      break;
-  }
-
-  // 3. Get the tokens on the path to the root.
-  for(int i=int(path.size())-2; i>=0; i--)
-    reroot_at(path[i]);
-
-  // 4. Clean up old root token if it became a tip, and remote intermediate knuckles
-  int old_root = path.back();
-  for(int t2 = old_root; t2 != root_token ; )
-  {
-    int p = tokens[t2].parent;
-
-    if (not tokens[t2].is_referenced())
+    // 2. Get the tokens on the path to the root.
+    boost::container::small_vector<int,10> path;
+    path.push_back(token_for_context(c));
+    while(true)
     {
-      if (tokens[t2].children.empty())
-	release_tip_token(t2);
-      else if (tokens[t2].children.size() == 1 and t2 != old_root)
-	release_knuckle_token(t2);
+	int parent = tokens[path.back()].parent;
+	if (parent != -1)
+	    path.push_back(parent);
+	else
+	    break;
     }
 
-    t2 = p;
-  }
+    // 3. Get the tokens on the path to the root.
+    for(int i=int(path.size())-2; i>=0; i--)
+	reroot_at(path[i]);
+
+    // 4. Clean up old root token if it became a tip, and remote intermediate knuckles
+    int old_root = path.back();
+    for(int t2 = old_root; t2 != root_token ; )
+    {
+	int p = tokens[t2].parent;
+
+	if (not tokens[t2].is_referenced())
+	{
+	    if (tokens[t2].children.empty())
+		release_tip_token(t2);
+	    else if (tokens[t2].children.size() == 1 and t2 != old_root)
+		release_knuckle_token(t2);
+	}
+
+	t2 = p;
+    }
 }
 
 void reg_heap::reroot_at(int t)
 {
-  assert(not is_root_token(t) and is_root_token(tokens[t].parent));
+    assert(not is_root_token(t) and is_root_token(tokens[t].parent));
 
 #ifdef DEBUG_MACHINE
-  check_used_regs();
+    check_used_regs();
 #endif
 
-  // 1. If this context isn't a direct child of the root, then make it one
-  if (not is_root_token(parent_token(t)))
-    reroot_at(parent_token(t));
+    // 1. If this context isn't a direct child of the root, then make it one
+    if (not is_root_token(parent_token(t)))
+	reroot_at(parent_token(t));
 
-  // re-rooting to the parent context shouldn't release its token.
-  int parent = parent_token(t);
-  assert(is_root_token(parent));
+    // re-rooting to the parent context shouldn't release its token.
+    int parent = parent_token(t);
+    assert(is_root_token(parent));
 
-  // 2. Unshare regs
-  unshare_regs(t);
+    // 2. Unshare regs
+    unshare_regs(t);
 
-  // 3. Change the relative mappings
-  total_steps_pivoted += tokens[t].delta_step().size();
-  total_results_pivoted += tokens[t].delta_result().size();
-  pivot_mapping(prog_steps, tokens[t].vm_step);
-  std::swap(tokens[parent].vm_step, tokens[t].vm_step);
-  pivot_mapping(prog_results, tokens[t].vm_result);
-  std::swap(tokens[parent].vm_result, tokens[t].vm_result);
+    // 3. Change the relative mappings
+    total_steps_pivoted += tokens[t].delta_step().size();
+    total_results_pivoted += tokens[t].delta_result().size();
+    pivot_mapping(prog_steps, tokens[t].vm_step);
+    std::swap(tokens[parent].vm_step, tokens[t].vm_step);
+    pivot_mapping(prog_results, tokens[t].vm_result);
+    std::swap(tokens[parent].vm_result, tokens[t].vm_result);
 
-  // 4. Alter the inheritance tree
-  tokens[parent].parent = t;
-  int index = remove_element(tokens[parent].children, t);
-  assert(index != -1);
+    // 4. Alter the inheritance tree
+    tokens[parent].parent = t;
+    int index = remove_element(tokens[parent].children, t);
+    assert(index != -1);
 
-  tokens[t].parent = -1;
-  tokens[t].children.push_back(parent);
+    tokens[t].parent = -1;
+    tokens[t].children.push_back(parent);
 
-  root_token = t;
-  assert(is_root_token(t));
+    root_token = t;
+    assert(is_root_token(t));
 
-  // 5. Remove probabilities for invalidated regs from the current probability
+    // 5. Remove probabilities for invalidated regs from the current probability
 
-  for(auto p: tokens[parent].delta_result())
-  {
-    int rc = p.second;  
-    if (rc > 0 and results[rc].flags.test(0))
-      dec_probability(rc);
-  }
+    for(auto p: tokens[parent].delta_result())
+    {
+	int rc = p.second;  
+	if (rc > 0 and results[rc].flags.test(0))
+	    dec_probability(rc);
+    }
 
-  total_reroot_one++;
+    total_reroot_one++;
   
-  assert(tokens[parent].version == tokens[t].version);
+    assert(tokens[parent].version == tokens[t].version);
 
-  for(int t2: tokens[t].children)
-    assert(tokens[t2].version <= tokens[t].version);
+    for(int t2: tokens[t].children)
+	assert(tokens[t2].version <= tokens[t].version);
 
-  assert(is_root_token(t));
+    assert(is_root_token(t));
 
-  // 6. re-evaluate all the regs that need to be up-to-date.
-  if (tokens[t].regs_to_re_evaluate.size())
-    mark_completely_dirty(t);
-  for(int R: tokens[t].regs_to_re_evaluate)
-    incremental_evaluate(R);
-  tokens[t].regs_to_re_evaluate.clear();
+    // 6. re-evaluate all the regs that need to be up-to-date.
+    if (tokens[t].regs_to_re_evaluate.size())
+	mark_completely_dirty(t);
+    for(int R: tokens[t].regs_to_re_evaluate)
+	incremental_evaluate(R);
+    tokens[t].regs_to_re_evaluate.clear();
 }
 
 /*
@@ -1101,295 +1101,295 @@ void reg_heap::reroot_at(int t)
 
 void reg_heap::mark_completely_dirty(int t)
 {
-  int& version = tokens[t].version;
-  for(int t2:tokens[t].children)
-    version = std::max(version, tokens[t2].version+1);
+    int& version = tokens[t].version;
+    for(int t2:tokens[t].children)
+	version = std::max(version, tokens[t2].version+1);
 }
 
 bool reg_heap::is_dirty(int t) const
 {
-  for(int t2:tokens[t].children)
-    if (tokens[t].version > tokens[t2].version)
-      return true;
-  return false;
+    for(int t2:tokens[t].children)
+	if (tokens[t].version > tokens[t2].version)
+	    return true;
+    return false;
 }
 
 const vector<pair<int,int>>& reg_heap::Token::delta_result() const
 {
-  return vm_result.delta();
+    return vm_result.delta();
 }
 
 const vector<pair<int,int>>& reg_heap::Token::delta_step() const
 {
-  return vm_step.delta();
+    return vm_step.delta();
 }
 
 
 // Note that a context can be completely dirty, w/o being dirty :-P
 bool reg_heap::is_completely_dirty(int t) const
 {
-  for(int t2:tokens[t].children)
-    if (tokens[t].version <= tokens[t2].version)
-      return false;
-  return true;
+    for(int t2:tokens[t].children)
+	if (tokens[t].version <= tokens[t2].version)
+	    return false;
+    return true;
 }
   
 void reg_heap::unshare_regs(int t)
 {
-  assert(is_root_token(parent_token(t)));
-  assert(tokens[root_token].version >= tokens[t].version);
+    assert(is_root_token(parent_token(t)));
+    assert(tokens[root_token].version >= tokens[t].version);
 
-  if (tokens[root_token].version <= tokens[t].version) return;
+    if (tokens[root_token].version <= tokens[t].version) return;
 
 #if DEBUG_MACHINE >= 2
-  check_used_regs();
+    check_used_regs();
 #endif
 
-  total_invalidate++;
+    total_invalidate++;
   
-  // find all regs in t that are not shared from the root
-  auto delta_result = tokens[t].delta_result();
-  auto delta_step = tokens[t].delta_step();
+    // find all regs in t that are not shared from the root
+    auto delta_result = tokens[t].delta_result();
+    auto delta_step = tokens[t].delta_step();
   
-  int n_delta_result0 = delta_result.size();
-  int n_delta_step0 = delta_step.size();
+    int n_delta_result0 = delta_result.size();
+    int n_delta_step0 = delta_step.size();
   
-  for(const auto& p: delta_result)
-  {
-    int r = p.first;
-    prog_temp[r] |= 1;
-  }
+    for(const auto& p: delta_result)
+    {
+	int r = p.first;
+	prog_temp[r] |= 1;
+    }
 
-  for(const auto& p: delta_step)
-  {
-    int r = p.first;
-    prog_temp[r] |= 2;
-    assert(prog_temp[r] == 3);
-  }
+    for(const auto& p: delta_step)
+    {
+	int r = p.first;
+	prog_temp[r] |= 2;
+	assert(prog_temp[r] == 3);
+    }
 
-  auto& vm_result = tokens[t].vm_result;
-  auto& vm_step = tokens[t].vm_step;
-  auto& regs_to_re_evaluate = tokens[t].regs_to_re_evaluate;
+    auto& vm_result = tokens[t].vm_result;
+    auto& vm_step = tokens[t].vm_step;
+    auto& regs_to_re_evaluate = tokens[t].regs_to_re_evaluate;
 
-  for(int i=0;i<delta_result.size();i++)
-  {
-    int r = delta_result[i].first;
+    for(int i=0;i<delta_result.size();i++)
+    {
+	int r = delta_result[i].first;
 
 //    int result = result_index_for_reg(r);
 
-    if (not has_result(r)) continue;
+	if (not has_result(r)) continue;
 
-    const auto& Result = result_for_reg(r);
+	const auto& Result = result_for_reg(r);
 
-    for(int res2: Result.called_by)
-    {
-      const auto& Result2 = results[res2];
-      int r2 = Result2.source_reg;
+	for(int res2: Result.called_by)
+	{
+	    const auto& Result2 = results[res2];
+	    int r2 = Result2.source_reg;
 
-      // This result is already unshared
-      if (prog_temp[r2] != 0) continue;
+	    // This result is already unshared
+	    if (prog_temp[r2] != 0) continue;
 
-      prog_temp[r2] = 1;
-      delta_result.emplace_back(r2,-1);
+	    prog_temp[r2] = 1;
+	    delta_result.emplace_back(r2,-1);
+	}
+
+	for(int s2: Result.used_by)
+	{
+	    auto& S2 = steps[s2];
+	    int r2 = S2.source_reg;
+
+	    // This step is already unshared
+	    if (prog_temp[r2] == 3) continue;
+
+	    if (prog_temp[r2] == 0)
+		delta_result.emplace_back(r2,-1);
+
+	    prog_temp[r2] = 3;
+	    delta_step.emplace_back(r2,-1);
+	    vm_step.add_value(r2,-1);
+	}
     }
 
-    for(int s2: Result.used_by)
+    for(int i=n_delta_result0;i<delta_result.size();i++)
     {
-      auto& S2 = steps[s2];
-      int r2 = S2.source_reg;
-
-      // This step is already unshared
-      if (prog_temp[r2] == 3) continue;
-
-      if (prog_temp[r2] == 0)
-	delta_result.emplace_back(r2,-1);
-
-      prog_temp[r2] = 3;
-      delta_step.emplace_back(r2,-1);
-      vm_step.add_value(r2,-1);
+	int r = delta_result[i].first;
+	vm_result.add_value(r,-1);
+	if (access(r).re_evaluate)
+	    regs_to_re_evaluate.push_back(r);
     }
-  }
-
-  for(int i=n_delta_result0;i<delta_result.size();i++)
-  {
-    int r = delta_result[i].first;
-    vm_result.add_value(r,-1);
-    if (access(r).re_evaluate)
-      regs_to_re_evaluate.push_back(r);
-  }
   
-  for(const auto& p: delta_result)
-  {
-    int r = p.first;
-    prog_temp[r] = 0;
-  }
+    for(const auto& p: delta_result)
+    {
+	int r = p.first;
+	prog_temp[r] = 0;
+    }
 
-  total_results_invalidated += (delta_result.size() - n_delta_result0);
-  total_steps_invalidated += (delta_step.size() - n_delta_step0);
+    total_results_invalidated += (delta_result.size() - n_delta_result0);
+    total_steps_invalidated += (delta_step.size() - n_delta_step0);
 
-  total_results_scanned += delta_result.size();
-  total_steps_scanned += delta_step.size();
+    total_results_scanned += delta_result.size();
+    total_steps_scanned += delta_step.size();
 
-  tokens[t].version = tokens[root_token].version;
+    tokens[t].version = tokens[root_token].version;
   
 #if DEBUG_MACHINE >= 2
-  check_used_regs();
+    check_used_regs();
 #endif
 }
 
 
 std::vector<int> reg_heap::used_regs_for_reg(int r) const
 {
-  vector<int> U;
-  if (not has_step(r)) return U;
+    vector<int> U;
+    if (not has_step(r)) return U;
 
-  for(const auto& rcp: step_for_reg(r).used_inputs)
-    U.push_back(results[rcp.first].source_reg);
+    for(const auto& rcp: step_for_reg(r).used_inputs)
+	U.push_back(results[rcp.first].source_reg);
 
-  return U;
+    return U;
 }
 
 void reg_heap::reclaim_used(int r)
 {
-  pool<reg>::reclaim_used(r);
+    pool<reg>::reclaim_used(r);
 }
 
 template <typename T>
 void insert_at_end(vector<int>& v, const T& t)
 {
-  v.insert(v.end(), t.begin(), t.end());
+    v.insert(v.end(), t.begin(), t.end());
 }
 
 void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 {
-  insert_at_end(scan, stack); // inc_heads = yes
-  insert_at_end(scan, temp); // yes
-  insert_at_end(scan, heads); // yes
-  insert_at_end(scan, probability_heads); // yes
-  insert_at_end(scan, random_modifiables_); // yes
-  insert_at_end(scan, transition_kernels_); // yes
-  for(int j=0;j<parameters.size();j++) // yes
-    scan.push_back(parameters[j].second);
-  if (keep_identifiers)
-    for(const auto& i: identifiers) // no
-      scan.push_back(i.second);
+    insert_at_end(scan, stack); // inc_heads = yes
+    insert_at_end(scan, temp); // yes
+    insert_at_end(scan, heads); // yes
+    insert_at_end(scan, probability_heads); // yes
+    insert_at_end(scan, random_modifiables_); // yes
+    insert_at_end(scan, transition_kernels_); // yes
+    for(int j=0;j<parameters.size();j++) // yes
+	scan.push_back(parameters[j].second);
+    if (keep_identifiers)
+	for(const auto& i: identifiers) // no
+	    scan.push_back(i.second);
 }
 
 int reg_heap::inc_heads(int R)
 {
-  assert( access(R).n_heads >= 0);
-  access(R).n_heads++;
-  return access(R).n_heads;
+    assert( access(R).n_heads >= 0);
+    access(R).n_heads++;
+    return access(R).n_heads;
 }
 
 int reg_heap::dec_heads(int R)
 {
-  assert( access(R).n_heads >= 0);
-  access(R).n_heads--;
-  assert( access(R).n_heads >= 0);
-  return access(R).n_heads;
+    assert( access(R).n_heads >= 0);
+    access(R).n_heads--;
+    assert( access(R).n_heads >= 0);
+    return access(R).n_heads;
 }
 
 int reg_heap::set_head(int index, int R2)
 {
-  int R1 = heads[index];
+    int R1 = heads[index];
 
-  inc_heads(R2);
+    inc_heads(R2);
 
-  heads[index] = R2;
+    heads[index] = R2;
 
-  dec_heads(R1);
+    dec_heads(R1);
 
-  return R1;
+    return R1;
 }
 
 int reg_heap::allocate_head()
 {
-  int R = allocate();
-  total_reg_allocations++;
+    int R = allocate();
+    total_reg_allocations++;
 
-  heads.push_back(R);
+    heads.push_back(R);
 
-  inc_heads(R);
+    inc_heads(R);
 
-  return R;
+    return R;
 }
 
 int reg_heap::push_temp_head()
 {
-  int R = allocate();
-  total_reg_allocations++;
+    int R = allocate();
+    total_reg_allocations++;
 
-  temp.push_back(R);
+    temp.push_back(R);
 
-  inc_heads(R);
+    inc_heads(R);
 
-  return R;
+    return R;
 }
 
 int reg_heap::push_temp_head(int R)
 {
-  temp.push_back(R);
+    temp.push_back(R);
 
-  inc_heads(R);
+    inc_heads(R);
 
-  return R;
+    return R;
 }
 
 void reg_heap::pop_temp_head()
 {
-  int R = temp.back();
+    int R = temp.back();
 
-  dec_heads(R);
+    dec_heads(R);
 
-  temp.pop_back();
+    temp.pop_back();
 }
 
 void reg_heap::get_more_memory()
 {
-  collect_garbage();
-  base_pool_t::get_more_memory();
+    collect_garbage();
+    base_pool_t::get_more_memory();
 }
 
 void reg_heap::expand_memory(int s)
 {
-  int old_size = size();
-  for(int t=0;t<tokens.size();t++)
-  {
-      assert(prog_steps.size() == old_size);
-      assert(prog_results.size() == old_size);
-      assert(prog_temp.size() == old_size);
-  }
+    int old_size = size();
+    for(int t=0;t<tokens.size();t++)
+    {
+	assert(prog_steps.size() == old_size);
+	assert(prog_results.size() == old_size);
+	assert(prog_temp.size() == old_size);
+    }
 
-  base_pool_t::expand_memory(s);
+    base_pool_t::expand_memory(s);
 
-  // Extend program
-  prog_steps.resize(size());
-  prog_results.resize(size());
-  prog_temp.resize(size());
-  for(int i=old_size;i<size();i++)
-  {
-    assert(prog_steps[i] == 0);
-    assert(prog_results[i] == 0);
-    assert(prog_temp[i] == 0);
-  }
+    // Extend program
+    prog_steps.resize(size());
+    prog_results.resize(size());
+    prog_temp.resize(size());
+    for(int i=old_size;i<size();i++)
+    {
+	assert(prog_steps[i] == 0);
+	assert(prog_results[i] == 0);
+	assert(prog_temp[i] == 0);
+    }
 }
 
 bool reg_heap::reg_is_constant(int r) const
 {
-  return access(r).type == reg::type_t::constant;
+    return access(r).type == reg::type_t::constant;
 }
 
 bool reg_heap::reg_is_changeable(int r) const
 {
-  return access(r).type == reg::type_t::changeable;
+    return access(r).type == reg::type_t::changeable;
 }
 
 void reg_heap::make_reg_changeable(int r)
 {
-  assert( access(r).type == reg::type_t::changeable or access(r).type == reg::type_t::unknown );
+    assert( access(r).type == reg::type_t::changeable or access(r).type == reg::type_t::unknown );
 
-  access(r).type = reg::type_t::changeable;
+    access(r).type = reg::type_t::changeable;
 }
 
 /*
@@ -1402,89 +1402,89 @@ void reg_heap::make_reg_changeable(int r)
  * Then
  * 1. If the reg was reachable when t was duplicated, then t will still be reachable in t.
  * 2. If the reg was unreachable when t was duplicated, then t will be unreach in 
-      t & descendants.
+ t & descendants.
  * 3. If the reg was 
  */
 
 int reg_heap::get_unused_token()
 {
-  if (unused_tokens.empty())
-  {
-    unused_tokens.push_back(get_n_tokens());
-    tokens.push_back(Token());
-    total_tokens = tokens.size();
-  }
+    if (unused_tokens.empty())
+    {
+	unused_tokens.push_back(get_n_tokens());
+	tokens.push_back(Token());
+	total_tokens = tokens.size();
+    }
 
-  int t = unused_tokens.back();
-  unused_tokens.pop_back();
+    int t = unused_tokens.back();
+    unused_tokens.pop_back();
 
-  assert(not token_is_used(t));
+    assert(not token_is_used(t));
 
-  tokens[t].used = true;
+    tokens[t].used = true;
 
-  if (root_token == -1)
-  {
-    assert(tokens.size() - unused_tokens.size() == 1);
-    root_token = t;
-  }
-  else
-    assert(tokens.size() - unused_tokens.size() > 1);
+    if (root_token == -1)
+    {
+	assert(tokens.size() - unused_tokens.size() == 1);
+	root_token = t;
+    }
+    else
+	assert(tokens.size() - unused_tokens.size() > 1);
 
-  assert(tokens[t].parent == -1);
-  assert(tokens[t].children.empty());
-  assert(tokens[t].vm_step.empty());
-  assert(tokens[t].vm_result.empty());
-  assert(not tokens[t].is_referenced());
+    assert(tokens[t].parent == -1);
+    assert(tokens[t].children.empty());
+    assert(tokens[t].vm_step.empty());
+    assert(tokens[t].vm_result.empty());
+    assert(not tokens[t].is_referenced());
 
-  return t;
+    return t;
 }
 
 bool reg_heap::result_is_called_by(int rc1, int rc2) const
 {
-  for(int rc: results[rc2].called_by)
-    if (rc == rc1)
-      return true;
+    for(int rc: results[rc2].called_by)
+	if (rc == rc1)
+	    return true;
 
-  return false;
+    return false;
 }
 
 bool reg_heap::result_is_used_by(int s1, int rc2) const
 {
-  for(int s: results[rc2].used_by)
-    if (s == s1)
-      return true;
+    for(int s: results[rc2].used_by)
+	if (s == s1)
+	    return true;
 
-  return false;
+    return false;
 }
 
 bool reg_heap::reg_is_used_by(int r1, int r2) const
 {
-  int s1 = step_index_for_reg(r1);
-  int rc2 = result_index_for_reg(r2);
+    int s1 = step_index_for_reg(r1);
+    int rc2 = result_index_for_reg(r2);
 
-  return result_is_used_by(s1,rc2);
+    return result_is_used_by(s1,rc2);
 }
 
 void reg_heap::check_tokens() const
 {
 #ifndef NDEBUG
-  for(int c=0;c<get_n_contexts();c++)
-  {
-    int t = token_for_context(c);
-    if (t >= 0)
+    for(int c=0;c<get_n_contexts();c++)
     {
-      assert(tokens[t].is_referenced());
-      assert(tokens[t].used);
+	int t = token_for_context(c);
+	if (t >= 0)
+	{
+	    assert(tokens[t].is_referenced());
+	    assert(tokens[t].used);
+	}
     }
-  }
 
-  for(int t=0;t<tokens.size();t++)
-    if (token_is_used(t))
-    {
-      assert(tokens[t].is_referenced() or tokens[t].children.size() >= 1);
-      for(int t2: children_of_token(t))
-	assert(tokens[t].version >= tokens[t2].version);
-    }
+    for(int t=0;t<tokens.size();t++)
+	if (token_is_used(t))
+	{
+	    assert(tokens[t].is_referenced() or tokens[t].children.size() >= 1);
+	    for(int t2: children_of_token(t))
+		assert(tokens[t].version >= tokens[t2].version);
+	}
 #endif
 }
 
@@ -1606,14 +1606,14 @@ void reg_heap::check_used_regs() const
 
 int reg_heap::get_shared_step(int r)
 {
-  // 1. Get a new computation
-  int s = steps.allocate();
-  total_step_allocations++;
+    // 1. Get a new computation
+    int s = steps.allocate();
+    total_step_allocations++;
   
-  // 2. Set the source of the computation
-  steps[s].source_reg = r;
+    // 2. Set the source of the computation
+    steps[s].source_reg = r;
 
-  return s;
+    return s;
 }
 
 /// Add a shared step at (t,r) -- assuming there isn't one already
@@ -1632,15 +1632,15 @@ int reg_heap::add_shared_step(int r)
 
 int reg_heap::get_shared_result(int r, int s)
 {
-  // 1. Get a new result
-  int rc = results.allocate();
-  total_comp_allocations++;
+    // 1. Get a new result
+    int rc = results.allocate();
+    total_comp_allocations++;
   
-  // 2. Set the source of the result
-  results[rc].source_step = s;
-  results[rc].source_reg = r;
+    // 2. Set the source of the result
+    results[rc].source_step = s;
+    results[rc].source_reg = r;
 
-  return rc;
+    return rc;
 }
 
 /// Add a shared result at (t,r) -- assuming there isn't one already
@@ -1656,18 +1656,18 @@ int reg_heap::add_shared_result(int r, int s)
     // Link it in to the mapping
     prog_results[r] = rc;
 
-  return rc;
+    return rc;
 }
 
 void reg_heap::check_back_edges_cleared_for_step(int s)
 {
-  for(auto& rcp: steps.access_unused(s).used_inputs)
-    assert(null(rcp.second));
+    for(auto& rcp: steps.access_unused(s).used_inputs)
+	assert(null(rcp.second));
 }
 
 void reg_heap::check_back_edges_cleared_for_result(int rc)
 {
-  assert(null(results.access_unused(rc).call_edge.second));
+    assert(null(results.access_unused(rc).call_edge.second));
 }
 
 void reg_heap::clear_back_edges_for_reg(int /*r*/)
@@ -1676,42 +1676,42 @@ void reg_heap::clear_back_edges_for_reg(int /*r*/)
 
 void reg_heap::clear_back_edges_for_step(int s)
 {
-  assert(s > 0);
-  for(auto& rcp: steps[s].used_inputs)
-  {
-    results[rcp.first].used_by.erase(rcp.second);
-    rcp.second = {};
-  }
+    assert(s > 0);
+    for(auto& rcp: steps[s].used_inputs)
+    {
+	results[rcp.first].used_by.erase(rcp.second);
+	rcp.second = {};
+    }
 }
 
 void reg_heap::clear_back_edges_for_result(int rc)
 {
-  assert(rc > 0);
-  // FIXME! If there is a value, set, there should be a call_edge
-  // FIXME! Should we unmap all values with no .. value/call_edge?
-  int call = results[rc].call_edge.first;
-  if (call)
-  {
-    assert(results[rc].value);
-    auto back_edge = results[rc].call_edge.second;
-    results[call].called_by.erase(back_edge);
-    results[rc].call_edge = {};
-  }
+    assert(rc > 0);
+    // FIXME! If there is a value, set, there should be a call_edge
+    // FIXME! Should we unmap all values with no .. value/call_edge?
+    int call = results[rc].call_edge.first;
+    if (call)
+    {
+	assert(results[rc].value);
+	auto back_edge = results[rc].call_edge.second;
+	results[call].called_by.erase(back_edge);
+	results[rc].call_edge = {};
+    }
 }
 
 void reg_heap::clear_step(int r)
 {
-  assert(not has_result(r));
-  int s = prog_steps[r];
-  prog_steps[r] = 0;
+    assert(not has_result(r));
+    int s = prog_steps[r];
+    prog_steps[r] = 0;
   
-  if (s > 0)
-  {
+    if (s > 0)
+    {
 #ifndef NDEBUG
-    check_back_edges_cleared_for_step(s);
+	check_back_edges_cleared_for_step(s);
 #endif
-    steps.reclaim_used(s);
-  }
+	steps.reclaim_used(s);
+    }
 }
 
 void reg_heap::clear_result(int r)
@@ -1730,690 +1730,690 @@ void reg_heap::clear_result(int r)
 
 void reg_heap::release_tip_token(int t)
 {
-  assert(tokens[t].children.empty());
-  assert(not tokens[t].is_referenced());
+    assert(tokens[t].children.empty());
+    assert(not tokens[t].is_referenced());
 
-  total_destroy_token++;
+    total_destroy_token++;
 
-  // 1. Clear flags of results in the root token before destroying the root token!
-  if (is_root_token(t))
-    for(auto p: tokens[root_token].delta_result())
+    // 1. Clear flags of results in the root token before destroying the root token!
+    if (is_root_token(t))
+	for(auto p: tokens[root_token].delta_result())
+	{
+	    int rc = p.second;
+	    if (rc > 0 and results[rc].flags.test(0))
+		dec_probability(rc);
+	}
+
+    // 2. Destroy computations in the token (this is an optimization)
+    destroy_all_computations_in_token(t);
+
+    // 3. Adjust the token tree
+    int parent = parent_token(t);
+
+    unused_tokens.push_back(t);
+  
+    if (parent != -1)
     {
-      int rc = p.second;
-      if (rc > 0 and results[rc].flags.test(0))
-	dec_probability(rc);
+	// mark token for this context unused
+	assert(not is_root_token(t));
+	assert(tokens.size() - unused_tokens.size() > 0);
+
+	int index = remove_element(tokens[parent_token(t)].children, t);
+	assert(index != -1);
+	tokens[t].parent = -1;
+    }
+    else
+    {
+	assert(is_root_token(t));
+	root_token = -1;
+	assert(tokens.size() - unused_tokens.size() == 0);
     }
 
-  // 2. Destroy computations in the token (this is an optimization)
-  destroy_all_computations_in_token(t);
+    // 4. Set the token to unused
+    tokens[t].used = false;
 
-  // 3. Adjust the token tree
-  int parent = parent_token(t);
-
-  unused_tokens.push_back(t);
-  
-  if (parent != -1)
-  {
-    // mark token for this context unused
-    assert(not is_root_token(t));
-    assert(tokens.size() - unused_tokens.size() > 0);
-
-    int index = remove_element(tokens[parent_token(t)].children, t);
-    assert(index != -1);
-    tokens[t].parent = -1;
-  }
-  else
-  {
-    assert(is_root_token(t));
-    root_token = -1;
-    assert(tokens.size() - unused_tokens.size() == 0);
-  }
-
-  // 4. Set the token to unused
-  tokens[t].used = false;
-
-  // 5. Make sure the token is empty
-  assert(tokens[t].vm_step.empty());
-  assert(tokens[t].vm_result.empty());
+    // 5. Make sure the token is empty
+    assert(tokens[t].vm_step.empty());
+    assert(tokens[t].vm_result.empty());
 }
 
 void reg_heap::capture_parent_token(int t2)
 {
-  int t1 = parent_token(t2);
-  assert(t1 != -1);
+    int t1 = parent_token(t2);
+    assert(t1 != -1);
 
-  int parent = parent_token(t1);
-  assert(parent != -1);
+    int parent = parent_token(t1);
+    assert(parent != -1);
 
-  // make parent point to t2 instead of t1
-  int index = replace_element(tokens[parent].children, t1, t2);
-  assert(index != -1);
+    // make parent point to t2 instead of t1
+    int index = replace_element(tokens[parent].children, t1, t2);
+    assert(index != -1);
 
-  // connect t2 to the parent and to t1
-  tokens[t2].parent = parent;
-  tokens[t2].children.push_back(t1);
+    // connect t2 to the parent and to t1
+    tokens[t2].parent = parent;
+    tokens[t2].children.push_back(t1);
 
-  // token t1 is now a leaf token
-  tokens[t1].parent = t2;
-  index = remove_element(tokens[t1].children, t2);
-  assert(index != -1);
+    // token t1 is now a leaf token
+    tokens[t1].parent = t2;
+    index = remove_element(tokens[t1].children, t2);
+    assert(index != -1);
 }
 
 void reg_heap::release_knuckle_token(int t)
 {
-  assert(token_is_used(t));
-  assert(not tokens[t].is_referenced());
-  assert(tokens[t].children.size() == 1);
+    assert(token_is_used(t));
+    assert(not tokens[t].is_referenced());
+    assert(tokens[t].children.size() == 1);
 
-  int child_token = tokens[t].children[0];
+    int child_token = tokens[t].children[0];
 
-  if (is_root_token(t))
-  {
-    reroot_at(child_token);
-    release_tip_token(t);
-    return;
-  }
+    if (is_root_token(t))
+    {
+	reroot_at(child_token);
+	release_tip_token(t);
+	return;
+    }
 
-  total_release_knuckle++;
+    total_release_knuckle++;
   
-  merge_split_mapping(t, child_token);
+    merge_split_mapping(t, child_token);
 
-  capture_parent_token(child_token);
+    capture_parent_token(child_token);
 
-  assert(tokens[t].version <= tokens[child_token].version);
+    assert(tokens[t].version <= tokens[child_token].version);
 
-  release_tip_token(t);
+    release_tip_token(t);
 }
 
 void reg_heap::release_tip_token_and_ancestors(int t)
 {
-  assert(token_is_used(t));
-  assert(tokens[t].children.empty());
-  assert(not tokens[t].is_referenced());
+    assert(token_is_used(t));
+    assert(tokens[t].children.empty());
+    assert(not tokens[t].is_referenced());
 
-  while(t != -1 and (not tokens[t].is_referenced()) and tokens[t].children.empty())
-  {
-    int parent = parent_token(t);
+    while(t != -1 and (not tokens[t].is_referenced()) and tokens[t].children.empty())
+    {
+	int parent = parent_token(t);
 
-    // clear only the mappings that were actually updated here.
-    release_tip_token(t);
+	// clear only the mappings that were actually updated here.
+	release_tip_token(t);
 
-    t = parent;
-  }
+	t = parent;
+    }
 }
 
 bool reg_heap::is_terminal_token(int t) const
 {
-  assert(token_is_used(t));
+    assert(token_is_used(t));
 
-  return tokens[t].children.empty();
+    return tokens[t].children.empty();
 }
 
 bool reg_heap::is_root_token(int t) const
 {
-  assert(token_is_used(t));
-  assert((t==root_token) == (tokens[t].parent == -1));
+    assert(token_is_used(t));
+    assert((t==root_token) == (tokens[t].parent == -1));
 
-  return t == root_token;
+    return t == root_token;
 }
 
 int reg_heap::parent_token(int t) const
 {
-  return tokens[t].parent;
+    return tokens[t].parent;
 }
 
 const vector<int>& reg_heap::children_of_token(int t) const
 {
-  return tokens[t].children;
+    return tokens[t].children;
 }
 
 int reg_heap::degree_of_token(int t) const
 {
-  int degree = children_of_token(t).size();
-  if (not is_root_token(t))
-    degree++;
-  return degree;
+    int degree = children_of_token(t).size();
+    if (not is_root_token(t))
+	degree++;
+    return degree;
 }
   
 
 bool reg_heap::token_is_used(int t) const
 {
-  assert(t >= 0 and t < tokens.size());
-  return tokens[t].used;
+    assert(t >= 0 and t < tokens.size());
+    return tokens[t].used;
 }
 
 int reg_heap::make_child_token(int t)
 {
 #ifdef DEBUG_MACHINE
-  check_used_regs();
+    check_used_regs();
 #endif
 
-  assert(tokens[t].used);
+    assert(tokens[t].used);
 
-  int t2 = get_unused_token();
+    int t2 = get_unused_token();
 
-  // assert(temp.empty());
+    // assert(temp.empty());
 
-  tokens[t2].triggers = tokens[t].triggers;
+    tokens[t2].triggers = tokens[t].triggers;
 
-  // set parent relationship
-  tokens[t2].parent = t;
-  tokens[t2].children.clear();
+    // set parent relationship
+    tokens[t2].parent = t;
+    tokens[t2].children.clear();
 
-  tokens[t].children.push_back(t2);
+    tokens[t].children.push_back(t2);
 
-  tokens[t2].version = tokens[t].version;
+    tokens[t2].version = tokens[t].version;
 
-  /*
-    Only true for root token!
-  for(int r: tokens[t].modified)
-    if (access(r).re_evaluate)
+    /*
+      Only true for root token!
+      for(int r: tokens[t].modified)
+      if (access(r).re_evaluate)
       assert(reg_has_value(t2,r));
-  */
+    */
 
-  /*
-  // use all the same computations and value.
-  tokens[t2].modified = tokens[t].modified;
-  tokens[t2].virtual_mapping = tokens[t].virtual_mapping;
+    /*
+    // use all the same computations and value.
+    tokens[t2].modified = tokens[t].modified;
+    tokens[t2].virtual_mapping = tokens[t].virtual_mapping;
 
-  for(int r: tokens[t].modified)
-  {
+    for(int r: tokens[t].modified)
+    {
     assert(has_computation(t,r));
     assert(has_computation(t2,r));
-  }
-  */
+    }
+    */
 #ifdef DEBUG_MACHINE
-  check_used_regs();
+    check_used_regs();
 #endif
 
-  return t2;
+    return t2;
 }
 
 int reg_heap::switch_to_child_token(int c)
 {
-  check_tokens();
+    check_tokens();
 
-  int t1 = token_for_context(c);
-  int t2 = make_child_token(t1);
-  unset_token_for_context(c);
-  set_token_for_context(c,t2);
+    int t1 = token_for_context(c);
+    int t2 = make_child_token(t1);
+    unset_token_for_context(c);
+    set_token_for_context(c,t2);
 
-  check_tokens();
+    check_tokens();
 
-  return t2;
+    return t2;
 }
 
 int interchange(int x, int t1, int t2)
 {
-  if (x == t1)
-    return t2;
-  else if (x == t2)
-    return t1;
-  else
-    return x;
+    if (x == t1)
+	return t2;
+    else if (x == t2)
+	return t1;
+    else
+	return x;
 }
 
 int reg_heap::get_n_contexts() const
 {
-  return token_for_context_.size();
+    return token_for_context_.size();
 }
 
 int reg_heap::token_for_context(int c) const
 {
-  assert(c >= 0);
-  return token_for_context_[c];
+    assert(c >= 0);
+    return token_for_context_[c];
 }
 
 int reg_heap::unset_token_for_context(int c)
 {
-  int t = token_for_context(c);
-  assert(t != -1);
-  assert(tokens[t].is_referenced());
+    int t = token_for_context(c);
+    assert(t != -1);
+    assert(tokens[t].is_referenced());
 
-  token_for_context_[c] = -1;
-  tokens[t].n_context_refs--;
-  assert(tokens[t].n_context_refs >= 0);
+    token_for_context_[c] = -1;
+    tokens[t].n_context_refs--;
+    assert(tokens[t].n_context_refs >= 0);
 
-  return t;
+    return t;
 }
 
 void reg_heap::set_token_for_context(int c, int t)
 {
-  assert(token_for_context(c) == -1);
-  token_for_context_[c] = t;
-  assert(tokens[t].n_context_refs >= 0);
-  tokens[t].n_context_refs++;
-  assert(tokens[t].is_referenced());
+    assert(token_for_context(c) == -1);
+    token_for_context_[c] = t;
+    assert(tokens[t].n_context_refs >= 0);
+    tokens[t].n_context_refs++;
+    assert(tokens[t].is_referenced());
 }
 
 int reg_heap::copy_context(int c)
 {
-  check_tokens();
+    check_tokens();
 
-  int t = token_for_context(c);
-  int c2 = get_new_context();
-  set_token_for_context(c2,t);
+    int t = token_for_context(c);
+    int c2 = get_new_context();
+    set_token_for_context(c2,t);
 
-  check_tokens();
-  return c2;
+    check_tokens();
+    return c2;
 }
 
 int reg_heap::get_new_context()
 {
-  // Add an unused context if we are missing one
-  if (unused_contexts.empty())
-  {
-    unused_contexts.push_back(get_n_contexts());
-    token_for_context_.push_back(-1);
-  }
+    // Add an unused context if we are missing one
+    if (unused_contexts.empty())
+    {
+	unused_contexts.push_back(get_n_contexts());
+	token_for_context_.push_back(-1);
+    }
 
-  // Get a new context index and check it has no token
-  int c = unused_contexts.back();
-  unused_contexts.pop_back();
-  assert(token_for_context(c) == -1);
+    // Get a new context index and check it has no token
+    int c = unused_contexts.back();
+    unused_contexts.pop_back();
+    assert(token_for_context(c) == -1);
 
-  return c;
+    return c;
 }
 
 int reg_heap::get_unused_context()
 {
-  int c = get_new_context();
+    int c = get_new_context();
   
-  set_token_for_context(c, get_unused_token());
+    set_token_for_context(c, get_unused_token());
 
-  check_tokens();
+    check_tokens();
 
-  return c;
+    return c;
 }
 
 void reg_heap::release_context(int c)
 {
-  // release the reference to the token
-  check_tokens();
+    // release the reference to the token
+    check_tokens();
 
-  int t = unset_token_for_context(c);
+    int t = unset_token_for_context(c);
 
-  if ((not tokens[t].is_referenced()) and tokens[t].children.size() == 0)
-    release_tip_token_and_ancestors(t);
+    if ((not tokens[t].is_referenced()) and tokens[t].children.size() == 0)
+	release_tip_token_and_ancestors(t);
 
-  // Mark the context as unused
-  token_for_context_[c] = -1;
-  unused_contexts.push_back(c);
+    // Mark the context as unused
+    token_for_context_[c] = -1;
+    unused_contexts.push_back(c);
 
-  check_tokens();
+    check_tokens();
 }
 
 std::vector<int>& reg_heap::triggers_for_context(int c)
 {
-  reroot_at_context(c);
-  return triggers();
+    reroot_at_context(c);
+    return triggers();
 }
 
 bool reg_heap::reg_is_fully_up_to_date_in_context(int R, int c)
 {
-  reroot_at_context(c);
-  return reg_is_fully_up_to_date(R);
+    reroot_at_context(c);
+    return reg_is_fully_up_to_date(R);
 }
 
 bool reg_heap::reg_is_fully_up_to_date(int R) const
 {
-  // 1. Handle index_var nodes!
-  int type = access(R).C.exp.head().type();
-  if (type == index_var_type)
-  {
-    assert( not reg_is_changeable(R) );
+    // 1. Handle index_var nodes!
+    int type = access(R).C.exp.head().type();
+    if (type == index_var_type)
+    {
+	assert( not reg_is_changeable(R) );
 
-    assert( not reg_has_value(R) );
+	assert( not reg_has_value(R) );
 
-    assert( not reg_has_call(R) );
+	assert( not reg_has_call(R) );
 
-    int index = access(R).C.exp.as_index_var();
+	int index = access(R).C.exp.as_index_var();
 
-    int R2 = access(R).C.lookup_in_env( index );
+	int R2 = access(R).C.lookup_in_env( index );
 
-    return reg_is_fully_up_to_date(R2);
-  }
+	return reg_is_fully_up_to_date(R2);
+    }
 
-  // 2. If we've never been evaluated OR we're not constant and have no value, then return false;
-  if (not reg_has_value(R)) return false;
+    // 2. If we've never been evaluated OR we're not constant and have no value, then return false;
+    if (not reg_has_value(R)) return false;
 
-  const closure& value = access_value_for_reg(R);
+    const closure& value = access_value_for_reg(R);
 
-  // NOTE! value cannot be an index_var.
-  const expression_ref& E = value.exp;
+    // NOTE! value cannot be an index_var.
+    const expression_ref& E = value.exp;
 
-  // Therefore, if the value is atomic, then R is up-to-date.
-  if (not E.size()) return true;
+    // Therefore, if the value is atomic, then R is up-to-date.
+    if (not E.size()) return true;
 
-  // If the value is a lambda function, then R is up-to-date.
-  if (E.head().type() != constructor_type) return true;
+    // If the value is a lambda function, then R is up-to-date.
+    if (E.head().type() != constructor_type) return true;
 
-  // If we get here, this had better be a constructor!
-  assert(E.head().is_a<constructor>());
+    // If we get here, this had better be a constructor!
+    assert(E.head().is_a<constructor>());
 
-  // Check each component that is a index_var to see if its out of date.
-  for(int i=0;i<E.size();i++)
-  {
-    int R2 = value.lookup_in_env( E.sub()[i].as_index_var() );
+    // Check each component that is a index_var to see if its out of date.
+    for(int i=0;i<E.size();i++)
+    {
+	int R2 = value.lookup_in_env( E.sub()[i].as_index_var() );
     
-    if (not reg_is_fully_up_to_date(R2)) return false;
-  }
+	if (not reg_is_fully_up_to_date(R2)) return false;
+    }
 
-  // All the components must be fully up-to-date, so R is fully up-to-date.
-  return true;
+    // All the components must be fully up-to-date, so R is fully up-to-date.
+    return true;
 }
 
 const expression_ref& reg_heap::get_parameter_value_in_context(int p, int c)
 {
-  int& R = parameters[p].second;
+    int& R = parameters[p].second;
 
-  return get_reg_value_in_context(R, c);
+    return get_reg_value_in_context(R, c);
 }
 
 const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
 {
-  total_get_reg_value++;
-  if (access(R).type == reg::type_t::constant) return access(R).C.exp;
+    total_get_reg_value++;
+    if (access(R).type == reg::type_t::constant) return access(R).C.exp;
 
-  total_get_reg_value_non_const++;
-  reroot_at_context(c);
+    total_get_reg_value_non_const++;
+    reroot_at_context(c);
 
-  if (has_result(R))
-  {
-    total_get_reg_value_non_const_with_result++;
-    int R2 = result_value_for_reg(R);
-    if (R2) return access(R2).C.exp;
-  }
+    if (has_result(R))
+    {
+	total_get_reg_value_non_const_with_result++;
+	int R2 = result_value_for_reg(R);
+	if (R2) return access(R2).C.exp;
+    }
 
-  // If the value needs to be computed (e.g. its a call expression) then compute it.
-  auto p = incremental_evaluate_in_context(R,c);
-  R = p.first;
-  int value = p.second;
+    // If the value needs to be computed (e.g. its a call expression) then compute it.
+    auto p = incremental_evaluate_in_context(R,c);
+    R = p.first;
+    int value = p.second;
 
-  return access(value).C.exp;
+    return access(value).C.exp;
 }
 
 void reg_heap::set_reg_value_in_context(int P, closure&& C, int c)
 {
-  int t = switch_to_child_token(c);
+    int t = switch_to_child_token(c);
 
-  set_reg_value(P, std::move(C), t);
+    set_reg_value(P, std::move(C), t);
 }
 
 pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
 {
 #if DEBUG_MACHINE >= 2
-  check_used_regs();
+    check_used_regs();
 #endif
 
-  reroot_at_context(c);
-  mark_completely_dirty(root_token);
-  auto p = incremental_evaluate(R);
+    reroot_at_context(c);
+    mark_completely_dirty(root_token);
+    auto p = incremental_evaluate(R);
 
 #if DEBUG_MACHINE >= 2
-  check_used_regs();
+    check_used_regs();
 #endif
 
-  return p;
+    return p;
 }
 
 const closure& reg_heap::lazy_evaluate(int& R)
 {
-  mark_completely_dirty(root_token);
-  auto p = incremental_evaluate(R);
-  R = p.first;
-  int value = p.second;
-  return access(value).C;
+    mark_completely_dirty(root_token);
+    auto p = incremental_evaluate(R);
+    R = p.first;
+    int value = p.second;
+    return access(value).C;
 }
 
 const closure& reg_heap::lazy_evaluate(int& R, int c)
 {
-  auto p = incremental_evaluate_in_context(R,c);
-  R = p.first;
-  int value = p.second;
-  return access(value).C;
+    auto p = incremental_evaluate_in_context(R,c);
+    R = p.first;
+    int value = p.second;
+    return access(value).C;
 }
 
 const closure& reg_heap::lazy_evaluate_head(int index, int c)
 {
-  int R1 = heads[index];
-  auto p = incremental_evaluate_in_context(R1,c);
-  int R2 = p.first;
-  int value = p.second;
-  if (R2 != R1)
-    set_head(index, R2);
+    int R1 = heads[index];
+    auto p = incremental_evaluate_in_context(R1,c);
+    int R2 = p.first;
+    int value = p.second;
+    if (R2 != R1)
+	set_head(index, R2);
 
-  return access(value).C;
+    return access(value).C;
 }
 
 const closure& reg_heap::lazy_evaluate_unchangeable(int& R)
 {
-  R = incremental_evaluate_unchangeable(R);
-  return access(R).C;
+    R = incremental_evaluate_unchangeable(R);
+    return access(R).C;
 }
 
 int reg_heap::get_modifiable_value_in_context(int R, int c)
 {
-  assert( access(R).C.exp.head().type() == modifiable_type);
-  assert( reg_is_changeable(R) );
+    assert( access(R).C.exp.head().type() == modifiable_type);
+    assert( reg_is_changeable(R) );
 
-  reroot_at_context(c);
+    reroot_at_context(c);
 
-  return call_for_reg(R);
+    return call_for_reg(R);
 }
 
 int reg_heap::add_identifier(const string& name)
 {
-  // if there's already an 's', then complain
-  if (identifiers.count(name))
-    throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
+    // if there's already an 's', then complain
+    if (identifiers.count(name))
+	throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
 
-  int R = allocate();
-  total_reg_allocations++;
+    int R = allocate();
+    total_reg_allocations++;
 
-  identifiers[name] = R;
-  return R;
+    identifiers[name] = R;
+    return R;
 }
 
 reg_heap::reg_heap(const module_loader& L)
-  :base_pool_t(1),
-   steps(1),
-   results(1),
-   P(new Program),
-   loader(L),
-   prog_steps(1),
-   prog_results(1),
-   prog_temp(1)
+    :base_pool_t(1),
+     steps(1),
+     results(1),
+     P(new Program),
+     loader(L),
+     prog_steps(1),
+     prog_results(1),
+     prog_temp(1)
 { 
-  //  results.collect_garbage = [this](){collect_garbage();};
-  steps.collect_garbage = [](){};
-  results.collect_garbage = [](){};
+    //  results.collect_garbage = [this](){collect_garbage();};
+    steps.collect_garbage = [](){};
+    results.collect_garbage = [](){};
 
 #ifndef NDEBUG
-  steps.clear_references = [this](int s){check_back_edges_cleared_for_step(s);};
-  results.clear_references = [this](int rc){check_back_edges_cleared_for_step(rc);};
+    steps.clear_references = [this](int s){check_back_edges_cleared_for_step(s);};
+    results.clear_references = [this](int rc){check_back_edges_cleared_for_step(rc);};
 #endif
-  steps.clear_references = [this](int){};
-  results.clear_references = [this](int){};
+    steps.clear_references = [this](int){};
+    results.clear_references = [this](int){};
 }
 
 void reg_heap::release_scratch_list() const
 {
-  n_active_scratch_lists--;
+    n_active_scratch_lists--;
 }
 
 vector<int>& reg_heap::get_scratch_list() const
 {
-  while(n_active_scratch_lists >= scratch_lists.size())
-    scratch_lists.push_back( new Vector<int> );
+    while(n_active_scratch_lists >= scratch_lists.size())
+	scratch_lists.push_back( new Vector<int> );
 
-  vector<int>& v = *scratch_lists[ n_active_scratch_lists++ ];
+    vector<int>& v = *scratch_lists[ n_active_scratch_lists++ ];
 
-  v.clear();
+    v.clear();
 
-  return v;
+    return v;
 }
 
 closure let_float(closure&& C)
 {
-  C.exp = let_float(expression_ref(C.exp));
-  C.exp = do_optimize_DCE(C.exp);
-  return C;
+    C.exp = let_float(expression_ref(C.exp));
+    C.exp = do_optimize_DCE(C.exp);
+    return C;
 }
 
 closure graph_normalize(closure&& C)
 {
-  C.exp = graph_normalize(expression_ref(C.exp));
-  return C;
+    C.exp = graph_normalize(expression_ref(C.exp));
+    return C;
 }
 
 closure indexify(closure&& C)
 {
-  C.exp = indexify(expression_ref(C.exp));
-  return C;
+    C.exp = indexify(expression_ref(C.exp));
+    return C;
 }
 
 closure trim_normalize(closure&& C)
 {
-  C.exp = trim_normalize(expression_ref(C.exp));
-  return C;
+    C.exp = trim_normalize(expression_ref(C.exp));
+    return C;
 }
 
 closure resolve_refs(const vector<Module>& P, closure&& C)
 {
-  C.exp = resolve_refs(P, C.exp);
-  return C;
+    C.exp = resolve_refs(P, C.exp);
+    return C;
 }
 
 closure reg_heap::preprocess(const closure& C)
 {
-  assert(C.exp);
-  assert(let_float(C.exp).print() == let_float(let_float(C.exp)).print());
-  //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
-  return trim_normalize( indexify( graph_normalize( let_float( translate_refs( resolve_refs(*P, closure(C) ) ) ) ) ) );
+    assert(C.exp);
+    assert(let_float(C.exp).print() == let_float(let_float(C.exp)).print());
+    //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
+    return trim_normalize( indexify( graph_normalize( let_float( translate_refs( resolve_refs(*P, closure(C) ) ) ) ) ) );
 }
 
 expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t& Env)
 {
-  int reg = -1;
+    int reg = -1;
 
-  // Replace parameters with the appropriate reg_var: of value parameter( )
-  if (E.is_a<parameter>())
-  {
-    string name = E.as_<parameter>().parameter_name;
-    string qualified_name = name;
-
-    int param_index = find_parameter(qualified_name);
-    
-    if (param_index == -1)
-      throw myexception()<<"Can't translate undefined parameter '"<<qualified_name<<"' ('"<<name<<"') in expression!";
-
-    reg = parameters[param_index].second;
-  }
-
-  // Replace parameters with the appropriate reg_var: of value whatever
-  if (E.is_a<identifier>())
-  {
-    string name = E.as_<identifier>().name;
-    string qualified_name = name;
-    assert(is_qualified_symbol(qualified_name) or is_haskell_builtin_con_name(qualified_name));
-    auto loc = identifiers.find( qualified_name );
-    if (loc == identifiers.end())
+    // Replace parameters with the appropriate reg_var: of value parameter( )
+    if (E.is_a<parameter>())
     {
-      if (is_haskell_builtin_con_name(name))
-      {
-	symbol_info S = Module::lookup_builtin_symbol(name);
-	add_identifier(S.name);
-      
-	// get the root for each identifier
-	loc = identifiers.find(S.name);
-	assert(loc != identifiers.end());
-	
-	int R = loc->second;
-	
-	assert(R != -1);
-	set_C(R, preprocess(S.body) );
-      }
-      else
-	throw myexception()<<"Can't translate undefined identifier '"<<name<<"' in expression!";
+	string name = E.as_<parameter>().parameter_name;
+	string qualified_name = name;
+
+	int param_index = find_parameter(qualified_name);
+    
+	if (param_index == -1)
+	    throw myexception()<<"Can't translate undefined parameter '"<<qualified_name<<"' ('"<<name<<"') in expression!";
+
+	reg = parameters[param_index].second;
     }
 
-    reg = loc->second;
-  }
+    // Replace parameters with the appropriate reg_var: of value whatever
+    if (E.is_a<identifier>())
+    {
+	string name = E.as_<identifier>().name;
+	string qualified_name = name;
+	assert(is_qualified_symbol(qualified_name) or is_haskell_builtin_con_name(qualified_name));
+	auto loc = identifiers.find( qualified_name );
+	if (loc == identifiers.end())
+	{
+	    if (is_haskell_builtin_con_name(name))
+	    {
+		symbol_info S = Module::lookup_builtin_symbol(name);
+		add_identifier(S.name);
+      
+		// get the root for each identifier
+		loc = identifiers.find(S.name);
+		assert(loc != identifiers.end());
+	
+		int R = loc->second;
+	
+		assert(R != -1);
+		set_C(R, preprocess(S.body) );
+	    }
+	    else
+		throw myexception()<<"Can't translate undefined identifier '"<<name<<"' in expression!";
+	}
 
-  // Replace parameters with the appropriate reg_var: of value whatever
-  if (E.is_a<reg_var>())
-    reg = E.as_<reg_var>().target;
+	reg = loc->second;
+    }
 
-  if (reg != -1)
-  {
-    int index = Env.size();
-    Env.insert(Env.begin(), reg);
+    // Replace parameters with the appropriate reg_var: of value whatever
+    if (E.is_a<reg_var>())
+	reg = E.as_<reg_var>().target;
 
-    return index_var(index);
-  }
+    if (reg != -1)
+    {
+	int index = Env.size();
+	Env.insert(Env.begin(), reg);
 
-  // Other constants have no parts, and don't need to be translated
-  if (not E.size()) return E;
+	return index_var(index);
+    }
 
-  // Translate the parts of the expression
-  object_ptr<expression> V = E.as_expression().clone();
-  for(int i=0;i<V->size();i++)
-    V->sub[i] = translate_refs(V->sub[i], Env);
+    // Other constants have no parts, and don't need to be translated
+    if (not E.size()) return E;
 
-  return V;
+    // Translate the parts of the expression
+    object_ptr<expression> V = E.as_expression().clone();
+    for(int i=0;i<V->size();i++)
+	V->sub[i] = translate_refs(V->sub[i], Env);
+
+    return V;
 }
 
 closure reg_heap::translate_refs(closure&& C)
 {
-  closure C2 = C;
-  C2.exp = translate_refs(C2.exp, C2.Env);
-  return C2;
+    closure C2 = C;
+    C2.exp = translate_refs(C2.exp, C2.Env);
+    return C2;
 }
 
 int reg_heap::find_parameter(const string& s) const
 {
-  for(int i=0;i<parameters.size();i++)
-    if (parameters[i].first == s)
-      return i;
+    for(int i=0;i<parameters.size();i++)
+	if (parameters[i].first == s)
+	    return i;
 
-  return -1;
+    return -1;
 }
 
 const vector<int>& reg_heap::transition_kernels() const
 {
-  return transition_kernels_;
+    return transition_kernels_;
 }
 
 int reg_heap::add_transition_kernel(int r)
 {
-  int i = transition_kernels_.size();
-  transition_kernels_.push_back(r);
-  inc_heads(r);
-  return i;
+    int i = transition_kernels_.size();
+    transition_kernels_.push_back(r);
+    inc_heads(r);
+    return i;
 }
 
 int reg_heap::add_parameter(const string& full_name)
 {
-  assert(full_name.size() != 0);
+    assert(full_name.size() != 0);
 
-  // 1. Check that we don't already have a parameter with that name
-  for(const auto& parameter: parameters)
-    if (parameter.first == full_name)
-      throw myexception()<<"A parameter with name '"<<full_name<<"' already exists - cannot add another one.";
+    // 1. Check that we don't already have a parameter with that name
+    for(const auto& parameter: parameters)
+	if (parameter.first == full_name)
+	    throw myexception()<<"A parameter with name '"<<full_name<<"' already exists - cannot add another one.";
 
-  // 2. Allocate space for the parameter
-  int r = allocate();
-  parameters.push_back( {full_name, r} );
-  inc_heads(r);
+    // 2. Allocate space for the parameter
+    int r = allocate();
+    parameters.push_back( {full_name, r} );
+    inc_heads(r);
 
-  // 3. Set its value to new_modifiable
-  expression_ref E = identifier("new_modifiable");
-  E = (identifier("unsafePerformIO"), E);
-  E = (identifier("evaluate"),-1,E);
+    // 3. Set its value to new_modifiable
+    expression_ref E = identifier("new_modifiable");
+    E = (identifier("unsafePerformIO"), E);
+    E = (identifier("evaluate"),-1,E);
 
-  set_C(r, preprocess( E ) );
+    set_C(r, preprocess( E ) );
 
 
-  return r;
+    return r;
 }
