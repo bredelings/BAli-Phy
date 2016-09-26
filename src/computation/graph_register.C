@@ -1099,13 +1099,8 @@ void reg_heap::merge_split_mapping(int t1, int t2)
 
 // Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
 // where (m2,v2) is at the root and (m1,v1) is relative.
-void reg_heap::pivot_step_mapping(int t1, int t2)
+void pivot_mapping(mapping& vm1, mapping& vm2)
 {
-  auto& vm1 = tokens[t1].vm_step;
-  auto& vm2 = tokens[t2].vm_step;
-
-  total_steps_pivoted += vm2.delta().size();
-  
   for(int i=0;i<vm2.delta().size();i++)
   {
     int r = vm2.delta()[i].first;
@@ -1125,38 +1120,6 @@ void reg_heap::pivot_step_mapping(int t1, int t2)
 
     vm1.set_value(r,s1);
     vm2.set_value(r,s2);
-  }
-  std::swap(vm1,vm2);
-}
-
-// Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
-// where (m2,v2) is at the root and (m1,v1) is relative.
-void reg_heap::pivot_relative_mapping(int t1, int t2)
-{
-  auto& vm1 = tokens[t1].vm_result;
-  auto& vm2 = tokens[t2].vm_result;
-
-  total_results_pivoted += vm2.delta().size();
-
-  for(int i=0;i<vm2.delta().size();i++)
-  {
-    int r = vm2.delta()[i].first;
-    assert(vm2[r]);
-
-    int rc1 = vm1[r];
-    int rc2 = vm2[r];
-
-    // switch from root/0 => root/-
-    if (rc1 == 0) rc1 = -1;
-
-    // switch root positions
-    std::swap(rc1,rc2);
-
-    // switch from root/0 => root/-
-    if (rc1 == -1) rc1 = 0;
-
-    vm1.set_value(r,rc1);
-    vm2.set_value(r,rc2);
   }
   std::swap(vm1,vm2);
 }
@@ -1223,8 +1186,10 @@ void reg_heap::reroot_at(int t)
   unshare_regs(t);
 
   // 3. Change the relative mappings
-  pivot_step_mapping(parent, t);
-  pivot_relative_mapping(parent, t);
+  total_steps_pivoted += tokens[t].vm_step.delta().size();
+  total_results_pivoted += tokens[t].vm_result.delta().size();
+  pivot_mapping(tokens[parent].vm_step, tokens[t].vm_step);
+  pivot_mapping(tokens[parent].vm_result, tokens[t].vm_result);
 
   // 4. Alter the inheritance tree
   tokens[parent].parent = t;

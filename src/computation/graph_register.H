@@ -369,9 +369,6 @@ public:
 
   void merge_split_mapping(int, int);
 
-  void pivot_step_mapping(int, int);
-  void pivot_relative_mapping(int, int);
-
   /*------------- Stuff for context indices -----------*/
   std::vector<int> unused_contexts;
 
