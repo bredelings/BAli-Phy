@@ -1704,11 +1704,7 @@ void reg_heap::clear_back_edges_for_step(int s)
 	rcp.second = {};
     }
     for(auto& r: steps[s].created_regs)
-    {
-	auto& created_by = access(r).created_by;
-	created_by.first = 0; // or -1?
-	created_by.second = {};
-    }
+	access(r).created_by = {0,{}};
     steps[s].created_regs.clear();
 }
 
