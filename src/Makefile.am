@@ -107,9 +107,9 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  tools/partition.C mcmc/proposals.C n_indels.C n_indels2.C alignment/alignment-util2.C \
 	  tools/parsimony.C tools/parsimony2.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
-	  imodel/setup.C computation/computation.C computation/tokens.C \
+	  imodel/setup.C computation/computation.C computation/tokens.C computation/preprocess.C \
 	  computation/graph_register.C computation/show_graph.C computation/module.C \
-	  computation/formula_expression.C computation/evaluate.C computation/gc.C \
+	  computation/formula_expression.C computation/evaluate.C computation/gc.C computation/reroot.C \
 	  computation/operations.C computation/loader.C computation/context.C computation/closure.C \
 	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C \
 	  parser/AST.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
