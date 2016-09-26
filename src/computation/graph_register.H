@@ -483,8 +483,11 @@ public:
 
   int remove_shared_result(int t, int r);
 
-  int add_shared_step(int t, int r);
-  int add_shared_result(int t, int r, int step);
+  int get_shared_step(int r);
+  int get_shared_result(int r, int step);
+
+  int add_shared_step(int r);
+  int add_shared_result(int r, int step);
 
   void clear_step(int r);
   void clear_result(int r);

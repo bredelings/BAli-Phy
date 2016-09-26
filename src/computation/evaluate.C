@@ -314,7 +314,7 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
       // We keep the (same) computation here, until we prove that we don't need one.
       // We don't need one if we evaluate to WHNF, and then we remove it.
       if (not has_step(R))
-	add_shared_step(root_token, R);
+	add_shared_step(R);
       int S = step_index_for_reg(R);
 
       // Incrementing the ref count wastes time, but avoids a crash.

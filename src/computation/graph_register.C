@@ -811,7 +811,7 @@ void reg_heap::set_result_value_for_reg(int r1)
 
   int rc1 = result_index_for_reg(r1);
   if (rc1 <= 0)
-    rc1 = add_shared_result(root_token, r1, step_index_for_reg(r1));
+    rc1 = add_shared_result(r1, step_index_for_reg(r1));
   assert(rc1 > 0);
   auto& RC1 = results[rc1];
   RC1.value = value;
@@ -1002,7 +1002,8 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
   assert(not is_root_token(t));
 
   // Finally set the new value.
-  int s = add_shared_step(t,R);
+  int s = get_shared_step(R);
+  tokens[t].vm_step.set_value(R,s);
 
   assert(not children_of_token(t).size());
 
@@ -1045,8 +1046,8 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
 void reg_heap::set_shared_value(int r, int v)
 {
   // add a new computation
-  int step = add_shared_step(root_token, r);
-  add_shared_result(root_token, r, step);
+  int step = add_shared_step(r);
+  add_shared_result(r, step);
 
   // set the value
   set_call(r, v);
@@ -1778,11 +1779,8 @@ void reg_heap::check_used_regs() const
 	assert(not c);
 }
 
-/// Add a shared step at (t,r) -- assuming there isn't one already
-int reg_heap::add_shared_step(int t, int r)
+int reg_heap::get_shared_step(int r)
 {
-  assert(tokens[t].vm_step[r] <= 0);
-
   // 1. Get a new computation
   int s = steps.allocate();
   total_step_allocations++;
@@ -1790,19 +1788,25 @@ int reg_heap::add_shared_step(int t, int r)
   // 2. Set the source of the computation
   steps[s].source_reg = r;
 
-  // 3. Link it in to the mapping
-  tokens[t].vm_step.set_value(r, s);
-
   return s;
 }
 
-/// Add a shared result at (t,r) -- assuming there isn't one already
-int reg_heap::add_shared_result(int t, int r, int s)
+/// Add a shared step at (t,r) -- assuming there isn't one already
+int reg_heap::add_shared_step(int r)
 {
-  assert(tokens[t].vm_result[r] <= 0);
-  // There should already be a step, if there is a result
-  assert(tokens[t].vm_step[r] > 0);
+    assert(not has_step(r));
 
+    // Allocate a step
+    int s = get_shared_step(r);
+
+    // Link it in to the mapping
+    tokens[root_token].vm_step.set_value(r, s);
+
+    return s;
+}
+
+int reg_heap::get_shared_result(int r, int s)
+{
   // 1. Get a new result
   int rc = results.allocate();
   total_comp_allocations++;
@@ -1811,8 +1815,21 @@ int reg_heap::add_shared_result(int t, int r, int s)
   results[rc].source_step = s;
   results[rc].source_reg = r;
 
-  // 3. Link it in to the mapping
-  tokens[t].vm_result.set_value(r, rc);
+  return rc;
+}
+
+/// Add a shared result at (t,r) -- assuming there isn't one already
+int reg_heap::add_shared_result(int r, int s)
+{
+    assert(not has_result(r));
+    // There should already be a step, if there is a result
+    assert(has_step(r));
+
+    // Get a result
+    int rc = get_shared_result(r,s);
+
+    // Link it in to the mapping
+    tokens[root_token].vm_result.set_value(r, rc);
 
   return rc;
 }
