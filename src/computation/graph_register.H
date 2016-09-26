@@ -368,8 +368,6 @@ public:
   int switch_to_child_token(int);
 
   void merge_split_mapping(int, int);
-  void merge_split_step_mapping(int, int);
-  void merge_split_relative_mapping(int, int);
 
   void pivot_step_mapping(int, int);
   void pivot_relative_mapping(int, int);
@@ -395,7 +393,7 @@ public:
 
   int token_for_context(int) const;
 
-        std::vector<int>& triggers_for_context(int c);
+  std::vector<int>& triggers_for_context(int c);
 
   bool reg_is_fully_up_to_date_in_context(int c, int r);
 

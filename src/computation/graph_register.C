@@ -1060,94 +1060,41 @@ void swap_value(mapping& vm1, mapping& vm2, int r)
   vm2.replace_value(r,v1);
 }
 
+void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
+{
+    for(auto p: vm2.delta())
+    {
+	int r = p.first;
+	prog_temp[r] = 1;
+    }
+
+    for(int i=0;i<vm1.delta().size();)
+    {
+	int r = vm1.delta()[i].first;
+	int v = vm1.delta()[i].second;
+
+	if (not prog_temp[r])
+	{
+	    vm2.add_value(r,v);
+	    vm1.erase_value(r);
+	}
+	else
+	    i++;
+    }
+
+    for(auto p: vm2.delta())
+    {
+	int r = p.first;
+	prog_temp[r] = 0;
+    }
+}
+
 // Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
 // and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
 void reg_heap::merge_split_mapping(int t1, int t2)
 {
-  merge_split_step_mapping(t1, t2);
-  merge_split_relative_mapping(t1, t2);
-}
-
-void reg_heap::merge_split_step_mapping(int t1, int t2)
-{
-    auto& vm1 = tokens[t1].vm_step;
-    auto& vm2 = tokens[t2].vm_step;
-
-    auto delta_step1 = vm1.delta();
-    auto delta_step2 = vm2.delta();
-
-    for(auto p: delta_step2)
-    {
-	int r = p.first;
-	prog_temp[r] = 1;
-    }
-
-    for(int i=0;i<delta_step1.size();)
-    {
-	int r = delta_step1[i].first;
-	int v = delta_step1[i].second;
-
-	if (not prog_temp[r])
-	{
-	    delta_step2.emplace_back(r,v);
-	    vm2.add_value(r,v);
-
-	    if (i < delta_step1.size())
-		delta_step1[i] = delta_step1.back();
-	    delta_step1.pop_back();
-	    vm1.erase_value(r);
-	}
-	else
-	    i++;
-    }
-
-    for(auto p: delta_step2)
-    {
-	int r = p.first;
-	prog_temp[r] = 0;
-    }
-}
-
-// Given mapping (m1,v1) followed by (m2,v2), compute a combined mapping for (m1,v1)+(m2,v2) -> (m2,v2)
-// and a mapping (m1,v1)-(m2,v2)->(m1,v1) for things that now are unused.
-void reg_heap::merge_split_relative_mapping(int t1, int t2)
-{
-    auto& vm1 = tokens[t1].vm_result;
-    auto& vm2 = tokens[t2].vm_result;
-
-    auto delta_result1 = vm1.delta();
-    auto delta_result2 = vm2.delta();
-
-    for(auto p: delta_result2)
-    {
-	int r = p.first;
-	prog_temp[r] = 1;
-    }
-
-    for(int i=0;i<delta_result1.size();)
-    {
-	int r = delta_result1[i].first;
-	int v = delta_result1[i].second;
-
-	if (not prog_temp[r])
-	{
-	    delta_result2.emplace_back(r,v);
-	    vm2.add_value(r,v);
-
-	    if (i < delta_result1.size())
-		delta_result1[i] = delta_result1.back();
-	    delta_result1.pop_back();
-	    vm1.erase_value(r);
-	}
-	else
-	    i++;
-    }
-
-    for(auto p: delta_result2)
-    {
-	int r = p.first;
-	prog_temp[r] = 0;
-    }
+    merge_split_mapping_(tokens[t1].vm_step, tokens[t2].vm_step, prog_temp);
+    merge_split_mapping_(tokens[t1].vm_result, tokens[t2].vm_result, prog_temp);
 }
 
 // Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
