@@ -103,46 +103,31 @@ public:
 
 class mapping
 {
-  struct address
-  {
-    int value = 0;
-    int index = -1;
-    address() {}
-    address(int i1):value(i1) {}
-  };
-
   std::vector<std::pair<int,int>> delta_;
-  std::vector<address> values;
+
 public:
   mapping& operator=(mapping&) = default;
 
   mapping& operator=(mapping&& vm) noexcept
   {
     delta_ = std::move(vm.delta_);
-    values = std::move(vm.values);
     return *this;
   }
 
-  int operator[](int i) const {return values[i].value;}
-  bool has_value(int r) const;
   void add_value(int r, int v);
-  int replace_value(int r, int v);
-  int erase_value(int r);
   int erase_value_at(int index);
-  int set_value(int r, int v);
   void clear();
   void resize(int s);
-  int size() const;
   bool empty() const;
 
   const std::vector<std::pair<int,int>>& delta() const {return delta_;}
+        std::vector<std::pair<int,int>>& delta()       {return delta_;}
   
   mapping() {}
   mapping(int s) {resize(s);}
   mapping(const mapping&) = default;
   mapping(mapping&& vm) noexcept
-  :delta_(std::move(vm.delta_)),
-    values(std::move(vm.values))
+  :delta_(std::move(vm.delta_))
   { }
 };
 

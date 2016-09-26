@@ -310,6 +310,28 @@ void unmap_unused(mapping& vm, pool<Obj>& Objs, pool<reg>& regs)
   }
 }
 
+template <typename Obj>
+void unmap_unused(vector<int>& prog, pool<Obj>& Objs, pool<reg>& regs)
+{
+  for(int r=0; r < prog.size(); r++)
+  {
+    int obj = prog[r];
+    assert(obj != 0);
+    // if there's a step mapped that is going to be destroyed, then remove the mapping.
+    if (obj > 0 and not Objs.is_marked(obj))
+      prog[r] = 0;
+    // if the reg is going to be destroyed, and the step is unshared, remove the unsharing mark.
+    else if (obj < 0 and not regs.is_marked(r))
+      prog[r] = 0;
+    else
+    {
+      // if there's a step mapped and its not going to be destroyed, then we should know that the reg is used.
+      if (obj > 0) assert(regs.is_marked(reg));
+      // advance to the next modified reg, if the previous one 
+    }
+  }
+}
+
 void reg_heap::trace_and_reclaim_unreachable()
 {
 #ifdef DEBUG_MACHINE
@@ -332,10 +354,16 @@ void reg_heap::trace_and_reclaim_unreachable()
   // unmap all the unused results
   for(int t=0; t < get_n_tokens(); t++)
     if (token_is_used(t))
-    {
-      unmap_unused(tokens[t].vm_step, steps, *this);
-      unmap_unused(tokens[t].vm_result, results, *this);
-    }
+	if (is_root_token(t))
+	{
+	    unmap_unused(prog_steps, steps, *this);
+	    unmap_unused(prog_results, results, *this);
+	}
+	else
+	{
+	    unmap_unused(tokens[t].vm_step, steps, *this);
+	    unmap_unused(tokens[t].vm_result, results, *this);
+	}
 
   // remove all back-edges
   for(auto i = steps.begin();i != steps.end(); i++)

@@ -335,102 +335,33 @@ void reg::check_cleared()
   assert(n_heads == 0);
 }
 
-bool mapping::has_value(int r) const {return operator[](r);}
-
 void mapping::add_value(int r, int v) 
 {
-  assert(not has_value(r));
   assert(v);
 
-  address A(v);
-  A.index = delta_.size();
-
-  values[r] = A;
   delta_.emplace_back(r,v);
-
-  assert(delta_[values[r].index].first == r);
-  assert(delta_[values[r].index].second == v);
-}
-
-int mapping::erase_value(int r)
-{
-    assert(values[r].value);
-    erase_value_at(values[r].index);
 }
 
 int mapping::erase_value_at(int index)
 {
-  int r = delta_[index].first;
-  int v = delta_[index].second;
-
-  // The reg should be mapped.
-  assert(v);
-
-  // Check correspondence between delta_ and values
-  assert(delta_[values[r].index].first == r);
-
   auto back = delta_.back();
-  int r2 = back.first;
   delta_.pop_back();
 
   // If we are deleting from the middle, move the last element to the middle
   if (index < delta_.size())
-  {
     delta_[index] = back;
-    values[r2].index = index;
-    assert(delta_[values[r2].index].first == r2);
-  }
 
-  values[r] = {};
-  return v;
-}
-
-int mapping::replace_value(int r, int v)
-{
-  assert(values[r].value);
-  assert(v);
-  int v_old = values[r].value;
-  values[r].value = v;
-  delta_[values[r].index].second = v;
-  return v_old;
-}
-
-int mapping::set_value(int r, int v)
-{
-  if (v)
-  {
-    if (has_value(r))
-      return replace_value(r,v);
-    else
-    {
-      add_value(r,v);
-      return 0;
-    }
-  }
-  else if (has_value(r))
-    return erase_value_at(values[r].index);
-  else
-  {
-    return 0;
-  }
+  return back.second;
 }
 
 void mapping::clear()
 {
-  for(auto p: delta_)
-    values[p.first] = {};
   delta_.clear();
 }
 
 void mapping::resize(int s)
 {
-  values.resize(s);
   delta_.reserve(s);
-}
-
-int mapping::size() const
-{
-  return values.size();
 }
 
 bool mapping::empty() const
@@ -642,12 +573,12 @@ const std::vector<int>& reg_heap::triggers() const {return tokens[root_token].tr
 
 int reg_heap::step_index_for_reg(int r) const 
 {
-  return tokens[root_token].vm_step[r];
+    return prog_steps[r];
 }
 
 int reg_heap::result_index_for_reg(int r) const 
 {
-  return tokens[root_token].vm_result[r];
+    return prog_results[r];
 }
 
 const Step& reg_heap::step_for_reg(int r) const 
@@ -935,7 +866,12 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
 
   // Finally set the new value.
   int s = get_shared_step(R);
-  tokens[t].vm_step.set_value(R,s);
+
+  assert(tokens[t].vm_step.empty());
+  tokens[t].vm_step.add_value(R,s);
+
+  assert(tokens[t].vm_result.empty());
+  tokens[t].vm_result.add_value(R,-1);
 
   assert(not children_of_token(t).size());
 
@@ -967,7 +903,6 @@ void reg_heap::set_reg_value(int R, closure&& value, int t)
     // Set the call
     set_C(R2, std::move( value ) );
   }
-  tokens[t].vm_result.set_value(R,-1);
 
 #if DEBUG_MACHINE >= 2
   check_used_regs();
@@ -1024,15 +959,14 @@ void reg_heap::merge_split_mapping(int t1, int t2)
 
 // Given a mapping (m1,v1) at the root followed by the relative mapping (m2,v2), construct a new mapping
 // where (m2,v2) is at the root and (m1,v1) is relative.
-void pivot_mapping(mapping& vm1, mapping& vm2)
+void pivot_mapping(vector<int>& prog1, mapping& vm2)
 {
   for(int i=0;i<vm2.delta().size();i++)
   {
     int r = vm2.delta()[i].first;
-    assert(vm2[r]);
 
-    int s1 = vm1[r];
-    int s2 = vm2[r];
+    int& s1 = prog1[r];
+    int& s2 = vm2.delta()[i].second;
 
     // switch from root/0 => root/-
     if (s1 == 0) s1 = -1;
@@ -1042,11 +976,7 @@ void pivot_mapping(mapping& vm1, mapping& vm2)
 
     // switch from root/0 => root/-
     if (s1 == -1) s1 = 0;
-
-    vm1.set_value(r,s1);
-    vm2.set_value(r,s2);
   }
-  std::swap(vm1,vm2);
 }
 
 void reg_heap::reroot_at_context(int c)
@@ -1113,8 +1043,10 @@ void reg_heap::reroot_at(int t)
   // 3. Change the relative mappings
   total_steps_pivoted += tokens[t].delta_step().size();
   total_results_pivoted += tokens[t].delta_result().size();
-  pivot_mapping(tokens[parent].vm_step, tokens[t].vm_step);
-  pivot_mapping(tokens[parent].vm_result, tokens[t].vm_result);
+  pivot_mapping(prog_steps, tokens[t].vm_step);
+  std::swap(tokens[parent].vm_step, tokens[t].vm_step);
+  pivot_mapping(prog_results, tokens[t].vm_result);
+  std::swap(tokens[parent].vm_result, tokens[t].vm_result);
 
   // 4. Alter the inheritance tree
   tokens[parent].parent = t;
@@ -1431,18 +1363,6 @@ void reg_heap::expand_memory(int s)
 
   base_pool_t::expand_memory(s);
 
-  // Extend virtual mappings, with virtual_mapping[i] = 0;
-  for(int t=0;t<tokens.size();t++)
-  {
-    tokens[t].vm_step.resize(size());
-    tokens[t].vm_result.resize(size());
-    for(int i=old_size;i<size();i++)
-    {
-      assert(tokens[t].vm_step[i] == 0);
-      assert(tokens[t].vm_result[i] == 0);
-    }
-  }
-
   // Extend program
   prog_steps.resize(size());
   prog_results.resize(size());
@@ -1492,13 +1412,6 @@ int reg_heap::get_unused_token()
   {
     unused_tokens.push_back(get_n_tokens());
     tokens.push_back(Token());
-    tokens.back().vm_step.resize(size());
-    tokens.back().vm_result.resize(size());
-    for(int i=0;i<size();i++)
-    {
-      assert(tokens.back().vm_step[i] == 0);
-      assert(tokens.back().vm_result[i] == 0);
-    }
     total_tokens = tokens.size();
   }
 
@@ -1677,6 +1590,9 @@ void reg_heap::check_used_regs_in_token(int t) const
 
 void reg_heap::check_used_regs() const
 {
+    assert(tokens[root_token].vm_step.empty());
+    assert(tokens[root_token].vm_result.empty());
+
     for(auto c: prog_temp)
 	assert(not c);
 
@@ -1709,7 +1625,7 @@ int reg_heap::add_shared_step(int r)
     int s = get_shared_step(r);
 
     // Link it in to the mapping
-    tokens[root_token].vm_step.set_value(r, s);
+    prog_steps[r] = s;
 
     return s;
 }
@@ -1738,7 +1654,7 @@ int reg_heap::add_shared_result(int r, int s)
     int rc = get_shared_result(r,s);
 
     // Link it in to the mapping
-    tokens[root_token].vm_result.set_value(r, rc);
+    prog_results[r] = rc;
 
   return rc;
 }
@@ -1786,9 +1702,8 @@ void reg_heap::clear_back_edges_for_result(int rc)
 void reg_heap::clear_step(int r)
 {
   assert(not has_result(r));
-  int s = 0;
-  if (tokens[root_token].vm_step[r])
-      s = tokens[root_token].vm_step.erase_value(r);
+  int s = prog_steps[r];
+  prog_steps[r] = 0;
   
   if (s > 0)
   {
@@ -1801,9 +1716,8 @@ void reg_heap::clear_step(int r)
 
 void reg_heap::clear_result(int r)
 {
-    int rc = 0;
-    if (tokens[root_token].vm_result[r])
-	rc = tokens[root_token].vm_result.erase_value(r);
+    int rc = prog_results[r];
+    prog_results[r] = 0;
 
     if (rc > 0)
     {
