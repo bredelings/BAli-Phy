@@ -1941,24 +1941,6 @@ int reg_heap::make_child_token(int t)
 
     tokens[t2].version = tokens[t].version;
 
-    /*
-      Only true for root token!
-      for(int r: tokens[t].modified)
-      if (access(r).re_evaluate)
-      assert(reg_has_value(t2,r));
-    */
-
-    /*
-    // use all the same computations and value.
-    tokens[t2].modified = tokens[t].modified;
-    tokens[t2].virtual_mapping = tokens[t].virtual_mapping;
-
-    for(int r: tokens[t].modified)
-    {
-    assert(has_computation(t,r));
-    assert(has_computation(t2,r));
-    }
-    */
 #ifdef DEBUG_MACHINE
     check_used_regs();
 #endif
