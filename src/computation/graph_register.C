@@ -747,10 +747,10 @@ void reg_heap::set_call(int R1, int R2)
 
 void reg_heap::destroy_all_computations_in_token(int t)
 {
-    // Remove use back-edges
     auto& delta_step = tokens[t].delta_step();
     auto& delta_result = tokens[t].delta_result();
 
+    // Remove use back-edges
     for(auto p: delta_step)
     {
 	int s = p.second;
