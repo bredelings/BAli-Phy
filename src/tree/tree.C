@@ -1586,6 +1586,8 @@ int Tree::induce_partition(const dynamic_bitset<>& partition)
 /// This ensures that list of branches or nodes connected to a specific node have the same order.
 void Tree::set_equivalent_node_pointers(const vector<BranchNode*>& old_nodes)
 {
+  if (nodes_.size() < 2) return;
+
   // Assign the nodes to the same branch they were on the other tree!
   assert(nodes_.size() == old_nodes.size());
   for(int n=0;n<nodes_.size();n++)
@@ -2470,7 +2472,7 @@ Tree star_tree(int n)
   BranchNode* center = get_first_node(1);
 
   if (n == 1)
-    ;
+    center->node_attributes->name = 0;
   else if (n == 2)
   {
     center->node_attributes->name = 0;
