@@ -1237,7 +1237,7 @@ void reg_heap::clear_back_edges_for_result(int rc)
 	assert(results[rc].value);
 	auto back_edge = results[rc].call_edge.second;
 	results[call].called_by.erase(back_edge);
-	results[rc].call_edge = {};
+	results[rc].call_edge = {0,{}};
     }
 }
 
