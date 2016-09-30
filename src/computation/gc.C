@@ -326,7 +326,7 @@ void unmap_unused(vector<int>& prog, pool<Obj>& Objs, pool<reg>& regs)
 	else
 	{
 	    // if there's a step mapped and its not going to be destroyed, then we should know that the reg is used.
-	    if (obj > 0) assert(regs.is_marked(reg));
+	    if (obj > 0) assert(regs.is_marked(r));
 	    // advance to the next modified reg, if the previous one 
 	}
     }
