@@ -316,19 +316,16 @@ void unmap_unused(vector<int>& prog, pool<Obj>& Objs, pool<reg>& regs)
     for(int r=0; r < prog.size(); r++)
     {
 	int obj = prog[r];
-	assert(obj != 0);
-	// if there's a step mapped that is going to be destroyed, then remove the mapping.
-	if (obj > 0 and not Objs.is_marked(obj))
+	assert(obj >= 0);
+	// If there's no step/result mapped here, then there's nothing to do.
+	if (obj == 0) continue;
+
+	// if the step/result mapped here is going to be destroyed, then remove the mapping.
+	if (not Objs.is_marked(obj))
 	    prog[r] = 0;
-	// if the reg is going to be destroyed, and the step is unshared, remove the unsharing mark.
-	else if (obj < 0 and not regs.is_marked(r))
-	    prog[r] = 0;
+	// if the step/result mapped here is NOT going to be destroyed, then we should know that the reg is used.
 	else
-	{
-	    // if there's a step mapped and its not going to be destroyed, then we should know that the reg is used.
-	    if (obj > 0) assert(regs.is_marked(r));
-	    // advance to the next modified reg, if the previous one 
-	}
+	    assert(regs.is_marked(r));
     }
 }
 
