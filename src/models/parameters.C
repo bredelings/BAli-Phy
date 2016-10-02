@@ -569,8 +569,16 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
     
     if (T.node(n).is_leaf_node())
     {
-      node = List(edges.front());
-      p_node = { -1 };
+      if (edges.empty())
+      {
+	node = List();
+	p_node = { };  
+      }
+      else
+      {
+	node = List(edges.front());
+        p_node = { -1 };
+      }
     }
     else
     {
