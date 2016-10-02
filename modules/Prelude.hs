@@ -200,7 +200,7 @@ sumi     = foldl (+) 0;
 producti = foldl (*) 1;
 
 enumFrom x = x:(enumFrom (x+1));
-enumFromTo x y = if (x==y) then [x] else x:(enumFromTo (x+1) y);
+enumFromTo x y = if (x>y) then [] else x:(enumFromTo (x+1) y);
 
 zipWith z (a:as) (b:bs) =  z a b : zipWith z as bs;
 zipWith _ _ _           =  [];
