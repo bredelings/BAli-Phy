@@ -598,6 +598,18 @@ void name_node(BranchNode* start,int i)
     } while (n != start);
 }
 
+int Tree::n_leafbranches() const
+{
+    int n = n_nodes();
+
+    if (n == 2)
+	return 1;
+    else if (n < 2)
+	return 0;
+    else
+	return n_leaves();
+}
+
 const vector<int>& Tree::leaf_nodes() const
 {
     // Require that leaf node ORDER is determined by the node_ order,
