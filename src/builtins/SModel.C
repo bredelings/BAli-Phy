@@ -1033,6 +1033,26 @@ extern "C" closure builtin_function_calc_root_probability(OperationArgs& Args)
     return {Pr};
 }
 
+inline double letter_class_frequency(int l, const alphabet& a, const vector<double>& f)
+{
+    assert(a.is_letter_class(l));
+    double p = 0;
+    const auto& fmask = a.letter_fmask(l);
+    for(int j=0; j<a.size(); j++)
+	p += f[j] * fmask[j];
+    return p;
+}
+
+inline log_double_t letter_frequency(int l, const alphabet& a, const vector<double>& f, const vector<log_double_t>& lf)
+{
+    if (a.is_letter(l))
+	return lf[l];
+    else if (a.is_letter_class(l))
+	return letter_class_frequency(l,a,f);
+    else
+	return 1;
+}
+
 extern "C" closure builtin_function_peel_likelihood_1(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
@@ -1056,9 +1076,10 @@ extern "C" closure builtin_function_peel_likelihood_1(OperationArgs& Args)
     log_double_t Pr = 1;
 
     for(auto l: seq)
-	if (a.is_letter(l))
-	    Pr *= LF[l];
-	else if (a.is_letter_class(l))
+	Pr *= letter_frequency(l, a, F, LF);
+
+    return {Pr};
+}
 	{
 	    double f = 0;
 	    const auto & fmask = a.letter_fmask(l);
