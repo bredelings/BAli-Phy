@@ -6,7 +6,7 @@ import Tree;
 builtin rs07_branch_HMM 4 "rs07_branch_HMM" "Alignment";
 builtin builtin_rs07_lengthp 2 "rs07_lengthp" "Alignment";
 
-rs07_lengthp = doubleToLogDouble . builtin_rs07_lengthp;
+rs07_lengthp e l = doubleToLogDouble (builtin_rs07_lengthp e l);
 
 rs07_model tree = Prefix "RS07"
 (do { logLambda <- laplace (-4.0) (1.0/sqrt 2.0);
