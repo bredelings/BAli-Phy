@@ -10,232 +10,235 @@ using std::set;
 /// Determine the parameters of model \a M that must be sorted in order to enforce identifiability.
 vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, const vector<string>& names)
 {
-  if (not dynamic_cast<const Parameters*>(&M)) return {};
+    if (not dynamic_cast<const Parameters*>(&M)) return {};
 
-  const Parameters& P = dynamic_cast<const Parameters&>(M);
-  vector< vector< vector<int> > > indices;
+    const Parameters& P = dynamic_cast<const Parameters&>(M);
+    vector< vector< vector<int> > > indices;
 
-  int n_smodels = P.n_smodels();
+    int n_smodels = P.n_smodels();
 
-  for(int i=0;i<n_smodels+1;i++) 
-  {
-    string prefix = "^";
-    if (i>0)
-      prefix = string("S")+convertToString(i) + ".";
-
-    vector< vector<int> > DP;
-    if (parameters_with_extension(names, prefix + "DP.rate*").size()  )
+    for(int i=0;i<n_smodels+1;i++) 
     {
-      DP.push_back( parameters_with_extension(names, prefix + "DP.rate*") );
-      DP.push_back( parameters_with_extension(names, prefix + "DP.f*") );
-      indices.push_back( DP );
+	string prefix = "^";
+	if (i>0)
+	    prefix = string("S")+convertToString(i) + ".";
+
+	vector< vector<int> > DP;
+	if (parameters_with_extension(names, prefix + "DP.rate*").size()  )
+	{
+	    DP.push_back( parameters_with_extension(names, prefix + "DP.rate*") );
+	    DP.push_back( parameters_with_extension(names, prefix + "DP.f*") );
+	    indices.push_back( DP );
+	}
+
+	vector< vector<int> > M3;
+	if (parameters_with_extension(names, prefix + "M3.omega*").size() )
+	{
+	    M3.push_back( parameters_with_extension(names, prefix + "M3.omega*") );
+	    M3.push_back( parameters_with_extension(names, prefix + "M3.f*") );
+	    indices.push_back( M3 );
+	}
     }
 
-    vector< vector<int> > M3;
-    if (parameters_with_extension(names, prefix + "M3.omega*").size() )
-    {
-      M3.push_back( parameters_with_extension(names, prefix + "M3.omega*") );
-      M3.push_back( parameters_with_extension(names, prefix + "M3.f*") );
-      indices.push_back( M3 );
-    }
-  }
-
-  return indices;
+    return indices;
 }
 
 void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& logged_computations, vector<string>& logged_names)
 {
-  assert(index != -1);
-  auto result = M.evaluate(index);
-  if (result.is_double() or result.is_int())
-  {
-    logged_computations.push_back(index);
-    logged_names.push_back(name);
-    index = -1;
-    return;
-  }
-
-  if (result.head().is_a<constructor>())
-  {
-    auto& c = result.head().as_<constructor>();
-    if (c.f_name == "Prelude.True" or c.f_name == "Prelude.False")
+    assert(index != -1);
+    auto result = M.evaluate(index);
+    if (result.is_double() or result.is_int())
     {
-      logged_computations.push_back(index);
-      logged_names.push_back(name);
-      index = -1;
-      return;
+	logged_computations.push_back(index);
+	logged_names.push_back(name);
+	index = -1;
+	return;
     }
 
-    if (c.f_name == "[]")
-      return;
-
-    if (c.f_name == ":")
+    if (result.head().is_a<constructor>())
     {
-      expression_ref L = M.get_expression(index);
-      expression_ref E = (identifier("Prelude.length"),L);
-      int length = M.evaluate_expression(E).as_int();
-      int index2 = -1;
-      for(int i=0;i<length;i++)
-      {
-	expression_ref E2 = (identifier("Prelude.!!"),L,i) ;
-	if (index2 == -1)
-	  index2 = M.add_compute_expression(E2);
-	else
-	  M.set_compute_expression(index2, E2);
+	auto& c = result.head().as_<constructor>();
+	if (c.f_name == "Prelude.True" or c.f_name == "Prelude.False")
+	{
+	    logged_computations.push_back(index);
+	    logged_names.push_back(name);
+	    index = -1;
+	    return;
+	}
 
-	find_sub_loggers(M, index2, name+"!!"+convertToString(i), logged_computations, logged_names);
-      }
+	if (c.f_name == "[]")
+	    return;
+
+	if (c.f_name == ":")
+	{
+	    expression_ref L = M.get_expression(index);
+	    expression_ref E = (identifier("Prelude.length"),L);
+	    int length = M.evaluate_expression(E).as_int();
+	    int index2 = -1;
+	    for(int i=0;i<length;i++)
+	    {
+		expression_ref E2 = (identifier("Prelude.!!"),L,i) ;
+		if (index2 == -1)
+		    index2 = M.add_compute_expression(E2);
+		else
+		    M.set_compute_expression(index2, E2);
+
+		find_sub_loggers(M, index2, name+"!!"+convertToString(i), logged_computations, logged_names);
+	    }
+	}
     }
-  }
 }
 
 owned_ptr<MCMC::LoggerFunction<std::string>> construct_table_function(owned_ptr<Model>& M, const vector<string>& Rao_Blackwellize)
 {
-  owned_ptr<Parameters> P = M.as<Parameters>();
+    owned_ptr<Parameters> P = M.as<Parameters>();
 
-  using namespace MCMC;
-  owned_ptr<TableGroupFunction<string> > TL = claim(new TableGroupFunction<string>);
+    using namespace MCMC;
+    owned_ptr<TableGroupFunction<string> > TL = claim(new TableGroupFunction<string>);
   
-  TL->add_field("iter", ConvertToStringFunction<long>( IterationsFunction() ) );
-  TL->add_field("prior", GetPriorFunction() );
-  if (P)
+    TL->add_field("iter", ConvertToStringFunction<long>( IterationsFunction() ) );
+    TL->add_field("prior", GetPriorFunction() );
+    if (P)
+	for(int i=0;i<P->n_data_partitions();i++)
+	    if ((*P)[i].variable_alignment())
+		TL->add_field("prior_A"+convertToString(i+1), GetAlignmentPriorFunction(i) );
+    TL->add_field("likelihood", GetLikelihoodFunction() );
+    TL->add_field("logp", GetProbabilityFunction() );
+  
+    {
+	vector<int> logged_computations;
+	vector<string> logged_names;
+
+	vector<string> names_ = parameter_names(*M);
+	set<string> names(names_.begin(), names_.end());
+
+	// FIXME: Using short_parameter_names should be nice... but
+	//          we are now logging EXPRESSIONS as well as actual parameters
+	//        This makes such simplification difficult.
+
+	for(int i=0;i<M->n_parameters();i++)
+	{
+	    string name = M->parameter_name(i);
+	    if (name.size() and name[0] == '*' and not log_verbose) continue;
+
+	    int index = M->add_compute_expression(parameter(name));
+
+	    find_sub_loggers(*M, index, name, logged_computations, logged_names);
+	}
+
+	TableGroupFunction<expression_ref> T1;
+	for(int i=0;i<logged_computations.size();i++)
+	{
+	    int index = logged_computations[i];
+	    string name = logged_names[i];
+	    T1.add_field(name, GetComputationFunction(index) );
+	}
+
+	SortedTableFunction T2(T1, get_un_identifiable_indices(*M, logged_names));
+
+	TL->add_fields( ConvertTableToStringFunction<expression_ref>( T2 ) );
+    }
+
+    for(const auto& p: Rao_Blackwellize)
+    {
+	int p_index = M->find_parameter(p);
+	if (p_index == -1)
+	    throw myexception()<<"No such parameter '"<<p<<"' to Rao-Blackwellize";
+
+	vector<expression_ref> values = {0,1};
+	TL->add_field("RB-"+p, Get_Rao_Blackwellized_Parameter_Function(p_index, values));
+    }
+
+    if (not P) return TableLogger<string>(*TL);
+
     for(int i=0;i<P->n_data_partitions();i++)
-      if ((*P)[i].variable_alignment())
-	TL->add_field("prior_A"+convertToString(i+1), GetAlignmentPriorFunction(i) );
-  TL->add_field("likelihood", GetLikelihoodFunction() );
-  TL->add_field("logp", GetProbabilityFunction() );
-  
-  {
-    vector<int> logged_computations;
-    vector<string> logged_names;
-
-    vector<string> names_ = parameter_names(*M);
-    set<string> names(names_.begin(), names_.end());
-
-    // FIXME: Using short_parameter_names should be nice... but
-    //          we are now logging EXPRESSIONS as well as actual parameters
-    //        This makes such simplification difficult.
-
-    for(int i=0;i<M->n_parameters();i++)
     {
-      string name = M->parameter_name(i);
-      if (name.size() and name[0] == '*' and not log_verbose) continue;
-
-      int index = M->add_compute_expression(parameter(name));
-
-      find_sub_loggers(*M, index, name, logged_computations, logged_names);
+	if ((*P)[i].variable_alignment())
+	{
+	    TL->add_field("|A"+convertToString(i+1)+"|", Get_Alignment_Length_Function(i) );
+	    TL->add_field("#indels"+convertToString(i+1), Get_Num_Indels_Function(i) );
+	    TL->add_field("|indels"+convertToString(i+1)+"|", Get_Total_Length_Indels_Function(i) );
+	}
+	const alphabet& a = (*P)[i].get_alphabet();
+	TL->add_field("#substs"+convertToString(i+1), Get_Num_Substitutions_Function(i, unit_cost_matrix(a)) );
+	if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
+	    TL->add_field("#substs(nuc)"+convertToString(i+1), Get_Num_Substitutions_Function(i, nucleotide_cost_matrix(*Tr)) );
+	if (const Codons* C = dynamic_cast<const Codons*>(&a))
+	    TL->add_field("#substs(aa)"+convertToString(i+1), Get_Num_Substitutions_Function(i, amino_acid_cost_matrix(*C)) );
     }
-
-    TableGroupFunction<expression_ref> T1;
-    for(int i=0;i<logged_computations.size();i++)
-    {
-      int index = logged_computations[i];
-      string name = logged_names[i];
-      T1.add_field(name, GetComputationFunction(index) );
-    }
-
-    SortedTableFunction T2(T1, get_un_identifiable_indices(*M, logged_names));
-
-    TL->add_fields( ConvertTableToStringFunction<expression_ref>( T2 ) );
-  }
-
-  for(const auto& p: Rao_Blackwellize)
-  {
-    int p_index = M->find_parameter(p);
-    if (p_index == -1)
-      throw myexception()<<"No such parameter '"<<p<<"' to Rao-Blackwellize";
-
-    vector<expression_ref> values = {0,1};
-    TL->add_field("RB-"+p, Get_Rao_Blackwellized_Parameter_Function(p_index, values));
-  }
-
-  if (not P) return TableLogger<string>(*TL);
-
-  for(int i=0;i<P->n_data_partitions();i++)
-  {
-    if ((*P)[i].variable_alignment())
-    {
-      TL->add_field("|A"+convertToString(i+1)+"|", Get_Alignment_Length_Function(i) );
-      TL->add_field("#indels"+convertToString(i+1), Get_Num_Indels_Function(i) );
-      TL->add_field("|indels"+convertToString(i+1)+"|", Get_Total_Length_Indels_Function(i) );
-    }
-    const alphabet& a = (*P)[i].get_alphabet();
-    TL->add_field("#substs"+convertToString(i+1), Get_Num_Substitutions_Function(i, unit_cost_matrix(a)) );
-    if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
-      TL->add_field("#substs(nuc)"+convertToString(i+1), Get_Num_Substitutions_Function(i, nucleotide_cost_matrix(*Tr)) );
-    if (const Codons* C = dynamic_cast<const Codons*>(&a))
-      TL->add_field("#substs(aa)"+convertToString(i+1), Get_Num_Substitutions_Function(i, amino_acid_cost_matrix(*C)) );
-  }
   
-  if (P->variable_alignment()) {
-    TL->add_field("|A|", Get_Total_Alignment_Length_Function() );
-    TL->add_field("#indels", Get_Total_Num_Indels_Function() );
-    TL->add_field("|indels|", Get_Total_Total_Length_Indels_Function() );
-  }
-  TL->add_field("#substs", Get_Total_Num_Substitutions_Function() );
+    if (P->variable_alignment()) {
+	TL->add_field("|A|", Get_Total_Alignment_Length_Function() );
+	TL->add_field("#indels", Get_Total_Num_Indels_Function() );
+	TL->add_field("|indels|", Get_Total_Total_Length_Indels_Function() );
+    }
+    TL->add_field("#substs", Get_Total_Num_Substitutions_Function() );
   
-  TL->add_field("|T|", Get_Tree_Length_Function() );
+    TL->add_field("|T|", Get_Tree_Length_Function() );
 
-  return TableLogger<string>(*TL);
+    return TableLogger<string>(*TL);
 }
 
 vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subsample, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
 {
-  using namespace MCMC;
-  vector<owned_ptr<Logger> > loggers;
+    using namespace MCMC;
+    vector<owned_ptr<Logger> > loggers;
 
-  owned_ptr<Parameters> P = M.as<Parameters>();
+    owned_ptr<Parameters> P = M.as<Parameters>();
 
-  string base = dir_name + "/" + "C" + convertToString(proc_id+1);
+    string base = dir_name + "/" + "C" + convertToString(proc_id+1);
 
-  owned_ptr<LoggerFunction<string> > TF = Subsample_Function(*construct_table_function(M, Rao_Blackwellize),subsample);
+    owned_ptr<LoggerFunction<string> > TF = Subsample_Function(*construct_table_function(M, Rao_Blackwellize),subsample);
 
-  owned_ptr<Logger> s = FunctionLogger(base +".p", *TF);
+    owned_ptr<Logger> s = FunctionLogger(base +".p", *TF);
   
-  // Write out scalar numerical variables (and functions of them) to C<>.p
-  loggers.push_back( s );
+    // Write out scalar numerical variables (and functions of them) to C<>.p
+    loggers.push_back( s );
   
-  if (not P) return loggers;
+    if (not P) return loggers;
 
-  // Write out the (scaled) tree each iteration to C<>.trees
-  loggers.push_back( FunctionLogger(base + ".trees", TreeFunction()<<"\n" ) );
+    // Write out the (scaled) tree each iteration to C<>.trees
+    loggers.push_back( FunctionLogger(base + ".trees", TreeFunction()<<"\n" ) );
   
-  // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
-  {
-    ConcatFunction F; 
-    F<<*TF<<"\n";
-    F<<Show_SModels_Function()<<"\n";
-    for(int i=0;i<P->n_data_partitions();i++)
-      if ((*P)[i].variable_alignment())
-	F<<AlignmentFunction(i)<<"\n\n";
-    F<<TreeFunction()<<"\n\n";
-    loggers.push_back( FunctionLogger(base + ".MAP", MAP_Function(F)) );
-  }
-
-  // Write out the probability that each column is in a particular substitution component to C<>.P<>.CAT
-  if (P->contains_key("log-categories"))
-    for(int i=0;i<P->n_data_partitions();i++)
-      loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
-					Mixture_Components_Function(i) ) );
-
-  // Write out ancestral sequences
-  if (P->contains_key("log-ancestral"))
-    for(int i=0;i<P->n_data_partitions();i++)
-      loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".ancestral.fastas", 
-					Ancestral_Sequences_Function(i) ) );
-
-  // Write out the alignments for each (variable) partition to C<>.P<>.fastas
-  for(int i=0;i<P->n_data_partitions();i++)
-    if ((*P)[i].variable_alignment()) 
+    // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
     {
-      string filename = base + ".P" + convertToString(i+1)+".fastas";
-
-      ConcatFunction F;
-      F<<"iterations = "<<ConvertToStringFunction<long> ( IterationsFunction() )<<"\n\n";
-      F<<AlignmentFunction(i);
-
-      loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10) ) );
+	ConcatFunction F; 
+	F<<*TF<<"\n";
+	F<<Show_SModels_Function()<<"\n";
+	if (P->t().n_nodes() > 1)
+	    for(int i=0;i<P->n_data_partitions();i++)
+		if ((*P)[i].variable_alignment())
+		    F<<AlignmentFunction(i)<<"\n\n";
+	F<<TreeFunction()<<"\n\n";
+	loggers.push_back( FunctionLogger(base + ".MAP", MAP_Function(F)) );
     }
-  return loggers;
+
+    // Write out the probability that each column is in a particular substitution component to C<>.P<>.CAT
+    if (P->contains_key("log-categories"))
+	for(int i=0;i<P->n_data_partitions();i++)
+	    loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
+					      Mixture_Components_Function(i) ) );
+
+    // Write out ancestral sequences
+    if (P->contains_key("log-ancestral") and P->t().n_nodes() > 1)
+	for(int i=0;i<P->n_data_partitions();i++)
+	    loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".ancestral.fastas", 
+					      Ancestral_Sequences_Function(i) ) );
+
+    // Write out the alignments for each (variable) partition to C<>.P<>.fastas
+    if (P->t().n_nodes() > 1)
+	for(int i=0;i<P->n_data_partitions();i++)
+	    if ((*P)[i].variable_alignment()) 
+	    {
+		string filename = base + ".P" + convertToString(i+1)+".fastas";
+		
+		ConcatFunction F;
+		F<<"iterations = "<<ConvertToStringFunction<long> ( IterationsFunction() )<<"\n\n";
+		F<<AlignmentFunction(i);
+		
+		loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10) ) );
+	    }
+
+    return loggers;
 }
 
