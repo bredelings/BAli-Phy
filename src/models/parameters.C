@@ -371,8 +371,6 @@ log_double_t data_partition::prior_alignment() const
 
   log_double_t Pr = P->evaluate(DPC().alignment_prior_index).as_log_double();
 
-  assert(not different(Pr, ::prior_HMM(*this)));
-
   return Pr;
 }
 

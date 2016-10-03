@@ -25,10 +25,5 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 //-------------- Alignment Priors -----------------//
 
-log_double_t prior_HMM_rootless_scale(const data_partition& P);
 log_double_t prior_branch(const pairwise_alignment_t&,const indel::PairHMM&);
-log_double_t prior_branch_from_counts(const matrix<int>& counts, const indel::PairHMM&);
-log_double_t prior_HMM_nogiven(const data_partition&);
-log_double_t prior_HMM(const data_partition&);
-matrix<int> get_path_counts(const pairwise_alignment_t& a,int node1, int node2);
 #endif
