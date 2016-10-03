@@ -484,6 +484,13 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     sequence_length_indices[n] = p->add_compute_expression( L );
   }
 
+  if (p->t().n_nodes() == 1)
+  {
+    auto seq = (identifier("!"),seqs_array, 0);
+    auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
+    likelihood_index = p->add_compute_expression((identifier("peel_likelihood_1"), seq, *a, f));
+  }
+  else
   {
     auto t = p->my_tree();
     auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
@@ -516,7 +523,13 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     }
 
     // Alignment prior
-    alignment_prior_index = p->add_compute_expression( (identifier("alignment_pr"), as, p->my_tree(), hmms, model) );
+    if (p->t().n_nodes() == 1)
+    {
+      auto seq = (identifier("!"),seqs_array, 0);
+      alignment_prior_index = p->add_compute_expression( (identifier("alignment_pr1"), seq, model) );
+    }
+    else
+      alignment_prior_index = p->add_compute_expression( (identifier("alignment_pr"), as, p->my_tree(), hmms, model) );
   }
 }
 
@@ -1161,7 +1174,7 @@ Parameters::Parameters(const module_loader& L,
   evaluate_expression( (identifier("numBranches"), my_tree()));
   evaluate_expression( (identifier("edgesOutOfNode"), my_tree(), 0));
   evaluate_expression( (identifier("neighbors"), my_tree(), 0));
-  evaluate_expression( (identifier("nodesForEdge"),my_tree(), 0));
+  //  evaluate_expression( (identifier("nodesForEdge"),my_tree(), 0));
   //  evaluate_expression( (identifier("edgeForNodes"), my_tree(), (identifier("nodesForEdge"),my_tree(), 0))).as_int();
   for(int b=0; b < 2*tt.n_branches(); b++)
   {
