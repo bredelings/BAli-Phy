@@ -17,41 +17,41 @@ using std::abs;
 
 extern "C" closure builtin_function_lExp(OperationArgs& Args)
 {
-  auto L = Args.evaluate(0);
-  auto pi = Args.evaluate(1);
-  double t = Args.evaluate(2).as_double();
+    auto L = Args.evaluate(0);
+    auto pi = Args.evaluate(1);
+    double t = Args.evaluate(2).as_double();
 
-  auto M = new Box<Matrix>;
-  *M = exp(L.as_<EigenValues>(), pi.as_<Vector<double>>(), t);
-  return M;
+    auto M = new Box<Matrix>;
+    *M = exp(L.as_<EigenValues>(), pi.as_<Vector<double>>(), t);
+    return M;
 }
 
 extern "C" closure builtin_function_reversible_rate_matrix(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  const Matrix& S = arg0.as_<Box<Matrix>>();
+    auto arg0 = Args.evaluate(0);
+    const Matrix& S = arg0.as_<Box<Matrix>>();
 
-  auto arg1 = Args.evaluate(1);
-  const Matrix& R = arg1.as_<Box<Matrix>>();
+    auto arg1 = Args.evaluate(1);
+    const Matrix& R = arg1.as_<Box<Matrix>>();
     
-  const unsigned N = S.size1();
-  assert(S.size1() == R.size1());
-  assert(S.size1() == R.size2());
+    const unsigned N = S.size1();
+    assert(S.size1() == R.size1());
+    assert(S.size1() == R.size2());
 
-  object_ptr<Box<Matrix>> Q_(new Box<Matrix>(N,N));
-  Matrix& Q = *Q_;
+    object_ptr<Box<Matrix>> Q_(new Box<Matrix>(N,N));
+    Matrix& Q = *Q_;
 
-  for(int i=0;i<N;i++) {
-    double sum=0;
-    for(int j=0;j<N;j++) {
-      if (i==j) continue;
-      Q(i,j) = S(i,j) * R(i,j);
-      sum += Q(i,j);
+    for(int i=0;i<N;i++) {
+	double sum=0;
+	for(int j=0;j<N;j++) {
+	    if (i==j) continue;
+	    Q(i,j) = S(i,j) * R(i,j);
+	    sum += Q(i,j);
+	}
+	Q(i,i) = -sum;
     }
-    Q(i,i) = -sum;
-  }
 
-  return Q_;
+    return Q_;
 }
 
 /*
@@ -64,233 +64,233 @@ extern "C" closure builtin_function_reversible_rate_matrix(OperationArgs& Args)
 
 extern "C" closure builtin_function_get_eigensystem(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  const Matrix& Q = arg0.as_< Box<Matrix> >();
+    auto arg0 = Args.evaluate(0);
+    const Matrix& Q = arg0.as_< Box<Matrix> >();
 
-  auto arg1 = Args.evaluate(1);
-  const vector<double>& pi = arg1.as_< Vector<double> >();
+    auto arg1 = Args.evaluate(1);
+    const vector<double>& pi = arg1.as_< Vector<double> >();
 
-  const unsigned n = Q.size1();
-  assert(Q.size2() == Q.size1());
-
-#ifdef DEBUG_RATE_MATRIX
-  assert(std::abs(sum(pi)-1.0) < 1.0e-6);
-  for(int i=0;i<n;i++) {
-    double sum = 0;
-    for(int j=0;j<n;j++)
-      sum += Q(i,j);
-    assert(abs(sum) < 1.0e-6);
-  }
-#endif
-
-  //--------- Compute pi[i]**0.5 and pi[i]**-0.5 ----------//
-  vector<double> sqrt_pi(n);
-  vector<double> inverse_sqrt_pi(n);
-  for(int i=0;i<n;i++) {
-    sqrt_pi[i] = sqrt(pi[i]);
-    inverse_sqrt_pi[i] = 1.0/sqrt_pi[i];
-  }
-
-  //--------------- Calculate eigensystem -----------------//
-  Matrix S(n,n);
-  for(int i=0;i<n;i++)
-    for(int j=0;j<=i;j++) {
-      S(j,i) = S(i,j) = Q(i,j) * sqrt_pi[i] * inverse_sqrt_pi[j];
+    const unsigned n = Q.size1();
+    assert(Q.size2() == Q.size1());
 
 #ifdef DEBUG_RATE_MATRIX
-      // check reversibility of rate matrix
-      if (i != j) {
-	assert (S(i,j) >= 0);
-	double p12 = Q(i,j)*pi[i];
-	double p21 = Q(j,i)*pi[j];
-	assert (abs(p12-p21) < 1.0e-12*(1.0+abs(p12)));
-	if (i > j)
-	  assert( abs(S(i,j) - S(j,i)) < 1.0e-13 );
-      }
-      else
-	assert (Q(i,j) <= 0);
+    assert(std::abs(sum(pi)-1.0) < 1.0e-6);
+    for(int i=0;i<n;i++) {
+	double sum = 0;
+	for(int j=0;j<n;j++)
+	    sum += Q(i,j);
+	assert(abs(sum) < 1.0e-6);
+    }
 #endif
+
+    //--------- Compute pi[i]**0.5 and pi[i]**-0.5 ----------//
+    vector<double> sqrt_pi(n);
+    vector<double> inverse_sqrt_pi(n);
+    for(int i=0;i<n;i++) {
+	sqrt_pi[i] = sqrt(pi[i]);
+	inverse_sqrt_pi[i] = 1.0/sqrt_pi[i];
     }
 
-  //---------------- Compute eigensystem ------------------//
-  return {new EigenValues(S)};
+    //--------------- Calculate eigensystem -----------------//
+    Matrix S(n,n);
+    for(int i=0;i<n;i++)
+	for(int j=0;j<=i;j++) {
+	    S(j,i) = S(i,j) = Q(i,j) * sqrt_pi[i] * inverse_sqrt_pi[j];
+
+#ifdef DEBUG_RATE_MATRIX
+	    // check reversibility of rate matrix
+	    if (i != j) {
+		assert (S(i,j) >= 0);
+		double p12 = Q(i,j)*pi[i];
+		double p21 = Q(j,i)*pi[j];
+		assert (abs(p12-p21) < 1.0e-12*(1.0+abs(p12)));
+		if (i > j)
+		    assert( abs(S(i,j) - S(j,i)) < 1.0e-13 );
+	    }
+	    else
+		assert (Q(i,j) <= 0);
+#endif
+	}
+
+    //---------------- Compute eigensystem ------------------//
+    return {new EigenValues(S)};
 }
 
 
 extern "C" closure builtin_function_get_equilibrium_rate(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  const alphabet& a = arg0.as_<alphabet>();
+    auto arg0 = Args.evaluate(0);
+    const alphabet& a = arg0.as_<alphabet>();
 
-  auto arg1 = Args.evaluate(1);
-  const vector<unsigned>& smap = arg1.as_< Vector<unsigned> >();
+    auto arg1 = Args.evaluate(1);
+    const vector<unsigned>& smap = arg1.as_< Vector<unsigned> >();
 
-  auto arg2 = Args.evaluate(2);
-  const Matrix& Q = arg2.as_< Box<Matrix> >();
+    auto arg2 = Args.evaluate(2);
+    const Matrix& Q = arg2.as_< Box<Matrix> >();
 
-  auto arg3 = Args.evaluate(3);
-  const vector<double> pi = arg3.as_< Vector<double> >();
+    auto arg3 = Args.evaluate(3);
+    const vector<double> pi = arg3.as_< Vector<double> >();
 
-  assert(Q.size2() == Q.size1());
-  const unsigned N = smap.size();
+    assert(Q.size2() == Q.size1());
+    const unsigned N = smap.size();
     
-  double scale=0;
+    double scale=0;
 
-  if (N == a.size()) 
-  {
-    for(int i=0;i<Q.size1();i++) 
-      scale -= pi[i]*Q(i,i);
-  }
-  else 
-  {
-    for(int s1=0;s1<N;s1++)
+    if (N == a.size()) 
     {
-      double temp = 0;
-      for(int s2=0;s2<N;s2++)
-	if (smap[s1] != smap[s2])
-	  temp += Q(s1,s2);
-
-      scale += temp*pi[s1];
+	for(int i=0;i<Q.size1();i++) 
+	    scale -= pi[i]*Q(i,i);
     }
-  }
+    else 
+    {
+	for(int s1=0;s1<N;s1++)
+	{
+	    double temp = 0;
+	    for(int s2=0;s2<N;s2++)
+		if (smap[s1] != smap[s2])
+		    temp += Q(s1,s2);
 
-  return {scale/a.width()};
+	    scale += temp*pi[s1];
+	}
+    }
+
+    return {scale/a.width()};
 }
 
 
 extern "C" closure builtin_function_singlet_to_triplet_exchange(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  const Triplets& T = arg0.as_<Triplets>();
+    auto arg0 = Args.evaluate(0);
+    const Triplets& T = arg0.as_<Triplets>();
 
-  auto arg1 = Args.evaluate(1);
-  const Matrix& S2 = arg1.as_<Box<Matrix>>();
+    auto arg1 = Args.evaluate(1);
+    const Matrix& S2 = arg1.as_<Box<Matrix>>();
 
-  int N = T.size();
+    int N = T.size();
 
-  object_ptr<Box<Matrix>> R ( new Box<Matrix>(N,N) );
+    object_ptr<Box<Matrix>> R ( new Box<Matrix>(N,N) );
 
-  Matrix& S = *R;
+    Matrix& S = *R;
 
-  for(int i=0;i<T.size();i++)
-    for(int j=0;j<i;j++) 
-    {
-      int nmuts=0;
-      int pos=-1;
-      for(int p=0;p<3;p++)
-	if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
-	  nmuts++;
-	  pos=p;
-	}
-      assert(nmuts>0);
-      assert(pos >= 0 and pos < 3);
+    for(int i=0;i<T.size();i++)
+	for(int j=0;j<i;j++) 
+	{
+	    int nmuts=0;
+	    int pos=-1;
+	    for(int p=0;p<3;p++)
+		if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
+		    nmuts++;
+		    pos=p;
+		}
+	    assert(nmuts>0);
+	    assert(pos >= 0 and pos < 3);
 	
-      S(j,i) = S(i,j) = 0;
+	    S(j,i) = S(i,j) = 0;
 
-      if (nmuts == 1) {
+	    if (nmuts == 1) {
 
-	int l1 = T.sub_nuc(i,pos);
-	int l2 = T.sub_nuc(j,pos);
-	assert(l1 != l2);
+		int l1 = T.sub_nuc(i,pos);
+		int l2 = T.sub_nuc(j,pos);
+		assert(l1 != l2);
 
-	S(j,i) = S(i,j) = S2(l1,l2);
-      }
-    }
+		S(j,i) = S(i,j) = S2(l1,l2);
+	    }
+	}
 
-  return R;
+    return R;
 }
 
 extern "C" closure builtin_function_muse_gaut_matrix(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  const Triplets& T = arg0.as_<Triplets>();
+    auto arg0 = Args.evaluate(0);
+    const Triplets& T = arg0.as_<Triplets>();
   
-  auto arg1 = Args.evaluate(1);
-  const Matrix& R1 = arg1.as_<Box<Matrix>>();
+    auto arg1 = Args.evaluate(1);
+    const Matrix& R1 = arg1.as_<Box<Matrix>>();
 
-  auto arg2 = Args.evaluate(2);
-  const Matrix& R2 = arg2.as_<Box<Matrix>>();
+    auto arg2 = Args.evaluate(2);
+    const Matrix& R2 = arg2.as_<Box<Matrix>>();
 
-  auto arg3 = Args.evaluate(3);
-  const Matrix& R3 = arg3.as_<Box<Matrix>>();
+    auto arg3 = Args.evaluate(3);
+    const Matrix& R3 = arg3.as_<Box<Matrix>>();
 
-  // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
-  assert(R1.size1() == 4);
-  assert(R1.size2() == 4);
-  assert(R2.size1() == 4);
-  assert(R2.size2() == 4);
-  assert(R3.size1() == 4);
-  assert(R3.size2() == 4);
+    // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
+    assert(R1.size1() == 4);
+    assert(R1.size2() == 4);
+    assert(R2.size1() == 4);
+    assert(R2.size2() == 4);
+    assert(R3.size1() == 4);
+    assert(R3.size2() == 4);
 
-  const int n = T.size();
+    const int n = T.size();
 
-  object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
+    object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
 
-  for(int i=0;i<n;i++)
-    for(int j=0;j<n;j++)
-    {
-      int nmuts=0;
-      int from=-1;
-      int to=-1;
-      int pos=-1;
-      for(int p=0;p<3;p++)
-	if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
-	  nmuts++;
-	  pos = p;
-	  from = T.sub_nuc(i,p);
-	  to = T.sub_nuc(j,p);
+    for(int i=0;i<n;i++)
+	for(int j=0;j<n;j++)
+	{
+	    int nmuts=0;
+	    int from=-1;
+	    int to=-1;
+	    int pos=-1;
+	    for(int p=0;p<3;p++)
+		if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
+		    nmuts++;
+		    pos = p;
+		    from = T.sub_nuc(i,p);
+		    to = T.sub_nuc(j,p);
+		}
+
+	    double r = 0;
+	    if (nmuts == 1)
+	    {
+		if (pos == 0)
+		    r = R1(from,to);
+		else if (pos == 1)
+		    r = R2(from,to);
+		else if (pos == 2)
+		    r = R3(from,to);
+		else
+		    std::abort();
+	    }
+	    (*R)(i,j) = r;
 	}
 
-      double r = 0;
-      if (nmuts == 1)
-      {
-	if (pos == 0)
-	  r = R1(from,to);
-	else if (pos == 1)
-	  r = R2(from,to);
-	else if (pos == 2)
-	  r = R3(from,to);
-	else
-	  std::abort();
-      }
-      (*R)(i,j) = r;
-    }
-
-  return R;
+    return R;
 }
 
 
 object_ptr<Object> SimpleExchangeFunction(double rho, int n)
 {
-  object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
+    object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
 
-  for(int i=0;i<n;i++) {
-    for(int j=0;j<n;j++)
-      (*R)(i,j) = rho;
+    for(int i=0;i<n;i++) {
+	for(int j=0;j<n;j++)
+	    (*R)(i,j) = rho;
 
-    (*R)(i,i) = 0;       // this is NOT a rate away.
-  }
+	(*R)(i,i) = 0;       // this is NOT a rate away.
+    }
 
-  return R;
+    return R;
 }
 
 object_ptr<const Object> EQU_Exchange_Function(int n)
 {
-  object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
+    object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
 
-  // Calculate S matrix
-  for(int i=0;i<n;i++)
-    for(int j=0;j<n;j++)
-      (*R)(i,j) = 1;
+    // Calculate S matrix
+    for(int i=0;i<n;i++)
+	for(int j=0;j<n;j++)
+	    (*R)(i,j) = 1;
 
-  return R;
+    return R;
 }
 
 extern "C" closure builtin_function_equ(OperationArgs& Args)
 {
-  int n = Args.evaluate(0).as_int();
+    int n = Args.evaluate(0).as_int();
     
-  return EQU_Exchange_Function(n);
+    return EQU_Exchange_Function(n);
 }
 
 
@@ -432,36 +432,36 @@ extern "C" closure builtin_function_equ(OperationArgs& Args)
 
 object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, istream& ifile)
 {
-  int n = a.size();
+    int n = a.size();
 
-  object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
+    object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
   
-  for(int i=0;i<n;i++)
-    for(int j=0;j<i;j++) {
-      ifile>>(*R)(i,j);
-      (*R)(j,i) = (*R)(i,j);
-    }
+    for(int i=0;i<n;i++)
+	for(int j=0;j<i;j++) {
+	    ifile>>(*R)(i,j);
+	    (*R)(j,i) = (*R)(i,j);
+	}
 
-  return object_ptr<const Object>(R);
+    return object_ptr<const Object>(R);
 }
 
 object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, const String& filename)
 {
-  checked_ifstream ifile(filename, "empirical rate matrix file");
-  return Empirical_Exchange_Function(a,ifile);
+    checked_ifstream ifile(filename, "empirical rate matrix file");
+    return Empirical_Exchange_Function(a,ifile);
 }
 
 extern "C" closure builtin_function_empirical(OperationArgs& Args)
 {
-  auto a = Args.evaluate(0);
-  auto S = Args.evaluate(1);
-  return Empirical_Exchange_Function(a.as_<alphabet>(), S.as_<String>());
+    auto a = Args.evaluate(0);
+    auto S = Args.evaluate(1);
+    return Empirical_Exchange_Function(a.as_<alphabet>(), S.as_<String>());
 }
 
 object_ptr<const Object> PAM_Exchange_Function(const alphabet& a)
 {
-  istringstream file(
-		     "27                                                                         \
+    istringstream file(
+	"27                                                                         \
  98  32                                                                     \
 120   0 905                                                                 \
  36  23   0   0                                                             \
@@ -481,19 +481,19 @@ object_ptr<const Object> PAM_Exchange_Function(const alphabet& a)
  24   8  95   0  96   0  22   0 127  37  28  13   0 698   0  34  42  61     \
 208  24  15  18  49  35  37  54  44 889 175  10 258  12  48  30 157   0  28 \
 ");
-  return Empirical_Exchange_Function(a, file);
+    return Empirical_Exchange_Function(a, file);
 }
 
 extern "C" closure builtin_function_pam(OperationArgs& Args)
 {
-  auto a = Args.evaluate(0);
-  return PAM_Exchange_Function(a.as_<alphabet>());
+    auto a = Args.evaluate(0);
+    return PAM_Exchange_Function(a.as_<alphabet>());
 }
 
 object_ptr<const Object> JTT_Exchange_Function(const alphabet& a)
 {
-  istringstream file(
-		     " 58                                                                        \
+    istringstream file(
+	" 58                                                                        \
  54  45                                                                    \
  81  16 528                                                                \
  56 113  34  10                                                            \
@@ -513,19 +513,19 @@ object_ptr<const Object> JTT_Exchange_Function(const alphabet& a)
  11  20  70  46 209  24   7   8 573  32  24   8  18 536  10  63  21  71    \
 298  17  16  31  62  20  45  47  11 961 180  14 323  62  23  38 112  25  16 \
 ");
-  return Empirical_Exchange_Function(a, file);
+    return Empirical_Exchange_Function(a, file);
 }
 
 extern "C" closure builtin_function_jtt(OperationArgs& Args)
 {
-  auto a = Args.evaluate(0);
-  return JTT_Exchange_Function(a.as_<alphabet>());
+    auto a = Args.evaluate(0);
+    return JTT_Exchange_Function(a.as_<alphabet>());
 }
 
 object_ptr<const Object> WAG_Exchange_Function(const alphabet& a)
 {
-  istringstream file(
-		     "0.551571 \
+    istringstream file(
+	"0.551571 \
 0.509848  0.635346 \
 0.738998  0.147304  5.429420 \
 1.027040  0.528191  0.265256  0.0302949 \
@@ -545,19 +545,19 @@ object_ptr<const Object> WAG_Exchange_Function(const alphabet& a)
 0.240735  0.381533  1.086000  0.325711  0.543833  0.227710  0.196303  0.103604  3.873440  0.420170  0.398618  0.133264  0.428437  6.454280  0.216046  0.786993  0.291148  2.485390 \
 2.006010  0.251849  0.196246  0.152335  1.002140  0.301281  0.588731  0.187247  0.118358  7.821300  1.800340  0.305434  2.058450  0.649892  0.314887  0.232739  1.388230  0.365369  0.314730 \
 ");
-  return Empirical_Exchange_Function(a, file);
+    return Empirical_Exchange_Function(a, file);
 }
 
 extern "C" closure builtin_function_wag(OperationArgs& Args)
 {
-  auto a = Args.evaluate(0);
-  return WAG_Exchange_Function(a.as_<alphabet>());
+    auto a = Args.evaluate(0);
+    return WAG_Exchange_Function(a.as_<alphabet>());
 }
 
 object_ptr<const Object> LG_Exchange_Function(const alphabet& a)
 {
-  istringstream file(
-		     "0.425093 \
+    istringstream file(
+	"0.425093 \
 0.276818 0.751878 \
 0.395144 0.123954 5.076149 \
 2.489084 0.534551 0.528768 0.062556 \
@@ -577,458 +577,495 @@ object_ptr<const Object> LG_Exchange_Function(const alphabet& a)
 0.218959 0.314440 0.612025 0.135107 1.165532 0.257336 0.120037 0.054679 5.306834 0.232523 0.299648 0.131932 0.481306 7.803902 0.089613 0.400547 0.245841 3.151815 \
 2.547870 0.170887 0.083688 0.037967 1.959291 0.210332 0.245034 0.076701 0.119013 10.649107 1.702745 0.185202 1.898718 0.654683 0.296501 0.098369 2.188158 0.189510 0.249313 \
 ");
-  return Empirical_Exchange_Function(a, file);
+    return Empirical_Exchange_Function(a, file);
 }
 
 extern "C" closure builtin_function_lg(OperationArgs& Args)
 {
-  auto a = Args.evaluate(0);
-  return WAG_Exchange_Function(a.as_<alphabet>());
+    auto a = Args.evaluate(0);
+    return WAG_Exchange_Function(a.as_<alphabet>());
 }
 
 extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  const Triplets& T = arg0.as_<Triplets>();
-  // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
+    auto arg0 = Args.evaluate(0);
+    const Triplets& T = arg0.as_<Triplets>();
+    // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
-  auto arg1 = Args.evaluate(1);
-  auto pi1 = arg1.as_<Vector<double>>();
+    auto arg1 = Args.evaluate(1);
+    auto pi1 = arg1.as_<Vector<double>>();
 
-  auto arg2 = Args.evaluate(2);
-  auto pi2 = arg2.as_<Vector<double>>();
+    auto arg2 = Args.evaluate(2);
+    auto pi2 = arg2.as_<Vector<double>>();
 
-  auto arg3 = Args.evaluate(3);
-  auto pi3 = arg3.as_<Vector<double>>();
+    auto arg3 = Args.evaluate(3);
+    auto pi3 = arg3.as_<Vector<double>>();
 
-  Vector<double> pi;
-  pi.resize(T.size());
-  for(int i=0;i<T.size();i++)
-    pi[i] = pi1[T.sub_nuc(i,0)] * pi2[T.sub_nuc(i,1)] * pi3[T.sub_nuc(i,2)];
+    Vector<double> pi;
+    pi.resize(T.size());
+    for(int i=0;i<T.size();i++)
+	pi[i] = pi1[T.sub_nuc(i,0)] * pi2[T.sub_nuc(i,1)] * pi3[T.sub_nuc(i,2)];
 
-  // Some triplets may be missing from the triplet alphabet (e.g. stop codons).  So renormalize.
+    // Some triplets may be missing from the triplet alphabet (e.g. stop codons).  So renormalize.
 
-  double scale = 1.0/sum(pi);
-  for(double& d : pi)
-    d *= scale;
+    double scale = 1.0/sum(pi);
+    for(double& d : pi)
+	d *= scale;
 
-  assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
+    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
 
-  return pi;
+    return pi;
 }
 
 extern "C" closure builtin_function_gtr(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  const Nucleotides& N = arg0.as_<Nucleotides>();
-  double AG = Args.evaluate(1).as_double();
-  double AT = Args.evaluate(2).as_double();
-  double AC = Args.evaluate(3).as_double();
-  double GT = Args.evaluate(4).as_double();
-  double GC = Args.evaluate(5).as_double();
-  double TC = Args.evaluate(6).as_double();
+    auto arg0 = Args.evaluate(0);
+    const Nucleotides& N = arg0.as_<Nucleotides>();
+    double AG = Args.evaluate(1).as_double();
+    double AT = Args.evaluate(2).as_double();
+    double AC = Args.evaluate(3).as_double();
+    double GT = Args.evaluate(4).as_double();
+    double GC = Args.evaluate(5).as_double();
+    double TC = Args.evaluate(6).as_double();
 
-  assert(N.size()==4);
+    assert(N.size()==4);
 
-  auto R = new Box<Matrix>(N.size(),N.size());
+    auto R = new Box<Matrix>(N.size(),N.size());
 
-  double total = AG + AT + AC + GT + GC + TC;
+    double total = AG + AT + AC + GT + GC + TC;
 
-  (*R)(1,0) = (*R)(0,1) = AG/total;
-  (*R)(2,0) = (*R)(0,2) = AT/total;
-  (*R)(3,0) = (*R)(0,3) = AC/total;
+    (*R)(1,0) = (*R)(0,1) = AG/total;
+    (*R)(2,0) = (*R)(0,2) = AT/total;
+    (*R)(3,0) = (*R)(0,3) = AC/total;
 
-  (*R)(2,1) = (*R)(1,2) = GT/total;
-  (*R)(3,1) = (*R)(1,3) = GC/total;
+    (*R)(2,1) = (*R)(1,2) = GT/total;
+    (*R)(3,1) = (*R)(1,3) = GC/total;
 
-  (*R)(3,2) = (*R)(2,3) = TC/total;
+    (*R)(3,2) = (*R)(2,3) = TC/total;
 
-  return {R};
+    return {R};
 }
 
 extern "C" closure builtin_function_m0(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  const Codons& C = arg0.as_<Codons>();
+    auto arg0 = Args.evaluate(0);
+    const Codons& C = arg0.as_<Codons>();
 
-  auto arg1 = Args.evaluate(1);
-  const Matrix& S = arg1.as_<Box<Matrix>>();
+    auto arg1 = Args.evaluate(1);
+    const Matrix& S = arg1.as_<Box<Matrix>>();
 
-  double omega = Args.evaluate(2).as_double();
+    double omega = Args.evaluate(2).as_double();
 
-  int n = C.size();
+    int n = C.size();
 
-  auto R = new Box<Matrix>(n,n);
+    auto R = new Box<Matrix>(n,n);
 
-  for(int i=0;i<n;i++) 
-  {
-    for(int j=0;j<i;j++) {
-      int nmuts=0;
-      int pos=-1;
-      for(int p=0;p<3;p++)
-	if (C.sub_nuc(i,p) != C.sub_nuc(j,p)) {
-	  nmuts++;
-	  pos=p;
+    for(int i=0;i<n;i++) 
+    {
+	for(int j=0;j<i;j++) {
+	    int nmuts=0;
+	    int pos=-1;
+	    for(int p=0;p<3;p++)
+		if (C.sub_nuc(i,p) != C.sub_nuc(j,p)) {
+		    nmuts++;
+		    pos=p;
+		}
+	    assert(nmuts>0);
+	    assert(pos >= 0 and pos < 3);
+
+	    double rate=0.0;
+
+	    if (nmuts == 1) 
+	    {
+		int l1 = C.sub_nuc(i,pos);
+		int l2 = C.sub_nuc(j,pos);
+		assert(l1 != l2);
+
+		rate = S(l1,l2);
+
+		if (C.translate(i) != C.translate(j))
+		    rate *= omega;	
+	    }
+
+	    (*R)(i,j) = (*R)(j,i) = rate;
 	}
-      assert(nmuts>0);
-      assert(pos >= 0 and pos < 3);
-
-      double rate=0.0;
-
-      if (nmuts == 1) 
-      {
-	int l1 = C.sub_nuc(i,pos);
-	int l2 = C.sub_nuc(j,pos);
-	assert(l1 != l2);
-
-	rate = S(l1,l2);
-
-	if (C.translate(i) != C.translate(j))
-	  rate *= omega;	
-      }
-
-      (*R)(i,j) = (*R)(j,i) = rate;
     }
-  }
 
-  return R;
+    return R;
 }
 
 extern "C" closure builtin_function_plus_gwF(OperationArgs& Args)
 {
-  const alphabet& a = Args.evaluate(0).as_<alphabet>();
+    const alphabet& a = Args.evaluate(0).as_<alphabet>();
 
-  double f = Args.evaluate(1).as_double();
+    double f = Args.evaluate(1).as_double();
 
-  auto arg2 = Args.evaluate(2);
-  const vector<double>& pi_ = arg2.as_< Vector<double> >();
+    auto arg2 = Args.evaluate(2);
+    const vector<double>& pi_ = arg2.as_< Vector<double> >();
 
-  const int n = a.size();
+    const int n = a.size();
 
-  auto R = new Box<Matrix>(n,n);
+    auto R = new Box<Matrix>(n,n);
 
-  // compute frequencies
-  vector<double> pi = pi_;
-  normalize(pi);
-  assert(a.size() == pi.size());
+    // compute frequencies
+    vector<double> pi = pi_;
+    normalize(pi);
+    assert(a.size() == pi.size());
     
-  // compute transition rates
-  valarray<double> pi_f(n);
-  for(int i=0;i<n;i++)
-    pi_f[i] = pow(pi[i],f);
+    // compute transition rates
+    valarray<double> pi_f(n);
+    for(int i=0;i<n;i++)
+	pi_f[i] = pow(pi[i],f);
 
-  for(int i=0;i<n;i++)
-    for(int j=0;j<n;j++)
-      (*R)(i,j) = pi_f[i]/pi[i] * pi_f[j];
+    for(int i=0;i<n;i++)
+	for(int j=0;j<n;j++)
+	    (*R)(i,j) = pi_f[i]/pi[i] * pi_f[j];
 
-  // diagonal entries should have no effect
-  for(int i=0;i<n;i++)
-    (*R)(i,i) = 0;
+    // diagonal entries should have no effect
+    for(int i=0;i<n;i++)
+	(*R)(i,i) = 0;
 
-  return R;
+    return R;
 }
 
 // codon_a codon_w omega nuc_q
 extern "C" closure builtin_function_fMutSel_q(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  const Codons& C = arg0.as_<Codons>();
-  int N = C.size();
+    auto arg0 = Args.evaluate(0);
+    const Codons& C = arg0.as_<Codons>();
+    int N = C.size();
   
-  auto arg1 = Args.evaluate(1);
-  const Vector<double>& codon_w = arg1.as_< Vector<double> >();
-  assert(codon_w.size() == N);
+    auto arg1 = Args.evaluate(1);
+    const Vector<double>& codon_w = arg1.as_< Vector<double> >();
+    assert(codon_w.size() == N);
 
-  double omega = Args.evaluate(2).as_double();
+    double omega = Args.evaluate(2).as_double();
 
-  auto arg3 = Args.evaluate(3);
-  const Matrix& nuc_Q = arg3.as_< Box<Matrix> >();
-  assert(nuc_Q.size1() == nuc_Q.size2());
-  assert(nuc_Q.size1() == C.getNucleotides().size());
+    auto arg3 = Args.evaluate(3);
+    const Matrix& nuc_Q = arg3.as_< Box<Matrix> >();
+    assert(nuc_Q.size1() == nuc_Q.size2());
+    assert(nuc_Q.size1() == C.getNucleotides().size());
 
-  vector<double> log_codon_w(N);
-  for(int i=0;i<N;i++)
-    log_codon_w[i] = log(codon_w[i]);
+    vector<double> log_codon_w(N);
+    for(int i=0;i<N;i++)
+	log_codon_w[i] = log(codon_w[i]);
   
-  auto Q_ = new Box<Matrix>(N,N);
-  Matrix& Q = *Q_;
+    auto Q_ = new Box<Matrix>(N,N);
+    Matrix& Q = *Q_;
 
-  for(int i=0;i<N;i++)
-  {
-    double sum = 0;
-    for(int j=0;j<N;j++)
+    for(int i=0;i<N;i++)
     {
-      if (i==j) continue;
+	double sum = 0;
+	for(int j=0;j<N;j++)
+	{
+	    if (i==j) continue;
 
-      int nmuts=0;
-      int pos=-1;
-      for(int p=0;p<3;p++)
-	if (C.sub_nuc(i,p) != C.sub_nuc(j,p)) {
-	  nmuts++;
-	  pos=p;
-	}
-      assert(nmuts>0);
-      assert(pos >= 0 and pos < 3);
+	    int nmuts=0;
+	    int pos=-1;
+	    for(int p=0;p<3;p++)
+		if (C.sub_nuc(i,p) != C.sub_nuc(j,p)) {
+		    nmuts++;
+		    pos=p;
+		}
+	    assert(nmuts>0);
+	    assert(pos >= 0 and pos < 3);
 
-      double rate=0.0;
+	    double rate=0.0;
 
-      if (nmuts == 1) 
-      {
-	int l1 = C.sub_nuc(i,pos);
-	int l2 = C.sub_nuc(j,pos);
-	assert(l1 != l2);
+	    if (nmuts == 1) 
+	    {
+		int l1 = C.sub_nuc(i,pos);
+		int l2 = C.sub_nuc(j,pos);
+		assert(l1 != l2);
 
-	rate = nuc_Q(l1,l2);
+		rate = nuc_Q(l1,l2);
 
 
-	// x = wj/wi    log(x)/(1-1/x)
-	// y = wi/wj   -log(y)/(1-y)
-	// 1+z = y     -log(1+z)/-z = log1p(z)/z   z = y-1 = (wi/wj)-1
-	double z = (codon_w[i] - codon_w[j])/codon_w[j];
-	if (std::abs(z) < 0.0001)
-	  rate *= ( 1.0 - z/2.0 + (z*z)/3.0 - (z*z*z)/4.0 );
-	else
-	  rate *= log1p(z)/z;
+		// x = wj/wi    log(x)/(1-1/x)
+		// y = wi/wj   -log(y)/(1-y)
+		// 1+z = y     -log(1+z)/-z = log1p(z)/z   z = y-1 = (wi/wj)-1
+		double z = (codon_w[i] - codon_w[j])/codon_w[j];
+		if (std::abs(z) < 0.0001)
+		    rate *= ( 1.0 - z/2.0 + (z*z)/3.0 - (z*z*z)/4.0 );
+		else
+		    rate *= log1p(z)/z;
 
-	if (C.translate(i) != C.translate(j))
-	  rate *= omega;	
-      }
+		if (C.translate(i) != C.translate(j))
+		    rate *= omega;	
+	    }
 
-      Q(i,j) = rate;
+	    Q(i,j) = rate;
       
-      sum += Q(i,j);
+	    sum += Q(i,j);
+	}
+	Q(i,i) = -sum;
     }
-    Q(i,i) = -sum;
-  }
 
-  return Q_;
+    return Q_;
 }
 
 // codon_a nuc_pi codon_w
 extern "C" closure builtin_function_fMutSel_pi(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  const Codons& C = arg0.as_<Codons>();
-  int N = C.size();
+    auto arg0 = Args.evaluate(0);
+    const Codons& C = arg0.as_<Codons>();
+    int N = C.size();
   
-  auto arg1 = Args.evaluate(1);
-  const vector<double>& codon_w = arg1.as_< Vector<double> >();
-  assert(codon_w.size() == N);
+    auto arg1 = Args.evaluate(1);
+    const vector<double>& codon_w = arg1.as_< Vector<double> >();
+    assert(codon_w.size() == N);
 
-  auto arg2 = Args.evaluate(2);
-  const vector<double>& nuc_pi = arg2.as_< Vector<double> >();
-  assert(nuc_pi.size() == C.getNucleotides().size());
+    auto arg2 = Args.evaluate(2);
+    const vector<double>& nuc_pi = arg2.as_< Vector<double> >();
+    assert(nuc_pi.size() == C.getNucleotides().size());
 
-  // compute frequencies
-  Vector<double> pi(C.size());
+    // compute frequencies
+    Vector<double> pi(C.size());
     
-  for(int i=0;i<N;i++)
-    pi[i] = nuc_pi[C.sub_nuc(i,0)] * nuc_pi[C.sub_nuc(i,1)] * nuc_pi[C.sub_nuc(i,2)] * codon_w[i];
+    for(int i=0;i<N;i++)
+	pi[i] = nuc_pi[C.sub_nuc(i,0)] * nuc_pi[C.sub_nuc(i,1)] * nuc_pi[C.sub_nuc(i,2)] * codon_w[i];
 
-  normalize(pi);
-  return pi;
+    normalize(pi);
+    return pi;
 }
 
 /*
 // codon_a nuc_pi omega nuc_q nuc_pi
 extern "C" closure builtin_function_fMutSel_q2(OperationArgs& Args)
 {
-  object_ptr<const Codons> C_ = Args.evaluate().as_<Codons>(0);
-  const Codons& C = *C_;
-  int N = C.size();
+object_ptr<const Codons> C_ = Args.evaluate().as_<Codons>(0);
+const Codons& C = *C_;
+int N = C.size();
   
-  object_ptr< const Vector<double> > codon_pi_ = Args.evaluate().as_< Vector<double> >(1);
-  const Vector<double>& codon_pi = *codon_pi_;
-  assert(codon_pi.size() == N);
+object_ptr< const Vector<double> > codon_pi_ = Args.evaluate().as_< Vector<double> >(1);
+const Vector<double>& codon_pi = *codon_pi_;
+assert(codon_pi.size() == N);
 
-  vector<double> nuc_log_pi;
-  for(int i=0;i<n;i++)
-    nuc_log_pi[i] = log(nuc_log_pi[i]);
+vector<double> nuc_log_pi;
+for(int i=0;i<n;i++)
+nuc_log_pi[i] = log(nuc_log_pi[i]);
 
-  // codon_pi[i] = nuc_pi[i1] * nuc_pi[i2] * nuc_pi[i3] * exp(codon_w[i]) * C;
-  // codon_w[i] - log(C) = log(codon_pi[i]) - log(nuc_pi[i1]) - log(nuc_pi[i2]) - log(nuc_pi[i3]
-  vector<double> codon_w(N);
-  for(int i=0;i<N;i++)
-  {
-    double x = log(codon_pi[i]);
-    for(int j=0;j<3;j++)
-      x -= nuc_log_pi[C.sub_nuc(i,j)];
-    codon_w[i] = x;
-  }
+// codon_pi[i] = nuc_pi[i1] * nuc_pi[i2] * nuc_pi[i3] * exp(codon_w[i]) * C;
+// codon_w[i] - log(C) = log(codon_pi[i]) - log(nuc_pi[i1]) - log(nuc_pi[i2]) - log(nuc_pi[i3]
+vector<double> codon_w(N);
+for(int i=0;i<N;i++)
+{
+double x = log(codon_pi[i]);
+for(int j=0;j<3;j++)
+x -= nuc_log_pi[C.sub_nuc(i,j)];
+codon_w[i] = x;
+}
   
-  double omega = Args.evaluate(2).as_double();
+double omega = Args.evaluate(2).as_double();
 
-  object_ptr<const Box<Matrix>> nuc_Q_ = Args.evaluate().as_<Box<Matrix>>(3);
-  const Matrix& nuc_Q = *nuc_Q_;
-  assert(nuc_Q.size1() == nuc_Q.size2());
-  assert(nuc_Q.size1() == C.getNucleotides().size());
+object_ptr<const Box<Matrix>> nuc_Q_ = Args.evaluate().as_<Box<Matrix>>(3);
+const Matrix& nuc_Q = *nuc_Q_;
+assert(nuc_Q.size1() == nuc_Q.size2());
+assert(nuc_Q.size1() == C.getNucleotides().size());
 
-  vector<double> log_codon_w(N);
-  for(int i=0;i<N;i++)
-    log_codon_w[i] = log(codon_w[i]);
+vector<double> log_codon_w(N);
+for(int i=0;i<N;i++)
+log_codon_w[i] = log(codon_w[i]);
   
-  object_ptr<Box<Matrix>> Q_(new Box<Matrix>(N,N));
-  Matrix& Q = *Q_;
+object_ptr<Box<Matrix>> Q_(new Box<Matrix>(N,N));
+Matrix& Q = *Q_;
 
-  for(int i=0;i<N;i++)
-  {
-    double sum = 0;
-    for(int j=0;j<N;j++)
-    {
-      if (i==j) continue;
+for(int i=0;i<N;i++)
+{
+double sum = 0;
+for(int j=0;j<N;j++)
+{
+if (i==j) continue;
 
-      int nmuts=0;
-      int pos=-1;
-      for(int p=0;p<3;p++)
-	if (C.sub_nuc(i,p) != C.sub_nuc(j,p)) {
-	  nmuts++;
-	  pos=p;
-	}
-      assert(nmuts>0);
-      assert(pos >= 0 and pos < 3);
+int nmuts=0;
+int pos=-1;
+for(int p=0;p<3;p++)
+if (C.sub_nuc(i,p) != C.sub_nuc(j,p)) {
+nmuts++;
+pos=p;
+}
+assert(nmuts>0);
+assert(pos >= 0 and pos < 3);
 
-      double rate=0.0;
+double rate=0.0;
 
-      if (nmuts == 1) 
-      {
-	int l1 = C.sub_nuc(i,pos);
-	int l2 = C.sub_nuc(j,pos);
-	assert(l1 != l2);
+if (nmuts == 1) 
+{
+int l1 = C.sub_nuc(i,pos);
+int l2 = C.sub_nuc(j,pos);
+assert(l1 != l2);
 
-	rate = nuc_Q(l1,l2);
+rate = nuc_Q(l1,l2);
 
-	rate *= (log_codon_w[j] - log_codon_w[i])/(codon_w[j] - codon_w[i])*codon_w[j];
+rate *= (log_codon_w[j] - log_codon_w[i])/(codon_w[j] - codon_w[i])*codon_w[j];
 
-	if (C.translate(i) != C.translate(j))
-	  rate *= omega;	
-      }
+if (C.translate(i) != C.translate(j))
+rate *= omega;	
+}
 
-      Q(i,j) = rate;
+Q(i,j) = rate;
       
-      sum += Q(i,j);
-    }
-    Q(i,i) = -sum;
-  }
+sum += Q(i,j);
+}
+Q(i,i) = -sum;
+}
 
-  return Q_;
+return Q_;
 }
 */
 
 extern "C" closure builtin_function_weighted_frequency_matrix(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  const auto& D = arg0.as_<EVector>();
+    auto arg0 = Args.evaluate(0);
+    const auto& D = arg0.as_<EVector>();
 
-  auto arg1 = Args.evaluate(1);
-  const auto& F = arg1.as_<EVector>();
-  // cache matrix of frequencies
+    auto arg1 = Args.evaluate(1);
+    const auto& F = arg1.as_<EVector>();
+    // cache matrix of frequencies
 
-  assert(D.size() == F.size());
+    assert(D.size() == F.size());
 
-  const int n_models = F.size();
-  const int n_states = F[0].as_<Vector<double>>().size();
+    const int n_models = F.size();
+    const int n_states = F[0].as_<Vector<double>>().size();
 
-  auto *WF = new Box<Matrix>(n_models, n_states);
+    auto *WF = new Box<Matrix>(n_models, n_states);
 
-  for(int m=0;m<n_models;m++) {
-    double p = D[m].as_double();
-    const auto& f = F[m].as_<Vector<double>>();
-    for(int s=0;s<n_states;s++) 
-      (*WF)(m,s) = p*f[s];
-  }
-  return WF;
+    for(int m=0;m<n_models;m++) {
+	double p = D[m].as_double();
+	const auto& f = F[m].as_<Vector<double>>();
+	for(int s=0;s<n_states;s++) 
+	    (*WF)(m,s) = p*f[s];
+    }
+    return WF;
 }
 
 extern "C" closure builtin_function_frequency_matrix(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  const auto& F = arg0.as_<EVector>();
-  // cache matrix of frequencies
+    auto arg0 = Args.evaluate(0);
+    const auto& F = arg0.as_<EVector>();
+    // cache matrix of frequencies
 
-  const int n_models = F.size();
-  const int n_states = F[0].as_<Vector<double>>().size();
+    const int n_models = F.size();
+    const int n_states = F[0].as_<Vector<double>>().size();
 
-  auto *FF = new Box<Matrix>(n_models, n_states);
+    auto *FF = new Box<Matrix>(n_models, n_states);
 
-  for(int m=0;m<n_models;m++) {
-    const auto& f = F[m].as_<Vector<double>>();
-    for(int s=0;s<n_states;s++) 
-      (*FF)(m,s) = f[s];
-  }
-  return FF;
+    for(int m=0;m<n_models;m++) {
+	const auto& f = F[m].as_<Vector<double>>();
+	for(int s=0;s<n_states;s++) 
+	    (*FF)(m,s) = f[s];
+    }
+    return FF;
 }
 
 #include "substitution/substitution-cache.H"
 #include "dp/hmm.H"
 
 namespace substitution {
-Likelihood_Cache_Branch*
-peel_leaf_branch(const vector<int>& sequence, const alphabet& a, const vector<Matrix>& transition_P);
+    Likelihood_Cache_Branch*
+    peel_leaf_branch(const vector<int>& sequence, const alphabet& a, const vector<Matrix>& transition_P);
 }
 
 extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  auto arg1 = Args.evaluate(1);
-  auto arg2 = Args.evaluate(2);
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
 
-  return substitution::peel_leaf_branch(arg0.as_<Vector<int>>(), arg1.as_<alphabet>(), arg2.as_<Vector<Matrix>>());
+    return substitution::peel_leaf_branch(arg0.as_<Vector<int>>(), arg1.as_<alphabet>(), arg2.as_<Vector<Matrix>>());
 }
 
 
 namespace substitution {
-Likelihood_Cache_Branch*
-peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
-		     const Likelihood_Cache_Branch* LCB2,
-		     const pairwise_alignment_t& A0,
-		     const pairwise_alignment_t& A1,
-		     const vector<Matrix>& transition_P,
-		     const Matrix& F);
+    Likelihood_Cache_Branch*
+    peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
+			 const Likelihood_Cache_Branch* LCB2,
+			 const pairwise_alignment_t& A0,
+			 const pairwise_alignment_t& A1,
+			 const vector<Matrix>& transition_P,
+			 const Matrix& F);
 }
 
 extern "C" closure builtin_function_peel_internal_branch(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  auto arg1 = Args.evaluate(1);
-  auto arg2 = Args.evaluate(2);
-  auto arg3 = Args.evaluate(3);
-  auto arg4 = Args.evaluate(4);
-  auto arg5 = Args.evaluate(5);
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
 
-  return substitution::peel_internal_branch(&arg0.as_<Likelihood_Cache_Branch>(),
-					    &arg1.as_<Likelihood_Cache_Branch>(),
-					    arg2.as_<pairwise_alignment_t>(),
-					    arg3.as_<pairwise_alignment_t>(),
-					    arg4.as_<Vector<Matrix>>(),
-					    arg5.as_<Box<Matrix>>());
+    return substitution::peel_internal_branch(&arg0.as_<Likelihood_Cache_Branch>(),
+					      &arg1.as_<Likelihood_Cache_Branch>(),
+					      arg2.as_<pairwise_alignment_t>(),
+					      arg3.as_<pairwise_alignment_t>(),
+					      arg4.as_<Vector<Matrix>>(),
+					      arg5.as_<Box<Matrix>>());
 }
 
 namespace substitution {
-log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
-				   const Likelihood_Cache_Branch* LCB2,
-				   const Likelihood_Cache_Branch* LCB3,
-				   const pairwise_alignment_t& A1,
-				   const pairwise_alignment_t& A2,
-				   const pairwise_alignment_t& A3,
-				   const Matrix& F);
+    log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
+				       const Likelihood_Cache_Branch* LCB2,
+				       const Likelihood_Cache_Branch* LCB3,
+				       const pairwise_alignment_t& A1,
+				       const pairwise_alignment_t& A2,
+				       const pairwise_alignment_t& A3,
+				       const Matrix& F);
 }
 
 extern "C" closure builtin_function_calc_root_probability(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  auto arg1 = Args.evaluate(1);
-  auto arg2 = Args.evaluate(2);
-  auto arg3 = Args.evaluate(3);
-  auto arg4 = Args.evaluate(4);
-  auto arg5 = Args.evaluate(5);
-  auto arg6 = Args.evaluate(6);
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
+    auto arg6 = Args.evaluate(6);
 
-  log_double_t Pr = substitution::calc_root_probability(&arg0.as_<Likelihood_Cache_Branch>(),
-							&arg1.as_<Likelihood_Cache_Branch>(),
-							&arg2.as_<Likelihood_Cache_Branch>(),
-							arg3.as_<pairwise_alignment_t>(),
-							arg4.as_<pairwise_alignment_t>(),
-							arg5.as_<pairwise_alignment_t>(),
-							arg6.as_<Box<Matrix>>());
-  return {Pr};
+    log_double_t Pr = substitution::calc_root_probability(&arg0.as_<Likelihood_Cache_Branch>(),
+							  &arg1.as_<Likelihood_Cache_Branch>(),
+							  &arg2.as_<Likelihood_Cache_Branch>(),
+							  arg3.as_<pairwise_alignment_t>(),
+							  arg4.as_<pairwise_alignment_t>(),
+							  arg5.as_<pairwise_alignment_t>(),
+							  arg6.as_<Box<Matrix>>());
+    return {Pr};
+}
+
+extern "C" closure builtin_function_peel_likelihood_1(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+
+    const auto& seq  = arg0.as_<Vector<int>>();
+    const auto& a    = arg1.as_<alphabet>();
+    const auto& WF   = arg2.as_<Box<Matrix>>();
+
+    // Make frequency-vector AND log(frequency)-vector
+    vector<double> F(a.size(),0);
+    vector<log_double_t> LF(a.size());
+    for(int l=0;l<F.size();l++)
+    {
+	for(int m=0;m<WF.size1();m++)
+	    F[l] += WF(m,l);
+	LF[l] = F[l];
+    }
+
+    log_double_t Pr = 1;
+
+    for(auto l: seq)
+	if (a.is_letter(l))
+	    Pr *= LF[l];
+	else if (a.is_letter_class(l))
+	{
+	    double f = 0;
+	    const auto & fmask = a.letter_fmask(l);
+	    for(int j=0; j<a.size(); j++)
+		f += F[j] * fmask[j];
+	    Pr *= f;
+	}
+
+    return {Pr};
 }

@@ -27,6 +27,7 @@ builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel";
 builtin peel_leaf_branch 3 "peel_leaf_branch" "SModel";
 builtin peel_internal_branch 6 "peel_internal_branch" "SModel";
 builtin calc_root_probability 7 "calc_root_probability" "SModel";
+builtin peel_likelihood_1 3 "peel_likelihood_1" "SModel";
 
 data ReversibleMarkov = ReversibleMarkov a b c d e f g;
 data ReversibleFrequency = ReversibleFrequency a b c d;
