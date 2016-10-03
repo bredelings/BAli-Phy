@@ -1080,13 +1080,107 @@ extern "C" closure builtin_function_peel_likelihood_1(OperationArgs& Args)
 
     return {Pr};
 }
-	{
-	    double f = 0;
-	    const auto & fmask = a.letter_fmask(l);
-	    for(int j=0; j<a.size(); j++)
-		f += F[j] * fmask[j];
-	    Pr *= f;
-	}
 
+extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
+
+    const auto& seq1  = arg0.as_<Vector<int>>();
+    const auto& seq2  = arg1.as_<Vector<int>>();
+    const auto& alpha = arg2.as_<alphabet>();
+    const auto& A     = arg3.as_<pairwise_alignment_t>();
+    const auto& P     = arg4.as_<Vector<Matrix>>();
+    const auto& WF    = arg5.as_<Box<Matrix>>();
+
+    // Make frequency-vector AND log(frequency)-vector
+    vector<double> F(alpha.size(),0);
+    vector<log_double_t> LF(alpha.size());
+    for(int l=0;l<F.size();l++)
+    {
+	for(int m=0;m<WF.size1();m++)
+	    F[l] += WF(m,l);
+	LF[l] = F[l];
+    }
+
+    assert(A.length1() == seq1.size());
+    assert(A.length2() == seq2.size());
+
+    log_double_t Pr = 1;
+
+    int i=0;
+    int j=0;
+    for(int x=1;x<A.size()-1;x++)
+    {
+	int a = A[x];
+	auto bits = convert_to_bits(a, 0, 1);
+	assert(bits.any());
+	if (bits.test(0) and bits.test(1))
+	{
+	    int l1 = seq1[i++];
+	    int l2 = seq2[j++];
+
+	    if (alpha.is_letter(l1))
+	    {
+		double p = 0;
+		if (alpha.is_letter(l2))
+		{
+		    for(int m=0;m<WF.size1();m++)
+			p += WF(m,l1) * P[m](l1,l2);
+		}
+		else if (alpha.is_letter_class(l2))
+		{
+		    const auto & fmask = alpha.letter_fmask(l2);
+		    for(int m=0;m<WF.size1();m++)
+			for(int j=0; j<alpha.size(); j++)
+			    p += WF(m,l1) * P[m](l1,j) * fmask[j];
+		}
+		else
+		    p += LF[l1];
+		Pr *= p;
+	    }
+	    else if (alpha.is_letter_class(l1))
+	    {
+		double p = 0;
+		if (alpha.is_letter(l2))
+		{
+		    const auto & fmask = alpha.letter_fmask(l1); 
+		    for(int m=0;m<WF.size1();m++)
+			for(int j=0; j<alpha.size(); j++)
+			    p += WF(m,l2) * P[m](l2,j) * fmask[j];
+		}
+		else if (alpha.is_letter_class(l2))
+		{
+		    const auto & mask1 = alpha.letter_mask(l1);
+		    const auto & fmask2 = alpha.letter_fmask(l2);
+		    for(int m=0;m<WF.size1();m++)
+			for(int j=0; j<alpha.size(); j++)
+			    if (mask1.test(j))
+				for(int k=0; k<alpha.size(); k++)
+				    p += WF(m,j) * P[m](j,k) * fmask2[k];
+		}
+		else
+		    p = letter_class_frequency(l1, alpha, F);
+		Pr *= p;
+	    }
+	    else
+		Pr *= letter_frequency(l2, alpha, F, LF);
+	}
+	else if (bits.test(0))
+	{
+	    int l = seq1[i++];
+	    Pr *= letter_frequency(l, alpha, F, LF);
+	}
+	else
+	{
+	    int l = seq2[j++];
+	    Pr *= letter_frequency(l, alpha, F, LF);
+
+	}
+    }
     return {Pr};
 }
