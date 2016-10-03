@@ -18,4 +18,5 @@ module Alignment where
   alignment_pr_top a tree hmm = product' $ map (alignment_branch_pr a hmm) [0..numBranches tree - 1];
   alignment_pr_bot a tree (_,lengthp) = (product' $ map (lengthp . seqlength a tree) (internal_nodes tree))^2;
   alignment_pr a tree hmm model = (alignment_pr_top a tree hmm)/(alignment_pr_bot a tree model);
+  alignment_pr1 seq (_,lengthp) = lengthp (sizeOfVectorInt seq);
 }  
