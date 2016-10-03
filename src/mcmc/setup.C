@@ -874,9 +874,9 @@ void do_sampling(const variables_map& args,
 	// - It does call the likelihood function, doesn't it?
 	// FIXME -   However, it is probably not so important to resample most parameters in a way that is interleaved with stuff... (?)
 	// FIXME -   Certainly, we aren't going to be interleaved with branches, anyway!
-	sampler.add(5 + log(PP->t().n_branches()), MH_but_no_slice_moves);
+	sampler.add(5 + log(1+PP->t().n_branches()), MH_but_no_slice_moves);
 	if (P->load_value("enable_MH_sampling",0.0) > 0.5)
-	    sampler.add(5 + log(PP->t().n_branches()),MH_moves);
+	    sampler.add(5 + log(1+PP->t().n_branches()),MH_moves);
 	else
 	    sampler.add(1,MH_moves);
     }
