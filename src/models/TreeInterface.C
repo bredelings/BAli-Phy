@@ -32,11 +32,7 @@ int TreeInterface::branch_out(int n, int i) const {
     if (P->branches_from_affected_node[n])
 	return (*P->branches_from_affected_node[n])[i];
   
-    int p = P->TC->parameters_for_tree_node[n][i];
-    if (p == -1)
-	return n;
-    else
-	return P->get_parameter_value(p).as_int();
+    return P->TC->parameters_for_tree_node[n][i].get_value(P);
 }
 
 int TreeInterface::branch_in(int n, int i) const {
@@ -200,19 +196,11 @@ bool TreeInterface::subtree_contains_branch(int b1,int b2) const
 
 
 int TreeInterface::source(int b) const {
-    int p = P->TC->parameters_for_tree_branch[b].first;
-    if (p == -1)
-	return b;
-    else
-	return P->get_parameter_value(p).as_int();
+    return P->TC->parameters_for_tree_branch[b].first.get_value(P);
 }
 
 int TreeInterface::target(int b) const {
-    int p = P->TC->parameters_for_tree_branch[b].second;
-    if (p == -1)
-	return b - n_branches();
-    else
-	return P->get_parameter_value(p).as_int();
+    return P->TC->parameters_for_tree_branch[b].second.get_value(P);
 }
   
 int TreeInterface::undirected(int b) const {
@@ -488,7 +476,7 @@ void TreeInterface::read_tree_node(const Tree& T, int n)
 
     // These are the current edges.
     for(int i=0;i<edges.size();i++)
-	const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_node[n][i], edges[i]);
+	P->TC->parameters_for_tree_node[n][i].set_value(const_cast<Parameters*>(P), edges[i]);
 }
 
 void TreeInterface::read_tree(const Tree& T)
@@ -500,9 +488,9 @@ void TreeInterface::read_tree(const Tree& T)
     for(int b=0; b < 2*T.n_branches(); b++)
     {
 	if (not T.directed_branch(b).source().is_leaf_node())
-	    const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_branch[b].first,  (int)T.directed_branch(b).source());
+	    P->TC->parameters_for_tree_branch[b].first.set_value(const_cast<Parameters*>(P), (int)T.directed_branch(b).source());
 	if (not T.directed_branch(b).target().is_leaf_node())
-	    const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_branch[b].second, (int)T.directed_branch(b).target());
+	    P->TC->parameters_for_tree_branch[b].second.set_value(const_cast<Parameters*>(P), (int)T.directed_branch(b).target());
     }
 }
 
@@ -535,8 +523,8 @@ void TreeInterface::reconnect_branch(int s1, int t1, int t2)
     branches_from_affected_node[t2]->push_back(b2);
 
     // Update branch source and target nodes
-    const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_branch[b1].second, t2);
-    const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_branch[b2].first,  t2);
+    P->TC->parameters_for_tree_branch[b1].second.set_value(const_cast<Parameters*>(P), t2);
+    P->TC->parameters_for_tree_branch[b2].first.set_value(const_cast<Parameters*>(P),  t2);
 }
 
 void TreeInterface::begin_modify_topology()
@@ -558,7 +546,7 @@ void TreeInterface::end_modify_node(int n)
 
     assert(branches.size() == P->TC->parameters_for_tree_node[n].size());
     for(int i=0;i<branches.size();i++)
-	const_cast<Parameters*>(P)->context::set_parameter_value(P->TC->parameters_for_tree_node[n][i], branches[i]);
+	P->TC->parameters_for_tree_node[n][i].set_value(const_cast<Parameters*>(P), branches[i]);
 
     delete P->branches_from_affected_node[n];
     const_cast<Parameters*>(P)->branches_from_affected_node[n] = nullptr;

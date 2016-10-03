@@ -578,7 +578,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
     for(int n=0; n < T.n_nodes(); n++)
     {
 	auto edges = edges_connecting_to_node(T,n);
-	vector<int> p_node;
+	vector<maybe_parameter> p_node;
 	expression_ref node;
     
 	if (T.node(n).is_leaf_node())
@@ -591,7 +591,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
 	    else
 	    {
 		node = List(edges.front());
-		p_node = { -1 };
+		p_node = { {-1,n} };
 	    }
 	}
 	else
@@ -615,7 +615,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
     for(int b=0; b < 2*T.n_branches(); b++)
     {
 	expression_ref source = T.directed_branch(b).source().name();
-	int p_source = -1;
+	maybe_parameter p_source = {-1,T.directed_branch(b).source().name()};
 	if (not T.directed_branch(b).source().is_leaf_node())
 	{
 	    string name_source = "*MyTree.branch"+convertToString(b)+"source"; 
@@ -624,13 +624,14 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
 	}
 
 	expression_ref target = T.directed_branch(b).target().name();
-	int p_target = -1;
+	maybe_parameter p_target = {-1, T.directed_branch(b).target().name()};
 	if (not T.directed_branch(b).target().is_leaf_node())
 	{
 	    string name_target = "*MyTree.branch"+convertToString(b)+"target"; 
 	    p_target = p->add_parameter(name_target,target);
 	    target = parameter(name_target);
 	}
+
 	int reverse_branch = T.directed_branch(b).reverse();
 	parameters_for_tree_branch.push_back( {p_source,p_target} );
 	branch_nodes.push_back( Tuple(source, target, reverse_branch) );
@@ -913,8 +914,8 @@ void Parameters::show_h_tree() const
 {
     for(int b=0; b < 2*t().n_branches(); b++)
     {
-	auto source = get_parameter_value(TC->parameters_for_tree_branch[b].first ).as_int();
-	auto target = get_parameter_value(TC->parameters_for_tree_branch[b].second).as_int();
+	auto source = TC->parameters_for_tree_branch[b].first.get_value(this);
+	auto target = TC->parameters_for_tree_branch[b].second.get_value(this);
 	std::cerr<<"branch "<<b<<": ("<<source<<","<<target<<")     "<<t().branch_length(b)<<"\n";
     }
 }
