@@ -22,13 +22,13 @@ expression_ref untranslate_vars(const expression_ref& E, const map<string, int>&
 expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& ids);
 map<int,string> get_constants(const reg_heap& C, int t);
 
-void throw_reg_exception(reg_heap& M, int R, myexception& e)
+void throw_reg_exception(reg_heap& M, int t, int R, myexception& e)
 {
-    dot_graph_for_token(M, 0);
+    dot_graph_for_token(M, t);
     string SS  = compact_graph_expression(M, R, M.get_identifiers()).print();
     string SSS = unlet(untranslate_vars(
 			   untranslate_vars(deindexify(trim_unnormalize(M.access(R).C)), M.get_identifiers()),
-			   get_constants(M,0)
+			   get_constants(M,t)
 			   )
 	).print();
     std::ostringstream o;
@@ -329,7 +329,7 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
 	    string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
 					  get_identifiers()).print();
 	    if (log_verbose)
-		dot_graph_for_token(*this, 0);
+		dot_graph_for_token(*this, root_token);
 #endif
 
 	    try
@@ -381,13 +381,13 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
 	    }
 	    catch (myexception& e)
 	    {
-		throw_reg_exception(*this, R, e);
+		throw_reg_exception(*this, root_token, R, e);
 	    }
 	    catch (const std::exception& ee)
 	    {
 		myexception e;
 		e<<ee.what();
-		throw_reg_exception(*this, R, e);
+		throw_reg_exception(*this, root_token, R, e);
 	    }
 
 #ifdef DEBUG_MACHINE
@@ -508,7 +508,7 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
 	    string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
 					  get_identifiers()).print();
 	    if (log_verbose)
-		dot_graph_for_token(*this, 0);
+		dot_graph_for_token(*this, root_token);
 #endif
 
 	    try
@@ -549,13 +549,13 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
 	    }
 	    catch (myexception& e)
 	    {
-		throw_reg_exception(*this, R, e);
+		throw_reg_exception(*this, root_token, R, e);
 	    }
 	    catch (const std::exception& ee)
 	    {
 		myexception e;
 		e<<ee.what();
-		throw_reg_exception(*this, R, e);
+		throw_reg_exception(*this, root_token, R, e);
 	    }
 
 #ifdef DEBUG_MACHINE
@@ -685,7 +685,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	    string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
 					  get_identifiers()).print();
 	    if (log_verbose)
-		dot_graph_for_token(*this, 0);
+		dot_graph_for_token(*this, root_token);
 #endif
 
 	    try
@@ -703,13 +703,13 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	    }
 	    catch (myexception& e)
 	    {
-		throw_reg_exception(*this, R, e);
+		throw_reg_exception(*this, root_token, R, e);
 	    }
 	    catch (const std::exception& ee)
 	    {
 		myexception e;
 		e<<ee.what();
-		throw_reg_exception(*this, R, e);
+		throw_reg_exception(*this, root_token, R, e);
 	    }
 
 #ifdef DEBUG_MACHINE

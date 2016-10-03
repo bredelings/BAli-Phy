@@ -358,7 +358,7 @@ void context::show_graph() const
 {
   get_probability();
   collect_garbage();
-  dot_graph_for_token(*memory(),0);
+  dot_graph_for_token(*memory(), context_index);
 }
 
 const module_loader& context::get_module_loader() const
