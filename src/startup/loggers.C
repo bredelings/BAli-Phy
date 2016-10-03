@@ -149,7 +149,7 @@ owned_ptr<MCMC::LoggerFunction<std::string>> construct_table_function(owned_ptr<
 	TL->add_field("RB-"+p, Get_Rao_Blackwellized_Parameter_Function(p_index, values));
     }
 
-    if (not P) return TableLogger<string>(*TL);
+    if (not P or P->t().n_nodes() < 2) return TableLogger<string>(*TL);
 
     for(int i=0;i<P->n_data_partitions();i++)
     {
