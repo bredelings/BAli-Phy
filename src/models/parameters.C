@@ -491,16 +491,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
 	likelihood_index = p->add_compute_expression((identifier("peel_likelihood_1"), seq, *a, f));
     }
-    else if (p->t().n_nodes() == 2)
-    {
-	auto seq1 = (identifier("!"), seqs_array, 0);
-	auto seq2 = (identifier("!"), seqs_array, 1);
-	auto A = (identifier("!"), as, 0);
-	auto P = (identifier("!"), transition_ps, 0);
-	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
-
-	likelihood_index = p->add_compute_expression((identifier("peel_likelihood_2"), seq1, seq2, *a, A, P, f));
-    }
     else
     {
 	auto t = p->my_tree();
@@ -509,8 +499,22 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	auto cls = p->get_expression(cl_index);
 	for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
 	    conditional_likelihoods_for_branch[b] = p->add_compute_expression((identifier("!"),cls,b));
-	auto root = parameter("*subst_root");
-	likelihood_index = p->add_compute_expression((identifier("peel_likelihood"), t, cls, as, f, root));
+
+	if (p->t().n_nodes() == 2)
+	{
+	    auto seq1 = (identifier("!"), seqs_array, 0);
+	    auto seq2 = (identifier("!"), seqs_array, 1);
+	    auto A = (identifier("!"), as, 0);
+	    auto P = (identifier("!"), transition_ps, 0);
+	    auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
+
+	    likelihood_index = p->add_compute_expression((identifier("peel_likelihood_2"), seq1, seq2, *a, A, P, f));
+	}
+	else
+	{
+	    auto root = parameter("*subst_root");
+	    likelihood_index = p->add_compute_expression((identifier("peel_likelihood"), t, cls, as, f, root));
+	}
     }
 
     // Add method indices for calculating branch HMMs and alignment prior
