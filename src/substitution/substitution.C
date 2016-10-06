@@ -1014,7 +1014,9 @@ namespace substitution {
       letter_likelihoods.push_back( get_letter_likelihoods(l, a, P) );
 
     // Compute the likelihood matrices for each letter in the sequence
-    vector<Matrix> likelihoods(L+delta, Matrix(n_models,n_states));
+    Matrix Zero(n_models,n_states);
+    element_assign(Zero,0);
+    vector<Matrix> likelihoods(L+delta, Zero);
 
     for(int i=0;i<L;i++)
     {
@@ -1040,20 +1042,17 @@ namespace substitution {
   vector<Matrix>
   get_column_likelihoods(const data_partition& P, const vector<int>& b, const matrix<int>& index, int delta)
   {
-    // FIXME - this now handles only internal sequences.  But see get_leaf_seq_likelihoods( ).
     auto t = P.t();
 
     //------ Check that all branches point to a 'root' node -----------//
     assert(b.size());
-    //    assert(not t.is_leaf_node(P.subst_root()));
+
     int root = t.target(b[0]);
     for(int i=1;i<b.size();i++)
       assert(t.target(b[i]) == root);
 
-    assert(not t.is_leaf_node(P.subst_root()));
-
     vector<Matrix> L;
-    L.reserve(index.size1()+2);
+    L.reserve(index.size1()+delta);
 
     const int n_models = P.n_base_models();
     const int n_states = P.n_states();
