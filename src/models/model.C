@@ -130,10 +130,13 @@ Model::Model(const module_loader& L)
     :context(L),keys(new std::map<std::string,double>)
 { }
 
-void show_parameters(std::ostream& o,const Model& M) {
+void show_parameters(std::ostream& o,const Model& M, bool show_hidden) {
     for(int i=0;i<M.n_parameters();i++) {
+	string name = M.parameter_name(i);
+	if ((not show_hidden) and name.size() > 1 and name[0] == '*')
+	    continue;
 	o<<"    ";
-	o<<M.parameter_name(i)<<" = ";
+	o<<name<<" = ";
 	string output="[NULL]";
 	if (M.get_parameter_value(i))
 	{
@@ -146,10 +149,10 @@ void show_parameters(std::ostream& o,const Model& M) {
     o<<"\n";
 }
 
-std::string show_parameters(const Model& M)
+std::string show_parameters(const Model& M, bool show_hidden)
 {
     std::ostringstream oss;
-    show_parameters(oss,M);
+    show_parameters(oss,M, show_hidden);
     return oss.str();
 }
 

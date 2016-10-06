@@ -1,21 +1,21 @@
 /*
-   Copyright (C) 2004-2010 Benjamin Redelings
+  Copyright (C) 2004-2010 Benjamin Redelings
 
-This file is part of BAli-Phy.
+  This file is part of BAli-Phy.
 
-BAli-Phy is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2, or (at your option) any later
-version.
+  BAli-Phy is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free
+  Software Foundation; either version 2, or (at your option) any later
+  version.
 
-BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+  BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+  for more details.
 
-You should have received a copy of the GNU General Public License
-along with BAli-Phy; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>.  */
+  You should have received a copy of the GNU General Public License
+  along with BAli-Phy; see the file COPYING.  If not see
+  <http://www.gnu.org/licenses/>.  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -90,213 +90,213 @@ using boost::shared_ptr;
 
 #ifdef DEBUG_MEMORY
 void * operator new(size_t sz) throw(std::bad_alloc) {
-  printf("new called, sz = %d\n",sz);
-  return malloc(sz); 
+    printf("new called, sz = %d\n",sz);
+    return malloc(sz); 
 }
 
 void operator delete(void * p) throw() {
-  printf("delete called, content = %d\n",(*(int*)p));
-  free(p); 
+    printf("delete called, content = %d\n",(*(int*)p));
+    free(p); 
 }
 #endif
 
 /*
-int parameter_with_extension(const Model& M, const string& name)
-{
+  int parameter_with_extension(const Model& M, const string& name)
+  {
   vector<int> indices = parameters_with_extension(M, name);
   if (not indices.size())
-    return -1;
+  return -1;
 
   if (indices.size() == 1)
-    return indices.back();
+  return indices.back();
 
   myexception e;
   e<<"Multiple parameter names fit the pattern '"<<name<<"':\n";
   for(int i=0;i<indices.size();i++)
-    e<<"   * "<<M.parameter_name(indices[i])<<"\n";
+  e<<"   * "<<M.parameter_name(indices[i])<<"\n";
 
   throw e;
-}
+  }
 */
 
 // How to record that the user said e.g. "fix the alignment"?  Or, fix parameter X?  Should we?
 
 void set_key_values(Model& M, const variables_map& args)
 {
-  if (not args.count("set")) return;
+    if (not args.count("set")) return;
 
-  vector<string> key_value_pairs = args["set"].as<vector<string> >();
+    vector<string> key_value_pairs = args["set"].as<vector<string> >();
 
-  for(const auto& key_value_pair: key_value_pairs)
-  {
-    vector<string> parse = split(key_value_pair,'=');
-    if (parse.size() != 2)
-      throw myexception()<<"Ill-formed key-value pair '"<<key_value_pair<<"'.";
+    for(const auto& key_value_pair: key_value_pairs)
+    {
+	vector<string> parse = split(key_value_pair,'=');
+	if (parse.size() != 2)
+	    throw myexception()<<"Ill-formed key-value pair '"<<key_value_pair<<"'.";
 
-    string key = parse[0];
+	string key = parse[0];
 
-    double value = convertTo<double>(parse[1]);
+	double value = convertTo<double>(parse[1]);
     
-    (*M.keys.modify())[key] = value;
-  }
+	(*M.keys.modify())[key] = value;
+    }
 }
 
 /// Parse command line arguments of the form --fix X=x or --unfix X=x or --set X=x and modify P
 void set_initial_parameter_values(Model& M, const variables_map& args) 
 {
-  //-------------- Specify fixed parameters ----------------//
-  vector<string> doset;
-  if (args.count("initial-value"))
-    doset = args["initial-value"].as<vector<string> >();
+    //-------------- Specify fixed parameters ----------------//
+    vector<string> doset;
+    if (args.count("initial-value"))
+	doset = args["initial-value"].as<vector<string> >();
 
-  vector<string> short_names = short_parameter_names(M);
+    vector<string> short_names = short_parameter_names(M);
 
-  // set parameters
-  for(const auto& arg: doset)
-  {
-    //parse
-    vector<string> parse = split(arg,'=');
-    if (parse.size() != 2)
-      throw myexception()<<"Ill-formed initial condition '"<<arg<<"'.";
-
-    string name = parse[0];
-    expression_ref value;
-    try {
-      value = parse_object(parse[1]);
-    }
-    catch (myexception& e)
+    // set parameters
+    for(const auto& arg: doset)
     {
-      std::ostringstream o;
-      o<<"Setting parameter '"<<name<<"': ";
-      e.prepend(o.str());
-      throw e;
+	//parse
+	vector<string> parse = split(arg,'=');
+	if (parse.size() != 2)
+	    throw myexception()<<"Ill-formed initial condition '"<<arg<<"'.";
+
+	string name = parse[0];
+	expression_ref value;
+	try {
+	    value = parse_object(parse[1]);
+	}
+	catch (myexception& e)
+	{
+	    std::ostringstream o;
+	    o<<"Setting parameter '"<<name<<"': ";
+	    e.prepend(o.str());
+	    throw e;
+	}
+
+	int p_index = M.find_parameter(name);
+	if (p_index == -1)
+	    p_index = find_index(short_names,name);
+	if (p_index == -1)
+	    throw myexception()<<"Can't find parameter '"<<name<<"' to set value '"<<parse[1]<<"'";
+
+	M.set_parameter_value(p_index,value);
     }
-
-    int p_index = M.find_parameter(name);
-    if (p_index == -1)
-      p_index = find_index(short_names,name);
-    if (p_index == -1)
-      throw myexception()<<"Can't find parameter '"<<name<<"' to set value '"<<parse[1]<<"'";
-
-    M.set_parameter_value(p_index,value);
-  }
 }
 
 /// Initialize the default random number generator and return the seed
 unsigned long init_rng_and_get_seed(const variables_map& args)
 {
-  unsigned long seed = 0;
-  if (args.count("seed")) {
-    seed = args["seed"].as<unsigned long>();
-    myrand_init(seed);
-  }
-  else
-    seed = myrand_init();
+    unsigned long seed = 0;
+    if (args.count("seed")) {
+	seed = args["seed"].as<unsigned long>();
+	myrand_init(seed);
+    }
+    else
+	seed = myrand_init();
 
-  return seed;
+    return seed;
 }
 
 chrono::system_clock::time_point start_time = chrono::system_clock::now();
 
 string ctime(const chrono::system_clock::time_point& t)
 {
-  time_t t2 = chrono::system_clock::to_time_t(t);
-  char* c = ctime(&t2);
-  return c;
+    time_t t2 = chrono::system_clock::to_time_t(t);
+    char* c = ctime(&t2);
+    return c;
 }
 
 void show_ending_messages()
 {
-  using namespace chrono;
+    using namespace chrono;
 
-  system_clock::time_point end_time = system_clock::now();
+    system_clock::time_point end_time = system_clock::now();
   
-  if (end_time - start_time > seconds(2)) 
-  {
-    cout<<endl;
-    cout<<"start time: "<<ctime(start_time)<<endl;
-    cout<<"  end time: "<<ctime(end_time)<<endl;
-    cout<<"total (elapsed) time: "<<duration_string( duration_cast<seconds>(end_time-start_time) )<<endl;
-    cout<<"total (CPU) time: "<<duration_string( duration_cast<seconds>(total_cpu_time()) )<<endl;
-  }
-  if (substitution::total_calc_root_prob > 1) {
-    cout<<endl;
-    cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
-    cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
-    cout<<"total branches peeled = "<<substitution::total_peel_leaf_branches+substitution::total_peel_internal_branches<<endl;
-    cout<<endl;
-  }
-  if (not log_verbose) return;
+    if (end_time - start_time > seconds(2)) 
+    {
+	cout<<endl;
+	cout<<"start time: "<<ctime(start_time)<<endl;
+	cout<<"  end time: "<<ctime(end_time)<<endl;
+	cout<<"total (elapsed) time: "<<duration_string( duration_cast<seconds>(end_time-start_time) )<<endl;
+	cout<<"total (CPU) time: "<<duration_string( duration_cast<seconds>(total_cpu_time()) )<<endl;
+    }
+    if (substitution::total_calc_root_prob > 1) {
+	cout<<endl;
+	cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
+	cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
+	cout<<"total branches peeled = "<<substitution::total_peel_leaf_branches+substitution::total_peel_internal_branches<<endl;
+	cout<<endl;
+    }
+    if (not log_verbose) return;
 
-  extern int total_reductions;
-  extern int total_changeable_eval;
-  extern int total_changeable_eval_with_result;
-  extern int total_changeable_eval_with_call;
-  extern int total_changeable_reductions;
-  extern int total_reg_allocations;
-  extern int total_comp_allocations;
-  extern int total_step_allocations;
-  extern int total_destroy_token;
-  extern int total_release_knuckle;
-  extern int total_create_context1;
-  extern int total_create_context2;
-  extern int total_tokens;
-  extern int total_reroot;
-  extern int total_reroot_one;
-  extern int total_set_reg_value;
-  extern int total_get_reg_value;
-  extern int total_get_reg_value_non_const;
-  extern int total_get_reg_value_non_const_with_result;
-  extern int total_invalidate;
-  extern int total_steps_invalidated;
-  extern int total_results_invalidated;
-  extern int total_steps_scanned;
-  extern int total_results_scanned;
-  extern int total_steps_pivoted;
-  extern int total_results_pivoted;
-  extern int total_context_pr;
-  extern int total_gc;
-  extern long total_regs;
-  extern long total_steps;
-  extern long total_comps;
+    extern int total_reductions;
+    extern int total_changeable_eval;
+    extern int total_changeable_eval_with_result;
+    extern int total_changeable_eval_with_call;
+    extern int total_changeable_reductions;
+    extern int total_reg_allocations;
+    extern int total_comp_allocations;
+    extern int total_step_allocations;
+    extern int total_destroy_token;
+    extern int total_release_knuckle;
+    extern int total_create_context1;
+    extern int total_create_context2;
+    extern int total_tokens;
+    extern int total_reroot;
+    extern int total_reroot_one;
+    extern int total_set_reg_value;
+    extern int total_get_reg_value;
+    extern int total_get_reg_value_non_const;
+    extern int total_get_reg_value_non_const_with_result;
+    extern int total_invalidate;
+    extern int total_steps_invalidated;
+    extern int total_results_invalidated;
+    extern int total_steps_scanned;
+    extern int total_results_scanned;
+    extern int total_steps_pivoted;
+    extern int total_results_pivoted;
+    extern int total_context_pr;
+    extern int total_gc;
+    extern long total_regs;
+    extern long total_steps;
+    extern long total_comps;
   
   
-  if (total_reductions > 0)
-  {
-    cout<<"total changeable evals         = "<<total_changeable_eval<<endl;
-    cout<<"  with result                  = "<<total_changeable_eval_with_result<<endl;
-    cout<<"  with call but not result     = "<<total_changeable_eval_with_call<<endl;
-    cout<<"total reduction steps          = "<<total_reductions<<endl;
-    cout<<"  changeable reduction steps   = "<<total_changeable_reductions<<endl;
-    cout<<"  unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
-    cout<<"\ntotal garbage collection runs  = "<<total_gc<<endl;
-    cout<<"total register allocations     = "<<total_reg_allocations<<endl;
-    cout<<"total computation allocations  = "<<total_comp_allocations<<endl;
-    cout<<"total step allocations         = "<<total_step_allocations<<endl;
-    cout<<"total regs                     = "<<total_regs<<endl;
-    cout<<"total steps                    = "<<total_steps<<endl;
-    cout<<"total computations             = "<<total_comps<<endl;
-    cout<<"\ntotal reroot operations        = "<<total_reroot<<endl;
-    cout<<"  total atomic reroot          = "<<total_reroot_one<<endl;
-    cout<<"  total steps pivoted          = "<<total_steps_pivoted<<endl;
-    cout<<"  total results pivoted        = "<<total_results_pivoted<<endl;
-    cout<<"total invalidations            = "<<total_invalidate<<endl;
-    cout<<"  total steps invalidated      = "<<total_steps_invalidated<<endl;
-    cout<<"  total results invalidated    = "<<total_results_invalidated<<endl;
-    cout<<"  total steps scanned          = "<<total_steps_scanned<<endl;
-    cout<<"  total results scanned        = "<<total_results_scanned<<endl;
-    cout<<"total tokens                   = "<<total_tokens<<endl;
-    cout<<"total tokens destroyed         = "<<total_destroy_token<<endl;
-    cout<<"  total knuckles destroyed     = "<<total_release_knuckle<<endl;
-    cout<<"total create context           = "<<total_create_context1+total_create_context2<<endl;
-    cout<<"  operator=                    = "<<total_create_context1<<endl;
-    cout<<"  copy constructor             = "<<total_create_context2<<endl;
-    cout<<"\ntotal values set               = "<<total_set_reg_value<<endl;
-    cout<<"total values gotten            = "<<total_get_reg_value<<endl;
-    cout<<"total values gotten variable   = "<<total_get_reg_value_non_const<<endl;
-    cout<<"total values gotten w/ result  = "<<total_get_reg_value_non_const_with_result<<endl;
-    cout<<"total context probability      = "<<total_context_pr<<endl;
-  }
+    if (total_reductions > 0)
+    {
+	cout<<"total changeable evals         = "<<total_changeable_eval<<endl;
+	cout<<"  with result                  = "<<total_changeable_eval_with_result<<endl;
+	cout<<"  with call but not result     = "<<total_changeable_eval_with_call<<endl;
+	cout<<"total reduction steps          = "<<total_reductions<<endl;
+	cout<<"  changeable reduction steps   = "<<total_changeable_reductions<<endl;
+	cout<<"  unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
+	cout<<"\ntotal garbage collection runs  = "<<total_gc<<endl;
+	cout<<"total register allocations     = "<<total_reg_allocations<<endl;
+	cout<<"total computation allocations  = "<<total_comp_allocations<<endl;
+	cout<<"total step allocations         = "<<total_step_allocations<<endl;
+	cout<<"total regs                     = "<<total_regs<<endl;
+	cout<<"total steps                    = "<<total_steps<<endl;
+	cout<<"total computations             = "<<total_comps<<endl;
+	cout<<"\ntotal reroot operations        = "<<total_reroot<<endl;
+	cout<<"  total atomic reroot          = "<<total_reroot_one<<endl;
+	cout<<"  total steps pivoted          = "<<total_steps_pivoted<<endl;
+	cout<<"  total results pivoted        = "<<total_results_pivoted<<endl;
+	cout<<"total invalidations            = "<<total_invalidate<<endl;
+	cout<<"  total steps invalidated      = "<<total_steps_invalidated<<endl;
+	cout<<"  total results invalidated    = "<<total_results_invalidated<<endl;
+	cout<<"  total steps scanned          = "<<total_steps_scanned<<endl;
+	cout<<"  total results scanned        = "<<total_results_scanned<<endl;
+	cout<<"total tokens                   = "<<total_tokens<<endl;
+	cout<<"total tokens destroyed         = "<<total_destroy_token<<endl;
+	cout<<"  total knuckles destroyed     = "<<total_release_knuckle<<endl;
+	cout<<"total create context           = "<<total_create_context1+total_create_context2<<endl;
+	cout<<"  operator=                    = "<<total_create_context1<<endl;
+	cout<<"  copy constructor             = "<<total_create_context2<<endl;
+	cout<<"\ntotal values set               = "<<total_set_reg_value<<endl;
+	cout<<"total values gotten            = "<<total_get_reg_value<<endl;
+	cout<<"total values gotten variable   = "<<total_get_reg_value_non_const<<endl;
+	cout<<"total values gotten w/ result  = "<<total_get_reg_value_non_const_with_result<<endl;
+	cout<<"total context probability      = "<<total_context_pr<<endl;
+    }
 }
 
 /* 
@@ -308,320 +308,320 @@ void show_ending_messages()
 
 fs::path get_system_lib_path(const string& exe_name)
 {
-  fs::path system_lib_path = find_exe_path(exe_name);
-  if (not system_lib_path.empty())
-  {
-    system_lib_path.remove_filename();
-    system_lib_path = system_lib_path / "lib" / "bali-phy";
+    fs::path system_lib_path = find_exe_path(exe_name);
+    if (not system_lib_path.empty())
+    {
+	system_lib_path.remove_filename();
+	system_lib_path = system_lib_path / "lib" / "bali-phy";
 
-    if (not fs::exists(system_lib_path))
-      system_lib_path = "";
-  }
-  return system_lib_path;
+	if (not fs::exists(system_lib_path))
+	    system_lib_path = "";
+    }
+    return system_lib_path;
 }
 
 fs::path get_user_lib_path()
 {
-  fs::path user_lib_path;
-  if (getenv("HOME"))
-  {
-    user_lib_path = getenv("HOME");
-    user_lib_path = user_lib_path / ".local" / "share" / "bali-phy" / "packages";
+    fs::path user_lib_path;
+    if (getenv("HOME"))
+    {
+	user_lib_path = getenv("HOME");
+	user_lib_path = user_lib_path / ".local" / "share" / "bali-phy" / "packages";
 
-    if (not fs::exists(user_lib_path))
-      user_lib_path = "";
-  }
-  return user_lib_path;
+	if (not fs::exists(user_lib_path))
+	    user_lib_path = "";
+    }
+    return user_lib_path;
 }
 
 module_loader setup_module_loader(variables_map& args, const string& filename)
 {
-  fs::path system_lib_path = get_system_lib_path(filename);
-  fs::path user_lib_path = get_user_lib_path();
+    fs::path system_lib_path = get_system_lib_path(filename);
+    fs::path user_lib_path = get_user_lib_path();
 
-  module_loader L;
+    module_loader L;
 
-  // 1. Add user-specified package paths
-  if (args.count("package-path"))
-    for(const string& path: split(args["package-path"].as<string>(),':'))
-      L.try_add_plugin_path(path);
+    // 1. Add user-specified package paths
+    if (args.count("package-path"))
+	for(const string& path: split(args["package-path"].as<string>(),':'))
+	    L.try_add_plugin_path(path);
 
-  // 2. Add default user path
-  if (not user_lib_path.empty())
-  {
-    fs::path user_module_path = user_lib_path;
-    if (fs::exists(user_module_path))
-      L.plugins_path.push_back( user_module_path.string() );
-  }
+    // 2. Add default user path
+    if (not user_lib_path.empty())
+    {
+	fs::path user_module_path = user_lib_path;
+	if (fs::exists(user_module_path))
+	    L.plugins_path.push_back( user_module_path.string() );
+    }
   
-  // 3. Add default system path
-  if (not system_lib_path.empty())
-  {
-    fs::path system_module_path = system_lib_path;
-    if (fs::exists(system_module_path))
-      L.plugins_path.push_back( system_module_path.string() );
-  }
+    // 3. Add default system path
+    if (not system_lib_path.empty())
+    {
+	fs::path system_module_path = system_lib_path;
+	if (fs::exists(system_module_path))
+	    L.plugins_path.push_back( system_module_path.string() );
+    }
 
-  // 4. Write out paths to C1.err
-  if (log_verbose)
-  {
-    std::cerr<<"\nPlugins path = \n";
-    for(const auto& path: L.plugins_path)
-      cerr<<"  "<<path<<"\n";
-  }
+    // 4. Write out paths to C1.err
+    if (log_verbose)
+    {
+	std::cerr<<"\nPlugins path = \n";
+	for(const auto& path: L.plugins_path)
+	    cerr<<"  "<<path<<"\n";
+    }
 
-  // 5a. Check for empty paths
-  if (L.plugins_path.empty())
-      throw myexception()<<"No plugin paths are specified!.  Use --package-path=<path> to specify the directory containing 'Prelude.so'.";
+    // 5a. Check for empty paths
+    if (L.plugins_path.empty())
+	throw myexception()<<"No plugin paths are specified!.  Use --package-path=<path> to specify the directory containing 'Prelude.so'.";
 
-  // 5b. Check for Prelude.so
-  try
-  {
-    L.find_plugin("Prelude");
-  }
-  catch (...)
-  {
-    throw myexception()<<"Can't find Prelude plugin.  Use --package-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
-  }
+    // 5b. Check for Prelude.so
+    try
+    {
+	L.find_plugin("Prelude");
+    }
+    catch (...)
+    {
+	throw myexception()<<"Can't find Prelude plugin.  Use --package-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
+    }
 
-  // 5c. Check for Prelude.hs
-  try
-  {
-    L.find_module("Prelude");
-  }
-  catch (...)
-  {
-    throw myexception()<<"Can't find Prelude in module path.  Use --package-path=<path> to specify the directory containing 'modules/Prelude.hs'.";
-  }
+    // 5c. Check for Prelude.hs
+    try
+    {
+	L.find_module("Prelude");
+    }
+    catch (...)
+    {
+	throw myexception()<<"Can't find Prelude in module path.  Use --package-path=<path> to specify the directory containing 'modules/Prelude.hs'.";
+    }
 
-  return L;
+    return L;
 }
 
 int main(int argc,char* argv[])
 { 
-  int n_procs = 1;
-  int proc_id = 0;
+    int n_procs = 1;
+    int proc_id = 0;
 
 #ifdef HAVE_MPI
-  mpi::environment env(argc, argv);
-  mpi::communicator world;
+    mpi::environment env(argc, argv);
+    mpi::communicator world;
 
-  proc_id = world.rank();
-  n_procs = world.size();
+    proc_id = world.rank();
+    n_procs = world.size();
 #endif
 
-  restore restore_cout(cout);
-  restore restore_cerr(cerr);
-  restore restore_clog(clog);
+    restore restore_cout(cout);
+    restore restore_cerr(cerr);
+    restore restore_clog(clog);
 
-  std::ios::sync_with_stdio(false);
+    std::ios::sync_with_stdio(false);
 
-  ostream out_screen(cout.rdbuf());
-  ostream err_screen(cerr.rdbuf());
+    ostream out_screen(cout.rdbuf());
+    ostream err_screen(cerr.rdbuf());
 
-  std::ostringstream out_cache;
-  std::ostringstream err_cache;
+    std::ostringstream out_cache;
+    std::ostringstream err_cache;
 
-  vector<shared_ptr<ostream>> files;
+    vector<shared_ptr<ostream>> files;
 
-  teebuf tee_out(out_screen.rdbuf(), out_cache.rdbuf());
-  teebuf tee_err(err_screen.rdbuf(), err_cache.rdbuf());
+    teebuf tee_out(out_screen.rdbuf(), out_cache.rdbuf());
+    teebuf tee_err(err_screen.rdbuf(), err_cache.rdbuf());
 
-  ostream out_both(&tee_out);
-  ostream err_both(&tee_err);
+    ostream out_both(&tee_out);
+    ostream err_both(&tee_err);
 
-  int retval=0;
+    int retval=0;
 
-  try {
+    try {
 
 #if defined(HAVE_FEENABLEEXCEPT) && !defined(NDEBUG)
-    feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
-    //    feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
+	feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
+	//    feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
 #endif
 #if defined(HAVE_CLEAREXCEPT) && defined(NDEBUG)
-    feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
+	feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
 #endif
-    fp_scale::initialize();
+	fp_scale::initialize();
 
-    //---------- Parse command line  ---------//
-    variables_map args = parse_cmd_line(argc,argv);
+	//---------- Parse command line  ---------//
+	variables_map args = parse_cmd_line(argc,argv);
 
-    bool show_only = args.count("test");
+	bool show_only = args.count("test");
 
-    //------ Increase precision for (cout,cerr) if we are testing ------//
-    if (show_only)
-    {
-      cerr.precision(15);
-      cout.precision(15);
-    }
-
-    //------ Capture copy of 'cerr' output in 'err_cache' ------//
-    if (not show_only)
-      cerr.rdbuf(err_both.rdbuf());
-
-    //------ Print version info for show-only ------//
-    if (show_only and proc_id == 0)
-    {
-      cout<<"command: "<<get_command_line(argc,argv)<<endl<<endl;
-      print_version_info(cout);
-      cout<<endl;
-    }
-
-    //------------- Setup module loader -------------//
-    module_loader L = setup_module_loader(args, argv[0]);
-
-    //---------- Initialize random seed -----------//
-    unsigned long seed = init_rng_and_get_seed(args);
-    
-    out_cache<<"random seed = "<<seed<<endl<<endl;
-
-    //---------- Create model object -----------//
-    owned_ptr<Model> M;
-    if (args.count("align"))
-      M = create_A_and_T_model(args, L, out_cache, out_screen, out_both, proc_id);
-    else
-      M = Model(L);
-    M->set_args(trailing_args(argc, argv, trailing_args_separator));
-
-    //------------- Parse the Hierarchical Model description -----------//
-    if (args.count("model"))
-    {
-      const string filename = args["model"].as<string>();
-      read_add_model(*M,filename);
-    }
-    else if (args.count("Model"))
-    {
-      const string filename = args["Model"].as<string>();
-      add_model(*M,filename);
-    }
-      
-    set_initial_parameter_values(*M,args);
-
-    set_key_values(*M,args);
-
-    //---------------Do something------------------//
-    if (show_only)
-    {
-      print_stats(cout,*M);
-
-      M->show_graph();
-    }
-    else 
-    {
-      raise_cpu_limit(err_both);
-
-      block_signals();
-
-      long int max_iterations = args["iterations"].as<long int>();
-      int subsample = args["subsample"].as<int>();
-      
-      //---------- Open output files -----------//
-      vector<owned_ptr<MCMC::Logger> > loggers;
-
-      string dir_name="";
-      if (not args.count("test")) {
-#ifdef HAVE_MPI
-	if (not proc_id) {
-	  dir_name = init_dir(args);
-	  
-	  for(int dest=1;dest<n_procs;dest++) 
-	    world.send(dest, 0, dir_name);
-	}
-	else
-	  world.recv(0, 0, dir_name);
-
-	// cerr<<"Proc "<<proc_id<<": dirname = "<<dir_name<<endl;
-#else
-	dir_name = init_dir(args);
-#endif
-	files = init_files(proc_id, dir_name, argc, argv);
+	//------ Increase precision for (cout,cerr) if we are testing ------//
+	if (show_only)
 	{
-	  vector<string> Rao_Blackwellize;
-	  if (args.count("Rao-Blackwellize"))
-	      Rao_Blackwellize = split(args["Rao-Blackwellize"].as<string>(),',');
-	  loggers = construct_loggers(M, subsample, Rao_Blackwellize, proc_id, dir_name);
+	    cerr.precision(15);
+	    cout.precision(15);
 	}
-	write_initial_alignments(*M, proc_id, dir_name);
-      }
-      else {
-	files.push_back(shared_ptr<ostream>(new ostream(cout.rdbuf())));
-	files.push_back(shared_ptr<ostream>(new ostream(cerr.rdbuf())));
-      }
 
-      //------ Redirect output to files -------//
-      *files[0]<<out_cache.str(); out_cache.str("");
-      *files[1]<<err_cache.str(); err_cache.str("");
+	//------ Capture copy of 'cerr' output in 'err_cache' ------//
+	if (not show_only)
+	    cerr.rdbuf(err_both.rdbuf());
 
-      tee_out.setbuf2(files[0]->rdbuf());
-      tee_err.setbuf2(files[1]->rdbuf());
+	//------ Print version info for show-only ------//
+	if (show_only and proc_id == 0)
+	{
+	    cout<<"command: "<<get_command_line(argc,argv)<<endl<<endl;
+	    print_version_info(cout);
+	    cout<<endl;
+	}
 
-      cout.flush() ; cout.rdbuf(files[0]->rdbuf());
-      cerr.flush() ; cerr.rdbuf(files[1]->rdbuf());
-      clog.flush() ; clog.rdbuf(files[1]->rdbuf());
+	//------------- Setup module loader -------------//
+	module_loader L = setup_module_loader(args, argv[0]);
 
-      //------ Redirect output to files -------//
+	//---------- Initialize random seed -----------//
+	unsigned long seed = init_rng_and_get_seed(args);
+    
+	out_cache<<"random seed = "<<seed<<endl<<endl;
 
-      // Force the creation of parameters
-      for(int i=0;i<M->n_parameters();i++)
-	M->parameter_is_modifiable(i);
+	//---------- Create model object -----------//
+	owned_ptr<Model> M;
+	if (args.count("align"))
+	    M = create_A_and_T_model(args, L, out_cache, out_screen, out_both, proc_id);
+	else
+	    M = Model(L);
+	M->set_args(trailing_args(argc, argv, trailing_args_separator));
 
-      avoid_zero_likelihood(M, *files[0], out_both);
+	//------------- Parse the Hierarchical Model description -----------//
+	if (args.count("model"))
+	{
+	    const string filename = args["model"].as<string>();
+	    read_add_model(*M,filename);
+	}
+	else if (args.count("Model"))
+	{
+	    const string filename = args["Model"].as<string>();
+	    add_model(*M,filename);
+	}
+      
+	set_initial_parameter_values(*M,args);
 
-      do_pre_burnin(args, M, *files[0], out_both);
+	set_key_values(*M,args);
 
-      out_screen<<"\nBeginning "<<max_iterations<<" iterations of MCMC computations."<<endl;
-      out_screen<<"   - Future screen output sent to '"<<dir_name<<"/C1.out'"<<endl;
-      out_screen<<"   - Future debugging output sent to '"<<dir_name<<"/C1.err'"<<endl;
-      if (M.as<Parameters>())
-      {
-	out_screen<<"   - Sampled trees logged to '"<<dir_name<<"/C1.trees'"<<endl;
-	out_screen<<"   - Sampled alignments logged to '"<<dir_name<<"/C1.P<partition>.fastas'"<<endl;
-      }
-      out_screen<<"   - Sampled numerical parameters logged to '"<<dir_name<<"/C1.p'"<<endl;
-      out_screen<<endl;
-      out_screen<<"You can examine 'C1.p' using BAli-Phy tool statreport (command-line)"<<endl;
-      out_screen<<"  or the BEAST program Tracer (graphical)."<<endl;
-      out_screen<<"See the manual for further information."<<endl;
+	//---------------Do something------------------//
+	if (show_only)
+	{
+	    print_stats(cout,*M, log_verbose);
 
-      //-------- Start the MCMC  -----------//
-      do_sampling(args, M, max_iterations, *files[0], loggers);
+	    M->show_graph();
+	}
+	else 
+	{
+	    raise_cpu_limit(err_both);
 
-      // Close all the streams, and write a notification that we finished all the iterations.
-      // close_files(files);
+	    block_signals();
+
+	    long int max_iterations = args["iterations"].as<long int>();
+	    int subsample = args["subsample"].as<int>();
+      
+	    //---------- Open output files -----------//
+	    vector<owned_ptr<MCMC::Logger> > loggers;
+
+	    string dir_name="";
+	    if (not args.count("test")) {
+#ifdef HAVE_MPI
+		if (not proc_id) {
+		    dir_name = init_dir(args);
+	  
+		    for(int dest=1;dest<n_procs;dest++) 
+			world.send(dest, 0, dir_name);
+		}
+		else
+		    world.recv(0, 0, dir_name);
+
+		// cerr<<"Proc "<<proc_id<<": dirname = "<<dir_name<<endl;
+#else
+		dir_name = init_dir(args);
+#endif
+		files = init_files(proc_id, dir_name, argc, argv);
+		{
+		    vector<string> Rao_Blackwellize;
+		    if (args.count("Rao-Blackwellize"))
+			Rao_Blackwellize = split(args["Rao-Blackwellize"].as<string>(),',');
+		    loggers = construct_loggers(M, subsample, Rao_Blackwellize, proc_id, dir_name);
+		}
+		write_initial_alignments(*M, proc_id, dir_name);
+	    }
+	    else {
+		files.push_back(shared_ptr<ostream>(new ostream(cout.rdbuf())));
+		files.push_back(shared_ptr<ostream>(new ostream(cerr.rdbuf())));
+	    }
+
+	    //------ Redirect output to files -------//
+	    *files[0]<<out_cache.str(); out_cache.str("");
+	    *files[1]<<err_cache.str(); err_cache.str("");
+
+	    tee_out.setbuf2(files[0]->rdbuf());
+	    tee_err.setbuf2(files[1]->rdbuf());
+
+	    cout.flush() ; cout.rdbuf(files[0]->rdbuf());
+	    cerr.flush() ; cerr.rdbuf(files[1]->rdbuf());
+	    clog.flush() ; clog.rdbuf(files[1]->rdbuf());
+
+	    //------ Redirect output to files -------//
+
+	    // Force the creation of parameters
+	    for(int i=0;i<M->n_parameters();i++)
+		M->parameter_is_modifiable(i);
+
+	    avoid_zero_likelihood(M, *files[0], out_both);
+
+	    do_pre_burnin(args, M, *files[0], out_both);
+
+	    out_screen<<"\nBeginning "<<max_iterations<<" iterations of MCMC computations."<<endl;
+	    out_screen<<"   - Future screen output sent to '"<<dir_name<<"/C1.out'"<<endl;
+	    out_screen<<"   - Future debugging output sent to '"<<dir_name<<"/C1.err'"<<endl;
+	    if (M.as<Parameters>())
+	    {
+		out_screen<<"   - Sampled trees logged to '"<<dir_name<<"/C1.trees'"<<endl;
+		out_screen<<"   - Sampled alignments logged to '"<<dir_name<<"/C1.P<partition>.fastas'"<<endl;
+	    }
+	    out_screen<<"   - Sampled numerical parameters logged to '"<<dir_name<<"/C1.p'"<<endl;
+	    out_screen<<endl;
+	    out_screen<<"You can examine 'C1.p' using BAli-Phy tool statreport (command-line)"<<endl;
+	    out_screen<<"  or the BEAST program Tracer (graphical)."<<endl;
+	    out_screen<<"See the manual for further information."<<endl;
+
+	    //-------- Start the MCMC  -----------//
+	    do_sampling(args, M, max_iterations, *files[0], loggers);
+
+	    // Close all the streams, and write a notification that we finished all the iterations.
+	    // close_files(files);
+	}
     }
-  }
-  catch (std::bad_alloc&) 
-  {
-    // 1. If we haven't yet moved screen output to a file, then write cached screen output.
-    out_screen<<out_cache.str(); out_screen.flush();
-    err_screen<<err_cache.str(); err_screen.flush();
+    catch (std::bad_alloc&) 
+    {
+	// 1. If we haven't yet moved screen output to a file, then write cached screen output.
+	out_screen<<out_cache.str(); out_screen.flush();
+	err_screen<<err_cache.str(); err_screen.flush();
 
-    // 2. Now, write message to either (screen+cache) or (screen+file), and flush.
-    err_both<<"Doh!  Some kind of memory problem?\n"<<endl;
-    // 3. Write memory report to either (screen) or (screen+cache) or (screen+file)
-    report_mem();
-    retval=2;
-  }
-  catch (std::exception& e) 
-  {
-    // 1. If we haven't yet moved screen output to a file, then write cached screen output.
-    out_screen<<out_cache.str(); out_screen.flush();
-    err_screen<<err_cache.str(); err_screen.flush();
+	// 2. Now, write message to either (screen+cache) or (screen+file), and flush.
+	err_both<<"Doh!  Some kind of memory problem?\n"<<endl;
+	// 3. Write memory report to either (screen) or (screen+cache) or (screen+file)
+	report_mem();
+	retval=2;
+    }
+    catch (std::exception& e) 
+    {
+	// 1. If we haven't yet moved screen output to a file, then write cached screen output.
+	out_screen<<out_cache.str(); out_screen.flush();
+	err_screen<<err_cache.str(); err_screen.flush();
 
-    // 2. Now, write message to either (screen+cache) or (screen+file), and flush.
-    if (n_procs > 1)
-      err_both<<"bali-phy: Error["<<proc_id<<"]! "<<e.what()<<endl;
-    else
-      err_both<<"bali-phy: Error! "<<e.what()<<endl;
+	// 2. Now, write message to either (screen+cache) or (screen+file), and flush.
+	if (n_procs > 1)
+	    err_both<<"bali-phy: Error["<<proc_id<<"]! "<<e.what()<<endl;
+	else
+	    err_both<<"bali-phy: Error! "<<e.what()<<endl;
 
-    retval=1;
-  }
+	retval=1;
+    }
 
-  show_ending_messages();
+    show_ending_messages();
 
-  out_both.flush();
-  err_both.flush();
-  return retval;
+    out_both.flush();
+    err_both.flush();
+    return retval;
 }
 
 ///

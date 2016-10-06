@@ -95,7 +95,7 @@ void show_smodels(std::ostream& o, const Parameters& P)
   }
 }
 
-void print_stats(std::ostream& o, const Model& M, bool /* print_alignment */) 
+void print_stats(std::ostream& o, const Model& M, bool show_hidden) 
 {
   const Parameters* P = dynamic_cast<const Parameters*>(&M);
   log_double_t Pr_prior = M.prior();
@@ -115,7 +115,7 @@ void print_stats(std::ostream& o, const Model& M, bool /* print_alignment */)
    <<"    beta = " <<beta  <<"\n";
 
   o<<"\n";
-  show_parameters(o,M);
+  show_parameters(o, M, show_hidden);
   o.flush();
 
   //  This takes too much disk space!

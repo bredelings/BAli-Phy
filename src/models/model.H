@@ -160,9 +160,9 @@ public:
     virtual ~Model() {};
 };
 
-void show_parameters(std::ostream& o,const Model& M);
+void show_parameters(std::ostream& o,const Model& M, bool = true);
 
-std::string show_parameters(const Model& M);
+std::string show_parameters(const Model& M, bool = true);
 
 bool has_parameter(const Model& M, const std::string& name);
 
