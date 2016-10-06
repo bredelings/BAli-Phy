@@ -48,12 +48,20 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition P,int b)
 
     vector< Matrix > dists1 = substitution::get_column_likelihoods(P, {b}, get_indices_n(P.seqlength(t.source(b))), 2);
 
-    vector<int> prev = t.branches_before(bb);
-    assert(prev.size() == 2);
-    auto a0 = convert_to_bits(P.get_pairwise_alignment(prev[0]),0,2);
-    auto a1 = convert_to_bits(P.get_pairwise_alignment(prev[1]),1,2);
-    auto a012 = Glue_A(a0,a1);
-    vector< Matrix > dists2 = substitution::get_column_likelihoods(P, prev, get_indices_from_bitpath_w(a012,{0,1},(1<<2)), 2);
+    vector< Matrix > dists2;
+    if (t.n_nodes() == 2)
+    {
+	dists2 = substitution::get_leaf_seq_likelihoods(P, t.target(b), 2);
+    }
+    else
+    {
+	vector<int> prev = t.branches_before(bb);
+	assert(prev.size() == 2);
+	auto a0 = convert_to_bits(P.get_pairwise_alignment(prev[0]),0,2);
+	auto a1 = convert_to_bits(P.get_pairwise_alignment(prev[1]),1,2);
+	auto a012 = Glue_A(a0,a1);
+	dists2 = substitution::get_column_likelihoods(P, prev, get_indices_from_bitpath_w(a012,{0,1},(1<<2)), 2);
+    }
     //  To handle a 2-node tree, we can do something things for dists2:
     //      dists2 = substitution::get_leaf_seq_likelihoods(P, root, 2);
 
