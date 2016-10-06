@@ -241,5 +241,7 @@ void sample_alignment(Parameters& P,int b)
 	//    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
 	//    report_constraints(s1[i],s2,i);
     }
+
+    P = p[0];
 }
 
