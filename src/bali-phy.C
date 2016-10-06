@@ -226,6 +226,8 @@ void show_ending_messages()
     cout<<"total branches peeled = "<<substitution::total_peel_leaf_branches+substitution::total_peel_internal_branches<<endl;
     cout<<endl;
   }
+  if (not log_verbose) return;
+
   extern int total_reductions;
   extern int total_changeable_eval;
   extern int total_changeable_eval_with_result;
