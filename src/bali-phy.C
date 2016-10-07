@@ -495,6 +495,13 @@ int main(int argc,char* argv[])
 	    add_model(*M,filename);
 	}
       
+	if (args.count("tree") and M.as<Parameters>())
+	{
+	    auto P = M.as<Parameters>();
+	    for(int i=0;i<P->n_branch_means();i++)
+		P->branch_mean(i, 1.0);
+	}
+
 	set_initial_parameter_values(*M,args);
 
 	set_key_values(*M,args);
