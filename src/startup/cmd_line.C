@@ -101,7 +101,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description model("Model options");
   model.add_options()
-    ("alphabet",value<vector<string> >()->composing(),"The alphabet: DNA, RNA, Amino-Acids, Codons, etc.")
+    ("alphabet",value<vector<string> >()->composing(),"DNA, RNA, Amino-Acids, Codons, etc.")
     ("smodel",value<vector<string> >()->composing(),"Substitution model.")
     ("imodel",value<vector<string> >()->composing(),"Indel model: none, RS07, RS05, RS07-no-T.")
     ("traditional,t","Fix the alignment and don't model indels.")
