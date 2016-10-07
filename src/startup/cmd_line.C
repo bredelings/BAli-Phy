@@ -48,7 +48,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description advanced("Advanced options");
   advanced.add_options()
-    ("Help,H", "Print advanced usage information.")
     ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
     ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
     ("randomize-alignment","Randomly realign the sequences before use.")
