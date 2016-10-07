@@ -96,7 +96,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>")
     ("set",value<vector<string> >()->composing(),"Set key=<value>")
     ("unalign-all,U","Unalign all sequences before use.")
-    ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.")
     ;
 
   options_description model("Model options");

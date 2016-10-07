@@ -96,35 +96,7 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
   valarray<double> frequencies(a.size());
 
   // empirical frequencies
-  if (not args.count("frequencies"))
-    frequencies = A.get_alphabet().get_frequencies_from_counts(counts,chop_internal(A).n_sequences());
-
-  // uniform frequencies
-  else if (args["frequencies"].as<string>() == "uniform")
-    frequencies = 1.0/a.size();
-
-  // triplet frequencies <- nucleotide frequencies
-  else if (args["frequencies"].as<string>() == "nucleotides") {
-    const Triplets* T = dynamic_cast<const Triplets*>(&a);
-
-    if (not T) throw myexception()<<"You can only specify nucleotide frequencies on Triplet or Codon alphabets.";
-    valarray<double> N_counts = get_nucleotide_counts_from_codon_counts(*T,counts);
-    valarray<double> fN = T->getNucleotides().get_frequencies_from_counts(N_counts,chop_internal(A).n_sequences());
-
-    frequencies = get_codon_frequencies_from_independent_nucleotide_frequencies(*T,fN);
-  }
-
-  // specified frequencies
-  else {
-    vector<double> f = split<double>(args["frequencies"].as<string>(),',');
-
-    if (f.size() != a.size())
-      throw myexception()<<"You specified "<<f.size()<<" frequencies, but there are "
-			 <<a.size()<<" letters of the alphabet!";
-
-    for(int i=0;i<f.size();i++)
-      frequencies[i] = f[i];
-  }
+  frequencies = A.get_alphabet().get_frequencies_from_counts(counts,chop_internal(A).n_sequences());
 
   return frequencies;
 }
