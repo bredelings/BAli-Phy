@@ -412,8 +412,6 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
 	P.PC->branch_prior_type = 0;
     else if (branch_prior == "Gamma") 
 	P.PC->branch_prior_type = 1;
-    else if (branch_prior == "Dirichlet") 
-	P.PC->branch_prior_type = 2;
     else
 	throw myexception()<<"I don't understand --branch-prior argument '"<<branch_prior<<"'.\n  Only 'Exponential' and 'Gamma' are allowed.";
 
