@@ -205,10 +205,82 @@ string ctime(const chrono::system_clock::time_point& t)
     return c;
 }
 
-void show_ending_messages()
+void show_ending_messages(bool show_only)
 {
     using namespace chrono;
 
+    if (not show_only or log_verbose) {
+
+	extern int total_reductions;
+	extern int total_changeable_eval;
+	extern int total_changeable_eval_with_result;
+	extern int total_changeable_eval_with_call;
+	extern int total_changeable_reductions;
+	extern int total_reg_allocations;
+	extern int total_comp_allocations;
+	extern int total_step_allocations;
+	extern int total_destroy_token;
+	extern int total_release_knuckle;
+	extern int total_create_context1;
+	extern int total_create_context2;
+	extern int total_tokens;
+	extern int total_reroot;
+	extern int total_reroot_one;
+	extern int total_set_reg_value;
+	extern int total_get_reg_value;
+	extern int total_get_reg_value_non_const;
+	extern int total_get_reg_value_non_const_with_result;
+	extern int total_invalidate;
+	extern int total_steps_invalidated;
+	extern int total_results_invalidated;
+	extern int total_steps_scanned;
+	extern int total_results_scanned;
+	extern int total_steps_pivoted;
+	extern int total_results_pivoted;
+	extern int total_context_pr;
+	extern int total_gc;
+	extern long total_regs;
+	extern long total_steps;
+	extern long total_comps;
+  
+  
+	if (total_reductions > 0)
+	{
+	    cout<<"total changeable evals         = "<<total_changeable_eval<<endl;
+	    cout<<"  with result                  = "<<total_changeable_eval_with_result<<endl;
+	    cout<<"  with call but not result     = "<<total_changeable_eval_with_call<<endl;
+	    cout<<"total reduction steps          = "<<total_reductions<<endl;
+	    cout<<"  changeable reduction steps   = "<<total_changeable_reductions<<endl;
+	    cout<<"  unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
+	    cout<<"\ntotal garbage collection runs  = "<<total_gc<<endl;
+	    cout<<"total register allocations     = "<<total_reg_allocations<<endl;
+	    cout<<"total computation allocations  = "<<total_comp_allocations<<endl;
+	    cout<<"total step allocations         = "<<total_step_allocations<<endl;
+	    cout<<"total regs                     = "<<total_regs<<endl;
+	    cout<<"total steps                    = "<<total_steps<<endl;
+	    cout<<"total computations             = "<<total_comps<<endl;
+	    cout<<"\ntotal reroot operations        = "<<total_reroot<<endl;
+	    cout<<"  total atomic reroot          = "<<total_reroot_one<<endl;
+	    cout<<"  total steps pivoted          = "<<total_steps_pivoted<<endl;
+	    cout<<"  total results pivoted        = "<<total_results_pivoted<<endl;
+	    cout<<"total invalidations            = "<<total_invalidate<<endl;
+	    cout<<"  total steps invalidated      = "<<total_steps_invalidated<<endl;
+	    cout<<"  total results invalidated    = "<<total_results_invalidated<<endl;
+	    cout<<"  total steps scanned          = "<<total_steps_scanned<<endl;
+	    cout<<"  total results scanned        = "<<total_results_scanned<<endl;
+	    cout<<"total tokens                   = "<<total_tokens<<endl;
+	    cout<<"total tokens destroyed         = "<<total_destroy_token<<endl;
+	    cout<<"  total knuckles destroyed     = "<<total_release_knuckle<<endl;
+	    cout<<"total create context           = "<<total_create_context1+total_create_context2<<endl;
+	    cout<<"  operator=                    = "<<total_create_context1<<endl;
+	    cout<<"  copy constructor             = "<<total_create_context2<<endl;
+	    cout<<"\ntotal values set               = "<<total_set_reg_value<<endl;
+	    cout<<"total values gotten            = "<<total_get_reg_value<<endl;
+	    cout<<"total values gotten variable   = "<<total_get_reg_value_non_const<<endl;
+	    cout<<"total values gotten w/ result  = "<<total_get_reg_value_non_const_with_result<<endl;
+	    cout<<"total context probability      = "<<total_context_pr<<endl;
+	}
+    }
     system_clock::time_point end_time = system_clock::now();
   
     if (end_time - start_time > seconds(2)) 
@@ -225,77 +297,6 @@ void show_ending_messages()
 	cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
 	cout<<"total branches peeled = "<<substitution::total_peel_leaf_branches+substitution::total_peel_internal_branches<<endl;
 	cout<<endl;
-    }
-    if (not log_verbose) return;
-
-    extern int total_reductions;
-    extern int total_changeable_eval;
-    extern int total_changeable_eval_with_result;
-    extern int total_changeable_eval_with_call;
-    extern int total_changeable_reductions;
-    extern int total_reg_allocations;
-    extern int total_comp_allocations;
-    extern int total_step_allocations;
-    extern int total_destroy_token;
-    extern int total_release_knuckle;
-    extern int total_create_context1;
-    extern int total_create_context2;
-    extern int total_tokens;
-    extern int total_reroot;
-    extern int total_reroot_one;
-    extern int total_set_reg_value;
-    extern int total_get_reg_value;
-    extern int total_get_reg_value_non_const;
-    extern int total_get_reg_value_non_const_with_result;
-    extern int total_invalidate;
-    extern int total_steps_invalidated;
-    extern int total_results_invalidated;
-    extern int total_steps_scanned;
-    extern int total_results_scanned;
-    extern int total_steps_pivoted;
-    extern int total_results_pivoted;
-    extern int total_context_pr;
-    extern int total_gc;
-    extern long total_regs;
-    extern long total_steps;
-    extern long total_comps;
-  
-  
-    if (total_reductions > 0)
-    {
-	cout<<"total changeable evals         = "<<total_changeable_eval<<endl;
-	cout<<"  with result                  = "<<total_changeable_eval_with_result<<endl;
-	cout<<"  with call but not result     = "<<total_changeable_eval_with_call<<endl;
-	cout<<"total reduction steps          = "<<total_reductions<<endl;
-	cout<<"  changeable reduction steps   = "<<total_changeable_reductions<<endl;
-	cout<<"  unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
-	cout<<"\ntotal garbage collection runs  = "<<total_gc<<endl;
-	cout<<"total register allocations     = "<<total_reg_allocations<<endl;
-	cout<<"total computation allocations  = "<<total_comp_allocations<<endl;
-	cout<<"total step allocations         = "<<total_step_allocations<<endl;
-	cout<<"total regs                     = "<<total_regs<<endl;
-	cout<<"total steps                    = "<<total_steps<<endl;
-	cout<<"total computations             = "<<total_comps<<endl;
-	cout<<"\ntotal reroot operations        = "<<total_reroot<<endl;
-	cout<<"  total atomic reroot          = "<<total_reroot_one<<endl;
-	cout<<"  total steps pivoted          = "<<total_steps_pivoted<<endl;
-	cout<<"  total results pivoted        = "<<total_results_pivoted<<endl;
-	cout<<"total invalidations            = "<<total_invalidate<<endl;
-	cout<<"  total steps invalidated      = "<<total_steps_invalidated<<endl;
-	cout<<"  total results invalidated    = "<<total_results_invalidated<<endl;
-	cout<<"  total steps scanned          = "<<total_steps_scanned<<endl;
-	cout<<"  total results scanned        = "<<total_results_scanned<<endl;
-	cout<<"total tokens                   = "<<total_tokens<<endl;
-	cout<<"total tokens destroyed         = "<<total_destroy_token<<endl;
-	cout<<"  total knuckles destroyed     = "<<total_release_knuckle<<endl;
-	cout<<"total create context           = "<<total_create_context1+total_create_context2<<endl;
-	cout<<"  operator=                    = "<<total_create_context1<<endl;
-	cout<<"  copy constructor             = "<<total_create_context2<<endl;
-	cout<<"\ntotal values set               = "<<total_set_reg_value<<endl;
-	cout<<"total values gotten            = "<<total_get_reg_value<<endl;
-	cout<<"total values gotten variable   = "<<total_get_reg_value_non_const<<endl;
-	cout<<"total values gotten w/ result  = "<<total_get_reg_value_non_const_with_result<<endl;
-	cout<<"total context probability      = "<<total_context_pr<<endl;
     }
 }
 
@@ -432,6 +433,8 @@ int main(int argc,char* argv[])
 
     int retval=0;
 
+    bool show_only = false;
+
     try {
 
 #if defined(HAVE_FEENABLEEXCEPT) && !defined(NDEBUG)
@@ -446,7 +449,7 @@ int main(int argc,char* argv[])
 	//---------- Parse command line  ---------//
 	variables_map args = parse_cmd_line(argc,argv);
 
-	bool show_only = args.count("test");
+	show_only = args.count("test");
 
 	//------ Increase precision for (cout,cerr) if we are testing ------//
 	if (show_only)
@@ -624,7 +627,7 @@ int main(int argc,char* argv[])
 	retval=1;
     }
 
-    show_ending_messages();
+    show_ending_messages(show_only);
 
     out_both.flush();
     err_both.flush();

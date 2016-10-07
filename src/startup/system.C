@@ -56,7 +56,7 @@ void raise_cpu_limit(ostream& o)
 }
 #endif
 
-void show_ending_messages();
+void show_ending_messages(bool);
 
 void die_on_signal(int sig)
 {
@@ -64,7 +64,7 @@ void die_on_signal(int sig)
   cout<<"received signal "<<sig<<".  Dying."<<endl;
   cerr<<"received signal "<<sig<<".  Dying."<<endl;
 
-  show_ending_messages();
+  show_ending_messages(true);
 
   exit(3);
 }

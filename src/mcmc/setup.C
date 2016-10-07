@@ -702,7 +702,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 		Parameters& PP = *P.as<Parameters>();
 		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_mean_index(j)).as_double()<<endl;
 	    }
-	    show_parameters(out_log,*P);
+	    show_parameters(out_log,*P,false);
 	    pre_burnin.iterate(P,Stats);
 	}
     }
@@ -730,7 +730,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 		Parameters& PP = *P.as<Parameters>();
 		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_mean_index(j)).as_double()<<endl;
 	    }
-	    show_parameters(out_log,*P);
+	    show_parameters(out_log,*P,false);
 	    pre_burnin.iterate(P,Stats);
 	}
 	out_both<<endl;
@@ -758,7 +758,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 		Parameters& PP = *P.as<Parameters>();
 		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_mean_index(j)).as_double()<<endl;
 	    }
-	    show_parameters(out_log,*P);
+	    show_parameters(out_log,*P,false);
 	    pre_burnin.iterate(P,Stats);
 	}
     }
@@ -798,7 +798,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 		Parameters& PP = *P.as<Parameters>();
 		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_mean_index(j)).as_double()<<endl;
 	    }
-	    show_parameters(out_log,*P);
+	    show_parameters(out_log,*P,false);
 	    pre_burnin.iterate(P,Stats);
 	}
 
