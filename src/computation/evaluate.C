@@ -318,7 +318,7 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
 	    int S = step_index_for_reg(R);
 
 	    // Incrementing the ref count wastes time, but avoids a crash.
-	    object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
+	    auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
 
 	    // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
 	    // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.
@@ -497,7 +497,7 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
 	    int S = step_index_for_reg(P);
 
 	    // Incrementing the ref count wastes time, but avoids a crash.
-	    object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
+	    auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
 
 	    // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
 	    // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.
@@ -674,7 +674,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	// 3. Reduction: Operation (includes @, case, +, etc.)
 	else
 	{
-	    object_ptr<const Operation> O = access(R).C.exp.head().assert_is_a<Operation>();
+	    auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
 
 	    // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
 	    // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.

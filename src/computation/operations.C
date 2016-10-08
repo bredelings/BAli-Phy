@@ -82,7 +82,7 @@ expression_ref peel_n_lambdas(const expression_ref& E, int n)
 }
       
 
-closure Apply::operator()(OperationArgs& Args) const
+closure apply_op(OperationArgs& Args)
 {
   closure C = Args.evaluate_slot_to_closure(0);
   int n_args_given = Args.n_args()-1;
@@ -123,11 +123,7 @@ closure Apply::operator()(OperationArgs& Args) const
   }
 }
 
-std::string Apply::name() const {
-  return "@";
-}
-
-closure Case::operator()(OperationArgs& Args) const
+closure case_op(OperationArgs& Args)
 {
   // Resizing of the memory can occur here, invalidating previously computed pointers
   // to closures.  The *index* within the memory shouldn't change, though.
@@ -211,9 +207,6 @@ closure Case::operator()(OperationArgs& Args) const
   return result;
 }
 
-std::string Case::name() const {
-  return "case";
-}
 
 /*
  * Let's are not really 'changeable', but we'd like to stop replacing (contingent) let's with their call.
@@ -239,7 +232,7 @@ std::string Case::name() const {
  * - If the execution is non-contingent, then we would actually like to update the reg 
  */
 
-closure Let::operator()(OperationArgs& Args) const
+closure let_op(OperationArgs& Args)
 {
   reg_heap& M = Args.memory();
 
@@ -269,19 +262,10 @@ closure Let::operator()(OperationArgs& Args) const
   return get_trimmed({T, local_env});
 }
 
-std::string Let::name() const {
-  return "let";
-}
-
-closure modifiable::operator()(OperationArgs&) const
+closure modifiable_op(OperationArgs&)
 {
   // A modifiable has a result that is not computed by reducing an expression.
   //       The result must be set.  Therefore, complain if the result is missing.
 
   throw myexception()<<"Evaluating modifiable with no result.";
-}
-
-string modifiable::name() const 
-{
-  return "modifiable";
 }
