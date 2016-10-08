@@ -33,11 +33,13 @@ struct Operation: public Operator
 	const Operation* O = dynamic_cast<const Operation*>(&o);
 	if (not O) return false;
 
+	if (op != O->op) return false;
+
 	if (n_args() != O->n_args()) return false;
 
 	if (name() != O->name()) return false;
 
-	return (op == O->op);
+	return true;
     }
 
     type_constant type() const {return operation_type;} // See expression.H to change this
