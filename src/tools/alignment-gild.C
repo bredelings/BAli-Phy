@@ -338,7 +338,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description all("Allowed options");
   all.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("align", value<string>(),"file with sequences and initial alignment")
     ("tree",value<string>(),"file with initial tree")
     ("find-root","estimate the root position from branch lengths")
@@ -537,7 +537,7 @@ int main(int argc,char* argv[]) {
     if (args.count("find-root"))
       RT = find_rooted_tree(T);
 
-    root_position rootp = find_root_branch_and_position(T,RT);
+    //    root_position rootp = find_root_branch_and_position(T,RT);
 
     //----------- Construct alignment indexes ----------//
     vector< vector< vector<int> > >  column_indexes;
