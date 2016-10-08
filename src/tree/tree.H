@@ -531,6 +531,7 @@ public:
     /// Create an identical tree that does not share memory with the original
     Tree& operator=(const Tree& T); 
 
+    int parse_(const std::string& s, std::function<void(BranchNode*)> assign_names);
     /// Parse and load the Newick format string 's', discovering and reporting leaf names in 'names'
     virtual int parse_and_discover_names(const std::string& s);
     /// Parse and load the Newick format string 's', where node names are given in 'names', or numerical starting at 1
