@@ -1,21 +1,21 @@
 /*
-   Copyright (C) 2007-2009 Benjamin Redelings
+  Copyright (C) 2007-2009 Benjamin Redelings
 
-This file is part of BAli-Phy.
+  This file is part of BAli-Phy.
 
-BAli-Phy is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2, or (at your option) any later
-version.
+  BAli-Phy is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free
+  Software Foundation; either version 2, or (at your option) any later
+  version.
 
-BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+  BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+  for more details.
 
-You should have received a copy of the GNU General Public License
-along with BAli-Phy; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>.  */
+  You should have received a copy of the GNU General Public License
+  along with BAli-Phy; see the file COPYING.  If not see
+  <http://www.gnu.org/licenses/>.  */
 
 #ifndef MCTREE_H
 #define MCTREE_H
@@ -25,21 +25,21 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree-dist.H"
 #include "matrix.H"
 
-bool partition_wanders_over(const Partition& p1,const Partition& p2);
+bool partition_wanders_over(const partition& p1,const partition& p2);
 
-bool partition_less_than(const Partition& p1,const Partition& p2);
+bool partition_less_than(const partition& p1,const partition& p2);
 
-std::vector<Partition> get_moveable_tree(std::vector<Partition> partitions);
+std::vector<partition> get_moveable_tree(std::vector<partition> partitions);
 
 struct mc_tree_edge {
-  int from;
-  int to;
-  int type;
-  int partition;
+    int from;
+    int to;
+    int type;
+    int partition;
 
-  mc_tree_edge(int f,int t,int T,int p)
-    :from(f),to(t),type(T),partition(p)
-  {}
+    mc_tree_edge(int f,int t,int T,int p)
+	:from(f),to(t),type(T),partition(p)
+	{}
 };
 
 // An MC tree is a collection of partitions
@@ -59,76 +59,78 @@ struct mc_tree_edge {
 
 struct MC_tree 
 {
-  // number of branches
-  int N;
+    // number of branches
+    int N;
 
-  // number of nodes
-  int C;
+    // number of nodes
+    int C;
 
-  // leaf names
-  std::vector<std::string> names_;
+    // leaf names
+    std::vector<std::string> names_;
 
-  // index of reversed branch
-  std::vector<int> reverse_;
+    // index of reversed branch
+    std::vector<int> reverse_;
 
-  std::vector<int> graph_node_to_tree_node_;
+    std::vector<int> graph_node_to_tree_node_;
 
-  std::vector<int> map_graph_nodes_to_tree_nodes();
+    std::vector<int> map_graph_nodes_to_tree_nodes();
 
 public:
-  SequenceTree T;
+    SequenceTree T;
 
-  std::vector<Partition> partitions;
-  std::vector<mc_tree_edge> edges;
+    std::vector<partition> partitions;
+    std::vector<mc_tree_edge> edges;
 
-  // map (directed) branches to node names
-  std::vector<int> mapping;
+    // map (directed) branches to node names
+    std::vector<int> mapping;
 
-  // partition properties
-  matrix<int> left_of;                // i<j
-  matrix<int> wanders_over;           // right end wanders
-  matrix<int> directly_left_of;       // i<j
-  matrix<int> directly_wanders_over;  // right end (group2)
-  matrix<int> connected_to;           // right end
-  std::vector<int> directly_wanders;              // right end
+    // partition properties
+    matrix<int> left_of;                // i<j
+    matrix<int> wanders_over;           // right end wanders
+    matrix<int> directly_left_of;       // i<j
+    matrix<int> directly_wanders_over;  // right end (group2)
+    matrix<int> connected_to;           // right end
+    std::vector<int> directly_wanders;              // right end
 
-  // node properties
-  matrix<int> connected;
+    // node properties
+    matrix<int> connected;
 
-  // list of unique branches
-  std::vector<int> branch_order;
+    // list of unique branches
+    std::vector<int> branch_order;
 
-  /// return a score that is higher for a more resolved tree
-  int score() const;
+    /// return a score that is higher for a more resolved tree
+    int score() const;
 
-  /// find the index of any partition that points to node n
-  int branch_to_node(int n) const;
-  /// find the index of the given partition
-  int find_branch(const Partition&) const;
-  /// find the degree of a node n
-  int degree(int n) const;
-  /// check if node n is a leaf node
-  bool is_leaf_node(int n) const;
-  /// find the name of the leaf node with taxon i
-  int leaf(int i) const;
+    /// find the index of any partition that points to node n
+    int branch_to_node(int n) const;
+    /// find the index of the given partition
+    int find_branch(const partition&) const;
+    /// find the degree of a node n
+    int degree(int n) const;
+    /// check if node n is a leaf node
+    bool is_leaf_node(int n) const;
+    /// find the name of the leaf node with taxon i
+    int leaf(int i) const;
 
-  const std::vector<std::string>& names() const {return names_;}
+    const std::vector<std::string>& names() const {return names_;}
 
-  int n_leaves() const {return names_.size();}
-  int n_branches() const {return N;}
-  int n_nodes() const {return C;}
-  int reverse(int i) const {return reverse_[i];}
+    int n_leaves() const {return names_.size();}
+    int n_branches() const {return N;}
+    int n_nodes() const {return C;}
+    int reverse(int i) const {return reverse_[i];}
 
-  int graph_node_to_tree_node(int n) const {return graph_node_to_tree_node_[n];}
+    int graph_node_to_tree_node(int n) const {return graph_node_to_tree_node_[n];}
 
-  MC_tree(const std::vector<Partition>&);
+    MC_tree(const PTree&);
 };
 
 void draw_graph(const MC_tree& T,const std::string& name);
 
 MC_tree load_MC_tree(const std::string&);
-std::vector<Partition> check_MC_partitions(const std::vector<Partition>&);
-void check_partitions_informative(const std::vector<Partition>&);
+PTree check_MC_partitions(const PTree&);
+PTree check_MC_partitions(const std::vector<std::string>&, const std::vector<partition>&);
+void check_partitions_informative(const std::vector<partition>&);
+void check_partitions_informative(const PTree&);
 
 std::ostream& operator<<(std::ostream& o, const MC_tree&);
 

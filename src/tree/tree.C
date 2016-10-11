@@ -1542,7 +1542,7 @@ int Tree::induce_partition(const dynamic_bitset<>& partition)
 	    partition2.flip(i);
     }
 
-    for(int i=n_leaves();i<n_nodes();i++) 
+    for(int i=n_leafbranches();i<n_nodes();i++) 
     {
 	vector<BranchNode*> group1;
 	vector<BranchNode*> group2;
