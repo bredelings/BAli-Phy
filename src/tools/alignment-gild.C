@@ -157,7 +157,7 @@ Matrix counts_to_probability(const Tree& T,const vector<int>& column,
   const int N = column.size();
 
   // initialize the pseudocount matrix
-  const double edge_prior = 0.5/(T.n_branches()/2);
+  const double edge_prior = 0.5/(1+T.n_branches()/2);
   const double prior = 0.5;
 
   Matrix pseudocount = EdgesDistanceMatrix(T);
