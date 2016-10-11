@@ -413,7 +413,7 @@ root_position find_root_branch_and_position(const SequenceTree& T,const RootedSe
 }
 
 vector<double> letter_weights_project(const vector<int>& column, const Matrix& Q, const SequenceTree& T,
-				      vector<vector<int> >& leaf_sets)
+				      vector<vector<int> >& /* leaf_sets */)
 {
   // get ordered list of features to keep (also a mapping)
   vector<int> f;
