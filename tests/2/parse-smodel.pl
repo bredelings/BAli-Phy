@@ -63,6 +63,8 @@ show_only("dna.fasta --smodel=HKY+gwF+gamma[n=4]");
 show_only("dna.fasta --smodel=HKY+gwF+gamma_inv");
 show_only("dna.fasta --smodel=HKY+gwF+gamma_inv[4]");
 
+show_only("dna.fasta --smodel=TN[kappa_pur=2,kappa_pyr=2]");
+
 show_only("aa.fasta --smodel WAG");
 show_only("aa.fasta --smodel WAG+F");
 show_only("aa.fasta --smodel LG+DP[4]");
