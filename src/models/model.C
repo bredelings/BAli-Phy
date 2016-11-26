@@ -26,7 +26,6 @@
 #include "computation/program.H"
 #include "computation/expression.H"
 #include "computation/module.H"
-#include "computation/formula_expression.H"
 #include "parser/desugar.H"
 
 using std::vector;

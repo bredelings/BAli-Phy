@@ -1,6 +1,7 @@
 #include "imodel/setup.H"
 #include "imodel/imodel.H"
 #include "computation/module.H"
+#include "computation/model_expression.H"
 
 using std::string;
 using std::vector;
