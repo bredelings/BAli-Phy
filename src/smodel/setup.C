@@ -82,42 +82,42 @@ using std::valarray;
 using boost::program_options::variables_map;
 using boost::shared_ptr;
 
-const vector<vector<string>> all_default_arguments = 
+const vector<vector<vector<string>>> all_default_arguments = 
 {
-    {"EQU"},
-    {"F81"},
-    {"HKY","kappa"},
-    {"TN","kappaPur","kappaPyr"},
-    {"GTR","ag","at","ac","gt","gc","tc"},
-    {"HKYx3","kappa"},
-    {"TNx3","kappaPur","kappaPyr"},
-    {"GTRx3","ag","at","ac","gt","gc","tc"},
-    {"PAM"},
-    {"JTT"},
-    {"WAG"},
-    {"LG"},
-    {"Empirical","filename"},
-    {"M0","submodel=HKY"},
-    {"fMutSel","*submodel"},
-    {"fMutSel0","*submodel"},
-    {"INV","p"},
-    {"DP","n","*submodel"},
-    {"gamma","n=4","alpha","*submodel"},
-    {"gamma_inv","n=4","alpha","p","*submodel"},
-    {"log-normal","n=4","sigmaOverMu","*submodel"},
-    {"log-normal_inv","n=4","sigmaOverMu","p","*submodel"},
-    {"M1a","nuc_model=HKY","freq_model=F61"},
-    {"M2a","nuc_model=HKY","freq_model=F61"},
-    {"M2a_Test","nuc_model=HKY","freq_model=F61"},
-    //    {"M3u","3","nuc_model="HKY","freq_model=F61"},
-    {"M3","n=4","nuc_model=HKY","freq_model=F61"},
-    {"M3_Test","n=4","nuc_model=HKY","freq_model=F61"},
-    {"M7","n=4","nuc_model=HKY","freq_model=F61"},
-    {"M8","n=4","nuc_model=HKY","freq_model=F61"},
-    {"M8a","n=4","nuc_model=HKY","freq_model=F61"},
-    {"M8a_Test","n=4","nuc_model=HKY","freq_model=F61"},
-    {"branch-site","n=2","nuc_model=HKY","freq_model=F61"},
-    {"dp_omega","n=4","nuc_model=HKY","freq_model=F61"}
+    {{"EQU"}},
+    {{"F81"}},
+    {{"HKY"},{"kappa"}},
+    {{"TN"},{"kappaPur"},{"kappaPyr"}},
+    {{"GTR"},{"ag"},{"at"},{"ac"},{"gt"},{"gc"},{"tc"}},
+    {{"HKYx3"},{"kappa"}},
+    {{"TNx3"},{"kappaPur"},{"kappaPyr"}},
+    {{"GTRx3"},{"ag"},{"at"},{"ac"},{"gt"},{"gc"},{"tc"}},
+    {{"PAM"}},
+    {{"JTT"}},
+    {{"WAG"}},
+    {{"LG"}},
+    {{"Empirical"},{"filename"}},
+    {{"M0"},{"submodel","HKY"}},
+    {{"fMutSel"},{"*submodel"}},
+    {{"fMutSel0"},{"*submodel"}},
+    {{"INV"},{"p"}},
+    {{"DP"},{"n"},{"*submodel"}},
+    {{"gamma"},{"n","4"},{"alpha"},{"*submodel"}},
+    {{"gamma_inv"},{"n","4"},{"alpha"},{"p"},{"*submodel"}},
+    {{"log-normal"},{"n","4"},{"sigmaOverMu"},{"*submodel"}},
+    {{"log-normal_inv"},{"n","4"},{"sigmaOverMu"},{"p"},{"*submodel"}},
+    {{"M1a"},{"nuc_model","HKY"},{"freq_model","F61"}},
+    {{"M2a"},{"nuc_model","HKY"},{"freq_model","F61"}},
+    {{"M2a_Test"},{"nuc_model","HKY"},{"freq_model","F61"}},
+    //    {{"M3u"},{"3"},{"nuc_model",""HKY"},{"freq_model","F61"}},
+    {{"M3"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}},
+    {{"M3_Test"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}},
+    {{"M7"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}},
+    {{"M8"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}},
+    {{"M8a"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}},
+    {{"M8a_Test"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}},
+    {{"branch-site"},{"n","2"},{"nuc_model","HKY"},{"freq_model","F61"}},
+    {{"dp_omega"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}}
 };
 
 optional<pair<string,string>> split_keyword(const string& s)
@@ -159,13 +159,13 @@ string get_keyword_for_positional_arg(const string& head, int i)
 {
     for(const auto& default_arguments: all_default_arguments)
     {
-	if (default_arguments[0] != head) continue;
+	if (default_arguments[0][0] != head) continue;
 
 	if (i+1 >= default_arguments.size())
 	    throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<head<<"', which only has "<<default_arguments.size()-1<<" positional arguments.";
 
 	// Strip leading '*' that indicates required argument
-	string keyword = default_arguments[i+1];
+	string keyword = default_arguments[i+1][0];
 	if (keyword[0] == '*')
 	    keyword = keyword.substr(1);
 	auto keyword_pair = split_keyword(keyword);
@@ -183,18 +183,19 @@ void set_default_values(ptree& args)
   
     for(const auto& default_arguments: all_default_arguments)
     {
-	if (default_arguments[0] != head) continue;
+	if (default_arguments[0][0] != head) continue;
 
-	for(int i=0;i<default_arguments.size()-1;i++)
+	for(int i=1;i<default_arguments.size();i++)
 	{
-	    string keyword = default_arguments[i+1];
+	    string keyword = default_arguments[i][0];
 	    if (keyword[0] == '*')
 		keyword = keyword.substr(1);
-	    auto keyword_pair = split_keyword(keyword);
-	    if (not keyword_pair) continue;
+	    bool has_default = (default_arguments[i].size() > 1);
+	    if (not has_default) continue;
+	    string def = default_arguments[i][1];
       
-	    if (not args.count(keyword_pair->first))
-		args.push_back({keyword_pair->first, ptree(keyword_pair->second)});
+	    if (not args.count(keyword))
+		args.push_back({keyword, ptree(def)});
 	}
     }
 }
@@ -208,11 +209,11 @@ void check_required_args(const ptree& args)
   
     for(const auto& default_arguments: all_default_arguments)
     {
-	if (default_arguments[0] != head) continue;
+	if (default_arguments[0][0] != head) continue;
 
-	for(int i=0;i<default_arguments.size()-1;i++)
+	for(int i=1;i<default_arguments.size();i++)
 	{
-	    string keyword = default_arguments[i+1];
+	    string keyword = default_arguments[i][0];
 	    if (keyword[0] != '*') continue;
 	    keyword = keyword.substr(1);
 
