@@ -44,6 +44,19 @@
 //   - So, maybe an INITIAL parse, only to DNA, RNA, or AA, just to determine alphabet?
 //   - Then 
 
+// 4. Make model_expressions for prefixing, logging, and sampling.
+// 5. Associate types with each argument.
+// 6. Expand default arguments in the model expression, and print the expanded expression.
+//    - Maybe have a first step where defaults are expanded, and a second step that can assume args are always present?
+// 7. Allow specifying lists?
+// 8. Allow specifying priors to the frequency model.
+// 9. Allow separately specifying random variables to e.g. indel model.
+// 10. Allow using user-specified models from the command line.
+// 11. ? How to deal with things that need model-dependent argument names?
+// 12. ? How to deal with things that need programmatic model specification?
+// 13. ? Why can't we sort the DP rates (which would be a great use of programmatic model specification)?
+// 14. OK, so *actually*, we can't do this, because we need to be able to handle top-level expressions
+//     NOT being actions, but arguments BEING actions.  Thus we need to make 'translate' more intelligent.
 
 #include <vector>
 #include <boost/program_options.hpp>
