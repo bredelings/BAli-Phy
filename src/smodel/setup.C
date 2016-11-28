@@ -513,14 +513,19 @@ expression_ref process_stack_Markov(const module_loader& L,
 	if (not N)
 	    throw myexception()<<"TN: '"<<a->name<<"' is not a nucleotide alphabet.";
 
-	if (model_rep.count("kappa_pur") and model_rep.count("kappa_pyr"))
-	{
-	    expression_ref kappa_pur = model_rep.get<double>("kappa_pur");
-	    expression_ref kappa_pyr = model_rep.get<double>("kappa_pyr");
-	    return (identifier("tn"), *a, kappa_pur, kappa_pur);
-	}
-	else
-	    return model_expression({identifier("tn_model"),*a});
+	expression_ref kappa_pur = model_expression({identifier("logNormal"),(identifier("log"),2.0),0.25});
+	kappa_pur = add_logger("kappa_pur",kappa_pur);
+
+	expression_ref kappa_pyr = model_expression({identifier("logNormal"),(identifier("log"),2.0),0.25});
+	kappa_pyr = add_logger("kappa_pyr",kappa_pyr);
+
+	if (model_rep.count("kappa_pur"))
+	    kappa_pur = model_rep.get<double>("kappa_pur");
+
+	if (model_rep.count("kappa_pyr"))
+	    kappa_pyr = model_rep.get<double>("kappa_pyr");
+	
+	return prefix("TN",(identifier("tn"), *a, kappa_pur, kappa_pyr));
     }
     else if (model_rep.get_value<string>() == "GTR")
     {
