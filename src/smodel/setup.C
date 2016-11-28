@@ -57,6 +57,9 @@
 // 13. ? Why can't we sort the DP rates (which would be a great use of programmatic model specification)?
 // 14. OK, so *actually*, we can't do this, because we need to be able to handle top-level expressions
 //     NOT being actions, but arguments BEING actions.  Thus we need to make 'translate' more intelligent.
+// 15. Specify the types of arguments and results (for coercion).
+// 16. Do the coercion on the ptree or string level.
+// 17. Write a function to go BACK from ptrees to strings.
 
 #include <vector>
 #include <boost/program_options.hpp>
