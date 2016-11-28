@@ -26,9 +26,7 @@ expression_ref perform_exp(const expression_ref& F)
     expression_ref E = F;
     if (contains_model_expression(F))
     {
-	std::cout<<E<<std::endl;
 	E = translate_model(E);
-	std::cout<<E<<std::endl;
 	E = (identifier("gen_model"),E);
 	E = (identifier("unsafePerformIO'"),E);
 	E = (identifier("evaluate"),-1,E);
@@ -41,9 +39,7 @@ expression_ref perform_exp(const expression_ref& F, const string& prefix)
     expression_ref E = F;
     if (contains_model_expression(F))
     {
-	std::cout<<E<<std::endl;
 	E = translate_model(E);
-	std::cout<<E<<std::endl;
 	E = (identifier("add_prefix"),prefix,E);
 	E = (identifier("gen_model"),E);
 	E = (identifier("unsafePerformIO'"),E);
@@ -76,7 +72,7 @@ expression_ref model_expression(const vector<expression_ref>& es)
 
 expression_ref translate_model(const expression_ref& E)
 {
-    if (contains_model_expression(E))
+    if (E.is_expression() and contains_model_expression(E))
     {
 	int index = 0;
 	for(const auto& F: E.sub())
@@ -84,28 +80,40 @@ expression_ref translate_model(const expression_ref& E)
 
 	expression_ref E2 = E.sub()[0];
 	int A = E.size()-1;
+	vector<int> needs_translation(A,0);
 	for(int i=0;i<A;i++)
-	    E2 = (E2,dummy(index+i));
-	for(int i=A-1;i>=0;i--)
 	{
-	    expression_ref arg = translate_model(E.sub()[i+1]);
-	    E2 = (identifier(">>="),arg,dummy(index+i)^E2);
+	    needs_translation[i] = contains_model_expression(E.sub()[i+1]);
+	    if (needs_translation[i])
+		E2 = (E2,dummy(index+i));
+	    else
+		E2 = (E2, E.sub()[i+1]);
 	}
-	return E2;
+	for(int i=A-1;i>=0;i--)
+	    if (needs_translation[i])
+	    {
+		expression_ref arg = translate_model(E.sub()[i+1]);
+		E2 = (identifier(">>="),arg,dummy(index+i)^E2);
+	    }
+	if (is_AST(E,"model"))
+	    return E2;
+	else
+	    return ((identifier("return"),E2));
+
     }
     else
 	return ((identifier("return"),E));
 }
 
 // prefix_action s a = Prefix s a
-expression_ref prefix(const expression_ref& E, const string& s, const expression_ref& A)
+expression_ref prefix(const string& s, const expression_ref& E)
 {
-    return model_expression({identifier("prefix_action"),s,A});
+    return model_expression({identifier("prefix_action"),s,E});
 }
 
 
 // log_action s a = do { x <- A ; log s x ; return x }
-expression_ref log(const expression_ref& E, const string& s, const expression_ref& A)
+expression_ref log(const string& s, const expression_ref& E)
 {
-    return model_expression({identifier("log_action"),s,A});
+    return model_expression({identifier("log_action"),s,E});
 }
