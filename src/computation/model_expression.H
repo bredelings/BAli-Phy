@@ -1,6 +1,7 @@
 #ifndef FORMULA_EXPRESSION_H
 #define FORMULA_EXPRESSION_H
 
+#include <string>
 #include "expression.H"
 #include <iostream>
 #include "computation/loader.H"
@@ -17,8 +18,12 @@ expression_ref result(const expression_ref&, const module_loader& L, const std::
 
 expression_ref result(const expression_ref&, const module_loader& L, const std::vector<std::string>&);
 
-template <typename T> struct Bounds;
-
 expression_ref model_expression(const std::vector<expression_ref>& es);
+
+expression_ref prefix(const expression_ref& s, const expression_ref& E);
+
+expression_ref add_logger(const std::string& s, const expression_ref& E);
+
 expression_ref translate_model(const expression_ref&);
+
 #endif

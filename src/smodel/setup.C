@@ -499,13 +499,13 @@ expression_ref process_stack_Markov(const module_loader& L,
 	if (not N)
 	    throw myexception()<<"HKY: '"<<a->name<<"' is not a nucleotide alphabet.";
 
+	expression_ref kappa = model_expression({identifier("logNormal"),(identifier("log"),2.0),0.25});
+	kappa = add_logger("kappa",kappa);
+
 	if (model_rep.count("kappa"))
-	{
-	    double kappa = model_rep.get<double>("kappa");
-	    return (identifier("hky"),*a,kappa);
-	}
-	else
-	    return model_expression({identifier("hky_model"),*a});
+	    kappa = model_rep.get<double>("kappa");
+
+	return prefix("HKY",(identifier("hky"),*a,kappa));
     }
     else if (model_rep.get_value<string>() == "TN")
     {

@@ -7,12 +7,21 @@ using std::vector;
 using std::set;
 using std::string;
 
+bool is_model_expression(const expression_ref& E)
+{
+    return is_AST(E,"model");
+}
+
+bool is_prefix_expression(const expression_ref& E)
+{
+    return is_AST(E,"prefix");
+}
+
 bool contains_model_expression(const expression_ref& E)
 {
     if (not E.is_expression()) return false;
 
-    if (is_AST(E,"model"))
-	return true;
+    if (is_model_expression(E)) return true;
 
     for(const auto F: E.sub())
 	if (contains_model_expression(F))
@@ -70,10 +79,30 @@ expression_ref model_expression(const vector<expression_ref>& es)
     return expression_ref(AST_node("model"),es);
 }
 
+// prefix_action s a = Prefix s a
+expression_ref prefix(const expression_ref& s, const expression_ref& E)
+{
+    return expression_ref(AST_node("prefix"),{s,E});
+}
+
+// log_action s a = do { x <- A ; log s x ; return x }
+expression_ref add_logger(const string& s, const expression_ref& E)
+{
+    return model_expression({identifier("add_logger"),s,E});
+}
+
 expression_ref translate_model(const expression_ref& E)
 {
     if (E.is_expression() and contains_model_expression(E))
     {
+	if (is_prefix_expression(E))
+	{
+	    assert(E.size() == 2);
+	    auto prefix = E.sub()[0];
+	    auto E2      = E.sub()[1];
+
+	    return (identifier("@@"), E.sub()[0], translate_model(E2));
+	}
 	int index = 0;
 	for(const auto& F: E.sub())
 	    index = std::max(index,get_safe_binder_index(F));
@@ -104,15 +133,3 @@ expression_ref translate_model(const expression_ref& E)
 	return ((identifier("return"),E));
 }
 
-// prefix_action s a = Prefix s a
-expression_ref prefix(const string& s, const expression_ref& E)
-{
-    return model_expression({identifier("prefix_action"),s,E});
-}
-
-
-// log_action s a = do { x <- A ; log s x ; return x }
-expression_ref log(const string& s, const expression_ref& E)
-{
-    return model_expression({identifier("log_action"),s,E});
-}
