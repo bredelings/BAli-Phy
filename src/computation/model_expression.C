@@ -7,12 +7,28 @@ using std::vector;
 using std::set;
 using std::string;
 
+bool contains_model_expression(const expression_ref& E)
+{
+    if (not E.is_expression()) return false;
+
+    if (is_AST(E,"model"))
+	return true;
+
+    for(const auto F: E.sub())
+	if (contains_model_expression(F))
+	    return true;
+
+    return false;
+}
+
 expression_ref perform_exp(const expression_ref& F)
 {
     expression_ref E = F;
-    if (is_AST(E,"model"))
+    if (contains_model_expression(F))
     {
+	std::cout<<E<<std::endl;
 	E = translate_model(E);
+	std::cout<<E<<std::endl;
 	E = (identifier("gen_model"),E);
 	E = (identifier("unsafePerformIO'"),E);
 	E = (identifier("evaluate"),-1,E);
@@ -23,9 +39,11 @@ expression_ref perform_exp(const expression_ref& F)
 expression_ref perform_exp(const expression_ref& F, const string& prefix)
 {
     expression_ref E = F;
-    if (is_AST(E,"model"))
+    if (contains_model_expression(F))
     {
+	std::cout<<E<<std::endl;
 	E = translate_model(E);
+	std::cout<<E<<std::endl;
 	E = (identifier("add_prefix"),prefix,E);
 	E = (identifier("gen_model"),E);
 	E = (identifier("unsafePerformIO'"),E);
@@ -58,7 +76,7 @@ expression_ref model_expression(const vector<expression_ref>& es)
 
 expression_ref translate_model(const expression_ref& E)
 {
-    if (is_AST(E,"model"))
+    if (contains_model_expression(E))
     {
 	int index = 0;
 	for(const auto& F: E.sub())
@@ -77,4 +95,17 @@ expression_ref translate_model(const expression_ref& E)
     }
     else
 	return ((identifier("return"),E));
+}
+
+// prefix_action s a = Prefix s a
+expression_ref prefix(const expression_ref& E, const string& s, const expression_ref& A)
+{
+    return model_expression({identifier("prefix_action"),s,A});
+}
+
+
+// log_action s a = do { x <- A ; log s x ; return x }
+expression_ref log(const expression_ref& E, const string& s, const expression_ref& A)
+{
+    return model_expression({identifier("log_action"),s,A});
 }
