@@ -89,17 +89,16 @@ expression_ref translate_model(const expression_ref& E)
 	    else
 		E2 = (E2, E.sub()[i+1]);
 	}
+	if (not is_AST(E,"model"))
+	    E2 = (identifier("return"),E2);
+
 	for(int i=A-1;i>=0;i--)
 	    if (needs_translation[i])
 	    {
 		expression_ref arg = translate_model(E.sub()[i+1]);
 		E2 = (identifier(">>="),arg,dummy(index+i)^E2);
 	    }
-	if (is_AST(E,"model"))
-	    return E2;
-	else
-	    return ((identifier("return"),E2));
-
+	return E2;
     }
     else
 	return ((identifier("return"),E));
