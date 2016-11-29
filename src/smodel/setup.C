@@ -84,6 +84,7 @@ using boost::shared_ptr;
 
 const vector<vector<vector<string>>> all_default_arguments = 
 {
+    {{"log","Double"},{"x","Double"}},
     {{"EQU","EM"}},
     {{"F81"}},
     {{"HKY","EM","SModel.hky"},{"alphabet","alphabet"},{"kappa","Double"}},
@@ -496,6 +497,16 @@ expression_ref coerce_to_RA(const module_loader& L,
     expression_ref M = get_smodel_(L, model_rep, a, frequencies);
 
     return coerce_to_RA(L, M, a);
+}
+
+expression_ref process_stack_functions(const module_loader& L, const ptree& model_rep)
+{
+    if (model_rep.get_value<string>() == "log")
+    {
+	expression_ref x = get_smodel_(L, model_rep.get_child("x"));
+	return (identifier("log"), x);
+    }
+    return {};
 }
 
 /// \brief Construct a model from the top of the string stack
@@ -1243,6 +1254,9 @@ get_smodel_(const module_loader& L, const ptree& model_rep, const object_ptr<con
       return model_rep.get_value<double>();
 
   expression_ref m;
+
+  m = process_stack_functions(L, model_rep);
+  if (m) return m;
 
   m = process_stack_Markov(L, model_rep, a);
   if (m) return m;
