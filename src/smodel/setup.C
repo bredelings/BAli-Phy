@@ -121,6 +121,9 @@ const vector<vector<vector<string>>> all_default_arguments =
     {{"RCTMC","RA"},{"Q","EM"},{"R","FM"}}
 };
 
+
+/// Split a string of the form key=value into {key,value}
+ptree parse(const string& s);
 optional<pair<string,string>> split_keyword(const string& s)
 {
     int pos = s.find('=');
@@ -196,7 +199,7 @@ void set_default_values(ptree& args)
 	    string def = default_arguments[i][2];
       
 	    if (not args.count(keyword))
-		args.push_back({keyword, ptree(def)});
+		args.push_back({keyword, parse(def)});
 	}
     }
 }
@@ -297,9 +300,6 @@ pair<optional<string>,string> split_last_plus(const string& s)
     else
 	return {s.substr(0,split), s.substr(split+1)};
 }
-
-/// Split a string of the form key=value into {key,value}
-ptree parse(const string& s);
 
 /// Parse strings of the form head[value1, value2, key3=value3, ...]
 ptree parse_no_submodel(const string& s)
