@@ -84,40 +84,41 @@ using boost::shared_ptr;
 
 const vector<vector<vector<string>>> all_default_arguments = 
 {
-    {{"EQU"}},
+    {{"EQU","EM"}},
     {{"F81"}},
-    {{"HKY"},{"kappa"}},
-    {{"TN"},{"kappaPur"},{"kappaPyr"}},
-    {{"GTR"},{"ag"},{"at"},{"ac"},{"gt"},{"gc"},{"tc"}},
-    {{"HKYx3"},{"kappa"}},
-    {{"TNx3"},{"kappaPur"},{"kappaPyr"}},
-    {{"GTRx3"},{"ag"},{"at"},{"ac"},{"gt"},{"gc"},{"tc"}},
-    {{"PAM"}},
-    {{"JTT"}},
-    {{"WAG"}},
-    {{"LG"}},
-    {{"Empirical"},{"filename"}},
-    {{"M0"},{"submodel","HKY"}},
-    {{"fMutSel"},{"*submodel"}},
-    {{"fMutSel0"},{"*submodel"}},
-    {{"INV"},{"p"}},
-    {{"DP"},{"n"},{"*submodel"}},
-    {{"gamma"},{"n","4"},{"alpha"},{"*submodel"}},
-    {{"gamma_inv"},{"n","4"},{"alpha"},{"p"},{"*submodel"}},
-    {{"log-normal"},{"n","4"},{"sigmaOverMu"},{"*submodel"}},
-    {{"log-normal_inv"},{"n","4"},{"sigmaOverMu"},{"p"},{"*submodel"}},
-    {{"M1a"},{"nuc_model","HKY"},{"freq_model","F61"}},
-    {{"M2a"},{"nuc_model","HKY"},{"freq_model","F61"}},
-    {{"M2a_Test"},{"nuc_model","HKY"},{"freq_model","F61"}},
+    {{"HKY","EM","SModel.hky"},{"alphabet","alphabet"},{"kappa","Double"}},
+    {{"TN","EM", "SModel.tn"},{"alphabet","alphabet"},{"kappaPur","Double"},{"kappaPyr","Double"}},
+    {{"GTR","EM"},{"ag"},{"at"},{"ac"},{"gt"},{"gc"},{"tc"}},
+    {{"HKYx3","EM"},{"kappa","Double"}},
+    {{"TNx3","EM"},{"kappaPur","Double"},{"kappaPyr","Double"}},
+    {{"GTRx3","EM"},{"ag"},{"at"},{"ac"},{"gt"},{"gc"},{"tc"}},
+    {{"PAM","EM"}},
+    {{"JTT","EM"}},
+    {{"WAG","EM"}},
+    {{"LG","EM"}},
+    {{"Empirical","EM"},{"filename"}},
+    {{"M0","EM", "SModel.m0"},{"alphabet","alphabet"},{"submodel","RA","HKY"}},
+    {{"fMutSel","RA"},{"*submodel","RA"}},
+    {{"fMutSel0","RA"},{"*submodel","RA"}},
+    {{"INV","MM"},{"p","Double"}},
+    {{"DP","MM"},{"n","Int"},{"*submodel","RA"}},
+    {{"gamma","MM"},{"n","Int","4"},{"alpha","Double"},{"*submodel","RA"}},
+    {{"gamma_inv","MM"},{"n","Int","4"},{"alpha","Double"},{"p","Double"},{"*submodel","RA"}},
+    {{"log-normal","MM"},{"n","Int","4"},{"sigmaOverMu","Double"},{"*submodel","RA"}},
+    {{"log-normal_inv","MM"},{"n","Int","4"},{"sigmaOverMu","Double"},{"p","Double"},{"*submodel","RA"}},
+    {{"M1a","MM"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
+    {{"M2a","MM"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
+    {{"M2a_Test","MM"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
     //    {{"M3u"},{"3"},{"nuc_model",""HKY"},{"freq_model","F61"}},
-    {{"M3"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}},
-    {{"M3_Test"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}},
-    {{"M7"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}},
-    {{"M8"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}},
-    {{"M8a"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}},
-    {{"M8a_Test"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}},
-    {{"branch-site"},{"n","2"},{"nuc_model","HKY"},{"freq_model","F61"}},
-    {{"dp_omega"},{"n","4"},{"nuc_model","HKY"},{"freq_model","F61"}}
+    {{"M3","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
+    {{"M3_Test","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
+    {{"M7","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
+    {{"M8","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
+    {{"M8a","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
+    {{"M8a_Test","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
+    {{"branch-site","MM"},{"n","Int","2"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
+    {{"dp_omega","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
+    {{"RCTMC","RA"},{"Q","EM"},{"R","FM"}}
 };
 
 optional<pair<string,string>> split_keyword(const string& s)
@@ -190,9 +191,9 @@ void set_default_values(ptree& args)
 	    string keyword = default_arguments[i][0];
 	    if (keyword[0] == '*')
 		keyword = keyword.substr(1);
-	    bool has_default = (default_arguments[i].size() > 1);
+	    bool has_default = (default_arguments[i].size() > 2);
 	    if (not has_default) continue;
-	    string def = default_arguments[i][1];
+	    string def = default_arguments[i][2];
       
 	    if (not args.count(keyword))
 		args.push_back({keyword, ptree(def)});
