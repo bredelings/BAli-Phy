@@ -124,6 +124,41 @@ const vector<vector<vector<string>>> all_default_arguments =
 
 /// Split a string of the form key=value into {key,value}
 ptree parse(const string& s);
+
+string get_type_for_arg(const string& func, const string& arg)
+{
+    for(const auto& x: all_default_arguments)
+    {
+	if (x[0][0] != func) continue;
+
+	for(int i=1;i<x.size();i++)
+	{
+	    const auto& y = x[i];
+	    if (y[0] == arg)
+		return y[1];
+	}
+    }
+    return "?";
+}
+
+string get_type(const string& func)
+{
+    if (can_be_converted_to<int>(func)) return "Int";
+    if (can_be_converted_to<double>(func)) return "Double";
+
+    for(const auto& x: all_default_arguments)
+    {
+	if (x[0][0] == func)
+	    return x[0][1];
+    }
+    return "?";
+}
+
+string get_type(const ptree& model_rep)
+{
+    return get_type(model_rep.get_value<string>());
+}
+
 optional<pair<string,string>> split_keyword(const string& s)
 {
     int pos = s.find('=');
