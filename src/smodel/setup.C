@@ -88,7 +88,7 @@ const vector<vector<vector<string>>> all_default_arguments =
     {{"logNormal","Double"},{"lmu","Double"},{"lsigma","Double"}},
     {{"EQU","EM"}},
     {{"F81"}},
-    {{"HKY","EM","SModel.hky"},{"alphabet","alphabet"},{"kappa","Double"}},
+    {{"HKY","EM","SModel.hky"},{"alphabet","alphabet"},{"kappa","Double","logNormal[log[2],0.25]"}},
     {{"TN","EM", "SModel.tn"},{"alphabet","alphabet"},{"kappaPur","Double"},{"kappaPyr","Double"}},
     {{"GTR","EM"},{"ag"},{"at"},{"ac"},{"gt"},{"gc"},{"tc"}},
     {{"HKYx3","EM"},{"kappa","Double"}},
@@ -563,11 +563,9 @@ expression_ref process_stack_Markov(const module_loader& L,
 	if (not N)
 	    throw myexception()<<"HKY: '"<<a->name<<"' is not a nucleotide alphabet.";
 
-	expression_ref kappa = model_expression({identifier("logNormal"),(identifier("log"),2.0),0.25});
-	kappa = add_logger("kappa",kappa);
+	expression_ref kappa = get_smodel_(L, model_rep.get_child("kappa"));
 
-	if (model_rep.count("kappa"))
-	    kappa = model_rep.get<double>("kappa");
+	kappa = add_logger("kappa",kappa);
 
 	return prefix("HKY",(identifier("hky"),*a,kappa));
     }
