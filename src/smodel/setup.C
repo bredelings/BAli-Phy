@@ -1234,6 +1234,14 @@ get_smodel_(const module_loader& L, const ptree& model_rep, const object_ptr<con
   //  std::cout<<std::endl;
   //  ptree model_rep = parse(smodel);
 
+  // If we are processing an Int, just return an int.
+  if (can_be_converted_to<int>(model_rep.get_value<string>()))
+      return model_rep.get_value<int>();
+
+  // If we are processing a Double, just return a double
+  if (can_be_converted_to<double>(model_rep.get_value<string>()))
+      return model_rep.get_value<double>();
+
   expression_ref m;
 
   m = process_stack_Markov(L, model_rep, a);
