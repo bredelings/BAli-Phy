@@ -85,6 +85,7 @@ using boost::shared_ptr;
 const vector<vector<vector<string>>> all_default_arguments = 
 {
     {{"log","Double"},{"x","Double"}},
+    {{"logNormal","Double"},{"lmu","Double"},{"lsigma","Double"}},
     {{"EQU","EM"}},
     {{"F81"}},
     {{"HKY","EM","SModel.hky"},{"alphabet","alphabet"},{"kappa","Double"}},
@@ -507,6 +508,18 @@ expression_ref process_stack_functions(const module_loader& L, const ptree& mode
 	return (identifier("log"), x);
     }
     return {};
+}
+
+expression_ref process_stack_distributions(const module_loader& L, const ptree& model_rep)
+{
+    expression_ref dist;
+    if (model_rep.get_value<string>() == "logNormal")
+    {
+	expression_ref lmu = get_smodel_(L, model_rep.get_child("lmu"));
+	expression_ref lsigma = get_smodel_(L, model_rep.get_child("lsigma"));
+	dist = model_expression({identifier("logNormal"), lmu, lsigma});
+    }
+    return dist;
 }
 
 /// \brief Construct a model from the top of the string stack
@@ -1256,6 +1269,9 @@ get_smodel_(const module_loader& L, const ptree& model_rep, const object_ptr<con
   expression_ref m;
 
   m = process_stack_functions(L, model_rep);
+  if (m) return m;
+
+  m = process_stack_distributions(L, model_rep);
   if (m) return m;
 
   m = process_stack_Markov(L, model_rep, a);
