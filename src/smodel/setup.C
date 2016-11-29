@@ -450,7 +450,7 @@ expression_ref coerce_to_EM(const module_loader& L,
 
     expression_ref S = get_smodel_(L, model_rep, a, frequencies);
 
-    if (S and result(S,L,vector<string>{"SModel","Distributions","Range"}).is_a<Box<Matrix>>())
+    if (S and get_type(model_rep) == "EM")
 	return S;
 
     throw myexception()<<": '"<<show(model_rep)<<"' is not an exchange model.";
@@ -903,7 +903,15 @@ expression_ref coerce_to_MM(const module_loader& L,
 {
     expression_ref M = get_smodel_(L, model_rep, a, frequencies);
 
-    return coerce_to_MM(L, M, a);
+    if (get_type(model_rep) == "MM") return M;
+
+    try { 
+	expression_ref ra = coerce_to_RA(L,model_rep,a,frequencies);
+	return model_expression({identifier("unit_model"), ra});
+    }
+    catch (std::exception& e) { 
+	throw myexception()<<": Can't construct a MixtureModel from '"<<M<<"':\n"<<e.what();
+    }
 }
 
 /// \brief Construct a MultiModel from model \a M
