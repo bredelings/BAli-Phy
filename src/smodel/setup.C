@@ -567,6 +567,13 @@ expression_ref get_smodel_as(const string& type,
 	throw myexception()<<"Can't construct type '"<<type<<"' from empty description!";
     }
 
+    if (type == "Double" and get_type(model_rep) == "Int")
+    {
+	double d;
+	if (can_be_converted_to<double>(model_rep.get_value<string>(), d))
+	    return d;
+    }
+
     if (get_type(model_rep) != type)
 	throw myexception()<<"Expected type "<<type<<" but got "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep);
 
