@@ -168,6 +168,59 @@ string get_type(const ptree& model_rep)
     return get_type(model_rep.get_value<string>());
 }
 
+ptree coerce_to_RA(const ptree& model_rep)
+{
+    if (get_type(model_rep) == "RA")
+	return model_rep;
+
+    if (get_type(model_rep) == "EM")
+    {
+	ptree r;
+	r.put_value("F");
+	ptree result;
+	result.put_value("RCTMC");
+	result.push_back({"Q",model_rep});
+	result.push_back({"R",ptree("F")});
+	return result;
+    }
+
+    throw myexception()<<"Cannot convert "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep)<<" to type RA.";
+}
+
+ptree coerce_to_MM(const ptree& model_rep)
+{
+    if (get_type(model_rep) == "MM")
+	return model_rep;
+
+    try {
+	ptree submodel = coerce_to_RA(model_rep);
+	ptree result;
+	result.put_value("UnitMixture");
+	result.push_back({"submodel",submodel});
+	return result;
+    }
+    catch (...) {
+	throw myexception()<<"Cannot convert "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep)<<" to type MM.";
+    }
+}
+
+ptree coerce_to_MMM(const ptree& model_rep)
+{
+    if (get_type(model_rep) == "MMM")
+	return model_rep;
+
+    try {
+	ptree submodel = coerce_to_MM(model_rep);
+	ptree result;
+	result.put_value("MMM");
+	result.push_back({"submodel",submodel});
+	return result;
+    }
+    catch (...) {
+	throw myexception()<<"Cannot convert "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep)<<" to type MMM.";
+    }
+}
+
 optional<pair<string,string>> split_keyword(const string& s)
 {
     int pos = s.find('=');
@@ -292,7 +345,21 @@ void check_and_coerce_arg_types(ptree& args)
 	    if (not args.count(keyword)) continue;
 	    auto supplied_type = get_type(args.get_child(keyword));
 
+	    if (required_type == supplied_type) continue;
 	    std::cout<<"head = "<<head<<" keyword = "<<keyword<<" required = "<<required_type<<" supplied = "<<supplied_type<<std::endl;
+	    ptree value = args.get_child(keyword);
+	    args.erase(keyword);
+	    if (required_type == "RA")
+		value = coerce_to_RA(value);
+	    else if (required_type == "MM")
+		value = coerce_to_MM(value);
+	    else if (required_type == "MMM")
+		value = coerce_to_MMM(value);
+	    else if (required_type == "Double" and supplied_type == "Int")
+	    { }
+	    else
+		throw myexception()<<"Can't coerce "<<value.get_value<string>()<<" of type "<<get_type(value)<<" to type "<<required_type<<".";
+	    args.push_back({keyword,value});
 	}
     }
 }
@@ -463,11 +530,6 @@ ptree parse(const string& s)
     return result;
 }
 
-ptree coerce(ptree model_rep)
-{
-    return model_rep;
-}
-
 /// \brief Return the default substitution model name for alphabet \a a, and "" if there is no default.
 string default_markov_model(const alphabet& a) 
 {
@@ -494,151 +556,21 @@ get_smodel_(const ptree& model_rep,const object_ptr<const alphabet>& a);
 expression_ref
 get_smodel_(const ptree& model_rep);
 
-expression_ref coerce_to_frequency_model(const ptree& model_rep,
-					 const object_ptr<const alphabet>& a,
-					 const shared_ptr< const valarray<double> >& frequencies)
-{
-    if (model_rep.empty() and model_rep.data().empty())
-    {
-	std::cout<<show(model_rep)<<std::endl;
-	throw myexception()<<"Can't construct frequency model from empty description!";
-    }
-
-    std::cout<<"coerce "<<model_rep.get_value<string>()<<"\n";
-    write_info(std::cout, model_rep);
-    std::cout<<" of type "<<get_type(model_rep)<<" to FM ..."<<std::endl;
-
-    expression_ref S = get_smodel_(model_rep, a, frequencies);
-
-    if (S and get_type(model_rep) == "FM")
-	return S;
-
-    throw myexception()<<": '"<<show(model_rep)<<"' is not a frequency model.";
-}
-
-
-/// \brief Construct an AlphabetExchangeModel from string \a smodel.
-expression_ref coerce_to_EM(const ptree& model_rep,
-			    const object_ptr<const alphabet>& a, 
-			    const shared_ptr< const valarray<double> >& frequencies)
-
-{
-    if (model_rep.empty() and model_rep.data().empty())
-    {
-	std::cout<<show(model_rep)<<std::endl;
-	throw myexception()<<"Can't construct substitution model from empty description!";
-    }
-
-    std::cout<<"coerce "<<model_rep.get_value<string>()<<"\n";
-    write_info(std::cout, model_rep);
-    std::cout<<" of type "<<get_type(model_rep)<<" to EM ..."<<std::endl;
-
-    expression_ref S = get_smodel_(model_rep, a, frequencies);
-
-    if (S and get_type(model_rep) == "EM")
-	return S;
-
-    throw myexception()<<": '"<<show(model_rep)<<"' is not an exchange model.";
-}
-
-ptree coerce_to_RA(const ptree& model_rep)
-{
-    if (get_type(model_rep) == "RA")
-	return model_rep;
-
-    if (get_type(model_rep) == "EM")
-    {
-	ptree r;
-	r.put_value("F");
-	ptree result;
-	result.put_value("RCTMC");
-	result.push_back({"Q",model_rep});
-	result.push_back({"R",ptree("F")});
-    }
-
-    throw myexception()<<"Cannot convert "<<model_rep.get_value<string>()<<":"<<get_type(model_rep)<<" to RA.";
-}
-
-ptree coerce_to_MM(const ptree& model_rep)
-{
-    if (get_type(model_rep) == "MM")
-	return model_rep;
-
-    try {
-	ptree submodel = coerce_to_RA(model_rep);
-	ptree result;
-	result.put_value("UnitMixture");
-	result.push_back({"submodel",submodel});
-	return result;
-    }
-    catch (...) {
-	throw myexception()<<"Cannot convert "<<model_rep.get_value<string>()<<":"<<get_type(model_rep)<<" to MM.";
-    }
-}
-
-ptree coerce_to_MMM(const ptree& model_rep)
-{
-    if (get_type(model_rep) == "MMM")
-	return model_rep;
-
-    try {
-	ptree submodel = coerce_to_MM(model_rep);
-	ptree result;
-	result.put_value("MMM");
-	result.push_back({"submodel",submodel});
-	return result;
-    }
-    catch (...) {
-	throw myexception()<<"Cannot convert "<<model_rep.get_value<string>()<<":"<<get_type(model_rep)<<" to MMM.";
-    }
-}
-
-/// \brief Construct a ReversibleMarkovModel from model \a M
-expression_ref coerce_to_RA(const ptree& model_rep,
-			    const object_ptr<const alphabet>& a,
-			    const shared_ptr< const valarray<double> >& frequencies)
-{
-    std::cout<<"coerce "<<model_rep.get_value<string>()<<"\n";
-    write_info(std::cout, model_rep);
-    std::cout<<" of type "<<get_type(model_rep)<<" to RA ..."<<std::endl;
-
-
-    if (get_type(model_rep) == "RA")
-	return get_smodel_(model_rep, a, frequencies);
-    else
-	return get_smodel_(coerce_to_RA(model_rep), a, frequencies);
-}
-
-/// \brief Construct a ReversibleMarkovModel from model \a M
-expression_ref coerce_to_MM(const ptree& model_rep,
-			    const object_ptr<const alphabet>& a,
-			    const shared_ptr< const valarray<double> >& frequencies)
-{
-    std::cout<<"coerce "<<model_rep.get_value<string>()<<"\n";
-    write_info(std::cout, model_rep);
-    std::cout<<" of type "<<get_type(model_rep)<<" to MM ..."<<std::endl;
-
-
-    if (get_type(model_rep) == "MM")
-	return get_smodel_(model_rep, a, frequencies);
-    else
-	return get_smodel_(coerce_to_MM(model_rep), a, frequencies);
-}
-
-/// \brief Construct a ReversibleMarkovModel from model \a M
-expression_ref coerce_to_MMM(const ptree& model_rep,
+expression_ref get_smodel_as(const string& type,
+			     const ptree& model_rep,
 			     const object_ptr<const alphabet>& a,
 			     const shared_ptr< const valarray<double> >& frequencies)
 {
-    std::cout<<"coerce "<<model_rep.get_value<string>()<<"\n";
-    write_info(std::cout, model_rep);
-    std::cout<<" of type "<<get_type(model_rep)<<" to MMM ..."<<std::endl;
+    if (model_rep.empty() and model_rep.data().empty())
+    {
+	std::cout<<show(model_rep)<<std::endl;
+	throw myexception()<<"Can't construct type '"<<type<<"' from empty description!";
+    }
 
+    if (get_type(model_rep) != type)
+	throw myexception()<<"Expected type "<<type<<" but got "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep);
 
-    if (get_type(model_rep) == "MMM")
-	return get_smodel_(model_rep, a, frequencies);
-    else
-	return get_smodel_(coerce_to_MMM(model_rep), a, frequencies);
+    return get_smodel_(model_rep, a, frequencies);
 }
 
 expression_ref process_stack_functions(const ptree& model_rep,
@@ -840,7 +772,7 @@ expression_ref process_stack_Markov(const ptree& model_rep,
 	    throw myexception()<<"M0: '"<<a->name<<"' is not a 'Codons' alphabet";
 	const Nucleotides& N = C->getNucleotides();
 
-	expression_ref S = coerce_to_EM(model_rep.get_child("submodel"), const_ptr(N), {});
+	expression_ref S = get_smodel_as("EM",model_rep.get_child("submodel"), const_ptr(N), {});
 
 	return model_expression({identifier("m0_model"), a , S});
     }
@@ -851,7 +783,7 @@ expression_ref process_stack_Markov(const ptree& model_rep,
 	    throw myexception()<<"fMutSel: '"<<a->name<<"' is not a 'Codons' alphabet";
 	const Nucleotides& N = C->getNucleotides();
 
-	expression_ref nuc_rm = coerce_to_RA(model_rep.get_child("submodel"), const_ptr(N), {});
+	expression_ref nuc_rm = get_smodel_as("RA",model_rep.get_child("submodel"), const_ptr(N), {});
 
 	return model_expression({identifier("fMutSel_model"), a , nuc_rm});
     }
@@ -862,7 +794,7 @@ expression_ref process_stack_Markov(const ptree& model_rep,
 	    throw myexception()<<"fMutSel0: '"<<a->name<<"' is not a 'Codons' alphabet";
 	const Nucleotides& N = C->getNucleotides();
 
-	expression_ref nuc_rm = coerce_to_RA(model_rep.get_child("submodel"), const_ptr(N), {});
+	expression_ref nuc_rm = get_smodel_as("RA",model_rep.get_child("submodel"), const_ptr(N), {});
 
 	return model_expression({identifier("fMutSel0_model"), a , nuc_rm});
     }
@@ -1004,7 +936,7 @@ expression_ref process_stack_Frequencies(const ptree& model_rep,
     if (R and model_rep.count("submodel"))
     {
 	// If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
-	expression_ref s = coerce_to_EM(model_rep.get_child("submodel"), a, frequencies);
+	expression_ref s = get_smodel_as("EM",model_rep.get_child("submodel"), a, frequencies);
 	expression_ref mm = model_expression({identifier("reversible_markov_model"), s, R});
 	return mm;
     }
@@ -1016,21 +948,17 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 				   const object_ptr<const alphabet>& a,
 				   const shared_ptr< const valarray<double> >& frequencies)
 {
-    if (model_rep.get_value<string>() == "single") 
-	return coerce_to_MM(coerce_to_RA(model_rep.get_child("submodel")),a, frequencies);
-
-    // else if (model_rep.get_value<string>() == "gamma_plus_uniform") {
-    else if (model_rep.get_value<string>() == "gamma") 
+    if (model_rep.get_value<string>() == "gamma") 
     {
-	expression_ref base = coerce_to_RA(model_rep.get_child("submodel"),a,frequencies);
+	expression_ref submodel = get_smodel_as("RA", model_rep.get_child("submodel"), a, frequencies);
 
 	int n = model_rep.get<int>("n");
 
-	return model_expression({identifier("gamma_model"), base, n});
+	return model_expression({identifier("gamma_model"), submodel, n});
     }
     else if (model_rep.get_value<string>() == "gamma_inv") 
     {
-	expression_ref base = coerce_to_RA(model_rep.get_child("submodel"),a,frequencies);
+	expression_ref base = get_smodel_as("RA",model_rep.get_child("submodel"),a,frequencies);
 
 	int n = model_rep.get<int>("n");
 
@@ -1038,13 +966,13 @@ expression_ref process_stack_Multi(const ptree& model_rep,
     }
     else if (model_rep.get_value<string>() == "INV") 
     {
-	expression_ref base = coerce_to_RA(model_rep.get_child("submodel"), a,frequencies);
+	expression_ref base = get_smodel_as("RA",model_rep.get_child("submodel"), a,frequencies);
 
 	return model_expression({identifier("inv_model"), base});
     }
     else if (model_rep.get_value<string>() == "log-normal") 
     {
-	expression_ref base = coerce_to_RA(model_rep.get_child("submodel"),a,frequencies);
+	expression_ref base = get_smodel_as("RA",model_rep.get_child("submodel"),a,frequencies);
 
 	int n = model_rep.get<int>("n");
 
@@ -1052,7 +980,7 @@ expression_ref process_stack_Multi(const ptree& model_rep,
     }
     else if (model_rep.get_value<string>() == "log-normal_inv") 
     {
-	expression_ref base = coerce_to_RA(model_rep.get_child("submodel"),a,frequencies);
+	expression_ref base = get_smodel_as("RA",model_rep.get_child("submodel"),a,frequencies);
 
 	int n = model_rep.get<int>("n");
 
@@ -1071,7 +999,7 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 
     else if (model_rep.get_value<string>() == "DP") 
     {
-	expression_ref base = coerce_to_RA(model_rep.get_child("submodel"),a,frequencies);
+	expression_ref base = get_smodel_as("RA",model_rep.get_child("submodel"),a,frequencies);
 
 	int n = model_rep.get<int>("n");
 
@@ -1148,9 +1076,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 	    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
 	const Nucleotides& N = C->getNucleotides();
 
-	expression_ref S = coerce_to_EM(model_rep.get_child("nuc_model"), const_ptr(N), {});
+	expression_ref S = get_smodel_as("EM",model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-	expression_ref R = coerce_to_frequency_model(model_rep.get_child("freq_model"), a, frequencies);
+	expression_ref R = get_smodel_as("FM",model_rep.get_child("freq_model"), a, frequencies);
 
 	return model_expression({identifier("m1a_model"),a,S,R});
     }
@@ -1161,9 +1089,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 	    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
 	const Nucleotides& N = C->getNucleotides();
 
-	expression_ref S = coerce_to_EM(model_rep.get_child("nuc_model"), const_ptr(N), {});
+	expression_ref S = get_smodel_as("EM",model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-	expression_ref R = coerce_to_frequency_model(model_rep.get_child("freq_model"), a, frequencies);
+	expression_ref R = get_smodel_as("FM",model_rep.get_child("freq_model"), a, frequencies);
 
 	return model_expression({identifier("m2a_model"),a,S,R});
     }
@@ -1174,9 +1102,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 	    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
 	const Nucleotides& N = C->getNucleotides();
 
-	expression_ref S = coerce_to_EM(model_rep.get_child("nuc_model"), const_ptr(N), {});
+	expression_ref S = get_smodel_as("EM",model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-	expression_ref R = coerce_to_frequency_model(model_rep.get_child("freq_model"), a, frequencies);
+	expression_ref R = get_smodel_as("FM",model_rep.get_child("freq_model"), a, frequencies);
 
 	return model_expression({identifier("m2a_test_model"),a,S,R});
     }
@@ -1189,9 +1117,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 	    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(model_rep.get_child("nuc_model"), const_ptr(N), {});
+    expression_ref S = get_smodel_as("EM",model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(model_rep.get_child("freq_model"), a, frequencies);
+    expression_ref R = get_smodel_as("FM",model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m3_model"),a,n,S,R});
   }
@@ -1204,9 +1132,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(model_rep.get_child("nuc_model"), const_ptr(N), {});
+    expression_ref S = get_smodel_as("EM",model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(model_rep.get_child("freq_model"), a, frequencies);
+    expression_ref R = get_smodel_as("FM",model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m3_test_model"),a,n,S,R});
   }
@@ -1219,9 +1147,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(model_rep.get_child("nuc_model"), const_ptr(N), {});
+    expression_ref S = get_smodel_as("EM",model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(model_rep.get_child("freq_model"), a, frequencies);
+    expression_ref R = get_smodel_as("FM",model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m7_model"),a,n,S,R});
   }
@@ -1234,9 +1162,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(model_rep.get_child("nuc_model"), const_ptr(N), {});
+    expression_ref S = get_smodel_as("EM",model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(model_rep.get_child("freq_model"), a, frequencies);
+    expression_ref R = get_smodel_as("FM",model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m8_model"),a,n,S,R});
   }
@@ -1249,9 +1177,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(model_rep.get_child("nuc_model"), const_ptr(N), {});
+    expression_ref S = get_smodel_as("EM",model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(model_rep.get_child("freq_model"), a, frequencies);
+    expression_ref R = get_smodel_as("FM",model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m8a_model"),a,n,S,R});
   }
@@ -1264,9 +1192,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(model_rep.get_child("nuc_model"), const_ptr(N), {});
+    expression_ref S = get_smodel_as("EM",model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(model_rep.get_child("freq_model"), a, frequencies);
+    expression_ref R = get_smodel_as("FM",model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m8b_model"),a,n,S,R});
   }
@@ -1279,9 +1207,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(model_rep.get_child("nuc_model"), const_ptr(N), {});
+    expression_ref S = get_smodel_as("EM",model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(model_rep.get_child("freq_model"), a, frequencies);
+    expression_ref R = get_smodel_as("FM",model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("m8a_test_model"),a,n,S,R});
   }
@@ -1294,9 +1222,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(model_rep.get_child("nuc_model"), const_ptr(N), {});
+    expression_ref S = get_smodel_as("EM",model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(model_rep.get_child("freq_model"), a, frequencies);
+    expression_ref R = get_smodel_as("FM",model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("branch_site_test_model"),a,n,S,R});
   }
@@ -1309,9 +1237,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = coerce_to_EM(model_rep.get_child("nuc_model"), const_ptr(N), {});
+    expression_ref S = get_smodel_as("EM",model_rep.get_child("nuc_model"), const_ptr(N), {});
 
-    expression_ref R = coerce_to_frequency_model(model_rep.get_child("freq_model"), a, frequencies);
+    expression_ref R = get_smodel_as("FM",model_rep.get_child("freq_model"), a, frequencies);
 
     return model_expression({identifier("dp_omega_model"),a,n,S,R});
   }
@@ -1388,7 +1316,7 @@ get_smodel(const ptree& model_rep, const object_ptr<const alphabet>& a, const sh
   assert(frequencies->size() == a->size());
 
   // --------- Convert smodel to MultiMixtureModel ------------//
-  expression_ref full_smodel = coerce_to_MMM(model_rep,a,frequencies);
+  expression_ref full_smodel = get_smodel_as("MMM", coerce_to_MMM(model_rep),a,frequencies);
 
   std::cerr<<"smodel = "<<full_smodel<<"\n";
 
