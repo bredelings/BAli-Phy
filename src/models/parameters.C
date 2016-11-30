@@ -33,7 +33,7 @@
 #include "util.H"
 #include "mcmc/proposals.H"
 #include "probability/probability.H"
-#include "computation/formula_expression.H"
+#include "computation/model_expression.H"
 #include "computation/module.H"
 #include "computation/operations.H" // for VectorFromList<>
 #include "math/exponential.H"

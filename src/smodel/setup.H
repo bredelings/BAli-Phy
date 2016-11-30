@@ -5,7 +5,6 @@
 #include <string>
 #include <boost/program_options.hpp>
 #include "object.H"
-#include "computation/formula_expression.H"
 #include "computation/loader.H"
 #include "alignment/alignment.H"
 #include "sequence/alphabet.H"

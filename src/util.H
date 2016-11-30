@@ -53,6 +53,13 @@ bool can_be_converted_to(const std::string& s, T& t)
 }
 
 template <class T>
+bool can_be_converted_to(const std::string& s) 
+{ 
+    T t;
+    return can_be_converted_to(s,t);
+}
+
+template <class T>
 T convertTo(const std::string& s) 
 { 
     T t;

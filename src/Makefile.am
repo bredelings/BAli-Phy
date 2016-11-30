@@ -46,7 +46,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   timer_stack.H mcmc/setup.H owned-ptr.H alignment/alignment-util2.H \
 	   bounds.H io.H parser/parse.H models/TreeInterface.H \
            parser/AST.H computation/computation.H computation/closure.H \
-           computation/context.H computation/expression.H computation/formula_expression.H \
+           computation/context.H computation/expression.H computation/model_expression.H \
 	   computation/bithash.H computation/graph_register.H computation/let-float.H \
            computation/loader.H computation/module.H \
 	   computation/operation.H computation/operations.H computation/operator.H \
@@ -109,7 +109,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
 	  imodel/setup.C computation/computation.C computation/tokens.C computation/preprocess.C \
 	  computation/graph_register.C computation/show_graph.C computation/module.C \
-	  computation/formula_expression.C computation/evaluate.C computation/gc.C computation/reroot.C \
+	  computation/model_expression.C computation/evaluate.C computation/gc.C computation/reroot.C \
 	  computation/operations.C computation/loader.C computation/context.C computation/closure.C \
 	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C \
 	  parser/AST.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
@@ -335,7 +335,7 @@ cut_range_SOURCES = tools/cut-range.C util.C io.C
 #	alignment-random.C parameters.C myexception.C monitor.C \
 #	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C \
 #	timer_stack.C io.C computation/operator.C computation/expression.C smodel/objects.C \
-#	computation/computation.C computation/formula_expression.C smodel/operations.C \
+#	computation/computation.C computation/model_expression.C smodel/operations.C \
 #	distribution-operations.C 2way.C computation/operations.C computation/module.C \
 #	computation/loader.C computation/context.C
 
