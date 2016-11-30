@@ -35,7 +35,9 @@ expression_ref perform_exp(const expression_ref& F)
     expression_ref E = F;
     if (contains_model_expression(F))
     {
+	std::cout<<E<<std::endl;
 	E = translate_model(E);
+	std::cout<<E<<std::endl;
 	E = (identifier("gen_model"),E);
 	E = (identifier("unsafePerformIO'"),E);
 	E = (identifier("evaluate"),-1,E);
@@ -48,7 +50,9 @@ expression_ref perform_exp(const expression_ref& F, const string& prefix)
     expression_ref E = F;
     if (contains_model_expression(F))
     {
+	std::cout<<E<<std::endl;
 	E = translate_model(E);
+	std::cout<<E<<std::endl;
 	E = (identifier("add_prefix"),prefix,E);
 	E = (identifier("gen_model"),E);
 	E = (identifier("unsafePerformIO'"),E);

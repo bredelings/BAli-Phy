@@ -690,9 +690,9 @@ iid_branch_length_model_gamma t = iid_branch_length_model t (gamma 0.5 (2.0/(int
 
 reversible_markov_model s r = return $ reversible_markov s r;
 
-unit_model m = return $ MixtureModel (DiscreteDistribution [(1.0,m)]);
+unit_mixture m = MixtureModel (DiscreteDistribution [(1.0,m)]);
 
-mmm m = return $ MixtureModels [m];
+mmm m = MixtureModels [m];
 
 cached_conditional_likelihoods t seqs as alpha ps f = let {lc    = mkArray (2*numBranches t) lcf;
                                                            lcf b = let {bb = b `mod` (numBranches t)} in

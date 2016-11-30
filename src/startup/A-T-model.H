@@ -18,7 +18,7 @@ void setup_heating(int proc_id, const boost::program_options::variables_map& arg
 void setup_partition_weights(const boost::program_options::variables_map& args, Parameters& P);
 
 std::vector<expression_ref>
-get_smodels(const module_loader& L,const boost::program_options::variables_map& args, const std::vector<alignment>& A,
+get_smodels(const boost::program_options::variables_map& args, const std::vector<alignment>& A,
 	    shared_items<std::string>& smodel_names_mapping);
 
 std::vector<expression_ref> 
