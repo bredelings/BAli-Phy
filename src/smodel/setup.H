@@ -17,24 +17,9 @@ std::valarray<double> empirical_frequencies(const boost::program_options::variab
 std::valarray<double> empirical_frequencies(const boost::program_options::variables_map& args,
 					    const std::vector<alignment>& A);
 
-/// Return a substitution::Model specified by args
-expression_ref get_smodel(const boost::program_options::variables_map& args,
-			  const object_ptr<const alphabet>& a,
-			  const boost::shared_ptr<const std::valarray<double> >& default_frequencies);
+expression_ref get_smodel(const std::string&, const object_ptr<alphabet>& A);
 
-/// Return a substitution::Model specified by name
-expression_ref get_smodel(const boost::program_options::variables_map& args,
-			  const std::string&,
-			  const alignment& A);
-
-/// Return a substitution::Model specified by args
-expression_ref get_smodel(const boost::program_options::variables_map& args,
-			  const alignment& A);
-
-/// Return a substitution::Model specified by name
-expression_ref get_smodel(const boost::program_options::variables_map& args,
-			  const std::string&,
-			  const std::vector<alignment>& A);
+expression_ref get_smodel(const std::string&, const alignment& A);
 
 std::string default_markov_model(const alphabet& a);
 

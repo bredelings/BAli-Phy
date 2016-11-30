@@ -110,8 +110,7 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 }
 
 vector<expression_ref>
-get_smodels(const variables_map& args, const vector<alignment>& A,
-	    shared_items<string>& smodel_names_mapping)
+get_smodels(const vector<alignment>& A, shared_items<string>& smodel_names_mapping)
 {
     vector<expression_ref> smodels;
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++) 
@@ -129,9 +128,8 @@ get_smodels(const variables_map& args, const vector<alignment>& A,
 		throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
 	}
 
-	expression_ref full_smodel = get_smodel(args,
-						smodel_names_mapping.unique(i),
-						alignments);
+	expression_ref full_smodel = get_smodel(smodel_names_mapping.unique(i), alignments[0]);
+
 	smodels.push_back(full_smodel);
 	//    cout<<"SModel "<<i+1<<": prior = "<<log(smodels.back()->prior())<<"\n";
     }
@@ -147,7 +145,7 @@ get_imodels(const shared_items<string>& imodel_names_mapping, const SequenceTree
     return imodels;
 }
 
-void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
+void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */,
 		 const shared_items<string>& imodels, const shared_items<string>& smodels,
 		 const Parameters& P,const variables_map& args)
 {
@@ -392,7 +390,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
     vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
 
     // FIXME - change to return a (model, standardized name) pair.
-    vector<expression_ref> full_smodels = get_smodels(args,A,smodel_names_mapping);
+    vector<expression_ref> full_smodels = get_smodels(A,smodel_names_mapping);
 
     //-------------- Which partitions share a scale? -----------//
     shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
