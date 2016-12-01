@@ -80,6 +80,7 @@
 #include <boost/optional.hpp>
 #include <boost/property_tree/info_parser.hpp>
 #include "computation/model_expression.H"
+#include "computation/operations.H"
 
 using boost::property_tree::ptree;
 using boost::optional;
@@ -90,12 +91,15 @@ using std::valarray;
 using boost::program_options::variables_map;
 using boost::shared_ptr;
 
+// N = no logging or arguments
+// M = this expression needs to be performed
+
 const vector<vector<vector<string>>> all_default_arguments = 
 {
-    {{"log","Double"}, {"log","x"}, {"x","Double"}},
-    {{"Uniform","Double"}, {"uniform","a","b"}, {"a","Double"}, {"b","Double"}},
-    {{"Normal","Double"}, {"normal","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
-    {{"logNormal","Double"}, {"logNormal","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
+    {{"log","Double","N"}, {"log","x"}, {"x","Double"}},
+    {{"Uniform","Double","M"}, {"uniform","a","b"}, {"a","Double"}, {"b","Double"}},
+    {{"Normal","Double","M"}, {"normal","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
+    {{"logNormal","Double","M"}, {"logNormal","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
     {{"EQU","EM"}, {}},
     {{"F81"}, {}},
     {{"HKY","EM"}, {"SModel.hky","alphabet","kappa"}, {"kappa","Double","logNormal[log[2],0.25]"}, {"alphabet","alphabet","default_alphabet"}, },
@@ -138,11 +142,27 @@ const vector<vector<vector<string>>> all_default_arguments =
     {{"MG94w9","FM"}, {}},
     {{"F61","FM"}, {}},
     {{"default_alphabet","alphabet"}, {}},
-    {{"RCTMC","RA"}, {"reversible_markov","Q","R"}, {"Q","EM"}, {"R","FM"}},
-    {{"UnitMixture","MM"}, {"unit_mixture","submodel"}, {"submodel","RA"}},
-    {{"MMM","MMM"}, {"mmm","submodel"}, {"submodel","MM"}}
+    {{"RCTMC","RA","N"}, {"reversible_markov","Q","R"}, {"Q","EM"}, {"R","FM"}},
+    {{"UnitMixture","MM","N"}, {"unit_mixture","submodel"}, {"submodel","RA"}},
+    {{"MMM","MMM","N"}, {"mmm","submodel"}, {"submodel","MM"}}
 };
 
+vector<string> get_arg(const vector<vector<string>>& args, const string& s)
+{
+    for(const auto& arg: args)
+	if (arg[0] == s)
+	    return arg;
+    throw myexception()<<"Function "<<args[0][0]<<" has no argument '"<<s<<"'";
+}
+
+vector<vector<vector<string>>> get_args_for_func(const vector<vector<vector<string>>>& all_args, const string& s)
+{
+    vector<vector<vector<string>>> args;
+    for(const auto& arg: all_args)
+	if (arg[0][0] == s)
+	    args.push_back(arg);
+    return args;
+}
 
 /// Split a string of the form key=value into {key,value}
 ptree parse(const string& s);
@@ -385,7 +405,7 @@ void check_and_coerce_arg_types(ptree& args)
 	    auto supplied_type = get_type(args.get_child(keyword));
 
 	    if (required_type == supplied_type) continue;
-	    std::cout<<"head = "<<head<<" keyword = "<<keyword<<" required = "<<required_type<<" supplied = "<<supplied_type<<std::endl;
+
 	    ptree value = args.get_child(keyword);
 	    args.erase(keyword);
 	    if (required_type == "RA")
@@ -539,9 +559,6 @@ ptree parse(const string& s)
 	result.push_back({"submodel",parse(*ss.first)});
     }
 
-    std::cout<<"from "<<result.get_value<string>()<<" of type "<<get_type(result)<<"\n";
-    write_info(std::cout, result);
-
     // 4. Convert e.g. TN+F -> RCTMC[TN,F]
     if (get_type(result) == "FM" and result.count("submodel"))
     {
@@ -552,9 +569,6 @@ ptree parse(const string& s)
 	result.put_value("RCTMC");
 	result.push_back({"Q",q});
 	result.push_back({"R",r});
-
-	std::cout<<"to "<<result.get_value<string>()<<"\n";
-	write_info(std::cout, result);
     }
 
     // 5. Coerce arguments to their given type
@@ -590,36 +604,37 @@ expression_ref get_smodel_as(const string& type, const ptree& model_rep,const ob
 
 expression_ref get_smodel_as(const string& type, const ptree& model_rep);
 
-expression_ref process_stack_functions(const ptree& model_rep,
-				       const object_ptr<const alphabet>& a)
+expression_ref process_stack_functions(const ptree& model_rep, const object_ptr<const alphabet>& a)
 {
-    if (model_rep.get_value<string>() == "log")
+    string name = model_rep.get_value<string>();
+
+    auto args = get_args_for_func(all_default_arguments, name);
+    if (args.size() and args[0][1].size())
+    {
+	bool no_log = args[0][0].size() > 2 and args[0][0][2] == "N";
+	expression_ref E = identifier(args[0][1][0]);
+	for(int i=0;i<args[0].size()-2;i++)
+	{
+	    string arg_name = args[0][1][i+1];
+	    string type = get_arg(args[0], arg_name)[1];
+	    expression_ref arg = get_smodel_as(type, model_rep.get_child(arg_name), a);
+	    if ((type == "Double" or type == "Int") and (not no_log))
+		arg = add_logger(arg_name, arg);
+	    E = (E,arg);
+	}
+	if (args[0][0].size() > 2 and args[0][0][2] == "M")
+	    E = model_expression(E);
+	if (not no_log)
+	    E = prefix(name,E);
+	
+	return E;
+    }
+
     if (model_rep.get_value<string>() == "default_alphabet")
     {
 	if (not a)
 	    throw myexception()<<"Default alphabet not specified!";
 	return *a;
-    }
-    else if (model_rep.get_value<string>() == "log")
-    {
-	expression_ref x = get_smodel_as("Double", model_rep.get_child("x"));
-	return (identifier("log"), x);
-    }
-    else if (model_rep.get_value<string>() == "RCTMC")
-    {
-	expression_ref q = get_smodel_as("EM", model_rep.get_child("Q"), a);
-	expression_ref r = get_smodel_as("FM", model_rep.get_child("R"), a);
-	return (identifier("reversible_markov"), q, r);
-    }
-    else if (model_rep.get_value<string>() == "UnitMixture")
-    {
-	expression_ref submodel = get_smodel_as("RA", model_rep.get_child("submodel"), a);
-	return (identifier("unit_mixture"), submodel);
-    }
-    else if (model_rep.get_value<string>() == "MMM")
-    {
-	expression_ref submodel = get_smodel_as("MM", model_rep.get_child("submodel"), a);
-	return (identifier("mmm"), submodel);
     }
     return {};
 }
@@ -627,6 +642,7 @@ expression_ref process_stack_functions(const ptree& model_rep,
 expression_ref process_stack_distributions(const ptree& model_rep)
 {
     expression_ref dist;
+
     if (model_rep.get_value<string>() == "logNormal")
     {
 	expression_ref lmu = get_smodel_as("Double", model_rep.get_child("lmu"));
@@ -1348,16 +1364,14 @@ get_smodel(const ptree& model_rep, const object_ptr<const alphabet>& a)
   // --------- Convert smodel to MultiMixtureModel ------------//
   expression_ref full_smodel = get_smodel_as("MMM", coerce_to_MMM(model_rep),a);
   
-  std::cerr<<"smodel = "<<full_smodel<<"\n";
-
   return full_smodel;
 }
 
 expression_ref
 get_smodel(const string& smodel, const object_ptr<const alphabet>& a) 
 {
-    std::cout<<"smodel1 = "<<smodel<<std::endl;
-    std::cout<<"smodel2 = "<<unparse(parse(smodel))<<std::endl;
+//    std::cout<<"smodel1 = "<<smodel<<std::endl;
+    std::cout<<"smodel = "<<unparse(parse(smodel))<<std::endl;
     return get_smodel(parse(smodel), a);
 }
 
