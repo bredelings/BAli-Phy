@@ -100,6 +100,17 @@ using boost::shared_ptr;
 // N = no logging or arguments
 // M = this expression needs to be performed
 
+/*
+  Maybe convert 'rule' information to JSON like this:
+{
+  name: "Uniform", 
+  type: "Double", 
+  action: true, 
+  call: ["uniform","a","b"], 
+  args: [["a","Double",0],["b","Double",1],
+}
+    */
+
 const vector<vector<vector<string>>> all_default_arguments = 
 {
     {{"log","Double","N"}, {"log","x"}, {"x","Double"}},
