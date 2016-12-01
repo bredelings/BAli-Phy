@@ -113,7 +113,7 @@ const vector<vector<vector<string>>> all_default_arguments =
     {{"WAG","EM"}, {}},
     {{"LG","EM"}, {}},
     {{"Empirical","EM"}, {}, {"filename"}},
-    {{"M0","EM"}, {"SModel.m0", "alphabet", "submodel"}, {"submodel","EM","HKY"}, {"omega","Double","Uniform[0,1]"}, {"alphabet","alphabet","default_alphabet"}},
+    {{"M0","EM"}, {"SModel.m0", "alphabet", "submodel","omega"}, {"submodel","EM","HKY"}, {"omega","Double","Uniform[0,1]"}, {"alphabet","alphabet","default_alphabet"}},
     {{"fMutSel","RA"}, {}, {"submodel","RA"}},
     {{"fMutSel0","RA"}, {}, {"submodel","RA"}},
     {{"INV","MM"}, {}, {"p","Double","Uniform[0,1]"}},
