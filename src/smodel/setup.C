@@ -672,32 +672,6 @@ expression_ref process_stack_Markov(const ptree& model_rep,
 
 	return model_expression({identifier("equ_model"),*a});
     }
-    else if (model_rep.get_value<string>() == "HKY")
-    {
-	const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
-	if (not N)
-	    throw myexception()<<"HKY: '"<<a->name<<"' is not a nucleotide alphabet.";
-
-	expression_ref kappa = get_smodel_as("Double", model_rep.get_child("kappa"));
-
-	kappa = add_logger("kappa",kappa);
-
-	return prefix("HKY",(identifier("hky"),*a,kappa));
-    }
-    else if (model_rep.get_value<string>() == "TN")
-    {
-	const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
-	if (not N)
-	    throw myexception()<<"TN: '"<<a->name<<"' is not a nucleotide alphabet.";
-
-	expression_ref kappaPur = get_smodel_as("Double",model_rep.get_child("kappaPur"));
-	kappaPur = add_logger("kappaPur",kappaPur);
-
-	expression_ref kappaPyr = get_smodel_as("Double",model_rep.get_child("kappaPyr"));
-	kappaPyr = add_logger("kappaPyr",kappaPyr);
-
-	return prefix("TN",(identifier("tn"), *a, kappaPur, kappaPyr));
-    }
     else if (model_rep.get_value<string>() == "GTR")
     {
 	const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
@@ -785,20 +759,6 @@ expression_ref process_stack_Markov(const ptree& model_rep,
       return M;
       }
     */
-    else if (model_rep.get_value<string>() == "M0") //M0[S]
-    {
-	const Codons* C = dynamic_cast<const Codons*>(&*a);
-	if (not C)
-	    throw myexception()<<"M0: '"<<a->name<<"' is not a 'Codons' alphabet";
-	const Nucleotides& N = C->getNucleotides();
-
-	expression_ref S = get_smodel_as("EM",model_rep.get_child("submodel"), const_ptr(N));
-
-	expression_ref omega = get_smodel_as("Double",model_rep.get_child("omega"));
-	omega = add_logger("omega",omega);
-
-	return prefix("M0",(identifier("m0"), *a, S, omega));
-    }
     else if (model_rep.get_value<string>() == "fMutSel")
     {
 	const Codons* C = dynamic_cast<const Codons*>(&*a);
