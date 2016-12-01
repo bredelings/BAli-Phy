@@ -594,6 +594,13 @@ expression_ref process_stack_functions(const ptree& model_rep,
 				       const object_ptr<const alphabet>& a)
 {
     if (model_rep.get_value<string>() == "log")
+    if (model_rep.get_value<string>() == "default_alphabet")
+    {
+	if (not a)
+	    throw myexception()<<"Default alphabet not specified!";
+	return *a;
+    }
+    else if (model_rep.get_value<string>() == "log")
     {
 	expression_ref x = get_smodel_as("Double", model_rep.get_child("x"));
 	return (identifier("log"), x);
