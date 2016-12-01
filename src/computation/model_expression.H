@@ -20,6 +20,8 @@ expression_ref result(const expression_ref&, const module_loader& L, const std::
 
 expression_ref model_expression(const std::vector<expression_ref>& es);
 
+expression_ref model_expression(const expression_ref&);
+
 expression_ref prefix(const expression_ref& s, const expression_ref& E);
 
 expression_ref add_logger(const std::string& s, const expression_ref& E);

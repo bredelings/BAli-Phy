@@ -1,6 +1,7 @@
 #include "model_expression.H"
 #include "context.H"
 #include "computation/module.H"
+#include "computation/operations.H"
 #include "parser/AST.H"
 
 using std::vector;
@@ -81,6 +82,20 @@ expression_ref result(const expression_ref& E, const module_loader& L, const vec
 expression_ref model_expression(const vector<expression_ref>& es)
 {
     return expression_ref(AST_node("model"),es);
+}
+
+expression_ref model_expression(const expression_ref& E)
+{
+    vector<expression_ref> es;
+    if (not E.is_expression())
+	es = {E};
+    else {
+	if (E.head().is_a<Apply>())
+	    es = E.sub();
+	else
+	    throw myexception()<<"Cannot make model expression from "<<E<<" with head "<<E.head();
+    }
+    return model_expression(es);
 }
 
 // prefix_action s a = Prefix s a
