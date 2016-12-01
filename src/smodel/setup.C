@@ -565,7 +565,10 @@ ptree parse(const string& s)
 	result.push_back({"submodel",parse(*ss.first)});
     }
 
-    // 4. Convert e.g. TN+F -> RCTMC[TN,F]
+    // 4. Set default values for top level -- this calls parse recursively to handle type checking for args of default values
+    set_default_values(result);
+  
+    // 5. Convert e.g. TN+F -> RCTMC[TN,F]
     if (get_type(result) == "FM" and result.count("submodel"))
     {
 	ptree q = result.get_child("submodel");
@@ -577,12 +580,9 @@ ptree parse(const string& s)
 	result.push_back({"R",r});
     }
 
-    // 5. Coerce arguments to their given type
+    // 6. Coerce arguments to their given type
     check_and_coerce_arg_types(result);
     
-    // 6. Set default values (should NOT introduce need for coercion)
-    set_default_values(result);
-  
     // 7. Check that required arguments are specified
     check_required_args(result);
 
