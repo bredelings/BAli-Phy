@@ -44,22 +44,30 @@
 //   - So, maybe an INITIAL parse, only to DNA, RNA, or AA, just to determine alphabet?
 //   - Then 
 
-// 4. Make model_expressions for prefixing, logging, and sampling.
-// 5. Associate types with each argument.
-// 6. Expand default arguments in the model expression, and print the expanded expression.
-//    - Maybe have a first step where defaults are expanded, and a second step that can assume args are always present?
+// 4b. Make model_expressions for sampling frequency.
+// 6b. Print the expanded model expression.
 // 7. Allow specifying lists?
 // 8. Allow specifying priors to the frequency model.
-// 9. Allow separately specifying random variables to e.g. indel model.
 // 10. Allow using user-specified models from the command line.
 // 11. ? How to deal with things that need model-dependent argument names?
 // 12. ? How to deal with things that need programmatic model specification?
 // 13. ? Why can't we sort the DP rates (which would be a great use of programmatic model specification)?
-// 14. OK, so *actually*, we can't do this, because we need to be able to handle top-level expressions
-//     NOT being actions, but arguments BEING actions.  Thus we need to make 'translate' more intelligent.
+//*17. Write a function to go BACK from ptrees to strings.
+// 18. Allow specifying the alphabet in the smodel, instead of as a command-line option.
+// 19. Allow generic parsing of functions completely from their description, instead of writing code for each one.
+// 20. Allow specifying the frequencies in the expression as (e.g.) empirical frequencies, for a group of alignments.
+// 21. Allow specifying and receiving help information for each function, and for its arguments.
+// 22. Eliminate as many ***_model functions as possible.
+
+// DONE
+// 4a. Make model_expressions for prefixing, logging.
+// 5. Associate types with each argument.
+// 6a. Expand default arguments in the model expression.
+// 9. Allow separately specifying random variables to e.g. indel model.
+// 14. Make 'translate' more intelligent, so that it can handle top-level expressions
+//     NOT being actions, but arguments BEING actions.
 // 15. Specify the types of arguments and results (for coercion).
 // 16. Do the coercion on the ptree or string level.
-//*17. Write a function to go BACK from ptrees to strings.
 
 #include <vector>
 #include <boost/program_options.hpp>
