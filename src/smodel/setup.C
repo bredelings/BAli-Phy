@@ -58,6 +58,7 @@
 // 20. Allow specifying the frequencies in the expression as (e.g.) empirical frequencies, for a group of alignments.
 // 21. Allow specifying and receiving help information for each function, and for its arguments.
 // 22. Eliminate as many ***_model functions as possible.
+// 23. Allow GTR aminoacid models.
 
 // DONE
 // 4a. Make model_expressions for prefixing, logging.
@@ -145,6 +146,31 @@ const vector<vector<vector<string>>> all_default_arguments =
 
 /// Split a string of the form key=value into {key,value}
 ptree parse(const string& s);
+
+string unparse(const ptree& p)
+{
+    string s = p.get_value<string>();
+    if (s == "RCTMC")
+    {
+	string Q = unparse(p.get_child("Q"));
+	string R = unparse(p.get_child("R"));
+	return Q + " + " + R;
+    }
+    vector<string> args;
+    string submodel;
+    for(const auto& pair: p)
+    {
+	if (pair.first == "submodel")
+	    submodel = unparse(pair.second);
+	else
+	    args.push_back( pair.first + "=" + unparse(pair.second) );
+    }
+    if (not args.empty())
+	s = s + "[" + join(args,',') + "]";
+    if (not submodel.empty())
+	s = submodel + " + " + s;
+    return s;
+}
 
 string get_type_for_arg(const string& func, const string& arg)
 {
@@ -1323,7 +1349,9 @@ get_smodel(const ptree& model_rep, const object_ptr<const alphabet>& a)
 expression_ref
 get_smodel(const string& smodel, const object_ptr<const alphabet>& a) 
 {
-  return get_smodel(parse(smodel), a);
+    std::cout<<"smodel1 = "<<smodel<<std::endl;
+    std::cout<<"smodel2 = "<<unparse(parse(smodel))<<std::endl;
+    return get_smodel(parse(smodel), a);
 }
 
 expression_ref get_smodel(const string& smodel_name,const alignment& A) 
