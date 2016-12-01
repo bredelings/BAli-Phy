@@ -59,6 +59,12 @@
 // 21. Allow specifying and receiving help information for each function, and for its arguments.
 // 22. Eliminate as many ***_model functions as possible.
 // 23. Allow GTR aminoacid models.
+// 24. Allow a full term-rewriting system, with unification on types.  This will allow passing
+//     computing expressions before we know the alphabet that allow the alphabet to be a (type) variable.
+//     We can then use these expressions to narrow the alphabets we try when reading the alignment matrix.
+//
+//     This should also allow propagating an integer argument to default values for other variables, although
+//     this will not work for evaluated expressions -- or not very well.
 
 // DONE
 // 4a. Make model_expressions for prefixing, logging.
@@ -1295,7 +1301,10 @@ get_smodel(const ptree& model_rep, const object_ptr<const alphabet>& a)
 
   // --------- Convert smodel to MultiMixtureModel ------------//
   expression_ref full_smodel = get_smodel_as("MMM", coerce_to_MMM(model_rep),a);
-  
+
+  if (log_verbose)
+      std::cout<<"full_smodel = "<<full_smodel<<std::endl;
+
   return full_smodel;
 }
 
@@ -1303,7 +1312,9 @@ expression_ref
 get_smodel(const string& smodel, const object_ptr<const alphabet>& a) 
 {
 //    std::cout<<"smodel1 = "<<smodel<<std::endl;
-    std::cout<<"smodel = "<<unparse(parse(smodel))<<std::endl;
+
+    if (log_verbose)
+	std::cout<<"smodel = "<<unparse(parse(smodel))<<std::endl;
     return get_smodel(parse(smodel), a);
 }
 
