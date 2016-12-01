@@ -59,7 +59,7 @@
 //     NOT being actions, but arguments BEING actions.  Thus we need to make 'translate' more intelligent.
 // 15. Specify the types of arguments and results (for coercion).
 // 16. Do the coercion on the ptree or string level.
-// 17. Write a function to go BACK from ptrees to strings.
+//*17. Write a function to go BACK from ptrees to strings.
 
 #include <vector>
 #include <boost/program_options.hpp>
@@ -83,51 +83,55 @@ using boost::shared_ptr;
 
 const vector<vector<vector<string>>> all_default_arguments = 
 {
-    {{"log","Double","log"},{"x","Double"}},
-    {{"logNormal","Double"},{"lmu","Double"},{"lsigma","Double"}},
-    {{"EQU","EM"}},
-    {{"F81"}},
-    {{"HKY","EM","SModel.hky"},{"alphabet","alphabet"},{"kappa","Double","logNormal[log[2],0.25]"}},
-    {{"TN","EM", "SModel.tn"},{"alphabet","alphabet"},{"kappaPur","Double","logNormal[log[2],0.25]"},{"kappaPyr","Double","logNormal[log[2],0.25]"}},
-    {{"GTR","EM"},{"ag"},{"at"},{"ac"},{"gt"},{"gc"},{"tc"}},
-    {{"HKYx3","EM"},{"kappa","Double","logNormal[log[2],0.25]"}},
-    {{"TNx3","EM"},{"kappaPur","Double","logNormal[log[2],0.25]"},{"kappaPyr","Double","logNormal[log[2],0.25]"}},
-    {{"GTRx3","EM"},{"ag"},{"at"},{"ac"},{"gt"},{"gc"},{"tc"}},
-    {{"PAM","EM"}},
-    {{"JTT","EM"}},
-    {{"WAG","EM"}},
-    {{"LG","EM"}},
-    {{"Empirical","EM"},{"filename"}},
-    {{"M0","EM", "SModel.m0"},{"alphabet","alphabet"},{"submodel","RA","HKY"}},
-    {{"fMutSel","RA"},{"*submodel","RA"}},
-    {{"fMutSel0","RA"},{"*submodel","RA"}},
-    {{"INV","MM"},{"p","Double"}},
-    {{"DP","MM"},{"n","Int"},{"*submodel","RA"}},
-    {{"gamma","MM"},{"n","Int","4"},{"alpha","Double"},{"*submodel","RA"}},
-    {{"gamma_inv","MM"},{"n","Int","4"},{"alpha","Double"},{"p","Double"},{"*submodel","RA"}},
-    {{"log-normal","MM"},{"n","Int","4"},{"sigmaOverMu","Double"},{"*submodel","RA"}},
-    {{"log-normal_inv","MM"},{"n","Int","4"},{"sigmaOverMu","Double"},{"p","Double"},{"*submodel","RA"}},
-    {{"M1a","MM"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
-    {{"M2a","MM"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
-    {{"M2a_Test","MM"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
-    //    {{"M3u"},{"3"},{"nuc_model",""HKY"},{"freq_model","F61"}},
-    {{"M3","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
-    {{"M3_Test","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
-    {{"M7","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
-    {{"M8","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
-    {{"M8a","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
-    {{"M8a_Test","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
-    {{"branch-site","MM"},{"n","Int","2"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
-    {{"dp_omega","MM"},{"n","Int","4"},{"nuc_model","EM","HKY"},{"freq_model","FM","F61"}},
-    {{"F","FM"}},
-    {{"gwF","FM"}},
-    {{"F1x4","FM"}},
-    {{"F3x4","FM"}},
-    {{"MG94","FM"}},
-    {{"MG94w9","FM"}},
-    {{"RCTMC","RA","reversible_markov"},{"Q","EM"},{"R","FM"}},
-    {{"UnitMixture","MM","unit_mixture"},{"submodel","RA"}},
-    {{"MMM","MMM","mmm"},{"submodel","MM"}}
+    {{"log","Double"}, {"log","x"}, {"x","Double"}},
+    {{"Uniform","Double"}, {"uniform","a","b"}, {"a","Double"}, {"b","Double"}},
+    {{"Normal","Double"}, {"normal","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
+    {{"logNormal","Double"}, {"logNormal","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
+    {{"EQU","EM"}, {}},
+    {{"F81"}, {}},
+    {{"HKY","EM"}, {"SModel.hky","alphabet","kappa"}, {"kappa","Double","logNormal[log[2],0.25]"}, {"alphabet","alphabet","default_alphabet"}, },
+    {{"TN","EM"}, {"SModel.tn","alphabet","kappaPur","kappaPyr"}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}, {"alphabet","alphabet","default_alphabet"}},
+    {{"GTR","EM"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"}},
+    {{"HKYx3","EM"}, {}, {"kappa","Double","logNormal[log[2],0.25]"}},
+    {{"TNx3","EM"}, {}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
+    {{"GTRx3","EM"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"}},
+    {{"PAM","EM"}, {}},
+    {{"JTT","EM"}, {}},
+    {{"WAG","EM"}, {}},
+    {{"LG","EM"}, {}},
+    {{"Empirical","EM"}, {}, {"filename"}},
+    {{"M0","EM"}, {"SModel.m0", "alphabet", "submodel"}, {"submodel","EM","HKY"}, {"omega","Double","Uniform[0,1]"}, {"alphabet","alphabet","default_alphabet"}},
+    {{"fMutSel","RA"}, {}, {"submodel","RA"}},
+    {{"fMutSel0","RA"}, {}, {"submodel","RA"}},
+    {{"INV","MM"}, {}, {"p","Double"}},
+    {{"DP","MM"}, {}, {"n","Int"}, {"submodel","RA"}},
+    {{"gamma","MM"}, {}, {"n","Int","4"}, {"*alpha","Double"}, {"submodel","RA"}},
+    {{"gamma_inv","MM"}, {}, {"n","Int","4"}, {"*alpha","Double"}, {"*p","Double"}, {"submodel","RA"}},
+    {{"log-normal","MM"}, {}, {"n","Int","4"}, {"sigmaOverMu","Double"}, {"submodel","RA"}},
+    {{"log-normal_inv","MM"}, {}, {"n","Int","4"}, {"sigmaOverMu","Double"}, {"p","Double","Uniform[0,1]"}, {"submodel","RA"}},
+    {{"M1a","MM"}, {}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
+    {{"M2a","MM"}, {}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
+    {{"M2a_Test","MM"}, {}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
+    //    {{"M3u"}, {"3"}, {"nuc_model",""HKY"}, {"freq_model","F61"}},
+    {{"M3","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
+    {{"M3_Test","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
+    {{"M7","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
+    {{"M8","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
+    {{"M8a","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
+    {{"M8a_Test","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
+    {{"branch-site","MM"}, {}, {"n","Int","2"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
+    {{"dp_omega","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
+    {{"F","FM"}, {}},
+    {{"gwF","FM"}, {}},
+    {{"F1x4","FM"}, {}},
+    {{"F3x4","FM"}, {}},
+    {{"MG94","FM"}, {}},
+    {{"MG94w9","FM"}, {}},
+    {{"F61","FM"}, {}},
+    {{"default_alphabet","alphabet"}, {}},
+    {{"RCTMC","RA"}, {"reversible_markov","Q","R"}, {"Q","EM"}, {"R","FM"}},
+    {{"UnitMixture","MM"}, {"unit_mixture","submodel"}, {"submodel","RA"}},
+    {{"MMM","MMM"}, {"mmm","submodel"}, {"submodel","MM"}}
 };
 
 
@@ -140,7 +144,7 @@ string get_type_for_arg(const string& func, const string& arg)
     {
 	if (x[0][0] != func) continue;
 
-	for(int i=1;i<x.size();i++)
+	for(int i=2;i<x.size();i++)
 	{
 	    const auto& y = x[i];
 	    if (y[0] == arg)
@@ -262,11 +266,11 @@ string get_keyword_for_positional_arg(const string& head, int i)
     {
 	if (default_arguments[0][0] != head) continue;
 
-	if (i+1 >= default_arguments.size())
-	    throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<head<<"', which only has "<<default_arguments.size()-1<<" positional arguments.";
+	if (i+2 >= default_arguments.size())
+	    throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<head<<"', which only has "<<default_arguments.size()-2<<" positional arguments.";
 
 	// Strip leading '*' that indicates required argument
-	string keyword = default_arguments[i+1][0];
+	string keyword = default_arguments[i+2][0];
 	if (keyword[0] == '*')
 	    keyword = keyword.substr(1);
 	auto keyword_pair = split_keyword(keyword);
@@ -286,14 +290,15 @@ void set_default_values(ptree& args)
     {
 	if (default_arguments[0][0] != head) continue;
 
-	for(int i=1;i<default_arguments.size();i++)
+	for(int i=2;i<default_arguments.size();i++)
 	{
-	    string keyword = default_arguments[i][0];
+	    const auto& argument = default_arguments[i];
+	    string keyword = argument[0];
 	    if (keyword[0] == '*')
 		keyword = keyword.substr(1);
-	    bool has_default = (default_arguments[i].size() > 2);
+	    bool has_default = (argument.size() > 2);
 	    if (not has_default) continue;
-	    string def = default_arguments[i][2];
+	    string def = argument[2];
       
 	    if (not args.count(keyword))
 		args.push_back({keyword, parse(def)});
@@ -312,11 +317,11 @@ void check_required_args(const ptree& args)
     {
 	if (default_arguments[0][0] != head) continue;
 
-	for(int i=1;i<default_arguments.size();i++)
+	for(int i=2;i<default_arguments.size();i++)
 	{
 	    string keyword = default_arguments[i][0];
-	    if (keyword[0] != '*') continue;
-	    keyword = keyword.substr(1);
+	    if (keyword[0] == '*') continue;
+	    if (default_arguments[i].size() > 2) continue;
 
 	    if (not args.count(keyword))
 		throw myexception()<<"Command '"<<head<<"' missing required argument '"<<keyword<<"'";
@@ -335,7 +340,7 @@ void check_and_coerce_arg_types(ptree& args)
     {
 	if (default_arguments[0][0] != head) continue;
 
-	for(int i=1;i<default_arguments.size();i++)
+	for(int i=2;i<default_arguments.size();i++)
 	{
 	    string keyword = default_arguments[i][0];
 	    if (keyword[0] == '*')
@@ -547,55 +552,32 @@ string default_markov_model(const alphabet& a)
 	return "";
 }
 
-expression_ref get_smodel_(const ptree& model_rep,const object_ptr<const alphabet>& a);
+expression_ref get_smodel_as(const string& type, const ptree& model_rep,const object_ptr<const alphabet>& a);
 
-expression_ref get_smodel_(const ptree& model_rep);
-
-expression_ref get_smodel_as(const string& type,
-			     const ptree& model_rep,
-			     const object_ptr<const alphabet>& a)
-{
-    if (model_rep.empty() and model_rep.data().empty())
-    {
-	std::cout<<show(model_rep)<<std::endl;
-	throw myexception()<<"Can't construct type '"<<type<<"' from empty description!";
-    }
-
-    if (type == "Double" and get_type(model_rep) == "Int")
-    {
-	double d;
-	if (can_be_converted_to<double>(model_rep.get_value<string>(), d))
-	    return d;
-    }
-
-    if (get_type(model_rep) != type)
-	throw myexception()<<"Expected type "<<type<<" but got "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep);
-
-    return get_smodel_(model_rep, a);
-}
+expression_ref get_smodel_as(const string& type, const ptree& model_rep);
 
 expression_ref process_stack_functions(const ptree& model_rep,
 				       const object_ptr<const alphabet>& a)
 {
     if (model_rep.get_value<string>() == "log")
     {
-	expression_ref x = get_smodel_(model_rep.get_child("x"));
+	expression_ref x = get_smodel_as("Double", model_rep.get_child("x"));
 	return (identifier("log"), x);
     }
     else if (model_rep.get_value<string>() == "RCTMC")
     {
-	expression_ref q = get_smodel_(model_rep.get_child("Q"), a);
-	expression_ref r = get_smodel_(model_rep.get_child("R"), a);
+	expression_ref q = get_smodel_as("EM", model_rep.get_child("Q"), a);
+	expression_ref r = get_smodel_as("FM", model_rep.get_child("R"), a);
 	return (identifier("reversible_markov"), q, r);
     }
     else if (model_rep.get_value<string>() == "UnitMixture")
     {
-	expression_ref submodel = get_smodel_(model_rep.get_child("submodel"), a);
+	expression_ref submodel = get_smodel_as("RA", model_rep.get_child("submodel"), a);
 	return (identifier("unit_mixture"), submodel);
     }
     else if (model_rep.get_value<string>() == "MMM")
     {
-	expression_ref submodel = get_smodel_(model_rep.get_child("submodel"), a);
+	expression_ref submodel = get_smodel_as("MM", model_rep.get_child("submodel"), a);
 	return (identifier("mmm"), submodel);
     }
     return {};
@@ -606,9 +588,21 @@ expression_ref process_stack_distributions(const ptree& model_rep)
     expression_ref dist;
     if (model_rep.get_value<string>() == "logNormal")
     {
-	expression_ref lmu = get_smodel_(model_rep.get_child("lmu"));
-	expression_ref lsigma = get_smodel_(model_rep.get_child("lsigma"));
+	expression_ref lmu = get_smodel_as("Double", model_rep.get_child("lmu"));
+	expression_ref lsigma = get_smodel_as("Double", model_rep.get_child("lsigma"));
 	dist = model_expression({identifier("logNormal"), lmu, lsigma});
+    }
+    if (model_rep.get_value<string>() == "Uniform")
+    {
+	expression_ref a = get_smodel_as("Double", model_rep.get_child("a"));
+	expression_ref b = get_smodel_as("Double", model_rep.get_child("b"));
+	dist = model_expression({identifier("uniform"), a, b});
+    }
+    if (model_rep.get_value<string>() == "Normal")
+    {
+	expression_ref mu = get_smodel_as("Double", model_rep.get_child("mu"));
+	expression_ref sigma = get_smodel_as("Double", model_rep.get_child("sigma"));
+	dist = model_expression({identifier("normal"), mu, sigma});
     }
     return dist;
 }
@@ -652,7 +646,7 @@ expression_ref process_stack_Markov(const ptree& model_rep,
 	if (not N)
 	    throw myexception()<<"HKY: '"<<a->name<<"' is not a nucleotide alphabet.";
 
-	expression_ref kappa = get_smodel_(model_rep.get_child("kappa"));
+	expression_ref kappa = get_smodel_as("Double", model_rep.get_child("kappa"));
 
 	kappa = add_logger("kappa",kappa);
 
@@ -664,10 +658,10 @@ expression_ref process_stack_Markov(const ptree& model_rep,
 	if (not N)
 	    throw myexception()<<"TN: '"<<a->name<<"' is not a nucleotide alphabet.";
 
-	expression_ref kappaPur = get_smodel_as("Double",model_rep.get_child("kappaPur"), a);
+	expression_ref kappaPur = get_smodel_as("Double",model_rep.get_child("kappaPur"));
 	kappaPur = add_logger("kappaPur",kappaPur);
 
-	expression_ref kappaPyr = get_smodel_as("Double",model_rep.get_child("kappaPyr"), a);
+	expression_ref kappaPyr = get_smodel_as("Double",model_rep.get_child("kappaPyr"));
 	kappaPyr = add_logger("kappaPyr",kappaPyr);
 
 	return prefix("TN",(identifier("tn"), *a, kappaPur, kappaPyr));
@@ -768,7 +762,10 @@ expression_ref process_stack_Markov(const ptree& model_rep,
 
 	expression_ref S = get_smodel_as("EM",model_rep.get_child("submodel"), const_ptr(N));
 
-	return model_expression({identifier("m0_model"), a , S});
+	expression_ref omega = get_smodel_as("Double",model_rep.get_child("omega"));
+	omega = add_logger("omega",omega);
+
+	return prefix("M0",(identifier("m0"), *a, S, omega));
     }
     else if (model_rep.get_value<string>() == "fMutSel")
     {
@@ -1269,10 +1266,30 @@ get_smodel_(const ptree& model_rep, const object_ptr<const alphabet>& a)
   throw myexception()<<"Couldn't process substitution model description \""<<show(model_rep)<<"\"";
 }
 
-expression_ref 
-get_smodel_(const ptree& model_rep)
+expression_ref get_smodel_as(const string& type, const ptree& model_rep, const object_ptr<const alphabet>& a)
 {
-    return get_smodel_(model_rep, {});
+    if (model_rep.empty() and model_rep.data().empty())
+    {
+	std::cout<<show(model_rep)<<std::endl;
+	throw myexception()<<"Can't construct type '"<<type<<"' from empty description!";
+    }
+
+    if (type == "Double" and get_type(model_rep) == "Int")
+    {
+	double d;
+	if (can_be_converted_to<double>(model_rep.get_value<string>(), d))
+	    return d;
+    }
+
+    if (get_type(model_rep) != type)
+	throw myexception()<<"Expected type "<<type<<" but got "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep);
+
+    return get_smodel_(model_rep, a);
+}
+
+expression_ref get_smodel_as(const string& type, const ptree& model_rep)
+{
+    return get_smodel_as(type, model_rep, {});
 }
 
 
