@@ -117,51 +117,51 @@ const vector<vector<vector<string>>> all_default_arguments =
     {{"Uniform","Double","M"}, {"uniform","a","b"}, {"a","Double"}, {"b","Double"}},
     {{"Normal","Double","M"}, {"normal","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
     {{"logNormal","Double","M"}, {"logNormal","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
-    {{"EQU","EM"}, {}},
+    {{"EQU","EM[a]"}, {}},
     {{"F81"}, {}},
-    {{"HKY","EM"}, {"SModel.hky","alphabet","kappa"}, {"kappa","Double","logNormal[log[2],0.25]"}, {"alphabet","alphabet","default_alphabet"}, },
-    {{"TN","EM"}, {"SModel.tn","alphabet","kappaPur","kappaPyr"}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}, {"alphabet","alphabet","default_alphabet"}},
-    {{"GTR","EM"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"}},
-    {{"HKYx3","EM"}, {}, {"kappa","Double","logNormal[log[2],0.25]"}},
-    {{"TNx3","EM"}, {}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
-    {{"GTRx3","EM"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"}},
-    {{"PAM","EM"}, {}},
-    {{"JTT","EM"}, {}},
-    {{"WAG","EM"}, {}},
-    {{"LG","EM"}, {}},
-    {{"Empirical","EM"}, {}, {"filename"}},
-    {{"M0","EM"}, {"SModel.m0", "alphabet", "submodel","omega"}, {"submodel","EM","HKY"}, {"omega","Double","Uniform[0,1]"}, {"alphabet","alphabet","default_alphabet"}},
-    {{"fMutSel","RA"}, {}, {"submodel","RA"}},
-    {{"fMutSel0","RA"}, {}, {"submodel","RA"}},
-    {{"INV","MM"}, {}, {"p","Double","Uniform[0,1]"}},
-    {{"DP","MM"}, {}, {"n","Int"}, {"submodel","RA"}},
-    {{"gamma","MM"}, {}, {"n","Int","4"}, {"*alpha","Double"}, {"submodel","RA"}},
-    {{"gamma_inv","MM"}, {}, {"n","Int","4"}, {"*alpha","Double"}, {"p","Double","Uniform[0,1]"}, {"submodel","RA"}},
-    {{"log-normal","MM"}, {}, {"n","Int","4"}, {"sigmaOverMu","Double"}, {"submodel","RA"}},
-    {{"log-normal_inv","MM"}, {}, {"n","Int","4"}, {"sigmaOverMu","Double"}, {"p","Double","Uniform[0,1]"}, {"submodel","RA"}},
-    {{"M1a","MM"}, {}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
-    {{"M2a","MM"}, {}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
-    {{"M2a_Test","MM"}, {}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
+    {{"HKY","EM[a]"}, {"SModel.hky","alphabet","kappa"}, {"kappa","Double","logNormal[log[2],0.25]"}, {"alphabet","alphabet","default_alphabet"}, },
+    {{"TN","EM[a]"}, {"SModel.tn","alphabet","kappaPur","kappaPyr"}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}, {"alphabet","alphabet","default_alphabet"}},
+    {{"GTR","EM[a]"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"}},
+    {{"HKYx3","EM[a]"}, {}, {"kappa","Double","logNormal[log[2],0.25]"}},
+    {{"TNx3","EM[a]"}, {}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
+    {{"GTRx3","EM[a]"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"}},
+    {{"PAM","EM[a]"}, {}},
+    {{"JTT","EM[a]"}, {}},
+    {{"WAG","EM[a]"}, {}},
+    {{"LG","EM[a]"}, {}},
+    {{"Empirical","EM[a]"}, {}, {"filename"}},
+    {{"M0","EM[a]"}, {"SModel.m0", "alphabet", "submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","Uniform[0,1]"}, {"alphabet","alphabet","default_alphabet"}},
+    {{"fMutSel","RA[a]"}, {}, {"submodel","RA[a]"}},
+    {{"fMutSel0","RA[a]"}, {}, {"submodel","RA[a]"}},
+    {{"INV","MM[a]"}, {}, {"p","Double","Uniform[0,1]"}},
+    {{"DP","MM[a]"}, {}, {"n","Int"}, {"submodel","RA[a]"}},
+    {{"gamma","MM[a]"}, {}, {"n","Int","4"}, {"*alpha","Double"}, {"submodel","RA[a]"}},
+    {{"gamma_inv","MM[a]"}, {}, {"n","Int","4"}, {"*alpha","Double"}, {"p","Double","Uniform[0,1]"}, {"submodel","RA[a]"}},
+    {{"log-normal","MM[a]"}, {}, {"n","Int","4"}, {"sigmaOverMu","Double"}, {"submodel","RA[a]"}},
+    {{"log-normal_inv","MM[a]"}, {}, {"n","Int","4"}, {"sigmaOverMu","Double"}, {"p","Double","Uniform[0,1]"}, {"submodel","RA[a]"}},
+    {{"M1a","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
+    {{"M2a","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
+    {{"M2a_Test","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     //    {{"M3u"}, {"3"}, {"nuc_model",""HKY"}, {"freq_model","F61"}},
-    {{"M3","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
-    {{"M3_Test","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
-    {{"M7","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
-    {{"M8","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
-    {{"M8a","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
-    {{"M8a_Test","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
-    {{"branch-site","MM"}, {}, {"n","Int","2"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
-    {{"dp_omega","MM"}, {}, {"n","Int","4"}, {"nuc_model","EM","HKY"}, {"freq_model","FM","F61"}},
-    {{"F","FM"}, {}},
-    {{"gwF","FM"}, {}},
-    {{"F1x4","FM"}, {}},
-    {{"F3x4","FM"}, {}},
-    {{"MG94","FM"}, {}},
-    {{"MG94w9","FM"}, {}},
-    {{"F61","FM"}, {}},
+    {{"M3","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
+    {{"M3_Test","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
+    {{"M7","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
+    {{"M8","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
+    {{"M8a","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
+    {{"M8a_Test","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
+    {{"branch-site","MM[a]"}, {}, {"n","Int","2"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
+    {{"dp_omega","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
+    {{"F","FM[a]"}, {}},
+    {{"gwF","FM[a]"}, {}},
+    {{"F1x4","FM[a]"}, {}},
+    {{"F3x4","FM[a]"}, {}},
+    {{"MG94","FM[a]"}, {}},
+    {{"MG94w9","FM[a]"}, {}},
+    {{"F61","FM[a]"}, {}},
     {{"default_alphabet","alphabet"}, {}},
-    {{"RCTMC","RA","N"}, {"reversible_markov","Q","R"}, {"Q","EM"}, {"R","FM"}},
-    {{"UnitMixture","MM","N"}, {"unit_mixture","submodel"}, {"submodel","RA"}},
-    {{"MMM","MMM","N"}, {"mmm","submodel"}, {"submodel","MM"}}
+    {{"RCTMC","RA[a]","N"}, {"reversible_markov","Q","R"}, {"Q","EM[a]"}, {"R","FM[a]"}},
+    {{"UnitMixture","MM[a]","N"}, {"unit_mixture","submodel"}, {"submodel","RA[a]"}},
+    {{"MMM","MMM[a]","N"}, {"mmm","submodel"}, {"submodel","MM[a]"}}
 };
 
 vector<string> get_arg(const vector<vector<string>>& args, const string& s)
@@ -183,6 +183,101 @@ vector<vector<vector<string>>> get_args_for_func(const vector<vector<vector<stri
 
 /// Split a string of the form key=value into {key,value}
 ptree parse(const string& s);
+ptree parse_type(const string& s);
+
+// given two terms, what equations do we need to unify them?
+ptree unify(const ptree& p1, const ptree& p2);
+
+bool can_unify(const ptree& p1, const ptree& p2)
+{
+    return unify(p1,p2).get_value<string>() != "fail";
+}
+
+ptree unify(const string& s1, const string& s2)
+{
+    auto p1 = parse_type(s1);
+    auto p2 = parse_type(s2);
+    return unify(p1,p2);
+}
+
+bool can_unify(const string& s1, const string& s2)
+{
+    return unify(s1,s2).get_value<string>() != "fail";
+}
+
+// given two sets of equations, what further equations do we need to unify them?
+bool merge_equations(ptree& p1, const ptree& p2)
+{
+    for(const auto& x: p2)
+    {
+	const auto& key = x.first;
+	assert(x.second.get_value<string>() != "");
+	// If p1 has no equality for the the variable, then just copy over p2's equality
+	if (not p1.count(key)) // or p1.get<string>(key) != "" or p2.get<string>(key) != "")
+	{
+	    p1.erase(key);
+	    p1.push_back(x);
+	}
+
+        // If they BOTH have an equality, then we need to merge the equalities.
+	ptree new_equalities = unify(p1.get_child(key),p2.get_child(key));
+	if (new_equalities.get_value<string>() == "fail")
+	    return false;
+
+	merge_equations(p1,new_equalities);
+    }
+
+    return true;
+}
+
+bool is_variable(const string& s)
+{
+    if (s.empty()) return false;
+    char first_letter = s[0];
+    return (first_letter >= 98 and first_letter <= 123);
+}
+
+ptree unify(const ptree& p1, const ptree& p2)
+{
+    // 1. If either term is a variable, then we are good.
+    string head1 = p1.get_value<string>();
+    string head2 = p2.get_value<string>();
+    if (head1 == "_" or head2 == "_")
+	return {}; // Don't record equations for matching wildcards
+    else if (is_variable(head1))
+    {
+	// Don't record equalities of the form a = a
+	if (head1 != head2)
+	{
+	    ptree equations;
+	    equations.push_back({head1,p2});
+	    return equations;
+	}
+    }
+    else if (is_variable(head2))
+    {
+	ptree equations;
+	equations.push_back({head2,p1});
+	return equations;
+    }
+
+    // 2. If the heads don't match then unification fails
+    if (head1 != head2) return ptree("fail");
+
+    // 3. If the arity doesn't match then unification fails
+    if (p1.size() != p2.size()) return ptree("fail");
+
+    // 4. If every argument unifies, then unification succeeds
+    ptree equations;
+
+    auto x = p1.begin();
+    auto y = p2.begin();
+    for(int i=0; i<p1.size(); i++, x++, y++)
+	if (not merge_equations(equations, unify(x->second, y->second)))
+	    return ptree("fail");
+    
+    return equations;
+}
 
 string unparse(const ptree& p)
 {
@@ -245,10 +340,10 @@ string get_type(const ptree& model_rep)
 
 ptree coerce_to_RA(const ptree& model_rep)
 {
-    if (get_type(model_rep) == "RA")
+    if (can_unify(get_type(model_rep), "RA[_]"))
 	return model_rep;
 
-    if (get_type(model_rep) == "EM")
+    if (can_unify(get_type(model_rep), "EM[_]"))
     {
 	ptree r;
 	r.put_value("F");
@@ -264,7 +359,7 @@ ptree coerce_to_RA(const ptree& model_rep)
 
 ptree coerce_to_MM(const ptree& model_rep)
 {
-    if (get_type(model_rep) == "MM")
+    if (can_unify(get_type(model_rep), "MM[_]"))
 	return model_rep;
 
     try {
@@ -281,7 +376,7 @@ ptree coerce_to_MM(const ptree& model_rep)
 
 ptree coerce_to_MMM(const ptree& model_rep)
 {
-    if (get_type(model_rep) == "MMM")
+    if (can_unify(get_type(model_rep), "MMM[_]"))
 	return model_rep;
 
     try {
@@ -421,15 +516,15 @@ void check_and_coerce_arg_types(ptree& args)
 	    if (not args.count(keyword)) continue;
 	    auto supplied_type = get_type(args.get_child(keyword));
 
-	    if (required_type == supplied_type) continue;
+	    if (can_unify(required_type,supplied_type)) continue;
 
 	    ptree value = args.get_child(keyword);
 	    args.erase(keyword);
-	    if (required_type == "RA")
+	    if (can_unify(required_type,"RA[a]"))
 		value = coerce_to_RA(value);
-	    else if (required_type == "MM")
+	    else if (can_unify(required_type,"MM[a]"))
 		value = coerce_to_MM(value);
-	    else if (required_type == "MMM")
+	    else if (can_unify(required_type,"MMM[a]"))
 		value = coerce_to_MMM(value);
 	    else if (required_type == "Double" and supplied_type == "Int")
 	    { }
@@ -559,6 +654,30 @@ ptree parse_no_submodel(const string& s)
     return result;
 }
 
+ptree parse_type(const string& s)
+{
+    // 1. Split the head and the arguments
+    auto args = split_args(s);
+    
+    // 2. Set the head
+    string head = args.front();
+    args.erase(args.begin());
+
+    ptree result;
+    result.put_value(head);
+  
+    // 3. Set the arguments
+    for(const auto& arg: args)
+    {
+	if (arg.empty()) throw myexception()<<"Type '"<<s<<"' has empty argument";
+
+	result.push_back({"", parse_type(arg)});
+    }
+
+    return result;
+}
+
+
 // Parse strings of the form head[args] + head[args] + ... + head[args]
 ptree parse(const string& s)
 {
@@ -578,26 +697,52 @@ ptree parse(const string& s)
 
     // 4. Set default values for top level -- this calls parse recursively to handle type checking for args of default values
     set_default_values(result);
-  
-    // 5. Convert e.g. TN+F -> RCTMC[TN,F]
-    if (get_type(result) == "FM" and result.count("submodel"))
+
+    return result;
+}
+
+// Translate pass M+FM -> RCTMC[M,FM]
+void pass1(ptree& p)
+{
+    // 1. Handle children.
+    for(auto& child: p)
+	pass1(child.second);
+    
+    // 2. Convert e.g. TN+F -> RCTMC[TN,F]
+    if (can_unify(get_type(p),"FM[_]") and p.count("submodel"))
     {
-	ptree q = result.get_child("submodel");
-	ptree r = result;
+	ptree q = p.get_child("submodel");
+	auto& r = p;
 	r.erase("submodel");
-	result = {};
+	
+	ptree result = {};
 	result.put_value("RCTMC");
 	result.push_back({"Q",q});
 	result.push_back({"R",r});
+	p = result;
     }
+}
 
-    // 6. Coerce arguments to their given type
-    check_and_coerce_arg_types(result);
+// Parse strings of the form head[args] + head[args] + ... + head[args]
+void pass2(ptree& p)
+{
+    // 1. Handle children.
+    for(auto& child: p)
+	pass2(child.second);
     
-    // 7. Check that required arguments are specified
-    check_required_args(result);
+    // 2 Coerce arguments to their given type
+    check_and_coerce_arg_types(p);
+    
+    // 3.. Check that required arguments are specified
+    check_required_args(p);
+}
 
-    return result;
+ptree translate_model(const string& s)
+{
+    auto p = parse(s);
+    pass1(p);
+    pass2(p);
+    return p;
 }
 
 /// \brief Return the default substitution model name for alphabet \a a, and "" if there is no default.
@@ -783,7 +928,7 @@ expression_ref process_stack_Markov(const ptree& model_rep,
 	    throw myexception()<<"fMutSel: '"<<a->name<<"' is not a 'Codons' alphabet";
 	const Nucleotides& N = C->getNucleotides();
 
-	expression_ref nuc_rm = get_smodel_as("RA",model_rep.get_child("submodel"), const_ptr(N));
+	expression_ref nuc_rm = get_smodel_as("RA[a]",model_rep.get_child("submodel"), const_ptr(N));
 
 	return model_expression({identifier("fMutSel_model"), a , nuc_rm});
     }
@@ -794,7 +939,7 @@ expression_ref process_stack_Markov(const ptree& model_rep,
 	    throw myexception()<<"fMutSel0: '"<<a->name<<"' is not a 'Codons' alphabet";
 	const Nucleotides& N = C->getNucleotides();
 
-	expression_ref nuc_rm = get_smodel_as("RA",model_rep.get_child("submodel"), const_ptr(N));
+	expression_ref nuc_rm = get_smodel_as("RA[a]",model_rep.get_child("submodel"), const_ptr(N));
 
 	return model_expression({identifier("fMutSel0_model"), a , nuc_rm});
     }
@@ -924,7 +1069,7 @@ expression_ref process_stack_Frequencies(const ptree& model_rep,
     if (R and model_rep.count("submodel"))
     {
 	// If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
-	expression_ref s = get_smodel_as("EM",model_rep.get_child("submodel"), a);
+	expression_ref s = get_smodel_as("EM[a]",model_rep.get_child("submodel"), a);
 	expression_ref mm = model_expression({identifier("reversible_markov_model"), s, R});
 	return mm;
     }
@@ -937,7 +1082,7 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 {
     if (model_rep.get_value<string>() == "gamma") 
     {
-	expression_ref submodel = get_smodel_as("RA", model_rep.get_child("submodel"), a);
+	expression_ref submodel = get_smodel_as("RA[a]", model_rep.get_child("submodel"), a);
 
 	int n = model_rep.get<int>("n");
 
@@ -945,7 +1090,7 @@ expression_ref process_stack_Multi(const ptree& model_rep,
     }
     else if (model_rep.get_value<string>() == "gamma_inv") 
     {
-	expression_ref base = get_smodel_as("RA", model_rep.get_child("submodel"),a);
+	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"),a);
 
 	int n = model_rep.get<int>("n");
 
@@ -953,13 +1098,13 @@ expression_ref process_stack_Multi(const ptree& model_rep,
     }
     else if (model_rep.get_value<string>() == "INV") 
     {
-	expression_ref base = get_smodel_as("RA", model_rep.get_child("submodel"), a);
+	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"), a);
 
 	return model_expression({identifier("inv_model"), base});
     }
     else if (model_rep.get_value<string>() == "log-normal") 
     {
-	expression_ref base = get_smodel_as("RA", model_rep.get_child("submodel"),a);
+	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"),a);
 
 	int n = model_rep.get<int>("n");
 
@@ -967,7 +1112,7 @@ expression_ref process_stack_Multi(const ptree& model_rep,
     }
     else if (model_rep.get_value<string>() == "log-normal_inv") 
     {
-	expression_ref base = get_smodel_as("RA", model_rep.get_child("submodel"),a);
+	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"),a);
 
 	int n = model_rep.get<int>("n");
 
@@ -986,7 +1131,7 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 
     else if (model_rep.get_value<string>() == "DP") 
     {
-	expression_ref base = get_smodel_as("RA", model_rep.get_child("submodel"),a);
+	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"),a);
 
 	int n = model_rep.get<int>("n");
 
@@ -1063,9 +1208,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 	    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
 	const Nucleotides& N = C->getNucleotides();
 
-	expression_ref S = get_smodel_as("EM", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
 
-	expression_ref R = get_smodel_as("FM", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
 
 	return model_expression({identifier("m1a_model"),a,S,R});
     }
@@ -1076,9 +1221,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 	    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
 	const Nucleotides& N = C->getNucleotides();
 
-	expression_ref S = get_smodel_as("EM", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
 
-	expression_ref R = get_smodel_as("FM", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
 
 	return model_expression({identifier("m2a_model"),a,S,R});
     }
@@ -1089,9 +1234,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 	    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
 	const Nucleotides& N = C->getNucleotides();
 
-	expression_ref S = get_smodel_as("EM", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
 
-	expression_ref R = get_smodel_as("FM", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
 
 	return model_expression({identifier("m2a_test_model"),a,S,R});
     }
@@ -1104,9 +1249,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 	    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = get_smodel_as("EM", model_rep.get_child("nuc_model"), const_ptr(N));
+    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
 
-    expression_ref R = get_smodel_as("FM", model_rep.get_child("freq_model"), a);
+    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
 
     return model_expression({identifier("m3_model"),a,n,S,R});
   }
@@ -1119,9 +1264,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = get_smodel_as("EM", model_rep.get_child("nuc_model"), const_ptr(N));
+    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
 
-    expression_ref R = get_smodel_as("FM", model_rep.get_child("freq_model"), a);
+    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
 
     return model_expression({identifier("m3_test_model"),a,n,S,R});
   }
@@ -1134,9 +1279,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = get_smodel_as("EM", model_rep.get_child("nuc_model"), const_ptr(N));
+    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
 
-    expression_ref R = get_smodel_as("FM", model_rep.get_child("freq_model"), a);
+    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
 
     return model_expression({identifier("m7_model"),a,n,S,R});
   }
@@ -1149,9 +1294,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = get_smodel_as("EM", model_rep.get_child("nuc_model"), const_ptr(N));
+    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
 
-    expression_ref R = get_smodel_as("FM", model_rep.get_child("freq_model"), a);
+    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
 
     return model_expression({identifier("m8_model"),a,n,S,R});
   }
@@ -1164,9 +1309,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = get_smodel_as("EM", model_rep.get_child("nuc_model"), const_ptr(N));
+    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
 
-    expression_ref R = get_smodel_as("FM", model_rep.get_child("freq_model"), a);
+    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
 
     return model_expression({identifier("m8a_model"),a,n,S,R});
   }
@@ -1179,9 +1324,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = get_smodel_as("EM", model_rep.get_child("nuc_model"), const_ptr(N));
+    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
 
-    expression_ref R = get_smodel_as("FM", model_rep.get_child("freq_model"), a);
+    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
 
     return model_expression({identifier("m8b_model"),a,n,S,R});
   }
@@ -1194,9 +1339,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = get_smodel_as("EM", model_rep.get_child("nuc_model"), const_ptr(N));
+    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
 
-    expression_ref R = get_smodel_as("FM", model_rep.get_child("freq_model"), a);
+    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
 
     return model_expression({identifier("m8a_test_model"),a,n,S,R});
   }
@@ -1209,9 +1354,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = get_smodel_as("EM", model_rep.get_child("nuc_model"), const_ptr(N));
+    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
 
-    expression_ref R = get_smodel_as("FM", model_rep.get_child("freq_model"), a);
+    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
 
     return model_expression({identifier("branch_site_test_model"),a,n,S,R});
   }
@@ -1224,9 +1369,9 @@ expression_ref process_stack_Multi(const ptree& model_rep,
       throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
-    expression_ref S = get_smodel_as("EM", model_rep.get_child("nuc_model"), const_ptr(N));
+    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
 
-    expression_ref R = get_smodel_as("FM", model_rep.get_child("freq_model"), a);
+    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
 
     return model_expression({identifier("dp_omega_model"),a,n,S,R});
   }
@@ -1287,7 +1432,7 @@ expression_ref get_smodel_as(const string& type, const ptree& model_rep, const o
 	    return d;
     }
 
-    if (get_type(model_rep) != type)
+    if (not can_unify(get_type(model_rep),type))
 	throw myexception()<<"Expected type "<<type<<" but got "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep);
 
     return get_smodel_(model_rep, a);
@@ -1311,7 +1456,7 @@ get_smodel(const ptree& model_rep, const object_ptr<const alphabet>& a)
   assert(frequencies->size() == a->size());
 
   // --------- Convert smodel to MultiMixtureModel ------------//
-  expression_ref full_smodel = get_smodel_as("MMM", coerce_to_MMM(model_rep),a);
+  expression_ref full_smodel = get_smodel_as("MMM[a]", coerce_to_MMM(model_rep),a);
 
   if (log_verbose)
       std::cout<<"full_smodel = "<<full_smodel<<std::endl;
@@ -1324,9 +1469,10 @@ get_smodel(const string& smodel, const object_ptr<const alphabet>& a)
 {
 //    std::cout<<"smodel1 = "<<smodel<<std::endl;
 
+    auto model_tree = translate_model(smodel);
     if (log_verbose)
-	std::cout<<"smodel = "<<unparse(parse(smodel))<<std::endl;
-    return get_smodel(parse(smodel), a);
+	std::cout<<"smodel = "<<unparse(model_tree)<<std::endl;
+    return get_smodel(model_tree, a);
 }
 
 expression_ref get_smodel(const string& smodel_name,const alignment& A) 
