@@ -639,31 +639,6 @@ expression_ref process_stack_functions(const ptree& model_rep, const object_ptr<
     return {};
 }
 
-expression_ref process_stack_distributions(const ptree& model_rep)
-{
-    expression_ref dist;
-
-    if (model_rep.get_value<string>() == "logNormal")
-    {
-	expression_ref lmu = get_smodel_as("Double", model_rep.get_child("lmu"));
-	expression_ref lsigma = get_smodel_as("Double", model_rep.get_child("lsigma"));
-	dist = model_expression({identifier("logNormal"), lmu, lsigma});
-    }
-    if (model_rep.get_value<string>() == "Uniform")
-    {
-	expression_ref a = get_smodel_as("Double", model_rep.get_child("a"));
-	expression_ref b = get_smodel_as("Double", model_rep.get_child("b"));
-	dist = model_expression({identifier("uniform"), a, b});
-    }
-    if (model_rep.get_value<string>() == "Normal")
-    {
-	expression_ref mu = get_smodel_as("Double", model_rep.get_child("mu"));
-	expression_ref sigma = get_smodel_as("Double", model_rep.get_child("sigma"));
-	dist = model_expression({identifier("normal"), mu, sigma});
-    }
-    return dist;
-}
-
 /// \brief Construct a model from the top of the string stack
 ///
 /// \param string_stack The list of strings representing the substitution model.
@@ -1306,9 +1281,6 @@ get_smodel_(const ptree& model_rep, const object_ptr<const alphabet>& a)
   expression_ref m;
 
   m = process_stack_functions(model_rep, a);
-  if (m) return m;
-
-  m = process_stack_distributions(model_rep);
   if (m) return m;
 
   m = process_stack_Markov(model_rep, a);
