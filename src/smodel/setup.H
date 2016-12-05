@@ -17,9 +17,7 @@ std::valarray<double> empirical_frequencies(const boost::program_options::variab
 std::valarray<double> empirical_frequencies(const boost::program_options::variables_map& args,
 					    const std::vector<alignment>& A);
 
-expression_ref get_smodel(const std::string&, const object_ptr<alphabet>& A);
-
-expression_ref get_smodel(const std::string&, const alignment& A);
+expression_ref get_smodel(const std::string&);
 
 std::string default_markov_model(const alphabet& a);
 

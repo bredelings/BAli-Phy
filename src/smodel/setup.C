@@ -102,14 +102,14 @@ using boost::shared_ptr;
 
 /*
   Maybe convert 'rule' information to JSON like this:
-{
+  {
   name: "Uniform", 
   type: "Double", 
   action: true, 
   call: ["uniform","a","b"], 
   args: [["a","Double",0],["b","Double",1],
-}
-    */
+  }
+*/
 
 const vector<vector<vector<string>>> all_default_arguments = 
 {
@@ -118,19 +118,19 @@ const vector<vector<vector<string>>> all_default_arguments =
     {{"Normal","Double","M"}, {"normal","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
     {{"logNormal","Double","M"}, {"logNormal","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
     {{"EQU","EM[a]"}, {}},
-    {{"F81"}, {}},
-    {{"HKY","EM[a]"}, {"SModel.hky","alphabet","kappa"}, {"kappa","Double","logNormal[log[2],0.25]"}, {"alphabet","alphabet","default_alphabet"}, },
-    {{"TN","EM[a]"}, {"SModel.tn","alphabet","kappaPur","kappaPyr"}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}, {"alphabet","alphabet","default_alphabet"}},
-    {{"GTR","EM[a]"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"}},
+    {{"F81"}, {}, {"alphabet","alphabet"}},
+    {{"HKY","EM[a]"}, {"SModel.hky","alphabet","kappa"}, {"kappa","Double","logNormal[log[2],0.25]"}, {"alphabet","alphabet"}, },
+    {{"TN","EM[a]"}, {"SModel.tn","alphabet","kappaPur","kappaPyr"}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}, {"alphabet","alphabet"}},
+    {{"GTR","EM[a]"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"},{"alphabet","alphabet"}},
     {{"HKYx3","EM[a]"}, {}, {"kappa","Double","logNormal[log[2],0.25]"}},
     {{"TNx3","EM[a]"}, {}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
     {{"GTRx3","EM[a]"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"}},
-    {{"PAM","EM[a]"}, {}},
-    {{"JTT","EM[a]"}, {}},
-    {{"WAG","EM[a]"}, {}},
-    {{"LG","EM[a]"}, {}},
+    {{"PAM","EM[AA]"}, {}, {"alphabet","alphabet","AA"}},
+    {{"JTT","EM[AA]"}, {}, {"alphabet","alphabet","AA"}},
+    {{"WAG","EM[AA]"}, {}, {"alphabet","alphabet","AA"}},
+    {{"LG","EM[AA]"}, {}, {"alphabet","alphabet","AA"}},
     {{"Empirical","EM[a]"}, {}, {"filename"}},
-    {{"M0","EM[a]"}, {"SModel.m0", "alphabet", "submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","Uniform[0,1]"}, {"alphabet","alphabet","default_alphabet"}},
+    {{"M0","EM[a]"}, {"SModel.m0", "alphabet", "submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","Uniform[0,1]"}, {"alphabet","alphabet"}},
     {{"fMutSel","RA[a]"}, {}, {"submodel","RA[a]"}},
     {{"fMutSel0","RA[a]"}, {}, {"submodel","RA[a]"}},
     {{"INV","MM[a]"}, {}, {"p","Double","Uniform[0,1]"}},
@@ -151,14 +151,13 @@ const vector<vector<vector<string>>> all_default_arguments =
     {{"M8a_Test","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"branch-site","MM[a]"}, {}, {"n","Int","2"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"dp_omega","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    {{"F","FM[a]"}, {}, {"alphabet","alphabet"}},
-    {{"gwF","FM[a]"}, {}},
+    {{"F","FM[a]","M"}, {"plus_f_model","alphabet",}, {"alphabet","alphabet"}},
+    {{"F61","FM[a]","M"}, {"plus_f_model","alphabet",}, {"alphabet","alphabet"}},
+    {{"gwF","FM[a]","M"}, {"plus_gwf_model","alphabet",}, {"alphabet","alphabet"}},
     {{"F1x4","FM[a]"}, {}},
     {{"F3x4","FM[a]"}, {}},
     {{"MG94","FM[a]"}, {}},
     {{"MG94w9","FM[a]"}, {}},
-    {{"F61","FM[a]"}, {}},
-    {{"default_alphabet","alphabet"}, {}},
     {{"DNA","alphabet","N"}, {"dna"}},
     {{"RNA","alphabet"}, {"rna"}},
     {{"AA","alphabet"}, {"aa"}},
@@ -766,11 +765,9 @@ string default_markov_model(const alphabet& a)
 	return "";
 }
 
-expression_ref get_smodel_as(const string& type, const ptree& model_rep,const object_ptr<const alphabet>& a);
-
 expression_ref get_smodel_as(const string& type, const ptree& model_rep);
 
-expression_ref process_stack_functions(const ptree& model_rep, const object_ptr<const alphabet>& a)
+expression_ref process_stack_functions(const ptree& model_rep)
 {
     string name = model_rep.get_value<string>();
 
@@ -783,7 +780,7 @@ expression_ref process_stack_functions(const ptree& model_rep, const object_ptr<
 	{
 	    string arg_name = args[0][1][i+1];
 	    string type = get_arg(args[0], arg_name)[1];
-	    expression_ref arg = get_smodel_as(type, model_rep.get_child(arg_name), a);
+	    expression_ref arg = get_smodel_as(type, model_rep.get_child(arg_name));
 	    if ((type == "Double" or type == "Int") and (not no_log))
 		arg = add_logger(arg_name, arg);
 	    E = (E,arg);
@@ -796,12 +793,6 @@ expression_ref process_stack_functions(const ptree& model_rep, const object_ptr<
 	return E;
     }
 
-    if (model_rep.get_value<string>() == "default_alphabet")
-    {
-	if (not a)
-	    throw myexception()<<"Default alphabet not specified!";
-	return *a;
-    }
     return {};
 }
 
@@ -810,8 +801,7 @@ expression_ref process_stack_functions(const ptree& model_rep, const object_ptr<
 /// \param string_stack The list of strings representing the substitution model.
 /// \param a The alphabet on which the model lives.
 ///
-expression_ref process_stack_Markov(const ptree& model_rep,
-				    const object_ptr<const alphabet>& a)
+expression_ref process_stack_Markov(const ptree& model_rep)
 {
     //------ Get the base markov model (Reversible Markov) ------//
     /*
@@ -829,24 +819,22 @@ expression_ref process_stack_Markov(const ptree& model_rep,
     */
 
     if (model_rep.get_value<string>() == "JC")
-	return (identifier("jukes_cantor"),*a);
+    {
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+
+	return (identifier("jukes_cantor"), alphabet);
+    }
     else if (model_rep.get_value<string>() == "EQU")
     {
-	const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
-	if (not N)
-	    throw myexception()<<"EQU: '"<<a->name<<"' is not a nucleotide alphabet.";
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-	return model_expression({identifier("equ_model"),*a});
+	return model_expression({identifier("equ_model"), alphabet});
     }
     else if (model_rep.get_value<string>() == "GTR")
     {
-	const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
-	if (not N)
-	    throw myexception()<<"GTR: '"<<a->name<<"' is not a nucleotide alphabet.";
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-	// FIXME - allow/make a general GTR model!
-
-	return model_expression({identifier("gtr_model"),*a});
+	return model_expression({identifier("gtr_model"), alphabet});
     }
     /*
       else if (model_rep.get_value<string>() == "EQUx3")) {
@@ -860,49 +848,58 @@ expression_ref process_stack_Markov(const ptree& model_rep,
     */
     else if (model_rep.get_value<string>() == "HKYx3")
     {
-	if (dynamic_cast<const Triplets*>(&*a))
-	    return model_expression({identifier("hkyx3_model"),*a});
-	else
-	    throw myexception()<<"HKYx3: '"<<a->name<<"' is not a triplet alphabet.";
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+
+	return model_expression({identifier("hkyx3_model"), alphabet});
     }
     else if (model_rep.get_value<string>() == "TNx3")
     {
-	if (dynamic_cast<const Triplets*>(&*a))
-	    return model_expression({identifier("tnx3_model"),*a});
-	else
-	    throw myexception()<<"TNx3: '"<<a->name<<"' is not a triplet alphabet.";
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+
+	return model_expression({identifier("tnx3_model"),alphabet});
     }
     else if (model_rep.get_value<string>() == "GTRx3")
     {
-	if (dynamic_cast<const Triplets*>(&*a))
-	    return model_expression({identifier("gtrx3_model"),*a});
-	else
-	    throw myexception()<<"GTRx3: '"<<a->name<<"' is not a triplet alphabet.";
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+
+	return model_expression({identifier("gtrx3_model"),alphabet});
     }
     else if (model_rep.get_value<string>() == "PAM")
     {
-	if (*a != AminoAcids())
-	    throw myexception()<<"PAM: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
-	return (identifier("SModel.pam"),a);
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+	
+	return (identifier("SModel.pam"), alphabet);
     }
-    else if (model_rep.get_value<string>() == "JTT") {
-	if (*a != AminoAcids())
-	    throw myexception()<<"JTT: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
-	return (identifier("SModel.jtt"),a);
+    else if (model_rep.get_value<string>() == "JTT")
+    {
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+
+	return (identifier("SModel.jtt"), alphabet);
     }
     else if (model_rep.get_value<string>() == "WAG") {
-	if (*a != AminoAcids())
-	    throw myexception()<<"WAG: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
-	return (identifier("SModel.wag"),a);
+	if (not model_rep.count("alphabet"))
+	    throw myexception()<<"Model '"<<model_rep.get_value<string>()<<"' is missing parameters 'alphabet'";
+
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+
+	return (identifier("SModel.wag"), alphabet);
     }
     else if (model_rep.get_value<string>() == "LG") {
-	if (*a != AminoAcids())
-	    throw myexception()<<"LG: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
-	return (identifier("SModel.lg"),a);
+	if (not model_rep.count("alphabet"))
+	    throw myexception()<<"Model '"<<model_rep.get_value<string>()<<"' is missing parameters 'alphabet'";
+
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+
+	return (identifier("SModel.lg"), alphabet);
     }
     else if (model_rep.get_value<string>() == "Empirical") 
     {
-	return (identifier("SModel.empirical"),a,model_rep.get<string>("filename"));
+	if (not model_rep.count("alphabet"))
+	    throw myexception()<<"Model '"<<model_rep.get_value<string>()<<"' is missing parameters 'alphabet'";
+
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+
+	return (identifier("SModel.empirical"), alphabet, model_rep.get<string>("filename"));
     }
     /*
       else if (model_rep.get_value<string>() == "C10")
@@ -927,25 +924,19 @@ expression_ref process_stack_Markov(const ptree& model_rep,
     */
     else if (model_rep.get_value<string>() == "fMutSel")
     {
-	const Codons* C = dynamic_cast<const Codons*>(&*a);
-	if (not C)
-	    throw myexception()<<"fMutSel: '"<<a->name<<"' is not a 'Codons' alphabet";
-	const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref nuc_rm = get_smodel_as("RA[a]",model_rep.get_child("submodel"), const_ptr(N));
+	expression_ref nuc_rm = get_smodel_as("RA[a]",model_rep.get_child("submodel"));
 
-	return model_expression({identifier("fMutSel_model"), a , nuc_rm});
+	return model_expression({identifier("fMutSel_model"), alphabet , nuc_rm});
     }
     else if (model_rep.get_value<string>() == "fMutSel0")
     {
-	const Codons* C = dynamic_cast<const Codons*>(&*a);
-	if (not C)
-	    throw myexception()<<"fMutSel0: '"<<a->name<<"' is not a 'Codons' alphabet";
-	const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref nuc_rm = get_smodel_as("RA[a]",model_rep.get_child("submodel"), const_ptr(N));
+	expression_ref nuc_rm = get_smodel_as("RA[a]",model_rep.get_child("submodel"));
 
-	return model_expression({identifier("fMutSel0_model"), a , nuc_rm});
+	return model_expression({identifier("fMutSel0_model"), alphabet , nuc_rm});
     }
 
     return {};
@@ -976,64 +967,60 @@ optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const
 /// \param a The alphabet on which the model lives.
 /// \param frequencies The initial frequencies for the model.
 ///
-expression_ref process_stack_Frequencies(const ptree& model_rep,
-					 const object_ptr<const alphabet>& a)
-
+expression_ref process_stack_Frequencies(const ptree& model_rep)
 {
     expression_ref R;
 
     if (model_rep.get_value<string>() == "F" or model_rep.get_value<string>() == "F61")
     {
-	if (model_rep.get_value<string>() == "F61" and a->size() != 61)
-	    throw myexception()<<"Cannot use 'F61' frequency model since alphabet contains "<<a->size()<<" letters.";
+	expression_ref alphabet_ = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-	if (auto pi = get_frequencies_from_tree(model_rep, *a))
-	    R = (identifier("plus_f"), a, get_list(*pi));
+	if (auto pi = get_frequencies_from_tree(model_rep, alphabet_.as_<alphabet>()))
+	    R = (identifier("plus_f"), alphabet_, get_list(*pi));
 	else
-	    R = model_expression({identifier("plus_f_model"),a});
+	    R = model_expression({identifier("plus_f_model"),alphabet_});
     }
     else if (model_rep.get_value<string>() == "gwF")
     {
-	auto pi = get_frequencies_from_tree(model_rep, *a);
+	expression_ref alphabet_ = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+	auto pi = get_frequencies_from_tree(model_rep, alphabet_.as_<alphabet>());
 	if (pi and model_rep.count("f"))
 	{
 	    double f = model_rep.get<double>("f");
-	    R = (identifier("plus_gwf"), a, get_list(*pi), f);
+	    R = (identifier("plus_gwf"), alphabet_, get_list(*pi), f);
 	}
 	else
-	    R = model_expression({identifier("plus_gwf_model"),a});
+	    R = model_expression({identifier("plus_gwf_model"),alphabet_});
     }
-    else if (model_rep.get_value<string>() == "F=uniform") 
-	R = (identifier("uniform_f_model"),a);
+    else if (model_rep.get_value<string>() == "F=uniform")
+    {
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+
+	R = (identifier("uniform_f_model"),alphabet);
+    }
     else if (model_rep.get_value<string>() == "F1x4")
     {
-	if (not dynamic_cast<const Triplets*>(&*a))
-	    throw myexception()<<"+F1x4: '"<<a->name<<"' is not a triplet alphabet.";
-
-	if (auto nuc_pi = get_frequencies_from_tree(model_rep, dynamic_cast<const Triplets*>(&*a)->getNucleotides()))
-	    R = (identifier("f1x4"), a, get_list(*nuc_pi));
-	else
-	    R = model_expression({identifier("f1x4_model"), a});
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+	
+	R = model_expression({identifier("f1x4_model"), alphabet});
     }
     else if (model_rep.get_value<string>() == "F3x4") 
     {
-	if (not dynamic_cast<const Triplets*>(&*a))
-	    throw myexception()<<"+F1x4: '"<<a->name<<"' is not a triplet alphabet.";
-	R = model_expression({identifier("f3x4_model"),a});
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+
+	R = model_expression({identifier("f3x4_model"),alphabet});
     }
     else if (model_rep.get_value<string>() == "MG94") 
     {
-	if (not dynamic_cast<const Triplets*>(&*a))
-	    throw myexception()<<"+MG94w9: '"<<a->name<<"' is not a triplet alphabet.";
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-	R = model_expression({identifier("mg94_model"),a});
+	R = model_expression({identifier("mg94_model"),alphabet});
     }
     else if (model_rep.get_value<string>() == "MG94w9") 
     {
-	if (not dynamic_cast<const Triplets*>(&*a))
-	    throw myexception()<<"+MG94w9: '"<<a->name<<"' is not a triplet alphabet.";
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-	R = model_expression({identifier("mg94w9_model"),a});
+	R = model_expression({identifier("mg94w9_model"),alphabet});
     }
     /*
       else if (model_rep.get_value<string>() == "F=amino-acids") 
@@ -1073,12 +1060,11 @@ expression_ref process_stack_Frequencies(const ptree& model_rep,
     return R;
 }
 
-expression_ref process_stack_Multi(const ptree& model_rep,
-				   const object_ptr<const alphabet>& a)
+expression_ref process_stack_Multi(const ptree& model_rep)
 {
     if (model_rep.get_value<string>() == "gamma") 
     {
-	expression_ref submodel = get_smodel_as("RA[a]", model_rep.get_child("submodel"), a);
+	expression_ref submodel = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
 
 	int n = model_rep.get<int>("n");
 
@@ -1086,7 +1072,7 @@ expression_ref process_stack_Multi(const ptree& model_rep,
     }
     else if (model_rep.get_value<string>() == "gamma_inv") 
     {
-	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"),a);
+	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
 
 	int n = model_rep.get<int>("n");
 
@@ -1094,13 +1080,13 @@ expression_ref process_stack_Multi(const ptree& model_rep,
     }
     else if (model_rep.get_value<string>() == "INV") 
     {
-	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"), a);
+	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
 
 	return model_expression({identifier("inv_model"), base});
     }
     else if (model_rep.get_value<string>() == "log-normal") 
     {
-	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"),a);
+	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
 
 	int n = model_rep.get<int>("n");
 
@@ -1108,7 +1094,7 @@ expression_ref process_stack_Multi(const ptree& model_rep,
     }
     else if (model_rep.get_value<string>() == "log-normal_inv") 
     {
-	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"),a);
+	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
 
 	int n = model_rep.get<int>("n");
 
@@ -1127,7 +1113,7 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 
     else if (model_rep.get_value<string>() == "DP") 
     {
-	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"),a);
+	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
 
 	int n = model_rep.get<int>("n");
 
@@ -1136,7 +1122,7 @@ expression_ref process_stack_Multi(const ptree& model_rep,
     /*
       else if (model_rep.get_value<string>() == "Modulated")
       {
-      formula_expression_ref MM = coerce_to_MM(model_rep.get_child("submodel"),a);
+      formula_expression_ref MM = coerce_to_MM(model_rep.get_child("submodel"));
 
       //    int n = ... n_base_models();
       //    return Modulated_Markov_E(MM, SimpleExchangeModel(n));
@@ -1150,7 +1136,7 @@ expression_ref process_stack_Multi(const ptree& model_rep,
 
       vector <formula_expression_ref> models;
       for(int i=0;i<model_args.size()-2;i++)
-      models.push_back( coerce_to_MM(model_args[i+2], a) );
+      models.push_back( coerce_to_MM(model_args[i+2]) );
 
       return Mixture_Model(models);
       }
@@ -1199,221 +1185,184 @@ expression_ref process_stack_Multi(const ptree& model_rep,
     */
     else if (model_rep.get_value<string>() == "M1a") // M2a[S,F]
     {
-	const Codons* C = dynamic_cast<const Codons*>(&*a);
-	if (not C)
-	    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-	const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
 
-	return model_expression({identifier("m1a_model"),a,S,R});
+	return model_expression({identifier("m1a_model"),alphabet,S,R});
     }
     else if (model_rep.get_value<string>() == "M2a") // M2a[S,F]
     {
-	const Codons* C = dynamic_cast<const Codons*>(&*a);
-	if (not C)
-	    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-	const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
 
-	return model_expression({identifier("m2a_model"),a,S,R});
+	return model_expression({identifier("m2a_model"),alphabet,S,R});
     }
     else if (model_rep.get_value<string>() == "M2a_Test") // M2a[S,F]
     {
-	const Codons* C = dynamic_cast<const Codons*>(&*a);
-	if (not C)
-	    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-	const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
 
-	return model_expression({identifier("m2a_test_model"),a,S,R});
+	return model_expression({identifier("m2a_test_model"),alphabet,S,R});
     }
     else if (model_rep.get_value<string>() == "M3") // M[n,S,F]
     {
 	int n = model_rep.get<int>("n");
 
-	const Codons* C = dynamic_cast<const Codons*>(&*a);
-	if (not C)
-	    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-    const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
 
-    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
 
-    return model_expression({identifier("m3_model"),a,n,S,R});
-  }
-  else if (model_rep.get_value<string>() == "M3_Test") // M3_Test[n,S,F]
-  {
-    int n = model_rep.get<int>("n");
+	return model_expression({identifier("m3_model"),alphabet,n,S,R});
+    }
+    else if (model_rep.get_value<string>() == "M3_Test") // M3_Test[n,S,F]
+    {
+	int n = model_rep.get<int>("n");
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    if (not C)
-      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-    const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
 
-    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
 
-    return model_expression({identifier("m3_test_model"),a,n,S,R});
-  }
-  else if (model_rep.get_value<string>() == "M7")
-  {
-    int n = model_rep.get<int>("n");
+	return model_expression({identifier("m3_test_model"),alphabet,n,S,R});
+    }
+    else if (model_rep.get_value<string>() == "M7")
+    {
+	int n = model_rep.get<int>("n");
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    if (not C)
-      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-    const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
 
-    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
 
-    return model_expression({identifier("m7_model"),a,n,S,R});
-  }
-  else if (model_rep.get_value<string>() == "M8")
-  {
-    int n = model_rep.get<int>("n");
+	return model_expression({identifier("m7_model"),alphabet,n,S,R});
+    }
+    else if (model_rep.get_value<string>() == "M8")
+    {
+	int n = model_rep.get<int>("n");
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    if (not C)
-      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-    const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
 
-    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
 
-    return model_expression({identifier("m8_model"),a,n,S,R});
-  }
-  else if (model_rep.get_value<string>() == "M8a")
-  {
-    int n = model_rep.get<int>("n");
+	return model_expression({identifier("m8_model"),alphabet,n,S,R});
+    }
+    else if (model_rep.get_value<string>() == "M8a")
+    {
+	int n = model_rep.get<int>("n");
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    if (not C)
-      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-    const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
 
-    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
 
-    return model_expression({identifier("m8a_model"),a,n,S,R});
-  }
-  else if (model_rep.get_value<string>() == "M8b")
-  {
-    int n = model_rep.get<int>("n");
+	return model_expression({identifier("m8a_model"),alphabet,n,S,R});
+    }
+    else if (model_rep.get_value<string>() == "M8b")
+    {
+	int n = model_rep.get<int>("n");
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    if (not C)
-      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-    const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
 
-    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
 
-    return model_expression({identifier("m8b_model"),a,n,S,R});
-  }
-  else if (model_rep.get_value<string>() == "M8a_Test") // M8b[n,S,F]
-  {
-    int n = model_rep.get<int>("n");
+	return model_expression({identifier("m8b_model"),alphabet,n,S,R});
+    }
+    else if (model_rep.get_value<string>() == "M8a_Test") // M8b[n,S,F]
+    {
+	int n = model_rep.get<int>("n");
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    if (not C)
-      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-    const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
 
-    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
 
-    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
 
-    return model_expression({identifier("m8a_test_model"),a,n,S,R});
-  }
-  else if (model_rep.get_value<string>() == "branch-site")  // branch-site-test[n,S,F]
-  {
-    int n = model_rep.get<int>("n");
+	return model_expression({identifier("m8a_test_model"),alphabet,n,S,R});
+    }
+    else if (model_rep.get_value<string>() == "branch-site")  // branch-site-test[n,S,F]
+    {
+	int n = model_rep.get<int>("n");
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    if (not C)
-      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-    const Nucleotides& N = C->getNucleotides();
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+	
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
 
-    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
 
-    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
+	return model_expression({identifier("branch_site_test_model"),alphabet,n,S,R});
+    }
+    else if (model_rep.get_value<string>() == "dp-omega")  // branch-site-test[n,S,F]
+    {
+	int n = model_rep.get<int>("n");
 
-    return model_expression({identifier("branch_site_test_model"),a,n,S,R});
-  }
-  else if (model_rep.get_value<string>() == "dp-omega")  // branch-site-test[n,S,F]
-  {
-    int n = model_rep.get<int>("n");
+	expression_ref alphabet = get_smodel_as("alphabet", model_rep.get_child("alphabet"));
+	
+	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    if (not C)
-      throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
-    const Nucleotides& N = C->getNucleotides();
+	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
 
-    expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"), const_ptr(N));
+	return model_expression({identifier("dp_omega_model"),alphabet,n,S,R});
+    }
 
-    expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"), a);
-
-    return model_expression({identifier("dp_omega_model"),a,n,S,R});
-  }
-
-  return {};
+    return {};
 }
 
-expression_ref 
-get_smodel_(const ptree& model_rep, const object_ptr<const alphabet>& a) 
+expression_ref get_smodel_(const ptree& model_rep)
 {
-  if (model_rep.empty() and model_rep.data().empty())
-    throw myexception()<<"Can't construct substitution model from empty description!";
+    if (model_rep.empty() and model_rep.data().empty())
+	throw myexception()<<"Can't construct substitution model from empty description!";
 
-  //  std::cout<<"smodel = "<<smodel<<std::endl;
-  //  auto result = parse(smodel);
-  //  std::cout<<result.get_value<string>()<<"\n";
-  //  write_info(std::cout, result);
-  //  std::cout<<std::endl;
-  //  ptree model_rep = parse(smodel);
+    //  std::cout<<"smodel = "<<smodel<<std::endl;
+    //  auto result = parse(smodel);
+    //  std::cout<<result.get_value<string>()<<"\n";
+    //  write_info(std::cout, result);
+    //  std::cout<<std::endl;
+    //  ptree model_rep = parse(smodel);
 
-  // If we are processing an Int, just return an int.
-  if (can_be_converted_to<int>(model_rep.get_value<string>()))
-      return model_rep.get_value<int>();
+    // If we are processing an Int, just return an int.
+    if (can_be_converted_to<int>(model_rep.get_value<string>()))
+	return model_rep.get_value<int>();
 
-  // If we are processing a Double, just return a double
-  if (can_be_converted_to<double>(model_rep.get_value<string>()))
-      return model_rep.get_value<double>();
+    // If we are processing a Double, just return a double
+    if (can_be_converted_to<double>(model_rep.get_value<string>()))
+	return model_rep.get_value<double>();
 
-  expression_ref m;
+    expression_ref m;
 
-  m = process_stack_functions(model_rep, a);
-  if (m) return m;
+    m = process_stack_functions(model_rep);
+    if (m) return m;
 
-  m = process_stack_Markov(model_rep, a);
-  if (m) return m;
+    m = process_stack_Markov(model_rep);
+    if (m) return m;
 
-  m = process_stack_Frequencies(model_rep, a);
-  if (m) return m;
+    m = process_stack_Frequencies(model_rep);
+    if (m) return m;
 
-  m = process_stack_Multi(model_rep, a);
-  if (m) return m;
+    m = process_stack_Multi(model_rep);
+    if (m) return m;
 
-  throw myexception()<<"Couldn't process substitution model description \""<<show(model_rep)<<"\"";
+    throw myexception()<<"Couldn't process substitution model description \""<<show(model_rep)<<"\"";
 }
 
-expression_ref get_smodel_as(const string& type, const ptree& model_rep, const object_ptr<const alphabet>& a)
+expression_ref get_smodel_as(const string& type, const ptree& model_rep)
 {
     if (model_rep.empty() and model_rep.data().empty())
     {
@@ -1431,14 +1380,8 @@ expression_ref get_smodel_as(const string& type, const ptree& model_rep, const o
     if (not can_unify(get_type(model_rep),type))
 	throw myexception()<<"Expected type "<<type<<" but got "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep);
 
-    return get_smodel_(model_rep, a);
+    return get_smodel_(model_rep);
 }
-
-expression_ref get_smodel_as(const string& type, const ptree& model_rep)
-{
-    return get_smodel_as(type, model_rep, {});
-}
-
 
 /// \brief Constrict a substitution::MultiModel for a specific alphabet
 ///
@@ -1446,30 +1389,23 @@ expression_ref get_smodel_as(const string& type, const ptree& model_rep)
 /// \param a The alphabet.
 /// \param frequencies The initial letter frequencies in the model.
 ///
-expression_ref
-get_smodel(const ptree& model_rep, const object_ptr<const alphabet>& a)
+expression_ref get_smodel(const ptree& model_rep)
 {
-  // --------- Convert smodel to MultiMixtureModel ------------//
-  expression_ref full_smodel = get_smodel_as("MMM[a]", coerce_to_MMM(model_rep),a);
+    // --------- Convert smodel to MultiMixtureModel ------------//
+    expression_ref full_smodel = get_smodel_as("MMM[a]", coerce_to_MMM(model_rep));
 
-  if (log_verbose)
-      std::cout<<"full_smodel = "<<full_smodel<<std::endl;
+    if (log_verbose)
+	std::cout<<"full_smodel = "<<full_smodel<<std::endl;
 
-  return full_smodel;
+    return full_smodel;
 }
 
-expression_ref
-get_smodel(const string& smodel, const object_ptr<const alphabet>& a) 
+expression_ref get_smodel(const string& smodel) 
 {
 //    std::cout<<"smodel1 = "<<smodel<<std::endl;
 
     auto model_tree = translate_model(smodel);
     if (log_verbose)
 	std::cout<<"smodel = "<<unparse(model_tree)<<std::endl;
-    return get_smodel(model_tree, a);
-}
-
-expression_ref get_smodel(const string& smodel_name,const alignment& A) 
-{
-  return get_smodel(smodel_name, const_ptr( A.get_alphabet() ));
+    return get_smodel(model_tree);
 }

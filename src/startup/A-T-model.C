@@ -128,7 +128,7 @@ get_smodels(const vector<alignment>& A, shared_items<string>& smodel_names_mappi
 		throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
 	}
 
-	expression_ref full_smodel = get_smodel(smodel_names_mapping.unique(i), alignments[0]);
+	expression_ref full_smodel = get_smodel(smodel_names_mapping.unique(i));
 
 	smodels.push_back(full_smodel);
 	//    cout<<"SModel "<<i+1<<": prior = "<<log(smodels.back()->prior())<<"\n";

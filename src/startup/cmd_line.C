@@ -68,7 +68,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
     ("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
     ;
-    
+
   // named options
   options_description general("General options");
   general.add_options()
@@ -79,7 +79,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("test,T","Analyze the initial values and exit.")
     ("verbose,V","Print extra output in case of error.")
     ;
-  
+
   options_description mcmc("MCMC options");
   mcmc.add_options()
     ("iterations,i",value<long int>()->default_value(100000),"The number of iterations to run.")
@@ -87,7 +87,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("seed,s", value<unsigned long>(),"Random seed")
     ("name,n", value<string>(),"Name for the analysis directory to create.")
     ;
-    
+
   options_description parameters("Parameter options");
   parameters.add_options()
     ("align", value<vector<string> >()->composing(),"Sequence file & initial alignment.")
@@ -100,8 +100,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description model("Model options");
   model.add_options()
     ("alphabet",value<vector<string> >()->composing(),"DNA, RNA, Amino-Acids, Codons, etc.")
-    ("smodel",value<vector<string> >()->composing(),"Substitution model.")
-    ("imodel",value<vector<string> >()->composing(),"Indel model: none, RS07, RS05, RS07-no-T.")
+    ("smodel,S",value<vector<string> >()->composing(),"Substitution model.")
+    ("imodel,I",value<vector<string> >()->composing(),"Indel model: none, RS07, RS05, RS07-no-T.")
     ("traditional,t","Fix the alignment and don't model indels.")
     ("branch-prior",value<string>()->default_value("Gamma"),"Exponential or Gamma.")
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
