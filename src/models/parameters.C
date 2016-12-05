@@ -317,7 +317,7 @@ double data_partition::sequence_length_pr(int l) const
     const context* C = P;
     const_cast<context*>(C)->set_parameter_value(arg_param_index, l );
 
-    return P->evaluate( P->PC->IModel_methods[m].length_p ).as_double();
+    return P->evaluate( P->PC->IModel_methods[m].length_p ).as_log_double();
 }
 
 int data_partition::seqlength(int n) const
