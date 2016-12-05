@@ -29,6 +29,42 @@ extern "C" closure builtin_function_getAminoAcids(OperationArgs& Args)
   return Args.evaluate(0).as_<Codons>().getAminoAcids();
 }
 
+extern "C" closure builtin_function_triplets(OperationArgs& Args)
+{
+    auto nuc  = Args.evaluate(0);
+
+    return {Triplets(nuc.as_<Nucleotides>())};
+}
+
+extern "C" closure builtin_function_codons(OperationArgs& Args)
+{
+    auto nuc  = Args.evaluate(0);
+    auto aa   = Args.evaluate(1);
+
+//    auto code = Args.evaluate(2).as_<Genetic_Code>();
+    return {Codons(nuc.as_<Nucleotides>(), aa.as_<AminoAcids>(), Standard_Genetic_Code())};
+}
+
+extern "C" closure builtin_function_dna(OperationArgs&)
+{
+    return {DNA()};
+}
+
+extern "C" closure builtin_function_rna(OperationArgs&)
+{
+    return {RNA()};
+}
+
+extern "C" closure builtin_function_aa(OperationArgs&)
+{
+    return {AminoAcids()};
+}
+
+extern "C" closure builtin_function_aaWithStop(OperationArgs&)
+{
+    return {AminoAcidsWithStop()};
+}
+
 extern "C" closure builtin_function_translate(OperationArgs& Args)
 {
   auto C = Args.evaluate(0);
