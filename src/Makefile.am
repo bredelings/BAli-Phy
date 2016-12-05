@@ -93,7 +93,8 @@ endif
 
 #-----------------------------------------------------------------
 
-bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substitution/substitution.C mcmc/moves.C \
+bali_phy_SOURCES = parser/parse.C dp/dp_hmm.C parser/desugar.C parser/AST.C sequence/sequence.C \
+          tree/tree.C alignment/alignment.C substitution/substitution.C mcmc/moves.C \
           rng.C math/exponential.C math/eigenvalue.C models/parameters.C prior.C mcmc/mcmc.C \
 	  probability/choose.C tree/sequencetree.C mcmc/sample-branch-lengths.C \
 	  util.C tree/randomtree.C sequence/alphabet.C bali-phy.C models/TreeInterface.C \
@@ -102,8 +103,8 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  setup.C mcmc/sample-two-nodes.C sequence/sequence-format.C \
 	  util-random.C alignment/alignment-random.C smodel/setup.C mcmc/sample-topology-SPR.C \
 	  dp/alignment-sums.C alignment/alignment-util.C probability/probability.C models/model.C \
-	  alignment/alignment-constraint.C \
-	  monitor.C tree/tree-util.C myexception.C math/pow2.C substitution/parsimony.C \
+	  alignment/alignment-constraint.C monitor.C \
+	  tree/tree-util.C myexception.C math/pow2.C substitution/parsimony.C \
 	  tools/partition.C mcmc/proposals.C n_indels.C n_indels2.C alignment/alignment-util2.C \
 	  tools/parsimony.C tools/parsimony2.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
@@ -111,8 +112,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  computation/graph_register.C computation/show_graph.C computation/module.C \
 	  computation/model_expression.C computation/evaluate.C computation/gc.C computation/reroot.C \
 	  computation/operations.C computation/loader.C computation/context.C computation/closure.C \
-	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C \
-	  parser/AST.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
+	  computation/let-float.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
 	  startup/loggers.C startup/system.C startup/cmd_line.C
 
 if HOST_MINGW32
