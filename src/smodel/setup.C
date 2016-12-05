@@ -1066,14 +1066,6 @@ expression_ref process_stack_Frequencies(const ptree& model_rep,
       }
     */
 
-    if (R and model_rep.count("submodel"))
-    {
-	// If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
-	expression_ref s = get_smodel_as("EM[a]",model_rep.get_child("submodel"), a);
-	expression_ref mm = model_expression({identifier("reversible_markov_model"), s, R});
-	return mm;
-    }
-
     return R;
 }
 
