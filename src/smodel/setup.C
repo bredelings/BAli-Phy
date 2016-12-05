@@ -1453,8 +1453,6 @@ expression_ref get_smodel_as(const string& type, const ptree& model_rep)
 expression_ref
 get_smodel(const ptree& model_rep, const object_ptr<const alphabet>& a)
 {
-  assert(frequencies->size() == a->size());
-
   // --------- Convert smodel to MultiMixtureModel ------------//
   expression_ref full_smodel = get_smodel_as("MMM[a]", coerce_to_MMM(model_rep),a);
 
