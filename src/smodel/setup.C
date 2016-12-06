@@ -484,44 +484,6 @@ void check_required_args(const ptree& args)
     }
 }
 
-void check_and_coerce_arg_types(ptree& model)
-{
-    //  std::cout<<"checkout model:\n";
-    //  write_info(std::cout, model);
-    //  std::cout<<show(model)<<std::endl;
-    const string& head = model.get_value<string>();
-
-    for(const auto& rule: get_rules_for_func(head))
-    {
-	for(int i=2;i<rule.size();i++)
-	{
-	    string keyword = rule[i][0];
-	    if (keyword[0] == '*')
-		keyword = keyword.substr(1);
-	    auto& required_type = rule[i][1];
-
-	    if (not model.count(keyword)) continue;
-	    auto supplied_type = get_type(model.get_child(keyword));
-
-	    if (can_unify(required_type,supplied_type)) continue;
-
-	    ptree value = model.get_child(keyword);
-	    model.erase(keyword);
-	    if (can_unify(required_type,"RA[a]"))
-		value = coerce_to_RA(value);
-	    else if (can_unify(required_type,"MM[a]"))
-		value = coerce_to_MM(value);
-	    else if (can_unify(required_type,"MMM[a]"))
-		value = coerce_to_MMM(value);
-	    else if (required_type == "Double" and supplied_type == "Int")
-	    { }
-	    else
-		throw myexception()<<"Can't coerce "<<value.get_value<string>()<<" of type "<<get_type(value)<<" to type "<<required_type<<".";
-	    model.push_back({keyword,value});
-	}
-    }
-}
-
 // Turn an expression of the form head[arg1, arg2, ..., argn] -> {head, arg1, arg2, ..., argn}.
 vector<string> split_args(string s)
 {
@@ -717,6 +679,10 @@ void pass2(const ptree& type, ptree& model)
     // 2. Substitute default values
     for(auto rule: get_rules_for_func(name))
     {
+        // 2a. Skip rules where the type does not match
+	equations_t equations = type_derived_from(parse_type(rule[0][1]), type);
+//	if (equations.get_value<string>() == "fail") continue;
+	
 	for(int i=2;i<rule.size();i++)
 	{
 	    const auto& argument = rule[i];
@@ -734,11 +700,36 @@ void pass2(const ptree& type, ptree& model)
 		model.push_back({keyword, arg});
 	    }
 	}
+
+	// 3. Coerce arguments to their given type
+	for(int i=2;i<rule.size();i++)
+	{
+	    string keyword = rule[i][0];
+	    if (keyword[0] == '*')
+		keyword = keyword.substr(1);
+	    auto& required_type = rule[i][1];
+
+	    if (not model.count(keyword)) continue;
+	    auto supplied_type = get_type(model.get_child(keyword));
+
+	    if (can_unify(required_type,supplied_type)) continue;
+
+	    ptree value = model.get_child(keyword);
+	    model.erase(keyword);
+	    if (can_unify(required_type,"RA[a]"))
+		value = coerce_to_RA(value);
+	    else if (can_unify(required_type,"MM[a]"))
+		value = coerce_to_MM(value);
+	    else if (can_unify(required_type,"MMM[a]"))
+		value = coerce_to_MMM(value);
+	    else if (required_type == "Double" and supplied_type == "Int")
+	    { }
+	    else
+		throw myexception()<<"Can't coerce "<<value.get_value<string>()<<" of type "<<get_type(value)<<" to type "<<required_type<<".";
+	    model.push_back({keyword,value});
+	}
     }
 
-    // 3. Coerce arguments to their given type
-    check_and_coerce_arg_types(model);
-    
     // 4. Check that required arguments are specified
     check_required_args(model);
 }
