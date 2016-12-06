@@ -208,6 +208,54 @@ equations_t type_derived_from(const type_t& t1, const type_t& t2)
     return unify(t1, t2);
 }
 
+/// True if some conversion function can be applied to the expression of type t1, so that it is of type t2
+equations_t convertible_to(ptree& model, const type_t& t1, type_t t2)
+{
+    auto equations = type_derived_from(t1, t2);
+    if (equations.get_value<string>() != "fail")
+	return equations;
+
+    if (t2.get_value<string>() == "MMM")
+    {
+	t2.put_value("MM");
+	equations = convertible_to(model,t1,t2);
+	if (equations.get_value<string>() != "fail")
+	{
+	    ptree result;
+	    result.put_value("MMM");
+	    result.push_back({"submodel",model});
+	    model = result;
+	}
+    }
+    else if (t2.get_value<string>() == "MM")
+    {
+	t2.put_value("RA");
+	equations = convertible_to(model,t1,t2);
+	if (equations.get_value<string>() != "fail")
+	{
+	    ptree result;
+	    result.put_value("UnitMixture");
+	    result.push_back({"submodel",model});
+	    model = result;
+	}
+    }
+    else if (t2.get_value<string>() == "RA")
+    {
+	t2.put_value("EM");
+	equations = convertible_to(model,t1,t2);
+	if (equations.get_value<string>() != "fail")
+	{
+	    ptree result;
+	    result.put_value("RCTMC");
+	    result.push_back({"Q",model});
+	    result.push_back({"R",ptree("F")});
+	    model = result;
+	}
+    }
+
+    return equations;
+}
+
 equations_t unify(const string& s1, const string& s2)
 {
     auto p1 = parse_type(s1);
@@ -319,18 +367,35 @@ string unparse(const ptree& p)
     return s;
 }
 
+string unparse_type(const ptree& p)
+{
+    string s = p.get_value<string>();
+    vector<string> args;
+    for(const auto& pair: p)
+	args.push_back( unparse(pair.second) );
+    if (not args.empty())
+	s = s + "[" + join(args,',') + "]";
+    return s;
+}
+
+string get_type_for_arg(const Rule& rule, const string& arg)
+{
+    for(int i=2;i<rule.size();i++)
+    {
+	const auto& y = rule[i];
+	if (y[0] == arg)
+	    return y[1];
+    }
+    return "?";
+}
+
 string get_type_for_arg(const string& func, const string& arg)
 {
-    for(const auto& x: all_default_arguments)
+    for(const auto& rule: get_rules_for_func(func))
     {
-	if (x[0][0] != func) continue;
-
-	for(int i=2;i<x.size();i++)
-	{
-	    const auto& y = x[i];
-	    if (y[0] == arg)
-		return y[1];
-	}
+	auto type = get_type_for_arg(rule, arg);
+	if (type != "?")
+	    return type;
     }
     return "?";
 }
@@ -351,59 +416,6 @@ string get_type(const string& func)
 string get_type(const ptree& model_rep)
 {
     return get_type(model_rep.get_value<string>());
-}
-
-ptree coerce_to_RA(const ptree& model_rep)
-{
-    if (can_unify(get_type(model_rep), "RA[_]"))
-	return model_rep;
-
-    if (can_unify(get_type(model_rep), "EM[_]"))
-    {
-	ptree r;
-	r.put_value("F");
-	ptree result;
-	result.put_value("RCTMC");
-	result.push_back({"Q",model_rep});
-	result.push_back({"R",ptree("F")});
-	return result;
-    }
-
-    throw myexception()<<"Cannot convert "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep)<<" to type RA.";
-}
-
-ptree coerce_to_MM(const ptree& model_rep)
-{
-    if (can_unify(get_type(model_rep), "MM[_]"))
-	return model_rep;
-
-    try {
-	ptree submodel = coerce_to_RA(model_rep);
-	ptree result;
-	result.put_value("UnitMixture");
-	result.push_back({"submodel",submodel});
-	return result;
-    }
-    catch (...) {
-	throw myexception()<<"Cannot convert "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep)<<" to type MM.";
-    }
-}
-
-ptree coerce_to_MMM(const ptree& model_rep)
-{
-    if (can_unify(get_type(model_rep), "MMM[_]"))
-	return model_rep;
-
-    try {
-	ptree submodel = coerce_to_MM(model_rep);
-	ptree result;
-	result.put_value("MMM");
-	result.push_back({"submodel",submodel});
-	return result;
-    }
-    catch (...) {
-	throw myexception()<<"Cannot convert "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep)<<" to type MMM.";
-    }
 }
 
 optional<pair<string,string>> split_keyword(const string& s)
@@ -668,76 +680,86 @@ void pass1(ptree& p)
     }
 }
 
-void pass2(const ptree& type, ptree& model)
+void pass2(const ptree& required_type, ptree& model)
 {
-    // 1. Handle children.
-    for(auto& child: model)
-	pass2({}, child.second);
-
     auto name = model.get_value<string>();
 
     // 2. Substitute default values
     for(auto rule: get_rules_for_func(name))
     {
+	type_t result_type = parse_type(rule[0][1]);
+//	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
         // 2a. Skip rules where the type does not match
-	equations_t equations = type_derived_from(parse_type(rule[0][1]), type);
-//	if (equations.get_value<string>() == "fail") continue;
-	
-	for(int i=2;i<rule.size();i++)
-	{
-	    const auto& argument = rule[i];
-	    string keyword = argument[0];
-	    if (keyword[0] == '*')
-		keyword = keyword.substr(1);
-	    bool has_default = (argument.size() > 2);
-	    if (not has_default) continue;
-	    string def = argument[2];
+	equations_t equations = type_derived_from(result_type, required_type);
 
-	    if (not model.count(keyword))
+	if (equations.get_value<string>() == "fail")
+	{
+	    equations = convertible_to(model, result_type, required_type);
+	    if (equations.get_value<string>() != "fail")
 	    {
-		auto arg = parse(def);
-		pass2({}, arg);
-		model.push_back({keyword, arg});
+		pass2(required_type, model);
+		return;
 	    }
 	}
 
-	// 3. Coerce arguments to their given type
+//	if (equations.get_value<string>() == "fail")
+//	    std::cout<<"fail!"<<std::endl;
+//	else
+//	    std::cout<<"OK."<<std::endl;
+
+	if (equations.get_value<string>() == "fail") continue;
+
+	// 3. Handle supplied arguments first.
+	for(auto& child: model)
+	{
+	    type_t arg_required_type = parse_type(get_type_for_arg(rule, child.first));
+	    pass2(arg_required_type, child.second);
+	}
+
+	// 4. Handle default arguments 
 	for(int i=2;i<rule.size();i++)
 	{
-	    string keyword = rule[i][0];
-	    if (keyword[0] == '*')
+	    const auto& argument = rule[i];
+
+	    string keyword = argument[0];
+	    bool arg_is_required = true;
+	    if (keyword[0] == '*') {
 		keyword = keyword.substr(1);
-	    auto& required_type = rule[i][1];
+		arg_is_required = false;
+	    }
 
-	    if (not model.count(keyword)) continue;
-	    auto supplied_type = get_type(model.get_child(keyword));
+	    if (model.count(keyword)) continue;
 
-	    if (can_unify(required_type,supplied_type)) continue;
-
-	    ptree value = model.get_child(keyword);
-	    model.erase(keyword);
-	    if (can_unify(required_type,"RA[a]"))
-		value = coerce_to_RA(value);
-	    else if (can_unify(required_type,"MM[a]"))
-		value = coerce_to_MM(value);
-	    else if (can_unify(required_type,"MMM[a]"))
-		value = coerce_to_MMM(value);
-	    else if (required_type == "Double" and supplied_type == "Int")
-	    { }
+	    // If there's no default arg 
+	    if (argument.size() <= 2)
+	    {
+		if (arg_is_required)
+		    throw myexception()<<"Command '"<<name<<"' missing required argument '"<<keyword<<"'";
+	    }
 	    else
-		throw myexception()<<"Can't coerce "<<value.get_value<string>()<<" of type "<<get_type(value)<<" to type "<<required_type<<".";
-	    model.push_back({keyword,value});
+	    {
+		type_t arg_required_type = parse_type(argument[1]);
+		auto default_arg = parse(argument[2]);
+		pass2(arg_required_type, default_arg);
+		model.push_back({keyword, default_arg});
+	    }
 	}
-    }
 
-    // 4. Check that required arguments are specified
-    check_required_args(model);
+	return;
+    }
+    if (can_be_converted_to<int>(name) and (required_type.get_value<string>() == "Int" or required_type.get_value<string>() == "Double"))
+	return;
+
+    if (can_be_converted_to<double>(name) and required_type.get_value<string>() == "Double")
+	return;
+
+    throw myexception()<<"Term '"<<model.get_value<string>()<<"' isn't of type '"<<unparse_type(required_type)<<"'";
 }
 
-ptree translate_model(const string& type, const string& model)
+ptree translate_model(const string& required_type, const string& model)
 {
     auto p = parse(model);
-    auto t = parse_type(type);
+    auto t = parse_type(required_type);
     pass1(p);
     pass2(t,p);
     return p;
@@ -1387,7 +1409,7 @@ expression_ref get_smodel_as(const string& type, const ptree& model_rep)
 expression_ref get_smodel(const ptree& model_rep)
 {
     // --------- Convert smodel to MultiMixtureModel ------------//
-    expression_ref full_smodel = get_smodel_as("MMM[a]", coerce_to_MMM(model_rep));
+    expression_ref full_smodel = get_smodel_as("MMM[a]", model_rep);
 
     if (log_verbose)
 	std::cout<<"full_smodel = "<<full_smodel<<std::endl;
