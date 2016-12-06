@@ -460,15 +460,13 @@ void check_required_args(const ptree& args)
     //  std::cout<<show(args)<<std::endl;
     const string& head = args.get_value<string>();
   
-    for(const auto& default_arguments: all_default_arguments)
+    for(const auto& rule: get_rules_for_func(head))
     {
-	if (default_arguments[0][0] != head) continue;
-
-	for(int i=2;i<default_arguments.size();i++)
+	for(int i=2;i<rule.size();i++)
 	{
-	    string keyword = default_arguments[i][0];
+	    string keyword = rule[i][0];
 	    if (keyword[0] == '*') continue;
-	    if (default_arguments[i].size() > 2) continue;
+	    if (rule[i].size() > 2) continue;
 
 	    if (not args.count(keyword))
 		throw myexception()<<"Command '"<<head<<"' missing required argument '"<<keyword<<"'";
@@ -483,16 +481,14 @@ void check_and_coerce_arg_types(ptree& args)
     //  std::cout<<show(args)<<std::endl;
     const string& head = args.get_value<string>();
 
-    for(const auto& default_arguments: all_default_arguments)
+    for(const auto& rule: get_rules_for_func(head))
     {
-	if (default_arguments[0][0] != head) continue;
-
-	for(int i=2;i<default_arguments.size();i++)
+	for(int i=2;i<rule.size();i++)
 	{
-	    string keyword = default_arguments[i][0];
+	    string keyword = rule[i][0];
 	    if (keyword[0] == '*')
 		keyword = keyword.substr(1);
-	    auto& required_type = default_arguments[i][1];
+	    auto& required_type = rule[i][1];
 
 	    if (not args.count(keyword)) continue;
 	    auto supplied_type = get_type(args.get_child(keyword));
