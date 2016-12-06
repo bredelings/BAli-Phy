@@ -111,7 +111,9 @@ using boost::shared_ptr;
   }
 */
 
-const vector<vector<vector<string>>> all_default_arguments = 
+typedef vector<vector<string>> Rule;
+
+const vector<Rule> all_default_arguments = 
 {
     {{"log","Double","N"}, {"log","x"}, {"x","Double"}},
     {{"Uniform","Double","M"}, {"uniform","a","b"}, {"a","Double"}, {"b","Double"}},
@@ -167,7 +169,7 @@ const vector<vector<vector<string>>> all_default_arguments =
     {{"MMM","MMM[a]","N"}, {"mmm","submodel"}, {"submodel","MM[a]"}}
 };
 
-vector<string> get_arg(const vector<vector<string>>& args, const string& s)
+vector<string> get_arg(const Rule& args, const string& s)
 {
     for(const auto& arg: args)
 	if (arg[0] == s)
@@ -175,13 +177,13 @@ vector<string> get_arg(const vector<vector<string>>& args, const string& s)
     throw myexception()<<"Function "<<args[0][0]<<" has no argument '"<<s<<"'";
 }
 
-vector<vector<vector<string>>> get_args_for_func(const vector<vector<vector<string>>>& all_args, const string& s)
+vector<Rule> get_rules_for_func(const string& s)
 {
-    vector<vector<vector<string>>> args;
-    for(const auto& arg: all_args)
-	if (arg[0][0] == s)
-	    args.push_back(arg);
-    return args;
+    vector<Rule> rules;
+    for(const auto& rule: all_default_arguments)
+	if (rule[0][0] == s)
+	    rules.push_back(rule);
+    return rules;
 }
 
 /// Split a string of the form key=value into {key,value}
@@ -451,30 +453,6 @@ string get_keyword_for_positional_arg(const string& head, int i)
     throw myexception()<<"No positional arguments for '"<<head<<"'!";
 }
 
-void set_default_values(ptree& args)
-{
-    const string& head = args.get_value<string>();
-  
-    for(const auto& default_arguments: all_default_arguments)
-    {
-	if (default_arguments[0][0] != head) continue;
-
-	for(int i=2;i<default_arguments.size();i++)
-	{
-	    const auto& argument = default_arguments[i];
-	    string keyword = argument[0];
-	    if (keyword[0] == '*')
-		keyword = keyword.substr(1);
-	    bool has_default = (argument.size() > 2);
-	    if (not has_default) continue;
-	    string def = argument[2];
-      
-	    if (not args.count(keyword))
-		args.push_back({keyword, parse(def)});
-	}
-    }
-}
-
 void check_required_args(const ptree& args)
 {
     //  std::cout<<"checkout args:\n";
@@ -680,7 +658,6 @@ ptree parse_type(const string& s)
     return result;
 }
 
-
 // Parse strings of the form head[args] + head[args] + ... + head[args]
 ptree parse(const string& s)
 {
@@ -697,9 +674,6 @@ ptree parse(const string& s)
 	    throw myexception()<<"Trying to specify a submodel with '+' when submodel already specified by keyword!";
 	result.push_back({"submodel",parse(*ss.first)});
     }
-
-    // 4. Set default values for top level -- this calls parse recursively to handle type checking for args of default values
-    set_default_values(result);
 
     return result;
 }
@@ -726,25 +700,49 @@ void pass1(ptree& p)
     }
 }
 
-// Parse strings of the form head[args] + head[args] + ... + head[args]
-void pass2(ptree& p)
+void pass2(const ptree& type, ptree& p)
 {
     // 1. Handle children.
     for(auto& child: p)
-	pass2(child.second);
-    
-    // 2 Coerce arguments to their given type
+	pass2({}, child.second);
+
+    auto name = p.get_value<string>();
+
+    // 2. Substitute default values
+    for(const auto& rule: get_rules_for_func(name))
+    {
+	for(int i=2;i<rule.size();i++)
+	{
+	    const auto& argument = rule[i];
+	    string keyword = argument[0];
+	    if (keyword[0] == '*')
+		keyword = keyword.substr(1);
+	    bool has_default = (argument.size() > 2);
+	    if (not has_default) continue;
+	    string def = argument[2];
+
+	    if (not p.count(keyword))
+	    {
+		auto arg = parse(def);
+		pass2({}, arg);
+		p.push_back({keyword, arg});
+	    }
+	}
+    }
+
+    // 3. Coerce arguments to their given type
     check_and_coerce_arg_types(p);
     
-    // 3.. Check that required arguments are specified
+    // 4. Check that required arguments are specified
     check_required_args(p);
 }
 
-ptree translate_model(const string& s)
+ptree translate_model(const string& type, const string& model)
 {
-    auto p = parse(s);
+    auto p = parse(model);
+    auto t = parse_type(type);
     pass1(p);
-    pass2(p);
+    pass2(t,p);
     return p;
 }
 
@@ -771,21 +769,21 @@ expression_ref process_stack_functions(const ptree& model_rep)
 {
     string name = model_rep.get_value<string>();
 
-    auto args = get_args_for_func(all_default_arguments, name);
-    if (args.size() and args[0][1].size())
+    auto rules = get_rules_for_func(name);
+    if (rules.size() and rules[0][1].size())
     {
-	bool no_log = args[0][0].size() > 2 and args[0][0][2] == "N";
-	expression_ref E = identifier(args[0][1][0]);
-	for(int i=0;i<args[0].size()-2;i++)
+	bool no_log = rules[0][0].size() > 2 and rules[0][0][2] == "N";
+	expression_ref E = identifier(rules[0][1][0]);
+	for(int i=0;i<rules[0].size()-2;i++)
 	{
-	    string arg_name = args[0][1][i+1];
-	    string type = get_arg(args[0], arg_name)[1];
+	    string arg_name = rules[0][1][i+1];
+	    string type = get_arg(rules[0], arg_name)[1];
 	    expression_ref arg = get_smodel_as(type, model_rep.get_child(arg_name));
 	    if ((type == "Double" or type == "Int") and (not no_log))
 		arg = add_logger(arg_name, arg);
 	    E = (E,arg);
 	}
-	if (args[0][0].size() > 2 and args[0][0][2] == "M")
+	if (rules[0][0].size() > 2 and rules[0][0][2] == "M")
 	    E = model_expression(E);
 	if (not no_log)
 	    E = prefix(name,E);
@@ -1404,7 +1402,7 @@ expression_ref get_smodel(const string& smodel)
 {
 //    std::cout<<"smodel1 = "<<smodel<<std::endl;
 
-    auto model_tree = translate_model(smodel);
+    auto model_tree = translate_model("MMM[a]", smodel);
     if (log_verbose)
 	std::cout<<"smodel = "<<unparse(model_tree)<<std::endl;
     return get_smodel(model_tree);
