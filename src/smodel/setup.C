@@ -113,6 +113,8 @@ using boost::shared_ptr;
 
 typedef ptree equations_t;
 
+typedef ptree type_t;
+
 typedef vector<vector<string>> Rule;
 
 const vector<Rule> all_default_arguments = 
@@ -200,6 +202,11 @@ bool can_unify(const ptree& p1, const ptree& p2)
     return unify(p1,p2).get_value<string>() != "fail";
 }
 
+/// True if t1 is derivedd from
+equations_t type_derived_from(const type_t& t1, const type_t& t2)
+{
+    return unify(t1, t2);
+}
 
 equations_t unify(const string& s1, const string& s2)
 {
