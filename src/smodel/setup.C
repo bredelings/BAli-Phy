@@ -111,6 +111,8 @@ using boost::shared_ptr;
   }
 */
 
+typedef ptree equations_t;
+
 typedef vector<vector<string>> Rule;
 
 const vector<Rule> all_default_arguments = 
@@ -191,14 +193,14 @@ ptree parse(const string& s);
 ptree parse_type(const string& s);
 
 // given two terms, what equations do we need to unify them?
-ptree unify(const ptree& p1, const ptree& p2);
+equations_t unify(const ptree& p1, const ptree& p2);
 
 bool can_unify(const ptree& p1, const ptree& p2)
 {
     return unify(p1,p2).get_value<string>() != "fail";
 }
 
-ptree unify(const string& s1, const string& s2)
+equations_t unify(const string& s1, const string& s2)
 {
     auto p1 = parse_type(s1);
     auto p2 = parse_type(s2);
@@ -211,7 +213,7 @@ bool can_unify(const string& s1, const string& s2)
 }
 
 // given two sets of equations, what further equations do we need to unify them?
-bool merge_equations(ptree& p1, const ptree& p2)
+bool merge_equations(equations_t& p1, const equations_t& p2)
 {
     for(const auto& x: p2)
     {
@@ -242,7 +244,7 @@ bool is_variable(const string& s)
     return (first_letter >= 98 and first_letter <= 123);
 }
 
-ptree unify(const ptree& p1, const ptree& p2)
+equations_t unify(const ptree& p1, const ptree& p2)
 {
     // 1. If either term is a variable, then we are good.
     string head1 = p1.get_value<string>();
@@ -254,14 +256,14 @@ ptree unify(const ptree& p1, const ptree& p2)
 	// Don't record equalities of the form a = a
 	if (head1 != head2)
 	{
-	    ptree equations;
+	    equations_t equations;
 	    equations.push_back({head1,p2});
 	    return equations;
 	}
     }
     else if (is_variable(head2))
     {
-	ptree equations;
+	equations_t equations;
 	equations.push_back({head2,p1});
 	return equations;
     }
@@ -273,7 +275,7 @@ ptree unify(const ptree& p1, const ptree& p2)
     if (p1.size() != p2.size()) return ptree("fail");
 
     // 4. If every argument unifies, then unification succeeds
-    ptree equations;
+    equations_t equations;
 
     auto x = p1.begin();
     auto y = p2.begin();
