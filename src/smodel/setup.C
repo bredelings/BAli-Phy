@@ -200,6 +200,7 @@ bool can_unify(const ptree& p1, const ptree& p2)
     return unify(p1,p2).get_value<string>() != "fail";
 }
 
+
 equations_t unify(const string& s1, const string& s2)
 {
     auto p1 = parse_type(s1);
@@ -476,12 +477,12 @@ void check_required_args(const ptree& args)
     }
 }
 
-void check_and_coerce_arg_types(ptree& args)
+void check_and_coerce_arg_types(ptree& model)
 {
-    //  std::cout<<"checkout args:\n";
-    //  write_info(std::cout, args);
-    //  std::cout<<show(args)<<std::endl;
-    const string& head = args.get_value<string>();
+    //  std::cout<<"checkout model:\n";
+    //  write_info(std::cout, model);
+    //  std::cout<<show(model)<<std::endl;
+    const string& head = model.get_value<string>();
 
     for(const auto& rule: get_rules_for_func(head))
     {
@@ -492,13 +493,13 @@ void check_and_coerce_arg_types(ptree& args)
 		keyword = keyword.substr(1);
 	    auto& required_type = rule[i][1];
 
-	    if (not args.count(keyword)) continue;
-	    auto supplied_type = get_type(args.get_child(keyword));
+	    if (not model.count(keyword)) continue;
+	    auto supplied_type = get_type(model.get_child(keyword));
 
 	    if (can_unify(required_type,supplied_type)) continue;
 
-	    ptree value = args.get_child(keyword);
-	    args.erase(keyword);
+	    ptree value = model.get_child(keyword);
+	    model.erase(keyword);
 	    if (can_unify(required_type,"RA[a]"))
 		value = coerce_to_RA(value);
 	    else if (can_unify(required_type,"MM[a]"))
@@ -509,7 +510,7 @@ void check_and_coerce_arg_types(ptree& args)
 	    { }
 	    else
 		throw myexception()<<"Can't coerce "<<value.get_value<string>()<<" of type "<<get_type(value)<<" to type "<<required_type<<".";
-	    args.push_back({keyword,value});
+	    model.push_back({keyword,value});
 	}
     }
 }
@@ -698,16 +699,16 @@ void pass1(ptree& p)
     }
 }
 
-void pass2(const ptree& type, ptree& p)
+void pass2(const ptree& type, ptree& model)
 {
     // 1. Handle children.
-    for(auto& child: p)
+    for(auto& child: model)
 	pass2({}, child.second);
 
-    auto name = p.get_value<string>();
+    auto name = model.get_value<string>();
 
     // 2. Substitute default values
-    for(const auto& rule: get_rules_for_func(name))
+    for(auto rule: get_rules_for_func(name))
     {
 	for(int i=2;i<rule.size();i++)
 	{
@@ -719,20 +720,20 @@ void pass2(const ptree& type, ptree& p)
 	    if (not has_default) continue;
 	    string def = argument[2];
 
-	    if (not p.count(keyword))
+	    if (not model.count(keyword))
 	    {
 		auto arg = parse(def);
 		pass2({}, arg);
-		p.push_back({keyword, arg});
+		model.push_back({keyword, arg});
 	    }
 	}
     }
 
     // 3. Coerce arguments to their given type
-    check_and_coerce_arg_types(p);
+    check_and_coerce_arg_types(model);
     
     // 4. Check that required arguments are specified
-    check_required_args(p);
+    check_required_args(model);
 }
 
 ptree translate_model(const string& type, const string& model)
