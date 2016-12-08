@@ -327,7 +327,8 @@ bool merge_equations(equations_t& p1, const equations_t& p2)
 	if (new_equalities.get_value<string>() == "fail")
 	    return false;
 
-	merge_equations(p1,new_equalities);
+	if (not merge_equations(p1,new_equalities))
+	    return false;
     }
 
     return true;
