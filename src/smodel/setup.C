@@ -379,7 +379,9 @@ equations_t unify(const ptree& p1, const ptree& p2)
     else if (is_variable(p1))
     {
 	// Don't record equalities of the form a = a
-	if (not is_variable(p2) or head1 != head2)
+	if (is_variable(p2) and head1 == head2)
+	    return {};
+	else
 	{
 	    equations_t equations;
 	    equations.push_back({head1,p2});
