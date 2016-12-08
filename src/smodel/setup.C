@@ -84,7 +84,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/optional.hpp>
-#include <boost/property_tree/info_parser.hpp>
+#include <boost/property_tree/json_parser.hpp>
 #include "computation/model_expression.H"
 #include "computation/operations.H"
 
@@ -115,9 +115,9 @@ typedef ptree equations_t;
 
 typedef ptree type_t;
 
-typedef vector<vector<string>> Rule;
+typedef ptree Rule;
 
-const vector<Rule> all_default_arguments = 
+const vector< vector<vector<string>> > all_default_arguments = 
 {
     {{"log","Double","N"}, {"log","x"}, {"x","Double"}},
     {{"Uniform","Double","M"}, {"uniform","a","b"}, {"a","Double"}, {"b","Double"}},
@@ -173,12 +173,56 @@ const vector<Rule> all_default_arguments =
     {{"MMM","MMM[a]","N"}, {"mmm","submodel"}, {"submodel","MM[a]"}}
 };
 
-vector<string> get_arg(const Rule& args, const string& s)
+/// Split a string of the form key=value into {key,value}
+ptree parse(const string& s);
+ptree parse_type(const string& s);
+
+ptree get_arg(const Rule& rule, const string& arg_name)
 {
-    for(const auto& arg: args)
-	if (arg[0] == s)
-	    return arg;
-    throw myexception()<<"Function "<<args[0][0]<<" has no argument '"<<s<<"'";
+    for(const auto& arg: rule.get_child("args"))
+	if (arg.second.get<string>("arg_name") == arg_name)
+	    return arg.second;
+    throw myexception()<<"Rule for function '"<<rule.get<string>("name")<<"' has no argument '"<<arg_name<<"'";
+}
+
+ptree convert_rule(const vector<vector<string>>& s)
+{
+    ptree rule;
+    rule.put("name",s[0][0]);
+
+    rule.push_back({"result_type",parse_type(s[0][1])});
+    if (s[0].size() > 2 and s[0][2] == "M")
+	rule.put("action","true");
+    if (s[0].size() > 2 and s[0][2] == "N")
+	rule.put("log","false");
+    if (s[1].size())
+    {
+	ptree call;
+	for(const auto& word: s[1])
+	    call.push_back({"",ptree(word)});
+	rule.push_back({"call",call});
+    }
+
+    ptree args;
+    for(int i=2;i<s.size();i++)
+    {
+	ptree arg;
+
+	string arg_name = s[i][0];
+	if (arg_name[0] == '*')
+	{
+	    arg_name = arg_name.substr(1);
+	    arg.put("optional","true");
+	}
+	arg.put("arg_name",arg_name);
+	arg.push_back({"arg_type",parse_type(s[i][1])});
+	if (s[i].size() > 2)
+	    arg.push_back({"default_value",parse(s[i][2])});
+	args.push_back({"",arg});
+    }
+    rule.push_back({"args",args});
+//    write_info(std::cout, rule);
+    return rule;
 }
 
 vector<Rule> get_rules_for_func(const string& s)
@@ -186,13 +230,9 @@ vector<Rule> get_rules_for_func(const string& s)
     vector<Rule> rules;
     for(const auto& rule: all_default_arguments)
 	if (rule[0][0] == s)
-	    rules.push_back(rule);
+	    rules.push_back(convert_rule(rule));
     return rules;
 }
-
-/// Split a string of the form key=value into {key,value}
-ptree parse(const string& s);
-ptree parse_type(const string& s);
 
 // given two terms, what equations do we need to unify them?
 equations_t unify(const ptree& p1, const ptree& p2);
@@ -409,44 +449,38 @@ string unparse_type(const ptree& p)
     return s;
 }
 
-string get_type_for_arg(const Rule& rule, const string& arg)
+ptree get_type_for_arg(const Rule& rule, const string& arg)
 {
-    for(int i=2;i<rule.size();i++)
-    {
-	const auto& y = rule[i];
-	if (y[0] == arg)
-	    return y[1];
-    }
-    return "?";
+    return get_arg(rule,arg).get_child("arg_type");
 }
 
-string get_type_for_arg(const string& func, const string& arg)
+ptree get_type_for_arg(const string& func, const string& arg)
 {
     for(const auto& rule: get_rules_for_func(func))
     {
-	auto type = get_type_for_arg(rule, arg);
-	if (type != "?")
-	    return type;
+	try {
+	    return get_type_for_arg(rule, arg);
+	}
+	catch (...) { }
     }
-    return "?";
+    return ptree("?");
 }
 
-string get_type(const string& func)
+ptree get_result_type(const string& func)
 {
-    if (can_be_converted_to<int>(func)) return "Int";
-    if (can_be_converted_to<double>(func)) return "Double";
+    if (can_be_converted_to<int>(func)) return ptree("Int");
+    if (can_be_converted_to<double>(func)) return ptree("Double");
 
-    for(const auto& x: all_default_arguments)
+    for(const auto& rule: get_rules_for_func(func))
     {
-	if (x[0][0] == func)
-	    return x[0][1];
+	return rule.get_child("result_type");
     }
-    return "?";
+    return ptree("?");
 }
 
-string get_type(const ptree& model_rep)
+ptree get_result_type(const ptree& model_rep)
 {
-    return get_type(model_rep.get_value<string>());
+    return get_result_type(model_rep.get_value<string>());
 }
 
 optional<pair<string,string>> split_keyword(const string& s)
@@ -486,45 +520,20 @@ string show(vector<string> args)
 
 string get_keyword_for_positional_arg(const string& head, int i)
 {
-    for(const auto& default_arguments: all_default_arguments)
-    {
-	if (default_arguments[0][0] != head) continue;
-
-	if (i+2 >= default_arguments.size())
-	    throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<head<<"', which only has "<<default_arguments.size()-2<<" positional arguments.";
-
-	// Strip leading '*' that indicates required argument
-	string keyword = default_arguments[i+2][0];
-	if (keyword[0] == '*')
-	    keyword = keyword.substr(1);
-	auto keyword_pair = split_keyword(keyword);
-	if (keyword_pair)
-	    return (*keyword_pair).first;
-	else
-	    return keyword;
-    }
-    throw myexception()<<"No positional arguments for '"<<head<<"'!";
-}
-
-void check_required_args(const ptree& args)
-{
-    //  std::cout<<"checkout args:\n";
-    //  write_info(std::cout, args);
-    //  std::cout<<show(args)<<std::endl;
-    const string& head = args.get_value<string>();
-  
     for(const auto& rule: get_rules_for_func(head))
     {
-	for(int i=2;i<rule.size();i++)
-	{
-	    string keyword = rule[i][0];
-	    if (keyword[0] == '*') continue;
-	    if (rule[i].size() > 2) continue;
+	const auto arguments = rule.get_child("args");
+	if (i > arguments.size())
+	    throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<head<<"', which only has "<<arguments.size()<<" positional arguments.";
 
-	    if (not args.count(keyword))
-		throw myexception()<<"Command '"<<head<<"' missing required argument '"<<keyword<<"'";
-	}
+	// Strip leading '*' that indicates required argument
+	auto it = arguments.begin();
+	for(int j=0;j<i;j++)
+	    it++;
+	
+	return it->second.get<string>("arg_name");
     }
+    throw myexception()<<"No positional arguments for '"<<head<<"'!";
 }
 
 // Turn an expression of the form head[arg1, arg2, ..., argn] -> {head, arg1, arg2, ..., argn}.
@@ -697,7 +706,7 @@ void pass1(ptree& p)
 	pass1(child.second);
     
     // 2. Convert e.g. TN+F -> RCTMC[TN,F]
-    if (can_unify(get_type(p),"FM[_]") and p.count("submodel"))
+    if (can_unify(get_result_type(p),parse_type("FM[_]")) and p.count("submodel"))
     {
 	ptree q = p.get_child("submodel");
 	auto& r = p;
@@ -718,7 +727,7 @@ void pass2(const ptree& required_type, ptree& model)
     // 2. Substitute default values
     for(auto rule: get_rules_for_func(name))
     {
-	type_t result_type = parse_type(rule[0][1]);
+	type_t result_type = rule.get_child("result_type");
 //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
         // 2a. Skip rules where the type does not match
 	equations_t equations = type_derived_from(result_type, required_type);
@@ -743,36 +752,32 @@ void pass2(const ptree& required_type, ptree& model)
 	// 3. Handle supplied arguments first.
 	for(auto& child: model)
 	{
-	    type_t arg_required_type = parse_type(get_type_for_arg(rule, child.first));
+	    type_t arg_required_type = get_type_for_arg(rule, child.first);
 	    pass2(arg_required_type, child.second);
 	}
 
 	// 4. Handle default arguments 
-	for(int i=2;i<rule.size();i++)
+	for(const auto& arg: rule.get_child("args"))
 	{
-	    const auto& argument = rule[i];
+	    const auto& argument = arg.second;
 
-	    string keyword = argument[0];
-	    bool arg_is_required = true;
-	    if (keyword[0] == '*') {
-		keyword = keyword.substr(1);
-		arg_is_required = false;
-	    }
+	    string arg_name = argument.get<string>("arg_name");
+	    bool arg_is_required = not (argument.count("optional") and argument.get<string>("optional") == "true");
 
-	    if (model.count(keyword)) continue;
+	    if (model.count(arg_name)) continue;
 
 	    // If there's no default arg 
-	    if (argument.size() <= 2)
+	    if (not argument.count("default_value"))
 	    {
 		if (arg_is_required)
-		    throw myexception()<<"Command '"<<name<<"' missing required argument '"<<keyword<<"'";
+		    throw myexception()<<"Command '"<<name<<"' missing required argument '"<<arg_name<<"'";
 	    }
 	    else
 	    {
-		type_t arg_required_type = parse_type(argument[1]);
-		auto default_arg = parse(argument[2]);
+		auto arg_required_type = argument.get_child("arg_type");
+		auto default_arg = argument.get_child("default_value");
 		pass2(arg_required_type, default_arg);
-		model.push_back({keyword, default_arg});
+		model.push_back({arg_name, default_arg});
 	    }
 	}
 
@@ -813,33 +818,57 @@ string default_markov_model(const alphabet& a)
 	return "";
 }
 
-expression_ref get_smodel_as(const string& type, const ptree& model_rep);
+auto index(const ptree& p, int i)
+{
+    if (i > p.size())
+	throw myexception()<<"Can't get entry "<<i<<" for tree with size "<<p.size();
+    auto it = p.begin();
+    for(int j=0;j<i;j++)
+	it++;
+    return *it;
+}
+
+ptree array_index(const ptree& p, int i)
+{
+    return index(p,i).second;
+}
+
+expression_ref get_smodel_as(const ptree& type, const ptree& model_rep);
+expression_ref get_smodel_as(const string& type, const ptree& model_rep)
+{
+    return get_smodel_as(parse_type(type), model_rep);
+}
 
 expression_ref process_stack_functions(const ptree& model_rep)
 {
     string name = model_rep.get_value<string>();
 
     auto rules = get_rules_for_func(name);
-    if (rules.size() and rules[0][1].size())
-    {
-	bool no_log = rules[0][0].size() > 2 and rules[0][0][2] == "N";
-	expression_ref E = identifier(rules[0][1][0]);
-	for(int i=0;i<rules[0].size()-2;i++)
-	{
-	    string arg_name = rules[0][1][i+1];
-	    string type = get_arg(rules[0], arg_name)[1];
-	    expression_ref arg = get_smodel_as(type, model_rep.get_child(arg_name));
-	    if ((type == "Double" or type == "Int") and (not no_log))
-		arg = add_logger(arg_name, arg);
-	    E = (E,arg);
-	}
-	if (rules[0][0].size() > 2 and rules[0][0][2] == "M")
-	    E = model_expression(E);
-	if (not no_log)
-	    E = prefix(name,E);
+    if (rules.empty()) return {};
+    auto rule = rules[0];
+    if (not rule.count("call")) return {};
 	
-	return E;
+    bool no_log = rule.get("log","true") == "false";
+    bool is_action = rule.get("action","false") == "true";
+    ptree call = rule.get_child("call");
+    ptree args = rule.get_child("args");
+    
+    expression_ref E = identifier(array_index(call,0).get_value<string>());
+    for(int i=1;i<call.size();i++)
+    {
+	string arg_name = array_index(call,i).get_value<string>();
+	ptree arg_tree = get_arg(rule, arg_name);
+	ptree arg_type = arg_tree.get_child("arg_type");
+	expression_ref arg = get_smodel_as(arg_type, model_rep.get_child(arg_name));
+	if ((arg_type.get_value<string>() == "Double" or arg_type.get_value<string>() == "Int") and (not no_log))
+	    arg = add_logger(arg_name, arg);
+	E = (E,arg);
     }
+    if (is_action)
+	E = model_expression(E);
+    if (not no_log)
+	E = prefix(name,E);
+    return E;
 
     return {};
 }
@@ -1410,23 +1439,26 @@ expression_ref get_smodel_(const ptree& model_rep)
     throw myexception()<<"Couldn't process substitution model description \""<<show(model_rep)<<"\"";
 }
 
-expression_ref get_smodel_as(const string& type, const ptree& model_rep)
+expression_ref get_smodel_as(const ptree& required_type, const ptree& model_rep)
 {
     if (model_rep.empty() and model_rep.data().empty())
     {
 	std::cout<<show(model_rep)<<std::endl;
-	throw myexception()<<"Can't construct type '"<<type<<"' from empty description!";
+	throw myexception()<<"Can't construct type '"<<unparse_type(required_type)<<"' from empty description!";
     }
 
-    if (type == "Double" and get_type(model_rep) == "Int")
+    ptree result_type = get_result_type(model_rep);
+    string name = model_rep.get_value<string>();
+
+    if (required_type.get_value<string>() == "Double" and result_type.get_value<string>() == "Int")
     {
 	double d;
-	if (can_be_converted_to<double>(model_rep.get_value<string>(), d))
+	if (can_be_converted_to<double>(name, d))
 	    return d;
     }
 
-    if (not can_unify(get_type(model_rep),type))
-	throw myexception()<<"Expected type "<<type<<" but got "<<model_rep.get_value<string>()<<" of type "<<get_type(model_rep);
+    if (not can_unify(result_type, required_type))
+	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but got '"<<name<<"' of type "<<unparse_type(result_type);
 
     return get_smodel_(model_rep);
 }
