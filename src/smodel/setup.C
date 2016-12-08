@@ -293,11 +293,42 @@ bool merge_equations(equations_t& p1, const equations_t& p2)
     return true;
 }
 
-bool is_variable(const string& s)
+bool is_variable(const ptree& p)
 {
+    if (not p.empty()) return false;
+    const string& s = p.get_value<string>();
     if (s.empty()) return false;
     char first_letter = s[0];
     return (first_letter >= 98 and first_letter <= 123);
+}
+
+bool is_wildcard(const ptree& p)
+{
+    if (not p.empty()) return false;
+    return (p.get_value<string>() == "");
+}
+
+void substitute(const equations_t& equations, ptree& p)
+{
+    if (is_variable(p))
+    {
+	for(auto& eq: equations)
+	    if (eq.first == p.get_value<string>())
+	    {
+		p = eq.second;
+		break;
+	    }
+    }
+    else
+	for(auto& child: p)
+	    substitute(equations, child.second);
+}
+
+ptree substitute(const equations_t& equations, const ptree& p)
+{
+    ptree p2 = p;
+    substitute(equations, p2);
+    return p2;
 }
 
 equations_t unify(const ptree& p1, const ptree& p2)
@@ -305,19 +336,19 @@ equations_t unify(const ptree& p1, const ptree& p2)
     // 1. If either term is a variable, then we are good.
     string head1 = p1.get_value<string>();
     string head2 = p2.get_value<string>();
-    if (head1 == "_" or head2 == "_")
+    if (is_wildcard(p1) or is_wildcard(p2))
 	return {}; // Don't record equations for matching wildcards
-    else if (is_variable(head1))
+    else if (is_variable(p1))
     {
 	// Don't record equalities of the form a = a
-	if (head1 != head2)
+	if (not is_variable(p2) or head1 != head2)
 	{
 	    equations_t equations;
 	    equations.push_back({head1,p2});
 	    return equations;
 	}
     }
-    else if (is_variable(head2))
+    else if (is_variable(p2))
     {
 	equations_t equations;
 	equations.push_back({head2,p1});
