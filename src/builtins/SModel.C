@@ -619,14 +619,14 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 
 extern "C" closure builtin_function_gtr(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate(0);
-    const Nucleotides& N = arg0.as_<Nucleotides>();
-    double AG = Args.evaluate(1).as_double();
-    double AT = Args.evaluate(2).as_double();
-    double AC = Args.evaluate(3).as_double();
-    double GT = Args.evaluate(4).as_double();
-    double GC = Args.evaluate(5).as_double();
-    double TC = Args.evaluate(6).as_double();
+    double AG = Args.evaluate(0).as_double();
+    double AT = Args.evaluate(1).as_double();
+    double AC = Args.evaluate(2).as_double();
+    double GT = Args.evaluate(3).as_double();
+    double GC = Args.evaluate(4).as_double();
+    double TC = Args.evaluate(5).as_double();
+    auto arg6 = Args.evaluate(6);
+    const Nucleotides& N = arg6.as_<Nucleotides>();
 
     assert(N.size()==4);
 

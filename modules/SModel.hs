@@ -36,9 +36,9 @@ data F81 = F81 a b c d;
 data MixtureModel = MixtureModel a;
 data MixtureModels = MixtureModels a;
 
-equ a = gtr a 1.0 1.0 1.0 1.0 1.0 1.0;
-hky a k = gtr a k 1.0 1.0 1.0 1.0 k;
-tn a k1 k2 = gtr a k1 1.0 1.0 1.0 1.0 k2;
+equ a = gtr 1.0 1.0 1.0 1.0 1.0 1.0 a;
+hky k a = gtr k 1.0 1.0 1.0 1.0 k a;
+tn k1 k2 a= gtr k1 1.0 1.0 1.0 1.0 k2 a;
 
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 
