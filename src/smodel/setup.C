@@ -363,13 +363,6 @@ void substitute(const equations_t& equations, ptree& p)
 	    substitute(equations, child.second);
 }
 
-ptree substitute(const equations_t& equations, const ptree& p)
-{
-    ptree p2 = p;
-    substitute(equations, p2);
-    return p2;
-}
-
 equations_t unify(const ptree& p1, const ptree& p2)
 {
     // 1. If either term is a variable, then we are good.
@@ -747,9 +740,8 @@ int find_unused_index(const set<string>& vars)
     return index+1;
 }
 
-ptree alpha_rename(const ptree& p, const set<string>& vars_to_avoid)
+ptree alpha_rename(const set<string>& vars, const set<string>& vars_to_avoid)
 {
-    auto vars = find_variables(p);
     int index = std::max(find_unused_index(vars), find_unused_index(vars_to_avoid));
 
     equations_t equations;
@@ -770,13 +762,26 @@ void pass2(const ptree& required_type, ptree& model, const ptree& equations = {}
 
     for(auto rule: get_rules_for_func(name))
     {
-	// 1. Rename rule variables to fresh variables
-	set<string> variables_to_avoid = find_variables(rule.get_child("result_type"));
-	add(variables_to_avoid, find_variables(rule.get_child("args")));
+	// 1a. Find variables in type and equations.
+	set<string> variables_to_avoid = find_variables(required_type);
+	add(variables_to_avoid, find_variables(equations));
 	for(const auto& eq: equations)
 	    variables_to_avoid.insert(eq.first);
+
+	// 1b. Find variables in rule type
+	set<string> rule_type_variables = find_variables(rule.get_child("result_type"));
+	for(const auto& x: rule.get_child("args"))
+	    add(rule_type_variables, find_variables( x.second.get_child("arg_type") ) );
+
+	// 1c. Make substitutions in rule type
 	std::cout<<"substituting-from: "<<show(rule)<<std::endl;
-	substitute(alpha_rename(rule, variables_to_avoid), rule);
+	auto renaming = alpha_rename(rule_type_variables, variables_to_avoid);
+	substitute(renaming, rule.get_child("result_type") );
+	for(auto& x: rule.get_child("args"))
+	{
+	    ptree& arg_type = x.second.get_child("arg_type");
+	    substitute( renaming, arg_type );
+	}
 	std::cout<<"substituting-to  : "<<show(rule)<<std::endl;
 
 //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
