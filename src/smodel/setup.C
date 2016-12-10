@@ -92,6 +92,7 @@ using boost::property_tree::ptree;
 using boost::optional;
 using std::string;
 using std::pair;
+using std::set;
 using std::vector;
 using std::valarray;
 using boost::program_options::variables_map;
@@ -720,16 +721,69 @@ void pass1(ptree& p)
     }
 }
 
-void pass2(const ptree& required_type, ptree& model)
+set<string> find_variables(const ptree& p)
+{
+    set<string> vars;
+    if (is_variable(p))
+	vars.insert(p.get_value<string>());
+    else
+	for(const auto& x: p)
+	    add(vars,find_variables(x.second));
+    return vars;
+}
+
+int find_unused_index(const set<string>& vars)
+{
+    int index = 0;
+    for(const auto& var: vars)
+    {
+	if (var.size() > 3 and var.substr(0,3) == "var")
+	{
+	    int i;
+	    if (can_be_converted_to<int>(var.substr(3),i))
+		index = std::max(index,i);
+	}
+    }
+    return index+1;
+}
+
+ptree alpha_rename(const ptree& p, const set<string>& vars_to_avoid)
+{
+    auto vars = find_variables(p);
+    int index = std::max(find_unused_index(vars), find_unused_index(vars_to_avoid));
+
+    equations_t equations;
+    for(const auto& var: vars)
+    {
+	if (includes(vars_to_avoid, var))
+	{
+	    string new_var = string("var") + convertToString(index++);
+	    equations.put(var,new_var);
+	}
+    }
+    return equations;
+}
+
+void pass2(const ptree& required_type, ptree& model, const ptree& equations = {})
 {
     auto name = model.get_value<string>();
 
-    // 2. Substitute default values
     for(auto rule: get_rules_for_func(name))
     {
-	type_t result_type = rule.get_child("result_type");
+	// 1. Rename rule variables to fresh variables
+	set<string> variables_to_avoid = find_variables(rule.get_child("result_type"));
+	add(variables_to_avoid, find_variables(rule.get_child("args")));
+	for(const auto& eq: equations)
+	    variables_to_avoid.insert(eq.first);
+	std::cout<<"substituting-from: "<<show(rule)<<std::endl;
+	substitute(alpha_rename(rule, variables_to_avoid), rule);
+	std::cout<<"substituting-to  : "<<show(rule)<<std::endl;
+
 //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
-        // 2a. Skip rules where the type does not match
+
+        // 2. Skip rules where the type does not match
+
+	type_t result_type = rule.get_child("result_type");
 	equations_t equations = type_derived_from(result_type, required_type);
 
 	if (equations.get_value<string>() == "fail")
@@ -753,7 +807,7 @@ void pass2(const ptree& required_type, ptree& model)
 	for(auto& child: model)
 	{
 	    type_t arg_required_type = get_type_for_arg(rule, child.first);
-	    pass2(arg_required_type, child.second);
+	    pass2(arg_required_type, child.second, equations);
 	}
 
 	// 4. Handle default arguments 
@@ -776,7 +830,7 @@ void pass2(const ptree& required_type, ptree& model)
 	    {
 		auto arg_required_type = argument.get_child("arg_type");
 		auto default_arg = argument.get_child("default_value");
-		pass2(arg_required_type, default_arg);
+		pass2(arg_required_type, default_arg, equations);
 		model.push_back({arg_name, default_arg});
 	    }
 	}
