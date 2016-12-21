@@ -549,7 +549,6 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
     n_states = C.add_compute_expression((identifier("nStates"), S));
     rate = C.add_compute_expression((identifier("rate"), S));
 
-    base_model = C.add_compute_expression( v1^(v2^(identifier("baseModel"), (identifier("getNthMixture"),S,v2), v1) ) );
     frequencies = C.add_compute_expression((identifier("componentFrequencies"), S));
     transition_p = C.add_compute_expression((identifier("branchTransitionP"), S));
 }

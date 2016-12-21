@@ -187,7 +187,6 @@ struct smodel_methods
 
     // but these ones take an argument!
     int transition_p; // int branch
-    int base_model; // int index
     int frequencies; // int 
   
     // also:
