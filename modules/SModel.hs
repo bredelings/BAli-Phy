@@ -422,7 +422,7 @@ frequencies_model a = do {
        letters = alphabet_letters a};
   SamplingRate (1.0/sqrt(intToDouble n_letters)) $ do {
      pi <- dirichlet' n_letters 1.0;
-     sequence_ $ zipWith (\p l -> Log ("pi"++l) p) pi letters;
+     sequence_ $ zipWith (\p l -> Log l p) pi letters;
      return pi
   }
 };
@@ -486,9 +486,9 @@ fMutSel0_model codon_a nuc_rm = Prefix "fMutSel0" $ do
 
 plus_f a pi = plus_gwf a pi 1.0;
 
-plus_f_model a = Prefix "F" (do {
-  pi <- frequencies_model a;
-  return (plus_f a pi);
+plus_f_model pi a = Prefix "F" (do {
+  pi' <- Prefix "pi" (pi a);
+  return (plus_f a pi');
 });
 
 plus_gwf a pi f = let {pi' = listToVectorDouble pi} in 

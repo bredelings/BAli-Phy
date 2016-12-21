@@ -121,10 +121,10 @@ typedef ptree Rule;
 const vector< vector<vector<string>> > all_default_arguments = 
 {
     {{"log","Double","N"}, {"log_model","x"}, {"x","Double"}},
-    {{"Uniform","Double"}, {"uniform_model","a","b"}, {"a","Double"}, {"b","Double"}},
+    {{"Uniform","Double"}, {"uniform_model","low","high"}, {"low","Double"}, {"high","Double"}},
     {{"Normal","Double"}, {"normal_model","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
     {{"logNormal","Double"}, {"logNormal_model","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
-    {{"logLaplace","Double"}, {"logLaplace_model","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
+    {{"logLaplace","Double"}, {"logLaplace_model","lm","ls"}, {"lm","Double"}, {"ls","Double"}},
     {{"EQU","EM[a]"}, {}},
     {{"F81"}, {}, {"alphabet","Alphabet"}},
     {{"HKY","EM[a]"}, {"hky_model","kappa"}, {"kappa","Double","logNormal[log[2],0.25]"}, },
@@ -159,7 +159,8 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"M8a_Test","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"branch-site","MM[a]"}, {}, {"n","Int","2"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"dp_omega","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    {{"F","FM[a]"}, {"plus_f_model"} },
+    {{"frequencies_prior","F"}, {"frequencies_model"}},
+    {{"F","FM[a]"}, {"plus_f_model","pi"},{"pi","F","frequencies_prior"}},
     {{"F61","FM[a]"}, {"plus_f_model"} },
     {{"gwF","FM[a]"}, {"plus_gwf_model"}},
     {{"F1x4","FM[a]"}, {}},
