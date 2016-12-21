@@ -494,11 +494,11 @@ plus_f_model pi a = Prefix "F" (do {
 plus_gwf a pi f = let {pi' = listToVectorDouble pi} in 
                   ReversibleFrequency a (simple_smap a) pi' (plus_gwF a f pi');
 
-plus_gwf_model a = Prefix "GWF" (do {
-  pi <- frequencies_model a;
-  f <- uniform 0.0 1.0;
-  Log "f" f;
-  return (plus_gwf a pi f);
+plus_gwf_model pi f a = Prefix "gwF" (do {
+  pi' <- Prefix "pi" (pi a);
+  f' <- Prefix "f" f;
+  Log "f" f';
+  return (plus_gwf a pi' f');
 });
 
 uniform_f_model a = let {n_letters = alphabetSize a;
