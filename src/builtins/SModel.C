@@ -619,21 +619,27 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 
 extern "C" closure builtin_function_gtr(OperationArgs& Args)
 {
-    auto S = Args.evaluate(0).as_<Vector<double>>();
+    auto arg0 = Args.evaluate(0);
+    auto& S = arg0.as_<EVector>();
     auto arg1 = Args.evaluate(1);
     const alphabet& a = arg1.as_<alphabet>();
 
+    double total = 0;
+    for(int i=0;i<S.size();i++)
+	total += S[i].as_double();
+
+    assert(total > 0);
+
     int n = a.size();
     auto R = new Box<Matrix>(n,n);
-    assert(S.size() == n*(n-1)/2);
-
-    double total = sum(S);
+    if (S.size() != n*(n-1)/2)
+	throw myexception()<<"Alphabet size is "<<n<<" but only got "<<S.size()<<" exchangeabilities";
 
     int k=0;
     for(int i=0;i<n;i++)
 	for(int j=0;j<i;j++)
 	{
-	    int x = S[k++]/total;
+	    double x = S[k++].as_double()/total;
 	    (*R)(i,j) = (*R)(j,i) = x;
 	}
 

@@ -36,7 +36,7 @@ data F81 = F81 a b c d;
 data MixtureModel = MixtureModel a;
 data MixtureModels = MixtureModels a;
 
-gtr exchange a = builtin_gtr (listToVectorDouble exchange) a;
+gtr exchange a = builtin_gtr (list_to_vector exchange) a;
 equ a = gtr [1.0, 1.0, 1.0, 1.0, 1.0, 1.0] a;
 tn k1 k2 a = gtr [k1, 1.0, 1.0, 1.0, 1.0, k2] a;
 hky k a = tn k k a;
