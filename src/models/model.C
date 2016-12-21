@@ -265,8 +265,8 @@ void check_remove_grandchildren(vector< vector<string> >& paths, const vector<st
     for(int i=0;i<paths.size();i++)
 	if (path_has_prefix(paths[i], path_prefix))
 	{
-	    // We don't consider leaf child paths
-	    if (paths[i].size() == path_prefix.size() + 1)
+	    // We don't consider leaf child paths or empty paths
+	    if (paths[i].size() <= path_prefix.size() + 1)
 		continue;
 
 	    string child_name = paths[i][L];
@@ -322,10 +322,11 @@ vector<string> short_parameter_names(vector<string> names)
     for(int i=0;i<paths.size();i++)
     {
 	vector<string> prefix = paths[i];
+	prefix.pop_back();
 	while(prefix.size())
 	{
-	    prefix.pop_back();
 	    check_remove_grandchildren(paths, prefix);
+	    prefix.pop_back();
 	}
     }
   
