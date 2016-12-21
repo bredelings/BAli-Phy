@@ -560,16 +560,40 @@ mg94w9_model triplet_a = Prefix "MG94w9"
        return $ ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (muse_gaut_matrix triplet_a nuc_r1 nuc_r2 nuc_r3)
 });
 
-gamma_model base n alphabet = Prefix "Gamma"
+gamma_model base alpha n alphabet = Prefix "Gamma"
   (do {
-     sigmaOverMu <- logLaplace (-3.0) 1.0;
-     Log "sigmaOverMu" sigmaOverMu;
-     let {a = 1.0/b; 
-          b = sigmaOverMu^2;
-          discretize n = uniformDiscretize (quantile (gamma a b)) n};
-     Log "a" a;
-     Log "b" b;
-     return $ multiRate (base alphabet) (discretize n)
+     base' <- base alphabet;
+
+     alpha' <- Prefix "alpha" alpha;
+     Log "alpha" alpha';
+
+     n' <- Prefix "n" n;
+     Log "n" n;
+
+     let {beta = 1.0/alpha';
+          dist = uniformDiscretize (quantile (gamma alpha' beta)) n'};
+
+     return $ multiRate base' dist
+});
+
+gamma_inv_model base alpha pInv n alphabet = Prefix "GammaInv"
+  (do {
+     base' <- base alphabet;
+
+     alpha' <- Prefix "alpha" alpha;
+     Log "alpha" alpha';
+
+     n' <- Prefix "n" n;
+     Log "n" n;
+
+     pInv' <- Prefix "pInv" pInv;
+     Log "pInv" pInv';
+         
+     let {beta = 1.0/alpha';
+          dist = uniformDiscretize (quantile (gamma alpha' beta)) n';
+          dist2 = extendDiscreteDistribution dist pInv' 0.0};
+
+     return $ multiRate base' dist2
 });
 
 plus_inv_model dist = do 
@@ -587,22 +611,6 @@ inv_model base = Prefix "INV" $ do
 
      return $ multiRate base dist2
 };
-
-gamma_inv_model base n = Prefix "GammaINV"
-  (do {
-     sigmaOverMu <- logLaplace (-3.0) 1.0;
-     Log "sigmaOverMu" sigmaOverMu;
-
-     let {a = 1.0/b; 
-          b = sigmaOverMu^2;
-          dist = uniformDiscretize (quantile (gamma a b)) n};
-     Log "a" a;
-     Log "b" b;
-
-     dist2 <- plus_inv_model dist;
-
-     return $ multiRate base dist2
-});
 
 log_normal_model base n = Prefix "LogNormal"
   (do {

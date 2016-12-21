@@ -124,6 +124,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"Uniform","Double"}, {"uniform_model","a","b"}, {"a","Double"}, {"b","Double"}},
     {{"Normal","Double"}, {"normal_model","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
     {{"logNormal","Double"}, {"logNormal_model","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
+    {{"logLaplace","Double"}, {"logLaplace_model","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
     {{"EQU","EM[a]"}, {}},
     {{"F81"}, {}, {"alphabet","Alphabet"}},
     {{"HKY","EM[a]"}, {"hky_model","kappa"}, {"kappa","Double","logNormal[log[2],0.25]"}, },
@@ -142,8 +143,8 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"fMutSel0","RA[a]"}, {}, {"submodel","RA[a]"}},
     {{"INV","MM[a]"}, {}, {"p","Double","Uniform[0,1]"}},
     {{"DP","MM[a]"}, {}, {"n","Int"}, {"submodel","RA[a]"}},
-    {{"gamma","MM[a]"}, {}, {"n","Int","4"}, {"*alpha","Double"}, {"submodel","RA[a]"}},
-    {{"gamma_inv","MM[a]"}, {}, {"n","Int","4"}, {"*alpha","Double"}, {"p","Double","Uniform[0,1]"}, {"submodel","RA[a]"}},
+    {{"gamma","MM[a]"}, {"gamma_model","submodel","alpha","n"}, {"n","Int","4"}, {"alpha","Double","logLaplace[-6,2]"}, {"submodel","RA[a]"}},
+    {{"gamma_inv","MM[a]"}, {"gamma_inv_model","submodel","alpha","pInv","n"}, {"n","Int","4"}, {"alpha","Double","logLaplace[-6,2]"}, {"pInv","Double","Uniform[0,1]"}, {"submodel","RA[a]"}},
     {{"log-normal","MM[a]"}, {}, {"n","Int","4"}, {"sigmaOverMu","Double"}, {"submodel","RA[a]"}},
     {{"log-normal_inv","MM[a]"}, {}, {"n","Int","4"}, {"sigmaOverMu","Double"}, {"p","Double","Uniform[0,1]"}, {"submodel","RA[a]"}},
     {{"M1a","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
@@ -909,7 +910,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
     auto rule = rules[0];
     if (not rule.count("call")) return {};
 	
-    bool no_log = rule.get("log","true") == "false";
+//    bool no_log = rule.get("log","true") == "false";
     bool is_action = rule.get("action","false") == "true";
     bool add_return = rule.get("add_return","false") == "true";
     ptree call = rule.get_child("call");
@@ -1203,23 +1204,7 @@ expression_ref process_stack_Frequencies(const ptree& model_rep)
 
 expression_ref process_stack_Multi(const ptree& model_rep)
 {
-    if (model_rep.get_value<string>() == "gamma") 
-    {
-	expression_ref submodel = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
-
-	int n = model_rep.get<int>("n");
-
-	return model_expression({identifier("gamma_model"), submodel, n});
-    }
-    else if (model_rep.get_value<string>() == "gamma_inv") 
-    {
-	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
-
-	int n = model_rep.get<int>("n");
-
-	return model_expression({identifier("gamma_inv_model"), base, n});
-    }
-    else if (model_rep.get_value<string>() == "INV") 
+    if (model_rep.get_value<string>() == "INV") 
     {
 	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
 
