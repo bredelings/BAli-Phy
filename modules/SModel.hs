@@ -4,7 +4,7 @@ import Distributions;
 import Alphabet;
 import Tree;
 import Parameters;
-    
+
 builtin f3x4_frequencies 4 "f3x4_frequencies" "SModel";
 builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
 builtin plus_gwF 3 "plus_gwF" "SModel";
@@ -427,6 +427,12 @@ frequencies_model a = do {
   }
 };
 
+
+get_element_freqs []                 x = error ("No frequency specified for letter '" ++ show x ++ "'");
+get_element_freqs ((key,value):rest) x = if (key == x) then value else get_element_freqs rest x;
+
+constant_frequencies_model freqs a = sequence [get_element_freqs freqs l|l <- alphabet_letters a];
+
 simple_smap a = iotaUnsigned (alphabetSize a);
 
 fMutSel codon_a codon_w omega (ReversibleMarkov _ _ nuc_q nuc_pi _ _ _) =
@@ -512,11 +518,11 @@ f1x4 triplet_a nuc_pi = let {nuc_pi' = listToVectorDouble nuc_pi;
                         ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (plus_gwF triplet_a 1.0 pi');
 
                                         
-f1x4_model triplet_a = Prefix "F1x4" 
+f1x4_model nuc_pi triplet_a = Prefix "F1x4" 
  (do {
-       let {nuc_a = getNucleotides triplet_a};
-       nuc_pi <- frequencies_model nuc_a;
-       return (f1x4 triplet_a nuc_pi);
+    let {nuc_a = getNucleotides triplet_a};
+    nuc_pi' <- Prefix "pi" (nuc_pi nuc_a);
+    return (f1x4 triplet_a nuc_pi');
 });
 
 f3x4 triplet_a nuc_pi1 nuc_pi2 nuc_pi3 = let {nuc_pi1' = listToVectorDouble nuc_pi1;
@@ -708,6 +714,14 @@ mmm m = MixtureModels [m];
 
 mmm_model m a = do {m' <- m a;
                     return (mmm m')};
+
+wag_model a = return (wag a);
+
+pam_model a = return (pam a);
+
+jtt_model a = return (jtt a);
+
+lg_model a = return (lg a);
 
 log_model x = do {x' <- x; return (log x')};
 

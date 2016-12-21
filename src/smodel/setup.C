@@ -133,10 +133,10 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"HKYx3","EM[a]"}, {}, {"kappa","Double","logNormal[log[2],0.25]"}},
     {{"TNx3","EM[a]"}, {}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
     {{"GTRx3","EM[a]"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"}},
-    {{"PAM","EM[AA]"}, {}, {"alphabet","Alphabet","AA"}},
-    {{"JTT","EM[AA]"}, {}, {"alphabet","Alphabet","AA"}},
-    {{"WAG","EM[AA]"}, {}, {"alphabet","Alphabet","AA"}},
-    {{"LG","EM[AA]"}, {}, {"alphabet","Alphabet","AA"}},
+    {{"PAM","EM[AA]"}, {"SModel.pam_model"}},
+    {{"JTT","EM[AA]"}, {"SModel.jtt_model"}},
+    {{"WAG","EM[AA]"}, {"SModel.wag_model"}},
+    {{"LG","EM[AA]"}, {"SModel.lg_model"}},
     {{"Empirical","EM[a]"}, {}, {"filename"}},
     {{"M0","EM[a]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","Uniform[0,1]"}},
     {{"fMutSel","RA[a]"}, {}, {"submodel","RA[a]"}},
@@ -160,10 +160,11 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"branch-site","MM[a]"}, {}, {"n","Int","2"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"dp_omega","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"frequencies_prior","F"}, {"frequencies_model"}},
+    {{"Freq","F","P"}, {"constant_frequencies_model"},{"**","Double"}},
     {{"F","FM[a]"}, {"plus_f_model","pi"},{"pi","F","frequencies_prior"}},
     {{"F61","FM[a]"}, {"plus_f_model"}, {"pi","F","frequencies_prior"}},
     {{"gwF","FM[a]"}, {"plus_gwf_model","pi","f"},{"pi","F","frequencies_prior"},{"f","Double","Uniform[0,1]"}},
-    {{"F1x4","FM[a]"}, {}},
+    {{"F1x4","FM[a]"}, {"f1x4_model","pi"}, {"pi","F","frequencies_prior"}},
     {{"F3x4","FM[a]"}, {}},
     {{"MG94","FM[a]"}, {}},
     {{"MG94w9","FM[a]"}, {}},
@@ -194,12 +195,8 @@ ptree convert_rule(const vector<vector<string>>& s)
     rule.put("name",s[0][0]);
 
     rule.push_back({"result_type",parse_type(s[0][1])});
-    if (s[0].size() > 2 and s[0][2] == "M")
-	rule.put("action","true");
-    if (s[0].size() > 2 and s[0][2] == "N")
-	rule.put("log","false");
-    if (s[0].size() > 3 and s[0][3] == "R")
-	rule.put("add_return","true");
+    if (s[0].size() > 2 and s[0][2] == "P")
+	rule.put("pass_arguments","true");
     if (s[1].size())
     {
 	ptree call;
@@ -764,6 +761,18 @@ void pass2(const ptree& required_type, ptree& model, const ptree& equations = {}
 {
     auto name = model.get_value<string>();
 
+    if (can_be_converted_to<int>(name) and (required_type.get_value<string>() == "Int" or required_type.get_value<string>() == "Double"))
+    {
+	assert(model.empty());
+	return;
+    }
+
+    if (can_be_converted_to<double>(name) and required_type.get_value<string>() == "Double")
+    {
+	assert(model.empty());
+	return;
+    }
+
     for(auto rule: get_rules_for_func(name))
     {
 	// 1a. Find variables in type and equations.
@@ -812,7 +821,16 @@ void pass2(const ptree& required_type, ptree& model, const ptree& equations = {}
 
 	if (equations.get_value<string>() == "fail") continue;
 
-	// 3. Handle supplied arguments first.
+	// 2.5. Check type of arguments if pass_arguments
+	if (rule.get("pass_arguments",false))
+	{
+	    type_t arg_required_type = get_type_for_arg(rule, "*");
+	    for(auto& child: model)
+		pass2(arg_required_type, child.second, equations);
+	    return;
+	}
+
+        // 3. Handle supplied arguments first.
 	for(auto& child: model)
 	{
 	    type_t arg_required_type = get_type_for_arg(rule, child.first);
@@ -846,11 +864,6 @@ void pass2(const ptree& required_type, ptree& model, const ptree& equations = {}
 
 	return;
     }
-    if (can_be_converted_to<int>(name) and (required_type.get_value<string>() == "Int" or required_type.get_value<string>() == "Double"))
-	return;
-
-    if (can_be_converted_to<double>(name) and required_type.get_value<string>() == "Double")
-	return;
 
     throw myexception()<<"Term '"<<model.get_value<string>()<<"' isn't of type '"<<unparse_type(required_type)<<"'";
 }
@@ -911,29 +924,32 @@ expression_ref process_stack_functions(const ptree& model_rep)
     auto rule = rules[0];
     if (not rule.count("call")) return {};
 	
-//    bool no_log = rule.get("log","true") == "false";
-    bool is_action = rule.get("action","false") == "true";
-    bool add_return = rule.get("add_return","false") == "true";
+    bool pass_arguments = rule.get("pass_arguments",false) == true;
     ptree call = rule.get_child("call");
     ptree args = rule.get_child("args");
     
     expression_ref E = identifier(array_index(call,0).get_value<string>());
-    for(int i=1;i<call.size();i++)
+    if (pass_arguments)
     {
-	string arg_name = array_index(call,i).get_value<string>();
-	ptree arg_tree = get_arg(rule, arg_name);
-	ptree arg_type = arg_tree.get_child("arg_type");
-	expression_ref arg = get_smodel_as(arg_type, model_rep.get_child(arg_name));
-//	if ((arg_type.get_value<string>() == "Double" or arg_type.get_value<string>() == "Int") and (not no_log))
-//	    arg = (identifier("add_logger"),arg_name, arg);
-	E = (E,arg);
+	ptree arg_type = get_type_for_arg(rule, "*");
+	vector<expression_ref> arguments;
+	for(const auto& child: model_rep)
+	{
+	    string arg_name = child.first;
+	    expression_ref arg = get_smodel_as(arg_type, model_rep.get_child(arg_name));
+	    arguments.push_back(Tuple(arg_name,arg));
+	}
+	E = (E,get_list(arguments));
     }
-    if (is_action)
-	E = model_expression(E);
-    if (add_return)
-	E = (identifier("return"),E);
-//    if (not no_log)
-//	E = (identifier("@@"), name, E);
+    else
+	for(int i=1;i<call.size();i++)
+	{
+	    string arg_name = array_index(call,i).get_value<string>();
+	    ptree arg_tree = get_arg(rule, arg_name);
+	    ptree arg_type = arg_tree.get_child("arg_type");
+	    expression_ref arg = get_smodel_as(arg_type, model_rep.get_child(arg_name));
+	    E = (E,arg);
+	}
     return E;
 
     return {};
@@ -1006,34 +1022,6 @@ expression_ref process_stack_Markov(const ptree& model_rep)
 	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
 
 	return model_expression({identifier("gtrx3_model"),alphabet});
-    }
-    else if (model_rep.get_value<string>() == "PAM")
-    {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
-	
-	return (identifier("SModel.pam"), alphabet);
-    }
-    else if (model_rep.get_value<string>() == "JTT")
-    {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
-
-	return (identifier("SModel.jtt"), alphabet);
-    }
-    else if (model_rep.get_value<string>() == "WAG") {
-	if (not model_rep.count("alphabet"))
-	    throw myexception()<<"Model '"<<model_rep.get_value<string>()<<"' is missing parameters 'alphabet'";
-
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
-
-	return (identifier("SModel.wag"), alphabet);
-    }
-    else if (model_rep.get_value<string>() == "LG") {
-	if (not model_rep.count("alphabet"))
-	    throw myexception()<<"Model '"<<model_rep.get_value<string>()<<"' is missing parameters 'alphabet'";
-
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
-
-	return (identifier("SModel.lg"), alphabet);
     }
     else if (model_rep.get_value<string>() == "Empirical") 
     {
