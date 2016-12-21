@@ -13,8 +13,8 @@
 /// a de Bruijn indexed variable 
 struct index_var
 {
-  int index;
-  index_var(int i):index(i) {}
+    int index;
+    index_var(int i):index(i) {}
 };
 
 /// An S-expression: An Object, and possibly an array of Objects.
@@ -22,269 +22,269 @@ struct expression;
 
 class expression_ref
 {
-  union
-  {
-    char c;
-    int i;
-    double d;
-    log_double_t ld;
-    object_ptr<const Object> O;
-  };
-  type_constant type_ = null_type;
+    union
+    {
+	char c;
+	int i;
+	double d;
+	log_double_t ld;
+	object_ptr<const Object> O;
+    };
+    type_constant type_ = null_type;
 
 public:
 
-  bool is_object_type() const {return type_ > index_var_type;}
+    bool is_object_type() const {return type_ > index_var_type;}
 
-  tribool operator==(const expression_ref& E2) const
-  {
-    if (type_ != E2.type())
-      return false;
+    tribool operator==(const expression_ref& E2) const
+	{
+	    if (type_ != E2.type())
+		return false;
     
-    switch(type_)
-    {
-    case int_type:
-      return (i == E2.as_int());
-      break;
-    case double_type:
-      return (d == E2.as_double());
-      break;
-    case log_double_type:
-      return (ld == E2.as_log_double());
-      break;
-    case char_type:
-      return (c == E2.as_char());
-      break;
-    case index_var_type:
-      return (i == E2.as_index_var());
-      break;
-    default:
-      return ptr()->compare(*E2.ptr());
-    }
-  }
+	    switch(type_)
+	    {
+	    case int_type:
+		return (i == E2.as_int());
+		break;
+	    case double_type:
+		return (d == E2.as_double());
+		break;
+	    case log_double_type:
+		return (ld == E2.as_log_double());
+		break;
+	    case char_type:
+		return (c == E2.as_char());
+		break;
+	    case index_var_type:
+		return (i == E2.as_index_var());
+		break;
+	    default:
+		return ptr()->compare(*E2.ptr());
+	    }
+	}
 
-  tribool operator==(const Object& O) const
-  {
-    if (not is_object_type())
-      return false;
-    else
-      return ptr()->compare(O);
-  }
+    tribool operator==(const Object& O) const
+	{
+	    if (not is_object_type())
+		return false;
+	    else
+		return ptr()->compare(O);
+	}
 
-  void clear() {destroy_ptr();type_=null_type;}
+    void clear() {destroy_ptr();type_=null_type;}
 
-  bool is_expression() const;
+    bool is_expression() const;
 
-  bool is_atomic() const
-  {
-    return not is_expression();
-  }
+    bool is_atomic() const
+	{
+	    return not is_expression();
+	}
 
-  type_constant type() const
-  {
-    return type_;
-  }
+    type_constant type() const
+	{
+	    return type_;
+	}
   
-  const expression& as_expression() const
-  {
-    assert(not is_atomic());
-    return *convert<expression>(ptr().get());
-  }
+    const expression& as_expression() const
+	{
+	    assert(not is_atomic());
+	    return *convert<expression>(ptr().get());
+	}
 
-  inline const expression_ref& head() const;
+    inline const expression_ref& head() const;
 
-  inline const std::vector<expression_ref>& sub() const;
+    inline const std::vector<expression_ref>& sub() const;
 
-  inline int size() const 
-  {
-    if (is_atomic())
-      return 0;
-    else
-      return sub().size();
-  }
+    inline int size() const 
+	{
+	    if (is_atomic())
+		return 0;
+	    else
+		return sub().size();
+	}
 
-  expression_ref operator()(const std::vector<expression_ref>& args) const;
+    expression_ref operator()(const std::vector<expression_ref>& args) const;
 
-  template <typename T>
-  bool is_a() const
-  {
-    if (not is_object_type())
-      return false;
-    else
-      return (bool)boost::dynamic_pointer_cast<const T>(ptr());
-  }
+    template <typename T>
+    bool is_a() const
+	{
+	    if (not is_object_type())
+		return false;
+	    else
+		return (bool)boost::dynamic_pointer_cast<const T>(ptr());
+	}
 
-  template <typename T>
-  object_ptr<const T> assert_is_a() const
-  {
-    return convert<const T>(ptr());
-  }
+    template <typename T>
+    object_ptr<const T> assert_is_a() const
+	{
+	    return convert<const T>(ptr());
+	}
 
-  template <typename T>
-  const T& as_() const
-  {
-    return *convert<const T>(ptr());
-  }
+    template <typename T>
+    const T& as_() const
+	{
+	    return *convert<const T>(ptr());
+	}
 
-  bool is_int() const
-  {
-    return type_ == int_type;
-  }
+    bool is_int() const
+	{
+	    return type_ == int_type;
+	}
 
-  int as_int() const
-  {
-    assert(is_int());
-    return i;
-  }
+    int as_int() const
+	{
+	    assert(is_int());
+	    return i;
+	}
 
-  bool is_double() const
-  {
-    return type_ == double_type;
-  }
+    bool is_double() const
+	{
+	    return type_ == double_type;
+	}
 
-  double as_double() const
-  {
-    assert(is_double());
-    return d;
-  }
+    double as_double() const
+	{
+	    assert(is_double());
+	    return d;
+	}
 
-  bool is_char() const
-  {
-    return type_ == char_type;
-  }
+    bool is_char() const
+	{
+	    return type_ == char_type;
+	}
 
-  char as_char() const
-  {
-    assert(is_char());
-    return c;
-  }
+    char as_char() const
+	{
+	    assert(is_char());
+	    return c;
+	}
 
-  bool is_log_double() const
-  {
-    return type_ == log_double_type;
-  }
+    bool is_log_double() const
+	{
+	    return type_ == log_double_type;
+	}
 
-  log_double_t as_log_double() const
-  {
-    assert(is_log_double());
-    return ld;
-  }
+    log_double_t as_log_double() const
+	{
+	    assert(is_log_double());
+	    return ld;
+	}
 
-  bool is_index_var() const
-  {
-    return type_ == index_var_type;
-  }
+    bool is_index_var() const
+	{
+	    return type_ == index_var_type;
+	}
   
-  int as_index_var() const
-  {
-    assert(is_index_var());
-    return i;
-  }
+    int as_index_var() const
+	{
+	    assert(is_index_var());
+	    return i;
+	}
 
-  inline const object_ptr<const Object>& ptr() const
-  {
-    assert(is_object_type());
-    assert((bool)O);
-    return O;
-  }
+    inline const object_ptr<const Object>& ptr() const
+	{
+	    assert(is_object_type());
+	    assert((bool)O);
+	    return O;
+	}
 
-  inline explicit operator bool() const
-  {
-    return (type_ != null_type);
-  }
+    inline explicit operator bool() const
+	{
+	    return (type_ != null_type);
+	}
 
-  std::string print() const
-  {
-    switch(type_)
-    {
-    case null_type:
-      return "[NULL]";
-    case int_type:
-      return convertToString(i);
-      break;
-    case double_type:
-      return convertToString(d);
-      break;
-    case log_double_type:
-      return convertToString(ld);
-      break;
-    case char_type:
-      return std::string("'")+c+"'";
-      break;
-    case index_var_type:
-      return std::string("%")+convertToString(i);
-      break;
-    default:
-      return ptr()->print();
-    }
-  }
+    std::string print() const
+	{
+	    switch(type_)
+	    {
+	    case null_type:
+		return "[NULL]";
+	    case int_type:
+		return convertToString(i);
+		break;
+	    case double_type:
+		return convertToString(d);
+		break;
+	    case log_double_type:
+		return convertToString(ld);
+		break;
+	    case char_type:
+		return std::string("'")+c+"'";
+		break;
+	    case index_var_type:
+		return std::string("%")+convertToString(i);
+		break;
+	    default:
+		return ptr()->print();
+	    }
+	}
 
-  typedef object_ptr<const Object> otype;
+    typedef object_ptr<const Object> otype;
 
-  inline void destroy_ptr()
-  {
-    if (is_object_type())
-      (&O)->~otype();
-  }
+    inline void destroy_ptr()
+	{
+	    if (is_object_type())
+		(&O)->~otype();
+	}
 
-  // Default
-  expression_ref() {}
+    // Default
+    expression_ref() {}
 
-  expression_ref(expression* e);
+    expression_ref(expression* e);
 
-  expression_ref(const expression* e);
+    expression_ref(const expression* e);
 
-  expression_ref(const object_ptr<const expression>& e):expression_ref(e.get()) { }
+    expression_ref(const object_ptr<const expression>& e):expression_ref(e.get()) { }
 
-  expression_ref(const object_ptr<expression>& e):expression_ref(e.get()) { }
+    expression_ref(const object_ptr<expression>& e):expression_ref(e.get()) { }
 
-  expression_ref(const expression_ref& e, const std::initializer_list<expression_ref> v);
+    expression_ref(const expression_ref& e, const std::initializer_list<expression_ref> v);
 
-  expression_ref(const expression_ref& e, const std::vector<expression_ref>& v);
+    expression_ref(const expression_ref& e, const std::vector<expression_ref>& v);
 
-  // Object arguments
-  expression_ref(Object* v):O(v),type_(v->type()) { }
+    // Object arguments
+    expression_ref(Object* v):O(v),type_(v->type()) { }
 
-  expression_ref(const Object* v):O(v),type_(v->type()) { }
+    expression_ref(const Object* v):O(v),type_(v->type()) { }
 
-  expression_ref(const object_ptr<Object>& v):expression_ref(v.get()) { }
+    expression_ref(const object_ptr<Object>& v):expression_ref(v.get()) { }
 
-  template <typename T>
-  expression_ref(const object_ptr<T>& v):expression_ref(v.get()) { }
+    template <typename T>
+    expression_ref(const object_ptr<T>& v):expression_ref(v.get()) { }
 
-  expression_ref(const Object& o):expression_ref(o.clone()) { }
+    expression_ref(const Object& o):expression_ref(o.clone()) { }
 
-  // Builtin-type arguments
-  expression_ref(const int& i2):i(i2),type_(int_type) {}
-  expression_ref(const double& d2):d(d2),type_(double_type) {}
-  expression_ref(const log_double_t& ld2):ld(ld2),type_(log_double_type) {}
-  expression_ref(const bool& b);
-  expression_ref(const index_var& iv):i(iv.index),type_(index_var_type) {}
-  expression_ref(const std::string& s);
-  expression_ref(const char* s);
-  expression_ref(const char& c2):c(c2),type_(char_type) {}
-  expression_ref(const String& s):expression_ref(s.clone()) { }
+    // Builtin-type arguments
+    expression_ref(const int& i2):i(i2),type_(int_type) {}
+    expression_ref(const double& d2):d(d2),type_(double_type) {}
+    expression_ref(const log_double_t& ld2):ld(ld2),type_(log_double_type) {}
+    expression_ref(const bool& b);
+    expression_ref(const index_var& iv):i(iv.index),type_(index_var_type) {}
+    expression_ref(const std::string& s);
+    expression_ref(const char* s);
+    expression_ref(const char& c2):c(c2),type_(char_type) {}
+    expression_ref(const String& s):expression_ref(s.clone()) { }
 
-  expression_ref& operator=(const expression_ref& E)
-  {
-    destroy_ptr();
-    type_ = E.type_;
-    if (is_object_type())
-      new (&O) otype(E.ptr());
-    else
-      d = E.d;
-    return *this;
-  }
+    expression_ref& operator=(const expression_ref& E)
+	{
+	    destroy_ptr();
+	    type_ = E.type_;
+	    if (is_object_type())
+		new (&O) otype(E.ptr());
+	    else
+		d = E.d;
+	    return *this;
+	}
 
-  expression_ref(const expression_ref& E):type_(E.type_)
-  {
-    if (is_object_type())
-      new (&O) otype(E.ptr());
-    else
-      d = E.d;
-  }
+    expression_ref(const expression_ref& E):type_(E.type_)
+	{
+	    if (is_object_type())
+		new (&O) otype(E.ptr());
+	    else
+		d = E.d;
+	}
 
-  inline ~expression_ref() {destroy_ptr();}
+    inline ~expression_ref() {destroy_ptr();}
 };
 
 
@@ -301,46 +301,46 @@ expression_ref operator&(const expression_ref&, const expression_ref&);
 /// An array of Objects.
 struct expression: public Object
 {
-  // The head of the expression.
-  expression_ref head;
+    // The head of the expression.
+    expression_ref head;
 
-  // An expression may or may not have sub-expressions
-  std::vector< expression_ref > sub;
+    // An expression may or may not have sub-expressions
+    std::vector< expression_ref > sub;
 
-  /// The number of terms after the head
-  int size() const {return sub.size();}
+    /// The number of terms after the head
+    int size() const {return sub.size();}
   
-  // Methods from Object
-  expression* clone() const {return new expression(*this);}
-  tribool compare(const Object& o) const;
-  std::string print() const;
+    // Methods from Object
+    expression* clone() const {return new expression(*this);}
+    tribool compare(const Object& o) const;
+    std::string print() const;
   
-  tribool operator==(const expression& E) const;
+    tribool operator==(const expression& E) const;
 
-  type_constant type() const {return expression_type;}
+    type_constant type() const {return expression_type;}
 
-  expression() {}
+    expression() {}
 
-  expression(const expression_ref&);
+    expression(const expression_ref&);
 
-  expression(const expression_ref&, const std::initializer_list< expression_ref > S);
+    expression(const expression_ref&, const std::initializer_list< expression_ref > S);
 
-  expression(const expression_ref&, const std::vector< expression_ref >& S);
+    expression(const expression_ref&, const std::vector< expression_ref >& S);
 
-  virtual ~expression() {}
+    virtual ~expression() {}
 };
 
 inline const expression_ref& expression_ref::head() const 
 {
-  if (is_expression())
-    return as_expression().head;
-  else
-    return *this;
+    if (is_expression())
+	return as_expression().head;
+    else
+	return *this;
 }
 
 inline bool expression_ref::is_expression() const
 {
-  return (type_ == expression_type);
+    return (type_ == expression_type);
 }
 
 inline const std::vector<expression_ref>& expression_ref::sub() const {return as_expression().sub;}
@@ -356,97 +356,97 @@ inline expression_ref::expression_ref(const expression_ref& e, const std::vector
 
 struct parameter: public Object
 {
-  std::string parameter_name;
+    std::string parameter_name;
 
-  parameter* clone() const {return new parameter(*this);}
-  std::string print() const {return parameter_name;}
-  tribool compare(const Object& o) const;
+    parameter* clone() const {return new parameter(*this);}
+    std::string print() const {return parameter_name;}
+    tribool compare(const Object& o) const;
   
-  type_constant type() const {return parameter_type;}
+    type_constant type() const {return parameter_type;}
 
-  parameter(const std::string& s);
+    parameter(const std::string& s);
 };
 
 // a dummy variable expression
 struct dummy: public Object
 {
-  int index;
+    int index;
 
-  std::string name;
+    std::string name;
 
-  bool operator==(const dummy&) const;
-  dummy* clone() const {return new dummy(*this);}
-  std::string print() const;
-  tribool compare(const Object& o) const;
+    bool operator==(const dummy&) const;
+    dummy* clone() const {return new dummy(*this);}
+    std::string print() const;
+    tribool compare(const Object& o) const;
   
-  bool operator<(const dummy&) const;
+    bool operator<(const dummy&) const;
 
-  type_constant type() const {return dummy_type;}
+    type_constant type() const {return dummy_type;}
 
-  dummy(int i):index(i) {}
-  dummy(const std::string& s):index(-1),name(s) { assert(name != "_");}
+    dummy(int i):index(i) {}
+    dummy(const std::string& s):index(-1),name(s) { assert(name != "_");}
 };
 
 struct reg_var: public Object
 {
-  int target;
+    int target;
 
-  reg_var* clone() const {return new reg_var(*this);}
+    reg_var* clone() const {return new reg_var(*this);}
 
-  std::string print() const 
-  {
-    return "<" + convertToString(target) + ">";
-  }
+    std::string print() const 
+	{
+	    return "<" + convertToString(target) + ">";
+	}
 
-  tribool compare(const Object& o) const
-  {
-    const reg_var* E = dynamic_cast<const reg_var*>(&o);
-    if (not E) 
-      return false;
+    tribool compare(const Object& o) const
+	{
+	    const reg_var* E = dynamic_cast<const reg_var*>(&o);
+	    if (not E) 
+		return false;
 
-    return target == E->target;
-  }
+	    return target == E->target;
+	}
 
-  reg_var():
-    target(-1)
-  { }
+    reg_var():
+	target(-1)
+	{ }
 
-  reg_var(int t):
-    target(t)
-  { }
+    reg_var(int t):
+	target(t)
+	{ }
 };
 
 struct identifier: public Object
 {
-  std::string name;
+    std::string name;
 
-  identifier* clone() const {return new identifier(*this);}
+    identifier* clone() const {return new identifier(*this);}
 
-  std::string print() const
-  {
-    return name;
-  }
+    std::string print() const
+	{
+	    return name;
+	}
 
-  tribool compare(const Object& o) const
-  {
-    const identifier* V = dynamic_cast<const identifier*>(&o);
-    if (not V)
-      return false;
+    tribool compare(const Object& o) const
+	{
+	    const identifier* V = dynamic_cast<const identifier*>(&o);
+	    if (not V)
+		return false;
 
-    return name == V->name;
-  }
+	    return name == V->name;
+	}
 
-  identifier(const std::string& s);
+    identifier(const std::string& s);
 };
 
 struct Trim: public Object
 {
-  Trim* clone() const {return new Trim(*this);}
-  tribool compare(const Object& o) const;
+    Trim* clone() const {return new Trim(*this);}
+    tribool compare(const Object& o) const;
 
-  type_constant type() const {return trim_type;}
+    type_constant type() const {return trim_type;}
 
-  std::string print() const;
+    std::string print() const;
 };
 
 bool is_dummy(const expression_ref&);
@@ -467,51 +467,51 @@ bool is_irrefutable_pattern(const expression_ref& E);
 
 struct let_obj: public Object
 {
-  let_obj* clone() const {return new let_obj(*this);}
+    let_obj* clone() const {return new let_obj(*this);}
 
-  tribool compare(const Object& o) const;
+    tribool compare(const Object& o) const;
 
-  type_constant type() const {return let_type;}
+    type_constant type() const {return let_type;}
 
-  std::string print() const;
+    std::string print() const;
 };
 
 struct AST_node: public Object
 {
-  AST_node* clone() const {return new AST_node(*this);}
-  std::string type;
-  std::string value;
-  tribool compare(const Object& o) const;
+    AST_node* clone() const {return new AST_node(*this);}
+    std::string type;
+    std::string value;
+    tribool compare(const Object& o) const;
 
-  std::string print() const;
+    std::string print() const;
 
-  AST_node(const std::string&);
-  AST_node(const std::string& t, const std::string& v);
+    AST_node(const std::string&);
+    AST_node(const std::string& t, const std::string& v);
 };
 
 struct constructor: public Operator
 {
-  constructor* clone() const {return new constructor(*this);}
+    constructor* clone() const {return new constructor(*this);}
 
-  tribool compare(const Object& o) const;
+    tribool compare(const Object& o) const;
   
-  std::string f_name;
-  int n_args_;
+    std::string f_name;
+    int n_args_;
 
-  int n_args() const {return n_args_;}
+    int n_args() const {return n_args_;}
 
-  assoc_type assoc;
+    assoc_type assoc;
 
-  int prec;
+    int prec;
 
-  assoc_type associativity() const {return assoc;}
-  virtual int precedence() const {return prec;}
+    assoc_type associativity() const {return assoc;}
+    virtual int precedence() const {return prec;}
 
-  std::string name() const {return f_name;}
+    std::string name() const {return f_name;}
 
-  type_constant type() const {return constructor_type;}
+    type_constant type() const {return constructor_type;}
 
-  constructor(const std::string&, int n);
+    constructor(const std::string&, int n);
 };
 
 constructor left_assoc_constructor(const std::string& s,int prec=0);
@@ -543,7 +543,7 @@ expression_ref apply_expression(const expression_ref& E, const std::vector< expr
 
 inline expression_ref expression_ref::operator()(const std::vector<expression_ref>& args) const
 {
-  return apply(*this,args);
+    return apply(*this,args);
 }
 
 expression_ref lambda_expression(const Operator& O);
@@ -573,27 +573,27 @@ std::vector<int> get_free_index_vars(const expression_ref&);
 
 struct lambda: public Object
 {
-  lambda* clone() const {return new lambda(*this);}
-  tribool compare(const Object& o) const;
-  type_constant type() const {return lambda_type;}
-  std::string print() const;
+    lambda* clone() const {return new lambda(*this);}
+    tribool compare(const Object& o) const;
+    type_constant type() const {return lambda_type;}
+    std::string print() const;
 };
 
 struct lambda2: public Object
 {
-  lambda2* clone() const {return new lambda2(*this);}
-  tribool compare(const Object& o) const;
+    lambda2* clone() const {return new lambda2(*this);}
+    tribool compare(const Object& o) const;
 
-  type_constant type() const {return lambda2_type;}
-  std::string print() const;
+    type_constant type() const {return lambda2_type;}
+    std::string print() const;
 };
 
 inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
 {
-  if (E)
-    return o<<E.print();
-  else
-    return o<<"[NULL]";
+    if (E)
+	return o<<E.print();
+    else
+	return o<<"[NULL]";
 }
 
 
@@ -609,31 +609,31 @@ expression_ref Tuple(int n);
 template <typename First, typename Second>
 auto apply_subst(const First& first, const Second& second)
 {
-  return first * second;
+    return first * second;
 }
 
 template <typename First, typename Second, typename Third, typename... Rest>
 auto apply_subst(const First& first, const Second& second, const Third& third, const Rest&... rest)
 {
-  return apply_subst(first*second, third, rest...);
+    return apply_subst(first*second, third, rest...);
 }
 
 template <typename First, typename Second, typename... Rest>
 auto Tuple(const First& first, const Second& second, const Rest&... rest)
 {
-  return apply_subst(Tuple(2+sizeof...(rest)) ,first,second,rest...);
+    return apply_subst(Tuple(2+sizeof...(rest)) ,first,second,rest...);
 }
 
 template <typename First>
 First let(const First& first)
 {
-  return first;
+    return first;
 }
 
 template <typename First, typename Second, typename... Rest>
 auto let(const First& first, const Second& second, const Rest&... rest)
 {
-  return let_expression(first,second,let(rest...));
+    return let_expression(first,second,let(rest...));
 }
 
 // 2 Fields, a value, and a Cons or a ListEnd
@@ -647,58 +647,58 @@ inline expression_ref List() {return ListEnd;}
 template <typename First>
 auto List(const First& first)
 {
-  return Cons*first*ListEnd;
+    return Cons*first*ListEnd;
 }
 
 template <typename First, typename T2>
 auto List(const First& first, const T2& t2)
 {
-  return Cons*first*List(t2);
+    return Cons*first*List(t2);
 }
 
 template <typename First, typename T2, typename T3>
 auto List(const First& first, const T2& t2, const T3& t3)
 {
-  return Cons*first*List(t2,t3);
+    return Cons*first*List(t2,t3);
 }
 
 template <typename First, typename T2, typename T3, typename T4>
 auto List(const First& first, const T2& t2, const T3& t3, const T4& t4)
 {
-  return Cons*first*List(t2,t3,t4);
+    return Cons*first*List(t2,t3,t4);
 }
 
 template <typename First, typename T2, typename T3, typename T4, typename T5>
 auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5& t5)
 {
-  return Cons*first*List(t2,t3,t4,t5);
+    return Cons*first*List(t2,t3,t4,t5);
 }
 
 
 template <typename First, typename T2, typename T3, typename T4, typename T5, typename T6>
 auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5& t5,const T6& t6)
 {
-  return Cons*first*List(t2,t3,t4,t5,t6);
+    return Cons*first*List(t2,t3,t4,t5,t6);
 }
 
 
 template <typename T,typename U>
 std::vector<T> get_vector(const expression_ref& E) 
 {
-  if (not E)
-    return std::vector<T>();
+    if (not E)
+	return std::vector<T>();
 
-  if (not E.size())
-  {
-    std::vector<T> v2(1);
-    v2[0] = E.as_<U>();
-    return v2;
-  }
+    if (not E.size())
+    {
+	std::vector<T> v2(1);
+	v2[0] = E.as_<U>();
+	return v2;
+    }
     
-  std::vector<T> v2(E.size());
-  for(int i=0;i<v2.size();i++)
-    v2[i] = E.sub()[i].as_<U>();
-  return v2;
+    std::vector<T> v2(E.size());
+    for(int i=0;i<v2.size();i++)
+	v2[i] = E.sub()[i].as_<U>();
+    return v2;
 }
 
 std::vector<expression_ref> get_ref_vector_from_list(const expression_ref& E);
@@ -706,21 +706,21 @@ std::vector<expression_ref> get_ref_vector_from_list(const expression_ref& E);
 template <typename T,typename U>
 std::vector<T> get_vector_from_list(const expression_ref& E)
 {
-  std::vector<expression_ref> v1 = get_ref_vector_from_list(E);
-  std::vector<T> v2;
-  for(int i=0;i<v1.size();i++)
-    v2.push_back(v1[i].as_<U>());
-  return v2;
+    std::vector<expression_ref> v1 = get_ref_vector_from_list(E);
+    std::vector<T> v2;
+    for(int i=0;i<v1.size();i++)
+	v2.push_back(v1[i].as_<U>());
+    return v2;
 }
 
 template <typename T>
 expression_ref get_tuple(const std::vector<T>& v)
 {
-  std::vector<expression_ref> v2;
-  for(int i=0;i<v.size();i++)
-    v2.push_back(v[i]);
+    std::vector<expression_ref> v2;
+    for(int i=0;i<v.size();i++)
+	v2.push_back(v[i]);
 
-  return get_tuple(v2);
+    return get_tuple(v2);
 }
 
 template<> expression_ref get_tuple<>(const std::vector<expression_ref>& v);
@@ -728,21 +728,21 @@ template<> expression_ref get_tuple<>(const std::vector<expression_ref>& v);
 template <typename T>
 expression_ref get_tuple(const std::valarray<T>& v)
 {
-  std::vector<expression_ref> v2;
-  for(int i=0;i<v.size();i++)
-    v2.push_back(v[i]);
+    std::vector<expression_ref> v2;
+    for(int i=0;i<v.size();i++)
+	v2.push_back(v[i]);
 
-  return get_tuple(v2);
+    return get_tuple(v2);
 }
 
 template <typename T>
 expression_ref get_list(const std::vector<T>& v)
 {
-  std::vector<expression_ref> v2;
-  for(int i=0;i<v.size();i++)
-    v2.push_back(v[i]);
+    std::vector<expression_ref> v2;
+    for(int i=0;i<v.size();i++)
+	v2.push_back(v[i]);
 
-  return get_list(v2);
+    return get_list(v2);
 }
 
 template<> expression_ref get_list<>(const std::vector<expression_ref>& v);
@@ -808,19 +808,21 @@ typedef Pair<expression_ref,expression_ref> EPair;
 template<> 
 inline std::string Box<std::vector<expression_ref>>::print() const
 {
-  std::string s = "{";
-  for(int i=0;i<size()-1;i++) {
-    s += (*this)[i].print();
-    s += ",";
-  }
-  s += this->back().print() + "}";
-  return s;
+    if (empty()) return "{}";
+
+    std::string s = "{";
+    for(int i=0;i<(int)size()-1;i++) {
+	s += (*this)[i].print();
+	s += ",";
+    }
+    s += this->back().print() + "}";
+    return s;
 }
 
 template<> 
 inline std::string Box<std::pair<expression_ref,expression_ref>>::print() const
 {
-  return std::string("(") + first.print() + "," + second.print() + ")";
+    return std::string("(") + first.print() + "," + second.print() + ")";
 }
 
 std::vector<double> vec_to_double(const std::vector<expression_ref>& v);
