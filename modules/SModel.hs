@@ -8,7 +8,7 @@ import Parameters;
 builtin f3x4_frequencies_builtin 4 "f3x4_frequencies" "SModel";
 builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
 builtin plus_gwF 3 "plus_gwF" "SModel";
-builtin gtr 7 "gtr" "SModel";
+builtin builtin_gtr 2 "gtr" "SModel";
 builtin m0 3 "m0" "SModel";
 builtin lExp 3 "lExp" "SModel";
 builtin reversible_rate_matrix 2 "reversible_rate_matrix" "SModel";
@@ -36,9 +36,10 @@ data F81 = F81 a b c d;
 data MixtureModel = MixtureModel a;
 data MixtureModels = MixtureModels a;
 
-equ a = gtr 1.0 1.0 1.0 1.0 1.0 1.0 a;
-hky k a = gtr k 1.0 1.0 1.0 1.0 k a;
-tn k1 k2 a = gtr k1 1.0 1.0 1.0 1.0 k2 a;
+gtr exchange a = builtin_gtr (listToVectorDouble exchange) a;
+equ a = gtr [1.0, 1.0, 1.0, 1.0, 1.0, 1.0] a;
+tn k1 k2 a = gtr [k1, 1.0, 1.0, 1.0, 1.0, k2] a;
+hky k a = tn k k a;
 
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 
@@ -48,7 +49,7 @@ multiRate m d = multiParameter (\x->(scale x m)) d;
 
 rate (ReversibleMarkov a s q pi l t r) = r;
 rate (MixtureModel d) = average (fmap2 rate d);
-     
+
 qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t;
 
 branchTransitionP (MixtureModel (DiscreteDistribution l)) t = let {r = rate (MixtureModel (DiscreteDistribution l))} 

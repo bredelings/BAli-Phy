@@ -619,29 +619,23 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 
 extern "C" closure builtin_function_gtr(OperationArgs& Args)
 {
-    double AG = Args.evaluate(0).as_double();
-    double AT = Args.evaluate(1).as_double();
-    double AC = Args.evaluate(2).as_double();
-    double GT = Args.evaluate(3).as_double();
-    double GC = Args.evaluate(4).as_double();
-    double TC = Args.evaluate(5).as_double();
-    auto arg6 = Args.evaluate(6);
-    const Nucleotides& N = arg6.as_<Nucleotides>();
+    auto S = Args.evaluate(0).as_<Vector<double>>();
+    auto arg1 = Args.evaluate(1);
+    const alphabet& a = arg1.as_<alphabet>();
 
-    assert(N.size()==4);
+    int n = a.size();
+    auto R = new Box<Matrix>(n,n);
+    assert(S.size() == n*(n-1)/2);
 
-    auto R = new Box<Matrix>(N.size(),N.size());
+    double total = sum(S);
 
-    double total = AG + AT + AC + GT + GC + TC;
-
-    (*R)(1,0) = (*R)(0,1) = AG/total;
-    (*R)(2,0) = (*R)(0,2) = AT/total;
-    (*R)(3,0) = (*R)(0,3) = AC/total;
-
-    (*R)(2,1) = (*R)(1,2) = GT/total;
-    (*R)(3,1) = (*R)(1,3) = GC/total;
-
-    (*R)(3,2) = (*R)(2,3) = TC/total;
+    int k=0;
+    for(int i=0;i<n;i++)
+	for(int j=0;j<i;j++)
+	{
+	    int x = S[k++]/total;
+	    (*R)(i,j) = (*R)(j,i) = x;
+	}
 
     return {R};
 }
