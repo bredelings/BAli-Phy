@@ -71,7 +71,7 @@ builtin + 2 "add" "Prelude";
 builtin - 2 "subtract" "Prelude";
 builtin / 2 "divide" "Prelude";
 builtin * 2 "multiply" "Prelude";
-builtin == 2 "equals" "Prelude";
+builtin builtin_equals 2 "equals" "Prelude";
 builtin /= 2 "notequals" "Prelude";
 builtin > 2 "greaterthan" "Prelude";
 builtin >= 2 "greaterthanorequal" "Prelude";
@@ -166,6 +166,10 @@ or               =  foldr (||) False;
 
 any p            =  or . map p;
 all p            =  and . map p;
+
+(x:xs) == (y:ys) = (x==y) && (xs == ys);
+[]     == []     = True;
+x      == y      = builtin_equals x y;
 
 elem x           =  any (== x);
 notElem x        =  all (/= x);
