@@ -87,7 +87,8 @@ closure apply_op(OperationArgs& Args)
   closure C = Args.evaluate_slot_to_closure(0);
   int n_args_given = Args.n_args()-1;
 
-  assert(C.exp.head().is_a<lambda2>());
+  if (not C.exp.head().is_a<lambda2>())
+      throw myexception()<<"Trying to apply non-lambda '"<<C.exp.head()<<"'";
   int n_args_needed = get_n_lambdas(C.exp);
   assert(n_args_needed >= 1);
   assert(n_args_given >= 1);
