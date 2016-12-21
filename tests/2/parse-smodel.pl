@@ -25,7 +25,7 @@ sub exec_show
 
         print STDERR "\n  message:  $message\n";
 #        print LOG    "\n  message:  $message\n";
-        exit($code);
+#        exit($code);
     }
     elsif ($verbose)
     {
