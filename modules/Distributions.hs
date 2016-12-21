@@ -248,6 +248,12 @@ logNormal_model mu sigma = Prefix "logNormal" (do {mu' <- Prefix "lmu" mu;
                                                    Log "lsigma" sigma';
                                                    logNormal mu' sigma'});
 
+logLaplace_model mu sigma = Prefix "logLaplace" (do {mu' <- Prefix "lmu" mu;
+                                                     Log "lmu" mu';
+                                                     sigma' <- Prefix "lsigma" sigma;
+                                                     Log "lsigma" sigma';
+                                                     logNormal mu' sigma'});
+
 safe_exp x = if (x < (-20.0)) then
                exp (-20.0);
              else if (x > 20.0) then
