@@ -618,8 +618,8 @@ namespace substitution {
 
 	vector<object_ptr<const F81_Object> > SubModels(n_models);
 	for(int m=0;m<n_models;m++) {
-	    SubModels[m] = P.base_model(m,b0).assert_is_a<F81_Object>();
-	    assert(SubModels[m]);
+//	    SubModels[m] = P.base_model(m,b0).assert_is_a<F81_Object>();
+//	    assert(SubModels[m]);
 	}
 	//    const double L = t.branch_length(b0);
 

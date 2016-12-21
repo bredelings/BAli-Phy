@@ -68,8 +68,6 @@ struct data_partition_constants
 
     int alignment_prior_index = -1;
 
-    matrix<int> base_model_indices;
-
     /// The names and comments for the sequences
     std::vector< sequence > seqs;
 
@@ -126,8 +124,6 @@ public:
     Matrix WeightedFrequencyMatrix() const;
 
     Matrix FrequencyMatrix() const;
-
-    expression_ref base_model(int m, int b) const;
 
     const Likelihood_Cache_Branch& cache(int b) const;
 

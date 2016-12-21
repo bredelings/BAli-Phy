@@ -282,13 +282,6 @@ vector<unsigned> data_partition::state_letters() const
     return P->evaluate(P->PC->SModels[s].state_letters).as_<Vector<unsigned>>();
 }
 
-expression_ref data_partition::base_model(int m, int b) const
-{
-    b = t().undirected(b);
-
-    return P->evaluate( DPC().base_model_indices(m,b) );
-}
-
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 {
     assert(variable_alignment());
@@ -443,22 +436,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     const int scale_index = p->scale_index_for_partition(i);
     const int smodel_index = p->smodel_index_for_partition(i);
     const int imodel_index = p->imodel_index_for_partition(i);
-    const int n_base_smodels = p->evaluate(p->PC->SModels[smodel_index].n_base_models).as_int();
 
     // Add method indices for calculating transition matrices.
     auto transition_ps = p->get_expression(p->PC->branch_transition_p_indices(scale_index, smodel_index));
     {
 	for(int b=0;b<B;b++)
 	    transition_p_method_indices[b] = p->add_compute_expression( (identifier("!"), transition_ps, b) );
-    }
-
-    // Add method indices for calculating base models and frequencies
-    base_model_indices.resize(n_base_smodels, B);
-    {
-	expression_ref BM = p->get_expression(p->PC->SModels[smodel_index].base_model);
-	for(int m=0;m<n_base_smodels;m++)
-	    for(int b=0;b<B;b++)
-		base_model_indices(m,b) = p->add_compute_expression((BM,m,b));
     }
 
     // Add parameters for observed leaf sequence objects
