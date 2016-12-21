@@ -120,14 +120,14 @@ typedef ptree Rule;
 
 const vector< vector<vector<string>> > all_default_arguments = 
 {
-    {{"log","Double","N"}, {"log","x"}, {"x","Double"}},
-    {{"Uniform","Double","M"}, {"uniform","a","b"}, {"a","Double"}, {"b","Double"}},
-    {{"Normal","Double","M"}, {"normal","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
-    {{"logNormal","Double","M"}, {"logNormal","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
+    {{"log","Double","N"}, {"log_model","x"}, {"x","Double"}},
+    {{"Uniform","Double"}, {"uniform_model","a","b"}, {"a","Double"}, {"b","Double"}},
+    {{"Normal","Double"}, {"normal_model","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
+    {{"logNormal","Double"}, {"logNormal_model","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
     {{"EQU","EM[a]"}, {}},
     {{"F81"}, {}, {"alphabet","Alphabet"}},
-    {{"HKY","EM[a]"}, {"SModel.hky","kappa","alphabet"}, {"kappa","Double","logNormal[log[2],0.25]"}, {"alphabet","Alphabet"}, },
-    {{"TN","EM[a]"}, {"SModel.tn","kappaPur","kappaPyr","alphabet"}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}, {"alphabet","Alphabet"}},
+    {{"HKY","EM[a]"}, {"hky_model","kappa"}, {"kappa","Double","logNormal[log[2],0.25]"}, },
+    {{"TN","EM[a]"}, {"tn_model","kappaPur","kappaPyr"}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
     {{"GTR","EM[a]"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"},{"alphabet","Alphabet"}},
     {{"HKYx3","EM[a]"}, {}, {"kappa","Double","logNormal[log[2],0.25]"}},
     {{"TNx3","EM[a]"}, {}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
@@ -137,7 +137,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"WAG","EM[AA]"}, {}, {"alphabet","Alphabet","AA"}},
     {{"LG","EM[AA]"}, {}, {"alphabet","Alphabet","AA"}},
     {{"Empirical","EM[a]"}, {}, {"filename"}},
-    {{"M0","EM[a]"}, {"SModel.m0","submodel","omega","alphabet"}, {"submodel","EM[a]","HKY"}, {"omega","Double","Uniform[0,1]"}, {"alphabet","Alphabet"}},
+    {{"M0","EM[a]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","Uniform[0,1]"}},
     {{"fMutSel","RA[a]"}, {}, {"submodel","RA[a]"}},
     {{"fMutSel0","RA[a]"}, {}, {"submodel","RA[a]"}},
     {{"INV","MM[a]"}, {}, {"p","Double","Uniform[0,1]"}},
@@ -158,9 +158,9 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"M8a_Test","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"branch-site","MM[a]"}, {}, {"n","Int","2"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"dp_omega","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    {{"F","FM[a]","M"}, {"plus_f_model","alphabet",}, {"alphabet","Alphabet"}},
-    {{"F61","FM[a]","M"}, {"plus_f_model","alphabet",}, {"alphabet","Alphabet"}},
-    {{"gwF","FM[a]","M"}, {"plus_gwf_model","alphabet",}, {"alphabet","Alphabet"}},
+    {{"F","FM[a]"}, {"plus_f_model"} },
+    {{"F61","FM[a]"}, {"plus_f_model"} },
+    {{"gwF","FM[a]"}, {"plus_gwf_model"}},
     {{"F1x4","FM[a]"}, {}},
     {{"F3x4","FM[a]"}, {}},
     {{"MG94","FM[a]"}, {}},
@@ -169,9 +169,9 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"RNA","Alphabet"}, {"rna"}},
     {{"AA","Alphabet"}, {"aa"}},
     {{"Codons","Alphabet"}, {"codons","nuc","aa"}, {"nuc","Alphabet"}, {"aa","Alphabet","AA"}},
-    {{"RCTMC","RA[a]","N"}, {"reversible_markov","Q","R"}, {"Q","EM[a]"}, {"R","FM[a]"}},
-    {{"UnitMixture","MM[a]","N"}, {"unit_mixture","submodel"}, {"submodel","RA[a]"}},
-    {{"MMM","MMM[a]","N"}, {"mmm","submodel"}, {"submodel","MM[a]"}}
+    {{"RCTMC","RA[a]","N"}, {"reversible_markov_model","Q","R"}, {"Q","EM[a]"}, {"R","FM[a]"}},
+    {{"UnitMixture","MM[a]","N"}, {"unit_mixture_model","submodel"}, {"submodel","RA[a]"}},
+    {{"MMM","MMM[a]","N"}, {"mmm_model","submodel"}, {"submodel","MM[a]"}}
 };
 
 /// Split a string of the form key=value into {key,value}
@@ -196,6 +196,8 @@ ptree convert_rule(const vector<vector<string>>& s)
 	rule.put("action","true");
     if (s[0].size() > 2 and s[0][2] == "N")
 	rule.put("log","false");
+    if (s[0].size() > 3 and s[0][3] == "R")
+	rule.put("add_return","true");
     if (s[1].size())
     {
 	ptree call;
@@ -909,6 +911,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	
     bool no_log = rule.get("log","true") == "false";
     bool is_action = rule.get("action","false") == "true";
+    bool add_return = rule.get("add_return","false") == "true";
     ptree call = rule.get_child("call");
     ptree args = rule.get_child("args");
     
@@ -919,14 +922,16 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	ptree arg_tree = get_arg(rule, arg_name);
 	ptree arg_type = arg_tree.get_child("arg_type");
 	expression_ref arg = get_smodel_as(arg_type, model_rep.get_child(arg_name));
-	if ((arg_type.get_value<string>() == "Double" or arg_type.get_value<string>() == "Int") and (not no_log))
-	    arg = add_logger(arg_name, arg);
+//	if ((arg_type.get_value<string>() == "Double" or arg_type.get_value<string>() == "Int") and (not no_log))
+//	    arg = (identifier("add_logger"),arg_name, arg);
 	E = (E,arg);
     }
     if (is_action)
 	E = model_expression(E);
-    if (not no_log)
-	E = prefix(name,E);
+    if (add_return)
+	E = (identifier("return"),E);
+//    if (not no_log)
+//	E = (identifier("@@"), name, E);
     return E;
 
     return {};
@@ -1475,11 +1480,17 @@ expression_ref get_smodel_(const ptree& model_rep)
 
     // If we are processing an Int, just return an int.
     if (can_be_converted_to<int>(model_rep.get_value<string>()))
-	return model_rep.get_value<int>();
+    {
+	expression_ref value = model_rep.get_value<int>();
+	return (identifier("return"), value);
+    }
 
     // If we are processing a Double, just return a double
     if (can_be_converted_to<double>(model_rep.get_value<string>()))
-	return model_rep.get_value<double>();
+    {
+	expression_ref value = model_rep.get_value<double>();
+	return (identifier("return"), value);
+    }
 
     expression_ref m;
 
@@ -1513,7 +1524,10 @@ expression_ref get_smodel_as(const ptree& required_type, const ptree& model_rep)
     {
 	double d;
 	if (can_be_converted_to<double>(name, d))
-	    return d;
+	{
+	    expression_ref value = d;
+	    return (identifier("return"), d);
+	}
     }
 
     if (not can_unify(result_type, required_type))

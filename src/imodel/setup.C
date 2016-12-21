@@ -28,9 +28,9 @@ expression_ref get_imodel(string name, const SequenceTree& T)
   else if (name == "RS07-no-T")
     ;
   else if (name == "RS07")
-    return model_expression({identifier("rs07_model"),0});
+      return (identifier("rs07_model"),0);
   else if (name == "relaxed_rates_RS07")
-    return model_expression({identifier("rs07_relaxed_rates_model"),0});
+    return (identifier("rs07_relaxed_rates_model"),0);
   else
     throw myexception()<<"Unrecognized indel model '"<<name<<"'";
 

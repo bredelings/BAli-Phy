@@ -130,6 +130,8 @@ get_smodels(const vector<alignment>& A, shared_items<string>& smodel_names_mappi
 
 	expression_ref full_smodel = get_smodel(smodel_names_mapping.unique(i));
 
+	full_smodel = (full_smodel, alignments[0].get_alphabet());
+
 	smodels.push_back(full_smodel);
 	//    cout<<"SModel "<<i+1<<": prior = "<<log(smodels.back()->prior())<<"\n";
     }

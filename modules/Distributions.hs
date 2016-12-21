@@ -76,6 +76,7 @@ builtin normal_quantile 3 "normal_quantile" "Distribution";
 builtin builtin_sample_normal 2 "sample_normal" "Distribution";
 sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
 normal m s = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine;
+normal_model m s = do {m' <- m; s' <- s; normal m' s'};
 
 builtin cauchy_density 3 "cauchy_density" "Distribution";
 builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution";
@@ -91,6 +92,7 @@ builtin uniform_density 3 "uniform_density" "Distribution";
 builtin builtin_sample_uniform 2 "sample_uniform" "Distribution";
 sample_uniform l u = Random (IOAction2 builtin_sample_uniform l u);
 uniform l u = ProbDensity (uniform_density l u) () (sample_uniform l u) (between l u);
+uniform_model l u = do {l' <- l; u' <- u; uniform l' u'};
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
 dirichlet_density ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
@@ -231,6 +233,8 @@ logExponential mu = expTransform $  exponential mu;
 logGamma a b = expTransform $ gamma a b;
 logLaplace m s = expTransform $ laplace m s;
 logCauchy m s = expTransform $ cauchy m s;
+
+logNormal_model mu sigma = do {mu' <- mu; sigma' <- sigma ; logNormal mu' sigma'};
 
 safe_exp x = if (x < (-20.0)) then
                exp (-20.0);

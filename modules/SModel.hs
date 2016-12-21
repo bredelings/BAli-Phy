@@ -38,7 +38,7 @@ data MixtureModels = MixtureModels a;
 
 equ a = gtr 1.0 1.0 1.0 1.0 1.0 1.0 a;
 hky k a = gtr k 1.0 1.0 1.0 1.0 k a;
-tn k1 k2 a= gtr k1 1.0 1.0 1.0 1.0 k2 a;
+tn k1 k2 a = gtr k1 1.0 1.0 1.0 1.0 k2 a;
 
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 
@@ -107,21 +107,19 @@ frequency_matrix (MixtureModels (m:ms)) = frequency_matrix m;
 --
 equ_model nuca = return $ equ nuca;
 
-hky_model nuca = Prefix "HKY" 
-  (do {
-     kappa <- logLaplace (log 2.0) 0.25 ;
-     Log "kappa" kappa;
-     return $ hky nuca kappa
-});
+hky_model kappa nuca = Prefix "HKY" 
+(do {
+   kappa' <- Prefix "kappa" kappa;
+   Log "kappa" kappa';
+   return $ hky kappa' nuca});
 
-tn_model nuca = Prefix "TN" 
-  (do {
-     kappaPur <- logLaplace (log 2.0) 0.25 ;
-     Log "kappaPur" kappaPur;
-     kappaPyr <- logLaplace (log 2.0) 0.25 ;
-     Log "kappaPyr" kappaPyr;
-     return $ tn nuca kappaPur kappaPyr
-});
+tn_model kappaPur kappaPyr nuca = Prefix "TN"
+(do {
+   kappaPur' <- Prefix "kappaPur" kappaPur;
+   Log "kappaPur" kappaPur';
+   kappaPyr' <- Prefix "kappaPyr" kappaPyr;
+   Log "kappaPyr" kappaPyr';
+   return (tn kappaPur' kappaPyr' nuca)});
 
 gtr_model nuca = Prefix "GTR" 
   (do {
@@ -135,11 +133,12 @@ gtr_model nuca = Prefix "GTR"
      return $ gtr nuca ag at ac gt gc tc
 });
 
-m0_model codona s = Prefix "M0"
+m0_model s omega codona = Prefix "M0"
   (do {
-     omega <- uniform 0.0 1.0;
+     omega' <- Prefix "omega" omega;
      Log "omega" omega;
-     return $ m0 codona s omega
+     s' <- s (getNucleotides codona);
+     return $ m0 codona s' omega'
   });
 
 m0_function codona s r = \omega -> reversible_markov (m0 codona s omega) r;
@@ -561,7 +560,7 @@ mg94w9_model triplet_a = Prefix "MG94w9"
        return $ ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (muse_gaut_matrix triplet_a nuc_r1 nuc_r2 nuc_r3)
 });
 
-gamma_model base n = Prefix "Gamma"
+gamma_model base n alphabet = Prefix "Gamma"
   (do {
      sigmaOverMu <- logLaplace (-3.0) 1.0;
      Log "sigmaOverMu" sigmaOverMu;
@@ -570,7 +569,7 @@ gamma_model base n = Prefix "Gamma"
           discretize n = uniformDiscretize (quantile (gamma a b)) n};
      Log "a" a;
      Log "b" b;
-     return $ multiRate base (discretize n)
+     return $ multiRate (base alphabet) (discretize n)
 });
 
 plus_inv_model dist = do 
@@ -688,11 +687,21 @@ iid_branch_length_model_exp t = iid_branch_length_model t (exponential (1.0/(int
 
 iid_branch_length_model_gamma t = iid_branch_length_model t (gamma 0.5 (2.0/(intToDouble (numBranches t))));
 
-reversible_markov_model s r = return $ reversible_markov s r;
+reversible_markov_model s r a = do {s' <- s a;
+                                    r' <- r a;
+                                    return (reversible_markov s' r');};
 
 unit_mixture m = MixtureModel (DiscreteDistribution [(1.0,m)]);
 
+unit_mixture_model m a = do {m' <- m a;
+                             return (unit_mixture m')};
+
 mmm m = MixtureModels [m];
+
+mmm_model m a = do {m' <- m a;
+                    return (mmm m')};
+
+log_model x = do {x' <- x; return (log x')};
 
 cached_conditional_likelihoods t seqs as alpha ps f = let {lc    = mkArray (2*numBranches t) lcf;
                                                            lcf b = let {bb = b `mod` (numBranches t)} in
