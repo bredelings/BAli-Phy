@@ -165,8 +165,8 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"F61","FM[a]"}, {"plus_f_model"}, {"pi","F","frequencies_prior"}},
     {{"gwF","FM[a]"}, {"plus_gwf_model","pi","f"},{"pi","F","frequencies_prior"},{"f","Double","Uniform[0,1]"}},
     {{"F1x4","FM[a]"}, {"f1x4_model","pi"}, {"pi","F","frequencies_prior"}},
-    {{"F3x4","FM[a]"}, {}},
-    {{"MG94","FM[a]"}, {}},
+    {{"F3x4","FM[a]"}, {"f3x4_model","pi1","pi2","pi3"}, {"pi1","F","frequencies_prior"}, {"pi2","F","frequencies_prior"}, {"pi3","F","frequencies_prior"}},
+    {{"MG94","FM[a]"}, {"mg94_model","pi"}, {"pi","F","frequencies_prior"}},
     {{"MG94w9","FM[a]"}, {}},
     {{"DNA","Alphabet","N"}, {"dna"}},
     {{"RNA","Alphabet"}, {"rna"}},
@@ -1128,24 +1128,6 @@ expression_ref process_stack_Frequencies(const ptree& model_rep)
 	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
 
 	R = (identifier("uniform_f_model"),alphabet);
-    }
-    else if (model_rep.get_value<string>() == "F1x4")
-    {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
-	
-	R = model_expression({identifier("f1x4_model"), alphabet});
-    }
-    else if (model_rep.get_value<string>() == "F3x4") 
-    {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
-
-	R = model_expression({identifier("f3x4_model"),alphabet});
-    }
-    else if (model_rep.get_value<string>() == "MG94") 
-    {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
-
-	R = model_expression({identifier("mg94_model"),alphabet});
     }
     else if (model_rep.get_value<string>() == "MG94w9") 
     {

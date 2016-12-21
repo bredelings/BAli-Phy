@@ -5,7 +5,7 @@ import Alphabet;
 import Tree;
 import Parameters;
 
-builtin f3x4_frequencies 4 "f3x4_frequencies" "SModel";
+builtin f3x4_frequencies_builtin 4 "f3x4_frequencies" "SModel";
 builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
 builtin plus_gwF 3 "plus_gwF" "SModel";
 builtin gtr 7 "gtr" "SModel";
@@ -512,12 +512,20 @@ uniform_f_model a = let {n_letters = alphabetSize a;
                          pi' = listToVectorDouble pi} in 
                     ReversibleFrequency a (simple_smap a) pi' (plus_gwF a 1.0 pi');
 
-f1x4 triplet_a nuc_pi = let {nuc_pi' = listToVectorDouble nuc_pi;
-                             pi' = f3x4_frequencies triplet_a nuc_pi' nuc_pi' nuc_pi';
-                             n_letters = alphabetSize triplet_a} in
-                        ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (plus_gwF triplet_a 1.0 pi');
+f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = listToVectorDouble pi1;
+                                      pi2' = listToVectorDouble pi2;
+                                      pi3' = listToVectorDouble pi3} in
+                                 f3x4_frequencies_builtin a pi1' pi2' pi3';
 
-                                        
+f1x4_frequencies a pi = let {pi' = listToVectorDouble pi}
+                        in f3x4_frequencies_builtin a pi' pi' pi';
+
+f1x4 triplet_a nuc_pi = let {triplet_pi = f1x4_frequencies triplet_a nuc_pi}
+                        in  ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi (plus_f triplet_a triplet_pi);
+
+f3x4 triplet_a nuc_pi1 nuc_pi2 nuc_pi3 = let {triplet_pi = f3x4_frequencies triplet_a nuc_pi1 nuc_pi2 nuc_pi3} in
+                                         ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi (plus_gwF triplet_a 1.0 triplet_pi);
+
 f1x4_model nuc_pi triplet_a = Prefix "F1x4" 
  (do {
     let {nuc_a = getNucleotides triplet_a};
@@ -525,29 +533,27 @@ f1x4_model nuc_pi triplet_a = Prefix "F1x4"
     return (f1x4 triplet_a nuc_pi');
 });
 
-f3x4 triplet_a nuc_pi1 nuc_pi2 nuc_pi3 = let {nuc_pi1' = listToVectorDouble nuc_pi1;
-                                              nuc_pi2' = listToVectorDouble nuc_pi2;
-                                              nuc_pi3' = listToVectorDouble nuc_pi3;
-                                              pi' = f3x4_frequencies triplet_a nuc_pi1' nuc_pi2' nuc_pi3'} in
-                                         ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (plus_gwF triplet_a 1.0 pi');
-
-f3x4_model triplet_a = Prefix "F3x4" 
+                                                             
+f3x4_model nuc_pi1 nuc_pi2 nuc_pi3 triplet_a = Prefix "F3x4" 
  (do {
        let {nuc_a = getNucleotides triplet_a};
-       nuc_pi1 <- Prefix "Site1" $ frequencies_model nuc_a;
-       nuc_pi2 <- Prefix "Site2" $ frequencies_model nuc_a;
-       nuc_pi3 <- Prefix "Site3" $ frequencies_model nuc_a;
-       return (f3x4 triplet_a nuc_pi1 nuc_pi2 nuc_pi3);
+       nuc_pi1' <- Prefix "Site1" $ nuc_pi1 nuc_a;
+       nuc_pi2' <- Prefix "Site2" $ nuc_pi2 nuc_a;
+       nuc_pi3' <- Prefix "Site3" $ nuc_pi3 nuc_a;
+       return (f3x4 triplet_a nuc_pi1' nuc_pi2' nuc_pi3');
 });
 
-mg94_model triplet_a = Prefix "MG94" 
+mg94 nuc_pi triplet_a = let {nuc_a      = getNucleotides triplet_a;
+                             triplet_pi = f1x4_frequencies triplet_a nuc_pi;
+                             nuc_r      = plus_f nuc_a nuc_pi} in
+                        ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi (muse_gaut_matrix triplet_a nuc_r nuc_r nuc_r);
+
+
+mg94_model nuc_pi triplet_a = Prefix "MG94" 
  (do {
        let {nuc_a = getNucleotides triplet_a};
-       nuc_pi <- frequencies_model nuc_a;
-       let {nuc_pi' = listToVectorDouble nuc_pi;
-            pi' = f3x4_frequencies triplet_a nuc_pi' nuc_pi' nuc_pi';
-            nuc_r = plus_gwF nuc_a 1.0 nuc_pi'};
-       return $ ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (muse_gaut_matrix triplet_a nuc_r nuc_r nuc_r)
+       nuc_pi' <- Prefix "pi" (nuc_pi nuc_a);
+       return (mg94 nuc_pi' triplet_a);
 });
 
 mg94w9_model triplet_a = Prefix "MG94w9" 
