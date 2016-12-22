@@ -122,16 +122,10 @@ tn_model kappaPur kappaPyr nuca = Prefix "TN"
    Log "kappaPyr" kappaPyr';
    return (tn kappaPur' kappaPyr' nuca)});
 
-gtr_model nuca = Prefix "GTR" 
+gtr_model s a = Prefix "GTR" 
   (do {
-     [ag,at,ac,gt,gc,tc] <- dirichlet [2.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 2.0/8.0];
-     Log "ag" ag;
-     Log "at" at;
-     Log "ac" ac;
-     Log "gt" gt;
-     Log "gc" gc;
-     Log "tc" tc;
-     return $ gtr nuca ag at ac gt gc tc
+     s' <- Prefix "S" (s a);
+     return $ gtr s' a;
 });
 
 m0_model s omega codona = Prefix "M0"
@@ -428,6 +422,17 @@ frequencies_model a = do {
   }
 };
 
+pairs l = [(x,y) | (x:ys) <- tails l, y <- ys];
+
+exchange_model a =  do {
+  let {lpairs = pairs (alphabet_letters a);
+       n = length(lpairs)};
+  SamplingRate (1.0/sqrt(intToDouble n)) $ do {
+     pi <- dirichlet' n 1.0;
+     sequence_ $ zipWith (\p (l1,l2) -> Log (l1++l2) p) pi lpairs;
+     return pi
+  }
+};
 
 get_element_freqs []                 x = error ("No frequency specified for letter '" ++ show x ++ "'");
 get_element_freqs ((key,value):rest) x = if (key == x) then value else get_element_freqs rest x;

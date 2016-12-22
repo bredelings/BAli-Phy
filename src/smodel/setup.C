@@ -129,7 +129,8 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"F81"}, {}, {"alphabet","Alphabet"}},
     {{"HKY","EM[a]"}, {"hky_model","kappa"}, {"kappa","Double","logNormal[log[2],0.25]"}, },
     {{"TN","EM[a]"}, {"tn_model","kappaPur","kappaPyr"}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
-    {{"GTR","EM[a]"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"},{"alphabet","Alphabet"}},
+    {{"GTR","EM[a]"}, {"gtr_model","S"}, {"S","E","exchange_prior"}},
+    {{"exchange_prior","E"}, {"exchange_model"}},
     {{"HKYx3","EM[a]"}, {}, {"kappa","Double","logNormal[log[2],0.25]"}},
     {{"TNx3","EM[a]"}, {}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
     {{"GTRx3","EM[a]"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"}},
@@ -988,12 +989,6 @@ expression_ref process_stack_Markov(const ptree& model_rep)
 	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
 
 	return model_expression({identifier("equ_model"), alphabet});
-    }
-    else if (model_rep.get_value<string>() == "GTR")
-    {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
-
-	return model_expression({identifier("gtr_model"), alphabet});
     }
     /*
       else if (model_rep.get_value<string>() == "EQUx3")) {
