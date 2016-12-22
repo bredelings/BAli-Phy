@@ -624,16 +624,16 @@ extern "C" closure builtin_function_gtr(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     const alphabet& a = arg1.as_<alphabet>();
 
+    int n = a.size();
+    auto R = new Box<Matrix>(n,n);
+    if (S.size() != n*(n-1)/2)
+	throw myexception()<<"Alphabet size is "<<n<<" but only got "<<S.size()<<" exchangeabilities";
+
     double total = 0;
     for(int i=0;i<S.size();i++)
 	total += S[i].as_double();
 
     assert(total > 0);
-
-    int n = a.size();
-    auto R = new Box<Matrix>(n,n);
-    if (S.size() != n*(n-1)/2)
-	throw myexception()<<"Alphabet size is "<<n<<" but only got "<<S.size()<<" exchangeabilities";
 
     int k=0;
     for(int i=0;i<n;i++)
