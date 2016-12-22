@@ -26,13 +26,14 @@ sub exec_show
         print STDERR "\n  message:  $message\n";
 #        print LOG    "\n  message:  $message\n";
 #        exit($code);
+	return ($code, $message)
     }
     elsif ($verbose)
     {
         print STDERR "\n\t$cmd\n\n";
     }
     close $tmp_fh;
-    return $result;
+    return (0, $result)
 }
 
 sub exec_result
@@ -46,9 +47,12 @@ sub exec_result
     return $?;
 }
 
+my $failures = 0;
+
 sub show_only
 {
-    exec_show("bali-phy --test @_");
+    my ($code, $result) = exec_show("bali-phy --test @_");
+    $failures++ if ($code != 0);
 }
 
 show_only("rna.fasta");
@@ -82,4 +86,4 @@ show_only("codons.fasta --alphabet=Codons --smodel=fMutSel[HKY]");
 show_only("codons.fasta --alphabet=Codons --smodel=fMutSel[HKY+F]");
 show_only("codons.fasta --alphabet=Codons --smodel=fMutSel[HKY+gwF]");
 
-print "\n";
+print "There were ${failures} failures.\n";
