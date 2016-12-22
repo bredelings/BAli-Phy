@@ -232,15 +232,9 @@ m7_omega_dist n_bins = do
 };
 
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
-m8_omega_dist n_bins = do
+m8_omega_dist posP posW n_bins = do
 {
   beta_dist <- m7_omega_dist n_bins;
-
-  posW <- logGamma 4.0 0.25;
-  Log "posW" posW;
-
-  posP <- beta 1.0 10.0;
-  Log "posP" posP;
 
   return $ extendDiscreteDistribution beta_dist posP posW;
 };
@@ -338,11 +332,21 @@ m7_model codona n_bins s r = Prefix "M7" $ do
   return $ multiParameter m0w dist
 };
 
-m8_model codona n_bins s r = Prefix "M8" $ do
+m8_model s r posP posW n_bins codona = Prefix "M8" $ do
 {
-  dist <- m8_omega_dist n_bins;
+  posP' <- Prefix "posP" posP;
+  Log "posP" posP';
+      
+  posW' <- Prefix "posW" posW;
+  Log "posW" posW';
 
-  let {m0w w = reversible_markov (m0 codona s w) r};
+  n_bins' <- n_bins;
+  dist <- m8_omega_dist posP' posW' n_bins';
+
+  s' <- Prefix "S" (s (getNucleotides codona));
+  r' <- Prefix "R" (r codona);
+
+  let {m0w w = reversible_markov (m0 codona s' w) r'};
   return $ multiParameter m0w dist
 };
 

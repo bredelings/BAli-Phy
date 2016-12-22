@@ -71,17 +71,22 @@ builtin beta_quantile 3 "beta_quantile" "Distribution";
 builtin builtin_sample_beta 2 "sample_beta" "Distribution";
 sample_beta a b = Random (IOAction2 builtin_sample_beta a b);
 beta a b = ProbDensity (beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0);
+beta_model a b = Prefix "Beta" $ do {a' <- Prefix "a" a;
+                                     Log "a" a';
+                                     b' <- Prefix "b" b;
+                                     Log "b" b';
+                                     beta a' b};
 
 builtin normal_density 3 "normal_density" "Distribution";
 builtin normal_quantile 3 "normal_quantile" "Distribution";
 builtin builtin_sample_normal 2 "sample_normal" "Distribution";
 sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
 normal m s = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine;
-normal_model m s = Prefix "Normal" (do {m' <- Prefix "mu" m;
-                                        Log "mu" m';
-                                        s' <- Prefix "sigma" s;
-                                        Log "sigma" s';
-                                        normal m' s'});
+normal_model m s = Prefix "Normal" $ do {m' <- Prefix "mu" m;
+                                         Log "mu" m';
+                                         s' <- Prefix "sigma" s;
+                                         Log "sigma" s';
+                                         normal m' s'};
 
 builtin cauchy_density 3 "cauchy_density" "Distribution";
 builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution";
@@ -254,6 +259,12 @@ logLaplace_model mu sigma = Prefix "logLaplace" (do {mu' <- Prefix "lmu" mu;
                                                      sigma' <- Prefix "lsigma" sigma;
                                                      Log "lsigma" sigma';
                                                      logNormal mu' sigma'});
+
+logGamma_model a b = Prefix "logGamma" $ do {a' <- Prefix "a" a;
+                                             Log "a" a';
+                                             b' <- Prefix "b" b;
+                                             Log "b" b';
+                                             logGamma a' b'};
 
 safe_exp x = if (x < (-20.0)) then
                exp (-20.0);
