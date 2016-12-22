@@ -78,6 +78,7 @@ builtin >= 2 "greaterthanorequal" "Prelude";
 builtin < 2 "lessthan" "Prelude";
 builtin <= 2 "lessthanorequal" "Prelude";
 builtin iotaUnsigned 1 "iotaUnsigned" "Prelude";
+builtin builtin_putStrLn 1 "putStrLn" "Prelude";
 builtin builtin_set_vector_index 3 "set_vector_index" "Vector";
 builtin builtin_new_vector 1 "new_vector" "Vector";
 builtin get_vector_index 2 "get_vector_index" "Vector";
@@ -247,6 +248,8 @@ listFromVectorvectorInt v = listFromVectorvectorInt' v (sizeOfVectorvectorInt v)
 c_pair (x,y) = c_pair' x y;
 
 pair_from_c p = (c_fst p, c_snd p);
+
+putStrLn line = IOAction1 builtin_putStrLn (listToString line);
 
 new_vector s = IOAction1 builtin_new_vector s;
 

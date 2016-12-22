@@ -410,6 +410,15 @@ extern "C" closure builtin_function_builtinError(OperationArgs& Args)
   throw myexception()<<message;
 }
 
+extern "C" closure builtin_function_putStrLn(OperationArgs& Args)
+{
+  std::string message = Args.evaluate(0).as_<String>();
+
+  std::cout<<message<<std::endl;
+
+  return constructor("()",0);
+}
+
 extern "C" closure builtin_function_reapply(OperationArgs& Args)
 {
   int index1 = Args.reference(0).as_index_var();
