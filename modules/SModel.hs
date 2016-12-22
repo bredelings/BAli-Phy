@@ -131,7 +131,7 @@ gtr_model s a = Prefix "GTR"
 m0_model s omega codona = Prefix "M0"
   (do {
      omega' <- Prefix "omega" omega;
-     Log "omega" omega;
+     Log "omega" omega';
      s' <- s (getNucleotides codona);
      return $ m0 codona s' omega'
   });
