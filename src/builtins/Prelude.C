@@ -398,7 +398,7 @@ extern "C" closure builtin_function_show(OperationArgs& Args)
   else if (x.is_a<String>())
     *v = x.as_<String>();
   else
-    throw myexception()<<"Add: object '"<<x.print()<<"' is not double, int, log_double, char, or string'";
+    throw myexception()<<"show: object '"<<x.print()<<"' is not double, int, log_double, char, or string'";
 
   return v;
 }
