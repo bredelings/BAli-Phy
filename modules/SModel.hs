@@ -7,7 +7,7 @@ import Parameters;
 
 builtin f3x4_frequencies_builtin 4 "f3x4_frequencies" "SModel";
 builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
-builtin plus_gwF 3 "plus_gwF" "SModel";
+builtin builtin_plus_gwf 3 "plus_gwF" "SModel";
 builtin builtin_gtr 2 "gtr" "SModel";
 builtin m0 3 "m0" "SModel";
 builtin lExp 3 "lExp" "SModel";
@@ -496,6 +496,12 @@ fMutSel0_model codon_a nuc_rm = Prefix "fMutSel0" $ do
   return $ fMutSel0 codon_a ws omega nuc_rm;
 };
 
+-- pi is a vector double here
+plus_f_matrix a pi = plus_gwf_matrix a pi 1.0;
+
+-- pi is a vector double here
+plus_f' a pi = plus_gwf' a pi 1.0;
+
 plus_f a pi = plus_gwf a pi 1.0;
 
 plus_f_model pi a = Prefix "F" (do {
@@ -503,8 +509,13 @@ plus_f_model pi a = Prefix "F" (do {
   return (plus_f a pi');
 });
 
-plus_gwf a pi f = let {pi' = listToVectorDouble pi} in 
-                  ReversibleFrequency a (simple_smap a) pi' (plus_gwF a f pi');
+-- pi is a vector double here
+plus_gwf_matrix a pi f = builtin_plus_gwf a f pi;
+
+-- pi is a vector double here
+plus_gwf' a pi f = ReversibleFrequency a (simple_smap a) pi (plus_gwf_matrix a pi f);
+
+plus_gwf a pi f = let {pi' = listToVectorDouble pi} in plus_gwf' a pi' f;
 
 plus_gwf_model pi f a = Prefix "gwF" (do {
   pi' <- Prefix "pi" (pi a);
@@ -516,7 +527,7 @@ plus_gwf_model pi f a = Prefix "gwF" (do {
 uniform_f_model a = let {n_letters = alphabetSize a;
                          pi = replicate n_letters (1.0/intToDouble n_letters);
                          pi' = listToVectorDouble pi} in 
-                    ReversibleFrequency a (simple_smap a) pi' (plus_gwF a 1.0 pi');
+                    ReversibleFrequency a (simple_smap a) pi' (plus_gwf' a pi');
 
 f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = listToVectorDouble pi1;
                                       pi2' = listToVectorDouble pi2;
@@ -526,11 +537,11 @@ f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = listToVectorDouble pi1;
 f1x4_frequencies a pi = let {pi' = listToVectorDouble pi}
                         in f3x4_frequencies_builtin a pi' pi' pi';
 
-f1x4 triplet_a nuc_pi = let {triplet_pi = f1x4_frequencies triplet_a nuc_pi}
-                        in  ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi (plus_f triplet_a triplet_pi);
+f1x4 triplet_a nuc_pi = let {triplet_pi_vec = f1x4_frequencies triplet_a nuc_pi}
+                        in  ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (plus_f_matrix triplet_a triplet_pi_vec);
 
-f3x4 triplet_a nuc_pi1 nuc_pi2 nuc_pi3 = let {triplet_pi = f3x4_frequencies triplet_a nuc_pi1 nuc_pi2 nuc_pi3} in
-                                         ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi (plus_gwF triplet_a 1.0 triplet_pi);
+f3x4 triplet_a nuc_pi1 nuc_pi2 nuc_pi3 = let {triplet_pi_vec = f3x4_frequencies triplet_a nuc_pi1 nuc_pi2 nuc_pi3} in
+                                         ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (plus_f_matrix triplet_a triplet_pi_vec);
 
 f1x4_model nuc_pi triplet_a = Prefix "F1x4" 
  (do {
@@ -549,10 +560,11 @@ f3x4_model nuc_pi1 nuc_pi2 nuc_pi3 triplet_a = Prefix "F3x4"
        return (f3x4 triplet_a nuc_pi1' nuc_pi2' nuc_pi3');
 });
 
-mg94 nuc_pi triplet_a = let {nuc_a      = getNucleotides triplet_a;
-                             triplet_pi = f1x4_frequencies triplet_a nuc_pi;
-                             nuc_r      = plus_f nuc_a nuc_pi} in
-                        ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi (muse_gaut_matrix triplet_a nuc_r nuc_r nuc_r);
+mg94 nuc_pi triplet_a = let {nuc_a          = getNucleotides triplet_a;
+                             triplet_pi_vec = f1x4_frequencies triplet_a nuc_pi;
+                             nuc_pi_vec     = listToVectorDouble nuc_pi;
+                             nuc_r          = plus_f_matrix nuc_a nuc_pi_vec} in
+                        ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (muse_gaut_matrix triplet_a nuc_r nuc_r nuc_r);
 
 
 mg94_model nuc_pi triplet_a = Prefix "MG94" 
@@ -571,9 +583,9 @@ mg94w9_model triplet_a = Prefix "MG94w9"
        let {nuc_pi1' = listToVectorDouble nuc_pi1;
             nuc_pi2' = listToVectorDouble nuc_pi2;
             nuc_pi3' = listToVectorDouble nuc_pi3;
-            nuc_r1   = plus_gwF nuc_a 1.0 nuc_pi1';
-            nuc_r2   = plus_gwF nuc_a 1.0 nuc_pi2';
-            nuc_r3   = plus_gwF nuc_a 1.0 nuc_pi3';
+            nuc_r1   = plus_f' nuc_a nuc_pi1';
+            nuc_r2   = plus_f' nuc_a nuc_pi2';
+            nuc_r3   = plus_f' nuc_a nuc_pi3';
             pi' = f3x4_frequencies triplet_a nuc_pi1' nuc_pi2' nuc_pi3'};
        return $ ReversibleFrequency triplet_a (simple_smap triplet_a) pi' (muse_gaut_matrix triplet_a nuc_r1 nuc_r2 nuc_r3)
 });
