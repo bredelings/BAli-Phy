@@ -75,7 +75,7 @@ beta_model a b = Prefix "Beta" $ do {a' <- Prefix "a" a;
                                      Log "a" a';
                                      b' <- Prefix "b" b;
                                      Log "b" b';
-                                     beta a' b};
+                                     beta a' b'};
 
 builtin normal_density 3 "normal_density" "Distribution";
 builtin normal_quantile 3 "normal_quantile" "Distribution";
