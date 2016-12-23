@@ -111,7 +111,7 @@ uniform_model l u = Prefix "Uniform" (do {l' <- Prefix "low" l;
 builtin uniform_int_density 3 "uniform_int_density" "Distribution";
 builtin builtin_sample_uniform_int 2 "sample_uniform_int" "Distribution";
 sample_uniform_int l u = Random (IOAction2 builtin_sample_uniform_int l u);
-uniform_int l u = ProbDensity (uniform_int_density l u) () (sample_uniform_int l u) (between l u);
+uniform_int l u = ProbDensity (uniform_int_density l u) () (sample_uniform_int l u) (integer_between l u);
 uniform_int_model l u = Prefix "UniformInt" (do {l' <- Prefix "low" l;
                                                  Log "low" l';
                                                  u' <- Prefix "high" u;

@@ -175,15 +175,9 @@ extern "C" closure builtin_function_uniform_int_density(OperationArgs& Args)
 {
     int a1 = Args.evaluate(0).as_int();
     int a2 = Args.evaluate(1).as_int();
-//  double x  = Args.evaluate(2).as_int();
+    double x  = Args.evaluate(2).as_int();
 
-    int w = a2-a1+1;
-
-    assert(w >= 1);
-
-    double result = 1.0/w;
-
-    return { result };
+    return { ::uniform_int_pdf(x,a1,a2) };
 }
 
 extern "C" closure builtin_function_sample_uniform_int(OperationArgs& Args)

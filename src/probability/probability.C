@@ -144,6 +144,15 @@ log_double_t uniform_pdf(double x, double a, double b)
   return 1.0/log_double_t(b-a);
 }
 
+log_double_t uniform_int_pdf(int x, int a, int b)
+{
+  assert(b >= a);
+
+  if (x < a or x > b) return 0;
+
+  return 1.0/log_double_t(b-a+1);
+}
+
 /// log density for y if y=ln (x+delta), and x ~ Exp(mu)
 
 /// f(x) = exp(-x/mu)/mu   g(y) = exp(-(exp(y)-delta)/mu)/mu * exp(y)
