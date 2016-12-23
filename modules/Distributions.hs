@@ -108,6 +108,16 @@ uniform_model l u = Prefix "Uniform" (do {l' <- Prefix "low" l;
                                           Log "high" u';
                                           uniform l' u'});
 
+builtin uniform_int_density 3 "uniform_int_density" "Distribution";
+builtin builtin_sample_uniform_int 2 "sample_uniform_int" "Distribution";
+sample_uniform_int l u = Random (IOAction2 builtin_sample_uniform_int l u);
+uniform_int l u = ProbDensity (uniform_int_density l u) () (sample_uniform_int l u) (between l u);
+uniform_int_model l u = Prefix "UniformInt" (do {l' <- Prefix "low" l;
+                                                 Log "low" l';
+                                                 u' <- Prefix "high" u;
+                                                 Log "high" u';
+                                                 uniform_int l' u'});
+
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
 dirichlet_density ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
 sample_dirichlet ps = do { vs <- mapM (\a->gamma a 1.0) ps;

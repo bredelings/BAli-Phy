@@ -122,6 +122,7 @@ const vector< vector<vector<string>> > all_default_arguments =
 {
     {{"log","Double","N"}, {"log_model","x"}, {"x","Double"}},
     {{"Uniform","Double"}, {"uniform_model","low","high"}, {"low","Double"}, {"high","Double"}},
+    {{"UniformInt","Int"}, {"uniform_int_model","low","high"}, {"low","Int"}, {"high","Int"}},
     {{"Normal","Double"}, {"normal_model","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
     {{"logNormal","Double"}, {"logNormal_model","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
     {{"logLaplace","Double"}, {"logLaplace_model","lm","ls"}, {"lm","Double"}, {"ls","Double"}},
