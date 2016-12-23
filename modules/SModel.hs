@@ -607,7 +607,7 @@ gamma_model base alpha n alphabet = Prefix "Gamma"
      Log "alpha" alpha';
 
      n' <- Prefix "n" n;
-     Log "n" n;
+     Log "n" n';
 
      let {beta = 1.0/alpha';
           dist = uniformDiscretize (quantile (gamma alpha' beta)) n'};
