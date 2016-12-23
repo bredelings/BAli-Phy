@@ -489,11 +489,13 @@ ptree get_result_type(const ptree& model_rep)
 
 optional<pair<string,string>> split_keyword(const string& s)
 {
-    int pos = s.find('=');
-    if (pos == -1)
-	return boost::none;
-    else
-	return pair<string,string>({s.substr(0,pos),s.substr(pos+1)});
+    for(int i=0;i<s.size();i++)
+    {
+	if (s[i] == '[' or s[i] == ']') return boost::none;
+	if (s[i] == '=')
+	return pair<string,string>({s.substr(0,i),s.substr(i+1)});
+    }
+    return boost::none;
 }
 
 string show(const ptree& pt, int depth = 0)
