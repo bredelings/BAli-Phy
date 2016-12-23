@@ -154,7 +154,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"gamma","MM[a]"}, {"gamma_model","submodel","alpha","n"}, {"n","Int","4"}, {"alpha","Double","logLaplace[-6,2]"}, {"submodel","RA[a]"}},
     {{"gamma_inv","MM[a]"}, {"gamma_inv_model","submodel","alpha","pInv","n"}, {"n","Int","4"}, {"alpha","Double","logLaplace[-6,2]"}, {"pInv","Double","Uniform[0,1]"}, {"submodel","RA[a]"}},
     {{"log-normal","MM[a]"}, {"log_normal_model","submodel","sigmaOverMu","n"}, {"n","Int","4"}, {"sigmaOverMu","Double","logLaplace[-3,1]"}, {"submodel","RA[a]"}},
-    {{"log-normal_inv","MM[a]"}, {}, {"n","Int","4"}, {"sigmaOverMu","Double"}, {"p","Double","Uniform[0,1]"}, {"submodel","RA[a]"}},
+    {{"log-normal_inv","MM[a]"}, {"log_normal_inv_model","submodel","sigmaOverMu","pInv", "n"}, {"n","Int","4"}, {"sigmaOverMu","Double","logLaplace[-3,1]"}, {"pInv","Double","Uniform[0,1]"}, {"submodel","RA[a]"}},
     {{"M1a","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"M2a","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"M2a_Test","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},

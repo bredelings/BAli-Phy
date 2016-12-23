@@ -669,19 +669,26 @@ log_normal_model base sigmaOverMu n alphabet = Prefix "LogNormal"
          return $ multiRate base' dist
 });
 
-log_normal_inv_model base n = Prefix "LogNormalInv"
+log_normal_inv_model base sigmaOverMu pInv n alphabet = Prefix "LogNormalInv"
   (do {
-     sigmaOverMu <- logLaplace (-3.0) 1.0;
-     Log "sigmaOverMu" sigmaOverMu;
+     base' <- base alphabet;
 
-     let {x = log(1.0+sigmaOverMu^2);
+     sigmaOverMu' <- Prefix "sigmaOverMu" sigmaOverMu;
+     Log "sigmaOverMu" sigmaOverMu';
+
+     n' <- Prefix "n" n;
+     Log "n" n';
+
+     pInv' <- Prefix "pInv" pInv;
+     Log "pInv" pInv';
+
+     let {x = log(1.0+sigmaOverMu'^2);
           lmu = -0.5*x;
           lsigma = sqrt x;
-          dist = uniformDiscretize (quantile (logNormal lmu lsigma)) n};
+          dist = uniformDiscretize (quantile (logNormal lmu lsigma)) n';
+          dist2 = extendDiscreteDistribution dist pInv' 0.0};
 
-     dist2 <- plus_inv_model dist;
-
-     return $ multiRate base dist2
+         return $ multiRate base' dist2
 });
 
 dp_model base n = Prefix "DP"
