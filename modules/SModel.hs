@@ -438,10 +438,15 @@ exchange_model a =  do {
   }
 };
 
-get_element_freqs []                 x = error ("No frequency specified for letter '" ++ show x ++ "'");
+get_element_freqs []                 x = error ("No frequency specified for letter '" ++ x ++ "'");
 get_element_freqs ((key,value):rest) x = if (key == x) then value else get_element_freqs rest x;
 
+get_element_exchange []                 x y = error ("No exchangeability specified for '" ++ x ++ "'");
+get_element_exchange ((key,value):rest) x y = if key == x || key == y then value else get_element_exchange rest x y;
+
 constant_frequencies_model freqs a = sequence [get_element_freqs freqs l|l <- alphabet_letters a];
+
+constant_exchange_model ex a = sequence [get_element_exchange ex (l1++l2) (l2++l1)|(l1,l2) <- pairs (alphabet_letters a)];
 
 simple_smap a = iotaUnsigned (alphabetSize a);
 

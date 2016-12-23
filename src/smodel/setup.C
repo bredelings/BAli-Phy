@@ -133,6 +133,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"TN","EM[a]"}, {"tn_model","kappaPur","kappaPyr"}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
     {{"GTR","EM[a]"}, {"gtr_model","S"}, {"S","E","exchange_prior"}},
     {{"exchange_prior","E"}, {"exchange_model"}},
+    {{"E","E","P"}, {"constant_exchange_model"},{"**","Double"}},
     {{"HKYx3","EM[a]"}, {}, {"kappa","Double","logNormal[log[2],0.25]"}},
     {{"TNx3","EM[a]"}, {}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
     {{"GTRx3","EM[a]"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"}},
