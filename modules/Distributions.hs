@@ -114,7 +114,20 @@ sample_dirichlet ps = do { vs <- mapM (\a->gamma a 1.0) ps;
                            return $ map (/(sum vs)) vs};
 dirichlet ps = ProbDensity (dirichlet_density ps) (no_quantile "dirichlet") (sample_dirichlet ps) (Simplex (length ps) 1.0);
 
+dirichlet_model ps = Prefix "Dirichlet" $ do
+                       {
+                         ps' <- ps;
+                         dirichlet ps';
+                       };
+
 dirichlet' n x = dirichlet (replicate n x);
+dirichlet'_model n x = Prefix "Dirichlet'" $ do
+                       {
+                         n' <- n;
+                         x' <- x;
+                         dirichlet' n' x';
+                       };
+
 
 builtin binomial_density 3 "binomial_density" "Distribution";
 builtin builtin_sample_binomial 2 "sample_binomial" "Distribution";
@@ -129,6 +142,11 @@ geometric2 p_fail p_success = ProbDensity (geometric_density p_fail p_success) (
 
 geometric p = geometric2 (1.0-p) p;
 rgeometric q = geometric2 q (1.0-q);
+
+geometric_model p  = Prefix "Geometric" $ do {
+                                            p' <- p;
+                                            geometric p';
+                                          };
 
 builtin poisson_density 2 "poisson_density" "Distribution";
 builtin builtin_sample_poisson 1 "sample_poisson" "Distribution";
