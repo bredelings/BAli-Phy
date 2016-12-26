@@ -137,10 +137,10 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"TN","EM[a]"}, {"tn_model","kappaPur","kappaPyr"}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
     {{"GTR","EM[a]"}, {"gtr_model","S"}, {"S","E","exchange_prior"}},
     {{"exchange_prior","E"}, {"exchange_model"}},
-    {{"E","E","P"}, {"constant_exchange_model"},{"**","Double"}},
+    {{"E","E","P"}, {"constant_exchange_model"},{"*","Double"}},
     {{"HKYx3","EM[a]"}, {}, {"kappa","Double","logNormal[log[2],0.25]"}},
     {{"TNx3","EM[a]"}, {}, {"kappaPur","Double","logNormal[log[2],0.25]"}, {"kappaPyr","Double","logNormal[log[2],0.25]"}},
-    {{"GTRx3","EM[a]"}, {}, {"*ag"}, {"*at"}, {"*ac"}, {"*gt"}, {"*gc"}, {"*tc"}},
+    {{"GTRx3","EM[a]"}, {}, {"ag"}, {"at"}, {"ac"}, {"gt"}, {"gc"}, {"tc"}},
     {{"PAM","EM[AA]"}, {"SModel.pam_model"}},
     {{"JTT","EM[AA]"}, {"SModel.jtt_model"}},
     {{"WAG","EM[AA]"}, {"SModel.wag_model"}},
@@ -174,7 +174,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"branch-site","MM[a]"}, {}, {"n","Int","2"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"dp_omega","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"frequencies_prior","F"}, {"frequencies_model"}},
-    {{"Freq","F","P"}, {"constant_frequencies_model"},{"**","Double"}},
+    {{"Freq","F","P"}, {"constant_frequencies_model"},{"*","Double"}},
     {{"F","FM[a]"}, {"plus_f_model","pi"},{"pi","F","frequencies_prior"}},
     {{"F61","FM[a]"}, {"plus_f_model","pi"}, {"pi","F","frequencies_prior"}},
     {{"gwF","FM[a]"}, {"plus_gwf_model","pi","f"},{"pi","F","frequencies_prior"},{"f","Double","Uniform[0,1]"}},
@@ -225,11 +225,6 @@ ptree convert_rule(const vector<vector<string>>& s)
 	ptree arg;
 
 	string arg_name = s[i][0];
-	if (arg_name[0] == '*')
-	{
-	    arg_name = arg_name.substr(1);
-	    arg.put("optional","true");
-	}
 	arg.put("arg_name",arg_name);
 	arg.push_back({"arg_type",parse_type(s[i][1])});
 	if (s[i].size() > 2)
@@ -537,7 +532,6 @@ string get_keyword_for_positional_arg(const string& head, int i)
 	if (i > arguments.size())
 	    throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<head<<"', which only has "<<arguments.size()<<" positional arguments.";
 
-	// Strip leading '*' that indicates required argument
 	auto it = arguments.begin();
 	for(int j=0;j<i;j++)
 	    it++;
@@ -859,7 +853,7 @@ void pass2(const ptree& required_type, ptree& model, const ptree& equations = {}
 	    const auto& argument = arg.second;
 
 	    string arg_name = argument.get<string>("arg_name");
-	    bool arg_is_required = not (argument.count("optional") and argument.get<string>("optional") == "true");
+	    bool arg_is_required = (arg_name != "*");
 
 	    if (model.count(arg_name)) continue;
 
