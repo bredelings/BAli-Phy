@@ -134,28 +134,28 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"Geometric","Distribution[Int]"}, {"geometric_model","p"}, {"p","Double"}},
     {{"EQU","EM[a]"}, {}},
     {{"F81"}, {}, {"alphabet","Alphabet"}},
-    {{"HKY","EM[a]"}, {"hky_model","kappa"}, {"kappa","Double","Sample[logNormal[log[2],0.25]]"}, },
-    {{"TN","EM[a]"}, {"tn_model","kappaPur","kappaPyr"}, {"kappaPur","Double","Sample[logNormal[log[2],0.25]]"}, {"kappaPyr","Double","Sample[logNormal[log[2],0.25]]"}},
+    {{"HKY","EM[a]"}, {"hky_model","kappa"}, {"kappa","Double","~logNormal[log[2],0.25]"}, },
+    {{"TN","EM[a]"}, {"tn_model","kappaPur","kappaPyr"}, {"kappaPur","Double","~logNormal[log[2],0.25]"}, {"kappaPyr","Double","~logNormal[log[2],0.25]"}},
     {{"GTR","EM[a]"}, {"gtr_model","S"}, {"S","E","exchange_prior"}},
     {{"exchange_prior","E"}, {"exchange_model"}},
     {{"E","E","P"}, {"constant_exchange_model"},{"*","Double"}},
-    {{"HKYx3","EM[a]"}, {}, {"kappa","Double","Sample[logNormal[log[2],0.25]]"}},
-    {{"TNx3","EM[a]"}, {}, {"kappaPur","Double","Sample[logNormal[log[2],0.25]]"}, {"kappaPyr","Double","Sample[logNormal[log[2],0.25]]"}},
+    {{"HKYx3","EM[a]"}, {}, {"kappa","Double","~logNormal[log[2],0.25]"}},
+    {{"TNx3","EM[a]"}, {}, {"kappaPur","Double","~logNormal[log[2],0.25]"}, {"kappaPyr","Double","~logNormal[log[2],0.25]"}},
     {{"GTRx3","EM[a]"}, {}, {"ag"}, {"at"}, {"ac"}, {"gt"}, {"gc"}, {"tc"}},
     {{"PAM","EM[AA]"}, {"SModel.pam_model"}},
     {{"JTT","EM[AA]"}, {"SModel.jtt_model"}},
     {{"WAG","EM[AA]"}, {"SModel.wag_model"}},
     {{"LG","EM[AA]"}, {"SModel.lg_model"}},
     {{"Empirical","EM[a]"}, {}, {"filename"}},
-    {{"M0","EM[a]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","Sample[Uniform[0,1]]"}},
+    {{"M0","EM[a]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","~Uniform[0,1]"}},
     {{"fMutSel","RA[a]"}, {}, {"submodel","RA[a]"}},
     {{"fMutSel0","RA[a]"}, {}, {"submodel","RA[a]"}},
-    {{"INV","MM[a]"}, {}, {"p","Double","Sample[Uniform[0,1]]"}},
+    {{"INV","MM[a]"}, {}, {"p","Double","~Uniform[0,1]"}},
     {{"DP","MM[a]"}, {}, {"n","Int"}, {"submodel","RA[a]"}},
-    {{"gamma","MM[a]"}, {"gamma_model","submodel","alpha","n"}, {"n","Int","4"}, {"alpha","Double","Sample[logLaplace[-6,2]]"}, {"submodel","RA[a]"}},
-    {{"gamma_inv","MM[a]"}, {"gamma_inv_model","submodel","alpha","pInv","n"}, {"n","Int","4"}, {"alpha","Double","Sample[logLaplace[-6,2]]"}, {"pInv","Double","Sample[Uniform[0,1]]"}, {"submodel","RA[a]"}},
-    {{"log-normal","MM[a]"}, {"log_normal_model","submodel","sigmaOverMu","n"}, {"n","Int","4"}, {"sigmaOverMu","Double","Sample[logLaplace[-3,1]]"}, {"submodel","RA[a]"}},
-    {{"log-normal_inv","MM[a]"}, {"log_normal_inv_model","submodel","sigmaOverMu","pInv", "n"}, {"n","Int","4"}, {"sigmaOverMu","Double","Sample[logLaplace[-3,1]]"}, {"pInv","Double","Sample[Uniform[0,1]]"}, {"submodel","RA[a]"}},
+    {{"gamma","MM[a]"}, {"gamma_model","submodel","alpha","n"}, {"n","Int","4"}, {"alpha","Double","~logLaplace[-6,2]"}, {"submodel","RA[a]"}},
+    {{"gamma_inv","MM[a]"}, {"gamma_inv_model","submodel","alpha","pInv","n"}, {"n","Int","4"}, {"alpha","Double","~logLaplace[-6,2]"}, {"pInv","Double","~Uniform[0,1]"}, {"submodel","RA[a]"}},
+    {{"log-normal","MM[a]"}, {"log_normal_model","submodel","sigmaOverMu","n"}, {"n","Int","4"}, {"sigmaOverMu","Double","~logLaplace[-3,1]"}, {"submodel","RA[a]"}},
+    {{"log-normal_inv","MM[a]"}, {"log_normal_inv_model","submodel","sigmaOverMu","pInv", "n"}, {"n","Int","4"}, {"sigmaOverMu","Double","~logLaplace[-3,1]"}, {"pInv","Double","~Uniform[0,1]"}, {"submodel","RA[a]"}},
     {{"M1a","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"M2a","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"M2a_Test","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
@@ -168,8 +168,8 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"n","Int","4"},
      {"nuc_model","EM[a]","HKY"},
      {"freq_model","FM[a]","F61"},
-     {"posP","Double","Sample[Beta[1,10]]"},
-     {"posW","Double","Sample[logGamma[4,0.25]]"} },
+     {"posP","Double","~Beta[1,10]"},
+     {"posW","Double","~logGamma[4,0.25]"} },
     {{"M8a","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"M8a_Test","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
     {{"branch-site","MM[a]"}, {}, {"n","Int","2"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
@@ -178,7 +178,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"Freq","F","P"}, {"constant_frequencies_model"},{"*","Double"}},
     {{"F","FM[a]"}, {"plus_f_model","pi"},{"pi","F","frequencies_prior"}},
     {{"F61","FM[a]"}, {"plus_f_model","pi"}, {"pi","F","frequencies_prior"}},
-    {{"gwF","FM[a]"}, {"plus_gwf_model","pi","f"},{"pi","F","frequencies_prior"},{"f","Double","Sample[Uniform[0,1]]"}},
+    {{"gwF","FM[a]"}, {"plus_gwf_model","pi","f"},{"pi","F","frequencies_prior"},{"f","Double","~Uniform[0,1]"}},
     {{"F1x4","FM[a]"}, {"f1x4_model","pi"}, {"pi","F","frequencies_prior"}},
     {{"F3x4","FM[a]"}, {"f3x4_model","pi1","pi2","pi3"}, {"pi1","F","frequencies_prior"}, {"pi2","F","frequencies_prior"}, {"pi3","F","frequencies_prior"}},
     {{"MG94","FM[a]"}, {"mg94_model","pi"}, {"pi","F","frequencies_prior"}},
@@ -431,8 +431,14 @@ string unparse(const ptree& p)
     string submodel;
     for(const auto& pair: p)
     {
-	if (pair.first == "submodel")
+	if (pair.first == "submodel") {
 	    submodel = unparse(pair.second);
+	}
+	else if (pair.second.get_value<string>() == "Sample")
+	{
+	    auto p2 = pair.second.begin()->second;
+	    args.push_back( pair.first + "~" + unparse(p2) );
+	}
 	else
 	    args.push_back( pair.first + "=" + unparse(pair.second) );
     }
@@ -488,12 +494,12 @@ ptree get_result_type(const ptree& model_rep)
     return get_result_type(model_rep.get_value<string>());
 }
 
-optional<pair<string,string>> split_keyword(const string& s)
+optional<pair<string,string>> split_keyword(const string& s, char c)
 {
     for(int i=0;i<s.size();i++)
     {
 	if (s[i] == '[' or s[i] == ']') return boost::none;
-	if (s[i] == '=')
+	if (s[i] == c)
 	return pair<string,string>({s.substr(0,i),s.substr(i+1)});
     }
     return boost::none;
@@ -616,9 +622,21 @@ pair<optional<string>,string> split_last_plus(const string& s)
 	return {s.substr(0,split), s.substr(split+1)};
 }
 
-/// Parse strings of the form head[value1, value2, key3=value3, ...]
+ptree add_sample(const ptree& p)
+{
+    ptree p2 = {};
+    p2.put_value("Sample");
+    p2.push_back({"x",p});
+    return p2;
+}
+
+/// Parse strings of the form {~}head[value1, value2, key3=value3, ...]
 ptree parse_no_submodel(const string& s)
 {
+    // 0. Handle ~
+    if (not s.empty() and s[0] == '~')
+	return add_sample(parse(s.substr(1)));
+
     // 1. Split the head and the arguments
     auto args = split_args(s);
 
@@ -639,12 +657,19 @@ ptree parse_no_submodel(const string& s)
 	if (args[i].empty()) continue;
 
 	// 5. If we have a keyword argument, remember it
-	if (auto arg = split_keyword(args[i]))
+	if (auto arg = split_keyword(args[i],'='))
 	{
 	    seen_keyword_arg = true;
 	    key_value = *arg;
 	}
-	// 6. Otherwise find the keyword for the positional argument
+	// 6. If we have a keyword argument, remember it
+	else if (auto arg = split_keyword(args[i],'~'))
+	{
+	    seen_keyword_arg = true;
+	    key_value = *arg;
+	    key_value.second = "~"+key_value.second;
+	}
+	// 7. Otherwise find the keyword for the positional argument
 	else
 	{
 	    if (seen_keyword_arg)
@@ -652,7 +677,7 @@ ptree parse_no_submodel(const string& s)
 	    key_value = {get_keyword_for_positional_arg(head, i), args[i]};
 	}
 
-	// 7. Set the key = value after parsing the value.
+	// 8. Set the key = value after parsing the value.
 	if (result.count(key_value.first))
 	    throw myexception()<<"Trying to set value for "<<head<<"."<<key_value.first<<" a second time!";
 	result.push_back({key_value.first, parse(key_value.second)});
