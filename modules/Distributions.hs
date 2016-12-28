@@ -75,7 +75,7 @@ beta_model a b = Prefix "Beta" $ do {a' <- Prefix "a" a;
                                      Log "a" a';
                                      b' <- Prefix "b" b;
                                      Log "b" b';
-                                     beta a' b'};
+                                     return $ beta a' b'};
 
 builtin normal_density 3 "normal_density" "Distribution";
 builtin normal_quantile 3 "normal_quantile" "Distribution";
@@ -86,7 +86,7 @@ normal_model m s = Prefix "Normal" $ do {m' <- Prefix "mu" m;
                                          Log "mu" m';
                                          s' <- Prefix "sigma" s;
                                          Log "sigma" s';
-                                         normal m' s'};
+                                         return $ normal m' s'};
 
 builtin cauchy_density 3 "cauchy_density" "Distribution";
 builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution";
@@ -106,7 +106,7 @@ uniform_model l u = Prefix "Uniform" (do {l' <- Prefix "low" l;
                                           Log "low" l';
                                           u' <- Prefix "high" u;
                                           Log "high" u';
-                                          uniform l' u'});
+                                          return $ uniform l' u'});
 
 builtin uniform_int_density 3 "uniform_int_density" "Distribution";
 builtin builtin_sample_uniform_int 2 "sample_uniform_int" "Distribution";
@@ -116,7 +116,7 @@ uniform_int_model l u = Prefix "UniformInt" (do {l' <- Prefix "low" l;
                                                  Log "low" l';
                                                  u' <- Prefix "high" u;
                                                  Log "high" u';
-                                                 uniform_int l' u'});
+                                                 return $ uniform_int l' u'});
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
 dirichlet_density ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
@@ -127,7 +127,7 @@ dirichlet ps = ProbDensity (dirichlet_density ps) (no_quantile "dirichlet") (sam
 dirichlet_model ps = Prefix "Dirichlet" $ do
                        {
                          ps' <- ps;
-                         dirichlet ps';
+                         return $ dirichlet ps';
                        };
 
 dirichlet' n x = dirichlet (replicate n x);
@@ -135,7 +135,7 @@ dirichlet'_model n x = Prefix "Dirichlet'" $ do
                        {
                          n' <- n;
                          x' <- x;
-                         dirichlet' n' x';
+                         return $ dirichlet' n' x';
                        };
 
 
@@ -155,7 +155,7 @@ rgeometric q = geometric2 q (1.0-q);
 
 geometric_model p  = Prefix "Geometric" $ do {
                                             p' <- p;
-                                            geometric p';
+                                            return $ geometric p';
                                           };
 
 builtin poisson_density 2 "poisson_density" "Distribution";
@@ -276,23 +276,23 @@ logGamma a b = expTransform $ gamma a b;
 logLaplace m s = expTransform $ laplace m s;
 logCauchy m s = expTransform $ cauchy m s;
 
-logNormal_model mu sigma = Prefix "logNormal" (do {mu' <- Prefix "lmu" mu;
-                                                   Log "lmu" mu';
-                                                   sigma' <- Prefix "lsigma" sigma;
-                                                   Log "lsigma" sigma';
-                                                   logNormal mu' sigma'});
+logNormal_model mu sigma = Prefix "logNormal" $ do {mu' <- Prefix "lmu" mu;
+                                                    Log "lmu" mu';
+                                                    sigma' <- Prefix "lsigma" sigma;
+                                                    Log "lsigma" sigma';
+                                                    return $ logNormal mu' sigma'};
 
-logLaplace_model mu sigma = Prefix "logLaplace" (do {mu' <- Prefix "lmu" mu;
-                                                     Log "lmu" mu';
-                                                     sigma' <- Prefix "lsigma" sigma;
-                                                     Log "lsigma" sigma';
-                                                     logNormal mu' sigma'});
+logLaplace_model mu sigma = Prefix "logLaplace" $ do {mu' <- Prefix "lmu" mu;
+                                                      Log "lmu" mu';
+                                                      sigma' <- Prefix "lsigma" sigma;
+                                                      Log "lsigma" sigma';
+                                                      return $ logNormal mu' sigma'};
 
 logGamma_model a b = Prefix "logGamma" $ do {a' <- Prefix "a" a;
                                              Log "a" a';
                                              b' <- Prefix "b" b;
                                              Log "b" b';
-                                             logGamma a' b'};
+                                             return $ logGamma a' b'};
 
 safe_exp x = if (x < (-20.0)) then
                exp (-20.0);

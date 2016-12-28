@@ -364,4 +364,5 @@ nubBy eq [] = [];
 tails (x:xs) = (x:xs):(tails xs);
 tails []     = [];
 
+performAction x = do { action <- x ; action };
 }
