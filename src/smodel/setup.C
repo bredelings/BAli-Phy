@@ -337,7 +337,10 @@ bool merge_equations(equations_t& p1, const equations_t& p2)
         // If they BOTH have an equality, then we need to merge the equalities.
 	else 
 	    if (not merge_equations(p1, unify(p1.get_child(key),p2.get_child(key))))
+	    {
+		p1 = ptree("fail");
 		return false;
+	    }
     }
 
     return true;
@@ -793,7 +796,7 @@ ptree alpha_rename(const set<string>& vars, const set<string>& vars_to_avoid)
     return equations;
 }
 
-void pass2(const ptree& required_type, ptree& model, const ptree& equations = {})
+void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 {
     auto name = model.get_value<string>();
 
@@ -838,18 +841,20 @@ void pass2(const ptree& required_type, ptree& model, const ptree& equations = {}
         // 2. Skip rules where the type does not match
 
 	type_t result_type = rule.get_child("result_type");
-	equations_t equations = type_derived_from(result_type, required_type);
+	equations_t equations2 = type_derived_from(result_type, required_type);
+	merge_equations(equations2,equations);
 
-	if (equations.get_value<string>() == "fail")
+	if (equations2.get_value<string>() == "fail")
 	{
-	    equations = convertible_to(model, result_type, required_type);
-	    if (equations.get_value<string>() != "fail")
+	    equations2 = convertible_to(model, result_type, required_type);
+	    merge_equations(equations2,equations);
+	    if (equations2.get_value<string>() != "fail")
 	    {
-		pass2(required_type, model);
+		pass2(required_type, model, equations2);
 		return;
 	    }
 	}
-
+	equations = equations2;
 //	if (equations.get_value<string>() == "fail")
 //	    std::cout<<"fail!"<<std::endl;
 //	else
@@ -909,7 +914,8 @@ ptree translate_model(const string& required_type, const string& model)
     auto p = parse(model);
     auto t = parse_type(required_type);
     pass1(p);
-    pass2(t,p);
+    equations_t equations;
+    pass2(t, p, equations);
     return p;
 }
 
