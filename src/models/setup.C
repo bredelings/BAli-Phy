@@ -356,43 +356,10 @@ optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const
 /// \param a The alphabet on which the model lives.
 /// \param frequencies The initial frequencies for the model.
 ///
-expression_ref process_stack_Frequencies(const ptree& model_rep)
+expression_ref process_stack_Frequencies(const ptree&)
 {
     expression_ref R;
 
-    if (model_rep.get_value<string>() == "F" or model_rep.get_value<string>() == "F61")
-    {
-	expression_ref alphabet_ = get_model_as("Alphabet", model_rep.get_child("alphabet"));
-
-	if (auto pi = get_frequencies_from_tree(model_rep, alphabet_.as_<alphabet>()))
-	    R = (identifier("plus_f"), alphabet_, get_list(*pi));
-	else
-	    R = model_expression({identifier("plus_f_model"),alphabet_});
-    }
-    else if (model_rep.get_value<string>() == "gwF")
-    {
-	expression_ref alphabet_ = get_model_as("Alphabet", model_rep.get_child("alphabet"));
-	auto pi = get_frequencies_from_tree(model_rep, alphabet_.as_<alphabet>());
-	if (pi and model_rep.count("f"))
-	{
-	    double f = model_rep.get<double>("f");
-	    R = (identifier("plus_gwf"), alphabet_, get_list(*pi), f);
-	}
-	else
-	    R = model_expression({identifier("plus_gwf_model"),alphabet_});
-    }
-    else if (model_rep.get_value<string>() == "F=uniform")
-    {
-	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
-
-	R = (identifier("uniform_f_model"),alphabet);
-    }
-    else if (model_rep.get_value<string>() == "MG94w9") 
-    {
-	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
-
-	R = model_expression({identifier("mg94w9_model"),alphabet});
-    }
     /*
       else if (model_rep.get_value<string>() == "F=amino-acids") 
       {

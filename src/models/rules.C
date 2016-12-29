@@ -76,7 +76,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"F1x4","FM[a]"}, {"f1x4_model","pi"}, {"pi","F","frequencies_prior"}},
     {{"F3x4","FM[a]"}, {"f3x4_model","pi1","pi2","pi3"}, {"pi1","F","frequencies_prior"}, {"pi2","F","frequencies_prior"}, {"pi3","F","frequencies_prior"}},
     {{"MG94","FM[a]"}, {"mg94_model","pi"}, {"pi","F","frequencies_prior"}},
-    {{"MG94w9","FM[a]"}, {}},
+    {{"MG94w9","FM[a]"}, {"mg94w9_model","pi1","pi2","pi3"}, {"pi1","F","frequencies_prior"}, {"pi2","F","frequencies_prior"}, {"pi3","F","frequencies_prior"}},
     {{"DNA","Alphabet","N"}, {"dna"}},
     {{"RNA","Alphabet"}, {"rna"}},
     {{"AA","Alphabet"}, {"aa"}},
