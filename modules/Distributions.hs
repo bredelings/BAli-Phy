@@ -102,6 +102,11 @@ builtin laplace_density 3 "laplace_density" "Distribution";
 builtin builtin_sample_laplace 2 "sample_laplace" "Distribution";
 sample_laplace m s = Random (IOAction2 builtin_sample_laplace m s);
 laplace m s = ProbDensity (laplace_density m s) () (sample_laplace m s) realLine;
+laplace_model m s = Prefix "Laplace" $ do {m' <- Prefix "m" m;
+                                           Log "m" m';
+                                           s' <- Prefix "s" s;
+                                           Log "s" s';
+                                           return $ laplace m' s'};
 
 builtin uniform_density 3 "uniform_density" "Distribution";
 builtin builtin_sample_uniform 2 "sample_uniform" "Distribution";
@@ -183,6 +188,9 @@ builtin exponential_density 2 "exponential_density" "Distribution";
 exponential_quantile mu p = gamma_quantile 1.0 mu p;
 sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
 exponential mu = ProbDensity (exponential_density mu) (exponential_quantile mu) (sample_exponential mu) (above 0.0);
+exponential_model mu = Prefix "Exponential" $ do { mu' <- Prefix "mean" mu;
+                                                   Log "mean" mu';
+                                                   return $ exponential mu'};
 
 normalize v = map (/total) v where {total=sum v};
 
