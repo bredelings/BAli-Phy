@@ -958,10 +958,10 @@ ptree array_index(const ptree& p, int i)
     return index(p,i).second;
 }
 
-expression_ref get_smodel_as(const ptree& type, const ptree& model_rep);
-expression_ref get_smodel_as(const string& type, const ptree& model_rep)
+expression_ref get_model_as(const ptree& type, const ptree& model_rep);
+expression_ref get_model_as(const string& type, const ptree& model_rep)
 {
-    return get_smodel_as(parse_type(type), model_rep);
+    return get_model_as(parse_type(type), model_rep);
 }
 
 expression_ref process_stack_functions(const ptree& model_rep)
@@ -984,7 +984,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	for(const auto& child: model_rep)
 	{
 	    string arg_name = child.first;
-	    expression_ref arg = get_smodel_as(arg_type, model_rep.get_child(arg_name));
+	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name));
 	    arguments.push_back(Tuple(arg_name,arg));
 	}
 	E = (E,get_list(arguments));
@@ -995,7 +995,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	    string arg_name = array_index(call,i).get_value<string>();
 	    ptree arg_tree = get_arg(*rule, arg_name);
 	    ptree arg_type = arg_tree.get_child("arg_type");
-	    expression_ref arg = get_smodel_as(arg_type, model_rep.get_child(arg_name));
+	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name));
 	    E = (E,arg);
 	}
     return E;
@@ -1027,13 +1027,13 @@ expression_ref process_stack_Markov(const ptree& model_rep)
 
     if (model_rep.get_value<string>() == "JC")
     {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
 	return (identifier("jukes_cantor"), alphabet);
     }
     else if (model_rep.get_value<string>() == "EQU")
     {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
 	return model_expression({identifier("equ_model"), alphabet});
     }
@@ -1049,19 +1049,19 @@ expression_ref process_stack_Markov(const ptree& model_rep)
     */
     else if (model_rep.get_value<string>() == "HKYx3")
     {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
 	return model_expression({identifier("hkyx3_model"), alphabet});
     }
     else if (model_rep.get_value<string>() == "TNx3")
     {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
 	return model_expression({identifier("tnx3_model"),alphabet});
     }
     else if (model_rep.get_value<string>() == "GTRx3")
     {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
 	return model_expression({identifier("gtrx3_model"),alphabet});
     }
@@ -1070,7 +1070,7 @@ expression_ref process_stack_Markov(const ptree& model_rep)
 	if (not model_rep.count("alphabet"))
 	    throw myexception()<<"Model '"<<model_rep.get_value<string>()<<"' is missing parameters 'alphabet'";
 
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
 	return (identifier("SModel.empirical"), alphabet, model_rep.get<string>("filename"));
     }
@@ -1097,17 +1097,17 @@ expression_ref process_stack_Markov(const ptree& model_rep)
     */
     else if (model_rep.get_value<string>() == "fMutSel")
     {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref nuc_rm = get_smodel_as("RA[a]",model_rep.get_child("submodel"));
+	expression_ref nuc_rm = get_model_as("RA[a]",model_rep.get_child("submodel"));
 
 	return model_expression({identifier("fMutSel_model"), alphabet , nuc_rm});
     }
     else if (model_rep.get_value<string>() == "fMutSel0")
     {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref nuc_rm = get_smodel_as("RA[a]",model_rep.get_child("submodel"));
+	expression_ref nuc_rm = get_model_as("RA[a]",model_rep.get_child("submodel"));
 
 	return model_expression({identifier("fMutSel0_model"), alphabet , nuc_rm});
     }
@@ -1146,7 +1146,7 @@ expression_ref process_stack_Frequencies(const ptree& model_rep)
 
     if (model_rep.get_value<string>() == "F" or model_rep.get_value<string>() == "F61")
     {
-	expression_ref alphabet_ = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet_ = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
 	if (auto pi = get_frequencies_from_tree(model_rep, alphabet_.as_<alphabet>()))
 	    R = (identifier("plus_f"), alphabet_, get_list(*pi));
@@ -1155,7 +1155,7 @@ expression_ref process_stack_Frequencies(const ptree& model_rep)
     }
     else if (model_rep.get_value<string>() == "gwF")
     {
-	expression_ref alphabet_ = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet_ = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 	auto pi = get_frequencies_from_tree(model_rep, alphabet_.as_<alphabet>());
 	if (pi and model_rep.count("f"))
 	{
@@ -1167,13 +1167,13 @@ expression_ref process_stack_Frequencies(const ptree& model_rep)
     }
     else if (model_rep.get_value<string>() == "F=uniform")
     {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
 	R = (identifier("uniform_f_model"),alphabet);
     }
     else if (model_rep.get_value<string>() == "MG94w9") 
     {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
 	R = model_expression({identifier("mg94w9_model"),alphabet});
     }
@@ -1219,13 +1219,13 @@ expression_ref process_stack_Multi(const ptree& model_rep)
 {
     if (model_rep.get_value<string>() == "INV") 
     {
-	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
+	expression_ref base = get_model_as("RA[a]", model_rep.get_child("submodel"));
 
 	return model_expression({identifier("inv_model"), base});
     }
     else if (model_rep.get_value<string>() == "log-normal") 
     {
-	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
+	expression_ref base = get_model_as("RA[a]", model_rep.get_child("submodel"));
 
 	int n = model_rep.get<int>("n");
 
@@ -1233,7 +1233,7 @@ expression_ref process_stack_Multi(const ptree& model_rep)
     }
     else if (model_rep.get_value<string>() == "log-normal_inv") 
     {
-	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
+	expression_ref base = get_model_as("RA[a]", model_rep.get_child("submodel"));
 
 	int n = model_rep.get<int>("n");
 
@@ -1252,7 +1252,7 @@ expression_ref process_stack_Multi(const ptree& model_rep)
 
     else if (model_rep.get_value<string>() == "DP") 
     {
-	expression_ref base = get_smodel_as("RA[a]", model_rep.get_child("submodel"));
+	expression_ref base = get_model_as("RA[a]", model_rep.get_child("submodel"));
 
 	int n = model_rep.get<int>("n");
 
@@ -1324,31 +1324,31 @@ expression_ref process_stack_Multi(const ptree& model_rep)
     */
     else if (model_rep.get_value<string>() == "M1a") // M2a[S,F]
     {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
+	expression_ref S = get_model_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
+	expression_ref R = get_model_as("FM[a]", model_rep.get_child("freq_model"));
 
 	return model_expression({identifier("m1a_model"),alphabet,S,R});
     }
     else if (model_rep.get_value<string>() == "M2a") // M2a[S,F]
     {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
+	expression_ref S = get_model_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
+	expression_ref R = get_model_as("FM[a]", model_rep.get_child("freq_model"));
 
 	return model_expression({identifier("m2a_model"),alphabet,S,R});
     }
     else if (model_rep.get_value<string>() == "M2a_Test") // M2a[S,F]
     {
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
+	expression_ref S = get_model_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
+	expression_ref R = get_model_as("FM[a]", model_rep.get_child("freq_model"));
 
 	return model_expression({identifier("m2a_test_model"),alphabet,S,R});
     }
@@ -1356,11 +1356,11 @@ expression_ref process_stack_Multi(const ptree& model_rep)
     {
 	int n = model_rep.get<int>("n");
 
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
+	expression_ref S = get_model_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
+	expression_ref R = get_model_as("FM[a]", model_rep.get_child("freq_model"));
 
 	return model_expression({identifier("m3_model"),alphabet,n,S,R});
     }
@@ -1368,11 +1368,11 @@ expression_ref process_stack_Multi(const ptree& model_rep)
     {
 	int n = model_rep.get<int>("n");
 
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
+	expression_ref S = get_model_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
+	expression_ref R = get_model_as("FM[a]", model_rep.get_child("freq_model"));
 
 	return model_expression({identifier("m3_test_model"),alphabet,n,S,R});
     }
@@ -1380,11 +1380,11 @@ expression_ref process_stack_Multi(const ptree& model_rep)
     {
 	int n = model_rep.get<int>("n");
 
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
+	expression_ref S = get_model_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
+	expression_ref R = get_model_as("FM[a]", model_rep.get_child("freq_model"));
 
 	return model_expression({identifier("m7_model"),alphabet,n,S,R});
     }
@@ -1392,11 +1392,11 @@ expression_ref process_stack_Multi(const ptree& model_rep)
     {
 	int n = model_rep.get<int>("n");
 
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
+	expression_ref S = get_model_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
+	expression_ref R = get_model_as("FM[a]", model_rep.get_child("freq_model"));
 
 	return model_expression({identifier("m8_model"),alphabet,n,S,R});
     }
@@ -1404,11 +1404,11 @@ expression_ref process_stack_Multi(const ptree& model_rep)
     {
 	int n = model_rep.get<int>("n");
 
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
+	expression_ref S = get_model_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
+	expression_ref R = get_model_as("FM[a]", model_rep.get_child("freq_model"));
 
 	return model_expression({identifier("m8a_model"),alphabet,n,S,R});
     }
@@ -1416,11 +1416,11 @@ expression_ref process_stack_Multi(const ptree& model_rep)
     {
 	int n = model_rep.get<int>("n");
 
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
+	expression_ref S = get_model_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
+	expression_ref R = get_model_as("FM[a]", model_rep.get_child("freq_model"));
 
 	return model_expression({identifier("m8b_model"),alphabet,n,S,R});
     }
@@ -1428,11 +1428,11 @@ expression_ref process_stack_Multi(const ptree& model_rep)
     {
 	int n = model_rep.get<int>("n");
 
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
+	expression_ref S = get_model_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
+	expression_ref R = get_model_as("FM[a]", model_rep.get_child("freq_model"));
 
 	return model_expression({identifier("m8a_test_model"),alphabet,n,S,R});
     }
@@ -1440,11 +1440,11 @@ expression_ref process_stack_Multi(const ptree& model_rep)
     {
 	int n = model_rep.get<int>("n");
 
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 	
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
+	expression_ref S = get_model_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
+	expression_ref R = get_model_as("FM[a]", model_rep.get_child("freq_model"));
 
 	return model_expression({identifier("branch_site_test_model"),alphabet,n,S,R});
     }
@@ -1452,11 +1452,11 @@ expression_ref process_stack_Multi(const ptree& model_rep)
     {
 	int n = model_rep.get<int>("n");
 
-	expression_ref alphabet = get_smodel_as("Alphabet", model_rep.get_child("alphabet"));
+	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
 	
-	expression_ref S = get_smodel_as("EM[a]", model_rep.get_child("nuc_model"));
+	expression_ref S = get_model_as("EM[a]", model_rep.get_child("nuc_model"));
 
-	expression_ref R = get_smodel_as("FM[a]", model_rep.get_child("freq_model"));
+	expression_ref R = get_model_as("FM[a]", model_rep.get_child("freq_model"));
 
 	return model_expression({identifier("dp_omega_model"),alphabet,n,S,R});
     }
@@ -1464,17 +1464,17 @@ expression_ref process_stack_Multi(const ptree& model_rep)
     return {};
 }
 
-expression_ref get_smodel_(const ptree& model_rep)
+expression_ref get_model_(const ptree& model_rep)
 {
     if (model_rep.empty() and model_rep.data().empty())
 	throw myexception()<<"Can't construct substitution model from empty description!";
 
-    //  std::cout<<"smodel = "<<smodel<<std::endl;
-    //  auto result = parse(smodel);
+    //  std::cout<<"model = "<<model<<std::endl;
+    //  auto result = parse(model);
     //  std::cout<<result.get_value<string>()<<"\n";
     //  write_info(std::cout, result);
     //  std::cout<<std::endl;
-    //  ptree model_rep = parse(smodel);
+    //  ptree model_rep = parse(model);
 
     // If we are processing an Int, just return an int.
     if (can_be_converted_to<int>(model_rep.get_value<string>()))
@@ -1507,7 +1507,7 @@ expression_ref get_smodel_(const ptree& model_rep)
     throw myexception()<<"Couldn't process substitution model description \""<<show(model_rep)<<"\"";
 }
 
-expression_ref get_smodel_as(const ptree& required_type, const ptree& model_rep)
+expression_ref get_model_as(const ptree& required_type, const ptree& model_rep)
 {
     if (model_rep.empty() and model_rep.data().empty())
     {
@@ -1531,32 +1531,32 @@ expression_ref get_smodel_as(const ptree& required_type, const ptree& model_rep)
     if (not can_unify(result_type, required_type))
 	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but got '"<<name<<"' of type "<<unparse_type(result_type);
 
-    return get_smodel_(model_rep);
+    return get_model_(model_rep);
 }
 
 /// \brief Constrict a substitution::MultiModel for a specific alphabet
 ///
-/// \param smodel_name The name of the substitution model.
+/// \param model_name The name of the substitution model.
 /// \param a The alphabet.
 /// \param frequencies The initial letter frequencies in the model.
 ///
-expression_ref get_smodel(const ptree& model_rep)
+expression_ref get_model(const ptree& model_rep)
 {
-    // --------- Convert smodel to MultiMixtureModel ------------//
-    expression_ref full_smodel = get_smodel_as("MMM[a]", model_rep);
+    // --------- Convert model to MultiMixtureModel ------------//
+    expression_ref full_model = get_model_as("MMM[a]", model_rep);
 
     if (log_verbose)
-	std::cout<<"full_smodel = "<<full_smodel<<std::endl;
+	std::cout<<"full_model = "<<full_model<<std::endl;
 
-    return full_smodel;
+    return full_model;
 }
 
-expression_ref get_smodel(const string& smodel) 
+expression_ref get_model(const string& model) 
 {
-//    std::cout<<"smodel1 = "<<smodel<<std::endl;
+//    std::cout<<"model1 = "<<model<<std::endl;
 
-    auto model_tree = translate_model("MMM[a]", smodel);
+    auto model_tree = translate_model("MMM[a]", model);
     if (log_verbose)
-	std::cout<<"smodel = "<<unparse(model_tree)<<std::endl;
-    return get_smodel(model_tree);
+	std::cout<<"model = "<<unparse(model_tree)<<std::endl;
+    return get_model(model_tree);
 }
