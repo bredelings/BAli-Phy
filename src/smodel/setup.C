@@ -153,6 +153,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"fMutSel0","RA[a]"}, {}, {"submodel","RA[a]"}},
     {{"INV","MM[a]"}, {}, {"p","Double","~Uniform[0,1]"}},
     {{"DP","MM[a]"}, {}, {"n","Int"}, {"submodel","RA[a]"}},
+    {{"MultiRate","MM[a]"}, {"multiRateModel","submodel","dist","n_bins"}, {"dist","Distribution[Double]"}, {"n_bins","Int","4"}, {"submodel","RA[a]"}},
     {{"GammaRates","MM[a]"}, {"SModel.gamma_model","submodel","alpha","n"}, {"n","Int","4"}, {"alpha","Double","~logLaplace[-6,2]"}, {"submodel","RA[a]"}},
     {{"GammaInvRates","MM[a]"}, {"SModel.gamma_inv_model","submodel","alpha","pInv","n"}, {"n","Int","4"}, {"alpha","Double","~logLaplace[-6,2]"}, {"pInv","Double","~Uniform[0,1]"}, {"submodel","RA[a]"}},
     {{"log-normal","MM[a]"}, {"log_normal_model","submodel","sigmaOverMu","n"}, {"n","Int","4"}, {"sigmaOverMu","Double","~logLaplace[-3,1]"}, {"submodel","RA[a]"}},
@@ -507,7 +508,7 @@ optional<pair<string,string>> split_keyword(const string& s, char c)
     {
 	if (s[i] == '[' or s[i] == ']') return boost::none;
 	if (s[i] == c)
-	return pair<string,string>({s.substr(0,i),s.substr(i+1)});
+	    return pair<string,string>({s.substr(0,i),s.substr(i+1)});
     }
     return boost::none;
 }
@@ -666,20 +667,26 @@ ptree parse_no_submodel(const string& s)
 	{
 	    seen_keyword_arg = true;
 	    key_value = *arg;
+	    if (arg->first.empty())
+		throw myexception()<<"Parameter name missing in argument '"<<args[i]<<"'";
 	}
 	// 6. If we have a keyword argument, remember it
-	else if (auto arg = split_keyword(args[i],'~'))
-	{
-	    seen_keyword_arg = true;
-	    key_value = *arg;
-	    key_value.second = "~"+key_value.second;
-	}
-	// 7. Otherwise find the keyword for the positional argument
 	else
 	{
-	    if (seen_keyword_arg)
-		throw myexception()<<"Positional argument after keyword argument in '"<<s<<"'";
-	    key_value = {get_keyword_for_positional_arg(head, i), args[i]};
+	    arg = split_keyword(args[i],'~');
+	    if (arg and arg->first.size() and arg->first[0] != '~')
+	    {
+		seen_keyword_arg = true;
+		key_value = *arg;
+		key_value.second = "~"+key_value.second;
+	    }
+	    // 7. Otherwise find the keyword for the positional argument
+	    else
+	    {
+		if (seen_keyword_arg)
+		    throw myexception()<<"Positional argument after keyword argument in '"<<s<<"'";
+		key_value = {get_keyword_for_positional_arg(head, i), args[i]};
+	    }
 	}
 
 	// 8. Set the key = value after parsing the value.
@@ -828,7 +835,7 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 	add(rule_type_variables, find_variables( x.second.get_child("arg_type") ) );
 
     // 1c. Make substitutions in rule type
-//    std::cout<<"substituting-from: "<<show(rule)<<std::endl;
+    //    std::cout<<"substituting-from: "<<show(rule)<<std::endl;
     auto renaming = alpha_rename(rule_type_variables, variables_to_avoid);
     substitute(renaming, rule.get_child("result_type") );
     for(auto& x: rule.get_child("args"))
@@ -836,9 +843,9 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 	ptree& arg_type = x.second.get_child("arg_type");
 	substitute( renaming, arg_type );
     }
-//    std::cout<<"substituting-to  : "<<show(rule)<<std::endl;
+    //    std::cout<<"substituting-to  : "<<show(rule)<<std::endl;
 
-//	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
+    //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
 
     // 2. Skip rules where the type does not match
 

@@ -47,6 +47,13 @@ multiParameter f (DiscreteDistribution d) = MixtureModel (DiscreteDistribution (
 
 multiRate m d = multiParameter (\x->(scale x m)) d;
 
+multiRateModel base dist n_bins alphabet = Prefix "MultiRate" $ do {
+                                                                  base' <- base alphabet;
+                                                                  dist' <- dist;
+                                                                  n_bins' <- Prefix "n_bins" n_bins;
+                                                                  let {dist'' = uniformDiscretize (quantile dist') n_bins'};
+                                                                  return $ multiRate base' dist''};
+
 rate (ReversibleMarkov a s q pi l t r) = r;
 rate (MixtureModel d) = average (fmap2 rate d);
 
