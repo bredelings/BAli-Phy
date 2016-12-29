@@ -197,7 +197,8 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"RS07","IM"}, {"rs07_model","logLambda","meanIndelLengthMinus1"},
      {"logLambda","Double","~Laplace[-4,0.707]"},
      {"meanIndelLengthMinus1","Double","~Exponential[10]"}
-    }
+    },
+    {{"RS07RelaxedRates","IM"}, {"rs07_relaxed_rates_model"}}
 };
 
 /// Split a string of the form key=value into {key,value}

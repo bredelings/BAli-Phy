@@ -33,6 +33,7 @@ rs07_relaxed_rates_model tree = Prefix "RelaxedRatesRS07"
    sigma <- iid (n_branches + delta) (gamma 1.05 0.05);
   
    alpha <- gamma 2.0 (1.0/6.0);
+   Log "alpha" alpha;
 
    category <- crp alpha n_branches delta;
 
