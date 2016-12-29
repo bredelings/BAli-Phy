@@ -368,6 +368,7 @@ void substitute(const equations_t& equations, ptree& p)
 	    if (eq.first == p.get_value<string>())
 	    {
 		p = eq.second;
+		substitute(equations, p);
 		break;
 	    }
     }
