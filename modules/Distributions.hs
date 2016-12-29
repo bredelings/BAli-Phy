@@ -244,6 +244,11 @@ list dists = ProbDensity (list_density dists) (no_quantile "list") (sequence dis
 -- define different examples of list distributions
 iid n dist = list (replicate n dist);
 
+iid_model n dist = Prefix "iid" $  do {
+                                     n' <- Prefix "n" n;
+                                     dist' < dist;
+                                     return $ iid n' dist};
+
 plate n dist_f = list $ map dist_f [0..n-1];
   
 -- This contains functions for working with DiscreteDistribution

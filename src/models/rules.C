@@ -22,6 +22,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"Beta","Distribution[Double]"}, {"beta_model","a","b"}, {"a","Double"}, {"b","Double"}},
     {{"Exponential","Distribution[Double]"}, {"exponential_model","mean"}, {"mean","Double"}},
     {{"Gamma","Distribution[Double]"}, {"Distributions.gamma_model","a","b"}, {"a","Double"}, {"b","Double"}},
+    {{"iid","Distribution[List[a]]"}, {"iid_model","n","dist"}, {"n","Int"}, {"dist","Distribution[a]"}},
     {{"Dirichlet","Distribution[List[Double]]"}, {"dirichlet'_model","n","x"}, {"n","Int"}, {"x","Double"}},
 //    {{"Dirichlet","List[Double]"}, {"dirichlet_model","ps"}, {"ps","List[Double]"}},
     {{"Geometric","Distribution[Int]"}, {"geometric_model","p"}, {"p","Double"}},
