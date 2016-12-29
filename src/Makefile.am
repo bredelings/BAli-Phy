@@ -52,7 +52,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   computation/operation.H computation/operations.H computation/operator.H \
            computation/pool.H computation/program.H \
 	   builtins/iota.H CacheList.H mcmc/logger.H models/setup.H \
-           dp/dp_hmm.H imodel/setup.H parser/desugar.H mcmc/AIS.H tools/distance-report.H \
+           dp/dp_hmm.H parser/desugar.H mcmc/AIS.H tools/distance-report.H \
 	   matrix.H builtins/vector_from_list.H startup/A-T-model.H startup/files.H startup/loggers.H \
 	   startup/io.H startup/system.H startup/cmd_line.H computation/type_constant.H \
 	   substitution/parsimony.H
@@ -108,7 +108,7 @@ bali_phy_SOURCES = parser/parse.C dp/dp_hmm.C parser/desugar.C parser/AST.C sequ
 	  tools/partition.C mcmc/proposals.C n_indels.C n_indels2.C alignment/alignment-util2.C \
 	  tools/parsimony.C tools/parsimony2.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
-	  imodel/setup.C computation/computation.C computation/tokens.C computation/preprocess.C \
+	  computation/computation.C computation/tokens.C computation/preprocess.C \
 	  computation/graph_register.C computation/show_graph.C computation/module.C \
 	  computation/model_expression.C computation/evaluate.C computation/gc.C computation/reroot.C \
 	  computation/operations.C computation/loader.C computation/context.C computation/closure.C \
