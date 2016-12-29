@@ -1,6 +1,6 @@
 #include "A-T-model.H"
 #include "io.H"
-#include "smodel/setup.H"
+#include "models/setup.H"
 #include "imodel/setup.H"
 #include "tree/tree-util.H" //extends
 #include "alignment/alignment-constraint.H"

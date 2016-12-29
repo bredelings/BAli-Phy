@@ -78,7 +78,7 @@
 
 #include <vector>
 #include <boost/program_options.hpp>
-#include "smodel/setup.H"
+#include "models/setup.H"
 #include "util.H"
 #include "myexception.H"
 #include <boost/property_tree/ptree.hpp>
