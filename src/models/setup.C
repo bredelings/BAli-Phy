@@ -85,6 +85,7 @@
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/optional.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include "models/rules.H"
 #include "computation/model_expression.H"
 #include "computation/operations.H"
 
@@ -116,151 +117,9 @@ typedef ptree equations_t;
 
 typedef ptree type_t;
 
-typedef ptree Rule;
-
-const vector< vector<vector<string>> > all_default_arguments = 
-{
-    {{"log","Double","N"}, {"log_model","x"}, {"x","Double"}},
-    {{"Sample","a"}, {"performAction","x"}, {"x","Distribution[a]"}},
-    {{"Uniform","Distribution[Double]"}, {"uniform_model","low","high"}, {"low","Double"}, {"high","Double"}},
-    {{"UniformInt","Distribution[Int]"}, {"uniform_int_model","low","high"}, {"low","Int"}, {"high","Int"}},
-    {{"Normal","Distribution[Double]"}, {"normal_model","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
-    {{"logNormal","Distribution[Double]"}, {"logNormal_model","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
-    {{"logLaplace","Distribution[Double]"}, {"logLaplace_model","lm","ls"}, {"lm","Double"}, {"ls","Double"}},
-    {{"Laplace","Distribution[Double]"}, {"laplace_model","m","s"}, {"m","Double"}, {"s","Double"}},
-    {{"logGamma","Distribution[Double]"}, {"logGamma_model","a","b"}, {"a","Double"}, {"b","Double"}},
-    {{"Beta","Distribution[Double]"}, {"beta_model","a","b"}, {"a","Double"}, {"b","Double"}},
-    {{"Exponential","Distribution[Double]"}, {"exponential_model","mean"}, {"mean","Double"}},
-    {{"Gamma","Distribution[Double]"}, {"Distributions.gamma_model","a","b"}, {"a","Double"}, {"b","Double"}},
-    {{"Dirichlet","Distribution[List[Double]]"}, {"dirichlet'_model","n","x"}, {"n","Int"}, {"x","Double"}},
-//    {{"Dirichlet","List[Double]"}, {"dirichlet_model","ps"}, {"ps","List[Double]"}},
-    {{"Geometric","Distribution[Int]"}, {"geometric_model","p"}, {"p","Double"}},
-    {{"EQU","EM[a]"}, {}},
-    {{"F81"}, {}, {"alphabet","Alphabet"}},
-    {{"HKY","EM[a]"}, {"hky_model","kappa"}, {"kappa","Double","~logNormal[log[2],0.25]"}, },
-    {{"TN","EM[a]"}, {"tn_model","kappaPur","kappaPyr"}, {"kappaPur","Double","~logNormal[log[2],0.25]"}, {"kappaPyr","Double","~logNormal[log[2],0.25]"}},
-    {{"GTR","EM[a]"}, {"gtr_model","S"}, {"S","E","exchange_prior"}},
-    {{"exchange_prior","E"}, {"exchange_model"}},
-    {{"E","E","P"}, {"constant_exchange_model"},{"*","Double"}},
-    {{"HKYx3","EM[a]"}, {}, {"kappa","Double","~logNormal[log[2],0.25]"}},
-    {{"TNx3","EM[a]"}, {}, {"kappaPur","Double","~logNormal[log[2],0.25]"}, {"kappaPyr","Double","~logNormal[log[2],0.25]"}},
-    {{"GTRx3","EM[a]"}, {}, {"ag"}, {"at"}, {"ac"}, {"gt"}, {"gc"}, {"tc"}},
-    {{"PAM","EM[AA]"}, {"SModel.pam_model"}},
-    {{"JTT","EM[AA]"}, {"SModel.jtt_model"}},
-    {{"WAG","EM[AA]"}, {"SModel.wag_model"}},
-    {{"LG","EM[AA]"}, {"SModel.lg_model"}},
-    {{"Empirical","EM[a]"}, {}, {"filename"}},
-    {{"M0","EM[a]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","~Uniform[0,1]"}},
-    {{"fMutSel","RA[a]"}, {}, {"submodel","RA[a]"}},
-    {{"fMutSel0","RA[a]"}, {}, {"submodel","RA[a]"}},
-    {{"INV","MM[a]"}, {}, {"p","Double","~Uniform[0,1]"}},
-    {{"DP","MM[a]"}, {}, {"n","Int"}, {"submodel","RA[a]"}},
-    {{"MultiRate","MM[a]"}, {"multiRateModel","submodel","dist","n_bins"}, {"dist","Distribution[Double]"}, {"n_bins","Int","4"}, {"submodel","RA[a]"}},
-    {{"GammaRates","MM[a]"}, {"SModel.gamma_model","submodel","alpha","n"}, {"n","Int","4"}, {"alpha","Double","~logLaplace[-6,2]"}, {"submodel","RA[a]"}},
-    {{"GammaInvRates","MM[a]"}, {"SModel.gamma_inv_model","submodel","alpha","pInv","n"}, {"n","Int","4"}, {"alpha","Double","~logLaplace[-6,2]"}, {"pInv","Double","~Uniform[0,1]"}, {"submodel","RA[a]"}},
-    {{"log-normal","MM[a]"}, {"log_normal_model","submodel","sigmaOverMu","n"}, {"n","Int","4"}, {"sigmaOverMu","Double","~logLaplace[-3,1]"}, {"submodel","RA[a]"}},
-    {{"log-normal_inv","MM[a]"}, {"log_normal_inv_model","submodel","sigmaOverMu","pInv", "n"}, {"n","Int","4"}, {"sigmaOverMu","Double","~logLaplace[-3,1]"}, {"pInv","Double","~Uniform[0,1]"}, {"submodel","RA[a]"}},
-    {{"M1a","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    {{"M2a","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    {{"M2a_Test","MM[a]"}, {}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    //    {{"M3u"}, {"3"}, {"nuc_model",""HKY"}, {"freq_model","F61"}},
-    {{"M3","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    {{"M3_Test","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    {{"M7","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    {{"M8","MM[a]"},
-     {"m8_model","nuc_model","freq_model","posP","posW","n"},
-     {"n","Int","4"},
-     {"nuc_model","EM[a]","HKY"},
-     {"freq_model","FM[a]","F61"},
-     {"posP","Double","~Beta[1,10]"},
-     {"posW","Double","~logGamma[4,0.25]"} },
-    {{"M8a","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    {{"M8a_Test","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    {{"branch-site","MM[a]"}, {}, {"n","Int","2"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    {{"dp_omega","MM[a]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[a]","F61"}},
-    {{"frequencies_prior","F"}, {"frequencies_model"}},
-    {{"Freq","F","P"}, {"constant_frequencies_model"},{"*","Double"}},
-    {{"F","FM[a]"}, {"plus_f_model","pi"},{"pi","F","frequencies_prior"}},
-    {{"F61","FM[a]"}, {"plus_f_model","pi"}, {"pi","F","frequencies_prior"}},
-    {{"gwF","FM[a]"}, {"plus_gwf_model","pi","f"},{"pi","F","frequencies_prior"},{"f","Double","~Uniform[0,1]"}},
-    {{"F1x4","FM[a]"}, {"f1x4_model","pi"}, {"pi","F","frequencies_prior"}},
-    {{"F3x4","FM[a]"}, {"f3x4_model","pi1","pi2","pi3"}, {"pi1","F","frequencies_prior"}, {"pi2","F","frequencies_prior"}, {"pi3","F","frequencies_prior"}},
-    {{"MG94","FM[a]"}, {"mg94_model","pi"}, {"pi","F","frequencies_prior"}},
-    {{"MG94w9","FM[a]"}, {}},
-    {{"DNA","Alphabet","N"}, {"dna"}},
-    {{"RNA","Alphabet"}, {"rna"}},
-    {{"AA","Alphabet"}, {"aa"}},
-    {{"Codons","Alphabet"}, {"codons","nuc","aa"}, {"nuc","Alphabet"}, {"aa","Alphabet","AA"}},
-    {{"RCTMC","RA[a]","N"}, {"reversible_markov_model","Q","R"}, {"Q","EM[a]"}, {"R","FM[a]"}},
-    {{"UnitMixture","MM[a]","N"}, {"unit_mixture_model","submodel"}, {"submodel","RA[a]"}},
-    {{"MMM","MMM[a]","N"}, {"mmm_model","submodel"}, {"submodel","MM[a]"}},
-    {{"RS07","IM"}, {"rs07_model","logLambda","meanIndelLengthMinus1"},
-     {"logLambda","Double","~Laplace[-4,0.707]"},
-     {"meanIndelLengthMinus1","Double","~Exponential[10]"}
-    },
-    {{"RS07RelaxedRates","IM"}, {"rs07_relaxed_rates_model"}}
-};
-
 /// Split a string of the form key=value into {key,value}
 ptree parse(const string& s);
 ptree parse_type(const string& s);
-
-ptree get_arg(const Rule& rule, const string& arg_name)
-{
-    for(const auto& arg: rule.get_child("args"))
-	if (arg.second.get<string>("arg_name") == arg_name)
-	    return arg.second;
-    throw myexception()<<"Rule for function '"<<rule.get<string>("name")<<"' has no argument '"<<arg_name<<"'";
-}
-
-ptree convert_rule(const vector<vector<string>>& s)
-{
-    ptree rule;
-    rule.put("name",s[0][0]);
-
-    rule.push_back({"result_type",parse_type(s[0][1])});
-    if (s[0].size() > 2 and s[0][2] == "P")
-	rule.put("pass_arguments","true");
-    if (s[1].size())
-    {
-	ptree call;
-	for(const auto& word: s[1])
-	    call.push_back({"",ptree(word)});
-	rule.push_back({"call",call});
-    }
-
-    ptree args;
-    for(int i=2;i<s.size();i++)
-    {
-	ptree arg;
-
-	string arg_name = s[i][0];
-	arg.put("arg_name",arg_name);
-	arg.push_back({"arg_type",parse_type(s[i][1])});
-	if (s[i].size() > 2)
-	    arg.push_back({"default_value",parse(s[i][2])});
-	args.push_back({"",arg});
-    }
-    rule.push_back({"args",args});
-//    write_info(std::cout, rule);
-    return rule;
-}
-
-optional<Rule> get_rule_for_func(const string& s)
-{
-    for(const auto& rule: all_default_arguments)
-	if (rule[0][0] == s)
-	    return convert_rule(rule);
-    return boost::none;
-}
-
-Rule require_rule_for_func(const string& s)
-{
-    if (auto rule = get_rule_for_func(s))
-	return *rule;
-    else
-	throw myexception()<<"No function '"<<s<<"'.";
-}
 
 // given two terms, what equations do we need to unify them?
 equations_t unify(const ptree& p1, const ptree& p2);
