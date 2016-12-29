@@ -923,14 +923,14 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
     }
 }
 
-ptree translate_model(const string& required_type, const string& model)
+std::pair<ptree,equations_t> translate_model(const string& required_type, const string& model)
 {
     auto p = parse(model);
     auto t = parse_type(required_type);
     pass1(p);
     equations_t equations;
     pass2(t, p, equations);
-    return p;
+    return {p,equations};
 }
 
 /// \brief Return the default substitution model name for alphabet \a a, and "" if there is no default.
@@ -1562,8 +1562,13 @@ expression_ref get_model(const string& type, const string& model)
 {
 //    std::cout<<"model1 = "<<model<<std::endl;
 
-    auto model_tree = translate_model(type, model);
+    auto p = translate_model(type, model);
+    auto model_tree = p.first;
+    auto equations = p.second;
     if (log_verbose)
+    {
 	std::cout<<"model = "<<unparse(model_tree)<<std::endl;
+	std::cout<<show(equations,4)<<std::endl;
+    }
     return get_model(type, model_tree);
 }
