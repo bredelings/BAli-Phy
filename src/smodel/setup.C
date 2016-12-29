@@ -245,6 +245,14 @@ optional<Rule> get_rule_for_func(const string& s)
     return boost::none;
 }
 
+Rule require_rule_for_func(const string& s)
+{
+    if (auto rule = get_rule_for_func(s))
+	return *rule;
+    else
+	throw myexception()<<"No function '"<<s<<"'.";
+}
+
 // given two terms, what equations do we need to unify them?
 equations_t unify(const ptree& p1, const ptree& p2);
 
@@ -531,20 +539,17 @@ string show(vector<string> args)
 
 string get_keyword_for_positional_arg(const string& head, int i)
 {
-    if (auto rule = get_rule_for_func(head))
-    {
-	const auto arguments = rule->get_child("args");
-	if (i > arguments.size())
-	    throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<head<<"', which only has "<<arguments.size()<<" positional arguments.";
+    auto rule = require_rule_for_func(head);
 
-	auto it = arguments.begin();
-	for(int j=0;j<i;j++)
-	    it++;
+    const auto arguments = rule.get_child("args");
+    if (i > arguments.size())
+	throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<head<<"', which only has "<<arguments.size()<<" positional arguments.";
+
+    auto it = arguments.begin();
+    for(int j=0;j<i;j++)
+	it++;
 	
-	return it->second.get<string>("arg_name");
-    }
-    else
-	throw myexception()<<"No positional arguments for '"<<head<<"'!";
+    return it->second.get<string>("arg_name");
 }
 
 // Turn an expression of the form head[arg1, arg2, ..., argn] -> {head, arg1, arg2, ..., argn}.
@@ -808,9 +813,7 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 	return;
     }
 
-    auto rule = get_rule_for_func(name);
-    if (not rule)
-	throw myexception()<<"Function '"<<name<<"' not found";
+    auto rule = require_rule_for_func(name);
 
     // 1a. Find variables in type and equations.
     set<string> variables_to_avoid = find_variables(required_type);
@@ -819,26 +822,26 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 	variables_to_avoid.insert(eq.first);
 
     // 1b. Find variables in rule type
-    set<string> rule_type_variables = find_variables(rule->get_child("result_type"));
-    for(const auto& x: rule->get_child("args"))
+    set<string> rule_type_variables = find_variables(rule.get_child("result_type"));
+    for(const auto& x: rule.get_child("args"))
 	add(rule_type_variables, find_variables( x.second.get_child("arg_type") ) );
 
     // 1c. Make substitutions in rule type
-//    std::cout<<"substituting-from: "<<show(*rule)<<std::endl;
+//    std::cout<<"substituting-from: "<<show(rule)<<std::endl;
     auto renaming = alpha_rename(rule_type_variables, variables_to_avoid);
-    substitute(renaming, rule->get_child("result_type") );
-    for(auto& x: rule->get_child("args"))
+    substitute(renaming, rule.get_child("result_type") );
+    for(auto& x: rule.get_child("args"))
     {
 	ptree& arg_type = x.second.get_child("arg_type");
 	substitute( renaming, arg_type );
     }
-//    std::cout<<"substituting-to  : "<<show(*rule)<<std::endl;
+//    std::cout<<"substituting-to  : "<<show(rule)<<std::endl;
 
 //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
 
     // 2. Skip rules where the type does not match
 
-    type_t result_type = rule->get_child("result_type");
+    type_t result_type = rule.get_child("result_type");
     equations_t equations2 = type_derived_from(result_type, required_type);
     merge_equations(equations2,equations);
 
@@ -862,9 +865,9 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 	throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
 
     // 2.5. Check type of arguments if pass_arguments
-    if (rule->get("pass_arguments",false))
+    if (rule.get("pass_arguments",false))
     {
-	type_t arg_required_type = get_type_for_arg(*rule, "*");
+	type_t arg_required_type = get_type_for_arg(rule, "*");
 	for(auto& child: model)
 	    pass2(arg_required_type, child.second, equations);
 	return;
@@ -873,13 +876,13 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
     // 3. Handle supplied arguments first.
     for(auto& child: model)
     {
-	type_t arg_required_type = get_type_for_arg(*rule, child.first);
+	type_t arg_required_type = get_type_for_arg(rule, child.first);
 	substitute(equations, arg_required_type);
 	pass2(arg_required_type, child.second, equations);
     }
 
     // 4. Handle default arguments 
-    for(const auto& arg: rule->get_child("args"))
+    for(const auto& arg: rule.get_child("args"))
     {
 	const auto& argument = arg.second;
 
