@@ -129,6 +129,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"logLaplace","Distribution[Double]"}, {"logLaplace_model","lm","ls"}, {"lm","Double"}, {"ls","Double"}},
     {{"logGamma","Distribution[Double]"}, {"logGamma_model","a","b"}, {"a","Double"}, {"b","Double"}},
     {{"Beta","Distribution[Double]"}, {"beta_model","a","b"}, {"a","Double"}, {"b","Double"}},
+    {{"Gamma","Distribution[Double]"}, {"Distributions.gamma_model","a","b"}, {"a","Double"}, {"b","Double"}},
     {{"Dirichlet","Distribution[List[Double]]"}, {"dirichlet'_model","n","x"}, {"n","Int"}, {"x","Double"}},
 //    {{"Dirichlet","List[Double]"}, {"dirichlet_model","ps"}, {"ps","List[Double]"}},
     {{"Geometric","Distribution[Int]"}, {"geometric_model","p"}, {"p","Double"}},

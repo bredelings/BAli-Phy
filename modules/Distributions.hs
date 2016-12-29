@@ -65,6 +65,11 @@ builtin gamma_quantile 3 "gamma_quantile" "Distribution";
 builtin builtin_sample_gamma 2 "sample_gamma" "Distribution";
 sample_gamma a b = Random (IOAction2 builtin_sample_gamma a b);
 gamma a b = ProbDensity (gamma_density a b) (gamma_quantile a b) (sample_gamma a b) (above 0.0);
+gamma_model a b = Prefix "Gamma" $ do {a' <- Prefix "a" a;
+                                     Log "a" a';
+                                     b' <- Prefix "b" b;
+                                     Log "b" b';
+                                     return $ gamma a' b'};
 
 builtin beta_density 3 "beta_density" "Distribution";
 builtin beta_quantile 3 "beta_quantile" "Distribution";
