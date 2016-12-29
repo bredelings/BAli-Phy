@@ -128,7 +128,7 @@ get_smodels(const vector<alignment>& A, shared_items<string>& smodel_names_mappi
 		throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
 	}
 
-	expression_ref full_smodel = get_model(smodel_names_mapping.unique(i));
+	expression_ref full_smodel = get_model("MMM[a]",smodel_names_mapping.unique(i));
 
 	full_smodel = (full_smodel, alignments[0].get_alphabet());
 
@@ -143,7 +143,7 @@ get_imodels(const shared_items<string>& imodel_names_mapping, const SequenceTree
 {
     vector<expression_ref> imodels;
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
-	imodels.push_back( get_imodel(imodel_names_mapping.unique(i), T) );
+	imodels.push_back( get_model("IM",imodel_names_mapping.unique(i)) );
     return imodels;
 }
 

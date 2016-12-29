@@ -127,7 +127,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"Normal","Distribution[Double]"}, {"normal_model","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
     {{"logNormal","Distribution[Double]"}, {"logNormal_model","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
     {{"logLaplace","Distribution[Double]"}, {"logLaplace_model","lm","ls"}, {"lm","Double"}, {"ls","Double"}},
-    {{"Laplace","Distribution[Double]"}, {"Laplace_model","m","s"}, {"m","Double"}, {"s","Double"}},
+    {{"Laplace","Distribution[Double]"}, {"laplace_model","m","s"}, {"m","Double"}, {"s","Double"}},
     {{"logGamma","Distribution[Double]"}, {"logGamma_model","a","b"}, {"a","Double"}, {"b","Double"}},
     {{"Beta","Distribution[Double]"}, {"beta_model","a","b"}, {"a","Double"}, {"b","Double"}},
     {{"Exponential","Distribution[Double]"}, {"exponential_model","mean"}, {"mean","Double"}},
@@ -193,7 +193,11 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"Codons","Alphabet"}, {"codons","nuc","aa"}, {"nuc","Alphabet"}, {"aa","Alphabet","AA"}},
     {{"RCTMC","RA[a]","N"}, {"reversible_markov_model","Q","R"}, {"Q","EM[a]"}, {"R","FM[a]"}},
     {{"UnitMixture","MM[a]","N"}, {"unit_mixture_model","submodel"}, {"submodel","RA[a]"}},
-    {{"MMM","MMM[a]","N"}, {"mmm_model","submodel"}, {"submodel","MM[a]"}}
+    {{"MMM","MMM[a]","N"}, {"mmm_model","submodel"}, {"submodel","MM[a]"}},
+    {{"RS07","IM"}, {"rs07_model","logLambda","meanIndelLengthMinus1"},
+     {"logLambda","Double","~Laplace[-4,0.707]"},
+     {"meanIndelLengthMinus1","Double","~Exponential[10]"}
+    }
 };
 
 /// Split a string of the form key=value into {key,value}
@@ -1542,10 +1546,10 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep)
 /// \param a The alphabet.
 /// \param frequencies The initial letter frequencies in the model.
 ///
-expression_ref get_model(const ptree& model_rep)
+expression_ref get_model(const string& type, const ptree& model_rep)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    expression_ref full_model = get_model_as("MMM[a]", model_rep);
+    expression_ref full_model = get_model_as(type, model_rep);
 
     if (log_verbose)
 	std::cout<<"full_model = "<<full_model<<std::endl;
@@ -1553,12 +1557,12 @@ expression_ref get_model(const ptree& model_rep)
     return full_model;
 }
 
-expression_ref get_model(const string& model) 
+expression_ref get_model(const string& type, const string& model)
 {
 //    std::cout<<"model1 = "<<model<<std::endl;
 
-    auto model_tree = translate_model("MMM[a]", model);
+    auto model_tree = translate_model(type, model);
     if (log_verbose)
 	std::cout<<"model = "<<unparse(model_tree)<<std::endl;
-    return get_model(model_tree);
+    return get_model(type, model_tree);
 }

@@ -9,7 +9,7 @@
 #include "sequence/alphabet.H"
 #include "computation/expression.H"
 
-expression_ref get_model(const std::string&);
+expression_ref get_model(const std::string& type, const std::string& model);
 
 std::string default_markov_model(const alphabet& a);
 
