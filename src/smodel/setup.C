@@ -874,6 +874,7 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
     for(auto& child: model)
     {
 	type_t arg_required_type = get_type_for_arg(*rule, child.first);
+	substitute(equations, arg_required_type);
 	pass2(arg_required_type, child.second, equations);
     }
 
@@ -896,6 +897,7 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 	else
 	{
 	    auto arg_required_type = argument.get_child("arg_type");
+	    substitute(equations, arg_required_type);
 	    auto default_arg = argument.get_child("default_value");
 	    pass2(arg_required_type, default_arg, equations);
 	    model.push_back({arg_name, default_arg});
