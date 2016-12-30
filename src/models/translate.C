@@ -141,7 +141,8 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 	merge_equations(equations2,equations);
 	if (equations2.get_value<string>() != "fail")
 	{
-	    pass2(required_type, model, equations2);
+	    equations = equations2;
+	    pass2(required_type, model, equations);
 	    return;
 	}
     }
