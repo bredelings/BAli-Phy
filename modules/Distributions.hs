@@ -246,8 +246,8 @@ iid n dist = list (replicate n dist);
 
 iid_model n dist = Prefix "iid" $  do {
                                      n' <- Prefix "n" n;
-                                     dist' < dist;
-                                     return $ iid n' dist};
+                                     dist' <- dist;
+                                     return $ iid n' dist'};
 
 plate n dist_f = list $ map dist_f [0..n-1];
   
