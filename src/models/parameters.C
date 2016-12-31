@@ -507,9 +507,9 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	expression_ref D = (identifier("!"),identifier("Params.substitutionBranchLengths"),scale_index);
 	expression_ref heat = parameter("Heat.beta");
 	expression_ref training = parameter("*IModels.training");
-	expression_ref model = (identifier("!"),identifier("IModels.models"),imodel_index);
+	expression_ref model = ((identifier("!"),identifier("IModels.models"),imodel_index), heat, training);
 
-	expression_ref hmms = (identifier("branch_hmms"), model, D, heat, training, B);
+	expression_ref hmms = (identifier("branch_hmms"), model, D, B);
 	hmms = p->get_expression( p->add_compute_expression(hmms) );
 
 	// branch HMMs
@@ -1292,8 +1292,12 @@ Parameters::Parameters(const module_loader& L,
 	string prefix = "*I" + convertToString(i+1);
 
 	I.length_arg_param_index = add_parameter(prefix+".lengthpArg", 1);
-	expression_ref lengthp = (identifier("snd"),(identifier("!"),identifier("IModels.models"),i));
 	expression_ref lengthp_arg = parameter(prefix+".lengthpArg");
+
+	expression_ref model = (identifier("!"),identifier("IModels.models"),i);
+	model = (model, parameter("Heat.beta"), parameter("*IModels.training"));
+
+	expression_ref lengthp = (identifier("snd"),model);
 	I.length_p = add_compute_expression( (lengthp, lengthp_arg) );
 
 	// Note that branch_HMM's are per scale and per-imodel.  Construct them in the data_partition.

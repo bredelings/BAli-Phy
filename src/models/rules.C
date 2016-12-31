@@ -85,6 +85,11 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"RCTMC","RA[a]","N"}, {"reversible_markov_model","Q","R"}, {"Q","EM[a]"}, {"R","FM[a]"}},
     {{"UnitMixture","MM[a]","N"}, {"unit_mixture_model","submodel"}, {"submodel","RA[a]"}},
     {{"MMM","MMM[a]","N"}, {"mmm_model","submodel"}, {"submodel","MM[a]"}},
+    {{"RS05","IM"}, {"rs05_model","logDelta","meanIndelLengthMinus1","tau"},
+     {"logDelta","Double","~Laplace[-4,0.707]"},
+     {"meanIndelLengthMinus1","Double","~Exponential[10]"},
+     {"tau","Double","0.001"}
+    },
     {{"RS07","IM"}, {"rs07_model","logLambda","meanIndelLengthMinus1"},
      {"logLambda","Double","~Laplace[-4,0.707]"},
      {"meanIndelLengthMinus1","Double","~Exponential[10]"}

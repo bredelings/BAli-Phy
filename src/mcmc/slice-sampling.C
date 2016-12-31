@@ -551,8 +551,10 @@ double slice_sample(double x0, slice_function& g,double w, int m)
   assert(g.in_range(x0));
 
   double gx0 = g();
+#ifndef NDEBUG
   volatile double diff = gx0 - g(x0);
   assert(std::abs(diff) < 1.0e-9);
+#endif
 
   // Determine the slice level, in log terms.
 

@@ -6,9 +6,7 @@ module Alignment where
   builtin transition_counts 1 "transition_counts" "Alignment";
   builtin pairwise_alignment_probability_from_counts 2 "pairwise_alignment_probability_from_counts" "Alignment";
   
-  branch_hmm model distances heat training b = fst model distances b heat training;
-  
-  branch_hmms model distances heat training n_branches = listArray' $ map (branch_hmm model distances heat training) [0..2*n_branches-1];
+  branch_hmms (model,_) distances n_branches = listArray' $ map (model distances) [0..2*n_branches-1];
   
   alignment_branch_pr a hmms b = pairwise_alignment_probability_from_counts (transition_counts (a!b)) (hmms!b);
   

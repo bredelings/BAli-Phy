@@ -240,5 +240,8 @@ public:
 };
 
 void remove_one_state(Matrix& Q,int S);
+void fragmentize(Matrix& Q,double e,int S);
 void fragmentize(Matrix& Q,double e);
+void exitize(Matrix& Q,double t,int S1,int S2);
+
 #endif
