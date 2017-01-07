@@ -37,7 +37,7 @@ data MixtureModel = MixtureModel a;
 data MixtureModels = MixtureModels a;
 
 gtr exchange a = builtin_gtr (list_to_vector exchange) a;
-equ a = gtr [1.0, 1.0, 1.0, 1.0, 1.0, 1.0] a;
+equ a = gtr (replicate nn 1.0) a where {n=alphabetSize a;nn=n*(n-1)/2};
 tn k1 k2 a = gtr [k1, 1.0, 1.0, 1.0, 1.0, k2] a;
 hky k a = tn k k a;
 
