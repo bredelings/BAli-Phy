@@ -45,7 +45,8 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"fMutSel","RA[a]"}, {}, {"submodel","RA[a]"}},
     {{"fMutSel0","RA[a]"}, {}, {"submodel","RA[a]"}},
     {{"INV","MM[a]"}, {}, {"p","Double","~Uniform[0,1]"}},
-    {{"DP","MM[a]"}, {}, {"n","Int"}, {"submodel","RA[a]"}},
+// fraction ~ dirichlet' n (1 + n/2), rates ~ dirichlet' n 2
+    {{"DP","MM[a]"}, {"dp_model","submodel","n","rates","frequencies"}, {"n","Int"}, {"rates","List[Double]"}, {"frequencies","List[Double]"}, {"submodel","RA[a]"}},
     {{"MultiRate","MM[a]"}, {"multiRateModel","submodel","dist","n_bins"}, {"dist","Distribution[Double]"}, {"n_bins","Int","4"}, {"submodel","RA[a]"}},
     {{"GammaRates","MM[a]"}, {"SModel.gamma_model","submodel","alpha","n"}, {"n","Int","4"}, {"alpha","Double","~logLaplace[-6,2]"}, {"submodel","RA[a]"}},
     {{"GammaInvRates","MM[a]"}, {"SModel.gamma_inv_model","submodel","alpha","pInv","n"}, {"n","Int","4"}, {"alpha","Double","~logLaplace[-6,2]"}, {"pInv","Double","~Uniform[0,1]"}, {"submodel","RA[a]"}},
