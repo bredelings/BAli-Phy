@@ -82,8 +82,8 @@ show_only("codons.fasta --alphabet=Codons --smodel=M3_Test");
 show_only("codons.fasta --alphabet=Codons --smodel=M8");
 show_only("codons.fasta --alphabet=Codons --smodel=M8[,HKY,F61]");
 
-show_only("codons.fasta --alphabet=Codons --smodel=fMutSel[HKY]");
-show_only("codons.fasta --alphabet=Codons --smodel=fMutSel[HKY+F]");
-show_only("codons.fasta --alphabet=Codons --smodel=fMutSel[HKY+gwF]");
+show_only("codons.fasta --alphabet=Codons --smodel=HKY+fMutSel");
+show_only("codons.fasta --alphabet=Codons --smodel=HKY+F+fMutSel");
+show_only("codons.fasta --alphabet=Codons --smodel=HKY+gwF+fMutSel");
 
 print "There were ${failures} failures.\n";
