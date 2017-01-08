@@ -83,6 +83,8 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"MG94w9","FM[Codon[a,b]]"}, {"mg94w9_model","pi1","pi2","pi3"}, {"pi1","F","frequencies_prior"}, {"pi2","F","frequencies_prior"}, {"pi3","F","frequencies_prior"}},
     {{"DNA","Alphabet","N"}, {"dna"}},
     {{"RNA","Alphabet"}, {"rna"}},
+//    {{"C10","MM[a]"}, {}},
+//    {{"C20","MM[a]"}, {}},
     {{"AA","Alphabet"}, {"aa"}},
 // We can't write Codons[a,b] yet because we don't any mechanism for dealing with inheritance
     {{"Codons","Alphabet"}, {"codons","nuc","aa"}, {"nuc","Alphabet"}, {"aa","Alphabet","AA"}},
