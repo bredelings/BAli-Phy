@@ -39,8 +39,9 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"WAG","EM[AA]"}, {"SModel.wag_model"}},
     {{"LG","EM[AA]"}, {"SModel.lg_model"}},
     {{"Empirical","EM[a]"}, {}, {"filename"}},
-    {{"M0","EM[a]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","~Uniform[0,1]"}},
-    {{"fMutSel","RA[a]"}, {}, {"submodel","RA[a]"}},
+    {{"M0","EM[Codon[a,b]]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","~Uniform[0,1]"}},
+    {{"fMutSel","RA[Codon[a,b]]"}, {"fMutSel_model","submodel","omega","ws"},
+     {"omega","Double","~Uniform[0,1]"}, {"ws","List[Double]","~Dirichlet[61,3.0]"}, {"submodel","RA[a]","HKY"}},
     {{"fMutSel0","RA[a]"}, {}, {"submodel","RA[a]"}},
     {{"INV","MM[a]"}, {}, {"p","Double","~Uniform[0,1]"}},
 // fraction ~ dirichlet' n (1 + n/2), rates ~ dirichlet' n 2

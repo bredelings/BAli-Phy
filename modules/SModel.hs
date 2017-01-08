@@ -468,21 +468,24 @@ where {codon_w = [w'!aa| codon <- codons,let {aa = translate a codon}];
          codons = take n_letters [0..];
          n_letters = alphabetSize a};
 
-fMutSel_model codon_a nuc_rm = Prefix "fMutSel" $ do
+fMutSel_model nuc_rm omega ws codon_a = Prefix "fMutSel" $ do
 {
-  omega <- uniform 0.0 1.0;
-  Log "omega" omega;
-
   let {n_letters = alphabetSize codon_a;
-       letters = alphabet_letters codon_a};
+       letters = alphabet_letters codon_a;
+       nuc_a = getNucleotides codon_a};
 
-  ws <- SamplingRate (1.0/sqrt(intToDouble n_letters)) $ do {
-     ws <- dirichlet' n_letters 3.0;
-     sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws letters;
-     return ws
+  nuc_rm' <- nuc_rm nuc_a;
+  
+  omega' <- Prefix "omega" omega;
+  Log "omega" omega';
+
+  ws' <- SamplingRate (1.0/sqrt(intToDouble n_letters)) $ do {
+     ws' <- ws;
+     sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws' letters;
+     return ws'
   };
 
-  return $ fMutSel codon_a ws omega nuc_rm;
+  return $ fMutSel codon_a ws' omega' nuc_rm';
 };
 
 -- Issue: bad mixing on fMutSel model
