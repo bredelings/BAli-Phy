@@ -39,7 +39,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"JTT","EM[AA]"}, {"SModel.jtt_model"}},
     {{"WAG","EM[AA]"}, {"SModel.wag_model"}},
     {{"LG","EM[AA]"}, {"SModel.lg_model"}},
-    {{"Empirical","EM[a]"}, {}, {"filename"}},
+    {{"Empirical","EM[a]"}, {"SModel.empirical_model","filename"}, {"filename","String"}},
     {{"M0","EM[Codon[a,b]]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","~Uniform[0,1]"}},
     {{"fMutSel","RA[Codon[a,b]]"}, {"fMutSel_model","submodel","omega","ws"},
      {"omega","Double","~Uniform[0,1]"}, {"ws","List[Double]","~Dirichlet[61,3.0]"}, {"submodel","RA[a]","HKY"}},

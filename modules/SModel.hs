@@ -15,7 +15,7 @@ builtin reversible_rate_matrix 2 "reversible_rate_matrix" "SModel";
 builtin get_eigensystem 2 "get_eigensystem" "SModel";
 builtin get_equilibrium_rate 4 "get_equilibrium_rate" "SModel";
 builtin singlet_to_triplet_exchange 2 "singlet_to_triplet_exchange" "SModel";
-builtin empirical 2 "empirical" "SModel";
+builtin builtin_empirical 2 "empirical" "SModel";
 builtin pam 1 "pam" "SModel";
 builtin jtt 1 "jtt" "SModel";
 builtin wag 1 "wag" "SModel";
@@ -780,6 +780,10 @@ pam_model a = return (pam a);
 jtt_model a = return (jtt a);
 
 lg_model a = return (lg a);
+
+empirical a filename = builtin_empirical a (listToString filename);
+
+empirical_model filename a = do { filename' <- filename ; return $ empirical a filename'};
 
 log_model x = do {x' <- x; return (log x')};
 
