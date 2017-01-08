@@ -301,10 +301,10 @@ m1a_model s r w1 f1 codona = Prefix "M1a" $ do
   s' <- Prefix "S" (s (getNucleotides codona));
   r' <- Prefix "R" (r codona);
 
-  w1' <- w1;
+  w1' <- Prefix "omega1" w1;
   Log "omega1" w1';
 
-  f1' <- f1;
+  f1' <- Prefix "p1" f1;
   Log "p1" f1';
         
   let {m0w w = reversible_markov (m0 codona s' w) r';
