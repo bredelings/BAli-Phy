@@ -657,10 +657,15 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep)
     {
 	double d;
 	if (can_be_converted_to<double>(name, d))
-	{
-	    expression_ref value = d;
 	    return (identifier("return"), d);
-	}
+    }
+
+    if (required_type.get_value<string>() == "String")
+    {
+	if (model_rep.size() != 0)
+	    throw myexception()<<"Cannot convert '"<<show(model_rep)<<"' to String";
+
+	return (identifier("return"), model_rep.get_value<string>());
     }
 
     if (not can_unify(result_type, required_type))

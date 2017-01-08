@@ -103,6 +103,12 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 	return;
     }
 
+    if (required_type.get_value<string>() == "String")
+    {
+	assert(model.empty());
+	return;
+    }
+
     auto rule = require_rule_for_func(name);
 
     // 1a. Find variables in type and equations.
