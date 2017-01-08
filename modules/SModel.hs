@@ -293,11 +293,22 @@ dp_omega_dist n_bins = do
   return $ DiscreteDistribution [(p,min omega 1.0)| omega <- omegas'];
 };
 
-m1a_model codona s r = Prefix "M1a" $ do
-{
-  dist <- m1a_omega_dist ();
+--  w1 <- uniform 0.0 1.0;
+--  [f1, f2] <- dirichlet' 2 1.0;
 
-  let {m0w w = reversible_markov (m0 codona s w) r};
+m1a_model s r w1 f1 codona = Prefix "M1a" $ do
+{
+  s' <- Prefix "S" (s (getNucleotides codona));
+  r' <- Prefix "R" (r codona);
+
+  w1' <- w1;
+  Log "omega1" w1';
+
+  f1' <- f1;
+  Log "p1" f1';
+        
+  let {m0w w = reversible_markov (m0 codona s' w) r';
+       dist = DiscreteDistribution [(f1',w1'), (1.0-f1',1.0)]};
   return $ multiParameter m0w dist
 };
 
