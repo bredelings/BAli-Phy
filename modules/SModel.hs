@@ -490,26 +490,29 @@ fMutSel_model nuc_rm omega ws codon_a = Prefix "fMutSel" $ do
   return $ fMutSel codon_a ws' omega' nuc_rm';
 };
 
--- Issue: bad mixing on fMutSel model
--- Issue: how to make M2/M8/branchsite/etc versions of fMutSel model?
-
-fMutSel0_model codon_a nuc_rm = Prefix "fMutSel0" $ do
+fMutSel0_model nuc_rm omega ws codon_a = Prefix "fMutSel" $ do
 {
-  omega <- uniform 0.0 1.0;
-  Log "omega" omega;
+  let {aa = getAminoAcids codon_a;
+       n_letters = alphabetSize aa;
+       letters = alphabet_letters aa;
+       nuc_a = getNucleotides codon_a};
 
-  let {amino_a = getAminoAcids codon_a;
-       n_letters = alphabetSize amino_a;
-       letters = alphabet_letters amino_a};
+  nuc_rm' <- nuc_rm nuc_a;
 
-  ws <- SamplingRate (1.0/sqrt(intToDouble n_letters)) $ do {
-     ws <- dirichlet' n_letters 3.0;
-     sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws letters;
-     return ws
+  omega' <- Prefix "omega" omega;
+  Log "omega" omega';
+
+  ws' <- SamplingRate (1.0/sqrt(intToDouble n_letters)) $ do {
+     ws' <- ws;
+     sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws' letters;
+     return ws'
   };
 
-  return $ fMutSel0 codon_a ws omega nuc_rm;
+  return $ fMutSel0 codon_a ws' omega' nuc_rm';
 };
+
+-- Issue: bad mixing on fMutSel model
+-- Issue: how to make M2/M8/branchsite/etc versions of fMutSel model?
 
 -- pi is a vector double here
 plus_f_matrix a pi = plus_gwf_matrix a pi 1.0;

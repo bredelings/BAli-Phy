@@ -42,8 +42,9 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"Empirical","EM[a]"}, {"SModel.empirical_model","filename"}, {"filename","String"}},
     {{"M0","EM[Codon[a,b]]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","~Uniform[0,1]"}},
     {{"fMutSel","RA[Codon[a,b]]"}, {"fMutSel_model","submodel","omega","ws"},
-     {"omega","Double","~Uniform[0,1]"}, {"ws","List[Double]","~Dirichlet[61,3.0]"}, {"submodel","RA[a]","HKY"}},
-    {{"fMutSel0","RA[a]"}, {}, {"submodel","RA[a]"}},
+     {"omega","Double","~Uniform[0,1]"}, {"ws","List[Double]","~iid[61,logNormal[0,0.5]]"}, {"submodel","RA[a]","HKY"}},
+    {{"fMutSel0","RA[Codon[a,b]]"}, {"fMutSel0_model","submodel","omega","ws"},
+     {"omega","Double","~Uniform[0,1]"}, {"ws","List[Double]","~iid[20,logNormal[0,0.5]]"}, {"submodel","RA[a]","HKY"}},
     {{"INV","MM[a]"}, {}, {"p","Double","~Uniform[0,1]"}},
 // fraction ~ dirichlet' n (1 + n/2), rates ~ dirichlet' n 2
     {{"DP","MM[a]"}, {"dp_model","submodel","n","rates","frequencies"}, {"n","Int"}, {"rates","List[Double]"}, {"frequencies","List[Double]"}, {"submodel","RA[a]"}},
