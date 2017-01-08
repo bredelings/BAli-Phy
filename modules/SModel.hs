@@ -417,12 +417,6 @@ x3_model s a = do {
  return $ singlet_to_triplet_exchange a s'
 };
 
-hkyx3_model a = x3_model hky_model;
-
-tnx3_model a = x3_model tn_model;
-
-gtrx3_model a = x3_model gtr_model;
-
 frequencies_model a = do {
   let {n_letters = alphabetSize a;
        letters = alphabet_letters a};
