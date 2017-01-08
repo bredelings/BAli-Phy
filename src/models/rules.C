@@ -27,6 +27,7 @@ const vector< vector<vector<string>> > all_default_arguments =
 //    {{"Dirichlet","List[Double]"}, {"dirichlet_model","ps"}, {"ps","List[Double]"}},
     {{"Geometric","Distribution[Int]"}, {"geometric_model","p"}, {"p","Double"}},
     {{"EQU","EM[a]"}, {"equ_model"}},
+    {{"JC","RA[a]"}, {"jc_model"}},
     {{"F81"}, {}, {"alphabet","Alphabet"}},
     {{"HKY","EM[a]"}, {"hky_model","kappa"}, {"kappa","Double","~logNormal[log[2],0.25]"}, },
     {{"TN","EM[a]"}, {"tn_model","kappaPur","kappaPyr"}, {"kappaPur","Double","~logNormal[log[2],0.25]"}, {"kappaPyr","Double","~logNormal[log[2],0.25]"}},

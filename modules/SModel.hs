@@ -115,6 +115,8 @@ frequency_matrix (MixtureModels (m:ms)) = frequency_matrix m;
 --
 equ_model nuca = return $ equ nuca;
 
+jc_model a = return $ reversible_markov (equ a) (plus_f a (replicate n_letters (1.0/intToDouble n_letters))) where {n_letters=alphabetSize a};
+
 hky_model kappa nuca = Prefix "HKY" 
 (do {
    kappa' <- Prefix "kappa" kappa;
