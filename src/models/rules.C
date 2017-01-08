@@ -45,7 +45,6 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"omega","Double","~Uniform[0,1]"}, {"ws","List[Double]","~iid[61,logNormal[0,0.5]]"}, {"submodel","RA[a]","HKY"}},
     {{"fMutSel0","RA[Codon[a,b]]"}, {"fMutSel0_model","submodel","omega","ws"},
      {"omega","Double","~Uniform[0,1]"}, {"ws","List[Double]","~iid[20,logNormal[0,0.5]]"}, {"submodel","RA[a]","HKY"}},
-    {{"INV","MM[a]"}, {}, {"p","Double","~Uniform[0,1]"}},
 // fraction ~ dirichlet' n (1 + n/2), rates ~ dirichlet' n 2
     {{"DP","MM[a]"}, {"dp_model","submodel","n","rates","frequencies"}, {"n","Int"}, {"rates","List[Double]"}, {"frequencies","List[Double]"}, {"submodel","RA[a]"}},
     {{"MultiRate","MM[a]"}, {"multiRateModel","submodel","dist","n_bins"}, {"dist","Distribution[Double]"}, {"n_bins","Int","4"}, {"submodel","RA[a]"}},
