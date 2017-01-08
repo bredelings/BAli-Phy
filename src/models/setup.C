@@ -241,47 +241,7 @@ expression_ref process_stack_Markov(const ptree& model_rep)
       }
     */
 
-    if (model_rep.get_value<string>() == "JC")
-    {
-	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
-
-	return (identifier("jukes_cantor"), alphabet);
-    }
-    else if (model_rep.get_value<string>() == "EQU")
-    {
-	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
-
-	return model_expression({identifier("equ_model"), alphabet});
-    }
-    /*
-      else if (model_rep.get_value<string>() == "EQUx3")) {
-
-      const Triplets* T = dynamic_cast<const Triplets*>(&*a);
-      if (T) 
-      return Singlet_to_Triplet_Exchange(*T,EQU(T->getNucleotides()));
-      else
-      throw myexception()<<"EQUx3: '"<<a->name<<"' is not a triplet alphabet.";
-      }
-    */
-    else if (model_rep.get_value<string>() == "HKYx3")
-    {
-	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
-
-	return model_expression({identifier("hkyx3_model"), alphabet});
-    }
-    else if (model_rep.get_value<string>() == "TNx3")
-    {
-	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
-
-	return model_expression({identifier("tnx3_model"),alphabet});
-    }
-    else if (model_rep.get_value<string>() == "GTRx3")
-    {
-	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
-
-	return model_expression({identifier("gtrx3_model"),alphabet});
-    }
-    else if (model_rep.get_value<string>() == "Empirical") 
+    if (model_rep.get_value<string>() == "Empirical") 
     {
 	if (not model_rep.count("alphabet"))
 	    throw myexception()<<"Model '"<<model_rep.get_value<string>()<<"' is missing parameters 'alphabet'";
@@ -311,14 +271,6 @@ expression_ref process_stack_Markov(const ptree& model_rep)
       return M;
       }
     */
-    else if (model_rep.get_value<string>() == "fMutSel")
-    {
-	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
-
-	expression_ref nuc_rm = get_model_as("RA[a]",model_rep.get_child("submodel"));
-
-	return model_expression({identifier("fMutSel_model"), alphabet , nuc_rm});
-    }
     else if (model_rep.get_value<string>() == "fMutSel0")
     {
 	expression_ref alphabet = get_model_as("Alphabet", model_rep.get_child("alphabet"));
