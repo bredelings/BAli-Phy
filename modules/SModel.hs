@@ -172,34 +172,10 @@ m7_omega_dist mu gamma n_bins = uniformDiscretize (quantile (beta a b)) n_bins w
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
 m8_omega_dist mu gamma n_bins posP posW = extendDiscreteDistribution (m7_omega_dist mu gamma n_bins) posP posW;
 
--- The M8a is has f1 of sites in a beta distribution, and f2 are neutral.
-m8a_omega_dist n_bins = do
-{
-  beta_dist <- m7_omega_dist n_bins;
+m8a_omega_dist mu gamma n_bins posP = m8_omega_dist mu gamma n_bins posP 1.0;
 
-  posP <- beta 1.0 10.0;
-  Log "posP" posP;
-
-  return $ extendDiscreteDistribution beta_dist posP 1.0;
-};
-
-m8a_test_omega_dist n_bins = do
-{
-  beta_dist <- m7_omega_dist n_bins;
-
-  posW <- logGamma 4.0 0.25;
-  Log "posW" posW;
-
-  posP <- beta 1.0 10.0;
-  Log "posP" posP;
-
-  posSelection <- bernoulli 0.5;
-  Log "posSelection" posSelection;
-
-  let {posW' = if (posSelection == 1) then posW else 0.0};
-
-  return $ extendDiscreteDistribution beta_dist posP posW';
-};
+m8a_test_omega_dist mu gamma n_bins posP posW 0 = m8_omega_dist mu gamma n_bins posP 1.0;
+m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins posP posW;
 
 dp_omegas mu omegas = map (\w -> min 1.0 (w*scale)) omegas where {scale = mu/sum(omegas)*(intToDouble $ length omegas)};
 
@@ -371,20 +347,54 @@ m8_model s r mu gamma n_bins posP posW codona = Prefix "M8" $ do
   return $ multiParameter m0w (m8_omega_dist mu' gamma' n_bins' posP' posW');
 };
 
-m8a_model codona n_bins s r = Prefix "M8a" $ do
+m8a_model s r mu gamma n_bins posP codona = Prefix "M8a" $ do
 {
-  dist <- m8a_omega_dist n_bins;
+  s' <- Prefix "S" (s (getNucleotides codona));
+  r' <- Prefix "R" (r codona);
 
-  let {m0w w = reversible_markov (m0 codona s w) r};
-  return $ multiParameter m0w dist
+  mu' <- Prefix "mu" mu;
+  Log "mu" mu';
+
+  -- gamma = sigma^2/mu
+  gamma' <- Prefix "gamma" gamma;
+  Log "gamma" gamma';
+
+  n_bins' <- Prefix "n_bins" n_bins;
+  Log "n_bins" n_bins';
+
+  posP' <- Prefix "posP" posP;
+  Log "posP" posP';
+
+  let {m0w w = reversible_markov (m0 codona s' w) r'};
+  return $ multiParameter m0w (m8a_omega_dist mu' gamma' n_bins' posP');
 };
 
-m8a_test_model codona n_bins s r = Prefix "M8a_Test" $ do
+m8a_test_model s r mu gamma n_bins posP posW posSelection codona = Prefix "M8a_Test" $ do
 {
-  dist <- m8a_test_omega_dist n_bins;
+  s' <- Prefix "S" (s (getNucleotides codona));
+  r' <- Prefix "R" (r codona);
 
-  let {m0w w = reversible_markov (m0 codona s w) r};
-  return $ multiParameter m0w dist
+  mu' <- Prefix "mu" mu;
+  Log "mu" mu';
+
+  -- gamma = sigma^2/mu
+  gamma' <- Prefix "gamma" gamma;
+  Log "gamma" gamma';
+
+  n_bins' <- Prefix "n_bins" n_bins;
+  Log "n_bins" n_bins';
+
+  posP' <- Prefix "posP" posP;
+  Log "posP" posP';
+
+  posW' <- Prefix "posW" posW;
+  Log "posW" posW';
+  
+  posSelection' <- Prefix "posSelection" posSelection;
+  Log "posSelection" posSelection';
+
+  let {m0w w = reversible_markov (m0 codona s' w) r'};
+  return $ multiParameter m0w (m8a_test_omega_dist mu' gamma' n_bins' posP' posW' posSelection');
 };
 
 branch_site_test_model codona n_bins s r = Prefix "BranchSiteTest"
