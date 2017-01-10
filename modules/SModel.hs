@@ -312,11 +312,27 @@ m1a_model s r w1 f1 codona = Prefix "M1a" $ do
   return $ multiParameter m0w dist
 };
 
-m2a_model codona s r = Prefix "M2a" $ do
+m2a_model s r w1 f1 posP posW codona = Prefix "M2a" $ do
 {
-  dist <- m2a_omega_dist ();
+  s' <- Prefix "S" (s (getNucleotides codona));
+  r' <- Prefix "R" (r codona);
 
-  let {m0w w = reversible_markov (m0 codona s w) r};
+  w1' <- Prefix "omega1" w1;
+  Log "omega1" w1';
+
+  f1' <- Prefix "p1" f1;
+  Log "p1" f1';
+        
+  posP' <- Prefix "posP" posP;
+  Log "posP" posP';
+
+  posW' <- Prefix "posW" posW;
+  Log "posW" posW';
+
+  let {m0w w = reversible_markov (m0 codona s' w) r';
+       f2 = 1.0-f1';
+       nonPosP = 1.0-posP';
+       dist = DiscreteDistribution [(nonPosP*f1',w1'), (nonPosP*f2,1.0),(posP',posW')]};
   return $ multiParameter m0w dist
 };
 
