@@ -68,8 +68,8 @@ const vector< vector<vector<string>> > all_default_arguments =
     //  Maybe we should introduce a way to sample Dirichlet and IIDs of the same length and then zip them?
     //   * would this solve some of our woes with the DP model?
     //   * this does NOT solve the issue of the dirichlet weight depending on n
-    {{"M3","MM[Codon[a,b]]"}, {"m3_model","nuc_model","freq_model","omegas","ps"},
-     {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"omegas","List[Double]","~iid[4,Uniform[0,1]]" }, {"ps","List[Double]","~Dirichlet[4,2]"}},
+    {{"M3","MM[Codon[a,b]]"}, {"m3_model","nuc_model","freq_model","ps","omegas"},
+     {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"ps","List[Double]","~Dirichlet[4,2]"}, {"omegas","List[Double]","~iid[4,Uniform[0,1]]" }},
     {{"M3_Test","MM[Codon[a,b]]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}},
     {{"M7","MM[Codon[a,b]]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}},
     {{"M8","MM[Codon[a,b]]"},
