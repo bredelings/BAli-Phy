@@ -708,7 +708,7 @@ log_normal_inv_model base sigmaOverMu pInv n alphabet = Prefix "LogNormalInv"
          return $ multiRate base' dist2
 });
 
-dp_model base n rates fraction a = Prefix "DP" $
+dp_model base rates fraction a = Prefix "DP" $
 do {
    fraction' <- fraction;
    sequence_ $ zipWith (\f i -> Log ("f"++show i) f) fraction' [1..];
