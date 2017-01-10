@@ -154,14 +154,7 @@ m2a_omega_dist f1 w1 posP posW = extendDiscreteDistribution (m1a_omega_dist f1 w
 m2a_test_omega_dist f1 w1 posP posW 0 = m2a_omega_dist f1 w1 posP 1.0;
 m2a_test_omega_dist f1 w1 posP posW _ = m2a_omega_dist f1 w1 posP posW;
 
-m3_omega_dist n_bins = do
-{
-  omegas <- iid n_bins (uniform 0.0 1.0);
-  ps <- dirichlet' n_bins (intToDouble n_bins/2.0);
-  Log "omega" omegas;
-  Log "f" ps;
-  return $ DiscreteDistribution $ zip ps omegas;
-};
+m3_omega_dist ps omegas = DiscreteDistribution $ zip ps omegas;
 
 m3_test_omega_dist n_bins = do
 {
@@ -323,12 +316,19 @@ m2a_test_model s r w1 f1 posP posW posSelection codona = Prefix "M2a_Test" $ do
   return $ multiParameter m0w (m2a_test_omega_dist f1' w1' posP' posW' posSelection');
 };
 
-m3_model codona n_bins s r = Prefix "M3" $ do
+m3_model s r ps omegas codona = Prefix "M3" $ do
 {
-  dist <- m3_omega_dist n_bins;
+  s' <- Prefix "S" (s (getNucleotides codona));
+  r' <- Prefix "R" (r codona);
 
-  let {m0w w = reversible_markov (m0 codona s w) r};
-  return $ multiParameter m0w dist
+  ps' <- Prefix "ps" ps;
+  sequence_ $ zipWith (\f i -> Log ("p"++show i) f) ps' [1..];
+
+  omegas' <- Prefix "omegas" omegas;
+  sequence_ $ zipWith (\f i -> Log ("omega"++show i) f) omegas' [1..];
+
+  let {m0w w = reversible_markov (m0 codona s' w) r'};
+  return $ multiParameter m0w (m3_omega_dist ps' omegas');
 };
 
 m3_test_model codona n_bins s r = Prefix "M3_Test" $ do
