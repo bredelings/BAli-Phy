@@ -35,7 +35,7 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, cons
 	if (parameters_with_extension(names, prefix + "M3.omega*").size() )
 	{
 	    M3.push_back( parameters_with_extension(names, prefix + "M3.omega*") );
-	    M3.push_back( parameters_with_extension(names, prefix + "M3.f*") );
+	    M3.push_back( parameters_with_extension(names, prefix + "M3.p*") );
 	    indices.push_back( M3 );
 	}
     }
