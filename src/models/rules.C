@@ -70,7 +70,8 @@ const vector< vector<vector<string>> > all_default_arguments =
     //   * this does NOT solve the issue of the dirichlet weight depending on n
     {{"M3","MM[Codon[a,b]]"}, {"m3_model","nuc_model","freq_model","ps","omegas"},
      {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"ps","List[Double]","~Dirichlet[4,2]"}, {"omegas","List[Double]","~iid[4,Uniform[0,1]]" }},
-    {{"M3_Test","MM[Codon[a,b]]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}},
+    {{"M3_Test","MM[Codon[a,b]]"}, {"m3_test_model","nuc_model","freq_model","ps","omegas","posP","posW","posSelection"},
+     {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"ps","List[Double]","~Dirichlet[4,2]"}, {"omegas","List[Double]","~iid[4,Uniform[0,1]]" },{"posP","Double", "~Beta[1,10]"}, {"posW","Double", "~logGamma[4,0.25]"}, {"posSelection", "Int", "~Bernoulli[0.5]"} },
     {{"M7","MM[Codon[a,b]]"}, {}, {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}},
     {{"M8","MM[Codon[a,b]]"},
      {"m8_model","nuc_model","freq_model","posP","posW","n"},

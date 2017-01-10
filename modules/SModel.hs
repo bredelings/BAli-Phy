@@ -156,23 +156,10 @@ m2a_test_omega_dist f1 w1 posP posW _ = m2a_omega_dist f1 w1 posP posW;
 
 m3_omega_dist ps omegas = DiscreteDistribution $ zip ps omegas;
 
-m3_test_omega_dist n_bins = do
-{
-  dist <- m3_omega_dist n_bins;
+m3p_omega_dist ps omegas posP posW = extendDiscreteDistribution (m3_omega_dist ps omegas) posP posW;
 
-  posW <- logGamma 4.0 0.25;
-  Log "posW" posW;
-
-  posP <- beta 1.0 10.0;
-  Log "posP" posP;
-
-  posSelection <- bernoulli 0.5;
-  Log "posSelection" posSelection;
-
-  let {posW' = if (posSelection == 1) then posW else 1.0};
-
-  return $ extendDiscreteDistribution dist posP posW';
-};
+m3_test_omega_dist ps omegas posP posW 0 = m3p_omega_dist ps omegas posP 1.0;
+m3_test_omega_dist ps omegas posP posW _ = m3p_omega_dist ps omegas posP posW;
 
 -- The M7 is just a beta distribution
 -- gamma' = var(x)/(mu*(1-mu)) = 1/(a+b+1) = 1/(n+1)
@@ -331,12 +318,28 @@ m3_model s r ps omegas codona = Prefix "M3" $ do
   return $ multiParameter m0w (m3_omega_dist ps' omegas');
 };
 
-m3_test_model codona n_bins s r = Prefix "M3_Test" $ do
+m3_test_model s r ps omegas posP posW posSelection codona = Prefix "M3_Test" $ do
 {
-  dist <- m3_test_omega_dist n_bins;
+  s' <- Prefix "S" (s (getNucleotides codona));
+  r' <- Prefix "R" (r codona);
 
-  let {m0w w = reversible_markov (m0 codona s w) r};
-  return $ multiParameter m0w dist
+  ps' <- Prefix "ps" ps;
+  sequence_ $ zipWith (\f i -> Log ("p"++show i) f) ps' [1..];
+
+  omegas' <- Prefix "omegas" omegas;
+  sequence_ $ zipWith (\f i -> Log ("omega"++show i) f) omegas' [1..];
+
+  posP' <- Prefix "posP" posP;
+  Log "posP" posP';
+
+  posW' <- Prefix "posW" posW;
+  Log "posW" posW';
+
+  posSelection' <- Prefix "posSelection" posSelection;
+  Log "posSelection" posSelection';
+
+  let {m0w w = reversible_markov (m0 codona s' w) r'};
+  return $ multiParameter m0w (m3_test_omega_dist ps' omegas' posP' posW' posSelection');
 };
 
 m7_model codona n_bins s r = Prefix "M7" $ do
