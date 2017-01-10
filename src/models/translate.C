@@ -91,14 +91,18 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 {
     auto name = model.get_value<string>();
 
-    if (can_be_converted_to<int>(name) and (required_type.get_value<string>() == "Int" or required_type.get_value<string>() == "Double"))
+    if (can_be_converted_to<int>(name))
     {
+	if (required_type.get_value<string>() != "Double" and required_type.get_value<string>() != "Int")
+	    throw myexception()<<"Can't convert '"<<name<<"' to require type '"<<unparse_type(required_type)<<"'";
 	assert(model.empty());
 	return;
     }
 
-    if (can_be_converted_to<double>(name) and required_type.get_value<string>() == "Double")
+    if (can_be_converted_to<double>(name))
     {
+	if (required_type.get_value<string>() != "Double")
+	    throw myexception()<<"Can't convert '"<<name<<"' to require type '"<<unparse_type(required_type)<<"'";
 	assert(model.empty());
 	return;
     }
