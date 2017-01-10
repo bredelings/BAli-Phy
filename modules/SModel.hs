@@ -170,12 +170,7 @@ m7_omega_dist mu gamma n_bins = uniformDiscretize (quantile (beta a b)) n_bins w
                                                                                       b = n*(1.0 - mu)};
 
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
-m8_omega_dist posP posW n_bins = do
-{
-  beta_dist <- m7_omega_dist n_bins;
-
-  return $ extendDiscreteDistribution beta_dist posP posW;
-};
+m8_omega_dist mu gamma n_bins posP posW = extendDiscreteDistribution (m7_omega_dist mu gamma n_bins) posP posW;
 
 -- The M8a is has f1 of sites in a beta distribution, and f2 are neutral.
 m8a_omega_dist n_bins = do
@@ -351,22 +346,29 @@ m7_model s r mu gamma n_bins codona = Prefix "M7" $ do
   return $ multiParameter m0w (m7_omega_dist mu' gamma' n_bins');
 };
 
-m8_model s r posP posW n_bins codona = Prefix "M8" $ do
+m8_model s r mu gamma n_bins posP posW codona = Prefix "M8" $ do
 {
-  posP' <- Prefix "posP" posP;
-  Log "posP" posP';
-      
-  posW' <- Prefix "posW" posW;
-  Log "posW" posW';
-
-  n_bins' <- n_bins;
-  dist <- m8_omega_dist posP' posW' n_bins';
-
   s' <- Prefix "S" (s (getNucleotides codona));
   r' <- Prefix "R" (r codona);
 
+  mu' <- Prefix "mu" mu;
+  Log "mu" mu';
+
+  -- gamma = sigma^2/mu
+  gamma' <- Prefix "gamma" gamma;
+  Log "gamma" gamma';
+
+  n_bins' <- Prefix "n_bins" n_bins;
+  Log "n_bins" n_bins';
+
+  posP' <- Prefix "posP" posP;
+  Log "posP" posP';
+
+  posW' <- Prefix "posW" posW;
+  Log "posW" posW';
+  
   let {m0w w = reversible_markov (m0 codona s' w) r'};
-  return $ multiParameter m0w dist
+  return $ multiParameter m0w (m8_omega_dist mu' gamma' n_bins' posP' posW');
 };
 
 m8a_model codona n_bins s r = Prefix "M8a" $ do
