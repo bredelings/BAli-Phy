@@ -163,26 +163,11 @@ m3_test_omega_dist ps omegas posP posW _ = m3p_omega_dist ps omegas posP posW;
 
 -- The M7 is just a beta distribution
 -- gamma' = var(x)/(mu*(1-mu)) = 1/(a+b+1) = 1/(n+1)
-m7_omega_dist n_bins = do 
-{
-  mu <- uniform 0.0 1.0;
-  Log "mu" mu;
-
-  gamma <- beta 1.0 10.0;
-  -- sigma^2/mu
-  Log "gamma" gamma;
-
-  let {cap = min (mu/(1.0+mu)) ((1.0-mu)/(2.0-mu));
-       gamma' = gamma*cap;
-       n = (1.0/gamma')-1.0;
-       a = n*mu;
-       b = n*(1.0 - mu)};
-
-  Log "a" a;
-  Log "b" b;
-
-  return $ uniformDiscretize (quantile (beta a b)) n_bins;
-};
+m7_omega_dist mu gamma n_bins = uniformDiscretize (quantile (beta a b)) n_bins where {cap = min (mu/(1.0+mu)) ((1.0-mu)/(2.0-mu));
+                                                                                      gamma' = gamma*cap;
+                                                                                      n = (1.0/gamma')-1.0;
+                                                                                      a = n*mu;
+                                                                                      b = n*(1.0 - mu)};
 
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
 m8_omega_dist posP posW n_bins = do
@@ -347,12 +332,23 @@ m3_test_model s r ps omegas posP posW posSelection codona = Prefix "M3_Test" $ d
   return $ multiParameter m0w (m3_test_omega_dist ps' omegas' posP' posW' posSelection');
 };
 
-m7_model codona n_bins s r = Prefix "M7" $ do
+m7_model s r mu gamma n_bins codona = Prefix "M7" $ do
 {
-  dist <- m7_omega_dist n_bins;
+  s' <- Prefix "S" (s (getNucleotides codona));
+  r' <- Prefix "R" (r codona);
 
-  let {m0w w = reversible_markov (m0 codona s w) r};
-  return $ multiParameter m0w dist
+  mu' <- Prefix "mu" mu;
+  Log "mu" mu';
+
+  -- gamma = sigma^2/mu
+  gamma' <- Prefix "gamma" gamma;
+  Log "gamma" gamma';
+
+  n_bins' <- Prefix "n_bins" n_bins;
+  Log "n_bins" n_bins';
+
+  let {m0w w = reversible_markov (m0 codona s' w) r'};
+  return $ multiParameter m0w (m7_omega_dist mu' gamma' n_bins');
 };
 
 m8_model s r posP posW n_bins codona = Prefix "M8" $ do
