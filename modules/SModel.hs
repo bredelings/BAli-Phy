@@ -397,36 +397,39 @@ m8a_test_model s r mu gamma n_bins posP posW posSelection codona = Prefix "M8a_T
   return $ multiParameter m0w (m8a_test_omega_dist mu' gamma' n_bins' posP' posW' posSelection');
 };
 
-branch_site_test_model codona n_bins s r = Prefix "BranchSiteTest"
-(do {
-  posW <- logGamma 4.0 0.25;
-  Log "posW" posW;
+branch_site_test_model s r fs ws posP posW posSelection codona = Prefix "BranchSiteTest" $
+do {
+  s' <- Prefix "S" (s (getNucleotides codona));
+  r' <- Prefix "R" (r codona);
 
-  posSelection <- bernoulli 0.5;
-  Log "posSelection" posSelection;
+  fs' <- Prefix "fs" fs;
+  sequence_ $ zipWith (\f i -> Log ("f"++show i) f) fs' [1..];
 
-  let {posW' = if (posSelection == 1) then posW else 1.0};
-
-  fs <- dirichlet' n_bins 1.0;
-  sequence_ $ zipWith (\f i -> Log ("f"++show i) f) fs [1..];
-
-  ws' <- iid (n_bins-1) (uniform 0.0 1.0);
+  ws' <- Prefix "omegas" ws;
   sequence_ $ zipWith (\f i -> Log ("w"++show i) f) ws' [1..];
 
-  let {ws = ws' ++ [1.0]};
+  let {ws'' = ws' ++ [1.0]};
 
-  let {d1 = DiscreteDistribution $ zip fs ws;
-       d2 = DiscreteDistribution $ zip fs (repeat posW')};
+  posP' <- Prefix "posP" posP;
+  Log "posP" posP';
 
-  posP <- beta 1.0 10.0;
-  Log "posP" posP;
+  posW' <- Prefix "posW" posW;
+  Log "posW" posW';
 
-  let {m0w w = reversible_markov (m0 codona s w) r;
-       mixture1 = multiParameter m0w (mixDiscreteDistributions [1.0-posP, posP] [d1,d1]);
-       mixture2 = multiParameter m0w (mixDiscreteDistributions [1.0-posP, posP] [d1,d2])};
+  posSelection' <- Prefix "posSelection" posSelection;
+  Log "posSelection" posSelection';
+
+  let {posW'' = if (posSelection' == 1) then posW' else 1.0};
+
+  let {d1 = DiscreteDistribution $ zip fs' ws'';
+       d2 = DiscreteDistribution $ zip fs' (repeat posW')};
+
+  let {m0w w = reversible_markov (m0 codona s' w) r';
+       mixture1 = multiParameter m0w (mixDiscreteDistributions [1.0-posP', posP'] [d1,d1]);
+       mixture2 = multiParameter m0w (mixDiscreteDistributions [1.0-posP', posP'] [d1,d2])};
 
   return $ MixtureModels [mixture1,mixture2]
-});
+};
 
 x3_model s a = do {
  s' <- s (getNucleotides a);
