@@ -169,7 +169,8 @@ geometric p = geometric2 (1.0-p) p;
 rgeometric q = geometric2 q (1.0-q);
 
 geometric_model p  = Prefix "Geometric" $ do {
-                                            p' <- p;
+                                            p' <- Prefix "p" p;
+                                            Log "p" p';
                                             return $ geometric p';
                                           };
 
