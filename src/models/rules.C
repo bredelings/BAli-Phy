@@ -12,6 +12,7 @@ const vector< vector<vector<string>> > all_default_arguments =
 {
     {{"log","Double","N"}, {"log_model","x"}, {"x","Double"}},
     {{"Sample","a"}, {"performAction","x"}, {"x","Distribution[a]"}},
+
     {{"Uniform","Distribution[Double]"}, {"uniform_model","low","high"}, {"low","Double"}, {"high","Double"}},
     {{"UniformInt","Distribution[Int]"}, {"uniform_int_model","low","high"}, {"low","Int"}, {"high","Int"}},
     {{"Normal","Distribution[Double]"}, {"normal_model","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
@@ -22,12 +23,17 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"Beta","Distribution[Double]"}, {"beta_model","a","b"}, {"a","Double"}, {"b","Double"}},
     {{"Exponential","Distribution[Double]"}, {"exponential_model","mean"}, {"mean","Double"}},
     {{"Gamma","Distribution[Double]"}, {"Distributions.gamma_model","a","b"}, {"a","Double"}, {"b","Double"}},
+
     {{"Bernoulli","Distribution[Int]"}, {"Distributions.bernoulli_model","p"}, {"p","Double"}},
     {{"Binomial","Distribution[Int]"}, {"Distributions.binomial_model","n", "p"}, {"n","Int"}, {"p","Double"}},
+    {{"Geometric","Distribution[Int]"}, {"geometric_model","p"}, {"p","Double"}},
+
     {{"iid","Distribution[List[a]]"}, {"iid_model","n","dist"}, {"n","Int"}, {"dist","Distribution[a]"}},
     {{"Dirichlet","Distribution[List[Double]]"}, {"dirichlet'_model","n","x"}, {"n","Int"}, {"x","Double"}},
 //    {{"Dirichlet","List[Double]"}, {"dirichlet_model","ps"}, {"ps","List[Double]"}},
-    {{"Geometric","Distribution[Int]"}, {"geometric_model","p"}, {"p","Double"}},
+
+//  We need a way to construct lists, not from a distribution.
+//    {{"List","List[a]"},{},{"*","a"}},
     {{"EQU","EM[a]"}, {"equ_model"}},
     {{"JC","RA[a]"}, {"jc_model"}},
     {{"F81"}, {}, {"alphabet","Alphabet"}},
@@ -83,7 +89,9 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"M8a_Test","MM[Codon[a,b]]"},
      {"m8a_test_model","nuc_model","freq_model","mu","gamma","n_bins","posP","posW","posSelection"},
      {"n_bins","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"mu","Double","~Uniform[0,1]"}, {"gamma","Double","~Beta[1,10]"}, {"posP","Double","~Beta[1,10]"}, {"posW","Double","~logGamma[4,0.25]"}, {"posSelection","Int","~Bernoulli[0.5]"} },
-    {{"branch-site","MM[Codon[a,b]]"}, {}, {"n","Int","2"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}},
+    {{"branch-site","MM[Codon[a,b]]"},
+     {"branch_site_test_model"},
+     {"n","Int","2"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"posP","Double","~Beta[1,10]"}, {"posW","Double","~logGamma[4,0.25]"}, {"posSelection","Int","~Bernoulli[0.5]"} },
     {{"dp_omega","MM[Codon[a,b]]"}, {"dp_omega_model","nuc_model","freq_model","mu","omegas"},
      {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"mu","Double","~Uniform[0,1]"}, {"omegas","List[Double]","~Dirichlet[4,1]"}},
     {{"frequencies_prior","F"}, {"frequencies_model"}},
