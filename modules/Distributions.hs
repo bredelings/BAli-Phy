@@ -153,6 +153,11 @@ builtin binomial_density 3 "binomial_density" "Distribution";
 builtin builtin_sample_binomial 2 "sample_binomial" "Distribution";
 sample_binomial n p = Random (IOAction2 builtin_sample_binomial n p);
 binomial n p = ProbDensity (binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (integer_between 0 n);
+binomial_model n p = Prefix "Binomial" $ do { n' <- Prefix "n" n;
+                                              Log "n" n';
+                                              p' <- Prefix "p" p;
+                                              Log "p" p';
+                                              return $ binomial n p};
 
 -- A geometric distribution on [0,\infty).  How many failures before a success?
 builtin geometric_density 3 "geometric_density" "Distribution";
@@ -182,6 +187,9 @@ bernoulli2 p q = ProbDensity (bernoulli_density2 p q) (no_quantile "bernoulli") 
 
 bernoulli p = bernoulli2 p (1.0-p);
 rbernoulli q = bernoulli2 (1.0-q) q;
+bernoulli_model p = Prefix "Bernoulli" $ do {p' <- Prefix "p" p;
+                                             Log "p" p';
+                                             return $ bernoulli p'};
 
 builtin builtin_sample_exponential 1 "sample_exponential" "Distribution";
 builtin exponential_density 2 "exponential_density" "Distribution";
