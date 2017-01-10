@@ -221,20 +221,25 @@ m8a_test_omega_dist n_bins = do
   return $ extendDiscreteDistribution beta_dist posP posW';
 };
 
-dp_omega_dist n_bins = do 
+dp_omegas mu omegas = map (\w -> min 1.0 (w*scale)) omegas where {scale = mu/sum(omegas)*(intToDouble $ length omegas)};
+
+dp_omega_model s r mu omegas codona = Prefix "DP_omega" $ do
 {
-  mu <- uniform 0.0 1.0;
-  Log "mu" mu;
+  s' <- Prefix "S" (s (getNucleotides codona));
+  r' <- Prefix "R" (r codona);
 
-  omegas <- dirichlet' n_bins 1.0;
-  let {p = 1.0/(intToDouble n_bins);
-       ave = sum(omegas)*p;
-       scale = mu/ave;
-       omegas' = map (*scale) omegas};
+  mu' <- Prefix "mu" mu;
+  Log "mu" mu';
 
-  Log "omegas" (map (min 1.0) omegas');
+  omegas' <- Prefix "omegas" omegas;
 
-  return $ DiscreteDistribution [(p,min omega 1.0)| omega <- omegas'];
+  let {m0w w = reversible_markov (m0 codona s' w) r';
+       p = 1.0/(intToDouble $ length omegas');
+       omegas'' = dp_omegas mu' omegas'};
+
+  sequence_ $ zipWith (\f i -> Log ("omega"++show i) f) omegas'' [1..];
+
+  return $ multiParameter m0w $ DiscreteDistribution $ zip (repeat p) (omegas'');
 };
 
 --  w1 <- uniform 0.0 1.0;
@@ -379,14 +384,6 @@ m8a_model codona n_bins s r = Prefix "M8a" $ do
 m8a_test_model codona n_bins s r = Prefix "M8a_Test" $ do
 {
   dist <- m8a_test_omega_dist n_bins;
-
-  let {m0w w = reversible_markov (m0 codona s w) r};
-  return $ multiParameter m0w dist
-};
-
-dp_omega_model codona n_bins s r = Prefix "DP_omega" $ do
-{
-  dist <- dp_omega_dist n_bins;
 
   let {m0w w = reversible_markov (m0 codona s w) r};
   return $ multiParameter m0w dist
