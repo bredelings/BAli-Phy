@@ -29,15 +29,15 @@ protected:
 public:
   void clear() {why.clear();}
 
-  virtual const char* what() const throw() {return why.c_str();}
+  virtual const char* what() const noexcept {return why.c_str();}
 
   template <typename T> myexception& operator<<(const T&);
 
   void prepend(const std::string& s) {why = s + why;}
 
-  myexception() throw() {}
-  myexception(const std::string& s) throw() : why(s) {}
-  virtual ~myexception() throw() {}
+  myexception() {}
+  myexception(const std::string& s): why(s) {}
+  virtual ~myexception() {}
 };
 
 template <typename T>

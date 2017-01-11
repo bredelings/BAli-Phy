@@ -89,12 +89,12 @@ using std::set;
 using boost::shared_ptr;
 
 #ifdef DEBUG_MEMORY
-void * operator new(size_t sz) throw(std::bad_alloc) {
+void * operator new(size_t sz)
     printf("new called, sz = %d\n",sz);
     return malloc(sz); 
 }
 
-void operator delete(void * p) throw() {
+void operator delete(void * p)
     printf("delete called, content = %d\n",(*(int*)p));
     free(p); 
 }

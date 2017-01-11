@@ -62,7 +62,7 @@ public:
 
 #ifndef NO_MEMBER_TEMPLATES
   template <class Y> friend class cow_ptr;
-  template <class Y> cow_ptr(const cow_ptr<Y>& r) throw()
+  template <class Y> cow_ptr(const cow_ptr<Y>& r) noexcept
     : data(r.data) {}
   template <class Y> cow_ptr& operator=(const cow_ptr<Y>& r)
   {
@@ -73,9 +73,9 @@ public:
   boost::shared_ptr<const X> get_ptr()    const {        return data;}
   boost::shared_ptr<X>       modify_ptr()       {copy(); return data;}
 
-  const X& operator*()    const throw()   {assert(data); return *data;}
-  const X* operator->()   const throw()   {assert(data); return data.get();}
-  const X* get()          const throw()   {              return data.get();}
+  const X& operator*()    const noexcept   {assert(data); return *data;}
+  const X* operator->()   const noexcept   {assert(data); return data.get();}
+  const X* get()          const noexcept   {              return data.get();}
     
   X* modify()                             {assert(data); copy(); return data.get();}
 
@@ -123,13 +123,13 @@ public:
     return *this;
   }
 
-  cow_ptr(const cow_ptr& r) throw()             : data(r.data) {}
+  cow_ptr(const cow_ptr& r) noexcept             : data(r.data) {}
 
   cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) { }
 
   cow_ptr(const boost::shared_ptr<X>& p) : data(p) { }
 
-  explicit cow_ptr(X* p = 0) throw()            : data(p) {}
+  explicit cow_ptr(X* p = 0) noexcept            : data(p) {}
 
   explicit cow_ptr(const X& x)                  : data(new X(x)) {}
 
@@ -169,7 +169,7 @@ public:
 
 #ifndef NO_MEMBER_TEMPLATES
   template <class Y> friend class polymorphic_cow_ptr;
-  template <class Y> polymorphic_cow_ptr(const polymorphic_cow_ptr<Y>& r) throw()
+  template <class Y> polymorphic_cow_ptr(const polymorphic_cow_ptr<Y>& r) noexcept
     : data(r.data) {}
   template <class Y> polymorphic_cow_ptr& operator=(const polymorphic_cow_ptr<Y>& r)
   {
@@ -181,9 +181,9 @@ public:
   boost::shared_ptr<const X> get_ptr()    const {        return data;}
   boost::shared_ptr<X>       modify_ptr()       {copy(); return data;}
 
-  const X& operator*()    const throw()   {assert(data); return *data;}
-  const X* operator->()   const throw()   {assert(data); return data.get();}
-  const X* get()          const throw()   {              return data.get();}
+  const X& operator*()    const noexcept   {assert(data); return *data;}
+  const X* operator->()   const noexcept   {assert(data); return data.get();}
+  const X* get()          const noexcept   {              return data.get();}
     
   X* modify()                             {assert(data); copy(); return data.get();}
 
@@ -232,7 +232,7 @@ public:
     return *this;
   }
 
-  polymorphic_cow_ptr(const polymorphic_cow_ptr& r) throw()             : data(r.data) {}
+  polymorphic_cow_ptr(const polymorphic_cow_ptr& r) noexcept             : data(r.data) {}
 
   polymorphic_cow_ptr(const constant_value<X>& p) : data(const_pointer_cast<X>(p)) { }
 
@@ -248,7 +248,7 @@ public:
     :data(boost::dynamic_pointer_cast<X>(r.data)) 
   {}
 
-  explicit polymorphic_cow_ptr(X* p = 0) throw()            : data(p) {}
+  explicit polymorphic_cow_ptr(X* p = 0) noexcept            : data(p) {}
 
   explicit polymorphic_cow_ptr(const X& x)                  : data(x.clone()) {}
 

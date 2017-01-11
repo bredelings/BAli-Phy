@@ -46,7 +46,7 @@ public:
     (*this)<<show_stack_trace();
     //    std::abort();
   }
-  ~choose_exception() throw() {}
+  ~choose_exception() {}
 };
 
 template <> choose_exception<log_double_t>::choose_exception(int i, const std::vector<log_double_t>& V);

@@ -391,14 +391,14 @@ typedef graph_traits<Graph>::edge_descriptor Edge_t;
 struct cycle_exception: public std::exception {
   int x;
   int y;
-  const char* what() const throw() {
+  const char* what() const noexcept {
     std::ostringstream w;
     w << "Adding edge "<<x<<"->"<<y<<" creates a cycle!";
     return w.str().c_str();
   }
-  cycle_exception(int x_,int y_) throw() 
+  cycle_exception(int x_,int y_)
     :x(x_),y(y_) { }
-  virtual ~cycle_exception() throw() {}
+  virtual ~cycle_exception() {}
 };
 
 struct online_topo_sort

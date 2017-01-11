@@ -45,7 +45,7 @@ struct bad_letter:public myexception
   /// Event: the letter "l" was not in alphabet "name"
   bad_letter(const std::string& l,const std::string& name);
 
-  virtual ~bad_letter() throw() {}
+  virtual ~bad_letter() {}
 };
 
 /***************** struct alphabet ********************/
