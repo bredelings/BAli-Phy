@@ -466,6 +466,8 @@ get_element_exchange ((key,value):rest) x y = if key == x || key == y then value
 
 constant_frequencies_model freqs a = sequence [get_element_freqs freqs l|l <- alphabet_letters a];
 
+constant_frequencies_model2 freqs a = do {freqs' <- freqs; return [get_element_freqs freqs' l|l <- alphabet_letters a]};
+
 constant_exchange_model ex a = sequence [get_element_exchange ex (l1++l2) (l2++l1)|(l1,l2) <- pairs (alphabet_letters a)];
 
 simple_smap a = iotaUnsigned (alphabetSize a);
