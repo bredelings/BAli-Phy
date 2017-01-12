@@ -107,7 +107,7 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 	return;
     }
 
-    if (required_type.get_value<string>() == "String")
+    if (name.size()>=2 and name[0] == '"' and name.back() == '"' and required_type.get_value<string>() == "String") 
     {
 	assert(model.empty());
 	return;

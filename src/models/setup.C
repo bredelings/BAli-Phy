@@ -259,18 +259,23 @@ expression_ref get_model_(const ptree& model_rep)
     //  ptree model_rep = parse(model);
 
     // If we are processing an Int, just return an int.
-    if (can_be_converted_to<int>(model_rep.get_value<string>()))
+    auto value = model_rep.get_value<string>();
+
+    if (can_be_converted_to<int>(value))
     {
 	expression_ref value = model_rep.get_value<int>();
 	return (identifier("return"), value);
     }
 
     // If we are processing a Double, just return a double
-    if (can_be_converted_to<double>(model_rep.get_value<string>()))
+    if (can_be_converted_to<double>(value))
     {
 	expression_ref value = model_rep.get_value<double>();
 	return (identifier("return"), value);
     }
+
+    if (value.size() > 2 and value[0] == '"' and value.back() == '"')
+	return (identifier("return"), value.substr(1,value.size()-2));
 
     expression_ref m;
 
@@ -300,10 +305,9 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep)
 
     if (required_type.get_value<string>() == "String")
     {
-	if (model_rep.size() != 0)
-	    throw myexception()<<"Cannot convert '"<<show(model_rep)<<"' to String";
-
-	return (identifier("return"), model_rep.get_value<string>());
+	auto s = model_rep.get_value<string>();
+	if (model_rep.size() == 0 and s.size() > 2 and s[0] == '"' and s.back() == '"')
+	    return (identifier("return"), s.substr(1,s.size()-2));
     }
 
     if (not can_unify(result_type, required_type))
