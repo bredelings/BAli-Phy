@@ -235,15 +235,18 @@ string unparse(const ptree& p)
     {
 	if (pair.first == "submodel") {
 	    submodel = unparse(pair.second);
+	    args.push_back("");
 	}
 	else if (pair.second.get_value<string>() == "Sample")
 	{
 	    auto p2 = pair.second.begin()->second;
-	    args.push_back( pair.first + "~" + unparse(p2) );
+	    args.push_back( "~" + unparse(p2) );
 	}
 	else
-	    args.push_back( pair.first + "=" + unparse(pair.second) );
+	    args.push_back( unparse(pair.second) );
     }
+    if (args.size() and args.back() == "")
+	args.pop_back();
     if (not args.empty())
 	s = s + "[" + join(args,',') + "]";
     if (not submodel.empty())
