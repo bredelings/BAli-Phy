@@ -166,9 +166,10 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 	throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
 
     // 2.5. Check type of arguments if pass_arguments
-    if (rule.get("pass_arguments",false))
+    if (rule.get("pass_arguments",false) or rule.get("list_arguments",false))
     {
 	type_t arg_required_type = get_type_for_arg(rule, "*");
+	substitute(equations, arg_required_type);
 	for(auto& child: model)
 	    pass2(arg_required_type, child.second, equations);
 	return;

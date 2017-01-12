@@ -33,7 +33,7 @@ const vector< vector<vector<string>> > all_default_arguments =
 //    {{"Dirichlet","List[Double]"}, {"dirichlet_model","ps"}, {"ps","List[Double]"}},
 
 //  We need a way to construct lists, not from a distribution.
-//    {{"List","List[a]"},{},{"*","a"}},
+    {{"List","List[a]","L"},{"sequence"},{"*","a"}},
     {{"EQU","EM[a]"}, {"equ_model"}},
     {{"JC","RA[a]"}, {"jc_model"}},
     {{"F81"}, {}, {"alphabet","Alphabet"}},
@@ -139,6 +139,9 @@ ptree convert_rule(const vector<vector<string>>& s)
     rule.push_back({"result_type",parse_type(s[0][1])});
     if (s[0].size() > 2 and s[0][2] == "P")
 	rule.put("pass_arguments","true");
+    else if (s[0].size() > 2 and s[0][2] == "L")
+	rule.put("list_arguments","true");
+
     if (s[1].size())
     {
 	ptree call;

@@ -188,7 +188,8 @@ expression_ref process_stack_functions(const ptree& model_rep)
     if (not rule) return {};
     if (not rule->count("call")) return {};
 	
-    bool pass_arguments = rule->get("pass_arguments",false) == true;
+    bool pass_arguments = rule->get("pass_arguments",false);
+    bool is_list_rule = rule->get("list_arguments",false);
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
     
@@ -199,10 +200,17 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	vector<expression_ref> arguments;
 	for(const auto& child: model_rep)
 	{
-	    string arg_name = child.first;
-	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name));
-	    arguments.push_back(Tuple(arg_name,arg));
+	    expression_ref arg = get_model_as(arg_type, child.second);
+	    arguments.push_back(Tuple(child.first, arg));
 	}
+	E = (E,get_list(arguments));
+    }
+    else if (is_list_rule)
+    {
+	ptree arg_type = get_type_for_arg(*rule, "*");
+	vector<expression_ref> arguments;
+	for(const auto& child: model_rep)
+	    arguments.push_back( get_model_as(arg_type, child.second) );
 	E = (E,get_list(arguments));
     }
     else

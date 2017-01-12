@@ -120,6 +120,12 @@ ptree parse_no_submodel(const string& s)
     ptree result;
     result.put_value(head);
   
+    if (args.empty()) return result;
+
+    auto rule = require_rule_for_func(head);
+    bool is_list_rule = rule.get("list_arguments",false);
+    bool is_dict_rule = rule.get("pass_arguments",false);
+
     // 3. Attempt to set the supplied arguments
     bool seen_keyword_arg = false;
     for(int i=0;i<args.size();i++)
@@ -138,26 +144,32 @@ ptree parse_no_submodel(const string& s)
 		throw myexception()<<"Parameter name missing in argument '"<<args[i]<<"'";
 	}
 	// 6. If we have a keyword argument, remember it
-	else
+	else if (arg = split_keyword(args[i],'~'))
 	{
-	    arg = split_keyword(args[i],'~');
 	    if (arg and arg->first.size() and arg->first[0] != '~')
 	    {
 		seen_keyword_arg = true;
 		key_value = *arg;
 		key_value.second = "~"+key_value.second;
 	    }
-	    // 7. Otherwise find the keyword for the positional argument
-	    else
-	    {
-		if (seen_keyword_arg)
-		    throw myexception()<<"Positional argument after keyword argument in '"<<s<<"'";
-		key_value = {get_keyword_for_positional_arg(head, i), args[i]};
-	    }
 	}
+	// 7. Otherwise find the keyword for the positional argument
+	else
+	{
+	    if (seen_keyword_arg)
+		throw myexception()<<"Positional argument after keyword argument in '"<<s<<"'";
+	    if (is_list_rule)
+		key_value = {"",args[i]};
+	    else if (is_dict_rule)
+		throw myexception()<<"Name required for argument "<<i+1<<" in of '"<<head<<"'";
+	    else
+		key_value = {get_keyword_for_positional_arg(head, i), args[i]};
+	}
+	if (is_list_rule and not key_value.first.empty())
+	    throw myexception()<<"No name for argument "<<i+1<<" of '"<<head<<"'";
 
 	// 8. Set the key = value after parsing the value.
-	if (result.count(key_value.first))
+	if (not key_value.first.empty() and result.count(key_value.first))
 	    throw myexception()<<"Trying to set value for "<<head<<"."<<key_value.first<<" a second time!";
 	result.push_back({key_value.first, parse(key_value.second)});
     }
