@@ -34,6 +34,8 @@ const vector< vector<vector<string>> > all_default_arguments =
 
 //  We need a way to construct lists, not from a distribution.
     {{"List","List[a]","L"},{"sequence"},{"*","a"}},
+    {{"Pair","Pair[a,b]"},{"pair_model","first","second"},{"first","a"}, {"second","b"}},
+
     {{"EQU","EM[a]"}, {"equ_model"}},
     {{"JC","RA[a]"}, {"jc_model"}},
     {{"F81"}, {}, {"alphabet","Alphabet"}},
@@ -96,6 +98,7 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"mu","Double","~Uniform[0,1]"}, {"omegas","List[Double]","~Dirichlet[4,1]"}},
     {{"frequencies_prior","F"}, {"frequencies_model"}},
     {{"Freq","F","P"}, {"constant_frequencies_model"},{"*","Double"}},
+    {{"Freq2","F"}, {"constant_frequencies_model2","dict"},{"dict","List[Pair[String,Double]]"}},
     {{"F","FM[a]"}, {"plus_f_model","pi"},{"pi","F","frequencies_prior"}},
     {{"F61","FM[Codon[a,b]]"}, {"plus_f_model","pi"}, {"pi","F","frequencies_prior"}},
     {{"gwF","FM[a]"}, {"plus_gwf_model","pi","f"},{"pi","F","frequencies_prior"},{"f","Double","~Uniform[0,1]"}},
