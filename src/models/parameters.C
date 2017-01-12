@@ -643,9 +643,9 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
 	p->evaluate_expression( p->get_expression(tree_head) );
 	expression_ref mus;
 	if (p->branch_prior_type() == 0)
-	    mus = model_expression({identifier("iid_branch_length_model_exp"), p->get_expression(tree_head)});
+	    mus = (identifier("iid_branch_length_model_exp"), p->get_expression(tree_head));
 	else if (p->branch_prior_type() == 1)
-	    mus = model_expression({identifier("iid_branch_length_model_gamma"), p->get_expression(tree_head)});
+	    mus = (identifier("iid_branch_length_model_gamma"), p->get_expression(tree_head));
 	p->evaluate_expression( perform_exp(mus) );
     }
 
@@ -1148,7 +1148,7 @@ Parameters::Parameters(const module_loader& L,
 
     // Add a Main.mu<i> parameter for each scale.
     {
-	expression_ref mus = model_expression({identifier("branch_mean_model"), n_scales()});
+	expression_ref mus = (identifier("branch_mean_model"), n_scales());
 	evaluate_expression( perform_exp(mus) );
     }
 
