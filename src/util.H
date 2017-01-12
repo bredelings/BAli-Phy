@@ -137,7 +137,7 @@ struct bad_mapping: public myexception
 	  size2(s2)
 	{ }
 
-    ~bad_mapping() throw() {}
+    ~bad_mapping() {}
 };
 
 
