@@ -301,8 +301,10 @@ vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) co
     return HMMs;
 }
 
-double data_partition::sequence_length_pr(int l) const
+double data_partition::sequence_length_pr(int n) const
 {
+    int l = seqlength(n);
+
     int m = P->imodel_index_for_partition(partition_index);
 
     int arg_param_index = P->PC->IModel_methods[m].length_arg_param_index;

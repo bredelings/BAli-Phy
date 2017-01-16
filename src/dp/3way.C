@@ -101,10 +101,7 @@ namespace A3 {
   {
     if (P.variable_alignment())
     {
-      // get the lengths of then internal node
-      int length = P.seqlength(nodes[0]);
-
-      return pow(P.sequence_length_pr(length), 2);
+      return pow(P.sequence_length_pr(nodes[0]), 2);
     }
     else
       return 1;

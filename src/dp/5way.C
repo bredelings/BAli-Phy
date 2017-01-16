@@ -87,13 +87,7 @@ namespace A5 {
   log_double_t correction(const data_partition& P,const hmm_order& order) 
   {
     if (P.variable_alignment())
-    {
-      // get lengths of two internal nodes
-      int length1 = P.seqlength(order.nodes[4]);
-      int length2 = P.seqlength(order.nodes[5]);
-      
-      return pow( P.sequence_length_pr(length1) * P.sequence_length_pr(length2), 2);
-    }
+      return pow( P.sequence_length_pr(order.nodes[4]) * P.sequence_length_pr(order.nodes[5]), 2);
     else
       return 1;
   }

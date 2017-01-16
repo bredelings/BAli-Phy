@@ -133,7 +133,7 @@ public:
     const indel::PairHMM& get_branch_HMM(int b) const;
     std::vector<indel::PairHMM> get_branch_HMMs(const std::vector<int>&) const;
 
-    double sequence_length_pr(int l) const;
+    double sequence_length_pr(int i) const;
 
     double get_beta() const;
 
