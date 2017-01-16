@@ -62,6 +62,8 @@ struct data_partition_constants
 
     std::vector<int> sequence_length_indices;
 
+    std::vector<int> sequence_length_pr_indices;
+
     std::vector<int> transition_p_method_indices;
 
     std::vector<int> branch_HMM_indices;
@@ -167,12 +169,6 @@ public:
     data_partition(const Parameters* P, int i);
 };
 
-struct imodel_methods
-{
-    int length_arg_param_index;
-    int length_p;
-};
-
 struct smodel_methods
 {
     int main;
@@ -239,8 +235,8 @@ struct parameters_constants: public Object
     std::vector<int> smodel_for_partition;
 
     /// The IndelModel
-    std::vector<imodel_methods> IModel_methods;
     std::vector<int> imodel_for_partition;
+    int n_imodels;
 
     // Scale for partition
     std::vector<int> scale_for_partition;
@@ -365,7 +361,7 @@ public:
     int n_smodels() const {return PC->SModels.size();}
   
     /// How many substitution models?
-    int n_imodels() const {return PC->IModel_methods.size();}
+    int n_imodels() const {return PC->n_imodels;}
 
     /// How many substitution models?
     int n_scales() const {return PC->n_scales;}

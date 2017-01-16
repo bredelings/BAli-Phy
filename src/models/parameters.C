@@ -303,16 +303,7 @@ vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) co
 
 double data_partition::sequence_length_pr(int n) const
 {
-    int l = seqlength(n);
-
-    int m = P->imodel_index_for_partition(partition_index);
-
-    int arg_param_index = P->PC->IModel_methods[m].length_arg_param_index;
-
-    const context* C = P;
-    const_cast<context*>(C)->set_parameter_value(arg_param_index, l );
-
-    return P->evaluate( P->PC->IModel_methods[m].length_p ).as_log_double();
+    return P->evaluate( DPC().sequence_length_pr_indices[n] ).as_log_double();
 }
 
 int data_partition::seqlength(int n) const
@@ -406,6 +397,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
      conditional_likelihoods_for_branch(2*p->t().n_branches()),
      leaf_sequence_indices(p->t().n_leaves(),-1),
      sequence_length_indices(AA.n_sequences(),-1),
+     sequence_length_pr_indices(AA.n_sequences(),-1),
      transition_p_method_indices(p->t().n_branches(),-1),
      seqs(AA.seqs()),
      sequences( alignment_letters(AA, p->t().n_leaves()) ),
@@ -514,7 +506,14 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	expression_ref hmms = (identifier("branch_hmms"), model, D, B);
 	hmms = p->get_expression( p->add_compute_expression(hmms) );
 
-	// branch HMMs
+	for(int n=0;n<sequence_length_pr_indices.size();n++)
+	{
+	    expression_ref l = p->get_expression(sequence_length_indices[n]);
+	    expression_ref lengthp = (identifier("snd"),model);
+	    sequence_length_pr_indices[n] = p->add_compute_expression( (lengthp,l) );
+	}
+
+        // branch HMMs
 	for(int b=0;b<B;b++)
 	{
 	    // (fst IModels.models!imodel_index) D b heat training
@@ -1105,8 +1104,8 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
 					   const vector<int>& i_mapping,
 					   const vector<int>& scale_mapping)
     :smodel_for_partition(s_mapping),
-     IModel_methods(IMs.size()),
      imodel_for_partition(i_mapping),
+     n_imodels(max(i_mapping)+1),
      scale_for_partition(scale_mapping),
      n_scales(max(scale_mapping)+1),
      TC(star_tree(t.get_leaf_labels())),
@@ -1285,24 +1284,6 @@ Parameters::Parameters(const module_loader& L,
 	    expression_ref S = get_expression(PC->SModels[m].main);
 	    PC->branch_transition_p_indices(s,m) = add_compute_expression((identifier("transition_p_index"), my_tree(), S, branch_cat_list, DL));
 	}
-    }
-
-    // Register compute expressions for branch HMMs and sequence length distributions
-    for(int i=0;i<n_imodels();i++) 
-    {
-	imodel_methods& I = PC->IModel_methods[i];
-	string prefix = "*I" + convertToString(i+1);
-
-	I.length_arg_param_index = add_parameter(prefix+".lengthpArg", 1);
-	expression_ref lengthp_arg = parameter(prefix+".lengthpArg");
-
-	expression_ref model = (identifier("!"),identifier("IModels.models"),i);
-	model = (model, parameter("Heat.beta"), parameter("*IModels.training"));
-
-	expression_ref lengthp = (identifier("snd"),model);
-	I.length_p = add_compute_expression( (lengthp, lengthp_arg) );
-
-	// Note that branch_HMM's are per scale and per-imodel.  Construct them in the data_partition.
     }
 
     // create data partitions
