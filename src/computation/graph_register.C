@@ -19,6 +19,7 @@ int total_get_reg_value_non_const = 0;
 int total_get_reg_value_non_const_with_result = 0;
 int total_context_pr = 0;
 int total_tokens = 0;
+int max_version = 0;
 
 /*
  * Goal: Share computation of WHNF structures between contexts, even when those
@@ -775,6 +776,7 @@ void reg_heap::mark_completely_dirty(int t)
     int& version = tokens[t].version;
     for(int t2:tokens[t].children)
 	version = std::max(version, tokens[t2].version+1);
+    max_version = std::max(version, max_version);
 }
 
 bool reg_heap::is_dirty(int t) const

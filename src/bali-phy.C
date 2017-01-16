@@ -224,6 +224,7 @@ void show_ending_messages(bool show_only)
 	extern int total_create_context1;
 	extern int total_create_context2;
 	extern int total_tokens;
+	extern int max_version;
 	extern int total_reroot;
 	extern int total_reroot_one;
 	extern int total_set_reg_value;
@@ -269,6 +270,7 @@ void show_ending_messages(bool show_only)
 	    cout<<"  total steps scanned          = "<<total_steps_scanned<<endl;
 	    cout<<"  total results scanned        = "<<total_results_scanned<<endl;
 	    cout<<"total tokens                   = "<<total_tokens<<endl;
+	    cout<<"maximum version                = "<<max_version<<endl;
 	    cout<<"total tokens destroyed         = "<<total_destroy_token<<endl;
 	    cout<<"  total knuckles destroyed     = "<<total_release_knuckle<<endl;
 	    cout<<"total create context           = "<<total_create_context1+total_create_context2<<endl;
