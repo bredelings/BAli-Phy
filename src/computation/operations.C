@@ -128,7 +128,7 @@ closure case_op(OperationArgs& Args)
 {
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
-    const closure obj = Args.evaluate()_slot_to_closure(0);
+    const closure obj = Args.evaluate_slot_to_closure(0);
 
     // Therefore, we must compute this *after* we do the computation above, since
     // we're going to hold on to it.  Otherwise the held reference would become
