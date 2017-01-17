@@ -60,152 +60,152 @@ using boost::dynamic_pointer_cast;
 
 int get_n_lambdas(const expression_ref& E)
 {
-  expression_ref E2 = E;
-  int n = 0;
-  while(E2.head().type() == lambda2_type)
-  {
-    E2 = E2.sub()[0];
-    n++;
-  }
-  return n;
+    expression_ref E2 = E;
+    int n = 0;
+    while(E2.head().type() == lambda2_type)
+    {
+	E2 = E2.sub()[0];
+	n++;
+    }
+    return n;
 }
 
 expression_ref peel_n_lambdas(const expression_ref& E, int n)
 {
-  expression_ref E2 = E;
-  for(int i=0;i<n;i++)
-  {
-    assert(E2.head().type() == lambda2_type);
-    E2 = E2.sub()[0];
-  }
-  return E2;
+    expression_ref E2 = E;
+    for(int i=0;i<n;i++)
+    {
+	assert(E2.head().type() == lambda2_type);
+	E2 = E2.sub()[0];
+    }
+    return E2;
 }
       
 
 closure apply_op(OperationArgs& Args)
 {
-  closure C = Args.evaluate_slot_to_closure(0);
-  int n_args_given = Args.n_args()-1;
+    closure C = Args.evaluate_slot_to_closure(0);
+    int n_args_given = Args.n_args()-1;
 
-  if (not C.exp.head().is_a<lambda2>())
-      throw myexception()<<"Trying to apply non-lambda '"<<C.exp.head()<<"'";
-  int n_args_needed = get_n_lambdas(C.exp);
-  assert(n_args_needed >= 1);
-  assert(n_args_given >= 1);
+    if (not C.exp.head().is_a<lambda2>())
+	throw myexception()<<"Trying to apply non-lambda '"<<C.exp.head()<<"'";
+    int n_args_needed = get_n_lambdas(C.exp);
+    assert(n_args_needed >= 1);
+    assert(n_args_given >= 1);
 
-  int n_args_applied = std::min(n_args_given, n_args_needed);
-  C.exp = peel_n_lambdas(C.exp, n_args_applied);
-  for(int i=0;i<n_args_applied;i++)
-  {
-    int arg = Args.current_closure().lookup_in_env( Args.reference(i+1).as_index_var());
-    C.Env.push_back(arg);
-  }
-
-  // 1. We can apply all the args
-  if (n_args_given <= n_args_needed)
-    return C;
-
-  // 2. We can only apply some of the args
-  else
-  {
-    int new_head_ref = Args.allocate(std::move(C));
-    closure::Env_t Env = {new_head_ref};
-    vector<expression_ref> args = {index_var(n_args_given - n_args_needed)};
-
-    for(int i=n_args_needed;i<n_args_given;i++)
+    int n_args_applied = std::min(n_args_given, n_args_needed);
+    C.exp = peel_n_lambdas(C.exp, n_args_applied);
+    for(int i=0;i<n_args_applied;i++)
     {
-      int arg = Args.current_closure().lookup_in_env( Args.reference(i+1).as_index_var() );
-      Env.push_back(arg);
-
-      args.push_back(index_var(n_args_given - i -1));
+	int arg = Args.current_closure().lookup_in_env( Args.reference(i+1).as_index_var());
+	C.Env.push_back(arg);
     }
-    expression_ref E2 = {Apply(),args};
-    return {E2,Env};
-  }
+
+    // 1. We can apply all the args
+    if (n_args_given <= n_args_needed)
+	return C;
+
+    // 2. We can only apply some of the args
+    else
+    {
+	int new_head_ref = Args.allocate(std::move(C));
+	closure::Env_t Env = {new_head_ref};
+	vector<expression_ref> args = {index_var(n_args_given - n_args_needed)};
+
+	for(int i=n_args_needed;i<n_args_given;i++)
+	{
+	    int arg = Args.current_closure().lookup_in_env( Args.reference(i+1).as_index_var() );
+	    Env.push_back(arg);
+
+	    args.push_back(index_var(n_args_given - i -1));
+	}
+	expression_ref E2 = {Apply(),args};
+	return {E2,Env};
+    }
 }
 
 closure case_op(OperationArgs& Args)
 {
-  // Resizing of the memory can occur here, invalidating previously computed pointers
-  // to closures.  The *index* within the memory shouldn't change, though.
-  const closure& obj = Args.evaluate_slot_to_closure(0);
+    // Resizing of the memory can occur here, invalidating previously computed pointers
+    // to closures.  The *index* within the memory shouldn't change, though.
+    const closure obj = Args.evaluate()_slot_to_closure(0);
 
-  // Therefore, we must compute this *after* we do the computation above, since
-  // we're going to hold on to it.  Otherwise the held reference would become
-  // *invalid* after the call above!
-  const closure& C = Args.current_closure();
+    // Therefore, we must compute this *after* we do the computation above, since
+    // we're going to hold on to it.  Otherwise the held reference would become
+    // *invalid* after the call above!
+    const closure& C = Args.current_closure();
 
-  int L = (Args.n_args() - 1)/2;
+    int L = (Args.n_args() - 1)/2;
 
 #ifndef NDEBUG
-  vector<expression_ref> cases(L);
-  vector<expression_ref> bodies(L);
-  for(int i=0;i<L;i++)
-  {
-    cases[i] = Args.reference(1 + 2*i);
-    bodies[i] = Args.reference(2 + 2*i);
-  }
+    vector<expression_ref> cases(L);
+    vector<expression_ref> bodies(L);
+    for(int i=0;i<L;i++)
+    {
+	cases[i] = Args.reference(1 + 2*i);
+	bodies[i] = Args.reference(2 + 2*i);
+    }
 
-  if (obj.exp.head().is_a<lambda2>())
-    throw myexception()<<"Case argument is a lambda '"<<make_case_expression(obj.exp, cases, bodies)<<"'";
+    if (obj.exp.head().is_a<lambda2>())
+	throw myexception()<<"Case argument is a lambda '"<<make_case_expression(obj.exp, cases, bodies)<<"'";
 #endif
 
-  closure result;
-  result.Env = C.Env;
+    closure result;
+    result.Env = C.Env;
 
-  for(int i=0;i<L and not result;i++)
-  {
-    const expression_ref& this_case = Args.reference(1 + 2*i);
-    const expression_ref& this_body = Args.reference(2 + 2*i);
-
-    // If its _, then match it.
-    if (this_case.head().type() == dummy_type)
+    for(int i=0;i<L and not result;i++)
     {
-      // We standardize to avoid case x of v -> f(v) so that f cannot reference v.
-      assert(is_wildcard(this_case));
-      assert(i == L-1);
+	const expression_ref& this_case = Args.reference(1 + 2*i);
+	const expression_ref& this_body = Args.reference(2 + 2*i);
+
+	// If its _, then match it.
+	if (this_case.head().type() == dummy_type)
+	{
+	    // We standardize to avoid case x of v -> f(v) so that f cannot reference v.
+	    assert(is_wildcard(this_case));
+	    assert(i == L-1);
       
-      result.exp = this_body;
-    }
-    else
-    {
-      // FIXME! Convert every pattern head to an integer...
+	    result.exp = this_body;
+	}
+	else
+	{
+	    // FIXME! Convert every pattern head to an integer...
 
-      // If we are a constructor, then match iff the the head matches.
-      if (obj.exp.head() == this_case.head())
-      {
+	    // If we are a constructor, then match iff the the head matches.
+	    if (obj.exp.head() == this_case.head())
+	    {
 #ifndef NDEBUG
-	if (obj.exp.size())
-	{
-	  // The number of constructor fields is the same the for case pattern and the case object.
-	  assert(obj.exp.size() == obj.exp.head().as_<constructor>().n_args());
-	  // The number of entries in the environment is the same as the number of constructor fields.
-	  assert(obj.exp.size() == obj.Env.size());
-	}
+		if (obj.exp.size())
+		{
+		    // The number of constructor fields is the same the for case pattern and the case object.
+		    assert(obj.exp.size() == obj.exp.head().as_<constructor>().n_args());
+		    // The number of entries in the environment is the same as the number of constructor fields.
+		    assert(obj.exp.size() == obj.Env.size());
+		}
 #endif	
-	result.exp = this_body;
+		result.exp = this_body;
 	
-	for(int j=0;j<obj.exp.size();j++)
-	{
-	  // Don't do a dynamic cast here!
-	  int index = obj.exp.sub()[j].as_index_var();
+		for(int j=0;j<obj.exp.size();j++)
+		{
+		    // Don't do a dynamic cast here!
+		    int index = obj.exp.sub()[j].as_index_var();
 	  
-	  result.Env.push_back( obj.lookup_in_env( index ) );
+		    result.Env.push_back( obj.lookup_in_env( index ) );
+		}
+	    }
 	}
-      }
     }
-  }
 
-  if (not result)
+    if (not result)
 #ifdef NDEBUG
-    throw myexception()<<"Case: object '"<<obj.exp<<"' doesn't match any alternative";
+	throw myexception()<<"Case: object '"<<obj.exp<<"' doesn't match any alternative";
 #else
     throw myexception()<<"Case: object '"<<obj.exp<<"' doesn't match any alternative in '"<<make_case_expression(obj.exp, cases, bodies)<<"'";
 #endif
 
-  result = get_trimmed(result);
+    result = get_trimmed(result);
 
-  return result;
+    return result;
 }
 
 
@@ -235,38 +235,38 @@ closure case_op(OperationArgs& Args)
 
 closure let_op(OperationArgs& Args)
 {
-  reg_heap& M = Args.memory();
+    reg_heap& M = Args.memory();
 
-  const closure& C = Args.current_closure();
+    const closure& C = Args.current_closure();
 
-  const vector<expression_ref>& A = C.exp.sub();
+    const vector<expression_ref>& A = C.exp.sub();
 
-  const expression_ref& T = A[0];
+    const expression_ref& T = A[0];
 
-  int n_bodies = int(A.size())-1;
+    int n_bodies = int(A.size())-1;
 
-  auto local_env = C.Env;
+    auto local_env = C.Env;
 
-  int start = local_env.size();
+    int start = local_env.size();
 
-  for(int i=0;i<n_bodies;i++)
-    local_env.push_back( M.push_temp_head() );
+    for(int i=0;i<n_bodies;i++)
+	local_env.push_back( M.push_temp_head() );
       
-  // Substitute the new heap vars for the dummy vars in expression T and in the bodies
-  for(int i=0;i<n_bodies;i++)
-    M.set_C(local_env[start+i], get_trimmed({A[i+1],local_env}));
+    // Substitute the new heap vars for the dummy vars in expression T and in the bodies
+    for(int i=0;i<n_bodies;i++)
+	M.set_C(local_env[start+i], get_trimmed({A[i+1],local_env}));
 
-  // Remove the new heap vars from the list of temp heads in reverse order.
-  for(int i=0;i<n_bodies; i++)
-    M.pop_temp_head();
+    // Remove the new heap vars from the list of temp heads in reverse order.
+    for(int i=0;i<n_bodies; i++)
+	M.pop_temp_head();
       
-  return get_trimmed({T, local_env});
+    return get_trimmed({T, local_env});
 }
 
 closure modifiable_op(OperationArgs&)
 {
-  // A modifiable has a result that is not computed by reducing an expression.
-  //       The result must be set.  Therefore, complain if the result is missing.
+    // A modifiable has a result that is not computed by reducing an expression.
+    //       The result must be set.  Therefore, complain if the result is missing.
 
-  throw myexception()<<"Evaluating modifiable with no result.";
+    throw myexception()<<"Evaluating modifiable with no result.";
 }
