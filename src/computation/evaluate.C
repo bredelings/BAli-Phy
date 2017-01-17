@@ -368,9 +368,8 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    make_reg_changeable(R);
 		    int r2 = Args.allocate(std::move(value));
 
-		    auto p = (steps[S].used_inputs.size()<=2)
-			?incremental_evaluate_from_call(R,r2)
-			:incremental_evaluate(r2);
+		    auto p = incremental_evaluate_from_call(R,r2);
+
 		    int r3 = p.first;
 		    int value = p.second;
 
