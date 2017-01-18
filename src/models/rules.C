@@ -38,6 +38,7 @@ const vector< vector<vector<string>> > all_default_arguments =
 
     {{"EQU","EM[a]"}, {"equ_model"}},
     {{"JC","RA[a]"}, {"jc_model"}},
+    {{"K80","RA[a]"}, {"k80_model","kappa"}, {"kappa","Double","~logNormal[log[2],0.25]"}, },
     {{"F81"}, {}, {"alphabet","Alphabet"}},
     {{"HKY","EM[a]"}, {"hky_model","kappa"}, {"kappa","Double","~logNormal[log[2],0.25]"}, },
     {{"TN","EM[a]"}, {"tn_model","kappaPur","kappaPyr"}, {"kappaPur","Double","~logNormal[log[2],0.25]"}, {"kappaPyr","Double","~logNormal[log[2],0.25]"}},
