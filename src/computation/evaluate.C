@@ -543,7 +543,6 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
 		    // The old used_input slots are not invalid, which is OK since none of them are changeable.
 		    assert(not has_step(R) );
 		    set_C(R, std::move(value) );
-		    return incremental_evaluate(R);
 		}
 	    }
 	    catch (myexception& e)
