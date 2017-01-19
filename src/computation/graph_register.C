@@ -282,6 +282,8 @@ void reg_heap::register_probability(int r)
 
 int reg_heap::register_probability(closure&& C)
 {
+    assert(not C.exp.head().is_a<expression>());
+
     int r = allocate();
     total_reg_allocations++;
     set_C(r, std::move(C));

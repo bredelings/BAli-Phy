@@ -194,7 +194,6 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
     assert(is_used(R));
 
 #ifndef NDEBUG
-    assert(not access(R).C.exp.head().is_a<expression>());
     if (reg_has_value(R))
     {
 	expression_ref E = access_value_for_reg(R).exp;
@@ -407,7 +406,6 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
     assert(is_used(R));
 
 #ifndef NDEBUG
-    assert(not access(R).C.exp.head().is_a<expression>());
     if (reg_has_value(R))
     {
 	expression_ref E = access_value_for_reg(R).exp;
