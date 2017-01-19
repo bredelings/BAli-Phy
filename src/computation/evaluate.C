@@ -84,6 +84,10 @@ class RegOperationArgs: public OperationArgs
 
 public:
 
+    // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q
+    // and point references to q instead of p.  But then it would not be true that a variable can
+    // only be referenced if the slot that created it is still referenced.
+    
     int allocate_reg()
 	{
 	    int r = OperationArgs::allocate_reg();
