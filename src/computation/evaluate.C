@@ -435,6 +435,8 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
 
     while (1)
     {
+	assert(not has_result(R));
+	assert(not has_step(R));
 	assert(access(R).C.exp);
 
 #ifndef NDEBUG
@@ -448,26 +450,12 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
 	/*---------- Below here, there is no call, and no value. ------------*/
 	if (access(R).C.exp.head().is_index_var())
 	{
-	    assert( not reg_is_changeable(R) );
-
-	    assert( not reg_has_value(R) );
-
-	    assert( not reg_has_call(R) );
-
-	    access(R).type = reg::type_t::index_var;
-
-	    clear_result(R);
-	    int s = step_index_for_reg(R);
-	    if (s > 0)
-		clear_back_edges_for_step(s);
-	    clear_step(R);
+	    // This heap slot will be unreferenced, there's no benefit in setting access(R).type.
+	    // There cannot be any result or step here, so we don't need to unmap them.
 
 	    int index = access(R).C.exp.as_index_var();
 
 	    int R2 = access(R).C.lookup_in_env( index );
-
-	    // Return the end of the index_var chain.
-	    // We used to update the index_var to point to the end of the chain.
 
 	    return incremental_evaluate(R2);
 	}
@@ -528,26 +516,7 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
 		if (changed)
 		    total_changeable_reductions++;
 
-		// If the reduction doesn't depend on modifiable, then replace E with the value.
-		if (not changed)
-		{
-		    // The old used_input slots are not invalid, which is OK since none of them are changeable.
-		    assert(not has_step(R) );
-		    set_C(R, std::move(value) );
-		}
-		// Otherwise, set the reduction value.
-		else if (value.exp.head().type() == index_var_type)
-		{
-		    int r2 = value.lookup_in_env( value.exp.as_index_var() );
-
-		    return incremental_evaluate(r2);
-		}
-		else
-		{
-		    // The old used_input slots are not invalid, which is OK since none of them are changeable.
-		    assert(not has_step(R) );
-		    set_C(R, std::move(value) );
-		}
+		set_C(R, std::move(value) );
 	    }
 	    catch (myexception& e)
 	    {
