@@ -355,9 +355,8 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
 		else
 		{
 		    make_reg_changeable(R);
-		    int r2 = Args.allocate(std::move(value));
 
-		    auto p = incremental_evaluate_from_call(R,r2);
+		    auto p = incremental_evaluate_from_call(R,value);
 
 		    int r3 = p.first;
 		    int value = p.second;
@@ -389,13 +388,17 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
     std::abort();
 }
 
-std::pair<int,int> reg_heap::incremental_evaluate_from_call(int P, int R)
+std::pair<int,int> reg_heap::incremental_evaluate_from_call(int P, closure& value)
 {
+    int R = push_temp_head();
     stack.push_back(R);
-    inc_heads(R);
+
+    set_C(R, std::move(value));
     auto result = incremental_evaluate_from_call_(P,R);
-    dec_heads(R);
+
     stack.pop_back();
+    pop_temp_head();
+
     return result;
 }
 
@@ -441,6 +444,8 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
 
 	    int R2 = access(R).C.lookup_in_env( index );
 
+	    // Although we are depending on things, we do NOT depend on R2 here, because we are going
+	    // to "call" it, instead of "using" it.
 	    return incremental_evaluate(R2);
 	}
 
