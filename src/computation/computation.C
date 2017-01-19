@@ -75,22 +75,9 @@ const expression_ref& OperationArgs::evaluate_(int slot)
 
 int OperationArgs::allocate(closure&& C)
 {
-    if (C.exp.head().type() == index_var_type)
-    {
-	int index = C.exp.as_index_var();
-
-	int r = C.lookup_in_env( index );
-    
-	assert(M.is_used(r));
-
-	return r;
-    }
-    else
-    {
-	int r = allocate_reg();
-	M.set_C(r, std::move(C));
-	return r;
-    }
+    int r = allocate_reg();
+    M.set_C(r, std::move(C));
+    return r;
 }
 
 int OperationArgs::allocate_reg()

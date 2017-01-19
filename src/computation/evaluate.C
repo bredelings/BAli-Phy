@@ -353,20 +353,6 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    assert(step_for_reg(R).used_inputs.empty());
 		    set_C(R, std::move(value) );
 		}
-		// Otherwise, set the reduction value.
-		else if (value.exp.head().type() == index_var_type)
-		{
-		    make_reg_changeable(R);
-		    int r2 = value.lookup_in_env( value.exp.as_index_var() );
-
-		    auto p = incremental_evaluate(r2);
-		    int r3 = p.first;
-		    int value = p.second;
-
-		    set_call(R, r3);
-		    set_result_value_for_reg(R);
-		    return {R, value};
-		}
 		else
 		{
 		    make_reg_changeable(R);
@@ -433,6 +419,8 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
 	assert(not reg_has_value(R));
 #endif
 
+    assert(access(R).type == reg::type_t::unknown);
+
     while (1)
     {
 	assert(not has_result(R));
@@ -443,9 +431,7 @@ std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
 	//    std::cerr<<"   statement: "<<R<<":   "<<access(R).E.print()<<std::endl;
 #endif
 
-	reg::type_t reg_type = access(R).type;
-
-	assert(reg_type == reg::type_t::unknown);
+	assert(access(R).type == reg::type_t::unknown);
 
 	/*---------- Below here, there is no call, and no value. ------------*/
 	if (access(R).C.exp.head().is_index_var())
