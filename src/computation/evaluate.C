@@ -357,7 +357,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		{
 		    make_reg_changeable(R);
 
-		    auto p = incremental_evaluate_from_call(R,value);
+		    auto p = incremental_evaluate_from_call(S,value);
 
 		    int r3 = p.first;
 		    int value = p.second;
@@ -389,7 +389,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
     std::abort();
 }
 
-pair<int,int> reg_heap::incremental_evaluate_from_call(int P, closure& value)
+pair<int,int> reg_heap::incremental_evaluate_from_call(int S, closure& value)
 {
     pair<int,int> result;
 
@@ -398,7 +398,7 @@ pair<int,int> reg_heap::incremental_evaluate_from_call(int P, closure& value)
 
     set_C(R, std::move(value));
 
-    incremental_evaluate_from_call_(P,R);
+    incremental_evaluate_from_call_(S,R);
 
     if (access(R).C.exp.head().is_index_var())
     {
@@ -422,7 +422,7 @@ pair<int,int> reg_heap::incremental_evaluate_from_call(int P, closure& value)
     return result;
 }
 
-void reg_heap::incremental_evaluate_from_call_(int P, int R)
+void reg_heap::incremental_evaluate_from_call_(int S, int R)
 {
     assert(is_completely_dirty(root_token));
     assert(is_valid_address(R));
@@ -433,8 +433,7 @@ void reg_heap::incremental_evaluate_from_call_(int P, int R)
     assert(not has_result(R));
     assert(not has_step(R));
 
-    assert(has_step(P));
-    int S = step_index_for_reg(P);
+    assert(S > 0);
 
     while (not access(R).C.exp.head().is_index_var() and not is_WHNF(access(R).C.exp))
     {
