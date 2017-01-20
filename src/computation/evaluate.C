@@ -380,6 +380,7 @@ pair<int,int> reg_heap::incremental_evaluate_from_call(int S, closure& value)
     pair<int,int> result;
 
     int R = push_temp_head();
+    mark_reg_created_by_step(R,S);
     stack.push_back(R);
 
     set_C(R, std::move(value));
