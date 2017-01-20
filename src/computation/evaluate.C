@@ -391,11 +391,30 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 
 pair<int,int> reg_heap::incremental_evaluate_from_call(int P, closure& value)
 {
+    pair<int,int> result;
+
     int R = push_temp_head();
     stack.push_back(R);
 
     set_C(R, std::move(value));
-    auto result = incremental_evaluate_from_call_(P,R);
+
+    incremental_evaluate_from_call_(P,R);
+
+    if (access(R).C.exp.head().is_index_var())
+    {
+	int index = access(R).C.exp.as_index_var();
+	
+	int R2 = access(R).C.lookup_in_env( index );
+
+	// Although we are depending on things, we do NOT depend on R2 here, because we are going
+	// to "call" it, instead of "using" it.
+	result = incremental_evaluate(R2);
+    }
+    else
+    {
+	access(R).type = reg::type_t::constant;
+	result = {R,R};
+    }
 
     stack.pop_back();
     pop_temp_head();
@@ -403,126 +422,73 @@ pair<int,int> reg_heap::incremental_evaluate_from_call(int P, closure& value)
     return result;
 }
 
-std::pair<int,int> reg_heap::incremental_evaluate_from_call_(int P, int R)
+void reg_heap::incremental_evaluate_from_call_(int P, int R)
 {
     assert(is_completely_dirty(root_token));
     assert(is_valid_address(R));
     assert(is_used(R));
 
-#ifndef NDEBUG
-    if (reg_has_value(R))
-    {
-	expression_ref E = access_value_for_reg(R).exp;
-	assert(is_WHNF(E));
-	assert(not E.head().is_a<expression>());
-	assert(not E.is_index_var());
-    }
-    if (access(R).C.exp.is_index_var())
-	assert(not reg_has_value(R));
-#endif
-
+    assert(access(R).C.exp);
     assert(access(R).type == reg::type_t::unknown);
+    assert(not has_result(R));
+    assert(not has_step(R));
 
-    while (1)
+    assert(has_step(P));
+    int S = step_index_for_reg(P);
+
+    while (not access(R).C.exp.head().is_index_var() and not is_WHNF(access(R).C.exp))
     {
+	assert(access(R).type == reg::type_t::unknown);
 	assert(not has_result(R));
 	assert(not has_step(R));
-	assert(access(R).C.exp);
 
 #ifndef NDEBUG
-	//    std::cerr<<"   statement: "<<R<<":   "<<access(R).E.print()<<std::endl;
+	assert(not access(R).C.exp.head().is_a<Trim>());
+	assert(access(R).C.exp.type() != parameter_type);
 #endif
-
-	assert(access(R).type == reg::type_t::unknown);
-
-	/*---------- Below here, there is no call, and no value. ------------*/
-	if (access(R).C.exp.head().is_index_var())
-	{
-	    // This heap slot will be unreferenced, there's no benefit in setting access(R).type.
-	    // There cannot be any result or step here, so we don't need to unmap them.
-
-	    int index = access(R).C.exp.as_index_var();
-
-	    int R2 = access(R).C.lookup_in_env( index );
-
-	    // Although we are depending on things, we do NOT depend on R2 here, because we are going
-	    // to "call" it, instead of "using" it.
-	    return incremental_evaluate(R2);
-	}
-
-	// Check for WHNF *OR* heap variables
-	else if (is_WHNF(access(R).C.exp))
-	{
-	    access(R).type = reg::type_t::constant;
-	    return {R,R};
-	}
-
-#ifndef NDEBUG
-	else if (access(R).C.exp.head().is_a<Trim>())
-	    std::abort();
-	else if (access(R).C.exp.type() == parameter_type)
-	    std::abort();
-#endif
-
-	// 3. Reduction: Operation (includes @, case, +, etc.)
-	else
-	{
-	    // We keep the (same) computation here, until we prove that we don't need one.
-	    // We don't need one if we evaluate to WHNF, and then we remove it.
-	    assert(has_step(P));
-	    int S = step_index_for_reg(P);
-
-	    // Incrementing the ref count wastes time, but avoids a crash.
-	    auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
-
-	    // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
-	    // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.
 
 #ifdef DEBUG_MACHINE
-	    string SS = "";
-	    SS = compact_graph_expression(*this, R, get_identifiers()).print();
-	    string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
-					  get_identifiers()).print();
-	    if (log_verbose)
-		dot_graph_for_token(*this, root_token);
+	string SS = "";
+	SS = compact_graph_expression(*this, R, get_identifiers()).print();
+	string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
+				      get_identifiers()).print();
+	if (log_verbose)
+	    dot_graph_for_token(*this, root_token);
 #endif
 
-	    try
-	    {
-		RegOperationArgs Args(R, S, *this);
+	try
+	{
+	    RegOperationArgs Args(R, S, *this);
 
-		int n_used_inputs1 = steps[S].used_inputs.size();
+	    int n_used_inputs1 = steps[S].used_inputs.size();
 
-		closure value = (*O)(Args);
-		int n_used_inputs2 = steps[S].used_inputs.size();
-		bool changed = n_used_inputs2 > n_used_inputs1;
+	    auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
+	    closure value = (*O)(Args);
+	    int n_used_inputs2 = steps[S].used_inputs.size();
+	    bool changed = n_used_inputs2 > n_used_inputs1;
 	
-		total_reductions++;
-		if (changed)
-		    total_changeable_reductions++;
+	    total_reductions++;
+	    if (changed)
+		total_changeable_reductions++;
 
-		set_C(R, std::move(value) );
-	    }
-	    catch (myexception& e)
-	    {
-		throw_reg_exception(*this, root_token, R, e);
-	    }
-	    catch (const std::exception& ee)
-	    {
-		myexception e;
-		e<<ee.what();
-		throw_reg_exception(*this, root_token, R, e);
-	    }
+	    set_C(R, std::move(value) );
+	}
+	catch (myexception& e)
+	{
+	    throw_reg_exception(*this, root_token, R, e);
+	}
+	catch (const std::exception& ee)
+	{
+	    myexception e;
+	    e<<ee.what();
+	    throw_reg_exception(*this, root_token, R, e);
+	}
 
 #ifdef DEBUG_MACHINE
 	    //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
 	    std::cerr<<"   + Executing statement {"<<O<<"}:  "<<SS<<"\n\n";
 #endif
-	}
     }
-
-    std::cerr<<"incremental_evaluate: unreachable?";
-    std::abort();
 }
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).

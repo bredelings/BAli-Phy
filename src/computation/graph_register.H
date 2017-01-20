@@ -496,7 +496,7 @@ private:
     std::pair<int,int> incremental_evaluate_(int R);
     int incremental_evaluate_unchangeable_(int R);
     std::pair<int,int> incremental_evaluate_from_call(int P, closure&);
-    std::pair<int,int> incremental_evaluate_from_call_(int P, int R);
+    void incremental_evaluate_from_call_(int P, int R);
 
 public:
   
