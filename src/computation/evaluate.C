@@ -7,6 +7,7 @@ using std::string;
 using std::vector;
 using std::map;
 using std::set;
+using std::pair;
 
 #include "operations.H"
 #include "computation.H"
@@ -156,7 +157,7 @@ public:
  */
 
 
-std::pair<int,int> reg_heap::incremental_evaluate(int R)
+pair<int,int> reg_heap::incremental_evaluate(int R)
 {
     stack.push_back(R);
     inc_heads(R);
@@ -187,7 +188,7 @@ int reg_heap::incremental_evaluate_unchangeable(int R)
 
 /// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
-std::pair<int,int> reg_heap::incremental_evaluate_(int R)
+pair<int,int> reg_heap::incremental_evaluate_(int R)
 {
     assert(is_completely_dirty(root_token));
     assert(is_valid_address(R));
@@ -388,7 +389,7 @@ std::pair<int,int> reg_heap::incremental_evaluate_(int R)
     std::abort();
 }
 
-std::pair<int,int> reg_heap::incremental_evaluate_from_call(int P, closure& value)
+pair<int,int> reg_heap::incremental_evaluate_from_call(int P, closure& value)
 {
     int R = push_temp_head();
     stack.push_back(R);
