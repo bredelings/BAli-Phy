@@ -321,24 +321,10 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		add_shared_step(R);
 	    int S = step_index_for_reg(R);
 
-	    // Incrementing the ref count wastes time, but avoids a crash.
-	    auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
-
-	    // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
-	    // Therefore, we cannot do "assert(not result_for_reg(t,R).changeable);" here.
-
-#ifdef DEBUG_MACHINE
-	    string SS = "";
-	    SS = compact_graph_expression(*this, R, get_identifiers()).print();
-	    string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
-					  get_identifiers()).print();
-	    if (log_verbose)
-		dot_graph_for_token(*this, root_token);
-#endif
-
 	    try
 	    {
 		RegOperationArgs Args(R, S, *this);
+		auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
 		closure value = (*O)(Args);
 		total_reductions++;
 		if (not steps[S].used_inputs.empty())
@@ -444,15 +430,6 @@ void reg_heap::incremental_evaluate_from_call_(int S, int R)
 #ifndef NDEBUG
 	assert(not access(R).C.exp.head().is_a<Trim>());
 	assert(access(R).C.exp.type() != parameter_type);
-#endif
-
-#ifdef DEBUG_MACHINE
-	string SS = "";
-	SS = compact_graph_expression(*this, R, get_identifiers()).print();
-	string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
-				      get_identifiers()).print();
-	if (log_verbose)
-	    dot_graph_for_token(*this, root_token);
 #endif
 
 	try
