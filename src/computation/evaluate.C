@@ -343,7 +343,25 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		{
 		    make_reg_changeable(R);
 
-		    auto p = incremental_evaluate_from_call(S,value);
+		    incremental_evaluate_from_call(S,value);
+
+		    pair<int,int> p;
+		    if (closure_stack.back().exp.head().is_index_var())
+		    {
+			int index = closure_stack.back().exp.as_index_var();
+			int r2 = closure_stack.back().lookup_in_env( index );
+			p = incremental_evaluate(r2);
+		    }
+		    else
+		    {
+			int r2 = allocate();
+			mark_reg_created_by_step(r2,S);
+			total_reg_allocations++;
+			set_C(r2, std::move(closure_stack.back()));
+			access(r2).type == reg::type_t::constant;
+			p = {r2,r2};
+		    }
+		    closure_stack.pop_back();
 
 		    int r3 = p.first;
 		    int value = p.second;
@@ -370,10 +388,8 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
     std::abort();
 }
 
-pair<int,int> reg_heap::incremental_evaluate_from_call(int S, closure& value)
+void reg_heap::incremental_evaluate_from_call(int S, closure& value)
 {
-    pair<int,int> result;
-
     int R = push_temp_head();
     mark_reg_created_by_step(R,S);
     stack.push_back(R);
@@ -382,26 +398,10 @@ pair<int,int> reg_heap::incremental_evaluate_from_call(int S, closure& value)
 
     incremental_evaluate_from_call_(S,R);
 
-    if (access(R).C.exp.head().is_index_var())
-    {
-	int index = access(R).C.exp.as_index_var();
-	
-	int R2 = access(R).C.lookup_in_env( index );
-
-	// Although we are depending on things, we do NOT depend on R2 here, because we are going
-	// to "call" it, instead of "using" it.
-	result = incremental_evaluate(R2);
-    }
-    else
-    {
-	access(R).type = reg::type_t::constant;
-	result = {R,R};
-    }
+    closure_stack.push_back( access(R).C );
 
     stack.pop_back();
     pop_temp_head();
-
-    return result;
 }
 
 void reg_heap::incremental_evaluate_from_call_(int S, int R)
