@@ -165,7 +165,6 @@ void reg_heap::trace(vector<int>& remap)
     vector<int>& roots = get_scratch_list();
     get_roots(roots);
 
-
     // 3. Mark all of these regs used
     for(int reg:roots)
 	mark_reg(reg);
@@ -395,6 +394,14 @@ void reg_heap::trace_and_reclaim_unreachable()
     // remap closures not to point through index_vars
     for(reg& R: *this)
 	for(int& r2: R.C.Env)
+	{
+	    assert(is_used(r2));
+	    r2 = remap[r2];
+	    assert(is_used(r2));
+	}
+
+    for(auto& C: closure_stack)
+	for(int& r2: C.Env)
 	{
 	    assert(is_used(r2));
 	    r2 = remap[r2];

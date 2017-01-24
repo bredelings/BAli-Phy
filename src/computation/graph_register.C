@@ -843,6 +843,11 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
     insert_at_end(scan, probability_heads); // yes
     insert_at_end(scan, random_modifiables_); // yes
     insert_at_end(scan, transition_kernels_); // yes
+
+    for(const auto& C: closure_stack)
+	for(int r: C.Env)
+	    scan.push_back(r);
+
     for(int j=0;j<parameters.size();j++) // yes
 	scan.push_back(parameters[j].second);
     if (keep_identifiers)
