@@ -41,11 +41,9 @@ void throw_reg_exception(reg_heap& M, int t, int R, myexception& e)
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
 class RegOperationArgs: public OperationArgs
 {
-    const int R;
-
     const int S;
 
-    const closure& current_closure() const {return memory()[R].C;}
+    const closure& current_closure() const {return memory().closure_stack.back();}
 
     bool evaluate_changeables() const {return true;}
 
@@ -98,8 +96,8 @@ public:
   
     RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-    RegOperationArgs(int r, int s, reg_heap& m)
-	:OperationArgs(m), R(r), S(s)
+    RegOperationArgs(int s, reg_heap& m)
+	:OperationArgs(m), S(s)
 	{ }
 };
 
@@ -323,9 +321,11 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 
 	    try
 	    {
-		RegOperationArgs Args(R, S, *this);
+		closure_stack.push_back (access(R).C );
+		RegOperationArgs Args(S, *this);
 		auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
 		closure value = (*O)(Args);
+		closure_stack.pop_back();
 		total_reductions++;
 		if (not steps[S].used_inputs.empty())
 		    total_changeable_reductions++;
@@ -358,7 +358,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 			mark_reg_created_by_step(r2,S);
 			total_reg_allocations++;
 			set_C(r2, std::move(closure_stack.back()));
-			access(r2).type == reg::type_t::constant;
+			access(r2).type = reg::type_t::constant;
 			p = {r2,r2};
 		    }
 		    closure_stack.pop_back();
@@ -430,12 +430,13 @@ void reg_heap::incremental_evaluate_from_call_(int S, int R)
 
 	try
 	{
-	    RegOperationArgs Args(R, S, *this);
-
+	    closure_stack.push_back (access(R).C );
+	    RegOperationArgs Args(S, *this);
 	    int n_used_inputs1 = steps[S].used_inputs.size();
 
 	    auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
 	    closure value = (*O)(Args);
+	    closure_stack.pop_back();
 	    int n_used_inputs2 = steps[S].used_inputs.size();
 	    bool changed = n_used_inputs2 > n_used_inputs1;
 	
