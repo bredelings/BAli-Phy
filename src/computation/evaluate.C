@@ -363,11 +363,6 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		e<<ee.what();
 		throw_reg_exception(*this, root_token, R, e);
 	    }
-
-#ifdef DEBUG_MACHINE
-	    //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
-	    std::cerr<<"   + Executing statement:  "<<SS<<"\n\n";
-#endif
 	}
     }
 
