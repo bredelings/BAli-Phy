@@ -1028,6 +1028,14 @@ void reg_heap::check_used_regs_in_token(int t) const
 	if (is_root_token(t)) assert(p.second != -1);
 	// No results for constant regs
 	assert(access(r).type != reg::type_t::constant);
+	int rc = p.second;
+	if (rc > 0)
+	{
+	    assert(not steps.is_free(results[rc].source_step));
+	    int call = results[rc].call_edge.first;
+	    if (call > 0)
+		assert(not results.is_free(call));
+	}
     }
     for(auto p: tokens[t].delta_step())
     {
@@ -1127,6 +1135,15 @@ void reg_heap::check_used_regs() const
     for(int t=0; t< tokens.size(); t++)
 	if (token_is_used(t))
 	    check_used_regs_in_token(t);
+
+    // Check results that are not mapped
+    for(const auto& result: results)
+    {
+	assert(not steps.is_free(result.source_step));
+	int call = result.call_edge.first;
+	if (call > 0)
+	    assert(not results.is_free(call));
+    }
 
     for(auto c: prog_temp)
 	assert(not c);
