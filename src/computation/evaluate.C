@@ -460,11 +460,6 @@ void reg_heap::incremental_evaluate_from_call_(int S, int R)
 	    e<<ee.what();
 	    throw_reg_exception(*this, root_token, R, e);
 	}
-
-#ifdef DEBUG_MACHINE
-	    //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
-	    std::cerr<<"   + Executing statement:  "<<SS<<"\n\n";
-#endif
     }
 }
 
