@@ -351,6 +351,7 @@ void reg_heap::trace_and_reclaim_unreachable()
     // unmap all the unused results
     for(int t=0; t < get_n_tokens(); t++)
 	if (token_is_used(t))
+	{
 	    if (is_root_token(t))
 	    {
 		unmap_unused(prog_steps, steps, *this);
@@ -361,6 +362,7 @@ void reg_heap::trace_and_reclaim_unreachable()
 		unmap_unused(tokens[t].vm_step, steps, *this);
 		unmap_unused(tokens[t].vm_result, results, *this);
 	    }
+	}
 
     // remove all back-edges
     for(auto i = steps.begin();i != steps.end(); i++)
