@@ -23,10 +23,23 @@ expression_ref untranslate_vars(const expression_ref& E, const map<string, int>&
 expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& ids);
 map<int,string> get_constants(const reg_heap& C, int t);
 
+void throw_reg_exception(reg_heap& M, int t, const closure& C, myexception& e)
+{
+    dot_graph_for_token(M, t);
+    string SSS = unlet(untranslate_vars(
+			   untranslate_vars(deindexify(trim_unnormalize(C)), M.get_identifiers()),
+			   get_constants(M,t)
+			   )
+	).print();
+    std::ostringstream o;
+    o<<"evaluating: "<<SSS<<"\n\n";
+    e.prepend(o.str());
+    throw e;
+}
+
 void throw_reg_exception(reg_heap& M, int t, int R, myexception& e)
 {
     dot_graph_for_token(M, t);
-    string SS  = compact_graph_expression(M, R, M.get_identifiers()).print();
     string SSS = unlet(untranslate_vars(
 			   untranslate_vars(deindexify(trim_unnormalize(M.access(R).C)), M.get_identifiers()),
 			   get_constants(M,t)
@@ -390,53 +403,30 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 
 void reg_heap::incremental_evaluate_from_call(int S, closure& value)
 {
-    int R = push_temp_head();
-    mark_reg_created_by_step(R,S);
-    stack.push_back(R);
+    closure_stack.push_back( value );
 
-    set_C(R, std::move(value));
-
-    incremental_evaluate_from_call_(S,R);
-
-    closure_stack.push_back( access(R).C );
-
-    stack.pop_back();
-    pop_temp_head();
+    incremental_evaluate_from_call_(S);
 }
 
-void reg_heap::incremental_evaluate_from_call_(int S, int R)
+void reg_heap::incremental_evaluate_from_call_(int S)
 {
     assert(is_completely_dirty(root_token));
-    assert(is_valid_address(R));
-    assert(is_used(R));
-
-    assert(access(R).C.exp);
-    assert(access(R).type == reg::type_t::unknown);
-    assert(not has_result(R));
-    assert(not has_step(R));
 
     assert(S > 0);
 
-    while (not access(R).C.exp.head().is_index_var() and not is_WHNF(access(R).C.exp))
+    while (not closure_stack.back().exp.head().is_index_var() and not is_WHNF(closure_stack.back().exp))
     {
-	assert(access(R).type == reg::type_t::unknown);
-	assert(not has_result(R));
-	assert(not has_step(R));
-
 #ifndef NDEBUG
-	assert(not access(R).C.exp.head().is_a<Trim>());
-	assert(access(R).C.exp.type() != parameter_type);
+	assert(not closure_stack.back().exp.head().is_a<Trim>());
+	assert(closure_stack.back().exp.type() != parameter_type);
 #endif
 
 	try
 	{
-	    closure_stack.push_back (access(R).C );
 	    RegOperationArgs Args(S, *this);
 	    int n_used_inputs1 = steps[S].used_inputs.size();
-
-	    auto O = access(R).C.exp.head().assert_is_a<Operation>()->op;
+	    auto O = closure_stack.back().exp.head().assert_is_a<Operation>()->op;
 	    closure value = (*O)(Args);
-	    closure_stack.pop_back();
 	    int n_used_inputs2 = steps[S].used_inputs.size();
 	    bool changed = n_used_inputs2 > n_used_inputs1;
 	
@@ -444,17 +434,17 @@ void reg_heap::incremental_evaluate_from_call_(int S, int R)
 	    if (changed)
 		total_changeable_reductions++;
 
-	    set_C(R, std::move(value) );
+	    closure_stack.back() = value;
 	}
 	catch (myexception& e)
 	{
-	    throw_reg_exception(*this, root_token, R, e);
+	    throw_reg_exception(*this, root_token, closure_stack.back(), e);
 	}
 	catch (const std::exception& ee)
 	{
 	    myexception e;
 	    e<<ee.what();
-	    throw_reg_exception(*this, root_token, R, e);
+	    throw_reg_exception(*this, root_token, closure_stack.back(), e);
 	}
     }
 }
