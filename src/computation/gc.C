@@ -29,7 +29,7 @@ void reg_heap::collect_garbage()
     trace_and_reclaim_unreachable();
 
 #ifdef DEBUG_MACHINE
-    cerr<<"Regs: "<<n_used()<<"/"<<size()<<endl;
+    std::cerr<<"Regs: "<<n_used()<<"/"<<size()<<std::endl;
     check_used_regs();
 #endif
 }

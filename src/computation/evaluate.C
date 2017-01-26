@@ -366,7 +366,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 
 #ifdef DEBUG_MACHINE
 	    //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
-	    std::cerr<<"   + Executing statement {"<<O<<"}:  "<<SS<<"\n\n";
+	    std::cerr<<"   + Executing statement:  "<<SS<<"\n\n";
 #endif
 	}
     }
@@ -463,7 +463,7 @@ void reg_heap::incremental_evaluate_from_call_(int S, int R)
 
 #ifdef DEBUG_MACHINE
 	    //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
-	    std::cerr<<"   + Executing statement {"<<O<<"}:  "<<SS<<"\n\n";
+	    std::cerr<<"   + Executing statement:  "<<SS<<"\n\n";
 #endif
     }
 }
