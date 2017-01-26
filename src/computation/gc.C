@@ -292,19 +292,21 @@ void unmap_unused(mapping& vm, pool<Obj>& Objs, pool<reg>& regs)
     for(int i=0; i < delta.size();)
     {
 	int reg = delta[i].first;
-	int obj = delta[i].second;
+	int& obj = delta[i].second;
 	assert(obj != 0);
-	// if there's a step mapped that is going to be destroyed, then remove the mapping.
-	if (obj > 0 and not Objs.is_marked(obj))
+
+	// We can't have: obj > 0, Obj marked, reg unmarked.  That would be bad.
+
+        // if there's a step mapped that is going to be destroyed, then remove the mapping.
+	if (not regs.is_marked(reg))
+	{
+	    assert(obj <= 0 or not Objs.is_marked(obj));
 	    vm.erase_value_at(i);
-	// if the reg is going to be destroy, and the step is unshared, remove the unsharing mark.
-	else if (obj < 0 and not regs.is_marked(reg))
-	    vm.erase_value_at(i);
+	}
 	else
 	{
-	    // if there's a step mapped and its not going to be destroyed, then we should know that the reg is used.
-	    if (obj > 0) assert(regs.is_marked(reg));
-	    // advance to the next modified reg, if the previous one 
+	    if (obj > 0 and not Objs.is_marked(obj))
+		obj = -1;
 	    i++;
 	}
     }
