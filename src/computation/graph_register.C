@@ -1048,7 +1048,7 @@ void reg_heap::check_used_regs_in_token(int t) const
 	assert((prog_temp[r]&2) == 0);
 	prog_temp[r] |= 2;
 	if (is_root_token(t)) assert(p.second != -1);
-	// If the step is set, the result better be set as well.
+	// If the step is unshared, the result must be unshared as well: this allows us to just walk unshared results.
 	assert(prog_temp[r] == 3);
 	// No steps for constant regs
 	assert(access(r).type != reg::type_t::constant);
