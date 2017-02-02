@@ -834,20 +834,6 @@ namespace substitution {
     }
 
     Likelihood_Cache_Branch*
-    peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
-			 const Likelihood_Cache_Branch* LCB2,
-			 const pairwise_alignment_t& A0,
-			 const pairwise_alignment_t& A1,
-			 const vector<Matrix>& transition_P,
-			 const Matrix& F)
-    {
-	auto index = alignment_index2(A0,A1);
-	auto LCB3 = peel_internal_branch(LCB1, LCB2, *index, transition_P, F);
-	delete index;
-	return LCB3;
-    }
-
-    Likelihood_Cache_Branch*
     peel_internal_branch_F81(const Likelihood_Cache_Branch* LCB1,
 			     const Likelihood_Cache_Branch* LCB2,
 			     const pairwise_alignment_t& A0,

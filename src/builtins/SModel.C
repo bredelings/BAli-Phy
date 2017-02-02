@@ -987,14 +987,6 @@ namespace substitution {
 			 const matrix<int>& index,
 			 const vector<Matrix>& transition_P,
 			 const Matrix& F);
-
-    Likelihood_Cache_Branch*
-    peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
-			 const Likelihood_Cache_Branch* LCB2,
-			 const pairwise_alignment_t& A0,
-			 const pairwise_alignment_t& A1,
-			 const vector<Matrix>& transition_P,
-			 const Matrix& F);
 }
 
 extern "C" closure builtin_function_alignment_index2(OperationArgs& Args)
