@@ -977,6 +977,17 @@ extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
 
 
 namespace substitution {
+    Box<matrix<int>>*
+    alignment_index2(const pairwise_alignment_t&, const pairwise_alignment_t&);
+    
+
+    Likelihood_Cache_Branch*
+    peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
+			 const Likelihood_Cache_Branch* LCB2,
+			 const matrix<int>& index,
+			 const vector<Matrix>& transition_P,
+			 const Matrix& F);
+
     Likelihood_Cache_Branch*
     peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
 			 const Likelihood_Cache_Branch* LCB2,
@@ -986,6 +997,14 @@ namespace substitution {
 			 const Matrix& F);
 }
 
+extern "C" closure builtin_function_alignment_index2(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+
+    return substitution::alignment_index2(arg0.as_<pairwise_alignment_t>(), arg1.as_<pairwise_alignment_t>());
+}
+
 extern "C" closure builtin_function_peel_internal_branch(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
@@ -993,14 +1012,12 @@ extern "C" closure builtin_function_peel_internal_branch(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
-    auto arg5 = Args.evaluate(5);
 
     return substitution::peel_internal_branch(&arg0.as_<Likelihood_Cache_Branch>(),
 					      &arg1.as_<Likelihood_Cache_Branch>(),
-					      arg2.as_<pairwise_alignment_t>(),
-					      arg3.as_<pairwise_alignment_t>(),
-					      arg4.as_<Vector<Matrix>>(),
-					      arg5.as_<Box<Matrix>>());
+					      arg2.as_<Box<matrix<int>>>(),
+					      arg3.as_<Vector<Matrix>>(),
+					      arg4.as_<Box<Matrix>>());
 }
 
 namespace substitution {
