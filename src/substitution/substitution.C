@@ -741,6 +741,8 @@ namespace substitution {
 			 const vector<Matrix>& transition_P,
 			 const Matrix& F)
     {
+	total_peel_internal_branches++;
+
 	const int n_models = transition_P.size();
 	const int n_states = transition_P[0].size1();
 	const int matrix_size = n_models * n_states;
@@ -819,6 +821,16 @@ namespace substitution {
 	return LCB3;
     }
   
+    matrix<int> alignment_index2(const pairwise_alignment_t& A0, const pairwise_alignment_t& A1)
+    {
+	auto a0 = convert_to_bits(A0, 0, 2);
+	auto a1 = convert_to_bits(A1, 1, 2);
+	auto a012 = Glue_A(a0, a1);
+
+	// get the relationships with the sub-alignments for the (two) branches behind b0
+	return get_indices_from_bitpath(a012, {0,1,2});
+    }
+
     Likelihood_Cache_Branch*
     peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
 			 const Likelihood_Cache_Branch* LCB2,
@@ -827,16 +839,7 @@ namespace substitution {
 			 const vector<Matrix>& transition_P,
 			 const Matrix& F)
     {
-	total_peel_internal_branches++;
-
-	auto a0 = convert_to_bits(A0, 0, 2);
-	auto a1 = convert_to_bits(A1, 1, 2);
-	auto a012 = Glue_A(a0, a1);
-
-	// get the relationships with the sub-alignments for the (two) branches behind b0
-	matrix<int> index = get_indices_from_bitpath(a012, {0,1,2});
-
-	/*-------------------- Do the peeling part------------- --------------------*/
+	auto index = alignment_index2(A0,A1);
 	return peel_internal_branch(LCB1, LCB2, index, transition_P, F);
     }
 
