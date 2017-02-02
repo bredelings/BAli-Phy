@@ -734,69 +734,12 @@ namespace substitution {
 	return LCB;
     }
 
-    /// Apply frequencies and collect probability for subA columns that go away on b.back()
-    /// Question: can this routine handle both 
-    /// (i) "going away" in terms of subA indices==-1 on b.back()
-    ///    AND
-    /// (ii) "going away" in terms of the node not being present at b.back().source()?
-    ///
-    /// Answer: Yes, because which columns "go away" is computed and then passed in via \a index.
-    log_double_t collect_vanishing_internal(const Likelihood_Cache_Branch* LCB1,
-					    const Likelihood_Cache_Branch* LCB2,
-					    const matrix<int>& index,
-					    const Matrix& F)
-    {
-	assert(index.size2() == 2);
-
-	// matrix F(m,s) is p(m)*freq(m,l)
-	const int n_models = F.size1();
-	const int n_states = F.size2();
-	const int matrix_size = n_models * n_states;
-
-	log_double_t total = 1;
-	for(int i=0;i<index.size1();i++)
-	{
-	    double p_col = 1;
-
-	    int i0 = index(i,0);
-	    int i1 = index(i,1);
-	    int i2 = index(i,2);
-	    if (i2 >= 0) continue;
-
-	    if (i0 != alphabet::gap) 
-	    {
-		assert(i1 == alphabet::gap);
-		p_col = element_prod_sum(F.begin(), (*LCB1)[i0], matrix_size );
-	    }
-	    else if (i1 != alphabet::gap)
-	    {
-		assert(i0 == alphabet::gap);
-		p_col = element_prod_sum(F.begin(), (*LCB2)[i1], matrix_size );
-	    }
-
-	    // Situation: i0 ==-1 and i1 == -1
-	    // This situation should never come from subA_index_vanishing( ) (e.g. if subA_index_internal)
-	    // These kinds of columns ARE generated in subA_index_none ( ) (e.g. if subA_index_leaf)
-	    //
-	    // Perhaps we should screen them out in subA_index_none( ) and do 
-	    //   std::abort() 
-	    // in this case.
-
-	    // SOME model must be possible
-	    assert(0 <= p_col and p_col <= 1.00000000001);
-
-	    // This does a log( ) operation.
-	    total *= p_col;
-	    //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
-	}
-	return LCB1->other_subst * LCB2->other_subst * total;
-    }
-
     Likelihood_Cache_Branch*
     peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
 			 const Likelihood_Cache_Branch* LCB2,
 			 matrix<int>& index,
-			 const vector<Matrix>& transition_P)
+			 const vector<Matrix>& transition_P,
+			 const Matrix& F)
     {
 	const int n_models = transition_P.size();
 	const int n_states = transition_P[0].size1();
@@ -811,13 +754,36 @@ namespace substitution {
 	Matrix ones(n_models, n_states);
 	element_assign(ones, 1);
     
+	log_double_t total = 1;
 	for(int i=0;i<index.size1();i++) 
 	{
 	    // compute the source distribution from 2 branch distributions
 	    int i0 = index(i,0);
 	    int i1 = index(i,1);
 	    int i2 = index(i,2);
-	    if (i2 < 0) continue;
+
+	    if (i2 < 0)
+	    {
+		double p_col = 1;
+		if (i0 != alphabet::gap) 
+		{
+		    assert(i1 == alphabet::gap);
+		    p_col = element_prod_sum(F.begin(), (*LCB1)[i0], matrix_size );
+		}
+		else if (i1 != alphabet::gap)
+		{
+		    assert(i0 == alphabet::gap);
+		    p_col = element_prod_sum(F.begin(), (*LCB2)[i1], matrix_size );
+		}
+
+		// Situation: i0 ==-1 and i1 == -1 can happen.
+
+		assert(0 <= p_col and p_col <= 1.00000000001);
+
+		// This does a log( ) operation.
+		total *= p_col;
+		continue;
+	    }
 
 	    const double* C = S;
 	    if (i0 != alphabet::gap and i1 != alphabet::gap)
@@ -849,6 +815,7 @@ namespace substitution {
 	    }
 	}
 
+	LCB3->other_subst = LCB1->other_subst * LCB2->other_subst * total;
 	return LCB3;
     }
   
@@ -870,12 +837,7 @@ namespace substitution {
 	matrix<int> index = get_indices_from_bitpath(a012, {0,1,2});
 
 	/*-------------------- Do the peeling part------------- --------------------*/
-	auto LCB3 = peel_internal_branch(LCB1, LCB2, index, transition_P);
-
-	/*-------------------- Do the other_subst collection part -------------------*/
-	LCB3->other_subst = collect_vanishing_internal(LCB1, LCB2, index, F);
-
-	return LCB3;
+	return peel_internal_branch(LCB1, LCB2, index, transition_P, F);
     }
 
     Likelihood_Cache_Branch*
@@ -948,7 +910,7 @@ namespace substitution {
 
 	/*-------------------- Do the other_subst collection part -------------b-------*/
 	matrix<int> index_collect = get_indices_from_bitpath_wo(a012, {0,1}, 1<<2);
-	LCB3->other_subst = collect_vanishing_internal(LCB1, LCB2, index_collect, WF);
+//	LCB3->other_subst = collect_vanishing_internal(LCB1, LCB2, index_collect, WF);
 	return LCB3;
     }
 
