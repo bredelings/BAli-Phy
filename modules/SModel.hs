@@ -26,8 +26,9 @@ builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel"
 builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel";
 builtin peel_leaf_branch 3 "peel_leaf_branch" "SModel";
 builtin alignment_index2 2 "alignment_index2" "SModel";
+builtin alignment_index3 3 "alignment_index3" "SModel";
 builtin peel_internal_branch 5 "peel_internal_branch" "SModel";
-builtin calc_root_probability 7 "calc_root_probability" "SModel";
+builtin calc_root_probability 5 "calc_root_probability" "SModel";
 builtin peel_likelihood_1 3 "peel_likelihood_1" "SModel";
 builtin peel_likelihood_2 6 "peel_likelihood_2" "SModel";
 
@@ -831,5 +832,5 @@ cached_conditional_likelihoods t seqs as alpha ps f = let {lc    = mkArray (2*nu
 
 peel_likelihood t cl as f root = let {branches_in = map (reverseEdge t) (edgesOutOfNode t root);} in
                                  case branches_in of {[b1,b2,b3]->
-                                                      calc_root_probability (cl!b1) (cl!b2) (cl!b3) (as!b1) (as!b2) (as!b3) f};
+                                                      calc_root_probability (cl!b1) (cl!b2) (cl!b3) (alignment_index3 (as!b1) (as!b2) (as!b3)) f};
 }
