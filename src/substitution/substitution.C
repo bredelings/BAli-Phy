@@ -760,6 +760,8 @@ namespace substitution {
 
 	    int i0 = index(i,0);
 	    int i1 = index(i,1);
+	    int i2 = index(i,2);
+	    if (i2 >= 0) continue;
 
 	    if (i0 != alphabet::gap) 
 	    {
@@ -814,6 +816,8 @@ namespace substitution {
 	    // compute the source distribution from 2 branch distributions
 	    int i0 = index(i,0);
 	    int i1 = index(i,1);
+	    int i2 = index(i,2);
+	    if (i2 < 0) continue;
 
 	    const double* C = S;
 	    if (i0 != alphabet::gap and i1 != alphabet::gap)
@@ -830,7 +834,7 @@ namespace substitution {
 	    // Columns like this would not be in subA_index_leaf, but might be in subA_index_internal
 
 	    // propagate from the source distribution
-	    double* R = (*LCB3)[i];            //name the result matrix
+	    double* R = (*LCB3)[i2];            //name the result matrix
 	    for(int m=0;m<n_models;m++) {
 	
 		const Matrix& Q = transition_P[m];
@@ -863,14 +867,13 @@ namespace substitution {
 	auto a012 = Glue_A(a0, a1);
 
 	// get the relationships with the sub-alignments for the (two) branches behind b0
-	matrix<int> index = get_indices_from_bitpath_w(a012, {0,1}, 1<<2);
+	matrix<int> index = get_indices_from_bitpath(a012, {0,1,2});
 
 	/*-------------------- Do the peeling part------------- --------------------*/
 	auto LCB3 = peel_internal_branch(LCB1, LCB2, index, transition_P);
 
 	/*-------------------- Do the other_subst collection part -------------------*/
-	matrix<int> index_collect = get_indices_from_bitpath_wo(a012, {0,1}, 1<<2);
-	LCB3->other_subst = collect_vanishing_internal(LCB1, LCB2, index_collect, F);
+	LCB3->other_subst = collect_vanishing_internal(LCB1, LCB2, index, F);
 
 	return LCB3;
     }
