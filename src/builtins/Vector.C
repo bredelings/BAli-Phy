@@ -9,235 +9,235 @@ using std::vector;
 template<typename T>
 closure VectorSize(OperationArgs& Args)
 {
-  auto v = Args.evaluate(0);
-  return {(int)v.as_<Box<std::vector<T> > >().size()};
+    auto v = Args.evaluate(0);
+    return {(int)v.as_<Box<std::vector<T> > >().size()};
 }
 
 template<typename T>
 closure GetVectorElement(OperationArgs& Args)
 {
-  auto v = Args.evaluate(0);
-  int i = Args.evaluate(1).as_int();
+    auto v = Args.evaluate(0);
+    int i = Args.evaluate(1).as_int();
 
-  const T& t = v.as_<Vector<T>>()[i];
-  return {t};
+    const T& t = v.as_<Vector<T>>()[i];
+    return {t};
 }
 
 extern "C" closure builtin_function_sizeOfVectorUnsigned(OperationArgs& Args)
 {
-  return VectorSize<unsigned>(Args);
+    return VectorSize<unsigned>(Args);
 }
 
 extern "C" closure builtin_function_sizeOfVectorInt(OperationArgs& Args)
 {
-  return VectorSize<int>(Args);
+    return VectorSize<int>(Args);
 }
 
 extern "C" closure builtin_function_sizeOfVectorVectorInt(OperationArgs& Args)
 {
-  return VectorSize<Vector<int>>(Args);
+    return VectorSize<Vector<int>>(Args);
 }
 
 extern "C" closure builtin_function_sizeOfVectorvectorInt(OperationArgs& Args)
 {
-  return VectorSize<vector<int>>(Args);
+    return VectorSize<vector<int>>(Args);
 }
 
 extern "C" closure builtin_function_getVectorIntElement(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  int i = Args.evaluate(1).as_int();
+    auto arg0 = Args.evaluate(0);
+    int i = Args.evaluate(1).as_int();
 
-  return {arg0.as_<Vector<int>>()[i]};
+    return {arg0.as_<Vector<int>>()[i]};
 }
 
 extern "C" closure builtin_function_getVectorVectorIntElement(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  int i = Args.evaluate(1).as_int();
+    auto arg0 = Args.evaluate(0);
+    int i = Args.evaluate(1).as_int();
 
-  return {arg0.as_<Vector<Vector<int>>>()[i]};
+    return {arg0.as_<Vector<Vector<int>>>()[i]};
 }
 
 extern "C" closure builtin_function_getVectorvectorIntElement(OperationArgs& Args)
 {
-  auto arg0 = Args.evaluate(0);
-  int i = Args.evaluate(1).as_int();
+    auto arg0 = Args.evaluate(0);
+    int i = Args.evaluate(1).as_int();
 
-  return {Vector<int>(arg0.as_<Vector<vector<int>>>()[i])};
+    return {Vector<int>(arg0.as_<Vector<vector<int>>>()[i])};
 }
 
 extern "C" closure builtin_function_sizeOfString(OperationArgs& Args)
 {
-  const std::string& s = Args.evaluate(0).as_<String>();
+    const std::string& s = Args.evaluate(0).as_<String>();
   
-  return {(int)s.size()};
+    return {(int)s.size()};
 }
 
 extern "C" closure builtin_function_getStringElement(OperationArgs& Args)
 {
-  const std::string& s = Args.evaluate(0).as_<String>();
-  int i = Args.evaluate(1).as_int();
+    const std::string& s = Args.evaluate(0).as_<String>();
+    int i = Args.evaluate(1).as_int();
   
-  return {s[i]};
+    return {s[i]};
 }
 
 extern "C" closure builtin_function_NewString(OperationArgs& Args)
 {
-  const int& length = Args.evaluate(0).as_int();
+    const int& length = Args.evaluate(0).as_int();
 
-  object_ptr<String> v (new String);
+    object_ptr<String> v (new String);
 
-  v->resize(length);
+    v->resize(length);
 
-  return v;
+    return v;
 }
 
 extern "C" closure builtin_function_SetStringIndex(OperationArgs& Args)
 {
-  object_ptr<const String> v = Args.evaluate(0).assert_is_a<String>();
-  int i = Args.evaluate(1).as_int();
-  char x = Args.evaluate(2).as_char();
+    object_ptr<const String> v = Args.evaluate(0).assert_is_a<String>();
+    int i = Args.evaluate(1).as_int();
+    char x = Args.evaluate(2).as_char();
 
-  const String* vv = &(*v);
-  String* vvv = const_cast<String*>(vv);
-  (*vvv)[i] = x;
+    const String* vv = &(*v);
+    String* vvv = const_cast<String*>(vv);
+    (*vvv)[i] = x;
 
-  return constructor("()",0);
+    return constructor("()",0);
 }
 
 template <class T>
 closure NewVector(OperationArgs& Args)
 {
-  int length = Args.evaluate(0).as_int();
+    int length = Args.evaluate(0).as_int();
 
-  auto v = new Vector<T>;
+    auto v = new Vector<T>;
 
-  v->resize(length);
+    v->resize(length);
 
-  return v;
+    return v;
 }
 
 extern "C" closure builtin_function_NewVectorInt(OperationArgs& Args)
 {
-  return NewVector<int>(Args);
+    return NewVector<int>(Args);
 }
 
 extern "C" closure builtin_function_NewVectorDouble(OperationArgs& Args)
 {
-  return NewVector<double>(Args);
+    return NewVector<double>(Args);
 }
 
 extern "C" closure builtin_function_NewVectorMatrix(OperationArgs& Args)
 {
-  return NewVector<Matrix>(Args);
+    return NewVector<Matrix>(Args);
 }
 
 extern "C" closure builtin_function_SetVectorIndexInt(OperationArgs& Args)
 {
-  object_ptr<const Vector<int>> v = Args.evaluate(0).assert_is_a<Vector<int>>();
-  int i = Args.evaluate(1).as_int();
-  int x = Args.evaluate(2).as_int();
+    object_ptr<const Vector<int>> v = Args.evaluate(0).assert_is_a<Vector<int>>();
+    int i = Args.evaluate(1).as_int();
+    int x = Args.evaluate(2).as_int();
 
-  const Vector<int>* vv = &(*v);
-  Vector<int>* vvv = const_cast<Vector<int>*>(vv);
-  (*vvv)[i] = x;
+    const Vector<int>* vv = &(*v);
+    Vector<int>* vvv = const_cast<Vector<int>*>(vv);
+    (*vvv)[i] = x;
 
-  return constructor("()",0);
+    return constructor("()",0);
 }
 
 extern "C" closure builtin_function_SetVectorIndexDouble(OperationArgs& Args)
 {
-  object_ptr<const Vector<double>> v = Args.evaluate(0).assert_is_a<Vector<double>>();
-  int i = Args.evaluate(1).as_int();
-  double x = Args.evaluate(2).as_double();
+    object_ptr<const Vector<double>> v = Args.evaluate(0).assert_is_a<Vector<double>>();
+    int i = Args.evaluate(1).as_int();
+    double x = Args.evaluate(2).as_double();
 
-  const Vector<double>* vv = &(*v);
-  Vector<double>* vvv = const_cast<Vector<double>*>(vv);
-  (*vvv)[i] = x;
+    const Vector<double>* vv = &(*v);
+    Vector<double>* vvv = const_cast<Vector<double>*>(vv);
+    (*vvv)[i] = x;
 
-  return constructor("()",0);
+    return constructor("()",0);
 }
 
 extern "C" closure builtin_function_SetVectorIndexMatrix(OperationArgs& Args)
 {
-  object_ptr<const Vector<Matrix>> v = Args.evaluate(0).assert_is_a<Vector<Matrix>>();
-  int i = Args.evaluate(1).as_int();
-  Box<Matrix> x = Args.evaluate(2).as_<Box<Matrix>>();
+    object_ptr<const Vector<Matrix>> v = Args.evaluate(0).assert_is_a<Vector<Matrix>>();
+    int i = Args.evaluate(1).as_int();
+    Box<Matrix> x = Args.evaluate(2).as_<Box<Matrix>>();
 
-  const Vector<Matrix>* vv = &(*v);
-  Vector<Matrix>* vvv = const_cast<Vector<Matrix>*>(vv);
-  (*vvv)[i] = x;
+    const Vector<Matrix>* vv = &(*v);
+    Vector<Matrix>* vvv = const_cast<Vector<Matrix>*>(vv);
+    (*vvv)[i] = x;
 
-  return constructor("()",0);
+    return constructor("()",0);
 }
 
 template<typename T, typename U>
 closure Vector_From_List(OperationArgs& Args)
 {
-  object_ptr<Box<std::vector<T> > > v (new Box<std::vector<T> >);
+    object_ptr<Box<std::vector<T> > > v (new Box<std::vector<T> >);
 
-  const closure* top = &Args.evaluate_slot_to_closure(0);
-  while(top->exp.size())
-  {
-    assert(has_constructor(top->exp,":"));
-    assert(top->exp.size() == 2);
+    const closure* top = &Args.evaluate_slot_to_closure(0);
+    while(top->exp.size())
+    {
+	assert(has_constructor(top->exp,":"));
+	assert(top->exp.size() == 2);
 
-    int element_index = top->exp.sub()[0].as_index_var();
-    int element_reg = top->lookup_in_env( element_index );
+	int element_index = top->exp.sub()[0].as_index_var();
+	int element_reg = top->lookup_in_env( element_index );
 
-    int next_index = top->exp.sub()[1].as_index_var();
-    int next_reg = top->lookup_in_env( next_index );
+	int next_index = top->exp.sub()[1].as_index_var();
+	int next_reg = top->lookup_in_env( next_index );
 
-    // Add the element to the list.
-    v->push_back( Args.evaluate_reg_to_object(element_reg).as_<U>() );
-    // Move to the next element or end
-    top = &Args.evaluate_reg_to_closure(next_reg);
-  }
-  assert(has_constructor(top->exp,"[]"));
+	// Add the element to the list.
+	v->push_back( Args.evaluate_reg_to_object(element_reg).as_<U>() );
+	// Move to the next element or end
+	top = &Args.evaluate_reg_to_closure(next_reg);
+    }
+    assert(has_constructor(top->exp,"[]"));
 
-  return v;
+    return v;
 }
 
 extern "C" closure builtin_function_Vector_Matrix_From_List(OperationArgs& Args)
 {
-  return Vector_From_List<Matrix,Box<Matrix>>(Args);
+    return Vector_From_List<Matrix,Box<Matrix>>(Args);
 }
 
 extern "C" closure builtin_function_new_vector(OperationArgs& Args)
 {
-  int length = Args.evaluate(0).as_int();
+    int length = Args.evaluate(0).as_int();
 
-  object_ptr<EVector> v = new EVector(length);
+    object_ptr<EVector> v = new EVector(length);
 
-  return v;
+    return v;
 }
 
 extern "C" closure builtin_function_vector_size(OperationArgs& Args)
 {
-  const Vector<expression_ref>& v = Args.evaluate(0).as_<Vector<expression_ref>>();
+    const Vector<expression_ref>& v = Args.evaluate(0).as_<Vector<expression_ref>>();
 
-  return {(int)v.size()};
+    return {(int)v.size()};
 }
 
 extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
 {
-  const EVector& v = Args.evaluate(0).as_<EVector>();
-  int i = Args.evaluate(1).as_int();
-  auto x = Args.evaluate(2);
+    const EVector& v = Args.evaluate(0).as_<EVector>();
+    int i = Args.evaluate(1).as_int();
+    auto x = Args.evaluate(2);
 
-  const EVector* vv = &v;
-  EVector* vvv = const_cast<EVector*>(vv);
-  (*vvv)[i] = x;
+    const EVector* vv = &v;
+    EVector* vvv = const_cast<EVector*>(vv);
+    (*vvv)[i] = x;
 
-  return constructor("()",0);
+    return constructor("()",0);
 }
 
 extern "C" closure builtin_function_get_vector_index(OperationArgs& Args)
 {
-  int i = Args.evaluate(1).as_int();
-  const EVector& v = Args.evaluate(0).as_<EVector>();
+    int i = Args.evaluate(1).as_int();
+    const EVector& v = Args.evaluate(0).as_<EVector>();
 
-  return v[i];
+    return v[i];
 }
 
