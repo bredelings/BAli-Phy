@@ -384,12 +384,12 @@ tribool Trim::compare(const Object& o) const
 }
 
 string dummy::print() const {
-    if (name.size())
-	return name;
-    else if (index < 0)
+    if (is_wildcard())
 	return "_";
+    else if (name.size() and index == -1)
+	return name;
     else
-	return string("#")+convertToString(index);
+	return name+string("#")+convertToString(index);
 }
 
 bool dummy::operator<(const dummy& D) const 
