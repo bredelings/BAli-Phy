@@ -386,7 +386,8 @@ struct dummy: public Object
     bool is_wildcard() const {return index < 0 and not name.size();}
 
     dummy(int i):index(i) {}
-    dummy(const std::string& s):index(-1),name(s) { assert(name != "_");}
+    dummy(const std::string& s):dummy(s,-1) {}
+    dummy(const std::string& s,int i):index(i),name(s) {assert(name != "_");}
 };
 
 struct reg_var: public Object
