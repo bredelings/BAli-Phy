@@ -2215,7 +2215,7 @@ bool is_reglike(const expression_ref& E)
 
 bool is_wildcard(const dummy& d)
 {
-    return (d.index < 0 and not d.name.size());
+    return d.is_wildcard();
 }
 
 // Remove in favor of is_dummy?

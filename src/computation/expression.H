@@ -383,6 +383,8 @@ struct dummy: public Object
 
     type_constant type() const {return dummy_type;}
 
+    bool is_wildcard() const {return index < 0 and not name.size();}
+
     dummy(int i):index(i) {}
     dummy(const std::string& s):index(-1),name(s) { assert(name != "_");}
 };
