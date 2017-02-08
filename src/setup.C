@@ -344,8 +344,6 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Seque
     //---------------- Randomize alignment? -----------------//
     if (args.count("randomize-alignment"))
       alignments[i] = randomize(alignments[i],T.n_leaves());
-    else if (args.count("unalign-all"))
-      alignments[i] = unalign_all(alignments[i],T.n_leaves());
   
     //------------------ Analyze 'internal'------------------//
     if ((args.count("internal") and args["internal"].as<string>() == "+")
@@ -398,8 +396,6 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Roote
     //---------------- Randomize alignment? -----------------//
     if (args.count("randomize-alignment"))
       alignments[i] = randomize(alignments[i],T.n_leaves());
-    else if (args.count("unalign-all"))
-      alignments[i] = unalign_all(alignments[i],T.n_leaves());
   
     //------------------ Analyze 'internal'------------------//
     if ((args.count("internal") and args["internal"].as<string>() == "+")
@@ -462,8 +458,6 @@ void load_As_and_random_T(const variables_map& args,vector<alignment>& alignment
     //---------------- Randomize alignment? -----------------//
     if (args.count("randomize-alignment"))
       alignments[i] = randomize(alignments[i],T.n_leaves());
-    else if (args.count("unalign-all"))
-      alignments[i] = unalign_all(alignments[i],T.n_leaves());
   
     //------------------ Analyze 'internal'------------------//
     if ((args.count("internal") and args["internal"].as<string>() == "+")
@@ -497,8 +491,6 @@ void load_A_and_T(const variables_map& args,alignment& A,RootedSequenceTree& T,b
   //---------------- Randomize alignment? -----------------//
   if (args.count("randomize-alignment"))
     A = randomize(A,T.n_leaves());
-  else if (args.count("unalign-all"))
-    A = unalign_all(A,T.n_leaves()); 
  
   //------------------ Analyze 'internal'------------------//
   if ((args.count("internal") and args["internal"].as<string>() == "+")
@@ -552,8 +544,6 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
   //---------------- Randomize alignment? -----------------//
   if (args.count("randomize-alignment"))
     A = randomize(A,T.n_leaves());
-  else if (args.count("unalign-all"))
-    A = unalign_all(A,T.n_leaves()); 
   
   //------------------ Analyze 'internal'------------------//
   if ((args.count("internal") and args["internal"].as<string>() == "+")
