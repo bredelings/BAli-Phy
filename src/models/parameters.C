@@ -410,18 +410,9 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     string prefix = "P"+convertToString(i+1)+".";
     string invisible_prefix = "*"+prefix;
 
-    auto AAA = AA;
-    minimally_connect_leaf_characters(AAA, t);
-  
-    // Create and set pairwise alignment parameters.
+    // Create pairwise alignment parameters.
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
-    {
-	int n1 = t.source(b);
-	int n2 = t.target(b);
-	auto pi = A2::get_pairwise_alignment(AAA,n1,n2);
-	pairwise_alignment_for_branch[b] = p->add_parameter(invisible_prefix+"a"+convertToString(b), pi);
-    }
-
+	pairwise_alignment_for_branch[b] = p->add_parameter(invisible_prefix+"a"+convertToString(b), 0);
     // Create and set conditional likelihoods for each branch
     for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
 	conditional_likelihoods_for_branch[b] = p->add_parameter(invisible_prefix+"CL"+convertToString(b), 0);
@@ -1340,6 +1331,15 @@ Parameters::Parameters(const module_loader& L,
     // create data partitions
     for(int i=0;i<A.size();i++)
 	PC->DPC.emplace_back(this,i,A[i]);
+
+    // Initialize alignments
+    for(int i=0;i<n_data_partitions();i++)
+    {
+	if (get_data_partition(i).has_IModel())
+	    get_data_partition(i).unalign_sequences();
+	else
+	    get_data_partition(i).set_alignment(A[i]);
+    }
 
     // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
     probability();
