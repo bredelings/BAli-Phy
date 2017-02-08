@@ -138,7 +138,7 @@ get_smodels(const vector<alignment>& A, shared_items<string>& smodel_names_mappi
 }
 
 vector<expression_ref> 
-get_imodels(const shared_items<string>& imodel_names_mapping, const SequenceTree& T)
+get_imodels(const shared_items<string>& imodel_names_mapping, const SequenceTree&)
 {
     vector<expression_ref> imodels;
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
