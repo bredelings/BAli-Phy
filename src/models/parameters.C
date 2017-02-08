@@ -1100,7 +1100,7 @@ expression_ref Parameters::my_tree() const
 parameters_constants::parameters_constants(const vector<alignment>& A, const SequenceTree& t,
 					   const vector<expression_ref>& SMs,
 					   const vector<int>& s_mapping,
-					   const vector<expression_ref>& IMs,
+					   const vector<expression_ref>& /* IMs */,
 					   const vector<int>& i_mapping,
 					   const vector<int>& scale_mapping)
     :smodel_for_partition(s_mapping),
