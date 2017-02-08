@@ -94,7 +94,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("tree",value<string>(),"File with initial tree")
     ("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>")
     ("set",value<vector<string> >()->composing(),"Set key=<value>")
-    ("unalign-all,U","Unalign all sequences before use.")
+    ("unalign,U","Unalign sequences (if variable-A)")
     ;
 
   options_description model("Model options");
