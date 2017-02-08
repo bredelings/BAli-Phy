@@ -398,8 +398,14 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
 
     vector<int> scale_mapping = scale_names_mapping.item_for_partition;
 
-    //-------------Create the Parameters object--------------//
+    //--------------- Create the Parameters object---------------//
     Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
+
+    //-------- Set the alignments for variable partitions ---------//
+    bool unalign = args.count("unalign");
+    for(int i=0;i<P.n_data_partitions();i++)
+	if (P.get_data_partition(i).has_IModel() and not unalign)
+	    P.get_data_partition(i).set_alignment(A[i]);
 
     // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
     set_foreground_branches(P, T);
