@@ -834,6 +834,57 @@ void disconnect_subtree(vector<HMM::bitmask_t>& a123456)
     }
 }
 
+void data_partition::set_alignment(const alignment& A)
+{
+    // 1. Check if the alphabet on the alignment is right.
+    if (get_alphabet() != A.get_alphabet())
+	throw myexception()<<"Can't set alignment with alphabet '"<<A.get_alphabet()<<"' in partition with alphabet '"<<get_alphabet()<<"'";
+
+    // 2. Connect the leaf characters
+    auto T = t();
+    auto AA = A;
+    minimally_connect_leaf_characters(AA, T);
+
+    // 3. Set pairwise alignment parameters.
+    for(int b=0;b<T.n_branches();b++)
+    {
+	int n1 = T.source(b);
+	int n2 = T.target(b);
+	auto pi = A2::get_pairwise_alignment(AA,n1,n2);
+	set_pairwise_alignment(b, pi);
+    }
+}
+
+pairwise_alignment_t make_unaligned_pairwise_alignment(int L1, int L2)
+{
+    pairwise_alignment_t pi;
+    pi.resize(L1+L2+2);
+    pi.front() = A2::states::S;
+    for(int i=0;i<L1;i++)
+	pi[1+i] = A2::states::G2;
+    for(int i=0;i<L2;i++)
+	pi[1+L1+i] = A2::states::G1;
+    pi.back() = A2::states::E;
+    return pi;
+}
+
+
+void data_partition::unalign_sequences()
+{
+    auto T = t();
+    for(int b = 0; b<T.n_branches(); b++)
+    {
+	int n1 = T.source(b);
+	int n2 = T.target(b);
+
+	// No evaluation is performed if this is a leaf node.
+	int L1 = T.is_leaf_node(n1) ? seqlength(n1) : 0;
+	int L2 = T.is_leaf_node(n2) ? seqlength(n2) : 0;
+
+	set_pairwise_alignment(b, make_unaligned_pairwise_alignment(L1,L2) );
+    }
+}
+
 void Parameters::NNI(const tree_edge& B1, const tree_edge& B2, bool allow_disconnect_subtree)
 {
     int b1 = t().find_branch(B1);

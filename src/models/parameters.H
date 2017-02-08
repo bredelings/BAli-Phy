@@ -154,6 +154,10 @@ public:
 
     const matrix<int>& alignment_constraint() const;
 
+    void set_alignment(const alignment&);
+
+    void unalign_sequences();
+
     // The prior, likelihood, and probability
     log_double_t prior_no_alignment() const;
     log_double_t prior_alignment() const;
