@@ -337,6 +337,7 @@ public:
     void reconnect_branch(int s1, int t1, int t2);
     void begin_modify_topology();
     void end_modify_topology();
+
 private:
     void exchange_subtrees(int b1, int b2);
 public:
