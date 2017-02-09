@@ -42,7 +42,7 @@ inline double log2(double x)
 #else
 inline double log2(double x)
 {
-  static temp = 1.0/log(2);
+  constexpr double temp = 1.0/log(2);
   return log(x)*temp;
 }
 #endif
@@ -51,8 +51,8 @@ inline double log2(double x)
 
 namespace fp_scale {
 
-  const int max = 50;
-  const int shift = max;
+  constexpr int max = 50;
+  constexpr int shift = max;
 
   extern double table[max*2+1];
 
@@ -70,7 +70,7 @@ namespace fp_scale {
   // 11 bits for exponent in double precision
   // 10 bits for negative exponents: exponent range in [0,1024)
   // 9 bits usable if we keep at half the exponent range: [0,512) 
-  const double cutoff = 1.0e-154;  // 2**-512 == 10**-154
+  constexpr double cutoff = 1.0e-154;  // 2**-512 == 10**-154
 }
 
 using fp_scale::pow2;
