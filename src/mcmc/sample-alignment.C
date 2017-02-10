@@ -46,9 +46,9 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition P,int b)
 
     int bb = t.reverse(b);
 
-    vector< Matrix > dists1 = substitution::get_column_likelihoods(P, {b}, get_indices_n(P.seqlength(t.source(b))), 2);
+    auto dists1 = substitution::get_column_likelihoods(P, {b}, get_indices_n(P.seqlength(t.source(b))), 2);
 
-    vector< Matrix > dists2;
+    DPmatrixEmit::EmissionProbs dists2;
     if (t.n_nodes() == 2)
     {
 	dists2 = substitution::get_leaf_seq_likelihoods(P, t.target(b), 2);
