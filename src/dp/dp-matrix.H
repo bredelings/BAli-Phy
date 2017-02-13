@@ -28,7 +28,7 @@
 
 #include <vector>
 #include "dp-engine.H"
-#include "substitution/substitution-cache.H"
+#include "substitution/cache.H"
 
 class state_matrix
 {

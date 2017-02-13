@@ -29,7 +29,7 @@
 #include <vector>
 #include "matrix.H"
 #include "math/log-double.H"
-#include "substitution/substitution-cache.H"
+#include "substitution/cache.H"
 
 class data_partition;
 

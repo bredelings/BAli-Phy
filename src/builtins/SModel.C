@@ -958,7 +958,7 @@ extern "C" closure builtin_function_frequency_matrix(OperationArgs& Args)
     return FF;
 }
 
-#include "substitution/substitution-cache.H"
+#include "substitution/cache.H"
 #include "dp/hmm.H"
 
 namespace substitution {

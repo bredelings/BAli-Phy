@@ -30,7 +30,7 @@ SUBDIRS = . builtins/
 noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3way.H \
            dp/dp-matrix.H setup.H dp/5way.H math/eigenvalue.H \
            n_indels.H n_indels2.H alignment/alignment-constraint.H math/exponential.H \
-           models/parameters.H substitution/substitution-cache.H alignment/alignment.H dp/hmm.H math/pow2.H \
+           models/parameters.H substitution/cache.H alignment/alignment.H dp/hmm.H math/pow2.H \
            substitution/substitution.H dp/alignment-sums.H imodel/imodel.H probability/probability.H \
            alignment/alignment-util.H prior.H mcmc/proposals.H \
            tree/tree-branchnode.H sequence/alphabet.H math/log-double.H tree/tree.H \

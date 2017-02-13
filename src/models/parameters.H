@@ -34,7 +34,6 @@
 #include "models/model.H"
 #include "imodel/imodel.H"
 #include "alignment/alignment.H"
-#include "substitution/substitution-cache.H"
 
 #include "tools/partition.H"
 #include "cow-ptr.H"
@@ -45,7 +44,7 @@
 //------------------------------- parameter-containing class --------------------------//
 
 class Parameters;
-class Likelihood_Cache;
+class Likelihood_Cache_Branch;
 
 struct data_partition_constants
 {
