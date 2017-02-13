@@ -31,9 +31,9 @@ class log_double_t {
 public:
 
     /// Access the log of the number.
-    double  log() const {return value;}
+    constexpr double  log() const {return value;}
     /// Access the log of the number.
-    double& log()       {return value;}
+    constexpr double& log()       {return value;}
 
     log_double_t& operator +=(const log_double_t& y) {loginc(value,y.log()); return *this;}
     log_double_t& operator -=(const log_double_t& y) {value = logdiff(log(),y.log()); return *this;}
@@ -61,7 +61,7 @@ public:
     }
 };
 
-inline double log(log_double_t x) {
+constexpr double log(log_double_t x) {
     return x.log();
 }
 
@@ -161,11 +161,11 @@ inline bool operator==(log_double_t x,double y) {
   }
 */
 
-inline bool operator!=(log_double_t x,log_double_t y) {
+constexpr bool operator!=(log_double_t x,log_double_t y) {
     return log(x)!=log(y);
 }
 
-inline bool operator!=(log_double_t x,double y) {
+constexpr bool operator!=(log_double_t x,double y) {
     if (y==0.0)
 	return log(x) > log_limit;
     else if (y==1)
@@ -176,7 +176,7 @@ inline bool operator!=(log_double_t x,double y) {
 
 #undef decl_double
 
-inline log_double_t pow(log_double_t x,double p) 
+constexpr log_double_t pow(log_double_t x,double p) 
 {
     x.log() *= p;
     return x;
