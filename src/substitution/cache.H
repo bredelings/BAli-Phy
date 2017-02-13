@@ -28,6 +28,7 @@
 class Likelihood_Cache_Branch: public Object
 {
     double* data = nullptr;
+    int* scale_ = nullptr;
     int matrix_size_ = -1;
 
     int n_states_ = -1;
@@ -47,7 +48,10 @@ public:
 
     double* operator[](int i) {assert(0 <= i and i < n_columns()); return data + matrix_size()*i;}
     const double* operator[](int i) const {assert(0 <= i and i < n_columns()); return data + matrix_size()*i;}
-  
+
+          int& scale(int i)       {return scale_[i];}
+    const int& scale(int i) const {return scale_[i];}
+
     void set(int c, double d)
     {
 	double* m = data + matrix_size()*c;
@@ -84,6 +88,7 @@ public:
     void swap(Likelihood_Cache_Branch& LCB)
     {
 	std::swap(data, LCB.data);
+	std::swap(scale_, LCB.scale_);
 	std::swap(matrix_size_, LCB.matrix_size_);
 	std::swap(n_states_, LCB.n_states_);
 	std::swap(n_models_, LCB.n_models_);
@@ -101,17 +106,21 @@ public:
     Likelihood_Cache_Branch(const Likelihood_Cache_Branch&) = delete;
     Likelihood_Cache_Branch(int C,int M, int S)
 	:data(new double[(C+2)*M*S]),
+	 scale_(new int[C]),
 	 matrix_size_(M*S),
 	 n_states_(S),
 	 n_models_(M),
 	 n_columns_(C)
-	{}
+	{
+	    for(int i=0;i<C;i++)
+		scale_[i] = 0;
+	}
     Likelihood_Cache_Branch(Likelihood_Cache_Branch&& LCB) noexcept
     {
 	swap(LCB);
     }
 
-    ~Likelihood_Cache_Branch() {delete[] data;}
+    ~Likelihood_Cache_Branch() {delete[] data; delete[] scale_;}
 };
 
 #endif
