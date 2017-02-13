@@ -49,8 +49,8 @@ public:
     double* operator[](int i) {assert(0 <= i and i < n_columns()); return data + matrix_size()*i;}
     const double* operator[](int i) const {assert(0 <= i and i < n_columns()); return data + matrix_size()*i;}
 
-          int& scale(int i)       {return scale_[i];}
-    const int& scale(int i) const {return scale_[i];}
+    int& scale(int i)       {assert(0 <= i and i < n_columns()); return scale_[i];}
+    int  scale(int i) const {assert(0 <= i and i < n_columns()); return scale_[i];}
 
     void set(int c, double d)
     {
