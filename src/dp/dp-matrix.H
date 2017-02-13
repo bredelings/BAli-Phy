@@ -28,6 +28,7 @@
 
 #include <vector>
 #include "dp-engine.H"
+#include "substitution/substitution-cache.H"
 
 class state_matrix
 {
@@ -165,7 +166,7 @@ protected:
     inline void prepare_cell(int i,int j);
 
 public:
-    typedef std::vector< Matrix > EmissionProbs;
+    typedef Likelihood_Cache_Branch EmissionProbs;
 
     /// Emission probabilities for first sequence
     EmissionProbs dists1;
@@ -173,7 +174,9 @@ public:
     EmissionProbs dists2;
 
     /// The number of different rates
-    int nrates() const {return dists1[0].size1();}
+    int nrates() const {return dists1.n_models();}
+
+    int nstates() const {return dists1.n_states();}
 
     log_double_t path_Q_subst(const std::vector<int>& path) const;
 
@@ -189,7 +192,7 @@ public:
     /// Construct a DP array from an HMM, emission probabilities, and substitution model
     DPmatrixEmit(const HMM& M,
 		 EmissionProbs&& dists1,
-		 EmissionProbs&& dists2, 
+		 EmissionProbs&& dists2,
 		 const Matrix& frequency);
   
     virtual ~DPmatrixEmit() {}
@@ -219,7 +222,6 @@ class DPmatrixConstrained: public DPmatrixEmit
 public:
 
     log_double_t path_P(const std::vector<int>& path) const;
-
 
     /// Sample a path from the HMM
     std::vector<int> sample_path() const;

@@ -516,14 +516,13 @@ void DPmatrixEmit::prepare_cell(int i,int j)
     assert(i > 0);
     assert(j > 0);
   
-    const Matrix& M1 = dists1[i];
-    const Matrix& M2 = dists2[j];
+    double* __restrict__ m1 = dists1[i];
+    double* __restrict__ m2 = dists2[j];
 
     double total=0;
-    for(int m=0;m<M1.size1();m++) {
-	for(int l=0;l<M1.size2();l++)
-	    total += M1(m,l) * M2(m,l);
-    }
+    const int MS = dists1.matrix_size();
+    for(int t=0;t<MS;t++)
+	total += m1[t] * m2[t];
 
     if (B != 1.0)
 	total = pow(total,B);
@@ -535,38 +534,29 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
 			   EmissionProbs&& d1,
 			   EmissionProbs&& d2,
 			   const Matrix& weighted_frequencies)
-    :DPmatrix(d1.size(),d2.size(),M),
-     s12_sub(d1.size(),d2.size()),
-     s1_sub(d1.size()),s2_sub(d2.size()),
-     dists1(std::move(d1)),dists2(std::move(d2))
+    :DPmatrix(d1.n_columns(), d2.n_columns(), M),
+     s12_sub(d1.n_columns(), d2.n_columns()),
+     s1_sub(d1.n_columns()), s2_sub(d2.n_columns()),
+     dists1(std::move(d1)), dists2(std::move(d2))
 {
+    int NS = nstates();
+
     //----- cache G1,G2 emission probabilities -----//
-    for(int i=0;i<dists1.size();i++) {
-	double total=0;
-	for(int m=0;m<nrates();m++) {
-	    for(int l=0;l<dists1[i].size2();l++)
-		total += weighted_frequencies(m,l)*dists1[i](m,l);
-	}
+    for(int i=0;i<dists1.n_columns();i++) {
+	double total = dists1.dot(i, weighted_frequencies);
 	s1_sub[i] = pow(total,B);
 	//    s1_sub[i] = pow(s1_sub[i],1.0/T);
     }
 
-    for(int i=0;i<dists2.size();i++) {
-	double total=0;
-	for(int m=0;m<nrates();m++) {
-	    for(int l=0;l<dists2[i].size2();l++)
-		total += weighted_frequencies(m,l)*dists2[i](m,l);
-	}
+    for(int i=0;i<dists2.n_columns();i++) {
+	double total = dists2.dot(i, weighted_frequencies);
 	s2_sub[i] = pow(total,B);
 	//    s2_sub[i] = pow(s2_sub[i],1.0/T);
     }
 
     //----- pre-calculate scaling factors --------//
-    for(int i=0;i<dists2.size();i++) {
-	for(int m=0;m<nrates();m++)
-	    for(int l=0;l<dists2[i].size2();l++)
-		dists2[i](m,l) *= weighted_frequencies(m,l);
-    }
+    for(int i=0;i<dists2.n_columns();i++)
+	dists2.mul(i, weighted_frequencies);
 }
 
 
@@ -903,6 +893,7 @@ DPmatrixConstrained::DPmatrixConstrained(const HMM& M,
 					 EmissionProbs&& d1,
 					 EmissionProbs&& d2,
 					 const Matrix& f):
-    DPmatrixEmit(M,std::move(d1),std::move(d2),f), allowed_states(dists2.size())
-	{ }
+    DPmatrixEmit(M,std::move(d1),std::move(d2),f),
+    allowed_states(dists2.n_columns())
+{ }
 

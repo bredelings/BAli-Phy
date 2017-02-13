@@ -120,8 +120,8 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition 
 	a23 = remove_silent(a123, m23);
     }
 
-    vector< Matrix > dists1 = substitution::get_column_likelihoods(P, {b1}, get_indices_n(P.seqlength(nodes[1])), 2);
-    vector< Matrix > dists23 = substitution::get_column_likelihoods(P, {b2, b3}, get_indices_from_bitpath_w(a23, {1,2}, m23), 2);
+    auto dists1 = substitution::get_column_likelihoods(P, {b1}, get_indices_n(P.seqlength(nodes[1])), 2);
+    auto dists23 = substitution::get_column_likelihoods(P, {b2, b3}, get_indices_from_bitpath_w(a23, {1,2}, m23), 2);
 
     //-------------- Create alignment matrices ---------------//
 
@@ -158,7 +158,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition 
     Matrices->states(1) = Matrices->dp_order();
 
     // Determine which states are allowed to match (,c2)
-    for(int c2=1;c2<Matrices->dists2.size()-1;c2++) 
+    for(int c2=1;c2<Matrices->dists2.n_columns()-1;c2++) 
     {
 	unsigned int mask = (a23[c2-1]&Matrices->emit2).to_ulong();
 	mask >>= 1;

@@ -63,6 +63,24 @@ public:
 	    m1[i] = m2[i];
     }
 
+    void mul(int c, const Matrix& M)
+    {
+	double* __restrict__ m1 = data + matrix_size()*c;
+	const double* __restrict__ m2 = M.begin();
+	for(int i=0;i<matrix_size();i++)
+	    m1[i] *= m2[i];
+    }
+
+    double dot(int c, const Matrix& M)
+    {
+	const double* __restrict__ m1 = data + matrix_size()*c;
+	const double* __restrict__ m2 = M.begin();
+	double total = 0;
+	for(int i=0;i<matrix_size();i++)
+	    total += m1[i] * m2[i];
+	return total;
+    }
+
     void swap(Likelihood_Cache_Branch& LCB)
     {
 	std::swap(data, LCB.data);

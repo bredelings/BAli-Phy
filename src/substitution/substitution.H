@@ -29,6 +29,7 @@
 #include <vector>
 #include "matrix.H"
 #include "math/log-double.H"
+#include "substitution/substitution-cache.H"
 
 class data_partition;
 
@@ -37,12 +38,11 @@ namespace substitution {
 
     std::vector<std::vector<std::pair<int,int>>> sample_ancestral_states(const data_partition& P);
 
-    std::vector<Matrix> 
-    get_column_likelihoods(const data_partition&, const std::vector<int>& b, const matrix<int>& index,int delta=0);
+
+    Likelihood_Cache_Branch get_column_likelihoods(const data_partition&, const std::vector<int>& b, const matrix<int>& index,int delta=0);
 
     /// Find the likelihood matrices for data at leaf node n.
-    std::vector<Matrix>
-    get_leaf_seq_likelihoods(const data_partition& P, int n, int delta);
+    Likelihood_Cache_Branch get_leaf_seq_likelihoods(const data_partition& P, int n, int delta);
 
     log_double_t other_subst(const data_partition&, const std::vector<int>& nodes);
   

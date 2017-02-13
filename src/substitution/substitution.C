@@ -914,7 +914,7 @@ namespace substitution {
 	return LCB3;
     }
 
-    vector<Matrix>
+    Likelihood_Cache_Branch
     get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const data_partition& P, int delta);
 
 
@@ -962,8 +962,9 @@ namespace substitution {
 	return R;
     }
 
+
     /// Get the likelihood matrix for each letter l of sequence 'sequence', where the likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
-    vector<Matrix>
+    Likelihood_Cache_Branch
     get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const data_partition& P, int delta)
     {
 	int L = sequence.size();
@@ -979,23 +980,24 @@ namespace substitution {
 	    letter_likelihoods.push_back( get_letter_likelihoods(l, a, P) );
 
 	// Compute the likelihood matrices for each letter in the sequence
-	Matrix Zero(n_models,n_states);
-	element_assign(Zero,0);
-	vector<Matrix> likelihoods(L+delta, Zero);
+	Likelihood_Cache_Branch LCB(L+delta, n_models, n_states);
+
+	for(int i=0;i<delta;i++)
+	    LCB.set(i,0);
 
 	for(int i=0;i<L;i++)
 	{
 	    int letter = sequence[i];
 	    if (a.is_letter(letter))
-		likelihoods[i+delta] = letter_likelihoods[letter];
+		LCB.set(i+delta, letter_likelihoods[letter]);
 	    else
-		likelihoods[i+delta] = get_letter_likelihoods(letter, a, P);
+		LCB.set(i+delta, get_letter_likelihoods(letter, a, P));
 	}
 
-	return likelihoods;
+	return LCB;
     }
 
-    vector<Matrix>
+    Likelihood_Cache_Branch
     get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
     {
 	const vector<int>& sequence = P.get_sequence(n);
@@ -1004,7 +1006,7 @@ namespace substitution {
     }
 
     /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
-    vector<Matrix>
+    Likelihood_Cache_Branch
     get_column_likelihoods(const data_partition& P, const vector<int>& b, const matrix<int>& index, int delta)
     {
 	auto t = P.t();
@@ -1016,21 +1018,14 @@ namespace substitution {
 	for(int i=1;i<b.size();i++)
 	    assert(t.target(b[i]) == root);
 
-	vector<Matrix> L;
-	L.reserve(index.size1()+delta);
-
 	const int n_models = P.n_base_models();
 	const int n_states = P.n_states();
 	const int matrix_size = n_models * n_states;
-	Matrix S(n_models, n_states);
+	Likelihood_Cache_Branch LCB(index.size1() + delta, n_models, n_states);
 
-	//Add the padding matrices
-	{
-	    element_assign(S,0);
-
-	    for(int i=0;i<delta;i++)
-		L.push_back(S);
-	}
+	//Clear the padding matrices
+	for(int i=0;i<delta;i++)
+	    LCB.set(i,0);
 
 	vector<const Likelihood_Cache_Branch*> cache;
 	for(int branch: b)
@@ -1039,21 +1034,20 @@ namespace substitution {
 	// For each column in the index (e.g. for each present character at node 'root')
 	for(int i=0;i<index.size1();i++) 
 	{
-	    element_assign(S,1);
+	    LCB.set(i+delta, 1);
 
 	    // Note that we could do ZERO products in this loop
+	    auto m = LCB[i+delta];
 	    for(int j=0;j<b.size();j++) 
 	    {
 		int i0 = index(i,j);
 		if (i0 == alphabet::gap) continue;
 
-		element_prod_modify(S.begin(), (*cache[j])[i0], matrix_size);
+		element_prod_modify(m, (*cache[j])[i0], matrix_size);
 	    }
-      
-	    L.push_back(S);
 	}
 
-	return L;
+	return LCB;
     }
 
     /// Find the leaf branches of a connected subtree of nodes \a nodes instead of tree \a T
