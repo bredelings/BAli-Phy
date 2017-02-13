@@ -27,12 +27,12 @@
 /// An object to store cached conditional likelihoods for a single branch
 class Likelihood_Cache_Branch: public Object
 {
-    double* data;
-    int matrix_size_;
+    double* data = nullptr;
+    int matrix_size_ = -1;
 
-    int n_states_;
-    int n_models_;
-    int n_columns_;
+    int n_states_ = -1;
+    int n_models_ = -1;
+    int n_columns_ = -1;
 public:
     Likelihood_Cache_Branch* clone() const {std::abort();}
   
@@ -48,6 +48,39 @@ public:
     double* operator[](int i) {assert(0 <= i and i < n_columns()); return data + matrix_size()*i;}
     const double* operator[](int i) const {assert(0 <= i and i < n_columns()); return data + matrix_size()*i;}
   
+    void set(int c, double d)
+    {
+	double* m = data + matrix_size()*c;
+	for(int i=0;i<matrix_size();i++)
+	    m[i] = d;
+    }
+
+    void set(int c, const Matrix& M)
+    {
+	double* m1 = data + matrix_size()*c;
+	const double* m2 = M.begin();
+	for(int i=0;i<matrix_size();i++)
+	    m1[i] = m2[i];
+    }
+
+    void swap(Likelihood_Cache_Branch& LCB)
+    {
+	std::swap(data, LCB.data);
+	std::swap(matrix_size_, LCB.matrix_size_);
+	std::swap(n_states_, LCB.n_states_);
+	std::swap(n_models_, LCB.n_models_);
+	std::swap(n_columns_, LCB.n_columns_);
+    }
+
+    Likelihood_Cache_Branch& operator=(const Likelihood_Cache_Branch&) = delete;
+    Likelihood_Cache_Branch& operator=(Likelihood_Cache_Branch&& LCB) noexcept
+    {
+	swap(LCB);
+	return *this;
+    }
+
+    Likelihood_Cache_Branch() {}
+    Likelihood_Cache_Branch(const Likelihood_Cache_Branch&) = delete;
     Likelihood_Cache_Branch(int C,int M, int S)
 	:data(new double[(C+2)*M*S]),
 	 matrix_size_(M*S),
@@ -55,6 +88,11 @@ public:
 	 n_models_(M),
 	 n_columns_(C)
 	{}
+    Likelihood_Cache_Branch(Likelihood_Cache_Branch&& LCB) noexcept
+    {
+	swap(LCB);
+    }
+
     ~Likelihood_Cache_Branch() {delete[] data;}
 };
 
