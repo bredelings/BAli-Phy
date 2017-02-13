@@ -388,6 +388,20 @@ log_double_t data_partition::heated_likelihood() const
 	return pow(likelihood(),get_beta());
 }
 
+pairwise_alignment_t make_unaligned_pairwise_alignment(int L1, int L2)
+{
+    pairwise_alignment_t pi;
+    pi.resize(L1+L2+2);
+    pi.front() = A2::states::S;
+    for(int i=0;i<L1;i++)
+	pi[1+i] = A2::states::G2;
+    for(int i=0;i<L2;i++)
+	pi[1+L1+i] = A2::states::G1;
+    pi.back() = A2::states::E;
+    return pi;
+}
+
+
 data_partition::data_partition(const Parameters* p, int i)
     :P(p),partition_index(i)
 { }
@@ -412,7 +426,17 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
     // Create pairwise alignment parameters.
     for(int b=0;b<pairwise_alignment_for_branch.size();b++)
-	pairwise_alignment_for_branch[b] = p->add_parameter(invisible_prefix+"a"+convertToString(b), 0);
+    {
+	int n1 = t.source(b);
+	int n2 = t.target(b);
+
+	// No evaluation is performed if this is a leaf node.
+	int L1 = t.is_leaf_node(n1) ? sequences[n1].size() : 0;
+	int L2 = t.is_leaf_node(n2) ? sequences[n2].size() : 0;
+
+	pairwise_alignment_for_branch[b] = p->add_parameter(invisible_prefix+"a"+convertToString(b), make_unaligned_pairwise_alignment(L1,L2) );;
+    }
+
     // Create and set conditional likelihoods for each branch
     for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
 	conditional_likelihoods_for_branch[b] = p->add_parameter(invisible_prefix+"CL"+convertToString(b), 0);
@@ -845,20 +869,6 @@ void data_partition::set_alignment(const alignment& A)
 	set_pairwise_alignment(b, pi);
     }
 }
-
-pairwise_alignment_t make_unaligned_pairwise_alignment(int L1, int L2)
-{
-    pairwise_alignment_t pi;
-    pi.resize(L1+L2+2);
-    pi.front() = A2::states::S;
-    for(int i=0;i<L1;i++)
-	pi[1+i] = A2::states::G2;
-    for(int i=0;i<L2;i++)
-	pi[1+L1+i] = A2::states::G1;
-    pi.back() = A2::states::E;
-    return pi;
-}
-
 
 void data_partition::unalign_sequences()
 {
@@ -1334,12 +1344,8 @@ Parameters::Parameters(const module_loader& L,
 
     // Initialize alignments
     for(int i=0;i<n_data_partitions();i++)
-    {
-	if (get_data_partition(i).has_IModel())
-	    get_data_partition(i).unalign_sequences();
-	else
+	if (not get_data_partition(i).has_IModel())
 	    get_data_partition(i).set_alignment(A[i]);
-    }
 
     // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
     probability();
