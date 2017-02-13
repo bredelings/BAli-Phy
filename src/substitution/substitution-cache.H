@@ -57,8 +57,8 @@ public:
 
     void set(int c, const Matrix& M)
     {
-	double* m1 = data + matrix_size()*c;
-	const double* m2 = M.begin();
+	double* __restrict__ m1 = data + matrix_size()*c;
+	const double* __restrict__ m2 = M.begin();
 	for(int i=0;i<matrix_size();i++)
 	    m1[i] = m2[i];
     }
