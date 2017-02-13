@@ -188,8 +188,8 @@ public:
 
     /// Construct a DP array from an HMM, emission probabilities, and substitution model
     DPmatrixEmit(const HMM& M,
-		 const EmissionProbs& dists1,
-		 const EmissionProbs& dists2, 
+		 EmissionProbs&& dists1,
+		 EmissionProbs&& dists2, 
 		 const Matrix& frequency);
   
     virtual ~DPmatrixEmit() {}
@@ -233,11 +233,9 @@ public:
     void prune();
 
     DPmatrixConstrained(const HMM& M,
-			const EmissionProbs& d1,
-			const EmissionProbs& d2, 
-			const Matrix& f):
-	DPmatrixEmit(M,d1,d2,f), allowed_states(d2.size())
-	{ }
+			EmissionProbs&& d1,
+			EmissionProbs&& d2, 
+			const Matrix& f);
 
     virtual ~DPmatrixConstrained() {}
 };

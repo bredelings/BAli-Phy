@@ -532,13 +532,13 @@ void DPmatrixEmit::prepare_cell(int i,int j)
 }
 
 DPmatrixEmit::DPmatrixEmit(const HMM& M,
-			   const vector< Matrix >& d1,
-			   const vector< Matrix >& d2, 
+			   EmissionProbs&& d1,
+			   EmissionProbs&& d2,
 			   const Matrix& weighted_frequencies)
     :DPmatrix(d1.size(),d2.size(),M),
      s12_sub(d1.size(),d2.size()),
      s1_sub(d1.size()),s2_sub(d2.size()),
-     dists1(d1),dists2(d2)
+     dists1(std::move(d1)),dists2(std::move(d2))
 {
     //----- cache G1,G2 emission probabilities -----//
     for(int i=0;i<dists1.size();i++) {
@@ -898,3 +898,11 @@ void DPmatrixConstrained::prune() {
     unsigned order2 = order_of_computation();
     std::cerr<<" order1 = "<<order1<<"    order2 = "<<order2<<"  fraction = "<<double(order2)/double(order1)<<endl;
 }
+
+DPmatrixConstrained::DPmatrixConstrained(const HMM& M,
+					 EmissionProbs&& d1,
+					 EmissionProbs&& d2,
+					 const Matrix& f):
+    DPmatrixEmit(M,std::move(d1),std::move(d2),f), allowed_states(dists2.size())
+	{ }
+

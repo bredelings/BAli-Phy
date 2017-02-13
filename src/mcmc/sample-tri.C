@@ -130,9 +130,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition 
 	branches[i] = t.find_branch(nodes[0],nodes[i+1]);
 
     boost::shared_ptr<DPmatrixConstrained> 
-	Matrices(new DPmatrixConstrained(m123,
-					 dists1, dists23, P.WeightedFrequencyMatrix())
-	    );
+	Matrices(new DPmatrixConstrained(m123, std::move(dists1), std::move(dists23), P.WeightedFrequencyMatrix()));
     Matrices->emit1 = 1;
     Matrices->emit2 = 2|4;
 
@@ -160,7 +158,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition 
     Matrices->states(1) = Matrices->dp_order();
 
     // Determine which states are allowed to match (,c2)
-    for(int c2=1;c2<dists23.size()-1;c2++) 
+    for(int c2=1;c2<Matrices->dists2.size()-1;c2++) 
     {
 	unsigned int mask = (a23[c2-1]&Matrices->emit2).to_ulong();
 	mask >>= 1;

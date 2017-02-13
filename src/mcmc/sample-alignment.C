@@ -74,7 +74,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition P,int b)
     boost::shared_ptr<DPmatrixSimple> 
 	Matrices( new DPmatrixSimple(HMM(state_emit, P.get_branch_HMM(b).start_pi(),
 					 P.get_branch_HMM(b), P.get_beta()),
-				     dists1, dists2, P.WeightedFrequencyMatrix())
+				     std::move(dists1), std::move(dists2), P.WeightedFrequencyMatrix())
 	    );
 
     //------------------ Compute the DP matrix ---------------------//
