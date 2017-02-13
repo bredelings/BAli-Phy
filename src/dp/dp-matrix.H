@@ -40,7 +40,8 @@ class state_matrix
     int* scale_;
 
     // Guarantee that these things aren't ever copied
-    state_matrix& operator=(const state_matrix&) {return *this;}
+    state_matrix& operator=(const state_matrix&) = delete;
+    state_matrix& operator=(state_matrix&&) = delete;
 
 public:
 
@@ -83,6 +84,8 @@ public:
 	 scale_(new int[s1*s2]) 
 	{}
 
+    state_matrix(const state_matrix&) = delete;
+    state_matrix(state_matrix&&) = delete;
     ~state_matrix();
 };
 
