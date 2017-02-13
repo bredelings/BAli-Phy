@@ -377,7 +377,7 @@ namespace substitution {
 	Matrix S(n_models,n_states);
 #endif
 
-	log_double_t total = 1;
+	double total = 1;
 	int scale = 0;
 	for(int i=0;i<index.size1();i++)
 	{
@@ -444,14 +444,20 @@ namespace substitution {
 
 	    // This does a log( ) operation.
 	    total *= p_col;
+	    if (total < scale_min)
+	    {
+		total *= scale_factor;
+		scale++;
+	    }
 	    //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
 	}
 
-	total *= LCB1->other_subst;
-	total *= LCB2->other_subst;
-	total *= LCB3->other_subst;
-	total.log() += log_scale_min * scale;
-	return total;
+	log_double_t Pr = total;
+	Pr *= LCB1->other_subst;
+	Pr *= LCB2->other_subst;
+	Pr *= LCB3->other_subst;
+	Pr.log() += log_scale_min * scale;
+	return Pr;
     }
 
     log_double_t calc_root_probability2(const data_partition& P,const vector<int>& rb,const matrix<int>& index) 
@@ -773,15 +779,14 @@ namespace substitution {
 	Matrix ones(n_models, n_states);
 	element_assign(ones, 1);
     
-	log_double_t total = 1;
+	double total = 1;
+	int total_scale = 0;
 	for(int i=0;i<index.size1();i++) 
 	{
 	    // compute the source distribution from 2 branch distributions
 	    int i0 = index(i,0);
 	    int i1 = index(i,1);
 	    int i2 = index(i,2);
-
-	    int scale = 0;
 
 	    if (i2 < 0)
 	    {
@@ -791,13 +796,13 @@ namespace substitution {
 		{
 		    assert(i1 == alphabet::gap);
 		    p_col = element_prod_sum(F.begin(), (*LCB1)[i0], matrix_size );
-		    scale += LCB1->scale(i0);
+		    total_scale += LCB1->scale(i0);
 		}
 		else if (i1 != alphabet::gap)
 		{
 		    assert(i0 == alphabet::gap);
 		    p_col = element_prod_sum(F.begin(), (*LCB2)[i1], matrix_size );
-		    scale += LCB2->scale(i1);
+		    total_scale += LCB2->scale(i1);
 		}
 
 		// Situation: i0 ==-1 and i1 == -1 can happen.
@@ -806,10 +811,15 @@ namespace substitution {
 
 		// This does a log( ) operation.
 		total *= p_col;
-		total.log() += log_scale_min * scale;
+		if (total < scale_min)
+		{
+		    total_scale++;
+		    total *= scale_factor;
+		}
 		continue;
 	    }
 
+	    int scale = 0;
 	    const double* C = S;
 	    if (i0 != alphabet::gap and i1 != alphabet::gap)
 	    {
@@ -859,6 +869,7 @@ namespace substitution {
 	}
 
 	LCB3->other_subst = LCB1->other_subst * LCB2->other_subst * total;
+	LCB3->other_subst.log() += total_scale*log_scale_min;
 	return LCB3;
     }
   
