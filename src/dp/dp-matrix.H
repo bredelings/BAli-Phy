@@ -192,6 +192,8 @@ public:
     /// Emission probabilities for --
     double emit__(int i,int j) const;
 
+    void compute_Pr_sum_all_paths();
+
     /// Construct a DP array from an HMM, emission probabilities, and substitution model
     DPmatrixEmit(const HMM& M,
 		 EmissionProbs&& dists1,

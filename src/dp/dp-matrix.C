@@ -530,6 +530,20 @@ void DPmatrixEmit::prepare_cell(int i,int j)
     s12_sub(i,j) = total;
 }
 
+void DPmatrixEmit::compute_Pr_sum_all_paths()
+{
+    DPmatrix::compute_Pr_sum_all_paths();
+
+    // Add in scaling factors from emission likelihoods
+    int scale = 0;
+    for(int i=0;i<dists1.n_columns();i++)
+	scale += dists1.scale(i);
+    for(int i=0;i<dists2.n_columns();i++)
+	scale += dists2.scale(i);
+    Pr_total.log() += log_scale_min*scale;
+    assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
+}
+
 DPmatrixEmit::DPmatrixEmit(const HMM& M,
 			   EmissionProbs&& d1,
 			   EmissionProbs&& d2,
@@ -719,6 +733,15 @@ void DPmatrixConstrained::compute_Pr_sum_all_paths()
     }
 
     Pr_total = pow(log_double_t(2.0),scale(I,J)) * total;
+    assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
+
+    // Add in scaling factors from emission likelihoods
+    int scale = 0;
+    for(int i=0;i<dists1.n_columns();i++)
+	scale += dists1.scale(i);
+    for(int i=0;i<dists2.n_columns();i++)
+	scale += dists2.scale(i);
+    Pr_total.log() += log_scale_min*scale;
     assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 }
 

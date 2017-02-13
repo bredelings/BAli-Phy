@@ -378,6 +378,7 @@ namespace substitution {
 #endif
 
 	log_double_t total = 1;
+	int scale = 0;
 	for(int i=0;i<index.size1();i++)
 	{
 	    double p_col = 1;
@@ -390,11 +391,20 @@ namespace substitution {
 	    int mi=0;
 
 	    if (i0 != -1)
+	    {
 		m[mi++] = ((*LCB1)[i0]);
+		scale += (*LCB1).scale(i0);
+	    }
 	    if (i1 != -1)
+	    {
 		m[mi++] = ((*LCB2)[i1]);
+		scale += (*LCB2).scale(i1);
+	    }
 	    if (i2 != -1)
+	    {
 		m[mi++] = ((*LCB3)[i2]);
+		scale += (*LCB3).scale(i2);
+	    }
 
 	    if (mi==3)
 		p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
@@ -440,7 +450,7 @@ namespace substitution {
 	total *= LCB1->other_subst;
 	total *= LCB2->other_subst;
 	total *= LCB3->other_subst;
-
+	total.log() += log_scale_min * scale;
 	return total;
     }
 
@@ -771,18 +781,23 @@ namespace substitution {
 	    int i1 = index(i,1);
 	    int i2 = index(i,2);
 
+	    int scale = 0;
+
 	    if (i2 < 0)
 	    {
 		double p_col = 1;
+
 		if (i0 != alphabet::gap) 
 		{
 		    assert(i1 == alphabet::gap);
 		    p_col = element_prod_sum(F.begin(), (*LCB1)[i0], matrix_size );
+		    scale += LCB1->scale(i0);
 		}
 		else if (i1 != alphabet::gap)
 		{
 		    assert(i0 == alphabet::gap);
 		    p_col = element_prod_sum(F.begin(), (*LCB2)[i1], matrix_size );
+		    scale += LCB2->scale(i1);
 		}
 
 		// Situation: i0 ==-1 and i1 == -1 can happen.
@@ -791,16 +806,26 @@ namespace substitution {
 
 		// This does a log( ) operation.
 		total *= p_col;
+		total.log() += log_scale_min * scale;
 		continue;
 	    }
 
 	    const double* C = S;
 	    if (i0 != alphabet::gap and i1 != alphabet::gap)
+	    {
 		element_prod_assign(S, (*LCB1)[i0], (*LCB2)[i1], matrix_size);
+		scale = LCB1->scale(i0) + LCB2->scale(i1);
+	    }
 	    else if (i0 != alphabet::gap)
+	    {
 		C = (*LCB1)[i0];
+		scale = LCB1->scale(i0);
+	    }
 	    else if (i1 != alphabet::gap)
+	    {
 		C = (*LCB2)[i1];
+		scale = LCB2->scale(i1);
+	    }
 	    else
 		C = ones.begin();
 
@@ -810,8 +835,9 @@ namespace substitution {
 
 	    // propagate from the source distribution
 	    double* R = (*LCB3)[i2];            //name the result matrix
-	    for(int m=0;m<n_models;m++) {
-	
+	    bool need_scale = true;
+	    for(int m=0;m<n_models;m++)
+	    {
 		const Matrix& Q = transition_P[m];
 	
 		// compute the distribution at the target (parent) node - multiple letters
@@ -820,8 +846,16 @@ namespace substitution {
 		    for(int s2=0;s2<n_states;s2++)
 			temp += Q(s1,s2)*C[m*n_states + s2];
 		    R[m*n_states + s1] = temp;
+		    need_scale = need_scale and (temp < scale_min);
 		}
 	    }
+	    if (need_scale) // and false)
+	    {
+		scale++;
+		for(int j=0; j<matrix_size; j++)
+		    R[j] *= scale_factor;
+	    }
+	    LCB3->scale(i2) = scale;
 	}
 
 	LCB3->other_subst = LCB1->other_subst * LCB2->other_subst * total;
@@ -1038,13 +1072,16 @@ namespace substitution {
 
 	    // Note that we could do ZERO products in this loop
 	    auto m = LCB[i+delta];
+	    int scale = 0;
 	    for(int j=0;j<b.size();j++) 
 	    {
 		int i0 = index(i,j);
 		if (i0 == alphabet::gap) continue;
 
 		element_prod_modify(m, (*cache[j])[i0], matrix_size);
+		scale += cache[j]->scale(i0);
 	    }
+	    LCB.scale(i) = scale;
 	}
 
 	return LCB;
