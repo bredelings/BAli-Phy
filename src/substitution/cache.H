@@ -24,6 +24,10 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 
+constexpr double scale_factor = pow(2, 256);
+constexpr double scale_min = 1.0/scale_factor;
+constexpr double log_scale_min = log(scale_min);
+
 /// An object to store cached conditional likelihoods for a single branch
 class Likelihood_Cache_Branch: public Object
 {
