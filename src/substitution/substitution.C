@@ -1186,7 +1186,6 @@ namespace substitution {
 
 	// 1. Allocate arrays for storing results and temporary results.
 	vector<vector<pair<int,int> > > ancestral_characters (t.n_nodes());
-	vector<vector<pair<int,int> > > subA_index_parent_characters (t.n_branches()*2);
     
 	// All the (-1,-1)'s should be overwritten with the sampled character.
 	for(int i=0;i<t.n_nodes();i++)
@@ -1196,11 +1195,7 @@ namespace substitution {
 	    // compute root branches
 	    vector<int> rb;
 	    for(int b: t.branches_in(root))
-	    {
 		rb.push_back(b);
-
-		subA_index_parent_characters[b] = vector<pair<int,int>>(P.seqlength(P.t().source(b)), {-1,-1});
-	    }
 
 	    const auto& cache0 = P.cache(rb[0]);
 	    const auto& cache1 = P.cache(rb[1]);
@@ -1212,6 +1207,10 @@ namespace substitution {
 	    auto a30 = convert_to_bits(P.get_pairwise_alignment(rb[2]),3,0);
 	    auto a0123 = Glue_A(a10, Glue_A(a20,a30));
 	    auto index = get_indices_from_bitpath(a0123, {1,2,3,0});
+
+	    int node0 = t.source(rb[0]);
+	    int node1 = t.source(rb[1]);
+	    int node2 = t.source(rb[2]);
 
 	    // FIXME - this doesn't handle case where tree has only 2 leaves.
 	    for(int i=0;i<index.size1();i++)
@@ -1238,11 +1237,11 @@ namespace substitution {
 		}
 
 		if (i0 != -1)
-		    subA_index_parent_characters[rb[0]][i0] = state_model;
+		    ancestral_characters[node0][i0] = state_model;
 		if (i1 != -1)
-		    subA_index_parent_characters[rb[1]][i1] = state_model;
+		    ancestral_characters[node1][i1] = state_model;
 		if (i2 != -1)
-		    subA_index_parent_characters[rb[2]][i2] = state_model;
+		    ancestral_characters[node2][i2] = state_model;
 	    }
 	}
 
@@ -1257,11 +1256,7 @@ namespace substitution {
 
 	    vector<int> local_branches = {b};
 	    for(int b: t.branches_before(b))
-	    {
 		local_branches.push_back(b);
-
-		subA_index_parent_characters[b] = vector<pair<int,int>>(P.seqlength(P.t().source(b)), {-1,-1});
-	    }
 
 	    assert(local_branches.size() == 3 or local_branches.size() == 1);
 
@@ -1288,7 +1283,7 @@ namespace substitution {
 		    // This is because it was incoming-present
 		    else
 		    {
-			pair<int,int> state_model_parent = subA_index_parent_characters[b][i];
+			pair<int,int> state_model_parent = ancestral_characters[node][i];
 			int mp = state_model_parent.first;
 			int lp = state_model_parent.second;
 			assert(mp != -1);
@@ -1334,6 +1329,9 @@ namespace substitution {
 		const auto& cache1 = P.cache(local_branches[1]);
 		const auto& cache2 = P.cache(local_branches[2]);
 
+		int node1 = t.source(local_branches[1]);
+		int node2 = t.source(local_branches[2]);
+
 		for(int i=0;i<index.size1();i++)
 		{
 		    int i0 = index(i,0);
@@ -1347,7 +1345,7 @@ namespace substitution {
 		    // This is because it was incoming-present
 		    else
 		    {
-			pair<int,int> state_model_parent = subA_index_parent_characters[b][i0];
+			pair<int,int> state_model_parent = ancestral_characters[node][i0];
 			int mp = state_model_parent.first;
 			int lp = state_model_parent.second;
 			assert(mp != -1);
@@ -1365,8 +1363,8 @@ namespace substitution {
 		    pair<int,int> state_model = sample(S);
 
 		    if (i0 != -1) ancestral_characters[node][i0] = state_model;
-		    if (i1 != -1) subA_index_parent_characters[local_branches[1]][i1] = state_model;
-		    if (i2 != -1) subA_index_parent_characters[local_branches[2]][i2] = state_model;
+		    if (i1 != -1) ancestral_characters[node1][i1] = state_model;
+		    if (i2 != -1) ancestral_characters[node2][i2] = state_model;
 		}
 	    }
 	}
