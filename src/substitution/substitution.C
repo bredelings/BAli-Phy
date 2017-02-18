@@ -1206,7 +1206,7 @@ namespace substitution {
 	    auto a20 = convert_to_bits(P.get_pairwise_alignment(rb[1]),2,0);
 	    auto a30 = convert_to_bits(P.get_pairwise_alignment(rb[2]),3,0);
 	    auto a0123 = Glue_A(a10, Glue_A(a20,a30));
-	    auto index = get_indices_from_bitpath(a0123, {1,2,3,0});
+	    auto index = get_indices_from_bitpath_w(a0123, {1,2,3},(1<<0));
 
 	    int node0 = t.source(rb[0]);
 	    int node1 = t.source(rb[1]);
@@ -1218,28 +1218,19 @@ namespace substitution {
 		int i0 = index(i,0);
 		int i1 = index(i,1);
 		int i2 = index(i,2);
-		int i3 = index(i,3);
-
-		if (i3 == -1) continue;
 
 		S = F;
 
-		if (i0 != -1)
-		    element_prod_modify(S.begin(), cache0[i0], matrix_size);
-		if (i1 != -1)
-		    element_prod_modify(S.begin(), cache1[i1], matrix_size);
-		if (i2 != -1)
-		    element_prod_modify(S.begin(), cache2[i2], matrix_size);
+		if (i0 != -1) element_prod_modify(S.begin(), cache0[i0], matrix_size);
+		if (i1 != -1) element_prod_modify(S.begin(), cache1[i1], matrix_size);
+		if (i2 != -1) element_prod_modify(S.begin(), cache2[i2], matrix_size);
 
 		pair<int,int> state_model = sample(S);
 
-		ancestral_characters[root][i3] = state_model;
-		if (i0 != -1)
-		    ancestral_characters[node0][i0] = state_model;
-		if (i1 != -1)
-		    ancestral_characters[node1][i1] = state_model;
-		if (i2 != -1)
-		    ancestral_characters[node2][i2] = state_model;
+		ancestral_characters[root][i] = state_model;
+		if (i0 != -1) ancestral_characters[node0][i0] = state_model;
+		if (i1 != -1) ancestral_characters[node1][i1] = state_model;
+		if (i2 != -1) ancestral_characters[node2][i2] = state_model;
 	    }
 	}
 
