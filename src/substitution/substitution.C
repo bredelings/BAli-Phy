@@ -1252,7 +1252,6 @@ namespace substitution {
 	for(int b: branches)
 	{
 	    int node = t.source(b);
-	    auto& sequence = P.get_sequence(node);
 
 	    const vector<Matrix>& transition_P = P.transition_P(b);
 
@@ -1265,8 +1264,6 @@ namespace substitution {
 	    }
 
 	    assert(local_branches.size() == 3 or local_branches.size() == 1);
-	    const auto& cache1 = P.cache(local_branches[1]);
-	    const auto& cache2 = P.cache(local_branches[2]);
 
 	    matrix<int> index;
 	    if (local_branches.size() == 1)
@@ -1279,40 +1276,32 @@ namespace substitution {
 		index = get_indices_from_bitpath(a012,{0,1,2});
 	    }
       
-	    for(int i=0;i<index.size1();i++)
+	    if (local_branches.size() == 1)
 	    {
-		int i0 = index(i,0);
-
-		int i1 = -1;
-		int i2 = -1;
-
-		if (local_branches.size() == 3)
+		const auto& sequence = P.get_sequence(node).data();
+		for(int i=0;i<index.size1();i++)
 		{
-		    i1 = index(i,1);
-		    i2 = index(i,2);
-		}
+		    int i0 = index(i,0);
 
-		// If there IS no parent character, then we can sample from F
-		if (i0 == -1)
-		    S = F;
-		// If there is a parent character, then it MUST have an (l,m) pair.
-		// This is because it was incoming-present
-		else
-		{
-		    pair<int,int> state_model_parent = subA_index_parent_characters[b][i0];
-		    int mp = state_model_parent.first;
-		    int lp = state_model_parent.second;
-		    assert(mp != -1);
-		    element_assign(S,0);
+		    // If there IS no parent character, then we can sample from F
+		    if (i0 == -1)
+			S = F;
+		    // If there is a parent character, then it MUST have an (l,m) pair.
+		    // This is because it was incoming-present
+		    else
+		    {
+			pair<int,int> state_model_parent = subA_index_parent_characters[b][i0];
+			int mp = state_model_parent.first;
+			int lp = state_model_parent.second;
+			assert(mp != -1);
+			element_assign(S,0);
 
-		    const Matrix& Q = transition_P[mp];
+			const Matrix& Q = transition_P[mp];
 
-		    for(int l=0;l<n_states;l++)
-			S(mp,l) = Q(lp,l);
-		}
+			for(int l=0;l<n_states;l++)
+			    S(mp,l) = Q(lp,l);
+		    }
 
-		if (local_branches.size() == 1)
-		{
 		    int ii = index(i,0);
 		    int l = sequence[ii];
 		    const alphabet& a = P.get_alphabet();
@@ -1337,25 +1326,61 @@ namespace substitution {
 					for(int m=0;m<n_models;m++)
 					    S(m,s) = 0;
 		    }
-		}
 	
-		if (i1 != -1)
-		    element_prod_modify(S.begin(), cache1[i1], matrix_size);
-		if (i2 != -1)
-		    element_prod_modify(S.begin(), cache2[i2], matrix_size);
-	
-		pair<int,int> state_model = sample(S);
-	
-		{
-		    int ii = index(i,0);
+		    pair<int,int> state_model = sample(S);
+
 		    if (ii != -1)
 			ancestral_characters[node][ii] = state_model;
 		}
+	    }
+	    else
+	    {
+		const auto& cache1 = P.cache(local_branches[1]);
+		const auto& cache2 = P.cache(local_branches[2]);
+
+		for(int i=0;i<index.size1();i++)
+		{
+		    int i0 = index(i,0);
+		    int i1 = index(i,1);
+		    int i2 = index(i,2);
+
+		    // If there IS no parent character, then we can sample from F
+		    if (i0 == -1)
+			S = F;
+		    // If there is a parent character, then it MUST have an (l,m) pair.
+		    // This is because it was incoming-present
+		    else
+		    {
+			pair<int,int> state_model_parent = subA_index_parent_characters[b][i0];
+			int mp = state_model_parent.first;
+			int lp = state_model_parent.second;
+			assert(mp != -1);
+			element_assign(S,0);
+
+			const Matrix& Q = transition_P[mp];
+
+			for(int l=0;l<n_states;l++)
+			    S(mp,l) = Q(lp,l);
+		    }
+
+		    if (i1 != -1)
+			element_prod_modify(S.begin(), cache1[i1], matrix_size);
+		    if (i2 != -1)
+			element_prod_modify(S.begin(), cache2[i2], matrix_size);
+
+		    pair<int,int> state_model = sample(S);
+
+		    {
+			int ii = index(i,0);
+			if (ii != -1)
+			    ancestral_characters[node][ii] = state_model;
+		    }
 	
-		if (i1 != -1)
-		    subA_index_parent_characters[local_branches[1]][i1] = state_model;
-		if (i2 != -1)
-		    subA_index_parent_characters[local_branches[2]][i2] = state_model;
+		    if (i1 != -1)
+			subA_index_parent_characters[local_branches[1]][i1] = state_model;
+		    if (i2 != -1)
+			subA_index_parent_characters[local_branches[2]][i2] = state_model;
+		}
 	    }
 	}
 
