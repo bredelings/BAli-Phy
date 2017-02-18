@@ -1281,16 +1281,14 @@ namespace substitution {
 		const auto& sequence = P.get_sequence(node).data();
 		for(int i=0;i<index.size1();i++)
 		{
-		    int i0 = index(i,0);
-
 		    // If there IS no parent character, then we can sample from F
-		    if (i0 == -1)
+		    if (i == -1)
 			S = F;
 		    // If there is a parent character, then it MUST have an (l,m) pair.
 		    // This is because it was incoming-present
 		    else
 		    {
-			pair<int,int> state_model_parent = subA_index_parent_characters[b][i0];
+			pair<int,int> state_model_parent = subA_index_parent_characters[b][i];
 			int mp = state_model_parent.first;
 			int lp = state_model_parent.second;
 			assert(mp != -1);
@@ -1302,8 +1300,7 @@ namespace substitution {
 			    S(mp,l) = Q(lp,l);
 		    }
 
-		    int ii = index(i,0);
-		    int l = sequence[ii];
+		    int l = sequence[i];
 		    const alphabet& a = P.get_alphabet();
 		    if (l == alphabet::not_gap)
 			;
@@ -1326,10 +1323,10 @@ namespace substitution {
 					for(int m=0;m<n_models;m++)
 					    S(m,s) = 0;
 		    }
-	
+
 		    pair<int,int> state_model = sample(S);
 
-		    if (ii != -1) ancestral_characters[node][ii] = state_model;
+		    if (i != -1) ancestral_characters[node][i] = state_model;
 		}
 	    }
 	    else
