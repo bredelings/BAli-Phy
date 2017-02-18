@@ -1186,6 +1186,34 @@ namespace substitution {
 	}
     }
 
+    void calc_leaf_likelihood(Matrix& S, int l, const alphabet& a, const vector<unsigned>& smap)
+    {
+	int n_models = S.size1();
+	int n_states = S.size2();
+
+	if (l == alphabet::not_gap)
+	    ;
+	else if (a.is_letter(l))
+	{
+	    // Clear S(m,s) for every state s that doesn't map to the observed letter l
+	    for(int s=0;s<n_states;s++)
+		if (smap[s] != l)
+		    for(int m=0;m<n_models;m++)
+			S(m,s) = 0;
+	}
+	else
+	{
+	    assert(a.is_letter_class(l));
+	    const auto& letters = a.letter_mask(l);
+	    for(int l=0;l<letters.size();l++)
+		if (letters.test(l))
+		    for(int s=0;s<n_states;s++)
+			if (smap[s] != l)
+			    for(int m=0;m<n_models;m++)
+				S(m,s) = 0;
+	}
+    }
+    
     vector<vector<pair<int,int>>> 
     sample_subst_history(const data_partition& P, const TreeInterface& t)
     {
@@ -1286,33 +1314,9 @@ namespace substitution {
 		{
 		    calc_transition_prob_from_parent(S, ancestral_characters[node][i], transition_P, F);
 
-		    int l = sequence[i];
-		    const alphabet& a = P.get_alphabet();
-		    if (l == alphabet::not_gap)
-			;
-		    else if (a.is_letter(l))
-		    {
-			// Clear S(m,s) for every state s that doesn't map to the observed letter l
-			for(int s=0;s<n_states;s++)
-			    if (smap[s] != l)
-				for(int m=0;m<n_models;m++)
-				    S(m,s) = 0;
-		    }
-		    else
-		    {
-			assert(a.is_letter_class(l));
-			alphabet::bitmask_t letters = a.letter_mask(l);
-			for(int l=0;l<letters.size();l++)
-			    if (letters.test(l))
-				for(int s=0;s<n_states;s++)
-				    if (smap[s] != l)
-					for(int m=0;m<n_models;m++)
-					    S(m,s) = 0;
-		    }
+		    calc_leaf_likelihood(S, sequence[i], P.get_alphabet(), smap);
 
-		    pair<int,int> state_model = sample(S);
-
-		    ancestral_characters[node][i] = state_model;
+		    ancestral_characters[node][i] = sample(S);
 		}
 	    }
 	    else
