@@ -786,6 +786,7 @@ a_branch_length_model dist i =
   return t
 });
 
+-- There are no triggers on the branch lengths, so resampling them doesn't work.
 iid_branch_length_model t dist = SamplingRate 0.0 $ mapM (\i -> a_branch_length_model dist i) [1..numBranches t];
 
 iid_branch_length_model_exp t = iid_branch_length_model t (exponential (1.0/(intToDouble (numBranches t))));
