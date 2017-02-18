@@ -1218,6 +1218,9 @@ namespace substitution {
 		int i0 = index(i,0);
 		int i1 = index(i,1);
 		int i2 = index(i,2);
+		int i3 = index(i,3);
+
+		if (i3 == -1) continue;
 
 		S = F;
 
@@ -1230,12 +1233,7 @@ namespace substitution {
 
 		pair<int,int> state_model = sample(S);
 
-		{
-		    int ii = index(i,3);
-		    if(ii != -1)
-			ancestral_characters[root][ii] = state_model;
-		}
-
+		ancestral_characters[root][i3] = state_model;
 		if (i0 != -1)
 		    ancestral_characters[node0][i0] = state_model;
 		if (i1 != -1)
@@ -1276,16 +1274,17 @@ namespace substitution {
 		const auto& sequence = P.get_sequence(node).data();
 		for(int i=0;i<index.size1();i++)
 		{
+		    pair<int,int> state_model_parent = ancestral_characters[node][i];
+		    int mp = state_model_parent.first;
+		    int lp = state_model_parent.second;
+
 		    // If there IS no parent character, then we can sample from F
-		    if (i == -1)
+		    if (mp == -1)
 			S = F;
 		    // If there is a parent character, then it MUST have an (l,m) pair.
 		    // This is because it was incoming-present
 		    else
 		    {
-			pair<int,int> state_model_parent = ancestral_characters[node][i];
-			int mp = state_model_parent.first;
-			int lp = state_model_parent.second;
 			assert(mp != -1);
 			element_assign(S,0);
 
@@ -1338,16 +1337,19 @@ namespace substitution {
 		    int i1 = index(i,1);
 		    int i2 = index(i,2);
 
+		    if (i0 == -1) continue;
+
+		    pair<int,int> state_model_parent = ancestral_characters[node][i0];
+		    int mp = state_model_parent.first;
+		    int lp = state_model_parent.second;
+
 		    // If there IS no parent character, then we can sample from F
-		    if (i0 == -1)
+		    if (mp == -1)
 			S = F;
 		    // If there is a parent character, then it MUST have an (l,m) pair.
 		    // This is because it was incoming-present
 		    else
 		    {
-			pair<int,int> state_model_parent = ancestral_characters[node][i0];
-			int mp = state_model_parent.first;
-			int lp = state_model_parent.second;
 			assert(mp != -1);
 			element_assign(S,0);
 
@@ -1362,7 +1364,7 @@ namespace substitution {
 
 		    pair<int,int> state_model = sample(S);
 
-		    if (i0 != -1) ancestral_characters[node][i0] = state_model;
+		    ancestral_characters[node][i0] = state_model;
 		    if (i1 != -1) ancestral_characters[node1][i1] = state_model;
 		    if (i2 != -1) ancestral_characters[node2][i2] = state_model;
 		}
