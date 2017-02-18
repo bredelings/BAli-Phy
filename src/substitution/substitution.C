@@ -1167,6 +1167,25 @@ namespace substitution {
 	return Pr;
     }
 
+    void calc_transition_prob_from_parent(Matrix& S, pair<int,int>& state_model_parent, const vector<Matrix>& Ps, const Matrix& WF)
+    {
+	int mp = state_model_parent.first;
+	int lp = state_model_parent.second;
+	int n_states = S.size2();
+	auto& Pr = Ps[mp];
+
+	// If there IS no parent character, then we can sample from F
+	if (mp == -1)
+	    S = WF;
+	else
+	{
+	    assert(mp != -1);
+	    element_assign(S,0);
+	    for(int l=0;l<n_states;l++)
+		S(mp,l) = Pr(lp,l);
+	}
+    }
+
     vector<vector<pair<int,int>>> 
     sample_subst_history(const data_partition& P, const TreeInterface& t)
     {
@@ -1257,7 +1276,7 @@ namespace substitution {
 		auto a1 = convert_to_bits(P.get_pairwise_alignment(local_branches[1]),1,0);
 		auto a2 = convert_to_bits(P.get_pairwise_alignment(local_branches[2]),2,0);
 		auto a012 = Glue_A(a1,a2);
-		index = get_indices_from_bitpath(a012,{0,1,2});
+		index = get_indices_from_bitpath_w(a012,{1,2},(1<<0));
 	    }
       
 	    if (local_branches.size() == 1)
@@ -1265,25 +1284,7 @@ namespace substitution {
 		const auto& sequence = P.get_sequence(node).data();
 		for(int i=0;i<index.size1();i++)
 		{
-		    pair<int,int> state_model_parent = ancestral_characters[node][i];
-		    int mp = state_model_parent.first;
-		    int lp = state_model_parent.second;
-
-		    // If there IS no parent character, then we can sample from F
-		    if (mp == -1)
-			S = F;
-		    // If there is a parent character, then it MUST have an (l,m) pair.
-		    // This is because it was incoming-present
-		    else
-		    {
-			assert(mp != -1);
-			element_assign(S,0);
-
-			const Matrix& Q = transition_P[mp];
-
-			for(int l=0;l<n_states;l++)
-			    S(mp,l) = Q(lp,l);
-		    }
+		    calc_transition_prob_from_parent(S, ancestral_characters[node][i], transition_P, F);
 
 		    int l = sequence[i];
 		    const alphabet& a = P.get_alphabet();
@@ -1311,7 +1312,7 @@ namespace substitution {
 
 		    pair<int,int> state_model = sample(S);
 
-		    if (i != -1) ancestral_characters[node][i] = state_model;
+		    ancestral_characters[node][i] = state_model;
 		}
 	    }
 	    else
@@ -1324,38 +1325,17 @@ namespace substitution {
 
 		for(int i=0;i<index.size1();i++)
 		{
-		    int i0 = index(i,0);
-		    int i1 = index(i,1);
-		    int i2 = index(i,2);
+		    int i1 = index(i,0);
+		    int i2 = index(i,1);
 
-		    if (i0 == -1) continue;
-
-		    pair<int,int> state_model_parent = ancestral_characters[node][i0];
-		    int mp = state_model_parent.first;
-		    int lp = state_model_parent.second;
-
-		    // If there IS no parent character, then we can sample from F
-		    if (mp == -1)
-			S = F;
-		    // If there is a parent character, then it MUST have an (l,m) pair.
-		    // This is because it was incoming-present
-		    else
-		    {
-			assert(mp != -1);
-			element_assign(S,0);
-
-			const Matrix& Q = transition_P[mp];
-
-			for(int l=0;l<n_states;l++)
-			    S(mp,l) = Q(lp,l);
-		    }
+		    calc_transition_prob_from_parent(S, ancestral_characters[node][i], transition_P, F);
 
 		    if (i1 != -1) element_prod_modify(S.begin(), cache1[i1], matrix_size);
 		    if (i2 != -1) element_prod_modify(S.begin(), cache2[i2], matrix_size);
 
 		    pair<int,int> state_model = sample(S);
 
-		    ancestral_characters[node][i0] = state_model;
+		    ancestral_characters[node][i] = state_model;
 		    if (i1 != -1) ancestral_characters[node1][i1] = state_model;
 		    if (i2 != -1) ancestral_characters[node2][i2] = state_model;
 		}
