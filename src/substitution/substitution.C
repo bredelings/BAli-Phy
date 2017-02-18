@@ -1329,8 +1329,7 @@ namespace substitution {
 	
 		    pair<int,int> state_model = sample(S);
 
-		    if (ii != -1)
-			ancestral_characters[node][ii] = state_model;
+		    if (ii != -1) ancestral_characters[node][ii] = state_model;
 		}
 	    }
 	    else
@@ -1363,23 +1362,14 @@ namespace substitution {
 			    S(mp,l) = Q(lp,l);
 		    }
 
-		    if (i1 != -1)
-			element_prod_modify(S.begin(), cache1[i1], matrix_size);
-		    if (i2 != -1)
-			element_prod_modify(S.begin(), cache2[i2], matrix_size);
+		    if (i1 != -1) element_prod_modify(S.begin(), cache1[i1], matrix_size);
+		    if (i2 != -1) element_prod_modify(S.begin(), cache2[i2], matrix_size);
 
 		    pair<int,int> state_model = sample(S);
 
-		    {
-			int ii = index(i,0);
-			if (ii != -1)
-			    ancestral_characters[node][ii] = state_model;
-		    }
-	
-		    if (i1 != -1)
-			subA_index_parent_characters[local_branches[1]][i1] = state_model;
-		    if (i2 != -1)
-			subA_index_parent_characters[local_branches[2]][i2] = state_model;
+		    if (i0 != -1) ancestral_characters[node][i0] = state_model;
+		    if (i1 != -1) subA_index_parent_characters[local_branches[1]][i1] = state_model;
+		    if (i2 != -1) subA_index_parent_characters[local_branches[2]][i2] = state_model;
 		}
 	    }
 	}
