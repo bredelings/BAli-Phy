@@ -37,7 +37,7 @@ constexpr double log_0 = -max_float;
 
 // NATS is 52*log(2) for 52 bits of precision
 // HMM... the long doubles have 64 bits of precision...
-const double NATS = 40;
+constexpr double NATS = 40;
 
 inline double logsum_nocheck(double x, double y) {
     if (std::abs(x-y) > NATS)
