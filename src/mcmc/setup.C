@@ -70,8 +70,7 @@ void add_MH_move(Model& P, const Proposal_Fn& proposal, const vector<string>& na
     // 2. For each MCMC parameter, create a move for it.
     for(const auto& parameter_name: names) 
     {
-	int index = P.find_parameter(parameter_name);
-	assert(index != -1);
+	assert(P.find_parameter(parameter_name) != -1);
 
 	Proposal2 proposal2(proposal, parameter_name, pnames, P);
 
