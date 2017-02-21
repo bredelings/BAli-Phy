@@ -555,9 +555,12 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
     for(int i=2;i<dists1.n_columns();i++)
     {
 	double sum = dists1.sum(i);
-	assert(sum > 0);
-	dists1.mul(i, 1.0/sum);
-	prod *= sum;
+	assert(sum <= 1.000000001);
+	if (sum != 0)
+	{
+	    dists1.mul(i, 1.0/sum); // currently ignoring possibility that sum is subnormal and 1.0/sum = Inf
+	    prod *= sum;
+	}
 
 	s1_sub[i] = pow(dists1.dot(i, weighted_frequencies), B);
 
@@ -571,9 +574,12 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
 	dists2.mul(i, weighted_frequencies);
 
 	double sum = dists2.sum(i);
-	assert(sum > 0);
-	dists2.mul(i, 1.0/sum);
-	prod *= sum;
+	assert(sum <= 1.000000001);
+	if (sum != 0)
+	{
+	    dists2.mul(i, 1.0/sum); // currently ignoring possibility that sum is subnormal and 1.0/sum = Inf
+	    prod *= sum;
+	}
 
 	s2_sub[i] = 1;
 
