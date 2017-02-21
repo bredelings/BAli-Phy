@@ -25,6 +25,7 @@
 #include <valarray>
 #include <vector>
 #include "util.H"
+#include "math/logprod.H"
 #include "dp/hmm.H"
 
 // #define DEBUG_SUBSTITUTION
@@ -377,7 +378,7 @@ namespace substitution {
 	Matrix S(n_models,n_states);
 #endif
 
-	double total = 1;
+	log_prod total;
 	int scale = 0;
 	for(int i=0;i<index.size1();i++)
 	{
@@ -444,11 +445,6 @@ namespace substitution {
 
 	    // This does a log( ) operation.
 	    total *= p_col;
-	    if (total < scale_min)
-	    {
-		total *= scale_factor;
-		scale++;
-	    }
 	    //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
 	}
 
@@ -779,7 +775,7 @@ namespace substitution {
 	Matrix ones(n_models, n_states);
 	element_assign(ones, 1);
     
-	double total = 1;
+	log_prod total;
 	int total_scale = 0;
 	for(int i=0;i<index.size1();i++) 
 	{
@@ -811,11 +807,6 @@ namespace substitution {
 
 		// This does a log( ) operation.
 		total *= p_col;
-		if (total < scale_min)
-		{
-		    total_scale++;
-		    total *= scale_factor;
-		}
 		continue;
 	    }
 
