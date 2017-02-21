@@ -238,6 +238,9 @@ void DPmatrix::compute_Pr_sum_all_paths()
 
     Pr_total *= pow(log_double_t(2.0),scale(I,J)) * total;
     assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
+
+    // This really is a probability, so it should be <= 1
+    assert(Pr_total <= 1.0);
 }
 
 void DPmatrix::forward_square() 
@@ -578,6 +581,9 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
     Pr_total.log() += log_scale_min*scale;
 
     Pr_total.log() *= B;
+
+    // So far we have only multiplied by number <= 1, so thus should be true.
+    assert(Pr_total <= 1.0);
 }
 
 
@@ -741,6 +747,9 @@ void DPmatrixConstrained::compute_Pr_sum_all_paths()
 
     Pr_total *= pow(log_double_t(2.0),scale(I,J)) * total;
     assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
+
+    // This really is a probability, so it should be <= 1
+    assert(Pr_total <= 1.0);
 }
 
 log_double_t DPmatrixConstrained::path_P(const vector<int>& path) const 
