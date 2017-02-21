@@ -554,7 +554,7 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
     s1_sub[1] = 0;
     for(int i=2;i<dists1.n_columns();i++)
     {
-	double sum = dists1.sum(i);
+	double sum = dists1.dot(i, weighted_frequencies);
 	assert(sum <= 1.000000001);
 	if (sum != 0)
 	{
@@ -562,7 +562,7 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
 	    prod *= sum;
 	}
 
-	s1_sub[i] = pow(dists1.dot(i, weighted_frequencies), B);
+	s1_sub[i] = 1;
 
 	scale += dists1.scale(i);
     }
