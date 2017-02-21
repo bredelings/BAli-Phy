@@ -79,6 +79,13 @@ public:
 	    m1[i] *= m2[i];
     }
 
+    void mul(int c, double f)
+    {
+	double* m1 = data + matrix_size()*c;
+	for(int i=0;i<matrix_size();i++)
+	    m1[i] *= f;
+    }
+
     double dot(int c, const Matrix& M)
     {
 	const double* __restrict__ m1 = data + matrix_size()*c;
@@ -86,6 +93,15 @@ public:
 	double total = 0;
 	for(int i=0;i<matrix_size();i++)
 	    total += m1[i] * m2[i];
+	return total;
+    }
+
+    double sum(int c)
+    {
+	const double* m1 = data + matrix_size()*c;
+	double total = 0;
+	for(int i=0;i<matrix_size();i++)
+	    total += m1[i];
 	return total;
     }
 
