@@ -35,10 +35,10 @@ public:
     /// Access the log of the number.
     constexpr double& log()       {return value;}
 
-    log_double_t& operator +=(const log_double_t& y) {loginc(value,y.log()); return *this;}
-    log_double_t& operator -=(const log_double_t& y) {value = logdiff(log(),y.log()); return *this;}
-    log_double_t& operator *=(const log_double_t& y) {value += y.log(); return *this;}
-    log_double_t& operator /=(const log_double_t& y) {value -= y.log(); return *this;}
+    constexpr log_double_t& operator +=(const log_double_t& y) {loginc(value,y.log()); return *this;}
+    constexpr log_double_t& operator -=(const log_double_t& y) {value = logdiff(log(),y.log()); return *this;}
+    constexpr log_double_t& operator *=(const log_double_t& y) {value += y.log(); return *this;}
+    constexpr log_double_t& operator /=(const log_double_t& y) {value -= y.log(); return *this;}
 
     operator double() const {return exp(value);}
 
@@ -66,33 +66,33 @@ constexpr double log(log_double_t x) {
 }
 
 #define decl_double(rtype,op)					\
-    inline rtype operator op (double x,log_double_t y) {	\
+    constexpr rtype operator op (double x,log_double_t y) {	\
 	return log_double_t(x) op y;				\
     }								\
 								\
-    inline rtype operator op (log_double_t x,double y) {	\
+    constexpr rtype operator op (log_double_t x,double y) {	\
 	return x op log_double_t(y);				\
     }
 
-inline log_double_t operator+(log_double_t x,log_double_t y) {
+constexpr log_double_t operator+(log_double_t x,log_double_t y) {
     log_double_t z = x;
     z += y;
     return z;
 }
 
-inline log_double_t operator-(log_double_t x,log_double_t y) {
+constexpr log_double_t operator-(log_double_t x,log_double_t y) {
     log_double_t z = x;
     z -= y;
     return z;
 }
 
-inline log_double_t operator*(log_double_t x,log_double_t y) {
+constexpr log_double_t operator*(log_double_t x,log_double_t y) {
     log_double_t z = x;
     z *= y;
     return z;
 }
 
-inline log_double_t operator/(log_double_t x,log_double_t y) {
+constexpr log_double_t operator/(log_double_t x,log_double_t y) {
     log_double_t z=x;
     z /= y;
     return z;
@@ -103,45 +103,45 @@ decl_double(log_double_t,-)
 decl_double(log_double_t,*)
 decl_double(log_double_t,/)
 
-inline bool operator< (log_double_t x,log_double_t y) {
+constexpr bool operator< (log_double_t x,log_double_t y) {
     return log(x)<log(y);
 }
 
 decl_double(bool,<)
 
-inline bool operator<=(log_double_t x,log_double_t y) {
+constexpr bool operator<=(log_double_t x,log_double_t y) {
     return log(x)<=log(y);
 }
 
 decl_double(bool,<=)
 
-inline bool operator> (log_double_t x,log_double_t y) {
+constexpr bool operator> (log_double_t x,log_double_t y) {
     return log(x)>log(y);
 }
 
-inline bool operator>(log_double_t x,double y) {
+constexpr bool operator>(log_double_t x,double y) {
     if (y==0)
 	return log(x) > log_limit;
     else
 	return x > log_double_t(y);
 }
 
-inline bool operator>(double  x,log_double_t y) {
+constexpr bool operator>(double  x,log_double_t y) {
     return log_double_t(x) > y;
 }
 
-inline bool operator>=(log_double_t x,log_double_t y) {
+constexpr bool operator>=(log_double_t x,log_double_t y) {
     return log(x)>=log(y);
 }
 
 decl_double(bool,>=)
 
 
-inline bool operator==(log_double_t x,log_double_t y) {
+constexpr bool operator==(log_double_t x,log_double_t y) {
     return log(x)==log(y);
 }
 
-inline bool operator==(log_double_t x,double y) {
+constexpr bool operator==(log_double_t x,double y) {
     if (y==0.0)
 	return log(x) <= log_limit;
     else if (y==1)
@@ -151,7 +151,7 @@ inline bool operator==(log_double_t x,double y) {
 }
 
 /*
-  inline bool operator==(log_double_t x,double y) {
+  constexpr bool operator==(log_double_t x,double y) {
   if (y==0)
   return (x==log_0);
   else if (y==1)
@@ -182,7 +182,7 @@ constexpr log_double_t pow(log_double_t x,double p)
     return x;
 }
 
-inline bool different(log_double_t x,log_double_t y,double tol=1.0e-9)
+constexpr bool different(log_double_t x,log_double_t y,double tol=1.0e-9)
 {
     double diff = log(x) - log(y);
 
@@ -195,7 +195,7 @@ inline bool different(log_double_t x,log_double_t y,double tol=1.0e-9)
 
 template<class T> T exp_to(double);
 
-template<> inline log_double_t exp_to<log_double_t>(double x) {
+template<> constexpr log_double_t exp_to<log_double_t>(double x) {
     log_double_t y;
     y.log() = x;
     return y;
@@ -205,7 +205,7 @@ template<> inline log_double_t exp_to<log_double_t>(double x) {
 //
 // template<class T> T pow(double,double);
 // 
-// template<> inline log_double_t pow<log_double_t>(double x,double p) {
+// template<> constexpr log_double_t pow<log_double_t>(double x,double p) {
 //   log_double_t y;
 //   y.log() = p * ::log(x);
 //   return y;
