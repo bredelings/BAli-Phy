@@ -346,7 +346,8 @@ log_double_t DPmatrix::path_P(const vector<int>& path) const
 
 vector<int> DPmatrix::sample_path() const 
 {
-    assert(Pr_sum_all_paths() > 0.0);
+    if (Pr_sum_all_paths() <= 0.0)
+	throw myexception()<<"DPmatrix::sample_path( ): trying to sample when total probability is 0.";
 
     vector<int> path;
 
@@ -830,6 +831,9 @@ log_double_t DPmatrixConstrained::path_P(const vector<int>& path) const
 
 vector<int> DPmatrixConstrained::sample_path() const 
 {
+    if (Pr_sum_all_paths() <= 0.0)
+	throw myexception()<<"DPmatrixConstrained::sample_path( ): trying to sample when total probability is 0.";
+
     vector<int> path;
 
     const int I = size1()-1;
