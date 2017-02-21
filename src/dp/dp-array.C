@@ -312,7 +312,7 @@ inline void DParrayConstrained::forward(int i2)
   }
 
   //------- if exponent is too low, rescale ------//
-  if (maximum > 0 and maximum < fp_scale::cutoff) {
+  if (maximum > 0 and maximum < fp_scale::lo_cutoff) {
     int logs = -(int)log2(maximum);
     double scale_ = pow2(logs);
     for(int s2=0;s2<states(i2).size();s2++)  

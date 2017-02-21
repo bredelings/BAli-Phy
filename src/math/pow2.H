@@ -70,7 +70,8 @@ namespace fp_scale {
   // 11 bits for exponent in double precision
   // 10 bits for negative exponents: exponent range in [0,1024)
   // 9 bits usable if we keep at half the exponent range: [0,512) 
-  constexpr double cutoff = 1.0e-154;  // 2**-512 == 10**-154
+  constexpr double hi_cutoff = 1.0e154;  // 2**-512 == 10**-154
+  constexpr double lo_cutoff = 1.0/hi_cutoff;  // 2**-512 == 10**-154
 }
 
 using fp_scale::pow2;

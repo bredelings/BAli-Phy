@@ -102,8 +102,9 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
 	(*this)(i2,j2,S2) = temp;
     }
 
-    //------- if exponent is too low, rescale ------//
-    if (maximum > 0 and maximum < fp_scale::cutoff) {
+    //------- if exponent is too high or too low, rescale ------//
+    if (maximum > fp_scale::hi_cutoff or (maximum > 0 and maximum < fp_scale::lo_cutoff))
+    {
 	int logs = -(int)log2(maximum);
 	double scale_ = pow2(logs);
 	for(int S2=0;S2<n_dp_states();S2++) 
@@ -456,8 +457,9 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2)
 	(*this)(i2,j2,S2) = temp;
     }
 
-    //------- if exponent is too low, rescale ------//
-    if (maximum > 0 and maximum < fp_scale::cutoff) {
+    //------- if exponent is too high or too low, rescale ------//
+    if (maximum > fp_scale::hi_cutoff or (maximum > 0 and maximum < fp_scale::lo_cutoff))
+    {
 	int logs = -(int)log2(maximum);
 	double scale_ = pow2(logs);
 	for(int S2=0;S2<n_dp_states();S2++) 
@@ -643,8 +645,9 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
 	(*this)(i2,j2,S2) = temp;
     }
 
-    //------- if exponent is too low, rescale ------//
-    if (maximum > 0 and maximum < fp_scale::cutoff) {
+    //------- if exponent is too high or too low, rescale ------//
+    if (maximum > fp_scale::hi_cutoff or (maximum > 0 and maximum < fp_scale::lo_cutoff))
+    {
 	int logs = -(int)log2(maximum);
 	double scale_ = pow2(logs);
 	for(int S2=0;S2<n_dp_states();S2++) 
@@ -722,8 +725,9 @@ inline void DPmatrixConstrained::forward_cell(int i2,int j2)
 	(*this)(i2,j2,S2) = temp;
     }
 
-    //------- if exponent is too low, rescale ------//
-    if (maximum > 0 and maximum < fp_scale::cutoff) {
+    //------- if exponent is too high or too low, rescale ------//
+    if (maximum > fp_scale::hi_cutoff or (maximum > 0 and maximum < fp_scale::lo_cutoff))
+    {
 	int logs = -(int)log2(maximum);
 	double scale_ = pow2(logs);
 	for(int i=0;i<states(j2).size();i++) {
