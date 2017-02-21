@@ -814,10 +814,11 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
     out_both<<"Finished pre-burnin in "<<duration_cast<boost::chrono::duration<double> >(t2-t1)<<".\n"<<endl;
 
 
+    int B = P.as<Parameters>()->t().n_branches();
     for(int i=0; i<P.as<Parameters>()->n_branch_means(); i++)
     {
-	if (P->get_parameter_value(P.as<Parameters>()->branch_mean_index(i)).as_double() > 0.5)
-	    P->set_parameter_value(P.as<Parameters>()->branch_mean_index(i), 0.5);
+	if (P->get_parameter_value(P.as<Parameters>()->branch_mean_index(i)).as_double() > 0.5*B)
+	    P->set_parameter_value(P.as<Parameters>()->branch_mean_index(i), 0.5*B);
     }
 
 
