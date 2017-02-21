@@ -235,7 +235,7 @@ void DPmatrix::compute_Pr_sum_all_paths()
     for(int state1=0;state1<n_dp_states();state1++)
 	total += (*this)(I,J,state1)*GQ(state1,endstate());
 
-    Pr_total = pow(log_double_t(2.0),scale(I,J)) * total;
+    Pr_total *= pow(log_double_t(2.0),scale(I,J)) * total;
     assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 }
 
@@ -530,20 +530,6 @@ void DPmatrixEmit::prepare_cell(int i,int j)
     s12_sub(i,j) = total;
 }
 
-void DPmatrixEmit::compute_Pr_sum_all_paths()
-{
-    DPmatrix::compute_Pr_sum_all_paths();
-
-    // Add in scaling factors from emission likelihoods
-    int scale = 0;
-    for(int i=0;i<dists1.n_columns();i++)
-	scale += dists1.scale(i);
-    for(int i=0;i<dists2.n_columns();i++)
-	scale += dists2.scale(i);
-    Pr_total.log() += log_scale_min*scale;
-    assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
-}
-
 DPmatrixEmit::DPmatrixEmit(const HMM& M,
 			   EmissionProbs&& d1,
 			   EmissionProbs&& d2,
@@ -556,17 +542,22 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
     int NS = nstates();
 
     //----- cache G1,G2 emission probabilities -----//
+    int scale = 0;
     for(int i=0;i<dists1.n_columns();i++) {
 	double total = dists1.dot(i, weighted_frequencies);
 	s1_sub[i] = pow(total,B);
+	scale += dists1.scale(i);
 	//    s1_sub[i] = pow(s1_sub[i],1.0/T);
     }
 
     for(int i=0;i<dists2.n_columns();i++) {
 	double total = dists2.dot(i, weighted_frequencies);
 	s2_sub[i] = pow(total,B);
+	scale += dists2.scale(i);
 	//    s2_sub[i] = pow(s2_sub[i],1.0/T);
     }
+    Pr_total = 1.0;
+    Pr_total.log() += log_scale_min*scale*B;
 
     //----- pre-calculate scaling factors --------//
     for(int i=0;i<dists2.n_columns();i++)
@@ -732,16 +723,7 @@ void DPmatrixConstrained::compute_Pr_sum_all_paths()
 	total += (*this)(I,J,S1)*GQ(S1,endstate());
     }
 
-    Pr_total = pow(log_double_t(2.0),scale(I,J)) * total;
-    assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
-
-    // Add in scaling factors from emission likelihoods
-    int scale = 0;
-    for(int i=0;i<dists1.n_columns();i++)
-	scale += dists1.scale(i);
-    for(int i=0;i<dists2.n_columns();i++)
-	scale += dists2.scale(i);
-    Pr_total.log() += log_scale_min*scale;
+    Pr_total *= pow(log_double_t(2.0),scale(I,J)) * total;
     assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 }
 
