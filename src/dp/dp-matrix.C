@@ -31,6 +31,7 @@
 #include "probability/choose.H"
 #include "util.H"
 #include "alignment/alignment-constraint.H"
+#include "math/logprod.H"
 
 using std::vector;
 using std::valarray;
@@ -543,25 +544,40 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
 
     //----- cache G1,G2 emission probabilities -----//
     int scale = 0;
-    for(int i=0;i<dists1.n_columns();i++) {
-	double total = dists1.dot(i, weighted_frequencies);
-	s1_sub[i] = pow(total,B);
+    log_prod prod;
+    s1_sub[0] = 0;
+    s1_sub[1] = 0;
+    for(int i=2;i<dists1.n_columns();i++)
+    {
+	double sum = dists1.sum(i);
+	assert(sum > 0);
+	dists1.mul(i, 1.0/sum);
+	prod *= sum;
+
+	s1_sub[i] = pow(dists1.dot(i, weighted_frequencies), B);
+
 	scale += dists1.scale(i);
-	//    s1_sub[i] = pow(s1_sub[i],1.0/T);
     }
 
-    for(int i=0;i<dists2.n_columns();i++) {
-	double total = dists2.dot(i, weighted_frequencies);
-	s2_sub[i] = pow(total,B);
-	scale += dists2.scale(i);
-	//    s2_sub[i] = pow(s2_sub[i],1.0/T);
-    }
-    Pr_total = 1.0;
-    Pr_total.log() += log_scale_min*scale*B;
-
-    //----- pre-calculate scaling factors --------//
-    for(int i=0;i<dists2.n_columns();i++)
+    s2_sub[0] = 0;
+    s2_sub[1] = 0;
+    for(int i=2;i<dists2.n_columns();i++)
+    {
 	dists2.mul(i, weighted_frequencies);
+
+	double sum = dists2.sum(i);
+	assert(sum > 0);
+	dists2.mul(i, 1.0/sum);
+	prod *= sum;
+
+	s2_sub[i] = 1;
+
+	scale += dists2.scale(i);
+    }
+    Pr_total = prod;
+    Pr_total.log() += log_scale_min*scale;
+
+    Pr_total.log() *= B;
 }
 
 
