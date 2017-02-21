@@ -39,14 +39,14 @@ constexpr double log_0 = -max_float;
 // HMM... the long doubles have 64 bits of precision...
 constexpr double NATS = 40;
 
-inline double logsum_nocheck(double x, double y) {
+constexpr double logsum_nocheck(double x, double y) {
     if (std::abs(x-y) > NATS)
 	return ((x > y) ? x : y);
     else
 	return (x + log1p(exp(y - x)));
 }
 
-inline double logsum(double x, double y)
+constexpr double logsum(double x, double y)
 {
     double temp = y-x;
     if (temp > NATS or x < log_limit)
@@ -57,7 +57,7 @@ inline double logsum(double x, double y)
 	return (x + log1p(exp(temp)));
 }
 
-inline void loginc(double& x, double y)
+constexpr void loginc(double& x, double y)
 {
     double temp = y-x;
     if (temp > NATS or x < log_limit)
@@ -68,7 +68,7 @@ inline void loginc(double& x, double y)
 	x += log1p(exp(temp));
 }
 
-inline double logdiff(double x, double y) {
+constexpr double logdiff(double x, double y) {
     assert(x >= y);
     double temp = y-x;
     if (temp < -NATS or y < log_limit)
