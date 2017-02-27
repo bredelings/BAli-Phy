@@ -10,7 +10,7 @@ using boost::property_tree::ptree;
 
 const vector< vector<vector<string>> > all_default_arguments = 
 {
-    {{"log","Double","G"}, {"log","1"}, {"1","Double"}},
+    {{"log","Double","GN"}, {"log","x"}, {"x","Double"}},
     {{"Sample","a"}, {"performAction","x"}, {"x","Distribution[a]"}},
 
     {{"Uniform","Distribution[Double]","G"}, {"uniform","low","high"}, {"low","Double"}, {"high","Double"}},
