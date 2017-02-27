@@ -190,10 +190,66 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	
     bool pass_arguments = rule->get("pass_arguments",false);
     bool is_list_rule = rule->get("list_arguments",false);
+    bool generate_function = rule->get("generate_function",false);
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
     
     expression_ref E = identifier(array_index(call,0).get_value<string>());
+    if (generate_function)
+    {
+	auto Prefix = lambda_expression( constructor("Distributions.Prefix",2) );
+	auto Log = lambda_expression( constructor("Distributions.Log",2) );
+
+	// 1. Get the underlying function f that we are calling
+	expression_ref F = identifier(array_index(call,0).get_value<string>());
+
+	// 2. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
+	//    There could be fewer of these than the rule arguments.
+	for(int i=1;i<call.size();i++)
+	{
+	    string call_arg_name = array_index(call,i).get_value<string>();
+	    F = (F,dummy("arg_" + call_arg_name));
+	}
+
+	// 3. Return the function call: 'return (f call.name1 call.name2 call.name3)'
+	F = (identifier("return"),F);
+
+	// 4. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << F)'
+	for(int i=0;i<args.size();i++)
+	{
+	    auto argi = array_index(args,i);
+
+	    string arg_name = array_index(argi,0).get_value<string>();
+	    ptree arg_tree = get_arg(*rule, arg_name);
+	    ptree arg_type = arg_tree.get_child("arg_type");
+	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name));
+	    bool do_log = true;
+
+	    // F = Log "arg_name" arg_name >> F
+	    if (do_log)
+	    {
+		auto log_action = (Log,arg_name,dummy("arg_"+arg_name));
+		F = (identifier(">>"),log_action,F);
+	    }
+
+	    // Prefix "arg_name" (arg_+arg_name)
+	    auto action = (Prefix, arg_name, dummy("xarg_"+arg_name));
+
+	    // F = 'action <<=
+	    F = (identifier(">>="), action, lambda_quantify(dummy("arg_"+arg_name), F));
+	}
+
+	F = (Prefix, name, F);
+
+	for(int j=args.size()-1;j>=0;j--)
+	{
+	    auto argi = array_index(args,j);
+	    string arg_name = array_index(argi,0).get_value<string>();
+	    F = lambda_quantify(dummy("xarg_"+arg_name),F);
+	}
+
+	E = F;
+    }
     if (pass_arguments)
     {
 	ptree arg_type = get_type_for_arg(*rule, "*");

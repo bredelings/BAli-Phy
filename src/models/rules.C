@@ -145,6 +145,8 @@ ptree convert_rule(const vector<vector<string>>& s)
 	rule.put("pass_arguments","true");
     else if (s[0].size() > 2 and s[0][2] == "L")
 	rule.put("list_arguments","true");
+    else if (s[0].size() > 2 and s[0][2] == "G")
+	rule.put("generate_function","true");
 
     if (s[1].size())
     {
