@@ -144,14 +144,11 @@ ptree parse_no_submodel(const string& s)
 		throw myexception()<<"Parameter name missing in argument '"<<args[i]<<"'";
 	}
 	// 6. If we have a keyword argument, remember it
-	else if (arg = split_keyword(args[i],'~'))
+	else if ((arg = split_keyword(args[i],'~')) and arg->first.size() and arg->first[0] != '~')
 	{
-	    if (arg and arg->first.size() and arg->first[0] != '~')
-	    {
-		seen_keyword_arg = true;
-		key_value = *arg;
-		key_value.second = "~"+key_value.second;
-	    }
+	    seen_keyword_arg = true;
+	    key_value = *arg;
+	    key_value.second = "~"+key_value.second;
 	}
 	// 7. Otherwise find the keyword for the positional argument
 	else
