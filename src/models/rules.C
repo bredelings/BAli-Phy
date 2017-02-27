@@ -141,12 +141,14 @@ ptree convert_rule(const vector<vector<string>>& s)
     rule.put("name",s[0][0]);
 
     rule.push_back({"result_type",parse_type(s[0][1])});
-    if (s[0].size() > 2 and s[0][2] == "P")
+    if (s[0].size() > 2 and contains_char(s[0][2],'P'))
 	rule.put("pass_arguments","true");
-    else if (s[0].size() > 2 and s[0][2] == "L")
+    if (s[0].size() > 2 and contains_char(s[0][2],'L'))
 	rule.put("list_arguments","true");
-    else if (s[0].size() > 2 and s[0][2] == "G")
+    if (s[0].size() > 2 and contains_char(s[0][2],'G'))
 	rule.put("generate_function","true");
+    if (s[0].size() > 2 and contains_char(s[0][2],'N'))
+	rule.put("no_log","true");
 
     if (s[1].size())
     {
