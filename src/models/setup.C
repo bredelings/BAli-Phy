@@ -223,7 +223,11 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	    ptree arg_tree = get_arg(*rule, arg_name);
 	    ptree arg_type = arg_tree.get_child("arg_type");
 	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name));
-	    bool do_log = true;
+	    bool do_log = false;
+	    if (model_rep.get_child(arg_name).get_value<string>() == "Sample")
+		do_log = true;
+	    else
+		std::cerr<<"Not logging: arg_name = "<<show(model_rep.get_child(arg_name))<<"\n";
 
 	    // F = Log "arg_name" arg_name >> F
 	    if (do_log)
