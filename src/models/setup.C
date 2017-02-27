@@ -258,10 +258,12 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	{
 	    auto argi = array_index(args,i);
 
+	    // No need to perform or log lambda arguments.
+	    if (argi.get("no_apply",false)) continue;
+
 	    string arg_name = array_index(argi,0).get_value<string>();
 	    ptree arg_tree = get_arg(*rule, arg_name);
 	    ptree arg_type = arg_tree.get_child("arg_type");
-	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name));
 
 	    // F = Log "arg_name" arg_name >> F
 	    if (should_log(model_rep, arg_name))
@@ -283,9 +285,13 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	{
 	    auto argi = array_index(args,j);
 	    string arg_name = array_index(argi,0).get_value<string>();
-	    F = lambda_quantify(dummy("xarg_"+arg_name),F);
+	    if (argi.get("no_apply",false))
+		F = lambda_quantify(dummy("arg_"+arg_name),F); // These args are not performed.
+	    else
+		F = lambda_quantify(dummy("xarg_"+arg_name),F);
 	}
 
+//	std::cerr<<F<<"\n";
 	E = F;
     }
     if (pass_arguments)
@@ -312,6 +318,8 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	{
 	    string arg_name = array_index(call,i).get_value<string>();
 	    ptree arg_tree = get_arg(*rule, arg_name);
+	    if (arg_tree.get("no_apply",false)) continue;
+
 	    ptree arg_type = arg_tree.get_child("arg_type");
 	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name));
 	    E = (E,arg);

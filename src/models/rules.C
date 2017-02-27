@@ -41,7 +41,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"JC","RA[a]"}, {"jc_model"}},
     {{"K80","RA[a]"}, {"k80_model","kappa"}, {"kappa","Double","~logNormal[log[2],0.25]"}, },
     {{"F81"}, {}, {"alphabet","Alphabet"}},
-    {{"HKY","EM[a]"}, {"hky_model","kappa"}, {"kappa","Double","~logNormal[log[2],0.25]"}, },
+    {{"HKY","EM[a]","G"}, {"hky","kappa","alphabet"}, {"kappa","Double","~logNormal[log[2],0.25]"}, {"alphabet","a","LAMBDA"}},
     {{"TN","EM[a]"}, {"tn_model","kappaPur","kappaPyr"}, {"kappaPur","Double","~logNormal[log[2],0.25]"}, {"kappaPyr","Double","~logNormal[log[2],0.25]"}},
     {{"GTR","EM[a]"}, {"gtr_model","S"}, {"S","E","exchange_prior"}},
     {{"exchange_prior","E"}, {"exchange_model"}},
@@ -167,7 +167,9 @@ ptree convert_rule(const vector<vector<string>>& s)
 	string arg_name = s[i][0];
 	arg.put("arg_name",arg_name);
 	arg.push_back({"arg_type",parse_type(s[i][1])});
-	if (s[i].size() > 2)
+	if (s[i].size() > 2 and s[i][2] == "LAMBDA")
+	    arg.put("no_apply","true"); // FIXME -- this only makes sense for the last few args
+	else if (s[i].size() > 2)
 	    arg.push_back({"default_value",parse(s[i][2])});
 	args.push_back({"",arg});
     }

@@ -178,6 +178,8 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
     // 3. Handle supplied arguments first.
     for(auto& child: model)
     {
+	if (get_arg(rule, child.first).get("no_apply",false))
+	    throw myexception()<<"Rule for function '"<<rule.get<string>("name")<<"' doesn't allow specifying a value for '"<<child.first<<"'.";
 	type_t arg_required_type = get_type_for_arg(rule, child.first);
 	substitute(equations, arg_required_type);
 	pass2(arg_required_type, child.second, equations);
@@ -189,7 +191,7 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 	const auto& argument = arg.second;
 
 	string arg_name = argument.get<string>("arg_name");
-	bool arg_is_required = (arg_name != "*");
+	bool arg_is_required = (arg_name != "*") and not argument.get("no_apply",false);
 
 	if (model.count(arg_name)) continue;
 
