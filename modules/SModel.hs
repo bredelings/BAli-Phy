@@ -819,8 +819,6 @@ empirical a filename = builtin_empirical a (listToString filename);
 
 empirical_model filename a = do { filename' <- filename ; return $ empirical a filename'};
 
-log_model x = do {x' <- x; return (log x')};
-
 pair_model x y = do {x' <- x; y' <- y; return (x',y')};
 
 cached_conditional_likelihoods t seqs as alpha ps f = let {lc    = mkArray (2*numBranches t) lcf;

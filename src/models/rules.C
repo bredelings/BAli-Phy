@@ -10,26 +10,26 @@ using boost::property_tree::ptree;
 
 const vector< vector<vector<string>> > all_default_arguments = 
 {
-    {{"log","Double","N"}, {"log_model","x"}, {"x","Double"}},
+    {{"log","Double","G"}, {"log","1"}, {"1","Double"}},
     {{"Sample","a"}, {"performAction","x"}, {"x","Distribution[a]"}},
 
-    {{"Uniform","Distribution[Double]"}, {"uniform_model","low","high"}, {"low","Double"}, {"high","Double"}},
-    {{"UniformInt","Distribution[Int]"}, {"uniform_int_model","low","high"}, {"low","Int"}, {"high","Int"}},
-    {{"Normal","Distribution[Double]"}, {"normal_model","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
-    {{"logNormal","Distribution[Double]"}, {"logNormal_model","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
-    {{"logLaplace","Distribution[Double]"}, {"logLaplace_model","lm","ls"}, {"lm","Double"}, {"ls","Double"}},
-    {{"Laplace","Distribution[Double]"}, {"laplace_model","m","s"}, {"m","Double"}, {"s","Double"}},
-    {{"logGamma","Distribution[Double]"}, {"logGamma_model","a","b"}, {"a","Double"}, {"b","Double"}},
-    {{"Beta","Distribution[Double]"}, {"beta_model","a","b"}, {"a","Double"}, {"b","Double"}},
-    {{"Exponential","Distribution[Double]"}, {"exponential_model","mean"}, {"mean","Double"}},
-    {{"Gamma","Distribution[Double]"}, {"Distributions.gamma_model","a","b"}, {"a","Double"}, {"b","Double"}},
+    {{"Uniform","Distribution[Double]","G"}, {"uniform","low","high"}, {"low","Double"}, {"high","Double"}},
+    {{"UniformInt","Distribution[Int]","G"}, {"uniform_int","low","high"}, {"low","Int"}, {"high","Int"}},
+    {{"Normal","Distribution[Double]","G"}, {"normal","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
+    {{"logNormal","Distribution[Double]","G"}, {"logNormal","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
+    {{"logLaplace","Distribution[Double]","G"}, {"logLaplace","lm","ls"}, {"lm","Double"}, {"ls","Double"}},
+    {{"Laplace","Distribution[Double]","G"}, {"laplace","m","s"}, {"m","Double"}, {"s","Double"}},
+    {{"logGamma","Distribution[Double]","G"}, {"logGamma","a","b"}, {"a","Double"}, {"b","Double"}},
+    {{"Beta","Distribution[Double]","G"}, {"beta","a","b"}, {"a","Double"}, {"b","Double"}},
+    {{"Exponential","Distribution[Double]","G"}, {"exponential","mean"}, {"mean","Double"}},
+    {{"Gamma","Distribution[Double]","G"}, {"Distributions.gamma","a","b"}, {"a","Double"}, {"b","Double"}},
 
-    {{"Bernoulli","Distribution[Int]"}, {"Distributions.bernoulli_model","p"}, {"p","Double"}},
-    {{"Binomial","Distribution[Int]"}, {"Distributions.binomial_model","n", "p"}, {"n","Int"}, {"p","Double"}},
-    {{"Geometric","Distribution[Int]"}, {"geometric_model","p"}, {"p","Double"}},
+    {{"Bernoulli","Distribution[Int]","G"}, {"Distributions.bernoulli","p"}, {"p","Double"}},
+    {{"Binomial","Distribution[Int]","G"}, {"Distributions.binomial","n", "p"}, {"n","Int"}, {"p","Double"}},
+    {{"Geometric","Distribution[Int]","G"}, {"geometric","p"}, {"p","Double"}},
 
-    {{"iid","Distribution[List[a]]"}, {"iid_model","n","dist"}, {"n","Int"}, {"dist","Distribution[a]"}},
-    {{"Dirichlet","Distribution[List[Double]]"}, {"dirichlet'_model","n","x"}, {"n","Int"}, {"x","Double"}},
+    {{"iid","Distribution[List[a]]","G"}, {"iid","n","dist"}, {"n","Int"}, {"dist","Distribution[a]"}},
+    {{"Dirichlet","Distribution[List[Double]]","G"}, {"dirichlet'","n","x"}, {"n","Int"}, {"x","Double"}},
 //    {{"Dirichlet","List[Double]"}, {"dirichlet_model","ps"}, {"ps","List[Double]"}},
 
 //  We need a way to construct lists, not from a distribution.

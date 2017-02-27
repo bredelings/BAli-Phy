@@ -65,33 +65,18 @@ builtin gamma_quantile 3 "gamma_quantile" "Distribution";
 builtin builtin_sample_gamma 2 "sample_gamma" "Distribution";
 sample_gamma a b = Random (IOAction2 builtin_sample_gamma a b);
 gamma a b = ProbDensity (gamma_density a b) (gamma_quantile a b) (sample_gamma a b) (above 0.0);
-gamma_model a b = Prefix "Gamma" $ do {a' <- Prefix "a" a;
-                                     Log "a" a';
-                                     b' <- Prefix "b" b;
-                                     Log "b" b';
-                                     return $ gamma a' b'};
 
 builtin beta_density 3 "beta_density" "Distribution";
 builtin beta_quantile 3 "beta_quantile" "Distribution";
 builtin builtin_sample_beta 2 "sample_beta" "Distribution";
 sample_beta a b = Random (IOAction2 builtin_sample_beta a b);
 beta a b = ProbDensity (beta_density a b) (beta_quantile a b) (sample_beta a b) (between 0.0 1.0);
-beta_model a b = Prefix "Beta" $ do {a' <- Prefix "a" a;
-                                     Log "a" a';
-                                     b' <- Prefix "b" b;
-                                     Log "b" b';
-                                     return $ beta a' b'};
 
 builtin normal_density 3 "normal_density" "Distribution";
 builtin normal_quantile 3 "normal_quantile" "Distribution";
 builtin builtin_sample_normal 2 "sample_normal" "Distribution";
 sample_normal m s = Random (IOAction2 builtin_sample_normal m s);
 normal m s = ProbDensity (normal_density m s) (normal_quantile m s) (sample_normal m s) realLine;
-normal_model m s = Prefix "Normal" $ do {m' <- Prefix "mu" m;
-                                         Log "mu" m';
-                                         s' <- Prefix "sigma" s;
-                                         Log "sigma" s';
-                                         return $ normal m' s'};
 
 builtin cauchy_density 3 "cauchy_density" "Distribution";
 builtin builtin_sample_cauchy 2 "sample_cauchy" "Distribution";
@@ -102,31 +87,16 @@ builtin laplace_density 3 "laplace_density" "Distribution";
 builtin builtin_sample_laplace 2 "sample_laplace" "Distribution";
 sample_laplace m s = Random (IOAction2 builtin_sample_laplace m s);
 laplace m s = ProbDensity (laplace_density m s) () (sample_laplace m s) realLine;
-laplace_model m s = Prefix "Laplace" $ do {m' <- Prefix "m" m;
-                                           Log "m" m';
-                                           s' <- Prefix "s" s;
-                                           Log "s" s';
-                                           return $ laplace m' s'};
 
 builtin uniform_density 3 "uniform_density" "Distribution";
 builtin builtin_sample_uniform 2 "sample_uniform" "Distribution";
 sample_uniform l u = Random (IOAction2 builtin_sample_uniform l u);
 uniform l u = ProbDensity (uniform_density l u) () (sample_uniform l u) (between l u);
-uniform_model l u = Prefix "Uniform" (do {l' <- Prefix "low" l;
-                                          Log "low" l';
-                                          u' <- Prefix "high" u;
-                                          Log "high" u';
-                                          return $ uniform l' u'});
 
 builtin uniform_int_density 3 "uniform_int_density" "Distribution";
 builtin builtin_sample_uniform_int 2 "sample_uniform_int" "Distribution";
 sample_uniform_int l u = Random (IOAction2 builtin_sample_uniform_int l u);
 uniform_int l u = ProbDensity (uniform_int_density l u) () (sample_uniform_int l u) (integer_between l u);
-uniform_int_model l u = Prefix "UniformInt" (do {l' <- Prefix "low" l;
-                                                 Log "low" l';
-                                                 u' <- Prefix "high" u;
-                                                 Log "high" u';
-                                                 return $ uniform_int l' u'});
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
 dirichlet_density ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
@@ -134,30 +104,12 @@ sample_dirichlet ps = do { vs <- mapM (\a->gamma a 1.0) ps;
                            return $ map (/(sum vs)) vs};
 dirichlet ps = ProbDensity (dirichlet_density ps) (no_quantile "dirichlet") (sample_dirichlet ps) (Simplex (length ps) 1.0);
 
-dirichlet_model ps = Prefix "Dirichlet" $ do
-                       {
-                         ps' <- ps;
-                         return $ dirichlet ps';
-                       };
-
 dirichlet' n x = dirichlet (replicate n x);
-dirichlet'_model n x = Prefix "Dirichlet'" $ do
-                       {
-                         n' <- n;
-                         x' <- x;
-                         return $ dirichlet' n' x';
-                       };
-
 
 builtin binomial_density 3 "binomial_density" "Distribution";
 builtin builtin_sample_binomial 2 "sample_binomial" "Distribution";
 sample_binomial n p = Random (IOAction2 builtin_sample_binomial n p);
 binomial n p = ProbDensity (binomial_density n p) (no_quantile "binomial") (sample_binomial n p) (integer_between 0 n);
-binomial_model n p = Prefix "Binomial" $ do { n' <- Prefix "n" n;
-                                              Log "n" n';
-                                              p' <- Prefix "p" p;
-                                              Log "p" p';
-                                              return $ binomial n p};
 
 -- A geometric distribution on [0,\infty).  How many failures before a success?
 builtin geometric_density 3 "geometric_density" "Distribution";
@@ -167,12 +119,6 @@ geometric2 p_fail p_success = ProbDensity (geometric_density p_fail p_success) (
 
 geometric p = geometric2 (1.0-p) p;
 rgeometric q = geometric2 q (1.0-q);
-
-geometric_model p  = Prefix "Geometric" $ do {
-                                            p' <- Prefix "p" p;
-                                            Log "p" p';
-                                            return $ geometric p';
-                                          };
 
 builtin poisson_density 2 "poisson_density" "Distribution";
 builtin builtin_sample_poisson 1 "sample_poisson" "Distribution";
@@ -188,18 +134,12 @@ bernoulli2 p q = ProbDensity (bernoulli_density2 p q) (no_quantile "bernoulli") 
 
 bernoulli p = bernoulli2 p (1.0-p);
 rbernoulli q = bernoulli2 (1.0-q) q;
-bernoulli_model p = Prefix "Bernoulli" $ do {p' <- Prefix "p" p;
-                                             Log "p" p';
-                                             return $ bernoulli p'};
 
 builtin builtin_sample_exponential 1 "sample_exponential" "Distribution";
 builtin exponential_density 2 "exponential_density" "Distribution";
 exponential_quantile mu p = gamma_quantile 1.0 mu p;
 sample_exponential mu = Random (IOAction1 builtin_sample_exponential mu);
 exponential mu = ProbDensity (exponential_density mu) (exponential_quantile mu) (sample_exponential mu) (above 0.0);
-exponential_model mu = Prefix "Exponential" $ do { mu' <- Prefix "mean" mu;
-                                                   Log "mean" mu';
-                                                   return $ exponential mu'};
 
 normalize v = map (/total) v where {total=sum v};
 
@@ -253,11 +193,6 @@ list dists = ProbDensity (list_density dists) (no_quantile "list") (sequence dis
 -- define different examples of list distributions
 iid n dist = list (replicate n dist);
 
-iid_model n dist = Prefix "iid" $  do {
-                                     n' <- Prefix "n" n;
-                                     dist' <- dist;
-                                     return $ iid n' dist'};
-
 plate n dist_f = list $ map dist_f [0..n-1];
   
 -- This contains functions for working with DiscreteDistribution
@@ -302,24 +237,6 @@ logExponential mu = expTransform $  exponential mu;
 logGamma a b = expTransform $ gamma a b;
 logLaplace m s = expTransform $ laplace m s;
 logCauchy m s = expTransform $ cauchy m s;
-
-logNormal_model mu sigma = Prefix "logNormal" $ do {mu' <- Prefix "lmu" mu;
-                                                    Log "lmu" mu';
-                                                    sigma' <- Prefix "lsigma" sigma;
-                                                    Log "lsigma" sigma';
-                                                    return $ logNormal mu' sigma'};
-
-logLaplace_model mu sigma = Prefix "logLaplace" $ do {mu' <- Prefix "lmu" mu;
-                                                      Log "lmu" mu';
-                                                      sigma' <- Prefix "lsigma" sigma;
-                                                      Log "lsigma" sigma';
-                                                      return $ logNormal mu' sigma'};
-
-logGamma_model a b = Prefix "logGamma" $ do {a' <- Prefix "a" a;
-                                             Log "a" a';
-                                             b' <- Prefix "b" b;
-                                             Log "b" b';
-                                             return $ logGamma a' b'};
 
 safe_exp x = if (x < (-20.0)) then
                exp (-20.0);
