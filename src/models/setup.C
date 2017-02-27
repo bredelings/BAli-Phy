@@ -325,8 +325,6 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	    E = (E,arg);
 	}
     return E;
-
-    return {};
 }
 
 optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const alphabet& a)
