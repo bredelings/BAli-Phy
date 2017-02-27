@@ -11,6 +11,7 @@ using boost::property_tree::ptree;
 const vector< vector<vector<string>> > all_default_arguments = 
 {
     {{"log","Double","GN"}, {"log","x"}, {"x","Double"}},
+    {{"exp","Double","GN"}, {"exp","x"}, {"x","Double"}},
     {{"Sample","a"}, {"performAction","x"}, {"x","Distribution[a]"}},
 
     {{"Uniform","Distribution[Double]","G"}, {"uniform","low","high"}, {"low","Double"}, {"high","Double"}},
