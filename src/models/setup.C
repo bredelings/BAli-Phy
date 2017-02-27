@@ -273,7 +273,15 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	    }
 
 	    // Prefix "arg_name" (arg_+arg_name)
-	    auto action = (Prefix, arg_name, dummy("xarg_"+arg_name));
+	    expression_ref action = dummy("xarg_"+arg_name);
+	    auto applied_args = argi.get_child_optional("applied_args");
+	    if (applied_args)
+		for(const auto& applied_arg: *applied_args)
+		{
+		    string applied_arg_name = applied_arg.second.get_value<string>();
+		    action = (action,dummy("arg_"+ applied_arg_name));
+		}
+	    action = (Prefix, arg_name, action);
 
 	    // F = 'action <<=
 	    F = (identifier(">>="), action, lambda_quantify(dummy("arg_"+arg_name), F));
@@ -312,6 +320,21 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	for(const auto& child: model_rep)
 	    arguments.push_back( get_model_as(arg_type, child.second) );
 	E = (E,get_list(arguments));
+    }
+    else if (generate_function)
+    {
+	for(int i=0;i<args.size();i++)
+	{
+//	    std::cerr<<show(array_index(args,i))<<"\n";
+	    string arg_name = array_index(args,i).get<string>("arg_name");
+	    ptree arg_tree = get_arg(*rule, arg_name);
+	    if (arg_tree.get("no_apply",false)) continue;
+
+	    ptree arg_type = arg_tree.get_child("arg_type");
+	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name));
+	    E = (E,arg);
+	}
+//	std::cerr<<E<<"\n";
     }
     else
 	for(int i=1;i<call.size();i++)

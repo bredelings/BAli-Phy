@@ -118,7 +118,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"AA","Alphabet"}, {"aa"}},
 // We can't write Codons[a,b] yet because we don't any mechanism for dealing with inheritance
     {{"Codons","Alphabet"}, {"codons","nuc","aa"}, {"nuc","Alphabet"}, {"aa","Alphabet","AA"}},
-    {{"RCTMC","RA[a]","N"}, {"reversible_markov_model","Q","R"}, {"Q","EM[a]"}, {"R","FM[a]"}},
+    {{"RCTMC","RA[a]","GN"}, {"reversible_markov","Q","R"}, {"Q","EM[a]","","A"}, {"R","FM[a]","","A"},{"A","a","LAMBDA"}},
     {{"UnitMixture","MM[a]","N"}, {"unit_mixture_model","submodel"}, {"submodel","RA[a]"}},
     {{"MMM","MMM[a]","N"}, {"mmm_model","submodel"}, {"submodel","MM[a]"}},
     {{"RS05","IM"}, {"rs05_model","logDelta","meanIndelLengthMinus1","tau"},
@@ -169,8 +169,16 @@ ptree convert_rule(const vector<vector<string>>& s)
 	arg.push_back({"arg_type",parse_type(s[i][1])});
 	if (s[i].size() > 2 and s[i][2] == "LAMBDA")
 	    arg.put("no_apply","true"); // FIXME -- this only makes sense for the last few args
-	else if (s[i].size() > 2)
+	else if (s[i].size() > 2 and not s[i][2].empty())
 	    arg.push_back({"default_value",parse(s[i][2])});
+
+	if (s[i].size() > 3 and not s[i][3].empty())
+	{
+	    ptree applied_args;
+	    for(const auto& arg: split(s[i][3],' '))
+		applied_args.push_back({"", ptree(arg)});
+	    arg.push_back({"applied_args",applied_args});
+	}
 	args.push_back({"",arg});
     }
     rule.push_back({"args",args});
