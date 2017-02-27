@@ -180,6 +180,48 @@ expression_ref get_model_as(const string& type, const ptree& model_rep)
     return get_model_as(parse_type(type), model_rep);
 }
 
+bool is_loggable_function(const string& name)
+{
+    auto rule = get_rule_for_func(name);
+    if (not rule) return false;
+    return not rule->get("no_log",false);
+}
+
+bool is_unlogged_random(const ptree& model)
+{
+    auto name = model.get_value<string>();
+
+    // 1. If this function is random, then yes.
+    if (name == "Sample") return true;
+
+    // 2. If this function is loggable then any random children have already been logged.
+    if (is_loggable_function(name)) return false;
+
+    // 3. Otherwise check if children are random and unlogged
+    for(const auto& p: model)
+	if (is_unlogged_random(p.second))
+	    return true;
+
+    return false;
+}
+
+bool should_log(const ptree& model, const string& arg_name)
+{
+    auto name = model.get_value<string>();
+
+    if (not is_loggable_function(name)) return false;
+
+    auto arg = model.get_child(arg_name);
+
+    if (is_unlogged_random(arg))
+	return true;
+    else
+    {
+	std::cerr<<"Not logging: arg_name = "<<show(arg)<<"\n";
+	return false;
+    }
+}
+
 expression_ref process_stack_functions(const ptree& model_rep)
 {
     string name = model_rep.get_value<string>();
@@ -223,14 +265,9 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	    ptree arg_tree = get_arg(*rule, arg_name);
 	    ptree arg_type = arg_tree.get_child("arg_type");
 	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name));
-	    bool do_log = false;
-	    if (model_rep.get_child(arg_name).get_value<string>() == "Sample")
-		do_log = true;
-	    else
-		std::cerr<<"Not logging: arg_name = "<<show(model_rep.get_child(arg_name))<<"\n";
 
 	    // F = Log "arg_name" arg_name >> F
-	    if (do_log)
+	    if (should_log(model_rep, arg_name))
 	    {
 		auto log_action = (Log,arg_name,dummy("arg_"+arg_name));
 		F = (identifier(">>"),log_action,F);
@@ -395,7 +432,7 @@ expression_ref get_model(const string& type, const ptree& model_rep)
 
 expression_ref get_model(const string& type, const string& model)
 {
-//    std::cout<<"model1 = "<<model<<std::endl;
+//    std::cout<<"model1 = "<<show(parse(model))<<std::endl;
 
     auto p = translate_model(type, model);
     auto model_tree = p.first;
