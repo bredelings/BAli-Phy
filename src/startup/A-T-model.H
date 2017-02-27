@@ -11,17 +11,18 @@
 #include "computation/module.H"
 #include "alignment/alignment.H"
 #include "setup.H"
+#include "models/setup.H"
 #include "owned-ptr.H"
 
 void setup_heating(int proc_id, const boost::program_options::variables_map& args, Parameters& P);
 
 void setup_partition_weights(const boost::program_options::variables_map& args, Parameters& P);
 
-std::vector<expression_ref>
+std::vector<model_t>
 get_smodels(const boost::program_options::variables_map& args, const std::vector<alignment>& A,
 	    shared_items<std::string>& smodel_names_mapping);
 
-std::vector<expression_ref> 
+std::vector<model_t> 
 get_imodels(const shared_items<std::string>& imodel_names_mapping, const SequenceTree& T);
 
 void log_summary(std::ostream& out_cache, std::ostream& out_screen,std::ostream& out_both,

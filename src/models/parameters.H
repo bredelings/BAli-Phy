@@ -40,6 +40,7 @@
 #include "cached_value.H"
 #include "dp/2way.H"
 #include "TreeInterface.H"
+#include "models/setup.H"
 
 //------------------------------- parameter-containing class --------------------------//
 
@@ -278,9 +279,9 @@ struct parameters_constants: public Object
     parameters_constants* clone() const {return new parameters_constants(*this);}
 
     parameters_constants(const std::vector<alignment>& A, const SequenceTree&, 
-			 const std::vector<expression_ref>&,
+			 const std::vector<model_t>&,
 			 const std::vector<int>&,
-			 const std::vector<expression_ref>&,
+			 const std::vector<model_t>&,
 			 const std::vector<int>&,
 			 const std::vector<int>&);
 };
@@ -398,15 +399,15 @@ public:
 
     Parameters(const module_loader& L,
 	       const std::vector<alignment>& A, const SequenceTree&, 
-	       const std::vector<expression_ref>&,
+	       const std::vector<model_t>&,
 	       const std::vector<int>&,
 	       const std::vector<int>&);
 
     Parameters(const module_loader& L,
 	       const std::vector<alignment>& A, const SequenceTree&, 
-	       const std::vector<expression_ref>&,
+	       const std::vector<model_t>&,
 	       const std::vector<int>&,
-	       const std::vector<expression_ref>&,
+	       const std::vector<model_t>&,
 	       const std::vector<int>&,
 	       const std::vector<int>&);
 };

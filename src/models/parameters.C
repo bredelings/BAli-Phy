@@ -1150,9 +1150,9 @@ expression_ref Parameters::my_tree() const
 }
 
 parameters_constants::parameters_constants(const vector<alignment>& A, const SequenceTree& t,
-					   const vector<expression_ref>& SMs,
+					   const vector<model_t>& SMs,
 					   const vector<int>& s_mapping,
-					   const vector<expression_ref>& /* IMs */,
+					   const vector<model_t>& /* IMs */,
 					   const vector<int>& i_mapping,
 					   const vector<int>& scale_mapping)
     :smodel_for_partition(s_mapping),
@@ -1180,9 +1180,9 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
 
 Parameters::Parameters(const module_loader& L,
 		       const vector<alignment>& A, const SequenceTree& tt,
-		       const vector<expression_ref>& SMs,
+		       const vector<model_t>& SMs,
 		       const vector<int>& s_mapping,
-		       const vector<expression_ref>& IMs,
+		       const vector<model_t>& IMs,
 		       const vector<int>& i_mapping,
 		       const vector<int>& scale_mapping)
     :Model(L),
@@ -1247,7 +1247,7 @@ Parameters::Parameters(const module_loader& L,
     {
 	string prefix = "S" + convertToString(i+1);
 
-	expression_ref smodel = SMs[i];
+	expression_ref smodel = SMs[i].expression;
 
 	PC->SModels.push_back( smodel_methods( perform_exp(smodel,prefix), *this) );
     }
@@ -1257,7 +1257,7 @@ Parameters::Parameters(const module_loader& L,
     for(int i=0;i<n_imodels();i++) 
     {
 	string prefix = "I" + convertToString(i+1);
-	auto imodel = (IMs[i],my_tree());
+	auto imodel = (IMs[i].expression, my_tree());
 	imodels_.push_back(perform_exp(imodel, prefix));
     }
 
@@ -1353,10 +1353,10 @@ Parameters::Parameters(const module_loader& L,
 
 Parameters::Parameters(const module_loader& L,
 		       const vector<alignment>& A, const SequenceTree& t,
-		       const vector<expression_ref>& SMs,
+		       const vector<model_t>& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<int>& scale_mapping)
-    :Parameters(L, A, t, SMs, s_mapping, vector<expression_ref>{}, vector<int>{}, scale_mapping)
+    :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<int>{}, scale_mapping)
 { }
 
 bool accept_MH(const Model& P1,const Model& P2,double rho)

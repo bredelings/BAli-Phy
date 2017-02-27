@@ -108,10 +108,10 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 	std::cout<<b<<"\n";
 }
 
-vector<expression_ref>
+vector<model_t>
 get_smodels(const vector<alignment>& A, shared_items<string>& smodel_names_mapping)
 {
-    vector<expression_ref> smodels;
+    vector<model_t> smodels;
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++) 
     {
 	vector<alignment> alignments;
@@ -127,9 +127,9 @@ get_smodels(const vector<alignment>& A, shared_items<string>& smodel_names_mappi
 		throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
 	}
 
-	expression_ref full_smodel = get_model("MMM[a]",smodel_names_mapping.unique(i));
+	auto full_smodel = get_model("MMM[a]",smodel_names_mapping.unique(i));
 
-	full_smodel = (full_smodel, alignments[0].get_alphabet());
+	full_smodel.expression= (full_smodel.expression, alignments[0].get_alphabet());
 
 	smodels.push_back(full_smodel);
 	//    cout<<"SModel "<<i+1<<": prior = "<<log(smodels.back()->prior())<<"\n";
@@ -137,10 +137,10 @@ get_smodels(const vector<alignment>& A, shared_items<string>& smodel_names_mappi
     return smodels;
 }
 
-vector<expression_ref> 
+vector<model_t>
 get_imodels(const shared_items<string>& imodel_names_mapping, const SequenceTree&)
 {
-    vector<expression_ref> imodels;
+    vector<model_t> imodels;
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
 	imodels.push_back( get_model("IM",imodel_names_mapping.unique(i)) );
     return imodels;
@@ -148,6 +148,7 @@ get_imodels(const shared_items<string>& imodel_names_mapping, const SequenceTree
 
 void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */,
 		 const shared_items<string>& imodels, const shared_items<string>& smodels,
+		 const vector<model_t>& IModels, const vector<model_t>& SModels,
 		 const Parameters& P,const variables_map& args)
 {
     //-------- Log some stuff -----------//
@@ -174,13 +175,13 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */
     for(int i=0;i<P.n_data_partitions();i++) {
 	int s_index = P.smodel_index_for_partition(i);
 	//    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
-	out_screen<<"#"<<i+1<<": subst ~ "<<smodels[i]<<" ("<<s_index+1<<")    ";
+	out_screen<<"#"<<i+1<<": subst ~ "<<SModels[i].description<<" ("<<s_index+1<<")\n";
 
 	int i_index = P.imodel_index_for_partition(i);
 	string i_name = "none";
 	if (i_index != -1)
-	    i_name = imodels[i];
-	out_screen<<" indel ~ "<<i_name<<" ("<<i_index+1<<")"<<endl;;
+	    i_name = IModels[i].description;
+	out_screen<<"#"<<i+1<<": indel ~ "<<i_name<<" ("<<i_index+1<<")"<<endl;
     }
     out_screen<<"\n";
 }
@@ -383,7 +384,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
     //--------- Set up the substitution model --------//
 
     // FIXME - change to return a (model, standardized name) pair.
-    vector<expression_ref> full_imodels = get_imodels(imodel_names_mapping, T);
+    auto full_imodels = get_imodels(imodel_names_mapping, T);
 
     //--------- Set up the substitution model --------//
     shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
@@ -391,7 +392,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
     vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
 
     // FIXME - change to return a (model, standardized name) pair.
-    vector<expression_ref> full_smodels = get_smodels(A,smodel_names_mapping);
+    auto full_smodels = get_smodels(A,smodel_names_mapping);
 
     //-------------- Which partitions share a scale? -----------//
     shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
@@ -423,7 +424,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& 
     write_branch_numbers(out_cache, T);
 
     //-------------------- Log model -------------------------//
-    log_summary(out_cache,out_screen,out_both,imodel_names_mapping,smodel_names_mapping,P,args);
+    log_summary(out_cache,out_screen,out_both,imodel_names_mapping,smodel_names_mapping,full_imodels,full_smodels,P,args);
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
