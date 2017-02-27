@@ -115,32 +115,11 @@ frequency_matrix (MixtureModel d) = let {model = MixtureModel d}
 frequency_matrix (MixtureModels (m:ms)) = frequency_matrix m;
 
 --
-equ_model nuca = return $ equ nuca;
-
 plus_f_equal_frequencies a = plus_f a (replicate n_letters (1.0/intToDouble n_letters)) where {n_letters=alphabetSize a};
 
-jc_model a = return $ reversible_markov (equ a) (plus_f_equal_frequencies a);
+jukes_cantor a = reversible_markov (equ a) (plus_f_equal_frequencies a);
 
-k80_model kappa nuca = Prefix "K80" $
-do {
-  kappa' <- Prefix "kappa" kappa;
-  Log "kappa" kappa';
-  return $ reversible_markov (hky kappa' nuca) (plus_f_equal_frequencies nuca);
-};
-
-hky_model kappa nuca = Prefix "HKY" 
-(do {
-   kappa' <- Prefix "kappa" kappa;
-   Log "kappa" kappa';
-   return $ hky kappa' nuca});
-
-tn_model kappaPur kappaPyr nuca = Prefix "TN"
-(do {
-   kappaPur' <- Prefix "kappaPur" kappaPur;
-   Log "kappaPur" kappaPur';
-   kappaPyr' <- Prefix "kappaPyr" kappaPyr;
-   Log "kappaPyr" kappaPyr';
-   return (tn kappaPur' kappaPyr' nuca)});
+k80 kappa nuca = reversible_markov (hky kappa nuca) (plus_f_equal_frequencies nuca);
 
 gtr_model s a = Prefix "GTR" 
   (do {
