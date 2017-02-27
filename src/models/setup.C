@@ -216,10 +216,7 @@ bool should_log(const ptree& model, const string& arg_name)
     if (is_unlogged_random(arg))
 	return true;
     else
-    {
-	std::cerr<<"Not logging: arg_name = "<<show(arg)<<"\n";
 	return false;
-    }
 }
 
 expression_ref process_stack_functions(const ptree& model_rep)
