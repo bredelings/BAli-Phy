@@ -515,7 +515,7 @@ log_double_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const
 	P_sub *= sub;
     }
     assert(i == size1()-1 and j == size2()-1);
-    return P_sub;
+    return P_sub * Pr_extra_subst;
 }
 
 void DPmatrixEmit::prepare_cell(int i,int j) 
@@ -586,13 +586,14 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
 
 	scale += dists2.scale(i);
     }
-    Pr_total = prod;
-    Pr_total.log() += log_scale_min*scale;
+    Pr_extra_subst = prod;
+    Pr_extra_subst.log() += log_scale_min*scale;
 
-    Pr_total.log() *= B;
+    Pr_extra_subst.log() *= B;
 
+    Pr_total = Pr_extra_subst;
     // So far we have only multiplied by number <= 1, so thus should be true.
-    assert(Pr_total <= 1.0);
+    assert(Pr_extra_subst <= 1.0);
 }
 
 

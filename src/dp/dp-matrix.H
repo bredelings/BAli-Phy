@@ -160,6 +160,8 @@ public:
 class DPmatrixEmit : public DPmatrix {
 protected:
 
+    log_double_t Pr_extra_subst = 1;
+
     Matrix s12_sub;
     /// Precomputed emission probabilies for +-
     std::vector<double> s1_sub;
