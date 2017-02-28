@@ -478,18 +478,6 @@ inline double DPmatrixEmit::emitMM(int i,int j) const {
     return s12_sub(i,j);
 }
 
-inline double DPmatrixEmit::emitM_(int i,int) const {
-    return s1_sub[i];
-}
-
-inline double DPmatrixEmit::emit_M(int,int j) const {
-    return s2_sub[j];
-}
-
-inline double DPmatrixEmit::emit__(int,int) const {
-    return 1.0;
-}
-
 log_double_t DPmatrixEmit::path_Q_subst(const vector<int>& path) const 
 {
     log_double_t P_sub=1.0;
@@ -543,7 +531,6 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
 			   const Matrix& weighted_frequencies)
     :DPmatrix(d1.n_columns(), d2.n_columns(), M),
      s12_sub(d1.n_columns(), d2.n_columns()),
-     s1_sub(d1.n_columns()), s2_sub(d2.n_columns()),
      dists1(std::move(d1)), dists2(std::move(d2))
 {
     int NS = nstates();
@@ -551,8 +538,6 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
     //----- cache G1,G2 emission probabilities -----//
     int scale = 0;
     log_prod prod;
-    s1_sub[0] = 0;
-    s1_sub[1] = 0;
     for(int i=2;i<dists1.n_columns();i++)
     {
 	double sum = dists1.dot(i, weighted_frequencies);
@@ -563,13 +548,9 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
 	    prod *= sum;
 	}
 
-	s1_sub[i] = 1;
-
 	scale += dists1.scale(i);
     }
 
-    s2_sub[0] = 0;
-    s2_sub[1] = 0;
     for(int i=2;i<dists2.n_columns();i++)
     {
 	dists2.mul(i, weighted_frequencies);
@@ -581,8 +562,6 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
 	    dists2.mul(i, 1.0/sum); // currently ignoring possibility that sum is subnormal and 1.0/sum = Inf
 	    prod *= sum;
 	}
-
-	s2_sub[i] = 1;
 
 	scale += dists2.scale(i);
     }

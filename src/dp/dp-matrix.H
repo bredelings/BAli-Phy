@@ -163,10 +163,6 @@ protected:
     log_double_t Pr_extra_subst = 1;
 
     Matrix s12_sub;
-    /// Precomputed emission probabilies for +-
-    std::vector<double> s1_sub;
-    /// Precomputed emission probabilies for -+
-    std::vector<double> s2_sub;
 
     inline void prepare_cell(int i,int j);
 
@@ -188,11 +184,11 @@ public:
     /// Emission probabilities for ++
     double emitMM(int i,int j) const;
     /// Emission probabilities for -+
-    double emit_M(int i,int j) const;
+    static constexpr double emit_M(int,int) {return 1;}
     /// Emission probabilities for +-
-    double emitM_(int i,int j) const;
+    static constexpr double emitM_(int,int) {return 1;}
     /// Emission probabilities for --
-    double emit__(int i,int j) const;
+    static constexpr double emit__(int,int) {return 1;}
 
     /// Construct a DP array from an HMM, emission probabilities, and substitution model
     DPmatrixEmit(const HMM& M,
