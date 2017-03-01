@@ -12,11 +12,11 @@ using std::pair;
 #include "operations.H"
 #include "computation.H"
 
-int total_reductions = 0;
-int total_changeable_reductions = 0;
-int total_changeable_eval = 0;
-int total_changeable_eval_with_result = 0;
-int total_changeable_eval_with_call = 0;
+long total_reductions = 0;
+long total_changeable_reductions = 0;
+long total_changeable_eval = 0;
+long total_changeable_eval_with_result = 0;
+long total_changeable_eval_with_call = 0;
 
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>&);
 expression_ref untranslate_vars(const expression_ref& E, const map<string, int>& ids);

@@ -304,7 +304,7 @@ public:
 	std::vector<int> regs_to_re_evaluate;
 
 	bool used = false;
-	int version = 0;
+	long version = 0;
     };
 private:
     int root_token = -1;
@@ -529,10 +529,10 @@ struct no_context: public std::exception
 {
 };
 
-extern int total_reductions;
-extern int total_reg_allocations;
-extern int total_comp_allocations;
-extern int total_reroot;
-extern int total_tokens;
+extern long total_reductions;
+extern long total_reg_allocations;
+extern long total_comp_allocations;
+extern long total_reroot;
+extern long total_tokens;
 
 #endif

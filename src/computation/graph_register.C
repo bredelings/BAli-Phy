@@ -10,16 +10,16 @@ using std::pair;
 using std::cerr;
 using std::endl;
 
-int total_reg_allocations = 0;
-int total_step_allocations = 0;
-int total_comp_allocations = 0;
-int total_set_reg_value = 0;
-int total_get_reg_value = 0;
-int total_get_reg_value_non_const = 0;
-int total_get_reg_value_non_const_with_result = 0;
-int total_context_pr = 0;
-int total_tokens = 0;
-int max_version = 0;
+long total_reg_allocations = 0;
+long total_step_allocations = 0;
+long total_comp_allocations = 0;
+long total_set_reg_value = 0;
+long total_get_reg_value = 0;
+long total_get_reg_value_non_const = 0;
+long total_get_reg_value_non_const_with_result = 0;
+long total_context_pr = 0;
+long total_tokens = 0;
+long max_version = 0;
 
 /*
  * Goal: Share computation of WHNF structures between contexts, even when those
@@ -775,7 +775,7 @@ void reg_heap::set_shared_value(int r, int v)
 
 void reg_heap::mark_completely_dirty(int t)
 {
-    int& version = tokens[t].version;
+    auto& version = tokens[t].version;
     for(int t2:tokens[t].children)
 	version = std::max(version, tokens[t2].version+1);
     max_version = std::max(version, max_version);

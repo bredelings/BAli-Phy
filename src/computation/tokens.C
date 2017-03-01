@@ -7,8 +7,8 @@ using std::pair;
 using std::cerr;
 using std::endl;
 
-int total_destroy_token = 0;
-int total_release_knuckle = 0;
+long total_destroy_token = 0;
+long total_release_knuckle = 0;
 
 void reg_heap::destroy_all_computations_in_token(int t)
 {

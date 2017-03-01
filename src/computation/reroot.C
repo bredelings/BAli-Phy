@@ -10,15 +10,15 @@ using std::pair;
 using std::cerr;
 using std::endl;
 
-int total_steps_pivoted = 0;
-int total_results_pivoted = 0;
-int total_reroot = 0;
-int total_reroot_one = 0;
-int total_invalidate = 0;
-int total_steps_invalidated = 0;
-int total_results_invalidated = 0;
-int total_steps_scanned = 0;
-int total_results_scanned = 0;
+long total_steps_pivoted = 0;
+long total_results_pivoted = 0;
+long total_reroot = 0;
+long total_reroot_one = 0;
+long total_invalidate = 0;
+long total_steps_invalidated = 0;
+long total_results_invalidated = 0;
+long total_steps_scanned = 0;
+long total_results_scanned = 0;
 
 void merge_split_mapping_(mapping& vm1, mapping& vm2, vector<char>& prog_temp)
 {
