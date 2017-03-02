@@ -77,7 +77,7 @@ TOOLS = model_P statreport alignment-gild \
 	alignment-convert alignment-thin \
 	trees-consensus cut-range alignment-translate \
 	alignment-median alignment-indices pickout \
-	joint-indels alignment-consensus alignment-info \
+	joint-indels alignment-consensus alignment-info alignment-smc\
 	subsample tree-mean-lengths mctree-mean-lengths trees-bootstrap \
 	joint-parsimony stats-merge stats-select alignment-identity \
 	alignment-cat draw-graph \
@@ -255,6 +255,10 @@ joint_parsimony_SOURCES = tools/joint-parsimony.C alignment/alignment.C sequence
 #---------------------------------------------------------------
 
 alignment_info_SOURCES = tools/alignment-info.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C tree/tree.C tree/sequencetree.C setup.C tools/parsimony.C sequence/sequence-format.C tree/randomtree.C alignment/alignment-util.C alignment/alignment-random.C tree/tree-util.C tools/statistics.C io.C
+
+#---------------------------------------------------------------
+
+alignment_smc_SOURCES = tools/alignment-smc.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C tree/tree.C tree/sequencetree.C setup.C tools/parsimony.C sequence/sequence-format.C tree/randomtree.C alignment/alignment-util.C alignment/alignment-random.C tree/tree-util.C tools/statistics.C io.C
 
 #---------------------------------------------------------------
 
