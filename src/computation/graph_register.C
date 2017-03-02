@@ -90,13 +90,6 @@ bool null(const CacheList<int>::iterator& i)
     return (i == CacheList<int>::iterator());
 }
 
-template<typename V>
-void truncate(V& v)
-{
-    (&v)->~V();
-    new (&v) V;
-}
-
 void Step::clear()
 {
     source_reg = -1;

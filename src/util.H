@@ -678,4 +678,11 @@ std::vector<X> remove_duplicates(const std::vector<X>& xs1)
 
 std::string sanitize_string(const std::string& s1);
 
+template<typename V>
+void truncate(V& v)
+{
+    (&v)->~V();
+    new (&v) V;
+}
+
 #endif
