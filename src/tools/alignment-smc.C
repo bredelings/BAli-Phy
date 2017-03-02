@@ -94,6 +94,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("mask-gaps,M",value<int>()->default_value(0),"Remove columns within <arg> columns of a gap")
 	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?")
 	("msmc","Output file for MSMC")
+	("psmc","Output file for PSMC")
 	;
 
     // positional options
@@ -429,6 +430,36 @@ void write_msmc(std::ostream& o, const alignment& A)
     }
 }
 
+void write_psmc(std::ostream& o, const alignment& A, int x1, int x2)
+{
+    const auto& a = A.get_alphabet();
+    constexpr int blocksize = 1000;
+    o<<">1\n";
+    for(int i=0;i<A.length()/blocksize;i++)
+    {
+	bool diff = false;
+	for(int j=0;not diff and j<blocksize;j++)
+	{
+	    int c = blocksize * i + j;
+
+	    int l1 = A(c,x1);
+	    int l2 = A(c,x2);
+
+	    if (not a.is_letter(l1) or not a.is_letter(l2)) continue;
+
+	    diff = (l1 != l2);
+	}
+	if (diff)
+	    o<<"K";
+	else
+	    o<<"T";
+	if (i%60 == 59)
+	    o<<"\n";
+    }
+    o<<std::endl;
+}
+
+
 int main(int argc,char* argv[]) 
 { 
     try {
@@ -512,6 +543,8 @@ int main(int argc,char* argv[])
 
 	if (args.count("msmc"))
 	    write_msmc(std::cout, A);
+	else if (args.count("psmc"))
+	    write_psmc(std::cout,A,0,1);
 	else
 	    std::cout<<A<<std::endl;
 
