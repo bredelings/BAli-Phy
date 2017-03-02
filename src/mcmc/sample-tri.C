@@ -208,9 +208,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition 
 	P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
     }
 
-#ifndef NDEBUG_DP
-//    check_alignment(P.A(),t,"sample_tri_base:out");
-#else
+#ifdef NDEBUG_DP
     Matrices->clear();
 #endif
 
@@ -335,36 +333,7 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
 #ifndef NDEBUG_DP
     std::cerr<<"choice = "<<C<<endl;
 
-    // One mask for all p[i] assumes that only ignored nodes can be renamed
-    auto t0 = p[0].t();
-    dynamic_bitset<> ignore1A = ~t0.partition(t0.find_branch(nodes[0][0],nodes[0][1]));
-    dynamic_bitset<> ignore2A = ~(t0.partition(t0.find_branch(nodes[0][0],nodes[0][2])) | t0.partition(t0.find_branch(nodes[0][0],nodes[0][3])) );
-
-    // Check that our constraints are met
-    for(int i=0;i<p.size();i++) {
-	for(int j=0;j<p[i].n_data_partitions();j++) {
-	    auto ignore1 = ignore1A;
-	    auto ignore2 = ignore2A;
-	    // If alignments are fixed, then internal node sequences can change to keep minimal connection.
-	    if (not P0[j].variable_alignment())
-		for(int i=t0.n_leaves();i<t0.n_nodes();i++)
-		{
-		    ignore1.set(i);
-		    ignore2.set(i);
-		}
-	    if (not(A_constant(P0[j].A(), p[i][j].A(), ignore1))) {
-		std::cerr<<P0[j].A()<<endl;
-		std::cerr<<p[i][j].A()<<endl;
-		assert(A_constant(P0[j].A(), p[i][j].A(), ignore1));
-	    }
-	    if (not A_constant(P0[j].A(), p[i][j].A(), ignore2))
-	    {
-		std::cerr<<P0[j].A()<<endl;
-		std::cerr<<p[i][j].A()<<endl;
-		assert(A_constant(P0[j].A(), p[i][j].A(), ignore2));
-	    }
-	}
-    }
+    // FIXME: check that alignment of unaffected sequences w/in 2 blocks is unchanged!
     
     // Add another entry for the incoming configuration
     p.push_back( P0 );
@@ -541,16 +510,6 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
 
     P.set_root(node1);
 
-    //  vector<dynamic_bitset<> > s1(P.n_data_partitions());
-    for(int i=0;i<P.n_data_partitions();i++) 
-    {
-	//    s1[i].resize(P[i].alignment_constraint.size1());
-	//    s1[i] = constraint_satisfied(P[i].alignment_constraint, P[i].A());
-#ifndef NDEBUG
-//	check_alignment(P[i].A(), P[i].t(), "tri_sample_alignment:in");
-#endif
-    }
-
     //------------(Gibbs) sample from proposal distribution ------------------//
     vector<Parameters> p(1,P);
 
@@ -567,16 +526,6 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
 
     if (C != -1) {
 	P = p[C];
-    }
-
-    for(int i=0;i<P.n_data_partitions();i++) 
-    {
-#ifndef NDEBUG
-//	check_alignment(P[i].A(), P[i].t(),"tri_sample_alignment:out");
-#endif
-
-	//    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
-	//    report_constraints(s1[i],s2,i);
     }
 }
 

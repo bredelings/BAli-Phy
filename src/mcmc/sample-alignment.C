@@ -111,16 +111,6 @@ void sample_alignment(Parameters& P,int b)
     if (t.is_leaf_node(t.target(b)))
 	b = t.reverse(b);
   
-    //  vector<dynamic_bitset<> > s1(P.n_data_partitions());
-    for(int i=0;i<P.n_data_partitions();i++) 
-    {
-	//    s1[i].resize(P[i].alignment_constraint.size1());
-	//    s1[i] = constraint_satisfied(P[i].alignment_constraint, P[i].A());
-#ifndef NDEBUG
-//	check_alignment(P[i].A(), P[i].t(), "tri_sample_alignment:in");
-#endif
-    }
-
 #if !defined(NDEBUG_DP) || !defined(NDEBUG)
     const Parameters P0 = P;
 #endif
@@ -231,16 +221,6 @@ void sample_alignment(Parameters& P,int b)
     }
 
 #endif
-
-    for(int i=0;i<P.n_data_partitions();i++) 
-    {
-#ifndef NDEBUG
-//	check_alignment(P[i].A(), P[i].t(),"tri_sample_alignment:out");
-#endif
-
-	//    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
-	//    report_constraints(s1[i],s2,i);
-    }
 
     P = p[0];
 }

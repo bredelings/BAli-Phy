@@ -115,10 +115,6 @@ sample_two_nodes_base(data_partition P, const data_partition& P0, const A5::hmm_
   P.set_pairwise_alignment(P.t().find_branch(nodes[3],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 3, 5));
   P.set_pairwise_alignment(P.t().find_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
 
-#ifndef NDEBUG_DP
-//  check_alignment(P.A(), P.t(), "sample_two_nodes_base:out");
-#endif
-
   return Matrices;
 }
 
@@ -232,19 +228,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector<A5::hmm_order>& or
 #ifndef NDEBUG_DP
   std::cerr<<"choice = "<<C<<endl;
 
-  // One mask for all p[i] assumes that only ignored nodes can be renamed
-  dynamic_bitset<> ignore(p[0].t().n_nodes());
-  ignore[ order[0].nodes[4] ] = true;
-  ignore[ order[0].nodes[5] ] = true;
-
-  // Check that our constraints are met
-  for(int i=0;i<p.size();i++) 
-    for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (not A_constant(P0[j].A(), p[i][j].A(), ignore)) {
-	std::cerr<<P0[j].A()<<endl;
-	std::cerr<<p[i][j].A()<<endl;
-	assert(A_constant(P0[j].A(), p[i][j].A(), ignore));
-      }
+  // FIXME: check that alignment of sequences besides the middle 2 is the same between P0[j] and p[i][j]
 
   // Add another entry for the incoming configuration
   p.push_back( P0 );

@@ -235,18 +235,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 #ifndef NDEBUG_DP
   std::cerr<<"choice = "<<C<<endl;
 
-  // One mask for all p[i] assumes that only ignored nodes can be renamed
-  dynamic_bitset<> ignore(p[0].t().n_nodes());
-  ignore[ nodes[0][0] ] = true;
-
-  // Check that our constraints are met
-  for(int i=0;i<p.size();i++) 
-    for(int j=0;j<p[i].n_data_partitions();j++) 
-      if (not A_constant(P0[j].A(), p[i][j].A(), ignore)) {
-	std::cerr<<P0[j].A()<<endl;
-	std::cerr<<p[i][j].A()<<endl;
-	assert(A_constant(P0[j].A(), p[i][j].A(), ignore));
-      }
+  // FIXME: check that alignment of sequences in each group is unchanged.
 
   // Add another entry for the incoming configuration
   p.push_back( P0 );
