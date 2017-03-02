@@ -117,7 +117,7 @@ void sample_alignment(Parameters& P,int b)
 	//    s1[i].resize(P[i].alignment_constraint.size1());
 	//    s1[i] = constraint_satisfied(P[i].alignment_constraint, P[i].A());
 #ifndef NDEBUG
-	check_alignment(P[i].A(), P[i].t(), "tri_sample_alignment:in");
+//	check_alignment(P[i].A(), P[i].t(), "tri_sample_alignment:in");
 #endif
     }
 
@@ -235,7 +235,7 @@ void sample_alignment(Parameters& P,int b)
     for(int i=0;i<P.n_data_partitions();i++) 
     {
 #ifndef NDEBUG
-	check_alignment(P[i].A(), P[i].t(),"tri_sample_alignment:out");
+//	check_alignment(P[i].A(), P[i].t(),"tri_sample_alignment:out");
 #endif
 
 	//    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A());

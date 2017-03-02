@@ -116,7 +116,7 @@ sample_two_nodes_base(data_partition P, const data_partition& P0, const A5::hmm_
   P.set_pairwise_alignment(P.t().find_branch(nodes[4],nodes[5]), get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
 
 #ifndef NDEBUG_DP
-  check_alignment(P.A(), P.t(), "sample_two_nodes_base:out");
+//  check_alignment(P.A(), P.t(), "sample_two_nodes_base:out");
 #endif
 
   return Matrices;

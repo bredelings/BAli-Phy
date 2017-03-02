@@ -209,7 +209,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition 
     }
 
 #ifndef NDEBUG_DP
-    check_alignment(P.A(),t,"sample_tri_base:out");
+//    check_alignment(P.A(),t,"sample_tri_base:out");
 #else
     Matrices->clear();
 #endif
@@ -547,7 +547,7 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
 	//    s1[i].resize(P[i].alignment_constraint.size1());
 	//    s1[i] = constraint_satisfied(P[i].alignment_constraint, P[i].A());
 #ifndef NDEBUG
-	check_alignment(P[i].A(), P[i].t(), "tri_sample_alignment:in");
+//	check_alignment(P[i].A(), P[i].t(), "tri_sample_alignment:in");
 #endif
     }
 
@@ -572,7 +572,7 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
     for(int i=0;i<P.n_data_partitions();i++) 
     {
 #ifndef NDEBUG
-	check_alignment(P[i].A(), P[i].t(),"tri_sample_alignment:out");
+//	check_alignment(P[i].A(), P[i].t(),"tri_sample_alignment:out");
 #endif
 
 	//    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, P[i].A());
