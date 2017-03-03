@@ -10,6 +10,12 @@ using std::pair;
 using std::cerr;
 using std::endl;
 
+
+expression_ref occurrence_analyzer(const expression_ref& E)
+{
+    
+}
+
 expression_ref graph_normalize(const expression_ref& E)
 {
     if (not E) return E;
