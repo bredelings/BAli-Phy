@@ -152,11 +152,6 @@ expression_ref lambda_expression(const Operator& O);
 expression_ref lambda_quantify(int dummy_index, const expression_ref& E);
 expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& E);
 
-expression_ref indexify(const expression_ref&);
-
-expression_ref deindexify(const expression_ref&, const std::vector<expression_ref>&);
-expression_ref deindexify(const expression_ref&);
-
 expression_ref trim_normalize(const expression_ref&);
 
 expression_ref trim(const expression_ref&);
@@ -334,6 +329,8 @@ template<> expression_ref get_list<>(const std::vector<expression_ref>& v);
 expression_ref let_expression(const std::vector<expression_ref>& vars, const std::vector<expression_ref>& bodies, const expression_ref& T);
 
 expression_ref let_expression(const expression_ref& var, const expression_ref& body, const expression_ref& T);
+
+expression_ref indexed_let_expression(const std::vector<expression_ref>& bodies, const expression_ref& T);
 
 expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise = expression_ref());
 

@@ -1,6 +1,7 @@
 #include "object.H"
 #include "computation/operation.H"
 #include "computation/expression/expression.H"
+#include "computation/expression/indexify.H"
 
 using std::vector;
 using std::string;
