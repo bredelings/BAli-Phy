@@ -46,7 +46,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   timer_stack.H mcmc/setup.H owned-ptr.H alignment/alignment-util2.H \
 	   bounds.H io.H parser/parse.H models/TreeInterface.H \
            parser/AST.H computation/computation.H computation/closure.H \
-           computation/context.H computation/expression/AST_node.H computation/expression/expression_ref.H computation/expression/expression.H computation/model_expression.H \
+           computation/context.H computation/expression/AST_node.H computation/expression/expression_ref.H computation/expression/expression.H computation/expression/constructor.H computation/model_expression.H \
 	   computation/bithash.H computation/graph_register.H computation/let-float.H \
            computation/loader.H computation/module.H \
 	   computation/operation.H computation/operations.H computation/operator.H \
@@ -108,7 +108,7 @@ bali_phy_SOURCES = parser/parse.C dp/dp_hmm.C parser/desugar.C parser/AST.C sequ
 	  tree/tree-util.C myexception.C math/pow2.C substitution/parsimony.C \
 	  tools/partition.C mcmc/proposals.C n_indels.C n_indels2.C alignment/alignment-util2.C \
 	  tools/parsimony.C tools/parsimony2.C version.C mcmc/slice-sampling.C timer_stack.C \
-	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression/expression.C computation/expression/expression_ref.C computation/expression/AST_node.C \
+	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression/expression.C computation/expression/constructor.C computation/expression/expression_ref.C computation/expression/AST_node.C \
 	  computation/computation.C computation/tokens.C computation/preprocess.C \
 	  computation/graph_register.C computation/show_graph.C computation/module.C \
 	  computation/model_expression.C computation/evaluate.C computation/gc.C computation/reroot.C \

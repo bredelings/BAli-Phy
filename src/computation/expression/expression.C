@@ -117,12 +117,6 @@ bool parse_case_expression(const expression_ref& E, expression_ref& T, vector<ex
 }
 
 
-bool is_tuple_name(const string& s)
-{
-    if (s.size() < 3) return false;
-    return s == tuple_name(s.size()-1);
-}
-
 bool dummy::operator==(const dummy& d) const
 {
     return index == d.index and name == d.name;
@@ -250,39 +244,6 @@ expression_ref lambda_expression(const Operator& O)
 	R = lambda_quantify(i,R);
   
     return R;
-}
-
-tribool constructor::compare(const Object& o) const
-{
-    const constructor* E = dynamic_cast<const constructor*>(&o);
-    if (not E) 
-	return false;
-
-    // Should we check that the arity matches also?
-
-    return f_name == E->f_name;
-}
-
-constructor::constructor(const string& s, int n)
-    :f_name(s), n_args_(n), assoc(assoc_none),prec(-1)
-{
-    assert(is_haskell_con_name(s) or (s=="*") or (s=="->"));
-}
-
-constructor left_assoc_constructor(const std::string& s,int prec)
-{
-    constructor f(s, 2);
-    f.prec = prec;
-    f.assoc = assoc_left;
-    return f;
-}
-
-constructor right_assoc_constructor(const std::string& s,int prec)
-{
-    constructor f(s, 2);
-    f.prec = prec;
-    f.assoc = assoc_right;
-    return f;
 }
 
 expression_ref substitute(const expression_ref& R1, int dummy_index, const expression_ref& R2)
@@ -1350,37 +1311,6 @@ expression_ref add_prefix(const string& prefix, const expression_ref& E)
     return E2;
 }
 
-string tuple_name(int n)
-{
-    if (n == 0)
-	return "()";
-
-    if (n == 1)
-	std::abort();
-
-    string s;
-    s.resize(n+1);
-    s[0] = '(';
-    for(int i=1;i<n;i++)
-	s[i] = ',';
-    s[n] = ')';
-    return s;
-}
-
-constructor tuple_head(int n)
-{
-    assert(n != 1);
-
-    string s = tuple_name(n);
-    return constructor(s,n);
-}
-
-expression_ref Tuple(int n)
-{
-    assert(n >= 0);
-    return lambda_expression( tuple_head(n) );
-}
-
 expression_ref Cons = lambda_expression( right_assoc_constructor(":",2) );
 
 expression_ref ListEnd = lambda_expression( constructor("[]",0) );
@@ -2163,11 +2093,6 @@ expression_ref unlet(const expression_ref& E)
 
     std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";
     return E;
-}
-
-bool has_constructor(const expression_ref& E, const string& s)
-{
-    return E.head() == constructor(s,-1);
 }
 
 const expression_ref v0 = dummy(0);
