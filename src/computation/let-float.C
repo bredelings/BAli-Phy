@@ -2,6 +2,7 @@
 #include <set>
 #include "let-float.H"
 #include "computation/expression/expression.H"
+#include "computation/expression/substitute.H"
 
 using std::vector;
 using std::set;

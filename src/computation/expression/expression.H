@@ -148,13 +148,6 @@ std::set<std::string> find_named_parameters(const expression_ref&);
 
 std::set<std::string> find_named_parameters(const std::vector<expression_ref>&);
 
-expression_ref substitute(const expression_ref& E1, int dummy, const expression_ref& E2);
-
-expression_ref substitute(const expression_ref& E1, const expression_ref& D, const expression_ref& E2);
-
-/// Substitute for all matches found
-expression_ref substitute(const expression_ref& E, const std::vector<expression_ref>& replace);
-
 expression_ref lambda_expression(const Operator& O);
 expression_ref lambda_quantify(int dummy_index, const expression_ref& E);
 expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& E);
@@ -172,13 +165,13 @@ expression_ref trim_unnormalize(const expression_ref&);
 
 expression_ref untrim(const expression_ref&);
 
-void alpha_rename(object_ptr<expression>& E, const expression_ref& x, const expression_ref& y);
-
 int max_index(const std::set<dummy>& s);
+
+std::vector<int> get_free_index_vars(const expression_ref&);
 
 std::set<dummy> get_free_indices(const expression_ref& E);
 
-std::vector<int> get_free_index_vars(const expression_ref&);
+std::set<dummy> get_bound_indices(const expression_ref& E);
 
 struct lambda: public Object
 {
@@ -383,12 +376,6 @@ extern const expression_ref v5;
 extern const expression_ref v6;
 extern const expression_ref v7;
 extern const expression_ref v8;
-
-expression_ref operator^(const expression_ref& x, const expression_ref& T);
-
-expression_ref operator+(const expression_ref& E1, const expression_ref& E2);
-
-expression_ref operator*(const expression_ref& E1, const expression_ref& E2);
 
 expression_ref parse_object(const std::string& s);
 

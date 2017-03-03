@@ -10,6 +10,7 @@
 #include "computation/loader.H"
 #include "expression/expression.H"
 #include "expression/AST_node.H"
+#include "expression/substitute.H"
 
 using std::pair;
 using std::map;

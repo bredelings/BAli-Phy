@@ -289,6 +289,8 @@ expression_ref operator+(const expression_ref& E1, const expression_ref&E2)
     return E3;
 }
 
+#include "substitute.H"
+
 expression_ref operator*(const expression_ref& E, const expression_ref&arg)
 {
     assert(E);
