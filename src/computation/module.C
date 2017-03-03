@@ -9,6 +9,7 @@
 #include "parser/AST.H"
 #include "computation/loader.H"
 #include "expression/expression.H"
+#include "expression/AST_node.H"
 
 using std::pair;
 using std::map;

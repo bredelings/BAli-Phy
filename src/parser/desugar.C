@@ -8,6 +8,7 @@
 #include "computation/loader.H"
 #include "AST.H"
 #include "computation/expression/expression.H"
+#include "computation/expression/AST_node.H"
 #include "desugar.H"
 
 using std::string;
