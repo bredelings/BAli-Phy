@@ -1,15 +1,16 @@
 // #define DEBUG_OPTIMIZE
 
-#include "expression.H"
-#include "module.H"
-#include "util.H"
-#include "operation.H"
-#include "operations.H"
 #include <set>
 #include <iterator>
 #include <map>
-#include "graph_register.H"
 #include <cctype>
+
+#include "expression.H"
+#include "computation/module.H"
+#include "util.H"
+#include "computation/operation.H"
+#include "computation/operations.H"
+#include "computation/graph_register.H"
 
 using std::vector;
 using std::string;

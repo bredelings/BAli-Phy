@@ -1,5 +1,6 @@
 #include "computation/computation.H"
 #include "sequence/alphabet.H"
+#include "computation/expression/expression.H"
 
 extern "C" closure builtin_function_alphabetSize(OperationArgs& Args)
 {

@@ -1,7 +1,7 @@
 //#define BOOST_SPIRIT_DEBUG
 //#define BOOST_SPIRIT_LEXERTL_DEBUG
 #include "parse.H"
-#include "computation/AST_node.H"
+#include "computation/expression/AST_node.H"
 
 #include <vector>
 #include <map>

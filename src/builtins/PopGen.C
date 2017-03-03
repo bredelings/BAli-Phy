@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "computation/computation.H"
 #include "io.H"
+#include "computation/expression/expression.H"
 
 using std::string;
 using std::vector;

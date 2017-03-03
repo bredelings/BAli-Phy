@@ -9,6 +9,7 @@
 #include "bounds.H"
 #include "rng.H"
 #include "vector_from_list.H"
+#include "computation/expression/expression.H"
 
 using std::vector;
 using std::string;

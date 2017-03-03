@@ -7,6 +7,7 @@
 #include "models/parameters.H"
 #include "computation/loader.H"
 #include "AST.H"
+#include "computation/expression/expression.H"
 #include "desugar.H"
 
 using std::string;

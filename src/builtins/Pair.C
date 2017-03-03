@@ -1,6 +1,7 @@
 #include "computation/computation.H"
 #include "myexception.H"
 #include <algorithm>
+#include "computation/expression/expression.H"
 
 using boost::dynamic_pointer_cast;
 

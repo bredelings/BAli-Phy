@@ -2,6 +2,7 @@
 #include "computation/operations.H"
 #include "myexception.H"
 #include "computation/graph_register.H"
+#include "computation/expression/expression.H"
 
 using boost::dynamic_pointer_cast;
 

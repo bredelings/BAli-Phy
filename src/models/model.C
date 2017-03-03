@@ -24,7 +24,7 @@
 #include "myexception.H"
 #include "models/model.H"
 #include "computation/program.H"
-#include "computation/expression.H"
+#include "computation/expression/expression.H"
 #include "computation/module.H"
 #include "parser/desugar.H"
 

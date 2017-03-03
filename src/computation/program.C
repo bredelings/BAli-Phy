@@ -3,6 +3,7 @@
 #include "myexception.H"
 #include "computation/loader.H"
 #include "models/model.H"
+#include "expression/expression.H"
 
 using std::vector;
 using std::set;

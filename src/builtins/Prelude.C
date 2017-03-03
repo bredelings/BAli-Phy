@@ -1,4 +1,5 @@
 #include "computation/computation.H"
+#include "computation/expression/expression.H"
 
 using boost::dynamic_pointer_cast;
 using std::string;

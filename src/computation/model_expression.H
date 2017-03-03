@@ -2,7 +2,7 @@
 #define FORMULA_EXPRESSION_H
 
 #include <string>
-#include "expression.H"
+#include "expression/expression_ref.H"
 #include <iostream>
 #include "computation/loader.H"
 

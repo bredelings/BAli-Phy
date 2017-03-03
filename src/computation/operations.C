@@ -2,6 +2,7 @@
 #include "graph_register.H"
 #include "math/exponential.H"
 #include "myexception.H"
+#include "expression/expression.H"
 
 using std::vector;
 using std::string;

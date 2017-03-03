@@ -4,7 +4,7 @@
 
 #include <set>
 #include <string>
-#include "computation/expression.H"
+#include "computation/expression/expression_ref.H"
 
 class Module;
 class Model;

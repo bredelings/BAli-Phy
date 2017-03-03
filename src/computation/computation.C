@@ -1,5 +1,5 @@
 #include "computation.H"
-#include "expression.H"
+#include "expression/expression.H"
 #include "graph_register.H"
 
 int OperationArgs::reg_for_slot(int slot) const

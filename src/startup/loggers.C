@@ -1,5 +1,6 @@
 #include "loggers.H"
 #include "tools/parsimony.H"
+#include "computation/expression/expression.H"
 
 #include <set>
 

@@ -1,9 +1,9 @@
 #include "computation/loader.H"
-#include "computation/expression.H"
 #include "computation/module.H"
 #include "computation/operations.H"
 #include "computation/graph_register.H"
 #include <boost/filesystem/operations.hpp>
+#include "expression/expression.H"
 
 #include "io.H"
 #include "parser/desugar.H"

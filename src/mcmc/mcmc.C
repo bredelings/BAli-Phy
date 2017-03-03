@@ -43,6 +43,7 @@
 #include "monitor.H"
 #include "proposals.H"
 #include "alignment/alignment-util.H"
+#include "computation/expression/expression.H"
 
 #include "slice-sampling.H"
 

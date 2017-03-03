@@ -37,6 +37,7 @@
 #include "timer_stack.H"
 #include "bounds.H"
 #include "AIS.H"
+#include "computation/expression/expression.H"
 
 using boost::program_options::variables_map;
 using boost::dynamic_bitset;

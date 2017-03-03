@@ -1,6 +1,7 @@
 #include <vector>
 #include <set>
 #include "let-float.H"
+#include "computation/expression/expression.H"
 
 using std::vector;
 using std::set;

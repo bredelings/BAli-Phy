@@ -1,7 +1,8 @@
 #include <iostream>
-#include "graph_register.H"
 #include <algorithm>
 #include "util.H"
+#include "graph_register.H"
+#include "expression/expression.H"
 
 using std::string;
 using std::vector;

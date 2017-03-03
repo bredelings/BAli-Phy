@@ -6,7 +6,7 @@
 #include "myexception.H"
 #include "operation.H"
 #include "computation.H"
-#include "expression.H"
+#include "expression/expression_ref.H"
 
 
 // In general, these operations simply ask for the value of each input

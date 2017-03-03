@@ -1,4 +1,5 @@
 #include "computation/computation.H"
+#include "computation/expression/expression.H"
 
 extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 {

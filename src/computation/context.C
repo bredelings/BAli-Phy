@@ -8,6 +8,7 @@
 #include "let-float.H"
 #include "parser/desugar.H"
 #include "parser/AST.H"
+#include "expression/expression.H"
 
 using std::string;
 using std::vector;

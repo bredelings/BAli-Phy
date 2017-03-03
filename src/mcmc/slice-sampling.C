@@ -26,6 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "slice-sampling.H"
 #include "rng.H"
 #include "probability/choose.H"
+#include "computation/expression/expression.H"
 
 using std::vector;
 

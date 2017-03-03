@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include "object.H"
-#include "expression.H"
+#include "expression/expression_ref.H"
 #include "util.H"
 #include <utility>
 #include "closure.H"

@@ -1,4 +1,5 @@
 #include "AST.H"
+#include "computation/expression/AST_node.H"
 
 using std::string;
 

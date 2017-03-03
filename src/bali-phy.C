@@ -67,6 +67,7 @@ namespace mpi = boost::mpi;
 #include "startup/io.H"
 #include "startup/system.H"
 #include "startup/cmd_line.H"
+#include "computation/expression/expression.H"
 
 namespace fs = boost::filesystem;
 namespace chrono = boost::chrono;

@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include <map>
-#include "computation/expression.H"
+#include "computation/expression/expression_ref.H"
 #include "computation/loader.H"
 
 class Module;

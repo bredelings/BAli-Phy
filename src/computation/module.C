@@ -8,6 +8,7 @@
 #include "parser/desugar.H"
 #include "parser/AST.H"
 #include "computation/loader.H"
+#include "expression/expression.H"
 
 using std::pair;
 using std::map;

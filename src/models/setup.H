@@ -7,7 +7,7 @@
 #include "object.H"
 #include "alignment/alignment.H"
 #include "sequence/alphabet.H"
-#include "computation/expression.H"
+#include "computation/expression/expression_ref.H"
 
 struct model_t
 {

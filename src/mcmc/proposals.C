@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "proposals.H"
 #include "tree/tree.H"
 #include "probability/probability.H"
+#include "computation/expression/expression.H"
 #include "rng.H"
 #include "util.H"
 

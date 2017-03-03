@@ -1,6 +1,7 @@
 #include "computation/computation.H"
 #include "dp/2way.H"
 #include "imodel/imodel.H"
+#include "computation/expression/expression.H"
 
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
 {

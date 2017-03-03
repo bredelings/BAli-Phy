@@ -2,14 +2,11 @@
 
 #include "expression_ref.H"
 #include "expression.H"
-#include "module.H"
 #include "util.H"
-#include "operation.H"
-#include "operations.H"
+#include "computation/operations.H"
 #include <set>
 #include <iterator>
 #include <map>
-#include "graph_register.H"
 #include <cctype>
 
 using std::vector;

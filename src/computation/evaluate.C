@@ -2,6 +2,7 @@
 //#undef NDEBUG
 //#endif
 #include "graph_register.H"
+#include "expression/expression.H"
 
 using std::string;
 using std::vector;

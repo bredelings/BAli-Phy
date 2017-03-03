@@ -41,6 +41,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution/parsimony.H"
 #include "alignment/alignment-util.H"
 #include "dp/2way.H"
+#include "computation/expression/expression.H"
 
 using std::endl;
 using std::pair;

@@ -5,7 +5,7 @@
 #include <string>
 #include <boost/container/small_vector.hpp>
 #include "object.H"
-#include "computation/expression.H"
+#include "computation/expression/expression_ref.H"
 
 struct closure
 {

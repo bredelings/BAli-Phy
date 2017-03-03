@@ -1,6 +1,6 @@
 #include "object.H"
 #include "computation/operation.H"
-#include "computation/expression.H"
+#include "computation/expression/expression.H"
 
 using std::vector;
 using std::string;

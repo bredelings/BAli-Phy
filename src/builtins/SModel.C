@@ -5,6 +5,7 @@
 #include "sequence/alphabet.H"
 #include "io.H"
 #include <valarray>
+#include "computation/expression/expression.H"
 
 using std::vector;
 using std::istringstream;

@@ -1,6 +1,7 @@
 #include <fstream>
 #include "graph_register.H"
 #include "operations.H"
+#include "expression/expression.H"
 
 using std::string;
 using std::vector;
