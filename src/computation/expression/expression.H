@@ -155,18 +155,6 @@ expression_ref substitute(const expression_ref& E1, const expression_ref& D, con
 /// Substitute for all matches found
 expression_ref substitute(const expression_ref& E, const std::vector<expression_ref>& replace);
 
-// Single-arg version  (Is this a function at all?)";
-expression_ref apply(const expression_ref& E,const expression_ref& arg);
-
-// Multiple-arg version
-expression_ref apply(const expression_ref& E, const std::vector< expression_ref > args);
-
-// Single-arg version  (Is this a function at all?)";
-expression_ref apply_expression(const expression_ref& E,const expression_ref& arg);
-
-// Multiple-arg version
-expression_ref apply_expression(const expression_ref& E, const std::vector< expression_ref > args);
-
 expression_ref lambda_expression(const Operator& O);
 expression_ref lambda_quantify(int dummy_index, const expression_ref& E);
 expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& E);

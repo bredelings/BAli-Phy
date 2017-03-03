@@ -97,6 +97,7 @@ public:
 		return sub().size();
 	}
 
+    // do i still need this?
     expression_ref operator()(const std::vector<expression_ref>& args) const;
 
     template <typename T>
@@ -284,8 +285,16 @@ public:
 
 /// This represents function application: a,b,c = a(b)(c) and not a(b(c)). The precedence is 18 (low).
 expression_ref operator,(const expression_ref&, const expression_ref&);
+
 /// This represents the Cons constructor: a&b = Cons a b = a:b.  The precedence is 3 (high).
 expression_ref operator&(const expression_ref&, const expression_ref&);
+
+/// This does lambda-quantify
+expression_ref operator^(const expression_ref& x, const expression_ref& T);
+
+expression_ref operator+(const expression_ref& E1, const expression_ref& E2);
+
+expression_ref operator*(const expression_ref& E1, const expression_ref& E2);
 
 /*
  *  By separating out the head from the children, each expression now represents

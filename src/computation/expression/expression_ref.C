@@ -1,6 +1,7 @@
 // #define DEBUG_OPTIMIZE
 
 #include "expression_ref.H"
+#include "apply.H"
 #include "expression.H"
 #include "util.H"
 #include "computation/operations.H"
@@ -260,8 +261,46 @@ expression_ref::expression_ref(const std::string& s)
 
 expression_ref::expression_ref(const index_var& iv):i(iv.index),type_(index_var_type) {}
 
+expression_ref operator,(const expression_ref& E1, const expression_ref& E2)
+{
+    return apply(E1, E2);
+}
 expression_ref expression_ref::operator()(const std::vector<expression_ref>& args) const
 {
     return apply(*this,args);
+}
+
+expression_ref operator&(const expression_ref& E1, const expression_ref& E2)
+{
+    return constructor(":",2)+E1+E2;
+}
+
+expression_ref operator^(const expression_ref& x, const expression_ref& T)
+{
+    return lambda_quantify(x,T);
+}
+
+expression_ref operator+(const expression_ref& E1, const expression_ref&E2)
+{
+    expression* E3 = new expression(E1.head());
+    if (not E1.is_atomic())
+	E3->sub = E1.sub();
+    E3->sub.push_back(E2);
+    return E3;
+}
+
+expression_ref operator*(const expression_ref& E, const expression_ref&arg)
+{
+    assert(E);
+
+    if (E.head().is_a<lambda>())
+    {
+	assert(E.size());
+	return substitute(E.sub()[1], E.sub()[0], arg);
+    }
+
+    // Allow applying non-lambda expressions to arguments.
+    // We need this to apply variables that turn out to be functions.
+    return apply_expression(E,arg);
 }
 

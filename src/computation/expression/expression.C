@@ -1222,52 +1222,6 @@ expression_ref substitute(const expression_ref& R1, const expression_ref& D, con
 }
 
 
-expression_ref apply_expression(const expression_ref& R,const expression_ref& arg)
-{
-    if (R.head().is_a<Apply>())
-	return R+arg;
-    else
-	return {Apply(),{R,arg}};
-}
-
-expression_ref apply_expression(const expression_ref& E,
-				const vector< expression_ref > args)
-{
-    expression_ref E2 = E;
-    for(int i=0;i<args.size();i++)
-	E2 = apply_expression(E2,args[i]);
-    return E2;
-}
-
-
-// When applying Lx.M to N, we need to make sure that no occurrence of x has the free variables in N bound.
-// At each occurence of x, we need to know 
-// (i) what are the lambda's that class with the free variables of N
-// (ii) what free variables of M are 
-expression_ref apply(const expression_ref& E,const expression_ref& arg)
-{
-    return apply_expression(E,arg);
-}
-
-expression_ref apply(const expression_ref& E,
-		     const vector< expression_ref > args)
-{
-    expression_ref E2 = E;
-    for(int i=0;i<args.size();i++)
-	E2 = apply(E2,args[i]);
-    return E2;
-}
-
-expression_ref operator,(const expression_ref& E1, const expression_ref& E2)
-{
-    return apply(E1, E2);
-}
-
-expression_ref operator&(const expression_ref& E1, const expression_ref& E2)
-{
-    return constructor(":",2)+E1+E2;
-}
-
 void find_named_parameters(const expression_ref& E, std::set<string>& names)
 {
     assert(E);
@@ -2105,41 +2059,12 @@ const expression_ref v6 = dummy(6);
 const expression_ref v7 = dummy(7);
 const expression_ref v8 = dummy(8);
 
-expression_ref operator^(const expression_ref& x, const expression_ref& T)
-{
-    return lambda_quantify(x,T);
-}
-
 expression_ref char_list(const string& s)
 {
     vector<expression_ref> letters;
     for(char c: s)
 	letters.push_back(c);
     return get_list(letters);
-}
-
-expression_ref operator+(const expression_ref& E1, const expression_ref&E2)
-{
-    expression* E3 = new expression(E1.head());
-    if (not E1.is_atomic())
-	E3->sub = E1.sub();
-    E3->sub.push_back(E2);
-    return E3;
-}
-
-expression_ref operator*(const expression_ref& E, const expression_ref&arg)
-{
-    assert(E);
-
-    if (E.head().is_a<lambda>())
-    {
-	assert(E.size());
-	return substitute(E.sub()[1], E.sub()[0], arg);
-    }
-
-    // Allow applying non-lambda expressions to arguments.
-    // We need this to apply variables that turn out to be functions.
-    return apply_expression(E,arg);
 }
 
 expression_ref parse_object(const string& s)
