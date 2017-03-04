@@ -23,10 +23,10 @@ using std::multiset;
 
 using boost::dynamic_pointer_cast;
 
-// 1. factor out: trim, list, tuple
+// 1. factor out: list, tuple
 // 2. eliminate substitution.H
-// 3. Move EVector and EPair code to expression_ref.H
-// 4. Eliminate identifier in favor of dummy (==var)?
+// 3. Eliminate identifier in favor of dummy (==var)?
+// 4. Remove horrible (#symbol)*(#function) substitution in module.C
 
 bool dummy::operator==(const dummy& d) const
 {
