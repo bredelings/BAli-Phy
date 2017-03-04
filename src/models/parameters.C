@@ -35,6 +35,7 @@
 #include "probability/probability.H"
 #include "computation/model_expression.H"
 #include "computation/expression/expression.H"
+#include "computation/expression/tuple.H"
 #include "computation/module.H"
 #include "computation/operations.H" // for VectorFromList<>
 #include "math/exponential.H"

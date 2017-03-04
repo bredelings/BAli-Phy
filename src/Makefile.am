@@ -52,6 +52,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   computation/expression/constructor.H computation/model_expression.H \
 	   computation/expression/indexify.H computation/expression/let.H \
 	   computation/expression/case.H computation/expression/trim.H \
+	   computation/expression/tuple.H \
 	   computation/bithash.H computation/graph_register.H computation/let-float.H \
            computation/loader.H computation/module.H \
 	   computation/operation.H computation/operations.H computation/operator.H \
@@ -119,6 +120,7 @@ bali_phy_SOURCES = parser/parse.C dp/dp_hmm.C parser/desugar.C parser/AST.C sequ
 	  computation/expression/apply.C computation/expression/substitute.C \
 	  computation/expression/indexify.C computation/expression/let.C \
 	  computation/expression/case.C  computation/expression/trim.C \
+	  computation/expression/tuple.C \
 	  computation/computation.C computation/tokens.C computation/preprocess.C \
 	  computation/graph_register.C computation/show_graph.C computation/module.C \
 	  computation/model_expression.C computation/evaluate.C computation/gc.C computation/reroot.C \

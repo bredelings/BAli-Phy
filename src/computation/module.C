@@ -12,6 +12,7 @@
 #include "expression/expression.H"
 #include "expression/let.H"
 #include "expression/case.H"
+#include "expression/tuple.H"
 #include "expression/substitute.H"
 
 using std::pair;

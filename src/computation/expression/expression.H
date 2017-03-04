@@ -154,24 +154,6 @@ struct lambda2: public Object
     std::string print() const;
 };
 
-template <typename First, typename Second>
-auto apply_subst(const First& first, const Second& second)
-{
-    return first * second;
-}
-
-template <typename First, typename Second, typename Third, typename... Rest>
-auto apply_subst(const First& first, const Second& second, const Third& third, const Rest&... rest)
-{
-    return apply_subst(first*second, third, rest...);
-}
-
-template <typename First, typename Second, typename... Rest>
-auto Tuple(const First& first, const Second& second, const Rest&... rest)
-{
-    return apply_subst(Tuple(2+sizeof...(rest)) ,first,second,rest...);
-}
-
 // 2 Fields, a value, and a Cons or a ListEnd
 extern expression_ref Cons;
 
@@ -247,28 +229,6 @@ std::vector<T> get_vector_from_list(const expression_ref& E)
     for(int i=0;i<v1.size();i++)
 	v2.push_back(v1[i].as_<U>());
     return v2;
-}
-
-template <typename T>
-expression_ref get_tuple(const std::vector<T>& v)
-{
-    std::vector<expression_ref> v2;
-    for(int i=0;i<v.size();i++)
-	v2.push_back(v[i]);
-
-    return get_tuple(v2);
-}
-
-template<> expression_ref get_tuple<>(const std::vector<expression_ref>& v);
-
-template <typename T>
-expression_ref get_tuple(const std::valarray<T>& v)
-{
-    std::vector<expression_ref> v2;
-    for(int i=0;i<v.size();i++)
-	v2.push_back(v[i]);
-
-    return get_tuple(v2);
 }
 
 template <typename T>

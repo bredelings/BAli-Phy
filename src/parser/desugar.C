@@ -13,6 +13,7 @@
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
 #include "computation/expression/constructor.H"
+#include "computation/expression/tuple.H"
 #include "desugar.H"
 
 using std::string;

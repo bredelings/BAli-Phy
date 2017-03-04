@@ -6,6 +6,7 @@
 #include "let.H"
 #include "case.H"
 #include "trim.H"
+#include "tuple.H"
 #include "expression.H"
 #include "computation/operations.H"
 #include <set>

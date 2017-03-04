@@ -37,13 +37,4 @@ constructor right_assoc_constructor(const std::string& s,int prec=0);
 
 bool has_constructor(const expression_ref&, const std::string&);
 
-std::string tuple_name(int n);
-bool is_tuple_name(const std::string&);
-constructor tuple_head(int n);
-
-// Create a constructor for n-tuples.
-expression_ref Tuple(int n);
-
-
-
 #endif
