@@ -133,8 +133,6 @@ expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref
 
 int max_index(const std::set<dummy>& s);
 
-std::vector<int> get_free_index_vars(const expression_ref&);
-
 std::set<dummy> get_free_indices(const expression_ref& E);
 
 std::set<dummy> get_bound_indices(const expression_ref& E);
