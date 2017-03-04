@@ -3,6 +3,7 @@
 #include "operations.H"
 #include "let-float.H"
 #include "computation/expression/expression.H"
+#include "computation/expression/let.H"
 #include "computation/expression/indexify.H"
 
 using std::string;

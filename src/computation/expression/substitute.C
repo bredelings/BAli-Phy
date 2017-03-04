@@ -1,6 +1,7 @@
 #include <set>
 #include "substitute.H"
 #include "expression.H"
+#include "let.H"
 
 using std::vector;
 using std::string;

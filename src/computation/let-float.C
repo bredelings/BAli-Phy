@@ -3,6 +3,7 @@
 #include "let-float.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/substitute.H"
+#include "computation/expression/let.H"
 
 using std::vector;
 using std::set;

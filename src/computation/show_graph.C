@@ -2,6 +2,7 @@
 #include "graph_register.H"
 #include "operations.H"
 #include "expression/expression.H"
+#include "expression/let.H"
 
 using std::string;
 using std::vector;

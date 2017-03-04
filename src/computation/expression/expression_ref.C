@@ -1,9 +1,10 @@
 // #define DEBUG_OPTIMIZE
 
+#include "util.H"
 #include "expression_ref.H"
 #include "apply.H"
+#include "let.H"
 #include "expression.H"
-#include "util.H"
 #include "computation/operations.H"
 #include <set>
 #include <iterator>

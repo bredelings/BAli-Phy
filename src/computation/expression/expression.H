@@ -133,17 +133,6 @@ bool is_wildcard(const expression_ref&);
 
 bool is_irrefutable_pattern(const expression_ref& E);
 
-struct let_obj: public Object
-{
-    let_obj* clone() const {return new let_obj(*this);}
-
-    tribool compare(const Object& o) const;
-
-    type_constant type() const {return let_type;}
-
-    std::string print() const;
-};
-
 std::set<std::string> find_named_parameters(const expression_ref&);
 
 std::set<std::string> find_named_parameters(const std::vector<expression_ref>&);
@@ -201,18 +190,6 @@ template <typename First, typename Second, typename... Rest>
 auto Tuple(const First& first, const Second& second, const Rest&... rest)
 {
     return apply_subst(Tuple(2+sizeof...(rest)) ,first,second,rest...);
-}
-
-template <typename First>
-First let(const First& first)
-{
-    return first;
-}
-
-template <typename First, typename Second, typename... Rest>
-auto let(const First& first, const Second& second, const Rest&... rest)
-{
-    return let_expression(first,second,let(rest...));
 }
 
 // 2 Fields, a value, and a Cons or a ListEnd
@@ -326,12 +303,6 @@ expression_ref get_list(const std::vector<T>& v)
 
 template<> expression_ref get_list<>(const std::vector<expression_ref>& v);
 
-expression_ref let_expression(const std::vector<expression_ref>& vars, const std::vector<expression_ref>& bodies, const expression_ref& T);
-
-expression_ref let_expression(const expression_ref& var, const expression_ref& body, const expression_ref& T);
-
-expression_ref indexed_let_expression(const std::vector<expression_ref>& bodies, const expression_ref& T);
-
 expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise = expression_ref());
 
 expression_ref case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
@@ -346,15 +317,10 @@ expression_ref def_function(const std::vector< std::vector<expression_ref> >& pa
 
 expression_ref launchbury_normalize(const expression_ref& E);
 expression_ref launchbury_unnormalize(const expression_ref& E);
-expression_ref unlet(const expression_ref& E);
 
 expression_ref add_prefix(const std::string&, const expression_ref& E);
 
 bool parse_case_expression(const expression_ref& E, expression_ref& T, std::vector<expression_ref>& patterns, std::vector<expression_ref>& bodies);
-
-bool parse_let_expression(const expression_ref& E, std::vector<expression_ref>& vars, std::vector<expression_ref>& bodies, expression_ref& T);
-
-bool parse_indexed_let_expression(const expression_ref& E, std::vector<expression_ref>& bodies, expression_ref& T);
 
 void parse_alternatives(const expression_ref& E, std::vector<expression_ref>& cases, std::vector<expression_ref>& results);
 
