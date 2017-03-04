@@ -7,6 +7,7 @@
 #include "case.H"
 #include "trim.H"
 #include "tuple.H"
+#include "list.H" // for char_list
 #include "expression.H"
 #include "computation/operations.H"
 #include <set>
