@@ -22,6 +22,11 @@ using std::multiset;
 
 using boost::dynamic_pointer_cast;
 
+// 1. factor out: trim, list, tuple
+// 2. eliminate substitution.H
+// 3. Move EVector and EPair code to expression_ref.H
+// 4. Eliminate identifier in favor of dummy (==var)?
+
 bool dummy::operator==(const dummy& d) const
 {
     return index == d.index and name == d.name;
