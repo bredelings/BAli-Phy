@@ -1,4 +1,5 @@
 #include "let.H"
+#include "case.H"
 #include "substitute.H"
 #include "expression.H"
 #include "computation/operations.H"

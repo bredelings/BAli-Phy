@@ -2,6 +2,7 @@
 #include "substitute.H"
 #include "expression.H"
 #include "let.H"
+#include "case.H"
 
 using std::vector;
 using std::string;

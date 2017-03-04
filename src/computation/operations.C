@@ -3,6 +3,7 @@
 #include "math/exponential.H"
 #include "myexception.H"
 #include "expression/expression.H"
+#include "expression/case.H"
 
 using std::vector;
 using std::string;

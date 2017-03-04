@@ -4,6 +4,7 @@
 #include "expression_ref.H"
 #include "apply.H"
 #include "let.H"
+#include "case.H"
 #include "expression.H"
 #include "computation/operations.H"
 #include <set>

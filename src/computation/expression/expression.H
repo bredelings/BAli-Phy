@@ -303,26 +303,10 @@ expression_ref get_list(const std::vector<T>& v)
 
 template<> expression_ref get_list<>(const std::vector<expression_ref>& v);
 
-expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise = expression_ref());
-
-expression_ref case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
-
-expression_ref make_case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
-
-//expression_ref def_function(const expression_ref& pattern, const expression_ref& body);
-
-//expression_ref def_function(const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
-
-expression_ref def_function(const std::vector< std::vector<expression_ref> >& patterns, const std::vector<expression_ref>& bodies);
-
 expression_ref launchbury_normalize(const expression_ref& E);
 expression_ref launchbury_unnormalize(const expression_ref& E);
 
 expression_ref add_prefix(const std::string&, const expression_ref& E);
-
-bool parse_case_expression(const expression_ref& E, expression_ref& T, std::vector<expression_ref>& patterns, std::vector<expression_ref>& bodies);
-
-void parse_alternatives(const expression_ref& E, std::vector<expression_ref>& cases, std::vector<expression_ref>& results);
 
 bool is_WHNF(const expression_ref& E);
 

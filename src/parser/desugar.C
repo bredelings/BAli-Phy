@@ -8,9 +8,10 @@
 #include "computation/loader.H"
 #include "AST.H"
 #include "computation/expression/expression.H"
+#include "computation/expression/AST_node.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/let.H"
-#include "computation/expression/AST_node.H"
+#include "computation/expression/case.H"
 #include "computation/expression/constructor.H"
 #include "desugar.H"
 
