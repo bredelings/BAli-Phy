@@ -107,16 +107,6 @@ struct identifier: public Object
     identifier(const std::string& s);
 };
 
-struct Trim: public Object
-{
-    Trim* clone() const {return new Trim(*this);}
-    tribool compare(const Object& o) const;
-
-    type_constant type() const {return trim_type;}
-
-    std::string print() const;
-};
-
 bool is_dummy(const expression_ref&);
 
 bool is_parameter(const expression_ref&);
@@ -140,14 +130,6 @@ std::set<std::string> find_named_parameters(const std::vector<expression_ref>&);
 expression_ref lambda_expression(const Operator& O);
 expression_ref lambda_quantify(int dummy_index, const expression_ref& E);
 expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& E);
-
-expression_ref trim_normalize(const expression_ref&);
-
-expression_ref trim(const expression_ref&);
-
-expression_ref trim_unnormalize(const expression_ref&);
-
-expression_ref untrim(const expression_ref&);
 
 int max_index(const std::set<dummy>& s);
 
