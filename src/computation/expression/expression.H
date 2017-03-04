@@ -92,8 +92,6 @@ bool is_identifier(const expression_ref& R);
 
 bool is_reglike(const expression_ref& R);
 
-bool is_irrefutable_pattern(const expression_ref& E);
-
 std::set<std::string> find_named_parameters(const expression_ref&);
 
 std::set<std::string> find_named_parameters(const std::vector<expression_ref>&);

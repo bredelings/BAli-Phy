@@ -16,4 +16,6 @@ void parse_alternatives(const expression_ref& E, std::vector<expression_ref>& ca
 
 expression_ref def_function(const std::vector< std::vector<expression_ref> >& patterns, const std::vector<expression_ref>& bodies);
 
+bool is_irrefutable_pattern(const expression_ref& E);
+
 #endif
