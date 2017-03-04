@@ -15,6 +15,7 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
+#include "computation/expression/dummy.H"
 #include "desugar.H"
 
 using std::string;

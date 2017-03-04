@@ -10,6 +10,7 @@
 #include "computation/loader.H"
 #include "expression/AST_node.H"
 #include "expression/expression.H"
+#include "expression/dummy.H"
 #include "expression/let.H"
 #include "expression/case.H"
 #include "expression/tuple.H"

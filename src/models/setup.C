@@ -92,6 +92,7 @@
 #include "computation/expression/expression.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
+#include "computation/expression/dummy.H"
 #include "computation/operations.H"
 
 using boost::property_tree::ptree;

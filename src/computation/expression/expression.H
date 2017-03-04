@@ -32,29 +32,6 @@ struct parameter: public Object
     parameter(const std::string& s);
 };
 
-// a dummy variable expression
-struct dummy: public Object
-{
-    int index;
-
-    std::string name;
-
-    bool operator==(const dummy&) const;
-    dummy* clone() const {return new dummy(*this);}
-    std::string print() const;
-    tribool compare(const Object& o) const;
-  
-    bool operator<(const dummy&) const;
-
-    type_constant type() const {return dummy_type;}
-
-    bool is_wildcard() const {return index < 0 and not name.size();}
-
-    dummy(int i):index(i) {}
-    dummy(const std::string& s):dummy(s,-1) {}
-    dummy(const std::string& s,int i):index(i),name(s) {assert(name != "_");}
-};
-
 struct reg_var: public Object
 {
     int target;
@@ -107,8 +84,6 @@ struct identifier: public Object
     identifier(const std::string& s);
 };
 
-bool is_dummy(const expression_ref&);
-
 bool is_parameter(const expression_ref&);
 
 bool is_modifiable(const expression_ref&);
@@ -116,10 +91,6 @@ bool is_modifiable(const expression_ref&);
 bool is_identifier(const expression_ref& R);
 
 bool is_reglike(const expression_ref& R);
-
-bool is_wildcard(const dummy& d);
-
-bool is_wildcard(const expression_ref&);
 
 bool is_irrefutable_pattern(const expression_ref& E);
 
@@ -130,12 +101,6 @@ std::set<std::string> find_named_parameters(const std::vector<expression_ref>&);
 expression_ref lambda_expression(const Operator& O);
 expression_ref lambda_quantify(int dummy_index, const expression_ref& E);
 expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& E);
-
-int max_index(const std::set<dummy>& s);
-
-std::set<dummy> get_free_indices(const expression_ref& E);
-
-std::set<dummy> get_bound_indices(const expression_ref& E);
 
 struct lambda: public Object
 {
@@ -160,18 +125,6 @@ expression_ref launchbury_unnormalize(const expression_ref& E);
 expression_ref add_prefix(const std::string&, const expression_ref& E);
 
 bool is_WHNF(const expression_ref& E);
-
-int get_safe_binder_index(const expression_ref& E);
-
-extern const expression_ref v0;
-extern const expression_ref v1;
-extern const expression_ref v2;
-extern const expression_ref v3;
-extern const expression_ref v4;
-extern const expression_ref v5;
-extern const expression_ref v6;
-extern const expression_ref v7;
-extern const expression_ref v8;
 
 expression_ref parse_object(const std::string& s);
 

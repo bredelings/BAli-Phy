@@ -15,6 +15,7 @@
 #include "computation/expression/let.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/case.H"
+#include "computation/expression/dummy.H"
 
 using std::vector;
 using std::string;
@@ -28,47 +29,10 @@ using boost::dynamic_pointer_cast;
 // 3. Eliminate identifier in favor of dummy (==var)?
 // 4. Remove horrible (#symbol)*(#function) substitution in module.C
 
-bool dummy::operator==(const dummy& d) const
-{
-    return index == d.index and name == d.name;
-}
-
-tribool dummy::compare(const Object& o) const 
-{
-    const dummy* D = dynamic_cast<const dummy*>(&o);
-    if (not D) 
-	return false;
-
-    return (*this) == *D;
-}
-
 identifier::identifier(const std::string& s)
     :name(s)
 {
     assert(not name.empty());
-}
-
-string dummy::print() const {
-    if (is_wildcard())
-	return "_";
-    else if (name.size() and index == -1)
-	return name;
-    else
-	return name+string("#")+convertToString(index);
-}
-
-bool dummy::operator<(const dummy& D) const 
-{
-    if (name.size() and not D.name.size())
-	return true;
-
-    if (not name.size() and D.name.size())
-	return false;
-
-    if (name.size())
-	return name < D.name;
-    else
-	return index < D.index;
 }
 
 tribool parameter::compare(const Object& o) const 
@@ -152,132 +116,6 @@ expression_ref lambda_expression(const Operator& O)
 ///    Instead, we must "alpha-convert" Lx.y to Lz.y, and then apply Lz.y to x, leading to Lz.x .
 
 /// Literally E2 for D in E1. (e.g. don't rename variables in E2).  Throw an exception if D is a lambda-bound dummy variable.
-
-std::set<dummy> get_free_indices(const expression_ref& E);
-
-/// Return the min of v
-template<typename T>
-T max(const std::set<T>& v)
-{
-    T t = *v.begin();
-    for(const auto& i: v)
-	t = std::max(t,i);
-
-    return t;
-}
-
-int max_index(const std::set<dummy>& s)
-{
-    if (s.empty()) return -1;
-    return max(s).index;
-}
-
-/// Return the min of v
-template<typename T>
-T min(const std::set<T>& v)
-{
-    T t = *v.begin();
-    for(const auto& i: v)
-	t = std::min(t,*i);
-
-    return t;
-}
-
-// Return the list of dummy variable indices that are bound at the top level of the expression
-std::set<dummy> get_bound_indices(const expression_ref& E)
-{
-    std::set<dummy> bound;
-
-    if (not E.size()) return bound;
-
-    // Make sure we don't try to substitute for lambda-quantified dummies
-    if (E.head().type() == lambda_type)
-    {
-	if (E.sub()[0].is_a<dummy>())
-	    bound.insert(E.sub()[0].as_<dummy>());
-    }
-    else 
-    {
-	if (E.head().type() == let_type)
-	{
-	    const int L = (E.size()-1)/2;
-	    for(int i=0;i<L;i++)
-	    {
-		if (E.sub()[1+2*i].is_a<dummy>())
-		    bound.insert(E.sub()[1+2*i].as_<dummy>());
-	    }
-	}
-	assert(not E.head().is_a<Case>());
-    }
-
-    return bound;
-}
-
-void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dummy>& free)
-{
-    // fv x = { x }
-    if (is_dummy(E))
-    {
-	dummy d = E.as_<dummy>();
-	if (not is_wildcard(E) and (bound.find(d) == bound.end()))
-	    free.insert(d);
-	return;
-    }
-
-    // fv c = { }
-    if (not E.size()) return;
-
-    // for case expressions get_bound_indices doesn't work correctly.
-    if (E.head().type() == case_type)
-    {
-	get_free_indices2(E.sub()[0], bound, free);
-
-	const int L = (E.size()-1)/2;
-
-	for(int i=0;i<L;i++)
-	{
-	    std::set<dummy> bound_ = get_free_indices(E.sub()[1+2*i]);
-	    for(const auto& d: bound_)
-		bound.insert(d);
-	    get_free_indices2(E.sub()[2+2*i], bound, free);
-	    for(const auto& d: bound_)
-	    {
-		auto it = bound.find(d);
-		bound.erase(it);
-	    }
-	}
-
-	return;
-    }
-
-    std::set<dummy> bound_ = get_bound_indices(E);
-    for(const auto& d: bound_)
-	bound.insert(d);
-    for(int i=0;i<E.size();i++)
-	get_free_indices2(E.sub()[i], bound, free);
-    for(const auto& d: bound_)
-    {
-	auto it = bound.find(d);
-	bound.erase(it);
-    }
-}
-
-std::set<dummy> get_free_indices(const expression_ref& E)
-{
-    multiset<dummy> bound;
-    set<dummy> free;
-    get_free_indices2(E, bound, free);
-    return free;
-}
-
-int get_safe_binder_index(const expression_ref& E)
-{
-    std::set<dummy> free = get_free_indices(E);
-    if (free.empty()) 
-	return 0;
-    else
-	return max_index(free)+1;
-}
 
 void find_named_parameters(const expression_ref& E, std::set<string>& names)
 {
@@ -414,11 +252,6 @@ bool is_WHNF(const expression_ref& E)
     }
 }
 
-bool is_dummy(const expression_ref& E)
-{
-    return (E.head().type() == dummy_type);
-}
-
 bool is_parameter(const expression_ref& E)
 {
     return E.is_a<parameter>();
@@ -444,24 +277,6 @@ bool is_reg_var(const expression_ref& E)
 bool is_reglike(const expression_ref& E)
 {
     return is_dummy(E) or is_parameter(E) or is_modifiable(E) or is_reg_var(E) or E.is_index_var() or is_identifier(E);
-}
-
-bool is_wildcard(const dummy& d)
-{
-    return d.is_wildcard();
-}
-
-// Remove in favor of is_dummy?
-bool is_wildcard(const expression_ref& E)
-{
-    if (is_dummy(E))
-    {
-	assert(not E.size());
-	dummy d = E.as_<dummy>();
-	return is_wildcard(d);
-    }
-    else
-	return false;
 }
 
 expression_ref launchbury_unnormalize(const expression_ref& E)
@@ -570,16 +385,6 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
     std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";
     return E;
 }
-
-const expression_ref v0 = dummy(0);
-const expression_ref v1 = dummy(1);
-const expression_ref v2 = dummy(2);
-const expression_ref v3 = dummy(3);
-const expression_ref v4 = dummy(4);
-const expression_ref v5 = dummy(5);
-const expression_ref v6 = dummy(6);
-const expression_ref v7 = dummy(7);
-const expression_ref v8 = dummy(8);
 
 expression_ref parse_object(const string& s)
 {

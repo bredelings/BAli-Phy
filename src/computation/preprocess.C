@@ -4,6 +4,7 @@
 #include "let-float.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
+#include "computation/expression/dummy.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/indexify.H"
 

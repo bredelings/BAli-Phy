@@ -4,6 +4,7 @@
 #include "myexception.H"
 #include "expression/expression.H"
 #include "expression/case.H"
+#include "expression/dummy.H"
 
 using std::vector;
 using std::string;

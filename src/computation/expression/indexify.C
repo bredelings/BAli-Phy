@@ -1,5 +1,6 @@
 #include "indexify.H"
 #include "expression.H"
+#include "dummy.H"
 #include "let.H"
 #include "case.H"
 

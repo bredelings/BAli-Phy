@@ -3,6 +3,7 @@
 #include "expression.H"
 #include "let.H"
 #include "case.H"
+#include "dummy.H"
 
 using std::vector;
 using std::string;
