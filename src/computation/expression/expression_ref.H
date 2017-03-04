@@ -365,4 +365,28 @@ inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
 	return o<<"[NULL]";
 }
 
+typedef Vector<expression_ref> EVector;
+typedef std::pair<expression_ref,expression_ref> Epair;
+typedef Pair<expression_ref,expression_ref> EPair;
+
+template<>
+inline std::string Box<std::vector<expression_ref>>::print() const
+{
+    if (empty()) return "{}";
+
+    std::string s = "{";
+    for(int i=0;i<(int)size()-1;i++) {
+	s += (*this)[i].print();
+	s += ",";
+    }
+    s += this->back().print() + "}";
+    return s;
+}
+
+template<>
+inline std::string Box<std::pair<expression_ref,expression_ref>>::print() const
+{
+    return std::string("(") + first.print() + "," + second.print() + ")";
+}
+
 #endif
