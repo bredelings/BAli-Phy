@@ -6,13 +6,11 @@
 using std::vector;
 using std::string;
 
-expression_ref Cons = lambda_expression( right_assoc_constructor(":",2) );
-
-expression_ref ListEnd = lambda_expression( constructor("[]",0) );
+expression_ref List() {return constructor("[]",0);}
 
 template<> expression_ref get_list<>(const vector<expression_ref>& v)
 {
-    expression_ref E = ListEnd;
+    expression_ref E = List();
 
     for(int i=v.size()-1;i>=0;i--)
 	E = v[i]&E;

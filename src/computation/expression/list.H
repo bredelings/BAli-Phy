@@ -3,50 +3,45 @@
 
 #include <vector>
 #include "expression_ref.H"
+#include "constructor.H"
 
-// 2 Fields, a value, and a Cons or a ListEnd
-extern expression_ref Cons;
-
-// 0 fields
-extern expression_ref ListEnd;
-
-inline expression_ref List() {return ListEnd;}
+expression_ref List();
 
 template <typename First>
 auto List(const First& first)
 {
-    return Cons*first*ListEnd;
+    return first&List();
 }
 
 template <typename First, typename T2>
 auto List(const First& first, const T2& t2)
 {
-    return Cons*first*List(t2);
+    return first&List(t2);
 }
 
 template <typename First, typename T2, typename T3>
 auto List(const First& first, const T2& t2, const T3& t3)
 {
-    return Cons*first*List(t2,t3);
+    return first&List(t2,t3);
 }
 
 template <typename First, typename T2, typename T3, typename T4>
 auto List(const First& first, const T2& t2, const T3& t3, const T4& t4)
 {
-    return Cons*first*List(t2,t3,t4);
+    return first&List(t2,t3,t4);
 }
 
 template <typename First, typename T2, typename T3, typename T4, typename T5>
 auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5& t5)
 {
-    return Cons*first*List(t2,t3,t4,t5);
+    return first&List(t2,t3,t4,t5);
 }
 
 
 template <typename First, typename T2, typename T3, typename T4, typename T5, typename T6>
 auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5& t5,const T6& t6)
 {
-    return Cons*first*List(t2,t3,t4,t5,t6);
+    return first&List(t2,t3,t4,t5,t6);
 }
 
 template <typename T>

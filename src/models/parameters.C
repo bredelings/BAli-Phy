@@ -629,7 +629,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
 		const auto& edge = edges[i];
 		string name = "*MyTree.nodeBranches"+convertToString(n) + "." + convertToString(i);
 		p_node.push_back( p->add_parameter(name,edge) );
-		node  = Cons * parameter(name) * node;
+		node  = parameter(name) & node;
 	    }
 	}
     
