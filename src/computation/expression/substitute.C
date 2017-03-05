@@ -4,6 +4,7 @@
 #include "let.H"
 #include "case.H"
 #include "dummy.H"
+#include "lambda.H"
 
 using std::vector;
 using std::string;

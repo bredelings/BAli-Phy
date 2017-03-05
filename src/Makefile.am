@@ -56,7 +56,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   computation/bithash.H computation/graph_register.H computation/let-float.H \
            computation/loader.H computation/module.H computation/expression/dummy.H \
 	   computation/operation.H computation/operations.H computation/operator.H \
-           computation/pool.H computation/program.H \
+           computation/pool.H computation/program.H computation/expression/lambda.H \
 	   builtins/iota.H CacheList.H mcmc/logger.H models/setup.H \
            dp/dp_hmm.H parser/desugar.H mcmc/AIS.H tools/distance-report.H \
 	   matrix.H builtins/vector_from_list.H startup/A-T-model.H startup/files.H startup/loggers.H \
@@ -121,7 +121,7 @@ bali_phy_SOURCES = parser/parse.C dp/dp_hmm.C parser/desugar.C parser/AST.C sequ
 	  computation/expression/indexify.C computation/expression/let.C \
 	  computation/expression/case.C  computation/expression/trim.C \
 	  computation/expression/tuple.C computation/expression/list.C \
-	  computation/expression/dummy.C \
+	  computation/expression/dummy.C computation/expression/lambda.C \
 	  computation/computation.C computation/tokens.C computation/preprocess.C \
 	  computation/graph_register.C computation/show_graph.C computation/module.C \
 	  computation/model_expression.C computation/evaluate.C computation/gc.C computation/reroot.C \

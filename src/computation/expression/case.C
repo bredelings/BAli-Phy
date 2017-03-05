@@ -1,7 +1,8 @@
 #include <set>
+#include "lambda.H"
+#include "dummy.H"
 #include "case.H"
 #include "let.H"
-#include "dummy.H"
 #include "substitute.H"
 #include "expression.H"
 #include "computation/operations.H"

@@ -1,4 +1,5 @@
 #include "trim.H"
+#include "lambda.H"
 #include "let.H"
 #include "case.H"
 #include "expression.H"

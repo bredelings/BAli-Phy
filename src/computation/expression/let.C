@@ -1,6 +1,7 @@
+#include "dummy.H"
+#include "lambda.H"
 #include "let.H"
 #include "case.H"
-#include "dummy.H"
 #include "substitute.H"
 #include "expression.H"
 #include "computation/operations.H"

@@ -1,4 +1,5 @@
 #include "tuple.H"
+#include "lambda.H"
 #include "expression.H"
 
 using std::vector;

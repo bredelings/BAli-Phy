@@ -2,6 +2,7 @@
 
 #include "util.H"
 #include "expression_ref.H"
+#include "lambda.H"
 #include "apply.H"
 #include "let.H"
 #include "case.H"

@@ -1,6 +1,7 @@
 #include "list.H"
 #include "expression.H"
 #include "constructor.H"
+#include "lambda.H"
 
 using std::vector;
 using std::string;

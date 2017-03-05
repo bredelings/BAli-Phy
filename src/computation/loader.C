@@ -4,6 +4,7 @@
 #include "computation/graph_register.H"
 #include <boost/filesystem/operations.hpp>
 #include "expression/expression.H"
+#include "expression/lambda.H"
 
 #include "io.H"
 #include "parser/desugar.H"

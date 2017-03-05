@@ -11,11 +11,11 @@
 #include "computation/operation.H"
 #include "computation/operations.H"
 #include "computation/graph_register.H"
-#include "computation/expression/substitute.H"
-#include "computation/expression/let.H"
-#include "computation/expression/trim.H"
-#include "computation/expression/case.H"
-#include "computation/expression/dummy.H"
+#include "substitute.H"
+#include "let.H"
+#include "case.H"
+#include "dummy.H"
+#include "lambda.H"
 
 using std::vector;
 using std::string;
@@ -25,6 +25,7 @@ using std::multiset;
 using boost::dynamic_pointer_cast;
 
 // 1. factor out: list, tuple
+// Also try to simplify the apply_subst stuff in tuple & list files
 // 2. eliminate substitution.H
 // 3. Eliminate identifier in favor of dummy (==var)?
 // 4. Remove horrible (#symbol)*(#function) substitution in module.C
@@ -47,56 +48,6 @@ tribool parameter::compare(const Object& o) const
 parameter::parameter(const std::string& s)
     :parameter_name(s)
 {
-}
-
-string lambda::print() const {
-    return "lambda";
-}
-
-tribool lambda::compare(const Object& o) const 
-{
-    return dynamic_cast<const lambda*>(&o);
-}
-
-string lambda2::print() const {
-    return "/\\";
-}
-
-tribool lambda2::compare(const Object& o) const 
-{
-    return dynamic_cast<const lambda2*>(&o);
-}
-
-expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& R)
-{
-    return new expression(lambda(),{dummy, R});
-}
-
-expression_ref lambda_quantify(int dummy_index, const expression_ref& R)
-{
-    return lambda_quantify(dummy(dummy_index), R);
-}
-
-expression_ref lambda_expression(const Operator& O)
-{
-    int n = O.n_args();
-    assert(n != -1);
-  
-    expression_ref R;
-    if (n == 0)
-	R = expression_ref(O.clone());
-    else
-    {
-	expression* E = new expression(O);
-	for(int i=0;i<n;i++)
-	    E->sub.push_back(expression_ref(dummy(i)));
-	R = expression_ref(E);
-    }
-  
-    for(int i=n-1;i>=0;i--) 
-	R = lambda_quantify(i,R);
-  
-    return R;
 }
 
 /// 1. Hey, could we solve the problem of needing to rename dummies by doing capture-avoiding substitution?
@@ -193,17 +144,6 @@ expression_ref add_prefix(const string& prefix, const expression_ref& E)
  *  Perhaps switch to (lambda dummy E) instead of (lambda[index] E)
  */ 
 
-template <typename T>
-vector<T> skip(int n, const vector<T>& v)
-{
-    if (v.size() <= n) return vector<T>();
-
-    vector<T> v2(v.size() - n);
-    for(int i=0;i<v2.size();i++)
-	v2[i] = v[i+n];
-
-    return v2;
-}
 
 // Def: a redex is an expression that matches the LHS of a reduction rule.
 

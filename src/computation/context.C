@@ -9,6 +9,7 @@
 #include "parser/desugar.H"
 #include "parser/AST.H"
 #include "expression/expression.H"
+#include "expression/lambda.H"
 
 using std::string;
 using std::vector;

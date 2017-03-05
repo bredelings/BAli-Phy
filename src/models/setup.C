@@ -90,9 +90,10 @@
 #include "models/translate.H"
 #include "computation/model_expression.H"
 #include "computation/expression/expression.H"
+#include "computation/expression/dummy.H"
+#include "computation/expression/lambda.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
-#include "computation/expression/dummy.H"
 #include "computation/operations.H"
 
 using boost::property_tree::ptree;
