@@ -11,22 +11,21 @@ constructor tuple_head(int n);
 // Create a constructor for n-tuples.
 expression_ref Tuple(int n);
 
-template <typename First, typename Second>
-auto apply_subst(const First& first, const Second& second)
+inline auto append_exp(const expression_ref& first, const expression_ref& second)
 {
-    return first * second;
+    return first + second;
 }
 
-template <typename First, typename Second, typename Third, typename... Rest>
-auto apply_subst(const First& first, const Second& second, const Third& third, const Rest&... rest)
+template <typename... Rest>
+auto append_exp(const expression_ref& first, const expression_ref& second, const expression_ref& third, const Rest&... rest)
 {
-    return apply_subst(first*second, third, rest...);
+    return append_exp(first+second, third, rest...);
 }
 
-template <typename First, typename Second, typename... Rest>
-auto Tuple(const First& first, const Second& second, const Rest&... rest)
+template <typename... Rest>
+auto Tuple(const expression_ref& first, const expression_ref& second, const Rest&... rest)
 {
-    return apply_subst(Tuple(2+sizeof...(rest)) ,first,second,rest...);
+    return append_exp(tuple_head(2+sizeof...(rest)),first,second,rest...);
 }
 
 template <typename T>

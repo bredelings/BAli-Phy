@@ -156,6 +156,4 @@ public:
 std::ostream& operator<<(std::ostream&, const Module&);
 
 expression_ref resolve_refs(const std::vector<Module>&, const expression_ref&);
-
-expression_ref do_optimize_DCE(const expression_ref&);
 #endif

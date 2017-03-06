@@ -130,7 +130,6 @@ expression_ref graph_normalize(const expression_ref& E)
 closure let_float(closure&& C)
 {
     C.exp = let_float(expression_ref(C.exp));
-    C.exp = do_optimize_DCE(C.exp);
     return C;
 }
 
