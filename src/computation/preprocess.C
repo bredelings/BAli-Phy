@@ -313,7 +313,6 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	// 5. Sort the vertices
 	vector<Vertex> sorted_vertices;
 	topological_sort(graph, std::back_inserter(sorted_vertices));
-	std::reverse(sorted_vertices.begin(), sorted_vertices.end());
 
 	vector<int> sorted_indices(sorted_vertices.size());
 	for(int i=0;i<sorted_indices.size();i++)
