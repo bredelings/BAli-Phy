@@ -4,12 +4,24 @@
 #include "object.H"
 #include "expression_ref.H"
 
+enum class amount_t {Unknown, None, Once, Many};
+
+enum class var_context {unknown, argument};
+
 // a dummy variable expression
 struct dummy: public Object
 {
     int index;
 
     std::string name;
+
+    amount_t work_dup = amount_t::Unknown;
+
+    amount_t code_dup = amount_t::Unknown;
+
+    var_context context = var_context::unknown;
+
+    bool is_loop_breaker = false;
 
     bool operator==(const dummy&) const;
     dummy* clone() const {return new dummy(*this);}
