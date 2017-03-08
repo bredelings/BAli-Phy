@@ -150,7 +150,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	// Analyze the object
 	expression_ref object;
 	set<dummy> obj_free_vars;
-	tie(object, obj_free_vars) = occurrence_analyzer(E.sub()[0]);
+	tie(object, obj_free_vars) = occurrence_analyzer(E.sub()[0], var_context::argument);
 
 	const int L = (E.size()-1)/2;
 	// Just normalize the bodies
