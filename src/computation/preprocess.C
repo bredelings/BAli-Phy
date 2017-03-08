@@ -291,7 +291,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 		    int i = components[c][k];
 		    if (E.sub()[2 + 2*i].is_a<dummy>()) score[k] = 4;
 		    else if (E.sub()[2 + 2*i].is_a<constructor>() or E.sub()[2 + 2*i].size() == 0) score[k] = 3;
-		    else if (free_vars.find(E.sub()[1 + 2*i].as_<dummy>())->work_dup == amount_t::Once) score[k] = 1;
+		    else if (free_vars.find(E.sub()[1 + 2*i].as_<dummy>())->pre_inline()) score[k] = 1;
 		}
 		int loop_breaker_index_in_component = argmin(score);
 		int loop_breaker_index = components[c][loop_breaker_index_in_component];

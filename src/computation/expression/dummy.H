@@ -8,13 +8,8 @@ enum class amount_t {Unknown, None, Once, Many};
 
 enum class var_context {unknown, argument};
 
-// a dummy variable expression
-struct dummy: public Object
+struct occurrence_info
 {
-    int index;
-
-    std::string name;
-
     amount_t work_dup = amount_t::Unknown;
 
     amount_t code_dup = amount_t::Unknown;
@@ -22,6 +17,19 @@ struct dummy: public Object
     var_context context = var_context::unknown;
 
     bool is_loop_breaker = false;
+
+    bool top_level = false;
+};
+    
+
+// a dummy variable expression
+struct dummy: public Object, public occurrence_info
+{
+    int index;
+
+    std::string name;
+
+    bool pre_inline() const;
 
     bool operator==(const dummy&) const;
     dummy* clone() const {return new dummy(*this);}
