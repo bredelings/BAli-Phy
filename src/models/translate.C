@@ -107,6 +107,16 @@ Rule substitute_in_rule_types(const equations_t& renaming, Rule rule)
     return rule;
 }
 
+Rule freshen_type_vars(Rule rule, const set<string>& bound_vars)
+{
+    // 1. Find variables in rule type
+    set<string> rule_type_variables = find_rule_type_vars(rule);
+
+    // 2. Make substitutions in rule type
+    auto renaming = alpha_rename(rule_type_variables, bound_vars);
+    return substitute_in_rule_types(renaming, rule);
+}
+
 void pass2(const ptree& required_type, ptree& model, equations_t& equations, const set<string>& bound_vars = {})
 {
     auto name = model.get_value<string>();
@@ -133,27 +143,20 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations, con
 	return;
     }
 
-    auto rule = require_rule_for_func(name);
-
     // 1a. Find variables in type and equations.
     set<string> variables_to_avoid = find_variables(required_type);
     add(variables_to_avoid, find_variables(equations));
     for(const auto& eq: equations)
 	variables_to_avoid.insert(eq.first);
-
-    // 1b. Find variables in rule type
-    set<string> rule_type_variables = find_rule_type_vars(rule);
-
-    // 1c. Make substitutions in rule type
-    //    std::cout<<"substituting-from: "<<show(rule)<<std::endl;
-    auto renaming = alpha_rename(rule_type_variables, variables_to_avoid);
-    rule = substitute_in_rule_types(renaming, rule);
-
-    //    std::cout<<"substituting-to  : "<<show(rule)<<std::endl;
+//    assert(includes(bound_vars, variables_to_avoid));
+    
+    // 2. Get rule with fresh type vars
+    auto rule = require_rule_for_func(name);
+    rule = freshen_type_vars(rule, vars_to_avoid);
 
     //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
 
-    // 2. Skip rules where the type does not match
+    // 3. Fail or add type conversion of rule result doesn't match required type
 
     type_t result_type = rule.get_child("result_type");
 
