@@ -34,16 +34,10 @@ void pass1(ptree& p)
     }
 }
 
-/// True if t1 is derivedd from
-optional<equations_t> type_derived_from(const type_t& t1, const type_t& t2)
-{
-    return unify(t1, t2);
-}
-
 /// True if some conversion function can be applied to the expression of type t1, so that it is of type t2
 optional<equations_t> convertible_to(ptree& model, const type_t& t1, type_t t2)
 {
-    auto equations = type_derived_from(t1, t2);
+    auto equations = unify(t1, t2);
     if (equations)
 	return equations;
 
@@ -163,7 +157,7 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations, con
 
     type_t result_type = rule.get_child("result_type");
 
-    auto equations2 = type_derived_from(result_type, required_type) && equations;
+    auto equations2 = unify(result_type, required_type) && equations;
 
     if (not equations2)
     {
