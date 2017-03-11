@@ -152,7 +152,7 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations, con
     
     // 2. Get rule with fresh type vars
     auto rule = require_rule_for_func(name);
-    rule = freshen_type_vars(rule, vars_to_avoid);
+    rule = freshen_type_vars(rule, variables_to_avoid);
 
     //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
 
