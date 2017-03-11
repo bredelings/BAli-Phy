@@ -88,7 +88,7 @@ optional<equations_t> convertible_to(ptree& model, const type_t& t1, type_t t2)
     return equations;
 }
 
-void pass2(const ptree& required_type, ptree& model, equations_t& equations)
+void pass2(const ptree& required_type, ptree& model, equations_t& equations, const set<string>& bound_vars = {})
 {
     auto name = model.get_value<string>();
 
