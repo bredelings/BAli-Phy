@@ -11,7 +11,7 @@ typedef boost::property_tree::ptree term_t;
 // given two terms, what equations do we need to unify them?
 boost::optional<equations_t> unify(const term_t& p1, const term_t& p2);
 
-std::set<std::string> find_variables(const term_t& p);
+std::set<std::string> find_variables_in_type(const term_t& p);
 
 equations_t alpha_rename(const std::set<std::string>& vars, const std::set<std::string>& vars_to_avoid);
 

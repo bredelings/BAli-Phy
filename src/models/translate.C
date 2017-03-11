@@ -90,9 +90,9 @@ optional<equations_t> convertible_to(ptree& model, const type_t& t1, type_t t2)
 
 set<string> find_rule_type_vars(const ptree& rule)
 {
-    set<string> vars = find_variables(rule.get_child("result_type"));
+    set<string> vars = find_variables_in_type(rule.get_child("result_type"));
     for(const auto& x: rule.get_child("args"))
-	add(vars, find_variables( x.second.get_child("arg_type") ) );
+	add(vars, find_variables_in_type( x.second.get_child("arg_type") ) );
     return vars;
 }
 
@@ -143,11 +143,14 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations, con
 	return;
     }
 
-    // 1a. Find variables in type and equations.
-    set<string> variables_to_avoid = find_variables(required_type);
-    add(variables_to_avoid, find_variables(equations));
+    // 1a. Find variables in required type
+    set<string> variables_to_avoid = find_variables_in_type(required_type);
+    // 1b. Find variables in equations
     for(const auto& eq: equations)
+    {
 	variables_to_avoid.insert(eq.first);
+	add(variables_to_avoid, find_variables_in_type(eq.second));
+    }
 //    assert(includes(bound_vars, variables_to_avoid));
     
     // 2. Get rule with fresh type vars
@@ -229,7 +232,7 @@ std::pair<ptree,equations_t> translate_model(const string& required_type, const 
     auto t = parse_type(required_type);
     pass1(p);
     equations_t equations;
-    pass2(t, p, equations);
+    pass2(t, p, equations, find_variables_in_type(t));
     return {p,equations};
 }
 

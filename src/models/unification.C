@@ -24,14 +24,14 @@ bool is_wildcard(const ptree& p)
     return (p.get_value<string>() == "_");
 }
 
-set<string> find_variables(const ptree& p)
+set<string> find_variables_in_type(const ptree& p)
 {
     set<string> vars;
     if (is_variable(p))
 	vars.insert(p.get_value<string>());
     else
 	for(const auto& x: p)
-	    add(vars,find_variables(x.second));
+	    add(vars,find_variables_in_type(x.second));
     return vars;
 }
 
