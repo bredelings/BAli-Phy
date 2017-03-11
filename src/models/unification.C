@@ -6,6 +6,7 @@
 using std::vector;
 using std::set;
 using std::string;
+using boost::optional;
 using boost::property_tree::ptree;
 
 bool is_variable(const ptree& p)
@@ -67,33 +68,35 @@ ptree alpha_rename(const set<string>& vars, const set<string>& vars_to_avoid)
 
 bool can_unify(const ptree& p1, const ptree& p2)
 {
-    return unify(p1,p2).get_value<string>() != "fail";
+    return (bool)unify(p1,p2);
 }
 
 // Given two sets of equations, what further equations do we need to unify them?
-bool merge_equations(equations_t& p1, const equations_t& p2)
+optional<equations_t> merge_equations(const optional<equations_t>& p1, const optional<equations_t>& p2)
 {
-    if (p1.get_value<string>() == "fail") return false;
-    if (p2.get_value<string>() == "fail") return false;
+    if (not p1) return boost::none;
+    if (not p2) return boost::none;
 
-    for(const auto& x: p2)
+    optional<equations_t> solution = p1;
+
+    for(const auto& x: *p2)
     {
 	assert(x.second.get_value<string>() != "");
 	const auto& key = x.first;
 
 	// If p1 has no equality for the variable, then just copy over p2's equality
-	if (not p1.count(key))
-	    p1.push_back(x);
+	if (not solution->count(key))
+	    solution->push_back(x);
         // If they BOTH have an equality, then we need to merge the equalities.
-	else 
-	    if (not merge_equations(p1, unify(p1.get_child(key),p2.get_child(key))))
-	    {
-		p1 = ptree("fail");
-		return false;
-	    }
+	else
+	{
+	    solution = merge_equations(solution, unify(solution->get_child(key),solution->get_child(key)));
+	    if (not solution)
+		return boost::none;
+	}
     }
 
-    return true;
+    return solution;
 }
 
 void substitute(const equations_t& equations, ptree& p)
@@ -113,18 +116,18 @@ void substitute(const equations_t& equations, ptree& p)
 	    substitute(equations, child.second);
 }
 
-equations_t unify(const ptree& p1, const ptree& p2)
+optional<equations_t> unify(const ptree& p1, const ptree& p2)
 {
     // 1. If either term is a variable, then we are good.
     string head1 = p1.get_value<string>();
     string head2 = p2.get_value<string>();
     if (is_wildcard(p1) or is_wildcard(p2))
-	return {}; // Don't record equations for matching wildcards
+	return ptree{}; // Don't record equations for matching wildcards
     else if (is_variable(p1))
     {
 	// Don't record equalities of the form a = a
 	if (is_variable(p2) and head1 == head2)
-	    return {};
+	    return ptree{};
 	else
 	{
 	    equations_t equations;
@@ -140,19 +143,22 @@ equations_t unify(const ptree& p1, const ptree& p2)
     }
 
     // 2. If the heads don't match then unification fails
-    if (head1 != head2) return ptree("fail");
+    if (head1 != head2) return boost::none;
 
     // 3. If the arity doesn't match then unification fails
-    if (p1.size() != p2.size()) return ptree("fail");
+    if (p1.size() != p2.size()) return boost::none;
 
     // 4. If every argument unifies, then unification succeeds
-    equations_t equations;
+    optional<equations_t> equations = equations_t{};
 
     auto x = p1.begin();
     auto y = p2.begin();
     for(int i=0; i<p1.size(); i++, x++, y++)
-	if (not merge_equations(equations, unify(x->second, y->second)))
-	    return ptree("fail");
+    {
+	equations = merge_equations(equations, unify(x->second, y->second));
+	if (not equations)
+	    return boost::none;
+    }
     
     return equations;
 }

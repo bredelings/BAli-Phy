@@ -10,6 +10,7 @@ using std::vector;
 using std::set;
 using std::string;
 using boost::property_tree::ptree;
+using boost::optional;
 
 // Translate pass M+FM -> RCTMC[M,FM]
 void pass1(ptree& p)
@@ -34,23 +35,23 @@ void pass1(ptree& p)
 }
 
 /// True if t1 is derivedd from
-equations_t type_derived_from(const type_t& t1, const type_t& t2)
+optional<equations_t> type_derived_from(const type_t& t1, const type_t& t2)
 {
     return unify(t1, t2);
 }
 
 /// True if some conversion function can be applied to the expression of type t1, so that it is of type t2
-equations_t convertible_to(ptree& model, const type_t& t1, type_t t2)
+optional<equations_t> convertible_to(ptree& model, const type_t& t1, type_t t2)
 {
     auto equations = type_derived_from(t1, t2);
-    if (equations.get_value<string>() != "fail")
+    if (equations)
 	return equations;
 
     if (t2.get_value<string>() == "MMM")
     {
 	t2.put_value("MM");
 	equations = convertible_to(model,t1,t2);
-	if (equations.get_value<string>() != "fail")
+	if (equations)
 	{
 	    ptree result;
 	    result.put_value("MMM");
@@ -62,7 +63,7 @@ equations_t convertible_to(ptree& model, const type_t& t1, type_t t2)
     {
 	t2.put_value("RA");
 	equations = convertible_to(model,t1,t2);
-	if (equations.get_value<string>() != "fail")
+	if (equations)
 	{
 	    ptree result;
 	    result.put_value("UnitMixture");
@@ -74,7 +75,7 @@ equations_t convertible_to(ptree& model, const type_t& t1, type_t t2)
     {
 	t2.put_value("EM");
 	equations = convertible_to(model,t1,t2);
-	if (equations.get_value<string>() != "fail")
+	if (equations)
 	{
 	    ptree result;
 	    result.put_value("RCTMC");
@@ -142,28 +143,29 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
     // 2. Skip rules where the type does not match
 
     type_t result_type = rule.get_child("result_type");
-    equations_t equations2 = type_derived_from(result_type, required_type);
-    merge_equations(equations2,equations);
+    auto equations2 = type_derived_from(result_type, required_type);
+    equations2 = merge_equations(equations2,equations);
 
-    if (equations2.get_value<string>() == "fail")
+    if (not equations2)
     {
 	equations2 = convertible_to(model, result_type, required_type);
-	merge_equations(equations2,equations);
-	if (equations2.get_value<string>() != "fail")
+	equations2 = merge_equations(equations2,equations);
+	if (equations2)
 	{
-	    equations = equations2;
+	    equations = *equations2;
 	    pass2(required_type, model, equations);
 	    return;
 	}
     }
-    equations = equations2;
-//	if (equations.get_value<string>() == "fail")
+//	if (not equations2)
 //	    std::cout<<"fail!"<<std::endl;
 //	else
 //	    std::cout<<"OK."<<std::endl;
 
-    if (equations.get_value<string>() == "fail")
+    if (not equations2)
 	throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
+    else
+	equations = *equations2;
 
     // 2.5. Check type of arguments if pass_arguments
     if (rule.get("pass_arguments",false) or rule.get("list_arguments",false))
