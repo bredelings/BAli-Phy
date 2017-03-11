@@ -433,7 +433,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep)
 	    return (identifier("return"), s.substr(1,s.size()-2));
     }
 
-    if (not can_unify(result_type, required_type))
+    if (not unify(result_type, required_type))
 	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but got '"<<name<<"' of type "<<unparse_type(result_type);
 
     return get_model_(model_rep);

@@ -20,7 +20,7 @@ void pass1(ptree& p)
 	pass1(child.second);
     
     // 2. Convert e.g. TN+F -> RCTMC[TN,F]
-    if (can_unify(get_result_type(p),parse_type("FM[_]")) and p.count("submodel"))
+    if (unify(get_result_type(p),parse_type("FM[_]")) and p.count("submodel"))
     {
 	ptree q = p.get_child("submodel");
 	auto& r = p;

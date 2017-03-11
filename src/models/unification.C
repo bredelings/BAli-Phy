@@ -66,11 +66,6 @@ ptree alpha_rename(const set<string>& vars, const set<string>& vars_to_avoid)
     return equations;
 }
 
-bool can_unify(const ptree& p1, const ptree& p2)
-{
-    return (bool)unify(p1,p2);
-}
-
 // Given two sets of equations, what further equations do we need to unify them?
 optional<equations_t> merge_equations(const optional<equations_t>& p1, const optional<equations_t>& p2)
 {
