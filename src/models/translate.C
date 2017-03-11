@@ -96,6 +96,17 @@ set<string> find_rule_type_vars(const ptree& rule)
     return vars;
 }
 
+Rule substitute_in_rule_types(const equations_t& renaming, Rule rule)
+{
+    substitute(renaming, rule.get_child("result_type") );
+    for(auto& x: rule.get_child("args"))
+    {
+	ptree& arg_type = x.second.get_child("arg_type");
+	substitute( renaming, arg_type );
+    }
+    return rule;
+}
+
 void pass2(const ptree& required_type, ptree& model, equations_t& equations, const set<string>& bound_vars = {})
 {
     auto name = model.get_value<string>();
@@ -136,12 +147,8 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations, con
     // 1c. Make substitutions in rule type
     //    std::cout<<"substituting-from: "<<show(rule)<<std::endl;
     auto renaming = alpha_rename(rule_type_variables, variables_to_avoid);
-    substitute(renaming, rule.get_child("result_type") );
-    for(auto& x: rule.get_child("args"))
-    {
-	ptree& arg_type = x.second.get_child("arg_type");
-	substitute( renaming, arg_type );
-    }
+    rule = substitute_in_rule_types(renaming, rule);
+
     //    std::cout<<"substituting-to  : "<<show(rule)<<std::endl;
 
     //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
