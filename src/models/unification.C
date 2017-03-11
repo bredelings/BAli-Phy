@@ -158,3 +158,7 @@ optional<equations_t> unify(const ptree& p1, const ptree& p2)
     return equations;
 }
 
+boost::optional<equations_t> operator&&(const boost::optional<equations_t>& p1, const boost::optional<equations_t>& p2)
+{
+    return merge_equations(p1,p2);
+}

@@ -144,11 +144,11 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
 
     type_t result_type = rule.get_child("result_type");
 
-    auto equations2 = merge_equations(type_derived_from(result_type, required_type),equations);
+    auto equations2 = type_derived_from(result_type, required_type) && equations;
 
     if (not equations2)
     {
-	if (equations2 = merge_equations(convertible_to(model, result_type, required_type),equations))
+	if (equations2 = convertible_to(model, result_type, required_type) && equations)
 	{
 	    equations = *equations2;
 	    pass2(required_type, model, equations);

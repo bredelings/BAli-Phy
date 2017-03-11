@@ -18,4 +18,7 @@ equations_t alpha_rename(const std::set<std::string>& vars, const std::set<std::
 void substitute(const equations_t& equations, term_t& p);
 
 boost::optional<equations_t> merge_equations(const boost::optional<equations_t>& p1, const boost::optional<equations_t>& p2);
+
+boost::optional<equations_t> operator&&(const boost::optional<equations_t>& p1, const boost::optional<equations_t>& p2);
+
 #endif
