@@ -143,27 +143,20 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations)
     // 2. Skip rules where the type does not match
 
     type_t result_type = rule.get_child("result_type");
-    auto equations2 = type_derived_from(result_type, required_type);
-    equations2 = merge_equations(equations2,equations);
+
+    auto equations2 = merge_equations(type_derived_from(result_type, required_type),equations);
 
     if (not equations2)
     {
-	equations2 = convertible_to(model, result_type, required_type);
-	equations2 = merge_equations(equations2,equations);
-	if (equations2)
+	if (equations2 = merge_equations(convertible_to(model, result_type, required_type),equations))
 	{
 	    equations = *equations2;
 	    pass2(required_type, model, equations);
 	    return;
 	}
+	else
+	    throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
     }
-//	if (not equations2)
-//	    std::cout<<"fail!"<<std::endl;
-//	else
-//	    std::cout<<"OK."<<std::endl;
-
-    if (not equations2)
-	throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
     else
 	equations = *equations2;
 
