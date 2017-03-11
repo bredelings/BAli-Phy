@@ -88,6 +88,14 @@ optional<equations_t> convertible_to(ptree& model, const type_t& t1, type_t t2)
     return equations;
 }
 
+set<string> find_rule_type_vars(const ptree& rule)
+{
+    set<string> vars = find_variables(rule.get_child("result_type"));
+    for(const auto& x: rule.get_child("args"))
+	add(vars, find_variables( x.second.get_child("arg_type") ) );
+    return vars;
+}
+
 void pass2(const ptree& required_type, ptree& model, equations_t& equations, const set<string>& bound_vars = {})
 {
     auto name = model.get_value<string>();
@@ -123,9 +131,7 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations, con
 	variables_to_avoid.insert(eq.first);
 
     // 1b. Find variables in rule type
-    set<string> rule_type_variables = find_variables(rule.get_child("result_type"));
-    for(const auto& x: rule.get_child("args"))
-	add(rule_type_variables, find_variables( x.second.get_child("arg_type") ) );
+    set<string> rule_type_variables = find_rule_type_vars(rule);
 
     // 1c. Make substitutions in rule type
     //    std::cout<<"substituting-from: "<<show(rule)<<std::endl;
