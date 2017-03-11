@@ -41,7 +41,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"JC","RA[a]","G"}, {"jukes_cantor", "A"}, {"A", "a", "LAMBDA"}},
     {{"K80","RA[a]","G"}, {"k80", "kappa", "A"}, {"kappa","Double","~logNormal[log[2],0.25]"}, {"A", "a", "LAMBDA"} },
     {{"F81"}, {}, {"alphabet","Alphabet"}},
-    {{"HKY","EM[a]","G"}, {"hky","kappa","alphabet"}, {"kappa","Double","~logNormal[log[2],0.25]"}, {"alphabet","a","LAMBDA"}},
+    {{"HKY","EM[a]","G","Nucleotides[a]"}, {"hky","kappa","alphabet"}, {"kappa","Double","~logNormal[log[2],0.25]"}, {"alphabet","a","LAMBDA"}},
     {{"TN","EM[a]","G"}, {"tn", "kappaPur", "kappaPyr", "A"}, {"kappaPur","Double","~logNormal[log[2],0.25]"}, {"kappaPyr","Double","~logNormal[log[2],0.25]"}, {"A", "a", "LAMBDA"}},
     {{"GTR","EM[a]"}, {"gtr_model","S"}, {"S","E","exchange_prior"}},
     {{"exchange_prior","E"}, {"exchange_model"}},
@@ -52,7 +52,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"WAG","EM[AA]"}, {"SModel.wag_model"}},
     {{"LG","EM[AA]"}, {"SModel.lg_model"}},
     {{"Empirical","EM[a]"}, {"SModel.empirical_model","filename"}, {"filename","String"}},
-    {{"M0","EM[Codon[a,b]]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","~Uniform[0,1]"}},
+    {{"M0","EM[Codon[a,b]]","","Nucleotides[a],AminoAcids[b],Codon[a,b,Codon[a,b]]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","~Uniform[0,1]"}},
     {{"fMutSel","RA[Codon[a,b]]"}, {"fMutSel_model","submodel","omega","ws"},
      {"omega","Double","~Uniform[0,1]"}, {"ws","List[Double]","~iid[61,logNormal[0,0.5]]"}, {"submodel","RA[a]","HKY"}},
     {{"fMutSel0","RA[Codon[a,b]]"}, {"fMutSel0_model","submodel","omega","ws"},
@@ -136,6 +136,15 @@ const vector< vector<vector<string>> > all_default_arguments =
 ptree parse(const string& s);
 ptree parse_type(const string& s);
 
+ptree parse_constraints(const string& s)
+{
+    vector<string> ss = split(s,',');
+    ptree constraints;
+    for(auto& c: ss)
+	constraints.push_back({"", parse_type(c)});
+    return constraints;
+}
+
 ptree convert_rule(const vector<vector<string>>& s)
 {
     ptree rule;
@@ -150,6 +159,9 @@ ptree convert_rule(const vector<vector<string>>& s)
 	rule.put("generate_function","true");
     if (s[0].size() > 2 and contains_char(s[0][2],'N'))
 	rule.put("no_log","true");
+
+    if (s[0].size() >= 4)
+	rule.push_back({"Constraints",parse_constraints(s[0][3])});
 
     if (s[1].size())
     {
