@@ -52,7 +52,8 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"WAG","EM[AA]"}, {"SModel.wag_model"}},
     {{"LG","EM[AA]"}, {"SModel.lg_model"}},
     {{"Empirical","EM[a]"}, {"SModel.empirical_model","filename"}, {"filename","String"}},
-    {{"M0","EM[Codon[a,b]]","","Nucleotides[a],AminoAcids[b],Codon[a,b,Codon[a,b]]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","~Uniform[0,1]"}},
+    // FIXME: For terms like Codons[a,b,F[c,d]] we can't just split on ',' because we will get 'Codons[a'
+    {{"M0","EM[Codon[a,b]]","","Nucleotides[a],AminoAcids[b]"}, {"m0_model","submodel","omega"}, {"submodel","EM[a]","HKY"}, {"omega","Double","~Uniform[0,1]"}},
     {{"fMutSel","RA[Codon[a,b]]"}, {"fMutSel_model","submodel","omega","ws"},
      {"omega","Double","~Uniform[0,1]"}, {"ws","List[Double]","~iid[61,logNormal[0,0.5]]"}, {"submodel","RA[a]","HKY"}},
     {{"fMutSel0","RA[Codon[a,b]]"}, {"fMutSel0_model","submodel","omega","ws"},
