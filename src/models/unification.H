@@ -43,11 +43,11 @@ equations unify(const term_t& T1, const term_t& T2);
 
 std::set<std::string> find_variables_in_type(const term_t& p);
 
-std::map<std::string, std::string> alpha_rename(const std::set<std::string>& vars, const std::set<std::string>& vars_to_avoid);
+std::map<std::string, term_t> alpha_rename(const std::set<std::string>& vars, const std::set<std::string>& vars_to_avoid);
 
 void substitute(const equations& equations, term_t& T);
 
-void substitute(const std::map<std::string, std::string>& replace, term_t& T);
+void substitute(const std::map<std::string, term_t>& replace, term_t& T);
 
 equations operator&&(const equations& p1, const equations& p2);
 

@@ -91,7 +91,7 @@ set<string> find_rule_type_vars(const ptree& rule)
     return vars;
 }
 
-Rule substitute_in_rule_types(const map<string,string>& renaming, Rule rule)
+Rule substitute_in_rule_types(const map<string,term_t>& renaming, Rule rule)
 {
     substitute(renaming, rule.get_child("result_type") );
     for(auto& x: rule.get_child("args"))

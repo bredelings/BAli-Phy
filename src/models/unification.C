@@ -167,17 +167,17 @@ int find_unused_index(const set<string>& vars)
 
 //
 
-map<string,string> alpha_rename(const set<string>& vars, const set<string>& vars_to_avoid)
+map<string,term_t> alpha_rename(const set<string>& vars, const set<string>& vars_to_avoid)
 {
     int index = std::max(find_unused_index(vars), find_unused_index(vars_to_avoid));
 
-    map<string,string> replace;
+    map<string,term_t> replace;
     for(const auto& var: vars)
     {
 	if (includes(vars_to_avoid, var))
 	{
 	    string new_var = string("var") + convertToString(index++);
-	    replace.insert({var, new_var});
+	    replace.insert({var, term_t(new_var)});
 	}
     }
     return replace;
@@ -217,13 +217,13 @@ void substitute(const equations& E, term_t& T)
 	    substitute(E, child.second);
 }
 
-void substitute(const map<string,string>& R, term_t& T)
+void substitute(const map<string,term_t>& R, term_t& T)
 {
     if (is_variable(T))
     {
 	string name = T.get_value<string>();
 	if (R.count(name))
-	    T = ptree(R.at(name));
+	    T = R.at(name);
     }
     else
 	for(auto& child: T)
