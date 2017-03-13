@@ -6,6 +6,6 @@
 #include <utility>
 #include "unification.H"
 
-std::pair<boost::property_tree::ptree,equations_t> translate_model(const std::string& required_type, const std::string& model);
+std::pair<boost::property_tree::ptree,equations> translate_model(const std::string& required_type, const std::string& model);
 
 #endif

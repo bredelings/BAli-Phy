@@ -4,10 +4,131 @@
 #include "util.H"
 
 using std::vector;
+using std::pair;
+using std::map;
 using std::set;
 using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
+
+
+bool is_wildcard(const ptree& p)
+{
+    if (not p.empty()) return false;
+    return (p.get_value<string>() == "_");
+}
+
+bool equations::has_record(const std::string& x) const
+{
+    for(auto& v: values)
+	if (v.first.count(x)) return true;
+
+    return false;
+}
+
+equations::operator bool() const
+{
+    return valid;
+}
+
+void equations::remove_record_for(const std::string& x)
+{
+    for(auto it = values.begin(); it != values.end(); it++)
+    {
+	if (it->first.count(x))
+	{
+	    values.erase(it);
+	    return;
+	}
+    }
+    std::abort();
+}
+
+const vector<pair<set<string>,optional<term_t>>>& equations::get_values() const
+{
+    return values;
+}
+
+vector<pair<set<string>,optional<term_t>>>::const_iterator equations::find_record(const std::string& x) const
+{
+    for(auto it = values.begin(); it != values.end(); it++)
+	if (it->first.count(x))
+	    return it;
+
+    std::abort();
+}
+
+vector<pair<set<string>,optional<term_t>>>::iterator equations::find_record(const std::string& x)
+{
+    for(auto it = values.begin(); it != values.end(); it++)
+	if (it->first.count(x))
+	    return it;
+
+    std::abort();
+}
+
+bool equations::add_condition(const string& x, const term_t& T)
+{
+    if (is_wildcard(T)) return valid;
+
+    if (not has_record(x))
+	// Add x = T
+	values.push_back({set<string>{x},T});
+    else
+    {
+	auto xrec = find_record(x);
+	if (not xrec->second)
+	    // Set x = T
+	    xrec->second = T;
+	else
+	    // If x=U then unify(U,T)
+	    unify(*xrec->second, T);
+    }
+    return valid;
+}
+
+bool equations::add_var_condition(const string& x, const string& y)
+{
+    // 1. If we are adding x == y then quit.
+    if (x == y) return valid;
+
+    if (not has_record(y))
+    {
+	if (not has_record(x))
+	    // 2. If neither x or y has a record, then add one for both of them.
+	    values.push_back({set<string>{x,y},{}});
+	else
+	{
+	    // 3. If x has a record by y does not, then add y to x's record;
+	    find_record(x)->first.insert(y);
+	}
+    }
+    else if (not has_record(x))
+	// 4. If y has a record by x does not, then add x to y's record;
+	find_record(y)->first.insert(x);
+    else
+    {
+	auto xrec = find_record(x);
+	auto yrec = find_record(y);
+	// Add the variables in y's record to x's record.
+	add(xrec->first, yrec->first);
+	// If x doesn't have a value, then just use y's value;
+	if (not xrec->second)
+	    xrec->second = yrec->second;
+	else if (yrec->second)
+	    unify(*xrec->second, *yrec->second);
+	remove_record_for(y);
+    }
+    return valid;
+}
+
+optional<term_t> equations::value_of_var(const string& x) const
+{
+    if (has_record(x))
+	return find_record(x)->second;
+    else
+	return boost::none;
+}
 
 bool is_variable(const ptree& p)
 {
@@ -16,12 +137,6 @@ bool is_variable(const ptree& p)
     if (s.empty()) return false;
     char first_letter = s[0];
     return (first_letter >= 97 and first_letter <= 122);
-}
-
-bool is_wildcard(const ptree& p)
-{
-    if (not p.empty()) return false;
-    return (p.get_value<string>() == "_");
 }
 
 set<string> find_variables_in_type(const ptree& p)
@@ -50,115 +165,115 @@ int find_unused_index(const set<string>& vars)
     return index+1;
 }
 
-ptree alpha_rename(const set<string>& vars, const set<string>& vars_to_avoid)
+//
+
+map<string,string> alpha_rename(const set<string>& vars, const set<string>& vars_to_avoid)
 {
     int index = std::max(find_unused_index(vars), find_unused_index(vars_to_avoid));
 
-    equations_t equations;
+    map<string,string> replace;
     for(const auto& var: vars)
     {
 	if (includes(vars_to_avoid, var))
 	{
 	    string new_var = string("var") + convertToString(index++);
-	    equations.put(var,new_var);
+	    replace.insert({var, new_var});
 	}
     }
-    return equations;
+    return replace;
 }
 
-// Given two sets of equations, what further equations do we need to unify them?
-optional<equations_t> merge_equations(const optional<equations_t>& p1, const optional<equations_t>& p2)
+
+equations operator&&(const equations& E1, const equations& E2)
 {
-    if (not p1) return boost::none;
-    if (not p2) return boost::none;
+    if (not E1) return equations{false};
+    if (not E2) return equations{false};
 
-    optional<equations_t> solution = p1;
+    equations solution = E1;
 
-    for(const auto& x: *p2)
+    for(const auto& value: E2.get_values())
     {
-	assert(x.second.get_value<string>() != "");
-	const auto& key = x.first;
-
-	// If p1 has no equality for the variable, then just copy over p2's equality
-	if (not solution->count(key))
-	    solution->push_back(x);
-        // If they BOTH have an equality, then we need to merge the equalities.
-	else
-	{
-	    solution = merge_equations(solution, unify(solution->get_child(key),solution->get_child(key)));
-	    if (not solution)
-		return boost::none;
-	}
+	string var0 = *value.first.begin();
+	for(const auto& var: value.first)
+	    solution.add_var_condition(var0,var);
+	if (value.second)
+	    solution.add_condition(var0, *value.second);
     }
 
     return solution;
 }
 
-void substitute(const equations_t& equations, ptree& p)
+
+void substitute(const equations& E, term_t& T)
 {
-    if (is_variable(p))
+    if (is_variable(T))
     {
-	for(auto& eq: equations)
-	    if (eq.first == p.get_value<string>())
-	    {
-		p = eq.second;
-		substitute(equations, p);
-		break;
-	    }
+	string name = T.get_value<string>();
+	if (E.value_of_var(name))
+	    T = ptree(*E.value_of_var(name));
     }
     else
-	for(auto& child: p)
-	    substitute(equations, child.second);
+	for(auto& child: T)
+	    substitute(E, child.second);
 }
 
-optional<equations_t> unify(const ptree& p1, const ptree& p2)
+void substitute(const map<string,string>& R, term_t& T)
 {
-    // 1. If either term is a variable, then we are good.
-    string head1 = p1.get_value<string>();
-    string head2 = p2.get_value<string>();
-    if (is_wildcard(p1) or is_wildcard(p2))
-	return ptree{}; // Don't record equations for matching wildcards
-    else if (is_variable(p1))
+    if (is_variable(T))
     {
-	// Don't record equalities of the form a = a
-	if (is_variable(p2) and head1 == head2)
-	    return ptree{};
+	string name = T.get_value<string>();
+	if (R.count(name))
+	    T = ptree(R.at(name));
+    }
+    else
+	for(auto& child: T)
+	    substitute(R, child.second);
+}
+
+bool equations::unify(const term_t& T1, const term_t& T2)
+{
+    string head1 = T1.get_value<string>();
+    string head2 = T2.get_value<string>();
+
+    // 1. If either term is a wildcard, then we are done.
+    if (is_wildcard(T1) or is_wildcard(T2))
+	return valid;
+
+    else if (is_variable(T1))
+    {
+	// 2. var1 = var2
+	if (is_variable(T2))
+	    return add_var_condition(head1, head2);
+	// 3. var1 = T2
 	else
-	{
-	    equations_t equations;
-	    equations.push_back({head1,p2});
-	    return equations;
-	}
+	    return add_condition(head1, T2);
     }
-    else if (is_variable(p2))
-    {
-	equations_t equations;
-	equations.push_back({head2,p1});
-	return equations;
-    }
+    else if (is_variable(T2))
+	// 4. var2 = T1
+	return add_condition(head2, T1);
 
-    // 2. If the heads don't match then unification fails
-    if (head1 != head2) return boost::none;
+    // 5. If the heads don't match then unification fails
+    if (head1 != head2)
+	valid = false;
 
-    // 3. If the arity doesn't match then unification fails
-    if (p1.size() != p2.size()) return boost::none;
+    // 6. If the arity doesn't match then unification fails
+    if (T1.size() != T2.size())
+	valid = false;
 
-    // 4. If every argument unifies, then unification succeeds
-    optional<equations_t> equations = equations_t{};
+    // 7. Walk the arguments (children) of the T1 and T2 and unify them.
+    auto x = T1.begin();
+    auto y = T2.begin();
+    for(int i=0; i<T1.size(); i++, x++, y++)
+	if (not unify(x->second, y->second))
+	    break;
 
-    auto x = p1.begin();
-    auto y = p2.begin();
-    for(int i=0; i<p1.size(); i++, x++, y++)
-    {
-	equations = merge_equations(equations, unify(x->second, y->second));
-	if (not equations)
-	    return boost::none;
-    }
-    
-    return equations;
+    // 8. If we got here, then we succeeded!
+    return valid;
 }
 
-boost::optional<equations_t> operator&&(const boost::optional<equations_t>& p1, const boost::optional<equations_t>& p2)
+equations unify(const term_t& T1, const term_t& T2)
 {
-    return merge_equations(p1,p2);
+    equations E;
+    E.unify(T1, T2);
+    return E;
 }

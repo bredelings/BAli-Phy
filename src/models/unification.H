@@ -4,21 +4,51 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/optional.hpp>
 #include <set>
+#include <vector>
+#include <map>
 
-typedef boost::property_tree::ptree equations_t;
 typedef boost::property_tree::ptree term_t;
 
+class equations
+{
+    bool valid = true;
+
+    std::vector<std::pair<std::set<std::string>,boost::optional<term_t>>> values;
+
+    bool has_record(const std::string& x) const;
+
+    std::vector<std::pair<std::set<std::string>, boost::optional<term_t>>>::const_iterator find_record(const std::string& x) const;
+
+    std::vector<std::pair<std::set<std::string>, boost::optional<term_t>>>::iterator find_record(const std::string& x);
+
+    void remove_record_for(const std::string& x);
+
+public:
+    boost::optional<term_t> value_of_var(const std::string& x) const;
+
+    bool add_condition(const std::string& x, const term_t& T);
+    bool add_var_condition(const std::string& x, const std::string& y);
+
+    bool unify(const term_t& T, const term_t& U);
+
+    const std::vector<std::pair<std::set<std::string>,boost::optional<term_t>>>& get_values() const;
+
+    operator bool() const;
+    equations() {};
+    explicit equations(bool s):valid(s) {};
+};
+
 // given two terms, what equations do we need to unify them?
-boost::optional<equations_t> unify(const term_t& p1, const term_t& p2);
+equations unify(const term_t& T1, const term_t& T2);
 
 std::set<std::string> find_variables_in_type(const term_t& p);
 
-equations_t alpha_rename(const std::set<std::string>& vars, const std::set<std::string>& vars_to_avoid);
+std::map<std::string, std::string> alpha_rename(const std::set<std::string>& vars, const std::set<std::string>& vars_to_avoid);
 
-void substitute(const equations_t& equations, term_t& p);
+void substitute(const equations& equations, term_t& T);
 
-boost::optional<equations_t> merge_equations(const boost::optional<equations_t>& p1, const boost::optional<equations_t>& p2);
+void substitute(const std::map<std::string, std::string>& replace, term_t& T);
 
-boost::optional<equations_t> operator&&(const boost::optional<equations_t>& p1, const boost::optional<equations_t>& p2);
+equations operator&&(const equations& p1, const equations& p2);
 
 #endif

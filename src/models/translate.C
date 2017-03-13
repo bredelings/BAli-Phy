@@ -8,6 +8,7 @@
 
 using std::vector;
 using std::set;
+using std::map;
 using std::string;
 using boost::property_tree::ptree;
 using boost::optional;
@@ -35,17 +36,17 @@ void pass1(ptree& p)
 }
 
 /// True if some conversion function can be applied to the expression of type t1, so that it is of type t2
-optional<equations_t> convertible_to(ptree& model, const type_t& t1, type_t t2)
+equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 {
-    auto equations = unify(t1, t2);
-    if (equations)
-	return equations;
+    auto E = unify(t1, t2);
+    if (E)
+	return E;
 
     if (t2.get_value<string>() == "MMM")
     {
 	t2.put_value("MM");
-	equations = convertible_to(model,t1,t2);
-	if (equations)
+	E = convertible_to(model,t1,t2);
+	if (E)
 	{
 	    ptree result;
 	    result.put_value("MMM");
@@ -56,8 +57,8 @@ optional<equations_t> convertible_to(ptree& model, const type_t& t1, type_t t2)
     else if (t2.get_value<string>() == "MM")
     {
 	t2.put_value("RA");
-	equations = convertible_to(model,t1,t2);
-	if (equations)
+	E = convertible_to(model,t1,t2);
+	if (E)
 	{
 	    ptree result;
 	    result.put_value("UnitMixture");
@@ -68,8 +69,8 @@ optional<equations_t> convertible_to(ptree& model, const type_t& t1, type_t t2)
     else if (t2.get_value<string>() == "RA")
     {
 	t2.put_value("EM");
-	equations = convertible_to(model,t1,t2);
-	if (equations)
+	E = convertible_to(model,t1,t2);
+	if (E)
 	{
 	    ptree result;
 	    result.put_value("RCTMC");
@@ -79,7 +80,7 @@ optional<equations_t> convertible_to(ptree& model, const type_t& t1, type_t t2)
 	}
     }
 
-    return equations;
+    return E;
 }
 
 set<string> find_rule_type_vars(const ptree& rule)
@@ -90,7 +91,7 @@ set<string> find_rule_type_vars(const ptree& rule)
     return vars;
 }
 
-Rule substitute_in_rule_types(const equations_t& renaming, Rule rule)
+Rule substitute_in_rule_types(const map<string,string>& renaming, Rule rule)
 {
     substitute(renaming, rule.get_child("result_type") );
     for(auto& x: rule.get_child("args"))
@@ -111,7 +112,7 @@ Rule freshen_type_vars(Rule rule, const set<string>& bound_vars)
     return substitute_in_rule_types(renaming, rule);
 }
 
-void pass2(const ptree& required_type, ptree& model, equations_t& equations, const set<string>& bound_vars = {})
+void pass2(const ptree& required_type, ptree& model, equations& E, const set<string>& bound_vars = {})
 {
     auto name = model.get_value<string>();
 
@@ -139,11 +140,13 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations, con
 
     // 1a. Find variables in required type
     set<string> variables_to_avoid = find_variables_in_type(required_type);
-    // 1b. Find variables in equations
-    for(const auto& eq: equations)
+    // 1b. Find variables in E
+    for(const auto& eq: E.get_values())
     {
-	variables_to_avoid.insert(eq.first);
-	add(variables_to_avoid, find_variables_in_type(eq.second));
+	for(const auto& var: eq.first)
+	    variables_to_avoid.insert(var);
+	if (eq.second)
+	    add(variables_to_avoid, find_variables_in_type(*eq.second));
     }
 //    assert(includes(bound_vars, variables_to_avoid));
     
@@ -157,29 +160,29 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations, con
 
     type_t result_type = rule.get_child("result_type");
 
-    auto equations2 = unify(result_type, required_type) && equations;
+    auto E2 = unify(result_type, required_type) && E;
 
-    if (not equations2)
+    if (not E2)
     {
-	if (equations2 = convertible_to(model, result_type, required_type) && equations)
+	if (E2 = convertible_to(model, result_type, required_type) && E)
 	{
-	    equations = *equations2;
-	    pass2(required_type, model, equations);
+	    E = E2;
+	    pass2(required_type, model, E);
 	    return;
 	}
 	else
 	    throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
     }
     else
-	equations = *equations2;
+	E = E2;
 
     // 2.5. Check type of arguments if pass_arguments
     if (rule.get("pass_arguments",false) or rule.get("list_arguments",false))
     {
 	type_t arg_required_type = get_type_for_arg(rule, "*");
-	substitute(equations, arg_required_type);
+	substitute(E, arg_required_type);
 	for(auto& child: model)
-	    pass2(arg_required_type, child.second, equations);
+	    pass2(arg_required_type, child.second, E);
 	return;
     }
 
@@ -189,8 +192,8 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations, con
 	if (get_arg(rule, child.first).get("no_apply",false))
 	    throw myexception()<<"Rule for function '"<<rule.get<string>("name")<<"' doesn't allow specifying a value for '"<<child.first<<"'.";
 	type_t arg_required_type = get_type_for_arg(rule, child.first);
-	substitute(equations, arg_required_type);
-	pass2(arg_required_type, child.second, equations);
+	substitute(E, arg_required_type);
+	pass2(arg_required_type, child.second, E);
     }
 
     // 4. Handle default arguments 
@@ -212,21 +215,21 @@ void pass2(const ptree& required_type, ptree& model, equations_t& equations, con
 	else
 	{
 	    auto arg_required_type = argument.get_child("arg_type");
-	    substitute(equations, arg_required_type);
+	    substitute(E, arg_required_type);
 	    auto default_arg = argument.get_child("default_value");
-	    pass2(arg_required_type, default_arg, equations);
+	    pass2(arg_required_type, default_arg, E);
 	    model.push_back({arg_name, default_arg});
 	}
     }
 }
 
-std::pair<ptree,equations_t> translate_model(const string& required_type, const string& model)
+std::pair<ptree,equations> translate_model(const string& required_type, const string& model)
 {
     auto p = parse(model);
     auto t = parse_type(required_type);
     pass1(p);
-    equations_t equations;
-    pass2(t, p, equations, find_variables_in_type(t));
-    return {p,equations};
+    equations E;
+    pass2(t, p, E, find_variables_in_type(t));
+    return {p,E};
 }
 
