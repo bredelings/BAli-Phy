@@ -84,6 +84,10 @@ bool equations::add_condition(const string& x, const term_t& T)
 	    // If x=U then unify(U,T)
 	    unify(*xrec->second, T);
     }
+#ifndef NDEBUG
+    for(auto& eq: values)
+	assert(eq.second or eq.first.size() > 1);
+#endif
     return valid;
 }
 
@@ -119,6 +123,10 @@ bool equations::add_var_condition(const string& x, const string& y)
 	    unify(*xrec->second, *yrec->second);
 	remove_record_for(y);
     }
+#ifndef NDEBUG
+    for(auto& eq: values)
+	assert(eq.second or eq.first.size() > 1);
+#endif
     return valid;
 }
 
@@ -156,13 +164,40 @@ void equations::eliminate_variable(const string& x)
 	S = {{x,term_t(y)}};
     }
 
-    // remove the equation if it has no more variables
-    if (xrec->first.empty()) values.erase(xrec);
+    // remove the equation if it has no variables, or 1 variable and no term.
+    if (xrec->first.empty() or (xrec->first.size() == 1 and not xrec->second))
+	values.erase(xrec);
 
     // replace occurrences of x with the equivalent term or variable
     for(auto& equation: values)
 	if (equation.second)
 	    substitute(S, *equation.second);
+
+    // Check invariant that we have either a term or >1 variable (#variables + #term >= 2)
+#ifndef NDEBUG
+    for(auto& eq: values)
+	assert(eq.second or eq.first.size() > 1);
+#endif
+}
+
+void equations::eliminate_except(const set<string>& keep)
+{
+    set<string> eliminate = referenced_vars();
+    remove(eliminate, keep);
+    for(auto& x: eliminate)
+	eliminate_variable(x);
+}
+
+set<string> equations::referenced_vars() const
+{
+    set<string> vars;
+    for(auto& v: values)
+    {
+	add(vars, v.first);
+	if (v.second)
+	    add(vars, find_variables_in_type(*v.second));
+    }
+    return vars;
 }
 
 bool is_variable(const ptree& p)

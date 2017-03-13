@@ -35,6 +35,10 @@ public:
 
     void eliminate_variable(const std::string&);
 
+    void eliminate_except(const std::set<std::string>&);
+
+    std::set<std::string> referenced_vars() const;
+
     operator bool() const;
     equations() {};
     explicit equations(bool s):valid(s) {};

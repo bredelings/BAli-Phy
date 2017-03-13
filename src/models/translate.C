@@ -102,6 +102,17 @@ Rule substitute_in_rule_types(const map<string,term_t>& renaming, Rule rule)
     return rule;
 }
 
+Rule substitute_in_rule_types(const equations& renaming, Rule rule)
+{
+    substitute(renaming, rule.get_child("result_type") );
+    for(auto& x: rule.get_child("args"))
+    {
+	ptree& arg_type = x.second.get_child("arg_type");
+	substitute( renaming, arg_type );
+    }
+    return rule;
+}
+
 Rule freshen_type_vars(Rule rule, const set<string>& bound_vars)
 {
     // 1. Find variables in rule type
@@ -112,7 +123,7 @@ Rule freshen_type_vars(Rule rule, const set<string>& bound_vars)
     return substitute_in_rule_types(renaming, rule);
 }
 
-void pass2(const ptree& required_type, ptree& model, equations& E, const set<string>& bound_vars = {})
+equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars)
 {
     auto name = model.get_value<string>();
 
@@ -121,7 +132,7 @@ void pass2(const ptree& required_type, ptree& model, equations& E, const set<str
 	if (required_type.get_value<string>() != "Double" and required_type.get_value<string>() != "Int")
 	    throw myexception()<<"Can't convert '"<<name<<"' to type '"<<unparse_type(required_type)<<"'";
 	assert(model.empty());
-	return;
+	return {};
     }
 
     if (can_be_converted_to<double>(name))
@@ -129,65 +140,55 @@ void pass2(const ptree& required_type, ptree& model, equations& E, const set<str
 	if (required_type.get_value<string>() != "Double")
 	    throw myexception()<<"Can't convert '"<<name<<"' to type '"<<unparse_type(required_type)<<"'";
 	assert(model.empty());
-	return;
+	return {};
     }
 
     if (name.size()>=2 and name[0] == '"' and name.back() == '"' and required_type.get_value<string>() == "String") 
     {
 	assert(model.empty());
-	return;
+	return {};
     }
 
-    // 1a. Find variables in required type
-    set<string> variables_to_avoid = find_variables_in_type(required_type);
-    // 1b. Find variables in E
-    for(const auto& eq: E.get_values())
-    {
-	for(const auto& var: eq.first)
-	    variables_to_avoid.insert(var);
-	if (eq.second)
-	    add(variables_to_avoid, find_variables_in_type(*eq.second));
-    }
-//    assert(includes(bound_vars, variables_to_avoid));
-    
-    // 2. Get rule with fresh type vars
+    // 0. Any variables in required_type must be listed as bound
+    assert(includes(bound_vars, find_variables_in_type(required_type)));
+
+    // 1. Get rule with fresh type vars
     auto rule = require_rule_for_func(name);
-    rule = freshen_type_vars(rule, variables_to_avoid);
+    rule = freshen_type_vars(rule, bound_vars);
 
     //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
 
-    // 3. Fail or add type conversion of rule result doesn't match required type
-
+    // 2. Unify required type with rule result type
     type_t result_type = rule.get_child("result_type");
+    auto E = unify(result_type, required_type);
 
-    auto E2 = unify(result_type, required_type) && E;
-
-    if (not E2)
+    // 2.1 Handle unification failure
+    if (not E)
     {
-	if (E2 = convertible_to(model, result_type, required_type) && E)
-	{
-	    E = E2;
-	    pass2(required_type, model, E);
-	    return;
-	}
+	if (convertible_to(model, result_type, required_type))
+	    return pass2(required_type, model, bound_vars);
 	else
 	    throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
     }
-    else
-	E = E2;
 
-    // Try to eliminate unneeded variables
-    for(auto v: find_rule_type_vars(rule))
-	E.eliminate_variable(v);
+    // 2.3 Update required type and rules with discovered constraints
+    substitute_in_rule_types(E, rule);
 
+    // 2.4 Record any new variables that we are using as bound variables
+    add(bound_vars, find_rule_type_vars(rule));
+    
 	// 2.5. Check type of arguments if pass_arguments
     if (rule.get("pass_arguments",false) or rule.get("list_arguments",false))
     {
-	type_t arg_required_type = get_type_for_arg(rule, "*");
-	substitute(E, arg_required_type);
 	for(auto& child: model)
-	    pass2(arg_required_type, child.second, E);
-	return;
+	{
+	    type_t arg_required_type = get_type_for_arg(rule, "*");
+	    E = E && pass2(arg_required_type, child.second, bound_vars);
+	    substitute_in_rule_types(E, rule);
+	    add(bound_vars, E.referenced_vars());
+	}
+	E.eliminate_except(find_variables_in_type(required_type));
+	return E;
     }
 
     // 3. Handle supplied arguments first.
@@ -196,8 +197,9 @@ void pass2(const ptree& required_type, ptree& model, equations& E, const set<str
 	if (get_arg(rule, child.first).get("no_apply",false))
 	    throw myexception()<<"Rule for function '"<<rule.get<string>("name")<<"' doesn't allow specifying a value for '"<<child.first<<"'.";
 	type_t arg_required_type = get_type_for_arg(rule, child.first);
-	substitute(E, arg_required_type);
-	pass2(arg_required_type, child.second, E);
+	E = E && pass2(arg_required_type, child.second, bound_vars);
+	substitute_in_rule_types(E, rule);
+	add(bound_vars, E.referenced_vars());
     }
 
     // 4. Handle default arguments 
@@ -219,12 +221,17 @@ void pass2(const ptree& required_type, ptree& model, equations& E, const set<str
 	else
 	{
 	    auto arg_required_type = argument.get_child("arg_type");
-	    substitute(E, arg_required_type);
 	    auto default_arg = argument.get_child("default_value");
-	    pass2(arg_required_type, default_arg, E);
+	    E = E && pass2(arg_required_type, default_arg, bound_vars);
+	    substitute_in_rule_types(E, rule);
+	    add(bound_vars, E.referenced_vars());
+
 	    model.push_back({arg_name, default_arg});
 	}
     }
+
+    E.eliminate_except(find_variables_in_type(required_type));
+    return E;
 }
 
 std::pair<ptree,equations> translate_model(const string& required_type, const string& model)
@@ -232,8 +239,7 @@ std::pair<ptree,equations> translate_model(const string& required_type, const st
     auto p = parse(model);
     auto t = parse_type(required_type);
     pass1(p);
-    equations E;
-    pass2(t, p, E, find_variables_in_type(t));
+    auto E = pass2(t, p, find_variables_in_type(t));
     return {p,E};
 }
 
