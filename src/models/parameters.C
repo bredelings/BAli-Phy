@@ -205,11 +205,22 @@ const alphabet& data_partition::get_alphabet() const
 
 alignment data_partition::A() const
 {
-    vector<pairwise_alignment_t> As;
-    for(int b=0;b<2*t().n_branches();b++)
-	As.push_back(get_pairwise_alignment(b));
-  
-    return get_alignment(get_alphabet(), DPC().seqs, DPC().sequences, construct(t(), As));
+    matrix<int> M;
+    if (t().n_nodes() == 1)
+    {
+	M = matrix<int>(DPC().sequences[0].size(),1);
+	for(int i=0;i<M.size1();i++)
+	    M(i,0) = i;
+    }
+    else
+    {
+	vector<pairwise_alignment_t> As;
+	for(int b=0;b<2*t().n_branches();b++)
+	    As.push_back(get_pairwise_alignment(b));
+	M = construct(t(), As);
+    }
+
+    return get_alignment(get_alphabet(), DPC().seqs, DPC().sequences, M);
 }
 
 TreeInterface data_partition::t() const

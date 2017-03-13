@@ -350,6 +350,8 @@ struct Construct
 	{ 
 	    using namespace A2;
 
+	    assert(t.n_nodes() > 1);
+
 	    // 1. Record child branches for each branch
 	    vector<int> branches = t.all_branches_from_node(0);
 
