@@ -130,6 +130,41 @@ optional<term_t> equations::value_of_var(const string& x) const
 	return boost::none;
 }
 
+
+void equations::eliminate_variable(const string& x)
+{
+    if (not has_record(x)) return;
+
+    // find the record
+    auto xrec = find_record(x);
+    auto value = xrec->second;
+
+    // remove x from the record
+    xrec->first.erase(x);
+
+
+    map<string,term_t>  S;
+    // substitute the term if there is one
+    if (value)
+	S = {{x,*value}};
+    // substitute an equivalent variable if there's no term in the equation
+    else
+    {
+	// If there's no term in the equation, there should at least be another variable
+	assert(not xrec->first.empty());
+	auto y = *xrec->first.begin();
+	S = {{x,term_t(y)}};
+    }
+
+    // remove the equation if it has no more variables
+    if (xrec->first.empty()) values.erase(xrec);
+
+    // replace occurrences of x with the equivalent term or variable
+    for(auto& equation: values)
+	if (equation.second)
+	    substitute(S, *equation.second);
+}
+
 bool is_variable(const ptree& p)
 {
     if (not p.empty()) return false;

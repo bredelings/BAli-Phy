@@ -33,6 +33,8 @@ public:
 
     const std::vector<std::pair<std::set<std::string>,boost::optional<term_t>>>& get_values() const;
 
+    void eliminate_variable(const std::string&);
+
     operator bool() const;
     equations() {};
     explicit equations(bool s):valid(s) {};

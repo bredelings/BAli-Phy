@@ -176,7 +176,11 @@ void pass2(const ptree& required_type, ptree& model, equations& E, const set<str
     else
 	E = E2;
 
-    // 2.5. Check type of arguments if pass_arguments
+    // Try to eliminate unneeded variables
+    for(auto v: find_rule_type_vars(rule))
+	E.eliminate_variable(v);
+
+	// 2.5. Check type of arguments if pass_arguments
     if (rule.get("pass_arguments",false) or rule.get("list_arguments",false))
     {
 	type_t arg_required_type = get_type_for_arg(rule, "*");
