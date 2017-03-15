@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unordered_map>
 #include "graph_register.H"
 #include "operations.H"
 #include "let-float.H"
@@ -15,6 +16,8 @@
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/strong_components.hpp>
 
+#include <boost/optional.hpp>
+
 typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph; 
 typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
 typedef boost::graph_traits<Graph>::edge_descriptor Edge_t;
@@ -23,6 +26,7 @@ using std::string;
 using std::vector;
 using std::pair;
 using std::set;
+using std::map;
 
 using std::cerr;
 using std::endl;
@@ -345,6 +349,403 @@ expression_ref analyze_occurrence(const expression_ref& E)
 {
     auto result = occurrence_analyzer(E);
     return result.first;
+}
+
+
+struct substitution_range;
+struct substitution: public map<dummy, substitution_range>
+{
+    using map::map;
+};
+
+struct substitution_range
+{
+    expression_ref E;
+    boost::optional<substitution> S;
+    substitution_range(const expression_ref& e):E(e) {}
+    substitution_range(const expression_ref& e, const boost::optional<substitution> s):E(e),S(s) {}
+};
+
+typedef map<dummy, pair<expression_ref,occurrence_info>> in_scope_set;
+
+void bind_var(in_scope_set& bound_vars, const dummy& x, const expression_ref& E)
+{
+    assert(not bound_vars.count(x));
+    bound_vars.insert({x,{E,x}});
+}
+
+void unbind_var(in_scope_set& bound_vars, const dummy& x)
+{
+    assert(bound_vars.count(x));
+    bound_vars.erase(x);
+}
+
+void bind_decls(in_scope_set& bound_vars, const vector<pair<dummy,expression_ref>>& decls)
+{
+    for(const auto& decl: decls)
+	bind_var(bound_vars, decl.first, decl.second);
+}
+
+void unbind_decls(in_scope_set& bound_vars, const vector<pair<dummy,expression_ref>>& decls)
+{
+    for(const auto& decl: decls)
+	unbind_var(bound_vars, decl.first);
+}
+
+enum class inline_context {case_object, apply_object, unknown};
+
+bool no_size_increase(const expression_ref& rhs, inline_context context)
+{
+    return false;
+}
+
+bool boring(const expression_ref& rhs, inline_context context)
+{
+    return true;
+}
+
+bool small_enough(const expression_ref& rhs, inline_context context)
+{
+    return false;
+}
+
+bool do_inline_multi(const expression_ref& rhs, inline_context context)
+{
+    if (no_size_increase(rhs,context)) return true;
+
+    if (boring(rhs,context)) return false;
+
+    return small_enough(rhs,context);
+}
+
+bool evaluates_to_bottom(const expression_ref& rhs)
+{
+    return false;
+}
+
+bool whnf_or_bottom(const expression_ref& rhs)
+{
+    return is_WHNF(rhs) or evaluates_to_bottom(rhs);
+}
+
+bool very_boring(inline_context context)
+{
+    if (context == inline_context::case_object) return false;
+
+    if (context == inline_context::apply_object) return false;
+
+    // This avoids substituting into constructor (and function) arguments.
+    return true;
+}
+
+
+bool do_inline(const expression_ref& rhs, const occurrence_info& occur, inline_context context)
+{
+    // LoopBreaker
+    if (occur.is_loop_breaker)
+	return false;
+    
+    // OnceSafe
+    else if (occur.pre_inline())
+	throw myexception()<<"Trying to inline OnceSafe variable!";
+
+    // MultiSafe
+    else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Many)
+	return do_inline_multi(rhs, context);
+
+    // OnceUnsafe
+    else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Once)
+	return whnf_or_bottom(rhs) and not very_boring(context);
+
+    // OnceUnsafe
+    else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Once and occur.context == var_context::argument)
+	return whnf_or_bottom(rhs) and not very_boring(context);
+
+    // MultiUnsafe
+    else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Many)
+	return whnf_or_bottom(rhs) and do_inline_multi(rhs, context);
+
+    std::abort();
+}
+
+bool is_trivial(const expression_ref& E)
+{
+    return E.is_a<dummy>();
+}
+
+expression_ref simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, inline_context context);
+
+// Do we have to explicitly skip loop breakers here?
+expression_ref consider_inline(const expression_ref& E, in_scope_set& bound_vars, inline_context context)
+{
+    dummy x = E.as_<dummy>();
+
+    const auto& binding = bound_vars[x];
+
+    // 1. If there's a binding x = E, and E = y for some variable y
+    if (binding.first and do_inline(binding.first, binding.second, context))
+	return simplify(binding.first, {}, bound_vars, context);
+    else
+	return E;
+}
+
+
+expression_ref get_new_name(const expression_ref& var, const in_scope_set& bound_vars)
+{
+    dummy x = var.as_<dummy>();
+    
+    auto it = bound_vars.find(x);
+
+    // If bound_vars doesn't contain x, then no need to change anything.
+    if (it == bound_vars.end()) return var;
+
+    x.index = bound_vars.size();
+    while(bound_vars.count(x) and x.index > 0)
+	x.index++;
+    
+    if (x.index <= 0) abort();
+    
+    return x;
+}
+
+dummy maybe_rename_var(const expression_ref& var, substitution& S, const in_scope_set& bound_vars)
+{
+    dummy x = var.as_<dummy>();
+    assert(not is_wildcard(x));
+    auto var2 = get_new_name(var, bound_vars);
+
+    // 1. If x is NOT in the bound set, then erase x from the substitution (if it's there)
+    if (var == var2)
+	S.erase(x);
+    // 2. If x IS in the bound set, add a substitution from x --> x2then erase x from the substitution (if it's there)
+    else
+	S.insert({x, var2});
+
+    return var2.as_<dummy>();
+}
+
+expression_ref simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, inline_context context);
+
+// case E of alts.  Here E has been simplified, but the alts have not.
+expression_ref rebuild_case(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, inline_context context)
+{
+    object_ptr<expression> E2 = E.as_expression().clone();
+    const int L = (E.size()-1)/2;
+
+    // 1. Walk each alternative
+    for(int i=0;i<L;i++)
+
+    {
+	auto S2 = S;
+	vector<pair<dummy, expression_ref>> decls;
+
+	expression_ref pattern = E2->sub[1 + 2*i];
+	if (pattern.is_expression())
+	{
+	    // 2. Walk the pattern vars and rename them, rewriting the pattern as we go.
+	    object_ptr<expression> pattern2 = pattern.as_expression().clone();
+	    for(int j=1; j<pattern2->size(); j++)
+	    {
+		expression_ref& var = pattern2->sub[j];
+		dummy x2 = maybe_rename_var(var, S2, bound_vars);
+		var = x2;
+		decls.push_back({x2, {}});
+	    }
+	    // 3. Use the rewritten pattern
+	    E2->sub[1 + 2*i] = pattern2;
+	}
+
+	// 4. Simplify the alternative body
+	bind_decls(bound_vars, decls);
+	E2->sub[2 + 2*i] = simplify(E2->sub[2 + 2*i], S, bound_vars, inline_context::unknown);
+	unbind_decls(bound_vars, decls);
+    }
+    return E2;
+}
+
+// @ E x1 .. xn.  The E and the x[i] have already been simplified.
+expression_ref rebuild_apply(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, inline_context context)
+{
+    return E;
+}
+
+// let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
+expression_ref rebuild_let(const vector<pair<dummy, expression_ref>>& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars)
+{
+    // If the decl is empty, then we don't have to do anythign special here.
+    if (decls.empty()) return simplify(E, S, bound_vars, inline_context::unknown);
+
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    for(auto& decl: decls)
+    {
+	bind_var(bound_vars, decl.first, decl.second);
+	vars.push_back(decl.first);
+	bodies.push_back(decl.second);
+    }
+
+    E = simplify(E, S, bound_vars, inline_context::unknown);
+
+    for(auto& decl: decls)
+	unbind_var(bound_vars, decl.first);
+
+    return let_expression(vars, bodies, E);
+}
+
+// Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
+// Q2. Where do we handle case-of-constant (case constant of alts)?
+// Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
+expression_ref simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, inline_context context)
+{
+    if (not E) return E;
+
+    // 1. Var (x)
+    if (E.is_a<dummy>())
+    {
+	dummy x = E.as_<dummy>();
+	// 1.1 If there's a substitution x -> E
+	if (S.count(x))
+	{
+	    auto it = S.find(x);
+	    // 1.1.1 If x -> SuspEx E S, then call the simplifier on E with its substitution S
+	    if (it->second.S)
+		return simplify(it->second.E, *(it->second.S), bound_vars, context);
+	    // 1.1.2 If x -> DoneEx E, then call the simplifier on E but with no substitution.
+	    else
+		return simplify(it->second.E, {}, bound_vars, context);
+	}
+	// 1.2 If there's no substitution determine whether to inline at call site.
+	else
+	    return consider_inline(E, bound_vars, context);
+    }
+
+     // Do we need something to handle WHNF variables?
+    
+    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+    if (not E.size()) return E;
+
+    // 2. Lambda (E = \x -> body)
+    if (E.head().is_a<lambda>())
+    {
+	assert(E.size() == 2);
+
+	auto S2 = S;
+
+	auto var = E.sub()[0];
+	// 2.1. Get the new name, possibly adding a substitution
+	dummy x2 = maybe_rename_var(var, S2, bound_vars);
+
+	// 2.2 Mark x2 as bound to nothing.  Occurrence info should be propagated.
+	bind_var(bound_vars, x2, {});
+
+	// 2.3 Simplify the body with x added to the bound set.
+	auto new_body = simplify(E.sub()[1], S2, bound_vars, inline_context::unknown);
+
+	// 2.4 Remove x_new from the bound set.
+	unbind_var(bound_vars,x2);
+
+	// 2.5 If we changed x, or simplified the body, then 
+	return lambda_quantify(x2, new_body);
+    }
+
+    // 6. Case
+    if (E.head().is_a<Case>())
+    {
+	// Analyze the object
+	object_ptr<expression> E2 = E.as_expression().clone();
+	E2->sub[0] = simplify(E2->sub[0], S, bound_vars, inline_context::case_object);
+
+	return rebuild_case(E2, S, bound_vars, context);
+    }
+
+    // ?. Apply
+    if (E.head().is_a<Apply>())
+    {
+	object_ptr<expression> V2 = E.as_expression().clone();
+	
+	// 1. Simplify the object.
+	V2->sub[0] = simplify(V2->sub[0], S, bound_vars, inline_context::apply_object);
+
+	// 2. Simplify the arguments
+	for(int i=1;i<E.size();i++)
+	{
+	    assert(is_trivial(V2->sub[i]));
+	    V2->sub[i] = simplify(V2->sub[i], S, bound_vars, inline_context::unknown);
+	}
+	
+	return rebuild_apply(V2, S, bound_vars, context);
+    }
+
+    // 4. Constructor or Operation
+    if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    {
+	object_ptr<expression> E2 = E.as_expression().clone();
+	for(int i=0;i<E.size();i++)
+	{
+	    assert(is_trivial(E2->sub[i]));
+	    E2->sub[i] = simplify(E2->sub[i], S, bound_vars, inline_context::unknown);
+	}
+	return E2;
+    }
+
+
+    // 5. Let (let {x[i] = F[i]} in body)
+    //
+    // Here we know that F[i] can only mention x[j<i] unless F[i] is a loop-breaker.
+    // 
+    if (E.head().is_a<let_obj>())
+    {
+	auto S2 = S;
+
+	// 5.1 Iterate over decls, simplifying them and adding substitutions for unconditional inlines.
+	const int n_decls = (E.size()-1)/2;
+	vector<pair<dummy,expression_ref>> new_decls;
+	for(int i=0;i<n_decls;i++)
+	{
+	    auto var = E.sub()[1 + 2*i];
+	    auto F   = E.sub()[2 + 2*i];
+	    dummy x = var.as_<dummy>();
+	    dummy x2 = maybe_rename_var(var, S2, bound_vars);
+	    
+	    if (x.pre_inline())
+		S2.insert({x, {F, S2}});  	         // 5.1.1 Preinline unconditionally:  Substitute x[i] --> SuspEx F S2
+	    else
+	    {
+		                                         // 5.1.2 Simplify F. We won't run across x2 (or any other unbound variable) here unless its a loop breaker.  But let's allow unbound loopbreakers ...
+		F = simplify(F, S2, bound_vars, inline_context::unknown); 
+
+		// FIXME! Pull let statements out of F, and add them before F in decls.
+
+		if (is_trivial(F) and not x.is_loop_breaker)
+		    S2.insert({x,F});                    // 5.1.3 Postinline unconditionally: Substitute x[i] --> DoneEx F S2
+		else
+		{
+		    new_decls.push_back({x2,F});             // 5.1.4 Maybe inline at call site: note x_new = F
+		    bind_var(bound_vars, x2, F);
+		}
+	    }
+	}
+	unbind_decls(bound_vars, new_decls);
+
+	// 5.2 Simplify the let-body
+	return rebuild_let(new_decls, E.sub()[0], S2, bound_vars);
+    }
+
+    std::abort();
+}
+
+
+expression_ref simplifier(const expression_ref& E1)
+{
+    set<dummy> free_vars;
+    expression_ref E2;
+    tie(E2, free_vars) = occurrence_analyzer(E1);
+
+    in_scope_set bound_vars;
+    for(auto& var: free_vars)
+	bound_vars.insert({var,{}});
+
+    return simplify(E2, {}, bound_vars, inline_context::unknown);
 }
 
 expression_ref graph_normalize(const expression_ref& E)
