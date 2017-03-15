@@ -546,10 +546,13 @@ expression_ref rebuild_case(const expression_ref& E, const substitution& S, in_s
 	    object_ptr<expression> pattern2 = pattern.as_expression().clone();
 	    for(int j=1; j<pattern2->size(); j++)
 	    {
-		expression_ref& var = pattern2->sub[j];
-		dummy x2 = maybe_rename_var(var, S2, bound_vars);
-		var = x2;
-		decls.push_back({x2, {}});
+		expression_ref var = pattern2->sub[j];
+		if (not is_wildcard(var))
+		{
+		    dummy x2 = maybe_rename_var(var, S2, bound_vars);
+		    pattern2->sub[j] = x2;
+		    decls.push_back({x2, {}});
+		}
 	    }
 	    // 3. Use the rewritten pattern
 	    E2->sub[1 + 2*i] = pattern2;
