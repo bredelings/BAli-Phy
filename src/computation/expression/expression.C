@@ -174,9 +174,7 @@ bool is_WHNF(const expression_ref& E)
     int type = E.head().type();
     if (E.size())
     {
-	assert(not E.head().is_a<lambda>());
-
-	if (type == lambda2_type or type == constructor_type) 
+	if (type == lambda_type or type == lambda2_type or type == constructor_type) 
 	    return true;
 	else
 	    return false;
