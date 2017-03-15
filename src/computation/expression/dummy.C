@@ -5,7 +5,7 @@ using std::set;
 using std::multiset;
 using std::string;
 
-bool dummy::pre_inline() const
+bool occurrence_info::pre_inline() const
 {
     if (work_dup != amount_t::Once) return false;
     if (code_dup != amount_t::Once) return false;

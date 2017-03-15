@@ -19,6 +19,8 @@ struct occurrence_info
     bool is_loop_breaker = false;
 
     bool top_level = false;
+
+    bool pre_inline() const;
 };
     
 
@@ -28,8 +30,6 @@ struct dummy: public Object, public occurrence_info
     int index;
 
     std::string name;
-
-    bool pre_inline() const;
 
     bool operator==(const dummy&) const;
     dummy* clone() const {return new dummy(*this);}
