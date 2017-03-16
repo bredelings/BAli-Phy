@@ -31,7 +31,7 @@ tribool dummy::compare(const Object& o) const
 string dummy::print() const {
     if (is_wildcard())
 	return "_";
-    else if (name.size() and index == -1)
+    else if (name.size() and index == 0)
 	return name;
     else
 	return name+string("#")+convertToString(index);
@@ -39,16 +39,12 @@ string dummy::print() const {
 
 bool dummy::operator<(const dummy& D) const 
 {
-    if (name.size() and not D.name.size())
-	return true;
+    int cmp = name.compare(D.name);
 
-    if (not name.size() and D.name.size())
-	return false;
+    if (cmp < 0) return false;
+    if (cmp > 0) return true;
 
-    if (name.size())
-	return name < D.name;
-    else
-	return index < D.index;
+    return index < D.index;
 }
 
 std::set<dummy> get_free_indices(const expression_ref& E);

@@ -43,7 +43,7 @@ struct dummy: public Object, public occurrence_info
     bool is_wildcard() const {return index < 0 and not name.size();}
 
     dummy(int i):index(i) {}
-    dummy(const std::string& s):dummy(s,-1) {}
+    dummy(const std::string& s):dummy(s,0) {}
     dummy(const std::string& s,int i):index(i),name(s) {assert(name != "_");}
 };
 
