@@ -368,6 +368,11 @@ struct substitution_range
 
 typedef map<dummy, pair<expression_ref,occurrence_info>> in_scope_set;
 
+bool is_trivial(const expression_ref& E)
+{
+    return is_reglike(E);
+}
+
 void bind_var(in_scope_set& bound_vars, const dummy& x, const expression_ref& E)
 {
     assert(not bound_vars.count(x));
@@ -398,7 +403,7 @@ void unbind_decls(in_scope_set& bound_vars, const vector<pair<dummy,expression_r
 	unbind_var(bound_vars, decl.first);
 }
 
-enum class inline_context {case_object, apply_object, unknown};
+enum class inline_context {case_object, apply_object, argument, unknown};
 
 bool no_size_increase(const expression_ref& rhs, inline_context context)
 {
@@ -451,6 +456,10 @@ bool do_inline(const expression_ref& rhs, const occurrence_info& occur, inline_c
     if (occur.is_loop_breaker)
 	return false;
     
+    // Function and constructor arguments
+    else if (context == inline_context::argument and not is_trivial(rhs))
+	return false;
+
     // OnceSafe
     else if (occur.pre_inline())
 	return true;
@@ -473,11 +482,6 @@ bool do_inline(const expression_ref& rhs, const occurrence_info& occur, inline_c
 	return whnf_or_bottom(rhs) and do_inline_multi(rhs, context);
 
     std::abort();
-}
-
-bool is_trivial(const expression_ref& E)
-{
-    return E.is_a<dummy>();
 }
 
 expression_ref simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, inline_context context);
@@ -688,7 +692,7 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	for(int i=1;i<E.size();i++)
 	{
 	    assert(is_trivial(V2->sub[i]));
-	    V2->sub[i] = simplify(V2->sub[i], S, bound_vars, inline_context::unknown);
+	    V2->sub[i] = simplify(V2->sub[i], S, bound_vars, inline_context::argument);
 	}
 	
 	return rebuild_apply(V2, S, bound_vars, context);
@@ -701,7 +705,7 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	for(int i=0;i<E.size();i++)
 	{
 	    assert(is_trivial(E2->sub[i]));
-	    E2->sub[i] = simplify(E2->sub[i], S, bound_vars, inline_context::unknown);
+	    E2->sub[i] = simplify(E2->sub[i], S, bound_vars, inline_context::argument);
 	}
 	return E2;
     }
