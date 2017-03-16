@@ -447,7 +447,8 @@ bool do_inline(const expression_ref& rhs, const occurrence_info& occur, inline_c
     
     // OnceSafe
     else if (occur.pre_inline())
-	throw myexception()<<"Trying to inline OnceSafe variable!";
+	return true;
+//	throw myexception()<<"Trying to inline OnceSafe variable!";
 
     // MultiSafe
     else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Many)
