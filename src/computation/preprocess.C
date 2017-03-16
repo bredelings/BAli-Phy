@@ -154,7 +154,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	// Analyze the object
 	expression_ref object;
 	set<dummy> obj_free_vars;
-	tie(object, obj_free_vars) = occurrence_analyzer(E.sub()[0], var_context::argument);
+	tie(object, obj_free_vars) = occurrence_analyzer(E.sub()[0]);
 
 	const int L = (E.size()-1)/2;
 	// Just normalize the bodies
@@ -183,7 +183,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	return {make_case_expression(object,patterns,bodies),free_vars};
     }
 
-    // 4. Constructor
+    // 4. Constructor, Operation (including Apply)
     if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
     {
 	set<dummy> free_vars;
@@ -192,7 +192,8 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	{
 	    set<dummy> free_vars_i;
 	    expression_ref arg_i;
-	    tie(arg_i,free_vars_i) = occurrence_analyzer(E.sub()[i], var_context::argument);
+	    auto context = (i==0 and E.head().is_a<Apply>()) ? var_context::unknown : var_context::argument;
+	    tie(arg_i,free_vars_i) = occurrence_analyzer(E.sub()[i], context);
 	    F = F + arg_i;
 	    free_vars = merge_occurrences(free_vars, free_vars_i);
 	}
