@@ -519,7 +519,10 @@ dummy maybe_rename_var(const expression_ref& var, substitution& S, const in_scop
 	S.erase(x);
     // 2. If x IS in the bound set, add a substitution from x --> x2then erase x from the substitution (if it's there)
     else
+    {
+	S.erase(x);
 	S.insert({x, var2});
+    }
 
     return var2.as_<dummy>();
 }
