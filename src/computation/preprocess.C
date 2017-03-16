@@ -547,7 +547,7 @@ expression_ref rebuild_case(const expression_ref& E, const substitution& S, in_s
 	{
 	    // 2. Walk the pattern vars and rename them, rewriting the pattern as we go.
 	    object_ptr<expression> pattern2 = pattern.as_expression().clone();
-	    for(int j=1; j<pattern2->size(); j++)
+	    for(int j=0; j<pattern2->size(); j++)
 	    {
 		expression_ref var = pattern2->sub[j];
 		if (not is_wildcard(var))
@@ -555,6 +555,7 @@ expression_ref rebuild_case(const expression_ref& E, const substitution& S, in_s
 		    dummy x2 = maybe_rename_var(var, S2, bound_vars);
 		    pattern2->sub[j] = x2;
 		    decls.push_back({x2, {}});
+		    bind_var(bound_vars,x2,{});
 		}
 	    }
 	    // 3. Use the rewritten pattern
@@ -562,8 +563,7 @@ expression_ref rebuild_case(const expression_ref& E, const substitution& S, in_s
 	}
 
 	// 4. Simplify the alternative body
-	bind_decls(bound_vars, decls);
-	E2->sub[2 + 2*i] = simplify(E2->sub[2 + 2*i], S, bound_vars, inline_context::unknown);
+	E2->sub[2 + 2*i] = simplify(E2->sub[2 + 2*i], S2, bound_vars, inline_context::unknown);
 	unbind_decls(bound_vars, decls);
     }
     return E2;
