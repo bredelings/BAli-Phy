@@ -380,6 +380,12 @@ void unbind_var(in_scope_set& bound_vars, const dummy& x)
     bound_vars.erase(x);
 }
 
+void rebind_var(in_scope_set& bound_vars, const dummy& x, const expression_ref& E)
+{
+    unbind_var(bound_vars,x);
+    bind_var(bound_vars,x,E);
+}
+
 void bind_decls(in_scope_set& bound_vars, const vector<pair<dummy,expression_ref>>& decls)
 {
     for(const auto& decl: decls)
@@ -709,43 +715,54 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
     {
 	auto S2 = S;
 
-	// 5.1 Iterate over decls, simplifying them and adding substitutions for unconditional inlines.
 	const int n_decls = (E.size()-1)/2;
-	vector<pair<dummy,expression_ref>> new_decls;
+
+	vector<pair<dummy,expression_ref>> decls;
+
+	// 5.1 Rename and bind all variables.
+	//     Binding all variables ensures that we avoid shadowing them, which helps with let-floating.
+	//     Renaming them is necessary to correctly simplify the bodies.
 	for(int i=0;i<n_decls;i++)
 	{
 	    auto var = E.sub()[1 + 2*i];
-	    auto F   = E.sub()[2 + 2*i];
 	    dummy x = var.as_<dummy>();
 	    dummy x2 = maybe_rename_var(var, S2, bound_vars);
-	    
-	    if (x.pre_inline())
-		S2.insert({x, {F, S2}});  	         // 5.1.1 Preinline unconditionally:  Substitute x[i] --> SuspEx F S2
-	    else
-	    {
-		                                         // 5.1.2 Simplify F. We won't run across x2 (or any other unbound variable) here unless its a loop breaker.  But let's allow unbound loopbreakers ...
-		F = simplify(F, S2, bound_vars, inline_context::unknown); 
-
-		// FIXME! Pull let statements out of F, and add them before F in decls.
-
-		if (is_trivial(F) and not x.is_loop_breaker)
-		    S2.insert({x,F});                    // 5.1.3 Postinline unconditionally: Substitute x[i] --> DoneEx F S2
-		else
-		{
-		    new_decls.push_back({x2,F});             // 5.1.4 Maybe inline at call site: note x_new = F
-		    bind_var(bound_vars, x2, F);
-		}
-	    }
+	    bind_var(bound_vars, x2, {});
+	    decls.push_back({x2,{}});
 	}
-	unbind_decls(bound_vars, new_decls);
+
+        // 5.2 Iterate over decls, renaming and binding vars as we go, and simplifying them and adding substitutions for unconditional inlines.
+	for(int i=0;i<n_decls;i++)
+	{
+	    // If x[i] is not a loop breaker, then x[i] can only BE referenced by LATER E[k] (since loop breakers are later), while
+	    //                                     E[i] can only reference EARLIER x[k] and loop breakers.
+	    auto var = E.sub()[1 + 2*i];
+	    auto F   = E.sub()[2 + 2*i];
+	    dummy x = var.as_<dummy>();
+	    dummy x2 = decls[i].first;
+	    
+	    // 1. Any references to x in F must be to the x bound in this scope.
+	    // 2. F can only contain references to x if x is a loop breaker.
+	    // 3. If x is a loop breaker, then S2 already contains substitutions for x -> x2 if needed.
+	    // 4. Therefore S2 is a good substitution for F.
+	    assert(x.is_loop_breaker or not get_free_indices(F).count(x));
+
+	    // 5.1.2 Simplify F.
+	    F = simplify(F, S2, bound_vars, inline_context::unknown); 
+
+	    decls[i].second = F;
+
+	    // Any later occurrences will see the bound value of x[i] when they are simplified.
+	    rebind_var(bound_vars, x2, F);
+	}
+	unbind_decls(bound_vars, decls);
 
 	// 5.2 Simplify the let-body
-	return rebuild_let(new_decls, E.sub()[0], S2, bound_vars);
+	return rebuild_let(decls, E.sub()[0], S2, bound_vars);
     }
 
     std::abort();
 }
-
 
 expression_ref simplifier(const expression_ref& E1)
 {
