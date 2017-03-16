@@ -480,7 +480,7 @@ expression_ref consider_inline(const expression_ref& E, in_scope_set& bound_vars
 {
     dummy x = E.as_<dummy>();
 
-    const auto& binding = bound_vars[x];
+    const auto& binding = bound_vars.at(x);
 
     // 1. If there's a binding x = E, and E = y for some variable y
     if (binding.first and do_inline(binding.first, binding.second, context))
@@ -619,7 +619,12 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	}
 	// 1.2 If there's no substitution determine whether to inline at call site.
 	else
+	{
+	    if (not bound_vars.count(x))
+		throw myexception()<<"Variable '"<<x.print()<<"' not bound!";
+
 	    return consider_inline(E, bound_vars, context);
+	}
     }
 
      // Do we need something to handle WHNF variables?
