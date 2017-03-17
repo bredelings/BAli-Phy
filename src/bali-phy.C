@@ -481,6 +481,16 @@ int main(int argc,char* argv[])
     
 	out_cache<<"random seed = "<<seed<<endl<<endl;
 
+	//---------- test optimizer ----------------
+	if (args.count("test-module"))
+	{
+	    string filename = args["test-module"].as<string>();
+	    Module M ( L.read_module_from_file(filename) );
+	    M.optimize({});
+	    std::cout<<M.module<<std::endl;
+	    exit(0);
+	}
+
 	//---------- Create model object -----------//
 	owned_ptr<Model> M;
 	if (args.count("align"))
