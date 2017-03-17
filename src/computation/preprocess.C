@@ -10,6 +10,7 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/indexify.H"
+#include "computation/expression/AST_node.H"
 
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -404,7 +405,76 @@ void unbind_decls(in_scope_set& bound_vars, const vector<pair<dummy,expression_r
 	unbind_var(bound_vars, decl.first);
 }
 
-enum class inline_context {case_object, apply_object, argument, unknown};
+struct inline_context
+{
+    expression_ref data;
+
+    inline_context prev_context() const {
+	if (data)
+	    assert(data.head().is_a<AST_node>());
+	return inline_context(data.sub()[0]);
+    }
+
+    bool is_case_object() const {return is_AST(data,"case_object");}
+    bool is_apply_object() const {return is_AST(data,"apply_object");}
+    bool is_argument() const {return is_AST(data,"argument");}
+    bool is_unknown() const {return is_AST(data,"unknown");}
+    bool is_null() const {return not data;}
+    expression_ref get_expression() const {return data.sub()[1];};
+
+    inline_context() {};
+    inline_context(const expression_ref& E):data(E) {}
+    inline_context(const string& s, const expression_ref E, const inline_context& context)
+	:data({AST_node(s),{context.data,E}}) {}
+};
+
+int num_arguments(inline_context context)
+{
+    int num = 0;
+    while(context.is_apply_object())
+    {
+	num++;
+	context = context.prev_context();
+    }
+    return num;
+}
+
+inline_context case_object_context(const expression_ref E, const inline_context& context)
+{
+    assert(E.head().is_a<Case>());
+    return inline_context("case_object",E,context);
+}
+
+inline_context apply_object_context(const expression_ref E, inline_context context)
+{
+    assert(E.head().is_a<Apply>());
+    for(int i=1;i<E.size();i++)
+    {
+	context = inline_context("apply_object", E.sub()[i], context);
+    }
+    return context;
+}
+
+inline_context argument_context(const inline_context& context)
+{
+    return inline_context("argument", {}, context);
+}
+
+inline_context unknown_context()
+{
+    return inline_context("unknown", {}, {});
+}
+
+inline_context remove_arguments(inline_context context, int n)
+{
+    for(int i=0;i<n;i++)
+    {
+	if (not context.is_apply_object())
+	    throw myexception()<<"Trying to remove "<<n<<" applications from context, but it only had "<<i<<".";
+	context = context.prev_context();
+    }
+    return context;
+}
 
 int get_n_lambdas1(const expression_ref& E)
 {
@@ -433,13 +503,13 @@ expression_ref peel_n_lambdas1(const expression_ref& E, int n)
       
 int nodes_size(const expression_ref& E);
 
-bool no_size_increase(const expression_ref& rhs, inline_context context)
+bool no_size_increase(const expression_ref& rhs, const inline_context& context)
 {
     // If rhs is a variable, then there's no size increase
     if (is_trivial(rhs)) return true;
 
     // If we are inlining a constant into a case object, then there will eventually be no size increase... right?
-    if (context == inline_context::case_object and is_WHNF(rhs))
+    if (context.is_case_object() and is_WHNF(rhs))
     {
 	assert(not rhs.is_a<lambda>());
 	return true;
@@ -447,9 +517,10 @@ bool no_size_increase(const expression_ref& rhs, inline_context context)
 
     // If we are inlining a function body that is smaller than its call (e.g. @ . f x ===> @ (\a b -> @ a b) f x ===> let {a=f;b=x} in @ a b ===> @ f x)
     // (e.g. @ $ f ===> @ (\a b -> @ a b) f ===> let a=f in (\b -> @ a b)  ===> (\b -> @ f b) ... wait isn't that the same as f?
-    if (context == inline_context::apply_object and is_WHNF(rhs))
+    if (context.is_apply_object() and is_WHNF(rhs))
     {
-	int n_args_supplied = 1; // get from context
+	int n_args_supplied = num_arguments(context);
+	assert(n_args_supplied >= 1);
 	int n_args_needed = get_n_lambdas1(rhs);
 	if (n_args_supplied >= n_args_needed)
 	{
@@ -463,7 +534,7 @@ bool no_size_increase(const expression_ref& rhs, inline_context context)
     return false;
 }
 
-bool boring(const expression_ref& rhs, inline_context context)
+bool boring(const expression_ref& rhs, const inline_context& context)
 {
     // if the rhs is applied only to variables with unknown value AND ...
 
@@ -472,12 +543,14 @@ bool boring(const expression_ref& rhs, inline_context context)
     return true;
 }
 
-bool small_enough(const expression_ref& rhs, inline_context context)
+bool small_enough(const expression_ref& rhs, const inline_context& context)
 {
+    if (is_trivial(rhs)) return true;
+
     return false;
 }
 
-bool do_inline_multi(const expression_ref& rhs, inline_context context)
+bool do_inline_multi(const expression_ref& rhs, const inline_context& context)
 {
     if (no_size_increase(rhs,context)) return true;
 
@@ -498,23 +571,23 @@ bool whnf_or_bottom(const expression_ref& rhs)
 
 bool very_boring(inline_context context)
 {
-    if (context == inline_context::case_object) return false;
+    if (context.is_case_object()) return false;
 
-    if (context == inline_context::apply_object) return false;
+    if (context.is_apply_object()) return false;
 
     // This avoids substituting into constructor (and function) arguments.
     return true;
 }
 
 
-bool do_inline(const expression_ref& rhs, const occurrence_info& occur, inline_context context)
+bool do_inline(const expression_ref& rhs, const occurrence_info& occur, const inline_context& context)
 {
     // LoopBreaker
     if (occur.is_loop_breaker)
 	return false;
     
     // Function and constructor arguments
-    else if (context == inline_context::argument and not is_trivial(rhs))
+    else if (context.is_argument() and not is_trivial(rhs))
 	return false;
 
     // OnceSafe
@@ -541,15 +614,18 @@ bool do_inline(const expression_ref& rhs, const occurrence_info& occur, inline_c
     std::abort();
 }
 
-expression_ref simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, inline_context context);
+expression_ref simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context);
 
 // Do we have to explicitly skip loop breakers here?
-expression_ref consider_inline(const expression_ref& E, in_scope_set& bound_vars, inline_context context)
+expression_ref consider_inline(const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
 {
     dummy x = E.as_<dummy>();
 
     const auto& binding = bound_vars.at(x);
 
+
+    std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
+    
     // 1. If there's a binding x = E, and E = y for some variable y
     if (binding.first and do_inline(binding.first, binding.second, context))
 	return simplify(binding.first, {}, bound_vars, context);
@@ -598,10 +674,8 @@ dummy rename_and_bind_var(const expression_ref& var, substitution& S, in_scope_s
     return x2;
 }
 
-expression_ref simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, inline_context context);
-
 // case E of alts.  Here E has been simplified, but the alts have not.
-expression_ref rebuild_case(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, inline_context context)
+expression_ref rebuild_case(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
     object_ptr<expression> E2 = E.as_expression().clone();
     const int L = (E.size()-1)/2;
@@ -632,7 +706,7 @@ expression_ref rebuild_case(const expression_ref& E, const substitution& S, in_s
 	}
 
 	// 4. Simplify the alternative body
-	E2->sub[2 + 2*i] = simplify(E2->sub[2 + 2*i], S2, bound_vars, inline_context::unknown);
+	E2->sub[2 + 2*i] = simplify(E2->sub[2 + 2*i], S2, bound_vars, unknown_context());
 	unbind_decls(bound_vars, decls);
     }
     return E2;
@@ -648,7 +722,7 @@ expression_ref rebuild_apply(const expression_ref& E, const substitution& S, in_
 expression_ref rebuild_let(const vector<pair<dummy, expression_ref>>& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars)
 {
     // If the decl is empty, then we don't have to do anythign special here.
-    if (decls.empty()) return simplify(E, S, bound_vars, inline_context::unknown);
+    if (decls.empty()) return simplify(E, S, bound_vars, unknown_context());
 
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
@@ -659,7 +733,7 @@ expression_ref rebuild_let(const vector<pair<dummy, expression_ref>>& decls, exp
 	bodies.push_back(decl.second);
     }
 
-    E = simplify(E, S, bound_vars, inline_context::unknown);
+    E = simplify(E, S, bound_vars, unknown_context());
 
     for(auto& decl: decls)
 	unbind_var(bound_vars, decl.first);
@@ -670,7 +744,7 @@ expression_ref rebuild_let(const vector<pair<dummy, expression_ref>>& decls, exp
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
-expression_ref simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, inline_context context)
+expression_ref simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
     if (not E) return E;
 
@@ -716,7 +790,7 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	dummy x2 = rename_and_bind_var(var, S2, bound_vars);
 
 	// 2.3 Simplify the body with x added to the bound set.
-	auto new_body = simplify(E.sub()[1], S2, bound_vars, inline_context::unknown);
+	auto new_body = simplify(E.sub()[1], S2, bound_vars, unknown_context());
 
 	// 2.4 Remove x_new from the bound set.
 	unbind_var(bound_vars,x2);
@@ -730,7 +804,7 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
     {
 	// Analyze the object
 	object_ptr<expression> E2 = E.as_expression().clone();
-	E2->sub[0] = simplify(E2->sub[0], S, bound_vars, inline_context::case_object);
+	E2->sub[0] = simplify(E2->sub[0], S, bound_vars, case_object_context(E, context));
 
 	return rebuild_case(E2, S, bound_vars, context);
     }
@@ -741,13 +815,13 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	object_ptr<expression> V2 = E.as_expression().clone();
 	
 	// 1. Simplify the object.
-	V2->sub[0] = simplify(V2->sub[0], S, bound_vars, inline_context::apply_object);
+	V2->sub[0] = simplify(V2->sub[0], S, bound_vars, apply_object_context(E, context));
 
 	// 2. Simplify the arguments
 	for(int i=1;i<E.size();i++)
 	{
 	    assert(is_trivial(V2->sub[i]));
-	    V2->sub[i] = simplify(V2->sub[i], S, bound_vars, inline_context::argument);
+	    V2->sub[i] = simplify(V2->sub[i], S, bound_vars, argument_context(context));
 	}
 	
 	return rebuild_apply(V2, S, bound_vars, context);
@@ -760,7 +834,7 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	for(int i=0;i<E.size();i++)
 	{
 	    assert(is_trivial(E2->sub[i]));
-	    E2->sub[i] = simplify(E2->sub[i], S, bound_vars, inline_context::argument);
+	    E2->sub[i] = simplify(E2->sub[i], S, bound_vars, argument_context(context));
 	}
 	return E2;
     }
@@ -805,7 +879,7 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	    assert(x.is_loop_breaker or not get_free_indices(F).count(x));
 
 	    // 5.1.2 Simplify F.
-	    F = simplify(F, S2, bound_vars, inline_context::unknown); 
+	    F = simplify(F, S2, bound_vars, unknown_context());
 
 	    decls[i].second = F;
 
@@ -831,7 +905,7 @@ expression_ref simplifier(const expression_ref& E1)
     for(auto& var: free_vars)
 	bound_vars.insert({var,{}});
 
-    return simplify(E2, {}, bound_vars, inline_context::unknown);
+    return simplify(E2, {}, bound_vars, {});
 }
 
 expression_ref graph_normalize(const expression_ref& E)
