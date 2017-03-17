@@ -574,7 +574,7 @@ expression_ref get_new_name(const expression_ref& var, const in_scope_set& bound
     return x;
 }
 
-dummy maybe_rename_var(const expression_ref& var, substitution& S, const in_scope_set& bound_vars)
+dummy rename_and_bind_var(const expression_ref& var, substitution& S, in_scope_set& bound_vars)
 {
     dummy x = var.as_<dummy>();
     assert(not is_wildcard(x));
@@ -590,7 +590,10 @@ dummy maybe_rename_var(const expression_ref& var, substitution& S, const in_scop
 	S.insert({x, var2});
     }
 
-    return var2.as_<dummy>();
+    dummy x2 = var2.as_<dummy>();
+    bind_var(bound_vars, x2, {});
+
+    return x2;
 }
 
 expression_ref simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, inline_context context);
@@ -603,7 +606,6 @@ expression_ref rebuild_case(const expression_ref& E, const substitution& S, in_s
 
     // 1. Walk each alternative
     for(int i=0;i<L;i++)
-
     {
 	auto S2 = S;
 	vector<pair<dummy, expression_ref>> decls;
@@ -618,10 +620,9 @@ expression_ref rebuild_case(const expression_ref& E, const substitution& S, in_s
 		expression_ref var = pattern2->sub[j];
 		if (not is_wildcard(var))
 		{
-		    dummy x2 = maybe_rename_var(var, S2, bound_vars);
+		    dummy x2 = rename_and_bind_var(var, S2, bound_vars);
 		    pattern2->sub[j] = x2;
 		    decls.push_back({x2, {}});
-		    bind_var(bound_vars,x2,{});
 		}
 	    }
 	    // 3. Use the rewritten pattern
@@ -710,10 +711,7 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 
 	auto var = E.sub()[0];
 	// 2.1. Get the new name, possibly adding a substitution
-	dummy x2 = maybe_rename_var(var, S2, bound_vars);
-
-	// 2.2 Mark x2 as bound to nothing.  Occurrence info should be propagated.
-	bind_var(bound_vars, x2, {});
+	dummy x2 = rename_and_bind_var(var, S2, bound_vars);
 
 	// 2.3 Simplify the body with x added to the bound set.
 	auto new_body = simplify(E.sub()[1], S2, bound_vars, inline_context::unknown);
@@ -784,9 +782,7 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	for(int i=0;i<n_decls;i++)
 	{
 	    auto var = E.sub()[1 + 2*i];
-	    dummy x = var.as_<dummy>();
-	    dummy x2 = maybe_rename_var(var, S2, bound_vars);
-	    bind_var(bound_vars, x2, {});
+	    dummy x2 = rename_and_bind_var(var, S2, bound_vars);
 	    decls.push_back({x2,{}});
 	}
 
