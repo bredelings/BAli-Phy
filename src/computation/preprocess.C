@@ -406,13 +406,67 @@ void unbind_decls(in_scope_set& bound_vars, const vector<pair<dummy,expression_r
 
 enum class inline_context {case_object, apply_object, argument, unknown};
 
+int get_n_lambdas1(const expression_ref& E)
+{
+    expression_ref E2 = E;
+    int n = 0;
+    while(E2.head().type() == lambda_type)
+    {
+	E2 = E2.sub()[0];
+	n++;
+    }
+    return n;
+}
+
+expression_ref peel_n_lambdas1(const expression_ref& E, int n)
+{
+    expression_ref E2 = E;
+    for(int i=0;i<n;i++)
+    {
+	assert(E2.head().type() == lambda_type);
+	E2 = E2.sub()[0];
+    }
+    return E2;
+}
+      
+int nodes_size(const expression_ref& E);
+
 bool no_size_increase(const expression_ref& rhs, inline_context context)
 {
+    // If rhs is a variable, then there's no size increase
+    if (is_trivial(rhs)) return true;
+
+    // If we are inlining a constant into a case object, then there will eventually be no size increase... right?
+    if (context == inline_context::case_object and is_WHNF(rhs))
+    {
+	assert(not rhs.is_a<lambda>());
+	return true;
+    }
+
+    // If we are inlining a function body that is smaller than its call (e.g. @ . f x ===> @ (\a b -> @ a b) f x ===> let {a=f;b=x} in @ a b ===> @ f x)
+    // (e.g. @ $ f ===> @ (\a b -> @ a b) f ===> let a=f in (\b -> @ a b)  ===> (\b -> @ f b) ... wait isn't that the same as f?
+    if (context == inline_context::apply_object and is_WHNF(rhs))
+    {
+	int n_args_supplied = 1; // get from context
+	int n_args_needed = get_n_lambdas1(rhs);
+	if (n_args_supplied >= n_args_needed)
+	{
+	    int size_of_call = 2 + n_args_needed;
+	    auto body = peel_n_lambdas1(rhs, n_args_needed);
+	    int size_of_body = nodes_size(body);
+	    if (size_of_body <= size_of_call) return true;
+	}
+    }
+
     return false;
 }
 
 bool boring(const expression_ref& rhs, inline_context context)
 {
+    // if the rhs is applied only to variables with unknown value AND ...
+
+    // ... after consuming all the arguments we need, the result is very_boring.
+
     return true;
 }
 
