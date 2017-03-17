@@ -410,9 +410,10 @@ int get_n_lambdas1(const expression_ref& E)
 {
     expression_ref E2 = E;
     int n = 0;
+    assert(E2.head().type() != lambda2_type);
     while(E2.head().type() == lambda_type)
     {
-	E2 = E2.sub()[0];
+	E2 = E2.sub()[1];
 	n++;
     }
     return n;
@@ -424,7 +425,8 @@ expression_ref peel_n_lambdas1(const expression_ref& E, int n)
     for(int i=0;i<n;i++)
     {
 	assert(E2.head().type() == lambda_type);
-	E2 = E2.sub()[0];
+	assert(E2.head().type() != lambda2_type);
+	E2 = E2.sub()[1];
     }
     return E2;
 }
