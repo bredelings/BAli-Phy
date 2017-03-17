@@ -60,6 +60,7 @@ namespace mpi = boost::mpi;
 #include "io.H"
 #include "parser/desugar.H"
 #include "computation/module.H"
+#include "computation/program.H"
 
 #include "startup/A-T-model.H"
 #include "startup/files.H"
@@ -486,8 +487,15 @@ int main(int argc,char* argv[])
 	{
 	    string filename = args["test-module"].as<string>();
 	    Module M ( L.read_module_from_file(filename) );
-	    M.optimize({});
-	    std::cout<<M.module<<std::endl;
+	    M.needs_prelude = false;
+	    M.do_optimize = true;
+	    vector<Module> P = {M};
+	    add_missing_imports(L, P);
+	    for(const auto& s: P[0].get_symbols())
+	    {
+		const auto& S = s.second;
+		std::cerr<<S.name<<" |= "<<S.body<<std::endl;
+	    }
 	    exit(0);
 	}
 
