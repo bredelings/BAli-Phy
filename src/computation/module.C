@@ -344,8 +344,11 @@ void Module::optimize(const vector<Module>& P)
     {
 	auto& S = s.second;
 	if (do_optimize)
+	{
+	    S.body = graph_normalize(S.body);
 	    for(int i=0;i<4;i++)
 		S.body = simplifier(S.body);
+	}
     }
 }
 
