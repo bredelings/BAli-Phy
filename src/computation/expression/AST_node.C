@@ -34,13 +34,15 @@ AST_node::AST_node(const string& t, const string& v)
 
 bool is_AST(const expression_ref& E, const string& type)
 {
-  if (not E.head().is_a<AST_node>()) return false;
-  return E.head().as_<AST_node>().type == type;
+    if (not E) return false;
+    if (not E.head().is_a<AST_node>()) return false;
+    return E.head().as_<AST_node>().type == type;
 }
 
 bool is_AST(const expression_ref& E, const string& type, const string& value)
 {
-  if (not E.head().is_a<AST_node>()) return false;
-  return (E.head().as_<AST_node>().type == type) and (E.head().as_<AST_node>().value == value);
+    if (not E) return false;
+    if (not E.head().is_a<AST_node>()) return false;
+    return (E.head().as_<AST_node>().type == type) and (E.head().as_<AST_node>().value == value);
 }
 
