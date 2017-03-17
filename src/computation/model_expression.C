@@ -2,7 +2,6 @@
 #include "context.H"
 #include "computation/module.H"
 #include "computation/operations.H"
-#include "parser/AST.H"
 #include "computation/expression/expression.H"
 
 using std::vector;

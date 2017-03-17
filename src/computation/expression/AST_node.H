@@ -2,6 +2,7 @@
 #define AST_NODE_H
 
 #include "object.H"
+#include "expression_ref.H"
 #include <string>
 
 struct AST_node: public Object
@@ -18,4 +19,6 @@ struct AST_node: public Object
 };
 
 
+bool is_AST(const expression_ref& E, const std::string& type);
+bool is_AST(const expression_ref& E, const std::string& type, const std::string& value);
 #endif

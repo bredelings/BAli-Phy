@@ -8,7 +8,6 @@
 
 #include "io.H"
 #include "parser/desugar.H"
-#include "parser/AST.H"
 
 namespace fs = boost::filesystem;
 

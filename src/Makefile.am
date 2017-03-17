@@ -45,7 +45,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   tools/consensus-tree.H tools/partition.H mcmc/slice-sampling.H \
 	   timer_stack.H mcmc/setup.H owned-ptr.H alignment/alignment-util2.H \
 	   bounds.H io.H parser/parse.H models/TreeInterface.H \
-           parser/AST.H computation/computation.H computation/closure.H \
+           computation/computation.H computation/closure.H \
            computation/context.H computation/expression/AST_node.H \
 	   computation/expression/expression_ref.H computation/expression/expression.H \
 	   computation/expression/apply.H computation/expression/substitute.H \
@@ -100,7 +100,7 @@ endif
 
 #-----------------------------------------------------------------
 
-bali_phy_SOURCES = parser/parse.C dp/dp_hmm.C parser/desugar.C parser/AST.C sequence/sequence.C \
+bali_phy_SOURCES = parser/parse.C dp/dp_hmm.C parser/desugar.C sequence/sequence.C \
           tree/tree.C alignment/alignment.C substitution/substitution.C mcmc/moves.C \
           rng.C math/exponential.C math/eigenvalue.C models/parameters.C prior.C mcmc/mcmc.C \
 	  probability/choose.C tree/sequencetree.C mcmc/sample-branch-lengths.C \

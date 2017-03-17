@@ -7,7 +7,6 @@
 #include "module.H"
 #include "let-float.H"
 #include "parser/desugar.H"
-#include "parser/AST.H"
 #include "expression/expression.H"
 #include "expression/lambda.H"
 
