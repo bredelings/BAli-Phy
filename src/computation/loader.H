@@ -6,8 +6,9 @@
 #include <set>
 #include <map>
 #include "computation/module.H"
+#include "computation/optimization/simplifier.H"
 
-class module_loader
+class module_loader: public simplifier_options
 {
   mutable std::map<std::string, expression_ref> modules;
 public:
