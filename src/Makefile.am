@@ -62,7 +62,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   matrix.H builtins/vector_from_list.H startup/A-T-model.H startup/files.H startup/loggers.H \
 	   startup/io.H startup/system.H startup/cmd_line.H computation/type_constant.H \
 	   substitution/parsimony.H models/rules.H models/parse.H models/translate.H \
-	   models/unification.H
+	   models/unification.H computation/optimization/simplifier.H
 
 LDFLAGS = @ldflags@ 
 
@@ -128,7 +128,7 @@ bali_phy_SOURCES = parser/parse.C dp/dp_hmm.C parser/desugar.C sequence/sequence
 	  computation/operations.C computation/loader.C computation/context.C computation/closure.C \
 	  computation/let-float.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
 	  startup/loggers.C startup/system.C startup/cmd_line.C models/rules.C models/parse.C \
-	  models/translate.C models/unification.C
+	  models/translate.C models/unification.C computation/optimization/simplifier.C
 
 if HOST_MINGW32
 bali_phy_SOURCES += dlfcn-win32/dlfcn.c
