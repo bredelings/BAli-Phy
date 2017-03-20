@@ -890,10 +890,18 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 		// 5.1.2 Simplify F.
 		F = simplify(options, F, S2, bound_vars, unknown_context());
 
-	        decls[i].second = F;
+		if (is_trivial(F) and options.post_inline_unconditionally)
+		{
+		    S2.erase(x);
+		    S2.insert({x,F});
+		}
+		else
+		{
+		    decls[i].second = F;
 
-		// Any later occurrences will see the bound value of x[i] when they are simplified.
-		rebind_var(bound_vars, x2, F);
+		    // Any later occurrences will see the bound value of x[i] when they are simplified.
+		    rebind_var(bound_vars, x2, F);
+		}
 	    }
 	}
 	unbind_decls(bound_vars, decls);
