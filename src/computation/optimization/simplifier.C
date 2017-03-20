@@ -880,18 +880,31 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	    // 4. Therefore S2 is a good substitution for F.
 	    assert(x.is_loop_breaker or not get_free_indices(F).count(x));
 
-	    // 5.1.2 Simplify F.
-	    F = simplify(options, F, S2, bound_vars, unknown_context());
+	    if (x.pre_inline() and options.pre_inline_unconditionally)
+	    {
+		S2.erase(x);
+		S2.insert({x,{F,S2}});
+	    }
+	    else
+	    {
+		// 5.1.2 Simplify F.
+		F = simplify(options, F, S2, bound_vars, unknown_context());
 
-	    decls[i].second = F;
+	        decls[i].second = F;
 
-	    // Any later occurrences will see the bound value of x[i] when they are simplified.
-	    rebind_var(bound_vars, x2, F);
+		// Any later occurrences will see the bound value of x[i] when they are simplified.
+		rebind_var(bound_vars, x2, F);
+	    }
 	}
 	unbind_decls(bound_vars, decls);
 
-	// 5.2 Simplify the let-body
-	return rebuild_let(options, decls, E.sub()[0], S2, bound_vars);
+	vector<pair<dummy,expression_ref>> decls2;
+	for(auto& decl: decls)
+	    if (decl.second)
+		decls2.push_back(decl);
+
+        // 5.2 Simplify the let-body
+	return rebuild_let(options, decls2, E.sub()[0], S2, bound_vars);
     }
 
     std::abort();
