@@ -13,6 +13,7 @@ struct simplifier_options
     bool case_of_constant = true;
     bool case_of_variable = true;
     bool beta_reduction = true;
+    int max_iterations = 4;
 };
 
 class module_loader;

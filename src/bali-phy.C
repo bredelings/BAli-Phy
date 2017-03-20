@@ -484,6 +484,7 @@ int main(int argc,char* argv[])
 	L.case_of_constant = args["case-of-constant"].as<bool>();
 	L.case_of_variable = args["case-of-variable"].as<bool>();
 	L.beta_reduction = args["beta-reduction"].as<bool>();
+	L.max_iterations = args["simplifier-max-iterations"].as<int>();
 
 	//---------- Initialize random seed -----------//
 	unsigned long seed = init_rng_and_get_seed(args);

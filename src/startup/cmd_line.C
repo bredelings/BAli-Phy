@@ -71,6 +71,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("case-of-constant",value<bool>()->default_value(true),"Case of constant")
 	("case-of-variable",value<bool>()->default_value(true),"Case of constant")
 	("beta-reduction",value<bool>()->default_value(true),"Beta-reduction")
+	("simplifier-max-iterations",value<int>()->default_value(4),"Bound on iterating simplifier")
 	;
     
     options_description developer("Developer options");

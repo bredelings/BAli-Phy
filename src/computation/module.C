@@ -345,7 +345,7 @@ void Module::optimize(const module_loader& L, const vector<Module>& P)
 	if (do_optimize)
 	{
 	    S.body = graph_normalize(S.body);
-	    for(int i=0;i<4;i++)
+	    for(int i=0;i<L.max_iterations;i++)
 		S.body = simplifier(L,S.body);
 	}
     }
