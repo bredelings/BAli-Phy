@@ -61,6 +61,18 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("test-module",value<string>(),"Parse and optimize the given module")
 	;
 
+    options_description optimization("Haskell optimization options");
+    optimization.add_options()
+	("pre-inline",value<bool>()->default_value(true),"Pre-inline unconditionally")
+	("post-inline",value<bool>()->default_value(true),"Post-inline unconditionally")
+	("let-float-from-case",value<bool>()->default_value(true),"Let float from case")
+	("let-float-from-apply",value<bool>()->default_value(true),"Let float from apply")
+	("let-float-from-let",value<bool>()->default_value(true),"Let float from let")
+	("case-of-constant",value<bool>()->default_value(true),"Case of constant")
+	("case-of-variable",value<bool>()->default_value(true),"Case of constant")
+	("beta-reduction",value<bool>()->default_value(true),"Beta-reduction")
+	;
+    
     options_description developer("Developer options");
     developer.add_options()
 	("partition-weights",value<string>(),"File containing tree with partition weights")
@@ -108,7 +120,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
 	;
     options_description all("All options");
-    all.add(general).add(mcmc).add(parameters).add(model).add(advanced).add(developer);
+    all.add(general).add(mcmc).add(parameters).add(model).add(advanced).add(optimization).add(developer);
     options_description some("All options");
     some.add(general).add(mcmc).add(parameters).add(model);
 

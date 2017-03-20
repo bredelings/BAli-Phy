@@ -476,6 +476,14 @@ int main(int argc,char* argv[])
 
 	//------------- Setup module loader -------------//
 	module_loader L = setup_module_loader(args, argv[0]);
+	L.pre_inline_unconditionally = args["pre-inline"].as<bool>();
+	L.post_inline_unconditionally = args["post-inline"].as<bool>();
+	L.let_float_from_case = args["let-float-from-case"].as<bool>();
+	L.let_float_from_apply = args["let-float-from-apply"].as<bool>();
+	L.let_float_from_let = args["let-float-from-let"].as<bool>();
+	L.case_of_constant = args["case-of-constant"].as<bool>();
+	L.case_of_variable = args["case-of-variable"].as<bool>();
+	L.beta_reduction = args["beta-reduction"].as<bool>();
 
 	//---------- Initialize random seed -----------//
 	unsigned long seed = init_rng_and_get_seed(args);
