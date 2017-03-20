@@ -3,6 +3,7 @@
 #include "computation/graph_register.H"
 #include "computation/operations.H"
 #include "computation/let-float.H"
+#include "computation/loader.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
@@ -581,7 +582,7 @@ bool very_boring(inline_context context)
 }
 
 
-bool do_inline(const expression_ref& rhs, const occurrence_info& occur, const inline_context& context)
+bool do_inline(const simplifier_options& options, const expression_ref& rhs, const occurrence_info& occur, const inline_context& context)
 {
     // LoopBreaker
     if (occur.is_loop_breaker)
@@ -615,10 +616,10 @@ bool do_inline(const expression_ref& rhs, const occurrence_info& occur, const in
     std::abort();
 }
 
-expression_ref simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context);
+expression_ref simplify(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context);
 
 // Do we have to explicitly skip loop breakers here?
-expression_ref consider_inline(const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
+expression_ref consider_inline(const simplifier_options& options, const expression_ref& E, in_scope_set& bound_vars, const inline_context& context)
 {
     dummy x = E.as_<dummy>();
 
@@ -628,8 +629,8 @@ expression_ref consider_inline(const expression_ref& E, in_scope_set& bound_vars
     std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
     
     // 1. If there's a binding x = E, and E = y for some variable y
-    if (binding.first and do_inline(binding.first, binding.second, context))
-	return simplify(binding.first, {}, bound_vars, context);
+    if (binding.first and do_inline(options, binding.first, binding.second, context))
+	return simplify(options, binding.first, {}, bound_vars, context);
     else
 	return E;
 }
@@ -676,7 +677,7 @@ dummy rename_and_bind_var(const expression_ref& var, substitution& S, in_scope_s
 }
 
 // case E of alts.  Here E has been simplified, but the alts have not.
-expression_ref rebuild_case(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+expression_ref rebuild_case(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
     object_ptr<expression> E2 = E.as_expression().clone();
     const int L = (E.size()-1)/2;
@@ -707,7 +708,7 @@ expression_ref rebuild_case(const expression_ref& E, const substitution& S, in_s
 	}
 
 	// 4. Simplify the alternative body
-	E2->sub[2 + 2*i] = simplify(E2->sub[2 + 2*i], S2, bound_vars, unknown_context());
+	E2->sub[2 + 2*i] = simplify(options, E2->sub[2 + 2*i], S2, bound_vars, unknown_context());
 	unbind_decls(bound_vars, decls);
     }
     return E2;
@@ -720,10 +721,10 @@ expression_ref rebuild_apply(const expression_ref& E, const substitution& S, in_
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
-expression_ref rebuild_let(const vector<pair<dummy, expression_ref>>& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars)
+expression_ref rebuild_let(const simplifier_options& options, const vector<pair<dummy, expression_ref>>& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars)
 {
     // If the decl is empty, then we don't have to do anythign special here.
-    if (decls.empty()) return simplify(E, S, bound_vars, unknown_context());
+    if (decls.empty()) return simplify(options, E, S, bound_vars, unknown_context());
 
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
@@ -734,7 +735,7 @@ expression_ref rebuild_let(const vector<pair<dummy, expression_ref>>& decls, exp
 	bodies.push_back(decl.second);
     }
 
-    E = simplify(E, S, bound_vars, unknown_context());
+    E = simplify(options, E, S, bound_vars, unknown_context());
 
     for(auto& decl: decls)
 	unbind_var(bound_vars, decl.first);
@@ -745,7 +746,7 @@ expression_ref rebuild_let(const vector<pair<dummy, expression_ref>>& decls, exp
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
-expression_ref simplify(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
+expression_ref simplify(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
     if (not E) return E;
 
@@ -759,10 +760,10 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	    auto it = S.find(x);
 	    // 1.1.1 If x -> SuspEx E S, then call the simplifier on E with its substitution S
 	    if (it->second.S)
-		return simplify(it->second.E, *(it->second.S), bound_vars, context);
+		return simplify(options, it->second.E, *(it->second.S), bound_vars, context);
 	    // 1.1.2 If x -> DoneEx E, then call the simplifier on E but with no substitution.
 	    else
-		return simplify(it->second.E, {}, bound_vars, context);
+		return simplify(options, it->second.E, {}, bound_vars, context);
 	}
 	// 1.2 If there's no substitution determine whether to inline at call site.
 	else
@@ -770,7 +771,7 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	    if (not bound_vars.count(x))
 		throw myexception()<<"Variable '"<<x.print()<<"' not bound!";
 
-	    return consider_inline(E, bound_vars, context);
+	    return consider_inline(options, E, bound_vars, context);
 	}
     }
 
@@ -791,7 +792,7 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	dummy x2 = rename_and_bind_var(var, S2, bound_vars);
 
 	// 2.3 Simplify the body with x added to the bound set.
-	auto new_body = simplify(E.sub()[1], S2, bound_vars, unknown_context());
+	auto new_body = simplify(options, E.sub()[1], S2, bound_vars, unknown_context());
 
 	// 2.4 Remove x_new from the bound set.
 	unbind_var(bound_vars,x2);
@@ -805,9 +806,9 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
     {
 	// Analyze the object
 	object_ptr<expression> E2 = E.as_expression().clone();
-	E2->sub[0] = simplify(E2->sub[0], S, bound_vars, case_object_context(E, context));
+	E2->sub[0] = simplify(options, E2->sub[0], S, bound_vars, case_object_context(E, context));
 
-	return rebuild_case(E2, S, bound_vars, context);
+	return rebuild_case(options, E2, S, bound_vars, context);
     }
 
     // ?. Apply
@@ -816,13 +817,13 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	object_ptr<expression> V2 = E.as_expression().clone();
 	
 	// 1. Simplify the object.
-	V2->sub[0] = simplify(V2->sub[0], S, bound_vars, apply_object_context(E, context));
+	V2->sub[0] = simplify(options, V2->sub[0], S, bound_vars, apply_object_context(E, context));
 
 	// 2. Simplify the arguments
 	for(int i=1;i<E.size();i++)
 	{
 	    assert(is_trivial(V2->sub[i]));
-	    V2->sub[i] = simplify(V2->sub[i], S, bound_vars, argument_context(context));
+	    V2->sub[i] = simplify(options, V2->sub[i], S, bound_vars, argument_context(context));
 	}
 	
 	return rebuild_apply(V2, S, bound_vars, context);
@@ -835,7 +836,7 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	for(int i=0;i<E.size();i++)
 	{
 	    assert(is_trivial(E2->sub[i]));
-	    E2->sub[i] = simplify(E2->sub[i], S, bound_vars, argument_context(context));
+	    E2->sub[i] = simplify(options, E2->sub[i], S, bound_vars, argument_context(context));
 	}
 	return E2;
     }
@@ -880,7 +881,7 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	    assert(x.is_loop_breaker or not get_free_indices(F).count(x));
 
 	    // 5.1.2 Simplify F.
-	    F = simplify(F, S2, bound_vars, unknown_context());
+	    F = simplify(options, F, S2, bound_vars, unknown_context());
 
 	    decls[i].second = F;
 
@@ -890,13 +891,13 @@ expression_ref simplify(const expression_ref& E, const substitution& S, in_scope
 	unbind_decls(bound_vars, decls);
 
 	// 5.2 Simplify the let-body
-	return rebuild_let(decls, E.sub()[0], S2, bound_vars);
+	return rebuild_let(options, decls, E.sub()[0], S2, bound_vars);
     }
 
     std::abort();
 }
 
-expression_ref simplifier(const expression_ref& E1)
+expression_ref simplifier(const simplifier_options& options, const expression_ref& E1)
 {
     set<dummy> free_vars;
     expression_ref E2;
@@ -906,7 +907,7 @@ expression_ref simplifier(const expression_ref& E1)
     for(auto& var: free_vars)
 	bound_vars.insert({var,{}});
 
-    return simplify(E2, {}, bound_vars, {});
+    return simplify(options, E2, {}, bound_vars, {});
 }
 
 

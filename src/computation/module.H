@@ -133,7 +133,7 @@ public:
 
     void get_types(const std::vector<Module>&);
 
-    void optimize(const std::vector<Module>&);
+    void optimize(const module_loader&, const std::vector<Module>&);
 
     void load_builtins(const module_loader&);
 

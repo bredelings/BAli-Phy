@@ -15,6 +15,8 @@ struct simplifier_options
     bool beta_reduction = true;
 };
 
-expression_ref simplifier(const expression_ref& E1);
+class module_loader;
+
+expression_ref simplifier(const simplifier_options&, const expression_ref&);
 
 #endif

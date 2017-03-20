@@ -15,6 +15,7 @@
 #include "expression/case.H"
 #include "expression/tuple.H"
 #include "expression/substitute.H"
+#include "computation/optimization/simplifier.H"
 
 using std::pair;
 using std::map;
@@ -333,9 +334,7 @@ int nodes_size(const expression_ref& E)
     return total;
 }
 
-expression_ref simplifier(const expression_ref&);
-
-void Module::optimize(const vector<Module>& P)
+void Module::optimize(const module_loader& L, const vector<Module>& P)
 {
     // why do we keep on re-optimizing the same module?
     if (optimized) return;
@@ -347,7 +346,7 @@ void Module::optimize(const vector<Module>& P)
 	{
 	    S.body = graph_normalize(S.body);
 	    for(int i=0;i<4;i++)
-		S.body = simplifier(S.body);
+		S.body = simplifier(L,S.body);
 	}
     }
 }
