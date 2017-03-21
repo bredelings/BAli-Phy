@@ -718,9 +718,37 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 }
 
 // @ E x1 .. xn.  The E and the x[i] have already been simplified.
-expression_ref rebuild_apply(const expression_ref& E, const substitution& S, in_scope_set& bound_vars, inline_context context)
+expression_ref rebuild_apply(const simplifier_options& options, expression_ref E, const substitution& S, in_scope_set& bound_vars, inline_context context)
 {
-    return E;
+    expression_ref object = E.sub()[0];
+
+    // 1. Optionally float let's out of the apply object
+    vector<pair<dummy,expression_ref>> decls;
+    if (options.let_float_from_apply)
+	decls = strip_let(object);
+
+    // 2. Determine how many arguments we can apply
+    int supplied_arguments = E.size() - 1;
+    int required_arguments = get_n_lambdas1(object);
+    int applied_arguments = std::min(supplied_arguments, required_arguments);
+    if (not options.beta_reduction) applied_arguments = 0;
+
+    // 3. For each applied argument, peel the lambda and add {var=argument} to the decls
+    for(int i=0;i<supplied_arguments;i++)
+    {
+	auto argument = E.sub()[1+i];
+	if (i<applied_arguments)
+	{
+	    auto x = object.sub()[0].as_<dummy>();
+	    decls.push_back({x, argument});
+	    object = peel_n_lambdas1(object,1);
+	}
+	else
+	    object = (object, argument);
+    }
+
+    // 5. Rebuild the application with floated-lets and let-bound arguments outside any remaining applications.
+    return let_expression(decls, object);
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
@@ -830,7 +858,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	    V2->sub[i] = simplify(options, V2->sub[i], S, bound_vars, argument_context(context));
 	}
 	
-	return rebuild_apply(V2, S, bound_vars, context);
+	return rebuild_apply(options, V2, S, bound_vars, context);
     }
 
     // 4. Constructor or Operation
