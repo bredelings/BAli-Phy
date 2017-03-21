@@ -729,7 +729,7 @@ expression_ref rebuild_let(const simplifier_options& options, const vector<pair<
     // If the decl is empty, then we don't have to do anythign special here.
     if (decls.empty()) return simplify(options, E, S, bound_vars, unknown_context());
 
-    vector<pair<expression_ref,expression_ref>> decls2;
+    vector<pair<dummy,expression_ref>> decls2;
     for(auto& decl: decls)
     {
 	bind_var(bound_vars, decl.first, decl.second);
@@ -742,15 +742,7 @@ expression_ref rebuild_let(const simplifier_options& options, const vector<pair<
     for(auto& decl: decls)
 	unbind_var(bound_vars, decl.first);
 
-    if (E.head().is_a<let_obj>())
-    {
-	int n_decls = (E.size()-1)/2;
-	for(int i=0;i<n_decls;i++)
-	    decls2.push_back({E.sub()[1 + 2*i], E.sub()[2 + 2*i]});
-
-	auto body = E.sub()[0]; // We need this reference to avoid deleting the body when assigning E.
-	E = body;
-    }
+    strip_let(E, decls2);
 
     return let_expression(decls2, E);
 }
@@ -905,16 +897,11 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 		// Float lets out of decl x = F
 		if (options.let_float_from_let and F.head().is_a<let_obj>() and F.sub()[0].head().is_a<constructor>())
 		{
-		    int n_decls2 = (F.size()-1)/2;
-		    for(int j=0;j<n_decls2;j++)
+		    for(auto& decl: strip_let(F))
 		    {
-			auto x3   = F.sub()[1 + 2*j].as_<dummy>();
-			auto F3   = F.sub()[2 + 2*j];
-			decls.push_back({x3, F3});
-			bind_var(bound_vars, x3, {});
+			bind_var(bound_vars, decl.first, decl.second);
+			decls.push_back(decl);
 		    }
-		    auto body = F.sub()[0]; // This variable is necessary so that F isn't destroyed before the assignment.
-		    F = body;
 		}
 
 		if (is_trivial(F) and options.post_inline_unconditionally)
