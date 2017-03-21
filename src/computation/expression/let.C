@@ -33,7 +33,7 @@ expression_ref indexed_let_expression(const vector<expression_ref>& bodies, cons
     return E;
 }
 
-expression_ref let_expression(const vector<pair<expression_ref, expression_ref>>& decls, const expression_ref& T)
+expression_ref let_expression(const vector<pair<dummy, expression_ref>>& decls, const expression_ref& T)
 {
     if (decls.size() == 0) return T;
 
@@ -266,5 +266,37 @@ expression_ref unlet(const expression_ref& E)
 
     std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";
     return E;
+}
+
+void get_decls_from_let(const expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
+{
+    assert(E.head().type() == let_type);
+    int n_decls = (E.size()-1)/2;
+    for(int i=0;i<n_decls;i++)
+	decls.push_back({E.sub()[1 + 2*i].as_<dummy>(), E.sub()[2 + 2*i]});
+}
+
+vector<pair<dummy, expression_ref>> get_decls_from_let(const expression_ref& E)
+{
+    vector<pair<dummy, expression_ref>> decls;
+    get_decls_from_let(E, decls);
+    return decls;
+}
+
+void strip_let(expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
+{
+    if (E.head().type() == let_type)
+    {
+	get_decls_from_let(E, decls);
+	auto body = E.sub()[0]; // We need this reference to avoid deleting the body when assigning E.
+	E = body;
+    }
+}
+
+vector<pair<dummy, expression_ref>> strip_let(expression_ref& E)
+{
+    vector<pair<dummy, expression_ref>> decls;
+    strip_let(E,decls);
+    return decls;
 }
 

@@ -5,6 +5,7 @@
 #include <utility>
 #include "object.H"
 #include "expression_ref.H"
+#include "dummy.H"
 
 struct let_obj: public Object
 {
@@ -31,7 +32,7 @@ auto let(const First& first, const Second& second, const Rest&... rest)
 
 expression_ref let_expression(const std::vector<expression_ref>& vars, const std::vector<expression_ref>& bodies, const expression_ref& T);
 
-expression_ref let_expression(const std::vector<std::pair<expression_ref, expression_ref>>& decls, const expression_ref& T);
+expression_ref let_expression(const std::vector<std::pair<dummy, expression_ref>>& decls, const expression_ref& T);
 
 expression_ref let_expression(const expression_ref& var, const expression_ref& body, const expression_ref& T);
 
@@ -43,5 +44,12 @@ bool parse_let_expression(const expression_ref& E, std::vector<expression_ref>& 
 
 bool parse_indexed_let_expression(const expression_ref& E, std::vector<expression_ref>& bodies, expression_ref& T);
 
+void get_decls_from_let(const expression_ref& E, std::vector<std::pair<dummy, expression_ref>>& decls);
+
+std::vector<std::pair<dummy, expression_ref>> get_decls_from_let(const expression_ref& E);
+
+void strip_let(expression_ref& E, std::vector<std::pair<dummy, expression_ref>>& decls);
+
+std::vector<std::pair<dummy, expression_ref>> strip_let(expression_ref& E);
 
 #endif
