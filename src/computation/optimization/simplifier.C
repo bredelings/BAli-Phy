@@ -625,8 +625,7 @@ expression_ref consider_inline(const simplifier_options& options, const expressi
 
     const auto& binding = bound_vars.at(x);
 
-
-    std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
+//    std::cerr<<"Considering inlining "<<E.print()<<" -> "<<binding.first<<" in context "<<context.data<<std::endl;
     
     // 1. If there's a binding x = E, and E = y for some variable y
     if (binding.first and do_inline(options, binding.first, binding.second, context))
