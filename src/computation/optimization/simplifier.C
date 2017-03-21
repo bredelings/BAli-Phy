@@ -731,8 +731,11 @@ expression_ref rebuild_let(const simplifier_options& options, const vector<pair<
     for(auto& decl: decls)
     {
 	bind_var(bound_vars, decl.first, decl.second);
-	vars.push_back(decl.first);
-	bodies.push_back(decl.second);
+	if (decl.second)
+	{
+	    vars.push_back(decl.first);
+	    bodies.push_back(decl.second);
+	}
     }
 
     E = simplify(options, E, S, bound_vars, unknown_context());
@@ -906,13 +909,8 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	}
 	unbind_decls(bound_vars, decls);
 
-	vector<pair<dummy,expression_ref>> decls2;
-	for(auto& decl: decls)
-	    if (decl.second)
-		decls2.push_back(decl);
-
         // 5.2 Simplify the let-body
-	return rebuild_let(options, decls2, E.sub()[0], S2, bound_vars);
+	return rebuild_let(options, decls, E.sub()[0], S2, bound_vars);
     }
 
     std::abort();
