@@ -8,6 +8,7 @@
 
 using std::vector;
 using std::string;
+using std::pair;
 
 tribool let_obj::compare(const Object& o) const 
 {
@@ -28,6 +29,22 @@ expression_ref indexed_let_expression(const vector<expression_ref>& bodies, cons
 
     for(const auto& body: bodies)
 	E->sub.push_back(body);
+
+    return E;
+}
+
+expression_ref let_expression(const vector<pair<expression_ref, expression_ref>>& decls, const expression_ref& T)
+{
+    if (decls.size() == 0) return T;
+
+    expression* E = new expression( let_obj() );
+    E->sub.push_back(T);
+
+    for(int i=0;i<decls.size();i++)
+    {
+	E->sub.push_back(decls[i].first);
+	E->sub.push_back(decls[i].second);
+    }
 
     return E;
 }

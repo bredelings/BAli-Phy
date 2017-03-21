@@ -2,6 +2,7 @@
 #define EXPRESSION_LET_H
 
 #include <vector>
+#include <utility>
 #include "object.H"
 #include "expression_ref.H"
 
@@ -29,6 +30,8 @@ auto let(const First& first, const Second& second, const Rest&... rest)
 }
 
 expression_ref let_expression(const std::vector<expression_ref>& vars, const std::vector<expression_ref>& bodies, const expression_ref& T);
+
+expression_ref let_expression(const std::vector<std::pair<expression_ref, expression_ref>>& decls, const expression_ref& T);
 
 expression_ref let_expression(const expression_ref& var, const expression_ref& body, const expression_ref& T);
 
