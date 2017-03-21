@@ -729,16 +729,12 @@ expression_ref rebuild_let(const simplifier_options& options, const vector<pair<
     // If the decl is empty, then we don't have to do anythign special here.
     if (decls.empty()) return simplify(options, E, S, bound_vars, unknown_context());
 
-    vector<expression_ref> vars;
-    vector<expression_ref> bodies;
+    vector<pair<expression_ref,expression_ref>> decls2;
     for(auto& decl: decls)
     {
 	bind_var(bound_vars, decl.first, decl.second);
 	if (decl.second)
-	{
-	    vars.push_back(decl.first);
-	    bodies.push_back(decl.second);
-	}
+	    decls2.push_back(decl);
     }
 
     E = simplify(options, E, S, bound_vars, unknown_context());
@@ -746,7 +742,17 @@ expression_ref rebuild_let(const simplifier_options& options, const vector<pair<
     for(auto& decl: decls)
 	unbind_var(bound_vars, decl.first);
 
-    return let_expression(vars, bodies, E);
+    if (E.head().is_a<let_obj>())
+    {
+	int n_decls = (E.size()-1)/2;
+	for(int i=0;i<n_decls;i++)
+	    decls2.push_back({E.sub()[1 + 2*i], E.sub()[2 + 2*i]});
+
+	auto body = E.sub()[0]; // We need this reference to avoid deleting the body when assigning E.
+	E = body;
+    }
+
+    return let_expression(decls2, E);
 }
 
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
