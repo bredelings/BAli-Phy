@@ -594,8 +594,12 @@ bool do_inline(const simplifier_options& options, const expression_ref& rhs, con
 
     // OnceSafe
     else if (occur.pre_inline())
-	return true;
-//	throw myexception()<<"Trying to inline OnceSafe variable!";
+    {
+	if (options.pre_inline_unconditionally)
+	    throw myexception()<<"Trying to inline OnceSafe variable!";
+	else
+	    return true;
+    }
 
     // MultiSafe
     else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Many)
