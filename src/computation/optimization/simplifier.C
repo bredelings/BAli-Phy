@@ -893,6 +893,21 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 		// 5.1.2 Simplify F.
 		F = simplify(options, F, S2, bound_vars, unknown_context());
 
+		// Float lets out of decl x = F
+		if (options.let_float_from_let and F.head().is_a<let_obj>() and F.sub()[0].head().is_a<constructor>())
+		{
+		    int n_decls2 = (F.size()-1)/2;
+		    for(int j=0;j<n_decls2;j++)
+		    {
+			auto x3   = F.sub()[1 + 2*j].as_<dummy>();
+			auto F3   = F.sub()[2 + 2*j];
+			decls.push_back({x3, F3});
+			bind_var(bound_vars, x3, {});
+		    }
+		    auto body = F.sub()[0]; // This variable is necessary so that F isn't destroyed before the assignment.
+		    F = body;
+		}
+
 		if (is_trivial(F) and options.post_inline_unconditionally)
 		{
 		    S2.erase(x);
