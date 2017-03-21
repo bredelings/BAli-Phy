@@ -450,7 +450,7 @@ inline_context case_object_context(const expression_ref E, const inline_context&
 inline_context apply_object_context(const expression_ref E, inline_context context)
 {
     assert(E.head().is_a<Apply>());
-    for(int i=1;i<E.size();i++)
+    for(int i=E.size()-1;i>=1;i--)
     {
 	context = inline_context("apply_object", E.sub()[i], context);
     }
