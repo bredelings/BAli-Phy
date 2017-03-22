@@ -14,6 +14,7 @@
 #include <boost/container/small_vector.hpp>
 #include <bitset>
 #include "CacheList.H"
+#include "computation/loader.H"
 
 struct Step
 {

@@ -6,7 +6,7 @@
 #include <set>
 #include <map>
 #include "computation/module.H"
-#include "computation/optimization/simplifier.H"
+#include "computation/optimization/simplifier.H" // for simplifier_options
 
 class module_loader: public simplifier_options
 {

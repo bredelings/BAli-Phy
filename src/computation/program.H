@@ -5,7 +5,8 @@
 #include <string>
 #include <map>
 #include "computation/expression/expression_ref.H"
-#include "computation/loader.H"
+
+class module_loader;
 
 class Module;
 
