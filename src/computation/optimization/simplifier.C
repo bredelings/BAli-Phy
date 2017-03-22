@@ -370,7 +370,9 @@ struct substitution_range
     substitution_range(const expression_ref& e, const boost::optional<substitution> s):E(e),S(s) {}
 };
 
-typedef map<dummy, pair<expression_ref,occurrence_info>> in_scope_set;
+typedef pair<expression_ref,occurrence_info> bound_variable_info;
+
+typedef map<dummy, bound_variable_info> in_scope_set;
 
 bool is_trivial(const expression_ref& E)
 {
@@ -389,10 +391,14 @@ void unbind_var(in_scope_set& bound_vars, const dummy& x)
     bound_vars.erase(x);
 }
 
-void rebind_var(in_scope_set& bound_vars, const dummy& x, const expression_ref& E)
+bound_variable_info rebind_var(in_scope_set& bound_vars, const dummy& x, const expression_ref& E)
 {
+    bound_variable_info old_binding = bound_vars.at(x);
     unbind_var(bound_vars,x);
-    bind_var(bound_vars,x,E);
+    dummy x2 = x;
+    static_cast<occurrence_info&>(x2) = old_binding.second;
+    bind_var(bound_vars,x2,E);
+    return old_binding;
 }
 
 void bind_decls(in_scope_set& bound_vars, const vector<pair<dummy,expression_ref>>& decls)
@@ -683,6 +689,7 @@ dummy rename_and_bind_var(const expression_ref& var, substitution& S, in_scope_s
 expression_ref rebuild_case(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
     object_ptr<expression> E2 = E.as_expression().clone();
+    expression_ref& object = E2->sub[0];
     const int L = (E.size()-1)/2;
 
     // 1. Walk each alternative
@@ -691,27 +698,36 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	auto S2 = S;
 	vector<pair<dummy, expression_ref>> decls;
 
-	expression_ref pattern = E2->sub[1 + 2*i];
-	if (pattern.is_expression())
+	// 2. Rename and bind pattern variables
+	expression_ref& pattern = E2->sub[1 + 2*i];
+	if (pattern.size())
 	{
-	    // 2. Walk the pattern vars and rename them, rewriting the pattern as we go.
 	    object_ptr<expression> pattern2 = pattern.as_expression().clone();
 	    for(int j=0; j<pattern2->size(); j++)
 	    {
-		expression_ref var = pattern2->sub[j];
-		if (not is_wildcard(var))
-		{
-		    dummy x2 = rename_and_bind_var(var, S2, bound_vars);
-		    pattern2->sub[j] = x2;
-		    decls.push_back({x2, {}});
-		}
+		expression_ref& var = pattern2->sub[j];
+		assert(is_dummy(var));
+
+		// Create an unused variable for wildcards.  This is for if we add a x=pattern binding.
+		if (is_wildcard(var)) var = dummy("__");
+
+		dummy x2 = rename_and_bind_var(var, S2, bound_vars);
+		var = x2;
+		decls.push_back({x2, {}});
 	    }
-	    // 3. Use the rewritten pattern
-	    E2->sub[1 + 2*i] = pattern2;
+	    pattern = pattern2;
 	}
+
+	// 3. If we know something extra about the value (or range, theoretically) of the object in this case branch, then record that.
+	bound_variable_info original_binding;
+	if (is_dummy(object)) original_binding = rebind_var(bound_vars, object.as_<dummy>(), E2->sub[1 + 2*i]);
 
 	// 4. Simplify the alternative body
 	E2->sub[2 + 2*i] = simplify(options, E2->sub[2 + 2*i], S2, bound_vars, unknown_context());
+
+	// 5. Restore informatation about an object variable to information outside this case branch.
+	if (is_dummy(object)) rebind_var(bound_vars, object.as_<dummy>(), original_binding.first);
+
 	unbind_decls(bound_vars, decls);
     }
     return E2;
