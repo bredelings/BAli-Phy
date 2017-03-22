@@ -181,9 +181,7 @@ bool is_WHNF(const expression_ref& E)
     }
     else
     {
-	if (type == parameter_type) 
-	    return false;
-	else if (type == modifiable_type) 
+	if (is_reglike(E))
 	    return false;
 	else
 	    return true;
