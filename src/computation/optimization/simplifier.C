@@ -782,6 +782,34 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
     }
     unbind_decls(bound_vars, decls);
 
+    // 6. Take a specific branch if the object is a constant
+    if (is_WHNF(object))
+    {
+	for(int i=0; i<L; i++)
+	{
+	    const auto& pattern = E2->sub[1 + 2*i];
+	    const auto& alt     = E2->sub[2 + 2*i];
+	    if (is_dummy(pattern))
+	    {
+		assert(is_wildcard(pattern));
+		return let_expression(decls, alt);
+	    }
+	    else if (pattern.head() == object.head())
+	    {
+		for(int j=0;j<pattern.size();j++)
+		{
+		    auto obj_var = object.sub()[j];
+		    auto pat_var = pattern.sub()[j];
+		    assert(is_dummy(obj_var) and not is_wildcard(obj_var));
+		    assert(is_dummy(pat_var) and not is_wildcard(pat_var));
+		    decls.push_back({pat_var.as_<dummy>(), obj_var});
+		}
+		return let_expression(decls, alt);
+	    }
+	}
+	throw myexception()<<"Case object doesn't many any alternative in '"<<E2<<"'";
+    }
+
     return let_expression(decls,E2);
 }
 
