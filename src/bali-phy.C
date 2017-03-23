@@ -497,14 +497,15 @@ int main(int argc,char* argv[])
 	{
 	    string filename = args["test-module"].as<string>();
 	    Module M ( L.read_module_from_file(filename) );
-	    M.needs_prelude = false;
+
 	    M.do_optimize = true;
 	    vector<Module> P = {M};
 	    add_missing_imports(L, P);
 	    for(const auto& s: P[0].get_symbols())
 	    {
 		const auto& S = s.second;
-		std::cerr<<S.name<<" |= "<<S.body<<std::endl;
+		if (S.body)
+		    std::cerr<<S.name<<" = "<<S.body<<std::endl;
 	    }
 	    exit(0);
 	}

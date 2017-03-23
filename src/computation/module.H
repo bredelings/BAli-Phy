@@ -67,7 +67,6 @@ class Module
   
 public:
 
-    bool needs_prelude = true;
     bool do_optimize = false;
     
     expression_ref module;

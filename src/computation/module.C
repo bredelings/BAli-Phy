@@ -263,7 +263,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
 	}
 
     // Import the Prelude if it wasn't explicitly mentioned in the import list.
-    if (needs_prelude and not saw_Prelude and name != "Prelude")
+    if (not saw_Prelude and name != "Prelude")
     {
 	Module M = find_module("Prelude",P);
 	import_module(M,"Prelude",false);
