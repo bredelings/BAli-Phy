@@ -5,6 +5,7 @@
 #include "let.H"
 #include "case.H"
 
+using std::pair;
 using std::vector;
 using std::string;
 
@@ -155,28 +156,30 @@ expression_ref deindexify(const expression_ref& E, const vector<expression_ref>&
 
     // Let expression
     vector<expression_ref> bodies;
-    expression_ref T;
-    if (parse_indexed_let_expression(E, bodies, T))
+    vector<pair<dummy,expression_ref>> decls;
+    expression_ref body;
+    if (parse_indexed_let_expression(E, bodies, body))
     {
 	vector<expression_ref> variables2 = variables;
-	vector<expression_ref> vars;
 	for(int i=0;i<bodies.size();i++)
 	{
 	    dummy d = get_named_dummy(variables2.size());
-	    vars.push_back( d );
+	    decls.push_back({d, bodies[i]});
 	    variables2.push_back( d );
 	}
 
-	for(auto& body: bodies)
-	    body = deindexify(body, variables2);
+	// Deindexify let-bound stmts only after list of variables has been extended.
+	for(int i=0;i<decls.size();i++)
+	    decls[i].second = deindexify(decls[i].second, variables2);
 
-	T = deindexify(T, variables2);
+	body = deindexify(body, variables2);
 
-	return let_expression(vars, bodies,T);
+	return let_expression(decls, body);
     }
 
     // case expression
     vector<expression_ref> patterns;
+    expression_ref T;
     if (parse_case_expression(E, T, patterns, bodies))
     {
 	T = deindexify(T, variables);
