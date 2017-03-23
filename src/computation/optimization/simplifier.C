@@ -749,7 +749,14 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 		assert(is_dummy(var));
 
 		// Create an unused variable for wildcards.  This is for if we add a x=pattern binding.
-		if (is_wildcard(var)) var = dummy("__");
+		if (is_wildcard(var)) {
+		    dummy wild("__",1);
+		    wild.code_dup = amount_t::None;
+		    wild.work_dup = amount_t::None;
+		    wild.is_loop_breaker = false;
+		    wild.context = var_context::unknown;
+		    var = wild;
+		}
 
 		dummy x2 = rename_and_bind_var(var, S2, bound_vars);
 		var = x2;
