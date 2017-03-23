@@ -49,70 +49,24 @@ expression_ref let_expression(const vector<pair<dummy, expression_ref>>& decls, 
     return E;
 }
 
-expression_ref let_expression(const vector<expression_ref>& vars, const vector<expression_ref>& bodies, const expression_ref& T)
-{
-    if (vars.size() == 0) return T;
-
-    // We COULD merge with T if it is already a let expression, but
-    // (a) We'd have to check that no variables overlap, and
-    // (b) Sometimes sequential let's execute faster.
-    // (c) Let's will probably be merged anyway during let-float.
-
-    expression* E = new expression( let_obj() );
-    E->sub.push_back(T);
-
-    for(int i=0;i<vars.size();i++)
-    {
-	E->sub.push_back(vars[i]);
-	E->sub.push_back(bodies[i]);
-    }
-
-    return E;
-}
-
-expression_ref let_expression(const expression_ref& var, const expression_ref& body, const expression_ref& T)
-{
-    return let_expression(vector<expression_ref>{var}, vector<expression_ref>{body}, T);
-}
-
 bool is_let_expression(const expression_ref& E)
 {
     return (E.head().type() == let_type);
 }
 
 //let [(x[i], bodies[i])] T
-bool parse_let_expression(const expression_ref& E, vector<expression_ref>& vars, vector<expression_ref>& bodies, expression_ref& T)
+bool parse_let_expression(const expression_ref& E, vector<pair<dummy,expression_ref>>& decls, expression_ref& body)
 {
-    vars.clear();
-    bodies.clear();
-
+    decls.clear();
     if (not is_let_expression(E)) return false;
 
     // There should be an odd number of arguments.
     assert(E.size()%2 == 1);
 
-    T = E.sub()[0];
+    body = E.sub()[0];
     const int L = (E.size()-1)/2;
     for(int i=0;i<L;i++)
-    {
-	vars.push_back(E.sub()[1+2*i]);
-	bodies.push_back(E.sub()[2+2*i]);
-    }
-
-    return true;
-}
-
-//let [(x[i], bodies[i])] T
-bool parse_let_expression(const expression_ref& E, vector<pair<dummy,expression_ref>>& decls, expression_ref& body)
-{
-    vector<expression_ref> vars;
-    vector<expression_ref> bodies;
-
-    decls.clear();
-    if (not parse_let_expression(E, vars, bodies, body)) return false;
-
-    for(int i=0;i<vars.size();i++)
-	decls.push_back({vars[i].as_<dummy>(), bodies[i]});
+	decls.push_back({E.sub()[1+2*i].as_<dummy>(), E.sub()[2+2*i]});
 
     return true;
 }
