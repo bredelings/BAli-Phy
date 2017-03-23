@@ -37,6 +37,8 @@ using std::endl;
 
 amount_t operator+(amount_t a1, amount_t a2)
 {
+    assert(a1 != amount_t::Unknown);
+    assert(a2 != amount_t::Unknown);
     if (a1 == amount_t::None) return a2;
     if (a2 == amount_t::None) return a1;
     if (a1 == amount_t::Many or a2 == amount_t::Many) return amount_t::Many;
@@ -46,6 +48,8 @@ amount_t operator+(amount_t a1, amount_t a2)
 
 amount_t max(amount_t a1, amount_t a2)
 {
+    assert(a1 != amount_t::Unknown);
+    assert(a2 != amount_t::Unknown);
     if (a1 == amount_t::None) return a2;
     if (a2 == amount_t::None) return a1;
     if (a1 == amount_t::Many or a2 == amount_t::Many) return amount_t::Many;
@@ -56,6 +60,14 @@ amount_t max(amount_t a1, amount_t a2)
 // Merge_branch should MAX the work done, but ADD the code size.
 set<dummy> merge_occurrences(const set<dummy>& free_vars1, const set<dummy>& free_vars2, bool alternate_branches = false)
 {
+#ifndef NDEBUG
+    for(auto var: free_vars1)
+	assert(var.code_dup != amount_t::Unknown and var.work_dup != amount_t::Unknown);
+
+    for(auto var: free_vars2)
+	assert(var.code_dup != amount_t::Unknown and var.work_dup != amount_t::Unknown);
+#endif
+
     // Start with free_vars1
     set<dummy> free_vars = free_vars1;
 
@@ -83,6 +95,11 @@ set<dummy> merge_occurrences(const set<dummy>& free_vars1, const set<dummy>& fre
 
 	free_vars.insert(var);
     }
+#ifndef NDEBUG
+    for(auto var: free_vars)
+	assert(var.code_dup != amount_t::Unknown and var.work_dup != amount_t::Unknown);
+#endif
+
     return free_vars;
 }
 
