@@ -238,15 +238,14 @@ expression_ref unlet(const expression_ref& E)
     // 5. Let 
     if (E.head().is_a<let_obj>())
     {
-	vector<expression_ref> vars;
-	vector<expression_ref> bodies;
+	vector<pair<dummy,expression_ref>> decls;
 	expression_ref T;
-	parse_let_expression(E, vars, bodies, T);
+	parse_let_expression(E, decls, T);
 
 	// unnormalize T and the bodies
 	T = unlet(T);
-	for(int i=0; i<vars.size(); i++)
-	    bodies[i] = unlet(bodies[i]);
+	for(int i=0; i<decls.size(); i++)
+	    decls[i].second = unlet(decls[i].second);
 
 	// substitute for non-recursive lets
 	bool changed = true;
@@ -254,34 +253,30 @@ expression_ref unlet(const expression_ref& E)
 	{
 	    changed = false;
 
-	    for(int i=vars.size()-1; i>=0; i--)
+	    for(int i=decls.size()-1; i>=0; i--)
 	    {
-		assert(vars[i].is_a<dummy>());
+		if (n_free_occurrences(decls[i].second, decls[i].first)) continue;
 
-		if (n_free_occurrences(bodies[i],vars[i])) continue;
-
-		int count = n_free_occurrences(T, vars[i]);
-		for(const auto& b: bodies)
-		    count += n_free_occurrences(b, vars[i]);
+		int count = n_free_occurrences(T, decls[i].first);
+		for(const auto& decl: decls)
+		    count += n_free_occurrences(decl.second, decl.first);
 
 		if (count != 1) continue;
 
 		changed = true;
 	
-		expression_ref var = vars[i];
-		expression_ref body = bodies[i];
+		auto decl = decls[i];
 	
-		vars.erase(vars.begin() + i);
-		bodies.erase(bodies.begin() + i);
+		decls.erase(decls.begin() + i);
 	
 		// substitute for the value of this variable in T and in the remaining bodies;
-		for(int j=0;j<vars.size();j++)
-		    bodies[j] = substitute(bodies[j], var, body);
-		T = substitute(T, var, body);
+		for(int j=0;j<decls.size();j++)
+		    decls[j].second = substitute(decls[j].second, decl.first, decl.second);
+		T = substitute(T, decl.first, decl.second);
 	    }
 	}
 
-	return let_expression(vars, bodies, T);
+	return let_expression(decls, T);
     }
 
     std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";
