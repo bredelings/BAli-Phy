@@ -247,13 +247,16 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	using namespace boost;
 	const int L = (E.size()-1)/2;
 
-	// 0. Initialize the graph
+	// 0. Initialize the graph and decls
 	Graph graph;
 	vector<adjacency_list<>::vertex_descriptor> vertices;
+	vector<pair<dummy, expression_ref>> decls;
 	for(int i=0; i<L; i++)
+	{
 	    vertices.push_back( add_vertex(graph) );
-	vector<expression_ref> vars(L);
-	vector<expression_ref> bodies(L);
+	    auto x = E.sub()[1 + 2*i].as_<dummy>();
+	    decls.push_back({x,{}});
+	}
 
 	// 1. Analyze the body
 	set<dummy> free_vars;
@@ -265,8 +268,8 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	vector<int> work;
 	for(int i=0;i<L;i++)
 	{
-	    auto var = E.sub()[1 + 2*i].as_<dummy>();
-	    if (free_vars.count(var) and not alive[i])
+	    const auto& x = decls[i].first;
+	    if (free_vars.count(x) and not alive[i])
 	    {
 		alive[i] = true;
 		work.push_back(i);
@@ -279,8 +282,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	    int i = work[k];
 	    // 3.1 Analyze the bound statement
 	    set<dummy> free_vars_i;
-	    tie(bodies[i],free_vars_i) = occurrence_analyzer(E.sub()[2 + 2*i]);
-	    vars[i] = E.sub()[1 + 2*i];
+	    tie(decls[i].second, free_vars_i) = occurrence_analyzer(E.sub()[2 + 2*i]);
 
 	    // 3.2 Record occurrences
 	    free_vars = merge_occurrences(free_vars, free_vars_i);
@@ -363,24 +365,22 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	for(int i=0;i<sorted_indices.size();i++)
 	    sorted_indices[i] = get(vertex_index,graph,sorted_vertices[i]);
 
-	// 6. Reconstruct the let statement
-	vector<expression_ref> vars2;
-	vector<expression_ref> bodies2;
-	for(int i: sorted_indices)
+	// 6. Set occurrence info for let vars, and remove from free_vars
+	for(auto& decl: decls)
 	{
-	    // Skip dead vars
-	    if (not bodies[i]) continue;
+	    decl.first = remove_var_and_set_occurrence_info(decl.first, free_vars);
 
-	    vars2.push_back(*free_vars.find(vars[i].as_<dummy>()));
-	    bodies2.push_back(bodies[i]);
+	    // Decl.second is missing if and only if the variable is never executed.
+	    assert(bool(decl.second) == bool(decl.first.code_dup != amount_t::None));
 	}
 
-	// 7. Remove let-vars from free_vars if they are in it.
-	for(int i=0;i<L;i++)
-	    free_vars.erase(E.sub()[1 + 2*i].as_<dummy>());
+	// 7. Sort the live decls
+	vector<pair<dummy,expression_ref>> decls2;
+	for(int i: sorted_indices)
+	    if (decls[i].second)
+		decls2.push_back(decls[i]);
 
-
-	return {let_expression(vars2, bodies2, body), free_vars};
+	return {let_expression(decls2, body), free_vars};
     }
 
     throw myexception()<<"occurrence_analyzer: I don't recognize expression '"+ E.print() + "'";
