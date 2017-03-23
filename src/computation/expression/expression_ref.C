@@ -16,6 +16,7 @@
 #include <map>
 #include <cctype>
 
+using std::pair;
 using std::vector;
 using std::string;
 using std::set;
@@ -85,14 +86,16 @@ string expression::print() const
 	    return result;
 	}
 
-	if (parse_let_expression(this, vars, bodies, T))
+	expression_ref body;
+	vector<pair<dummy, expression_ref>> decls;
+	if (parse_let_expression(this, decls, body))
 	{
 	    result = "let {";
 	    vector<string> parts;
-	    for(int i=0;i<vars.size();i++)
-		parts.push_back(vars[i].print() + " = " + bodies[i].print());
+	    for(int i=0;i<decls.size();i++)
+		parts.push_back(decls[i].first.print() + " = " + decls[i].second.print());
 	    result += join(parts,", ");
-	    result += "} in " + T.print();
+	    result += "} in " + body.print();
 	    return result;
 	}
 

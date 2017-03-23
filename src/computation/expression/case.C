@@ -331,7 +331,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
     expression_ref CE = make_case_expression(x[0], simple_patterns, simple_bodies);
 
     if (otherwise and not all_simple_followed_by_irrefutable)
-	CE = let_expression(O, otherwise, CE);
+	CE = let_expression({{O.as_<dummy>(), otherwise}}, CE);
 
     return CE;
 }

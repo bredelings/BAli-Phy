@@ -40,7 +40,11 @@ expression_ref indexed_let_expression(const std::vector<expression_ref>& bodies,
 
 expression_ref unlet(const expression_ref& E);
 
+bool is_let_expression(const expression_ref& E);
+
 bool parse_let_expression(const expression_ref& E, std::vector<expression_ref>& vars, std::vector<expression_ref>& bodies, expression_ref& T);
+
+bool parse_let_expression(const expression_ref& E, std::vector<std::pair<dummy, expression_ref>>& decls, expression_ref& body);
 
 bool parse_indexed_let_expression(const expression_ref& E, std::vector<expression_ref>& bodies, expression_ref& T);
 

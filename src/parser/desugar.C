@@ -829,25 +829,26 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    // parse the decls and bind declared names internally to the decls.
 	    v[0] = desugar(m, v[0], bound);
 
-	    vector<expression_ref> decls = v[0].sub();
+	    vector<pair<dummy,expression_ref>> decls;
 
 	    // find the bound var names + construct arguments to let_obj()
-	    vector<expression_ref> w = {body};
 	    set<string> bound2 = bound;
-	    for(const auto& decl: decls)
+	    for(const auto& decl: v[0].sub())
 	    {
 		if (is_AST(decl,"EmptyDecl")) continue;
 
-		bound2.insert(decl.sub()[0].as_<dummy>().name);
-		w.push_back(decl.sub()[0]);
-		w.push_back(decl.sub()[1]);
+		dummy x = decl.sub()[0].as_<dummy>().name;
+		auto E = decl.sub()[1];
+
+		decls.push_back({x,E});
+		bound2.insert(x.name);
 	    }
 
 	    // finally desugar let-body, now that we know the bound vars.
-	    w[0] = desugar(m, w[0], bound2);
+	    body = desugar(m, body, bound2);
 
 	    // construct the new let expression.
-	    return new expression{ let_obj(), w };
+	    return let_expression(decls, body);
 	}
 	else if (n.type == "Case")
 	{

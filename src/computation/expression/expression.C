@@ -20,6 +20,7 @@
 using std::vector;
 using std::string;
 using std::set;
+using std::pair;
 using std::multiset;
 
 using boost::dynamic_pointer_cast;
@@ -261,17 +262,16 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
     }
 
     // 5. Let 
-    if (E.head().is_a<let_obj>())
+    if (is_let_expression(E))
     {
-	vector<expression_ref> vars;
-	vector<expression_ref> bodies;
-	expression_ref T;
-	parse_let_expression(E, vars, bodies, T);
+	vector<pair<dummy,expression_ref>> decls;
+	expression_ref body;
+	parse_let_expression(E, decls, body);
 
-	// unnormalize T and the bodies
-	T = launchbury_unnormalize(T);
-	for(int i=0; i<vars.size(); i++)
-	    bodies[i] = launchbury_unnormalize(bodies[i]);
+	// unnormalize body and the decls
+	body = launchbury_unnormalize(body);
+	for(auto& decl: decls)
+	    decl.second = launchbury_unnormalize(decl.second);
 
 	/*
 	  Identify cycles of size > 1...
@@ -292,30 +292,27 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 	{
 	    changed = false;
 
-	    for(int i=vars.size()-1; i>=0; i--)
+	    for(int i=decls.size()-1; i>=0; i--)
 	    {
-		auto& V = vars[i].as_<dummy>();
-		std::set<dummy> free = get_free_indices(bodies[i]);
+		auto& x = decls[i].first;
+		std::set<dummy> free = get_free_indices(decls[i].second);
 
-		// if V references itself then don't substitute it.
-		if (free.count(V)) continue;
+		// if x references itself then don't substitute it.
+		if (free.count(x)) continue;
 	
 		changed = true;
 	
-		expression_ref var = vars[i];
-		expression_ref body = bodies[i];
-	
-		vars.erase(vars.begin() + i);
-		bodies.erase(bodies.begin() + i);
+		auto decl = decls[i];
+		decls.erase(decls.begin() + i);
 	
 		// substitute for the value of this variable in T and in the remaining bodies;
-		for(int j=0;j<vars.size();j++)
-		    bodies[j] = substitute(bodies[j], var, body);
-		T = substitute(T, var, body);
+		for(int j=0;j<decls.size();j++)
+		    decls[j].second = substitute(decls[j].second, decl.first, decl.second);
+		body = substitute(body, decl.first, decl.second);
 	    }
 	}
 
-	return let_expression(vars, bodies, T);
+	return let_expression(decls, body);
     }
 
     std::cerr<<"I don't recognize expression '"+ E.print() + "'\n";

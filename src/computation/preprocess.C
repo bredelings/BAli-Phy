@@ -62,11 +62,11 @@ expression_ref graph_normalize(const expression_ref& E)
 	else
 	{
 	    int var_index = get_safe_binder_index(E);
-	    expression_ref x = dummy(var_index);
+	    auto x = dummy(var_index);
 	    expression_ref obj = V->sub[0];
 	    V->sub[0] = x;
 
-	    return let_expression(x,obj,V);
+	    return let_expression({{x,obj}},V);
 	}
     }
 
