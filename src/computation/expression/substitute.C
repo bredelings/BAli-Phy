@@ -25,7 +25,7 @@ void alpha_rename(object_ptr<expression>& E, const expression_ref& x, const expr
 	E->sub[0] = y;
 	E->sub[1] = substitute(E->sub[1], x, y);
     }
-    else if (E->head.is_a<let_obj>())
+    else if (is_let_expression(E))
     {
 	for(int i=0;i<E->size();i++)
 	    E->sub[i] = substitute(E->sub[i], x, y);

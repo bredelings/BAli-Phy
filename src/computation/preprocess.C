@@ -99,7 +99,7 @@ expression_ref graph_normalize(const expression_ref& E)
     }
 
     // 5. Let 
-    if (E.head().is_a<let_obj>())
+    if (is_let_expression(E))
     {
 	object_ptr<expression> V = E.as_expression().clone();
 

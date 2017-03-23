@@ -1,4 +1,5 @@
 #include "dummy.H"
+#include "computation/expression/let.H"
 #include "computation/operations.H"
 
 using std::set;
@@ -92,7 +93,7 @@ std::set<dummy> get_bound_indices(const expression_ref& E)
     }
     else 
     {
-	if (E.head().type() == let_type)
+	if (is_let_expression(E))
 	{
 	    const int L = (E.size()-1)/2;
 	    for(int i=0;i<L;i++)

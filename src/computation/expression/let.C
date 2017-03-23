@@ -239,7 +239,7 @@ expression_ref unlet(const expression_ref& E)
 
 void get_decls_from_let(const expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
 {
-    assert(E.head().type() == let_type);
+    assert(is_let_expression(E));
     int n_decls = (E.size()-1)/2;
     for(int i=0;i<n_decls;i++)
 	decls.push_back({E.sub()[1 + 2*i].as_<dummy>(), E.sub()[2 + 2*i]});
@@ -254,7 +254,7 @@ vector<pair<dummy, expression_ref>> get_decls_from_let(const expression_ref& E)
 
 void strip_let(expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
 {
-    if (E.head().type() == let_type)
+    if (is_let_expression(E))
     {
 	get_decls_from_let(E, decls);
 	auto body = E.sub()[0]; // We need this reference to avoid deleting the body when assigning E.

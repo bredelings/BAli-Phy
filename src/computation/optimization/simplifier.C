@@ -242,7 +242,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 
 
     // 5. Let (let {x[i] = F[i]} in body)
-    if (E.head().is_a<let_obj>())
+    if (is_let_expression(E))
     {
 	using namespace boost;
 	const int L = (E.size()-1)/2;
@@ -972,7 +972,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     //
     // Here we know that F[i] can only mention x[j<i] unless F[i] is a loop-breaker.
     // 
-    if (E.head().is_a<let_obj>())
+    if (is_let_expression(E))
     {
 	auto S2 = S;
 
@@ -1017,7 +1017,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 		F = simplify(options, F, S2, bound_vars, unknown_context());
 
 		// Float lets out of decl x = F
-		if (options.let_float_from_let and F.head().is_a<let_obj>() and F.sub()[0].head().is_a<constructor>())
+		if (options.let_float_from_let and is_let_expression(F) and F.sub()[0].head().is_a<constructor>())
 		{
 		    for(auto& decl: strip_let(F))
 		    {
