@@ -103,6 +103,35 @@ set<dummy> merge_occurrences(const set<dummy>& free_vars1, const set<dummy>& fre
     return free_vars;
 }
 
+dummy remove_var_and_set_occurrence_info(dummy x, set<dummy>& free_vars)
+{
+    assert(not is_wildcard(x));
+
+    // 1. Copy occurrence info
+    auto x_iter = free_vars.find(x);
+    if (x_iter == free_vars.end())
+    {
+	x.work_dup = amount_t::None;
+	x.code_dup = amount_t::None;
+	x.is_loop_breaker = false;
+	x.context = var_context::unknown;
+    }
+    else
+	static_cast<occurrence_info&>(x) = *x_iter;
+
+    // 2. Remove var from set
+    free_vars.erase(x);
+
+    assert(x.code_dup != amount_t::Unknown and x.work_dup != amount_t::Unknown);
+
+    return x;
+}
+
+dummy remove_var_and_set_occurrence_info(const expression_ref& var, set<dummy>& free_vars)
+{
+    dummy x = var.as_<dummy>();
+    return remove_var_and_set_occurrence_info(x, free_vars);
+}
 // occur:: Expression -> (marked free_variables, marked Expression)
 
 pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var_context context=var_context::unknown)
@@ -134,27 +163,8 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	tie(body, free_vars) = occurrence_analyzer(E.sub()[1]);
 
 	// 2. Mark bound variable with occurrence info from the body
-	dummy x = E.sub()[0].as_<dummy>();
-
-	auto x_iter = free_vars.find(x);
-	if (x_iter == free_vars.end())
-	{
-	    x.work_dup = amount_t::None;
-	    x.code_dup = amount_t::None;
-	    x.is_loop_breaker = false;
-	    x.context = var_context::unknown;
-	}
-	else
-	{
-	    x.work_dup = x_iter->work_dup;
-	    x.code_dup = x_iter->code_dup;
-	    x.is_loop_breaker = x_iter->is_loop_breaker;
-	    x.context = x_iter->context;
-	}
-
-
-	// 3. remove x from free variables of the body
-	free_vars.erase(x);
+	// 3. Remove variable from free variables
+	dummy x = remove_var_and_set_occurrence_info(E.sub()[0], free_vars);
 
 	// 4. change Once -> OnceInLam / work=Many, code=Once
 	set<dummy> free_vars2;
@@ -188,13 +198,23 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	    set<dummy> alt_i_free_vars;
 	    tie(bodies[i], alt_i_free_vars) = occurrence_analyzer(E.sub()[2+2*i]);
 
-	    // Remove vars bound by the pattern
 	    patterns[i] = E.sub()[1+2*i];
-	    auto alt_i_pattern_vars = get_free_indices(patterns[i]);
 
-	    // Remove pattern variables from free_vars if it contains them.
-	    for(const auto& d: alt_i_pattern_vars)
-		alt_i_free_vars.erase(d);
+	    // Remove pattern vars from free variables
+	    // Copy occurrence info into pattern variables
+	    if (patterns[i].size())
+	    {
+		object_ptr<expression> pattern2 = patterns[i].as_expression().clone();
+		for(int j=0;j < pattern2->size(); j++)
+		{
+		    if (not is_wildcard(pattern2->sub[j]))
+		    {
+			dummy x = remove_var_and_set_occurrence_info(pattern2->sub[j], alt_i_free_vars);
+			pattern2->sub[j] = x; // use temporary to avoid deleting pattern2->sub[j]
+		    }
+		}
+		patterns[i] = pattern2;
+	    }
 
 	    // Merge occurrences for this pattern into the occurrence for the whole set of alts.
 	    alts_free_vars = merge_occurrences(alts_free_vars, alt_i_free_vars, true);
