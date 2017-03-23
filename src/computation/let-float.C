@@ -12,36 +12,29 @@ using std::vector;
 using std::set;
 using std::pair;
 
-vector<pair<dummy, expression_ref>> get_decls(const vector<expression_ref>& vars, const vector<expression_ref>& bodies)
-{
-    vector<pair<dummy, expression_ref>> decls;
-    for(int i=0;i<vars.size();i++)
-	decls.push_back({vars[i].as_<dummy>(), bodies[i]});
-    return decls;
-}
-
 // ?- Determine which let statements have bound vars (bound_indices) and which do not (unbound_indices).
 //    (The ones with no bound vars can be floated.)
-bool find_let_statements_with_bound_vars(const vector<expression_ref>& let_vars, const vector<expression_ref>& let_bodies,
+bool find_let_statements_with_bound_vars(const vector<pair<dummy,expression_ref>>& decls,
 					 const set<dummy>& bound,
 					 vector<int>& bound_indices, vector<int>& unbound_indices)
 {
-    set<dummy> let_bound;
-    for(int i=0;i<let_vars.size();i++)
-	let_bound.insert(let_vars[i].as_<dummy>());
-
     // Find the set of bound variables that could be free in let_bodies
     set<dummy> visible_bound = bound;
-    for(const auto& i: let_bound)
-	visible_bound.erase(i);
+    set<dummy> let_bound;
+    for(int i=0;i<decls.size();i++)
+    {
+	auto x = decls[i].first;
+	let_bound.insert(x);
+	visible_bound.erase(x);
+    }
 
     vector< set<dummy> > free_vars;
-    for(int i=0;i<let_bodies.size();i++)
-	free_vars.push_back( get_free_indices( let_bodies[i] ) );
+    for(int i=0;i<decls.size();i++)
+	free_vars.push_back( get_free_indices( decls[i].second ) );
 
     bound_indices.clear();
     unbound_indices.clear();
-    for(int i=0;i<let_bodies.size();i++)
+    for(int i=0;i<decls.size();i++)
 	unbound_indices.push_back(i);
 
     // Find the indices that are not bound (directly or indirectly) by the bound variables
@@ -52,9 +45,10 @@ bool find_let_statements_with_bound_vars(const vector<expression_ref>& let_vars,
 	for(int i=unbound_indices.size()-1;i>=0;i--)
 	{
 	    int index = unbound_indices[i];
+	    auto x = decls[index].first;
 	    if (not intersection(free_vars[index], new_bound).empty())
 	    {
-		new_bound_next.insert(let_vars[index].as_<dummy>());
+		new_bound_next.insert(x);
 		bound_indices.push_back(index);
 		unbound_indices.erase( unbound_indices.begin() + i);
 	    }
@@ -76,11 +70,10 @@ expression_ref move_lets(bool scope, const expression_ref E,
 {
     assert(E);
 
-    vector<expression_ref> E_vars;
-    vector<expression_ref> E_bodies;
+    vector<pair<dummy,expression_ref>> E_decls;
     expression_ref E2 = E;
 
-    if (not parse_let_expression(E, E_vars, E_bodies, E2))
+    if (not parse_let_expression(E, E_decls, E2))
 	E2 = E;
 
     // Find the set of variables to avoid renaming over: free + bound + let-bound-just-above
@@ -101,13 +94,13 @@ expression_ref move_lets(bool scope, const expression_ref E,
     // Determine which of the let-statements in E we can float.
     vector<int> unbound_indices;
     vector<int> bound_indices;
-    if (find_let_statements_with_bound_vars(E_vars, E_bodies, bound, bound_indices, unbound_indices))
+    if (find_let_statements_with_bound_vars(E_decls, bound, bound_indices, unbound_indices))
     {
 	// Adjust the new indices to avoid hitting any of the other let-binder-variables in E
-	for(int i=0;i<E_vars.size();i++)
+	for(int i=0;i<E_decls.size();i++)
 	{
-	    dummy D = E_vars[i].as_<dummy>();
-	    new_index = std::max(new_index, D.index + 1);
+	    dummy x = E_decls[i].first;
+	    new_index = std::max(new_index, x.index + 1);
 	}
 
 	/******************** alpha-rename E -> EE ********************/
@@ -116,7 +109,7 @@ expression_ref move_lets(bool scope, const expression_ref E,
     
 	for(int index: unbound_indices)
 	{
-	    dummy D = E_vars[index].as_<dummy>();
+	    dummy D = E_decls[index].first;
 	    if (includes(avoid, D))
 	    {
 		dummy D2(new_index++);
@@ -127,7 +120,7 @@ expression_ref move_lets(bool scope, const expression_ref E,
 	}
   
 	// Recompute E_vars and E_bodies from the alpha-renamed version of E
-	parse_let_expression(EE, E_vars, E_bodies, E2);            
+	parse_let_expression(EE, E_decls, E2);            
     
 	/*********** move free lets to higher-level environment **********/
 	for(int index: unbound_indices)
@@ -137,21 +130,19 @@ expression_ref move_lets(bool scope, const expression_ref E,
 	    //      for(int j=0;j<vars.size();j++)
 	    //	assert(not includes(vars, E_vars[index]));
 #endif
-	    decls.push_back( {E_vars[index].as_<dummy>(), E_bodies[index]} );
+	    decls.push_back( E_decls[index] );
 	}
 
 	// Construct the remainder expression
-	vector<expression_ref> E_vars2;
-	vector<expression_ref> E_bodies2;
+	vector<pair<dummy,expression_ref>> E_decls2;
 	for(int i=0;i<bound_indices.size();i++)
 	{
 	    int index = bound_indices[i];
       
-	    E_vars2.push_back(E_vars[index]);
-	    E_bodies2.push_back(E_bodies[index]);
+	    E_decls2.push_back(E_decls[index]);
 	}
 
-	E2 = let_expression(get_decls(E_vars2, E_bodies2), E2);
+	E2 = let_expression(E_decls2, E2);
     }
     // If nothing is moveable, then just return the original statement.
     else

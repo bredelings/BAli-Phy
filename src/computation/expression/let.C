@@ -108,6 +108,7 @@ bool parse_let_expression(const expression_ref& E, vector<pair<dummy,expression_
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
 
+    decls.clear();
     if (not parse_let_expression(E, vars, bodies, body)) return false;
 
     for(int i=0;i<vars.size();i++)
