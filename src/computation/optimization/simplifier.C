@@ -736,7 +736,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
     for(int i=0;i<L;i++)
     {
 	auto S2 = S;
-	vector<pair<dummy, expression_ref>> decls;
+	vector<pair<dummy, expression_ref>> pat_decls;
 
 	// 2. Rename and bind pattern variables
 	expression_ref& pattern = E2->sub[1 + 2*i];
@@ -760,7 +760,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 
 		dummy x2 = rename_and_bind_var(var, S2, bound_vars);
 		var = x2;
-		decls.push_back({x2, {}});
+		pat_decls.push_back({x2, {}});
 	    }
 	    pattern = pattern2;
 	}
@@ -775,7 +775,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	// 5. Restore informatation about an object variable to information outside this case branch.
 	if (is_dummy(object)) rebind_var(bound_vars, object.as_<dummy>(), original_binding.first);
 
-	unbind_decls(bound_vars, decls);
+	unbind_decls(bound_vars, pat_decls);
     }
     return E2;
 }
