@@ -58,15 +58,11 @@ bool is_let_expression(const expression_ref& E)
 bool parse_let_expression(const expression_ref& E, vector<pair<dummy,expression_ref>>& decls, expression_ref& body)
 {
     decls.clear();
+    body = E;
+
     if (not is_let_expression(E)) return false;
 
-    // There should be an odd number of arguments.
-    assert(E.size()%2 == 1);
-
-    body = E.sub()[0];
-    const int L = (E.size()-1)/2;
-    for(int i=0;i<L;i++)
-	decls.push_back({E.sub()[1+2*i].as_<dummy>(), E.sub()[2+2*i]});
+    decls = strip_let(body);
 
     return true;
 }
