@@ -67,17 +67,17 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
     }
 
     // Let expression
-    vector<expression_ref> vars;
+    vector<pair<dummy,expression_ref>> decls;
     vector<expression_ref> bodies;
     expression_ref T;
-    if (parse_let_expression(E, vars, bodies, T))
+    if (parse_let_expression(E, decls, T))
     {
 	vector<dummy> variables2 = variables;
-	for(const auto& var: vars)
-	    variables2.push_back(var.as_<dummy>());
+	for(const auto& decl: decls)
+	    variables2.push_back(decl.first);
 
-	for(auto& body: bodies)
-	    body = indexify(body, variables2);
+	for(int i=0;i<decls.size();i++)
+	    bodies.push_back( indexify(decls[i].second, variables2) );
 
 	T = indexify(T, variables2);
 
