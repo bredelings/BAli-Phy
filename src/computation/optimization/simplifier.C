@@ -419,6 +419,8 @@ bool is_trivial(const expression_ref& E)
 void bind_var(in_scope_set& bound_vars, const dummy& x, const expression_ref& E)
 {
     assert(not bound_vars.count(x));
+    assert(x.work_dup != amount_t::Unknown);
+    assert(x.code_dup != amount_t::Unknown);
     bound_vars.insert({x,{E,x}});
 }
 
@@ -703,6 +705,7 @@ expression_ref get_new_name(const expression_ref& var, const in_scope_set& bound
 dummy rename_and_bind_var(const expression_ref& var, substitution& S, in_scope_set& bound_vars)
 {
     dummy x = var.as_<dummy>();
+    assert(x.code_dup != amount_t::Unknown);
     assert(not is_wildcard(x));
     auto var2 = get_new_name(var, bound_vars);
 
