@@ -789,19 +789,17 @@ expression_ref rebuild_let(const simplifier_options& options, const vector<pair<
 {
     // If the decl is empty, then we don't have to do anythign special here.
     if (decls.empty()) return simplify(options, E, S, bound_vars, unknown_context());
-
-    vector<pair<dummy,expression_ref>> decls2;
-    for(auto& decl: decls)
-    {
-	bind_var(bound_vars, decl.first, decl.second);
-	if (decl.second)
-	    decls2.push_back(decl);
-    }
+    bind_decls(bound_vars, decls);
 
     E = simplify(options, E, S, bound_vars, unknown_context());
 
+    unbind_decls(bound_vars, decls);
+
+    // Only put the bound variables in decls2.
+    vector<pair<dummy,expression_ref>> decls2;
     for(auto& decl: decls)
-	unbind_var(bound_vars, decl.first);
+	if (decl.second)
+	    decls2.push_back(decl);
 
     strip_let(E, decls2);
 
