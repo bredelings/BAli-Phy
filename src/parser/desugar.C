@@ -801,6 +801,8 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       expression_ref decls_ = v[0];
       assert(is_AST(decls_,"Decls"));
       expression_ref body = v[1];
+
+      // transform "let (a,b) = E in F" => "case E of (a,b) -> F"
       {
 	expression_ref decl = decls_.sub()[0];
 	if (is_AST(decl,"Decl"))
