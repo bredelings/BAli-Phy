@@ -190,7 +190,7 @@ expression_ref unlet(const expression_ref& E)
     }
 
     // 5. Let 
-    if (E.head().is_a<let_obj>())
+    if (is_let_expression(E))
     {
 	vector<pair<dummy,expression_ref>> decls;
 	expression_ref T;
