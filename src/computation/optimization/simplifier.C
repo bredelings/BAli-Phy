@@ -732,7 +732,10 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
     expression_ref& object = E2->sub[0];
     const int L = (E.size()-1)/2;
 
-    // 1. Walk each alternative
+    auto decls = strip_let(object);
+    bind_decls(bound_vars, decls);
+
+    // 1. Simplify each alternative
     for(int i=0;i<L;i++)
     {
 	auto S2 = S;
@@ -777,7 +780,9 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 
 	unbind_decls(bound_vars, pat_decls);
     }
-    return E2;
+    unbind_decls(bound_vars, decls);
+
+    return let_expression(decls,E2);
 }
 
 // @ E x1 .. xn.  The E and the x[i] have already been simplified.
