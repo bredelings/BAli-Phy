@@ -10,6 +10,15 @@
 
 using std::vector;
 using std::set;
+using std::pair;
+
+vector<pair<dummy, expression_ref>> get_decls(const vector<expression_ref>& vars, const vector<expression_ref>& bodies)
+{
+    vector<pair<dummy, expression_ref>> decls;
+    for(int i=0;i<vars.size();i++)
+	decls.push_back({vars[i].as_<dummy>(), bodies[i]});
+    return decls;
+}
 
 // ?- Determine which let statements have bound vars (bound_indices) and which do not (unbound_indices).
 //    (The ones with no bound vars can be floated.)
@@ -144,7 +153,7 @@ expression_ref move_lets(bool scope, const expression_ref E,
       E_bodies2.push_back(E_bodies[index]);
     }
 
-    E2 = let_expression(E_vars2, E_bodies2, E2);
+    E2 = let_expression(get_decls(E_vars2, E_bodies2), E2);
   }
   // If nothing is moveable, then just return the original statement.
   else
@@ -233,7 +242,7 @@ expression_ref let_float(const expression_ref& E)
     M = move_lets(true, M, vars, bodies, bound, free_in_E);
 
     // Reassemble the expression
-    E2 = let_expression(vars, bodies, lambda_quantify(D, M) );
+    E2 = let_expression(get_decls(vars, bodies), lambda_quantify(D, M) );
 
     assert(free_in_E == get_free_indices(E2));
   }
@@ -259,7 +268,7 @@ expression_ref let_float(const expression_ref& E)
       bodies[i] = move_lets(true, bodies[i], let_vars, let_bodies, bound, free_in_E);
     }
 
-    E2 = let_expression(let_vars, let_bodies, make_case_expression(T, patterns, bodies));
+    E2 = let_expression(get_decls(let_vars, let_bodies), make_case_expression(T, patterns, bodies));
 
     assert(free_in_E == get_free_indices(E2));
   }
@@ -293,7 +302,7 @@ expression_ref let_float(const expression_ref& E)
       bodies[i] = E;
     }
 
-    E2 = let_expression(vars,bodies,T);
+    E2 = let_expression(get_decls(vars,bodies),T);
   }
 
   // 6. Handle application, constructors, and operations.
@@ -312,7 +321,7 @@ expression_ref let_float(const expression_ref& E)
       V->sub[i] = move_lets(true, V->sub[i], vars, bodies, set<dummy>(), free_in_E);
     }
       
-    E2 = let_expression(vars, bodies, object_ptr<const expression>(V));
+    E2 = let_expression(get_decls(vars, bodies), object_ptr<const expression>(V));
 
     assert(free_in_E == get_free_indices(E2));
   }

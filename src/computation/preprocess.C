@@ -78,26 +78,24 @@ expression_ref graph_normalize(const expression_ref& E)
 	object_ptr<expression> E2 = E.as_expression().clone();
 
 	// Actually we probably just need x[i] not to be free in E.sub()[i]
-	vector<expression_ref> vars;
-	vector<expression_ref> bodies;
+	vector<pair<dummy, expression_ref>> decls;
 	for(int i=0;i<E2->size();i++)
 	{
 	    E2->sub[i] = graph_normalize(E.sub()[i]);
 
 	    if (not is_reglike(E2->sub[i]))
 	    {
-		expression_ref var = dummy( var_index++ );
+		auto x = dummy( var_index++ );
 
 		// 1. Let-bind the argument expression
-		vars.push_back( var );
-		bodies.push_back( E2->sub[i] );
+		decls.push_back( {x, E2->sub[i]} );
 
 		// 2. Replace the argument expression with the let var.
-		E2->sub[i] = var;
+		E2->sub[i] = x;
 	    }
 	}
 
-	return let_expression(vars, bodies, object_ptr<const expression>(E2));
+	return let_expression(decls, object_ptr<const expression>(E2));
     }
 
     // 5. Let 
