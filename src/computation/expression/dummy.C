@@ -95,12 +95,9 @@ std::set<dummy> get_bound_indices(const expression_ref& E)
     {
 	if (is_let_expression(E))
 	{
-	    const int L = (E.size()-1)/2;
-	    for(int i=0;i<L;i++)
-	    {
-		if (E.sub()[1+2*i].is_a<dummy>())
-		    bound.insert(E.sub()[1+2*i].as_<dummy>());
-	    }
+	    auto decls = let_decls(E);
+	    for(auto& decl: decls)
+		bound.insert(decl.first);
 	}
 	assert(not E.head().is_a<Case>());
     }
