@@ -967,9 +967,12 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     // 
     if (is_let_expression(E))
     {
+	auto body       = let_body(E);
+	auto orig_decls = let_decls(E);
+
 	auto S2 = S;
 
-	const int n_decls = (E.size()-1)/2;
+	const int n_decls = orig_decls.size();
 
 	vector<pair<dummy,expression_ref>> decls;
 
@@ -978,8 +981,8 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	//     Renaming them is necessary to correctly simplify the bodies.
 	for(int i=0;i<n_decls;i++)
 	{
-	    auto var = E.sub()[1 + 2*i];
-	    dummy x2 = rename_and_bind_var(var, S2, bound_vars);
+	    dummy x = orig_decls[i].first;
+	    dummy x2 = rename_and_bind_var(x, S2, bound_vars);
 	    decls.push_back({x2,{}});
 	}
 
@@ -988,9 +991,9 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	{
 	    // If x[i] is not a loop breaker, then x[i] can only BE referenced by LATER E[k] (since loop breakers are later), while
 	    //                                     E[i] can only reference EARLIER x[k] and loop breakers.
-	    auto var = E.sub()[1 + 2*i];
-	    auto F   = E.sub()[2 + 2*i];
-	    dummy x = var.as_<dummy>();
+	    dummy x  = orig_decls[i].first;
+	    auto F   = orig_decls[i].second;
+
 	    dummy x2 = decls[i].first;
 	    
 	    // 1. Any references to x in F must be to the x bound in this scope.
@@ -1036,7 +1039,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	unbind_decls(bound_vars, decls);
 
         // 5.2 Simplify the let-body
-	return rebuild_let(options, decls, E.sub()[0], S2, bound_vars);
+	return rebuild_let(options, decls, body, S2, bound_vars);
     }
 
     std::abort();
