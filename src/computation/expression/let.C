@@ -4,6 +4,7 @@
 #include "case.H"
 #include "substitute.H"
 #include "expression.H"
+#include "AST_node.H"
 #include "computation/operations.H"
 
 using std::vector;
@@ -37,14 +38,18 @@ expression_ref let_expression(const vector<pair<dummy, expression_ref>>& decls, 
 {
     if (decls.size() == 0) return T;
 
-    expression* E = new expression( let_obj() );
-    E->sub.push_back(T);
-
+    auto Decls = new expression( AST_node("Decls") );
     for(int i=0;i<decls.size();i++)
     {
-	E->sub.push_back(decls[i].first);
-	E->sub.push_back(decls[i].second);
+	auto Decl = new expression( AST_node("Decl") );
+	Decl->sub.push_back(decls[i].first);
+	Decl->sub.push_back(decls[i].second);
+	Decls->sub.push_back(Decl);
     }
+
+    auto E = new expression( let_obj() );
+    E->sub.push_back(Decls);
+    E->sub.push_back(T);
 
     return E;
 }
@@ -235,9 +240,12 @@ expression_ref unlet(const expression_ref& E)
 void get_decls_from_let(const expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
 {
     assert(is_let_expression(E));
-    int n_decls = (E.size()-1)/2;
-    for(int i=0;i<n_decls;i++)
-	decls.push_back({E.sub()[1 + 2*i].as_<dummy>(), E.sub()[2 + 2*i]});
+    auto& Decls = E.sub()[0].sub();
+    for(int i=0;i<Decls.size();i++)
+    {
+	auto& Decl = Decls[i].sub();
+	decls.push_back({Decl[0].as_<dummy>(), Decl[1]});
+    }
 }
 
 vector<pair<dummy, expression_ref>> let_decls(const expression_ref& E)
@@ -249,7 +257,7 @@ vector<pair<dummy, expression_ref>> let_decls(const expression_ref& E)
 
 expression_ref let_body(expression_ref  E)
 {
-    return E.sub()[0];
+    return E.sub()[1];
 }
 
 void strip_let(expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
