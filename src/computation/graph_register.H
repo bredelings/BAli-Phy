@@ -257,6 +257,8 @@ public:
 
     std::vector<std::string> args;
 
+    /// Get the memory location (reg) for a given identifier (string)
+    int reg_for_id(const std::string&);
     /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
     expression_ref translate_refs(const expression_ref& R, closure::Env_t&);
     /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references

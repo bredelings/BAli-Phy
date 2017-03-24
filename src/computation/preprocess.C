@@ -163,6 +163,33 @@ closure reg_heap::preprocess(const closure& C)
     return trim_normalize( indexify( graph_normalize( let_float( translate_refs( resolve_refs(*P, closure(C) ) ) ) ) ) );
 }
 
+int reg_heap::reg_for_id(const string& name)
+{
+    assert(is_qualified_symbol(name) or is_haskell_builtin_con_name(name));
+    auto loc = identifiers.find( name );
+    if (loc == identifiers.end())
+    {
+	if (is_haskell_builtin_con_name(name))
+	{
+	    symbol_info S = Module::lookup_builtin_symbol(name);
+	    add_identifier(S.name);
+
+	    // get the root for each identifier
+	    loc = identifiers.find(S.name);
+	    assert(loc != identifiers.end());
+
+	    int R = loc->second;
+
+	    assert(R != -1);
+	    set_C(R, preprocess(S.body) );
+	}
+	else
+	    throw myexception()<<"Can't translate undefined identifier '"<<name<<"' in expression!";
+    }
+
+    return loc->second;
+}
+
 expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t& Env)
 {
     int reg = -1;
@@ -171,48 +198,28 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
     if (E.is_a<parameter>())
     {
 	string name = E.as_<parameter>().parameter_name;
-	string qualified_name = name;
 
-	int param_index = find_parameter(qualified_name);
+	int param_index = find_parameter(name);
     
 	if (param_index == -1)
-	    throw myexception()<<"Can't translate undefined parameter '"<<qualified_name<<"' ('"<<name<<"') in expression!";
+	    throw myexception()<<"Can't translate undefined parameter '"<<name<<"' in expression!";
 
 	reg = parameters[param_index].second;
     }
 
-    // Replace parameters with the appropriate reg_var: of value whatever
-    if (E.is_a<identifier>())
+    // Replace dummies that are either qualified ids, or builtin constructor names
+    else if (is_dummy(E) and not is_wildcard(E))
     {
-	string name = E.as_<identifier>().name;
-	string qualified_name = name;
-	assert(is_qualified_symbol(qualified_name) or is_haskell_builtin_con_name(qualified_name));
-	auto loc = identifiers.find( qualified_name );
-	if (loc == identifiers.end())
-	{
-	    if (is_haskell_builtin_con_name(name))
-	    {
-		symbol_info S = Module::lookup_builtin_symbol(name);
-		add_identifier(S.name);
-      
-		// get the root for each identifier
-		loc = identifiers.find(S.name);
-		assert(loc != identifiers.end());
-	
-		int R = loc->second;
-	
-		assert(R != -1);
-		set_C(R, preprocess(S.body) );
-	    }
-	    else
-		throw myexception()<<"Can't translate undefined identifier '"<<name<<"' in expression!";
-	}
-
-	reg = loc->second;
+	auto& name = E.as_<dummy>().name;
+	if (name.size() and is_qualified_symbol(name) or is_haskell_builtin_con_name(name))
+	    reg = reg_for_id(name);
     }
+    // Replace parameters with the appropriate reg_var: of value whatever
+    else if (E.is_a<identifier>())
+	reg = reg_for_id(E.as_<identifier>().name);
 
     // Replace parameters with the appropriate reg_var: of value whatever
-    if (E.is_a<reg_var>())
+    else if (E.is_a<reg_var>())
 	reg = E.as_<reg_var>().target;
 
     if (reg != -1)
