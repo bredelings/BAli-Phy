@@ -245,23 +245,19 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
     if (is_let_expression(E))
     {
 	using namespace boost;
-	const int L = (E.size()-1)/2;
+	auto decls = let_decls(E);
+	auto body = let_body(E);
+	const int L = decls.size();
 
 	// 0. Initialize the graph and decls
 	Graph graph;
 	vector<adjacency_list<>::vertex_descriptor> vertices;
-	vector<pair<dummy, expression_ref>> decls;
 	for(int i=0; i<L; i++)
-	{
 	    vertices.push_back( add_vertex(graph) );
-	    auto x = E.sub()[1 + 2*i].as_<dummy>();
-	    decls.push_back({x,{}});
-	}
 
 	// 1. Analyze the body
 	set<dummy> free_vars;
-	expression_ref body;
-	tie(body, free_vars) = occurrence_analyzer(E.sub()[0]);
+	tie(body, free_vars) = occurrence_analyzer(body);
 
 	// 2. Mark vars referenced in the body as being alive
 	vector<bool> alive(L,0);
@@ -282,7 +278,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	    int i = work[k];
 	    // 3.1 Analyze the bound statement
 	    set<dummy> free_vars_i;
-	    tie(decls[i].second, free_vars_i) = occurrence_analyzer(E.sub()[2 + 2*i]);
+	    tie(decls[i].second, free_vars_i) = occurrence_analyzer(decls[i].second);
 
 	    // 3.2 Record occurrences
 	    free_vars = merge_occurrences(free_vars, free_vars_i);
@@ -291,8 +287,8 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	    for(int j=0;j<L;j++)
 	    {
 		// 3.3.1 Check if variable i references variable j
-		auto varj = E.sub()[1 + 2*j].as_<dummy>();
-		if (free_vars_i.count(varj))
+		auto x_j = decls[j].first;
+		if (free_vars_i.count(x_j))
 		{
 		    // 3.3.2 Add an edge from i -> j meaning "i references j"
 		    boost::add_edge(vertices[i], vertices[j], graph);
@@ -307,7 +303,16 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	    }
 	}
 
-	// 4. Break cycles
+	// 4. Set occurrence info for let vars in the decl, and remove bound vars from free_vars
+	for(int i=0;i<decls.size();i++)
+	{
+	    decls[i].first = remove_var_and_set_occurrence_info(decls[i].first, free_vars);
+
+	    // Variable is alive if and only if the variable is never executed.
+	    assert(alive[i] == (decls[i].first.code_dup != amount_t::None));
+	}
+
+	// 5. Break cycles
 	vector<int> component(L);
 	bool changed = true;
 	while(changed)
@@ -336,9 +341,11 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 		for(int k = 0; k < score.size(); k++)
 		{
 		    int i = components[c][k];
-		    if (E.sub()[2 + 2*i].is_a<dummy>()) score[k] = 4;
-		    else if (E.sub()[2 + 2*i].is_a<constructor>() or E.sub()[2 + 2*i].size() == 0) score[k] = 3;
-		    else if (free_vars.find(E.sub()[1 + 2*i].as_<dummy>())->pre_inline()) score[k] = 1;
+		    auto x = decls[i].first;
+		    auto F = decls[i].second;
+		    if (is_reglike(F)) score[k] = 4;
+		    else if (F.is_a<constructor>() or F.size() == 0) score[k] = 3;
+		    else if (x.pre_inline()) score[k] = 1;
 		}
 		int loop_breaker_index_in_component = argmin(score);
 		int loop_breaker_index = components[c][loop_breaker_index_in_component];
@@ -348,12 +355,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 		changed = true;
 
 		// mark the variable as a loop breaker
-		{
-		    dummy var = *free_vars.find(E.sub()[1 + 2*loop_breaker_index].as_<dummy>());
-		    var.is_loop_breaker = true;
-		    free_vars.erase(var);
-		    free_vars.insert(var);
-		}
+		decls[loop_breaker_index].first.is_loop_breaker = true;
 	    }
 	}
 
@@ -365,19 +367,10 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	for(int i=0;i<sorted_indices.size();i++)
 	    sorted_indices[i] = get(vertex_index,graph,sorted_vertices[i]);
 
-	// 6. Set occurrence info for let vars, and remove from free_vars
-	for(auto& decl: decls)
-	{
-	    decl.first = remove_var_and_set_occurrence_info(decl.first, free_vars);
-
-	    // Decl.second is missing if and only if the variable is never executed.
-	    assert(bool(decl.second) == bool(decl.first.code_dup != amount_t::None));
-	}
-
 	// 7. Sort the live decls
 	vector<pair<dummy,expression_ref>> decls2;
 	for(int i: sorted_indices)
-	    if (decls[i].second)
+	    if (alive[i])
 		decls2.push_back(decls[i]);
 
 	return {let_expression(decls2, body), free_vars};
