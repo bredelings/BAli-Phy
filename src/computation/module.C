@@ -286,16 +286,18 @@ void Module::resolve_symbols(const std::vector<Module>& P)
 	    string qname = S.name;
 	    string name = get_unqualified_name(qname);
       
-	    decl = substitute(decl,dummy(qname),identifier(qname));
-	    decl = substitute(decl,dummy( name),identifier(qname));
+	    decl = substitute(decl,dummy(name), dummy(qname));
 	}
   
     // 3. Define the symbols
     for(const auto& decl: decls_sub)
 	if (is_AST(decl,"Decl"))
 	{
-	    string name = decl.sub()[0].as_<identifier>().name;
-	    symbols.at(name).body = decl.sub()[1];
+	    auto var = decl.sub()[0];
+	    if (is_dummy(var))
+		symbols.at(var.as_<dummy>().name).body = decl.sub()[1];
+	    else
+		symbols.at(var.as_<identifier>().name).body = decl.sub()[1];
 	}
 }
 
