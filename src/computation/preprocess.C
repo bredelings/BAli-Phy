@@ -101,18 +101,17 @@ expression_ref graph_normalize(const expression_ref& E)
     // 5. Let 
     if (is_let_expression(E))
     {
-	object_ptr<expression> V = E.as_expression().clone();
+	auto decls = let_decls(E);
+	auto body  = let_body(E);
 
-	// Normalize the object
-	V->sub[0] = graph_normalize(V->sub[0]);
+	// Normalize the body
+	body = graph_normalize(body);
 
-	const int L = (V->sub.size()-1)/2;
+	// Just normalize the bound statements
+	for(auto& decl: decls)
+	    decl.second = graph_normalize(decl.second);
 
-	// Just normalize the bodies, not the vars
-	for(int i=0;i<L;i++)
-	    V->sub[2 + 2*i] = graph_normalize(V->sub[2 + 2*i]);
-
-	return V;
+	return let_expression(decls, body);
     }
 
     throw myexception()<<"graph_normalize: I don't recognize expression '"+ E.print() + "'";
