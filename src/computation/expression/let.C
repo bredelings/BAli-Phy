@@ -58,11 +58,12 @@ bool is_let_expression(const expression_ref& E)
 bool parse_let_expression(const expression_ref& E, vector<pair<dummy,expression_ref>>& decls, expression_ref& body)
 {
     decls.clear();
-    body = E;
+    body = {};
 
     if (not is_let_expression(E)) return false;
 
-    decls = strip_let(body);
+    decls = let_decls(E);
+    body = let_body(E);
 
     return true;
 }
@@ -241,11 +242,16 @@ void get_decls_from_let(const expression_ref& E, vector<pair<dummy, expression_r
 	decls.push_back({E.sub()[1 + 2*i].as_<dummy>(), E.sub()[2 + 2*i]});
 }
 
-vector<pair<dummy, expression_ref>> get_decls_from_let(const expression_ref& E)
+vector<pair<dummy, expression_ref>> let_decls(const expression_ref& E)
 {
     vector<pair<dummy, expression_ref>> decls;
     get_decls_from_let(E, decls);
     return decls;
+}
+
+expression_ref let_body(expression_ref  E)
+{
+    return E.sub()[0];
 }
 
 void strip_let(expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
@@ -253,8 +259,7 @@ void strip_let(expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
     if (is_let_expression(E))
     {
 	get_decls_from_let(E, decls);
-	auto body = E.sub()[0]; // We need this reference to avoid deleting the body when assigning E.
-	E = body;
+	E = let_body(E);
     }
 }
 

@@ -44,7 +44,9 @@ bool parse_indexed_let_expression(const expression_ref& E, std::vector<expressio
 
 void get_decls_from_let(const expression_ref& E, std::vector<std::pair<dummy, expression_ref>>& decls);
 
-std::vector<std::pair<dummy, expression_ref>> get_decls_from_let(const expression_ref& E);
+std::vector<std::pair<dummy, expression_ref>> let_decls(const expression_ref& E);
+
+expression_ref let_body(expression_ref E);
 
 void strip_let(expression_ref& E, std::vector<std::pair<dummy, expression_ref>>& decls);
 
