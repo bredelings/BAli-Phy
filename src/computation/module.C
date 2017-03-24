@@ -454,13 +454,14 @@ void parse_combinator_application(const expression_ref& E, string& name, vector<
 
     assert(E.head().is_a<Apply>());
   
-    // 1. Find the head.  This should be a var, not an apply.
-#ifndef NDEBUG
-    if (not E.sub()[0].is_a<identifier>())
+    // 1. Find the head.  This should be a var or a dummy, not an apply.
+    auto var = E.sub()[0];
+    if (var.is_a<identifier>())
+	name = var.as_<identifier>().name;
+    else if (is_dummy(var))
+	name = var.as_<dummy>().name;
+    else
 	throw myexception()<<"Combinator definition '"<<E<<"' does not start with variable!";
-#endif  
-
-    name = E.sub()[0].as_<identifier>().name;
 
     // 2. Look through the arguments
     for(int i=1;i<E.size();i++)

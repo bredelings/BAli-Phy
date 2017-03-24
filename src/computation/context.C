@@ -9,6 +9,7 @@
 #include "parser/desugar.H"
 #include "expression/expression.H"
 #include "expression/lambda.H"
+#include "expression/dummy.H"
 
 using std::string;
 using std::vector;
@@ -190,6 +191,7 @@ void context::set_modifiable_value(int index, const expression_ref& E)
     assert(not E.is_index_var());
     assert(not E.is_a<reg_var>());
     assert(not E.is_a<identifier>());
+    assert(not E.is_a<dummy>());
     set_modifiable_value_(index, E);
 }
 
@@ -199,6 +201,7 @@ void context::set_parameter_value(int index, const expression_ref& E)
     assert(not E.is_index_var());
     assert(not E.is_a<reg_var>());
     assert(not E.is_a<identifier>());
+    assert(not E.is_a<dummy>());
     set_parameter_value_(index, E);
 }
 

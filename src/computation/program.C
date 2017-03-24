@@ -4,6 +4,7 @@
 #include "computation/loader.H"
 #include "models/model.H"
 #include "expression/expression.H"
+#include "expression/dummy.H"
 
 using std::vector;
 using std::set;
@@ -215,11 +216,19 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<string,s
 	    auto loc = simplify.find(E.as_<identifier>().name);
 	    if (loc != simplify.end())
 		return identifier(loc->second);
-	    else
-		return E;
 	}
-	else
-	    return E;
+	else if (is_dummy(E))
+	{
+	    auto x = E.as_<dummy>();
+	    if (x.name.size() and is_qualified_symbol(x.name))
+	    {
+		auto loc = simplify.find(x.name);
+		if (loc != simplify.end())
+		    return dummy(loc->second);
+	    }
+
+	}
+	return E;
     }
 
     object_ptr<expression> V = E.as_expression().clone();
