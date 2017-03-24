@@ -187,12 +187,10 @@ expression_ref unlet(const expression_ref& E)
     }
 
     // 5. Let 
-    if (is_let_expression(E))
+    vector<pair<dummy,expression_ref>> decls;
+    expression_ref T;
+    if (parse_let_expression(E, decls, T))
     {
-	vector<pair<dummy,expression_ref>> decls;
-	expression_ref T;
-	parse_let_expression(E, decls, T);
-
 	// unnormalize T and the bodies
 	T = unlet(T);
 	for(int i=0; i<decls.size(); i++)
