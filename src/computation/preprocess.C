@@ -211,7 +211,7 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
     else if (is_dummy(E) and not is_wildcard(E))
     {
 	auto& name = E.as_<dummy>().name;
-	if (name.size() and is_qualified_symbol(name) or is_haskell_builtin_con_name(name))
+	if (name.size() and (is_qualified_symbol(name) or is_haskell_builtin_con_name(name)))
 	    reg = reg_for_id(name);
     }
     // Replace parameters with the appropriate reg_var: of value whatever
