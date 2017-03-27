@@ -272,10 +272,11 @@ void Module::resolve_symbols(const std::vector<Module>& P)
     if (not topdecls) return;
 
     // 1. Desugar the module
-    expression_ref decls = desugar(*this,topdecls);
+    assert(is_AST(topdecls,"TopDecls"));
+    topdecls = desugar(*this,topdecls);
   
     // 2. Convert top-level dummies into global vars, in both decls AND notes.
-    vector<expression_ref> decls_sub = decls.sub();
+    vector<expression_ref> decls_sub = topdecls.sub();
     for(auto& decl: decls_sub)
 	for(auto& p: symbols)
 	{
