@@ -53,7 +53,7 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
 
 	E1 = infix_parse_neg(m, symbol_info("-",variable_symbol,unknown_scope, 2,6,left_fix), T);
 
-	return infix_parse(m, op1, (identifier("Prelude.negate"),E1), T);
+	return infix_parse(m, op1, (dummy("Prelude.negate"),E1), T);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
@@ -97,7 +97,7 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
 	T.pop_front();
 	expression_ref E3 = infix_parse_neg(m, op2, T);
 
-	expression_ref E1_op2_E3 = (identifier(op2.name), E1, E3);
+	expression_ref E1_op2_E3 = (dummy(op2.name), E1, E3);
 
 	if (op2.symbol_type == constructor_symbol)
 	{
@@ -161,6 +161,17 @@ expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const exp
     symbol_info op2;
     if (T.front().is_a<identifier>())
 	op2 = m.get_operator( T.front().as_<identifier>().name );
+    else if (is_dummy(T.front()))
+    {
+	auto d = T.front().as_<dummy>().name;
+	if (m.is_declared( d ) )
+	    op2 = m.get_operator( d );
+	else
+	{
+	    op2.precedence = 9;
+	    op2.fixity = left_fix;
+	}
+    }
     else if (T.front().head().is_a<AST_node>())
     {
 	auto& n = T.front().head().as_<AST_node>();
@@ -569,7 +580,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    {
 		const symbol_info& S = m.lookup_symbol(n.value);
 		string qualified_name = S.name;
-		return identifier(qualified_name);
+		return dummy(qualified_name);
 	    }
 	    else
 		throw myexception()<<"Can't find id '"<<n.value<<"'";
@@ -578,22 +589,8 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	{
 	    for(auto& e: v)
 		e = desugar(m, e, bound);
+
 	    expression_ref E2 = v[0];
-
-	    // For constructors, actually substitute the body
-	    if (v[0].is_a<identifier>())
-	    {
-		auto& V = v[0].as_<identifier>();
-		if (m.is_declared(V.name))
-		{
-		    auto S = m.lookup_symbol(V.name);
-		    if (S.symbol_type == constructor_symbol)
-			E2 = S.body;
-		}
-	    }
-
-	    //      / FIXME - if the first element is a known constructor, then substitute in the arguments!
-	    //      / FIXME - why aren't constructor name ids being recognized?
 
 	    for(int i=1;i<v.size();i++)
 		E2 = (E2,v[i]);
@@ -881,7 +878,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	}
 	else if (n.type == "enumFrom")
 	{
-	    expression_ref E2 = identifier("Prelude.enumFrom");
+	    expression_ref E2 = dummy("Prelude.enumFrom");
 	    for(auto& e: v) {
 		e = desugar(m, e, bound);
 		E2 = (E2,e);
@@ -890,7 +887,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	}
 	else if (n.type == "enumFromTo")
 	{
-	    expression_ref E2 = identifier("Prelude.enumFromTo");
+	    expression_ref E2 = dummy("Prelude.enumFromTo");
 	    for(auto& e: v) {
 		e = desugar(m, e, bound);
 		E2 = (E2,e);
