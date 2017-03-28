@@ -132,7 +132,7 @@ void add(const module_loader& L, vector<Module>& P, const Module& M)
 #ifndef NDEBUG
     // 3. Assert that every module exists only once in the list.
     for(const auto& module: P)
-	assert(count_module(P, M.name) == 1);
+	assert(count_module(P, module.name) == 1);
 #endif
 
     // 4. Import any modules that are (transitively) implied by the ones we just loaded.
