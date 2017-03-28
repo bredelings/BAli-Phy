@@ -126,6 +126,8 @@ public:
 
     void import_module(const Module& M2, const std::string&, bool qualified);
 
+    void perform_imports(const std::vector<Module>&);
+
     void resolve_symbols(const std::vector<Module>&);
 
     void resolve_refs(const std::vector<Module>&);

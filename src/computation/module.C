@@ -238,11 +238,8 @@ std::set<std::string> Module::dependencies() const
     return module_names;
 }
 
-void Module::resolve_symbols(const std::vector<Module>& P)
+void Module::perform_imports(const std::vector<Module>& P)
 {
-    if (resolved) return;
-    resolved = true;
-
     bool saw_Prelude = false;
     if (impdecls)
 	for(const auto& impdecl:impdecls.sub())
@@ -268,6 +265,14 @@ void Module::resolve_symbols(const std::vector<Module>& P)
 	Module M = find_module("Prelude",P);
 	import_module(M,"Prelude",false);
     }
+}
+
+void Module::resolve_symbols(const std::vector<Module>& P)
+{
+    if (resolved) return;
+    resolved = true;
+
+    perform_imports(P);
 
     if (not topdecls) return;
 
@@ -289,9 +294,10 @@ void Module::resolve_symbols(const std::vector<Module>& P)
       
 	    decl = substitute(decl,dummy(name), dummy(qname));
 	}
+    topdecls = {AST_node("TopDecls"),decls_sub};
   
     // 3. Define the symbols
-    for(const auto& decl: decls_sub)
+    for(const auto& decl: topdecls.sub())
 	if (is_AST(decl,"Decl"))
 	{
 	    auto var = decl.sub()[0];
