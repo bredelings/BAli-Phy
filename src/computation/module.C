@@ -313,11 +313,11 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
     if (resolved) return;
     resolved = true;
 
-    load_builtins(L);
-
     perform_imports(P);
 
     desugar(P);
+
+    load_builtins(L);
 
     update_function_symbols();
 
@@ -400,6 +400,7 @@ void Module::load_builtins(const module_loader& L)
 {
     if (not topdecls) return;
 
+    vector<expression_ref> new_decls;
     for(const auto& decl: topdecls.sub())
 	if (is_AST(decl,"Builtin"))
 	{
@@ -409,8 +410,11 @@ void Module::load_builtins(const module_loader& L)
 
 	    function_name = lookup_symbol(function_name).name;
 
-	    symbols.at(function_name).body = body;
+	    new_decls.push_back({AST_node("Decl"),{dummy(function_name),body}});
 	}
+	else
+	    new_decls.push_back(decl);
+    topdecls = {AST_node("TopDecls"), new_decls};
 }
 
 bool Module::is_declared(const std::string& name) const
