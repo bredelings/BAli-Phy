@@ -128,6 +128,8 @@ public:
 
     void perform_imports(const std::vector<Module>&);
 
+    void desugar(const std::vector<Module>&);
+
     void update_function_symbols();
 
     void resolve_symbols(const std::vector<Module>&);

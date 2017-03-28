@@ -269,6 +269,8 @@ void Module::perform_imports(const std::vector<Module>& P)
 
 void Module::update_function_symbols()
 {
+    if (not topdecls) return;
+
     // 3. Define the symbols
     for(const auto& decl: topdecls.sub())
 	if (is_AST(decl,"Decl"))
@@ -281,18 +283,13 @@ void Module::update_function_symbols()
 	}
 }
 
-void Module::resolve_symbols(const std::vector<Module>& P)
+void Module::desugar(const std::vector<Module>& P)
 {
-    if (resolved) return;
-    resolved = true;
-
-    perform_imports(P);
-
     if (not topdecls) return;
 
     // 1. Desugar the module
     assert(is_AST(topdecls,"TopDecls"));
-    topdecls = desugar(*this,topdecls);
+    topdecls = ::desugar(*this,topdecls);
   
     // 2. Convert top-level dummies into global vars, in both decls AND notes.
     vector<expression_ref> decls_sub = topdecls.sub();
@@ -309,6 +306,16 @@ void Module::resolve_symbols(const std::vector<Module>& P)
 	    decl = substitute(decl,dummy(name), dummy(qname));
 	}
     topdecls = {AST_node("TopDecls"),decls_sub};
+}
+
+void Module::resolve_symbols(const std::vector<Module>& P)
+{
+    if (resolved) return;
+    resolved = true;
+
+    perform_imports(P);
+
+    desugar(P);
 
     update_function_symbols();
 }
