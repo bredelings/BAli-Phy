@@ -354,26 +354,38 @@ void Module::optimize(const module_loader& L, const vector<Module>& P)
     }
 }
 
-void Module::load_builtins(const module_loader& L)
+pair<string,expression_ref> parse_builtin(const expression_ref& decl, const module_loader& L)
 {
     const string builtin_prefix = "builtin_function_";
 
+    assert(is_AST(decl, "Builtin"));
+
+    string function_name = decl.sub()[0].as_<String>();
+    int n_args           = decl.sub()[1].as_int();
+    string symbol_name   = decl.sub()[2].as_<String>();
+    string plugin_name   = decl.sub()[3].as_<String>();
+
+    string operation_name = plugin_name+":"+symbol_name;
+
+    auto body = load_builtin(L, builtin_prefix + symbol_name, plugin_name, n_args, operation_name);
+
+    return {function_name, body};
+}
+
+void Module::load_builtins(const module_loader& L)
+{
     if (not topdecls) return;
 
     for(const auto& decl: topdecls.sub())
 	if (is_AST(decl,"Builtin"))
 	{
-	    string function_name = decl.sub()[0].as_<String>();
-	    int n = decl.sub()[1].as_int();
-	    string symbol_name = decl.sub()[2].as_<String>();
-	    string plugin_name = symbol_name;
-
-	    if (decl.size() > 3)
-		plugin_name = decl.sub()[3].as_<String>();
+	    auto x = parse_builtin(decl, L);
+	    auto function_name = x.first;
+	    auto body = x.second;
 
 	    function_name = lookup_symbol(function_name).name;
 
-	    symbols.at(function_name).body = load_builtin(L, builtin_prefix + symbol_name, plugin_name, n, function_name);
+	    symbols.at(function_name).body = body;
 	}
 }
 
