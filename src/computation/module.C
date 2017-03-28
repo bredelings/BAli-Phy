@@ -319,9 +319,9 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
 
     load_builtins(L);
 
-    update_function_symbols();
+    resolve_refs(P); // this only deals with identifier( )...
 
-    resolve_refs(P);
+    update_function_symbols();
 
     get_types(P);
 }
@@ -988,15 +988,6 @@ symbol_info lookup_symbol(const string& name, const vector<Module>& P)
     std::abort();
 }
 
-void Module::resolve_refs(const vector<Module>& P)
-{
-    for(auto& S: symbols)
-    {
-	expression_ref& body = S.second.body;
-	body = ::resolve_refs(P,body);
-    }
-}
-
 expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
 {
     // Replace parameters with the appropriate reg_var: of value whatever
@@ -1026,3 +1017,20 @@ expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
 
     return V;
 }
+
+void Module::resolve_refs(const vector<Module>& P)
+{
+    if (not topdecls) return;
+
+    vector<expression_ref> new_decls;
+    for(const auto& decl: topdecls.sub())
+	if (is_AST(decl, "Decl"))
+	{
+	    auto body = ::resolve_refs(P, decl.sub()[1]);
+	    new_decls.push_back({AST_node("Decl"),{decl.sub()[0],body}});
+	}
+	else
+	    new_decls.push_back(decl);
+    topdecls = {AST_node("TopDecls"), new_decls};
+}
+
