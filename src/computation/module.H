@@ -132,7 +132,7 @@ public:
 
     void update_function_symbols();
 
-    void resolve_symbols(const std::vector<Module>&);
+    void resolve_symbols(const module_loader& L, const std::vector<Module>&);
 
     void resolve_refs(const std::vector<Module>&);
 

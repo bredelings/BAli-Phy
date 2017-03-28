@@ -98,10 +98,7 @@ void add_missing_imports(const module_loader& L, vector<Module>& P)
 	if (not module.is_resolved())
 	{
 	    try {
-		module.load_builtins(L);
-		module.resolve_symbols(P);
-		module.resolve_refs(P);
-		module.get_types(P);
+		module.resolve_symbols(L, P);
 	    }
 	    catch (myexception& e)
 	    {

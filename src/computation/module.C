@@ -308,16 +308,22 @@ void Module::desugar(const std::vector<Module>& P)
     topdecls = {AST_node("TopDecls"),decls_sub};
 }
 
-void Module::resolve_symbols(const std::vector<Module>& P)
+void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& P)
 {
     if (resolved) return;
     resolved = true;
+
+    load_builtins(L);
 
     perform_imports(P);
 
     desugar(P);
 
     update_function_symbols();
+
+    resolve_refs(P);
+
+    get_types(P);
 }
 
 expression_ref func_type(const expression_ref& a, const expression_ref& b)
