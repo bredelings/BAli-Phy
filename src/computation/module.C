@@ -267,6 +267,20 @@ void Module::perform_imports(const std::vector<Module>& P)
     }
 }
 
+void Module::update_function_symbols()
+{
+    // 3. Define the symbols
+    for(const auto& decl: topdecls.sub())
+	if (is_AST(decl,"Decl"))
+	{
+	    auto var = decl.sub()[0];
+	    if (is_dummy(var))
+		symbols.at(var.as_<dummy>().name).body = decl.sub()[1];
+	    else
+		symbols.at(var.as_<identifier>().name).body = decl.sub()[1];
+	}
+}
+
 void Module::resolve_symbols(const std::vector<Module>& P)
 {
     if (resolved) return;
@@ -295,17 +309,8 @@ void Module::resolve_symbols(const std::vector<Module>& P)
 	    decl = substitute(decl,dummy(name), dummy(qname));
 	}
     topdecls = {AST_node("TopDecls"),decls_sub};
-  
-    // 3. Define the symbols
-    for(const auto& decl: topdecls.sub())
-	if (is_AST(decl,"Decl"))
-	{
-	    auto var = decl.sub()[0];
-	    if (is_dummy(var))
-		symbols.at(var.as_<dummy>().name).body = decl.sub()[1];
-	    else
-		symbols.at(var.as_<identifier>().name).body = decl.sub()[1];
-	}
+
+    update_function_symbols();
 }
 
 expression_ref func_type(const expression_ref& a, const expression_ref& b)
