@@ -1026,18 +1026,3 @@ expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
 
     return V;
 }
-
-string rename_module(const string& s, const string& modid1, const string& modid2)
-{
-    if (not is_qualified_symbol(s)) return s;
-
-    string modid = get_module_name(s);
-    string name = get_unqualified_name(s);
-
-    if (modid == modid1)
-	return modid2 + "." + name;
-    else
-	return s;
-}
-
-
