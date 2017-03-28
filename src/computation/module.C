@@ -706,65 +706,56 @@ set<string> find_all_ids(const expression_ref& E);
 
 Module& Module::operator+=(const expression_ref& E)
 {
-    expression_ref decls = E;
+    assert(is_AST(E,"Module"));
+    assert(not module);
+    module = E;
 
-    if (is_AST(E,"Module"))
+    // 1. module = [optional name] + body
+    if (module.size() == 1)
+	body = module.sub()[0];
+    else
     {
-	if (module)
-	    throw myexception()<<"Can't load new module over old module '"<<name<<"'";
-
-	module = E;
-
-	// 1. module = [optional name] + body
-	if (module.size() == 1)
-	    body = module.sub()[0];
-	else
-	{
-	    string module_name2 = module.sub()[0].as_<String>();
-	    if (not name.empty() and name != module_name2)
-		throw myexception()<<"Overwriting module name '"<<name<<"' with '"<<module_name2<<"'";
-	    name = module_name2;
-
-	    body = module.sub()[1];
-	}
-	assert(is_AST(body,"Body"));
-
-	// 2. body = impdecls + [optional topdecls]
-	for(const auto& E: body.sub())
-	    if (is_AST(E,"TopDecls"))
-		topdecls = E;
-	    else if (is_AST(E,"impdecls"))
-		impdecls = E;
-    
-	// 3. Do imports.
-	if (impdecls)
-	{
-	    for(const auto& impdecl:impdecls.sub())
-	    {
-		int i=0;
-		bool qualified = impdecl.sub()[0].as_<String>() == "qualified";
-		if (qualified) i++;
-
-		string imp_module_name = impdecl.sub()[i++].as_<String>();
-
-		string imp_module_name_as = imp_module_name;
-		if (i < impdecl.size() and impdecl.sub()[i++].as_<String>() == "as")
-		    imp_module_name_as = impdecl.sub()[i++].as_<String>();
-
-		assert(i == impdecl.size());
-	    }
-	}
-
-	if (not topdecls)
-	    return *this;
-	else
-	    decls = topdecls;
+	string module_name2 = module.sub()[0].as_<String>();
+	if (not name.empty() and name != module_name2)
+	    throw myexception()<<"Overwriting module name '"<<name<<"' with '"<<module_name2<<"'";
+	name = module_name2;
+	
+	body = module.sub()[1];
     }
+    assert(is_AST(body,"Body"));
+    
+    // 2. body = impdecls + [optional topdecls]
+    for(const auto& E: body.sub())
+	if (is_AST(E,"TopDecls"))
+	    topdecls = E;
+	else if (is_AST(E,"impdecls"))
+	    impdecls = E;
+    
+    // 3. Do imports.
+    if (impdecls)
+    {
+	for(const auto& impdecl:impdecls.sub())
+	{
+	    int i=0;
+	    bool qualified = impdecl.sub()[0].as_<String>() == "qualified";
+	    if (qualified) i++;
+	    
+	    string imp_module_name = impdecl.sub()[i++].as_<String>();
+	    
+	    string imp_module_name_as = imp_module_name;
+	    if (i < impdecl.size() and impdecl.sub()[i++].as_<String>() == "as")
+		imp_module_name_as = impdecl.sub()[i++].as_<String>();
 
-    assert(is_AST(decls,"Decls") or is_AST(decls,"TopDecls"));
+	    assert(i == impdecl.size());
+	}
+    }
+    
+    if (not topdecls) return *this;
+
+    assert(is_AST(topdecls,"TopDecls"));
 
     // 0. Get names that are being declared.
-    for(const auto& decl: decls.sub())
+    for(const auto& decl: topdecls.sub())
 	if (is_AST(decl,"FixityDecl"))
 	{
 	    // Determine fixity.
@@ -847,15 +838,8 @@ Module& Module::operator+=(const expression_ref& E)
 		}
 	    }
 	}
-      
-    if (module) return *this;
 
-    if (not topdecls)
-	topdecls = decls;
-
-    // This means that operator::+=() can only be called once with a module, and once without.
-    // \todo FIXME:cleanup - Make this part of the function body then, and allow constructing the module from it.
-    assert(decls.ptr() == topdecls.ptr());
+    assert(module);
 
     return *this;
 }
