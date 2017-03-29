@@ -1,6 +1,5 @@
 #include "dummy.H"
 #include "computation/expression/let.H"
-#include "computation/operations.H"
 #include "computation/module.H"
 
 using std::set;
@@ -100,7 +99,7 @@ std::set<dummy> get_bound_indices(const expression_ref& E)
 	    for(auto& decl: decls)
 		bound.insert(decl.first);
 	}
-	assert(not E.head().is_a<Case>());
+	assert(not is_case(E));
     }
 
     return bound;

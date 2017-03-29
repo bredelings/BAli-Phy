@@ -4,6 +4,7 @@
 #include "expression/expression.H"
 #include "expression/let.H"
 #include "expression/dummy.H"
+#include "expression/case.H"
 
 using std::string;
 using std::vector;
@@ -373,7 +374,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	bool print_record = false;
 	if (F.head().type() == operation_type or F.head().type() == constructor_type)
 	{
-	    if (not F.head().is_a<Case>() and not F.head().is_a<Apply>())
+	    if (not is_case(F) and not F.head().is_a<Apply>())
 	    {
 		print_record = true;
 		o<<"shape = record, ";

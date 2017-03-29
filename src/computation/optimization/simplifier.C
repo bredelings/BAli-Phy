@@ -479,7 +479,7 @@ int num_arguments(inline_context context)
 
 inline_context case_object_context(const expression_ref E, const inline_context& context)
 {
-    assert(E.head().is_a<Case>());
+    assert(is_case(E));
     return inline_context("case_object",E,context);
 }
 
