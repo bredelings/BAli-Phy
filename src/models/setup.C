@@ -254,14 +254,15 @@ expression_ref process_stack_functions(const ptree& model_rep)
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
     
-    expression_ref E = identifier(array_index(call,0).get_value<string>());
+    assert(is_qualified_symbol(array_index(call,0).get_value<string>()));
+    expression_ref E = dummy(array_index(call,0).get_value<string>());
     if (generate_function)
     {
 	auto Prefix = lambda_expression( constructor("Distributions.Prefix",2) );
 	auto Log = lambda_expression( constructor("Distributions.Log",2) );
 
 	// 1. Get the underlying function f that we are calling
-	expression_ref F = identifier(array_index(call,0).get_value<string>());
+	expression_ref F = E;
 
 	// 2. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
 	//    There could be fewer of these than the rule arguments.
@@ -272,7 +273,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	}
 
 	// 3. Return the function call: 'return (f call.name1 call.name2 call.name3)'
-	F = (identifier("return"),F);
+	F = (dummy("Prelude.return"),F);
 
 	// 4. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << F)'
 	for(int i=0;i<args.size();i++)
@@ -290,7 +291,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	    if (should_log(model_rep, arg_name))
 	    {
 		auto log_action = (Log,arg_name,dummy("arg_"+arg_name));
-		F = (identifier(">>"),log_action,F);
+		F = (dummy("Prelude.>>"),log_action,F);
 	    }
 
 	    // Prefix "arg_name" (arg_+arg_name)
@@ -305,7 +306,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	    action = (Prefix, arg_name, action);
 
 	    // F = 'action <<=
-	    F = (identifier(">>="), action, lambda_quantify(dummy("arg_"+arg_name), F));
+	    F = (dummy("Prelude.>>="), action, lambda_quantify(dummy("arg_"+arg_name), F));
 	}
 
 	F = (Prefix, name, F);
@@ -408,18 +409,18 @@ expression_ref get_model_(const ptree& model_rep)
     if (can_be_converted_to<int>(value))
     {
 	expression_ref value = model_rep.get_value<int>();
-	return (identifier("return"), value);
+	return (dummy("Prelude.return"), value);
     }
 
     // If we are processing a Double, just return a double
     if (can_be_converted_to<double>(value))
     {
 	expression_ref value = model_rep.get_value<double>();
-	return (identifier("return"), value);
+	return (dummy("Prelude.return"), value);
     }
 
     if (value.size() > 2 and value[0] == '"' and value.back() == '"')
-	return (identifier("return"), value.substr(1,value.size()-2));
+	return (dummy("Prelude.return"), value.substr(1,value.size()-2));
 
     expression_ref m;
 
@@ -444,14 +445,14 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep)
     {
 	double d;
 	if (can_be_converted_to<double>(name, d))
-	    return (identifier("return"), d);
+	    return (dummy("Prelude.return"), d);
     }
 
     if (required_type.get_value<string>() == "String")
     {
 	auto s = model_rep.get_value<string>();
 	if (model_rep.size() == 0 and s.size() > 2 and s[0] == '"' and s.back() == '"')
-	    return (identifier("return"), s.substr(1,s.size()-2));
+	    return (dummy("Prelude.return"), s.substr(1,s.size()-2));
     }
 
     if (not unify(result_type, required_type))
