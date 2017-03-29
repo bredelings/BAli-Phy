@@ -61,34 +61,9 @@ struct reg_var: public Object
 	{ }
 };
 
-struct identifier: public Object
-{
-    std::string name;
-
-    identifier* clone() const {return new identifier(*this);}
-
-    std::string print() const
-	{
-	    return name;
-	}
-
-    tribool compare(const Object& o) const
-	{
-	    const identifier* V = dynamic_cast<const identifier*>(&o);
-	    if (not V)
-		return false;
-
-	    return name == V->name;
-	}
-
-    identifier(const std::string& s);
-};
-
 bool is_parameter(const expression_ref&);
 
 bool is_modifiable(const expression_ref&);
-
-bool is_identifier(const expression_ref& R);
 
 bool is_reglike(const expression_ref& R);
 

@@ -31,12 +31,6 @@ using boost::dynamic_pointer_cast;
 // 3. Eliminate identifier in favor of dummy (==var)?
 // 4. Remove horrible (#symbol)*(#function) substitution in module.C
 
-identifier::identifier(const std::string& s)
-    :name(s)
-{
-    assert(not name.empty());
-}
-
 tribool parameter::compare(const Object& o) const 
 {
     const parameter* E = dynamic_cast<const parameter*>(&o);
@@ -201,11 +195,6 @@ bool is_modifiable(const expression_ref& E)
     return result;
 }
 
-bool is_identifier(const expression_ref& E)
-{
-    return E.is_a<identifier>();
-}
-
 bool is_reg_var(const expression_ref& E)
 {
     return E.is_a<reg_var>();
@@ -213,7 +202,7 @@ bool is_reg_var(const expression_ref& E)
 
 bool is_reglike(const expression_ref& E)
 {
-    return is_dummy(E) or is_parameter(E) or is_modifiable(E) or is_reg_var(E) or E.is_index_var() or is_identifier(E);
+    return is_dummy(E) or is_parameter(E) or is_modifiable(E) or is_reg_var(E) or E.is_index_var();
 }
 
 expression_ref launchbury_unnormalize(const expression_ref& E)

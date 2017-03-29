@@ -67,9 +67,7 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
 	return E1;
 
     symbol_info op2;
-    if (T.front().is_a<identifier>())
-	op2 = m.get_operator( T.front().as_<identifier>().name );
-    else if (T.front().is_a<dummy>())
+    if (T.front().is_a<dummy>())
     {
 	auto d = T.front().as_<dummy>().name;
 	if (m.is_declared( d ) )
@@ -159,9 +157,7 @@ expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const exp
 	return E1;
 
     symbol_info op2;
-    if (T.front().is_a<identifier>())
-	op2 = m.get_operator( T.front().as_<identifier>().name );
-    else if (is_dummy(T.front()))
+    if (is_dummy(T.front()))
     {
 	auto d = T.front().as_<dummy>().name;
 	if (m.is_declared( d ) )

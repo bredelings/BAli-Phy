@@ -134,8 +134,6 @@ public:
 
     void resolve_symbols(const module_loader& L, const std::vector<Module>&);
 
-    void resolve_refs(const std::vector<Module>&);
-
     void get_types(const std::vector<Module>&);
 
     void optimize(const module_loader&, const std::vector<Module>&);

@@ -276,10 +276,7 @@ void Module::update_function_symbols()
 	if (is_AST(decl,"Decl"))
 	{
 	    auto var = decl.sub()[0];
-	    if (is_dummy(var))
-		symbols.at(var.as_<dummy>().name).body = decl.sub()[1];
-	    else
-		symbols.at(var.as_<identifier>().name).body = decl.sub()[1];
+	    symbols.at(var.as_<dummy>().name).body = decl.sub()[1];
 	}
 }
 
@@ -319,8 +316,6 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
                 // fixme - separate renaming from desugaring -- move it after load_builtins.
 
     load_builtins(L);
-
-    resolve_refs(P); // this only deals with identifier( )...
 
     update_function_symbols();
 
@@ -498,9 +493,7 @@ void parse_combinator_application(const expression_ref& E, string& name, vector<
   
     // 1. Find the head.  This should be a var or a dummy, not an apply.
     auto var = E.sub()[0];
-    if (var.is_a<identifier>())
-	name = var.as_<identifier>().name;
-    else if (is_dummy(var))
+    if (is_dummy(var))
 	name = var.as_<dummy>().name;
     else
 	throw myexception()<<"Combinator definition '"<<E<<"' does not start with variable!";
@@ -971,51 +964,5 @@ symbol_info lookup_symbol(const string& name, const vector<Module>& P)
 	    return module.lookup_symbol(name);
 
     std::abort();
-}
-
-expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
-{
-    // Replace parameters with the appropriate reg_var: of value whatever
-    if (E.is_a<identifier>())
-    {
-	string name = E.as_<identifier>().name;
-	if (not is_qualified_symbol(name))
-	{
-	    for(const auto& module: P)
-		if (module.is_declared(name))
-		{
-		    symbol_info S = module.lookup_symbol(name);
-		    string qualified_name = S.name;
-		    return identifier(qualified_name);
-		}
-	    throw myexception()<<"Can't find any module for unqualified symbol '"<<name<<"'";
-	}
-    }
-
-    // Other constants have no parts, and don't need to be resolved
-    if (not E.size()) return E;
-
-    // Resolve the parts of the expression
-    object_ptr<expression> V = E.as_expression().clone();
-    for(int i=0;i<V->size();i++)
-	V->sub[i] = resolve_refs(P, V->sub[i]);
-
-    return V;
-}
-
-void Module::resolve_refs(const vector<Module>& P)
-{
-    if (not topdecls) return;
-
-    vector<expression_ref> new_decls;
-    for(const auto& decl: topdecls.sub())
-	if (is_AST(decl, "Decl"))
-	{
-	    auto body = ::resolve_refs(P, decl.sub()[1]);
-	    new_decls.push_back({AST_node("Decl"),{decl.sub()[0],body}});
-	}
-	else
-	    new_decls.push_back(decl);
-    topdecls = {AST_node("TopDecls"), new_decls};
 }
 

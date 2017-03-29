@@ -501,6 +501,9 @@ int main(int argc,char* argv[])
 	    M.do_optimize = true;
 	    vector<Module> P = {M};
 	    add_missing_imports(L, P);
+	    std::cerr<<"module = "<<P[0].module<<std::endl;
+	    std::cerr<<"body = "<<P[0].body<<std::endl;
+	    std::cerr<<"topdecls = "<<P[0].topdecls<<std::endl;
 	    for(const auto& s: P[0].get_symbols())
 	    {
 		const auto& S = s.second;

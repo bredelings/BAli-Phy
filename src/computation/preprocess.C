@@ -149,18 +149,12 @@ closure trim_normalize(closure&& C)
     return C;
 }
 
-closure resolve_refs(const vector<Module>& P, closure&& C)
-{
-    C.exp = resolve_refs(P, C.exp);
-    return C;
-}
-
 closure reg_heap::preprocess(const closure& C)
 {
     assert(C.exp);
     assert(let_float(C.exp).print() == let_float(let_float(C.exp)).print());
     //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
-    return trim_normalize( indexify( graph_normalize( let_float( translate_refs( resolve_refs(*P, closure(C) ) ) ) ) ) );
+    return trim_normalize( indexify( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) );
 }
 
 int reg_heap::reg_for_id(const string& name)
@@ -214,9 +208,6 @@ expression_ref reg_heap::translate_refs(const expression_ref& E, closure::Env_t&
 	if (name.size() and (is_qualified_symbol(name) or is_haskell_builtin_con_name(name)))
 	    reg = reg_for_id(name);
     }
-    // Replace parameters with the appropriate reg_var: of value whatever
-    else if (E.is_a<identifier>())
-	reg = reg_for_id(E.as_<identifier>().name);
 
     // Replace parameters with the appropriate reg_var: of value whatever
     else if (E.is_a<reg_var>())
