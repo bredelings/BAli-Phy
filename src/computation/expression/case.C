@@ -394,3 +394,7 @@ expression_ref def_function(const vector< vector<expression_ref> >& patterns, co
     return E;
 }
 
+bool is_case(const expression_ref& E)
+{
+    return E.head().type() == case_type;
+}

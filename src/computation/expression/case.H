@@ -18,4 +18,6 @@ expression_ref def_function(const std::vector< std::vector<expression_ref> >& pa
 
 bool is_irrefutable_pattern(const expression_ref& E);
 
+bool is_case(const expression_ref& E);
+
 #endif
