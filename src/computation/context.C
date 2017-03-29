@@ -209,7 +209,7 @@ void context::set_parameter_value_expression(int index, const expression_ref& O)
 {
     if (O)
     {
-	expression_ref E = (identifier("set_parameter_value"), get_context_index(), parameter(parameter_name(index)), O);
+	expression_ref E = (dummy("Parameters.set_parameter_value"), get_context_index(), parameter(parameter_name(index)), O);
 
 	perform_expression(E);
     }
@@ -498,7 +498,7 @@ context::context(const module_loader& L, const vector<Module>& Ps)
     (*this) += "Distributions";
     (*this) += Ps;
 
-    perform_io_head = add_compute_expression(identifier("unsafePerformIO"));
+    perform_io_head = add_compute_expression(dummy("Prelude.unsafePerformIO"));
 }
 
 context::context(const module_loader& L, const vector<string>& module_names)

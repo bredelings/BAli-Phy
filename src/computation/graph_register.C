@@ -3,6 +3,7 @@
 #include "util.H"
 #include "graph_register.H"
 #include "expression/expression.H"
+#include "expression/dummy.H"
 
 using std::string;
 using std::vector;
@@ -1484,9 +1485,9 @@ int reg_heap::add_parameter(const string& full_name)
     inc_heads(r);
 
     // 3. Set its value to new_modifiable
-    expression_ref E = identifier("new_modifiable");
-    E = (identifier("unsafePerformIO"), E);
-    E = (identifier("evaluate"),-1,E);
+    expression_ref E = dummy("Parameters.new_modifiable");
+    E = (dummy("Prelude.unsafePerformIO"), E);
+    E = (dummy("Parameters.evaluate"),-1,E);
 
     set_C(r, preprocess( E ) );
 
