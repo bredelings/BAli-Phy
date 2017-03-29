@@ -304,8 +304,7 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
 
     perform_imports(P);
 
-    desugar(P); // fixme - remove quadratic replacing of name with qname
-                // fixme - separate renaming from desugaring -- move it after load_builtins.
+    desugar(P); // fixme - separate renaming from desugaring -- move it after load_builtins.
 
     load_builtins(L);
 
