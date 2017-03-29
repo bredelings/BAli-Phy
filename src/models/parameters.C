@@ -38,6 +38,7 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
+#include "computation/expression/dummy.H"
 #include "computation/module.H"
 #include "computation/operations.H" // for VectorFromList<>
 #include "math/exponential.H"
@@ -465,7 +466,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     auto transition_ps = p->get_expression(p->PC->branch_transition_p_indices(scale_index, smodel_index));
     {
 	for(int b=0;b<B;b++)
-	    transition_p_method_indices[b] = p->add_compute_expression( (identifier("!"), transition_ps, b) );
+	    transition_p_method_indices[b] = p->add_compute_expression( (dummy("Prelude.!"), transition_ps, b) );
     }
 
     // Add parameters for observed leaf sequence objects
@@ -475,7 +476,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     vector<expression_ref> seqs_;
     for(int index: leaf_sequence_indices)
 	seqs_.push_back( p->get_expression(index) );
-    auto seqs_array = p->get_expression( p->add_compute_expression((identifier("listArray'"),get_list(seqs_))) );
+    auto seqs_array = p->get_expression( p->add_compute_expression((dummy("Prelude.listArray'"),get_list(seqs_))) );
   
     // Add methods indices for sequence lengths
     vector<expression_ref> as_;
@@ -484,43 +485,43 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	expression_ref a = parameter( p->parameter_name(pairwise_alignment_for_branch[b]) );
 	as_.push_back(a);
     }
-    expression_ref as = p->get_expression( p->add_compute_expression((identifier("listArray'"),get_list(as_))) );
+    expression_ref as = p->get_expression( p->add_compute_expression((dummy("Prelude.listArray'"),get_list(as_))) );
 
     for(int n=0;n<t.n_nodes();n++)
     {
-	auto L = (identifier("seqlength"), as, p->my_tree(), n);
+	auto L = (dummy("Alignment.seqlength"), as, p->my_tree(), n);
 	sequence_length_indices[n] = p->add_compute_expression( L );
     }
 
     if (p->t().n_nodes() == 1)
     {
-	auto seq = (identifier("!"),seqs_array, 0);
+	auto seq = (dummy("Prelude.!"),seqs_array, 0);
 	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
-	likelihood_index = p->add_compute_expression((identifier("peel_likelihood_1"), seq, *a, f));
+	likelihood_index = p->add_compute_expression((dummy("SModel.peel_likelihood_1"), seq, *a, f));
     }
     else
     {
 	auto t = p->my_tree();
 	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
-	cl_index = p->add_compute_expression((identifier("cached_conditional_likelihoods"),t,seqs_array,as,*a,transition_ps,f));  // Create and set conditional likelihoods for each branch
+	cl_index = p->add_compute_expression((dummy("SModel.cached_conditional_likelihoods"),t,seqs_array,as,*a,transition_ps,f));  // Create and set conditional likelihoods for each branch
 	auto cls = p->get_expression(cl_index);
 	for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
-	    conditional_likelihoods_for_branch[b] = p->add_compute_expression((identifier("!"),cls,b));
+	    conditional_likelihoods_for_branch[b] = p->add_compute_expression((dummy("Prelude.!"),cls,b));
 
 	if (p->t().n_nodes() == 2)
 	{
-	    auto seq1 = (identifier("!"), seqs_array, 0);
-	    auto seq2 = (identifier("!"), seqs_array, 1);
-	    auto A = (identifier("!"), as, 0);
-	    auto P = (identifier("!"), transition_ps, 0);
+	    auto seq1 = (dummy("Prelude.!"), seqs_array, 0);
+	    auto seq2 = (dummy("Prelude.!"), seqs_array, 1);
+	    auto A = (dummy("Prelude.!"), as, 0);
+	    auto P = (dummy("Prelude.!"), transition_ps, 0);
 	    auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
 
-	    likelihood_index = p->add_compute_expression((identifier("peel_likelihood_2"), seq1, seq2, *a, A, P, f));
+	    likelihood_index = p->add_compute_expression((dummy("SModel.peel_likelihood_2"), seq1, seq2, *a, A, P, f));
 	}
 	else
 	{
 	    auto root = parameter("*subst_root");
-	    likelihood_index = p->add_compute_expression((identifier("peel_likelihood"), t, cls, as, f, root));
+	    likelihood_index = p->add_compute_expression((dummy("SModel.peel_likelihood"), t, cls, as, f, root));
 	}
     }
 
@@ -528,18 +529,18 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     if (imodel_index != -1)
     {
 	// D = Params.substitutionBranchLengths!scale_index
-	expression_ref D = (identifier("!"),identifier("Params.substitutionBranchLengths"),scale_index);
+	expression_ref D = (dummy("Prelude.!"),dummy("Params.substitutionBranchLengths"),scale_index);
 	expression_ref heat = parameter("Heat.beta");
 	expression_ref training = parameter("*IModels.training");
-	expression_ref model = ((identifier("!"),identifier("IModels.models"),imodel_index), heat, training);
+	expression_ref model = ((dummy("Prelude.!"),dummy("IModels.models"),imodel_index), heat, training);
 
-	expression_ref hmms = (identifier("branch_hmms"), model, D, B);
+	expression_ref hmms = (dummy("Alignment.branch_hmms"), model, D, B);
 	hmms = p->get_expression( p->add_compute_expression(hmms) );
 
 	for(int n=0;n<sequence_length_pr_indices.size();n++)
 	{
 	    expression_ref l = p->get_expression(sequence_length_indices[n]);
-	    expression_ref lengthp = (identifier("snd"),model);
+	    expression_ref lengthp = (dummy("Prelude.snd"),model);
 	    sequence_length_pr_indices[n] = p->add_compute_expression( (lengthp,l) );
 	}
 
@@ -547,41 +548,41 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	for(int b=0;b<B;b++)
 	{
 	    // (fst IModels.models!imodel_index) D b heat training
-	    int index = p->add_compute_expression( (identifier("!"), hmms, b) );
+	    int index = p->add_compute_expression( (dummy("Prelude.!"), hmms, b) );
 	    branch_HMM_indices.push_back( index );
 	}
 
 	// Alignment prior
 	if (p->t().n_nodes() == 1)
 	{
-	    auto seq = (identifier("!"),seqs_array, 0);
-	    alignment_prior_index = p->add_compute_expression( (identifier("alignment_pr1"), seq, model) );
+	    auto seq = (dummy("Prelude.!"),seqs_array, 0);
+	    alignment_prior_index = p->add_compute_expression( (dummy("Alignment.alignment_pr1"), seq, model) );
 	}
 	else
-	    alignment_prior_index = p->add_compute_expression( (identifier("alignment_pr"), as, p->my_tree(), hmms, model) );
+	    alignment_prior_index = p->add_compute_expression( (dummy("Alignment.alignment_pr"), as, p->my_tree(), hmms, model) );
     }
 }
 
 //-----------------------------------------------------------------------------//
 smodel_methods::smodel_methods(const expression_ref& E, context& C)
 {
-    expression_ref V = identifier("listToVectorDouble");
+    expression_ref V = dummy("Prelude.listToVectorDouble");
 
     main = C.add_compute_expression( E );
     expression_ref S = C.get_expression(main);
 
-    n_base_models = C.add_compute_expression((identifier("nBaseModels"), S));
-    n_states =  C.add_compute_expression((identifier("nStates"), S));
-    distribution =  C.add_compute_expression((V,(identifier("distribution"), S)));
-    weighted_frequency_matrix = C.add_compute_expression((identifier("weighted_frequency_matrix"), S));
-    frequency_matrix = C.add_compute_expression((identifier("frequency_matrix"), S));
-    get_alphabet = C.add_compute_expression((identifier("getAlphabet"), S));
-    state_letters = C.add_compute_expression((identifier("stateLetters"), S));
-    n_states = C.add_compute_expression((identifier("nStates"), S));
-    rate = C.add_compute_expression((identifier("rate"), S));
+    n_base_models = C.add_compute_expression((dummy("SModel.nBaseModels"), S));
+    n_states =  C.add_compute_expression((dummy("SModel.nStates"), S));
+    distribution =  C.add_compute_expression((V,(dummy("SModel.distribution"), S)));
+    weighted_frequency_matrix = C.add_compute_expression((dummy("SModel.weighted_frequency_matrix"), S));
+    frequency_matrix = C.add_compute_expression((dummy("SModel.frequency_matrix"), S));
+    get_alphabet = C.add_compute_expression((dummy("SModel.getAlphabet"), S));
+    state_letters = C.add_compute_expression((dummy("SModel.stateLetters"), S));
+    n_states = C.add_compute_expression((dummy("SModel.nStates"), S));
+    rate = C.add_compute_expression((dummy("SModel.rate"), S));
 
-    frequencies = C.add_compute_expression((identifier("componentFrequencies"), S));
-    transition_p = C.add_compute_expression((identifier("branchTransitionP"), S));
+    frequencies = C.add_compute_expression((dummy("SModel.componentFrequencies"), S));
+    transition_p = C.add_compute_expression((dummy("SModel.branchTransitionP"), S));
 }
 
 vector<int> edges_connecting_to_node(const Tree& T, int n)
@@ -636,7 +637,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
 	parameters_for_tree_node.push_back ( p_node );
 	node_branches.push_back( node );
     }
-    expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
+    expression_ref node_branches_array = (dummy("Prelude.listArray'"),get_list(node_branches));
 
     vector<expression_ref> branch_nodes;
     for(int b=0; b < 2*T.n_branches(); b++)
@@ -663,7 +664,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
 	parameters_for_tree_branch.push_back( {p_source,p_target} );
 	branch_nodes.push_back( Tuple(source, target, reverse_branch) );
     }
-    expression_ref branch_nodes_array = (identifier("listArray'"),get_list(branch_nodes));
+    expression_ref branch_nodes_array = (dummy("Prelude.listArray'"),get_list(branch_nodes));
 
     expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
 
@@ -674,9 +675,9 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
 	p->evaluate_expression( p->get_expression(tree_head) );
 	expression_ref mus;
 	if (p->branch_prior_type() == 0)
-	    mus = (identifier("iid_branch_length_model_exp"), p->get_expression(tree_head));
+	    mus = (dummy("SModel.iid_branch_length_model_exp"), p->get_expression(tree_head));
 	else if (p->branch_prior_type() == 1)
-	    mus = (identifier("iid_branch_length_model_gamma"), p->get_expression(tree_head));
+	    mus = (dummy("SModel.iid_branch_length_model_gamma"), p->get_expression(tree_head));
 	p->evaluate_expression( perform_exp(mus) );
     }
 
@@ -1216,14 +1217,14 @@ Parameters::Parameters(const module_loader& L,
 
     // Add a Main.mu<i> parameter for each scale.
     {
-	expression_ref mus = (identifier("branch_mean_model"), n_scales());
+	expression_ref mus = (dummy("SModel.branch_mean_model"), n_scales());
 	evaluate_expression( perform_exp(mus) );
     }
 
     for(int i=0;i<n_scales();i++)
     {
 	string mu_name = "Main.mu"+convertToString(i+1);
-	int trigger = add_compute_expression( (identifier("trigger_on"),parameter(mu_name),i) );
+	int trigger = add_compute_expression( (dummy("Parameters.trigger_on"),parameter(mu_name),i) );
 	set_re_evaluate(trigger, true);
     }
 
@@ -1236,12 +1237,12 @@ Parameters::Parameters(const module_loader& L,
     subst_root_index = add_parameter("*subst_root", t().n_nodes()-1);
 
 #ifndef NDEBUG
-    evaluate_expression( (identifier("numNodes"), my_tree()));
-    evaluate_expression( (identifier("numBranches"), my_tree()));
-    evaluate_expression( (identifier("edgesOutOfNode"), my_tree(), 0));
-    evaluate_expression( (identifier("neighbors"), my_tree(), 0));
-    //  evaluate_expression( (identifier("nodesForEdge"),my_tree(), 0));
-    //  evaluate_expression( (identifier("edgeForNodes"), my_tree(), (identifier("nodesForEdge"),my_tree(), 0))).as_int();
+    evaluate_expression( (dummy("Tree.numNodes"), my_tree()));
+    evaluate_expression( (dummy("Tree.numBranches"), my_tree()));
+    evaluate_expression( (dummy("Tree.edgesOutOfNode"), my_tree(), 0));
+    evaluate_expression( (dummy("Tree.neighbors"), my_tree(), 0));
+    //  evaluate_expression( (dummy("nodesForEdge"),my_tree(), 0));
+    //  evaluate_expression( (dummy("edgeForNodes"), my_tree(), (dummy("nodesForEdge"),my_tree(), 0))).as_int();
     for(int b=0; b < 2*tt.n_branches(); b++)
     {
 	vector<const_branchview> branch_list;
@@ -1250,7 +1251,7 @@ Parameters::Parameters(const module_loader& L,
 	for(auto b: branch_list)
 	    branch_list_.push_back(b);
 
-	vector<int> b2 = evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),my_tree(),b)))).as_<Vector<int>>();
+	vector<int> b2 = evaluate_expression( (dummy("Prelude.listToVectorInt"),((dummy("Tree.edgesBeforeEdge"),my_tree(),b)))).as_<Vector<int>>();
 	assert(b2.size() == branch_list_.size());
 	for( int i: branch_list_)
 	    assert(includes(b2,i));
@@ -1279,7 +1280,7 @@ Parameters::Parameters(const module_loader& L,
     add_parameter("*IModels.training", false);
 
     Module imodels_program("IModels");
-    imodels_program.def_function("models", (identifier("listArray'"), get_list(imodels_)));
+    imodels_program.def_function("models", (dummy("Prelude.listArray'"), get_list(imodels_)));
     (*this) += imodels_program;
   
     /*------------------------- Add commands to log all parameters created before this point. ------------------------*/
@@ -1335,7 +1336,7 @@ Parameters::Parameters(const module_loader& L,
     }
 
     Module parameter_program("Params");
-    parameter_program.def_function("substitutionBranchLengths", (identifier("listArray'"),(identifier("fmap"),identifier("listArray'"),substitutionBranchLengthsList)));
+    parameter_program.def_function("substitutionBranchLengths", (dummy("Prelude.listArray'"),(dummy("Prelude.fmap"),dummy("Prelude.listArray'"),substitutionBranchLengthsList)));
     (*this) += parameter_program;
 
     // register the cached transition_p indices
@@ -1343,13 +1344,13 @@ Parameters::Parameters(const module_loader& L,
     for(int s=0;s < n_branch_means(); s++)
     {
 	// Better yet, make a substitutionBranchLengths!scale!branch that can be referenced elsewhere.
-	expression_ref DL = (identifier("!"),identifier("Params.substitutionBranchLengths"),s);
+	expression_ref DL = (dummy("Prelude.!"),dummy("Params.substitutionBranchLengths"),s);
 
 	// Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
 	for(int m=0;m < n_smodels(); m++)
 	{
 	    expression_ref S = get_expression(PC->SModels[m].main);
-	    PC->branch_transition_p_indices(s,m) = add_compute_expression((identifier("transition_p_index"), my_tree(), S, branch_cat_list, DL));
+	    PC->branch_transition_p_indices(s,m) = add_compute_expression((dummy("SModel.transition_p_index"), my_tree(), S, branch_cat_list, DL));
 	}
     }
 

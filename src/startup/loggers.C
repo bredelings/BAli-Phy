@@ -1,6 +1,7 @@
 #include "loggers.H"
 #include "tools/parsimony.H"
 #include "computation/expression/expression.H"
+#include "computation/expression/dummy.H"
 
 #include <set>
 
@@ -73,12 +74,12 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
 	if (c.f_name == ":")
 	{
 	    expression_ref L = M.get_expression(index);
-	    expression_ref E = (identifier("Prelude.length"),L);
+	    expression_ref E = (dummy("Prelude.length"),L);
 	    int length = M.evaluate_expression(E).as_int();
 	    int index2 = -1;
 	    for(int i=0;i<length;i++)
 	    {
-		expression_ref E2 = (identifier("Prelude.!!"),L,i) ;
+		expression_ref E2 = (dummy("Prelude.!!"),L,i) ;
 		if (index2 == -1)
 		    index2 = M.add_compute_expression(E2);
 		else

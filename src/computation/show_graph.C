@@ -3,6 +3,7 @@
 #include "operations.H"
 #include "expression/expression.H"
 #include "expression/let.H"
+#include "expression/dummy.H"
 
 using std::string;
 using std::vector;
@@ -243,7 +244,7 @@ expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& 
     {
       auto loc = ids.find(E.as_<reg_var>().target);
       if (loc != ids.end())
-	return identifier(loc->second);
+	return parameter(loc->second);  // Use parameter for everything, even dummies, to avoid checks on legal variable names.
       else
 	return E;
     }
@@ -266,7 +267,7 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
   {
     int R = id.second;
     string name = id.first;
-    names[R] = expression_ref(new identifier(name) );
+    names[R] = expression_ref(new dummy(name) );
   }
   discover_graph_vars(C, R, names, ids);
 
