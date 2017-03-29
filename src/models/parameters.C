@@ -1241,8 +1241,7 @@ Parameters::Parameters(const module_loader& L,
     evaluate_expression( (dummy("Tree.numBranches"), my_tree()));
     evaluate_expression( (dummy("Tree.edgesOutOfNode"), my_tree(), 0));
     evaluate_expression( (dummy("Tree.neighbors"), my_tree(), 0));
-    //  evaluate_expression( (dummy("nodesForEdge"),my_tree(), 0));
-    //  evaluate_expression( (dummy("edgeForNodes"), my_tree(), (dummy("nodesForEdge"),my_tree(), 0))).as_int();
+
     for(int b=0; b < 2*tt.n_branches(); b++)
     {
 	vector<const_branchview> branch_list;
