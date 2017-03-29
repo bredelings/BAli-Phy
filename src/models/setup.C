@@ -254,8 +254,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
     
-    assert(is_qualified_symbol(array_index(call,0).get_value<string>()));
-    expression_ref E = dummy(array_index(call,0).get_value<string>());
+    expression_ref E = qualified_dummy(array_index(call,0).get_value<string>());
     if (generate_function)
     {
 	auto Prefix = lambda_expression( constructor("Distributions.Prefix",2) );

@@ -208,16 +208,12 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<string,s
 {
     if (not E.size())
     {
-	if (is_dummy(E))
+	if (is_qualified_dummy(E))
 	{
 	    auto x = E.as_<dummy>();
-	    if (x.name.size() and is_qualified_symbol(x.name))
-	    {
-		auto loc = simplify.find(x.name);
-		if (loc != simplify.end())
-		    return dummy(loc->second);
-	    }
-
+	    auto loc = simplify.find(x.name);
+	    if (loc != simplify.end())
+		return dummy(loc->second);
 	}
 	return E;
     }

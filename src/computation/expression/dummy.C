@@ -1,6 +1,7 @@
 #include "dummy.H"
 #include "computation/expression/let.H"
 #include "computation/operations.H"
+#include "computation/module.H"
 
 using std::set;
 using std::multiset;
@@ -174,6 +175,21 @@ int get_safe_binder_index(const expression_ref& E)
 bool is_dummy(const expression_ref& E)
 {
     return (E.head().type() == dummy_type);
+}
+
+dummy qualified_dummy(const string& name)
+{
+    assert(name.size());
+    assert(is_qualified_symbol(name));
+    return dummy(name);
+}
+
+bool is_qualified_dummy(const expression_ref& E)
+{
+    if (not is_dummy(E)) return false;
+    auto& x = E.as_<dummy>();
+    if (x.name.empty()) return false;
+    return is_qualified_symbol(x.name);
 }
 
 bool is_wildcard(const dummy& d)

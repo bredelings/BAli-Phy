@@ -47,7 +47,11 @@ struct dummy: public Object, public occurrence_info
     dummy(const std::string& s,int i):index(i),name(s) {assert(name != "_");}
 };
 
+dummy qualified_dummy(const std::string&);
+
 bool is_dummy(const expression_ref&);
+
+bool is_qualified_dummy(const expression_ref&);
 
 bool is_wildcard(const expression_ref&);
 
