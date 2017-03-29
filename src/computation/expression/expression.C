@@ -226,19 +226,20 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
     }
 
     // 6. Case
-    if (E.head().is_a<Case>())
+    expression_ref object;
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    if (parse_case_expression(E, object, patterns, bodies))
     {
-	expression* V = E.as_expression().clone();
-
 	// Unormalize the object
-	V->sub[0] = launchbury_unnormalize(V->sub[0]);
+	object = launchbury_unnormalize(object);
 
-	const int L = V->sub.size()/2 - 1;
+	const int L = patterns.size();
 	// Just unnormalize the bodies
 	for(int i=0;i<L;i++)
-	    V->sub[2+2*i] = launchbury_unnormalize(V->sub[2+2*i]);
+	    bodies[i] = launchbury_unnormalize(bodies[i]);
     
-	return V;
+	return make_case_expression(object, patterns, bodies);
     }
 
     // 4. Constructor
