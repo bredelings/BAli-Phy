@@ -494,6 +494,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	else if (n.type == "Decls" or n.type == "TopDecls")
 	{
 	    set<string> bound2 = bound;
+	    bool top = is_AST(E,"TopDecls");
 
 	    // Find all the names bound here
 	    for(auto& e: v)
@@ -505,9 +506,32 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 
 		// Bind the function id to avoid errors on the undeclared id later.
 		if (is_function_binding(e))
-		    bound2.insert(get_func_name(e));
+		{
+		    string name = get_func_name(e);
+		    if (top)
+		    {
+			assert(not is_qualified_symbol(name));
+			string qualified_name = m.name + "." + name;
+			bound2.insert(qualified_name);
+		    }
+		    else
+			bound2.insert(name);
+		}
 		else if (is_pattern_binding(e))
-		    add(bound2, get_pattern_bound_vars(e));
+		{
+		    auto vars = get_pattern_bound_vars(e);
+		    set<string> vars2;
+		    if (top)
+			for(auto& name: vars)
+			{
+			    assert(not is_qualified_symbol(name));
+			    string qualified_name = m.name + "." + name;
+			    vars2.insert(qualified_name);
+			}
+		    else
+			vars2 = vars;
+		    add(bound2, vars2);
+		}
 	    }
 
 	    // Replace ids with dummies
@@ -519,6 +543,23 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 
 	    // Convert fundecls to normal decls
 	    vector<expression_ref> decls = parse_fundecls(v);
+	    if (top)
+	    {
+		vector<expression_ref> new_decls;
+		for(auto& decl: decls)
+		{
+		    if (is_AST(decl,"Decl") and decl.size() == 2)
+		    {
+			auto x = decl.sub()[0].as_<dummy>();
+			if (not is_qualified_symbol(x.name))
+			    x.name = m.name + "." + x.name;
+			new_decls.push_back({AST_node("Decl"),{x,decl.sub()[1]}});
+		    }
+		    else
+			new_decls.push_back(decl);
+		}
+		decls = new_decls;
+	    }
 
 	    return new expression{E.head(),decls};
 	}

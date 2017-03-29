@@ -287,22 +287,14 @@ void Module::desugar(const std::vector<Module>& P)
     // 1. Desugar the module
     assert(is_AST(topdecls,"TopDecls"));
     topdecls = ::desugar(*this,topdecls);
-  
-    // 2. Convert top-level dummies into global vars, in both decls AND notes.
-    vector<expression_ref> decls_sub = topdecls.sub();
-    for(auto& decl: decls_sub)
-	for(auto& p: symbols)
-	{
-	    const auto& S = p.second;
-	    if (S.symbol_type != variable_symbol) continue;
-	    if (S.scope != local_scope) continue;
+    for(auto& p: symbols)
+    {
+	const auto& S = p.second;
+	if (S.symbol_type != variable_symbol) continue;
+	if (S.scope != local_scope) continue;
       
-	    string qname = S.name;
-	    string name = get_unqualified_name(qname);
-      
-	    decl = substitute(decl,dummy(name), dummy(qname));
-	}
-    topdecls = {AST_node("TopDecls"),decls_sub};
+	string qname = S.name;
+    }
 }
 
 void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& P)
