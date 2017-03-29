@@ -179,26 +179,24 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
     }
 
     // 6. Case
-    if (E.head().is_a<Case>())
+    expression_ref object;
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    if (parse_case_expression(E, object, patterns, bodies))
     {
 	// Analyze the object
-	expression_ref object;
 	set<dummy> obj_free_vars;
-	tie(object, obj_free_vars) = occurrence_analyzer(E.sub()[0]);
+	tie(object, obj_free_vars) = occurrence_analyzer(object);
 
-	const int L = (E.size()-1)/2;
+	const int L = patterns.size();
 	// Just normalize the bodies
 
 	set<dummy> alts_free_vars;
-	vector<expression_ref> patterns(L);
-	vector<expression_ref> bodies(L);
 	for(int i=0;i<L;i++)
 	{
 	    // Analyze the i-ith branch
 	    set<dummy> alt_i_free_vars;
-	    tie(bodies[i], alt_i_free_vars) = occurrence_analyzer(E.sub()[2+2*i]);
-
-	    patterns[i] = E.sub()[1+2*i];
+	    tie(bodies[i], alt_i_free_vars) = occurrence_analyzer(bodies[i]);
 
 	    // Remove pattern vars from free variables
 	    // Copy occurrence info into pattern variables
@@ -921,11 +919,14 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     }
 
     // 6. Case
-    if (E.head().is_a<Case>())
+    expression_ref object;
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    if (parse_case_expression(E, object, patterns, bodies))
     {
 	// Analyze the object
-	object_ptr<expression> E2 = E.as_expression().clone();
-	E2->sub[0] = simplify(options, E2->sub[0], S, bound_vars, case_object_context(E, context));
+	object = simplify(options, object, S, bound_vars, case_object_context(E, context));
+	auto E2 = make_case_expression(object, patterns, bodies);
 
 	return rebuild_case(options, E2, S, bound_vars, context);
     }
