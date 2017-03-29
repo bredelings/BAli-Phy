@@ -15,7 +15,7 @@ bool parse_case_expression(const expression_ref& E, expression_ref& T, vector<ex
     patterns.clear();
     bodies.clear();
 
-    if (E.head().type() != case_type) return false;
+    if (not is_case(E)) return false;
 
     T = E.sub()[0];
     const int L = (E.size()-1)/2;

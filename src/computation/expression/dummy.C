@@ -1,8 +1,10 @@
 #include "dummy.H"
 #include "computation/expression/let.H"
+#include "computation/expression/case.H"
 #include "computation/module.H"
 
 using std::set;
+using std::vector;
 using std::multiset;
 using std::string;
 
@@ -120,18 +122,21 @@ void get_free_indices2(const expression_ref& E, multiset<dummy>& bound, set<dumm
     if (not E.size()) return;
 
     // for case expressions get_bound_indices doesn't work correctly.
-    if (E.head().type() == case_type)
+    expression_ref object;
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    if (parse_case_expression(E, object, patterns, bodies))
     {
-	get_free_indices2(E.sub()[0], bound, free);
+	get_free_indices2(object, bound, free);
 
-	const int L = (E.size()-1)/2;
+	const int L = patterns.size();
 
 	for(int i=0;i<L;i++)
 	{
-	    std::set<dummy> bound_ = get_free_indices(E.sub()[1+2*i]);
+	    std::set<dummy> bound_ = get_free_indices(patterns[i]);
 	    for(const auto& d: bound_)
 		bound.insert(d);
-	    get_free_indices2(E.sub()[2+2*i], bound, free);
+	    get_free_indices2(bodies[i], bound, free);
 	    for(const auto& d: bound_)
 	    {
 		auto it = bound.find(d);
