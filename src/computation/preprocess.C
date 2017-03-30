@@ -150,7 +150,7 @@ closure reg_heap::preprocess(const closure& C)
     assert(C.exp);
     assert(let_float(C.exp).print() == let_float(let_float(C.exp)).print());
     //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
-    return trim_normalize( indexify( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) );
+    return trim_normalize( indexify( graph_normalize( translate_refs( closure(C) ) ) ) );
 }
 
 int reg_heap::reg_for_id(const string& name)

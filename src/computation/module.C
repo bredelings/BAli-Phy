@@ -311,6 +311,31 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
     update_function_symbols();
 
     get_types(P);
+
+    if (topdecls)
+    {
+
+	vector<expression_ref> new_decls;
+	for(auto& decl: topdecls.sub())
+	{
+	    if (not is_AST(decl,"Decl"))
+		new_decls.push_back(decl);
+	    else
+	    {
+		// This won't float things to the top level!
+		auto name = decl.sub()[0].as_<dummy>().name;
+		auto body = decl.sub()[1];
+		body = let_float(body);
+		if (do_optimize)
+		    for(int i=0;i<L.max_iterations;i++)
+			body = simplifier(L, graph_normalize(body));
+		new_decls.push_back({AST_node("Decl"),{decl.sub()[0], body}});
+	    }
+	}
+	topdecls = {AST_node("TopDecls"),new_decls};
+    }
+
+    update_function_symbols();
 }
 
 expression_ref func_type(const expression_ref& a, const expression_ref& b)

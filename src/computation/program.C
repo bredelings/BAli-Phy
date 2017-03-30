@@ -108,10 +108,6 @@ void add_missing_imports(const module_loader& L, vector<Module>& P)
 		throw e;
 	    }
 	}
-  
-    for(auto& module: P)
-	if (not module.is_optimized())
-	    module.optimize(L, P);
 }
 
 void add(const module_loader& L, vector<Module>& P, const Module& M)
