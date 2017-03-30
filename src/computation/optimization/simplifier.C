@@ -637,6 +637,10 @@ bool do_inline(const simplifier_options& options, const expression_ref& rhs, con
 	    return true;
     }
 
+    // If its "trivial" but not a variable, we should substitute if we can.
+    if (is_WHNF(rhs) and rhs.size() == 0)
+	return true;
+
     // MultiSafe
     else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Many)
 	return do_inline_multi(rhs, context);
