@@ -503,7 +503,7 @@ int main(int argc,char* argv[])
 	    for(const auto& s: P[0].get_symbols())
 	    {
 		const auto& S = s.second;
-		if (S.body)
+		if (S.body and S.scope == local_scope)
 		    std::cerr<<S.name<<" = "<<S.body<<std::endl;
 	    }
 	    exit(0);
