@@ -308,8 +308,6 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
 
     load_builtins(L);
 
-    update_function_symbols();
-
     get_types(P);
 
     if (topdecls)
