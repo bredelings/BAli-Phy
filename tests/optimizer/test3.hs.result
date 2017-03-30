@@ -1,1 +1,0 @@
-Test.f = let {a = 10, #3 = let {#1 = 3} in Prelude.+ a #1} in \#1 -> #3

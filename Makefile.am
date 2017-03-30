@@ -107,3 +107,6 @@ EXTRA_DIST = $(doc_DATA) $(EXTRA_HEADERS) $(bin_SCRIPTS) $(noinst_SCRIPTS) \
 
 dist-hook:
 	rm -rf `find $(distdir) -name TODO`
+
+check:
+	cd $(abs_top_srcdir)/tests/optimizer; ./run_tests.sh
