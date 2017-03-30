@@ -23,6 +23,10 @@ void reg_heap::destroy_all_computations_in_token(int t)
 	{
 	    for(int r: steps[s].created_regs)
 	    {
+//            We can't reclaim regs here, because we would have to search for their steps/results.
+//            Instead just clear them, and wait for GC to eliminate them, and also their steps/results.
+//		access(r).created_by = {0,{}};
+//		reclaim_used(r);
 		truncate(access(r));
 	    }
 	    steps[s].created_regs.clear();
