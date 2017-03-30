@@ -38,10 +38,7 @@ expression_ref graph_normalize(const expression_ref& E)
 	object_ptr<expression> V = E.as_expression().clone();
 	V->sub[1] = graph_normalize(E.sub()[1]);
 
-	if (V->sub[1].ptr() == E.sub()[1].ptr())
-	    return E;
-	else
-	    return V;
+	return V;
     }
 
     // 6. Case
