@@ -23,8 +23,7 @@ void reg_heap::destroy_all_computations_in_token(int t)
 	{
 	    for(int r: steps[s].created_regs)
 	    {
-		access(r).created_by = {0,{}};
-		reclaim_used(r);
+		truncate(access(r));
 	    }
 	    steps[s].created_regs.clear();
 	    clear_back_edges_for_step(s);

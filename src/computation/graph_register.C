@@ -820,6 +820,7 @@ void reg_heap::reclaim_used(int r)
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
     assert(not access(r).created_by.first);
     assert(null(access(r).created_by.second));
+    assert(not has_step(r));
   
     pool<reg>::reclaim_used(r);
 }
