@@ -719,9 +719,11 @@ dummy rename_and_bind_var(const expression_ref& var, substitution& S, in_scope_s
 // case E of alts.  Here E has been simplified, but the alts have not.
 expression_ref rebuild_case(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
-    object_ptr<expression> E2 = E.as_expression().clone();
-    expression_ref& object = E2->sub[0];
-    const int L = (E.size()-1)/2;
+    expression_ref object;
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    parse_case_expression(E, object, patterns, bodies);
+    const int L = patterns.size();
 
     auto decls = strip_let(object);
     bind_decls(bound_vars, decls);
@@ -733,10 +735,9 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	vector<pair<dummy, expression_ref>> pat_decls;
 
 	// 2. Rename and bind pattern variables
-	expression_ref& pattern = E2->sub[1 + 2*i];
-	if (pattern.size())
+	if (patterns[i].size())
 	{
-	    object_ptr<expression> pattern2 = pattern.as_expression().clone();
+	    object_ptr<expression> pattern2 = patterns[i].as_expression().clone();
 	    for(int j=0; j<pattern2->size(); j++)
 	    {
 		expression_ref& var = pattern2->sub[j];
@@ -756,15 +757,15 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 		var = x2;
 		pat_decls.push_back({x2, {}});
 	    }
-	    pattern = pattern2;
+	    patterns[i] = pattern2;
 	}
 
 	// 3. If we know something extra about the value (or range, theoretically) of the object in this case branch, then record that.
 	bound_variable_info original_binding;
-	if (is_dummy(object)) original_binding = rebind_var(bound_vars, object.as_<dummy>(), E2->sub[1 + 2*i]);
+	if (is_dummy(object)) original_binding = rebind_var(bound_vars, object.as_<dummy>(), patterns[i]);
 
 	// 4. Simplify the alternative body
-	E2->sub[2 + 2*i] = simplify(options, E2->sub[2 + 2*i], S2, bound_vars, unknown_context());
+	bodies[i] = simplify(options, bodies[i], S2, bound_vars, unknown_context());
 
 	// 5. Restore informatation about an object variable to information outside this case branch.
 	if (is_dummy(object)) rebind_var(bound_vars, object.as_<dummy>(), original_binding.first);
@@ -778,30 +779,28 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
     {
 	for(int i=0; i<L; i++)
 	{
-	    const auto& pattern = E2->sub[1 + 2*i];
-	    const auto& alt     = E2->sub[2 + 2*i];
-	    if (is_dummy(pattern))
+	    if (is_dummy(patterns[i]))
 	    {
-		assert(is_wildcard(pattern));
-		return let_expression(decls, alt);
+		assert(is_wildcard(patterns[i]));
+		return let_expression(decls, bodies[i]);
 	    }
-	    else if (pattern.head() == object.head())
+	    else if (patterns[i].head() == object.head())
 	    {
-		for(int j=0;j<pattern.size();j++)
+		for(int j=0;j<patterns[i].size();j++)
 		{
 		    auto obj_var = object.sub()[j];
-		    auto pat_var = pattern.sub()[j];
+		    auto pat_var = patterns[i].sub()[j];
 		    assert(is_dummy(obj_var) and not is_wildcard(obj_var));
 		    assert(is_dummy(pat_var) and not is_wildcard(pat_var));
 		    decls.push_back({pat_var.as_<dummy>(), obj_var});
 		}
-		return let_expression(decls, alt);
+		return let_expression(decls, bodies[i]);
 	    }
 	}
-	throw myexception()<<"Case object doesn't many any alternative in '"<<E2<<"'";
+	throw myexception()<<"Case object doesn't many any alternative in '"<<make_case_expression(object, patterns, bodies)<<"'";
     }
 
-    return let_expression(decls,E2);
+    return let_expression(decls,make_case_expression(object, patterns, bodies));
 }
 
 // @ E x1 .. xn.  The E and the x[i] have already been simplified.
