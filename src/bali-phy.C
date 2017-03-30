@@ -349,8 +349,12 @@ module_loader setup_module_loader(variables_map& args, const string& filename)
 
     // 1. Add user-specified package paths
     if (args.count("package-path"))
-	for(const string& path: split(args["package-path"].as<string>(),':'))
-	    L.try_add_plugin_path(path);
+	for(const string& p: split(args["package-path"].as<string>(),':'))
+	{
+	    fs::path path = p;
+	    L.try_add_plugin_path( (path / "modules").string() );
+	    L.try_add_plugin_path( path.string() );
+	}
 
     // 2. Add default user path
     if (not user_lib_path.empty())
@@ -360,12 +364,11 @@ module_loader setup_module_loader(variables_map& args, const string& filename)
 	    L.plugins_path.push_back( user_module_path.string() );
     }
   
-    // 3. Add default system path
+    // 3. Add default system paths
     if (not system_lib_path.empty())
     {
-	fs::path system_module_path = system_lib_path;
-	if (fs::exists(system_module_path))
-	    L.plugins_path.push_back( system_module_path.string() );
+	L.try_add_plugin_path( (system_lib_path / "modules").string() );
+	L.try_add_plugin_path( system_lib_path.string() );
     }
 
     // 4. Write out paths to C1.err

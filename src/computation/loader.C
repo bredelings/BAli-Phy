@@ -80,7 +80,7 @@ string module_loader::find_module(const string& modid) const
 	fs::path path = get_relative_path_from_haskell_id(modid);
 	path.replace_extension(".hs");
     
-	fs::path filename = find_file_in_path(plugins_path, "modules"/path );
+	fs::path filename = find_file_in_path(plugins_path, path );
 	return filename.string();
     }
     catch (myexception& e)
