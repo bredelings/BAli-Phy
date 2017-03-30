@@ -238,15 +238,28 @@ expression_ref unlet(const expression_ref& E)
     return E;
 }
 
-void get_decls_from_let(const expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
+void get_decls(const expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
 {
-    assert(is_let_expression(E));
-    auto& Decls = E.sub()[0].sub();
+    assert(is_AST(E,"Decls") or is_AST(E,"TopDecls"));
+    auto& Decls = E.sub();
     for(int i=0;i<Decls.size();i++)
     {
 	auto& Decl = Decls[i].sub();
 	decls.push_back({Decl[0].as_<dummy>(), Decl[1]});
     }
+}
+
+void get_decls_from_let(const expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
+{
+    assert(is_let_expression(E));
+    get_decls(E.sub()[0], decls);
+}
+
+vector<pair<dummy, expression_ref>> decls(const expression_ref& E)
+{
+    vector<pair<dummy, expression_ref>> decls;
+    get_decls(E, decls);
+    return decls;
 }
 
 vector<pair<dummy, expression_ref>> let_decls(const expression_ref& E)

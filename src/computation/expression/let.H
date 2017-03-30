@@ -42,9 +42,13 @@ bool parse_let_expression(const expression_ref& E, std::vector<std::pair<dummy, 
 
 bool parse_indexed_let_expression(const expression_ref& E, std::vector<expression_ref>& bodies, expression_ref& T);
 
+void get_decls(const expression_ref& E, std::vector<std::pair<dummy, expression_ref>>& decls);
+
 void get_decls_from_let(const expression_ref& E, std::vector<std::pair<dummy, expression_ref>>& decls);
 
 std::vector<std::pair<dummy, expression_ref>> let_decls(const expression_ref& E);
+
+std::vector<std::pair<dummy, expression_ref>> decls(const expression_ref& E);
 
 expression_ref let_body(expression_ref E);
 
