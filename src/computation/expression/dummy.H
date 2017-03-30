@@ -20,6 +20,8 @@ struct occurrence_info
 
     bool top_level = false;
 
+    bool is_exported = false;
+
     bool pre_inline() const;
 };
     
