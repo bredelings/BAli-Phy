@@ -1,0 +1,1 @@
+Test.f = let {a = 10, #2 = Prelude.negate a} in \#1 -> #2
