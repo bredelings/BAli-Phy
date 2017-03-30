@@ -67,7 +67,7 @@ class Module
   
 public:
 
-    bool do_optimize = false;
+    bool do_optimize = true;
     
     expression_ref module;
     expression_ref body;
