@@ -312,7 +312,6 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
 
     if (topdecls)
     {
-
 	vector<expression_ref> new_decls;
 	for(auto& decl: topdecls.sub())
 	{
@@ -324,9 +323,14 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
 		auto name = decl.sub()[0].as_<dummy>().name;
 		auto body = decl.sub()[1];
 		body = let_float(body);
+
 		if (do_optimize)
+		{
+		    body = graph_normalize(body);
 		    for(int i=0;i<L.max_iterations;i++)
-			body = simplifier(L, graph_normalize(body));
+			body = simplifier(L, body);
+		}
+
 		new_decls.push_back({AST_node("Decl"),{decl.sub()[0], body}});
 	    }
 	}
