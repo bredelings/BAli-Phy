@@ -169,7 +169,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     if (args.count("align") and (args.count("model") or args.count("Model")))
 	throw myexception()<<"You cannot specify both sequence files and a generic model.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
-    if (not args.count("align") and not args.count("model") and not args.count("Model"))
+    if (not args.count("align") and not args.count("model") and not args.count("Model") and not args.count("test-module"))
 	throw myexception()<<"You must specify alignment files or a generic model (--model or --Model).\n\nTry `"<<argv[0]<<" --help' for more information.";
 
     if (args.count("model") and args.count("Model"))

@@ -5,7 +5,7 @@ PROG=$@
 passed=0
 failed=0
 for i in test*.hs ; do
-    $PROG --test-module=$i x 2>$i.result
+    $PROG --test-module=$i 2>$i.result
     if ! diff -u $i.opt $i.result; then
 	echo "Test $i failed!"
 	let "failed++"
