@@ -359,11 +359,37 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		{
 		    make_reg_changeable(R);
 
+		    int r2;
+		    if (value.exp.head().is_index_var())
+		    {
+			int index = value.exp.as_index_var();
+			r2 = value.lookup_in_env( index );
+		    }
+		    else
+		    {
+			r2 = allocate();
+			assert(not has_step(r2));
+			mark_reg_created_by_step(r2,S);
+			total_reg_allocations++;
+			set_C(r2, std::move(value));
+		    }
+
+		    auto p = incremental_evaluate(r2);
+
+/*            Don't combine this step and the step it reduces to into the same step.
+
+	      This (apparently) causes problems with SModel.cached_conditional_likelihoods and
+               SModel.peel_likelihood, which do things like case n of [x,y,z] -> expensive x y z.
+
+	      It doesn't appear to increase the number of expensive operations, but it triples
+	       the number of steps pivoted & scanned, and doubles the number of steps invalidated.
+
 		    incremental_evaluate_from_call(S,value);
 
 		    pair<int,int> p;
 		    if (closure_stack.back().exp.head().is_index_var())
 		    {
+
 			int index = closure_stack.back().exp.as_index_var();
 			int r2 = closure_stack.back().lookup_in_env( index );
 			p = incremental_evaluate(r2);
@@ -378,6 +404,7 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 			p = {r2,r2};
 		    }
 		    closure_stack.pop_back();
+*/
 
 		    int r3 = p.first;
 		    int value = p.second;
