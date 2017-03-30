@@ -132,26 +132,27 @@ closure case_op(OperationArgs& Args)
 {
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
-    const closure obj = Args.evaluate_slot_to_closure(0);
+    const closure object = Args.evaluate_slot_to_closure(0);
 
     // Therefore, we must compute this *after* we do the computation above, since
     // we're going to hold on to it.  Otherwise the held reference would become
     // *invalid* after the call above!
     const closure& C = Args.current_closure();
 
-    int L = (Args.n_args() - 1)/2;
+    auto& alts = Args.reference(1).sub();
+    int L = alts.size();
 
 #ifndef NDEBUG
     vector<expression_ref> cases(L);
     vector<expression_ref> bodies(L);
     for(int i=0;i<L;i++)
     {
-	cases[i] = Args.reference(1 + 2*i);
-	bodies[i] = Args.reference(2 + 2*i);
+	cases[i] = alts[i].sub()[0];
+	bodies[i] = alts[i].sub()[1];
     }
 
-    if (obj.exp.head().is_a<lambda2>())
-	throw myexception()<<"Case argument is a lambda '"<<make_case_expression(obj.exp, cases, bodies)<<"'";
+    if (object.exp.head().is_a<lambda2>())
+	throw myexception()<<"Case argument is a lambda '"<<make_case_expression(object.exp, cases, bodies)<<"'";
 #endif
 
     closure result;
@@ -159,8 +160,8 @@ closure case_op(OperationArgs& Args)
 
     for(int i=0;i<L and not result;i++)
     {
-	const expression_ref& this_case = Args.reference(1 + 2*i);
-	const expression_ref& this_body = Args.reference(2 + 2*i);
+	const expression_ref& this_case = alts[i].sub()[0];
+	const expression_ref& this_body = alts[i].sub()[1];
 
 	// If its _, then match it.
 	if (this_case.head().type() == dummy_type)
@@ -176,25 +177,25 @@ closure case_op(OperationArgs& Args)
 	    // FIXME! Convert every pattern head to an integer...
 
 	    // If we are a constructor, then match iff the the head matches.
-	    if (obj.exp.head() == this_case.head())
+	    if (object.exp.head() == this_case.head())
 	    {
 #ifndef NDEBUG
-		if (obj.exp.size())
+		if (object.exp.size())
 		{
 		    // The number of constructor fields is the same the for case pattern and the case object.
-		    assert(obj.exp.size() == obj.exp.head().as_<constructor>().n_args());
+		    assert(object.exp.size() == object.exp.head().as_<constructor>().n_args());
 		    // The number of entries in the environment is the same as the number of constructor fields.
-		    assert(obj.exp.size() == obj.Env.size());
+		    assert(object.exp.size() == object.Env.size());
 		}
 #endif	
 		result.exp = this_body;
 	
-		for(int j=0;j<obj.exp.size();j++)
+		for(int j=0;j<object.exp.size();j++)
 		{
 		    // Don't do a dynamic cast here!
-		    int index = obj.exp.sub()[j].as_index_var();
+		    int index = object.exp.sub()[j].as_index_var();
 	  
-		    result.Env.push_back( obj.lookup_in_env( index ) );
+		    result.Env.push_back( object.lookup_in_env( index ) );
 		}
 	    }
 	}
@@ -202,9 +203,9 @@ closure case_op(OperationArgs& Args)
 
     if (not result)
 #ifdef NDEBUG
-	throw myexception()<<"Case: object '"<<obj.exp<<"' doesn't match any alternative";
+	throw myexception()<<"Case: object '"<<object.exp<<"' doesn't match any alternative";
 #else
-    throw myexception()<<"Case: object '"<<obj.exp<<"' doesn't match any alternative in '"<<make_case_expression(obj.exp, cases, bodies)<<"'";
+    throw myexception()<<"Case: object '"<<object.exp<<"' doesn't match any alternative in '"<<make_case_expression(object.exp, cases, bodies)<<"'";
 #endif
 
     result = get_trimmed(result);

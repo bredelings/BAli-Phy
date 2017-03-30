@@ -5,26 +5,25 @@
 #include "let.H"
 #include "substitute.H"
 #include "expression.H"
+#include "AST_node.H"
 #include "computation/operations.H"
 
 using std::vector;
 
 /// R = case T of {patterns[i] -> bodies[i]}
-bool parse_case_expression(const expression_ref& E, expression_ref& T, vector<expression_ref>& patterns, vector<expression_ref>& bodies)
+bool parse_case_expression(const expression_ref& E, expression_ref& object, vector<expression_ref>& patterns, vector<expression_ref>& bodies)
 {
     patterns.clear();
     bodies.clear();
 
     if (not is_case(E)) return false;
 
-    T = E.sub()[0];
-    const int L = (E.size()-1)/2;
-    patterns.resize(L);
-    bodies.resize(L);
-    for(int i=0;i<L;i++)
+    object = E.sub()[0];
+
+    for(auto& alt: E.sub()[1].sub())
     {
-	patterns[i] = E.sub()[1 + 2*i];
-	bodies[i] = E.sub()[2 + 2*i];
+	patterns.push_back( alt.sub()[0] );
+	bodies.push_back( alt.sub()[1] );
     }
 
     return true;
@@ -74,18 +73,22 @@ expression_ref simple_case_expression(const expression_ref& T, const vector<expr
     return E;
 }
 
-expression_ref make_case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+expression_ref make_case_expression(const expression_ref& object, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
     assert(patterns.size() == bodies.size());
+    assert(not patterns.empty());
 
-    expression* E = new expression( Case() );
-    E->sub.push_back(T);
-  
+    expression_ref alts = AST_node("alts");
     for(int i=0;i<patterns.size();i++)
     {
-	E->sub.push_back( patterns[i] );
-	E->sub.push_back( bodies[i] );
+	expression_ref alt = AST_node("alt");
+	alt = alt + patterns[i] + bodies[i];
+	alts = alts + alt;
     }
+
+    expression_ref E = Case();
+    E = E + object + alts;
+
     return E;
 }
 
