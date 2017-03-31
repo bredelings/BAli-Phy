@@ -297,6 +297,63 @@ void Module::desugar(const std::vector<Module>& P)
     }
 }
 
+void parse_module(const expression_ref& M, string& name, expression_ref& exports, expression_ref& impdecls, expression_ref& topdecls)
+{
+    assert(is_AST(M, "Module"));
+    expression_ref body;
+    if (M.size() == 1)
+    {
+	name = "";
+	exports = {};
+	body = M.sub()[0];
+    }
+    else if (M.size() == 2)
+    {
+	name = M.sub()[0].as_<String>();
+	body = M.sub()[1];
+    }
+    else if (M.size() == 3)
+    {
+	name = M.sub()[0].as_<String>();
+	exports = M.sub()[1];
+	assert(is_AST(exports,"Exports"));
+	body = M.sub()[2];
+    }
+    assert(is_AST(body,"Body"));
+
+    // 2. body = impdecls + [optional topdecls]
+    for(const auto& E: body.sub())
+	if (is_AST(E,"TopDecls"))
+	    topdecls = E;
+	else if (is_AST(E,"impdecls"))
+	    impdecls = E;
+}
+
+expression_ref create_module(const string& name, const expression_ref& exports, const expression_ref& impdecls, const expression_ref& topdecls)
+{
+    expression_ref body = AST_node("Body");
+    if (impdecls)
+    {
+	assert(is_AST(impdecls, "impdecls"));
+	body = body + impdecls;
+    }
+    if (topdecls)
+    {
+	assert(is_AST(topdecls, "TopDecls"));
+	body = body + topdecls;
+    }
+    expression_ref module = AST_node("Module");
+    if (not name.empty())
+	module = module + String(name);
+    if (exports)
+    {
+	assert(is_AST(exports,"Exports"));
+	module = module + exports;
+    }
+    module = module + body;
+    return module;
+}
+
 void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& P)
 {
     if (resolved) return;

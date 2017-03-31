@@ -53,6 +53,9 @@ std::string get_unqualified_name(const std::string&);
 
 std::vector<std::string> get_haskell_identifier_path(const std::string& s);
 
+void parse_module(const expression_ref& M, std::string& name, expression_ref& exports, expression_ref& impdecls, expression_ref& topdecls);
+expression_ref create_module(const std::string& name, const expression_ref& exports, const expression_ref& impdecls, const expression_ref& topdecls);
+
 class module_loader;
 
 class Module
