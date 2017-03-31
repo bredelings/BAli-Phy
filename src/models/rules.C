@@ -103,7 +103,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"Freq","F","P"}, {"SModel.constant_frequencies_model"},{"*","Double"}},
     {{"Freq2","F"}, {"SModel.constant_frequencies_model2","dict"},{"dict","List[Pair[String,Double]]"}},
     {{"F","FM[a]"}, {"SModel.plus_f_model","pi"},{"pi","F","frequencies_prior"}},
-    {{"F61","FM[Codon[a,b]]"}, {"plus_f_model","pi"}, {"pi","F","frequencies_prior"}},
+    {{"F61","FM[Codon[a,b]]"}, {"SModel.plus_f_model","pi"}, {"pi","F","frequencies_prior"}},
     {{"gwF","FM[a]"}, {"SModel.plus_gwf_model","pi","f"},{"pi","F","frequencies_prior"},{"f","Double","~Uniform[0,1]"}},
     // How about a generic frequency model that is equivalent to fMutSel0?  Can we do that?
     // Or maybe we need to do fMutSel & fMutSel0 version of the site models.
