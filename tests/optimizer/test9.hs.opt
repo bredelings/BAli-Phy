@@ -1,1 +1,1 @@
-Test.f = let {#2 = 2} in \#1 -> let {#10 = Prelude.+ #1 #2} in Prelude.* #10 #10
+Test.f = let {#2 = 2} in \#1 -> let {#11 = Prelude.+ #1 #2} in Prelude.* #11 #11
