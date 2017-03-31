@@ -276,7 +276,13 @@ void Module::update_function_symbols()
 	if (is_AST(decl,"Decl"))
 	{
 	    auto var = decl.sub()[0];
-	    symbols.at(var.as_<dummy>().name).body = decl.sub()[1];
+	    string name = var.as_<dummy>().name;
+	    if (not symbols.count(name))
+	    {
+		def_function(name, decl.sub()[1]);
+	    }
+	    else
+		symbols.at(var.as_<dummy>().name).body = decl.sub()[1];
 	}
 }
 
@@ -369,29 +375,46 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
 
     if (topdecls)
     {
+	exports = AST_node("Exports");
+	for(auto& decl: topdecls.sub())
+	{
+	    if (not is_AST(decl,"Decl")) continue;
+	    auto x = decl.sub()[0].as_<dummy>();
+	    assert(is_qualified_dummy(x));
+	    exports = exports + x;
+	}
+    }
+
+    if (topdecls)
+    {
 	vector<expression_ref> new_decls;
 	for(auto& decl: topdecls.sub())
 	{
 	    if (not is_AST(decl,"Decl"))
-		new_decls.push_back(decl);
+		; //new_decls.push_back(decl);
 	    else
 	    {
 		// This won't float things to the top level!
 		auto name = decl.sub()[0].as_<dummy>().name;
 		auto body = decl.sub()[1];
 		body = let_float(body);
-
-		if (do_optimize)
-		{
-		    body = graph_normalize(body);
-		    for(int i=0;i<L.max_iterations;i++)
-			body = simplifier(L, body);
-		}
+		body = graph_normalize(body);
 
 		new_decls.push_back({AST_node("Decl"),{decl.sub()[0], body}});
 	    }
 	}
 	topdecls = {AST_node("TopDecls"),new_decls};
+
+	if (do_optimize)
+	{
+	    module = create_module(name, exports, impdecls, topdecls);
+
+	    for(int i=0;i<L.max_iterations;i++)
+		module = simplifier(L, module);
+
+	    parse_module(module, name, exports, impdecls, topdecls);
+	}
+
     }
 
     update_function_symbols();

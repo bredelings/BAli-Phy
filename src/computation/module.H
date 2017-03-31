@@ -76,7 +76,8 @@ public:
     expression_ref body;
     expression_ref impdecls;
     expression_ref topdecls;
-  
+    expression_ref exports;
+
     std::string name;
 
     bool is_resolved() const {return resolved;}

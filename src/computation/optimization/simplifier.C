@@ -117,7 +117,11 @@ dummy remove_var_and_set_occurrence_info(dummy x, set<dummy>& free_vars)
 	x.context = var_context::unknown;
     }
     else
+    {
+	bool is_exported = x.is_exported;
 	static_cast<occurrence_info&>(x) = *x_iter;
+	x.is_exported = is_exported;
+    }
 
     // 2. Remove var from set
     free_vars.erase(x);
@@ -134,7 +138,164 @@ dummy remove_var_and_set_occurrence_info(const expression_ref& var, set<dummy>& 
 }
 // occur:: Expression -> (marked free_variables, marked Expression)
 
-pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var_context context=var_context::unknown)
+pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var_context context=var_context::unknown);
+
+vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,expression_ref>> decls, set<dummy>& free_vars)
+{
+    using namespace boost;
+    const int L = decls.size();
+
+    // 0. Initialize the graph and decls
+    Graph graph;
+    vector<adjacency_list<>::vertex_descriptor> vertices;
+    for(int i=0; i<L; i++)
+	vertices.push_back( add_vertex(graph) );
+
+    // 2. Mark vars referenced in the body as being alive
+    vector<bool> alive(L,0);
+    vector<int> work;
+    for(int i=0;i<L;i++)
+    {
+	const auto& x = decls[i].first;
+	if (x.is_exported or free_vars.count(x))
+	{
+	    alive[i] = true;
+	    work.push_back(i);
+	}
+    }
+
+    // 3. Discover reachable variables, analyze them, and record references between variables
+    for(int k=0;k<work.size();k++)
+    {
+	int i = work[k];
+	// 3.1 Analyze the bound statement
+	set<dummy> free_vars_i;
+	tie(decls[i].second, free_vars_i) = occurrence_analyzer(decls[i].second);
+
+	// 3.2 Record occurrences
+	free_vars = merge_occurrences(free_vars, free_vars_i);
+
+	// 3.3. Check if other variables j are referenced from the i-th variable.
+	for(int j=0;j<L;j++)
+	{
+	    // 3.3.1 Check if variable i references variable j
+	    auto x_j = decls[j].first;
+	    if (free_vars_i.count(x_j))
+	    {
+		// 3.3.2 Add an edge from i -> j meaning "i references j"
+		boost::add_edge(vertices[i], vertices[j], graph);
+
+		// 3.3.3 Add variable j to the work list if we haven't put it on the list already
+		if (not alive[j])
+		{
+		    alive[j] = true;
+		    work.push_back(j);
+		}
+	    }
+	}
+    }
+
+    // 4. Set occurrence info for let vars in the decl, and remove bound vars from free_vars
+    for(int i=0;i<decls.size();i++)
+    {
+	decls[i].first = remove_var_and_set_occurrence_info(decls[i].first, free_vars);
+
+	// Variable is alive if and only if the variable is never executed.
+	assert(alive[i] == (decls[i].first.code_dup != amount_t::None or decls[i].first.is_exported));
+    }
+
+    // 5. Break cycles
+    vector<int> component(L);
+    bool changed = true;
+    while(changed)
+    {
+	changed = false;
+
+	// find strongly connected components: every node is reachable from every other node
+	int num = strong_components(graph, make_iterator_property_map(component.begin(), get(vertex_index, graph)));
+
+	// find variables in each component
+	vector<vector<int>> components(num);
+	for(int i=0;i<L;i++)
+	{
+	    int c = component[i];
+	    components[c].push_back(i);
+	}
+
+	for(int c=0;c<num and not changed;c++)
+	{
+	    int first = components[c][0];
+
+	    // If the component is a single with no loop to itself, then it is fine.
+	    if (components[c].size() == 1 and not edge(vertices[first],vertices[first],graph).second) continue;
+
+	    vector<int> score(components[c].size());
+	    for(int k = 0; k < score.size(); k++)
+	    {
+		int i = components[c][k];
+		auto x = decls[i].first;
+		auto F = decls[i].second;
+		if (is_reglike(F)) score[k] = 4;
+		else if (F.is_a<constructor>() or F.size() == 0) score[k] = 3;
+		else if (x.pre_inline()) score[k] = 1;
+	    }
+	    int loop_breaker_index_in_component = argmin(score);
+	    int loop_breaker_index = components[c][loop_breaker_index_in_component];
+
+	    // delete incoming edges to the loop breaker
+	    clear_in_edges(vertices[loop_breaker_index], graph);
+	    changed = true;
+
+	    // mark the variable as a loop breaker
+	    decls[loop_breaker_index].first.is_loop_breaker = true;
+	}
+    }
+
+    // 5. Sort the vertices
+    vector<Vertex> sorted_vertices;
+    topological_sort(graph, std::back_inserter(sorted_vertices));
+
+    vector<int> sorted_indices(sorted_vertices.size());
+    for(int i=0;i<sorted_indices.size();i++)
+	sorted_indices[i] = get(vertex_index,graph,sorted_vertices[i]);
+
+    // 7. Sort the live decls
+    vector<pair<dummy,expression_ref>> decls2;
+    for(int i: sorted_indices)
+	if (alive[i])
+	    decls2.push_back(decls[i]);
+    return decls2;
+}
+
+void export_decls(vector<pair<dummy,expression_ref>>& decls, const expression_ref& exports, const string& name)
+{
+    // Record exports
+    set<string> exported;
+    for(auto& ex: exports.sub())
+	exported.insert(ex.as_<dummy>().name);
+
+    // Mark exported vars as exported
+    for(auto& decl: decls)
+    {
+	if (exported.count(decl.first.name))
+	{
+	    decl.first.is_exported = true;
+	    exported.erase(decl.first.name);
+	}
+    }
+
+    // Check that we don't export things that don't exist
+    if (not exported.empty())
+    {
+	myexception e;
+	e<<"Module '"<<name<<"' exports undefined symbols:\n";
+	for(auto& name: exported)
+	    e<<"  "<<name;
+	throw e;
+    }
+}
+
+pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var_context context)
 {
     if (not E) return {E,{}};
 
@@ -242,136 +403,38 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
     // 5. Let (let {x[i] = F[i]} in body)
     if (is_let_expression(E))
     {
-	using namespace boost;
 	auto decls = let_decls(E);
 	auto body = let_body(E);
-	const int L = decls.size();
-
-	// 0. Initialize the graph and decls
-	Graph graph;
-	vector<adjacency_list<>::vertex_descriptor> vertices;
-	for(int i=0; i<L; i++)
-	    vertices.push_back( add_vertex(graph) );
 
 	// 1. Analyze the body
 	set<dummy> free_vars;
 	tie(body, free_vars) = occurrence_analyzer(body);
 
-	// 2. Mark vars referenced in the body as being alive
-	vector<bool> alive(L,0);
-	vector<int> work;
-	for(int i=0;i<L;i++)
-	{
-	    const auto& x = decls[i].first;
-	    if (free_vars.count(x) and not alive[i])
-	    {
-		alive[i] = true;
-		work.push_back(i);
-	    }
-	}
-
-	// 3. Discover reachable variables, analyze them, and record references between variables
-	for(int k=0;k<work.size();k++)
-	{
-	    int i = work[k];
-	    // 3.1 Analyze the bound statement
-	    set<dummy> free_vars_i;
-	    tie(decls[i].second, free_vars_i) = occurrence_analyzer(decls[i].second);
-
-	    // 3.2 Record occurrences
-	    free_vars = merge_occurrences(free_vars, free_vars_i);
-
-	    // 3.3. Check if other variables j are referenced from the i-th variable.
-	    for(int j=0;j<L;j++)
-	    {
-		// 3.3.1 Check if variable i references variable j
-		auto x_j = decls[j].first;
-		if (free_vars_i.count(x_j))
-		{
-		    // 3.3.2 Add an edge from i -> j meaning "i references j"
-		    boost::add_edge(vertices[i], vertices[j], graph);
-
-		    // 3.3.3 Add variable j to the work list if we haven't put it on the list already
-		    if (not alive[j])
-		    {
-			alive[j] = true;
-			work.push_back(j);
-		    }
-		}
-	    }
-	}
-
-	// 4. Set occurrence info for let vars in the decl, and remove bound vars from free_vars
-	for(int i=0;i<decls.size();i++)
-	{
-	    decls[i].first = remove_var_and_set_occurrence_info(decls[i].first, free_vars);
-
-	    // Variable is alive if and only if the variable is never executed.
-	    assert(alive[i] == (decls[i].first.code_dup != amount_t::None));
-	}
-
-	// 5. Break cycles
-	vector<int> component(L);
-	bool changed = true;
-	while(changed)
-	{
-	    changed = false;
-
-	    // find strongly connected components: every node is reachable from every other node
-	    int num = strong_components(graph, make_iterator_property_map(component.begin(), get(vertex_index, graph)));
-
-	    // find variables in each component
-	    vector<vector<int>> components(num);
-	    for(int i=0;i<L;i++)
-	    {
-		int c = component[i];
-		components[c].push_back(i);
-	    }
-
-	    for(int c=0;c<num and not changed;c++)
-	    {
-		int first = components[c][0];
-
-		// If the component is a single with no loop to itself, then it is fine.
-		if (components[c].size() == 1 and not edge(vertices[first],vertices[first],graph).second) continue;
-
-		vector<int> score(components[c].size());
-		for(int k = 0; k < score.size(); k++)
-		{
-		    int i = components[c][k];
-		    auto x = decls[i].first;
-		    auto F = decls[i].second;
-		    if (is_reglike(F)) score[k] = 4;
-		    else if (F.is_a<constructor>() or F.size() == 0) score[k] = 3;
-		    else if (x.pre_inline()) score[k] = 1;
-		}
-		int loop_breaker_index_in_component = argmin(score);
-		int loop_breaker_index = components[c][loop_breaker_index_in_component];
-
-		// delete incoming edges to the loop breaker
-		clear_in_edges(vertices[loop_breaker_index], graph);
-		changed = true;
-
-		// mark the variable as a loop breaker
-		decls[loop_breaker_index].first.is_loop_breaker = true;
-	    }
-	}
-
-	// 5. Sort the vertices
-	vector<Vertex> sorted_vertices;
-	topological_sort(graph, std::back_inserter(sorted_vertices));
-
-	vector<int> sorted_indices(sorted_vertices.size());
-	for(int i=0;i<sorted_indices.size();i++)
-	    sorted_indices[i] = get(vertex_index,graph,sorted_vertices[i]);
-
-	// 7. Sort the live decls
-	vector<pair<dummy,expression_ref>> decls2;
-	for(int i: sorted_indices)
-	    if (alive[i])
-		decls2.push_back(decls[i]);
+	auto decls2 = occurrence_analyze_decls(decls, free_vars);
 
 	return {let_expression(decls2, body), free_vars};
+    }
+
+    if (is_AST(E,"Module"))
+    {
+	string name;
+	expression_ref exports;
+	expression_ref impdecls;
+	expression_ref topdecls;
+	parse_module(E, name, exports, impdecls, topdecls);
+
+	// Record exports
+	auto decls = parse_decls(topdecls);
+	export_decls(decls, exports, name);
+
+	// Analyze the decls
+	set<dummy> free_vars;
+	auto decls2 = occurrence_analyze_decls(decls, free_vars);
+	topdecls = make_topdecls(decls2);
+
+	auto module = create_module(name, exports, impdecls, topdecls);
+
+	return {module, free_vars};
     }
 
     throw myexception()<<"occurrence_analyzer: I don't recognize expression '"+ E.print() + "'";
@@ -631,7 +694,7 @@ bool do_inline(const simplifier_options& options, const expression_ref& rhs, con
     // OnceSafe
     else if (occur.pre_inline())
     {
-	if (options.pre_inline_unconditionally)
+	if (options.pre_inline_unconditionally and not occur.is_exported)
 	    throw myexception()<<"Trying to inline OnceSafe variable!";
 	else
 	    return true;
@@ -863,6 +926,82 @@ expression_ref rebuild_let(const simplifier_options& options, const vector<pair<
     return let_expression(decls2, E);
 }
 
+
+substitution
+simplify_decls(const simplifier_options& options, vector<pair<dummy, expression_ref>>& orig_decls, const substitution& S, in_scope_set& bound_vars, bool is_top_level)
+{
+    auto S2 = S;
+
+    const int n_decls = orig_decls.size();
+
+    vector<pair<dummy,expression_ref>> decls;
+
+    // 5.1 Rename and bind all variables.
+    //     Binding all variables ensures that we avoid shadowing them, which helps with let-floating.
+    //     Renaming them is necessary to correctly simplify the bodies.
+    for(int i=0;i<n_decls;i++)
+    {
+	dummy x = orig_decls[i].first;
+	dummy x2 = rename_and_bind_var(x, S2, bound_vars);
+	decls.push_back({x2,{}});
+    }
+
+    // 5.2 Iterate over decls, renaming and binding vars as we go, and simplifying them and adding substitutions for unconditional inlines.
+    for(int i=0;i<n_decls;i++)
+    {
+	// If x[i] is not a loop breaker, then x[i] can only BE referenced by LATER E[k] (since loop breakers are later), while
+	//                                     E[i] can only reference EARLIER x[k] and loop breakers.
+	dummy x  = orig_decls[i].first;
+	auto F   = orig_decls[i].second;
+
+	dummy x2 = decls[i].first;
+
+	// 1. Any references to x in F must be to the x bound in this scope.
+	// 2. F can only contain references to x if x is a loop breaker.
+	// 3. If x is a loop breaker, then S2 already contains substitutions for x -> x2 if needed.
+	// 4. Therefore S2 is a good substitution for F.
+	assert(x.is_loop_breaker or not get_free_indices(F).count(x));
+
+	if (x.pre_inline() and options.pre_inline_unconditionally and not x.is_exported)
+	{
+	    S2.erase(x);
+	    S2.insert({x,{F,S2}});
+	}
+	else
+	{
+	    // 5.1.2 Simplify F.
+	    F = simplify(options, F, S2, bound_vars, unknown_context());
+
+	    // Float lets out of decl x = F
+	    if (options.let_float_from_let and is_let_expression(F) and (F.sub()[0].head().is_a<constructor>() and not is_top_level))
+	    {
+		for(auto& decl: strip_let(F))
+		{
+		    bind_var(bound_vars, decl.first, decl.second);
+		    decls.push_back(decl);
+		}
+	    }
+
+	    if (is_trivial(F) and options.post_inline_unconditionally and not x.is_exported)
+	    {
+		S2.erase(x);
+		S2.insert({x,F});
+	    }
+	    else
+	    {
+		decls[i].second = F;
+
+		// Any later occurrences will see the bound value of x[i] when they are simplified.
+		rebind_var(bound_vars, x2, F);
+	    }
+	}
+    }
+    unbind_decls(bound_vars, decls);
+
+    orig_decls = decls;
+    return S2;
+}
+
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
@@ -972,78 +1111,30 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     if (is_let_expression(E))
     {
 	auto body       = let_body(E);
-	auto orig_decls = let_decls(E);
+	auto decls = let_decls(E);
 
-	auto S2 = S;
-
-	const int n_decls = orig_decls.size();
-
-	vector<pair<dummy,expression_ref>> decls;
-
-	// 5.1 Rename and bind all variables.
-	//     Binding all variables ensures that we avoid shadowing them, which helps with let-floating.
-	//     Renaming them is necessary to correctly simplify the bodies.
-	for(int i=0;i<n_decls;i++)
-	{
-	    dummy x = orig_decls[i].first;
-	    dummy x2 = rename_and_bind_var(x, S2, bound_vars);
-	    decls.push_back({x2,{}});
-	}
-
-        // 5.2 Iterate over decls, renaming and binding vars as we go, and simplifying them and adding substitutions for unconditional inlines.
-	for(int i=0;i<n_decls;i++)
-	{
-	    // If x[i] is not a loop breaker, then x[i] can only BE referenced by LATER E[k] (since loop breakers are later), while
-	    //                                     E[i] can only reference EARLIER x[k] and loop breakers.
-	    dummy x  = orig_decls[i].first;
-	    auto F   = orig_decls[i].second;
-
-	    dummy x2 = decls[i].first;
-	    
-	    // 1. Any references to x in F must be to the x bound in this scope.
-	    // 2. F can only contain references to x if x is a loop breaker.
-	    // 3. If x is a loop breaker, then S2 already contains substitutions for x -> x2 if needed.
-	    // 4. Therefore S2 is a good substitution for F.
-	    assert(x.is_loop_breaker or not get_free_indices(F).count(x));
-
-	    if (x.pre_inline() and options.pre_inline_unconditionally)
-	    {
-		S2.erase(x);
-		S2.insert({x,{F,S2}});
-	    }
-	    else
-	    {
-		// 5.1.2 Simplify F.
-		F = simplify(options, F, S2, bound_vars, unknown_context());
-
-		// Float lets out of decl x = F
-		if (options.let_float_from_let and is_let_expression(F) and F.sub()[0].head().is_a<constructor>())
-		{
-		    for(auto& decl: strip_let(F))
-		    {
-			bind_var(bound_vars, decl.first, decl.second);
-			decls.push_back(decl);
-		    }
-		}
-
-		if (is_trivial(F) and options.post_inline_unconditionally)
-		{
-		    S2.erase(x);
-		    S2.insert({x,F});
-		}
-		else
-		{
-		    decls[i].second = F;
-
-		    // Any later occurrences will see the bound value of x[i] when they are simplified.
-		    rebind_var(bound_vars, x2, F);
-		}
-	    }
-	}
-	unbind_decls(bound_vars, decls);
+	auto S2 = simplify_decls(options, decls, S, bound_vars, false);
 
         // 5.2 Simplify the let-body
 	return rebuild_let(options, decls, body, S2, bound_vars);
+    }
+
+
+    if (is_AST(E, "Module"))
+    {
+	string name;
+	expression_ref exports;
+	expression_ref impdecls;
+	expression_ref topdecls;
+	parse_module(E, name, exports, impdecls, topdecls);
+
+	auto decls = parse_decls(topdecls);
+	export_decls(decls, exports, name);
+
+	simplify_decls(options, decls, S, bound_vars,true);
+	topdecls = make_topdecls(decls);
+
+	return create_module(name, exports, impdecls, topdecls);
     }
 
     std::abort();
