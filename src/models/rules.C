@@ -41,7 +41,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"JC","RA[a]","G"}, {"SModel.jukes_cantor", "A"}, {"A", "a", "LAMBDA"}},
     {{"K80","RA[a]","G"}, {"SModel.k80", "kappa", "A"}, {"kappa","Double","~logNormal[log[2],0.25]"}, {"A", "a", "LAMBDA"} },
     {{"F81"}, {}, {"alphabet","Alphabet"}},
-    {{"HKY","EM[a]","G","Nucleotides[a]"}, {"hky","kappa","alphabet"}, {"kappa","Double","~logNormal[log[2],0.25]"}, {"alphabet","a","LAMBDA"}},
+    {{"HKY","EM[a]","G","Nucleotides[a]"}, {"SModel.hky","kappa","alphabet"}, {"kappa","Double","~logNormal[log[2],0.25]"}, {"alphabet","a","LAMBDA"}},
     {{"TN","EM[a]","G"}, {"SModel.tn", "kappaPur", "kappaPyr", "A"}, {"kappaPur","Double","~logNormal[log[2],0.25]"}, {"kappaPyr","Double","~logNormal[log[2],0.25]"}, {"A", "a", "LAMBDA"}},
     {{"GTR","EM[a]"}, {"SModel.gtr_model","S"}, {"S","E","exchange_prior"}},
     {{"exchange_prior","E"}, {"SModel.exchange_model"}},
