@@ -1,0 +1,3 @@
+Test.f = let {#0 = 'y', #4 = 'o', #2 = '!', #7 = [], #3 = #2:#7, #5 = #4:#3, #6 = #0:#5, #8 = Prelude.error #6} in \#1 -> case #1 of {x:xs -> x,[] -> #8}
+Test.g = let {#2 = 10} in \#1 -> let {#3 = Test.f #1} in Prelude.+ #2 #3
+Test.h = let {#0 = 2, #1 = [], #8 = 10, #9 = #0:#1, #3 = Test.f #9} in Prelude.+ #8 #3
