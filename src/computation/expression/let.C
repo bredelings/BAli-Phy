@@ -34,22 +34,45 @@ expression_ref indexed_let_expression(const vector<expression_ref>& bodies, cons
     return E;
 }
 
+
+expression_ref make_decls(const vector<pair<dummy, expression_ref>>& decls)
+{
+    if (decls.empty()) return {};
+
+    expression_ref Decls = AST_node("Decls");
+    for(auto& decl: decls)
+    {
+	expression_ref Decl = AST_node("Decl");
+	Decl = Decl + decl.first + decl.second;
+	Decls = Decls + Decl;
+    }
+    return Decls;
+}
+
+
+expression_ref make_topdecls(const vector<pair<dummy, expression_ref>>& decls)
+{
+    if (decls.empty()) return {};
+
+    expression_ref Decls = AST_node("TopDecls");
+    for(auto& decl: decls)
+    {
+	expression_ref Decl = AST_node("Decl");
+	Decl = Decl + decl.first + decl.second;
+	Decls = Decls + Decl;
+    }
+    return Decls;
+}
+
+
 expression_ref let_expression(const vector<pair<dummy, expression_ref>>& decls, const expression_ref& T)
 {
     if (decls.size() == 0) return T;
 
-    auto Decls = new expression( AST_node("Decls") );
-    for(int i=0;i<decls.size();i++)
-    {
-	auto Decl = new expression( AST_node("Decl") );
-	Decl->sub.push_back(decls[i].first);
-	Decl->sub.push_back(decls[i].second);
-	Decls->sub.push_back(Decl);
-    }
+    auto Decls = make_decls(decls);
 
-    auto E = new expression( let_obj() );
-    E->sub.push_back(Decls);
-    E->sub.push_back(T);
+    expression_ref E = let_obj();
+    E = E + Decls + T;
 
     return E;
 }
@@ -244,6 +267,7 @@ void get_decls(const expression_ref& E, vector<pair<dummy, expression_ref>>& dec
     auto& Decls = E.sub();
     for(int i=0;i<Decls.size();i++)
     {
+	assert(is_AST(Decls[i],"Decl"));
 	auto& Decl = Decls[i].sub();
 	decls.push_back({Decl[0].as_<dummy>(), Decl[1]});
     }
@@ -255,7 +279,7 @@ void get_decls_from_let(const expression_ref& E, vector<pair<dummy, expression_r
     get_decls(E.sub()[0], decls);
 }
 
-vector<pair<dummy, expression_ref>> decls(const expression_ref& E)
+vector<pair<dummy, expression_ref>> parse_decls(const expression_ref& E)
 {
     vector<pair<dummy, expression_ref>> decls;
     get_decls(E, decls);

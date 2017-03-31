@@ -48,7 +48,11 @@ void get_decls_from_let(const expression_ref& E, std::vector<std::pair<dummy, ex
 
 std::vector<std::pair<dummy, expression_ref>> let_decls(const expression_ref& E);
 
-std::vector<std::pair<dummy, expression_ref>> decls(const expression_ref& E);
+std::vector<std::pair<dummy, expression_ref>> parse_decls(const expression_ref& E);
+
+expression_ref make_decls(const std::vector<std::pair<dummy, expression_ref>>&);
+
+expression_ref make_topdecls(const std::vector<std::pair<dummy, expression_ref>>&);
 
 expression_ref let_body(expression_ref E);
 
