@@ -1,0 +1,20 @@
+command: bali-phy --test 5d.fasta --tree=1.tree --smodel=HKY[kappa=2]+F[pi=Freq[A=0.1,C=0.2,T=0.3,G=0.4]] --initial-value Main.mu1=1.0
+
+VERSION: 3.0-alpha1  [simplifier commit 123d47bd]  (Mar 30 2017 23:28:33)
+BUILD: Mar 30 2017 23:28:42
+ARCH: x86_64-pc-linux-gnu
+COMPILER: GCC 7.0.1 20170316 (experimental) [trunk revision 246203]
+FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops  -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing -pipe -O3 -pedantic -I/usr/include/cairo -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng16 -g -Wmisleading-indentation -Wlogical-op
+
+
+#1: subst ~ HKY[2] + F[Freq[0.1,0.2,0.3,0.4]] (1)
+#1: indel ~ RS07[~Laplace[-4,0.707],~Exponential[10]] (1)
+
+    prior = -54.0158031811   prior_A1 = -41.5511068589362    likelihood = -910.294173123957    logp = -964.309976305057    beta = 1
+
+    Heat.beta = 1.000000    Main.mu1 = 1.000000    I1.RS07.logLambda = -2.982538    I1.RS07.meanIndelLength = 5.824922
+
+total likelihood evals = 2
+total calc_root_prob evals = 2
+total branches peeled = 14
+
