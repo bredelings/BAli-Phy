@@ -39,12 +39,13 @@ expression_ref make_decls(const vector<pair<dummy, expression_ref>>& decls)
 {
     if (decls.empty()) return {};
 
-    expression_ref Decls = AST_node("Decls");
+    object_ptr<expression> Decls = new expression(AST_node("Decls"));
     for(auto& decl: decls)
     {
-	expression_ref Decl = AST_node("Decl");
-	Decl = Decl + decl.first + decl.second;
-	Decls = Decls + Decl;
+	object_ptr<expression> Decl = new expression(AST_node("Decl"));
+	Decl->sub.push_back(decl.first);
+	Decl->sub.push_back(decl.second);
+	Decls->sub.push_back(Decl);
     }
     return Decls;
 }
@@ -54,12 +55,13 @@ expression_ref make_topdecls(const vector<pair<dummy, expression_ref>>& decls)
 {
     if (decls.empty()) return {};
 
-    expression_ref Decls = AST_node("TopDecls");
+    object_ptr<expression> Decls = new expression(AST_node("TopDecls"));
     for(auto& decl: decls)
     {
-	expression_ref Decl = AST_node("Decl");
-	Decl = Decl + decl.first + decl.second;
-	Decls = Decls + Decl;
+	object_ptr<expression> Decl = new expression(AST_node("Decl"));
+	Decl->sub.push_back(decl.first);
+	Decl->sub.push_back(decl.second);
+	Decls->sub.push_back(Decl);
     }
     return Decls;
 }
@@ -71,8 +73,9 @@ expression_ref let_expression(const vector<pair<dummy, expression_ref>>& decls, 
 
     auto Decls = make_decls(decls);
 
-    expression_ref E = let_obj();
-    E = E + Decls + T;
+    object_ptr<expression> E = new expression(let_obj());
+    E->sub.push_back(Decls);
+    E->sub.push_back(T);
 
     return E;
 }
