@@ -574,6 +574,13 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
 
     if (topdecls)
 	topdecls = rename_top_level(topdecls, name);
+    // It should be possible to make a simple and cheap renamer rename(body,map<dummy,dummy>,module_name) that
+    //  locates any references to vars in the map and substitutes for them.
+
+    // After that we need to update importing so that we can include the bodies for some of the imported symbols that aren't too large.
+    // Then we will be able to inline $ and . and id from the Prelude.
+
+    // Hopefully we can reimplement let-float in a way that isn't so expensive.. and also speeds things up.
 
     update_function_symbols();
 }
