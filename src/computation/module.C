@@ -739,7 +739,17 @@ bool is_haskell_module_name(const std::string& s)
 
 bool is_qualified_symbol(const string& s)
 {
-    return (get_haskell_identifier_path(s).size() >= 2);
+    if (not s.size()) return false;
+
+    vector<string> path = haskell_name_path(s);
+
+    for(int i=0;i<path.size()-1;i++)
+	if (not is_haskell_conid(path[i]))
+	    throw myexception()<<"Module id component '"<<path[i]<<"' in identifier '"<<s<<"' is not legal!";
+
+    return (path.size() > 1);
+
+    return true;
 }
 
 string get_module_name(const std::string& s)
