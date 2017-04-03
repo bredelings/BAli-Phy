@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo -n "Testing optimizer: "
+SECONDS=0
 PROG=$@
 
 passed=0
@@ -13,4 +15,4 @@ for i in test*.hs ; do
 	let "passed++"
     fi
 done
-echo "$passed tests passed, $failed tests failed."
+echo "$passed tests passed, $failed tests failed. ($SECONDS seconds)"
