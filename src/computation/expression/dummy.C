@@ -197,6 +197,7 @@ bool is_qualified_dummy(const expression_ref& E)
 {
     if (not is_dummy(E)) return false;
     auto& x = E.as_<dummy>();
+    if (x.is_wildcard()) return false;
     if (x.name.empty()) return false;
     return is_qualified_symbol(x.name);
 }
