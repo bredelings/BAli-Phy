@@ -34,6 +34,11 @@ tribool dummy::compare(const Object& o) const
 string dummy::print() const {
     if (is_wildcard())
 	return "_";
+    else if (name == ":" or is_haskell_consym(name))
+    {
+	assert(index == 0);
+	return string("(") + name + ")";
+    }
     else if (name.size() and index == 0)
 	return name;
     else
