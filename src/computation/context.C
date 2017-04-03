@@ -426,7 +426,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 	    assert(loc != identifiers().end());
 	    int R = loc->second;
 
-	    expression_ref F = M.get_function(S.name);
+	    expression_ref F = M.get_symbols().at(S.name).body;
 	    assert(F);
 
 #ifdef DEBUG_OPTIMIZE
