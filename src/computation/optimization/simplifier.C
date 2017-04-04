@@ -165,6 +165,10 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
     }
 
     // 3. Discover reachable variables, analyze them, and record references between variables
+    map<dummy,int> index_for_var;
+    for(int i=0;i<L;i++)
+	index_for_var.insert({decls[i].first,i});
+
     for(int k=0;k<work.size();k++)
     {
 	int i = work[k];
@@ -176,12 +180,13 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 	free_vars = merge_occurrences(free_vars, free_vars_i);
 
 	// 3.3. Check if other variables j are referenced from the i-th variable.
-	for(int j=0;j<L;j++)
+	for(auto& x: free_vars_i)
 	{
-	    // 3.3.1 Check if variable i references variable j
-	    auto x_j = decls[j].first;
-	    if (free_vars_i.count(x_j))
+	    auto it = index_for_var.find(x);
+	    if (it != index_for_var.end())
 	    {
+		int j = it->second;
+
 		// 3.3.2 Add an edge from i -> j meaning "i references j"
 		boost::add_edge(vertices[i], vertices[j], graph);
 
