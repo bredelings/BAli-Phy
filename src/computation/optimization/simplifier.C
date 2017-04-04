@@ -973,7 +973,7 @@ simplify_decls(const simplifier_options& options, vector<pair<dummy, expression_
 	    F = simplify(options, F, S2, bound_vars, unknown_context());
 
 	    // Float lets out of decl x = F
-	    if (options.let_float_from_let and is_let_expression(F) and (F.sub()[0].head().is_a<constructor>() and not is_top_level))
+	    if (options.let_float_from_let and is_let_expression(F) and (F.sub()[0].head().is_a<constructor>() or is_top_level))
 	    {
 		for(auto& decl: strip_let(F))
 		{
