@@ -95,18 +95,28 @@ void add_missing_imports(const module_loader& L, vector<Module>& P)
   
     // 2. Process new modules and 
     for(auto& module: P)
-	if (not module.is_resolved())
+	try {
+	    module.resolve_symbols(L, P);
+	}
+	catch (myexception& e)
 	{
-	    try {
-		module.resolve_symbols(L, P);
-	    }
-	    catch (myexception& e)
-	    {
-		std::ostringstream o;
-		o<<"In module '"<<module.name<<"': ";
-		e.prepend(o.str());
-		throw e;
-	    }
+	    std::ostringstream o;
+	    o<<"In module '"<<module.name<<"': ";
+	    e.prepend(o.str());
+	    throw e;
+	}
+
+    // 3. Process new modules and 
+    for(auto& module: P)
+	try {
+	    module.optimize(L, P);
+	}
+	catch (myexception& e)
+	{
+	    std::ostringstream o;
+	    o<<"In module '"<<module.name<<"': ";
+	    e.prepend(o.str());
+	    throw e;
 	}
 }
 

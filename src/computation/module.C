@@ -540,40 +540,6 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
 	}
     }
 
-    if (topdecls)
-    {
-	vector<expression_ref> new_decls;
-	for(auto& decl: topdecls.sub())
-	{
-	    if (not is_AST(decl,"Decl"))
-		; //new_decls.push_back(decl);
-	    else
-	    {
-		// This won't float things to the top level!
-		auto name = decl.sub()[0].as_<dummy>().name;
-		auto body = decl.sub()[1];
-		body = let_float(body);
-		body = graph_normalize(body);
-
-		new_decls.push_back({AST_node("Decl"),{decl.sub()[0], body}});
-	    }
-	}
-	topdecls = {AST_node("TopDecls"),new_decls};
-
-	if (do_optimize)
-	{
-	    module = create_module(name, exports, impdecls, topdecls);
-
-	    for(int i=0;i<L.max_iterations;i++)
-		module = simplifier(L, module);
-
-	    parse_module(module, name, exports, impdecls, topdecls);
-	}
-
-    }
-
-    if (topdecls)
-	topdecls = rename_top_level(topdecls, name);
     // It should be possible to make a simple and cheap renamer rename(body,map<dummy,dummy>,module_name) that
     //  locates any references to vars in the map and substitutes for them.
 
@@ -582,7 +548,6 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
 
     // Hopefully we can reimplement let-float in a way that isn't so expensive.. and also speeds things up.
 
-    update_function_symbols();
 }
 
 expression_ref func_type(const expression_ref& a, const expression_ref& b)
@@ -625,16 +590,43 @@ void Module::optimize(const module_loader& L, const vector<Module>& P)
     // why do we keep on re-optimizing the same module?
     if (optimized) return;
     optimized = true;
-    for(auto& s: symbols)
+
+    if (topdecls)
     {
-	auto& S = s.second;
+	vector<expression_ref> new_decls;
+	for(auto& decl: topdecls.sub())
+	{
+	    if (not is_AST(decl,"Decl"))
+		; //new_decls.push_back(decl);
+	    else
+	    {
+		// This won't float things to the top level!
+		auto name = decl.sub()[0].as_<dummy>().name;
+		auto body = decl.sub()[1];
+		body = let_float(body);
+		body = graph_normalize(body);
+
+		new_decls.push_back({AST_node("Decl"),{decl.sub()[0], body}});
+	    }
+	}
+	topdecls = {AST_node("TopDecls"),new_decls};
+
 	if (do_optimize)
 	{
-	    S.body = graph_normalize(S.body);
+	    module = create_module(name, exports, impdecls, topdecls);
+
 	    for(int i=0;i<L.max_iterations;i++)
-		S.body = simplifier(L,S.body);
+		module = simplifier(L, module);
+
+	    parse_module(module, name, exports, impdecls, topdecls);
 	}
+
     }
+
+    if (topdecls)
+	topdecls = rename_top_level(topdecls, name);
+
+    update_function_symbols();
 }
 
 pair<string,expression_ref> parse_builtin(const expression_ref& decl, const module_loader& L)
