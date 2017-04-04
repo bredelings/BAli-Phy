@@ -347,6 +347,8 @@ expression_ref translate_funlhs(const expression_ref& E)
 	// Let's just ignore pat elements here -- they can be fixed up by desugar, I think.
 
 	// TODO: We want to look at the infix patterns here to make sure that operator parses as the top-level element.
+	//       In cases like x:y +++ z the parser should identify that +++ is the function because it isn't a constructor.
+	//       What if the constructor is an imported symbol?  Then we need to export +++ before we can check the infix parsing.
     
 	return {AST_node("funlhs1"),{E.sub()[1],E.sub()[0],E.sub()[2]}};
     }
@@ -439,6 +441,9 @@ expression_ref get_fresh_id(const string& s, const expression_ref& /* E */)
  * We probably want to move away from using dummies to represent patterns.
  * - Dummies can't represent e.g. irrefutable patterns.
  */
+
+// What would be involved in moving the renamer to a kind of phase 2?
+// How do we get the exported symbols before we do the desugaring that depends on imports?
 
 expression_ref desugar(const Module& m, const expression_ref& E, const set<string>& bound)
 {
