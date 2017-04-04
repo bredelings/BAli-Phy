@@ -1,4 +1,5 @@
 #include <set>
+#include <boost/optional.hpp>
 #include "computation/module.H"
 #include "myexception.H"
 #include "computation/graph_register.H"
@@ -20,6 +21,7 @@
 using std::pair;
 using std::map;
 using std::set;
+using std::multiset;
 using std::string;
 using std::vector;
 
@@ -367,6 +369,152 @@ expression_ref create_module(const string& name, const expression_ref& exports, 
     return module;
 }
 
+expression_ref rename(const expression_ref& E, const map<dummy,dummy>& substitution, multiset<dummy>& bound)
+{
+    if (not E) return E;
+
+    // 1. Var (x)
+    if (E.is_a<dummy>())
+    {
+	auto& x = E.as_<dummy>();
+	// 1.1 If there's a substitution x -> E
+	if (not bound.count(x) and substitution.count(x))
+	    return substitution.at(x);
+	else
+	    return E;
+    }
+
+    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+    if (not E.size()) return E;
+
+    // 2. Lambda (E = \x -> body)
+    if (E.head().is_a<lambda>())
+    {
+	assert(E.size() == 2);
+
+	auto x = E.sub()[0].as_<dummy>();
+	auto body = E.sub()[1];
+
+	bound.insert(x);
+	body = rename(body, substitution, bound);
+	bound.erase(x);
+
+	return lambda_quantify(x,body);
+    }
+
+    // 6. Case
+    expression_ref object;
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    if (parse_case_expression(E, object, patterns, bodies))
+    {
+	// Analyze the object
+	object = rename(object, substitution, bound);
+	for(int i=0; i<patterns.size(); i++)
+	{
+	    for(int j=0;j<patterns[i].size(); j++)
+	    {
+		auto& x = patterns[i].sub()[j].as_<dummy>();
+		if (not x.is_wildcard())
+		    bound.insert(x);
+	    }
+
+	    bodies[i] = rename(bodies[i], substitution, bound);
+
+	    for(int j=0;j<patterns[i].size(); j++)
+	    {
+		auto& x = patterns[i].sub()[j].as_<dummy>();
+		if (not x.is_wildcard())
+		    bound.erase(x);
+	    }
+	}
+	return make_case_expression(object, patterns, bodies);
+    }
+
+    // 4. Constructor or Operation or Apply
+    if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    {
+	object_ptr<expression> E2 = E.as_expression().clone();
+	for(int i=0;i<E.size();i++)
+	    E2->sub[i] = rename(E2->sub[i], substitution, bound);
+	return E2;
+    }
+
+    // 5. Let (let {x[i] = F[i]} in body)
+    if (is_let_expression(E))
+    {
+	auto body  = let_body(E);
+	auto decls = let_decls(E);
+
+	for(auto& decl: decls)
+	    bound.insert(decl.first);
+
+	body = rename(body, substitution, bound);
+
+	for(auto& decl: decls)
+	    decl.second = rename(decl.second, substitution, bound);
+
+	for(auto& decl: decls)
+	    bound.erase(decl.first);
+
+        // 5.2 Simplify the let-body
+	return let_expression(decls, body);
+    }
+
+    std::abort();
+    return E;
+}
+
+
+boost::optional<string> get_new_name(const dummy& x, const string& module_name)
+{
+    if (is_qualified_dummy(x)) return boost::none;
+
+    return module_name + "." + x.name + "#" + convertToString(x.index);
+}
+
+expression_ref rename_top_level(const expression_ref& decls, const string& module_name)
+{
+    assert(is_AST(decls, "TopDecls"));
+
+    map<dummy, dummy> substitution;
+
+    set<dummy> top_level_vars;
+
+    vector<pair<dummy,expression_ref>> decls2;
+
+    for(int i = 0; i< decls.size(); i++)
+    {
+	auto x = decls.sub()[i].sub()[0].as_<dummy>();
+	dummy x2 = x;
+	assert(not substitution.count(x));
+
+	if (auto new_name = get_new_name(x, module_name))
+	{
+	    x2 = dummy(*new_name);
+	    assert(not substitution.count(x2.name));
+	    substitution.insert({x,x2});
+	}
+
+	decls2.push_back({x2,decls.sub()[i].sub()[1]});
+
+	// None of the renamed vars should have the same name;
+	assert(not top_level_vars.count(x2));
+	top_level_vars.insert(x2);
+    }
+
+    multiset<dummy> bound;
+    for(auto& decl: decls2)
+    {
+	assert(bound.empty());
+	decl.second = rename(decl.second, substitution, bound);
+    }
+
+    assert(bound.empty());
+
+    return make_topdecls(decls2);
+}
+
 void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& P)
 {
     if (resolved) return;
@@ -423,6 +571,9 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
 	}
 
     }
+
+    if (topdecls)
+	topdecls = rename_top_level(topdecls, name);
 
     update_function_symbols();
 }
