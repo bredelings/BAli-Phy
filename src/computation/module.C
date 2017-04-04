@@ -277,14 +277,19 @@ void Module::update_function_symbols()
     for(const auto& decl: topdecls.sub())
 	if (is_AST(decl,"Decl"))
 	{
-	    auto var = decl.sub()[0];
-	    string name = var.as_<dummy>().name;
+	    auto& var = decl.sub()[0];
+	    auto& body = decl.sub()[1];
+	    auto& name = var.as_<dummy>().name;
 	    if (not symbols.count(name))
 	    {
-		def_function(name, decl.sub()[1]);
+		symbol_info si;
+		si.name = name;
+		si.body = body;
+		si.scope = local_scope;
+		symbols.insert({name, si});
 	    }
 	    else
-		symbols.at(var.as_<dummy>().name).body = decl.sub()[1];
+		symbols.at(name).body = body;
 	}
 }
 
