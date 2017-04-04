@@ -614,6 +614,21 @@ vector<string> haskell_name_path(const std::string& s)
 	return split(s,'.');
 }
 
+bool is_valid_identifier(const string& s)
+{
+    if (is_haskell_varid(s)) return true;
+
+    if (is_haskell_conid(s)) return true;
+
+    if (is_haskell_varsym(s)) return true;
+
+    if (is_haskell_consym(s)) return true;
+
+    if (is_haskell_builtin_con_name(s)) return true;
+
+    return false;
+}
+
 vector<string> get_haskell_identifier_path(const std::string& s)
 {
     if (not s.size())
@@ -624,13 +639,6 @@ vector<string> get_haskell_identifier_path(const std::string& s)
     for(int i=0;i<path.size()-1;i++)
 	if (not is_haskell_conid(path[i]))
 	    throw myexception()<<"Module id component '"<<path[i]<<"' in identifier '"<<s<<"' is not legal!";
-
-    if (not is_haskell_varid(path.back()) and
-	not is_haskell_conid(path.back()) and
-	not is_haskell_varsym(path.back()) and
-	not is_haskell_consym(path.back()) and
-	not is_haskell_builtin_con_name(path.back()))
-	throw myexception()<<"Unqualified name '"<<path.back()<<"' in identifier '"<<s<<"' is not legal!";
 
     return path;
 }
@@ -739,17 +747,7 @@ bool is_haskell_module_name(const std::string& s)
 
 bool is_qualified_symbol(const string& s)
 {
-    if (not s.size()) return false;
-
-    vector<string> path = haskell_name_path(s);
-
-    for(int i=0;i<path.size()-1;i++)
-	if (not is_haskell_conid(path[i]))
-	    throw myexception()<<"Module id component '"<<path[i]<<"' in identifier '"<<s<<"' is not legal!";
-
-    return (path.size() > 1);
-
-    return true;
+    return (get_haskell_identifier_path(s).size() >= 2);
 }
 
 string get_module_name(const std::string& s)
