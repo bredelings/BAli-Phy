@@ -197,6 +197,8 @@ void Module::import_module(const Module& M2, const string& modid, bool qualified
 {
     assert(modid != name);
 
+    // Right now 'exports' only has functions, not data types or constructors
+
     for(const auto& p: M2.symbols)
     {
 	const symbol_info& S = p.second;
