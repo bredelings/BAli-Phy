@@ -47,12 +47,12 @@ string dummy::print() const {
 
 bool dummy::operator<(const dummy& D) const 
 {
+    if (index < D.index) return true;
+    if (index > D.index) return false;
+
     int cmp = name.compare(D.name);
 
-    if (cmp < 0) return false;
-    if (cmp > 0) return true;
-
-    return index < D.index;
+    return (cmp < 0);
 }
 
 std::set<dummy> get_free_indices(const expression_ref& E);
