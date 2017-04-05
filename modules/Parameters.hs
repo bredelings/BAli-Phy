@@ -1,7 +1,6 @@
 module Parameters where  
 {
 import Range;
-import Distributions;
 
 builtin builtin_set_modifiable_value 3 "set_modifiable_value" "Modifiables";
 builtin is_changeable 1 "is_changeable" "Modifiables";
@@ -32,8 +31,6 @@ new_modifiable_list (h:t) = do { m <- h;
                                  ms <- new_modifiable_list t; 
                                  return (m:ms) 
                                };
-
-structure_for_dist = sample' [] True;
 
 set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v;
 
