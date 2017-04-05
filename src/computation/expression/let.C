@@ -266,6 +266,8 @@ expression_ref unlet(const expression_ref& E)
 
 void get_decls(const expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
 {
+    if (not E) return;
+
     assert(is_AST(E,"Decls") or is_AST(E,"TopDecls"));
     auto& Decls = E.sub();
     for(int i=0;i<Decls.size();i++)
