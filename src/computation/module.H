@@ -59,6 +59,8 @@ expression_ref create_module(const std::string& name, const expression_ref& expo
 
 class module_loader;
 
+class Program;
+
 class Module
 {
     std::map<std::string, symbol_info> symbols;
@@ -133,19 +135,19 @@ public:
 
     void import_module(const Module& M2, const std::string&, bool qualified);
 
-    void perform_imports(const std::vector<Module>&);
+    void perform_imports(const Program&);
 
-    void desugar(const std::vector<Module>&);
+    void desugar(const Program&);
 
-    void get_small_decls(const std::vector<Module>&);
+    void get_small_decls(const Program&);
 
     void update_function_symbols();
 
-    void resolve_symbols(const module_loader& L, const std::vector<Module>&);
+    void resolve_symbols(const Program&);
 
-    void get_types(const std::vector<Module>&);
+    void get_types(const Program&);
 
-    void optimize(const module_loader&, const std::vector<Module>&);
+    void optimize(const Program&);
 
     void load_builtins(const module_loader&);
 
@@ -170,5 +172,5 @@ public:
 
 std::ostream& operator<<(std::ostream&, const Module&);
 
-expression_ref resolve_refs(const std::vector<Module>&, const expression_ref&);
+expression_ref resolve_refs(const Program&, const expression_ref&);
 #endif

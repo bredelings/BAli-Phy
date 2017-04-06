@@ -366,7 +366,7 @@ void context::show_graph() const
 
 context& context::operator+=(const string& module_name)
 {
-    if (not contains_module(get_Program(), module_name))
+    if (not get_Program().contains_module(module_name))
 	(*this) += get_Program().get_module_loader().load_module(module_name);
 
     return *this;
@@ -385,7 +385,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
     // 2. Give each identifier a pointer to an unused location; define parameter bodies.
     for(const auto& name: module_names)
     {
-	const Module& M = get_module(get_Program(), name);
+	const Module& M = get_Program().get_module(name);
 
 	for(const auto& s: M.get_symbols())
 	{
@@ -406,7 +406,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
     // 3. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
     for(const auto& name: module_names)
     {
-	const Module& M = get_module(get_Program(), name);
+	const Module& M = get_Program().get_module(name);
 
 	for(const auto& s: M.get_symbols())
 	{

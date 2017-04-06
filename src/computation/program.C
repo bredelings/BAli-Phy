@@ -12,7 +12,11 @@ using std::pair;
 using std::map;
 using std::string;
 
-const module_loader& Program::get_module_loader()
+      vector<Module>& Program::modules()       {return *this;}
+
+const vector<Module>& Program::modules() const {return *this;}
+
+const module_loader& Program::get_module_loader() const
 {
     return *loader;
 }
@@ -21,25 +25,25 @@ Program::Program(const std::shared_ptr<module_loader>& L)
     :loader(L)
 {}
 
-bool contains_module(const vector<Module>& P, const string& module_name)
+int Program::find_module(const string& module_name) const
 {
-    return find_module(P,module_name) != -1;
-}
-
-int find_module(const vector<Module>& P, const string& module_name)
-{
-    for(int i=0;i<P.size();i++)
-	if (P[i].name == module_name)
+    for(int i=0;i<modules().size();i++)
+	if (modules()[i].name == module_name)
 	    return i;
     return -1;
 }
 
-const Module& get_module(const vector<Module>& P, const string& module_name)
+bool Program::contains_module(const string& module_name) const
 {
-    int index = find_module(P,module_name);
+    return find_module(module_name) != -1;
+}
+
+const Module& Program::get_module(const string& module_name) const
+{
+    int index = find_module(module_name);
     if (index == -1)
 	throw myexception()<<"Progam does not contain module '"<<module_name<<"'";
-    return P[index];
+    return modules()[index];
 }
 
 vector<string> module_names(const vector<Module>& P)
@@ -70,19 +74,6 @@ static int count_module(const vector<Module>& P,const string& module_name)
 	if (module.name == module_name)
 	    count++;
     return count;
-}
-
-set<string> unresolved_imports(const vector<Module>& P)
-{
-    set<string> modules_to_add;
-
-    // Add dependencies on modules
-    for(const auto& module: P)
-	for(const string& module_name: module.dependencies())
-	    if (not contains_module(P, module_name))
-		modules_to_add.insert(module_name);
-
-    return modules_to_add;
 }
 
 #include <boost/graph/graph_traits.hpp>
@@ -151,28 +142,28 @@ vector<string> sort_modules_by_dependencies(const module_loader& L, vector<strin
     return new_module_names2;
 }
 
-void check_dependencies(const module_loader& L, std::vector<Module>& P)
+void Program::check_dependencies()
 {
-    for(int i=0;i<P.size();i++)
+    for(int i=0;i<modules().size();i++)
     {
-	auto& M = P[i];
+	auto& M = modules()[i];
 	for(auto& name: M.dependencies())
 	{
-	    int index = find_module(P, name);
+	    int index = find_module(name);
 	    assert(index != -1);
 	    assert(index < i);
 	}
     }
 }
 
-void desugar_and_optimize(const module_loader& L, vector<Module>& P)
+void Program::desugar_and_optimize()
 {
-    check_dependencies(L, P);
+    check_dependencies();
 
     // 2. Load missing modules, desugar, resolve names
-    for(auto& module: P)
+    for(auto& module: modules())
 	try {
-	    module.resolve_symbols(L, P);
+	    module.resolve_symbols(*this);
 	}
 	catch (myexception& e)
 	{
@@ -183,9 +174,9 @@ void desugar_and_optimize(const module_loader& L, vector<Module>& P)
 	}
 
     // 3. Load small declarations
-    for(auto& module: P)
+    for(auto& module: modules())
 	try {
-	    module.get_small_decls(P);
+	    module.get_small_decls(*this);
 	}
 	catch (myexception& e)
 	{
@@ -196,9 +187,9 @@ void desugar_and_optimize(const module_loader& L, vector<Module>& P)
 	}
 
     // 4. Optimize
-    for(auto& module: P)
+    for(auto& module: modules())
 	try {
-	    module.optimize(L, P);
+	    module.optimize(*this);
 	}
 	catch (myexception& e)
 	{
@@ -245,13 +236,13 @@ void Program::add(const std::string& name)
 
     for(auto& name: new_names2)
     {
-	check_dependencies(*loader, *this);
-	push_back(loader->load_module(name));
-	check_dependencies(*loader, *this);
+	check_dependencies();
+	modules().push_back(loader->load_module(name));
+	check_dependencies();
     }
 
     // 4. Desugar and optimize modules
-    desugar_and_optimize(*loader, *this);
+    desugar_and_optimize();
 }
 
 void Program::add(const vector<string>& module_names)
@@ -272,20 +263,20 @@ void Program::add(const Module& M)
 	add(name);
 
     // 1. Check that the program doesn't already contain this module name.
-    if (contains_module(*this, M.name))
+    if (contains_module(M.name))
 	throw myexception()<<"Trying to add duplicate module '"<<M.name<<"' to program "<<module_names_path(*this);
 
     // 2. Actually add the module.
-    push_back( M );
+    modules().push_back( M );
 
 #ifndef NDEBUG
     // 3. Assert that every module exists only once in the list.
-    for(const auto& module: *this)
+    for(const auto& module: modules())
 	assert(count_module(*this, module.name) == 1);
 #endif
 
     // 4. Import any modules that are (transitively) implied by the ones we just loaded.
-    desugar_and_optimize(*loader, *this);
+    desugar_and_optimize();
 }
 
 bool is_declared(const vector<Module>& modules, const string& qvar)

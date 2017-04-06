@@ -503,8 +503,7 @@ int main(int argc,char* argv[])
 
 	    Program P(L);
 	    P.add(M);
-	    desugar_and_optimize(*L, P);
-	    auto& M2 = get_module(P, M.name);
+	    auto& M2 = P.get_module(M.name);
 	    for(const auto& s: M2.get_symbols())
 	    {
 		const auto& S = s.second;

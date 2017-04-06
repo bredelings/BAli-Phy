@@ -57,7 +57,7 @@ bool operator!=(const symbol_info&S1, const symbol_info& S2)
     return not (S1 == S2);
 }
 
-symbol_info lookup_symbol(const string& name, const vector<Module>& P);
+symbol_info lookup_symbol(const string& name, const Program& P);
 
 bool Module::symbol_exists(const string& name) const
 {
@@ -249,7 +249,7 @@ set<string> Module::dependencies() const
     return imported_modules(impdecls,name);
 }
 
-void Module::perform_imports(const std::vector<Module>& P)
+void Module::perform_imports(const Program& P)
 {
     bool saw_Prelude = false;
     if (impdecls)
@@ -259,7 +259,7 @@ void Module::perform_imports(const std::vector<Module>& P)
 
 	    string imp_name = get_imported_module_name(impdecl);
       
-	    const auto&	M = get_module(P, imp_name);
+	    const auto&	M = P.get_module(imp_name);
 
 	    import_module(M, imp_name, imp_qualified);
 	    if (imp_name == "Prelude")
@@ -269,7 +269,7 @@ void Module::perform_imports(const std::vector<Module>& P)
     // Import the Prelude if it wasn't explicitly mentioned in the import list.
     if (not saw_Prelude and name != "Prelude")
     {
-	auto& M = get_module(P, "Prelude");
+	auto& M = P.get_module("Prelude");
 	import_module(M, "Prelude", false);
     }
 }
@@ -303,7 +303,7 @@ void Module::update_function_symbols()
 	}
 }
 
-void Module::desugar(const std::vector<Module>& P)
+void Module::desugar(const Program&)
 {
     if (not topdecls) return;
 
@@ -322,7 +322,7 @@ void Module::desugar(const std::vector<Module>& P)
 
 int nodes_size(const expression_ref& E);
 
-void Module::get_small_decls(const std::vector<Module>& P)
+void Module::get_small_decls(const Program& P)
 {
     if (not topdecls) return;
 
@@ -331,7 +331,7 @@ void Module::get_small_decls(const std::vector<Module>& P)
     // Collect small decls from imported modules;
     for(auto& imp_mod_name: dependencies())
     {
-	auto& M = get_module(P, imp_mod_name);
+	auto& M = P.get_module(imp_mod_name);
 	small_decls.insert(M.small_decls.begin(), M.small_decls.end());
     }
 
@@ -560,7 +560,7 @@ expression_ref rename_top_level(const expression_ref& decls, const string& modul
     return make_topdecls(decls2);
 }
 
-void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& P)
+void Module::resolve_symbols(const Program& P)
 {
     if (resolved) return;
     resolved = true;
@@ -569,7 +569,7 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
 
     desugar(P); // fixme - separate renaming from desugaring -- move it after load_builtins.
 
-    load_builtins(L);
+    load_builtins(P.get_module_loader());
 
     get_types(P);
 
@@ -611,7 +611,7 @@ expression_ref func_type(const expression_ref& a, const expression_ref& b)
     return Arrow+a+b;
 }
 
-void Module::get_types(const vector<Module>& P)
+void Module::get_types(const Program& P)
 {
     expression_ref Star = constructor("*",0);
     //  std::cerr<<func_type(func_type(Star,Star),Star)<<"\n";
@@ -640,7 +640,7 @@ int nodes_size(const expression_ref& E)
     return total;
 }
 
-void Module::optimize(const module_loader& L, const vector<Module>& P)
+void Module::optimize(const Program& P)
 {
     // why do we keep on re-optimizing the same module?
     if (optimized) return;
@@ -670,8 +670,8 @@ void Module::optimize(const module_loader& L, const vector<Module>& P)
 	{
 	    module = create_module(name, exports, impdecls, topdecls);
 
-	    for(int i=0;i<L.max_iterations;i++)
-		module = simplifier(L, module);
+	    for(int i=0;i<P.get_module_loader().max_iterations;i++)
+		module = simplifier(P.get_module_loader(), module);
 
 	    parse_module(module, name, exports, impdecls, topdecls);
 	}
@@ -1268,7 +1268,7 @@ std::ostream& operator<<(std::ostream& o, const Module& D)
     return o;
 }
 
-symbol_info lookup_symbol(const string& name, const vector<Module>& P)
+symbol_info lookup_symbol(const string& name, const Program& P)
 {
     if (is_haskell_builtin_con_name(name))
 	return Module::lookup_builtin_symbol(name);
