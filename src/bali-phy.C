@@ -501,7 +501,8 @@ int main(int argc,char* argv[])
 	    string filename = args["test-module"].as<string>();
 	    Module M ( L.read_module_from_file(filename) );
 
-	    vector<Module> P = {M};
+	    vector<Module> P = {};
+	    add(L, P, M);
 	    add_missing_imports(L, P);
 	    auto& M2 = get_module(P, M.name);
 	    for(const auto& s: M2.get_symbols())
