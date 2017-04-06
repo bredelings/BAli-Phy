@@ -528,12 +528,22 @@ void Module::resolve_symbols(const module_loader& L, const std::vector<Module>& 
 
     get_types(P);
 
+    // Get rid of declarations that are not Decl
+    if (topdecls)
+    {
+	vector<expression_ref> decls;
+	for(auto& decl: topdecls.sub())
+	    if (is_AST(decl,"Decl"))
+		decls.push_back(decl);
+	topdecls = {AST_node("TopDecls"),decls};
+    }
+
+    // Get exports
     if (topdecls)
     {
 	exports = AST_node("Exports");
 	for(auto& decl: topdecls.sub())
 	{
-	    if (not is_AST(decl,"Decl")) continue;
 	    auto x = decl.sub()[0].as_<dummy>();
 	    assert(is_qualified_dummy(x));
 	    exports = exports + x;
