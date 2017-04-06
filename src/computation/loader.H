@@ -10,19 +10,19 @@
 
 class module_loader: public simplifier_options
 {
-  mutable std::map<std::string, expression_ref> modules;
+    mutable std::map<std::string, expression_ref> modules;
 public:
-  std::vector<std::string> plugins_path;
+    std::vector<std::string> plugins_path;
 
-  bool try_add_plugin_path(const std::string& path);
+    bool try_add_plugin_path(const std::string& path);
   
-  std::string find_module(const std::string& modid) const;
-  std::string find_plugin(const std::string& plugin_name) const;
-  /// Load the module file from disk.
-  expression_ref read_module_from_file(const std::string&) const;
-  /// Add the hard-coded elements to the module.
-  Module load_module_from_file(const std::string&) const;
-  Module load_module(const std::string&) const;
+    std::string find_module(const std::string& modid) const;
+    std::string find_plugin(const std::string& plugin_name) const;
+    /// Load the module file from disk.
+    expression_ref read_module_from_file(const std::string&) const;
+    /// Add the hard-coded elements to the module.
+    Module load_module_from_file(const std::string&) const;
+    Module load_module(const std::string&) const;
 };
 
 std::vector<Module> load_modules(const module_loader&, const std::vector<std::string>&);
