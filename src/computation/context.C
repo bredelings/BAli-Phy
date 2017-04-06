@@ -367,7 +367,7 @@ void context::show_graph() const
 context& context::operator+=(const string& module_name)
 {
     if (not get_Program().contains_module(module_name))
-	(*this) += get_Program().get_module_loader().load_module(module_name);
+	(*this) += get_Program().get_module_loader()->load_module(module_name);
 
     return *this;
 }
@@ -457,15 +457,6 @@ context& context::operator+=(const Module& M)
     return *this;
 }
 
-// \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
-context& context::operator+=(const vector<Module>& Ms)
-{
-    for(const auto& M: Ms)
-	(*this) += M;
-
-    return *this;
-}
-
 context& context::operator=(const context& C)
 {
     total_create_context1++;
@@ -478,27 +469,18 @@ context& context::operator=(const context& C)
     return *this;
 }
 
-context::context(const std::shared_ptr<module_loader>& L)
-    :context(L, vector<Module>{})
-{ }
-
-context::context(const std::shared_ptr<module_loader>& L, const vector<Module>& Ps)
-    :memory_(new reg_heap(L)),
+context::context(const Program& P)
+    :memory_(new reg_heap(P.get_module_loader())),
      context_index(memory_->get_unused_context())
 {
-    (*this) += "Prelude";
-    (*this) += "Parameters";
-    (*this) += "Distributions";
-    (*this) += Ps;
+    for(auto& M: P.modules())
+	(*this) += M;
+
+    // For Prelude.unsafePerformIO
+    if (not P.size())
+	(*this) += "Prelude";
 
     perform_io_head = add_compute_expression(dummy("Prelude.unsafePerformIO"));
-}
-
-context::context(const std::shared_ptr<module_loader>& L, const vector<string>& module_names)
-    :context(L)
-{
-    for(const auto& name: module_names)
-	(*this) += name;
 }
 
 context::context(const context& C)

@@ -569,7 +569,7 @@ void Module::resolve_symbols(const Program& P)
 
     desugar(P); // fixme - separate renaming from desugaring -- move it after load_builtins.
 
-    load_builtins(P.get_module_loader());
+    load_builtins(*P.get_module_loader());
 
     get_types(P);
 
@@ -670,8 +670,8 @@ void Module::optimize(const Program& P)
 	{
 	    module = create_module(name, exports, impdecls, topdecls);
 
-	    for(int i=0;i<P.get_module_loader().max_iterations;i++)
-		module = simplifier(P.get_module_loader(), module);
+	    for(int i=0;i<P.get_module_loader()->max_iterations;i++)
+		module = simplifier(*P.get_module_loader(), module);
 
 	    parse_module(module, name, exports, impdecls, topdecls);
 	}

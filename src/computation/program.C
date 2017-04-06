@@ -16,9 +16,9 @@ using std::string;
 
 const vector<Module>& Program::modules() const {return *this;}
 
-const module_loader& Program::get_module_loader() const
+const std::shared_ptr<module_loader>& Program::get_module_loader() const
 {
-    return *loader;
+    return loader;
 }
 
 Program::Program(const std::shared_ptr<module_loader>& L)

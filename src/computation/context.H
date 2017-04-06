@@ -202,11 +202,7 @@ public:
 
     context(const context&);
 
-    context(const std::shared_ptr<module_loader>&);
-
-    context(const std::shared_ptr<module_loader>&, const std::vector<Module>& P);
-
-    context(const std::shared_ptr<module_loader>&, const std::vector<std::string>& module_names);
+    context(const Program& P);
 
     ~context();
 };
