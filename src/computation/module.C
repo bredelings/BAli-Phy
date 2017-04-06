@@ -281,18 +281,22 @@ void Module::update_function_symbols()
 	{
 	    auto& var = decl.sub()[0];
 	    auto& body = decl.sub()[1];
-	    auto& name = var.as_<dummy>().name;
-	    if (not symbols.count(name))
+	    auto& x = var.as_<dummy>();
+	    assert(is_qualified_symbol(x.name));
+
+	    if (name != get_module_name(x.name)) continue;
+
+	    if (not symbols.count(x.name))
 	    {
 		symbol_info si;
-		si.name = name;
+		si.name = x.name;
 		si.body = body;
 		si.scope = local_scope;
 		si.symbol_type = variable_symbol;
-		symbols.insert({name, si});
+		symbols.insert({x.name, si});
 	    }
 	    else
-		symbols.at(name).body = body;
+		symbols.at(x.name).body = body;
 	}
 }
 
