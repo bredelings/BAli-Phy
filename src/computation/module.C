@@ -229,11 +229,11 @@ string get_imported_module_name(const expression_ref& impdecl)
     return impdecl.sub()[i].as_<String>();
 }
 
-std::set<std::string> Module::dependencies() const
+set<string> imported_modules(const expression_ref& impdecls, const string& this_module_name)
 {
     set<string> module_names;
 
-    if (name != "Prelude")
+    if (this_module_name != "Prelude")
 	module_names.insert("Prelude");
 
     if (not impdecls) return module_names;
@@ -242,6 +242,11 @@ std::set<std::string> Module::dependencies() const
 	module_names.insert(get_imported_module_name(impdecl));
 
     return module_names;
+}
+
+set<string> Module::dependencies() const
+{
+    return imported_modules(impdecls,name);
 }
 
 void Module::perform_imports(const std::vector<Module>& P)
