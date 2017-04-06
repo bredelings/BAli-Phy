@@ -76,21 +76,91 @@ set<string> unresolved_imports(const vector<Module>& P)
     return modules_to_add;
 }
 
-void add_missing_imports(const module_loader& L, vector<Module>& P)
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/topological_sort.hpp>
+#include <boost/graph/strong_components.hpp>
+
+vector<string> sort_modules_by_dependencies(const module_loader& L, vector<string>& new_module_names)
 {
-    // 1. Perform a closure over missing modules.
-    std::set<string> modules_to_add;
+    using namespace boost;
 
-    do
+    typedef adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph;
+    typedef graph_traits<Graph>::vertex_descriptor Vertex;
+
+    // Construct the dependency graph.  (i,j) means that i imports j
+    Graph graph;
+    vector<adjacency_list<>::vertex_descriptor> vertices;
+    for(int i=0; i<new_module_names.size(); i++)
+	vertices.push_back( add_vertex(graph) );
+
+    for(int i=0;i<new_module_names.size();i++)
     {
-	for(const string& module_name: modules_to_add)
-	    P.push_back( L.load_module(module_name) );
+	auto& name = new_module_names[i];
+	for(auto& imp_name: L.load_module(name).dependencies())
+	{
+	    int j = find_index(new_module_names, imp_name);
+	    if (j != -1)
+		boost::add_edge(vertices[i], vertices[j], graph);
+	}
+    }
 
-	modules_to_add = unresolved_imports(P);
-    } 
-    while (not modules_to_add.empty());
-  
-    // 2. Process new modules and 
+    // Find connected components
+    vector<int> component(new_module_names.size());
+    int num = strong_components(graph, make_iterator_property_map(component.begin(), get(vertex_index, graph)));
+    vector<vector<int>> components(num);
+    for(int i=0;i<new_module_names.size();i++)
+    {
+	int c = component[i];
+	components[c].push_back(i);
+    }
+
+    // Check for cyclic module dependencies
+    for(auto& vs: components)
+    {
+	if (vs.size() == 1) continue;
+
+	myexception e;
+	e<<"Cycle in module dependencies:";
+	for(auto& m: vs)
+	    e<<" "<<new_module_names[m];
+	throw e;
+    }
+
+    // 5. Sort the vertices
+    vector<Vertex> sorted_vertices;
+    topological_sort(graph, std::back_inserter(sorted_vertices));
+
+    // 6. Make a program in the right order
+    vector<string> new_module_names2;
+    for(int i=0;i<new_module_names.size();i++)
+    {
+	int j = get(vertex_index,graph,sorted_vertices[i]);
+	new_module_names2.push_back(new_module_names[j]);
+    }
+
+    return new_module_names2;
+}
+
+void check_dependencies(const module_loader& L, std::vector<Module>& P)
+{
+    for(int i=0;i<P.size();i++)
+    {
+	auto& M = P[i];
+	for(auto& name: M.dependencies())
+	{
+	    int index = find_module(P, name);
+	    assert(index != -1);
+	    assert(index < i);
+	}
+    }
+}
+
+void desugar_and_optimize(const module_loader& L, vector<Module>& P)
+{
+    check_dependencies(L, P);
+
+    // 2. Load missing modules, desugar, resolve names
     for(auto& module: P)
 	try {
 	    module.resolve_symbols(L, P);
@@ -117,10 +187,67 @@ void add_missing_imports(const module_loader& L, vector<Module>& P)
 	}
 }
 
+set<string> new_module_names(const module_loader& L, const set<string>& old_module_names, const set<string>& modules_to_import)
+{
+    vector<string> modules_to_consider;
+    for(auto& module: modules_to_import)
+	modules_to_consider.push_back(module);
+
+    set<string> new_module_names;
+    for(int i=0; i<modules_to_consider.size(); i++)
+    {
+	auto& module = modules_to_consider[i];
+
+	// This one is already included
+	if (old_module_names.count(module) or new_module_names.count(module)) continue;
+
+	// Add it to the list of new modules
+	new_module_names.insert(module);
+
+	for(auto& import: L.load_module(module).dependencies())
+	    modules_to_consider.push_back(import);
+    }
+
+    return new_module_names;
+}
+
+void add(const module_loader& L, std::vector<Module>& P, const std::string& name)
+{
+    auto new_names = new_module_names(L, module_names_set(P), {name});
+
+    vector<string> new_names1;
+    for(auto& name: new_names)
+	new_names1.push_back(name);
+
+    vector<string> new_names2 = sort_modules_by_dependencies(L, new_names1);
+
+    for(auto& name: new_names2)
+    {
+	check_dependencies(L, P);
+	P.push_back(L.load_module(name));
+	check_dependencies(L, P);
+    }
+
+    // 4. Desugar and optimize modules
+    desugar_and_optimize(L, P);
+}
+
+void add(const module_loader& L, vector<Module>& P, const vector<string>& module_names)
+{
+    for(const auto& name: module_names)
+	add(L, P, name);
+}
+
+void add(const module_loader& L, vector<Module>& P, const vector<Module>& modules)
+{
+    for(const auto& M: modules)
+	add(L, P, M);
+}
+
 void add(const module_loader& L, vector<Module>& P, const Module& M)
 {
-    // Get module_names, but in a set<string>
-    set<string> old_module_names = module_names_set(P);
+    for(auto& name: M.dependencies())
+	add(L, P, name);
 
     // 1. Check that the program doesn't already contain this module name.
     if (contains_module(P, M.name))
@@ -136,29 +263,7 @@ void add(const module_loader& L, vector<Module>& P, const Module& M)
 #endif
 
     // 4. Import any modules that are (transitively) implied by the ones we just loaded.
-    add_missing_imports(L, P);
-}
-
-void add(const module_loader& L, vector<Module>& P, const vector<Module>& modules)
-{
-    for(const auto& M: modules)
-	add(L, P, M);
-}
-
-void add(const module_loader& L, std::vector<Module>& P, const std::string& name)
-{
-    if (not contains_module(P, name))
-	add(L, P, L.load_module(name));
-}
-
-void add(const module_loader& L, vector<Module>& P, const vector<string>& module_names)
-{
-    vector<Module> modules;
-
-    // Load the regular modules
-    for(const auto& name: module_names)
-	add(L, P, name);
-
+    desugar_and_optimize(L, P);
 }
 
 bool is_declared(const vector<Module>& modules, const string& qvar)

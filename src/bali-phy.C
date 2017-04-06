@@ -503,7 +503,7 @@ int main(int argc,char* argv[])
 
 	    vector<Module> P = {};
 	    add(L, P, M);
-	    add_missing_imports(L, P);
+	    desugar_and_optimize(L, P);
 	    auto& M2 = get_module(P, M.name);
 	    for(const auto& s: M2.get_symbols())
 	    {
