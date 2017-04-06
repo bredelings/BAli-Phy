@@ -105,12 +105,6 @@ public:
     /// Add a constructor
     void def_constructor(const std::string& name, int arity);
 
-    Module& operator+=(const char*);
-
-    Module& operator+=(const std::string&);
-
-    Module& operator+=(const expression_ref&);
-
     bool symbol_exists(const std::string&) const;
 
     void add_symbol(const symbol_info&, scope_t);

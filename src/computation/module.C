@@ -978,16 +978,6 @@ string get_unqualified_name(const std::string& s)
     return get_haskell_identifier_path(s).back();
 }
 
-Module& Module::operator+=(const char* s)
-{
-    return operator+=(string(s));
-}
-
-Module& Module::operator+=(const string& s)
-{
-    return operator+=(parse_haskell_decls(s));
-}
-
 // Here we do only phase 1 -- we only parse the decls enough to
 //   determine which is a variable, and which are e.g. constructors.
 // We can't determine function bodies at all, since we can't even handle op definitions
@@ -1016,7 +1006,99 @@ string get_function_name(const expression_ref& E)
 set<string> find_bound_vars(const expression_ref& E);
 set<string> find_all_ids(const expression_ref& E);
 
-Module& Module::operator+=(const expression_ref& E)
+void Module::def_function(const std::string& fname, const expression_ref& body, const expression_ref& type)
+{
+    if (is_qualified_symbol(fname))
+	throw myexception()<<"Locally defined symbol '"<<fname<<"' should not be qualified in function declaration.";
+
+    string qualified_name = name+"."+fname;
+    auto loc = symbols.find(qualified_name);
+
+    if (loc != symbols.end())
+    {
+	symbol_info& S = loc->second;
+	// Only the fixity has been declared!
+	if (S.symbol_type == unknown_symbol and not S.body and not S.type)
+	{
+	    S.symbol_type = variable_symbol;
+	    S.body = body;
+	    S.type = type;
+	}
+	else
+	    throw myexception()<<"Can't add function with name '"<<fname<<"': that name is already used!";
+    }
+    else
+	declare_symbol({fname, variable_symbol, local_scope, -1, -1, unknown_fix, body, type});
+}
+
+void Module::def_function(const std::string& fname, const expression_ref& body)
+{
+    def_function(fname, body, {});
+}
+
+void Module::def_function(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+{
+    assert(patterns.size());
+    assert(patterns.size() == bodies.size());
+
+    string fname;
+    vector< vector<expression_ref> > sub_patterns(patterns.size());
+    parse_combinator_application(patterns[0], fname, sub_patterns[0]);
+
+    for(int i=1;i<patterns.size();i++)
+    {
+	string fname2;
+	parse_combinator_application(patterns[i], fname2, sub_patterns[i]);
+
+	if (fname != fname2) throw myexception()<<"In definition of function '"<<fname<<"', incorrect function name '"<<fname2<<"' found as well.";
+    }
+
+    expression_ref E = ::def_function(sub_patterns, bodies);
+    def_function(fname, E);
+}
+
+void Module::def_constructor(const std::string& cname, int arity)
+{
+    if (is_qualified_symbol(cname))
+	throw myexception()<<"Locally defined symbol '"<<cname<<"' should not be qualified.";
+
+    string qualified_name = name+"."+cname;
+    expression_ref body = lambda_expression( constructor(qualified_name, arity) );
+
+    auto loc = symbols.find(qualified_name);
+    if (loc != symbols.end())
+    {
+	symbol_info& S = loc->second;
+	// Only the fixity has been declared!
+	if (S.symbol_type == unknown_symbol and not S.body and not S.type)
+	{
+	    S.symbol_type = constructor_symbol;
+	    S.body = body;
+	    return;
+	}
+    }
+
+    declare_symbol( {cname, constructor_symbol, local_scope, arity, -1, unknown_fix, body, {}} );
+}
+
+expression_ref Module::get_function(const std::string& fname) const
+{
+    return lookup_symbol(fname).body;
+}
+
+// A name of "" means that we are defining a top-level program, or a piece of a top-level program.
+Module::Module(const string& n)
+    :name(n)
+{
+    if (not n.size())
+	throw myexception()<<"Module name may not be empty!";
+}
+
+Module::Module(const char *n)
+    :Module(string(n))
+{ }
+
+Module::Module(const expression_ref& E)
 {
     assert(is_AST(E,"Module"));
     assert(not module);
@@ -1062,7 +1144,7 @@ Module& Module::operator+=(const expression_ref& E)
 	}
     }
     
-    if (not topdecls) return *this;
+    if (not topdecls) return;
 
     assert(is_AST(topdecls,"TopDecls"));
 
@@ -1152,105 +1234,6 @@ Module& Module::operator+=(const expression_ref& E)
 	}
 
     assert(module);
-
-    return *this;
-}
-
-void Module::def_function(const std::string& fname, const expression_ref& body, const expression_ref& type)
-{
-    if (is_qualified_symbol(fname))
-	throw myexception()<<"Locally defined symbol '"<<fname<<"' should not be qualified in function declaration.";
-
-    string qualified_name = name+"."+fname;
-    auto loc = symbols.find(qualified_name);
-
-    if (loc != symbols.end())
-    {
-	symbol_info& S = loc->second;
-	// Only the fixity has been declared!
-	if (S.symbol_type == unknown_symbol and not S.body and not S.type)
-	{
-	    S.symbol_type = variable_symbol;
-	    S.body = body;
-	    S.type = type;
-	}
-	else 
-	    throw myexception()<<"Can't add function with name '"<<fname<<"': that name is already used!";
-    }
-    else
-	declare_symbol({fname, variable_symbol, local_scope, -1, -1, unknown_fix, body, type});
-}
-
-void Module::def_function(const std::string& fname, const expression_ref& body)
-{
-    def_function(fname, body, {});
-}
-
-void Module::def_function(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
-{
-    assert(patterns.size());
-    assert(patterns.size() == bodies.size());
-
-    string fname;
-    vector< vector<expression_ref> > sub_patterns(patterns.size());
-    parse_combinator_application(patterns[0], fname, sub_patterns[0]);
-
-    for(int i=1;i<patterns.size();i++)
-    {
-	string fname2;
-	parse_combinator_application(patterns[i], fname2, sub_patterns[i]);
-
-	if (fname != fname2) throw myexception()<<"In definition of function '"<<fname<<"', incorrect function name '"<<fname2<<"' found as well.";
-    }
-
-    expression_ref E = ::def_function(sub_patterns, bodies);
-    def_function(fname, E);
-}
-
-void Module::def_constructor(const std::string& cname, int arity)
-{
-    if (is_qualified_symbol(cname))
-	throw myexception()<<"Locally defined symbol '"<<cname<<"' should not be qualified.";
-
-    string qualified_name = name+"."+cname;
-    expression_ref body = lambda_expression( constructor(qualified_name, arity) );
-
-    auto loc = symbols.find(qualified_name);
-    if (loc != symbols.end())
-    {
-	symbol_info& S = loc->second;
-	// Only the fixity has been declared!
-	if (S.symbol_type == unknown_symbol and not S.body and not S.type)
-	{
-	    S.symbol_type = constructor_symbol;
-	    S.body = body;
-	    return;
-	}
-    }
-
-    declare_symbol( {cname, constructor_symbol, local_scope, arity, -1, unknown_fix, body, {}} );
-}
-
-expression_ref Module::get_function(const std::string& fname) const
-{
-    return lookup_symbol(fname).body;
-}
-
-// A name of "" means that we are defining a top-level program, or a piece of a top-level program.
-Module::Module(const string& n)
-    :name(n)
-{ 
-    if (not n.size())
-	throw myexception()<<"Module name may not be empty!";
-}
-
-Module::Module(const char *n)
-    :Module(string(n))
-{ }
-
-Module::Module(const expression_ref& E)
-{ 
-    (*this) += E;
 }
 
 std::ostream& operator<<(std::ostream& o, const Module& D)
