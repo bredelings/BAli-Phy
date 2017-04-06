@@ -288,6 +288,7 @@ void Module::update_function_symbols()
 		si.name = name;
 		si.body = body;
 		si.scope = local_scope;
+		si.symbol_type = variable_symbol;
 		symbols.insert({name, si});
 	    }
 	    else
