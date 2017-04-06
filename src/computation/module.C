@@ -215,62 +215,67 @@ void Module::import_module(const Module& M2, bool qualified)
     import_module(M2, M2.name, qualified);
 }
 
-bool import_is_qualified(const expression_ref& impdecl)
+module_import parse_import(const expression_ref& impdecl)
 {
-    return impdecl.sub()[0].as_<String>() == "qualified";
-}
+    module_import mi;
 
-string get_imported_module_name(const expression_ref& impdecl)
-{
     int i=0;
-    bool qualified = impdecl.sub()[0].as_<String>() == "qualified";
-    if (qualified) i++;
+    mi.qualified = impdecl.sub()[0].as_<String>() == "qualified";
+    if (mi.qualified) i++;
+	    
+    mi.name = impdecl.sub()[i++].as_<String>();
+	    
+    if (i < impdecl.size() and impdecl.sub()[i++].as_<String>() == "as")
+	mi.as = impdecl.sub()[i++].as_<String>();
+    else
+	mi.as = mi.name;
 
-    return impdecl.sub()[i].as_<String>();
+    // only:   handle import qualified A as B (x, y)
+    // hiding:  handle import qualified A as B hiding (x, y)
+
+    assert(i == impdecl.size());
+    return mi;
 }
 
-set<string> imported_modules(const expression_ref& impdecls, const string& this_module_name)
+vector<module_import> Module::imports() const
 {
-    set<string> module_names;
+    vector<module_import> m_imports;
 
-    if (this_module_name != "Prelude")
-	module_names.insert("Prelude");
-
-    if (not impdecls) return module_names;
-
-    for(const auto& impdecl:impdecls.sub())
-	module_names.insert(get_imported_module_name(impdecl));
-
-    return module_names;
-}
-
-set<string> Module::dependencies() const
-{
-    return imported_modules(impdecls,name);
-}
-
-void Module::perform_imports(const Program& P)
-{
     bool saw_Prelude = false;
     if (impdecls)
 	for(const auto& impdecl:impdecls.sub())
 	{
-	    bool imp_qualified = import_is_qualified(impdecl);
-
-	    string imp_name = get_imported_module_name(impdecl);
-      
-	    const auto&	M = P.get_module(imp_name);
-
-	    import_module(M, imp_name, imp_qualified);
-	    if (imp_name == "Prelude")
+	    m_imports.push_back(parse_import(impdecl));
+	    if (m_imports.back().name == "Prelude")
 		saw_Prelude = true;
 	}
 
     // Import the Prelude if it wasn't explicitly mentioned in the import list.
     if (not saw_Prelude and name != "Prelude")
     {
-	auto& M = P.get_module("Prelude");
-	import_module(M, "Prelude", false);
+	module_import Prelude;
+	Prelude.name = "Prelude";
+	Prelude.as = "Prelude";
+	m_imports.push_back(Prelude);
+    }
+
+    return m_imports;
+}
+
+set<string> Module::dependencies() const
+{
+    set<string> modules;
+    for(auto& mi: imports())
+	modules.insert(mi.name);
+    return modules;
+}
+
+void Module::perform_imports(const Program& P)
+{
+    for(auto& i: imports())
+    {
+	auto& I = P.get_module(i.name);
+	import_module(I, i.as, i.qualified);
     }
 }
 
@@ -611,7 +616,7 @@ expression_ref func_type(const expression_ref& a, const expression_ref& b)
     return Arrow+a+b;
 }
 
-void Module::get_types(const Program& P)
+void Module::get_types(const Program&)
 {
     expression_ref Star = constructor("*",0);
     //  std::cerr<<func_type(func_type(Star,Star),Star)<<"\n";
