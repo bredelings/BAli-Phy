@@ -21,6 +21,8 @@ class Program: public std::vector<Module>
 
     int find_module(const std::string& module_name) const;
 
+    int count_module(const std::string& module_name) const;
+
 public:
           std::vector<Module>& modules();
 

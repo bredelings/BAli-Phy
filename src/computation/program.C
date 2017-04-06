@@ -67,10 +67,10 @@ set<string> Program::module_names_set() const
     return names;
 }
 
-static int count_module(const vector<Module>& P,const string& module_name)
+int Program::count_module(const string& module_name) const
 {
     int count = 0;
-    for(const auto& module: P)
+    for(const auto& module: modules())
 	if (module.name == module_name)
 	    count++;
     return count;
@@ -272,7 +272,7 @@ void Program::add(const Module& M)
 #ifndef NDEBUG
     // 3. Assert that every module exists only once in the list.
     for(const auto& module: modules())
-	assert(count_module(*this, module.name) == 1);
+	assert(count_module(module.name) == 1);
 #endif
 
     // 4. Import any modules that are (transitively) implied by the ones we just loaded.
