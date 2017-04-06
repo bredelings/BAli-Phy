@@ -25,9 +25,6 @@ public:
     Module load_module(const std::string&) const;
 };
 
-std::vector<Module> load_modules(const module_loader&, const std::vector<std::string>&);
-std::vector<Module> load_modules(const module_loader&, const std::set<std::string>&);
-
 expression_ref load_builtin(const module_loader& L, const std::string& symbol_name, const std::string& filename, int n, const std::string& fname);
 expression_ref load_builtin(const std::string& symbol_name, const std::string& filename, int n, const std::string& fname);
 

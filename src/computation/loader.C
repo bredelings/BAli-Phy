@@ -107,22 +107,6 @@ Module module_loader::load_module_from_file(const string& filename) const
     }
 }
 
-vector<Module> load_modules(const module_loader& L, const vector<string>& module_names)
-{
-    vector<Module> P;
-    for(const string& name: module_names)
-	P.push_back(L.load_module(name));
-    return P;
-}
-
-vector<Module> load_modules(const module_loader& L, const set<string>& module_names)
-{
-    vector<Module> P;
-    for(const string& name: module_names)
-	P.push_back(L.load_module(name));
-    return P;
-}
-
 Module module_loader::load_module(const string& module_name) const
 {
     string filename = find_module(module_name);
