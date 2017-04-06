@@ -194,8 +194,6 @@ public:
 
     context& operator+=(const std::string& module_name);
 
-    context& operator+=(const std::vector<Module>& D);
-
     context& operator+=(const std::vector<std::string>& module_names);
 
     context& operator=(const context& c);
