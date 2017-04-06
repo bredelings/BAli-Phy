@@ -215,29 +215,31 @@ void Module::import_module(const Module& M2, bool qualified)
     import_module(M2, M2.name, qualified);
 }
 
-Module find_module(const string& module_name, const std::vector<Module>& P)
+bool import_is_qualified(const expression_ref& impdecl)
 {
-    for(const auto& module: P)
-	if (module.name == module_name)
-	    return module;
-    std::abort();
+    return impdecl.sub()[0].as_<String>() == "qualified";
+}
+
+string get_imported_module_name(const expression_ref& impdecl)
+{
+    int i=0;
+    bool qualified = impdecl.sub()[0].as_<String>() == "qualified";
+    if (qualified) i++;
+
+    return impdecl.sub()[i].as_<String>();
 }
 
 std::set<std::string> Module::dependencies() const
 {
-    if (not impdecls) return set<string>{};
-  
     set<string> module_names;
 
-    for(const auto& impdecl:impdecls.sub())
-    {
-	int i=0;
-	bool qualified = impdecl.sub()[0].as_<String>() == "qualified";
-	if (qualified) i++;
+    if (name != "Prelude")
+	module_names.insert("Prelude");
 
-	string imp_module_name = impdecl.sub()[i++].as_<String>();
-	module_names.insert(imp_module_name);
-    }
+    if (not impdecls) return module_names;
+
+    for(const auto& impdecl:impdecls.sub())
+	module_names.insert(get_imported_module_name(impdecl));
 
     return module_names;
 }
@@ -248,26 +250,22 @@ void Module::perform_imports(const std::vector<Module>& P)
     if (impdecls)
 	for(const auto& impdecl:impdecls.sub())
 	{
-	    int i=0;
-	    bool qualified = impdecl.sub()[0].as_<String>() == "qualified";
-	    if (qualified) i++;
-    
-	    string imp_module_name = impdecl.sub()[i++].as_<String>();
-      
-	    assert(i == impdecl.size());
-      
-	    Module M = find_module(imp_module_name,P);
+	    bool imp_qualified = import_is_qualified(impdecl);
 
-	    import_module(M, imp_module_name, qualified);
-	    if (imp_module_name == "Prelude")
+	    string imp_name = get_imported_module_name(impdecl);
+      
+	    const auto&	M = get_module(P, imp_name);
+
+	    import_module(M, imp_name, imp_qualified);
+	    if (imp_name == "Prelude")
 		saw_Prelude = true;
 	}
 
     // Import the Prelude if it wasn't explicitly mentioned in the import list.
     if (not saw_Prelude and name != "Prelude")
     {
-	Module M = find_module("Prelude",P);
-	import_module(M,"Prelude",false);
+	auto& M = get_module(P, "Prelude");
+	import_module(M, "Prelude", false);
     }
 }
 

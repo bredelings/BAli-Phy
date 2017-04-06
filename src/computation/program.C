@@ -67,9 +67,6 @@ set<string> unresolved_imports(const vector<Module>& P)
 {
     set<string> modules_to_add;
 
-    if (not contains_module(P, "Prelude"))
-	modules_to_add.insert("Prelude");
-
     // Add dependencies on modules
     for(const auto& module: P)
 	for(const string& module_name: module.dependencies())
