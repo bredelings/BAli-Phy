@@ -441,7 +441,7 @@ context& context::operator+=(const Module& M)
     Program& PP = get_Program();
 
     // Get module_names, but in a set<string>
-    set<string> old_module_names = module_names_set(PP);
+    set<string> old_module_names = PP.module_names_set();
 
     // 1. Add the new modules to the program, add notes, perform imports, and resolve symbols.
     get_Program().add(M);

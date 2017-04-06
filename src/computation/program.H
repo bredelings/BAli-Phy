@@ -34,6 +34,12 @@ public:
 
     void add(const std::vector<std::string>& module_names);
 
+    std::vector<std::string> module_names() const;
+
+    std::set<std::string> module_names_set() const;
+
+    std::string module_names_path() const;
+
     bool contains_module(const std::string& module_name) const;
 
     const Module& get_module(const std::string& module_name) const;
@@ -42,12 +48,6 @@ public:
 
     Program(const std::shared_ptr<module_loader>&);
 };
-
-std::vector<std::string> module_names(const std::vector<Module>& P);
-std::string module_names_path(const std::vector<Module>& P);
-std::set<std::string> module_names_set(const std::vector<Module>& P);
-
-bool is_declared(const std::vector<Module>& modules, const std::string& qvar);
 
 std::map<std::string,std::string> get_simplified_names(const std::set<std::string>&);
 

@@ -46,23 +46,23 @@ const Module& Program::get_module(const string& module_name) const
     return modules()[index];
 }
 
-vector<string> module_names(const vector<Module>& P)
+vector<string> Program::module_names() const
 {
     vector<string> names;
-    for(const auto& module: P)
+    for(const auto& module: modules())
 	names.push_back(module.name);
     return names;
 }
 
-string module_names_path(const vector<Module>& P)
+string Program::module_names_path() const
 {
-    return "["+join(module_names(P),",") +"]";
+    return "["+join(module_names(),",") +"]";
 }
 
-set<string> module_names_set(const vector<Module>& P)
+set<string> Program::module_names_set() const
 {
     set<string> names;
-    for(const auto& module: P)
+    for(const auto& module: modules())
 	names.insert(module.name);
     return names;
 }
@@ -226,7 +226,7 @@ set<string> new_module_names(const module_loader& L, const set<string>& old_modu
 
 void Program::add(const std::string& name)
 {
-    auto new_names = new_module_names(*loader, module_names_set(*this), {name});
+    auto new_names = new_module_names(*loader, module_names_set(), {name});
 
     vector<string> new_names1;
     for(auto& name: new_names)
@@ -264,7 +264,7 @@ void Program::add(const Module& M)
 
     // 1. Check that the program doesn't already contain this module name.
     if (contains_module(M.name))
-	throw myexception()<<"Trying to add duplicate module '"<<M.name<<"' to program "<<module_names_path(*this);
+	throw myexception()<<"Trying to add duplicate module '"<<M.name<<"' to program "<<module_names_path();
 
     // 2. Actually add the module.
     modules().push_back( M );
@@ -277,20 +277,6 @@ void Program::add(const Module& M)
 
     // 4. Import any modules that are (transitively) implied by the ones we just loaded.
     desugar_and_optimize();
-}
-
-bool is_declared(const vector<Module>& modules, const string& qvar)
-{
-    if (is_haskell_builtin_con_name(qvar)) return true;
-
-    if (not is_qualified_symbol(qvar))
-	throw myexception()<<"Can't search program for non-builtin, unqualified varid '"<<qvar<<"'";
-
-    for(const auto& module: modules)
-	if (module.is_declared_local(qvar))
-	    return true;
-
-    return false;
 }
 
 map<string,string> get_simplified_names(const set<string>& names)
