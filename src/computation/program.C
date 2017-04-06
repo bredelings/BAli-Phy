@@ -233,59 +233,59 @@ set<string> new_module_names(const module_loader& L, const set<string>& old_modu
     return new_module_names;
 }
 
-void add(const module_loader& L, std::vector<Module>& P, const std::string& name)
+void Program::add(const std::string& name)
 {
-    auto new_names = new_module_names(L, module_names_set(P), {name});
+    auto new_names = new_module_names(*loader, module_names_set(*this), {name});
 
     vector<string> new_names1;
     for(auto& name: new_names)
 	new_names1.push_back(name);
 
-    vector<string> new_names2 = sort_modules_by_dependencies(L, new_names1);
+    vector<string> new_names2 = sort_modules_by_dependencies(*loader, new_names1);
 
     for(auto& name: new_names2)
     {
-	check_dependencies(L, P);
-	P.push_back(L.load_module(name));
-	check_dependencies(L, P);
+	check_dependencies(*loader, *this);
+	push_back(loader->load_module(name));
+	check_dependencies(*loader, *this);
     }
 
     // 4. Desugar and optimize modules
-    desugar_and_optimize(L, P);
+    desugar_and_optimize(*loader, *this);
 }
 
-void add(const module_loader& L, vector<Module>& P, const vector<string>& module_names)
+void Program::add(const vector<string>& module_names)
 {
     for(const auto& name: module_names)
-	add(L, P, name);
+	add(name);
 }
 
-void add(const module_loader& L, vector<Module>& P, const vector<Module>& modules)
+void Program::add(const vector<Module>& modules)
 {
     for(const auto& M: modules)
-	add(L, P, M);
+	add(M);
 }
 
-void add(const module_loader& L, vector<Module>& P, const Module& M)
+void Program::add(const Module& M)
 {
     for(auto& name: M.dependencies())
-	add(L, P, name);
+	add(name);
 
     // 1. Check that the program doesn't already contain this module name.
-    if (contains_module(P, M.name))
-	throw myexception()<<"Trying to add duplicate module '"<<M.name<<"' to program "<<module_names_path(P);
+    if (contains_module(*this, M.name))
+	throw myexception()<<"Trying to add duplicate module '"<<M.name<<"' to program "<<module_names_path(*this);
 
     // 2. Actually add the module.
-    P.push_back( M );
+    push_back( M );
 
 #ifndef NDEBUG
     // 3. Assert that every module exists only once in the list.
-    for(const auto& module: P)
-	assert(count_module(P, module.name) == 1);
+    for(const auto& module: *this)
+	assert(count_module(*this, module.name) == 1);
 #endif
 
     // 4. Import any modules that are (transitively) implied by the ones we just loaded.
-    desugar_and_optimize(L, P);
+    desugar_and_optimize(*loader, *this);
 }
 
 bool is_declared(const vector<Module>& modules, const string& qvar)

@@ -444,7 +444,7 @@ context& context::operator+=(const Module& M)
     set<string> old_module_names = module_names_set(PP);
 
     // 1. Add the new modules to the program, add notes, perform imports, and resolve symbols.
-    add(get_Program().get_module_loader(), PP, M);
+    get_Program().add(M);
 
     // 2. Give each identifier a pointer to an unused location; define parameter bodies.
     vector<string> new_module_names;
