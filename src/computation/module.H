@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/dummy.H"
 #include <algorithm>
 #include <iostream>
 
@@ -78,6 +79,8 @@ public:
     expression_ref topdecls;
     expression_ref exports;
 
+    std::map<dummy,expression_ref> small_decls;
+
     std::string name;
 
     bool is_resolved() const {return resolved;}
@@ -133,6 +136,8 @@ public:
     void perform_imports(const std::vector<Module>&);
 
     void desugar(const std::vector<Module>&);
+
+    void get_small_decls(const std::vector<Module>&);
 
     void update_function_symbols();
 

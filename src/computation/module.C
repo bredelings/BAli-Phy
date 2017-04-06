@@ -320,6 +320,43 @@ void Module::desugar(const std::vector<Module>& P)
     }
 }
 
+int nodes_size(const expression_ref& E);
+
+void Module::get_small_decls(const std::vector<Module>& P)
+{
+    if (not topdecls) return;
+
+    if (not small_decls.empty()) return;
+
+    // Collect small decls from imported modules;
+    for(auto& imp_mod_name: dependencies())
+    {
+	auto& M = get_module(P, imp_mod_name);
+	small_decls.insert(M.small_decls.begin(), M.small_decls.end());
+    }
+
+    // Add small decls to topdecls
+    if (not small_decls.empty())
+    {
+	auto decls = parse_decls(topdecls);
+
+	decls.insert(decls.end(), small_decls.begin(), small_decls.end());
+
+	topdecls = make_topdecls(decls);
+
+	small_decls.clear();
+    }
+
+    assert(small_decls.empty());
+    for(auto& decl: topdecls.sub())
+    {
+	auto& x = decl.sub()[0].as_<dummy>();
+	auto& body = decl.sub()[1];
+	if (nodes_size(body) < 15)
+	    small_decls.insert({x, body});
+    }
+}
+
 void parse_module(const expression_ref& M, string& name, expression_ref& exports, expression_ref& impdecls, expression_ref& topdecls)
 {
     assert(is_AST(M, "Module"));

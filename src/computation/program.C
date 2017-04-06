@@ -173,7 +173,20 @@ void desugar_and_optimize(const module_loader& L, vector<Module>& P)
 	    throw e;
 	}
 
-    // 3. Process new modules and 
+    // 3. Load small declarations
+    for(auto& module: P)
+	try {
+	    module.get_small_decls(P);
+	}
+	catch (myexception& e)
+	{
+	    std::ostringstream o;
+	    o<<"In module '"<<module.name<<"': ";
+	    e.prepend(o.str());
+	    throw e;
+	}
+
+    // 4. Optimize
     for(auto& module: P)
 	try {
 	    module.optimize(L, P);
