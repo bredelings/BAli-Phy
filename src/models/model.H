@@ -155,7 +155,7 @@ public:
     void set_parameter_values(const std::vector<int>& indices,const std::vector<expression_ref>& p);
 
     /// Construct an empty model
-    Model(const module_loader&);
+    Model(const std::shared_ptr<module_loader>&);
 
     virtual ~Model() {};
 };

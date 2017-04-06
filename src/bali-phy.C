@@ -340,7 +340,7 @@ fs::path get_user_lib_path()
     return user_lib_path;
 }
 
-module_loader setup_module_loader(variables_map& args, const string& filename)
+std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const string& filename)
 {
     fs::path system_lib_path = get_system_lib_path(filename);
     fs::path user_lib_path = get_user_lib_path();
@@ -403,7 +403,7 @@ module_loader setup_module_loader(variables_map& args, const string& filename)
 	throw myexception()<<"Can't find Prelude in module path.  Use --package-path=<path> to specify the directory containing 'modules/Prelude.hs'.";
     }
 
-    return L;
+    return std::shared_ptr<module_loader>(new module_loader(L));
 }
 
 int main(int argc,char* argv[])
@@ -479,16 +479,16 @@ int main(int argc,char* argv[])
 	}
 
 	//------------- Setup module loader -------------//
-	module_loader L = setup_module_loader(args, argv[0]);
-	L.pre_inline_unconditionally = args["pre-inline"].as<bool>();
-	L.post_inline_unconditionally = args["post-inline"].as<bool>();
-	L.let_float_from_case = args["let-float-from-case"].as<bool>();
-	L.let_float_from_apply = args["let-float-from-apply"].as<bool>();
-	L.let_float_from_let = args["let-float-from-let"].as<bool>();
-	L.case_of_constant = args["case-of-constant"].as<bool>();
-	L.case_of_variable = args["case-of-variable"].as<bool>();
-	L.beta_reduction = args["beta-reduction"].as<bool>();
-	L.max_iterations = args["simplifier-max-iterations"].as<int>();
+	auto L = setup_module_loader(args, argv[0]);
+	L->pre_inline_unconditionally = args["pre-inline"].as<bool>();
+	L->post_inline_unconditionally = args["post-inline"].as<bool>();
+	L->let_float_from_case = args["let-float-from-case"].as<bool>();
+	L->let_float_from_apply = args["let-float-from-apply"].as<bool>();
+	L->let_float_from_let = args["let-float-from-let"].as<bool>();
+	L->case_of_constant = args["case-of-constant"].as<bool>();
+	L->case_of_variable = args["case-of-variable"].as<bool>();
+	L->beta_reduction = args["beta-reduction"].as<bool>();
+	L->max_iterations = args["simplifier-max-iterations"].as<int>();
 
 	//---------- Initialize random seed -----------//
 	unsigned long seed = init_rng_and_get_seed(args);
@@ -499,11 +499,11 @@ int main(int argc,char* argv[])
 	if (args.count("test-module"))
 	{
 	    string filename = args["test-module"].as<string>();
-	    Module M ( L.read_module_from_file(filename) );
+	    Module M ( L->read_module_from_file(filename) );
 
 	    vector<Module> P = {};
-	    add(L, P, M);
-	    desugar_and_optimize(L, P);
+	    add(*L, P, M);
+	    desugar_and_optimize(*L, P);
 	    auto& M2 = get_module(P, M.name);
 	    for(const auto& s: M2.get_symbols())
 	    {

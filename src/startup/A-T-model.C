@@ -327,7 +327,7 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
 }
 
 
-owned_ptr<Model> create_A_and_T_model(variables_map& args, const module_loader& L,
+owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr<module_loader>& L,
 				      ostream& out_cache, ostream& out_screen, ostream& out_both,
 				      int proc_id)
 {

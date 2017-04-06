@@ -12,6 +12,15 @@ using std::pair;
 using std::map;
 using std::string;
 
+const module_loader& Program::get_module_loader()
+{
+    return *loader;
+}
+
+Program::Program(const std::shared_ptr<module_loader>& L)
+    :loader(L)
+{}
+
 bool contains_module(const vector<Module>& P, const string& module_name)
 {
     return find_module(P,module_name) != -1;

@@ -397,13 +397,13 @@ public:
 
     std::string name() const {return "Full Model";}
 
-    Parameters(const module_loader& L,
+    Parameters(const std::shared_ptr<module_loader>& L,
 	       const std::vector<alignment>& A, const SequenceTree&, 
 	       const std::vector<model_t>&,
 	       const std::vector<int>&,
 	       const std::vector<int>&);
 
-    Parameters(const module_loader& L,
+    Parameters(const std::shared_ptr<module_loader>& L,
 	       const std::vector<alignment>& A, const SequenceTree&, 
 	       const std::vector<model_t>&,
 	       const std::vector<int>&,

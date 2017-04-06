@@ -1194,7 +1194,7 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
     }
 }
 
-Parameters::Parameters(const module_loader& L,
+Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<alignment>& A, const SequenceTree& tt,
 		       const vector<model_t>& SMs,
 		       const vector<int>& s_mapping,
@@ -1366,7 +1366,7 @@ Parameters::Parameters(const module_loader& L,
     probability();
 }
 
-Parameters::Parameters(const module_loader& L,
+Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<alignment>& A, const SequenceTree& t,
 		       const vector<model_t>& SMs,
 		       const vector<int>& s_mapping,

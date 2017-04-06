@@ -4,13 +4,20 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <memory>
 #include "computation/expression/expression_ref.H"
 
 class module_loader;
 
 class Module;
 
-typedef std::vector<Module> Program;
+class Program: public std::vector<Module>
+{
+    std::shared_ptr<module_loader> loader;
+public:
+    const module_loader& get_module_loader();
+    Program(const std::shared_ptr<module_loader>&);
+};
 
 bool contains_module(const std::vector<Module>& P, const std::string& module_name);
 

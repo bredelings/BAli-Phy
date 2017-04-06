@@ -125,7 +125,7 @@ log_double_t Model::prior() const
     return get_probability();
 }
 
-Model::Model(const module_loader& L)
+Model::Model(const std::shared_ptr<module_loader>& L)
     :context(L),keys(new std::map<std::string,double>)
 { }
 

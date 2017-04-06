@@ -60,7 +60,7 @@ public:
 
     int get_context_index() const {return context_index;}
 
-    const std::vector<Module>& get_Program() const;
+    const Program& get_Program() const;
 
     reg& access(int i) const;
 
@@ -184,8 +184,6 @@ protected:
 public:
     void show_graph() const;
   
-    const module_loader& get_module_loader() const;
-
     void allocate_identifiers_for_modules(const std::vector<std::string>& module_names);
 
     void perform_transition_kernel(int i);
@@ -204,11 +202,11 @@ public:
 
     context(const context&);
 
-    context(const module_loader&);
+    context(const std::shared_ptr<module_loader>&);
 
-    context(const module_loader&, const std::vector<Module>& P);
+    context(const std::shared_ptr<module_loader>&, const std::vector<Module>& P);
 
-    context(const module_loader&, const std::vector<std::string>& module_names);
+    context(const std::shared_ptr<module_loader>&, const std::vector<std::string>& module_names);
 
     ~context();
 };

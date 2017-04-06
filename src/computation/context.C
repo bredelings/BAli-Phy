@@ -364,15 +364,10 @@ void context::show_graph() const
     dot_graph_for_token(*memory(), t);
 }
 
-const module_loader& context::get_module_loader() const
-{
-    return memory()->loader;
-}
-
 context& context::operator+=(const string& module_name)
 {
     if (not contains_module(get_Program(), module_name))
-	(*this) += get_module_loader().load_module(module_name);
+	(*this) += get_Program().get_module_loader().load_module(module_name);
 
     return *this;
 }
@@ -449,7 +444,7 @@ context& context::operator+=(const Module& M)
     set<string> old_module_names = module_names_set(PP);
 
     // 1. Add the new modules to the program, add notes, perform imports, and resolve symbols.
-    add(get_module_loader(), PP, M);
+    add(get_Program().get_module_loader(), PP, M);
 
     // 2. Give each identifier a pointer to an unused location; define parameter bodies.
     vector<string> new_module_names;
@@ -483,11 +478,11 @@ context& context::operator=(const context& C)
     return *this;
 }
 
-context::context(const module_loader& L)
+context::context(const std::shared_ptr<module_loader>& L)
     :context(L, vector<Module>{})
 { }
 
-context::context(const module_loader& L, const vector<Module>& Ps)
+context::context(const std::shared_ptr<module_loader>& L, const vector<Module>& Ps)
     :memory_(new reg_heap(L)),
      context_index(memory_->get_unused_context())
 {
@@ -499,7 +494,7 @@ context::context(const module_loader& L, const vector<Module>& Ps)
     perform_io_head = add_compute_expression(dummy("Prelude.unsafePerformIO"));
 }
 
-context::context(const module_loader& L, const vector<string>& module_names)
+context::context(const std::shared_ptr<module_loader>& L, const vector<string>& module_names)
     :context(L)
 {
     for(const auto& name: module_names)

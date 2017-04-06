@@ -1410,12 +1410,11 @@ int reg_heap::add_identifier(const string& name)
     return R;
 }
 
-reg_heap::reg_heap(const module_loader& L)
+reg_heap::reg_heap(const std::shared_ptr<module_loader>& L)
     :base_pool_t(1),
      steps(1),
      results(1),
-     P(new Program),
-     loader(L),
+     P(new Program(L)),
      prog_steps(1),
      prog_results(1),
      prog_temp(1)
