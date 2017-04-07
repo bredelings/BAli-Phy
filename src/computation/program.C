@@ -156,25 +156,21 @@ void Program::check_dependencies()
     }
 }
 
-void Program::desugar_and_optimize()
+void Program::compile(int i)
 {
     check_dependencies();
 
-    // Load missing modules, desugar, resolve names
-    for(auto& module: modules())
-	try {
-	    module.add_local_symbols();
-	    module.resolve_symbols(*this);
-	    module.get_small_decls(*this);
-	    module.optimize(*this);
-	}
-	catch (myexception& e)
-	{
-	    std::ostringstream o;
-	    o<<"In module '"<<module.name<<"': ";
-	    e.prepend(o.str());
-	    throw e;
-	}
+    auto& M = modules()[i];
+    try {
+	M.compile(*this);
+    }
+    catch (myexception& e)
+    {
+	std::ostringstream o;
+	o<<"In module '"<<M.name<<"': ";
+	e.prepend(o.str());
+	throw e;
+    }
 }
 
 set<string> new_module_names(const module_loader& L, const set<string>& old_module_names, const set<string>& modules_to_import)
@@ -203,6 +199,8 @@ set<string> new_module_names(const module_loader& L, const set<string>& old_modu
 
 void Program::add(const std::string& name)
 {
+    int first_new = modules().size();
+
     auto new_names = new_module_names(*loader, module_names_set(), {name});
 
     vector<string> new_names1;
@@ -211,15 +209,15 @@ void Program::add(const std::string& name)
 
     vector<string> new_names2 = sort_modules_by_dependencies(*loader, new_names1);
 
+    // Add the new modules, processing them as we go.
     for(auto& name: new_names2)
     {
 	check_dependencies();
+	int module_index = modules().size();
 	modules().push_back(loader->load_module(name));
+	compile(module_index);
 	check_dependencies();
     }
-
-    // 4. Desugar and optimize modules
-    desugar_and_optimize();
 }
 
 void Program::add(const vector<string>& module_names)
@@ -245,15 +243,13 @@ void Program::add(const Module& M)
 
     // 2. Actually add the module.
     modules().push_back( M );
+    compile(modules().size()-1);
 
 #ifndef NDEBUG
     // 3. Assert that every module exists only once in the list.
     for(const auto& module: modules())
 	assert(count_module(module.name) == 1);
 #endif
-
-    // 4. Import any modules that are (transitively) implied by the ones we just loaded.
-    desugar_and_optimize();
 }
 
 map<string,string> get_simplified_names(const set<string>& names)

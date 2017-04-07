@@ -270,6 +270,14 @@ set<string> Module::dependencies() const
     return modules;
 }
 
+void Module::compile(const Program& P)
+{
+    add_local_symbols();
+    resolve_symbols(P);
+    get_small_decls(P);
+    optimize(P);
+}
+
 void Module::perform_imports(const Program& P)
 {
     for(auto& i: imports())

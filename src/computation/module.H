@@ -140,6 +140,8 @@ public:
 
     void import_module(const Module& M2, const std::string&, bool qualified);
 
+    void compile(const Program&);
+
     void perform_imports(const Program&);
 
     void add_local_symbols();

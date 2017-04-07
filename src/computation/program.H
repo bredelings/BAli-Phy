@@ -17,7 +17,7 @@ class Program: public std::vector<Module>
 
     void check_dependencies();
 
-    void desugar_and_optimize();
+    void compile(int i);
 
     int find_module(const std::string& module_name) const;
 
