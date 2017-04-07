@@ -160,35 +160,11 @@ void Program::desugar_and_optimize()
 {
     check_dependencies();
 
-    // 2. Load missing modules, desugar, resolve names
+    // Load missing modules, desugar, resolve names
     for(auto& module: modules())
 	try {
 	    module.resolve_symbols(*this);
-	}
-	catch (myexception& e)
-	{
-	    std::ostringstream o;
-	    o<<"In module '"<<module.name<<"': ";
-	    e.prepend(o.str());
-	    throw e;
-	}
-
-    // 3. Load small declarations
-    for(auto& module: modules())
-	try {
 	    module.get_small_decls(*this);
-	}
-	catch (myexception& e)
-	{
-	    std::ostringstream o;
-	    o<<"In module '"<<module.name<<"': ";
-	    e.prepend(o.str());
-	    throw e;
-	}
-
-    // 4. Optimize
-    for(auto& module: modules())
-	try {
 	    module.optimize(*this);
 	}
 	catch (myexception& e)
