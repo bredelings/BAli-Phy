@@ -148,7 +148,9 @@ public:
 
     void desugar(const Program&);
 
-    void get_small_decls(const Program&);
+    void import_small_decls(const Program&);
+
+    void export_small_decls(const Program&);
 
     void update_function_symbols();
 

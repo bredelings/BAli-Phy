@@ -309,9 +309,11 @@ void Module::compile(const Program& P)
 	}
     }
 
-    get_small_decls(P);
+    import_small_decls(P);
 
     optimize(P);
+
+    export_small_decls(P);
 }
 
 void Module::perform_imports(const Program& P)
@@ -363,11 +365,11 @@ void Module::desugar(const Program&)
 
 int nodes_size(const expression_ref& E);
 
-void Module::get_small_decls(const Program& P)
+void Module::import_small_decls(const Program& P)
 {
     if (not topdecls) return;
 
-    if (not small_decls.empty()) return;
+    assert(small_decls.empty());
 
     // Collect small decls from imported modules;
     for(auto& imp_mod_name: dependencies())
@@ -387,6 +389,11 @@ void Module::get_small_decls(const Program& P)
 
 	small_decls.clear();
     }
+}
+
+void Module::export_small_decls(const Program& P)
+{
+    if (not topdecls) return;
 
     assert(small_decls.empty());
     for(auto& decl: topdecls.sub())
