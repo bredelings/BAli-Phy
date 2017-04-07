@@ -715,11 +715,11 @@ bool do_inline(const simplifier_options& options, const expression_ref& rhs, con
 
     // OnceUnsafe
     else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Once)
-	return whnf_or_bottom(rhs) and not very_boring(context);
+	return whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context));
 
     // OnceUnsafe
     else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Once and occur.context == var_context::argument)
-	return whnf_or_bottom(rhs) and not very_boring(context);
+	return whnf_or_bottom(rhs) and (no_size_increase(rhs,context) or not very_boring(context));
 
     // MultiUnsafe
     else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Many)
