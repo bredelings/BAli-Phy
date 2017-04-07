@@ -1107,22 +1107,20 @@ void Module::def_constructor(const std::string& cname, int arity)
 	throw myexception()<<"Locally defined symbol '"<<cname<<"' should not be qualified.";
 
     string qualified_name = name+"."+cname;
-    expression_ref body = lambda_expression( constructor(qualified_name, arity) );
 
     auto loc = symbols.find(qualified_name);
     if (loc != symbols.end())
     {
 	symbol_info& S = loc->second;
 	// Only the fixity has been declared!
-	if (S.symbol_type == unknown_symbol and not S.body and not S.type)
+	if (S.symbol_type == unknown_symbol and not S.type)
 	{
 	    S.symbol_type = constructor_symbol;
-	    S.body = body;
 	    return;
 	}
     }
 
-    declare_symbol( {cname, constructor_symbol, local_scope, arity, -1, unknown_fix, body, {}} );
+    declare_symbol( {cname, constructor_symbol, local_scope, arity, -1, unknown_fix, {}, {}} );
 }
 
 expression_ref Module::get_function(const std::string& fname) const
