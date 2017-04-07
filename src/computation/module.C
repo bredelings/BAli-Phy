@@ -1111,14 +1111,13 @@ Module::Module(const expression_ref& E)
 
     // 1. module = [optional name] + body
     if (module.size() == 1)
+    {
+	name = "Main";
 	body = module.sub()[0];
+    }
     else
     {
-	string module_name2 = module.sub()[0].as_<String>();
-	if (not name.empty() and name != module_name2)
-	    throw myexception()<<"Overwriting module name '"<<name<<"' with '"<<module_name2<<"'";
-	name = module_name2;
-	
+	name = module.sub()[0].as_<String>();
 	body = module.sub()[1];
     }
     assert(is_AST(body,"Body"));
@@ -1129,25 +1128,6 @@ Module::Module(const expression_ref& E)
 	    topdecls = E;
 	else if (is_AST(E,"impdecls"))
 	    impdecls = E;
-    
-    // 3. Do imports.
-    if (impdecls)
-    {
-	for(const auto& impdecl:impdecls.sub())
-	{
-	    int i=0;
-	    bool qualified = impdecl.sub()[0].as_<String>() == "qualified";
-	    if (qualified) i++;
-	    
-	    string imp_module_name = impdecl.sub()[i++].as_<String>();
-	    
-	    string imp_module_name_as = imp_module_name;
-	    if (i < impdecl.size() and impdecl.sub()[i++].as_<String>() == "as")
-		imp_module_name_as = impdecl.sub()[i++].as_<String>();
-
-	    assert(i == impdecl.size());
-	}
-    }
     
     if (not topdecls) return;
 
