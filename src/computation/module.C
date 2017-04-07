@@ -272,9 +272,43 @@ set<string> Module::dependencies() const
 
 void Module::compile(const Program& P)
 {
+    assert(not resolved);
+    resolved = true;
+
     add_local_symbols();
-    resolve_symbols(P);
+
+    perform_imports(P);
+
+    desugar(P); // fixme - separate renaming from desugaring -- move it after load_builtins.
+
+    load_builtins(*P.get_module_loader());
+
+    get_types(P);
+
+    // Get rid of declarations that are not Decl
+    if (topdecls)
+    {
+	vector<expression_ref> decls;
+	for(auto& decl: topdecls.sub())
+	    if (is_AST(decl,"Decl"))
+		decls.push_back(decl);
+	topdecls = {AST_node("TopDecls"),decls};
+    }
+
+    // Get exports
+    if (topdecls)
+    {
+	exports = AST_node("Exports");
+	for(auto& decl: topdecls.sub())
+	{
+	    auto x = decl.sub()[0].as_<dummy>();
+	    assert(is_qualified_dummy(x));
+	    exports = exports + x;
+	}
+    }
+
     get_small_decls(P);
+
     optimize(P);
 }
 
@@ -318,18 +352,10 @@ void Module::update_function_symbols()
 
 void Module::desugar(const Program&)
 {
-    if (not topdecls) return;
-
-    // 1. Desugar the module
-    assert(is_AST(topdecls,"TopDecls"));
-    topdecls = ::desugar(*this,topdecls);
-    for(auto& p: symbols)
+    if (topdecls)
     {
-	const auto& S = p.second;
-	if (S.symbol_type != variable_symbol) continue;
-	if (S.scope != local_scope) continue;
-      
-	string qname = S.name;
+	assert(is_AST(topdecls,"TopDecls"));
+	topdecls = ::desugar(*this,topdecls);
     }
 }
 
@@ -571,51 +597,6 @@ expression_ref rename_top_level(const expression_ref& decls, const string& modul
     assert(bound.empty());
 
     return make_topdecls(decls2);
-}
-
-void Module::resolve_symbols(const Program& P)
-{
-    if (resolved) return;
-    resolved = true;
-
-    perform_imports(P);
-
-    desugar(P); // fixme - separate renaming from desugaring -- move it after load_builtins.
-
-    load_builtins(*P.get_module_loader());
-
-    get_types(P);
-
-    // Get rid of declarations that are not Decl
-    if (topdecls)
-    {
-	vector<expression_ref> decls;
-	for(auto& decl: topdecls.sub())
-	    if (is_AST(decl,"Decl"))
-		decls.push_back(decl);
-	topdecls = {AST_node("TopDecls"),decls};
-    }
-
-    // Get exports
-    if (topdecls)
-    {
-	exports = AST_node("Exports");
-	for(auto& decl: topdecls.sub())
-	{
-	    auto x = decl.sub()[0].as_<dummy>();
-	    assert(is_qualified_dummy(x));
-	    exports = exports + x;
-	}
-    }
-
-    // It should be possible to make a simple and cheap renamer rename(body,map<dummy,dummy>,module_name) that
-    //  locates any references to vars in the map and substitutes for them.
-
-    // After that we need to update importing so that we can include the bodies for some of the imported symbols that aren't too large.
-    // Then we will be able to inline $ and . and id from the Prelude.
-
-    // Hopefully we can reimplement let-float in a way that isn't so expensive.. and also speeds things up.
-
 }
 
 expression_ref func_type(const expression_ref& a, const expression_ref& b)

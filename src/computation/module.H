@@ -152,8 +152,6 @@ public:
 
     void update_function_symbols();
 
-    void resolve_symbols(const Program&);
-
     void get_types(const Program&);
 
     void optimize(const Program&);
