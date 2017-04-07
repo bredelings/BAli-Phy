@@ -461,9 +461,9 @@ struct substitution: public map<dummy, substitution_range>
 struct substitution_range
 {
     expression_ref E;
-    boost::optional<substitution> S;
+    const substitution* S = nullptr;
     substitution_range(const expression_ref& e):E(e) {}
-    substitution_range(const expression_ref& e, const boost::optional<substitution> s):E(e),S(s) {}
+    substitution_range(const expression_ref& e, const substitution& s):E(e),S(&s) {}
 };
 
 typedef pair<expression_ref,occurrence_info> bound_variable_info;
@@ -967,6 +967,11 @@ simplify_decls(const simplifier_options& options, vector<pair<dummy, expression_
 	// 4. Therefore S2 is a good substitution for F.
 	assert(x.is_loop_breaker or not get_free_indices(F).count(x));
 
+	// A. Suspended substitutions created by pre-inlining won't be affected if we include unconditionally inlining later-occurring variables.
+	//   A.1 This is because substitutions for later-occuring variables that are loop-breakers has already been done.
+	//   A.2 Non-loop cannot occur in the bodies F that the suspended substitutions will be applied to.
+	// B. Therefore, we can create a single substitution object for an entire decl scope, and just include pointers to it.
+	// C. The lifetime of the substitution is just the duration of this scope, so raw pointers are fine.
 	if (x.pre_inline() and options.pre_inline_unconditionally and not x.is_exported)
 	{
 	    S2.erase(x);
