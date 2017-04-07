@@ -283,6 +283,8 @@ void Module::compile(const Program& P)
 
     load_builtins(*P.get_module_loader());
 
+    load_constructors();
+
     get_types(P);
 
     // Get rid of declarations that are not Decl
@@ -714,6 +716,47 @@ void Module::load_builtins(const module_loader& L)
 	}
 	else
 	    new_decls.push_back(decl);
+    topdecls = {AST_node("TopDecls"), new_decls};
+}
+
+void Module::load_constructors()
+{
+    if (not topdecls) return;
+
+    vector<expression_ref> new_decls;
+    for(const auto& decl: topdecls.sub())
+	if (is_AST(decl,"Decl:data"))
+	{
+	    if (decl.size() >= 2)
+	    {
+		expression_ref constrs = decl.sub()[1];
+		assert(is_AST(constrs,"constrs"));
+		for(const auto& constr: constrs.sub())
+		{
+		    string cname;
+		    int arity = -1;
+		    if (is_AST(constr,"constr"))
+		    {
+			cname = constr.sub()[0].as_<String>();
+			arity = constr.size() - 1;
+		    }
+		    else if (is_AST(constr,"constr_op"))
+		    {
+			cname = constr.sub()[1].as_<String>();
+			arity = 2;
+		    }
+		    else
+			std::abort();
+		    string qualified_name = name+"."+cname;
+		    expression_ref body = lambda_expression( constructor(qualified_name, arity) );
+		    new_decls.push_back({AST_node("Decl"),{dummy(qualified_name),body}});
+		}
+	    }
+            // Strip out the constructor definition here new_decls.push_back(decl);
+	}
+	else
+	    new_decls.push_back(decl);
+
     topdecls = {AST_node("TopDecls"), new_decls};
 }
 

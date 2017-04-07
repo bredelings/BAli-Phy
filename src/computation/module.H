@@ -158,6 +158,8 @@ public:
 
     void load_builtins(const module_loader&);
 
+    void load_constructors();
+
     bool is_declared(const std::string&) const;
 
     bool is_declared_local(const std::string&) const;
