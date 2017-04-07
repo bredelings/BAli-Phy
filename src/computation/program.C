@@ -163,6 +163,7 @@ void Program::desugar_and_optimize()
     // Load missing modules, desugar, resolve names
     for(auto& module: modules())
 	try {
+	    module.add_local_symbols();
 	    module.resolve_symbols(*this);
 	    module.get_small_decls(*this);
 	    module.optimize(*this);

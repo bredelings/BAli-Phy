@@ -1091,44 +1091,8 @@ expression_ref Module::get_function(const std::string& fname) const
     return lookup_symbol(fname).body;
 }
 
-// A name of "" means that we are defining a top-level program, or a piece of a top-level program.
-Module::Module(const string& n)
-    :name(n)
+void Module::add_local_symbols()
 {
-    if (not n.size())
-	throw myexception()<<"Module name may not be empty!";
-}
-
-Module::Module(const char *n)
-    :Module(string(n))
-{ }
-
-Module::Module(const expression_ref& E)
-{
-    assert(is_AST(E,"Module"));
-    assert(not module);
-    module = E;
-
-    // 1. module = [optional name] + body
-    if (module.size() == 1)
-    {
-	name = "Main";
-	body = module.sub()[0];
-    }
-    else
-    {
-	name = module.sub()[0].as_<String>();
-	body = module.sub()[1];
-    }
-    assert(is_AST(body,"Body"));
-    
-    // 2. body = impdecls + [optional topdecls]
-    for(const auto& E: body.sub())
-	if (is_AST(E,"TopDecls"))
-	    topdecls = E;
-	else if (is_AST(E,"impdecls"))
-	    impdecls = E;
-    
     if (not topdecls) return;
 
     assert(is_AST(topdecls,"TopDecls"));
@@ -1217,6 +1181,45 @@ Module::Module(const expression_ref& E)
 		}
 	    }
 	}
+}
+
+// A name of "" means that we are defining a top-level program, or a piece of a top-level program.
+Module::Module(const string& n)
+    :name(n)
+{
+    if (not n.size())
+	throw myexception()<<"Module name may not be empty!";
+}
+
+Module::Module(const char *n)
+    :Module(string(n))
+{ }
+
+Module::Module(const expression_ref& E)
+{
+    assert(is_AST(E,"Module"));
+    assert(not module);
+    module = E;
+
+    // 1. module = [optional name] + body
+    if (module.size() == 1)
+    {
+	name = "Main";
+	body = module.sub()[0];
+    }
+    else
+    {
+	name = module.sub()[0].as_<String>();
+	body = module.sub()[1];
+    }
+    assert(is_AST(body,"Body"));
+
+    // 2. body = impdecls + [optional topdecls]
+    for(const auto& E: body.sub())
+	if (is_AST(E,"TopDecls"))
+	    topdecls = E;
+	else if (is_AST(E,"impdecls"))
+	    impdecls = E;
 
     assert(module);
 }

@@ -79,7 +79,7 @@ class Module
     bool resolved = false;
 
     bool optimized = false;
-  
+
 public:
 
     bool do_optimize = true;
@@ -141,6 +141,8 @@ public:
     void import_module(const Module& M2, const std::string&, bool qualified);
 
     void perform_imports(const Program&);
+
+    void add_local_symbols();
 
     void desugar(const Program&);
 
