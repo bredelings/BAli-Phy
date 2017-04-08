@@ -305,7 +305,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
     if (not E) return {E,{}};
 
     // 1. Var
-    if (E.is_a<dummy>())
+    if (is_dummy(E))
     {
 	dummy var = E.as_<dummy>();
 	var.work_dup = amount_t::Once;
@@ -628,13 +628,13 @@ bool no_size_increase(const expression_ref& rhs, const inline_context& context)
 	int n_args_supplied = num_arguments(context);
 	assert(n_args_supplied >= 1);
 	int n_args_needed = get_n_lambdas1(rhs);
-	if (n_args_supplied >= n_args_needed)
-	{
-	    int size_of_call = 2 + n_args_needed;
-	    auto body = peel_n_lambdas1(rhs, n_args_needed);
-	    int size_of_body = nodes_size(body);
-	    if (size_of_body <= size_of_call) return true;
-	}
+	int n_args_used = std::min(n_args_needed, n_args_supplied);
+
+	int size_of_call = 1 + n_args_supplied;
+	auto body = peel_n_lambdas1(rhs, n_args_used);
+	int size_of_body = nodes_size(body);
+
+	if (size_of_body <= size_of_call) return true;
     }
 
     return false;
