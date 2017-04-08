@@ -57,6 +57,57 @@ amount_t max(amount_t a1, amount_t a2)
     std::abort();
 }
 
+int simple_size(const expression_ref& E)
+{
+    if (is_dummy(E))
+	return 0;
+
+    else if (E.size() == 0)
+	return 1;
+
+    else if (E.head().is_a<constructor>())
+    {
+	for(auto& x: E.sub())
+	    assert(is_dummy(x));
+	return 1;
+    }
+
+    else if (E.head().is_a<Apply>())
+	return E.size() + simple_size(E.sub()[0]);
+
+    else if (E.head().type() == lambda_type)
+	return simple_size(E.sub()[1]);
+
+    else if (is_let_expression(E))
+    {
+	int size = 1 + simple_size(E.sub()[1]);
+
+	for(auto& decl: E.sub()[0].sub())
+	    size += simple_size(E.sub()[1]);
+
+	return size;
+    }
+    else if (is_case(E))
+    {
+	expression_ref object;
+	vector<expression_ref> patterns;
+	vector<expression_ref> bodies;
+	parse_case_expression(E, object, patterns, bodies);
+	int alts_size = simple_size(bodies[0]);
+	for(int i=1;i<bodies.size();i++)
+	    alts_size = std::max(alts_size, simple_size(bodies[i]));
+	return 1 + simple_size(object) + alts_size;
+    }
+    else if (E.head().is_a<Operation>())
+    {
+	for(auto& x: E.sub())
+	    assert(is_dummy(x));
+	return 1;
+    }
+
+    std::abort();
+}
+
 // Merge_branch should MAX the work done, but ADD the code size.
 set<dummy> merge_occurrences(const set<dummy>& free_vars1, const set<dummy>& free_vars2, bool alternate_branches = false)
 {
