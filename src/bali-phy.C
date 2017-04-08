@@ -406,6 +406,8 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const st
     return std::shared_ptr<module_loader>(new module_loader(L));
 }
 
+int simple_size(const expression_ref& E);
+
 int main(int argc,char* argv[])
 { 
     int n_procs = 1;
@@ -508,7 +510,8 @@ int main(int argc,char* argv[])
 	    {
 		const auto& S = s.second;
 		if (S.body and S.scope == local_scope)
-		    std::cerr<<S.name<<" = "<<S.body<<std::endl;
+		    std::cerr<<"size = "<<simple_size(S.body)<<"   "<<S.name<<" = "<<S.body<<std::endl;
+	    }
 	    }
 	    exit(0);
 	}
