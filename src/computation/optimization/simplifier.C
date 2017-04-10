@@ -424,14 +424,14 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
     if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
     {
 	set<dummy> free_vars;
-	expression_ref F = E.head();
+	object_ptr<expression> F = new expression(E.head());
 	for(int i=0;i<E.size();i++)
 	{
 	    set<dummy> free_vars_i;
 	    expression_ref arg_i;
-	    auto context = (i==0 and E.head().is_a<Apply>()) ? var_context::unknown : var_context::argument;
+	    auto context = (i==0 and is_apply(E.head())) ? var_context::unknown : var_context::argument;
 	    tie(arg_i,free_vars_i) = occurrence_analyzer(E.sub()[i], context);
-	    F = F + arg_i;
+	    F->sub.push_back(arg_i);
 	    merge_occurrences_into(free_vars, free_vars_i);
 	}
 	return {F,free_vars};
