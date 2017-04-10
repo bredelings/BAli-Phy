@@ -150,7 +150,7 @@ public:
 
     void import_small_decls(const Program&);
 
-    void export_small_decls(const Program&);
+    void export_small_decls();
 
     void update_function_symbols();
 

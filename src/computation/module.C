@@ -317,7 +317,7 @@ void Module::compile(const Program& P)
 
     optimize(P);
 
-    export_small_decls(P);
+    export_small_decls();
 }
 
 void Module::perform_imports(const Program& P)
@@ -395,7 +395,7 @@ void Module::import_small_decls(const Program& P)
     }
 }
 
-void Module::export_small_decls(const Program& P)
+void Module::export_small_decls()
 {
     if (not topdecls) return;
 
