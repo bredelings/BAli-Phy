@@ -404,8 +404,6 @@ void Module::import_small_decls(const Program& P)
     add_constructor(small_decls_in, constructor("(,,,,,,,)",8));
     add_constructor(small_decls_in, constructor("(,,,,,,,,)",9));
     add_constructor(small_decls_in, constructor("(,,,,,,,,,)",10));
-
-    std::cerr<<"loading "<<small_decls_in.size()<<" small decls for "<<name<<".";
 }
 
 void Module::export_small_decls()
