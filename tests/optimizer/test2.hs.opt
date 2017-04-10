@@ -1,1 +1,3 @@
-Test.f = let {a = 10, #2 = Prelude.negate a} in \#1 -> #2
+size = 1   Test.#2 = Prelude:negate Test.#820
+size = 1   Test.#820 = 10
+size = 0   Test.f = \#1 -> Test.#2

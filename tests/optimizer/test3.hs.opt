@@ -1,1 +1,4 @@
-Test.f = let {a = 10, #3 = let {#1 = 3} in Prelude.+ a #1} in \#1 -> #3
+size = 1   Test.#3 = Prelude:add Test.#820 Test.#821
+size = 1   Test.#820 = 10
+size = 1   Test.#821 = 3
+size = 0   Test.f = \#1 -> Test.#3
