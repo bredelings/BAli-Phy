@@ -109,7 +109,7 @@ int simple_size(const expression_ref& E)
 }
 
 // Merge_branch should MAX the work done, but ADD the code size.
-set<dummy> merge_occurrences(const set<dummy>& free_vars1, const set<dummy>& free_vars2, bool alternate_branches = false)
+void merge_occurrences_into(set<dummy>& free_vars1, const set<dummy>& free_vars2, bool alternate_branches = false)
 {
 #ifndef NDEBUG
     for(auto var: free_vars1)
@@ -118,9 +118,6 @@ set<dummy> merge_occurrences(const set<dummy>& free_vars1, const set<dummy>& fre
     for(auto var: free_vars2)
 	assert(var.code_dup != amount_t::Unknown and var.work_dup != amount_t::Unknown);
 #endif
-
-    // Start with free_vars1
-    set<dummy> free_vars = free_vars1;
 
     // Then consider free_vars2
     for(auto var: free_vars2)
@@ -141,17 +138,15 @@ set<dummy> merge_occurrences(const set<dummy>& free_vars1, const set<dummy>& fre
 	    else
 		var.context = var_context::unknown;
 
-	    free_vars.erase(var);
+	    free_vars1.erase(var);
 	}
 
-	free_vars.insert(var);
+	free_vars1.insert(var);
     }
 #ifndef NDEBUG
-    for(auto var: free_vars)
+    for(auto var: free_vars1)
 	assert(var.code_dup != amount_t::Unknown and var.work_dup != amount_t::Unknown);
 #endif
-
-    return free_vars;
 }
 
 dummy remove_var_and_set_occurrence_info(dummy x, set<dummy>& free_vars)
@@ -228,7 +223,7 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 	tie(decls[i].second, free_vars_i) = occurrence_analyzer(decls[i].second);
 
 	// 3.2 Record occurrences
-	free_vars = merge_occurrences(free_vars, free_vars_i);
+	merge_occurrences_into(free_vars, free_vars_i);
 
 	// 3.3. Check if other variables j are referenced from the i-th variable.
 	for(auto& x: free_vars_i)
@@ -402,8 +397,8 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
     if (parse_case_expression(E, object, patterns, bodies))
     {
 	// Analyze the object
-	set<dummy> obj_free_vars;
-	tie(object, obj_free_vars) = occurrence_analyzer(object);
+	set<dummy> free_vars;
+	tie(object, free_vars) = occurrence_analyzer(object);
 
 	const int L = patterns.size();
 	// Just normalize the bodies
@@ -432,9 +427,9 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	    }
 
 	    // Merge occurrences for this pattern into the occurrence for the whole set of alts.
-	    alts_free_vars = merge_occurrences(alts_free_vars, alt_i_free_vars, true);
+	    merge_occurrences_into(alts_free_vars, alt_i_free_vars, true);
 	}
-	set<dummy> free_vars = merge_occurrences(obj_free_vars, alts_free_vars);
+	merge_occurrences_into(free_vars, dup_work(alts_free_vars));
 	return {make_case_expression(object,patterns,bodies),free_vars};
     }
 
@@ -450,7 +445,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	    auto context = (i==0 and E.head().is_a<Apply>()) ? var_context::unknown : var_context::argument;
 	    tie(arg_i,free_vars_i) = occurrence_analyzer(E.sub()[i], context);
 	    F = F + arg_i;
-	    free_vars = merge_occurrences(free_vars, free_vars_i);
+	    merge_occurrences_into(free_vars, free_vars_i);
 	}
 	return {F,free_vars};
     }
