@@ -378,15 +378,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	dummy x = remove_var_and_set_occurrence_info(E.sub()[0], free_vars);
 
 	// 4. change Once -> OnceInLam / work=Many, code=Once
-	set<dummy> free_vars2;
-	for(auto var: free_vars)
-	{
-	    if (var.work_dup == amount_t::Once)
-		var.work_dup = amount_t::Many;
-	    free_vars2.insert(var);
-	}
-
-	return {lambda_quantify(x,body),free_vars2};
+	return {lambda_quantify(x,body), dup_work(free_vars)};
     }
 
     // 6. Case
