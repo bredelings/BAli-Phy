@@ -412,6 +412,8 @@ void Module::export_small_decls()
     for(auto& decl: topdecls.sub())
     {
 	auto& x = decl.sub()[0].as_<dummy>();
+	assert(not x.name.empty());
+
 	auto& body = decl.sub()[1];
 	if (nodes_size(body) < 15)
 	    small_decls_out.insert({x, body});
