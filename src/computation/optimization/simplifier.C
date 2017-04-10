@@ -421,7 +421,8 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	    merge_occurrences_into(alts_free_vars, alt_i_free_vars, true);
 	}
 	// We can avoid inlining directly into alternatives, since this might duplicate work.
-	merge_occurrences_into(free_vars, dup_work(alts_free_vars));
+        // merge_occurrences_into(free_vars, dup_work(alts_free_vars));
+	merge_occurrences_into(free_vars, alts_free_vars);
 	return {make_case_expression(object,patterns,bodies),free_vars};
     }
 
