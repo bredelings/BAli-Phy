@@ -37,4 +37,9 @@ constructor right_assoc_constructor(const std::string& s,int prec=0);
 
 bool has_constructor(const expression_ref&, const std::string&);
 
+inline bool is_constructor(const expression_ref& E)
+{
+    return E.type() == constructor_type;
+}
+
 #endif
