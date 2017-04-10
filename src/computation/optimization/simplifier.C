@@ -185,8 +185,6 @@ dummy remove_var_and_set_occurrence_info(const expression_ref& var, set<dummy>& 
 }
 // occur:: Expression -> (marked free_variables, marked Expression)
 
-pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var_context context=var_context::unknown);
-
 vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,expression_ref>> decls, set<dummy>& free_vars)
 {
     using namespace boost;
@@ -1198,7 +1196,8 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 }
 
 
-expression_ref simplifier(const simplifier_options& options, const map<dummy,expression_ref>& small_decls_in, const expression_ref& E1)
+expression_ref simplifier(const simplifier_options& options, const map<dummy,expression_ref>& small_decls_in,
+			  const set<dummy>& small_decls_in_free_vars, const expression_ref& E1)
 {
     set<dummy> free_vars;
     expression_ref E2;
@@ -1211,12 +1210,11 @@ expression_ref simplifier(const simplifier_options& options, const map<dummy,exp
 	dummy x = decl.first;
 	x.work_dup = amount_t::Many;
 	x.code_dup = amount_t::Many;
-	set<dummy> free_vars2;
-	expression_ref body;
-	tie(body, free_vars2) = occurrence_analyzer(decl.second);
-	free_vars.insert(free_vars2.begin(), free_vars2.end());
-	bound_vars.insert({x,{body,x}});
+	bound_vars.insert({x,{decl.second,x}});
     }
+
+    for(auto& var: small_decls_in_free_vars)
+	bound_vars.insert({var,{}});
 
     for(auto& var: free_vars)
 	bound_vars.insert({var,{}});

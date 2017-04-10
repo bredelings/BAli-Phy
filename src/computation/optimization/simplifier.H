@@ -1,7 +1,9 @@
 #ifndef SIMPLIFIER_H
 #define SIMPLIFIER_H
 
+#include <set>
 #include <map>
+#include <utility>
 #include "computation/expression/expression_ref.H"
 #include "computation/expression/dummy.H"
 
@@ -20,6 +22,8 @@ struct simplifier_options
 
 class module_loader;
 
-expression_ref simplifier(const simplifier_options&, const std::map<dummy, expression_ref>&, const expression_ref&);
+std::pair<expression_ref,std::set<dummy>> occurrence_analyzer(const expression_ref& E, var_context context=var_context::unknown);
+
+expression_ref simplifier(const simplifier_options&, const std::map<dummy, expression_ref>&, const std::set<dummy>&, const expression_ref&);
 
 #endif

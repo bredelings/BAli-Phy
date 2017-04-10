@@ -92,7 +92,11 @@ public:
 
     std::map<dummy,expression_ref> small_decls_in;
 
+    std::set<dummy> small_decls_in_free_vars;
+
     std::map<dummy,expression_ref> small_decls_out;
+
+    std::set<dummy> small_decls_out_free_vars;
 
     std::string name;
 

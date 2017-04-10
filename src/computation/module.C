@@ -373,7 +373,9 @@ int nodes_size(const expression_ref& E);
 void add_constructor(map<dummy,expression_ref>& decls, const constructor& con)
 {
     dummy x(con.name());
-    decls.insert({x,lambda_expression(con)});
+    expression_ref body = lambda_expression(con);
+    auto res = occurrence_analyzer(body);
+    decls.insert({x,res.first});
 }
 
 void Module::import_small_decls(const Program& P)
@@ -387,6 +389,7 @@ void Module::import_small_decls(const Program& P)
     {
 	auto& M = P.get_module(imp_mod_name);
 	small_decls_in.insert(M.small_decls_out.begin(), M.small_decls_out.end());
+	small_decls_in_free_vars.insert(M.small_decls_out_free_vars.begin(), M.small_decls_out_free_vars.end());
     }
 
     add_constructor(small_decls_in, constructor(":",2));
@@ -418,6 +421,13 @@ void Module::export_small_decls()
 	auto& body = decl.sub()[1];
 	if (nodes_size(body) < 15)
 	    small_decls_out.insert({x, body});
+    }
+
+    for(auto& decl: small_decls_out)
+    {
+	set<dummy> free_vars;
+	tie(decl.second, free_vars) = occurrence_analyzer(decl.second);
+	small_decls_out_free_vars.insert(free_vars.begin(), free_vars.end());
     }
 }
 
@@ -704,7 +714,7 @@ void Module::optimize(const Program& P)
 	    module = create_module(name, exports, impdecls, topdecls);
 
 	    for(int i=0;i<P.get_module_loader()->max_iterations;i++)
-		module = simplifier(*P.get_module_loader(), small_decls_in, module);
+		module = simplifier(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, module);
 
 	    parse_module(module, name, exports, impdecls, topdecls);
 	}
