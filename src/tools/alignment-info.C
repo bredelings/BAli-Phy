@@ -22,6 +22,7 @@
 #include <map>
 #include <string>
 #include "tree/tree.H"
+#include "tree/tree-util.H"
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
 #include "util.H"
@@ -252,12 +253,15 @@ int main(int argc,char* argv[])
 	variables_map args = parse_cmd_line(argc,argv);
 
 	//----------- Load alignment and tree ---------//
-	alignment A;
+	alignment A = load_A(args, false);
 	SequenceTree T;
 	if (args.count("tree"))
-	    load_A_and_T(args,A,T,false);
-	else
-	    A = load_A(args,false);
+	{
+	    T = load_T(args);
+	    link(A,T,false);
+	    check_alignment(A,T,false);
+	}
+
 	const alphabet& a = A.get_alphabet();
     
 	//----- Count informative/non-constant sites ----//
