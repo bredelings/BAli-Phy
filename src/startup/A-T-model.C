@@ -356,18 +356,28 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     }
 
     //----------- Load alignments and tree ---------//
-    vector<alignment> A;
+    vector<alignment> A = load_As(args);
     SequenceTree T;
 
     if (args.count("tree"))
-	load_As_and_T(args,A,T);
+	T = load_T(args);
     else
-	load_As_and_random_T(args,A,T);
+    {
+	SequenceTree TC = star_tree(sequence_names(A[0]));
+	if (args.count("t-constraint"))
+	    TC = load_constraint_tree(args["t-constraint"].as<string>(),sequence_names(A[0]));
+
+	T = TC;
+	RandomTree(T, 1.0);
+    }
 
     for(int i=0;i<A.size();i++) {
 	check_alignment_names(A[i]);
 	check_alignment_values(A[i],filenames[i]);
     }
+
+    for(auto& a: A)
+	link(a,T,true);
 
     //--------- Handle branch lengths <= 0 --------//
     sanitize_branch_lengths(T);

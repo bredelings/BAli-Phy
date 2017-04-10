@@ -40,6 +40,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// Map leaf nodes of T to the leaf sequences of A
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
 
+std::vector<alignment> load_As(const boost::program_options::variables_map& args);
+
 void load_As_and_T(const boost::program_options::variables_map& args, std::vector<alignment>& A,SequenceTree& T);
 
 void load_As_and_T(const boost::program_options::variables_map& args, std::vector<alignment>& A,SequenceTree& T);
