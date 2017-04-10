@@ -297,6 +297,10 @@ void Module::compile(const Program& P)
 	topdecls = {AST_node("TopDecls"),decls};
     }
 
+    // Check for duplicate top-level names.
+    if (topdecls)
+	check_duplicate_var(topdecls);
+
     // Get exports
     if (topdecls)
     {
@@ -576,6 +580,10 @@ expression_ref rename_top_level(const expression_ref& decls, const string& modul
 
     vector<pair<dummy,expression_ref>> decls2;
 
+#ifndef NDEBUG
+    check_duplicate_var(decls);
+#endif
+
     for(int i = 0; i< decls.size(); i++)
     {
 	auto x = decls.sub()[i].sub()[0].as_<dummy>();
@@ -604,6 +612,10 @@ expression_ref rename_top_level(const expression_ref& decls, const string& modul
     }
 
     assert(bound.empty());
+
+#ifndef NDEBUG
+    check_duplicate_var(decls2);
+#endif
 
     return make_topdecls(decls2);
 }

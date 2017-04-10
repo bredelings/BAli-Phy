@@ -8,6 +8,7 @@
 #include "computation/operations.H"
 
 using std::vector;
+using std::set;
 using std::string;
 using std::pair;
 
@@ -319,3 +320,34 @@ vector<pair<dummy, expression_ref>> strip_let(expression_ref& E)
     return decls;
 }
 
+boost::optional<dummy> find_first_duplicate_var(const vector<pair<dummy,expression_ref>>& decls)
+{
+    set<dummy> vars;
+    for(auto& decl: decls)
+    {
+	const auto& x = decl.first;
+	if (vars.count(x))
+	    return x;
+	vars.insert(x);
+    }
+    return boost::none;
+}
+
+boost::optional<dummy> find_first_duplicate_var(const expression_ref& decls)
+{
+    return find_first_duplicate_var(parse_decls(decls));
+}
+
+void check_duplicate_var(const vector<pair<dummy,expression_ref>>& decls)
+{
+    auto var = find_first_duplicate_var(decls);
+    if (var)
+	throw myexception()<<"variable '"<<var->print()<<"' occurs twice!";
+}
+
+void check_duplicate_var(const expression_ref& decls)
+{
+    auto var = find_first_duplicate_var(decls);
+    if (var)
+	throw myexception()<<"variable '"<<var->print()<<"' occurs twice!";
+}

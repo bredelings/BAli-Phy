@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <utility>
+#include <boost/optional.hpp>
 #include "object.H"
 #include "expression_ref.H"
 #include "dummy.H"
@@ -59,5 +60,10 @@ expression_ref let_body(expression_ref E);
 void strip_let(expression_ref& E, std::vector<std::pair<dummy, expression_ref>>& decls);
 
 std::vector<std::pair<dummy, expression_ref>> strip_let(expression_ref& E);
+
+boost::optional<dummy> find_first_duplicate_var(const std::vector<std::pair<dummy,expression_ref>>& decls);
+boost::optional<dummy> find_first_duplicate_var(const expression_ref& decls);
+void check_duplicate_var(const std::vector<std::pair<dummy,expression_ref>>& decls);
+void check_duplicate_var(const expression_ref& decls);
 
 #endif
