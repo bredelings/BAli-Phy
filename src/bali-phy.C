@@ -512,7 +512,6 @@ int main(int argc,char* argv[])
 		if (S.body and S.scope == local_scope)
 		    std::cerr<<"size = "<<simple_size(S.body)<<"   "<<S.name<<" = "<<S.body<<std::endl;
 	    }
-	    }
 	    exit(0);
 	}
 
