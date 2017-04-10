@@ -1,7 +1,9 @@
 #ifndef SIMPLIFIER_H
 #define SIMPLIFIER_H
 
+#include <map>
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/dummy.H"
 
 struct simplifier_options
 {
@@ -18,6 +20,6 @@ struct simplifier_options
 
 class module_loader;
 
-expression_ref simplifier(const simplifier_options&, const expression_ref&);
+expression_ref simplifier(const simplifier_options&, const std::map<dummy, expression_ref>&, const expression_ref&);
 
 #endif

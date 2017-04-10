@@ -1201,13 +1201,27 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     std::abort();
 }
 
-expression_ref simplifier(const simplifier_options& options, const expression_ref& E1)
+
+expression_ref simplifier(const simplifier_options& options, const map<dummy,expression_ref>& small_decls_in, const expression_ref& E1)
 {
     set<dummy> free_vars;
     expression_ref E2;
     tie(E2, free_vars) = occurrence_analyzer(E1);
 
     in_scope_set bound_vars;
+
+    for(auto& decl: small_decls_in)
+    {
+	dummy x = decl.first;
+	x.work_dup = amount_t::Many;
+	x.code_dup = amount_t::Many;
+	set<dummy> free_vars2;
+	expression_ref body;
+	tie(body, free_vars2) = occurrence_analyzer(decl.second);
+	free_vars.insert(free_vars2.begin(), free_vars2.end());
+	bound_vars.insert({x,{body,x}});
+    }
+
     for(auto& var: free_vars)
 	bound_vars.insert({var,{}});
 
