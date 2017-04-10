@@ -369,6 +369,12 @@ void Module::desugar(const Program&)
 
 int nodes_size(const expression_ref& E);
 
+void add_constructor(map<dummy,expression_ref>& decls, const constructor& con)
+{
+    dummy x(con.name());
+    decls.insert({x,lambda_expression(con)});
+}
+
 void Module::import_small_decls(const Program& P)
 {
     if (not topdecls) return;
