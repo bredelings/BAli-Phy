@@ -690,7 +690,7 @@ traditional = traditional
 	invariant sites.  The amount of rate variation and the fraction of
 	invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv --randomize-alignment</userinput></screen></example>
+      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv</userinput></screen></example>
 
     <example><info><title>Fixed alignment</title></info>
       
