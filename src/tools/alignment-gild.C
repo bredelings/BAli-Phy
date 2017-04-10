@@ -24,6 +24,7 @@
 #include <list>
 #include "myexception.H"
 #include "alignment/alignment.H"
+#include "tree/tree-util.H"
 #include "optimize.H"
 #include "findroot.H"
 #include "util.H"
@@ -218,7 +219,10 @@ void add_internal_labels(SequenceTree& T);
 void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A,RootedSequenceTree& T) 
 {
     //--------------- Load and link template A and T -----------------//
-    load_A_and_T(args,A,T,false);
+    A = load_A(args, false);
+    T = load_T(args);;
+    link(A,T,false);
+    check_alignment(A,T,false);
 
     //------------ Try to load alignments -----------//
     int maxalignments = args["max-alignments"].as<int>();
