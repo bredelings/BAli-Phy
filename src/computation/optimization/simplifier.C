@@ -8,6 +8,7 @@
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
 #include "computation/expression/dummy.H"
+#include "computation/expression/apply.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/indexify.H"
@@ -65,17 +66,17 @@ int simple_size(const expression_ref& E)
     else if (E.size() == 0)
 	return 1;
 
-    else if (E.head().is_a<constructor>())
+    else if (is_constructor(E.head()))
     {
 	for(auto& x: E.sub())
 	    assert(is_dummy(x));
 	return 1;
     }
 
-    else if (E.head().is_a<Apply>())
+    else if (is_apply(E.head()))
 	return E.size() + simple_size(E.sub()[0]);
 
-    else if (E.head().type() == lambda_type)
+    else if (is_lambda(E.head()))
 	return simple_size(E.sub()[1]);
 
     else if (is_let_expression(E))
@@ -98,7 +99,7 @@ int simple_size(const expression_ref& E)
 	    alts_size = std::max(alts_size, simple_size(bodies[i]));
 	return 1 + simple_size(object) + alts_size;
     }
-    else if (E.head().is_a<Operation>())
+    else if (is_non_apply_operation(E.head()))
     {
 	for(auto& x: E.sub())
 	    assert(is_dummy(x));
