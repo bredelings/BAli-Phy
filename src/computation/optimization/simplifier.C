@@ -1016,7 +1016,7 @@ simplify_decls(const simplifier_options& options, vector<pair<dummy, expression_
 	    F = simplify(options, F, S2, bound_vars, unknown_context());
 
 	    // Float lets out of decl x = F
-	    if (options.let_float_from_let and is_let_expression(F) and (F.sub()[0].head().is_a<constructor>() or is_top_level))
+	    if (options.let_float_from_let and is_let_expression(F) and (is_constructor(F.sub()[0].head()) or is_top_level))
 	    {
 		for(auto& decl: strip_let(F))
 		{
@@ -1053,7 +1053,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     if (not E) return E;
 
     // 1. Var (x)
-    if (E.is_a<dummy>())
+    if (is_dummy(E))
     {
 	dummy x = E.as_<dummy>();
 	// 1.1 If there's a substitution x -> E
@@ -1083,7 +1083,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     if (not E.size()) return E;
 
     // 2. Lambda (E = \x -> body)
-    if (E.head().is_a<lambda>())
+    if (is_lambda(E.head()))
     {
 	assert(E.size() == 2);
 
@@ -1117,7 +1117,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     }
 
     // ?. Apply
-    if (E.head().is_a<Apply>())
+    if (is_apply(E.head()))
     {
 	object_ptr<expression> V2 = E.as_expression().clone();
 	
@@ -1135,7 +1135,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     }
 
     // 4. Constructor or Operation
-    if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    if (is_constructor(E.head()) or is_non_apply_operation(E.head()))
     {
 	object_ptr<expression> E2 = E.as_expression().clone();
 	for(int i=0;i<E.size();i++)
