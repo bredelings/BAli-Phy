@@ -90,7 +90,9 @@ public:
     expression_ref topdecls;
     expression_ref exports;
 
-    std::map<dummy,expression_ref> small_decls;
+    std::map<dummy,expression_ref> small_decls_in;
+
+    std::map<dummy,expression_ref> small_decls_out;
 
     std::string name;
 

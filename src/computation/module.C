@@ -373,25 +373,26 @@ void Module::import_small_decls(const Program& P)
 {
     if (not topdecls) return;
 
-    assert(small_decls.empty());
+    assert(small_decls_in.empty());
 
     // Collect small decls from imported modules;
     for(auto& imp_mod_name: dependencies())
     {
 	auto& M = P.get_module(imp_mod_name);
-	small_decls.insert(M.small_decls.begin(), M.small_decls.end());
+	small_decls_in.insert(M.small_decls_out.begin(), M.small_decls_out.end());
     }
 
+    std::cerr<<"loading small decls for "<<name<<": going from "<<topdecls.size();
     // Add small decls to topdecls
-    if (not small_decls.empty())
+    if (not small_decls_in.empty())
     {
 	auto decls = parse_decls(topdecls);
 
-	decls.insert(decls.end(), small_decls.begin(), small_decls.end());
+	decls.insert(decls.end(), small_decls_in.begin(), small_decls_in.end());
 
 	topdecls = make_topdecls(decls);
 
-	small_decls.clear();
+	small_decls_in.clear();
     }
 }
 
@@ -399,13 +400,13 @@ void Module::export_small_decls()
 {
     if (not topdecls) return;
 
-    assert(small_decls.empty());
+    assert(small_decls_out.empty());
     for(auto& decl: topdecls.sub())
     {
 	auto& x = decl.sub()[0].as_<dummy>();
 	auto& body = decl.sub()[1];
 	if (nodes_size(body) < 15)
-	    small_decls.insert({x, body});
+	    small_decls_out.insert({x, body});
     }
 }
 
