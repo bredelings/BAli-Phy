@@ -24,11 +24,6 @@
 	 "/usr/share/xml/docbook/schema/dtd/4.5/dbcentx.mod">
 %dbcent;
 
-<!ENTITY % xhtml-lat1
-         PUBLIC "-//W3C//ENTITIES Latin 1 for XHTML//EN"
-         "http://www.w3.org/TR/xhtml1/DTD/xhtml-lat1.ent" >
-%xhtml-lat1;
-
 <!ENTITY % ent-mmlalias
       PUBLIC "-//W3C//ENTITIES Aiases for MathML 2.0//EN"
              "/usr/share/xml/schema/w3c/mathml/dtd/mmlalias.ent" >
