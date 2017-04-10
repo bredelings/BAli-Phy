@@ -340,6 +340,7 @@ void Module::update_function_symbols()
 	    auto& var = decl.sub()[0];
 	    auto& body = decl.sub()[1];
 	    auto& x = var.as_<dummy>();
+
 	    assert(is_qualified_symbol(x.name));
 
 	    if (name != get_module_name(x.name)) continue;
