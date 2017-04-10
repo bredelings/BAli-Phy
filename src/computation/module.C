@@ -382,6 +382,18 @@ void Module::import_small_decls(const Program& P)
 	small_decls_in.insert(M.small_decls_out.begin(), M.small_decls_out.end());
     }
 
+    add_constructor(small_decls_in, constructor(":",2));
+    add_constructor(small_decls_in, constructor("[]",0));
+    add_constructor(small_decls_in, constructor("()",0));
+    add_constructor(small_decls_in, constructor("(,)",2));
+    add_constructor(small_decls_in, constructor("(,,)",3));
+    add_constructor(small_decls_in, constructor("(,,,)",4));
+    add_constructor(small_decls_in, constructor("(,,,,)",5));
+    add_constructor(small_decls_in, constructor("(,,,,,)",6));
+    add_constructor(small_decls_in, constructor("(,,,,,,)",7));
+    add_constructor(small_decls_in, constructor("(,,,,,,,)",8));
+    add_constructor(small_decls_in, constructor("(,,,,,,,,)",9));
+    add_constructor(small_decls_in, constructor("(,,,,,,,,,)",10));
 
     std::cerr<<"loading "<<small_decls_in.size()<<" small decls for "<<name<<".";
 }
@@ -734,18 +746,6 @@ void Module::load_constructors()
     if (not topdecls) return;
 
     vector<expression_ref> new_decls;
-    new_decls.push_back({AST_node("Decl"),{dummy(":"),lambda_expression(constructor(":",2))}});
-    new_decls.push_back({AST_node("Decl"),{dummy(":"),lambda_expression(constructor("[]",0))}});
-    new_decls.push_back({AST_node("Decl"),{dummy(":"),lambda_expression(constructor("()",0))}});
-    new_decls.push_back({AST_node("Decl"),{dummy(":"),lambda_expression(constructor("(,)",2))}});
-    new_decls.push_back({AST_node("Decl"),{dummy(":"),lambda_expression(constructor("(,,)",3))}});
-    new_decls.push_back({AST_node("Decl"),{dummy(":"),lambda_expression(constructor("(,,,)",4))}});
-    new_decls.push_back({AST_node("Decl"),{dummy(":"),lambda_expression(constructor("(,,,,)",5))}});
-    new_decls.push_back({AST_node("Decl"),{dummy(":"),lambda_expression(constructor("(,,,,,)",6))}});
-    new_decls.push_back({AST_node("Decl"),{dummy(":"),lambda_expression(constructor("(,,,,,,)",7))}});
-    new_decls.push_back({AST_node("Decl"),{dummy(":"),lambda_expression(constructor("(,,,,,,,)",8))}});
-    new_decls.push_back({AST_node("Decl"),{dummy(":"),lambda_expression(constructor("(,,,,,,,,)",9))}});
-    new_decls.push_back({AST_node("Decl"),{dummy(":"),lambda_expression(constructor("(,,,,,,,,,)",10))}});
 
     for(const auto& decl: topdecls.sub())
 	if (is_AST(decl,"Decl:data"))
