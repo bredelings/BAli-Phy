@@ -274,7 +274,7 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 		auto x = decls[i].first;
 		auto F = decls[i].second;
 		if (is_reglike(F)) score[k] = 4;
-		else if (F.is_a<constructor>() or F.size() == 0) score[k] = 3;
+		else if (is_constructor(F.head()) or F.size() == 0) score[k] = 3;
 		else if (x.pre_inline()) score[k] = 1;
 	    }
 	    int loop_breaker_index_in_component = argmin(score);
@@ -352,7 +352,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
     if (not E.size()) return {E,{}};
 
     // 2. Lambda (E = \x -> body)
-    if (E.head().is_a<lambda>())
+    if (is_lambda(E.head()))
     {
 	assert(E.size() == 2);
 
@@ -421,7 +421,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
     }
 
     // 4. Constructor, Operation (including Apply)
-    if (E.head().is_a<constructor>() or E.head().is_a<Operation>())
+    if (is_constructor(E.head()) or is_apply(E.head()) or is_non_apply_operation(E.head()))
     {
 	set<dummy> free_vars;
 	object_ptr<expression> F = new expression(E.head());
