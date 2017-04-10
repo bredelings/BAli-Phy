@@ -418,13 +418,6 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
     //------------- Link Alignment and Tree -----------------//
     link(A,T,internal_sequences);
 
-    //------------------ Analyze 'internal'------------------//
-    if ((args.count("internal") and args["internal"].as<string>() == "+"))
-	for(int column=0;column< A.length();column++) {
-	    for(int i=T.n_leaves();i<A.n_sequences();i++) 
-		A.set_value(column,i, alphabet::not_gap);
-	}
-
     //---- Check that internal sequence satisfy constraints ----//
     check_alignment(A,T,internal_sequences);
 }
