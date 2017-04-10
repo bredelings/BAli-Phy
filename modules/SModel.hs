@@ -69,8 +69,6 @@ reversible_markov' a smap q pi = ReversibleMarkov a smap q pi (get_eigensystem q
 
 reversible_markov s (ReversibleFrequency a smap pi r) = reversible_markov' a smap (reversible_rate_matrix s r) pi;
 
-jukes_cantor a = reversible_markov (equ a) (uniform_f_model a);
-
 nBaseModels (MixtureModel (DiscreteDistribution l)) = length l;
 nBaseModels (MixtureModels (m:ms)) = nBaseModels m;
 
@@ -550,11 +548,6 @@ plus_gwf_model pi f a = Prefix "gwF" (do {
   Log "f" f';
   return (plus_gwf a pi' f');
 });
-
-uniform_f_model a = let {n_letters = alphabetSize a;
-                         pi = replicate n_letters (1.0/intToDouble n_letters);
-                         pi' = listToVectorDouble pi} in 
-                    ReversibleFrequency a (simple_smap a) pi' (plus_gwf' a pi');
 
 f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = listToVectorDouble pi1;
                                       pi2' = listToVectorDouble pi2;
