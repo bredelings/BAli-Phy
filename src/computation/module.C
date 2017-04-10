@@ -577,7 +577,13 @@ expression_ref rename(const expression_ref& E, const map<dummy,dummy>& substitut
 
 boost::optional<string> get_new_name(const dummy& x, const string& module_name)
 {
-    if (is_qualified_dummy(x)) return boost::none;
+    assert(not is_haskell_builtin_con_name(x.name));
+
+    if (is_qualified_dummy(x))
+    {
+	assert(x.index == 0);
+	return boost::none;
+    }
 
     return module_name + "." + x.name + "#" + convertToString(x.index);
 }
