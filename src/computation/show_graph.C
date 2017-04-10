@@ -55,7 +55,7 @@ void reg_heap::find_all_used_regs_in_context(int t, bool keep_identifiers, vecto
 #endif
 }
 
-void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& scan, vector<int>& unique) const
+void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<int>& unique) const
 {
     for(int i=0;i<scan.size();i++)
     {
