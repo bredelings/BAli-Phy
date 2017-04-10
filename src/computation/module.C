@@ -382,18 +382,8 @@ void Module::import_small_decls(const Program& P)
 	small_decls_in.insert(M.small_decls_out.begin(), M.small_decls_out.end());
     }
 
-    std::cerr<<"loading small decls for "<<name<<": going from "<<topdecls.size();
-    // Add small decls to topdecls
-    if (not small_decls_in.empty())
-    {
-	auto decls = parse_decls(topdecls);
 
-	decls.insert(decls.end(), small_decls_in.begin(), small_decls_in.end());
-
-	topdecls = make_topdecls(decls);
-
-	small_decls_in.clear();
-    }
+    std::cerr<<"loading "<<small_decls_in.size()<<" small decls for "<<name<<".";
 }
 
 void Module::export_small_decls()
