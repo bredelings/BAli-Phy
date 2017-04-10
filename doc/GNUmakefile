@@ -11,13 +11,13 @@ clean:
 	./add_screen.pl < $^ > $@
 
 %.html: %.xml docbook-html.xsl
-	xsltproc --xinclude docbook-html.xsl $*.xml > $@
+	xsltproc --nonet --xinclude docbook-html.xsl $*.xml > $@
 
 %.xhtml: %.xml docbook-xhtml.xsl
-	xsltproc --xinclude docbook-xhtml.xsl $*.xml > $@
+	xsltproc --nonet --xinclude docbook-xhtml.xsl $*.xml > $@
 
 %.fo: %.xml docbook-fo.xsl
-	xsltproc --xinclude docbook-fo.xsl $*.xml > $@
+	xsltproc --nonet --xinclude docbook-fo.xsl $*.xml > $@
 
 %.pdf: %.fo
 	fop $*.fo $*.pdf
