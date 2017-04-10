@@ -340,14 +340,8 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Seque
 
     for(int i=0;i<alignments.size();i++) 
     {
-    
-	//---------------- Randomize alignment? -----------------//
-	if (args.count("randomize-alignment"))
-	    alignments[i] = randomize(alignments[i],T.n_leaves());
-  
 	//------------------ Analyze 'internal'------------------//
-	if ((args.count("internal") and args["internal"].as<string>() == "+")
-	    or args.count("randomize-alignment"))
+	if ((args.count("internal") and args["internal"].as<string>() == "+"))
 	    for(int column=0;column< alignments[i].length();column++) {
 		for(int j=T.n_leaves();j<alignments[i].n_sequences();j++) 
 		    alignments[i].set_value(column,j, alphabet::not_gap);
@@ -392,14 +386,8 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Roote
 
     for(int i=0;i<alignments.size();i++) 
     {
-    
-	//---------------- Randomize alignment? -----------------//
-	if (args.count("randomize-alignment"))
-	    alignments[i] = randomize(alignments[i],T.n_leaves());
-  
 	//------------------ Analyze 'internal'------------------//
-	if ((args.count("internal") and args["internal"].as<string>() == "+")
-	    or args.count("randomize-alignment"))
+	if ((args.count("internal") and args["internal"].as<string>() == "+"))
 	    for(int column=0;column< alignments[i].length();column++) {
 		for(int j=T.n_leaves();j<alignments[i].n_sequences();j++) 
 		    alignments[i].set_value(column,j, alphabet::not_gap);
@@ -454,14 +442,8 @@ void load_As_and_random_T(const variables_map& args,vector<alignment>& alignment
     //---------------process----------------//
     for(int i=0;i<alignments.size();i++) 
     {
-    
-	//---------------- Randomize alignment? -----------------//
-	if (args.count("randomize-alignment"))
-	    alignments[i] = randomize(alignments[i],T.n_leaves());
-  
 	//------------------ Analyze 'internal'------------------//
-	if ((args.count("internal") and args["internal"].as<string>() == "+")
-	    or args.count("randomize-alignment"))
+	if ((args.count("internal") and args["internal"].as<string>() == "+"))
 	    for(int column=0;column< alignments[i].length();column++) {
 		for(int j=T.n_leaves();j<alignments[i].n_sequences();j++) 
 		    alignments[i].set_value(column,j, alphabet::not_gap);
@@ -488,13 +470,8 @@ void load_A_and_T(const variables_map& args,alignment& A,RootedSequenceTree& T,b
     //------------- Link Alignment and Tree -----------------//
     link(A,T,internal_sequences);
 
-    //---------------- Randomize alignment? -----------------//
-    if (args.count("randomize-alignment"))
-	A = randomize(A,T.n_leaves());
- 
     //------------------ Analyze 'internal'------------------//
-    if ((args.count("internal") and args["internal"].as<string>() == "+")
-	or args.count("randomize-alignment"))
+    if ((args.count("internal") and args["internal"].as<string>() == "+"))
 	for(int column=0;column< A.length();column++) {
 	    for(int i=T.n_leaves();i<A.n_sequences();i++) 
 		A.set_value(column,i, alphabet::not_gap );
@@ -541,13 +518,8 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
     //------------- Link Alignment and Tree -----------------//
     link(A,T,internal_sequences);
 
-    //---------------- Randomize alignment? -----------------//
-    if (args.count("randomize-alignment"))
-	A = randomize(A,T.n_leaves());
-  
     //------------------ Analyze 'internal'------------------//
-    if ((args.count("internal") and args["internal"].as<string>() == "+")
-	or args.count("randomize-alignment"))
+    if ((args.count("internal") and args["internal"].as<string>() == "+"))
 	for(int column=0;column< A.length();column++) {
 	    for(int i=T.n_leaves();i<A.n_sequences();i++) 
 		A.set_value(column,i, alphabet::not_gap);
