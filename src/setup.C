@@ -274,18 +274,6 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
     check_alignment(A,T,internal_sequences);
 }
 
-/// \brief Reorder leaf indices of T and sequences indices of alignments to match alignments[0]; check the result.
-///
-/// \param alignments The alignments.
-/// \param T The leaf-labelled tree.
-/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
-///
-void link(vector<alignment>& alignments, SequenceTree& T, const vector<bool>& internal_sequences)
-{
-    for(int i=0;i<alignments.size();i++) 
-	link(alignments[i],T,internal_sequences[i]);
-}
-
 /// Load an collections of alignments from command line args "--align filename1 --align filename2 ... "
 vector<alignment> load_As(const variables_map& args)
 {
@@ -313,42 +301,16 @@ vector<alignment> load_As(const variables_map& args)
 /// \param T The leaf-labelled tree.
 /// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
 /// 
-void load_As_and_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,bool internal_sequences)
-{
-    //align - filenames
-    vector<string> filenames = args["align"].as<vector<string> >();
-
-    vector<bool> i(filenames.size(),internal_sequences);
-
-    load_As_and_T(args,alignments,T,i);
-}
-
-/// \brief Load a tree and a collection of alignments based on command line parameters.
-///
-/// \param args The command line parameters.
-/// \param alignments The alignments.
-/// \param T The leaf-labelled tree.
-/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
-/// 
-void load_As_and_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,const vector<bool>& internal_sequences)
+void load_As_and_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T)
 {
     alignments = load_As(args);
 
     T = load_T(args);
 
-    link(alignments,T,internal_sequences);
-
-    for(int i=0;i<alignments.size();i++) 
+    for(auto& A: alignments)
     {
-	//------------------ Analyze 'internal'------------------//
-	if ((args.count("internal") and args["internal"].as<string>() == "+"))
-	    for(int column=0;column< alignments[i].length();column++) {
-		for(int j=T.n_leaves();j<alignments[i].n_sequences();j++) 
-		    alignments[i].set_value(column,j, alphabet::not_gap);
-	    }
-
-	//---- Check that internal sequence satisfy constraints ----//
-	check_alignment(alignments[i],T,internal_sequences[i]);
+	link(A,T,true);
+	check_alignment(A, T, true);
     }
 }
 
@@ -359,42 +321,16 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Seque
 /// \param T The leaf-labelled tree.
 /// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
 /// 
-void load_As_and_T(const variables_map& args,vector<alignment>& alignments,RootedSequenceTree& T,bool internal_sequences)
-{
-    //align - filenames
-    vector<string> filenames = args["align"].as<vector<string> >();
-
-    vector<bool> i(filenames.size(),internal_sequences);
-
-    load_As_and_T(args,alignments,T,i);
-}
-
-/// \brief Load a tree and a collection of alignments based on command line parameters.
-///
-/// \param args The command line parameters.
-/// \param alignments The alignments.
-/// \param T The leaf-labelled tree.
-/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
-/// 
-void load_As_and_T(const variables_map& args,vector<alignment>& alignments,RootedSequenceTree& T,const vector<bool>& internal_sequences)
+void load_As_and_T(const variables_map& args,vector<alignment>& alignments,RootedSequenceTree& T)
 {
     alignments = load_As(args);
 
     T = load_T(args);
 
-    link(alignments,T,internal_sequences);
-
-    for(int i=0;i<alignments.size();i++) 
+    for(auto& A: alignments)
     {
-	//------------------ Analyze 'internal'------------------//
-	if ((args.count("internal") and args["internal"].as<string>() == "+"))
-	    for(int column=0;column< alignments[i].length();column++) {
-		for(int j=T.n_leaves();j<alignments[i].n_sequences();j++) 
-		    alignments[i].set_value(column,j, alphabet::not_gap);
-	    }
-
-	//---- Check that internal sequence satisfy constraints ----//
-	check_alignment(alignments[i],T,internal_sequences[i]);
+	link(A,T,true);
+	check_alignment(A,T,true);
     }
 }
 
@@ -406,25 +342,7 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Roote
 /// \param T The leaf-labelled tree.
 /// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
 /// 
-void load_As_and_random_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,bool internal_sequences)
-{
-    //align - filenames
-    vector<string> filenames = args["align"].as<vector<string> >();
-
-    vector<bool> i(filenames.size(),internal_sequences);
-
-    load_As_and_random_T(args,alignments,T,i);
-}
-
-
-/// \brief Load a collection of alignments based on command line parameters and generate a random tree.
-///
-/// \param args The command line parameters.
-/// \param alignments The alignments.
-/// \param T The leaf-labelled tree.
-/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
-/// 
-void load_As_and_random_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T,const vector<bool>& internal_sequences)
+void load_As_and_random_T(const variables_map& args,vector<alignment>& alignments,SequenceTree& T)
 {
     alignments = load_As(args);
 
@@ -437,20 +355,10 @@ void load_As_and_random_T(const variables_map& args,vector<alignment>& alignment
     RandomTree(T,1.0);
 
     //-------------- Link --------------------------------//
-    link(alignments,T,internal_sequences);
-
-    //---------------process----------------//
-    for(int i=0;i<alignments.size();i++) 
+    for(auto& A: alignments)
     {
-	//------------------ Analyze 'internal'------------------//
-	if ((args.count("internal") and args["internal"].as<string>() == "+"))
-	    for(int column=0;column< alignments[i].length();column++) {
-		for(int j=T.n_leaves();j<alignments[i].n_sequences();j++) 
-		    alignments[i].set_value(column,j, alphabet::not_gap);
-	    }
-
-	//---- Check that internal sequence satisfy constraints ----//
-	check_alignment(alignments[i],T,internal_sequences[i]);
+	link(A,T,true);
+	check_alignment(A, T, true);
     }
 }
 
@@ -469,14 +377,6 @@ void load_A_and_T(const variables_map& args,alignment& A,RootedSequenceTree& T,b
 
     //------------- Link Alignment and Tree -----------------//
     link(A,T,internal_sequences);
-
-    //------------------ Analyze 'internal'------------------//
-    if ((args.count("internal") and args["internal"].as<string>() == "+"))
-	for(int column=0;column< A.length();column++) {
-	    for(int i=T.n_leaves();i<A.n_sequences();i++) 
-		A.set_value(column,i, alphabet::not_gap );
-	}
-
     //---- Check that internal sequence satisfy constraints ----//
     check_alignment(A,T,internal_sequences);
 }

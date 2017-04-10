@@ -40,21 +40,15 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// Map leaf nodes of T to the leaf sequences of A
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
 
-void load_As_and_T(const boost::program_options::variables_map& args,
-		   std::vector<alignment>& A,SequenceTree& T,bool internal_sequences=true);
+void load_As_and_T(const boost::program_options::variables_map& args, std::vector<alignment>& A,SequenceTree& T);
 
-void load_As_and_T(const boost::program_options::variables_map& args,
-		   std::vector<alignment>& A,SequenceTree& T,const std::vector<bool>& internal_sequences);
+void load_As_and_T(const boost::program_options::variables_map& args, std::vector<alignment>& A,SequenceTree& T);
 
-void load_As_and_T(const boost::program_options::variables_map& args,
-		   std::vector<alignment>& A,RootedSequenceTree& T,bool internal_sequences=true);
-void load_As_and_T(const boost::program_options::variables_map& args,
-		   std::vector<alignment>& A,RootedSequenceTree& T,const std::vector<bool>& internal_sequences);
+void load_As_and_T(const boost::program_options::variables_map& args, std::vector<alignment>& A,RootedSequenceTree& T);
+void load_As_and_T(const boost::program_options::variables_map& args, std::vector<alignment>& A,RootedSequenceTree& T);
 /// Load an alignment A, generate a random SequenceTree T, and then link them.
-void load_As_and_random_T(const boost::program_options::variables_map& args,
-			  std::vector<alignment>& A,SequenceTree& T,bool internal_sequences=true);
-void load_As_and_random_T(const boost::program_options::variables_map& args,
-			  std::vector<alignment>& A,SequenceTree& T,const std::vector<bool>& internal_sequences);
+void load_As_and_random_T(const boost::program_options::variables_map& args, std::vector<alignment>& A,SequenceTree& T);
+void load_As_and_random_T(const boost::program_options::variables_map& args, std::vector<alignment>& A,SequenceTree& T);
 
 
 /// Load and link() an alignment A and SequenceTree T

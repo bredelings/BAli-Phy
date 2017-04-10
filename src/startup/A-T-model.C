@@ -358,16 +358,11 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     //----------- Load alignments and tree ---------//
     vector<alignment> A;
     SequenceTree T;
-    // FIXME - do I want to allow/remove internal node sequences here?
-    vector<bool> internal_sequences(n_partitions);
-    for(int i=0;i<internal_sequences.size();i++)
-	internal_sequences[i] = true;
 
-    //       - and only if there is an indel model?
     if (args.count("tree"))
-	load_As_and_T(args,A,T,internal_sequences);
+	load_As_and_T(args,A,T);
     else
-	load_As_and_random_T(args,A,T,internal_sequences);
+	load_As_and_random_T(args,A,T);
 
     for(int i=0;i<A.size();i++) {
 	check_alignment_names(A[i]);
