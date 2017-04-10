@@ -308,10 +308,7 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Seque
     T = load_T(args);
 
     for(auto& A: alignments)
-    {
 	link(A,T,true);
-	check_alignment(A, T, true);
-    }
 }
 
 /// \brief Load a tree and a collection of alignments based on command line parameters.
@@ -328,10 +325,7 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Roote
     T = load_T(args);
 
     for(auto& A: alignments)
-    {
 	link(A,T,true);
-	check_alignment(A,T,true);
-    }
 }
 
 
@@ -356,10 +350,7 @@ void load_As_and_random_T(const variables_map& args,vector<alignment>& alignment
 
     //-------------- Link --------------------------------//
     for(auto& A: alignments)
-    {
 	link(A,T,true);
-	check_alignment(A, T, true);
-    }
 }
 
 /// \brief Load a tree and an alignment based on command line parameters.
@@ -377,8 +368,6 @@ void load_A_and_T(const variables_map& args,alignment& A,RootedSequenceTree& T,b
 
     //------------- Link Alignment and Tree -----------------//
     link(A,T,internal_sequences);
-    //---- Check that internal sequence satisfy constraints ----//
-    check_alignment(A,T,internal_sequences);
 }
 
 /// \brief Load a tree and an alignment based on command line parameters.
@@ -417,9 +406,6 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
 
     //------------- Link Alignment and Tree -----------------//
     link(A,T,internal_sequences);
-
-    //---- Check that internal sequence satisfy constraints ----//
-    check_alignment(A,T,internal_sequences);
 }
 
 /// Construct a multifurcating tree representing topology constraints from file \a filename.
