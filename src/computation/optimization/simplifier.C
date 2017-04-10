@@ -333,6 +333,18 @@ void export_decls(vector<pair<dummy,expression_ref>>& decls, const expression_re
     }
 }
 
+set<dummy> dup_work(set<dummy>& vars)
+{
+    set<dummy> vars2;
+    for(auto var: vars)
+    {
+	if (var.work_dup == amount_t::Once)
+	    var.work_dup = amount_t::Many;
+	vars2.insert(var);
+    }
+    return vars2;
+}
+
 pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var_context context)
 {
     if (not E) return {E,{}};
