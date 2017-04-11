@@ -1,21 +1,21 @@
 /*
-   Copyright (C) 2004-2007,2010 Benjamin Redelings
+  Copyright (C) 2004-2007,2010 Benjamin Redelings
 
-This file is part of BAli-Phy.
+  This file is part of BAli-Phy.
 
-BAli-Phy is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2, or (at your option) any later
-version.
+  BAli-Phy is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free
+  Software Foundation; either version 2, or (at your option) any later
+  version.
 
-BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+  BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+  for more details.
 
-You should have received a copy of the GNU General Public License
-along with BAli-Phy; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>.  */
+  You should have received a copy of the GNU General Public License
+  along with BAli-Phy; see the file COPYING.  If not see
+  <http://www.gnu.org/licenses/>.  */
 
 /**
  * @file setup.H
@@ -60,40 +60,40 @@ void load_bali_phy_rc(boost::program_options::variables_map&,
 template <typename T>
 class shared_items
 {
-  // unique items
-  std::vector<T> items;
+    // unique items
+    std::vector<T> items;
 
 public:
 
-  // from partition -> item
-  std::vector<int> item_for_partition;  
+    // from partition -> item
+    std::vector<int> item_for_partition;  
 
-  // from item -> partition
-  std::vector<std::vector<int> > partitions_for_item;
+    // from item -> partition
+    std::vector<std::vector<int> > partitions_for_item;
 
-  int n_unique_items() const {return items.size();}
+    int n_unique_items() const {return items.size();}
 
-  int n_partitions() const {return item_for_partition.size();}
+    int n_partitions() const {return item_for_partition.size();}
 
-  const T& unique(int i) const {return items[i];}
-        T& unique(int i)       {return items[i];}
+    const T& unique(int i) const {return items[i];}
+    T& unique(int i)       {return items[i];}
 
-  const T& operator[](int i) const {return items[item_for_partition[i]];}
-        T& operator[](int i)       {return items[item_for_partition[i]];}
+    const T& operator[](int i) const {return items[item_for_partition[i]];}
+    T& operator[](int i)       {return items[item_for_partition[i]];}
 
-  int n_partitions_for_item(int i) const {return partitions_for_item[i].size();}
+    int n_partitions_for_item(int i) const {return partitions_for_item[i].size();}
 
-  shared_items(const std::vector<T>& v1, const std::vector<int>& v2)
-    :items(v1),
-     item_for_partition(v2),
-     partitions_for_item(items.size())
-  {
-    for(int i=0;i<n_partitions();i++) {
-      int item = item_for_partition[i];
-      if (item != -1)
-	partitions_for_item[item].push_back(i);
-    }
-  }
+    shared_items(const std::vector<T>& v1, const std::vector<int>& v2)
+	:items(v1),
+	 item_for_partition(v2),
+	 partitions_for_item(items.size())
+	{
+	    for(int i=0;i<n_partitions();i++) {
+		int item = item_for_partition[i];
+		if (item != -1)
+		    partitions_for_item[item].push_back(i);
+	    }
+	}
 };
 
 std::string parse_partitions_and_model(std::string model, std::vector<int>& partitions);
