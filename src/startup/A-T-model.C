@@ -176,13 +176,13 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */
     for(int i=0;i<P.n_data_partitions();i++) {
 	int s_index = P.smodel_index_for_partition(i);
 	//    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
-	out_screen<<"#"<<i+1<<": subst ~ "<<SModels[i].description<<" ("<<s_index+1<<")\n";
+	out_screen<<"#"<<i+1<<": subst ~ "<<SModels[i].description<<" (S"<<s_index+1<<")\n";
 
 	int i_index = P.imodel_index_for_partition(i);
 	string i_name = "none";
 	if (i_index != -1)
 	    i_name = IModels[i].description;
-	out_screen<<"#"<<i+1<<": indel ~ "<<i_name<<" ("<<i_index+1<<")"<<endl;
+	out_screen<<"#"<<i+1<<": indel ~ "<<i_name<<" (I"<<i_index+1<<")"<<endl;
     }
     out_screen<<"\n";
 }
