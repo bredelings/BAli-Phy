@@ -4,6 +4,7 @@
 #include "tree/tree-util.H" //extends
 #include "alignment/alignment-constraint.H"
 #include "alignment/alignment-util.H"
+#include "models/parse.H"
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -107,32 +108,6 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
     }
     for(double b:P.PC->beta_series)
 	std::cout<<b<<"\n";
-}
-
-vector<model_t>
-get_smodels(const vector<alignment>& A, shared_items<string>& smodel_names_mapping)
-{
-    vector<model_t> smodels;
-    for(int i=0;i<smodel_names_mapping.n_unique_items();i++) 
-    {
-	vector<alignment> alignments;
-	for(int j: smodel_names_mapping.partitions_for_item[i])
-	    alignments.push_back(A[j]);
-
-	if (smodel_names_mapping.unique(i) == "")
-	{
-	    const alphabet& a = alignments[0].get_alphabet();
-	    smodel_names_mapping.unique(i) = default_markov_model(a);
-
-	    if (smodel_names_mapping.unique(i) == "")
-		throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
-	}
-
-	auto full_smodel = get_model("MMM[a]",smodel_names_mapping.unique(i));
-
-	smodels.push_back(full_smodel);
-    }
-    return smodels;
 }
 
 vector<model_t>
@@ -353,11 +328,60 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 	imodel_mapping = imodel_names_mapping.item_for_partition;
     }
 
+    //------------- Get smodel names -------------------
+    shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
+
+    vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
+
+    vector<model_t> full_smodels(smodel_names_mapping.n_unique_items());
+
+    for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
+	if (not smodel_names_mapping.unique(i).empty())
+	    full_smodels[i] = get_model("MMM[a]",smodel_names_mapping.unique(i));
+
+    //------------- Get alphabet names -------------------
+    shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filenames.size());
+    vector<string> alphabet_names;
+    for(int i=0;i<alphabet_names_mapping.n_partitions();i++)
+	alphabet_names.push_back(alphabet_names_mapping[i]);
+
+    for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
+    {
+	if (smodel_names_mapping.unique(i).empty()) continue;
+
+	auto type = parse_type(full_smodels[i].type);
+	auto alphabet_type = type.begin()->second;
+
+	vector<int> a_specified;
+	vector<int> a_unspecified;
+	for(int j: smodel_names_mapping.partitions_for_item[i])
+	{
+	    if (alphabet_names[j].empty())
+		a_unspecified.push_back(j);
+	    else
+		a_specified.push_back(j);
+	}
+	if (a_specified.size() and a_unspecified.size())
+	    throw myexception()<<"SModel "<<i+1<<" applied to partition "<<a_specified[i]+1<<" (alphabet specified) and partition "
+			       <<a_unspecified[0]+1<<" (alphabet not specified).";
+
+	if (a_specified.size())
+	{
+	    for(int j: a_specified)
+		if (alphabet_names[j] != alphabet_names[a_specified[0]])
+		    throw myexception()<<"Partitions "<<a_specified[0]+1<<" and "<<j+1<<" have different alphabets, but are given the same substitution model!";
+	}
+	else if (alphabet_type.get_value<string>() == "Codon")
+	{
+	    for(int j: smodel_names_mapping.partitions_for_item[i])
+		alphabet_names[j] = "Codons";
+	}
+    }
+
     //----------- Load alignments  ---------//
     vector<alignment> A(filenames.size());
 
     // -- load alphabets with specified names
-    shared_items<string> alphabet_names = get_mapping(args, "alphabet", filenames.size());
     for(int i=0;i<filenames.size();i++)
 	if (alphabet_names[i].size())
 	    A[i] = load_alignment(filenames[i], load_alphabets(alphabet_names[i]) );
@@ -393,21 +417,38 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     //--------- Handle branch lengths <= 0 --------//
     sanitize_branch_lengths(T);
 
-    //--------- Set up the substitution model --------//
-
-    // FIXME - change to return a (model, standardized name) pair.
+    //--------- Set up indel model --------//
     auto full_imodels = get_imodels(imodel_names_mapping, T);
 
-    //--------- Set up the substitution model --------//
-    shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
+    //--------- Get substitution models that depend on default alphabet --------//
+    for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
+	if (smodel_names_mapping.unique(i).empty())
+	{
+	    int first_index = smodel_names_mapping.partitions_for_item[i][0];
+	    const alphabet& a = A[first_index].get_alphabet();
+
+	    smodel_names_mapping.unique(i) = default_markov_model(a);
+
+	    if (smodel_names_mapping.unique(i) == "")
+		throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
+
+	    full_smodels[i] = get_model("MMM[a]",smodel_names_mapping.unique(i));
+	}
     
-    vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
+    // Apply alphabet
+    for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
+    {
+	int first_index = smodel_names_mapping.partitions_for_item[i][0];
+	const alphabet& a = A[first_index].get_alphabet();
 
-    // FIXME - change to return a (model, standardized name) pair.
-    auto full_smodels = get_smodels(A,smodel_names_mapping);
+	auto type = parse_type(full_smodels[i].type);
+	auto alphabet_type = type.begin()->second;
 
-    for(int i=0;i<A.size();i++)
-	full_smodels[i].expression = (full_smodels[i].expression, A[i].get_alphabet());
+	if (alphabet_type.get_value<string>() == "Codon" and not dynamic_cast<const Codons*>(&a))
+	    throw myexception()<<"Substitution model S"<<i+1<<" requires a codon alphabet, but sequences are '"<<a.name<<"'";;
+
+	full_smodels[i].expression = (full_smodels[i].expression, a);
+    }
 
     //-------------- Which partitions share a scale? -----------//
     shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
