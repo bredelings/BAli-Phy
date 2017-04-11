@@ -116,8 +116,8 @@ get_smodels(const vector<alignment>& A, shared_items<string>& smodel_names_mappi
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++) 
     {
 	vector<alignment> alignments;
-	for(int j=0;j<smodel_names_mapping.n_partitions_for_item(i);j++)
-	    alignments.push_back(A[smodel_names_mapping.partitions_for_item[i][j]]);
+	for(int j: smodel_names_mapping.partitions_for_item[i])
+	    alignments.push_back(A[j]);
 
 	if (smodel_names_mapping.unique(i) == "")
 	{
