@@ -130,10 +130,7 @@ get_smodels(const vector<alignment>& A, shared_items<string>& smodel_names_mappi
 
 	auto full_smodel = get_model("MMM[a]",smodel_names_mapping.unique(i));
 
-	full_smodel.expression= (full_smodel.expression, alignments[0].get_alphabet());
-
 	smodels.push_back(full_smodel);
-	//    cout<<"SModel "<<i+1<<": prior = "<<log(smodels.back()->prior())<<"\n";
     }
     return smodels;
 }
@@ -408,6 +405,9 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 
     // FIXME - change to return a (model, standardized name) pair.
     auto full_smodels = get_smodels(A,smodel_names_mapping);
+
+    for(int i=0;i<A.size();i++)
+	full_smodels[i].expression = (full_smodels[i].expression, A[i].get_alphabet());
 
     //-------------- Which partitions share a scale? -----------//
     shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
