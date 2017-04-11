@@ -40,8 +40,6 @@
 /// Map leaf nodes of T to the leaf sequences of A
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
 
-std::vector<alignment> load_As(const boost::program_options::variables_map& args);
-
 SequenceTree load_constraint_tree(const std::string& filename,const std::vector<std::string>&);
 
 

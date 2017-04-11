@@ -274,27 +274,6 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
     check_alignment(A,T,internal_sequences);
 }
 
-/// Load an collections of alignments from command line args "--align filename1 --align filename2 ... "
-vector<alignment> load_As(const variables_map& args)
-{
-    vector<string> filenames = args["align"].as<vector<string> >();
-
-    shared_items<string> alphabet_names = get_mapping(args, "alphabet", filenames.size());
-
-    vector<alignment> alignments;
-
-    for(int i=0;i<filenames.size();i++) {
-	const string alphabet_name = alphabet_names[i];
-	if (alphabet_name.size())
-	    alignments.push_back( load_alignment(filenames[i], load_alphabets(alphabet_name) ) );
-	else
-	    alignments.push_back( load_alignment(filenames[i]) );
-    }
-
-    return alignments;
-}
-
-
 /// Construct a multifurcating tree representing topology constraints from file \a filename.
 ///
 /// \param filename The name of the file to load the tree from.
