@@ -370,12 +370,29 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 	    for(int j: a_specified)
 		if (alphabet_names[j] != alphabet_names[a_specified[0]])
 		    throw myexception()<<"Partitions "<<a_specified[0]+1<<" and "<<j+1<<" have different alphabets, but are given the same substitution model!";
+	    string a = alphabet_names[a_specified[0]];
+	    if (alphabet_type.get_value<string>() == "Codon")
+	    {
+		if (a == "DNA" or a == "RNA" or a == "AA" or a == "Amino-Acids")
+		    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a codon alphabet!";
+	    }
+	    else if (alphabet_type.get_value<string>() == "AA")
+	    {
+		if (a != "AA" and a != "Amino-Acids" and a != "Amino-AcidsWithStop")
+		    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires an amino-acid alphabet!";
+	    }
 	}
 	else if (alphabet_type.get_value<string>() == "Codon")
 	{
 	    for(int j: smodel_names_mapping.partitions_for_item[i])
 		alphabet_names[j] = "Codons";
 	}
+//      Use the auto-detected alphabet right now -- it leaves to better error messages.
+//	else if (alphabet_type.get_value<string>() == "AA")
+//	{
+//	    for(int j: smodel_names_mapping.partitions_for_item[i])
+//		alphabet_names[j] = "AA";
+//	}
     }
 
     //----------- Load alignments  ---------//
@@ -446,6 +463,9 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 
 	if (alphabet_type.get_value<string>() == "Codon" and not dynamic_cast<const Codons*>(&a))
 	    throw myexception()<<"Substitution model S"<<i+1<<" requires a codon alphabet, but sequences are '"<<a.name<<"'";;
+
+	if (alphabet_type.get_value<string>() == "AA" and not dynamic_cast<const AminoAcids*>(&a))
+	    throw myexception()<<"Substitution model S"<<i+1<<" requires an amino-acid alphabet, but sequences are '"<<a.name<<"'";;
 
 	full_smodels[i].expression = (full_smodels[i].expression, a);
     }
