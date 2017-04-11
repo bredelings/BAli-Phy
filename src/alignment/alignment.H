@@ -1,21 +1,21 @@
 /*
-   Copyright (C) 2004-2009 Benjamin Redelings
+  Copyright (C) 2004-2009 Benjamin Redelings
 
-This file is part of BAli-Phy.
+  This file is part of BAli-Phy.
 
-BAli-Phy is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2, or (at your option) any later
-version.
+  BAli-Phy is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free
+  Software Foundation; either version 2, or (at your option) any later
+  version.
 
-BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+  BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+  for more details.
 
-You should have received a copy of the GNU General Public License
-along with BAli-Phy; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>.  */
+  You should have received a copy of the GNU General Public License
+  along with BAli-Phy; see the file COPYING.  If not see
+  <http://www.gnu.org/licenses/>.  */
 
 /**
  * @file alignment.H
@@ -42,125 +42,125 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// A multiple sequence alignment
 class alignment: public Object
 {
-  /// The homology array - accessed through operator()
-  matrix<int> array;
+    /// The homology array - accessed through operator()
+    matrix<int> array;
   
-  /// The unaligned sequences on which the alignment is based.
-  std::vector<sequence> sequences;
+    /// The unaligned sequences on which the alignment is based.
+    std::vector<sequence> sequences;
 
-  /// Reset the alignment: no sequences, an empty array.
-  void clear();
+    /// Reset the alignment: no sequences, an empty array.
+    void clear();
 
-  /// Add a new row to the homology array.
-  void add_row(const std::vector<int>&);
+    /// Add a new row to the homology array.
+    void add_row(const std::vector<int>&);
 
-  /// The alphabet that translates integers back to letters.
-  object_ptr<const alphabet> a;
+    /// The alphabet that translates integers back to letters.
+    object_ptr<const alphabet> a;
   
 public:
 
-  alignment* clone() const {return new alignment(*this);}
+    alignment* clone() const {return new alignment(*this);}
   
-  /// Unsafe - Make a copy of the alignment without preserving the homology array
-  friend alignment blank_copy(const alignment&,int length);
+    /// Unsafe - Make a copy of the alignment without preserving the homology array
+    friend alignment blank_copy(const alignment&,int length);
 
-  /// The order of the sequence named s
-  int index(const std::string& s) const;
+    /// The order of the sequence named s
+    int index(const std::string& s) const;
 
-  /// Get the sorted list of columns that contain characters
-  std::vector<int> get_columns_for_characters(int row) const;
+    /// Get the sorted list of columns that contain characters
+    std::vector<int> get_columns_for_characters(int row) const;
 
-  /// The i-th sequence
-  const sequence& seq(int i) const { return sequences[i];}
-  /// The i-th sequence
-  sequence& seq(int i) { return sequences[i];}
+    /// The i-th sequence
+    const sequence& seq(int i) const { return sequences[i];}
+    /// The i-th sequence
+    sequence& seq(int i) { return sequences[i];}
 
-  std::vector<sequence> seqs() const {return sequences;}
+    std::vector<sequence> seqs() const {return sequences;}
 
-  /// Remove sequence 'i' from the alignment
-  void del_sequence(int);
-  /// Remove a bunch of sequences' from the alignment
-  void del_sequences(const std::vector<int>&);
-  /// Add sequence 's' to the alignment
-  void add_sequence(const sequence& s);
-  /// Add a bunch of sequences to the alignment
-  void add_sequences(const std::vector<sequence>&);
+    /// Remove sequence 'i' from the alignment
+    void del_sequence(int);
+    /// Remove a bunch of sequences' from the alignment
+    void del_sequences(const std::vector<int>&);
+    /// Add sequence 's' to the alignment
+    void add_sequence(const sequence& s);
+    /// Add a bunch of sequences to the alignment
+    void add_sequences(const std::vector<sequence>&);
 
-  /// Add sequences sequences to the alignment.
-  void load(const std::vector<sequence>& sequences);
-  /// Add sequences sequences to the alignment.
-  void load(const std::vector<object_ptr<const alphabet> >& alphabets,const std::vector<sequence>& sequences);
+    /// Add sequences sequences to the alignment.
+    void load(const std::vector<sequence>& sequences);
+    /// Add sequences sequences to the alignment.
+    void load(const std::vector<object_ptr<const alphabet> >& alphabets,const std::vector<sequence>& sequences);
 
-  /// Parse the file file using loader, and add the resulting sequences.
-  void load(sequence_format::loader_t loader,std::istream& file);
-  /// Parse the file file using loader, and add the resulting sequences.
-  void load(const std::vector<object_ptr<const alphabet> >& alphabets,sequence_format::loader_t,std::istream&);
+    /// Parse the file file using loader, and add the resulting sequences.
+    void load(sequence_format::loader_t loader,std::istream& file);
+    /// Parse the file file using loader, and add the resulting sequences.
+    void load(const std::vector<object_ptr<const alphabet> >& alphabets,sequence_format::loader_t,std::istream&);
 
-  /// Load PHYLIP or FASTA file 'filename', depending on extention
-  void load(const std::string& filename);
-  /// Load PHYLIP or FASTA file 'filename', depending on extention
-  void load(const std::vector<object_ptr<const alphabet> >& alphabets,const std::string& filename);
+    /// Load PHYLIP or FASTA file 'filename', depending on extention
+    void load(const std::string& filename);
+    /// Load PHYLIP or FASTA file 'filename', depending on extention
+    void load(const std::vector<object_ptr<const alphabet> >& alphabets,const std::string& filename);
 
-  /// Get a list of sequences (with gaps) that represent the current alignment.
-  std::vector<sequence> convert_to_sequences() const;
+    /// Get a list of sequences (with gaps) that represent the current alignment.
+    std::vector<sequence> convert_to_sequences() const;
 
-  /// Get a list of sequences (with gaps) that represent the current alignment.
-  void write_sequences(sequence_format::dumper_t,std::ostream&) const;
+    /// Get a list of sequences (with gaps) that represent the current alignment.
+    void write_sequences(sequence_format::dumper_t,std::ostream&) const;
 
-  /// Print alignment in default format (FASTA)
-  void print_to_stream(std::ostream&) const;
-  /// Print alignment in FASTA format
-  void print_fasta_to_stream(std::ostream&) const;
-  /// Print alignment in PHYLIP format
-  void print_phylip_to_stream(std::ostream&) const;
+    /// Print alignment in default format (FASTA)
+    void print_to_stream(std::ostream&) const;
+    /// Print alignment in FASTA format
+    void print_fasta_to_stream(std::ostream&) const;
+    /// Print alignment in PHYLIP format
+    void print_phylip_to_stream(std::ostream&) const;
 
-  /// Resize the alignment array
-  void changelength(int l);
-  /// Remove a column from the alignment, preserving the information in other columns.
-  void delete_column(int i);
+    /// Resize the alignment array
+    void changelength(int l);
+    /// Remove a column from the alignment, preserving the information in other columns.
+    void delete_column(int i);
 
-  /// The feature (letter,gap,non-gap) of sequence s in column l
-  void set_value(int l,int s,int v) {array(l,s) = v; }
-  /// The feature (letter,gap,non-gap) of sequence s in column l
-  int operator()(int l,int s) const {return array(l,s); }
+    /// The feature (letter,gap,non-gap) of sequence s in column l
+    void set_value(int l,int s,int v) {array(l,s) = v; }
+    /// The feature (letter,gap,non-gap) of sequence s in column l
+    int operator()(int l,int s) const {return array(l,s); }
 
-  /// Does sequence i have a gap at position j ?
-  bool gap(int i,int j) const {return array(i,j)==alphabet::gap;}
-  /// Does sequence i have an unknown at position j ?
-  bool unknown(int i,int j) const {return array(i,j)==alphabet::unknown;}
-  /// Does sequence i have an character at position j ?
-  bool character(int i,int j) const {return not gap(i,j) and not unknown(i,j);}
+    /// Does sequence i have a gap at position j ?
+    bool gap(int i,int j) const {return array(i,j)==alphabet::gap;}
+    /// Does sequence i have an unknown at position j ?
+    bool unknown(int i,int j) const {return array(i,j)==alphabet::unknown;}
+    /// Does sequence i have an character at position j ?
+    bool character(int i,int j) const {return not gap(i,j) and not unknown(i,j);}
 
-  /// Number of columns
-  int length() const {return array.size1();}
+    /// Number of columns
+    int length() const {return array.size1();}
 
-  /// Total number of sequences
-  int n_sequences() const {assert(array.size2() == sequences.size()); return array.size2();}
+    /// Total number of sequences
+    int n_sequences() const {assert(array.size2() == sequences.size()); return array.size2();}
 
-  //FIXME!  I should cache the results of this
-  /// Compute the length of a particular sequence from the array
-  int seqlength(int) const;
+    //FIXME!  I should cache the results of this
+    /// Compute the length of a particular sequence from the array
+    int seqlength(int) const;
 
-  /// Access the alignment's alphabet.
-  const alphabet& get_alphabet() const {return *a;}
+    /// Access the alignment's alphabet.
+    const alphabet& get_alphabet() const {return *a;}
 
-  /// Construct an empty alignment
-  alignment() {}
+    /// Construct an empty alignment
+    alignment() {}
 
-  /// Construct an empty alignment, with alphabet a
-  explicit alignment(const alphabet& a);
+    /// Construct an empty alignment, with alphabet a
+    explicit alignment(const alphabet& a);
 
-  /// Unsafe - Construct an empty alignment, with n sequences of length 0
-  explicit alignment(const alphabet& a,int n);
+    /// Unsafe - Construct an empty alignment, with n sequences of length 0
+    explicit alignment(const alphabet& a,int n);
 
-  /// Unsafe - Construct an alignment from sequences, but with any empty array
-  explicit alignment(const alphabet&,const std::vector<sequence>& sequence);
+    /// Unsafe - Construct an alignment from sequences, but with any empty array
+    explicit alignment(const alphabet&,const std::vector<sequence>& sequence);
 
-  /// Unsafe - Construct an empty n x L alignment.
-  explicit alignment(const alphabet&,int n,int L);
+    /// Unsafe - Construct an empty n x L alignment.
+    explicit alignment(const alphabet&,int n,int L);
 
-  /// Construct an alignment from file filename using alphabet a
-  explicit alignment(const alphabet& a,const std::string& filename);
+    /// Construct an alignment from file filename using alphabet a
+    explicit alignment(const alphabet& a,const std::string& filename);
 };
 
 /// Reorder the sequences of \a A according to the permutation @mapping
@@ -207,28 +207,28 @@ std::vector<int> get_sparse_alignment_row(const alignment& A, int i);
 
 class homology_matrix: public matrix<int>
 {
-  bool character(int c, int s) const {return operator()(c,s) >= 0;}
-  bool gap(int c, int s) const {return not character(c,s);}
-  int operator()(int c, int s) const {return matrix<int>::operator()(c,s);}
-  int& operator()(int c, int s)  = delete;
-  void set_cell(int c, int s, int v) {matrix<int>::operator()(c,s) = v;}
-  int seqlength(int s) const;
-  std::vector<int> get_columns_for_characters(int row) const;
-  int length() const {return size1();}
-  int n_sequences() const {return size2();}
+    bool character(int c, int s) const {return operator()(c,s) >= 0;}
+    bool gap(int c, int s) const {return not character(c,s);}
+    int operator()(int c, int s) const {return matrix<int>::operator()(c,s);}
+    int& operator()(int c, int s)  = delete;
+    void set_cell(int c, int s, int v) {matrix<int>::operator()(c,s) = v;}
+    int seqlength(int s) const;
+    std::vector<int> get_columns_for_characters(int row) const;
+    int length() const {return size1();}
+    int n_sequences() const {return size2();}
 
-  using matrix<int>::matrix;
+    using matrix<int>::matrix;
 };
 
 class sparse_increasing_index_matrix
 {
-  int L;
+    int L;
 public:
-  int length() const;
-  std::vector< std::vector<int> > columns;
-  void finish_column();
-  void set_present(int i);
-  sparse_increasing_index_matrix(int);
+    int length() const;
+    std::vector< std::vector<int> > columns;
+    void finish_column();
+    void set_present(int i);
+    sparse_increasing_index_matrix(int);
 };
 
 #endif
