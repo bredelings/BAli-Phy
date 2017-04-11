@@ -57,4 +57,8 @@ void substitute(const std::map<std::string, term_t>& replace, term_t& T);
 
 equations operator&&(const equations& p1, const equations& p2);
 
+bool is_wildcard(const boost::property_tree::ptree& p);
+
+std::string show(const equations& E);
+
 #endif

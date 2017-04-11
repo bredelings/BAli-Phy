@@ -18,6 +18,24 @@ bool is_wildcard(const ptree& p)
     return (p.get_value<string>() == "_");
 }
 
+string show(const ptree& pt, int depth = 0);
+
+/// Split a string of the form key=value into {key,value}
+string show(const equations& E)
+{
+    string result;
+    for(auto& e: E.get_values())
+    {
+	for(auto& var: e.first)
+	    result += (var + " = ");
+	if (e.second)
+	    result += show(*e.second);
+	else
+	    result += "\n";
+    }
+    return result;
+}
+
 bool equations::has_record(const std::string& x) const
 {
     for(auto& v: values)

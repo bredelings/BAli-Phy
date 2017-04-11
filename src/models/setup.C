@@ -135,22 +135,6 @@ string show(const ptree& pt, int depth = 0)
     return result;
 }
 
-/// Split a string of the form key=value into {key,value}
-string show(const equations& E)
-{
-    string result;
-    for(auto& e: E.get_values())
-    {
-	for(auto& var: e.first)
-	    result += (var + " = ");
-	if (e.second)
-	    result += show(*e.second);
-	else
-	    result += "\n";
-    }
-    return result;
-}
-
 string show(vector<string> args)
 {
     string output = args[0];
