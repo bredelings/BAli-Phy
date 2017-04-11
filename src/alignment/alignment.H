@@ -144,6 +144,9 @@ public:
     /// Access the alignment's alphabet.
     const alphabet& get_alphabet() const {return *a;}
 
+    /// Access the alignment's alphabet.
+    bool has_alphabet() const {return a;}
+
     /// Construct an empty alignment
     alignment() {}
 
