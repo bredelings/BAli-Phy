@@ -364,7 +364,6 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 
     for(int i=0;i<filenames.size();i++) {
 	const string alphabet_name = alphabet_names[i];
-	auto a = load_alphabets(args);
 	if (alphabet_name.size())
 	    A[i] = load_alignment(filenames[i], load_alphabets(alphabet_name) );
 	else
