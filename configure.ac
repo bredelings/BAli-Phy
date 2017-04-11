@@ -80,6 +80,10 @@ AC_ARG_WITH([system-boost], AS_HELP_STRING([--with-system-boost],[Use the Boost 
   use_system_boost=yes,
   use_system_boost=no
 )
+AC_ARG_WITH([system-eigen], AS_HELP_STRING([--with-system-eigen],[Use the Eigen headers installed on the system, instead of our own.]),
+  use_system_eigen=yes,
+  use_system_eigen=no
+)
 
 # 1. Check for compilers, don't add default compile flags
 #       CFLAGs and CXXFLAGS are for users to pass input on.
@@ -320,12 +324,21 @@ if test "$use_mpi" != no ; then
    AM_CPPFLAGS="$AM_CPPFLAGS $MPI_CPPFLAGS"
 fi
 
+#---------------------- Check for Eigen ------------------#
+if test "$use_system_eigen" = yes ; then
+echo " * Looking for system Eigen headers..."
+AC_CHECK_HEADERS([Eigen/Eigenvalues],[],[echo "Error: I can't find <Eigen/Eigenvalues>."; echo "Please install the Eigen headers, or specify their location using --with-extra-includes". ; exit 1])
+else
+echo " * Not using system Eigen headers: we'll use our own."
+eigen_includes="-isystem \$(top_srcdir)/include"
+AM_CXXFLAGS="$eigen_includes $AM_CXXFLAGS"
+fi
 #---------------------- Check for BOOST ------------------#
 
 echo "------------------------------------------"
 if test "$use_system_boost" = yes ; then
 echo " * Looking for the system BOOST headers..."
-AC_CHECK_HEADERS([boost/config.hpp],[],[echo "Error: I can't find <boost/config.hpp>."; echo "Please install the BOOST headers, or specify their location using --with-extra-inclues". ; exit 1])
+AC_CHECK_HEADERS([boost/config.hpp],[],[echo "Error: I can't find <boost/config.hpp>."; echo "Please install the BOOST headers, or specify their location using --with-extra-includes". ; exit 1])
 AC_CHECK_HEADERS([boost/system/error_code.hpp],[],[echo "Error: I can't find <boost/system/error_code.hpp>."; echo "Please install the BOOST.system headers." ; exit 1])
 AC_CHECK_HEADERS([boost/filesystem/operations.hpp],[],[echo "Error: I can't find <boost/filesystem/operations.hpp>."; echo "Please install the BOOST.filesystem headers." ; exit 1])
 AC_CHECK_HEADERS([boost/program_options.hpp],[],[echo "Error: I can't find <boost/program_options.hpp>."; echo "Please install the BOOST.program options headers." ; exit 1])
