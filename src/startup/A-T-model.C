@@ -355,8 +355,16 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 	imodel_mapping = imodel_names_mapping.item_for_partition;
     }
 
-    //----------- Load alignments and tree ---------//
+    //----------- Load alignments  ---------//
     vector<alignment> A = load_As(args);
+
+
+    for(int i=0;i<A.size();i++) {
+	check_alignment_names(A[i]);
+	check_alignment_values(A[i],filenames[i]);
+    }
+
+    //----------- Load tree and link to alignments ---------//
     SequenceTree T;
 
     if (args.count("tree"))
@@ -371,20 +379,11 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 	RandomTree(T, 1.0);
     }
 
-    for(int i=0;i<A.size();i++) {
-	check_alignment_names(A[i]);
-	check_alignment_values(A[i],filenames[i]);
-    }
-
     for(auto& a: A)
 	link(a,T,true);
 
     //--------- Handle branch lengths <= 0 --------//
     sanitize_branch_lengths(T);
-
-    //--------- Do we have enough sequences? ------//
-    //    if (T.n_leaves() < 3)
-    //      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".";
 
     //--------- Set up the substitution model --------//
 
