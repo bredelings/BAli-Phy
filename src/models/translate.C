@@ -234,12 +234,10 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
     return E;
 }
 
-std::pair<ptree,equations> translate_model(const string& required_type, const string& model)
+std::pair<ptree,equations> translate_model(const ptree& required_type, ptree model)
 {
-    auto p = parse(model);
-    auto t = parse_type(required_type);
-    pass1(p);
-    auto E = pass2(t, p, find_variables_in_type(t));
-    return {p,E};
+    pass1(model);
+    auto E = pass2(required_type, model, find_variables_in_type(required_type));
+    return {model,E};
 }
 

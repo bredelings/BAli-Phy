@@ -180,10 +180,6 @@ ptree array_index(const ptree& p, int i)
 }
 
 expression_ref get_model_as(const ptree& type, const ptree& model_rep);
-expression_ref get_model_as(const string& type, const ptree& model_rep)
-{
-    return get_model_as(parse_type(type), model_rep);
-}
 
 bool is_loggable_function(const string& name)
 {
@@ -450,7 +446,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep)
 /// \param a The alphabet.
 /// \param frequencies The initial letter frequencies in the model.
 ///
-model_t get_model(const string& type, const ptree& model_rep)
+model_t get_model(const ptree& type, const ptree& model_rep)
 {
     // --------- Convert model to MultiMixtureModel ------------//
     expression_ref full_model = get_model_as(type, model_rep);
@@ -458,20 +454,26 @@ model_t get_model(const string& type, const ptree& model_rep)
     if (log_verbose)
 	std::cout<<"full_model = "<<full_model<<std::endl;
 
-    return {unparse(model_rep),type, full_model};
+    return {unparse(model_rep), unparse_type(type), full_model};
 }
 
 model_t get_model(const string& type, const string& model)
 {
 //    std::cout<<"model1 = "<<show(parse(model))<<std::endl;
 
-    auto p = translate_model(type, model);
-    auto model_tree = p.first;
+    auto required_type = parse_type(type);
+    auto model_rep = parse(model);
+
+    auto p = translate_model(required_type, model_rep);
+    model_rep = p.first;
     auto equations = p.second;
+    substitute(equations, model_rep);
+    substitute(equations, required_type);
     if (log_verbose)
     {
-	std::cout<<"model = "<<unparse(model_tree)<<std::endl;
+	std::cout<<"model = "<<unparse(model_rep)<<std::endl;
+	std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
 	std::cout<<show(equations)<<std::endl;
     }
-    return get_model(type, model_tree);
+    return get_model(required_type, model_rep);
 }
