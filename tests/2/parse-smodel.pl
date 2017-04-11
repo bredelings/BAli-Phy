@@ -74,16 +74,17 @@ show_only("aa.fasta --smodel WAG+F");
 show_only("aa.fasta --smodel LG+DP");
 
 show_only("codons.fasta --alphabet=Codons");
-show_only("codons.fasta --alphabet=Codons --smodel=M0+F1x4");
-show_only("codons.fasta --alphabet=Codons --smodel=M0[omega=1]+F1x4");
-show_only("codons.fasta --alphabet=Codons --smodel=M0[,GTR]+F3x4");
-show_only("codons.fasta --alphabet=Codons --smodel=M3[GTR,MG94]");
-show_only("codons.fasta --alphabet=Codons --smodel=M3_Test");
-show_only("codons.fasta --alphabet=Codons --smodel=M8");
-show_only("codons.fasta --alphabet=Codons --smodel=M8[,HKY,F61]");
+show_only("codons.fasta");
+show_only("codons.fasta --smodel=M0+F1x4");
+show_only("codons.fasta --smodel=M0[omega=1]+F1x4");
+show_only("codons.fasta --smodel=M0[,GTR]+F3x4");
+show_only("codons.fasta --smodel=M3[GTR,MG94]");
+show_only("codons.fasta --smodel=M3_Test");
+show_only("codons.fasta --smodel=M8");
+show_only("codons.fasta --smodel=M8[,HKY,F61]");
 
-show_only("codons.fasta --alphabet=Codons --smodel=HKY+fMutSel");
-show_only("codons.fasta --alphabet=Codons --smodel=HKY+F+fMutSel");
-show_only("codons.fasta --alphabet=Codons --smodel=HKY+gwF+fMutSel");
+show_only("codons.fasta --smodel=HKY+fMutSel");
+show_only("codons.fasta --smodel=HKY+F+fMutSel");
+show_only("codons.fasta --smodel=HKY+gwF+fMutSel");
 
 print "There were ${failures} failures.\n";
