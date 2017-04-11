@@ -356,19 +356,19 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 	imodel_mapping = imodel_names_mapping.item_for_partition;
     }
 
-    //----------- Load alphabet names  ---------//
-    shared_items<string> alphabet_names = get_mapping(args, "alphabet", filenames.size());
-
     //----------- Load alignments  ---------//
     vector<alignment> A(filenames.size());
 
-    for(int i=0;i<filenames.size();i++) {
-	const string alphabet_name = alphabet_names[i];
-	if (alphabet_name.size())
-	    A[i] = load_alignment(filenames[i], load_alphabets(alphabet_name) );
-	else
+    // -- load alphabets with specified names
+    shared_items<string> alphabet_names = get_mapping(args, "alphabet", filenames.size());
+    for(int i=0;i<filenames.size();i++)
+	if (alphabet_names[i].size())
+	    A[i] = load_alignment(filenames[i], load_alphabets(alphabet_names[i]) );
+
+    // -- load other alphabets
+    for(int i=0;i<filenames.size();i++)
+	if (not A[i].has_alphabet())
 	    A[i] = load_alignment(filenames[i]);
-    }
 
     for(int i=0;i<A.size();i++) {
 	check_alignment_names(A[i]);
