@@ -127,9 +127,10 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"meanIndelLengthMinus1","Double","~Exponential[10]"},
      {"tau","Double","0.001"}
     },
-    {{"RS07","IM"}, {"IModel.rs07_model","logLambda","meanIndelLengthMinus1"},
+    {{"RS07","IM","G"}, {"IModel.rs07","logLambda","meanIndelLengthMinus1","tree"},
      {"logLambda","Double","~Laplace[-4,0.707]"},
-     {"meanIndelLengthMinus1","Double","~Exponential[10]"}
+     {"meanIndelLengthMinus1","Double","~Exponential[10]"},
+     {"tree","tree","LAMBDA"}
     },
     {{"RS07RelaxedRates","IM"}, {"IModel.rs07_relaxed_rates_model"}}
 };

@@ -30,21 +30,8 @@ rs05_model logRate meanIndelLengthMinus1 tau tree = Prefix "RS05"
 
 rs07_lengthp e l = doubleToLogDouble (builtin_rs07_lengthp e l);
 
-rs07_model logLambda meanIndelLengthMinus1 tree = Prefix "RS07"
-(do {
---   logLambda <- laplace (-4.0) (1.0/sqrt 2.0);
-   logLambda' <- Prefix "logLambda" logLambda;
-   Log "logLambda" logLambda';
-   let {lambda = exp logLambda'};
-
---   meanIndelLengthMinus1 <- exponential 10.0;
-   meanIndelLengthMinus1' <- Prefix "meanIndelLengthMinus1" meanIndelLengthMinus1;
-   Log "meanIndelLength" (meanIndelLengthMinus1'+1.0);
-   let {epsilon = meanIndelLengthMinus1'/(1.0 + meanIndelLengthMinus1')};
-
-   return (\heat training -> (\d b ->rs07_branch_HMM epsilon (lambda*d!b) heat training, rs07_lengthp epsilon))
-});
-
+rs07 logLambda meanIndelLengthMinus1 tree heat training = (\d b ->rs07_branch_HMM epsilon (lambda*d!b) heat training, rs07_lengthp epsilon) 
+                                                            where {lambda = exp logLambda; epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1)};
 rs07_relaxed_rates_model tree = Prefix "RelaxedRatesRS07"
 (do {
    let {n_branches = numBranches tree;
