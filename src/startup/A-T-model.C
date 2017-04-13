@@ -314,19 +314,13 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     vector<int> imodel_mapping(n_partitions, -1);
     shared_items<string> imodel_names_mapping(vector<string>(),imodel_mapping);
 
-    if (args.count("traditional") and args.count("imodel"))
-	throw myexception()<<"Error: you may not specify both --imodel <arg> and --traditional";
+    imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
 
-    if (not args.count("traditional"))
-    {
-	imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
-
-	for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
-	    if (imodel_names_mapping.unique(i) == "")
-		imodel_names_mapping.unique(i) = "RS07";
+    for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
+	if (imodel_names_mapping.unique(i) == "")
+	    imodel_names_mapping.unique(i) = "RS07";
       
-	imodel_mapping = imodel_names_mapping.item_for_partition;
-    }
+    imodel_mapping = imodel_names_mapping.item_for_partition;
 
     //------------- Get smodel names -------------------
     shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
