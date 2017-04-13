@@ -450,7 +450,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	int L1 = t.is_leaf_node(n1) ? sequences[n1].size() : 0;
 	int L2 = t.is_leaf_node(n2) ? sequences[n2].size() : 0;
 
-	pairwise_alignment_for_branch[b] = p->add_parameter(invisible_prefix+"a"+convertToString(b), make_unaligned_pairwise_alignment(L1,L2) );;
+	auto pi = make_unaligned_pairwise_alignment(L1,L2);
+	// Ensure that for the 2-sequence case, the two directions agree on the alignment.
+	if (b > t.reverse(b))
+	    pi = make_unaligned_pairwise_alignment(L2,L1).flipped();
+
+	pairwise_alignment_for_branch[b] = p->add_parameter(invisible_prefix+"a"+convertToString(b), pi );
     }
 
     // Create and set conditional likelihoods for each branch
