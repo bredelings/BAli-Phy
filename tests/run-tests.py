@@ -8,6 +8,7 @@ def debug(m):
     sys.stderr.write('DEBUG: ')
     sys.stderr.write(m)
     sys.stderr.write('\n')
+
 def error(m):
     sys.stderr.write('ERROR: ')
     sys.stderr.write(m)
@@ -21,15 +22,24 @@ def get_test_dirs(top_test_dir):
             test_dirs.insert(0,path)
     return test_dirs
     
-def run_test_cmd(test_dir, cmd):
+
+def get_cmd_args(test_dir,data_dir):
+    import re
+    args_filename = os.path.join(test_dir,'command.txt')
+    args = open(args_filename,'r').read()
+    args = re.sub('<DATA>',data_dir,args)
+    return args.split()
+
+
+def run_test_cmd(test_dir, data_dir, cmd):
     print "Running test:",test_subdir," ",
     obt_outf = os.path.join(test_dir, 'obtained-output')
     obt_errf = os.path.join(test_dir, 'obtained-error')
     obt_exitf = os.path.join(test_dir, 'obtained-exit')
     obt_likef = os.path.join(test_dir, 'obtained-likelihood')
-    argsf = os.path.join(test_dir,'command.txt')
-    args = open(argsf,'r').read().split()
-    cmd = cmd + args
+
+    cmd = cmd + get_cmd_args(test_dir,data_dir)
+
     with codecs.open(obt_outf, 'w', encoding='utf-8') as obt_out:
         with codecs.open(obt_errf, 'w', encoding='utf-8') as obt_err:
             invocation = '"{}"'.format('" "'.join(cmd))
@@ -137,7 +147,8 @@ def perform_test(top_test_dir,test_subdir,cmd):
     obt_errf = os.path.join(test_dir, 'obtained-error')
     obt_exitf = os.path.join(test_dir, 'obtained-exit')
     obt_likef = os.path.join(test_dir, 'obtained-likelihood')
-    run_test_cmd(test_dir, cmd)
+    data_dir = os.path.join(top_test_dir, 'data')
+    run_test_cmd(test_dir, data_dir, cmd)
     failures = check_test_output(test_dir, test_subdir)
     if not failures:
         print "... ok"
