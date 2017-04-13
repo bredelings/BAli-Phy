@@ -1,0 +1,1 @@
+--test <DATA>/aa.fasta --smodel WAG

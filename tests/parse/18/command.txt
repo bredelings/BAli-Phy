@@ -1,0 +1,1 @@
+--test <DATA>/codons.fasta --smodel=M0[omega=1]+F1x4

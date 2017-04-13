@@ -1,5 +1,0 @@
-size = 1   Test.#2 = Prelude:negate Test.#820
-size = 1   Test.#820 = 10
-size = 0   Test.f = \#1 -> Test.#2
-size = 1   Test.g = \#1 #781 -> Prelude.IOAnd #1 #781
-size = 1   Test.h = \#1 #781 -> #1:#781

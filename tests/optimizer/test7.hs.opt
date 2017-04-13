@@ -1,2 +1,0 @@
-size = 2   Test.f = \#1 -> Test.g#0 #1
-size = 2   Test.g#0 = \#1 -> Test.g#0 #1
