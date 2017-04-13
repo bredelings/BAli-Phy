@@ -154,7 +154,10 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */
 	string i_name = "none";
 	if (i_index != -1)
 	    i_name = IModels[i].description;
-	out_screen<<"#"<<i+1<<": indel ~ "<<i_name<<" (I"<<i_index+1<<")"<<endl;
+	out_screen<<"#"<<i+1<<": indel ~ "<<i_name;
+	if (i_index >= 0)
+	    out_screen<<" (I"<<i_index+1<<")";
+	out_screen<<endl;
     }
     out_screen<<"\n";
 }
