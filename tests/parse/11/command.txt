@@ -1,0 +1,1 @@
+--test <DATA>/dna.fasta --smodel=TN[kappaPur=2,kappaPyr=2]

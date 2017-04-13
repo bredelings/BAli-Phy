@@ -1,0 +1,1 @@
+--test <DATA>/codons.fasta --smodel=M3[GTR,MG94]

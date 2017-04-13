@@ -1,0 +1,1 @@
+--test <DATA>/dna.fasta
