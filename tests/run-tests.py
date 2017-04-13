@@ -139,7 +139,7 @@ def check_test_output(test_dir, name):
         failures.append('likelihood')
     return failures
 
-def perform_test(top_test_dir,test_subdir,cmd):
+def perform_test(data_dir, top_test_dir,test_subdir,cmd):
     global NUM_TESTS, FAILED_TESTS
     test_dir = os.path.join(top_test_dir, test_subdir)
     NUM_TESTS += 1
@@ -147,7 +147,7 @@ def perform_test(top_test_dir,test_subdir,cmd):
     obt_errf = os.path.join(test_dir, 'obtained-error')
     obt_exitf = os.path.join(test_dir, 'obtained-exit')
     obt_likef = os.path.join(test_dir, 'obtained-likelihood')
-    data_dir = os.path.join(top_test_dir, 'data')
+
     run_test_cmd(test_dir, data_dir, cmd)
     failures = check_test_output(test_dir, test_subdir)
     if not failures:
@@ -165,13 +165,17 @@ if __name__ == '__main__':
     import sys
     import os
 
-    top_test_dir = os.path.split(sys.argv[0])[0]
-    top_test_dir = os.path.abspath(top_test_dir)
+    script_dir = os.path.split(sys.argv[0])[0]
+    script_dir = os.path.abspath(script_dir)
+
+    data_dir = os.path.join(script_dir, 'data')
+
+    top_test_dir = os.getcwd()
 
     cmd = sys.argv[1:]
     if not cmd:
         cmd = ['bali-phy']
 
     for test_subdir in get_test_dirs(top_test_dir):
-        perform_test(top_test_dir, test_subdir, cmd)
+        perform_test(data_dir, top_test_dir, test_subdir, cmd)
     print "Performed {} tests, {} failures".format(NUM_TESTS, len(FAILED_TESTS))
