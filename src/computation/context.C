@@ -203,18 +203,6 @@ void context::set_parameter_value(int index, const expression_ref& E)
     set_parameter_value_(index, E);
 }
 
-void context::set_parameter_value_expression(int index, const expression_ref& O)
-{
-    if (O)
-    {
-	expression_ref E = (dummy("Parameters.set_parameter_value"), get_context_index(), parameter(parameter_name(index)), O);
-
-	perform_expression(E);
-    }
-    else
-	set_parameter_value_(index, {} );
-}
-
 void context::set_parameter_value_(int index, closure&& C)
 {
     assert(index >= 0);

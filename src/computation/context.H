@@ -127,9 +127,6 @@ public:
     void set_parameter_value(int index, const expression_ref&);
 
     /// Update the value of a non-constant, non-computed index
-    void set_parameter_value_expression(int index, const expression_ref&);
-
-    /// Update the value of a non-constant, non-computed index
     void set_parameter_value_(int index, closure&&);
 
     /// Update the value of a non-constant, non-computed index
