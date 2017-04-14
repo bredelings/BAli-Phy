@@ -1227,6 +1227,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	evaluate_expression( perform_exp(mu) );
     }
 
+    // Add triggers for them.
     for(int i=0;i<n_scales();i++)
     {
 	string mu_name = "Main.mu"+convertToString(i+1);
