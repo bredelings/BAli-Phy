@@ -1221,9 +1221,10 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     add_parameter("Heat.beta", 1.0);
 
     // Add a Main.mu<i> parameter for each scale.
+    for(int i=0; i<n_scales();i++)
     {
-	expression_ref mus = (dummy("SModel.branch_mean_model"), n_scales());
-	evaluate_expression( perform_exp(mus) );
+	expression_ref mu = (dummy("SModel.a_branch_mean_model"), i+1);
+	evaluate_expression( perform_exp(mu) );
     }
 
     for(int i=0;i<n_scales();i++)
