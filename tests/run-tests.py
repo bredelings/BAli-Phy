@@ -1,5 +1,7 @@
 #!/usr/bin/python
+from __future__ import print_function
 import subprocess
+
 
 NUM_TESTS = 0
 FAILED_TESTS = []
@@ -32,7 +34,7 @@ def get_cmd_args(test_dir,data_dir):
 
 
 def run_test_cmd(test_dir, data_dir, cmd):
-    print "Running test:",test_subdir," ",
+    print("Running test:",test_subdir," ",end="")
     obt_outf = os.path.join(test_dir, 'obtained-output')
     obt_errf = os.path.join(test_dir, 'obtained-error')
     obt_exitf = os.path.join(test_dir, 'obtained-exit')
@@ -102,7 +104,7 @@ def check_likelihood(test_dir):
     if os.path.exists(expectedf):
         expected_likelihood = codecs.open(expectedf, 'r').read()
     else:
-        return True
+        return None
 
     outputf   = os.path.join(test_dir, 'obtained-output')
     obtained_likelihood = None
@@ -113,33 +115,45 @@ def check_likelihood(test_dir):
                 obtained_likelihood = m.group(1)
 
     if not obtained_likelihood:
-        print "no likelihood found!"
-        return False
+        return "No likelihood found!"
 
     if expected_likelihood and obtained_likelihood:
         e = float(expected_likelihood);
         o = float(obtained_likelihood);
         diff = o - e
         if diff < get_precision(expected_likelihood):
-            return True
+            return None
         else:
-            print "likelihood is off by",diff,"!"
-            return False
+            return "likelihood is off by {}!".format(diff)
 
-                
 def check_test_output(test_dir, name):
     failures = []
+    message = ""
+    exit_test_failed = False
     if not check_expected(test_dir, 'obtained-output', 'output'):
         failures.append('output')
     if not check_expected(test_dir, 'obtained-error', 'error'):
         failures.append('error')
     if not check_expected(test_dir, 'obtained-exit', 'exit'):
         failures.append('exit')
-    if not check_likelihood(test_dir):
+        exit_test_failed = True
+    likelihood_message = check_likelihood(test_dir)
+    if likelihood_message:
+        message += likelihood_message
         failures.append('likelihood')
-    return failures
+
+    if exit_test_failed:
+        expected_exitf = os.path.join(test_dir, 'exit')
+        expected_exit = codecs.open(expected_exitf, 'r').read()
+        if expected_exit.rstrip() == "0":
+            obtained_errorf = os.path.join(test_dir, 'obtained-error')
+            obtained_error = codecs.open(obtained_errorf, 'r').read()
+            message = obtained_error
+
+    return (failures,message)
 
 def perform_test(data_dir, top_test_dir,test_subdir,cmd):
+    import re
     global NUM_TESTS, FAILED_TESTS
     test_dir = os.path.join(top_test_dir, test_subdir)
     NUM_TESTS += 1
@@ -149,14 +163,17 @@ def perform_test(data_dir, top_test_dir,test_subdir,cmd):
     obt_likef = os.path.join(test_dir, 'obtained-likelihood')
 
     run_test_cmd(test_dir, data_dir, cmd)
-    failures = check_test_output(test_dir, test_subdir)
+    failures,message = check_test_output(test_dir, test_subdir)
     if not failures:
-        print "... ok"
+        print("... ok")
     else:
-        print "... FAIL!",
-        print failures
+        print("... FAIL! ",end="")
+        print(failures)
         FAILED_TESTS.insert(-1,test_subdir)
-        
+        if message:
+            message = re.sub('^','    ',message)
+            message = message.rstrip('\n')+"\n"
+            print(message)
 
 
 if __name__ == '__main__':
@@ -178,4 +195,4 @@ if __name__ == '__main__':
 
     for test_subdir in get_test_dirs(top_test_dir):
         perform_test(data_dir, top_test_dir, test_subdir, cmd)
-    print "Performed {} tests, {} failures".format(NUM_TESTS, len(FAILED_TESTS))
+    print("Performed {} tests, {} failures".format(NUM_TESTS, len(FAILED_TESTS)))
