@@ -488,9 +488,9 @@ string SimpleIndelModel::name() const {return "RS05";}
 SimpleIndelModel::SimpleIndelModel(const std::shared_ptr<module_loader>& L)
     :IndelModel(L),QE(Q1.size1(),Q1.size2())
 {
-    add_parameter("delta",  -5.0);
-    add_parameter("epsilon",-0.25); // no upper bound on transformed scale
-    add_parameter("tau",    log(0.001));
+    add_modifiable_parameter_with_value("delta",  -5.0);
+    add_modifiable_parameter_with_value("epsilon",-0.25); // no upper bound on transformed scale
+    add_modifiable_parameter_with_value("tau",    log(0.001));
 }
 
 indel::PairHMM RS07_branch_HMM_(double e, double D, double heat, bool in_training)
@@ -654,11 +654,11 @@ log_double_t TKF1::lengthp(int l) const
 TKF1::TKF1(const std::shared_ptr<module_loader>& L, bool b)
     :IndelModel(L),time_dependant(b)
 {
-    add_parameter("lambda",-5.0);
-    add_parameter("meanLength",100.0);
-    add_parameter("lambdaPriorMedian", -5.0);
-    add_parameter("lambdaPriorStddev", 1.5);
-    add_parameter("meanLengthPriorMean", 1.5);
+    add_modifiable_parameter_with_value("lambda",-5.0);
+    add_modifiable_parameter_with_value("meanLength",100.0);
+    add_modifiable_parameter_with_value("lambdaPriorMedian", -5.0);
+    add_modifiable_parameter_with_value("lambdaPriorStddev", 1.5);
+    add_modifiable_parameter_with_value("meanLengthPriorMean", 1.5);
 }
 
 
@@ -721,13 +721,13 @@ log_double_t TKF2::lengthp(int l) const
 TKF2::TKF2(const std::shared_ptr<module_loader>& L, bool b)
     :IndelModel(L), time_dependant(b)
 {
-    add_parameter("lambda",-5.0);
-    add_parameter("epsilon",-0.25);
-    add_parameter("mean_length",100.0);
-    add_parameter("lambdaPriorMedian", -5.0);
-    add_parameter("lambdaPriorStddev", 1.5);
-    add_parameter("epsilonPriorLength", 10.0);
-    add_parameter("meanLengthPriorMean", 1.5);
+    add_modifiable_parameter_with_value("lambda",-5.0);
+    add_modifiable_parameter_with_value("epsilon",-0.25);
+    add_modifiable_parameter_with_value("mean_length",100.0);
+    add_modifiable_parameter_with_value("lambdaPriorMedian", -5.0);
+    add_modifiable_parameter_with_value("lambdaPriorStddev", 1.5);
+    add_modifiable_parameter_with_value("epsilonPriorLength", 10.0);
+    add_modifiable_parameter_with_value("meanLengthPriorMean", 1.5);
 }
 
 TransducerIndelModel::TransducerIndelModel(const std::shared_ptr<module_loader>& module_path)
@@ -857,11 +857,11 @@ string TKF1_Transducer::name() const
 TKF1_Transducer::TKF1_Transducer(const std::shared_ptr<module_loader>& L,bool b)
     :TransducerIndelModel(L),time_dependent(b)
 {
-    add_parameter("lambda",-5.0);
-    add_parameter("meanLength",100.0);
-    add_parameter("lambdaPriorMedian", -5.0);
-    add_parameter("lambdaPriorStddev", 1.5);
-    add_parameter("meanLengthPriorMean", 1.5);
+    add_modifiable_parameter_with_value("lambda",-5.0);
+    add_modifiable_parameter_with_value("meanLength",100.0);
+    add_modifiable_parameter_with_value("lambdaPriorMedian", -5.0);
+    add_modifiable_parameter_with_value("lambdaPriorStddev", 1.5);
+    add_modifiable_parameter_with_value("meanLengthPriorMean", 1.5);
 }
 
 
@@ -1170,15 +1170,15 @@ string FS_Transducer::name() const
 FS_Transducer::FS_Transducer(const std::shared_ptr<module_loader>& L,bool b)
     :TransducerIndelModel(L),time_dependent(b)
 {
-    add_parameter("lambdaS", -5.0);                  // 0
-    add_parameter("lambdaF", -3.0);                  // 1
-    add_parameter("r", -0.3);                       // 2
-    add_parameter("meanLengthS", 20);             // 3
-    add_parameter("meanLengthF", 20);             // 4
-    add_parameter("switch", 0.1);                   // 5
-    add_parameter("lambdaPriorMedianS", -5.0);    // 6
-    add_parameter("lambdaPriorMedianF", -3.0);    // 7
-    add_parameter("lambdaPriorStddev", 1.5);     // 8
-    add_parameter("meanLengthPriorMean", 1.5);  // 9
+    add_modifiable_parameter_with_value("lambdaS", -5.0);                  // 0
+    add_modifiable_parameter_with_value("lambdaF", -3.0);                  // 1
+    add_modifiable_parameter_with_value("r", -0.3);                       // 2
+    add_modifiable_parameter_with_value("meanLengthS", 20);             // 3
+    add_modifiable_parameter_with_value("meanLengthF", 20);             // 4
+    add_modifiable_parameter_with_value("switch", 0.1);                   // 5
+    add_modifiable_parameter_with_value("lambdaPriorMedianS", -5.0);    // 6
+    add_modifiable_parameter_with_value("lambdaPriorMedianF", -3.0);    // 7
+    add_modifiable_parameter_with_value("lambdaPriorStddev", 1.5);     // 8
+    add_modifiable_parameter_with_value("meanLengthPriorMean", 1.5);  // 9
 }
 

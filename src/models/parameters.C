@@ -455,12 +455,12 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	if (b > t.reverse(b))
 	    pi = make_unaligned_pairwise_alignment(L2,L1).flipped();
 
-	pairwise_alignment_for_branch[b] = p->add_parameter(invisible_prefix+"a"+convertToString(b), pi );
+	pairwise_alignment_for_branch[b] = p->add_modifiable_parameter_with_value(invisible_prefix+"a"+convertToString(b), pi );
     }
 
     // Create and set conditional likelihoods for each branch
     for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
-	conditional_likelihoods_for_branch[b] = p->add_parameter(invisible_prefix+"CL"+convertToString(b), 0);
+	conditional_likelihoods_for_branch[b] = p->add_modifiable_parameter_with_value(invisible_prefix+"CL"+convertToString(b), 0);
 
     //  const int n_states = state_letters().size();
     const int scale_index = p->scale_index_for_partition(i);
@@ -634,7 +634,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
 	    {
 		const auto& edge = edges[i];
 		string name = "*MyTree.nodeBranches"+convertToString(n) + "." + convertToString(i);
-		p_node.push_back( p->add_parameter(name,edge) );
+		p_node.push_back( p->add_modifiable_parameter_with_value(name,edge) );
 		node  = parameter(name) & node;
 	    }
 	}
@@ -652,7 +652,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
 	if (not T.directed_branch(b).source().is_leaf_node())
 	{
 	    string name_source = "*MyTree.branch"+convertToString(b)+"source"; 
-	    p_source = p->add_parameter(name_source,source);
+	    p_source = p->add_modifiable_parameter_with_value(name_source,source);
 	    source = parameter(name_source);
 	}
 
@@ -661,7 +661,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
 	if (not T.directed_branch(b).target().is_leaf_node())
 	{
 	    string name_target = "*MyTree.branch"+convertToString(b)+"target"; 
-	    p_target = p->add_parameter(name_target,target);
+	    p_target = p->add_modifiable_parameter_with_value(name_target,target);
 	    target = parameter(name_target);
 	}
 
@@ -1218,7 +1218,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     PC->constants.push_back(-1);
 
-    add_parameter("Heat.beta", 1.0);
+    add_modifiable_parameter_with_value("Heat.beta", 1.0);
 
     // Add a Main.mu<i> parameter for each scale.
     for(int i=0; i<n_scales();i++)
@@ -1241,7 +1241,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
   
     t().read_tree(tt);
 
-    subst_root_index = add_parameter("*subst_root", t().n_nodes()-1);
+    subst_root_index = add_modifiable_parameter_with_value("*subst_root", t().n_nodes()-1);
 
 #ifndef NDEBUG
     evaluate_expression( (dummy("Tree.numNodes"), my_tree()));
@@ -1283,7 +1283,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	imodels_.push_back(perform_exp(imodel, prefix));
     }
 
-    add_parameter("*IModels.training", false);
+    add_modifiable_parameter_with_value("*IModels.training", false);
 
     Module imodels_program("IModels");
     imodels_program.def_function("models", (dummy("Prelude.listArray'"), get_list(imodels_)));
@@ -1305,7 +1305,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	    double delta_t = t().branch_length(b);
 
 	    string name = "d" + convertToString(b+1);
-	    int index = add_parameter(prefix+"."+name, rate * delta_t);
+	    int index = add_modifiable_parameter_with_value(prefix+"."+name, rate * delta_t);
 	    PC->branch_length_indices[s].push_back(index);
 	}
     }
@@ -1315,7 +1315,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     for(int b=0;b<t().n_branches();b++)
     {
 	string name = "*Main.branchCat" + convertToString(b+1);
-	add_parameter(name, 0);
+	add_modifiable_parameter_with_value(name, 0);
 	branch_categories.push_back(parameter(name));
     }
     expression_ref branch_cat_list = get_expression( add_compute_expression( (get_list(branch_categories) ) ) );
