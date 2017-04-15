@@ -424,7 +424,7 @@ public:
     int add_identifier(const std::string&);
 
     /// Add a new parameter, which is a modifiable.
-    int add_parameter(const std::string&);
+    int add_modifiable_parameter(const std::string&);
 
     /// Add a new parameter, which is a modifiable.
     int add_parameter_expression(const std::string&, const expression_ref&);

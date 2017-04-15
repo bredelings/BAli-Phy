@@ -240,7 +240,7 @@ int context::find_parameter(const string& s) const
 int context::add_parameter(const string& full_name, const expression_ref& value)
 {
     int p = n_parameters();
-    memory()->add_parameter(full_name);
+    memory()->add_modifiable_parameter(full_name);
 
     set_parameter_value_(p, value);
 
