@@ -141,7 +141,7 @@ extern "C" closure builtin_function_add_parameter(OperationArgs& Args)
 
   auto& M = Args.memory();
 
-  M.parameters.push_back({name,R});
+  M.add_parameter(name, R);
 
   return constructor("()",0);
 }

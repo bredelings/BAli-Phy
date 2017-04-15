@@ -1481,6 +1481,17 @@ int reg_heap::add_modifiable_parameter(const string& full_name)
 
 int reg_heap::add_parameter(const string& full_name, const expression_ref& E)
 {
+    // 1. Allocate space for the expression
+    int r = allocate();
+    set_C(r, preprocess( E ) );
+
+    add_parameter(full_name, r);
+
+    return r;
+}
+
+void reg_heap::add_parameter(const string& full_name, int r)
+{
     assert(full_name.size() != 0);
 
     // 1. Check that we don't already have a parameter with that name
@@ -1489,13 +1500,6 @@ int reg_heap::add_parameter(const string& full_name, const expression_ref& E)
 	    throw myexception()<<"A parameter with name '"<<full_name<<"' already exists - cannot add another one.";
 
     // 2. Allocate space for the parameter
-    int r = allocate();
     parameters.push_back( {full_name, r} );
     inc_heads(r);
-
-    // 3. Set its value to new_modifiable
-    set_C(r, preprocess( E ) );
-
-
-    return r;
 }

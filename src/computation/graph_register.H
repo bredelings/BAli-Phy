@@ -429,6 +429,9 @@ public:
     /// Add a new parameter, which is a modifiable.
     int add_parameter(const std::string&, const expression_ref&);
 
+    /// Add a new parameter pointing to reg r.
+    void add_parameter(const std::string&, int r);
+
     /*----- Graph walking ------*/
     void find_all_regs_in_context(int, bool, std::vector<int>&) const;
     void find_all_used_regs_in_context(int, bool, std::vector<int>&) const;
