@@ -427,7 +427,7 @@ public:
     int add_modifiable_parameter(const std::string&);
 
     /// Add a new parameter, which is a modifiable.
-    int add_parameter_expression(const std::string&, const expression_ref&);
+    int add_parameter(const std::string&, const expression_ref&);
 
     /*----- Graph walking ------*/
     void find_all_regs_in_context(int, bool, std::vector<int>&) const;

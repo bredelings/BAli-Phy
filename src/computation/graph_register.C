@@ -1476,10 +1476,10 @@ int reg_heap::add_modifiable_parameter(const string& full_name)
     E = (dummy("Prelude.unsafePerformIO"), E);
     E = (dummy("Parameters.evaluate"),-1,E);
 
-    return add_parameter_expression(full_name, E);
+    return add_parameter(full_name, E);
 }
 
-int reg_heap::add_parameter_expression(const string& full_name, const expression_ref& E)
+int reg_heap::add_parameter(const string& full_name, const expression_ref& E)
 {
     assert(full_name.size() != 0);
 

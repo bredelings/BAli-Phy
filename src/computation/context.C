@@ -247,10 +247,10 @@ int context::add_modifiable_parameter_with_value(const string& full_name, const 
     return p;
 }
 
-int context::add_parameter_expression(const string& full_name, const expression_ref& E)
+int context::add_parameter(const string& full_name, const expression_ref& E)
 {
     int p = n_parameters();
-    memory()->add_parameter_expression(full_name, E);
+    memory()->add_parameter(full_name, E);
     return p;
 }
 
