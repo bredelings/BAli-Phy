@@ -1472,6 +1472,15 @@ int reg_heap::add_transition_kernel(int r)
 
 int reg_heap::add_parameter(const string& full_name)
 {
+    expression_ref E = dummy("Parameters.new_modifiable");
+    E = (dummy("Prelude.unsafePerformIO"), E);
+    E = (dummy("Parameters.evaluate"),-1,E);
+
+    return add_parameter_expression(full_name, E);
+}
+
+int reg_heap::add_parameter_expression(const string& full_name, const expression_ref& E)
+{
     assert(full_name.size() != 0);
 
     // 1. Check that we don't already have a parameter with that name
@@ -1485,10 +1494,6 @@ int reg_heap::add_parameter(const string& full_name)
     inc_heads(r);
 
     // 3. Set its value to new_modifiable
-    expression_ref E = dummy("Parameters.new_modifiable");
-    E = (dummy("Prelude.unsafePerformIO"), E);
-    E = (dummy("Parameters.evaluate"),-1,E);
-
     set_C(r, preprocess( E ) );
 
 

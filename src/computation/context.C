@@ -242,8 +242,15 @@ int context::add_parameter(const string& full_name, const expression_ref& value)
     int p = n_parameters();
     memory()->add_parameter(full_name);
 
-    set_parameter_value_(p, preprocess(value));
+    set_parameter_value_(p, value);
 
+    return p;
+}
+
+int context::add_parameter_expression(const string& full_name, const expression_ref& E)
+{
+    int p = n_parameters();
+    memory()->add_parameter_expression(full_name, E);
     return p;
 }
 

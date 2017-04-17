@@ -146,8 +146,11 @@ public:
     double get_rate_for_reg(int r) const;
 
 public:
-    /// Create a new parameter named s
+    /// Create a new modifiable parameter named s with initial value 'value'
     int add_parameter(const std::string& s, const expression_ref& value);
+
+    /// Create a new parameter named s for expression E
+    int add_parameter_expression(const std::string& s, const expression_ref& E);
 
     /// Reserve an identifier with name s
     int add_identifier(const std::string& s) const;
