@@ -1216,22 +1216,16 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     add_modifiable_parameter_with_value("Heat.beta", 1.0);
 
-    // Add a Main.mu<i> parameter for each scale.
+    // Add parameter for each scale, and add a trigger on it.
+    const string scale_prefix = "Main.mu";
     for(int i=0; i<n_branch_scales();i++)
     {
-	expression_ref mu = (dummy("SModel.a_branch_mean_model"), i+1);
-	string name = "Main.mu" + std::to_string(i+1);
-	PC->scale_parameter_indices[i] = add_parameter(name, perform_exp(mu));
-    }
-    assert(PC->scale_parameter_indices.size() == n_branch_scales());
-    for(int i=0;i<n_branch_scales();i++)
-	assert(PC->scale_parameter_indices[i] >= 0);
+	string name = scale_prefix + std::to_string(i+1);
 
-    // Add triggers for them.
-    for(int i=0;i<n_branch_scales();i++)
-    {
-	string mu_name = "Main.mu"+convertToString(i+1);
-	int trigger = add_compute_expression( (dummy("Parameters.trigger_on"),parameter(mu_name),i) );
+	expression_ref scale = (dummy("SModel.a_branch_mean_model"), i+1);
+	PC->scale_parameter_indices[i] = add_parameter(name, perform_exp(scale));
+
+	int trigger = add_compute_expression( (dummy("Parameters.trigger_on"),parameter(name),i) );
 	set_re_evaluate(trigger, true);
     }
 
