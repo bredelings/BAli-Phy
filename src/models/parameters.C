@@ -1142,7 +1142,7 @@ int Parameters::branch_mean_index(int i) const
 {
     assert(0 <= i and i < n_branch_means());
 
-    return 1+i;
+    return PC->scale_parameter_indices[i];
 }
 
 
@@ -1181,6 +1181,7 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
      n_imodels(max(i_mapping)+1),
      scale_for_partition(scale_mapping),
      n_scales(max(scale_mapping)+1),
+     scale_parameter_indices(n_scales),
      TC(star_tree(t.get_leaf_labels())),
      branch_HMM_type(t.n_branches(),0)
 {
@@ -1225,7 +1226,12 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     {
 	expression_ref mu = (dummy("SModel.a_branch_mean_model"), i+1);
 	evaluate_expression( perform_exp(mu) );
+	string name = "Main.mu" + std::to_string(i+1);
+	PC->scale_parameter_indices[i] = find_parameter(name);
     }
+    assert(PC->scale_parameter_indices.size() == n_scales());
+    for(int i=0;i<n_scales();i++)
+	assert(PC->scale_parameter_indices[i] >= 0);
 
     // Add triggers for them.
     for(int i=0;i<n_scales();i++)
