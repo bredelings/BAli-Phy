@@ -159,9 +159,6 @@ class reg_heap: public Object, public checked_pool<reg>
     bool result_is_used_by(int, int) const;
     bool reg_is_used_by(int, int) const;
 
-    int inc_heads(int R);
-    int dec_heads(int R);
-
 public:
 
     reg_heap* clone() const {std::abort();}

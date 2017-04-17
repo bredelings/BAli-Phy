@@ -269,8 +269,6 @@ void reg_heap::register_probability(int r)
 
 	probability_heads.push_back(r);
 
-	inc_heads(r);
-
 	prs_list.push_back(r);
     }
 }
@@ -319,7 +317,6 @@ void reg_heap::dec_probability(int rc)
 
     int r = results[rc].source_reg;
     assert(reg_is_changeable(r));
-    assert(access(r).n_heads > 0);
     prs_list.push_back(r);
 }
 
@@ -390,7 +387,6 @@ int reg_heap::add_random_modifiable(int r)
 {
     int i = random_modifiables_.size();
     random_modifiables_.push_back(r);
-    inc_heads(r);
     return i;
 }
 
@@ -412,11 +408,7 @@ int reg_heap::find_parameter_modifiable_reg(int index)
     int R2 = incremental_evaluate_unchangeable(R);
 
     if (R != R2)
-    {
-	dec_heads(R);
-	inc_heads(R2);
 	parameters[index].second = R2;
-    }
 
 #ifndef NDEBUG
     if (not is_modifiable(access(R2).C.exp))
@@ -851,30 +843,11 @@ void reg_heap::get_roots(vector<int>& scan, bool keep_identifiers) const
 	    scan.push_back(i.second);
 }
 
-int reg_heap::inc_heads(int R)
-{
-    assert( access(R).n_heads >= 0);
-    access(R).n_heads++;
-    return access(R).n_heads;
-}
-
-int reg_heap::dec_heads(int R)
-{
-    assert( access(R).n_heads >= 0);
-    access(R).n_heads--;
-    assert( access(R).n_heads >= 0);
-    return access(R).n_heads;
-}
-
 int reg_heap::set_head(int index, int R2)
 {
     int R1 = heads[index];
 
-    inc_heads(R2);
-
     heads[index] = R2;
-
-    dec_heads(R1);
 
     return R1;
 }
@@ -886,8 +859,6 @@ int reg_heap::allocate_head()
 
     heads.push_back(R);
 
-    inc_heads(R);
-
     return R;
 }
 
@@ -898,8 +869,6 @@ int reg_heap::push_temp_head()
 
     temp.push_back(R);
 
-    inc_heads(R);
-
     return R;
 }
 
@@ -907,16 +876,12 @@ int reg_heap::push_temp_head(int R)
 {
     temp.push_back(R);
 
-    inc_heads(R);
-
     return R;
 }
 
 void reg_heap::pop_temp_head()
 {
     int R = temp.back();
-
-    dec_heads(R);
 
     temp.pop_back();
 }
@@ -1466,7 +1431,6 @@ int reg_heap::add_transition_kernel(int r)
 {
     int i = transition_kernels_.size();
     transition_kernels_.push_back(r);
-    inc_heads(r);
     return i;
 }
 
@@ -1501,5 +1465,4 @@ void reg_heap::add_parameter(const string& full_name, int r)
 
     // 2. Allocate space for the parameter
     parameters.push_back( {full_name, r} );
-    inc_heads(r);
 }

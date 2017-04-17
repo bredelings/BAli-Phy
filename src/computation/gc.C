@@ -171,9 +171,17 @@ void reg_heap::trace(vector<int>& remap)
     vector<int>& roots = get_scratch_list();
     get_roots(roots);
 
+#ifndef NDEBUG
+    for(auto r: roots)
+	assert(access(r).n_heads == 0);
+#endif
+
     // 3. Mark all of these regs used
-    for(int reg:roots)
-	mark_reg(reg);
+    for(int r:roots)
+    {
+	access(r).n_heads = 3;
+	mark_reg(r);
+    }
 
     // 4. Mark all steps/results at heads in the root token.
     if (get_n_tokens())
@@ -283,6 +291,18 @@ void reg_heap::trace(vector<int>& remap)
 	for(int r : R.C.Env)
 	    mark_reg(r);
     }
+
+#ifndef NDEBUG
+    for(auto r: roots)
+	assert(access(r).n_heads == 3);
+#endif
+    for(auto r: roots)
+	access(r).n_heads = 0;
+
+#ifndef NDEBUG
+    for(int i=n_null();i<size();i++)
+	assert(access_unused(i).n_heads == 0);
+#endif
 
     release_scratch_list();
     release_scratch_list();

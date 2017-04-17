@@ -174,9 +174,7 @@ public:
 pair<int,int> reg_heap::incremental_evaluate(int R)
 {
     stack.push_back(R);
-    inc_heads(R);
     auto result = incremental_evaluate_(R);
-    dec_heads(R);
     stack.pop_back();
     return result;
 }
@@ -184,9 +182,7 @@ pair<int,int> reg_heap::incremental_evaluate(int R)
 int reg_heap::incremental_evaluate_unchangeable(int R)
 {
     stack.push_back(R);
-    inc_heads(R);
     auto result = incremental_evaluate_unchangeable_(R);
-    dec_heads(R);
     stack.pop_back();
     return result;
 }
