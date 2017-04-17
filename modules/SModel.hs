@@ -742,12 +742,7 @@ distances_model_for_scale numBranches scale = mapM (distance_model scale) [1..nu
 
 distances_model numBranches numScales = mapM (distances_model_for_scale numBranches) [1..numScales];
 
-a_branch_mean_model n = 
-(do {
-   mu <- gamma 0.5 2.0;
-   Log ("Main.mu"++show n) mu;
-   return mu
-});
+a_branch_mean_model n = gamma 0.5 2.0;
 
 a_branch_length_model dist i =
 (do {

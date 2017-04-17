@@ -1220,9 +1220,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     for(int i=0; i<n_branch_scales();i++)
     {
 	expression_ref mu = (dummy("SModel.a_branch_mean_model"), i+1);
-	evaluate_expression( perform_exp(mu) );
 	string name = "Main.mu" + std::to_string(i+1);
-	PC->scale_parameter_indices[i] = find_parameter(name);
+	PC->scale_parameter_indices[i] = add_parameter(name, perform_exp(mu));
     }
     assert(PC->scale_parameter_indices.size() == n_branch_scales());
     for(int i=0;i<n_branch_scales();i++)
