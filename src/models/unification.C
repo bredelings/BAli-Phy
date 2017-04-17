@@ -348,6 +348,8 @@ bool equations::unify(const term_t& T1, const term_t& T2)
     if (T1.size() != T2.size())
 	valid = false;
 
+    if (not valid) return false;
+
     // 7. Walk the arguments (children) of the T1 and T2 and unify them.
     auto x = T1.begin();
     auto y = T2.begin();
