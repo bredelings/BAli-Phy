@@ -160,7 +160,6 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */
     for(int i=0;i<P.n_imodels();i++)
 	out_cache<<"indel model"<<i+1<<" = "<<imodels.unique(i)<<endl<<endl;
 
-    out_screen<<"\n";
     for(int i=0;i<P.n_data_partitions();i++) {
 	int s_index = P.smodel_index_for_partition(i);
 	//    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
@@ -180,7 +179,6 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */
 	out_screen<<endl;
 
     }
-    out_screen<<"\n";
 }
 
 void check_alignment_names(const alignment& A)

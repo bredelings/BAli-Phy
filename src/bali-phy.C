@@ -296,7 +296,7 @@ void show_ending_messages(bool show_only)
 	cout<<"total (elapsed) time: "<<duration_string( duration_cast<seconds>(end_time-start_time) )<<endl;
 	cout<<"total (CPU) time: "<<duration_string( duration_cast<seconds>(total_cpu_time()) )<<endl;
     }
-    if (substitution::total_calc_root_prob > 1) {
+    if (substitution::total_calc_root_prob > 1 and not show_only) {
 	cout<<endl;
 	cout<<"total likelihood evals = "<<substitution::total_likelihood<<endl;
 	cout<<"total calc_root_prob evals = "<<substitution::total_calc_root_prob<<endl;
@@ -471,14 +471,6 @@ int main(int argc,char* argv[])
 	//------ Capture copy of 'cerr' output in 'err_cache' ------//
 	if (not show_only)
 	    cerr.rdbuf(err_both.rdbuf());
-
-	//------ Print version info for show-only ------//
-	if (show_only and proc_id == 0)
-	{
-	    cout<<"command: "<<get_command_line(argc,argv)<<endl<<endl;
-	    print_version_info(cout);
-	    cout<<endl;
-	}
 
 	//------------- Setup module loader -------------//
 	auto L = setup_module_loader(args, argv[0]);
