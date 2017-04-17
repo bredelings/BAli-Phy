@@ -400,6 +400,7 @@ public:
 	       const std::vector<alignment>& A, const SequenceTree&, 
 	       const std::vector<model_t>&,
 	       const std::vector<int>&,
+	       const std::vector<model_t>&,
 	       const std::vector<int>&);
 
     Parameters(const std::shared_ptr<module_loader>& L,
@@ -408,6 +409,7 @@ public:
 	       const std::vector<int>&,
 	       const std::vector<model_t>&,
 	       const std::vector<int>&,
+	       const std::vector<model_t>&,
 	       const std::vector<int>&);
 };
 

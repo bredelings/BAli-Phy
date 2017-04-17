@@ -119,9 +119,25 @@ get_imodels(const shared_items<string>& imodel_names_mapping, const SequenceTree
     return imodels;
 }
 
+string show_model(boost::property_tree::ptree p)
+{
+    bool top_sample = false;
+    if (p.get_value<string>() == "Sample")
+    {
+	top_sample = true;
+	p = p.begin()->second;
+    }
+
+    string output = unparse(p);
+    string connector = top_sample?"~ ":"= ";
+
+    return connector + output;
+}
+
 void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */,
 		 const shared_items<string>& imodels, const shared_items<string>& smodels,
 		 const vector<model_t>& IModels, const vector<model_t>& SModels,
+		 const vector<model_t>& ScaleModels,
 		 const Parameters& P,const variables_map& args)
 {
     //-------- Log some stuff -----------//
@@ -148,16 +164,21 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */
     for(int i=0;i<P.n_data_partitions();i++) {
 	int s_index = P.smodel_index_for_partition(i);
 	//    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
-	out_screen<<"#"<<i+1<<": subst ~ "<<SModels[i].description<<" (S"<<s_index+1<<")\n";
+	out_screen<<"#"<<i+1<<": subst "<<show_model(SModels[i].description)<<" (S"<<s_index+1<<")\n";
 
 	int i_index = P.imodel_index_for_partition(i);
-	string i_name = "none";
+	string i_name = " = none";
 	if (i_index != -1)
-	    i_name = IModels[i].description;
-	out_screen<<"#"<<i+1<<": indel ~ "<<i_name;
+	    i_name = show_model(IModels[i].description);
+	out_screen<<"#"<<i+1<<": indel "<<i_name;
 	if (i_index >= 0)
 	    out_screen<<" (I"<<i_index+1<<")";
 	out_screen<<endl;
+
+	int scale_index = P.scale_index_for_partition(i);
+	out_screen<<"#"<<i+1<<": scale "<<show_model(ScaleModels[i].description)<<" (Scale"<<scale_index+1<<")\n";
+	out_screen<<endl;
+
     }
     out_screen<<"\n";
 }
@@ -346,7 +367,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     {
 	if (smodel_names_mapping.unique(i).empty()) continue;
 
-	auto type = parse_type(full_smodels[i].type);
+	auto type = full_smodels[i].type;
 	auto alphabet_type = type.begin()->second;
 
 	vector<int> a_specified;
@@ -455,7 +476,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 	int first_index = smodel_names_mapping.partitions_for_item[i][0];
 	const alphabet& a = A[first_index].get_alphabet();
 
-	auto type = parse_type(full_smodels[i].type);
+	auto type = full_smodels[i].type;
 	auto alphabet_type = type.begin()->second;
 
 	if (alphabet_type.get_value<string>() == "Codon" and not dynamic_cast<const Codons*>(&a))
@@ -468,12 +489,22 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     }
 
     //-------------- Which partitions share a scale? -----------//
-    shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
+    shared_items<string> scale_names_mapping = get_mapping(args, "scale", A.size());
 
     vector<int> scale_mapping = scale_names_mapping.item_for_partition;
 
-    //--------------- Create the Parameters object---------------//
-    Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
+    vector<model_t> full_scale_models(scale_names_mapping.n_unique_items());
+
+    for(int i=0;i<scale_names_mapping.n_unique_items();i++)
+    {
+	auto scale_model = scale_names_mapping.unique(i);
+	if (scale_model.empty())
+	    scale_model = "~Gamma[0.5,2]";
+	full_scale_models[i] = get_model("Double", scale_model);
+    }
+
+//--------------- Create the Parameters object---------------//
+    Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping);
 
     //-------- Set the alignments for variable partitions ---------//
     bool unalign = args.count("unalign");
@@ -497,7 +528,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     write_branch_numbers(out_cache, T);
 
     //-------------------- Log model -------------------------//
-    log_summary(out_cache,out_screen,out_both,imodel_names_mapping,smodel_names_mapping,full_imodels,full_smodels,P,args);
+    log_summary(out_cache,out_screen,out_both,imodel_names_mapping,smodel_names_mapping,full_imodels,full_smodels,full_scale_models,P,args);
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))

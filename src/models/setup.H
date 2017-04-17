@@ -4,6 +4,7 @@
 #include <valarray>
 #include <string>
 #include <boost/program_options.hpp>
+#include <boost/property_tree/ptree.hpp>
 #include "object.H"
 #include "alignment/alignment.H"
 #include "sequence/alphabet.H"
@@ -11,8 +12,8 @@
 
 struct model_t
 {
-    std::string description;
-    std::string type;
+    boost::property_tree::ptree description;
+    boost::property_tree::ptree type;
     expression_ref expression;
 };
 

@@ -1201,6 +1201,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<int>& s_mapping,
 		       const vector<model_t>& IMs,
 		       const vector<int>& i_mapping,
+		       const vector<model_t>& scaleMs,
 		       const vector<int>& scale_mapping)
     :Model(L),
      PC(new parameters_constants(A,tt,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
@@ -1222,7 +1223,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     {
 	string name = scale_prefix + std::to_string(i+1);
 
-	expression_ref scale = (dummy("SModel.a_branch_mean_model"), i+1);
+	expression_ref scale = scaleMs[i].expression;
 	PC->scale_parameter_indices[i] = add_parameter(name, perform_exp(scale));
 
 	int trigger = add_compute_expression( (dummy("Parameters.trigger_on"),parameter(name),i) );
@@ -1371,8 +1372,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<alignment>& A, const SequenceTree& t,
 		       const vector<model_t>& SMs,
 		       const vector<int>& s_mapping,
+		       const vector<model_t>& scaleMs,
 		       const vector<int>& scale_mapping)
-    :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<int>{}, scale_mapping)
+    :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<int>{}, scaleMs, scale_mapping)
 { }
 
 bool accept_MH(const Model& P1,const Model& P2,double rho)

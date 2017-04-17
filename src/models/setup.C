@@ -454,7 +454,7 @@ model_t get_model(const ptree& type, const ptree& model_rep)
     if (log_verbose)
 	std::cout<<"full_model = "<<full_model<<std::endl;
 
-    return {unparse(model_rep), unparse_type(type), full_model};
+    return {model_rep, type, full_model};
 }
 
 model_t get_model(const string& type, const string& model)
