@@ -370,7 +370,7 @@ public:
     int n_imodels() const {return PC->n_imodels;}
 
     /// How many substitution models?
-    int n_scales() const {return PC->n_scales;}
+    int n_branch_scales() const {return PC->n_scales;}
 
     object_ptr<const alphabet> get_alphabet_for_smodel(int i) const;
 
@@ -382,15 +382,13 @@ public:
     void set_root(int n) const;
     int subst_root() const;
 
-    int n_branch_means() const;
-
     double branch_mean() const;
 
-    int branch_mean_index(int i) const;
+    int branch_scale_index(int i) const;
 
-    void branch_mean(int i,double); 
+    void branch_scale(int i,double); 
 
-    void branch_mean_tricky(int i,double); 
+    void branch_scale_tricky(int i,double); 
 
     double get_branch_subst_rate(int p, int b) const;
 

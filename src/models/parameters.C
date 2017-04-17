@@ -1080,18 +1080,18 @@ void Parameters::recalc()
     // Check for beta (0) or mu[i] (i+1)
     for(int index: tr)
     {
-	if (0 <= index and index < n_scales())
+	if (0 <= index and index < n_branch_scales())
 	{
 	    int s = index;
 
 	    assert(includes(triggers(),s));
-	    assert(0 <= s and s < n_scales());
+	    assert(0 <= s and s < n_branch_scales());
       
 	    // Change branch lengths for the s-th scale
 	    assert(PC->branch_length_indices[s].size() == t().n_branches());
 	    for(int b=0;b<t().n_branches();b++)
 	    {
-		double rate = get_parameter_value(branch_mean_index(s)).as_double();;
+		double rate = get_parameter_value(branch_scale_index(s)).as_double();;
 		double delta_t = t().branch_length(b);
 
 		context::set_parameter_value(PC->branch_length_indices[s][b], rate*delta_t);
@@ -1118,9 +1118,9 @@ void Parameters::setlength(int b,double l)
     t().set_branch_length(b, l);
 
     // Update D parameters
-    for(int s=0; s<n_scales(); s++) 
+    for(int s=0; s<n_branch_scales(); s++) 
     {
-	double rate = get_parameter_value(branch_mean_index(s)).as_double();
+	double rate = get_parameter_value(branch_scale_index(s)).as_double();
 	double delta_t = t().branch_length(b);
     
 	context::set_parameter_value(PC->branch_length_indices[s][b], rate * delta_t);
@@ -1133,36 +1133,31 @@ double Parameters::branch_mean() const
 }
 
 
-int Parameters::n_branch_means() const
+int Parameters::branch_scale_index(int i) const 
 {
-    return n_scales();
-}
-
-int Parameters::branch_mean_index(int i) const 
-{
-    assert(0 <= i and i < n_branch_means());
+    assert(0 <= i and i < n_branch_scales());
 
     return PC->scale_parameter_indices[i];
 }
 
 
-void Parameters::branch_mean(int i, double x)
+void Parameters::branch_scale(int i, double x)
 {
-    set_parameter_value(branch_mean_index(i),x);
+    set_parameter_value(branch_scale_index(i),x);
 }
 
 // Change the branch_mean for the i-th scale (and all partitions using it) without
 // invalidating anything. How do we do this?
 // I think we do it by not going through set_parameter_value( ) as above.
-void Parameters::branch_mean_tricky(int i,double x)
+void Parameters::branch_scale_tricky(int i,double x)
 {
-    context::set_parameter_value(branch_mean_index(i), x );
+    context::set_parameter_value(branch_scale_index(i), x );
 }
 
 double Parameters::get_branch_subst_rate(int p, int /* b */) const
 {
     int s = scale_index_for_partition(p);
-    return get_parameter_value(branch_mean_index(s)).as_double();
+    return get_parameter_value(branch_scale_index(s)).as_double();
 }
 
 expression_ref Parameters::my_tree() const
@@ -1222,19 +1217,19 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     add_modifiable_parameter_with_value("Heat.beta", 1.0);
 
     // Add a Main.mu<i> parameter for each scale.
-    for(int i=0; i<n_scales();i++)
+    for(int i=0; i<n_branch_scales();i++)
     {
 	expression_ref mu = (dummy("SModel.a_branch_mean_model"), i+1);
 	evaluate_expression( perform_exp(mu) );
 	string name = "Main.mu" + std::to_string(i+1);
 	PC->scale_parameter_indices[i] = find_parameter(name);
     }
-    assert(PC->scale_parameter_indices.size() == n_scales());
-    for(int i=0;i<n_scales();i++)
+    assert(PC->scale_parameter_indices.size() == n_branch_scales());
+    for(int i=0;i<n_branch_scales();i++)
 	assert(PC->scale_parameter_indices[i] >= 0);
 
     // Add triggers for them.
-    for(int i=0;i<n_scales();i++)
+    for(int i=0;i<n_branch_scales();i++)
     {
 	string mu_name = "Main.mu"+convertToString(i+1);
 	int trigger = add_compute_expression( (dummy("Parameters.trigger_on"),parameter(mu_name),i) );
@@ -1301,13 +1296,13 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	PC->TC.branch(b).set_length(-1);
 
     // Add and initialize variables for branch *lengths*: scale<s>.D<b>
-    for(int s=0;s<n_scales();s++)
+    for(int s=0;s<n_branch_scales();s++)
     {
 	string prefix= "*Scale" + convertToString(s+1);
 	PC->branch_length_indices.push_back(vector<int>());
 	for(int b=0;b<t().n_branches();b++)
 	{
-	    double rate = get_parameter_value(branch_mean_index(s)).as_double();
+	    double rate = get_parameter_value(branch_scale_index(s)).as_double();
 	    double delta_t = t().branch_length(b);
 
 	    string name = "d" + convertToString(b+1);
@@ -1329,7 +1324,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     expression_ref substitutionBranchLengthsList;
     {
 	vector<expression_ref> SBLL;
-	for(int s=0;s < n_branch_means(); s++)
+	for(int s=0;s < n_branch_scales(); s++)
 	{
 	    string prefix= "*Scale" + convertToString(s+1);
 	    // Get a list of the branch LENGTH (not time) parameters
@@ -1352,8 +1347,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     (*this) += parameter_program;
 
     // register the cached transition_p indices
-    PC->branch_transition_p_indices.resize(n_branch_means(), n_smodels());
-    for(int s=0;s < n_branch_means(); s++)
+    PC->branch_transition_p_indices.resize(n_branch_scales(), n_smodels());
+    for(int s=0;s < n_branch_scales(); s++)
     {
 	// Better yet, make a substitutionBranchLengths!scale!branch that can be referenced elsewhere.
 	expression_ref DL = (dummy("Prelude.!"),dummy("Params.substitutionBranchLengths"),s);

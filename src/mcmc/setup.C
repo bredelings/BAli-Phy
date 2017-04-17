@@ -265,7 +265,7 @@ MCMC::MoveAll get_scale_MH_moves(owned_ptr<Model>& P)
     MCMC::MoveAll MH_moves("parameters:scale:MH");
     if (P.as<Parameters>())
     {
-	for(int i=0;i<P.as<Parameters>()->n_branch_means();i++)
+	for(int i=0;i<P.as<Parameters>()->n_branch_scales();i++)
 	    add_MH_move(*P, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),
 			"mu_scale_sigma",     0.6,  MH_moves);
     }
@@ -286,7 +286,7 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
     MCMC::MoveAll MH_moves("parameters:MH");
 
     if (Parameters* P = dynamic_cast<Parameters*>(&M))
-	for(int i=0;i<P->n_branch_means();i++)
+	for(int i=0;i<P->n_branch_scales();i++)
 	    add_MH_move(M, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
 
 
@@ -332,7 +332,7 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
 MCMC::MoveAll get_scale_slice_moves(Parameters& P)
 {
     MCMC::MoveAll slice_moves("parameters:scale:MH");
-    for(int i=0;i<P.n_branch_means();i++)
+    for(int i=0;i<P.n_branch_scales();i++)
 	add_slice_moves(P, "Main.mu"+convertToString(i+1), slice_moves);
     return slice_moves;
 }
@@ -348,7 +348,7 @@ MCMC::MoveAll get_parameter_slice_moves(Model& M)
     if (Parameters* P = dynamic_cast<Parameters*>(&M))
     {
 	// scale parameters - do we need this?
-	for(int i=0;i<P->n_branch_means();i++)
+	for(int i=0;i<P->n_branch_scales();i++)
 	    add_slice_moves(*P, "*.mu"+convertToString(i+1), slice_moves);
 
 	slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));
@@ -697,10 +697,10 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 	for(int i=0;i<3;i++) {
 	    out_both<<" Tree size #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
 	    out_both<<"   |T| = "<<Get_Tree_Length_Function()(*P,0);
-	    for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
+	    for(int j=0;j<P.as<Parameters>()->n_branch_scales();j++)
 	    {
 		Parameters& PP = *P.as<Parameters>();
-		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_mean_index(j)).as_double()<<endl;
+		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_scale_index(j)).as_double()<<endl;
 	    }
 	    show_parameters(out_log,*P,false);
 	    pre_burnin.iterate(P,Stats);
@@ -725,10 +725,10 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 	for(int i=0;i<n_pre_burnin;i++) {
 	    out_both<<" SPR #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
 	    out_both<<"   |T| = "<<Get_Tree_Length_Function()(*P,0);
-	    for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
+	    for(int j=0;j<P.as<Parameters>()->n_branch_scales();j++)
 	    {
 		Parameters& PP = *P.as<Parameters>();
-		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_mean_index(j)).as_double()<<endl;
+		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_scale_index(j)).as_double()<<endl;
 	    }
 	    show_parameters(out_log,*P,false);
 	    pre_burnin.iterate(P,Stats);
@@ -753,10 +753,10 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 	for(int i=0;i<n_pre_burnin2;i++) {
 	    out_both<<" NNI #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
 	    out_both<<"   |T| = "<<Get_Tree_Length_Function()(*P,0);
-	    for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
+	    for(int j=0;j<P.as<Parameters>()->n_branch_scales();j++)
 	    {
 		Parameters& PP = *P.as<Parameters>();
-		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_mean_index(j)).as_double()<<endl;
+		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_scale_index(j)).as_double()<<endl;
 	    }
 	    show_parameters(out_log,*P,false);
 	    pre_burnin.iterate(P,Stats);
@@ -793,10 +793,10 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 	    out_both<<" SPR+A #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
 	    out_both<<"   |A| = "<<Get_Total_Alignment_Length_Function()(*P,0);
 	    out_both<<"   |T| = "<<Get_Tree_Length_Function()(*P,0);
-	    for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
+	    for(int j=0;j<P.as<Parameters>()->n_branch_scales();j++)
 	    {
 		Parameters& PP = *P.as<Parameters>();
-		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_mean_index(j)).as_double()<<endl;
+		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_scale_index(j)).as_double()<<endl;
 	    }
 	    show_parameters(out_log,*P,false);
 	    pre_burnin.iterate(P,Stats);
@@ -816,10 +816,10 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 
 
     int B = P.as<Parameters>()->t().n_branches();
-    for(int i=0; i<P.as<Parameters>()->n_branch_means(); i++)
+    for(int i=0; i<P.as<Parameters>()->n_branch_scales(); i++)
     {
-	if (P->get_parameter_value(P.as<Parameters>()->branch_mean_index(i)).as_double() > 0.5*B)
-	    P->set_parameter_value(P.as<Parameters>()->branch_mean_index(i), 0.5*B);
+	if (P->get_parameter_value(P.as<Parameters>()->branch_scale_index(i)).as_double() > 0.5*B)
+	    P->set_parameter_value(P.as<Parameters>()->branch_scale_index(i), 0.5*B);
     }
 
 

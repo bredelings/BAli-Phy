@@ -243,8 +243,8 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P_,int i1,int i
 double sum_of_means(const Parameters& P)
 {
   double sum = 0;
-  for(int i=0;i<P.n_branch_means();i++) 
-    sum += P.get_parameter_value(P.branch_mean_index(i)).as_double();
+  for(int i=0;i<P.n_branch_scales();i++) 
+    sum += P.get_parameter_value(P.branch_scale_index(i)).as_double();
   return sum;
 }
 
@@ -259,8 +259,8 @@ double set_sum_of_means_tricky(Parameters& P, double t)
 {
   double sum = sum_of_means(P);
   double scale = t/sum;
-  for(int i=0;i<P.n_branch_means();i++) 
-    P.branch_mean_tricky(i,P.get_parameter_value(P.branch_mean_index(i)).as_double() * scale);
+  for(int i=0;i<P.n_branch_scales();i++) 
+    P.branch_scale_tricky(i,P.get_parameter_value(P.branch_scale_index(i)).as_double() * scale);
 
   return scale;
 }
@@ -285,7 +285,7 @@ double scale_means_only_slice_function::operator()()
   count++;
 
   const int B = P.t().n_branches();
-  const int n = P.n_branch_means();
+  const int n = P.n_branch_scales();
 
   // return pi * (\sum_i \mu_i)^(n-B)
   return log(P.heated_probability()) + log(sum_of_means(P))*(n-B);
@@ -308,20 +308,20 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
   std::clog<<"Bounds on t are "<<b<<std::endl;
 #endif
 
-  for(int i=0; i<P.n_branch_means(); i++)
+  for(int i=0; i<P.n_branch_scales(); i++)
   {
-    Bounds<double> b2 = P.get_bounds(P.branch_mean_index(i));
+    Bounds<double> b2 = P.get_bounds(P.branch_scale_index(i));
 
     if (b2.has_lower_bound and b2.lower_bound > 0)
     {
       b2.has_lower_bound = true;
-      b2.lower_bound = log(b2.lower_bound) - log(P.get_parameter_value(P.branch_mean_index(i)).as_double());
+      b2.lower_bound = log(b2.lower_bound) - log(P.get_parameter_value(P.branch_scale_index(i)).as_double());
     }
     else
       b2.has_lower_bound = false;
 
     if (b2.has_upper_bound)
-      b2.upper_bound = log(b2.upper_bound) - log(P.get_parameter_value(P.branch_mean_index(i)).as_double());
+      b2.upper_bound = log(b2.upper_bound) - log(P.get_parameter_value(P.branch_scale_index(i)).as_double());
 
     b = b and b2;
   }
