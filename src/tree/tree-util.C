@@ -24,6 +24,7 @@
 #include "tree/tree-util.H"
 #include "myexception.H"
 #include "io.H"
+#include "tools/read-trees.H" // split out trees_format::reader_t
 
 using boost::program_options::variables_map;
 using std::map;
@@ -42,8 +43,14 @@ RootedSequenceTree load_T(const variables_map& args) {
     if (not args.count("tree"))
 	throw myexception()<<"Tree file not specified! (--tree <filename>)";
     
+    auto filename = args["tree"].as<string>();
+
+    using namespace trees_format;
+
+    std::shared_ptr<reader_t> trees_in(new Newick_or_NEXUS(filename));
     RootedSequenceTree RT;
-    RT.read(args["tree"].as<string>());
+    if (not trees_in->next_tree(RT))
+	throw myexception()<<"No tree in file '"<<filename<<"'";
 
     return RT;
 }
