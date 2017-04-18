@@ -121,7 +121,7 @@ def check_likelihood(test_dir):
         e = float(expected_likelihood);
         o = float(obtained_likelihood);
         diff = o - e
-        if diff < get_precision(expected_likelihood):
+        if abs(diff) < get_precision(expected_likelihood):
             return None
         else:
             return "likelihood is off by {}!".format(diff)
