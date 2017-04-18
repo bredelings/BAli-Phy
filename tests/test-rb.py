@@ -101,7 +101,7 @@ def check_likelihood(test_dir):
     obtained_likelihood = None
     with codecs.open(outputf, 'r') as output:
         for line in output:
-            m = re.match(r".*likelihood = +([^ ]+).*", line)
+            m = re.match(r".*likelihood =[ \t]+([^ \t]+).*", line)
             if m:
                 obtained_likelihood = m.group(1)
 
