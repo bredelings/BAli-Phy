@@ -37,7 +37,7 @@ def run_test_cmd(test_dir, data_dir, cmd):
             invocation = '"{}"'.format('" "'.join(cmd))
 #            debug('Running: ' + invocation + ' >"' + obt_outf + '" 2>"' + obt_errf + '" ; echo $? >"' + obt_exitf + '"')
             p = subprocess.Popen(cmd, cwd=test_dir, stdin=subprocess.PIPE, stdout=obt_out, stderr=obt_err)
-            p.communicate(input='data="{}";source("rb-command.Rev")'.format(data_dir))
+            p.communicate(input='datadir = "{}";source("rb-command.Rev")'.format(data_dir))
             exit_code = p.wait()
             with codecs.open(obt_exitf, 'w', encoding='utf-8') as obt_exit:
                 obt_exit.write('{e:d}\n'.format(e=exit_code))
