@@ -23,7 +23,7 @@ data = readDiscreteCharacterData(datadir +"/5d-muscle.fasta")
 ######################
 
 #### specify the GTR+G substitution model applied uniformly to all sites ###
-pi    <- simplex([0.1,0.2,0.3,0.4])
+pi    <- simplex([0.1,0.2,0.4,0.3])
 kappa <- 2
 
 #### create a deterministic variable for the rate matrix ####
