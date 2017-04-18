@@ -1,64 +1,10 @@
-################################################################################
-#
-# RevBayes Test: Computing the likelihood for a given tree and parameters under
-#                under an HKY model.
-#
-# authors: Sebastian Hoehna
-#
-################################################################################
-
-
-#######################
-# Reading in the Data #
-#######################
-
-
-### Read in sequence data for both genes
-
 data = readDiscreteCharacterData(datadir +"/5d.fasta")
-
-
-######################
-# Substitution Model #
-######################
-
-#### specify the GTR+G substitution model applied uniformly to all sites ###
 pi    <- simplex([0.1,0.2,0.4,0.3])
 kappa <- 2
-
-#### create a deterministic variable for the rate matrix ####
 Q := fnHKY(kappa,pi) 
-
-
-
-##############
-# Tree model #
-##############
-
-
-
-### the time tree is a stochastic node modeled by the constant rate birth-death process (dnBDP)
 psi <- readTrees(datadir + "/1.tree")[1]
-
-
-
-###################
-# Molecular clock #
-###################
-
-clock_rate <- 1.0
-
-
-###################
-# PhyloCTMC Model #
-###################
-
-# the sequence evolution model
-seq ~ dnPhyloCTMC(tree=psi, Q=Q, branchRates=clock_rate, type="DNA")
-
-# attach the data
+seq ~ dnPhyloCTMC(tree=psi, Q=Q, branchRates=1.0, type="DNA")
 seq.clamp(data)
-
 write("likelihood =",seq.lnProbability())
 
 
