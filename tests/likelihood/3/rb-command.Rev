@@ -1,6 +1,6 @@
-D <- readDiscreteCharacterData(data+ "/Primates.nex")
+D <- readDiscreteCharacterData(datadir + "/Primates.nex")
 
-tau <- readTrees(data+ "/primates.tree")[1]
+tau <- readTrees(datadir + "/primates.tree")[1]
 
 # substition model priors
 pi <- simplex(1,1,1,1)
