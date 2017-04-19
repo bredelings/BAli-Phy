@@ -135,7 +135,6 @@ string show_model(boost::property_tree::ptree p)
 }
 
 void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */,
-		 const shared_items<string>& imodels, const shared_items<string>& smodels,
 		 const vector<model_t>& IModels, const vector<model_t>& SModels,
 		 const vector<model_t>& ScaleModels,
 		 const Parameters& P,const variables_map& args)
@@ -150,15 +149,19 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */
     for(int i=0;i<P.n_data_partitions();i++) {
 	out_cache<<"smodel-index"<<i+1<<" = "<<P.smodel_index_for_partition(i)<<endl;
 	out_cache<<"imodel-index"<<i+1<<" = "<<P.imodel_index_for_partition(i)<<endl;
+	out_cache<<"scale-index"<<i+1<<" = "<<P.scale_index_for_partition(i)<<endl;
     }
     out_cache<<endl;
 
     for(int i=0;i<P.n_smodels();i++)
 	//    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
-	out_cache<<"subst model"<<i+1<<" = "<<smodels.unique(i)<<endl<<endl;
+	out_cache<<"subst model"<<i+1<<" "<<show_model(SModels[i].description)<<endl<<endl;
 
     for(int i=0;i<P.n_imodels();i++)
-	out_cache<<"indel model"<<i+1<<" = "<<imodels.unique(i)<<endl<<endl;
+	out_cache<<"indel model"<<i+1<<" "<<show_model(IModels[i].description)<<endl<<endl;
+
+    for(int i=0;i<P.n_branch_scales();i++)
+	out_cache<<"scale model"<<i+1<<" "<<show_model(ScaleModels[i].description)<<endl<<endl;
 
     for(int i=0;i<P.n_data_partitions();i++) {
 	int s_index = P.smodel_index_for_partition(i);
@@ -526,7 +529,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     write_branch_numbers(out_cache, T);
 
     //-------------------- Log model -------------------------//
-    log_summary(out_cache,out_screen,out_both,imodel_names_mapping,smodel_names_mapping,full_imodels,full_smodels,full_scale_models,P,args);
+    log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, P,args);
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
