@@ -55,7 +55,7 @@ struct log_prod_underflow
 
 struct log_prod_rescale
 {
-    static constexpr double scale_factor = pow(2.0, 256);
+    static constexpr double scale_factor = 115792089237316195423570985008687907853269984665640564039457584007913129639936e0;
     static constexpr double scale_min = 1.0/scale_factor;
     static constexpr double log_scale_min = log(scale_min);
     
