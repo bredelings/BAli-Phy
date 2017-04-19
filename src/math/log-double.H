@@ -35,8 +35,8 @@ public:
     /// Access the log of the number.
     constexpr double& log()       {return value;}
 
-    constexpr log_double_t& operator +=(const log_double_t& y) {loginc(value,y.log()); return *this;}
-    constexpr log_double_t& operator -=(const log_double_t& y) {value = logdiff(log(),y.log()); return *this;}
+    log_double_t& operator +=(const log_double_t& y) {loginc(value,y.log()); return *this;}
+    log_double_t& operator -=(const log_double_t& y) {value = logdiff(log(),y.log()); return *this;}
     constexpr log_double_t& operator *=(const log_double_t& y) {value += y.log(); return *this;}
     constexpr log_double_t& operator /=(const log_double_t& y) {value -= y.log(); return *this;}
 
@@ -53,7 +53,6 @@ public:
 	return *this;
     }
 
-
     constexpr log_double_t():value(log_0) {}
 
     constexpr log_double_t(double x):value(0) {
@@ -66,21 +65,21 @@ constexpr double log(log_double_t x) {
 }
 
 #define decl_double(rtype,op)					\
-    constexpr rtype operator op (double x,log_double_t y) {	\
+    inline rtype operator op (double x,log_double_t y) {	\
 	return log_double_t(x) op y;				\
     }								\
 								\
-    constexpr rtype operator op (log_double_t x,double y) {	\
+    inline rtype operator op (log_double_t x,double y) {	\
 	return x op log_double_t(y);				\
     }
 
-constexpr log_double_t operator+(log_double_t x,log_double_t y) {
+inline log_double_t operator+(log_double_t x,log_double_t y) {
     log_double_t z = x;
     z += y;
     return z;
 }
 
-constexpr log_double_t operator-(log_double_t x,log_double_t y) {
+inline log_double_t operator-(log_double_t x,log_double_t y) {
     log_double_t z = x;
     z -= y;
     return z;
@@ -141,13 +140,13 @@ constexpr bool operator==(log_double_t x,log_double_t y) {
     return log(x)==log(y);
 }
 
-constexpr bool operator==(log_double_t x,double y) {
+inline bool operator==(log_double_t x,double y) {
     if (y==0.0)
 	return log(x) <= log_limit;
     else if (y==1)
 	return log(x) == 0.0;
     else
-	return double(x) == y;
+	return log(x) == log(y);
 }
 
 /*
@@ -165,13 +164,13 @@ constexpr bool operator!=(log_double_t x,log_double_t y) {
     return log(x)!=log(y);
 }
 
-constexpr bool operator!=(log_double_t x,double y) {
+inline bool operator!=(log_double_t x,double y) {
     if (y==0.0)
 	return log(x) > log_limit;
     else if (y==1)
 	return log(x) != 0.0;
     else
-	return double(x) != y;
+	return log(x) != log(y);
 }
 
 #undef decl_double

@@ -28,7 +28,7 @@ struct log_prod_underflow
 {
     log_double_t accum = 1.0;
     double prod = 1.0;
-    constexpr log_prod_underflow& operator*=(double x)
+    log_prod_underflow& operator*=(double x)
     {
 #ifndef NDEBUG
 	auto old = *this;
@@ -47,9 +47,9 @@ struct log_prod_underflow
 	return *this;
 	    
     }
-    constexpr log_double_t value() const {return accum * prod;}
-    constexpr operator log_double_t () const {return value();}
-    constexpr bool is_zero() const {return value() <= 0.0;}
+    log_double_t value() const {return accum * prod;}
+    operator log_double_t () const {return value();}
+    bool is_zero() const {return value() <= 0.0;}
     constexpr log_prod_underflow() {}
 };
 
@@ -62,7 +62,7 @@ struct log_prod_rescale
     double prod = 1.0;
     int scale = 0;
 
-    constexpr log_prod_rescale& operator*=(double x)
+    log_prod_rescale& operator*=(double x)
     {
 #ifndef NDEBUG
 	auto old = *this;
@@ -85,7 +85,7 @@ struct log_prod_rescale
 	return *this;
 	    
     }
-    constexpr log_double_t value() const {
+    log_double_t value() const {
 	log_double_t Pr = prod;
 	Pr.log() += log_scale_min * scale;
 	return Pr;
@@ -93,7 +93,7 @@ struct log_prod_rescale
 
     constexpr operator log_double_t () const {return value();}
 
-    constexpr bool is_zero() const {return value() <= 0.0;}
+    bool is_zero() const {return value() <= 0.0;}
     constexpr log_prod_rescale() {}
 };
 
@@ -112,7 +112,7 @@ struct log_prod_logsum
     constexpr log_double_t value() const {return accum;}
     constexpr operator log_double_t () const {return value();}
 
-    constexpr bool is_zero() const {return value() <= 0.0;}
+    bool is_zero() const {return value() <= 0.0;}
     constexpr log_prod_logsum() {}
 };
 
