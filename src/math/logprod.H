@@ -91,7 +91,7 @@ struct log_prod_rescale
 	return Pr;
     }
 
-    constexpr operator log_double_t () const {return value();}
+    operator log_double_t () const {return value();}
 
     bool is_zero() const {return value() <= 0.0;}
     constexpr log_prod_rescale() {}
