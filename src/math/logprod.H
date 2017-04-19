@@ -57,7 +57,7 @@ struct log_prod_rescale
 {
     static constexpr double scale_factor = 115792089237316195423570985008687907853269984665640564039457584007913129639936e0;
     static constexpr double scale_min = 1.0/scale_factor;
-    static constexpr double log_scale_min = log(scale_min);
+    static constexpr double log_scale_min = -177.445678223345999210811423093293201427328034396225345054e0;
     
     double prod = 1.0;
     int scale = 0;
