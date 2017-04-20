@@ -119,12 +119,6 @@ jukes_cantor a = reversible_markov (equ a) (plus_f_equal_frequencies a);
 
 k80 kappa nuca = reversible_markov (hky kappa nuca) (plus_f_equal_frequencies nuca);
 
-gtr_model s a = Prefix "GTR" 
-  (do {
-     s' <- Prefix "S" (s a);
-     return $ gtr s' a;
-});
-
 m0_model s omega codona = Prefix "M0"
   (do {
      omega' <- Prefix "omega" omega;
