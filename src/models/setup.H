@@ -21,4 +21,5 @@ model_t get_model(const std::string& type, const std::string& model);
 
 std::string default_markov_model(const alphabet& a);
 
+std::string show(const boost::property_tree::ptree& pt, int depth = 0);
 #endif

@@ -121,7 +121,7 @@ using boost::shared_ptr;
 */
 
 /// Split a string of the form key=value into {key,value}
-string show(const ptree& pt, int depth = 0)
+string show(const ptree& pt, int depth)
 {
     string result = "";
     string indent(depth,' ');
@@ -459,10 +459,9 @@ model_t get_model(const ptree& type, const ptree& model_rep)
 
 model_t get_model(const string& type, const string& model)
 {
-//    std::cout<<"model1 = "<<show(parse(model))<<std::endl;
-
     auto required_type = parse_type(type);
     auto model_rep = parse(model);
+//    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
 
     auto p = translate_model(required_type, model_rep);
     model_rep = p.first;
