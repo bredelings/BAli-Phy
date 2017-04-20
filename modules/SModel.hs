@@ -613,27 +613,7 @@ log_normal_rates' sigmaOverMu n = uniformDiscretize (quantile (log_normal_rates'
 
 log_normal_rates base sigmaOverMu n = multiRate base (log_normal_rates' sigmaOverMu n);
 
-log_normal_inv_model base sigmaOverMu pInv n alphabet = Prefix "LogNormalInv"
-  (do {
-     base' <- base alphabet;
-
-     sigmaOverMu' <- Prefix "sigmaOverMu" sigmaOverMu;
-     Log "sigmaOverMu" sigmaOverMu';
-
-     n' <- Prefix "n" n;
-     Log "n" n';
-
-     pInv' <- Prefix "pInv" pInv;
-     Log "pInv" pInv';
-
-     let {x = log(1.0+sigmaOverMu'^2);
-          lmu = -0.5*x;
-          lsigma = sqrt x;
-          dist = uniformDiscretize (quantile (logNormal lmu lsigma)) n';
-          dist2 = extendDiscreteDistribution dist pInv' 0.0};
-
-         return $ multiRate base' dist2
-});
+log_normal_inv_rates base sigmaOverMu pInv n = multiRate base $ plus_inv pInv (log_normal_rates' sigmaOverMu n);
 
 dp_model base rates fraction a = Prefix "DP" $
 do {
