@@ -68,14 +68,14 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"MultiRate","MM[a]"}, {"SModel.multiRateModel","submodel","dist","n_bins"}, {"dist","Distribution[Double]"}, {"n_bins","Int","4"}, {"submodel","RA[a]"}},
 
     {{"GammaRates","MM[a]","G"},
-     {"SModel.gamma_rates","submodel","alpha","n","A"},
+     {"SModel.gamma_rates","submodel","alpha","n"},
      {"n","Int","4"},
      {"alpha","Double","~logLaplace[-6,2]"},
      {"submodel","RA[a]","","A"},
      {"A","a","LAMBDA"}},
 
     {{"GammaInvRates","MM[a]","G"},
-     {"SModel.gamma_inv_rates","submodel","alpha","pInv","n","A"},
+     {"SModel.gamma_inv_rates","submodel","alpha","pInv","n"},
      {"n","Int","4"},
      {"alpha","Double","~logLaplace[-6,2]"},
      {"pInv","Double","~Uniform[0,1]"},
