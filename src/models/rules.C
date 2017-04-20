@@ -10,129 +10,168 @@ using boost::property_tree::ptree;
 
 const vector< vector<vector<string>> > all_default_arguments = 
 {
-    {{"log","Double","GN"}, {"Prelude.log","x"}, {"x","Double"}},
-    {{"exp","Double","GN"}, {"Prelude.exp","x"}, {"x","Double"}},
-    {{"Sample","a"}, {"Prelude.performAction","x"}, {"x","Distribution[a]"}},
+    {{"log", "Double", "GN"}, {"Prelude.log", "x"}, {"x", "Double"}},
+    {{"exp", "Double", "GN"}, {"Prelude.exp", "x"}, {"x", "Double"}},
+    {{"Sample", "a"}, {"Prelude.performAction", "x"}, {"x", "Distribution[a]"}},
 
-    {{"Uniform","Distribution[Double]","G"}, {"Distributions.uniform","low","high"}, {"low","Double"}, {"high","Double"}},
-    {{"UniformInt","Distribution[Int]","G"}, {"Distributions.uniform_int","low","high"}, {"low","Int"}, {"high","Int"}},
-    {{"Normal","Distribution[Double]","G"}, {"Distributions.normal","mu","sigma"}, {"mu","Double"}, {"sigma","Double"}},
-    {{"logNormal","Distribution[Double]","G"}, {"Distributions.logNormal","lmu","lsigma"}, {"lmu","Double"}, {"lsigma","Double"}},
-    {{"logLaplace","Distribution[Double]","G"}, {"Distributions.logLaplace","lm","ls"}, {"lm","Double"}, {"ls","Double"}},
-    {{"Laplace","Distribution[Double]","G"}, {"Distributions.laplace","m","s"}, {"m","Double"}, {"s","Double"}},
-    {{"logGamma","Distribution[Double]","G"}, {"Distributions.logGamma","a","b"}, {"a","Double"}, {"b","Double"}},
-    {{"Beta","Distribution[Double]","G"}, {"Distributions.beta","a","b"}, {"a","Double"}, {"b","Double"}},
-    {{"Exponential","Distribution[Double]","G"}, {"Distributions.exponential","mean"}, {"mean","Double"}},
-    {{"Gamma","Distribution[Double]","G"}, {"Distributions.gamma","a","b"}, {"a","Double"}, {"b","Double"}},
+    {{"Uniform", "Distribution[Double]", "G"}, {"Distributions.uniform", "low", "high"}, {"low", "Double"}, {"high", "Double"}},
+    {{"UniformInt", "Distribution[Int]", "G"}, {"Distributions.uniform_int", "low", "high"}, {"low", "Int"}, {"high", "Int"}},
+    {{"Normal", "Distribution[Double]", "G"}, {"Distributions.normal", "mu", "sigma"}, {"mu", "Double"}, {"sigma", "Double"}},
+    {{"logNormal", "Distribution[Double]", "G"}, {"Distributions.logNormal", "lmu", "lsigma"}, {"lmu", "Double"}, {"lsigma", "Double"}},
+    {{"logLaplace", "Distribution[Double]", "G"}, {"Distributions.logLaplace", "lm", "ls"}, {"lm", "Double"}, {"ls", "Double"}},
+    {{"Laplace", "Distribution[Double]", "G"}, {"Distributions.laplace", "m", "s"}, {"m", "Double"}, {"s", "Double"}},
+    {{"logGamma", "Distribution[Double]", "G"}, {"Distributions.logGamma", "a", "b"}, {"a", "Double"}, {"b", "Double"}},
+    {{"Beta", "Distribution[Double]", "G"}, {"Distributions.beta", "a", "b"}, {"a", "Double"}, {"b", "Double"}},
+    {{"Exponential", "Distribution[Double]", "G"}, {"Distributions.exponential", "mean"}, {"mean", "Double"}},
+    {{"Gamma", "Distribution[Double]", "G"}, {"Distributions.gamma", "a", "b"}, {"a", "Double"}, {"b", "Double"}},
 
-    {{"Bernoulli","Distribution[Int]","G"}, {"Distributions.bernoulli","p"}, {"p","Double"}},
-    {{"Binomial","Distribution[Int]","G"}, {"Distributions.binomial","n", "p"}, {"n","Int"}, {"p","Double"}},
-    {{"Geometric","Distribution[Int]","G"}, {"Distributions.geometric","p"}, {"p","Double"}},
+    {{"Bernoulli", "Distribution[Int]", "G"}, {"Distributions.bernoulli", "p"}, {"p", "Double"}},
+    {{"Binomial", "Distribution[Int]", "G"}, {"Distributions.binomial", "n", "p"}, {"n", "Int"}, {"p", "Double"}},
+    {{"Geometric", "Distribution[Int]", "G"}, {"Distributions.geometric", "p"}, {"p", "Double"}},
 
-    {{"iid","Distribution[List[a]]","G"}, {"Distributions.iid","n","dist"}, {"n","Int"}, {"dist","Distribution[a]"}},
-    {{"Dirichlet","Distribution[List[Double]]","G"}, {"Distributions.dirichlet'","n","x"}, {"n","Int"}, {"x","Double"}},
-//    {{"Dirichlet","List[Double]"}, {"dirichlet_model","ps"}, {"ps","List[Double]"}},
+    {{"iid", "Distribution[List[a]]", "G"}, {"Distributions.iid", "n", "dist"}, {"n", "Int"}, {"dist", "Distribution[a]"}},
+    {{"Dirichlet", "Distribution[List[Double]]", "G"}, {"Distributions.dirichlet'", "n", "x"}, {"n", "Int"}, {"x", "Double"}},
+//    {{"Dirichlet", "List[Double]"}, {"dirichlet_model", "ps"}, {"ps", "List[Double]"}},
 
 //  We need a way to construct lists, not from a distribution.
-    {{"List","List[a]","L"},{"Prelude.sequence"},{"*","a"}},
-    {{"Pair","Pair[a,b]"},{"SModel.pair_model","first","second"},{"first","a"}, {"second","b"}},
+    {{"List", "List[a]", "L"},{"Prelude.sequence"},{"*", "a"}},
+    {{"Pair", "Pair[a,b]"},{"(,)", "first", "second"},{"first", "a"}, {"second", "b"}},
 
-    {{"EQU","EM[a]","G"}, {"SModel.equ", "A"}, {"A", "a", "LAMBDA"}},
-    {{"JC","RA[a]","G"}, {"SModel.jukes_cantor", "A"}, {"A", "a", "LAMBDA"}},
-    {{"K80","RA[a]","G"}, {"SModel.k80", "kappa", "A"}, {"kappa","Double","~logNormal[log[2],0.25]"}, {"A", "a", "LAMBDA"} },
-    {{"F81"}, {}, {"alphabet","Alphabet"}},
-    {{"HKY","EM[a]","G","Nucleotides[a]"}, {"SModel.hky","kappa","alphabet"}, {"kappa","Double","~logNormal[log[2],0.25]"}, {"alphabet","a","LAMBDA"}},
-    {{"TN","EM[a]","G"}, {"SModel.tn", "kappaPur", "kappaPyr", "A"}, {"kappaPur","Double","~logNormal[log[2],0.25]"}, {"kappaPyr","Double","~logNormal[log[2],0.25]"}, {"A", "a", "LAMBDA"}},
-    {{"GTR","EM[a]"}, {"SModel.gtr_model","S"}, {"S","E","exchange_prior"}},
-    {{"exchange_prior","E"}, {"SModel.exchange_model"}},
-    {{"E","E","P"}, {"SModel.constant_exchange_model"},{"*","Double"}},
-    {{"x3","EM[a]"}, {"SModel.x3_model","submodel"}, {"submodel","EM[b]"}},
-    {{"PAM","EM[AA]"}, {"SModel.pam_model"}},
-    {{"JTT","EM[AA]"}, {"SModel.jtt_model"}},
-    {{"WAG","EM[AA]"}, {"SModel.wag_model"}},
-    {{"LG","EM[AA]"}, {"SModel.lg_model"}},
-    {{"Empirical","EM[a]"}, {"SModel.empirical_model","filename"}, {"filename","String"}},
+    {{"EQU", "EM[a]", "G"}, {"SModel.equ", "A"}, {"A", "a", "LAMBDA"}},
+    {{"JC", "RA[a]", "G"}, {"SModel.jukes_cantor", "A"}, {"A", "a", "LAMBDA"}},
+    {{"K80", "RA[a]", "G"}, {"SModel.k80", "kappa", "A"}, {"kappa", "Double", "~logNormal[log[2],0.25]"}, {"A", "a", "LAMBDA"} },
+    {{"F81"}, {}, {"alphabet", "Alphabet"}},
+    {{"HKY", "EM[a]", "G", "Nucleotides[a]"}, {"SModel.hky", "kappa", "alphabet"}, {"kappa", "Double", "~logNormal[log[2],0.25]"}, {"alphabet", "a", "LAMBDA"}},
+    {{"TN", "EM[a]", "G"}, {"SModel.tn", "kappaPur", "kappaPyr", "A"}, {"kappaPur", "Double", "~logNormal[log[2],0.25]"}, {"kappaPyr", "Double", "~logNormal[log[2],0.25]"}, {"A", "a", "LAMBDA"}},
+//    {{"GTR", "EM[a]"}, {"SModel.gtr_model", "S"}, {"S", "E", "exchange_prior"}},
+    {{"GTR", "EM[a]", "G"}, {"SModel.gtr", "S", "A"}, {"S", "E", "exchange_prior", "A"}, {"A", "a", "LAMBDA"}},
+    {{"exchange_prior", "E"}, {"SModel.exchange_model"}},
+    {{"E", "E", "P"}, {"SModel.constant_exchange_model"},{"*", "Double"}},
+    {{"x3", "EM[a]"}, {"SModel.x3_model", "submodel"}, {"submodel", "EM[b]"}},
+    {{"PAM", "EM[AA]", "G"}, {"SModel.pam", "A"}, {"A", "a", "LAMBDA"}},
+    {{"JTT", "EM[AA]", "G"}, {"SModel.jtt", "A"}, {"A", "a", "LAMBDA"}},
+    {{"WAG", "EM[AA]", "G"}, {"SModel.wag", "A"}, {"A", "a", "LAMBDA"}},
+    {{"LG", "EM[AA]", "G"}, {"SModel.lg", "A"}, {"A", "a", "LAMBDA"}},
+    {{"Empirical", "EM[a]"}, {"SModel.empirical_model", "filename"}, {"filename", "String"}},
     // FIXME: For terms like Codons[a,b,F[c,d]] we can't just split on ',' because we will get 'Codons[a'
-    {{"M0","EM[Codon[a,b]]","","Nucleotides[a],AminoAcids[b]"}, {"SModel.m0_model","submodel","omega"}, {"omega","Double","~Uniform[0,1]"}, {"submodel","EM[a]","HKY"}},
-    {{"fMutSel","RA[Codon[a,b]]"}, {"SModel.fMutSel_model","submodel","omega","ws"},
-     {"omega","Double","~Uniform[0,1]"}, {"ws","List[Double]","~iid[61,logNormal[0,0.5]]"}, {"submodel","RA[a]","HKY"}},
-    {{"fMutSel0","RA[Codon[a,b]]"}, {"SModel.fMutSel0_model","submodel","omega","ws"},
-     {"omega","Double","~Uniform[0,1]"}, {"ws","List[Double]","~iid[20,logNormal[0,0.5]]"}, {"submodel","RA[a]","HKY"}},
+    {{"M0", "EM[Codon[a,b]]", "", "Nucleotides[a],AminoAcids[b]"}, {"SModel.m0_model", "submodel", "omega"}, {"omega", "Double", "~Uniform[0,1]"}, {"submodel", "EM[a]", "HKY"}},
+    {{"fMutSel", "RA[Codon[a,b]]"}, {"SModel.fMutSel_model", "submodel", "omega", "ws"},
+     {"omega", "Double", "~Uniform[0,1]"}, {"ws", "List[Double]", "~iid[61,logNormal[0,0.5]]"}, {"submodel", "RA[a]", "HKY"}},
+    {{"fMutSel0", "RA[Codon[a,b]]"}, {"SModel.fMutSel0_model", "submodel", "omega", "ws"},
+     {"omega", "Double", "~Uniform[0,1]"}, {"ws", "List[Double]", "~iid[20,logNormal[0,0.5]]"}, {"submodel", "RA[a]", "HKY"}},
 // fraction ~ dirichlet' n (1 + n/2), rates ~ dirichlet' n 2
     // DP does not actually use n, given rates and frequencies.
     // DP could have another variant that is only given an n... but then are we abandoning the idea of specifying all parameters?
     // Perhaps DP should be able to introduce an n and then  condition on it, to ensure that rates and frequencies get the same n?
     // So, a let-statement.
-    {{"DP","MM[a]"}, {"SModel.dp_model","submodel","rates","frequencies"}, {"rates","List[Double]","~Dirichlet[4,2]"}, {"frequencies","List[Double]","~Dirichlet[4,3]"}, {"submodel","RA[a]"}},
-    {{"MultiRate","MM[a]"}, {"SModel.multiRateModel","submodel","dist","n_bins"}, {"dist","Distribution[Double]"}, {"n_bins","Int","4"}, {"submodel","RA[a]"}},
-    {{"GammaRates","MM[a]"}, {"SModel.gamma_model","submodel","alpha","n"}, {"n","Int","4"}, {"alpha","Double","~logLaplace[-6,2]"}, {"submodel","RA[a]"}},
-    {{"GammaInvRates","MM[a]"}, {"SModel.gamma_inv_model","submodel","alpha","pInv","n"}, {"n","Int","4"}, {"alpha","Double","~logLaplace[-6,2]"}, {"pInv","Double","~Uniform[0,1]"}, {"submodel","RA[a]"}},
-    {{"log-normal","MM[a]"}, {"SModel.log_normal_model","submodel","sigmaOverMu","n"}, {"n","Int","4"}, {"sigmaOverMu","Double","~logLaplace[-3,1]"}, {"submodel","RA[a]"}},
-    {{"log-normal_inv","MM[a]"}, {"SModel.log_normal_inv_model","submodel","sigmaOverMu","pInv", "n"}, {"n","Int","4"}, {"sigmaOverMu","Double","~logLaplace[-3,1]"}, {"pInv","Double","~Uniform[0,1]"}, {"submodel","RA[a]"}},
-    {{"M1a","MM[Codon[a,b]]"}, {"SModel.m1a_model","nuc_model","freq_model","omega1","p1"},
-     {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"omega1","Double","~Uniform[0,1]"}, {"p1","Double","~Uniform[0,1]"} },
-    {{"M2a","MM[Codon[a,b]]"}, {"SModel.m2a_model","nuc_model","freq_model","omega1","p1","posP","posW"},
-     {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"omega1","Double","~Uniform[0,1]"}, {"p1","Double","~Uniform[0,1]"}, {"posP","Double", "~Beta[1,10]"}, {"posW","Double", "~logGamma[4,0.25]"} },
-    {{"M2a_Test","MM[Codon[a,b]]"}, {"SModel.m2a_test_model","nuc_model","freq_model","omega1","p1","posP","posW","posSelection"},
-     {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"omega1","Double","~Uniform[0,1]"}, {"p1","Double","~Uniform[0,1]"}, {"posP","Double", "~Beta[1,10]"}, {"posW","Double", "~logGamma[4,0.25]"}, {"posSelection", "Int", "~Bernoulli[0.5]"} },
-    //    {{"M3u"}, {"3"}, {"nuc_model",""HKY"}, {"freq_model","F61"}},
+    {{"DP", "MM[a]"}, {"SModel.dp_model", "submodel", "rates", "frequencies"}, {"rates", "List[Double]", "~Dirichlet[4,2]"}, {"frequencies", "List[Double]", "~Dirichlet[4,3]"}, {"submodel", "RA[a]"}},
+    {{"MultiRate", "MM[a]"}, {"SModel.multiRateModel", "submodel", "dist", "n_bins"}, {"dist", "Distribution[Double]"}, {"n_bins", "Int", "4"}, {"submodel", "RA[a]"}},
+
+    {{"GammaRates", "MM[a]", "G"},
+     {"SModel.gamma_rates", "submodel", "alpha", "n"},
+     {"n", "Int", "4"},
+     {"alpha", "Double", "~logLaplace[-6,2]"},
+     {"submodel", "RA[a]", "", "A"},
+     {"A", "a", "LAMBDA"}},
+
+    {{"GammaInvRates", "MM[a]", "G"},
+     {"SModel.gamma_inv_rates", "submodel", "alpha", "pInv", "n"},
+     {"n", "Int", "4"},
+     {"alpha", "Double", "~logLaplace[-6,2]"},
+     {"pInv", "Double", "~Uniform[0,1]"},
+     {"submodel", "RA[a]", "", "A"},
+     {"A", "a", "LAMBDA"}},
+
+    {{"log_normal_rates", "MM[a]", "G"},
+     {"SModel.log_normal_rates", "submodel", "sigmaOverMu", "n"},
+     {"n", "Int", "4"},
+     {"sigmaOverMu", "Double", "~logLaplace[-3,1]"},
+     {"submodel", "RA[a]", "", "A"},
+     {"A", "a", "LAMBDA"}},
+    
+    {{"log_normal_inv_rates", "MM[a]", "G"},
+     {"SModel.log_normal_inv_rates", "submodel", "sigmaOverMu", "pInv", "n"},
+     {"n", "Int", "4"},
+     {"sigmaOverMu", "Double", "~logLaplace[-3,1]"},
+     {"pInv", "Double", "~Uniform[0,1]"},
+     {"submodel", "RA[a]", "", "A"},
+     {"A", "a", "LAMBDA"}},
+
+    {{"M1a", "MM[Codon[a,b]]"}, {"SModel.m1a_model", "nuc_model", "freq_model", "omega1", "p1"},
+     {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"omega1", "Double", "~Uniform[0,1]"}, {"p1", "Double", "~Uniform[0,1]"} },
+    {{"M2a", "MM[Codon[a,b]]"}, {"SModel.m2a_model", "nuc_model", "freq_model", "omega1", "p1", "posP", "posW"},
+     {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"omega1", "Double", "~Uniform[0,1]"}, {"p1", "Double", "~Uniform[0,1]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"} },
+    {{"M2a_Test", "MM[Codon[a,b]]"}, {"SModel.m2a_test_model", "nuc_model", "freq_model", "omega1", "p1", "posP", "posW", "posSelection"},
+     {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"omega1", "Double", "~Uniform[0,1]"}, {"p1", "Double", "~Uniform[0,1]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"}, {"posSelection", "Int", "~Bernoulli[0.5]"} },
+    //    {{"M3u"}, {"3"}, {"nuc_model", ""HKY"}, {"freq_model", "F61"}},
     //  Maybe we should introduce a way to sample Dirichlet and IIDs of the same length and then zip them?
     //   * would this solve some of our woes with the DP model?
     //   * this does NOT solve the issue of the dirichlet weight depending on n
-    {{"M3","MM[Codon[a,b]]"}, {"SModel.m3_model","nuc_model","freq_model","ps","omegas"},
-     {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"ps","List[Double]","~Dirichlet[4,2]"}, {"omegas","List[Double]","~iid[4,Uniform[0,1]]" }},
-    {{"M3_Test","MM[Codon[a,b]]"}, {"SModel.m3_test_model","nuc_model","freq_model","ps","omegas","posP","posW","posSelection"},
-     {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"ps","List[Double]","~Dirichlet[4,2]"}, {"omegas","List[Double]","~iid[4,Uniform[0,1]]" },{"posP","Double", "~Beta[1,10]"}, {"posW","Double", "~logGamma[4,0.25]"}, {"posSelection", "Int", "~Bernoulli[0.5]"} },
-    {{"M7","MM[Codon[a,b]]"}, {"SModel.m7_model","nuc_model","freq_model","mu","gamma","n_bins"},
-     {"n_bins","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"},{"mu","Double","~Uniform[0,1]"},{"gamma","Double","~Beta[1,10]"}},
-    {{"M8","MM[Codon[a,b]]"},
-     {"SModel.m8_model","nuc_model","freq_model","mu","gamma","n","posP","posW"},
-     {"n","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"mu","Double","~Uniform[0,1]"}, {"gamma","Double","~Beta[1,10]"}, {"posP","Double","~Beta[1,10]"}, {"posW","Double","~logGamma[4,0.25]"} },
-    {{"M8a","MM[Codon[a,b]]"},
-     {"SModel.m8a_model","nuc_model","freq_model","mu","gamma","n_bins","posP"},
-     {"n_bins","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"mu","Double","~Uniform[0,1]"}, {"gamma","Double","~Beta[1,10]"}, {"posP","Double","~Beta[1,10]"}, {"posW","Double","~logGamma[4,0.25]"} },
-    {{"M8a_Test","MM[Codon[a,b]]"},
-     {"SModel.m8a_test_model","nuc_model","freq_model","mu","gamma","n_bins","posP","posW","posSelection"},
-     {"n_bins","Int","4"}, {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"mu","Double","~Uniform[0,1]"}, {"gamma","Double","~Beta[1,10]"}, {"posP","Double","~Beta[1,10]"}, {"posW","Double","~logGamma[4,0.25]"}, {"posSelection","Int","~Bernoulli[0.5]"} },
-    {{"branch-site","MMM[Codon[a,b]]"},
-     {"SModel.branch_site_test_model","nuc_model","freq_model","fs","omegas","posP","posW","posSelection"},
-     {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"fs","List[Double]","~Dirichlet[2,1]"}, {"omegas","List[Double]","~iid[1,Uniform[0,1]]"}, {"posP","Double","~Beta[1,10]"}, {"posW","Double","~logGamma[4,0.25]"}, {"posSelection","Int","~Bernoulli[0.5]"} },
-    {{"dp_omega","MM[Codon[a,b]]"}, {"SModel.dp_omega_model","nuc_model","freq_model","mu","omegas"},
-     {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"mu","Double","~Uniform[0,1]"}, {"omegas","List[Double]","~Dirichlet[4,1]"}},
-    {{"frequencies_prior","F"}, {"SModel.frequencies_model"}},
-    {{"Freq","F","P"}, {"SModel.constant_frequencies_model"},{"*","Double"}},
-    {{"Freq2","F"}, {"SModel.constant_frequencies_model2","dict"},{"dict","List[Pair[String,Double]]"}},
-    {{"F","FM[a]"}, {"SModel.plus_f_model","pi"},{"pi","F","frequencies_prior"}},
-    {{"F61","FM[Codon[a,b]]"}, {"SModel.plus_f_model","pi"}, {"pi","F","frequencies_prior"}},
-    {{"gwF","FM[a]"}, {"SModel.plus_gwf_model","pi","f"},{"pi","F","frequencies_prior"},{"f","Double","~Uniform[0,1]"}},
+    {{"M3", "MM[Codon[a,b]]"}, {"SModel.m3_model", "nuc_model", "freq_model", "ps", "omegas"},
+     {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"ps", "List[Double]", "~Dirichlet[4,2]"}, {"omegas", "List[Double]", "~iid[4,Uniform[0,1]]" }},
+    {{"M3_Test", "MM[Codon[a,b]]"}, {"SModel.m3_test_model", "nuc_model", "freq_model", "ps", "omegas", "posP", "posW", "posSelection"},
+     {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"ps", "List[Double]", "~Dirichlet[4,2]"}, {"omegas", "List[Double]", "~iid[4,Uniform[0,1]]" },{"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"}, {"posSelection", "Int", "~Bernoulli[0.5]"} },
+    {{"M7", "MM[Codon[a,b]]"}, {"SModel.m7_model", "nuc_model", "freq_model", "mu", "gamma", "n_bins"},
+     {"n_bins", "Int", "4"}, {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"},{"mu", "Double", "~Uniform[0,1]"},{"gamma", "Double", "~Beta[1,10]"}},
+    {{"M8", "MM[Codon[a,b]]"},
+     {"SModel.m8_model", "nuc_model", "freq_model", "mu", "gamma", "n", "posP", "posW"},
+     {"n", "Int", "4"}, {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"mu", "Double", "~Uniform[0,1]"}, {"gamma", "Double", "~Beta[1,10]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"} },
+    {{"M8a", "MM[Codon[a,b]]"},
+     {"SModel.m8a_model", "nuc_model", "freq_model", "mu", "gamma", "n_bins", "posP"},
+     {"n_bins", "Int", "4"}, {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"mu", "Double", "~Uniform[0,1]"}, {"gamma", "Double", "~Beta[1,10]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"} },
+    {{"M8a_Test", "MM[Codon[a,b]]"},
+     {"SModel.m8a_test_model", "nuc_model", "freq_model", "mu", "gamma", "n_bins", "posP", "posW", "posSelection"},
+     {"n_bins", "Int", "4"}, {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"mu", "Double", "~Uniform[0,1]"}, {"gamma", "Double", "~Beta[1,10]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"}, {"posSelection", "Int", "~Bernoulli[0.5]"} },
+    {{"branch-site", "MMM[Codon[a,b]]"},
+     {"SModel.branch_site_test_model", "nuc_model", "freq_model", "fs", "omegas", "posP", "posW", "posSelection"},
+     {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"fs", "List[Double]", "~Dirichlet[2,1]"}, {"omegas", "List[Double]", "~iid[1,Uniform[0,1]]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"}, {"posSelection", "Int", "~Bernoulli[0.5]"} },
+    {{"dp_omega", "MM[Codon[a,b]]"}, {"SModel.dp_omega_model", "nuc_model", "freq_model", "mu", "omegas"},
+     {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"mu", "Double", "~Uniform[0,1]"}, {"omegas", "List[Double]", "~Dirichlet[4,1]"}},
+    {{"frequencies_prior", "F"}, {"SModel.frequencies_model"}},
+    {{"Freq", "F", "P"}, {"SModel.constant_frequencies_model"},{"*", "Double"}},
+    {{"Freq2", "F"}, {"SModel.constant_frequencies_model2", "dict"},{"dict", "List[Pair[String,Double]]"}},
+    {{"F", "FM[a]", "G"}, {"SModel.plus_f", "A", "pi"},{"pi", "F", "frequencies_prior", "A"}, {"A", "a", "LAMBDA"}},
+    {{"F61", "FM[Codon[a,b]]", "G"}, {"SModel.plus_f", "A", "pi"},{"pi", "F", "frequencies_prior", "A"}, {"A", "a", "LAMBDA"}},
+    {{"gwF", "FM[a]", "G"}, {"SModel.plus_gwf", "A", "pi", "f"},{"pi", "F", "frequencies_prior", "A"},{"f", "Double", "~Uniform[0,1]"},{"A", "a", "LAMBDA"}},
     // How about a generic frequency model that is equivalent to fMutSel0?  Can we do that?
     // Or maybe we need to do fMutSel & fMutSel0 version of the site models.
     //These should really be Triplet models, not Codon models - so we need inheritance
-    {{"F1x4","FM[Codon[a,b]]"}, {"SModel.f1x4_model","pi"}, {"pi","F","frequencies_prior"}},
-    {{"F3x4","FM[Codon[a,b]]"}, {"SModel.f3x4_model","pi1","pi2","pi3"}, {"pi1","F","frequencies_prior"}, {"pi2","F","frequencies_prior"}, {"pi3","F","frequencies_prior"}},
-    {{"MG94","FM[Codon[a,b]]"}, {"SModel.mg94_model","pi"}, {"pi","F","frequencies_prior"}},
-    {{"MG94w9","FM[Codon[a,b]]"}, {"SModel.mg94w9_model","pi1","pi2","pi3"}, {"pi1","F","frequencies_prior"}, {"pi2","F","frequencies_prior"}, {"pi3","F","frequencies_prior"}},
-    {{"DNA","Alphabet","N"}, {"dna"}},
-    {{"RNA","Alphabet"}, {"rna"}},
-//    {{"C10","MM[a]"}, {}},
-//    {{"C20","MM[a]"}, {}},
-    {{"AA","Alphabet"}, {"aa"}},
+    {{"F1x4", "FM[Codon[a,b]]"}, {"SModel.f1x4_model", "pi"}, {"pi", "F", "frequencies_prior"}},
+    {{"F3x4", "FM[Codon[a,b]]"}, {"SModel.f3x4_model", "pi1", "pi2", "pi3"}, {"pi1", "F", "frequencies_prior"}, {"pi2", "F", "frequencies_prior"}, {"pi3", "F", "frequencies_prior"}},
+    {{"MG94", "FM[Codon[a,b]]"}, {"SModel.mg94_model", "pi"}, {"pi", "F", "frequencies_prior"}},
+    {{"MG94w9", "FM[Codon[a,b]]"}, {"SModel.mg94w9_model", "pi1", "pi2", "pi3"}, {"pi1", "F", "frequencies_prior"}, {"pi2", "F", "frequencies_prior"}, {"pi3", "F", "frequencies_prior"}},
+    {{"DNA", "Alphabet", "N"}, {"dna"}},
+    {{"RNA", "Alphabet"}, {"rna"}},
+//    {{"C10", "MM[a]"}, {}},
+//    {{"C20", "MM[a]"}, {}},
+    {{"AA", "Alphabet"}, {"aa"}},
 // We can't write Codons[a,b] yet because we don't any mechanism for dealing with inheritance
-    {{"Codons","Alphabet"}, {"codons","nuc","aa"}, {"nuc","Alphabet"}, {"aa","Alphabet","AA"}},
-    {{"RCTMC","RA[a]","GN"}, {"SModel.reversible_markov","Q","R"}, {"Q","EM[a]","","A"}, {"R","FM[a]","","A"},{"A","a","LAMBDA"}},
-    {{"UnitMixture","MM[a]","N"}, {"SModel.unit_mixture_model","submodel"}, {"submodel","RA[a]"}},
-    {{"MMM","MMM[a]","N"}, {"SModel.mmm_model","submodel"}, {"submodel","MM[a]"}},
-    {{"RS05","IM"}, {"IModel.rs05_model","logDelta","meanIndelLengthMinus1","tau"},
-     {"logDelta","Double","~Laplace[-4,0.707]"},
-     {"meanIndelLengthMinus1","Double","~Exponential[10]"},
-     {"tau","Double","0.001"}
+    {{"Codons", "Alphabet"}, {"codons", "nuc", "aa"}, {"nuc", "Alphabet"}, {"aa", "Alphabet", "AA"}},
+    {{"RCTMC", "RA[a]", "GN"}, {"SModel.reversible_markov", "Q", "R"}, {"Q", "EM[a]", "", "A"}, {"R", "FM[a]", "", "A"},{"A", "a", "LAMBDA"}},
+
+    {{"UnitMixture", "MM[a]", "NG"},
+     {"SModel.unit_mixture", "submodel"},
+     {"submodel", "RA[a]", "", "A"},
+     {"A", "a", "LAMBDA"},
     },
-    {{"RS07","IM","G"}, {"IModel.rs07","logLambda","meanIndelLengthMinus1","tree"},
-     {"logLambda","Double","~Laplace[-4,0.707]"},
-     {"meanIndelLengthMinus1","Double","~Exponential[10]"},
-     {"tree","tree","LAMBDA"}
+
+    {{"MMM", "MMM[a]", "NG"},
+     {"SModel.mmm", "submodel"},
+     {"submodel", "MM[a]", "", "A"},
+     {"A", "a", "LAMBDA"}
     },
-    {{"RS07RelaxedRates","IM"}, {"IModel.rs07_relaxed_rates_model"}}
+
+    {{"RS05", "IM"}, {"IModel.rs05_model", "logDelta", "meanIndelLengthMinus1", "tau"},
+     {"logDelta", "Double", "~Laplace[-4,0.707]"},
+     {"meanIndelLengthMinus1", "Double", "~Exponential[10]"},
+     {"tau", "Double", "0.001"}
+    },
+    {{"RS07", "IM", "G"}, {"IModel.rs07", "logLambda", "meanIndelLengthMinus1", "tree"},
+     {"logLambda", "Double", "~Laplace[-4,0.707]"},
+     {"meanIndelLengthMinus1", "Double", "~Exponential[10]"},
+     {"tree", "tree", "LAMBDA"}
+    },
+    {{"RS07RelaxedRates", "IM"}, {"IModel.rs07_relaxed_rates_model"}}
 };
 
 ptree parse(const string& s);
@@ -153,17 +192,15 @@ ptree convert_rule(const vector<vector<string>>& s)
     rule.put("name",s[0][0]);
 
     rule.push_back({"result_type",parse_type(s[0][1])});
-    if (s[0].size() > 2 and contains_char(s[0][2],'P'))
-	rule.put("pass_arguments","true");
-    if (s[0].size() > 2 and contains_char(s[0][2],'L'))
-	rule.put("list_arguments","true");
-    if (s[0].size() > 2 and contains_char(s[0][2],'G'))
-	rule.put("generate_function","true");
-    if (s[0].size() > 2 and contains_char(s[0][2],'N'))
-	rule.put("no_log","true");
+    string attributes = (s[0].size() > 2)?s[0][2]:"";
+
+    if (contains_char(attributes, 'P')) rule.put("pass_arguments", "true");
+    if (contains_char(attributes, 'L')) rule.put("list_arguments", "true");
+    if (contains_char(attributes, 'G')) rule.put("generate_function", "true");
+    if (contains_char(attributes, 'N')) rule.put("no_log", "true");
 
     if (s[0].size() >= 4)
-	rule.push_back({"Constraints",parse_constraints(s[0][3])});
+	rule.push_back({"Constraints", parse_constraints(s[0][3])});
 
     if (s[1].size())
     {
@@ -182,7 +219,7 @@ ptree convert_rule(const vector<vector<string>>& s)
 	arg.put("arg_name",arg_name);
 	arg.push_back({"arg_type",parse_type(s[i][1])});
 	if (s[i].size() > 2 and s[i][2] == "LAMBDA")
-	    arg.put("no_apply","true"); // FIXME -- this only makes sense for the last few args
+	    arg.put("no_apply", "true"); // FIXME -- this only makes sense for the last few args
 	else if (s[i].size() > 2 and not s[i][2].empty())
 	    arg.push_back({"default_value",parse(s[i][2])});
 

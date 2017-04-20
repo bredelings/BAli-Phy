@@ -119,12 +119,6 @@ jukes_cantor a = reversible_markov (equ a) (plus_f_equal_frequencies a);
 
 k80 kappa nuca = reversible_markov (hky kappa nuca) (plus_f_equal_frequencies nuca);
 
-gtr_model s a = Prefix "GTR" 
-  (do {
-     s' <- Prefix "S" (s a);
-     return $ gtr s' a;
-});
-
 m0_model s omega codona = Prefix "M0"
   (do {
      omega' <- Prefix "omega" omega;
@@ -529,11 +523,6 @@ plus_f' a pi = plus_gwf' a pi 1.0;
 
 plus_f a pi = plus_gwf a pi 1.0;
 
-plus_f_model pi a = Prefix "F" (do {
-  pi' <- Prefix "pi" (pi a);
-  return (plus_f a pi');
-});
-
 -- pi is a vector double here
 plus_gwf_matrix a pi f = builtin_plus_gwf a f pi;
 
@@ -541,13 +530,6 @@ plus_gwf_matrix a pi f = builtin_plus_gwf a f pi;
 plus_gwf' a pi f = ReversibleFrequency a (simple_smap a) pi (plus_gwf_matrix a pi f);
 
 plus_gwf a pi f = let {pi' = listToVectorDouble pi} in plus_gwf' a pi' f;
-
-plus_gwf_model pi f a = Prefix "gwF" (do {
-  pi' <- Prefix "pi" (pi a);
-  f' <- Prefix "f" f;
-  Log "f" f';
-  return (plus_gwf a pi' f');
-});
 
 f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = listToVectorDouble pi1;
                                       pi2' = listToVectorDouble pi2;
@@ -612,97 +594,26 @@ mg94w9_model nuc_pi1 nuc_pi2 nuc_pi3 triplet_a = Prefix "MG94w9" $
        return $ mg94w9 nuc_pi1' nuc_pi2' nuc_pi3' triplet_a;
 };
 
-gamma_model base alpha n alphabet = Prefix "Gamma"
-  (do {
-     base' <- base alphabet;
+gamma_rates'' alpha = gamma alpha (1.0/alpha);
 
-     alpha' <- Prefix "alpha" alpha;
-     Log "alpha" alpha';
+gamma_rates' alpha n = uniformDiscretize (quantile (gamma_rates'' alpha)) n;
 
-     n' <- Prefix "n" n;
-     Log "n" n';
+gamma_rates base alpha n = multiRate base (gamma_rates' alpha n);
 
-     let {beta = 1.0/alpha';
-          dist = uniformDiscretize (quantile (gamma alpha' beta)) n'};
+plus_inv pInv rates = extendDiscreteDistribution rates pInv 0.0;
 
-     return $ multiRate base' dist
-});
+gamma_inv_rates base alpha pInv n = multiRate base $ plus_inv pInv (gamma_rates' alpha n);
 
-gamma_inv_model base alpha pInv n alphabet = Prefix "GammaInv"
-  (do {
-     base' <- base alphabet;
+log_normal_rates'' sigmaOverMu = logNormal lmu lsigma where {x = log(1.0+sigmaOverMu^2);
+                                                             lmu = -0.5*x;
+                                                             lsigma = sqrt x};
 
-     alpha' <- Prefix "alpha" alpha;
-     Log "alpha" alpha';
+log_normal_rates' sigmaOverMu n = uniformDiscretize (quantile (log_normal_rates'' sigmaOverMu)) n;
 
-     n' <- Prefix "n" n;
-     Log "n" n;
 
-     pInv' <- Prefix "pInv" pInv;
-     Log "pInv" pInv';
-         
-     let {beta = 1.0/alpha';
-          dist = uniformDiscretize (quantile (gamma alpha' beta)) n';
-          dist2 = extendDiscreteDistribution dist pInv' 0.0};
+log_normal_rates base sigmaOverMu n = multiRate base (log_normal_rates' sigmaOverMu n);
 
-     return $ multiRate base' dist2
-});
-
-plus_inv_model dist = do 
-{
-  pInv <- beta 1.0 2.0;
-  Log "pInv" pInv;
-  return $ extendDiscreteDistribution dist pInv 0.0
-};
-
-inv_model base = Prefix "INV" $ do
-{
-     let {dist = DiscreteDistribution [(1.0,1.0)]};
-
-     dist2 <- plus_inv_model dist;
-
-     return $ multiRate base dist2
-};
-
-log_normal_model base sigmaOverMu n alphabet = Prefix "LogNormal"
-  (do {
-     base' <- base alphabet;
-
-     sigmaOverMu' <- Prefix "sigmaOverMu" sigmaOverMu;
-     Log "sigmaOverMu" sigmaOverMu';
-
-     n' <- Prefix "n" n;
-     Log "n" n';
-
-     let {x = log(1.0+sigmaOverMu'^2);
-          lmu = -0.5*x;
-          lsigma = sqrt x;
-          dist = uniformDiscretize (quantile (logNormal lmu lsigma)) n'};
-
-         return $ multiRate base' dist
-});
-
-log_normal_inv_model base sigmaOverMu pInv n alphabet = Prefix "LogNormalInv"
-  (do {
-     base' <- base alphabet;
-
-     sigmaOverMu' <- Prefix "sigmaOverMu" sigmaOverMu;
-     Log "sigmaOverMu" sigmaOverMu';
-
-     n' <- Prefix "n" n;
-     Log "n" n';
-
-     pInv' <- Prefix "pInv" pInv;
-     Log "pInv" pInv';
-
-     let {x = log(1.0+sigmaOverMu'^2);
-          lmu = -0.5*x;
-          lsigma = sqrt x;
-          dist = uniformDiscretize (quantile (logNormal lmu lsigma)) n';
-          dist2 = extendDiscreteDistribution dist pInv' 0.0};
-
-         return $ multiRate base' dist2
-});
+log_normal_inv_rates base sigmaOverMu pInv n = multiRate base $ plus_inv pInv (log_normal_rates' sigmaOverMu n);
 
 dp_model base rates fraction a = Prefix "DP" $
 do {
@@ -731,19 +642,6 @@ branch_transition_p t smodel branch_cat_list ds b = vector_Matrix_From_List $ br
 
 transition_p_index t smodel branch_cat_list ds = mkArray (numBranches t) (branch_transition_p t smodel branch_cat_list ds);
 
-distance_model scale branch =
-(do {
-   m <- new_modifiable;
-   add_parameter ("*Scale"++show scale++"."++show (branch+1)) m;
-   return m
-   });
-
-distances_model_for_scale numBranches scale = mapM (distance_model scale) [1..numBranches];
-
-distances_model numBranches numScales = mapM (distances_model_for_scale numBranches) [1..numScales];
-
-a_branch_mean_model n = gamma 0.5 2.0;
-
 a_branch_length_model dist i =
 (do {
   t <- dist;
@@ -758,33 +656,13 @@ iid_branch_length_model_exp t = iid_branch_length_model t (exponential (1.0/(int
 
 iid_branch_length_model_gamma t = iid_branch_length_model t (gamma 0.5 (2.0/(intToDouble (numBranches t))));
 
-reversible_markov_model s r a = do {s' <- s a;
-                                    r' <- r a;
-                                    return (reversible_markov s' r');};
-
 unit_mixture m = MixtureModel (DiscreteDistribution [(1.0,m)]);
 
-unit_mixture_model m a = do {m' <- m a;
-                             return (unit_mixture m')};
-
 mmm m = MixtureModels [m];
-
-mmm_model m a = do {m' <- m a;
-                    return (mmm m')};
-
-wag_model a = return (wag a);
-
-pam_model a = return (pam a);
-
-jtt_model a = return (jtt a);
-
-lg_model a = return (lg a);
 
 empirical a filename = builtin_empirical a (listToString filename);
 
 empirical_model filename a = do { filename' <- filename ; return $ empirical a filename'};
-
-pair_model x y = do {x' <- x; y' <- y; return (x',y')};
 
 cached_conditional_likelihoods t seqs as alpha ps f = let {lc    = mkArray (2*numBranches t) lcf;
                                                            lcf b = let {bb = b `mod` (numBranches t)} in
