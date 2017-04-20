@@ -523,11 +523,6 @@ plus_f' a pi = plus_gwf' a pi 1.0;
 
 plus_f a pi = plus_gwf a pi 1.0;
 
-plus_f_model pi a = Prefix "F" (do {
-  pi' <- Prefix "pi" (pi a);
-  return (plus_f a pi');
-});
-
 -- pi is a vector double here
 plus_gwf_matrix a pi f = builtin_plus_gwf a f pi;
 
