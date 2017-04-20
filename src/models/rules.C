@@ -162,17 +162,15 @@ ptree convert_rule(const vector<vector<string>>& s)
     rule.put("name",s[0][0]);
 
     rule.push_back({"result_type",parse_type(s[0][1])});
-    if (s[0].size() > 2 and contains_char(s[0][2],'P'))
-	rule.put("pass_arguments","true");
-    if (s[0].size() > 2 and contains_char(s[0][2],'L'))
-	rule.put("list_arguments","true");
-    if (s[0].size() > 2 and contains_char(s[0][2],'G'))
-	rule.put("generate_function","true");
-    if (s[0].size() > 2 and contains_char(s[0][2],'N'))
-	rule.put("no_log","true");
+    string attributes = (s[0].size() > 2)?s[0][2]:"";
+
+    if (contains_char(attributes, 'P')) rule.put("pass_arguments","true");
+    if (contains_char(attributes, 'L')) rule.put("list_arguments","true");
+    if (contains_char(attributes, 'G')) rule.put("generate_function","true");
+    if (contains_char(attributes, 'N')) rule.put("no_log","true");
 
     if (s[0].size() >= 4)
-	rule.push_back({"Constraints",parse_constraints(s[0][3])});
+	rule.push_back({"Constraints", parse_constraints(s[0][3])});
 
     if (s[1].size())
     {
