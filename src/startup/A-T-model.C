@@ -178,6 +178,8 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */
 	out_screen<<"#"<<i+1<<": scale "<<show_model(ScaleModels[i].description)<<" (Scale"<<scale_index+1<<")\n";
 	out_screen<<endl;
 
+	if (log_verbose)
+	    out_screen<<show(SModels[i].description);
     }
 }
 
