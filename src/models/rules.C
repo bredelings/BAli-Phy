@@ -82,7 +82,13 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"submodel","RA[a]","","A"},
      {"A","a","LAMBDA"}},
 
-    {{"log-normal","MM[a]"}, {"SModel.log_normal_model","submodel","sigmaOverMu","n"}, {"n","Int","4"}, {"sigmaOverMu","Double","~logLaplace[-3,1]"}, {"submodel","RA[a]"}},
+    {{"log-normal", "MM[a]", "G"},
+     {"SModel.log_normal_rates", "submodel", "sigmaOverMu", "n"},
+     {"n","Int","4"},
+     {"sigmaOverMu","Double","~logLaplace[-3,1]"},
+     {"submodel","RA[a]","", "A"},
+     {"A","a","LAMBDA"}},
+    
     {{"log-normal_inv","MM[a]"}, {"SModel.log_normal_inv_model","submodel","sigmaOverMu","pInv", "n"}, {"n","Int","4"}, {"sigmaOverMu","Double","~logLaplace[-3,1]"}, {"pInv","Double","~Uniform[0,1]"}, {"submodel","RA[a]"}},
     {{"M1a","MM[Codon[a,b]]"}, {"SModel.m1a_model","nuc_model","freq_model","omega1","p1"},
      {"nuc_model","EM[a]","HKY"}, {"freq_model","FM[Codon[a,b]]","F61"}, {"omega1","Double","~Uniform[0,1]"}, {"p1","Double","~Uniform[0,1]"} },

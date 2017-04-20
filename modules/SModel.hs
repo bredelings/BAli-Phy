@@ -594,7 +594,9 @@ mg94w9_model nuc_pi1 nuc_pi2 nuc_pi3 triplet_a = Prefix "MG94w9" $
        return $ mg94w9 nuc_pi1' nuc_pi2' nuc_pi3' triplet_a;
 };
 
-gamma_rates' alpha n = uniformDiscretize (quantile (gamma alpha beta)) n where {beta=1.0/alpha};
+gamma_rates'' alpha = gamma alpha (1.0/alpha);
+
+gamma_rates' alpha n = uniformDiscretize (quantile (gamma_rates'' alpha)) n;
 
 gamma_rates base alpha n = multiRate base (gamma_rates' alpha n);
 
@@ -602,23 +604,14 @@ plus_inv pInv rates = extendDiscreteDistribution rates pInv 0.0;
 
 gamma_inv_rates base alpha pInv n = multiRate base $ plus_inv pInv (gamma_rates' alpha n);
 
-log_normal_model base sigmaOverMu n alphabet = Prefix "LogNormal"
-  (do {
-     base' <- base alphabet;
+log_normal_rates'' sigmaOverMu = logNormal lmu lsigma where {x = log(1.0+sigmaOverMu^2);
+                                                             lmu = -0.5*x;
+                                                             lsigma = sqrt x};
 
-     sigmaOverMu' <- Prefix "sigmaOverMu" sigmaOverMu;
-     Log "sigmaOverMu" sigmaOverMu';
+log_normal_rates' sigmaOverMu n = uniformDiscretize (quantile (log_normal_rates'' sigmaOverMu)) n;
 
-     n' <- Prefix "n" n;
-     Log "n" n';
 
-     let {x = log(1.0+sigmaOverMu'^2);
-          lmu = -0.5*x;
-          lsigma = sqrt x;
-          dist = uniformDiscretize (quantile (logNormal lmu lsigma)) n'};
-
-         return $ multiRate base' dist
-});
+log_normal_rates base sigmaOverMu n = multiRate base (log_normal_rates' sigmaOverMu n);
 
 log_normal_inv_model base sigmaOverMu pInv n alphabet = Prefix "LogNormalInv"
   (do {
