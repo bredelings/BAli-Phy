@@ -772,14 +772,6 @@ mmm m = MixtureModels [m];
 mmm_model m a = do {m' <- m a;
                     return (mmm m')};
 
-wag_model a = return (wag a);
-
-pam_model a = return (pam a);
-
-jtt_model a = return (jtt a);
-
-lg_model a = return (lg a);
-
 empirical a filename = builtin_empirical a (listToString filename);
 
 empirical_model filename a = do { filename' <- filename ; return $ empirical a filename'};
