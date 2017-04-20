@@ -35,7 +35,7 @@ const vector< vector<vector<string>> > all_default_arguments =
 
 //  We need a way to construct lists, not from a distribution.
     {{"List", "List[a]", "L"},{"Prelude.sequence"},{"*", "a"}},
-    {{"Pair", "Pair[a,b]"},{"SModel.pair_model", "first", "second"},{"first", "a"}, {"second", "b"}},
+    {{"Pair", "Pair[a,b]"},{"(,)", "first", "second"},{"first", "a"}, {"second", "b"}},
 
     {{"EQU", "EM[a]", "G"}, {"SModel.equ", "A"}, {"A", "a", "LAMBDA"}},
     {{"JC", "RA[a]", "G"}, {"SModel.jukes_cantor", "A"}, {"A", "a", "LAMBDA"}},
