@@ -187,6 +187,7 @@ void reg_heap::reroot_at(int t)
 
 void reg_heap::unshare_regs(int t)
 {
+    // parent_token(t) should be the root.
     assert(is_root_token(parent_token(t)));
     assert(tokens[root_token].version >= tokens[t].version);
 
@@ -209,12 +210,14 @@ void reg_heap::unshare_regs(int t)
     int n_delta_result0 = delta_result.size();
     int n_delta_step0 = delta_step.size();
   
+    // All the regs with delta_result set have results invalidated in t
     for(const auto& p: delta_result)
     {
 	int r = p.first;
 	prog_temp[r] |= 1;
     }
 
+    // All the regs with delta_step set have steps (and results) invalidated in t
     for(const auto& p: delta_step)
     {
 	int r = p.first;
@@ -222,6 +225,7 @@ void reg_heap::unshare_regs(int t)
 	assert(prog_temp[r] == 3);
     }
 
+    // Scan regs with different result in t that are used/called by root steps/results
     for(int i=0;i<delta_result.size();i++)
     {
 	int r = delta_result[i].first;
@@ -232,6 +236,7 @@ void reg_heap::unshare_regs(int t)
 
 	const auto& Result = result_for_reg(r);
 
+	// Look at results that call the root's result (that is overridden in t)
 	for(int res2: Result.called_by)
 	{
 	    const auto& Result2 = results[res2];
@@ -240,10 +245,15 @@ void reg_heap::unshare_regs(int t)
 	    // This result is already unshared
 	    if (prog_temp[r2] != 0) continue;
 
-	    prog_temp[r2] = 1;
-	    vm_result.add_value(r2,-1);
+	    // The root program's result at r2 is res2, which calls the root program's result at r
+	    if (prog_results[r2] == res2)
+	    {
+		prog_temp[r2] = 1;
+		vm_result.add_value(r2,-1);
+	    }
 	}
 
+	// Look at step that use the root's result (that is overridden in t)
 	for(int s2: Result.used_by)
 	{
 	    auto& S2 = steps[s2];
@@ -252,11 +262,15 @@ void reg_heap::unshare_regs(int t)
 	    // This step is already unshared
 	    if (prog_temp[r2] == 3) continue;
 
-	    if (prog_temp[r2] == 0)
-		vm_result.add_value(r2,-1);
+	    // The root program's step at r2 is s2, which uses the root program's result at r
+	    if (prog_steps[r2] == s2)
+	    {
+		if (prog_temp[r2] == 0)
+		    vm_result.add_value(r2,-1);
 
-	    prog_temp[r2] = 3;
-	    vm_step.add_value(r2,-1);
+		prog_temp[r2] = 3;
+		vm_step.add_value(r2,-1);
+	    }
 	}
     }
 
