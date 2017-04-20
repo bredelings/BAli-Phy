@@ -642,19 +642,6 @@ branch_transition_p t smodel branch_cat_list ds b = vector_Matrix_From_List $ br
 
 transition_p_index t smodel branch_cat_list ds = mkArray (numBranches t) (branch_transition_p t smodel branch_cat_list ds);
 
-distance_model scale branch =
-(do {
-   m <- new_modifiable;
-   add_parameter ("*Scale"++show scale++"."++show (branch+1)) m;
-   return m
-   });
-
-distances_model_for_scale numBranches scale = mapM (distance_model scale) [1..numBranches];
-
-distances_model numBranches numScales = mapM (distances_model_for_scale numBranches) [1..numScales];
-
-a_branch_mean_model n = gamma 0.5 2.0;
-
 a_branch_length_model dist i =
 (do {
   t <- dist;
@@ -669,14 +656,7 @@ iid_branch_length_model_exp t = iid_branch_length_model t (exponential (1.0/(int
 
 iid_branch_length_model_gamma t = iid_branch_length_model t (gamma 0.5 (2.0/(intToDouble (numBranches t))));
 
-reversible_markov_model s r a = do {s' <- s a;
-                                    r' <- r a;
-                                    return (reversible_markov s' r');};
-
 unit_mixture m = MixtureModel (DiscreteDistribution [(1.0,m)]);
-
-unit_mixture_model m a = do {m' <- m a;
-                             return (unit_mixture m')};
 
 mmm m = MixtureModels [m];
 

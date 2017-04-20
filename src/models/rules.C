@@ -148,7 +148,13 @@ const vector< vector<vector<string>> > all_default_arguments =
 // We can't write Codons[a,b] yet because we don't any mechanism for dealing with inheritance
     {{"Codons", "Alphabet"}, {"codons", "nuc", "aa"}, {"nuc", "Alphabet"}, {"aa", "Alphabet", "AA"}},
     {{"RCTMC", "RA[a]", "GN"}, {"SModel.reversible_markov", "Q", "R"}, {"Q", "EM[a]", "", "A"}, {"R", "FM[a]", "", "A"},{"A", "a", "LAMBDA"}},
-    {{"UnitMixture", "MM[a]", "N"}, {"SModel.unit_mixture_model", "submodel"}, {"submodel", "RA[a]"}},
+
+    {{"UnitMixture", "MM[a]", "NG"},
+     {"SModel.unit_mixture", "submodel"},
+     {"submodel", "RA[a]", "", "A"},
+     {"A", "a", "LAMBDA"},
+    },
+
     {{"MMM", "MMM[a]", "N"}, {"SModel.mmm_model", "submodel"}, {"submodel", "MM[a]"}},
     {{"RS05", "IM"}, {"IModel.rs05_model", "logDelta", "meanIndelLengthMinus1", "tau"},
      {"logDelta", "Double", "~Laplace[-4,0.707]"},
