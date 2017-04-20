@@ -5,6 +5,8 @@
 #include "rules.H"
 #include "myexception.H"
 #include "util.H"
+#include <iostream>
+#include "setup.H"
 
 using std::vector;
 using std::set;
@@ -123,6 +125,8 @@ Rule freshen_type_vars(Rule rule, const set<string>& bound_vars)
     return substitute_in_rule_types(renaming, rule);
 }
 
+
+// OK, so 'model' is going to have arg=value pairs set, but not necessarily in the right order.
 equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars)
 {
     auto name = model.get_value<string>();
@@ -177,7 +181,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
     // 2.4 Record any new variables that we are using as bound variables
     add(bound_vars, find_rule_type_vars(rule));
     
-	// 2.5. Check type of arguments if pass_arguments
+    // 2.5. Check type of arguments if pass_arguments
     if (rule.get("pass_arguments",false) or rule.get("list_arguments",false))
     {
 	for(auto& child: model)
@@ -191,18 +195,15 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	return E;
     }
 
-    // 3. Handle supplied arguments first.
+    // 3. Complain if undescribed arguments are supplied
     for(auto& child: model)
-    {
 	if (get_arg(rule, child.first).get("no_apply",false))
 	    throw myexception()<<"Rule for function '"<<rule.get<string>("name")<<"' doesn't allow specifying a value for '"<<child.first<<"'.";
-	type_t arg_required_type = get_type_for_arg(rule, child.first);
-	E = E && pass2(arg_required_type, child.second, bound_vars);
-	substitute_in_rule_types(E, rule);
-	add(bound_vars, E.referenced_vars());
-    }
 
-    // 4. Handle default arguments 
+    // Create the new model tree with args in correct order
+    ptree model2(name);
+
+    // 4. Handle arguments in rule order
     for(const auto& arg: rule.get_child("args"))
     {
 	const auto& argument = arg.second;
@@ -210,10 +211,19 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	string arg_name = argument.get<string>("arg_name");
 	bool arg_is_required = (arg_name != "*") and not argument.get("no_apply",false);
 
-	if (model.count(arg_name)) continue;
+	// If this is a supplied argument
+	if (model.count(arg_name))
+	{
+	    type_t arg_required_type = get_type_for_arg(rule, arg_name);
+	    ptree arg_value = model.get_child(arg_name);
+	    E = E && pass2(arg_required_type, arg_value, bound_vars);
+	    model2.push_back({arg_name, arg_value});
+	    substitute_in_rule_types(E, rule);
+	    add(bound_vars, E.referenced_vars());
+	}
 
 	// If there's no default arg 
-	if (not argument.count("default_value"))
+	else if (not argument.count("default_value"))
 	{
 	    if (arg_is_required)
 		throw myexception()<<"Command '"<<name<<"' missing required argument '"<<arg_name<<"'";
@@ -226,10 +236,11 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	    substitute_in_rule_types(E, rule);
 	    add(bound_vars, E.referenced_vars());
 
-	    model.push_back({arg_name, default_arg});
+	    model2.push_back({arg_name, default_arg});
 	}
     }
 
+    model = model2;
     E.eliminate_except(find_variables_in_type(required_type));
     return E;
 }
