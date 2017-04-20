@@ -274,6 +274,7 @@ void reg_heap::unshare_regs(int t)
 	}
     }
 
+    // Scan regs that were just unshared to see if they should be re-evaluated.
     for(int i=n_delta_result0;i<delta_result.size();i++)
     {
 	int r = delta_result[i].first;
@@ -281,6 +282,7 @@ void reg_heap::unshare_regs(int t)
 	    regs_to_re_evaluate.push_back(r);
     }
   
+    // Erase the marks that we made on prog_temp.
     for(const auto& p: delta_result)
     {
 	int r = p.first;
