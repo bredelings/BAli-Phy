@@ -66,8 +66,16 @@ const vector< vector<vector<string>> > all_default_arguments =
     // So, a let-statement.
     {{"DP","MM[a]"}, {"SModel.dp_model","submodel","rates","frequencies"}, {"rates","List[Double]","~Dirichlet[4,2]"}, {"frequencies","List[Double]","~Dirichlet[4,3]"}, {"submodel","RA[a]"}},
     {{"MultiRate","MM[a]"}, {"SModel.multiRateModel","submodel","dist","n_bins"}, {"dist","Distribution[Double]"}, {"n_bins","Int","4"}, {"submodel","RA[a]"}},
-    {{"GammaRates","MM[a]"}, {"SModel.gamma_model","submodel","alpha","n"}, {"n","Int","4"}, {"alpha","Double","~logLaplace[-6,2]"}, {"submodel","RA[a]"}},
+
+    {{"GammaRates","MM[a]","G"},
+     {"SModel.gamma_rates","submodel","alpha","n","A"},
+     {"n","Int","4"},
+     {"alpha","Double","~logLaplace[-6,2]"},
+     {"submodel","RA[a]","","A"},
+     {"A","a","LAMBDA"}},
+
     {{"GammaInvRates","MM[a]"}, {"SModel.gamma_inv_model","submodel","alpha","pInv","n"}, {"n","Int","4"}, {"alpha","Double","~logLaplace[-6,2]"}, {"pInv","Double","~Uniform[0,1]"}, {"submodel","RA[a]"}},
+
     {{"log-normal","MM[a]"}, {"SModel.log_normal_model","submodel","sigmaOverMu","n"}, {"n","Int","4"}, {"sigmaOverMu","Double","~logLaplace[-3,1]"}, {"submodel","RA[a]"}},
     {{"log-normal_inv","MM[a]"}, {"SModel.log_normal_inv_model","submodel","sigmaOverMu","pInv", "n"}, {"n","Int","4"}, {"sigmaOverMu","Double","~logLaplace[-3,1]"}, {"pInv","Double","~Uniform[0,1]"}, {"submodel","RA[a]"}},
     {{"M1a","MM[Codon[a,b]]"}, {"SModel.m1a_model","nuc_model","freq_model","omega1","p1"},

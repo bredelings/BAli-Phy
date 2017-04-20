@@ -594,21 +594,7 @@ mg94w9_model nuc_pi1 nuc_pi2 nuc_pi3 triplet_a = Prefix "MG94w9" $
        return $ mg94w9 nuc_pi1' nuc_pi2' nuc_pi3' triplet_a;
 };
 
-gamma_model base alpha n alphabet = Prefix "Gamma"
-  (do {
-     base' <- base alphabet;
-
-     alpha' <- Prefix "alpha" alpha;
-     Log "alpha" alpha';
-
-     n' <- Prefix "n" n;
-     Log "n" n';
-
-     let {beta = 1.0/alpha';
-          dist = uniformDiscretize (quantile (gamma alpha' beta)) n'};
-
-     return $ multiRate base' dist
-});
+gamma_rates base alpha n alphabet = multiRate base dist where {beta = 1.0/alpha; dist = uniformDiscretize (quantile (gamma alpha beta)) n};
 
 gamma_inv_model base alpha pInv n alphabet = Prefix "GammaInv"
   (do {
