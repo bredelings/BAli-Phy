@@ -531,13 +531,6 @@ plus_gwf' a pi f = ReversibleFrequency a (simple_smap a) pi (plus_gwf_matrix a p
 
 plus_gwf a pi f = let {pi' = listToVectorDouble pi} in plus_gwf' a pi' f;
 
-plus_gwf_model pi f a = Prefix "gwF" (do {
-  pi' <- Prefix "pi" (pi a);
-  f' <- Prefix "f" f;
-  Log "f" f';
-  return (plus_gwf a pi' f');
-});
-
 f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = listToVectorDouble pi1;
                                       pi2' = listToVectorDouble pi2;
                                       pi3' = listToVectorDouble pi3} in
