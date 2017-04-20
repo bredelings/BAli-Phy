@@ -660,9 +660,6 @@ unit_mixture m = MixtureModel (DiscreteDistribution [(1.0,m)]);
 
 mmm m = MixtureModels [m];
 
-mmm_model m a = do {m' <- m a;
-                    return (mmm m')};
-
 empirical a filename = builtin_empirical a (listToString filename);
 
 empirical_model filename a = do { filename' <- filename ; return $ empirical a filename'};

@@ -155,7 +155,12 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"A", "a", "LAMBDA"},
     },
 
-    {{"MMM", "MMM[a]", "N"}, {"SModel.mmm_model", "submodel"}, {"submodel", "MM[a]"}},
+    {{"MMM", "MMM[a]", "NG"},
+     {"SModel.mmm", "submodel"},
+     {"submodel", "MM[a]", "", "A"},
+     {"A", "a", "LAMBDA"}
+    },
+
     {{"RS05", "IM"}, {"IModel.rs05_model", "logDelta", "meanIndelLengthMinus1", "tau"},
      {"logDelta", "Double", "~Laplace[-4,0.707]"},
      {"meanIndelLengthMinus1", "Double", "~Exponential[10]"},
