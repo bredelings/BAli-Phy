@@ -1218,7 +1218,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     add_modifiable_parameter_with_value("Heat.beta", 1.0);
 
     // Add parameter for each scale, and add a trigger on it.
-    const string scale_prefix = "Main.mu";
+    const string scale_prefix = "Scale";
     for(int i=0; i<n_branch_scales();i++)
     {
 	string name = scale_prefix + std::to_string(i+1);
