@@ -30,7 +30,6 @@ double scale_gaussian(double& x,double sigma);
 
 class Proposal: public Object {
 public:
-  virtual std::set<int> get_affected_parameters(const owned_ptr<Model>&) const = 0;
   Proposal* clone() const =0;
   virtual double operator()(Model& P) const=0;
 };
@@ -40,14 +39,12 @@ typedef double (*generic_proposal)(Model& P);
 class Generic_Proposal: public Proposal
 {
   generic_proposal proposal;
-  std::set<int> affected_parameters;
   
 public:
   Generic_Proposal* clone() const {return new Generic_Proposal(*this);}
-  std::set<int> get_affected_parameters(const owned_ptr<Model>&) const {return affected_parameters;}
   double operator()(Model& P) const {return proposal(P);}
   Generic_Proposal(generic_proposal gp):proposal(gp) {}
-  Generic_Proposal(generic_proposal gp,const std::set<int>& a):proposal(gp),affected_parameters(a) {}
+  Generic_Proposal(generic_proposal gp,const std::set<int>& a):proposal(gp) {}
 };
 
 // This type of proposal can't check if arguments are fixed, and therefore must assume that they are
@@ -148,7 +145,6 @@ class Proposal2: public Proposal
 
 public:
   const std::vector<int>& get_indices() const {return indices;}
-  std::set<int> get_affected_parameters(const owned_ptr<Model>&) const;
   Proposal2* clone() const {return new Proposal2(*this);}
   double operator()(Model& P) const;
   Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<std::string>& v,
@@ -166,7 +162,6 @@ class Proposal2M: public Proposal
 
 public:
   const std::vector<int>& get_indices() const {return indices;}
-  std::set<int> get_affected_parameters(const owned_ptr<Model>&) const;
   Proposal2M* clone() const {return new Proposal2M(*this);}
   double operator()(Model& P) const;
   Proposal2M(const Proposal_Fn& p,int, const std::vector<double>& v);

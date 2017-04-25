@@ -505,14 +505,6 @@ double Proposal2::operator()(Model& P) const
   return ratio;
 }
 
-std::set<int> Proposal2::get_affected_parameters(const owned_ptr<Model>&) const
-{
-  std::set<int> affected_parameters;
-  for(int i: indices)
-    affected_parameters.insert(i);
-  return affected_parameters;
-}
-
 Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<string>& v,
 	  const Model& P)
   :proposal(p),
@@ -555,11 +547,6 @@ double Proposal2M::operator()(Model& P) const
     P.set_modifiable_value(indices[i], x[i]);
 
   return ratio;
-}
-
-std::set<int> Proposal2M::get_affected_parameters(const owned_ptr<Model>&) const
-{
-  return std::set<int>{};
 }
 
 Proposal2M::Proposal2M(const Proposal_Fn& p,int  s, const vector<double>& v)
