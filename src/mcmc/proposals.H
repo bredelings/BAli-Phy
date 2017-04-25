@@ -34,17 +34,16 @@ public:
   virtual double operator()(Model& P) const=0;
 };
 
-typedef double (*generic_proposal)(Model& P);
+typedef std::function<double(Model& P)> generic_proposal_t;
 
 class Generic_Proposal: public Proposal
 {
-  generic_proposal proposal;
+  generic_proposal_t proposal;
   
 public:
   Generic_Proposal* clone() const {return new Generic_Proposal(*this);}
   double operator()(Model& P) const {return proposal(P);}
-  Generic_Proposal(generic_proposal gp):proposal(gp) {}
-  Generic_Proposal(generic_proposal gp,const std::set<int>& a):proposal(gp) {}
+  Generic_Proposal(generic_proposal_t gp):proposal(gp) {}
 };
 
 // This type of proposal can't check if arguments are fixed, and therefore must assume that they are
