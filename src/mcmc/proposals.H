@@ -190,4 +190,6 @@ double move_scale_branch(Model& P);
 
 double move_subst_type_branch(Model& P);
 
+double realign_and_propose_parameter(Model& P, int param, const Proposal_Fn& proposal, const std::vector<double>& v);
+
 #endif

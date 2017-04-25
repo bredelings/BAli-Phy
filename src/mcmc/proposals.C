@@ -630,3 +630,19 @@ double move_subst_type_branch(Model& P)
 
     return 1.0;
 }
+
+// Can't we just send in any sigma parameters or whatever WITH the proposal?
+
+double realign_and_propose_parameter(Model& P2, int param, const Proposal_Fn& proposal, const vector<double>& v)
+{
+    Model& P1 = P2;
+
+    // read, alter, and write parameter values
+    vector< expression_ref > x = P1.get_parameter_values({param});
+
+    double ratio = proposal(x, v);
+
+    P2.set_parameter_values({param},x);
+
+    return ratio;
+}

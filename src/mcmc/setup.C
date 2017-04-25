@@ -324,7 +324,24 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
     add_MH_move(M, Between(-40,0,shift_cauchy),  "*.logLambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
     add_MH_move(M, more_than(0.0, shift_cauchy), "*.meanIndelLengthMinus1",     "epsilon_shift_sigma",   0.1, MH_moves, 10);
 
-    add_MH_move(M, Between(-20,20,shift_cauchy), "logLambdaScale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
+
+    // Resample logLambda and alignment
+    {
+	int index = M.find_parameter("I1.RS07.logLambda");
+
+	auto proposal = [index](Model& P){ return realign_and_propose_parameter(P, index, shift_cauchy, {0.25}) ;};
+
+	MH_moves.add(1.0, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_logLambda"));
+    }
+
+    // Resample meanIndelLengthMinus1 and alignment
+    {
+	int index = M.find_parameter("I1.RS07.meanIndelLengthMinus1");
+
+	auto proposal = [index](Model& P){ return realign_and_propose_parameter(P, index, more_than(0.0, shift_cauchy), {0.1}) ;};
+
+	MH_moves.add(1.0, MCMC::MH_Move(Generic_Proposal(proposal),"realign_and_sample_meanIndelLengthMinus1"));
+    }
 
     return MH_moves;
 }
