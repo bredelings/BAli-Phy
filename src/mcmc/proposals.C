@@ -560,7 +560,7 @@ Proposal2M::Proposal2M(const Proposal_Fn& p,const vector<int>& s, const vector<d
   parameters(v)
 { }
 
-double move_scale_branch(Model& P)
+double move_scale_branch(Model& /*P */)
 {
 /*
   Parameters& PP = dynamic_cast<Parameters&>(P);
