@@ -55,6 +55,8 @@ private:
 
 public:
 
+    const reg_heap& get_memory() const {return *memory();}
+
     const std::vector<std::string>& get_args() const;
     void set_args(const std::vector<std::string>& args);
 

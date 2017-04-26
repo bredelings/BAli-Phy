@@ -266,7 +266,7 @@ MCMC::MoveAll get_scale_MH_moves(owned_ptr<Model>& P)
     if (P.as<Parameters>())
     {
 	for(int i=0;i<P.as<Parameters>()->n_branch_scales();i++)
-	    add_MH_move(*P, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),
+	    add_MH_move(*P, log_scaled(Between(-20,20,shift_cauchy)),    "Scale"+convertToString(i+1),
 			"mu_scale_sigma",     0.6,  MH_moves);
     }
     return MH_moves;
@@ -287,7 +287,7 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
 
     if (Parameters* P = dynamic_cast<Parameters*>(&M))
 	for(int i=0;i<P->n_branch_scales();i++)
-	    add_MH_move(M, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
+	    add_MH_move(M, log_scaled(Between(-20,20,shift_cauchy)),    "Scale"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
 
 
     /*
@@ -333,7 +333,7 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
 {
     MCMC::MoveAll slice_moves("parameters:scale:MH");
     for(int i=0;i<P.n_branch_scales();i++)
-	add_slice_moves(P, "Main.mu"+convertToString(i+1), slice_moves);
+	add_slice_moves(P, "Scale"+convertToString(i+1), slice_moves);
     return slice_moves;
 }
 

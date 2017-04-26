@@ -549,3 +549,38 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     o<<"}"<<std::endl;
 }
 
+void write_token_graph(const reg_heap& C, std::ostream& o)
+{
+    o<<"digraph \"tokens\" {\n";
+    o<<"graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];\n";
+    o<<"node [fontname=Arial, style=filled, height=0, width=0, shape=box];\n";
+    o<<"edge [style=\"setlinewidth(2)\"];\n";
+    for(int t=0;t<C.get_n_tokens();t++)
+    {
+	if (not C.token_is_used(t)) continue;
+	for(int c: C.children_of_token(t))
+	    o<<"t"<<t<<" -> t"<<c<<"\n";
+	int n_steps = C.get_token(t).vm_step.delta().size();
+	int n_results = C.get_token(t).vm_result.delta().size();
+	o<<"t"<<t<<" [label=\"T"<<t<<" steps="<<n_steps<<" results = "<<n_results<<"\"]\n";
+    }
+    for(int c=0;c<C.get_n_contexts();c++)
+    {
+	int t = C.token_for_context(c);
+	if (t == -1) continue;
+	o<<"t"<<t<<" [color=\"green\"]\n";
+	o<<"c"<<c<<" -> t"<<t<<"\n";
+	o<<"c"<<c<<" [color=\"purple\"]\n";
+    }
+
+    o<<"}"<<std::endl;
+}
+
+void write_token_graph(const reg_heap& C)
+{
+    string filename = "tokens.dot";
+    std::ofstream file(filename);
+    write_token_graph(C, file);
+    file.close();
+}
+
