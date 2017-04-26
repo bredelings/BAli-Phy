@@ -42,10 +42,10 @@ Installed locations
 The instructions above put 
 If you installed in $HOME/local as recommended above, then files will be in:
 
-| Location                                        | Files                   |
-| ----------------------------------------------- | ----------------------- |
-| ~/Applications/bali-phy/bin                     | Binary executables.     |
-| ~/Applications/bali-phy/examples/sequences      | Example files.          |
-| ~/Applications/bali-phy/share/doc/bali-phy/     | Documentation.          |
+| Location                                                       | Files                   |
+| -------------------------------------------------------------- | ----------------------- |
+| ~/Applications/bali-phy/bin                                    | Binary executables.     |
+| ~/Applications/bali-phy/share/bali-phy/examples/sequences      | Example files.          |
+| ~/Applications/bali-phy/share/doc/bali-phy/                    | Documentation.          |
 
 
