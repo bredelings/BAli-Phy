@@ -24,24 +24,28 @@ cd BAli-Phy/
 cd ..
 mkdir bali-phy-build
 cd bali-phy-build
-../BAli-Phy/configure --prefix=$HOME/local/
+../BAli-Phy/configure --prefix=$HOME/Applications/bali-phy/
 make
 make install
 ```
 
-If you don't specify a prefix, the default is to install files under `/usr/local`.
-
 Extra options to `configure` can be revealed by supplying the `--help` flag.
+
+Adding bali-phy to your `$PATH`
+------------------------------
+
+In order to run the installed software, you should (add `bali-phy` to your `$PATH`)[http://bali-phy.org/README.xhtml#installation].
 
 Installed locations
 ------------------
+
+The instructions above put 
 If you installed in $HOME/local as recommended above, then files will be in:
 
-| Location                        | Files                   |
-| ------------------------------- | ----------------------- |
-| ~/local/bin                     | Binary executables.     |
-| ~/local/share/bali-phy/examples | Example files.          |
-| ~/local/share/bali-phy/Data     | Data directory.         |
-| ~/local/share/doc/bali-phy/     | Documentation.          |
+| Location                                        | Files                   |
+| ----------------------------------------------- | ----------------------- |
+| ~/Applications/bali-phy/bin                     | Binary executables.     |
+| ~/Applications/bali-phy/examples/sequences      | Example files.          |
+| ~/Applications/bali-phy/share/doc/bali-phy/     | Documentation.          |
 
 
