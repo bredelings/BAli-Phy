@@ -609,6 +609,7 @@ int main(int argc,char* argv[])
 	    do_pre_burnin(args, M, *files[0], out_both);
 
 	    out_screen<<"\nBeginning "<<max_iterations<<" iterations of MCMC computations."<<endl;
+	    out_screen<<"\nBAli-Phy does NOT decide when to stop -- you need to decide yourself!"<<endl;
 	    out_screen<<"   - Future screen output sent to '"<<dir_name<<"/C1.out'"<<endl;
 	    out_screen<<"   - Future debugging output sent to '"<<dir_name<<"/C1.err'"<<endl;
 	    if (M.as<Parameters>())
@@ -618,9 +619,8 @@ int main(int argc,char* argv[])
 	    }
 	    out_screen<<"   - Sampled numerical parameters logged to '"<<dir_name<<"/C1.p'"<<endl;
 	    out_screen<<endl;
-	    out_screen<<"You can examine 'C1.p' using BAli-Phy tool statreport (command-line)"<<endl;
-	    out_screen<<"  or the BEAST program Tracer (graphical)."<<endl;
-	    out_screen<<"See the manual for further information."<<endl;
+	    out_screen<<"You can examine 'C1.p' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n"<<endl;
+	    out_screen<<"See the manual at http://www.bali-phy.org/README.xhtml for further information."<<endl;
 
 	    //-------- Start the MCMC  -----------//
 	    do_sampling(args, M, max_iterations, *files[0], loggers);
