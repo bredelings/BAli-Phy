@@ -5,6 +5,8 @@ Documentation
 * [Manual](http://bali-phy.org/README.xhtml)
 * [Tutorial](http://bali-phy.org/Tutorial2.html)
 
+The Manual describes [how to install](http://bali-phy.org/README.xhtml#installation) bali-phy in detail.  Simplified instructions are below.
+
 Compiling
 ---------
 
@@ -17,9 +19,12 @@ Build
 
 ```bash
 git clone https://github.com/bredelings/BAli-Phy.git
-mkdir bali-phy-<version>-build
-cd bali-phy-<version>-build
-../bali-phy/configure --prefix=$HOME/local/
+cd BAli-Phy/
+./bootstrap.sh
+cd ..
+mkdir bali-phy-build
+cd bali-phy-build
+../BAli-Phy/configure --prefix=$HOME/local/
 make
 make install
 ```
@@ -32,11 +37,11 @@ Installed locations
 ------------------
 If you installed in $HOME/local as recommended above, then files will be in:
 
-|----Location---------------------|-----------Files---------|
+| Location                        | Files                   |
+| ------------------------------- | ----------------------- |
 | ~/local/bin                     | Binary executables.     |
 | ~/local/share/bali-phy/examples | Example files.          |
 | ~/local/share/bali-phy/Data     | Data directory.         |
 | ~/local/share/doc/bali-phy/     | Documentation.          |
-
 
 
