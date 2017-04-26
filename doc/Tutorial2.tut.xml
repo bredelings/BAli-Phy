@@ -54,7 +54,7 @@ Some options have a short form which is a single letter:
 % bali-phy -h | less
 </para>
 
-<section ><info><title>RNA</title></info>
+<section ><info><title>DNA and RNA</title></info>
 <para>
 Analyze a data set, but don't begin MCMC.  (This is useful to know if the analysis works, what model will be used,
 compute likelihoods, etc.)
