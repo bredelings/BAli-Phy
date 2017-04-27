@@ -220,6 +220,16 @@ bool should_log(const ptree& model, const string& arg_name)
 	return false;
 }
 
+expression_ref apply_args(expression_ref action, const ptree& applied_args)
+{
+    for(const auto& applied_arg: applied_args)
+    {
+	string applied_arg_name = applied_arg.second.get_value<string>();
+	action = (action,dummy("arg_"+ applied_arg_name));
+    }
+    return action;
+}
+
 expression_ref process_stack_functions(const ptree& model_rep)
 {
     string name = model_rep.get_value<string>();
@@ -274,16 +284,13 @@ expression_ref process_stack_functions(const ptree& model_rep)
 		F = (dummy("Prelude.>>"),log_action,F);
 	    }
 
-	    // Prefix "arg_name" (arg_+arg_name)
+	    // Apply arguments if necessary
 	    expression_ref action = dummy("xarg_"+arg_name);
 	    auto applied_args = argi.get_child_optional("applied_args");
 	    if (applied_args)
-		for(const auto& applied_arg: *applied_args)
-		{
-		    string applied_arg_name = applied_arg.second.get_value<string>();
-		    action = (action,dummy("arg_"+ applied_arg_name));
-		}
+		action = apply_args(action, *applied_args);
 
+	    // Prefix "arg_name" (arg_+arg_name)
 	    if (not no_log) action = (Prefix, arg_name, action);
 
 	    // F = 'action <<=
