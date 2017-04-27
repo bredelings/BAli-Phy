@@ -34,18 +34,31 @@ const vector< vector<vector<string>> > all_default_arguments =
 //    {{"Dirichlet", "List[Double]"}, {"dirichlet_model[ps]"}, {"ps", "List[Double]"}},
 
 //  We need a way to construct lists, not from a distribution.
-    {{"List", "List[a]", "L"},{"Prelude.sequence"},{"*", "a"}},
-    {{"Pair", "Pair[a,b]"},{"(,)[first,second]"},{"first", "a"}, {"second", "b"}},
+    {{"List", "List[a]", "L"},
+     {"Prelude.sequence"},
+     {"*", "a"}},
+
+    {{"Pair", "Pair[a,b]", "G"},{"(,)[first,second]"},{"first", "a"}, {"second", "b"}},
 
     {{"EQU", "EM[a]", "G"}, {"SModel.equ[A]"}, {"A", "a", "LAMBDA"}},
+
     {{"JC", "RA[a]", "G"}, {"SModel.jukes_cantor[A]"}, {"A", "a", "LAMBDA"}},
+
     {{"K80", "RA[a]", "G"}, {"SModel.k80[kappa,A]"}, {"kappa", "Double", "~logNormal[log[2],0.25]"}, {"A", "a", "LAMBDA"} },
+
     {{"F81"}, {}, {"alphabet", "Alphabet"}},
+
     {{"HKY", "EM[a]", "G", "Nucleotides[a]"}, {"SModel.hky[kappa,alphabet]"}, {"kappa", "Double", "~logNormal[log[2],0.25]"}, {"alphabet", "a", "LAMBDA"}},
+
     {{"TN", "EM[a]", "G"}, {"SModel.tn[kappaPur,kappaPyr,A]"}, {"kappaPur", "Double", "~logNormal[log[2],0.25]"}, {"kappaPyr", "Double", "~logNormal[log[2],0.25]"}, {"A", "a", "LAMBDA"}},
-//    {{"GTR", "EM[a]"}, {"SModel.gtr_model", "S"}, {"S", "E", "exchange_prior"}},
-    {{"GTR", "EM[a]", "G"}, {"SModel.gtr[S,A]"}, {"S", "E", "exchange_prior", "A"}, {"A", "a", "LAMBDA"}},
+
+    {{"GTR", "EM[a]", "G"},
+     {"SModel.gtr[S,A]"},
+     {"S", "E", "exchange_prior", "A"},
+     {"A", "a", "LAMBDA"}},
+
     {{"exchange_prior", "E"}, {"SModel.exchange_model"}},
+
     {{"E", "E", "P"}, {"SModel.constant_exchange_model"},{"*", "Double"}},
 
     {{"x3", "EM[a]","G"},
@@ -54,9 +67,13 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"A","a","LAMBDA"}},
 
     {{"PAM", "EM[AA]", "G"}, {"SModel.pam[A]"}, {"A", "a", "LAMBDA"}},
+
     {{"JTT", "EM[AA]", "G"}, {"SModel.jtt[A]"}, {"A", "a", "LAMBDA"}},
+
     {{"WAG", "EM[AA]", "G"}, {"SModel.wag[A]"}, {"A", "a", "LAMBDA"}},
+
     {{"LG", "EM[AA]", "G"}, {"SModel.lg[A]"}, {"A", "a", "LAMBDA"}},
+
     {{"Empirical", "EM[a]"}, {"SModel.empirical_model[filename]"}, {"filename", "String"}},
 
     {{"M0", "EM[Codon[a,b]]", "G", "Nucleotides[a],AminoAcids[b]"},
