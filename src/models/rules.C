@@ -10,28 +10,28 @@ using boost::property_tree::ptree;
 
 const vector< vector<vector<string>> > all_default_arguments = 
 {
-    {{"log", "Double", "GN"}, {"Prelude.log", "x"}, {"x", "Double"}},
-    {{"exp", "Double", "GN"}, {"Prelude.exp", "x"}, {"x", "Double"}},
-    {{"Sample", "a"}, {"Prelude.performAction", "x"}, {"x", "Distribution[a]"}},
+    {{"log", "Double", "GN"}, {"Prelude.log[x]"}, {"x", "Double"}},
+    {{"exp", "Double", "GN"}, {"Prelude.exp[x]"}, {"x", "Double"}},
+    {{"Sample", "a"}, {"Prelude.performAction[x]"}, {"x", "Distribution[a]"}},
 
-    {{"Uniform", "Distribution[Double]", "G"}, {"Distributions.uniform", "low", "high"}, {"low", "Double"}, {"high", "Double"}},
-    {{"UniformInt", "Distribution[Int]", "G"}, {"Distributions.uniform_int", "low", "high"}, {"low", "Int"}, {"high", "Int"}},
-    {{"Normal", "Distribution[Double]", "G"}, {"Distributions.normal", "mu", "sigma"}, {"mu", "Double"}, {"sigma", "Double"}},
-    {{"logNormal", "Distribution[Double]", "G"}, {"Distributions.logNormal", "lmu", "lsigma"}, {"lmu", "Double"}, {"lsigma", "Double"}},
-    {{"logLaplace", "Distribution[Double]", "G"}, {"Distributions.logLaplace", "lm", "ls"}, {"lm", "Double"}, {"ls", "Double"}},
-    {{"Laplace", "Distribution[Double]", "G"}, {"Distributions.laplace", "m", "s"}, {"m", "Double"}, {"s", "Double"}},
-    {{"logGamma", "Distribution[Double]", "G"}, {"Distributions.logGamma", "a", "b"}, {"a", "Double"}, {"b", "Double"}},
-    {{"Beta", "Distribution[Double]", "G"}, {"Distributions.beta", "a", "b"}, {"a", "Double"}, {"b", "Double"}},
-    {{"Exponential", "Distribution[Double]", "G"}, {"Distributions.exponential", "mean"}, {"mean", "Double"}},
-    {{"Gamma", "Distribution[Double]", "G"}, {"Distributions.gamma", "a", "b"}, {"a", "Double"}, {"b", "Double"}},
+    {{"Uniform", "Distribution[Double]", "G"}, {"Distributions.uniform[low,high]"}, {"low", "Double"}, {"high", "Double"}},
+    {{"UniformInt", "Distribution[Int]", "G"}, {"Distributions.uniform_int[low,high]"}, {"low", "Int"}, {"high", "Int"}},
+    {{"Normal", "Distribution[Double]", "G"}, {"Distributions.normal[mu,sigma]"}, {"mu", "Double"}, {"sigma", "Double"}},
+    {{"logNormal", "Distribution[Double]", "G"}, {"Distributions.logNormal[lmu,lsigma]"}, {"lmu", "Double"}, {"lsigma", "Double"}},
+    {{"logLaplace", "Distribution[Double]", "G"}, {"Distributions.logLaplace[lm,ls]"}, {"lm", "Double"}, {"ls", "Double"}},
+    {{"Laplace", "Distribution[Double]", "G"}, {"Distributions.laplace[m,s]"}, {"m", "Double"}, {"s", "Double"}},
+    {{"logGamma", "Distribution[Double]", "G"}, {"Distributions.logGamma[a,b]"}, {"a", "Double"}, {"b", "Double"}},
+    {{"Beta", "Distribution[Double]", "G"}, {"Distributions.beta[a,b]"}, {"a", "Double"}, {"b", "Double"}},
+    {{"Exponential", "Distribution[Double]", "G"}, {"Distributions.exponential[mean]"}, {"mean", "Double"}},
+    {{"Gamma", "Distribution[Double]", "G"}, {"Distributions.gamma[a,b]"}, {"a", "Double"}, {"b", "Double"}},
 
-    {{"Bernoulli", "Distribution[Int]", "G"}, {"Distributions.bernoulli", "p"}, {"p", "Double"}},
-    {{"Binomial", "Distribution[Int]", "G"}, {"Distributions.binomial", "n", "p"}, {"n", "Int"}, {"p", "Double"}},
-    {{"Geometric", "Distribution[Int]", "G"}, {"Distributions.geometric", "p"}, {"p", "Double"}},
+    {{"Bernoulli", "Distribution[Int]", "G"}, {"Distributions.bernoulli[p]"}, {"p", "Double"}},
+    {{"Binomial", "Distribution[Int]", "G"}, {"Distributions.binomial[n,p]"}, {"n", "Int"}, {"p", "Double"}},
+    {{"Geometric", "Distribution[Int]", "G"}, {"Distributions.geometric[p]"}, {"p", "Double"}},
 
-    {{"iid", "Distribution[List[a]]", "G"}, {"Distributions.iid", "n", "dist"}, {"n", "Int"}, {"dist", "Distribution[a]"}},
-    {{"Dirichlet", "Distribution[List[Double]]", "G"}, {"Distributions.dirichlet'", "n", "x"}, {"n", "Int"}, {"x", "Double"}},
-//    {{"Dirichlet", "List[Double]"}, {"dirichlet_model", "ps"}, {"ps", "List[Double]"}},
+    {{"iid", "Distribution[List[a]]", "G"}, {"Distributions.iid[n,dist]"}, {"n", "Int"}, {"dist", "Distribution[a]"}},
+    {{"Dirichlet", "Distribution[List[Double]]", "G"}, {"Distributions.dirichlet'[n,x]"}, {"n", "Int"}, {"x", "Double"}},
+//    {{"Dirichlet", "List[Double]"}, {"dirichlet_model[ps]"}, {"ps", "List[Double]"}},
 
 //  We need a way to construct lists, not from a distribution.
     {{"List", "List[a]", "L"},{"Prelude.sequence"},{"*", "a"}},
@@ -202,11 +202,19 @@ ptree convert_rule(const vector<vector<string>>& s)
     if (s[0].size() >= 4)
 	rule.push_back({"Constraints", parse_constraints(s[0][3])});
 
-    if (s[1].size())
+    if (not s[1].size())
+	;
+    else if (s[1][0].find('[') != std::string::npos)
+    {
+	ptree call = parse_type(s[1][0]);
+	rule.push_back({"call",call});
+    }
+    else
     {
 	ptree call;
-	for(const auto& word: s[1])
-	    call.push_back({"",ptree(word)});
+	call.put_value(s[1][0]);
+	for(int i=1;i<s[1].size();i++)
+	    call.push_back({"",ptree(s[1][i])});
 	rule.push_back({"call",call});
     }
 

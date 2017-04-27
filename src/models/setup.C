@@ -235,7 +235,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
     
-    expression_ref E = qualified_dummy(array_index(call,0).get_value<string>());
+    expression_ref E = qualified_dummy(call.get_value<string>());
     if (generate_function)
     {
 	auto Prefix = lambda_expression( constructor("Distributions.Prefix",2) );
@@ -246,7 +246,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
 
 	// 2. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
 	//    There could be fewer of these than the rule arguments.
-	for(int i=1;i<call.size();i++)
+	for(int i=0;i<call.size();i++)
 	{
 	    string call_arg_name = array_index(call,i).get_value<string>();
 	    F = (F,dummy("arg_" + call_arg_name));
@@ -340,7 +340,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
 //	std::cerr<<E<<"\n";
     }
     else
-	for(int i=1;i<call.size();i++)
+	for(int i=0;i<call.size();i++)
 	{
 	    string arg_name = array_index(call,i).get_value<string>();
 	    ptree arg_tree = get_arg(*rule, arg_name);
