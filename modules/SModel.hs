@@ -175,21 +175,7 @@ dp_omega_model s r mu omegas codona = Prefix "DP_omega" $ do
 --  w1 <- uniform 0.0 1.0;
 --  [f1, f2] <- dirichlet' 2 1.0;
 
-m1a_model s r w1 f1 codona = Prefix "M1a" $ do
-{
-  s' <- Prefix "S" (s (getNucleotides codona));
-  r' <- Prefix "R" (r codona);
-
-  w1' <- Prefix "omega1" w1;
-  Log "omega1" w1';
-
-  f1' <- Prefix "p1" f1;
-  Log "p1" f1';
-        
-  let {m0w w = reversible_markov (m0 codona s' w) r'};
-
-  return $ multiParameter m0w (m1a_omega_dist f1' w1');
-};
+m1a s r w1 f1 codona = multiParameter m0w (m1a_omega_dist f1 w1) where {m0w w = reversible_markov (m0 codona s w) r};
 
 m2a_model s r w1 f1 posP posW codona = Prefix "M2a" $ do
 {

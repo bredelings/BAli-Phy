@@ -65,8 +65,14 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"submodel", "EM[a]", "HKY", "Alphabet.getNucleotides[A]"},
      {"A","a","LAMBDA"}},
 
-    {{"fMutSel", "RA[Codon[a,b]]"}, {"SModel.fMutSel_model[submodel,omega,ws]"},
-     {"omega", "Double", "~Uniform[0,1]"}, {"ws", "List[Double]", "~iid[61,logNormal[0,0.5]]"}, {"submodel", "RA[a]", "HKY"}},
+    {{"fMutSel", "RA[Codon[a,b]]",},
+     {"SModel.fMutSel_model[submodel,omega,ws]"},
+     {"omega", "Double", "~Uniform[0,1]"},
+     // ws: We are setting the sampling rate to 1/sqrt(n_letters) on these.
+     // ws: We are logging these inside the function.
+     {"ws", "List[Double]", "~iid[61,logNormal[0,0.5]]"},
+     {"submodel", "RA[a]", "HKY"}},
+
     {{"fMutSel0", "RA[Codon[a,b]]"}, {"SModel.fMutSel0_model[submodel,omega,ws]"},
      {"omega", "Double", "~Uniform[0,1]"}, {"ws", "List[Double]", "~iid[20,logNormal[0,0.5]]"}, {"submodel", "RA[a]", "HKY"}},
 // fraction ~ dirichlet' n (1 + n/2), rates ~ dirichlet' n 2
@@ -107,8 +113,13 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"submodel", "RA[a]", "", "A"},
      {"A", "a", "LAMBDA"}},
 
-    {{"M1a", "MM[Codon[a,b]]"}, {"SModel.m1a_model[nuc_model,freq_model,omega1,p1]"},
-     {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"omega1", "Double", "~Uniform[0,1]"}, {"p1", "Double", "~Uniform[0,1]"} },
+    {{"M1a", "MM[Codon[a,b]]","G"},
+     {"SModel.m1a[nuc_model,freq_model,omega1,p1,A]"},
+     {"nuc_model", "EM[a]", "HKY", "Alphabet.getNucleotides[A]"},
+     {"freq_model", "FM[Codon[a,b]]", "F61","A"},
+     {"omega1", "Double", "~Uniform[0,1]"},
+     {"p1", "Double", "~Uniform[0,1]"},
+     {"A","a","LAMBDA"}},
     
     {{"M2a", "MM[Codon[a,b]]"}, {"SModel.m2a_model[nuc_model,freq_model,omega1,p1,posP,posW]"},
      {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"omega1", "Double", "~Uniform[0,1]"}, {"p1", "Double", "~Uniform[0,1]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"} },
