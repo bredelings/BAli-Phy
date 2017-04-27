@@ -64,18 +64,18 @@ const vector< vector<vector<string>> > all_default_arguments =
     // DP could have another variant that is only given an n... but then are we abandoning the idea of specifying all parameters?
     // Perhaps DP should be able to introduce an n and then  condition on it, to ensure that rates and frequencies get the same n?
     // So, a let-statement.
-    {{"DP", "MM[a]"}, {"SModel.dp_model", "submodel", "rates", "frequencies"}, {"rates", "List[Double]", "~Dirichlet[4,2]"}, {"frequencies", "List[Double]", "~Dirichlet[4,3]"}, {"submodel", "RA[a]"}},
-    {{"MultiRate", "MM[a]"}, {"SModel.multiRateModel", "submodel", "dist", "n_bins"}, {"dist", "Distribution[Double]"}, {"n_bins", "Int", "4"}, {"submodel", "RA[a]"}},
+    {{"DP", "MM[a]"}, {"SModel.dp_model[submodel,rates,frequencies]"}, {"rates", "List[Double]", "~Dirichlet[4,2]"}, {"frequencies", "List[Double]", "~Dirichlet[4,3]"}, {"submodel", "RA[a]"}},
+    {{"MultiRate", "MM[a]"}, {"SModel.multiRateModel[submodel,dist,n_bins]"}, {"dist", "Distribution[Double]"}, {"n_bins", "Int", "4"}, {"submodel", "RA[a]"}},
 
     {{"GammaRates", "MM[a]", "G"},
-     {"SModel.gamma_rates", "submodel", "alpha", "n"},
+     {"SModel.gamma_rates[submodel,alpha,n]"},
      {"n", "Int", "4"},
      {"alpha", "Double", "~logLaplace[-6,2]"},
      {"submodel", "RA[a]", "", "A"},
      {"A", "a", "LAMBDA"}},
 
     {{"GammaInvRates", "MM[a]", "G"},
-     {"SModel.gamma_inv_rates", "submodel", "alpha", "pInv", "n"},
+     {"SModel.gamma_inv_rates[submodel,alpha,pInv,n]"},
      {"n", "Int", "4"},
      {"alpha", "Double", "~logLaplace[-6,2]"},
      {"pInv", "Double", "~Uniform[0,1]"},
@@ -83,59 +83,76 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"A", "a", "LAMBDA"}},
 
     {{"log_normal_rates", "MM[a]", "G"},
-     {"SModel.log_normal_rates", "submodel", "sigmaOverMu", "n"},
+     {"SModel.log_normal_rates[submodel,sigmaOverMu,n]"},
      {"n", "Int", "4"},
      {"sigmaOverMu", "Double", "~logLaplace[-3,1]"},
      {"submodel", "RA[a]", "", "A"},
      {"A", "a", "LAMBDA"}},
     
     {{"log_normal_inv_rates", "MM[a]", "G"},
-     {"SModel.log_normal_inv_rates", "submodel", "sigmaOverMu", "pInv", "n"},
+     {"SModel.log_normal_inv_rates[submodel,sigmaOverMu,pInv,n]"},
      {"n", "Int", "4"},
      {"sigmaOverMu", "Double", "~logLaplace[-3,1]"},
      {"pInv", "Double", "~Uniform[0,1]"},
      {"submodel", "RA[a]", "", "A"},
      {"A", "a", "LAMBDA"}},
 
-    {{"M1a", "MM[Codon[a,b]]"}, {"SModel.m1a_model", "nuc_model", "freq_model", "omega1", "p1"},
+    {{"M1a", "MM[Codon[a,b]]"}, {"SModel.m1a_model[nuc_model,freq_model,omega1,p1]"},
      {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"omega1", "Double", "~Uniform[0,1]"}, {"p1", "Double", "~Uniform[0,1]"} },
-    {{"M2a", "MM[Codon[a,b]]"}, {"SModel.m2a_model", "nuc_model", "freq_model", "omega1", "p1", "posP", "posW"},
+    
+    {{"M2a", "MM[Codon[a,b]]"}, {"SModel.m2a_model[nuc_model,freq_model,omega1,p1,posP,posW]"},
      {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"omega1", "Double", "~Uniform[0,1]"}, {"p1", "Double", "~Uniform[0,1]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"} },
-    {{"M2a_Test", "MM[Codon[a,b]]"}, {"SModel.m2a_test_model", "nuc_model", "freq_model", "omega1", "p1", "posP", "posW", "posSelection"},
+
+    {{"M2a_Test", "MM[Codon[a,b]]"}, {"SModel.m2a_test_model[nuc_model,freq_model,omega1,p1,posP,posW,posSelection]"},
      {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"omega1", "Double", "~Uniform[0,1]"}, {"p1", "Double", "~Uniform[0,1]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"}, {"posSelection", "Int", "~Bernoulli[0.5]"} },
     //    {{"M3u"}, {"3"}, {"nuc_model", ""HKY"}, {"freq_model", "F61"}},
     //  Maybe we should introduce a way to sample Dirichlet and IIDs of the same length and then zip them?
     //   * would this solve some of our woes with the DP model?
     //   * this does NOT solve the issue of the dirichlet weight depending on n
-    {{"M3", "MM[Codon[a,b]]"}, {"SModel.m3_model", "nuc_model", "freq_model", "ps", "omegas"},
+
+    {{"M3", "MM[Codon[a,b]]"}, {"SModel.m3_model[nuc_model,freq_model,ps,omegas]"},
      {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"ps", "List[Double]", "~Dirichlet[4,2]"}, {"omegas", "List[Double]", "~iid[4,Uniform[0,1]]" }},
-    {{"M3_Test", "MM[Codon[a,b]]"}, {"SModel.m3_test_model", "nuc_model", "freq_model", "ps", "omegas", "posP", "posW", "posSelection"},
+
+    {{"M3_Test", "MM[Codon[a,b]]"}, {"SModel.m3_test_model[nuc_model,freq_model,ps,omegas,posP,posW,posSelection]"},
      {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"ps", "List[Double]", "~Dirichlet[4,2]"}, {"omegas", "List[Double]", "~iid[4,Uniform[0,1]]" },{"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"}, {"posSelection", "Int", "~Bernoulli[0.5]"} },
-    {{"M7", "MM[Codon[a,b]]"}, {"SModel.m7_model", "nuc_model", "freq_model", "mu", "gamma", "n_bins"},
+
+    {{"M7", "MM[Codon[a,b]]"}, {"SModel.m7_model[nuc_model,freq_model,mu,gamma,n_bins]"},
      {"n_bins", "Int", "4"}, {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"},{"mu", "Double", "~Uniform[0,1]"},{"gamma", "Double", "~Beta[1,10]"}},
+    
     {{"M8", "MM[Codon[a,b]]"},
-     {"SModel.m8_model", "nuc_model", "freq_model", "mu", "gamma", "n", "posP", "posW"},
+     {"SModel.m8_model[nuc_model,freq_model,mu,gamma,n,posP,posW]"},
      {"n", "Int", "4"}, {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"mu", "Double", "~Uniform[0,1]"}, {"gamma", "Double", "~Beta[1,10]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"} },
+
     {{"M8a", "MM[Codon[a,b]]"},
-     {"SModel.m8a_model", "nuc_model", "freq_model", "mu", "gamma", "n_bins", "posP"},
+     {"SModel.m8a_model[nuc_model,freq_model,mu,gamma,n_bins,posP]"},
      {"n_bins", "Int", "4"}, {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"mu", "Double", "~Uniform[0,1]"}, {"gamma", "Double", "~Beta[1,10]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"} },
+    
     {{"M8a_Test", "MM[Codon[a,b]]"},
-     {"SModel.m8a_test_model", "nuc_model", "freq_model", "mu", "gamma", "n_bins", "posP", "posW", "posSelection"},
+     {"SModel.m8a_test_model[nuc_model,freq_model,mu,gamma,n_bins,posP,posW,posSelection]"},
      {"n_bins", "Int", "4"}, {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"mu", "Double", "~Uniform[0,1]"}, {"gamma", "Double", "~Beta[1,10]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"}, {"posSelection", "Int", "~Bernoulli[0.5]"} },
+
     {{"branch-site", "MMM[Codon[a,b]]"},
-     {"SModel.branch_site_test_model", "nuc_model", "freq_model", "fs", "omegas", "posP", "posW", "posSelection"},
+     {"SModel.branch_site_test_model[nuc_model,freq_model,fs,omegas,posP,posW,posSelection]"},
      {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"fs", "List[Double]", "~Dirichlet[2,1]"}, {"omegas", "List[Double]", "~iid[1,Uniform[0,1]]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"}, {"posSelection", "Int", "~Bernoulli[0.5]"} },
-    {{"dp_omega", "MM[Codon[a,b]]"}, {"SModel.dp_omega_model", "nuc_model", "freq_model", "mu", "omegas"},
+
+    {{"dp_omega", "MM[Codon[a,b]]"}, {"SModel.dp_omega_model[nuc_model,freq_model,mu,omegas]"},
      {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"mu", "Double", "~Uniform[0,1]"}, {"omegas", "List[Double]", "~Dirichlet[4,1]"}},
+    
     {{"frequencies_prior", "F"}, {"SModel.frequencies_model"}},
+    
     {{"Freq", "F", "P"}, {"SModel.constant_frequencies_model"},{"*", "Double"}},
-    {{"Freq2", "F"}, {"SModel.constant_frequencies_model2", "dict"},{"dict", "List[Pair[String,Double]]"}},
-    {{"F", "FM[a]", "G"}, {"SModel.plus_f", "A", "pi"},{"pi", "F", "frequencies_prior", "A"}, {"A", "a", "LAMBDA"}},
-    {{"F61", "FM[Codon[a,b]]", "G"}, {"SModel.plus_f", "A", "pi"},{"pi", "F", "frequencies_prior", "A"}, {"A", "a", "LAMBDA"}},
-    {{"gwF", "FM[a]", "G"}, {"SModel.plus_gwf", "A", "pi", "f"},{"pi", "F", "frequencies_prior", "A"},{"f", "Double", "~Uniform[0,1]"},{"A", "a", "LAMBDA"}},
+    
+    {{"Freq2", "F"}, {"SModel.constant_frequencies_model2[dict]"},{"dict", "List[Pair[String,Double]]"}},
+    
+    {{"F", "FM[a]", "G"}, {"SModel.plus_f[A,pi]"},{"pi", "F", "frequencies_prior", "A"}, {"A", "a", "LAMBDA"}},
+    
+    {{"F61", "FM[Codon[a,b]]", "G"}, {"SModel.plus_f[A,pi]"},{"pi", "F", "frequencies_prior", "A"}, {"A", "a", "LAMBDA"}},
+
+    {{"gwF", "FM[a]", "G"}, {"SModel.plus_gwf[A,pi,f]"},{"pi", "F", "frequencies_prior", "A"},{"f", "Double", "~Uniform[0,1]"},{"A", "a", "LAMBDA"}},
     // How about a generic frequency model that is equivalent to fMutSel0?  Can we do that?
     // Or maybe we need to do fMutSel & fMutSel0 version of the site models.
     //These should really be Triplet models, not Codon models - so we need inheritance
+
     {{"F1x4", "FM[Codon[a,b]]"}, {"SModel.f1x4_model", "pi"}, {"pi", "F", "frequencies_prior"}},
     {{"F3x4", "FM[Codon[a,b]]"}, {"SModel.f3x4_model", "pi1", "pi2", "pi3"}, {"pi1", "F", "frequencies_prior"}, {"pi2", "F", "frequencies_prior"}, {"pi3", "F", "frequencies_prior"}},
     {{"MG94", "FM[Codon[a,b]]"}, {"SModel.mg94_model", "pi"}, {"pi", "F", "frequencies_prior"}},
