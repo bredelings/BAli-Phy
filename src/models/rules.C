@@ -48,7 +48,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"exchange_prior", "E"}, {"SModel.exchange_model"}},
     {{"E", "E", "P"}, {"SModel.constant_exchange_model"},{"*", "Double"}},
 
-    {{"x3", "EM[a]"},
+    {{"x3", "EM[a]","G"},
      {"SModel.singlet_to_triplet_exchange[A,submodel]"},
      {"submodel", "EM[b]","","Alphabet.getNucleotides[A]"},
      {"A","a","LAMBDA"}},
