@@ -153,41 +153,43 @@ const vector< vector<vector<string>> > all_default_arguments =
     // Or maybe we need to do fMutSel & fMutSel0 version of the site models.
     //These should really be Triplet models, not Codon models - so we need inheritance
 
-    {{"F1x4", "FM[Codon[a,b]]"}, {"SModel.f1x4_model", "pi"}, {"pi", "F", "frequencies_prior"}},
-    {{"F3x4", "FM[Codon[a,b]]"}, {"SModel.f3x4_model", "pi1", "pi2", "pi3"}, {"pi1", "F", "frequencies_prior"}, {"pi2", "F", "frequencies_prior"}, {"pi3", "F", "frequencies_prior"}},
-    {{"MG94", "FM[Codon[a,b]]"}, {"SModel.mg94_model", "pi"}, {"pi", "F", "frequencies_prior"}},
-    {{"MG94w9", "FM[Codon[a,b]]"}, {"SModel.mg94w9_model", "pi1", "pi2", "pi3"}, {"pi1", "F", "frequencies_prior"}, {"pi2", "F", "frequencies_prior"}, {"pi3", "F", "frequencies_prior"}},
+    {{"F1x4", "FM[Codon[a,b]]"}, {"SModel.f1x4_model[pi]"}, {"pi", "F", "frequencies_prior"}},
+    {{"F3x4", "FM[Codon[a,b]]"}, {"SModel.f3x4_model[pi1,pi2,pi3]"}, {"pi1", "F", "frequencies_prior"}, {"pi2", "F", "frequencies_prior"}, {"pi3", "F", "frequencies_prior"}},
+    {{"MG94", "FM[Codon[a,b]]"}, {"SModel.mg94_model[pi]"}, {"pi", "F", "frequencies_prior"}},
+    {{"MG94w9", "FM[Codon[a,b]]"}, {"SModel.mg94w9_model[pi1,pi2,pi3]"}, {"pi1", "F", "frequencies_prior"}, {"pi2", "F", "frequencies_prior"}, {"pi3", "F", "frequencies_prior"}},
     {{"DNA", "Alphabet", "N"}, {"dna"}},
     {{"RNA", "Alphabet"}, {"rna"}},
 //    {{"C10", "MM[a]"}, {}},
 //    {{"C20", "MM[a]"}, {}},
     {{"AA", "Alphabet"}, {"aa"}},
 // We can't write Codons[a,b] yet because we don't any mechanism for dealing with inheritance
-    {{"Codons", "Alphabet"}, {"codons", "nuc", "aa"}, {"nuc", "Alphabet"}, {"aa", "Alphabet", "AA"}},
-    {{"RCTMC", "RA[a]", "GN"}, {"SModel.reversible_markov", "Q", "R"}, {"Q", "EM[a]", "", "A"}, {"R", "FM[a]", "", "A"},{"A", "a", "LAMBDA"}},
+    {{"Codons", "Alphabet"}, {"codons[nuc,aa]"}, {"nuc", "Alphabet"}, {"aa", "Alphabet", "AA"}},
+    {{"RCTMC", "RA[a]", "GN"}, {"SModel.reversible_markov[Q,R]"}, {"Q", "EM[a]", "", "A"}, {"R", "FM[a]", "", "A"},{"A", "a", "LAMBDA"}},
 
     {{"UnitMixture", "MM[a]", "NG"},
-     {"SModel.unit_mixture", "submodel"},
+     {"SModel.unit_mixture[submodel]"},
      {"submodel", "RA[a]", "", "A"},
      {"A", "a", "LAMBDA"},
     },
 
     {{"MMM", "MMM[a]", "NG"},
-     {"SModel.mmm", "submodel"},
+     {"SModel.mmm[submodel]"},
      {"submodel", "MM[a]", "", "A"},
      {"A", "a", "LAMBDA"}
     },
 
-    {{"RS05", "IM"}, {"IModel.rs05_model", "logDelta", "meanIndelLengthMinus1", "tau"},
+    {{"RS05", "IM"}, {"IModel.rs05_model[logDelta,meanIndelLengthMinus1,tau]"},
      {"logDelta", "Double", "~Laplace[-4,0.707]"},
      {"meanIndelLengthMinus1", "Double", "~Exponential[10]"},
      {"tau", "Double", "0.001"}
     },
-    {{"RS07", "IM", "G"}, {"IModel.rs07", "logLambda", "meanIndelLengthMinus1", "tree"},
+
+    {{"RS07", "IM", "G"}, {"IModel.rs07[logLambda,meanIndelLengthMinus1,tree]"},
      {"logLambda", "Double", "~Laplace[-4,0.707]"},
      {"meanIndelLengthMinus1", "Double", "~Exponential[10]"},
      {"tree", "tree", "LAMBDA"}
     },
+
     {{"RS07RelaxedRates", "IM"}, {"IModel.rs07_relaxed_rates_model"}}
 };
 
@@ -219,21 +221,9 @@ ptree convert_rule(const vector<vector<string>>& s)
     if (s[0].size() >= 4)
 	rule.push_back({"Constraints", parse_constraints(s[0][3])});
 
-    if (not s[1].size())
-	;
-    else if (s[1][0].find('[') != std::string::npos)
-    {
-	ptree call = parse_type(s[1][0]);
-	rule.push_back({"call",call});
-    }
-    else
-    {
-	ptree call;
-	call.put_value(s[1][0]);
-	for(int i=1;i<s[1].size();i++)
-	    call.push_back({"",ptree(s[1][i])});
-	rule.push_back({"call",call});
-    }
+    // Add the call
+    rule.push_back({"call", parse_type(s[1][0])});
+    assert(s[1].size() == 1);
 
     ptree args;
     for(int i=2;i<s.size();i++)
