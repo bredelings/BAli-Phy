@@ -231,6 +231,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
     bool pass_arguments = rule->get("pass_arguments",false);
     bool is_list_rule = rule->get("list_arguments",false);
     bool generate_function = rule->get("generate_function",false);
+    bool no_log = rule->get("no_log",false);
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
     
@@ -282,13 +283,14 @@ expression_ref process_stack_functions(const ptree& model_rep)
 		    string applied_arg_name = applied_arg.second.get_value<string>();
 		    action = (action,dummy("arg_"+ applied_arg_name));
 		}
-	    action = (Prefix, arg_name, action);
+
+	    if (not no_log) action = (Prefix, arg_name, action);
 
 	    // F = 'action <<=
 	    F = (dummy("Prelude.>>="), action, lambda_quantify(dummy("arg_"+arg_name), F));
 	}
 
-	F = (Prefix, name, F);
+	if (not no_log) F = (Prefix, name, F);
 
 	for(int j=args.size()-1;j>=0;j--)
 	{
