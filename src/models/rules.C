@@ -47,7 +47,12 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"GTR", "EM[a]", "G"}, {"SModel.gtr[S,A]"}, {"S", "E", "exchange_prior", "A"}, {"A", "a", "LAMBDA"}},
     {{"exchange_prior", "E"}, {"SModel.exchange_model"}},
     {{"E", "E", "P"}, {"SModel.constant_exchange_model"},{"*", "Double"}},
-    {{"x3", "EM[a]"}, {"SModel.x3_model[submodel]"}, {"submodel", "EM[b]"}},
+
+    {{"x3", "EM[a]"},
+     {"SModel.singlet_to_triplet_exchange[A,submodel]"},
+     {"submodel", "EM[b]","","Alphabet.getNucleotides[A]"},
+     {"A","a","LAMBDA"}},
+
     {{"PAM", "EM[AA]", "G"}, {"SModel.pam[A]"}, {"A", "a", "LAMBDA"}},
     {{"JTT", "EM[AA]", "G"}, {"SModel.jtt[A]"}, {"A", "a", "LAMBDA"}},
     {{"WAG", "EM[AA]", "G"}, {"SModel.wag[A]"}, {"A", "a", "LAMBDA"}},

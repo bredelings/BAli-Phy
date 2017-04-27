@@ -405,11 +405,6 @@ do {
   return $ MixtureModels [mixture1,mixture2]
 };
 
-x3_model s a = do {
- s' <- s (getNucleotides a);
- return $ singlet_to_triplet_exchange a s'
-};
-
 frequencies_model a = do {
   let {n_letters = alphabetSize a;
        letters = alphabet_letters a};
