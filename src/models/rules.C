@@ -121,8 +121,15 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"p1", "Double", "~Uniform[0,1]"},
      {"A","a","LAMBDA"}},
     
-    {{"M2a", "MM[Codon[a,b]]"}, {"SModel.m2a_model[nuc_model,freq_model,omega1,p1,posP,posW]"},
-     {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"omega1", "Double", "~Uniform[0,1]"}, {"p1", "Double", "~Uniform[0,1]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"} },
+    {{"M2a", "MM[Codon[a,b]]","G"},
+     {"SModel.m2a[nuc_model,freq_model,omega1,p1,posP,posW,A]"},
+     {"nuc_model", "EM[a]", "HKY", "Alphabet.getNucleotides[A]"},
+     {"freq_model", "FM[Codon[a,b]]", "F61","A"},
+     {"omega1", "Double", "~Uniform[0,1]"},
+     {"p1", "Double", "~Uniform[0,1]"},
+     {"posP", "Double", "~Beta[1,10]"},
+     {"posW", "Double", "~logGamma[4,0.25]"},
+     {"A","a","LAMBDA"}},
 
     {{"M2a_Test", "MM[Codon[a,b]]"}, {"SModel.m2a_test_model[nuc_model,freq_model,omega1,p1,posP,posW,posSelection]"},
      {"nuc_model", "EM[a]", "HKY"}, {"freq_model", "FM[Codon[a,b]]", "F61"}, {"omega1", "Double", "~Uniform[0,1]"}, {"p1", "Double", "~Uniform[0,1]"}, {"posP", "Double", "~Beta[1,10]"}, {"posW", "Double", "~logGamma[4,0.25]"}, {"posSelection", "Int", "~Bernoulli[0.5]"} },
