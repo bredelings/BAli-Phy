@@ -100,7 +100,7 @@ struct log_prod_rescale
 struct log_prod_logsum
 {
     log_double_t accum = 1.0;
-    constexpr log_prod_logsum& operator*=(double x)
+    log_prod_logsum& operator*=(double x)
     {
 #ifndef NDEBUG
 	auto old = *this;
