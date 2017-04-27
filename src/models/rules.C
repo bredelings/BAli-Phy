@@ -239,12 +239,8 @@ ptree convert_rule(const vector<vector<string>>& s)
 	    arg.push_back({"default_value",parse(s[i][2])});
 
 	if (s[i].size() > 3 and not s[i][3].empty())
-	{
-	    ptree applied_args;
-	    for(const auto& arg: split(s[i][3],' '))
-		applied_args.push_back({"", ptree(arg)});
-	    arg.push_back({"applied_args",applied_args});
-	}
+	    arg.push_back({"applied_args",parse_type(s[i][3])});
+
 	args.push_back({"",arg});
     }
     rule.push_back({"args",args});

@@ -220,14 +220,24 @@ bool should_log(const ptree& model, const string& arg_name)
 	return false;
 }
 
+expression_ref arg_to_apply(const ptree& expression)
+{
+    expression_ref E;
+    string top = expression.get_value<string>();
+    if (top.find('.') == string::npos)
+	E = dummy(string("arg_")+top);
+    else
+	E = dummy(top);
+
+    for(auto& arg: expression)
+	E = (E, arg_to_apply(arg.second));
+
+    return E;
+}
+
 expression_ref apply_args(expression_ref action, const ptree& applied_args)
 {
-    for(const auto& applied_arg: applied_args)
-    {
-	string applied_arg_name = applied_arg.second.get_value<string>();
-	action = (action,dummy("arg_"+ applied_arg_name));
-    }
-    return action;
+    return (action, arg_to_apply(applied_args));
 }
 
 expression_ref process_stack_functions(const ptree& model_rep)
