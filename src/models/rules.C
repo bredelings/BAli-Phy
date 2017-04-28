@@ -8,6 +8,10 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
+// TODO: allow refering to other parameters in parameter values (default values and otherwise)
+// TODO: move stuff (e.g. logging) out of models
+// TODO: allow specifying branch priors to the --branch-prior argument.  (Remove the Gamma default, and calculate one).
+
 const vector< vector<vector<string>> > all_default_arguments = 
 {
     {{"log", "Double", "GN"}, {"Prelude.log[x]"}, {"x", "Double"}},
