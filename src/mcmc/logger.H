@@ -50,19 +50,6 @@ namespace MCMC {
     template <typename T>
     using logger_function = std::function<T (const Model&, long)>;
 
-    // std::vector<std::function<T(const Model& M, t>>
-    template <typename T>
-    class FunctionList
-    {
-    protected:
-	std::vector<std::shared_ptr<std::function<T (const Model&,long)>>> functions;
-    public:
-	void add_function(const std::function<T(const Model&,long)>& func)
-	    {
-		functions.push_back(std::make_shared<std::function<T(const Model&,long)>>(func));
-	    }
-    };
-
     class GetComputationFunction
     {
 	int index;
@@ -415,10 +402,15 @@ namespace MCMC {
 	FunctionLogger(const std::string& filename, const logger_function<std::string>& L);
     };
 
-    class ConcatFunction: public FunctionList<std::string>
+    class ConcatFunction
     {
+	std::vector<logger_function<std::string>> functions;
 	std::string separator;
     public:
+	void add_function(const logger_function<std::string>& func)
+	{
+	    functions.push_back(func);
+	}
 	ConcatFunction* clone() const {return new ConcatFunction(*this);}
 	std::string operator()(const Model& M, long t);
 	ConcatFunction() {}

@@ -520,7 +520,7 @@ namespace MCMC {
 	string output;
 
 	for(int i=0;i<functions.size();i++)
-	    output += (*functions[i])(M,t);
+	    output += (functions[i])(M,t);
 
 	return output;
     }
