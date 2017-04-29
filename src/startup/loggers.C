@@ -251,7 +251,7 @@ vector<shared_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int sub
 		
 		ConcatFunction F;
 		auto iterations = [](const Model&, long t) {return to_string(t);};
-		F<<"iterations = "<< LambdaLoggerFunction<string>(iterations)<<"\n\n";
+		F<<"iterations = "<<iterations<<"\n\n";
 		F<<AlignmentFunction(i);
 		
 		loggers.push_back( make_shared<Logger>(FunctionLogger(filename, Subsample_Function(F,10) ) ) );

@@ -66,15 +66,6 @@ namespace MCMC {
 	return [F2 = owned_ptr<LoggerFunction<T>>(F)](const Model& M,long t) mutable {return (*F2)(M,t);};
     }
 
-    template <typename T>
-    struct LambdaLoggerFunction: public LoggerFunction<T>
-    {
-	LambdaLoggerFunction* clone() const {return new LambdaLoggerFunction<T>(*this);}
-	std::function<T(const Model&,long)> f;
-	T operator()(const Model& M, long t) {return f(M,t);}
-	LambdaLoggerFunction(const std::function<T(const Model&,long)>& F):f(F) {}
-    };
-
     // std::vector<std::function<T(const Model& M, t>>
     template <typename T>
     class FunctionList
