@@ -862,7 +862,7 @@ void do_sampling(const variables_map& args,
 		 owned_ptr<Model>& P,
 		 long int max_iterations,
 		 ostream& s_out,
-		 const vector<shared_ptr<MCMC::Logger> >& loggers)
+		 const vector<MCMC::Logger>& loggers)
 {
     using namespace MCMC;
 

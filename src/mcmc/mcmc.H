@@ -539,7 +539,7 @@ namespace MCMC {
     /// A Sampler: based on a collection of moves to run every iteration
     class Sampler: public MoveAll, public MoveStats 
     {
-	std::vector<std::shared_ptr<Logger> > loggers;
+	std::vector<Logger> loggers;
 
     public:
 	/// Run the sampler for 'max' iterations
@@ -547,7 +547,7 @@ namespace MCMC {
 
 	int n_loggers() const {return loggers.size();}
 
-	void add_logger(const std::shared_ptr<Logger>&);
+	void add_logger(const Logger&);
 
 	Sampler(const std::string& s)
 	    :MoveAll(s) {}

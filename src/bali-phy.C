@@ -555,7 +555,7 @@ int main(int argc,char* argv[])
 	    int subsample = args["subsample"].as<int>();
       
 	    //---------- Open output files -----------//
-	    vector<shared_ptr<MCMC::Logger> > loggers;
+	    vector<MCMC::Logger> loggers;
 
 	    string dir_name="";
 	    if (not args.count("test")) {

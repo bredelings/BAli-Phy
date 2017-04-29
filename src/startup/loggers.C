@@ -95,7 +95,7 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
     }
 }
 
-owned_ptr<MCMC::LoggerFunction<std::string>> construct_table_function(owned_ptr<Model>& M, const vector<string>& Rao_Blackwellize)
+MCMC::logger_function<std::string> construct_table_function(owned_ptr<Model>& M, const vector<string>& Rao_Blackwellize)
 {
     owned_ptr<Parameters> P = M.as<Parameters>();
 
@@ -195,18 +195,18 @@ owned_ptr<MCMC::LoggerFunction<std::string>> construct_table_function(owned_ptr<
     return TableLogger<string>(*TL);
 }
 
-vector<shared_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subsample, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
+vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
 {
     using namespace MCMC;
-    vector<shared_ptr<Logger> > loggers;
+    vector<Logger> loggers;
 
     owned_ptr<Parameters> P = M.as<Parameters>();
 
     string base = dir_name + "/" + "C" + convertToString(proc_id+1);
 
-    logger_function<string> TF = Subsample_Function(*construct_table_function(M, Rao_Blackwellize),subsample);
+    logger_function<string> TF = Subsample_Function(construct_table_function(M, Rao_Blackwellize),subsample);
 
-    shared_ptr<Logger> s = std::make_shared<Logger>(FunctionLogger(base +".p", TF));
+    Logger s = FunctionLogger(base +".p", TF);
   
     // Write out scalar numerical variables (and functions of them) to C<>.p
     loggers.push_back( s );
@@ -214,7 +214,7 @@ vector<shared_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int sub
     if (not P) return loggers;
 
     // Write out the (scaled) tree each iteration to C<>.trees
-    loggers.push_back( make_shared<Logger>(FunctionLogger(base + ".trees", TreeFunction()<<"\n" ) ) );
+    loggers.push_back( FunctionLogger(base + ".trees", TreeFunction()<<"\n" ) );
   
     // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
     {
@@ -226,20 +226,20 @@ vector<shared_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int sub
 		if ((*P)[i].variable_alignment())
 		    F<<AlignmentFunction(i)<<"\n\n";
 	F<<TreeFunction()<<"\n\n";
-	loggers.push_back( make_shared<Logger>(FunctionLogger(base + ".MAP", MAP_Function(F))) );
+	loggers.push_back( FunctionLogger(base + ".MAP", MAP_Function(F)) );
     }
 
     // Write out the probability that each column is in a particular substitution component to C<>.P<>.CAT
     if (P->contains_key("log-categories"))
 	for(int i=0;i<P->n_data_partitions();i++)
-	    loggers.push_back( make_shared<Logger>(FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
-								  Mixture_Components_Function(i) ) ) );
+	    loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
+					      Mixture_Components_Function(i) ) );
 
     // Write out ancestral sequences
     if (P->contains_key("log-ancestral") and P->t().n_nodes() > 1)
 	for(int i=0;i<P->n_data_partitions();i++)
-	    loggers.push_back( make_shared<Logger>( FunctionLogger(base + ".P" + convertToString(i+1)+".ancestral.fastas", 
-								   Ancestral_Sequences_Function(i) ) ) );
+	    loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".ancestral.fastas", 
+								   Ancestral_Sequences_Function(i) ) );
 
 
     // Write out the alignments for each (variable) partition to C<>.P<>.fastas
@@ -254,7 +254,7 @@ vector<shared_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int sub
 		F<<"iterations = "<<iterations<<"\n\n";
 		F<<AlignmentFunction(i);
 		
-		loggers.push_back( make_shared<Logger>(FunctionLogger(filename, Subsample_Function(F,10) ) ) );
+		loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10) ) );
 	    }
 
     return loggers;

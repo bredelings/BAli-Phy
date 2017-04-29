@@ -1127,7 +1127,7 @@ namespace MCMC {
 
 
     void mcmc_log(long iterations, long /* max_iter*/, int subsample, Model& P, ostream& s_out, 
-		  const MoveStats& /* S */, vector<shared_ptr<Logger> >& loggers)
+		  const MoveStats& /* S */, vector<Logger>& loggers)
     {
 	s_out<<"iterations = "<<iterations<<"\n";
 	clog<<"iterations = "<<iterations<<"\n";
@@ -1140,7 +1140,7 @@ namespace MCMC {
 	//    print_stats(s_out, P, iterations%(10*subsample) == 0);
 
 	for(int i=0;i<loggers.size();i++)
-	    (*loggers[i])(P,iterations);
+	    (loggers[i])(P,iterations);
 
 	/*
 	  if (iterations%20 == 0 or iterations < 20 or iterations >= max_iter) {
@@ -1158,7 +1158,7 @@ namespace MCMC {
 	v1.insert(v1.end(), v2.begin(), v2.end());
     }
 
-    void Sampler::add_logger(const shared_ptr<Logger>& L)
+    void Sampler::add_logger(const Logger& L)
     {
 	loggers.push_back(L);
     }
