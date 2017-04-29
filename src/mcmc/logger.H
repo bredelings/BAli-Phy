@@ -46,6 +46,7 @@ struct slice_function;
 
 namespace MCMC {
 
+    // std::function<void(const Model& M, t)>
     struct Logger
     {
 	virtual Logger* clone() const =0;
@@ -64,6 +65,7 @@ namespace MCMC {
 	FileLogger(const std::ostream&);
     };
 
+    // std::function<T(const Model& M, t)>
     template <typename T>
     struct LoggerFunction
     {
@@ -360,6 +362,12 @@ namespace MCMC {
 	void add_field(const std::string& name, const std::function<T(const Model&,long)>& f)
 	    {
 		add_field(name,LambdaLoggerFunction<T>(f));
+	    }
+
+	void add_field(const std::string& name, const std::function<T(const Parameters&)>& f)
+	    {
+		auto f2 = [f](const Model& M,long) { return f(dynamic_cast<const Parameters&>(M));};
+		add_field(name,LambdaLoggerFunction<T>(f2));
 	    }
 
 	std::vector<T> operator()(const Model& M, long t)

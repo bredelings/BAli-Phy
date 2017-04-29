@@ -98,14 +98,14 @@ owned_ptr<MCMC::LoggerFunction<std::string>> construct_table_function(owned_ptr<
     using namespace MCMC;
     owned_ptr<TableGroupFunction<string> > TL = claim(new TableGroupFunction<string>);
   
-    TL->add_field("iter", ConvertToStringFunction<long>( IterationsFunction() ) );
-    TL->add_field("prior", GetPriorFunction() );
+    TL->add_field("iter", [](const Model&, long t) {return std::to_string(t);});
+    TL->add_field("prior", [](const Model& M, long) {return std::to_string(log(M.prior()));});
     if (P)
 	for(int i=0;i<P->n_data_partitions();i++)
 	    if ((*P)[i].variable_alignment())
-		TL->add_field("prior_A"+convertToString(i+1), GetAlignmentPriorFunction(i) );
-    TL->add_field("likelihood", GetLikelihoodFunction() );
-    TL->add_field("logp", GetProbabilityFunction() );
+		TL->add_field("prior_A"+convertToString(i+1), [i](const Parameters& P) {return std::to_string(log(P[i].prior_alignment()));});
+    TL->add_field("likelihood", [](const Model& M, long) {return std::to_string(log(M.likelihood()));});
+    TL->add_field("logp", [](const Model& M, long) {return std::to_string(log(M.probability()));});
   
     {
 	vector<int> logged_computations;
@@ -174,11 +174,7 @@ owned_ptr<MCMC::LoggerFunction<std::string>> construct_table_function(owned_ptr<
     {
 	auto name = string("Scale")+std::to_string(i+1)+"*|T|";
 
-	auto f = [i](const Model& M, long)
-	         {
-		     const Parameters& P = dynamic_cast<const Parameters&>(M);
-		     return convertToString( P.branch_scale(i)*tree_length(P.t()));
-		 };
+	auto f = [i](const Parameters& P) {return std::to_string( P.branch_scale(i)*tree_length(P.t()));};
 
 	TL->add_field(name, f);
     }
