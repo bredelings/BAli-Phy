@@ -458,9 +458,10 @@ namespace MCMC {
     class FunctionLogger
     {
 	std::shared_ptr<std::ostream> log_file;
-	owned_ptr<LoggerFunction<std::string> > function;
+	std::shared_ptr<logger_function<std::string> > function;
     public:
 	void operator()(const Model& M, long t);
+	FunctionLogger(const std::string& filename, const logger_function<std::string>& L);
 	FunctionLogger(const std::string& filename, const LoggerFunction<std::string>& L);
     };
 
@@ -475,6 +476,8 @@ namespace MCMC {
     };
 
     ConcatFunction& operator<<(ConcatFunction&,const LoggerFunction<std::string>&);
+
+    ConcatFunction& operator<<(ConcatFunction&,const logger_function<std::string>&);
 
     ConcatFunction& operator<<(ConcatFunction&,const std::string& s);
 

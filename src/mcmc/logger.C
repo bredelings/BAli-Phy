@@ -52,6 +52,7 @@ namespace MCMC {
     using std::cerr;
     using std::clog;
     using std::string;
+    using std::make_shared;
     using std::ostream;
 
     int SortedTableFunction::n_fields() const
@@ -510,9 +511,16 @@ namespace MCMC {
 	log_file->flush();
     }
 
-    FunctionLogger::FunctionLogger(const std::string& filename, const LoggerFunction<string>& L)
-	:log_file(new checked_ofstream(filename,false)),function(L)
+    FunctionLogger::FunctionLogger(const std::string& filename, const logger_function<string>& L)
+	:log_file(new checked_ofstream(filename,false)),function(make_shared<logger_function<string>>(L))
     { }
+
+    FunctionLogger::FunctionLogger(const std::string& filename, const LoggerFunction<string>& L)
+	:log_file(new checked_ofstream(filename,false))
+    {
+	auto L2 = make_logger_function<string>(L);
+	function = make_shared<logger_function<string>>(L2);
+    }
 
     string ConcatFunction::operator()(const Model& M, long t)
     {
@@ -525,6 +533,12 @@ namespace MCMC {
     }
 
     ConcatFunction& operator<<(ConcatFunction& CF,const LoggerFunction<string>& F)
+    {
+	CF.add_function(F);
+	return CF;
+    }
+
+    ConcatFunction& operator<<(ConcatFunction& CF,const logger_function<string>& F)
     {
 	CF.add_function(F);
 	return CF;

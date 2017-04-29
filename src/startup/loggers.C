@@ -204,9 +204,9 @@ vector<shared_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int sub
 
     string base = dir_name + "/" + "C" + convertToString(proc_id+1);
 
-    owned_ptr<LoggerFunction<string> > TF = Subsample_Function(*construct_table_function(M, Rao_Blackwellize),subsample);
+    logger_function<string> TF = Subsample_Function(*construct_table_function(M, Rao_Blackwellize),subsample);
 
-    shared_ptr<Logger> s = std::make_shared<Logger>(FunctionLogger(base +".p", *TF));
+    shared_ptr<Logger> s = std::make_shared<Logger>(FunctionLogger(base +".p", TF));
   
     // Write out scalar numerical variables (and functions of them) to C<>.p
     loggers.push_back( s );
@@ -219,7 +219,7 @@ vector<shared_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int sub
     // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
     {
 	ConcatFunction F; 
-	F<<*TF<<"\n";
+	F<<TF<<"\n";
 	F<<Show_SModels_Function()<<"\n";
 	if (P->t().n_nodes() > 1)
 	    for(int i=0;i<P->n_data_partitions();i++)
