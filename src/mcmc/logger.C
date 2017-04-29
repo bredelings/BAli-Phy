@@ -515,13 +515,6 @@ namespace MCMC {
 	:log_file(new checked_ofstream(filename,false)),function(make_shared<logger_function<string>>(L))
     { }
 
-    FunctionLogger::FunctionLogger(const std::string& filename, const LoggerFunction<string>& L)
-	:log_file(new checked_ofstream(filename,false))
-    {
-	auto L2 = make_logger_function<string>(L);
-	function = make_shared<logger_function<string>>(L2);
-    }
-
     string ConcatFunction::operator()(const Model& M, long t)
     {
 	string output;

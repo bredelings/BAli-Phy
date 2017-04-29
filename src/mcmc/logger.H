@@ -47,24 +47,8 @@ namespace MCMC {
 
     typedef std::function<void(const Model& M, long)> Logger;
 
-    // std::function<T(const Model& M, t)>
-    template <typename T>
-    struct LoggerFunction
-    {
-	virtual LoggerFunction<T>* clone() const =0;
-	virtual T operator()(const Model& P,long t)=0;
-	virtual ~LoggerFunction() {}
-    };
-
-
     template <typename T>
     using logger_function = std::function<T (const Model&, long)>;
-
-    template <typename T>
-    logger_function<T> make_logger_function(const LoggerFunction<T>& F)
-    {
-	return [F2 = owned_ptr<LoggerFunction<T>>(F)](const Model& M,long t) mutable {return (*F2)(M,t);};
-    }
 
     // std::vector<std::function<T(const Model& M, t>>
     template <typename T>
@@ -429,7 +413,6 @@ namespace MCMC {
     public:
 	void operator()(const Model& M, long t);
 	FunctionLogger(const std::string& filename, const logger_function<std::string>& L);
-	FunctionLogger(const std::string& filename, const LoggerFunction<std::string>& L);
     };
 
     class ConcatFunction: public FunctionList<std::string>
