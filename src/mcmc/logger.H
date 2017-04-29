@@ -348,7 +348,7 @@ namespace MCMC {
     }
 
     template <typename T>
-    class TableLogger: public LoggerFunction<std::string>
+    class TableLogger
     {
 	owned_ptr<TableFunction<T> > TF;
 	char separator;
