@@ -35,7 +35,6 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <boost/shared_ptr.hpp>
 
 #include "models/parameters.H"
 #include "io.H"
@@ -57,7 +56,7 @@ namespace MCMC {
     class FileLogger : public Logger
     {
     protected:
-	boost::shared_ptr<std::ostream> log_file;
+	std::shared_ptr<std::ostream> log_file;
 
     public:
 	FileLogger* clone() const =0;
@@ -262,8 +261,8 @@ namespace MCMC {
 		return std::vector<T>(1,output);
 	    }
 
-	UnitTableFunction(const std::string& name, const LoggerFunction<T>& f)
-	    :field_name(name),F(f)
+	UnitTableFunction(const std::string& name, const std::function<T(const Model&,long)>& f)
+	    :field_name(name),F(LambdaLoggerFunction<T>(f))
 	    { }
     };
 
@@ -318,20 +317,15 @@ namespace MCMC {
 		functions.push_back(f);
 	    }
 
-	void add_field(const std::string& name, const LoggerFunction<T>& f)
-	    {
-		functions.push_back(UnitTableFunction<T>(name,f));
-	    }
-
 	void add_field(const std::string& name, const std::function<T(const Model&,long)>& f)
 	    {
-		add_field(name,LambdaLoggerFunction<T>(f));
+		functions.push_back(UnitTableFunction<T>(name,f));
 	    }
 
 	void add_field(const std::string& name, const std::function<T(const Parameters&)>& f)
 	    {
 		auto f2 = [f](const Model& M,long) { return f(dynamic_cast<const Parameters&>(M));};
-		add_field(name,LambdaLoggerFunction<T>(f2));
+		add_field(name,f2);
 	    }
 
 	std::vector<T> operator()(const Model& M, long t)
