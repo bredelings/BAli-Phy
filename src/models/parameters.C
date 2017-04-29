@@ -602,7 +602,7 @@ vector<int> edges_connecting_to_node(const Tree& T, int n)
     return branch_list_;
 }
 
-tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
+tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model_t& branch_length_model)
     :n_leaves(T.n_leaves()),
      node_labels(T.get_labels())
 {
@@ -675,15 +675,12 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T)
 
     tree_head = p->add_compute_expression( (tree_con, node_branches_array, branch_nodes_array, T.n_nodes(), T.n_branches()));
   
-    // Add a *T<b> parameter for each branch b.
     {
 	p->evaluate_expression( p->get_expression(tree_head) );
-	expression_ref mus;
-	if (p->branch_prior_type() == 0)
-	    mus = (dummy("SModel.iid_branch_length_model_exp"), p->get_expression(tree_head));
-	else if (p->branch_prior_type() == 1)
-	    mus = (dummy("SModel.iid_branch_length_model_gamma"), p->get_expression(tree_head));
-	p->evaluate_expression( perform_exp(mus) );
+	// Add a *T<b> parameter for each branch b.
+	// We can't use iid[n, gamma[0.5,2/B]] yet because we need the branches to be named *T<b>, I think.
+	expression_ref branch_lengths = (dummy("SModel.iid_branch_length_model"), p->get_expression(tree_head), branch_length_model.expression);
+	p->evaluate_expression( perform_exp(branch_lengths) );
     }
 
     // Create the parameters that hold branch lengths
@@ -1202,7 +1199,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<model_t>& IMs,
 		       const vector<int>& i_mapping,
 		       const vector<model_t>& scaleMs,
-		       const vector<int>& scale_mapping)
+		       const vector<int>& scale_mapping,
+		       const model_t& branch_length_model)
     :Model(L),
      PC(new parameters_constants(A,tt,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
      variable_alignment_( n_imodels() > 0 ),
@@ -1232,7 +1230,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     branches_from_affected_node.resize(tt.n_nodes());
 
-    TC = new tree_constants(this, tt);
+    TC = new tree_constants(this, tt, branch_length_model);
   
     t().read_tree(tt);
 
@@ -1373,8 +1371,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<model_t>& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<model_t>& scaleMs,
-		       const vector<int>& scale_mapping)
-    :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<int>{}, scaleMs, scale_mapping)
+		       const vector<int>& scale_mapping,
+		       const model_t& branch_length_model)
+    :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<int>{}, scaleMs, scale_mapping, branch_length_model)
 { }
 
 bool accept_MH(const Model& P1,const Model& P2,double rho)

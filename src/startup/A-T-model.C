@@ -137,6 +137,7 @@ string show_model(boost::property_tree::ptree p)
 void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */,
 		 const vector<model_t>& IModels, const vector<model_t>& SModels,
 		 const vector<model_t>& ScaleModels,
+		 const model_t& branch_length_model,
 		 const Parameters& P,const variables_map& args)
 {
     //-------- Log some stuff -----------//
@@ -162,6 +163,10 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */
 
     for(int i=0;i<P.n_branch_scales();i++)
 	out_cache<<"scale model"<<i+1<<" "<<show_model(ScaleModels[i].description)<<endl<<endl;
+
+    out_screen<<"T:topology ~ uniform on tree topologies\n";
+
+    out_screen<<"T:length[b] "<<show_model(branch_length_model.description)<<endl<<endl;
 
     for(int i=0;i<P.n_data_partitions();i++) {
 	int s_index = P.smodel_index_for_partition(i);
@@ -506,8 +511,20 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 	full_scale_models[i] = get_model("Double", scale_model);
     }
 
-//--------------- Create the Parameters object---------------//
-    Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping);
+    //-------------- Branch length model --------------------//
+    model_t branch_length_model;
+    if (args.count("branch-length"))
+	branch_length_model = get_model("Double", args["branch-length"].as<string>());
+
+    // Don't divide by 0 if we have 1 sequence and T.n_branches() == 0
+    else if (T.n_branches() > 0)
+    {
+	string beta = std::to_string(2.0/T.n_branches());
+	branch_length_model = get_model("Double", string("~Gamma[0.5,")+beta+"]");
+    }
+
+    //--------------- Create the Parameters object---------------//
+    Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model);
 
     //-------- Set the alignments for variable partitions ---------//
     bool unalign = args.count("unalign");
@@ -518,20 +535,11 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
     set_foreground_branches(P, T);
 
-    //------------- Set the branch prior type --------------//
-    string branch_prior = args["branch-prior"].as<string>();
-    if (branch_prior == "Exponential")  
-	P.PC->branch_prior_type = 0;
-    else if (branch_prior == "Gamma") 
-	P.PC->branch_prior_type = 1;
-    else
-	throw myexception()<<"I don't understand --branch-prior argument '"<<branch_prior<<"'.\n  Only 'Exponential' and 'Gamma' are allowed.";
-
     //------------- Write out a tree with branch numbers as branch lengths------------- //
     write_branch_numbers(out_cache, T);
 
     //-------------------- Log model -------------------------//
-    log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, P,args);
+    log_summary(out_cache, out_screen, out_both, full_imodels, full_smodels, full_scale_models, branch_length_model, P,args);
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))

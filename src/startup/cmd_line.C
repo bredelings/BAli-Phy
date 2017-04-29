@@ -114,7 +114,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("alphabet",value<vector<string> >()->composing(),"DNA, RNA, Amino-Acids, Codons, etc.")
 	("smodel,S",value<vector<string> >()->composing(),"Substitution model.")
 	("imodel,I",value<vector<string> >()->composing(),"Indel model: none, RS07, RS05.")
-	("branch-prior",value<string>()->default_value("Gamma"),"Exponential or Gamma.")
+	("branch-length",value<string>(),"Defaults to ~Gamma[0.5, 2/n_branches[T]].")
 	("scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
 	;
     options_description all("All options");

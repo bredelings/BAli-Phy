@@ -229,7 +229,7 @@ struct tree_constants: public Object
   
     tree_constants* clone() const {return new tree_constants(*this);}
 
-    tree_constants(Parameters*, const SequenceTree&);
+    tree_constants(Parameters*, const SequenceTree&, const model_t&);
 };
 
 struct parameters_constants: public Object
@@ -401,7 +401,8 @@ public:
 	       const std::vector<model_t>&,
 	       const std::vector<int>&,
 	       const std::vector<model_t>&,
-	       const std::vector<int>&);
+	       const std::vector<int>&,
+	       const model_t&);
 
     Parameters(const std::shared_ptr<module_loader>& L,
 	       const std::vector<alignment>& A, const SequenceTree&, 
@@ -410,7 +411,8 @@ public:
 	       const std::vector<model_t>&,
 	       const std::vector<int>&,
 	       const std::vector<model_t>&,
-	       const std::vector<int>&);
+	       const std::vector<int>&,
+	       const model_t&);
 };
 
 bool accept_MH(const Model& P1,const Model& P2,double rho);
