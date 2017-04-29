@@ -164,8 +164,8 @@ MCMC::logger_function<std::string> construct_table_function(owned_ptr<Model>& M,
 	if ((*P)[i].variable_alignment())
 	{
 	    TL->add_field("|A"+convertToString(i+1)+"|", [i](const Parameters& P){return to_string(alignment_length(P[i]));});
-	    TL->add_field("#indels"+convertToString(i+1), Get_Num_Indels_Function(i) );
-	    TL->add_field("|indels"+convertToString(i+1)+"|", Get_Total_Length_Indels_Function(i) );
+	    TL->add_field("#indels"+convertToString(i+1), [i](const Parameters& P){return to_string(n_indels(P[i]));});
+	    TL->add_field("|indels"+convertToString(i+1)+"|", [i](const Parameters& P){return to_string(total_length_indels(P[i]));});
 	}
 	const alphabet& a = (*P)[i].get_alphabet();
 	TL->add_field("#substs"+convertToString(i+1), Get_Num_Substitutions_Function(i, unit_cost_matrix(a)) );

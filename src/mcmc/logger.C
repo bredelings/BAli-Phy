@@ -251,18 +251,6 @@ namespace MCMC {
 	return convertToString(n_mutations(P[p], cost_matrix));
     }
 
-    string Get_Num_Indels_Function::operator()(const Model& M, long)
-    {
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-	return convertToString(n_indels(P[p]));
-    }
-
-    string Get_Total_Length_Indels_Function::operator()(const Model& M, long)
-    {
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-	return convertToString(total_length_indels(P[p]));
-    }
-//
     string Get_Total_Alignment_Length_Function::operator()(const Model& M, long)
     {
 	const Parameters& P = dynamic_cast<const Parameters&>(M);
