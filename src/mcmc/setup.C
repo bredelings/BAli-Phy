@@ -46,6 +46,7 @@ using std::endl;
 using std::string;
 using std::ostream;
 using std::map;
+using std::shared_ptr;
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
 void add_modifiable_MH_move(const string& name, const Proposal_Fn& proposal, int m_index, const vector<double>& parameters,
@@ -861,7 +862,7 @@ void do_sampling(const variables_map& args,
 		 owned_ptr<Model>& P,
 		 long int max_iterations,
 		 ostream& s_out,
-		 const vector<owned_ptr<MCMC::Logger> >& loggers)
+		 const vector<shared_ptr<MCMC::Logger> >& loggers)
 {
     using namespace MCMC;
 

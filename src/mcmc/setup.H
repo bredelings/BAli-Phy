@@ -52,5 +52,5 @@ void do_sampling(const boost::program_options::variables_map& args,
 		 owned_ptr<Model>& P,
 		 long int max_iterations,
 		 std::ostream& files,
-		 const std::vector<owned_ptr<MCMC::Logger> >&);
+		 const std::vector<std::shared_ptr<MCMC::Logger> >&);
 #endif

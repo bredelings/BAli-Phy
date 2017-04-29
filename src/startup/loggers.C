@@ -8,6 +8,8 @@
 using std::vector;
 using std::string;
 using std::set;
+using std::shared_ptr;
+using std::make_shared;
 
 using std::to_string;
 
@@ -193,10 +195,10 @@ owned_ptr<MCMC::LoggerFunction<std::string>> construct_table_function(owned_ptr<
     return TableLogger<string>(*TL);
 }
 
-vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subsample, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
+vector<shared_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subsample, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
 {
     using namespace MCMC;
-    vector<owned_ptr<Logger> > loggers;
+    vector<shared_ptr<Logger> > loggers;
 
     owned_ptr<Parameters> P = M.as<Parameters>();
 
@@ -204,7 +206,7 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subs
 
     owned_ptr<LoggerFunction<string> > TF = Subsample_Function(*construct_table_function(M, Rao_Blackwellize),subsample);
 
-    owned_ptr<Logger> s = FunctionLogger(base +".p", *TF);
+    shared_ptr<Logger> s = std::make_shared<Logger>(FunctionLogger(base +".p", *TF));
   
     // Write out scalar numerical variables (and functions of them) to C<>.p
     loggers.push_back( s );
@@ -212,7 +214,7 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subs
     if (not P) return loggers;
 
     // Write out the (scaled) tree each iteration to C<>.trees
-    loggers.push_back( FunctionLogger(base + ".trees", TreeFunction()<<"\n" ) );
+    loggers.push_back( make_shared<Logger>(FunctionLogger(base + ".trees", TreeFunction()<<"\n" ) ) );
   
     // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
     {
@@ -224,20 +226,21 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subs
 		if ((*P)[i].variable_alignment())
 		    F<<AlignmentFunction(i)<<"\n\n";
 	F<<TreeFunction()<<"\n\n";
-	loggers.push_back( FunctionLogger(base + ".MAP", MAP_Function(F)) );
+	loggers.push_back( make_shared<Logger>(FunctionLogger(base + ".MAP", MAP_Function(F))) );
     }
 
     // Write out the probability that each column is in a particular substitution component to C<>.P<>.CAT
     if (P->contains_key("log-categories"))
 	for(int i=0;i<P->n_data_partitions();i++)
-	    loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
-					      Mixture_Components_Function(i) ) );
+	    loggers.push_back( make_shared<Logger>(FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
+								  Mixture_Components_Function(i) ) ) );
 
     // Write out ancestral sequences
     if (P->contains_key("log-ancestral") and P->t().n_nodes() > 1)
 	for(int i=0;i<P->n_data_partitions();i++)
-	    loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".ancestral.fastas", 
-					      Ancestral_Sequences_Function(i) ) );
+	    loggers.push_back( make_shared<Logger>( FunctionLogger(base + ".P" + convertToString(i+1)+".ancestral.fastas", 
+								   Ancestral_Sequences_Function(i) ) ) );
+
 
     // Write out the alignments for each (variable) partition to C<>.P<>.fastas
     if (P->t().n_nodes() > 1)
@@ -251,7 +254,7 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subs
 		F<<"iterations = "<< LambdaLoggerFunction<string>(iterations)<<"\n\n";
 		F<<AlignmentFunction(i);
 		
-		loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10) ) );
+		loggers.push_back( make_shared<Logger>(FunctionLogger(filename, Subsample_Function(F,10) ) ) );
 	    }
 
     return loggers;

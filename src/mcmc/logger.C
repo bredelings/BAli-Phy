@@ -131,14 +131,6 @@ namespace MCMC {
 		}
     }
 
-    FileLogger::FileLogger(const string& filename)
-	:log_file(new checked_ofstream(filename,false))
-    { }
-
-    FileLogger::FileLogger(const std::ostream& o)
-	:log_file(new ostream(o.rdbuf()))
-    { }
-
     string TableViewerFunction::operator()(const Model& M, long t)
     {
 	vector<string> fields = function->field_names();
@@ -519,7 +511,7 @@ namespace MCMC {
     }
 
     FunctionLogger::FunctionLogger(const std::string& filename, const LoggerFunction<string>& L)
-	:FileLogger(filename),function(L)
+	:log_file(new checked_ofstream(filename,false)),function(L)
     { }
 
     string ConcatFunction::operator()(const Model& M, long t)

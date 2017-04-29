@@ -89,7 +89,7 @@ using std::vector;
 using std::map;
 using std::set;
 
-using boost::shared_ptr;
+using std::shared_ptr;
 
 #ifdef DEBUG_MEMORY
 void * operator new(size_t sz)
@@ -555,7 +555,7 @@ int main(int argc,char* argv[])
 	    int subsample = args["subsample"].as<int>();
       
 	    //---------- Open output files -----------//
-	    vector<owned_ptr<MCMC::Logger> > loggers;
+	    vector<shared_ptr<MCMC::Logger> > loggers;
 
 	    string dir_name="";
 	    if (not args.count("test")) {

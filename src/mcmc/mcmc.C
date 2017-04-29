@@ -65,6 +65,7 @@ namespace MCMC {
     using std::cerr;
     using std::clog;
     using std::string;
+    using std::shared_ptr;
     using std::ostream;
 
     void Result::inc(const Result& R) {
@@ -1126,7 +1127,7 @@ namespace MCMC {
 
 
     void mcmc_log(long iterations, long /* max_iter*/, int subsample, Model& P, ostream& s_out, 
-		  const MoveStats& /* S */, vector<owned_ptr<Logger> >& loggers)
+		  const MoveStats& /* S */, vector<shared_ptr<Logger> >& loggers)
     {
 	s_out<<"iterations = "<<iterations<<"\n";
 	clog<<"iterations = "<<iterations<<"\n";
@@ -1157,7 +1158,7 @@ namespace MCMC {
 	v1.insert(v1.end(), v2.begin(), v2.end());
     }
 
-    void Sampler::add_logger(const owned_ptr<Logger>& L)
+    void Sampler::add_logger(const shared_ptr<Logger>& L)
     {
 	loggers.push_back(L);
     }

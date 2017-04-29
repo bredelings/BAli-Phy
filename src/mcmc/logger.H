@@ -45,24 +45,7 @@ struct slice_function;
 
 namespace MCMC {
 
-    // std::function<void(const Model& M, t)>
-    struct Logger
-    {
-	virtual Logger* clone() const =0;
-	virtual void operator()(const Model& M,long t)=0;
-	virtual ~Logger() {}
-    };
-
-    class FileLogger : public Logger
-    {
-    protected:
-	std::shared_ptr<std::ostream> log_file;
-
-    public:
-	FileLogger* clone() const =0;
-	FileLogger(const std::string&);
-	FileLogger(const std::ostream&);
-    };
+    typedef std::function<void(const Model& M, long)> Logger;
 
     // std::function<T(const Model& M, t)>
     template <typename T>
@@ -460,11 +443,11 @@ namespace MCMC {
 	TableViewerFunction(const TableFunction<std::string>&);
     };
 
-    class FunctionLogger: public FileLogger
+    class FunctionLogger
     {
+	std::shared_ptr<std::ostream> log_file;
 	owned_ptr<LoggerFunction<std::string> > function;
     public:
-	FunctionLogger* clone() const {return new FunctionLogger(*this);}
 	void operator()(const Model& M, long t);
 	FunctionLogger(const std::string& filename, const LoggerFunction<std::string>& L);
     };

@@ -12,7 +12,7 @@ using std::string;
 using std::vector;
 using std::ofstream;
 using std::ostream;
-using boost::shared_ptr;
+using std::shared_ptr;
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
