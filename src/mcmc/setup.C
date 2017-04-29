@@ -29,6 +29,7 @@
 /// 
 
 #include "mcmc/setup.H"
+#include "mcmc/logger.H"
 #include "util.H"
 #include "sample.H"
 #include "alignment/alignment-util.H"

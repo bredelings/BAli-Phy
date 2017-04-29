@@ -45,8 +45,6 @@ struct slice_function;
 
 namespace MCMC {
 
-    typedef std::function<void(const Model& M, long)> Logger;
-
     template <typename T>
     using logger_function = std::function<T (const Model&, long)>;
 

@@ -40,7 +40,6 @@
 #include "rng.H"
 #include "proposals.H"
 #include "bounds.H"
-#include "logger.H"
 
 // how to have different models, with different moves
 // and possibly moves between models?
@@ -48,6 +47,8 @@
 struct slice_function;
 
 namespace MCMC {
+
+    typedef std::function<void(const Model& M, long)> Logger;
 
     //---------------------- Move Stats ---------------------//
     /// \brief Stores counts, totals, and averages for an MCMC transition kernel

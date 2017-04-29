@@ -2,6 +2,8 @@
 #include "tools/parsimony.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/dummy.H"
+#include "mcmc/mcmc.H"
+#include "mcmc/logger.H"
 
 #include <set>
 
