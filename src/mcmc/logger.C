@@ -507,12 +507,12 @@ namespace MCMC {
 
     void FunctionLogger::operator()(const Model& M, long t)
     {
-	(*log_file)<<((*function)(M,t));
+	(*log_file)<<function(M,t);
 	log_file->flush();
     }
 
     FunctionLogger::FunctionLogger(const std::string& filename, const logger_function<string>& L)
-	:log_file(new checked_ofstream(filename,false)),function(make_shared<logger_function<string>>(L))
+	:log_file(new checked_ofstream(filename,false)),function(L)
     { }
 
     string ConcatFunction::operator()(const Model& M, long t)

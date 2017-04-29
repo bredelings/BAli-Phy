@@ -54,7 +54,6 @@ namespace MCMC {
     {
 	int index;
     public:
-	GetComputationFunction* clone() const {return new GetComputationFunction(*this);}
 	expression_ref operator()(const Model& M,long t);
 	GetComputationFunction(int i);
     };
@@ -63,7 +62,6 @@ namespace MCMC {
     {
 	int p;
     public:
-	Get_Alignment_Length_Function* clone() const {return new Get_Alignment_Length_Function(*this);}
 	std::string operator()(const Model& M, long t);
 	Get_Alignment_Length_Function(int i):p(i) {}
     };
@@ -73,7 +71,6 @@ namespace MCMC {
 	int p;
 	matrix<int> cost_matrix;
     public:
-	Get_Num_Substitutions_Function* clone() const {return new Get_Num_Substitutions_Function(*this);}
 	std::string operator()(const Model& M, long t);
 	Get_Num_Substitutions_Function(int i, const matrix<int>& C):p(i), cost_matrix(C) {}
     };
@@ -82,7 +79,6 @@ namespace MCMC {
     {
 	int p;
     public:
-	Get_Num_Indels_Function* clone() const {return new Get_Num_Indels_Function(*this);}
 	std::string operator()(const Model& M, long t);
 	Get_Num_Indels_Function(int i):p(i) {}
     };
@@ -91,7 +87,6 @@ namespace MCMC {
     {
 	int p;
     public:
-	Get_Total_Length_Indels_Function* clone() const {return new Get_Total_Length_Indels_Function(*this);}
 	std::string operator()(const Model& M, long t);
 	Get_Total_Length_Indels_Function(int i):p(i) {}
     };
@@ -99,14 +94,12 @@ namespace MCMC {
     struct Get_Total_Alignment_Length_Function
     {
     public:
-	Get_Total_Alignment_Length_Function* clone() const {return new Get_Total_Alignment_Length_Function(*this);}
 	std::string operator()(const Model& M, long t);
     };
 
     struct Get_Total_Num_Substitutions_Function
     {
     public:
-	Get_Total_Num_Substitutions_Function* clone() const {return new Get_Total_Num_Substitutions_Function(*this);}
 	std::string operator()(const Model& M, long t);
     };
 
@@ -114,7 +107,6 @@ namespace MCMC {
     {
 	int p;
     public:
-	Get_Total_Num_Indels_Function* clone() const {return new Get_Total_Num_Indels_Function(*this);}
 	std::string operator()(const Model& M, long t);
     };
 
@@ -122,7 +114,6 @@ namespace MCMC {
     {
 	int p;
     public:
-	Get_Total_Total_Length_Indels_Function* clone() const {return new Get_Total_Total_Length_Indels_Function(*this);}
 	std::string operator()(const Model& M, long t);
     };
 
@@ -131,20 +122,17 @@ namespace MCMC {
 	int parameter;
 	std::vector<expression_ref> values;
 
-	Get_Rao_Blackwellized_Parameter_Function* clone() const {return new Get_Rao_Blackwellized_Parameter_Function(*this);}
 	std::string operator()(const Model& M, long t);
 	Get_Rao_Blackwellized_Parameter_Function(int p, const std::vector<expression_ref>& v);
     };
 
     struct Get_Tree_Length_Function
     {
-	Get_Tree_Length_Function* clone() const {return new Get_Tree_Length_Function(*this);}
 	std::string operator()(const Model& M, long t);
     };
 
     struct TreeFunction
     {
-	TreeFunction* clone() const {return new TreeFunction(*this);}
 	std::string operator()(const Model& M, long t);
     };
 
@@ -153,7 +141,6 @@ namespace MCMC {
 	log_double_t MAP_score;
 	std::shared_ptr<logger_function<std::string> > F;
     public:
-	MAP_Function* clone() const {return new MAP_Function(*this);}
 	std::string operator()(const Model& M, long t);
 	MAP_Function(const logger_function<std::string>& f):MAP_score(0),F(std::make_shared<logger_function<std::string>>(f)) { }
     };
@@ -162,7 +149,6 @@ namespace MCMC {
     {
 	int p;
     public:
-	AlignmentFunction* clone() const {return new AlignmentFunction(*this);}
 	std::string operator()(const Model& M, long t);
 	AlignmentFunction(int i):p(i) {}
     };
@@ -342,7 +328,6 @@ namespace MCMC {
     class Show_SModels_Function
     {
     public:
-	Show_SModels_Function* clone() const {return new Show_SModels_Function(*this);}
 	std::string operator()(const Model& M, long t);
     };
 
@@ -351,7 +336,6 @@ namespace MCMC {
 	std::shared_ptr<logger_function<std::string> > function;
 	int subsample;
     public:
-	Subsample_Function* clone() const {return new Subsample_Function(*this);}
 	std::string operator()(const Model&, long t);
 	Subsample_Function(const logger_function<std::string>& f, int i)
 	    :function(std::make_shared<logger_function<std::string>>(f)),subsample(i) {}
@@ -361,7 +345,6 @@ namespace MCMC {
     {
 	int p;
     public:
-	Mixture_Components_Function* clone() const {return new Mixture_Components_Function(*this);}
 	std::string operator()(const Model& M, long t);
 	Mixture_Components_Function(int i):p(i) {}
     };
@@ -370,7 +353,6 @@ namespace MCMC {
     {
 	int p;
     public:
-	Ancestral_Sequences_Function* clone() const {return new Ancestral_Sequences_Function(*this);}
 	std::string operator()(const Model& M, long t);
 	Ancestral_Sequences_Function(int i):p(i) {}
     };
@@ -379,7 +361,6 @@ namespace MCMC {
     {
 	std::string s;
     public:
-	String_Function* clone() const {return new String_Function(*this);}
 	std::string operator()(const Model&, long) {return s;}
 	String_Function(const std::string& s_):s(s_) {}
     };
@@ -388,7 +369,6 @@ namespace MCMC {
     {
 	owned_ptr<TableFunction<std::string> > function;
     public:
-	TableViewerFunction* clone() const {return new TableViewerFunction(*this);}
 	std::string operator()(const Model& M, long t);
 	TableViewerFunction(const TableFunction<std::string>&);
     };
@@ -396,7 +376,7 @@ namespace MCMC {
     class FunctionLogger
     {
 	std::shared_ptr<std::ostream> log_file;
-	std::shared_ptr<logger_function<std::string> > function;
+	logger_function<std::string> function;
     public:
 	void operator()(const Model& M, long t);
 	FunctionLogger(const std::string& filename, const logger_function<std::string>& L);
@@ -411,7 +391,6 @@ namespace MCMC {
 	{
 	    functions.push_back(func);
 	}
-	ConcatFunction* clone() const {return new ConcatFunction(*this);}
 	std::string operator()(const Model& M, long t);
 	ConcatFunction() {}
 	ConcatFunction(const std::string& s):separator(s) {}
