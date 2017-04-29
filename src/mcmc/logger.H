@@ -102,12 +102,6 @@ namespace MCMC {
 	    }
     };
 
-    struct IterationsFunction: public LoggerFunction<long>
-    {
-	IterationsFunction* clone() const {return new IterationsFunction(*this);}
-	long operator()(const Model&,long t) {return t;}
-    };
-
     class GetComputationFunction: public LoggerFunction<expression_ref>
     {
 	int index;
@@ -132,36 +126,6 @@ namespace MCMC {
 	ConvertToStringFunction(const LoggerFunction<T>& f)
 	    :F(f)
 	    { }
-    };
-
-    struct GetPriorFunction: public LoggerFunction<std::string>
-    {
-	GetPriorFunction* clone() const {return new GetPriorFunction(*this);}
-	std::string operator()(const Model& M, long t);
-	GetPriorFunction() {}
-    };
-
-    class GetAlignmentPriorFunction: public LoggerFunction<std::string>
-    {
-	int p;
-    public:
-	GetAlignmentPriorFunction* clone() const {return new GetAlignmentPriorFunction(*this);}
-	std::string operator()(const Model& M, long t);
-	GetAlignmentPriorFunction(int i):p(i) {}
-    };
-
-    struct GetLikelihoodFunction: public LoggerFunction<std::string>
-    {
-	GetLikelihoodFunction* clone() const {return new GetLikelihoodFunction(*this);}
-	std::string operator()(const Model& M, long t);
-	GetLikelihoodFunction() {}
-    };
-
-    struct GetProbabilityFunction: public LoggerFunction<std::string>
-    {
-	GetProbabilityFunction* clone() const {return new GetProbabilityFunction(*this);}
-	std::string operator()(const Model& M, long t);
-	GetProbabilityFunction() {}
     };
 
     struct Get_Alignment_Length_Function: public LoggerFunction<std::string>

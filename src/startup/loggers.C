@@ -9,6 +9,8 @@ using std::vector;
 using std::string;
 using std::set;
 
+using std::to_string;
+
 /// Determine the parameters of model \a M that must be sorted in order to enforce identifiability.
 vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, const vector<string>& names)
 {
@@ -98,14 +100,14 @@ owned_ptr<MCMC::LoggerFunction<std::string>> construct_table_function(owned_ptr<
     using namespace MCMC;
     owned_ptr<TableGroupFunction<string> > TL = claim(new TableGroupFunction<string>);
   
-    TL->add_field("iter", [](const Model&, long t) {return std::to_string(t);});
-    TL->add_field("prior", [](const Model& M, long) {return std::to_string(log(M.prior()));});
+    TL->add_field("iter", [](const Model&, long t) {return to_string(t);});
+    TL->add_field("prior", [](const Model& M, long) {return to_string(log(M.prior()));});
     if (P)
 	for(int i=0;i<P->n_data_partitions();i++)
 	    if ((*P)[i].variable_alignment())
-		TL->add_field("prior_A"+convertToString(i+1), [i](const Parameters& P) {return std::to_string(log(P[i].prior_alignment()));});
-    TL->add_field("likelihood", [](const Model& M, long) {return std::to_string(log(M.likelihood()));});
-    TL->add_field("logp", [](const Model& M, long) {return std::to_string(log(M.probability()));});
+		TL->add_field("prior_A"+convertToString(i+1), [i](const Parameters& P) {return to_string(log(P[i].prior_alignment()));});
+    TL->add_field("likelihood", [](const Model& M, long) {return to_string(log(M.likelihood()));});
+    TL->add_field("logp", [](const Model& M, long) {return to_string(log(M.probability()));});
   
     {
 	vector<int> logged_computations;
@@ -172,9 +174,9 @@ owned_ptr<MCMC::LoggerFunction<std::string>> construct_table_function(owned_ptr<
     // Add fields Scale<s>*|T|
     for(int i=0;i<P->n_branch_scales();i++)
     {
-	auto name = string("Scale")+std::to_string(i+1)+"*|T|";
+	auto name = string("Scale")+to_string(i+1)+"*|T|";
 
-	auto f = [i](const Parameters& P) {return std::to_string( P.branch_scale(i)*tree_length(P.t()));};
+	auto f = [i](const Parameters& P) {return to_string( P.branch_scale(i)*tree_length(P.t()));};
 
 	TL->add_field(name, f);
     }
@@ -245,7 +247,8 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(owned_ptr<Model>& M, int subs
 		string filename = base + ".P" + convertToString(i+1)+".fastas";
 		
 		ConcatFunction F;
-		F<<"iterations = "<<ConvertToStringFunction<long> ( IterationsFunction() )<<"\n\n";
+		auto iterations = [](const Model&, long t) {return to_string(t);};
+		F<<"iterations = "<< LambdaLoggerFunction<string>(iterations)<<"\n\n";
 		F<<AlignmentFunction(i);
 		
 		loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10) ) );
