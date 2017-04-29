@@ -231,7 +231,7 @@ namespace MCMC {
     class UnitTableFunction: public TableFunction<T>
     {
 	std::string field_name;
-	owned_ptr<LoggerFunction<T> > F;
+	std::shared_ptr<std::function<T (const Model&,long)>> F;
     public:
 	virtual UnitTableFunction<T>* clone() const {return new UnitTableFunction<T>(*this);}
 
@@ -245,7 +245,7 @@ namespace MCMC {
 	    }
 
 	UnitTableFunction(const std::string& name, const std::function<T(const Model&,long)>& f)
-	    :field_name(name),F(LambdaLoggerFunction<T>(f))
+	    :field_name(name),F(std::make_shared<std::function<T (const Model&,long)>>(f))
 	    { }
     };
 
