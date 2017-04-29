@@ -56,15 +56,6 @@ namespace MCMC {
 
     int total_length_indels(const data_partition& P);
 
-    struct Get_Num_Substitutions_Function
-    {
-	int p;
-	matrix<int> cost_matrix;
-    public:
-	std::string operator()(const Model& M, long t);
-	Get_Num_Substitutions_Function(int i, const matrix<int>& C):p(i), cost_matrix(C) {}
-    };
-
     struct Get_Total_Alignment_Length_Function
     {
     public:

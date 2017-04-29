@@ -4,6 +4,7 @@
 #include "computation/expression/dummy.H"
 #include "mcmc/mcmc.H"
 #include "mcmc/logger.H"
+#include "substitution/parsimony.H"
 
 #include <set>
 
@@ -168,11 +169,11 @@ MCMC::logger_function<std::string> construct_table_function(owned_ptr<Model>& M,
 	    TL->add_field("|indels"+convertToString(i+1)+"|", [i](const Parameters& P){return to_string(total_length_indels(P[i]));});
 	}
 	const alphabet& a = (*P)[i].get_alphabet();
-	TL->add_field("#substs"+convertToString(i+1), Get_Num_Substitutions_Function(i, unit_cost_matrix(a)) );
+	TL->add_field("#substs"+convertToString(i+1), [i,cost = unit_cost_matrix(a)](const Parameters& P) {return to_string(n_mutations(P[i],cost));});
 	if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
-	    TL->add_field("#substs(nuc)"+convertToString(i+1), Get_Num_Substitutions_Function(i, nucleotide_cost_matrix(*Tr)) );
+	    TL->add_field("#substs(nuc)"+convertToString(i+1), [i,cost = nucleotide_cost_matrix(*Tr)](const Parameters& P) {return to_string(n_mutations(P[i],cost));});
 	if (const Codons* C = dynamic_cast<const Codons*>(&a))
-	    TL->add_field("#substs(aa)"+convertToString(i+1), Get_Num_Substitutions_Function(i, amino_acid_cost_matrix(*C)) );
+	    TL->add_field("#substs(aa)"+convertToString(i+1), [i,cost = amino_acid_cost_matrix(*C)](const Parameters& P) {return to_string(n_mutations(P[i],cost));});
     }
 
     // Add fields Scale<s>*|T|
