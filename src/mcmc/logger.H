@@ -58,6 +58,15 @@ namespace MCMC {
 
 
     template <typename T>
+    using logger_function = std::function<T (const Model&, long)>;
+
+    template <typename T>
+    logger_function<T> make_logger_function(const LoggerFunction<T>& F)
+    {
+	return [F2 = owned_ptr<LoggerFunction<T>>(F)](const Model& M,long t) mutable {return (*F2)(M,t);};
+    }
+
+    template <typename T>
     struct LambdaLoggerFunction: public LoggerFunction<T>
     {
 	LambdaLoggerFunction* clone() const {return new LambdaLoggerFunction<T>(*this);}
@@ -75,7 +84,7 @@ namespace MCMC {
     public:
 	void add_function(const LoggerFunction<T>&F)
 	    {
-		auto func = [F2 = owned_ptr<LoggerFunction<T>>(F)](const Model& M,long t) mutable {return (*F2)(M,t);};
+		auto func = make_logger_function(F);
 		functions.push_back(std::make_shared<std::function<T(const Model&,long)>>(func));
 	    }
 
@@ -97,7 +106,7 @@ namespace MCMC {
     template <typename T>
     class ConvertToStringFunction: public LoggerFunction<std::string>
     {
-	owned_ptr<LoggerFunction<T> > F;
+	std::shared_ptr<LoggerFunction<T> > F;
     public:
 	ConvertToStringFunction* clone() const {return new ConvertToStringFunction(*this);}
 
@@ -203,11 +212,11 @@ namespace MCMC {
     class MAP_Function: public LoggerFunction<std::string>
     {
 	log_double_t MAP_score;
-	owned_ptr<LoggerFunction<std::string> > F;
+	std::shared_ptr<logger_function<std::string> > F;
     public:
 	MAP_Function* clone() const {return new MAP_Function(*this);}
 	std::string operator()(const Model& M, long t);
-	MAP_Function(const LoggerFunction<std::string>& f):MAP_score(0),F(f) { }
+	MAP_Function(const logger_function<std::string>& f):MAP_score(0),F(std::make_shared<logger_function<std::string>>(f)) { }
     };
 
     class AlignmentFunction: public LoggerFunction<std::string>
@@ -399,13 +408,15 @@ namespace MCMC {
 
     class Subsample_Function: public LoggerFunction<std::string>
     {
-	owned_ptr<LoggerFunction<std::string> > function;
+	std::shared_ptr<logger_function<std::string> > function;
 	int subsample;
     public:
 	Subsample_Function* clone() const {return new Subsample_Function(*this);}
 	std::string operator()(const Model&, long t);
 	Subsample_Function(const LoggerFunction<std::string>& f, int i)
-	    :function(f),subsample(i) {}
+	    :function(std::make_shared<logger_function<std::string>>(make_logger_function(f))),subsample(i) {}
+	Subsample_Function(const logger_function<std::string>& f, int i)
+	    :function(std::make_shared<logger_function<std::string>>(f)),subsample(i) {}
     };
 
     class Mixture_Components_Function: public LoggerFunction<std::string>
