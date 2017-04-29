@@ -94,23 +94,6 @@ namespace MCMC {
 	GetComputationFunction(int i);
     };
 
-    template <typename T>
-    class ConvertToStringFunction
-    {
-	std::shared_ptr<LoggerFunction<T> > F;
-    public:
-	ConvertToStringFunction* clone() const {return new ConvertToStringFunction(*this);}
-
-	std::string operator()(const Model& M,long t)
-	    {
-		return convertToString<T>((*F)(M,t));
-	    }
-
-	ConvertToStringFunction(const LoggerFunction<T>& f)
-	    :F(f)
-	    { }
-    };
-
     struct Get_Alignment_Length_Function
     {
 	int p;
