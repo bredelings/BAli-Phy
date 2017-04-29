@@ -152,7 +152,7 @@ namespace MCMC {
 	:function(f)
     { }
 
-    expression_ref GetComputationFunction::operator()(const Model& M, long)
+    expression_ref get_computation(const Model& M, int index)
     {
 	expression_ref result = M.evaluate(index);
 
@@ -173,10 +173,6 @@ namespace MCMC {
 	else
 	    return -1;
     }
-
-    GetComputationFunction::GetComputationFunction(int i)
-	:index(i)
-    { }
 
     int n_insertions(const pairwise_alignment_t& a)
     {

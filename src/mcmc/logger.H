@@ -50,13 +50,7 @@ namespace MCMC {
     template <typename T>
     using logger_function = std::function<T (const Model&, long)>;
 
-    class GetComputationFunction
-    {
-	int index;
-    public:
-	expression_ref operator()(const Model& M,long t);
-	GetComputationFunction(int i);
-    };
+    expression_ref get_computation(const Model& M, int index);
 
     struct Get_Alignment_Length_Function
     {

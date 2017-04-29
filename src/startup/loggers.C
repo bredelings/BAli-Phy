@@ -137,7 +137,7 @@ MCMC::logger_function<std::string> construct_table_function(owned_ptr<Model>& M,
 	{
 	    int index = logged_computations[i];
 	    string name = logged_names[i];
-	    T1.add_field(name, GetComputationFunction(index) );
+	    T1.add_field(name, [index](const Model& M, long) {return get_computation(M,index);} );
 	}
 
 	SortedTableFunction T2(T1, get_un_identifiable_indices(*M, logged_names));
