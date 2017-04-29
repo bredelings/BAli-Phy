@@ -386,6 +386,8 @@ public:
 
     int branch_scale_index(int i) const;
 
+    double branch_scale(int i) const;
+
     void branch_scale(int i,double); 
 
     void branch_scale_tricky(int i,double); 

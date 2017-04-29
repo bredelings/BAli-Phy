@@ -1071,6 +1071,11 @@ int Parameters::subst_root() const
     return get_parameter_value(subst_root_index).as_int();
 }
 
+double Parameters::branch_scale(int s) const
+{
+    return get_parameter_value(branch_scale_index(s)).as_double();;
+}
+
 void Parameters::recalc()
 {
     auto tr = triggers();
@@ -1088,7 +1093,7 @@ void Parameters::recalc()
 	    assert(PC->branch_length_indices[s].size() == t().n_branches());
 	    for(int b=0;b<t().n_branches();b++)
 	    {
-		double rate = get_parameter_value(branch_scale_index(s)).as_double();;
+		double rate = branch_scale(s);
 		double delta_t = t().branch_length(b);
 
 		context::set_parameter_value(PC->branch_length_indices[s][b], rate*delta_t);
