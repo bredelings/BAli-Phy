@@ -185,27 +185,6 @@ namespace MCMC {
 	:index(i)
     { }
 
-    string GetPriorFunction::operator()(const Model& M, long)
-    {
-	return convertToString(log(M.prior()));
-    }
-
-    string GetAlignmentPriorFunction::operator()(const Model& M, long)
-    {
-	const Parameters& P = dynamic_cast<const Parameters&>(M);
-	return convertToString(log(P[p].prior_alignment()));
-    }
-
-    string GetLikelihoodFunction::operator()(const Model& M, long)
-    {
-	return convertToString(log(M.likelihood()));
-    }
-
-    string GetProbabilityFunction::operator()(const Model& M, long)
-    {
-	return convertToString(log(M.probability()));
-    }
-
     int n_insertions(const pairwise_alignment_t& a)
     {
 	using namespace A2;
