@@ -72,6 +72,17 @@ namespace MCMC {
 	virtual ~LoggerFunction() {}
     };
 
+
+    template <typename T>
+    struct LambdaLoggerFunction: public LoggerFunction<T>
+    {
+	LambdaLoggerFunction* clone() const {return new LambdaLoggerFunction<T>(*this);}
+	std::function<T(const Model&,long)> f;
+	T operator()(const Model& M, long t) {return f(M,t);}
+	LambdaLoggerFunction(const std::function<T(const Model&,long)>& F):f(F) {}
+    };
+
+    // std::vector<std::function<T(const Model& M, t>>
     template <typename T>
     class FunctionList
     {
@@ -81,6 +92,11 @@ namespace MCMC {
 	void add_function(const LoggerFunction<T>&F)
 	    {
 		functions.push_back(F);
+	    }
+
+	void add_function(const std::function<T(const Model&,long)>& func)
+	    {
+		functions.push_back(LambdaLoggerFunction<T>(func));
 	    }
     };
 
@@ -339,6 +355,11 @@ namespace MCMC {
 	void add_field(const std::string& name, const LoggerFunction<T>& f)
 	    {
 		functions.push_back(UnitTableFunction<T>(name,f));
+	    }
+
+	void add_field(const std::string& name, const std::function<T(const Model&,long)>& f)
+	    {
+		add_field(name,LambdaLoggerFunction<T>(f));
 	    }
 
 	std::vector<T> operator()(const Model& M, long t)
