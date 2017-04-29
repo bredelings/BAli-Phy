@@ -474,11 +474,17 @@ namespace MCMC {
 
     ConcatFunction operator<<(const ConcatFunction&,const LoggerFunction<std::string>&);
 
+    ConcatFunction operator<<(const ConcatFunction&,const logger_function<std::string>&);
+
     ConcatFunction operator<<(const ConcatFunction&,const std::string& s);
 
     ConcatFunction operator<<(const LoggerFunction<std::string>&,const LoggerFunction<std::string>&);
 
+    ConcatFunction operator<<(const logger_function<std::string>&,const logger_function<std::string>&);
+
     ConcatFunction operator<<(const LoggerFunction<std::string>&,const std::string& s);
+
+    ConcatFunction operator<<(const logger_function<std::string>&,const std::string& s);
 }
 
 #endif
