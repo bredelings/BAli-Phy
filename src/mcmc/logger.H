@@ -71,16 +71,17 @@ namespace MCMC {
     class FunctionList
     {
     protected:
-	std::vector<owned_ptr<LoggerFunction<T> > > functions;
+	std::vector<std::shared_ptr<std::function<T (const Model&,long)>>> functions;
     public:
 	void add_function(const LoggerFunction<T>&F)
 	    {
-		functions.push_back(F);
+		auto func = [F2 = owned_ptr<LoggerFunction<T>>(F)](const Model& M,long t) mutable {return (*F2)(M,t);};
+		functions.push_back(std::make_shared<std::function<T(const Model&,long)>>(func));
 	    }
 
 	void add_function(const std::function<T(const Model&,long)>& func)
 	    {
-		functions.push_back(LambdaLoggerFunction<T>(func));
+		functions.push_back(std::make_shared<std::function<T(const Model&,long)>>(func));
 	    }
     };
 
