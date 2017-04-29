@@ -391,14 +391,14 @@ namespace MCMC {
 	    { }
     };
 
-    class Show_SModels_Function: public LoggerFunction<std::string>
+    class Show_SModels_Function
     {
     public:
 	Show_SModels_Function* clone() const {return new Show_SModels_Function(*this);}
 	std::string operator()(const Model& M, long t);
     };
 
-    class Subsample_Function: public LoggerFunction<std::string>
+    class Subsample_Function
     {
 	std::shared_ptr<logger_function<std::string> > function;
 	int subsample;
@@ -411,7 +411,7 @@ namespace MCMC {
 	    :function(std::make_shared<logger_function<std::string>>(f)),subsample(i) {}
     };
 
-    class Mixture_Components_Function: public LoggerFunction<std::string>
+    class Mixture_Components_Function
     {
 	int p;
     public:
@@ -420,7 +420,7 @@ namespace MCMC {
 	Mixture_Components_Function(int i):p(i) {}
     };
 
-    class Ancestral_Sequences_Function: public LoggerFunction<std::string>
+    class Ancestral_Sequences_Function
     {
 	int p;
     public:
@@ -429,7 +429,7 @@ namespace MCMC {
 	Ancestral_Sequences_Function(int i):p(i) {}
     };
 
-    class String_Function: public LoggerFunction<std::string>
+    class String_Function
     {
 	std::string s;
     public:
