@@ -52,13 +52,7 @@ namespace MCMC {
 
     expression_ref get_computation(const Model& M, int index);
 
-    struct Get_Alignment_Length_Function
-    {
-	int p;
-    public:
-	std::string operator()(const Model& M, long t);
-	Get_Alignment_Length_Function(int i):p(i) {}
-    };
+    int alignment_length(const data_partition& P);
 
     struct Get_Num_Substitutions_Function
     {
