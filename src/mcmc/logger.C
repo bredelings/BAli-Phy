@@ -419,7 +419,7 @@ namespace MCMC {
     {
 	const Parameters& P = dynamic_cast<const Parameters&>(M);
 
-	return convertToString( mu_scale(P) * tree_length(P.t()) );
+	return convertToString( tree_length(P.t()) );
     }
 
     string TreeFunction::operator()(const Model& M, long)
