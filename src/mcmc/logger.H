@@ -200,7 +200,7 @@ namespace MCMC {
 	std::string operator()(const Model& M, long t);
     };
 
-    class MAP_Function: public LoggerFunction<std::string>
+    class MAP_Function
     {
 	log_double_t MAP_score;
 	std::shared_ptr<logger_function<std::string> > F;
@@ -210,7 +210,7 @@ namespace MCMC {
 	MAP_Function(const logger_function<std::string>& f):MAP_score(0),F(std::make_shared<logger_function<std::string>>(f)) { }
     };
 
-    class AlignmentFunction: public LoggerFunction<std::string>
+    class AlignmentFunction
     {
 	int p;
     public:
@@ -220,11 +220,12 @@ namespace MCMC {
     };
 
     template <typename T>
-    class TableFunction: public LoggerFunction<std::vector<T> >
+    class TableFunction
     {
     public:
 	virtual TableFunction* clone() const =0;
 	virtual int n_fields() const =0;
+	virtual std::vector<T> operator()(const Model&,long)=0;
 	virtual std::vector<std::string> field_names() const =0;
     };
 
