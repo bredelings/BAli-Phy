@@ -11,6 +11,11 @@ using boost::property_tree::ptree;
 // TODO: allow refering to other parameters in parameter values (default values and otherwise)
 // TODO: move stuff (e.g. logging) out of models
 // TODO: allow specifying branch priors to the --branch-prior argument.  (Remove the Gamma default, and calculate one).
+// TODO: clean up loggers.{H,C} to use lambda functions
+// TODO:  print out scale<i>*|T|
+// TODO: clean up transition kernels to use lambda functions?
+// TODO: remove triggers
+// TODO: find some way to run under the prior?
 
 const vector< vector<vector<string>> > all_default_arguments = 
 {
