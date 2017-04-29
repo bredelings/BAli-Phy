@@ -168,6 +168,20 @@ owned_ptr<MCMC::LoggerFunction<std::string>> construct_table_function(owned_ptr<
 	if (const Codons* C = dynamic_cast<const Codons*>(&a))
 	    TL->add_field("#substs(aa)"+convertToString(i+1), Get_Num_Substitutions_Function(i, amino_acid_cost_matrix(*C)) );
     }
+
+    // Add fields Scale<s>*|T|
+    for(int i=0;i<P->n_branch_scales();i++)
+    {
+	auto name = string("Scale")+std::to_string(i+1)+"*|T|";
+
+	auto f = [i](const Model& M, long)
+	         {
+		     const Parameters& P = dynamic_cast<const Parameters&>(M);
+		     return convertToString( P.branch_scale(i)*tree_length(P.t()));
+		 };
+
+	TL->add_field(name, f);
+    }
   
     if (P->variable_alignment()) {
 	TL->add_field("|A|", Get_Total_Alignment_Length_Function() );
