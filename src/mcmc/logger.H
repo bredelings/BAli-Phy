@@ -73,12 +73,6 @@ namespace MCMC {
     protected:
 	std::vector<std::shared_ptr<std::function<T (const Model&,long)>>> functions;
     public:
-	void add_function(const LoggerFunction<T>&F)
-	    {
-		auto func = make_logger_function(F);
-		functions.push_back(std::make_shared<std::function<T(const Model&,long)>>(func));
-	    }
-
 	void add_function(const std::function<T(const Model&,long)>& func)
 	    {
 		functions.push_back(std::make_shared<std::function<T(const Model&,long)>>(func));
@@ -388,8 +382,6 @@ namespace MCMC {
     public:
 	Subsample_Function* clone() const {return new Subsample_Function(*this);}
 	std::string operator()(const Model&, long t);
-	Subsample_Function(const LoggerFunction<std::string>& f, int i)
-	    :function(std::make_shared<logger_function<std::string>>(make_logger_function(f))),subsample(i) {}
 	Subsample_Function(const logger_function<std::string>& f, int i)
 	    :function(std::make_shared<logger_function<std::string>>(f)),subsample(i) {}
     };
@@ -421,7 +413,7 @@ namespace MCMC {
 	String_Function(const std::string& s_):s(s_) {}
     };
 
-    class TableViewerFunction: public LoggerFunction<std::string>
+    class TableViewerFunction
     {
 	owned_ptr<TableFunction<std::string> > function;
     public:
@@ -440,7 +432,7 @@ namespace MCMC {
 	FunctionLogger(const std::string& filename, const LoggerFunction<std::string>& L);
     };
 
-    class ConcatFunction: public LoggerFunction<std::string>, public FunctionList<std::string>
+    class ConcatFunction: public FunctionList<std::string>
     {
 	std::string separator;
     public:
@@ -450,23 +442,15 @@ namespace MCMC {
 	ConcatFunction(const std::string& s):separator(s) {}
     };
 
-    ConcatFunction& operator<<(ConcatFunction&,const LoggerFunction<std::string>&);
-
     ConcatFunction& operator<<(ConcatFunction&,const logger_function<std::string>&);
 
     ConcatFunction& operator<<(ConcatFunction&,const std::string& s);
-
-    ConcatFunction operator<<(const ConcatFunction&,const LoggerFunction<std::string>&);
 
     ConcatFunction operator<<(const ConcatFunction&,const logger_function<std::string>&);
 
     ConcatFunction operator<<(const ConcatFunction&,const std::string& s);
 
-    ConcatFunction operator<<(const LoggerFunction<std::string>&,const LoggerFunction<std::string>&);
-
     ConcatFunction operator<<(const logger_function<std::string>&,const logger_function<std::string>&);
-
-    ConcatFunction operator<<(const LoggerFunction<std::string>&,const std::string& s);
 
     ConcatFunction operator<<(const logger_function<std::string>&,const std::string& s);
 }

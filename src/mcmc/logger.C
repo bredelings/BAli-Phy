@@ -532,11 +532,6 @@ namespace MCMC {
 	return output;
     }
 
-    ConcatFunction& operator<<(ConcatFunction& CF,const LoggerFunction<string>& F)
-    {
-	CF.add_function(F);
-	return CF;
-    }
 
     ConcatFunction& operator<<(ConcatFunction& CF,const logger_function<string>& F)
     {
@@ -548,12 +543,6 @@ namespace MCMC {
     {
 	CF.add_function( String_Function(s));
 	return CF;
-    }
-
-    ConcatFunction operator<<(const ConcatFunction& CF,const LoggerFunction<string>& F)
-    {
-	ConcatFunction CF2 = CF;
-	return CF2<<F;
     }
 
     ConcatFunction operator<<(const ConcatFunction& CF,const logger_function<string>& F)
@@ -568,24 +557,10 @@ namespace MCMC {
 	return CF2<<s;
     }
 
-    ConcatFunction operator<<(const LoggerFunction<string>& F1,const LoggerFunction<string>& F2)
-    {
-	ConcatFunction CF;
-	CF<<F1<<F2;
-	return CF;
-    }
-
     ConcatFunction operator<<(const logger_function<string>& F1,const logger_function<string>& F2)
     {
 	ConcatFunction CF;
 	CF<<F1<<F2;
-	return CF;
-    }
-
-    ConcatFunction operator<<(const LoggerFunction<string>& F,const string& s)
-    {
-	ConcatFunction CF;
-	CF<<F<<s;
 	return CF;
     }
 
