@@ -85,7 +85,7 @@ namespace MCMC {
 	    }
     };
 
-    class GetComputationFunction: public LoggerFunction<expression_ref>
+    class GetComputationFunction
     {
 	int index;
     public:
@@ -95,7 +95,7 @@ namespace MCMC {
     };
 
     template <typename T>
-    class ConvertToStringFunction: public LoggerFunction<std::string>
+    class ConvertToStringFunction
     {
 	std::shared_ptr<LoggerFunction<T> > F;
     public:
@@ -111,7 +111,7 @@ namespace MCMC {
 	    { }
     };
 
-    struct Get_Alignment_Length_Function: public LoggerFunction<std::string>
+    struct Get_Alignment_Length_Function
     {
 	int p;
     public:
@@ -120,7 +120,7 @@ namespace MCMC {
 	Get_Alignment_Length_Function(int i):p(i) {}
     };
 
-    struct Get_Num_Substitutions_Function: public LoggerFunction<std::string>
+    struct Get_Num_Substitutions_Function
     {
 	int p;
 	matrix<int> cost_matrix;
@@ -130,7 +130,7 @@ namespace MCMC {
 	Get_Num_Substitutions_Function(int i, const matrix<int>& C):p(i), cost_matrix(C) {}
     };
 
-    struct Get_Num_Indels_Function: public LoggerFunction<std::string>
+    struct Get_Num_Indels_Function
     {
 	int p;
     public:
@@ -139,7 +139,7 @@ namespace MCMC {
 	Get_Num_Indels_Function(int i):p(i) {}
     };
 
-    struct Get_Total_Length_Indels_Function: public LoggerFunction<std::string>
+    struct Get_Total_Length_Indels_Function
     {
 	int p;
     public:
@@ -148,21 +148,21 @@ namespace MCMC {
 	Get_Total_Length_Indels_Function(int i):p(i) {}
     };
 
-    struct Get_Total_Alignment_Length_Function: public LoggerFunction<std::string>
+    struct Get_Total_Alignment_Length_Function
     {
     public:
 	Get_Total_Alignment_Length_Function* clone() const {return new Get_Total_Alignment_Length_Function(*this);}
 	std::string operator()(const Model& M, long t);
     };
 
-    struct Get_Total_Num_Substitutions_Function: public LoggerFunction<std::string>
+    struct Get_Total_Num_Substitutions_Function
     {
     public:
 	Get_Total_Num_Substitutions_Function* clone() const {return new Get_Total_Num_Substitutions_Function(*this);}
 	std::string operator()(const Model& M, long t);
     };
 
-    struct Get_Total_Num_Indels_Function: public LoggerFunction<std::string>
+    struct Get_Total_Num_Indels_Function
     {
 	int p;
     public:
@@ -170,7 +170,7 @@ namespace MCMC {
 	std::string operator()(const Model& M, long t);
     };
 
-    struct Get_Total_Total_Length_Indels_Function: public LoggerFunction<std::string>
+    struct Get_Total_Total_Length_Indels_Function
     {
 	int p;
     public:
@@ -178,7 +178,7 @@ namespace MCMC {
 	std::string operator()(const Model& M, long t);
     };
 
-    struct Get_Rao_Blackwellized_Parameter_Function: public LoggerFunction<std::string>
+    struct Get_Rao_Blackwellized_Parameter_Function
     {
 	int parameter;
 	std::vector<expression_ref> values;
@@ -188,13 +188,13 @@ namespace MCMC {
 	Get_Rao_Blackwellized_Parameter_Function(int p, const std::vector<expression_ref>& v);
     };
 
-    struct Get_Tree_Length_Function: public LoggerFunction<std::string>
+    struct Get_Tree_Length_Function
     {
 	Get_Tree_Length_Function* clone() const {return new Get_Tree_Length_Function(*this);}
 	std::string operator()(const Model& M, long t);
     };
 
-    struct TreeFunction: public LoggerFunction<std::string>
+    struct TreeFunction
     {
 	TreeFunction* clone() const {return new TreeFunction(*this);}
 	std::string operator()(const Model& M, long t);
