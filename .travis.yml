@@ -1,0 +1,19 @@
+dist: trusty
+sudo: required
+language: C++
+before_install:
+    - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+    - sudo apt-get update -y -qq
+    - sudo apt-get install -y g++-5
+compiler:
+    - g++
+    - clang++
+install:
+    - sh bootstrap.sh
+    - mkdir bali-phy-build
+script:
+    - cd bali-phy-build
+    - ../configure --prefix=$HOME/local
+    - make -j3 install
+    - make check
+
