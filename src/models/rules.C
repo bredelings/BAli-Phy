@@ -8,9 +8,8 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
-// TODO: allow running with --scale=1 to get: time bali-phy 25-muscle.fasta --seed=0 --iter=20 --branch-length=~Uniform[0,100] --scale=1
-//  -- can we make the scale index return -1 if there's no parameter to adjust?
-//  -- likewise for branch lengths?
+// TODO: allow running with --scale=1 and --branch-length=1?
+// TODO: Fix pre-burnin output.
 // TODO: allow referring to other parameters in parameter values (default values and otherwise)
 // TODO: remove triggers
 // TODO: move stuff (e.g. logging) out of models
