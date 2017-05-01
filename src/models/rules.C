@@ -8,15 +8,15 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
-// TODO: allow referring to other parameters in parameter values (default values and otherwise)
-// TODO: move stuff (e.g. logging) out of models
-// TODO: clean up loggers.{H,C} to use lambda functions
-// TODO: clean up transition kernels to use lambda functions?
-// TODO: remove triggers
-// TODO: find some way to run under the prior?
 // TODO: allow running with --scale=1 to get: time bali-phy 25-muscle.fasta --seed=0 --iter=20 --branch-length=~Uniform[0,100] --scale=1
 //  -- can we make the scale index return -1 if there's no parameter to adjust?
 //  -- likewise for branch lengths?
+// TODO: allow referring to other parameters in parameter values (default values and otherwise)
+// TODO: remove triggers
+// TODO: move stuff (e.g. logging) out of models
+// TODO: clean up loggers.{H,C} to use lambda functions
+// TODO: clean up transition kernels to use lambda functions?
+// TODO: find some way to run under the prior?
 
 const vector< vector<vector<string>> > all_default_arguments = 
 {
