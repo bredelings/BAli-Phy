@@ -4,7 +4,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/optional.hpp>
 #include <set>
-#include <vector>
+#include <list>
 #include <map>
 
 typedef boost::property_tree::ptree term_t;
@@ -13,13 +13,14 @@ class equations
 {
     bool valid = true;
 
-    std::vector<std::pair<std::set<std::string>,boost::optional<term_t>>> values;
+    // Use a list here so that we can modify the list without invalidating iterators.
+    std::list<std::pair<std::set<std::string>,boost::optional<term_t>>> values;
 
     bool has_record(const std::string& x) const;
 
-    std::vector<std::pair<std::set<std::string>, boost::optional<term_t>>>::const_iterator find_record(const std::string& x) const;
+    std::list<std::pair<std::set<std::string>, boost::optional<term_t>>>::const_iterator find_record(const std::string& x) const;
 
-    std::vector<std::pair<std::set<std::string>, boost::optional<term_t>>>::iterator find_record(const std::string& x);
+    std::list<std::pair<std::set<std::string>, boost::optional<term_t>>>::iterator find_record(const std::string& x);
 
     void remove_record_for(const std::string& x);
 
@@ -31,7 +32,7 @@ public:
 
     bool unify(const term_t& T, const term_t& U);
 
-    const std::vector<std::pair<std::set<std::string>,boost::optional<term_t>>>& get_values() const;
+    const std::list<std::pair<std::set<std::string>,boost::optional<term_t>>>& get_values() const;
 
     void eliminate_variable(const std::string&);
 

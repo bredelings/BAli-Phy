@@ -1,9 +1,8 @@
 #include "unification.H"
-#include <vector>
 #include <set>
 #include "util.H"
 
-using std::vector;
+using std::list;
 using std::pair;
 using std::map;
 using std::set;
@@ -62,12 +61,12 @@ void equations::remove_record_for(const std::string& x)
     std::abort();
 }
 
-const vector<pair<set<string>,optional<term_t>>>& equations::get_values() const
+const list<pair<set<string>,optional<term_t>>>& equations::get_values() const
 {
     return values;
 }
 
-vector<pair<set<string>,optional<term_t>>>::const_iterator equations::find_record(const std::string& x) const
+list<pair<set<string>,optional<term_t>>>::const_iterator equations::find_record(const std::string& x) const
 {
     for(auto it = values.begin(); it != values.end(); it++)
 	if (it->first.count(x))
@@ -76,7 +75,7 @@ vector<pair<set<string>,optional<term_t>>>::const_iterator equations::find_recor
     std::abort();
 }
 
-vector<pair<set<string>,optional<term_t>>>::iterator equations::find_record(const std::string& x)
+list<pair<set<string>,optional<term_t>>>::iterator equations::find_record(const std::string& x)
 {
     for(auto it = values.begin(); it != values.end(); it++)
 	if (it->first.count(x))
@@ -351,6 +350,7 @@ bool equations::unify(const term_t& T1, const term_t& T2)
     if (not valid) return false;
 
     // 7. Walk the arguments (children) of the T1 and T2 and unify them.
+    //    -- but unifying things might result in reallocating the vector, and thus invalidating the entries.
     auto x = T1.begin();
     auto y = T2.begin();
     for(int i=0; i<T1.size(); i++, x++, y++)
