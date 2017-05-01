@@ -8,7 +8,7 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
-// TODO: allow running with --scale=1 and --branch-length=1?
+// TODO: change scale_means_only -> scale_all_branches
 // TODO: Fix pre-burnin output.
 // TODO: allow referring to other parameters in parameter values (default values and otherwise)
 // TODO: remove triggers
