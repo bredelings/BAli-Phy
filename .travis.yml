@@ -17,30 +17,30 @@ cache: apt
 
 language: C++
 before_install:
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      	 sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
-      	 sudo apt-get update -y -qq;
-      	 sudo apt-get install -y g++-5;
-	 sudo update-alternatives --install /usr/bin/g++  g++  /usr/bin/g++-5  90;
-	 sudo update-alternatives --install /usr/bin/gcc  gcc  /usr/bin/gcc-5  90;
-      fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      	  brew update;
-	  brew uninstall libtool && brew install libtool;
-      fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
+      sudo apt-get update -y -qq;
+      sudo apt-get install -y g++-5;
+      sudo update-alternatives --install /usr/bin/g++  g++  /usr/bin/g++-5  90;
+      sudo update-alternatives --install /usr/bin/gcc  gcc  /usr/bin/gcc-5  90;
+    fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew update;
+      brew uninstall libtool && brew install libtool;
+    fi
 
 compiler:
-    - g++
-    - clang++
+  - g++
+  - clang++
 install:
-    - sh bootstrap.sh
-    - mkdir bali-phy-build
+  - sh bootstrap.sh
+  - mkdir bali-phy-build
 script:
-    - cd bali-phy-build
-    - ../configure --prefix=$HOME/local
-    - make -j3 install
-    - make check
+  - cd bali-phy-build
+  - ../configure --prefix=$HOME/local
+  - make -j3 install
+  - make check
 os:
-    - linux
-    - osx
+  - linux
+  - osx
 
