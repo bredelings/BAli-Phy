@@ -15,7 +15,7 @@ Compiling
 
 You will need a C++ compiler that understands C++14.  These include
  * gcc 5 (or higher)
- * clang 3.9 (or higher)
+ * clang 3.5 (or higher)
 
 Build
 -----
