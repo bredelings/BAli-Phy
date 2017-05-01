@@ -181,7 +181,7 @@ constexpr log_double_t pow(log_double_t x,double p)
     return x;
 }
 
-constexpr bool different(log_double_t x,log_double_t y,double tol=1.0e-9)
+bool different(log_double_t x,log_double_t y,double tol=1.0e-9)
 {
     double diff = log(x) - log(y);
 
