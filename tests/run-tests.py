@@ -5,6 +5,7 @@ import subprocess
 
 NUM_TESTS = 0
 FAILED_TESTS = []
+XFAILED_TESTS = []
 
 def debug(m):
     sys.stderr.write('DEBUG: ')
@@ -150,7 +151,9 @@ def check_test_output(test_dir, name):
             obtained_error = codecs.open(obtained_errorf, 'r').read()
             message = obtained_error
 
-    return (failures,message)
+    xfail = os.path.exists(os.path.join(test_dir,'xfail'))
+
+    return (failures,xfail,message)
 
 def perform_test(data_dir, top_test_dir,test_subdir,cmd):
     import re
@@ -163,13 +166,17 @@ def perform_test(data_dir, top_test_dir,test_subdir,cmd):
     obt_likef = os.path.join(test_dir, 'obtained-likelihood')
 
     run_test_cmd(test_dir, data_dir, cmd)
-    failures,message = check_test_output(test_dir, test_subdir)
+    failures,xfail,message = check_test_output(test_dir, test_subdir)
     if not failures:
         print("... ok")
-    else:
+    elif failures:
         print("... FAIL! ",end="")
+        if xfail:
+            print("(expected) ",end="")
+            XFAILED_TESTS.insert(-1,test_subdir)
+        else:
+            FAILED_TESTS.insert(-1,test_subdir)
         print(failures)
-        FAILED_TESTS.insert(-1,test_subdir)
         if message:
             message = re.sub('^','    ',message)
             message = message.rstrip('\n')+"\n"
@@ -195,4 +202,8 @@ if __name__ == '__main__':
 
     for test_subdir in get_test_dirs(top_test_dir):
         perform_test(data_dir, top_test_dir, test_subdir, cmd)
-    print("Performed {} tests, {} failures".format(NUM_TESTS, len(FAILED_TESTS)))
+    print("Performed {} tests, {} expected failures, {} unexpected failures".format(NUM_TESTS, len(XFAILED_TESTS), len(FAILED_TESTS)))
+    if (len(FAILED_TESTS) > 0):
+        exit(1)
+    else:
+        exit(0)
