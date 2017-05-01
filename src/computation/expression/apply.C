@@ -6,6 +6,8 @@ using std::vector;
 
 expression_ref apply_expression(const expression_ref& R,const expression_ref& arg)
 {
+    assert(R);
+    assert(arg);
     if (R.head().is_a<Apply>())
 	return R+arg;
     else
