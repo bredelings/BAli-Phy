@@ -262,16 +262,21 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
     }
 }
 
-MCMC::MoveAll get_scale_MH_moves(owned_ptr<Model>& P)
+bool scale_is_modifiable(const Model& M, int s)
 {
-    MCMC::MoveAll MH_moves("parameters:scale:MH");
-    if (P.as<Parameters>())
-    {
-	for(int i=0;i<P.as<Parameters>()->n_branch_scales();i++)
-	    add_MH_move(*P, log_scaled(Between(-20,20,shift_cauchy)),    "Scale"+convertToString(i+1),
-			"mu_scale_sigma",     0.6,  MH_moves);
-    }
-    return MH_moves;
+    auto& P = dynamic_cast<const Parameters&>(M);
+    return P.parameter_is_modifiable(P.branch_scale_index(s));
+}
+
+bool all_scales_modifiable(const Model& M)
+{
+    auto& P = dynamic_cast<const Parameters&>(M);
+
+    for(int s=0;s<P.n_branch_scales();s++)
+	if (not scale_is_modifiable(M,s))
+	    return false;
+
+    return true;
 }
 
 //FIXME - how to make a number of variants with certain things fixed, for burn-in?
@@ -289,7 +294,8 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
 
     if (Parameters* P = dynamic_cast<Parameters*>(&M))
 	for(int i=0;i<P->n_branch_scales();i++)
-	    add_MH_move(M, log_scaled(Between(-20,20,shift_cauchy)),    "Scale"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
+	    if (scale_is_modifiable(M, i))
+		add_MH_move(M, log_scaled(Between(-20,20,shift_cauchy)),    "Scale"+convertToString(i+1),             "Scale_scale_sigma",     0.6,  MH_moves);
 
 
     /*
@@ -317,10 +323,8 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
       add_MH_move(P, log_scaled(Between(-20,0,shift_cauchy)),    "*.Beta.varOverMu", "beta.Var_scale_sigma",  0.25, MH_moves);
       add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.LogNormal.sigma_over_mu","log-normal.sigma_scale_sigma",  0.25, MH_moves);
     */
-    if (dynamic_cast<Parameters*>(&M))
-	MH_moves.add(4,MCMC::SingleMove(scale_means_only,
-					"scale_means_only", "mean")
-	    );
+    if (dynamic_cast<Parameters*>(&M) and all_scales_modifiable(M))
+	MH_moves.add(4,MCMC::SingleMove(scale_means_only, "scale_Scales_only", "scale"));
   
     add_MH_move(M, shift_delta,                  "b*.delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
     add_MH_move(M, Between(-40,0,shift_cauchy),  "*.logLambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
@@ -360,7 +364,8 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
 {
     MCMC::MoveAll slice_moves("parameters:scale:MH");
     for(int i=0;i<P.n_branch_scales();i++)
-	add_slice_moves(P, "Scale"+convertToString(i+1), slice_moves);
+	if (scale_is_modifiable(P,i))
+	    add_slice_moves(P, "Scale"+convertToString(i+1), slice_moves);
     return slice_moves;
 }
 
@@ -376,9 +381,11 @@ MCMC::MoveAll get_parameter_slice_moves(Model& M)
     {
 	// scale parameters - do we need this?
 	for(int i=0;i<P->n_branch_scales();i++)
-	    add_slice_moves(*P, "*.mu"+convertToString(i+1), slice_moves);
+	    if (scale_is_modifiable(M,i))
+		add_slice_moves(*P, "Scale"+convertToString(i+1), slice_moves);
 
-	slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));
+	if (all_scales_modifiable(M))
+	    slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_Scales_only_slice",0.6));
     }
 
     // Add slice moves for continuous 1D distributions
@@ -691,6 +698,19 @@ double fraction_non_gap(const Parameters& P)
     return total_char/total_cell;
 }
 
+void log_preburnin(ostream& o, const Model& M, const string& name, int iter)
+{
+    auto& P = dynamic_cast<const Parameters&>(M);
+
+    o<<" "<<name<<" #"<<iter+1<<"   prior = "<<P.prior()<<"   likelihood = "<<P.likelihood();
+    o<<"   |T| = "<<tree_length(P.t());
+    for(int s=0;s<P.n_branch_scales();s++)
+	o<<"   Scale"<<s+1<<" = "<<P.branch_scale(s);
+    o<<std::endl;
+    show_parameters(o, P, false);
+}
+
+
 void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 		   ostream& out_log,ostream& out_both)
 {
@@ -722,14 +742,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 	enable_disable_transition_kernels(pre_burnin,args);
 
 	for(int i=0;i<3;i++) {
-	    out_both<<" Tree size #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
-	    out_both<<"   |T| = "<<Get_Tree_Length_Function()(*P,0);
-	    for(int j=0;j<P.as<Parameters>()->n_branch_scales();j++)
-	    {
-		Parameters& PP = *P.as<Parameters>();
-		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_scale_index(j)).as_double()<<endl;
-	    }
-	    show_parameters(out_log,*P,false);
+	    log_preburnin(out_both, *P, "Tree size", i);
 	    pre_burnin.iterate(P,Stats);
 	}
     }
@@ -739,25 +752,16 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
     {
 	MoveAll pre_burnin("pre-burnin");
 	pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
-	pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
-					  "scale_means_only","mean"));
-	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths,
-				    "walk_tree_sample_branch_lengths","tree:lengths"));
-	pre_burnin.add(1,SingleMove(sample_SPR_search_all,"SPR_search_all",
-				    "tree:topology:lengths"));
+	if (all_scales_modifiable(*P))
+	    pre_burnin.add(4,MCMC::SingleMove(scale_means_only, "scale_Scales_only","scale"));
+	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths, "walk_tree_sample_branch_lengths","tree:lengths"));
+	pre_burnin.add(1,SingleMove(sample_SPR_search_all,"SPR_search_all", "tree:topology:lengths"));
 
 	// enable and disable moves
 	enable_disable_transition_kernels(pre_burnin,args);
 
 	for(int i=0;i<n_pre_burnin;i++) {
-	    out_both<<" SPR #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
-	    out_both<<"   |T| = "<<Get_Tree_Length_Function()(*P,0);
-	    for(int j=0;j<P.as<Parameters>()->n_branch_scales();j++)
-	    {
-		Parameters& PP = *P.as<Parameters>();
-		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_scale_index(j)).as_double()<<endl;
-	    }
-	    show_parameters(out_log,*P,false);
+	    log_preburnin(out_both, *P, "SPR", i);
 	    pre_burnin.iterate(P,Stats);
 	}
 	out_both<<endl;
@@ -768,24 +772,16 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 	MoveAll pre_burnin("pre-burnin");
 
 	pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
-	pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
-					  "scale_means_only","mean"));
-	pre_burnin.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,
-				    "NNI_and_lengths","tree:topology:lengths"));
+	if (all_scales_modifiable(*P))
+	    pre_burnin.add(4,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
+	pre_burnin.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths, "NNI_and_lengths","tree:topology:lengths"));
 
 	// enable and disable moves
 	enable_disable_transition_kernels(pre_burnin,args);
 
 	int n_pre_burnin2 = n_pre_burnin + (int)log(P.as<Parameters>()->t().n_leaves());
 	for(int i=0;i<n_pre_burnin2;i++) {
-	    out_both<<" NNI #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
-	    out_both<<"   |T| = "<<Get_Tree_Length_Function()(*P,0);
-	    for(int j=0;j<P.as<Parameters>()->n_branch_scales();j++)
-	    {
-		Parameters& PP = *P.as<Parameters>();
-		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_scale_index(j)).as_double()<<endl;
-	    }
-	    show_parameters(out_log,*P,false);
+	    log_preburnin(out_both, *P, "NNI", i);
 	    pre_burnin.iterate(P,Stats);
 	}
     }
@@ -806,12 +802,10 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 
 	MoveAll pre_burnin("pre-burnin+A");
 	pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
-	pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
-					  "scale_means_only", "mean"));
-	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths,
-				    "walk_tree_sample_branch_lengths", "tree:lengths"));
-	pre_burnin.add(1,SingleMove(sample_SPR_A_search_all,"SPR_search_all",
-				    "tree:topology:lengths"));
+	if (all_scales_modifiable(*P))
+	    pre_burnin.add(4,MCMC::SingleMove(scale_means_only, "scale_means_only", "mean"));
+	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths, "walk_tree_sample_branch_lengths", "tree:lengths"));
+	pre_burnin.add(1,SingleMove(sample_SPR_A_search_all,"SPR_search_all", "tree:topology:lengths"));
 
 	// enable and disable moves
 	enable_disable_transition_kernels(pre_burnin,args);
