@@ -164,9 +164,11 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */
     for(int i=0;i<P.n_branch_scales();i++)
 	out_cache<<"scale model"<<i+1<<" "<<show_model(ScaleModels[i].description)<<endl<<endl;
 
-    out_screen<<"T:topology ~ uniform on tree topologies\n";
+    if (P.t().n_branches() > 1)
+	out_screen<<"T:topology ~ uniform on tree topologies\n";
 
-    out_screen<<"T:length[b] "<<show_model(branch_length_model.description)<<endl<<endl;
+    if (P.t().n_branches() > 0)
+	out_screen<<"T:length[b] "<<show_model(branch_length_model.description)<<endl<<endl;
 
     for(int i=0;i<P.n_data_partitions();i++) {
 	int s_index = P.smodel_index_for_partition(i);

@@ -675,6 +675,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 
     tree_head = p->add_compute_expression( (tree_con, node_branches_array, branch_nodes_array, T.n_nodes(), T.n_branches()));
   
+    if (T.n_branches() > 0)
     {
 	p->evaluate_expression( p->get_expression(tree_head) );
 	// Add a *T<b> parameter for each branch b.
