@@ -1,6 +1,11 @@
 [![Build Status](https://www.travis-ci.org/bredelings/BAli-Phy.svg?branch=master
 )](https://www.travis-ci.org/bredelings/BAli-Phy)
 
+Install
+-------
+
+Please visit the [releases page](http://www.bali-phy.org/download.php) to official binaries.
+
 Documentation
 ------------
 
@@ -13,9 +18,10 @@ The Manual describes [how to install](http://bali-phy.org/README.xhtml#installat
 Compiling
 ---------
 
-You will need a C++ compiler that understands C++14.  These include
- * gcc 5 (or higher)
- * clang 3.5 (or higher)
+You will need a C++ compiler that understands C++14.  
+ * gcc 5 (or higher) works
+ * clang 3.5 (or higher) works
+ * XCode 7.3 (or higher) works
 
 Build
 -----
