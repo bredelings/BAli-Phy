@@ -1,3 +1,6 @@
+[![Build Status](https://www.travis-ci.org/bredelings/BAli-Phy.svg?branch=master
+)](https://www.travis-ci.org/bredelings/BAli-Phy)
+
 Documentation
 ------------
 
