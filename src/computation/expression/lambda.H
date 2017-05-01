@@ -4,7 +4,7 @@
 #include "object.H"
 #include "expression_ref.H"
 
-class Operator;
+struct Operator;
 
 struct lambda: public Object
 {
