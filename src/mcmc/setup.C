@@ -817,7 +817,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 	    for(int j=0;j<P.as<Parameters>()->n_branch_scales();j++)
 	    {
 		Parameters& PP = *P.as<Parameters>();
-		out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_scale_index(j)).as_double()<<endl;
+		out_both<<"     Scale"<<j+1<<" = "<<PP.branch_scale(j)<<endl;
 	    }
 	    show_parameters(out_log,*P,false);
 	    pre_burnin.iterate(P,Stats);
@@ -838,12 +838,8 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 
     int B = P.as<Parameters>()->t().n_branches();
     for(int i=0; i<P.as<Parameters>()->n_branch_scales(); i++)
-    {
-	if (P->get_parameter_value(P.as<Parameters>()->branch_scale_index(i)).as_double() > 0.5*B)
-	    P->set_parameter_value(P.as<Parameters>()->branch_scale_index(i), 0.5*B);
-    }
-
-
+	if (P.as<Parameters>()->branch_scale(i) > 0.5*B)
+	    P.as<Parameters>()->branch_scale(i, 0.5*B);
 }
 
 /// \brief Create transition kernels and start a Markov chain
