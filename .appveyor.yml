@@ -1,3 +1,4 @@
+# APPVEYOR_BUILD_FOLDER is C:/projects/bali-phy
 version: '{build}'
 environment:
   matrix:
@@ -14,13 +15,13 @@ install:
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S git"
 
 before_build:
-    - bash -lc "cd $APPVEYOR_BUILD_FOLDER && mkdir build"
-    - bash -lc "cd $APPVEYOR_BUILD_FOLDER/BAli-Phy && ./bootstrap.sh"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER && mkdir build"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER && ./bootstrap.sh"
 
 build_script:
-    - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ../BAli-Phy/configure --prefix=$APPVEYOR_BUILD_FOLDER/bali-phy"
-    - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make -j3 install"
-    - bash -lc "cd $APPVEYOR_BUILD_FOLDER && tar -zcf bali-phy.tgz bali-phy/"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ../configure --prefix=$APPVEYOR_BUILD_FOLDER/../local/bali-phy"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make -j3 install"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/../local/ && tar -zcf bali-phy.tgz bali-phy/"
 
 test_script:
-    - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make check"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make check"
