@@ -707,7 +707,6 @@ void log_preburnin(ostream& o, const Model& M, const string& name, int iter)
     for(int s=0;s<P.n_branch_scales();s++)
 	o<<"   Scale"<<s+1<<" = "<<P.branch_scale(s);
     o<<std::endl;
-    show_parameters(o, P, false);
 }
 
 
@@ -743,6 +742,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 
 	for(int i=0;i<3;i++) {
 	    log_preburnin(out_both, *P, "Tree size", i);
+	    show_parameters(out_log, *P, false);
 	    pre_burnin.iterate(P,Stats);
 	}
     }
@@ -762,6 +762,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 
 	for(int i=0;i<n_pre_burnin;i++) {
 	    log_preburnin(out_both, *P, "SPR", i);
+	    show_parameters(out_log, *P, false);
 	    pre_burnin.iterate(P,Stats);
 	}
 	out_both<<endl;
@@ -782,6 +783,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 	int n_pre_burnin2 = n_pre_burnin + (int)log(P.as<Parameters>()->t().n_leaves());
 	for(int i=0;i<n_pre_burnin2;i++) {
 	    log_preburnin(out_both, *P, "NNI", i);
+	    show_parameters(out_log, *P, false);
 	    pre_burnin.iterate(P,Stats);
 	}
     }
