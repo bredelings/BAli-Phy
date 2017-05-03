@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "2.3.6"         >
+<!ENTITY  version        "3.0b1"         >
 
 <!ENTITY  source.file    "bali-phy-&version;.tar.gz"         >
 <!ENTITY  linux64.file   "bali-phy-&version;-linux64.tar.gz"         >
@@ -57,7 +57,7 @@
   <section xml:id="installation"><info><title>Installation</title></info>
 
   <para>You can install BAli-Phy by downloading compiled executables from the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/download.php">website</link>.</para>
-  <para>On OSX 10.8 or higher, you could also install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 5.1 compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
+  <para>On OS X, you can also install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 7 (or higher) compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
   <section xml:id="pre-requisites"><info><title>Hardware requirements</title></info>
     
     <para>We recommend running BAli-Phy on a computing cluster for long runs.
@@ -118,8 +118,7 @@ While running the Cygwin installer
     </section>
 
     <section><info><title>Mac OS X requirements</title></info>
-    <para>We recommend Mac OS X version 10.8 (or higher).</para>
-    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 5.1 compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
+    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 7 (or higher) compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
     </section>
 
     <section><info><title>Linux requirements</title></info>
@@ -328,19 +327,19 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
     <section><info><title>Software requirements</title></info>
       
 
-    <para>In order to compile BAli-Phy, you need a C++ compiler than can understands the C++11 standard.  </para>
+    <para>In order to compile BAli-Phy, you need a C++ compiler than can understands the C++14 standard.  </para>
     <section><info><title>Compilers: Linux</title></info>
-    <para>On Linux we recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 4.8 (or higher).
+    <para>On Linux we recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 5.0 (or higher).
     </para>
-    <para>You may also use the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 3.4.0 or higher.
+    <para>You may also use the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 3.5.0 or higher.
     </para>
     </section>
 
     <section><info><title>Compilers: Mac</title></info>
-    <para>On Mac 10.8 and above, the simplest method is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 5.1 (or newer).  Then you can use the default compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link>).
+    <para>On Mac OS X, the simplest method is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or newer).  Then you can use the default compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link>).
     </para>
     
-    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have XCode 5.1.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
+    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
 
     </section>
     
@@ -434,13 +433,11 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	
 	
 	<para>The default C++ compiler is <command>g++</command>.  On
-	  some systems, <command>g++</command> invokes GCC version 4.2,
-	  and the correct compiler is called something else, such as
-	  <command>g++-4.8</command>.  To use
-	  <command>g++-4.8</command> as the C++ compiler when compiling
+	  some systems, <command>g++</command> invokes a C++ compiler that is too old.
+	  To use <command>g++-5</command> as the C++ compiler when compiling
 	  <application>BAli-Phy</application>, you would set the CXX
 	  environment variable as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure CXX=g++-4.8</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure CXX=g++-5</userinput></screen>
 	</para>
       </section>
 
@@ -457,7 +454,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	<para>
           All these options to <command>configure</command> can be
 	  combined, as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CXX=g++-4.8 CXXFLAGS="-march=native -g"</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CXX=g++-5 CXXFLAGS="-march=native -g"</userinput></screen>
 	</para>
       </section>
     </section>
@@ -471,17 +468,13 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
       </para>
 
       <para>To generate these files, you need automake 1.8 (or higher)
-	and autoconf 2.59 (or higher).  Run these commands in the top level
-	directory of the repository that you checked out.<screen><prompt>%</prompt><userinput> autoheader</userinput>
-<prompt>%</prompt> <userinput>aclocal -I m4</userinput>
-<prompt>%</prompt> <userinput>libtoolize</userinput>
-<prompt>%</prompt> <userinput>automake -a</userinput>
-<prompt>%</prompt> <userinput>autoconf</userinput></screen>
+	autoconf 2.59 (or higher), and libtool.  In the top level
+	directory of the repository that you checked out, run <screen><prompt>%</prompt><userinput> ./bootstrap.sh</userinput></screen>
+
         If your system has multiple versions of automake, then you may
 	have to type e.g. <userinput>automake-1.14 -a</userinput> and
 	<userinput>aclocal-1.14</userinput> instead in order to specify which
-	version to use.  On Mac, you may need to replace the <command>libtoolize</command> with 
-<screen><prompt>%</prompt> <userinput>glibtoolize</userinput></screen>
+	version to use.
 </para>
     </section>
 
@@ -533,13 +526,10 @@ This can be done simply by starting several instances of the program, and does n
 
       <para>You can specify a more complex substitution model as follows (See <xref linkend="subst_basic"/>):
 
-	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel LG+gamma_inv</userinput></screen> </para>
+	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel LG+GammaInvRates</userinput></screen> </para>
       <para>You may specify an indel model of <userinput>none</userinput>
 	to fix the alignment to its initial value, and ignore information in shared insertions or deletions.
   	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --imodel none</userinput></screen></para>
-      <para>If you desire to use a codon model, you must specify the alphabet:
-	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons</userinput></screen>
-      </para>
     </section>
 
     <section><info><title>Multiple genes or data partitions</title></info>
@@ -552,15 +542,15 @@ This can be done simply by starting several instances of the program, and does n
 
       <para>By default, each partition will recieve an independent copy of the model, and will not share parameter values:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel TN --imodel RS07</userinput></screen>
-However, you can select partition-specific values for 5 options: <userinput>--smodel</userinput>, <userinput>--imodel</userinput>, <userinput>--alphabet</userinput>, <userinput>--same-scale</userinput>, and <userinput>--align-constraint</userinput>.  For example, to specify different substitution models but the same alphabet:
+However, you can select partition-specific values for 5 options: <userinput>--smodel</userinput>, <userinput>--imodel</userinput>, <userinput>--alphabet</userinput>, and <userinput>--scale</userinput>.  For example, to specify different substitution models but the same alphabet:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --alphabet 1,2:DNA</userinput></screen>
 You can fix the alignment and ignore insertion/deletion information in one partition, while allowing the alignment to vary and using insertion/deletion information in another partition:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --imodel 1:RS07 --imodel 2:none</userinput></screen>
 You can also specify that two partitions share a single copy of a single substitution model or indel model.  This reduces the number of parameters and also pools information between the partitions:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1,2:TN --imodel 1,2:RS07</userinput></screen>
-By default each partition has a separate scale, but you can force groups of partitions to share a scale. The name of the groups for the scale are not currently used, but may be used in later versions of the software:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --same-scale 1,2:groupname</userinput></screen>
-Finally, you may specify the option <userinput>--traditional</userinput>, or its short form <userinput>-t</userinput>.  This is the same as <userinput>--imodel none</userinput> and affects all partitions:
+By default each partition has a separate scale, but you can force groups of partitions to share a scale. If you levae the value of the scale blank, the default distribution on scales will be used:
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --scale 1,2:</userinput></screen>
+Finally, you may specify <userinput>-Inone</userinput> or <userinput>--imodel none</userinput>, which affects all partitions:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR -t</userinput></screen>
       </para>
     </section>
@@ -631,16 +621,13 @@ align = examples/EF-Tu/5d.fasta
 smodel = log-normal_inv
 
 #fix the alignment and do not model indels
-traditional = traditional
+imodel = none
 	  </programlisting>
           The first option, <userinput>align</userinput>, is the name of
 	  the sequence file, which has no name on the command line.
 	  Lines that begin with # are comments, and blank lines are
-	  ignored.  The option <userinput>--traditional</userinput> uses
-	  the option name as the value, because it does not take a
-	  value.  Thus, this configuration file corresponds to the
-	  command line
-	  <screen><prompt>%</prompt> <userinput>bali-phy examples/EF-Tu/5d.fasta --smodel log-normal_inv --traditional</userinput></screen>
+	  ignored.
+	  <screen><prompt>%</prompt> <userinput>bali-phy examples/EF-Tu/5d.fasta --smodel log-normal_inv --imodel none</userinput></screen>
 	</para>
       </section>
 
@@ -695,13 +682,13 @@ traditional = traditional
     <example><info><title>Fixed alignment</title></info>
       
       <para>Here we use the 5S rRNA 5-taxon data set provided with
-	the software.  The alignment is fixed and the <userinput>--traditional</userinput>
+	the software.  The alignment is fixed and the <userinput>-Inone</userinput>
 	option is used, making indels non-informative.  In addition,
 	nucleotide frequencies are fixed to empirical values estimated
 	from the input sequences. 
       </para> 
 
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant -Inone</userinput></screen>
 
     </example>
   </section>
@@ -1264,7 +1251,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
        <application>BAli-Phy</application> are specified using a
        stack, as follows: <userinput>Model[arg]+Model[arg]+...+Model[arg]</userinput>
         where each model uses the previous models as input.  For
-	example, <userinput>LG+gamma_inv[4]</userinput>. Some arguments are optional.</para>
+	example, <userinput>LG+GammaInvRates[4]</userinput>. Some arguments are optional.</para>
 
 	<note>
 	  <para>
@@ -1629,8 +1616,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>model</replaceable> + gamma</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + gamma[4]</userinput> (default)</para>
+		<para><userinput><replaceable>model</replaceable> + GammaRates</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + GammaRates[4]</userinput> (default)</para>
 		<para>Yang (1994)</para>
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
@@ -1645,8 +1632,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>model</replaceable> + gamma_inv</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + gamma_inv[4]</userinput> (default)</para>
+		<para><userinput><replaceable>model</replaceable> + GammaInvRates</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + GammaInvRates[4]</userinput> (default)</para>
 		<para>Yang (1994)</para>
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
@@ -1951,11 +1938,11 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
       <para>Example: --smodel EQU --alphabet Triplets</para>
       <para>Example: --smodel HKY</para>
       <para>Example: --smodel TN+F=constant</para>
-      <para>Example: --smodel M0 --alphabet Codons</para>
-      <para>Example: --smodel M0+F1x4 --alphabet Codons</para>
-      <para>Example: --smodel M2a --alphabet Codons</para>
-      <para>Example: --smodel M2a[HKY] --alphabet Codons (same as above)</para>
-      <para>Example: --smodel M2[TN,F3x4] --alphabet Codons</para>
+      <para>Example: --smodel M0</para>
+      <para>Example: --smodel M0+F1x4</para>
+      <para>Example: --smodel M2a</para>
+      <para>Example: --smodel M2a[HKY] (same as above)</para>
+      <para>Example: --smodel M2[TN,F3x4]</para>
     </section>
     <section xml:id="genetic-codes"><info><title>Genetic Codes</title></info>
       
@@ -2518,9 +2505,9 @@ The stabilization criterion is the same one described above for numerical values
 
       <qandaset>
 	<qandaentry>
-	  <question><para>Can I fix the alignment and ignore indel information, like MrBayes and other MCMC programs?</para></question>
+	  <question><para>Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</para></question>
 	  <answer>
-	    <para>Yes.  Add <userinput>-t</userinput> or <userinput>--traditional</userinput> on the command line.  This has the same effect as <userinput>--imodel none</userinput>.</para>
+	    <para>Yes.  Add <userinput>-Inone</userinput> or <userinput>--imodel=none</userinput> on the command line.</para>
 	  </answer>
 	</qandaentry>
 
@@ -2553,10 +2540,10 @@ The stabilization criterion is the same one described above for numerical values
       
       <qandaset>
 	<qandaentry>
-	  <question><para>I tried to use <userinput>--smodel LG+gamma[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
+	  <question><para>I tried to use <userinput>--smodel LG+GammaRates[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
 	  <answer>
-	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>LG+gamma[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <command>bali-phy</command>.</para>
-	    <para>To avoid this, put a backslash in front of the first "[" and write <userinput>--smodel LG+gamma&#92;[6]</userinput>.  This will keep the C-shell from interfering with your command.
+	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>LG+GammaRates[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <command>bali-phy</command>.</para>
+	    <para>To avoid this, put a backslash in front of the first "[" and write <userinput>--smodel LG+GammaRates&#92;[6]</userinput>.  This will keep the C-shell from interfering with your command.
 	    </para>
 	  </answer>
 	</qandaentry>

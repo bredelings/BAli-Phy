@@ -1,4 +1,4 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BAli-Phy User's Guide v2.3.6</title><link rel="stylesheet" type="text/css" href="docbook.css"><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div lang="en" class="article"><div class="titlepage"><div><div><h2 class="title"><a name="idp1"></a><span class="application">BAli-Phy</span> User's Guide v2.3.6</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Benjamin</span> <span class="surname">Redelings</span></h3></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl class="toc"><dt><span class="section"><a href="#intro">1. Introduction</a></span></dt><dt><span class="section"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#pre-requisites">2.1. Hardware requirements</a></span></dt><dt><span class="section"><a href="#idp2">2.2. MS Windows requirements</a></span></dt><dt><span class="section"><a href="#idp3">2.3. Mac OS X requirements</a></span></dt><dt><span class="section"><a href="#idp4">2.4. Linux requirements</a></span></dt><dt><span class="section"><a href="#idp5">2.5. Installing BAli-Phy executables</a></span></dt><dt><span class="section"><a href="#idp10">2.6. Adding BAli-Phy to your <code class="envar">PATH</code></a></span></dt><dt><span class="section"><a href="#software_req">2.7. Additional required software</a></span></dt><dt><span class="section"><a href="#tests">2.8. Testing the installed software</a></span></dt></dl></dd><dt><span class="section"><a href="#compilation">3. Compiling <span class="application">BAli-Phy</span></a></span></dt><dd><dl><dt><span class="section"><a href="#idp15">3.1. Software requirements</a></span></dt><dt><span class="section"><a href="#idp16">3.2. Quick Start</a></span></dt><dt><span class="section"><a href="#idp21">3.3. Options to <span class="command"><strong>configure</strong></span></a></span></dt><dt><span class="section"><a href="#gitsource">3.4. Generating the <span class="command"><strong>configure</strong></span> script
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BAli-Phy User's Guide v3.0b1</title><link rel="stylesheet" type="text/css" href="docbook.css"><meta name="generator" content="DocBook XSL Stylesheets V1.79.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div lang="en" class="article"><div class="titlepage"><div><div><h2 class="title"><a name="idp1"></a><span class="application">BAli-Phy</span> User's Guide v3.0b1</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Benjamin</span> <span class="surname">Redelings</span></h3></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl class="toc"><dt><span class="section"><a href="#intro">1. Introduction</a></span></dt><dt><span class="section"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#pre-requisites">2.1. Hardware requirements</a></span></dt><dt><span class="section"><a href="#idp2">2.2. MS Windows requirements</a></span></dt><dt><span class="section"><a href="#idp3">2.3. Mac OS X requirements</a></span></dt><dt><span class="section"><a href="#idp4">2.4. Linux requirements</a></span></dt><dt><span class="section"><a href="#idp5">2.5. Installing BAli-Phy executables</a></span></dt><dt><span class="section"><a href="#idp10">2.6. Adding BAli-Phy to your <code class="envar">PATH</code></a></span></dt><dt><span class="section"><a href="#software_req">2.7. Additional required software</a></span></dt><dt><span class="section"><a href="#tests">2.8. Testing the installed software</a></span></dt></dl></dd><dt><span class="section"><a href="#compilation">3. Compiling <span class="application">BAli-Phy</span></a></span></dt><dd><dl><dt><span class="section"><a href="#idp15">3.1. Software requirements</a></span></dt><dt><span class="section"><a href="#idp16">3.2. Quick Start</a></span></dt><dt><span class="section"><a href="#idp21">3.3. Options to <span class="command"><strong>configure</strong></span></a></span></dt><dt><span class="section"><a href="#gitsource">3.4. Generating the <span class="command"><strong>configure</strong></span> script
 	and Makefiles (<span class="application">git</span> only)</a></span></dt><dt><span class="section"><a href="#idp22">3.5. Installing when compiling from source</a></span></dt></dl></dd><dt><span class="section"><a href="#running">4. Running the program</a></span></dt><dd><dl><dt><span class="section"><a href="#idp23">4.1. Quick Start</a></span></dt><dt><span class="section"><a href="#idp24">4.2. Command line options</a></span></dt><dt><span class="section"><a href="#idp25">4.3. Multiple genes or data partitions</a></span></dt><dt><span class="section"><a href="#cluster">4.4. Running on computing clusters</a></span></dt><dt><span class="section"><a href="#idp29">4.5. Option files (Scripts)</a></span></dt><dt><span class="section"><a href="#examples">4.6. Examples</a></span></dt></dl></dd><dt><span class="section"><a href="#input">5. Input</a></span></dt><dd><dl><dt><span class="section"><a href="#idp30">5.1. Sequence formats</a></span></dt><dt><span class="section"><a href="#idp33">5.2. Is my data set too large?</a></span></dt></dl></dd><dt><span class="section"><a href="#output">6. Output</a></span></dt><dd><dl><dt><span class="section"><a href="#idp34">6.1. Output directory</a></span></dt><dt><span class="section"><a href="#idp35">6.2. Output options</a></span></dt><dt><span class="section"><a href="#idp39">6.3. Output files</a></span></dt><dt><span class="section"><a href="#idp47">6.4. Summarizing the output</a></span></dt><dt><span class="section"><a href="#analysis">6.5. Summarizing the output - scripted</a></span></dt></dl></dd><dt><span class="section"><a href="#subst_models">7. Substitution models</a></span></dt><dd><dl><dt><span class="section"><a href="#idp50">7.1. Default substitution models</a></span></dt><dt><span class="section"><a href="#subst_basic">7.2. Basic CTMC models</a></span></dt><dt><span class="section"><a href="#subst_freq">7.3. Substitution Frequency models</a></span></dt><dt><span class="section"><a href="#idp51">7.4. Substitution Mixture Models</a></span></dt><dt><span class="section"><a href="#idp52">7.5. The branch-site substitution model</a></span></dt><dt><span class="section"><a href="#idp53">7.6. Substitution model examples</a></span></dt><dt><span class="section"><a href="#genetic-codes">7.7. Genetic Codes</a></span></dt></dl></dd><dt><span class="section"><a href="#indel_models">8. Insertion/deletion models</a></span></dt><dt><span class="section"><a href="#alignment_constraints">9. Alignment constraints</a></span></dt><dd><dl><dt><span class="section"><a href="#idp54">9.1. Syntax</a></span></dt><dt><span class="section"><a href="#idp55">9.2. Examples</a></span></dt><dt><span class="section"><a href="#idp56">9.3. Computing the constraints</a></span></dt></dl></dd><dt><span class="section"><a href="#mixing_and_convergence">10. Convergence and Mixing: Is it done yet?</a></span></dt><dd><dl><dt><span class="section"><a href="#idp57">10.1. Definition of Convergence</a></span></dt><dt><span class="section"><a href="#idp58">10.2. Definition of Mixing</a></span></dt><dt><span class="section"><a href="#idp61">10.3. Diagnostics: Variation in split frequencies across runs (ASDSF/MSDSF)</a></span></dt><dt><span class="section"><a href="#idp62">10.4. Diagnostics: Potential Scale Reduction Factors (PSRF)</a></span></dt><dt><span class="section"><a href="#idp65">10.5. Diagnostics: Effective sample sizes (ESS)</a></span></dt><dt><span class="section"><a href="#idp68">10.6. Diagnostics: Stabilization</a></span></dt></dl></dd><dt><span class="section"><a href="#alignment-utilities">11. Alignment utilities</a></span></dt><dd><dl><dt><span class="section"><a href="#idp69">11.1. alignment-info</a></span></dt><dt><span class="section"><a href="#idp70">11.2. alignment-cat</a></span></dt><dt><span class="section"><a href="#idp71">11.3. alignment-thin</a></span></dt><dt><span class="section"><a href="#idp72">11.4. alignment-draw</a></span></dt><dt><span class="section"><a href="#idp73">11.5. alignment-find</a></span></dt><dt><span class="section"><a href="#idp74">11.6. alignment-indices</a></span></dt><dt><span class="section"><a href="#idp75">11.7. alignment-chop-internal</a></span></dt></dl></dd><dt><span class="section"><a href="#tree-utilities">12. Tree utilities</a></span></dt><dd><dl><dt><span class="section"><a href="#idp76">12.1. trees-consensus</a></span></dt><dt><span class="section"><a href="#idp77">12.2. trees-bootstrap</a></span></dt><dt><span class="section"><a href="#idp78">12.3. trees-to-SRQ</a></span></dt></dl></dd><dt><span class="section"><a href="#FAQ">13. Frequently Asked Questions (FAQ)</a></span></dt><dd><dl><dt><span class="section"><a href="#idp79">13.1. Input files</a></span></dt><dt><span class="section"><a href="#idp80">13.2. Running <span class="command"><strong>bali-phy</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp81">13.3. Run-time error messages</a></span></dt><dt><span class="section"><a href="#idp82">13.4. Stopping <span class="command"><strong>bali-phy</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp83">13.5. Running <span class="command"><strong>bp-analyze.pl</strong></span>.</a></span></dt><dt><span class="section"><a href="#idp84">13.6. Interpreting the results.</a></span></dt><dt><span class="section"><a href="#idp85">13.7. How do I...</a></span></dt></dl></dd></dl></div>
   
 
@@ -102,31 +102,31 @@ or
 </p></li><li class="listitem"><p><a class="ulink" href="http://www.bali-phy.org/download.php" target="_top">Download</a> 
 BAli-Phy executables for your operating system from the web site using your browser.  Choose the 64-bit executables unless your operating system can only run 32-bit executables.  Save them to the <code class="filename">~/Applications</code> directory that you just created on the command line. Then check to see that the file is there.  Make sure it is the correct file for Mac, Linux, or Windows:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>ls ~/Applications</code></strong>
-bali-phy-2.3.6-linux64.tar.gz
+bali-phy-3.0b1-linux64.tar.gz
 </pre><p>
 </p>
 <p>Alternatively, you can download the file directly from the command line using <strong class="userinput"><code>wget</code></strong> if you know the URL:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>cd ~/Applications</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>wget http://www.bali-phy.org/bali-phy-2.3.6-win64.tar.gz</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>wget http://www.bali-phy.org/bali-phy-3.0b1-win64.tar.gz</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>ls</code></strong>
-bali-phy-2.3.6-win64.tar.gz
+bali-phy-3.0b1-win64.tar.gz
 </pre><p>
 On Mac, you can use <span class="command"><strong>curl</strong></span> instead of <span class="command"><strong>wget</strong></span>:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>cd ~/Applications</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>curl -O http://www.bali-phy.org/bali-phy-2.3.6-mac64.tar.gz</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>curl -O http://www.bali-phy.org/bali-phy-3.0b1-mac64.tar.gz</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>ls</code></strong>
-bali-phy-2.3.6-mac64.tar.gz
+bali-phy-3.0b1-mac64.tar.gz
 </pre><p>
 </p>
 </li><li class="listitem"><p>Extract the compressed archive on the Unix (or
     Cygwin) command line using the <span class="command"><strong>tar</strong></span> command:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>cd ~/Applications</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>tar -zxf bali-phy-2.3.6-linux64.tar.gz</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>tar -zxf bali-phy-3.0b1-linux64.tar.gz</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>ls</code></strong>
-bali-phy-2.3.6/   bali-phy-2.3.6-linux64.tar.gz
+bali-phy-3.0b1/   bali-phy-3.0b1-linux64.tar.gz
 </pre><p>
     </p></li><li class="listitem"><p>Finally, test that the program can be run.
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>~/Applications/bali-phy-2.3.6/bin/bali-phy -v</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>~/Applications/bali-phy-3.0b1/bin/bali-phy -v</code></strong>
 VERSION: 2.3.0  [master commit 9e551ef0]  (Apr 29 2014 18:04:25)
 BUILD: Apr 29 2014 18:05:33
 ARCH: x86_64-unknown-linux-gnu
@@ -142,7 +142,7 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
       <p>
 	If you installed <span class="application">BAli-Phy</span> to the directory
 	<code class="filename">~/Applications</code>, then you can run
-	bali-phy by typing <span class="command"><strong>~/Applications/bali-phy-2.3.6/bin/bali-phy</strong></span>.
+	bali-phy by typing <span class="command"><strong>~/Applications/bali-phy-3.0b1/bin/bali-phy</strong></span>.
 	However, it would be much nicer to simply type
 	<span class="command"><strong>bali-phy</strong></span> and let the computer find the
 	executable for you.  This can be achieved by putting the directory
@@ -165,9 +165,9 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>echo $PATH</code></strong></pre><p>
 	We will assume that you extracted the bali-phy archive in
 	<code class="filename">~/Applications</code> and so you want to add
-	<code class="filename">$HOME/Applications/bali-phy-2.3.6/bin</code>
+	<code class="filename">$HOME/Applications/bali-phy-3.0b1/bin</code>
 	to your <code class="envar">PATH</code>.  (If you installed to another directory,
-	replace <code class="filename">$HOME/Applications/bali-phy-2.3.6/</code> with that directory.)
+	replace <code class="filename">$HOME/Applications/bali-phy-3.0b1/</code> with that directory.)
       </p>
       </div>
 
@@ -177,10 +177,10 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 	<span class="command"><strong>echo $SHELL</strong></span> to find out. If your
 	shell is <span class="command"><strong>sh</strong></span> or 
 	<span class="command"><strong>bash</strong></span> then the command looks like this: 
-	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>PATH=$HOME/Applications/bali-phy-2.3.6/bin:$PATH</code></strong></pre><p>
+	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>PATH=$HOME/Applications/bali-phy-3.0b1/bin:$PATH</code></strong></pre><p>
 	If your shell is <span class="command"><strong>csh</strong></span> or
 	<span class="command"><strong>tcsh</strong></span>, then the command looks like this:
-	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>setenv PATH $HOME/Applications/bali-phy-2.3.6/bin:$PATH</code></strong></pre><p>
+	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>setenv PATH $HOME/Applications/bali-phy-3.0b1/bin:$PATH</code></strong></pre><p>
 	Note that these commands will only affect the window you are typing
 	in, and will vanish when you reboot.   
       </p>
@@ -231,7 +231,7 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="tests"></a>2.8. Testing the installed software</h3></div></div></div>
     <p>In order to determine that the software has been correctly installed, and the <code class="envar">PATH</code> has been correctly set, run the following commands:
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-2.3.6/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=150</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0b1/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=150</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>bp-analyze.pl 5d-1/</code></strong></pre><p>
     </p>
     <p>Furthermore, the directory <code class="filename">5d-1</code> should contain a file called <code class="filename">C1.p</code>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</p>
@@ -260,17 +260,17 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 
     <p>In order to compile BAli-Phy, you need a C++ compiler than can understands the C++11 standard.  </p>
     <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp11"></a>3.1.1. Compilers: Linux</h4></div></div></div>
-    <p>On Linux we recommend the GNU C++ Compiler (<a class="ulink" href="http://gcc.gnu.org" target="_top">GCC</a>) version 4.8 (or higher).
+    <p>On Linux we recommend the GNU C++ Compiler (<a class="ulink" href="http://gcc.gnu.org" target="_top">GCC</a>) version 5.0 (or higher).
     </p>
-    <p>You may also use the <a class="ulink" href="http://clang.llvm.org" target="_top">Clang</a> compiler version 3.4.0 or higher.
+    <p>You may also use the <a class="ulink" href="http://clang.llvm.org" target="_top">Clang</a> compiler version 3.5.0 or higher.
     </p>
     </div>
 
     <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp12"></a>3.1.2. Compilers: Mac</h4></div></div></div>
-    <p>On Mac 10.8 and above, the simplest method is to install <a class="ulink" href="https://developer.apple.com/xcode/" target="_top">XCode</a> version 5.1 (or newer).  Then you can use the default compiler (<a class="ulink" href="http://clang.llvm.org" target="_top">Clang</a>).
+    <p>On Mac OS X, the simplest method is to install <a class="ulink" href="https://developer.apple.com/xcode/" target="_top">XCode</a> (version 6 or newer).  Then you can use the default compiler (<a class="ulink" href="http://clang.llvm.org" target="_top">Clang</a>).
     </p>
     
-    <p>You can now install with <a class="ulink" href="http://brew.sh/" target="_top">homebrew</a> if you have XCode 5.1.  The recipe is in <a class="ulink" href="https://github.com/Homebrew/homebrew-science/blob/master/README.md" target="_top">homebrew/science</a>.</p>
+    <p>You can now install with <a class="ulink" href="http://brew.sh/" target="_top">homebrew</a>.  The recipe is in <a class="ulink" href="https://github.com/Homebrew/homebrew-science/blob/master/README.md" target="_top">homebrew/science</a>.</p>
 
     </div>
     
@@ -300,13 +300,13 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 	extract the source code archive, using a graphical archive
 	manager, or the command-line tool <span class="command"><strong>tar</strong></span>:
 	
-	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>tar -zxf bali-phy-2.3.6.tar.gz</code></strong></pre><p>
+	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>tar -zxf bali-phy-3.0b1.tar.gz</code></strong></pre><p>
 	Then create a <span class="emphasis"><em>separate</em></span> build directory, enter it, and run the
 	configure command:
 
 	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>mkdir build</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>cd build</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-2.3.6/configure --prefix=$HOME/Applications/bali-phy-2.3.6/</code></strong></pre><p>
+<code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-3.0b1/configure --prefix=$HOME/Applications/bali-phy-3.0b1/</code></strong></pre><p>
 	
 	If this command succeeds, then you can simply type
 
@@ -314,7 +314,7 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 <code class="prompt">%</code> <span class="command"><strong>make install</strong></span></pre><p>
 
 	to build and install <span class="command"><strong>bali-phy</strong></span> and its
-	associated tools and install it in <code class="filename">~/Applications/bali-phy-2.3.6</code>.
+	associated tools and install it in <code class="filename">~/Applications/bali-phy-3.0b1</code>.
 	To customize the compilation and installation process, read the
 	following sections on supplying arguments to the
 	<span class="command"><strong>configure</strong></span> script.
@@ -334,9 +334,9 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 	  <strong class="userinput"><code>--prefix=<em class="replaceable"><code>dir</code></em></code></strong>.
 	  For example, in order to install
 	  <span class="application">BAli-Phy</span> under
-	  <code class="filename">~/Applications/bali-phy-2.3.6/</code>, you can enter:
+	  <code class="filename">~/Applications/bali-phy-3.0b1/</code>, you can enter:
 
-	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-2.3.6/configure --prefix=$HOME/Applications/bali-phy-2.3.6</code></strong></pre><p>
+	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-3.0b1/configure --prefix=$HOME/Applications/bali-phy-3.0b1</code></strong></pre><p>
 	</p>
 
       </div>
@@ -368,7 +368,7 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 	  <span class="command"><strong>g++-4.8</strong></span> as the C++ compiler when compiling
 	  <span class="application">BAli-Phy</span>, you would set the CXX
 	  environment variable as follows:
-	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-2.3.6/configure CXX=g++-4.8</code></strong></pre><p>
+	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-3.0b1/configure CXX=g++-4.8</code></strong></pre><p>
 	</p>
       </div>
 
@@ -376,7 +376,7 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 	
 	
 	<p>You can pass flags to the C++ compiler by setting the CXXFLAGS variable:
-	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-2.3.6/configure CXXFLAGS="-march=native -g"</code></strong></pre><p>
+	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-3.0b1/configure CXXFLAGS="-march=native -g"</code></strong></pre><p>
 	</p>
       </div>
 
@@ -385,7 +385,7 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 	<p>
           All these options to <span class="command"><strong>configure</strong></span> can be
 	  combined, as follows:
-	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-2.3.6/configure --prefix=$HOME/Applications/bali-phy-2.3.6 CXX=g++-4.8 CXXFLAGS="-march=native -g"</code></strong></pre><p>
+	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-3.0b1/configure --prefix=$HOME/Applications/bali-phy-3.0b1 CXX=g++-4.8 CXXFLAGS="-march=native -g"</code></strong></pre><p>
 	</p>
       </div>
     </div>
@@ -590,7 +590,7 @@ traditional = traditional
       executables and extracted them in the
       <code class="filename">~/Applications</code> directory, then the
       <code class="filename">examples/</code> directory will be found at 
-      <code class="filename">~/Applications/bali-phy-2.3.6/share/bali-phy/examples/</code>.
+      <code class="filename">~/Applications/bali-phy-3.0b1/share/bali-phy/examples/</code>.
     </p>
 
     <p>Also note that <span class="command"><strong>bali-phy</strong></span>
@@ -605,7 +605,7 @@ traditional = traditional
       
       <p>Here we analyze the EF-Tu 5-taxon data set provided with
 	the software.</p>
-      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-2.3.6/share/bali-phy/examples/EF-Tu/5d.fasta</code></strong></pre>
+      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0b1/share/bali-phy/examples/EF-Tu/5d.fasta</code></strong></pre>
     </div></div><br class="example-break">
 
     <div class="example"><a name="idp658"></a><p class="title"><b>Example 2. Multiple-Rate Substitution Model</b></p><div class="example-contents">
@@ -615,7 +615,7 @@ traditional = traditional
 	invariant sites.  The amount of rate variation and the fraction of
 	invariant sites are estimated</p>
       
-      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-2.3.6/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv</code></strong></pre></div></div><br class="example-break">
+      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0b1/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv</code></strong></pre></div></div><br class="example-break">
 
     <div class="example"><a name="idp666"></a><p class="title"><b>Example 3. Fixed alignment</b></p><div class="example-contents">
       
@@ -626,7 +626,7 @@ traditional = traditional
 	from the input sequences. 
       </p> 
 
-      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-2.3.6/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</code></strong></pre>
+      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0b1/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</code></strong></pre>
 
     </div></div><br class="example-break">
   </div>
