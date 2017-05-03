@@ -1,0 +1,26 @@
+environment:
+  matrix:
+  - MSYSTEM: MINGW64
+    PATH: C:\msys64\usr\bin;C:\msys64\mingw64\bin;C:\Windows\System32;C:\Windows;%PATH%
+  - MSYSTEM: MINGW32
+    PATH: C:\msys64\usr\bin;C:\msys64\mingw32\bin;C:\Windows\System32;C:\Windows;%PATH%
+
+install:
+  # update mysy2
+  - C:\msys64\usr\bin\bash -lc "pacman --needed --noconfirm -Sy pacman-mirrors"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S autoconf automake bison flex"
+  - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S git"
+
+before_build:
+#    - cd C:\projects\meta
+#    - git submodule update --init --recursive
+    - bash -lc "cd $APPVEYOR_BUILD_FOLDER && mkdir build"
+
+build_script:
+    - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ../configure --prefix=$HOME/bali-phy"
+    - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make -j3 install"
+    - bash -lc "cd $HOME && tar -zcf bali-phy.tgz bali-phy/"
+
+test_script:
+    - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make check"
