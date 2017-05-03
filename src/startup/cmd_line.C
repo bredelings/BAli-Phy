@@ -48,10 +48,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description advanced("Advanced options");
     advanced.add_options()
+	("unalign,U","Unalign sequences (if variable-A)")
 	("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
-	("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
+	("beta",value<string>(),"MCMCMC temperature")
 	("package-path,P",value<string>(),"Directories to search for packages (':'-separated)")
-	("align-constraint",value<string>(),"File with alignment constraints.")
 	("enable",value<string>(),"Comma-separated list of kernels to enable.")
 	("disable",value<string>(),"Comma-separated list of kernels to disable.")
 	("set",value<vector<string> >()->composing(),"Set key=<value>")
@@ -59,6 +59,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("model,m",value<string>(),"File containing hierarchical model.")
 	("Model,M",value<string>(),"Module containing hierarchical model.")
 	("test-module",value<string>(),"Parse and optimize the given module")
+	("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
 	;
 
     options_description optimization("Haskell optimization options");
@@ -77,10 +78,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description developer("Developer options");
     developer.add_options()
 	("partition-weights",value<string>(),"File containing tree with partition weights")
-	("beta",value<string>(),"MCMCMC temperature")
 	("dbeta",value<string>(),"MCMCMC temperature changes")
 	("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
 	("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
+	("align-constraint",value<string>(),"File with alignment constraints.")
 	;
 
     // named options
@@ -106,7 +107,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     parameters.add_options()
 	("align", value<vector<string> >()->composing(),"Sequence file & initial alignment.")
 	("tree",value<string>(),"File with initial tree")
-	("unalign,U","Unalign sequences (if variable-A)")
 	;
 
     options_description model("Model options");
