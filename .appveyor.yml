@@ -1,3 +1,4 @@
+version: '{build}'
 environment:
   matrix:
   - MSYSTEM: MINGW64
@@ -18,9 +19,9 @@ before_build:
     - bash -lc "cd $APPVEYOR_BUILD_FOLDER && mkdir build"
 
 build_script:
-    - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ../configure --prefix=$HOME/bali-phy"
+    - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ../BAli-Phy/configure --prefix=$APPVEYOR_BUILD_FOLDER/bali-phy"
     - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make -j3 install"
-    - bash -lc "cd $HOME && tar -zcf bali-phy.tgz bali-phy/"
+    - bash -lc "cd $APPVEYOR_BUILD_FOLDER && tar -zcf bali-phy.tgz bali-phy/"
 
 test_script:
     - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make check"
