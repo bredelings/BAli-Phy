@@ -14,9 +14,8 @@ install:
   - C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S git"
 
 before_build:
-#    - cd C:\projects\meta
-#    - git submodule update --init --recursive
     - bash -lc "cd $APPVEYOR_BUILD_FOLDER && mkdir build"
+    - bash -lc "cd $APPVEYOR_BUILD_FOLDER/BAli-Phy && ./bootstrap.sh"
 
 build_script:
     - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ../BAli-Phy/configure --prefix=$APPVEYOR_BUILD_FOLDER/bali-phy"
