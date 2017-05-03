@@ -24,7 +24,6 @@ libboost_serialization_la_SOURCES =  src/archive_exception.cpp \
     src/extended_type_info_typeid.cpp \
     src/polymorphic_iarchive.cpp \
     src/polymorphic_oarchive.cpp \
-    src/shared_ptr_helper.cpp \
     src/stl_port.cpp \
     src/text_iarchive.cpp \
     src/text_oarchive.cpp \
