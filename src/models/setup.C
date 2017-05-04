@@ -336,8 +336,9 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 
     auto name = model_rep.get_value<string>();
     auto rule = get_rule_for_func(name);
-    if (not rule) return {};
-    if (not rule->count("call")) return {};
+
+    if (not rule) throw myexception()<<"No rule for '"<<name<<"'";
+    if (not rule->count("call")) throw myexception()<<"No call for '"<<name<<"'";
 	
     bool pass_arguments = rule->get("pass_arguments",false);
     bool is_list_rule = rule->get("list_arguments",false);
