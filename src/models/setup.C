@@ -310,6 +310,12 @@ expression_ref get_constant_model(const ptree& required_type, const ptree& model
 
 expression_ref get_variable_model(const ptree& E, const set<string>& scope)
 {
+    if (not E.size())
+    {
+	auto name = E.get_value<string>();
+	if (scope.find("name") != scope.end())
+	    return dummy(string("arg_") + name);
+    }
     return {};
 }
 
