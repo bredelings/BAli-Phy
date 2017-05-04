@@ -174,15 +174,16 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"posW", "Double", "~logGamma[4,0.25]"},
      {"A","a","LAMBDA"}},
 
-    {{"M2a_Test", "MM[Codon[a,b]]"},
-     {"SModel.m2a_test_model[nuc_model,freq_model,omega1,p1,posP,posW,posSelection]"},
-     {"nuc_model", "EM[a]", "HKY"},
-     {"freq_model", "FM[Codon[a,b]]", "F61"},
+    {{"M2a_Test", "MM[Codon[a,b]]", "G"},
+     {"SModel.m2a_test[nuc_model,freq_model,omega1,p1,posP,posW,posSelection,A]"},
+     {"nuc_model", "EM[a]", "HKY", "Alphabet.getNucleotides[A]"},
+     {"freq_model", "FM[Codon[a,b]]", "F61","A"},
      {"omega1", "Double", "~Uniform[0,1]"},
      {"p1", "Double", "~Uniform[0,1]"},
      {"posP", "Double", "~Beta[1,10]"},
      {"posW", "Double", "~logGamma[4,0.25]"},
-     {"posSelection", "Int", "~Bernoulli[0.5]"} },
+     {"posSelection", "Int", "~Bernoulli[0.5]"},
+     {"A","a","LAMBDA"}},
 
     //    {{"M3u"}, {"3"}, {"nuc_model", ""HKY"}, {"freq_model", "F61"}},
     //  Maybe we should introduce a way to sample Dirichlet and IIDs of the same length and then zip them?

@@ -181,30 +181,7 @@ m1a s r w1 f1 codona = multiParameter m0w (m1a_omega_dist f1 w1)
 m2a s r w1 f1 posP posW codona = multiParameter m0w (m2a_omega_dist f1 w1 posP posW)
     where {m0w w = reversible_markov (m0 codona s w) r};
 
-m2a_test_model s r w1 f1 posP posW posSelection codona = Prefix "M2a_Test" $ do
-{
-  s' <- Prefix "S" (s (getNucleotides codona));
-  r' <- Prefix "R" (r codona);
-
-  w1' <- Prefix "omega1" w1;
-  Log "omega1" w1';
-
-  f1' <- Prefix "p1" f1;
-  Log "p1" f1';
-
-  posP' <- Prefix "posP" posP;
-  Log "posP" posP';
-
-  posW' <- Prefix "posW" posW;
-  Log "posW" posW';
-
-  posSelection' <- Prefix "posSelection" posSelection;
-  Log "posSelection" posSelection';
-
-  let {m0w w = reversible_markov (m0 codona s' w) r'};
-
-  return $ multiParameter m0w (m2a_test_omega_dist f1' w1' posP' posW' posSelection');
-};
+m2a_test s r w1 f1 posP posW posSelection codona = multiParameter m0w (m2a_test_omega_dist f1 w1 posP posW posSelection) where {m0w w = reversible_markov (m0 codona s w) r};
 
 m3 s r ps omegas codona = multiParameter m0w (m3_omega_dist ps omegas) where {m0w w = reversible_markov (m0 codona s w) r};
 
