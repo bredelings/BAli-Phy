@@ -199,7 +199,7 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"A", "a", "LAMBDA"}},
 
     {{"M3_Test", "MM[Codon[a,b]]", "G"},
-     {"SModel.m3_test[nuc_model,freq_model,ps,omegas,posP,posW,posSelection]"},
+     {"SModel.m3_test[nuc_model,freq_model,ps,omegas,posP,posW,posSelection,A]"},
      {"nuc_model", "EM[a]", "HKY", "Alphabet.getNucleotides[A]"},
      {"freq_model", "FM[Codon[a,b]]", "F61", "A"},
      {"ps", "List[Double]", "~Dirichlet[4,2]"},
