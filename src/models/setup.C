@@ -373,7 +373,26 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
     ptree args = rule->get_child("args");
     
     expression_ref E = qualified_dummy(call.get_value<string>());
-    if (generate_function)
+    if (pass_arguments)
+    {
+	ptree arg_type = get_type_for_arg(*rule, "*");
+	vector<expression_ref> arguments;
+	for(const auto& child: model_rep)
+	{
+	    expression_ref arg = get_model_as(arg_type, child.second, scope);
+	    arguments.push_back(Tuple(child.first, arg));
+	}
+	return (E,get_list(arguments));
+    }
+    else if (is_list_rule)
+    {
+	ptree arg_type = get_type_for_arg(*rule, "*");
+	vector<expression_ref> arguments;
+	for(const auto& child: model_rep)
+	    arguments.push_back( get_model_as(arg_type, child.second, scope) );
+	return (E,get_list(arguments));
+    }
+    else if (generate_function)
     {
 	auto Prefix = lambda_expression( constructor("Distributions.Prefix",2) );
 	auto Log = lambda_expression( constructor("Distributions.Log",2) );
@@ -439,26 +458,8 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 //	std::cerr<<F<<"\n";
 	E = F;
     }
-    if (pass_arguments)
-    {
-	ptree arg_type = get_type_for_arg(*rule, "*");
-	vector<expression_ref> arguments;
-	for(const auto& child: model_rep)
-	{
-	    expression_ref arg = get_model_as(arg_type, child.second, scope);
-	    arguments.push_back(Tuple(child.first, arg));
-	}
-	E = (E,get_list(arguments));
-    }
-    else if (is_list_rule)
-    {
-	ptree arg_type = get_type_for_arg(*rule, "*");
-	vector<expression_ref> arguments;
-	for(const auto& child: model_rep)
-	    arguments.push_back( get_model_as(arg_type, child.second, scope) );
-	E = (E,get_list(arguments));
-    }
-    else if (generate_function)
+
+    if (generate_function)
     {
 	for(int i=0;i<args.size();i++)
 	{
@@ -468,7 +469,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 	    if (arg_tree.get("no_apply",false)) continue;
 
 	    ptree arg_type = arg_tree.get_child("arg_type");
-	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), scope);
+	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
 	    E = (E,arg);
 	}
 //	std::cerr<<E<<"\n";
