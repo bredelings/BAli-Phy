@@ -187,24 +187,7 @@ m3 s r ps omegas codona = multiParameter m0w (m3_omega_dist ps omegas) where {m0
 
 m3_test s r ps omegas posP posW posSelection codona = multiParameter m0w (m3_test_omega_dist ps omegas posP posW posSelection) where {m0w w = reversible_markov (m0 codona s w) r};
 
-m7_model s r mu gamma n_bins codona = Prefix "M7" $ do
-{
-  s' <- Prefix "S" (s (getNucleotides codona));
-  r' <- Prefix "R" (r codona);
-
-  mu' <- Prefix "mu" mu;
-  Log "mu" mu';
-
-  -- gamma = sigma^2/mu
-  gamma' <- Prefix "gamma" gamma;
-  Log "gamma" gamma';
-
-  n_bins' <- Prefix "n_bins" n_bins;
-  Log "n_bins" n_bins';
-
-  let {m0w w = reversible_markov (m0 codona s' w) r'};
-  return $ multiParameter m0w (m7_omega_dist mu' gamma' n_bins');
-};
+m7 s r mu gamma n_bins codona =  multiParameter m0w (m7_omega_dist mu gamma n_bins) where {m0w w = reversible_markov (m0 codona s w) r};
 
 m8 s r mu gamma n_bins posP posW codona = multiParameter m0w (m8_omega_dist mu gamma n_bins posP posW) where {m0w w = reversible_markov (m0 codona s w) r};
 
