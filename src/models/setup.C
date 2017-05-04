@@ -259,17 +259,41 @@ optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const
 	return pi;
 }
 
-expression_ref get_model_(const ptree& model_rep, const set<string>& scope)
+expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, const set<string>& scope)
 {
-    if (model_rep.empty() and model_rep.data().empty())
-	throw myexception()<<"Can't construct substitution model from empty description!";
-
     //  std::cout<<"model = "<<model<<std::endl;
     //  auto result = parse(model);
     //  std::cout<<result.get_value<string>()<<"\n";
     //  write_info(std::cout, result);
     //  std::cout<<std::endl;
     //  ptree model_rep = parse(model);
+
+    // 1. Complain on empty models
+    if (model_rep.empty() and model_rep.data().empty())
+    {
+	std::cout<<show(model_rep)<<std::endl;
+	throw myexception()<<"Can't construct type '"<<unparse_type(required_type)<<"' from empty description!";
+    }
+
+    ptree result_type = get_result_type(model_rep);
+    string name = model_rep.get_value<string>();
+
+    if (required_type.get_value<string>() == "Double" and result_type.get_value<string>() == "Int")
+    {
+	double d;
+	if (can_be_converted_to<double>(name, d))
+	    return (dummy("Prelude.return"), d);
+    }
+
+    if (required_type.get_value<string>() == "String")
+    {
+	auto s = model_rep.get_value<string>();
+	if (model_rep.size() == 0 and s.size() > 2 and s[0] == '"' and s.back() == '"')
+	    return (dummy("Prelude.return"), s.substr(1,s.size()-2));
+    }
+
+    if (not unify(result_type, required_type))
+	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but got '"<<name<<"' of type "<<unparse_type(result_type);
 
     // If we are processing an Int, just return an int.
     auto value = model_rep.get_value<string>();
@@ -289,8 +313,6 @@ expression_ref get_model_(const ptree& model_rep, const set<string>& scope)
 
     if (value.size() > 2 and value[0] == '"' and value.back() == '"')
 	return (dummy("Prelude.return"), value.substr(1,value.size()-2));
-
-    string name = model_rep.get_value<string>();
 
     auto rule = get_rule_for_func(name);
     if (not rule) return {};
@@ -421,36 +443,6 @@ expression_ref get_model_(const ptree& model_rep, const set<string>& scope)
     throw myexception()<<"Couldn't process substitution model description \""<<show(model_rep)<<"\"";
 }
 
-expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, const set<string>& scope)
-{
-    if (model_rep.empty() and model_rep.data().empty())
-    {
-	std::cout<<show(model_rep)<<std::endl;
-	throw myexception()<<"Can't construct type '"<<unparse_type(required_type)<<"' from empty description!";
-    }
-
-    ptree result_type = get_result_type(model_rep);
-    string name = model_rep.get_value<string>();
-
-    if (required_type.get_value<string>() == "Double" and result_type.get_value<string>() == "Int")
-    {
-	double d;
-	if (can_be_converted_to<double>(name, d))
-	    return (dummy("Prelude.return"), d);
-    }
-
-    if (required_type.get_value<string>() == "String")
-    {
-	auto s = model_rep.get_value<string>();
-	if (model_rep.size() == 0 and s.size() > 2 and s[0] == '"' and s.back() == '"')
-	    return (dummy("Prelude.return"), s.substr(1,s.size()-2));
-    }
-
-    if (not unify(result_type, required_type))
-	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but got '"<<name<<"' of type "<<unparse_type(result_type);
-
-    return get_model_(model_rep, scope);
-}
 
 /// \brief Constrict a substitution::MultiModel for a specific alphabet
 ///
