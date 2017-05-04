@@ -264,30 +264,7 @@ m7_model s r mu gamma n_bins codona = Prefix "M7" $ do
   return $ multiParameter m0w (m7_omega_dist mu' gamma' n_bins');
 };
 
-m8_model s r mu gamma n_bins posP posW codona = Prefix "M8" $ do
-{
-  s' <- Prefix "S" (s (getNucleotides codona));
-  r' <- Prefix "R" (r codona);
-
-  mu' <- Prefix "mu" mu;
-  Log "mu" mu';
-
-  -- gamma = sigma^2/mu
-  gamma' <- Prefix "gamma" gamma;
-  Log "gamma" gamma';
-
-  n_bins' <- Prefix "n_bins" n_bins;
-  Log "n_bins" n_bins';
-
-  posP' <- Prefix "posP" posP;
-  Log "posP" posP';
-
-  posW' <- Prefix "posW" posW;
-  Log "posW" posW';
-  
-  let {m0w w = reversible_markov (m0 codona s' w) r'};
-  return $ multiParameter m0w (m8_omega_dist mu' gamma' n_bins' posP' posW');
-};
+m8 s r mu gamma n_bins posP posW codona = multiParameter m0w (m8_omega_dist mu gamma n_bins posP posW) where {m0w w = reversible_markov (m0 codona s w) r};
 
 m8a_model s r mu gamma n_bins posP codona = Prefix "M8a" $ do
 {
