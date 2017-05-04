@@ -240,8 +240,56 @@ expression_ref apply_args(expression_ref action, const ptree& applied_args)
     return (action, arg_to_apply(applied_args));
 }
 
-expression_ref process_stack_functions(const ptree& model_rep, const set<string>& scope)
+optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const alphabet& a)
 {
+    vector<double> pi;
+    for(int i=0;i<a.size();i++)
+	if (model_rep.count(a.letter(i)))
+	    pi.push_back(model_rep.get<double>(a.letter(i)));
+
+    if (pi.size() > 0 and pi.size() < a.size())
+    {
+	string head = model_rep.get_value<string>();
+	throw myexception()<<"For frequency model '"<<head<<"', you must specify all letter frequencies, or none!";
+    }
+
+    if (pi.empty())
+	return boost::none;
+    else
+	return pi;
+}
+
+expression_ref get_model_(const ptree& model_rep, const set<string>& scope)
+{
+    if (model_rep.empty() and model_rep.data().empty())
+	throw myexception()<<"Can't construct substitution model from empty description!";
+
+    //  std::cout<<"model = "<<model<<std::endl;
+    //  auto result = parse(model);
+    //  std::cout<<result.get_value<string>()<<"\n";
+    //  write_info(std::cout, result);
+    //  std::cout<<std::endl;
+    //  ptree model_rep = parse(model);
+
+    // If we are processing an Int, just return an int.
+    auto value = model_rep.get_value<string>();
+
+    if (can_be_converted_to<int>(value))
+    {
+	expression_ref value = model_rep.get_value<int>();
+	return (dummy("Prelude.return"), value);
+    }
+
+    // If we are processing a Double, just return a double
+    if (can_be_converted_to<double>(value))
+    {
+	expression_ref value = model_rep.get_value<double>();
+	return (dummy("Prelude.return"), value);
+    }
+
+    if (value.size() > 2 and value[0] == '"' and value.back() == '"')
+	return (dummy("Prelude.return"), value.substr(1,value.size()-2));
+
     string name = model_rep.get_value<string>();
 
     auto rule = get_rule_for_func(name);
@@ -367,63 +415,8 @@ expression_ref process_stack_functions(const ptree& model_rep, const set<string>
 	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), scope);
 	    E = (E,arg);
 	}
-    return E;
-}
 
-optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const alphabet& a)
-{
-    vector<double> pi;
-    for(int i=0;i<a.size();i++)
-	if (model_rep.count(a.letter(i)))
-	    pi.push_back(model_rep.get<double>(a.letter(i)));
-
-    if (pi.size() > 0 and pi.size() < a.size())
-    {
-	string head = model_rep.get_value<string>();
-	throw myexception()<<"For frequency model '"<<head<<"', you must specify all letter frequencies, or none!";
-    }
-
-    if (pi.empty())
-	return boost::none;
-    else
-	return pi;
-}
-
-expression_ref get_model_(const ptree& model_rep, const set<string>& scope)
-{
-    if (model_rep.empty() and model_rep.data().empty())
-	throw myexception()<<"Can't construct substitution model from empty description!";
-
-    //  std::cout<<"model = "<<model<<std::endl;
-    //  auto result = parse(model);
-    //  std::cout<<result.get_value<string>()<<"\n";
-    //  write_info(std::cout, result);
-    //  std::cout<<std::endl;
-    //  ptree model_rep = parse(model);
-
-    // If we are processing an Int, just return an int.
-    auto value = model_rep.get_value<string>();
-
-    if (can_be_converted_to<int>(value))
-    {
-	expression_ref value = model_rep.get_value<int>();
-	return (dummy("Prelude.return"), value);
-    }
-
-    // If we are processing a Double, just return a double
-    if (can_be_converted_to<double>(value))
-    {
-	expression_ref value = model_rep.get_value<double>();
-	return (dummy("Prelude.return"), value);
-    }
-
-    if (value.size() > 2 and value[0] == '"' and value.back() == '"')
-	return (dummy("Prelude.return"), value.substr(1,value.size()-2));
-
-    expression_ref m;
-
-    m = process_stack_functions(model_rep, scope);
-    if (m) return m;
+    if (E) return E;
 
     throw myexception()<<"Couldn't process substitution model description \""<<show(model_rep)<<"\"";
 }
