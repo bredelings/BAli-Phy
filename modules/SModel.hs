@@ -47,14 +47,14 @@ scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x
 
 multiParameter f (DiscreteDistribution d) = MixtureModel (DiscreteDistribution (fmap2 f d));
 
-multiRate m d = multiParameter (\x->(scale x m)) d;
+multi_rate m d = multiParameter (\x->(scale x m)) d;
 
 multiRateModel base dist n_bins alphabet = Prefix "MultiRate" $ do {
                                                                   base' <- base alphabet;
                                                                   dist' <- dist;
                                                                   n_bins' <- Prefix "n_bins" n_bins;
                                                                   let {dist'' = uniformDiscretize (quantile dist') n_bins'};
-                                                                  return $ multiRate base' dist''};
+                                                                  return $ multi_rate base' dist''};
 
 rate (ReversibleMarkov a s q pi l t r) = r;
 rate (MixtureModel d) = average (fmap2 rate d);
@@ -342,11 +342,11 @@ gamma_rates'' alpha = gamma alpha (1.0/alpha);
 
 gamma_rates' alpha n = uniformDiscretize (quantile (gamma_rates'' alpha)) n;
 
-gamma_rates base alpha n = multiRate base (gamma_rates' alpha n);
+gamma_rates base alpha n = multi_rate base (gamma_rates' alpha n);
 
 plus_inv pInv rates = extendDiscreteDistribution rates pInv 0.0;
 
-gamma_inv_rates base alpha pInv n = multiRate base $ plus_inv pInv (gamma_rates' alpha n);
+gamma_inv_rates base alpha pInv n = multi_rate base $ plus_inv pInv (gamma_rates' alpha n);
 
 log_normal_rates'' sigmaOverMu = logNormal lmu lsigma where {x = log(1.0+sigmaOverMu^2);
                                                              lmu = -0.5*x;
@@ -355,11 +355,11 @@ log_normal_rates'' sigmaOverMu = logNormal lmu lsigma where {x = log(1.0+sigmaOv
 log_normal_rates' sigmaOverMu n = uniformDiscretize (quantile (log_normal_rates'' sigmaOverMu)) n;
 
 
-log_normal_rates base sigmaOverMu n = multiRate base (log_normal_rates' sigmaOverMu n);
+log_normal_rates base sigmaOverMu n = multi_rate base (log_normal_rates' sigmaOverMu n);
 
-log_normal_inv_rates base sigmaOverMu pInv n = multiRate base $ plus_inv pInv (log_normal_rates' sigmaOverMu n);
+log_normal_inv_rates base sigmaOverMu pInv n = multi_rate base $ plus_inv pInv (log_normal_rates' sigmaOverMu n);
 
-dp base rates fraction a = multiRate base (DiscreteDistribution dist) where {dist = zip fraction rates};
+dp base rates fraction a = multi_rate base (DiscreteDistribution dist) where {dist = zip fraction rates};
 
 branch_transition_p t smodel branch_cat_list ds b = vector_Matrix_From_List $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b);
 
