@@ -347,23 +347,24 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
     //  std::cout<<std::endl;
     //  ptree model_rep = parse(model);
 
-    // 1. Complain on empty models
+    // 1. Complain on empty expressions
     if (model_rep.empty() and model_rep.data().empty())
-    {
-	std::cout<<show(model_rep)<<std::endl;
 	throw myexception()<<"Can't construct type '"<<unparse_type(required_type)<<"' from empty description!";
-    }
 
+    // 2. Handle constant expressions
     if (auto constant = get_constant_model(required_type, model_rep)) return constant;
 
+    // 3. Handle variables
     if (auto variable = get_variable_model(model_rep, scope)) return variable;
 
+    // 4. Now we have a function -- get the rule
     auto name = model_rep.get_value<string>();
     auto rule = get_rule_for_func(name);
 
     if (not rule) throw myexception()<<"No rule for '"<<name<<"'";
     if (not rule->count("call")) throw myexception()<<"No call for '"<<name<<"'";
 	
+    // 5. Extract parts of the rule
     bool pass_arguments = rule->get("pass_arguments",false);
     bool is_list_rule = rule->get("list_arguments",false);
     bool generate_function = rule->get("generate_function",false);
