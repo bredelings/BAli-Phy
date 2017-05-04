@@ -10,6 +10,7 @@
 
 using std::vector;
 using std::set;
+using std::pair;
 using std::map;
 using std::string;
 using boost::property_tree::ptree;
@@ -126,8 +127,44 @@ Rule freshen_type_vars(Rule rule, const set<string>& bound_vars)
 }
 
 
+set<string> find_type_variables_from_scope(const vector<pair<string, ptree>>& scope)
+{
+    set<string> vars;
+    for(auto& x: scope)
+	add(vars, find_variables_in_type(x.second));
+    return vars;
+}
+
+optional<ptree> find_in_scope(const string& name, const vector<pair<string,ptree>>& in_scope)
+{
+    for(int i=int(in_scope.size())-1;i>=0;i--)
+	if (in_scope[i].first == name)
+	    return in_scope[i].second;
+    return boost::none;
+}
+
+
+const vector<pair<string, ptree>> extend_scope(const ptree& rule, int skip, const vector<pair<string, ptree>>& scope)
+{
+    auto scope2 = scope;
+    int i=0;
+    for(const auto& arg: rule.get_child("args"))
+    {
+	i++;
+	if (i < skip) continue;
+
+	const auto& argument = arg.second;
+	string arg_name = argument.get<string>("arg_name");
+	type_t arg_required_type = get_type_for_arg(rule, arg_name);
+
+	scope2.push_back({arg_name, arg_required_type});
+    }
+
+    return scope2;
+}
+
 // OK, so 'model' is going to have arg=value pairs set, but not necessarily in the right order.
-equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars)
+equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars, const vector<pair<string, ptree>>& scope)
 {
     auto name = model.get_value<string>();
 
@@ -153,8 +190,24 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	return {};
     }
 
-    // 0. Any variables in required_type must be listed as bound
+    if (auto type = find_in_scope(name, scope))
+    {
+	auto E = unify(*type, required_type);
+	if (not E)
+	{
+	    if (convertible_to(model, *type, required_type))
+		return pass2(required_type, model, bound_vars, scope);
+	    else
+		throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(*type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
+	}
+	return E;
+    }
+
+
+    // 0a. Any variables in required_type must be listed as bound
     assert(includes(bound_vars, find_variables_in_type(required_type)));
+    // 0b. Any type variables in scope must also be listed as bound
+    assert(includes(bound_vars, find_type_variables_from_scope(scope)));
 
     // 1. Get rule with fresh type vars
     auto rule = require_rule_for_func(name);
@@ -170,7 +223,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
     if (not E)
     {
 	if (convertible_to(model, result_type, required_type))
-	    return pass2(required_type, model, bound_vars);
+	    return pass2(required_type, model, bound_vars, scope);
 	else
 	    throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
     }
@@ -179,6 +232,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
     substitute_in_rule_types(E, rule);
 
     // 2.4 Record any new variables that we are using as bound variables
+    //     (I think that only rules can introduce new variables)
     add(bound_vars, find_rule_type_vars(rule));
     
     // 2.5. Check type of arguments if pass_arguments
@@ -187,7 +241,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	for(auto& child: model)
 	{
 	    type_t arg_required_type = get_type_for_arg(rule, "*");
-	    E = E && pass2(arg_required_type, child.second, bound_vars);
+	    E = E && pass2(arg_required_type, child.second, bound_vars, scope);
 	    substitute_in_rule_types(E, rule);
 	    add(bound_vars, E.referenced_vars());
 	}
@@ -204,8 +258,10 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
     ptree model2(name);
 
     // 4. Handle arguments in rule order
+    int skip=0;
     for(const auto& arg: rule.get_child("args"))
     {
+	skip++;
 	const auto& argument = arg.second;
 
 	string arg_name = argument.get<string>("arg_name");
@@ -216,7 +272,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	{
 	    type_t arg_required_type = get_type_for_arg(rule, arg_name);
 	    ptree arg_value = model.get_child(arg_name);
-	    E = E && pass2(arg_required_type, arg_value, bound_vars);
+	    E = E && pass2(arg_required_type, arg_value, bound_vars, extend_scope(rule,skip,scope));
 	    model2.push_back({arg_name, arg_value});
 	    substitute_in_rule_types(E, rule);
 	    add(bound_vars, E.referenced_vars());
@@ -232,7 +288,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	{
 	    auto arg_required_type = argument.get_child("arg_type");
 	    auto default_arg = argument.get_child("default_value");
-	    E = E && pass2(arg_required_type, default_arg, bound_vars);
+	    E = E && pass2(arg_required_type, default_arg, bound_vars, extend_scope(rule, skip, scope));
 	    substitute_in_rule_types(E, rule);
 	    add(bound_vars, E.referenced_vars());
 
@@ -241,14 +297,18 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
     }
 
     model = model2;
-    E.eliminate_except(find_variables_in_type(required_type));
+
+    auto keep = find_variables_in_type(required_type);
+    add(keep, find_type_variables_from_scope(scope));
+    E.eliminate_except(keep);
+
     return E;
 }
 
 std::pair<ptree,equations> translate_model(const ptree& required_type, ptree model)
 {
     pass1(model);
-    auto E = pass2(required_type, model, find_variables_in_type(required_type));
+    auto E = pass2(required_type, model, find_variables_in_type(required_type), {});
     return {model,E};
 }
 
