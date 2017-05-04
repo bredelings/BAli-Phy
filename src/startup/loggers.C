@@ -92,7 +92,7 @@ void find_sub_loggers(Model& M, int& index, const string& name, vector<int>& log
 		else
 		    M.set_compute_expression(index2, E2);
 
-		find_sub_loggers(M, index2, name+"!!"+convertToString(i), logged_computations, logged_names);
+		find_sub_loggers(M, index2, name+"["+convertToString(i+1)+"]", logged_computations, logged_names);
 	    }
 	}
     }
