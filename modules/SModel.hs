@@ -266,55 +266,9 @@ m7_model s r mu gamma n_bins codona = Prefix "M7" $ do
 
 m8 s r mu gamma n_bins posP posW codona = multiParameter m0w (m8_omega_dist mu gamma n_bins posP posW) where {m0w w = reversible_markov (m0 codona s w) r};
 
-m8a_model s r mu gamma n_bins posP codona = Prefix "M8a" $ do
-{
-  s' <- Prefix "S" (s (getNucleotides codona));
-  r' <- Prefix "R" (r codona);
+m8a s r mu gamma n_bins posP codona = multiParameter m0w (m8a_omega_dist mu gamma n_bins posP) where {m0w w = reversible_markov (m0 codona s w) r};
 
-  mu' <- Prefix "mu" mu;
-  Log "mu" mu';
-
-  -- gamma = sigma^2/mu
-  gamma' <- Prefix "gamma" gamma;
-  Log "gamma" gamma';
-
-  n_bins' <- Prefix "n_bins" n_bins;
-  Log "n_bins" n_bins';
-
-  posP' <- Prefix "posP" posP;
-  Log "posP" posP';
-
-  let {m0w w = reversible_markov (m0 codona s' w) r'};
-  return $ multiParameter m0w (m8a_omega_dist mu' gamma' n_bins' posP');
-};
-
-m8a_test_model s r mu gamma n_bins posP posW posSelection codona = Prefix "M8a_Test" $ do
-{
-  s' <- Prefix "S" (s (getNucleotides codona));
-  r' <- Prefix "R" (r codona);
-
-  mu' <- Prefix "mu" mu;
-  Log "mu" mu';
-
-  -- gamma = sigma^2/mu
-  gamma' <- Prefix "gamma" gamma;
-  Log "gamma" gamma';
-
-  n_bins' <- Prefix "n_bins" n_bins;
-  Log "n_bins" n_bins';
-
-  posP' <- Prefix "posP" posP;
-  Log "posP" posP';
-
-  posW' <- Prefix "posW" posW;
-  Log "posW" posW';
-  
-  posSelection' <- Prefix "posSelection" posSelection;
-  Log "posSelection" posSelection';
-
-  let {m0w w = reversible_markov (m0 codona s' w) r'};
-  return $ multiParameter m0w (m8a_test_omega_dist mu' gamma' n_bins' posP' posW' posSelection');
-};
+m8a_test s r mu gamma n_bins posP posW posSelection codona = multiParameter m0w (m8a_test_omega_dist mu gamma n_bins posP posW posSelection) where {m0w w = reversible_markov (m0 codona s w) r};
 
 branch_site_test_model s r fs ws posP posW posSelection codona = Prefix "BranchSiteTest" $
 do {
