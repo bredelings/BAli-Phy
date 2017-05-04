@@ -426,12 +426,26 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
     {
 	auto argi = array_index(args,i);
 
-	// No need to perform or log lambda arguments.
-	if (argi.get("no_apply",false)) continue;
-
 	string arg_name = array_index(argi,0).get_value<string>();
+	// No need to perform or log lambda arguments.
+	if (argi.get("no_apply",false))
+	{
+	    // E = (\arg_name -> E)
+	    E = lambda_quantify(dummy("arg_"+arg_name), E);
+	    continue;
+	}
+
 	ptree arg_tree = get_arg(*rule, arg_name);
 	ptree arg_type = arg_tree.get_child("arg_type");
+	expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+
+	// Apply arguments if necessary
+	auto applied_args = argi.get_child_optional("applied_args");
+	if (applied_args)
+	    arg = apply_args(arg, *applied_args);
+
+	// Prefix "arg_name" (arg_+arg_name)
+	if (not no_log) arg = (Prefix,name,(Prefix, arg_name, arg));
 
 	// E = Log "arg_name" arg_name >> E
 	if (should_log(model_rep, arg_name))
@@ -440,43 +454,8 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 	    E = (dummy("Prelude.>>"),log_action,E);
 	}
 
-	// Apply arguments if necessary
-	expression_ref action = dummy("xarg_"+arg_name);
-	auto applied_args = argi.get_child_optional("applied_args");
-	if (applied_args)
-	    action = apply_args(action, *applied_args);
-
-	// Prefix "arg_name" (arg_+arg_name)
-	if (not no_log) action = (Prefix, arg_name, action);
-
-	// E = 'action <<=
-	E = (dummy("Prelude.>>="), action, lambda_quantify(dummy("arg_"+arg_name), E));
-    }
-
-    if (not no_log) E = (Prefix, name, E);
-
-    for(int j=args.size()-1;j>=0;j--)
-    {
-	auto argi = array_index(args,j);
-	string arg_name = array_index(argi,0).get_value<string>();
-	if (argi.get("no_apply",false))
-	    E = lambda_quantify(dummy("arg_"+arg_name),E); // These args are not performed.
-	else
-	    E = lambda_quantify(dummy("xarg_"+arg_name),E);
-    }
-
-//	std::cerr<<E<<"\n";
-
-    for(int i=0;i<args.size();i++)
-    {
-//	    std::cerr<<show(array_index(args,i))<<"\n";
-	string arg_name = array_index(args,i).get<string>("arg_name");
-	ptree arg_tree = get_arg(*rule, arg_name);
-	if (arg_tree.get("no_apply",false)) continue;
-
-	ptree arg_type = arg_tree.get_child("arg_type");
-	expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
-	E = (E,arg);
+	// E = 'arg <<= (\arg_name -> E)
+	E = (dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+arg_name), E));
     }
 
     return E;

@@ -114,8 +114,9 @@ const vector< vector<vector<string>> > all_default_arguments =
     // So, a let-statement.
     {{"DP", "MM[a]","G"},
      {"SModel.dp[submodel,rates,frequencies,A]"},
-     {"rates", "List[Double]", "~Dirichlet[4,2]"},
-     {"frequencies", "List[Double]", "~Dirichlet[4,3]"},
+     {"rates", "List[Double]", "~Dirichlet[n_bins,2]"},
+     {"frequencies", "List[Double]", "~Dirichlet[n_bins,3]"},
+     {"n_bins","Int","4"},
      {"submodel", "RA[a]","","A"},
      {"A","a","LAMBDA"}},
 
