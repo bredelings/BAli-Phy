@@ -320,6 +320,24 @@ expression_ref get_variable_model(const ptree& E, const set<string>& scope)
 }
 
 
+set<string> extend_scope(const ptree& rule, int skip, const set<string>& scope)
+{
+    auto scope2 = scope;
+    int i=0;
+    for(const auto& arg: rule.get_child("args"))
+    {
+	i++;
+	if (i < skip) continue;
+
+	const auto& argument = arg.second;
+	string arg_name = argument.get<string>("arg_name");
+
+	scope2.insert(arg_name);
+    }
+
+    return scope2;
+}
+
 expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, const set<string>& scope)
 {
     //  std::cout<<"model = "<<model<<std::endl;
