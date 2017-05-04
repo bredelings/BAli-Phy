@@ -40,7 +40,6 @@ const vector< vector<vector<string>> > all_default_arguments =
 
     {{"iid", "Distribution[List[a]]", "G"}, {"Distributions.iid[n,dist]"}, {"n", "Int"}, {"dist", "Distribution[a]"}},
     {{"Dirichlet", "Distribution[List[Double]]", "G"}, {"Distributions.dirichlet'[n,x]"}, {"n", "Int"}, {"x", "Double"}},
-//    {{"Dirichlet", "List[Double]"}, {"dirichlet_model[ps]"}, {"ps", "List[Double]"}},
 
 //  We need a way to construct lists, not from a distribution.
     {{"List", "List[a]", "L"},
@@ -286,9 +285,10 @@ const vector< vector<vector<string>> > all_default_arguments =
     // Or maybe we need to do fMutSel & fMutSel0 version of the site models.
     //These should really be Triplet models, not Codon models - so we need inheritance
 
-    {{"F1x4", "FM[Codon[a,b]]"},
-     {"SModel.f1x4_model[pi]"},
-     {"pi", "F", "frequencies_prior"}},
+    {{"F1x4", "FM[Codon[a,b]]", "G"},
+     {"SModel.f1x4[A,pi]"},
+     {"pi", "F", "frequencies_prior","Alphabet.getNucleotides[A]"},
+     {"A","a","LAMBDA"}},
 
     {{"F3x4", "FM[Codon[a,b]]"},
      {"SModel.f3x4_model[pi1,pi2,pi3]"},
