@@ -4,7 +4,7 @@
 Install
 -------
 
-Please visit the [releases page](http://www.bali-phy.org/download.php) to official binaries.
+Please visit the [releases page](http://www.bali-phy.org/download.php) to download official binaries.
 
 Documentation
 ------------
