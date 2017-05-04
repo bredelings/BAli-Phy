@@ -144,7 +144,7 @@ optional<ptree> find_in_scope(const string& name, const vector<pair<string,ptree
 }
 
 
-const vector<pair<string, ptree>> extend_scope(const ptree& rule, int skip, const vector<pair<string, ptree>>& scope)
+vector<pair<string, ptree>> extend_scope(const ptree& rule, int skip, const vector<pair<string, ptree>>& scope)
 {
     auto scope2 = scope;
     int i=0;
