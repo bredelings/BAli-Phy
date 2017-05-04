@@ -119,11 +119,12 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"submodel", "RA[a]","","A"},
      {"A","a","LAMBDA"}},
 
-    {{"MultiRate", "MM[a]"},
-     {"SModel.multiRateModel[submodel,dist,n_bins]"},
+    {{"MultiRate", "MM[a]", "G"},
+     {"SModel.multi_rate_unif_bins[submodel,dist,n_bins]"},
      {"dist", "Distribution[Double]"},
      {"n_bins", "Int", "4"},
-     {"submodel", "RA[a]"}},
+     {"submodel", "RA[a]","","A"},
+     {"A","a","LAMBDA"}},
 
     {{"GammaRates", "MM[a]", "G"},
      {"SModel.gamma_rates[submodel,alpha,n]"},
