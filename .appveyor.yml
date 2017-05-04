@@ -19,7 +19,7 @@ before_build:
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER && ./bootstrap.sh"
 
 build_script:
-  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ../configure --prefix=$APPVEYOR_BUILD_FOLDER/../local/bali-phy"
+  - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && ../configure --prefix=../../local/bali-phy"
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER/build && make -j3 install"
   - bash -lc "cd $APPVEYOR_BUILD_FOLDER/../local/ && tar -zcf bali-phy.tgz bali-phy/"
 
