@@ -322,15 +322,6 @@ f1x4 triplet_a nuc_pi = let {triplet_pi_vec = f1x4_frequencies triplet_a nuc_pi}
 f3x4 triplet_a nuc_pi1 nuc_pi2 nuc_pi3 = let {triplet_pi_vec = f3x4_frequencies triplet_a nuc_pi1 nuc_pi2 nuc_pi3} in
                                          ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (plus_f_matrix triplet_a triplet_pi_vec);
 
-f3x4_model nuc_pi1 nuc_pi2 nuc_pi3 triplet_a = Prefix "F3x4" 
- (do {
-       let {nuc_a = getNucleotides triplet_a};
-       nuc_pi1' <- Prefix "Site1" $ nuc_pi1 nuc_a;
-       nuc_pi2' <- Prefix "Site2" $ nuc_pi2 nuc_a;
-       nuc_pi3' <- Prefix "Site3" $ nuc_pi3 nuc_a;
-       return (f3x4 triplet_a nuc_pi1' nuc_pi2' nuc_pi3');
-});
-
 mg94 nuc_pi triplet_a = let {nuc_a          = getNucleotides triplet_a;
                              triplet_pi_vec = f1x4_frequencies triplet_a nuc_pi;
                              nuc_pi_vec     = listToVectorDouble nuc_pi;

@@ -290,11 +290,12 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"pi", "F", "frequencies_prior","Alphabet.getNucleotides[A]"},
      {"A","a","LAMBDA"}},
 
-    {{"F3x4", "FM[Codon[a,b]]"},
-     {"SModel.f3x4_model[pi1,pi2,pi3]"},
-     {"pi1", "F", "frequencies_prior"},
-     {"pi2", "F", "frequencies_prior"},
-     {"pi3", "F", "frequencies_prior"}},
+    {{"F3x4", "FM[Codon[a,b]]", "G"},
+     {"SModel.f3x4[A,pi1,pi2,pi3]"},
+     {"pi1", "F", "frequencies_prior","Alphabet.getNucleotides[A]"},
+     {"pi2", "F", "frequencies_prior","Alphabet.getNucleotides[A]"},
+     {"pi3", "F", "frequencies_prior","Alphabet.getNucleotides[A]"},
+     {"A","a","LAMBDA"}},
 
     {{"MG94", "FM[Codon[a,b]]"},
      {"SModel.mg94_model[pi]"},
