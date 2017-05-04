@@ -179,7 +179,7 @@ ptree array_index(const ptree& p, int i)
     return index(p,i).second;
 }
 
-expression_ref get_model_as(const ptree& type, const ptree& model_rep);
+expression_ref get_model_as(const ptree& type, const ptree& model_rep, const set<string>& scope);
 
 bool is_loggable_function(const string& name)
 {
@@ -240,7 +240,7 @@ expression_ref apply_args(expression_ref action, const ptree& applied_args)
     return (action, arg_to_apply(applied_args));
 }
 
-expression_ref process_stack_functions(const ptree& model_rep)
+expression_ref process_stack_functions(const ptree& model_rep, const set<string>& scope)
 {
     string name = model_rep.get_value<string>();
 
@@ -328,7 +328,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	vector<expression_ref> arguments;
 	for(const auto& child: model_rep)
 	{
-	    expression_ref arg = get_model_as(arg_type, child.second);
+	    expression_ref arg = get_model_as(arg_type, child.second, scope);
 	    arguments.push_back(Tuple(child.first, arg));
 	}
 	E = (E,get_list(arguments));
@@ -338,7 +338,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	ptree arg_type = get_type_for_arg(*rule, "*");
 	vector<expression_ref> arguments;
 	for(const auto& child: model_rep)
-	    arguments.push_back( get_model_as(arg_type, child.second) );
+	    arguments.push_back( get_model_as(arg_type, child.second, scope) );
 	E = (E,get_list(arguments));
     }
     else if (generate_function)
@@ -351,7 +351,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	    if (arg_tree.get("no_apply",false)) continue;
 
 	    ptree arg_type = arg_tree.get_child("arg_type");
-	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name));
+	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), scope);
 	    E = (E,arg);
 	}
 //	std::cerr<<E<<"\n";
@@ -364,7 +364,7 @@ expression_ref process_stack_functions(const ptree& model_rep)
 	    if (arg_tree.get("no_apply",false)) continue;
 
 	    ptree arg_type = arg_tree.get_child("arg_type");
-	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name));
+	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), scope);
 	    E = (E,arg);
 	}
     return E;
@@ -389,7 +389,7 @@ optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const
 	return pi;
 }
 
-expression_ref get_model_(const ptree& model_rep)
+expression_ref get_model_(const ptree& model_rep, const set<string>& scope)
 {
     if (model_rep.empty() and model_rep.data().empty())
 	throw myexception()<<"Can't construct substitution model from empty description!";
@@ -422,13 +422,13 @@ expression_ref get_model_(const ptree& model_rep)
 
     expression_ref m;
 
-    m = process_stack_functions(model_rep);
+    m = process_stack_functions(model_rep, scope);
     if (m) return m;
 
     throw myexception()<<"Couldn't process substitution model description \""<<show(model_rep)<<"\"";
 }
 
-expression_ref get_model_as(const ptree& required_type, const ptree& model_rep)
+expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, const set<string>& scope)
 {
     if (model_rep.empty() and model_rep.data().empty())
     {
@@ -456,7 +456,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep)
     if (not unify(result_type, required_type))
 	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but got '"<<name<<"' of type "<<unparse_type(result_type);
 
-    return get_model_(model_rep);
+    return get_model_(model_rep, scope);
 }
 
 /// \brief Constrict a substitution::MultiModel for a specific alphabet
@@ -468,7 +468,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep)
 model_t get_model(const ptree& type, const ptree& model_rep)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    expression_ref full_model = get_model_as(type, model_rep);
+    expression_ref full_model = get_model_as(type, model_rep, {});
 
     if (log_verbose)
 	std::cout<<"full_model = "<<full_model<<std::endl;
