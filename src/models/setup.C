@@ -179,8 +179,6 @@ ptree array_index(const ptree& p, int i)
     return index(p,i).second;
 }
 
-expression_ref get_model_as(const ptree& type, const ptree& model_rep, const set<string>& scope);
-
 bool is_loggable_function(const string& name)
 {
     auto rule = get_rule_for_func(name);
@@ -259,6 +257,63 @@ optional<vector<double>> get_frequencies_from_tree(const ptree& model_rep, const
 	return pi;
 }
 
+void require_type(const ptree& E, const ptree& required_type, const string& type2)
+{
+    string name = E.get_value<string>();
+
+    if (not unify(ptree(type2), required_type))
+	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but got '"<<name<<"' of type 'Int'";
+}
+
+expression_ref get_constant_model(const ptree& required_type, const ptree& model_rep)
+{
+    string name = model_rep.get_value<string>();
+
+    // 1. If its an integer constant
+    if (can_be_converted_to<int>(name))
+    {
+	if (model_rep.size() != 0)
+	    throw myexception()<<"An integer constant cannot have arguments!";
+
+	if (required_type.get_value<string>() == "Double")
+	    return (dummy("Prelude.return"), convertTo<double>(name));
+
+	require_type(model_rep, required_type, "Int");
+
+	return (dummy("Prelude.return"), convertTo<int>(name));
+    }
+
+    // 2. If its an integer constant
+    else if (can_be_converted_to<double>(name))
+    {
+	if (model_rep.size() != 0)
+	    throw myexception()<<"An floating point constant cannot have arguments!";
+
+	require_type(model_rep, required_type, "Double");
+
+	return (dummy("Prelude.return"), convertTo<double>(name));
+    }
+
+    // 3. If its a string constant
+    else if (name.size() > 2 and name[0] == '"' and name.back() == '"')
+    {
+	if (model_rep.size() != 0)
+	    throw myexception()<<"An string constant cannot have arguments!";
+
+	require_type(model_rep, required_type, "String");
+
+	return (dummy("Prelude.return"), name.substr(1,name.size()-2));
+    }
+
+    return {};
+}
+
+expression_ref get_variable_model(const ptree& E, const set<string>& scope)
+{
+    return {};
+}
+
+
 expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, const set<string>& scope)
 {
     //  std::cout<<"model = "<<model<<std::endl;
@@ -275,45 +330,11 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 	throw myexception()<<"Can't construct type '"<<unparse_type(required_type)<<"' from empty description!";
     }
 
-    ptree result_type = get_result_type(model_rep);
-    string name = model_rep.get_value<string>();
+    if (auto constant = get_constant_model(required_type, model_rep)) return constant;
 
-    if (required_type.get_value<string>() == "Double" and result_type.get_value<string>() == "Int")
-    {
-	double d;
-	if (can_be_converted_to<double>(name, d))
-	    return (dummy("Prelude.return"), d);
-    }
+    if (auto variable = get_variable_model(model_rep, scope)) return variable;
 
-    if (required_type.get_value<string>() == "String")
-    {
-	auto s = model_rep.get_value<string>();
-	if (model_rep.size() == 0 and s.size() > 2 and s[0] == '"' and s.back() == '"')
-	    return (dummy("Prelude.return"), s.substr(1,s.size()-2));
-    }
-
-    if (not unify(result_type, required_type))
-	throw myexception()<<"Expected type '"<<unparse_type(required_type)<<"' but got '"<<name<<"' of type "<<unparse_type(result_type);
-
-    // If we are processing an Int, just return an int.
-    auto value = model_rep.get_value<string>();
-
-    if (can_be_converted_to<int>(value))
-    {
-	expression_ref value = model_rep.get_value<int>();
-	return (dummy("Prelude.return"), value);
-    }
-
-    // If we are processing a Double, just return a double
-    if (can_be_converted_to<double>(value))
-    {
-	expression_ref value = model_rep.get_value<double>();
-	return (dummy("Prelude.return"), value);
-    }
-
-    if (value.size() > 2 and value[0] == '"' and value.back() == '"')
-	return (dummy("Prelude.return"), value.substr(1,value.size()-2));
-
+    auto name = model_rep.get_value<string>();
     auto rule = get_rule_for_func(name);
     if (not rule) return {};
     if (not rule->count("call")) return {};
