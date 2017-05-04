@@ -392,89 +392,8 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 	    arguments.push_back( get_model_as(arg_type, child.second, scope) );
 	return (E,get_list(arguments));
     }
-    else if (generate_function)
+    else if (not generate_function)
     {
-	auto Prefix = lambda_expression( constructor("Distributions.Prefix",2) );
-	auto Log = lambda_expression( constructor("Distributions.Log",2) );
-
-	// 1. Get the underlying function f that we are calling
-	expression_ref F = E;
-
-	// 2. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
-	//    There could be fewer of these than the rule arguments.
-	for(int i=0;i<call.size();i++)
-	{
-	    string call_arg_name = array_index(call,i).get_value<string>();
-	    F = (F,dummy("arg_" + call_arg_name));
-	}
-
-	// 3. Return the function call: 'return (f call.name1 call.name2 call.name3)'
-	F = (dummy("Prelude.return"),F);
-
-	// 4. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << F)'
-	for(int i=0;i<args.size();i++)
-	{
-	    auto argi = array_index(args,i);
-
-	    // No need to perform or log lambda arguments.
-	    if (argi.get("no_apply",false)) continue;
-
-	    string arg_name = array_index(argi,0).get_value<string>();
-	    ptree arg_tree = get_arg(*rule, arg_name);
-	    ptree arg_type = arg_tree.get_child("arg_type");
-
-	    // F = Log "arg_name" arg_name >> F
-	    if (should_log(model_rep, arg_name))
-	    {
-		auto log_action = (Log,arg_name,dummy("arg_"+arg_name));
-		F = (dummy("Prelude.>>"),log_action,F);
-	    }
-
-	    // Apply arguments if necessary
-	    expression_ref action = dummy("xarg_"+arg_name);
-	    auto applied_args = argi.get_child_optional("applied_args");
-	    if (applied_args)
-		action = apply_args(action, *applied_args);
-
-	    // Prefix "arg_name" (arg_+arg_name)
-	    if (not no_log) action = (Prefix, arg_name, action);
-
-	    // F = 'action <<=
-	    F = (dummy("Prelude.>>="), action, lambda_quantify(dummy("arg_"+arg_name), F));
-	}
-
-	if (not no_log) F = (Prefix, name, F);
-
-	for(int j=args.size()-1;j>=0;j--)
-	{
-	    auto argi = array_index(args,j);
-	    string arg_name = array_index(argi,0).get_value<string>();
-	    if (argi.get("no_apply",false))
-		F = lambda_quantify(dummy("arg_"+arg_name),F); // These args are not performed.
-	    else
-		F = lambda_quantify(dummy("xarg_"+arg_name),F);
-	}
-
-//	std::cerr<<F<<"\n";
-	E = F;
-    }
-
-    if (generate_function)
-    {
-	for(int i=0;i<args.size();i++)
-	{
-//	    std::cerr<<show(array_index(args,i))<<"\n";
-	    string arg_name = array_index(args,i).get<string>("arg_name");
-	    ptree arg_tree = get_arg(*rule, arg_name);
-	    if (arg_tree.get("no_apply",false)) continue;
-
-	    ptree arg_type = arg_tree.get_child("arg_type");
-	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
-	    E = (E,arg);
-	}
-//	std::cerr<<E<<"\n";
-    }
-    else
 	for(int i=0;i<call.size();i++)
 	{
 	    string arg_name = array_index(call,i).get_value<string>();
@@ -485,10 +404,82 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), scope);
 	    E = (E,arg);
 	}
+	return E;
+    }
 
-    if (E) return E;
+    auto Prefix = lambda_expression( constructor("Distributions.Prefix",2) );
+    auto Log = lambda_expression( constructor("Distributions.Log",2) );
 
-    throw myexception()<<"Couldn't process substitution model description \""<<show(model_rep)<<"\"";
+    // 2. Apply the arguments listed in the call : 'f call.name1 call.name2 call.name3'
+    //    There could be fewer of these than the rule arguments.
+    for(int i=0;i<call.size();i++)
+    {
+	string call_arg_name = array_index(call,i).get_value<string>();
+	E = (E,dummy("arg_" + call_arg_name));
+    }
+
+    // 3. Return the function call: 'return (f call.name1 call.name2 call.name3)'
+    E = (dummy("Prelude.return"),E);
+
+    // 4. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
+    for(int i=0;i<args.size();i++)
+    {
+	auto argi = array_index(args,i);
+
+	// No need to perform or log lambda arguments.
+	if (argi.get("no_apply",false)) continue;
+
+	string arg_name = array_index(argi,0).get_value<string>();
+	ptree arg_tree = get_arg(*rule, arg_name);
+	ptree arg_type = arg_tree.get_child("arg_type");
+
+	// E = Log "arg_name" arg_name >> E
+	if (should_log(model_rep, arg_name))
+	{
+	    auto log_action = (Log,arg_name,dummy("arg_"+arg_name));
+	    E = (dummy("Prelude.>>"),log_action,E);
+	}
+
+	// Apply arguments if necessary
+	expression_ref action = dummy("xarg_"+arg_name);
+	auto applied_args = argi.get_child_optional("applied_args");
+	if (applied_args)
+	    action = apply_args(action, *applied_args);
+
+	// Prefix "arg_name" (arg_+arg_name)
+	if (not no_log) action = (Prefix, arg_name, action);
+
+	// E = 'action <<=
+	E = (dummy("Prelude.>>="), action, lambda_quantify(dummy("arg_"+arg_name), E));
+    }
+
+    if (not no_log) E = (Prefix, name, E);
+
+    for(int j=args.size()-1;j>=0;j--)
+    {
+	auto argi = array_index(args,j);
+	string arg_name = array_index(argi,0).get_value<string>();
+	if (argi.get("no_apply",false))
+	    E = lambda_quantify(dummy("arg_"+arg_name),E); // These args are not performed.
+	else
+	    E = lambda_quantify(dummy("xarg_"+arg_name),E);
+    }
+
+//	std::cerr<<E<<"\n";
+
+    for(int i=0;i<args.size();i++)
+    {
+//	    std::cerr<<show(array_index(args,i))<<"\n";
+	string arg_name = array_index(args,i).get<string>("arg_name");
+	ptree arg_tree = get_arg(*rule, arg_name);
+	if (arg_tree.get("no_apply",false)) continue;
+
+	ptree arg_type = arg_tree.get_child("arg_type");
+	expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+	E = (E,arg);
+    }
+
+    return E;
 }
 
 
