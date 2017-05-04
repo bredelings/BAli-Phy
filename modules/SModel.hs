@@ -338,13 +338,6 @@ mg94w9 nuc_pi1 nuc_pi2 nuc_pi3 triplet_a = let {nuc_a          = getNucleotides 
                                                 nuc_r3         = plus_f_matrix nuc_a nuc_pi_vec3} in
                                            ReversibleFrequency triplet_a (simple_smap triplet_a) triplet_pi_vec (muse_gaut_matrix triplet_a nuc_r1 nuc_r2 nuc_r3);
 
-mg94_model nuc_pi triplet_a = Prefix "MG94" 
- (do {
-       let {nuc_a = getNucleotides triplet_a};
-       nuc_pi' <- Prefix "pi" (nuc_pi nuc_a);
-       return (mg94 nuc_pi' triplet_a);
-});
-
 mg94w9_model nuc_pi1 nuc_pi2 nuc_pi3 triplet_a = Prefix "MG94w9" $
  do {
        let {nuc_a = getNucleotides triplet_a};
