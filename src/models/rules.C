@@ -263,12 +263,13 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"posSelection", "Int", "~Bernoulli[0.5]"},
      {"A","a","LAMBDA"}},
 
-    {{"dp_omega", "MM[Codon[a,b]]"},
-     {"SModel.dp_omega_model[nuc_model,freq_model,mu,omegas]"},
-     {"nuc_model", "EM[a]", "HKY"},
-     {"freq_model", "FM[Codon[a,b]]", "F61"},
+    {{"dp_omega", "MM[Codon[a,b]]", "G"},
+     {"SModel.dp_omega[nuc_model,freq_model,mu,omegas,A]"},
+     {"nuc_model", "EM[a]", "HKY", "Alphabet.getNucleotides[A]"},
+     {"freq_model", "FM[Codon[a,b]]", "F61", "A"},
      {"mu", "Double", "~Uniform[0,1]"},
-     {"omegas", "List[Double]", "~Dirichlet[4,1]"}},
+     {"omegas", "List[Double]", "~Dirichlet[4,1]"},
+     {"A","a","LAMBDA"}},
     
     {{"frequencies_prior", "F"}, {"SModel.frequencies_model"}},
     
