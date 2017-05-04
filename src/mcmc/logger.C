@@ -64,9 +64,10 @@ namespace MCMC {
     {
 	vector<string> names = F->field_names();
 
-	for(int i=0;i<names.size();i++)
-	    if (sorted_index[i] != -1)
-		names[i] += "[S" + convertToString(sorted_index[i]+1) + "]";
+//      Was this to uniquify by substitution model?
+//	for(int i=0;i<names.size();i++)
+//	    if (sorted_index[i] != -1)
+//		names[i] += "[S" + convertToString(sorted_index[i]+1) + "]";
 
 	return names;
     }
