@@ -314,7 +314,7 @@ expression_ref get_variable_model(const ptree& E, const set<string>& scope)
     {
 	auto name = E.get_value<string>();
 	if (scope.count(name))
-	    return dummy(string("arg_") + name);
+	    return (dummy("Prelude.return"),dummy(string("arg_") + name));
     }
     return {};
 }
