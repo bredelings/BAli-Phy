@@ -109,4 +109,4 @@ dist-hook:
 	rm -rf `find $(distdir) -name TODO`
 
 check:
-	cd $(abs_top_srcdir)/tests; $(abs_top_srcdir)/tests/run-tests.py $(abs_top_builddir)/src/bali-phy --package-path=$(abs_top_builddir)/src/builtins/.libs/:$(abs_top_srcdir)/modules
+	cd $(abs_top_srcdir)/tests; python $(abs_top_srcdir)/tests/run-tests.py $(abs_top_builddir)/src/bali-phy --package-path=$(abs_top_builddir)/src/builtins/.libs/:$(abs_top_srcdir)/modules
