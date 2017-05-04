@@ -113,11 +113,12 @@ const vector< vector<vector<string>> > all_default_arguments =
     // DP could have another variant that is only given an n... but then are we abandoning the idea of specifying all parameters?
     // Perhaps DP should be able to introduce an n and then  condition on it, to ensure that rates and frequencies get the same n?
     // So, a let-statement.
-    {{"DP", "MM[a]"},
-     {"SModel.dp_model[submodel,rates,frequencies]"},
+    {{"DP", "MM[a]","G"},
+     {"SModel.dp[submodel,rates,frequencies,A]"},
      {"rates", "List[Double]", "~Dirichlet[4,2]"},
      {"frequencies", "List[Double]", "~Dirichlet[4,3]"},
-     {"submodel", "RA[a]"}},
+     {"submodel", "RA[a]","","A"},
+     {"A","a","LAMBDA"}},
 
     {{"MultiRate", "MM[a]"},
      {"SModel.multiRateModel[submodel,dist,n_bins]"},

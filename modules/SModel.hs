@@ -501,28 +501,7 @@ log_normal_rates base sigmaOverMu n = multiRate base (log_normal_rates' sigmaOve
 
 log_normal_inv_rates base sigmaOverMu pInv n = multiRate base $ plus_inv pInv (log_normal_rates' sigmaOverMu n);
 
-dp_model base rates fraction a = Prefix "DP" $
-do {
-   fraction' <- fraction;
-   sequence_ $ zipWith (\f i -> Log ("f"++show i) f) fraction' [1..];
-
-   rates'    <- rates;
-   sequence_ $ zipWith (\f i -> Log ("rates"++show i) f) rates' [1..];
-
-   let {dist = zip fraction' rates';
-        dist' = quicksortWith (\(f,r)->r) dist;
-        x = unzip dist';
-        fs = fst x;
-        rs = snd x};
-
---   mapM_ (\i -> Log ("f"++show i) (fs!!i)) [0..];
---   mapM_ (\i -> Log ("rate"++show i) (rs!!i)) [0..];
-
-   base' <- base a;
-
-   return $ multiRate base' (DiscreteDistribution dist)
-};
-
+dp base rates fraction a = multiRate base (DiscreteDistribution dist) where {dist = zip fraction rates};
 
 branch_transition_p t smodel branch_cat_list ds b = vector_Matrix_From_List $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b);
 
