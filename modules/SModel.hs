@@ -206,20 +206,7 @@ m2a_test_model s r w1 f1 posP posW posSelection codona = Prefix "M2a_Test" $ do
   return $ multiParameter m0w (m2a_test_omega_dist f1' w1' posP' posW' posSelection');
 };
 
-m3_model s r ps omegas codona = Prefix "M3" $ do
-{
-  s' <- Prefix "S" (s (getNucleotides codona));
-  r' <- Prefix "R" (r codona);
-
-  ps' <- Prefix "ps" ps;
-  sequence_ $ zipWith (\f i -> Log ("p"++show i) f) ps' [1..];
-
-  omegas' <- Prefix "omegas" omegas;
-  sequence_ $ zipWith (\f i -> Log ("omega"++show i) f) omegas' [1..];
-
-  let {m0w w = reversible_markov (m0 codona s' w) r'};
-  return $ multiParameter m0w (m3_omega_dist ps' omegas');
-};
+m3 s r ps omegas codona = multiParameter m0w (m3_omega_dist ps omegas) where {m0w w = reversible_markov (m0 codona s w) r};
 
 m3_test_model s r ps omegas posP posW posSelection codona = Prefix "M3_Test" $ do
 {

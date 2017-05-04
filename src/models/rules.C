@@ -189,12 +189,13 @@ const vector< vector<vector<string>> > all_default_arguments =
     //   * would this solve some of our woes with the DP model?
     //   * this does NOT solve the issue of the dirichlet weight depending on n
 
-    {{"M3", "MM[Codon[a,b]]"},
-     {"SModel.m3_model[nuc_model,freq_model,ps,omegas]"},
-     {"nuc_model", "EM[a]", "HKY"},
-     {"freq_model", "FM[Codon[a,b]]", "F61"},
+    {{"M3", "MM[Codon[a,b]]", "G"},
+     {"SModel.m3[nuc_model,freq_model,ps,omegas,A]"},
+     {"nuc_model", "EM[a]", "HKY", "Alphabet.getNucleotides[A]"},
+     {"freq_model", "FM[Codon[a,b]]", "F61", "A"},
      {"ps", "List[Double]", "~Dirichlet[4,2]"},
-     {"omegas", "List[Double]", "~iid[4,Uniform[0,1]]" }},
+     {"omegas", "List[Double]", "~iid[4,Uniform[0,1]]"},
+     {"A", "a", "LAMBDA"}},
 
     {{"M3_Test", "MM[Codon[a,b]]"},
      {"SModel.m3_test_model[nuc_model,freq_model,ps,omegas,posP,posW,posSelection]"},
