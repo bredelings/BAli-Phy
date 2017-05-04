@@ -195,39 +195,21 @@ m8a s r mu gamma n_bins posP codona = multiParameter m0w (m8a_omega_dist mu gamm
 
 m8a_test s r mu gamma n_bins posP posW posSelection codona = multiParameter m0w (m8a_test_omega_dist mu gamma n_bins posP posW posSelection) where {m0w w = reversible_markov (m0 codona s w) r};
 
-branch_site_test_model s r fs ws posP posW posSelection codona = Prefix "BranchSiteTest" $
-do {
-  s' <- Prefix "S" (s (getNucleotides codona));
-  r' <- Prefix "R" (r codona);
+branch_site s r fs ws posP posW codona = MixtureModels [bg_mixture,fg_mixture] where
+    {
+-- background omega distribution -- where the last omega is 1.0 (neutral)
+      bg_dist = DiscreteDistribution $ zip fs (ws ++ [1.0]);
+-- accelerated omega distribution -- posW for all categories
+      accel_dist = DiscreteDistribution $ zip fs (repeat posW);
+      m0w w = reversible_markov (m0 codona s w) r;
+-- background branches always use the background omega distribution              
+      bg_mixture = multiParameter m0w (mixDiscreteDistributions [1.0-posP, posP] [bg_dist, bg_dist]);
+-- foreground branches use the foreground omega distribution with probability posP
+      fg_mixture = multiParameter m0w (mixDiscreteDistributions [1.0-posP, posP] [bg_dist, accel_dist]);
+    };
 
-  fs' <- Prefix "fs" fs;
-  sequence_ $ zipWith (\f i -> Log ("f"++show i) f) fs' [1..];
-
-  ws' <- Prefix "omegas" ws;
-  sequence_ $ zipWith (\f i -> Log ("w"++show i) f) ws' [1..];
-
-  let {ws'' = ws' ++ [1.0]};
-
-  posP' <- Prefix "posP" posP;
-  Log "posP" posP';
-
-  posW' <- Prefix "posW" posW;
-  Log "posW" posW';
-
-  posSelection' <- Prefix "posSelection" posSelection;
-  Log "posSelection" posSelection';
-
-  let {posW'' = if (posSelection' == 1) then posW' else 1.0};
-
-  let {d1 = DiscreteDistribution $ zip fs' ws'';
-       d2 = DiscreteDistribution $ zip fs' (repeat posW')};
-
-  let {m0w w = reversible_markov (m0 codona s' w) r';
-       mixture1 = multiParameter m0w (mixDiscreteDistributions [1.0-posP', posP'] [d1,d1]);
-       mixture2 = multiParameter m0w (mixDiscreteDistributions [1.0-posP', posP'] [d1,d2])};
-
-  return $ MixtureModels [mixture1,mixture2]
-};
+branch_site_test s r fs ws posP posW posSelection codona = branch_site s r fs ws posP posW' codona where
+    {posW' = if (posSelection == 1) then posW else 1.0};
 
 frequencies_model a = do {
   let {n_letters = alphabetSize a;
