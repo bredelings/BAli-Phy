@@ -9,13 +9,13 @@ using boost::optional;
 using boost::property_tree::ptree;
 
 // TODO: change scale_means_only -> scale_all_branches
-// TODO: Fix pre-burnin output.
-// TODO: allow referring to other parameters in parameter values (default values and otherwise)
+// TODO: *allow referring to other parameters in parameter values (default values and otherwise)
 // TODO: remove triggers
 // TODO: move stuff (e.g. logging) out of models
 // TODO: clean up loggers.{H,C} to use lambda functions
 // TODO: clean up transition kernels to use lambda functions?
 // TODO: find some way to run under the prior?
+// TODO: rewrite frequencies_prior..
 
 const vector< vector<vector<string>> > all_default_arguments = 
 {
@@ -50,15 +50,27 @@ const vector< vector<vector<string>> > all_default_arguments =
 
     {{"EQU", "EM[a]", "G"}, {"SModel.equ[A]"}, {"A", "a", "LAMBDA"}},
 
-    {{"JC", "RA[a]", "G"}, {"SModel.jukes_cantor[A]"}, {"A", "a", "LAMBDA"}},
+    {{"JC", "RA[a]", "G"},
+     {"SModel.jukes_cantor[A]"},
+     {"A", "a", "LAMBDA"}},
 
-    {{"K80", "RA[a]", "G"}, {"SModel.k80[kappa,A]"}, {"kappa", "Double", "~logNormal[log[2],0.25]"}, {"A", "a", "LAMBDA"} },
+    {{"K80", "RA[a]", "G"},
+     {"SModel.k80[kappa,A]"},
+     {"kappa", "Double", "~logNormal[log[2],0.25]"},
+     {"A", "a", "LAMBDA"} },
 
     {{"F81"}, {}, {"alphabet", "Alphabet"}},
 
-    {{"HKY", "EM[a]", "G", "Nucleotides[a]"}, {"SModel.hky[kappa,alphabet]"}, {"kappa", "Double", "~logNormal[log[2],0.25]"}, {"alphabet", "a", "LAMBDA"}},
+    {{"HKY", "EM[a]", "G", "Nucleotides[a]"},
+     {"SModel.hky[kappa,alphabet]"},
+     {"kappa", "Double", "~logNormal[log[2],0.25]"},
+     {"alphabet", "a", "LAMBDA"}},
 
-    {{"TN", "EM[a]", "G"}, {"SModel.tn[kappaPur,kappaPyr,A]"}, {"kappaPur", "Double", "~logNormal[log[2],0.25]"}, {"kappaPyr", "Double", "~logNormal[log[2],0.25]"}, {"A", "a", "LAMBDA"}},
+    {{"TN", "EM[a]", "G"},
+     {"SModel.tn[kappaPur,kappaPyr,A]"},
+     {"kappaPur", "Double", "~logNormal[log[2],0.25]"},
+     {"kappaPyr", "Double", "~logNormal[log[2],0.25]"},
+     {"A", "a", "LAMBDA"}},
 
     {{"GTR", "EM[a]", "G"},
      {"SModel.gtr[S,A]"},
@@ -107,16 +119,12 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"ws", "List[Double]", "~iid[20,logNormal[0,0.5]]"},
      {"submodel", "RA[a]", "HKY"}},
 
-// fraction ~ dirichlet' n (1 + n/2), rates ~ dirichlet' n 2
-    // DP does not actually use n, given rates and frequencies.
-    // DP could have another variant that is only given an n... but then are we abandoning the idea of specifying all parameters?
-    // Perhaps DP should be able to introduce an n and then  condition on it, to ensure that rates and frequencies get the same n?
-    // So, a let-statement.
+    // fraction ~ dirichlet' n (1 + n/2), rates ~ dirichlet' n 2
     {{"DP", "MM[a]","G"},
      {"SModel.dp[submodel,rates,frequencies,A]"},
-     {"rates", "List[Double]", "~Dirichlet[n_bins,2]"},
-     {"frequencies", "List[Double]", "~Dirichlet[n_bins,3]"},
-     {"n_bins","Int","4"},
+     {"rates", "List[Double]", "~Dirichlet[n,2]"},
+     {"frequencies", "List[Double]", "~Dirichlet[n,3]"},
+     {"n","Int","4"},
      {"submodel", "RA[a]","","A"},
      {"A","a","LAMBDA"}},
 
