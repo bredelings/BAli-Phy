@@ -335,9 +335,8 @@ std::set<T> intersection(const std::set<T>& S1, const std::set<T>& S2)
 
 // Print out elements of container v separated by string s
 template<class V,typename S>
-std::string join(const V& v, const S& sep)
+inline void join(std::ostream& o, const V& v, const S& sep)
 {
-    std::ostringstream o;
     int i=0;
     for(const auto& elem: v)
     {
@@ -345,6 +344,13 @@ std::string join(const V& v, const S& sep)
 	o<<elem;
 	i++;
     }
+}
+
+template<class V,typename S>
+inline std::string join(const V& v, const S& sep)
+{
+    std::ostringstream o;
+    join(o, v, sep);
     return o.str();
 }
 

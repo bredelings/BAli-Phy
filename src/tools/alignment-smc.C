@@ -93,6 +93,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("strip-gaps,S","Remove columns within <arg> columns of a gap")
 	("mask-gaps,M",value<int>()->default_value(0),"Remove columns within <arg> columns of a gap")
 	("variant",value<int>()->default_value(1),"Is there a SNP at distance <arg> from SNP?")
+	("dical2","Output file for DiCal2")
 	("msmc","Output file for MSMC")
 	("psmc","Output file for PSMC")
 	;
@@ -394,6 +395,60 @@ vector<int> diffuse(const vector<int>& v, int d, int label)
 }
 
 /*
+NUM LOCI
+20
+
+SEGREGATING SITES
+2       4       8       14
+
+HAPLOTYPES
+1100
+0011
+1010
+0101
+0001
+1000
+1010
+0101
+*/
+void write_dical2(std::ostream& o, const alignment& A)
+{
+    auto& a = A.get_alphabet();
+    int last_snp = -1;
+
+    vector<vector<int>> haplotypes(A.n_sequences());
+    vector<int> segregating_sites;
+    for(int column=0;column<A.length();column++)
+    {
+	if (is_masked_column(A,column)) continue;
+
+	if (not is_variant_column(A,column)) continue;
+	
+	segregating_sites.push_back(column+1);
+
+	for(int h=0;h<A.n_sequences();h++)
+	    haplotypes[h].push_back( A(column,h) == A(column,0)?0:1 );
+    }
+    // Write number of loci
+    o<<"NUM LOCI\n"<<A.length()<<"\n\n";
+
+    // Write snp locations
+    o<<"SEGREGATING SITES\n";
+    join(o, segregating_sites, '\t');
+    o<<"\n\n";
+	
+    // write haplotypes
+    o<<"HAPLOTYPES\n";
+    for(auto& haplotype: haplotypes)
+    {
+	join(o,haplotype,"");
+	o<<"\n";
+    }
+    o.flush();
+}
+
+
+/*
  https://github.com/stschiff/msmc/blob/master/guide.md
 1   58432   63  TCCC
 1   58448   16  GAAA
@@ -545,6 +600,8 @@ int main(int argc,char* argv[])
 	    write_msmc(std::cout, A);
 	else if (args.count("psmc"))
 	    write_psmc(std::cout,A,0,1);
+	else if (args.count("dical2"))
+	    write_dical2(std::cout,A);
 	else
 	    std::cout<<A<<std::endl;
 
