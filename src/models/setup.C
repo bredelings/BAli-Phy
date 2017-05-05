@@ -422,19 +422,13 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
     E = (dummy("Prelude.return"),E);
 
     // 4. Peform the rule arguments 'Prefix "arg_name" (arg_+arg_name) >>= (\arg_name -> (Log "arg_name" arg_name) << E)'
-    for(int i=0;i<args.size();i++)
+    int i=0;
+    for(;i<args.size();i++)
     {
 	auto argi = array_index(args,i);
 
+	if (argi.get("no_apply",false)) break;
 	string arg_name = array_index(argi,0).get_value<string>();
-	// No need to perform or log lambda arguments.
-	if (argi.get("no_apply",false))
-	{
-	    // E = (\arg_name -> E)
-	    E = lambda_quantify(dummy("arg_"+arg_name), E);
-	    continue;
-	}
-
 	ptree arg_tree = get_arg(*rule, arg_name);
 	ptree arg_type = arg_tree.get_child("arg_type");
 	expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
@@ -445,7 +439,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 	    arg = apply_args(arg, *applied_args);
 
 	// Prefix "arg_name" (arg_+arg_name)
-	if (not no_log) arg = (Prefix,name,(Prefix, arg_name, arg));
+	if (not no_log) arg = (Prefix, arg_name, arg);
 
 	// E = Log "arg_name" arg_name >> E
 	if (should_log(model_rep, arg_name))
@@ -456,6 +450,17 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 
 	// E = 'arg <<= (\arg_name -> E)
 	E = (dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+arg_name), E));
+    }
+
+    if (not no_log) E = (Prefix,name,E);
+	
+    for(;i<args.size();i++)
+    {
+	// E = (\arg_name -> E)
+	auto argi = array_index(args,i);
+	string arg_name = array_index(argi,0).get_value<string>();
+	E = lambda_quantify(dummy("arg_"+arg_name), E);
+	continue;
     }
 
     return E;
