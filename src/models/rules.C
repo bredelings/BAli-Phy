@@ -336,13 +336,16 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"A", "a", "LAMBDA"}
     },
 
-    {{"RS05", "IM"}, {"IModel.rs05_model[logDelta,meanIndelLengthMinus1,tau]"},
+    {{"RS05", "IM", "G"},
+     {"IModel.rs05[logDelta,meanIndelLengthMinus1,tau,tree]"},
      {"logDelta", "Double", "~Laplace[-4,0.707]"},
      {"meanIndelLengthMinus1", "Double", "~Exponential[10]"},
-     {"tau", "Double", "0.001"}
+     {"tau", "Double", "0.001"},
+     {"tree", "tree", "LAMBDA"}
     },
 
-    {{"RS07", "IM", "G"}, {"IModel.rs07[logLambda,meanIndelLengthMinus1,tree]"},
+    {{"RS07", "IM", "G"},
+     {"IModel.rs07[logLambda,meanIndelLengthMinus1,tree]"},
      {"logLambda", "Double", "~Laplace[-4,0.707]"},
      {"meanIndelLengthMinus1", "Double", "~Exponential[10]"},
      {"tree", "tree", "LAMBDA"}

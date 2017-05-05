@@ -10,23 +10,14 @@ builtin builtin_rs07_lengthp 2 "rs07_lengthp" "Alignment";
 
 rs05_lengthp m l = doubleToLogDouble (builtin_rs05_lengthp m l);
 
-rs05_model logRate meanIndelLengthMinus1 tau tree = Prefix "RS05"
-(do {
-   logRate' <- Prefix "logRate" logRate;
-   Log "logRate" logRate';
-   let {rate = exp logRate';
-        x = exp (-2.0*rate);
-        delta = x/(1.0+x)};
-
-   meanIndelLengthMinus1' <- Prefix "meanIndelLengthMinus1" meanIndelLengthMinus1;
-   Log "meanIndelLength" (meanIndelLengthMinus1'+1.0);
-   let {epsilon = meanIndelLengthMinus1'/(1.0 + meanIndelLengthMinus1')};
-
-   tau' <- Prefix "tau" tau;
-   Log "tau" tau';
-
-   return (\heat training -> let {m = rs05_branch_HMM epsilon delta tau' heat training} in (\d b -> m, rs05_lengthp m))
-});
+rs05 logRate meanIndelLengthMinus1 tau tree heat training = (\d b -> m, rs05_lengthp m) where
+    {
+      rate = exp logRate;
+      x = exp (-2.0*rate);
+      delta = x/(1.0+x);
+      epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
+      m = rs05_branch_HMM epsilon delta tau heat training;
+    };
 
 rs07_lengthp e l = doubleToLogDouble (builtin_rs07_lengthp e l);
 
