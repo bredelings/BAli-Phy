@@ -48,7 +48,6 @@ In order to run the installed software, you should [add bali-phy to your $PATH](
 Installed locations
 ------------------
 
-The instructions above put 
 If you installed in $HOME/local as recommended above, then files will be in:
 
 | Location                                                       | Files                   |
