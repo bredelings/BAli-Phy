@@ -20,7 +20,7 @@
   <div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="installation"></a>2. Installation</h2></div></div></div>
 
   <p>You can install BAli-Phy by downloading compiled executables from the <a class="ulink" href="http://www.bali-phy.org/download.php" target="_top">website</a>.</p>
-  <p>On OSX 10.8 or higher, you could also install with <a class="ulink" href="http://brew.sh/" target="_top">homebrew</a> if you have the XCode 5.1 compiler.  The recipe is in <a class="ulink" href="https://github.com/Homebrew/homebrew-science/blob/master/README.md" target="_top">homebrew/science</a>.</p>
+  <p>On OS X, you can also install with <a class="ulink" href="http://brew.sh/" target="_top">homebrew</a> if you have the XCode 7 (or higher) compiler.  The recipe is in <a class="ulink" href="https://github.com/Homebrew/homebrew-science/blob/master/README.md" target="_top">homebrew/science</a>.</p>
   <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="pre-requisites"></a>2.1. Hardware requirements</h3></div></div></div>
     
     <p>We recommend running BAli-Phy on a computing cluster for long runs.
@@ -77,8 +77,7 @@ While running the Cygwin installer
     </div>
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp3"></a>2.3. Mac OS X requirements</h3></div></div></div>
-    <p>We recommend Mac OS X version 10.8 (or higher).</p>
-    <p>You can now install with <a class="ulink" href="http://brew.sh/" target="_top">homebrew</a> if you have the XCode 5.1 compiler.  The recipe is in <a class="ulink" href="https://github.com/Homebrew/homebrew-science/blob/master/README.md" target="_top">homebrew/science</a>.</p>
+    <p>You can now install with <a class="ulink" href="http://brew.sh/" target="_top">homebrew</a> if you have the XCode 7 (or higher) compiler.  The recipe is in <a class="ulink" href="https://github.com/Homebrew/homebrew-science/blob/master/README.md" target="_top">homebrew/science</a>.</p>
     </div>
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp4"></a>2.4. Linux requirements</h3></div></div></div>
@@ -258,7 +257,7 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp15"></a>3.1. Software requirements</h3></div></div></div>
       
 
-    <p>In order to compile BAli-Phy, you need a C++ compiler than can understands the C++11 standard.  </p>
+    <p>In order to compile BAli-Phy, you need a C++ compiler than can understands the C++14 standard.  </p>
     <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp11"></a>3.1.1. Compilers: Linux</h4></div></div></div>
     <p>On Linux we recommend the GNU C++ Compiler (<a class="ulink" href="http://gcc.gnu.org" target="_top">GCC</a>) version 5.0 (or higher).
     </p>
@@ -362,13 +361,11 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 	
 	
 	<p>The default C++ compiler is <span class="command"><strong>g++</strong></span>.  On
-	  some systems, <span class="command"><strong>g++</strong></span> invokes GCC version 4.2,
-	  and the correct compiler is called something else, such as
-	  <span class="command"><strong>g++-4.8</strong></span>.  To use
-	  <span class="command"><strong>g++-4.8</strong></span> as the C++ compiler when compiling
+	  some systems, <span class="command"><strong>g++</strong></span> invokes a C++ compiler that is too old.
+	  To use <span class="command"><strong>g++-5</strong></span> as the C++ compiler when compiling
 	  <span class="application">BAli-Phy</span>, you would set the CXX
 	  environment variable as follows:
-	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-3.0b1/configure CXX=g++-4.8</code></strong></pre><p>
+	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-3.0b1/configure CXX=g++-5</code></strong></pre><p>
 	</p>
       </div>
 
@@ -385,7 +382,7 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 	<p>
           All these options to <span class="command"><strong>configure</strong></span> can be
 	  combined, as follows:
-	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-3.0b1/configure --prefix=$HOME/Applications/bali-phy-3.0b1 CXX=g++-4.8 CXXFLAGS="-march=native -g"</code></strong></pre><p>
+	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>../bali-phy-3.0b1/configure --prefix=$HOME/Applications/bali-phy-3.0b1 CXX=g++-5 CXXFLAGS="-march=native -g"</code></strong></pre><p>
 	</p>
       </div>
     </div>
@@ -399,17 +396,13 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
       </p>
 
       <p>To generate these files, you need automake 1.8 (or higher)
-	and autoconf 2.59 (or higher).  Run these commands in the top level
-	directory of the repository that you checked out.</p><pre class="screen"><code class="prompt">%</code><strong class="userinput"><code> autoheader</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>aclocal -I m4</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>libtoolize</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>automake -a</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>autoconf</code></strong></pre><p>
+	autoconf 2.59 (or higher), and libtool.  In the top level
+	directory of the repository that you checked out, run </p><pre class="screen"><code class="prompt">%</code><strong class="userinput"><code> ./bootstrap.sh</code></strong></pre><p>
+
         If your system has multiple versions of automake, then you may
 	have to type e.g. <strong class="userinput"><code>automake-1.14 -a</code></strong> and
 	<strong class="userinput"><code>aclocal-1.14</code></strong> instead in order to specify which
-	version to use.  On Mac, you may need to replace the <span class="command"><strong>libtoolize</strong></span> with 
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>glibtoolize</code></strong></pre><p>
+	version to use.
 </p>
     </div>
 
@@ -458,13 +451,10 @@ This can be done simply by starting several instances of the program, and does n
 
       <p>You can specify a more complex substitution model as follows (See <a class="xref" href="#subst_basic" title="7.2. Basic CTMC models">Section 7.2, &#8220;Basic CTMC models&#8221;</a>):
 
-	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy <em class="replaceable"><code>sequence-file</code></em> --smodel LG+gamma_inv</code></strong></pre><p> </p>
+	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy <em class="replaceable"><code>sequence-file</code></em> --smodel LG+GammaInvRates</code></strong></pre><p> </p>
       <p>You may specify an indel model of <strong class="userinput"><code>none</code></strong>
 	to fix the alignment to its initial value, and ignore information in shared insertions or deletions.
   	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy <em class="replaceable"><code>sequence-file</code></em> --imodel none</code></strong></pre>
-      <p>If you desire to use a codon model, you must specify the alphabet:
-	</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy <em class="replaceable"><code>sequence-file</code></em> --smodel M0 --alphabet Codons</code></strong></pre><p>
-      </p>
     </div>
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp25"></a>4.3. Multiple genes or data partitions</h3></div></div></div>
@@ -477,15 +467,15 @@ This can be done simply by starting several instances of the program, and does n
 
       <p>By default, each partition will recieve an independent copy of the model, and will not share parameter values:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy <em class="replaceable"><code>sequence-file1</code></em> <em class="replaceable"><code>sequence-file2</code></em> --smodel TN --imodel RS07</code></strong></pre><p>
-However, you can select partition-specific values for 5 options: <strong class="userinput"><code>--smodel</code></strong>, <strong class="userinput"><code>--imodel</code></strong>, <strong class="userinput"><code>--alphabet</code></strong>, <strong class="userinput"><code>--same-scale</code></strong>, and <strong class="userinput"><code>--align-constraint</code></strong>.  For example, to specify different substitution models but the same alphabet:
+However, you can select partition-specific values for 5 options: <strong class="userinput"><code>--smodel</code></strong>, <strong class="userinput"><code>--imodel</code></strong>, <strong class="userinput"><code>--alphabet</code></strong>, and <strong class="userinput"><code>--scale</code></strong>.  For example, to specify different substitution models but the same alphabet:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy <em class="replaceable"><code>sequence-file1</code></em> <em class="replaceable"><code>sequence-file2</code></em> --smodel 1:TN --smodel 2:GTR --alphabet 1,2:DNA</code></strong></pre><p>
 You can fix the alignment and ignore insertion/deletion information in one partition, while allowing the alignment to vary and using insertion/deletion information in another partition:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy <em class="replaceable"><code>sequence-file1</code></em> <em class="replaceable"><code>sequence-file2</code></em> --imodel 1:RS07 --imodel 2:none</code></strong></pre><p>
 You can also specify that two partitions share a single copy of a single substitution model or indel model.  This reduces the number of parameters and also pools information between the partitions:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy <em class="replaceable"><code>sequence-file1</code></em> <em class="replaceable"><code>sequence-file2</code></em> --smodel 1,2:TN --imodel 1,2:RS07</code></strong></pre><p>
-By default each partition has a separate scale, but you can force groups of partitions to share a scale. The name of the groups for the scale are not currently used, but may be used in later versions of the software:
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy <em class="replaceable"><code>sequence-file1</code></em> <em class="replaceable"><code>sequence-file2</code></em> --smodel 1:TN --smodel 2:GTR --same-scale 1,2:groupname</code></strong></pre><p>
-Finally, you may specify the option <strong class="userinput"><code>--traditional</code></strong>, or its short form <strong class="userinput"><code>-t</code></strong>.  This is the same as <strong class="userinput"><code>--imodel none</code></strong> and affects all partitions:
+By default each partition has a separate scale, but you can force groups of partitions to share a scale. If you levae the value of the scale blank, the default distribution on scales will be used:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy <em class="replaceable"><code>sequence-file1</code></em> <em class="replaceable"><code>sequence-file2</code></em> --smodel 1:TN --smodel 2:GTR --scale 1,2:</code></strong></pre><p>
+Finally, you may specify <strong class="userinput"><code>-Inone</code></strong> or <strong class="userinput"><code>--imodel none</code></strong>, which affects all partitions:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy <em class="replaceable"><code>sequence-file1</code></em> <em class="replaceable"><code>sequence-file2</code></em> --smodel 1:TN --smodel 2:GTR -t</code></strong></pre><p>
       </p>
     </div>
@@ -556,16 +546,13 @@ align = examples/EF-Tu/5d.fasta
 smodel = log-normal_inv
 
 #fix the alignment and do not model indels
-traditional = traditional
+imodel = none
 	  </pre><p>
           The first option, <strong class="userinput"><code>align</code></strong>, is the name of
 	  the sequence file, which has no name on the command line.
 	  Lines that begin with # are comments, and blank lines are
-	  ignored.  The option <strong class="userinput"><code>--traditional</code></strong> uses
-	  the option name as the value, because it does not take a
-	  value.  Thus, this configuration file corresponds to the
-	  command line
-	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy examples/EF-Tu/5d.fasta --smodel log-normal_inv --traditional</code></strong></pre><p>
+	  ignored.
+	  </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy examples/EF-Tu/5d.fasta --smodel log-normal_inv --imodel none</code></strong></pre><p>
 	</p>
       </div>
 
@@ -601,14 +588,14 @@ traditional = traditional
       the program is running. 
     </p>
 
-    <div class="example"><a name="idp650"></a><p class="title"><b>Example 1. No frills</b></p><div class="example-contents">
+    <div class="example"><a name="idp628"></a><p class="title"><b>Example 1. No frills</b></p><div class="example-contents">
       
       <p>Here we analyze the EF-Tu 5-taxon data set provided with
 	the software.</p>
       <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0b1/share/bali-phy/examples/EF-Tu/5d.fasta</code></strong></pre>
     </div></div><br class="example-break">
 
-    <div class="example"><a name="idp658"></a><p class="title"><b>Example 2. Multiple-Rate Substitution Model</b></p><div class="example-contents">
+    <div class="example"><a name="idp636"></a><p class="title"><b>Example 2. Multiple-Rate Substitution Model</b></p><div class="example-contents">
       
       <p>We now modify the previous example by changing the
 	substitution model to allow log-normal-distributed rate variation and
@@ -617,16 +604,16 @@ traditional = traditional
       
       <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0b1/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv</code></strong></pre></div></div><br class="example-break">
 
-    <div class="example"><a name="idp666"></a><p class="title"><b>Example 3. Fixed alignment</b></p><div class="example-contents">
+    <div class="example"><a name="idp644"></a><p class="title"><b>Example 3. Fixed alignment</b></p><div class="example-contents">
       
       <p>Here we use the 5S rRNA 5-taxon data set provided with
-	the software.  The alignment is fixed and the <strong class="userinput"><code>--traditional</code></strong>
+	the software.  The alignment is fixed and the <strong class="userinput"><code>-Inone</code></strong>
 	option is used, making indels non-informative.  In addition,
 	nucleotide frequencies are fixed to empirical values estimated
 	from the input sequences. 
       </p> 
 
-      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0b1/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</code></strong></pre>
+      <pre class="screen"> <code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0b1/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant -Inone</code></strong></pre>
 
     </div></div><br class="example-break">
   </div>
@@ -1035,7 +1022,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
        <span class="application">BAli-Phy</span> are specified using a
        stack, as follows: <strong class="userinput"><code>Model[arg]+Model[arg]+...+Model[arg]</code></strong>
         where each model uses the previous models as input.  For
-	example, <strong class="userinput"><code>LG+gamma_inv[4]</code></strong>. Some arguments are optional.</p>
+	example, <strong class="userinput"><code>LG+GammaInvRates[4]</code></strong>. Some arguments are optional.</p>
 
 	<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3>
 	  <p>
@@ -1077,7 +1064,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	TNx3, GTRx3, JTT, WAG, LG, and M0.  Each of these models is a
 	way of specifying the exchangeability matrix <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><msub><mi>S</mi> <mi>ij</mi></msub></math>.</p>
 
-	<div class="table"><a name="idp1215"></a><p class="title"><b>Table 1. Substitution Models</b></p><div class="table-contents">
+	<div class="table"><a name="idp1193"></a><p class="title"><b>Table 1. Substitution Models</b></p><div class="table-contents">
 	  
 	  <table class="table" summary="Substitution Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>Alphabet</th><th>Parameters</th></tr></thead><tbody><tr><td><strong class="userinput"><code>EQU</code></strong></td><td>any</td><td>none</td></tr><tr><td>
 		  <p><strong class="userinput"><code>HKY</code></strong></p>
@@ -1141,7 +1128,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>R</mi></math>).
       </p>
 
-      <div class="table"><a name="idp1411"></a><p class="title"><b>Table 2. Frequency Models</b></p><div class="table-contents">
+      <div class="table"><a name="idp1389"></a><p class="title"><b>Table 2. Frequency Models</b></p><div class="table-contents">
 	
 	<table class="table" summary="Frequency Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>Alphabet</th><th>Parameters</th></tr></thead><tbody><tr><td>
 		<p><strong class="userinput"><code>F</code></strong></p>
@@ -1216,21 +1203,21 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       or have different parameters (e.g. an M2 codon model).
     </p>
 
-      <div class="table"><a name="idp1538"></a><p class="title"><b>Table 3. CTMC Mixture Models</b></p><div class="table-contents">
+      <div class="table"><a name="idp1516"></a><p class="title"><b>Table 3. CTMC Mixture Models</b></p><div class="table-contents">
 	
 	<table class="table" summary="CTMC Mixture Models" border="0"><colgroup><col><col><col></colgroup><thead><tr><th>Model</th><th>Alphabet</th><th>Parameters</th></tr></thead><tbody><tr><td>
 		<p><strong class="userinput"><code><em class="replaceable"><code>model</code></em> + INV</code></strong></p>
 	      </td><td><em class="replaceable"><code>model</code></em> alphabet</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">pInv</span></p></td><td> <p>Fraction of invariant sites.</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
-		<p><strong class="userinput"><code><em class="replaceable"><code>model</code></em> + gamma</code></strong></p>
-		<p><strong class="userinput"><code><em class="replaceable"><code>model</code></em> + gamma[4]</code></strong> (default)</p>
+		<p><strong class="userinput"><code><em class="replaceable"><code>model</code></em> + GammaRates</code></strong></p>
+		<p><strong class="userinput"><code><em class="replaceable"><code>model</code></em> + GammaRates[4]</code></strong> (default)</p>
 		<p>Yang (1994)</p>
 	      </td><td><em class="replaceable"><code>model</code></em> alphabet</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">sigmaOverMu</span></p></td><td> <p>noise to signal ratio for Gamma(a,b).  Also equal to 1/sqrt(a).</p> </td></tr><tr><td><p><span class="term">a</span></p></td><td> <p>parameter for Gamma(a,b)</p> </td></tr><tr><td><p><span class="term">b</span></p></td><td> <p>parameter for Gamma(a,b)</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
-		<p><strong class="userinput"><code><em class="replaceable"><code>model</code></em> + gamma_inv</code></strong></p>
-		<p><strong class="userinput"><code><em class="replaceable"><code>model</code></em> + gamma_inv[4]</code></strong> (default)</p>
+		<p><strong class="userinput"><code><em class="replaceable"><code>model</code></em> + GammaInvRates</code></strong></p>
+		<p><strong class="userinput"><code><em class="replaceable"><code>model</code></em> + GammaInvRates[4]</code></strong> (default)</p>
 		<p>Yang (1994)</p>
 	      </td><td><em class="replaceable"><code>model</code></em> alphabet</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">sigmaOverMu</span></p></td><td> <p>noise to signal ratio for Gamma(a,b).  Also equal to 1/sqrt(a).</p> </td></tr><tr><td><p><span class="term">a</span></p></td><td> <p>parameter for Gamma(a,b)</p> </td></tr><tr><td><p><span class="term">b</span></p></td><td> <p>parameter for Gamma(a,b)</p> </td></tr><tr><td><p><span class="term">pInv</span></p></td><td> <p>Fraction of invariant sites.</p> </td></tr></tbody></table></div>
@@ -1320,11 +1307,11 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <p>In order to use the branch-site substitution model, the user needs to
     </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">Specify an unrooted tree topology in Newick format.</li><li class="listitem">Label foreground branches on the tree using NHX attributes.</li><li class="listitem">Disable topology changes in order to fix the tree topology (branch lengths are estimated).</li></ul></div><p>
     Here is an example tree file:
-</p><div class="example"><a name="idp1971"></a><p class="title"><b>Example 4. An initial tree file with branch lengths</b></p><div class="example-contents">
+</p><div class="example"><a name="idp1949"></a><p class="title"><b>Example 4. An initial tree file with branch lengths</b></p><div class="example-contents">
 (((A1:0.1, B1:0.1):0.1,(C1:0.1, D1:0.1):0.1):0.1,((E1:0.1, F1:0.1):0.1,(G1:0.1, H1:0.1):0.1):0.1,(((A2:0.1, B2:0.1):0.1,(C2:0.1, D2:0.1):0.1):0.1,((E2:0.1, F2:0.1):0.1,(G2:0.1, H2:0.1):0.1):0.1):[&amp;&amp;NHX:foreground=1]0.2);
 </div></div><p><br class="example-break">
 Any branch lengths provided will be used as initial values in the MCMC analysis.  However, it is not necessary to provide them:
-</p><div class="example"><a name="idp1973"></a><p class="title"><b>Example 5. An initial tree file without branch lengths</b></p><div class="example-contents">
+</p><div class="example"><a name="idp1951"></a><p class="title"><b>Example 5. An initial tree file without branch lengths</b></p><div class="example-contents">
 (((A1, B1),(C1, D1)),((E1, F1),(G1, H1)),(((A2, B2),(C2, D2)),((E2, F2),(G2, H2))):[&amp;&amp;NHX:foreground=1]);
 </div></div><p><br class="example-break">
 The NHX attribute must be applied to the branch, not the node.  Therefore it must occur after a colon.  Multiple branches may be marked as foreground branches.
@@ -1345,11 +1332,11 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
       <p>Example: --smodel EQU --alphabet Triplets</p>
       <p>Example: --smodel HKY</p>
       <p>Example: --smodel TN+F=constant</p>
-      <p>Example: --smodel M0 --alphabet Codons</p>
-      <p>Example: --smodel M0+F1x4 --alphabet Codons</p>
-      <p>Example: --smodel M2a --alphabet Codons</p>
-      <p>Example: --smodel M2a[HKY] --alphabet Codons (same as above)</p>
-      <p>Example: --smodel M2[TN,F3x4] --alphabet Codons</p>
+      <p>Example: --smodel M0</p>
+      <p>Example: --smodel M0+F1x4</p>
+      <p>Example: --smodel M2a</p>
+      <p>Example: --smodel M2a[HKY] (same as above)</p>
+      <p>Example: --smodel M2[TN,F3x4]</p>
     </div>
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="genetic-codes"></a>7.7. Genetic Codes</h3></div></div></div>
       
@@ -1367,7 +1354,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
       
       <p>The current models are RS05, RS07, and <strong class="userinput"><code>none</code></strong>.  The default is RS07.  Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>Pr</mi><mo stretchy="false">(</mo><mi>A</mi><mo stretchy="false">&#8739;</mo><mi>T</mi><mo>,</mo><mi>&#964;</mi><mo>,</mo><mi>&#923;</mi><mo stretchy="false">)</mo></math> is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</p>
 
-<div class="table"><a name="idp2035"></a><p class="title"><b>Table 4. Substitution Models</b></p><div class="table-contents">
+<div class="table"><a name="idp2013"></a><p class="title"><b>Table 4. Substitution Models</b></p><div class="table-contents">
 	  
 	  <table class="table" summary="Substitution Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>Parameters</th><th>Description</th></tr></thead><tbody><tr><td>
 		  <p><strong class="userinput"><code>RS05</code></strong></p>
@@ -1773,8 +1760,8 @@ The stabilization criterion is the same one described above for numerical values
   <div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="FAQ"></a>13. Frequently Asked Questions (FAQ)</h2></div></div></div>
     
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp79"></a>13.1. Input files</h3></div></div></div>
-      <div class="qandaset"><a name="idp2386"></a><dl><dt>13.1.1. <a href="#idp2387">Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</a></dt><dt>13.1.2. <a href="#idp2393">Does BAli-Phy accept "?" characters?</a></dt><dt>13.1.3. <a href="#idp2401">Does BAli-Phy accept the characters "R" and "Y", etc.?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2387"></a><a name="idp2388"></a><p><b>13.1.1.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</p></td></tr>
+      <div class="qandaset"><a name="idp2364"></a><dl><dt>13.1.1. <a href="#idp2365">Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</a></dt><dt>13.1.2. <a href="#idp2371">Does BAli-Phy accept "?" characters?</a></dt><dt>13.1.3. <a href="#idp2379">Does BAli-Phy accept the characters "R" and "Y", etc.?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2365"></a><a name="idp2366"></a><p><b>13.1.1.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes, BAli-Phy accepts the wildcard characters "N"
 	    (for DNA) and "X" (for proteins).  These characters
 	    indicate that some letter is present (as opposed to a
@@ -1782,7 +1769,7 @@ The stabilization criterion is the same one described above for numerical values
 	    letter it is.  
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2393"></a><a name="idp2394"></a><p><b>13.1.2.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept "?" characters?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2371"></a><a name="idp2372"></a><p><b>13.1.2.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept "?" characters?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	      No.  "?" characters are often used to indicate
 	      <span class="emphasis"><em>either</em></span> letter presence (e.g. "N",
@@ -1796,7 +1783,7 @@ The stabilization criterion is the same one described above for numerical values
 	    alternatives are quite different.)
 	    </p></td></tr>
 	
-	<tr class="question"><td align="left" valign="top"><a name="idp2401"></a><a name="idp2402"></a><p><b>13.1.3.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the characters "R" and "Y", etc.?</p></td></tr>
+	<tr class="question"><td align="left" valign="top"><a name="idp2379"></a><a name="idp2380"></a><p><b>13.1.3.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the characters "R" and "Y", etc.?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	      Yes.  BAli-Phy accepts the characters Y, R, W, S, K, M,
 	      B, D, H, and V for DNA, RNA, and Codon alphabets.
@@ -1822,17 +1809,17 @@ The stabilization criterion is the same one described above for numerical values
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp80"></a>13.2. Running <span class="command"><strong>bali-phy</strong></span>.</h3></div></div></div>
 
-      <div class="qandaset"><a name="idp2413"></a><dl><dt>13.2.1. <a href="#idp2414">Can I fix the alignment and ignore indel information, like MrBayes and other MCMC programs?</a></dt><dt>13.2.2. <a href="#idp2422">Can I fix the tree topology, while allowing the alignment to vary?</a></dt><dt>13.2.3. <a href="#idp2429">Can I fix the tree topology and relative branch lengths, while allowing the alignment to vary?</a></dt><dt>13.2.4. <a href="#idp2437">Can I fix the tree topology and absolute branch lengths in all data partitions, while allowing the alignment to vary?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2414"></a><a name="idp2415"></a><p><b>13.2.1.</b></p></td><td align="left" valign="top"><p>Can I fix the alignment and ignore indel information, like MrBayes and other MCMC programs?</p></td></tr>
-	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>-t</code></strong> or <strong class="userinput"><code>--traditional</code></strong> on the command line.  This has the same effect as <strong class="userinput"><code>--imodel none</code></strong>.</p></td></tr>
+      <div class="qandaset"><a name="idp2391"></a><dl><dt>13.2.1. <a href="#idp2392">Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</a></dt><dt>13.2.2. <a href="#idp2399">Can I fix the tree topology, while allowing the alignment to vary?</a></dt><dt>13.2.3. <a href="#idp2406">Can I fix the tree topology and relative branch lengths, while allowing the alignment to vary?</a></dt><dt>13.2.4. <a href="#idp2414">Can I fix the tree topology and absolute branch lengths in all data partitions, while allowing the alignment to vary?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2392"></a><a name="idp2393"></a><p><b>13.2.1.</b></p></td><td align="left" valign="top"><p>Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</p></td></tr>
+	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>-Inone</code></strong> or <strong class="userinput"><code>--imodel=none</code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2422"></a><a name="idp2423"></a><p><b>13.2.2.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2399"></a><a name="idp2400"></a><p><b>13.2.2.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=topology --tree=<em class="replaceable"><code>treefile</code></em></code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2429"></a><a name="idp2430"></a><p><b>13.2.3.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>relative</em></span> branch lengths, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2406"></a><a name="idp2407"></a><p><b>13.2.3.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>relative</em></span> branch lengths, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=tree --tree=<em class="replaceable"><code>treefile</code></em></code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2437"></a><a name="idp2438"></a><p><b>13.2.4.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>absolute</em></span> branch lengths <span class="emphasis"><em>in all data partitions</em></span>, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2414"></a><a name="idp2415"></a><p><b>13.2.4.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>absolute</em></span> branch lengths <span class="emphasis"><em>in all data partitions</em></span>, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=tree --tree=<em class="replaceable"><code>treefile</code></em> --fix=mu1 ... --fix-mu<em class="replaceable"><code>n</code></em></code></strong> on the command line.</p></td></tr>
 	</tbody></table></div>
 
@@ -1841,9 +1828,9 @@ The stabilization criterion is the same one described above for numerical values
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp81"></a>13.3. Run-time error messages</h3></div></div></div>
       
       
-      <div class="qandaset"><a name="idp2450"></a><dl><dt>13.3.1. <a href="#idp2451">I tried to use --smodel LG+gamma[6] and I got an error message "bali-phy: No match."  What gives?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2451"></a><a name="idp2452"></a><p><b>13.3.1.</b></p></td><td align="left" valign="top"><p>I tried to use <strong class="userinput"><code>--smodel LG+gamma[6]</code></strong> and I got an error message "bali-phy: No match."  What gives?</p></td></tr>
-	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>You are probably using the C-shell as your command line shell.  It is trying to interpret <strong class="userinput"><code>LG+gamma[6]</code></strong> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <span class="command"><strong>bali-phy</strong></span>.</p><p>To avoid this, put a backslash in front of the first "[" and write <strong class="userinput"><code>--smodel LG+gamma\[6]</code></strong>.  This will keep the C-shell from interfering with your command.
+      <div class="qandaset"><a name="idp2427"></a><dl><dt>13.3.1. <a href="#idp2428">I tried to use --smodel LG+GammaRates[6] and I got an error message "bali-phy: No match."  What gives?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2428"></a><a name="idp2429"></a><p><b>13.3.1.</b></p></td><td align="left" valign="top"><p>I tried to use <strong class="userinput"><code>--smodel LG+GammaRates[6]</code></strong> and I got an error message "bali-phy: No match."  What gives?</p></td></tr>
+	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>You are probably using the C-shell as your command line shell.  It is trying to interpret <strong class="userinput"><code>LG+GammaRates[6]</code></strong> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <span class="command"><strong>bali-phy</strong></span>.</p><p>To avoid this, put a backslash in front of the first "[" and write <strong class="userinput"><code>--smodel LG+GammaRates\[6]</code></strong>.  This will keep the C-shell from interfering with your command.
 	    </p></td></tr>
 	</tbody></table></div>
     </div>
@@ -1851,17 +1838,17 @@ The stabilization criterion is the same one described above for numerical values
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp82"></a>13.4. Stopping <span class="command"><strong>bali-phy</strong></span>.</h3></div></div></div>
       
 
-      <div class="qandaset"><a name="idp2466"></a><dl><dt>13.4.1. <a href="#idp2467">Why is bali-phy still
-	      running? How long will it take?</a></dt><dt>13.4.2. <a href="#idp2473">How do I stop a bali-phy
-	  run on my personal computer?</a></dt><dt>13.4.3. <a href="#idp2491">How do I stop a bali-phy
-	  run on a computing cluster?</a></dt><dt>13.4.4. <a href="#idp2500">So, how can I know when to stop it?</a></dt><dt>13.4.5. <a href="#idp2505">How can I tell when the chain has converged?</a></dt><dt>13.4.6. <a href="#idp2511">How can I check how many iterations the chain
+      <div class="qandaset"><a name="idp2443"></a><dl><dt>13.4.1. <a href="#idp2444">Why is bali-phy still
+	      running? How long will it take?</a></dt><dt>13.4.2. <a href="#idp2450">How do I stop a bali-phy
+	  run on my personal computer?</a></dt><dt>13.4.3. <a href="#idp2468">How do I stop a bali-phy
+	  run on a computing cluster?</a></dt><dt>13.4.4. <a href="#idp2477">So, how can I know when to stop it?</a></dt><dt>13.4.5. <a href="#idp2482">How can I tell when the chain has converged?</a></dt><dt>13.4.6. <a href="#idp2488">How can I check how many iterations the chain
 	      has finished?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2467"></a><a name="idp2468"></a><p><b>13.4.1.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bali-phy</strong></span> still
+	  <tr class="question"><td align="left" valign="top"><a name="idp2444"></a><a name="idp2445"></a><p><b>13.4.1.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bali-phy</strong></span> still
 	      running? How long will it take?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>It runs until you stop it.  Stop it when its
 	      done.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2473"></a><a name="idp2474"></a><p><b>13.4.2.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2450"></a><a name="idp2451"></a><p><b>13.4.2.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
 	  run on my personal computer?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Simply kill the process -- there is no special
 	    command to stop <span class="command"><strong>bali-phy</strong></span>. If you are
@@ -1897,7 +1884,7 @@ However, be aware that this will terminate <span class="emphasis"><em>all</em></
 your <span class="command"><strong>bali-phy</strong></span> runs on that computer.
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2491"></a><a name="idp2492"></a><p><b>13.4.3.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2468"></a><a name="idp2469"></a><p><b>13.4.3.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
 	  run on a computing cluster?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Simply terminate the submitted job.  The specific command
 	    to terminate a job will depend on the queue manager that
@@ -1913,14 +1900,14 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 	    commands. 
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2500"></a><a name="idp2501"></a><p><b>13.4.4.</b></p></td><td align="left" valign="top"><p>So, how can I know when to stop it?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2477"></a><a name="idp2478"></a><p><b>13.4.4.</b></p></td><td align="left" valign="top"><p>So, how can I know when to stop it?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>You can stop when it has both converged and also run for long enough to give
 	      you &gt;1000 effectively independent samples.  </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2505"></a><a name="idp2506"></a><p><b>13.4.5.</b></p></td><td align="left" valign="top"><p>How can I tell when the chain has converged?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2482"></a><a name="idp2483"></a><p><b>13.4.5.</b></p></td><td align="left" valign="top"><p>How can I tell when the chain has converged?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>See section <a class="xref" href="#mixing_and_convergence" title="10. Convergence and Mixing: Is it done yet?">Section 10, &#8220;Convergence and Mixing: Is it done yet?&#8221;</a>.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2511"></a><a name="idp2512"></a><p><b>13.4.6.</b></p></td><td align="left" valign="top"><p>How can I check how many iterations the chain
+	  <tr class="question"><td align="left" valign="top"><a name="idp2488"></a><a name="idp2489"></a><p><b>13.4.6.</b></p></td><td align="left" valign="top"><p>How can I check how many iterations the chain
 	      has finished?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Run <span class="command"><strong>wc -l C1.p</strong></span> inside the output
 	      directory, and subtract 2.
@@ -1930,17 +1917,17 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp83"></a>13.5. Running <span class="command"><strong>bp-analyze.pl</strong></span>.</h3></div></div></div>
-      <div class="qandaset"><a name="idp2522"></a><dl><dt>13.5.1. <a href="#idp2523">Why does bp-analyze.pl say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</a></dt><dt>13.5.2. <a href="#idp2531">Why does bp-analyze.pl say "Program 'gnuplot' not found.  Trace plots will not be generated"?</a></dt><dt>13.5.3. <a href="#idp2539">Why does bp-analyze.pl say "Program 'R' not found.  Some mixing graphs will not be generated"?</a></dt><dt>13.5.4. <a href="#idp2546">Why is bp-analyze.pl stopping early, or failing to generate some files?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2523"></a><a name="idp2524"></a><p><b>13.5.1.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze.pl</strong></span> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</p></td></tr>
+      <div class="qandaset"><a name="idp2499"></a><dl><dt>13.5.1. <a href="#idp2500">Why does bp-analyze.pl say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</a></dt><dt>13.5.2. <a href="#idp2508">Why does bp-analyze.pl say "Program 'gnuplot' not found.  Trace plots will not be generated"?</a></dt><dt>13.5.3. <a href="#idp2516">Why does bp-analyze.pl say "Program 'R' not found.  Some mixing graphs will not be generated"?</a></dt><dt>13.5.4. <a href="#idp2523">Why is bp-analyze.pl stopping early, or failing to generate some files?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2500"></a><a name="idp2501"></a><p><b>13.5.1.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze.pl</strong></span> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>The program <span class="command"><strong>draw-tree</strong></span> was not distributed on this platform (Windows, Mac).  This is not a fatal error message, it just means that a pretty picture of the tree will not be generated automatically.  You can still view the tree with <span class="application">FigTree</span>, for example.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2531"></a><a name="idp2532"></a><p><b>13.5.2.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze.pl</strong></span> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2508"></a><a name="idp2509"></a><p><b>13.5.2.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze.pl</strong></span> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>This is because you have not installed <span class="application">gnuplot</span>.  This is not a fatal error message, it just means that pictures of traces, partition support, and SRQ plots will not be generated automatically.  You can still view MCMC traces with <span class="application">Tracer</span>.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2539"></a><a name="idp2540"></a><p><b>13.5.3.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze.pl</strong></span> say "Program 'R' not found.  Some mixing graphs will not be generated"?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2516"></a><a name="idp2517"></a><p><b>13.5.3.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze.pl</strong></span> say "Program 'R' not found.  Some mixing graphs will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>This is because you have not installed <span class="application">R</span>.  This is not a fatal error message, it just means that a plot showing differences in clade probabilities between runs will not be generated.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2546"></a><a name="idp2547"></a><p><b>13.5.4.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bp-analyze.pl</strong></span> stopping early, or failing to generate some files?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2523"></a><a name="idp2524"></a><p><b>13.5.4.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bp-analyze.pl</strong></span> stopping early, or failing to generate some files?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Look in the file <code class="filename">Results/bp-analyze.log</code>.  This should contain the actual commands that were run, along with error message from these commands.  These error message should give you a hint as to what the problem might be.</p></td></tr>
 	</tbody></table></div>
     </div>
@@ -1949,11 +1936,11 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp84"></a>13.6. Interpreting the results.</h3></div></div></div>
       
 
-      <div class="qandaset"><a name="idp2556"></a><dl><dt>13.6.1. <a href="#idp2557">How do I compute the clade support?</a></dt><dt>13.6.2. <a href="#idp2562">How do I compute the split/bi-partition support?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2557"></a><a name="idp2558"></a><p><b>13.6.1.</b></p></td><td align="left" valign="top"><p>How do I compute the clade support?</p></td></tr>
+      <div class="qandaset"><a name="idp2533"></a><dl><dt>13.6.1. <a href="#idp2534">How do I compute the clade support?</a></dt><dt>13.6.2. <a href="#idp2539">How do I compute the split/bi-partition support?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2534"></a><a name="idp2535"></a><p><b>13.6.1.</b></p></td><td align="left" valign="top"><p>How do I compute the clade support?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Actually, BAli-Phy uses unrooted trees, so it only estimates bi-partition support.  A bi-partition is a division of taxa into two groups, but it does not specify which group contains the root. </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2562"></a><a name="idp2563"></a><p><b>13.6.2.</b></p></td><td align="left" valign="top"><p>How do I compute the split/bi-partition support?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2539"></a><a name="idp2540"></a><p><b>13.6.2.</b></p></td><td align="left" valign="top"><p>How do I compute the split/bi-partition support?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>After you analyze the output (<a class="xref" href="#analysis" title="6.5. Summarizing the output - scripted">Section 6.5, &#8220;Summarizing the output - scripted&#8221;</a>), the partition support is indicated in
 	      <code class="filename">Results/consensus</code> and in <code class="filename">Results/c50.PP.tree</code>. </p></td></tr>
 	</tbody></table></div>
@@ -1961,23 +1948,23 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp85"></a>13.7. How do I...</h3></div></div></div>
       
-      <div class="qandaset"><a name="idp2573"></a><dl><dt>13.7.1. <a href="#idp2574">How do I concatenate alignments?</a></dt><dt>13.7.2. <a href="#idp2583">How do I select columns from an alignment?</a></dt><dt>13.7.3. <a href="#idp2591">How do I create an alignment-constraint file
+      <div class="qandaset"><a name="idp2550"></a><dl><dt>13.7.1. <a href="#idp2551">How do I concatenate alignments?</a></dt><dt>13.7.2. <a href="#idp2560">How do I select columns from an alignment?</a></dt><dt>13.7.3. <a href="#idp2568">How do I create an alignment-constraint file
 	      from an alignment?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2574"></a><a name="idp2575"></a><p><b>13.7.1.</b></p></td><td align="left" valign="top"><p>How do I concatenate alignments?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2551"></a><a name="idp2552"></a><p><b>13.7.1.</b></p></td><td align="left" valign="top"><p>How do I concatenate alignments?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
  	    </p><pre class="screen"><code class="prompt">%</code> alignment-cat <em class="replaceable"><code>filename1.fasta</code></em> <em class="replaceable"><code>filename2.fasta</code></em> &gt; result.fasta</pre><p>
 	      The alignments must have the same sequence names, but
 	      the names need not be in the same order.
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2583"></a><a name="idp2584"></a><p><b>13.7.2.</b></p></td><td align="left" valign="top"><p>How do I select columns from an alignment?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2560"></a><a name="idp2561"></a><p><b>13.7.2.</b></p></td><td align="left" valign="top"><p>How do I select columns from an alignment?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	    </p><pre class="screen"><code class="prompt">%</code> alignment-cat -c1-10,50-100,600- <em class="replaceable"><code>filename.fasta</code></em> &gt; result.fasta</pre><p>
 	    The resulting alignment will contain the selected columns
 	    in the order you specified.
 	  </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2591"></a><a name="generating_constraint_files"></a><p><b>13.7.3.</b></p></td><td align="left" valign="top"><p>How do I create an alignment-constraint file
+	  <tr class="question"><td align="left" valign="top"><a name="idp2568"></a><a name="generating_constraint_files"></a><p><b>13.7.3.</b></p></td><td align="left" valign="top"><p>How do I create an alignment-constraint file
 	      from an alignment?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>To constrain the alignment to match some alignment
 	      file <em class="replaceable"><code>filename.fasta</code></em> in columns
