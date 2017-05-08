@@ -8,6 +8,9 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
+// TODO: implement +INV by averaging the frequencies of other models.
+// TODO: print out parameter lines using the table logger.
+// TODO: show tree & scale priors in bp-analyze output.
 // TODO: change scale_means_only -> scale_all_branches
 // TODO: *allow referring to other parameters in parameter values (default values and otherwise)
 // TODO: remove triggers
