@@ -347,7 +347,7 @@ set<dummy> dup_work(set<dummy>& vars)
 
 pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var_context context)
 {
-    if (not E) return {E,{}};
+    if (not E) return {E,set<dummy>{}};
 
     // 1. Var
     if (is_dummy(E))
@@ -361,7 +361,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
     }
 
     // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-    if (not E.size()) return {E,{}};
+    if (not E.size()) return {E,set<dummy>{}};
 
     // 2. Lambda (E = \x -> body)
     if (is_lambda(E.head()))
