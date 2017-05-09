@@ -23,6 +23,12 @@ You will need a C++ compiler that understands C++14.
  * clang 3.5 (or higher) works
  * XCode 7.3 (or higher) works
 
+You will also need to install
+ * autoconf
+ * automake
+ * libtool
+in order to generate the configure script and Makefiles.
+
 Build
 -----
 
