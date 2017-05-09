@@ -14,8 +14,23 @@ cache: apt
 #     - CXX=g++-5
 #     - CXX=g++-6
 #     - CXX=g++-7
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      compiler: g++
+    - os: linux
+      dist: trusty
+      compiler: clang++
+    - os: osx
+      osx_image: xcode8.3
+    - os: osx
+      osx_image: xcode7.3
+    - os: osx
+      osx_image: xcode6.4
 
 language: C++
+
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
@@ -36,7 +51,3 @@ script:
   - ../configure --prefix=$HOME/local
   - make -j3 install
   - make check
-os:
-  - linux
-  - osx
-
