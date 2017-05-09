@@ -1,0 +1,129 @@
+<!DOCTYPE book [
+<!ENTITY % sgml.features "IGNORE">
+<!ENTITY % xml.features "INCLUDE">
+
+<!ENTITY % ent-mmlalias
+      PUBLIC "-//W3C//ENTITIES Aiases for MathML 2.0//EN"
+             "/usr/share/xml/schema/w3c/mathml/dtd/mmlalias.ent" >
+%ent-mmlalias;
+]>
+<article xmlns="http://docbook.org/ns/docbook" version="5.0" 
+         xmlns:mml="http://www.w3.org/1998/Math/MathML"
+	 xml:lang="en">
+  <info><title>Alignment Practical Exercises</title>
+    <author><personname><firstname>Benjamin</firstname><surname>Redelings</surname></personname></author>
+  </info>
+
+<para>This tutorial assumes a UNIX command line.  On Linux or Mac this is built in; on Windows install Cygwin.</para>
+<section><info><title>Exercise (Setup, MAFFT, HoT, Seaview)</title></info>
+
+<section><info><title>Setup</title></info>
+<section><info><title>Make a ~/bin directory (for programs) and add it to your PATH</title></info>
+% cd                        					// go to your home directory
+% pwd                                                                       // where are we? = print working directory
+% ls                                                                           // look around
+% mkdir bin            					// make a subdirectory
+% nano .bash_profile	    				// edit the startup script
+Add a line “PATH=~/bin:$PATH”.  Then log out and log back in.
+% less .bash_profile					// examine .bashrc to see if your changes are there
+% echo $PATH                                                         	// check that ~/bin is in PATH
+</section>
+
+<section><info><title>Download the alignment files we will use</title></info>
+% cd
+% mkdir alignment_files
+% cd ~/alignment_files
+% wget http://www.bali-phy.org/examples.tgz       // Download the files – Linux (On cygwin, first install wget).
+% curl -O http://www.bali-phy.org/examples.tgz   // Download the files – Mac
+(Alternatively, download the files using your browser)
+% tar -zxf examples.tgz                                       	// extract the compressed archive
+% ls examples						        // look inside the new directory that was created
+% less examples/5S-rRNA/5d.fasta                                // examine the downloaded files – type q to quit
+% alignment-info examples/5S-rRNA/5d.fasta
+</section>
+
+<section><info><title>Install fasta-flip.pl to ~/bin</title></info>
+% cd ~/alignment_files/examples
+% chmod +x fasta-flip.pl				// make the file executable
+% cp fasta-flip.pl ~/bin				// copy the file to ~/bin
+% which fasta-flip.pl					// check to make sure its in your PATH
+</section>
+</section>
+<section><info><title>Align forward and backwards (HoT) with mafft.</title></info>
+% cp 5S-rRNA/25.fasta .				                                  // make a copy of a file
+% mafft –auto 25.fasta &gt; 25-mafft.fasta                                           // try a simple sequence alignment 
+% fasta-flip.pl 25.fasta | mafft –auto - | fasta-flip.pl &gt; 25-mafft-flipped.fasta // align the sequences when flipped
+</section>
+<section><info><title>Visualize the alignments with seaview</title></info>
+% seaview 25-mafft.fasta &#38; seaview 25-mafft-flipped.fasta &#38;                       // take a look at the two alignments
+</section>
+</section>
+
+  <section><info><title>Exercise (muscle, Probcons, SuiteMSA, and consensus)</title></info>
+<section><info><title>Make a local copy of a data file</title></info>
+% cd ~/alignment_files/examples
+% cp HIV/HIVSIV.fasta .                                                               	// Make a copy of the file in the current directory
+% alignment-info HIVSIV.fasta					// Some basic info about the sequences
+</section>
+<section><info><title>Muscle</title></info>
+Look at the time to perform different numbers of iterations with muscle
+% time muscle -maxiters 1 &lt; HIVSIV.fasta &gt; HIVSIV-muscle1.fasta	// use a bad guide tree
+% time muscle -maxiters 2 &lt; HIVSIV.fasta &gt; HIVSIV-muscle2.fasta	// obtain a better guide tree and realign
+% time muscle -maxiters 3 &lt; HIVSIV.fasta &gt; HIVSIV-muscle3.fasta	// also add refinement
+% time muscle &lt; HIVSIV.fasta &gt; HIVSIV-muscle.fasta
+% muscle -in HIVSIV.fasta -out HIVSIV-muscle.fasta                 	// This is the same as the previous command.
+
+Compare the first and last alignments
+% alignment-cat HIVSIV-muscle1.fasta --reorder-by-alignment=HIVSIV-muscle.fasta &gt; a      // reorder sequences
+% mv a HIVSIV-muscle1.fasta 
+% seaview HIVSIV-muscle1.fasta &#38; seaview HIVSIV-muscle.fasta &#38;
+</section>
+
+<section><info><title>Probcons</title></info>
+Align sequences and reversed sequences with probcons
+% probcons HIVSIV.fasta &gt; HIVSIV-probcons.fasta
+% fasta-flip.pl HIVSIV.fasta &gt; HIVSIV-flipped.fasta
+% probcons HIVSIV-flipped.fasta | fasta-flip.pl &gt; HIVSIV-probcons-flipped.fasta
+</section>
+<section><info><title>SuiteMSA</title></info>
+Compare alignments using SuiteMSA
+% SuiteMSA &#38;
+<emphasis>Choose Pixel Plot, and select HIVSIV-probcons.fasta</emphasis>
+<emphasis>Click on “Add” to load a new alignment file, and choose HIVSIV-probcons-flipped.fasta</emphasis>
+<emphasis>Click on “Add” to load a new alignment file, and choose HIVSIV-muscle.fasta</emphasis>
+Q: What is the spatial pattern of the differences?
+</section>
+<section><info><title>Consensus</title></info>
+Construct an alignment that only contains homologies present in both mafft and probcons alignments
+% echo &gt; blank
+% cat blank  // It should print a blank line to the screen.
+
+% cat HIVSIV-muscle.fasta blank HIVSIV-probcons.fasta &gt; two-alignments.fasta
+% alignment-consensus –strict=0.99 &lt; two-alignments.fasta &gt; consensus.fasta
+% seaview consensus.fasta &#38;
+</section>
+  </section>
+<section><info><title>Exercise (FSA and Prank)</title></info>
+<section><info><title>FSA</title></info>
+Align sequences with fsa.  This will take some time.
+% cd ~/alignment_files/examples
+% fsa --fast --gapfactor 0 HIVSIV.fasta &gt; HIVSIV-fsa0.fasta &#38;     	// This is similar to probcons – few gaps.
+% fsa --fast --gapfactor 0.5 HIVSIV.fasta &gt; HIVSIV-fsa.fasta &#38;           // This is the default. Some gaps.
+
+Look at the alignment lengths for the different fsa parameters:
+% alignment-info HIVSIV-fsa0.fasta
+% alignment-info HIVSIV-fsa.fasta
+</section>
+<section><info><title>Prank</title></info>
+Align a (short) 5S data set with prank
+% cd ~/alignment_files/examples/
+% prank -d=ITS/ITS1.fasta +F
+% cp output.2.fas ITS1-prank1.fasta
+
+% mafft ITS/ITS1.fasta &gt; ITS1-mafft.fasta
+% muscle &lt; ITS/ITS1.fasta &gt; ITS1-muscle.fasta
+% SuiteMSA &#38;
+Compare ITS1-prank.fasta, ITS1-mafft.fasta, and ITS1-muscle.fasta using SuiteMSA
+</section>
+</section>
+</article>
