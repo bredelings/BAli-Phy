@@ -21,7 +21,7 @@ Compiling
 You will need a C++ compiler that understands C++14.  
  * gcc 5 (or higher) works
  * clang 3.5 (or higher) works
- * XCode 7.3 (or higher) works
+ * XCode 6.0 (or higher) works
 
 You will also need to install
  * autoconf
