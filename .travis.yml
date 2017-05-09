@@ -1,4 +1,3 @@
-dist: trusty
 sudo: required
 cache: apt
 # addons:
@@ -17,8 +16,10 @@ cache: apt
 matrix:
   include:
     - os: linux
+      dist: trusty
       compiler: g++
     - os: linux
+      dist: trusty
       compiler: clang++
     - os: osx
       osx_image: xcode8.3
