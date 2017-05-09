@@ -476,7 +476,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 model_t get_model(const ptree& type, const ptree& model_rep)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    expression_ref full_model = get_model_as(type, model_rep, {});
+    expression_ref full_model = get_model_as(type, model_rep, std::set<string>{});
 
     if (log_verbose)
 	std::cout<<"full_model = "<<full_model<<std::endl;
