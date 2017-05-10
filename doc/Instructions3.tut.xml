@@ -55,8 +55,8 @@ Add a line “PATH=~/bin:$PATH”.  Then log out and log back in.
 </section>
 <section><info><title>Align forward and backwards (HoT) with mafft.</title></info>
 % cp 5S-rRNA/25.fasta .				                                  // make a copy of a file
-% mafft –auto 25.fasta &gt; 25-mafft.fasta                                           // try a simple sequence alignment 
-% fasta-flip.pl 25.fasta | mafft –auto - | fasta-flip.pl &gt; 25-mafft-flipped.fasta // align the sequences when flipped
+% mafft --auto 25.fasta &gt; 25-mafft.fasta                                           // try a simple sequence alignment 
+% fasta-flip.pl 25.fasta | mafft --auto - | fasta-flip.pl &gt; 25-mafft-flipped.fasta // align the sequences when flipped
 </section>
 <section><info><title>Visualize the alignments with seaview</title></info>
 % seaview 25-mafft.fasta &#38; seaview 25-mafft-flipped.fasta &#38;                       // take a look at the two alignments
