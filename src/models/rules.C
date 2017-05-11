@@ -13,7 +13,6 @@ using boost::property_tree::ptree;
 // TODO: show tree & scale priors in bp-analyze output.
 // TODO: change scale_means_only -> scale_all_branches
 // TODO: *allow referring to other parameters in parameter values (default values and otherwise)
-// TODO: remove triggers
 // TODO: move stuff (e.g. logging) out of models
 // TODO: clean up loggers.{H,C} to use lambda functions
 // TODO: clean up transition kernels to use lambda functions?

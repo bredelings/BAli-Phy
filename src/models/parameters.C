@@ -1079,8 +1079,6 @@ double Parameters::branch_scale(int s) const
 
 void Parameters::recalc()
 {
-    auto tr = triggers();
-    triggers().clear();
 }
 
 object_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
@@ -1190,7 +1188,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
     add_modifiable_parameter_with_value("Heat.beta", 1.0);
 
-    // Add parameter for each scale, and add a trigger on it.
+    // Add parameter for each scale
     const string scale_prefix = "Scale";
     for(int i=0; i<n_branch_scales();i++)
     {

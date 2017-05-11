@@ -443,9 +443,6 @@ double reg_heap::get_rate_for_reg(int r)
     return access(r3).C.exp.as_double();
 }
 
-const std::vector<int>& reg_heap::triggers() const {return tokens[root_token].triggers;}
-std::vector<int>& reg_heap::triggers()       {return tokens[root_token].triggers;}
-
 int reg_heap::step_index_for_reg(int r) const 
 {
     return prog_steps[r];
@@ -1255,12 +1252,6 @@ void reg_heap::clear_result(int r)
 #endif
 	results.reclaim_used(rc);
     }
-}
-
-std::vector<int>& reg_heap::triggers_for_context(int c)
-{
-    reroot_at_context(c);
-    return triggers();
 }
 
 const expression_ref& reg_heap::get_parameter_value_in_context(int p, int c)

@@ -10,7 +10,6 @@ builtin builtin_new_modifiable 1 "new_modifiable" "Modifiables";
 builtin builtin_new_random_modifiable 4 "new_random_modifiable" "Modifiables";
 builtin evaluate 2 "evaluate" "Modifiables";
 builtin get_modifiable_value 2 "get_modifiable_value" "Modifiables";
-builtin builtin_trigger 1 "trigger" "Modifiables";
 builtin builtin_add_parameter 2 "add_parameter" "Modifiables";
 builtin builtin_register_probability 1 "register_probability" "Modifiables";
 
@@ -53,8 +52,4 @@ set_parameter_value_ token p v = if (is_modifiable p)
                                  else set_parameter_value_' token p v;
 
 get_modifiable_result token m = evaluate token (get_modifiable_value token m);
-
-trigger i = IOAction1 builtin_trigger i;
-
-trigger_on x i = unsafePerformIO $ do {return x;trigger i};
 }

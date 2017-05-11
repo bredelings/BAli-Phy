@@ -369,7 +369,7 @@ a_branch_length_model dist i =
   return t
 });
 
--- There are no triggers on the branch lengths, so resampling them doesn't work.
+-- If we sample branches that are not adjacent, then it won't be efficient.
 iid_branch_length_model t dist = SamplingRate 0.0 $ mapM (\i -> a_branch_length_model dist i) [1..numBranches t];
 
 unit_mixture m = MixtureModel (DiscreteDistribution [(1.0,m)]);

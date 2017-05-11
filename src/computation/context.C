@@ -32,9 +32,6 @@ std::vector<std::pair<std::string,int>>& context::parameters() const {return mem
 
 std::map<std::string, int>& context::identifiers() const {return memory()->get_identifiers();}
 
-const std::vector<int>& context::triggers() const {return memory()->triggers_for_context(context_index);}
-      std::vector<int>& context::triggers()       {return memory()->triggers_for_context(context_index);}
-
 reg& context::access(int i) const {return memory()->access(i);}
 
 reg& context::operator[](int i) const {return memory()->access(i);}

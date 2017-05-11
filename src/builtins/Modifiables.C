@@ -183,16 +183,3 @@ extern "C" closure builtin_function_evaluate(OperationArgs& Args)
 
   return {index_var(0),{R2}};
 }
-
-extern "C" closure builtin_function_trigger(OperationArgs& Args)
-{
-  int i = Args.evaluate(0).as_int();
-
-  reg_heap& M = Args.memory();
-
-  // We should be executing in the root token
-
-  M.triggers().push_back(i);
-
-  return constructor("()",0);
-}

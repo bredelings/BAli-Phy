@@ -288,9 +288,6 @@ public:
 	int n_context_refs = 0;
 	bool is_referenced() const {assert(n_context_refs >= 0); return n_context_refs > 0;}
     
-	/// A list of signals that have been sent
-	std::vector<int> triggers;
-
 	/// Mapping from closures to steps/results
 	const std::vector<std::pair<int,int>>& delta_result() const;
 	const std::vector<std::pair<int,int>>& delta_step() const;
@@ -381,8 +378,6 @@ public:
 
     int token_for_context(int) const;
 
-    std::vector<int>& triggers_for_context(int c);
-
     const expression_ref& get_parameter_value_in_context(int R, int c);
 
     const expression_ref& get_reg_value_in_context(int& R, int c);
@@ -402,9 +397,6 @@ public:
 
     const std::map<std::string,int>& get_identifiers() const {return identifiers;}
     std::map<std::string,int>& get_identifiers()       {return identifiers;}
-
-    const std::vector<int>& triggers() const;
-    std::vector<int>& triggers();
 
     /// Make heads[index] point to r
     int set_head(int index, int r);

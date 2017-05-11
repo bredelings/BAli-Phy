@@ -34,10 +34,6 @@ class context
 
     std::map<std::string, int>& identifiers() const;
 
-public:
-    const std::vector<int>& triggers() const;
-    std::vector<int>& triggers();
-
 private:
     int push_temp_head() const;
     void pop_temp_head() const;

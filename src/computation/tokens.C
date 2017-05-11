@@ -225,8 +225,6 @@ int reg_heap::make_child_token(int t)
 
     // assert(temp.empty());
 
-    tokens[t2].triggers = tokens[t].triggers;
-
     // set parent relationship
     tokens[t2].parent = t;
     tokens[t2].children.clear();
