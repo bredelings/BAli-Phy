@@ -1080,27 +1080,6 @@ double Parameters::branch_scale(int s) const
 void Parameters::recalc()
 {
     auto tr = triggers();
-    // Check for beta (0) or mu[i] (i+1)
-    for(int index: tr)
-    {
-	if (0 <= index and index < n_branch_scales())
-	{
-	    int s = index;
-
-	    assert(includes(triggers(),s));
-	    assert(0 <= s and s < n_branch_scales());
-      
-	    // Change branch lengths for the s-th scale
-	    assert(PC->branch_length_indices[s].size() == t().n_branches());
-	    for(int b=0;b<t().n_branches();b++)
-	    {
-		double rate = branch_scale(s);
-		double delta_t = t().branch_length(b);
-
-		context::set_parameter_value(PC->branch_length_indices[s][b], rate*delta_t);
-	    }
-	}
-    }
     triggers().clear();
 }
 
@@ -1119,15 +1098,6 @@ void Parameters::setlength(int b,double l)
     b = t().undirected(b);
 
     t().set_branch_length(b, l);
-
-    // Update D parameters
-    for(int s=0; s<n_branch_scales(); s++) 
-    {
-	double rate = branch_scale(s);
-	double delta_t = t().branch_length(b);
-    
-	context::set_parameter_value(PC->branch_length_indices[s][b], rate * delta_t);
-    }
 }
 
 double Parameters::branch_mean() const 
@@ -1228,9 +1198,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 
 	expression_ref scale = scaleMs[i].expression;
 	PC->scale_parameter_indices[i] = add_parameter(name, perform_exp(scale));
-
-	int trigger = add_compute_expression( (dummy("Parameters.trigger_on"),parameter(name),i) );
-	set_re_evaluate(trigger, true);
     }
 
     branches_from_affected_node.resize(tt.n_nodes());
@@ -1295,15 +1262,12 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // Add and initialize variables for branch *lengths*: scale<s>.D<b>
     for(int s=0;s<n_branch_scales();s++)
     {
-	string prefix= "*Scale" + convertToString(s+1);
+	expression_ref scale = parameter("Scale" + convertToString(s+1));
 	PC->branch_length_indices.push_back(vector<int>());
 	for(int b=0;b<t().n_branches();b++)
 	{
-	    double rate = branch_scale(s);
-	    double delta_t = t().branch_length(b);
-
-	    string name = "d" + convertToString(b+1);
-	    int index = add_modifiable_parameter_with_value(prefix+"."+name, rate * delta_t);
+	    expression_ref length = parameter("*T" + convertToString(s+1));
+	    int index = add_compute_expression( (dummy("Prelude.*"),scale,length) );
 	    PC->branch_length_indices[s].push_back(index);
 	}
     }
@@ -1323,17 +1287,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	vector<expression_ref> SBLL;
 	for(int s=0;s < n_branch_scales(); s++)
 	{
-	    string prefix= "*Scale" + convertToString(s+1);
-	    // Get a list of the branch LENGTH (not time) parameters
 	    vector<expression_ref> D;
 	    for(int b=0;b<t().n_branches();b++)
-	    {
-		string name = "d" + convertToString(b+1);
-		D.push_back(parameter(prefix+"."+name));
-	    }
-      
-	    // FIXME - give this a usable name!!
-	    // Better yet, make a substitutionBranchLengths!scale!branch that can be referenced elsewhere.
+		D.push_back( get_expression(PC->branch_length_indices[s][b]) );
 	    SBLL.push_back(get_list(D));
 	}
 	substitutionBranchLengthsList = get_list(SBLL);
