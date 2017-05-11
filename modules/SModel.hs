@@ -370,10 +370,6 @@ a_branch_length_model dist i =
 -- There are no triggers on the branch lengths, so resampling them doesn't work.
 iid_branch_length_model t dist = SamplingRate 0.0 $ mapM (\i -> a_branch_length_model dist i) [1..numBranches t];
 
-iid_branch_length_model_exp t = iid_branch_length_model t (exponential (1.0/(intToDouble (numBranches t))));
-
-iid_branch_length_model_gamma t = iid_branch_length_model t (gamma 0.5 (2.0/(intToDouble (numBranches t))));
-
 unit_mixture m = MixtureModel (DiscreteDistribution [(1.0,m)]);
 
 mmm m = MixtureModels [m];
