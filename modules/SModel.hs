@@ -114,6 +114,8 @@ jukes_cantor a = reversible_markov (equ a) (plus_f_equal_frequencies a);
 
 k80 kappa nuca = reversible_markov (hky kappa nuca) (plus_f_equal_frequencies nuca);
 
+f81 pi a = reversible_markov (equ a) (plus_f a pi);
+
 m0_function codona s r = \omega -> reversible_markov (m0 codona s omega) r;
 
 m1a_omega_dist f1 w1 = DiscreteDistribution [(f1,w1), (1.0-f1,1.0)];

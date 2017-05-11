@@ -19,6 +19,8 @@ using boost::property_tree::ptree;
 // TODO: clean up transition kernels to use lambda functions?
 // TODO: find some way to run under the prior?
 // TODO: rewrite frequencies_prior..
+// Q: fmutsel version of m3, etc.
+// Q: how to share GTR between genes in gtr+gwf?
 
 const vector< vector<vector<string>> > all_default_arguments = 
 {
@@ -62,7 +64,10 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"kappa", "Double", "~logNormal[log[2],0.25]"},
      {"A", "a", "LAMBDA"} },
 
-    {{"F81"}, {}, {"alphabet", "Alphabet"}},
+    {{"F81", "RA[a]", "G"},
+     {"SModel.f81[pi,A]"},
+     {"pi", "F", "frequencies_prior", "A"},
+     {"A", "a", "LAMBDA"} },
 
     {{"HKY", "EM[a]", "G", "Nucleotides[a]"},
      {"SModel.hky[kappa,alphabet]"},
@@ -292,7 +297,10 @@ const vector< vector<vector<string>> > all_default_arguments =
     
     {{"Freq2", "F"}, {"SModel.constant_frequencies_model2[dict]"},{"dict", "List[Pair[String,Double]]"}},
     
-    {{"F", "FM[a]", "G"}, {"SModel.plus_f[A,pi]"},{"pi", "F", "frequencies_prior", "A"}, {"A", "a", "LAMBDA"}},
+    {{"F", "FM[a]", "G"},
+     {"SModel.plus_f[A,pi]"},
+     {"pi", "F", "frequencies_prior", "A"},
+     {"A", "a", "LAMBDA"}},
     
     {{"F61", "FM[Codon[a,b]]", "G"}, {"SModel.plus_f[A,pi]"},{"pi", "F", "frequencies_prior", "A"}, {"A", "a", "LAMBDA"}},
 
