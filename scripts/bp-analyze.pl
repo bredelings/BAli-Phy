@@ -733,6 +733,27 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
 	$section .= "</div>\n";
     }
 
+    my $MDS_figure;
+    if (-e "Results/tree-1-2-3.svg")
+    {
+	$MDS_figure = "tree-1-2-3.svg";
+    }
+    elsif (-e "Results/tree-1-2.svg")
+    {
+	$MDS_figure = "tree-1-2.svg";
+    }
+    elsif (-e "Results/tree-1.svg")
+    {
+	$MDS_figure = "tree1.svg";
+    }
+    if (defined($MDS_figure))
+    {
+	$section .= '<div style="width:100%;clear:both">';
+	$section .= '<h3>Tree mixing - Multidimensional scaling</h3>';
+	$section .= html_svg($MDS_figure,"45%","",["floating_picture"]);
+#	$section .= html_svg("convergence2-PP.svg","45%","",["r_floating_picture"]);
+	$section .= "</div>\n";
+    }
 
 my $tne_string = exec_show("pickout -n Ne < Results/partitions.bs");
 my @tne_array = split(/\n/,$tne_string);
@@ -2507,18 +2528,48 @@ sub translate_cygwin
 
 sub tree_MDS
 {
-    return;
-
     print "\nGenerate MDS plots of topology burnin ... ";
-    my $script = find_in_path("tree-plot1.R");
     my $i=1;
     foreach my $tree_file (@tree_files)
     {
+	my $script = find_in_path("tree-plot1.R");
 	my $matfile = "Results/tree${i}.M";
 	my $outfile = "Results/tree${i}.svg";
 	exec_show("trees-distances matrix --max=300 $tree_file > $matfile");
 	Rexec($script,"$matfile $outfile");
 	$i++;
+    }
+
+    if ($#tree_files+1 == 2)
+    {
+	my $script = find_in_path("tree-plot2.R");
+	my $tf1 = $tree_files[0];
+	my $tf2 = $tree_files[1];
+	my $N = 400;
+	my $L1 = min([$N, get_n_lines($tf1)]);
+	my $L2 = min([$N, get_n_lines($tf2)]);
+	my $matfile = "Results/tree-1-2.M";
+	my $outfile = "Results/tree-1-2.svg";
+#	print "L1 = $L1  L2 = $L2\n";
+	exec_show("trees-distances matrix --max=$N $tf1 $tf2 > $matfile");
+	Rexec($script,"$L1 $L2 $matfile $outfile");
+    }
+
+    elsif ($#tree_files+1 >= 3)
+    {
+	my $script = find_in_path("tree-plot2.3");
+	my $tf1 = $tree_files[0];
+	my $tf2 = $tree_files[1];
+	my $tf3 = $tree_files[2];
+	my $N = 400;
+	my $L1 = min([$N, get_n_lines($tf1)]);
+	my $L2 = min([$N, get_n_lines($tf2)]);
+	my $L3 = min([$N, get_n_lines($tf3)]);
+	my $matfile = "Results/tree-1-2-3.M";
+	my $outfile = "Results/tree-1-2-3.svg";
+#	print "L1 = $L1  L2 = $L2\n";
+	exec_show("trees-distances matrix --max=$N $tf1 $tf2 $tf3> $matfile");
+	Rexec($script,"$L1 $L2 $L3 $matfile $outfile");
     }
 }
 
