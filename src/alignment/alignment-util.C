@@ -990,10 +990,8 @@ optional<alignment> find_load_next_alignment(istream& ifile, const alphabet& a, 
 }
 
 template <typename T>
-int thin_by_half(list<T>& Ts)
+void thin_by_half(list<T>& Ts)
 {
-    int remaining = 0;
-
     // Remove every other alignment
     for(auto loc = Ts.begin();loc!=Ts.end();) 
     {
@@ -1004,13 +1002,10 @@ int thin_by_half(list<T>& Ts)
 	if (loc == Ts.end())  break;
 
 	loc++;
-	remaining++;
     }
-
-    return remaining;
 }
 
-bool thin_alignments(list<alignment>& alignments,int max)
+bool thin_down_to(list<alignment>& alignments,int max)
 {
     int total = alignments.size();
     if (total <= max or max == -1)  return false;
@@ -1093,7 +1088,7 @@ list<alignment> load_alignments(istream& ifile, const vector<string>& names, con
     load_more_alignments(alignments,ifile,names,a,maxalignments);
 
     //------------  If we have too many alignments--------------//
-    if (thin_alignments(alignments, maxalignments) and log_verbose)
+    if (thin_down_to(alignments, maxalignments) and log_verbose)
     {
 	cerr<<"Went from "<<total;
 	cerr<<" to "<<alignments.size()<<" alignments.\n";
@@ -1121,7 +1116,7 @@ std::list<alignment> load_alignments(std::istream& ifile, const std::vector<obje
     load_more_alignments(alignments,ifile,names,A.get_alphabet(),maxalignments);
 
     //------------  If we have too many alignments--------------//
-    if (thin_alignments(alignments, maxalignments) and log_verbose)
+    if (thin_down_to(alignments, maxalignments) and log_verbose)
     {
 	cerr<<"Went from "<<total;
 	cerr<<" to "<<alignments.size()<<" alignments.\n";
@@ -1154,7 +1149,7 @@ std::list<alignment> load_alignments(std::istream& ifile, const vector<string>& 
     load_more_alignments(alignments,ifile,names,A.get_alphabet(),maxalignments);
 
     //------------  If we have too many alignments--------------//
-    if (thin_alignments(alignments, maxalignments) and log_verbose)
+    if (thin_down_to(alignments, maxalignments) and log_verbose)
     {
 	cerr<<"Went from "<<total;
 	cerr<<" to "<<alignments.size()<<" alignments.\n";
