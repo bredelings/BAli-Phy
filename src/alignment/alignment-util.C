@@ -1127,21 +1127,13 @@ std::list<alignment> load_alignments(std::istream& ifile, const vector<string>& 
     list<alignment> alignments;
   
     // we are using every 'skip-th' alignment
-    int total = 0;
-
     find_and_skip_alignments(ifile,skip);
 
-    alignment A = load_next_alignment(ifile,alphabets);
-
-    {
-	vector<int> mapping = compute_mapping(names, sequence_names(A));
-
-	A = reorder_sequences(A,mapping);
-    }
+    alignment A = reorder_sequences( load_next_alignment(ifile,alphabets), names);
 
     alignments.push_back(A);
 
-    load_more_alignments(alignments,ifile,names,A.get_alphabet(),maxalignments);
+    load_more_alignments(alignments, ifile, names, A.get_alphabet(), maxalignments);
 
     return alignments;
 }
