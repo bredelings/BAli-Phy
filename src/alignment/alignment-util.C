@@ -27,6 +27,7 @@
 #include "util.H"
 #include "setup.H"
 #include "io.H"
+#include <boost/optional.hpp>
 
 using std::string;
 using std::vector;
@@ -36,6 +37,7 @@ using std::cerr;
 using std::endl;
 using std::istream;
 
+using boost::optional;
 using boost::dynamic_bitset;
 
 using boost::program_options::variables_map;
@@ -980,6 +982,13 @@ alignment load_next_alignment(istream& ifile, const alphabet& a, const vector<st
     return reorder_sequences(A,names);
 }
 
+optional<alignment> find_load_next_alignment(istream& ifile, const alphabet& a, const vector<string>& names)
+{
+    if (not find_alignment(ifile)) return boost::none;
+
+    return load_next_alignment(ifile,a,names);
+}
+
 int thin_alignments(list<alignment>& alignments)
 {
     int remaining = 0;
@@ -1036,13 +1045,10 @@ istream& load_more_alignments(list<alignment>& alignments, istream& ifile, const
     int total = alignments.size();
 
     try {
-	while(find_alignment(ifile))
+	while(auto A = find_load_next_alignment(ifile,a,names))
 	{
-	    // READ the next alignment
-	    alignment A = load_next_alignment(ifile,a,names);
-
 	    // STORE the alignment
-	    alignments.push_back(A);
+	    alignments.push_back(*A);
 	    total++;
 
 	    // If there are too many alignments
