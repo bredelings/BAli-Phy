@@ -948,11 +948,10 @@ alignment reorder_sequences(const alignment& A, const vector<string>& names)
 
     if (names == n2) return A;
 
-    alignment A2;
     try {
 	vector<int> new_order = compute_mapping(names,n2);
 
-	A2 = reorder_sequences(A,new_order);
+	return reorder_sequences(A,new_order);
     }
     catch(bad_mapping<string>& e)
     {
@@ -969,8 +968,6 @@ alignment reorder_sequences(const alignment& A, const vector<string>& names)
 	    e<<"Alignment has extra sequence \""<<e.missing<<"\".";
 	throw e;
     }
-
-    return A2;
 }
 
 alignment load_next_alignment(istream& ifile, const alphabet& a, const vector<string>& names)
@@ -1092,6 +1089,7 @@ void load_more_alignments(list<alignment>& alignments, istream& ifile, const vec
 			  subsample );
 }
 
+// Names and alphabet supplied as argument
 list<alignment> load_alignments(istream& ifile, const vector<string>& names, const alphabet& a, int skip, int maxalignments) 
 {
     find_and_skip_alignments(ifile,skip);
@@ -1102,38 +1100,37 @@ list<alignment> load_alignments(istream& ifile, const vector<string>& names, con
     return alignments;
 }
 
-std::list<alignment> load_alignments(std::istream& ifile, const std::vector<object_ptr<const alphabet> >& alphabets, int skip, int maxalignments)
+
+// Get names from first alignment
+std::list<alignment> load_alignments(std::istream& ifile,
+				     const std::vector<object_ptr<const alphabet> >& alphabets,
+				     int skip, int maxalignments)
 {
     list<alignment> alignments;
   
-    // we are using every 'skip-th' alignment
-    find_and_skip_alignments(ifile,skip);
+    find_and_skip_alignments(ifile, skip);
 
-    alignment A = load_next_alignment(ifile,alphabets);
+    alignments.push_back(load_next_alignment(ifile,alphabets));
 
-    vector<string> names = sequence_names(A);
+    vector<string> names = sequence_names(alignments.front());
 
-    alignments.push_back(A);
-
-    load_more_alignments(alignments,ifile,names,A.get_alphabet(),maxalignments);
+    load_more_alignments(alignments, ifile, names, alignments.front().get_alphabet(), maxalignments);
 
     return alignments;
 }
 
+// Names supplied as argument
 std::list<alignment> load_alignments(std::istream& ifile, const vector<string>& names, 
 				     const std::vector<object_ptr<const alphabet> >& alphabets, 
 				     int skip, int maxalignments)
 {
     list<alignment> alignments;
   
-    // we are using every 'skip-th' alignment
-    find_and_skip_alignments(ifile,skip);
+    find_and_skip_alignments(ifile, skip);
 
-    alignment A = reorder_sequences( load_next_alignment(ifile,alphabets), names);
+    alignments.push_back( reorder_sequences( load_next_alignment(ifile,alphabets), names) );
 
-    alignments.push_back(A);
-
-    load_more_alignments(alignments, ifile, names, A.get_alphabet(), maxalignments);
+    load_more_alignments(alignments, ifile, names, alignments.front().get_alphabet(), maxalignments);
 
     return alignments;
 }
