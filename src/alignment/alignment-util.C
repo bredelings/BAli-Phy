@@ -1039,28 +1039,30 @@ bool thin_alignments(list<alignment>& alignments,int max)
     return true;
 }
 
-istream& load_more_alignments(list<alignment>& alignments, istream& ifile, const vector<string>& names, 
-			      const alphabet& a, int maxalignments, int subsample=1) 
+void insert_and_maybe_thin(alignment t, list<alignment>& Ts, int max, int& subsample)
 {
-    int total = alignments.size();
+    Ts.push_back(std::move(t));
 
+    // If there are too many alignments
+    if (max != -1 and Ts.size() > 2*max)
+    {
+	// start skipping twice as many alignments
+	subsample *= 2;
+
+	if (log_verbose) cerr<<"Went from "<<Ts.size();
+	thin_alignments(Ts);
+	if (log_verbose) cerr<<" to "<<Ts.size()<<" alignments.\n";
+    }
+}
+
+void load_more_alignments(list<alignment>& alignments, istream& ifile, const vector<string>& names, 
+			  const alphabet& a, int maxalignments, int subsample=1) 
+{
     try {
 	while(auto A = find_load_next_alignment(ifile,a,names))
 	{
-	    // STORE the alignment
-	    alignments.push_back(*A);
-	    total++;
-
-	    // If there are too many alignments
-	    if (maxalignments != -1 and total > 2*maxalignments)
-	    {
-		// start skipping twice as many alignments
-		subsample *= 2;
-
-		if (log_verbose) cerr<<"Went from "<<total;
-		total = thin_alignments(alignments);
-		if (log_verbose) cerr<<" to "<<total<<" alignments.\n";
-	    }
+	    // add the alignment and thin if possible
+	    insert_and_maybe_thin(*A, alignments, maxalignments, subsample);
 
 	    // skip over alignments due to subsampling
 	    find_and_skip_alignments(ifile, subsample-1);
@@ -1073,7 +1075,6 @@ istream& load_more_alignments(list<alignment>& alignments, istream& ifile, const
 	cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
 	cerr<<"  Exception: "<<e.what()<<endl;
     }
-    return ifile;
 }
 
 list<alignment> load_alignments(istream& ifile, const vector<string>& names, const alphabet& a,
