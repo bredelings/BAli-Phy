@@ -1003,14 +1003,15 @@ void thin_by_half(list<T>& Ts)
     }
 }
 
-bool thin_down_to(list<alignment>& alignments,int max)
+template <typename T>
+bool thin_down_to(list<T>& Ts,int max)
 {
-    int total = alignments.size();
+    int total = Ts.size();
     if (total <= max or max == -1)  return false;
 
     assert(total <= max*2);
 
-    // We have this many extra alignments
+    // We have this many extra Ts
     const int extra = total - max;
   
     vector<int> kill(extra);
@@ -1019,11 +1020,11 @@ bool thin_down_to(list<alignment>& alignments,int max)
     std::reverse(kill.begin(),kill.end());
   
     int i=0;
-    for(auto loc = alignments.begin();loc!=alignments.end();i++) {
+    for(auto loc = Ts.begin();loc!=Ts.end();i++) {
 	if (i == kill.back()) {
 	    kill.pop_back();
 	    auto j = loc++;
-	    alignments.erase(j);
+	    Ts.erase(j);
 	    total--;
 	}
 	else
