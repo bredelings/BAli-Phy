@@ -742,7 +742,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     {
 	$MDS_figure = "tree-1-2.svg";
     }
-    elsif (-e "Results/tree-1.svg")
+    elsif (-e "Results/tree1.svg")
     {
 	$MDS_figure = "tree1.svg";
     }
