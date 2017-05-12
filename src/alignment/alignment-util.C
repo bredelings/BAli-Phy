@@ -985,11 +985,9 @@ int thin_alignments(list<alignment>& alignments)
     int remaining = 0;
 
     // Remove every other alignment
-    typedef list<alignment>::iterator iterator_t;
-
-    for(iterator_t loc = alignments.begin();loc!=alignments.end();) 
+    for(auto loc = alignments.begin();loc!=alignments.end();) 
     {
-	iterator_t j = loc++; 
+	auto j = loc++; 
 
 	alignments.erase(j);
 
@@ -1018,11 +1016,10 @@ bool thin_alignments(list<alignment>& alignments,int max)
     std::reverse(kill.begin(),kill.end());
   
     int i=0;
-    typedef list<alignment>::iterator iterator_t;
-    for(iterator_t loc = alignments.begin();loc!=alignments.end();i++) {
+    for(auto loc = alignments.begin();loc!=alignments.end();i++) {
 	if (i == kill.back()) {
 	    kill.pop_back();
-	    iterator_t j = loc++;
+	    auto j = loc++;
 	    alignments.erase(j);
 	    total--;
 	}
@@ -1058,18 +1055,18 @@ istream& load_more_alignments(list<alignment>& alignments, istream& ifile, const
 	}
 
 	// If there are too many alignments
-	if (maxalignments != -1 and total > 2*maxalignments) {
+	if (maxalignments != -1 and total > 2*maxalignments)
+	{
 	    // start skipping twice as many alignments
 	    subsample *= 2;
 
 	    if (log_verbose) cerr<<"Went from "<<total;
 	    total = thin_alignments(alignments);
 	    if (log_verbose) cerr<<" to "<<total<<" alignments.\n";
-
 	}
 
 	// skip over alignments due to subsampling
-	find_and_skip_alignments(ifile,subsample-1);
+	find_and_skip_alignments(ifile, subsample-1);
     }
     return ifile;
 }
