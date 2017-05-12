@@ -62,7 +62,8 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   matrix.H builtins/vector_from_list.H startup/A-T-model.H startup/files.H startup/loggers.H \
 	   startup/io.H startup/system.H startup/cmd_line.H computation/type_constant.H \
 	   substitution/parsimony.H models/rules.H models/parse.H models/translate.H \
-	   models/unification.H computation/optimization/simplifier.H tools/read-trees.H
+	   models/unification.H computation/optimization/simplifier.H tools/read-trees.H \
+           alignment/load.H
 
 LDFLAGS = @ldflags@ 
 
@@ -129,7 +130,7 @@ bali_phy_SOURCES = parser/parse.C dp/dp_hmm.C parser/desugar.C sequence/sequence
 	  computation/let-float.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
 	  startup/loggers.C startup/system.C startup/cmd_line.C models/rules.C models/parse.C \
 	  models/translate.C models/unification.C computation/optimization/simplifier.C \
-	  tools/read-trees.C
+	  tools/read-trees.C alignment/load.C
 
 if HOST_MINGW32
 bali_phy_SOURCES += dlfcn-win32/dlfcn.c
@@ -198,82 +199,84 @@ alignment_gild_SOURCES = tools/alignment-gild.C alignment/alignment.C sequence/a
 	sequence/sequence.C util.C rng.C tree/tree.C tree/sequencetree.C tools/optimize.C \
 	tools/findroot.C setup.C sequence/sequence-format.C \
 	tools/distance-methods.C alignment/alignment-random.C alignment/alignment-util.C \
-	tree/randomtree.C tree/tree-util.C tools/inverse.C io.C tools/read-trees.C
+	tree/randomtree.C tree/tree-util.C tools/inverse.C io.C tools/read-trees.C \
+	alignment/load.C
 
 alignment_gild_LDADD = ${ATLAS_LIBS}
 
 #---------------------------------------------------------------
 
 alignment_median_SOURCES = tools/alignment-median.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C \
-	tree/tree.C tree/sequencetree.C sequence/sequence-format.C alignment/alignment-util.C io.C tools/distance-report.C tools/statistics.C
+	tree/tree.C tree/sequencetree.C sequence/sequence-format.C alignment/alignment-util.C io.C tools/distance-report.C tools/statistics.C \
+	alignment/load.C
 
 #---------------------------------------------------------------
 
 alignment_consensus_SOURCES = tools/alignment-consensus.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C \
 	tree/tree.C tree/sequencetree.C util-random.C tools/statistics.C \
-	sequence/sequence-format.C alignment/alignment-util.C alignment/index-matrix.C io.C
+	sequence/sequence-format.C alignment/alignment-util.C alignment/index-matrix.C io.C alignment/load.C
 
 #---------------------------------------------------------------
 
 alignment_max_SOURCES = tools/alignment-max.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C \
 	tree/tree.C tree/sequencetree.C util-random.C tools/statistics.C \
-	sequence/sequence-format.C alignment/alignment-util.C alignment/index-matrix.C io.C
+	sequence/sequence-format.C alignment/alignment-util.C alignment/index-matrix.C io.C alignment/load.C
 
 #---------------------------------------------------------------
 
 alignment_compare_SOURCES = tools/alignment-compare.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C \
-	tree/tree.C tree/sequencetree.C util-random.C \
-	sequence/sequence-format.C alignment/alignment-util.C io.C
+	tree/tree.C tree/sequencetree.C util-random.C sequence/sequence-format.C alignment/alignment-util.C io.C \
+	alignment/load.C
 
 #---------------------------------------------------------------
 
 alignment_identity_SOURCES = tools/alignment-identity.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C \
-	tree/tree.C tree/sequencetree.C util-random.C tools/statistics.C \
+	tree/tree.C tree/sequencetree.C util-random.C tools/statistics.C alignment/load.C \
 	sequence/sequence-format.C alignment/alignment-util.C alignment/index-matrix.C io.C
 
 #---------------------------------------------------------------
 
 alignment_thin_SOURCES = tools/alignment-thin.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C \
 	tree/tree.C tree/sequencetree.C setup.C sequence/sequence-format.C tree/randomtree.C \
-	alignment/alignment-util.C alignment/alignment-random.C tree/tree-util.C \
+	alignment/alignment-util.C alignment/alignment-random.C tree/tree-util.C alignment/load.C \
 	tools/distance-methods.C tools/inverse.C alignment/index-matrix.C io.C tools/read-trees.C
 
 
 #---------------------------------------------------------------
 
 alignment_chop_internal_SOURCES = tools/alignment-chop-internal.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C tree/tree.C \
-	sequence/sequence-format.C alignment/alignment-util.C io.C tree/sequencetree.C
+	sequence/sequence-format.C alignment/alignment-util.C io.C tree/sequencetree.C alignment/load.C
 
 #---------------------------------------------------------------
 
-alignment_indices_SOURCES = tools/alignment-indices.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C tree/tree.C sequence/sequence-format.C alignment/alignment-util.C io.C tree/sequencetree.C
+alignment_indices_SOURCES = tools/alignment-indices.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C tree/tree.C sequence/sequence-format.C alignment/alignment-util.C io.C tree/sequencetree.C alignment/load.C
 
 #---------------------------------------------------------------
 
-alignments_diff_SOURCES = tools/alignments-diff.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C tree/tree.C sequence/sequence-format.C alignment/alignment-util.C io.C tree/sequencetree.C
+alignments_diff_SOURCES = tools/alignments-diff.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C tree/tree.C sequence/sequence-format.C alignment/alignment-util.C io.C tree/sequencetree.C alignment/load.C
 
 #---------------------------------------------------------------
 
-alignment_draw_SOURCES = tools/alignment-draw.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C sequence/sequence-format.C util.C alignment/alignment-util.C tools/colors.C tree/tree.C io.C tree/sequencetree.C
+alignment_draw_SOURCES = tools/alignment-draw.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C sequence/sequence-format.C util.C alignment/alignment-util.C tools/colors.C tree/tree.C io.C tree/sequencetree.C alignment/load.C
 
 #---------------------------------------------------------------
 
-joint_indels_SOURCES = tools/joint-indels.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C tree/tree.C tree/sequencetree.C tree/tree-util.C setup.C sequence/sequence-format.C alignment/alignment-random.C alignment/alignment-util.C tree/randomtree.C tools/statistics.C tools/joint-A-T.C tools/partition.C io.C tools/read-trees.C
+joint_indels_SOURCES = tools/joint-indels.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C tree/tree.C tree/sequencetree.C tree/tree-util.C setup.C sequence/sequence-format.C alignment/alignment-random.C alignment/alignment-util.C tree/randomtree.C tools/statistics.C tools/joint-A-T.C tools/partition.C io.C tools/read-trees.C alignment/load.C
 
 #---------------------------------------------------------------
 
 joint_parsimony_SOURCES = tools/joint-parsimony.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C tree/tree.C \
 	tree/sequencetree.C tree/tree-util.C setup.C sequence/sequence-format.C \
 	alignment/alignment-random.C alignment/alignment-util.C tree/randomtree.C \
-	tools/parsimony.C tools/joint-A-T.C n_indels.C io.C tools/read-trees.C
+	tools/parsimony.C tools/joint-A-T.C n_indels.C io.C tools/read-trees.C alignment/load.C
 
 #---------------------------------------------------------------
 
-alignment_info_SOURCES = tools/alignment-info.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C tree/tree.C tree/sequencetree.C setup.C tools/parsimony.C sequence/sequence-format.C tree/randomtree.C alignment/alignment-util.C alignment/alignment-random.C tree/tree-util.C tools/statistics.C io.C tools/read-trees.C
+alignment_info_SOURCES = tools/alignment-info.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C tree/tree.C tree/sequencetree.C setup.C tools/parsimony.C sequence/sequence-format.C tree/randomtree.C alignment/alignment-util.C alignment/alignment-random.C tree/tree-util.C tools/statistics.C io.C tools/read-trees.C alignment/load.C
 
 #---------------------------------------------------------------
 
-alignment_smc_SOURCES = tools/alignment-smc.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C tree/tree.C tree/sequencetree.C setup.C tools/parsimony.C sequence/sequence-format.C tree/randomtree.C alignment/alignment-util.C alignment/alignment-random.C tree/tree-util.C tools/statistics.C io.C tools/read-trees.C
+alignment_smc_SOURCES = tools/alignment-smc.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C tree/tree.C tree/sequencetree.C setup.C tools/parsimony.C sequence/sequence-format.C tree/randomtree.C alignment/alignment-util.C alignment/alignment-random.C tree/tree-util.C tools/statistics.C io.C tools/read-trees.C alignment/load.C
 
 #---------------------------------------------------------------
 
@@ -282,19 +285,19 @@ alignment_cat_SOURCES = tools/alignment-cat.C sequence/alphabet.C sequence/seque
 
 #---------------------------------------------------------------
 
-alignment_translate_SOURCES = tools/alignment-translate.C alignment/alignment.C alignment/alignment-util.C sequence/alphabet.C sequence/sequence.C sequence/sequence-format.C util.C tree/tree.C setup.C tree/sequencetree.C tree/randomtree.C rng.C tree/tree-util.C alignment/alignment-random.C io.C tools/tree-dist.C tools/partition.C tools/read-trees.C
+alignment_translate_SOURCES = tools/alignment-translate.C alignment/alignment.C alignment/alignment-util.C sequence/alphabet.C sequence/sequence.C sequence/sequence-format.C util.C tree/tree.C setup.C tree/sequencetree.C tree/randomtree.C rng.C tree/tree-util.C alignment/alignment-random.C io.C tools/tree-dist.C tools/partition.C tools/read-trees.C alignment/load.C
 
 #---------------------------------------------------------------
 
-alignment_find_SOURCES = tools/alignment-find.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C alignment/alignment-util.C rng.C util.C sequence/sequence-format.C tree/tree.C io.C tree/sequencetree.C
+alignment_find_SOURCES = tools/alignment-find.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C alignment/alignment-util.C rng.C util.C sequence/sequence-format.C tree/tree.C io.C tree/sequencetree.C alignment/load.C
 
 #---------------------------------------------------------------
 
-alignment_convert_SOURCES = tools/alignment-convert.C alignment/alignment.C alignment/alignment-util.C sequence/sequence.C sequence/alphabet.C util.C sequence/sequence-format.C tree/tree.C io.C tree/sequencetree.C
+alignment_convert_SOURCES = tools/alignment-convert.C alignment/alignment.C alignment/alignment-util.C sequence/sequence.C sequence/alphabet.C util.C sequence/sequence-format.C tree/tree.C io.C tree/sequencetree.C alignment/load.C
 
 #---------------------------------------------------------------
 
-alignment_find_conserved_SOURCES = tools/alignment-find-conserved.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C tree/tree.C tree/sequencetree.C setup.C tools/parsimony.C sequence/sequence-format.C tree/randomtree.C alignment/alignment-util.C alignment/alignment-random.C tree/tree-util.C tools/statistics.C tools/partition.C io.C tools/read-trees.C
+alignment_find_conserved_SOURCES = tools/alignment-find-conserved.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C rng.C tree/tree.C tree/sequencetree.C setup.C tools/parsimony.C sequence/sequence-format.C tree/randomtree.C alignment/alignment-util.C alignment/alignment-random.C tree/tree-util.C tools/statistics.C tools/partition.C io.C tools/read-trees.C alignment/load.C
 
 #---------------------------------------------------------------
 
@@ -376,6 +379,6 @@ draw_tree_LDADD = ${CAIRO_LIBS}
 #---------------------------------------------------------------
 
 path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C \
-	sequence/sequence-format.C alignment/alignment-util.C tree/tree.C io.C tree/sequencetree.C
+	sequence/sequence-format.C alignment/alignment-util.C tree/tree.C io.C tree/sequencetree.C alignment/load.C
 
 #---------------------------------------------------------------

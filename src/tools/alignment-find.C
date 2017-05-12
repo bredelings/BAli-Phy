@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <string>
 #include "sequence/alphabet.H"
 #include "alignment/alignment.H"
-#include "alignment/alignment-util.H"
+#include "alignment/load.H"
 
 #include <boost/program_options.hpp>
 

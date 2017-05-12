@@ -29,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "findroot.H"
 #include "util.H"
 #include "alignment/alignment-util.H"
+#include "alignment/load.H"
 #include "distance-methods.H"
 #include "distance-report.H"
 #include "io.H"

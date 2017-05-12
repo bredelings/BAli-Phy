@@ -3,7 +3,7 @@
 #include "models/setup.H"
 #include "tree/tree-util.H" //extends
 #include "alignment/alignment-constraint.H"
-#include "alignment/alignment-util.H"
+#include "alignment/load.H"
 #include "models/parse.H"
 
 namespace po = boost::program_options;

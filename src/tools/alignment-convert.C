@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "myexception.H"
 #include "alignment/alignment.H"
 #include "sequence/sequence-format.H"
-#include "alignment/alignment-util.H"
+#include "alignment/load.H"
 
 #include <boost/program_options.hpp>
 

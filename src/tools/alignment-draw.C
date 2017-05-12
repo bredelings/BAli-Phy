@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree/tree.H"
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
+#include "alignment/load.H"
 #include "util.H"
 #include "colors.H"
 #include "io.H"

@@ -1,0 +1,544 @@
+#include "alignment/load.H"
+
+#include "alignment-util.H"
+#include "util.H"
+#include "io.H"
+
+#include <boost/optional.hpp>
+
+using std::istream;
+using std::vector;
+using std::string;
+using std::list;
+using std::cerr;
+using std::endl;
+
+using boost::optional;
+using boost::program_options::variables_map;
+
+int total_length(const vector<sequence>& sequences)
+{
+    int count = 0;
+    for(const auto& sequence: sequences)
+	count += sequence.size();
+    return count;
+}
+
+int letter_count(const string& letters, const string& s)
+{
+    int count = 0;
+    for(int i=0;i<s.size();i++)
+	if (letters.find(s[i]) != std::string::npos)
+	    count++;
+    return count;
+}
+
+double letter_count(const string& letters, const vector<sequence>& sequences)
+{
+    int count = 0;
+    for(const auto& sequence: sequences)
+	count += letter_count(letters, sequence);
+    return count;
+}
+
+double letter_fraction(const string& letters, const string& gaps, const vector<sequence>& sequences)
+{
+    int count = letter_count(letters, sequences);
+    int total = total_length(sequences) - letter_count(gaps, sequences);
+
+    return double(count)/total;
+}
+
+object_ptr<const alphabet> guess_alphabet(const vector<sequence>& sequences)
+{
+    double ATGCN = letter_fraction("ATGCN","-?",sequences);
+    double AUGCN = letter_fraction("AUGCN","-?",sequences);
+    if (ATGCN > 0.95 and AUGCN <= ATGCN)
+	return new DNA;
+    else if (AUGCN > 0.95)
+	return new RNA;
+
+    if (std::max(ATGCN,AUGCN) > 0.5)
+	throw myexception()<<"Can't guess alphabet";
+
+    if (letter_count("*",sequences) > 0)
+	return new AminoAcidsWithStop;
+    else
+	return new AminoAcids;
+}
+
+vector<object_ptr<const alphabet> > load_alphabets(const variables_map& args) 
+{
+    vector<object_ptr<const alphabet> > alphabets; 
+
+    if (not args.count("alphabet"))
+	return load_alphabets();
+
+    const string name = args["alphabet"].as<string>();
+
+    return load_alphabets(name);
+}
+
+alignment load_alignment(const string& filename,const vector<object_ptr<const alphabet> >& alphabets)
+{
+    vector<sequence> sequences = sequence_format::load_from_file(filename);
+
+    alignment A;
+
+    A.load(alphabets, sequences);
+  
+    int n_empty = remove_empty_columns(A);
+    if (n_empty)
+	if (log_verbose) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
+  
+    if (A.n_sequences() == 0)
+	throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
+
+    return A;
+}
+
+alignment load_alignment(const string& filename)
+{
+    vector<sequence> sequences = sequence_format::load_from_file(filename);
+
+    try {
+	object_ptr<const alphabet> a = guess_alphabet(sequences);
+
+	alignment A(*a);
+	A.load(sequences);
+    
+	int n_empty = remove_empty_columns(A);
+	if (n_empty)
+	    if (log_verbose) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
+    
+	if (A.n_sequences() == 0)
+	    throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
+    
+	return A;
+    }
+    catch (myexception& e)
+    {
+	throw e<<" for file "<<filename<<".  Please specify RNA, DNA, or AminoAcids.";
+    }
+}
+
+/// Load an alignment from command line args "--align filename"
+alignment load_A(const variables_map& args,bool keep_internal) 
+{
+    vector<object_ptr<const alphabet> > alphabets = load_alphabets(args);
+  
+    // ----- Try to load alignment ------ //
+    if (not args.count("align")) 
+	throw myexception("Alignment file not specified! (--align <filename>)");
+  
+    string filename = args["align"].as<string>();
+    alignment A = load_alignment(filename,alphabets);
+
+    if (not keep_internal)
+	A = chop_internal(A);
+
+    return A;
+}
+
+
+using std::vector;
+using std::string;
+using std::list;
+
+istream& find_alignment(istream& ifile)
+{
+    string line;
+    while (ifile and ifile.peek() != '>')
+    {
+	if (not portable_getline(ifile,line)) break;
+    }
+
+    return ifile;
+}
+
+istream& skip_alignment(istream& ifile)
+{
+    string line;
+    do {
+	portable_getline(ifile,line);
+    } while (ifile and line.size());
+
+    return ifile;
+}
+
+istream& find_and_skip_alignment(istream& ifile)
+{
+    if (find_alignment(ifile))
+	skip_alignment(ifile);
+    return ifile;
+}
+
+istream& find_and_skip_alignments(istream& ifile, int n)
+{
+    for(int i=0;i<n and ifile;i++)
+	find_and_skip_alignment(ifile);
+    return ifile;
+}
+
+alignment load_next_alignment(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets)
+{
+    if (not find_alignment(ifile))
+	throw myexception()<<"No alignment found.\n";
+
+    // READ the alignment
+    try {
+	alignment A;
+	A.load(alphabets, sequence_format::read_fasta, ifile);
+    
+	// strip out empty columns
+	remove_empty_columns(A);
+    
+	// complain if there are no sequences in the alignment
+	if (A.n_sequences() == 0) 
+	    throw myexception(string("Alignment didn't contain any sequences!"));
+    
+	return A;
+    }
+    catch (std::exception& e) {
+	throw myexception()<<"Error loading alignment.\n  Exception: "<<e.what()<<"\n";
+    }
+}
+
+alignment load_next_alignment(istream& ifile, object_ptr<const alphabet> a)
+{
+    vector<object_ptr<const alphabet> > alphabets;
+    alphabets.push_back(a);
+    return load_next_alignment(ifile,alphabets);
+}
+
+alignment load_next_alignment(istream& ifile, const alphabet& a)
+{
+    object_ptr<const alphabet> aa ( a.clone() );
+    return load_next_alignment(ifile,aa);
+}
+
+alignment reorder_sequences(const alignment& A, const vector<string>& names)
+{
+    // Check the names and stuff.
+    vector<string> n2 = sequence_names(A);
+
+    if (names == n2) return A;
+
+    try {
+	vector<int> new_order = compute_mapping(names,n2);
+
+	return reorder_sequences(A,new_order);
+    }
+    catch(bad_mapping<string>& e)
+    {
+	e.clear();
+	if (e.size2 < e.size1)
+	    e<<"Alignment has too few sequences! (Got "<<A.n_sequences()<<", expected "<<names.size()<<")\n";
+
+	if (e.size1 < e.size2)
+	    e<<"Alignmnent has too many sequences! (Got "<<A.n_sequences()<<", expected "<<names.size()<<")\n";
+
+	if (e.from == 0)
+	    e<<"Alignment is missing sequence \""<<e.missing<<"\".";
+	else
+	    e<<"Alignment has extra sequence \""<<e.missing<<"\".";
+	throw e;
+    }
+}
+
+alignment load_next_alignment(istream& ifile, const alphabet& a, const vector<string>& names)
+{
+    object_ptr<const alphabet> aa ( a.clone() );
+    alignment A = load_next_alignment(ifile,aa);
+    return reorder_sequences(A,names);
+}
+
+optional<alignment> find_load_next_alignment(istream& ifile, const alphabet& a, const vector<string>& names)
+{
+    if (not find_alignment(ifile)) return boost::none;
+
+    return load_next_alignment(ifile,a,names);
+}
+
+template <typename T>
+void thin_by_half(list<T>& Ts)
+{
+    // Remove every other alignment
+    for(auto loc = Ts.begin();loc!=Ts.end();) 
+    {
+	auto j = loc++; 
+
+	Ts.erase(j);
+
+	if (loc == Ts.end())  break;
+
+	loc++;
+    }
+}
+
+template <typename T>
+bool thin_down_to(list<T>& Ts,int max)
+{
+    int total = Ts.size();
+    if (total <= max or max == -1)  return false;
+
+    assert(total <= max*2);
+
+    // We have this many extra Ts
+    const int extra = total - max;
+  
+    vector<int> kill(extra);
+    for(int i=0;i<kill.size();i++)
+	kill[i] = int( double(i+0.5)*total/extra);
+    std::reverse(kill.begin(),kill.end());
+  
+    int i=0;
+    for(auto loc = Ts.begin();loc!=Ts.end();i++) {
+	if (i == kill.back()) {
+	    kill.pop_back();
+	    auto j = loc++;
+	    Ts.erase(j);
+	    total--;
+	}
+	else
+	    loc++;
+    }
+    assert(kill.empty());
+    return true;
+}
+
+void insert_and_maybe_thin(alignment t, list<alignment>& Ts, int max, int& subsample)
+{
+    Ts.push_back(std::move(t));
+
+    // If there are too many alignments
+    if (max != -1 and Ts.size() > 2*max)
+    {
+	// start skipping twice as many alignments
+	subsample *= 2;
+
+	if (log_verbose) cerr<<"Went from "<<Ts.size();
+	thin_by_half(Ts);
+	if (log_verbose) cerr<<" to "<<Ts.size()<<" alignments.\n";
+    }
+}
+
+void load_more_alignments(list<alignment>& alignments,
+			  std::function<optional<alignment>(void)> next,
+			  std::function<void(int)> skip,
+			  int maxalignments,
+			  int subsample=1) 
+{
+    try {
+	while(auto A = next())
+	{
+	    // add the alignment and thin if possible
+	    insert_and_maybe_thin(*A, alignments, maxalignments, subsample);
+
+	    // skip over alignments due to subsampling
+	    skip(subsample-1);
+	}
+    }
+    // If we had a problem reading elements, still do the thinning.
+    catch (std::exception& e) {
+	if (alignments.empty()) throw e;
+
+	cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
+	cerr<<"  Exception: "<<e.what()<<endl;
+    }
+
+    //------------  If we have too many alignments--------------//
+    int total = alignments.size();
+    if (thin_down_to(alignments, maxalignments) and log_verbose)
+	cerr<<"Went from "<<total<<" to "<<alignments.size()<<" alignments.\n";
+}
+
+void load_more_alignments(list<alignment>& alignments, istream& ifile, const vector<string>& names, 
+			  const alphabet& a, int maxalignments, int subsample=1) 
+{
+    auto next = [&ifile,&names,&a] () {return find_load_next_alignment(ifile,a,names); };
+    auto skip = [&ifile] (int skip) {find_and_skip_alignments(ifile, skip); };
+    load_more_alignments( alignments,
+			  next,
+			  skip,
+			  maxalignments,
+			  subsample );
+}
+
+// Names and alphabet supplied as argument
+list<alignment> load_alignments(istream& ifile, const vector<string>& names, const alphabet& a, int skip, int maxalignments) 
+{
+    find_and_skip_alignments(ifile,skip);
+
+    list<alignment> alignments;
+    load_more_alignments(alignments,ifile,names,a,maxalignments);
+
+    return alignments;
+}
+
+
+// Get names from first alignment
+std::list<alignment> load_alignments(std::istream& ifile,
+				     const std::vector<object_ptr<const alphabet> >& alphabets,
+				     int skip, int maxalignments)
+{
+    list<alignment> alignments;
+  
+    find_and_skip_alignments(ifile, skip);
+
+    alignments.push_back(load_next_alignment(ifile,alphabets));
+
+    vector<string> names = sequence_names(alignments.front());
+
+    load_more_alignments(alignments, ifile, names, alignments.front().get_alphabet(), maxalignments);
+
+    return alignments;
+}
+
+// Names supplied as argument
+std::list<alignment> load_alignments(std::istream& ifile, const vector<string>& names, 
+				     const std::vector<object_ptr<const alphabet> >& alphabets, 
+				     int skip, int maxalignments)
+{
+    list<alignment> alignments;
+  
+    find_and_skip_alignments(ifile, skip);
+
+    alignments.push_back( reorder_sequences( load_next_alignment(ifile,alphabets), names) );
+
+    load_more_alignments(alignments, ifile, names, alignments.front().get_alphabet(), maxalignments);
+
+    return alignments;
+}
+
+
+vector<alignment> load_alignments(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets) {
+    vector<alignment> alignments;
+  
+    vector<string> n1;
+
+    alignment A;
+    try {
+	while(ifile) {
+
+	    // CHECK if an alignment begins here
+	    if (ifile.peek() != '>') {
+		string line;
+		portable_getline(ifile,line);
+		continue;
+	    }
+    
+	    // READ the next alignment
+	    if (alignments.empty()) {
+		A.load(alphabets,sequence_format::read_fasta,ifile);
+		n1 = sequence_names(A);
+	    }
+	    else 
+		ifile>>A;
+
+	    // STRIP out empty columns
+	    remove_empty_columns(A);
+
+	    // COMPLAIN if there are no sequences in the alignment
+	    if (A.n_sequences() == 0) 
+		throw myexception(string("Alignment didn't contain any sequences!"));
+    
+	    // Check the names and stuff.
+	    vector<string> n2 = sequence_names(A);
+
+	    if (n1 != n2) {
+		// inverse of the mapping n2->n1
+		vector<int> new_order = compute_mapping(n1,n2);
+		A = reorder_sequences(A,new_order);
+	    }
+
+	    // STORE the alignment if we're not going to skip it
+	    alignments.push_back(A);
+	}
+    }
+    catch (std::exception& e) {
+	std::cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
+	std::cerr<<"  Exception: "<<e.what()<<endl;
+    }
+
+    if (log_verbose) std::cerr<<"Loaded "<<alignments.size()<<" alignments.\n";
+
+    return alignments;
+}
+
+alignment find_first_alignment(std::istream& ifile, const vector<object_ptr<const alphabet> >& alphabets) 
+{
+    alignment A;
+
+    // for each line (nth is the line counter)
+    string line;
+    while(ifile) {
+    
+	// CHECK if an alignment begins here
+	if (ifile.peek() != '>') {
+	    string line;
+	    portable_getline(ifile,line);
+	    continue;
+	}
+    
+	try {
+	    // read alignment into A
+	    alignment A2;
+	    A2.load(alphabets,sequence_format::read_fasta,ifile);
+	    A = A2;
+
+	    // strip out empty columns
+	    remove_empty_columns(A);
+	    break;
+	}
+	catch (std::exception& e) {
+	    std::cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
+	    std::cerr<<"  Exception: "<<e.what()<<endl;
+	    break;
+	}
+
+    }
+
+    if (A.n_sequences() == 0) 
+	throw myexception()<<"No alignments found.";
+
+    return A;
+}
+
+alignment find_last_alignment(std::istream& ifile, const vector<object_ptr<const alphabet> >& alphabets) 
+{
+    alignment A;
+
+    // for each line (nth is the line counter)
+    string line;
+    while(ifile) {
+    
+	// CHECK if an alignment begins here
+	if (ifile.peek() != '>') {
+	    string line;
+	    portable_getline(ifile,line);
+	    continue;
+	}
+    
+	try {
+	    // read alignment into A
+	    alignment A2;
+	    A2.load(alphabets,sequence_format::read_fasta,ifile);
+	    A = A2;
+
+	    // strip out empty columns
+	    remove_empty_columns(A);
+	}
+	catch (std::exception& e) {
+	    std::cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
+	    std::cerr<<"  Exception: "<<e.what()<<endl;
+	    break;
+	}
+    }
+
+    if (A.n_sequences() == 0) 
+	throw myexception()<<"No alignments found.";
+
+    return A;
+}
+

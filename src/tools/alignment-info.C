@@ -25,6 +25,7 @@
 #include "tree/tree-util.H"
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
+#include "alignment/load.H"
 #include "util.H"
 #include "setup.H"
 #include "findroot.H"
