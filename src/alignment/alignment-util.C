@@ -1139,7 +1139,6 @@ std::list<alignment> load_alignments(std::istream& ifile, const vector<string>& 
 }
 
 
-
 vector<alignment> load_alignments(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets) {
     vector<alignment> alignments;
   
