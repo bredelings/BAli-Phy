@@ -179,8 +179,6 @@ reg& reg::operator=(reg&& R) noexcept
 {
     C = std::move(R.C);
 
-    re_evaluate = R.re_evaluate;
-
     type = R.type;
 
     n_heads = R.n_heads;
@@ -192,7 +190,6 @@ reg& reg::operator=(reg&& R) noexcept
 
 reg::reg(reg&& R) noexcept
 :C( std::move(R.C) ),
-			 re_evaluate( R.re_evaluate ),
 			 type ( R.type ),
 			 n_heads( R.n_heads ),
 			 created_by( std::move(R.created_by) )
@@ -202,14 +199,12 @@ void reg::clear()
 {
     assert(n_heads == 0);
     C.clear();
-    re_evaluate = false;
     type = type_t::unknown;
 }
 
 void reg::check_cleared()
 {
     assert(not C);
-    assert(not re_evaluate);
     assert(type == type_t::unknown);
     assert(n_heads == 0);
     assert(created_by.first == 0);

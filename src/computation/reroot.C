@@ -176,13 +176,6 @@ void reg_heap::reroot_at(int t)
 	assert(tokens[t2].version <= tokens[t].version);
 
     assert(is_root_token(t));
-
-    // 6. re-evaluate all the regs that need to be up-to-date.
-    if (tokens[t].regs_to_re_evaluate.size())
-	mark_completely_dirty(t);
-    for(int R: tokens[t].regs_to_re_evaluate)
-	incremental_evaluate(R);
-    tokens[t].regs_to_re_evaluate.clear();
 }
 
 void reg_heap::unshare_regs(int t)
@@ -201,7 +194,6 @@ void reg_heap::unshare_regs(int t)
   
     auto& vm_result = tokens[t].vm_result;
     auto& vm_step = tokens[t].vm_step;
-    auto& regs_to_re_evaluate = tokens[t].regs_to_re_evaluate;
 
     // find all regs in t that are not shared from the root
     const auto& delta_result = vm_result.delta();
@@ -274,14 +266,6 @@ void reg_heap::unshare_regs(int t)
 	}
     }
 
-    // Scan regs that were just unshared to see if they should be re-evaluated.
-    for(int i=n_delta_result0;i<delta_result.size();i++)
-    {
-	int r = delta_result[i].first;
-	if (access(r).re_evaluate)
-	    regs_to_re_evaluate.push_back(r);
-    }
-  
     // Erase the marks that we made on prog_temp.
     for(const auto& p: delta_result)
     {

@@ -80,9 +80,6 @@ public:
     /* The closure */
     closure C;
 
-    /// Is C a parameter, or is the reduction value dependent on a parameter value?
-    bool re_evaluate = false;
-
     enum class type_t {unknown=0, index_var=1, constant=2, changeable=3};
 
     type_t type = type_t::unknown;
@@ -294,9 +291,6 @@ public:
 
 	mapping vm_result;
 	mapping vm_step;
-
-	/// These are the regs that must be evaluated when the context becomes active.
-	std::vector<int> regs_to_re_evaluate;
 
 	bool used = false;
 	long version = 0;

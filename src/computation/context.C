@@ -303,15 +303,6 @@ void context::set_compute_expression_(int i, closure&& C)
     set_C( R, std::move(C) );
 }
 
-/// Should the ith compute expression be re_evaluated when invalidated?
-void context::set_re_evaluate(int i, bool b)
-{
-    memory()->lazy_evaluate_head(i, context_index);
-    int R = heads()[i];
-    if (memory()->reg_is_changeable(R))
-	access(R).re_evaluate = b;
-}
-
 int context::n_expressions() const
 {
     return heads().size();
