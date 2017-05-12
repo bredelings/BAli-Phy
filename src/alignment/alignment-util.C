@@ -989,18 +989,19 @@ optional<alignment> find_load_next_alignment(istream& ifile, const alphabet& a, 
     return load_next_alignment(ifile,a,names);
 }
 
-int thin_alignments(list<alignment>& alignments)
+template <typename T>
+int thin_by_half(list<T>& Ts)
 {
     int remaining = 0;
 
     // Remove every other alignment
-    for(auto loc = alignments.begin();loc!=alignments.end();) 
+    for(auto loc = Ts.begin();loc!=Ts.end();) 
     {
 	auto j = loc++; 
 
-	alignments.erase(j);
+	Ts.erase(j);
 
-	if (loc == alignments.end())  break;
+	if (loc == Ts.end())  break;
 
 	loc++;
 	remaining++;
@@ -1050,7 +1051,7 @@ void insert_and_maybe_thin(alignment t, list<alignment>& Ts, int max, int& subsa
 	subsample *= 2;
 
 	if (log_verbose) cerr<<"Went from "<<Ts.size();
-	thin_alignments(Ts);
+	thin_by_half(Ts);
 	if (log_verbose) cerr<<" to "<<Ts.size()<<" alignments.\n";
     }
 }
