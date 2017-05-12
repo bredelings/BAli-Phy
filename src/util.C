@@ -531,3 +531,11 @@ string sanitize_string(const string& s1)
   }
   return s2;
 }
+
+bool in_order(const vector<int>& order)
+{
+    for(int i=0;i<order.size();i++)
+	if (order[i] != i)
+	    return false;
+    return true;
+}

@@ -93,6 +93,8 @@ std::string convertToString(T t)
 /// How many of v's bits are true?
 int n_elements(const std::vector<bool>& v);
 
+bool in_order(const std::vector<int>& order);
+
 template<class T>
 struct bad_mapping: public myexception
 {
