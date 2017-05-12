@@ -1065,6 +1065,11 @@ void load_more_alignments(list<alignment>& alignments,
 	    // skip over alignments due to subsampling
 	    skip(subsample-1);
 	}
+
+	//------------  If we have too many alignments--------------//
+	int total = alignments.size();
+	if (thin_down_to(alignments, maxalignments) and log_verbose)
+	    cerr<<"Went from "<<total<<" to "<<alignments.size()<<" alignments.\n";
     }
     catch (std::exception& e) {
 	if (alignments.empty())
@@ -1094,11 +1099,6 @@ list<alignment> load_alignments(istream& ifile, const vector<string>& names, con
     list<alignment> alignments;
     load_more_alignments(alignments,ifile,names,a,maxalignments);
 
-    //------------  If we have too many alignments--------------//
-    int total = alignments.size();
-    if (thin_down_to(alignments, maxalignments) and log_verbose)
-	cerr<<"Went from "<<total<<" to "<<alignments.size()<<" alignments.\n";
-
     return alignments;
 }
 
@@ -1116,13 +1116,6 @@ std::list<alignment> load_alignments(std::istream& ifile, const std::vector<obje
     alignments.push_back(A);
 
     load_more_alignments(alignments,ifile,names,A.get_alphabet(),maxalignments);
-
-    //------------  If we have too many alignments--------------//
-    int total = alignments.size();
-    if (thin_down_to(alignments, maxalignments) and log_verbose)
-    {
-	cerr<<"Went from "<<total<<" to "<<alignments.size()<<" alignments.\n";
-    }
 
     return alignments;
 }
@@ -1149,13 +1142,6 @@ std::list<alignment> load_alignments(std::istream& ifile, const vector<string>& 
     alignments.push_back(A);
 
     load_more_alignments(alignments,ifile,names,A.get_alphabet(),maxalignments);
-
-    //------------  If we have too many alignments--------------//
-    if (thin_down_to(alignments, maxalignments) and log_verbose)
-    {
-	cerr<<"Went from "<<total;
-	cerr<<" to "<<alignments.size()<<" alignments.\n";
-    }
 
     return alignments;
 }
