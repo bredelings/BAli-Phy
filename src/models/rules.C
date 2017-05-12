@@ -18,6 +18,7 @@ using boost::property_tree::ptree;
 // TODO: clean up transition kernels to use lambda functions?
 // TODO: find some way to run under the prior?
 // TODO: rewrite frequencies_prior..
+// TODO: change Scale and *T (branch lengths) into an array, and log them that way.
 // Q: fmutsel version of m3, etc.
 // Q: how to share GTR between genes in gtr+gwf?
 
