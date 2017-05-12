@@ -1050,17 +1050,20 @@ void insert_and_maybe_thin(alignment t, list<alignment>& Ts, int max, int& subsa
     }
 }
 
-void load_more_alignments(list<alignment>& alignments, istream& ifile, const vector<string>& names, 
-			  const alphabet& a, int maxalignments, int subsample=1) 
+void load_more_alignments(list<alignment>& alignments,
+			  std::function<optional<alignment>(void)> next,
+			  std::function<void(int)> skip,
+			  int maxalignments,
+			  int subsample=1) 
 {
     try {
-	while(auto A = find_load_next_alignment(ifile,a,names))
+	while(auto A = next())
 	{
 	    // add the alignment and thin if possible
 	    insert_and_maybe_thin(*A, alignments, maxalignments, subsample);
 
 	    // skip over alignments due to subsampling
-	    find_and_skip_alignments(ifile, subsample-1);
+	    skip(subsample-1);
 	}
     }
     catch (std::exception& e) {
@@ -1070,6 +1073,18 @@ void load_more_alignments(list<alignment>& alignments, istream& ifile, const vec
 	cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
 	cerr<<"  Exception: "<<e.what()<<endl;
     }
+}
+
+void load_more_alignments(list<alignment>& alignments, istream& ifile, const vector<string>& names, 
+			  const alphabet& a, int maxalignments, int subsample=1) 
+{
+    auto next = [&ifile,&names,&a] () {return find_load_next_alignment(ifile,a,names); };
+    auto skip = [&ifile] (int skip) {find_and_skip_alignments(ifile, skip); };
+    load_more_alignments( alignments,
+			  next,
+			  skip,
+			  maxalignments,
+			  subsample );
 }
 
 list<alignment> load_alignments(istream& ifile, const vector<string>& names, const alphabet& a, int skip, int maxalignments) 
