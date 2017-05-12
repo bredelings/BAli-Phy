@@ -906,8 +906,6 @@ istream& find_and_skip_alignments(istream& ifile, int n)
 
 alignment load_next_alignment(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets)
 {
-    string line;
-
     if (not find_alignment(ifile))
 	throw myexception()<<"No alignment found.\n";
 
@@ -1073,38 +1071,26 @@ void load_more_alignments(list<alignment>& alignments, istream& ifile, const vec
     }
 }
 
-list<alignment> load_alignments(istream& ifile, const vector<string>& names, const alphabet& a,
-				int skip, int maxalignments) 
+list<alignment> load_alignments(istream& ifile, const vector<string>& names, const alphabet& a, int skip, int maxalignments) 
 {
-    list<alignment> alignments;
-  
-    // we are using every 'skip-th' alignment
-    int total = 0;
-
-    alignment A(a);
-
     find_and_skip_alignments(ifile,skip);
 
+    list<alignment> alignments;
     load_more_alignments(alignments,ifile,names,a,maxalignments);
 
     //------------  If we have too many alignments--------------//
+    int total = alignments.size();
     if (thin_down_to(alignments, maxalignments) and log_verbose)
-    {
-	cerr<<"Went from "<<total;
-	cerr<<" to "<<alignments.size()<<" alignments.\n";
-    }
+	cerr<<"Went from "<<total<<" to "<<alignments.size()<<" alignments.\n";
 
     return alignments;
 }
 
-std::list<alignment> load_alignments(std::istream& ifile, const std::vector<object_ptr<const alphabet> >& alphabets, 
-				     int skip, int maxalignments)
+std::list<alignment> load_alignments(std::istream& ifile, const std::vector<object_ptr<const alphabet> >& alphabets, int skip, int maxalignments)
 {
     list<alignment> alignments;
   
     // we are using every 'skip-th' alignment
-    int total = 0;
-
     find_and_skip_alignments(ifile,skip);
 
     alignment A = load_next_alignment(ifile,alphabets);
@@ -1116,10 +1102,10 @@ std::list<alignment> load_alignments(std::istream& ifile, const std::vector<obje
     load_more_alignments(alignments,ifile,names,A.get_alphabet(),maxalignments);
 
     //------------  If we have too many alignments--------------//
+    int total = alignments.size();
     if (thin_down_to(alignments, maxalignments) and log_verbose)
     {
-	cerr<<"Went from "<<total;
-	cerr<<" to "<<alignments.size()<<" alignments.\n";
+	cerr<<"Went from "<<total<<" to "<<alignments.size()<<" alignments.\n";
     }
 
     return alignments;
