@@ -150,6 +150,14 @@ public:
     /// Construct an empty alignment
     alignment() {}
 
+    alignment& operator=(const alignment&) = default;
+
+    alignment& operator=(alignment&&) = default;
+
+    alignment(const alignment&) = default;
+
+    alignment(alignment&&) = default;
+
     /// Construct an empty alignment, with alphabet a
     explicit alignment(const alphabet& a);
 
