@@ -180,10 +180,9 @@ istream& find_and_skip_alignments(istream& ifile, int n)
     return ifile;
 }
 
-alignment load_next_alignment(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets)
+optional<alignment> find_load_next_alignment(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets)
 {
-    if (not find_alignment(ifile))
-	throw myexception()<<"No alignment found.\n";
+    if (not find_alignment(ifile)) return boost::none;
 
     // READ the alignment
     try {
@@ -202,6 +201,16 @@ alignment load_next_alignment(istream& ifile, const vector<object_ptr<const alph
     catch (std::exception& e) {
 	throw myexception()<<"Error loading alignment.\n  Exception: "<<e.what()<<"\n";
     }
+}
+
+
+alignment load_next_alignment(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets)
+{
+    auto A = find_load_next_alignment(ifile, alphabets);
+    if (not A)
+	throw myexception()<<"No alignment found.\n";
+
+    return std::move(*A);
 }
 
 alignment load_next_alignment(istream& ifile, object_ptr<const alphabet> a)
@@ -323,21 +332,39 @@ void insert_and_maybe_thin(alignment t, list<alignment>& Ts, int max, int& subsa
     }
 }
 
-void load_more_alignments(list<alignment>& alignments,
-			  std::function<optional<alignment>(void)> next,
-			  std::function<void(int)> skip,
-			  int maxalignments,
-			  int subsample=1) 
+template <typename T>
+void load_more(list<T>& Ts, 
+	       std::function<optional<T>(void)> next,
+	       std::function<void(int)> skip,
+	       int max,
+	       int subsample=1) 
 {
     try {
 	while(auto A = next())
 	{
-	    // add the alignment and thin if possible
-	    insert_and_maybe_thin(*A, alignments, maxalignments, subsample);
+	    // add the T and thin if possible
+	    insert_and_maybe_thin(*A, Ts, max, subsample);
 
-	    // skip over alignments due to subsampling
+	    // skip over Ts due to subsampling
 	    skip(subsample-1);
 	}
+    }
+    // If we had a problem reading elements, still do the thinning.
+    catch (std::exception& e) {
+	thin_down_to(Ts, max);
+
+	throw e;
+    }
+    thin_down_to(Ts, max);
+}
+
+void load_more_alignments(list<alignment>& alignments, istream& ifile, const vector<string>& names, 
+			  const alphabet& a, int maxalignments, int subsample=1) 
+{
+    try {
+	auto next = [&ifile,&names,&a] () {return find_load_next_alignment(ifile,a,names); };
+	auto skip = [&ifile] (int skip) {find_and_skip_alignments(ifile, skip); };
+	load_more<alignment>( alignments, next, skip, maxalignments, subsample );
     }
     // If we had a problem reading elements, still do the thinning.
     catch (std::exception& e) {
@@ -347,22 +374,6 @@ void load_more_alignments(list<alignment>& alignments,
 	cerr<<"  Exception: "<<e.what()<<endl;
     }
 
-    //------------  If we have too many alignments--------------//
-    int total = alignments.size();
-    if (thin_down_to(alignments, maxalignments) and log_verbose)
-	cerr<<"Went from "<<total<<" to "<<alignments.size()<<" alignments.\n";
-}
-
-void load_more_alignments(list<alignment>& alignments, istream& ifile, const vector<string>& names, 
-			  const alphabet& a, int maxalignments, int subsample=1) 
-{
-    auto next = [&ifile,&names,&a] () {return find_load_next_alignment(ifile,a,names); };
-    auto skip = [&ifile] (int skip) {find_and_skip_alignments(ifile, skip); };
-    load_more_alignments( alignments,
-			  next,
-			  skip,
-			  maxalignments,
-			  subsample );
 }
 
 // Names and alphabet supplied as argument
