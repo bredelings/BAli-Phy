@@ -1065,19 +1065,19 @@ void load_more_alignments(list<alignment>& alignments,
 	    // skip over alignments due to subsampling
 	    skip(subsample-1);
 	}
-
-	//------------  If we have too many alignments--------------//
-	int total = alignments.size();
-	if (thin_down_to(alignments, maxalignments) and log_verbose)
-	    cerr<<"Went from "<<total<<" to "<<alignments.size()<<" alignments.\n";
     }
+    // If we had a problem reading elements, still do the thinning.
     catch (std::exception& e) {
-	if (alignments.empty())
-	    throw e;
+	if (alignments.empty()) throw e;
 
 	cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
 	cerr<<"  Exception: "<<e.what()<<endl;
     }
+
+    //------------  If we have too many alignments--------------//
+    int total = alignments.size();
+    if (thin_down_to(alignments, maxalignments) and log_verbose)
+	cerr<<"Went from "<<total<<" to "<<alignments.size()<<" alignments.\n";
 }
 
 void load_more_alignments(list<alignment>& alignments, istream& ifile, const vector<string>& names, 
