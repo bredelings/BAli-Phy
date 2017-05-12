@@ -8,6 +8,8 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
+// TODO: generalize online machinery for subsample-down-to machinery.
+// TODO: rewrite tree reader/writer functions to use lambdas.
 // TODO: make trees-distances able to subsample down to 400.
 // TODO: implement +INV by averaging the frequencies of other models.
 // TODO: print out parameter lines using the table logger.
