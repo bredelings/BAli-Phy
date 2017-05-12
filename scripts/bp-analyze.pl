@@ -2580,17 +2580,17 @@ sub exec_show
     my ($tmp_fh,$tmp_filename) = tempfile();
 
     my $result = `$cmd 2>$tmp_filename`;
+    my $message = `cat $tmp_filename`; 
+    print LOG $message;
     if ($? != 0)
     {
 	my $code = $?>>8;
-	my $message = `cat $tmp_filename`; 
 	print STDERR "Subcommand failed! (code $code)\n";
 	print LOG    "Subcommand failed! (code $code)\n";
 
 	print STDERR "\n  command:  $cmd\n";
 
 	print STDERR "\n  message:  $message\n";
-	print LOG    "\n  message:  $message\n";
 	exit($code);
     }
     elsif ($verbose)
