@@ -1146,48 +1146,47 @@ vector<alignment> load_alignments(istream& ifile, const vector<object_ptr<const 
     vector<string> n1;
 
     alignment A;
-    while(ifile) {
+    try {
+	while(ifile) {
 
-	// CHECK if an alignment begins here
-	if (ifile.peek() != '>') {
-	    string line;
-	    portable_getline(ifile,line);
-	    continue;
-	}
+	    // CHECK if an alignment begins here
+	    if (ifile.peek() != '>') {
+		string line;
+		portable_getline(ifile,line);
+		continue;
+	    }
     
-	// READ the next alignment
-	try {
+	    // READ the next alignment
 	    if (alignments.empty()) {
 		A.load(alphabets,sequence_format::read_fasta,ifile);
 		n1 = sequence_names(A);
 	    }
 	    else 
 		ifile>>A;
-	}
-	catch (std::exception& e) {
-	    std::cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
-	    std::cerr<<"  Exception: "<<e.what()<<endl;
-	    break;
-	}
 
-	// STRIP out empty columns
-	remove_empty_columns(A);
+	    // STRIP out empty columns
+	    remove_empty_columns(A);
 
-	// COMPLAIN if there are no sequences in the alignment
-	if (A.n_sequences() == 0) 
-	    throw myexception(string("Alignment didn't contain any sequences!"));
+	    // COMPLAIN if there are no sequences in the alignment
+	    if (A.n_sequences() == 0) 
+		throw myexception(string("Alignment didn't contain any sequences!"));
     
-	// Check the names and stuff.
-	vector<string> n2 = sequence_names(A);
+	    // Check the names and stuff.
+	    vector<string> n2 = sequence_names(A);
 
-	if (n1 != n2) {
-	    // inverse of the mapping n2->n1
-	    vector<int> new_order = compute_mapping(n1,n2);
-	    A = reorder_sequences(A,new_order);
+	    if (n1 != n2) {
+		// inverse of the mapping n2->n1
+		vector<int> new_order = compute_mapping(n1,n2);
+		A = reorder_sequences(A,new_order);
+	    }
+
+	    // STORE the alignment if we're not going to skip it
+	    alignments.push_back(A);
 	}
-
-	// STORE the alignment if we're not going to skip it
-	alignments.push_back(A);
+    }
+    catch (std::exception& e) {
+	std::cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
+	std::cerr<<"  Exception: "<<e.what()<<endl;
     }
 
     if (log_verbose) std::cerr<<"Loaded "<<alignments.size()<<" alignments.\n";
