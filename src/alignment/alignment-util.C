@@ -1035,38 +1035,37 @@ istream& load_more_alignments(list<alignment>& alignments, istream& ifile, const
 {
     int total = alignments.size();
 
-    while(find_alignment(ifile))
-    {
-	try {
+    try {
+	while(find_alignment(ifile))
+	{
 	    // READ the next alignment
 	    alignment A = load_next_alignment(ifile,a,names);
 
 	    // STORE the alignment
 	    alignments.push_back(A);
 	    total++;
+
+	    // If there are too many alignments
+	    if (maxalignments != -1 and total > 2*maxalignments)
+	    {
+		// start skipping twice as many alignments
+		subsample *= 2;
+
+		if (log_verbose) cerr<<"Went from "<<total;
+		total = thin_alignments(alignments);
+		if (log_verbose) cerr<<" to "<<total<<" alignments.\n";
+	    }
+
+	    // skip over alignments due to subsampling
+	    find_and_skip_alignments(ifile, subsample-1);
 	}
-	catch (std::exception& e) {
-	    if (alignments.empty())
-		throw e;
+    }
+    catch (std::exception& e) {
+	if (alignments.empty())
+	    throw e;
 
-	    cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
-	    cerr<<"  Exception: "<<e.what()<<endl;
-	    break;
-	}
-
-	// If there are too many alignments
-	if (maxalignments != -1 and total > 2*maxalignments)
-	{
-	    // start skipping twice as many alignments
-	    subsample *= 2;
-
-	    if (log_verbose) cerr<<"Went from "<<total;
-	    total = thin_alignments(alignments);
-	    if (log_verbose) cerr<<" to "<<total<<" alignments.\n";
-	}
-
-	// skip over alignments due to subsampling
-	find_and_skip_alignments(ifile, subsample-1);
+	cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
+	cerr<<"  Exception: "<<e.what()<<endl;
     }
     return ifile;
 }
