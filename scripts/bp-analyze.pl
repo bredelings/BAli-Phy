@@ -180,7 +180,7 @@ $max_arg = "--max=$max_iter" if (defined($max_iter));
 my $skip="";
 $skip="--skip=$burnin" if ($tree_files[0] ne "Results/T1.trees");
 
-my $subsample_string = "--sub-sample=$subsample";
+my $subsample_string = "--subsample=$subsample";
 $subsample_string = "" if ($subsample == 1);
 
 if ($personality =~ "bali-phy.*" || $personality eq "beast" || $personality eq "phylobayes") {
@@ -465,7 +465,7 @@ $section .= '<table style="width:100%">'."\n";
 
 $section .= "<tr>\n";
 $section .= "  <td>burn-in = $burnin samples</td>\n";
-$section .= "  <td>sub-sample = $subsample</td>\n" if ($subsample != 1);
+$section .= "  <td>subsample = $subsample</td>\n" if ($subsample != 1);
 $section .= "  <td>$marginal_prob</td>\n";
 $section .= "</tr>\n";
 $section .= "</table>\n";
