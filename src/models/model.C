@@ -132,17 +132,13 @@ Model::Model(const std::shared_ptr<module_loader>& L)
 void show_parameters(std::ostream& o,const Model& M, bool show_hidden) {
     for(int i=0;i<M.n_parameters();i++) {
 	string name = M.parameter_name(i);
-	if ((not show_hidden) and name.size() > 1 and name[0] == '*')
-	    continue;
-	o<<"    ";
-	o<<name<<" = ";
-	string output="[NULL]";
-	if (M.get_parameter_value(i))
-	{
-	    output=M.get_parameter_value(i).print();
-	    if (output.find(10) != string::npos or output.find(13) != string::npos)
-		output = "[multiline]";
-	}
+	if ((not show_hidden) and name.size() > 1 and name[0] == '*') continue;
+
+	o<<"    "<<name<<" = ";
+
+	string output = M.get_parameter_value(i).print();
+	if (output.find(10) != string::npos or output.find(13) != string::npos)
+	    output = "[multiline]";
 	o<<output;
     }
     o<<"\n";
