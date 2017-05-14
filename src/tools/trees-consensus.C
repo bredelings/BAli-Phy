@@ -401,6 +401,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "Produce help message.")
 	("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
 	("until,u",value<int>(),"Read until this number of trees.")
+	("max,m",value<int>(),"Thin tree samples down to this number of trees.")
 	("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
 	("ignore", value<string>(),"Comma-separated list of taxa to ignore.")
 	;
@@ -986,6 +987,10 @@ int main(int argc,char* argv[])
 	if (args.count("until"))
 	    last = args["until"].as<int>();
 
+	int max = -1;
+	if (args.count("max"))
+	    max = args["max"].as<int>();
+
 	double min_support = args["min-support"].as<double>();
 
 	double report_ratio = args["odds-ratio"].as<double>();
@@ -1038,9 +1043,9 @@ int main(int argc,char* argv[])
 	{
 	    int count = 0;
 	    if (files[i] == "-")
-		count = trees[i].load_file(std::cin,skip,subsample,last,ignore);
+		count = trees[i].load_file(std::cin,skip,last,subsample,max,ignore);
 	    else
-		count = trees[i].load_file(files[i],skip,subsample,last,ignore);      
+		count = trees[i].load_file(files[i],skip,last,subsample,max,ignore);      
 
 	    if (log_verbose)
 		std::cerr<<"Read "<<count<<" trees from '"<<files[i]<<"'"<<std::endl;

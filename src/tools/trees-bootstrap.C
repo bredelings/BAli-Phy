@@ -689,7 +689,7 @@ int main(int argc,char* argv[])
 		filenames.push_back(vector<string>());
 	}
 
-	tree_sample_collection tree_dists(filenames,skip,subsample,last);
+	tree_sample_collection tree_dists(filenames,skip,last,subsample);
 
 	vector<int> D(tree_dists.n_dists());
 	for(int d=0;d<D.size();d++) {

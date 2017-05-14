@@ -126,7 +126,7 @@ int main(int argc,char* argv[])
 	if (args.count("max-points"))
 	    max_points = args["max-points"].as<int>();
 
-	tree_sample tree_dist(std::cin,skip,subsample,last);
+	tree_sample tree_dist(std::cin, skip, last, subsample);
 
 
 	const int L = tree_dist.size();

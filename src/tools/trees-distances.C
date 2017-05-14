@@ -119,6 +119,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "produce help message")
 	("skip,s",value<unsigned>()->default_value(0),"number of tree samples to skip")
 	("until,u",value<int>(),"Read until this number of trees.")
+	("max,m",value<int>(),"Thin tree samples down to this number of trees.")
 	("subsample,x",value<int>()->default_value(1),"factor by which to subsample")
 	("verbose,v","Output more log messages on stderr.")
 	;
@@ -619,6 +620,10 @@ int main(int argc,char* argv[])
 	if (args.count("until"))
 	    last = args["until"].as<int>();
 
+	int max = -1;
+	if (args.count("max"))
+	    max = args["max"].as<int>();
+
 	tree_metric_fn metric_fn = NULL;
 	string metric = args["metric"].as<string>();
 	if (metric == "topology" or metric == "RF")
@@ -647,9 +652,9 @@ int main(int argc,char* argv[])
 	    {
 		int count = 0;
 		if (files[i] == "-")
-		    count = all_trees.load_file(std::cin,skip,subsample,last);
+		    count = all_trees.load_file(std::cin,skip,last,subsample,max);
 		else
-		    count = all_trees.load_file(files[i],skip,subsample,last);
+		    count = all_trees.load_file(files[i],skip,last,subsample,max);
 		if (log_verbose)
 		    std::cerr<<"Read "<<count<<" trees from '"<<files[i]<<"'"<<std::endl;
 	    }
@@ -665,7 +670,7 @@ int main(int argc,char* argv[])
 	else if (analysis == "autocorrelation") 
 	{
 	    check_supplied_filenames(1,files);
-	    tree_sample trees(files[0],skip,subsample,last);
+	    tree_sample trees(files[0],skip,last,subsample);
 
 	    matrix<double> D = distances(trees,metric_fn);
       
@@ -695,7 +700,7 @@ int main(int argc,char* argv[])
 	else if (analysis == "diameter") 
 	{
 	    check_supplied_filenames(1,files);
-	    tree_sample trees(files[0],skip,subsample,last);
+	    tree_sample trees(files[0],skip,last,subsample);
 	    if (trees.size() < 2)
 		throw myexception()<<"diameter: only 1 point in set.";
 
@@ -710,7 +715,7 @@ int main(int argc,char* argv[])
 	    bool topology_only = args.count("topology-only");
 
 	    check_supplied_filenames(1,files);
-	    tree_sample trees(files[0],skip,subsample,last);
+	    tree_sample trees(files[0],skip,last,subsample);
 
 	    write_distance_cvars_header(trees.T(0),leaves_only);
 
@@ -728,7 +733,7 @@ int main(int argc,char* argv[])
 	    bool topology_only = args.count("topology-only");
 
 	    check_supplied_filenames(1,files);
-	    tree_sample trees(files[0],skip,subsample,last);
+	    tree_sample trees(files[0],skip,last,subsample);
 
 	    for(int i=0;i<trees.size();i++)
 	    {
@@ -753,8 +758,8 @@ int main(int argc,char* argv[])
 	{
 	    check_supplied_filenames(2,files);
 
-	    tree_sample trees1(files[0],skip,subsample,last);
-	    tree_sample trees2(files[1],skip,subsample,last);
+	    tree_sample trees1(files[0],skip,last,subsample);
+	    tree_sample trees2(files[1],skip,last,subsample);
 
 	    tree_sample both = trees1;
 	    both.append_trees(trees2);
@@ -767,7 +772,7 @@ int main(int argc,char* argv[])
 	{
 	    check_supplied_filenames(2,files);
 
-	    tree_sample trees1(files[0],skip,subsample,last);
+	    tree_sample trees1(files[0],skip,last,subsample);
 	    tree_sample trees2(files[1],0,0,-1);
 
 	    for(int i=0;i<trees1.size();i++)
@@ -783,7 +788,7 @@ int main(int argc,char* argv[])
 
 	    check_supplied_filenames(2,files);
       
-	    tree_sample trees1(files[0],skip,subsample,last);
+	    tree_sample trees1(files[0],skip,last,subsample);
 	    tree_sample trees2(files[1],0,0,-1);
       
 	    matrix<double> D2 = distances(trees2,metric_fn);

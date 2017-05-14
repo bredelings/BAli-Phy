@@ -340,7 +340,7 @@ int main(int argc,char* argv[])
 	accum_branch_lengths A(Q);
 
 	try {
-	    scan_trees(std::cin,skip,subsample,last,prune,Q.T.get_leaf_labels(),A);
+	    scan_trees(std::cin,skip,last,subsample,prune,Q.T.get_leaf_labels(),A);
 	}
 	catch (std::exception& e) 
 	{

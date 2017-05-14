@@ -361,7 +361,7 @@ int main(int argc,char* argv[])
 	//-------- Read in the tree samples --------//
 	if ( args.count("simple") ) {
 	    accum_branch_lengths_ignore_topology A(Q);
-	    scan_trees(std::cin,skip,subsample,last,prune,Q.get_leaf_labels(), A);
+	    scan_trees(std::cin,skip,last,subsample,prune,Q.get_leaf_labels(), A);
 	    for(int b=0;b<B;b++)
 		Q.branch(b).set_length(A.m1[b]);
 	    cout<<Q<<endl;
@@ -371,7 +371,7 @@ int main(int argc,char* argv[])
 	accum_branch_lengths_same_topology A(Q);
 
 	try {
-	    scan_trees(std::cin,skip,subsample,last,prune,Q.get_leaf_labels(), A);
+	    scan_trees(std::cin,skip,last,subsample,prune,Q.get_leaf_labels(), A);
 	}
 	catch (std::exception& e) 
 	{
