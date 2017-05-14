@@ -207,7 +207,21 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 
     string base = dir_name + "/" + "C" + convertToString(proc_id+1);
 
-    logger_function<string> TF = TableLogger<string>(*construct_table_function(M, Rao_Blackwellize),subsample);
+    auto TL = construct_table_function(M, Rao_Blackwellize);
+
+    auto TF = TableLogger<string>(*TL);
+
+    auto TF3 = [TL,names=TL->field_names()](const Model& M, long t) mutable {
+	std::ostringstream o;
+	auto values = (*TL)(M,t);
+	for(int i=0;i<TL->n_fields();i++) {
+	    string name = names[i];
+	    if ((not log_verbose) and name.size() > 1 and name[0] == '*') continue;
+	    o<<"    "<<name<<" = "<<values[i];
+	}
+	o<<"\n";
+	return o.str();
+    };
 
     Logger s = FunctionLogger(base +".p", Subsample_Function(TF,subsample));
   
@@ -222,7 +236,7 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
     // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
     {
 	ConcatFunction F; 
-	F<<TF<<"\n";
+	F<<TF3<<"\n";
 	F<<Show_SModels_Function()<<"\n";
 	if (P->t().n_nodes() > 1)
 	    for(int i=0;i<P->n_data_partitions();i++)
