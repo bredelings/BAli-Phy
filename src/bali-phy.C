@@ -539,9 +539,15 @@ int main(int argc,char* argv[])
 	set_key_values(*M,args);
 
 	//---------------Do something------------------//
+	vector<string> Rao_Blackwellize;
+	if (args.count("Rao-Blackwellize"))
+	    Rao_Blackwellize = split(args["Rao-Blackwellize"].as<string>(),',');
+
 	if (show_only)
 	{
-	    print_stats(cout,*M, log_verbose);
+	    auto TL = construct_table_function(M, Rao_Blackwellize);
+
+	    std::cout<<table_logger_line(*TL, *M, 0);
 
 	    M->show_graph();
 	}
@@ -574,12 +580,7 @@ int main(int argc,char* argv[])
 		dir_name = init_dir(args);
 #endif
 		files = init_files(proc_id, dir_name, argc, argv);
-		{
-		    vector<string> Rao_Blackwellize;
-		    if (args.count("Rao-Blackwellize"))
-			Rao_Blackwellize = split(args["Rao-Blackwellize"].as<string>(),',');
-		    loggers = construct_loggers(M, subsample, Rao_Blackwellize, proc_id, dir_name);
-		}
+		loggers = construct_loggers(M, subsample, Rao_Blackwellize, proc_id, dir_name);
 		write_initial_alignments(*M, proc_id, dir_name);
 	    }
 	    else {

@@ -198,6 +198,22 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
     return TL;
 }
 
+
+string table_logger_line(MCMC::TableFunction<string>& TF, const Model& M, long t)
+{
+    std::ostringstream o;
+    auto values = TF(M,t);
+    auto names = TF.field_names();
+
+    for(int i=0;i<TF.n_fields();i++) {
+	string name = names[i];
+	if ((not log_verbose) and name.size() > 1 and name[0] == '*') continue;
+	o<<"    "<<name<<" = "<<values[i];
+    }
+    o<<"\n";
+    return o.str();
+}
+
 vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
 {
     using namespace MCMC;
@@ -211,17 +227,7 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 
     auto TF = TableLogger<string>(*TL);
 
-    auto TF3 = [TL,names=TL->field_names()](const Model& M, long t) mutable {
-	std::ostringstream o;
-	auto values = (*TL)(M,t);
-	for(int i=0;i<TL->n_fields();i++) {
-	    string name = names[i];
-	    if ((not log_verbose) and name.size() > 1 and name[0] == '*') continue;
-	    o<<"    "<<name<<" = "<<values[i];
-	}
-	o<<"\n";
-	return o.str();
-    };
+    auto TF3 = [TL](const Model& M, long t) mutable { return table_logger_line(*TL,M,t); };
 
     Logger s = FunctionLogger(base +".p", Subsample_Function(TF,subsample));
   

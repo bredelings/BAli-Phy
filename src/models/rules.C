@@ -13,8 +13,6 @@ using boost::property_tree::ptree;
 // HARD TODO: --help implicit value?
 //   Also, say which parameter and function if we have an argument type mismatch.
 
-// TODO: print out parameter lines using the table logger.
-
 // TODO: change Scale and *T (branch lengths) into an array, and log them that way.
 
 // TODO: implement +INV by averaging the frequencies of other models.
