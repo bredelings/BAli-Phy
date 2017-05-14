@@ -401,7 +401,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "Produce help message.")
 	("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
 	("until,u",value<int>(),"Read until this number of trees.")
-	("sub-sample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
+	("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
 	("ignore", value<string>(),"Comma-separated list of taxa to ignore.")
 	;
   
@@ -980,7 +980,7 @@ int main(int argc,char* argv[])
 	    }
 	}
 
-	int subsample=args["sub-sample"].as<int>();
+	int subsample=args["subsample"].as<int>();
 
 	int last = -1;
 	if (args.count("until"))

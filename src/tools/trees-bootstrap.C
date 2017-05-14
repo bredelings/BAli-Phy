@@ -485,7 +485,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "Produce help message.")
 	("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
 	("max,m",value<unsigned>(),"Maximum number of trees to read.")
-	("sub-sample,x",value<unsigned>(),"Factor by which to sub-sample.")
+	("subsample,x",value<unsigned>(),"Factor by which to sub-sample.")
 	("predicates",value<string>(),"Predicates to examine.")
 	("min-support",value<double>()->default_value(0.1,"0.1"),"Minimum value of predicates to consider interesting..")
 	("verbose,v","Output more log messages on stderr.")
@@ -672,8 +672,8 @@ int main(int argc,char* argv[])
 	    max = args["max"].as<unsigned>();
     
 	int subsample=1;
-	if (args.count("sub-sample"))
-	    subsample = args["sub-sample"].as<unsigned>();
+	if (args.count("subsample"))
+	    subsample = args["subsample"].as<unsigned>();
 
 	//-------------- Read in tree distributions --------------//
 	if (not args.count("files"))

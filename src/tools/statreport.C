@@ -59,7 +59,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("select", value<vector<string> >()->composing(),"Analyze only these fields.")
     ("individual,i","Show results for individual files separately also.")
     ("skip,s",value<string>()->default_value("10%"),"Number of initial lines to skip.")
-    ("sub-sample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
+    ("subsample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
     ("truth",value<double>(),"True value")
     ("min",value<int>(),"Required minimum number of lines to read.")
     ("max,m",value<int>(),"Maximum number of lines to read.")
@@ -554,7 +554,7 @@ int main(int argc,char* argv[])
 
     cout.precision(args["precision"].as<unsigned>());
 
-    int subsample=args["sub-sample"].as<int>();
+    int subsample=args["subsample"].as<int>();
 
     int max = -1;
     if (args.count("max"))

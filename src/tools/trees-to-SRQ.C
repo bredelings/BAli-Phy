@@ -75,7 +75,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "produce help message")
 	("predicates",value<string>(),"predicates to examine")
 	("skip,s",value<int>()->default_value(0),"number of trees to skip")
-	("sub-sample,x",value<int>()->default_value(1),"factor by which to sub-sample")
+	("subsample,x",value<int>()->default_value(1),"factor by which to sub-sample")
 	("max,m",value<int>(),"maximum number of trees to read")
 	("max-points",value<int>(),"maximum number of points to record")
 	("mode", value<string>()->default_value("SRQ"),"SRQ, sum, or values")
@@ -116,7 +116,7 @@ int main(int argc,char* argv[])
 	// Read in the trees
 	int skip = args["skip"].as<int>();
 
-	int subsample=args["sub-sample"].as<int>();
+	int subsample=args["subsample"].as<int>();
 
 	int max = -1;
 	if (args.count("max"))

@@ -73,7 +73,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help", "produce help message")
 	("skip",value<unsigned>()->default_value(0),"number of trees to skip")
 	("max",value<unsigned>(),"maximum number of trees to read")
-	("sub-sample",value<unsigned>(),"factor by which to sub-sample")
+	("subsample",value<unsigned>(),"factor by which to sub-sample")
 	("verbose","Output more log messages on stderr.")
 	;
   
@@ -122,8 +122,8 @@ tree_sample load_tree_file(const variables_map& args, const string& filename)
 	max = args["max"].as<unsigned>();
 
     int subsample=1;
-    if (args.count("sub-sample"))
-	subsample = args["sub-sample"].as<unsigned>();
+    if (args.count("subsample"))
+	subsample = args["subsample"].as<unsigned>();
 
     if (filename == "-") {
 	if (log_verbose) cerr<<"partitions-supported: Loading trees from STDIN...\n";

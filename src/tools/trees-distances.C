@@ -119,7 +119,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "produce help message")
 	("skip,s",value<unsigned>()->default_value(0),"number of tree samples to skip")
 	("max,m",value<int>(),"maximum number of tree samples to read")
-	("sub-sample,x",value<int>()->default_value(1),"factor by which to sub-sample")
+	("subsample,x",value<int>()->default_value(1),"factor by which to subsample")
 	("verbose,v","Output more log messages on stderr.")
 	;
 
@@ -613,7 +613,7 @@ int main(int argc,char* argv[])
 
 	unsigned skip = args["skip"].as<unsigned>();
 
-	int subsample=args["sub-sample"].as<int>();
+	int subsample=args["subsample"].as<int>();
 
 	int max = -1;
 	if (args.count("max"))

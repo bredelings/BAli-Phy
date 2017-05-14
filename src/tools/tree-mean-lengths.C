@@ -171,7 +171,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("max,m",value<int>(),"maximum number of tree samples to read")
 	("prune",value<string>(),"Comma-separated taxa to remove")
 	("simple","Ignore all branches not in the query tree")
-	("sub-sample,x",value<int>()->default_value(1),"factor by which to sub-sample")
+	("subsample,x",value<int>()->default_value(1),"factor by which to sub-sample")
 	("var","report standard deviation of branch lengths instead of mean")
 	("no-node-lengths","ignore branches not in the specified topology")
 	("safe","Don't die if no trees match the topology")
@@ -340,7 +340,7 @@ int main(int argc,char* argv[])
 	if (args.count("max"))
 	    max = args["max"].as<int>();
 
-	int subsample = args["sub-sample"].as<int>();
+	int subsample = args["subsample"].as<int>();
 
 	vector<string> prune;
 	if (args.count("prune")) {
