@@ -8,6 +8,10 @@ svg(file=outfile,height=8,width=8)
 
 M = as.matrix(read.table(infile))
 L = dim(M)[1]
+if (dim(M)[2] != L) { stop("Matrix not square") }
+if (N1 + N2 != L) { stop("Wrong number of points.") }
+
+# Actually do the MDS
 library(stats)
 points = cmdscale(M)
 
