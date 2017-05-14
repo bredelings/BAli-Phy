@@ -8,6 +8,9 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
+// TODO: --help implicit value?
+//   Also, say which parameter and function if we have an argument type mismatch.
+
 // TODO: missing complete genes? (or document why not).
 
 // TODO: generalize online machinery for subsample-down-to machinery.
