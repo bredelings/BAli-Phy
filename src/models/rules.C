@@ -8,15 +8,29 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
+// TODO: missing complete genes? (or document why not).
+
 // TODO: generalize online machinery for subsample-down-to machinery.
 // TODO: rewrite tree reader/writer functions to use lambdas.
 // TODO: make trees-distances able to subsample down to 400.
+//  * rename --max -> --last
+//  * use --max for the down-to argument.
+//  * --sub-sample -> --subsample
+//  * make the --max thing be top-level, and use the stacked readers
+//    as input.
+
 // TODO: implement +INV by averaging the frequencies of other models.
+
 // TODO: print out parameter lines using the table logger.
+
 // TODO: show tree & scale priors in bp-analyze output.
+
 // TODO: change scale_means_only -> scale_all_branches
+
 // TODO: *allow referring to other parameters in parameter values (default values and otherwise)
+//  * allow addition/subtraction?
 // TODO: move stuff (e.g. logging) out of models
+//  * how can we log e.g. nucleotide names?
 // TODO: clean up loggers.{H,C} to use lambda functions
 // TODO: clean up transition kernels to use lambda functions?
 // TODO: find some way to run under the prior?
