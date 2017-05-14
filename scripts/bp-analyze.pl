@@ -2553,6 +2553,15 @@ sub tree_MDS
 #	print "L1 = $L1  L2 = $L2\n";
 	exec_show("trees-distances matrix --max=$N $tf1 $tf2 > $matfile");
 	Rexec($script,"$L1 $L2 $matfile $outfile");
+
+	my $script3d = find_in_path("tree-plot2-3D.R");
+	print "3d script is at '${script3d}'\n";
+	my $message = Rexec($script3d, "$L1 $L2 $matfile");
+
+	# compute x3d file for 3d mixing plot
+	open FILE, ">Results/tree-1-2.points";
+	print FILE &gen_x3d_of_mds($message);
+	close FILE;
     }
 
     elsif ($#tree_files+1 >= 3)
@@ -2571,6 +2580,7 @@ sub tree_MDS
 	exec_show("trees-distances matrix --max=$N $tf1 $tf2 $tf3> $matfile");
 	Rexec($script,"$L1 $L2 $L3 $matfile $outfile");
     }
+
 }
 
 sub exec_show
@@ -2612,3 +2622,58 @@ sub exec_result
     return $?;
 }
 
+
+sub gen_x3d_of_mds
+{
+    my $point_string = shift;
+
+    my @points;
+    my $G1 = 0;
+    my $G2 = 0;
+    my @x = ();
+    my @y = ();
+    my @z = ();
+
+    foreach my $line (split "\n", $point_string)
+    {
+	chomp $line;
+	my $point = [split "\t", $line];
+	$G1++ if (${$point}[3] == 1);
+	$G2++ if (${$point}[3] == 2);
+	push @x, ${$point}[0];
+	push @y, ${$point}[1];
+	push @z, ${$point}[2];
+	push @points, $point;
+    }
+
+    my $xmin = min(\@x);
+    my $xmax = max(\@x);
+    my $xw = abs($xmax - $xmin);
+
+    my $ymin = min(\@y);
+    my $ymax = max(\@y);
+    my $yw = abs($ymax - $ymin);
+
+    my $zmin = min(\@z);
+    my $zmax = max(\@z);
+    my $zw = abs($zmax - $zmin);
+    
+    my $x3d = "";
+    foreach my $point (@points)
+    {
+	my $x = ${$point}[0];
+	my $y = ${$point}[1];
+	my $z = ${$point}[2];
+	my $g = ${$point}[3];
+	my $color;
+	my $size = 0.15;
+	my $scale = "$size $size $size";
+	$color = "1 0 0" if ($g == 1);
+	$color = "0 0 1" if ($g == 2);
+	$x3d .= "<transform translation='$x $y $z' scale='$scale'><shape><appearance><material diffuseColor='$color'></material></appearance><box></box></shape></transform>";
+	$x3d .= "\n";
+    }
+
+    $x3d = "<x3d><scene>\n$x3d\n</scene></x3d>\n";
+    return $x3d;
+}
