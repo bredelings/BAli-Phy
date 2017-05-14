@@ -168,7 +168,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "produce help message")
 	("tree", value<string>(),"tree to re-root")
 	("skip,s",value<int>()->default_value(0),"number of tree samples to skip")
-	("max,m",value<int>(),"maximum number of tree samples to read")
+	("until,u",value<int>(),"Read until this number of trees.")
 	("prune",value<string>(),"Comma-separated taxa to remove")
 	("simple","Ignore all branches not in the query tree")
 	("subsample,x",value<int>()->default_value(1),"factor by which to sub-sample")
@@ -336,9 +336,9 @@ int main(int argc,char* argv[])
 
 	int skip = args["skip"].as<int>();
 
-	int max = -1;
-	if (args.count("max"))
-	    max = args["max"].as<int>();
+	int last = -1;
+	if (args.count("until"))
+	    last = args["until"].as<int>();
 
 	int subsample = args["subsample"].as<int>();
 
@@ -361,7 +361,7 @@ int main(int argc,char* argv[])
 	//-------- Read in the tree samples --------//
 	if ( args.count("simple") ) {
 	    accum_branch_lengths_ignore_topology A(Q);
-	    scan_trees(std::cin,skip,subsample,max,prune,Q.get_leaf_labels(), A);
+	    scan_trees(std::cin,skip,subsample,last,prune,Q.get_leaf_labels(), A);
 	    for(int b=0;b<B;b++)
 		Q.branch(b).set_length(A.m1[b]);
 	    cout<<Q<<endl;
@@ -371,7 +371,7 @@ int main(int argc,char* argv[])
 	accum_branch_lengths_same_topology A(Q);
 
 	try {
-	    scan_trees(std::cin,skip,subsample,max,prune,Q.get_leaf_labels(), A);
+	    scan_trees(std::cin,skip,subsample,last,prune,Q.get_leaf_labels(), A);
 	}
 	catch (std::exception& e) 
 	{

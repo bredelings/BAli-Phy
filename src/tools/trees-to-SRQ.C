@@ -76,7 +76,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("predicates",value<string>(),"predicates to examine")
 	("skip,s",value<int>()->default_value(0),"number of trees to skip")
 	("subsample,x",value<int>()->default_value(1),"factor by which to sub-sample")
-	("max,m",value<int>(),"maximum number of trees to read")
+	("until,u",value<int>(),"Read until this number of trees.")
 	("max-points",value<int>(),"maximum number of points to record")
 	("mode", value<string>()->default_value("SRQ"),"SRQ, sum, or values")
 	("invert","consider the inverse of each event instead")
@@ -118,15 +118,15 @@ int main(int argc,char* argv[])
 
 	int subsample=args["subsample"].as<int>();
 
-	int max = -1;
-	if (args.count("max"))
-	    max = args["max"].as<int>();
+	int last = -1;
+	if (args.count("until"))
+	    last = args["until"].as<int>();
 
 	int max_points = -1;
 	if (args.count("max-points"))
 	    max_points = args["max-points"].as<int>();
 
-	tree_sample tree_dist(std::cin,skip,subsample,max);
+	tree_sample tree_dist(std::cin,skip,subsample,last);
 
 
 	const int L = tree_dist.size();

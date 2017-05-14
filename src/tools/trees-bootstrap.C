@@ -484,7 +484,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     input.add_options()
 	("help,h", "Produce help message.")
 	("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
-	("max,m",value<unsigned>(),"Maximum number of trees to read.")
+	("until,u",value<int>(),"Read until this number of trees.")
 	("subsample,x",value<unsigned>(),"Factor by which to sub-sample.")
 	("predicates",value<string>(),"Predicates to examine.")
 	("min-support",value<double>()->default_value(0.1,"0.1"),"Minimum value of predicates to consider interesting..")
@@ -667,9 +667,9 @@ int main(int argc,char* argv[])
 	}
 
 
-	int max = -1;
-	if (args.count("max"))
-	    max = args["max"].as<unsigned>();
+	int last = -1;
+	if (args.count("until"))
+	    last = args["until"].as<unsigned>();
     
 	int subsample=1;
 	if (args.count("subsample"))
@@ -689,7 +689,7 @@ int main(int argc,char* argv[])
 		filenames.push_back(vector<string>());
 	}
 
-	tree_sample_collection tree_dists(filenames,skip,subsample,max);
+	tree_sample_collection tree_dists(filenames,skip,subsample,last);
 
 	vector<int> D(tree_dists.n_dists());
 	for(int d=0;d<D.size();d++) {

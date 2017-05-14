@@ -62,7 +62,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("subsample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
 	("truth",value<double>(),"True value")
 	("min",value<int>(),"Required minimum number of lines to read.")
-	("max,m",value<int>(),"Maximum number of lines to read.")
+	("until,u",value<int>(),"Read until this number of trees.")
 	("mean", "Show mean and standard deviation.")
 	("mode", "Show mode (with precision)")
 	("log-mean", "Show log mean of X given log X.")
@@ -556,9 +556,9 @@ int main(int argc,char* argv[])
 
 	int subsample=args["subsample"].as<int>();
 
-	int max = -1;
-	if (args.count("max"))
-	    max = args["max"].as<int>();
+	int last = -1;
+	if (args.count("until"))
+	    last = args["until"].as<int>();
 
 	int min_rows = -1;
 	if (args.count("min"))
@@ -582,9 +582,9 @@ int main(int argc,char* argv[])
 	filenames = args["filenames"].as< vector<string> >();
 	for(int i=0;i<filenames.size();i++) {
 	    if (filenames[i] == "-")
-		tables.push_back(stats_table(std::cin,0,subsample,max,ignore,select));
+		tables.push_back(stats_table(std::cin,0,subsample,last,ignore,select));
 	    else
-		tables.push_back(stats_table(filenames[i],0,subsample,max,ignore,select));
+		tables.push_back(stats_table(filenames[i],0,subsample,last,ignore,select));
 	    if (not tables.back().n_rows())
 		throw myexception()<<"File '"<<filenames[i]<<"' has no samples left after removal of burn-in!";
 	}
