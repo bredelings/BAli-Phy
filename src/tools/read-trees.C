@@ -502,16 +502,16 @@ namespace trees_format
 	:wrapped_reader_t(r),subsample(s)
     { }
 
-    bool Max::next_tree_(Tree& T,int& r)
+    bool Last::next_tree_(Tree& T,int& r)
     {
-	if (wrapped_reader_t::lines() < m)
+	if (wrapped_reader_t::lines() < last)
 	    return wrapped_reader_t::next_tree_(T,r);
 	else
 	    return false;
     }
 
-    Max::Max(int i, const reader_t& r)
-	:wrapped_reader_t(r),m(i)
+    Last::Last(int l, const reader_t& r)
+	:wrapped_reader_t(r),last(l)
     { }
 
     bool Fixroot::next_tree_(Tree& T,int& r)

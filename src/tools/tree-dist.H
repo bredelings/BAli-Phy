@@ -97,17 +97,17 @@ public:
     operator std::vector<tree_record>& () {return trees;}
     operator const std::vector<tree_record>& () const {return trees;}
 
-    int load_file(std::istream&,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
-    int load_file(const std::string&,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
+    int load_file(std::istream&,int skip=0,int last=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
+    int load_file(const std::string&,int skip=0,int last=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
     int append_trees(const tree_sample&);
 
     tree_sample() {}
-    tree_sample(std::istream&,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
-    tree_sample(const std::string& filename,int skip=0,int max=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
+    tree_sample(std::istream&,int skip=0,int last=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
+    tree_sample(const std::string& filename,int skip=0,int last=-1,int subsample=1,const std::vector<std::string>& prune=std::vector<std::string>());
 };
 
-void scan_trees(std::istream&,int skip,int subsample,int max,accumulator<SequenceTree>& op);
-void scan_trees(std::istream&,int skip,int subsample,int max,const std::vector<std::string>& prune,accumulator<SequenceTree>& op);
-void scan_trees(std::istream&,int skip,int subsample,int max,const std::vector<std::string>& prune,const std::vector<std::string>& leaf_order, accumulator<SequenceTree>& op);
+void scan_trees(std::istream&,int skip,int subsample,int last,accumulator<SequenceTree>& op);
+void scan_trees(std::istream&,int skip,int subsample,int last,const std::vector<std::string>& prune,accumulator<SequenceTree>& op);
+void scan_trees(std::istream&,int skip,int subsample,int last,const std::vector<std::string>& prune,const std::vector<std::string>& leaf_order, accumulator<SequenceTree>& op);
 
 #endif

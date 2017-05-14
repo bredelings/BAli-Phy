@@ -208,7 +208,7 @@ void tree_sample::add_tree(RootedTree& T)
 
 
 
-int tree_sample::load_file(istream& file,int skip,int subsample,int max,const vector<string>& prune)
+int tree_sample::load_file(istream& file,int skip,int subsample,int last,const vector<string>& prune)
 {
     using namespace trees_format;
 
@@ -221,8 +221,8 @@ int tree_sample::load_file(istream& file,int skip,int subsample,int max,const ve
     if (subsample > 1)
 	trees_in = shared_ptr<reader_t>(new Subsample(subsample,*trees_in));
 
-    if (max > 0)
-	trees_in = shared_ptr<reader_t>(new Max(max,*trees_in));
+    if (last > 0)
+	trees_in = shared_ptr<reader_t>(new Last(last,*trees_in));
 
     trees_in = shared_ptr<reader_t>(new Fixroot(*trees_in));
 
@@ -260,11 +260,11 @@ int tree_sample::load_file(istream& file,int skip,int subsample,int max,const ve
     return t;
 }
 
-int tree_sample::load_file(const string& filename,int skip,int subsample,int max,const vector<string>& prune)
+int tree_sample::load_file(const string& filename,int skip,int subsample,int last,const vector<string>& prune)
 {
     checked_ifstream file(filename,"tree samples file");
   
-    int count = load_file(file,skip,subsample,max,prune);
+    int count = load_file(file,skip,subsample,last,prune);
     return count;
 }
 
@@ -293,17 +293,17 @@ int tree_sample::append_trees(const tree_sample& trees)
     return trees.size();
 }
 
-tree_sample::tree_sample(istream& file,int skip,int subsample,int max,const vector<string>& prune)
+tree_sample::tree_sample(istream& file,int skip,int subsample,int last,const vector<string>& prune)
 {
-    load_file(file,skip,subsample,max,prune);
+    load_file(file,skip,subsample,last,prune);
 }
 
-tree_sample::tree_sample(const string& filename,int skip,int subsample,int max,const vector<string>& prune)
+tree_sample::tree_sample(const string& filename,int skip,int subsample,int last,const vector<string>& prune)
 {
-    load_file(filename,skip,subsample,max,prune);
+    load_file(filename,skip,subsample,last,prune);
 }
 
-void scan_trees(istream& file,int skip,int subsample,int max, const vector<string>& prune,
+void scan_trees(istream& file,int skip,int subsample,int last, const vector<string>& prune,
 		const vector<string>& leaf_order, accumulator<SequenceTree>& op)
 {
     using namespace trees_format;
@@ -317,8 +317,8 @@ void scan_trees(istream& file,int skip,int subsample,int max, const vector<strin
     if (subsample > 1)
 	trees = shared_ptr<reader_t>(new Subsample(subsample,*trees));
 
-    if (max > 0)
-	trees = shared_ptr<reader_t>(new Max(max,*trees));
+    if (last > 0)
+	trees = shared_ptr<reader_t>(new Last(last,*trees));
 
     trees = shared_ptr<reader_t>(new Fixroot(*trees));
 
@@ -337,15 +337,15 @@ void scan_trees(istream& file,int skip,int subsample,int max, const vector<strin
     op.finalize();
 }
 
-void scan_trees(istream& file,int skip,int subsample,int max, const vector<string>& prune,
+void scan_trees(istream& file,int skip,int subsample,int last, const vector<string>& prune,
 		accumulator<SequenceTree>& op)
 {
-    scan_trees(file,skip,subsample,max,prune,vector<string>(),op);
+    scan_trees(file,skip,subsample,last,prune,vector<string>(),op);
 }
 
-void scan_trees(istream& file,int skip,int subsample,int max,
+void scan_trees(istream& file,int skip,int subsample,int last,
 		accumulator<SequenceTree>& op)
 {
-    scan_trees(file,skip,subsample,max,vector<string>(),op);
+    scan_trees(file,skip,subsample,last,vector<string>(),op);
 }
 

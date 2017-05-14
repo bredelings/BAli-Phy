@@ -154,15 +154,15 @@ namespace trees_format {
 	Subsample(int, const reader_t&);
     };
 
-    class Max: public wrapped_reader_t
+    class Last: public wrapped_reader_t
     {
-	int m;
+	int last;
 
 	bool next_tree_(Tree&,int& r);
     public:
-	Max* clone() const {return new Max(*this);}
+	Last* clone() const {return new Last(*this);}
     
-	Max(int, const reader_t&);
+	Last(int, const reader_t&);
     };
 
 
