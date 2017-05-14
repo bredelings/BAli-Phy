@@ -8,25 +8,20 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
-// TODO: --help implicit value?
+// HARD TODO: missing complete genes? (or document why not).
+
+// HARD TODO: --help implicit value?
 //   Also, say which parameter and function if we have an argument type mismatch.
-
-// TODO: missing complete genes? (or document why not).
-
-// TODO: generalize online machinery for subsample-down-to machinery.
-// TODO: rewrite tree reader/writer functions to use lambdas.
-// TODO: make trees-distances able to subsample down to 400.
-//  * rename --max -> --last
-//  * use --max for the down-to argument.
-//  * --sub-sample -> --subsample
-//  * make the --max thing be top-level, and use the stacked readers
-//    as input.
-
-// TODO: implement +INV by averaging the frequencies of other models.
 
 // TODO: print out parameter lines using the table logger.
 
+// TODO: change Scale and *T (branch lengths) into an array, and log them that way.
+
+// TODO: implement +INV by averaging the frequencies of other models.
+
 // TODO: show tree & scale priors in bp-analyze output.
+
+// TODO: rewrite tree reader/writer functions to use lambdas.
 
 // TODO: change scale_means_only -> scale_all_branches
 
@@ -38,7 +33,6 @@ using boost::property_tree::ptree;
 // TODO: clean up transition kernels to use lambda functions?
 // TODO: find some way to run under the prior?
 // TODO: rewrite frequencies_prior..
-// TODO: change Scale and *T (branch lengths) into an array, and log them that way.
 // Q: fmutsel version of m3, etc.
 // Q: how to share GTR between genes in gtr+gwf?
 
@@ -473,6 +467,7 @@ ptree get_arg(const Rule& rule, const string& arg_name)
 	if (arg.second.get<string>("arg_name") == arg_name)
 	    return arg.second;
     throw myexception()<<"Rule for function '"<<rule.get<string>("name")<<"' has no argument '"<<arg_name<<"'";
+    // FIXME give info about function here?
 }
 
 string get_keyword_for_positional_arg(const string& head, int i)
