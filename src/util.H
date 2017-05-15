@@ -81,13 +81,12 @@ template <class T>
 std::string convertToString(T t)
 {
     std::ostringstream o;
+    o.precision(15);
     o<<std::boolalpha;
     o.flags(o.flags() | std::ios::fixed);
   
-    if (o << t)
-	return o.str();
-    // some sort of error handling goes here...
-    return "conversion error";
+    o << t;
+    return o.str();
 } 
 
 /// How many of v's bits are true?

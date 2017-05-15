@@ -105,14 +105,14 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
     using namespace MCMC;
     owned_ptr<TableGroupFunction<string> > TL = claim(new TableGroupFunction<string>);
   
-    TL->add_field("iter", [](const Model&, long t) {return to_string(t);});
-    TL->add_field("prior", [](const Model& M, long) {return to_string(log(M.prior()));});
+    TL->add_field("iter", [](const Model&, long t) {return convertToString(t);});
+    TL->add_field("prior", [](const Model& M, long) {return convertToString(log(M.prior()));});
     if (P)
 	for(int i=0;i<P->n_data_partitions();i++)
 	    if ((*P)[i].variable_alignment())
-		TL->add_field("prior_A"+convertToString(i+1), [i](const Parameters& P) {return to_string(log(P[i].prior_alignment()));});
-    TL->add_field("likelihood", [](const Model& M, long) {return to_string(log(M.likelihood()));});
-    TL->add_field("logp", [](const Model& M, long) {return to_string(log(M.probability()));});
+		TL->add_field("prior_A"+convertToString(i+1), [i](const Parameters& P) {return convertToString(log(P[i].prior_alignment()));});
+    TL->add_field("likelihood", [](const Model& M, long) {return convertToString(log(M.likelihood()));});
+    TL->add_field("logp", [](const Model& M, long) {return convertToString(log(M.probability()));});
   
     {
 	vector<int> logged_computations;
@@ -164,16 +164,16 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
     {
 	if ((*P)[i].variable_alignment())
 	{
-	    TL->add_field("|A"+convertToString(i+1)+"|", [i](const Parameters& P){return to_string(alignment_length(P[i]));});
-	    TL->add_field("#indels"+convertToString(i+1), [i](const Parameters& P){return to_string(n_indels(P[i]));});
-	    TL->add_field("|indels"+convertToString(i+1)+"|", [i](const Parameters& P){return to_string(total_length_indels(P[i]));});
+	    TL->add_field("|A"+convertToString(i+1)+"|", [i](const Parameters& P){return convertToString(alignment_length(P[i]));});
+	    TL->add_field("#indels"+convertToString(i+1), [i](const Parameters& P){return convertToString(n_indels(P[i]));});
+	    TL->add_field("|indels"+convertToString(i+1)+"|", [i](const Parameters& P){return convertToString(total_length_indels(P[i]));});
 	}
 	const alphabet& a = (*P)[i].get_alphabet();
-	TL->add_field("#substs"+convertToString(i+1), [i,cost = unit_cost_matrix(a)](const Parameters& P) {return to_string(n_mutations(P[i],cost));});
+	TL->add_field("#substs"+convertToString(i+1), [i,cost = unit_cost_matrix(a)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
 	if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
-	    TL->add_field("#substs(nuc)"+convertToString(i+1), [i,cost = nucleotide_cost_matrix(*Tr)](const Parameters& P) {return to_string(n_mutations(P[i],cost));});
+	    TL->add_field("#substs(nuc)"+convertToString(i+1), [i,cost = nucleotide_cost_matrix(*Tr)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
 	if (const Codons* C = dynamic_cast<const Codons*>(&a))
-	    TL->add_field("#substs(aa)"+convertToString(i+1), [i,cost = amino_acid_cost_matrix(*C)](const Parameters& P) {return to_string(n_mutations(P[i],cost));});
+	    TL->add_field("#substs(aa)"+convertToString(i+1), [i,cost = amino_acid_cost_matrix(*C)](const Parameters& P) {return convertToString(n_mutations(P[i],cost));});
     }
 
     // Add fields Scale<s>*|T|
@@ -181,7 +181,7 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
     {
 	auto name = string("Scale")+to_string(i+1)+"*|T|";
 
-	auto f = [i](const Parameters& P) {return to_string( P.branch_scale(i)*tree_length(P.t()));};
+	auto f = [i](const Parameters& P) {return convertToString( P.branch_scale(i)*tree_length(P.t()));};
 
 	TL->add_field(name, f);
     }
@@ -273,7 +273,7 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 		string filename = base + ".P" + convertToString(i+1)+".fastas";
 		
 		ConcatFunction F;
-		auto iterations = [](const Model&, long t) {return to_string(t);};
+		auto iterations = [](const Model&, long t) {return convertToString(t);};
 		F<<"iterations = "<<iterations<<"\n\n";
 		F<<AlignmentFunction(i);
 		
