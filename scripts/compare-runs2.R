@@ -23,10 +23,13 @@ avePP  = as.vector( PP[,N])
 LOD = LOD[,1:N-1]
 PP  = PP[,1:N-1]
 
+lodToPP = function(x) {y=exp(x);y/(1+y)}
+ppToLod = function(x) {log10(x/(1-x))}
 
 #-------------- Plot 1 -------------------
-svg(file=outfile1,height=5,width=7) 
+svg(file=outfile1,height=3,width=7) 
 
+par(mar=c(4, 4, 0, 4) + 0.1)
 plot(avePP,xlab="Split",ylab="PP",type="n",ylim=c(0,1),xaxt="n")
 axis(side=1,at=1:L,1:L)
 
@@ -40,14 +43,33 @@ for(i in 1:L) {
   lines(c(i,i),c(minPP[i],maxPP[i]),lwd=2)
 }
 
+lodticks = c(-3,-2,-1,0,1,2,3)
+axis(side=4, at=lodToPP(lodticks),labels = lodticks)
+mtext(side=4,line=3,expression(log[10](PP/(1-PP))))
+
+ppmin = min(minPP)
+ppmax = max(maxPP)
+
 # Plot the estimate for each split, and connect the dots
 lines(avePP,col=hsv(1,1,1),lwd=2)
 
 #-------------- Plot 2 -------------------
-svg(file=outfile2,height=5,width=7) 
+svg(file=outfile2,height=3,width=7) 
 
-plot(aveLOD,xlab="Split",ylab="LOD10", type="n",xaxt="n")
+par(mar=c(4, 4, 0, 4) + 0.1)
+plot(aveLOD,xlab="Split",ylab=expression(log[10](PP/(1-PP))), type="n",xaxt="n")
+
 axis(side=1,at=1:L,1:L)
+
+lodToPP = function(x) {y=exp(x);y/(1+y)}
+ppToLod = function(x) {log10(x/(1-x))}
+
+#par(mar=c(4,1,1,1))
+
+ppticks =c(0.001,0.01,0.1,0.5,0.9,0.99,0.999)
+pplabels= c("0.001","0.01","0.1","0.5","0.9","0.99","0.999")
+axis(side=4, at=ppToLod(ppticks),labels = pplabels)
+mtext(side=4,line=3,'PP')
 
 # plot results from another analysis for comparison
 # lines(LOD,col=hsv(0.63,0.4,1),lwd=2)

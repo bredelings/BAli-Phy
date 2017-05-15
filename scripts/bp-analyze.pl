@@ -2555,7 +2555,7 @@ sub tree_MDS
 	Rexec($script,"$L1 $L2 $matfile $outfile");
 
 	my $script3d = find_in_path("tree-plot2-3D.R");
-	print "3d script is at '${script3d}'\n";
+#	print "3d script is at '${script3d}'\n";
 	my $message = Rexec($script3d, "$L1 $L2 $matfile");
 
 	# compute x3d file for 3d mixing plot
