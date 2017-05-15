@@ -1196,6 +1196,7 @@ sub mixing_diagnostics
     print "done.\n";
 
     return if ($#tree_files <= 0);
+
     if (!more_recent_than_all_of("Results/convergence-PP.pdf",[@tree_files]))
     {
 	my $script = find_in_path("compare-runs.R");
