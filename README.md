@@ -29,6 +29,11 @@ You will also need to install
  * libtool
 in order to generate the configure script and Makefiles.
 
+You can optionally install the cairo graphics library to
+build the `draw-tree` program for generating simple pictures of
+trees.
+* cairo (optional)
+
 Build
 -----
 
