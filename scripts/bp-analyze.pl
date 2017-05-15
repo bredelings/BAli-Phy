@@ -727,32 +727,47 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
 
     ###### What file should we show for MDS?
     my $MDS_figure;
+    my $title;
     if (-e "Results/tree-1-2-3.svg")
     {
 	$MDS_figure = "tree-1-2-3.svg";
+	$title = "the first 3 chains";
     }
     elsif (-e "Results/tree-1-2.svg")
     {
 	$MDS_figure = "tree-1-2.svg";
+	$title = "2 chains";
     }
     elsif (-e "Results/tree1.svg")
     {
 	$MDS_figure = "tree1.svg";
+	$title = "1 chain";
     }
 
     ###### Table of MDS versus 
     $section .= '<table style="width:100%;clear:both"><tr>';
 
     $section .= '<td style="width:40%;vertical-align:top">';
-    $section .= '<h4 style="text-align:center">Projection of RF distances</h4>';
+    $section .= "<h4 style=\"text-align:center\">Projection of RF distances for $title</h4>";
     $section .= html_svg($MDS_figure,"90%","",[]) if (defined($MDS_figure));
     $section .= '</td>';
     
     $section .= '<td style="width:40%;vertical-align:top">';
     $section .= '<h4 style="text-align:center">Variation of split PPs across chains</h4>';
-    $section .= html_svg("convergence1-PP.svg","90%","",[]);
+    if (-e "Results/convergence1-PP.svg")
+    {
+	$section .= html_svg("convergence1-PP.svg","90%","",[])
+    }
+
     $section .= "<br/><br/><br/><br/>";
-    $section .= html_svg("convergence2-PP.svg","90%","",[]);
+    if (-e "Results/convergence2-PP.svg")
+    {
+	$section .= html_svg("convergence2-PP.svg","90%","",[]);
+    }
+    else
+    {
+	$section .= "<p>Not generated: multiple chains needed.</p>";
+    }
     $section .= '</td>';
     
     $section .= '</tr></table>';
