@@ -725,14 +725,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     $section .= "</tr>";
     $section .= "</table>\n";
 
-    if (-e "Results/convergence1-PP.svg" or -e "Results/convergence2-PP.svg")
-    {
-	$section .= '<div style="width:100%;clear:both">';
-	$section .= html_svg("convergence1-PP.svg","45%","",["floating_picture"]);
-	$section .= html_svg("convergence2-PP.svg","45%","",["r_floating_picture"]);
-	$section .= "</div>\n";
-    }
-
+    ###### What file should we show for MDS?
     my $MDS_figure;
     if (-e "Results/tree-1-2-3.svg")
     {
@@ -746,14 +739,23 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     {
 	$MDS_figure = "tree1.svg";
     }
-    if (defined($MDS_figure))
-    {
-	$section .= '<div style="width:100%;clear:both">';
-	$section .= '<h3>Tree mixing - Multidimensional scaling</h3>';
-	$section .= html_svg($MDS_figure,"30%","",["floating_picture"]);
-#	$section .= html_svg("convergence2-PP.svg","45%","",["r_floating_picture"]);
-	$section .= "</div>\n";
-    }
+
+    ###### Table of MDS versus 
+    $section .= '<table style="width:100%;clear:both"><tr>';
+
+    $section .= '<td style="width:40%;vertical-align:top">';
+    $section .= '<h4 style="text-align:center">Projection of RF distances</h4>';
+    $section .= html_svg($MDS_figure,"90%","",[]) if (defined($MDS_figure));
+    $section .= '</td>';
+    
+    $section .= '<td style="width:40%;vertical-align:top">';
+    $section .= '<h4 style="text-align:center">Variation of split PPs across chains</h4>';
+    $section .= html_svg("convergence1-PP.svg","90%","",[]);
+    $section .= "<br/><br/><br/><br/>";
+    $section .= html_svg("convergence2-PP.svg","90%","",[]);
+    $section .= '</td>';
+    
+    $section .= '</tr></table>';
 
 my $tne_string = exec_show("pickout -n Ne < Results/partitions.bs");
 my @tne_array = split(/\n/,$tne_string);
