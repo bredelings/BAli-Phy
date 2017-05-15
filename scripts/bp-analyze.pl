@@ -750,7 +750,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     {
 	$section .= '<div style="width:100%;clear:both">';
 	$section .= '<h3>Tree mixing - Multidimensional scaling</h3>';
-	$section .= html_svg($MDS_figure,"45%","",["floating_picture"]);
+	$section .= html_svg($MDS_figure,"30%","",["floating_picture"]);
 #	$section .= html_svg("convergence2-PP.svg","45%","",["r_floating_picture"]);
 	$section .= "</div>\n";
     }
