@@ -48,7 +48,12 @@ for(i in 1:(N-1)) {
 minPP = apply(PP, 1, min, na.rm=TRUE)
 maxPP = apply(PP, 1, max, na.rm=TRUE)
 for(i in 1:L) {
-  lines(c(i,i),c(minPP[i],maxPP[i]),lwd=2)
+    X = sort(PP[i,])
+    LX = length(X)
+    for(j in 1:(LX-1))
+    {
+        lines(c(i,i), c(X[j],X[j+1]), lwd=min(j,LX-j), col=hsv(1,0.5,0,0.5))
+    }
 }
 
 lodticks = c(-3,-2,-1,0,1,2,3)
@@ -92,7 +97,12 @@ for(i in 1:(N-1)) {
 minLOD = apply(LOD, 1, min, na.rm=TRUE)
 maxLOD = apply(LOD, 1, max, na.rm=TRUE)
 for(i in 1:L) {
-  lines(c(i,i),c(minLOD[i],maxLOD[i]),lwd=2)
+    X = sort(LOD[i,])
+    LX = length(X)
+    for(j in 1:(LX-1))
+    {
+        lines(c(i,i), c(X[j],X[j+1]), lwd=min(j,LX-j), col=hsv(1,0.5,0,0.5))
+    }
 }
 
 # Plot the estimate for each split, and connect the dots
