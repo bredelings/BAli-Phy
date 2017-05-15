@@ -2568,7 +2568,7 @@ sub tree_MDS
 
     elsif ($#tree_files+1 >= 3)
     {
-	my $script = find_in_path("tree-plot2.3");
+	my $script = find_in_path("tree-plot3.R");
 	my $tf1 = $tree_files[0];
 	my $tf2 = $tree_files[1];
 	my $tf3 = $tree_files[2];
@@ -2579,7 +2579,7 @@ sub tree_MDS
 	my $matfile = "Results/tree-1-2-3.M";
 	my $outfile = "Results/tree-1-2-3.svg";
 #	print "L1 = $L1  L2 = $L2\n";
-	exec_show("trees-distances matrix --max=$N $tf1 $tf2 $tf3> $matfile");
+	exec_show("trees-distances matrix --max=$N $tf1 $tf2 $tf3 > $matfile");
 	Rexec($script,"$L1 $L2 $L3 $matfile $outfile");
     }
 
