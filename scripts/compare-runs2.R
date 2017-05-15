@@ -36,6 +36,14 @@ axis(side=1,at=1:L,1:L)
 # plot results from another analysis for comparison
 # lines(avePP_other,col=hsv(0.63,0.4,1),lwd=2)
 
+ptcolor = hsv(0, 1, 0, 0.5)
+
+for(i in 1:(N-1)) {
+    xs = 1:L
+    xs = xs + rnorm(L, 0, N/500)
+    points(xs, PP[,i], col=ptcolor, pch=".",cex=4)
+}
+
 # Plot the bars representing the range for each split
 minPP = apply(PP, 1, min, na.rm=TRUE)
 maxPP = apply(PP, 1, max, na.rm=TRUE)
@@ -73,6 +81,12 @@ mtext(side=4,line=3,'PP')
 
 # plot results from another analysis for comparison
 # lines(LOD,col=hsv(0.63,0.4,1),lwd=2)
+
+for(i in 1:(N-1)) {
+    xs = 1:L
+    xs = xs + rnorm(L, 0, N/500)
+    points(xs, LOD[,i], col=ptcolor, pch=".",cex=4)
+}
 
 # Plot the bars representing the range for each split
 minLOD = apply(LOD, 1, min, na.rm=TRUE)
