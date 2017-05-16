@@ -27,11 +27,7 @@ You will also need to install
  * autoconf
  * automake
  * libtool
- * cairo (optional)
-
-If the cairo graphics library is installed, then the post-run analysis
-script will generate a simple SVG tree figure.
-
+ * cairo graphics library (optional)
 
 Build
 -----
