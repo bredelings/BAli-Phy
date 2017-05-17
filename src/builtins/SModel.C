@@ -915,6 +915,26 @@ return Q_;
 }
 */
 
+extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    const auto& WF = arg0.as_<Box<Matrix>>();
+
+    const int n_models = WF.size1();
+    const int n_states = WF.size2();
+
+    auto* ave_f = new EVector(n_states);
+    for(int s=0;s<n_states;s++)
+    {
+	double total = 0;
+	for(int m=0;m<n_models;m++)
+	    total += WF(m,s);
+	(*ave_f)[s] = total;
+    }
+
+    return ave_f;
+}
+
 extern "C" closure builtin_function_weighted_frequency_matrix(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);

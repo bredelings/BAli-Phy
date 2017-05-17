@@ -162,12 +162,10 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"submodel", "RA[a]", "", "A"},
      {"A", "a", "LAMBDA"}},
 
-    {{"GammaInvRates", "MM[a]", "G"},
-     {"SModel.gamma_inv_rates[submodel,alpha,pInv,n]"},
-     {"n", "Int", "4"},
-     {"alpha", "Double", "~logLaplace[-6,2]"},
-     {"pInv", "Double", "~Uniform[0,1]"},
-     {"submodel", "RA[a]", "", "A"},
+    {{"INV", "MM[a]", "G"},
+     {"SModel.plus_inv[submodel,pInv]"},
+     {"pInv","Double","~Uniform[0,1]"},
+     {"submodel","MM[a]","","A"},
      {"A", "a", "LAMBDA"}},
 
     {{"log_normal_rates", "MM[a]", "G"},
@@ -177,14 +175,6 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"submodel", "RA[a]", "", "A"},
      {"A", "a", "LAMBDA"}},
     
-    {{"log_normal_inv_rates", "MM[a]", "G"},
-     {"SModel.log_normal_inv_rates[submodel,sigmaOverMu,pInv,n]"},
-     {"n", "Int", "4"},
-     {"sigmaOverMu", "Double", "~logLaplace[-3,1]"},
-     {"pInv", "Double", "~Uniform[0,1]"},
-     {"submodel", "RA[a]", "", "A"},
-     {"A", "a", "LAMBDA"}},
-
     {{"M1a", "MM[Codon[a,b]]","G"},
      {"SModel.m1a[nuc_model,freq_model,omega1,p1,A]"},
      {"nuc_model", "EM[a]", "HKY", "Alphabet.getNucleotides[A]"},

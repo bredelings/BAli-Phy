@@ -8,6 +8,7 @@ import Parameters;
 builtin f3x4_frequencies_builtin 4 "f3x4_frequencies" "SModel";
 builtin muse_gaut_matrix 4 "muse_gaut_matrix" "SModel";
 builtin builtin_plus_gwf 3 "plus_gwF" "SModel";
+builtin builtin_average_frequency 1 "average_frequency" "SModel";
 builtin builtin_gtr 2 "gtr" "SModel";
 builtin m0 3 "m0" "SModel";
 builtin lExp 3 "lExp" "SModel";
@@ -48,6 +49,13 @@ scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x
 multiParameter f (DiscreteDistribution d) = MixtureModel (DiscreteDistribution (fmap2 f d));
 
 multi_rate m d = multiParameter (\x->(scale x m)) d;
+
+
+average_frequency (MixtureModel ms) = list_from_vector $ builtin_average_frequency $ weighted_frequency_matrix $ MixtureModel ms;
+
+plus_inv (MixtureModel ms) p_inv = MixtureModel $ extendDiscreteDistribution ms p_inv (scale 0.0 $ f81 pi a) where
+                                                  {a  = getAlphabet$MixtureModel ms;
+                                                   pi = average_frequency $ MixtureModel ms};
 
 multi_rate_unif_bins base dist n_bins = multi_rate base $ uniformDiscretize (quantile dist) n_bins;
 
@@ -341,20 +349,13 @@ gamma_rates_unif_bins alpha n = uniformDiscretize (quantile (gamma_rates_dist al
 
 gamma_rates base alpha n = multi_rate_unif_bins base (gamma_rates_dist alpha) n;
 
-plus_inv pInv rates = extendDiscreteDistribution rates pInv 0.0;
-
-gamma_inv_rates base alpha pInv n = multi_rate base $ plus_inv pInv (gamma_rates_unif_bins alpha n);
-
 log_normal_rates'' sigmaOverMu = logNormal lmu lsigma where {x = log(1.0+sigmaOverMu^2);
                                                              lmu = -0.5*x;
                                                              lsigma = sqrt x};
 
 log_normal_rates' sigmaOverMu n = uniformDiscretize (quantile (log_normal_rates'' sigmaOverMu)) n;
 
-
 log_normal_rates base sigmaOverMu n = multi_rate base (log_normal_rates' sigmaOverMu n);
-
-log_normal_inv_rates base sigmaOverMu pInv n = multi_rate base $ plus_inv pInv (log_normal_rates' sigmaOverMu n);
 
 dp base rates fraction a = multi_rate base (DiscreteDistribution dist) where {dist = zip fraction rates};
 
