@@ -53,9 +53,10 @@ multi_rate m d = multiParameter (\x->(scale x m)) d;
 
 average_frequency (MixtureModel ms) = list_from_vector $ builtin_average_frequency $ weighted_frequency_matrix $ MixtureModel ms;
 
-plus_inv (MixtureModel ms) p_inv = MixtureModel $ extendDiscreteDistribution ms p_inv (scale 0.0 $ f81 pi a) where
-                                                  {a  = getAlphabet$MixtureModel ms;
-                                                   pi = average_frequency $ MixtureModel ms};
+
+extend_mixture (MixtureModel ms) p x = MixtureModel $ extendDiscreteDistribution ms p x;
+
+plus_inv mm p_inv = extend_mixture mm p_inv (scale 0.0 $ f81 pi a) where {a  = getAlphabet mm; pi = average_frequency mm};
 
 multi_rate_unif_bins base dist n_bins = multi_rate base $ uniformDiscretize (quantile dist) n_bins;
 
