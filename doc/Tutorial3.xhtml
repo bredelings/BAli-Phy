@@ -67,7 +67,7 @@ Let's also start a <span class="emphasis"><em>fixed alignment</em></span> analys
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy 5S-rRNA/25-muscle.fasta --test --smodel=GTR</code></strong>
 </pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm149"></a>6.2. Rate variation</h3></div></div></div><p>
 You can also allow different sites to evolve at 5 different rates using the gamma[4]+INV model of rate heterogeneity:
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy 5S-rRNA/25-muscle.fasta --test --smodel=GTR+GammaInvRates[4]</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy 5S-rRNA/25-muscle.fasta --test --smodel=GTR+GammaRates[4]+INV</code></strong>
 </pre><p>You can allow 5 different rates that are all independently estimated:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy 5S-rRNA/25-muscle.fasta --test --smodel=GTR+DP[n=5]</code></strong>
 </pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm159"></a>6.3. Codon models</h3></div></div></div><p>

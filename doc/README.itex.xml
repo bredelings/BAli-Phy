@@ -526,7 +526,7 @@ This can be done simply by starting several instances of the program, and does n
 
       <para>You can specify a more complex substitution model as follows (See <xref linkend="subst_basic"/>):
 
-	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel LG+GammaInvRates</userinput></screen> </para>
+	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel LG+GammaRates+INV</userinput></screen> </para>
       <para>You may specify an indel model of <userinput>none</userinput>
 	to fix the alignment to its initial value, and ignore information in shared insertions or deletions.
   	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --imodel none</userinput></screen></para>
@@ -1251,7 +1251,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
        <application>BAli-Phy</application> are specified using a
        stack, as follows: <userinput>Model[arg]+Model[arg]+...+Model[arg]</userinput>
         where each model uses the previous models as input.  For
-	example, <userinput>LG+GammaInvRates[4]</userinput>. Some arguments are optional.</para>
+	example, <userinput>LG+GammaRates[4]+INV</userinput>. Some arguments are optional.</para>
 
 	<note>
 	  <para>
@@ -1632,8 +1632,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>model</replaceable> + GammaInvRates</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + GammaInvRates[4]</userinput> (default)</para>
+		<para><userinput><replaceable>model</replaceable> + GammaRates + INV</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + GammaRates[4] + INV</userinput> (default)</para>
 		<para>Yang (1994)</para>
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>

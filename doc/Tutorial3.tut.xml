@@ -125,7 +125,7 @@ You can change the substitution model from the Tamura-Nei model to the General T
 <section><info><title>Rate variation</title></info>
 <para>
 You can also allow different sites to evolve at 5 different rates using the gamma[4]+INV model of rate heterogeneity:
-% bali-phy 5S-rRNA/25-muscle.fasta --test --smodel=GTR+GammaInvRates[4]
+% bali-phy 5S-rRNA/25-muscle.fasta --test --smodel=GTR+GammaRates[4]+INV
 You can allow 5 different rates that are all independently estimated:
 % bali-phy 5S-rRNA/25-muscle.fasta --test --smodel=GTR+DP[n=5]
 </para>
