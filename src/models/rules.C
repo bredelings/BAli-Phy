@@ -141,7 +141,7 @@ const vector< vector<vector<string>> > all_default_arguments =
 
     // fraction ~ dirichlet' n (1 + n/2), rates ~ dirichlet' n 2
     {{"DP", "MM[a]","G"},
-     {"SModel.dp[submodel,rates,frequencies,A]"},
+     {"SModel.dp[submodel,rates,frequencies]"},
      {"rates", "List[Double]", "~Dirichlet[n,2]"},
      {"frequencies", "List[Double]", "~Dirichlet[n,3]"},
      {"n","Int","4"},
