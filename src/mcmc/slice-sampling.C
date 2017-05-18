@@ -255,12 +255,12 @@ double sum_of_means(const Parameters& P)
 ///
 /// The lengths D=mu*T are not updated by calling recalc, so that the smodel and imodel do not get updated.
 ///
-double set_sum_of_means_tricky(Parameters& P, double t)
+double set_sum_of_means(Parameters& P, double t)
 {
     double sum = sum_of_means(P);
     double scale = t/sum;
     for(int i=0;i<P.n_branch_scales();i++) 
-	P.branch_scale_tricky(i,P.branch_scale(i) * scale);
+	P.branch_scale(i,P.branch_scale(i) * scale);
 
     return scale;
 }
@@ -268,7 +268,7 @@ double set_sum_of_means_tricky(Parameters& P, double t)
 double scale_means_only_slice_function::operator()(double t)
 {
     // Set the values of \mu[i]
-    double scale = set_sum_of_means_tricky(P, initial_sum_of_means * exp(t));
+    double scale = set_sum_of_means(P, initial_sum_of_means * exp(t));
 
     // Scale the tree in the opposite direction
     for(int b=0;b<P.t().n_branches();b++) 

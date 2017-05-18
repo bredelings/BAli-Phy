@@ -389,8 +389,6 @@ public:
 
     void branch_scale(int i,double); 
 
-    void branch_scale_tricky(int i,double); 
-
     double get_branch_subst_rate(int p, int b) const;
 
     Parameters* clone() const {return new Parameters(*this);}

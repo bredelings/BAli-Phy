@@ -103,8 +103,8 @@ using std::ostream;
  *    - This will allow us to avoid maintaining a Markov blanket.
  * 2. Make sure we don't read alignments with ^@ characters in the sequences!
  *
- * 3. Eliminate the need for set_branch_mean_tricky( )
- *    - Implement setting D!b only when the change is large enough.
+ * 3. Avoid recomputing likelihoods when recomputed branch lengths are unchanged.
+ *    - Cast to single precision, and then only recompute when that changes.
  * 4. Rewrite multi-case code to take patterns in terms of expression_ref's that might be seen from the parser.
  *     + Allows moving towards 16 incrementally.
  * 5. Handle 'where' clauses (e.g. in "alt")
@@ -1111,14 +1111,6 @@ int Parameters::branch_scale_index(int i) const
 void Parameters::branch_scale(int i, double x)
 {
     set_parameter_value(branch_scale_index(i),x);
-}
-
-// Change the branch_mean for the i-th scale (and all partitions using it) without
-// invalidating anything. How do we do this?
-// I think we do it by not going through set_parameter_value( ) as above.
-void Parameters::branch_scale_tricky(int i,double x)
-{
-    context::set_parameter_value(branch_scale_index(i), x );
 }
 
 double Parameters::get_branch_subst_rate(int p, int /* b */) const
