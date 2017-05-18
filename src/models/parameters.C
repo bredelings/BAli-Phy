@@ -92,102 +92,59 @@ using std::ostream;
  * 27. [DONE] Allow adding transition kernels from haskell
  * 28. [DONE] specifying the sampling rate from haskell
  *
+ * 29. [DONE] Efficiently recalculate the probability when only a few densities change.
+ *            This will allow us to avoid maintaining a Markov blanket.
+ * 30. [DONE] Add ability to specify the prior on variables.
+ * 31. [DONE] Eliminate the need for re-evaluate in the substitution likelihood.
+ * 32. [DONE] Remove sequence data from the alignment!
+ * 33. [DONE] Clean up intermediate representations such as let, case, etc..
+ * 34. [DONE] Allow generating an alignment (sparse or dense) only when we need it.
+ *
+ * 
  */
 
 /* \todo: List of things to do to clean up programs.
  *
  * See list in models/parameters.C 
  *
- * 1. Efficiently recalculate the probability when only a few densities change.
- *    - Will this require signals? (Signals might also help us to recalculate mu*t to see if anything changed.)
- *    - This will allow us to avoid maintaining a Markov blanket.
- * 2. Make sure we don't read alignments with ^@ characters in the sequences!
+ * 1. Make sure we don't read alignments with ^@ characters in the sequences! (?)
  *
- * 3. Avoid recomputing likelihoods when recomputed branch lengths are unchanged.
+ * 2. Avoid recomputing likelihoods when recomputed branch lengths are unchanged.
  *    - Cast to single precision, and then only recompute when that changes.
- * 4. Rewrite multi-case code to take patterns in terms of expression_ref's that might be seen from the parser.
+ * 3. Rewrite multi-case code to take patterns in terms of expression_ref's that might be seen from the parser.
  *     + Allows moving towards 16 incrementally.
- * 5. Handle 'where' clauses (e.g. in "alt")
- * 6. Handle guards clauses (e.g. in gdrhs, and gdpat)
- *     + I *think* that guards cannot fail in a way that makes the rule fail and move to the next rule.
- *       (The 'otherwise' rule might be special, though??)
- *     + If failure of all guards leads to failure, then can the guards can be processed as a special RHS?
- *     6b. Handle as-patterns.
+ * 4. Handle 'where' clauses (e.g. in "alt")
+ * 5. Handle guards clauses (e.g. in gdrhs, and gdpat)
+ *     + Guards *can* fail in a way that makes the rule fail and move to the next rule.
+ *     5b. Handle as-patterns.
  *        case v of x@pat -> body => case v of pat -> (\x->body) v
- *     6c. Handle irrefutable patterns that use ~.
+ *     5c. Handle irrefutable patterns that use ~.
  *        case v of ~h:t -> body
- *     6d. What does it mean (if its true) that irrefutable bindings are only irrefutable at the top level?
- * 8. Make Context load an entire program, instead of adding pieces incrementally.
+ *     5d. What does it mean (if its true) that irrefutable bindings are only irrefutable at the top level?
+ * 6. Make Context load an entire program, instead of adding pieces incrementally.
  *
- * 10. Allow fixing parameters. (e.g. to test the branch-site model under ML)
- * 11. How to specify default priors if model creation is an IO operation?
- * 12. Optimizations
- *     - Perform applications if expression is used only once?
+ * 7. Optimizations
  *     - Remove let bindings for unused variables?
  *     - Merge let bidings with identical bodies?
  *     - Simplify some case expressions based on knowledge of let-bound variable?
- * 13. Print out simpler names than Test.i for parameter i.
+ *
+ * 8. Print out simpler names than Test.i for parameter i.
  *     - I think parameters are in a separate namespace?
- *     - Perhaps put a '*' on the beginning of the name when comparing with the Haskell namespace?
  *
- * 18. Add ability to change the prior on variables.
+ * 9. Add the ability to store newtype definitions.
  *
- * 19. Add the ability to store newtype definitions.
+ * 10. Compare the monadic interface with Acar's interface.
  *
- * 20. Move to only loading entire programs into a context, where programs are entire module collections.
- *
- * 21. Compare the monadic interface with Acar's interface.
- *
- * 22.
+ * 11.
  *     - Handle sequences with lengths not divisible by 3.
  *     - Handle loading alignments with codons not together.
- *     - Handle guessing of alphabets based on frequencies.
- *     - Handle loading of letters like K for DNA -- change to N.
  *     - Could we actually handle all SEEN codon triplets?
  *
- * 23. Store alignments in a more sparse format?
+ * 12. Store alignments in a more sparse format?
  *
- * 24. Allow generating an alignment (sparse or dense) only when we need it?
+ * 13. Rename reg_heap -> something more descriptive/attractive.
  *
- * 25. Eliminate the need for re-evaluate in the substitution likelihood?
- *
- * 26. We seem to have lost a lot of speed (factor of 2) compared to:
- VERSION: 2.3.0-devel  [master commit f4e1bbc3+]  (Jan 21 2014 22:45:49)
- *     Perhaps this is entirely related to module loading time?
- *     A lot of the time seems to come from substituting for global identifiers in Module::resolve_symbols
- *
- * 27. Clean up intermediate representations.
- *      - Speed up get_free_indices.
- *      - Make get_bound_indices simpler.
- *      - Make Case statements different in the different representations.
- *      - Speed up let floating.
- *      - Eliminate dynamic casting.
- *
- * 28. Eliminate named dummies in favor of identifiers.
- *
- * 29. Remove sequence data from the alignment!
- *      - Or, at least the alignment we use in Parameters.
- *      - What INTERFACES does the alignment class need to implement?
- *      - Clearing the sequence data seems to work.
- *
- * 31. Split up graph_register.C
- *
- * 32. Rename reg_heap -> something more descriptive/attractive.
- *
- * 33. Begin adding node-based information to new tree class.
- *
- * 35. We are spending 7% of CPU time in read_h_tree.
- *     - Stop calling set_tree( ) in sample-topology-SPR.C!
- *     - Why can't we just remove the call?
- *
- * 36. We are spending 7.5% of CPU time in construct 
- *     - Perform write_match and write_insertions w/ function calls in construct( )
- *
- * 42. Different results for 25.fasta versus 2.2.0!
- *     - Really?
- *     - Check when this comment (#42) was added.
- *
- * 43. Not printing RS07 model parameters??
+ * 14. Not printing RS07 model parameters??
  *     - To force all names to be generated before the layout for C1.p is constructed,
  *       I compute the probability at the end of Parameters::Parameters( ).
  */
