@@ -1077,10 +1077,6 @@ double Parameters::branch_scale(int s) const
     return get_parameter_value(branch_scale_index(s)).as_double();;
 }
 
-void Parameters::recalc()
-{
-}
-
 object_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
 {
     return evaluate(PC->SModels[s].get_alphabet).assert_is_a<alphabet>();

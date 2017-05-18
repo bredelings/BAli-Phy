@@ -63,7 +63,6 @@ class Model: public context
     /// \brief Recalculate internal data based on current parameters
     ///
     ////  \param indices The indices of the parameters that changed.
-    virtual void recalc() {}
 
 public:
 

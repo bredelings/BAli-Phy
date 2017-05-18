@@ -303,7 +303,6 @@ public:
     bool variable_alignment_;
 
 private:
-    void recalc();
 
     std::vector<int> affected_nodes;
     std::vector<std::vector<int>*> branches_from_affected_node;

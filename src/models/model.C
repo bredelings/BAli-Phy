@@ -93,7 +93,6 @@ std::vector< expression_ref > Model::get_modifiable_values(const std::vector<int
 void Model::set_modifiable_value(int m, const expression_ref& value) 
 {
     context::set_modifiable_value(m, value);
-    recalc();
 }
 
 void Model::set_parameter_value(int i,const expression_ref& value) 
@@ -116,8 +115,6 @@ void Model::set_parameter_values(const vector<int>& indices,const vector<express
 
     for(int i=0;i<indices.size();i++)
 	context::set_parameter_value(indices[i], p[i]);
-
-    recalc();
 }
 
 log_double_t Model::prior() const
