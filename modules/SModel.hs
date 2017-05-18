@@ -125,8 +125,6 @@ k80 kappa nuca = reversible_markov (hky kappa nuca) (plus_f_equal_frequencies nu
 
 f81 pi a = reversible_markov (equ a) (plus_f a pi);
 
-m0_function codona s r = \omega -> reversible_markov (m0 codona s omega) r;
-
 m1a_omega_dist f1 w1 = DiscreteDistribution [(f1,w1), (1.0-f1,1.0)];
 
 m2a_omega_dist f1 w1 posP posW = extendDiscreteDistribution (m1a_omega_dist f1 w1) posP posW;
@@ -346,17 +344,13 @@ mg94w9 nuc_pi1 nuc_pi2 nuc_pi3 triplet_a = let {nuc_a          = getNucleotides 
 
 gamma_rates_dist alpha = gamma alpha (1.0/alpha);
 
-gamma_rates_unif_bins alpha n = uniformDiscretize (quantile (gamma_rates_dist alpha)) n;
-
 gamma_rates base alpha n = multi_rate_unif_bins base (gamma_rates_dist alpha) n;
 
-log_normal_rates'' sigmaOverMu = logNormal lmu lsigma where {x = log(1.0+sigmaOverMu^2);
+log_normal_rates_dist sigmaOverMu = logNormal lmu lsigma where {x = log(1.0+sigmaOverMu^2);
                                                              lmu = -0.5*x;
                                                              lsigma = sqrt x};
 
-log_normal_rates' sigmaOverMu n = uniformDiscretize (quantile (log_normal_rates'' sigmaOverMu)) n;
-
-log_normal_rates base sigmaOverMu n = multi_rate base (log_normal_rates' sigmaOverMu n);
+log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rates_dist sigmaOverMu) n;
 
 dp base rates fraction a = multi_rate base (DiscreteDistribution dist) where {dist = zip fraction rates};
 
