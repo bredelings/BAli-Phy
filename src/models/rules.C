@@ -299,6 +299,8 @@ const vector< vector<vector<string>> > all_default_arguments =
     
     {{"Freq2", "F"}, {"SModel.constant_frequencies_model2[dict]"},{"dict", "List[Pair[String,Double]]"}},
     
+    // We have A (the alphabet) available to reference in the default value for pi.  So we could do Dirichlet[n_letters[A],1.0]
+    // How would we do a sampling rate just for the letter frequencies?
     {{"F", "FM[a]", "G"},
      {"SModel.plus_f[A,pi]"},
      {"pi", "F", "frequencies_prior", "A"},
