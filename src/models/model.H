@@ -102,44 +102,9 @@ public:
     /// Get SOME model modifiable values
     std::vector<expression_ref> get_modifiable_values(const std::vector<int>&) const;
 
-    /// Get SOME model modifiable values
-    template <typename T>
-    std::vector<T> get_modifiable_values_as(const std::vector<int>& indices) const
-	{
-	    std::vector<T> values(indices.size());
-    
-	    for(int i=0;i<values.size();i++)
-		values[i] = get_modifiable_value(indices[i]).as_<T>();
-    
-	    return values;  
-	}
-
-    /// Get SOME model parameter values
-    template <typename T>
-    std::vector<T> get_parameter_values_as(const std::vector<int>& indices) const
-	{
-	    std::vector<T> values(indices.size());
-    
-	    for(int i=0;i<values.size();i++)
-		values[i] = get_parameter_value(indices[i]).as_<T>();
-    
-	    return values;  
-	}
-
     /// Get SOME model parameter values
     std::vector<expression_ref> get_parameter_values(const std::vector<int>&) const;
 
-    /// Get ALL model parameter values
-    template <typename T>
-    std::vector<T> get_parameter_values_as() const
-	{
-	    std::vector<T> values(n_parameters());
-    
-	    for(int i=0;i<values.size();i++)
-		values[i] = get_parameter_value(i).as_<T>();
-    
-	    return values;  
-	}
     /// Get ALL model parameter values
     std::vector<expression_ref > get_parameter_values() const;
 
