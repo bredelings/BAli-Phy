@@ -41,16 +41,6 @@ vector<expression_ref> model_parameter_expressions(const Model& M)
     return sub;
 }
 
-std::vector< expression_ref > Model::get_parameter_values() const
-{
-    std::vector< expression_ref > values(n_parameters());
-
-    for(int i=0;i<values.size();i++)
-	values[i] = get_parameter_value(i);
-    
-    return values;  
-}
-
 std::vector< expression_ref > Model::get_parameter_values(const std::vector<int>& indices) const
 {
     std::vector< expression_ref > values(indices.size());

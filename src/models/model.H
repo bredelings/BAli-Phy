@@ -105,9 +105,6 @@ public:
     /// Get SOME model parameter values
     std::vector<expression_ref> get_parameter_values(const std::vector<int>&) const;
 
-    /// Get ALL model parameter values
-    std::vector<expression_ref > get_parameter_values() const;
-
     /// Set SOME of the model parameter values
     void set_parameter_values(const std::vector<int>& indices,const std::vector<expression_ref>& p);
 
