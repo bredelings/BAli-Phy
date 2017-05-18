@@ -58,7 +58,7 @@ extend_mixture (MixtureModel ms) p x = MixtureModel $ extendDiscreteDistribution
 
 plus_inv mm p_inv = extend_mixture mm p_inv (scale 0.0 $ f81 pi a) where {a  = getAlphabet mm; pi = average_frequency mm};
 
-multi_rate_unif_bins base dist n_bins = multi_rate base $ uniformDiscretize (quantile dist) n_bins;
+multi_rate_unif_bins base dist n_bins = multi_rate base $ uniformDiscretize dist n_bins;
 
 rate (ReversibleMarkov a s q pi l t r) = r;
 rate (MixtureModel d) = average (fmap2 rate d);
@@ -141,11 +141,11 @@ m3_test_omega_dist ps omegas posP posW _ = m3p_omega_dist ps omegas posP posW;
 
 -- The M7 is just a beta distribution
 -- gamma' = var(x)/(mu*(1-mu)) = 1/(a+b+1) = 1/(n+1)
-m7_omega_dist mu gamma n_bins = uniformDiscretize (quantile (beta a b)) n_bins where {cap = min (mu/(1.0+mu)) ((1.0-mu)/(2.0-mu));
-                                                                                      gamma' = gamma*cap;
-                                                                                      n = (1.0/gamma')-1.0;
-                                                                                      a = n*mu;
-                                                                                      b = n*(1.0 - mu)};
+m7_omega_dist mu gamma n_bins = uniformDiscretize (beta a b) n_bins where {cap = min (mu/(1.0+mu)) ((1.0-mu)/(2.0-mu));
+                                                                           gamma' = gamma*cap;
+                                                                           n = (1.0/gamma')-1.0;
+                                                                           a = n*mu;
+                                                                           b = n*(1.0 - mu)};
 
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
 m8_omega_dist mu gamma n_bins posP posW = extendDiscreteDistribution (m7_omega_dist mu gamma n_bins) posP posW;

@@ -221,7 +221,7 @@ average (DiscreteDistribution l) = foldl' (\x y->(x+(fst y)*(snd y))) 0.0 l;
 
 uniformGrid n = DiscreteDistribution [( 1.0/n', (2.0*i'+1.0)/(2.0*n') ) | i <- take n [0..], let {n' = intToDouble n;i'=intToDouble i}];
 
-uniformDiscretize q n = fmap2 q (uniformGrid n);
+uniformDiscretize dist n = fmap2 (quantile dist) (uniformGrid n);
 
 -- This contains exp-transformed functions
 expTransform (ProbDensity d q s r) = ProbDensity pdf' q' s' r' 
