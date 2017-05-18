@@ -143,13 +143,6 @@ public:
     /// Get ALL model parameter values
     std::vector<expression_ref > get_parameter_values() const;
 
-    /// Set the value of a modifiable
-    void set_modifiable_value(int m, const expression_ref& value);
-
-    /// Set A model parameter value
-    void set_parameter_value(int p, const expression_ref& value);
-    /// Set A model parameter value
-    void set_parameter_value(const std::string& p, const expression_ref& value);
     /// Set SOME of the model parameter values
     void set_parameter_values(const std::vector<int>& indices,const std::vector<expression_ref>& p);
 

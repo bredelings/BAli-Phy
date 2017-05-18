@@ -90,31 +90,12 @@ std::vector< expression_ref > Model::get_modifiable_values(const std::vector<int
     return values;  
 }
 
-void Model::set_modifiable_value(int m, const expression_ref& value) 
-{
-    context::set_modifiable_value(m, value);
-}
-
-void Model::set_parameter_value(int i,const expression_ref& value) 
-{
-    set_parameter_values({i}, {value});
-}
-
-void Model::set_parameter_value(const string& p_name,const expression_ref& value) 
-{
-    int i = find_parameter(p_name);
-    if (i == -1)
-	throw myexception()<<"Cannot find parameter called '"<<p_name<<"'";
-    
-    set_parameter_values({i},{value});
-}
-
 void Model::set_parameter_values(const vector<int>& indices,const vector<expression_ref>& p)
 {
     assert(indices.size() == p.size());
 
     for(int i=0;i<indices.size();i++)
-	context::set_parameter_value(indices[i], p[i]);
+	set_parameter_value(indices[i], p[i]);
 }
 
 log_double_t Model::prior() const
