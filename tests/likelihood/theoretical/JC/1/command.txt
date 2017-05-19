@@ -1,1 +1,1 @@
---test AA.fasta --tree=AA.tree --smodel=JC -Inone
+--test <DATA>/AA.fasta --tree=<DATA>/AA.tree --smodel=JC -Inone

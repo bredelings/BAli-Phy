@@ -1,5 +1,5 @@
-data = readDiscreteCharacterData(datadir +"/AA.nex")
-psi <- readTrees(datadir +"/AA.tree")[1]
+data = readDiscreteCharacterData(datadir +"/AT.nex")
+psi <- readTrees(datadir+"/AA.tree")[1]
 pi    <- simplex([0.1,0.2,0.4,0.3])
 Q := fnJC(4)
 seq ~ dnPhyloCTMC(tree=psi, Q=Q, branchRates=1.0, pInv=0.9, type="DNA")

@@ -1,4 +1,4 @@
-data = readDiscreteCharacterData(datadir +"/AA.nex")
+data = readDiscreteCharacterData(datadir +"/AT.nex")
 psi <- readTrees(datadir+"/AA.tree")[1]
 pi    <- simplex([0.1,0.2,0.4,0.3])
 Q := fnJC(4)
