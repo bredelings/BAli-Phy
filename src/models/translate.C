@@ -178,10 +178,11 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 
     if (can_be_converted_to<double>(name))
     {
-	if (required_type.get_value<string>() != "Double")
+	auto E = unify(required_type, ptree("Double"));
+	if (not E)
 	    throw myexception()<<"Can't convert '"<<name<<"' to type '"<<unparse_type(required_type)<<"'";
 	assert(model.empty());
-	return {};
+	return E;
     }
 
     if (name.size()>=2 and name[0] == '"' and name.back() == '"' and required_type.get_value<string>() == "String") 
