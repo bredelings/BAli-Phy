@@ -1,1 +1,1 @@
---test AA.fasta --tree=AA.tree --smodel=JC+INV[0.9] --scale=1 -Inone
+--test AA.fasta --tree=AA.tree --smodel=JC+INV[0.9] -Inone
