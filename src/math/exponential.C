@@ -1,21 +1,21 @@
 /*
-   Copyright (C) 2004-2007, 2010, 2012, 2014 Benjamin Redelings
+  Copyright (C) 2004-2007, 2010, 2012, 2014 Benjamin Redelings
 
-This file is part of BAli-Phy.
+  This file is part of BAli-Phy.
 
-BAli-Phy is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2, or (at your option) any later
-version.
+  BAli-Phy is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free
+  Software Foundation; either version 2, or (at your option) any later
+  version.
 
-BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+  BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+  for more details.
 
-You should have received a copy of the GNU General Public License
-along with BAli-Phy; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>.  */
+  You should have received a copy of the GNU General Public License
+  along with BAli-Phy; see the file COPYING.  If not see
+  <http://www.gnu.org/licenses/>.  */
 
 ///
 /// \file exponential.C
@@ -54,65 +54,77 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::vector;
 
+// compute the exp(M) - I from the SVD for M (i.e. M=O D O^t )
+Matrix expm1(const EigenValues& solution,double t) 
+{
+    const Matrix& O = solution.Rotation();
+    std::vector<double> D = solution.Diagonal();
+
+    // Exponentiate Eigenvalues
+    for(int i=0;i<solution.size();i++)
+	D[i] = expm1(t*D[i]);
+
+    //Matrix E = prod(O,prod(D,trans(O)));
+
+    int size = O.size1();
+    Matrix E(size,size);
+    for(int i=0;i<size;i++)
+	for(int j=0;j<size;j++) {
+	    double temp =0;
+	    for(int k=0;k<size;k++)
+		temp += O(i,k)*O(j,k)*D[k];
+	    E(i,j) = temp;
+	}
+	
+#ifndef NDEBUG
+    for(int i=0;i<E.size1();i++)
+	for(int j=0;j<E.size2();j++)
+	    assert(E(i,j) + (i==j)?1.0:0.0 >= -1.0e-13);
+#endif
+
+    return E;
+}
+
 // compute the exponential of a matrix that is given in terms of its SVD
 Matrix exp(const EigenValues& solution,double t) 
 {
-  const Matrix& O = solution.Rotation();
-  std::vector<double> D = solution.Diagonal();
+    Matrix E = expm1(solution, t);
 
-  // Exponentiate Eigenvalues
-  for(int i=0;i<solution.size();i++)
-    D[i] = exp(t*D[i]);
+    for(int i=0; i< E.size1(); i++)
+	E(i,i) += 1.0;
 
-  //Matrix E = prod(O,prod(D,trans(O)));
-
-  int size = O.size1();
-  Matrix E(size,size);
-  for(int i=0;i<size;i++)
-    for(int j=0;j<size;j++) {
-      double temp =0;
-      for(int k=0;k<size;k++)
-	temp += O(i,k)*O(j,k)*D[k];
-      E(i,j) = temp;
-    }
-	
-
-  for(int i=0;i<E.size1();i++)
-    for(int j=0;j<E.size2();j++)
-      assert(E(i,j) >= -1.0e-13);
-
-  return E;
+    return E;
 }
 
 /// Compute the exponential of a matrix from a reversible markov chain
 Matrix exp(const EigenValues& eigensystem,const vector<double>& D,const double t) {
-  const int n = D.size();
+    const int n = D.size();
 
-  // Compute D^-a * E * D^a
-  std::vector<double> DP(n);
-  std::vector<double> DN(n);
-  for(int i=0;i<D.size();i++) {
-    DP[i] = sqrt(D[i]);
-    DN[i] = 1.0/DP[i];
-  }
-
-  // compute E = exp(S2)
-  Matrix E = exp(eigensystem,t);
-
-  // Compute D^-a * E * D^a
-  for(int i=0;i<E.size1();i++)
-    for(int j=0;j<E.size2();j++)
-      E(i,j) *= DN[i]*DP[j];
-
-
-  for(int i=0;i<E.size1();i++)
-    for(int j=0;j<E.size2();j++) {
-      assert(E(i,j) >= -1.0e-13);
-      if (E(i,j)<0)
-	E(i,j)=0;
+    // Compute D^-a * E * D^a
+    std::vector<double> DP(n);
+    std::vector<double> DN(n);
+    for(int i=0;i<D.size();i++) {
+	DP[i] = sqrt(D[i]);
+	DN[i] = 1.0/DP[i];
     }
 
-  return E;
+    // compute E = exp(S2)
+    Matrix E = exp(eigensystem,t);
+
+    // Compute D^-a * E * D^a
+    for(int i=0;i<E.size1();i++)
+	for(int j=0;j<E.size2();j++)
+	    E(i,j) *= DN[i]*DP[j];
+
+
+    for(int i=0;i<E.size1();i++)
+	for(int j=0;j<E.size2();j++) {
+	    assert(E(i,j) >= -1.0e-13);
+	    if (E(i,j)<0)
+		E(i,j)=0;
+	}
+
+    return E;
 }
 
 // exp(Q) = D^-a * exp(E) * D^a
