@@ -1,0 +1,6 @@
+data = readDiscreteCharacterData("AT.nex")
+psi <- readTrees("AA.tree")[1]
+Q := fnJC(4)
+seq ~ dnPhyloCTMC(tree=psi, Q=Q, branchRates=1.0, type="DNA")
+seq.clamp(data)
+write("likelihood =",seq.lnProbability())
