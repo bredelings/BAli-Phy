@@ -1,4 +1,4 @@
-D <- readDiscreteCharacterData(datadir + "/Primates.nex")
+D <- readDiscreteCharacterData(datadir + "/primates.fasta")
 tau <- readTrees(datadir + "/primates.tree")[1]
 pi    <- simplex([0.1,0.2,0.4,0.3])
 kappa <- 2
