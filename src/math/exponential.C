@@ -49,8 +49,18 @@
 //  Therefore we note that
 //  5.  exp(Qt) = PI^-0.5 * exp(PI^0.5 * Qt * PI^-0.5) * PI^0.5
 // This holds in general for reversible Q, regardless of how Q is
-// constructued! 
-
+// constructued!
+//  6. To get better answers when t is small (e.g. 0), we note that
+//     exp(Qt) - I = PI^-0.5 * exp(PI^0.5 * Qt * PI^-0.5) * PI^0.5 - I
+//                 = PI^-0.5 * [exp(PI^0.5 * Qt * PI^-0.5) - I] * PI^0.5
+//  7. The singular value decomposition decomposes the symmetric matrix S = O D O^t, where O^t = O^-1
+//  8. We therefore have
+//     exp(Qt) - I = PI^-0.5 * [exp(O Dt O^-1) - I] * PI^0.5
+//                 = PI^-0.5 * [O exp(Dt) O^-1 - O*O^-1] * PI^0.5
+//                 = PI^-0.5 * [O (exp(Dt)-I) O^-1 ] * PI^0.5
+//  9. We can compute exp(D) - I by simply computing expm1(d[i]*t) for each eigenvalue d[i]
+// 10. Then exp(Qt) = I + PI^-0.5 * [O *expm1(tD)*O^-1 ] * PI^0.5
+//     Using expm1 here allows us to get exp(Q*0) = I when t=0, and also when t is not close to 0.
 
 using std::vector;
 
