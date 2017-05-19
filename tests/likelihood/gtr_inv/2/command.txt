@@ -1,0 +1,1 @@
+--test <DATA>/primates.fasta --tree=<DATA>/primates.tree --smodel=HKY[kappa=2]+F[pi=Freq[A=0.1,C=0.2,T=0.3,G=0.4]]+INV[pInv=0.9]

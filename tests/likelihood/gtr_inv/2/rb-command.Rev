@@ -1,0 +1,8 @@
+D <- readDiscreteCharacterData(datadir + "/Primates.nex")
+tau <- readTrees(datadir + "/primates.tree")[1]
+pi    <- simplex([0.1,0.2,0.4,0.3])
+kappa <- 2
+Q := fnHKY(kappa,pi)
+seq ~ dnPhyloCTMC(tree=tau, Q=Q, pInv = 0.9, branchRates=1.0, type="DNA")
+seq.clamp(D)
+write("likelihood = ",seq.lnProbability())
