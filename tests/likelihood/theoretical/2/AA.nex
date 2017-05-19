@@ -1,0 +1,14 @@
+#NEXUS
+[saved by seaview on Fri May 19 18:28:20 2017]
+BEGIN DATA;
+  DIMENSIONS NTAX=2 NCHAR=1;
+  FORMAT DATATYPE=DNA
+  GAP=-
+  ;
+MATRIX
+[1] S1
+A
+[2] S2
+A
+;
+END;
