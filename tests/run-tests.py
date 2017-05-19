@@ -125,7 +125,7 @@ def check_likelihood(test_dir):
         if abs(diff) < get_precision(expected_likelihood):
             return None
         else:
-            return "likelihood is off by {}!".format(diff)
+            return "likelihood is off by {}! (Got {} but expected {})".format(diff,obtained_likelihood,expected_likelihood)
 
 def check_test_output(test_dir, name):
     failures = []
