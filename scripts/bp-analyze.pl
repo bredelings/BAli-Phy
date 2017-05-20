@@ -462,31 +462,19 @@ sub section_analysis
 $section .= "<h2><a name=\"analysis\">Analysis</a></h2>\n";
 $section .= '<table style="width:100%">'."\n";
 
-$section .= "<tr>\n";
-$section .= "  <td>burn-in = $burnin samples</td>\n";
-$section .= "  <td>subsample = $subsample</td>\n" if ($subsample != 1);
-$section .= "  <td>$marginal_prob</td>\n";
-$section .= "</tr>\n";
-$section .= "</table>\n";
-
-$section .= '<table style="width:100%">'."\n";
-$section .= "<tr>\n";
-$section .= "  <td>Complete sample: $n_topologies topologies</td>\n";
-$section .= "  <td>95% Bayesian credible interval: $n_topologies_95 topologies</td>\n";
-$section .= "</tr>\n";
-
-$section .= "</table>\n";
-
-$section .= '<table class="backlit">'."\n";
-$section .= "<tr><th>chain #</th><th>Iterations (after burnin)</th><th>command line</th><th>subdirectory</th><th>directory</th></tr></tr>\n";
+$section .= '<table class="backlit" style="width:100%">'."\n";
+$section .= "<tr><th>chain #</th><th>burnin</th><th>subsample</th><th>Iterations (remaining)</th><th>command line</th><th>subdirectory</th><th>directory</th></tr></tr>\n";
     for(my $i=0;$i<=$#out_files;$i++)
     {
 $section .= "<tr>\n";
 
 $section .= "  <td>".($i+1)."</td>\n";
 
-my $after_burnin = $n_iterations[$i] - $burnin;
-$section .= "  <td>$after_burnin samples</td>\n";
+$section .= "  <td>$burnin</td>\n";
+$section .= "  <td>$subsample</td>\n";
+
+my $remaining = ($n_iterations[$i] - $burnin)/$subsample;
+$section .= "  <td>$remaining</td>\n";
 
 $section .= "  <td>$commands[$i]</td>\n";
 $section .= "  <td>$subdirs[$i]</td>\n";
@@ -495,6 +483,14 @@ $section .= "  <td>$directories[$i]</td>\n";
 $section .= "</tr>\n";
     }
 $section .= "</table>\n";
+
+$section .= '<p><table style="width:100%">'."\n";
+$section .= "<tr>\n";
+$section .= "  <td>$marginal_prob</td>\n";
+$section .= "  <td>Complete sample: $n_topologies topologies</td>\n";
+$section .= "  <td>95% Bayesian credible interval: $n_topologies_95 topologies</td>\n";
+$section .= "</tr>\n";
+$section .= "</table></p>\n";
 
 
     return $section;
