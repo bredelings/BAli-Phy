@@ -1,12 +1,18 @@
+begin mrbayes;
+execute Primates.nex;
+end;
+
 begin trees;
   tree mystarttree = (Pongo:0.099368007616747,(Gorilla:0.057413108370095,(Homo_sapiens:0.042791384547650,Pan:0.042791384547650):0.014621723822446):0.041954899246652,(Hylobates:0.122662166930165,((Saimiri_sciureus:0.220209266173682,(Lemur_catta:0.173346456408127,Tarsius_syrichta:0.173346456408127):0.098779914216936):0.038889808747283,(M_sylvanus:0.069536941879787,(M_fascicularis:0.045413146272676,(M_mulatta:0.017727123050085,Macaca_fuscata:0.017727123050085):0.027686023222591):0.024123795607111):0.111782515546613):0.058657290496235):0.023294159313418);
-end trees;
+end;
 
 begin mrbayes;
-   lset nst=2 rates=Invgamma;
-   execute Primates.nex;
-   startvals 
-      tau = mystarttree
-      V = mystarttree
-   ;
+  lset nst=2 rates=Invgamma;
+  startvals tau = mystarttree;
+  startvals V = mystarttree;
+  prset tratio = fixed(2.0);
+  prset statefreqpr = fixed(0.1,0.2,0.4,0.3);
+  prset shapepr = fixed(0.5);
+  prset Pinvar = fixed(0.9);
+  mcmc ngen=1000 nchains=1 temp=0.5;
 end;
