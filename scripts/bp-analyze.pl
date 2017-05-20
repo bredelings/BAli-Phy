@@ -361,7 +361,6 @@ sub html_header
 	width: 99%;
 	padding: 0.2em 0.2em 0.5em 0.2em; /* .5 is on the bottom */
 	display: table;
-	border: none; /* only needed for Netscape 4.x */
         width: 100%;
 }
 
@@ -375,7 +374,6 @@ sub html_header
 	display: table-cell;
 	text-align: left; 
 	white-space: nowrap;
-/*	whitespace: nowrap; only for Netscape 4.x, but causes invalidation */
 }
       .backlit td {background: rgb(220,220,220);}
 
