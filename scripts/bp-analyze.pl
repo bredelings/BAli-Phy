@@ -102,7 +102,7 @@ my $max_iter;    # maximum number of iterations to consider
 # These things are ... ??
 my $n_chains=1;
 my $min_support;
-my $min_Ne;
+my $min_ESS;
 
 &parse_command_line();
 
@@ -311,7 +311,7 @@ my %CI_high = ();
 my %PSRF_CI80 = ();
 my %PSRF_RCF = ();
 my %ACT = ();
-my %Ne = ();
+my %ESS = ();
 my %Burnin = ();
 
 &generate_trace_plots();
@@ -778,12 +778,12 @@ my @tne_array = split(/\n/,$tne_string);
 #my $min_tNe = $tne_array[0];
 my $min_tNe = exec_show("pickout -n 'min Ne' < Results/partitions.bs");
 
-my @sne = sort {$a <=> $b} values(%Ne);
-    $min_Ne = $sne[0];
+my @sne = sort {$a <=> $b} values(%ESS);
+    $min_ESS = $sne[0];
 
 print "\n";
 print "NOTE: burnin (scalar) <= $burnin_before\n" if defined($burnin_before);
-print "NOTE: min_ESS (scalar)    = $min_Ne\n" if defined($min_Ne);
+print "NOTE: min_ESS (scalar)    = $min_ESS\n" if defined($min_ESS);
 print "NOTE: min_ESS (partition) = $min_tNe\n" if defined($min_tNe);
 print "NOTE: ASDSF = $asdsf\n" if defined($asdsf);
 print "NOTE: MSDSF = $msdsf\n" if defined($msdsf);
@@ -820,12 +820,12 @@ sub section_scalar_variables
 	if (defined($CI_low{$var})) {
 	    $section .= "<td>($CI_low{$var}, $CI_high{$var})</td>\n";
 	    my $style = "";
-	    $style = ' style="color:red"' if ($Ne{$var} <= $min_Ne);
+	    $style = ' style="color:red"' if ($ESS{$var} <= $min_ESS);
 	    $section .= "<td $style>$ACT{$var}</td>\n";
 	    $style = "";
-	    $style = ' style="color:orange"' if ($Ne{$var} < 300);
-	    $style = ' style="color:red"' if ($Ne{$var} < 100);
-	    $section .= "<td $style>$Ne{$var}</td>\n";
+	    $style = ' style="color:orange"' if ($ESS{$var} < 300);
+	    $style = ' style="color:red"' if ($ESS{$var} < 100);
+	    $section .= "<td $style>$ESS{$var}</td>\n";
 	    $style = "";
 	    $style = ' style="color:red"' if ($Burnin{$var} eq "Not Converged!");
 	    $section .= "<td $style>$Burnin{$var}</td>\n";
@@ -900,12 +900,12 @@ for(my $i=1;$i <= $#var_names; $i++)
     if (defined($CI_low{$var})) {
 	print $index "<td>($CI_low{$var}, $CI_high{$var})</td>\n";
 	my $style = "";
-	$style = ' style="color:red"' if ($Ne{$var} <= $min_Ne);
+	$style = ' style="color:red"' if ($ESS{$var} <= $min_ESS);
 	print $index "<td $style>$ACT{$var}</td>\n";
 	$style = "";
-	$style = ' style="color:orange"' if ($Ne{$var} < 300);
-	$style = ' style="color:red"' if ($Ne{$var} < 100);
-	print $index "<td $style>$Ne{$var}</td>\n";
+	$style = ' style="color:orange"' if ($ESS{$var} < 300);
+	$style = ' style="color:red"' if ($ESS{$var} < 100);
+	print $index "<td $style>$ESS{$var}</td>\n";
 	$style = "";
 	$style = ' style="color:red"' if ($Burnin{$var} eq "Not Converged!");
 	print $index "<td $style>$Burnin{$var}</td>\n";
@@ -1545,7 +1545,7 @@ sub generate_trace_plots
 		$line = <REPORT>;
 		$line =~ /t @ (.+)\s+Ne = ([^ ]+)\s+burnin = (Not Converged!|[^ ]+)/;
 		$ACT{$var} = $1;
-		$Ne{$var} = $2;
+		$ESS{$var} = $2;
 		$Burnin{$var} = $3;
 
 		$line = <REPORT>;
