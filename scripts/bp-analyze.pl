@@ -773,8 +773,8 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
 my $tne_string = exec_show("pickout -n Ne < Results/partitions.bs");
 my @tne_array = split(/\n/,$tne_string);
 @tne_array = sort {$a <=> $b} @tne_array;
-#my $min_tNe = $tne_array[0];
-my $min_tNe = exec_show("pickout -n 'min Ne' < Results/partitions.bs");
+#my $min_tESS = $tne_array[0];
+my $min_tESS = exec_show("pickout -n 'min Ne' < Results/partitions.bs");
 
 my @sne = sort {$a <=> $b} values(%ESS);
     $min_ESS = $sne[0];
@@ -782,7 +782,7 @@ my @sne = sort {$a <=> $b} values(%ESS);
 print "\n";
 print "NOTE: burnin (scalar) <= $burnin_before\n" if defined($burnin_before);
 print "NOTE: min_ESS (scalar)    = $min_ESS\n" if defined($min_ESS);
-print "NOTE: min_ESS (partition) = $min_tNe\n" if defined($min_tNe);
+print "NOTE: min_ESS (partition) = $min_tESS\n" if defined($min_tESS);
 print "NOTE: ASDSF = $asdsf\n" if defined($asdsf);
 print "NOTE: MSDSF = $msdsf\n" if defined($msdsf);
 print "NOTE: PSRF-80%CI = $psrf_80\n" if defined($psrf_80);
