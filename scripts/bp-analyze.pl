@@ -568,7 +568,7 @@ sub section_phylogeny_distribution
 	$section .= "<tr>";
 	$section .= "<td>$name</td>";
 #    $section .= "<td><a href=\"$tree.topology\">-L</a></td>";
-	$section .= "<td><a href=\"$tree.tree\">+L</a></td>";
+	$section .= "<td><a href=\"$tree.tree\">Newick</a> (<a href=\"$tree.PP.tree\">+PP</a>)</td>";
 	$section .= "<td><a href=\"$tree-tree.pdf\">PDF</a></td>";
 	$section .= "<td><a href=\"$tree-tree.svg\">SVG</a></td>";
 	
