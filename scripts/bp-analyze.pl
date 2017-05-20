@@ -1526,9 +1526,9 @@ sub generate_trace_plots
 	@var_names = split(/\t/,$header);
 	close VARS;
 	
+	print "Analyzing scalar variables ... ";
+
 	open REPORT, "Results/Report";
-	
-	print "Generating trace-plots ... ";
 	
 	while (my $line = <REPORT>) {
 	    chomp $line;
@@ -1560,8 +1560,12 @@ sub generate_trace_plots
 	    }
 	}
 
+	print "done\n";
+
 	return if (!$do_trace_plots);
 	
+	print "Generating trace-plots ... ";
+
 	my $Nmax = 5000;
 	
 	for(my $i=1;$i<= $#var_names; $i++)
