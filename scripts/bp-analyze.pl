@@ -967,7 +967,7 @@ sub parse_command_line
 	    do_cleanup();
 	    exit;
 	}
-	elsif ($arg =~ /--burnin=(.+)/) {
+	elsif ($arg =~ /--skip=(.+)/) {
 	    $burnin = $1;
 	}
 	elsif ($arg =~ /--verbose/) {
