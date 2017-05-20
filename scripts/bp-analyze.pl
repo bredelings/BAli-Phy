@@ -94,7 +94,7 @@ my $muscle = 0;
 my $probcons = 0;
 my $sub_partitions=0;
 my $do_consensus_alignments=0;
-my $do_trace_plots=1;
+my $do_trace_plots=0;
 my $prune;
 my $speed=1;
 my $max_iter;    # maximum number of iterations to consider
@@ -996,8 +996,8 @@ sub parse_command_line
 	elsif ($arg =~ /--mc-tree/) {
 	    $sub_partitions=1;
 	}
-	elsif ($arg =~ /--no-trace-plots/) {
-	    $do_trace_plots=0;
+	elsif ($arg =~ /--trace-plots/) {
+	    $do_trace_plots=1;
 	}
 	elsif ($arg =~ /--alignment-consensus/) {
 	    $do_consensus_alignments=1;
