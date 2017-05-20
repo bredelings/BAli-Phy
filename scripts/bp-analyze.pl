@@ -687,7 +687,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     
 
     $section .= "<table>";
-    $section .= "<tr><th>burnin (scalar)</th><th>Ne (scalar)</th><th>Ne (partition)</th><th>ASDSF</th><th>MSDSF</th><th>PSRF-CI80%</th><th>PSRF-RCF</th></tr>";
+    $section .= "<tr><th>burnin (scalar)</th><th>ESS (scalar)</th><th>ESS (partition)</th><th>ASDSF</th><th>MSDSF</th><th>PSRF-CI80%</th><th>PSRF-RCF</th></tr>";
     $section .= "<tr>";
 
     my $burnin_before = "NA";
@@ -783,8 +783,8 @@ my @sne = sort {$a <=> $b} values(%Ne);
 
 print "\n";
 print "NOTE: burnin (scalar) <= $burnin_before\n" if defined($burnin_before);
-print "NOTE: min_Ne (scalar)    = $min_Ne\n" if defined($min_Ne);
-print "NOTE: min_Ne (partition) = $min_tNe\n" if defined($min_tNe);
+print "NOTE: min_ESS (scalar)    = $min_Ne\n" if defined($min_Ne);
+print "NOTE: min_ESS (partition) = $min_tNe\n" if defined($min_tNe);
 print "NOTE: ASDSF = $asdsf\n" if defined($asdsf);
 print "NOTE: MSDSF = $msdsf\n" if defined($msdsf);
 print "NOTE: PSRF-80%CI = $psrf_80\n" if defined($psrf_80);
@@ -802,7 +802,7 @@ sub section_scalar_variables
     $section .= "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
 
     $section .= "<table>\n";
-    $section .= "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th><th>burnin</th></tr>\n";
+    $section .= "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">ESS</th><th>burnin</th></tr>\n";
     
     for(my $i=1;$i <= $#var_names; $i++) 
     {
@@ -881,7 +881,7 @@ if ($#var_names != -1) {
     print $index "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
 
     print $index "<table>\n";
-    print $index "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">Ne</th><th>burnin</th><th title=\"Potential Scale Reduction Factor based on width of 80% credible interval\">PSRF-CI80%</th><th>PSRF-RCF</th></tr>\n";
+    print $index "<tr><th>Statistic</th><th>Median</th><th title=\"95% Bayesian Credible Interval\">95% BCI</th><th title=\"Auto-Correlation Time\">ACT</th><th title=\"Effective Sample Size\">ESS</th><th>burnin</th><th title=\"Potential Scale Reduction Factor based on width of 80% credible interval\">PSRF-CI80%</th><th>PSRF-RCF</th></tr>\n";
 }
     
 for(my $i=1;$i <= $#var_names; $i++) 
