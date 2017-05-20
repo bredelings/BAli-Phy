@@ -415,7 +415,7 @@ sub print_data_and_model
     my $section = "";
     $section .= "<h2 style=\"clear:both\"><a name=\"data\">Data &amp; Model</a></h2>\n";
     $section .= "<table class=\"backlit\">\n";
-    $section .= "<tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th></tr>\n";
+    $section .= "<tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Alphabet</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th></tr>\n";
     for(my $p=0;$p<=$#input_file_names;$p++) 
     {
 	$section .= "<tr>\n";
@@ -429,8 +429,9 @@ sub print_data_and_model
 
 	$section .= "<td>";
 	$section .= "$min - $max" if defined ($min);
-	$section .= "$alphabet" if ($personality =~ "bali-phy.*");
 	$section .= "</td>\n";
+
+	$section .= "<td>$alphabet</td>" if ($personality =~ "bali-phy.*");
 
 	if ($personality =~ "bali-phy.*")
 	{
