@@ -477,13 +477,20 @@ $section .= "</tr>\n";
 $section .= "</table>\n";
 
 $section .= '<table class="backlit">'."\n";
-$section .= "<tr><th>chain #</th><th>Iterations (after burnin)</th></tr>\n";
+$section .= "<tr><th>chain #</th><th>Iterations (after burnin)</th><th>command line</th><th>subdirectory</th><th>directory</th></tr></tr>\n";
     for(my $i=0;$i<=$#out_files;$i++)
     {
 $section .= "<tr>\n";
+
 $section .= "  <td>".($i+1)."</td>\n";
+
 my $after_burnin = $n_iterations[$i] - $burnin;
 $section .= "  <td>$after_burnin samples</td>\n";
+
+$section .= "  <td>$commands[$i]</td>\n";
+$section .= "  <td>$subdirs[$i]</td>\n";
+$section .= "  <td>$directories[$i]</td>\n";
+
 $section .= "</tr>\n";
     }
 $section .= "</table>\n";
@@ -548,6 +555,7 @@ sub section_phylogeny_distribution
     $section .= "<h2><a name=\"topology\">Phylogeny Distribution</a></h2>\n";
 
 
+    $section .= html_svg("c50-tree.svg","25%","",["floating_picture"]);
     $section .= '<table>'."\n";
     $section .= "<tr><td>Partition support: <a href=\"consensus\">Summary</a></td></tr>\n";
     $section .= "<tr><td><span title=\"How many partitions are supported at each level of Posterior Log Odds (LOD)?\">Partition support graph:</span> <a href=\"c-levels.svg\">SVG</a></td></tr>\n";
@@ -856,14 +864,6 @@ sub print_index_html
     print $index &topbar();
 
 print $index "<h1>$title</h1>\n";
-print $index html_svg("c50-tree.svg","25%","",["floating_picture"]);
-#print $index "<p>Samples were created by the following command line:</p>";
-for(my $i=0; $i<= $#subdirs; $i++)
-{
-    print $index "<p><b>directory:</b> $directories[$i]<br/>\n";
-    print $index "<b>subdirectory:</b> $subdirs[$i]<br/>\n";
-    print $index "<b>command line:</b> $commands[$i]</p>\n";
-}
 
 print $index &print_data_and_model();
 
