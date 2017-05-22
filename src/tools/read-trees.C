@@ -150,7 +150,9 @@ namespace trees_format
     }
 
     Newick::~Newick()
-    {}
+    {
+	delete file;
+    }
 
     bool NEXUS::skip(int n)
     {
@@ -403,7 +405,9 @@ namespace trees_format
     }
 
     NEXUS::~NEXUS()
-    {}
+    {
+	delete file;
+    }
 
     bool wrapped_reader_t::next_tree_(Tree& T,int& r) {
 	if (tfr->next_tree_(T,r)) {
