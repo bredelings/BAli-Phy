@@ -126,6 +126,7 @@ namespace MCMC {
 	virtual int n_fields() const =0;
 	virtual std::vector<T> operator()(const Model&,long)=0;
 	virtual std::vector<std::string> field_names() const =0;
+	virtual ~TableFunction() {};
     };
 
     template<typename T>
