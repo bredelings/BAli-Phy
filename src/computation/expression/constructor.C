@@ -4,7 +4,7 @@
 
 using std::string;
 
-tribool constructor::compare(const Object& o) const
+bool constructor::operator==(const Object& o) const
 {
     const constructor* E = dynamic_cast<const constructor*>(&o);
     if (not E) 

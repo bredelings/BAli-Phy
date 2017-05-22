@@ -12,7 +12,7 @@ struct let_obj: public Object
 {
     let_obj* clone() const {return new let_obj(*this);}
 
-    tribool compare(const Object& o) const;
+    bool operator==(const Object& o) const;
 
     type_constant type() const {return let_type;}
 

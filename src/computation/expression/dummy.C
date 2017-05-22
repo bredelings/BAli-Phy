@@ -22,7 +22,7 @@ bool dummy::operator==(const dummy& d) const
     return index == d.index and name == d.name;
 }
 
-tribool dummy::compare(const Object& o) const 
+bool dummy::operator==(const Object& o) const 
 {
     const dummy* D = dynamic_cast<const dummy*>(&o);
     if (not D) 

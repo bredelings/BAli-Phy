@@ -7,7 +7,7 @@
 struct Trim: public Object
 {
     Trim* clone() const {return new Trim(*this);}
-    tribool compare(const Object& o) const;
+    bool operator==(const Object& o) const;
 
     type_constant type() const {return trim_type;}
 

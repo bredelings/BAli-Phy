@@ -3,15 +3,11 @@
 
 #include <string>
 #include <boost/intrusive_ptr.hpp>
-#include <boost/logic/tribool.hpp>
 #include <iostream>
 #include "util.H"
 
 #include "math/log-double.H"
 #include "computation/type_constant.H"
-
-using boost::logic::tribool;
-using boost::logic::indeterminate;
 
 class Object 
 {
@@ -45,14 +41,14 @@ public:
 
     virtual Object* clone() const =0;
 
-    virtual tribool compare(const Object& O) const
+    virtual bool operator==(const Object& O) const
 	{
-	    if (this == &O) 
+	    if (this == &O)
 		return true;
 
 	    if (typeid(*this) != typeid(O)) return false;
 
-	    return indeterminate;
+	    std::abort();
 	}
 
     int ref_count() const {return _refs;}

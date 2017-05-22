@@ -10,7 +10,7 @@ struct constructor: public Operator
 {
     constructor* clone() const {return new constructor(*this);}
 
-    tribool compare(const Object& o) const;
+    bool operator==(const Object& o) const;
   
     std::string f_name;
     int n_args_;

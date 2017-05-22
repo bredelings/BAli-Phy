@@ -10,7 +10,7 @@ struct AST_node: public Object
     AST_node* clone() const {return new AST_node(*this);}
     std::string type;
     std::string value;
-    tribool compare(const Object& o) const;
+    bool operator==(const Object& o) const;
 
     std::string print() const;
 

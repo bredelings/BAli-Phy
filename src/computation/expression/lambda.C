@@ -8,7 +8,7 @@ string lambda::print() const {
     return "lambda";
 }
 
-tribool lambda::compare(const Object& o) const 
+bool lambda::operator==(const Object& o) const 
 {
     return dynamic_cast<const lambda*>(&o);
 }
@@ -17,7 +17,7 @@ string lambda2::print() const {
     return "/\\";
 }
 
-tribool lambda2::compare(const Object& o) const 
+bool lambda2::operator==(const Object& o) const 
 {
     return dynamic_cast<const lambda2*>(&o);
 }

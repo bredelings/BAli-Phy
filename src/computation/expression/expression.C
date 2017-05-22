@@ -31,7 +31,7 @@ using boost::dynamic_pointer_cast;
 // 3. Eliminate identifier in favor of dummy (==var)?
 // 4. Remove horrible (#symbol)*(#function) substitution in module.C
 
-tribool parameter::compare(const Object& o) const 
+bool parameter::operator==(const Object& o) const 
 {
     const parameter* E = dynamic_cast<const parameter*>(&o);
     if (not E) 

@@ -12,10 +12,9 @@ using std::set;
 using std::string;
 using std::pair;
 
-tribool let_obj::compare(const Object& o) const 
+bool let_obj::operator==(const Object& o) const 
 {
-    const let_obj* T = dynamic_cast<const let_obj*>(&o);
-    return T;
+    return dynamic_cast<const let_obj*>(&o);
 }
 
 string let_obj::print() const 

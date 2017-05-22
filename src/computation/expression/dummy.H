@@ -34,9 +34,9 @@ struct dummy: public Object, public occurrence_info
     std::string name;
 
     bool operator==(const dummy&) const;
+    bool operator==(const Object& o) const;
     dummy* clone() const {return new dummy(*this);}
     std::string print() const;
-    tribool compare(const Object& o) const;
   
     bool operator<(const dummy&) const;
 

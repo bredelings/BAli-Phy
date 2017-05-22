@@ -44,7 +44,7 @@ struct Bounds: public Object
     T upper_bound;
 
     Bounds<T>* clone() const {return new Bounds<T>(*this);}
-    tribool compare(const Object& O) const
+    bool operator==(const Object& O) const
 	{
 	    if (this == &O) return true;
 

@@ -2,7 +2,7 @@
 
 using std::string;
 
-tribool AST_node::compare(const Object& o) const 
+bool AST_node::operator==(const Object& o) const 
 {
     const AST_node* T = dynamic_cast<const AST_node*>(&o);
     if (not T)

@@ -203,33 +203,17 @@ string expression::print() const
     return print_operator_expression( pargs );
 }
 
-tribool expression::operator==(const expression& E) const
+bool expression::operator==(const expression& E) const
 {
-    tribool same = true;
-    {
-	tribool b = (head == E.head);
-	if (indeterminate(b))
-	    std::cerr<<"Warning: '"<<head<<"' and '"<<E.head<<"' are unsure if they are equal.\n\n";
-
-	same = same and b;
-	if (not same) return false;
-    }
+    if (head != E.head) return false;
 
     for(int i=0;i<size();i++) 
-    {
-	tribool b = (sub[i] == E.sub[i]);
+	if (sub[i] != E.sub[i]) return false;
 
-	if (indeterminate(b))
-	    std::cerr<<"Warning: '"<<sub[i]<<"' and '"<<E.sub[i]<<"' are unsure if they are equal.\n\n";
-
-	same = same and b;
-	if (not same) return false;
-    }
-
-    return same;
+    return true;
 }
 
-tribool expression::compare(const Object& o) const 
+bool expression::operator==(const Object& o) const 
 {
     const expression* E = dynamic_cast<const expression*>(&o);
     if (not E) 

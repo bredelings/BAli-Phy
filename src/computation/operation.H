@@ -28,7 +28,7 @@ struct Operation: public Operator
 
     std::string name() const {return name_;}
 
-    tribool compare(const Object& o) const 
+    bool operator==(const Object& o) const
     {
 	const Operation* O = dynamic_cast<const Operation*>(&o);
 	if (not O) return false;

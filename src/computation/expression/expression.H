@@ -25,7 +25,7 @@ struct parameter: public Object
 
     parameter* clone() const {return new parameter(*this);}
     std::string print() const {return parameter_name;}
-    tribool compare(const Object& o) const;
+    bool operator==(const Object& o) const;
   
     type_constant type() const {return parameter_type;}
 
@@ -43,7 +43,7 @@ struct reg_var: public Object
 	    return "<" + convertToString(target) + ">";
 	}
 
-    tribool compare(const Object& o) const
+    bool operator==(const Object& o) const
 	{
 	    const reg_var* E = dynamic_cast<const reg_var*>(&o);
 	    if (not E) 

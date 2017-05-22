@@ -30,7 +30,7 @@ public:
 
     bool is_object_type() const {return type_ > index_var_type;}
 
-    tribool operator==(const expression_ref& E2) const
+    bool operator==(const expression_ref& E2) const
 	{
 	    if (type_ != E2.type())
 		return false;
@@ -53,16 +53,26 @@ public:
 		return (i == E2.as_index_var());
 		break;
 	    default:
-		return ptr()->compare(*E2.ptr());
+		return (*ptr() == *E2.ptr());
 	    }
 	}
 
-    tribool operator==(const Object& O) const
+    bool operator!=(const expression_ref& E2) const
+	{
+	    return not (*this == E2);
+	}
+
+    bool operator==(const Object& O) const
 	{
 	    if (not is_object_type())
 		return false;
 	    else
-		return ptr()->compare(O);
+		return (*ptr() == O);
+	}
+
+    bool operator!=(const Object& O) const
+	{
+	    return not (*this == O);
 	}
 
     void clear() {destroy_ptr();type_=null_type;}
@@ -313,10 +323,10 @@ struct expression: public Object
   
     // Methods from Object
     expression* clone() const {return new expression(*this);}
-    tribool compare(const Object& o) const;
     std::string print() const;
   
-    tribool operator==(const expression& E) const;
+    bool operator==(const expression& E) const;
+    bool operator==(const Object& o) const;
 
     type_constant type() const {return expression_type;}
 

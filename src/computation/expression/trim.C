@@ -12,10 +12,9 @@ string Trim::print() const
     return "Trim";
 }
 
-tribool Trim::compare(const Object& o) const 
+bool Trim::operator==(const Object& o) const 
 {
-    const Trim* T = dynamic_cast<const Trim*>(&o);
-    return T;
+    return dynamic_cast<const Trim*>(&o);
 }
 
 vector<int> pop_vars(int n, vector<int> vars)
