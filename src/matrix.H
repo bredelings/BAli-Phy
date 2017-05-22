@@ -112,7 +112,20 @@ namespace bali_phy
 		    data_[i] += M2.begin()[i];
 		return *this;
 	    }
-    
+
+	bool operator==(const matrix& M) const
+	    {
+		if (this == &M) return true;
+
+		if (size1() != M.size1()) return false;
+
+		if (size2() != M.size2()) return false;
+
+		for(int i=0;i<size();i++)
+		    if (data_[i] != M.data_[i]) return false;
+
+		return true;
+	    }
 
 	matrix() {}
 
