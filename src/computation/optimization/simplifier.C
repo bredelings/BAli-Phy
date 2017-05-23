@@ -1031,7 +1031,8 @@ simplify_decls(const simplifier_options& options, vector<pair<dummy, expression_
 		}
 	    }
 
-	    if (is_trivial(F) and options.post_inline_unconditionally and not x.is_exported)
+	    // what are the conditions for post-inlining unconditionally?
+	    if (is_trivial(F) and options.post_inline_unconditionally and not x.is_exported and not x.is_loop_breaker)
 	    {
 		S2.erase(x);
 		S2.insert({x,F});
