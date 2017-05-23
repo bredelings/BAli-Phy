@@ -1111,8 +1111,22 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	// 2.4 Remove x_new from the bound set.
 	unbind_var(bound_vars,x2);
 
-	// 2.5 If we changed x, or simplified the body, then 
-	return lambda_quantify(x2, new_body);
+	// 2.5 Eta-reduction : Lx2.@ f x2 ==> f.  (Let-floating should let us ignore if f is a let-expression).
+	if (new_body.is_expression() and is_apply(new_body.head()) and (new_body.as_expression().sub.back() == x2))
+	{
+	    if (new_body.size() == 2)
+		return new_body.sub()[0];
+	    else
+	    {
+		assert(new_body.size() > 2);
+		object_ptr<expression> new_body2 = new_body.as_expression().clone();
+		new_body2->sub.pop_back();
+		return new_body2;
+	    }
+	}
+	// 2.6 Recreate the lambda expression with x->x2 and simplified new body.
+	else
+	    return lambda_quantify(x2, new_body);
     }
 
     // 6. Case
