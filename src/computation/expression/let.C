@@ -44,6 +44,7 @@ expression_ref make_decls(const vector<pair<dummy, expression_ref>>& decls)
     {
 	object_ptr<expression> Decl = new expression(AST_node("Decl"));
 	Decl->sub.push_back(decl.first);
+	assert(decl.second);
 	Decl->sub.push_back(decl.second);
 	Decls->sub.push_back(Decl);
     }
@@ -60,6 +61,7 @@ expression_ref make_topdecls(const vector<pair<dummy, expression_ref>>& decls)
     {
 	object_ptr<expression> Decl = new expression(AST_node("Decl"));
 	Decl->sub.push_back(decl.first);
+	assert(decl.second);
 	Decl->sub.push_back(decl.second);
 	Decls->sub.push_back(Decl);
     }
