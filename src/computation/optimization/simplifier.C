@@ -978,7 +978,8 @@ simplify_decls(const simplifier_options& options, vector<pair<dummy, expression_
 
     const int n_decls = orig_decls.size();
 
-    vector<pair<dummy,expression_ref>> decls;
+    vector<pair<dummy,expression_ref>> new_decls;
+    vector<dummy> new_names;
 
     // 5.1 Rename and bind all variables.
     //     Binding all variables ensures that we avoid shadowing them, which helps with let-floating.
@@ -987,7 +988,7 @@ simplify_decls(const simplifier_options& options, vector<pair<dummy, expression_
     {
 	dummy x = orig_decls[i].first;
 	dummy x2 = rename_and_bind_var(x, S2, bound_vars);
-	decls.push_back({x2,{}});
+	new_names.push_back(x2);
     }
 
     // 5.2 Iterate over decls, renaming and binding vars as we go, and simplifying them and adding substitutions for unconditional inlines.
@@ -998,7 +999,9 @@ simplify_decls(const simplifier_options& options, vector<pair<dummy, expression_
 	dummy x  = orig_decls[i].first;
 	auto F   = orig_decls[i].second;
 
-	dummy x2 = decls[i].first;
+	dummy x2 = new_names[i];
+
+	if (x.is_exported) assert(x == x2);
 
 	// 1. Any references to x in F must be to the x bound in this scope.
 	// 2. F can only contain references to x if x is a loop breaker.
@@ -1027,7 +1030,8 @@ simplify_decls(const simplifier_options& options, vector<pair<dummy, expression_
 		for(auto& decl: strip_let(F))
 		{
 		    bind_var(bound_vars, decl.first, decl.second);
-		    decls.push_back(decl);
+		    new_names.push_back(decl.first);
+		    new_decls.push_back(decl);
 		}
 	    }
 
@@ -1039,16 +1043,17 @@ simplify_decls(const simplifier_options& options, vector<pair<dummy, expression_
 	    }
 	    else
 	    {
-		decls[i].second = F;
+		new_decls.push_back({x2,F});
 
 		// Any later occurrences will see the bound value of x[i] when they are simplified.
 		rebind_var(bound_vars, x2, F);
 	    }
 	}
     }
-    unbind_decls(bound_vars, decls);
+    for(auto& new_name: new_names)
+	unbind_var(bound_vars, new_name);
 
-    orig_decls = decls;
+    std::swap(orig_decls, new_decls);
     return S2;
 }
 
