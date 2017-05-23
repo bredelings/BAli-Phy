@@ -1062,7 +1062,7 @@ simplify_decls(const simplifier_options& options, vector<pair<dummy, expression_
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
 expression_ref simplify(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
-    if (not E) return E;
+    assert(E);
 
     // 1. Var (x)
     if (is_dummy(E))
