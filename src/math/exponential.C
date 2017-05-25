@@ -95,37 +95,26 @@ Matrix expm1(const EigenValues& solution,double t)
     return E;
 }
 
-// compute the exponential of a matrix that is given in terms of its SVD
-Matrix exp(const EigenValues& solution,double t) 
-{
-    Matrix E = expm1(solution, t);
-
-    for(int i=0; i< E.size1(); i++)
-	E(i,i) += 1.0;
-
-    return E;
-}
-
 /// Compute the exponential of a matrix from a reversible markov chain
-Matrix exp(const EigenValues& eigensystem,const vector<double>& D,const double t) {
-    const int n = D.size();
+Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const double t)
+{
+    Matrix E = expm1(eigensystem,t);
 
-    // Compute D^-a * E * D^a
+    const int n = pi.size();
+
     std::vector<double> DP(n);
     std::vector<double> DN(n);
-    for(int i=0;i<D.size();i++) {
-	DP[i] = sqrt(D[i]);
+    for(int i=0;i<pi.size();i++) {
+	DP[i] = sqrt(pi[i]);
 	DN[i] = 1.0/DP[i];
     }
 
-    // compute E = exp(S2)
-    Matrix E = exp(eigensystem,t);
-
-    // Compute D^-a * E * D^a
     for(int i=0;i<E.size1();i++)
 	for(int j=0;j<E.size2();j++)
 	    E(i,j) *= DN[i]*DP[j];
 
+    for(int i=0;i<E.size1();i++)
+	E(i,i) += 1.0;
 
     for(int i=0;i<E.size1();i++)
 	for(int j=0;j<E.size2();j++) {
@@ -136,6 +125,3 @@ Matrix exp(const EigenValues& eigensystem,const vector<double>& D,const double t
 
     return E;
 }
-
-// exp(Q) = D^-a * exp(E) * D^a
-// E = exp(D^a * Q * D^-a) = exp(D^1/2 * S * D^1/2)
