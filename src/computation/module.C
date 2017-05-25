@@ -1113,27 +1113,6 @@ void Module::def_function(const std::string& fname, const expression_ref& body)
 	declare_symbol({fname, variable_symbol, local_scope, -1, -1, unknown_fix, body, {}});
 }
 
-void Module::def_function(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
-{
-    assert(patterns.size());
-    assert(patterns.size() == bodies.size());
-
-    string fname;
-    vector< vector<expression_ref> > sub_patterns(patterns.size());
-    parse_combinator_application(patterns[0], fname, sub_patterns[0]);
-
-    for(int i=1;i<patterns.size();i++)
-    {
-	string fname2;
-	parse_combinator_application(patterns[i], fname2, sub_patterns[i]);
-
-	if (fname != fname2) throw myexception()<<"In definition of function '"<<fname<<"', incorrect function name '"<<fname2<<"' found as well.";
-    }
-
-    expression_ref E = ::def_function(sub_patterns, bodies);
-    def_function(fname, E);
-}
-
 void Module::def_constructor(const std::string& cname, int arity)
 {
     if (is_qualified_symbol(cname))
