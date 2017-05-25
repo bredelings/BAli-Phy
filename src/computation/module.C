@@ -280,7 +280,8 @@ void Module::compile(const Program& P)
     perform_imports(P);
 
     // Currently we do renaming here, including adding prefixes to top-level decls.
-    desugar(P); // fixme - separate renaming from desugaring -- move it after load_builtins.
+    if (not skip_desugaring)
+	desugar(P); // fixme - separate renaming from desugaring -- move it after load_builtins.
 
     load_builtins(*P.get_module_loader());
 
@@ -1090,7 +1091,29 @@ string get_function_name(const expression_ref& E)
 set<string> find_bound_vars(const expression_ref& E);
 set<string> find_all_ids(const expression_ref& E);
 
-void Module::def_function(const std::string& fname, const expression_ref& body)
+
+void Module::add_decl(const std::string& fname, const expression_ref& body)
+{
+    expression_ref decl = {AST_node("Decl"),{dummy(name + "." + fname),body}};
+
+    if (not topdecls)
+    {
+	skip_desugaring = true;
+	vector<expression_ref> decls = {decl};
+	topdecls = {AST_node("TopDecls"),decls};
+    }
+    else
+    {
+	// We can't mix C++-synthesized decls with decls loaded from a file.
+	assert(skip_desugaring == true);
+
+	vector<expression_ref> decls = topdecls.sub();
+	decls.push_back(decl);
+	topdecls = {AST_node("TopDecls"),decls};
+    }
+}
+
+void Module::def_function(const std::string& fname)
 {
     if (is_qualified_symbol(fname))
 	throw myexception()<<"Locally defined symbol '"<<fname<<"' should not be qualified in function declaration.";
@@ -1133,12 +1156,7 @@ void Module::def_constructor(const std::string& cname, int arity)
 	}
     }
 
-    declare_symbol( {cname, constructor_symbol, local_scope, arity, -1, unknown_fix, {}, {}} );
-}
-
-expression_ref Module::get_function(const std::string& fname) const
-{
-    return lookup_symbol(fname).body;
+    declare_symbol( {cname, constructor_symbol, local_scope, arity, -1, unknown_fix, {}} );
 }
 
 void Module::add_local_symbols()
@@ -1198,13 +1216,13 @@ void Module::add_local_symbols()
 			S.symbol_type = variable_symbol;
 		}
 		else
-		    def_function(var_name,{});
+		    def_function(var_name);
 	    }
 	}
 	else if (is_AST(decl,"Builtin"))
 	{
 	    string bname = decl.sub()[0].as_<String>();
-	    def_function(bname,{});
+	    def_function(bname);
 	}
 	else if (is_AST(decl,"Decl:data"))
 	{

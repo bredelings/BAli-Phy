@@ -1194,7 +1194,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     add_modifiable_parameter_with_value("*IModels.training", false);
 
     Module imodels_program("IModels");
-    imodels_program.def_function("models", (dummy("Prelude.listArray'"), get_list(imodels_)));
+    imodels_program.add_decl("models", (dummy("Prelude.listArray'"), get_list(imodels_)));
     (*this) += imodels_program;
   
     /*------------------------- Add commands to log all parameters created before this point. ------------------------*/
@@ -1239,7 +1239,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
 
     Module parameter_program("Params");
-    parameter_program.def_function("substitutionBranchLengths", (dummy("Prelude.listArray'"),(dummy("Prelude.fmap"),dummy("Prelude.listArray'"),substitutionBranchLengthsList)));
+    parameter_program.add_decl("substitutionBranchLengths", (dummy("Prelude.listArray'"),(dummy("Prelude.fmap"),dummy("Prelude.listArray'"),substitutionBranchLengthsList)));
     (*this) += parameter_program;
 
     // register the cached transition_p indices

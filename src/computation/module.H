@@ -80,6 +80,8 @@ class Module
 
     bool optimized = false;
 
+    bool skip_desugaring = false;
+
 public:
 
     bool do_optimize = true;
@@ -111,7 +113,10 @@ public:
     const std::map<std::string, symbol_info>& get_symbols() const {return symbols;}
 
     /// Add a function
-    void def_function(const std::string& name, const expression_ref& b);
+    void add_decl(const std::string& name, const expression_ref& b);
+
+    /// Add a function
+    void def_function(const std::string& name);
 
     /// Add a constructor
     void def_constructor(const std::string& name, int arity);
@@ -169,8 +174,6 @@ public:
     static symbol_info lookup_builtin_symbol(const std::string&);
 
     symbol_info lookup_symbol(const std::string&) const;
-
-    expression_ref get_function(const std::string&) const;
 
     symbol_info get_operator(const std::string& name) const;
 
