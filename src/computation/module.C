@@ -279,6 +279,7 @@ void Module::compile(const Program& P)
 
     perform_imports(P);
 
+    // Currently we do renaming here, including adding prefixes to top-level decls.
     desugar(P); // fixme - separate renaming from desugaring -- move it after load_builtins.
 
     load_builtins(*P.get_module_loader());
