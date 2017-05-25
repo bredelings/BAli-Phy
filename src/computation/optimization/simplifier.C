@@ -550,14 +550,14 @@ void unbind_decls(in_scope_set& bound_vars, const vector<pair<dummy,expression_r
 	unbind_var(bound_vars, decl.first);
 }
 
-struct inline_context
+class inline_context
 {
     expression_ref data;
-
+public:
     inline_context prev_context() const {
 	if (data)
 	    assert(data.head().is_a<AST_node>());
-	return inline_context(data.sub()[0]);
+	return inline_context(data.sub()[1]);
     }
 
     bool is_case_object() const {return is_AST(data,"case_object");}
@@ -565,12 +565,12 @@ struct inline_context
     bool is_argument() const {return is_AST(data,"argument");}
     bool is_unknown() const {return is_AST(data,"unknown");}
     bool is_null() const {return not data;}
-    expression_ref get_expression() const {return data.sub()[1];};
+    expression_ref get_expression() const {return data.sub()[0];};
 
     inline_context() {};
     inline_context(const expression_ref& E):data(E) {}
     inline_context(const string& s, const expression_ref E, const inline_context& context)
-	:data({AST_node(s),{context.data,E}}) {}
+	:data({AST_node(s),{E, context.data}}) {}
 };
 
 int num_arguments(inline_context context)
