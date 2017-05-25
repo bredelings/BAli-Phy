@@ -498,11 +498,10 @@ int main(int argc,char* argv[])
 	    Program P(L);
 	    P.add(M);
 	    auto& M2 = P.get_module(M.name);
-	    for(const auto& s: M2.get_symbols())
+	    for(const auto& decl: M2.topdecls.sub())
 	    {
-		const auto& S = s.second;
-		if (S.body and S.scope == local_scope)
-		    std::cerr<<"size = "<<simple_size(S.body)<<"   "<<S.name<<" = "<<S.body<<std::endl;
+		auto& body = decl.sub()[1];
+		std::cerr<<"size = "<<simple_size(body)<<"   "<<decl.sub()[0]<<" = "<<body<<std::endl;
 	    }
 	    exit(0);
 	}

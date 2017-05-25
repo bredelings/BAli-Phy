@@ -9,6 +9,7 @@
 #include "parser/desugar.H"
 #include "expression/expression.H"
 #include "expression/lambda.H"
+#include "expression/AST_node.H"
 #include "expression/dummy.H"
 
 using std::string;
@@ -391,29 +392,32 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
     {
 	const Module& M = get_Program().get_module(name);
 
-	for(const auto& s: M.get_symbols())
+	for(const auto& decl: M.topdecls.sub())
 	{
-	    const symbol_info& S = s.second;
+	    assert(is_AST(decl,"Decl"));
 
-	    if (S.scope != local_scope) continue;
-
-	    if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
+	    // get the qualified name for the decl
+	    auto x = decl.sub()[0].as_<dummy>();
+	    string name = x.name;
+	    assert(is_qualified_symbol(name));
 
 	    // get the root for each identifier
-	    auto loc = identifiers().find(S.name);
+	    auto loc = identifiers().find(name);
 	    assert(loc != identifiers().end());
 	    int R = loc->second;
 
-	    expression_ref F = M.get_symbols().at(S.name).body;
-	    assert(F);
+	    // get the body for the  decl
+	    auto& body = decl.sub()[1];
+	    assert(body);
 
 #ifdef DEBUG_OPTIMIZE
-	    std::cerr<<S.name<<" := "<<F<<"\n\n";
-	    std::cerr<<S.name<<" := "<<preprocess(F).exp<<"\n\n\n\n";
+	    std::cerr<<name<<" := "<<body<<"\n\n";
+	    std::cerr<<name<<" := "<<preprocess(body).exp<<"\n\n\n\n";
 #endif
 
+	    // load the body into the machine
 	    assert(R != -1);
-	    set_C(R, preprocess(F) );
+	    set_C(R, preprocess(body) );
 	}
     }
 }

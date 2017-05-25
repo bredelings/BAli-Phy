@@ -29,27 +29,19 @@ symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int
     :name(s), symbol_type(st), scope(sc), arity(i2)
 { }
 
-symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2, const expression_ref& b)
-    :name(s), symbol_type(st), scope(sc), arity(i2), body(b)
-{ }
-
 symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2, int i3, fixity_t f)
     :name(s), symbol_type(st), scope(sc), arity(i2), precedence(i3), fixity(f)
 { }
 
-symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2, int i3, fixity_t f, const expression_ref& b)
-    :name(s), symbol_type(st), scope(sc), arity(i2), precedence(i3), fixity(f), body(b)
-{ }
-
-symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2, int i3, fixity_t f, const expression_ref& b, const expression_ref& t)
-    :name(s), symbol_type(st), scope(sc), arity(i2), precedence(i3), fixity(f), body(b), type(t)
+symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2, int i3, fixity_t f, const expression_ref& t)
+    :name(s), symbol_type(st), scope(sc), arity(i2), precedence(i3), fixity(f), type(t)
 { }
 
 bool operator==(const symbol_info&S1, const symbol_info& S2)
 {
     return (S1.name == S2.name) and (S1.symbol_type == S2.symbol_type) and (S1.scope == S2.scope) and
 	(S1.arity == S2.arity) and (S1.precedence == S2.precedence) and (S1.fixity == S2.fixity) and
-	(S1.body.ptr() == S2.body.ptr()) and (S1.type.ptr() == S2.type.ptr());
+	(S1.type.ptr() == S2.type.ptr());
 }
 
 bool operator!=(const symbol_info&S1, const symbol_info& S2)
@@ -137,7 +129,7 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     string s2 = name + "." + s;
 
     if (not symbol_exists(s2))
-	declare_symbol({s, unknown_symbol, local_scope, -1, -1, unknown_fix, {}, {}});
+	declare_symbol({s, unknown_symbol, local_scope, -1, -1, unknown_fix, {}});
 
     symbol_info& S = symbols.find(s2)->second;
     if (precedence < 0 or precedence > 9)
@@ -340,7 +332,6 @@ void Module::update_function_symbols()
 	if (is_AST(decl,"Decl"))
 	{
 	    auto& var = decl.sub()[0];
-	    auto& body = decl.sub()[1];
 	    auto& x = var.as_<dummy>();
 
 	    assert(is_qualified_symbol(x.name));
@@ -351,13 +342,10 @@ void Module::update_function_symbols()
 	    {
 		symbol_info si;
 		si.name = x.name;
-		si.body = body;
 		si.scope = local_scope;
 		si.symbol_type = variable_symbol;
 		symbols.insert({x.name, si});
 	    }
-	    else
-		symbols.at(x.name).body = body;
 	}
 }
 
@@ -821,19 +809,19 @@ bool Module::is_declared_local(const std::string& name) const
     return (loc->second.scope == local_scope);
 }
 
-symbol_info Module::lookup_builtin_symbol(const std::string& name)
+pair<symbol_info,expression_ref> Module::lookup_builtin_symbol(const std::string& name)
 {
     if (name == "()")
-	return symbol_info("()", constructor_symbol, global_scope, 0, constructor("()",0));
+	return {symbol_info("()", constructor_symbol, global_scope, 0), constructor("()",0)};
     else if (name == "[]")
-	return symbol_info("[]", constructor_symbol, global_scope, 0, constructor("[]",0));
+	return {symbol_info("[]", constructor_symbol, global_scope, 0), constructor("[]",0)};
     else if (name == ":")
-	return symbol_info(":", constructor_symbol, global_scope, 2, 5, right_fix, lambda_expression( right_assoc_constructor(":",2) ) );
+	return {symbol_info(":", constructor_symbol, global_scope, 2, 5, right_fix), lambda_expression( right_assoc_constructor(":",2) )};
     else if (is_tuple_name(name))
     {
 	int arity = name.size() - 1;
 	expression_ref body = lambda_expression( tuple_head(arity) );
-	return symbol_info(name, constructor_symbol, global_scope, arity, body);
+	return {symbol_info(name, constructor_symbol, global_scope, arity), body};
     }
     throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
 }
@@ -841,7 +829,7 @@ symbol_info Module::lookup_builtin_symbol(const std::string& name)
 symbol_info Module::lookup_symbol(const std::string& name) const
 {
     if (is_haskell_builtin_con_name(name))
-	return lookup_builtin_symbol(name);
+	return lookup_builtin_symbol(name).first;
 
     int count = aliases.count(name);
     if (count == 0)
@@ -1125,16 +1113,15 @@ void Module::def_function(const std::string& fname)
     {
 	symbol_info& S = loc->second;
 	// Only the fixity has been declared!
-	if (S.symbol_type == unknown_symbol and not S.body and not S.type)
+	if (S.symbol_type == unknown_symbol)
 	{
 	    S.symbol_type = variable_symbol;
-	    S.body = body;
 	}
 	else
 	    throw myexception()<<"Can't add function with name '"<<fname<<"': that name is already used!";
     }
     else
-	declare_symbol({fname, variable_symbol, local_scope, -1, -1, unknown_fix, body, {}});
+	declare_symbol({fname, variable_symbol, local_scope, -1, -1, unknown_fix, {}});
 }
 
 void Module::def_constructor(const std::string& cname, int arity)
@@ -1212,7 +1199,7 @@ void Module::add_local_symbols()
 		{
 		    symbol_info& S = loc->second;
 		    // Only the fixity has been declared!
-		    if (S.symbol_type == unknown_symbol and not S.body and not S.type)
+		    if (S.symbol_type == unknown_symbol and not S.type)
 			S.symbol_type = variable_symbol;
 		}
 		else
@@ -1292,25 +1279,17 @@ Module::Module(const expression_ref& E)
     assert(module);
 }
 
-std::ostream& operator<<(std::ostream& o, const Module& D)
+std::ostream& operator<<(std::ostream& o, const Module& M)
 {
-    for(const auto& s: D.get_symbols())
-    {
-	const symbol_info& S = s.second;
-	if (S.body)
-	{
-	    o<<S.name<<" = "<<S.body<<")\n";
-	    o<<S.name<<" = "<<let_float(S.body)<<")\n";
-	    o<<"\n";
-	}
-    }
+    for(const auto& decl: M.topdecls.sub())
+	o<<decl.sub()[0]<<" = "<<decl.sub()[1]<<")\n";
     return o;
 }
 
 symbol_info lookup_symbol(const string& name, const Program& P)
 {
     if (is_haskell_builtin_con_name(name))
-	return Module::lookup_builtin_symbol(name);
+	return Module::lookup_builtin_symbol(name).first;
 
     assert(is_qualified_symbol(name));
     string name1 = get_module_name(name);

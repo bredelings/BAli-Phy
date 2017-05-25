@@ -22,15 +22,12 @@ struct symbol_info
     int arity = -1;
     int precedence = -1;
     fixity_t fixity = unknown_fix;
-    expression_ref body;
     expression_ref type;
 
     symbol_info() {};
     symbol_info(const std::string&, symbol_type_t, scope_t, int);
-    symbol_info(const std::string&, symbol_type_t, scope_t, int, const expression_ref&);
     symbol_info(const std::string&, symbol_type_t, scope_t, int, int, fixity_t);
     symbol_info(const std::string&, symbol_type_t, scope_t, int, int, fixity_t, const expression_ref&);
-    symbol_info(const std::string&, symbol_type_t, scope_t, int, int, fixity_t, const expression_ref&, const expression_ref&);
 };
 
 bool operator==(const symbol_info&S1, const symbol_info& S2);
@@ -171,7 +168,7 @@ public:
 
     bool is_declared_local(const std::string&) const;
 
-    static symbol_info lookup_builtin_symbol(const std::string&);
+    static std::pair<symbol_info,expression_ref> lookup_builtin_symbol(const std::string&);
 
     symbol_info lookup_symbol(const std::string&) const;
 

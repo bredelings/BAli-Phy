@@ -8,10 +8,6 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
-// Cleanup: remove tribool
-// Cleanup: topdecls instead of symbol table to store function bodies
-// Cleanup: find where body is NULL.
-
 // HARD TODO: missing complete genes? (or document why not).
 
 // HARD TODO: --help implicit value?
