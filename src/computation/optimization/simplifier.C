@@ -952,7 +952,10 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
     // Hmmm... this is complicated because leaving out the default could cause a match failure, which this transformation would eliminate.
     else if (is_identity_case(object, patterns, bodies))
 	return let_expression(decls, object);
-
+    // 8. case-of-case
+    //    case (case E of p[i] x[k] -> a[i] x[k]) of q[j] y[k] -> b[j] y[l])    ==>
+    //    case E of p[i] x[k] -> case a[i] x[i] of q[j] y[k] -> b[j] y[l]) ==>
+    //    let c[j] y[l] = b[j] y[l] in case E of p[i] x[k] -> case a[i] x[i] of q[j] y[k] -> c[j] y[l]).
 
     return let_expression(decls,make_case_expression(object, patterns, bodies));
 }
