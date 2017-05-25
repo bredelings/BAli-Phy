@@ -199,8 +199,6 @@ set<string> new_module_names(const module_loader& L, const set<string>& old_modu
 
 void Program::add(const std::string& name)
 {
-    int first_new = modules().size();
-
     auto new_names = new_module_names(*loader, module_names_set(), {name});
 
     vector<string> new_names1;
