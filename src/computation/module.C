@@ -1089,7 +1089,7 @@ string get_function_name(const expression_ref& E)
 set<string> find_bound_vars(const expression_ref& E);
 set<string> find_all_ids(const expression_ref& E);
 
-void Module::def_function(const std::string& fname, const expression_ref& body, const expression_ref& type)
+void Module::def_function(const std::string& fname, const expression_ref& body)
 {
     if (is_qualified_symbol(fname))
 	throw myexception()<<"Locally defined symbol '"<<fname<<"' should not be qualified in function declaration.";
@@ -1105,18 +1105,12 @@ void Module::def_function(const std::string& fname, const expression_ref& body, 
 	{
 	    S.symbol_type = variable_symbol;
 	    S.body = body;
-	    S.type = type;
 	}
 	else
 	    throw myexception()<<"Can't add function with name '"<<fname<<"': that name is already used!";
     }
     else
-	declare_symbol({fname, variable_symbol, local_scope, -1, -1, unknown_fix, body, type});
-}
-
-void Module::def_function(const std::string& fname, const expression_ref& body)
-{
-    def_function(fname, body, {});
+	declare_symbol({fname, variable_symbol, local_scope, -1, -1, unknown_fix, body, {}});
 }
 
 void Module::def_function(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
