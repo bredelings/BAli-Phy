@@ -708,11 +708,18 @@ bool boring(const expression_ref& rhs, const inline_context& context)
     return true;
 }
 
+constexpr double keenness = 1.5;
+constexpr double inline_threshhold = 8;
+
 bool small_enough(const expression_ref& rhs, const inline_context& context)
 {
-    if (is_trivial(rhs)) return true;
+    double body_size = simple_size(rhs);
 
-    return false;
+    double size_of_call = 1 + num_arguments(context);
+
+    int discounts = 0;
+
+    return (body_size - size_of_call - keenness*discounts <= inline_threshhold);
 }
 
 bool do_inline_multi(const expression_ref& rhs, const inline_context& context)
