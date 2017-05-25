@@ -679,11 +679,31 @@ bool no_size_increase(const expression_ref& rhs, const inline_context& context)
     return false;
 }
 
+bool very_boring(const inline_context& context)
+{
+    if (context.is_case_object()) return false;
+
+    if (context.is_apply_object()) return false;
+
+    // This avoids substituting into constructor (and function) arguments.
+    return true;
+}
+
+
 bool boring(const expression_ref& rhs, const inline_context& context)
 {
     // if the rhs is applied only to variables with unknown value AND ...
 
     // ... after consuming all the arguments we need, the result is very_boring.
+    {
+	int n_args_needed = get_n_lambdas1(rhs);
+	if (num_arguments(context) >= n_args_needed)
+	{
+	    auto context2 = remove_arguments(context, n_args_needed);
+	    if (not very_boring(context2)) return false;
+	}
+    }
+
 
     return true;
 }
@@ -713,17 +733,6 @@ bool whnf_or_bottom(const expression_ref& rhs)
 {
     return is_WHNF(rhs) or evaluates_to_bottom(rhs);
 }
-
-bool very_boring(inline_context context)
-{
-    if (context.is_case_object()) return false;
-
-    if (context.is_apply_object()) return false;
-
-    // This avoids substituting into constructor (and function) arguments.
-    return true;
-}
-
 
 bool do_inline(const simplifier_options& options, const expression_ref& rhs, const occurrence_info& occur, const inline_context& context)
 {
