@@ -843,6 +843,28 @@ dummy rename_and_bind_var(const expression_ref& var, substitution& S, in_scope_s
     return x2;
 }
 
+bool is_identity_case(const expression_ref& object, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+{
+    assert(patterns.size() == bodies.size());
+    for(int i=0;i<patterns.size();i++)
+    {
+	if (is_wildcard(patterns[i]))
+	{
+	    if (bodies[i] != object) return false;
+	}
+	else if (is_dummy(patterns[i].head()))
+	{
+	    assert(not patterns[i].size());
+	    if (bodies[i] != patterns[i] and bodies[i] != object) return false;
+	}
+	else if (patterns[i] != bodies[i]) return false;
+    }
+
+    return true;
+}
+
+
+
 // case E of alts.  Here E has been simplified, but the alts have not.
 expression_ref rebuild_case(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
@@ -926,6 +948,11 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	}
 	throw myexception()<<"Case object doesn't many any alternative in '"<<make_case_expression(object, patterns, bodies)<<"'";
     }
+    // 7. If the case is an identity transformation
+    // Hmmm... this is complicated because leaving out the default could cause a match failure, which this transformation would eliminate.
+    else if (is_identity_case(object, patterns, bodies))
+	return let_expression(decls, object);
+
 
     return let_expression(decls,make_case_expression(object, patterns, bodies));
 }
