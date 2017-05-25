@@ -873,7 +873,7 @@ int reg_heap::push_temp_head(int R)
 
 void reg_heap::pop_temp_head()
 {
-    int R = temp.back();
+//    int R = temp.back();
 
     temp.pop_back();
 }
