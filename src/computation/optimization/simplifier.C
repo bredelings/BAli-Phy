@@ -671,7 +671,7 @@ bool no_size_increase(const expression_ref& rhs, const inline_context& context)
 
 	int size_of_call = 1 + n_args_supplied;
 	auto body = peel_n_lambdas1(rhs, n_args_used);
-	int size_of_body = nodes_size(body);
+	int size_of_body = simple_size(body);
 
 	if (size_of_body <= size_of_call) return true;
     }
