@@ -481,6 +481,9 @@ int main(int argc,char* argv[])
 	L->let_float_from_let = args["let-float-from-let"].as<bool>();
 	L->case_of_constant = args["case-of-constant"].as<bool>();
 	L->case_of_variable = args["case-of-variable"].as<bool>();
+	L->case_of_case = args["case-of-case"].as<bool>();
+	L->inline_threshhold = args["inline-threshhold"].as<int>();
+	L->keenness = args["keenness"].as<double>();
 	L->beta_reduction = args["beta-reduction"].as<bool>();
 	L->max_iterations = args["simplifier-max-iterations"].as<int>();
 

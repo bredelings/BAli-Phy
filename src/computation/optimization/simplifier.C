@@ -708,10 +708,7 @@ bool boring(const expression_ref& rhs, const inline_context& context)
     return true;
 }
 
-constexpr double keenness = 1.5;
-constexpr double inline_threshhold = 8;
-
-bool small_enough(const expression_ref& rhs, const inline_context& context)
+bool small_enough(const simplifier_options& options,const expression_ref& rhs, const inline_context& context)
 {
     double body_size = simple_size(rhs);
 
@@ -719,16 +716,16 @@ bool small_enough(const expression_ref& rhs, const inline_context& context)
 
     int discounts = 0;
 
-    return (body_size - size_of_call - keenness*discounts <= inline_threshhold);
+    return (body_size - size_of_call - options.keenness*discounts <= options.inline_threshhold);
 }
 
-bool do_inline_multi(const expression_ref& rhs, const inline_context& context)
+bool do_inline_multi(const simplifier_options& options, const expression_ref& rhs, const inline_context& context)
 {
     if (no_size_increase(rhs,context)) return true;
 
     if (boring(rhs,context)) return false;
 
-    return small_enough(rhs,context);
+    return small_enough(options, rhs,context);
 }
 
 bool evaluates_to_bottom(const expression_ref& rhs)
@@ -766,7 +763,7 @@ bool do_inline(const simplifier_options& options, const expression_ref& rhs, con
 
     // MultiSafe
     else if (occur.work_dup == amount_t::Once and occur.code_dup == amount_t::Many)
-	return do_inline_multi(rhs, context);
+	return do_inline_multi(options, rhs, context);
 
     // OnceUnsafe
     else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Once)
@@ -778,7 +775,7 @@ bool do_inline(const simplifier_options& options, const expression_ref& rhs, con
 
     // MultiUnsafe
     else if (occur.work_dup == amount_t::Many and occur.code_dup == amount_t::Many)
-	return whnf_or_bottom(rhs) and do_inline_multi(rhs, context);
+	return whnf_or_bottom(rhs) and do_inline_multi(options, rhs, context);
 
     std::abort();
 }
@@ -1021,7 +1018,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
     //    case (case E of p[i] x[k] -> a[i] x[k]) of q[j] y[k] -> b[j] y[l])    ==>
     //    case E of p[i] x[k] -> case a[i] x[i] of q[j] y[k] -> b[j] y[l]) ==>
     //    let c[j] y[l] = b[j] y[l] in case E of p[i] x[k] -> case a[i] x[i] of q[j] y[k] -> c[j] y[l]).
-    else if (is_case(object))
+    else if (is_case(object) and options.case_of_case)
     {
 	expression_ref object2;
 	vector<expression_ref> patterns2;

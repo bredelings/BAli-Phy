@@ -16,8 +16,11 @@ struct simplifier_options
     bool let_float_from_let = true;
     bool case_of_constant = true;
     bool case_of_variable = true;
+    bool case_of_case = true;
     bool beta_reduction = true;
     int max_iterations = 4;
+    int inline_threshhold = 8;
+    double keenness = 1.5;
 };
 
 class module_loader;
