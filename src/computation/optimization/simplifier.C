@@ -801,15 +801,12 @@ expression_ref consider_inline(const simplifier_options& options, const expressi
 	return E;
 }
 
-
-expression_ref get_new_name(const expression_ref& var, const in_scope_set& bound_vars)
+dummy get_new_name(dummy x, const in_scope_set& bound_vars)
 {
-    dummy x = var.as_<dummy>();
-    
     auto it = bound_vars.find(x);
 
     // If bound_vars doesn't contain x, then no need to change anything.
-    if (it == bound_vars.end()) return var;
+    if (it == bound_vars.end()) return x;
 
     x.index = bound_vars.size();
     while(bound_vars.count(x) and x.index > 0)
@@ -820,12 +817,17 @@ expression_ref get_new_name(const expression_ref& var, const in_scope_set& bound
     return x;
 }
 
+dummy get_new_name(const expression_ref& var, const in_scope_set& bound_vars)
+{
+    return get_new_name(var.as_<dummy>(), bound_vars);
+}
+
 dummy rename_and_bind_var(const expression_ref& var, substitution& S, in_scope_set& bound_vars)
 {
     dummy x = var.as_<dummy>();
     assert(x.code_dup != amount_t::Unknown);
     assert(not is_wildcard(x));
-    auto var2 = get_new_name(var, bound_vars);
+    expression_ref var2 = get_new_name(var, bound_vars);
 
     // 1. If x is NOT in the bound set, then erase x from the substitution (if it's there)
     if (var == var2)
@@ -863,6 +865,69 @@ bool is_identity_case(const expression_ref& object, const vector<expression_ref>
     return true;
 }
 
+
+void get_pattern_dummies(const expression_ref& pattern, set<dummy>& vars)
+{
+    if (is_dummy(pattern))
+    {
+	auto& x = pattern.as_<dummy>();
+	if (not x.is_wildcard())
+	    vars.insert(x);
+    }
+    else if (pattern.size() > 0)
+	for(auto& y: pattern.sub())
+	    get_pattern_dummies(y, vars);
+}
+
+
+// Get a list of patterns.size() names for let-bound variables that don't alias any bound vars  in patterns or patterns2
+vector<dummy> get_body_function_names(in_scope_set& bound_vars, const vector<expression_ref>& patterns, const vector<expression_ref>& patterns2)
+{
+    vector<dummy> lifted_names;
+
+    int orig_size = bound_vars.size();
+
+    // 1. Get the list of dummies to avoid
+    set<dummy> avoid;
+    for(auto& pattern: patterns)
+	get_pattern_dummies(pattern, avoid);
+    for(auto& pattern: patterns2)
+	get_pattern_dummies(pattern, avoid);
+
+    // 2. Bind the unbound ones into scope
+    set<dummy> added;
+    for(auto& x:avoid)
+	if (not bound_vars.count(x))
+	{
+	    added.insert(x);
+	    bind_var(bound_vars, x, {});
+	}
+
+    // 3. Make some new names, putting them into scope as we go.
+    dummy z("_cc");
+    z.work_dup = amount_t::Many;
+    z.code_dup = amount_t::Many;
+    for(int i=0;i<patterns.size();i++)
+    {
+	z = get_new_name(z, bound_vars);
+	lifted_names.push_back(z);
+	bind_var(bound_vars, z, {});
+    }
+    assert(bound_vars.size() == orig_size + added.size() + patterns.size());
+
+    // 4. Unbind the new names from scope
+    for(int i=0;i<lifted_names.size();i++)
+	unbind_var(bound_vars, lifted_names[i]);
+
+    // 5. Unbind the names from the patterns from scope too.
+    for(auto& var: added)
+	unbind_var(bound_vars, var);
+
+    // 6. The scope size should now be the same size as when we started.
+    assert(bound_vars.size() == orig_size);
+
+    return lifted_names;
+}
 
 
 // case E of alts.  Here E has been simplified, but the alts have not.
@@ -956,6 +1021,61 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
     //    case (case E of p[i] x[k] -> a[i] x[k]) of q[j] y[k] -> b[j] y[l])    ==>
     //    case E of p[i] x[k] -> case a[i] x[i] of q[j] y[k] -> b[j] y[l]) ==>
     //    let c[j] y[l] = b[j] y[l] in case E of p[i] x[k] -> case a[i] x[i] of q[j] y[k] -> c[j] y[l]).
+    else if (is_case(object))
+    {
+	expression_ref object2;
+	vector<expression_ref> patterns2;
+	vector<expression_ref> bodies2;
+	parse_case_expression(object, object2, patterns2, bodies2);
+
+        // 1. Find names for the lifted case bodies.
+	vector<dummy> lifted_names = get_body_function_names(bound_vars, patterns, patterns2);
+
+	// 2. Lift case bodies into let-bound functions, and replace with calls to these functions.
+	for(int i=0;i<patterns.size();i++)
+	{
+	    auto func = lifted_names[i];
+	    auto func_body = bodies[i];
+	    expression_ref func_call = func;
+
+	    // 2.1 For each USED pattern variable,
+	    auto process_dummy =
+		[&func_body,&func_call](const expression_ref& var)
+		{
+		    auto& x = var.as_<dummy>();
+		    if (not x.is_wildcard() and x.code_dup != amount_t::None)
+		    {
+			func_body = lambda_quantify(x, func_body);
+			func_call = (func_call, x);
+		    }
+		};
+
+	    if (is_dummy(patterns[i]))
+		process_dummy(patterns[i]);
+	    else
+		for(int j=0;j<patterns[i].size();j++)
+		    process_dummy(patterns[i].sub()[j]);
+
+	    decls.push_back({func,func_body});
+	    bodies[i] = func_call;
+	}
+
+	// OK, it should not be too hard to make a version of this that uses ALL the pattern variables.
+	// But how do we know which ones are never used in an alt body?
+	// Actually the unused variables should be marked with NEVER usage information.
+
+	// 3. The actual case-of-case transformation.
+	//
+	//      case (case object2 of patterns2 -> bodies2) of patterns => bodies
+	//                         to
+	//      case object2 of patterns2 -> case bodies2 of patterns => bodies
+        //
+	auto alts = make_alts(patterns,bodies);
+	for(int i=0;i<patterns2.size();i++)
+	    bodies2[i] = make_case_expression(bodies2[i],alts);
+
+	return let_expression(decls, make_case_expression(object2,patterns2,bodies2));
+    }
 
     return let_expression(decls,make_case_expression(object, patterns, bodies));
 }
