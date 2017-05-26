@@ -73,23 +73,44 @@ expression_ref simple_case_expression(const expression_ref& T, const vector<expr
     return E;
 }
 
-expression_ref make_case_expression(const expression_ref& object, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+expression_ref make_alt(const expression_ref& pattern, const expression_ref& body)
+{
+    assert(pattern);
+    assert(body);
+
+    object_ptr<expression> alt = new expression(AST_node("alt"));
+    alt->sub.push_back(pattern);
+    alt->sub.push_back(body);
+    return alt;
+}
+
+expression_ref make_alts(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
     assert(patterns.size() == bodies.size());
     assert(not patterns.empty());
 
-    expression_ref alts = AST_node("alts");
+    object_ptr<expression> alts = new expression(AST_node("alts"));
     for(int i=0;i<patterns.size();i++)
-    {
-	expression_ref alt = AST_node("alt");
-	alt = alt + patterns[i] + bodies[i];
-	alts = alts + alt;
-    }
+	alts->sub.push_back(make_alt(patterns[i],bodies[i]));
+    return alts;
+}
 
-    expression_ref E = Case();
-    E = E + object + alts;
+
+expression_ref make_case_expression(const expression_ref& object, const expression_ref& alts)
+{
+    assert(object);
+    assert(alts);
+
+    object_ptr<expression> E = new expression(Case());
+    E->sub.push_back(object);
+    E->sub.push_back(alts);
 
     return E;
+}
+
+expression_ref make_case_expression(const expression_ref& object, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+{
+    return make_case_expression(object,make_alts(patterns,bodies));
 }
 
 int find_object(const vector<expression_ref>& v, const expression_ref& E)

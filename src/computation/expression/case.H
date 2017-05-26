@@ -8,7 +8,11 @@ expression_ref case_expression(const expression_ref& T, const expression_ref& pa
 
 expression_ref case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
 
+expression_ref make_alts(const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
+
 expression_ref make_case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
+
+expression_ref make_case_expression(const expression_ref& object, const expression_ref& alts);
 
 bool parse_case_expression(const expression_ref& E, expression_ref& T, std::vector<expression_ref>& patterns, std::vector<expression_ref>& bodies);
 
