@@ -390,13 +390,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 
 	// If its not a function binding, accept it as is, and continue.
 	if (v[i].sub()[0].is_a<dummy>())
-	    decls.push_back(new expression(v[i].head(),
-					   {
-					       v[i].sub()[0],
-						   v[i].sub()[1].sub()[0]
-						   }
-				)
-		);
+	    decls.push_back({v[i].head(), { v[i].sub()[0], v[i].sub()[1].sub()[0] } } );
 	else if (is_AST(v[i].sub()[0], "funlhs1"))
 	{
 	    vector<vector<expression_ref> > patterns;
@@ -416,12 +410,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 		if (patterns.back().size() != patterns.front().size())
 		    throw myexception()<<"Function '"<<name<<"' has different numbers of arguments!";
 	    }
-	    decls.push_back(new expression(AST_node("Decl"),
-					   {dummy(name),
-						   def_function(patterns,bodies)
-						   }
-				)
-		);
+	    decls.push_back({AST_node("Decl"), {dummy(name), def_function(patterns,bodies) } } );
 
 	    // skip the other bindings for this function
 	    i += (patterns.size()-1);
@@ -566,7 +555,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		decls = new_decls;
 	    }
 
-	    return new expression{E.head(),decls};
+	    return {E.head(),decls};
 	}
 	else if (n.type == "Decl")
 	{
@@ -581,7 +570,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 		for(auto& e: v)
 		    e = desugar(m, e, bound2);
 
-		return new expression(E.head(),v);
+		return {E.head(),v};
 	    }
 
 	    // Is this a set of pattern bindings?
@@ -800,7 +789,10 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	    for(auto& e: v)
 		e = desugar(m, e, bound);
 
-	    return new expression{ constructor(S.name,S.arity),v };
+	    if (v.size())
+		return { constructor(S.name,S.arity), v };
+	    else
+		return { constructor(S.name,S.arity) };
 	}
 	else if (n.type == "If")
 	{
@@ -941,7 +933,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     for(auto& e: v)
 	e = desugar(m, e, bound);
     if (E.size())
-	return new expression(E.head(),v);
+	return {E.head(),v};
     else
 	return E;
 }
