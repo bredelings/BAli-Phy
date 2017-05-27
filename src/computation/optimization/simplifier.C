@@ -84,7 +84,7 @@ int simple_size(const expression_ref& E)
 	int size = 1 + simple_size(E.sub()[1]);
 
 	for(auto& decl: E.sub()[0].sub())
-	    size += simple_size(E.sub()[1]);
+	    size += simple_size(decl.sub()[1]);
 
 	return size;
     }
