@@ -1055,6 +1055,9 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	// 2. Lift case bodies into let-bound functions, and replace the bodies with calls to these functions.
 	for(int i=0;i<patterns.size();i++)
 	{
+	    // Don't both factoring out trivial expressions
+	    if (is_trivial(patterns[i])) continue;
+
 	    vector<dummy> used_vars = get_used_vars(patterns[i]);
 
 	    auto f = lifted_names[i];
