@@ -1,1 +1,1 @@
-size = 1   Test.f = \#1 -> case #1 of {x:xs -> xs}
+size = 2   Test.f = \#1 -> case #1 of {x:xs -> xs,[] -> []}

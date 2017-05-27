@@ -951,6 +951,34 @@ vector<dummy> get_used_vars(const expression_ref& pattern)
     return used;
 }
 
+bool has_used_vars(const expression_ref& pattern)
+{
+    if (is_used_var(pattern))
+	return true;
+    else if (pattern.is_expression())
+	for(auto& var: pattern.sub())
+	    if (is_used_var(var.as_<dummy>()))
+		return true;
+
+    return false;
+}
+
+// Check if all case branches refer to the same constant expression that does not reference any pattern variables.
+bool is_constant_case(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+{
+    return (patterns.size() == 1 and not has_used_vars(patterns[0]));
+
+    // This might be too expensive.
+    // FIXME - handle cases where its trivial, a constructor or builtin application, or a variable application to trivial variables.
+    assert(patterns.size() == bodies.size());
+    for(int i=0;i<patterns.size();i++)
+    {
+	if (has_used_vars(patterns[i])) return false;
+	if (i > 0 and bodies[i] != bodies[0]) return false;
+    }
+    return true;
+}
+
 // case E of alts.  Here E has been simplified, but the alts have not.
 expression_ref rebuild_case(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
@@ -962,6 +990,15 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 
     auto decls = strip_let(object);
     bind_decls(bound_vars, decls);
+
+    // NOTE: Any thing that relies on occurrence info for pattern vars should be done here, before
+    //       we simplify alternatives, because that simplification can introduce new uses of the pattern vars.
+    // Example: case #1 of {x:xs -> case #1 of {y:ys -> ys}} ==> case #1 of {x:xs -> xs} 
+    //       We set #1=x:xs in the alternative, which means that a reference to #1 can reference xs.
+
+    // 0. If all alternatives are the same expression that doesn't depend on any bound pattern variables.
+    if (is_constant_case(patterns,bodies))
+	return simplify(options, bodies[0], S, bound_vars, context);
 
     // 1. Simplify each alternative
     for(int i=0;i<L;i++)
