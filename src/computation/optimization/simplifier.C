@@ -926,6 +926,30 @@ vector<dummy> get_body_function_names(in_scope_set& bound_vars, const vector<exp
     return lifted_names;
 }
 
+bool is_used_var(const dummy& x)
+{
+    return (not x.is_wildcard() and x.code_dup != amount_t::None);
+}
+
+bool is_used_var(const expression_ref& x)
+{
+    if (not is_dummy(x)) return false;
+    return is_used_var(x.as_<dummy>());
+}
+
+vector<dummy> get_used_vars(const expression_ref& pattern)
+{
+    vector<dummy> used;
+
+    if (is_used_var(pattern))
+	used.push_back(pattern.as_<dummy>());
+    else if (pattern.is_expression())
+	for(auto& var: pattern.sub())
+	    if (is_used_var(var.as_<dummy>()))
+		used.push_back(var.as_<dummy>());
+
+    return used;
+}
 
 // case E of alts.  Here E has been simplified, but the alts have not.
 expression_ref rebuild_case(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
@@ -983,9 +1007,11 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 
 	unbind_decls(bound_vars, pat_decls);
     }
+
     unbind_decls(bound_vars, decls);
 
     // 6. Take a specific branch if the object is a constant
+    expression_ref E2;
     if (is_WHNF(object))
     {
 	for(int i=0; i<L; i++)
@@ -993,7 +1019,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	    if (is_dummy(patterns[i]))
 	    {
 		assert(is_wildcard(patterns[i]));
-		return let_expression(decls, bodies[i]);
+		E2 = let_expression(decls, bodies[i]);
 	    }
 	    else if (patterns[i].head() == object.head())
 	    {
@@ -1005,19 +1031,17 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 		    assert(is_dummy(pat_var) and not is_wildcard(pat_var));
 		    decls.push_back({pat_var.as_<dummy>(), obj_var});
 		}
-		return let_expression(decls, bodies[i]);
+		E2 =  bodies[i];
 	    }
 	}
-	throw myexception()<<"Case object doesn't many any alternative in '"<<make_case_expression(object, patterns, bodies)<<"'";
+	if (not E2)
+	    throw myexception()<<"Case object doesn't many any alternative in '"<<make_case_expression(object, patterns, bodies)<<"'";
     }
     // 7. If the case is an identity transformation
-    // Hmmm... this is complicated because leaving out the default could cause a match failure, which this transformation would eliminate.
+    // Hmmm... this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
     else if (is_identity_case(object, patterns, bodies))
-	return let_expression(decls, object);
+	E2 = object;
     // 8. case-of-case
-    //    case (case E of p[i] x[k] -> a[i] x[k]) of q[j] y[k] -> b[j] y[l])    ==>
-    //    case E of p[i] x[k] -> case a[i] x[i] of q[j] y[k] -> b[j] y[l]) ==>
-    //    let c[j] y[l] = b[j] y[l] in case E of p[i] x[k] -> case a[i] x[i] of q[j] y[k] -> c[j] y[l]).
     else if (is_case(object) and options.case_of_case)
     {
 	expression_ref object2;
@@ -1028,38 +1052,23 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
         // 1. Find names for the lifted case bodies.
 	vector<dummy> lifted_names = get_body_function_names(bound_vars, patterns, patterns2);
 
-	// 2. Lift case bodies into let-bound functions, and replace with calls to these functions.
+	// 2. Lift case bodies into let-bound functions, and replace the bodies with calls to these functions.
 	for(int i=0;i<patterns.size();i++)
 	{
-	    auto func = lifted_names[i];
-	    auto func_body = bodies[i];
-	    expression_ref func_call = func;
+	    vector<dummy> used_vars = get_used_vars(patterns[i]);
 
-	    // 2.1 For each USED pattern variable,
-	    auto process_dummy =
-		[&func_body,&func_call](const expression_ref& var)
-		{
-		    auto& x = var.as_<dummy>();
-		    if (not x.is_wildcard() and x.code_dup != amount_t::None)
-		    {
-			func_body = lambda_quantify(x, func_body);
-			func_call = (func_call, x);
-		    }
-		};
+	    auto f = lifted_names[i];
+	    expression_ref f_body = bodies[i];
+	    expression_ref f_call = f;
+	    for(int j=0;j<used_vars.size();j++)
+	    {
+		f_call = (f_call,used_vars[j]);
+		f_body = lambda_quantify(used_vars[used_vars.size()-1-j],f_body);
+	    }
 
-	    if (is_dummy(patterns[i]))
-		process_dummy(patterns[i]);
-	    else
-		for(int j=0;j<patterns[i].size();j++)
-		    process_dummy(patterns[i].sub()[j]);
-
-	    decls.push_back({func,func_body});
-	    bodies[i] = func_call;
+	    decls.push_back({f,f_body});
+	    bodies[i] = f_call;
 	}
-
-	// OK, it should not be too hard to make a version of this that uses ALL the pattern variables.
-	// But how do we know which ones are never used in an alt body?
-	// Actually the unused variables should be marked with NEVER usage information.
 
 	// 3. The actual case-of-case transformation.
 	//
@@ -1071,10 +1080,13 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	for(int i=0;i<patterns2.size();i++)
 	    bodies2[i] = make_case_expression(bodies2[i],alts);
 
-	return let_expression(decls, make_case_expression(object2,patterns2,bodies2));
+	E2 = make_case_expression(object2,patterns2,bodies2);
     }
 
-    return let_expression(decls,make_case_expression(object, patterns, bodies));
+    if (not E2)
+	return let_expression(decls, make_case_expression(object, patterns, bodies));
+    else
+	return let_expression(decls, E2);
 }
 
 // @ E x1 .. xn.  The E and the x[i] have already been simplified.
