@@ -1008,8 +1008,6 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	unbind_decls(bound_vars, pat_decls);
     }
 
-    unbind_decls(bound_vars, decls);
-
     // 6. Take a specific branch if the object is a constant
     expression_ref E2;
     if (is_WHNF(object))
@@ -1019,7 +1017,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	    if (is_dummy(patterns[i]))
 	    {
 		assert(is_wildcard(patterns[i]));
-		E2 = let_expression(decls, bodies[i]);
+		E2 = bodies[i];
 	    }
 	    else if (patterns[i].head() == object.head())
 	    {
@@ -1029,7 +1027,9 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 		    auto pat_var = patterns[i].sub()[j];
 		    assert(is_dummy(obj_var) and not is_wildcard(obj_var));
 		    assert(is_dummy(pat_var) and not is_wildcard(pat_var));
-		    decls.push_back({pat_var.as_<dummy>(), obj_var});
+		    auto& x = pat_var.as_<dummy>();
+		    decls.push_back({x, obj_var});
+		    bind_var(bound_vars, x, obj_var);
 		}
 		E2 =  bodies[i];
 	    }
@@ -1067,6 +1067,8 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	    }
 
 	    decls.push_back({f,f_body});
+	    bind_var(bound_vars, f, f_body);
+
 	    bodies[i] = f_call;
 	}
 
@@ -1082,6 +1084,8 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 
 	E2 = make_case_expression(object2,patterns2,bodies2);
     }
+
+    unbind_decls(bound_vars, decls);
 
     if (not E2)
 	return let_expression(decls, make_case_expression(object, patterns, bodies));
