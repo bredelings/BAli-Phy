@@ -1,0 +1,6 @@
+size = 1   Test.#0 = 'f'
+size = 1   Test.#5 = []
+size = 1   Test.#6 = Test.#0:Test.#5
+size = 2   Test.fail2#0 = Prelude.error Test.#6
+size = 1   Test.#4 = []
+size = 9   Test.f = \#1 #2 -> let {fail1 = case #1 of {[] -> Test.fail2#0,x:xs -> case #2 of {[] -> x:Test.#4,y:ys -> Test.fail2#0}}} in case #1 of {x:xs -> case #2 of {y:ys -> Prelude.++ xs ys,_ -> fail1},_ -> fail1}
