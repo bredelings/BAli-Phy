@@ -730,6 +730,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
 
     ###### What file should we show for MDS?
     my $MDS_figure;
+    my $MDS_figure_3d;
     my $title;
     if (-e "Results/tree-1-2-3.svg")
     {
@@ -739,6 +740,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     elsif (-e "Results/tree-1-2.svg")
     {
 	$MDS_figure = "tree-1-2.svg";
+	$MDS_figure_3d = "tree-1-2.points";
 	$title = "2 chains";
     }
     elsif (-e "Results/tree1.svg")
@@ -753,6 +755,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     $section .= '<td style="width:40%;vertical-align:top">';
     $section .= "<h4 style=\"text-align:center\">Projection of RF distances for $title</h4>";
     $section .= html_svg($MDS_figure,"90%","",[]) if (defined($MDS_figure));
+    $section .= "<a href='${MDS_figure_3d}.html'>3D</a>";
     $section .= '</td>';
     
     $section .= '<td style="width:40%;vertical-align:top">';
@@ -2573,12 +2576,9 @@ sub tree_MDS
 
 	my $script3d = find_in_path("tree-plot2-3D.R");
 #	print "3d script is at '${script3d}'\n";
-	my $message = Rexec($script3d, "$L1 $L2 $matfile");
+	my $point_string = Rexec($script3d, "$L1 $L2 $matfile");
 
-	# compute x3d file for 3d mixing plot
-	open FILE, ">Results/tree-1-2.points";
-	print FILE &gen_x3d_of_mds($message);
-	close FILE;
+	&write_x3d_file("Results/tree-1-2.points.x3d", $point_string);
     }
 
     elsif ($#tree_files+1 >= 3)
@@ -2640,13 +2640,42 @@ sub exec_result
 }
 
 
+sub write_x3d_file
+{
+    my $filename = shift;
+    my $point_string = shift;
+
+    open FILE, ">$filename";
+    print FILE &gen_x3d_of_mds($point_string);
+    close FILE;
+
+    open FILE, ">Results/tree-1-2.points.html";
+    print FILE "<html>
+  <head>
+    <title>MDS 3D Plot</title>
+    <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'> </script>
+    <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
+    <style>
+      x3d { border:2px solid darkorange; }
+    </style>
+  </head>
+  <body>
+    <x3d width='1000px' height='1000px'>
+      <scene>
+	<inline url='tree-1-2.points.x3d'> </inline>
+      </scene>
+    </x3d>
+  </body>
+</html>
+";
+    close FILE;
+}
+
 sub gen_x3d_of_mds
 {
     my $point_string = shift;
 
     my @points;
-    my $G1 = 0;
-    my $G2 = 0;
     my @x = ();
     my @y = ();
     my @z = ();
@@ -2655,8 +2684,6 @@ sub gen_x3d_of_mds
     {
 	chomp $line;
 	my $point = [split "\t", $line];
-	$G1++ if (${$point}[3] == 1);
-	$G2++ if (${$point}[3] == 2);
 	push @x, ${$point}[0];
 	push @y, ${$point}[1];
 	push @z, ${$point}[2];
@@ -2685,8 +2712,9 @@ sub gen_x3d_of_mds
 	my $color;
 	my $size = 0.15;
 	my $scale = "$size $size $size";
-	$color = "1 0 0" if ($g == 1);
-	$color = "0 0 1" if ($g == 2);
+	$color = "1 0 0" if (defined($g) && $g == 1);
+	$color = "0 0 1" if (defined($g) && $g == 2);
+	$color = "0 1 0" if (defined($g) && $g == 3);
 	$x3d .= "<transform translation='$x $y $z' scale='$scale'><shape><appearance><material diffuseColor='$color'></material></appearance><box></box></shape></transform>";
 	$x3d .= "\n";
     }
