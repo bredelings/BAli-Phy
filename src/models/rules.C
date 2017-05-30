@@ -13,6 +13,20 @@ using boost::property_tree::ptree;
 // HARD TODO: --help implicit value?
 //   Also, say which parameter and function if we have an argument type mismatch.
 
+// TODO: * Add 01 alphabets.
+//       * HARD: Allow loading 01234 character data.
+//       * Condition on columns not being invariant.
+//         - this only makes sense for constant alignments.
+//         - perhaps each column should kind of be a separate partition.
+//         - this isn't SEQUENCE data.
+//         - but manuscripts ARE sequences
+//         - should we handle insertions & deletions that way?
+//       * Q: how to add the extra term?
+
+// TODO: Q: Relatedly, how much slowdown does the alignment prior multiplication tree cause?
+
+// TODO: allow reasonable exporting, to break up SModel.hs into submodules that are exported from it.
+
 // TODO: change Scale and *T (branch lengths) into an array, and log them that way.
 
 // TODO: implement +INV by averaging the frequencies of other models.
