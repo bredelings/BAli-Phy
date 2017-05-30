@@ -2560,9 +2560,7 @@ sub tree_MDS
 
 	my $script3d = find_in_path("tree-plot1-3D.R");
 	die "can't find script $script!" if (!defined($script));
-	print "script = '${script3d}'";
 	my $point_string = Rexec($script3d, "$matfile");
-	print "point string = ${point_string}";
 	&write_x3d_file("Results","tree-3D1-${i}.points", $point_string);
 
 	$i++;
