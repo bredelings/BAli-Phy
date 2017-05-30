@@ -2717,11 +2717,14 @@ sub gen_x3d_of_mds
     foreach my $point (@points)
     {
 	my $x = ${$point}[0];
+	$x = ($x-$xmin)/$xw*5.0 - 2.5;
 	my $y = ${$point}[1];
+	$y = ($y-$ymin)/$yw*5.0 - 2.5;
 	my $z = ${$point}[2];
+	$z = ($z-$zmin)/$zw*5.0 - 2.5;
 	my $g = ${$point}[3];
 	my $color;
-	my $size = 0.15;
+	my $size = 0.04;
 	my $scale = "$size $size $size";
 	$color = "1 0 0";
 	$color = "1 0 0" if (defined($g) && $g == 1);
