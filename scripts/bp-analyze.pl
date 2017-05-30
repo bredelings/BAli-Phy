@@ -2730,7 +2730,7 @@ sub gen_x3d_of_mds
 	$color = "1 0 0" if (defined($g) && $g == 1);
 	$color = "0 0 1" if (defined($g) && $g == 2);
 	$color = "0 1 0" if (defined($g) && $g == 3);
-	$x3d .= "<transform translation='$x $y $z' scale='$scale'><shape><appearance><material diffuseColor='$color'></material></appearance><box></box></shape></transform>";
+	$x3d .= "<transform translation='$x $y $z' scale='$scale'><shape><appearance><material diffuseColor='$color'></material></appearance><sphere></sphere></shape></transform>";
 	$x3d .= "\n";
     }
 
