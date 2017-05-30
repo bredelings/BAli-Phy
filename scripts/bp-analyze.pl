@@ -9,7 +9,6 @@
 # !! How to select alignments from a given temperature level?
 #    Annotate alignments with information... ?
 
-
 # 1. Histogram for distribution of each statistic.
 # 2. alignment properties (#indels, etc)
 # 3. alphabet of each partition
@@ -746,6 +745,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     elsif (-e "Results/tree1.svg")
     {
 	$MDS_figure = "tree1.svg";
+	$MDS_figure_3d = "tree-3D1-1.points";
 	$title = "1 chain";
     }
 
@@ -755,7 +755,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     $section .= '<td style="width:40%;vertical-align:top">';
     $section .= "<h4 style=\"text-align:center\">Projection of RF distances for $title</h4>";
     $section .= html_svg($MDS_figure,"90%","",[]) if (defined($MDS_figure));
-    $section .= "<a href='${MDS_figure_3d}.html'>3D</a>";
+    $section .= "<a href='file:${MDS_figure_3d}.html'>3D</a>";
     $section .= '</td>';
     
     $section .= '<td style="width:40%;vertical-align:top">';
@@ -2557,6 +2557,14 @@ sub tree_MDS
 	my $outfile = "Results/tree${i}.svg";
 	exec_show("trees-distances matrix --max=300 $tree_file > $matfile");
 	Rexec($script,"$matfile $outfile");
+
+	my $script3d = find_in_path("tree-plot1-3D.R");
+	die "can't find script $script!" if (!defined($script));
+	print "script = '${script3d}'";
+	my $point_string = Rexec($script3d, "$matfile");
+	print "point string = ${point_string}";
+	&write_x3d_file("Results","tree-3D1-${i}.points", $point_string);
+
 	$i++;
     }
 
@@ -2578,7 +2586,7 @@ sub tree_MDS
 #	print "3d script is at '${script3d}'\n";
 	my $point_string = Rexec($script3d, "$L1 $L2 $matfile");
 
-	&write_x3d_file("Results/tree-1-2.points.x3d", $point_string);
+	&write_x3d_file("Results","tree-1-2.points", $point_string);
     }
 
     elsif ($#tree_files+1 >= 3)
@@ -2642,15 +2650,19 @@ sub exec_result
 
 sub write_x3d_file
 {
+    my $dir = shift;
     my $filename = shift;
     my $point_string = shift;
 
-    open FILE, ">$filename";
+    $dir = "$dir/" if ("$dir");
+    
+    open FILE, ">${dir}${filename}.x3d";
     print FILE &gen_x3d_of_mds($point_string);
     close FILE;
 
-    open FILE, ">Results/tree-1-2.points.html";
-    print FILE "<html>
+    open FILE, ">${dir}${filename}.html";
+    print FILE 
+"<html>
   <head>
     <title>MDS 3D Plot</title>
     <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'> </script>
@@ -2662,7 +2674,7 @@ sub write_x3d_file
   <body>
     <x3d width='1000px' height='1000px'>
       <scene>
-	<inline url='tree-1-2.points.x3d'> </inline>
+	<inline url='${filename}.x3d'> </inline>
       </scene>
     </x3d>
   </body>
@@ -2712,6 +2724,7 @@ sub gen_x3d_of_mds
 	my $color;
 	my $size = 0.15;
 	my $scale = "$size $size $size";
+	$color = "1 0 0";
 	$color = "1 0 0" if (defined($g) && $g == 1);
 	$color = "0 0 1" if (defined($g) && $g == 2);
 	$color = "0 1 0" if (defined($g) && $g == 3);
