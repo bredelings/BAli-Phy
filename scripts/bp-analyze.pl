@@ -966,8 +966,9 @@ sub parse_command_line
 	    do_cleanup();
 	    exit;
 	}
-	elsif ($arg =~ /--skip=(.+)/) {
+	elsif ($arg =~ /--skip=(.*)/) {
 	    $burnin = $1;
+	    die "Empty argument to --skip=<arg>!" if (!defined($burnin) || $burnin eq "");
 	}
 	elsif ($arg =~ /--verbose/) {
 	    $verbose = 1;
@@ -2555,7 +2556,7 @@ sub tree_MDS
 	my $script = find_in_path("tree-plot1.R");
 	my $matfile = "Results/tree${i}.M";
 	my $outfile = "Results/tree${i}.svg";
-	exec_show("trees-distances matrix --max=300 $tree_file > $matfile");
+	exec_show("trees-distances matrix --max=300 $skip $tree_file > $matfile");
 	Rexec($script,"$matfile $outfile");
 
 	my $script3d = find_in_path("tree-plot1-3D.R");
@@ -2577,7 +2578,7 @@ sub tree_MDS
 	my $matfile = "Results/tree-1-2.M";
 	my $outfile = "Results/tree-1-2.svg";
 #	print "L1 = $L1  L2 = $L2\n";
-	exec_show("trees-distances matrix --max=$N $tf1 $tf2 > $matfile");
+	exec_show("trees-distances matrix --max=$N $skip $tf1 $tf2 > $matfile");
 	Rexec($script,"$L1 $L2 $matfile $outfile");
 
 	my $script3d = find_in_path("tree-plot2-3D.R");
@@ -2600,7 +2601,7 @@ sub tree_MDS
 	my $matfile = "Results/tree-1-2-3.M";
 	my $outfile = "Results/tree-1-2-3.svg";
 #	print "L1 = $L1  L2 = $L2\n";
-	exec_show("trees-distances matrix --max=$N $tf1 $tf2 $tf3 > $matfile");
+	exec_show("trees-distances matrix --max=$N $skip $tf1 $tf2 $tf3 > $matfile");
 	Rexec($script,"$L1 $L2 $L3 $matfile $outfile");
     }
 
