@@ -21,7 +21,6 @@
 #include "read-trees.H"
 #include <fstream>
 #include "tree-dist.H"
-#include "io.H"
 
 using std::vector;
 using std::valarray;
@@ -93,7 +92,7 @@ namespace trees_format
     bool Newick::next_tree_(Tree& T,int& r)
     {
 	if (not line.size())
-	    while (portable_getline(*file,line) and not line.size());
+	    while (portable_getline(fileref,line) and not line.size());
 	if (not line.size()) return false;
 	try {
 	    r = T.parse_with_names(line,leaf_names);
@@ -101,7 +100,7 @@ namespace trees_format
 	catch (std::exception& e) {
 	    cerr<<" Error! "<<e.what()<<endl;
 	    cerr<<" Quitting read of tree file."<<endl;
-	    file->setstate(std::ios::badbit);
+	    fileref.setstate(std::ios::badbit);
 	    return false;
 	}
 	line.clear();
@@ -115,21 +114,21 @@ namespace trees_format
 	    line.clear();
 	    n--;
 	}
-	for(int i=0;i<n and *file;i++)
-	    portable_getline(*file,line);
+	for(int i=0;i<n and fileref;i++)
+	    portable_getline(fileref,line);
 	line.clear();
 	return not done();
     }
 
     bool Newick::done() const
     {
-	return (not *file);
+	return (not fileref);
     }
 
     void Newick::initialize()
     {
 	SequenceTree T;
-	portable_getline(*file,line);
+	portable_getline(fileref,line);
 	T.parse(line);
 	leaf_names = T.get_leaf_labels();
 	std::sort(leaf_names.begin(),leaf_names.end());
@@ -138,20 +137,21 @@ namespace trees_format
     }
 
     Newick::Newick(const std::string& filename)
-	:file(new checked_ifstream(filename,"Newick tree file"))
+	:fileptr(new checked_ifstream(filename,"Newick tree file")),
+	 fileref(*fileptr)
+	 
     {
 	initialize();
     }
   
     Newick::Newick(istream& i)
-	:file(&i)
+	:fileref(i)
     {
 	initialize();
     }
 
     Newick::~Newick()
     {
-	delete file;
     }
 
     bool NEXUS::skip(int n)
@@ -160,15 +160,15 @@ namespace trees_format
 	    line.clear();
 	    n--;
 	}
-	for(int i=0;i<n and *file;i++)
-	    getline(*file,line,';');
+	for(int i=0;i<n and fileref;i++)
+	    getline(fileref, line, ';');
 	line.clear();
 	return not done();
     }
 
     bool NEXUS::done() const
     {
-	return (not *file);
+	return (not fileref);
     }
 
     istream& get_NEXUS_command(istream& file,std::string& s)
@@ -275,14 +275,14 @@ namespace trees_format
     bool NEXUS::next_tree_(Tree& T,int& r)
     {
 	if (not line.size())
-	    get_NEXUS_command(*file,line);
+	    get_NEXUS_command(fileref,line);
 	if (not line.size()) return false;
 	try {
 	    string word;
 	    int pos=0;
 	    get_word_NEXUS(word,pos,line);
 	    if (uppercase(word) == "END" or uppercase(word) == "ENDBLOCK") {
-		file->setstate(std::ios::badbit);
+		fileref.setstate(std::ios::badbit);
 		return false;
 	    }
 	    get_word_NEXUS(word,pos,line);
@@ -302,7 +302,7 @@ namespace trees_format
 	catch (std::exception& e) {
 	    cerr<<" Error! "<<e.what()<<endl;
 	    cerr<<" Quitting read of tree file."<<endl;
-	    file->setstate(std::ios::badbit);
+	    fileref.setstate(std::ios::badbit);
 	    return false;
 	}
 	line.clear();
@@ -332,7 +332,7 @@ namespace trees_format
     void NEXUS::initialize()
     {
 	// Check #NEXUS
-	portable_getline(*file,line);
+	portable_getline(fileref,line);
 	if (line != "#NEXUS")
 	    throw myexception()<<"NEXUS trees reader: File does not begin with '#NEXUS' and may not be a NEXUS file.";
   
@@ -342,7 +342,7 @@ namespace trees_format
 
 	bool in_trees_block=false;
 
-	while(get_NEXUS_command(*file,line))
+	while(get_NEXUS_command(fileref,line))
 	{
 	    //    cerr<<"line: "<<line<<endl;
 	    int pos=0;
@@ -386,27 +386,29 @@ namespace trees_format
 		catch (std::exception& e) {
 		    cerr<<" Error! "<<e.what()<<endl;
 		    cerr<<" Quitting read of tree file."<<endl;
-		    file->setstate(std::ios::badbit);
+		    fileref.setstate(std::ios::badbit);
 		}
 	    }
 	}
     }
 
     NEXUS::NEXUS(const std::string& filename)
-	:file(new checked_ifstream(filename,"NEXUS tree file")),translate(false)
+	:fileptr(new checked_ifstream(filename,"NEXUS tree file")),
+	 fileref(*fileptr),
+	 translate(false)
     {
 	initialize();
     }
 
     NEXUS::NEXUS(istream& f)
-	:file(&f),translate(false)
+	:fileref(f),
+	 translate(false)
     {
 	initialize();
     }
 
     NEXUS::~NEXUS()
     {
-	delete file;
     }
 
     bool wrapped_reader_t::next_tree_(Tree& T,int& r) {

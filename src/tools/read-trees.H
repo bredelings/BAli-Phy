@@ -29,6 +29,7 @@
 
 #include <map>
 
+#include "io.H"
 #include "tree/tree.H"
 #include "tree/sequencetree.H"
 
@@ -58,7 +59,8 @@ namespace trees_format {
     class Newick: public reader_t
     {
 	std::string line;
-	std::istream* file;
+	std::shared_ptr<checked_ifstream> fileptr;
+	std::istream& fileref;
 
 	void initialize();
 
@@ -77,7 +79,8 @@ namespace trees_format {
     class NEXUS: public reader_t
     {
 	std::string line;
-	std::istream* file;
+	std::shared_ptr<checked_ifstream> fileptr;
+	std::istream& fileref;
 	bool translate;
 
 	void parse_translate_command(const std::string&);
