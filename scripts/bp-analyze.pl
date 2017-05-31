@@ -2573,8 +2573,8 @@ sub tree_MDS
 	my $tf1 = $tree_files[0];
 	my $tf2 = $tree_files[1];
 	my $N = 400;
-	my $L1 = min([$N, get_n_lines($tf1)]);
-	my $L2 = min([$N, get_n_lines($tf2)]);
+	my $L1 = min([$N, get_n_lines($tf1)-$burnin]);
+	my $L2 = min([$N, get_n_lines($tf2)-$burnin]);
 	my $matfile = "Results/tree-1-2.M";
 	my $outfile = "Results/tree-1-2.svg";
 #	print "L1 = $L1  L2 = $L2\n";
@@ -2595,9 +2595,9 @@ sub tree_MDS
 	my $tf2 = $tree_files[1];
 	my $tf3 = $tree_files[2];
 	my $N = 400;
-	my $L1 = min([$N, get_n_lines($tf1)]);
-	my $L2 = min([$N, get_n_lines($tf2)]);
-	my $L3 = min([$N, get_n_lines($tf3)]);
+	my $L1 = min([$N, get_n_lines($tf1)-$burnin]);
+	my $L2 = min([$N, get_n_lines($tf2)-$burnin]);
+	my $L3 = min([$N, get_n_lines($tf3)-$burnin]);
 	my $matfile = "Results/tree-1-2-3.M";
 	my $outfile = "Results/tree-1-2-3.svg";
 #	print "L1 = $L1  L2 = $L2\n";
