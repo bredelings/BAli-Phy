@@ -282,6 +282,18 @@ alphabet::alphabet(const string& s,const vector<string>& letters,const string& m
     insert(letters[i]);
 }
 
+Numeric::Numeric(const string& s, int n)
+    :alphabet(s, "", "X")
+{
+    for(int i=0;i<n;i++)
+	insert(std::to_string(i));
+}
+
+Numeric::Numeric(int n)
+    :Numeric(string("Numeric[")+std::to_string(n)+"]", n)
+{
+}
+
 int Nucleotides::complement(int l) const
 {
   assert(l >= -3);

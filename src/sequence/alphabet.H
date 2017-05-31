@@ -244,6 +244,13 @@ public:
     virtual ~alphabet() {};
 };
 
+class Numeric: public alphabet {
+public:
+    virtual Numeric* clone() const {return new Numeric(*this);};
+    Numeric(int n);
+    Numeric(const std::string& name, int n);
+};
+
 /// An alphabet of nucleotides
 class Nucleotides: public alphabet {
 public:

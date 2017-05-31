@@ -58,6 +58,10 @@ object_ptr<const alphabet> guess_alphabet(const vector<sequence>& sequences)
     else if (AUGCN > 0.95)
 	return new RNA;
 
+    double digits = letter_fraction("0123456789","-?X",sequences);
+    if (digits > 0.95)
+	return new Numeric(2);
+
     if (std::max(ATGCN,AUGCN) > 0.5)
 	throw myexception()<<"Can't guess alphabet";
 
