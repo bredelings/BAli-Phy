@@ -81,15 +81,15 @@ Run another copy of the same analysis, which will create a new directory called 
 
 You can take a look at your running jobs.  There should be two bali-phy jobs running.
 % jobs
-After each iteration, one line containing values for numerical parameters (such as the nucleotide frequencies) is written to the files <filename>ITS1-5.8S-ITS2-1/C1.p</filename> and <filename>ITS1-5.8S-ITS2-2/C1.p</filename>.  So we can check the number of iterations completed by looking at the number of lines in these files:
-% wc -l ITS1-5.8S-ITS2-*/C1.p
+After each iteration, one line containing values for numerical parameters (such as the nucleotide frequencies) is written to the files <filename>ITS1-5.8S-ITS2-1/C1.log</filename> and <filename>ITS1-5.8S-ITS2-2/C1.log</filename>.  So we can check the number of iterations completed by looking at the number of lines in these files:
+% wc -l ITS1-5.8S-ITS2-*/C1.log
 
 The mean or the median of these values can be used as an estimate of the parameter.  The variance indicates the degree of uncertainty.  Let's look at the initial parameter estimates:
-% statreport ITS1-5.8S-ITS2-1/C1.p ITS1-5.8S-ITS2-2/C1.p | less
-% statreport ITS1-5.8S-ITS2-1/C1.p ITS1-5.8S-ITS2-2/C1.p --mean | less
+% statreport ITS1-5.8S-ITS2-1/C1.log ITS1-5.8S-ITS2-2/C1.log | less
+% statreport ITS1-5.8S-ITS2-1/C1.log ITS1-5.8S-ITS2-2/C1.log --mean | less
 
 The program Tracer graphically displays the posterior probability distribution for each parameter.  (If you are using Windows or Mac, first run Tracer, and then press the <guilabel>+</guilabel> button to add the files.)
-% tracer ITS1-5.8S-ITS2-1/C1.p ITS1-5.8S-ITS2-2/C1.p &#38;
+% tracer ITS1-5.8S-ITS2-1/C1.log ITS1-5.8S-ITS2-2/C1.log &#38;
 
 How does the evolutionary process for these genes differ in:
 <orderedlist>
@@ -159,8 +159,8 @@ Look at the directories that were created to store the output files:
 % ls
 Here is a shell trick with curly braces {} to avoid typing some things multiple times, illustrated with the <userinput>echo</userinput> command.  Let's see how many more iterations have been completed since we last checked:
 % echo "hi!"
-% echo ITS1-5.8S-ITS2-{1,2}/C1.p
-% wc -l ITS1-5.8S-ITS2-{1,2}/C1.p
+% echo ITS1-5.8S-ITS2-{1,2}/C1.log
+% wc -l ITS1-5.8S-ITS2-{1,2}/C1.log
 Examine the file containing the sampled trees:
 % less ITS1-5.8S-ITS2-1/C1.trees
 Examine the file containing the sampled alignments:
@@ -175,7 +175,7 @@ about what command was run, when it was run, and what the process ID (PID) of th
 <section ><info><title>Command-line summary of output files</title></info>
 <para>
 Try summarizing the sampled numerical parameters (e.g. not trees and alignments).
-% statreport ITS1-5.8S-ITS2-{1,2}/C1.p --mean --median > Report
+% statreport ITS1-5.8S-ITS2-{1,2}/C1.log --mean --median > Report
 % less Report
 
 Now lets compute the consensus tree for these two runs.  When figtree asks for a name for the branch supports, type <userinput>PP</userinput> in the box.

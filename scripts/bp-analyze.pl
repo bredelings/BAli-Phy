@@ -1039,14 +1039,11 @@ sub determine_personality
     
     if (-e "$first_dir/C1.out")
     {
-	$personality = "bali-phy-2.1";
+	$personality = "bali-phy-2.1" if (-e "$first_dir/C1.p");
+	$personality = "bali-phy-3"   if (-e "$first_dir/C1.log");
 	$n_chains = get_header_attribute("$first_dir/C1.out","MPI_SIZE");
 	$n_chains=1 if (!defined($n_chains));
-	$personality = "bali-phy-2.1-heated" if ($n_chains > 1);
-    }
-    elsif (-e "$first_dir/1.out")
-    {
-	$personality = "bali-phy-2.0";
+	$personality = "${personality}-heated" if ($n_chains > 1);
     }
     else {
 	my @treelists = glob("$first_dir/*.treelist");
@@ -1079,7 +1076,17 @@ sub determine_input_files
 {
     my $first_dir = $subdirectories[0];
 
-    if ($personality eq "bali-phy-2.1")
+    if ($personality =~ "bali-phy-3.*")
+    {
+	foreach my $directory (@subdirectories)
+	{
+	    push @out_files, check_file_exists("$directory/C1.out");
+	    push @tree_files, check_file_exists("$directory/C1.trees");
+	    push @parameter_files, check_file_exists("$directory/C1.log");
+	}
+	$MAP_file = "$first_dir/1.MAP";
+    }
+    elsif ($personality eq "bali-phy-2.1")
     {
 	foreach my $directory (@subdirectories)
 	{
@@ -1089,23 +1096,13 @@ sub determine_input_files
 	}
 	$MAP_file = "$first_dir/1.MAP";
     }
-    elsif ($personality eq "bali-phy-2.1-heated")
+    elsif ($personality =~ "bali-phy.*-heated")
     {
 	$n_chains = get_header_attribute("MPI_SIZE");
 	for(my $i=0;$i<$n_chains;$i++) {
 	    push @out_files,"C$i.out" if (-e "C$i.out");
 	    push @tree_files,"C$i.trees" if (-e "C$i.trees");
 	}
-    }
-    elsif ($personality eq "bali-phy-2.0")
-    {
-	foreach my $directory (@subdirectories)
-	{
-	    push @out_files, check_file_exists("$directory/1.out");
-	    push @tree_files, check_file_exists("$directory/1.trees");
-	    push @parameter_files, check_file_exists("$directory/1.p");
-	}
-	$MAP_file = "$first_dir/1.MAP";
     }
     elsif ($personality eq "treefile")
     { }
@@ -2438,7 +2435,7 @@ sub get_the_only_subdirectory
 
 sub determine_alignment_files
 {
-    if ($personality =~ "bali-phy-2.1.*") {
+    if ($personality =~ "bali-phy.*") {
 	if ($n_chains == 1) {
 	    # In this case, we are constructing a list for each DIRECTORY
 	    foreach my $directory (@subdirectories)

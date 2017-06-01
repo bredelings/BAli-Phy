@@ -42,15 +42,15 @@ Run another copy of the same analysis, which will create a new directory called 
 </pre><p>
 You can take a look at your running jobs.  There should be two bali-phy jobs running.
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>jobs</code></strong>
-</pre><p>After each iteration, one line containing values for numerical parameters (such as the nucleotide frequencies) is written to the files <code class="filename">ITS1-5.8S-ITS2-1/C1.p</code> and <code class="filename">ITS1-5.8S-ITS2-2/C1.p</code>.  So we can check the number of iterations completed by looking at the number of lines in these files:
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>wc -l ITS1-5.8S-ITS2-*/C1.p</code></strong>
+</pre><p>After each iteration, one line containing values for numerical parameters (such as the nucleotide frequencies) is written to the files <code class="filename">ITS1-5.8S-ITS2-1/C1.log</code> and <code class="filename">ITS1-5.8S-ITS2-2/C1.log</code>.  So we can check the number of iterations completed by looking at the number of lines in these files:
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>wc -l ITS1-5.8S-ITS2-*/C1.log</code></strong>
 </pre><p>
 The mean or the median of these values can be used as an estimate of the parameter.  The variance indicates the degree of uncertainty.  Let's look at the initial parameter estimates:
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>statreport ITS1-5.8S-ITS2-1/C1.p ITS1-5.8S-ITS2-2/C1.p | less</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>statreport ITS1-5.8S-ITS2-1/C1.p ITS1-5.8S-ITS2-2/C1.p --mean | less</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>statreport ITS1-5.8S-ITS2-1/C1.log ITS1-5.8S-ITS2-2/C1.log | less</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>statreport ITS1-5.8S-ITS2-1/C1.log ITS1-5.8S-ITS2-2/C1.log --mean | less</code></strong>
 </pre><p>
 The program Tracer graphically displays the posterior probability distribution for each parameter.  (If you are using Windows or Mac, first run Tracer, and then press the <span class="guilabel">+</span> button to add the files.)
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>tracer ITS1-5.8S-ITS2-1/C1.p ITS1-5.8S-ITS2-2/C1.p &amp;</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>tracer ITS1-5.8S-ITS2-1/C1.log ITS1-5.8S-ITS2-2/C1.log &amp;</code></strong>
 </pre><p>
 How does the evolutionary process for these genes differ in:
 </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem">substitution rate? (Scale&lt;p&gt;)</li><li class="listitem">insertion-deletion rate? (I&lt;p&gt;.logLambda)</li><li class="listitem">nucleotide frequencies? (S&lt;p&gt;.TN.F.pi.{A,T,G,C})</li><li class="listitem">number of indels? (#indels)</li></ol></div><p>
@@ -91,8 +91,8 @@ Look at the directories that were created to store the output files:
 <code class="prompt">%</code> <strong class="userinput"><code>ls</code></strong>
 </pre><p>Here is a shell trick with curly braces {} to avoid typing some things multiple times, illustrated with the <strong class="userinput"><code>echo</code></strong> command.  Let's see how many more iterations have been completed since we last checked:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>echo "hi!"</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>echo ITS1-5.8S-ITS2-{1,2}/C1.p</code></strong>
-<code class="prompt">%</code> <strong class="userinput"><code>wc -l ITS1-5.8S-ITS2-{1,2}/C1.p</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>echo ITS1-5.8S-ITS2-{1,2}/C1.log</code></strong>
+<code class="prompt">%</code> <strong class="userinput"><code>wc -l ITS1-5.8S-ITS2-{1,2}/C1.log</code></strong>
 </pre><p>Examine the file containing the sampled trees:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>less ITS1-5.8S-ITS2-1/C1.trees</code></strong>
 </pre><p>Examine the file containing the sampled alignments:
@@ -104,7 +104,7 @@ about what command was run, when it was run, and what the process ID (PID) of th
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>less ITS1-5.8S-ITS2-1/C1.out</code></strong>
 </pre></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm216"></a>7.2. Command-line summary of output files</h3></div></div></div><p>
 Try summarizing the sampled numerical parameters (e.g. not trees and alignments).
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>statreport ITS1-5.8S-ITS2-{1,2}/C1.p --mean --median &gt; Report</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>statreport ITS1-5.8S-ITS2-{1,2}/C1.log --mean --median &gt; Report</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>less Report</code></strong>
 </pre><p>
 Now lets compute the consensus tree for these two runs.  When figtree asks for a name for the branch supports, type <strong class="userinput"><code>PP</code></strong> in the box.

@@ -620,9 +620,9 @@ int main(int argc,char* argv[])
 		out_screen<<"   - Sampled trees logged to '"<<dir_name<<"/C1.trees'"<<endl;
 		out_screen<<"   - Sampled alignments logged to '"<<dir_name<<"/C1.P<partition>.fastas'"<<endl;
 	    }
-	    out_screen<<"   - Sampled numerical parameters logged to '"<<dir_name<<"/C1.p'"<<endl;
+	    out_screen<<"   - Sampled numerical parameters logged to '"<<dir_name<<"/C1.log'"<<endl;
 	    out_screen<<endl;
-	    out_screen<<"You can examine 'C1.p' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n"<<endl;
+	    out_screen<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the BEAST program Tracer (graphical).\n"<<endl;
 	    out_screen<<"See the manual at http://www.bali-phy.org/README.xhtml for further information."<<endl;
 
 	    //-------- Start the MCMC  -----------//

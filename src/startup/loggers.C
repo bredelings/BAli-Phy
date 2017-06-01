@@ -229,7 +229,7 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 
     auto TF3 = [TL](const Model& M, long t) mutable { return table_logger_line(*TL,M,t); };
 
-    Logger s = FunctionLogger(base +".p", Subsample_Function(TF,subsample));
+    Logger s = FunctionLogger(base +".log", Subsample_Function(TF,subsample));
   
     // Write out scalar numerical variables (and functions of them) to C<>.p
     loggers.push_back( s );

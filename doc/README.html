@@ -233,7 +233,7 @@ FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -fu
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bali-phy ~/Applications/bali-phy-3.0b1/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=150</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>bp-analyze.pl 5d-1/</code></strong></pre><p>
     </p>
-    <p>Furthermore, the directory <code class="filename">5d-1</code> should contain a file called <code class="filename">C1.p</code>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</p>
+    <p>Furthermore, the directory <code class="filename">5d-1</code> should contain a file called <code class="filename">C1.log</code>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</p>
     </div>
 
   </div>
@@ -742,7 +742,7 @@ imodel = none
 	    <p>Log file for hopefully irrelevant error messages.</p>
 	  </td></tr><tr><td><p><span class="term">C1.MAP</span></p></td><td>
 	    <p>Successive estimates of the MAP point.</p>
-	  </td></tr><tr><td><p><span class="term">C1.p</span></p></td><td>
+	  </td></tr><tr><td><p><span class="term">C1.log</span></p></td><td>
 	    <p>Scalar parameters: indel and substitution parameters, etc.</p>
 	  </td></tr><tr><td><p><span class="term">C1.trees</span></p></td><td>
 	    <p>Tree samples: one sample per line, in Newick format.</p>
@@ -750,9 +750,9 @@ imodel = none
       
       <p>For the last two files, each line in these files corresponds to one iteration.</p>
 
-      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp38"></a>6.3.1. Field names in <code class="filename">C1.p</code></h4></div></div></div>
+      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp38"></a>6.3.1. Field names in <code class="filename">C1.log</code></h4></div></div></div>
 
-      <p>This section explains the meaning of the various field names in the file <code class="filename">C1.p</code>.</p>
+      <p>This section explains the meaning of the various field names in the file <code class="filename">C1.log</code>.</p>
 
 
       <div class="section"><div class="titlepage"><div><div><h5 class="title"><a name="idp36"></a>6.3.1.1. Computed parameter names</h5></div></div></div>
@@ -876,13 +876,13 @@ This command computes the effective sample size for the posterior probability of
 </p>  
       </div>
 
-      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp43"></a>6.4.4. Summarizing numerical parameters (<code class="filename">C1.p</code>)</h4></div></div></div>
+      <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp43"></a>6.4.4. Summarizing numerical parameters (<code class="filename">C1.log</code>)</h4></div></div></div>
 	
 <p>
 This command gives a median and confidence interval, ESS, and a stabilization time:
-</p><pre class="screen"><code class="prompt">%</code> statreport C1.p &gt; Report </pre><p>	
+</p><pre class="screen"><code class="prompt">%</code> statreport C1.log &gt; Report </pre><p>	
 This command compares multiple runs to give PSRF and joint ESS values as well:
-</p><pre class="screen"><code class="prompt">%</code> statreport <em class="replaceable"><code>dir-1</code></em>/C1.p <em class="replaceable"><code>dir-2</code></em>/C1.p &gt; Report </pre><p>	
+</p><pre class="screen"><code class="prompt">%</code> statreport <em class="replaceable"><code>dir-1</code></em>/C1.log <em class="replaceable"><code>dir-2</code></em>/C1.log &gt; Report </pre><p>	
 The program <a class="ulink" href="http://tree.bio.ed.ac.uk/software/tracer/" target="_top">Tracer</a> allows you to view the same summaries graphically.</p>
 
 <p>See <a class="xref" href="#mixing_and_convergence" title="10. Convergence and Mixing: Is it done yet?">Section 10, &#8220;Convergence and Mixing: Is it done yet?&#8221;</a> for more information.
@@ -1527,7 +1527,7 @@ similar posterior distributions.  Only numerical variables may have a
 PSRF. To calculate the PSRF for each
 numerical parameter, you may run: 
 
-</p><pre class="screen"><code class="prompt">%</code> statreport <em class="replaceable"><code>dir-1</code></em>/C1.p <em class="replaceable"><code>dir-2</code></em>/C2.p ... <em class="replaceable"><code>dir-n</code></em>/C1.p &gt; Report </pre><p>
+</p><pre class="screen"><code class="prompt">%</code> statreport <em class="replaceable"><code>dir-1</code></em>/C1.log <em class="replaceable"><code>dir-2</code></em>/C2.p ... <em class="replaceable"><code>dir-n</code></em>/C1.log &gt; Report </pre><p>
 The PSRF is a ratio of the width of the pooled distribution to the
 average width of each distribution, and should ideally be 1.  The PSRF
 is customarily considered to be small enough if it is less than 1.01.
@@ -1562,7 +1562,7 @@ adequately mix between modes.</p>
       <div class="section"><div class="titlepage"><div><div><h4 class="title"><a name="idp63"></a>10.5.1. ESS for numerical values</h4></div></div></div>
 	
       <p>To calculate the split ESS values, run:
-</p><pre class="screen"><code class="prompt">%</code> statreport <em class="replaceable"><code>dir-1</code></em>/C1.p <em class="replaceable"><code>dir-2</code></em>/C1.p ... <em class="replaceable"><code>dir-n</code></em>/C1.p &gt; Report </pre><p>
+</p><pre class="screen"><code class="prompt">%</code> statreport <em class="replaceable"><code>dir-1</code></em>/C1.log <em class="replaceable"><code>dir-2</code></em>/C1.log ... <em class="replaceable"><code>dir-n</code></em>/C1.log &gt; Report </pre><p>
       We calculate effective sample sizes based on integrated
       autocorrelation times.  This method has the nice property that
       simply duplicating every sample does not increase the ESS.
@@ -1594,7 +1594,7 @@ adequately mix between modes.</p>
 	
 <p>To obtain estimates of the stabilization time for each
 numerical  parameter, you may run:
-</p><pre class="screen"><code class="prompt">%</code> statreport C1.p &gt; Report </pre><p>
+</p><pre class="screen"><code class="prompt">%</code> statreport C1.log &gt; Report </pre><p>
 Each series of values is counted as having stabilized after
 the series crosses its upper and then lower 95% confidence bounds
 twice (if the initial value is below the median) or crosses its lower
@@ -1909,7 +1909,7 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 	
 	  <tr class="question"><td align="left" valign="top"><a name="idp2488"></a><a name="idp2489"></a><p><b>13.4.6.</b></p></td><td align="left" valign="top"><p>How can I check how many iterations the chain
 	      has finished?</p></td></tr>
-	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Run <span class="command"><strong>wc -l C1.p</strong></span> inside the output
+	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Run <span class="command"><strong>wc -l C1.log</strong></span> inside the output
 	      directory, and subtract 2.
 	    </p></td></tr>
 	</tbody></table></div>
