@@ -13,6 +13,8 @@ using boost::property_tree::ptree;
 // HARD TODO: --help implicit value?
 //   Also, say which parameter and function if we have an argument type mismatch.
 
+// TODO: * add --jitter option to trees-distances?
+
 // TODO: * Add 01 alphabets.
 //       * HARD: Allow loading 01234 character data.
 //       * Condition on columns not being invariant.
