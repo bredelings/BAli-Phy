@@ -343,23 +343,16 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     const int n_partitions = filenames.size();
 
     //-------------Choose an indel model--------------//
-    //FIXME - make a shared_items-like class that also holds the items to we can put the whole state in one object.
-    //FIXME - make bali-phy.C a more focussed and readable file - remove setup junk to other places? (where?)
-    vector<int> imodel_mapping(n_partitions, -1);
-    shared_items<string> imodel_names_mapping(vector<string>(),imodel_mapping);
-
-    imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
+    auto imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
+    auto& imodel_mapping = imodel_names_mapping.item_for_partition;
 
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
 	if (imodel_names_mapping.unique(i) == "")
 	    imodel_names_mapping.unique(i) = "RS07";
-      
-    imodel_mapping = imodel_names_mapping.item_for_partition;
 
     //------------- Get smodel names -------------------
-    shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
-
-    vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
+    auto smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
+    auto& smodel_mapping = smodel_names_mapping.item_for_partition;
 
     vector<model_t> full_smodels(smodel_names_mapping.n_unique_items());
 
