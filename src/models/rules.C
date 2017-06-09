@@ -8,7 +8,9 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
-// TODO: release new beta?
+// TODO: show tree & scale priors in bp-analyze output.
+
+// TODO: release new beta? (automatic deployment on mac?)
 
 // TODO: full laziness transformation.  <- WE ARE HERE.
 //       do simplification before and after full laziness
@@ -19,18 +21,21 @@ using boost::property_tree::ptree;
 //       unpack_cstring (AFTER splitting up dependences in modules)
 //       allow reasonable exporting, to break up SModel.hs into submodules that are exported from it.
 //       READ SANTOS THESIS.
+//       Q: why is floating-inwards necessary?  This seems to substitute for more intelligent analyses...
 //       get optimization examples from the thesis?
 //       allow case a+x of v -> E to put v EITHER into a closure OR on a stack.
 
 // TODO: add --jitter option to trees-distances?
 
-// TODO: show tree & scale priors in bp-analyze output.
+// TODO: add covarion and CAT10 and CAT20 models.
+
+//--- Up to here, just do it.
+
+// TODO: fix compilation with recent boost.
 
 // TODO: change scale_means_only -> scale_all_branches
 
 // TODO: move logging, scale_factor, prefixing, etc. out of models.
-
-// TODO: add covarion and CAT10 and CAT20 models.
 
 // TODO: make a function that generates a JSON object (or property tree) object in order to log things.
 //       - maybe make things like frequencies be implemented as a Map [(String,Double)]
