@@ -8,6 +8,8 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
+// TODO: release new beta?
+
 // TODO: full laziness transformation.  <- WE ARE HERE.
 //       do simplification before and after full laziness
 //       case-merging
