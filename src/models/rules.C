@@ -8,15 +8,43 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
+// TODO: full laziness transformation.  <- WE ARE HERE.
+//       do simplification before and after full laziness
+//       case-merging
+//       generate un-optimized code for cases (e.g. def_function)
+//       handle x@(y:ys) and guards in case statements.
+//       when a depends on b, fully simplify b before trying to simplify a.
+//       allow reasonable exporting, to break up SModel.hs into submodules that are exported from it.
+//       READ SANTOS THESIS.
+//       get optimization examples from the thesis?
+//       allow case a+x of v -> E to put v EITHER into a closure OR on a stack.
+
+// TODO: add --jitter option to trees-distances?
+
+// TODO: show tree & scale priors in bp-analyze output.
+
+// TODO: change scale_means_only -> scale_all_branches
+
+// TODO: move logging, scale_factor, prefixing, etc. out of models.
+
+// TODO: make a function that generates a JSON object (or property tree) object in order to log things.
+//       - maybe make things like frequencies be implemented as a Map [(String,Double)]
+//       - maybe just make a specialized logger and/or reader that treats a [String] and a [Double] as map from String->Double.
+//         * make an automatic conversion rule so we can supply e.g. {A:0.1,T:0.2,C:0.3,G:0.4} and get the numbers in the right order,
+//           and also a way of logging them in the right order?
+//       - can we handle e.g. {A:log[0.1],T:1.0-Log[0.1]} ?
+
+// TODO: Add a "scope" construct to haskell to handle things that shouldn't be moved out of scope?
+
+// TODO: make sub-partitions: split 0/1 partitions under Mk or Mkv into sub-partitions where alphabet size = character size.
+
 // HARD TODO: missing complete genes? (or document why not).
 
 // HARD TODO: --help implicit value?
 //   Also, say which parameter and function if we have an argument type mismatch.
 
-// TODO: * add --jitter option to trees-distances?
-
 // TODO: * Add 01 alphabets.
-//       * HARD: Allow loading 01234 character data.
+//       * HARD: Allow loading 01234 character data -- probably requires sub-partitions.
 //       * Condition on columns not being invariant.
 //         - this only makes sense for constant alignments.
 //         - perhaps each column should kind of be a separate partition.
@@ -27,24 +55,13 @@ using boost::property_tree::ptree;
 
 // TODO: Q: Relatedly, how much slowdown does the alignment prior multiplication tree cause?
 
-// TODO: allow reasonable exporting, to break up SModel.hs into submodules that are exported from it.
-
 // TODO: change Scale and *T (branch lengths) into an array, and log them that way.
-
-// TODO: implement +INV by averaging the frequencies of other models.
-
-// TODO: show tree & scale priors in bp-analyze output.
 
 // TODO: rewrite tree reader/writer functions to use lambdas.
 
-// TODO: change scale_means_only -> scale_all_branches
-
-// TODO: *allow referring to other parameters in parameter values (default values and otherwise)
-//  * allow addition/subtraction?
-// TODO: move stuff (e.g. logging) out of models
-//  * how can we log e.g. nucleotide names?
-// TODO: clean up loggers.{H,C} to use lambda functions
-// TODO: clean up transition kernels to use lambda functions?
+// TODO: allow addition/subtraction?
+// ? TODO: clean up loggers.{H,C} to use lambda functions
+// ? TODO: clean up transition kernels to use lambda functions?
 // TODO: find some way to run under the prior?
 // TODO: rewrite frequencies_prior..
 // Q: fmutsel version of m3, etc.
