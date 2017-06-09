@@ -29,6 +29,8 @@ using boost::property_tree::ptree;
 
 // TODO: move logging, scale_factor, prefixing, etc. out of models.
 
+// TODO: add covarion and CAT10 and CAT20 models.
+
 // TODO: make a function that generates a JSON object (or property tree) object in order to log things.
 //       - maybe make things like frequencies be implemented as a Map [(String,Double)]
 //       - maybe just make a specialized logger and/or reader that treats a [String] and a [Double] as map from String->Double.
