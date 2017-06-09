@@ -15,7 +15,8 @@ using boost::property_tree::ptree;
 //       case-merging
 //       generate un-optimized code for cases (e.g. def_function)
 //       handle x@(y:ys) and guards in case statements.
-//       when a depends on b, fully simplify b before trying to simplify a.
+//       when a depends on b, fully simplify b before trying to simplify a. (split modules into a LIST of topdecls)
+//       unpack_cstring (AFTER splitting up dependences in modules)
 //       allow reasonable exporting, to break up SModel.hs into submodules that are exported from it.
 //       READ SANTOS THESIS.
 //       get optimization examples from the thesis?
