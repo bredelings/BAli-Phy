@@ -22,10 +22,6 @@ using boost::property_tree::ptree;
 //       get optimization examples from the thesis?
 //       allow case a+x of v -> E to put v EITHER into a closure OR on a stack.
 
-// TODO: add --jitter option to trees-distances?
-
-// TODO: show tree & scale priors in bp-analyze output.
-
 // TODO: change scale_means_only -> scale_all_branches
 
 // TODO: move logging, scale_factor, prefixing, etc. out of models.
