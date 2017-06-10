@@ -2067,10 +2067,8 @@ sub get_scale_models_for_file
 
     while (my $line = <FILE>) 
     {
-	print $line;
 	if ($line =~ /scale model([0-9]+) (.+)/) {
 	    push @smodels,$2;
-	    print "         Found scale model\n";
 	}
 	else
 	{
