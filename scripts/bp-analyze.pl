@@ -125,6 +125,10 @@ my $n_partitions = 1+$#input_file_names;
 my @n_iterations = get_n_iterations();
 my @smodels = @{ get_smodels() };
 my @imodels = @{ get_imodels() };
+my @scale_models =  @{ get_scale_models() };
+my $topology_prior;
+my $branch_prior;
+&get_tree_prior();
 
 my @smodel_indices = @{ get_smodel_indices() };
 push @smodel_indices,0 if ($#smodel_indices == -1);
@@ -139,6 +143,9 @@ if ($#imodel_indices == -1)
 	push @imodel_indices,0;
     }
 }
+
+my @scale_model_indices = @{ get_scale_model_indices() };
+push @scale_model_indices,0 if ($#scale_model_indices == -1);
 
 my @alphabets = get_alphabets();
 
@@ -414,7 +421,7 @@ sub print_data_and_model
     my $section = "";
     $section .= "<h2 style=\"clear:both\"><a name=\"data\">Data &amp; Model</a></h2>\n";
     $section .= "<table class=\"backlit\">\n";
-    $section .= "<tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Alphabet</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th></tr>\n";
+    $section .= "<tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Alphabet</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th><th>Scale&nbsp;Model</tr>\n";
     for(my $p=0;$p<=$#input_file_names;$p++) 
     {
 	$section .= "<tr>\n";
@@ -434,7 +441,7 @@ sub print_data_and_model
 
 	if ($personality =~ "bali-phy.*")
 	{
-	    my $smodel = sanitize_smodel( $smodels[$smodel_indices[$p]] );
+	    my $smodel = $smodels[$smodel_indices[$p]];
 
 	    $section .= " <td>$smodel</td>\n";
 	}
@@ -447,11 +454,30 @@ sub print_data_and_model
 
 	$imodel = $imodels[$imodel_indices[$p]] if ($imodel_indices[$p] != -1);
 	$section .= " <td>$imodel</td>\n";
+
+	if ($personality =~ "bali-phy.*")
+	{
+	    my $scale_model = $scale_models[$scale_model_indices[$p]];
+
+	    $section .= " <td>$scale_model</td>\n";
+	}
+	else
+	{
+	    $section .= " <td></td>\n";
+	}
 	$section .= "</tr>\n";
     }
     
     $section .= "</table>\n";
 
+
+    $section .= "<h2 style=\"clear:both\"><a name=\"data\">Tree Model</a></h2>\n";
+#    $section .= "<table class=\"backlit\">\n";
+    $section .= "<table>\n";
+    $section .= "<tr><td>topology</td><td>$topology_prior</td></tr>" if (defined($topology_prior));
+    $section .= "<tr><td>branch lengths</td><td>$branch_prior</td></tr>" if (defined($topology_prior));
+    $section .= "</table>\n";
+    
     return $section;
 }
 
@@ -1973,21 +1999,32 @@ sub get_header_attributes
 
 #Empirical(/home/bredelings/local/share/bali-phy/Data//wag.dat) 
 
-sub sanitize_smodel
+sub get_tree_prior
 {
-    my $smodel = shift;
+    return [] if ($personality !~ "bali-phy.*");
 
-    if ($smodel =~ m|(Empirical\(.*/(.*).dat\))|)
+    my $file = $out_files[0];
+
+    local *FILE;
+
+    open FILE, $file or die "Can't open $file!";
+
+    while (my $line = <FILE>)
     {
-	my $temp1 = $1;
-	my $temp2 = $2;
-	$temp2 =~ tr/a-z/A-Z/;
-	
-	$smodel =~ s/\Q$temp1/$temp2/;
+	if ($line =~ /^T:topology (.*)$/)
+	{
+	    $topology_prior = $1;
+	}
+	if ($line =~ /^T:length\[b\] (.*)$/)
+	{
+	    $branch_prior = $1;
+	}
+	last if ($line =~ /^iterations/);
     }
 
-    return $smodel;
+    close FILE;
 }
+
 
 sub get_smodels_for_file
 {
@@ -2010,6 +2047,35 @@ sub get_smodels_for_file
 	    push @smodels,$1;
 	}
 	last if ($line =~ /^iterations = 0/);
+    }
+    close FILE;
+
+    return [@smodels];
+}
+
+sub get_scale_models_for_file
+{
+    my $file = shift;
+
+    return [] if ($personality !~ "bali-phy.*");
+
+    local *FILE;
+
+    open FILE, $file or die "Can't open $file!";
+
+    my @smodels = ();
+
+    while (my $line = <FILE>) 
+    {
+	print $line;
+	if ($line =~ /scale model([0-9]+) (.+)/) {
+	    push @smodels,$2;
+	    print "         Found scale model\n";
+	}
+	else
+	{
+	    last if ($line =~ /^iterations = 0/);
+	}
     }
     close FILE;
 
@@ -2041,6 +2107,25 @@ sub get_smodels
 
     print "\nError! Different MCMC chains have different substitution models!\n";
     show_array_differences("    subst model = ", $out_files[0], $smodels[0], $out_files[$different], $smodels[$different]);
+    exit(1);
+}
+
+sub get_scale_models
+{
+    return [] if ($#out_files == -1);
+    my @scale_models;
+
+    foreach my $out_file (@out_files)
+    {
+	push @scale_models, get_scale_models_for_file($out_file);
+    }
+
+    my $different = arrays_all_equal(@scale_models);
+
+    return $scale_models[0] if (! $different);
+
+    print "\nError! Different MCMC chains have different scale models!\n";
+    show_array_differences("    subst model = ", $out_files[0], $scale_models[0], $out_files[$different], $scale_models[$different]);
     exit(1);
 }
 
@@ -2112,6 +2197,28 @@ sub get_smodel_indices
     close FILE;
 
     return [@smodel_indices];
+}
+
+sub get_scale_model_indices
+{
+    return [] if ($personality !~ "bali-phy.*");
+
+    local *FILE;
+
+    open FILE, $out_files[0] or die "Can't open $out_files[0]!";
+
+    my @scale_model_indices = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /scale-index(.+) = (.+)/) {
+	    push @scale_model_indices,$2;
+	}
+	last if ($line =~ /^iterations = 0/);
+    }
+    close FILE;
+
+    return [@scale_model_indices];
 }
 
 sub get_imodel_indices
