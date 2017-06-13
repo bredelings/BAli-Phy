@@ -32,6 +32,7 @@
 #include "util.H"
 #include "tree/tree-util.H"
 #include "tree-dist.H"
+#include "rng.H"
 
 #include <boost/program_options.hpp>
 #include "distance-report.H"
@@ -137,6 +138,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("minmax", "Show minumum and maximum distances")
 	("leaves-only", "Show minumum and maximum distances")
 	("topology-only", "Show minumum and maximum distances")
+	("jitter",value<double>(),"Amount of noise to add to distances")
 	;
 
     options_description visible("All options");
@@ -664,6 +666,14 @@ int main(int argc,char* argv[])
 	    if (args.count("remove-duplicates"))
 		D = remove_duplicates(D);
 
+	    if (args.count("jitter"))
+	    {
+		double sigma = args["jitter"].as<double>();
+		myrand_init();
+		for(int i=0;i<D.size1();i++)
+		    for(int j=0;j<D.size2();j++)
+			D(i,j) += gaussian(0,sigma);
+	    }
 	    print_matrix(D,'\t','\n');
 	}
 

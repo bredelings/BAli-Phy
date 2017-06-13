@@ -367,7 +367,7 @@ cut_range_SOURCES = tools/cut-range.C util.C io.C
 
 trees_distances_SOURCES = tools/trees-distances.C tree/tree.C \
 	tree/sequencetree.C tools/tree-dist.C tools/partition.C util.C \
-	tree/tree-util.C tools/statistics.C io.C tools/distance-report.C tools/read-trees.C
+	tree/tree-util.C tools/statistics.C io.C tools/distance-report.C tools/read-trees.C rng.C
 
 #---------------------------------------------------------------
 

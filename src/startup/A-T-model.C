@@ -134,7 +134,7 @@ string show_model(boost::property_tree::ptree p)
     return connector + output;
 }
 
-void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */,
+void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 		 const vector<model_t>& IModels, const vector<model_t>& SModels,
 		 const vector<model_t>& ScaleModels,
 		 const model_t& branch_length_model,
@@ -165,12 +165,13 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& /* out_both */
 	out_cache<<"scale model"<<i+1<<" "<<show_model(ScaleModels[i].description)<<endl<<endl;
 
     if (P.t().n_branches() > 1)
-	out_screen<<"T:topology ~ uniform on tree topologies\n";
+	out_both<<"T:topology ~ uniform on tree topologies\n";
 
     if (P.t().n_branches() > 0)
-	out_screen<<"T:length[b] "<<show_model(branch_length_model.description)<<endl<<endl;
+	out_both<<"T:length[b] "<<show_model(branch_length_model.description)<<endl<<endl;
 
-    for(int i=0;i<P.n_data_partitions();i++) {
+    for(int i=0;i<P.n_data_partitions();i++)
+    {
 	int s_index = P.smodel_index_for_partition(i);
 	//    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
 	out_screen<<"#"<<i+1<<": subst "<<show_model(SModels[s_index].description)<<" (S"<<s_index+1<<")\n";
@@ -422,6 +423,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     // -- load alphabets with specified names
     for(int i=0;i<filenames.size();i++)
 	if (alphabet_names[i].size())
+	    // FIXME - if we are loading codons, FIRST determine the UNDERLYING alphabet, then 
 	    A[i] = load_alignment(filenames[i], load_alphabets(alphabet_names[i]) );
 
     // -- load other alphabets
