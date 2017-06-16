@@ -517,6 +517,8 @@ int main(int argc,char* argv[])
 	    M = Model(L);
 	M->set_args(trailing_args(argc, argv, trailing_args_separator));
 
+	L.reset();
+
 	//------------- Parse the Hierarchical Model description -----------//
 	if (args.count("model"))
 	{
@@ -529,6 +531,8 @@ int main(int argc,char* argv[])
 	    add_model(*M,filename);
 	}
       
+	M->clear_program();
+
 	if (args.count("tree") and M.as<Parameters>())
 	{
 	    auto P = M.as<Parameters>();

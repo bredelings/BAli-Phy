@@ -60,6 +60,8 @@ public:
 
     const Program& get_Program() const;
 
+    void clear_program();
+
     reg& access(int i) const;
 
     const closure& access_result_for_reg(int i) const;

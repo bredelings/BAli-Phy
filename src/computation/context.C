@@ -519,12 +519,23 @@ std::ostream& operator<<(std::ostream& o, const context& C)
 
 Program& context::get_Program()
 {
+    if (not memory()->P)
+	throw myexception()<<"Program used after being cleared!";
+
     return *(memory()->P);
 }
 
 const Program& context::get_Program() const
 {
+    if (not memory()->P)
+	throw myexception()<<"Program used after being cleared!";
+
     return *(memory()->P);
+}
+
+void context::clear_program()
+{
+    memory()->P.reset();
 }
 
 const vector<string>& context::get_args() const
