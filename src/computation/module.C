@@ -4,7 +4,6 @@
 #include "myexception.H"
 #include "computation/graph_register.H"
 #include "computation/operations.H"
-#include "let-float.H"
 #include "parser/parse.H"
 #include "parser/desugar.H"
 #include "computation/loader.H"
@@ -17,6 +16,7 @@
 #include "expression/tuple.H"
 #include "expression/substitute.H"
 #include "computation/optimization/simplifier.H"
+#include "computation/optimization/let-float.H"
 
 using std::pair;
 using std::map;

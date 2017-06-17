@@ -53,7 +53,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   computation/expression/indexify.H computation/expression/let.H \
 	   computation/expression/case.H computation/expression/trim.H \
 	   computation/expression/tuple.H computation/expression/list.H \
-	   computation/bithash.H computation/graph_register.H computation/let-float.H \
+	   computation/bithash.H computation/graph_register.H computation/optimization/let-float.H \
            computation/loader.H computation/module.H computation/expression/dummy.H \
 	   computation/operation.H computation/operations.H computation/operator.H \
            computation/pool.H computation/program.H computation/expression/lambda.H \
@@ -127,7 +127,7 @@ bali_phy_SOURCES = parser/parse.C dp/dp_hmm.C parser/desugar.C sequence/sequence
 	  computation/graph_register.C computation/show_graph.C computation/module.C \
 	  computation/model_expression.C computation/evaluate.C computation/gc.C computation/reroot.C \
 	  computation/operations.C computation/loader.C computation/context.C computation/closure.C \
-	  computation/let-float.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
+	  computation/optimization/let-float.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
 	  startup/loggers.C startup/system.C startup/cmd_line.C models/rules.C models/parse.C \
 	  models/translate.C models/unification.C computation/optimization/simplifier.C \
 	  tools/read-trees.C alignment/load.C

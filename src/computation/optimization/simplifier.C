@@ -2,7 +2,6 @@
 #include <unordered_map>
 #include "computation/graph_register.H"
 #include "computation/operations.H"
-#include "computation/let-float.H"
 #include "computation/loader.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
@@ -13,6 +12,7 @@
 #include "computation/expression/trim.H"
 #include "computation/expression/indexify.H"
 #include "computation/expression/AST_node.H"
+#include "let-float.H"
 
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
