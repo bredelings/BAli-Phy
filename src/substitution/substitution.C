@@ -577,7 +577,7 @@ namespace substitution {
 
 
     Likelihood_Cache_Branch*
-    peel_leaf_branch(const vector<int>& sequence, const alphabet& a, const vector<Matrix>& transition_P)
+    peel_leaf_branch(const vector<int>& sequence, const alphabet& a, const EVector& transition_P)
     {
 	total_peel_leaf_branches++;
 
@@ -586,7 +586,7 @@ namespace substitution {
 	int L0 = sequence.size();
 
 	const int n_models  = transition_P.size();
-	const int n_states  = transition_P[0].size1();
+	const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
 	const int matrix_size = n_models * n_states;
 
 	auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
@@ -600,7 +600,7 @@ namespace substitution {
 	    if (a.is_letter(l2))
 		for(int m=0;m<n_models;m++) 
 		{
-		    const Matrix& Q = transition_P[m];
+		    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
 		    for(int s1=0;s1<n_states;s1++)
 			R[m*n_states + s1] = Q(s1,l2);
 		}
@@ -611,7 +611,7 @@ namespace substitution {
 		const alphabet::fmask_t& fmask = a.letter_fmask(l2);
 		for(int m=0;m<n_models;m++) 
 		{
-		    const Matrix& Q = transition_P[m];
+		    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
 		    for(int s1=0;s1<n_states;s1++)
 		    {
 			double sum = 0.0;
@@ -709,7 +709,7 @@ namespace substitution {
 
     Likelihood_Cache_Branch*
     peel_leaf_branch_modulated(const vector<int>& sequence, const alphabet& a,
-			       const vector<Matrix>& transition_P, const vector<unsigned>& smap)
+			       const EVector& transition_P, const vector<unsigned>& smap)
     {
 	total_peel_leaf_branches++;
 
@@ -717,7 +717,7 @@ namespace substitution {
 	int L0 = sequence.size();
 
 	const int n_models  = transition_P.size();
-	const int n_states  = transition_P[0].size1();
+	const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
 	const int matrix_size = n_models * n_states;
 	const int n_letters = a.n_letters();
 
@@ -733,13 +733,13 @@ namespace substitution {
 
 	    if (a.is_letter(l2))
 		for(int m=0;m<n_models;m++) {
-		    const Matrix& Q = transition_P[m];
+		    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
 		    for(int s1=0;s1<n_states;s1++)
 			R[m*n_states + s1] = sum(Q,smap,n_letters,s1,l2);
 		}
 	    else if (a.is_letter_class(l2)) {
 		for(int m=0;m<n_models;m++) {
-		    const Matrix& Q = transition_P[m];
+		    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
 		    for(int s1=0;s1<n_states;s1++)
 			R[m*n_states + s1] = sum(Q,smap,s1,l2,a);
 		}
@@ -757,13 +757,13 @@ namespace substitution {
     peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
 			 const Likelihood_Cache_Branch* LCB2,
 			 const matrix<int>& index,
-			 const vector<Matrix>& transition_P,
+			 const EVector& transition_P,
 			 const Matrix& F)
     {
 	total_peel_internal_branches++;
 
 	const int n_models = transition_P.size();
-	const int n_states = transition_P[0].size1();
+	const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
 	const int matrix_size = n_models * n_states;
     
 	// Do this before accessing matrices or other_subst
@@ -839,7 +839,7 @@ namespace substitution {
 	    bool need_scale = true;
 	    for(int m=0;m<n_models;m++)
 	    {
-		const Matrix& Q = transition_P[m];
+		const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
 	
 		// compute the distribution at the target (parent) node - multiple letters
 		for(int s1=0;s1<n_states;s1++) {
@@ -1158,12 +1158,12 @@ namespace substitution {
 	return Pr;
     }
 
-    void calc_transition_prob_from_parent(Matrix& S, pair<int,int>& state_model_parent, const vector<Matrix>& Ps, const Matrix& WF)
+    void calc_transition_prob_from_parent(Matrix& S, pair<int,int>& state_model_parent, const EVector& Ps, const Matrix& WF)
     {
 	int mp = state_model_parent.first;
 	int lp = state_model_parent.second;
 	int n_states = S.size2();
-	auto& Pr = Ps[mp];
+	auto& Pr = Ps[mp].as_<Box<Matrix>>();
 
 	// If there IS no parent character, then we can sample from F
 	if (mp == -1)
@@ -1279,7 +1279,7 @@ namespace substitution {
 	{
 	    int node = t.source(b);
 
-	    const vector<Matrix>& transition_P = P.transition_P(b);
+	    const auto& transition_P = P.transition_P(b);
 
 	    vector<int> local_branches = {b};
 	    for(int b: t.branches_before(b))
