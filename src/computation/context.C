@@ -537,6 +537,11 @@ void context::clear_program()
     memory()->P.reset();
 }
 
+void context::clear_identifiers()
+{
+    memory()->identifiers.clear();
+}
+
 const vector<string>& context::get_args() const
 {
     return memory()->args;

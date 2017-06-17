@@ -532,6 +532,7 @@ int main(int argc,char* argv[])
 	}
       
 	M->clear_program();
+	M->clear_identifiers();
 
 	if (args.count("tree") and M.as<Parameters>())
 	{
