@@ -531,8 +531,6 @@ int main(int argc,char* argv[])
 	    add_model(*M,filename);
 	}
       
-	M->clear_program();
-	M->clear_identifiers();
 
 	if (args.count("tree") and M.as<Parameters>())
 	{
@@ -594,6 +592,9 @@ int main(int argc,char* argv[])
 		files.push_back(shared_ptr<ostream>(new ostream(cout.rdbuf())));
 		files.push_back(shared_ptr<ostream>(new ostream(cerr.rdbuf())));
 	    }
+
+	    M->clear_program();
+	    M->clear_identifiers();
 
 	    //------ Redirect output to files -------//
 	    *files[0]<<out_cache.str(); out_cache.str("");
