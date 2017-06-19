@@ -966,10 +966,6 @@ bool has_used_vars(const expression_ref& pattern)
 // Check if all case branches refer to the same constant expression that does not reference any pattern variables.
 bool is_constant_case(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
-    return (patterns.size() == 1 and not has_used_vars(patterns[0]));
-
-    // This might be too expensive.
-    // FIXME - handle cases where its trivial, a constructor or builtin application, or a variable application to trivial variables.
     assert(patterns.size() == bodies.size());
     for(int i=0;i<patterns.size();i++)
     {
