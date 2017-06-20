@@ -2,7 +2,6 @@
 #include <unordered_map>
 #include "graph_register.H"
 #include "operations.H"
-#include "let-float.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
 #include "computation/expression/case.H"
@@ -10,6 +9,7 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/trim.H"
 #include "computation/expression/indexify.H"
+#include "computation/optimization/let-float.H"
 
 #include <boost/optional.hpp>
 

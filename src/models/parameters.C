@@ -211,12 +211,12 @@ const std::vector<int>& data_partition::get_sequence(int i) const
     return P->evaluate( DPC().leaf_sequence_indices[i] ).as_<Vector<int>>();
 }
 
-const std::vector<Matrix>& data_partition::transition_P(int b) const
+const EVector& data_partition::transition_P(int b) const
 {
     b = t().undirected(b);
     assert(b >= 0 and b < t().n_branches());
 
-    return P->evaluate( DPC().transition_p_method_indices[b] ).as_<Vector<Matrix>>();
+    return P->evaluate( DPC().transition_p_method_indices[b] ).as_<EVector>();
 }
 
 int data_partition::n_base_models() const

@@ -354,7 +354,7 @@ log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rate
 
 dp base rates fraction = multi_rate base (DiscreteDistribution dist) where {dist = zip fraction rates};
 
-branch_transition_p t smodel branch_cat_list ds b = vector_Matrix_From_List $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b);
+branch_transition_p t smodel branch_cat_list ds b = list_to_vector $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b);
 
 transition_p_index t smodel branch_cat_list ds = mkArray (numBranches t) (branch_transition_p t smodel branch_cat_list ds);
 

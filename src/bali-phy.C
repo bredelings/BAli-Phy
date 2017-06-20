@@ -517,6 +517,8 @@ int main(int argc,char* argv[])
 	    M = Model(L);
 	M->set_args(trailing_args(argc, argv, trailing_args_separator));
 
+	L.reset();
+
 	//------------- Parse the Hierarchical Model description -----------//
 	if (args.count("model"))
 	{
@@ -529,6 +531,7 @@ int main(int argc,char* argv[])
 	    add_model(*M,filename);
 	}
       
+
 	if (args.count("tree") and M.as<Parameters>())
 	{
 	    auto P = M.as<Parameters>();
@@ -589,6 +592,9 @@ int main(int argc,char* argv[])
 		files.push_back(shared_ptr<ostream>(new ostream(cout.rdbuf())));
 		files.push_back(shared_ptr<ostream>(new ostream(cerr.rdbuf())));
 	    }
+
+	    M->clear_program();
+	    M->clear_identifiers();
 
 	    //------ Redirect output to files -------//
 	    *files[0]<<out_cache.str(); out_cache.str("");

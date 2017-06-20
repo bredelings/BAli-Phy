@@ -8,6 +8,19 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
+// TODO: spend 1 hour writing and diagramming the poster
+
+// TODO: haskell
+
+// TODO: spend 1 hour writing the incertae sedis talk.
+
+// TODO: reduce memory:
+//       - toss identifiers, and make them not heads. (
+
+// TODO: move some things into a computation/machine directory
+//       separate parsing and model-creation code.
+//       move parsing code into computation directory
+
 // TODO: show tree & scale priors in bp-analyze output.
 
 // TODO: release new beta? (automatic deployment on mac?)

@@ -33,7 +33,7 @@ dummy get_named_dummy(int n)
 }
 
 /// Convert to using de Bruijn indices.
-expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
+expression_ref indexify(const expression_ref& E, vector<dummy>& variables)
 {
     if (not E.size())
     {
@@ -61,9 +61,10 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
     // Lambda expression - /\x.e
     if (E.head().is_a<lambda>())
     {
-	vector<dummy> variables2 = variables;
-	variables2.push_back(E.sub()[0].as_<dummy>());
-	return make_indexed_lambda( indexify(E.sub()[1], variables2) );
+	variables.push_back(E.sub()[0].as_<dummy>());
+	auto E2 = make_indexed_lambda( indexify(E.sub()[1], variables) );
+	variables.pop_back();
+	return E2;
     }
 
     // Let expression
@@ -72,14 +73,16 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
     expression_ref T;
     if (parse_let_expression(E, decls, T))
     {
-	vector<dummy> variables2 = variables;
 	for(const auto& decl: decls)
-	    variables2.push_back(decl.first);
+	    variables.push_back(decl.first);
 
 	for(int i=0;i<decls.size();i++)
-	    bodies.push_back( indexify(decls[i].second, variables2) );
+	    bodies.push_back( indexify(decls[i].second, variables) );
 
-	T = indexify(T, variables2);
+	T = indexify(T, variables);
+
+	for(int i=0;i<decls.size();i++)
+	    variables.pop_back();
 
 	return indexed_let_expression(bodies,T);
     }
@@ -96,18 +99,21 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 	    expression_ref& P = patterns[i];
 	    expression_ref& B = bodies[i];
 
-	    vector<dummy> variables2 = variables;
-	    for(int j=0;j<P.size();j++)
-		variables2.push_back(P.sub()[j].as_<dummy>());
-
 #ifndef NDEBUG
 	    // FIXME - I guess this doesn't handle case a of b -> f(b)?
 	    if (is_dummy(P))
 		assert(is_wildcard(P));
 #endif
 
+	    for(int j=0;j<P.size();j++)
+		variables.push_back(P.sub()[j].as_<dummy>());
+
+	    B = indexify(B, variables);
+
+	    for(int j=0;j<P.size();j++)
+		variables.pop_back();
+
 	    P = P.head();
-	    B = indexify(B, variables2);
 	}
 
 	return make_case_expression(T, patterns, bodies);
@@ -123,7 +129,8 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 
 expression_ref indexify(const expression_ref& E)
 {
-    return indexify(E,vector<dummy>{});
+    vector<dummy> variables;
+    return indexify(E,variables);
 }
 
 /// Convert to using de Bruijn indices.

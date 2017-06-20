@@ -984,7 +984,7 @@ extern "C" closure builtin_function_frequency_matrix(OperationArgs& Args)
 
 namespace substitution {
     Likelihood_Cache_Branch*
-    peel_leaf_branch(const vector<int>& sequence, const alphabet& a, const vector<Matrix>& transition_P);
+    peel_leaf_branch(const vector<int>& sequence, const alphabet& a, const EVector& transition_P);
 }
 
 extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
@@ -993,7 +993,7 @@ extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
 
-    return substitution::peel_leaf_branch(arg0.as_<Vector<int>>(), arg1.as_<alphabet>(), arg2.as_<Vector<Matrix>>());
+    return substitution::peel_leaf_branch(arg0.as_<Vector<int>>(), arg1.as_<alphabet>(), arg2.as_<EVector>());
 }
 
 
@@ -1008,7 +1008,7 @@ namespace substitution {
     peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
 			 const Likelihood_Cache_Branch* LCB2,
 			 const matrix<int>& index,
-			 const vector<Matrix>& transition_P,
+			 const EVector& transition_P,
 			 const Matrix& F);
 }
 
@@ -1040,7 +1040,7 @@ extern "C" closure builtin_function_peel_internal_branch(OperationArgs& Args)
     return substitution::peel_internal_branch(&arg0.as_<Likelihood_Cache_Branch>(),
 					      &arg1.as_<Likelihood_Cache_Branch>(),
 					      arg2.as_<Box<matrix<int>>>(),
-					      arg3.as_<Vector<Matrix>>(),
+					      arg3.as_<EVector>(),
 					      arg4.as_<Box<Matrix>>());
 }
 
@@ -1129,7 +1129,7 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
     const auto& seq2  = arg1.as_<Vector<int>>();
     const auto& alpha = arg2.as_<alphabet>();
     const auto& A     = arg3.as_<pairwise_alignment_t>();
-    const auto& P     = arg4.as_<Vector<Matrix>>();
+    const auto& P     = arg4.as_<EVector>();
     const auto& WF    = arg5.as_<Box<Matrix>>();
 
     // Make frequency-vector AND log(frequency)-vector
@@ -1165,14 +1165,14 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
 		if (alpha.is_letter(l2))
 		{
 		    for(int m=0;m<WF.size1();m++)
-			p += WF(m,l1) * P[m](l1,l2);
+			p += WF(m,l1) * P[m].as_<Box<Matrix>>()(l1,l2);
 		}
 		else if (alpha.is_letter_class(l2))
 		{
 		    const auto & fmask = alpha.letter_fmask(l2);
 		    for(int m=0;m<WF.size1();m++)
 			for(int j=0; j<alpha.size(); j++)
-			    p += WF(m,l1) * P[m](l1,j) * fmask[j];
+			    p += WF(m,l1) * P[m].as_<Box<Matrix>>()(l1,j) * fmask[j];
 		}
 		else
 		    p += LF[l1];
@@ -1186,7 +1186,7 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
 		    const auto & fmask = alpha.letter_fmask(l1); 
 		    for(int m=0;m<WF.size1();m++)
 			for(int j=0; j<alpha.size(); j++)
-			    p += WF(m,l2) * P[m](l2,j) * fmask[j];
+			    p += WF(m,l2) * P[m].as_<Box<Matrix>>()(l2,j) * fmask[j];
 		}
 		else if (alpha.is_letter_class(l2))
 		{
@@ -1196,7 +1196,7 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
 			for(int j=0; j<alpha.size(); j++)
 			    if (mask1.test(j))
 				for(int k=0; k<alpha.size(); k++)
-				    p += WF(m,j) * P[m](j,k) * fmask2[k];
+				    p += WF(m,j) * P[m].as_<Box<Matrix>>()(j,k) * fmask2[k];
 		}
 		else
 		    p = letter_class_frequency(l1, alpha, F);

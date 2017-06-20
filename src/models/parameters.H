@@ -109,7 +109,7 @@ public:
     TreeInterface t() const;
 
     /// Cached Transition Probabilities
-    const std::vector<Matrix>& transition_P(int b) const;
+    const EVector& transition_P(int b) const;
   
     const std::vector<int>& get_sequence(int i) const;
 

@@ -173,38 +173,6 @@ extern "C" closure builtin_function_SetVectorIndexMatrix(OperationArgs& Args)
     return constructor("()",0);
 }
 
-template<typename T, typename U>
-closure Vector_From_List(OperationArgs& Args)
-{
-    object_ptr<Box<std::vector<T> > > v (new Box<std::vector<T> >);
-
-    const closure* top = &Args.evaluate_slot_to_closure(0);
-    while(top->exp.size())
-    {
-	assert(has_constructor(top->exp,":"));
-	assert(top->exp.size() == 2);
-
-	int element_index = top->exp.sub()[0].as_index_var();
-	int element_reg = top->lookup_in_env( element_index );
-
-	int next_index = top->exp.sub()[1].as_index_var();
-	int next_reg = top->lookup_in_env( next_index );
-
-	// Add the element to the list.
-	v->push_back( Args.evaluate_reg_to_object(element_reg).as_<U>() );
-	// Move to the next element or end
-	top = &Args.evaluate_reg_to_closure(next_reg);
-    }
-    assert(has_constructor(top->exp,"[]"));
-
-    return v;
-}
-
-extern "C" closure builtin_function_Vector_Matrix_From_List(OperationArgs& Args)
-{
-    return Vector_From_List<Matrix,Box<Matrix>>(Args);
-}
-
 extern "C" closure builtin_function_new_vector(OperationArgs& Args)
 {
     int length = Args.evaluate(0).as_int();

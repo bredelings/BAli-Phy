@@ -5,7 +5,6 @@
 #include "computation/program.H"
 #include "loader.H"
 #include "module.H"
-#include "let-float.H"
 #include "parser/desugar.H"
 #include "expression/expression.H"
 #include "expression/lambda.H"
@@ -519,12 +518,28 @@ std::ostream& operator<<(std::ostream& o, const context& C)
 
 Program& context::get_Program()
 {
+    if (not memory()->P)
+	throw myexception()<<"Program used after being cleared!";
+
     return *(memory()->P);
 }
 
 const Program& context::get_Program() const
 {
+    if (not memory()->P)
+	throw myexception()<<"Program used after being cleared!";
+
     return *(memory()->P);
+}
+
+void context::clear_program()
+{
+    memory()->P.reset();
+}
+
+void context::clear_identifiers()
+{
+    memory()->identifiers.clear();
 }
 
 const vector<string>& context::get_args() const
