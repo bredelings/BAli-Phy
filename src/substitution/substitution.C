@@ -485,35 +485,45 @@ namespace substitution {
 	Matrix S(n_models,n_states);
 #endif
 
+	const auto& bits1 = LCB1->bits;
+	const auto& bits2 = LCB2->bits;
+	const auto& bits3 = LCB3->bits;
+
+	const int L = bits1.size();
+	assert(L > 0);
+	assert(L == bits2.size());
+	assert(L == bits3.size());
+
 	log_prod total;
 	int scale = 0;
-	for(int i=0;i<index.size1();i++)
+	for(int c=0,i1=0,i2=0,i3=0;c<L;c++)
 	{
-	    double p_col = 1;
+	    bool non_gap1 = bits1.test(c);
+	    bool non_gap2 = bits2.test(c);
+	    bool non_gap3 = bits3.test(c);
 
-	    int i0 = index(i,0);
-	    int i1 = index(i,1);
-	    int i2 = index(i,2);
+	    if ((not non_gap1) and (not non_gap2) and (not non_gap3)) continue;
 
 	    const double* m[3];
 	    int mi=0;
 
-	    if (i0 != -1)
+	    if (non_gap1)
 	    {
-		m[mi++] = ((*LCB1)[i0]);
-		scale += (*LCB1).scale(i0);
+		m[mi++] = ((*LCB1)[i1]);
+		scale += (*LCB1).scale(i1);
 	    }
-	    if (i1 != -1)
+	    if (non_gap2)
 	    {
-		m[mi++] = ((*LCB2)[i1]);
-		scale += (*LCB2).scale(i1);
+		m[mi++] = ((*LCB2)[i2]);
+		scale += (*LCB2).scale(i2);
 	    }
-	    if (i2 != -1)
+	    if (non_gap3)
 	    {
-		m[mi++] = ((*LCB3)[i2]);
-		scale += (*LCB3).scale(i2);
+		m[mi++] = ((*LCB3)[i3]);
+		scale += (*LCB3).scale(i3);
 	    }
 
+	    double p_col = 1.0;
 	    if (mi==3)
 		p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
 	    else if (mi==2)
@@ -526,11 +536,11 @@ namespace substitution {
 	    element_assign(S,F);
 
 	    //-------------- Propagate and collect information at 'root' -----------//
-	    if (i0 != alphabet::gap)
+	    if (non_gap1)
 		element_prod_modify(S.begin(),(*LCB1)[i0], matrix_size);
-	    if (i1 != alphabet::gap)
+	    if (non_gap2)
 		element_prod_modify(S.begin(),(*LCB2)[i1], matrix_size);
-	    if (i2 != alphabet::gap)
+	    if (non_gap3)
 		element_prod_modify(S.begin(),(*LCB3)[i2], matrix_size);
 
 	    //------------ Check that individual models are not crazy -------------//
@@ -550,15 +560,15 @@ namespace substitution {
 	    // SOME model must be possible
 	    assert(0 <= p_col and p_col <= 1.00000000001);
 
-	    // This does a log( ) operation.
+	    if (non_gap1) i1++;
+	    if (non_gap2) i2++;
+	    if (non_gap3) i3++;
+
 	    total *= p_col;
 	    //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
 	}
 
 	log_double_t Pr = total;
-	Pr *= LCB1->other_subst;
-	Pr *= LCB2->other_subst;
-	Pr *= LCB3->other_subst;
 	Pr.log() += log_scale_min * scale;
 	return Pr;
     }
@@ -1029,91 +1039,63 @@ namespace substitution {
     Likelihood_Cache_Branch*
     peel_internal_branch_SEV(const Likelihood_Cache_Branch* LCB1,
 			     const Likelihood_Cache_Branch* LCB2,
-			     const matrix<int>& index,
 			     const EVector& transition_P,
 			     const Matrix& F)
     {
 	total_peel_internal_branches++;
 
-	assert(LCB1->bits.size() > 0);
-	assert(LCB2->bits.size() > 0);
-	
 	const int n_models = transition_P.size();
 	const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
 	const int matrix_size = n_models * n_states;
     
+	const auto& bits1 = LCB1->bits;
+	const auto& bits2 = LCB2->bits;
+
+	int L = bits1.size();
+	assert(L > 0);
+	assert(bits2.size() == L);
+
 	// Do this before accessing matrices or other_subst
-	auto* LCB3 = new Likelihood_Cache_Branch(index.size1(), n_models, n_states);
+	auto* LCB3 = new Likelihood_Cache_Branch(L, n_models, n_states);
 	LCB3->bits = LCB1->bits | LCB2->bits;
-	assert(LCB3->bits.size() > 0);
+	const auto& bits3 = LCB3->bits;
+	assert(bits3.size() == L);
 
 	// scratch matrix
 	double* S = LCB3->scratch(0);
 
-	Matrix ones(n_models, n_states);
-	element_assign(ones, 1);
-    
-	log_prod total;
-	int total_scale = 0;
-	for(int i=0;i<index.size1();i++) 
+	for(int c=0,i1=0,i2=0,i3=0;c<L;c++)
 	{
-	    // compute the source distribution from 2 branch distributions
-	    int i0 = index(i,0);
-	    int i1 = index(i,1);
-	    int i2 = index(i,2);
+	    if (not bits3.test(c)) continue;
 
-	    if (i2 < 0)
-	    {
-		double p_col = 1;
-
-		if (i0 != alphabet::gap) 
-		{
-		    assert(i1 == alphabet::gap);
-		    p_col = element_prod_sum(F.begin(), (*LCB1)[i0], matrix_size );
-		    total_scale += LCB1->scale(i0);
-		}
-		else if (i1 != alphabet::gap)
-		{
-		    assert(i0 == alphabet::gap);
-		    p_col = element_prod_sum(F.begin(), (*LCB2)[i1], matrix_size );
-		    total_scale += LCB2->scale(i1);
-		}
-
-		// Situation: i0 ==-1 and i1 == -1 can happen.
-
-		assert(0 <= p_col and p_col <= 1.00000000001);
-
-		// This does a log( ) operation.
-		total *= p_col;
-		continue;
-	    }
+	    bool nongap1 = bits1.test(c);
+	    bool nongap2 = bits2.test(c);
 
 	    int scale = 0;
 	    const double* C = S;
-	    if (i0 != alphabet::gap and i1 != alphabet::gap)
+	    if (nongap1 and nongap2)
 	    {
-		element_prod_assign(S, (*LCB1)[i0], (*LCB2)[i1], matrix_size);
-		scale = LCB1->scale(i0) + LCB2->scale(i1);
+		element_prod_assign(S, (*LCB1)[i1], (*LCB2)[i2], matrix_size);
+		scale = LCB1->scale(i1) + LCB2->scale(i2);
 	    }
-	    else if (i0 != alphabet::gap)
+	    else if (nongap1)
 	    {
-		C = (*LCB1)[i0];
-		scale = LCB1->scale(i0);
+		C = (*LCB1)[i1];
+		scale = LCB1->scale(i1);
 	    }
-	    else if (i1 != alphabet::gap)
+	    else if (nongap2)
 	    {
-		C = (*LCB2)[i1];
-		scale = LCB2->scale(i1);
+		C = (*LCB2)[i2];
+		scale = LCB2->scale(i2);
 	    }
 	    else
-		C = ones.begin();
-
-	    //      else
-	    //	std::abort(); // columns like this should not be in the index
-	    // Columns like this would not be in subA_index_leaf, but might be in subA_index_internal
+	    {
+		// columns like this should not be in the index
+		std::abort();
+	    }
 
 	    // propagate from the source distribution
-	    double* R = (*LCB3)[i2];            //name the result matrix
+	    double* R = (*LCB3)[i3];            //name the result matrix
 	    bool need_scale = true;
 	    for(int m=0;m<n_models;m++)
 	    {
@@ -1135,10 +1117,12 @@ namespace substitution {
 		    R[j] *= scale_factor;
 	    }
 	    LCB3->scale(i2) = scale;
+
+	    if (nongap1) i1++;
+	    if (nongap2) i2++;
+	    i3++;
 	}
 
-	LCB3->other_subst = LCB1->other_subst * LCB2->other_subst * total;
-	LCB3->other_subst.log() += total_scale*log_scale_min;
 	return LCB3;
     }
   
