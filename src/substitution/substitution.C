@@ -27,6 +27,7 @@
 #include "util.H"
 #include "math/logprod.H"
 #include "dp/hmm.H"
+#include <boost/dynamic_bitset.hpp>
 
 // #define DEBUG_SUBSTITUTION
 // #define DEBUG_CACHING
@@ -578,6 +579,60 @@ namespace substitution {
 
     Likelihood_Cache_Branch*
     peel_leaf_branch(const vector<int>& sequence, const alphabet& a, const EVector& transition_P)
+    {
+	total_peel_leaf_branches++;
+
+	//    const vector<unsigned>& smap = MC.state_letters();
+
+	int L0 = sequence.size();
+
+	const int n_models  = transition_P.size();
+	const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
+	const int matrix_size = n_models * n_states;
+
+	auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
+    
+	for(int i=0;i<L0;i++)
+	{
+	    double* R = (*LCB)[i];
+	    // compute the distribution at the parent node
+	    int l2 = sequence[i];
+
+	    if (a.is_letter(l2))
+		for(int m=0;m<n_models;m++) 
+		{
+		    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+		    for(int s1=0;s1<n_states;s1++)
+			R[m*n_states + s1] = Q(s1,l2);
+		}
+	    else if (a.is_letter_class(l2)) 
+	    {
+		// FIXME - why is the sum(Q,l1,l2,a) function so much slower?
+		// FIXME - would this slowness affect the modulated peeling functions also?
+		const alphabet::fmask_t& fmask = a.letter_fmask(l2);
+		for(int m=0;m<n_models;m++) 
+		{
+		    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+		    for(int s1=0;s1<n_states;s1++)
+		    {
+			double sum = 0.0;
+			for(int s2=0;s2<n_states;s2++)
+			    sum += Q(s1,s2) * fmask[s2];
+			R[m*n_states + s1] = sum;
+		    }
+		}
+	    }
+	    else
+		element_assign(R, matrix_size, 1);
+	}
+
+	LCB->other_subst = 1;
+
+	return LCB;
+    }
+
+    Likelihood_Cache_Branch*
+    peel_leaf_branch2(const vector<int>& sequence, const alphabet& a, const EVector& transition_P, const boost::dynamic_bitset<>& mask)
     {
 	total_peel_leaf_branches++;
 

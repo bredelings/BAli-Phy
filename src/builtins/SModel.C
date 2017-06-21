@@ -981,10 +981,13 @@ extern "C" closure builtin_function_frequency_matrix(OperationArgs& Args)
 
 #include "substitution/cache.H"
 #include "dp/hmm.H"
+using boost::dynamic_bitset;
 
 namespace substitution {
     Likelihood_Cache_Branch*
     peel_leaf_branch(const vector<int>& sequence, const alphabet& a, const EVector& transition_P);
+    Likelihood_Cache_Branch*
+    peel_leaf_branch2(const vector<int>& sequence, const alphabet& a, const EVector& transition_P, const dynamic_bitset<>& mask);
 }
 
 extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
@@ -994,6 +997,17 @@ extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
 
     return substitution::peel_leaf_branch(arg0.as_<Vector<int>>(), arg1.as_<alphabet>(), arg2.as_<EVector>());
+}
+
+
+extern "C" closure builtin_function_peel_leaf_branch2(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+
+    return substitution::peel_leaf_branch2(arg0.as_<Vector<int>>(), arg1.as_<alphabet>(), arg2.as_<EVector>(), arg3.as_<Box<dynamic_bitset<>>>());
 }
 
 
