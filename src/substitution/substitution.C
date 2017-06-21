@@ -645,6 +645,7 @@ namespace substitution {
 	const int matrix_size = n_models * n_states;
 
 	auto LCB = new Likelihood_Cache_Branch(L0, n_models, n_states);
+	LCB->bits = mask;
     
 	for(int i=0;i<L0;i++)
 	{
