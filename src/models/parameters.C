@@ -462,7 +462,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
 	likelihood_index = p->add_compute_expression((dummy("SModel.peel_likelihood_1"), seq, *a, f));
     }
-    else
+    else if (likelihood_calculator_type == 0)
     {
 	auto t = p->my_tree();
 	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
@@ -485,6 +485,31 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	{
 	    auto root = parameter("*subst_root");
 	    likelihood_index = p->add_compute_expression((dummy("SModel.peel_likelihood"), t, cls, as, f, root));
+	}
+    }
+    else if (likelihood_calculator_type == 1)
+    {
+	auto t = p->my_tree();
+	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
+	cl_index = p->add_compute_expression((dummy("SModel.cached_conditional_likelihoods2"),t,seqs_array,as,*a,transition_ps,f));  // Create and set conditional likelihoods for each branch
+	auto cls = p->get_expression(cl_index);
+	for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
+	    conditional_likelihoods_for_branch[b] = p->add_compute_expression((dummy("Prelude.!"),cls,b));
+
+	if (p->t().n_nodes() == 2)
+	{
+	    auto seq1 = (dummy("Prelude.!"), seqs_array, 0);
+	    auto seq2 = (dummy("Prelude.!"), seqs_array, 1);
+	    auto A = (dummy("Prelude.!"), as, 0);
+	    auto P = (dummy("Prelude.!"), transition_ps, 0);
+	    auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
+
+	    likelihood_index = p->add_compute_expression((dummy("SModel.peel_likelihood_2"), seq1, seq2, *a, A, P, f));
+	}
+	else
+	{
+	    auto root = parameter("*subst_root");
+	    likelihood_index = p->add_compute_expression((dummy("SModel.peel_likelihood2"), t, cls, as, f, root));
 	}
     }
 

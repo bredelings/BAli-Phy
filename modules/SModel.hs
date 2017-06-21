@@ -385,4 +385,21 @@ cached_conditional_likelihoods t seqs as alpha ps f = let {lc    = mkArray (2*nu
 peel_likelihood t cl as f root = let {branches_in = map (reverseEdge t) (edgesOutOfNode t root);} in
                                  case branches_in of {[b1,b2,b3]->
                                                       calc_root_probability (cl!b1) (cl!b2) (cl!b3) (alignment_index3 (as!b1) (as!b2) (as!b3)) f};
+
+
+peel_leaf_branch2 = peel_leaf_branch;
+peel_internal_branch2 = peel_internal_branch;
+calc_root_probability2 = calc_root_probability;
+
+cached_conditional_likelihoods2 t seqs as alpha ps f = let {lc    = mkArray (2*numBranches t) lcf;
+                                                           lcf b = let {bb = b `mod` (numBranches t)} in
+                                                                   case edgesBeforeEdge t b of {
+                                                                       []      -> peel_leaf_branch2 (seqs!sourceNode t b) alpha (ps!bb);
+                                                                       [b1,b2] -> peel_internal_branch2 (lc!b1) (lc!b2) (alignment_index2 (as!b1) (as!b2)) (ps!bb) f}
+                                                          }
+                                                      in lc;
+
+peel_likelihood2 t cl as f root = let {branches_in = map (reverseEdge t) (edgesOutOfNode t root);} in
+                                 case branches_in of {[b1,b2,b3]->
+                                                      calc_root_probability2 (cl!b1) (cl!b2) (cl!b3) (alignment_index3 (as!b1) (as!b2) (as!b3)) f};
 }
