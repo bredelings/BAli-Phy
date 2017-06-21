@@ -61,6 +61,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("Model,M",value<string>(),"Module containing hierarchical model.")
 	("test-module",value<string>(),"Parse and optimize the given module")
 	("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
+	("likelihood-calculators",value<string>(),"comma-separated integers")
 	;
 
     options_description optimization("Haskell optimization options");
