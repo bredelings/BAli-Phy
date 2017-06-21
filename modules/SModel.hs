@@ -30,6 +30,7 @@ builtin peel_leaf_branch2 4 "peel_leaf_branch2" "SModel";
 builtin alignment_index2 2 "alignment_index2" "SModel";
 builtin alignment_index3 3 "alignment_index3" "SModel";
 builtin peel_internal_branch 5 "peel_internal_branch" "SModel";
+builtin peel_internal_branch2 5 "peel_internal_branch2" "SModel";
 builtin calc_root_probability 5 "calc_root_probability" "SModel";
 builtin peel_likelihood_1 3 "peel_likelihood_1" "SModel";
 builtin peel_likelihood_2 6 "peel_likelihood_2" "SModel";
@@ -389,7 +390,6 @@ peel_likelihood t cl as f root = let {branches_in = map (reverseEdge t) (edgesOu
                                                       calc_root_probability (cl!b1) (cl!b2) (cl!b3) (alignment_index3 (as!b1) (as!b2) (as!b3)) f};
 
 
-peel_internal_branch2 = peel_internal_branch;
 calc_root_probability2 = calc_root_probability;
 
 cached_conditional_likelihoods2 t seqs as alpha ps f a =
