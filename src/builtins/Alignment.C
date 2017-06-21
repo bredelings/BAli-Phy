@@ -2,6 +2,7 @@
 #include "dp/2way.H"
 #include "imodel/imodel.H"
 #include "computation/expression/expression.H"
+#include <boost/dynamic_bitset.hpp>
 
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
 {
@@ -257,3 +258,25 @@ extern "C" closure builtin_function_rs05_lengthp(OperationArgs& Args)
     }
     return {P};
 }
+
+extern "C" closure builtin_function_bitmask_from_alignment(OperationArgs& Args)
+{
+    using boost::dynamic_bitset;
+
+    auto arg0 = Args.evaluate(0);
+    const auto& A = arg0. as_<alignment>();
+
+    int seq = Args.evaluate(1).as_int();
+
+    int L = A.length();
+    
+    object_ptr<Box<dynamic_bitset<>>> mask_(new Box<dynamic_bitset<>>(L));
+    auto& mask = *mask_;
+
+    for(int i=0;i<L;i++)
+	if (A.character(i,seq))
+	    mask.flip(i);
+
+    return mask_;
+}
+
