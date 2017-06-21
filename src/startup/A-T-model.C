@@ -525,6 +525,8 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     if (args.count("likelihood-calculators"))
     {
 	likelihood_calculator_types = split<int>(args["likelihood-calculators"].as<string>(), ",");
+	if (likelihood_calculator_types.size() == 1)
+	    likelihood_calculator_types = vector<int>(A.size(), likelihood_calculator_types[0]);
 	if (likelihood_calculator_types.size() != A.size())
 	    throw myexception()<<"We have "<<A.size()<<" partitions, but only got "<<likelihood_calculator_types.size()<<" likelihood calculator types.";
     }
