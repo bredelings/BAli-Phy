@@ -920,6 +920,122 @@ namespace substitution {
 	return LCB3;
     }
   
+    Likelihood_Cache_Branch*
+    peel_internal_branch2(const Likelihood_Cache_Branch* LCB1,
+			 const Likelihood_Cache_Branch* LCB2,
+			 const matrix<int>& index,
+			 const EVector& transition_P,
+			 const Matrix& F)
+    {
+	total_peel_internal_branches++;
+
+	assert(LCB1->bits.size() > 0);
+	assert(LCB2->bits.size() > 0);
+	
+	const int n_models = transition_P.size();
+	const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
+	const int matrix_size = n_models * n_states;
+    
+	// Do this before accessing matrices or other_subst
+	auto* LCB3 = new Likelihood_Cache_Branch(index.size1(), n_models, n_states);
+	LCB3->bits = LCB1->bits | LCB2->bits;
+	assert(LCB3->bits.size() > 0);
+
+	// scratch matrix
+	double* S = LCB3->scratch(0);
+
+	Matrix ones(n_models, n_states);
+	element_assign(ones, 1);
+    
+	log_prod total;
+	int total_scale = 0;
+	for(int i=0;i<index.size1();i++) 
+	{
+	    // compute the source distribution from 2 branch distributions
+	    int i0 = index(i,0);
+	    int i1 = index(i,1);
+	    int i2 = index(i,2);
+
+	    if (i2 < 0)
+	    {
+		double p_col = 1;
+
+		if (i0 != alphabet::gap) 
+		{
+		    assert(i1 == alphabet::gap);
+		    p_col = element_prod_sum(F.begin(), (*LCB1)[i0], matrix_size );
+		    total_scale += LCB1->scale(i0);
+		}
+		else if (i1 != alphabet::gap)
+		{
+		    assert(i0 == alphabet::gap);
+		    p_col = element_prod_sum(F.begin(), (*LCB2)[i1], matrix_size );
+		    total_scale += LCB2->scale(i1);
+		}
+
+		// Situation: i0 ==-1 and i1 == -1 can happen.
+
+		assert(0 <= p_col and p_col <= 1.00000000001);
+
+		// This does a log( ) operation.
+		total *= p_col;
+		continue;
+	    }
+
+	    int scale = 0;
+	    const double* C = S;
+	    if (i0 != alphabet::gap and i1 != alphabet::gap)
+	    {
+		element_prod_assign(S, (*LCB1)[i0], (*LCB2)[i1], matrix_size);
+		scale = LCB1->scale(i0) + LCB2->scale(i1);
+	    }
+	    else if (i0 != alphabet::gap)
+	    {
+		C = (*LCB1)[i0];
+		scale = LCB1->scale(i0);
+	    }
+	    else if (i1 != alphabet::gap)
+	    {
+		C = (*LCB2)[i1];
+		scale = LCB2->scale(i1);
+	    }
+	    else
+		C = ones.begin();
+
+	    //      else
+	    //	std::abort(); // columns like this should not be in the index
+	    // Columns like this would not be in subA_index_leaf, but might be in subA_index_internal
+
+	    // propagate from the source distribution
+	    double* R = (*LCB3)[i2];            //name the result matrix
+	    bool need_scale = true;
+	    for(int m=0;m<n_models;m++)
+	    {
+		const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+	
+		// compute the distribution at the target (parent) node - multiple letters
+		for(int s1=0;s1<n_states;s1++) {
+		    double temp=0;
+		    for(int s2=0;s2<n_states;s2++)
+			temp += Q(s1,s2)*C[m*n_states + s2];
+		    R[m*n_states + s1] = temp;
+		    need_scale = need_scale and (temp < scale_min);
+		}
+	    }
+	    if (need_scale) // and false)
+	    {
+		scale++;
+		for(int j=0; j<matrix_size; j++)
+		    R[j] *= scale_factor;
+	    }
+	    LCB3->scale(i2) = scale;
+	}
+
+	LCB3->other_subst = LCB1->other_subst * LCB2->other_subst * total;
+	LCB3->other_subst.log() += total_scale*log_scale_min;
+	return LCB3;
+    }
+  
     Box<matrix<int>>* alignment_index2(const pairwise_alignment_t& A0, const pairwise_alignment_t& A1)
     {
 	auto a0 = convert_to_bits(A0, 0, 2);
