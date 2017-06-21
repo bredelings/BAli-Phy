@@ -396,7 +396,7 @@ cached_conditional_likelihoods_SEV t seqs as alpha ps f a =
                  lcf b = let {bb = b `mod` (numBranches t)} in
                          case edgesBeforeEdge t b of {
                                                     []      -> peel_leaf_branch_SEV (seqs!sourceNode t b) alpha (ps!bb) (bitmask_from_alignment a $ sourceNode t b);
-                                                               [b1,b2] -> peel_internal_branch_SEV (lc!b1) (lc!b2) (alignment_index2 (as!b1) (as!b2)) (ps!bb) f}
+                                                    [b1,b2] -> peel_internal_branch_SEV (lc!b1) (lc!b2) (alignment_index2 (as!b1) (as!b2)) (ps!bb) f}
         }
     in lc;
 
