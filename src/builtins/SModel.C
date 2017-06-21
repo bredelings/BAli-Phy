@@ -986,8 +986,9 @@ using boost::dynamic_bitset;
 namespace substitution {
     Likelihood_Cache_Branch*
     peel_leaf_branch(const vector<int>& sequence, const alphabet& a, const EVector& transition_P);
+
     Likelihood_Cache_Branch*
-    peel_leaf_branch2(const vector<int>& sequence, const alphabet& a, const EVector& transition_P, const dynamic_bitset<>& mask);
+    peel_leaf_branch_SEV(const vector<int>& sequence, const alphabet& a, const EVector& transition_P, const dynamic_bitset<>& mask);
 }
 
 extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
@@ -1000,14 +1001,14 @@ extern "C" closure builtin_function_peel_leaf_branch(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_peel_leaf_branch2(OperationArgs& Args)
+extern "C" closure builtin_function_peel_leaf_branch_SEV(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
 
-    return substitution::peel_leaf_branch2(arg0.as_<Vector<int>>(), arg1.as_<alphabet>(), arg2.as_<EVector>(), arg3.as_<Box<dynamic_bitset<>>>());
+    return substitution::peel_leaf_branch_SEV(arg0.as_<Vector<int>>(), arg1.as_<alphabet>(), arg2.as_<EVector>(), arg3.as_<Box<dynamic_bitset<>>>());
 }
 
 
@@ -1026,11 +1027,11 @@ namespace substitution {
 			 const Matrix& F);
 
     Likelihood_Cache_Branch*
-    peel_internal_branch2(const Likelihood_Cache_Branch* LCB1,
-			 const Likelihood_Cache_Branch* LCB2,
-			 const matrix<int>& index,
-			 const EVector& transition_P,
-			 const Matrix& F);
+    peel_internal_branch_SEV(const Likelihood_Cache_Branch* LCB1,
+			     const Likelihood_Cache_Branch* LCB2,
+			     const matrix<int>& index,
+			     const EVector& transition_P,
+			     const Matrix& F);
 }
 
 extern "C" closure builtin_function_alignment_index2(OperationArgs& Args)
@@ -1065,7 +1066,7 @@ extern "C" closure builtin_function_peel_internal_branch(OperationArgs& Args)
 					      arg4.as_<Box<Matrix>>());
 }
 
-extern "C" closure builtin_function_peel_internal_branch2(OperationArgs& Args)
+extern "C" closure builtin_function_peel_internal_branch_SEV(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
@@ -1073,11 +1074,11 @@ extern "C" closure builtin_function_peel_internal_branch2(OperationArgs& Args)
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
 
-    return substitution::peel_internal_branch2(&arg0.as_<Likelihood_Cache_Branch>(),
-					      &arg1.as_<Likelihood_Cache_Branch>(),
-					      arg2.as_<Box<matrix<int>>>(),
-					      arg3.as_<EVector>(),
-					      arg4.as_<Box<Matrix>>());
+    return substitution::peel_internal_branch_SEV(&arg0.as_<Likelihood_Cache_Branch>(),
+						  &arg1.as_<Likelihood_Cache_Branch>(),
+						  arg2.as_<Box<matrix<int>>>(),
+						  arg3.as_<EVector>(),
+						  arg4.as_<Box<Matrix>>());
 }
 
 namespace substitution {
@@ -1086,6 +1087,12 @@ namespace substitution {
 				       const Likelihood_Cache_Branch* LCB3,
 				       const matrix<int>& index,
 				       const Matrix& F);
+
+    log_double_t calc_root_probability_SEV(const Likelihood_Cache_Branch* LCB1,
+					   const Likelihood_Cache_Branch* LCB2,
+					   const Likelihood_Cache_Branch* LCB3,
+					   const matrix<int>& index,
+					   const Matrix& F);
 }
 
 extern "C" closure builtin_function_calc_root_probability(OperationArgs& Args)
@@ -1101,6 +1108,22 @@ extern "C" closure builtin_function_calc_root_probability(OperationArgs& Args)
 							  &arg2.as_<Likelihood_Cache_Branch>(),
 							  arg3.as_<Box<matrix<int>>>(),
 							  arg4.as_<Box<Matrix>>());
+    return {Pr};
+}
+
+extern "C" closure builtin_function_calc_root_probability_SEV(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate(0);
+    auto arg1 = Args.evaluate(1);
+    auto arg2 = Args.evaluate(2);
+    auto arg3 = Args.evaluate(3);
+    auto arg4 = Args.evaluate(4);
+
+    log_double_t Pr = substitution::calc_root_probability_SEV(&arg0.as_<Likelihood_Cache_Branch>(),
+							      &arg1.as_<Likelihood_Cache_Branch>(),
+							      &arg2.as_<Likelihood_Cache_Branch>(),
+							      arg3.as_<Box<matrix<int>>>(),
+							      arg4.as_<Box<Matrix>>());
     return {Pr};
 }
 
