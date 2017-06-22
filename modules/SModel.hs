@@ -396,7 +396,7 @@ peel_likelihood t cl as f root = let {branches_in = map (reverseEdge t) (edgesOu
                                                       calc_root_probability (cl!b1) (cl!b2) (cl!b3) (alignment_index3 (as!b1) (as!b2) (as!b3)) f};
 
 
-cached_conditional_likelihoods_SEV t seqs as alpha ps f a =
+cached_conditional_likelihoods_SEV t seqs alpha ps f a =
     let {lc    = mkArray (2*numBranches t) lcf;
                  lcf b = let {bb = b `mod` (numBranches t)} in
                          case edgesBeforeEdge t b of {
@@ -405,7 +405,6 @@ cached_conditional_likelihoods_SEV t seqs as alpha ps f a =
         }
     in lc;
 
-peel_likelihood_SEV t cl as f root = let {branches_in = map (reverseEdge t) (edgesOutOfNode t root);} in
-                                 case branches_in of {[b1,b2,b3]->
-                                                      calc_root_probability_SEV (cl!b1) (cl!b2) (cl!b3) f};
+peel_likelihood_SEV t cl f root = let {branches_in = map (reverseEdge t) (edgesOutOfNode t root);} in
+                                  case branches_in of {[b1,b2,b3]-> calc_root_probability_SEV (cl!b1) (cl!b2) (cl!b3) f};
 }

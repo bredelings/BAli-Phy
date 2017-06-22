@@ -491,7 +491,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     {
 	auto t = p->my_tree();
 	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
-	cl_index = p->add_compute_expression((dummy("SModel.cached_conditional_likelihoods_SEV"),t,seqs_array,as,*a,transition_ps,f,AA));  // Create and set conditional likelihoods for each branch
+	cl_index = p->add_compute_expression((dummy("SModel.cached_conditional_likelihoods_SEV"),t,seqs_array,*a,transition_ps,f,AA));  // Create and set conditional likelihoods for each branch
 	auto cls = p->get_expression(cl_index);
 	for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
 	    conditional_likelihoods_for_branch[b] = p->add_compute_expression((dummy("Prelude.!"),cls,b));
@@ -509,7 +509,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	else
 	{
 	    auto root = parameter("*subst_root");
-	    likelihood_index = p->add_compute_expression((dummy("SModel.peel_likelihood_SEV"), t, cls, as, f, root));
+	    likelihood_index = p->add_compute_expression((dummy("SModel.peel_likelihood_SEV"), t, cls, f, root));
 	}
     }
 
