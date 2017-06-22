@@ -1069,14 +1069,13 @@ extern "C" closure builtin_function_peel_internal_branch_SEV(OperationArgs& Args
 {
     auto arg0 = Args.evaluate(0);
     auto arg1 = Args.evaluate(1);
-//    auto arg2 = Args.evaluate(2);
+    auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
-    auto arg4 = Args.evaluate(4);
 
     return substitution::peel_internal_branch_SEV(&arg0.as_<Likelihood_Cache_Branch>(),
 						  &arg1.as_<Likelihood_Cache_Branch>(),
-						  arg3.as_<EVector>(),
-						  arg4.as_<Box<Matrix>>());
+						  arg2.as_<EVector>(),
+						  arg3.as_<Box<Matrix>>());
 }
 
 namespace substitution {

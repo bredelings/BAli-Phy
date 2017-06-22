@@ -25,17 +25,22 @@ builtin fMutSel_q 4 "fMutSel_q" "SModel";
 builtin fMutSel_pi 3 "fMutSel_pi" "SModel";
 builtin builtin_weighted_frequency_matrix 2 "weighted_frequency_matrix" "SModel";
 builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel";
+
+-- peeling for connected-CLVs
 builtin peel_leaf_branch 3 "peel_leaf_branch" "SModel";
-builtin peel_leaf_branch_SEV 4 "peel_leaf_branch_SEV" "SModel";
 builtin alignment_index2 2 "alignment_index2" "SModel";
 builtin alignment_index3 3 "alignment_index3" "SModel";
 builtin peel_internal_branch 5 "peel_internal_branch" "SModel";
-builtin peel_internal_branch_SEV 5 "peel_internal_branch_SEV" "SModel";
 builtin calc_root_probability 5 "calc_root_probability" "SModel";
+
+-- peeling for SEV
+builtin bitmask_from_alignment 2 "bitmask_from_alignment" "Alignment";
+builtin peel_leaf_branch_SEV 4 "peel_leaf_branch_SEV" "SModel";
+builtin peel_internal_branch_SEV 4 "peel_internal_branch_SEV" "SModel";
 builtin calc_root_probability_SEV 4 "calc_root_probability_SEV" "SModel";
+
 builtin peel_likelihood_1 3 "peel_likelihood_1" "SModel";
 builtin peel_likelihood_2 6 "peel_likelihood_2" "SModel";
-builtin bitmask_from_alignment 2 "bitmask_from_alignment" "Alignment";
 
 data ReversibleMarkov = ReversibleMarkov a b c d e f g;
 data ReversibleFrequency = ReversibleFrequency a b c d;
@@ -396,7 +401,7 @@ cached_conditional_likelihoods_SEV t seqs as alpha ps f a =
                  lcf b = let {bb = b `mod` (numBranches t)} in
                          case edgesBeforeEdge t b of {
                                                     []      -> peel_leaf_branch_SEV (seqs!sourceNode t b) alpha (ps!bb) (bitmask_from_alignment a $ sourceNode t b);
-                                                    [b1,b2] -> peel_internal_branch_SEV (lc!b1) (lc!b2) (alignment_index2 (as!b1) (as!b2)) (ps!bb) f}
+                                                    [b1,b2] -> peel_internal_branch_SEV (lc!b1) (lc!b2) (ps!bb) f}
         }
     in lc;
 
