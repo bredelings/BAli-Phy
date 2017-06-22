@@ -477,8 +477,6 @@ namespace substitution {
 	assert(n_models == LCB3->n_models());
 	assert(n_states == LCB3->n_states());
 
-	assert(index.size2() == 3);
-
 #ifdef DEBUG_SUBSTITUTION
 	// scratch matrix 
 	Matrix S(n_models,n_states);
