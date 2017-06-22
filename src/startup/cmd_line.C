@@ -49,6 +49,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description advanced("Advanced options");
     advanced.add_options()
 	("unalign,U","Unalign sequences (if variable-A)")
+	("unalign-all,U","Unalign sequences")
 	("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
 	("beta",value<string>(),"MCMCMC temperature")
 	("package-path,P",value<string>(),"Directories to search for packages (':'-separated)")

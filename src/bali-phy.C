@@ -539,7 +539,8 @@ int main(int argc,char* argv[])
 		P->branch_scale(i, 1.0);
 	}
 
-	set_initial_parameter_values(*M,args);
+//      FIXME - With lots of tree nodes, this explodes in short_parameter_names( )
+//	set_initial_parameter_values(*M,args);
 
 	set_key_values(*M,args);
 

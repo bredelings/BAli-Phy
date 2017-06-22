@@ -1261,11 +1261,6 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     for(int i=0;i<A.size();i++)
 	PC->DPC.emplace_back(this,i,A[i]);
 
-    // Initialize alignments
-    for(int i=0;i<n_data_partitions();i++)
-	if (not get_data_partition(i).has_IModel())
-	    get_data_partition(i).set_alignment(A[i]);
-
     // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
     probability();
 }

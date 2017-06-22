@@ -525,8 +525,9 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 
     //-------- Set the alignments for variable partitions ---------//
     bool unalign = args.count("unalign");
+    bool unalign_all = args.count("unalign-all");
     for(int i=0;i<P.n_data_partitions();i++)
-	if (P.get_data_partition(i).has_IModel() and not unalign)
+	if (not unalign_all and (not unalign or not P.get_data_partition(i).has_IModel()))
 	    P.get_data_partition(i).set_alignment(A[i]);
 
     // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
