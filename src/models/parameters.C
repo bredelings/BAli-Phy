@@ -374,12 +374,17 @@ pairwise_alignment_t make_unaligned_pairwise_alignment(int L1, int L2)
     return pi;
 }
 
+int data_partition::likelihood_calculator() const
+{
+    return DPC().likelihood_calculator;
+}
+
 
 data_partition::data_partition(const Parameters* p, int i)
     :P(p),partition_index(i)
 { }
 
-data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, int like_calc_type)
+data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, int like_calc)
     :pairwise_alignment_for_branch(2*p->t().n_branches()),
      conditional_likelihoods_for_branch(2*p->t().n_branches()),
      leaf_sequence_indices(p->t().n_leaves(),-1),
@@ -390,7 +395,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
      sequences( alignment_letters(AA, p->t().n_leaves()) ),
      a(AA.get_alphabet().clone()),
      branch_HMM_type(p->t().n_branches(),0),
-     likelihood_calculator_type(like_calc_type)
+     likelihood_calculator(like_calc)
 {
     const auto& t = p->t();
     int B = t.n_branches();
@@ -462,7 +467,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
 	likelihood_index = p->add_compute_expression((dummy("SModel.peel_likelihood_1"), seq, *a, f));
     }
-    else if (likelihood_calculator_type == 0)
+    else if (likelihood_calculator == 0)
     {
 	auto t = p->my_tree();
 	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
@@ -487,7 +492,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	    likelihood_index = p->add_compute_expression((dummy("SModel.peel_likelihood"), t, cls, as, f, root));
 	}
     }
-    else if (likelihood_calculator_type == 1)
+    else if (likelihood_calculator == 1)
     {
 	auto t = p->my_tree();
 	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
@@ -1145,7 +1150,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<model_t>& scaleMs,
 		       const vector<int>& scale_mapping,
 		       const model_t& branch_length_model,
-		       const vector<int>& like_calc_types)
+		       const vector<int>& like_calcs)
     :Model(L),
      PC(new parameters_constants(A,tt,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
      variable_alignment_( n_imodels() > 0 ),
@@ -1285,9 +1290,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
 
     // create data partitions
-    assert(like_calc_types.size() == A.size());
+    assert(like_calcs.size() == A.size());
     for(int i=0;i<A.size();i++)
-	PC->DPC.emplace_back(this, i, A[i], like_calc_types[i]);
+	PC->DPC.emplace_back(this, i, A[i], like_calcs[i]);
 
     // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
     probability();
@@ -1300,8 +1305,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<model_t>& scaleMs,
 		       const vector<int>& scale_mapping,
 		       const model_t& branch_length_model,
-		       const vector<int>& like_calc_types)
-    :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<int>{}, scaleMs, scale_mapping, branch_length_model, like_calc_types)
+		       const vector<int>& like_calcs)
+    :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<int>{}, scaleMs, scale_mapping, branch_length_model, like_calcs)
 { }
 
 bool accept_MH(const Model& P1,const Model& P2,double rho)

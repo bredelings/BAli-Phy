@@ -83,9 +83,9 @@ struct data_partition_constants
     /// Alignment constraint
     matrix<int> alignment_constraint;
 
-    int likelihood_calculator_type;
+    int likelihood_calculator;
 
-    data_partition_constants(Parameters* P, int i, const alignment&, int like_calc_type);
+    data_partition_constants(Parameters* P, int i, const alignment&, int like_calc);
 };
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)
@@ -106,7 +106,7 @@ public:
     /// Is the alignment allowed to vary?
     bool variable_alignment() const;
   
-    int likelihood_calculator_type() const;
+    int likelihood_calculator() const;
 
     alignment A() const;
 
@@ -406,7 +406,7 @@ public:
 	       const std::vector<model_t>&,
 	       const std::vector<int>&,
 	       const model_t&,
-	       const std::vector<int>& like_calc_types);
+	       const std::vector<int>& like_calcs);
 
     Parameters(const std::shared_ptr<module_loader>& L,
 	       const std::vector<alignment>& A, const SequenceTree&, 
@@ -417,7 +417,7 @@ public:
 	       const std::vector<model_t>&,
 	       const std::vector<int>&,
 	       const model_t&,
-	       const std::vector<int>& like_calc_types);
+	       const std::vector<int>& like_calcs);
 };
 
 bool accept_MH(const Model& P1,const Model& P2,double rho);

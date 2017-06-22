@@ -130,7 +130,7 @@ bali_phy_SOURCES = parser/parse.C dp/dp_hmm.C parser/desugar.C sequence/sequence
 	  computation/optimization/let-float.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
 	  startup/loggers.C startup/system.C startup/cmd_line.C models/rules.C models/parse.C \
 	  models/translate.C models/unification.C computation/optimization/simplifier.C \
-	  tools/read-trees.C alignment/load.C
+	  tools/read-trees.C alignment/load.C alignment/index-matrix.C
 
 if HOST_MINGW32
 bali_phy_SOURCES += dlfcn-win32/dlfcn.c

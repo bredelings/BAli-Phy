@@ -4,6 +4,7 @@
 #include "tree/tree-util.H" //extends
 #include "alignment/alignment-constraint.H"
 #include "alignment/load.H"
+#include "alignment/index-matrix.H"
 #include "models/parse.H"
 
 namespace po = boost::program_options;
@@ -334,6 +335,15 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
     return branches;
 }
 
+alignment unalign_A(const alignment& A)
+{
+    vector<int> L;
+    for(int i=0;i<A.n_sequences();i++)
+	L.push_back(A.seqlength(i));
+
+    return get_alignment(unaligned_matrix(L),A);
+}
+
 
 owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr<module_loader>& L,
 				      ostream& out_cache, ostream& out_screen, ostream& out_both,
@@ -521,25 +531,30 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     }
 
     //-------------- Likelihood calculator types -----------//
-    vector<int> likelihood_calculator_types(A.size(), 0);
+    vector<int> likelihood_calculators(A.size(), 0);
     if (args.count("likelihood-calculators"))
     {
-	likelihood_calculator_types = split<int>(args["likelihood-calculators"].as<string>(), ",");
-	if (likelihood_calculator_types.size() == 1)
-	    likelihood_calculator_types = vector<int>(A.size(), likelihood_calculator_types[0]);
-	if (likelihood_calculator_types.size() != A.size())
-	    throw myexception()<<"We have "<<A.size()<<" partitions, but only got "<<likelihood_calculator_types.size()<<" likelihood calculator types.";
+	likelihood_calculators = split<int>(args["likelihood-calculators"].as<string>(), ",");
+	if (likelihood_calculators.size() == 1)
+	    likelihood_calculators = vector<int>(A.size(), likelihood_calculators[0]);
+	if (likelihood_calculators.size() != A.size())
+	    throw myexception()<<"We have "<<A.size()<<" partitions, but only got "<<likelihood_calculators.size()<<" likelihood calculator types.";
     }
-
-    //--------------- Create the Parameters object---------------//
-    Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculator_types);
-
-    //-------- Set the alignments for variable partitions ---------//
     bool unalign = args.count("unalign");
     bool unalign_all = args.count("unalign-all");
+    for(int i=0;i<A.size();i++)
+	if (unalign_all or (unalign and imodel_mapping[i] != -1))
+	    if (likelihood_calculators[i] != 0)
+		A[i] = unalign_A(A[i]);
+    
+    //--------------- Create the Parameters object---------------//
+    Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators);
+
+    //-------- Set the alignments for variable partitions ---------//
     for(int i=0;i<P.n_data_partitions();i++)
 	if (not unalign_all and (not unalign or not P.get_data_partition(i).has_IModel()))
-	    P.get_data_partition(i).set_alignment(A[i]);
+	    if (P.get_data_partition(i).likelihood_calculator()==0)
+		P.get_data_partition(i).set_alignment(A[i]);
 
     // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
     set_foreground_branches(P, T);
