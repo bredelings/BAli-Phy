@@ -460,7 +460,6 @@ namespace substitution {
     log_double_t calc_root_probability_SEV(const Likelihood_Cache_Branch* LCB1,
 					   const Likelihood_Cache_Branch* LCB2,
 					   const Likelihood_Cache_Branch* LCB3,
-					   const matrix<int>& index,
 					   const Matrix& F)
     {
 	total_calc_root_prob++;

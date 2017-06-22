@@ -32,7 +32,7 @@ builtin alignment_index3 3 "alignment_index3" "SModel";
 builtin peel_internal_branch 5 "peel_internal_branch" "SModel";
 builtin peel_internal_branch_SEV 5 "peel_internal_branch_SEV" "SModel";
 builtin calc_root_probability 5 "calc_root_probability" "SModel";
-builtin calc_root_probability_SEV 5 "calc_root_probability_SEV" "SModel";
+builtin calc_root_probability_SEV 4 "calc_root_probability_SEV" "SModel";
 builtin peel_likelihood_1 3 "peel_likelihood_1" "SModel";
 builtin peel_likelihood_2 6 "peel_likelihood_2" "SModel";
 builtin bitmask_from_alignment 2 "bitmask_from_alignment" "Alignment";
@@ -402,5 +402,5 @@ cached_conditional_likelihoods_SEV t seqs as alpha ps f a =
 
 peel_likelihood_SEV t cl as f root = let {branches_in = map (reverseEdge t) (edgesOutOfNode t root);} in
                                  case branches_in of {[b1,b2,b3]->
-                                                      calc_root_probability_SEV (cl!b1) (cl!b2) (cl!b3) (alignment_index3 (as!b1) (as!b2) (as!b3)) f};
+                                                      calc_root_probability_SEV (cl!b1) (cl!b2) (cl!b3) f};
 }
