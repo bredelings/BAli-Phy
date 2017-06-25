@@ -58,6 +58,21 @@ void add(vector<T>& v1,const vector<T>& v2)
 	v1[i] += v2[i];
 }
 
+int n_gaps(const alignment& A)
+{
+    int total = 0;
+    for(int i=0;i<A.length();i++)
+	for(int j=0;j<A.n_sequences();j++)
+	    if (A.gap(i,j))
+		total++;
+    return total;
+}
+
+double gap_fraction(const alignment& A)
+{
+    return double(n_gaps(A))/A.n_sequences()/A.length();
+}
+
 
 vector<int> find_triplet(const sequence& s,const string& triplet) 
 {
@@ -334,6 +349,7 @@ int main(int argc,char* argv[])
 	//----------- guess # of indels -----------//
 	cout<<" ========   gaps ========\n";
 	cout<<"  "<<n_with_gaps<<" ("<<double(n_with_gaps)/A.length()*100<<"%) sites contain a gap.\n";
+	cout<<"  "<<gap_fraction(A)*100<<"% of the matrix is gaps.\n";
 	map<gap,unsigned> gaps = guess_indels(A);
 	vector<int> gap_lengths;
 	int total_gaps =0;
