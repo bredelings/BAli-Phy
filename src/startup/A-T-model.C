@@ -539,13 +539,22 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 	    likelihood_calculators = vector<int>(A.size(), likelihood_calculators[0]);
 	if (likelihood_calculators.size() != A.size())
 	    throw myexception()<<"We have "<<A.size()<<" partitions, but only got "<<likelihood_calculators.size()<<" likelihood calculator types.";
+	for(int i=0; i<A.size();i++)
+	{
+	    int c = likelihood_calculators[i];
+	    if (c != 0 and c != 1)
+		throw myexception()<<"Calculator "<<c<<" not recognized!";
+	    if (c != 0 and imodel_mapping[i] != -1)
+		throw myexception()<<"Calculator "<<c<<" does not work with a variable alignment!";
+	}
     }
+
     bool unalign = args.count("unalign");
     bool unalign_all = args.count("unalign-all");
     for(int i=0;i<A.size();i++)
 	if (unalign_all or (unalign and imodel_mapping[i] != -1))
 	    if (likelihood_calculators[i] != 0)
-		A[i] = unalign_A(A[i]);
+		throw myexception()<<"Can't unalign with calculator "<<likelihood_calculators[i]<<"!";
     
     //--------------- Create the Parameters object---------------//
     Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators);
