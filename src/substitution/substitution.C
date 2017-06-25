@@ -303,6 +303,7 @@ namespace substitution {
     int total_peel_branches=0;
     int total_likelihood=0;
     int total_calc_root_prob=0;
+    long int total_root_clv_length=0;
 
     inline double sum(const std::vector<double>& f,int l1,const alphabet& a)
     {
@@ -358,6 +359,8 @@ namespace substitution {
 				       const Matrix& F)
     {
 	total_calc_root_prob++;
+	total_root_clv_length += index.size1();
+//	std::cerr<<"root_clv_length = "<<index.size1()<<std::endl;
 
 	const int n_models = F.size1();
 	const int n_states = F.size2();
@@ -490,6 +493,8 @@ namespace substitution {
 	assert(L > 0);
 	assert(L == bits2.size());
 	assert(L == bits3.size());
+
+	total_root_clv_length += L;
 
 	log_prod total;
 	int scale = 0;
@@ -922,6 +927,16 @@ namespace substitution {
 	return LCB;
     }
 
+    int sum_row(const matrix<int>& index, int row)
+    {
+	int total = 0;
+	for(int i=0;i<index.size1();i++)
+	    if (index(i,row) >= 0)
+		total++;
+	return total;
+    }
+	
+
     Likelihood_Cache_Branch*
     peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
 			 const Likelihood_Cache_Branch* LCB2,
@@ -934,7 +949,9 @@ namespace substitution {
 	const int n_models = transition_P.size();
 	const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
 	const int matrix_size = n_models * n_states;
-    
+
+//	std::cerr<<"L1 = "<<sum_row(index,0)<<"      L2 = "<<sum_row(index,1)<<"    L3 = "<<sum_row(index,2)<<std::endl;
+
 	// Do this before accessing matrices or other_subst
 	auto* LCB3 = new Likelihood_Cache_Branch(index.size1(), n_models, n_states);
 

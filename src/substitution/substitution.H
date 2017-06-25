@@ -55,6 +55,7 @@ namespace substitution {
     extern int total_peel_branches;
     extern int total_calc_root_prob;
     extern int total_likelihood;
+    extern long total_root_clv_length;
 }
 
 #endif
