@@ -43,15 +43,6 @@ using boost::optional;
 
 using boost::program_options::variables_map;
 
-optional<int> find_internal_node(const TreeInterface& t)
-{
-    for(int n=0;n<t.n_nodes();n++)
-	if (t.is_internal_node(n)) return n;
-
-    return boost::none;
-}
-
-
 vector<dynamic_bitset<>> get_states_for_leaf_characters(const alignment& A, const TreeInterface& t)
 {
     vector<dynamic_bitset<>> present(t.n_nodes(), dynamic_bitset<>(A.length()));
