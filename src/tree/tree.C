@@ -618,7 +618,7 @@ const vector<int>& Tree::leaf_nodes() const
     {
 	leaf_nodes_.modify_value().clear();
 	for(int i=0;i<nodes_.size();i++)
-	    if (is_leaf_node(nodes_[i]))
+	    if (::is_leaf_node(nodes_[i]))
 		leaf_nodes_.modify_value().push_back(i);
 	leaf_nodes_.validate();
     }
@@ -659,7 +659,7 @@ const vector<tree_edge>& Tree::leaf_branches() const
 	{
 	    for(int i=0;i<branches_.size();i++)
 		// orient branches away from leaf nodes
-		if (is_branch(branches_[i]) and is_leaf_node(branches_[i]))
+		if (is_branch(branches_[i]) and ::is_leaf_node(branches_[i]))
 		    leaf_branches_.modify_value().push_back( branches_[i] );
 	}
 	leaf_branches_.validate();
@@ -748,7 +748,7 @@ vector<int> Tree::prune_leaves(const vector<int>& remove)
 	if (do_remove[i]) 
 	{
 	    BranchNode* leaf = old_nodes[i];
-	    while(is_leaf_node(leaf) and leaf->out and leaf->out != leaf) 
+	    while(::is_leaf_node(leaf) and leaf->out and leaf->out != leaf) 
 	    {
 		old_nodes[leaf->node_attributes->name] = 0;
 		BranchNode* parent = TreeView::unlink_subtree(leaf->out);
@@ -813,7 +813,7 @@ void Tree::merge_tree(int node, const Tree& T, int tnode) {
     if (not tn->out)
 	throw myexception()<<"Trying to merge a tree w/ only one node: not allowed.";
 
-    int nl1 = n_leaves();   if (is_leaf_node(n )) nl1--;
+    int nl1 = n_leaves();   if (::is_leaf_node(n )) nl1--;
 
     shift_leaves( n, 0  ,  n->node_attributes->name);
     shift_leaves(tn, nl1, tn->node_attributes->name);
@@ -821,8 +821,8 @@ void Tree::merge_tree(int node, const Tree& T, int tnode) {
     TreeView::merge_nodes(n,tn);
 
     //------------------------- Setup ---------------------------//
-    assert(not is_leaf_node(n));
-    assert(not is_leaf_node(tn));
+    assert(not ::is_leaf_node(n));
+    assert(not ::is_leaf_node(tn));
 
     reanalyze(nodes_[0]);
 
@@ -1312,7 +1312,7 @@ void Tree::reanalyze(BranchNode* start)
     int total_branch_nodes = 0;
     for(BN_iterator BN(start);BN;BN++) {
 	total_branch_nodes++;
-	if (is_leaf_node(*BN))
+	if (::is_leaf_node(*BN))
 	    n_leaves_++;
     }
     nodes_.resize(1+total_branch_nodes/2);
@@ -1328,7 +1328,7 @@ void Tree::reanalyze(BranchNode* start)
     //----------- Set the leaf names ------------//
     vector<BranchNode*> work(n_leaves());
     for(BN_iterator BN(start);BN;BN++)
-	if (is_leaf_node(*BN))
+	if (::is_leaf_node(*BN))
 	    work[(*BN)->node_attributes->name] = (*BN);
 
     //------------- Clear all names -------------//
@@ -1387,7 +1387,7 @@ void Tree::recompute(BranchNode* start,bool recompute_partitions)
     for(BN_iterator BN(start);BN;BN++) {
 
 	// each leaf node has only one BranchNode, so this works
-	if (is_leaf_node(*BN)) n_leaves_++;
+	if (::is_leaf_node(*BN)) n_leaves_++;
 
 	//construct the nodes_ index
 	nodes_[(*BN)->node_attributes->name] = *BN;
@@ -1416,9 +1416,9 @@ void Tree::check_structure() const {
 
 	//leaf nodes come before internal nodes
 	if (i<n_leaves())
-	    assert(is_leaf_node(BN));
+	    assert(::is_leaf_node(BN));
 	else
-	    assert(is_internal_node(BN));
+	    assert(::is_internal_node(BN));
 
 	//each BranchNode in a node must have the same node name
 	for(BranchNode* n = BN->next;n != BN;n=n->next)
@@ -1990,7 +1990,7 @@ int Tree::parse_and_discover_names(const string& line)
 	// First give integer name to leaves with labels.
 	for(BN_iterator BN(root_);BN;BN++)
 	{
-	    if (is_leaf_node(*BN) and has_label(*BN, node_label_index))
+	    if (::is_leaf_node(*BN) and has_label(*BN, node_label_index))
 		(*BN)->node_attributes->name = L++;
 	    else
 		(*BN)->node_attributes->name = -1;
@@ -1999,7 +1999,7 @@ int Tree::parse_and_discover_names(const string& line)
 	// Name other leaves and resize attribute objects
 	for(BN_iterator BN(root_);BN;BN++)
 	{
-	    if (is_leaf_node(*BN) and not has_label(*BN, node_label_index))
+	    if (::is_leaf_node(*BN) and not has_label(*BN, node_label_index))
 		(*BN)->node_attributes->name = L++;
 
 	    (*BN)->node_attributes->resize(n_node_attributes());
@@ -2045,7 +2045,7 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
 	// Name leaves and resize attribute vectors
 	for(BN_iterator BN(root_);BN;BN++)
 	{
-	    if (is_leaf_node(*BN) and has_label(*BN, node_label_index))
+	    if (::is_leaf_node(*BN) and has_label(*BN, node_label_index))
 		(*BN)->node_attributes->name = get_leaf_index(get_label(*BN, node_label_index), allow_numbers,names);
 	    else
 		(*BN)->node_attributes->name = -1;
@@ -2064,6 +2064,46 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
 int Tree::parse_with_names(const string& line,const vector<string>& names)
 {
     return parse_with_names_or_numbers(line,names,false);
+}
+
+bool Tree::is_leaf_node(int n) const
+{
+    return node(n).is_leaf_node();
+}
+
+int Tree::source(int b) const
+{
+    return directed_branch(b).source().name();
+}
+   
+int Tree::target(int b) const
+{
+    return directed_branch(b).target().name();
+}
+
+vector<int> Tree::neighbors(int n) const
+{
+    vector<int> nn;
+    for(auto nv = node(n).neighbors();nv;nv++)
+	nn.push_back((*nv).name());
+    return nn;
+}
+
+vector<int> Tree::all_branches_toward_node(int n) const
+{
+    vector<int> toward;
+    for(auto bv: branches_toward_node(*this, n))
+	toward.push_back(bv.name());
+    return toward;
+}
+
+vector<int> Tree::branches_before(int b) const
+{
+    vector<int> bb;
+    for(auto bv = directed_branch(b).branches_before();bv;bv++)
+	bb.push_back((*bv).name());
+    return bb;
+    
 }
 
 Tree::Tree()
