@@ -8,6 +8,14 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
+// TODO: try implementing a horseshoe model for f and s
+
+// TODO: linear version of connect-all-characters
+
+// TODO: complain when setting calculator=SEV and imodel!=none
+
+// TODO: devirtualize pool::allocate
+
 // TODO: spend 1 hour writing and diagramming the poster
 
 // TODO: haskell
