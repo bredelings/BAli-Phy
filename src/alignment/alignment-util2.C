@@ -154,6 +154,8 @@ void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
     {
 	auto& present = between_characters[n];
 
+	if (t.is_leaf_node(n)) continue;
+
 	for(int column=0;column<A.length();column++)
 	{
 	    // put present characters into the alignment.
@@ -163,16 +165,8 @@ void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
 		A.set_value(column, n, alphabet::gap );
 	}
     }
+    remove_empty_columns(A);
 }    
-
-optional<int> check_characters_present(const alignment& A, const vector<dynamic_bitset<>>& present)
-{
-    for(int n=0; n < present.size(); n++)
-	for(int c = 0; c < A.length(); c++)
-	    if (present[n].test(c) and A.gap(c,n))
-		return c;
-    return boost::none;
-}
 
 /// Check that internal node states are consistent
 void check_internal_nodes_connected(const alignment& A,const TreeInterface& t,const vector<int>& ignore)
@@ -223,4 +217,3 @@ void check_alignment(const alignment& A,const TreeInterface& t,bool internal_seq
     // Finally check that the internal node states are consistent
     check_internal_nodes_connected(A,t);
 }
-
