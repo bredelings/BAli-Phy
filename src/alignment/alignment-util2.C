@@ -43,100 +43,6 @@ using boost::optional;
 
 using boost::program_options::variables_map;
 
-/// Check that any two present nodes are connected by a path of present nodes
-bool all_characters_connected(const TreeInterface& t, const vector<dynamic_bitset<>>& partitions,
-			      dynamic_bitset<> present,const vector<int>& _ignore)
-{
-    assert(present.size() == t.n_nodes());
-
-    //--------- set the ignored nodes to 'not present' -----------//
-    dynamic_bitset<> ignore(present.size());
-    for(int i=0;i<_ignore.size();i++) {
-	int n = _ignore[i];
-	present[n] = false;
-	ignore[n] = true;
-    }
-
-    //---------- for each internal node... -------------//
-    for(int n1=t.n_leaves(); n1<t.n_nodes(); n1++) {
-
-	if (present[n1] or ignore[n1]) continue;
-      
-	//------- if it is '-' and not ignored ... -------//
-	vector<int> neighbors = t.neighbors(n1);
-	assert(neighbors.size() == 3);
-
-	//---- check the three attatched subtrees ... ----//
-	int total=0;
-	for(int i=0;i<neighbors.size();i++) {
-	    dynamic_bitset<> group = partitions[t.find_branch(n1,neighbors[i])];
-	    if (present.intersects(group))
-		total++;
-	}
-
-	//----- nodes should be present in only one. -----//
-	if (total > 1)
-	    return false;
-    }
-    return true;
-}
-
-
-void connect_all_characters(const TreeInterface& t, const vector<dynamic_bitset<>>& partitions, dynamic_bitset<>& present)
-{
-    assert(present.size() == t.n_nodes());
-  
-    //---------- for each internal node... -------------//
-    for(int n1=t.n_leaves(); n1<t.n_nodes(); n1++) 
-    {
-	if (present[n1]) continue;
-
-	//------- if it is '-' and not ignored ... -------//
-	vector<int> neighbors = t.neighbors(n1);
-	assert(neighbors.size() == 3);
-
-	//---- check the three attatched subtrees ... ----//
-	int total=0;
-	for(int i=0;i<neighbors.size();i++)
-	{
-	    dynamic_bitset<> group = partitions[t.find_branch(n1,neighbors[i])];
-	    if (present.intersects(group))
-		total++;
-	}
-
-	if (total > 1)
-	    present[n1] = true;
-    }
-    assert(all_characters_connected(t,partitions,present,vector<int>()));
-}
-
-/// \brief Check if internal node characters are only present between leaf charaters.
-///
-/// \param A The alignment
-/// \param T The tree
-bool check_leaf_characters_minimally_connected(const alignment& A,const TreeInterface& t)
-{
-    assert(A.n_sequences() == t.n_nodes());
-
-    auto partitions = get_partitions(t);
-    for(int column=0;column<A.length();column++)
-    {
-	// construct leaf presence/absence mask
-	dynamic_bitset<> present(t.n_nodes());
-	for(int i=0;i<t.n_leaves();i++)
-	    present[i] = not A.gap(column,i);
-    
-	// compute presence/absence for internal nodes
-	connect_all_characters(t, partitions, present);
-
-	// put present characters into the alignment.
-	for(int i=t.n_leaves();i<t.n_nodes();i++)
-	    if (present[i] != A.character(column,i))
-		return false;
-    }
-    return true;
-}
-
 optional<int> find_internal_node(const TreeInterface& t)
 {
     for(int n=0;n<t.n_nodes();n++)
@@ -145,39 +51,63 @@ optional<int> find_internal_node(const TreeInterface& t)
     return boost::none;
 }
 
-/// Force internal node states are consistent by connecting leaf characters
-void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
+
+vector<dynamic_bitset<>> get_states_for_leaf_characters(const alignment& A, const TreeInterface& t)
+{
+    vector<dynamic_bitset<>> present(t.n_nodes(), dynamic_bitset<>(A.length()));
+
+    // Set the bitmasks for the leaf sequences
+    for(int n=0;n<t.n_nodes();n++)
+    {
+	auto& mask = present[n];
+	if (t.is_leaf_node(n))
+	{
+	    for(int c=0;c<A.length();c++)
+		if (A.character(c,n))
+		    mask.set(c);
+	}
+    }
+
+    return present;
+}
+
+vector<dynamic_bitset<>> get_states_for_all_characters(const alignment& A, const TreeInterface& t)
+{
+    vector<dynamic_bitset<>> present(t.n_nodes(), dynamic_bitset<>(A.length()));
+
+    // Set the bitmasks for the leaf sequences
+    for(int n=0;n<t.n_nodes();n++)
+    {
+	auto& mask = present[n];
+	for(int c=0;c<A.length();c++)
+	    if (A.character(c,n))
+		mask.set(c);
+    }
+
+    return present;
+}
+
+/// Force internal node states to be consistent by connecting leaf characters
+vector<dynamic_bitset<>> get_connected_states(const vector<dynamic_bitset<>>& states, const TreeInterface& t)
 {
     assert(A.n_sequences() == t.n_nodes());
 
-    auto root_ = find_internal_node(t);
-    if (not root_) return;
-    int root = *root_;
+    // Set the bitmasks for the leaf sequences
+    vector<dynamic_bitset<>> character_before_node = states;
+
+    int root = 0;
 
     vector<int> branches = t.all_branches_toward_node(root);
 
-    // Set the bitmasks for the leaf sequences
-    vector<dynamic_bitset<>> character_before_node(A.n_sequences(), dynamic_bitset<>(A.length()));
-
-    // 1. First determine whether there is any character before a branch.
+    // 1. First determine whether there is any character at-or-before a branch.
     for(int b: branches)
     {
 	int n = t.source(b);
 	auto& mask = character_before_node[n];
 	auto before = t.branches_before(b);
 
-	if (before.empty())
-	{
-	    for(int c=0;c<A.length();c++)
-		if (A.character(c,n))
-		    mask.set(c);
-	}
-	else
-	{
-	    for(int bb: before)
-		mask |= character_before_node[t.source(bb)];
-	}
-	  
+	for(int bb: before)
+	    mask |= character_before_node[t.source(bb)];
     }
 
     // 2. Get the list of internal nodes from the root toward the leaves
@@ -186,22 +116,27 @@ void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
     {
 	int b = branches[i];
 	int n = t.source(b);
-	if (t.is_leaf_node(n)) continue;
 	nodes.push_back(n);
     }
 
     // 3. We are going to write over @character_before_node with @between_characters
     auto& between_characters = character_before_node;
 
-    dynamic_bitset<> temp(A.length());
+    dynamic_bitset<> temp(states[0].size());
     for(int n: nodes)
     {
 	auto& mask = between_characters[n];
 
+	// If this is a leaf node then we are already done.
+	if (t.is_leaf_node(n)) continue;
+
+        // If there's a character at this node, then we count it.
+	mask = states[n];
+	
 	// One of these branches is going to be between_characters, and the rest will be character_before_node
 	auto before = t.neighbors(n);
 
-	// Consider all pairs of edges
+	// If there is a character at any pair of input edges, then count it.
 	for(int i=0;i<before.size();i++)
 	{
 	    int n1 = before[i];
@@ -216,9 +151,15 @@ void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
 	}
     }
 
-    // 4. Copy new bitmasks to alignment matrix
-    // FIXME -- ideally we could keep this as a bitmask...
-    for(int n: nodes)
+    return between_characters;
+}    
+
+/// Force internal node states are consistent by connecting leaf characters
+void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
+{
+    auto between_characters = get_connected_states(get_states_for_leaf_characters(A, t), t);
+
+    for(int n = 0; n < t.n_nodes(); n++)
     {
 	auto& present = between_characters[n];
 
@@ -233,26 +174,46 @@ void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
     }
 }    
 
+optional<int> check_characters_present(const alignment& A, const vector<dynamic_bitset<>>& present)
+{
+    for(int n=0; n < present.size(); n++)
+	for(int c = 0; c < A.length(); c++)
+	    if (present[n].test(c) and A.gap(c,n))
+		return c;
+    return boost::none;
+}
+
 /// Check that internal node states are consistent
 void check_internal_nodes_connected(const alignment& A,const TreeInterface& t,const vector<int>& ignore)
 {
     // Only check if A in fact has internal node sequences.
     if (A.n_sequences() == t.n_leaves()) return;
 
+    auto between_characters = get_connected_states(get_states_for_all_characters(A, t), t);
+
+    auto bad_column = check_characters_present(A, between_characters);
+    
+    if (bad_column)
+    {
+	cerr<<"Internal node states are inconsistent in column "<<*bad_column<<endl;
+	cerr<<A<<endl;
+	throw myexception()<<"Internal node states are inconsistent in column "<<*bad_column;
+    }
+}
+
+/// \brief Check if internal node characters are only present between leaf charaters.
+///
+/// \param A The alignment
+/// \param T The tree
+bool check_leaf_characters_minimally_connected(const alignment& A,const TreeInterface& t)
+{
     assert(A.n_sequences() == t.n_nodes());
 
-    auto partitions = get_partitions(t);
-    for(int column=0;column<A.length();column++) {
-	dynamic_bitset<> present(t.n_nodes());
-	for(int i=0;i<t.n_nodes();i++) 
-	    present[i] = not A.gap(column,i);
+    auto between_characters = get_connected_states(get_states_for_leaf_characters(A, t), t);
+
+    auto bad_column = check_characters_present(A, between_characters);
     
-	if (not all_characters_connected(t,partitions,present,ignore)) {
-	    cerr<<"Internal node states are inconsistent in column "<<column<<endl;
-	    cerr<<A<<endl;
-	    throw myexception()<<"Internal node states are inconsistent in column "<<column;
-	}
-    }
+    return not bad_column;
 }
 
 void check_alignment(const alignment& A,const TreeInterface& t,bool internal_sequences) 
