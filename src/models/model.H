@@ -124,7 +124,7 @@ std::vector<std::string> parameter_names(const Model& M);
 
 std::vector<std::string> short_parameter_names(const Model& M);
 
-std::vector<std::string> short_parameter_names(std::vector<std::string> names);
+std::vector<std::string> short_parameter_names(const std::vector<std::string>& names);
 
 std::vector<int> parameters_with_extension(const Model& M, std::string name);
 

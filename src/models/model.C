@@ -20,6 +20,8 @@
 #include <set>
 #include <map>
 
+#include <boost/property_tree/ptree.hpp>
+
 #include "util.H"
 #include "myexception.H"
 #include "models/model.H"
@@ -30,8 +32,10 @@
 
 using std::vector;
 using std::string;
+using std::set;
 
 using boost::dynamic_pointer_cast;
+using boost::property_tree::ptree;
 
 vector<expression_ref> model_parameter_expressions(const Model& M)
 {
@@ -167,99 +171,6 @@ bool operator<(const vector<string>& p1, const vector<string>& p2)
     // equal
     return false;
 }
-
-typedef std::set< vector<string> > path_set_t;
-
-/// Does this path have the given prefix?
-bool path_has_prefix(const vector<string>& path, const vector<string>& path_prefix)
-{
-    if (path_prefix.size() > path.size()) return false;
-
-    for(int i=0;i<path_prefix.size();i++)
-	if (path[i] != path_prefix[i])
-	    return false;
-
-    return true;
-}
-
-/// Are the paths all distinguishable from each other?
-bool overlap(const path_set_t& set1, const path_set_t& set2)
-{
-    if (set1.empty() or set2.empty()) return false;
-
-    path_set_t::const_iterator it1 = set1.begin(), it1End = set1.end();
-    path_set_t::const_iterator it2 = set2.begin(), it2End = set2.end();
-
-    if(*it1 > *set2.rbegin() || *it2 > *set1.rbegin()) return false;
-
-    while(it1 != it1End && it2 != it2End)
-    {
-	if(*it1 < *it2)
-	    it1++; 
-	else if (*it1 > *it2)
-	    it2++; 
-	else
-	    return true;
-    }
-
-    return false;
-}
-
-/// Remove the nodes in paths that are direct children of the path_prefix
-void remove_prefix(vector< vector<string> >& paths, const  vector<string>& path_prefix)
-{
-    for(int i=0;i<paths.size();i++)
-    {
-	if (not path_has_prefix(paths[i], path_prefix)) continue;
-
-	paths[i].erase(paths[i].begin()+path_prefix.size()-1);
-    }
-}
-
-/// Remove (internal) child paths if grandchild paths are not shared with any other child.
-void check_remove_grandchildren(vector< vector<string> >& paths, const vector<string>& path_prefix)
-{
-    // construct the child paths and their locations
-    typedef std::map<string, path_set_t> path_map_t;
-    path_map_t grandchild_paths;
-
-    int L = path_prefix.size();
-
-    // find the grandchild paths for each child
-    for(int i=0;i<paths.size();i++)
-	if (path_has_prefix(paths[i], path_prefix))
-	{
-	    // We don't consider leaf child paths or empty paths
-	    if (paths[i].size() <= path_prefix.size() + 1)
-		continue;
-
-	    string child_name = paths[i][L];
-
-	    vector<string> grandchild_path = paths[i];
-	    grandchild_path.erase(grandchild_path.begin(),grandchild_path.begin()+L+1);
-
-	    grandchild_paths[child_name].insert(grandchild_path);
-	    assert(grandchild_path.size());
-	}
-
-    // check of the grandchild paths of any child overlap with the grandchild paths of any other child
-    for(path_map_t::const_iterator i = grandchild_paths.begin();i != grandchild_paths.end();i++)
-    {
-	bool unique = true;
-	for(path_map_t::const_iterator j = grandchild_paths.begin();j != grandchild_paths.end();j++)
-	{
-	    if (i->first == j->first) continue;
-
-	    if (overlap(i->second,j->second)) unique = false;
-	}
-	if (unique) {
-	    vector<string> child_prefix = path_prefix;
-	    child_prefix.push_back(i->first);
-	    remove_prefix(paths, child_prefix);
-	}
-    }
-}
-
 // We can think of this collection of name lists as a tree.
 // - Each name list is a path from the root to a tip.
 // - Each node (except the root) has a string name associated with it.
@@ -272,32 +183,95 @@ void check_remove_grandchildren(vector< vector<string> >& paths, const vector<st
 //  with the ones furthest from the root, and remove their children
 //  if it is allowable.
 
-vector<string> short_parameter_names(vector<string> names)
+void copy_to_vec(const ptree& p, vector<string>& names2, const string& path = "")
 {
-    // for any sequence n[0] n[1] ... n[i-1] n[i] n[i+1] ..... N[L]
-    // If we select all the sequences where where  n[0].... n[i-1] are the same
-    //  Then we can get rid of n[i] if the sequences n[i+1]...N[L] are all different
-
-    // construct the name paths
-    vector< vector<string> > paths;
-    for(int i=0;i<names.size();i++)
-	paths.push_back(split(names[i],"."));
-
-    for(int i=0;i<paths.size();i++)
+    if (p.empty())
     {
-	vector<string> prefix = paths[i];
-	prefix.pop_back();
-	while(prefix.size())
-	{
-	    check_remove_grandchildren(paths, prefix);
-	    prefix.pop_back();
-	}
+	int i=p.get_value<int>();
+	names2[i] = path;
     }
-  
-    for(int i=0;i<names.size();i++)
-	names[i] = join(paths[i],".");
+    else
+    {
+	for(auto& x: p)
+	    if (path.empty())
+		copy_to_vec(x.second, names2, x.first);
+	    else
+		copy_to_vec(x.second, names2, path + "." + x.first);
+    }
+}
 
-    return names;
+
+// here we aren't handling '*' prefixes...
+void simplify(ptree& p)
+{
+    if (p.empty()) return;
+
+    for(auto& x: p)
+	simplify(x.second);
+
+    // We require the names of children that map to values,
+    // and the names of grandchildren do not overlap.
+
+    set<string> names;
+    for(auto& x: p)
+    {
+	if (x.second.empty())
+	{
+	    if (names.count(x.first)) return;
+	    names.insert(x.first);
+	}
+	else
+	    for(auto& y: x.second)
+	    {
+		if (names.count(y.first)) return;
+		names.insert(y.first);
+	    }
+    }
+
+    ptree p2;
+    for(auto& x: p)
+    {
+	if (x.second.empty())
+	    p2.push_back(std::move(x));
+	else
+	    for(auto& y: x.second)
+		p2.push_back(std::move(y));
+    }
+
+    std::swap(p,p2);
+}
+
+vector<string> short_parameter_names(const vector<string>& names)
+{
+    // construct the name paths
+    ptree paths;
+    vector<bool> hidden(names.size(),false);
+    for(int i=0;i<names.size();i++)
+    {
+	if (names[i].size() and names[i][0] == '*')
+	{
+	    paths.put(names[i].substr(1),i);
+	    hidden[i] = true;
+	}
+	else
+	    paths.put(names[i],i);
+    }
+
+    // Remove levels that aren't needed for disambiguation
+    simplify(paths);
+
+    // Recreate a name vector
+    vector<string> names2(names.size());
+    copy_to_vec(paths, names2);
+
+    // Put hidden-ness attributes back in.
+    for(int i=0;i<names2.size();i++)
+	if (hidden[i])
+	    names2[i] = string("*") + names2[i];
+
+    for(int i=0;i<names2.size();i++)
+	std::cerr<<names[i]<<" -> "<<names2[i]<<std::endl;
+    return names2;
 }
 
 vector<string> parameter_names(const Model& M)
