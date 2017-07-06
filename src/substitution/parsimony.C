@@ -80,7 +80,7 @@ void peel_muts(int* n_muts1, int* n_muts2, int n_letters, const matrix<int>& cos
 }
 
 int* peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>& cost,
-			       const vector<int*>& cache, int& total)
+			       vector<int*>& cache, int& total)
 {
     auto& a = P.get_alphabet();
     int n_letters = a.size();
@@ -141,6 +141,9 @@ int* peel_muts_internal_branch(int b, const data_partition& P, const matrix<int>
 	    total += min(n_muts1 + i1*n_letters, n_letters);
 	}
     }
+
+    delete [] cache[B[0]]; cache[B[0]] = nullptr;
+    delete [] cache[B[1]]; cache[B[1]] = nullptr;
 
     return n_muts;
 }
