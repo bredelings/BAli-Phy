@@ -81,8 +81,6 @@ vector<dynamic_bitset<>> get_states_for_all_characters(const alignment& A, const
 /// Force internal node states to be consistent by connecting leaf characters
 vector<dynamic_bitset<>> get_connected_states(const vector<dynamic_bitset<>>& states, const TreeInterface& t)
 {
-    assert(A.n_sequences() == t.n_nodes());
-
     // Set the bitmasks for the leaf sequences
     vector<dynamic_bitset<>> character_before_node = states;
 
@@ -148,6 +146,8 @@ vector<dynamic_bitset<>> get_connected_states(const vector<dynamic_bitset<>>& st
 /// Force internal node states are consistent by connecting leaf characters
 void minimally_connect_leaf_characters(alignment& A,const TreeInterface& t)
 {
+    assert(A.n_sequences() == t.n_nodes());
+
     auto between_characters = get_connected_states(get_states_for_leaf_characters(A, t), t);
 
     for(int n = 0; n < t.n_nodes(); n++)
