@@ -30,7 +30,7 @@ builtin builtin_frequency_matrix 1 "frequency_matrix" "SModel";
 builtin peel_leaf_branch 3 "peel_leaf_branch" "SModel";
 builtin alignment_index2 2 "alignment_index2" "SModel";
 builtin alignment_index3 3 "alignment_index3" "SModel";
-builtin peel_internal_branch 5 "peel_internal_branch" "SModel";
+builtin peel_internal_branch 6 "peel_internal_branch" "SModel";
 builtin calc_root_probability 5 "calc_root_probability" "SModel";
 
 -- peeling for SEV
@@ -387,7 +387,7 @@ cached_conditional_likelihoods t seqs as alpha ps f = let {lc    = mkArray (2*nu
                                                            lcf b = let {bb = b `mod` (numBranches t)} in
                                                                    case edgesBeforeEdge t b of {
                                                                        []      -> peel_leaf_branch (seqs!sourceNode t b) alpha (ps!bb);
-                                                                       [b1,b2] -> peel_internal_branch (lc!b1) (lc!b2) (alignment_index2 (as!b1) (as!b2)) (ps!bb) f}
+                                                                       [b1,b2] -> peel_internal_branch (lc!b1) (lc!b2) (as!b1) (as!b2) (ps!bb) f}
                                                           }
                                                       in lc;
 

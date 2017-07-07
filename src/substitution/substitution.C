@@ -940,7 +940,8 @@ namespace substitution {
     Likelihood_Cache_Branch*
     peel_internal_branch(const Likelihood_Cache_Branch* LCB1,
 			 const Likelihood_Cache_Branch* LCB2,
-			 const matrix<int>& index,
+			 const pairwise_alignment_t& A0,
+			 const pairwise_alignment_t& A1,
 			 const EVector& transition_P,
 			 const Matrix& F)
     {
@@ -952,7 +953,13 @@ namespace substitution {
 
 //	std::cerr<<"L1 = "<<sum_row(index,0)<<"      L2 = "<<sum_row(index,1)<<"    L3 = "<<sum_row(index,2)<<std::endl;
 
-	// Do this before accessing matrices or other_subst
+	// get the relationships with the sub-alignments for the (two) branches behind b0
+	auto a0 = convert_to_bits(A0, 0, 2);
+	auto a1 = convert_to_bits(A1, 1, 2);
+	auto a012 = Glue_A(a0, a1);
+	matrix<int> index = get_indices_from_bitpath(a012, {0,1,2});
+
+        // Do this before accessing matrices or other_subst
 	auto* LCB3 = new Likelihood_Cache_Branch(index.size1(), n_models, n_states);
 
 	// scratch matrix
