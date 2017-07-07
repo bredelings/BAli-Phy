@@ -956,79 +956,90 @@ namespace substitution {
 	// get the relationships with the sub-alignments for the (two) branches behind b0
 	auto a0 = convert_to_bits(A0, 0, 2);
 	auto a1 = convert_to_bits(A1, 1, 2);
-	auto a012 = Glue_A(a0, a1);
-	matrix<int> index = get_indices_from_bitpath(a012, {0,1,2});
+
+	int total_length = a0.size();
+	for(auto& x: a1)
+	    if (x.test(1) and not x.test(2))
+		total_length++;
 
         // Do this before accessing matrices or other_subst
-	auto* LCB3 = new Likelihood_Cache_Branch(index.size1(), n_models, n_states);
+	auto* LCB3 = new Likelihood_Cache_Branch(total_length, n_models, n_states);
 
 	// scratch matrix
 	double* S = LCB3->scratch(0);
 
 	Matrix ones(n_models, n_states);
 	element_assign(ones, 1);
-    
+
 	log_prod total;
 	int total_scale = 0;
-	for(int i=0;i<index.size1();i++) 
+	const int AL0 = a0.size();
+	const int AL1 = a1.size();
+	int s0=0,s1=0,s2=0;
+	assert(bitlength(a0,2) == bitlength(a1,2));
+	for(int i0=0,i1=0;;)
 	{
-	    // compute the source distribution from 2 branch distributions
-	    int i0 = index(i,0);
-	    int i1 = index(i,1);
-	    int i2 = index(i,2);
-
-	    if (i2 < 0)
+	    while (not a0[i0].test(2) and i0 < AL0)
 	    {
-		double p_col = 1;
-
-		if (i0 != alphabet::gap) 
-		{
-		    assert(i1 == alphabet::gap);
-		    p_col = element_prod_sum(F.begin(), (*LCB1)[i0], matrix_size );
-		    total_scale += LCB1->scale(i0);
-		}
-		else if (i1 != alphabet::gap)
-		{
-		    assert(i0 == alphabet::gap);
-		    p_col = element_prod_sum(F.begin(), (*LCB2)[i1], matrix_size );
-		    total_scale += LCB2->scale(i1);
-		}
-
-		// Situation: i0 ==-1 and i1 == -1 can happen.
-
+		assert(a0[i0].test(0));
+		double p_col = element_prod_sum(F.begin(), (*LCB1)[s0], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
-
-		// This does a log( ) operation.
 		total *= p_col;
-		continue;
+		total_scale += LCB1->scale(s0);
+		i0++;
+		s0++;
+	    }
+	    while (not a1[i1].test(2) and i1 < AL1)
+	    {
+		assert(a1[i1].test(1));
+		double p_col = element_prod_sum(F.begin(), (*LCB2)[s1], matrix_size );
+		assert(0 <= p_col and p_col <= 1.00000000001);
+		total *= p_col;
+		total_scale += LCB2->scale(s1);
+		i1++;
+		s1++;
+	    }
+	    if (i1 >= AL1)
+	    {
+		assert(i0 == AL0);
+		break;
+	    }
+	    else
+	    {
+		assert(i0 < AL0 and i1 < AL1);
+		assert(a0[i0].test(2) and a1[i1].test(2));
 	    }
 
 	    int scale = 0;
 	    const double* C = S;
-	    if (i0 != alphabet::gap and i1 != alphabet::gap)
+	    bool not_gap0 = a0[i0].test(0);
+	    bool not_gap1 = a1[i1].test(1);
+	    i0++;
+	    i1++;
+	    if (not_gap0 and not_gap1)
 	    {
-		element_prod_assign(S, (*LCB1)[i0], (*LCB2)[i1], matrix_size);
-		scale = LCB1->scale(i0) + LCB2->scale(i1);
+		element_prod_assign(S, (*LCB1)[s0], (*LCB2)[s1], matrix_size);
+		scale = LCB1->scale(s0) + LCB2->scale(s1);
+		s0++;
+		s1++;
 	    }
-	    else if (i0 != alphabet::gap)
+	    else if (not_gap0)
 	    {
-		C = (*LCB1)[i0];
-		scale = LCB1->scale(i0);
+		C = (*LCB1)[s0];
+		scale = LCB1->scale(s0);
+		s0++;
 	    }
-	    else if (i1 != alphabet::gap)
+	    else if (not_gap1)
 	    {
-		C = (*LCB2)[i1];
-		scale = LCB2->scale(i1);
+		C = (*LCB2)[s1];
+		scale = LCB2->scale(s1);
+		s1++;
 	    }
 	    else
-		C = ones.begin();
-
-	    //      else
-	    //	std::abort(); // columns like this should not be in the index
-	    // Columns like this would not be in subA_index_leaf, but might be in subA_index_internal
+		C = ones.begin();  // Columns like this would not be in subA_index_leaf, but might be in subA_index_internal
 
 	    // propagate from the source distribution
-	    double* R = (*LCB3)[i2];            //name the result matrix
+	    double* R = (*LCB3)[s2];            //name the result matrix
 	    bool need_scale = true;
 	    for(int m=0;m<n_models;m++)
 	    {
@@ -1049,14 +1060,15 @@ namespace substitution {
 		for(int j=0; j<matrix_size; j++)
 		    R[j] *= scale_factor;
 	    }
-	    LCB3->scale(i2) = scale;
+	    LCB3->scale(s2) = scale;
+	    s2++;
 	}
 
 	LCB3->other_subst = LCB1->other_subst * LCB2->other_subst * total;
 	LCB3->other_subst.log() += total_scale*log_scale_min;
 	return LCB3;
     }
-  
+
     Likelihood_Cache_Branch*
     peel_internal_branch_SEV(const Likelihood_Cache_Branch* LCB1,
 			     const Likelihood_Cache_Branch* LCB2,
