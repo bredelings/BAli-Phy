@@ -27,6 +27,7 @@
 #include "object.H"
 #include "matrix.H"
 #include "models/TreeInterface.H"
+#include "hmm.H"
 
 class pairwise_alignment_t: public Object
 {
@@ -85,5 +86,9 @@ namespace A2 {
 
     pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path);
 }
+
+pairwise_alignment_t get_pairwise_alignment_from_bits(const std::vector<HMM::bitmask_t>& bit_path, int n1, int n2);
+
+pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path, const HMM&, int n1, int n2);
 
 #endif

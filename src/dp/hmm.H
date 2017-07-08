@@ -26,9 +26,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef HMM_H
 #define HMM_H
 
-#include "math/log-double.H"
+#include <vector>
 #include <bitset>
-#include "2way.H"
+#include "math/log-double.H"
+#include "matrix.H"
+
 
 // Can I make Q into a general function, backed by a matrix in some cases?
 
@@ -111,10 +113,6 @@ HMM Glue(const HMM& top, const HMM& bottom);
 std::vector<HMM::bitmask_t> Glue_A(const std::vector<HMM::bitmask_t>&, const std::vector<HMM::bitmask_t>&);
 
 std::vector<HMM::bitmask_t> get_bits_from_path(const std::vector<int>& path, const HMM&);
-
-pairwise_alignment_t get_pairwise_alignment_from_bits(const std::vector<HMM::bitmask_t>& bit_path, int n1, int n2);
-
-pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path, const HMM&, int n1, int n2);
 
 std::vector<int> get_path_unique(const std::vector<HMM::bitmask_t>& bit_path, const HMM& H);
 

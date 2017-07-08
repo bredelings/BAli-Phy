@@ -6,6 +6,7 @@
 #include "io.H"
 #include <valarray>
 #include "computation/expression/expression.H"
+#include "dp/2way.H"
 
 using std::vector;
 using std::istringstream;
