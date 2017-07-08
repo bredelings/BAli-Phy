@@ -177,15 +177,7 @@ namespace MCMC {
 
     int n_insertions(const pairwise_alignment_t& a)
     {
-	using namespace A2;
-
-	int total = 0;
-
-	for(int s: a)
-	    if (s == states::G1)
-		total++;
-
-	return total;
+	return a.count(A2::states::G1);
     }
   
     int n_indels(const pairwise_alignment_t& a)
@@ -206,13 +198,7 @@ namespace MCMC {
     {
 	using namespace A2;
 
-	int total = 0;
-
-	for(int s: a)
-	    if (s == states::G1 or s == states::G2)
-		total++;
-
-	return total;
+	return a.count(states::G1) + a.count(states::G2);
     }
   
     int alignment_length(const data_partition& P)

@@ -26,7 +26,7 @@ using boost::dynamic_bitset;
 void pairwise_alignment_t::flip()
 {
     for(int i=0;i<size();i++)
-	(*this)[i] = A2::flip((*this)[i]);
+	states_[i] = A2::flip(states_[i]);
 }
 
 pairwise_alignment_t pairwise_alignment_t::flipped() const
@@ -67,11 +67,7 @@ pairwise_alignment_t::pairwise_alignment_t()
 { }
 
 pairwise_alignment_t::pairwise_alignment_t(const vector<int>& pi)
-    :vector<int>(pi)
-{ }
-
-pairwise_alignment_t::pairwise_alignment_t(const pairwise_alignment_t& pi)
-    :vector<int>(pi),Object()
+    :states_(pi)
 { }
 
 bool operator==(const pairwise_alignment_t& pi1, const pairwise_alignment_t& pi2)
@@ -105,8 +101,9 @@ vector<bitset<64>> convert_to_bits(const pairwise_alignment_t& A, int b1, int b2
     vector<bitset<64>> a;
     a.reserve(A.size());
 
-    for(int s:A)
+    for(int i=0;i<A.size();i++)
     {
+	int s = A[i];
 	auto bits = convert_to_bits(s, b1, b2);
 	if (bits.any())
 	    a.push_back(bits);

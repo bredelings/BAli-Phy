@@ -28,8 +28,11 @@
 #include "matrix.H"
 #include "models/TreeInterface.H"
 
-struct pairwise_alignment_t: public std::vector<int>, public Object
+class pairwise_alignment_t: public Object
 {
+    std::vector<int> states_;
+
+public:
     pairwise_alignment_t* clone()  const {return new pairwise_alignment_t(*this);}
 
     void flip();
@@ -40,8 +43,16 @@ struct pairwise_alignment_t: public std::vector<int>, public Object
 
     int count(int s) const;
 
-    pairwise_alignment_t(const std::vector<int>&);
-    pairwise_alignment_t(const pairwise_alignment_t&);
+    int size() const {return states_.size();};
+    void resize(int s) {states_.resize(s);};
+    void reserve(int s) {states_.reserve(s);};
+    void push_back(int state) {states_.push_back(state);};
+
+    int operator[](int i) const {return states_[i];};
+    int& operator[](int i) {return states_[i];};
+
+    explicit pairwise_alignment_t(const std::vector<int>&);
+    pairwise_alignment_t(const pairwise_alignment_t&) = default;
     pairwise_alignment_t();
 };
 
