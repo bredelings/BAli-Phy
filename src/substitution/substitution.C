@@ -951,8 +951,6 @@ namespace substitution {
 	const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
 	const int matrix_size = n_models * n_states;
 
-//	std::cerr<<"L1 = "<<sum_row(index,0)<<"      L2 = "<<sum_row(index,1)<<"    L3 = "<<sum_row(index,2)<<std::endl;
-
 	// get the relationships with the sub-alignments for the (two) branches behind b0
 	auto a0 = convert_to_bits(A0, 0, 2);
 	auto a1 = convert_to_bits(A1, 1, 2);
