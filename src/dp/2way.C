@@ -528,3 +528,29 @@ pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& pa
   return get_pairwise_alignment_from_bits(get_bits_from_path(path, H), n1, n2);
 }
 
+int n_insertions(const pairwise_alignment_t& a)
+{
+    return a.count(A2::states::G1);
+}
+
+int n_indels(const pairwise_alignment_t& a)
+{
+    using namespace A2;
+
+    int total = 0;
+
+    for(int i=1;i<a.size()-1;i++)
+	if (a[i-1] != a[i])
+	    if (a[i] == states::G1 or a[i] == states::G2)
+		total++;
+
+    return total;
+}
+
+int total_length_indels(const pairwise_alignment_t& a)
+{
+    using namespace A2;
+
+    return a.count(states::G1) + a.count(states::G2);
+}
+

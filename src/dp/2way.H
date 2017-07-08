@@ -91,4 +91,9 @@ pairwise_alignment_t get_pairwise_alignment_from_bits(const std::vector<HMM::bit
 
 pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path, const HMM&, int n1, int n2);
 
+int n_insertions(const pairwise_alignment_t& a);
+
+int n_indels(const pairwise_alignment_t& a);
+
+int total_length_indels(const pairwise_alignment_t& a);
 #endif
