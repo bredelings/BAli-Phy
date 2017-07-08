@@ -361,19 +361,6 @@ log_double_t data_partition::heated_likelihood() const
 	return pow(likelihood(),get_beta());
 }
 
-pairwise_alignment_t make_unaligned_pairwise_alignment(int L1, int L2)
-{
-    pairwise_alignment_t pi;
-    pi.resize(L1+L2+2);
-    pi[0] = A2::states::S;
-    for(int i=0;i<L1;i++)
-	pi[1+i] = A2::states::G2;
-    for(int i=0;i<L2;i++)
-	pi[1+L1+i] = A2::states::G1;
-    pi[pi.size()-1] = A2::states::E;
-    return pi;
-}
-
 int data_partition::likelihood_calculator() const
 {
     return DPC().likelihood_calculator;
