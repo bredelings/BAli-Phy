@@ -977,7 +977,7 @@ namespace substitution {
 	assert(bitlength(a0,2) == bitlength(a1,2));
 	for(int i0=0,i1=0;;)
 	{
-	    while (not a0[i0].test(2) and i0 < AL0)
+	    while (i0 < AL0 and not a0[i0].test(2))
 	    {
 		assert(a0[i0].test(0));
 		double p_col = element_prod_sum(F.begin(), (*LCB1)[s0], matrix_size );
@@ -987,7 +987,7 @@ namespace substitution {
 		i0++;
 		s0++;
 	    }
-	    while (not a1[i1].test(2) and i1 < AL1)
+	    while (i1 < AL1 and not a1[i1].test(2))
 	    {
 		assert(a1[i1].test(1));
 		double p_col = element_prod_sum(F.begin(), (*LCB2)[s1], matrix_size );
