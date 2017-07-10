@@ -952,13 +952,7 @@ namespace substitution {
 	const int matrix_size = n_models * n_states;
 
 	// get the relationships with the sub-alignments for the (two) branches behind b0
-	auto a0 = convert_to_bits(A0, 0, 2);
-	auto a1 = convert_to_bits(A1, 1, 2);
-
-	int total_length = a0.size();
-	for(auto& x: a1)
-	    if (x.test(1) and not x.test(2))
-		total_length++;
+	int total_length = A0.size() + A1.count_delete();
 
         // Do this before accessing matrices or other_subst
 	auto* LCB3 = new Likelihood_Cache_Branch(total_length, n_models, n_states);
@@ -971,15 +965,15 @@ namespace substitution {
 
 	log_prod total;
 	int total_scale = 0;
-	const int AL0 = a0.size();
-	const int AL1 = a1.size();
+	const int AL0 = A0.size();
+	const int AL1 = A1.size();
 	int s0=0,s1=0,s2=0;
-	assert(bitlength(a0,2) == bitlength(a1,2));
+	assert(A0.length2() == A1.length2());
 	for(int i0=0,i1=0;;)
 	{
-	    while (i0 < AL0 and not a0[i0].test(2))
+	    while (i0 < AL0 and not A0.has_character2(i0))
 	    {
-		assert(a0[i0].test(0));
+		assert(A0.has_character1(i0));
 		double p_col = element_prod_sum(F.begin(), (*LCB1)[s0], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
 		total *= p_col;
@@ -987,9 +981,9 @@ namespace substitution {
 		i0++;
 		s0++;
 	    }
-	    while (i1 < AL1 and not a1[i1].test(2))
+	    while (i1 < AL1 and not A1.has_character2(i1))
 	    {
-		assert(a1[i1].test(1));
+		assert(A1.has_character1(i1));
 		double p_col = element_prod_sum(F.begin(), (*LCB2)[s1], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
 		total *= p_col;
@@ -1005,13 +999,13 @@ namespace substitution {
 	    else
 	    {
 		assert(i0 < AL0 and i1 < AL1);
-		assert(a0[i0].test(2) and a1[i1].test(2));
+		assert(A0.has_character2(i0) and A1.has_character2(i1));
 	    }
 
 	    int scale = 0;
 	    const double* C = S;
-	    bool not_gap0 = a0[i0].test(0);
-	    bool not_gap1 = a1[i1].test(1);
+	    bool not_gap0 = A0.has_character1(i0);
+	    bool not_gap1 = A1.has_character1(i1);
 	    i0++;
 	    i1++;
 	    if (not_gap0 and not_gap1)
