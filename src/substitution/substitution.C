@@ -355,9 +355,17 @@ namespace substitution {
     log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
 				       const Likelihood_Cache_Branch* LCB2,
 				       const Likelihood_Cache_Branch* LCB3,
-				       const matrix<int>& index,
+				       const pairwise_alignment_t& A1,
+				       const pairwise_alignment_t& A2,
+				       const pairwise_alignment_t& A3,
 				       const Matrix& F)
     {
+	auto a10 = convert_to_bits(A1,1,0);
+	auto a20 = convert_to_bits(A2,2,0);
+	auto a30 = convert_to_bits(A3,3,0);
+	auto a0123 = Glue_A(a10, Glue_A(a20,a30));
+
+	auto index = get_indices_from_bitpath(a0123, {1,2,3});
 	total_calc_root_prob++;
 	total_root_clv_length += index.size1();
 //	std::cerr<<"root_clv_length = "<<index.size1()<<std::endl;

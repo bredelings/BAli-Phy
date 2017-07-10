@@ -1086,7 +1086,9 @@ namespace substitution {
     log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
 				       const Likelihood_Cache_Branch* LCB2,
 				       const Likelihood_Cache_Branch* LCB3,
-				       const matrix<int>& index,
+				       const pairwise_alignment_t& A1,
+				       const pairwise_alignment_t& A2,
+				       const pairwise_alignment_t& A3,
 				       const Matrix& F);
 
     log_double_t calc_root_probability_SEV(const Likelihood_Cache_Branch* LCB1,
@@ -1102,12 +1104,16 @@ extern "C" closure builtin_function_calc_root_probability(OperationArgs& Args)
     auto arg2 = Args.evaluate(2);
     auto arg3 = Args.evaluate(3);
     auto arg4 = Args.evaluate(4);
+    auto arg5 = Args.evaluate(5);
+    auto arg6 = Args.evaluate(6);
 
     log_double_t Pr = substitution::calc_root_probability(&arg0.as_<Likelihood_Cache_Branch>(),
 							  &arg1.as_<Likelihood_Cache_Branch>(),
 							  &arg2.as_<Likelihood_Cache_Branch>(),
-							  arg3.as_<Box<matrix<int>>>(),
-							  arg4.as_<Box<Matrix>>());
+							  arg3.as_<pairwise_alignment_t>(),
+							  arg4.as_<pairwise_alignment_t>(),
+							  arg5.as_<pairwise_alignment_t>(),
+							  arg6.as_<Box<Matrix>>());
     return {Pr};
 }
 

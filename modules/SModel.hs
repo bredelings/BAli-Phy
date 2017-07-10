@@ -31,7 +31,7 @@ builtin peel_leaf_branch 3 "peel_leaf_branch" "SModel";
 builtin alignment_index2 2 "alignment_index2" "SModel";
 builtin alignment_index3 3 "alignment_index3" "SModel";
 builtin peel_internal_branch 6 "peel_internal_branch" "SModel";
-builtin calc_root_probability 5 "calc_root_probability" "SModel";
+builtin calc_root_probability 7 "calc_root_probability" "SModel";
 
 -- peeling for SEV
 builtin bitmask_from_alignment 2 "bitmask_from_alignment" "Alignment";
@@ -393,7 +393,7 @@ cached_conditional_likelihoods t seqs as alpha ps f = let {lc    = mkArray (2*nu
 
 peel_likelihood t cl as f root = let {branches_in = map (reverseEdge t) (edgesOutOfNode t root);} in
                                  case branches_in of {[b1,b2,b3]->
-                                                      calc_root_probability (cl!b1) (cl!b2) (cl!b3) (alignment_index3 (as!b1) (as!b2) (as!b3)) f};
+                                                      calc_root_probability (cl!b1) (cl!b2) (cl!b3) (as!b1) (as!b2) (as!b3) f};
 
 
 cached_conditional_likelihoods_SEV t seqs alpha ps f a =
