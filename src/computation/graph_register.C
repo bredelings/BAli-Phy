@@ -633,7 +633,7 @@ void reg_heap::set_C(int R, closure&& C)
 
 void reg_heap::clear_C(int R)
 {
-    access_unused(R).C.clear();
+    truncate(access_unused(R).C);
 }
 
 void reg_heap::mark_reg_created_by_step(int r, int s)
