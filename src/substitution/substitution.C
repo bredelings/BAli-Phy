@@ -355,20 +355,15 @@ namespace substitution {
     log_double_t calc_root_probability(const Likelihood_Cache_Branch* LCB1,
 				       const Likelihood_Cache_Branch* LCB2,
 				       const Likelihood_Cache_Branch* LCB3,
+				       const pairwise_alignment_t& A0,
 				       const pairwise_alignment_t& A1,
 				       const pairwise_alignment_t& A2,
-				       const pairwise_alignment_t& A3,
 				       const Matrix& F)
     {
-	auto a10 = convert_to_bits(A1,1,0);
-	auto a20 = convert_to_bits(A2,2,0);
-	auto a30 = convert_to_bits(A3,3,0);
-	auto a0123 = Glue_A(a10, Glue_A(a20,a30));
-
-	auto index = get_indices_from_bitpath(a0123, {1,2,3});
+	assert(LCB1->n_columns() == A0.length1());
+	assert(LCB2->n_columns() == A1.length1());
+	assert(LCB3->n_columns() == A2.length1());
 	total_calc_root_prob++;
-	total_root_clv_length += index.size1();
-//	std::cerr<<"root_clv_length = "<<index.size1()<<std::endl;
 
 	const int n_models = F.size1();
 	const int n_states = F.size2();
@@ -383,8 +378,6 @@ namespace substitution {
 	assert(n_models == LCB3->n_models());
 	assert(n_states == LCB3->n_states());
 
-	assert(index.size2() == 3);
-
 #ifdef DEBUG_SUBSTITUTION
 	// scratch matrix 
 	Matrix S(n_models,n_states);
@@ -392,33 +385,89 @@ namespace substitution {
 
 	log_prod total;
 	int scale = 0;
-	for(int i=0;i<index.size1();i++)
+	const int AL0 = A0.size();
+	const int AL1 = A1.size();
+	const int AL2 = A2.size();
+	int s0=0,s1=0,s2=0,s3=0;
+	assert(A0.length2() == A1.length2());
+	assert(A0.length2() == A2.length2());
+	for(int i0=0,i1=0,i2=0;;)
 	{
-	    double p_col = 1;
+	    while(i0 < AL0 and not A0.has_character2(i0))
+	    {
+		assert(A0.has_character1(i0));
+		double p_col = element_prod_sum(F.begin(), (*LCB1)[s0], matrix_size );
+		assert(0 <= p_col and p_col <= 1.00000000001);
+		total *= p_col;
+		scale += LCB1->scale(s0);
+		i0++;
+		s0++;
+		total_root_clv_length++;
+	    }
+	    while (i1 < AL1 and not A1.has_character2(i1))
+	    {
+		assert(A1.has_character1(i1));
+		double p_col = element_prod_sum(F.begin(), (*LCB2)[s1], matrix_size );
+		assert(0 <= p_col and p_col <= 1.00000000001);
+		total *= p_col;
+		scale += LCB2->scale(s1);
+		i1++;
+		s1++;
+		total_root_clv_length++;
+	    }
+	    while (i2 < AL2 and not A2.has_character2(i2))
+	    {
+		assert(A2.has_character1(i2));
+		double p_col = element_prod_sum(F.begin(), (*LCB3)[s2], matrix_size );
+		assert(0 <= p_col and p_col <= 1.00000000001);
+		total *= p_col;
+		scale += LCB3->scale(s2);
+		i2++;
+		s2++;
+		total_root_clv_length++;
+	    }
 
-	    int i0 = index(i,0);
-	    int i1 = index(i,1);
-	    int i2 = index(i,2);
+	    if (i2 >= AL2)
+	    {
+		assert(i0 == AL0);
+		assert(i1 == AL1);
+		break;
+	    }
+	    else
+	    {
+		assert(i0 < AL0 and i1 < AL1 and i2 < AL2);
+		assert(A0.has_character2(i0) and A1.has_character2(i1) and A2.has_character2(i2));
+	    }
+
+	    bool not_gap0 = A0.has_character1(i0);
+	    bool not_gap1 = A1.has_character1(i1);
+	    bool not_gap2 = A2.has_character1(i2);
+	    i0++;
+	    i1++;
+	    i2++;
 
 	    const double* m[3];
 	    int mi=0;
+	    if (not_gap0)
+	    {
+		m[mi++] = ((*LCB1)[s0]);
+		scale += (*LCB1).scale(s0);
+		s0++;
+	    }
+	    if (not_gap1)
+	    {
+		m[mi++] = ((*LCB2)[s1]);
+		scale += (*LCB2).scale(s1);
+		s1++;
+	    }
+	    if (not_gap2)
+	    {
+		m[mi++] = ((*LCB3)[s2]);
+		scale += (*LCB3).scale(s2);
+		s2++;
+	    }
 
-	    if (i0 != -1)
-	    {
-		m[mi++] = ((*LCB1)[i0]);
-		scale += (*LCB1).scale(i0);
-	    }
-	    if (i1 != -1)
-	    {
-		m[mi++] = ((*LCB2)[i1]);
-		scale += (*LCB2).scale(i1);
-	    }
-	    if (i2 != -1)
-	    {
-		m[mi++] = ((*LCB3)[i2]);
-		scale += (*LCB3).scale(i2);
-	    }
-
+	    double p_col = 1;
 	    if (mi==3)
 		p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
 	    else if (mi==2)
@@ -431,12 +480,12 @@ namespace substitution {
 	    element_assign(S,F);
 
 	    //-------------- Propagate and collect information at 'root' -----------//
-	    if (i0 != alphabet::gap)
-		element_prod_modify(S.begin(),(*LCB1)[i0], matrix_size);
-	    if (i1 != alphabet::gap)
-		element_prod_modify(S.begin(),(*LCB2)[i1], matrix_size);
-	    if (i2 != alphabet::gap)
-		element_prod_modify(S.begin(),(*LCB3)[i2], matrix_size);
+	    if (not_gap0)
+		element_prod_modify(S.begin(),(*LCB1)[s0], matrix_size);
+	    if (not_gap1)
+		element_prod_modify(S.begin(),(*LCB2)[s1], matrix_size);
+	    if (not_gap2)
+		element_prod_modify(S.begin(),(*LCB3)[s2], matrix_size);
 
 	    //------------ Check that individual models are not crazy -------------//
 	    for(int m=0;m<n_models;m++) {
@@ -458,6 +507,9 @@ namespace substitution {
 	    // This does a log( ) operation.
 	    total *= p_col;
 	    //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
+
+	    s3++;
+	    total_root_clv_length++;
 	}
 
 	log_double_t Pr = total;
@@ -960,10 +1012,10 @@ namespace substitution {
 	const int matrix_size = n_models * n_states;
 
 	// get the relationships with the sub-alignments for the (two) branches behind b0
-	int total_length = A0.size() + A1.count_delete();
 
         // Do this before accessing matrices or other_subst
-	auto* LCB3 = new Likelihood_Cache_Branch(total_length, n_models, n_states);
+	auto* LCB3 = new Likelihood_Cache_Branch(A0.length2(), n_models, n_states);
+	assert(A0.length2() == A1.length2());
 
 	// scratch matrix
 	double* S = LCB3->scratch(0);
@@ -976,7 +1028,6 @@ namespace substitution {
 	const int AL0 = A0.size();
 	const int AL1 = A1.size();
 	int s0=0,s1=0,s2=0;
-	assert(A0.length2() == A1.length2());
 	for(int i0=0,i1=0;;)
 	{
 	    while (i0 < AL0 and not A0.has_character2(i0))
