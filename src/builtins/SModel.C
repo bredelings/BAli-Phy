@@ -1208,10 +1208,7 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
     int j=0;
     for(int x=0;x<A.size();x++)
     {
-	int a = A[x];
-	auto bits = convert_to_bits(a, 0, 1);
-	assert(bits.any());
-	if (bits.test(0) and bits.test(1))
+	if (A.is_match(x))
 	{
 	    int l1 = seq1[i++];
 	    int l2 = seq2[j++];
@@ -1262,7 +1259,7 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
 	    else
 		Pr *= letter_frequency(l2, alpha, F, LF);
 	}
-	else if (bits.test(0))
+	else if (A.is_delete(x))
 	{
 	    int l = seq1[i++];
 	    Pr *= letter_frequency(l, alpha, F, LF);

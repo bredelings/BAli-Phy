@@ -57,8 +57,8 @@ extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
     int prev = states::S;
     for(int column=0;column<A.size();column++)
     {
-	counts(prev,A[column])++;
-	prev = A[column];
+	counts(prev,A.get_state(column))++;
+	prev = A.get_state(column);
     }
     counts(prev, states::E)++;
 

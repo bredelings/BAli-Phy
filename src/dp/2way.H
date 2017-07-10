@@ -83,7 +83,7 @@ public:
     bool is_insert(int i) const {return states_[i] == A2::states::G1;};
     bool is_delete(int i) const {return states_[i] == A2::states::G2;};
 
-    int operator[](int i) const {return states_[i];};
+    int  get_state(int i) const {return states_[i];};
     void set_state(int i, int S) {states_[i] = S;};
     void set_match(int i) {states_[i] = A2::states::M;};
     void set_insert(int i) {states_[i] = A2::states::G1;};

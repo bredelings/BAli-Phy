@@ -58,7 +58,7 @@ int pairwise_alignment_t::count(int s) const
 {
     int total = 0;
     for(int i=0;i<size();i++)
-	if ((*this)[i] == s)
+	if (get_state(i) == s)
 	    total++;
     return total;
 }
@@ -75,7 +75,7 @@ bool operator==(const pairwise_alignment_t& pi1, const pairwise_alignment_t& pi2
     if (pi1.size() != pi2.size()) return false;
 
     for(int i=0;i<pi1.size();i++)
-	if (pi1[i] != pi2[i]) return false;
+	if (pi1.get_state(i) != pi2.get_state(i)) return false;
 
     return true;
 }
@@ -103,7 +103,7 @@ vector<bitset<64>> convert_to_bits(const pairwise_alignment_t& A, int b1, int b2
 
     for(int i=0;i<A.size();i++)
     {
-	int s = A[i];
+	int s = A.get_state(i);
 	auto bits = convert_to_bits(s, b1, b2);
 	if (bits.any())
 	    a.push_back(bits);
@@ -385,7 +385,7 @@ void Construct::write_match(int node0)
     int S = states::E;
     if (pos[node0] < A[node0].size())
     {
-	S = A[node0][pos[node0]];
+	S = A[node0].get_state(pos[node0]);
 	pos[node0]++;
     }
     assert(S == states::M or S == states::G2 or S == states::E);
@@ -417,7 +417,7 @@ int Construct::write_insertions(int node0)
 	// Find the next state
 	if (pos[node0] >= A[node0].size()) return states::E;
 
-	int S = A[node0][pos[node0]];
+	int S = A[node0].get_state(pos[node0]);
 
 	if (S != states::G1) return S;
 
