@@ -125,8 +125,6 @@ vector<sequence> concatenate(const vector<sequence>& S1, const vector<sequence>&
 
 vector<sequence> select(const vector<sequence>& s,const vector<int>& columns)
 {
-  assert(all_same_length(s));
-
   //------- Start with empty sequences --------//
   vector<sequence> S = s;
   for(int i=0;i<s.size();i++)
@@ -142,9 +140,9 @@ vector<sequence> select(const vector<sequence>& s,const vector<int>& columns)
 
 vector<sequence> select(const vector<sequence>& s,const string& range)
 {
-  assert(all_same_length(s));
-
-  int L = s[0].size();
+  auto L = s[0].size();
+  for(int i=0;i<s.size();i++)
+      L = std::max(L, s[i].size());
 
   vector<int> columns = parse_multi_range(range, L);
 
