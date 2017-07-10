@@ -143,21 +143,9 @@ namespace A2 {
 	pi.reserve(M.size1());
 	for(int c=0;c<M.size1();c++)
 	{
-	    int S = -1;
-	    if (M(c,n1) >=0 or M(c,n1) == -2)
-	    {
-		if (M(c,n2) >=0 or M(c,n2) == -2)
-		    S = A2::states::M;
-		else
-		    S = A2::states::G2;
-	    }
-	    else
-	    {
-		if (M(c,n2) >=0 or M(c,n2) == -2)
-		    S = A2::states::G1;
-	    }
-	    if (S != -1)
-		pi.push_back(S);
+	    bool d1 = (M(c,n1) >=0 or M(c,n1) == -2);
+	    bool d2 = (M(c,n2) >=0 or M(c,n2) == -2);
+	    pi.push_back(d1,d2);
 	}
 
 	return pi;
@@ -169,21 +157,9 @@ namespace A2 {
 	pi.reserve(A.length());
 	for(int c=0;c<A.length();c++)
 	{
-	    int S = -1;
-	    if (A.character(c,n1))
-	    {
-		if (A.character(c,n2))
-		    S = A2::states::M;
-		else
-		    S = A2::states::G2;
-	    }
-	    else
-	    {
-		if (A.character(c,n2))
-		    S = A2::states::G1;
-	    }
-	    if (S != -1)
-		pi.push_back(S);
+	    bool d1 = A.character(c,n1);
+	    bool d2 = A.character(c,n2);
+	    pi.push_back(d1,d2);
 	}
 
 	return pi;
@@ -503,17 +479,7 @@ pairwise_alignment_t get_pairwise_alignment_from_bits(const std::vector<HMM::bit
   pi.reserve(bit_path.size());
 
   for(const auto& bits: bit_path)
-  {
-    bool d1 = bits.test(i);
-    bool d2 = bits.test(j);
-
-    if (d1 and d2)
-      pi.push_back(A2::states::M);
-    else if (d1 and not d2)
-      pi.push_back(A2::states::G2);
-    else if (not d1 and d2)
-      pi.push_back(A2::states::G1);
-  }
+    pi.push_back(bits.test(i), bits.test(j));
   
   return pi;
 }

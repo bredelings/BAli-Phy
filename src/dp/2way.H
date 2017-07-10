@@ -61,7 +61,23 @@ public:
     int size() const {return states_.size();};
     void resize(int s) {states_.resize(s);};
     void reserve(int s) {states_.reserve(s);};
+
     void push_back(int state) {states_.push_back(state);};
+    void push_back_match() {states_.push_back(A2::states::M);};
+    void push_back_insert() {states_.push_back(A2::states::G1);};
+    void push_back_delete() {states_.push_back(A2::states::G2);};
+    bool push_back(bool c1, bool c2) {
+	if (not c1 and not c2) return false;
+
+	if (c1 and c2)
+	    push_back_match();
+	else if (c1)
+	    push_back_delete();
+	else if (c2)
+	    push_back_insert();
+
+	return true;
+    }
 
     bool is_match(int i) const {return states_[i] == A2::states::M;};
     bool is_insert(int i) const {return states_[i] == A2::states::G1;};
