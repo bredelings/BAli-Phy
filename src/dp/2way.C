@@ -67,8 +67,11 @@ pairwise_alignment_t::pairwise_alignment_t()
 { }
 
 pairwise_alignment_t::pairwise_alignment_t(const vector<int>& pi)
-    :states_(pi)
-{ }
+{
+    resize(pi.size());
+    for(int i=0;i<pi.size();i++)
+	set_state(i,pi[i]);
+}
 
 bool operator==(const pairwise_alignment_t& pi1, const pairwise_alignment_t& pi2)
 {

@@ -42,7 +42,7 @@ namespace A2
 
 class pairwise_alignment_t: public Object
 {
-    std::vector<int> states_;
+    std::vector<char> states_;
 
 public:
     pairwise_alignment_t* clone()  const {return new pairwise_alignment_t(*this);}
@@ -62,7 +62,7 @@ public:
     void resize(int s) {states_.resize(s);};
     void reserve(int s) {states_.reserve(s);};
 
-    void push_back(int state) {states_.push_back(state);};
+    void push_back(char state) {states_.push_back(state);};
     void push_back_match() {states_.push_back(A2::states::M);};
     void push_back_insert() {states_.push_back(A2::states::G1);};
     void push_back_delete() {states_.push_back(A2::states::G2);};
@@ -83,8 +83,8 @@ public:
     bool is_insert(int i) const {return states_[i] == A2::states::G1;};
     bool is_delete(int i) const {return states_[i] == A2::states::G2;};
 
-    int  get_state(int i) const {return states_[i];};
-    void set_state(int i, int S) {states_[i] = S;};
+    char  get_state(int i) const {return states_[i];};
+    void set_state(int i, char S) {states_[i] = S;};
     void set_match(int i) {states_[i] = A2::states::M;};
     void set_insert(int i) {states_[i] = A2::states::G1;};
     void set_delete(int i) {states_[i] = A2::states::G2;};
