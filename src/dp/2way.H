@@ -54,6 +54,9 @@ public:
     int length2() const;
 
     int count(int s) const;
+    int count_match() const {return count(A2::states::M);};
+    int count_insert() const {return count(A2::states::G1);};
+    int count_delete() const {return count(A2::states::G2);};
 
     int size() const {return states_.size();};
     void resize(int s) {states_.resize(s);};
@@ -100,8 +103,6 @@ namespace A2 {
 pairwise_alignment_t get_pairwise_alignment_from_bits(const std::vector<HMM::bitmask_t>& bit_path, int n1, int n2);
 
 pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path, const HMM&, int n1, int n2);
-
-int n_insertions(const pairwise_alignment_t& a);
 
 int n_indels(const pairwise_alignment_t& a);
 

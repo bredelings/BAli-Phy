@@ -181,7 +181,7 @@ namespace MCMC {
 
 	int total = P.seqlength(0);
 	for(int b: branches)
-	    total += n_insertions( P.get_pairwise_alignment(b) );
+	    total += P.get_pairwise_alignment(b).count_insert();
 
 	return total;
     }
