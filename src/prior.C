@@ -30,8 +30,13 @@ matrix<int> get_path_counts(const pairwise_alignment_t& a)
 
   matrix<int> counts(5,5,0);
 
-  for(int i=1;i<a.size();i++) 
-    counts(a[i-1], a[i])++;
+  int prev = A2::states::S;
+  for(int i=0;i<a.size();i++)
+  {
+      counts(prev, a[i])++;
+      prev = a[i];
+  }
+  counts(prev, A2::states::E)++;
 
   return counts;
 }

@@ -1206,7 +1206,7 @@ extern "C" closure builtin_function_peel_likelihood_2(OperationArgs& Args)
 
     int i=0;
     int j=0;
-    for(int x=1;x<A.size()-1;x++)
+    for(int x=0;x<A.size();x++)
     {
 	int a = A[x];
 	auto bits = convert_to_bits(a, 0, 1);

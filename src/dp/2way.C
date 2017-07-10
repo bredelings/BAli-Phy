@@ -140,8 +140,7 @@ namespace A2 {
     pairwise_alignment_t get_pairwise_alignment(const matrix<int>& M, int n1, int n2)
     {
 	pairwise_alignment_t pi;
-	pi.reserve(M.size1()+2);
-	pi.push_back(A2::states::S);
+	pi.reserve(M.size1());
 	for(int c=0;c<M.size1();c++)
 	{
 	    int S = -1;
@@ -160,7 +159,6 @@ namespace A2 {
 	    if (S != -1)
 		pi.push_back(S);
 	}
-	pi.push_back(A2::states::E);
 
 	return pi;
     }
@@ -168,8 +166,7 @@ namespace A2 {
     pairwise_alignment_t get_pairwise_alignment(const alignment& A, int n1, int n2)
     {
 	pairwise_alignment_t pi;
-	pi.reserve(A.length()+2);
-	pi.push_back(A2::states::S);
+	pi.reserve(A.length());
 	for(int c=0;c<A.length();c++)
 	{
 	    int S = -1;
@@ -188,7 +185,6 @@ namespace A2 {
 	    if (S != -1)
 		pi.push_back(S);
 	}
-	pi.push_back(A2::states::E);
 
 	return pi;
     }
@@ -196,12 +192,9 @@ namespace A2 {
     pairwise_alignment_t get_pairwise_alignment_from_path(const vector<int>& path)
     {
 	pairwise_alignment_t pi;
-	pi.reserve(path.size() + 2);
-	pi.push_back(A2::states::S);
+	pi.reserve(path.size() );
 	for(int c=0;c<path.size();c++)
 	    pi.push_back(path[c]);
-	pi.push_back(A2::states::E);
-
 	return pi;
     }
 
@@ -329,6 +322,8 @@ vector<int> graph_alignment::sort()
     return order;
 }
 
+// this code currently relies on start and end states...
+
 struct Construct
 {
     int c=0;
@@ -341,7 +336,7 @@ struct Construct
     void write_match(int n0);
     Construct(const vector<pairwise_alignment_t>& a, const TreeInterface& t)
 	:A(t.n_nodes()),
-	 pos(t.n_nodes(),1),
+	 pos(t.n_nodes(),0),
 	 L(t.n_nodes(),0),
 	 children(t.n_nodes())
 	{ 
@@ -411,8 +406,12 @@ void Construct::write_match(int node0)
     using namespace A2;
 
     // Read something,
-    int S = A[node0][pos[node0]];
-    pos[node0]++;
+    int S = states::E;
+    if (pos[node0] < A[node0].size())
+    {
+	S = A[node0][pos[node0]];
+	pos[node0]++;
+    }
     assert(S == states::M or S == states::G2 or S == states::E);
   
     // Call down to children with a down-tick
@@ -435,12 +434,14 @@ int Construct::write_insertions(int node0)
 
     while (true)
     {
-	// Find the next state
-	int S = A[node0][pos[node0]];
-
 	// Add child insertions that come before this column
 	for(const auto& n: children[node0])
 	    write_insertions(n);
+
+	// Find the next state
+	if (pos[node0] >= A[node0].size()) return states::E;
+
+	int S = A[node0][pos[node0]];
 
 	if (S != states::G1) return S;
 
@@ -499,8 +500,7 @@ pairwise_alignment_t get_pairwise_alignment_from_bits(const std::vector<HMM::bit
   assert(i != j);
 
   pairwise_alignment_t pi;
-  pi.reserve(bit_path.size()+2);
-  pi.push_back(A2::states::S);
+  pi.reserve(bit_path.size());
 
   for(const auto& bits: bit_path)
   {
@@ -514,8 +514,6 @@ pairwise_alignment_t get_pairwise_alignment_from_bits(const std::vector<HMM::bit
     else if (not d1 and d2)
       pi.push_back(A2::states::G1);
   }
-  
-  pi.push_back(A2::states::E);
   
   return pi;
 }
@@ -537,9 +535,9 @@ int n_indels(const pairwise_alignment_t& a)
 {
     using namespace A2;
 
-    int total = 0;
+    int total = (a[0] == states::G1 or a[0] == states::G2)?1:0;
 
-    for(int i=1;i<a.size()-1;i++)
+    for(int i=1;i<a.size();i++)
 	if (a[i-1] != a[i])
 	    if (a[i] == states::G1 or a[i] == states::G2)
 		total++;
@@ -557,13 +555,11 @@ int total_length_indels(const pairwise_alignment_t& a)
 pairwise_alignment_t make_unaligned_pairwise_alignment(int L1, int L2)
 {
     pairwise_alignment_t pi;
-    pi.resize(L1+L2+2);
-    pi[0] = A2::states::S;
+    pi.resize(L1+L2);
     for(int i=0;i<L1;i++)
-	pi[1+i] = A2::states::G2;
+	pi[i] = A2::states::G2;
     for(int i=0;i<L2;i++)
-	pi[1+L1+i] = A2::states::G1;
-    pi[pi.size()-1] = A2::states::E;
+	pi[L1+i] = A2::states::G1;
     return pi;
 }
 

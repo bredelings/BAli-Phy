@@ -54,8 +54,13 @@ extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
 
     using namespace A2;
 
-    for(int column=1;column<A.size();column++) 
-	counts(A[column-1],A[column])++;
+    int prev = states::S;
+    for(int column=0;column<A.size();column++)
+    {
+	counts(prev,A[column])++;
+	prev = A[column];
+    }
+    counts(prev, states::E)++;
 
     return counts;
 }
