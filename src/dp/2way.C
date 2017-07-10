@@ -557,9 +557,9 @@ pairwise_alignment_t make_unaligned_pairwise_alignment(int L1, int L2)
     pairwise_alignment_t pi;
     pi.resize(L1+L2);
     for(int i=0;i<L1;i++)
-	pi[i] = A2::states::G2;
+	pi.set_state(i, A2::states::G2);
     for(int i=0;i<L2;i++)
-	pi[L1+i] = A2::states::G1;
+	pi.set_state(L1+i, A2::states::G1);
     return pi;
 }
 

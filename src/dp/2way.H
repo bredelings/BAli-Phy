@@ -50,7 +50,7 @@ public:
     void push_back(int state) {states_.push_back(state);};
 
     int operator[](int i) const {return states_[i];};
-    int& operator[](int i) {return states_[i];};
+    void set_state(int i, int S) {states_[i] = S;};
 
     explicit pairwise_alignment_t(const std::vector<int>&);
     pairwise_alignment_t(const pairwise_alignment_t&) = default;
