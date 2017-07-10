@@ -40,7 +40,7 @@ int pairwise_alignment_t::length1() const
 {
     int total = 0;
     for(int i=0;i<size();i++)
-	if ((*this)[i] == A2::states::M or (*this)[i] == A2::states::G2)
+	if (is_match(i) or is_delete(i))
 	    total++;
     return total;
 }
@@ -49,7 +49,7 @@ int pairwise_alignment_t::length2() const
 {
     int total = 0;
     for(int i=0;i<size();i++)
-	if ((*this)[i] == A2::states::M or (*this)[i] == A2::states::G1)
+	if (is_match(i) or is_insert(i))
 	    total++;
     return total;
 }
@@ -278,16 +278,16 @@ void graph_alignment::add_pairwise_alignment(int node1, int node2, const pairwis
     for(int i=0;i<pi.size();i++)
     {
 	int column = -1;
-	if (pi[i] == states::M)
+	if (pi.is_match(i))
 	{
 	    column = get_column(node1, index1++);
 	    add_row_character_to_column(node2, column);
 	}
-	else if (pi[i] == states::G1)
+	else if (pi.is_insert(i))
 	{
 	    column = add_row_character_to_new_column(node2);
 	}
-	else if (pi[i] == states::G2)
+	else if (pi.is_delete(i))
 	{
 	    column = get_column(node1, index1++);
 	}
@@ -535,11 +535,11 @@ int n_indels(const pairwise_alignment_t& a)
 {
     using namespace A2;
 
-    int total = (a[0] == states::G1 or a[0] == states::G2)?1:0;
+    int total = (a.is_insert(0) or a.is_delete(0))?1:0;
 
     for(int i=1;i<a.size();i++)
 	if (a[i-1] != a[i])
-	    if (a[i] == states::G1 or a[i] == states::G2)
+	    if (a.is_insert(i) or a.is_delete(i))
 		total++;
 
     return total;
@@ -557,9 +557,8 @@ pairwise_alignment_t make_unaligned_pairwise_alignment(int L1, int L2)
     pairwise_alignment_t pi;
     pi.resize(L1+L2);
     for(int i=0;i<L1;i++)
-	pi.set_state(i, A2::states::G2);
+	pi.set_delete(i);
     for(int i=0;i<L2;i++)
-	pi.set_state(L1+i, A2::states::G1);
+	pi.set_insert(L1+i);
     return pi;
 }
-

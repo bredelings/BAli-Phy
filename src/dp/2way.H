@@ -29,6 +29,17 @@
 #include "models/TreeInterface.H"
 #include "hmm.H"
 
+namespace A2
+{
+    namespace states {
+	constexpr int M  = 0;
+	constexpr int G1 = 1;
+	constexpr int G2 = 2;
+	constexpr int E  = 3;
+	constexpr int S  = 4;
+    }
+}
+
 class pairwise_alignment_t: public Object
 {
     std::vector<int> states_;
@@ -49,8 +60,15 @@ public:
     void reserve(int s) {states_.reserve(s);};
     void push_back(int state) {states_.push_back(state);};
 
+    bool is_match(int i) const {return states_[i] == A2::states::M;};
+    bool is_insert(int i) const {return states_[i] == A2::states::G1;};
+    bool is_delete(int i) const {return states_[i] == A2::states::G2;};
+
     int operator[](int i) const {return states_[i];};
     void set_state(int i, int S) {states_[i] = S;};
+    void set_match(int i) {states_[i] = A2::states::M;};
+    void set_insert(int i) {states_[i] = A2::states::G1;};
+    void set_delete(int i) {states_[i] = A2::states::G2;};
 
     explicit pairwise_alignment_t(const std::vector<int>&);
     pairwise_alignment_t(const pairwise_alignment_t&) = default;
@@ -69,14 +87,6 @@ alignment get_alignment(const alphabet& a, const std::vector<sequence>&, const s
 alignment get_alignment(const alignment& A1, const std::vector< std::vector<int>>& sequences, const matrix<int>& M);
 
 namespace A2 {
-
-    namespace states {
-	constexpr int M  = 0;
-	constexpr int G1 = 1;
-	constexpr int G2 = 2;
-	constexpr int E  = 3;
-	constexpr int S  = 4;
-    }
 
     int flip(int s);
 
