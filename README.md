@@ -34,6 +34,8 @@ Build
 
 ```bash
 git clone https://github.com/bredelings/BAli-Phy.git
+git submodule init
+git submodule update
 cd BAli-Phy/
 ./bootstrap.sh
 cd ..
@@ -41,6 +43,7 @@ mkdir bali-phy-build
 cd bali-phy-build
 ../BAli-Phy/configure --prefix=$HOME/Applications/bali-phy/
 make
+make check
 make install
 ```
 
