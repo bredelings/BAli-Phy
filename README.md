@@ -34,8 +34,7 @@ Build
 
 ```bash
 git clone https://github.com/bredelings/BAli-Phy.git
-git submodule init
-git submodule update
+git submodule update --init
 cd BAli-Phy/
 ./bootstrap.sh
 cd ..
