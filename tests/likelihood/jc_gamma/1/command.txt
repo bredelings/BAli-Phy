@@ -1,1 +1,0 @@
---test <DATA>/primates.fasta --tree=<DATA>/primates.tree --smodel=JC+GammaRates[4,0.5]

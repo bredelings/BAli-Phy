@@ -1,7 +1,0 @@
-library("gmp",warn.conflicts=FALSE)
-library("Rmpfr",warn.conflicts=FALSE)
-t = mpfr("1.0",prec=256)
-q1 = mpfr("0.25", prec=256)
-q3 = mpfr("0.75", prec=256)
-log(q1*(q1 - q1*exp(-t/q3)))
-

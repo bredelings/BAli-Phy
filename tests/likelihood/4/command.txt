@@ -1,1 +1,0 @@
---test <DATA>/5d-muscle.fasta --tree=<DATA>/1.tree --smodel=TN[kappaPur=1.5,kappaPyr=2.5]+F[pi=Freq[A=0.1,C=0.2,T=0.3,G=0.4]]

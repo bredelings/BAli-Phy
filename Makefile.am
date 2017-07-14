@@ -111,3 +111,4 @@ dist-hook:
 
 check:
 	cd $(abs_top_srcdir)/tests; python $(abs_top_srcdir)/tests/run-tests.py $(abs_top_builddir)/src/bali-phy$(EXEEXT) --package-path=$(abs_top_builddir)/src/builtins/.libs/:$(abs_top_srcdir)/modules
+	cd $(abs_top_srcdir)/testiphy; python $(abs_top_srcdir)/testiphy/run-tests.py $(abs_top_builddir)/src/bali-phy$(EXEEXT) --package-path=$(abs_top_builddir)/src/builtins/.libs/:$(abs_top_srcdir)/modules

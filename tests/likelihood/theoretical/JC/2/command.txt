@@ -1,1 +1,0 @@
---test <DATA>/AT.fasta --tree=<DATA>/AA.tree --smodel=JC -Inone
