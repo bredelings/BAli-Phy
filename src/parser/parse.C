@@ -44,76 +44,76 @@ namespace phoenix = boost::phoenix;
 template <typename BaseIterator, typename Iterator>
 struct myerror_handler
 {
-  template <typename, typename, typename>
-  struct result { typedef void type; };
+    template <typename, typename, typename>
+    struct result { typedef void type; };
 
-  myerror_handler(BaseIterator first, BaseIterator last)
-    : first(first), last(last) {}
+    myerror_handler(BaseIterator first, BaseIterator last)
+	: first(first), last(last) {}
 
-  template <typename Message, typename What>
-  void operator()(
-		  Message const& message,
-		  What const& what,
-		  Iterator err_pos) const
-  {
-    // retrieve underlying iterator from current token
-    BaseIterator err_pos_base = err_pos->matched().begin();
+    template <typename Message, typename What>
+    void operator()(
+	Message const& message,
+	What const& what,
+	Iterator err_pos) const
+	{
+	    // retrieve underlying iterator from current token
+	    BaseIterator err_pos_base = err_pos->matched().begin();
 
-    int line;
-    BaseIterator line_start = get_pos(err_pos_base, line);
-    if (err_pos_base != last)
-    {
-      std::cout << message << what << " line " << line << ':' << std::endl;
-      std::cout << get_line(line_start) << std::endl;
-      for (; line_start != err_pos_base; ++line_start)
-	std::cout << ' ';
-      std::cout << '^' << std::endl;
-    }
-    else
-    {
-      std::cout << "Unexpected end of file. ";
-      std::cout << message << what << " line " << line << std::endl;
-    }
-  }
+	    int line;
+	    BaseIterator line_start = get_pos(err_pos_base, line);
+	    if (err_pos_base != last)
+	    {
+		std::cout << message << what << " line " << line << ':' << std::endl;
+		std::cout << get_line(line_start) << std::endl;
+		for (; line_start != err_pos_base; ++line_start)
+		    std::cout << ' ';
+		std::cout << '^' << std::endl;
+	    }
+	    else
+	    {
+		std::cout << "Unexpected end of file. ";
+		std::cout << message << what << " line " << line << std::endl;
+	    }
+	}
 
-  BaseIterator get_pos(BaseIterator err_pos, int& line) const
-  {
-    line = 1;
-    BaseIterator i = first;
-    BaseIterator line_start = first;
-    while (i != err_pos)
-    {
-      bool eol = false;
-      if (i != err_pos && *i == '\r') // CR
-      {
-	eol = true;
-	line_start = ++i;
-      }
-      if (i != err_pos && *i == '\n') // LF
-      {
-	eol = true;
-	line_start = ++i;
-      }
-      if (eol)
-	++line;
-      else
-	++i;
-    }
-    return line_start;
-  }
+    BaseIterator get_pos(BaseIterator err_pos, int& line) const
+	{
+	    line = 1;
+	    BaseIterator i = first;
+	    BaseIterator line_start = first;
+	    while (i != err_pos)
+	    {
+		bool eol = false;
+		if (i != err_pos && *i == '\r') // CR
+		{
+		    eol = true;
+		    line_start = ++i;
+		}
+		if (i != err_pos && *i == '\n') // LF
+		{
+		    eol = true;
+		    line_start = ++i;
+		}
+		if (eol)
+		    ++line;
+		else
+		    ++i;
+	    }
+	    return line_start;
+	}
 
-  std::string get_line(BaseIterator err_pos) const
-  {
-    BaseIterator i = err_pos;
-    // position i to the next EOL
-    while (i != last && (*i != '\r' && *i != '\n'))
-      ++i;
-    return std::string(err_pos, i);
-  }
+    std::string get_line(BaseIterator err_pos) const
+	{
+	    BaseIterator i = err_pos;
+	    // position i to the next EOL
+	    while (i != last && (*i != '\r' && *i != '\n'))
+		++i;
+	    return std::string(err_pos, i);
+	}
 
-  BaseIterator first;
-  BaseIterator last;
-  std::vector<Iterator> iters;
+    BaseIterator first;
+    BaseIterator last;
+    std::vector<Iterator> iters;
 };
 
 
@@ -139,56 +139,56 @@ struct myerror_handler
 //   
 
 /*
-program → { lexeme | whitespace }
-lexeme → qvarid | qconid | qvarsym | qconsym
-          | literal | special | reservedop | reservedid
-literal  → integer | float | char | string
-special  → (|)|,|;|[|]|`|{|}
-whitespace → whitestuff {whitestuff }
-whitestuff → whitechar | comment | ncomment
-whitechar → newline | vertab | space | tab | uniWhite
-newline → return linefeed | return | linefeed | formfeed
-return → a carriage return
-linefeed → a line feed
-vertab → a vertical tab
-formfeed → a form feed
-space → a space
-tab → a horizontal tab
-uniWhite → any Unicode character defined as whitespace
-comment → dashes [ any symbol {any} ] newline
-dashes → -- {-}
-opencom → {-
-closecom → -}
-ncomment → opencom ANYseq {ncomment ANYseq} closecom
-ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
-ANY → graphic | whitechar
-any → graphic | space | tab
-graphic → small | large | symbol | digit | special | " | ’
-small → ascSmall | uniSmall | _
-ascSmall → a | b | ... | z
-uniSmall → any Unicode lowercase letter
-large → ascLarge | uniLarge
-ascLarge → A | B | ... | Z
-uniLarge → any uppercase or titlecase Unicode letter
-symbol → ascSymbol | uniSymbol special | _ | " | ’
-ascSymbol → !|#|$|%|&|*|+|.|/|<|=|>|?|@
-            | \|ˆ|||-| ̃|:
-uniSymbol → any Unicode symbol or punctuation
-digit → ascDigit | uniDigit
-ascDigit → 0 | 1 | ... | 9
-uniDigit → any Unicode decimal digit
-octit → 0 | 1 | ... | 7
-hexit → digit | A | . . . | F | a | . . . | f
+  program → { lexeme | whitespace }
+  lexeme → qvarid | qconid | qvarsym | qconsym
+  | literal | special | reservedop | reservedid
+  literal  → integer | float | char | string
+  special  → (|)|,|;|[|]|`|{|}
+  whitespace → whitestuff {whitestuff }
+  whitestuff → whitechar | comment | ncomment
+  whitechar → newline | vertab | space | tab | uniWhite
+  newline → return linefeed | return | linefeed | formfeed
+  return → a carriage return
+  linefeed → a line feed
+  vertab → a vertical tab
+  formfeed → a form feed
+  space → a space
+  tab → a horizontal tab
+  uniWhite → any Unicode character defined as whitespace
+  comment → dashes [ any symbol {any} ] newline
+  dashes → -- {-}
+  opencom → {-
+  closecom → -}
+  ncomment → opencom ANYseq {ncomment ANYseq} closecom
+  ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
+  ANY → graphic | whitechar
+  any → graphic | space | tab
+  graphic → small | large | symbol | digit | special | " | ’
+  small → ascSmall | uniSmall | _
+  ascSmall → a | b | ... | z
+  uniSmall → any Unicode lowercase letter
+  large → ascLarge | uniLarge
+  ascLarge → A | B | ... | Z
+  uniLarge → any uppercase or titlecase Unicode letter
+  symbol → ascSymbol | uniSymbol special | _ | " | ’
+  ascSymbol → !|#|$|%|&|*|+|.|/|<|=|>|?|@
+  | \|ˆ|||-| ̃|:
+  uniSymbol → any Unicode symbol or punctuation
+  digit → ascDigit | uniDigit
+  ascDigit → 0 | 1 | ... | 9
+  uniDigit → any Unicode decimal digit
+  octit → 0 | 1 | ... | 7
+  hexit → digit | A | . . . | F | a | . . . | f
 */
 
 bool is_reservedid(const string& id)
 {
-  return (id == "case" or id=="class" or id=="data" or id=="default" or id=="deriving" or id=="do" or id=="else" or id=="foreign" or id=="if" or id=="import" or id=="in" or id=="infix" or id=="infixl" or id=="infixr" or id=="instance" or id=="let" or id=="module" or id=="newtype" or id=="of" or id=="then" or id=="type" or id=="where" or id=="_");
+    return (id == "case" or id=="class" or id=="data" or id=="default" or id=="deriving" or id=="do" or id=="else" or id=="foreign" or id=="if" or id=="import" or id=="in" or id=="infix" or id=="infixl" or id=="infixr" or id=="instance" or id=="let" or id=="module" or id=="newtype" or id=="of" or id=="then" or id=="type" or id=="where" or id=="_");
 }
 
 bool is_reservedop(const string& op)
 {
-  return (op == ".." or op == ":" or op == "::" or op == "=" or op == "\\" or op == "|" or op == "<-" or op == "->" or op == "@" or op == "~" or op == "=>");
+    return (op == ".." or op == ":" or op == "::" or op == "=" or op == "\\" or op == "|" or op == "<-" or op == "->" or op == "@" or op == "~" or op == "=>");
 }
 
 std::string get_unqualified_name(const std::string&);
@@ -197,28 +197,28 @@ typedef boost::spirit::istream_iterator StreamIter;
 
 void fail_if_reserved_id(const StreamIter start, const StreamIter end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
 {
-  if (is_reservedid(std::string(start, end)))
-    pass = lex::pass_flags::pass_fail;
+    if (is_reservedid(std::string(start, end)))
+	pass = lex::pass_flags::pass_fail;
 }
 
 void fail_if_reserved_qid(const StreamIter start, const StreamIter end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
 {
-  string id = get_unqualified_name(string(start,end));
-  if (is_reservedid(id))
-    pass = lex::pass_flags::pass_fail;
+    string id = get_unqualified_name(string(start,end));
+    if (is_reservedid(id))
+	pass = lex::pass_flags::pass_fail;
 }
 
 void fail_if_reserved_op(const StreamIter start, const StreamIter end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
 {
-  if (is_reservedop(std::string(start, end)))
-    pass = lex::pass_flags::pass_fail;
+    if (is_reservedop(std::string(start, end)))
+	pass = lex::pass_flags::pass_fail;
 }
 
 void fail_if_reserved_qop(const StreamIter start, const StreamIter end, BOOST_SCOPED_ENUM(lex::pass_flags)& pass)
 {
-  string op = get_unqualified_name(string(start,end));
-  if (is_reservedop(op))
-    pass = lex::pass_flags::pass_fail;
+    string op = get_unqualified_name(string(start,end));
+    if (is_reservedop(op))
+	pass = lex::pass_flags::pass_fail;
 }
 
 // http://www.haskell.org/ghc/docs/6.10.2/html/libraries/haskell-src/Language-Haskell-Lexer.html
@@ -226,514 +226,514 @@ template <typename Lexer>
 struct HTokens : lex::lexer<Lexer>
 {
     HTokens()
-    {
+	{
 /*
-program → { lexeme | whitespace }
-lexeme → qvarid | qconid | qvarsym | qconsym
-          | literal | special | reservedop | reservedid
-literal  → integer | float | char | string
+  program → { lexeme | whitespace }
+  lexeme → qvarid | qconid | qvarsym | qconsym
+  | literal | special | reservedop | reservedid
+  literal  → integer | float | char | string
 
-opencom → {-
-closecom → -}
-ncomment → opencom ANYseq {ncomment ANYseq} closecom
-ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
+  opencom → {-
+  closecom → -}
+  ncomment → opencom ANYseq {ncomment ANYseq} closecom
+  ANYseq → {ANY } {ANY } ( opencom | closecom ) {ANY }
 
 */
-      // define patterns (lexer macros) to be used during token definition 
-      // below
-      this->self.add_pattern
-	("newline","\r\n|[\r\n\f]")
-	("whitechar","[\n\v \t]")
-	// uniWhite
-	("ascDigit","\\d+")
-	("digit","{ascDigit}")
-	// uniDigit
-	("octit","[0-7]")
-	("hexit","{digit}|[A-F]|[a-f]")
-	("ascSymbol","[!#$%&*+./<=>?@\\\\^|\\-~:]")
-	// uniSymbol
-	("symbol","{ascSymbol}") // | uniSymbol except <special,_,",'>
-	("ascSmall","[a-z]")
-	// uniSmall
-	("small","{ascSmall}|_") // | uniSmall
-	("ascLarge","[A-Z]")
-	// uniLarge
-	("large","{ascLarge}") // | uniLarge
-	("special","[(),;[\\]`{}]")
-	("graphic","{small}|{large}|{symbol}|{digit}|{special}|[\"']")
-	("any","{graphic}|[\t ]")
-	("ANY","{graphic}|{whitechar}")
-	("dashes","--+")
-	("graphicnonsymbol","{small}|{large}|{digit}|{special}|[\"']")
-	("graphicnonq", "{small}|{large}|{symbol}|{digit}|{special}|[\"]")
-	("graphicnonqq","{small}|{large}|{symbol}|{digit}|{special}|'")
-	("anynonsymbol","{graphicnonsymbol}|[\t ]")
-	("comment","{dashes}({anynonsymbol}{any}*)?{newline}")
-	("whitestuff","{whitechar}|{comment}") // | ncomment
-	("whitespace","{whitestuff}+")
-	("varid","{small}({small}|{large}|{digit}|')*")
-	("conid","{large}({small}|{large}|{digit}|')*")
-	("varsym","{symbol}+")
-	("consym",":{symbol}*")
-	("modid","({conid}\\.)+")
-	("decimal","\\d+")
-	("exponent","[eE][\\+\\-]?{decimal}")
-	// The char and string literals are missing some stuff
-	("escape","\\[abfnrtv\\\"']");
+	    // define patterns (lexer macros) to be used during token definition 
+	    // below
+	    this->self.add_pattern
+		("newline","\r\n|[\r\n\f]")
+		("whitechar","[\n\v \t]")
+		// uniWhite
+		("ascDigit","\\d+")
+		("digit","{ascDigit}")
+		// uniDigit
+		("octit","[0-7]")
+		("hexit","{digit}|[A-F]|[a-f]")
+		("ascSymbol","[!#$%&*+./<=>?@\\\\^|\\-~:]")
+		// uniSymbol
+		("symbol","{ascSymbol}") // | uniSymbol except <special,_,",'>
+		("ascSmall","[a-z]")
+		// uniSmall
+		("small","{ascSmall}|_") // | uniSmall
+		("ascLarge","[A-Z]")
+		// uniLarge
+		("large","{ascLarge}") // | uniLarge
+		("special","[(),;[\\]`{}]")
+		("graphic","{small}|{large}|{symbol}|{digit}|{special}|[\"']")
+		("any","{graphic}|[\t ]")
+		("ANY","{graphic}|{whitechar}")
+		("dashes","--+")
+		("graphicnonsymbol","{small}|{large}|{digit}|{special}|[\"']")
+		("graphicnonq", "{small}|{large}|{symbol}|{digit}|{special}|[\"]")
+		("graphicnonqq","{small}|{large}|{symbol}|{digit}|{special}|'")
+		("anynonsymbol","{graphicnonsymbol}|[\t ]")
+		("comment","{dashes}({anynonsymbol}{any}*)?{newline}")
+		("whitestuff","{whitechar}|{comment}") // | ncomment
+		("whitespace","{whitestuff}+")
+		("varid","{small}({small}|{large}|{digit}|')*")
+		("conid","{large}({small}|{large}|{digit}|')*")
+		("varsym","{symbol}+")
+		("consym",":{symbol}*")
+		("modid","({conid}\\.)+")
+		("decimal","\\d+")
+		("exponent","[eE][\\+\\-]?{decimal}")
+		// The char and string literals are missing some stuff
+		("escape","\\[abfnrtv\\\"']");
 
-      QVarId = "{modid}{varid}";
-      VarId = "{varid}";
-      QConId = "{modid}{conid}";
-      ConId = "{conid}";
-      QVarSym = "{modid}{varsym}";
-      VarSym = "{varsym}";
-      QConSym = "{modid}{consym}";
-      ConSym = "{consym}";
+	    QVarId = "{modid}{varid}";
+	    VarId = "{varid}";
+	    QConId = "{modid}{conid}";
+	    ConId = "{conid}";
+	    QVarSym = "{modid}{varsym}";
+	    VarSym = "{varsym}";
+	    QConSym = "{modid}{consym}";
+	    ConSym = "{consym}";
 
-	  // Literal
-      IntTok = "{decimal}";
-      FloatTok = "{digit}\\.{digit}{exponent}?|{digit}{exponent}";
-      //      Character = "'({graphicnonq}| |{escape})'";
-      Character = "'({graphicnonq}| |{escape})'";
-      //      StringTok = "\"({graphicnonqq}| |{escape})*\"";
-      StringTok = "[\"]({graphicnonqq}| |{escape})*[\"]";
+	    // Literal
+	    IntTok = "{decimal}";
+	    FloatTok = "{digit}\\.{digit}{exponent}?|{digit}{exponent}";
+	    //      Character = "'({graphicnonq}| |{escape})'";
+	    Character = "'({graphicnonq}| |{escape})'";
+	    //      StringTok = "\"({graphicnonqq}| |{escape})*\"";
+	    StringTok = "[\"]({graphicnonqq}| |{escape})*[\"]";
 
-      LeftParen   = "[(]";
-      RightParen  = "[)]";
-      SemiColon   = ";";
-      LeftCurly   = "\\{";
-      RightCurly  = "}";
-      VRightCurly = "}";
-      LeftSquare  = "\\[";
-      RightSquare = "]";
-      Comma       = ",";
-      BackQuote   = "`";
+	    LeftParen   = "[(]";
+	    RightParen  = "[)]";
+	    SemiColon   = ";";
+	    LeftCurly   = "\\{";
+	    RightCurly  = "}";
+	    VRightCurly = "}";
+	    LeftSquare  = "\\[";
+	    RightSquare = "]";
+	    Comma       = ",";
+	    BackQuote   = "`";
 
-         // underscore - part of reservedid?
-      Underscore = "_";
+	    // underscore - part of reservedid?
+	    Underscore = "_";
 
-         // reservedop
-      DotDot = "\\.\\.";
-      Colon = ":";
-      DoubleColon = "::";
-      Equals = "=";
-      Backslash = "\\\\";
-      Bar = "\\|";
-      LeftArrow = "<-";
-      RightArrow = "->";
-      At = "@";
-      Tilde = "~";
-      DoubleArrow = "=>";
-      // Minus and Exclamation are "special" varops
-      Minus = "-";
-      Exclamation = "!";
+	    // reservedop
+	    DotDot = "\\.\\.";
+	    Colon = ":";
+	    DoubleColon = "::";
+	    Equals = "=";
+	    Backslash = "\\\\";
+	    Bar = "\\|";
+	    LeftArrow = "<-";
+	    RightArrow = "->";
+	    At = "@";
+	    Tilde = "~";
+	    DoubleArrow = "=>";
+	    // Minus and Exclamation are "special" varops
+	    Minus = "-";
+	    Exclamation = "!";
 
-         // reservedid
-      KW_Case = "case";
-      KW_Class = "class";
-      KW_Data = "data";
-      KW_Default = "default";
-      KW_Deriving = "deriving";
-      KW_Do = "do";
-      KW_Else = "else";
-      KW_Foreign = "foreign";
-      KW_If = "if";
-      KW_Import = "import";
-      KW_In = "in";
-      KW_Infix = "infix";
-      KW_InfixL = "infixl";
-      KW_InfixR = "infixr";
-      KW_Instance = "instance";
-      KW_Let = "let";
-      KW_Module = "module";
-      KW_NewType = "newtype";
-      KW_Of = "of";
-      KW_Then = "then";
-      KW_Type = "type";
-      KW_Where = "where";
-      KW_Export = "export";
-      KW_Hiding = "hiding";
-      KW_Qualified = "qualified";
-      KW_Safe = "safe";
-      KW_Unsafe = "unsafe";
+	    // reservedid
+	    KW_Case = "case";
+	    KW_Class = "class";
+	    KW_Data = "data";
+	    KW_Default = "default";
+	    KW_Deriving = "deriving";
+	    KW_Do = "do";
+	    KW_Else = "else";
+	    KW_Foreign = "foreign";
+	    KW_If = "if";
+	    KW_Import = "import";
+	    KW_In = "in";
+	    KW_Infix = "infix";
+	    KW_InfixL = "infixl";
+	    KW_InfixR = "infixr";
+	    KW_Instance = "instance";
+	    KW_Let = "let";
+	    KW_Module = "module";
+	    KW_NewType = "newtype";
+	    KW_Of = "of";
+	    KW_Then = "then";
+	    KW_Type = "type";
+	    KW_Where = "where";
+	    KW_Export = "export";
+	    KW_Hiding = "hiding";
+	    KW_Qualified = "qualified";
+	    KW_Safe = "safe";
+	    KW_Unsafe = "unsafe";
 
-      // This is not a haskell keyword
-      KW_Builtin = "builtin";
+	    // This is not a haskell keyword
+	    KW_Builtin = "builtin";
 
-      // whitespace
-      WHITESPACE = "{whitespace}";
+	    // whitespace
+	    WHITESPACE = "{whitespace}";
 
-      // define tokens and associate them with the lexer
-      //        word = "{WORD}";    // reference the pattern 'WORD' as defined above
+	    // define tokens and associate them with the lexer
+	    //        word = "{WORD}";    // reference the pattern 'WORD' as defined above
       
-      // this lexer will recognize 3 token types: words, newlines, and 
-      // everything else
-      this->self  =
-	LeftParen
-	| RightParen
-	| SemiColon
-	| LeftCurly
-	| RightCurly
-	| VRightCurly // added to satisfy demands of parser?
-	| LeftSquare
-	| RightSquare
-	| Comma
-	| BackQuote
+	    // this lexer will recognize 3 token types: words, newlines, and 
+	    // everything else
+	    this->self  =
+		LeftParen
+		| RightParen
+		| SemiColon
+		| LeftCurly
+		| RightCurly
+		| VRightCurly // added to satisfy demands of parser?
+		| LeftSquare
+		| RightSquare
+		| Comma
+		| BackQuote
 
-	| KW_Builtin
+		| KW_Builtin
 
-	// underscore - part of reservedid?
-	| Underscore
+		// underscore - part of reservedid?
+		| Underscore
 
-	// reservedop
-	| DotDot
-	| Colon
-	| DoubleColon
-	| Equals
-	| Backslash
-	| Bar
-	| LeftArrow
-	| RightArrow
-	| At
-	| Tilde
-	| DoubleArrow
-	| Minus         //?
-	| Exclamation   //?
+		// reservedop
+		| DotDot
+		| Colon
+		| DoubleColon
+		| Equals
+		| Backslash
+		| Bar
+		| LeftArrow
+		| RightArrow
+		| At
+		| Tilde
+		| DoubleArrow
+		| Minus         //?
+		| Exclamation   //?
 
-	// reservedid
-	| KW_Case
-	| KW_Class
-	| KW_Data
-	| KW_Default
-	| KW_Deriving
-	| KW_Do
-	| KW_Else
-	| KW_Foreign
-	| KW_If
-	| KW_Import
-	| KW_In
-	| KW_Infix
-	| KW_InfixL
-	| KW_InfixR
-	| KW_Instance
-	| KW_Let
-	| KW_Module
-	| KW_NewType
-	| KW_Of
-	| KW_Then
-	| KW_Type
-	| KW_Where
-	| KW_Export
-	| KW_Hiding
-	| KW_Qualified
-	| KW_Safe
-	| KW_Unsafe
+		// reservedid
+		| KW_Case
+		| KW_Class
+		| KW_Data
+		| KW_Default
+		| KW_Deriving
+		| KW_Do
+		| KW_Else
+		| KW_Foreign
+		| KW_If
+		| KW_Import
+		| KW_In
+		| KW_Infix
+		| KW_InfixL
+		| KW_InfixR
+		| KW_Instance
+		| KW_Let
+		| KW_Module
+		| KW_NewType
+		| KW_Of
+		| KW_Then
+		| KW_Type
+		| KW_Where
+		| KW_Export
+		| KW_Hiding
+		| KW_Qualified
+		| KW_Safe
+		| KW_Unsafe
 
-	| QVarId [&fail_if_reserved_qid]
-	| VarId
-	| QConId
-	| ConId
-	| QConSym [&fail_if_reserved_qop]
-	| ConSym
-	| QVarSym [&fail_if_reserved_qop]
-	| VarSym
+		| QVarId [&fail_if_reserved_qid]
+		| VarId
+		| QConId
+		| ConId
+		| QConSym [&fail_if_reserved_qop]
+		| ConSym
+		| QVarSym [&fail_if_reserved_qop]
+		| VarSym
 
-	// Literal
-	| IntTok
-	| FloatTok
-	| Character
-	| StringTok
+		// Literal
+		| IntTok
+		| FloatTok
+		| Character
+		| StringTok
 	
-	// whitespace
-	| WHITESPACE [ lex::_pass = lex::pass_flags::pass_ignore ] // how do we skip whitespace in the lexer?
-        ;
-    }
+		// whitespace
+		| WHITESPACE [ lex::_pass = lex::pass_flags::pass_ignore ] // how do we skip whitespace in the lexer?
+		;
+	}
 
-  lex::token_def<std::string> QVarId;   // (String,STring)
-  lex::token_def<std::string> VarId;    // String
-  lex::token_def<std::string> QConId;   // (String, String)	
-  lex::token_def<std::string> ConId;    // String	
-  lex::token_def<std::string> QVarSym;  // (String, String)	
-  lex::token_def<std::string> VarSym;   // String	
-  lex::token_def<std::string> QConSym;  // (String, String)	
-  lex::token_def<std::string> ConSym;   // String 
+    lex::token_def<std::string> QVarId;   // (String,STring)
+    lex::token_def<std::string> VarId;    // String
+    lex::token_def<std::string> QConId;   // (String, String)	
+    lex::token_def<std::string> ConId;    // String	
+    lex::token_def<std::string> QVarSym;  // (String, String)	
+    lex::token_def<std::string> VarSym;   // String	
+    lex::token_def<std::string> QConSym;  // (String, String)	
+    lex::token_def<std::string> ConSym;   // String 
 
-  lex::token_def<std::string> IntTok;   // Integer
-  lex::token_def<std::string> FloatTok; // Rational	
-  lex::token_def<std::string> Character;       // Char	
-  lex::token_def<std::string> StringTok;// String	
+    lex::token_def<std::string> IntTok;   // Integer
+    lex::token_def<std::string> FloatTok; // Rational	
+    lex::token_def<std::string> Character;       // Char	
+    lex::token_def<std::string> StringTok;// String	
 
-  lex::token_def<> LeftParen;
-  lex::token_def<> RightParen;
-  lex::token_def<> SemiColon;
-  lex::token_def<> LeftCurly;
-  lex::token_def<> RightCurly;
-  lex::token_def<> VRightCurly;
-  lex::token_def<> LeftSquare;
-  lex::token_def<> RightSquare;
-  lex::token_def<> Comma;
-  lex::token_def<> BackQuote;
+    lex::token_def<> LeftParen;
+    lex::token_def<> RightParen;
+    lex::token_def<> SemiColon;
+    lex::token_def<> LeftCurly;
+    lex::token_def<> RightCurly;
+    lex::token_def<> VRightCurly;
+    lex::token_def<> LeftSquare;
+    lex::token_def<> RightSquare;
+    lex::token_def<> Comma;
+    lex::token_def<> BackQuote;
 
-  lex::token_def<> Underscore;
+    lex::token_def<> Underscore;
 
-  lex::token_def<> DotDot;
-  lex::token_def<> Colon;
-  lex::token_def<> DoubleColon;
-  lex::token_def<> Equals;
-  lex::token_def<> Backslash;
-  lex::token_def<> Bar;
-  lex::token_def<> LeftArrow;
-  lex::token_def<> RightArrow;
-  lex::token_def<> At;
-  lex::token_def<> Tilde;
-  lex::token_def<> DoubleArrow;
+    lex::token_def<> DotDot;
+    lex::token_def<> Colon;
+    lex::token_def<> DoubleColon;
+    lex::token_def<> Equals;
+    lex::token_def<> Backslash;
+    lex::token_def<> Bar;
+    lex::token_def<> LeftArrow;
+    lex::token_def<> RightArrow;
+    lex::token_def<> At;
+    lex::token_def<> Tilde;
+    lex::token_def<> DoubleArrow;
 
-  lex::token_def<> Minus;
-  lex::token_def<> Exclamation;
-  // Keywords
-  lex::token_def<> KW_Case;
-  lex::token_def<> KW_Class;
-  lex::token_def<> KW_Data;
-  lex::token_def<> KW_Default;
-  lex::token_def<> KW_Deriving;
-  lex::token_def<> KW_Do;
-  lex::token_def<> KW_Else;
-  lex::token_def<> KW_Foreign;
-  lex::token_def<> KW_If;
-  lex::token_def<> KW_Import;
-  lex::token_def<> KW_In;
-  lex::token_def<> KW_Infix;
-  lex::token_def<> KW_InfixL;
-  lex::token_def<> KW_InfixR;
-  lex::token_def<> KW_Instance;
-  lex::token_def<> KW_Let;
-  lex::token_def<> KW_Module;
-  lex::token_def<> KW_NewType;
-  lex::token_def<> KW_Of;
-  lex::token_def<> KW_Then;
-  lex::token_def<> KW_Type;
-  lex::token_def<> KW_Where;
-  lex::token_def<> KW_Export;
-  lex::token_def<> KW_Hiding;
-  lex::token_def<> KW_Qualified;
-  lex::token_def<> KW_Safe;
-  lex::token_def<> KW_Unsafe;
+    lex::token_def<> Minus;
+    lex::token_def<> Exclamation;
+    // Keywords
+    lex::token_def<> KW_Case;
+    lex::token_def<> KW_Class;
+    lex::token_def<> KW_Data;
+    lex::token_def<> KW_Default;
+    lex::token_def<> KW_Deriving;
+    lex::token_def<> KW_Do;
+    lex::token_def<> KW_Else;
+    lex::token_def<> KW_Foreign;
+    lex::token_def<> KW_If;
+    lex::token_def<> KW_Import;
+    lex::token_def<> KW_In;
+    lex::token_def<> KW_Infix;
+    lex::token_def<> KW_InfixL;
+    lex::token_def<> KW_InfixR;
+    lex::token_def<> KW_Instance;
+    lex::token_def<> KW_Let;
+    lex::token_def<> KW_Module;
+    lex::token_def<> KW_NewType;
+    lex::token_def<> KW_Of;
+    lex::token_def<> KW_Then;
+    lex::token_def<> KW_Type;
+    lex::token_def<> KW_Where;
+    lex::token_def<> KW_Export;
+    lex::token_def<> KW_Hiding;
+    lex::token_def<> KW_Qualified;
+    lex::token_def<> KW_Safe;
+    lex::token_def<> KW_Unsafe;
 
-  lex::token_def<> KW_Builtin;
+    lex::token_def<> KW_Builtin;
 
-  //  lex::token_def<std::string> WHITESPACE; For multi-stage lexing, we will actually need the matched string
-  lex::token_def<lex::omit> WHITESPACE;
-  //  lex::token_def<> EOF;
+    //  lex::token_def<std::string> WHITESPACE; For multi-stage lexing, we will actually need the matched string
+    lex::token_def<lex::omit> WHITESPACE;
+    //  lex::token_def<> EOF;
 };
 
 expression_ref to_int(const string& s)
 {
-  return convertTo<int>(s);
+    return convertTo<int>(s);
 }
 
 expression_ref to_float(const string& s)
 {
-  return convertTo<double>(s);
+    return convertTo<double>(s);
 }
 
 expression_ref to_char(const string& s)
 {
-  assert(s.size() == 3);
-  return s[1];
+    assert(s.size() == 3);
+    return s[1];
 }
 
 string remove_quotes(const string& s)
 {
-  assert(s.size() >= 2);
-  return s.substr(1,s.size()-2);
+    assert(s.size() >= 2);
+    return s.substr(1,s.size()-2);
 }
 
 expression_ref to_String(const string& s)
 {
-  return String(remove_quotes(s));
+    return String(remove_quotes(s));
 }
 
 template <typename Iterator>
 struct HParser : qi::grammar<Iterator, expression_ref()>
 {
-  typedef myerror_handler<StreamIter, Iterator> error_handler_type;
+    typedef myerror_handler<StreamIter, Iterator> error_handler_type;
 
-  template <typename TokenDef>
+    template <typename TokenDef>
     HParser(error_handler_type& error_handler, const TokenDef& tok) 
-      : HParser::base_type(exp)
-    {
-        using qi::lit;
-        using qi::lexeme;
-	using qi::on_error;
-	using qi::fail;
-        using ascii::char_;
-        using qi::double_;
-	using qi::eps;
-	using qi::eoi;
-        using ascii::string;
-        using namespace qi::labels;
+	: HParser::base_type(exp)
+	{
+	    using qi::lit;
+	    using qi::lexeme;
+	    using qi::on_error;
+	    using qi::fail;
+	    using ascii::char_;
+	    using qi::double_;
+	    using qi::eps;
+	    using qi::eoi;
+	    using ascii::string;
+	    using namespace qi::labels;
 
-        using phoenix::at_c;
-        using phoenix::push_back;
-	using phoenix::begin;
-	using phoenix::end;
-	using phoenix::insert;
-	using phoenix::clear;
-	using phoenix::construct;
-	using phoenix::new_;
-	using phoenix::val;
-	using boost::phoenix::function;
+	    using phoenix::at_c;
+	    using phoenix::push_back;
+	    using phoenix::begin;
+	    using phoenix::end;
+	    using phoenix::insert;
+	    using phoenix::clear;
+	    using phoenix::construct;
+	    using phoenix::new_;
+	    using phoenix::val;
+	    using boost::phoenix::function;
 
-	typedef function<error_handler_type> error_handler_function;
+	    typedef function<error_handler_type> error_handler_function;
 
-	varid %= tok.VarId;
-	qvarid %= tok.VarId | tok.QVarId;
-	conid %= tok.ConId;
-	qconid %= tok.ConId | tok.QConId;
+	    varid %= tok.VarId;
+	    qvarid %= tok.VarId | tok.QVarId;
+	    conid %= tok.ConId;
+	    qconid %= tok.ConId | tok.QConId;
 
-	varsym = tok.VarSym [_val = _1] | tok.Minus[_val = "-"] | tok.Exclamation [_val = "!"];
-	qvarsym %= varsym | tok.QVarSym;
-	consym %= tok.ConSym;
-	qconsym %= tok.ConSym | tok.QConSym;
+	    varsym = tok.VarSym [_val = _1] | tok.Minus[_val = "-"] | tok.Exclamation [_val = "!"];
+	    qvarsym %= varsym | tok.QVarSym;
+	    consym %= tok.ConSym;
+	    qconsym %= tok.ConSym | tok.QConSym;
 
-	tyvar %= varid;
-	tycon %= conid;
-	tycls %= conid;
-	modid %= qconid;
+	    tyvar %= varid;
+	    tycon %= conid;
+	    tycls %= conid;
+	    modid %= qconid;
 
-	qtycon %= qconid;
-	qtycls %= qconid;
+	    qtycon %= qconid;
+	    qtycls %= qconid;
 
-	quoted_string = tok.StringTok [ _val = phoenix::bind(to_String,_1) ];
+	    quoted_string = tok.StringTok [ _val = phoenix::bind(to_String,_1) ];
 	
-	literal_float = tok.FloatTok [ _val = phoenix::bind(to_float,_1) ];
-	literal_int   = tok.IntTok [ _val = phoenix::bind(to_int,_1) ];
-	literal_char  = tok.Character [ _val = phoenix::bind(to_char,_1) ];
-	literal_string = tok.StringTok [ _val = phoenix::bind(remove_quotes,_1) ];
+	    literal_float = tok.FloatTok [ _val = phoenix::bind(to_float,_1) ];
+	    literal_int   = tok.IntTok [ _val = phoenix::bind(to_int,_1) ];
+	    literal_char  = tok.Character [ _val = phoenix::bind(to_char,_1) ];
+	    literal_string = tok.StringTok [ _val = phoenix::bind(remove_quotes,_1) ];
 
-	literal %= literal_float | literal_int | literal_char | literal_string;
+	    literal %= literal_float | literal_int | literal_char | literal_string;
 
-	/*----- Section 3 ------*/
-	exp = 
-	  infixexp [ _val = _1 ] >> -(tok.DoubleColon >> -(context >> tok.DoubleArrow) >> type);
+	    /*----- Section 3 ------*/
+	    exp = 
+		infixexp [ _val = _1 ] >> -(tok.DoubleColon >> -(context >> tok.DoubleArrow) >> type);
 
-	infixexp = 
-	  lexp [push_back(_a,_1)] >> qop [push_back(_a,_1)] >> infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
-	  | eps[clear(_a)] >> tok.Minus [push_back(_a, AST_node("neg"))] >> infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
-	  | lexp [ _val = _1 ]
-	  ;
+	    infixexp = 
+		lexp [push_back(_a,_1)] >> qop [push_back(_a,_1)] >> infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
+		| eps[clear(_a)] >> tok.Minus [push_back(_a, AST_node("neg"))] >> infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
+		| lexp [ _val = _1 ]
+		;
 
-	lexp %= lexp_lambda | lexp_let | lexp_if | lexp_case | lexp_do | fexp;
+	    lexp %= lexp_lambda | lexp_let | lexp_if | lexp_case | lexp_do | fexp;
 
-	lexp_lambda = tok.Backslash > +apat[push_back(_a,_1)] > tok.RightArrow > exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Lambda"), _a)  ];
+	    lexp_lambda = tok.Backslash > +apat[push_back(_a,_1)] > tok.RightArrow > exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Lambda"), _a)  ];
 
-	lexp_let = let_decls[push_back(_a,_1)] >> tok.KW_In > exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ];
+	    lexp_let = let_decls[push_back(_a,_1)] >> tok.KW_In > exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ];
 
-	lexp_if = tok.KW_If > exp[push_back(_a,_1)] > -tok.SemiColon >> tok.KW_Then > exp[push_back(_a,_1)] > -tok.SemiColon > tok.KW_Else > exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ];
+	    lexp_if = tok.KW_If > exp[push_back(_a,_1)] > -tok.SemiColon >> tok.KW_Then > exp[push_back(_a,_1)] > -tok.SemiColon > tok.KW_Else > exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ];
 
-	lexp_case = tok.KW_Case > exp[push_back(_a,_1)] > tok.KW_Of > tok.LeftCurly >> alts[push_back(_a,_1)] >> tok.RightCurly >> eps [ _val = new_<expression>(AST_node("Case"), _a)  ];
+	    lexp_case = tok.KW_Case > exp[push_back(_a,_1)] > tok.KW_Of > tok.LeftCurly >> alts[push_back(_a,_1)] >> tok.RightCurly >> eps [ _val = new_<expression>(AST_node("Case"), _a)  ];
 
-	lexp_do = tok.KW_Do > tok.LeftCurly > stmts[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Do"), _a)  ];
+	    lexp_do = tok.KW_Do > tok.LeftCurly > stmts[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Do"), _a)  ];
 
-	fexp = +aexp [ push_back(_a,_1) ] >> eps [ _val = new_<expression>(AST_node("Apply"), _a) ]  ; // function application
+	    fexp = +aexp [ push_back(_a,_1) ] >> eps [ _val = new_<expression>(AST_node("Apply"), _a) ]  ; // function application
 
-	// order: con >> conid >> qconid >qcon >> gcon
+	    // order: con >> conid >> qconid >qcon >> gcon
 
-	aexp = 
-	  // variable
-	  qvar [_val = construct<AST_node>("id", construct<String>(_1)) ]
-	  // general constructor
-	  | gcon [ _val = construct<AST_node>("id", construct<String>(_1)) ]
-	  // literal
-	  | literal [_val = _1 ]
-	  // parenthesized expression
-	  | eps[clear(_a)] >> tok.LeftParen >> exp [_val = _1] >> tok.RightParen
-	  // tuple, k >= 2
-	  | eps[clear(_a)] >> tok.LeftParen >> exp [push_back(_a,_1)] >> +(tok.Comma>>exp [push_back(_a,_1)]) >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("Tuple"), _a) ]
-	  // left section
-	  | eps[clear(_a)] >> tok.LeftParen >> infixexp[push_back(_a,_1)]  >> qop[push_back(_a,_1)] >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
-	  // right section
-	  | eps[clear(_a)] >> tok.LeftParen >> qop[push_back(_a,_1)] - tok.Minus >> infixexp[push_back(_a,_1)] >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("RightSection"), _a) ]
-	  // list
-	  | tok.LeftSquare[clear(_a)] >> (exp[push_back(_a,_1)]%tok.Comma) >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("List"), _a) ]
-	  // arithmetic sequence
-	  | tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.DotDot >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("enumFrom"), _a) ]
-	  | tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.DotDot >> exp[push_back(_a,_1)] >> tok.RightSquare  >> eps [ _val = new_<expression>(AST_node("enumFromTo"), _a) ]
-	  | tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.Comma>>exp[push_back(_a,_1)] >>tok.DotDot >> tok.RightSquare  >> eps [ _val = new_<expression>(AST_node("enumFromThen"), _a) ]
-	  | tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.Comma>>exp[push_back(_a,_1)] >>tok.DotDot >> exp[push_back(_a,_1)] >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("enumFromThenTo"), _a) ]
-	  // list comprehension
-	  | tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >>tok.Bar >> (qual[push_back(_a,_1)]%tok.Comma) >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("ListComprehension"), _a) ]
-	  //	  | qcon >> tok.LeftCurly >> *fbind >> tok.RightCurly  // labeled construction (?)
-	  //	  | (aexp - qcon) >> tok.LeftCurly>> +fbind >> tok.RightCurly; // labeled update
-	  ;
+	    aexp = 
+		// variable
+		qvar [_val = construct<AST_node>("id", construct<String>(_1)) ]
+		// general constructor
+		| gcon [ _val = construct<AST_node>("id", construct<String>(_1)) ]
+		// literal
+		| literal [_val = _1 ]
+		// parenthesized expression
+		| eps[clear(_a)] >> tok.LeftParen >> exp [_val = _1] >> tok.RightParen
+		// tuple, k >= 2
+		| eps[clear(_a)] >> tok.LeftParen >> exp [push_back(_a,_1)] >> +(tok.Comma>>exp [push_back(_a,_1)]) >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("Tuple"), _a) ]
+		// left section
+		| eps[clear(_a)] >> tok.LeftParen >> infixexp[push_back(_a,_1)]  >> qop[push_back(_a,_1)] >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
+		// right section
+		| eps[clear(_a)] >> tok.LeftParen >> qop[push_back(_a,_1)] - tok.Minus >> infixexp[push_back(_a,_1)] >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("RightSection"), _a) ]
+		// list
+		| tok.LeftSquare[clear(_a)] >> (exp[push_back(_a,_1)]%tok.Comma) >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("List"), _a) ]
+		// arithmetic sequence
+		| tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.DotDot >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("enumFrom"), _a) ]
+		| tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.DotDot >> exp[push_back(_a,_1)] >> tok.RightSquare  >> eps [ _val = new_<expression>(AST_node("enumFromTo"), _a) ]
+		| tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.Comma>>exp[push_back(_a,_1)] >>tok.DotDot >> tok.RightSquare  >> eps [ _val = new_<expression>(AST_node("enumFromThen"), _a) ]
+		| tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >> tok.Comma>>exp[push_back(_a,_1)] >>tok.DotDot >> exp[push_back(_a,_1)] >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("enumFromThenTo"), _a) ]
+		// list comprehension
+		| tok.LeftSquare[clear(_a)] >> exp[push_back(_a,_1)] >>tok.Bar >> (qual[push_back(_a,_1)]%tok.Comma) >> tok.RightSquare >> eps [ _val = new_<expression>(AST_node("ListComprehension"), _a) ]
+		//	  | qcon >> tok.LeftCurly >> *fbind >> tok.RightCurly  // labeled construction (?)
+		//	  | (aexp - qcon) >> tok.LeftCurly>> +fbind >> tok.RightCurly; // labeled update
+		;
 	  
-	/*----- Section 3.2 -------*/
-	gcon =  tok.LeftParen >> tok.RightParen [_val = "()"]
-	  | tok.LeftSquare >> tok.RightSquare [_val = "[]"]
-	  | tok.LeftParen >> tok.Comma [_val = "(,"] >> *tok.Comma[_val += ","] >> tok.RightParen[_val += ")"]
-	  | qcon [ _val = _1];
+	    /*----- Section 3.2 -------*/
+	    gcon =  tok.LeftParen >> tok.RightParen [_val = "()"]
+		| tok.LeftSquare >> tok.RightSquare [_val = "[]"]
+		| tok.LeftParen >> tok.Comma [_val = "(,"] >> *tok.Comma[_val += ","] >> tok.RightParen[_val += ")"]
+		| qcon [ _val = _1];
 
-	var  = varid[_val = _1] | tok.LeftParen >> varsym[_val = _1] >> tok.RightParen;    // variable
-	qvar = qvarid[_val = _1] | tok.LeftParen >> qvarsym[_val = _1] >> tok.RightParen;   // qualified variable
-	con  = conid[_val = _1]  | tok.LeftParen >> consym[_val = _1] >> tok.RightParen;    // constructor
-	qcon = qconid[_val = _1] | tok.LeftParen >> gconsym[_val = _1] >> tok.RightParen;   // qualified constructor
-	varop = varsym[_val = _1] | tok.BackQuote >> varid[_val = _1] >> tok.BackQuote;    // variable operator
-	qvarop = qvarsym[_val = _1] | tok.BackQuote >> qvarid[_val = _1] >> tok.BackQuote; // qualified variable operator
-	conop = consym[_val = _1] | tok.BackQuote >> conid[_val = _1] >> tok.BackQuote;    // constructor operator
-	qconop = gconsym[_val = _1] | tok.BackQuote >> qconid[_val = _1] >> tok.BackQuote; // qualified constructor operator
-	op %= varop | conop;                      // operator
-	qop = qvarop [ _val = construct<AST_node>("id", construct<String>(_1)) ] | qconop [ _val = construct<AST_node>("id",construct<String>(_1)) ];  // qualified operator
-	gconsym = qconsym [_val = _1] | tok.Colon [_val = ":"];
+	    var  = varid[_val = _1] | tok.LeftParen >> varsym[_val = _1] >> tok.RightParen;    // variable
+	    qvar = qvarid[_val = _1] | tok.LeftParen >> qvarsym[_val = _1] >> tok.RightParen;   // qualified variable
+	    con  = conid[_val = _1]  | tok.LeftParen >> consym[_val = _1] >> tok.RightParen;    // constructor
+	    qcon = qconid[_val = _1] | tok.LeftParen >> gconsym[_val = _1] >> tok.RightParen;   // qualified constructor
+	    varop = varsym[_val = _1] | tok.BackQuote >> varid[_val = _1] >> tok.BackQuote;    // variable operator
+	    qvarop = qvarsym[_val = _1] | tok.BackQuote >> qvarid[_val = _1] >> tok.BackQuote; // qualified variable operator
+	    conop = consym[_val = _1] | tok.BackQuote >> conid[_val = _1] >> tok.BackQuote;    // constructor operator
+	    qconop = gconsym[_val = _1] | tok.BackQuote >> qconid[_val = _1] >> tok.BackQuote; // qualified constructor operator
+	    op %= varop | conop;                      // operator
+	    qop = qvarop [ _val = construct<AST_node>("id", construct<String>(_1)) ] | qconop [ _val = construct<AST_node>("id",construct<String>(_1)) ];  // qualified operator
+	    gconsym = qconsym [_val = _1] | tok.Colon [_val = ":"];
 
-	/*----- Section 3.11 -----*/
-	qual = pat [push_back(_a,_1)] >> tok.LeftArrow > exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
-	  | eps [clear(_a) ] >> let_decls[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("LetQual"), _a) ]
-	  | eps [clear(_a) ] >> exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("SimpleQual"), _a) ];
+	    /*----- Section 3.11 -----*/
+	    qual = pat [push_back(_a,_1)] >> tok.LeftArrow > exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
+		| eps [clear(_a) ] >> let_decls[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("LetQual"), _a) ]
+		| eps [clear(_a) ] >> exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("SimpleQual"), _a) ];
 
-	/*----- Section 3.13 -----*/
-	alts = (alt % tok.SemiColon )[_a = _1] >> eps [ _val = new_<expression>(AST_node("alts"), _a) ];
-	alt =  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> tok.RightArrow > exp[push_back(_a,_1)] >> -(tok.KW_Where >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
-	  |  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> gdpat[push_back(_a,_1)] >> -(tok.KW_Where >> decls[push_back(_a,_1)])  >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
-	  | eps;
+	    /*----- Section 3.13 -----*/
+	    alts = (alt % tok.SemiColon )[_a = _1] >> eps [ _val = new_<expression>(AST_node("alts"), _a) ];
+	    alt =  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> tok.RightArrow > exp[push_back(_a,_1)] >> -(tok.KW_Where >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
+		|  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> gdpat[push_back(_a,_1)] >> -(tok.KW_Where >> decls[push_back(_a,_1)])  >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
+		| eps;
 
-	gdpat = guards [push_back(_a,_1)]>> tok.RightArrow >> exp[push_back(_a,_1)] >> -gdpat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("GdPat"), _a) ];
-	guards = tok.Bar >> +guard[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Guards"), _a) ];
-	guard = pat[push_back(_a,_1)] >> tok.LeftArrow >> infixexp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("PatternGuard"), _a) ]
-	  | eps [clear(_a) ] >> let_decls[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("LetGuard"), _a) ]
-	  |  eps [clear(_a) ] >> infixexp[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("BoolGuard"), _a) ];
+	    gdpat = guards [push_back(_a,_1)]>> tok.RightArrow >> exp[push_back(_a,_1)] >> -gdpat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("GdPat"), _a) ];
+	    guards = tok.Bar >> +guard[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Guards"), _a) ];
+	    guard = pat[push_back(_a,_1)] >> tok.LeftArrow >> infixexp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("PatternGuard"), _a) ]
+		| eps [clear(_a) ] >> let_decls[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("LetGuard"), _a) ]
+		|  eps [clear(_a) ] >> infixexp[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("BoolGuard"), _a) ];
 
-	/*----- Section 3.14 -----*/
-	stmts = *(stmt[push_back(_a,_1)]) >> exp[push_back(_a,_1)] >> -tok.SemiColon >> tok.RightCurly [ _val = new_<expression>(AST_node("Stmts"), _a) ];
-	stmt = pat[push_back(_a,_1)] >> tok.LeftArrow > exp[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("PatStmt"), _a) ]
-	  | eps [clear(_a) ] >> exp[push_back(_a,_1)] >> tok.SemiColon >> !tok.RightCurly >> eps[ _val = new_<expression>(AST_node("SimpleStmt"), _a) ]
-	  | eps [clear(_a) ] >> let_decls[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("LetStmt"), _a) ]
-	  | eps [clear(_a) ] >> tok.SemiColon [ _val = new_<expression>(AST_node("EmptyStmt"), _a) ];
+	    /*----- Section 3.14 -----*/
+	    stmts = *(stmt[push_back(_a,_1)]) >> exp[push_back(_a,_1)] >> -tok.SemiColon >> tok.RightCurly [ _val = new_<expression>(AST_node("Stmts"), _a) ];
+	    stmt = pat[push_back(_a,_1)] >> tok.LeftArrow > exp[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("PatStmt"), _a) ]
+		| eps [clear(_a) ] >> exp[push_back(_a,_1)] >> tok.SemiColon >> !tok.RightCurly >> eps[ _val = new_<expression>(AST_node("SimpleStmt"), _a) ]
+		| eps [clear(_a) ] >> let_decls[push_back(_a,_1)] >> tok.SemiColon [ _val = new_<expression>(AST_node("LetStmt"), _a) ]
+		| eps [clear(_a) ] >> tok.SemiColon [ _val = new_<expression>(AST_node("EmptyStmt"), _a) ];
 
-	/*----- Section 3.15 -----*/
-	//	fbind %= qvar >> tok.Equals >> exp;
+	    /*----- Section 3.15 -----*/
+	    //	fbind %= qvar >> tok.Equals >> exp;
 
-	/*----- Section 3.17 -----*/
-	pat = 
-	  lpat [ push_back(_a,_1) ] >> qconop [ push_back(_a,construct<AST_node>("id",construct<String>(_1))) ] >> pat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("pat"), _a) ]
-	  | eps [clear(_a)] >>  lpat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("pat"), _a) ];
+	    /*----- Section 3.17 -----*/
+	    pat = 
+		lpat [ push_back(_a,_1) ] >> qconop [ push_back(_a,construct<AST_node>("id",construct<String>(_1))) ] >> pat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("pat"), _a) ]
+		| eps [clear(_a)] >>  lpat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("pat"), _a) ];
 
-	lpat = 
-	  // negative literal float
-	  eps [clear(_a)] >> tok.Minus >> literal_float[push_back(_a,_1)] >> eps [  _val = new_<expression>(AST_node("neg_h_float"), _a) ]
-	  // negative literal integer
-	  | eps [clear(_a)] >> tok.Minus >> literal_int[push_back(_a,_1)] >> eps [  _val = new_<expression>(AST_node("neg_h_integer"), _a) ]
-	  // here the number of apat's must match the constructor arity
-	  | eps [clear(_a)] >>  gcon[ push_back(_a,construct<String>(_1)) ] >> +apat[ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
-	  // apat
-	  | apat [ _val = _1 ]
-	  ;                  
+	    lpat = 
+		// negative literal float
+		eps [clear(_a)] >> tok.Minus >> literal_float[push_back(_a,_1)] >> eps [  _val = new_<expression>(AST_node("neg_h_float"), _a) ]
+		// negative literal integer
+		| eps [clear(_a)] >> tok.Minus >> literal_int[push_back(_a,_1)] >> eps [  _val = new_<expression>(AST_node("neg_h_integer"), _a) ]
+		// here the number of apat's must match the constructor arity
+		| eps [clear(_a)] >>  gcon[ push_back(_a,construct<String>(_1)) ] >> +apat[ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
+		// apat
+		| apat [ _val = _1 ]
+		;                  
 
-	apat = 
-	  // as pattern
-	  //	  var >> tok.At>>apat 
-	  // irrefutable var pattern
-	  var [ _val = construct<AST_node>("apat_var", construct<String>(_1)) ]
-	  // arity gcon = 0
+	    apat = 
+		// as pattern
+		//	  var >> tok.At>>apat 
+		// irrefutable var pattern
+		var [ _val = construct<AST_node>("apat_var", construct<String>(_1)) ]
+		// arity gcon = 0
 	  | gcon [ push_back(_a,construct<String>(_1)) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
 	  // labelled pattern
 	  //	  | qcon >> tok.LeftCurly >> *fpat >> tok.RightCurly     
