@@ -13,9 +13,9 @@
 #define BOOST_TEST_DETAIL_THROW_EXCEPTION_HPP
 
 // Boost
-#include <boost/config.hpp> // BOOST_NO_EXCEPTION
+#include <boost/config.hpp> // BOOST_NO_EXCEPTIONS
 
-#ifdef BOOST_NO_EXCEPTION
+#ifdef BOOST_NO_EXCEPTIONS
 // C RUNTIME
 #include <stdlib.h>
 
@@ -56,7 +56,6 @@ throw_exception(E const& e) { throw e; }
 
 //____________________________________________________________________________//
 
-#define BOOST_TEST_I_THROW( E ) unit_test::ut_detail::throw_exception( E )
 #define BOOST_TEST_I_THROW( E ) unit_test::ut_detail::throw_exception( E )
 #define BOOST_TEST_I_ASSRT( cond, ex ) if( cond ) {} else BOOST_TEST_I_THROW( ex )
 

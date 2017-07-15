@@ -17,6 +17,7 @@
 // Boost.Test
 #include <boost/test/detail/global_typedef.hpp>
 #include <boost/test/utils/runtime/argument.hpp>
+#include <boost/make_shared.hpp>
 
 // STL
 #include <iostream>
@@ -34,31 +35,35 @@ namespace runtime_config {
 // **************                 runtime_config               ************** //
 // ************************************************************************** //
 
-// UTF parameters 
-BOOST_TEST_DECL extern std::string AUTO_START_DBG;
-BOOST_TEST_DECL extern std::string BREAK_EXEC_PATH;
-BOOST_TEST_DECL extern std::string BUILD_INFO;
-BOOST_TEST_DECL extern std::string CATCH_SYS_ERRORS;
-BOOST_TEST_DECL extern std::string COLOR_OUTPUT;
-BOOST_TEST_DECL extern std::string DETECT_FP_EXCEPT;
-BOOST_TEST_DECL extern std::string DETECT_MEM_LEAKS;
-BOOST_TEST_DECL extern std::string LIST_CONTENT;
-BOOST_TEST_DECL extern std::string LIST_LABELS;
-BOOST_TEST_DECL extern std::string LOG_FORMAT;
-BOOST_TEST_DECL extern std::string LOG_LEVEL;
-BOOST_TEST_DECL extern std::string LOG_SINK;
-BOOST_TEST_DECL extern std::string OUTPUT_FORMAT;
-BOOST_TEST_DECL extern std::string RANDOM_SEED;
-BOOST_TEST_DECL extern std::string REPORT_FORMAT;
-BOOST_TEST_DECL extern std::string REPORT_LEVEL;
-BOOST_TEST_DECL extern std::string REPORT_MEM_LEAKS;
-BOOST_TEST_DECL extern std::string REPORT_SINK;
-BOOST_TEST_DECL extern std::string RESULT_CODE;
-BOOST_TEST_DECL extern std::string RUN_FILTERS;
-BOOST_TEST_DECL extern std::string SAVE_TEST_PATTERN;
-BOOST_TEST_DECL extern std::string SHOW_PROGRESS;
-BOOST_TEST_DECL extern std::string USE_ALT_STACK;
-BOOST_TEST_DECL extern std::string WAIT_FOR_DEBUGGER;
+// UTF parameters
+BOOST_TEST_DECL extern std::string btrt_auto_start_dbg;
+BOOST_TEST_DECL extern std::string btrt_break_exec_path;
+BOOST_TEST_DECL extern std::string btrt_build_info;
+BOOST_TEST_DECL extern std::string btrt_catch_sys_errors;
+BOOST_TEST_DECL extern std::string btrt_color_output;
+BOOST_TEST_DECL extern std::string btrt_detect_fp_except;
+BOOST_TEST_DECL extern std::string btrt_detect_mem_leaks;
+BOOST_TEST_DECL extern std::string btrt_list_content;
+BOOST_TEST_DECL extern std::string btrt_list_labels;
+BOOST_TEST_DECL extern std::string btrt_log_format;
+BOOST_TEST_DECL extern std::string btrt_log_level;
+BOOST_TEST_DECL extern std::string btrt_log_sink;
+BOOST_TEST_DECL extern std::string btrt_combined_logger;
+BOOST_TEST_DECL extern std::string btrt_output_format;
+BOOST_TEST_DECL extern std::string btrt_random_seed;
+BOOST_TEST_DECL extern std::string btrt_report_format;
+BOOST_TEST_DECL extern std::string btrt_report_level;
+BOOST_TEST_DECL extern std::string btrt_report_mem_leaks;
+BOOST_TEST_DECL extern std::string btrt_report_sink;
+BOOST_TEST_DECL extern std::string btrt_result_code;
+BOOST_TEST_DECL extern std::string btrt_run_filters;
+BOOST_TEST_DECL extern std::string btrt_save_test_pattern;
+BOOST_TEST_DECL extern std::string btrt_show_progress;
+BOOST_TEST_DECL extern std::string btrt_use_alt_stack;
+BOOST_TEST_DECL extern std::string btrt_wait_for_debugger;
+BOOST_TEST_DECL extern std::string btrt_help;
+BOOST_TEST_DECL extern std::string btrt_usage;
+BOOST_TEST_DECL extern std::string btrt_version;
 
 BOOST_TEST_DECL void init( int& argc, char** argv );
 
@@ -76,6 +81,11 @@ get( runtime::cstring parameter_name )
     return argument_store().get<T>( parameter_name );
 }
 
+inline bool has( runtime::cstring parameter_name )
+{
+    return argument_store().has( parameter_name );
+}
+
 /// For public access
 BOOST_TEST_DECL bool save_pattern();
 
@@ -86,35 +96,34 @@ BOOST_TEST_DECL bool save_pattern();
 class stream_holder {
 public:
     // Constructor
-    explicit        stream_holder( std::ostream& default_stream )
+    explicit        stream_holder( std::ostream& default_stream = std::cout)
     : m_stream( &default_stream )
     {
     }
 
-    void            setup( runtime::cstring param_name )
+    void            setup( const const_string& stream_name )
     {
-        if( !runtime_config::argument_store().has( param_name ) )
+        if(stream_name.empty())
             return;
 
-        std::string const& file_name = runtime_config::get<std::string>( param_name );
-
-        if( file_name == "stderr" )
+        if( stream_name == "stderr" )
             m_stream = &std::cerr;
-        else if( file_name == "stdout" )
+        else if( stream_name == "stdout" )
             m_stream = &std::cout;
         else {
-            m_file.open( file_name.c_str() );
-            m_stream = &m_file;
+            m_file = boost::make_shared<std::ofstream>();
+            m_file->open( std::string(stream_name.begin(), stream_name.end()).c_str() );
+            m_stream = m_file.get();
         }
     }
 
     // Access methods
-    std::ostream&   ref() const { return *m_stream; }  
+    std::ostream&   ref() const { return *m_stream; }
 
 private:
     // Data members
-    std::ofstream   m_file;
-    std::ostream*   m_stream;  
+    boost::shared_ptr<std::ofstream>   m_file;
+    std::ostream*   m_stream;
 };
 
 } // namespace runtime_config

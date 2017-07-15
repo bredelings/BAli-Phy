@@ -7395,6 +7395,26 @@ All the units are given using the suffix "s" following the System International 
 [/==================================]
 
 [//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////]
+[section [*Version 2.0.7, August 18, 2016 - 1.62] ]
+
+[*Fixes:]
+
+* [@http://svn.boost.org/trac/boost/ticket/11630 #11630] boost chrono documentation about boost chrono version & io API is wrong.
+* [@http://svn.boost.org/trac/boost/ticket/12176 #12176] Chrono without linking to Boost.System 
+* [@http://svn.boost.org/trac/boost/ticket/12260 #12260] Bug: time_fmt does not support for wchar_t on windows
+
+[endsect] [/section [*Version 2.0.7] ]
+[//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////]
+[section [*Version 2.0.6, December 18, 2015 - 1.60] ]
+
+[*Fixes:]
+
+* [@http://svn.boost.org/trac/boost/ticket/11330 #11330] boost::chrono::duration default constructor doesn't initialize rep_
+* [@http://svn.boost.org/trac/boost/ticket/11618 #11618] Chrono IO V2 doc ios_state.hpp does not exist
+* [@http://svn.boost.org/trac/boost/ticket/11631 #11631] boost chrono io v2 does not let you support custom clocks  
+  
+[endsect] [/section [*Version 2.0.6] ]
+[//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////]
 [section [*Version 2.0.5, February 18, 2015 - 1.58] ]
 
 [*Fixes:]
