@@ -641,9 +641,9 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 	    aexp = 
 		// variable
-		qvar [_val = construct<AST_node>("id", construct<String>(_1)) ]
+		qvar [_val = construct<AST_node>(std::string("id"), construct<String>(_1)) ]
 		// general constructor
-		| gcon [ _val = construct<AST_node>("id", construct<String>(_1)) ]
+		| gcon [ _val = construct<AST_node>(std::string("id"), construct<String>(_1)) ]
 		// literal
 		| literal [_val = _1 ]
 		// parenthesized expression
@@ -668,9 +668,9 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 		;
 	  
 	    /*----- Section 3.2 -------*/
-	    gcon =  tok.LeftParen >> tok.RightParen [_val = "()"]
-		| tok.LeftSquare >> tok.RightSquare [_val = "[]"]
-		| tok.LeftParen >> tok.Comma [_val = "(,"] >> *tok.Comma[_val += ","] >> tok.RightParen[_val += ")"]
+	    gcon =  tok.LeftParen >> tok.RightParen [_val = std::string("()")]
+		| tok.LeftSquare >> tok.RightSquare [_val = std::string("[]")]
+		| tok.LeftParen >> tok.Comma [_val = std::string("(,")] >> *tok.Comma[_val += std::string(",")] >> tok.RightParen[_val += std::string(")")]
 		| qcon [ _val = _1];
 
 	    var  = varid[_val = _1] | tok.LeftParen >> varsym[_val = _1] >> tok.RightParen;    // variable
@@ -682,8 +682,8 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 	    conop = consym[_val = _1] | tok.BackQuote >> conid[_val = _1] >> tok.BackQuote;    // constructor operator
 	    qconop = gconsym[_val = _1] | tok.BackQuote >> qconid[_val = _1] >> tok.BackQuote; // qualified constructor operator
 	    op %= varop | conop;                      // operator
-	    qop = qvarop [ _val = construct<AST_node>("id", construct<String>(_1)) ] | qconop [ _val = construct<AST_node>("id",construct<String>(_1)) ];  // qualified operator
-	    gconsym = qconsym [_val = _1] | tok.Colon [_val = ":"];
+	    qop = qvarop [ _val = construct<AST_node>(std::string("id"), construct<String>(_1)) ] | qconop [ _val = construct<AST_node>(std::string("id"),construct<String>(_1)) ];  // qualified operator
+	    gconsym = qconsym [_val = _1] | tok.Colon [_val = std::string(":")];
 
 	    /*----- Section 3.11 -----*/
 	    qual = pat [push_back(_a,_1)] >> tok.LeftArrow > exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
@@ -714,7 +714,7 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 
 	    /*----- Section 3.17 -----*/
 	    pat = 
-		lpat [ push_back(_a,_1) ] >> qconop [ push_back(_a,construct<AST_node>("id",construct<String>(_1))) ] >> pat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("pat"), _a) ]
+		lpat [ push_back(_a,_1) ] >> qconop [ push_back(_a,construct<AST_node>(std::string("id"),construct<String>(_1))) ] >> pat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("pat"), _a) ]
 		| eps [clear(_a)] >>  lpat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("pat"), _a) ];
 
 	    lpat = 
@@ -732,458 +732,458 @@ struct HParser : qi::grammar<Iterator, expression_ref()>
 		// as pattern
 		//	  var >> tok.At>>apat 
 		// irrefutable var pattern
-		var [ _val = construct<AST_node>("apat_var", construct<String>(_1)) ]
+		var [ _val = construct<AST_node>(std::string("apat_var"), construct<String>(_1)) ]
 		// arity gcon = 0
-	  | gcon [ push_back(_a,construct<String>(_1)) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
-	  // labelled pattern
-	  //	  | qcon >> tok.LeftCurly >> *fpat >> tok.RightCurly     
-	  | literal [  _val = _1 ]
-	  // wildcard
-	  | tok.Underscore [ _val = construct<AST_node>("WildcardPattern") ]                       
-	  // parenthesized pattern
-	  | tok.LeftParen >> pat [ _val = _1 ] >> tok.RightParen          
-	  // tuple patten
-	  | eps[clear(_a)] >> tok.LeftParen >> pat[ push_back(_a,_1) ] >> +(tok.Comma >> pat[ push_back(_a,_1) ]) >> tok.RightParen [ _val = new_<expression>(AST_node("Tuple"), _a) ]
-	  // list pattern
-	  | tok.LeftSquare[clear(_a)] >> pat[ push_back(_a,_1) ] % tok.Comma >> tok.RightSquare [ _val = new_<expression>(AST_node("List"), _a) ]
-	  // irrefutable pattern
-	  //	  | tok.Tilde >> apat                
-	  ;
-	//	fpat %= qvar >> tok.Equals >> pat;         // field pattern
+		| gcon [ push_back(_a,construct<String>(_1)) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
+		// labelled pattern
+		//	  | qcon >> tok.LeftCurly >> *fpat >> tok.RightCurly     
+		| literal [  _val = _1 ]
+		// wildcard
+		| tok.Underscore [ _val = construct<AST_node>(std::string("WildcardPattern")) ]
+		// parenthesized pattern
+		| tok.LeftParen >> pat [ _val = _1 ] >> tok.RightParen          
+		// tuple patten
+		| eps[clear(_a)] >> tok.LeftParen >> pat[ push_back(_a,_1) ] >> +(tok.Comma >> pat[ push_back(_a,_1) ]) >> tok.RightParen [ _val = new_<expression>(AST_node("Tuple"), _a) ]
+		// list pattern
+		| tok.LeftSquare[clear(_a)] >> pat[ push_back(_a,_1) ] % tok.Comma >> tok.RightSquare [ _val = new_<expression>(AST_node("List"), _a) ]
+		// irrefutable pattern
+		//	  | tok.Tilde >> apat                
+		;
+	    //	fpat %= qvar >> tok.Equals >> pat;         // field pattern
 
-	/*------ Section 4 -------*/
-	module = 
-	  -(tok.KW_Module > modid[ push_back(_a,construct<String>(_1)) ] > /*-exports >>*/ tok.KW_Where) > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
+	    /*------ Section 4 -------*/
+	    module = 
+		-(tok.KW_Module > modid[ push_back(_a,construct<String>(_1)) ] > /*-exports >>*/ tok.KW_Where) > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
 
-	body = 
-	  tok.LeftCurly >> impdecls[ push_back(_a,_1) ] >> tok.SemiColon > topdecls[ push_back(_a,_1) ] > tok.RightCurly >> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
-	  | tok.LeftCurly[clear(_a)] >> impdecls[ push_back(_a,_1) ] > tok.RightCurly>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
-	  // Since body MUST match wherever it occurs, we can force the last rule to match...
-	  | tok.LeftCurly > topdecls [ push_back(_a,_1) ] > tok.RightCurly >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
+	    body = 
+		tok.LeftCurly >> impdecls[ push_back(_a,_1) ] >> tok.SemiColon > topdecls[ push_back(_a,_1) ] > tok.RightCurly >> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
+		| tok.LeftCurly[clear(_a)] >> impdecls[ push_back(_a,_1) ] > tok.RightCurly>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
+		// Since body MUST match wherever it occurs, we can force the last rule to match...
+		| tok.LeftCurly > topdecls [ push_back(_a,_1) ] > tok.RightCurly >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
 
-	topdecls = topdecl [ push_back(_a,_1) ] % tok.SemiColon >> eps[ _val = new_<expression>(AST_node("TopDecls"), _a) ];
-	topdecl = 
-	  tok.KW_Type > simpletype[ push_back(_a,_1) ] >> tok.Equals >> type[ push_back(_a,_1) ] >> eps [ _val = new_<expression>(AST_node("Decl:type"), _a) ]
-	  | tok.KW_Data > /*-(context >> tok.DoubleArrow) >> */ simpletype[ push_back(_a,_1) ] >> tok.Equals > constrs[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
-	  | tok.KW_Data > /*-(context >> tok.DoubleArrow) >> */ simpletype[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
-	  | tok.KW_NewType > /*-(context >> tok.DoubleArrow) >> */ simpletype [ push_back(_a,_1) ] >> tok.Equals >> newconstr[ push_back(_a,_1) ] /*>> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:newtype"), _a) ]
-	  //	  | tok.KW_Class >> -(scontext >> tok.DoubleArrow) >> tycls >> tyvar >> -(tok.KW_Where >> cdecls)
-	  //	  | tok.KW_Instance >> -(scontext >> tok.DoubleArrow) >> qtycls >> inst >> -(tok.KW_Where >> idecls)
-	  //	  | tok.KW_Default >> *type
-	  //	  | tok.KW_Foreign >> fdecl
-	  | tok.KW_Builtin > (var|varop)[ push_back(_a,construct<String>(_1)) ] >> literal_int[push_back(_a,_1)] >> quoted_string[push_back(_a,_1)] >> -quoted_string[push_back(_a,_1)] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
-	  | decl [_val = _1]
-	  ;
+	    topdecls = topdecl [ push_back(_a,_1) ] % tok.SemiColon >> eps[ _val = new_<expression>(AST_node("TopDecls"), _a) ];
+	    topdecl = 
+		tok.KW_Type > simpletype[ push_back(_a,_1) ] >> tok.Equals >> type[ push_back(_a,_1) ] >> eps [ _val = new_<expression>(AST_node("Decl:type"), _a) ]
+		| tok.KW_Data > /*-(context >> tok.DoubleArrow) >> */ simpletype[ push_back(_a,_1) ] >> tok.Equals > constrs[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
+		| tok.KW_Data > /*-(context >> tok.DoubleArrow) >> */ simpletype[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
+		| tok.KW_NewType > /*-(context >> tok.DoubleArrow) >> */ simpletype [ push_back(_a,_1) ] >> tok.Equals >> newconstr[ push_back(_a,_1) ] /*>> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:newtype"), _a) ]
+		//	  | tok.KW_Class >> -(scontext >> tok.DoubleArrow) >> tycls >> tyvar >> -(tok.KW_Where >> cdecls)
+		//	  | tok.KW_Instance >> -(scontext >> tok.DoubleArrow) >> qtycls >> inst >> -(tok.KW_Where >> idecls)
+		//	  | tok.KW_Default >> *type
+		//	  | tok.KW_Foreign >> fdecl
+		| tok.KW_Builtin > (var|varop)[ push_back(_a,construct<String>(_1)) ] >> literal_int[push_back(_a,_1)] >> quoted_string[push_back(_a,_1)] >> -quoted_string[push_back(_a,_1)] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
+		| decl [_val = _1]
+		;
 
-	let_decls = tok.KW_Let > decls[ _val = _1 ];
-	decls = tok.LeftCurly > (decl % tok.SemiColon)[_val = new_<expression>(AST_node("Decls"), _1)] > tok.RightCurly;
-	decl  = 
-	  (funlhs | pat)[push_back(_a,_1)] >> rhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Decl"), _a)  ]
-	| gendecl [_val = _1];
+	    let_decls = tok.KW_Let > decls[ _val = _1 ];
+	    decls = tok.LeftCurly > (decl % tok.SemiColon)[_val = new_<expression>(AST_node("Decls"), _1)] > tok.RightCurly;
+	    decl  = 
+		(funlhs | pat)[push_back(_a,_1)] >> rhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Decl"), _a)  ]
+		| gendecl [_val = _1];
 
-	// class declarations
-	cdecls %= tok.LeftCurly >> cdecl % tok.SemiColon > tok.RightCurly;
-	//	cdecl  %= gendecl | (funlhs | var) >> rhs;
+	    // class declarations
+	    cdecls %= tok.LeftCurly >> cdecl % tok.SemiColon > tok.RightCurly;
+	    //	cdecl  %= gendecl | (funlhs | var) >> rhs;
 
-	// instance declarations
-	idecls %= tok.LeftCurly >> idecl % tok.SemiColon > tok.RightCurly;
-	//	idecl  %= (funlhs | var) >> rhs | eps;
+	    // instance declarations
+	    idecls %= tok.LeftCurly >> idecl % tok.SemiColon > tok.RightCurly;
+	    //	idecl  %= (funlhs | var) >> rhs | eps;
 
-	gendecl = // vars >> tok.DoubleColon >>  -(context >> tok.DoubleArrow) >> type 
-	  fixity[push_back(_a,construct<String>(_1))] > -literal_int[push_back(_a,_1)] > ops[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FixityDecl"), _a)  ]
-	  | eps [ _val = new_<expression>(AST_node("EmptyDecl"), _a)  ];
+	    gendecl = // vars >> tok.DoubleColon >>  -(context >> tok.DoubleArrow) >> type 
+		fixity[push_back(_a,construct<String>(_1))] > -literal_int[push_back(_a,_1)] > ops[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FixityDecl"), _a)  ]
+		| eps [ _val = new_<expression>(AST_node("EmptyDecl"), _a)  ];
 
-	ops = op[push_back(_a,construct<String>(_1))]%tok.Comma >> eps [ _val = new_<expression>(AST_node("Ops"), _a)  ];
-	vars %= +var;
-	fixity = tok.KW_InfixL [_val = "infixl"] | tok.KW_InfixR [_val = "infixr"] | tok.KW_Infix [_val = "infix" ];
+	    ops = op[push_back(_a,construct<String>(_1))]%tok.Comma >> eps [ _val = new_<expression>(AST_node("Ops"), _a)  ];
+	    vars %= +var;
+	    fixity = tok.KW_InfixL [_val = std::string("infixl")] | tok.KW_InfixR [_val = std::string("infixr")] | tok.KW_Infix [_val = std::string("infix") ];
 
-	/*----- Section 4.1.2 ------*/
+	    /*----- Section 4.1.2 ------*/
 
-	type = btype[push_back(_a,_1)] >> tok.RightArrow >> type[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FunctionType"), _a) ]
-	  | btype [_val = _1];
+	    type = btype[push_back(_a,_1)] >> tok.RightArrow >> type[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FunctionType"), _a) ]
+		| btype [_val = _1];
 
-	btype = +atype[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("TypeApply"), _a) ];
+	    btype = +atype[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("TypeApply"), _a) ];
 
-	atype = gtycon [_val = construct<AST_node>("type_id",construct<String>(_1)) ]
-	  // type variable
-	  | tyvar [_val = construct<AST_node>("type_id",construct<String>(_1)) ]
-	  // tuple type, k >= 2
-	  | eps[clear(_a)] >> tok.LeftParen >> type[push_back(_a,_1)] >> +(tok.Comma>>type[push_back(_a,_1)]) >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("TupleType"), _a) ]
-	  // list type
-	  | eps[clear(_a)] >> tok.LeftSquare >> type [push_back(_a,_1)] >> tok.RightSquare  >> eps [ _val = new_<expression>(AST_node("ListType"), _a) ]
-	  // parenthesized type
-	  | eps[clear(_a)] >> tok.LeftParen >> type [_val = _1 ] >> tok.RightParen;
-	atype2 = atype [_val = _1] | tok.Exclamation >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("StrictAtype"), _a) ];
+	    atype = gtycon [_val = construct<AST_node>(std::string("type_id"),construct<String>(_1)) ]
+		// type variable
+		| tyvar [_val = construct<AST_node>(std::string("type_id"),construct<String>(_1)) ]
+		// tuple type, k >= 2
+		| eps[clear(_a)] >> tok.LeftParen >> type[push_back(_a,_1)] >> +(tok.Comma>>type[push_back(_a,_1)]) >> tok.RightParen >> eps [ _val = new_<expression>(AST_node("TupleType"), _a) ]
+		// list type
+		| eps[clear(_a)] >> tok.LeftSquare >> type [push_back(_a,_1)] >> tok.RightSquare  >> eps [ _val = new_<expression>(AST_node("ListType"), _a) ]
+		// parenthesized type
+		| eps[clear(_a)] >> tok.LeftParen >> type [_val = _1 ] >> tok.RightParen;
+	    atype2 = atype [_val = _1] | tok.Exclamation >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("StrictAtype"), _a) ];
 
-	gtycon = tok.LeftParen >> tok.RightParen [_val = "()"]
-	  | tok.LeftSquare >> tok.RightSquare [_val = "[]"]
-	  | tok.LeftParen >> tok.RightArrow >> tok.RightParen [_val = "->"]
-	  | tok.LeftParen >> tok.Comma [_val = "(,"] >> *tok.Comma[_val += ","] >>tok.RightParen[_val += ")"]
-	  | qtycon [ _val = _1];
+	    gtycon = tok.LeftParen >> tok.RightParen [_val = std::string("()")]
+		| tok.LeftSquare >> tok.RightSquare [_val = std::string("[]")]
+		| tok.LeftParen >> tok.RightArrow >> tok.RightParen [_val = std::string("->")]
+		| tok.LeftParen >> tok.Comma [_val = std::string("(,")] >> *tok.Comma[_val += std::string(",")] >>tok.RightParen[_val += std::string(")")]
+		| qtycon [ _val = _1];
 
-	/*----- Section 4.1.3 ------*/
-	//	context %= h_class | tok.LeftParen >> *h_class >> tok.RightParen;
-	//	h_class %= qtycls >> tyvar 
-	//        | qtycls >> tok.LeftParen >> tyvar >> +atype >> tok.RightParen;
+	    /*----- Section 4.1.3 ------*/
+	    //	context %= h_class | tok.LeftParen >> *h_class >> tok.RightParen;
+	    //	h_class %= qtycls >> tyvar 
+	    //        | qtycls >> tok.LeftParen >> tyvar >> +atype >> tok.RightParen;
 
-	/*----- Section 4.2.1 ------*/
-	newconstr = con[push_back(_a,_1)] >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("newconstr"), _a) ];
-	  // | con >> tok.LeftCurly >> var >> tok.DoubleColon >> type > tok.RightCurly;
-	simpletype = tycon[_val = construct<AST_node>("type_id",construct<String>(_1)) ] >> *tyvar[_val = construct<AST_node>("type_id",construct<String>(_1)) ];
-	constrs = constr[push_back(_a,_1)]%tok.Bar >> eps [ _val = new_<expression>(AST_node("constrs"), _a) ];
+	    /*----- Section 4.2.1 ------*/
+	    newconstr = con[push_back(_a,_1)] >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("newconstr"), _a) ];
+	    // | con >> tok.LeftCurly >> var >> tok.DoubleColon >> type > tok.RightCurly;
+	    simpletype = tycon[_val = construct<AST_node>(std::string("type_id"),construct<String>(_1)) ] >> *tyvar[_val = construct<AST_node>(std::string("type_id"),construct<String>(_1)) ];
+	    constrs = constr[push_back(_a,_1)]%tok.Bar >> eps [ _val = new_<expression>(AST_node("constrs"), _a) ];
 
-	constr = con[push_back(_a,construct<String>(_1))] >> *atype2[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("constr"), _a) ]
-       	  | (btype | atype2)[push_back(_a,_1)] >> conop[push_back(_a,_1)] >> (btype | atype2)[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("constr_op"), _a) ];
-	  //	  | con >> tok.LeftCurly >> *fielddecl > tok.RightCurly;
+	    constr = con[push_back(_a,construct<String>(_1))] >> *atype2[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("constr"), _a) ]
+		| (btype | atype2)[push_back(_a,_1)] >> conop[push_back(_a,_1)] >> (btype | atype2)[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("constr_op"), _a) ];
+	    //	  | con >> tok.LeftCurly >> *fielddecl > tok.RightCurly;
 
-	fielddecl = vars >> tok.DoubleColon >> (type | tok.Exclamation >> atype);
-	//	deriving = tok.KW_Deriving >> (dclass | tok.LeftParen >> tok.RightParen | tok.LeftParen >> dclass%tok.Comma >> tok.RightParen);
-	dclass = qtycls;
+	    fielddecl = vars >> tok.DoubleColon >> (type | tok.Exclamation >> atype);
+	    //	deriving = tok.KW_Deriving >> (dclass | tok.LeftParen >> tok.RightParen | tok.LeftParen >> dclass%tok.Comma >> tok.RightParen);
+	    dclass = qtycls;
 
-	/*------ Section 4.3.1 -----*/
-	//	scontext %= simpleclass | tok.LeftParen >> tok.RightParen | tok.LeftParen >> simpleclass%tok.Comma >> tok.RightParen;
-	//	simpleclass %= qtycls >> tyvar;
+	    /*------ Section 4.3.1 -----*/
+	    //	scontext %= simpleclass | tok.LeftParen >> tok.RightParen | tok.LeftParen >> simpleclass%tok.Comma >> tok.RightParen;
+	    //	simpleclass %= qtycls >> tyvar;
 	
-	/*------ Section 4.3.2 -----*/
-	/*
-	inst %= 
-	  gtycon 
-	  | tok.LeftParen >> gtycon >> *tyvar >>tok.RightParen 
-	  | tok.LeftParen >> tyvar >> tok.Comma >> tyvar %tok.Comma >> tok.RightParen
-	  | tok.LeftSquare >> tyvar >> tok.RightSquare
-	  | tyvar >> tok.RightArrow >> tyvar
-	  ;
-	*/
+	    /*------ Section 4.3.2 -----*/
+	    /*
+	      inst %= 
+	      gtycon 
+	      | tok.LeftParen >> gtycon >> *tyvar >>tok.RightParen 
+	      | tok.LeftParen >> tyvar >> tok.Comma >> tyvar %tok.Comma >> tok.RightParen
+	      | tok.LeftSquare >> tyvar >> tok.RightSquare
+	      | tyvar >> tok.RightArrow >> tyvar
+	      ;
+	    */
 
-	/*------ Section 4.4.3 -----*/
-	funlhs = var [push_back(_a,construct<AST_node>("id", construct<String>(_1)))] >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs1"), _a)  ]
-	  | eps[clear(_a)] >> pat [push_back(_a,_1)] >> varop[push_back(_a,construct<AST_node>("id", construct<String>(_1)))] >> pat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs2"), _a)  ]
-	  | eps[clear(_a)] >> tok.LeftParen >> funlhs[push_back(_a,_1)] >> tok.RightParen >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs3"), _a)  ];
+	    /*------ Section 4.4.3 -----*/
+	    funlhs = var [push_back(_a,construct<AST_node>(std::string("id"), construct<String>(_1)))] >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs1"), _a)  ]
+		| eps[clear(_a)] >> pat [push_back(_a,_1)] >> varop[push_back(_a,construct<AST_node>(std::string("id"), construct<String>(_1)))] >> pat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs2"), _a)  ]
+		| eps[clear(_a)] >> tok.LeftParen >> funlhs[push_back(_a,_1)] >> tok.RightParen >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs3"), _a)  ];
 
-	rhs = tok.Equals >> exp [push_back(_a,_1)] >> -(tok.KW_Where >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ]
-	  | gdrhs[push_back(_a,_1)] >> -(tok.KW_Where >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ];
+	    rhs = tok.Equals >> exp [push_back(_a,_1)] >> -(tok.KW_Where >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ]
+		| gdrhs[push_back(_a,_1)] >> -(tok.KW_Where >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ];
 
-	gdrhs = guards[push_back(_a,_1)] >> tok.Equals >> exp [push_back(_a,_1)] >> -gdrhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("gdrhs"), _a)  ];
+	    gdrhs = guards[push_back(_a,_1)] >> tok.Equals >> exp [push_back(_a,_1)] >> -gdrhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("gdrhs"), _a)  ];
 
-	/*------ Section 5.1 -------*/
-	impdecls = impdecl[push_back(_a,_1)] % tok.SemiColon >> eps [ _val = new_<expression>(AST_node("impdecls"), _a)  ];
+	    /*------ Section 5.1 -------*/
+	    impdecls = impdecl[push_back(_a,_1)] % tok.SemiColon >> eps [ _val = new_<expression>(AST_node("impdecls"), _a)  ];
 	
-	/*------ Section 5.2 -------*/
-	/*
-	exports = tok.LeftParen >> tok.RightParen | tok.LeftParen>> h_export % tok.Comma >> -tok.Comma >> tok.RightParen;
-	h_export = 
-	  qvar
-	  | qtycon >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> cname %tok.Comma >> tok.RightParen)
-	  | qtycls >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> var %tok.Comma >> tok.RightParen)
-	  | "module" >> modid
-	  ;
-	*/
-	cname = var | con;
+	    /*------ Section 5.2 -------*/
+	    /*
+	      exports = tok.LeftParen >> tok.RightParen | tok.LeftParen>> h_export % tok.Comma >> -tok.Comma >> tok.RightParen;
+	      h_export = 
+	      qvar
+	      | qtycon >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> cname %tok.Comma >> tok.RightParen)
+	      | qtycls >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> var %tok.Comma >> tok.RightParen)
+	      | "module" >> modid
+	      ;
+	    */
+	    cname = var | con;
 	
-	/*------ Section 5.3 -------*/
-	impdecl = tok.KW_Import > -tok.KW_Qualified[push_back(_a,"qualified")] 
-	                   > modid[push_back(_a,construct<String>(_1))] 
-			   >> /*-impspec >>*/ eps [ _val = new_<expression>(AST_node("ImpDecl"), _a)  ];
+	    /*------ Section 5.3 -------*/
+	    impdecl = tok.KW_Import > -tok.KW_Qualified[push_back(_a,std::string("qualified"))] 
+		> modid[push_back(_a,construct<String>(_1))] 
+		>> /*-impspec >>*/ eps [ _val = new_<expression>(AST_node("ImpDecl"), _a)  ];
 
-	//	impspec = 
-	//	  tok.LeftParen >> tok.RightParen
-	//	  | tok.LeftParen >> import%tok.Comma >> tok.RightParen
-	//	  | tok.KW_Hiding >> tok.LeftParen >> import%tok.Comma >> tok.RightParen;
+	    //	impspec = 
+	    //	  tok.LeftParen >> tok.RightParen
+	    //	  | tok.LeftParen >> import%tok.Comma >> tok.RightParen
+	    //	  | tok.KW_Hiding >> tok.LeftParen >> import%tok.Comma >> tok.RightParen;
 
-	// FIXME! Parsing problems //
-	/*
-	import = 
-	   var
-	  | tycon >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> cname %"," >> tok.RightParen)
-	  | tycls >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> var %"," >> tok.RightParen);
-	*/
+	    // FIXME! Parsing problems //
+	    /*
+	      import = 
+	      var
+	      | tycon >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> cname %"," >> tok.RightParen)
+	      | tycls >> -(tok.LeftParen >> tok.DotDot >> tok.RightParen | tok.LeftParen >> tok.RightParen | tok.LeftParen >> var %"," >> tok.RightParen);
+	    */
 
-#define add_error_handler(node) on_error<fail>(node,\
-	error_handler_function(error_handler)(\
-            "Error! Expecting ", _4, _3));\
+#define add_error_handler(node) on_error<fail>(node,			\
+					       error_handler_function(error_handler)( \
+						   std::string("Error! Expecting "), _4, _3)); \
 
-	add_error_handler(exp);
-	add_error_handler(infixexp);
-	add_error_handler(lexp);
-	add_error_handler(lexp_lambda);
-	add_error_handler(lexp_let);
-	add_error_handler(lexp_if);
-	add_error_handler(lexp_case);
-	add_error_handler(lexp_do);
-	add_error_handler(fexp);
-	add_error_handler(aexp);
-	add_error_handler(funlhs);
-	add_error_handler(gendecl);
-	add_error_handler(fixity);
-	add_error_handler(rhs);
-	add_error_handler(impdecls);
-	add_error_handler(impdecl);
-	add_error_handler(decls);
-	add_error_handler(decl);
-	add_error_handler(stmts);
-	add_error_handler(stmt);
-	add_error_handler(topdecls);
-	add_error_handler(topdecl);
-	add_error_handler(module);
-	add_error_handler(body);
-	add_error_handler(pat);
-	add_error_handler(lpat);
-	add_error_handler(apat);
-	add_error_handler(literal);
-	add_error_handler(literal_int);
-	add_error_handler(literal_float);
-	add_error_handler(literal_char);
-	add_error_handler(literal_string);
+	    add_error_handler(exp);
+	    add_error_handler(infixexp);
+	    add_error_handler(lexp);
+	    add_error_handler(lexp_lambda);
+	    add_error_handler(lexp_let);
+	    add_error_handler(lexp_if);
+	    add_error_handler(lexp_case);
+	    add_error_handler(lexp_do);
+	    add_error_handler(fexp);
+	    add_error_handler(aexp);
+	    add_error_handler(funlhs);
+	    add_error_handler(gendecl);
+	    add_error_handler(fixity);
+	    add_error_handler(rhs);
+	    add_error_handler(impdecls);
+	    add_error_handler(impdecl);
+	    add_error_handler(decls);
+	    add_error_handler(decl);
+	    add_error_handler(stmts);
+	    add_error_handler(stmt);
+	    add_error_handler(topdecls);
+	    add_error_handler(topdecl);
+	    add_error_handler(module);
+	    add_error_handler(body);
+	    add_error_handler(pat);
+	    add_error_handler(lpat);
+	    add_error_handler(apat);
+	    add_error_handler(literal);
+	    add_error_handler(literal_int);
+	    add_error_handler(literal_float);
+	    add_error_handler(literal_char);
+	    add_error_handler(literal_string);
 
-	BOOST_SPIRIT_DEBUG_NODE(varid);
-	BOOST_SPIRIT_DEBUG_NODE(qvarid);
-	BOOST_SPIRIT_DEBUG_NODE(conid);
-	BOOST_SPIRIT_DEBUG_NODE(qconid);
-	BOOST_SPIRIT_DEBUG_NODE(varsym);
-	BOOST_SPIRIT_DEBUG_NODE(qvarsym);
-	BOOST_SPIRIT_DEBUG_NODE(consym);
-	BOOST_SPIRIT_DEBUG_NODE(qconsym);
+	    BOOST_SPIRIT_DEBUG_NODE(varid);
+	    BOOST_SPIRIT_DEBUG_NODE(qvarid);
+	    BOOST_SPIRIT_DEBUG_NODE(conid);
+	    BOOST_SPIRIT_DEBUG_NODE(qconid);
+	    BOOST_SPIRIT_DEBUG_NODE(varsym);
+	    BOOST_SPIRIT_DEBUG_NODE(qvarsym);
+	    BOOST_SPIRIT_DEBUG_NODE(consym);
+	    BOOST_SPIRIT_DEBUG_NODE(qconsym);
 
-	BOOST_SPIRIT_DEBUG_NODE(var);
-	BOOST_SPIRIT_DEBUG_NODE(qvar);
-	BOOST_SPIRIT_DEBUG_NODE(con);
-	BOOST_SPIRIT_DEBUG_NODE(qcon);
-	BOOST_SPIRIT_DEBUG_NODE(varop);
-	BOOST_SPIRIT_DEBUG_NODE(qvarop);
-	BOOST_SPIRIT_DEBUG_NODE(conop);
-	BOOST_SPIRIT_DEBUG_NODE(qconop);
-	BOOST_SPIRIT_DEBUG_NODE(op);
-	BOOST_SPIRIT_DEBUG_NODE(qop);
-	BOOST_SPIRIT_DEBUG_NODE(gconsym);
-	BOOST_SPIRIT_DEBUG_NODE(gcon);
+	    BOOST_SPIRIT_DEBUG_NODE(var);
+	    BOOST_SPIRIT_DEBUG_NODE(qvar);
+	    BOOST_SPIRIT_DEBUG_NODE(con);
+	    BOOST_SPIRIT_DEBUG_NODE(qcon);
+	    BOOST_SPIRIT_DEBUG_NODE(varop);
+	    BOOST_SPIRIT_DEBUG_NODE(qvarop);
+	    BOOST_SPIRIT_DEBUG_NODE(conop);
+	    BOOST_SPIRIT_DEBUG_NODE(qconop);
+	    BOOST_SPIRIT_DEBUG_NODE(op);
+	    BOOST_SPIRIT_DEBUG_NODE(qop);
+	    BOOST_SPIRIT_DEBUG_NODE(gconsym);
+	    BOOST_SPIRIT_DEBUG_NODE(gcon);
 
-	BOOST_SPIRIT_DEBUG_NODE(modid);
-	BOOST_SPIRIT_DEBUG_NODE(module);
-	BOOST_SPIRIT_DEBUG_NODE(body);
-	BOOST_SPIRIT_DEBUG_NODE(topdecls);
-	BOOST_SPIRIT_DEBUG_NODE(topdecl);
+	    BOOST_SPIRIT_DEBUG_NODE(modid);
+	    BOOST_SPIRIT_DEBUG_NODE(module);
+	    BOOST_SPIRIT_DEBUG_NODE(body);
+	    BOOST_SPIRIT_DEBUG_NODE(topdecls);
+	    BOOST_SPIRIT_DEBUG_NODE(topdecl);
 
-	BOOST_SPIRIT_DEBUG_NODE(exp);
-	BOOST_SPIRIT_DEBUG_NODE(infixexp);
-	BOOST_SPIRIT_DEBUG_NODE(fexp);
-	BOOST_SPIRIT_DEBUG_NODE(lexp);
-	BOOST_SPIRIT_DEBUG_NODE(lexp_lambda);
-	BOOST_SPIRIT_DEBUG_NODE(lexp_let);
-	BOOST_SPIRIT_DEBUG_NODE(lexp_if);
-	BOOST_SPIRIT_DEBUG_NODE(lexp_case);
-	BOOST_SPIRIT_DEBUG_NODE(lexp_do);
-	BOOST_SPIRIT_DEBUG_NODE(aexp);
-	BOOST_SPIRIT_DEBUG_NODE(funlhs);
-	BOOST_SPIRIT_DEBUG_NODE(rhs);
-	BOOST_SPIRIT_DEBUG_NODE(decl);
-	BOOST_SPIRIT_DEBUG_NODE(gendecl);
-	BOOST_SPIRIT_DEBUG_NODE(decls);
-	BOOST_SPIRIT_DEBUG_NODE(stmts);
-	BOOST_SPIRIT_DEBUG_NODE(stmt);
-	BOOST_SPIRIT_DEBUG_NODE(pat);
-	BOOST_SPIRIT_DEBUG_NODE(lpat);
-	BOOST_SPIRIT_DEBUG_NODE(apat);
-	BOOST_SPIRIT_DEBUG_NODE(literal);
-	BOOST_SPIRIT_DEBUG_NODE(literal_int);
-	BOOST_SPIRIT_DEBUG_NODE(literal_float);
-	BOOST_SPIRIT_DEBUG_NODE(literal_char);
-	BOOST_SPIRIT_DEBUG_NODE(literal_string);
-	BOOST_SPIRIT_DEBUG_NODE(var);
-	BOOST_SPIRIT_DEBUG_NODE(varop);
-	BOOST_SPIRIT_DEBUG_NODE(constrs);
-	BOOST_SPIRIT_DEBUG_NODE(constr);
-	BOOST_SPIRIT_DEBUG_NODE(con);
+	    BOOST_SPIRIT_DEBUG_NODE(exp);
+	    BOOST_SPIRIT_DEBUG_NODE(infixexp);
+	    BOOST_SPIRIT_DEBUG_NODE(fexp);
+	    BOOST_SPIRIT_DEBUG_NODE(lexp);
+	    BOOST_SPIRIT_DEBUG_NODE(lexp_lambda);
+	    BOOST_SPIRIT_DEBUG_NODE(lexp_let);
+	    BOOST_SPIRIT_DEBUG_NODE(lexp_if);
+	    BOOST_SPIRIT_DEBUG_NODE(lexp_case);
+	    BOOST_SPIRIT_DEBUG_NODE(lexp_do);
+	    BOOST_SPIRIT_DEBUG_NODE(aexp);
+	    BOOST_SPIRIT_DEBUG_NODE(funlhs);
+	    BOOST_SPIRIT_DEBUG_NODE(rhs);
+	    BOOST_SPIRIT_DEBUG_NODE(decl);
+	    BOOST_SPIRIT_DEBUG_NODE(gendecl);
+	    BOOST_SPIRIT_DEBUG_NODE(decls);
+	    BOOST_SPIRIT_DEBUG_NODE(stmts);
+	    BOOST_SPIRIT_DEBUG_NODE(stmt);
+	    BOOST_SPIRIT_DEBUG_NODE(pat);
+	    BOOST_SPIRIT_DEBUG_NODE(lpat);
+	    BOOST_SPIRIT_DEBUG_NODE(apat);
+	    BOOST_SPIRIT_DEBUG_NODE(literal);
+	    BOOST_SPIRIT_DEBUG_NODE(literal_int);
+	    BOOST_SPIRIT_DEBUG_NODE(literal_float);
+	    BOOST_SPIRIT_DEBUG_NODE(literal_char);
+	    BOOST_SPIRIT_DEBUG_NODE(literal_string);
+	    BOOST_SPIRIT_DEBUG_NODE(var);
+	    BOOST_SPIRIT_DEBUG_NODE(varop);
+	    BOOST_SPIRIT_DEBUG_NODE(constrs);
+	    BOOST_SPIRIT_DEBUG_NODE(constr);
+	    BOOST_SPIRIT_DEBUG_NODE(con);
 
-	BOOST_SPIRIT_DEBUG_NODE(type);
-	BOOST_SPIRIT_DEBUG_NODE(atype);
-	BOOST_SPIRIT_DEBUG_NODE(atype2);
-	BOOST_SPIRIT_DEBUG_NODE(btype);
-	BOOST_SPIRIT_DEBUG_NODE(gtycon);
-	BOOST_SPIRIT_DEBUG_NODE(qtycon);
+	    BOOST_SPIRIT_DEBUG_NODE(type);
+	    BOOST_SPIRIT_DEBUG_NODE(atype);
+	    BOOST_SPIRIT_DEBUG_NODE(atype2);
+	    BOOST_SPIRIT_DEBUG_NODE(btype);
+	    BOOST_SPIRIT_DEBUG_NODE(gtycon);
+	    BOOST_SPIRIT_DEBUG_NODE(qtycon);
 
-	modid.name("modid");
-	exp.name("exp");
-	infixexp.name("infixexp");
-	lexp.name("lexp");
-	lexp_lambda.name("lexp_lambda");
-	lexp_let.name("lexp_let");
-	lexp_if.name("lexp_if");
-	lexp_case.name("lexp_case");
-	lexp_do.name("lexp_do");
-	fexp.name("fexp");
-	aexp.name("aexp");
-	qual.name("qual");
-	alts.name("alts");
-	alt.name("alt");
-	gdpat.name("gdpat");
-	guards.name("guards");
-	guard.name("guard");
-	stmts.name("stmts");
-	stmt.name("stmt");
-	funlhs.name("funlhs");
-	apat.name("apat");
-	lpat.name("lpat");
-	pat.name("pat");
-	module.name("module");
-	body.name("body");
-	rhs.name("rhs");
-	decls.name("decls");
-	decl.name("decl");
-	topdecls.name("topdecls");
-	topdecl.name("topdecl");
-	impdecls.name("impdecls");
-	impdecl.name("impdecl");
-	gendecl.name("gendecl");
-	ops.name("ops");
-	fixity.name("fixity");
-	gcon.name("gcon");
-	literal.name("literal");
-    }
-  qi::rule<Iterator, std::string()> varid;
-  qi::rule<Iterator, std::string()> qvarid;
-  qi::rule<Iterator, std::string()> conid;
-  qi::rule<Iterator, std::string()> qconid;
+	    modid.name("modid");
+	    exp.name("exp");
+	    infixexp.name("infixexp");
+	    lexp.name("lexp");
+	    lexp_lambda.name("lexp_lambda");
+	    lexp_let.name("lexp_let");
+	    lexp_if.name("lexp_if");
+	    lexp_case.name("lexp_case");
+	    lexp_do.name("lexp_do");
+	    fexp.name("fexp");
+	    aexp.name("aexp");
+	    qual.name("qual");
+	    alts.name("alts");
+	    alt.name("alt");
+	    gdpat.name("gdpat");
+	    guards.name("guards");
+	    guard.name("guard");
+	    stmts.name("stmts");
+	    stmt.name("stmt");
+	    funlhs.name("funlhs");
+	    apat.name("apat");
+	    lpat.name("lpat");
+	    pat.name("pat");
+	    module.name("module");
+	    body.name("body");
+	    rhs.name("rhs");
+	    decls.name("decls");
+	    decl.name("decl");
+	    topdecls.name("topdecls");
+	    topdecl.name("topdecl");
+	    impdecls.name("impdecls");
+	    impdecl.name("impdecl");
+	    gendecl.name("gendecl");
+	    ops.name("ops");
+	    fixity.name("fixity");
+	    gcon.name("gcon");
+	    literal.name("literal");
+	}
+    qi::rule<Iterator, std::string()> varid;
+    qi::rule<Iterator, std::string()> qvarid;
+    qi::rule<Iterator, std::string()> conid;
+    qi::rule<Iterator, std::string()> qconid;
 
-  qi::rule<Iterator, std::string()> varsym;
-  qi::rule<Iterator, std::string()> qvarsym;
-  qi::rule<Iterator, std::string()> consym;
-  qi::rule<Iterator, std::string()> qconsym;
+    qi::rule<Iterator, std::string()> varsym;
+    qi::rule<Iterator, std::string()> qvarsym;
+    qi::rule<Iterator, std::string()> consym;
+    qi::rule<Iterator, std::string()> qconsym;
 
-  qi::rule<Iterator, std::string()> tyvar;
-  qi::rule<Iterator, std::string()> tycon;
-  qi::rule<Iterator, std::string()> tycls;
-  qi::rule<Iterator, std::string()> modid; // module id
+    qi::rule<Iterator, std::string()> tyvar;
+    qi::rule<Iterator, std::string()> tycon;
+    qi::rule<Iterator, std::string()> tycls;
+    qi::rule<Iterator, std::string()> modid; // module id
 
-  qi::rule<Iterator, std::string()> qtycon; // qualified type constructor
-  qi::rule<Iterator, std::string()> qtycls; // qualified type class
+    qi::rule<Iterator, std::string()> qtycon; // qualified type constructor
+    qi::rule<Iterator, std::string()> qtycls; // qualified type class
 
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_float;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_int;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_char;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_string;
-  qi::rule<Iterator, expression_ref()> quoted_string;
-  qi::rule<Iterator, expression_ref()> literal;  
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_float;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_int;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_char;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal_string;
+    qi::rule<Iterator, expression_ref()> quoted_string;
+    qi::rule<Iterator, expression_ref()> literal;  
 
-  qi::rule<Iterator, expression_ref()> exp;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> infixexp;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_lambda;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_if;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_let;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_case;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_do;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> fexp;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> aexp;
+    qi::rule<Iterator, expression_ref()> exp;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> infixexp;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_lambda;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_if;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_let;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_case;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lexp_do;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> fexp;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> aexp;
 
-  /*----- Section 3.2 -------*/
-  qi::rule<Iterator, std::string()> gcon;
-  qi::rule<Iterator, std::string()> var;
-  qi::rule<Iterator, std::string()> qvar;
-  qi::rule<Iterator, std::string()> con;
-  qi::rule<Iterator, std::string()> qcon;
-  qi::rule<Iterator, std::string()> varop;
-  qi::rule<Iterator, std::string()> qvarop;
-  qi::rule<Iterator, std::string()> conop;
-  qi::rule<Iterator, std::string()> qconop;
-  qi::rule<Iterator, std::string()> op;
-  qi::rule<Iterator, std::string()> gconsym;
-  qi::rule<Iterator, expression_ref()> qop;
+    /*----- Section 3.2 -------*/
+    qi::rule<Iterator, std::string()> gcon;
+    qi::rule<Iterator, std::string()> var;
+    qi::rule<Iterator, std::string()> qvar;
+    qi::rule<Iterator, std::string()> con;
+    qi::rule<Iterator, std::string()> qcon;
+    qi::rule<Iterator, std::string()> varop;
+    qi::rule<Iterator, std::string()> qvarop;
+    qi::rule<Iterator, std::string()> conop;
+    qi::rule<Iterator, std::string()> qconop;
+    qi::rule<Iterator, std::string()> op;
+    qi::rule<Iterator, std::string()> gconsym;
+    qi::rule<Iterator, expression_ref()> qop;
 
-  /*----- Section 3.11 -----*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> qual;  
+    /*----- Section 3.11 -----*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> qual;  
 
-  /*----- Section 3.13 -----*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> alts;  
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> alt;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gdpat;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> guards;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> guard;
+    /*----- Section 3.13 -----*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> alts;  
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> alt;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gdpat;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> guards;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> guard;
 
-  /*----- Section 3.14 -----*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> stmts;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> stmt;
+    /*----- Section 3.14 -----*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> stmts;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> stmt;
 
-  /*----- Section 3.15 -----*/
-  qi::rule<Iterator, std::string()> fbind;  
+    /*----- Section 3.15 -----*/
+    qi::rule<Iterator, std::string()> fbind;  
 
-  /*----- Section 3.17 -----*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> pat;  
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lpat;  
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> apat;  
-  qi::rule<Iterator, std::string()> fpat;  
+    /*----- Section 3.17 -----*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> pat;  
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> lpat;  
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> apat;  
+    qi::rule<Iterator, std::string()> fpat;  
 
-  /*----- Section 4 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> module;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> body;
+    /*----- Section 4 ------*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> module;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> body;
 
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> topdecls;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> topdecl;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> topdecls;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> topdecl;
 
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> decls;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> decl;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> decls;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> decl;
 
-  // This is just so we can EXPECT decls after let, without locking in the containing rule
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> let_decls;
+    // This is just so we can EXPECT decls after let, without locking in the containing rule
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> let_decls;
 
 
-  qi::rule<Iterator, std::string()> cdecls;
-  qi::rule<Iterator, std::string()> cdecl;
+    qi::rule<Iterator, std::string()> cdecls;
+    qi::rule<Iterator, std::string()> cdecl;
 
-  qi::rule<Iterator, std::string()> idecls;
-  qi::rule<Iterator, std::string()> idecl;
+    qi::rule<Iterator, std::string()> idecls;
+    qi::rule<Iterator, std::string()> idecl;
 
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gendecl;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gendecl;
 
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> ops;
-  qi::rule<Iterator, std::string()> vars;
-  qi::rule<Iterator, std::string()> fixity;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> ops;
+    qi::rule<Iterator, std::string()> vars;
+    qi::rule<Iterator, std::string()> fixity;
 
-  /*----- Section 4.1.2 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> type;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> btype;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> atype;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> atype2;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gtype;
-  //  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gtycon;
-  qi::rule<Iterator, std::string()> gtycon;
+    /*----- Section 4.1.2 ------*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> type;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> btype;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> atype;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> atype2;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gtype;
+    //  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gtycon;
+    qi::rule<Iterator, std::string()> gtycon;
 
-  /*----- Section 4.1.3 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> context;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> h_class;
+    /*----- Section 4.1.3 ------*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> context;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> h_class;
 
-  /*----- Section 4.2.1 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> newconstr;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> simpletype;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> constrs;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> constr;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> fielddecl;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> deriving;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> dclass;
+    /*----- Section 4.2.1 ------*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> newconstr;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> simpletype;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> constrs;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> constr;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> fielddecl;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> deriving;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> dclass;
 
-  /*----- Section 4.3.1 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> scontext;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> simpleclass;
+    /*----- Section 4.3.1 ------*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> scontext;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> simpleclass;
 
-  /*----- Section 4.3.2 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> inst;
+    /*----- Section 4.3.2 ------*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> inst;
 
-  /*----- Section 4.4.3 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> funlhs;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> rhs;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gdrhs;
+    /*----- Section 4.4.3 ------*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> funlhs;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> rhs;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> gdrhs;
 
-  /*----- Section 5.1 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> impdecls;
+    /*----- Section 5.1 ------*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> impdecls;
 
-  /*----- Section 5.2 ------*/
-  qi::rule<Iterator, std::string()> exports;
-  qi::rule<Iterator, std::string()> h_export;
-  qi::rule<Iterator, std::string()> cname;
+    /*----- Section 5.2 ------*/
+    qi::rule<Iterator, std::string()> exports;
+    qi::rule<Iterator, std::string()> h_export;
+    qi::rule<Iterator, std::string()> cname;
 
-  /*----- Section 5.3 ------*/
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> impdecl;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> impspec;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> import;
+    /*----- Section 5.3 ------*/
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> impdecl;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> impspec;
+    qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> import;
 };
 
 //-----------------------------------------------------------------------//
@@ -1197,104 +1197,104 @@ HTokens<Lexer> lexer1;          // Our lexer
 
 expression_ref parse_haskell_line(const string& line)
 {
-  std::stringstream line_stream(line);
-  line_stream.unsetf(std::ios::skipws);
+    std::stringstream line_stream(line);
+    line_stream.unsetf(std::ios::skipws);
 
-  StreamIter beg = StreamIter(line_stream), end;
+    StreamIter beg = StreamIter(line_stream), end;
 
-  HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
-  HParser<HTokens<Lexer>::iterator_type> haskell_parser(error_handler,lexer1);
-  /*
-  Uncommenting this makes the line parse fail!
-  {
-    for(auto i = lexer1.begin(beg, end); i != lexer1.end() and (*i).is_valid(); i++)
-    {
+    HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
+    HParser<HTokens<Lexer>::iterator_type> haskell_parser(error_handler,lexer1);
+    /*
+      Uncommenting this makes the line parse fail!
+      {
+      for(auto i = lexer1.begin(beg, end); i != lexer1.end() and (*i).is_valid(); i++)
+      {
       auto& t = *i;
       std::cout<<"'"<<t.value()<<"'\n";;
-    }
-  }
-  */
-  /*----------------------------------------------------------------------------*/
+      }
+      }
+    */
+    /*----------------------------------------------------------------------------*/
 
-  expression_ref cmd;
-  StreamIter iter = beg;
-  if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.exp, cmd))
-    throw myexception()<<"Haskell line parse failed!";
+    expression_ref cmd;
+    StreamIter iter = beg;
+    if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.exp, cmd))
+	throw myexception()<<"Haskell line parse failed!";
 
-  if (iter != end)
-    throw myexception()<<"Haskell line parse only parsed:\n "<<string(beg,iter)<<"\n";
+    if (iter != end)
+	throw myexception()<<"Haskell line parse only parsed:\n "<<string(beg,iter)<<"\n";
 
-  return cmd;
+    return cmd;
 }
 
 expression_ref parse_haskell_decls(const string& line)
 {
-  std::stringstream line_stream(line);
-  line_stream.unsetf(std::ios::skipws);
+    std::stringstream line_stream(line);
+    line_stream.unsetf(std::ios::skipws);
 
-  StreamIter beg = StreamIter(line_stream), end;
+    StreamIter beg = StreamIter(line_stream), end;
 
-  HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
-  HParser<HTokens<Lexer>::iterator_type> haskell_parser(error_handler,lexer1);
+    HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
+    HParser<HTokens<Lexer>::iterator_type> haskell_parser(error_handler,lexer1);
 
-  {
-    for(auto i = lexer1.begin(beg, end); i != lexer1.end() and (*i).is_valid(); i++)
     {
-      auto& t = *i;
-      std::cout<<"'"<<t.value()<<"'\n";;
+	for(auto i = lexer1.begin(beg, end); i != lexer1.end() and (*i).is_valid(); i++)
+	{
+	    auto& t = *i;
+	    std::cout<<"'"<<t.value()<<"'\n";;
+	}
     }
-  }
 
-  /*----------------------------------------------------------------------------*/
+    /*----------------------------------------------------------------------------*/
 
-  expression_ref cmd;
-  StreamIter iter = beg;
-  if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.decls, cmd))
-    throw myexception()<<"Haskell decls parse failed!";
+    expression_ref cmd;
+    StreamIter iter = beg;
+    if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.decls, cmd))
+	throw myexception()<<"Haskell decls parse failed!";
 
-  if (iter != end)
-    throw myexception()<<"Haskell decls parse only parsed:\n "<<string(beg,iter)<<"\n";
+    if (iter != end)
+	throw myexception()<<"Haskell decls parse only parsed:\n "<<string(beg,iter)<<"\n";
 
-  return cmd;
+    return cmd;
 }
 
 expression_ref parse_module_file(const string& lines)
 {
-  std::stringstream line_stream(lines);
-  line_stream.unsetf(std::ios::skipws);
-
-  StreamIter beg = StreamIter(line_stream), end;
-
-  HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
-  HParser<HTokens<Lexer>::iterator_type> haskell_parser(error_handler,lexer1);
-
-  /*
-  {
     std::stringstream line_stream(lines);
     line_stream.unsetf(std::ios::skipws);
 
     StreamIter beg = StreamIter(line_stream), end;
 
     HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
-    for(auto i = lexer1.begin(beg,end); i != lexer1.end() and (*i).is_valid(); i++)
-    {
+    HParser<HTokens<Lexer>::iterator_type> haskell_parser(error_handler,lexer1);
+
+    /*
+      {
+      std::stringstream line_stream(lines);
+      line_stream.unsetf(std::ios::skipws);
+
+      StreamIter beg = StreamIter(line_stream), end;
+
+      HParser<HTokens<Lexer>::iterator_type>::error_handler_type error_handler(beg,end);
+      for(auto i = lexer1.begin(beg,end); i != lexer1.end() and (*i).is_valid(); i++)
+      {
       auto& t = *i;
       std::cout<<"'"<<t.value()<<"'\n";;
-    }
-    // Sharing the same stream might not work.
-  }
-  */
-  /*----------------------------------------------------------------------------*/
+      }
+      // Sharing the same stream might not work.
+      }
+    */
+    /*----------------------------------------------------------------------------*/
 
-  expression_ref cmd;
-  StreamIter iter = beg;
-  if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.module, cmd))
-    throw myexception()<<"Module parse failed!";
+    expression_ref cmd;
+    StreamIter iter = beg;
+    if (not tokenize_and_parse(iter, end, lexer1, haskell_parser.module, cmd))
+	throw myexception()<<"Module parse failed!";
 
-  //  std::cerr<<"cmd = "<<cmd<<std::endl;
+    //  std::cerr<<"cmd = "<<cmd<<std::endl;
 
-  if (iter != end)
-    throw myexception()<<"Haskell module parse only parsed:\n "<<string(beg,iter)<<"\n";
+    if (iter != end)
+	throw myexception()<<"Haskell module parse only parsed:\n "<<string(beg,iter)<<"\n";
 
-  return cmd;
+    return cmd;
 }
