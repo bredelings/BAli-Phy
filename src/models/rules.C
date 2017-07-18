@@ -16,16 +16,23 @@ using boost::property_tree::ptree;
 
 // TODO: devirtualize pool::allocate
 
+// TODO: implement iteration-based color for 3D MDS plot.
+
 // TODO: reduce memory:
-//       - toss identifiers, and make them not heads. (
+//       - toss identifiers, and make them not heads.
+//       - further reduce memory for pairwise alignments.
 
 // TODO: move some things into a computation/machine directory
 //       separate parsing and model-creation code.
 //       move parsing code into computation directory
 
-// TODO: show tree & scale priors in bp-analyze output.
+// TODO: speed up likelihood code by caching/indexing on (node,index)
+//       - caching based on (node,index) means that we'd have to expose (node,index), which is odd.
+//       - can we internally cache the edges_before_edge computation?
+//       - how about making branch lookup constant, and changing the prev/next fields?
 
-// TODO: release new beta? (automatic deployment on mac?)
+// QUESTION: how do we think about indexing on the root instead of just tracking the execution graph?
+//           how does this relate to factorial n = case n or n' => factorial n'?
 
 // TODO: full laziness transformation.  <- WE ARE HERE.
 //       do simplification before and after full laziness
