@@ -98,6 +98,7 @@ using boost::property_tree::ptree;
 
 const vector< vector<vector<string>> > all_default_arguments = 
 {
+    // What we want here is Num a => a -> a -> a
     {{"Int.Add", "Int", "GN"}, {"Prelude.+[x,y]"}, {"x", "Int"}, {"y", "Int"}},
     {{"Int.Sub", "Int", "GN"}, {"Prelude.-[x,y]"}, {"x", "Int"}, {"y", "Int"}},
     {{"Int.Mul", "Int", "GN"}, {"Prelude.*[x,y]"}, {"x", "Int"}, {"y", "Int"}},
