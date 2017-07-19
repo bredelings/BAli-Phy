@@ -98,6 +98,10 @@ using boost::property_tree::ptree;
 
 const vector< vector<vector<string>> > all_default_arguments = 
 {
+    {{"Int.Add", "Int", "GN"}, {"Prelude.+[x,y]"}, {"x", "Int"}, {"y", "Int"}},
+    {{"Int.Sub", "Int", "GN"}, {"Prelude.-[x,y]"}, {"x", "Int"}, {"y", "Int"}},
+    {{"Int.Mul", "Int", "GN"}, {"Prelude.*[x,y]"}, {"x", "Int"}, {"y", "Int"}},
+    {{"Int.Div", "Int", "GN"}, {"Prelude./[x,y]"}, {"x", "Int"}, {"y", "Int"}},
     {{"log", "Double", "GN"}, {"Prelude.log[x]"}, {"x", "Double"}},
     {{"exp", "Double", "GN"}, {"Prelude.exp[x]"}, {"x", "Double"}},
     {{"Sample", "a"}, {"Prelude.performAction[x]"}, {"x", "Distribution[a]"}},
