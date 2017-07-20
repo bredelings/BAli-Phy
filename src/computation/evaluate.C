@@ -1,7 +1,7 @@
 //#ifdef NDEBUG
 //#undef NDEBUG
 //#endif
-//#define COMBINE_STEPS
+#define COMBINE_STEPS
 #include "graph_register.H"
 #include "expression/expression.H"
 #include "expression/let.H"
@@ -374,20 +374,11 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 
 		    auto p = incremental_evaluate(r2);
 #else
-/*            Don't combine this step and the step it reduces to into the same step.
-
-	      This (apparently) causes problems with SModel.cached_conditional_likelihoods and
-               SModel.peel_likelihood, which do things like case n of [x,y,z] -> expensive x y z.
-
-	      It doesn't appear to increase the number of expensive operations, but it triples
-	      the number of steps pivoted & scanned, and doubles the number of steps invalidated. */
-
 		    incremental_evaluate_from_call(S,value);
 
 		    pair<int,int> p;
 		    if (closure_stack.back().exp.head().is_index_var())
 		    {
-
 			int index = closure_stack.back().exp.as_index_var();
 			int r2 = closure_stack.back().lookup_in_env( index );
 			p = incremental_evaluate(r2);
@@ -395,11 +386,17 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		    else
 		    {
 			int r2 = allocate();
+			assert(not has_step(r2));
 			mark_reg_created_by_step(r2,S);
 			total_reg_allocations++;
 			set_C(r2, std::move(closure_stack.back()));
-			access(r2).type = reg::type_t::constant;
-			p = {r2,r2};
+			if (closure_stack.back().exp.head().type() == let2_type)
+			    p = incremental_evaluate(r2);
+			else
+			{
+			    access(r2).type = reg::type_t::constant;
+			    p = {r2,r2};
+			}
 		    }
 		    closure_stack.pop_back();
 #endif
@@ -442,7 +439,9 @@ void reg_heap::incremental_evaluate_from_call_(int S)
 
     assert(S > 0);
 
-    while (not closure_stack.back().exp.head().is_index_var() and not is_WHNF(closure_stack.back().exp))
+    while (not closure_stack.back().exp.head().is_index_var() and
+	   closure_stack.back().exp.head().type() != let2_type and
+	   not is_WHNF(closure_stack.back().exp))
     {
 #ifndef NDEBUG
 	assert(not closure_stack.back().exp.head().is_a<Trim>());

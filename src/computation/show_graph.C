@@ -86,6 +86,17 @@ void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<
 	    }
 	}
 
+	// We can get dependencies on used regs that are not in the environment if we
+	// have merged steps.
+	for(int j: used_regs_for_reg(r))
+	{
+	    if (is_used(j) and not is_marked(j))
+	    {
+		set_mark(j);
+		unique.push_back(j);
+	    }
+	}
+
 	// Count also the references from the call
 	if (reg_has_call(r))
 	{
