@@ -130,6 +130,9 @@ closure apply_op(OperationArgs& Args)
 
 closure case_op(OperationArgs& Args)
 {
+    extern long total_case_op;
+    total_case_op++;
+
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
     const closure object = Args.evaluate_slot_to_closure(0);
@@ -240,6 +243,9 @@ closure case_op(OperationArgs& Args)
 
 closure let_op(OperationArgs& Args)
 {
+    extern long total_let_op;
+    total_let_op++;
+
     reg_heap& M = Args.memory();
 
     const closure& C = Args.current_closure();

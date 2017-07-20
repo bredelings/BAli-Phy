@@ -247,6 +247,9 @@ void show_ending_messages(bool show_only)
 	extern long total_steps;
 	extern long total_comps;
 
+	extern long total_case_op;
+	extern long total_let_op;
+	extern long total_index_op;
 	if (total_reductions > 0)
 	{
 	    cout<<"total changeable evals         = "<<total_changeable_eval<<endl;
@@ -255,6 +258,9 @@ void show_ending_messages(bool show_only)
 	    cout<<"total reduction steps          = "<<total_reductions<<endl;
 	    cout<<"  changeable reduction steps   = "<<total_changeable_reductions<<endl;
 	    cout<<"  unchangeable reduction steps = "<<total_reductions-total_changeable_reductions<<endl;
+	    cout<<"  op:case                      = "<<total_case_op<<endl;
+	    cout<<"  op:let                       = "<<total_let_op<<endl;
+	    cout<<"  op:index                     = "<<total_index_op<<endl;
 	    cout<<"\ntotal garbage collection runs  = "<<total_gc<<endl;
 	    cout<<"total register allocations     = "<<total_reg_allocations<<endl;
 	    cout<<"total computation allocations  = "<<total_comp_allocations<<endl;

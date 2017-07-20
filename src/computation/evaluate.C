@@ -22,6 +22,10 @@ long total_changeable_eval = 0;
 long total_changeable_eval_with_result = 0;
 long total_changeable_eval_with_call = 0;
 
+long total_case_op = 0;
+long total_let_op = 0;
+long total_index_op = 0;
+
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, int>&);
 expression_ref untranslate_vars(const expression_ref& E, const map<string, int>& ids);
 expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& ids);
