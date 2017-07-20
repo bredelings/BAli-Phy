@@ -529,11 +529,23 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	{
 	    int R2 = C.call_for_reg(R);
 	    assert(includes(regs,R2));
+
+	    bool created_call = false;
+	    for(int r: C.step_for_reg(R).created_regs)
+		if (r == R2)
+		    created_call = true;
+
 	    string name2 = "n" + convertToString(R2);
-	    o<<name<<":e -> "<<name2<<":w ";
+	    if (created_call) o<<"{rank=same; ";
+	    if (created_call)
+		o<<name<<" -> "<<name2;
+	    else
+		o<<name<<":e -> "<<name2<<":w ";
 	    o<<"[";
 	    o<<"color=\"#007700\"";
-	    o<<"];\n";
+	    o<<"];";
+	    if (created_call) o<<"}";
+	    o<<"\n";
 	}
 
 	// used_inputs
