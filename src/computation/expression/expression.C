@@ -10,7 +10,6 @@
 #include "util.H"
 #include "computation/operation.H"
 #include "computation/operations.H"
-#include "computation/graph_register.H"
 #include "substitute.H"
 #include "let.H"
 #include "case.H"

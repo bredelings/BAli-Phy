@@ -2,8 +2,8 @@
 #include <algorithm>
 #include "util.H"
 #include "graph_register.H"
-#include "expression/expression.H"
-#include "expression/dummy.H"
+#include "computation/expression/expression.H"
+#include "computation/expression/dummy.H"
 
 using std::string;
 using std::vector;

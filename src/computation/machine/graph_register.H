@@ -4,12 +4,12 @@
 #include <string>
 #include <vector>
 #include "object.H"
-#include "expression/expression_ref.H"
+#include "computation/expression/expression_ref.H"
 #include "util.H"
 #include <utility>
-#include "closure.H"
+#include "computation/closure.H"
 #include "pool.H"
-#include "program.H"
+#include "computation/program.H"
 #include <boost/shared_ptr.hpp>
 #include <boost/container/small_vector.hpp>
 #include <bitset>

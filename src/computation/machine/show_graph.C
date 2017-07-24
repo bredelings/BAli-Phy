@@ -1,10 +1,10 @@
 #include <fstream>
 #include "graph_register.H"
-#include "operations.H"
-#include "expression/expression.H"
-#include "expression/let.H"
-#include "expression/dummy.H"
-#include "expression/case.H"
+#include "computation/operations.H"
+#include "computation/expression/expression.H"
+#include "computation/expression/let.H"
+#include "computation/expression/dummy.H"
+#include "computation/expression/case.H"
 
 using std::string;
 using std::vector;

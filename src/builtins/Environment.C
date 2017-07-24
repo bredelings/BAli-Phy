@@ -1,6 +1,6 @@
 #include "computation/computation.H"
 #include "myexception.H"
-#include "computation/graph_register.H"
+#include "computation/machine/graph_register.H"
 #include "rng.H"
 #include "util.H"
 #include "probability/choose.H"

@@ -2,7 +2,9 @@
 #include <boost/optional.hpp>
 #include "computation/module.H"
 #include "myexception.H"
-#include "computation/graph_register.H"
+#include "program.H"
+#include "operations.H"
+#include "computation/machine/graph_register.H" // for graph_normalize( )
 #include "computation/operations.H"
 #include "parser/parse.H"
 #include "parser/desugar.H"

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <unordered_map>
-#include "graph_register.H"
+#include "computation/machine/graph_register.H"
 #include "operations.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"

@@ -3,9 +3,9 @@
 //#endif
 #define COMBINE_STEPS
 #include "graph_register.H"
-#include "expression/expression.H"
-#include "expression/let.H"
-#include "expression/trim.H"
+#include "computation/expression/expression.H"
+#include "computation/expression/let.H"
+#include "computation/expression/trim.H"
 
 using std::string;
 using std::vector;
@@ -13,8 +13,8 @@ using std::map;
 using std::set;
 using std::pair;
 
-#include "operations.H"
-#include "computation.H"
+#include "computation/operations.H"
+#include "computation/computation.H"
 
 long total_reductions = 0;
 long total_changeable_reductions = 0;

@@ -53,11 +53,11 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   computation/expression/indexify.H computation/expression/let.H \
 	   computation/expression/case.H computation/expression/trim.H \
 	   computation/expression/tuple.H computation/expression/list.H \
-	   computation/bithash.H computation/graph_register.H computation/optimization/let-float.H \
+	   computation/bithash.H computation/machine/graph_register.H computation/optimization/let-float.H \
            computation/loader.H computation/module.H computation/expression/dummy.H \
 	   computation/operation.H computation/operations.H computation/operator.H \
-           computation/pool.H computation/program.H computation/expression/lambda.H \
-	   builtins/iota.H CacheList.H mcmc/logger.H models/setup.H \
+           computation/machine/pool.H computation/program.H computation/expression/lambda.H \
+	   builtins/iota.H computation/machine/CacheList.H mcmc/logger.H models/setup.H \
            dp/dp_hmm.H parser/desugar.H mcmc/AIS.H tools/distance-report.H \
 	   matrix.H builtins/vector_from_list.H startup/A-T-model.H startup/files.H startup/loggers.H \
 	   startup/io.H startup/system.H startup/cmd_line.H computation/type_constant.H \
@@ -123,9 +123,9 @@ bali_phy_SOURCES = parser/parse.C dp/dp_hmm.C parser/desugar.C sequence/sequence
 	  computation/expression/case.C  computation/expression/trim.C \
 	  computation/expression/tuple.C computation/expression/list.C \
 	  computation/expression/dummy.C computation/expression/lambda.C \
-	  computation/computation.C computation/tokens.C computation/preprocess.C \
-	  computation/graph_register.C computation/show_graph.C computation/module.C \
-	  computation/model_expression.C computation/evaluate.C computation/gc.C computation/reroot.C \
+	  computation/computation.C computation/machine/tokens.C computation/preprocess.C \
+	  computation/machine/graph_register.C computation/machine/show_graph.C computation/module.C \
+	  computation/model_expression.C computation/machine/evaluate.C computation/machine/gc.C computation/machine/reroot.C \
 	  computation/operations.C computation/loader.C computation/context.C computation/closure.C \
 	  computation/optimization/let-float.C computation/program.C mcmc/sample-tri.C startup/A-T-model.C startup/files.C \
 	  startup/loggers.C startup/system.C startup/cmd_line.C models/rules.C models/parse.C \
@@ -164,7 +164,7 @@ endif
 BUILT_SOURCES = version.C git_version.stamp
 
 noinst_LIBRARIES = libsums.a
-libsums_a_SOURCES = computation/sums.C
+libsums_a_SOURCES = computation/machine/sums.C
 libsums_a_CXXFLAGS = ${AM_CXXFLAGS} -fno-fast-math
 libsums_a_CFLAGS = ${AM_CFLAGS} -fno-fast-math
 

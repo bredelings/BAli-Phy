@@ -1,7 +1,6 @@
 #include "computation/loader.H"
 #include "computation/module.H"
 #include "computation/operations.H"
-#include "computation/graph_register.H"
 #include <boost/filesystem/operations.hpp>
 #include "expression/expression.H"
 #include "expression/lambda.H"
