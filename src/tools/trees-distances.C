@@ -653,12 +653,16 @@ int main(int argc,char* argv[])
 	    for(int i=0;i<files.size();i++) 
 	    {
 		int count = 0;
+		int start = all_trees.size();
 		if (files[i] == "-")
 		    count = all_trees.load_file(std::cin,skip,last,subsample,max);
 		else
 		    count = all_trees.load_file(files[i],skip,last,subsample,max);
 		if (log_verbose)
+		{
 		    std::cerr<<"Read "<<count<<" trees from '"<<files[i]<<"'"<<std::endl;
+		    std::cerr<<"Kept "<<all_trees.size()-start<<" trees from '"<<files[i]<<"'"<<std::endl;
+		}
 	    }
 
 	    matrix<double> D = distances(all_trees,metric_fn);
