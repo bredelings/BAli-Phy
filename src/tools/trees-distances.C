@@ -684,7 +684,7 @@ int main(int argc,char* argv[])
 	else if (analysis == "autocorrelation") 
 	{
 	    check_supplied_filenames(1,files);
-	    tree_sample trees(files[0],skip,last,subsample);
+	    tree_sample trees(files[0],skip,last,subsample,max);
 
 	    matrix<double> D = distances(trees,metric_fn);
       
@@ -714,7 +714,7 @@ int main(int argc,char* argv[])
 	else if (analysis == "diameter") 
 	{
 	    check_supplied_filenames(1,files);
-	    tree_sample trees(files[0],skip,last,subsample);
+	    tree_sample trees(files[0],skip,last,subsample,max);
 	    if (trees.size() < 2)
 		throw myexception()<<"diameter: only 1 point in set.";
 
@@ -729,7 +729,7 @@ int main(int argc,char* argv[])
 	    bool topology_only = args.count("topology-only");
 
 	    check_supplied_filenames(1,files);
-	    tree_sample trees(files[0],skip,last,subsample);
+	    tree_sample trees(files[0],skip,last,subsample,max);
 
 	    write_distance_cvars_header(trees.T(0),leaves_only);
 
@@ -747,7 +747,7 @@ int main(int argc,char* argv[])
 	    bool topology_only = args.count("topology-only");
 
 	    check_supplied_filenames(1,files);
-	    tree_sample trees(files[0],skip,last,subsample);
+	    tree_sample trees(files[0],skip,last,subsample,max);
 
 	    for(int i=0;i<trees.size();i++)
 	    {
@@ -772,8 +772,8 @@ int main(int argc,char* argv[])
 	{
 	    check_supplied_filenames(2,files);
 
-	    tree_sample trees1(files[0],skip,last,subsample);
-	    tree_sample trees2(files[1],skip,last,subsample);
+	    tree_sample trees1(files[0],skip,last,subsample,max);
+	    tree_sample trees2(files[1],skip,last,subsample,max);
 
 	    tree_sample both = trees1;
 	    both.append_trees(trees2);
@@ -786,7 +786,7 @@ int main(int argc,char* argv[])
 	{
 	    check_supplied_filenames(2,files);
 
-	    tree_sample trees1(files[0],skip,last,subsample);
+	    tree_sample trees1(files[0],skip,last,subsample,max);
 	    tree_sample trees2(files[1],0,0,-1);
 
 	    for(int i=0;i<trees1.size();i++)
@@ -802,7 +802,7 @@ int main(int argc,char* argv[])
 
 	    check_supplied_filenames(2,files);
       
-	    tree_sample trees1(files[0],skip,last,subsample);
+	    tree_sample trees1(files[0],skip,last,subsample,max);
 	    tree_sample trees2(files[1],0,0,-1);
       
 	    matrix<double> D2 = distances(trees2,metric_fn);
