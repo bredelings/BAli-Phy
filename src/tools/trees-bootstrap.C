@@ -128,7 +128,7 @@ public:
 
     tree_sample_collection() {}
 
-    tree_sample_collection(const vector<vector<string> >& filenames,int skip, int subsample, int max)
+    tree_sample_collection(const vector<vector<string> >& filenames,int skip, int subsample, int until, int max)
 	{
 	    for(int i=0;i<filenames.size();i++) 
 	    {
@@ -139,7 +139,7 @@ public:
 		int d = add_sample_new_distribution(tree_sample(filenames[i][0],skip,subsample,max));
 		for(int j=1;j<filenames[i].size();j++) {
 		    cout<<"# Loading trees from '"<<filenames[i][j]<<"'...\n";
-		    add_sample(d,tree_sample(filenames[i][j],skip,subsample,max));
+		    add_sample(d,tree_sample(filenames[i][j],skip,subsample,until,max));
 		}
 	    }
 	}
@@ -485,7 +485,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", "Produce help message.")
 	("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
 	("until,u",value<int>(),"Read until this number of trees.")
-	("subsample,x",value<unsigned>(),"Factor by which to sub-sample.")
+	("max,m",value<int>(),"Thin tree samples down to this number of trees.")
+	("subsample,x",value<int>(),"Factor by which to sub-sample.")
 	("predicates",value<string>(),"Predicates to examine.")
 	("min-support",value<double>()->default_value(0.1,"0.1"),"Minimum value of predicates to consider interesting..")
 	("verbose,v","Output more log messages on stderr.")
@@ -494,9 +495,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description bootstrap("Block bootstrap options");
     bootstrap.add_options()
 	("bootstrap","Do block bootstrapping to get a CI on the posterior probabilities.")
-	("samples",value<unsigned>()->default_value(10000U),"Number of bootstrap samples.")
-	("pseudocount",value<unsigned>()->default_value(1U),"Extra 0/1 to add to bootstrap samples.")
-	("blocksize",value<unsigned>(),"Block size to use in block boostrap.")
+	("samples",value<int>()->default_value(10000U),"Number of bootstrap samples.")
+	("pseudocount",value<int>()->default_value(1U),"Extra 0/1 to add to bootstrap samples.")
+	("blocksize",value<int>(),"Block size to use in block boostrap.")
 	("seed", value<unsigned long>(),"Random seed.")
 	;
     
@@ -644,7 +645,7 @@ int main(int argc,char* argv[])
 	else
 	    seed = myrand_init();
     
-	int pseudocount = args["pseudocount"].as<unsigned>();
+	int pseudocount = args["pseudocount"].as<int>();
 
 	double compare_dx = args["separation"].as<double>();
     
@@ -669,11 +670,15 @@ int main(int argc,char* argv[])
 
 	int last = -1;
 	if (args.count("until"))
-	    last = args["until"].as<unsigned>();
+	    last = args["until"].as<int>();
     
+	int max = -1;
+	if (args.count("max"))
+	    max = args["max"].as<int>();
+
 	int subsample=1;
 	if (args.count("subsample"))
-	    subsample = args["subsample"].as<unsigned>();
+	    subsample = args["subsample"].as<int>();
 
 	//-------------- Read in tree distributions --------------//
 	if (not args.count("files"))
@@ -689,7 +694,7 @@ int main(int argc,char* argv[])
 		filenames.push_back(vector<string>());
 	}
 
-	tree_sample_collection tree_dists(filenames,skip,last,subsample);
+	tree_sample_collection tree_dists(filenames,skip,last,subsample,max);
 
 	vector<int> D(tree_dists.n_dists());
 	for(int d=0;d<D.size();d++) {
@@ -728,7 +733,7 @@ int main(int argc,char* argv[])
 	unsigned blocksize = min_trees/50+1;
 
 	if (args.count("blocksize"))
-	    blocksize = args["blocksize"].as<unsigned>();
+	    blocksize = args["blocksize"].as<int>();
 	bool bootstrapped = (args.count("bootstrap") > 0);
 
 	cout<<"# [ seed = "<<seed<<"    pseudocount = "<<pseudocount<<"    blocksize = "<<blocksize<<" ]"<<endl<<endl;
@@ -833,7 +838,7 @@ int main(int argc,char* argv[])
 
 	// generate a bootstrap sample for each g,d,s : but all the p share the same bootstrap sample.
 
-	const unsigned n_samples = args["samples"].as<unsigned>();
+	const int n_samples = args["samples"].as<int>();
       
 	if (bootstrapped)
 	    for(int g=0;g<tree_dists.n_dists();g++)
