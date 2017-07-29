@@ -394,13 +394,8 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 			mark_reg_created_by_step(r2,S);
 			total_reg_allocations++;
 			set_C(r2, std::move(closure_stack.back()));
-			if (closure_stack.back().exp.head().type() == let2_type)
-			    p = incremental_evaluate(r2);
-			else
-			{
-			    access(r2).type = reg::type_t::constant;
-			    p = {r2,r2};
-			}
+			access(r2).type = reg::type_t::constant;
+			p = {r2,r2};
 		    }
 		    closure_stack.pop_back();
 #endif
@@ -475,6 +470,15 @@ void reg_heap::incremental_evaluate_from_call_(int S)
 	    e<<ee.what();
 	    throw_reg_exception(*this, root_token, closure_stack.back(), e);
 	}
+    }
+    if (closure_stack.back().exp.head().type() == let2_type)
+    {
+	int r2 = allocate();
+	assert(not has_step(r2));
+	mark_reg_created_by_step(r2,S);
+	total_reg_allocations++;
+	set_C(r2, std::move(closure_stack.back()));
+	closure_stack.back() = closure(index_var(0),{r2});
     }
 }
 
