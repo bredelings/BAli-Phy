@@ -645,16 +645,6 @@ void SPR_at_location(Parameters& P, const tree_edge& b_subtree, const tree_edge&
     // unbroken target branch
     /// \todo Correctly handle moving to the same topology -- but allow branch lengths to change.
     double L = P.t().branch_length(P.t().find_branch(b_target));
-    map<tree_edge, double>::const_iterator record = locations.find(b_target);
-    if (record == locations.end())
-    {
-	std::cerr<<"Branch not found in spr location object!\n"<<std::endl;
-	std::abort();
-    }
-    tree_edge B_unbroken_target = record->first;
-    // U is the fraction of the way from B_unbroken_target.node1 
-    // toward B_unbroken_target.node2 to place the new node.
-    double U = record->second; 
 
     // node joining the subtree to the rest of the tree
     int n0 = b_subtree.node2;
@@ -662,16 +652,7 @@ void SPR_at_location(Parameters& P, const tree_edge& b_subtree, const tree_edge&
     // Perform the SPR operation (specified by a branch TOWARD the pruned subtree)
     SPR_by_NNI(P, b_subtree.reverse(), b_target, true, disconnect_subtree);
 
-    // Find the names of the branches
-    int b1 = P.t().find_branch(B_unbroken_target.node1, n0);
-    int b2 = P.t().find_branch(n0, B_unbroken_target.node2);
-
-    // Set the lengths of the two branches
-    double L1 = L*U;
-    double L2 = L - L1;
-
-    P.setlength(b1, L1);
-    P.setlength(b2, L2);
+    set_lengths_at_location(P, n0, L, b_target, locations);
 
 #ifndef NDEBUG
     double total_length_after = tree_length(P.t());
