@@ -715,6 +715,11 @@ vector<string> Parameters::get_labels() const
     return TC->node_labels;
 }
 
+string write_newick(const Parameters& P, bool print_lengths)
+{
+    return write(P.t(), P.get_labels(), print_lengths);
+}
+
 void Parameters::reconnect_branch(int s1, int t1, int t2)
 {
     t().reconnect_branch(s1, t1, t2);

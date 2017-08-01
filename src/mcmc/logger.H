@@ -96,6 +96,8 @@ namespace MCMC {
 	std::string operator()(const Model& M, long t);
     };
 
+    std::string write_newick(const Parameters& P);
+
     struct TreeFunction
     {
 	std::string operator()(const Model& M, long t);

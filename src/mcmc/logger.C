@@ -254,21 +254,6 @@ namespace MCMC {
 	return L;
     }
 
-    double mu_scale(const Parameters& P)
-    {
-	valarray<double> weights(P.n_data_partitions());
-	for(int i=0;i<weights.size();i++)
-	    weights[i] = max(sequence_lengths(P[i]));
-	weights /= weights.sum();
-  
-	// FIXME - we are just looking at branch 0!
-	double mu_scale=0;
-	for(int i=0;i<P.n_data_partitions();i++)
-	    mu_scale += P.get_branch_subst_rate(i,0)*weights[i];
-
-	return mu_scale;
-    }
-
     string Get_Rao_Blackwellized_Parameter_Function::operator()(const Model& M, long)
     {
 	if (parameter == -1) std::abort();
@@ -331,17 +316,7 @@ namespace MCMC {
     {
 	const Parameters& P = dynamic_cast<const Parameters&>(M);
 
-	auto T = P.t();
-    
-	double scale = mu_scale(P);
-
-	vector<double> L;
-	for(int b=0;b<T.n_branches();b++)
-	    L.push_back(scale*T.branch_length(b));
-
-	vector<string> names = P.get_labels();
-  
-	return write(T, L, names);
+	return write_newick(P,true);
     }
 
     string MAP_Function::operator()(const Model& M, long t)

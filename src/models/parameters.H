@@ -421,6 +421,6 @@ public:
 };
 
 bool accept_MH(const Model& P1,const Model& P2,double rho);
-
+std::string write_newick(const Parameters&, bool=true);
 
 #endif
