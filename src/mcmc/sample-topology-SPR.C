@@ -600,6 +600,36 @@ void SPR_by_NNI(Parameters& P, const tree_edge& E1, const tree_edge& E2, bool cl
     P.setlength(P.t().find_branch(E5), 0.0);
 }
 
+
+// Let b_target = (x,y).  Then we have (x,n0) and (n0,y).
+// B_unbroken_target specifies the orientation for the distance U.
+void set_lengths_at_location(Parameters& P, int n0, double L, const tree_edge& b_target, const spr_attachment_points& locations)
+{
+    // 1. Look up location attachment info for this branch.
+    map<tree_edge, double>::const_iterator record = locations.find(b_target);
+    if (record == locations.end())
+    {
+	std::cerr<<"Branch not found in spr location object!\n"<<std::endl;
+	std::abort();
+    }
+
+    // 2. U is the fraction of the way from B_unbroken_target.node1 toward B_unbroken_target.node2 to place the new node.
+    tree_edge B_unbroken_target = record->first;
+    double U = record->second; 
+
+    // 3. Find the names of the branches
+    int b1 = P.t().find_branch(B_unbroken_target.node1, n0);
+    int b2 = P.t().find_branch(n0, B_unbroken_target.node2);
+
+    // 4. Get the lengths of the two branches
+    double L1 = L*U;
+    double L2 = L - L1;
+
+    // 5. Set the lengths of the two branches
+    P.setlength(b1, L1);
+    P.setlength(b2, L2);
+}
+
 /// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
 ///  and choose the point on the branch specified in \a locations.
 void SPR_at_location(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const spr_attachment_points& locations, bool disconnect_subtree=false)
