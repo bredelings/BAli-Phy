@@ -497,6 +497,8 @@ void TreeInterface::read_tree(const Tree& T)
 void TreeInterface::reconnect_branch(int s1, int t1, int t2)
 {
     int b1 = find_branch(s1,t1);
+    // Handle case where we have a loop from a leaf node s1 to a leaf node s1 -- ensure that we select the original branch away from s1.
+    if (is_leaf_node(s1)) b1 = s1;
     int b2 = reverse(b1);
 
     auto& affected_nodes = const_cast<Parameters*>(P)->affected_nodes;

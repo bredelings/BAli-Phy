@@ -720,6 +720,48 @@ string write_newick(const Parameters& P, bool print_lengths)
     return write(P.t(), P.get_labels(), print_lengths);
 }
 
+void Parameters::prune_subtree(const tree_edge& b_subtree)
+{
+    // FIXME -- this seems redundant.
+    vector<int> connected = t().branches_after(t().find_branch(b_subtree));
+    double L = t().branch_length(connected[0]) + t().branch_length(connected[1]);
+
+    if (connected.empty()) throw myexception()<<"We can't prune subtrees that point to leaves!";
+
+    //  int x = b_subtree.node1;
+    int y = b_subtree.node2;
+    int a = t().target(connected[0]);
+    int b = t().target(connected[1]);
+    // Avoid changing the orientation of leaf branches.
+    if (t().is_leaf_node(b)) std::swap(a,b);
+    assert(not t().is_leaf_node(b));
+
+    begin_modify_topology();
+    reconnect_branch(a,y,b);
+    reconnect_branch(y,b,y);
+    end_modify_topology();
+
+    t().set_branch_length(t().find_branch(a,b), L);
+    t().set_branch_length(t().find_branch(y,y), 0.0);
+}
+
+void Parameters::regraft_subtree(const tree_edge& b_subtree, const tree_edge& b_target)
+{
+    //  int x = b_subtree.node1;
+    int y = b_subtree.node2;
+
+    int a = b_target.node1;
+    int b = b_target.node2;
+    // Avoid changing the orientation of leaf  branches.
+    if (t().is_leaf_node(b)) std::swap(a,b);
+    assert(not t().is_leaf_node(b));
+
+    begin_modify_topology();
+    reconnect_branch(y,y,b);
+    reconnect_branch(a,b,y);
+    end_modify_topology();
+}
+
 void Parameters::reconnect_branch(int s1, int t1, int t2)
 {
     t().reconnect_branch(s1, t1, t2);
