@@ -10,6 +10,8 @@ using boost::property_tree::ptree;
 
 // TODO: decrease memory usage for pairwise alignments.
 
+// TODO: decrease memory usage for HMM::bitmask_t from 64 bits to 8 bits.
+
 // TODO: try implementing a horseshoe model for f and s
 
 // TODO: complain when setting calculator=SEV and imodel!=none
