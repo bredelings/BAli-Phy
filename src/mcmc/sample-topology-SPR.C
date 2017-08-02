@@ -1010,16 +1010,16 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     Parameters initial = P;
     Parameters detached = initial;
     detached.prune_subtree(B1);
-    spr_attachment_probabilities Pr2;
-    Pr2[I.B0] = initial.heated_likelihood() * initial.prior_no_alignment();
+    spr_attachment_probabilities Pr;
+    Pr[I.B0] = initial.heated_likelihood() * initial.prior_no_alignment();
 #ifdef DEBUG_SPR_ALL
-    Pr2.LLL[I.B0] = initial.heated_likelihood();
+    Pr.LLL[I.B0] = initial.heated_likelihood();
 #endif
 
-    vector<Parameters> Ps2;
+    vector<Parameters> Ps;
     vector<tuple<int,int,int,vector<vector<HMM::bitmask_t>>>> alignments3way;
-    Ps2.reserve(I.attachment_branch_pairs.size());
-    Ps2.push_back(detached);
+    Ps.reserve(I.attachment_branch_pairs.size());
+    Ps.push_back(detached);
     alignments3way.reserve(I.attachment_branch_pairs.size());
     alignments3way.push_back(get_3way_alignments(initial, B1, I.B0));
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
@@ -1032,15 +1032,15 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	const tree_edge& Bprev = I.attachment_branch_pairs[prev_i].edge;
 
 	if (prev_i != 0) assert(Bprev.node2 == B2.node1);
-	Ps2.push_back(Ps2[prev_i]);
-	assert(Ps2.size() == i+1);
-	auto& p = Ps2.back();
+	Ps.push_back(Ps[prev_i]);
+	assert(Ps.size() == i+1);
+	auto& p = Ps.back();
 	alignments3way.push_back( move_pruned_subtree(p, alignments3way[prev_i], B1, Bprev, B2, BB.sibling) );
     }
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
     {
 	const tree_edge& B2 = I.attachment_branch_pairs[i].edge;
-	auto& p = Ps2[i];
+	auto& p = Ps[i];
 	double L = p.t().branch_length(p.t().find_branch(B2));
 
 	// 1. Reconnect the tree
@@ -1054,10 +1054,10 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	set_3way_alignments(p, B1, B2, alignments3way[i]);
 
 	// 4. Compute likelihood and probability
-	Pr2[B2] = p.heated_likelihood() * p.prior_no_alignment();
+	Pr[B2] = p.heated_likelihood() * p.prior_no_alignment();
 
 #ifdef DEBUG_SPR_ALL
-	Pr2.LLL[B2] = p.heated_likelihood();
+	Pr.LLL[B2] = p.heated_likelihood();
 #endif
     }
 
@@ -1067,54 +1067,10 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 #endif
     /*----------------------- Initialize likelihood for each attachment point ----------------------- */
 
-    // The probability of attaching to each branch, w/o the alignment probability
-    spr_attachment_probabilities Pr;
-    Pr[I.B0] = P.heated_likelihood() * P.prior_no_alignment();
-
-#ifdef DEBUG_SPR_ALL
-    Pr.LLL[I.B0] = P.heated_likelihood();
-#endif
-
-    // Compute the probability of each attachment point
-    // After this point, the LC root will now be the same node: the attachment point.
-    vector<Parameters> Ps;
-    Ps.reserve(I.attachment_branch_pairs.size());
-    Ps.push_back(P);
-    for(int i=1;i<I.attachment_branch_pairs.size();i++) 
-    {
-	// Define target branch b2 - pointing away from B1
-	const auto& BB = I.attachment_branch_pairs[i];
-	int prev_i = BB.prev_i;
-	tree_edge B2 = BB.edge;
-    
-	if (prev_i != 0) assert(I.attachment_branch_pairs[prev_i].edge.node2 == B2.node1);
-	Ps.push_back(Ps[prev_i]);
-	assert(Ps.size() == i+1);
-	auto& p = Ps.back();
-	SPR_at_location(p, B1, B2, locations);
-
-	Pr[B2] = p.heated_likelihood() * p.prior_no_alignment();
-	auto diff = Pr2[B2].log() - Pr[B2].log();
-	std::cerr<<"i = "<<i<<"     diff Pr = "<<diff<<std::endl;
-	assert(std::abs(diff) < 1.0e-9);
-#ifdef DEBUG_SPR_ALL
-	Pr.LLL[B2] = p.heated_likelihood();
-	auto diff = Pr2.LLL[B2].log() - Pr.LLL[B2].log();
-	cerr<<"  PR = "<<Pr.LLL[B2].log()<<"  PR2 = "<<Pr2.LLL[B2].log()<<"   diff = "<<diff<<endl;
-	assert(std::abs(diff) < 1.0e-9);
-	//    log_double_t PR1 = P.heated_likelihood();
-#endif
-    }
-
     // We had better not let this get changed!
     assert(P.subst_root() == root_node);
 
-#ifndef NDEBUG
-    auto peels2 = substitution::total_peel_internal_branches + substitution::total_peel_leaf_branches;
-    std::cerr<<"total_peels1 = "<<peels2 - peels1<<std::endl;
-#endif
-
-    return Pr2;
+    return Pr;
 }
 
 /// This just computes nodes and calls sample_tri_multi
