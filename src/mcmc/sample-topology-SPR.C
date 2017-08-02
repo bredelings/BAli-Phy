@@ -1066,10 +1066,19 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& B1)
     //    return false;
 
 #ifdef DEBUG_SPR_ALL
-    // The likelihood for attaching at a particular place should not
-    // depend on the initial attachment point.
+    // The likelihood for attaching at a particular place should not depend on the initial attachment point.
     log_double_t L_1 = p[1].heated_likelihood();
-    assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
+    auto diff = L_1.log() - LLL[C].log();
+    std::cerr<<"re-attachment diff = "<<diff<<std::endl;
+
+    // FIXME - If we have an IModel, then re-attaching means that we unalign characters instead of extending their alignment
+    //         to keep them aligned.
+    bool has_imodel = true;
+    for(int i=0;i<P.n_data_partitions();i++)
+	if (not P[i].has_IModel())
+	    has_imodel = false;
+    if (not has_imodel)
+	assert(std::abs(diff) < 1.0e-9);
 #endif
 
     // Step N+1: Use the chosen tree as a proposal, allowing us to sample the alignment.
