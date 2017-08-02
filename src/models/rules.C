@@ -9,6 +9,8 @@ using boost::optional;
 using boost::property_tree::ptree;
 
 // TODO: decrease memory usage for pairwise alignments.
+//       - make pairwise alignments represent the relevant bits without translation (e.g. make convert_to_bits a no-op)
+//       - make pairwise contain two dynamic_bitsets
 
 // TODO: decrease memory usage for HMM::bitmask_t from 64 bits to 8 bits.
 
