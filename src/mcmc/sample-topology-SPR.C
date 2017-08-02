@@ -666,6 +666,12 @@ void SPR_at_location(Parameters& P, const tree_edge& b_subtree, const tree_edge&
     //         Since we are actually using the MATRIX, perhaps we should fix this.
 }
 
+struct attachment_branch
+{
+    int prev_i = -1;
+    tree_edge edge;
+};
+
 /// A struct to compute and store information about attachment points their branch names
 struct spr_info
 {
@@ -681,7 +687,7 @@ public:
     /// The current attachment branch, specified in terms of its endpoint nodes
     tree_edge B0;
 
-    vector<pair<int,tree_edge>> attachment_branch_pairs;
+    vector<attachment_branch> attachment_branch_pairs;
 
     // Lengths of branches
     vector<double> L;
@@ -718,7 +724,7 @@ public:
 	    vector<U> v;
 	    v.reserve(n_attachment_branches());
 	    for(const auto& bp : attachment_branch_pairs)
-		v.push_back( M.at( bp.second ) );      // Assumes a particular orientation of the edge
+		v.push_back( M.at( bp.edge ) );      // Assumes a particular orientation of the edge
 
 	    return v;
 	}
@@ -726,7 +732,7 @@ public:
     spr_info(const TreeInterface& T, const tree_edge& b);
 }; 
 
-void branch_pairs_after(const TreeInterface& T, int prev_i, const tree_edge& prev_b, vector<pair<int,tree_edge>>& branch_pairs)
+void branch_pairs_after(const TreeInterface& T, int prev_i, const tree_edge& prev_b, vector<attachment_branch>& branch_pairs)
 {
     for(const auto& b: T.branches_after(T.find_branch(prev_b)))
     {
@@ -738,14 +744,14 @@ void branch_pairs_after(const TreeInterface& T, int prev_i, const tree_edge& pre
 }
 
 
-vector<pair<int,tree_edge>> branch_pairs_after(const TreeInterface& T, const tree_edge& b_parent)
+vector<attachment_branch> branch_pairs_after(const TreeInterface& T, const tree_edge& b_parent)
 {
     auto child_branches = T.branches_after(T.find_branch(b_parent));
     auto b1 = T.edge( child_branches[0] );
     auto b2 = T.edge( child_branches[1] );
     tree_edge b0 { b1.node2, b2.node2 };
 
-    vector<pair<int,tree_edge>> branch_pairs;
+    vector<attachment_branch> branch_pairs;
     branch_pairs.push_back({-1,b0});
 
     branch_pairs_after(T, 0, b1, branch_pairs);
@@ -772,7 +778,7 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
 
     for(const auto& bp: attachment_branch_pairs)
     {
-	const auto& E = bp.second;
+	const auto& E = bp.edge;
 	if (E == B0)
 	    L.push_back(T.branch_length(child_branches[0]) + T.branch_length(child_branches[1]));
 	else if (E == B0.reverse())
@@ -797,7 +803,7 @@ spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tr
 
     // compute attachment locations for non-current branches
     for(int i=1;i<I.n_attachment_branches();i++)
-	locations[I.attachment_branch_pairs[i].second] = uniform();
+	locations[I.attachment_branch_pairs[i].edge] = uniform();
 
     return locations;
 }
@@ -844,10 +850,10 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     {
 	// Define target branch b2 - pointing away from B1
 	const auto& BB = I.attachment_branch_pairs[i];
-	int prev_i = BB.first;
-	tree_edge B2 = BB.second;
+	int prev_i = BB.prev_i;
+	tree_edge B2 = BB.edge;
     
-	if (prev_i != 0) assert(I.attachment_branch_pairs[prev_i].second.node2 == B2.node1);
+	if (prev_i != 0) assert(I.attachment_branch_pairs[prev_i].edge.node2 == B2.node1);
 	Ps.push_back(Ps[prev_i]);
 	assert(Ps.size() == i+1);
 	auto& p = Ps.back();
@@ -1042,13 +1048,13 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& B1)
 	for(int i=0;i<indices.size();i++)
 	{
 	    int I1 = indices[i];
-	    int I2 = I.attachment_branch_pairs[I1].first;
+	    int I2 = I.attachment_branch_pairs[I1].prev_i;
 	    if (I2 > 0)
 		indices.push_back(I2);
 	}
 	std::reverse(indices.begin(), indices.end());
 	for(int i: indices)
-	    SPR_at_location(p[1], B1, I.attachment_branch_pairs[i].second, locations, true);
+	    SPR_at_location(p[1], B1, I.attachment_branch_pairs[i].edge, locations, true);
     }
 
     // enforce tree constraints
