@@ -78,9 +78,9 @@ HMM::bitmask_t remap_bits(HMM::bitmask_t bits, const vector<int>& mapping)
     return mask;
 }
 
-vector<HMM::bitmask_t> remap_bitpath(const vector<HMM::bitmask_t>& path, const vector<int>& nodes1, const vector<int>& nodes2)
+//FIXME - Should be more general - this couldn't (for example) remap {0,1} to {5,6}
+vector<HMM::bitmask_t> remap_bitpath(const vector<HMM::bitmask_t>& path, const vector<int>& mapping)
 {
-    vector<int> mapping = compute_mapping(nodes1,nodes2);
     vector<HMM::bitmask_t> path2 = path;
     for(auto& mask: path2)
 	mask = remap_bits(mask,mapping);

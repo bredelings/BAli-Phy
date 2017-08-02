@@ -104,7 +104,7 @@ int bitslength(const std::vector<HMM::bitmask_t>& bits, HMM::bitmask_t m);
 
 HMM::bitmask_t remap_bits(HMM::bitmask_t bits1, const std::vector<int>& mapping);
 
-std::vector<HMM::bitmask_t> remap_bitpath(const std::vector<HMM::bitmask_t>& path, const std::vector<int>& nodes1, const std::vector<int>& nodes2);
+std::vector<HMM::bitmask_t> remap_bitpath(const std::vector<HMM::bitmask_t>& path, const std::vector<int>& mapping);
 
 std::vector<HMM::bitmask_t> remove_silent(const std::vector<HMM::bitmask_t>& bits, HMM::bitmask_t m);
 

@@ -58,7 +58,7 @@ sample_two_nodes_base(data_partition P, const data_partition& P0, const A5::hmm_
       for use with (A[i],T[i],nodes[i]).  */
 
   vector<HMM::bitmask_t> a123456 = A5::get_bitpath(P0, order0);
-  a123456 = remap_bitpath(a123456, order0.nodes, order.nodes);
+  a123456 = remap_bitpath(a123456, compute_mapping(order0.nodes, order.nodes));
   vector<HMM::bitmask_t> a1234 = remove_silent(a123456, m12345.all_bits() & ~m12345.hidden_bits);
 
   /*-------------- Create DP matrices ---------------*/
