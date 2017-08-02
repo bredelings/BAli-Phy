@@ -687,7 +687,7 @@ public:
     vector<int> child_branches;
 
     /// The current attachment branch, specified in terms of its endpoint nodes
-    tree_edge B0;
+    tree_edge initial_edge;
 
     vector<attachment_branch> attachment_branch_pairs;
 
@@ -713,7 +713,7 @@ public:
 
 	    int n0 = b_parent.node2;
 	    if (T.target(b) == n0 or T.source(b) == n0)
-		return B0;
+		return initial_edge;
 
 	    return T.edge(b);
 	}
@@ -773,7 +773,7 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
 
     int B1 = child_branches[0];
     int B2 = child_branches[1];
-    B0 = tree_edge(T.target(B1), T.target(B2));
+    initial_edge = tree_edge(T.target(B1), T.target(B2));
 
     /*----------- get the list of possible attachment points, with [0] being the current one.------- */
     // \todo - With tree constraints, or with a variable alignment and alignment constraints,
@@ -784,9 +784,9 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
     for(const auto& bp: attachment_branch_pairs)
     {
 	const auto& E = bp.edge;
-	if (E == B0)
+	if (E == initial_edge)
 	    L.push_back(T.branch_length(child_branches[0]) + T.branch_length(child_branches[1]));
-	else if (E == B0.reverse())
+	else if (E == initial_edge.reverse())
 	    std::abort();
 	else
 	    L.push_back(T.branch_length(T.find_branch(E)));
@@ -794,17 +794,17 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
 }
 
 /// Get a list of attachment branches, and a location for attachment on each branch
-spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tree_edge& b1)
+spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tree_edge& subtree_edge)
 {
-    spr_info I(T, b1);
+    spr_info I(T, subtree_edge);
 
-    tree_edge B0(T.target(I.child_branches[0]), T.target(I.child_branches[1]));
+    tree_edge initial_edge(T.target(I.child_branches[0]), T.target(I.child_branches[1]));
     double L0a = T.branch_length(I.child_branches[0]);
     double L0b = T.branch_length(I.child_branches[1]);
 
     // compute attachment location for current branche
     spr_attachment_points locations;
-    locations[B0] = L0a/(L0a+L0b);
+    locations[initial_edge] = L0a/(L0a+L0b);
 
     // compute attachment locations for non-current branches
     for(int i=1;i<I.n_attachment_branches();i++)
@@ -813,7 +813,7 @@ spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tr
     return locations;
 }
 
-// OK so if B1=(x,y) and B0 = (a,b) then we should have edges (y,a) and (y.b) in the tree
+// OK so if B1=(x,y) and initial_edge = (a,b) then we should have edges (y,a) and (y.b) in the tree
 // Here we are aligning {x,a,b} with y undefined.
 vector<HMM::bitmask_t> get_3way_alignment(data_partition P, int a, int b, int x, int y)
 {
@@ -986,7 +986,7 @@ move_pruned_subtree(Parameters& P,
 /// After this routine, likelihood caches and subalignment indices for branches in the
 /// non-pruned subtree should reflect the situation where the subtree has been pruned.
 ///
-spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tree_edge& B1, const spr_attachment_points& locations)
+spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const spr_attachment_points& locations)
 {
 #ifndef NDEBUG
     auto peels0 = substitution::total_peel_internal_branches + substitution::total_peel_leaf_branches;
@@ -994,7 +994,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 
     // The attachment node for the pruned subtree.
     // This node will move around, but we will always peel up to this node to calculate the likelihood.
-    int root_node = B1.node2;
+    int root_node = subtree_edge.node2;
     // Because the attachment node keeps its name, this will stay in effect throughout the likelihood calculations.
     P.set_root(root_node);
 
@@ -1002,18 +1002,18 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     // FIXME - do we need this?
     P.heated_likelihood();
 
-    spr_info I(P.t(), B1);
+    spr_info I(P.t(), subtree_edge);
 
     if (I.n_attachment_branches() == 1) return spr_attachment_probabilities();
 
     /*----------------------- Initialize likelihood for each attachment point ----------------------- */
     Parameters initial = P;
     Parameters detached = initial;
-    detached.prune_subtree(B1);
+    detached.prune_subtree(subtree_edge);
     spr_attachment_probabilities Pr;
-    Pr[I.B0] = initial.heated_likelihood() * initial.prior_no_alignment();
+    Pr[I.initial_edge] = initial.heated_likelihood() * initial.prior_no_alignment();
 #ifdef DEBUG_SPR_ALL
-    Pr.LLL[I.B0] = initial.heated_likelihood();
+    Pr.LLL[I.initial_edge] = initial.heated_likelihood();
 #endif
 
     vector<Parameters> Ps;
@@ -1021,10 +1021,10 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     Ps.reserve(I.attachment_branch_pairs.size());
     Ps.push_back(detached);
     alignments3way.reserve(I.attachment_branch_pairs.size());
-    alignments3way.push_back(get_3way_alignments(initial, B1, I.B0));
+    alignments3way.push_back(get_3way_alignments(initial, subtree_edge, I.initial_edge));
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
     {
-	// Define target branch b2 - pointing away from B1
+	// Define target branch b2 - pointing away from subtree_edge
 	const auto& BB = I.attachment_branch_pairs[i];
 	const tree_edge& B2 = BB.edge;
 
@@ -1035,7 +1035,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	Ps.push_back(Ps[prev_i]);
 	assert(Ps.size() == i+1);
 	auto& p = Ps.back();
-	alignments3way.push_back( move_pruned_subtree(p, alignments3way[prev_i], B1, Bprev, B2, BB.sibling) );
+	alignments3way.push_back( move_pruned_subtree(p, alignments3way[prev_i], subtree_edge, Bprev, B2, BB.sibling) );
     }
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
     {
@@ -1044,14 +1044,14 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	double L = p.t().branch_length(p.t().find_branch(B2));
 
 	// 1. Reconnect the tree
-	p.regraft_subtree(B1, B2);
+	p.regraft_subtree(subtree_edge, B2);
 
         // 2. Set branch lengths
-	int n0 = B1.node2;
+	int n0 = subtree_edge.node2;
 	set_lengths_at_location(p, n0, L, B2, locations);
 
 	// 3. Set pairwise alignments on three branches
-	set_3way_alignments(p, B1, B2, alignments3way[i]);
+	set_3way_alignments(p, subtree_edge, B2, alignments3way[i]);
 
 	// 4. Compute likelihood and probability
 	Pr[B2] = p.heated_likelihood() * p.prior_no_alignment();
