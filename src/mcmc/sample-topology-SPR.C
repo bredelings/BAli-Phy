@@ -670,6 +670,7 @@ struct attachment_branch
 {
     int prev_i = -1;
     tree_edge edge;
+    tree_edge sibling;
 };
 
 /// A struct to compute and store information about attachment points their branch names
@@ -734,10 +735,13 @@ public:
 
 void branch_pairs_after(const TreeInterface& T, int prev_i, const tree_edge& prev_b, vector<attachment_branch>& branch_pairs)
 {
-    for(const auto& b: T.branches_after(T.find_branch(prev_b)))
+    vector<int> after = T.branches_after(T.find_branch(prev_b));
+    assert(after.size() == 0 or after.size() == 2);
+    for(int j=0; j<after.size(); j++)
     {
-	tree_edge curr_b = T.edge(b);
-	branch_pairs.push_back({prev_i,curr_b});
+	tree_edge curr_b = T.edge(after[j]);
+	tree_edge sibling = T.edge(after[1-j]);
+	branch_pairs.push_back({prev_i, curr_b, sibling});
 	int curr_i = branch_pairs.size()-1;
 	branch_pairs_after(T, curr_i, curr_b, branch_pairs);
     }
@@ -752,7 +756,7 @@ vector<attachment_branch> branch_pairs_after(const TreeInterface& T, const tree_
     tree_edge b0 { b1.node2, b2.node2 };
 
     vector<attachment_branch> branch_pairs;
-    branch_pairs.push_back({-1,b0});
+    branch_pairs.push_back({-1,b0,{}});
 
     branch_pairs_after(T, 0, b1, branch_pairs);
     branch_pairs_after(T, 0, b2, branch_pairs);
