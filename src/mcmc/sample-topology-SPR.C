@@ -45,6 +45,7 @@ using std::vector;
 using std::string;
 using std::map;
 using std::pair;
+using std::tuple;
 
 using std::cout;
 using std::cerr;
@@ -810,6 +811,174 @@ spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tr
 	locations[I.attachment_branch_pairs[i].edge] = uniform();
 
     return locations;
+}
+
+// OK so if B1=(x,y) and B0 = (a,b) then we should have edges (y,a) and (y.b) in the tree
+// Here we are aligning {x,a,b} with y undefined.
+vector<HMM::bitmask_t> get_3way_alignment(data_partition P, int a, int b, int x, int y)
+{
+    constexpr int a_bit = 0;
+    constexpr int b_bit = 1;
+    constexpr int x_bit = 2;
+    constexpr int y_bit = 3;
+
+    int bxy = P.t().find_branch(x,y);
+    int bya = P.t().find_branch(y,a);
+    int byb = P.t().find_branch(y,b);
+
+    auto Axy = convert_to_bits(P.get_pairwise_alignment(bxy), x_bit, y_bit);
+    auto Aya = convert_to_bits(P.get_pairwise_alignment(bya), y_bit, a_bit);
+    auto Ayb = convert_to_bits(P.get_pairwise_alignment(byb), y_bit, b_bit);
+
+    auto Aabxy = Glue_A(Axy,Glue_A(Aya, Ayb));
+
+    // Clear bit #3 (y)
+    for(auto& z: Aabxy)
+	z.set(y_bit,false);
+
+    P.unset_pairwise_alignment(bxy);
+    P.unset_pairwise_alignment(bya);
+    P.unset_pairwise_alignment(byb);
+
+    return Aabxy;
+}
+
+tuple<int,int,int,vector<vector<HMM::bitmask_t>>>
+get_3way_alignments(const Parameters& P,  const tree_edge& b_subtree, const tree_edge& b_target)
+{
+    int a = b_target.node1; // bit 0
+    int b = b_target.node2; // bit 1
+    int x = b_subtree.node1; // bit 2
+    int y = b_subtree.node2; // bit 3
+
+    vector<vector<HMM::bitmask_t>> As(P.n_data_partitions());
+    for(int i=0;i<P.n_data_partitions();i++)
+	As[i] = get_3way_alignment(P.get_data_partition(i), a, b, x, y);
+    return {a, b, x, As};
+}
+
+void set_3way_alignment(data_partition P, int bxy, int bya, int byb, vector<HMM::bitmask_t> alignment)
+{
+    constexpr int a_bit = 0;
+    constexpr int b_bit = 1;
+    constexpr int x_bit = 2;
+    constexpr int y_bit = 3;
+
+    // compute the alignment for a-y,b-y,y-x being minimally connected
+    for(auto& z: alignment)
+    {
+	int inc=0;
+	if (z.test(a_bit)) inc++;
+	if (z.test(b_bit)) inc++;
+	if (z.test(x_bit)) inc++;
+	if (inc >= 2)
+	    z.set(y_bit,true);
+    }
+
+    P.set_pairwise_alignment(bxy, get_pairwise_alignment_from_bits(alignment, x_bit, y_bit));
+    P.set_pairwise_alignment(bya, get_pairwise_alignment_from_bits(alignment, y_bit, a_bit));
+    P.set_pairwise_alignment(byb, get_pairwise_alignment_from_bits(alignment, y_bit, b_bit));
+}
+
+void set_3way_alignments(Parameters& P, const tree_edge& b_subtree, const tree_edge& b_target, const tuple<int,int,int,vector<vector<HMM::bitmask_t>>>& alignments)
+{
+    using std::get;
+
+    int a = b_target.node1; // bit 0
+    int b = b_target.node2; // bit 1
+    int x = b_subtree.node1; // bit 2
+    int y = b_subtree.node2; // bit 3
+
+    int bxy = P.t().find_branch(x,y);
+    int bya = P.t().find_branch(y,a);
+    int byb = P.t().find_branch(y,b);
+
+    // Orient the target branch to match the 3-way alignment
+    if (get<0>(alignments) == b and get<1>(alignments) == a) std::swap(a,b);
+
+    assert(get<2>(alignments) == x);
+    assert(get<0>(alignments) == a and get<1>(alignments) == b);
+    for(int i=0; i<P.n_data_partitions(); i++)
+	set_3way_alignment(P[i], bxy, bya, byb, get<3>(alignments)[i]);
+}
+
+vector<HMM::bitmask_t>
+move_pruned_subtree(data_partition P, const vector<HMM::bitmask_t>& alignment_prev, int b_ab, int b_bc, int b_bd)
+{
+    constexpr int a_bit = 0;
+    constexpr int b_bit = 1;
+    constexpr int x_bit = 2;
+    constexpr int c_bit = 3;
+    constexpr int d_bit = 4;
+
+    // 1. Construct 5-way alignment of {a,b,c,d,x}
+    auto A_bc = convert_to_bits(P.get_pairwise_alignment(b_bc), b_bit, c_bit);
+    auto A_bd = convert_to_bits(P.get_pairwise_alignment(b_bd), b_bit, d_bit);
+    auto A_abxcd = Glue_A(alignment_prev,Glue_A(A_bc, A_bd));
+
+    // 2. Recompute presence/absence of character in b after moving x from ab to bc
+    for(auto& a: A_abxcd)
+    {
+	int inc=0;
+	if (a.test(0)) inc++;
+	if (a.test(4)) inc++;
+	if (a.test(2) or a.test(3)) inc++;
+	a.set(1, inc > 1);
+    }
+
+    // 3. Modify the pairwise alignments along ab and bd since b has been modified.
+    P.set_pairwise_alignment(b_ab, get_pairwise_alignment_from_bits(A_abxcd, a_bit, b_bit));
+    P.set_pairwise_alignment(b_bd, get_pairwise_alignment_from_bits(A_abxcd, b_bit, d_bit));
+
+    // 4. Return alignment of bc with x.  (0 <- b, 1 <- c, 2 <- x)
+    return remap_bitpath(A_abxcd, {{b_bit,0}, {c_bit,1}, {x_bit,2}});
+}
+
+tuple<int,int,int,vector<vector<HMM::bitmask_t>>>
+move_pruned_subtree(Parameters& P,
+		    const tuple<int,int,int,vector<vector<HMM::bitmask_t>>>& alignments_prev,
+		    const tree_edge& b_subtree, tree_edge b_prev, const tree_edge& b_next, const tree_edge& b_sibling)
+{
+    using std::get;
+    // 1. Rotate b_prev to point toward b_next
+    if (b_prev.node2 != b_next.node1 and b_prev.node2 != b_next.node2) b_prev = b_prev.reverse();
+
+    // 2. Determine if the prev_alignment has its node0 and node1 in the right order.
+    bool flip_prev_A = false;
+    if (get<0>(alignments_prev) != b_prev.node1)
+    {
+	flip_prev_A = true;
+	assert(get<0>(alignments_prev) == b_prev.node2 and get<1>(alignments_prev) == b_prev.node1);
+    }
+    else
+	assert(get<0>(alignments_prev) == b_prev.node1 and get<1>(alignments_prev) == b_prev.node2);
+
+    // 2. Extract branch names from tree
+    int x = b_subtree.node1;
+//    int y = b_subtree.node2;
+
+    int a = b_prev.node1;
+    int b = b_prev.node2;
+
+    assert(b_next.node1 == b);
+    int c = b_next.node2;
+
+    assert(b_sibling.node1 == b);
+    int d = b_sibling.node2;
+
+    int b_ab = P.t().find_branch(a,b);
+    int b_bc = P.t().find_branch(b,c);
+    int b_bd = P.t().find_branch(b,d);
+
+    // 3. Adjust pairwise alignments and construct 3-node alignment for attaching to new edge
+    vector<vector<HMM::bitmask_t>> alignments_next(P.n_data_partitions());
+    for(int i=0; i<P.n_data_partitions(); i++)
+	if (flip_prev_A)
+	    alignments_next[i] = move_pruned_subtree(P[i], remap_bitpath(std::get<3>(alignments_prev)[i],{1,0,2,3,4}), b_ab, b_bc, b_bd);
+	else
+	    alignments_next[i] = move_pruned_subtree(P[i], std::get<3>(alignments_prev)[i], b_ab, b_bc, b_bd);
+
+    return {b, c, x, alignments_next};
 }
 
 /// Compute the probability of pruning b1^t and regraftion at \a locations
