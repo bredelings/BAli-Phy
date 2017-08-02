@@ -1026,38 +1026,38 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     {
 	// Define target branch b2 - pointing away from subtree_edge
 	const auto& BB = I.attachment_branch_pairs[i];
-	const tree_edge& B2 = BB.edge;
+	const tree_edge& next_target_edge = BB.edge;
 
 	int prev_i = BB.prev_i;
-	const tree_edge& Bprev = I.attachment_branch_pairs[prev_i].edge;
+	const tree_edge& prev_target_edge = I.attachment_branch_pairs[prev_i].edge;
 
-	if (prev_i != 0) assert(Bprev.node2 == B2.node1);
+	if (prev_i != 0) assert(prev_target_edge.node2 == next_target_edge.node1);
 	Ps.push_back(Ps[prev_i]);
 	assert(Ps.size() == i+1);
 	auto& p = Ps.back();
-	alignments3way.push_back( move_pruned_subtree(p, alignments3way[prev_i], subtree_edge, Bprev, B2, BB.sibling) );
+	alignments3way.push_back( move_pruned_subtree(p, alignments3way[prev_i], subtree_edge, prev_target_edge, next_target_edge, BB.sibling) );
     }
     for(int i=1;i<I.attachment_branch_pairs.size();i++)
     {
-	const tree_edge& B2 = I.attachment_branch_pairs[i].edge;
+	const tree_edge& next_target_edge = I.attachment_branch_pairs[i].edge;
 	auto& p = Ps[i];
-	double L = p.t().branch_length(p.t().find_branch(B2));
+	double L = p.t().branch_length(p.t().find_branch(next_target_edge));
 
 	// 1. Reconnect the tree
-	p.regraft_subtree(subtree_edge, B2);
+	p.regraft_subtree(subtree_edge, next_target_edge);
 
         // 2. Set branch lengths
 	int n0 = subtree_edge.node2;
-	set_lengths_at_location(p, n0, L, B2, locations);
+	set_lengths_at_location(p, n0, L, next_target_edge, locations);
 
 	// 3. Set pairwise alignments on three branches
-	set_3way_alignments(p, subtree_edge, B2, alignments3way[i]);
+	set_3way_alignments(p, subtree_edge, next_target_edge, alignments3way[i]);
 
 	// 4. Compute likelihood and probability
-	Pr[B2] = p.heated_likelihood() * p.prior_no_alignment();
+	Pr[next_target_edge] = p.heated_likelihood() * p.prior_no_alignment();
 
 #ifdef DEBUG_SPR_ALL
-	Pr.LLL[B2] = p.heated_likelihood();
+	Pr.LLL[next_target_edge] = p.heated_likelihood();
 #endif
     }
 
@@ -1186,33 +1186,33 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
  */
 
 
-bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& B1) 
+bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subtree_edge) 
 {
     const int bins = 6;
 
-    if (P.t().is_leaf_node(B1.node2)) return false;
+    if (P.t().is_leaf_node(subtree_edge.node2)) return false;
 
     // The attachment node for the pruned subtree.
     // This node will move around, but we will always peel up to this node to calculate the likelihood.
-    int root_node = B1.node2;
+    int root_node = subtree_edge.node2;
     // Because the attachment node keeps its name, this will stay in effect throughout the likelihood calculations.
     P.set_root(root_node);
 
     // Compute and cache conditional likelihoods up to the (likelihood) root node.
     P.heated_likelihood();
 
-    spr_attachment_points locations = get_spr_attachment_points(P.t(), B1);
+    spr_attachment_points locations = get_spr_attachment_points(P.t(), subtree_edge);
 
     vector<Parameters> p(2,P);
 
-    spr_info I(P.t(), B1);
+    spr_info I(P.t(), subtree_edge);
 
     // Compute total lengths for each of the possible attachment branches
     vector<double> L = I.attachment_branch_lengths();
 
     if (I.n_attachment_branches() == 1) return false;
 
-    spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], B1, locations);
+    spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], subtree_edge, locations);
 
     vector<log_double_t> Pr = I.convert_to_vector(PrB);
 #ifdef DEBUG_SPR_ALL
@@ -1249,7 +1249,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& B1)
 	}
 	std::reverse(indices.begin(), indices.end());
 	for(int i: indices)
-	    SPR_at_location(p[1], B1, I.attachment_branch_pairs[i].edge, locations, true);
+	    SPR_at_location(p[1], subtree_edge, I.attachment_branch_pairs[i].edge, locations, true);
     }
 
     // enforce tree constraints
@@ -1291,8 +1291,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& B1)
     }
 
 
-    MCMC::Result result = SPR_stats(p[0].t(), p[1].t(), accepted, bins, B1);
-    double L_effective = effective_length(P.t(), B1);
+    MCMC::Result result = SPR_stats(p[0].t(), p[1].t(), accepted, bins, subtree_edge);
+    double L_effective = effective_length(P.t(), subtree_edge);
     SPR_inc(Stats, result, "SPR (all)", L_effective);
 
     return ((C != 0) and accepted);
