@@ -998,10 +998,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     // Because the attachment node keeps its name, this will stay in effect throughout the likelihood calculations.
     P.set_root(root_node);
 
-    // Compute and cache conditional likelihoods up to the (likelihood) root node.
-    // FIXME - do we need this?
-    P.heated_likelihood();
-
     spr_info I(P.t(), subtree_edge);
 
     if (I.n_attachment_branches() == 1) return spr_attachment_probabilities();
@@ -1037,7 +1033,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	auto& p = Ps.back();
 	alignments3way.push_back( move_pruned_subtree(p, alignments3way[prev_i], subtree_edge, prev_target_edge, next_target_edge, BB.sibling) );
     }
-    for(int i=1;i<I.attachment_branch_pairs.size();i++)
+    for(int i=(int)I.attachment_branch_pairs.size()-1;i>0;i--)
     {
 	const tree_edge& next_target_edge = I.attachment_branch_pairs[i].edge;
 	auto& p = Ps[i];
@@ -1059,6 +1055,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 #ifdef DEBUG_SPR_ALL
 	Pr.LLL[next_target_edge] = p.heated_likelihood();
 #endif
+	Ps.pop_back();
     }
 
 #ifndef NDEBUG
