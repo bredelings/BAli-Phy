@@ -767,8 +767,8 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b)
     assert(child_branches.size() == 2);
 
     int B1 = child_branches[0];
-    //  int B2 = child_branches[1];
-    B0 = tree_edge(T.target(child_branches[0]), T.target(child_branches[1]));
+    int B2 = child_branches[1];
+    B0 = tree_edge(T.target(B1), T.target(B2));
 
     /*----------- get the list of possible attachment points, with [0] being the current one.------- */
     // \todo - With tree constraints, or with a variable alignment and alignment constraints,
