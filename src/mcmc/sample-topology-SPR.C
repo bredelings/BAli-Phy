@@ -1094,6 +1094,9 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
 	SPR_at_location(p, B1, B2, locations);
 
 	Pr[B2] = p.heated_likelihood() * p.prior_no_alignment();
+	auto diff = Pr2[B2].log() - Pr[B2].log();
+	std::cerr<<"i = "<<i<<"     diff Pr = "<<diff<<std::endl;
+	assert(std::abs(diff) < 1.0e-9);
 #ifdef DEBUG_SPR_ALL
 	Pr.LLL[B2] = p.heated_likelihood();
 	auto diff = Pr2.LLL[B2].log() - Pr.LLL[B2].log();
@@ -1111,7 +1114,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters P, const tr
     std::cerr<<"total_peels1 = "<<peels2 - peels1<<std::endl;
 #endif
 
-    return Pr;
+    return Pr2;
 }
 
 /// This just computes nodes and calls sample_tri_multi
