@@ -289,12 +289,30 @@ int data_partition::seqlength(int n) const
     return l;
 }
 
+bool data_partition::pairwise_alignment_is_unset(int b) const
+{
+    auto E = get_pairwise_alignment_(b);
+    return E.is_int();
+}
+
+void data_partition::unset_pairwise_alignment(int b)
+{
+    assert(has_IModel() or likelihood_calculator() == 0);
+    int B = t().reverse(b);
+    assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
+
+    const context* C = P;
+    const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[b], 0);
+    const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[B], 0);
+    assert(pairwise_alignment_is_unset(b));
+}
+
 /// Set the pairwise alignment value, but don't mark the alignment & sequence lengths as changed.
 void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi)
 {
     assert(has_IModel() or likelihood_calculator() == 0);
     int B = t().reverse(b);
-    assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
+    assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
     const context* C = P;
     const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[b], new pairwise_alignment_t(pi));
     const_cast<context*>(C)->set_parameter_value(DPC().pairwise_alignment_for_branch[B], new pairwise_alignment_t(pi.flipped()));

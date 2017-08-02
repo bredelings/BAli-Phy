@@ -156,6 +156,10 @@ public:
 
     void set_pairwise_alignment(int b, const pairwise_alignment_t&);
 
+    void unset_pairwise_alignment(int b);
+
+    bool pairwise_alignment_is_unset(int b) const;
+
     const matrix<int>& alignment_constraint() const;
 
     void set_alignment(const alignment&);
