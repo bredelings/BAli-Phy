@@ -29,6 +29,7 @@
 #include "imodel/imodel.H"
 
 using std::vector;
+using std::pair;
 
 //      if (silent_network(S2))
 //	Pr += Q(S1,S2);
@@ -80,6 +81,24 @@ HMM::bitmask_t remap_bits(HMM::bitmask_t bits, const vector<int>& mapping)
 
 //FIXME - Should be more general - this couldn't (for example) remap {0,1} to {5,6}
 vector<HMM::bitmask_t> remap_bitpath(const vector<HMM::bitmask_t>& path, const vector<int>& mapping)
+{
+    vector<HMM::bitmask_t> path2 = path;
+    for(auto& mask: path2)
+	mask = remap_bits(mask,mapping);
+    return path2;
+}
+
+HMM::bitmask_t remap_bits(HMM::bitmask_t bits, const vector<pair<int,int>>& mapping)
+{
+    HMM::bitmask_t mask;
+
+    for(const auto& x: mapping)
+	mask.set(x.second, bits.test(x.first));
+
+    return mask;
+}
+
+vector<HMM::bitmask_t> remap_bitpath(const vector<HMM::bitmask_t>& path, const vector<pair<int,int>>& mapping)
 {
     vector<HMM::bitmask_t> path2 = path;
     for(auto& mask: path2)

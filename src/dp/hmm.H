@@ -28,9 +28,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 #include <bitset>
+#include <utility>
 #include "math/log-double.H"
 #include "matrix.H"
-
 
 // Can I make Q into a general function, backed by a matrix in some cases?
 
@@ -105,6 +105,10 @@ int bitslength(const std::vector<HMM::bitmask_t>& bits, HMM::bitmask_t m);
 HMM::bitmask_t remap_bits(HMM::bitmask_t bits1, const std::vector<int>& mapping);
 
 std::vector<HMM::bitmask_t> remap_bitpath(const std::vector<HMM::bitmask_t>& path, const std::vector<int>& mapping);
+
+HMM::bitmask_t remap_bits(HMM::bitmask_t bits1, const std::vector<std::pair<int,int>>& mapping);
+
+std::vector<HMM::bitmask_t> remap_bitpath(const std::vector<HMM::bitmask_t>& path, const std::vector<std::pair<int,int>>& mapping);
 
 std::vector<HMM::bitmask_t> remove_silent(const std::vector<HMM::bitmask_t>& bits, HMM::bitmask_t m);
 
