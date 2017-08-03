@@ -99,8 +99,8 @@ public:
 
 bool operator==(const pairwise_alignment_t&, const pairwise_alignment_t&);
 
-std::bitset<64> convert_to_bits(int, int, int);
-std::vector<std::bitset<64>> convert_to_bits(const pairwise_alignment_t&, int, int );
+std::bitset<8> convert_to_bits(int, int, int);
+std::vector<std::bitset<8>> convert_to_bits(const pairwise_alignment_t&, int, int );
 
 matrix<int> construct(const TreeInterface& t, const std::vector<pairwise_alignment_t>& A);
 

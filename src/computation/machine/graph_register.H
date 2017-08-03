@@ -28,7 +28,7 @@ struct Step
     boost::container::small_vector< std::pair<int,CacheList<int>::iterator>, 2 > used_inputs;
     CacheList<int> created_regs;
 
-    std::bitset<64> flags;
+    std::bitset<8> flags;
 
     void clear();
 
@@ -61,7 +61,7 @@ struct Result
     /// Which reduction values made use of the value of this expression (via call)
     CacheList<int> called_by;
 
-    std::bitset<64> flags;
+    std::bitset<8> flags;
 
     void clear();
 

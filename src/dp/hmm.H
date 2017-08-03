@@ -39,7 +39,7 @@ namespace indel { class PairHMM; }
 /// A Hidden Markov Model - represented by the transition matrix and accessory functions
 class HMM {
 public:
-  typedef std::bitset<64> bitmask_t;
+  typedef std::bitset<8> bitmask_t;
 
   /// bitmasks of whether states emit features in each sequence
   std::vector<bitmask_t> state_emit;
