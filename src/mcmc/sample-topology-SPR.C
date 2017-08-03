@@ -854,7 +854,7 @@ get_3way_alignments(const Parameters& P,  const tree_edge& b_subtree, const tree
     vector<vector<HMM::bitmask_t>> As(P.n_data_partitions());
     for(int i=0;i<P.n_data_partitions();i++)
 	As[i] = get_3way_alignment(P.get_data_partition(i), a, b, x, y);
-    return {a, b, x, As};
+    return tuple<int,int,int,vector<vector<HMM::bitmask_t>>>{a, b, x, As};
 }
 
 void set_3way_alignment(data_partition P, int bxy, int bya, int byb, vector<HMM::bitmask_t> alignment)
@@ -978,7 +978,7 @@ move_pruned_subtree(Parameters& P,
 	else
 	    alignments_next[i] = move_pruned_subtree(P[i], std::get<3>(alignments_prev)[i], b_ab, b_bc, b_bd);
 
-    return {b, c, x, alignments_next};
+    return tuple<int,int,int,vector<vector<HMM::bitmask_t>>>{b, c, x, alignments_next};
 }
 
 /// Compute the probability of pruning b1^t and regraftion at \a locations
