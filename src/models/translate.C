@@ -97,6 +97,7 @@ set<string> find_rule_type_vars(const ptree& rule)
 Rule substitute_in_rule_types(const map<string,term_t>& renaming, Rule rule)
 {
     substitute(renaming, rule.get_child("result_type") );
+    substitute(renaming, rule.get_child("constraints") );
     for(auto& x: rule.get_child("args"))
     {
 	ptree& arg_type = x.second.get_child("arg_type");
@@ -108,6 +109,7 @@ Rule substitute_in_rule_types(const map<string,term_t>& renaming, Rule rule)
 Rule substitute_in_rule_types(const equations& renaming, Rule rule)
 {
     substitute(renaming, rule.get_child("result_type") );
+    substitute(renaming, rule.get_child("constraints") );
     for(auto& x: rule.get_child("args"))
     {
 	ptree& arg_type = x.second.get_child("arg_type");
