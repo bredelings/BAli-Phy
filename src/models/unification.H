@@ -9,12 +9,19 @@
 
 typedef boost::property_tree::ptree term_t;
 
+
+template<> struct std::less<term_t> {
+    bool operator()(const term_t& a, const term_t& b) const;
+};
+
 class equations
 {
     bool valid = true;
 
     // Use a list here so that we can modify the list without invalidating iterators.
     std::list<std::pair<std::set<std::string>,boost::optional<term_t>>> values;
+
+    std::set<term_t> constraints;
 
     bool has_record(const std::string& x) const;
 
@@ -33,6 +40,8 @@ public:
     bool unify(const term_t& T, const term_t& U);
 
     const std::list<std::pair<std::set<std::string>,boost::optional<term_t>>>& get_values() const;
+
+    const std::set<term_t>& get_constraints() const;
 
     void eliminate_variable(const std::string&);
 

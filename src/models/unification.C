@@ -66,6 +66,11 @@ const list<pair<set<string>,optional<term_t>>>& equations::get_values() const
     return values;
 }
 
+const set<term_t>& equations::get_constraints() const
+{
+    return constraints;
+}
+
 list<pair<set<string>,optional<term_t>>>::const_iterator equations::find_record(const std::string& x) const
 {
     for(auto it = values.begin(); it != values.end(); it++)
@@ -155,19 +160,43 @@ optional<term_t> equations::value_of_var(const string& x) const
 	return boost::none;
 }
 
+bool compare(const ptree& a, const ptree& b)
+{
+    if (a.get_value<string>() < b.get_value<string>()) return true;
+    if (a.get_value<string>() > b.get_value<string>()) return false;
+
+    if (a.size() < b.size()) return true;
+    if (a.size() > b.size()) return false;
+
+    for(auto it1 = a.begin(), it2 = b.begin();it1 != a.end(); it1++, it2++)
+    {
+	if (it1->first < it2-> first) return true;
+	if (it1->first > it2-> first) return false;
+
+	if (compare(it1->second,it2->second)) return true;
+	if (compare(it2->second,it1->second)) return false;
+    }
+
+    return false;
+}
+
+bool std::less<term_t>::operator()(const term_t& a, const term_t& b) const
+{
+    return compare(a,b);
+}
 
 void equations::eliminate_variable(const string& x)
 {
     if (not has_record(x)) return;
 
-    // find the record
+    // 1. find the record
     auto xrec = find_record(x);
     auto value = xrec->second;
 
-    // remove x from the record
+    // 2. remove x from the record
     xrec->first.erase(x);
 
-
+    // 3. Determine the substitution
     map<string,term_t>  S;
     // substitute the term if there is one
     if (value)
@@ -181,14 +210,24 @@ void equations::eliminate_variable(const string& x)
 	S = {{x,term_t(y)}};
     }
 
-    // remove the equation if it has no variables, or 1 variable and no term.
+    // 4. remove the equation if it has no variables, or 1 variable and no term.
     if (xrec->first.empty() or (xrec->first.size() == 1 and not xrec->second))
 	values.erase(xrec);
 
-    // replace occurrences of x with the equivalent term or variable
+    // 5. Apply the substitution to the equations.
     for(auto& equation: values)
 	if (equation.second)
 	    substitute(S, *equation.second);
+
+    // 6. Apply the substitution to the constraints.
+    set<term_t> new_constraints;
+    for(auto& constraint: constraints)
+    {
+	auto new_constraint = constraint;
+	substitute(S, new_constraint);
+	new_constraints.insert(new_constraint);
+    }
+    std::swap(constraints, new_constraints);
 
     // Check invariant that we have either a term or >1 variable (#variables + #term >= 2)
 #ifndef NDEBUG
@@ -207,6 +246,8 @@ void equations::eliminate_except(const set<string>& keep)
 
 set<string> equations::referenced_vars() const
 {
+    // NOTE: maybe scan constraints, or make sure that constraints only mention these.
+
     set<string> vars;
     for(auto& v: values)
     {
