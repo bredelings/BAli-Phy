@@ -607,35 +607,33 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     {
 	auto edges = edges_connecting_to_node(T,n);
 	vector<maybe_parameter> p_node;
-	expression_ref node;
+	vector<expression_ref> node;
     
 	if (T.node(n).is_leaf_node())
 	{
 	    if (edges.empty())
 	    {
-		node = List();
 		p_node = { };  
 	    }
 	    else
 	    {
-		node = List(edges.front());
+		node.push_back(edges.front());
 		p_node = { {-1,n} };
 	    }
 	}
 	else
 	{
-	    node = List();
 	    for(int i=0;i<edges.size();i++)
 	    {
 		const auto& edge = edges[i];
 		string name = "*MyTree.nodeBranches"+convertToString(n) + "." + convertToString(i);
 		p_node.push_back( p->add_modifiable_parameter_with_value(name,edge) );
-		node  = parameter(name) & node;
+		node.push_back( parameter(name) );
 	    }
 	}
     
 	parameters_for_tree_node.push_back ( p_node );
-	node_branches.push_back( node );
+	node_branches.push_back( get_list(node) );
     }
     expression_ref node_branches_array = (dummy("Prelude.listArray'"),get_list(node_branches));
 
