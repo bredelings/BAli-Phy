@@ -35,7 +35,9 @@ public:
     std::vector<int> all_branches_after_inclusive(int b) const;
     std::vector<int> all_branches_from_node(int n) const;
     std::vector<int> all_branches_toward_node(int n) const;
+
     int source(int b) const;
+    int source_index(int b) const;
     int target(int b) const;
     int reverse(int b) const;
   

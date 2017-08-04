@@ -644,11 +644,17 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     {
 	expression_ref source = T.directed_branch(b).source().name();
 	maybe_parameter p_source = {-1,T.directed_branch(b).source().name()};
+	expression_ref source_index = 0;
+	maybe_parameter p_source_index = {-1,0};
 	if (not T.directed_branch(b).source().is_leaf_node())
 	{
 	    string name_source = "*MyTree.branch"+convertToString(b)+"source"; 
-	    p_source = p->add_modifiable_parameter_with_value(name_source,source);
+	    p_source = p->add_modifiable_parameter_with_value(name_source, source);
 	    source = parameter(name_source);
+
+	    string name_source_index = "*MyTree.branch"+convertToString(b)+"source_index"; 
+	    p_source_index = p->add_modifiable_parameter_with_value(name_source_index, source_index);
+	    source_index = parameter(name_source_index);
 	}
 
 	expression_ref target = T.directed_branch(b).target().name();
@@ -661,8 +667,8 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 	}
 
 	int reverse_branch = T.directed_branch(b).reverse();
-	parameters_for_tree_branch.push_back( {p_source,p_target} );
-	branch_nodes.push_back( Tuple(source, target, reverse_branch) );
+	parameters_for_tree_branch.push_back( {p_source, p_source_index, p_target} );
+	branch_nodes.push_back( Tuple(source, source_index, target, reverse_branch) );
     }
     expression_ref branch_nodes_array = (dummy("Prelude.listArray'"),get_list(branch_nodes));
 
@@ -1022,10 +1028,11 @@ void Parameters::NNI(int b1, int b2, bool allow_disconnect_subtree)
 
 void Parameters::show_h_tree() const
 {
+    using std::get;
     for(int b=0; b < 2*t().n_branches(); b++)
     {
-	auto source = TC->parameters_for_tree_branch[b].first.get_value(this);
-	auto target = TC->parameters_for_tree_branch[b].second.get_value(this);
+	auto source = get<0>(TC->parameters_for_tree_branch[b]).get_value(this);
+	auto target = get<2>(TC->parameters_for_tree_branch[b]).get_value(this);
 	std::cerr<<"branch "<<b<<": ("<<source<<","<<target<<")     "<<t().branch_length(b)<<"\n";
     }
 }

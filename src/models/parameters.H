@@ -227,7 +227,7 @@ struct tree_constants: public Object
     // The tree
     int tree_head = -1;
     std::vector<std::vector<maybe_parameter>> parameters_for_tree_node;
-    std::vector<std::pair<maybe_parameter,maybe_parameter>> parameters_for_tree_branch;
+    std::vector<std::tuple<maybe_parameter,maybe_parameter,maybe_parameter>> parameters_for_tree_branch;
 
     std::vector<int> branch_length_parameters;
 
