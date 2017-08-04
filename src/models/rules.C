@@ -476,8 +476,10 @@ ptree convert_rule(const vector<vector<string>>& s)
     if (contains_char(attributes, 'G')) rule.put("generate_function", "true");
     if (contains_char(attributes, 'N')) rule.put("no_log", "true");
 
+    ptree constraints;
     if (s[0].size() >= 4)
-	rule.push_back({"Constraints", parse_constraints(s[0][3])});
+	constraints = parse_constraints(s[0][3]);
+    rule.push_back({"constraints", constraints});
 
     // Add the call
     rule.push_back({"call", parse_type(s[1][0])});
