@@ -13,7 +13,7 @@ reverseEdge t b = case (nodesForEdge t b) of {(_,_,_,r)->r};
 edgeForNodes t (n1,n2) = head [b | b <- (edgesOutOfNode t n1), (targetNode t b)==n2];
 nodeDegree t n = length (edgesOutOfNode t n);
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n);
-edgesBeforeEdge t b = map (reverseEdge t) $ filter (/=b) $ edgesOutOfNode t (sourceNode t b);
+edgesBeforeEdge t b = case (nodesForEdge t b) of {(source,index,_,_) -> map (reverseEdge t) $ remove_element index $ edgesOutOfNode t source};
                                                                                                                      
 is_leaf_node t n = (nodeDegree t n == 1);
 is_internal_node t n = not $ is_leaf_node t n;
@@ -21,4 +21,8 @@ is_internal_node t n = not $ is_leaf_node t n;
 nodes t = [0..numNodes t - 1];
 leaf_nodes t = filter (is_leaf_node t) (nodes t);
 internal_nodes t = filter (is_internal_node t) (nodes t);
+
+remove_element _ []     = [];
+remove_element 0 (x:xs) = xs;
+remove_element i (x:xs) = x:(remove_element (i-1) xs);
 }
