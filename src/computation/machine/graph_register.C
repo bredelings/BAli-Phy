@@ -1370,16 +1370,6 @@ reg_heap::reg_heap(const std::shared_ptr<module_loader>& L)
      prog_results(1),
      prog_temp(1)
 { 
-    //  results.collect_garbage = [this](){collect_garbage();};
-    steps.collect_garbage = [](){};
-    results.collect_garbage = [](){};
-
-#ifndef NDEBUG
-    steps.clear_references = [this](int s){check_back_edges_cleared_for_step(s);};
-    results.clear_references = [this](int rc){check_back_edges_cleared_for_step(rc);};
-#endif
-    steps.clear_references = [this](int){};
-    results.clear_references = [this](int){};
 }
 
 void reg_heap::release_scratch_list() const

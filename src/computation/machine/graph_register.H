@@ -137,13 +137,13 @@ public:
 // * well, parameters could be reg's, so that a separate reg must be a separate parameter.
 // * how, then, do we handle reg NAME's, if reg's are not uniquely identified by their names?
 
-class reg_heap: public Object, public checked_pool<reg>
+class reg_heap: public Object, public pool<reg>
 {
-    typedef checked_pool<reg> base_pool_t;
+    typedef pool<reg> base_pool_t;
 
-    mutable checked_pool_callback<Step> steps;
+    mutable pool<Step> steps;
 
-    mutable checked_pool_callback<Result> results;
+    mutable pool<Result> results;
 
     mutable int n_active_scratch_lists = 0;
     mutable std::vector< object_ptr<Vector<int> > > scratch_lists;
