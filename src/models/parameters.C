@@ -665,7 +665,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 	}
 
 	int reverse_branch = T.directed_branch(b).reverse();
-	parameters_for_tree_branch.push_back( {p_source, p_source_index, p_target} );
+	parameters_for_tree_branch.push_back( std::tuple<maybe_parameter, maybe_parameter, maybe_parameter>{p_source, p_source_index, p_target} );
 	branch_nodes.push_back( Tuple(source, source_index, target, reverse_branch) );
     }
     expression_ref branch_nodes_array = (dummy("Prelude.listArray'"),get_list(branch_nodes));
