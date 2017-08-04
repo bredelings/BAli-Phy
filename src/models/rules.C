@@ -103,10 +103,10 @@ using boost::property_tree::ptree;
 const vector< vector<vector<string>> > all_default_arguments = 
 {
     // What we want here is Num a => a -> a -> a
-    {{"Int.Add", "Int", "GN"}, {"Prelude.+[x,y]"}, {"x", "Int"}, {"y", "Int"}},
-    {{"Int.Sub", "Int", "GN"}, {"Prelude.-[x,y]"}, {"x", "Int"}, {"y", "Int"}},
-    {{"Int.Mul", "Int", "GN"}, {"Prelude.*[x,y]"}, {"x", "Int"}, {"y", "Int"}},
-    {{"Int.Div", "Int", "GN"}, {"Prelude./[x,y]"}, {"x", "Int"}, {"y", "Int"}},
+    {{"Add", "a", "GN", "Num[a]"}, {"Prelude.+[x,y]"}, {"x", "a"}, {"y", "a"}},
+    {{"Sub", "a", "GN", "Num[a]"}, {"Prelude.-[x,y]"}, {"x", "a"}, {"y", "a"}},
+    {{"Mul", "a", "GN", "Num[a]"}, {"Prelude.*[x,y]"}, {"x", "a"}, {"y", "a"}},
+    {{"Div", "a", "GN", "Num[a]"}, {"Prelude./[x,y]"}, {"x", "a"}, {"y", "a"}},
     {{"log", "Double", "GN"}, {"Prelude.log[x]"}, {"x", "Double"}},
     {{"exp", "Double", "GN"}, {"Prelude.exp[x]"}, {"x", "Double"}},
     {{"Sample", "a"}, {"Prelude.performAction[x]"}, {"x", "Distribution[a]"}},
