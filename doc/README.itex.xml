@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "3.0b1"         >
+<!ENTITY  version        "3.0-beta2"         >
 
 <!ENTITY  source.file    "bali-phy-&version;.tar.gz"         >
 <!ENTITY  linux64.file   "bali-phy-&version;-linux64.tar.gz"         >
@@ -7,11 +7,11 @@
 <!ENTITY  win64.file     "bali-phy-&version;-win64.tar.gz"         >
 <!ENTITY  mac64.file     "bali-phy-&version;-mac64.tar.gz"         >
 
-<!ENTITY  source.url     "http://www.bali-phy.org/&source.file;"         >
-<!ENTITY  linux64.url     "http://www.bali-phy.org/&linux64.file;"         >
-<!ENTITY  win32.url     "http://www.bali-phy.org/&win32.file;"         >
-<!ENTITY  win64.url     "http://www.bali-phy.org/&win64.file;"         >
-<!ENTITY  mac64.url     "http://www.bali-phy.org/&mac64.file;"         >
+<!ENTITY  source.url     "http://www.bali-phy.org/files/&source.file;"         >
+<!ENTITY  linux64.url     "http://www.bali-phy.org/files/&linux64.file;"         >
+<!ENTITY  win32.url     "http://www.bali-phy.org/files/&win32.file;"         >
+<!ENTITY  win64.url     "http://www.bali-phy.org/files/&win64.file;"         >
+<!ENTITY  mac64.url     "http://www.bali-phy.org/files/&mac64.file;"         >
 
 <!ENTITY  install.prefix     "~/Applications"         >
 <!ENTITY  install.path     "&install.prefix;/bali-phy-&version;"         >
@@ -57,7 +57,7 @@
   <section xml:id="installation"><info><title>Installation</title></info>
 
   <para>You can install BAli-Phy by downloading compiled executables from the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/download.php">website</link>.</para>
-  <para>On OS X, you can also install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 7 (or higher) compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
+  <para>On OS X, you can also install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 7 (or higher) compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.  However, the recipe may not install the latest version.</para>
   <section xml:id="pre-requisites"><info><title>Hardware requirements</title></info>
     
     <para>We recommend running BAli-Phy on a computing cluster for long runs.
@@ -69,8 +69,8 @@
     viewing.</para> 
 
     <para>
-      We typically run <application>BAli-Phy</application> on Core2
-      processors with 8Gb of RAM.  You may need a 64-bit executable and a 64-bit
+      We typically run <application>BAli-Phy</application> on computers with 8Gb of RAM.
+      You may need a 64-bit executable and a 64-bit
       version of your operating system to be able to analyze large data sets that
       consume more that 2Gb of RAM.
     </para>
@@ -118,7 +118,7 @@ While running the Cygwin installer
     </section>
 
     <section><info><title>Mac OS X requirements</title></info>
-    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 7 (or higher) compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
+    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 7 (or higher) compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.  However, the recipe may not install the latest version.</para>
     </section>
 
     <section><info><title>Linux requirements</title></info>
@@ -301,7 +301,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 
     <section xml:id="tests"><info><title>Testing the installed software</title></info>
     <para>In order to determine that the software has been correctly installed, and the <envar>PATH</envar> has been correctly set, run the following commands:
-<screen><prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=150</userinput>
+<screen><prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/5S-rRNA/5d.fasta --iter=150</userinput>
 <prompt>%</prompt> <userinput>bp-analyze.pl 5d-1/</userinput></screen>
     </para>
     <para>Furthermore, the directory <filename>5d-1</filename> should contain a file called <filename>C1.log</filename>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</para>
@@ -319,9 +319,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
       is intended to be a relatively painless process.
     </para>
 
-    <para>If you are compiling "live" source
-      code that you checked out using GIT (and you probably
-      aren't) then you need to follow the directions in <xref linkend="gitsource"/> before you start compiling.
+    <para>If you are compiling "live" source code that you checked out using GIT, then you need to follow the directions in <xref linkend="gitsource"/> before you start compiling.
     </para>
 
     <section><info><title>Software requirements</title></info>
@@ -336,10 +334,9 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
     </section>
 
     <section><info><title>Compilers: Mac</title></info>
-    <para>On Mac OS X, the simplest method is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or newer).  Then you can use the default compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link>).
-    </para>
+    <para>On Mac OS X, the simplest method is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or newer).  Then you can use the default compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link>). </para>
     
-    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.</para>
+    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>. However, this recipe may not install the latest version.</para>
 
     </section>
     
@@ -548,7 +545,7 @@ You can fix the alignment and ignore insertion/deletion information in one parti
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --imodel 1:RS07 --imodel 2:none</userinput></screen>
 You can also specify that two partitions share a single copy of a single substitution model or indel model.  This reduces the number of parameters and also pools information between the partitions:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1,2:TN --imodel 1,2:RS07</userinput></screen>
-By default each partition has a separate scale, but you can force groups of partitions to share a scale. If you levae the value of the scale blank, the default distribution on scales will be used:
+By default each partition has a separate scale, but you can force groups of partitions to share a scale. If you leave the value of the scale blank, the default distribution on scales will be used:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --scale 1,2:</userinput></screen>
 Finally, you may specify <userinput>-Inone</userinput> or <userinput>--imodel none</userinput>, which affects all partitions:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR -t</userinput></screen>
@@ -615,10 +612,10 @@ Finally, you may specify <userinput>-Inone</userinput> or <userinput>--imodel no
 	  For example, consider the following
 	  option file:
 	  <programlisting>#select a data set to analyze
-align = examples/EF-Tu/5d.fasta
+align = examples/sequences/EF-Tu/5d.fasta
 
 #select an substitution model
-smodel = log-normal_inv
+smodel = LG+log_normal_rates+INV
 
 #fix the alignment and do not model indels
 imodel = none
@@ -627,7 +624,7 @@ imodel = none
 	  the sequence file, which has no name on the command line.
 	  Lines that begin with # are comments, and blank lines are
 	  ignored.
-	  <screen><prompt>%</prompt> <userinput>bali-phy examples/EF-Tu/5d.fasta --smodel log-normal_inv --imodel none</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>bali-phy examples/sequences/EF-Tu/5d.fasta --smodel LG+log_normal_rates+INV --imodel none</userinput></screen>
 	</para>
       </section>
 
@@ -647,12 +644,12 @@ imodel = none
     
     <para>Here are some examples which demonstrate how to run
       <application>BAli-Phy</application>.  In order to run these
-      examples, you must find the <filename>examples/</filename>
+      examples, you must find the <filename>examples/sequences/</filename>
       directory which contains the example files.  If you downloaded
       executables and extracted them in the
       <filename>&install.prefix;</filename> directory, then the
-      <filename>examples/</filename> directory will be found at 
-      <filename>&install.path;/share/bali-phy/examples/</filename>.
+      <filename>examples/sequences/</filename> directory will be found at 
+      <filename>&install.path;/share/bali-phy/examples/sequences/</filename>.
     </para>
 
     <para>Also note that <command>bali-phy</command>
@@ -667,7 +664,7 @@ imodel = none
       
       <para>Here we analyze the EF-Tu 5-taxon data set provided with
 	the software.</para>
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/EF-Tu/5d.fasta</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/EF-Tu/5d.fasta</userinput></screen>
     </example>
 
     <example><info><title>Multiple-Rate Substitution Model</title></info>
@@ -677,18 +674,16 @@ imodel = none
 	invariant sites.  The amount of rate variation and the fraction of
 	invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal_inv</userinput></screen></example>
+      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel LG+log_normal_rates+INV</userinput></screen></example>
 
     <example><info><title>Fixed alignment</title></info>
       
       <para>Here we use the 5S rRNA 5-taxon data set provided with
 	the software.  The alignment is fixed and the <userinput>-Inone</userinput>
-	option is used, making indels non-informative.  In addition,
-	nucleotide frequencies are fixed to empirical values estimated
-	from the input sequences. 
+	option is used, making indels non-informative.
       </para> 
 
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant -Inone</userinput></screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/5S-rRNA/25-muscle.fasta -Inone</userinput></screen>
 
     </example>
   </section>
@@ -720,7 +715,9 @@ imodel = none
 	sets. We recommend a conservative starting point with few taxa
 	and short sequence lengths.  You can then increase the size of
 	your data set until a balance between speed and size is
-	reached.</para> 
+	reached.  The tool <application>alignment-thin</application> described
+        in <xref linkend="alignment-utilities"/> can be used to construct a smaller
+        data set.</para> 
 
       <para>The number of samples that you need depends on whether you
 	are primarily interested in obtaining a point estimate or in
@@ -941,9 +938,9 @@ imodel = none
 	</varlistentry>
 
 	<varlistentry>
-	  <term>|T|</term>
+	  <term>Scale<replaceable>n</replaceable>&nbsp;*&nbsp;|T|</term>
 	  <listitem>
-	    <para>For a single-partition analysis, the sum of branch lengths.  For a multi-partition analysis, a weighted average of this sum across partitions.</para>
+	    <para>The branch lengths for partition group <replaceable>n</replaceable>.</para>
 	  </listitem>
 	</varlistentry>
 
@@ -956,9 +953,9 @@ imodel = none
 
       <variablelist>
 	<varlistentry>
-	  <term>mu<replaceable>n</replaceable></term>
+	  <term>Scale<replaceable>n</replaceable></term>
 	  <listitem>
-	    <para>The average number of substitutions per branch.  The <replaceable>n</replaceable>th scale parameter ordinarily applies to the <replaceable>n</replaceable>th partition, unless multiple partitions are forced to have the same branch lengths using <userinput>--same-scale</userinput>.</para>
+	    <para>The average number of substitutions per branch in partition group <replaceable>n</replaceable>.  This ordinarily applies to the <replaceable>n</replaceable>th partition, unless multiple partitions are forced to have the same branch length scale using <userinput>--scale</userinput>.</para>
 	  </listitem>
 	</varlistentry>
 
@@ -1455,26 +1452,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 	    <row>
 	      <entry>
-		<para><userinput>F=constant</userinput></para>
-		<para>Whelan and Goldman (2001)</para>
-		<para>Frequencies fixed to simple estimates.</para>
-	      </entry>
-	      <entry>any</entry>
-	      <entry>
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		<para><userinput>F=uniform</userinput></para>
-		<para>Whelan and Goldman (2001)</para>
-		<para>All letters have equal frequencies.</para>
-	      </entry>
-	      <entry>any</entry>
-	      <entry>
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
 		<para><userinput>F61</userinput></para>
 		<para>Synonym of F for codon models</para>
 	      </entry>
@@ -1589,7 +1566,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <para>
       Complex substitution models in <application>BAli-Phy</application>
       are constructed as mixtures of reversible CTMC models (see <xref linkend="subst_basic"/>) that run at different rates (e.g. $\Gamma_4+INV$)
-      or have different parameters (e.g. an M2 codon model).
+      or have different parameters (e.g. an M2a codon model).
     </para>
 
       <table frame="none" rowsep="1" class="abc"><info><title>CTMC Mixture Models</title></info>
@@ -1601,18 +1578,6 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>Parameters</entry>
 	  </row></thead>
 	  <tbody>
-
-	    <row>
-	      <entry>
-		<para><userinput><replaceable>model</replaceable> + INV</userinput></para>
-	      </entry>
-	      <entry><replaceable>model</replaceable> alphabet</entry>
-	      <entry>
-		<variablelist>
-		  <varlistentry> <term>pInv</term> <listitem> <para>Fraction of invariant sites.</para> </listitem> </varlistentry>
-		</variablelist>
-	      </entry>
-	    </row>
 
 	    <row>
 	      <entry>
@@ -1632,25 +1597,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>model</replaceable> + GammaRates + INV</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + GammaRates[4] + INV</userinput> (default)</para>
-		<para>Yang (1994)</para>
-	      </entry>
-	      <entry><replaceable>model</replaceable> alphabet</entry>
-	      <entry>
-		<variablelist>
-		  <varlistentry> <term>sigmaOverMu</term> <listitem> <para>noise to signal ratio for Gamma(a,b).  Also equal to 1/sqrt(a).</para> </listitem> </varlistentry>
-		  <varlistentry> <term>a</term> <listitem> <para>parameter for Gamma(a,b)</para> </listitem> </varlistentry>
-		  <varlistentry> <term>b</term> <listitem> <para>parameter for Gamma(a,b)</para> </listitem> </varlistentry>
-		  <varlistentry> <term>pInv</term> <listitem> <para>Fraction of invariant sites.</para> </listitem> </varlistentry>
-		</variablelist>
-	      </entry>
-	    </row>
-
-	    <row>
-	      <entry>
-		<para><userinput><replaceable>model</replaceable> + log-normal</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + log-normal[4]</userinput> (default)</para>
+		<para><userinput><replaceable>model</replaceable> + log_normal_rates</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + log_normal_rates[4]</userinput> (default)</para>
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
@@ -1663,13 +1611,11 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>model</replaceable> + log-normal_inv</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + log-normal_inv[4]</userinput> (default)</para>
+		<para><userinput><replaceable>model</replaceable> + INV</userinput></para>
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
 		<variablelist>
-		  <varlistentry> <term>sigmaOverMu</term> <listitem> <para>noise to signal ratio for $\log Normal$.</para> </listitem> </varlistentry>
 		  <varlistentry> <term>pInv</term> <listitem> <para>Fraction of invariant sites.</para> </listitem> </varlistentry>
 		</variablelist>
 	      </entry>
@@ -1734,8 +1680,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>M3</userinput></para>
-		<para><userinput>M3[4,HKY,F61]</userinput> (default)</para>
-		<para><userinput>M3[4,GTR,MG94]</userinput></para>
+		<para><userinput>M3[HKY,F61]</userinput> (default)</para>
+		<para><userinput>M3[GTR,MG94,n=4]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1844,8 +1790,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>
 			<variablelist>
 	<para><userinput>branch-site</userinput></para>
-		<para><userinput>branch-site[2,HKY,F61]</userinput> (default)</para>
-		<para><userinput>branch-site[,GTR,F3x4]</userinput></para>
+		<para><userinput>branch-site[HKY,F61]</userinput> (default)</para>
+		<para><userinput>branch-site[GTR,F3x4]</userinput></para>
 		<para>Zhang, et. al. (2005)</para>
 		</variablelist>
 	      </entry>
@@ -1923,7 +1869,7 @@ Any branch lengths provided will be used as initial values in the MCMC analysis.
 The NHX attribute must be applied to the branch, not the node.  Therefore it must occur after a colon.  Multiple branches may be marked as foreground branches.
     </para>
     <para>An example command line is as follows:
-<screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta --smodel branch-site[,HKY,F3x4] --disable=topology --tree=<replaceable>tree</replaceable>.tree --alphabet=Codons</screen>
+<screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta --smodel branch-site[HKY,F3x4] --disable=topology --tree=<replaceable>tree</replaceable>.tree --alphabet=Codons</screen>
 </para>
 <para>The posterior probability of positive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <userinput>--mean</userinput> option.
 </para>
@@ -1932,17 +1878,16 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
     </section>
     <section><info><title>Substitution model examples</title></info>
       
-      <para>Example: --smodel WAG+F+log-normal_inv</para>
-      <para>Example: --smodel WAG+gwF+log-normal_inv</para>
-      <para>Example: --smodel WAG+log-normal_inv (same as above)</para>
+      <para>Example: --smodel WAG+F+log_normal_rates+INV</para>
+      <para>Example: --smodel WAG+log_normal_rates+INV (same as above)</para>
+      <para>Example: --smodel LG+gwF+log_normal_rates+INV</para>
       <para>Example: --smodel EQU --alphabet Triplets</para>
       <para>Example: --smodel HKY</para>
-      <para>Example: --smodel TN+F=constant</para>
       <para>Example: --smodel M0</para>
       <para>Example: --smodel M0+F1x4</para>
       <para>Example: --smodel M2a</para>
       <para>Example: --smodel M2a[HKY] (same as above)</para>
-      <para>Example: --smodel M2[TN,F3x4]</para>
+      <!-- para>Example: smodel M2[TN,F3x4]</para -->
     </section>
     <section xml:id="genetic-codes"><info><title>Genetic Codes</title></info>
       
@@ -2165,7 +2110,7 @@ acceptable if it is &lt; 0.01.
     <section><info><title>Diagnostics: Potential Scale Reduction Factors (PSRF)</title></info>
       
 <para>
-Potential Scale Redution Factors check that different runs have
+Potential Scale Reduction Factors check that different runs have
 similar posterior distributions.  Only numerical variables may have a
 PSRF. To calculate the PSRF for each
 numerical parameter, you may run: 
@@ -2528,7 +2473,7 @@ The stabilization criterion is the same one described above for numerical values
 	<qandaentry>
 	  <question><para>Can I fix the tree topology and <emphasis>absolute</emphasis> branch lengths <emphasis>in all data partitions</emphasis>, while allowing the alignment to vary?</para></question>
 	  <answer>
-	    <para>Yes.  Add <userinput>--disable=tree --tree=<replaceable>treefile</replaceable> --fix=mu1 ... --fix-mu<replaceable>n</replaceable></userinput> on the command line.</para>
+	    <para>Yes.  Add <userinput>--disable=tree --tree=<replaceable>treefile</replaceable> --scale=1</userinput> on the command line.</para>
 	  </answer>
 	</qandaentry>
       </qandaset>
