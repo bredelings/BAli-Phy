@@ -678,9 +678,8 @@ imodel = none
 
     <example><info><title>Fixed alignment</title></info>
       
-      <para>Here we use the 5S rRNA 5-taxon data set provided with
-	the software.  The alignment is fixed and the <userinput>-Inone</userinput>
-	option is used, making indels non-informative.
+      <para>Here we use the 5S rRNA 25-taxon data set provided with
+      the software. The <userinput>-Inone</userinput> option is used, fixing the alignment and making indels non-informative.
       </para> 
 
       <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/5S-rRNA/25-muscle.fasta -Inone</userinput></screen>
@@ -1003,7 +1002,7 @@ of all samples:
 <screen><prompt>%</prompt> trees-consensus -s20% C1.trees &gt; <filename>c50.PP.tree</filename></screen>
 To discard some samples, keeping (say) every 10th sample, you may add
 the options <userinput>-x10</userinput> or
-<userinput>--sub-sample=10</userinput>.  This can make the program a
+<userinput>--subsample=10</userinput>.  This can make the program a
 lot faster, at the possible expense of some loss in accuracy.
 <screen><prompt>%</prompt> trees-consensus -s20% -x10 C1.trees &gt; <filename>c50.PP.tree</filename></screen>
 By default, splits are included in the consensus tree if they have a
@@ -1252,7 +1251,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	<note>
 	  <para>
-	    If you are using the C-shell command line shell (<command>csh</command> or <command>tcsh</command>), then it will try to interpret each argument as an array reference, giving the error message "bali-phy: Not found."  To avoid this you may need to insert backslashes before the left square brackes, like this: <userinput>Model&#92;[arg]+Model&#92;[arg]+...+Model&#92;[arg]</userinput>.
+	    If you are using the C-shell command line shell (<command>csh</command> or <command>tcsh</command>), then it will try to interpret each argument as an array reference, giving the error message "bali-phy: No match."  To avoid this, put quotes around the substitution model, like this: <userinput>--smodel="Model[arg]+Model[arg]+...+Model[arg]"</userinput>.
 	  </para>
 	</note>
 
@@ -1687,8 +1686,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>Codons</entry>
 	      <entry>
 		<variablelist>
-		  <varlistentry> <term>M3.omega!!i</term> <listitem> <para>the conserved dN/dS ratio for category i</para> </listitem> </varlistentry>
-		  <varlistentry> <term>M3.f!!i</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
+		  <varlistentry> <term>M3.omegas[i]</term> <listitem> <para>the conserved dN/dS ratio for category i</para> </listitem> </varlistentry>
+		  <varlistentry> <term>M3.ps[i]</term> <listitem> <para>the fraction of sites in category i</para> </listitem> </varlistentry>
 		</variablelist>
 	      </entry>
 	    </row>
@@ -1696,15 +1695,16 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    <row>
 	      <entry>
 		<para><userinput>M3_Test</userinput></para>
-		<para><userinput>M3_Test[4,HKY,F61]</userinput> (default)</para>
-		<para><userinput>M3_Test[4,GTR,MG94]</userinput></para>
+		<para><userinput>M3_Test[HKY,F61]</userinput> (default)</para>
+		<para><userinput>M3_Test[GTR,MG94]</userinput></para>
 		<para>Yang, et. al. (2000)</para>
 	      </entry>
 	      <entry>Codons</entry>
 	      <entry>
 		<variablelist>
-		  <varlistentry> <term>M3.omega!!i</term> <listitem> <para>the conserved dN/dS ratio for category i</para> </listitem> </varlistentry>
-		  <varlistentry> <term>M3.f!!i</term> <listitem> <para>the fraction of conserved sites among non-positively selected sites</para> </listitem> </varlistentry>
+		  <varlistentry> <term>M3.omegas[i]</term> <listitem> <para>the conserved dN/dS ratio for category i</para> </listitem> </varlistentry>
+		  <varlistentry> <term>M3.ps[i]</term> <listitem> <para>the fraction of sites in category i</para> </listitem> </varlistentry>
+
 		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
 		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of positively selected sites.</para> </listitem> </varlistentry>
 		  <varlistentry> <term>posSelection</term> <listitem> <para>model selector (1 if positive selection, 0 if not).</para> </listitem> </varlistentry>
@@ -1742,6 +1742,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		  <varlistentry> <term>mu</term> <listitem> <para>mean of the Beta(a,b) distribution.</para> </listitem> </varlistentry>
 		  <varlistentry> <term>a</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
 		  <varlistentry> <term>b</term> <listitem> <para>parameter of Beta(a,b) distribution</para> </listitem> </varlistentry>
+
+		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio</para> </listitem> </varlistentry>
 		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of neutral sites.</para> </listitem> </varlistentry>
 		</variablelist>
 	      </entry>
@@ -1788,8 +1790,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-			<variablelist>
-	<para><userinput>branch-site</userinput></para>
+		<variablelist>
+		  <para><userinput>branch-site</userinput></para>
 		<para><userinput>branch-site[HKY,F61]</userinput> (default)</para>
 		<para><userinput>branch-site[GTR,F3x4]</userinput></para>
 		<para>Zhang, et. al. (2005)</para>
@@ -1798,9 +1800,9 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry>Codons</entry>
 	      <entry>
 		<variablelist>
-		  <varlistentry> <term>f1</term> <listitem> <para>the fraction of conserved sites on background branches.</para> </listitem> </varlistentry>
-		  <varlistentry> <term>f2</term> <listitem> <para>the fraction of neutral sites on background branches.</para> </listitem> </varlistentry>
-		  <varlistentry> <term>w1</term> <listitem> <para>the conserved dN/dS ratio.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>fs[1]</term> <listitem> <para>the fraction of conserved sites on background branches.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>fs[2]</term> <listitem> <para>the fraction of neutral sites on background branches.</para> </listitem> </varlistentry>
+		  <varlistentry> <term>omegas[1]</term> <listitem> <para>the conserved dN/dS ratio.</para> </listitem> </varlistentry>
 		  <varlistentry> <term>posW</term> <listitem> <para>the positively selected dN/dS ratio.</para> </listitem> </varlistentry>
 		  <varlistentry> <term>posP</term> <listitem> <para>the fraction of sites (neutral or conserved) that switch to positive selection on
 		  foreground branches.</para> </listitem> </varlistentry>
@@ -1869,7 +1871,7 @@ Any branch lengths provided will be used as initial values in the MCMC analysis.
 The NHX attribute must be applied to the branch, not the node.  Therefore it must occur after a colon.  Multiple branches may be marked as foreground branches.
     </para>
     <para>An example command line is as follows:
-<screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta --smodel branch-site[HKY,F3x4] --disable=topology --tree=<replaceable>tree</replaceable>.tree --alphabet=Codons</screen>
+<screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta --smodel branch-site[HKY,F3x4] --disable=topology --tree=<replaceable>tree</replaceable>.tree</screen>
 </para>
 <para>The posterior probability of positive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <userinput>--mean</userinput> option.
 </para>
@@ -2204,15 +2206,15 @@ values in the sequence.</para>
 
 <orderedlist inheritnum="ignore" continuation="restarts">
 <listitem><para>To report the average distances within and between two tree samples:
-<screen><prompt>%</prompt> trees-distances --skip=<replaceable>burnin</replaceable> --sub-sample=<replaceable>factor</replaceable> compare <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees</screen>
+<screen><prompt>%</prompt> trees-distances --skip=<replaceable>burnin</replaceable> --subsample=<replaceable>factor</replaceable> compare <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees</screen>
 </para></listitem>
 
 <listitem><para>To compute the distance from each tree in C1.trees to all trees equilibrium.trees, as a time series:
-<screen><prompt>%</prompt> trees-distances --skip=<replaceable>burnin</replaceable> --sub-sample=<replaceable>factor</replaceable> convergence <filename>C1.trees</filename> <filename>equilibrium.trees</filename></screen>
+<screen><prompt>%</prompt> trees-distances --skip=<replaceable>burnin</replaceable> --subsample=<replaceable>factor</replaceable> convergence <filename>C1.trees</filename> <filename>equilibrium.trees</filename></screen>
 </para></listitem>
 
 <listitem><para>To assess when the above time series stabilizes:
-<screen><prompt>%</prompt> trees-distances --skip=<replaceable>burnin</replaceable> --sub-sample=<replaceable>factor</replaceable> converged <filename>C1.trees</filename> <filename>equilibrium.trees</filename></screen>
+<screen><prompt>%</prompt> trees-distances --skip=<replaceable>burnin</replaceable> --subsample=<replaceable>factor</replaceable> converged <filename>C1.trees</filename> <filename>equilibrium.trees</filename></screen>
 The stabilization criterion is the same one described above for numerical values.
 </para></listitem>
 </orderedlist>
@@ -2488,7 +2490,7 @@ The stabilization criterion is the same one described above for numerical values
 	  <question><para>I tried to use <userinput>--smodel LG+GammaRates[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
 	  <answer>
 	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>LG+GammaRates[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <command>bali-phy</command>.</para>
-	    <para>To avoid this, put a backslash in front of the first "[" and write <userinput>--smodel LG+GammaRates&#92;[6]</userinput>.  This will keep the C-shell from interfering with your command.
+	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>--smodel "LG+GammaRates[6]"</userinput>.  This will keep the C-shell from interfering with your command.
 	    </para>
 	  </answer>
 	</qandaentry>
@@ -2522,24 +2524,21 @@ The stabilization criterion is the same one described above for numerical values
 	    example:
 <screen><prompt>%</prompt> less 5d-1/C1.out
 command: bali-phy 5d.fasta
-start time: Thu Oct  3 15:18:17 2013
+start time: Wed Aug  9 13:44:39 2017
 
-VERSION: 2.2.0  [2.2 commit 66ad8405+]  (Oct 03 2013 14:47:48)
-BUILD: Oct  3 2013 15:13:10
-ARCH: x86_64-unknown-linux-gnu
-COMPILER: GCC 4.8.1
-FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops -std=c++11 -finline-limit=1000   -pipe -O3
-directory: /home/bredelings/Devel/bali-phy/Runs
-subdirectory: 5d-1
-hostname: mutant
-<emphasis>PID: 21415</emphasis>
-
-random seed = 10968853200429096211
-
+VERSION: 3.0-beta2  [type-constraints commit b792c30b+]  (Aug 04 2017 13:40:40)
+BUILD: Aug  7 2017 21:01:44
+ARCH: x86_64-pc-linux-gnu
+COMPILER: GCC 7.1.0
+FLAGS: -isystem &#36;(top_srcdir)/boost/include -isystem $(top_srcdir)/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops  -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing -pipe -O3 -pedantic -I/usr/include/cairo -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng16 -g -Wmisleading-indentation -Wlogical-op -fno-var-tracking-assignments
+directory: /home/bredelings/Work
+subdirectory: 5d-257
+hostname: telomere
+<emphasis>PID: 18838</emphasis>
 ...
 </screen>
-Here the PID is 21415.  Therefore you can type:
-<screen><prompt>%</prompt> kill 21415</screen>
+Here the PID is 18838.  Therefore you can type:
+<screen><prompt>%</prompt> kill 18838</screen>
 On some operating systems you can also type:
 <screen><prompt>%</prompt> killall bali-phy</screen>
 However, be aware that this will terminate <emphasis>all</emphasis> of

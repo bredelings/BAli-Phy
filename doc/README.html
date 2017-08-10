@@ -819,7 +819,7 @@ of all samples:
 </p><pre class="screen"><code class="prompt">%</code> trees-consensus -s20% C1.trees &gt; <code class="filename">c50.PP.tree</code></pre><p>
 To discard some samples, keeping (say) every 10th sample, you may add
 the options <strong class="userinput"><code>-x10</code></strong> or
-<strong class="userinput"><code>--sub-sample=10</code></strong>.  This can make the program a
+<strong class="userinput"><code>--subsample=10</code></strong>.  This can make the program a
 lot faster, at the possible expense of some loss in accuracy.
 </p><pre class="screen"><code class="prompt">%</code> trees-consensus -s20% -x10 C1.trees &gt; <code class="filename">c50.PP.tree</code></pre><p>
 By default, splits are included in the consensus tree if they have a
@@ -1234,14 +1234,14 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<p><strong class="userinput"><code>M3[GTR,MG94,n=4]</code></strong></p>
 		<p>Yang, et. al. (2000)</p>
 	      </td><td>Codons</td><td>
-		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">M3.omega!!i</span></p></td><td> <p>the conserved dN/dS ratio for category i</p> </td></tr><tr><td><p><span class="term">M3.f!!i</span></p></td><td> <p>the fraction of conserved sites among non-positively selected sites</p> </td></tr></tbody></table></div>
+		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">M3.omegas[i]</span></p></td><td> <p>the conserved dN/dS ratio for category i</p> </td></tr><tr><td><p><span class="term">M3.ps[i]</span></p></td><td> <p>the fraction of sites in category i</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code>M3_Test</code></strong></p>
-		<p><strong class="userinput"><code>M3_Test[4,HKY,F61]</code></strong> (default)</p>
-		<p><strong class="userinput"><code>M3_Test[4,GTR,MG94]</code></strong></p>
+		<p><strong class="userinput"><code>M3_Test[HKY,F61]</code></strong> (default)</p>
+		<p><strong class="userinput"><code>M3_Test[GTR,MG94]</code></strong></p>
 		<p>Yang, et. al. (2000)</p>
 	      </td><td>Codons</td><td>
-		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">M3.omega!!i</span></p></td><td> <p>the conserved dN/dS ratio for category i</p> </td></tr><tr><td><p><span class="term">M3.f!!i</span></p></td><td> <p>the fraction of conserved sites among non-positively selected sites</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of positively selected sites.</p> </td></tr><tr><td><p><span class="term">posSelection</span></p></td><td> <p>model selector (1 if positive selection, 0 if not).</p> </td></tr></tbody></table></div>
+		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">M3.omegas[i]</span></p></td><td> <p>the conserved dN/dS ratio for category i</p> </td></tr><tr><td><p><span class="term">M3.ps[i]</span></p></td><td> <p>the fraction of sites in category i</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of positively selected sites.</p> </td></tr><tr><td><p><span class="term">posSelection</span></p></td><td> <p>model selector (1 if positive selection, 0 if not).</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code>M7</code></strong></p>
 		<p><strong class="userinput"><code>M7[4,HKY,F61]</code></strong> (default)</p>
@@ -1255,7 +1255,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<p><strong class="userinput"><code>M8a[6,GTR,F3x4]</code></strong></p>
 		<p>Yang, et. al. (2000)</p>
 	      </td><td>Codons</td><td>
-		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">mu</span></p></td><td> <p>mean of the Beta(a,b) distribution.</p> </td></tr><tr><td><p><span class="term">a</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">b</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of neutral sites.</p> </td></tr></tbody></table></div>
+		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">mu</span></p></td><td> <p>mean of the Beta(a,b) distribution.</p> </td></tr><tr><td><p><span class="term">a</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">b</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of neutral sites.</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
 		<p><strong class="userinput"><code>M8</code></strong></p>
 		<p><strong class="userinput"><code>M8[4,HKY,F61]</code></strong> (default)</p>
@@ -1271,9 +1271,9 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      </td><td>Codons</td><td>
 		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">mu</span></p></td><td> <p>mean of the Beta(a,b) distribution.</p> </td></tr><tr><td><p><span class="term">a</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">b</span></p></td><td> <p>parameter of Beta(a,b) distribution</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of positively selected sites.</p> </td></tr><tr><td><p><span class="term">posSelection</span></p></td><td> <p>model selector (1 if positive selection, 0 if not).</p> </td></tr></tbody></table></div>
 	      </td></tr><tr><td>
-			<div class="variablelist"><p><strong class="userinput"><code>branch-site</code></strong></p><p><strong class="userinput"><code>branch-site[HKY,F61]</code></strong> (default)</p><p><strong class="userinput"><code>branch-site[GTR,F3x4]</code></strong></p><p>Zhang, et. al. (2005)</p><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody></tbody></table></div>
+		<div class="variablelist"><p><strong class="userinput"><code>branch-site</code></strong></p><p><strong class="userinput"><code>branch-site[HKY,F61]</code></strong> (default)</p><p><strong class="userinput"><code>branch-site[GTR,F3x4]</code></strong></p><p>Zhang, et. al. (2005)</p><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody></tbody></table></div>
 	      </td><td>Codons</td><td>
-		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">f1</span></p></td><td> <p>the fraction of conserved sites on background branches.</p> </td></tr><tr><td><p><span class="term">f2</span></p></td><td> <p>the fraction of neutral sites on background branches.</p> </td></tr><tr><td><p><span class="term">w1</span></p></td><td> <p>the conserved dN/dS ratio.</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio.</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of sites (neutral or conserved) that switch to positive selection on
+		<div class="variablelist"><table border="0" class="variablelist"><colgroup><col align="left" valign="top"><col></colgroup><tbody><tr><td><p><span class="term">fs[1]</span></p></td><td> <p>the fraction of conserved sites on background branches.</p> </td></tr><tr><td><p><span class="term">fs[2]</span></p></td><td> <p>the fraction of neutral sites on background branches.</p> </td></tr><tr><td><p><span class="term">omegas[1]</span></p></td><td> <p>the conserved dN/dS ratio.</p> </td></tr><tr><td><p><span class="term">posW</span></p></td><td> <p>the positively selected dN/dS ratio.</p> </td></tr><tr><td><p><span class="term">posP</span></p></td><td> <p>the fraction of sites (neutral or conserved) that switch to positive selection on
 		  foreground branches.</p> </td></tr><tr><td><p><span class="term">posSelection</span></p></td><td> <p>model selector (1 if positive selection, 0 if not).</p> </td></tr></tbody></table></div>
 	      </td></tr></tbody></table>
       </div></div><br class="table-break">
@@ -1283,17 +1283,17 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <p>In order to use the branch-site substitution model, the user needs to
     </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">Specify an unrooted tree topology in Newick format.</li><li class="listitem">Label foreground branches on the tree using NHX attributes.</li><li class="listitem">Disable topology changes in order to fix the tree topology (branch lengths are estimated).</li></ul></div><p>
     Here is an example tree file:
-</p><div class="example"><a name="idp1885"></a><p class="title"><b>Example 4. An initial tree file with branch lengths</b></p><div class="example-contents">
+</p><div class="example"><a name="idp1889"></a><p class="title"><b>Example 4. An initial tree file with branch lengths</b></p><div class="example-contents">
 (((A1:0.1, B1:0.1):0.1,(C1:0.1, D1:0.1):0.1):0.1,((E1:0.1, F1:0.1):0.1,(G1:0.1, H1:0.1):0.1):0.1,(((A2:0.1, B2:0.1):0.1,(C2:0.1, D2:0.1):0.1):0.1,((E2:0.1, F2:0.1):0.1,(G2:0.1, H2:0.1):0.1):0.1):[&amp;&amp;NHX:foreground=1]0.2);
 </div></div><p><br class="example-break">
 Any branch lengths provided will be used as initial values in the MCMC analysis.  However, it is not necessary to provide them:
-</p><div class="example"><a name="idp1887"></a><p class="title"><b>Example 5. An initial tree file without branch lengths</b></p><div class="example-contents">
+</p><div class="example"><a name="idp1891"></a><p class="title"><b>Example 5. An initial tree file without branch lengths</b></p><div class="example-contents">
 (((A1, B1),(C1, D1)),((E1, F1),(G1, H1)),(((A2, B2),(C2, D2)),((E2, F2),(G2, H2))):[&amp;&amp;NHX:foreground=1]);
 </div></div><p><br class="example-break">
 The NHX attribute must be applied to the branch, not the node.  Therefore it must occur after a colon.  Multiple branches may be marked as foreground branches.
     </p>
     <p>An example command line is as follows:
-</p><pre class="screen"><code class="prompt">%</code> bali-phy <em class="replaceable"><code>alignment</code></em>.fasta --smodel branch-site[HKY,F3x4] --disable=topology --tree=<em class="replaceable"><code>tree</code></em>.tree --alphabet=Codons</pre><p>
+</p><pre class="screen"><code class="prompt">%</code> bali-phy <em class="replaceable"><code>alignment</code></em>.fasta --smodel branch-site[HKY,F3x4] --disable=topology --tree=<em class="replaceable"><code>tree</code></em>.tree</pre><p>
 </p>
 <p>The posterior probability of positive selection is the posterior mean of the posSelection parameter.  This may be computed using the statreport program with the <strong class="userinput"><code>--mean</code></strong> option.
 </p>
@@ -1329,7 +1329,7 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
       
       <p>The current models are RS05, RS07, and <strong class="userinput"><code>none</code></strong>.  The default is RS07.  Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mi>Pr</mi><mo stretchy="false">(</mo><mi>A</mi><mo stretchy="false">&#8739;</mo><mi>T</mi><mo>,</mo><mi>&#964;</mi><mo>,</mo><mi>&#923;</mi><mo stretchy="false">)</mo></math> is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</p>
 
-<div class="table"><a name="idp1947"></a><p class="title"><b>Table 4. Substitution Models</b></p><div class="table-contents">
+<div class="table"><a name="idp1951"></a><p class="title"><b>Table 4. Substitution Models</b></p><div class="table-contents">
 	  
 	  <table class="table" summary="Substitution Models" border="0"><colgroup><col class="col1"><col class="col2"><col class="col3"></colgroup><thead><tr><th>Model</th><th>Parameters</th><th>Description</th></tr></thead><tbody><tr><td>
 		  <p><strong class="userinput"><code>RS05</code></strong></p>
@@ -1590,11 +1590,11 @@ values in the sequence.</p>
 <p>It is also be possible to assess stabilization of tree topologies using tools distributed with <span class="application">bali-phy</span> by using commands like the following.  Here, sub-sampling and burnin does not apply to the equilibrium tree files. Also, note that you need to manually construct the equilibrium samples, which we recommend to contain at least 500 trees; you might do this by sub-sampling using the <span class="application">BAli-Phy</span> tool <span class="command"><strong>sub-sample</strong></span>.</p>
 
 <div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>To report the average distances within and between two tree samples:
-</p><pre class="screen"><code class="prompt">%</code> trees-distances --skip=<em class="replaceable"><code>burnin</code></em> --sub-sample=<em class="replaceable"><code>factor</code></em> compare <em class="replaceable"><code>dir-1</code></em>/C1.trees <em class="replaceable"><code>dir-2</code></em>/C1.trees</pre><p>
+</p><pre class="screen"><code class="prompt">%</code> trees-distances --skip=<em class="replaceable"><code>burnin</code></em> --subsample=<em class="replaceable"><code>factor</code></em> compare <em class="replaceable"><code>dir-1</code></em>/C1.trees <em class="replaceable"><code>dir-2</code></em>/C1.trees</pre><p>
 </p></li><li class="listitem"><p>To compute the distance from each tree in C1.trees to all trees equilibrium.trees, as a time series:
-</p><pre class="screen"><code class="prompt">%</code> trees-distances --skip=<em class="replaceable"><code>burnin</code></em> --sub-sample=<em class="replaceable"><code>factor</code></em> convergence <code class="filename">C1.trees</code> <code class="filename">equilibrium.trees</code></pre><p>
+</p><pre class="screen"><code class="prompt">%</code> trees-distances --skip=<em class="replaceable"><code>burnin</code></em> --subsample=<em class="replaceable"><code>factor</code></em> convergence <code class="filename">C1.trees</code> <code class="filename">equilibrium.trees</code></pre><p>
 </p></li><li class="listitem"><p>To assess when the above time series stabilizes:
-</p><pre class="screen"><code class="prompt">%</code> trees-distances --skip=<em class="replaceable"><code>burnin</code></em> --sub-sample=<em class="replaceable"><code>factor</code></em> converged <code class="filename">C1.trees</code> <code class="filename">equilibrium.trees</code></pre><p>
+</p><pre class="screen"><code class="prompt">%</code> trees-distances --skip=<em class="replaceable"><code>burnin</code></em> --subsample=<em class="replaceable"><code>factor</code></em> converged <code class="filename">C1.trees</code> <code class="filename">equilibrium.trees</code></pre><p>
 The stabilization criterion is the same one described above for numerical values.
 </p></li></ol></div>
 
@@ -1735,8 +1735,8 @@ The stabilization criterion is the same one described above for numerical values
   <div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="FAQ"></a>13. Frequently Asked Questions (FAQ)</h2></div></div></div>
     
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp79"></a>13.1. Input files</h3></div></div></div>
-      <div class="qandaset"><a name="idp2298"></a><dl><dt>13.1.1. <a href="#idp2299">Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</a></dt><dt>13.1.2. <a href="#idp2305">Does BAli-Phy accept "?" characters?</a></dt><dt>13.1.3. <a href="#idp2313">Does BAli-Phy accept the characters "R" and "Y", etc.?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2299"></a><a name="idp2300"></a><p><b>13.1.1.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</p></td></tr>
+      <div class="qandaset"><a name="idp2302"></a><dl><dt>13.1.1. <a href="#idp2303">Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</a></dt><dt>13.1.2. <a href="#idp2309">Does BAli-Phy accept "?" characters?</a></dt><dt>13.1.3. <a href="#idp2317">Does BAli-Phy accept the characters "R" and "Y", etc.?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2303"></a><a name="idp2304"></a><p><b>13.1.1.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes, BAli-Phy accepts the wildcard characters "N"
 	    (for DNA) and "X" (for proteins).  These characters
 	    indicate that some letter is present (as opposed to a
@@ -1744,7 +1744,7 @@ The stabilization criterion is the same one described above for numerical values
 	    letter it is.  
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2305"></a><a name="idp2306"></a><p><b>13.1.2.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept "?" characters?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2309"></a><a name="idp2310"></a><p><b>13.1.2.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept "?" characters?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	      No.  "?" characters are often used to indicate
 	      <span class="emphasis"><em>either</em></span> letter presence (e.g. "N",
@@ -1758,7 +1758,7 @@ The stabilization criterion is the same one described above for numerical values
 	    alternatives are quite different.)
 	    </p></td></tr>
 	
-	<tr class="question"><td align="left" valign="top"><a name="idp2313"></a><a name="idp2314"></a><p><b>13.1.3.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the characters "R" and "Y", etc.?</p></td></tr>
+	<tr class="question"><td align="left" valign="top"><a name="idp2317"></a><a name="idp2318"></a><p><b>13.1.3.</b></p></td><td align="left" valign="top"><p>Does BAli-Phy accept the characters "R" and "Y", etc.?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	      Yes.  BAli-Phy accepts the characters Y, R, W, S, K, M,
 	      B, D, H, and V for DNA, RNA, and Codon alphabets.
@@ -1784,17 +1784,17 @@ The stabilization criterion is the same one described above for numerical values
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp80"></a>13.2. Running <span class="command"><strong>bali-phy</strong></span>.</h3></div></div></div>
 
-      <div class="qandaset"><a name="idp2325"></a><dl><dt>13.2.1. <a href="#idp2326">Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</a></dt><dt>13.2.2. <a href="#idp2333">Can I fix the tree topology, while allowing the alignment to vary?</a></dt><dt>13.2.3. <a href="#idp2340">Can I fix the tree topology and relative branch lengths, while allowing the alignment to vary?</a></dt><dt>13.2.4. <a href="#idp2348">Can I fix the tree topology and absolute branch lengths in all data partitions, while allowing the alignment to vary?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2326"></a><a name="idp2327"></a><p><b>13.2.1.</b></p></td><td align="left" valign="top"><p>Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</p></td></tr>
+      <div class="qandaset"><a name="idp2329"></a><dl><dt>13.2.1. <a href="#idp2330">Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</a></dt><dt>13.2.2. <a href="#idp2337">Can I fix the tree topology, while allowing the alignment to vary?</a></dt><dt>13.2.3. <a href="#idp2344">Can I fix the tree topology and relative branch lengths, while allowing the alignment to vary?</a></dt><dt>13.2.4. <a href="#idp2352">Can I fix the tree topology and absolute branch lengths in all data partitions, while allowing the alignment to vary?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2330"></a><a name="idp2331"></a><p><b>13.2.1.</b></p></td><td align="left" valign="top"><p>Can I fix the alignment and ignore indel information, like MrBayes, BEAST, PhyloBayes and other MCMC programs?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>-Inone</code></strong> or <strong class="userinput"><code>--imodel=none</code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2333"></a><a name="idp2334"></a><p><b>13.2.2.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2337"></a><a name="idp2338"></a><p><b>13.2.2.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=topology --tree=<em class="replaceable"><code>treefile</code></em></code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2340"></a><a name="idp2341"></a><p><b>13.2.3.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>relative</em></span> branch lengths, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2344"></a><a name="idp2345"></a><p><b>13.2.3.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>relative</em></span> branch lengths, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=tree --tree=<em class="replaceable"><code>treefile</code></em></code></strong> on the command line.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2348"></a><a name="idp2349"></a><p><b>13.2.4.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>absolute</em></span> branch lengths <span class="emphasis"><em>in all data partitions</em></span>, while allowing the alignment to vary?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2352"></a><a name="idp2353"></a><p><b>13.2.4.</b></p></td><td align="left" valign="top"><p>Can I fix the tree topology and <span class="emphasis"><em>absolute</em></span> branch lengths <span class="emphasis"><em>in all data partitions</em></span>, while allowing the alignment to vary?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Yes.  Add <strong class="userinput"><code>--disable=tree --tree=<em class="replaceable"><code>treefile</code></em> --scale=1</code></strong> on the command line.</p></td></tr>
 	</tbody></table></div>
 
@@ -1803,8 +1803,8 @@ The stabilization criterion is the same one described above for numerical values
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp81"></a>13.3. Run-time error messages</h3></div></div></div>
       
       
-      <div class="qandaset"><a name="idp2360"></a><dl><dt>13.3.1. <a href="#idp2361">I tried to use --smodel LG+GammaRates[6] and I got an error message "bali-phy: No match."  What gives?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2361"></a><a name="idp2362"></a><p><b>13.3.1.</b></p></td><td align="left" valign="top"><p>I tried to use <strong class="userinput"><code>--smodel LG+GammaRates[6]</code></strong> and I got an error message "bali-phy: No match."  What gives?</p></td></tr>
+      <div class="qandaset"><a name="idp2364"></a><dl><dt>13.3.1. <a href="#idp2365">I tried to use --smodel LG+GammaRates[6] and I got an error message "bali-phy: No match."  What gives?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2365"></a><a name="idp2366"></a><p><b>13.3.1.</b></p></td><td align="left" valign="top"><p>I tried to use <strong class="userinput"><code>--smodel LG+GammaRates[6]</code></strong> and I got an error message "bali-phy: No match."  What gives?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>You are probably using the C-shell as your command line shell.  It is trying to interpret <strong class="userinput"><code>LG+GammaRates[6]</code></strong> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <span class="command"><strong>bali-phy</strong></span>.</p><p>To avoid this, put a backslash in front of the first "[" and write <strong class="userinput"><code>--smodel LG+GammaRates\[6]</code></strong>.  This will keep the C-shell from interfering with your command.
 	    </p></td></tr>
 	</tbody></table></div>
@@ -1813,17 +1813,17 @@ The stabilization criterion is the same one described above for numerical values
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp82"></a>13.4. Stopping <span class="command"><strong>bali-phy</strong></span>.</h3></div></div></div>
       
 
-      <div class="qandaset"><a name="idp2376"></a><dl><dt>13.4.1. <a href="#idp2377">Why is bali-phy still
-	      running? How long will it take?</a></dt><dt>13.4.2. <a href="#idp2383">How do I stop a bali-phy
-	  run on my personal computer?</a></dt><dt>13.4.3. <a href="#idp2401">How do I stop a bali-phy
-	  run on a computing cluster?</a></dt><dt>13.4.4. <a href="#idp2410">So, how can I know when to stop it?</a></dt><dt>13.4.5. <a href="#idp2415">How can I tell when the chain has converged?</a></dt><dt>13.4.6. <a href="#idp2421">How can I check how many iterations the chain
+      <div class="qandaset"><a name="idp2380"></a><dl><dt>13.4.1. <a href="#idp2381">Why is bali-phy still
+	      running? How long will it take?</a></dt><dt>13.4.2. <a href="#idp2387">How do I stop a bali-phy
+	  run on my personal computer?</a></dt><dt>13.4.3. <a href="#idp2405">How do I stop a bali-phy
+	  run on a computing cluster?</a></dt><dt>13.4.4. <a href="#idp2414">So, how can I know when to stop it?</a></dt><dt>13.4.5. <a href="#idp2419">How can I tell when the chain has converged?</a></dt><dt>13.4.6. <a href="#idp2425">How can I check how many iterations the chain
 	      has finished?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2377"></a><a name="idp2378"></a><p><b>13.4.1.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bali-phy</strong></span> still
+	  <tr class="question"><td align="left" valign="top"><a name="idp2381"></a><a name="idp2382"></a><p><b>13.4.1.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bali-phy</strong></span> still
 	      running? How long will it take?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>It runs until you stop it.  Stop it when its
 	      done.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2383"></a><a name="idp2384"></a><p><b>13.4.2.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2387"></a><a name="idp2388"></a><p><b>13.4.2.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
 	  run on my personal computer?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Simply kill the process -- there is no special
 	    command to stop <span class="command"><strong>bali-phy</strong></span>. If you are
@@ -1835,31 +1835,28 @@ The stabilization criterion is the same one described above for numerical values
 	    example:
 </p><pre class="screen"><code class="prompt">%</code> less 5d-1/C1.out
 command: bali-phy 5d.fasta
-start time: Thu Oct  3 15:18:17 2013
+start time: Wed Aug  9 13:44:39 2017
 
-VERSION: 2.2.0  [2.2 commit 66ad8405+]  (Oct 03 2013 14:47:48)
-BUILD: Oct  3 2013 15:13:10
-ARCH: x86_64-unknown-linux-gnu
-COMPILER: GCC 4.8.1
-FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops -std=c++11 -finline-limit=1000   -pipe -O3
-directory: /home/bredelings/Devel/bali-phy/Runs
-subdirectory: 5d-1
-hostname: mutant
-<span class="emphasis"><em>PID: 21415</em></span>
-
-random seed = 10968853200429096211
-
+VERSION: 3.0-beta2  [type-constraints commit b792c30b+]  (Aug 04 2017 13:40:40)
+BUILD: Aug  7 2017 21:01:44
+ARCH: x86_64-pc-linux-gnu
+COMPILER: GCC 7.1.0
+FLAGS: -isystem $(top_srcdir)/boost/include -isystem $(top_srcdir)/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops  -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing -pipe -O3 -pedantic -I/usr/include/cairo -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng16 -g -Wmisleading-indentation -Wlogical-op -fno-var-tracking-assignments
+directory: /home/bredelings/Work
+subdirectory: 5d-257
+hostname: telomere
+<span class="emphasis"><em>PID: 18838</em></span>
 ...
 </pre><p>
-Here the PID is 21415.  Therefore you can type:
-</p><pre class="screen"><code class="prompt">%</code> kill 21415</pre><p>
+Here the PID is 18838.  Therefore you can type:
+</p><pre class="screen"><code class="prompt">%</code> kill 18838</pre><p>
 On some operating systems you can also type:
 </p><pre class="screen"><code class="prompt">%</code> killall bali-phy</pre><p>
 However, be aware that this will terminate <span class="emphasis"><em>all</em></span> of
 your <span class="command"><strong>bali-phy</strong></span> runs on that computer.
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2401"></a><a name="idp2402"></a><p><b>13.4.3.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2405"></a><a name="idp2406"></a><p><b>13.4.3.</b></p></td><td align="left" valign="top"><p>How do I stop a <span class="command"><strong>bali-phy</strong></span>
 	  run on a computing cluster?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Simply terminate the submitted job.  The specific command
 	    to terminate a job will depend on the queue manager that
@@ -1875,14 +1872,14 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 	    commands. 
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2410"></a><a name="idp2411"></a><p><b>13.4.4.</b></p></td><td align="left" valign="top"><p>So, how can I know when to stop it?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2414"></a><a name="idp2415"></a><p><b>13.4.4.</b></p></td><td align="left" valign="top"><p>So, how can I know when to stop it?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>You can stop when it has both converged and also run for long enough to give
 	      you &gt;1000 effectively independent samples.  </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2415"></a><a name="idp2416"></a><p><b>13.4.5.</b></p></td><td align="left" valign="top"><p>How can I tell when the chain has converged?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2419"></a><a name="idp2420"></a><p><b>13.4.5.</b></p></td><td align="left" valign="top"><p>How can I tell when the chain has converged?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>See section <a class="xref" href="#mixing_and_convergence" title="10. Convergence and Mixing: Is it done yet?">Section 10, &#8220;Convergence and Mixing: Is it done yet?&#8221;</a>.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2421"></a><a name="idp2422"></a><p><b>13.4.6.</b></p></td><td align="left" valign="top"><p>How can I check how many iterations the chain
+	  <tr class="question"><td align="left" valign="top"><a name="idp2425"></a><a name="idp2426"></a><p><b>13.4.6.</b></p></td><td align="left" valign="top"><p>How can I check how many iterations the chain
 	      has finished?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Run <span class="command"><strong>wc -l C1.log</strong></span> inside the output
 	      directory, and subtract 2.
@@ -1892,17 +1889,17 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp83"></a>13.5. Running <span class="command"><strong>bp-analyze.pl</strong></span>.</h3></div></div></div>
-      <div class="qandaset"><a name="idp2432"></a><dl><dt>13.5.1. <a href="#idp2433">Why does bp-analyze.pl say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</a></dt><dt>13.5.2. <a href="#idp2441">Why does bp-analyze.pl say "Program 'gnuplot' not found.  Trace plots will not be generated"?</a></dt><dt>13.5.3. <a href="#idp2449">Why does bp-analyze.pl say "Program 'R' not found.  Some mixing graphs will not be generated"?</a></dt><dt>13.5.4. <a href="#idp2456">Why is bp-analyze.pl stopping early, or failing to generate some files?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2433"></a><a name="idp2434"></a><p><b>13.5.1.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze.pl</strong></span> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</p></td></tr>
+      <div class="qandaset"><a name="idp2436"></a><dl><dt>13.5.1. <a href="#idp2437">Why does bp-analyze.pl say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</a></dt><dt>13.5.2. <a href="#idp2445">Why does bp-analyze.pl say "Program 'gnuplot' not found.  Trace plots will not be generated"?</a></dt><dt>13.5.3. <a href="#idp2453">Why does bp-analyze.pl say "Program 'R' not found.  Some mixing graphs will not be generated"?</a></dt><dt>13.5.4. <a href="#idp2460">Why is bp-analyze.pl stopping early, or failing to generate some files?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2437"></a><a name="idp2438"></a><p><b>13.5.1.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze.pl</strong></span> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>The program <span class="command"><strong>draw-tree</strong></span> was not distributed on this platform (Windows, Mac).  This is not a fatal error message, it just means that a pretty picture of the tree will not be generated automatically.  You can still view the tree with <span class="application">FigTree</span>, for example.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2441"></a><a name="idp2442"></a><p><b>13.5.2.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze.pl</strong></span> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2445"></a><a name="idp2446"></a><p><b>13.5.2.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze.pl</strong></span> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>This is because you have not installed <span class="application">gnuplot</span>.  This is not a fatal error message, it just means that pictures of traces, partition support, and SRQ plots will not be generated automatically.  You can still view MCMC traces with <span class="application">Tracer</span>.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2449"></a><a name="idp2450"></a><p><b>13.5.3.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze.pl</strong></span> say "Program 'R' not found.  Some mixing graphs will not be generated"?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2453"></a><a name="idp2454"></a><p><b>13.5.3.</b></p></td><td align="left" valign="top"><p>Why does <span class="command"><strong>bp-analyze.pl</strong></span> say "Program 'R' not found.  Some mixing graphs will not be generated"?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>This is because you have not installed <span class="application">R</span>.  This is not a fatal error message, it just means that a plot showing differences in clade probabilities between runs will not be generated.</p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2456"></a><a name="idp2457"></a><p><b>13.5.4.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bp-analyze.pl</strong></span> stopping early, or failing to generate some files?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2460"></a><a name="idp2461"></a><p><b>13.5.4.</b></p></td><td align="left" valign="top"><p>Why is <span class="command"><strong>bp-analyze.pl</strong></span> stopping early, or failing to generate some files?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Look in the file <code class="filename">Results/bp-analyze.log</code>.  This should contain the actual commands that were run, along with error message from these commands.  These error message should give you a hint as to what the problem might be.</p></td></tr>
 	</tbody></table></div>
     </div>
@@ -1911,11 +1908,11 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp84"></a>13.6. Interpreting the results.</h3></div></div></div>
       
 
-      <div class="qandaset"><a name="idp2466"></a><dl><dt>13.6.1. <a href="#idp2467">How do I compute the clade support?</a></dt><dt>13.6.2. <a href="#idp2472">How do I compute the split/bi-partition support?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2467"></a><a name="idp2468"></a><p><b>13.6.1.</b></p></td><td align="left" valign="top"><p>How do I compute the clade support?</p></td></tr>
+      <div class="qandaset"><a name="idp2470"></a><dl><dt>13.6.1. <a href="#idp2471">How do I compute the clade support?</a></dt><dt>13.6.2. <a href="#idp2476">How do I compute the split/bi-partition support?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2471"></a><a name="idp2472"></a><p><b>13.6.1.</b></p></td><td align="left" valign="top"><p>How do I compute the clade support?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>Actually, BAli-Phy uses unrooted trees, so it only estimates bi-partition support.  A bi-partition is a division of taxa into two groups, but it does not specify which group contains the root. </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2472"></a><a name="idp2473"></a><p><b>13.6.2.</b></p></td><td align="left" valign="top"><p>How do I compute the split/bi-partition support?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2476"></a><a name="idp2477"></a><p><b>13.6.2.</b></p></td><td align="left" valign="top"><p>How do I compute the split/bi-partition support?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>After you analyze the output (<a class="xref" href="#analysis" title="6.5. Summarizing the output - scripted">Section 6.5, &#8220;Summarizing the output - scripted&#8221;</a>), the partition support is indicated in
 	      <code class="filename">Results/consensus</code> and in <code class="filename">Results/c50.PP.tree</code>. </p></td></tr>
 	</tbody></table></div>
@@ -1923,23 +1920,23 @@ your <span class="command"><strong>bali-phy</strong></span> runs on that compute
 
     <div class="section"><div class="titlepage"><div><div><h3 class="title"><a name="idp85"></a>13.7. How do I...</h3></div></div></div>
       
-      <div class="qandaset"><a name="idp2483"></a><dl><dt>13.7.1. <a href="#idp2484">How do I concatenate alignments?</a></dt><dt>13.7.2. <a href="#idp2493">How do I select columns from an alignment?</a></dt><dt>13.7.3. <a href="#idp2501">How do I create an alignment-constraint file
+      <div class="qandaset"><a name="idp2487"></a><dl><dt>13.7.1. <a href="#idp2488">How do I concatenate alignments?</a></dt><dt>13.7.2. <a href="#idp2497">How do I select columns from an alignment?</a></dt><dt>13.7.3. <a href="#idp2505">How do I create an alignment-constraint file
 	      from an alignment?</a></dt></dl><table border="0" style="width: 100%;"><colgroup><col align="left" width="1%"><col></colgroup><tbody>
-	  <tr class="question"><td align="left" valign="top"><a name="idp2484"></a><a name="idp2485"></a><p><b>13.7.1.</b></p></td><td align="left" valign="top"><p>How do I concatenate alignments?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2488"></a><a name="idp2489"></a><p><b>13.7.1.</b></p></td><td align="left" valign="top"><p>How do I concatenate alignments?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
  	    </p><pre class="screen"><code class="prompt">%</code> alignment-cat <em class="replaceable"><code>filename1.fasta</code></em> <em class="replaceable"><code>filename2.fasta</code></em> &gt; result.fasta</pre><p>
 	      The alignments must have the same sequence names, but
 	      the names need not be in the same order.
 	    </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2493"></a><a name="idp2494"></a><p><b>13.7.2.</b></p></td><td align="left" valign="top"><p>How do I select columns from an alignment?</p></td></tr>
+	  <tr class="question"><td align="left" valign="top"><a name="idp2497"></a><a name="idp2498"></a><p><b>13.7.2.</b></p></td><td align="left" valign="top"><p>How do I select columns from an alignment?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
 	    </p><pre class="screen"><code class="prompt">%</code> alignment-cat -c1-10,50-100,600- <em class="replaceable"><code>filename.fasta</code></em> &gt; result.fasta</pre><p>
 	    The resulting alignment will contain the selected columns
 	    in the order you specified.
 	  </p></td></tr>
 	
-	  <tr class="question"><td align="left" valign="top"><a name="idp2501"></a><a name="generating_constraint_files"></a><p><b>13.7.3.</b></p></td><td align="left" valign="top"><p>How do I create an alignment-constraint file
+	  <tr class="question"><td align="left" valign="top"><a name="idp2505"></a><a name="generating_constraint_files"></a><p><b>13.7.3.</b></p></td><td align="left" valign="top"><p>How do I create an alignment-constraint file
 	      from an alignment?</p></td></tr>
 	  <tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>To constrain the alignment to match some alignment
 	      file <em class="replaceable"><code>filename.fasta</code></em> in columns
