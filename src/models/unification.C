@@ -24,6 +24,8 @@ string show(const ptree& pt, int depth = 0);
 string show(const equations& E)
 {
     string result;
+    if (not E) result = "FAIL\n";
+
     for(auto& constraint: E.get_constraints())
 	result += unparse_type(constraint) + " <=\n";
     for(auto& e: E.get_values())
