@@ -227,6 +227,9 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
     type_t result_type = rule.get_child("result_type");
     auto E = unify(result_type, required_type);
 
+    for(const auto& constraint: rule.get_child("constraints"))
+	E.add_constraint(constraint.second);
+
     // 2.1 Handle unification failure
     if (not E)
     {
