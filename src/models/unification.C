@@ -1,6 +1,7 @@
 #include "unification.H"
 #include <set>
 #include "util.H"
+#include "parse.H"
 
 using std::list;
 using std::pair;
@@ -23,6 +24,8 @@ string show(const ptree& pt, int depth = 0);
 string show(const equations& E)
 {
     string result;
+    for(auto& constraint: E.get_constraints())
+	result += unparse_type(constraint) + " <=\n";
     for(auto& e: E.get_values())
     {
 	for(auto& var: e.first)
@@ -407,6 +410,11 @@ bool equations::unify(const term_t& T1, const term_t& T2)
 
     // 8. If we got here, then we succeeded!
     return valid;
+}
+
+string equations::show() const
+{
+    return ::show(*this);
 }
 
 equations unify(const term_t& T1, const term_t& T2)
