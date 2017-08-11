@@ -240,7 +240,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
     }
 
     // 2.3 Update required type and rules with discovered constraints
-    substitute_in_rule_types(E, rule);
+    rule = substitute_in_rule_types(E, rule);
 
     // 2.4 Record any new variables that we are using as bound variables
     //     (I think that only rules can introduce new variables)
