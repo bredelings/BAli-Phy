@@ -43,6 +43,8 @@ public:
 
     const std::set<term_t>& get_constraints() const;
 
+    void add_constraint(const term_t&);
+
     void eliminate_variable(const std::string&);
 
     void eliminate_except(const std::set<std::string>&);

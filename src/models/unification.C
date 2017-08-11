@@ -71,6 +71,11 @@ const set<term_t>& equations::get_constraints() const
     return constraints;
 }
 
+void equations::add_constraint(const term_t& constraint)
+{
+    constraints.insert(constraint);
+}
+
 list<pair<set<string>,optional<term_t>>>::const_iterator equations::find_record(const std::string& x) const
 {
     for(auto it = values.begin(); it != values.end(); it++)
@@ -318,6 +323,8 @@ equations operator&&(const equations& E1, const equations& E2)
     if (not E2) return equations{false};
 
     equations solution = E1;
+    for(auto& constraint: E2.get_constraints())
+	solution.add_constraint(constraint);
 
     for(const auto& value: E2.get_values())
     {
