@@ -287,14 +287,11 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	if (model.count(arg_name))
 	{
 	    type_t arg_required_type = get_type_for_arg(rule, arg_name);
+	    substitute(E, arg_required_type);
 	    ptree arg_value = model.get_child(arg_name);
 	    E = E && pass2(arg_required_type, arg_value, bound_vars, extend_scope(rule,skip,scope));
 	    if (not E)
-	    {
-		auto x = arg_required_type;
-		substitute(E,x);
-		throw myexception()<<"Expression '"<<unparse(arg_value)<<"' is not of required type "<<unparse_type(x)<<"!";
-	    }
+		throw myexception()<<"Expression '"<<unparse(arg_value)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
 	    model2.push_back({arg_name, arg_value});
 	    add(bound_vars, E.referenced_vars());
 	}
@@ -308,14 +305,11 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	else
 	{
 	    auto arg_required_type = argument.get_child("arg_type");
+	    substitute(E, arg_required_type);
 	    auto default_arg = argument.get_child("default_value");
 	    E = E && pass2(arg_required_type, default_arg, bound_vars, extend_scope(rule, skip, scope));
 	    if (not E)
-	    {
-		auto x = arg_required_type;
-		substitute(E,x);
-		throw myexception()<<"Default value '"<<unparse(default_arg)<<"' is not of required type "<<unparse_type(x)<<"!";
-	    }
+		throw myexception()<<"Expression '"<<unparse(default_arg)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
 	    add(bound_vars, E.referenced_vars());
 
 	    model2.push_back({arg_name, default_arg});
