@@ -51,6 +51,8 @@ public:
 
     std::set<std::string> referenced_vars() const;
 
+    std::string show() const;
+
     operator bool() const;
     equations() {};
     explicit equations(bool s):valid(s) {};
