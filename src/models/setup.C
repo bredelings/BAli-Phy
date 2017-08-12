@@ -473,7 +473,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 /// \param a The alphabet.
 /// \param frequencies The initial letter frequencies in the model.
 ///
-model_t get_model(const ptree& type, const ptree& model_rep)
+model_t get_model(const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep)
 {
     // --------- Convert model to MultiMixtureModel ------------//
     expression_ref full_model = get_model_as(type, model_rep, std::set<string>{});
@@ -481,7 +481,7 @@ model_t get_model(const ptree& type, const ptree& model_rep)
     if (log_verbose)
 	std::cout<<"full_model = "<<full_model<<std::endl;
 
-    return {model_rep, type, full_model};
+    return {model_rep, type, constraints, full_model};
 }
 
 model_t get_model(const string& type, const string& model)
@@ -501,5 +501,5 @@ model_t get_model(const string& type, const string& model)
 	std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
 	std::cout<<show(equations)<<std::endl;
     }
-    return get_model(required_type, model_rep);
+    return get_model(required_type, equations.get_constraints(), model_rep);
 }

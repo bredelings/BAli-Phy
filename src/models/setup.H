@@ -3,17 +3,20 @@
 #include <vector>
 #include <valarray>
 #include <string>
+#include <set>
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include "object.H"
 #include "alignment/alignment.H"
 #include "sequence/alphabet.H"
 #include "computation/expression/expression_ref.H"
+#include "unification.H"
 
 struct model_t
 {
     boost::property_tree::ptree description;
     boost::property_tree::ptree type;
+    std::set<term_t> constraints;
     expression_ref expression;
 };
 
