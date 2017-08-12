@@ -9,10 +9,13 @@
 
 typedef boost::property_tree::ptree term_t;
 
-
-template<> struct std::less<term_t> {
+// GCC5 can't handle 'struct std::less<>'
+namespace std
+{
+template<> struct less<term_t> {
     bool operator()(const term_t& a, const term_t& b) const;
 };
+}
 
 class equations
 {

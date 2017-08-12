@@ -40,12 +40,12 @@
 #include "cached_value.H"
 #include "dp/2way.H"
 #include "TreeInterface.H"
-#include "models/setup.H"
 
 //------------------------------- parameter-containing class --------------------------//
 
 class Parameters;
 class Likelihood_Cache_Branch;
+class model_t;
 
 struct data_partition_constants
 {

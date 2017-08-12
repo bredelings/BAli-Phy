@@ -42,6 +42,7 @@
 #include "computation/module.H"
 #include "computation/operations.H" // for VectorFromList<>
 #include "math/exponential.H"
+#include "models/setup.H"
 
 using std::vector;
 using std::string;
