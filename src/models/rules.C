@@ -8,6 +8,10 @@ using std::string;
 using boost::optional;
 using boost::property_tree::ptree;
 
+// TODO: reject HKY+HKY -- reduce constraints.
+//       reject HKY model with amino acid data.
+//       reject M3[LG,F1x4]
+
 // TODO: decrease memory usage for pairwise alignments.
 //       - make pairwise alignments represent the relevant bits without translation (e.g. make convert_to_bits a no-op)
 //       - make pairwise contain two dynamic_bitsets
