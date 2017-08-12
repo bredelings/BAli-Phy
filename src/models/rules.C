@@ -172,7 +172,7 @@ const vector< vector<vector<string>> > all_default_arguments =
 
     {{"E", "E", "P"}, {"SModel.constant_exchange_model"},{"*", "Double"}},
 
-    {{"x3", "EM[a]","G"},
+    {{"x3", "EM[a]","G", "Triplets[a]"},
      {"SModel.singlet_to_triplet_exchange[A,submodel]"},
      {"submodel", "EM[b]","","Alphabet.getNucleotides[A]"},
      {"A","a","LAMBDA"}},
