@@ -142,7 +142,7 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"SModel.jukes_cantor[A]"},
      {"A", "a", "LAMBDA"}},
 
-    {{"K80", "RA[a]", "G"},
+    {{"K80", "RA[a]", "G", "Nucleotides[a]"},
      {"SModel.k80[kappa,A]"},
      {"kappa", "Double", "~logNormal[log[2],0.25]"},
      {"A", "a", "LAMBDA"} },
@@ -157,7 +157,7 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"kappa", "Double", "~logNormal[log[2],0.25]"},
      {"alphabet", "a", "LAMBDA"}},
 
-    {{"TN", "EM[a]", "G"},
+    {{"TN", "EM[a]", "G", "Nucleotides[a]"},
      {"SModel.tn[kappaPur,kappaPyr,A]"},
      {"kappaPur", "Double", "~logNormal[log[2],0.25]"},
      {"kappaPyr", "Double", "~logNormal[log[2],0.25]"},
