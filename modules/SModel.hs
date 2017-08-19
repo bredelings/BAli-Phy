@@ -56,6 +56,11 @@ hky k a = tn k k a;
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m) <- dist];
 
+mixMM fs ms = MixtureModel $ mix fs [m | MixtureModel m <- ms];
+scale_MMs rs ms = [scaleMM r m | (r,m) <- zip' rs ms];
+scaled_mixture ms rs fs = mixMM fs (scale_MMs rs ms);
+scaled_mixture' a ms rs fs = scaled_mixture (map ($a) ms) rs fs;
+
 multiParameter model_fn values = MixtureModel [ (f*p, m) |(p,x) <- values, let {dist = case model_fn x of {MixtureModel d -> d}}, (f,m) <- dist];
 
 multi_rate m d = multiParameter (\x->scaleMM x m) d;
@@ -358,7 +363,8 @@ log_normal_rates_dist sigmaOverMu = logNormal lmu lsigma where {x = log(1.0+sigm
 
 log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rates_dist sigmaOverMu) n;
 
-dp base rates fraction = multi_rate base dist where {dist = zip fraction rates};
+--dp base rates fraction = multi_rate base dist where {dist = zip fraction rates};
+dp base rates fraction = scaled_mixture (replicate (length fraction) base) rates fraction;
 
 branch_transition_p t smodel branch_cat_list ds b = list_to_vector $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b);
 
