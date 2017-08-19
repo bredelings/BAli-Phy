@@ -212,10 +212,11 @@ uniformQuantiles q n = map (\i -> q ((2.0*(intToDouble i)+1.0)/(intToDouble n)) 
 
 unwrapDD (DiscreteDistribution l) = l;
 
-mixDiscreteDistributions' (h:t) (h2:t2) = (fmap1 (\q->q*h) h2)++(mixDiscreteDistributions' t t2);
-mixDiscreteDistributions' [] [] = [];
+mix fs ds = [(p*f, x) | (f, d) <- zip' fs ds, (p, x) <- d];
 
-mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap unwrapDD l2));
+certainly x = [(1.0, x)];
+
+mixDiscreteDistributions fs ds = DiscreteDistribution $ mix fs (fmap unwrapDD ds);
 
 average (DiscreteDistribution l) = foldl' (\x y->(x+(fst y)*(snd y))) 0.0 l;
 

@@ -211,6 +211,11 @@ zipWith _ _ _           =  [];
 
 zip = zipWith (,);
 
+zipWith' z (a:as) (b:bs) =  z a b : zipWith z as bs;
+zipWith' _ [] []           =  [];
+
+zip' = zipWith' (,);
+
 concat xs = foldr (++) [] xs;
 
 concatMap f = concat . map f;
