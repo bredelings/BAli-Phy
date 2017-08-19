@@ -54,10 +54,11 @@ tn k1 k2 a = gtr [k1, 1.0, 1.0, 1.0, 1.0, k2] a;
 hky k a = tn k k a;
 
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
+scaleMM x (MixtureModel dist            ) = MixtureModel [(p, scale x m) | (p, m) <- dist];
 
-multiParameter model_fn values = MixtureModel [(p, model_fn x) | (p, x) <- values];
+multiParameter model_fn values = MixtureModel [ (f*p, m) |(p,x) <- values, let {dist = case model_fn x of {MixtureModel d -> d}}, (f,m) <- dist];
 
-multi_rate m d = multiParameter (\x->(scale x m)) d;
+multi_rate m d = multiParameter (\x->scaleMM x m) d;
 
 average_frequency (MixtureModel ms) = list_from_vector $ builtin_average_frequency $ weighted_frequency_matrix $ MixtureModel ms;
 
@@ -164,31 +165,30 @@ m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins 
 
 dp_omegas mu omegas = map (\w -> min 1.0 (w*scale)) omegas where {scale = mu/sum(omegas)*(intToDouble $ length omegas)};
 
-dp_omega s r mu omegas codona = multiParameter m0w $ zip (repeat p) (dp_omegas mu omegas) where
-    {m0w w = reversible_markov (m0 codona s w) r;
-     p = 1.0/(intToDouble $ length omegas)};
+omega_mixture codona s r dist = multiParameter (\w -> unit_mixture $ reversible_markov (m0 codona s w) r) dist;
+
+dp_omega s r mu omegas codona = omega_mixture codona s r $ zip (repeat p) (dp_omegas mu omegas) where
+    {p = 1.0/(intToDouble $ length omegas)};
 
 --  w1 <- uniform 0.0 1.0;
 --  [f1, f2] <- dirichlet' 2 1.0;
-m1a s r w1 f1 codona = multiParameter m0w (m1a_omega_dist f1 w1)
-    where {m0w w = reversible_markov (m0 codona s w) r};
+m1a s r w1 f1 codona = omega_mixture codona s r (m1a_omega_dist f1 w1);
 
-m2a s r w1 f1 posP posW codona = multiParameter m0w (m2a_omega_dist f1 w1 posP posW)
-    where {m0w w = reversible_markov (m0 codona s w) r};
+m2a s r w1 f1 posP posW codona = omega_mixture codona s r (m2a_omega_dist f1 w1 posP posW);
 
-m2a_test s r w1 f1 posP posW posSelection codona = multiParameter m0w (m2a_test_omega_dist f1 w1 posP posW posSelection) where {m0w w = reversible_markov (m0 codona s w) r};
+m2a_test s r w1 f1 posP posW posSelection codona = omega_mixture codona s r (m2a_test_omega_dist f1 w1 posP posW posSelection);
 
-m3 s r ps omegas codona = multiParameter m0w (m3_omega_dist ps omegas) where {m0w w = reversible_markov (m0 codona s w) r};
+m3 s r ps omegas codona = omega_mixture codona s r (m3_omega_dist ps omegas);
 
-m3_test s r ps omegas posP posW posSelection codona = multiParameter m0w (m3_test_omega_dist ps omegas posP posW posSelection) where {m0w w = reversible_markov (m0 codona s w) r};
+m3_test s r ps omegas posP posW posSelection codona = omega_mixture codona s r (m3_test_omega_dist ps omegas posP posW posSelection);
 
-m7 s r mu gamma n_bins codona =  multiParameter m0w (m7_omega_dist mu gamma n_bins) where {m0w w = reversible_markov (m0 codona s w) r};
+m7 s r mu gamma n_bins codona =  omega_mixture codona s r (m7_omega_dist mu gamma n_bins);
 
-m8 s r mu gamma n_bins posP posW codona = multiParameter m0w (m8_omega_dist mu gamma n_bins posP posW) where {m0w w = reversible_markov (m0 codona s w) r};
+m8 s r mu gamma n_bins posP posW codona = omega_mixture codona s r (m8_omega_dist mu gamma n_bins posP posW);
 
-m8a s r mu gamma n_bins posP codona = multiParameter m0w (m8a_omega_dist mu gamma n_bins posP) where {m0w w = reversible_markov (m0 codona s w) r};
+m8a s r mu gamma n_bins posP codona = omega_mixture codona s r (m8a_omega_dist mu gamma n_bins posP);
 
-m8a_test s r mu gamma n_bins posP posW posSelection codona = multiParameter m0w (m8a_test_omega_dist mu gamma n_bins posP posW posSelection) where {m0w w = reversible_markov (m0 codona s w) r};
+m8a_test s r mu gamma n_bins posP posW posSelection codona = omega_mixture codona s r (m8a_test_omega_dist mu gamma n_bins posP posW posSelection);
 
 branch_site s r fs ws posP posW codona = MixtureModels [bg_mixture,fg_mixture] where
     {
@@ -196,11 +196,10 @@ branch_site s r fs ws posP posW codona = MixtureModels [bg_mixture,fg_mixture] w
       bg_dist = zip fs (ws ++ [1.0]);
 -- accelerated omega distribution -- posW for all categories
       accel_dist = zip fs (repeat posW);
-      m0w w = reversible_markov (m0 codona s w) r;
 -- background branches always use the background omega distribution              
-      bg_mixture = multiParameter m0w (mix [1.0-posP, posP] [bg_dist, bg_dist]);
+      bg_mixture = omega_mixture codona s r (mix [1.0-posP, posP] [bg_dist, bg_dist]);
 -- foreground branches use the foreground omega distribution with probability posP
-      fg_mixture = multiParameter m0w (mix [1.0-posP, posP] [bg_dist, accel_dist]);
+      fg_mixture = omega_mixture codona s r (mix [1.0-posP, posP] [bg_dist, accel_dist]);
     };
 
 branch_site_test s r fs ws posP posW posSelection codona = branch_site s r fs ws posP posW' codona where
