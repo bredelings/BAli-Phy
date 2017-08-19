@@ -196,31 +196,24 @@ iid n dist = list (replicate n dist);
 plate n dist_f = list $ map dist_f [0..n-1];
   
 -- This contains functions for working with DiscreteDistribution
-data DiscreteDistribution a = DiscreteDistribution [(Double,a)];
 
 fmap1 f [] = [];
 fmap1 f ((x,y):l) = (f x,y):(fmap1 f l);
-fmap1 f (DiscreteDistribution l) = DiscreteDistribution (fmap1 f l);
 
 fmap2 f [] = [];
 fmap2 f ((x,y):l) = (x,f y):(fmap2 f l);
-fmap2 f (DiscreteDistribution l) = DiscreteDistribution (fmap2 f l);
-
-extendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution ((p,x):(fmap1 (\q->q*(1.0-p)) d));
 
 uniformQuantiles q n = map (\i -> q ((2.0*(intToDouble i)+1.0)/(intToDouble n)) ) (take n [1..]);
-
-unwrapDD (DiscreteDistribution l) = l;
 
 mix fs ds = [(p*f, x) | (f, d) <- zip' fs ds, (p, x) <- d];
 
 certainly x = [(1.0, x)];
 
-mixDiscreteDistributions fs ds = DiscreteDistribution $ mix fs (fmap unwrapDD ds);
+extendDiscreteDistribution d p x = mix [p, 1.0-p] [certainly x, d];
 
-average (DiscreteDistribution l) = foldl' (\x y->(x+(fst y)*(snd y))) 0.0 l;
+average l = foldl' (\x y->(x+(fst y)*(snd y))) 0.0 l;
 
-uniformGrid n = DiscreteDistribution [( 1.0/n', (2.0*i'+1.0)/(2.0*n') ) | i <- take n [0..], let {n' = intToDouble n;i'=intToDouble i}];
+uniformGrid n = [( 1.0/n', (2.0*i'+1.0)/(2.0*n') ) | i <- take n [0..], let {n' = intToDouble n;i'=intToDouble i}];
 
 uniformDiscretize dist n = fmap2 (quantile dist) (uniformGrid n);
 

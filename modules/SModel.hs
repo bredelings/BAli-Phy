@@ -55,17 +55,15 @@ hky k a = tn k k a;
 
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 
-multiParameter f (DiscreteDistribution d) = MixtureModel (DiscreteDistribution (fmap2 f d));
+multiParameter model_fn values = MixtureModel [(p, model_fn x) | (p, x) <- values];
 
 multi_rate m d = multiParameter (\x->(scale x m)) d;
 
-
 average_frequency (MixtureModel ms) = list_from_vector $ builtin_average_frequency $ weighted_frequency_matrix $ MixtureModel ms;
 
+extend_mixture (MixtureModel ms) (p,x) = MixtureModel $ mix [p, 1.0-p] [certainly x, ms];
 
-extend_mixture (MixtureModel ms) p x = MixtureModel $ extendDiscreteDistribution ms p x;
-
-plus_inv mm p_inv = extend_mixture mm p_inv (scale 0.0 $ f81 pi a) where {a  = getAlphabet mm; pi = average_frequency mm};
+plus_inv mm p_inv = extend_mixture mm (p_inv, scale 0.0 $ f81 pi a) where {a  = getAlphabet mm; pi = average_frequency mm};
 
 multi_rate_unif_bins base dist n_bins = multi_rate base $ uniformDiscretize dist n_bins;
 
@@ -74,7 +72,7 @@ rate (MixtureModel d) = average (fmap2 rate d);
 
 qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t;
 
-branchTransitionP (MixtureModel (DiscreteDistribution l)) t = let {r = rate (MixtureModel (DiscreteDistribution l))} 
+branchTransitionP (MixtureModel l) t = let {r = rate (MixtureModel l)} 
                                                               in map (\x -> qExp (scale (t/r) (snd x))) l;
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
@@ -82,10 +80,10 @@ reversible_markov' a smap q pi = ReversibleMarkov a smap q pi (get_eigensystem q
 
 reversible_markov s (ReversibleFrequency a smap pi r) = reversible_markov' a smap (reversible_rate_matrix s r) pi;
 
-nBaseModels (MixtureModel (DiscreteDistribution l)) = length l;
+nBaseModels (MixtureModel l) = length l;
 nBaseModels (MixtureModels (m:ms)) = nBaseModels m;
 
-baseModel (MixtureModel (DiscreteDistribution l)) i = snd (l !! i);
+baseModel (MixtureModel l) i = snd (l !! i);
 
 stateLetters (ReversibleMarkov _ smap _ _ _ _ _) = smap;
 stateLetters (F81 _ smap _ _ ) = smap;
@@ -105,14 +103,14 @@ frequencies (F81 _ _ _ pi) = pi;
 componentFrequencies (MixtureModel d)       i = frequencies (baseModel (MixtureModel d) i);
 componentFrequencies (MixtureModels (m:ms)) i = componentFrequencies m i;
 
-distribution (MixtureModel (DiscreteDistribution l)) = map fst l;
+distribution (MixtureModel l) = map fst l;
 distribution (MixtureModels (m:ms))                  = distribution m;
 
 getNthMixture (MixtureModels l) i = l !! i;
 
 unwrapMM (MixtureModel dd) = dd;
 
-mixMixtureModels l dd = MixtureModel (mixDiscreteDistributions l (map unwrapMM dd));
+mixMixtureModels l dd = MixtureModel (mix l (map unwrapMM dd));
 
 weighted_frequency_matrix (MixtureModel d) = let {model = MixtureModel d;
                                                   dist = list_to_vector $ distribution model;
@@ -134,14 +132,14 @@ k80 kappa nuca = reversible_markov (hky kappa nuca) (plus_f_equal_frequencies nu
 
 f81 pi a = reversible_markov (equ a) (plus_f a pi);
 
-m1a_omega_dist f1 w1 = DiscreteDistribution [(f1,w1), (1.0-f1,1.0)];
+m1a_omega_dist f1 w1 = [(f1,w1), (1.0-f1,1.0)];
 
 m2a_omega_dist f1 w1 posP posW = extendDiscreteDistribution (m1a_omega_dist f1 w1) posP posW;
 
 m2a_test_omega_dist f1 w1 posP posW 0 = m2a_omega_dist f1 w1 posP 1.0;
 m2a_test_omega_dist f1 w1 posP posW _ = m2a_omega_dist f1 w1 posP posW;
 
-m3_omega_dist ps omegas = DiscreteDistribution $ zip ps omegas;
+m3_omega_dist ps omegas = zip' ps omegas;
 
 m3p_omega_dist ps omegas posP posW = extendDiscreteDistribution (m3_omega_dist ps omegas) posP posW;
 
@@ -166,7 +164,7 @@ m8a_test_omega_dist mu gamma n_bins posP posW _ = m8_omega_dist mu gamma n_bins 
 
 dp_omegas mu omegas = map (\w -> min 1.0 (w*scale)) omegas where {scale = mu/sum(omegas)*(intToDouble $ length omegas)};
 
-dp_omega s r mu omegas codona = multiParameter m0w $ DiscreteDistribution $ zip (repeat p) (dp_omegas mu omegas) where
+dp_omega s r mu omegas codona = multiParameter m0w $ zip (repeat p) (dp_omegas mu omegas) where
     {m0w w = reversible_markov (m0 codona s w) r;
      p = 1.0/(intToDouble $ length omegas)};
 
@@ -195,14 +193,14 @@ m8a_test s r mu gamma n_bins posP posW posSelection codona = multiParameter m0w 
 branch_site s r fs ws posP posW codona = MixtureModels [bg_mixture,fg_mixture] where
     {
 -- background omega distribution -- where the last omega is 1.0 (neutral)
-      bg_dist = DiscreteDistribution $ zip fs (ws ++ [1.0]);
+      bg_dist = zip fs (ws ++ [1.0]);
 -- accelerated omega distribution -- posW for all categories
-      accel_dist = DiscreteDistribution $ zip fs (repeat posW);
+      accel_dist = zip fs (repeat posW);
       m0w w = reversible_markov (m0 codona s w) r;
 -- background branches always use the background omega distribution              
-      bg_mixture = multiParameter m0w (mixDiscreteDistributions [1.0-posP, posP] [bg_dist, bg_dist]);
+      bg_mixture = multiParameter m0w (mix [1.0-posP, posP] [bg_dist, bg_dist]);
 -- foreground branches use the foreground omega distribution with probability posP
-      fg_mixture = multiParameter m0w (mixDiscreteDistributions [1.0-posP, posP] [bg_dist, accel_dist]);
+      fg_mixture = multiParameter m0w (mix [1.0-posP, posP] [bg_dist, accel_dist]);
     };
 
 branch_site_test s r fs ws posP posW posSelection codona = branch_site s r fs ws posP posW' codona where
@@ -361,7 +359,7 @@ log_normal_rates_dist sigmaOverMu = logNormal lmu lsigma where {x = log(1.0+sigm
 
 log_normal_rates base sigmaOverMu n = multi_rate_unif_bins base (log_normal_rates_dist sigmaOverMu) n;
 
-dp base rates fraction = multi_rate base (DiscreteDistribution dist) where {dist = zip fraction rates};
+dp base rates fraction = multi_rate base dist where {dist = zip fraction rates};
 
 branch_transition_p t smodel branch_cat_list ds b = list_to_vector $ branchTransitionP (getNthMixture smodel (branch_cat_list!!b)) (ds!b);
 
@@ -377,7 +375,7 @@ a_branch_length_model dist i =
 -- If we sample branches that are not adjacent, then it won't be efficient.
 iid_branch_length_model t dist = SamplingRate 0.0 $ mapM (\i -> a_branch_length_model dist i) [1..numBranches t];
 
-unit_mixture m = MixtureModel (DiscreteDistribution [(1.0,m)]);
+unit_mixture m = MixtureModel (certainly m);
 
 mmm m = MixtureModels [m];
 
