@@ -133,7 +133,7 @@ last []          =  error "Prelude.last: empty list";
 null []          =  True;
 null (_:_)       =  False;
 
-init [x] = x;
+init [x] = [];
 init (x:xs) = x:(init xs);
 init []     = error "Prelude.init: empty list";
 
