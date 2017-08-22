@@ -120,21 +120,6 @@ get_imodels(const shared_items<string>& imodel_names_mapping, const SequenceTree
     return imodels;
 }
 
-string show_model(boost::property_tree::ptree p)
-{
-    bool top_sample = false;
-    if (p.get_value<string>() == "Sample")
-    {
-	top_sample = true;
-	p = p.begin()->second;
-    }
-
-    string output = unparse(p);
-    string connector = top_sample?"~ ":"= ";
-
-    return connector + output;
-}
-
 void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 		 const vector<model_t>& IModels, const vector<model_t>& SModels,
 		 const vector<model_t>& ScaleModels,

@@ -264,3 +264,18 @@ string unparse_type(const ptree& p)
     return s;
 }
 
+string show_model(boost::property_tree::ptree p)
+{
+    bool top_sample = false;
+    if (p.get_value<string>() == "Sample")
+    {
+	top_sample = true;
+	p = p.begin()->second;
+    }
+
+    string output = unparse(p);
+    string connector = top_sample?"~ ":"= ";
+
+    return connector + output;
+}
+
