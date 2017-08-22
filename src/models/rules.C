@@ -214,6 +214,20 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"ws", "List[Double]", "~iid[20,logNormal[0,0.5]]"},
      {"submodel", "RA[a]", "HKY"}},
 
+    // If we didn't have to perform things, I'd just make a mixture' that applies the alphabet to each sub-model in the list.
+    // This is going to cause ordering trouble, since we will execute models after it is referenced.
+    // If we had lazy evaluation, we wouldn't evaluate default args unless they were needed.
+    {{"Mixture", "MM[a]","G"},
+     {"SModel.scaled_mixture'[A,models,rates,frequencies]"},
+     {"models", "List[MM[a]]","","A"},
+     {"rates", "List[Double]", "~Dirichlet[Length[models],2]"},
+     {"frequencies", "List[Double]", "~Dirichlet[Length[models],3]"},
+     {"A","a","LAMBDA"}},
+
+    {{"Length", "Int"},
+     {"length[x]"},
+     {"x", "List[a]"}},
+
     // fraction ~ dirichlet' n (1 + n/2), rates ~ dirichlet' n 2
     {{"DP", "MM[a]","G"},
      {"SModel.dp[submodel,rates,frequencies]"},
