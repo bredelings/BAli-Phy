@@ -512,6 +512,14 @@ ptree convert_rule(const vector<vector<string>>& s)
     return rule;
 }
 
+vector<Rule> get_rules()
+{
+    vector<Rule> rules;
+    for(auto& rule: all_default_arguments)
+	rules.push_back(convert_rule(rule));
+    return rules;
+}
+
 optional<Rule> get_rule_for_func(const string& s)
 {
     for(const auto& rule: all_default_arguments)

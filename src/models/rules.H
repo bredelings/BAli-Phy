@@ -9,6 +9,8 @@ typedef boost::property_tree::ptree Rule;
 
 typedef boost::property_tree::ptree type_t;
 
+std::vector<Rule> get_rules();
+
 boost::optional<Rule> get_rule_for_func(const std::string& s);
 
 Rule require_rule_for_func(const std::string& s);
