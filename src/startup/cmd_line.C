@@ -178,19 +178,24 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	{
 	    string name = rule->get<string>("name");
 	    string result_type = unparse_type(rule->get_child("result_type"));
-	    std::cout<<name<<" :: "<<result_type << std::endl;
 	    auto args = rule->get_child("args");
+	    vector<string> args_names_types;
 	    for(auto& argpair: args)
 	    {
 		auto& arg = argpair.second;
-		std::cout<<"     "<<arg.get<string>("arg_name");
-		std::cout<<" :: "<<unparse_type(arg.get_child("arg_type"));
+		if (arg.get_child_optional("no_apply")) continue;
+		args_names_types.push_back(arg.get<string>("arg_name") + " :: " + unparse_type(arg.get_child("arg_type")));
+	    }
+	    std::cout<<name;
+	    if (args_names_types.size()) std::cout<<"["<<join(args_names_types,", ")<<"]";
+	    std::cout<<" -> "<<result_type << std::endl;
+	    for(auto& argpair: args)
+	    {
+		auto& arg = argpair.second;
+		if (arg.get_child_optional("no_apply")) continue;
 		auto default_value = arg.get_child_optional("default_value");
 		if (default_value)
-		{
-		    std::cout<<" "<<show_model(*default_value);
-		}
-		std::cout<<std::endl;
+		    std::cout<<"   "<<arg.get<string>("arg_name")<<" "<<show_model(*default_value)<<std::endl;
 	    }
 	    exit(0);
 	}
