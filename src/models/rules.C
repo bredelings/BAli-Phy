@@ -246,21 +246,21 @@ const vector< vector<vector<string>> > all_default_arguments =
 
     {{"Rates.Gamma", "MixtureModel[a]", "G"},
      {"SModel.gamma_rates[submodel,alpha,n]"},
-     {"n", "Int", "4"},
-     {"alpha", "Double", "~logLaplace[-6,2]"},
+     {"n", "Int", "4", "", "The number of bins for discretizing the Gamma distribution."},
+     {"alpha", "Double", "~logLaplace[-6,2]", "", "The shape parameter for the Gamma distribution."},
      {"submodel", "MixtureModel[a]", "", "A"},
      {"A", "a", "LAMBDA"}},
 
     {{"Rates.logNormal", "MixtureModel[a]", "G"},
      {"SModel.log_normal_rates[submodel,sigmaOverMu,n]"},
-     {"n", "Int", "4"},
+     {"n", "Int", "4", "", "The number of bins for discretizing the logNormal distribution"},
      {"sigmaOverMu", "Double", "~logLaplace[-3,1]"},
      {"submodel", "MixtureModel[a]", "", "A"},
      {"A", "a", "LAMBDA"}},
     
     {{"INV", "MixtureModel[a]", "G"},
      {"SModel.plus_inv[submodel,pInv]"},
-     {"pInv","Double","~Uniform[0,1]"},
+     {"pInv","Double","~Uniform[0,1]", "", "The fraction of invariant sites."},
      {"submodel","MixtureModel[a]","","A"},
      {"A", "a", "LAMBDA"}},
 
@@ -274,12 +274,12 @@ const vector< vector<vector<string>> > all_default_arguments =
     
     {{"M2a", "MixtureModel[Codon[a,b]]","G"},
      {"SModel.m2a[nuc_model,freq_model,omega1,p1,posP,posW,A]"},
-     {"nuc_model", "ExchangeModel[a]", "HKY", "Alphabet.getNucleotides[A]"},
-     {"freq_model", "FrequencyModel[Codon[a,b]]", "F61","A"},
+     {"nuc_model", "ExchangeModel[a]", "HKY", "Alphabet.getNucleotides[A]","The nucleotide exchange model."},
+     {"freq_model", "FrequencyModel[Codon[a,b]]", "F61","A","The frequency model."},
      {"omega1", "Double", "~Uniform[0,1]"},
      {"p1", "Double", "~Uniform[0,1]"},
-     {"posP", "Double", "~Beta[1,10]"},
-     {"posW", "Double", "~logGamma[4,0.25]"},
+     {"posP", "Double", "~Beta[1,10]" ,"", "The fraction of positively selected sites"},
+     {"posW", "Double", "~logGamma[4,0.25]", "", "The dN/dS value for positively selected sites"},
      {"A","a","LAMBDA"}},
 
     {{"M2a_Test", "MixtureModel[Codon[a,b]]", "G"},

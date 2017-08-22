@@ -24,7 +24,7 @@ void pass1(ptree& p)
 	pass1(child.second);
     
     // 2. Convert e.g. TN+F -> RCTMC[TN,F]
-    if (unify(get_result_type(p),parse_type("FM[_]")) and p.count("submodel"))
+    if (unify(get_result_type(p),parse_type("FrequencyModel[_]")) and p.count("submodel"))
     {
 	ptree q = p.get_child("submodel");
 	auto& r = p;
@@ -45,19 +45,19 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
     if (E)
 	return E;
 
-    if (t2.get_value<string>() == "MMM")
+    if (t2.get_value<string>() == "MultiMixtureModel")
     {
-	t2.put_value("MM");
+	t2.put_value("MixtureModel");
 	E = convertible_to(model,t1,t2);
 	if (E)
 	{
 	    ptree result;
-	    result.put_value("MMM");
+	    result.put_value("MultiMixtureModel");
 	    result.push_back({"submodel",model});
 	    model = result;
 	}
     }
-    else if (t2.get_value<string>() == "MM")
+    else if (t2.get_value<string>() == "MixtureModel")
     {
 	t2.put_value("RA");
 	E = convertible_to(model,t1,t2);
@@ -71,7 +71,7 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
     }
     else if (t2.get_value<string>() == "RA")
     {
-	t2.put_value("EM");
+	t2.put_value("ExchangeModel");
 	E = convertible_to(model,t1,t2);
 	if (E)
 	{
