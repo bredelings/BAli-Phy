@@ -158,13 +158,13 @@ const vector< vector<vector<string>> > all_default_arguments =
 
     {{"HKY", "EM[a]", "G", "Nucleotides[a]"},
      {"SModel.hky[kappa,alphabet]"},
-     {"kappa", "Double", "~logNormal[log[2],0.25]"},
+     {"kappa", "Double", "~logNormal[log[2],0.25]","","Transition/transversion ratio"},
      {"alphabet", "a", "LAMBDA"}},
 
     {{"TN", "EM[a]", "G", "Nucleotides[a]"},
      {"SModel.tn[kappaPur,kappaPyr,A]"},
-     {"kappaPur", "Double", "~logNormal[log[2],0.25]"},
-     {"kappaPyr", "Double", "~logNormal[log[2],0.25]"},
+     {"kappaPur", "Double", "~logNormal[log[2],0.25]","","A<->G Transition/transversion ratio"},
+     {"kappaPyr", "Double", "~logNormal[log[2],0.25]","","C<->T Transition/transversion ratio"},
      {"A", "a", "LAMBDA"}},
 
     {{"GTR", "EM[a]", "G"},
@@ -194,9 +194,9 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"filename", "String"},
      {"A","a","LAMBDA"}},
 
-    {{"M0", "EM[Codon[a,b]]", "G", "Nucleotides[a],AminoAcids[b]"},
+    {{"M0", "EM[Codon[a,b]]", "G", "Nucleotides[a],AminoAcids[b]","The Yang & Nielsen (2000) model of dN/dS"},
      {"SModel.m0[A,submodel,omega]"},
-     {"omega", "Double", "~Uniform[0,1]"},
+     {"omega", "Double", "~Uniform[0,1]","","Relative rate of non-synonymous changes relative to synonymous changes."},
      {"submodel", "EM[a]", "HKY", "Alphabet.getNucleotides[A]"},
      {"A","a","LAMBDA"}},
 
@@ -494,10 +494,15 @@ ptree convert_rule(const vector<vector<string>>& s)
     if (contains_char(attributes, 'G')) rule.put("generate_function", "true");
     if (contains_char(attributes, 'N')) rule.put("no_log", "true");
 
+    // Add type constraints
     ptree constraints;
     if (s[0].size() >= 4)
 	constraints = parse_constraints(s[0][3]);
     rule.push_back({"constraints", constraints});
+
+    // Add function description
+    if (s[0].size() >= 5 and not s[0][4].empty())
+	rule.push_back({"description",ptree(s[0][4])});
 
     // Add the call
     rule.push_back({"call", parse_type(s[1][0])});
@@ -518,6 +523,9 @@ ptree convert_rule(const vector<vector<string>>& s)
 
 	if (s[i].size() > 3 and not s[i][3].empty())
 	    arg.push_back({"applied_args",parse_type(s[i][3])});
+
+	if (s[i].size() > 4 and not s[i][4].empty())
+	    arg.push_back({"description",ptree(s[i][4])});
 
 	args.push_back({"",arg});
     }
