@@ -3,6 +3,8 @@
 #include "../io.H"
 #include "setup.H"
 #include "version.H"
+#include "models/rules.H"
+#include "models/parse.H"
 
 using std::string;
 using std::vector;
@@ -155,6 +157,43 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
 	cout<<some<<"\n";
 	exit(0);
+    }
+
+    if (args.count("help"))
+    {
+	string topic = args["help"].as<string>();
+	if (topic == "functions")
+	{
+	    auto rules = get_rules();
+	    for(auto& rule: rules)
+	    {
+		string name = rule.get_child("name").get_value<string>();
+		string result_type = unparse_type(rule.get_child("result_type"));
+		std::cout<<name<<" :: "<<result_type << std::endl;
+	    }
+	    exit(0);
+	}
+
+	if (auto rule = get_rule_for_func(topic))
+	{
+	    string name = rule->get<string>("name");
+	    string result_type = unparse_type(rule->get_child("result_type"));
+	    std::cout<<name<<" :: "<<result_type << std::endl;
+	    auto args = rule->get_child("args");
+	    for(auto& argpair: args)
+	    {
+		auto& arg = argpair.second;
+		std::cout<<"     "<<arg.get<string>("arg_name");
+		std::cout<<" :: "<<unparse_type(arg.get_child("arg_type"));
+		auto default_value = arg.get_child_optional("default_value");
+		if (default_value)
+		{
+		    std::cout<<" "<<show_model(*default_value);
+		}
+		std::cout<<std::endl;
+	    }
+	    exit(0);
+	}
     }
 
     if (args.count("help")) {
