@@ -176,6 +176,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 	if (auto rule = get_rule_for_func(topic))
 	{
+	    auto desc = rule->get_optional<string>("description");
+	    if (desc)
+		std::cout<<*desc<<std::endl<<std::endl;
+
 	    string name = rule->get<string>("name");
 	    string result_type = unparse_type(rule->get_child("result_type"));
 	    auto args = rule->get_child("args");
@@ -188,11 +192,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    }
 	    std::cout<<name;
 	    if (args_names_types.size()) std::cout<<"["<<join(args_names_types,", ")<<"]";
-	    std::cout<<" -> "<<result_type << std::endl;
-
-	    auto desc = rule->get_optional<string>("description");
-	    if (desc)
-		std::cout<<*desc<<std::endl<<std::endl;
+	    std::cout<<" -> "<<result_type << std::endl<<std::endl;
 
 	    for(auto& argpair: args)
 	    {
@@ -203,7 +203,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 		if (default_value or desc)
 		    std::cout<<"   "<<arg.get<string>("arg_name")<<" "<<show_model(*default_value)<<std::endl;
 		if (desc)
-		    std::cout<<"       "<<*desc<<std::endl;
+		    std::cout<<"       "<<*desc<<std::endl<<std::endl;
 	    }
 	    exit(0);
 	}
