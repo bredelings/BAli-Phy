@@ -49,7 +49,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     options_description advanced("Advanced options");
     advanced.add_options()
 	("unalign,U","Unalign sequences (if variable-A)")
-	("unalign-all,U","Unalign sequences")
+	("unalign-all","Unalign sequences")
 	("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
 	("beta",value<string>(),"MCMCMC temperature")
 	("package-path,P",value<string>(),"Directories to search for packages (':'-separated)")
@@ -92,12 +92,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description general("General options");
     general.add_options()
-	("help,h", "Print usage information.")
-	("Help,H", "Print advanced usage information.")
+	("help,h", value<string>()->implicit_value("help"),"Print usage information.")
 	("version,v", "Print version information.")
 	("config,c", value<string>(),"Config file to read.")
 	("test,T","Analyze the initial values and exit.")
-	("verbose,V","Print extra output in case of error.")
+	("verbose,V",value<int>()->implicit_value(1),"Print extra output in case of error.")
 	;
 
     options_description mcmc("MCMC options");
@@ -145,12 +144,19 @@ variables_map parse_cmd_line(int argc,char* argv[])
     if (args.count("verbose"))
 	log_verbose = 1;
 
-    if (args.count("Help"))
+    if (args.count("help") and args["help"].as<string>() == "advanced")
     {
 	cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
 	cout<<all<<"\n";
 	exit(0);
     }
+    if (args.count("help") and args["help"].as<string>() == "help")
+    {
+	cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
+	cout<<some<<"\n";
+	exit(0);
+    }
+
     if (args.count("help")) {
 	cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
 	cout<<some<<"\n";
