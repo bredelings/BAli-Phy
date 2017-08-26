@@ -239,6 +239,13 @@ closure case_op(OperationArgs& Args)
  *
  * Then there is the issue of contingent execution.
  * - If the execution is non-contingent, then we would actually like to update the reg 
+ *
+ * Update: 8/26/2017 - So, currently when we have E=let DECLS in changeable, we perform the let, and then 
+ *                     update E to E=changeable.  Then if changeable changes, we do not need to re-perform the let.
+ *                     If we merge the let and the changeable, then we are basically keepint E=let Decls in changeable,
+ *                     but not creating a call from E=let Decls in changeable to F=changeable.  However, this merger is still
+ *                     bad, because it means that if F changes, then we re-allocate the Decls, which unshares them, and also
+ *                     re-allocates them.
  */
 
 closure let_op(OperationArgs& Args)
