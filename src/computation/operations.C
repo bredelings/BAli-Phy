@@ -255,30 +255,35 @@ closure let_op(OperationArgs& Args)
 
     reg_heap& M = Args.memory();
 
-    const closure& C = Args.current_closure();
+    auto C  = Args.current_closure();
 
-    const vector<expression_ref>& A = C.exp.sub();
+    do
+    {
+	int start = C.Env.size();
 
-    const expression_ref& T = A[0];
+	const vector<expression_ref>& args = C.exp.sub();
 
-    int n_bodies = int(A.size())-1;
+	const expression_ref& body = args[0];
 
-    auto local_env = C.Env;
+	int n_bodies = int(args.size())-1;
 
-    int start = local_env.size();
-
-    for(int i=0;i<n_bodies;i++)
-	local_env.push_back( M.push_temp_head() );
+	// 1. Allocate the new vars on the heap
+	for(int i=0;i<n_bodies;i++)
+	    C.Env.push_back( M.push_temp_head() );
       
-    // Substitute the new heap vars for the dummy vars in expression T and in the bodies
-    for(int i=0;i<n_bodies;i++)
-	M.set_C(local_env[start+i], get_trimmed({A[i+1],local_env}));
+	// 2. Substitute the new heap vars for the dummy vars in expression T and in the bodies
+	for(int i=0;i<n_bodies;i++)
+	    M.set_C(C.Env[start+i], get_trimmed({args[i+1],C.Env}));
 
-    // Remove the new heap vars from the list of temp heads in reverse order.
-    for(int i=0;i<n_bodies; i++)
-	M.pop_temp_head();
+	// 3. Remove the new heap vars from the list of temp heads in reverse order.
+	for(int i=0;i<n_bodies; i++)
+	    M.pop_temp_head();
       
-    return get_trimmed({T, local_env});
+	C = get_trimmed({body, C.Env});
+    }
+    while (C.exp.head().type() == let2_type);
+
+    return C;
 }
 
 closure modifiable_op(OperationArgs&)
