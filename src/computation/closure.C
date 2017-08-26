@@ -27,7 +27,7 @@ closure get_trimmed(const closure& C)
     return get_trimmed(std::move(C2));
 }
 
-closure get_trimmed(closure&& C)
+void do_trim(closure& C)
 {
     if (C.exp.head().type() == trim_type)
     {
@@ -47,8 +47,13 @@ closure get_trimmed(closure&& C)
 	// Should this ever happen?
 	assert(not C.exp.head().is_a<Trim>());
     }
-  
-    return std::move(C);
+}
+
+closure get_trimmed(closure&& C)
+{
+    do_trim(C);
+
+    return C;
 }
 
 expression_ref deindexify(const closure& C)

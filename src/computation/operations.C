@@ -279,7 +279,8 @@ closure let_op(OperationArgs& Args)
 	for(int i=0;i<n_bodies; i++)
 	    M.pop_temp_head();
       
-	C = get_trimmed({body, C.Env});
+	C.exp = body;
+	do_trim(C);
     }
     while (C.exp.head().type() == let2_type);
 
