@@ -172,16 +172,18 @@ dummy remove_var_and_set_occurrence_info(const expression_ref& var, set<dummy>& 
 }
 // occur:: Expression -> (marked free_variables, marked Expression)
 
-vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,expression_ref>> decls, set<dummy>& free_vars)
+bool is_alive(const occurrence_info& x)
+{
+    return (x.is_exported or x.code_dup != amount_t::None);
+}
+
+Graph construct_directed_reference_graph(vector<pair<dummy,expression_ref>>& decls, set<dummy>& free_vars)
 {
     using namespace boost;
     const int L = decls.size();
 
     // 0. Initialize the graph and decls
-    Graph graph;
-    vector<adjacency_list<>::vertex_descriptor> vertices;
-    for(int i=0; i<L; i++)
-	vertices.push_back( add_vertex(graph) );
+    Graph graph(L);
 
     // 2. Mark vars referenced in the body as being alive
     vector<bool> alive(L,0);
@@ -220,7 +222,7 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 		int j = it->second;
 
 		// 3.3.2 Add an edge from i -> j meaning "i references j"
-		boost::add_edge(vertices[i], vertices[j], graph);
+		boost::add_edge(i, j, graph);
 
 		// 3.3.3 Add variable j to the work list if we haven't put it on the list already
 		if (not alive[j])
@@ -238,8 +240,34 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 	decls[i].first = remove_var_and_set_occurrence_info(decls[i].first, free_vars);
 
 	// Variable is alive if and only if the variable is never executed.
-	assert(alive[i] == (decls[i].first.code_dup != amount_t::None or decls[i].first.is_exported));
+	assert(alive[i] == is_alive(decls[i].first));
     }
+
+    return graph;
+}
+
+// free_vars: (in) vars that are free in the body of the let statement.
+//            (out) vars that are free in the let statement.
+//
+// maybe fixme: avoid doing any work that is O(#decls), only do work that is O(#live decls)?
+//
+//              HOWEVER. probably doing work that is C*#decls is OK if we don't analyze the bodies of the dead decls,
+//               because we already did some work that is O(#decls to create the list of decls).
+//
+//              On the other hand, doing work that is O(#decls) in EACH iteration, makes that work O(#decls * #simplifier_passes)
+//
+//              Deal with this later.
+//
+
+vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,expression_ref>> decls, set<dummy>& free_vars)
+{
+    using namespace boost;
+    const int L = decls.size();
+
+    // 1. Determine which vars are alive or dead..
+    // 2. Copy use information into dummies in decls
+    // 3. Remove declared vars from free_vars.
+    auto graph = construct_directed_reference_graph(decls, free_vars);
 
     // 5. Break cycles
     vector<int> component(L);
@@ -264,7 +292,7 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 	    int first = components[c][0];
 
 	    // If the component is a single with no loop to itself, then it is fine.
-	    if (components[c].size() == 1 and not edge(vertices[first],vertices[first],graph).second) continue;
+	    if (components[c].size() == 1 and not edge(first,first,graph).second) continue;
 
 	    vector<int> score(components[c].size());
 	    for(int k = 0; k < score.size(); k++)
@@ -280,7 +308,7 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 	    int loop_breaker_index = components[c][loop_breaker_index_in_component];
 
 	    // delete incoming edges to the loop breaker
-	    clear_in_edges(vertices[loop_breaker_index], graph);
+	    clear_in_edges(loop_breaker_index, graph);
 	    changed = true;
 
 	    // mark the variable as a loop breaker
@@ -299,7 +327,7 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
     // 7. Sort the live decls
     vector<pair<dummy,expression_ref>> decls2;
     for(int i: sorted_indices)
-	if (alive[i])
+	if (is_alive(decls[i].first))
 	    decls2.push_back(decls[i]);
     return decls2;
 }
