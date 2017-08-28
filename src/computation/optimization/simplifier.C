@@ -293,21 +293,44 @@ vector<pair<vector<int>,Graph>> get_ordered_live_components(const Graph& graph, 
     return live_components;
 }
 
-int select_loop_breaker(const vector<int>& component, const vector<pair<dummy,expression_ref>>& decls)
+int get_score(const pair<dummy, expression_ref>& decl)
 {
-    vector<int> score(component.size());
-    for(int k = 0; k < score.size(); k++)
+    auto& x = decl.first;
+    auto& F = decl.second;
+
+    if (is_reglike(F))
+	return 4;
+    else if (is_constructor(F.head()) or F.size() == 0)
+	return 3;
+    else if (x.pre_inline())
+	return 1;
+    else
+	return 0;
+}
+
+template <typename T>
+int argmin(int n, std::function<T(int)> f)
+{
+    int min_index = 0;
+    int min_score = f(0);
+    for(int i=1;i<n;i++)
     {
-	int i = component[k];
-	auto x = decls[i].first;
-	auto F = decls[i].second;
-	if (is_reglike(F)) score[k] = 4;
-	else if (is_constructor(F.head()) or F.size() == 0) score[k] = 3;
-	else if (x.pre_inline()) score[k] = 1;
+	T score = f(i);
+	if (score < min_score)
+	{
+	    min_index = i;
+	    min_score = score;
+	}
     }
-    int loop_breaker_index_in_component = argmin(score);
-    int loop_breaker_index = component[loop_breaker_index_in_component];
-    return loop_breaker_index;
+    return min_index;
+}
+
+
+// Find element of component with smallest score in sub_component.
+int select_loop_breaker(const vector<int>& sub_component, const vector<int>& component, const vector<pair<dummy,expression_ref>>& decls)
+{
+    std::function<int(int)> score_fn = [&](int k) {return get_score(decls[component[sub_component[k]]]);};
+    return sub_component[argmin(sub_component.size(), score_fn)];
 }
 
 
@@ -348,29 +371,42 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 
     vector<pair<vector<int>,Graph>> ordered_components = get_ordered_live_components(graph, decls);
 
-    // 5. Break cycles
-    bool changed = true;
-    while(changed)
+    // 5. Break cycles in each component
+    for(auto& component: ordered_components)
     {
-	changed = false;
+	auto& component_indices = component.first;
+	auto& component_graph = component.second;
 
-	// find strongly connected components: every node is reachable from every other node
-	vector<vector<int>> components = get_ordered_strong_components(graph);
-
-	for(auto& component: components)
+        // 5.1 Break cycles in this component
+	bool changed = true;
+	while(changed)
 	{
-	    // If the component is a single with no loop to itself, then we don't need to break any loops
-	    if (component.size() == 1 and not edge(component[0], component[0], graph).second) continue;
+	    changed = false;
 
-	    int loop_breaker_index = select_loop_breaker(component, decls);
+	    // find strongly connected components: every node is reachable from every other node
+	    vector<vector<int>> sub_components = get_ordered_strong_components(component_graph);
 
-	    // delete incoming edges to the loop breaker
-	    clear_in_edges(loop_breaker_index, graph);
-	    changed = true;
+	    // 5.1.1.  Break cycles in the first sub_component with a cycle
+	    for(auto& sub_component: sub_components)
+	    {
+		// If the component is a single with no loop to itself, then we don't need to break any loops
+		if (sub_component.size() == 1 and not edge(sub_component[0], sub_component[0], component_graph).second) continue;
 
-	    // mark the variable as a loop breaker
-	    decls[loop_breaker_index].first.is_loop_breaker = true;
-	    break;
+		// Find the element of the component with the lowest score in the sub_component.
+		int loop_breaker_component_index = select_loop_breaker(sub_component, component_indices, decls);
+		int loop_breaker_index = component_indices[loop_breaker_component_index];
+
+		// Remove incoming edges to the loop breaker from the component graph
+		clear_in_edges(loop_breaker_component_index, component_graph);
+		clear_in_edges(loop_breaker_index, graph);
+
+		// Mark the variable as a loop breaker
+		decls[loop_breaker_index]. first. is_loop_breaker = true;
+
+		// Start
+		changed = true;
+		break;
+	    }
 	}
     }
 
