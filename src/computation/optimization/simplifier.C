@@ -361,7 +361,19 @@ vector<int> topo_sort(const Graph& graph)
 //              Deal with this later.
 //
 
-vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,expression_ref>> decls, set<dummy>& free_vars)
+template <typename T>
+vector<T> flatten(const vector<vector<T>>& v1)
+{
+    vector<T> v2;
+    for(auto& v: v1)
+	for(auto& t: v)
+	    v2.push_back(t);
+    return v2;
+}
+
+
+vector<vector<pair<dummy,expression_ref>>>
+occurrence_analyze_decls(vector<pair<dummy,expression_ref>> decls, set<dummy>& free_vars)
 {
     // 1. Determine which vars are alive or dead..
     // 2. Construct reference graph between (live) vars.
@@ -426,10 +438,14 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
     }
 
     // 7. Flatten the decl groups
-    vector<pair<dummy,expression_ref>> decls2;
+    vector<vector<pair<dummy,expression_ref>>> decls2;
     for(auto& component: ordered_components)
+    {
+	vector<pair<dummy,expression_ref>> a_decls;
 	for(int i: component.first)
-	    decls2.push_back(decls[i]);
+	    a_decls.push_back(decls[i]);
+	decls2.push_back(a_decls);
+    }
     return decls2;
 }
 
@@ -582,7 +598,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	set<dummy> free_vars;
 	tie(body, free_vars) = occurrence_analyzer(body);
 
-	auto decls2 = occurrence_analyze_decls(decls, free_vars);
+	auto decls2 = flatten(occurrence_analyze_decls(decls, free_vars));
 
 	return {let_expression(decls2, body), free_vars};
     }
@@ -601,7 +617,7 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 
 	// Analyze the decls
 	set<dummy> free_vars;
-	auto decls2 = occurrence_analyze_decls(decls, free_vars);
+	auto decls2 = flatten(occurrence_analyze_decls(decls, free_vars));
 	topdecls = make_topdecls(decls2);
 
 	auto module = create_module(name, exports, impdecls, topdecls);
