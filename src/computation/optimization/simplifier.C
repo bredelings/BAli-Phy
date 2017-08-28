@@ -290,6 +290,24 @@ vector<pair<vector<int>,Graph>> get_ordered_live_components(const Graph& graph, 
     return live_components;
 }
 
+int select_loop_breaker(const vector<int>& component, const vector<pair<dummy,expression_ref>>& decls)
+{
+    vector<int> score(component.size());
+    for(int k = 0; k < score.size(); k++)
+    {
+	int i = component[k];
+	auto x = decls[i].first;
+	auto F = decls[i].second;
+	if (is_reglike(F)) score[k] = 4;
+	else if (is_constructor(F.head()) or F.size() == 0) score[k] = 3;
+	else if (x.pre_inline()) score[k] = 1;
+    }
+    int loop_breaker_index_in_component = argmin(score);
+    int loop_breaker_index = component[loop_breaker_index_in_component];
+    return loop_breaker_index;
+}
+
+
 // free_vars: (in) vars that are free in the body of the let statement.
 //            (out) vars that are free in the let statement.
 //
@@ -306,7 +324,6 @@ vector<pair<vector<int>,Graph>> get_ordered_live_components(const Graph& graph, 
 vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,expression_ref>> decls, set<dummy>& free_vars)
 {
     using namespace boost;
-    const int L = decls.size();
 
     // 1. Determine which vars are alive or dead..
     // 2. Construct reference graph between (live) vars.
@@ -339,23 +356,10 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 
 	for(auto& component: components)
 	{
-	    int first = component[0];
-	    
-	    // If the component is a single with no loop to itself, then it is fine.
-	    if (component.size() == 1 and not edge(first,first,graph).second) continue;
+	    // If the component is a single with no loop to itself, then we don't need to break any loops
+	    if (component.size() == 1 and not edge(component[0], component[0], graph).second) continue;
 
-	    vector<int> score(component.size());
-	    for(int k = 0; k < score.size(); k++)
-	    {
-		int i = component[k];
-		auto x = decls[i].first;
-		auto F = decls[i].second;
-		if (is_reglike(F)) score[k] = 4;
-		else if (is_constructor(F.head()) or F.size() == 0) score[k] = 3;
-		else if (x.pre_inline()) score[k] = 1;
-	    }
-	    int loop_breaker_index_in_component = argmin(score);
-	    int loop_breaker_index = component[loop_breaker_index_in_component];
+	    int loop_breaker_index = select_loop_breaker(component, decls);
 
 	    // delete incoming edges to the loop breaker
 	    clear_in_edges(loop_breaker_index, graph);
@@ -363,6 +367,7 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 
 	    // mark the variable as a loop breaker
 	    decls[loop_breaker_index].first.is_loop_breaker = true;
+	    break;
 	}
     }
 
