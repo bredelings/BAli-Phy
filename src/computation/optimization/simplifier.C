@@ -185,17 +185,14 @@ Graph construct_directed_reference_graph(vector<pair<dummy,expression_ref>>& dec
     // 0. Initialize the graph and decls
     Graph graph(L);
 
-    // 2. Mark vars referenced in the body as being alive
-    vector<bool> alive(L,0);
+    // 1. Mark vars referenced in the body as being alive by setting x.code_dup = Unknown
     vector<int> work;
     for(int i=0;i<L;i++)
     {
-	const auto& x = decls[i].first;
-	if (x.is_exported or free_vars.count(x))
-	{
-	    alive[i] = true;
+	auto& x = decls[i].first;
+	x.code_dup = free_vars.count(x)?(amount_t::Unknown):(amount_t::None);
+	if (is_alive(x))
 	    work.push_back(i);
-	}
     }
 
     // 3. Discover reachable variables, analyze them, and record references between variables
@@ -225,22 +222,13 @@ Graph construct_directed_reference_graph(vector<pair<dummy,expression_ref>>& dec
 		boost::add_edge(i, j, graph);
 
 		// 3.3.3 Add variable j to the work list if we haven't put it on the list already
-		if (not alive[j])
+		if (not is_alive(decls[j].first))
 		{
-		    alive[j] = true;
+		    decls[j].first.code_dup = amount_t::Unknown;
 		    work.push_back(j);
 		}
 	    }
 	}
-    }
-
-    // 4. Set occurrence info for let vars in the decl, and remove bound vars from free_vars
-    for(int i=0;i<decls.size();i++)
-    {
-	decls[i].first = remove_var_and_set_occurrence_info(decls[i].first, free_vars);
-
-	// Variable is alive if and only if the variable is never executed.
-	assert(alive[i] == is_alive(decls[i].first));
     }
 
     return graph;
@@ -265,9 +253,22 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
     const int L = decls.size();
 
     // 1. Determine which vars are alive or dead..
-    // 2. Copy use information into dummies in decls
-    // 3. Remove declared vars from free_vars.
+    // 2. Construct reference graph between (live) vars.
     auto graph = construct_directed_reference_graph(decls, free_vars);
+
+    // 3. Copy use information into dummies in decls
+    // 4. Remove declared vars from free_vars.
+    for(int i=0;i<decls.size();i++)
+    {
+	auto& x = decls[i].first;
+	if (is_alive(x))
+	{
+	    x = remove_var_and_set_occurrence_info(x, free_vars);
+	    assert(is_alive(x));
+	}
+	else
+	    assert(not free_vars.count(x));
+    }
 
     // 5. Break cycles
     vector<int> component(L);
