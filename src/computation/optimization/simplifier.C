@@ -21,6 +21,9 @@
 #include <boost/optional.hpp>
 #include "simplifier.H"
 
+// TODO: split out dependency analyses into own file.
+// TODO: split out occurrence analysis into own file.
+
 typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph; 
 typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
 typedef boost::graph_traits<Graph>::edge_descriptor Edge_t;
