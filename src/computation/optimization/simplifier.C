@@ -333,6 +333,20 @@ int select_loop_breaker(const vector<int>& sub_component, const vector<int>& com
     return sub_component[argmin(sub_component.size(), score_fn)];
 }
 
+vector<int> topo_sort(const Graph& graph)
+{
+    using namespace boost;
+
+    vector<Vertex> sorted_vertices;
+    topological_sort(graph, std::back_inserter(sorted_vertices));
+
+    vector<int> sorted_indices(sorted_vertices.size());
+    for(int i=0;i<sorted_indices.size();i++)
+	sorted_indices[i] = get(vertex_index, graph, sorted_vertices[i]);
+
+    return sorted_indices;
+}
+
 
 // free_vars: (in) vars that are free in the body of the let statement.
 //            (out) vars that are free in the let statement.
@@ -349,8 +363,6 @@ int select_loop_breaker(const vector<int>& sub_component, const vector<int>& com
 
 vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,expression_ref>> decls, set<dummy>& free_vars)
 {
-    using namespace boost;
-
     // 1. Determine which vars are alive or dead..
     // 2. Construct reference graph between (live) vars.
     auto graph = construct_directed_reference_graph(decls, free_vars);
@@ -399,7 +411,6 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 
 		// Remove incoming edges to the loop breaker from the component graph
 		clear_in_edges(loop_breaker_component_index, component_graph);
-		clear_in_edges(loop_breaker_index, graph);
 
 		// Mark the variable as a loop breaker
 		decls[loop_breaker_index]. first. is_loop_breaker = true;
@@ -409,18 +420,9 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 		break;
 	    }
 	}
-	vector<Vertex> sorted_vertices;
-	topological_sort(component_graph, std::back_inserter(sorted_vertices));
 
-	vector<int> sorted_indices(sorted_vertices.size());
-	for(int i=0;i<sorted_indices.size();i++)
-	    sorted_indices[i] = get(vertex_index, component_graph, sorted_vertices[i]);
-
-	vector<int> sorted_component_indices(component_indices.size());
-	for(int i=0; i<sorted_component_indices.size(); i++)
-	    sorted_component_indices[i] = component_indices[sorted_indices[i]];
-
-	std::swap(sorted_component_indices, component_indices);
+	// 6.2. Topo-sort elements of the component now that loops are broken
+	component_indices = apply_indices(component_indices, topo_sort(component_graph));
     }
 
     // 7. Flatten the decl groups
