@@ -234,6 +234,62 @@ Graph construct_directed_reference_graph(vector<pair<dummy,expression_ref>>& dec
     return graph;
 }
 
+Graph get_subgraph(const vector<int> vertices, const Graph& graph)
+{
+    Graph subgraph(vertices.size());
+    for(int i=0;i<vertices.size();i++)
+	for(int j=0;j<vertices.size();j++)
+	    if (edge(vertices[i],vertices[j],graph).second)
+		boost::add_edge(i, j, subgraph);
+    return subgraph;
+}
+
+vector<vector<int>> get_ordered_strong_components(const Graph& graph)
+{
+    using namespace boost;
+    const int L = num_vertices(graph);
+
+    // 1. Label each vertex with its component
+    vector<int> component_for_index(L);
+    int C = strong_components(graph, make_iterator_property_map(component_for_index.begin(), get(vertex_index, graph)));
+
+    // find live variables in each component
+    vector<vector<int>> components(C);
+
+    for(int i=0;i<L;i++)
+    {
+	int c = component_for_index[i];
+	components[c].push_back(i);
+    }
+
+    return components;
+}
+
+vector<int> get_live_vars(const vector<int>& vars, const vector<pair<dummy,expression_ref>>& decls)
+{
+    vector<int> live_vars;
+    for(int var: vars)
+    {
+	if (is_alive(decls[var].first))
+	    live_vars.push_back(var);
+    }
+    return live_vars;
+}
+
+vector<pair<vector<int>,Graph>> get_ordered_live_components(const Graph& graph, const vector<pair<dummy,expression_ref>>& decls)
+{
+    vector<pair<vector<int>,Graph>> live_components;
+    for(auto& component: get_ordered_strong_components(graph))
+    {
+	auto live_component = get_live_vars(component, decls);
+	if (live_component.empty()) continue;
+
+	live_components.push_back(pair<vector<int>,Graph>(std::move(live_component), get_subgraph(live_component, graph)));
+    }
+
+    return live_components;
+}
+
 // free_vars: (in) vars that are free in the body of the let statement.
 //            (out) vars that are free in the let statement.
 //
@@ -270,35 +326,28 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 	    assert(not free_vars.count(x));
     }
 
+    vector<pair<vector<int>,Graph>> ordered_components = get_ordered_live_components(graph, decls);
+
     // 5. Break cycles
-    vector<int> component(L);
     bool changed = true;
     while(changed)
     {
 	changed = false;
 
 	// find strongly connected components: every node is reachable from every other node
-	int num = strong_components(graph, make_iterator_property_map(component.begin(), get(vertex_index, graph)));
+	vector<vector<int>> components = get_ordered_strong_components(graph);
 
-	// find variables in each component
-	vector<vector<int>> components(num);
-	for(int i=0;i<L;i++)
+	for(auto& component: components)
 	{
-	    int c = component[i];
-	    components[c].push_back(i);
-	}
-
-	for(int c=0;c<num and not changed;c++)
-	{
-	    int first = components[c][0];
-
+	    int first = component[0];
+	    
 	    // If the component is a single with no loop to itself, then it is fine.
-	    if (components[c].size() == 1 and not edge(first,first,graph).second) continue;
+	    if (component.size() == 1 and not edge(first,first,graph).second) continue;
 
-	    vector<int> score(components[c].size());
+	    vector<int> score(component.size());
 	    for(int k = 0; k < score.size(); k++)
 	    {
-		int i = components[c][k];
+		int i = component[k];
 		auto x = decls[i].first;
 		auto F = decls[i].second;
 		if (is_reglike(F)) score[k] = 4;
@@ -306,7 +355,7 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 		else if (x.pre_inline()) score[k] = 1;
 	    }
 	    int loop_breaker_index_in_component = argmin(score);
-	    int loop_breaker_index = components[c][loop_breaker_index_in_component];
+	    int loop_breaker_index = component[loop_breaker_index_in_component];
 
 	    // delete incoming edges to the loop breaker
 	    clear_in_edges(loop_breaker_index, graph);
