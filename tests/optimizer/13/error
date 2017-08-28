@@ -1,2 +1,2 @@
-size = 3   Test.f = \#1 -> let {#4 = case #1 of {h:__#1 -> h,[] -> Prelude.#306}} in \#2 #3 -> case #4 of {Prelude.True -> #2,_ -> #3}
-size = 2   Test.g = \#1 #2 #3 -> case #3 of {h:__#1 -> case h of {Prelude.True -> #1,_ -> #2},[] -> case Prelude.#306 of {Prelude.True -> #1,_ -> #2}}
+size = 3   Test.f = \#1 -> let {#4 = case #1 of {h:__#1 -> h,[] -> Prelude.#310}} in \#2 #3 -> case #4 of {Prelude.True -> #2,_ -> #3}
+size = 2   Test.g = \#1 #2 #3 -> case #3 of {h:__#1 -> case h of {Prelude.True -> #1,_ -> #2},[] -> case Prelude.#310 of {Prelude.True -> #1,_ -> #2}}

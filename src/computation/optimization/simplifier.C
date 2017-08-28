@@ -369,15 +369,16 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 	    assert(not free_vars.count(x));
     }
 
+    // 5. Find strongly connected components
     vector<pair<vector<int>,Graph>> ordered_components = get_ordered_live_components(graph, decls);
 
-    // 5. Break cycles in each component
+    // 6. Break cycles in each component
     for(auto& component: ordered_components)
     {
 	auto& component_indices = component.first;
 	auto& component_graph = component.second;
 
-        // 5.1 Break cycles in this component
+        // 6.1 Break cycles in this component
 	bool changed = true;
 	while(changed)
 	{
@@ -386,7 +387,7 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 	    // find strongly connected components: every node is reachable from every other node
 	    vector<vector<int>> sub_components = get_ordered_strong_components(component_graph);
 
-	    // 5.1.1.  Break cycles in the first sub_component with a cycle
+	    // 6.1.1.  Break cycles in the first sub_component with a cycle
 	    for(auto& sub_component: sub_components)
 	    {
 		// If the component is a single with no loop to itself, then we don't need to break any loops
@@ -408,20 +409,24 @@ vector<pair<dummy,expression_ref>> occurrence_analyze_decls(vector<pair<dummy,ex
 		break;
 	    }
 	}
+	vector<Vertex> sorted_vertices;
+	topological_sort(component_graph, std::back_inserter(sorted_vertices));
+
+	vector<int> sorted_indices(sorted_vertices.size());
+	for(int i=0;i<sorted_indices.size();i++)
+	    sorted_indices[i] = get(vertex_index, component_graph, sorted_vertices[i]);
+
+	vector<int> sorted_component_indices(component_indices.size());
+	for(int i=0; i<sorted_component_indices.size(); i++)
+	    sorted_component_indices[i] = component_indices[sorted_indices[i]];
+
+	std::swap(sorted_component_indices, component_indices);
     }
 
-    // 5. Sort the vertices
-    vector<Vertex> sorted_vertices;
-    topological_sort(graph, std::back_inserter(sorted_vertices));
-
-    vector<int> sorted_indices(sorted_vertices.size());
-    for(int i=0;i<sorted_indices.size();i++)
-	sorted_indices[i] = get(vertex_index,graph,sorted_vertices[i]);
-
-    // 7. Sort the live decls
+    // 7. Flatten the decl groups
     vector<pair<dummy,expression_ref>> decls2;
-    for(int i: sorted_indices)
-	if (is_alive(decls[i].first))
+    for(auto& component: ordered_components)
+	for(int i: component.first)
 	    decls2.push_back(decls[i]);
     return decls2;
 }
