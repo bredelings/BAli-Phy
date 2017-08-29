@@ -18,6 +18,7 @@
 #include "expression/tuple.H"
 #include "expression/substitute.H"
 #include "computation/optimization/simplifier.H"
+#include "computation/optimization/occurrence.H"
 #include "computation/optimization/let-float.H"
 
 using std::pair;
