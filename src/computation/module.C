@@ -478,6 +478,14 @@ expression_ref create_module(const string& name, const expression_ref& exports, 
     return module;
 }
 
+template <typename T>
+void erase_one(multiset<T>& mset, const T& elem)
+{
+    auto it = mset.find(elem);
+    assert(it != mset.end());
+    mset.erase(it);
+}
+
 expression_ref rename(const expression_ref& E, const map<dummy,dummy>& substitution, multiset<dummy>& bound)
 {
     if (not E) return E;
@@ -506,7 +514,7 @@ expression_ref rename(const expression_ref& E, const map<dummy,dummy>& substitut
 
 	bound.insert(x);
 	body = rename(body, substitution, bound);
-	bound.erase(x);
+	erase_one(bound,x);
 
 	return lambda_quantify(x,body);
     }
@@ -534,7 +542,7 @@ expression_ref rename(const expression_ref& E, const map<dummy,dummy>& substitut
 	    {
 		auto& x = patterns[i].sub()[j].as_<dummy>();
 		if (not x.is_wildcard())
-		    bound.erase(x);
+		    erase_one(bound,x);
 	    }
 	}
 	return make_case_expression(object, patterns, bodies);
@@ -564,7 +572,7 @@ expression_ref rename(const expression_ref& E, const map<dummy,dummy>& substitut
 	    decl.second = rename(decl.second, substitution, bound);
 
 	for(auto& decl: decls)
-	    bound.erase(decl.first);
+	    erase_one(bound, decl.first);
 
         // 5.2 Simplify the let-body
 	return let_expression(decls, body);
@@ -627,9 +635,8 @@ expression_ref rename_top_level(const expression_ref& decls, const string& modul
     {
 	assert(bound.empty());
 	decl.second = rename(decl.second, substitution, bound);
+	assert(bound.empty());
     }
-
-    assert(bound.empty());
 
 #ifndef NDEBUG
     check_duplicate_var(decls2);
