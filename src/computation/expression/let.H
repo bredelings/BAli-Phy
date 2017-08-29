@@ -33,6 +33,8 @@ auto let(const First& first, const Second& second, const Rest&... rest)
 
 expression_ref let_expression(const std::vector<std::pair<dummy, expression_ref>>& decls, const expression_ref& T);
 
+expression_ref let_expression(const std::vector<std::vector<std::pair<dummy, expression_ref>>>& decl_groups, const expression_ref& T);
+
 expression_ref indexed_let_expression(const std::vector<expression_ref>& bodies, const expression_ref& T);
 
 expression_ref unlet(const expression_ref& E);

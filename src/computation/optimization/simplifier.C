@@ -343,7 +343,6 @@ vector<int> topo_sort(const Graph& graph)
 //              Deal with this later.
 //
 
-
 vector<vector<pair<dummy,expression_ref>>>
 occurrence_analyze_decls(vector<pair<dummy,expression_ref>> decls, set<dummy>& free_vars)
 {
@@ -570,9 +569,9 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	set<dummy> free_vars;
 	tie(body, free_vars) = occurrence_analyzer(body);
 
-	auto decls2 = flatten(occurrence_analyze_decls(decls, free_vars));
+	auto decls_groups = occurrence_analyze_decls(decls, free_vars);
 
-	return {let_expression(decls2, body), free_vars};
+	return {let_expression(decls_groups, body), free_vars};
     }
 
     if (is_AST(E,"Module"))

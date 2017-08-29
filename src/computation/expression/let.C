@@ -82,6 +82,14 @@ expression_ref let_expression(const vector<pair<dummy, expression_ref>>& decls, 
     return E;
 }
 
+expression_ref let_expression(const vector<vector<pair<dummy, expression_ref>>>& decl_groups, const expression_ref& T)
+{
+    expression_ref body = T;
+    for(auto& decls: reverse(decl_groups))
+	body = let_expression(decls,body);
+    return body;
+}
+
 bool is_let_expression(const expression_ref& E)
 {
     return (E.head().type() == let_type);
