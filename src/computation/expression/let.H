@@ -31,9 +31,12 @@ auto let(const First& first, const Second& second, const Rest&... rest)
     return let_expression(first,second,let(rest...));
 }
 
-expression_ref let_expression(const std::vector<std::pair<dummy, expression_ref>>& decls, const expression_ref& T);
+typedef std::pair<dummy, expression_ref> CDecl;
+typedef std::vector<CDecl> CDecls;
 
-expression_ref let_expression(const std::vector<std::vector<std::pair<dummy, expression_ref>>>& decl_groups, const expression_ref& T);
+expression_ref let_expression(const CDecls& decls, const expression_ref& T);
+
+expression_ref let_expression(const std::vector<CDecls>& decl_groups, const expression_ref& T);
 
 expression_ref indexed_let_expression(const std::vector<expression_ref>& bodies, const expression_ref& T);
 
@@ -41,31 +44,31 @@ expression_ref unlet(const expression_ref& E);
 
 bool is_let_expression(const expression_ref& E);
 
-bool parse_let_expression(const expression_ref& E, std::vector<std::pair<dummy, expression_ref>>& decls, expression_ref& body);
+bool parse_let_expression(const expression_ref& E, CDecls& decls, expression_ref& body);
 
 bool parse_indexed_let_expression(const expression_ref& E, std::vector<expression_ref>& bodies, expression_ref& T);
 
-void get_decls(const expression_ref& E, std::vector<std::pair<dummy, expression_ref>>& decls);
+void get_decls(const expression_ref& E, CDecls& decls);
 
-void get_decls_from_let(const expression_ref& E, std::vector<std::pair<dummy, expression_ref>>& decls);
+void get_decls_from_let(const expression_ref& E, CDecls& decls);
 
-std::vector<std::pair<dummy, expression_ref>> let_decls(const expression_ref& E);
+CDecls let_decls(const expression_ref& E);
 
-std::vector<std::pair<dummy, expression_ref>> parse_decls(const expression_ref& E);
+CDecls parse_decls(const expression_ref& E);
 
-expression_ref make_decls(const std::vector<std::pair<dummy, expression_ref>>&);
+expression_ref make_decls(const CDecls&);
 
-expression_ref make_topdecls(const std::vector<std::pair<dummy, expression_ref>>&);
+expression_ref make_topdecls(const CDecls&);
 
 expression_ref let_body(expression_ref E);
 
-void strip_let(expression_ref& E, std::vector<std::pair<dummy, expression_ref>>& decls);
+void strip_let(expression_ref& E, CDecls& decls);
 
-std::vector<std::pair<dummy, expression_ref>> strip_let(expression_ref& E);
+CDecls strip_let(expression_ref& E);
 
-boost::optional<dummy> find_first_duplicate_var(const std::vector<std::pair<dummy,expression_ref>>& decls);
+boost::optional<dummy> find_first_duplicate_var(const CDecls& decls);
 boost::optional<dummy> find_first_duplicate_var(const expression_ref& decls);
-void check_duplicate_var(const std::vector<std::pair<dummy,expression_ref>>& decls);
+void check_duplicate_var(const CDecls& decls);
 void check_duplicate_var(const expression_ref& decls);
 
 #endif

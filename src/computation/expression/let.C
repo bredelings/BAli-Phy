@@ -35,7 +35,7 @@ expression_ref indexed_let_expression(const vector<expression_ref>& bodies, cons
 }
 
 
-expression_ref make_decls(const vector<pair<dummy, expression_ref>>& decls)
+expression_ref make_decls(const CDecls& decls)
 {
     if (decls.empty()) return {};
 
@@ -52,7 +52,7 @@ expression_ref make_decls(const vector<pair<dummy, expression_ref>>& decls)
 }
 
 
-expression_ref make_topdecls(const vector<pair<dummy, expression_ref>>& decls)
+expression_ref make_topdecls(const CDecls& decls)
 {
     if (decls.empty()) return {};
 
@@ -69,7 +69,7 @@ expression_ref make_topdecls(const vector<pair<dummy, expression_ref>>& decls)
 }
 
 
-expression_ref let_expression(const vector<pair<dummy, expression_ref>>& decls, const expression_ref& T)
+expression_ref let_expression(const CDecls& decls, const expression_ref& T)
 {
     if (decls.size() == 0) return T;
 
@@ -82,7 +82,7 @@ expression_ref let_expression(const vector<pair<dummy, expression_ref>>& decls, 
     return E;
 }
 
-expression_ref let_expression(const vector<vector<pair<dummy, expression_ref>>>& decl_groups, const expression_ref& T)
+expression_ref let_expression(const vector<CDecls>& decl_groups, const expression_ref& T)
 {
     expression_ref body = T;
     for(auto& decls: reverse(decl_groups))
@@ -96,7 +96,7 @@ bool is_let_expression(const expression_ref& E)
 }
 
 //let [(x[i], bodies[i])] T
-bool parse_let_expression(const expression_ref& E, vector<pair<dummy,expression_ref>>& decls, expression_ref& body)
+bool parse_let_expression(const expression_ref& E, CDecls& decls, expression_ref& body)
 {
     decls.clear();
     body = {};
@@ -229,7 +229,7 @@ expression_ref unlet(const expression_ref& E)
     }
 
     // 5. Let 
-    vector<pair<dummy,expression_ref>> decls;
+    CDecls decls;
     expression_ref T;
     if (parse_let_expression(E, decls, T))
     {
@@ -274,7 +274,7 @@ expression_ref unlet(const expression_ref& E)
     return E;
 }
 
-void get_decls(const expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
+void get_decls(const expression_ref& E, CDecls& decls)
 {
     if (not E) return;
 
@@ -288,22 +288,22 @@ void get_decls(const expression_ref& E, vector<pair<dummy, expression_ref>>& dec
     }
 }
 
-void get_decls_from_let(const expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
+void get_decls_from_let(const expression_ref& E, CDecls& decls)
 {
     assert(is_let_expression(E));
     get_decls(E.sub()[0], decls);
 }
 
-vector<pair<dummy, expression_ref>> parse_decls(const expression_ref& E)
+CDecls parse_decls(const expression_ref& E)
 {
-    vector<pair<dummy, expression_ref>> decls;
+    CDecls decls;
     get_decls(E, decls);
     return decls;
 }
 
-vector<pair<dummy, expression_ref>> let_decls(const expression_ref& E)
+CDecls let_decls(const expression_ref& E)
 {
-    vector<pair<dummy, expression_ref>> decls;
+    CDecls decls;
     get_decls_from_let(E, decls);
     return decls;
 }
@@ -313,7 +313,7 @@ expression_ref let_body(expression_ref  E)
     return E.sub()[1];
 }
 
-void strip_let(expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
+void strip_let(expression_ref& E, CDecls& decls)
 {
     if (is_let_expression(E))
     {
@@ -322,14 +322,14 @@ void strip_let(expression_ref& E, vector<pair<dummy, expression_ref>>& decls)
     }
 }
 
-vector<pair<dummy, expression_ref>> strip_let(expression_ref& E)
+CDecls strip_let(expression_ref& E)
 {
-    vector<pair<dummy, expression_ref>> decls;
+    CDecls decls;
     strip_let(E,decls);
     return decls;
 }
 
-boost::optional<dummy> find_first_duplicate_var(const vector<pair<dummy,expression_ref>>& decls)
+boost::optional<dummy> find_first_duplicate_var(const CDecls& decls)
 {
     set<dummy> vars;
     for(auto& decl: decls)
@@ -347,7 +347,7 @@ boost::optional<dummy> find_first_duplicate_var(const expression_ref& decls)
     return find_first_duplicate_var(parse_decls(decls));
 }
 
-void check_duplicate_var(const vector<pair<dummy,expression_ref>>& decls)
+void check_duplicate_var(const CDecls& decls)
 {
     auto var = find_first_duplicate_var(decls);
     if (var)
