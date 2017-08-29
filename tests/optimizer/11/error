@@ -1,5 +1,5 @@
-size = 1   Test.f = \#1 #2 -> case #2 of {[] -> Prelude.#360,__#1:__#413 -> __#413}
-size = 5   Test.g = \#1 -> let {#785 = case #1 of {[] -> Prelude.True,__#1:__#413 -> Prelude.False}, #4 = case #1 of {__#1:t -> t,[] -> Prelude.#360}} in \#2 -> case #785 of {Prelude.True -> #2,_ -> #4}
+size = 1   Test.f = \#1 #2 -> case #2 of {[] -> Prelude.#270,__#1:__#325 -> __#325}
+size = 5   Test.g = \#1 -> let {#3 = case #1 of {[] -> Prelude.True,__#1:__#325 -> Prelude.False}, #4 = case #1 of {__#1:t -> t,[] -> Prelude.#270}} in \#2 -> case #3 of {Prelude.True -> #2,_ -> #4}
 size = 1   Test.#3 = 1
 size = 2   Test.h = \#1 #2 -> case #1 of {Prelude.True -> 1,_ -> #2}
 size = 1   Test.#782 = 1
