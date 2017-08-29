@@ -1239,12 +1239,8 @@ expression_ref rebuild_let(const simplifier_options& options, const CDecls& decl
 
     unbind_decls(bound_vars, decls);
 
-    // Only put the bound variables in decls2.
-    CDecls decls2;
-    for(auto& decl: decls)
-	if (decl.second)
-	    decls2.push_back(decl);
-
+    // FIXME! Why can't we remove this?
+    CDecls decls2 = decls;
     strip_let(E, decls2);
 
     return let_expression(decls2, E);
