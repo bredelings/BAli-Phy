@@ -574,28 +574,6 @@ pair<expression_ref,set<dummy>> occurrence_analyzer(const expression_ref& E, var
 	return {let_expression(decls_groups, body), free_vars};
     }
 
-    if (is_AST(E,"Module"))
-    {
-	string name;
-	expression_ref exports;
-	expression_ref impdecls;
-	expression_ref topdecls;
-	parse_module(E, name, exports, impdecls, topdecls);
-
-	// Record exports
-	auto decls = parse_decls(topdecls);
-	export_decls(decls, exports, name);
-
-	// Analyze the decls
-	set<dummy> free_vars;
-	auto decls2 = flatten(occurrence_analyze_decls(decls, free_vars));
-	topdecls = make_topdecls(decls2);
-
-	auto module = create_module(name, exports, impdecls, topdecls);
-
-	return {module, free_vars};
-    }
-
     throw myexception()<<"occurrence_analyzer: I don't recognize expression '"+ E.print() + "'";
 }
 
@@ -1518,24 +1496,6 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	return rebuild_let(options, decls, body, S2, bound_vars);
     }
 
-
-    if (is_AST(E, "Module"))
-    {
-	string name;
-	expression_ref exports;
-	expression_ref impdecls;
-	expression_ref topdecls;
-	parse_module(E, name, exports, impdecls, topdecls);
-
-	auto decls = parse_decls(topdecls);
-	export_decls(decls, exports, name);
-
-	simplify_decls(options, decls, S, bound_vars,true);
-	topdecls = make_topdecls(decls);
-
-	return create_module(name, exports, impdecls, topdecls);
-    }
-
     std::abort();
 }
 
@@ -1545,7 +1505,24 @@ expression_ref simplifier(const simplifier_options& options, const map<dummy,exp
 {
     set<dummy> free_vars;
     expression_ref E2;
-    tie(E2, free_vars) = occurrence_analyzer(E1);
+    {
+	string name;
+	expression_ref exports;
+	expression_ref impdecls;
+	expression_ref topdecls;
+	parse_module(E1, name, exports, impdecls, topdecls);
+
+	// Record exports
+	auto decls = parse_decls(topdecls);
+	export_decls(decls, exports, name);
+
+	// Analyze the decls
+	auto decls2 = flatten(occurrence_analyze_decls(decls, free_vars));
+	topdecls = make_topdecls(decls2);
+
+	E2 = create_module(name, exports, impdecls, topdecls);
+    }
+
 
     in_scope_set bound_vars;
 
@@ -1563,7 +1540,21 @@ expression_ref simplifier(const simplifier_options& options, const map<dummy,exp
     for(auto& var: free_vars)
 	bound_vars.insert({var,{}});
 
-    return simplify(options, E2, {}, bound_vars, {});
+    {
+	string name;
+	expression_ref exports;
+	expression_ref impdecls;
+	expression_ref topdecls;
+	parse_module(E2, name, exports, impdecls, topdecls);
+
+	auto decls = parse_decls(topdecls);
+	export_decls(decls, exports, name);
+
+	simplify_decls(options, decls, {}, bound_vars,true);
+	topdecls = make_topdecls(decls);
+
+	return create_module(name, exports, impdecls, topdecls);
+    }
 }
 
 
