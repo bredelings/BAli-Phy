@@ -731,18 +731,17 @@ void Module::optimize(const Program& P)
 
 	if (do_optimize)
 	{
-	    module = create_module(name, exports, impdecls, topdecls);
+	    auto decls = parse_decls(topdecls);
 
 	    for(int i=0;i<P.get_module_loader()->max_iterations;i++)
 	    {
-		parse_module(module, name, exports, impdecls, topdecls);
-		auto decls = parse_decls(topdecls);
 		export_decls(decls, exports, name);
 		decls = simplify_module(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decls);
-		module = create_module(name, exports, impdecls, make_topdecls(decls));
 	    }
 
-	    parse_module(module, name, exports, impdecls, topdecls);
+	    topdecls = make_topdecls(decls);
+
+	    module = create_module(name, exports, impdecls, topdecls);
 	}
     }
 
