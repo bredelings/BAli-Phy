@@ -766,7 +766,7 @@ expression_ref rebuild_let(const simplifier_options& options, const CDecls& decl
 
     // FIXME! Why can't we remove this?
     CDecls decls2 = decls;
-//    strip_let(E, decls2);
+    strip_let(E, decls2);
 
     return let_expression(decls2, E);
 }
