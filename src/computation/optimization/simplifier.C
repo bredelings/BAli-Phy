@@ -308,24 +308,6 @@ int get_score(const pair<dummy, expression_ref>& decl)
 	return 0;
 }
 
-template <typename T>
-int argmin(int n, std::function<T(int)> f)
-{
-    int min_index = 0;
-    int min_score = f(0);
-    for(int i=1;i<n;i++)
-    {
-	T score = f(i);
-	if (score < min_score)
-	{
-	    min_index = i;
-	    min_score = score;
-	}
-    }
-    return min_index;
-}
-
-
 // Find element of component with smallest score in sub_component.
 int select_loop_breaker(const vector<int>& sub_component, const vector<int>& component, const vector<pair<dummy,expression_ref>>& decls)
 {
@@ -360,16 +342,6 @@ vector<int> topo_sort(const Graph& graph)
 //
 //              Deal with this later.
 //
-
-template <typename T>
-vector<T> flatten(const vector<vector<T>>& v1)
-{
-    vector<T> v2;
-    for(auto& v: v1)
-	for(auto& t: v)
-	    v2.push_back(t);
-    return v2;
-}
 
 
 vector<vector<pair<dummy,expression_ref>>>
