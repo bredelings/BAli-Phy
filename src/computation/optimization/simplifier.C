@@ -1476,8 +1476,8 @@ CDecls simplify_module(const simplifier_options& options, const map<dummy,expres
 {
     set<dummy> free_vars;
 
-    // Analyze the decls
-    decls = flatten(occurrence_analyze_decls(decls, free_vars));
+    // Decompose the decls, remove unused decls, and occurrence-analyze the decls.
+    auto decl_groups = occurrence_analyze_decls(decls, free_vars);
 
     in_scope_set bound_vars;
 
@@ -1495,9 +1495,15 @@ CDecls simplify_module(const simplifier_options& options, const map<dummy,expres
     for(auto& var: free_vars)
 	bound_vars.insert({var,{}});
 
-    simplify_decls(options, decls, {}, bound_vars, true);
+    vector<substitution> S(1);
+    for(auto& decls: decl_groups)
+    {
+	auto s = simplify_decls(options, decls, S.back(), bound_vars, true);
+	S.push_back( s );
+	bind_decls(bound_vars, decls);
+    }
 
-    return decls;
+    return flatten(decl_groups);
 }
 
 
