@@ -596,7 +596,7 @@ expression_ref rename_top_level(const expression_ref& decls, const string& modul
 
     set<dummy> top_level_vars;
 
-    vector<pair<dummy,expression_ref>> decls2;
+    CDecls decls2;
 
 #ifndef NDEBUG
     check_duplicate_var(decls);
@@ -673,7 +673,7 @@ int nodes_size(const expression_ref& E)
     return total;
 }
 
-void export_decls(vector<pair<dummy,expression_ref>>& decls, const expression_ref& exports, const string& name)
+void export_decls(CDecls& decls, const expression_ref& exports, const string& name)
 {
     // Record exports
     set<string> exported;

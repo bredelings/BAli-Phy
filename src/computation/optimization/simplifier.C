@@ -180,7 +180,7 @@ bool is_alive(const occurrence_info& x)
     return (x.is_exported or x.code_dup != amount_t::None);
 }
 
-Graph construct_directed_reference_graph(vector<pair<dummy,expression_ref>>& decls, set<dummy>& free_vars)
+Graph construct_directed_reference_graph(CDecls& decls, set<dummy>& free_vars)
 {
     using namespace boost;
     const int L = decls.size();
@@ -268,7 +268,7 @@ vector<vector<int>> get_ordered_strong_components(const Graph& graph)
     return components;
 }
 
-vector<int> get_live_vars(const vector<int>& vars, const vector<pair<dummy,expression_ref>>& decls)
+vector<int> get_live_vars(const vector<int>& vars, const CDecls& decls)
 {
     vector<int> live_vars;
     for(int var: vars)
@@ -279,7 +279,7 @@ vector<int> get_live_vars(const vector<int>& vars, const vector<pair<dummy,expre
     return live_vars;
 }
 
-vector<pair<vector<int>,Graph>> get_ordered_live_components(const Graph& graph, const vector<pair<dummy,expression_ref>>& decls)
+vector<pair<vector<int>,Graph>> get_ordered_live_components(const Graph& graph, const CDecls& decls)
 {
     vector<pair<vector<int>,Graph>> live_components;
     for(auto& component: get_ordered_strong_components(graph))
@@ -293,7 +293,7 @@ vector<pair<vector<int>,Graph>> get_ordered_live_components(const Graph& graph, 
     return live_components;
 }
 
-int get_score(const pair<dummy, expression_ref>& decl)
+int get_score(const CDecl& decl)
 {
     auto& x = decl.first;
     auto& F = decl.second;
@@ -309,7 +309,7 @@ int get_score(const pair<dummy, expression_ref>& decl)
 }
 
 // Find element of component with smallest score in sub_component.
-int select_loop_breaker(const vector<int>& sub_component, const vector<int>& component, const vector<pair<dummy,expression_ref>>& decls)
+int select_loop_breaker(const vector<int>& sub_component, const vector<int>& component, const CDecls& decls)
 {
     std::function<int(int)> score_fn = [&](int k) {return get_score(decls[component[sub_component[k]]]);};
     return sub_component[argmin(sub_component.size(), score_fn)];
@@ -343,8 +343,8 @@ vector<int> topo_sort(const Graph& graph)
 //              Deal with this later.
 //
 
-vector<vector<pair<dummy,expression_ref>>>
-occurrence_analyze_decls(vector<pair<dummy,expression_ref>> decls, set<dummy>& free_vars)
+vector<CDecls>
+occurrence_analyze_decls(CDecls decls, set<dummy>& free_vars)
 {
     // 1. Determine which vars are alive or dead..
     // 2. Construct reference graph between (live) vars.
@@ -409,10 +409,10 @@ occurrence_analyze_decls(vector<pair<dummy,expression_ref>> decls, set<dummy>& f
     }
 
     // 7. Flatten the decl groups
-    vector<vector<pair<dummy,expression_ref>>> decls2;
+    vector<CDecls> decls2;
     for(auto& component: ordered_components)
     {
-	vector<pair<dummy,expression_ref>> a_decls;
+	CDecls a_decls;
 	for(int i: component.first)
 	    a_decls.push_back(decls[i]);
 	decls2.push_back(a_decls);
@@ -603,13 +603,13 @@ bound_variable_info rebind_var(in_scope_set& bound_vars, const dummy& x, const e
     return old_binding;
 }
 
-void bind_decls(in_scope_set& bound_vars, const vector<pair<dummy,expression_ref>>& decls)
+void bind_decls(in_scope_set& bound_vars, const CDecls& decls)
 {
     for(const auto& decl: decls)
 	bind_var(bound_vars, decl.first, decl.second);
 }
 
-void unbind_decls(in_scope_set& bound_vars, const vector<pair<dummy,expression_ref>>& decls)
+void unbind_decls(in_scope_set& bound_vars, const CDecls& decls)
 {
     for(const auto& decl: decls)
 	unbind_var(bound_vars, decl.first);
@@ -1065,7 +1065,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
     for(int i=0;i<L;i++)
     {
 	auto S2 = S;
-	vector<pair<dummy, expression_ref>> pat_decls;
+	CDecls pat_decls;
 
 	// 2. Rename and bind pattern variables
 	if (patterns[i].size())
@@ -1200,7 +1200,7 @@ expression_ref rebuild_apply(const simplifier_options& options, expression_ref E
     expression_ref object = E.sub()[0];
 
     // 1. Optionally float let's out of the apply object
-    vector<pair<dummy,expression_ref>> decls;
+    CDecls decls;
     if (options.let_float_from_apply)
 	decls = strip_let(object);
 
@@ -1229,7 +1229,7 @@ expression_ref rebuild_apply(const simplifier_options& options, expression_ref E
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
-expression_ref rebuild_let(const simplifier_options& options, const vector<pair<dummy, expression_ref>>& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars)
+expression_ref rebuild_let(const simplifier_options& options, const CDecls& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars)
 {
     // If the decl is empty, then we don't have to do anythign special here.
     if (decls.empty()) return simplify(options, E, S, bound_vars, unknown_context());
@@ -1240,7 +1240,7 @@ expression_ref rebuild_let(const simplifier_options& options, const vector<pair<
     unbind_decls(bound_vars, decls);
 
     // Only put the bound variables in decls2.
-    vector<pair<dummy,expression_ref>> decls2;
+    CDecls decls2;
     for(auto& decl: decls)
 	if (decl.second)
 	    decls2.push_back(decl);
@@ -1252,13 +1252,13 @@ expression_ref rebuild_let(const simplifier_options& options, const vector<pair<
 
 
 substitution
-simplify_decls(const simplifier_options& options, vector<pair<dummy, expression_ref>>& orig_decls, const substitution& S, in_scope_set& bound_vars, bool is_top_level)
+simplify_decls(const simplifier_options& options, CDecls& orig_decls, const substitution& S, in_scope_set& bound_vars, bool is_top_level)
 {
     auto S2 = S;
 
     const int n_decls = orig_decls.size();
 
-    vector<pair<dummy,expression_ref>> new_decls;
+    CDecls new_decls;
     vector<dummy> new_names;
 
     // 5.1 Rename and bind all variables.
@@ -1472,9 +1472,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 }
 
 
-vector<pair<dummy,expression_ref>>
-simplify_module(const simplifier_options& options, const map<dummy,expression_ref>& small_decls_in,const set<dummy>& small_decls_in_free_vars,
-		vector<pair<dummy,expression_ref>> decls)
+CDecls simplify_module(const simplifier_options& options, const map<dummy,expression_ref>& small_decls_in,const set<dummy>& small_decls_in_free_vars, CDecls decls)
 {
     set<dummy> free_vars;
 

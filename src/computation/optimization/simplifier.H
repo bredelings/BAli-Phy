@@ -5,6 +5,7 @@
 #include <map>
 #include <utility>
 #include "computation/expression/expression_ref.H"
+#include "computation/expression/let.H"
 #include "computation/expression/dummy.H"
 
 struct simplifier_options
@@ -27,8 +28,6 @@ class module_loader;
 
 std::pair<expression_ref,std::set<dummy>> occurrence_analyzer(const expression_ref& E, var_context context=var_context::unknown);
 
-std::vector<std::pair<dummy,expression_ref>>
-simplify_module(const simplifier_options&, const std::map<dummy, expression_ref>&, const std::set<dummy>&,
-		const std::vector<std::pair<dummy,expression_ref>>);
+CDecls simplify_module(const simplifier_options&, const std::map<dummy, expression_ref>&, const std::set<dummy>&, CDecls);
 
 #endif
