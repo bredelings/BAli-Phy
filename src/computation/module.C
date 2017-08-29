@@ -673,6 +673,36 @@ int nodes_size(const expression_ref& E)
     return total;
 }
 
+void export_decls(vector<pair<dummy,expression_ref>>& decls, const expression_ref& exports, const string& name)
+{
+    // Record exports
+    set<string> exported;
+    for(auto& ex: exports.sub())
+	exported.insert(ex.as_<dummy>().name);
+
+    // Mark exported vars as exported
+    for(auto& decl: decls)
+    {
+	if (exported.count(decl.first.name))
+	{
+	    decl.first.is_exported = true;
+	    exported.erase(decl.first.name);
+	}
+	else
+	    decl.first.is_exported = false;
+    }
+
+    // Check that we don't export things that don't exist
+    if (not exported.empty())
+    {
+	myexception e;
+	e<<"Module '"<<name<<"' exports undefined symbols:\n";
+	for(auto& name: exported)
+	    e<<"  "<<name;
+	throw e;
+    }
+}
+
 void Module::optimize(const Program& P)
 {
     // why do we keep on re-optimizing the same module?
@@ -705,13 +735,15 @@ void Module::optimize(const Program& P)
 
 	    for(int i=0;i<P.get_module_loader()->max_iterations;i++)
 	    {
-		auto decls = simplifier(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, module);
+		parse_module(module, name, exports, impdecls, topdecls);
+		auto decls = parse_decls(topdecls);
+		export_decls(decls, exports, name);
+		decls = simplify_module(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, decls);
 		module = create_module(name, exports, impdecls, make_topdecls(decls));
 	    }
 
 	    parse_module(module, name, exports, impdecls, topdecls);
 	}
-
     }
 
     if (topdecls)

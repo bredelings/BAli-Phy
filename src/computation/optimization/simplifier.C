@@ -420,34 +420,6 @@ occurrence_analyze_decls(vector<pair<dummy,expression_ref>> decls, set<dummy>& f
     return decls2;
 }
 
-void export_decls(vector<pair<dummy,expression_ref>>& decls, const expression_ref& exports, const string& name)
-{
-    // Record exports
-    set<string> exported;
-    for(auto& ex: exports.sub())
-	exported.insert(ex.as_<dummy>().name);
-
-    // Mark exported vars as exported
-    for(auto& decl: decls)
-    {
-	if (exported.count(decl.first.name))
-	{
-	    decl.first.is_exported = true;
-	    exported.erase(decl.first.name);
-	}
-    }
-
-    // Check that we don't export things that don't exist
-    if (not exported.empty())
-    {
-	myexception e;
-	e<<"Module '"<<name<<"' exports undefined symbols:\n";
-	for(auto& name: exported)
-	    e<<"  "<<name;
-	throw e;
-    }
-}
-
 set<dummy> dup_work(set<dummy>& vars)
 {
     set<dummy> vars2;
@@ -1501,19 +1473,10 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 
 
 vector<pair<dummy,expression_ref>>
-simplifier(const simplifier_options& options, const map<dummy,expression_ref>& small_decls_in,const set<dummy>& small_decls_in_free_vars, const expression_ref& E1)
+simplify_module(const simplifier_options& options, const map<dummy,expression_ref>& small_decls_in,const set<dummy>& small_decls_in_free_vars,
+		vector<pair<dummy,expression_ref>> decls)
 {
     set<dummy> free_vars;
-
-    string name;
-    expression_ref exports;
-    expression_ref impdecls;
-    expression_ref topdecls;
-    parse_module(E1, name, exports, impdecls, topdecls);
-
-    // Record exports
-    auto decls = parse_decls(topdecls);
-    export_decls(decls, exports, name);
 
     // Analyze the decls
     decls = flatten(occurrence_analyze_decls(decls, free_vars));
