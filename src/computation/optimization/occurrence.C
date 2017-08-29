@@ -21,10 +21,7 @@
 #include <boost/optional.hpp>
 #include "simplifier.H"
 
-// TODO: split out dependency analyses into own file.
-// TODO: split out occurrence analysis into own file.
-// TODO: split out inlining heuristics into own file.
-// TODO: stop merging let {x=E} in let {y=F} in body.
+// TODO: split out dependency analysis into own file.
 
 typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph; 
 typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
