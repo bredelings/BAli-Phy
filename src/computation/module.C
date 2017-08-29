@@ -704,7 +704,10 @@ void Module::optimize(const Program& P)
 	    module = create_module(name, exports, impdecls, topdecls);
 
 	    for(int i=0;i<P.get_module_loader()->max_iterations;i++)
-		module = simplifier(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, module);
+	    {
+		auto decls = simplifier(*P.get_module_loader(), small_decls_in, small_decls_in_free_vars, module);
+		module = create_module(name, exports, impdecls, make_topdecls(decls));
+	    }
 
 	    parse_module(module, name, exports, impdecls, topdecls);
 	}

@@ -1500,8 +1500,8 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 }
 
 
-expression_ref simplifier(const simplifier_options& options, const map<dummy,expression_ref>& small_decls_in,
-			  const set<dummy>& small_decls_in_free_vars, const expression_ref& E1)
+vector<pair<dummy,expression_ref>>
+simplifier(const simplifier_options& options, const map<dummy,expression_ref>& small_decls_in,const set<dummy>& small_decls_in_free_vars, const expression_ref& E1)
 {
     set<dummy> free_vars;
 
@@ -1534,10 +1534,9 @@ expression_ref simplifier(const simplifier_options& options, const map<dummy,exp
     for(auto& var: free_vars)
 	bound_vars.insert({var,{}});
 
-    simplify_decls(options, decls, {}, bound_vars,true);
-    topdecls = make_topdecls(decls);
+    simplify_decls(options, decls, {}, bound_vars, true);
 
-    return create_module(name, exports, impdecls, topdecls);
+    return decls;
 }
 
 
