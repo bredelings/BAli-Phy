@@ -36,6 +36,7 @@
 #include <map>
 #include <set>
 #include <typeinfo>
+#include <functional>
 
 std::string demangle(const std::string&);
 
@@ -420,6 +421,24 @@ T min(const std::vector<T>& v) {
     return t;
 }
 
+template <typename T>
+int argmin(int n, std::function<T(int)> f)
+{
+    int min_index = 0;
+    int min_score = f(0);
+    for(int i=1;i<n;i++)
+    {
+	T score = f(i);
+	if (score < min_score)
+	{
+	    min_index = i;
+	    min_score = score;
+	}
+    }
+    return min_index;
+}
+
+
 /// Return the arg-min of v
 template<class T>
 unsigned argmin(const std::vector<T>& v) {
@@ -690,6 +709,31 @@ void truncate(V& v)
 {
     (&v)->~V();
     new (&v) V;
+}
+
+template <typename T>
+std::vector<T> flatten(const std::vector<std::vector<T>>& v1)
+{
+    std::vector<T> v2;
+    for(auto& v: v1)
+	for(auto& t: v)
+	    v2.push_back(t);
+    return v2;
+}
+
+namespace std
+{
+    template <typename T>
+    struct reversion_wrapper { T& iterable; };
+
+    template <typename T>
+    auto begin (reversion_wrapper<T> w) { return std::rbegin(w.iterable); }
+
+    template <typename T>
+    auto end (reversion_wrapper<T> w) { return std::rend(w.iterable); }
+
+    template <typename T>
+    reversion_wrapper<T> reverse (T&& iterable) { return { iterable }; }
 }
 
 #endif
