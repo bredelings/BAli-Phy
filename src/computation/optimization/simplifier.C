@@ -596,6 +596,36 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
     return S2;
 }
 
+// Eta-reduction : if f does not reference x2 then
+//                     \x2 ->               ($) f x2  ===>              f
+//                 We don't do this (could perform more allocation):
+//                     \x2 -> (let decls in ($) f x2) ===> let decls in f
+expression_ref eta_reduce(const expression_ref& E)
+{
+    assert(is_lambda(E.head()));
+    auto& x    = E.sub()[0].as_<dummy>();
+    auto& body = E.sub()[1];
+
+    if (x.code_dup == amount_t::Once and
+	body.is_expression() and is_apply(body.head()) and
+	(body.as_expression().sub.back() == x))
+    {
+	// ($) f x  ==> f
+	if (body.size() == 2)
+	    return body.sub()[0];
+	// ($) f y x ==> ($) f y
+	else
+	{
+	    assert(body.size() > 2);
+	    object_ptr<expression> body2 = body.as_expression().clone();
+	    body2->sub.pop_back();
+	    return body2;
+	}
+    }
+    else
+	return E;
+}
+
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
 // Q2. Where do we handle case-of-constant (case constant of alts)?
 // Q3. How do we handle local let-floating from (i) case objects, (ii) apply-objects, (iii) let-bound statements?
@@ -647,30 +677,11 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	// 2.3 Simplify the body with x added to the bound set.
 	auto new_body = simplify(options, E.sub()[1], S2, bound_vars, unknown_context());
 
-	// 2.4 Remove x_new from the bound set.
+	// 2.4 Remove x2 from the bound set.
 	unbind_var(bound_vars,x2);
 
-	// 2.5 Eta-reduction : if f does not reference x2 then
-	//                     \x2 ->               ($) f x2  ===>              f 
-	//     We don't do this (could perform more allocation):
-	//                     \x2 -> (let decls in ($) f x2) ===> let decls in f
-	if (x2.code_dup == amount_t::Once and
-	    new_body.is_expression() and is_apply(new_body.head()) and
-	    (new_body.as_expression().sub.back() == x2))
-	{
-	    if (new_body.size() == 2)
-		return new_body.sub()[0];
-	    else
-	    {
-		assert(new_body.size() > 2);
-		object_ptr<expression> new_body2 = new_body.as_expression().clone();
-		new_body2->sub.pop_back();
-		return new_body2;
-	    }
-	}
-	// 2.6 Recreate the lambda expression with x->x2 and simplified new body.
-	else
-	    return lambda_quantify(x2, new_body);
+	// 2.5 Return (\x2 -> new_body) after eta-reduction
+	return eta_reduce(lambda_quantify(x2, new_body));
     }
 
     // 6. Case
