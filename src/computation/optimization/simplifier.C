@@ -123,29 +123,23 @@ dummy get_new_name(dummy x, const in_scope_set& bound_vars)
     return x;
 }
 
-dummy get_new_name(const expression_ref& var, const in_scope_set& bound_vars)
-{
-    return get_new_name(var.as_<dummy>(), bound_vars);
-}
-
 dummy rename_and_bind_var(const expression_ref& var, substitution& S, in_scope_set& bound_vars)
 {
     dummy x = var.as_<dummy>();
     assert(x.code_dup != amount_t::Unknown);
     assert(not is_wildcard(x));
-    expression_ref var2 = get_new_name(var, bound_vars);
+    dummy x2 = get_new_name(x, bound_vars);
 
     // 1. If x is NOT in the bound set, then erase x from the substitution (if it's there)
-    if (var == var2)
+    if (x == x2)
 	S.erase(x);
     // 2. If x IS in the bound set, add a substitution from x --> x2then erase x from the substitution (if it's there)
     else
     {
 	S.erase(x);
-	S.insert({x, var2});
+	S.insert({x, expression_ref(x2)});
     }
 
-    dummy x2 = var2.as_<dummy>();
     bind_var(bound_vars, x2, {});
 
     return x2;
