@@ -656,8 +656,13 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	// 2.4 Remove x_new from the bound set.
 	unbind_var(bound_vars,x2);
 
-	// 2.5 Eta-reduction : Lx2.@ f x2 ==> f.  (Let-floating should let us ignore if f is a let-expression).
-	if (new_body.is_expression() and is_apply(new_body.head()) and (new_body.as_expression().sub.back() == x2))
+	// 2.5 Eta-reduction : if f does not reference x2 then
+	//                     \x2 ->               ($) f x2  ===>              f 
+	//     We don't do this (could perform more allocation):
+	//                     \x2 -> (let decls in ($) f x2) ===> let decls in f
+	if (x2.code_dup == amount_t::Once and
+	    new_body.is_expression() and is_apply(new_body.head()) and
+	    (new_body.as_expression().sub.back() == x2))
 	{
 	    if (new_body.size() == 2)
 		return new_body.sub()[0];
