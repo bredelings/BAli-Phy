@@ -499,6 +499,8 @@ int n_indels(const pairwise_alignment_t& a)
 {
     using namespace A2;
 
+    if (a.size() < 1) return 0;
+
     int total = (a.is_insert(0) or a.is_delete(0))?1:0;
 
     for(int i=1;i<a.size();i++)
