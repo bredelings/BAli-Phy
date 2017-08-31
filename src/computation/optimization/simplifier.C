@@ -734,7 +734,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
     // 
     if (is_let_expression(E))
     {
-	auto body       = let_body(E);
+	auto body  = let_body(E);
 	auto decls = let_decls(E);
 
 	auto S2 = simplify_decls(options, decls, S, bound_vars, false);
