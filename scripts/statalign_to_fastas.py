@@ -25,7 +25,6 @@ def print_alignment(alignment):
     for line in alignment:
         print(line)
 
-
 if __name__ == '__main__':
     import codecs
     import re
@@ -34,6 +33,9 @@ if __name__ == '__main__':
 
     infile = sys.argv[1]
 
+    num = 0
     for alignment in get_alignments(infile):
+        num += 1
         print_alignment(alignment)
         print("\n\n")
+    sys.stderr.write("Read {} alignments.\n".format(num))
