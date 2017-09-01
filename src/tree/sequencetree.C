@@ -220,7 +220,7 @@ string write_with_bootstrap_fraction(const vector<string>& names, const_branchvi
     // print the branch length if requested
     double bfb = bf[b.undirected_name()];
     if (bfb >= 0)
-	output += " " + convertToString<double>(bf[b.undirected_name()]);
+	output += convertToString<double>(bf[b.undirected_name()]);
 
     if (print_lengths)
 	output += ":" + convertToString(b.length());
