@@ -146,7 +146,7 @@ HMM::HMM(const vector<bitmask_t>& bitmasks, int start_index, int end_index, cons
 
 int find_first_set_bit(const HMM::bitmask_t& mask)
 {
-    constexpr int L = mask.size();
+    const int L = mask.size();
     for(int i=0;i<L;i++)
 	if (mask.test(i))
 	    return i;
