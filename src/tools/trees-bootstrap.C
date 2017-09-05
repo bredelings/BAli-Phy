@@ -128,7 +128,7 @@ public:
 
     tree_sample_collection() {}
 
-    tree_sample_collection(const vector<vector<string> >& filenames,int skip, int subsample, int until, int max)
+    tree_sample_collection(const vector<vector<string> >& filenames, int skip, int last, int subsample, int max)
 	{
 	    for(int i=0;i<filenames.size();i++) 
 	    {
@@ -136,10 +136,10 @@ public:
 		    throw myexception()<<"Group "<<i+1<<" doesn't contain any files!";
 
 		cout<<"# Loading trees from '"<<filenames[i][0]<<"'...\n";
-		int d = add_sample_new_distribution(tree_sample(filenames[i][0],skip,subsample,max));
+		int d = add_sample_new_distribution(tree_sample(filenames[i][0], skip, last, subsample, max));
 		for(int j=1;j<filenames[i].size();j++) {
 		    cout<<"# Loading trees from '"<<filenames[i][j]<<"'...\n";
-		    add_sample(d,tree_sample(filenames[i][j],skip,subsample,until,max));
+		    add_sample(d,tree_sample(filenames[i][j], skip, last, subsample, max));
 		}
 	    }
 	}
