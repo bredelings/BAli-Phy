@@ -70,6 +70,9 @@ using std::vector;
 extern "C" closure builtin_function_rs07_lengthp(OperationArgs& Args)
 {
     double e = Args.evaluate(0).as_double();
+    if (e < 0.0)
+	throw myexception()<<"Error: mean indel length cannot be < 1, but was set to "<<1.0/(1.0-e)<<"!";
+
     int l = Args.evaluate(1).as_int();
 
     if (l < 0)
@@ -83,6 +86,9 @@ extern "C" closure builtin_function_rs07_lengthp(OperationArgs& Args)
 extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
 {
     double e = Args.evaluate(0).as_double();
+    if (e < 0.0)
+	throw myexception()<<"Error: mean indel length cannot be < 1, but was set to "<<1.0/(1.0-e)<<"!";
+
     double D = Args.evaluate(1).as_double();
     double heat = Args.evaluate(2).as_double();
     constructor in_training_c = Args.evaluate(3).head().as_<constructor>();

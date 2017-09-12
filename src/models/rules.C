@@ -460,9 +460,9 @@ const vector< vector<vector<string>> > all_default_arguments =
     },
 
     {{"RS07", "IM", "G","Redelings & Suchard (2007) model of insertions and deletions."},
-     {"IModel.rs07[logLambda,meanIndelLengthMinus1,tree]"},
+     {"IModel.rs07[logLambda,meanIndelLength,tree]"},
      {"logLambda", "Double", "~Laplace[-4,0.707]","","The log of the insertion-deletion rate, normalized to the substitution rate."},
-     {"meanIndelLengthMinus1", "Double", "~Exponential[10]"},
+     {"meanIndelLength", "Double", "Add[1.0,~Exponential[10]]"},
      {"tree", "tree", "LAMBDA"}
     },
 

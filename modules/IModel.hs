@@ -10,19 +10,19 @@ builtin builtin_rs07_lengthp 2 "rs07_lengthp" "Alignment";
 
 rs05_lengthp m l = doubleToLogDouble (builtin_rs05_lengthp m l);
 
-rs05 logRate meanIndelLengthMinus1 tau tree heat training = (\d b -> m, rs05_lengthp m) where
+rs05 logRate meanIndelLength tau tree heat training = (\d b -> m, rs05_lengthp m) where
     {
       rate = exp logRate;
       x = exp (-2.0*rate);
       delta = x/(1.0+x);
-      epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
+      epsilon = (meanIndelLength-1.0)/meanIndelLength;
       m = rs05_branch_HMM epsilon delta tau heat training;
     };
 
 rs07_lengthp e l = doubleToLogDouble (builtin_rs07_lengthp e l);
 
-rs07 logLambda meanIndelLengthMinus1 tree heat training = (\d b ->rs07_branch_HMM epsilon (lambda*d!b) heat training, rs07_lengthp epsilon) 
-                                                            where {lambda = exp logLambda; epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1)};
+rs07 logLambda meanIndelLength tree heat training = (\d b ->rs07_branch_HMM epsilon (lambda*d!b) heat training, rs07_lengthp epsilon) 
+                                              where {lambda = exp logLambda; epsilon = (meanIndelLength-1.0)/meanIndelLength};
 rs07_relaxed_rates_model tree = Prefix "RelaxedRatesRS07"
 (do {
    let {n_branches = numBranches tree;
