@@ -150,18 +150,31 @@ variables_map parse_cmd_line(int argc,char* argv[])
     {
 	cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
 	cout<<all<<"\n";
+	cout<<"Try --help=topics for a list of topics to ask for help on.\n\n";
 	exit(0);
     }
     if (args.count("help") and args["help"].as<string>() == "help")
     {
 	cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
 	cout<<some<<"\n";
+	cout<<"Try --help=topics for a list of topics to ask for help on.\n\n";
 	exit(0);
     }
 
     if (args.count("help"))
     {
 	string topic = args["help"].as<string>();
+	if (topic == "topics")
+	{
+	    std::cout<<"Help topics via --help=arg are available for:\n";
+	    std::cout<<"  =help                Command-line flags and a short description.\n";
+	    std::cout<<"  =advanced            Extra command-line flags and a short description.\n";
+	    std::cout<<"  =topics              This list of topics.\n";
+	    std::cout<<"  =functions           A list of functions and result type.\n";
+	    std::cout<<"  =<function name>     Function type, description, and argument names.\n";
+	    std::cout<<"\n";
+	    exit(0);
+	}
 	if (topic == "functions")
 	{
 	    auto rules = get_rules();
