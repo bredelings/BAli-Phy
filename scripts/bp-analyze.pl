@@ -2784,6 +2784,39 @@ sub write_x3d_file
     close FILE;
 }
 
+sub hsv_to_rgb
+{
+    my $H = shift;
+    my $S = shift;
+    my $V = shift;
+
+    // decompose color range [0,6) into a discrete color (i) and fraction (f)
+    my $h = $H * 6;
+    my $i = int($h);
+    my $f = $h - $i;
+
+    my $p = $V*(1.0 - $S);
+    my $q = $V*(1.0 - ($S*$f));
+    my $t = $V*(1.0 - ($S*(1.0-$f)));
+
+    if ($i==0) 
+      return ($V,$t,$p);
+    else if ($i==1) 
+      return ($q,$V,$p);
+    else if ($i==2) 
+      return ($p,$V,$t);
+    else if ($i==3) 
+      return ($p,$q,$V);
+    else if ($i==4) 
+      return ($t,$p,$V);
+    else if ($i==5) 
+      return ($V,$p,$q);
+}
+
+sub rgb_to_color
+{
+}
+
 sub gen_x3d_of_mds
 {
     my $point_string = shift;
