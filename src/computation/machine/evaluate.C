@@ -359,13 +359,14 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 		else
 		{
 		    make_reg_changeable(R);
+		    closure_stack.push_back(value);
 
 #ifndef COMBINE_STEPS
 		    int r2;
-		    if (value.exp.head().is_index_var())
+		    if (closure_stack.back().exp.head().is_index_var())
 		    {
-			int index = value.exp.as_index_var();
-			r2 = value.lookup_in_env( index );
+			int index = closure_stack.back().exp.as_index_var();
+			r2 = closure_stack.back().lookup_in_env( index );
 		    }
 		    else
 		    {
@@ -373,12 +374,12 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 			assert(not has_step(r2));
 			mark_reg_created_by_step(r2,S);
 			total_reg_allocations++;
-			set_C(r2, std::move(value));
+			set_C(r2, std::move(closure_stack.back()));
 		    }
 
 		    auto p = incremental_evaluate(r2);
 #else
-		    incremental_evaluate_from_call(S,value);
+		    incremental_evaluate_from_call_(S);
 
 		    pair<int,int> p;
 		    if (closure_stack.back().exp.head().is_index_var())
@@ -397,8 +398,8 @@ pair<int,int> reg_heap::incremental_evaluate_(int R)
 			access(r2).type = reg::type_t::constant;
 			p = {r2,r2};
 		    }
-		    closure_stack.pop_back();
 #endif
+		    closure_stack.pop_back();
 
 		    int r3 = p.first;
 		    int value = p.second;
