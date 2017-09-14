@@ -18,6 +18,7 @@
 #include <boost/optional.hpp>
 #include "simplifier.H"
 
+// TODO: update strip_let -> strip_lets to make sure we get ALL the lets (for example).
 // TODO: stop merging let {x=E} in let {y=F} in body.
 // TODO: pass in decl_groups to simplify_module instead of just decls.  Treat later decls as body of early one for aliveness purposes.
 // TODO: Can we process earlier topdecl groups until done instead of passing over the whole thing multiple times.
