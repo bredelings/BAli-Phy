@@ -257,6 +257,8 @@ closure let_op(OperationArgs& Args)
 
     auto C  = Args.current_closure();
 
+    int total_allocated_vars = 0;
+
     do
     {
 	int start = C.Env.size();
@@ -275,14 +277,19 @@ closure let_op(OperationArgs& Args)
 	for(int i=0;i<n_bodies;i++)
 	    M.set_C(C.Env[start+i], get_trimmed({args[i+1],C.Env}));
 
-	// 3. Remove the new heap vars from the list of temp heads in reverse order.
-	for(int i=0;i<n_bodies; i++)
-	    M.pop_temp_head();
-      
+	total_allocated_vars += n_bodies;
+
 	C.exp = body;
 	do_trim(C);
     }
     while (C.exp.head().type() == let2_type);
+
+    // FIXME - we are hoping that no allocations occur before the returned result can
+    //         be put on a
+
+    // 3. Remove the new heap vars from the list of temp heads in reverse order.
+    for(int i=0;i<total_allocated_vars; i++)
+	M.pop_temp_head();
 
     return C;
 }
