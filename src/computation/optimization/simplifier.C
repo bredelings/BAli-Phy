@@ -18,10 +18,28 @@
 #include <boost/optional.hpp>
 #include "simplifier.H"
 
+// TODO: when building let expressions to bind variables, pass those expressions into the simplifier
+//       * 1. stop translating wildcards to named variables.
+//       * 2. make the occurrence analyzer replace dead variables with wildcards in case patterns and lambdas.
+//       * 3. move case-of-constant analysis ahead of normal case analysis, so that we can simplify the let-statement we create.
+//       * 4. share as much code as possible between the case-of-constant and normal case analysis.
+// TODO: make simplify_decls actually take a decl_groups, and return a new one by reference.
 // TODO: update strip_let -> strip_lets to make sure we get ALL the lets (for example).
+// - rebuild_case( )  --> strip_let( ) -> let_expression( ).
+// - rebuild_apply( ) --> strip_let( ) -> let_expression( ).
+// - rebuild_let( ) --> remove strip_let( )!
+// - simplify_decls( ) --> strip_let( ) ... add to current decls.
+//   * how does this work?
+//   * the test for a constructor needs to look through multiple let statements now.
+//   * if we have nonrec { x = let DECLS in F} then neither the DECLS nor the F can mention x.  Therefore, we can move the decls BEFORE this set.
+//   * if we have    rec { x = let DECLS in F} then the DECLS *might* mention x, or other variables.  So, we can't put them before.
+//     But F might mention the decls, so we can't put them after.  Therefore, we need to merge them.
+//   * ok, so, we could LIFT the elements into the let.  But then than MERGES all the elements...
 // TODO: stop merging let {x=E} in let {y=F} in body.
 // TODO: pass in decl_groups to simplify_module instead of just decls.  Treat later decls as body of early one for aliveness purposes.
+//  - so, for the occurrence analyzer, we process a series of decl_groups in REVERSE order.
 // TODO: Can we process earlier topdecl groups until done instead of passing over the whole thing multiple times.
+// - I *think* so.  as we 5
 
 using std::string;
 using std::vector;
