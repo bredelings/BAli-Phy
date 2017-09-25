@@ -721,6 +721,16 @@ std::vector<T> flatten(const std::vector<std::vector<T>>& v1)
     return v2;
 }
 
+template <typename T>
+std::vector<T> flatten(std::vector<std::vector<T>>&& v1)
+{
+    std::vector<T> v2;
+    for(auto& v: v1)
+	for(auto& t: v)
+	    v2.push_back(std::move(t));
+    return v2;
+}
+
 namespace std
 {
     template <typename T>
