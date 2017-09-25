@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include <list>
 #include "computation/operations.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
@@ -29,6 +30,7 @@ typedef boost::graph_traits<Graph>::edge_descriptor Edge_t;
 
 using std::string;
 using std::vector;
+using std::list;
 using std::pair;
 using std::set;
 using std::map;
@@ -290,6 +292,17 @@ vector<int> topo_sort(const Graph& graph)
 //
 //              Deal with this later.
 //
+
+vector<CDecls>
+occurrence_analyze_decl_groups(const vector<CDecls>& decl_groups, set<dummy>& free_vars)
+{
+    vector<vector<CDecls>> output;
+    for(const auto& decls: reverse(decl_groups))
+	output.push_back(occurrence_analyze_decls(decls, free_vars));
+
+    std::reverse(output.begin(), output.end());
+    return flatten(std::move(output));
+}
 
 vector<CDecls>
 occurrence_analyze_decls(CDecls decls, set<dummy>& free_vars)
