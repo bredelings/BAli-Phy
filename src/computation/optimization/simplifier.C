@@ -521,9 +521,8 @@ expression_ref rebuild_let(const simplifier_options& options, const CDecls& decl
 
     unbind_decls(bound_vars, decls);
 
-    // FIXME! Why can't we remove this?
-    CDecls decls2 = decls;
-    strip_let(E, decls2);
+    return let_expression(decls, E);
+}
 
 expression_ref multi_let_body(expression_ref E)
 {
