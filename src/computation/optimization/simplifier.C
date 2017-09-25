@@ -801,7 +801,7 @@ CDecls simplify_module(const simplifier_options& options, const map<dummy,expres
 	bind_decls(bound_vars, decls);
     }
 
-    return flatten(decl_groups);
+    return flatten(std::move(decl_groups));
 }
 
 
