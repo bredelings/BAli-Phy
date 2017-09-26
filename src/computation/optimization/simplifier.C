@@ -367,7 +367,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
     expression_ref E2;
     if (is_WHNF(object))
     {
-	for(int i=0; i<L; i++)
+	for(int i=0; i<L and not E2; i++)
 	{
 	    if (is_dummy(patterns[i]))
 	    {
