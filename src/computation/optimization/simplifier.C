@@ -530,13 +530,12 @@ expression_ref rebuild_apply(const simplifier_options& options, expression_ref E
 }
 
 // let {x[i] = E[i]} in body.  The x[i] have been renamed and the E[i] have been simplified, but body has not yet been handled.
-expression_ref rebuild_let(const simplifier_options& options, const CDecls& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars)
+expression_ref rebuild_let(const simplifier_options& options, const CDecls& decls, expression_ref E, const substitution& S, in_scope_set& bound_vars, const inline_context& context)
 {
     // If the decl is empty, then we don't have to do anythign special here.
-    if (decls.empty()) return simplify(options, E, S, bound_vars, unknown_context());
     bind_decls(bound_vars, decls);
 
-    E = simplify(options, E, S, bound_vars, unknown_context());
+    E = simplify(options, E, S, bound_vars, context);
 
     unbind_decls(bound_vars, decls);
 
@@ -782,7 +781,7 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 	auto S2 = simplify_decls(options, decls, S, bound_vars, false);
 
         // 5.2 Simplify the let-body
-	return rebuild_let(options, decls, body, S2, bound_vars);
+	return rebuild_let(options, decls, body, S2, bound_vars, context);
     }
 
     std::abort();
