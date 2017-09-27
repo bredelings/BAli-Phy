@@ -152,7 +152,7 @@ dummy rename_and_bind_var(const expression_ref& var, substitution& S, in_scope_s
     // 1. If x is NOT in the bound set, then erase x from the substitution (if it's there)
     if (x == x2)
 	S.erase(x);
-    // 2. If x IS in the bound set, add a substitution from x --> x2then erase x from the substitution (if it's there)
+    // 2. If x IS in the bound set, add a substitution from x --> x2 then erase x from the substitution (if it's there)
     else
     {
 	S.erase(x);
@@ -318,6 +318,54 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
     if (is_constant_case(patterns,bodies))
 	return simplify(options, bodies[0], S, bound_vars, context);
 
+    // 6. Take a specific branch if the object is a constant
+    expression_ref E2;
+    if (is_WHNF(object) and not is_dummy(object))
+    {
+	for(int i=0; i<L and not E2; i++)
+	{
+	    if (is_dummy(patterns[i]))
+	    {
+		assert(is_wildcard(patterns[i]));
+		E2 = simplify(options, bodies[i], S, bound_vars, context);
+	    }
+	    else if (patterns[i].head() == object.head())
+	    {
+		// 2. Rename and bind pattern variables
+                // case (x[1], x[2], ..., x[n]) of {(y[1], y[2], ..., y[n]) -> f y[1] y[2] ... y[n]}
+		//   a. add substitutions y[i] -> z[i] for z[i] fresh (i.e. not overlapping x[i])
+		//   b. let {z[i] = x[i]} in f y[1] y[2] ... y[n]  => let {z[i] = x[i]} in f' z[1] z[2] ... z[n]
+		// In the next round of simplification,
+		//   a. we simplify all the x[i], possibly replacing them with another variable, or a larger expression.  But lets assume they are left unchanged.
+		//   b. we should do EITHER pre- or post- inline substitution for each variable.  Replacing the z[i] by x[i].
+		// Since the x[i] are already simplified during this round, it SEEMS like we should be able to just add substitutions from y[i] -> x[i]!
+
+		auto S2 = S;
+		for(int j=0;j<patterns[i].size();j++)
+		{
+		    auto pat_var = patterns[i].sub()[j];
+		    auto& x = pat_var.as_<dummy>();
+		    if (not is_wildcard(pat_var))
+		    {
+			auto obj_var = object.sub()[j];
+			assert(is_dummy(obj_var) and not is_wildcard(obj_var));
+			assert(is_dummy(pat_var) and not is_wildcard(pat_var));
+			S2.erase(x);
+			S2.insert({x,obj_var});
+		    }
+		}
+		E2 = simplify(options, bodies[i], S2, bound_vars, context);
+	    }
+	}
+	if (not E2)
+	    throw myexception()<<"Case object doesn't match any alternative in '"<<make_case_expression(object, patterns, bodies)<<"'";
+
+	unbind_decls(bound_vars, decls);
+
+	return let_expression(decls,E2);
+    }
+
+
     // 1. Simplify each alternative
     for(int i=0;i<L;i++)
     {
@@ -363,38 +411,9 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	unbind_decls(bound_vars, pat_decls);
     }
 
-    // 6. Take a specific branch if the object is a constant
-    expression_ref E2;
-    if (is_WHNF(object))
-    {
-	for(int i=0; i<L and not E2; i++)
-	{
-	    if (is_dummy(patterns[i]))
-	    {
-		assert(is_wildcard(patterns[i]));
-		E2 = bodies[i];
-	    }
-	    else if (patterns[i].head() == object.head())
-	    {
-		for(int j=0;j<patterns[i].size();j++)
-		{
-		    auto obj_var = object.sub()[j];
-		    auto pat_var = patterns[i].sub()[j];
-		    assert(is_dummy(obj_var) and not is_wildcard(obj_var));
-		    assert(is_dummy(pat_var) and not is_wildcard(pat_var));
-		    auto& x = pat_var.as_<dummy>();
-		    decls.push_back({x, obj_var});
-		    bind_var(bound_vars, x, obj_var);
-		}
-		E2 =  bodies[i];
-	    }
-	}
-	if (not E2)
-	    throw myexception()<<"Case object doesn't many any alternative in '"<<make_case_expression(object, patterns, bodies)<<"'";
-    }
     // 7. If the case is an identity transformation
     // Hmmm... this might not be right, because leaving out the default could cause a match failure, which this transformation would eliminate.
-    else if (is_identity_case(object, patterns, bodies))
+    if (is_identity_case(object, patterns, bodies))
 	E2 = object;
     // 8. case-of-case
     else if (is_case(object) and options.case_of_case)
