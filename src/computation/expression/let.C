@@ -288,7 +288,7 @@ void get_decls(const expression_ref& E, CDecls& decls)
     }
 }
 
-void get_decls_from_let(const expression_ref& E, CDecls& decls)
+void let_decls(const expression_ref& E, CDecls& decls)
 {
     assert(is_let_expression(E));
     get_decls(E.sub()[0], decls);
@@ -304,7 +304,7 @@ CDecls parse_decls(const expression_ref& E)
 CDecls let_decls(const expression_ref& E)
 {
     CDecls decls;
-    get_decls_from_let(E, decls);
+    let_decls(E, decls);
     return decls;
 }
 
@@ -313,13 +313,16 @@ expression_ref let_body(expression_ref  E)
     return E.sub()[1];
 }
 
-void strip_let(expression_ref& E, CDecls& decls)
+bool strip_let(expression_ref& E, CDecls& decls)
 {
     if (is_let_expression(E))
     {
-	get_decls_from_let(E, decls);
+	let_decls(E, decls);
 	E = let_body(E);
+	return true;
     }
+    else
+	return false;
 }
 
 CDecls strip_let(expression_ref& E)
@@ -327,6 +330,17 @@ CDecls strip_let(expression_ref& E)
     CDecls decls;
     strip_let(E,decls);
     return decls;
+}
+
+std::vector<CDecls> strip_lets(expression_ref& E)
+{
+    std::vector<CDecls> decl_groups;
+    while(is_let_expression(E))
+    {
+	decl_groups.push_back(let_decls(E));
+	E = let_body(E);
+    }
+    return decl_groups;
 }
 
 boost::optional<dummy> find_first_duplicate_var(const CDecls& decls)
