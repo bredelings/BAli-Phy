@@ -98,13 +98,16 @@ inline_context case_object_context(const expression_ref E, const inline_context&
     return inline_context("case_object",E,context);
 }
 
+inline_context apply_object_context_one_arg(const inline_context& context, const expression_ref& arg)
+{
+    return inline_context("apply_object", arg, context);
+}
+
 inline_context apply_object_context(const expression_ref E, inline_context context)
 {
     assert(E.head().is_a<Apply>());
     for(int i=E.size()-1;i>=1;i--)
-    {
-	context = inline_context("apply_object", E.sub()[i], context);
-    }
+	context = apply_object_context_one_arg(context, E.sub()[i]);
     return context;
 }
 

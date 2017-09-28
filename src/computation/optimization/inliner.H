@@ -34,6 +34,7 @@ public:
 
 inline_context unknown_context();
 inline_context argument_context(const inline_context& context);
+inline_context apply_object_context_one_arg(const inline_context& context, const expression_ref& arg);
 inline_context apply_object_context(const expression_ref E, inline_context context);
 inline_context case_object_context(const expression_ref E, const inline_context& context);
 
