@@ -786,7 +786,7 @@ CDecls simplify_module(const simplifier_options& options, const map<dummy,expres
     set<dummy> free_vars;
 
     // Decompose the decls, remove unused decls, and occurrence-analyze the decls.
-    auto decl_groups = occurrence_analyze_decls(decls, free_vars);
+    auto decl_groups = occurrence_analyze_decl_groups({decls}, free_vars);
 
     in_scope_set bound_vars;
 
