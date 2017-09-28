@@ -512,18 +512,20 @@ expression_ref rebuild_apply(const simplifier_options& options, expression_ref E
     if (not options.beta_reduction) applied_arguments = 0;
 
     // 3. For each applied argument, peel the lambda and add {var=argument} to the decls
+    CDecls apply_decls;
     for(int i=0;i<applied_arguments;i++)
     {
 	auto argument = E.sub()[1+i];
 	if (i<used_arguments)
 	{
 	    auto x = object.sub()[0].as_<dummy>();
-	    decls.push_back({x, argument});
+	    apply_decls.push_back({x, argument});
 	    object = peel_n_lambdas1(object,1);
 	}
 	else
 	    object = (object, argument);
     }
+    object = let_expression(apply_decls, object);
 
     // 5. Rebuild the application with floated-lets and let-bound arguments outside any remaining applications.
     return let_expression(decls, object);
