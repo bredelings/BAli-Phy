@@ -506,16 +506,16 @@ expression_ref rebuild_apply(const simplifier_options& options, expression_ref E
 	decls = strip_let(object);
 
     // 2. Determine how many arguments we can apply
-    int supplied_arguments = E.size() - 1;
-    int required_arguments = get_n_lambdas1(object);
-    int applied_arguments = std::min(supplied_arguments, required_arguments);
+    int applied_arguments = E.size() - 1;
+    int lambda_arguments = get_n_lambdas1(object);
+    int used_arguments = std::min(applied_arguments, lambda_arguments);
     if (not options.beta_reduction) applied_arguments = 0;
 
     // 3. For each applied argument, peel the lambda and add {var=argument} to the decls
-    for(int i=0;i<supplied_arguments;i++)
+    for(int i=0;i<applied_arguments;i++)
     {
 	auto argument = E.sub()[1+i];
-	if (i<applied_arguments)
+	if (i<used_arguments)
 	{
 	    auto x = object.sub()[0].as_<dummy>();
 	    decls.push_back({x, argument});
