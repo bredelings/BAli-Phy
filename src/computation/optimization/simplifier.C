@@ -318,7 +318,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
     parse_case_expression(E, object, patterns, bodies);
     const int L = patterns.size();
 
-    auto decls = strip_let(object);
+    auto decls = strip_lets(object);
     bind_decls(bound_vars, decls);
 
     // NOTE: Any thing that relies on occurrence info for pattern vars should be done here, before
