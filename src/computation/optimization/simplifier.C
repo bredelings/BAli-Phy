@@ -102,10 +102,22 @@ void bind_decls(in_scope_set& bound_vars, const CDecls& decls)
 	bind_var(bound_vars, decl.first, decl.second);
 }
 
+void bind_decls(in_scope_set& bound_vars, const vector<CDecls>& decl_groups)
+{
+    for(auto& decls: decl_groups)
+	bind_decls(bound_vars, decls);
+}
+
 void unbind_decls(in_scope_set& bound_vars, const CDecls& decls)
 {
     for(const auto& decl: decls)
 	unbind_var(bound_vars, decl.first);
+}
+
+void unbind_decls(in_scope_set& bound_vars, const vector<CDecls>& decl_groups)
+{
+    for(auto& decls: reverse(decl_groups))
+	unbind_decls(bound_vars, decls);
 }
 
 expression_ref simplify(const simplifier_options& options, const expression_ref& E, const substitution& S, in_scope_set& bound_vars, const inline_context& context);
