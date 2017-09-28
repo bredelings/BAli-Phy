@@ -427,6 +427,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	vector<dummy> lifted_names = get_body_function_names(bound_vars, patterns, patterns2);
 
 	// 2. Lift case bodies into let-bound functions, and replace the bodies with calls to these functions.
+	CDecls cc_decls;
 	for(int i=0;i<patterns.size();i++)
 	{
 	    // Don't both factoring out trivial expressions
@@ -443,8 +444,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 		f_body = lambda_quantify(used_vars[used_vars.size()-1-j],f_body);
 	    }
 
-	    decls.push_back({f,f_body});
-	    bind_var(bound_vars, f, f_body);
+	    cc_decls.push_back({f,f_body});
 
 	    bodies[i] = f_call;
 	}
@@ -459,15 +459,14 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
 	for(int i=0;i<patterns2.size();i++)
 	    bodies2[i] = make_case_expression(bodies2[i],alts);
 
-	E2 = make_case_expression(object2,patterns2,bodies2);
+	E2 = let_expression(cc_decls, make_case_expression(object2,patterns2,bodies2));
     }
+
+    if (not E2) E2 = make_case_expression(object, patterns, bodies);
 
     unbind_decls(bound_vars, decls);
 
-    if (not E2)
-	return let_expression(decls, make_case_expression(object, patterns, bodies));
-    else
-	return let_expression(decls, E2);
+    return let_expression(decls, E2);
 }
 
 int get_n_lambdas1(const expression_ref& E)
