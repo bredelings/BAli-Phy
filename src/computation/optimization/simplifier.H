@@ -36,6 +36,6 @@ expression_ref peel_n_lambdas1(const expression_ref& E, int n);
 
 bool is_trivial(const expression_ref& E);
 
-CDecls simplify_module(const simplifier_options&, const std::map<dummy, expression_ref>&, const std::set<dummy>&, CDecls);
+std::vector<CDecls> simplify_module(const simplifier_options&, const std::map<dummy, expression_ref>&, const std::set<dummy>&, const std::vector<CDecls>& decl_groups);
 
 #endif

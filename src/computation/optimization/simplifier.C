@@ -781,12 +781,13 @@ expression_ref simplify(const simplifier_options& options, const expression_ref&
 }
 
 
-CDecls simplify_module(const simplifier_options& options, const map<dummy,expression_ref>& small_decls_in,const set<dummy>& small_decls_in_free_vars, CDecls decls)
+vector<CDecls> simplify_module(const simplifier_options& options, const map<dummy,expression_ref>& small_decls_in,const set<dummy>& small_decls_in_free_vars,
+			       const vector<CDecls>& decl_groups_in)
 {
     set<dummy> free_vars;
 
     // Decompose the decls, remove unused decls, and occurrence-analyze the decls.
-    auto decl_groups = occurrence_analyze_decl_groups({decls}, free_vars);
+    auto decl_groups = occurrence_analyze_decl_groups(decl_groups_in, free_vars);
 
     in_scope_set bound_vars;
 
@@ -812,7 +813,7 @@ CDecls simplify_module(const simplifier_options& options, const map<dummy,expres
 	bind_decls(bound_vars, decls);
     }
 
-    return flatten(std::move(decl_groups));
+    return decl_groups;
 }
 
 
