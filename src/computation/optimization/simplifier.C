@@ -512,9 +512,9 @@ expression_ref rebuild_apply(const simplifier_options& options, expression_ref E
     expression_ref object = E.sub()[0];
 
     // 1. Optionally float let's out of the apply object
-    CDecls decls;
+    vector<CDecls> decls;
     if (options.let_float_from_apply)
-	decls = strip_let(object);
+	decls = strip_lets(object);
 
     // 2. Determine how many arguments we can apply
     int applied_arguments = E.size() - 1;
