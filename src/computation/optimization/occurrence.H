@@ -10,5 +10,6 @@
 
 std::pair<expression_ref,std::set<dummy>> occurrence_analyzer(const expression_ref& E, var_context context=var_context::unknown);
 std::vector<CDecls> occurrence_analyze_decls(CDecls decls, std::set<dummy>& free_vars);
+std::vector<CDecls> occurrence_analyze_decl_groups(const std::vector<CDecls>& decls, std::set<dummy>& free_vars);
 
 #endif
