@@ -60,11 +60,9 @@ expression_ref make_decls(const CDecls&);
 
 expression_ref make_topdecls(const CDecls&);
 
-expression_ref let_body(expression_ref E);
+expression_ref let_body(const expression_ref& E);
 
-bool strip_let(expression_ref& E, CDecls& decls);
-
-CDecls strip_let(expression_ref& E);
+expression_ref multi_let_body(expression_ref E);
 
 std::vector<CDecls> strip_lets(expression_ref& E);
 

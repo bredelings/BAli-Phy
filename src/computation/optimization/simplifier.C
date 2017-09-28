@@ -555,14 +555,6 @@ expression_ref rebuild_let(const simplifier_options& options, const CDecls& decl
     return let_expression(decls, E);
 }
 
-expression_ref multi_let_body(expression_ref E)
-{
-    while(is_let_expression(E))
-	E = let_body(E);
-    return E;
-}
-
-
 substitution
 simplify_decls(const simplifier_options& options, CDecls& orig_decls, const substitution& S, in_scope_set& bound_vars, bool is_top_level)
 {
@@ -618,15 +610,13 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
 
 	    // Float lets out of decl x = F
 	    if (options.let_float_from_let and (is_constructor(multi_let_body(F)) or is_top_level))
-		while (is_let_expression(F))
-		{
-		    for(auto& decl: strip_let(F))
+		for(auto& decls: strip_lets(F))
+		    for(auto& decl: decls)
 		    {
 			bind_var(bound_vars, decl.first, decl.second);
 			new_names.push_back(decl.first);
 			new_decls.push_back(decl);
 		    }
-		}
 
 	    // what are the conditions for post-inlining unconditionally?
 	    if (is_trivial(F) and options.post_inline_unconditionally and not x.is_exported and not x.is_loop_breaker)

@@ -308,28 +308,17 @@ CDecls let_decls(const expression_ref& E)
     return decls;
 }
 
-expression_ref let_body(expression_ref  E)
+expression_ref let_body(const expression_ref& E)
 {
+    assert(is_let_expression(E));
     return E.sub()[1];
 }
 
-bool strip_let(expression_ref& E, CDecls& decls)
+expression_ref multi_let_body(expression_ref E)
 {
-    if (is_let_expression(E))
-    {
-	let_decls(E, decls);
+    while(is_let_expression(E))
 	E = let_body(E);
-	return true;
-    }
-    else
-	return false;
-}
-
-CDecls strip_let(expression_ref& E)
-{
-    CDecls decls;
-    strip_let(E,decls);
-    return decls;
+    return E;
 }
 
 std::vector<CDecls> strip_lets(expression_ref& E)
