@@ -24,18 +24,6 @@
 //       * 3. move case-of-constant analysis ahead of normal case analysis, so that we can simplify the let-statement we create.
 //       * 4. share as much code as possible between the case-of-constant and normal case analysis.
 // TODO: make simplify_decls actually take a decl_groups, and return a new one by reference.
-// TODO: update strip_let -> strip_lets to make sure we get ALL the lets (for example).
-// - rebuild_case( )  --> strip_let( ) -> let_expression( ).
-// - rebuild_apply( ) --> strip_let( ) -> let_expression( ).
-// - rebuild_let( ) --> remove strip_let( )!
-// - simplify_decls( ) --> strip_let( ) ... add to current decls.
-//   * how does this work?
-//   * the test for a constructor needs to look through multiple let statements now.
-//   * if we have nonrec { x = let DECLS in F} then neither the DECLS nor the F can mention x.  Therefore, we can move the decls BEFORE this set.
-//   * if we have    rec { x = let DECLS in F} then the DECLS *might* mention x, or other variables.  So, we can't put them before.
-//     But F might mention the decls, so we can't put them after.  Therefore, we need to merge them.
-//   * ok, so, we could LIFT the elements into the let.  But then than MERGES all the elements...
-// TODO: stop merging let {x=E} in let {y=F} in body.
 // TODO: pass in decl_groups to simplify_module instead of just decls.  Treat later decls as body of early one for aliveness purposes.
 //  - so, for the occurrence analyzer, we process a series of decl_groups in REVERSE order.
 // TODO: Can we process earlier topdecl groups until done instead of passing over the whole thing multiple times.
@@ -318,7 +306,7 @@ expression_ref rebuild_case(const simplifier_options& options, const expression_
     parse_case_expression(E, object, patterns, bodies);
     const int L = patterns.size();
 
-    auto decls = strip_lets(object);
+    auto decls = strip_multi_let(object);
     bind_decls(bound_vars, decls);
 
     // NOTE: Any thing that relies on occurrence info for pattern vars should be done here, before
@@ -514,7 +502,7 @@ expression_ref rebuild_apply(const simplifier_options& options, expression_ref E
     // 1. Optionally float let's out of the apply object
     vector<CDecls> decls;
     if (options.let_float_from_apply)
-	decls = strip_lets(object);
+	decls = strip_multi_let(object);
 
     // 2. Determine how many arguments we can apply
     int applied_arguments = E.size() - 1;
@@ -554,6 +542,8 @@ expression_ref rebuild_let(const simplifier_options& options, const CDecls& decl
 
     return let_expression(decls, E);
 }
+
+// FIXME - Until we can know that decls are non-recursive, we can't simplify an Decls into more than one Decls - we have to merge them.
 
 substitution
 simplify_decls(const simplifier_options& options, CDecls& orig_decls, const substitution& S, in_scope_set& bound_vars, bool is_top_level)
@@ -610,7 +600,7 @@ simplify_decls(const simplifier_options& options, CDecls& orig_decls, const subs
 
 	    // Float lets out of decl x = F
 	    if (options.let_float_from_let and (is_constructor(multi_let_body(F)) or is_top_level))
-		for(auto& decls: strip_lets(F))
+		for(auto& decls: strip_multi_let(F))
 		    for(auto& decl: decls)
 		    {
 			bind_var(bound_vars, decl.first, decl.second);

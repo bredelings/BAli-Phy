@@ -321,7 +321,7 @@ expression_ref multi_let_body(expression_ref E)
     return E;
 }
 
-std::vector<CDecls> strip_lets(expression_ref& E)
+std::vector<CDecls> strip_multi_let(expression_ref& E)
 {
     std::vector<CDecls> decl_groups;
     while(is_let_expression(E))
