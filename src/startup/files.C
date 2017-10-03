@@ -61,13 +61,21 @@ vector<shared_ptr<ofstream>> open_files(int proc_id, const string& name, vector<
 
 string open_dir(const string& dirbase)
 {
-    for(int i=1;;i++) {
+    // FIXME. Maybe the ability to create arbitrary files should not be allowed?
+
+    // 1. Create the parent directory.
+    auto parent = fs::path(dirbase).parent_path();
+    if (not parent.empty())
+	fs::create_directories(parent);
+
+    // 2. Try to create the child directory
+    for(int i=1;;i++)
+    {
 	string dirname = dirbase + "-" + convertToString(i);
 
-	if (not fs::exists(dirname)) {
-	    fs::create_directories(dirname);
+	// 3. Ensure a unique owner.
+	if (fs::create_directory(dirname))
 	    return dirname;
-	}
     }
 }
 
