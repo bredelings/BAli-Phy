@@ -398,7 +398,7 @@ namespace substitution {
 		assert(A0.has_character1(i0));
 		double p_col = element_prod_sum(F.begin(), (*LCB1)[s0], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
-		total.mult_with_count(p_col,1);
+		total.mult_with_count(p_col,(*LCB1).count(s0));
 		scale += LCB1->scale(s0);
 		i0++;
 		s0++;
@@ -409,7 +409,7 @@ namespace substitution {
 		assert(A1.has_character1(i1));
 		double p_col = element_prod_sum(F.begin(), (*LCB2)[s1], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
-		total.mult_with_count(p_col,1);
+		total.mult_with_count(p_col,(*LCB2).count(s1));
 		scale += LCB2->scale(s1);
 		i1++;
 		s1++;
@@ -420,7 +420,7 @@ namespace substitution {
 		assert(A2.has_character1(i2));
 		double p_col = element_prod_sum(F.begin(), (*LCB3)[s2], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
-		total.mult_with_count(p_col,1);
+		total.mult_with_count(p_col,(*LCB3).count(s2));
 		scale += LCB3->scale(s2);
 		i2++;
 		s2++;
@@ -446,24 +446,28 @@ namespace substitution {
 	    i1++;
 	    i2++;
 
+	    int count = -1;
 	    const double* m[3];
 	    int mi=0;
 	    if (not_gap0)
 	    {
 		m[mi++] = ((*LCB1)[s0]);
 		scale += (*LCB1).scale(s0);
+		count = (*LCB1).count(s0);
 		s0++;
 	    }
 	    if (not_gap1)
 	    {
 		m[mi++] = ((*LCB2)[s1]);
 		scale += (*LCB2).scale(s1);
+		count = (*LCB2).count(s1);
 		s1++;
 	    }
 	    if (not_gap2)
 	    {
 		m[mi++] = ((*LCB3)[s2]);
 		scale += (*LCB3).scale(s2);
+		count = (*LCB3).count(s2);
 		s2++;
 	    }
 
@@ -505,7 +509,7 @@ namespace substitution {
 	    assert(0 <= p_col and p_col <= 1.00000000001);
 
 	    // This might do a log( ) operation.
-	    total.mult_with_count(p_col,1);
+	    total.mult_with_count(p_col,count);
 	    //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
 
 	    s3++;
