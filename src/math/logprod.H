@@ -28,6 +28,13 @@ struct log_prod_underflow
 {
     log_double_t accum = 1.0;
     double prod = 1.0;
+
+    log_prod_underflow& operator*=(log_double_t x)
+    {
+	accum *= x;
+	return *this;
+    }
+
     log_prod_underflow& operator*=(double x)
     {
 #ifndef NDEBUG
@@ -45,8 +52,8 @@ struct log_prod_underflow
 	    accum *= x;
 	assert(not this->is_zero() or x == 0 or old.is_zero());
 	return *this;
-	    
     }
+
     log_double_t value() const {return accum * prod;}
     operator log_double_t () const {return value();}
     bool is_zero() const {return value() <= 0.0;}
@@ -100,6 +107,13 @@ struct log_prod_rescale
 struct log_prod_logsum
 {
     log_double_t accum = 1.0;
+
+    log_prod_logsum& operator*=(log_double_t x)
+    {
+	accum *= x;
+	return *this;
+    }
+
     log_prod_logsum& operator*=(double x)
     {
 #ifndef NDEBUG
@@ -118,5 +132,18 @@ struct log_prod_logsum
 
 typedef log_prod_underflow log_prod;
 
+inline log_prod_underflow& mult_with_count(log_prod& prod, double x, int c)
+{
+    constexpr int limit = 4;
+    if (c <= limit)
+    {
+	for(int i=0;i<c;i++)
+	    prod *= x;
+    }
+    else
+	prod *= pow(log_double_t(x),c);
+
+    return prod;
+}
 #endif
 
