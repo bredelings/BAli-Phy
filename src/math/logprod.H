@@ -43,6 +43,7 @@ struct log_prod_underflow
 	double mult = prod * x;
 	if (mult >= std::numeric_limits<double>::min())
 	    prod = mult;
+	// keep the larger of {prod,x} in the "prod" slot.
 	else if (prod < x)
 	{
 	    accum *= prod;
@@ -50,6 +51,41 @@ struct log_prod_underflow
 	}
 	else
 	    accum *= x;
+	assert(not this->is_zero() or x == 0 or old.is_zero());
+	return *this;
+    }
+
+    log_prod_underflow& mult_with_count(double x, int c)
+    {
+	assert(c >= 0);
+	assert(prod >= 0);
+
+	constexpr int count_limit = 4;
+
+#ifndef NDEBUG
+	auto old = *this;
+#endif
+	if (c >= count_limit)
+	    accum *= pow(log_double_t(x),c);
+	else
+	{
+	    double f = x;
+	    for(int i=1;i<c;i++)
+		f *= x;
+
+	    double mult = prod * f;
+	    if (mult >= std::numeric_limits<double>::min()) // multi > 0
+		prod = mult;
+	    // keep the larger of {prod,f} in the "prod" slot, if f > 0
+	    else if (prod < f) // f > 0
+	    {
+		accum *= prod;
+		prod = f;
+	    }
+	    else
+		accum *= pow(log_double_t(x),c);
+	}
+
 	assert(not this->is_zero() or x == 0 or old.is_zero());
 	return *this;
     }
