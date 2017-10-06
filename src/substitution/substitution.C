@@ -1039,7 +1039,7 @@ namespace substitution {
 		assert(A0.has_character1(i0));
 		double p_col = element_prod_sum(F.begin(), (*LCB1)[s0], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
-		total.mult_with_count(p_col,1);
+		total.mult_with_count(p_col,(*LCB1).count(s0));
 		total_scale += LCB1->scale(s0);
 		i0++;
 		s0++;
@@ -1049,7 +1049,7 @@ namespace substitution {
 		assert(A1.has_character1(i1));
 		double p_col = element_prod_sum(F.begin(), (*LCB2)[s1], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
-		total.mult_with_count(p_col,1);
+		total.mult_with_count(p_col,(*LCB2).count(s1));
 		total_scale += LCB2->scale(s1);
 		i1++;
 		s1++;
@@ -1071,10 +1071,13 @@ namespace substitution {
 	    bool not_gap1 = A1.has_character1(i1);
 	    i0++;
 	    i1++;
+	    int count = -1;
 	    if (not_gap0 and not_gap1)
 	    {
 		element_prod_assign(S, (*LCB1)[s0], (*LCB2)[s1], matrix_size);
 		scale = LCB1->scale(s0) + LCB2->scale(s1);
+		count = (*LCB1).count(s0);
+		assert(count == (*LCB2).count(s1));
 		s0++;
 		s1++;
 	    }
@@ -1082,12 +1085,14 @@ namespace substitution {
 	    {
 		C = (*LCB1)[s0];
 		scale = LCB1->scale(s0);
+		count = (*LCB1).count(s0);
 		s0++;
 	    }
 	    else if (not_gap1)
 	    {
 		C = (*LCB2)[s1];
 		scale = LCB2->scale(s1);
+		count = (*LCB2).count(s1);
 		s1++;
 	    }
 	    else
@@ -1116,6 +1121,7 @@ namespace substitution {
 		    R[j] *= scale_factor;
 	    }
 	    LCB3->scale(s2) = scale;
+	    LCB3->count(s2) = count;
 	    s2++;
 	}
 
