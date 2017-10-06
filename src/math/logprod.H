@@ -168,18 +168,5 @@ struct log_prod_logsum
 
 typedef log_prod_underflow log_prod;
 
-inline log_prod_underflow& mult_with_count(log_prod& prod, double x, int c)
-{
-    constexpr int limit = 4;
-    if (c <= limit)
-    {
-	for(int i=0;i<c;i++)
-	    prod *= x;
-    }
-    else
-	prod *= pow(log_double_t(x),c);
-
-    return prod;
-}
 #endif
 
