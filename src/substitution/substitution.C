@@ -398,7 +398,7 @@ namespace substitution {
 		assert(A0.has_character1(i0));
 		double p_col = element_prod_sum(F.begin(), (*LCB1)[s0], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
-		total *= p_col;
+		total.mult_with_count(p_col,1);
 		scale += LCB1->scale(s0);
 		i0++;
 		s0++;
@@ -409,7 +409,7 @@ namespace substitution {
 		assert(A1.has_character1(i1));
 		double p_col = element_prod_sum(F.begin(), (*LCB2)[s1], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
-		total *= p_col;
+		total.mult_with_count(p_col,1);
 		scale += LCB2->scale(s1);
 		i1++;
 		s1++;
@@ -420,7 +420,7 @@ namespace substitution {
 		assert(A2.has_character1(i2));
 		double p_col = element_prod_sum(F.begin(), (*LCB3)[s2], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
-		total *= p_col;
+		total.mult_with_count(p_col,1);
 		scale += LCB3->scale(s2);
 		i2++;
 		s2++;
@@ -504,8 +504,8 @@ namespace substitution {
 	    // SOME model must be possible
 	    assert(0 <= p_col and p_col <= 1.00000000001);
 
-	    // This does a log( ) operation.
-	    total *= p_col;
+	    // This might do a log( ) operation.
+	    total.mult_with_count(p_col,1);
 	    //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
 
 	    s3++;
@@ -626,7 +626,7 @@ namespace substitution {
 	    if (non_gap2) i2++;
 	    if (non_gap3) i3++;
 
-	    total *= p_col;
+	    total.mult_with_count(p_col,1);
 	    //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
 	}
 
@@ -661,7 +661,7 @@ namespace substitution {
 	auto& LCB1 = P.cache(rb[0]);
 	auto& LCB2 = P.cache(rb[1]);
     
-	log_double_t total = 1;
+	log_prod total;
 	for(int i=0;i<index.size1();i++)
 	{
 	    double p_col = 1;
@@ -711,7 +711,7 @@ namespace substitution {
 	    assert(0 <= p_col and p_col <= 1.00000000001);
 
 	    // This does a log( ) operation.
-	    total *= p_col;
+	    total.mult_with_count(p_col,1);
 	    //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
 	}
 
@@ -1035,7 +1035,7 @@ namespace substitution {
 		assert(A0.has_character1(i0));
 		double p_col = element_prod_sum(F.begin(), (*LCB1)[s0], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
-		total *= p_col;
+		total.mult_with_count(p_col,1);
 		total_scale += LCB1->scale(s0);
 		i0++;
 		s0++;
@@ -1045,7 +1045,7 @@ namespace substitution {
 		assert(A1.has_character1(i1));
 		double p_col = element_prod_sum(F.begin(), (*LCB2)[s1], matrix_size );
 		assert(0 <= p_col and p_col <= 1.00000000001);
-		total *= p_col;
+		total.mult_with_count(p_col,1);
 		total_scale += LCB2->scale(s1);
 		i1++;
 		s1++;
@@ -1695,8 +1695,6 @@ namespace substitution {
     {
 	std::abort();
     }
-  
-
 
     vector< vector<double> > get_model_likelihoods_by_alignment_column(const data_partition& P)
     {
