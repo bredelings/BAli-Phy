@@ -304,7 +304,7 @@ bool data_partition::pairwise_alignment_is_unset(int b) const
 
 void data_partition::unset_pairwise_alignment(int b)
 {
-    assert(has_IModel() or likelihood_calculator() == 0);
+    assert(not has_IModel() or likelihood_calculator() == 0);
     int B = t().reverse(b);
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
 
@@ -317,7 +317,7 @@ void data_partition::unset_pairwise_alignment(int b)
 /// Set the pairwise alignment value, but don't mark the alignment & sequence lengths as changed.
 void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi)
 {
-    assert(has_IModel() or likelihood_calculator() == 0);
+    assert(not has_IModel() or likelihood_calculator() == 0);
     int B = t().reverse(b);
     assert(pairwise_alignment_is_unset(b) or (get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped()));
     const context* C = P;
@@ -334,7 +334,7 @@ const matrix<int>& data_partition::alignment_constraint() const
 
 expression_ref data_partition::get_pairwise_alignment_(int b) const
 {
-    assert(has_IModel() or likelihood_calculator() == 0);
+    assert(not has_IModel() or likelihood_calculator() == 0);
     return P->get_parameter_value(DPC().pairwise_alignment_for_branch[b]);
 }
 
