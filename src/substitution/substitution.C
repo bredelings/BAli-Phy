@@ -1020,6 +1020,8 @@ namespace substitution {
         // Do this before accessing matrices or other_subst
 	auto* LCB3 = new Likelihood_Cache_Branch(A0.length2(), n_models, n_states);
 	assert(A0.length2() == A1.length2());
+	assert(A0.length1() == LCB1->n_columns());
+	assert(A1.length1() == LCB2->n_columns());
 
 	// scratch matrix
 	double* S = LCB3->scratch(0);
