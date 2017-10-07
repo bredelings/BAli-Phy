@@ -1453,13 +1453,21 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     assert(like_calcs.size() == A.size());
     for(int i=0;i<A.size();i++)
     {
-	// construct compressed alignment, counts, and mapping
-	vector<int> counts;
-	vector<int> mapping;
-	auto AA = compress_alignment(A[i], t(), counts, mapping);
+	if (imodel_index_for_partition(i) == -1)
+	{
+	    // construct compressed alignment, counts, and mapping
+	    vector<int> counts;
+	    vector<int> mapping;
+	    auto AA = compress_alignment(A[i], t(), counts, mapping);
 
-	counts = vector<int>(A[i].length(), 1);
-	PC->DPC.emplace_back(this, i, A[i], counts, like_calcs[i]);
+	    PC->DPC.emplace_back(this, i, AA, counts, like_calcs[i]);
+	    get_data_partition(i).set_alignment(AA);
+	}
+	else
+	{
+	    auto counts = vector<int>(A[i].length(), 1);
+	    PC->DPC.emplace_back(this, i, A[i], counts, like_calcs[i]);
+	}
     }
 
     // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
