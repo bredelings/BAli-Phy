@@ -767,6 +767,7 @@ namespace substitution {
 	//    const vector<unsigned>& smap = MC.state_letters();
 
 	int L0 = sequence.size();
+	assert(counts.size() == L0);
 
 	const int n_models  = transition_P.size();
 	const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
@@ -776,6 +777,9 @@ namespace substitution {
     
 	for(int i=0;i<L0;i++)
 	{
+	    assert(counts[0] >= 1);
+	    LCB->count(i) = counts[i];
+
 	    double* R = (*LCB)[i];
 	    // compute the distribution at the parent node
 	    int l2 = sequence[i];
