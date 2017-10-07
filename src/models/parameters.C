@@ -456,10 +456,21 @@ vector<vector<int>> compress_site_patterns(const alignment& A, int n, vector<int
 
 alignment alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, const vector<int>& counts, const TreeInterface& t)
 {
+    assert(old.n_sequences() <= t.n_nodes());
+    assert(counts.size() <= old.length());
+    assert(counts.size() == patterns.size());
+    assert(t.n_leaves() == patterns[0].size());
+
     alignment A(old.get_alphabet(), counts.size(), t.n_nodes());
-    for(int i=0;i<old.n_sequences();i++)
-	for(int c=0;c<counts.size();c++)
-	    A.set_value(c,i,patterns[i][c]);
+
+    for(int i=0;i<t.n_nodes();i++)
+	if (i < t.n_leaves())
+	    for(int c=0;c<A.length();c++)
+		A.set_value(c,i,patterns[c][i]);
+	else
+	    for(int c=0;c<A.length();c++)
+		A.set_value(c,i,alphabet::gap);
+
     minimally_connect_leaf_characters(A,t);
     return A;
 }
