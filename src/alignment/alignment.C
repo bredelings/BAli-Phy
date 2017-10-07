@@ -356,7 +356,7 @@ alignment::alignment(const alphabet& a1)
     :a(a1.clone())
 {}
 
-alignment::alignment(const alphabet& a1,int n,int L)
+alignment::alignment(const alphabet& a1,int L,int n)
     :array(L,n),sequences(vector<sequence>(n)),a(a1.clone())
 {
 }
@@ -468,7 +468,7 @@ alignment reorder_sequences(const alignment& A, const vector<int>& order)
 {
     unsigned L = A.length();
 
-    alignment A2(A.get_alphabet(), order.size(), L);
+    alignment A2(A.get_alphabet(), L, order.size());
 
     for(int i=0;i<order.size();i++) 
     {
