@@ -386,13 +386,13 @@ mmm m = MixtureModels [m];
 
 empirical a filename = builtin_empirical a (listToString filename);
 
-cached_conditional_likelihoods t seqs as alpha ps f = let {lc    = mkArray (2*numBranches t) lcf;
-                                                           lcf b = let {bb = b `mod` (numBranches t)} in
-                                                                   case edgesBeforeEdge t b of {
-                                                                       []      -> peel_leaf_branch (seqs!sourceNode t b) alpha (ps!bb);
-                                                                       [b1,b2] -> peel_internal_branch (lc!b1) (lc!b2) (as!b1) (as!b2) (ps!bb) f}
-                                                          }
-                                                      in lc;
+cached_conditional_likelihoods t seqs counts as alpha ps f = let {lc    = mkArray (2*numBranches t) lcf;
+                                                                  lcf b = let {bb = b `mod` (numBranches t)} in
+                                                                          case edgesBeforeEdge t b of {
+                                                                              []      -> peel_leaf_branch (seqs!sourceNode t b) alpha (ps!bb);
+                                                                              [b1,b2] -> peel_internal_branch (lc!b1) (lc!b2) (as!b1) (as!b2) (ps!bb) f}
+                                                                 }
+                                                             in lc;
 
 peel_likelihood t cl as f root = let {likelihoods = mkArray (numNodes t) peel_likelihood';
                                       peel_likelihood' root = let {branches_in = map (reverseEdge t) (edgesOutOfNode t root);} in

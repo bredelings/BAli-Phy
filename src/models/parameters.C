@@ -488,7 +488,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
      branch_HMM_type(p->t().n_branches(),0),
      likelihood_calculator(like_calc)
 {
-
     const auto& t = p->t();
     int B = t.n_branches();
 
@@ -530,13 +529,19 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     }
 
     // Add parameters for observed leaf sequence objects
+    vector<vector<int>> seq_counts = alignment_letters_counts(AA, t.n_leaves(), counts);
+    vector<expression_ref> counts_;
     for(int i=0; i<leaf_sequence_indices.size(); i++)
+    {
 	leaf_sequence_indices[i] = p->add_compute_expression(Vector<int>(sequences[i]));
+	counts_.push_back( Vector<int>(seq_counts[i]) );
+    }
 
     vector<expression_ref> seqs_;
     for(int index: leaf_sequence_indices)
 	seqs_.push_back( p->get_expression(index) );
     auto seqs_array = p->get_expression( p->add_compute_expression((dummy("Prelude.listArray'"),get_list(seqs_))) );
+    auto counts_array = p->get_expression( p->add_compute_expression((dummy("Prelude.listArray'"),get_list(counts_))) );
   
     // Add methods indices for sequence lengths
     vector<expression_ref> as_;
@@ -563,7 +568,7 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     {
 	auto t = p->my_tree();
 	auto f = p->get_expression(p->PC->SModels[smodel_index].weighted_frequency_matrix);
-	cl_index = p->add_compute_expression((dummy("SModel.cached_conditional_likelihoods"),t,seqs_array,as,*a,transition_ps,f));  // Create and set conditional likelihoods for each branch
+	cl_index = p->add_compute_expression((dummy("SModel.cached_conditional_likelihoods"),t,seqs_array,counts_array,as,*a,transition_ps,f));  // Create and set conditional likelihoods for each branch
 	auto cls = p->get_expression(cl_index);
 	for(int b=0;b<conditional_likelihoods_for_branch.size();b++)
 	    conditional_likelihoods_for_branch[b] = p->add_compute_expression((dummy("Prelude.!"),cls,b));
