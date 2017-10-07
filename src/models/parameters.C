@@ -1310,8 +1310,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<model_t>& scaleMs,
 		       const vector<int>& scale_mapping,
 		       const model_t& branch_length_model,
-		       const vector<int>& like_calcs)
-    :Model(L),
+		       const std::vector<int>& like_calcs,
+		       const key_map_t& k)
+    :Model(L,k),
      PC(new parameters_constants(A,tt,SMs,s_mapping,IMs,i_mapping,scale_mapping)),
      variable_alignment_( n_imodels() > 0 ),
      updown(-1)
@@ -1450,7 +1451,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     }
 
     // create data partitions
-    bool allow_compression = true;
+    bool allow_compression = load_value("compression",1) > 0.5;
 
     assert(like_calcs.size() == A.size());
     for(int i=0;i<A.size();i++)
@@ -1462,13 +1463,13 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	    vector<int> mapping;
 	    auto AA = compress_alignment(A[i], t(), counts, mapping);
 
-	    PC->DPC.emplace_back(this, i, AA, counts, like_calcs[i]);
+	    PC->DPC.emplace_back(this, i, AA, counts, likelihood_calculators[i]);
 	    get_data_partition(i).set_alignment(AA);
 	}
 	else
 	{
 	    auto counts = vector<int>(A[i].length(), 1);
-	    PC->DPC.emplace_back(this, i, A[i], counts, like_calcs[i]);
+	    PC->DPC.emplace_back(this, i, A[i], counts, likelihood_calculators[i]);
 	    if (imodel_index_for_partition(i) == -1)
 		get_data_partition(i).set_alignment(A[i]);
 	}
@@ -1485,8 +1486,9 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<model_t>& scaleMs,
 		       const vector<int>& scale_mapping,
 		       const model_t& branch_length_model,
-		       const vector<int>& like_calcs)
-    :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<int>{}, scaleMs, scale_mapping, branch_length_model, like_calcs)
+		       const std::vector<int>& like_calcs,
+		       const key_map_t& k)
+    :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<int>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, k)
 { }
 
 bool accept_MH(const Model& P1,const Model& P2,double rho)

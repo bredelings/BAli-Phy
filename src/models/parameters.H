@@ -412,7 +412,8 @@ public:
 	       const std::vector<model_t>&,
 	       const std::vector<int>&,
 	       const model_t&,
-	       const std::vector<int>& like_calcs);
+	       const std::vector<int>&,
+	       const key_map_t&);
 
     Parameters(const std::shared_ptr<module_loader>& L,
 	       const std::vector<alignment>& A, const SequenceTree&, 
@@ -423,7 +424,8 @@ public:
 	       const std::vector<model_t>&,
 	       const std::vector<int>&,
 	       const model_t&,
-	       const std::vector<int>& like_calcs);
+	       const std::vector<int>&,
+	       const key_map_t&);
 };
 
 bool accept_MH(const Model& P1,const Model& P2,double rho);

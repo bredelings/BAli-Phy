@@ -124,26 +124,6 @@ void operator delete(void * p)
 
 // How to record that the user said e.g. "fix the alignment"?  Or, fix parameter X?  Should we?
 
-void set_key_values(Model& M, const variables_map& args)
-{
-    if (not args.count("set")) return;
-
-    vector<string> key_value_pairs = args["set"].as<vector<string> >();
-
-    for(const auto& key_value_pair: key_value_pairs)
-    {
-	vector<string> parse = split(key_value_pair,'=');
-	if (parse.size() != 2)
-	    throw myexception()<<"Ill-formed key-value pair '"<<key_value_pair<<"'.";
-
-	string key = parse[0];
-
-	double value = convertTo<double>(parse[1]);
-    
-	(*M.keys.modify())[key] = value;
-    }
-}
-
 /// Parse command line arguments of the form --fix X=x or --unfix X=x or --set X=x and modify P
 void set_initial_parameter_values(Model& M, const variables_map& args) 
 {
@@ -520,7 +500,10 @@ int main(int argc,char* argv[])
 	if (args.count("align"))
 	    M = create_A_and_T_model(args, L, out_cache, out_screen, out_both, proc_id);
 	else
-	    M = Model(L);
+	{
+	    auto keys = parse_key_map(args["set"].as<vector<string> >());
+	    M = Model(L, keys);
+	}
 	M->set_args(trailing_args(argc, argv, trailing_args_separator));
 
 	L.reset();
@@ -547,8 +530,6 @@ int main(int argc,char* argv[])
 
 //      FIXME - With lots of tree nodes, this explodes in short_parameter_names( )
 //	set_initial_parameter_values(*M,args);
-
-	set_key_values(*M,args);
 
 	//---------------Do something------------------//
 	vector<string> Rao_Blackwellize;

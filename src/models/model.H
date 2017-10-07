@@ -65,9 +65,10 @@ class Model: public context
     ////  \param indices The indices of the parameters that changed.
 
 public:
+    typedef std::map<std::string,double> key_map_t;
 
     /// An object for key-value pairs.
-    cow_ptr< std::map<std::string,double> > keys;
+    cow_ptr< key_map_t > keys;
 
     bool contains_key(const std::string& key) const { return keys->count(key);}
     double lookup_key(const std::string& key) const { return keys->find(key)->second;}
@@ -109,10 +110,12 @@ public:
     void set_parameter_values(const std::vector<int>& indices,const std::vector<expression_ref>& p);
 
     /// Construct an empty model
-    Model(const std::shared_ptr<module_loader>&);
+    Model(const std::shared_ptr<module_loader>&, const key_map_t& k = {});
 
     virtual ~Model() {};
 };
+
+Model::key_map_t parse_key_map(const std::vector<std::string>& key_value_strings);
 
 void show_parameters(std::ostream& o,const Model& M, bool = true);
 

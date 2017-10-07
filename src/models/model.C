@@ -97,9 +97,11 @@ log_double_t Model::prior() const
     return get_probability();
 }
 
-Model::Model(const std::shared_ptr<module_loader>& L)
-    :context(L),keys(new std::map<std::string,double>)
+Model::Model(const std::shared_ptr<module_loader>& L, const key_map_t& k)
+    :context(L),keys(new key_map_t(k))
 { }
+
+
 
 void show_parameters(std::ostream& o,const Model& M, bool show_hidden) {
     for(int i=0;i<M.n_parameters();i++) {
@@ -378,5 +380,25 @@ vector<int> parameters_with_extension(const vector<string>& M, string name)
 vector<int> parameters_with_extension(const Model& M, string name)
 {
     return parameters_with_extension(parameter_names(M), name);
+}
+
+Model::key_map_t parse_key_map(const vector<string>& key_value_strings)
+{
+    Model::key_map_t keys;
+
+    for(const auto& key_value_pair: key_value_strings )
+    {
+	vector<string> parse = split(key_value_pair,'=');
+	if (parse.size() != 2)
+	    throw myexception()<<"Ill-formed key-value pair '"<<key_value_pair<<"'.";
+
+	string key = parse[0];
+
+	double value = convertTo<double>(parse[1]);
+
+	keys[key] = value;
+    }
+
+    return keys;
 }
 
