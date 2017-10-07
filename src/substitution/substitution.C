@@ -760,7 +760,7 @@ namespace substitution {
 
 
     Likelihood_Cache_Branch*
-    peel_leaf_branch(const vector<int>& sequence, const alphabet& a, const EVector& transition_P)
+    peel_leaf_branch(const vector<int>& sequence, const vector<int>& counts, const alphabet& a, const EVector& transition_P)
     {
 	total_peel_leaf_branches++;
 
