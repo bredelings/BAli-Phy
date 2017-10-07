@@ -454,6 +454,16 @@ vector<vector<int>> compress_alignment(const alignment& A, int n, vector<int>& c
     return columns;
 }
 
+alignment alignment_from_patterns(const alignment& old, const vector<vector<int>>& patterns, const vector<int>& counts, const TreeInterface& t)
+{
+    alignment A(old.get_alphabet(), counts.size(), t.n_nodes());
+    for(int i=0;i<old.n_sequences();i++)
+	for(int c=0;c<counts.size();c++)
+	    A.set_value(c,i,patterns[i][c]);
+    minimally_connect_leaf_characters(A,t);
+    return A;
+}
+
 
 data_partition::data_partition(const Parameters* p, int i)
     :P(p),partition_index(i)
