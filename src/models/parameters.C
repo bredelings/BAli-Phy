@@ -24,6 +24,9 @@
 ///        for the MCMC.
 ///
 
+#include <map>
+#include <boost/optional.hpp>
+
 #include "models/parameters.H"
 #include "rng.H"
 #include "substitution/substitution.H"
@@ -49,6 +52,9 @@ using std::string;
 using std::cerr;
 using std::endl;
 using std::ostream;
+using std::map;
+
+using boost::optional;
 
 /*
  * DONE:
@@ -387,6 +393,67 @@ int data_partition::likelihood_calculator() const
     return DPC().likelihood_calculator;
 }
 
+struct column_map
+{
+    optional<int> value;
+    map<int, column_map> key_first;
+
+    optional<int>& insert(const vector<int>& key, int index=0)
+    {
+	if (index >= key.size()) return value;
+	int x = key[index];
+	return key_first[x].insert(key, index+1);
+    }
+};
+	
+int find_add_column(column_map& M, const vector<int>& column, int next)
+{
+    auto& result = M.insert(column);
+    if (not result)
+	result = next;
+    return *result;
+}
+
+int add_column(column_map& M, const vector<int>& column, vector<vector<int>>& cols, vector<int>& counts)
+{
+    assert(cols.size() == counts.size());
+    int c = find_add_column(M, column, cols.size());
+    if (c == cols.size())
+    {
+	cols.push_back(column);
+	counts.push_back(1);
+    }
+    else
+	counts[c]++;
+    return c;
+}
+
+vector<int> site_pattern(const alignment& A, int n, int c)
+{
+    assert(n <= A.size2());
+
+    vector<int> pattern(n);
+    for(int j=0;j<n;j++)
+    {
+	int x = A(c,j);
+	if (x < 0) x = alphabet::not_gap;
+	pattern[j] = x;
+    }
+    return pattern;
+}
+
+vector<vector<int>> compress_alignment(const alignment& A, int n, vector<int>& counts, vector<int>& mapping)
+{
+    column_map M;
+    vector<vector<int>> columns;
+    mapping.resize(A.length());
+    for(int c=0;c<A.length();c++)
+	mapping[c] = add_column(M, site_pattern(A,n,c), columns, counts);
+
+    std::cerr<<A.length()<<" columns -> "<<columns.size()<<" unique patterns.\n";
+    return columns;
+}
+
 
 data_partition::data_partition(const Parameters* p, int i)
     :P(p),partition_index(i)
@@ -405,8 +472,13 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
      branch_HMM_type(p->t().n_branches(),0),
      likelihood_calculator(like_calc)
 {
+
     const auto& t = p->t();
     int B = t.n_branches();
+
+    vector<int> counts;
+    vector<int> mapping;
+    auto AAA = compress_alignment(AA, t.n_leaves(), counts, mapping);
 
     string prefix = "P"+convertToString(i+1)+".";
     string invisible_prefix = "*"+prefix;
