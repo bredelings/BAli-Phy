@@ -85,7 +85,7 @@ struct data_partition_constants
 
     int likelihood_calculator;
 
-    data_partition_constants(Parameters* P, int i, const alignment&, int like_calc);
+    data_partition_constants(Parameters* P, int i, const alignment&, const std::vector<int>& counts, int like_calc);
 };
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)

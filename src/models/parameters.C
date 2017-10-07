@@ -442,7 +442,7 @@ vector<int> site_pattern(const alignment& A, int n, int c)
     return pattern;
 }
 
-vector<vector<int>> compress_alignment(const alignment& A, int n, vector<int>& counts, vector<int>& mapping)
+vector<vector<int>> compress_site_patterns(const alignment& A, int n, vector<int>& counts, vector<int>& mapping)
 {
     column_map M;
     vector<vector<int>> columns;
@@ -464,12 +464,18 @@ alignment alignment_from_patterns(const alignment& old, const vector<vector<int>
     return A;
 }
 
+alignment compress_alignment(const alignment& A, const TreeInterface& t, vector<int>& counts, vector<int>& mapping)
+{
+    auto patterns = compress_site_patterns(A, t.n_leaves(), counts, mapping);
+    return alignment_from_patterns(A, patterns, counts, t);
+}
+
 
 data_partition::data_partition(const Parameters* p, int i)
     :P(p),partition_index(i)
 { }
 
-data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, int like_calc)
+data_partition_constants::data_partition_constants(Parameters* p, int i, const alignment& AA, const vector<int>& counts, int like_calc)
     :pairwise_alignment_for_branch(2*p->t().n_branches()),
      conditional_likelihoods_for_branch(2*p->t().n_branches()),
      leaf_sequence_indices(p->t().n_leaves(),-1),
@@ -485,10 +491,6 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 
     const auto& t = p->t();
     int B = t.n_branches();
-
-    vector<int> counts;
-    vector<int> mapping;
-    auto AAA = compress_alignment(AA, t.n_leaves(), counts, mapping);
 
     string prefix = "P"+convertToString(i+1)+".";
     string invisible_prefix = "*"+prefix;
@@ -1434,7 +1436,15 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // create data partitions
     assert(like_calcs.size() == A.size());
     for(int i=0;i<A.size();i++)
-	PC->DPC.emplace_back(this, i, A[i], like_calcs[i]);
+    {
+	// construct compressed alignment, counts, and mapping
+	vector<int> counts;
+	vector<int> mapping;
+	auto AA = compress_alignment(A[i], t(), counts, mapping);
+
+	counts = vector<int>(A[i].length(), 1);
+	PC->DPC.emplace_back(this, i, A[i], counts, like_calcs[i]);
+    }
 
     // FIXME: We currently need this to make sure all parameters get instantiated before we finish the constructor.
     probability();
