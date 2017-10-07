@@ -446,7 +446,7 @@ namespace substitution {
 	    i1++;
 	    i2++;
 
-	    int count = -1;
+	    int count = 1;
 	    const double* m[3];
 	    int mi=0;
 	    if (not_gap0)
@@ -1102,7 +1102,10 @@ namespace substitution {
 		s1++;
 	    }
 	    else
+	    {
+		count = 1;
 		C = ones.begin();  // Columns like this would not be in subA_index_leaf, but might be in subA_index_internal
+	    }
 
 	    // propagate from the source distribution
 	    double* R = (*LCB3)[s2];            //name the result matrix
@@ -1127,6 +1130,7 @@ namespace substitution {
 		    R[j] *= scale_factor;
 	    }
 	    LCB3->scale(s2) = scale;
+	    assert(count >= 1);
 	    LCB3->count(s2) = count;
 	    s2++;
 	}
