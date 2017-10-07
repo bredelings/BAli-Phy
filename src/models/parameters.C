@@ -430,13 +430,13 @@ int add_column(column_map& M, const vector<int>& column, vector<vector<int>>& co
 
 vector<int> site_pattern(const alignment& A, int n, int c)
 {
-    assert(n <= A.size2());
+    assert(n <= A.n_sequences());
 
     vector<int> pattern(n);
     for(int j=0;j<n;j++)
     {
 	int x = A(c,j);
-	if (x < 0) x = alphabet::not_gap;
+	if (x < 0) x = alphabet::gap;
 	pattern[j] = x;
     }
     return pattern;
