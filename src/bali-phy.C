@@ -501,7 +501,9 @@ int main(int argc,char* argv[])
 	    M = create_A_and_T_model(args, L, out_cache, out_screen, out_both, proc_id);
 	else
 	{
-	    auto keys = parse_key_map(args["set"].as<vector<string> >());
+	    Model::key_map_t keys;
+	    if (args.count("set"))
+		keys = parse_key_map(args["set"].as<vector<string> >());
 	    M = Model(L, keys);
 	}
 	M->set_args(trailing_args(argc, argv, trailing_args_separator));

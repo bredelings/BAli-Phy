@@ -542,7 +542,9 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 		throw myexception()<<"Can't unalign with calculator "<<likelihood_calculators[i]<<"!";
     
     //--------------- Create the Parameters object---------------//
-    auto keys = parse_key_map(args["set"].as<vector<string> >());
+    Model::key_map_t keys;
+    if (args.count("set"))
+	keys = parse_key_map(args["set"].as<vector<string> >());
     Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, full_scale_models, scale_mapping, branch_length_model, likelihood_calculators, keys);
 
     //-------- Set the alignments for variable partitions ---------//
