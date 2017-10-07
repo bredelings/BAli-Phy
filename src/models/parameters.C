@@ -1463,13 +1463,13 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	    vector<int> mapping;
 	    auto AA = compress_alignment(A[i], t(), counts, mapping);
 
-	    PC->DPC.emplace_back(this, i, AA, counts, likelihood_calculators[i]);
+	    PC->DPC.emplace_back(this, i, AA, counts, like_calcs[i]);
 	    get_data_partition(i).set_alignment(AA);
 	}
 	else
 	{
 	    auto counts = vector<int>(A[i].length(), 1);
-	    PC->DPC.emplace_back(this, i, A[i], counts, likelihood_calculators[i]);
+	    PC->DPC.emplace_back(this, i, A[i], counts, like_calcs[i]);
 	    if (imodel_index_for_partition(i) == -1)
 		get_data_partition(i).set_alignment(A[i]);
 	}
