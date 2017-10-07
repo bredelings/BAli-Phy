@@ -163,6 +163,8 @@ std::vector<int> alignment_row_letters(const alignment& A, int i);
 
 std::vector< std::vector<int> > alignment_letters(const alignment& A, int n);
 
+std::vector< std::vector<int> > alignment_letters_counts(const alignment& A, int n, const std::vector<int>& counts);
+
 void check_same_sequence_lengths(const std::vector<int>&, const alignment&);
 
 alignment unalign_all(const alignment& A, int);

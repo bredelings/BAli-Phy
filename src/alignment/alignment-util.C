@@ -1147,6 +1147,15 @@ vector<int> alignment_row_letters(const alignment& A, int i)
     return s;
 }
 
+vector<int> alignment_row_counts(const alignment& A, int i, const vector<int>& counts)
+{
+    vector<int> s;
+    for(int c=0;c<A.length();c++)
+	if (A.character(c,i))
+	    s.push_back(counts[c]);
+    return s;
+}
+
 vector<vector<int> > alignment_letters(const alignment& A, int N)
 {
     // Construct the new leaf sequences
@@ -1154,6 +1163,17 @@ vector<vector<int> > alignment_letters(const alignment& A, int N)
 
     for(int i=0;i<N;i++)
 	S.push_back( alignment_row_letters(A,i));
+
+    return S;
+}
+
+vector<vector<int> > alignment_letters_counts(const alignment& A, int N, const vector<int>& counts)
+{
+    // Construct the counts for the new leaf sequences
+    vector< vector<int> > S;
+
+    for(int i=0;i<N;i++)
+	S.push_back( alignment_row_counts(A,i,counts));
 
     return S;
 }
