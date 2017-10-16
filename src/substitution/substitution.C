@@ -1591,7 +1591,9 @@ namespace substitution {
 	// 1. Allocate arrays for storing results and temporary results.
 	vector<vector<pair<int,int> > > ancestral_characters (t.n_nodes());
     
-	// All the (-1,-1)'s should be overwritten with the sampled character.
+	// We initially use this array to store the ancestral character, but then replace it with the sampled character.
+	// If the ancestral character is (-1,-1) then the ancestor is a gap, and does not exist.
+	// Thus, all the (-1,-1)'s should be overwritten with the sampled character.
 	for(int i=0;i<t.n_nodes();i++)
 	    ancestral_characters[i] = vector<pair<int,int>>(P.seqlength(i), {-1,-1});
 
@@ -1664,6 +1666,8 @@ namespace substitution {
 		index = get_indices_from_bitpath_w(a012,{1,2},(1<<0));
 	    }
       
+
+	    // Sample value of leaf characters
 	    if (local_branches.size() == 1)
 	    {
 		const auto& sequence = P.get_sequence(node).data();
@@ -1676,6 +1680,7 @@ namespace substitution {
 		    ancestral_characters[node][i] = sample(S);
 		}
 	    }
+	    // Sample value of internal characters, and save as ancestral value of child characters.
 	    else
 	    {
 		const auto& cache1 = P.cache(local_branches[1]);
