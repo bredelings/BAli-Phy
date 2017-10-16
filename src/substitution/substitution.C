@@ -1696,6 +1696,7 @@ namespace substitution {
 
 		    calc_transition_prob_from_parent(S, ancestral_characters[node][i], transition_P, F);
 
+		    // We need child branch CLVs, since we save CLVs and the end of each branch.
 		    if (i1 != -1) element_prod_modify(S.begin(), cache1[i1], matrix_size);
 		    if (i2 != -1) element_prod_modify(S.begin(), cache2[i2], matrix_size);
 
