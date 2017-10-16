@@ -128,7 +128,7 @@ public:
     template <typename T>
     const T& as_() const
 	{
-	    return *convert<const T>(ptr());
+	    return *convert<const T>(ptr().get());
 	}
 
     bool is_int() const
