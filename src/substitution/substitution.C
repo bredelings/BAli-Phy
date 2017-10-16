@@ -1529,13 +1529,13 @@ namespace substitution {
 	int mp = state_model_parent.first;
 	int lp = state_model_parent.second;
 	int n_states = S.size2();
-	auto& Pr = Ps[mp].as_<Box<Matrix>>();
 
 	// If there IS no parent character, then we can sample from F
 	if (mp == -1)
 	    S = WF;
 	else
 	{
+	    auto& Pr = Ps[mp].as_<Box<Matrix>>();
 	    assert(mp != -1);
 	    element_assign(S,0);
 	    for(int l=0;l<n_states;l++)
