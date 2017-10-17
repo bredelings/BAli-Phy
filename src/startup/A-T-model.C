@@ -116,7 +116,7 @@ get_imodels(const shared_items<string>& imodel_names_mapping, const SequenceTree
 {
     vector<model_t> imodels;
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
-	imodels.push_back( get_model("IM",imodel_names_mapping.unique(i)) );
+	imodels.push_back( get_model("IndelModel",imodel_names_mapping.unique(i)) );
     return imodels;
 }
 

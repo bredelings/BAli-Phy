@@ -451,7 +451,7 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"A", "a", "LAMBDA"}
     },
 
-    {{"RS05", "IM", "G"},
+    {{"RS05", "IndelModel", "G"},
      {"IModel.rs05[logDelta,meanIndelLengthMinus1,tau,tree]"},
      {"logDelta", "Double", "~Laplace[-4,0.707]"},
      {"meanIndelLengthMinus1", "Double", "~Exponential[10]"},
@@ -459,14 +459,14 @@ const vector< vector<vector<string>> > all_default_arguments =
      {"tree", "tree", "LAMBDA"}
     },
 
-    {{"RS07", "IM", "G","Redelings & Suchard (2007) model of insertions and deletions."},
+    {{"RS07", "IndelModel", "G","Redelings & Suchard (2007) model of insertions and deletions."},
      {"IModel.rs07[logLambda,meanIndelLength,tree]"},
      {"logLambda", "Double", "~Laplace[-4,0.707]","","The log of the insertion-deletion rate, normalized to the substitution rate."},
      {"meanIndelLength", "Double", "Add[1.0,~Exponential[10]]"},
      {"tree", "tree", "LAMBDA"}
     },
 
-    {{"RS07RelaxedRates", "IM"}, {"IModel.rs07_relaxed_rates_model"}}
+    {{"RS07RelaxedRates", "IndelModel"}, {"IModel.rs07_relaxed_rates_model"}}
 };
 
 ptree parse(const string& s);
