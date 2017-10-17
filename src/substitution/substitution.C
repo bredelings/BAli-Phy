@@ -1650,8 +1650,8 @@ namespace substitution {
 	    const auto& transition_P = P.transition_P(b);
 
 	    vector<int> local_branches = {b};
-	    for(int b: t.branches_before(b))
-		local_branches.push_back(b);
+	    for(int b2: t.branches_before(b))
+		local_branches.push_back(b2);
 
 	    assert(local_branches.size() == 3 or local_branches.size() == 1);
 
