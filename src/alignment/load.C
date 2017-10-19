@@ -83,6 +83,19 @@ vector<object_ptr<const alphabet> > load_alphabets(const variables_map& args)
     return load_alphabets(name);
 }
 
+std::string get_alphabet_name(const boost::program_options::variables_map& args)
+{
+    string alph_name;
+    if (args.count("alphabet"))
+	alph_name = args["alphabet"].as<string>();
+    return alph_name;
+}
+
+alignment load_alignment(const string& filename,const string& alph_name)
+{
+    return load_alignment(filename, load_alphabets(alph_name) );
+}
+
 alignment load_alignment(const string& filename,const vector<object_ptr<const alphabet> >& alphabets)
 {
     vector<sequence> sequences = sequence_format::load_from_file(filename);

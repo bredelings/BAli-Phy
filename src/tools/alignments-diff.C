@@ -221,10 +221,10 @@ int main(int argc,char* argv[])
     string filename1 = args["alignment1"].as<string>();
     string filename2 = args["alignment2"].as<string>();
 
-    alignment A1 = load_alignment(filename1,load_alphabets(args));
+    alignment A1 = load_alignment(filename1, get_alphabet_name(args));
     check_names_unique(A1);
 
-    alignment A2 = load_alignment(filename2,load_alphabets(args));
+    alignment A2 = load_alignment(filename2, get_alphabet_name(args));
     A2 = reorder_sequences(A2, sequence_names(A1));
 
     matrix<int> M1 = M(A1);

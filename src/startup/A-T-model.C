@@ -419,7 +419,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     for(int i=0;i<filenames.size();i++)
 	if (alphabet_names[i].size())
 	    // FIXME - if we are loading codons, FIRST determine the UNDERLYING alphabet, then 
-	    A[i] = load_alignment(filenames[i], load_alphabets(alphabet_names[i]) );
+	    A[i] = load_alignment(filenames[i], alphabet_names[i]);
 
     // -- load other alphabets
     for(int i=0;i<filenames.size();i++)

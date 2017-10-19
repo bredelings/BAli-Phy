@@ -12,11 +12,16 @@
 
 std::vector<object_ptr<const alphabet> > load_alphabets(const boost::program_options::variables_map& args);
 
+std::string get_alphabet_name(const boost::program_options::variables_map& args);
+
 /// Load an alignment from command line args --align=filename
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
 
 /// Load an alignment from file
 alignment load_alignment(const std::string& filename, const std::vector<object_ptr<const alphabet> >& alphabets);
+
+/// Load an alignment from file
+alignment load_alignment(const std::string& filename, const std::string& alph_name);
 
 /// Load an alignment from file
 alignment load_alignment(const std::string& filename);
