@@ -575,7 +575,7 @@ vector<int> Triplets::operator()(const string& letters) const
 	    triplets[i] = alphabet::gap;
 	else
 	{
-	    e<<"Sequence not aligned as "<<letters_name()<<"!  Column "<<i+1<<" has mixed gap/non-gap letter '"<<letters.substr(i*letter_size,letter_size)<<"'";
+	    e<<" Sequence not aligned as "<<letters_name()<<"!  Column "<<i+1<<" has mixed gap/non-gap letter '"<<letters.substr(i*letter_size,letter_size)<<"'";
 	    ok = false;
 	}
     }
@@ -584,7 +584,7 @@ vector<int> Triplets::operator()(const string& letters) const
     if (n_letters%letter_size != 0)
     {
 	if (not ok) e<<"\n";
-	e<<"Sequence of "<<n_letters<<" "<<N->letters_name()<<" cannot be divided into "<<letters_name() <<": not a multiple of 3 "<<N->letters_name()<<"!";
+	e<<" Sequence of "<<n_letters<<" "<<N->letters_name()<<" cannot be divided into "<<letters_name() <<": not a multiple of 3 "<<N->letters_name()<<"!";
 	ok = false;
     }
 
@@ -592,7 +592,7 @@ vector<int> Triplets::operator()(const string& letters) const
     if (singlets.size() % letter_size != 0)
     {
 	if (not ok) e<<"\n";
-	e<<"Sequence of "<<letters.size()<<" columns cannot be divided into "<<letters_name() <<": not a multiple of 3 columns!";
+	e<<" Alignment row of "<<letters.size()<<" columns cannot be divided into "<<letters_name() <<": not a multiple of 3 columns!";
 	ok = false;
     }
 
