@@ -539,6 +539,32 @@ valarray<double> Triplets::get_frequencies_from_counts(const valarray<double>& c
     return f;
 }
 
+vector<int> Triplets::operator()(const string& letters) const
+{
+    const int letter_size = width();
+
+    if (letters.size()%letter_size != 0)
+	throw myexception()<<"Sequence of "<<letters.size()<<" "<<N->letters_name()<<" cannot be divided into "<<letters_name()<<": not a multiple of 3 "<<N->letters_name()<<"!";
+
+/*
+    vector<int> v(letters.size()/lsize);
+
+    for(int i=0;i<v.size();i++)
+    {
+	string temp = s.substr(i*letter_size,letter_size);
+	int l1 = -10;
+	try { l1 = (*N)[temp[0]]; } catch (...) {};
+
+	int l2 = -10;
+	try { l2 = (*N)[temp[0]]; } catch (...) {};
+
+	int l3 = -10;
+	try { l3 = (*N)[temp[0]]; } catch (...) {};
+    }
+*/
+    return alphabet::operator()(letters);
+}
+
 Triplets::Triplets(const Nucleotides& a)
     :alphabet(string("Triplets of ")+a.name,getTriplets(a)),N(a),
      codon_table(4,vector<vector<int> >(4,vector<int>(4,-1)))

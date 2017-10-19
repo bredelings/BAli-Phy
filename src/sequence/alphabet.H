@@ -113,6 +113,9 @@ public:
     /// The string for a unknown (often '?')
     std::string unknown_letter;
 
+    virtual std::string letter_name() const {return "letter";};
+    virtual std::string letters_name() const {return letter_name()+"s";};
+
     /// The number of singlet letters per alphabet letter.
     int width() const {return letters_[0].size();}
 
@@ -191,7 +194,7 @@ public:
     int operator[](const std::string&) const;
 
     /// Translate a sequence of letters into indexes
-    std::vector<int> operator()(const std::string&) const;
+    virtual std::vector<int> operator()(const std::string&) const;
 
     /// Get the letter that corresponds to index 'i'
     std::string lookup(int i) const;
@@ -256,6 +259,8 @@ class Nucleotides: public alphabet {
 public:
     virtual Nucleotides* clone() const=0;
 
+    virtual std::string letter_name() const {return "nucleotide";};
+
     /// Is the letter a purine?
     bool purine(int i) const {return i==0 or i==1;}
 
@@ -309,6 +314,8 @@ class AminoAcids: public alphabet {
 protected:
     AminoAcids(const std::string& s,const std::string& letters);
 public:
+    virtual std::string letter_name() const {return "amino acid";};
+
     virtual AminoAcids* clone() const {return new AminoAcids(*this);}
 
     bool is_stop(int i) const;
@@ -339,6 +346,8 @@ protected:
 public:
     virtual Triplets* clone() const {return new Triplets(*this);}
 
+    virtual std::string letter_name() const {return "triplet";};
+
     /// The alphabet of nucleotides that we construct triplets from
     const Nucleotides& getNucleotides() const {return *N;}
 
@@ -349,6 +358,8 @@ public:
     int get_triplet(int n1, int n2, int n3) const;
 
     std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
+
+    std::vector<int> operator()(const std::string&) const;
 
     Triplets(const Nucleotides& N);
     Triplets(const std::string& s,const Nucleotides& N);
@@ -459,6 +470,8 @@ protected:
 
 public:
     virtual Codons* clone() const {return new Codons(*this);}
+
+    virtual std::string letter_name() const {return "codon";};
 
     /// Is letter codon a stop codon?
     bool stop_codon(int codon) const {
