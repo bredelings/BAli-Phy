@@ -374,7 +374,10 @@ AminoAcidsWithStop::AminoAcidsWithStop()
 { }
 
 
-void Triplets::setup_sub_nuc_table() {
+void Triplets::setup_sub_nuc_table()
+{
+    codon_table = vector<vector<vector<int>>>(4,vector<vector<int> >(4,vector<int>(4,-1)));
+
     sub_nuc_table.clear();
     sub_nuc_table.resize(size());
 
@@ -600,8 +603,7 @@ vector<int> Triplets::operator()(const string& letters) const
 }
 
 Triplets::Triplets(const string& s,const Nucleotides& a)
-    :alphabet(s,getTriplets(a)),N(a),
-     codon_table(4,vector<vector<int> >(4,vector<int>(4,-1)))
+    :alphabet(s,getTriplets(a)),N(a)
 {
     // compute our 'wildcard' letter
     wildcard = N->wildcard+N->wildcard+N->wildcard;
