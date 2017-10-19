@@ -562,6 +562,7 @@ vector<int> Triplets::operator()(const string& letters) const
     bool ok = true;
     vector<int> triplets(singlets.size()/letter_size);
 
+    vector<int> stop_codons;
     for(int i=0;i<triplets.size() and ok;i++)
     {
 	int l1 = singlets[letter_size * i + 0];
@@ -569,7 +570,15 @@ vector<int> Triplets::operator()(const string& letters) const
 	int l3 = singlets[letter_size * i + 2];
 
 	if (is_feature(l1) and is_feature(l2) and is_feature(l3))
-	    triplets[i] = operator[](letters.substr(letter_size*i,letter_size)); //get_triplet(l1, l2, l3);
+	{
+	    try {
+		triplets[i] = get_triplet(l1, l2, l3);
+	    }
+	    catch (...)
+	    {
+		stop_codons.push_back(i);
+	    }
+	}
 
 	else if (l1 == alphabet::gap and l2 == alphabet::gap and l3 == alphabet::gap)
 	    triplets[i] = alphabet::gap;
@@ -594,6 +603,18 @@ vector<int> Triplets::operator()(const string& letters) const
 	if (not ok) e<<"\n";
 	e<<" Alignment row of "<<letters.size()<<" columns cannot be divided into "<<letters_name() <<": not a multiple of 3 columns!";
 	ok = false;
+    }
+
+    if (stop_codons.size())
+    {
+	if (not ok) e<<"\n";
+	ok = false;
+	auto C = dynamic_cast<const Codons*>(this);
+	e<<" Sequence contains "<<stop_codons.size()<<" stop codons: not allowed!\n";
+
+	int col = stop_codons[0];
+	string stop = letters.substr(col*letter_size, letter_size);
+	e<<"   First stop codon is '"<<stop<<"' in column "<<col+1<<"   ("<<C->getGenetic_Code().name()<<")";
     }
 
     if (not ok)
