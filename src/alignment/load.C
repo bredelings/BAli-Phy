@@ -89,7 +89,15 @@ alignment load_alignment(const string& filename,const vector<object_ptr<const al
 
     alignment A;
 
-    A.load(alphabets, sequences);
+    try
+    {
+	A.load(alphabets, sequences);
+    }
+    catch (myexception& e)
+    {
+	e.prepend("In file '"+filename+"': ");
+	throw e;
+    }
   
     int n_empty = remove_empty_columns(A);
     if (n_empty)
