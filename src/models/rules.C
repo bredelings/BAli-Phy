@@ -217,15 +217,21 @@ const vector< vector<vector<string>> > all_default_arguments =
     // If we didn't have to perform things, I'd just make a mixture' that applies the alphabet to each sub-model in the list.
     // This is going to cause ordering trouble, since we will execute models after it is referenced.
     // If we had lazy evaluation, we wouldn't evaluate default args unless they were needed.
+
     {{"Mixture", "MixtureModel[a]","G"},
-     {"SModel.scaled_mixture'[A,models,rates,frequencies]"},
-     {"models", "List[MixtureModel[a]]","","A"},
+     {"SModel.scaled_mixture[Prelude.mapM[models,A],rates,frequencies]"},
+     {"models", "List[MixtureModel[a]]",""},
      {"rates", "List[Double]", "~Dirichlet[Length[models],2]"},
      {"frequencies", "List[Double]", "~Dirichlet[Length[models],3]"},
      {"A","a","LAMBDA"}},
 
+    // Let[var=E1,E2]::T
+    // We need special handling of let, because it needs to take a variable name that is not fixed,
+    // and because it needs to bind the variable name when parsing E2.
+    // Also, if the let is of type T, then E2 needs to be of type T.
+
     {{"Length", "Int"},
-     {"length[x]"},
+     {"Prelude.length[x]"},
      {"x", "List[a]"}},
 
     // fraction ~ dirichlet' n (1 + n/2), rates ~ dirichlet' n 2
