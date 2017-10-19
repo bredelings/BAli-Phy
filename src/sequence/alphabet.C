@@ -543,48 +543,65 @@ vector<int> Triplets::operator()(const string& letters) const
 {
     const int letter_size = width();
 
-    if (letters.size()%letter_size != 0)
-	throw myexception()<<"Sequence of "<<letters.size()<<" "<<N->letters_name()<<" cannot be divided into "<<letters_name()<<": not a multiple of 3 "<<N->letters_name()<<"!";
+    myexception e;
 
-/*
-    vector<int> v(letters.size()/lsize);
+    // 1. First translate singlets.
+    vector<int> singlets = (*N)(letters);
 
-    for(int i=0;i<v.size();i++)
+    // FIXME -- if ? gets here from a user who means N/X then things will get confusing fast.
+
+    // 2. Second count the number of non-gap letters.
+    int n_letters = 0;
+    for(auto s: singlets)
+	if (is_feature(s)) n_letters++;
+
+    // 3. Try to load alignment row with gaps
+    bool ok = true;
+    vector<int> triplets(singlets.size()/letter_size);
+
+    for(int i=0;i<triplets.size() and ok;i++)
     {
-	string temp = s.substr(i*letter_size,letter_size);
-	int l1 = -10;
-	try { l1 = (*N)[temp[0]]; } catch (...) {};
+	int l1 = singlets[letter_size * i + 0];
+	int l2 = singlets[letter_size * i + 1];
+	int l3 = singlets[letter_size * i + 2];
 
-	int l2 = -10;
-	try { l2 = (*N)[temp[0]]; } catch (...) {};
+	if (is_feature(l1) and is_feature(l2) and is_feature(l3))
+	    triplets[i] = operator[](letters.substr(letter_size*i,letter_size)); //get_triplet(l1, l2, l3);
 
-	int l3 = -10;
-	try { l3 = (*N)[temp[0]]; } catch (...) {};
+	else if (l1 == alphabet::gap and l2 == alphabet::gap and l3 == alphabet::gap)
+	    triplets[i] = alphabet::gap;
+	else
+	{
+	    e<<"Sequence not aligned as "<<letters_name()<<"!  Column "<<i+1<<" has mixed gap/non-gap letter '"<<letters.substr(i*letter_size,letter_size)<<"'";
+	    ok = false;
+	}
     }
-*/
-    return alphabet::operator()(letters);
-}
 
-Triplets::Triplets(const Nucleotides& a)
-    :alphabet(string("Triplets of ")+a.name,getTriplets(a)),N(a),
-     codon_table(4,vector<vector<int> >(4,vector<int>(4,-1)))
-{
-    // compute our 'wildcard' letter
-    wildcard = N->wildcard+N->wildcard+N->wildcard;
+    // 4. Check if we have the right number of letters.
+    if (n_letters%letter_size != 0)
+    {
+	if (not ok) e<<"\n";
+	e<<"Sequence of "<<n_letters<<" "<<N->letters_name()<<" cannot be divided into "<<letters_name() <<": not a multiple of 3 "<<N->letters_name()<<"!";
+	ok = false;
+    }
 
-    // compute our 'gap' letter
-    gap_letter = N->gap_letter + N->gap_letter + N->gap_letter;
+    // 5. Check for extra columns we haven't been using
+    if (singlets.size() % letter_size != 0)
+    {
+	if (not ok) e<<"\n";
+	e<<"Sequence of "<<letters.size()<<" columns cannot be divided into "<<letters_name() <<": not a multiple of 3 columns!";
+	ok = false;
+    }
 
-    // compute our 'unknown' letter
-    unknown_letter = N->unknown_letter + N->unknown_letter + N->unknown_letter;
+    if (not ok)
+	throw e;
 
-    setup_sub_nuc_table();
-
-    setup_letter_classes();
+    return triplets;
 }
 
 Triplets::Triplets(const string& s,const Nucleotides& a)
-    :alphabet(s,getTriplets(a)),N(a)
+    :alphabet(s,getTriplets(a)),N(a),
+     codon_table(4,vector<vector<int> >(4,vector<int>(4,-1)))
 {
     // compute our 'wildcard' letter
     wildcard = N->wildcard+N->wildcard+N->wildcard;
@@ -599,6 +616,10 @@ Triplets::Triplets(const string& s,const Nucleotides& a)
 
     setup_letter_classes();
 }
+
+Triplets::Triplets(const Nucleotides& a)
+    :Triplets(string("Triplets of ")+a.name,a)
+{ }
 
 char convert_DNA_or_RNA_to(char c, Nucleotides& N)
 {
