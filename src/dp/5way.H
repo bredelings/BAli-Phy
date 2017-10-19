@@ -27,7 +27,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define FIVEWAY_H
 
 #include <vector>
-#include "alignment/alignment.H"
 #include "models/parameters.H"
 #include "2way.H"
 #include "hmm.H"
