@@ -915,6 +915,14 @@ object_ptr<const alphabet> get_alphabet(const string& name_)
 
 	return new Triplets(*N);
     }
+    else if (name == "Numeric")
+    {
+	if (arguments.size() != 1 or arguments[0].empty())
+	    throw myexception()<<"Numeric needs one argument specifying the number of states: e.g. Numeric[2].";
+	int n = convertTo<int>(arguments[0]);
+
+	return new Numeric(n);
+    }
     else if (name == "DNA")
 	return new DNA;
     else if (name == "RNA")
