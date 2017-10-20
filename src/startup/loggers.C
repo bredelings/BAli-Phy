@@ -258,21 +258,6 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 	    loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
 					      Mixture_Components_Function(i) ) );
 
-    // Write out ancestral sequences
-    if (P->contains_key("log-ancestral") and P->t().n_nodes() > 1)
-	for(int i=0;i<P->n_data_partitions();i++)
-	    if ((*P)[i].variable_alignment()) 
-	    {
-		string filename = base + ".P" + convertToString(i+1)+".ancestral.fastas";
-
-		ConcatFunction F;
-		auto iterations = [](const Model&, long t) {return convertToString(t);};
-		F<<"iterations = "<<iterations<<"\n\n";
-		F<<Ancestral_Sequences_Function(i);
-
-		loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10) ) );
-	    }
-
     // Write out the alignments for each (variable) partition to C<>.P<>.fastas
     if (P->t().n_nodes() > 1)
 	for(int i=0;i<P->n_data_partitions();i++)
@@ -283,7 +268,8 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 		ConcatFunction F;
 		auto iterations = [](const Model&, long t) {return convertToString(t);};
 		F<<"iterations = "<<iterations<<"\n\n";
-		F<<AlignmentFunction(i);
+		F<<Ancestral_Sequences_Function(i);
+//		F<<AlignmentFunction(i);
 		
 		loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10) ) );
 	    }
