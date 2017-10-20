@@ -83,38 +83,37 @@ string guess_alphabet(const vector<sequence>& sequences)
 	return "Amino-Acids";
 }
 
-object_ptr<const alphabet> load_alphabet(const string& name_, const vector<sequence>& sequences)
+object_ptr<const Nucleotides> get_nucleotides(const string& name)
+{
+    if (name == "DNA")
+	return new DNA;
+    else if (name == "RNA")
+	return new RNA;
+
+    throw myexception()<<"'"<<name<<"' is not a valid nucleotides alphabet.  Please specify DNA or RNA.";
+}
+
+object_ptr<const alphabet> get_alphabet(const string& name_)
 {
     string name = name_;
-    if (name.empty()) name = guess_alphabet(sequences);
-
     vector<string> arguments = get_arguments(name,'[',']');
 
     if (name == "Codons")
     {
-	arguments.resize(2);
-	object_ptr<const Nucleotides> N;
+	if (arguments.size() != 2 or arguments[0].empty() or arguments[1].empty())
+	    throw myexception()<<"Codons needs two arguments specifying the nucleotide alphabet and the genetic code: e.g. Codons[DNA,standard].";
 
-	if (arguments[0].empty()) arguments[0] = guess_nucleotides(sequences);
-	if (arguments[0] == "DNA")
-	    N = new DNA;
-	else if (arguments[0] == "RNA")
-	    N = new RNA;
-
-	if (arguments[1].empty()) arguments[1] = "standard";
-	object_ptr<const Genetic_Code> G = get_genetic_code(arguments[1]);
+	auto N = get_nucleotides(arguments[0]);
+	auto G = get_genetic_code(arguments[1]);
 
 	return new Codons(*N, AminoAcids(), *G);
     }
     else if (name == "Triplets")
     {
-	arguments.resize(1);
-	if (arguments[0].empty()) arguments[0] = guess_nucleotides(sequences);
-	object_ptr<const Nucleotides> N;
-	if (arguments[0] == "DNA")
-	    N = new DNA;
-	else if (arguments[0] == "RNA")
-	    N = new RNA;
+	if (arguments.size() != 1 or arguments[0].empty())
+	    throw myexception()<<"Triplets needs one argument specifying the nucleotide alphabet: e.g. Triplets[DNA].";
+
+	auto N = get_nucleotides(arguments[0]);
 
 	return new Triplets(*N);
     }
@@ -128,6 +127,36 @@ object_ptr<const alphabet> load_alphabet(const string& name_, const vector<seque
 	return new AminoAcidsWithStop;
 
     throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
+}
+
+string guess_alphabet(const string& name_, const vector<sequence>& sequences)
+{
+    string name = name_;
+    if (name.empty()) name = guess_alphabet(sequences);
+
+    vector<string> arguments = get_arguments(name,'[',']');
+
+    if (name == "Codons")
+    {
+	if (arguments.size() < 2) arguments.resize(2);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides(sequences);
+	if (arguments[1].empty()) arguments[1] = "standard";
+	return "Codons[" + arguments[0] + "," + arguments[1] + "]";
+    }
+    else if (name == "Triplets")
+    {
+	if (arguments.size() < 1) arguments.resize(1);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides(sequences);
+	return "Triplets[" + arguments[0] + "," + arguments[1] + "]";
+    }
+    else
+	return name_;
+}
+
+object_ptr<const alphabet> load_alphabet(const string& name_, const vector<sequence>& sequences)
+{
+    string name = guess_alphabet(name_, sequences);
+    return get_alphabet(name);
 }
 
 std::string get_alphabet_name(const boost::program_options::variables_map& args)
