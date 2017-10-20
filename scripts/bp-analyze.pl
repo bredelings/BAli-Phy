@@ -1410,7 +1410,7 @@ sub compute_wpd_alignments
 	    my $name = "P$p-max";
 	    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ||
 		! more_recent_than("Results/Work/$name-unordered.fasta",$infile) ) {
-		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-max> Results/Work/$name-unordered.fasta");
+		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-chop-internal --tree=Results/MAP.tree | alignment-max> Results/Work/$name-unordered.fasta");
 	    }
 	    push @alignments,$name;
 	    $alignment_names{$name} = "Best (WPD)";
@@ -1437,7 +1437,7 @@ sub compute_consensus_alignments
 	    my $name = "P$p-consensus-$value";
 	    print "c$value ";
 	    if (! more_recent_than("Results/Work/$name-unordered.fasta",$infile)) {
-		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta");
+		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-chop-internal --tree=Results/MAP.tree | alignment-consensus --cutoff=$cvalue> Results/Work/$name-unordered.fasta");
 	    }
 	    push @alignments,$name;
 	    $alignment_names{$name} = "$value% consensus";
@@ -1505,7 +1505,7 @@ sub compute_and_draw_AU_plots
 	    my $infile = $partition_samples[0][$p-1];
 	    
 	    if (!more_recent_than("Results/$alignment-AU.prob",$infile)) {
-		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob");
+		exec_show("cut-range --skip=$burnin $size_arg < $infile | alignment-chop-internal --tree=Results/MAP.tree | alignment-gild Results/$alignment.fasta Results/MAP.tree --max-alignments=500 > Results/$alignment-AU.prob");
 	    }
 	    print "done.\n";
 	    my $result = exec_result("alignment-draw Results/$alignment.fasta --show-ruler --AU Results/$alignment-AU.prob --color-scheme=DNA+contrast+fade+fade+fade+fade > Results/$alignment-AU.html 2>/dev/null");
