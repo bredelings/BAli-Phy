@@ -472,6 +472,35 @@ alignment reorder_sequences(const alignment& A, const vector<int>& order)
     return A2;
 }
 
+alignment reorder_sequences(const alignment& A, const vector<string>& names)
+{
+    // Check the names and stuff.
+    vector<string> n2 = sequence_names(A);
+
+    if (names == n2) return A;
+
+    try {
+	vector<int> new_order = compute_mapping(names,n2);
+
+	return reorder_sequences(A,new_order);
+    }
+    catch(bad_mapping<string>& e)
+    {
+	e.clear();
+	if (e.size2 < e.size1)
+	    e<<"Alignment has too few sequences! (Got "<<A.n_sequences()<<", expected "<<names.size()<<")\n";
+
+	if (e.size1 < e.size2)
+	    e<<"Alignmnent has too many sequences! (Got "<<A.n_sequences()<<", expected "<<names.size()<<")\n";
+
+	if (e.from == 0)
+	    e<<"Alignment is missing sequence \""<<e.missing<<"\".";
+	else
+	    e<<"Alignment has extra sequence \""<<e.missing<<"\".";
+	throw e;
+    }
+}
+
 vector<int> get_sparse_alignment_row(const alignment& A, int i)
 {
     vector<int> columns;

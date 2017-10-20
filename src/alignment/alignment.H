@@ -177,6 +177,9 @@ public:
 /// Reorder the sequences of \a A according to the permutation @mapping
 alignment reorder_sequences(const alignment& A, const std::vector<int>& mapping);
 
+/// Reorder the sequences of \a A so that the names are in the specified order.
+alignment reorder_sequences(const alignment& A, const std::vector<std::string>& names);
+
 /// Write alignment A to file file
 std::ostream& operator<<(std::ostream& file,const alignment& A);
 

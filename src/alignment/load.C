@@ -106,91 +106,78 @@ istream& find_and_skip_alignments(istream& ifile, int n)
     return ifile;
 }
 
-optional<alignment> find_load_next_alignment(istream& ifile, const string& alph_name)
+vector<sequence> load_next_sequences(istream& ifile)
 {
-    if (not find_alignment(ifile)) return boost::none;
+    if (not find_alignment(ifile))
+	throw myexception()<<"No alignment found.\n";
 
-    // READ the alignment
-    try {
-	alignment A;
-	A.load(alph_name, sequence_format::read_fasta, ifile);
-    
-	// strip out empty columns
-	remove_empty_columns(A);
-    
-	// complain if there are no sequences in the alignment
-	if (A.n_sequences() == 0) 
+    try
+    {
+	auto sequences = sequence_format::read_fasta(ifile);
+	if (sequences.empty())
 	    throw myexception(string("Alignment didn't contain any sequences!"));
-    
-	return A;
+	return std::move(sequences);
     }
-    catch (std::exception& e) {
+    catch (std::exception& e)
+    {
 	throw myexception()<<"Error loading alignment.\n  Exception: "<<e.what()<<"\n";
     }
 }
 
-
 alignment load_next_alignment(istream& ifile, const string& alph_name)
 {
-    auto A = find_load_next_alignment(ifile, alph_name);
-    if (not A)
-	throw myexception()<<"No alignment found.\n";
+    alignment A;
+    A.load(alph_name, load_next_sequences(ifile));
 
-    return std::move(*A);
+    // strip out empty columns
+    remove_empty_columns(A);
+
+    return A;
 }
 
-alignment load_next_alignment(istream& ifile, object_ptr<const alphabet> a)
-{
-    return load_next_alignment(ifile,{a});
-}
 
 alignment load_next_alignment(istream& ifile, const alphabet& a)
 {
-    object_ptr<const alphabet> aa ( a.clone() );
-    return load_next_alignment(ifile,aa);
+    alignment A(a);
+    A.load(load_next_sequences(ifile));
+
+    // strip out empty columns
+    remove_empty_columns(A);
+
+    return A;
 }
 
-alignment reorder_sequences(const alignment& A, const vector<string>& names)
-{
-    // Check the names and stuff.
-    vector<string> n2 = sequence_names(A);
-
-    if (names == n2) return A;
-
-    try {
-	vector<int> new_order = compute_mapping(names,n2);
-
-	return reorder_sequences(A,new_order);
-    }
-    catch(bad_mapping<string>& e)
-    {
-	e.clear();
-	if (e.size2 < e.size1)
-	    e<<"Alignment has too few sequences! (Got "<<A.n_sequences()<<", expected "<<names.size()<<")\n";
-
-	if (e.size1 < e.size2)
-	    e<<"Alignmnent has too many sequences! (Got "<<A.n_sequences()<<", expected "<<names.size()<<")\n";
-
-	if (e.from == 0)
-	    e<<"Alignment is missing sequence \""<<e.missing<<"\".";
-	else
-	    e<<"Alignment has extra sequence \""<<e.missing<<"\".";
-	throw e;
-    }
-}
 
 alignment load_next_alignment(istream& ifile, const alphabet& a, const vector<string>& names)
 {
-    object_ptr<const alphabet> aa ( a.clone() );
-    alignment A = load_next_alignment(ifile,aa);
-    return reorder_sequences(A,names);
+    return reorder_sequences(load_next_alignment(ifile,a), names);
+}
+
+
+optional<vector<sequence>> find_load_next_sequences(istream& ifile)
+{
+    if (not find_alignment(ifile)) return boost::none;
+    return load_next_sequences(ifile);
+}
+
+
+optional<alignment> find_load_next_alignment(istream& ifile, const string& alph_name)
+{
+    if (not find_alignment(ifile)) return boost::none;
+    return load_next_alignment(ifile, alph_name);
+}
+
+
+optional<alignment> find_load_next_alignment(istream& ifile, const alphabet& a)
+{
+    if (not find_alignment(ifile)) return boost::none;
+    return load_next_alignment(ifile, a);
 }
 
 optional<alignment> find_load_next_alignment(istream& ifile, const alphabet& a, const vector<string>& names)
 {
     if (not find_alignment(ifile)) return boost::none;
-
-    return load_next_alignment(ifile,a,names);
+    return load_next_alignment(ifile, a, names);
 }
 
 template <typename T>
