@@ -386,6 +386,14 @@ namespace MCMC {
 
 	alignment A = P[p].A();
 
+	// FIXME! Handle inferring N/X in leaf sequences for 1 or 2 sequences.
+	if (P.t().n_leaves() <= 2)
+	{
+	    A.print_fasta_to_stream(output);
+	    output<<endl;
+	    return output.str();
+	}
+
 	const vector<unsigned> smap = P[p].state_letters();
 
 	vector<vector<pair<int,int> > > states = substitution::sample_ancestral_states(P[p]);
