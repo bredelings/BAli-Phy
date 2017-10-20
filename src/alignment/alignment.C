@@ -239,7 +239,7 @@ void alignment::load(const vector<sequence>& seqs)
 
 void alignment::load(const string& alph_name,const vector<sequence>& seqs)
 {
-    auto alphabets = load_alphabets(alph_name);
+    auto alphabets = load_alphabets(alph_name, seqs);
     string errors = "Sequences don't fit any of the alphabets:";
     for(int i=0;i<alphabets.size();i++) {
 	try {

@@ -49,18 +49,34 @@ double letter_fraction(const string& letters, const string& gaps, const vector<s
     return double(count)/total;
 }
 
-vector<object_ptr<const alphabet> > load_alphabets(const string& name_)
+object_ptr<const alphabet> guess_alphabet(const vector<sequence>& sequences)
+{
+    double ATGCN = letter_fraction("ATGCN","-?",sequences);
+    double AUGCN = letter_fraction("AUGCN","-?",sequences);
+    if (ATGCN > 0.95 and AUGCN <= ATGCN)
+	return new DNA;
+    else if (AUGCN > 0.95)
+	return new RNA;
+
+    double digits = letter_fraction("0123456789","-?X",sequences);
+    if (digits > 0.95)
+	return new Numeric(2);
+
+    if (std::max(ATGCN,AUGCN) > 0.5)
+	throw myexception()<<"Can't guess alphabet";
+
+    if (letter_count("*",sequences) > 0)
+	return new AminoAcidsWithStop;
+    else
+	return new AminoAcids;
+}
+
+vector<object_ptr<const alphabet> > load_alphabets(const string& name_, const vector<sequence>& sequences)
 {
     if (name_.empty())
     {
-	vector<object_ptr<const alphabet> > alphabets;
-
-	alphabets.push_back(object_ptr<const alphabet>(new DNA));
-	alphabets.push_back(object_ptr<const alphabet>(new RNA));
-	alphabets.push_back(object_ptr<const alphabet>(new AminoAcids));
-	alphabets.push_back(object_ptr<const alphabet>(new AminoAcidsWithStop));
-
-	return alphabets;
+	auto a = guess_alphabet(sequences);
+	return {a};
     }
 
     vector<object_ptr<const alphabet> > alphabets;
@@ -99,28 +115,6 @@ vector<object_ptr<const alphabet> > load_alphabets(const string& name_)
 	throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
 
     return alphabets;
-}
-
-object_ptr<const alphabet> guess_alphabet(const vector<sequence>& sequences)
-{
-    double ATGCN = letter_fraction("ATGCN","-?",sequences);
-    double AUGCN = letter_fraction("AUGCN","-?",sequences);
-    if (ATGCN > 0.95 and AUGCN <= ATGCN)
-	return new DNA;
-    else if (AUGCN > 0.95)
-	return new RNA;
-
-    double digits = letter_fraction("0123456789","-?X",sequences);
-    if (digits > 0.95)
-	return new Numeric(2);
-
-    if (std::max(ATGCN,AUGCN) > 0.5)
-	throw myexception()<<"Can't guess alphabet";
-
-    if (letter_count("*",sequences) > 0)
-	return new AminoAcidsWithStop;
-    else
-	return new AminoAcids;
 }
 
 std::string get_alphabet_name(const boost::program_options::variables_map& args)
