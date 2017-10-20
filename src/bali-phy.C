@@ -476,7 +476,7 @@ int main(int argc,char* argv[])
 	//---------- Initialize random seed -----------//
 	unsigned long seed = init_rng_and_get_seed(args);
     
-	out_cache<<"random seed = "<<seed<<endl<<endl;
+	if (log_verbose) out_cache<<"random seed = "<<seed<<endl<<endl;
 
 	//---------- test optimizer ----------------
 	if (args.count("test-module"))
@@ -509,6 +509,10 @@ int main(int argc,char* argv[])
 	M->set_args(trailing_args(argc, argv, trailing_args_separator));
 
 	L.reset();
+
+	//------------ Avoid printing seed during unrelated error messages ---//
+
+	if (not log_verbose) out_cache<<"random seed = "<<seed<<endl<<endl;
 
 	//------------- Parse the Hierarchical Model description -----------//
 	if (args.count("model"))
