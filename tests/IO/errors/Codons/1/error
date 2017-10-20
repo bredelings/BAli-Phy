@@ -1,0 +1,2 @@
+bali-phy: Error! In file 'test.fasta': sequence #1 '1':
+ Sequence not aligned as codons!  Column 2 has mixed gap/non-gap letter 'G--'
