@@ -6,6 +6,7 @@
 #include <list>
 #include <string>
 #include <boost/program_options.hpp>
+#include <boost/optional.hpp>
 #include "sequence/alphabet.H"
 #include "alignment.H"
 #include "object.H"
@@ -25,6 +26,8 @@ std::list<alignment> load_alignments(std::istream& ifile, const std::string& alp
 std::list<alignment> load_alignments(std::istream& ifile, const std::vector<std::string>& names, const std::string& alph_name, int skip, int maxalignments);
 
 std::vector<alignment> load_alignments(std::istream& ifile, const std::string& names);
+
+boost::optional<std::vector<sequence>> find_load_next_sequences(std::istream& ifile);
 
 alignment find_first_alignment(std::istream& ifile, const std::string& alph_name);
 
