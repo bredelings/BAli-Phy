@@ -44,6 +44,37 @@ vector<string> trailing_args(int argc, char* argv[], const string& separator)
     return args;
 }
 
+void help_on_help(std::ostream& o)
+{
+    o<<"Help topics via --help=arg are available for:\n";
+    o<<"  =commands            Command-line flags and a short description.\n";
+    o<<"  =advanced            Extra command-line flags and a short description.\n\n";
+    o<<"  =functions           A list of functions and result type.\n";
+    o<<"  =<function name>     Function type, description, and argument names.\n\n";
+    o<<"  =help                This list of topics.\n\n";
+    o<<"  =alphabet            Possible arguments to --alphabet\n";
+    o<<"\n";
+}
+
+void help_on_alphabet(std::ostream& o)
+{
+    o<<"You can specify the alphabet to specific partitions writing:\n";
+    o<<"    '--alphabet=1:DNA --alphabet=3,4:Codons'\n";
+    o<<"If the partitions are unspecified, the alphabet applies to all partitions:\n";
+    o<<"    '--alphabet=DNA'\n\n";
+
+    o<<"The alphabet for each partition can be:\n";
+    o<<"   'DNA', 'RNA', 'Amino-Acids', 'Numeric', 'Triplets', or 'Codons'\n\n";
+
+    o<<"You can specify the nucleotide alphabet for Triplets or Codons.\n";
+    o<<"    'Triplets[DNA]'           'Codons[RNA]'\n\n";
+
+    o<<"You can specify the genetic code Codons.\n";
+    o<<"    'Codons[,standard]'       'Codons[RNA,mt-vert]'\n";
+    o<<"The code can be 'standard' (the default), 'mt-vert', 'mt-invert',\n 'mt-yeast', or 'mt-protozoan'\n";
+    // FIXME - add separate help topics for: triplets, codons, genetic-codes
+}
+
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
     using namespace po;
@@ -94,7 +125,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description general("General options");
     general.add_options()
-	("help,h", value<string>()->implicit_value("help"),"Print usage information.")
+	("help,h", value<string>()->implicit_value("commands"),"Print usage information.")
 	("version,v", "Print version information.")
 	("config,c", value<string>(),"Config file to read.")
 	("test,T","Analyze the initial values and exit.")
@@ -143,36 +174,34 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	exit(0);
     }
 
-    if (args.count("verbose"))
-	log_verbose = 1;
-
-    if (args.count("help") and args["help"].as<string>() == "advanced")
-    {
-	cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
-	cout<<all<<"\n";
-	cout<<"Try --help=topics for a list of topics to ask for help on.\n\n";
-	exit(0);
-    }
-    if (args.count("help") and args["help"].as<string>() == "help")
-    {
-	cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
-	cout<<some<<"\n";
-	cout<<"Try --help=topics for a list of topics to ask for help on.\n\n";
-	exit(0);
-    }
+    if (args.count("verbose")) log_verbose = 1;
 
     if (args.count("help"))
     {
 	string topic = args["help"].as<string>();
-	if (topic == "topics")
+	if (topic == "commands")
 	{
-	    std::cout<<"Help topics via --help=arg are available for:\n";
-	    std::cout<<"  =help                Command-line flags and a short description.\n";
-	    std::cout<<"  =advanced            Extra command-line flags and a short description.\n";
-	    std::cout<<"  =topics              This list of topics.\n";
-	    std::cout<<"  =functions           A list of functions and result type.\n";
-	    std::cout<<"  =<function name>     Function type, description, and argument names.\n";
-	    std::cout<<"\n";
+	    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
+	    cout<<some<<"\n";
+	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
+	    exit(0);
+	}
+	if (topic == "advanced")
+	{
+	    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
+	    cout<<all<<"\n";
+	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
+	    exit(0);
+	}
+
+	if (topic == "help")
+	{
+	    help_on_help(std::cout);
+	    exit(0);
+	}
+	if (topic == "alphabet")
+	{
+	    help_on_alphabet(std::cout);
 	    exit(0);
 	}
 	if (topic == "functions")
@@ -220,12 +249,12 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    }
 	    exit(0);
 	}
-    }
-
-    if (args.count("help")) {
-	cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
-	cout<<some<<"\n";
-	exit(0);
+	else
+	{
+	    cout<<"Help topic '"<<args["help"].as<string>()<<"' not found.\n\n";
+	    help_on_help(cout);
+	    exit(0);
+	}
     }
 
     if (args.count("config")) 
