@@ -1,1 +1,1 @@
---test <DATA>/codons.fasta
+--test <DATA>/codons-dna.fasta

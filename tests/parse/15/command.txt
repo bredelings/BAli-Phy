@@ -1,1 +1,1 @@
---test <DATA>/codons.fasta --alphabet=Codons
+--test <DATA>/codons-dna.fasta --alphabet=Codons

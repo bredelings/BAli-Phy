@@ -1,1 +1,1 @@
---test <DATA>/codons.fasta --smodel=M3_Test
+--test <DATA>/codons-dna.fasta --smodel=M3_Test
