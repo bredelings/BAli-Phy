@@ -58,3 +58,96 @@ bool operator==(const sequence& s1,const sequence& s2) {
   return s1.name == s2.name and
     (string&)s1 == (string&)s2;
 }
+
+int total_length(const vector<sequence>& sequences)
+{
+    int count = 0;
+    for(const auto& sequence: sequences)
+	count += sequence.size();
+    return count;
+}
+
+int letter_count(const string& letters, const string& s)
+{
+    int count = 0;
+    for(int i=0;i<s.size();i++)
+	if (letters.find(s[i]) != std::string::npos)
+	    count++;
+    return count;
+}
+
+double letter_count(const string& letters, const vector<sequence>& sequences)
+{
+    int count = 0;
+    for(const auto& sequence: sequences)
+	count += letter_count(letters, sequence);
+    return count;
+}
+
+double letter_fraction(const string& letters, const string& gaps, const vector<sequence>& sequences)
+{
+    int count = letter_count(letters, sequences);
+    int total = total_length(sequences) - letter_count(gaps, sequences);
+
+    return double(count)/total;
+}
+
+string guess_nucleotides(const vector<sequence>& sequences)
+{
+    double ATGCN = letter_fraction("ATGCN","-?",sequences);
+    double AUGCN = letter_fraction("AUGCN","-?",sequences);
+    if (ATGCN > AUGCN)
+	return "DNA";
+    else
+	return "RNA";
+}
+
+string guess_alphabet(const vector<sequence>& sequences)
+{
+    // FIXME - we should maybe count things one time into a map from char -> int.
+    double ATGCN = letter_fraction("ATGCN","-?",sequences);
+    double AUGCN = letter_fraction("AUGCN","-?",sequences);
+    if (ATGCN > 0.95 and AUGCN <= ATGCN)
+	return "DNA";
+    else if (AUGCN > 0.95)
+	return "RNA";
+
+    double digits = letter_fraction("0123456789","-?X",sequences);
+    // FIXME - We can check the largest number ... but each column might have a different highest number.
+    if (digits > 0.95)
+	return "Numeric[2]";
+
+    if (std::max(ATGCN,AUGCN) > 0.5)
+	throw myexception()<<"Can't guess alphabet";
+
+    if (letter_count("*",sequences) > 0)
+	return "Amino-Acids+stop";
+    else
+	return "Amino-Acids";
+}
+
+string guess_alphabet(const string& name_, const vector<sequence>& sequences)
+{
+    if (name_.empty())
+	return guess_alphabet(sequences);
+
+    string name = name_;
+    vector<string> arguments = get_arguments(name,'[',']');
+
+    if (name == "Codons")
+    {
+	if (arguments.size() < 2) arguments.resize(2);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides(sequences);
+	if (arguments[1].empty()) arguments[1] = "standard";
+	return "Codons[" + arguments[0] + "," + arguments[1] + "]";
+    }
+    else if (name == "Triplets")
+    {
+	if (arguments.size() < 1) arguments.resize(1);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides(sequences);
+	return "Triplets[" + arguments[0] + "]";
+    }
+    else
+	return name_;
+}
+

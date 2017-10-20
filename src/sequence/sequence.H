@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef SEQUENCE_H
 #define SEQUENCE_H
 #include <string>
+#include <vector>
 
 struct sequence_info
 {
@@ -44,4 +45,6 @@ struct sequence: public std::string, public sequence_info
 };
 
 bool operator==(const sequence&,const sequence&);
+
+std::string guess_alphabet(const std::string& name_, const std::vector<sequence>& sequences);
 #endif
