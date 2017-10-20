@@ -866,14 +866,7 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1, const Genetic_Code& G
 
 vector<object_ptr<const alphabet> > load_alphabets()
 {
-    vector<object_ptr<const alphabet> > alphabets; 
-
-    alphabets.push_back(object_ptr<const alphabet>(new DNA));
-    alphabets.push_back(object_ptr<const alphabet>(new RNA));
-    alphabets.push_back(object_ptr<const alphabet>(new AminoAcids));
-    alphabets.push_back(object_ptr<const alphabet>(new AminoAcidsWithStop));
-
-    return alphabets;
+    return load_alphabets("");
 }
 
 object_ptr<const Genetic_Code> get_genetic_code(const string& name)
@@ -895,6 +888,18 @@ object_ptr<const Genetic_Code> get_genetic_code(const string& name)
 
 vector<object_ptr<const alphabet> > load_alphabets(const string& name_)
 {
+    if (name_.empty())
+    {
+	vector<object_ptr<const alphabet> > alphabets; 
+
+	alphabets.push_back(object_ptr<const alphabet>(new DNA));
+	alphabets.push_back(object_ptr<const alphabet>(new RNA));
+	alphabets.push_back(object_ptr<const alphabet>(new AminoAcids));
+	alphabets.push_back(object_ptr<const alphabet>(new AminoAcidsWithStop));
+
+	return alphabets;
+    }
+
     vector<object_ptr<const alphabet> > alphabets; 
 
     string name = name_;

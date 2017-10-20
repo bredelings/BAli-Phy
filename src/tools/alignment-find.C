@@ -80,9 +80,9 @@ int main(int argc,char* argv[])
       throw myexception()<<"You must choose either --first or --last, not both";
 
     if (args.count("first"))
-      A = find_first_alignment(std::cin, load_alphabets(args));
+      A = find_first_alignment(std::cin, get_alphabet_name(args));
     else
-      A = find_last_alignment(std::cin, load_alphabets(args));
+      A = find_last_alignment(std::cin, get_alphabet_name(args));
 
     //------------------ Print it out -------------------//
     std::cout<<A;

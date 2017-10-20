@@ -242,7 +242,7 @@ void alignment_sample::load(const variables_map& args, const string& filename)
 
   list<alignment> As;
   if (not alignments.size())
-    As = load_alignments(input,load_alphabets(args),skip,maxalignments);
+    As = load_alignments(input,get_alphabet_name(args),skip,maxalignments);
   else
     As = load_alignments(input, sequence_names(), get_alphabet(), skip,maxalignments);
 

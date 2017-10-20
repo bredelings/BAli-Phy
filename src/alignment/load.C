@@ -93,12 +93,9 @@ std::string get_alphabet_name(const boost::program_options::variables_map& args)
 
 alignment load_alignment(const string& filename,const string& alph_name)
 {
-    return load_alignment(filename, load_alphabets(alph_name) );
-}
-
-alignment load_alignment(const string& filename,const vector<object_ptr<const alphabet> >& alphabets)
-{
     vector<sequence> sequences = sequence_format::load_from_file(filename);
+
+    auto alphabets = load_alphabets(alph_name);
 
     alignment A;
 
@@ -150,14 +147,12 @@ alignment load_alignment(const string& filename)
 /// Load an alignment from command line args "--align filename"
 alignment load_A(const variables_map& args,bool keep_internal) 
 {
-    vector<object_ptr<const alphabet> > alphabets = load_alphabets(args);
-  
     // ----- Try to load alignment ------ //
     if (not args.count("align")) 
 	throw myexception("Alignment file not specified! (--align <filename>)");
   
     string filename = args["align"].as<string>();
-    alignment A = load_alignment(filename,alphabets);
+    alignment A = load_alignment(filename, get_alphabet_name(args));
 
     if (not keep_internal)
 	A = chop_internal(A);
@@ -205,8 +200,10 @@ istream& find_and_skip_alignments(istream& ifile, int n)
     return ifile;
 }
 
-optional<alignment> find_load_next_alignment(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets)
+optional<alignment> find_load_next_alignment(istream& ifile, const string& alph_name)
 {
+    auto alphabets = load_alphabets(alph_name);
+
     if (not find_alignment(ifile)) return boost::none;
 
     // READ the alignment
@@ -229,9 +226,9 @@ optional<alignment> find_load_next_alignment(istream& ifile, const vector<object
 }
 
 
-alignment load_next_alignment(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets)
+alignment load_next_alignment(istream& ifile, const string& alph_name)
 {
-    auto A = find_load_next_alignment(ifile, alphabets);
+    auto A = find_load_next_alignment(ifile, alph_name);
     if (not A)
 	throw myexception()<<"No alignment found.\n";
 
@@ -240,9 +237,7 @@ alignment load_next_alignment(istream& ifile, const vector<object_ptr<const alph
 
 alignment load_next_alignment(istream& ifile, object_ptr<const alphabet> a)
 {
-    vector<object_ptr<const alphabet> > alphabets;
-    alphabets.push_back(a);
-    return load_next_alignment(ifile,alphabets);
+    return load_next_alignment(ifile,{a});
 }
 
 alignment load_next_alignment(istream& ifile, const alphabet& a)
@@ -414,15 +409,13 @@ list<alignment> load_alignments(istream& ifile, const vector<string>& names, con
 
 
 // Get names from first alignment
-std::list<alignment> load_alignments(std::istream& ifile,
-				     const std::vector<object_ptr<const alphabet> >& alphabets,
-				     int skip, int maxalignments)
+std::list<alignment> load_alignments(std::istream& ifile, const string& alph_name, int skip, int maxalignments)
 {
     list<alignment> alignments;
   
     find_and_skip_alignments(ifile, skip);
 
-    alignments.push_back(load_next_alignment(ifile,alphabets));
+    alignments.push_back(load_next_alignment(ifile, alph_name));
 
     vector<string> names = sequence_names(alignments.front());
 
@@ -432,15 +425,13 @@ std::list<alignment> load_alignments(std::istream& ifile,
 }
 
 // Names supplied as argument
-std::list<alignment> load_alignments(std::istream& ifile, const vector<string>& names, 
-				     const std::vector<object_ptr<const alphabet> >& alphabets, 
-				     int skip, int maxalignments)
+std::list<alignment> load_alignments(std::istream& ifile, const vector<string>& names, const string& alph_name, int skip, int maxalignments)
 {
     list<alignment> alignments;
   
     find_and_skip_alignments(ifile, skip);
 
-    alignments.push_back( reorder_sequences( load_next_alignment(ifile,alphabets), names) );
+    alignments.push_back( reorder_sequences( load_next_alignment(ifile,alph_name), names) );
 
     load_more_alignments(alignments, ifile, names, alignments.front().get_alphabet(), maxalignments);
 
@@ -448,7 +439,10 @@ std::list<alignment> load_alignments(std::istream& ifile, const vector<string>& 
 }
 
 
-vector<alignment> load_alignments(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets) {
+vector<alignment> load_alignments(istream& ifile, const string& alph_name)
+{
+    auto alphabets = load_alphabets(alph_name);
+
     vector<alignment> alignments;
   
     vector<string> n1;
@@ -502,8 +496,10 @@ vector<alignment> load_alignments(istream& ifile, const vector<object_ptr<const 
     return alignments;
 }
 
-alignment find_first_alignment(std::istream& ifile, const vector<object_ptr<const alphabet> >& alphabets) 
+alignment find_first_alignment(std::istream& ifile, const string& alph_name)
 {
+    auto alphabets = load_alphabets(alph_name);
+
     alignment A;
 
     // for each line (nth is the line counter)
@@ -541,8 +537,10 @@ alignment find_first_alignment(std::istream& ifile, const vector<object_ptr<cons
     return A;
 }
 
-alignment find_last_alignment(std::istream& ifile, const vector<object_ptr<const alphabet> >& alphabets) 
+alignment find_last_alignment(std::istream& ifile, const string& alph_name)
 {
+    auto alphabets = load_alphabets(alph_name);
+
     alignment A;
 
     // for each line (nth is the line counter)

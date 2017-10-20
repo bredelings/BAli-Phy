@@ -69,7 +69,7 @@ joint_A_T get_joint_A_T(const variables_map& args,bool internal)
 
   unsigned subsample = args["subsample"].as<unsigned>();
 
-  vector<alignment> A = load_alignments(a_file, load_alphabets(args));
+  vector<alignment> A = load_alignments(a_file, get_alphabet_name(args));
   vector<SequenceTree> T = load_trees(t_file, 0, subsample);
 
   return joint_A_T(A,T,internal);

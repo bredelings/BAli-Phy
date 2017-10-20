@@ -49,7 +49,7 @@ using namespace std;
 
 void load_alignments(vector<alignment>& alignments,
 		     const string& filename, 
-		     const vector<object_ptr<const alphabet> >& alphabets,
+		     const string& alph_name,
 		     int maxalignments,
 		     string what)
 {
@@ -61,7 +61,7 @@ void load_alignments(vector<alignment>& alignments,
 
   checked_ifstream file(filename, "alignment sample file");
 
-  list<alignment> As = load_alignments(file, alphabets, 0, maxalignments);
+  list<alignment> As = load_alignments(file, alph_name, 0, maxalignments);
 
   alignments.clear();
   alignments.insert(alignments.begin(),As.begin(),As.end());
@@ -99,12 +99,12 @@ void do_setup(const variables_map& args,
 
   {
     string filename = args["file1"].as<string>();
-    load_alignments(alignments1,filename,load_alphabets(args),maxalignments,"#1");
+    load_alignments(alignments1, filename, get_alphabet_name(args), maxalignments, "#1");
   }
 
   {
     string filename = args["file2"].as<string>();
-    load_alignments(alignments2,filename,load_alphabets(args),maxalignments,"#2");
+    load_alignments(alignments2, filename, get_alphabet_name(args), maxalignments, "#2");
   }
 }
 

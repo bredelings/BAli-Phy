@@ -78,7 +78,7 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
 
   // --------------------- try ---------------------- //
   cerr<<"Loading alignments...";
-  list<alignment> As = load_alignments(std::cin,load_alphabets(args),skip,maxalignments);
+  list<alignment> As = load_alignments(std::cin,get_alphabet_name(args),skip,maxalignments);
   alignments.insert(alignments.begin(),As.begin(),As.end());
   cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (not alignments.size())
