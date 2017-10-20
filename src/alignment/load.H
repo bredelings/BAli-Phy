@@ -10,8 +10,6 @@
 #include "alignment.H"
 #include "object.H"
 
-std::vector<object_ptr<const alphabet> > load_alphabets(const boost::program_options::variables_map& args);
-
 std::string get_alphabet_name(const boost::program_options::variables_map& args);
 
 /// Load an alignment from command line args --align=filename

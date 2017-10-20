@@ -505,9 +505,5 @@ std::valarray<double> get_nucleotide_counts_from_codon_counts(const Triplets& C,
 /// Compute codon frequences from nucleotide frequencies if the nucleotide positions in the codon are independent
 std::valarray<double> get_codon_frequencies_from_independent_nucleotide_frequencies(const Triplets& C,const std::valarray<double>& fN );
 
-std::vector<object_ptr<const alphabet> > load_alphabets();
-
-std::vector<object_ptr<const alphabet> > load_alphabets(const std::string&);
-
 object_ptr<const Genetic_Code> get_genetic_code(const std::string& name);
 #endif

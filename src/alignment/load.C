@@ -49,6 +49,58 @@ double letter_fraction(const string& letters, const string& gaps, const vector<s
     return double(count)/total;
 }
 
+vector<object_ptr<const alphabet> > load_alphabets(const string& name_)
+{
+    if (name_.empty())
+    {
+	vector<object_ptr<const alphabet> > alphabets;
+
+	alphabets.push_back(object_ptr<const alphabet>(new DNA));
+	alphabets.push_back(object_ptr<const alphabet>(new RNA));
+	alphabets.push_back(object_ptr<const alphabet>(new AminoAcids));
+	alphabets.push_back(object_ptr<const alphabet>(new AminoAcidsWithStop));
+
+	return alphabets;
+    }
+
+    vector<object_ptr<const alphabet> > alphabets;
+
+    string name = name_;
+    vector<string> arguments = get_arguments(name,'[',']');
+
+    if (name == "Codons" or name == "Codons*" or name == "Codons+stop")
+    {
+	object_ptr<const AminoAcids> AA;
+	if (name == "Codons")
+	    AA = object_ptr<const AminoAcids>(new AminoAcids);
+	else
+	    AA = object_ptr<const AminoAcids>(new AminoAcidsWithStop);
+
+	object_ptr<const Genetic_Code> G(new Standard_Genetic_Code());
+	if (arguments.size())
+	    G = get_genetic_code(arguments[0]);
+
+	alphabets.push_back(object_ptr<const alphabet>(new Codons(DNA(),*AA,*G)));
+	alphabets.push_back(object_ptr<const alphabet>(new Codons(RNA(),*AA,*G)));
+    }
+    else if (name == "Triplets") {
+	alphabets.push_back(object_ptr<const alphabet>(new Triplets(DNA())));
+	alphabets.push_back(object_ptr<const alphabet>(new Triplets(RNA())));
+    }
+    else if (name == "DNA")
+	alphabets.push_back(object_ptr<const alphabet>(new DNA()));
+    else if (name == "RNA")
+	alphabets.push_back(object_ptr<const alphabet>(new RNA()));
+    else if (name == "Amino-Acids" or name == "AA")
+	alphabets.push_back(object_ptr<const alphabet>(new AminoAcids()));
+    else if (name == "Amino-Acids+stop" or name == "AA*")
+	alphabets.push_back(object_ptr<const alphabet>(new AminoAcidsWithStop()));
+    else
+	throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
+
+    return alphabets;
+}
+
 object_ptr<const alphabet> guess_alphabet(const vector<sequence>& sequences)
 {
     double ATGCN = letter_fraction("ATGCN","-?",sequences);
@@ -69,18 +121,6 @@ object_ptr<const alphabet> guess_alphabet(const vector<sequence>& sequences)
 	return new AminoAcidsWithStop;
     else
 	return new AminoAcids;
-}
-
-vector<object_ptr<const alphabet> > load_alphabets(const variables_map& args) 
-{
-    vector<object_ptr<const alphabet> > alphabets; 
-
-    if (not args.count("alphabet"))
-	return load_alphabets();
-
-    const string name = args["alphabet"].as<string>();
-
-    return load_alphabets(name);
 }
 
 std::string get_alphabet_name(const boost::program_options::variables_map& args)

@@ -864,11 +864,6 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1, const Genetic_Code& G
     name = string("Codons of ") + getNucleotides().name + " -> " + A1.name + " [" + G->name() + "]";
 }
 
-vector<object_ptr<const alphabet> > load_alphabets()
-{
-    return load_alphabets("");
-}
-
 object_ptr<const Genetic_Code> get_genetic_code(const string& name)
 {
     if (name == "standard")
@@ -884,57 +879,5 @@ object_ptr<const Genetic_Code> get_genetic_code(const string& name)
     else
 	throw myexception()<<"I don't recognize genetic code name '"<<name<<"'.\n"
 	    "  Try one of 'standard', 'mt-vert', 'mt-invert', 'mt-protozoan', 'mt-yeast'.";
-}
-
-vector<object_ptr<const alphabet> > load_alphabets(const string& name_)
-{
-    if (name_.empty())
-    {
-	vector<object_ptr<const alphabet> > alphabets; 
-
-	alphabets.push_back(object_ptr<const alphabet>(new DNA));
-	alphabets.push_back(object_ptr<const alphabet>(new RNA));
-	alphabets.push_back(object_ptr<const alphabet>(new AminoAcids));
-	alphabets.push_back(object_ptr<const alphabet>(new AminoAcidsWithStop));
-
-	return alphabets;
-    }
-
-    vector<object_ptr<const alphabet> > alphabets; 
-
-    string name = name_;
-    vector<string> arguments = get_arguments(name,'[',']');
-
-    if (name == "Codons" or name == "Codons*" or name == "Codons+stop")
-    {
-	object_ptr<const AminoAcids> AA;
-	if (name == "Codons")
-	    AA = object_ptr<const AminoAcids>(new AminoAcids);
-	else
-	    AA = object_ptr<const AminoAcids>(new AminoAcidsWithStop);
-    
-	object_ptr<const Genetic_Code> G(new Standard_Genetic_Code());
-	if (arguments.size())
-	    G = get_genetic_code(arguments[0]);
-
-	alphabets.push_back(object_ptr<const alphabet>(new Codons(DNA(),*AA,*G)));
-	alphabets.push_back(object_ptr<const alphabet>(new Codons(RNA(),*AA,*G)));
-    }
-    else if (name == "Triplets") {
-	alphabets.push_back(object_ptr<const alphabet>(new Triplets(DNA())));
-	alphabets.push_back(object_ptr<const alphabet>(new Triplets(RNA())));
-    }
-    else if (name == "DNA")
-	alphabets.push_back(object_ptr<const alphabet>(new DNA()));
-    else if (name == "RNA")
-	alphabets.push_back(object_ptr<const alphabet>(new RNA()));
-    else if (name == "Amino-Acids" or name == "AA")
-	alphabets.push_back(object_ptr<const alphabet>(new AminoAcids()));
-    else if (name == "Amino-Acids+stop" or name == "AA*")
-	alphabets.push_back(object_ptr<const alphabet>(new AminoAcidsWithStop()));
-    else 
-	throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
-
-    return alphabets;
 }
 
