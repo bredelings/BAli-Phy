@@ -81,15 +81,13 @@ object_ptr<const alphabet> guess_alphabet(const vector<sequence>& sequences)
 	return new AminoAcids;
 }
 
-vector<object_ptr<const alphabet> > load_alphabets(const string& name_, const vector<sequence>& sequences)
+object_ptr<const alphabet> load_alphabet(const string& name_, const vector<sequence>& sequences)
 {
     if (name_.empty())
     {
 	auto a = guess_alphabet(sequences);
 	return {a};
     }
-
-    vector<object_ptr<const alphabet> > alphabets;
 
     string name = name_;
     vector<string> arguments = get_arguments(name,'[',']');
@@ -108,7 +106,7 @@ vector<object_ptr<const alphabet> > load_alphabets(const string& name_, const ve
 	if (arguments[1].empty()) arguments[1] = "standard";
 	object_ptr<const Genetic_Code> G = get_genetic_code(arguments[1]);
 
-	alphabets.push_back(object_ptr<const alphabet>(new Codons(*N, AminoAcids(), *G)));
+	return new Codons(*N, AminoAcids(), *G);
     }
     else if (name == "Triplets")
     {
@@ -120,20 +118,18 @@ vector<object_ptr<const alphabet> > load_alphabets(const string& name_, const ve
 	else if (arguments[0] == "RNA")
 	    N = new RNA;
 
-	alphabets.push_back(object_ptr<const alphabet>(new Triplets(*N)));
+	return new Triplets(*N);
     }
     else if (name == "DNA")
-	alphabets.push_back(object_ptr<const alphabet>(new DNA()));
+	return new DNA;
     else if (name == "RNA")
-	alphabets.push_back(object_ptr<const alphabet>(new RNA()));
+	return new RNA;
     else if (name == "Amino-Acids" or name == "AA")
-	alphabets.push_back(object_ptr<const alphabet>(new AminoAcids()));
+	return new AminoAcids;
     else if (name == "Amino-Acids+stop" or name == "AA*")
-	alphabets.push_back(object_ptr<const alphabet>(new AminoAcidsWithStop()));
-    else
-	throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
+	return new AminoAcidsWithStop;
 
-    return alphabets;
+    throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
 }
 
 std::string get_alphabet_name(const boost::program_options::variables_map& args)
