@@ -41,6 +41,16 @@ using boost::optional;
 
 using boost::program_options::variables_map;
 
+alignment chop_internal(alignment A, int n_leaves)
+{
+    return reorder_sequences(A,iota<int>(n_leaves));
+}
+
+alignment chop_internal(alignment A, const SequenceTree& T)
+{
+    return chop_internal(A, T.n_leaves());
+}
+
 alignment chop_internal(alignment A, bool keep_empty_columns) 
 {
     int N = (A.n_sequences()+2)/2;

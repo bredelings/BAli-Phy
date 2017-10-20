@@ -40,6 +40,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 // Remove sequences to \a A corresponding to internal nodes in \a T
 alignment chop_internal(alignment A,bool keep_empty_columns=false);
 
+// Remove sequences to \a A corresponding to internal nodes in \a T
+alignment chop_internal(alignment A, const SequenceTree& T);
+
+// Remove sequences to \a A corresponding to internal nodes in \a T
+alignment chop_internal(alignment A, int n_leaves);
+
 // Add sequences to A corresponding to internal nodes in T
 alignment add_internal(alignment A,const SequenceTree& T);
 
