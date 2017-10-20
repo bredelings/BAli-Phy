@@ -239,7 +239,8 @@ void alignment::load(const vector<sequence>& seqs)
 
 void alignment::load(const string& alph_name,const vector<sequence>& seqs)
 {
-    a = load_alphabet(alph_name, seqs);
+    string full_name = guess_alphabet(alph_name, seqs);
+    a = ::get_alphabet(full_name);
     load(seqs);
 }
 

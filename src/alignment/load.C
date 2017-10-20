@@ -16,12 +16,6 @@ using std::endl;
 using boost::optional;
 using boost::program_options::variables_map;
 
-object_ptr<const alphabet> load_alphabet(const string& name_, const vector<sequence>& sequences)
-{
-    string name = guess_alphabet(name_, sequences);
-    return get_alphabet(name);
-}
-
 std::string get_alphabet_name(const boost::program_options::variables_map& args)
 {
     string alph_name;
@@ -54,31 +48,6 @@ alignment load_alignment(const string& filename,const string& alph_name)
 	throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
 
     return A;
-}
-
-alignment load_alignment(const string& filename)
-{
-    vector<sequence> sequences = sequence_format::load_from_file(filename);
-
-    try {
-	object_ptr<const alphabet> a = load_alphabet("",sequences);
-
-	alignment A(*a);
-	A.load(sequences);
-    
-	int n_empty = remove_empty_columns(A);
-	if (n_empty)
-	    if (log_verbose) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
-    
-	if (A.n_sequences() == 0)
-	    throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";
-    
-	return A;
-    }
-    catch (myexception& e)
-    {
-	throw e<<" for file "<<filename<<".  Please specify RNA, DNA, or AminoAcids.";
-    }
 }
 
 /// Load an alignment from command line args "--align filename"

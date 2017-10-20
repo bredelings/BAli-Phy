@@ -46,5 +46,6 @@ struct sequence: public std::string, public sequence_info
 
 bool operator==(const sequence&,const sequence&);
 
+std::string guess_alphabet(const std::vector<sequence>& sequences);
 std::string guess_alphabet(const std::string& name_, const std::vector<sequence>& sequences);
 #endif
