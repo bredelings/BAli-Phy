@@ -246,7 +246,7 @@ alignment_thin_SOURCES = tools/alignment-thin.C alignment/alignment.C sequence/a
 #---------------------------------------------------------------
 
 alignment_chop_internal_SOURCES = tools/alignment-chop-internal.C alignment/alignment.C sequence/alphabet.C sequence/sequence.C util.C tree/tree.C \
-	sequence/sequence-format.C alignment/alignment-util.C io.C tree/sequencetree.C alignment/load.C
+	sequence/sequence-format.C alignment/alignment-util.C io.C tree/sequencetree.C alignment/load.C tree/tree-util.C tools/read-trees.C
 
 #---------------------------------------------------------------
 

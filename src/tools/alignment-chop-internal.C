@@ -21,9 +21,9 @@
 #include <fstream>
 #include <string>
 #include "tree/tree.H"
-#include "alignment/alignment.H"
+#include "tree/tree-util.H"
 #include "alignment/load.H"
-#include "alignment/alignment-util.H"
+#include "sequence/sequence-format.H"
 #include "util.H"
 #include "setup.H"
 #include "findroot.H"
@@ -50,6 +50,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help", "produce help message")
 	("align", value<string>(),"file with sequences and initial alignment")
 	("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
+	("tree",value<string>(),"file with tree that specifies leaves to keep")
+	("nleaves,N",value<int>(),"number of sequences to keep")
 	;
 
     // positional options
@@ -63,7 +65,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     notify(args);    
 
     if (args.count("help")) {
-	cout<<"Usage: alignment-chop-internal <alignment-file> [OPTIONS]\n";
+	cout<<"Usage: alignment-chop-internal [OPTIONS] < <alignments-file>\n";
 	cout<<"Remove ancestral sequences from an alignment.\n\n";
 	cout<<all<<"\n";
 	exit(0);
@@ -80,13 +82,28 @@ int main(int argc,char* argv[])
 	//---------- Parse command line  -------//
 	variables_map args = parse_cmd_line(argc,argv);
 
-	//------- Try to load alignment --------//
-	alignment A = load_A(args);
+	//------- Determine number of leaf sequences to keep --------//
+	if (args.count("nleaves") and args.count("tree"))
+	    throw myexception()<<"You can't specify both 'nleaves' and 'tree'!";
 
-	//------- Print out the alignment ------//
-	alignment A2 = chop_internal(A);
-	std::cout<<A2<<std::endl;
+	int N = -1;
+	if (args.count("nleaves"))
+	    N = args["nleaves"].as<int>();
+	else if (args.count("tree"))
+	    N = load_T(args).n_leaves();
+	else
+	    throw myexception()<<"Both 'n_leaves' nor 'tree' unspecified!";
+	
+	//------ Read sequences and chop off non-leaf sequences -----//
+	while (auto sequences = find_load_next_sequences(std::cin))
+	{
+	    if (sequences->size() < N)
+		throw myexception()<<"Trying to keep "<<N<<" leaf sequences, but only got "<<sequences->size()<<"!";
 
+	    sequences->resize(N);
+
+	    sequence_format::write_fasta(std::cout, *sequences);
+	}
     }
     catch (std::exception& e) {
 	std::cerr<<"alignment-chop-internal: Error! "<<e.what()<<endl;
