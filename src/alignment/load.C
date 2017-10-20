@@ -83,52 +83,6 @@ string guess_alphabet(const vector<sequence>& sequences)
 	return "Amino-Acids";
 }
 
-object_ptr<const Nucleotides> get_nucleotides(const string& name)
-{
-    if (name == "DNA")
-	return new DNA;
-    else if (name == "RNA")
-	return new RNA;
-
-    throw myexception()<<"'"<<name<<"' is not a valid nucleotides alphabet.  Please specify DNA or RNA.";
-}
-
-object_ptr<const alphabet> get_alphabet(const string& name_)
-{
-    string name = name_;
-    vector<string> arguments = get_arguments(name,'[',']');
-
-    if (name == "Codons")
-    {
-	if (arguments.size() != 2 or arguments[0].empty() or arguments[1].empty())
-	    throw myexception()<<"Codons needs two arguments specifying the nucleotide alphabet and the genetic code: e.g. Codons[DNA,standard].";
-
-	auto N = get_nucleotides(arguments[0]);
-	auto G = get_genetic_code(arguments[1]);
-
-	return new Codons(*N, AminoAcids(), *G);
-    }
-    else if (name == "Triplets")
-    {
-	if (arguments.size() != 1 or arguments[0].empty())
-	    throw myexception()<<"Triplets needs one argument specifying the nucleotide alphabet: e.g. Triplets[DNA].";
-
-	auto N = get_nucleotides(arguments[0]);
-
-	return new Triplets(*N);
-    }
-    else if (name == "DNA")
-	return new DNA;
-    else if (name == "RNA")
-	return new RNA;
-    else if (name == "Amino-Acids" or name == "AA")
-	return new AminoAcids;
-    else if (name == "Amino-Acids+stop" or name == "AA*")
-	return new AminoAcidsWithStop;
-
-    throw myexception()<<"I don't recognize alphabet '"<<name<<"'";
-}
-
 string guess_alphabet(const string& name_, const vector<sequence>& sequences)
 {
     string name = name_;
