@@ -49,6 +49,16 @@ double letter_fraction(const string& letters, const string& gaps, const vector<s
     return double(count)/total;
 }
 
+string guess_nucleotides(const vector<sequence>& sequences)
+{
+    double ATGCN = letter_fraction("ATGCN","-?",sequences);
+    double AUGCN = letter_fraction("AUGCN","-?",sequences);
+    if (ATGCN > AUGCN)
+	return "DNA";
+    else
+	return "RNA";
+}
+
 object_ptr<const alphabet> guess_alphabet(const vector<sequence>& sequences)
 {
     double ATGCN = letter_fraction("ATGCN","-?",sequences);
@@ -84,24 +94,33 @@ vector<object_ptr<const alphabet> > load_alphabets(const string& name_, const ve
     string name = name_;
     vector<string> arguments = get_arguments(name,'[',']');
 
-    if (name == "Codons" or name == "Codons*" or name == "Codons+stop")
+    if (name == "Codons")
     {
-	object_ptr<const AminoAcids> AA;
-	if (name == "Codons")
-	    AA = object_ptr<const AminoAcids>(new AminoAcids);
-	else
-	    AA = object_ptr<const AminoAcids>(new AminoAcidsWithStop);
+	arguments.resize(2);
+	object_ptr<const Nucleotides> N;
 
-	object_ptr<const Genetic_Code> G(new Standard_Genetic_Code());
-	if (arguments.size())
-	    G = get_genetic_code(arguments[0]);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides(sequences);
+	if (arguments[0] == "DNA")
+	    N = new DNA;
+	else if (arguments[0] == "RNA")
+	    N = new RNA;
 
-	alphabets.push_back(object_ptr<const alphabet>(new Codons(DNA(),*AA,*G)));
-	alphabets.push_back(object_ptr<const alphabet>(new Codons(RNA(),*AA,*G)));
+	if (arguments[1].empty()) arguments[1] = "standard";
+	object_ptr<const Genetic_Code> G = get_genetic_code(arguments[1]);
+
+	alphabets.push_back(object_ptr<const alphabet>(new Codons(*N, AminoAcids(), *G)));
     }
-    else if (name == "Triplets") {
-	alphabets.push_back(object_ptr<const alphabet>(new Triplets(DNA())));
-	alphabets.push_back(object_ptr<const alphabet>(new Triplets(RNA())));
+    else if (name == "Triplets")
+    {
+	arguments.resize(1);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides(sequences);
+	object_ptr<const Nucleotides> N;
+	if (arguments[0] == "DNA")
+	    N = new DNA;
+	else if (arguments[0] == "RNA")
+	    N = new RNA;
+
+	alphabets.push_back(object_ptr<const alphabet>(new Triplets(*N)));
     }
     else if (name == "DNA")
 	alphabets.push_back(object_ptr<const alphabet>(new DNA()));
