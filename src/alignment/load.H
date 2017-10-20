@@ -12,6 +12,8 @@
 
 std::string get_alphabet_name(const boost::program_options::variables_map& args);
 
+std::vector<object_ptr<const alphabet> > load_alphabets(const std::string& name_);
+
 /// Load an alignment from command line args --align=filename
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
 

@@ -106,10 +106,20 @@ int main(int argc,char* argv[])
     
     //--------- Load alignment & determine RNA or DNA ----------//
     alignment A1;
-    vector<object_ptr<const alphabet> > alphabets;
-    alphabets.push_back(object_ptr<const alphabet>(new DNA));
-    alphabets.push_back(object_ptr<const alphabet>(new RNA));
-    A1.load(alphabets, sequences);
+    try
+    {
+	DNA d;
+	alignment A(d);
+	A.load(sequences);
+	A1 = A;
+    }
+    catch (...)
+    {
+	RNA r;
+	alignment A(r);
+	A.load(sequences);
+	A1 = A;
+    }
 
     owned_ptr<Nucleotides> N(dynamic_cast<const Nucleotides&>(A1.get_alphabet()));
     assert(N);

@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <sstream>
 #include "alignment.H"
+#include "load.H"
 #include "myexception.H"
 #include "util.H"
 #include "rng.H"
@@ -236,7 +237,9 @@ void alignment::load(const vector<sequence>& seqs)
 
 }
 
-void alignment::load(const vector<object_ptr<const alphabet> >& alphabets,const vector<sequence>& seqs) {
+void alignment::load(const string& alph_name,const vector<sequence>& seqs)
+{
+    auto alphabets = load_alphabets(alph_name);
     string errors = "Sequences don't fit any of the alphabets:";
     for(int i=0;i<alphabets.size();i++) {
 	try {
@@ -266,14 +269,13 @@ void alignment::load(sequence_format::loader_t loader,std::istream& file)
 }
 
 
-void alignment::load(const vector<object_ptr<const alphabet> >& alphabets, sequence_format::loader_t loader,
-		     std::istream& file) 
+void alignment::load(const string& alph_name, sequence_format::loader_t loader, std::istream& file) 
 {
     // read file
     vector<sequence> seqs = loader(file);
 
     // load sequences into alignment
-    load(alphabets,seqs);
+    load(alph_name,seqs);
 }
 
 
@@ -294,12 +296,13 @@ void alignment::load(const string& filename)
     load(seqs);
 }
 
-void alignment::load(const vector<object_ptr<const alphabet> >& alphabets,const string& filename) {
+void alignment::load(const string& alph_name,const string& filename)
+{
     // read from file
     vector<sequence> seqs = sequence_format::load_from_file(filename);
 
     // load sequences into alignment
-    load(alphabets,seqs);
+    load(alph_name,seqs);
 }
 
 void alignment::print_to_stream(std::ostream& file) const{

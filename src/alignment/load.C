@@ -135,13 +135,11 @@ alignment load_alignment(const string& filename,const string& alph_name)
 {
     vector<sequence> sequences = sequence_format::load_from_file(filename);
 
-    auto alphabets = load_alphabets(alph_name);
-
     alignment A;
 
     try
     {
-	A.load(alphabets, sequences);
+	A.load(alph_name, sequences);
     }
     catch (myexception& e)
     {
@@ -242,14 +240,12 @@ istream& find_and_skip_alignments(istream& ifile, int n)
 
 optional<alignment> find_load_next_alignment(istream& ifile, const string& alph_name)
 {
-    auto alphabets = load_alphabets(alph_name);
-
     if (not find_alignment(ifile)) return boost::none;
 
     // READ the alignment
     try {
 	alignment A;
-	A.load(alphabets, sequence_format::read_fasta, ifile);
+	A.load(alph_name, sequence_format::read_fasta, ifile);
     
 	// strip out empty columns
 	remove_empty_columns(A);
@@ -481,8 +477,6 @@ std::list<alignment> load_alignments(std::istream& ifile, const vector<string>& 
 
 vector<alignment> load_alignments(istream& ifile, const string& alph_name)
 {
-    auto alphabets = load_alphabets(alph_name);
-
     vector<alignment> alignments;
   
     vector<string> n1;
@@ -500,7 +494,7 @@ vector<alignment> load_alignments(istream& ifile, const string& alph_name)
     
 	    // READ the next alignment
 	    if (alignments.empty()) {
-		A.load(alphabets,sequence_format::read_fasta,ifile);
+		A.load(alph_name, sequence_format::read_fasta, ifile);
 		n1 = sequence_names(A);
 	    }
 	    else 
@@ -538,8 +532,6 @@ vector<alignment> load_alignments(istream& ifile, const string& alph_name)
 
 alignment find_first_alignment(std::istream& ifile, const string& alph_name)
 {
-    auto alphabets = load_alphabets(alph_name);
-
     alignment A;
 
     // for each line (nth is the line counter)
@@ -556,7 +548,7 @@ alignment find_first_alignment(std::istream& ifile, const string& alph_name)
 	try {
 	    // read alignment into A
 	    alignment A2;
-	    A2.load(alphabets,sequence_format::read_fasta,ifile);
+	    A2.load(alph_name, sequence_format::read_fasta, ifile);
 	    A = A2;
 
 	    // strip out empty columns
@@ -579,8 +571,6 @@ alignment find_first_alignment(std::istream& ifile, const string& alph_name)
 
 alignment find_last_alignment(std::istream& ifile, const string& alph_name)
 {
-    auto alphabets = load_alphabets(alph_name);
-
     alignment A;
 
     // for each line (nth is the line counter)
@@ -597,7 +587,7 @@ alignment find_last_alignment(std::istream& ifile, const string& alph_name)
 	try {
 	    // read alignment into A
 	    alignment A2;
-	    A2.load(alphabets,sequence_format::read_fasta,ifile);
+	    A2.load(alph_name, sequence_format::read_fasta, ifile);
 	    A = A2;
 
 	    // strip out empty columns
