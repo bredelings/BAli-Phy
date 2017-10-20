@@ -261,9 +261,17 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
     // Write out ancestral sequences
     if (P->contains_key("log-ancestral") and P->t().n_nodes() > 1)
 	for(int i=0;i<P->n_data_partitions();i++)
-	    loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".ancestral.fastas", 
-								   Ancestral_Sequences_Function(i) ) );
+	    if ((*P)[i].variable_alignment()) 
+	    {
+		string filename = base + ".P" + convertToString(i+1)+".ancestral.fastas";
 
+		ConcatFunction F;
+		auto iterations = [](const Model&, long t) {return convertToString(t);};
+		F<<"iterations = "<<iterations<<"\n\n";
+		F<<Ancestral_Sequences_Function(i);
+
+		loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10) ) );
+	    }
 
     // Write out the alignments for each (variable) partition to C<>.P<>.fastas
     if (P->t().n_nodes() > 1)
