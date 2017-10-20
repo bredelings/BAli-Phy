@@ -59,37 +59,35 @@ string guess_nucleotides(const vector<sequence>& sequences)
 	return "RNA";
 }
 
-object_ptr<const alphabet> guess_alphabet(const vector<sequence>& sequences)
+string guess_alphabet(const vector<sequence>& sequences)
 {
+    // FIXME - we should maybe count things one time into a map from char -> int.
     double ATGCN = letter_fraction("ATGCN","-?",sequences);
     double AUGCN = letter_fraction("AUGCN","-?",sequences);
     if (ATGCN > 0.95 and AUGCN <= ATGCN)
-	return new DNA;
+	return "DNA";
     else if (AUGCN > 0.95)
-	return new RNA;
+	return "RNA";
 
     double digits = letter_fraction("0123456789","-?X",sequences);
+    // FIXME - We can check the largest number ... but each column might have a different highest number.
     if (digits > 0.95)
-	return new Numeric(2);
+	return "Numeric[2]";
 
     if (std::max(ATGCN,AUGCN) > 0.5)
 	throw myexception()<<"Can't guess alphabet";
 
     if (letter_count("*",sequences) > 0)
-	return new AminoAcidsWithStop;
+	return "Amino-Acids+stop";
     else
-	return new AminoAcids;
+	return "Amino-Acids";
 }
 
 object_ptr<const alphabet> load_alphabet(const string& name_, const vector<sequence>& sequences)
 {
-    if (name_.empty())
-    {
-	auto a = guess_alphabet(sequences);
-	return {a};
-    }
-
     string name = name_;
+    if (name.empty()) name = guess_alphabet(sequences);
+
     vector<string> arguments = get_arguments(name,'[',']');
 
     if (name == "Codons")
@@ -171,7 +169,7 @@ alignment load_alignment(const string& filename)
     vector<sequence> sequences = sequence_format::load_from_file(filename);
 
     try {
-	object_ptr<const alphabet> a = guess_alphabet(sequences);
+	object_ptr<const alphabet> a = load_alphabet("",sequences);
 
 	alignment A(*a);
 	A.load(sequences);
