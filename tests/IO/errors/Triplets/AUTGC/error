@@ -1,2 +1,2 @@
 bali-phy: Error! In file 'test.fasta': sequence #1 '1':
-Letter 'U' not in alphabet 'DNA nucleotides'.
+Letter 'U' not in alphabet 'DNA'.
