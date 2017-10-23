@@ -2791,9 +2791,10 @@ sub hsv_to_rgb
     my $V = shift;
 
     # decompose color range [0,6) into a discrete color (i) and fraction (f)
-    my $h = $H * 6;
+    my $h = ($H * 6);
     my $i = int($h);
     my $f = $h - $i;
+    $i = $i % 6;
 
     my $p = $V*(1.0 - $S);
     my $q = $V*(1.0 - ($S*$f));
@@ -2821,6 +2822,19 @@ sub hsv_to_rgb
 
 sub rgb_to_color
 {
+    my $r = shift;
+    my $g = shift;
+    my $b = shift;
+    return "$r $g $b";
+}
+
+sub interpolate
+{
+    my $i = shift;
+    my $total = shift;
+    my $from = shift;
+    my $to = shift;
+    return $to + ($from-$to)*($i/($total-1-$i));
 }
 
 sub gen_x3d_of_mds
@@ -2832,6 +2846,8 @@ sub gen_x3d_of_mds
     my @y = ();
     my @z = ();
 
+    my %n = ();
+
     foreach my $line (split "\n", $point_string)
     {
 	chomp $line;
@@ -2839,6 +2855,10 @@ sub gen_x3d_of_mds
 	push @x, ${$point}[0];
 	push @y, ${$point}[1];
 	push @z, ${$point}[2];
+	my $g = ${$point}[3];
+	$g = 0 if (!defined($g));
+	$n{$g} = 0 if (!defined($n{$g}));
+	$n{$g}++;
 	push @points, $point;
     }
 
@@ -2855,6 +2875,7 @@ sub gen_x3d_of_mds
     my $zw = abs($zmax - $zmin);
     
     my $x3d = "";
+    my %seen = ();
     foreach my $point (@points)
     {
 	my $x = ${$point}[0];
@@ -2864,13 +2885,16 @@ sub gen_x3d_of_mds
 	my $z = ${$point}[2];
 	$z = ($z-$zmin)/$zw*5.0 - 2.5;
 	my $g = ${$point}[3];
+	$g = 0 if (!defined($g));
+	$seen{$g} = 0 if (!defined($seen{$g}));
+	$seen{$g}++;
 	my $color;
 	my $size = 0.04;
 	my $scale = "$size $size $size";
 	$color = "1 0 0";
-	$color = "1 0 0" if (defined($g) && $g == 1);
-	$color = "0 0 1" if (defined($g) && $g == 2);
-	$color = "0 1 0" if (defined($g) && $g == 3);
+	$color = rgb_to_color(hsv_to_rgb(1,1,1)) if (defined($g) && $g == 1);
+	$color = rgb_to_color(hsv_to_rgb(0.666666,1,1)) if (defined($g) && $g == 2);
+	$color = rgb_to_color(hsv_to_rgb(0.166666,1,1)) if (defined($g) && $g == 3);
 	$x3d .= "<transform translation='$x $y $z' scale='$scale'><shape><appearance><material diffuseColor='$color'></material></appearance><sphere></sphere></shape></transform>";
 	$x3d .= "\n";
     }
