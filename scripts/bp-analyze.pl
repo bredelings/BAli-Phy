@@ -760,6 +760,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     if (-e "Results/tree-1-2-3.svg")
     {
 	$MDS_figure = "tree-1-2-3.svg";
+	$MDS_figure_3d = "tree-1-2-3.points";
 	$title = "the first 3 chains";
     }
     elsif (-e "Results/tree-1-2.svg")
@@ -2763,10 +2764,6 @@ sub write_x3d_file
 
     $dir = "$dir/" if ("$dir");
     
-    open FILE, ">${dir}${filename}.x3d";
-    print FILE &gen_x3d_of_mds($point_string);
-    close FILE;
-
     open FILE, ">${dir}${filename}.html";
     print FILE 
 "<html>
@@ -2780,8 +2777,9 @@ sub write_x3d_file
   </head>
   <body>
     <x3d width='1000px' height='1000px'>
-      <scene>
-	<inline url='${filename}.x3d'> </inline>
+      <scene>";
+    print FILE &gen_x3d_of_mds($point_string);
+    print FILE "
       </scene>
     </x3d>
   </body>
@@ -2920,6 +2918,7 @@ sub gen_x3d_of_mds
 	$seen{$g}++;
     }
 
-    $x3d = "<x3d><scene>\n$x3d\n</scene></x3d>\n";
+    ## FIXME - Chrome can't <include /> local files because it treats them as cross-site scripting, which they are not, I think.
+#    $x3d = "<x3d><scene>\n$x3d\n</scene></x3d>\n";
     return $x3d;
 }
