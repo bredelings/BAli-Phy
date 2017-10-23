@@ -2705,6 +2705,12 @@ sub tree_MDS
 #	print "L1 = $L1  L2 = $L2\n";
 	exec_show("trees-distances matrix --max=$N --jitter=0.3 $skip $tf1 $tf2 $tf3 > $matfile");
 	Rexec($script,"$L1 $L2 $L3 $matfile $outfile");
+
+	my $script3d = find_in_path("tree-plot3-3D.R");
+#	print "3d script is at '${script3d}'\n";
+	my $point_string = Rexec($script3d, "$L1 $L2 $L3 $matfile");
+
+	&write_x3d_file("Results","tree-1-2-3.points", $point_string);
     }
 
 }
@@ -2891,7 +2897,7 @@ sub gen_x3d_of_mds
 	my $size = 0.04;
 	my $scale = "$size $size $size";
 	$color = "1 0 0";
-	print "Handling point $seen{$g}/$n{$g} in group $g\n";
+
 	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.833333, 1.0),
 #	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.0,      0.0),
 					 interpolate($seen{$g}, $n{$g}, 0.3,      1.0),
