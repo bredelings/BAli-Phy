@@ -160,6 +160,8 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
     {
 	int s_index = P.smodel_index_for_partition(i);
 	//    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
+	out_screen<<"#"<<i+1 <<": alphabet = "<<P.get_data_partition(i).get_alphabet().name<<"\n";
+
 	out_screen<<"#"<<i+1<<": subst "<<show_model(SModels[s_index].description)<<" (S"<<s_index+1<<")\n";
 
 	int i_index = P.imodel_index_for_partition(i);
