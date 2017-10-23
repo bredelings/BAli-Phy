@@ -163,7 +163,7 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	out_screen<<"#"<<i+1<<": subst "<<show_model(SModels[s_index].description)<<" (S"<<s_index+1<<")\n";
 
 	int i_index = P.imodel_index_for_partition(i);
-	string i_name = " = none";
+	string i_name = "= none";
 	if (i_index != -1)
 	    i_name = show_model(IModels[i_index].description);
 	out_screen<<"#"<<i+1<<": indel "<<i_name;
