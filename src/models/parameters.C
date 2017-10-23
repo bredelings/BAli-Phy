@@ -450,7 +450,6 @@ vector<vector<int>> compress_site_patterns(const alignment& A, int n, vector<int
     for(int c=0;c<A.length();c++)
 	mapping[c] = add_column(M, site_pattern(A,n,c), columns, counts);
 
-    std::cerr<<A.length()<<" columns -> "<<columns.size()<<" unique patterns.\n";
     return columns;
 }
 
@@ -1462,6 +1461,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	    vector<int> counts;
 	    vector<int> mapping;
 	    auto AA = compress_alignment(A[i], t(), counts, mapping);
+	    std::cerr<<"Partition #"<<i+1<<": "<<A[i].length()<<" columns -> "<<AA.length()<<" unique patterns.\n";
 
 	    PC->DPC.emplace_back(this, i, AA, counts, like_calcs[i]);
 	    get_data_partition(i).set_alignment(AA);
