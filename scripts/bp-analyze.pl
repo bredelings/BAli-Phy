@@ -2834,7 +2834,7 @@ sub interpolate
     my $total = shift;
     my $from = shift;
     my $to = shift;
-    return $to + ($from-$to)*($i/($total-1-$i));
+    return $from + ($to-$from)*($i*1.0/($total-1));
 }
 
 sub gen_x3d_of_mds
@@ -2856,7 +2856,7 @@ sub gen_x3d_of_mds
 	push @y, ${$point}[1];
 	push @z, ${$point}[2];
 	my $g = ${$point}[3];
-	$g = 0 if (!defined($g));
+	$g = 1 if (!defined($g));
 	$n{$g} = 0 if (!defined($n{$g}));
 	$n{$g}++;
 	push @points, $point;
@@ -2885,18 +2885,33 @@ sub gen_x3d_of_mds
 	my $z = ${$point}[2];
 	$z = ($z-$zmin)/$zw*5.0 - 2.5;
 	my $g = ${$point}[3];
-	$g = 0 if (!defined($g));
+	$g = 1 if (!defined($g));
 	$seen{$g} = 0 if (!defined($seen{$g}));
-	$seen{$g}++;
 	my $color;
 	my $size = 0.04;
 	my $scale = "$size $size $size";
 	$color = "1 0 0";
-	$color = rgb_to_color(hsv_to_rgb(1,1,1)) if (defined($g) && $g == 1);
-	$color = rgb_to_color(hsv_to_rgb(0.666666,1,1)) if (defined($g) && $g == 2);
-	$color = rgb_to_color(hsv_to_rgb(0.166666,1,1)) if (defined($g) && $g == 3);
+	print "Handling point $seen{$g}/$n{$g} in group $g\n";
+	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.833333, 1.0),
+#	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.0,      0.0),
+					 interpolate($seen{$g}, $n{$g}, 0.3,      1.0),
+					 1)
+	                      ) if (defined($g) && $g == 1);
+
+	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.5,      0.666666),
+#	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.666666, 0.666666),
+					 interpolate($seen{$g}, $n{$g}, 0.3,      1.0),
+					 1)
+	                      ) if (defined($g) && $g == 2);
+
+	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.166666, 0.333333),
+					 interpolate($seen{$g}, $n{$g}, 0.3,      1.0),
+					 1)
+	    ) if (defined($g) && $g == 3);
+
 	$x3d .= "<transform translation='$x $y $z' scale='$scale'><shape><appearance><material diffuseColor='$color'></material></appearance><sphere></sphere></shape></transform>";
 	$x3d .= "\n";
+	$seen{$g}++;
     }
 
     $x3d = "<x3d><scene>\n$x3d\n</scene></x3d>\n";
