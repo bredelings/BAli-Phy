@@ -339,11 +339,11 @@ Nucleotides::Nucleotides(const string& s, char c)
 }
 
 DNA::DNA()
-    :Nucleotides("DNA nucleotides",'T') 
+    :Nucleotides("DNA",'T')
 { }
 
 RNA::RNA()
-    :Nucleotides("RNA nucleotides",'U') 
+    :Nucleotides("RNA",'U')
 { }
 
 
@@ -641,7 +641,7 @@ Triplets::Triplets(const string& s,const Nucleotides& a)
 }
 
 Triplets::Triplets(const Nucleotides& a)
-    :Triplets(string("Triplets of ")+a.name,a)
+    :Triplets(string("Triplets[")+a.name+"]",a)
 { }
 
 char convert_DNA_or_RNA_to(char c, Nucleotides& N)
@@ -769,31 +769,31 @@ Genetic_Code::Genetic_Code(const string& n, const string& filename)
 }
 
 Standard_Genetic_Code::Standard_Genetic_Code()
-    :Genetic_Code("Standard_Genetic_Code")
+    :Genetic_Code("standard")
 {
     setup_table("FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG");
 }
 
 Mt_Invertebrate_Genetic_Code::Mt_Invertebrate_Genetic_Code()
-    :Genetic_Code("Mt_Invertebrate_Genetic_Code")
+    :Genetic_Code("mt-invert")
 {
     setup_table("FFLLSSSSYY**CCWWLLLLPPPPHHQQRRRRIIMMTTTTNNKKSSSSVVVVAAAADDEEGGGG");
 }
 
 Mt_Vertebrate_Genetic_Code::Mt_Vertebrate_Genetic_Code()
-    :Genetic_Code("Mt_Vertebrate_Genetic_Code")
+    :Genetic_Code("mt-vert")
 {
     setup_table("FFLLSSSSYY**CCWWLLLLPPPPHHQQRRRRIIMMTTTTNNKKSS**VVVVAAAADDEEGGGG");
 }
 
 Mt_Yeast_Genetic_Code::Mt_Yeast_Genetic_Code()
-    :Genetic_Code("Mt_Yeast_Genetic_Code")
+    :Genetic_Code("mt-yeast")
 {
     setup_table("FFLLSSSSYY**CCWWTTTTPPPPHHQQRRRRIIMMTTTTNNKKSSRRVVVVAAAADDEEGGGG");
 }
 
 Mt_Protozoan_Genetic_Code::Mt_Protozoan_Genetic_Code()
-    :Genetic_Code("Mt_Protozoan_Genetic_Code")
+    :Genetic_Code("mt-protozoan")
 {
     setup_table("FFLLSSSSYY**CCWWTTTTPPPPHHQQRRRRIIMMTTTTNNKKSSRRVVVVAAAADDEEGGGG");
 }
@@ -861,7 +861,7 @@ Codons::Codons(const Nucleotides& N1,const AminoAcids& A1, const Genetic_Code& G
     setup_sub_nuc_table();
     setup_letter_classes();
 
-    name = string("Codons of ") + getNucleotides().name + " -> " + A1.name + " [" + G->name() + "]";
+    name = string("Codons[") + getNucleotides().name + ","+ G->name() + "]";
 }
 
 object_ptr<const Genetic_Code> get_genetic_code(const string& name)
