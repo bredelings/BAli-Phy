@@ -433,7 +433,7 @@ This can be done simply by starting several instances of the program, and does n
 
       <para>You can specify a more complex substitution model as follows (See <xref linkend="subst_basic"/>):
 
-	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel LG+GammaRates+INV</userinput></screen> </para>
+	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel LG+Rates.Gamma+INV</userinput></screen> </para>
       <para>You may specify an indel model of <userinput>none</userinput>
 	to fix the alignment to its initial value, and ignore information in shared insertions or deletions.
   	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --imodel none</userinput></screen></para>
@@ -525,7 +525,7 @@ Finally, you may specify <userinput>-Inone</userinput> or <userinput>--imodel no
 align = examples/sequences/EF-Tu/5d.fasta
 
 #select an substitution model
-smodel = LG+log_normal_rates+INV
+smodel = LG+Rates.logNormal+INV
 
 #fix the alignment and do not model indels
 imodel = none
@@ -534,7 +534,7 @@ imodel = none
 	  the sequence file, which has no name on the command line.
 	  Lines that begin with # are comments, and blank lines are
 	  ignored.
-	  <screen><prompt>%</prompt> <userinput>bali-phy examples/sequences/EF-Tu/5d.fasta --smodel LG+log_normal_rates+INV --imodel none</userinput></screen>
+	  <screen><prompt>%</prompt> <userinput>bali-phy examples/sequences/EF-Tu/5d.fasta --smodel LG+Rates.logNormal+INV --imodel none</userinput></screen>
 	</para>
       </section>
 
@@ -584,7 +584,7 @@ imodel = none
 	invariant sites.  The amount of rate variation and the fraction of
 	invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel LG+log_normal_rates+INV</userinput></screen></example>
+      <screen> <prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/EF-Tu/5d.fasta --smodel LG+Rates.logNormal+INV</userinput></screen></example>
 
     <example><info><title>Fixed alignment</title></info>
       
@@ -705,11 +705,6 @@ imodel = none
 	sequence-file name by using the <userinput>--name</userinput> option.</para>
     </section>
 
-    <section><info><title>Output options</title></info>
-
-    <para>In order to infer ancestral sequences at internal nodes, add the option <userinput>--set log-ancestral=1</userinput>.  This will lead to the creation of an additional output file called <filename>C1.P1.ancestral.fastas</filename>. This file contains a sampled alignment for each iteration, where N's are replaced with a letter randomly sampled from the posterior distribution.</para>
-    </section>
-
     <section><info><title>Output files</title></info>
       
       <para><application>BAli-Phy</application> writes the following output
@@ -740,14 +735,14 @@ imodel = none
 	<varlistentry>
 	  <term>C1.MAP</term>
 	  <listitem>
-	    <para>Successive estimates of the MAP point.</para>
+	    <para>Successive estimates of the MAP alignment, tree and parameters.</para>
 	  </listitem>
 	</varlistentry>
 	
 	<varlistentry>
 	  <term>C1.log</term>
 	  <listitem>
-	    <para>Scalar parameters: indel and substitution parameters, etc.</para>
+	    <para>Numeric parameters: indel and substitution rates, etc.</para>
 	  </listitem>
 	</varlistentry>
 	
@@ -1157,7 +1152,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
        <application>BAli-Phy</application> are specified using a
        stack, as follows: <userinput>Model[arg]+Model[arg]+...+Model[arg]</userinput>
         where each model uses the previous models as input.  For
-	example, <userinput>LG+GammaRates[4]+INV</userinput>. Some arguments are optional.</para>
+	example, <userinput>LG+Rates.Gamma[4]+INV</userinput>. Some arguments are optional.</para>
 
 	<note>
 	  <para>
@@ -1490,8 +1485,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>model</replaceable> + GammaRates</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + GammaRates[4]</userinput> (default)</para>
+		<para><userinput><replaceable>model</replaceable> + Rates.Gamma</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + Rates.Gamma[4]</userinput> (default)</para>
 		<para>Yang (1994)</para>
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
@@ -1506,8 +1501,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>model</replaceable> + log_normal_rates</userinput></para>
-		<para><userinput><replaceable>model</replaceable> + log_normal_rates[4]</userinput> (default)</para>
+		<para><userinput><replaceable>model</replaceable> + Rates.logNormal</userinput></para>
+		<para><userinput><replaceable>model</replaceable> + Rates.logNormal[4]</userinput> (default)</para>
 	      </entry>
 	      <entry><replaceable>model</replaceable> alphabet</entry>
 	      <entry>
@@ -1790,9 +1785,9 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
     </section>
     <section><info><title>Substitution model examples</title></info>
       
-      <para>Example: --smodel WAG+F+log_normal_rates+INV</para>
-      <para>Example: --smodel WAG+log_normal_rates+INV (same as above)</para>
-      <para>Example: --smodel LG+gwF+log_normal_rates+INV</para>
+      <para>Example: --smodel WAG+F+Rates.logNormal+INV</para>
+      <para>Example: --smodel WAG+Rates.logNormal+INV (same as above)</para>
+      <para>Example: --smodel LG+gwF+Rates.logNormal+INV</para>
       <para>Example: --smodel EQU --alphabet Triplets</para>
       <para>Example: --smodel HKY</para>
       <para>Example: --smodel M0</para>
@@ -1803,11 +1798,13 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
     </section>
     <section xml:id="genetic-codes"><info><title>Genetic Codes</title></info>
       
-      <para>When using a codon-based substitution model like <userinput>M0</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
+      <para>When using a codon-based substitution model like <userinput>M0</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[,<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
 <para>If the genetic code is not specified, then the standard code is used:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons</screen>
-	This example specifies the vertebrate mitochondrial code:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons[mt-vert]</screen>
+<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons[RNA]</screen>
+	These examples specify the vertebrate mitochondrial code:
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons[DNA,mt-vert]
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons[,mt-vert]</screen>	
 </para>
     </section>
 
@@ -2397,10 +2394,10 @@ The stabilization criterion is the same one described above for numerical values
       
       <qandaset>
 	<qandaentry>
-	  <question><para>I tried to use <userinput>--smodel LG+GammaRates[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
+	  <question><para>I tried to use <userinput>--smodel LG+Rates.Gamma[6]</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
 	  <answer>
-	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>LG+GammaRates[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <command>bali-phy</command>.</para>
-	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>--smodel "LG+GammaRates[6]"</userinput>.  This will keep the C-shell from interfering with your command.
+	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>LG+Rates.Gamma[6]</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn't even run <command>bali-phy</command>.</para>
+	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>--smodel "LG+Rates.Gamma[6]"</userinput>.  This will keep the C-shell from interfering with your command.
 	    </para>
 	  </answer>
 	</qandaentry>
