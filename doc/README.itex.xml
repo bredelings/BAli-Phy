@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "3.0-beta2"         >
+<!ENTITY  version        "3.0-beta4"         >
 
 <!ENTITY  source.file    "bali-phy-&version;.tar.gz"         >
 <!ENTITY  linux64.file   "bali-phy-&version;-linux64.tar.gz"         >
@@ -312,31 +312,36 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
   <section xml:id="compilation"><info><title>Compiling <application>BAli-Phy</application></title></info>
     
 
-    <para>Most users will not need to compile <application>BAli-Phy</application>
-      and can skip this section, because they can use the precompiled 
-      executables from the official website for Linux, Mac, and
-      Windows.  However, compiling <application>BAli-Phy</application>
-      is intended to be a relatively painless process.
+    <para>Compiling <application>BAli-Phy</application> is intended to be a relatively painless process.  However, most people will want to <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://bali-phy.org/download.php">download a compiled version</link>.
+
     </para>
 
-    <para>If you are compiling "live" source code that you checked out using GIT, then you need to follow the directions in <xref linkend="gitsource"/> before you start compiling.
-    </para>
-
-    <section><info><title>Software requirements</title></info>
+    <section><info><title>Setup</title></info>
       
 
-    <para>In order to compile BAli-Phy, you need a C++ compiler than can understands the C++14 standard.  </para>
-    <section><info><title>Compilers: Linux</title></info>
-    <para>On Linux we recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 5.0 (or higher).
-    </para>
-    <para>You may also use the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 3.5.0 or higher.
+    <para>In order to compile BAli-Phy, you need a C++ compiler than understands the C++14 standard.  We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 5.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 3.5.0 or higher. You will also need recent versions of autoconf, automake, and libtool to generate the configure script.  The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won't be built. See also <xref linkend="software_req"/>. </para>
+
+    <section><info><title>Linux</title></info>
+    <para>On Debian and Ubuntu, you can type:
+<screen><prompt>%</prompt> sudo apt-get install g++
+<prompt>%</prompt> sudo apt-get install libtool
+<prompt>%</prompt> sudo apt-get install autoconf
+<prompt>%</prompt> sudo apt-get install automake
+<prompt>%</prompt> sudo apt-get install git
+<prompt>%</prompt> sudo apt-get install libcairo2-dev</screen>
     </para>
     </section>
 
     <section><info><title>Compilers: Mac</title></info>
-    <para>On Mac OS X, the simplest method is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or newer).  Then you can use the default compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link>). </para>
-    
-    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>. However, this recipe may not install the latest version.</para>
+    <para>On Mac OS X, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or newer), which comes with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link>. To get the other tools, first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>, and then type:
+<screen><prompt>%</prompt> brew install libtool
+<prompt>%</prompt> brew install autoconf
+<prompt>%</prompt> brew install automake
+<prompt>%</prompt> brew install git
+<prompt>%</prompt> brew install cairo
+</screen>
+    </para>
+    <!-- para>You can also install BAli-Phy with homebrew.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>. However, this recipe may not install the latest version.</para -->
 
     </section>
     
@@ -345,71 +350,35 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
     <para>However, the easiest way to build MINGW executables is to use either Linux or Cygwin as the host environment.  This is called using a "cross-compiler".  You can obtain cross compilers for MINGW on both Linux and Cygwin.  To inform the <filename>configure.sh</filename> script that you wish to use a cross compiler, add the <userinput>--host</userinput> flag.  You should add the flag <userinput>--host=x86_64-w64-mingw32</userinput> to build 64-bit windows, and <userinput>--host=i686-w64-mingw32</userinput> to build 32-bit executables.</para>
     </section>
 
-    <section><info><title>Optional software libraries</title></info>
-    <para>This is not strictly necessary to run bali-phy, but is necessary for building the
-    tool <application>draw-tree</application> that is used to
-    draw consensus trees:
-
-    <itemizedlist>
-	  <listitem><para> The Cairo graphics library
-	      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link>)
-	  </para></listitem>
-    </itemizedlist>
-	See also <xref linkend="software_req"/>.
-    </para>
-    </section>
-
 	  
     </section>
 
-    <section><info><title>Quick Start</title></info>
-      
-      <para>In order to compile the program on UNIX, first
-	extract the source code archive, using a graphical archive
-	manager, or the command-line tool <command>tar</command>:
-	
-	<screen><prompt>%</prompt> <userinput>tar -zxf &source.file;</userinput></screen>
-	Then create a <emphasis>separate</emphasis> build directory, enter it, and run the
-	configure command:
-
-	<screen><prompt>%</prompt> <userinput>mkdir build</userinput>
-<prompt>%</prompt> <userinput>cd build</userinput>
-<prompt>%</prompt> <userinput>../bali-phy-&version;/configure --prefix=&#36;HOME/Applications/bali-phy-&version;/</userinput></screen>
-	
-	If this command succeeds, then you can simply type
-
-	<screen><prompt>%</prompt> <userinput>make</userinput>
-<prompt>%</prompt> <command>make install</command></screen>
-
-	to build and install <command>bali-phy</command> and its
-	associated tools and install it in <filename>&install.path;</filename>.
-	To customize the compilation and installation process, read the
-	following sections on supplying arguments to the
-	<command>configure</command> script.
+    <section xml:id="quickstart"><info><title>Clone, Configure, Compile</title></info>
+       
+    <para>First check out the code using git, and generate the configure script:
+<screen><prompt>%</prompt><userinput> git clone https://github.com/bredelings/BAli-Phy.git</userinput>
+<prompt>%</prompt><userinput> (cd BAli-Phy ; ./bootstrap.sh)</userinput>
+</screen>Then create a <emphasis>separate</emphasis> build directory, enter it, and run the configure command:
+<screen><prompt>%</prompt><userinput> mkdir build</userinput>
+<prompt>%</prompt><userinput> cd build </userinput>
+<prompt>%</prompt> <userinput>../BAli-Phy/configure --prefix=&#36;HOME/Applications/bali-phy-&version;/</userinput>
+</screen>Finally, build and install the software:
+<screen><prompt>%</prompt><userinput> make</userinput>
+<prompt>%</prompt><userinput> make install</userinput>
+</screen>
+The command <command>bali-phy</command> and its associated tools should then be located in <filename>&install.path;/bin/</filename>. To install to another directory <replaceable>dir</replaceable>, specify --prefix=<replaceable>dir</replaceable> to <command>configure</command>.
       </para>
+
     </section>
-
-    <section><info><title>Options to <command>configure</command></title></info>
-      
-
-      <section xml:id="install-prefix"><info><title>Installing to another location</title></info>
+      <section><info><title>Options: compiler and linker flags</title></info>
 	
-	<para>The configure script chooses to install
-	  <command>bali-phy</command> in the directory
-	  <filename>/usr/local/</filename> by default. You can install
-	  executables to another directory <replaceable>dir</replaceable>
-	  by passing
-	  <userinput>--prefix=<replaceable>dir</replaceable></userinput>.
-	  For example, in order to install
-	  <application>BAli-Phy</application> under
-	  <filename>~/Applications/bali-phy-&version;/</filename>, you can enter:
-
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
-	</para>
+      <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-5</command> on systems where <command>g++</command> invokes a compiler that is too old:
+ <screen><prompt>%</prompt> <userinput>../BAli-Phy/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CXX=g++-5</userinput></screen>
+        You may also set compiler and linker options using the CXXFLAGS and LDFLAGS variables.  A useful example of this is to produce an OS X executuable on that can run on older versions of OS X:
+	  <screen><prompt>%</prompt> <userinput>../BAli-Phy/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CXXFLAGS="-mmacosx-version-min=10.9" LDFLAGS="-mmacosx-version-min=10.9"</userinput></screen>	</para>
 
       </section>
-
-      <section><info><title>Specifying where to find libraries and header files (e.g. Cairo)</title></info>
+      <section><info><title>Options: where to find libraries and header files (e.g. Cairo)</title></info>
 	
 	<para>You can instruct the compiler to look for include files
 	  in directory <replaceable>dir</replaceable> by passing
@@ -426,67 +395,8 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 	<para>For example, if your system has Cairo installed in <filename>/usr/local/</filename>, then you might need to add "<userinput>--with-extra-includes=/usr/local/include --with-extra-libs=/usr/local/lib</userinput>" to the configure script arguments so that the compiler can find the Cairo include files and libraries.</para>
       </section>
 
-      <section><info><title>Selecting a non-default C++ compiler</title></info>
-	
-	
-	<para>The default C++ compiler is <command>g++</command>.  On
-	  some systems, <command>g++</command> invokes a C++ compiler that is too old.
-	  To use <command>g++-5</command> as the C++ compiler when compiling
-	  <application>BAli-Phy</application>, you would set the CXX
-	  environment variable as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure CXX=g++-5</userinput></screen>
-	</para>
-      </section>
-
-      <section><info><title>Passing flags to the C++ compiler</title></info>
-	
-	
-	<para>You can pass flags to the C++ compiler by setting the CXXFLAGS variable:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure CXXFLAGS="-march=native -g"</userinput></screen>
-	</para>
-      </section>
-
-      <section><info><title>Example</title></info>
-	
-	<para>
-          All these options to <command>configure</command> can be
-	  combined, as follows:
-	  <screen><prompt>%</prompt> <userinput>../bali-phy-&version;/configure --prefix=&#36;HOME/Applications/bali-phy-&version; CXX=g++-5 CXXFLAGS="-march=native -g"</userinput></screen>
-	</para>
-      </section>
-    </section>
-    <section xml:id="gitsource"><info><title>Generating the <command>configure</command> script
-	and Makefiles (<application>git</application> only)</title></info>
-       
-      <para>Skip this step unless you are compiling a
-	snapshot of the source code that you checked out using
-	GIT. If you downloaded an official tar.gz archive of the
-	source from the website, then it already includes these files.
-      </para>
-
-      <para>To generate these files, you need automake 1.8 (or higher)
-	autoconf 2.59 (or higher), and libtool.  In the top level
-	directory of the repository that you checked out, run <screen><prompt>%</prompt><userinput> ./bootstrap.sh</userinput></screen>
-
-        If your system has multiple versions of automake, then you may
-	have to type e.g. <userinput>automake-1.14 -a</userinput> and
-	<userinput>aclocal-1.14</userinput> instead in order to specify which
-	version to use.
-</para>
     </section>
 
-
-
-    <section><info><title>Installing when compiling from source</title></info>
-      
-      <para>
-	After compiling <application>BAli-Phy</application>, you can
-	simply type <command>make install</command>.  This will copy the
-	compiled executables to the installation directory (See <xref linkend="install-prefix"/>).
-      </para>
-    </section>
-
-  </section>
 
   <section xml:id="running"><info><title>Running the program</title></info>
     
