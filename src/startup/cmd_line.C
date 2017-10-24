@@ -134,7 +134,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description mcmc("MCMC options");
     mcmc.add_options()
-	("iterations,i",value<long int>()->default_value(100000),"The number of iterations to run.")
+	("iterations,i",value<long int>(),"The number of iterations to run.")
 	("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
 	("seed,s", value<unsigned long>(),"Random seed")
 	("name,n", value<string>(),"Name for the analysis directory to create.")
@@ -276,9 +276,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("model") and args.count("Model"))
 	throw myexception()<<"You cannot specify both --model and --Model.\n\nTry `"<<argv[0]<<" --help' for more information.";
-
-    if (not args.count("iterations"))
-	throw myexception()<<"The number of iterations was not specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
     return args;
 }

@@ -556,7 +556,9 @@ int main(int argc,char* argv[])
 
 	    block_signals();
 
-	    long int max_iterations = args["iterations"].as<long int>();
+	    long int max_iterations = 200000;
+	    if (args.count("iterations"))
+		max_iterations = args["iterations"].as<long int>();
 	    int subsample = args["subsample"].as<int>();
       
 	    //---------- Open output files -----------//
@@ -611,8 +613,13 @@ int main(int argc,char* argv[])
 
 	    do_pre_burnin(args, M, *files[0], out_both);
 
-	    out_screen<<"\nBeginning "<<max_iterations<<" iterations of MCMC computations."<<endl;
-	    out_screen<<"\nBAli-Phy does NOT decide when to stop -- you need to decide yourself!"<<endl;
+	    out_screen<<"\nBAli-Phy does NOT detect when how many iterations is sufficient:\n   You need to monitor convergence and kill it when done."<<endl;
+	    if (not args.count("iterations"))
+		out_screen<<"   Maximum number of iterations not specified: limiting to "<<max_iterations<<"."<<endl;
+	    else
+		out_screen<<"   Maximum number of iterations set to "<<max_iterations<<"."<<endl;
+
+	    out_screen<<"\nBeginning MCMC computations."<<endl;
 	    out_screen<<"   - Future screen output sent to '"<<dir_name<<"/C1.out'"<<endl;
 	    out_screen<<"   - Future debugging output sent to '"<<dir_name<<"/C1.err'"<<endl;
 	    if (M.as<Parameters>())

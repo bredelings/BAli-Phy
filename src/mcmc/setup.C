@@ -831,7 +831,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 	    PP.set_parameter_value(PP.find_parameter("*IModels.training"), new constructor("Prelude.False",0));
 	}
     }
-    out_both<<endl;
+//    out_both<<endl;
 
     out_log<<Stats<<endl;
     duration_t t2 = total_cpu_time();
