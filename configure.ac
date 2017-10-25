@@ -132,12 +132,6 @@ AC_ARG_ENABLE([profile],
              [profile=$enableval],
              [profile=no])
 
-AC_ARG_ENABLE([cairo],
-              AS_HELP_STRING([--enable-cairo], [Build drawing programs that depend on libcairo]),
-             [cairo=yes],
-             [cairo=no])
-
-
 # Specify extra library paths
 AC_ARG_WITH([mpi], AS_HELP_STRING([--with-mpi],[Compile with MPI]),
   use_mpi="$withval",
@@ -238,8 +232,6 @@ AM_CONDITIONAL(HOST_I386,test "${host_cpu}" = i386)
 AM_CONDITIONAL(HOST_I686,test "${host_cpu}" = i686)
 AM_CONDITIONAL(HOST_X86_64,test "${host_cpu}" = x86_64)
 AM_CONDITIONAL(HOST_PPC,test "${host_cpu}" = powerpc)
-
-AM_CONDITIONAL(HAVE_CAIRO, test "${cairo}" = yes)
 
 # Checks for library functions.
 AC_HEADER_STDC
@@ -415,14 +407,16 @@ echo "------------------------------------------"
 
 #----------------------- Check for cairo ----------------#
 cairo_progs=""
-if test -n "$cairo" && test "$cairo" != "no"; then
-   temp=""
-   PKG_CHECK_MODULES(CAIRO,"cairo $temp")
-   AC_SUBST(CAIRO_CFLAGS)
-   AC_SUBST(CAIRO_LIBS)
+PKG_CHECK_MODULES(CAIRO,"cairo >= 1.10",cairo=yes,cairo=no)
+AC_SUBST(CAIRO_CFLAGS)
+AC_SUBST(CAIRO_LIBS)
+if test "$cairo" = "no" ; then
+   echo	"Can't find cairo library (using pkg-config)! The tool `drawtree` will not be built."
 fi
+
 AM_CXXFLAGS="$AM_CXXFLAGS -pedantic $CAIRO_CFLAGS"
 AC_SUBST(cairo_progs)
+AM_CONDITIONAL(HAVE_CAIRO, test "${cairo}" = yes)
 
 ldflags=$LDFLAGS
 if test "${host_os_noversion}" = "linux" ; then
@@ -465,7 +459,6 @@ if test -n "$cairo" && test "$cairo" != "no"; then
 fi
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CXXFLAGS)
-
 
 # Release instructions:
 # 1. Source: make dist
