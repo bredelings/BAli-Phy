@@ -118,11 +118,24 @@ While running the Cygwin installer
     </section>
 
     <section><info><title>Mac OS X requirements</title></info>
-    <para>You can now install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 7 (or higher) compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.  However, the recipe may not install the latest version.</para>
+    <para>After installing XCode and <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>, you can type:
+<screen><prompt>%</prompt> brew install gnuplot
+<prompt>%</prompt> brew tap homebrew/science
+<prompt>%</prompt> brew install r
+</screen>
+    </para>
+    <para>You can also install bali-phy itself with homebrew:
+<screen><prompt>%</prompt> brew tap homebrew/science
+<prompt>%</prompt> brew install bali-phy</screen>
+However, the recipe may not install the latest version.</para>
     </section>
 
     <section><info><title>Linux requirements</title></info>
-      <para>No extra requirements.</para>
+    <para>If you have Debian or Ubuntu linux, you can type:
+    <screen><prompt>%</prompt> sudo apt-get install gnuplot
+<prompt>%</prompt> sudo apt-get install r-base
+<prompt>%</prompt> sudo apt-get install seaview</screen>
+    </para>
     </section>
 
     <section><info><title>Installing BAli-Phy executables</title></info>
