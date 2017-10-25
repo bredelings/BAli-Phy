@@ -407,11 +407,11 @@ echo "------------------------------------------"
 
 #----------------------- Check for cairo ----------------#
 cairo_progs=""
-PKG_CHECK_MODULES(CAIRO,"cairo >= 1.10",cairo=yes,cairo=no)
+PKG_CHECK_MODULES(CAIRO,[cairo >= 1.8],cairo=yes,cairo=no)
 AC_SUBST(CAIRO_CFLAGS)
 AC_SUBST(CAIRO_LIBS)
 if test "$cairo" = "no" ; then
-   echo	"Can't find cairo library (using pkg-config)! The tool `drawtree` will not be built."
+   echo	"Can't find cairo library (using pkg-config)! The tool 'draw-tree' will not be built."
 fi
 
 AM_CXXFLAGS="$AM_CXXFLAGS -pedantic $CAIRO_CFLAGS"
