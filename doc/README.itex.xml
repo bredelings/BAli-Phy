@@ -57,7 +57,7 @@
   <section xml:id="installation"><info><title>Installation</title></info>
 
   <para>You can install BAli-Phy by downloading compiled executables from the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/download.php">website</link>.</para>
-  <para>On OS X, you can also install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 7 (or higher) compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.  However, the recipe may not install the latest version.</para>
+  <para>On OS X, you can also install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 6 (or higher) compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.  However, the recipe may not install the latest version.</para>
   <section xml:id="pre-requisites"><info><title>Hardware requirements</title></info>
     
     <para>We recommend running BAli-Phy on a computing cluster for long runs.
@@ -117,25 +117,38 @@ While running the Cygwin installer
       </note>
     </section>
 
-    <section><info><title>Mac OS X requirements</title></info>
-    <para>After installing XCode and <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>, you can type:
-<screen><prompt>%</prompt> brew install gnuplot
-<prompt>%</prompt> brew tap homebrew/science
-<prompt>%</prompt> brew install r
-</screen>
-    </para>
-    <para>You can also install bali-phy itself with homebrew:
+    <section><info><title>Mac OS X</title></info>
+    <para>First install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 6 or higher.
+
+    Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>:
+    <screen><prompt>%</prompt> /usr/bin/ruby -e "&#36;(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</screen>
+    Then use homebrew to install 
 <screen><prompt>%</prompt> brew tap homebrew/science
 <prompt>%</prompt> brew install bali-phy</screen>
-However, the recipe may not install the latest version.</para>
+    The packages for R and gnuplot should be install automatically.
+    </para>
+
     </section>
 
-    <section><info><title>Linux requirements</title></info>
-    <para>If you have Debian or Ubuntu linux, you can type:
+    <section><info><title>Linux</title></info>
+
+    <para>
+      First install BAli-Phy:
+      <screen><prompt>%</prompt> mkdir &install.prefix;
+<prompt>%</prompt> cd &install.prefix;
+<prompt>%</prompt> wget &linux64.url;
+<prompt>%</prompt> tar -zxf &linux64.file;</screen></para>
+      <para>Second, add it to your PATH, so that the shell knows where to find it:
+<screen><prompt>%</prompt> echo "setenv PATH &#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH" &#62;&#62; ~/.login
+<prompt>%</prompt> echo "export PATH=&#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH" &#62;&#62; ~/.bashrc</screen>
+    </para>
+
+    <para>If you have Debian or Ubuntu linux, you can install other recommended programs by typing:
     <screen><prompt>%</prompt> sudo apt-get install gnuplot
 <prompt>%</prompt> sudo apt-get install r-base
 <prompt>%</prompt> sudo apt-get install seaview</screen>
     </para>
+
     </section>
 
     <section><info><title>Installing BAli-Phy executables</title></info>
@@ -345,7 +358,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
     </para>
     </section>
 
-    <section><info><title>Compilers: Mac</title></info>
+    <section><info><title>Mac</title></info>
     <para>On Mac OS X, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or newer), which comes with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link>. To get the other tools, first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>, and then type:
 <screen><prompt>%</prompt> brew install libtool
 <prompt>%</prompt> brew install autoconf
@@ -358,7 +371,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP
 
     </section>
     
-    <section><info><title>Compilers: Windows</title></info>
+    <section><info><title>Windows</title></info>
     <para>We recommend compiling windows executables in the MINGW format instead of the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/">Cygwin</link> format.  MINGW executables are native windows executables, and do not need <filename>cygwin.dll</filename> to run.</para>
     <para>However, the easiest way to build MINGW executables is to use either Linux or Cygwin as the host environment.  This is called using a "cross-compiler".  You can obtain cross compilers for MINGW on both Linux and Cygwin.  To inform the <filename>configure.sh</filename> script that you wish to use a cross compiler, add the <userinput>--host</userinput> flag.  You should add the flag <userinput>--host=x86_64-w64-mingw32</userinput> to build 64-bit windows, and <userinput>--host=i686-w64-mingw32</userinput> to build 32-bit executables.</para>
     </section>
