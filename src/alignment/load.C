@@ -308,9 +308,14 @@ std::list<alignment> load_alignments(std::istream& ifile, const string& alph_nam
 
     alignments.push_back(load_next_alignment(ifile, alph_name));
 
+    // The actually first alignment might be freed later on, so we can't
+    // rely on a reference to it's alphabet.
+    auto& first = alignments.front();
+    object_ptr<const alphabet> a = first.get_alphabet().clone();
+
     vector<string> names = sequence_names(alignments.front());
 
-    load_more_alignments(alignments, ifile, names, alignments.front().get_alphabet(), maxalignments);
+    load_more_alignments(alignments, ifile, names, *a, maxalignments);
 
     return alignments;
 }
