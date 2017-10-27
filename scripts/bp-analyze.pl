@@ -36,7 +36,10 @@ use Carp;
 
 use POSIX;
 
+use Cwd 'abs_path';
+
 use File::Temp qw(tempfile);
+use File::Basename;
 
 my $home = $ENV{'HOME'};
 
@@ -1237,14 +1240,14 @@ sub mixing_diagnostics
 
     if (!more_recent_than_all_of("Results/convergence-PP.pdf",[@tree_files]))
     {
-	my $script = find_in_path("compare-runs.R");
+	my $script = get_libexec_script("compare-runs.R");
 	die "can't find script $script!" if (!defined($script));
 	Rexec($script,"Results/LOD-table Results/convergence-PP.pdf");
     }
     if (!more_recent_than_all_of("Results/convergence1-PP.svg",[@tree_files]) or 
 	!more_recent_than_all_of("Results/convergence2-PP.svg",[@tree_files]))
     {
-	my $script = find_in_path("compare-runs2.R");
+	my $script = get_libexec_script("compare-runs2.R");
 	die "can't find script $script!" if (!defined($script));
 	Rexec($script,"Results/LOD-table Results/convergence1-PP.svg Results/convergence2-PP.svg");
     }
@@ -1635,6 +1638,18 @@ EOF` if ($have_gnuplot);
     }
 }
 
+
+sub get_libexec_script
+{
+    my $file = shift;
+    my $prefix = dirname(dirname(abs_path(__FILE__)));
+    my $libexecdir = "$prefix/libexec/bali-phy/";
+    die "Missing libexecdir '$libexecdir'!" if (! -e $libexecdir);
+    my $path = "$libexecdir/$file";
+    die "Missing libexec script '$file'!" if (! -e $path);
+    
+    return $path;
+}
 
 sub find_in_path
 {
@@ -2656,13 +2671,13 @@ sub tree_MDS
     my $i=1;
     foreach my $tree_file (@tree_files)
     {
-	my $script = find_in_path("tree-plot1.R");
+	my $script = get_libexec_script("tree-plot1.R");
 	my $matfile = "Results/tree${i}.M";
 	my $outfile = "Results/tree${i}.svg";
 	exec_show("trees-distances matrix --max=300 --jitter=0.3 $skip $tree_file > $matfile");
 	Rexec($script,"$matfile $outfile");
 
-	my $script3d = find_in_path("tree-plot1-3D.R");
+	my $script3d = get_libexec_script("tree-plot1-3D.R");
 	die "can't find script $script!" if (!defined($script));
 	my $point_string = Rexec($script3d, "$matfile");
 	&write_x3d_file("Results","tree-3D1-${i}.points", $point_string);
@@ -2672,7 +2687,7 @@ sub tree_MDS
 
     if ($#tree_files+1 == 2)
     {
-	my $script = find_in_path("tree-plot2.R");
+	my $script = get_libexec_script("tree-plot2.R");
 	my $tf1 = $tree_files[0];
 	my $tf2 = $tree_files[1];
 	my $N = 400;
@@ -2684,7 +2699,7 @@ sub tree_MDS
 	exec_show("trees-distances matrix --max=$N --jitter=0.3 $skip $tf1 $tf2 > $matfile");
 	Rexec($script,"$L1 $L2 $matfile $outfile");
 
-	my $script3d = find_in_path("tree-plot2-3D.R");
+	my $script3d = get_libexec_script("tree-plot2-3D.R");
 #	print "3d script is at '${script3d}'\n";
 	my $point_string = Rexec($script3d, "$L1 $L2 $matfile");
 
@@ -2693,7 +2708,7 @@ sub tree_MDS
 
     elsif ($#tree_files+1 >= 3)
     {
-	my $script = find_in_path("tree-plot3.R");
+	my $script = get_libexec_script("tree-plot3.R");
 	my $tf1 = $tree_files[0];
 	my $tf2 = $tree_files[1];
 	my $tf3 = $tree_files[2];
@@ -2707,7 +2722,7 @@ sub tree_MDS
 	exec_show("trees-distances matrix --max=$N --jitter=0.3 $skip $tf1 $tf2 $tf3 > $matfile");
 	Rexec($script,"$L1 $L2 $L3 $matfile $outfile");
 
-	my $script3d = find_in_path("tree-plot3-3D.R");
+	my $script3d = get_libexec_script("tree-plot3-3D.R");
 #	print "3d script is at '${script3d}'\n";
 	my $point_string = Rexec($script3d, "$L1 $L2 $L3 $matfile");
 
