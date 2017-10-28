@@ -114,6 +114,15 @@ my $min_ESS;
 &determine_input_files();
 
 @commands = get_header_attributes("command",@out_files);
+my $commands_differ=0;
+for(my $i=1;$i<=$#commands;$i++)
+{
+    if ($commands[$i] ne $commands[0])
+    {
+	$commands_differ=1;
+	print "WARNING: Commands differ!\n  $commands[0]\n  $commands[$i]\n";
+    }
+}
 @directories = get_header_attributes("directory",@out_files);
 @subdirs    = get_header_attributes("subdirectory",@out_files);
 
@@ -488,10 +497,13 @@ sub section_analysis
 {
     my $section = "";
 $section .= "<h2><a name=\"analysis\">Analysis</a></h2>\n";
+$section .= "<p><b>command line</b>: $commands[0]</p>\n" if (!$commands_differ);
 $section .= '<table style="width:100%">'."\n";
 
 $section .= '<table class="backlit" style="width:100%">'."\n";
-$section .= "<tr><th>chain #</th><th>burnin</th><th>subsample</th><th>Iterations (remaining)</th><th>command line</th><th>subdirectory</th><th>directory</th></tr></tr>\n";
+$section .= "<tr><th>chain #</th><th>burnin</th><th>subsample</th><th>Iterations (remaining)</th>";
+$section .= "<th>command line</th>" if ($commands_differ);
+$section .= "<th>subdirectory</th><th>directory</th></tr></tr>\n";
     for(my $i=0;$i<=$#out_files;$i++)
     {
 $section .= "<tr>\n";
@@ -504,7 +516,7 @@ $section .= "  <td>$subsample</td>\n";
 my $remaining = ($n_iterations[$i] - $burnin)/$subsample;
 $section .= "  <td>$remaining</td>\n";
 
-$section .= "  <td>$commands[$i]</td>\n";
+$section .= "  <td>$commands[$i]</td>\n" if ($commands_differ);
 $section .= "  <td>$subdirs[$i]</td>\n";
 $section .= "  <td>$directories[$i]</td>\n";
 
@@ -1996,8 +2008,6 @@ sub get_header_attributes
 	local *FILE;
 
 	open FILE, $filename or die "Can't open $filename!";
-
-	my @partitions = ();
 
 	while (my $line = <FILE>) 
 	{
