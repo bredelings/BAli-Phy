@@ -69,8 +69,15 @@ lines(avePP,col=hsv(1,1,1),lwd=2)
 #-------------- Plot 2 -------------------
 svg(file=outfile2,height=3,width=7) 
 
+lodmax = log10(ppmax/(1-ppmax));
+lodmin = log10(ppmin/(1-ppmin));
+ymax = lodmin + 1.02*(lodmax - lodmin)
+ymin = lodmax + 1.02*(lodmin - lodmax)
+ymax = max(2.1,ymax)
+ymin = min(-2.1,ymin)
+
 par(mar=c(4, 4, 0, 4) + 0.1)
-plot(aveLOD,xlab="Split",ylab=expression(log[10](PP/(1-PP))), type="n",xaxt="n")
+plot(aveLOD,xlab="Split",ylab=expression(log[10](PP/(1-PP))), ylim=c(ymin,ymax),type="n",xaxt="n")
 
 axis(side=1,at=1:L,1:L)
 
