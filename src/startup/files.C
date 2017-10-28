@@ -144,6 +144,14 @@ string hostname()
 }
 #endif
 
+string quote_string(const string& s,char q='"')
+{
+    if (s.empty() or s.find_first_of(" ;()") != string::npos)
+	return string(1,q)+s+string(1,q);
+    else
+	return s;
+}
+
 /// Create output files for thread 'proc_id' in directory 'dirname'
 vector<shared_ptr<ostream>> init_files(int proc_id, const string& dirname,
 				       int argc,char* argv[])
@@ -163,7 +171,7 @@ vector<shared_ptr<ostream>> init_files(int proc_id, const string& dirname,
     
     s_out<<"command: ";
     for(int i=0;i<argc;i++) {
-	s_out<<argv[i];
+	s_out<<quote_string(argv[i]);
 	if (i != argc-1) s_out<<" ";
     }
     s_out<<endl;
