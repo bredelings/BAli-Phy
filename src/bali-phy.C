@@ -367,7 +367,7 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const st
 
     // 5a. Check for empty paths
     if (L.plugins_path.empty())
-	throw myexception()<<"No plugin paths are specified!.  Use --package-path=<path> to specify the directory containing 'Prelude.so'.";
+	throw myexception()<<"No plugin paths are specified!.  Use --package-path=<path> to specify the directory containing 'Prelude"<<plugin_extension<<"'.";
 
     // 5b. Check for Prelude.so
     try
