@@ -85,6 +85,7 @@ namespace
   //      thread safe.
   # if defined(BOOST_WINDOWS_API) || defined(__hpux) || defined(__sun)\
      || (defined(__linux) && (!defined(__USE_XOPEN2K) || defined(BOOST_SYSTEM_USE_STRERROR)))\
+     || (defined(__CYGWIN__) && (__POSIX_VISIBLE < 200112 || defined(BOOST_SYSTEM_USE_STRERROR)))\
      || (defined(__osf__) && !defined(_REENTRANT))\
      || (defined(__INTEGRITY))\
      || (defined(__vms))\
@@ -97,7 +98,7 @@ namespace
       char buf[64];
       char * bp = buf;
       std::size_t sz = sizeof(buf);
-  #  if defined(__CYGWIN__) || defined(__USE_GNU)
+  #  if __GNU_VISIBLE__ || defined(__USE_GNU)
       // Oddball version of strerror_r
       const char * c_str = strerror_r( ev, bp, sz );
       return  c_str
