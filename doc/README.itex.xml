@@ -56,10 +56,12 @@
 
   <section xml:id="installation"><info><title>Installation</title></info>
 
-  <para>You can install BAli-Phy by downloading compiled executables from the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/download.php">website</link>.</para>
-  <para>On OS X, you can also install with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> if you have the XCode 6 (or higher) compiler.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>.  However, the recipe may not install the latest version.</para>
   <section xml:id="pre-requisites"><info><title>Hardware requirements</title></info>
     
+    <para>
+      We typically run <application>BAli-Phy</application> on workstations with at least 8Gb of RAM.
+    </para>
+
     <para>We recommend running BAli-Phy on a computing cluster for long runs.
     A computing cluster can speed up the analysis by allowing
     you to run several identical MCMC chains simultaneously and then
@@ -67,13 +69,6 @@
     logging out or turning off the computer will terminate the run
     early.  Result files can be copied back to a laptop or desktop for
     viewing.</para> 
-
-    <para>
-      We typically run <application>BAli-Phy</application> on computers with 8Gb of RAM.
-      You may need a 64-bit executable and a 64-bit
-      version of your operating system to be able to analyze large data sets that
-      consume more that 2Gb of RAM.
-    </para>
 
     <para>
     </para>
@@ -121,32 +116,46 @@ While running the Cygwin installer
     <para>First install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 6 or higher.
 
     Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>:
-    <screen><prompt>%</prompt> /usr/bin/ruby -e "&#36;(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</screen>
+    <screen><prompt>%</prompt> <userinput>/usr/bin/ruby -e "&#36;(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</userinput></screen>
     Then use homebrew to install 
-<screen><prompt>%</prompt> brew tap homebrew/science
-<prompt>%</prompt> brew install bali-phy</screen>
-    The packages for R and gnuplot should be install automatically.
+<screen><prompt>%</prompt> <userinput>brew tap homebrew/science</userinput>
+<prompt>%</prompt> <userinput>brew install bali-phy</userinput></screen>
     </para>
-
+    <para>
+      You can install gnuplot via homebrew:
+<screen><prompt>%</prompt> <userinput> brew install gnuplot</userinput></screen>
+      You can also install the R packages <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mran.microsoft.com/open/">from MRAN</link>.
+    </para>
     </section>
 
     <section><info><title>Linux</title></info>
 
     <para>
       First install BAli-Phy:
-      <screen><prompt>%</prompt> mkdir &install.prefix;
-<prompt>%</prompt> cd &install.prefix;
-<prompt>%</prompt> wget &linux64.url;
-<prompt>%</prompt> tar -zxf &linux64.file;</screen></para>
-      <para>Second, add it to your PATH, so that the shell knows where to find it:
-<screen><prompt>%</prompt> echo "setenv PATH &#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH" &#62;&#62; ~/.login
-<prompt>%</prompt> echo "export PATH=&#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH" &#62;&#62; ~/.bashrc</screen>
+      <screen><prompt>%</prompt> <userinput>mkdir &install.prefix;</userinput>
+<prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
+<prompt>%</prompt> <userinput>wget &linux64.url;</userinput>
+<prompt>%</prompt> <userinput>tar -zxf &linux64.file;</userinput></screen>
+      Check that the executable runs:
+<screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy --version</userinput>
+VERSION: 3.0-beta4  [master commit b38eea9f+]  (Oct 28 2017 13:54:20)
+BUILD: Oct 28 2017 14:01:23
+ARCH: x86_64-pc-linux-gnu
+COMPILER: GCC 7.2.1 20171025
+FLAGS: -isystem &#36;(top_srcdir)/boost/include -isystem &#36;(top_srcdir)/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops  -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing -pipe -O3 -pedantic -I/usr/include/cairo -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng16 -g -Wmisleading-indentation -Wlogical-op -fno-var-tracking-assignments
+</screen>
+    </para>
+
+<para>Second, add it to your PATH, so that the shell knows where to find it:
+<screen><prompt>%</prompt> <userinput>echo 'setenv PATH &#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.login</userinput>
+<prompt>%</prompt> <userinput>test -r ~/.bash_profile &#38;&#38; echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.bash_profile</userinput>
+<prompt>%</prompt> <userinput>echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.profile</userinput></screen>
     </para>
 
     <para>If you have Debian or Ubuntu linux, you can install other recommended programs by typing:
-    <screen><prompt>%</prompt> sudo apt-get install gnuplot
-<prompt>%</prompt> sudo apt-get install r-base
-<prompt>%</prompt> sudo apt-get install seaview</screen>
+    <screen><prompt>%</prompt> <userinput>sudo apt-get install gnuplot</userinput>
+<prompt>%</prompt> <userinput>sudo apt-get install r-base</userinput>
+<prompt>%</prompt> <userinput>sudo apt-get install seaview</userinput></screen>
     </para>
 
     </section>

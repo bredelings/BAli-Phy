@@ -3,7 +3,13 @@
 }
 
 .command, .prompt {
-	font-weight: bold;
+    font-weight: bold;
+}
+
+.prompt {
+    font-weight: bold;
+    text-decoration: underline;
+    color: green;
 }
 
 .note {
