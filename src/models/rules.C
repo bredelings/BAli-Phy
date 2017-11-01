@@ -487,12 +487,14 @@ ptree parse_constraints(const string& s)
     return constraints;
 }
 
-ptree convert_rule(const vector<vector<string>>& s)
+
+
+ptree convert_rule_old(const vector<vector<string>>& s)
 {
     ptree rule;
     rule.put("name",s[0][0]);
 
-    rule.push_back({"result_type",parse_type(s[0][1])});
+    rule.push_back({"result_type", ptree(s[0][1])});
     string attributes = (s[0].size() > 2)?s[0][2]:"";
 
     if (contains_char(attributes, 'P')) rule.put("pass_arguments", "true");
@@ -502,8 +504,7 @@ ptree convert_rule(const vector<vector<string>>& s)
 
     // Add type constraints
     ptree constraints;
-    if (s[0].size() >= 4)
-	constraints = parse_constraints(s[0][3]);
+    if (s[0].size() >= 4) constraints = ptree(s[0][3]);
     rule.push_back({"constraints", constraints});
 
     // Add function description
@@ -511,7 +512,7 @@ ptree convert_rule(const vector<vector<string>>& s)
 	rule.push_back({"description",ptree(s[0][4])});
 
     // Add the call
-    rule.push_back({"call", parse_type(s[1][0])});
+    rule.push_back({"call", ptree(s[1][0])});
     assert(s[1].size() == 1);
 
     ptree args;
@@ -521,14 +522,14 @@ ptree convert_rule(const vector<vector<string>>& s)
 
 	string arg_name = s[i][0];
 	arg.put("arg_name",arg_name);
-	arg.push_back({"arg_type",parse_type(s[i][1])});
+	arg.push_back({"arg_type",ptree(s[i][1])});
 	if (s[i].size() > 2 and s[i][2] == "LAMBDA")
 	    arg.put("no_apply", "true"); // FIXME -- this only makes sense for the last few args
 	else if (s[i].size() > 2 and not s[i][2].empty())
-	    arg.push_back({"default_value",parse(s[i][2])});
+	    arg.push_back({"default_value",ptree(s[i][2])});
 
 	if (s[i].size() > 3 and not s[i][3].empty())
-	    arg.push_back({"applied_args",parse_type(s[i][3])});
+	    arg.push_back({"applied_args",ptree(s[i][3])});
 
 	if (s[i].size() > 4 and not s[i][4].empty())
 	    arg.push_back({"description",ptree(s[i][4])});
@@ -537,6 +538,50 @@ ptree convert_rule(const vector<vector<string>>& s)
     }
     rule.push_back({"args",args});
 //    write_info(std::cout, rule);
+    return rule;
+}
+
+
+
+ptree convert_rule(const vector<vector<string>>& s)
+{
+    ptree rule = convert_rule_old(s);
+
+    {
+	ptree& result_type = rule.get_child("result_type");
+	result_type = parse_type(result_type.get_value<string>());
+    }
+
+    {
+	ptree& constraints = rule.get_child("constraints");
+	constraints = parse_constraints(constraints.get_value<string>());
+    }
+
+    {
+	ptree& call = rule.get_child("call");
+	call = parse_type(call.get_value<string>());
+    }
+
+    for(auto& arg_pair: rule.get_child("args"))
+    {
+	auto& x = arg_pair.second;
+
+	{
+	    ptree& arg_type = x.get_child("arg_type");
+	    arg_type = parse_type(arg_type.get_value<string>());
+	}
+
+	if (auto default_value = x.get_child_optional("default_value"))
+	{
+	    (*default_value) = parse(default_value->get_value<string>());
+	}
+
+	if (auto applied_args= x.get_child_optional("applied_args"))
+	{
+	    (*applied_args) = parse_type(applied_args->get_value<string>());
+	}
+    }
+
     return rule;
 }
 
