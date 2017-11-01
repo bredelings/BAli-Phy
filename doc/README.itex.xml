@@ -59,99 +59,103 @@
   <section xml:id="pre-requisites"><info><title>Hardware requirements</title></info>
     
     <para>
-      We typically run <application>BAli-Phy</application> on workstations with at least 8Gb of RAM.
+      We typically run <application>BAli-Phy</application> on workstations with at least 8Gb of RAM and 2 cores.  More cores will allow you to run more MCMC chains at once, and more RAM will allow you to run larger data sets.  However, it is often easier and faster to run BAli-Phy on a (Linux) computing cluster, if you have one available.
     </para>
-
-    <para>We recommend running BAli-Phy on a computing cluster for long runs.
-    A computing cluster can speed up the analysis by allowing
-    you to run several identical MCMC chains simultaneously and then
-    pool the resulting samples.  You also don't need to worry that
-    logging out or turning off the computer will terminate the run
-    early.  Result files can be copied back to a laptop or desktop for
-    viewing.</para> 
 
     <para>
     </para>
   </section>
 
-    <section><info><title>MS Windows requirements</title></info>
-      <para>Before you can use <application>BAli-Phy</application> on
-      MS Windows, you must first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>.
-      Cygwin is a Unix/Linux command-line environment for Windows.
-While running the Cygwin installer
-	<filename>setup.exe</filename>, you will be given an
-	opportunity to select additional packages.
-	<itemizedlist>
-	  <listitem><para>From <guilabel>Interpreters</guilabel>, select <guilabel>perl</guilabel>.</para></listitem>
-	  <listitem><para>From <guilabel>Web</guilabel>, select <guilabel>wget</guilabel>.</para></listitem>
-	  <listitem><para>From <guilabel>Editors</guilabel>, select <guilabel>nano</guilabel>.</para></listitem>
-	</itemizedlist>
-	
-      </para>
+  <section><info><title>MS Windows requirements</title></info>
+  <section><info><title>Installing Msys2</title></info>
+      <para>Before you can use <application>BAli-Phy</application> on Windows you need to install a Unix command-line environment.  We recommand installing the 64-bit version of <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link>. You may then access the Unix command line environment by running the MSYS2 shell (not the normal windows command line).  The MSYS2 shell mounts the <filename>C:</filename> drive on <filename>/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/c/Users/</filename>, for example.</para> 
 
-      <para>You may then access the Unix command line environment by running the
-      <application>Cygwin Terminal</application> application (not the
-      normal windows command line).</para> 
+  </section>
+  <section><info><title>Install BAli-Phy executables from website</title></info>
+      <para>
+	First, download and extract the executables:
+      <screen><prompt>%</prompt> <userinput>mkdir -p &install.prefix;</userinput>
+<prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
+<prompt>%</prompt> <userinput>wget &win64.url;</userinput>
+<prompt>%</prompt> <userinput>tar -zxf &win64.file;</userinput></screen>
+       Second, check that the <command>bali-phy</command> executable runs:
+      <screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy --version</userinput></screen>
+    </para>
 
-      <para>You might wish to save the installer on your
-      desktop in case you want to run it again, since you can use it
-      to install additional packages later.</para>
-
-      <note>BAli-Phy refers to windows files using the normal
-      <filename>C:/</filename> method because it is compiled as a
-      native windows executable.
-      The combination of native windows executables (which want <filename>C:/</filename>)
-      and the Cygwin shell (which wants <filename>/cygdrive/c/</filename>) can be
-      confusing.  If you supply Cygwin filenames with
-      <filename>/cygdrive/</filename> to native windows executables like BAli-Phy, then it
-      will complain that the files cannot be found.  
-      </note>
-      <note>
-	In the Cygwin shell you can access downloaded files at
-      <filename>/cygdrive/c/Documents\ and\ Settings/<replaceable>username</replaceable>/Downloads/</filename>. 
-      </note>
-    </section>
+<para>Third, add the executables to your PATH, so that the shell knows where to find them:
+<screen><prompt>%</prompt> <userinput>export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH</userinput>
+<prompt>%</prompt> <userinput>test -r ~/.bash_profile &#38;&#38; echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.bash_profile</userinput>
+<prompt>%</prompt> <userinput>echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.profile</userinput></screen>
+</para>
+</section>
+  </section>
 
     <section><info><title>Mac OS X</title></info>
+    <section><info><title>Install BAli-Phy using homebrew (recommended) </title></info>
     <para>First install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 6 or higher.
 
     Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>:
     <screen><prompt>%</prompt> <userinput>/usr/bin/ruby -e "&#36;(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</userinput></screen>
-    Then use homebrew to install 
-<screen><prompt>%</prompt> <userinput>brew tap homebrew/science</userinput>
+    Then use homebrew to compile and install <command>bali-phy</command>:
+<screen><prompt>%</prompt> <userinput>brew tap bredelings/bioinformatics</userinput>
 <prompt>%</prompt> <userinput>brew install bali-phy</userinput></screen>
-    </para>
-    <para>
-      You can install gnuplot via homebrew:
-<screen><prompt>%</prompt> <userinput> brew install gnuplot</userinput></screen>
-      You can also install the R packages <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mran.microsoft.com/open/">from MRAN</link>.
+Check that the executable runs:
+<screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
     </para>
     </section>
 
-    <section><info><title>Linux</title></info>
-
+    <section><info><title>Install BAli-Phy using executables from website (alternative)</title></info>
     <para>
-      First install BAli-Phy:
-      <screen><prompt>%</prompt> <userinput>mkdir &install.prefix;</userinput>
+      First download and extract the executables:
+      <screen><prompt>%</prompt> <userinput>mkdir -p &install.prefix;</userinput>
 <prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
-<prompt>%</prompt> <userinput>wget &linux64.url;</userinput>
-<prompt>%</prompt> <userinput>tar -zxf &linux64.file;</userinput></screen>
+<prompt>%</prompt> <userinput>curl -O &mac64.url;</userinput>
+<prompt>%</prompt> <userinput>tar -zxf &mac64.file;</userinput></screen>
       Check that the executable runs:
-<screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy --version</userinput>
-VERSION: 3.0-beta4  [master commit b38eea9f+]  (Oct 28 2017 13:54:20)
-BUILD: Oct 28 2017 14:01:23
-ARCH: x86_64-pc-linux-gnu
-COMPILER: GCC 7.2.1 20171025
-FLAGS: -isystem &#36;(top_srcdir)/boost/include -isystem &#36;(top_srcdir)/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops  -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing -pipe -O3 -pedantic -I/usr/include/cairo -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/pixman-1 -I/usr/include/freetype2 -I/usr/include/libpng16 -g -Wmisleading-indentation -Wlogical-op -fno-var-tracking-assignments
-</screen>
+      <screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy --version</userinput></screen>
     </para>
 
-<para>Second, add it to your PATH, so that the shell knows where to find it:
-<screen><prompt>%</prompt> <userinput>echo 'setenv PATH &#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.login</userinput>
+<para>Then, add it to your PATH, so that the shell knows where to find it:
+<screen><prompt>%</prompt> <userinput>export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH</userinput>
 <prompt>%</prompt> <userinput>test -r ~/.bash_profile &#38;&#38; echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.bash_profile</userinput>
 <prompt>%</prompt> <userinput>echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.profile</userinput></screen>
     </para>
 
+    </section>
+
+    <section><info><title>Install programs used by <command>bp-analyze</command></title></info>
+      <itemizedlist>
+	<listitem>
+      You can install <command>gnuplot</command> via homebrew:
+<screen><prompt>%</prompt> <userinput> brew install gnuplot</userinput></screen> </listitem>
+      <listitem>You can install R <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mran.microsoft.com/open/">from MRAN</link>.
+</listitem></itemizedlist>
+    </section>
+    </section>
+
+    <section><info><title>Linux</title></info>
+    <section><info><title>Install BAli-Phy using executables from website (alternative)</title></info>
+
+    <para>First install <command>wget</command>.  If you have Debian or Ubuntu Linux, type:
+    <screen><prompt>%</prompt> <userinput>sudo apt-get install wget</userinput></screen>
+    </para>
+    <para>
+      Then download and extract the executables:
+      <screen><prompt>%</prompt> <userinput>mkdir -p &install.prefix;</userinput>
+<prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
+<prompt>%</prompt> <userinput>wget &linux64.url;</userinput>
+<prompt>%</prompt> <userinput>tar -zxf &linux64.file;</userinput></screen>
+      Second, check that the executable runs:
+      <screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy --version</userinput></screen>
+    </para>
+
+<para>Third, add it to your PATH, so that the shell knows where to find it:
+<screen><prompt>%</prompt> <userinput>export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH</userinput>
+<prompt>%</prompt> <userinput>test -r ~/.bash_profile &#38;&#38; echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.bash_profile</userinput>
+<prompt>%</prompt> <userinput>echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.profile</userinput></screen>
+</para>
+    </section>
+    <section><info><title>Install programs used by <command>bp-analyze</command></title></info>
     <para>If you have Debian or Ubuntu linux, you can install other recommended programs by typing:
     <screen><prompt>%</prompt> <userinput>sudo apt-get install gnuplot</userinput>
 <prompt>%</prompt> <userinput>sudo apt-get install r-base</userinput>
@@ -159,70 +163,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -isystem &#36;(top_srcdir)/inclu
     </para>
 
     </section>
-
-    <section><info><title>Installing BAli-Phy executables</title></info>
-
-    <orderedlist>
-
-      <listitem><para>Start by opening a Unix terminal window.  (On Apple, this is the <application>Terminal</application>
-    application; on Windows it will be the <application>Cygwin Terminal</application>, not the
-    Windows command prompt.)</para></listitem>
-    
-    <listitem><para>Make a directory called <filename>Applications</filename> in your
-    home directory:
-<screen><prompt>%</prompt> <userinput>mkdir &install.prefix;</userinput></screen>
-    <note>
-    Note that <userinput>~</userinput> is a synonym for
-    <userinput>&#36;HOME</userinput>, your home directory.  You can
-    find out what your home directory is by typing
-<screen><prompt>%</prompt> <userinput>echo &#36;HOME</userinput></screen>
-or
-<screen><prompt>%</prompt> <userinput>echo ~</userinput></screen></note>
-</para></listitem>
-
-    <listitem><para><link xmlns:xlink="http://www.w3.org/1999/xlink"
-    xlink:href="http://www.bali-phy.org/download.php">Download</link> 
-BAli-Phy executables for your operating system from the web site using your browser.  Choose the 64-bit executables unless your operating system can only run 32-bit executables.  Save them to the <filename>&install.prefix;</filename> directory that you just created on the command line. Then check to see that the file is there.  Make sure it is the correct file for Mac, Linux, or Windows:
-<screen><prompt>%</prompt> <userinput>ls &install.prefix;</userinput>
-&linux64.file;
-</screen>
-</para>
-<para>Alternatively, you can download the file directly from the command line using <userinput>wget</userinput> if you know the URL:
-<screen><prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
-<prompt>%</prompt> <userinput>wget &win64.url;</userinput>
-<prompt>%</prompt> <userinput>ls</userinput>
-&win64.file;
-</screen>
-On Mac, you can use <command>curl</command> instead of <command>wget</command>:
-<screen><prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
-<prompt>%</prompt> <userinput>curl -O &mac64.url;</userinput>
-<prompt>%</prompt> <userinput>ls</userinput>
-&mac64.file;
-</screen>
-</para>
-</listitem>
-
-    <listitem><para>Extract the compressed archive on the Unix (or
-    Cygwin) command line using the <command>tar</command> command:
-<screen><prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
-<prompt>%</prompt> <userinput>tar -zxf &linux64.file;</userinput>
-<prompt>%</prompt> <userinput>ls</userinput>
-bali-phy-&version;/   &linux64.file;
-</screen>
-    </para></listitem>
-
-    <listitem><para>Finally, test that the program can be run.
-<screen><prompt>%</prompt> <userinput>&exe.path; -v</userinput>
-VERSION: 2.3.0  [master commit 9e551ef0]  (Apr 29 2014 18:04:25)
-BUILD: Apr 29 2014 18:05:33
-ARCH: x86_64-unknown-linux-gnu
-COMPILER: GCC 4.8.1 20130424 (prerelease)
-FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops -std=c++11 -finline-limit=1000 -pipe -O3
-</screen>
-</para></listitem>
-    </orderedlist>
-    </section>      
-
+    </section>
     <section><info><title>Adding BAli-Phy to your <envar>PATH</envar></title></info>
 
       <section><title>I have a path?</title>
