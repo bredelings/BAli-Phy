@@ -29,7 +29,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/io/detail/quoted_manip.hpp>
 #include <boost/static_assert.hpp>
-#include <boost/functional/hash_fwd.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/type_traits/is_integral.hpp>
 #include <string>
 #include <iterator>

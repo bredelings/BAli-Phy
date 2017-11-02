@@ -25,10 +25,7 @@
 # pragma once
 #endif
 
-// Forward declaration from #include <boost/functional/hash_fwd.hpp>
-namespace boost {
-    template <class It> std::size_t hash_range(It, It);
-}
+#include <boost/functional/hash.hpp>
 
 namespace boost { namespace typeindex {
 
