@@ -28,17 +28,7 @@
 #include "matrix.H"
 #include "models/TreeInterface.H"
 #include "hmm.H"
-
-namespace A2
-{
-    namespace states {
-	constexpr int M  = 0;
-	constexpr int G1 = 1;
-	constexpr int G2 = 2;
-	constexpr int E  = 3;
-	constexpr int S  = 4;
-    }
-}
+#include "A2_states.H"
 
 class pairwise_alignment_t: public Object
 {
@@ -109,8 +99,6 @@ alignment get_alignment(const alphabet& a, const std::vector<sequence>&, const s
 alignment get_alignment(const alignment& A1, const std::vector< std::vector<int>>& sequences, const matrix<int>& M);
 
 namespace A2 {
-
-    int flip(int s);
 
     pairwise_alignment_t get_pairwise_alignment(const alignment& A, int n1, int n2);
 

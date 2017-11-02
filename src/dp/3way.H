@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define THREEWAY_H
 
 #include "models/parameters.H"
-#include "2way.H"
+#include "A2_states.H"
 #include "hmm.H"
 
 // Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8

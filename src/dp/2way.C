@@ -128,17 +128,8 @@ typedef graph_traits<Graph>::vertex_descriptor Vertex;
 #include <map>
 using std::map;
 
-namespace A2 {
-
-
-    int flip(int s)
-    {
-	if (s == states::G1)
-	    return states::G2;
-	else if (s == states::G2) 
-	    return states::G1;
-	else return s;
-    }
+namespace A2
+{
 
     pairwise_alignment_t get_pairwise_alignment(const matrix<int>& M, int n1, int n2)
     {

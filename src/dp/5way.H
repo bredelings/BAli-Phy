@@ -28,7 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 #include "models/parameters.H"
-#include "2way.H"
+#include "A2_states.H"
 #include "hmm.H"
 
 
