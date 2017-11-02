@@ -29,7 +29,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "optimize.H"
 #include "findroot.H"
 #include "util.H"
-#include "setup.H"
 
 #include "alignment/alignment-util.H"
 #include "tree/tree-util.H"
@@ -37,7 +36,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "joint-A-T.H"
 #include "n_indels.H"
 
-#include "dp/2way.H"
+#include "dp/A2_states.H"
 using namespace A2;
 
 using std::cin;
