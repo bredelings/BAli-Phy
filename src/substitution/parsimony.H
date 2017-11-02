@@ -23,14 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "matrix.H"
 #include "sequence/alphabet.H"
 #include "models/parameters.H"
-
-matrix<int> unit_cost_matrix(unsigned size);
-
-matrix<int> unit_cost_matrix(const alphabet&);
-
-matrix<int> nucleotide_cost_matrix(const Triplets& T);
-
-matrix<int> amino_acid_cost_matrix(const Codons& C);
+#include "tools/parsimony.H"
 
 int n_mutations(const data_partition& P, const matrix<int>& cost);
 
