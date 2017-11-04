@@ -58,7 +58,7 @@ namespace bali_phy
 		return data_[size2_*i + j];
 	    }
 
-	void swap(matrix<T>& m2)
+	void swap(matrix<T>& m2) noexcept
 	    {
 		std::swap(data_, m2.data_);
 		std::swap(size1_, m2.size1_);
@@ -68,16 +68,13 @@ namespace bali_phy
 
 	matrix& operator=(const matrix<T>& m2)
 	    {
-		resize(m2.size1(), m2.size2());
-
-		for(int i=0;i<m2.size();i++)
-		    data_[i] = m2.data_[i];
+		matrix<T>(m2).swap(*this);
 		return *this;
 	    }
 
 	matrix& operator=(matrix<T>&& m2) noexcept
 	    {
-		swap(m2);
+		matrix<T>(m2).swap(*this);
 		return *this;
 	    }
 
@@ -142,12 +139,15 @@ namespace bali_phy
 
 	matrix(const matrix<T>& m2)
 	    {
-		operator=(m2);
+		resize(m2.size1(), m2.size2());
+
+		for(int i=0;i<m2.size();i++)
+		    data_[i] = m2.data_[i];
 	    }
 
 	matrix(matrix<T>&& m2) noexcept
 	    {
-		operator=(std::move(m2));
+		swap(m2);
 	    }
 
 	~matrix()
