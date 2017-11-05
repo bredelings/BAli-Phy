@@ -553,6 +553,8 @@ ptree convert_rule(const vector<vector<string>>& s)
     }
 
     {
+	if (not rule.get_child_optional("constraints"))
+	    rule.push_back({"constraints",ptree()});
 	ptree& constraints = rule.get_child("constraints");
 	constraints = parse_constraints(constraints.get_value<string>());
     }
