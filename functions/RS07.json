@@ -1,0 +1,24 @@
+{
+    "name": "RS07",
+    "result_type": "IndelModel",
+    "constraints": "Redelings & Suchard (2007) model of insertions and deletions.",
+    "call": "IModel.rs07[logLambda,meanIndelLength,tree]",
+    "args": [
+        {
+            "arg_name": "logLambda",
+            "arg_type": "Double",
+            "default_value": "~Laplace[-4,0.707]",
+            "description": "The log of the insertion-deletion rate, normalized to the substitution rate."
+        },
+        {
+            "arg_name": "meanIndelLength",
+            "arg_type": "Double",
+            "default_value": "Add[1.0,~Exponential[10]]"
+        },
+        {
+            "arg_name": "tree",
+            "arg_type": "tree",
+            "no_apply": "true"
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "name": "log",
+    "result_type": "Double",
+    "no_log": "true",
+    "call": "Prelude.log[x]",
+    "args": [
+        {
+            "arg_name": "x",
+            "arg_type": "Double"
+        }
+    ]
+}

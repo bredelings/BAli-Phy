@@ -1,0 +1,15 @@
+{
+    "name": "logGamma",
+    "result_type": "Distribution[Double]",
+    "call": "Distributions.logGamma[a,b]",
+    "args": [
+        {
+            "arg_name": "a",
+            "arg_type": "Double"
+        },
+        {
+            "arg_name": "b",
+            "arg_type": "Double"
+        }
+    ]
+}

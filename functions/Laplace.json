@@ -1,0 +1,15 @@
+{
+    "name": "Laplace",
+    "result_type": "Distribution[Double]",
+    "call": "Distributions.laplace[m,s]",
+    "args": [
+        {
+            "arg_name": "m",
+            "arg_type": "Double"
+        },
+        {
+            "arg_name": "s",
+            "arg_type": "Double"
+        }
+    ]
+}

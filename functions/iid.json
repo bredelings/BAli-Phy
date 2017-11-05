@@ -1,0 +1,15 @@
+{
+    "name": "iid",
+    "result_type": "Distribution[List[a]]",
+    "call": "Distributions.iid[n,dist]",
+    "args": [
+        {
+            "arg_name": "n",
+            "arg_type": "Int"
+        },
+        {
+            "arg_name": "dist",
+            "arg_type": "Distribution[a]"
+        }
+    ]
+}

@@ -1,0 +1,15 @@
+{
+    "name": "Uniform",
+    "result_type": "Distribution[Double]",
+    "call": "Distributions.uniform[low,high]",
+    "args": [
+        {
+            "arg_name": "low",
+            "arg_type": "Double"
+        },
+        {
+            "arg_name": "high",
+            "arg_type": "Double"
+        }
+    ]
+}

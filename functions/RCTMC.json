@@ -1,0 +1,23 @@
+{
+    "name": "RCTMC",
+    "result_type": "RA[a]",
+    "no_log": "true",
+    "call": "SModel.reversible_markov[Q,R]",
+    "args": [
+        {
+            "arg_name": "Q",
+            "arg_type": "ExchangeModel[a]",
+            "applied_args": "A"
+        },
+        {
+            "arg_name": "R",
+            "arg_type": "FrequencyModel[a]",
+            "applied_args": "A"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

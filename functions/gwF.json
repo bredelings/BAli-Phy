@@ -1,0 +1,23 @@
+{
+    "name": "gwF",
+    "result_type": "FrequencyModel[a]",
+    "call": "SModel.plus_gwf[A,pi,f]",
+    "args": [
+        {
+            "arg_name": "pi",
+            "arg_type": "F",
+            "default_value": "frequencies_prior",
+            "applied_args": "A"
+        },
+        {
+            "arg_name": "f",
+            "arg_type": "Double",
+            "default_value": "~Uniform[0,1]"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

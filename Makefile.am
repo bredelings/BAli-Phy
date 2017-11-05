@@ -26,6 +26,88 @@ nobase_modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude
 		modules/MCMC.hs modules/IModel.hs modules/System/Environment.hs modules/Data/ReadFile.hs \
 		modules/SubAIndex.hs
 
+functionsdir = $(libdir)/@PACKAGE@/
+nobase_functions_DATA = functions/AA.json \
+	functions/Add.json \
+	functions/Bernoulli.json \
+	functions/Beta.json \
+	functions/Binomial.json \
+	functions/branch-site.json \
+	functions/Codons.json \
+	functions/Dirichlet.json \
+	functions/Div.json \
+	functions/DNA.json \
+	functions/DP.json \
+	functions/dp_omega.json \
+	functions/E.json \
+	functions/Empirical.json \
+	functions/EQU.json \
+	functions/exchange_prior.json \
+	functions/exp.json \
+	functions/Exponential.json \
+	functions/F1x4.json \
+	functions/F3x4.json \
+	functions/F61.json \
+	functions/F81.json \
+	functions/F.json \
+	functions/fMutSel0.json \
+	functions/fMutSel.json \
+	functions/Freq2.json \
+	functions/Freq.json \
+	functions/frequencies_prior.json \
+	functions/Gamma.json \
+	functions/Geometric.json \
+	functions/GTR.json \
+	functions/gwF.json \
+	functions/HKY.json \
+	functions/iid.json \
+	functions/INV.json \
+	functions/JC.json \
+	functions/JTT.json \
+	functions/K80.json \
+	functions/Laplace.json \
+	functions/Length.json \
+	functions/LG.json \
+	functions/List.json \
+	functions/logGamma.json \
+	functions/log.json \
+	functions/logLaplace.json \
+	functions/logNormal.json \
+	functions/M0.json \
+	functions/M1a.json \
+	functions/M2a.json \
+	functions/M2a_Test.json \
+	functions/M3.json \
+	functions/M3_Test.json \
+	functions/M7.json \
+	functions/M8a.json \
+	functions/M8a_Test.json \
+	functions/M8.json \
+	functions/MG94.json \
+	functions/MG94w9.json \
+	functions/Mixture.json \
+	functions/Mul.json \
+	functions/MultiMixtureModel.json \
+	functions/MultiRate.json \
+	functions/Normal.json \
+	functions/Pair.json \
+	functions/PAM.json \
+	functions/Rates.Gamma.json \
+	functions/Rates.logNormal.json \
+	functions/RCTMC.json \
+	functions/RNA.json \
+	functions/RS05.json \
+	functions/RS07.json \
+	functions/RS07RelaxedRates.json \
+	functions/Sample.json \
+	functions/Sub.json \
+	functions/TN.json \
+	functions/UniformInt.json \
+	functions/Uniform.json \
+	functions/UnitMixture.json \
+	functions/WAG.json \
+	functions/x3.json 
+
 # Distributed in the doc/ directory
 docdir = $(datadir)/doc/@PACKAGE@
 doc_DATA = doc/README.html doc/README.xhtml doc/docbook.css doc/README.pdf \

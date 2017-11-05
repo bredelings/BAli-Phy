@@ -1,0 +1,18 @@
+{
+    "name": "F81",
+    "result_type": "RA[a]",
+    "call": "SModel.f81[pi,A]",
+    "args": [
+        {
+            "arg_name": "pi",
+            "arg_type": "F",
+            "default_value": "frequencies_prior",
+            "applied_args": "A"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

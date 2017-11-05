@@ -1,0 +1,15 @@
+{
+    "name": "logNormal",
+    "result_type": "Distribution[Double]",
+    "call": "Distributions.logNormal[lmu,lsigma]",
+    "args": [
+        {
+            "arg_name": "lmu",
+            "arg_type": "Double"
+        },
+        {
+            "arg_name": "lsigma",
+            "arg_type": "Double"
+        }
+    ]
+}

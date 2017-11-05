@@ -1,0 +1,19 @@
+{
+    "name": "HKY",
+    "result_type": "ExchangeModel[a]",
+    "constraints": "Nucleotides[a]",
+    "call": "SModel.hky[kappa,alphabet]",
+    "args": [
+        {
+            "arg_name": "kappa",
+            "arg_type": "Double",
+            "default_value": "~logNormal[log[2],0.25]",
+            "description": "Transition\/transversion ratio"
+        },
+        {
+            "arg_name": "alphabet",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

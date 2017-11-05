@@ -1,0 +1,15 @@
+{
+    "name": "UniformInt",
+    "result_type": "Distribution[Int]",
+    "call": "Distributions.uniform_int[low,high]",
+    "args": [
+        {
+            "arg_name": "low",
+            "arg_type": "Int"
+        },
+        {
+            "arg_name": "high",
+            "arg_type": "Int"
+        }
+    ]
+}

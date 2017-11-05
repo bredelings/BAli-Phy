@@ -1,0 +1,15 @@
+{
+    "name": "Binomial",
+    "result_type": "Distribution[Int]",
+    "call": "Distributions.binomial[n,p]",
+    "args": [
+        {
+            "arg_name": "n",
+            "arg_type": "Int"
+        },
+        {
+            "arg_name": "p",
+            "arg_type": "Double"
+        }
+    ]
+}

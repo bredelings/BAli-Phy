@@ -1,0 +1,16 @@
+{
+    "name": "Empirical",
+    "result_type": "ExchangeModel[a]",
+    "call": "SModel.empirical[A,filename]",
+    "args": [
+        {
+            "arg_name": "filename",
+            "arg_type": "String"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

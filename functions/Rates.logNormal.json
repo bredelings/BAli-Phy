@@ -1,0 +1,28 @@
+{
+    "name": "Rates.logNormal",
+    "result_type": "MixtureModel[a]",
+    "call": "SModel.log_normal_rates[submodel,sigmaOverMu,n]",
+    "args": [
+        {
+            "arg_name": "n",
+            "arg_type": "Int",
+            "default_value": "4",
+            "description": "The number of bins for discretizing the logNormal distribution"
+        },
+        {
+            "arg_name": "sigmaOverMu",
+            "arg_type": "Double",
+            "default_value": "~logLaplace[-3,1]"
+        },
+        {
+            "arg_name": "submodel",
+            "arg_type": "MixtureModel[a]",
+            "applied_args": "A"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

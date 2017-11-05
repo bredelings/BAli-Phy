@@ -1,0 +1,17 @@
+{
+    "name": "Sub",
+    "result_type": "a",
+    "no_log": "true",
+    "constraints": "Num[a]",
+    "call": "Prelude.-[x,y]",
+    "args": [
+        {
+            "arg_name": "x",
+            "arg_type": "a"
+        },
+        {
+            "arg_name": "y",
+            "arg_type": "a"
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+{
+    "name": "PAM",
+    "result_type": "ExchangeModel[AA]",
+    "call": "SModel.pam[A]",
+    "args": [
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

@@ -1,0 +1,15 @@
+{
+    "name": "Dirichlet",
+    "result_type": "Distribution[List[Double]]",
+    "call": "Distributions.dirichlet'[n,x]",
+    "args": [
+        {
+            "arg_name": "n",
+            "arg_type": "Int"
+        },
+        {
+            "arg_name": "x",
+            "arg_type": "Double"
+        }
+    ]
+}

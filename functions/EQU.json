@@ -1,0 +1,12 @@
+{
+    "name": "EQU",
+    "result_type": "ExchangeModel[a]",
+    "call": "SModel.equ[A]",
+    "args": [
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

@@ -1,0 +1,11 @@
+{
+    "name": "Bernoulli",
+    "result_type": "Distribution[Int]",
+    "call": "Distributions.bernoulli[p]",
+    "args": [
+        {
+            "arg_name": "p",
+            "arg_type": "Double"
+        }
+    ]
+}

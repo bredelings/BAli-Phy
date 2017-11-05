@@ -1,0 +1,26 @@
+{
+    "name": "M0",
+    "result_type": "ExchangeModel[Codon[a,b]]",
+    "constraints": "Nucleotides[a],AminoAcids[b]",
+    "description": "The Yang & Nielsen (2000) model of dN\/dS",
+    "call": "SModel.m0[A,submodel,omega]",
+    "args": [
+        {
+            "arg_name": "omega",
+            "arg_type": "Double",
+            "default_value": "~Uniform[0,1]",
+            "description": "Relative rate of non-synonymous changes relative to synonymous changes."
+        },
+        {
+            "arg_name": "submodel",
+            "arg_type": "ExchangeModel[a]",
+            "default_value": "HKY",
+            "applied_args": "Alphabet.getNucleotides[A]"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

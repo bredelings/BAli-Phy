@@ -1,0 +1,18 @@
+{
+    "name": "K80",
+    "result_type": "RA[a]",
+    "constraints": "Nucleotides[a]",
+    "call": "SModel.k80[kappa,A]",
+    "args": [
+        {
+            "arg_name": "kappa",
+            "arg_type": "Double",
+            "default_value": "~logNormal[log[2],0.25]"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

@@ -1,0 +1,48 @@
+{
+    "name": "M2a",
+    "result_type": "MixtureModel[Codon[a,b]]",
+    "call": "SModel.m2a[nuc_model,freq_model,omega1,p1,posP,posW,A]",
+    "args": [
+        {
+            "arg_name": "nuc_model",
+            "arg_type": "ExchangeModel[a]",
+            "default_value": "HKY",
+            "applied_args": "Alphabet.getNucleotides[A]",
+            "description": "The nucleotide exchange model."
+        },
+        {
+            "arg_name": "freq_model",
+            "arg_type": "FrequencyModel[Codon[a,b]]",
+            "default_value": "F61",
+            "applied_args": "A",
+            "description": "The frequency model."
+        },
+        {
+            "arg_name": "omega1",
+            "arg_type": "Double",
+            "default_value": "~Uniform[0,1]"
+        },
+        {
+            "arg_name": "p1",
+            "arg_type": "Double",
+            "default_value": "~Uniform[0,1]"
+        },
+        {
+            "arg_name": "posP",
+            "arg_type": "Double",
+            "default_value": "~Beta[1,10]",
+            "description": "The fraction of positively selected sites"
+        },
+        {
+            "arg_name": "posW",
+            "arg_type": "Double",
+            "default_value": "~logGamma[4,0.25]",
+            "description": "The dN\/dS value for positively selected sites"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

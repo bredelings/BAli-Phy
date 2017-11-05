@@ -1,0 +1,12 @@
+{
+    "name": "JC",
+    "result_type": "RA[a]",
+    "call": "SModel.jukes_cantor[A]",
+    "args": [
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

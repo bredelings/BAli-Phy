@@ -1,0 +1,49 @@
+{
+    "name": "branch-site",
+    "result_type": "MultiMixtureModel[Codon[a,b]]",
+    "call": "SModel.branch_site_test[nuc_model,freq_model,fs,omegas,posP,posW,posSelection,A]",
+    "args": [
+        {
+            "arg_name": "nuc_model",
+            "arg_type": "ExchangeModel[a]",
+            "default_value": "HKY",
+            "applied_args": "Alphabet.getNucleotides[A]"
+        },
+        {
+            "arg_name": "freq_model",
+            "arg_type": "FrequencyModel[Codon[a,b]]",
+            "default_value": "F61",
+            "applied_args": "A"
+        },
+        {
+            "arg_name": "fs",
+            "arg_type": "List[Double]",
+            "default_value": "~Dirichlet[2,1]"
+        },
+        {
+            "arg_name": "omegas",
+            "arg_type": "List[Double]",
+            "default_value": "~iid[1,Uniform[0,1]]"
+        },
+        {
+            "arg_name": "posP",
+            "arg_type": "Double",
+            "default_value": "~Beta[1,10]"
+        },
+        {
+            "arg_name": "posW",
+            "arg_type": "Double",
+            "default_value": "~logGamma[4,0.25]"
+        },
+        {
+            "arg_name": "posSelection",
+            "arg_type": "Int",
+            "default_value": "~Bernoulli[0.5]"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

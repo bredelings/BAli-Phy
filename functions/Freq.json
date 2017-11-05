@@ -1,0 +1,13 @@
+{
+    "name": "Freq",
+    "result_type": "F",
+    "pass_arguments": "true",
+    "generate_function": "false",
+    "call": "SModel.constant_frequencies_model",
+    "args": [
+        {
+            "arg_name": "*",
+            "arg_type": "Double"
+        }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "name": "x3",
+    "result_type": "ExchangeModel[a]",
+    "constraints": "Triplets[a]",
+    "call": "SModel.singlet_to_triplet_exchange[A,submodel]",
+    "args": [
+        {
+            "arg_name": "submodel",
+            "arg_type": "ExchangeModel[b]",
+            "applied_args": "Alphabet.getNucleotides[A]"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

@@ -1,0 +1,17 @@
+{
+    "name": "Codons",
+    "result_type": "Alphabet",
+    "generate_function": "false",
+    "call": "codons[nuc,aa]",
+    "args": [
+        {
+            "arg_name": "nuc",
+            "arg_type": "Alphabet"
+        },
+        {
+            "arg_name": "aa",
+            "arg_type": "Alphabet",
+            "default_value": "AA"
+        }
+    ]
+}

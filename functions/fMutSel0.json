@@ -1,0 +1,23 @@
+{
+    "name": "fMutSel0",
+    "result_type": "RA[Codon[a,b]]",
+    "generate_function": "false",
+    "call": "SModel.fMutSel0_model[submodel,omega,ws]",
+    "args": [
+        {
+            "arg_name": "omega",
+            "arg_type": "Double",
+            "default_value": "~Uniform[0,1]"
+        },
+        {
+            "arg_name": "ws",
+            "arg_type": "List[Double]",
+            "default_value": "~iid[20,logNormal[0,0.5]]"
+        },
+        {
+            "arg_name": "submodel",
+            "arg_type": "RA[a]",
+            "default_value": "HKY"
+        }
+    ]
+}

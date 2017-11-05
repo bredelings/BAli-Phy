@@ -1,0 +1,18 @@
+{
+    "name": "UnitMixture",
+    "result_type": "MixtureModel[a]",
+    "no_log": "true",
+    "call": "SModel.unit_mixture[submodel]",
+    "args": [
+        {
+            "arg_name": "submodel",
+            "arg_type": "RA[a]",
+            "applied_args": "A"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

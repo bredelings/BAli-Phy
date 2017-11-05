@@ -1,0 +1,15 @@
+{
+    "name": "Normal",
+    "result_type": "Distribution[Double]",
+    "call": "Distributions.normal[mu,sigma]",
+    "args": [
+        {
+            "arg_name": "mu",
+            "arg_type": "Double"
+        },
+        {
+            "arg_name": "sigma",
+            "arg_type": "Double"
+        }
+    ]
+}

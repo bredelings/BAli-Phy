@@ -1,0 +1,19 @@
+{
+    "name": "MG94",
+    "result_type": "FrequencyModel[Codon[a,b]]",
+    "constraints": "The Muse & Gaut (1994) model of codon substitution.",
+    "call": "SModel.mg94[pi,A]",
+    "args": [
+        {
+            "arg_name": "pi",
+            "arg_type": "F",
+            "default_value": "frequencies_prior",
+            "applied_args": "Alphabet.getNucleotides[A]"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

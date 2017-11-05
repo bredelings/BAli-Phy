@@ -1,0 +1,30 @@
+{
+    "name": "F3x4",
+    "result_type": "FrequencyModel[Codon[a,b]]",
+    "call": "SModel.f3x4[A,pi1,pi2,pi3]",
+    "args": [
+        {
+            "arg_name": "pi1",
+            "arg_type": "F",
+            "default_value": "frequencies_prior",
+            "applied_args": "Alphabet.getNucleotides[A]"
+        },
+        {
+            "arg_name": "pi2",
+            "arg_type": "F",
+            "default_value": "frequencies_prior",
+            "applied_args": "Alphabet.getNucleotides[A]"
+        },
+        {
+            "arg_name": "pi3",
+            "arg_type": "F",
+            "default_value": "frequencies_prior",
+            "applied_args": "Alphabet.getNucleotides[A]"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

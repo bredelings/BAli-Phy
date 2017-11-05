@@ -1,0 +1,26 @@
+{
+    "name": "MultiRate",
+    "result_type": "MixtureModel[a]",
+    "call": "SModel.multi_rate_unif_bins[submodel,dist,n_bins]",
+    "args": [
+        {
+            "arg_name": "dist",
+            "arg_type": "Distribution[Double]"
+        },
+        {
+            "arg_name": "n_bins",
+            "arg_type": "Int",
+            "default_value": "4"
+        },
+        {
+            "arg_name": "submodel",
+            "arg_type": "MixtureModel[a]",
+            "applied_args": "A"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

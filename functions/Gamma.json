@@ -1,0 +1,15 @@
+{
+    "name": "Gamma",
+    "result_type": "Distribution[Double]",
+    "call": "Distributions.gamma[a,b]",
+    "args": [
+        {
+            "arg_name": "a",
+            "arg_type": "Double"
+        },
+        {
+            "arg_name": "b",
+            "arg_type": "Double"
+        }
+    ]
+}

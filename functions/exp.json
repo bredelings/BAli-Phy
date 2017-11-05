@@ -1,0 +1,12 @@
+{
+    "name": "exp",
+    "result_type": "Double",
+    "no_log": "true",
+    "call": "Prelude.exp[x]",
+    "args": [
+        {
+            "arg_name": "x",
+            "arg_type": "Double"
+        }
+    ]
+}

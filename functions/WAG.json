@@ -1,0 +1,12 @@
+{
+    "name": "WAG",
+    "result_type": "ExchangeModel[AA]",
+    "call": "SModel.wag[A]",
+    "args": [
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

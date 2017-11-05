@@ -1,0 +1,32 @@
+{
+    "name": "DP",
+    "result_type": "MixtureModel[a]",
+    "call": "SModel.dp[submodel,rates,frequencies]",
+    "args": [
+        {
+            "arg_name": "rates",
+            "arg_type": "List[Double]",
+            "default_value": "~Dirichlet[n,2]"
+        },
+        {
+            "arg_name": "frequencies",
+            "arg_type": "List[Double]",
+            "default_value": "~Dirichlet[n,3]"
+        },
+        {
+            "arg_name": "n",
+            "arg_type": "Int",
+            "default_value": "4"
+        },
+        {
+            "arg_name": "submodel",
+            "arg_type": "MixtureModel[a]",
+            "applied_args": "A"
+        },
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}

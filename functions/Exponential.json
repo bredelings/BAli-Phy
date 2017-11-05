@@ -1,0 +1,11 @@
+{
+    "name": "Exponential",
+    "result_type": "Distribution[Double]",
+    "call": "Distributions.exponential[mean]",
+    "args": [
+        {
+            "arg_name": "mean",
+            "arg_type": "Double"
+        }
+    ]
+}

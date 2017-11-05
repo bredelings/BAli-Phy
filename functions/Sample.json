@@ -1,0 +1,12 @@
+{
+    "name": "Sample",
+    "result_type": "a",
+    "generate_function": "false",
+    "call": "Prelude.performAction[x]",
+    "args": [
+        {
+            "arg_name": "x",
+            "arg_type": "Distribution[a]"
+        }
+    ]
+}

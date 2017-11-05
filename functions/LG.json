@@ -1,0 +1,12 @@
+{
+    "name": "LG",
+    "result_type": "ExchangeModel[AA]",
+    "call": "SModel.lg[A]",
+    "args": [
+        {
+            "arg_name": "A",
+            "arg_type": "a",
+            "no_apply": "true"
+        }
+    ]
+}
