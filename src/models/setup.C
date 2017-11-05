@@ -367,7 +367,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
     // 5. Extract parts of the rule
     bool pass_arguments = rule->get("pass_arguments",false);
     bool is_list_rule = rule->get("list_arguments",false);
-    bool generate_function = rule->get("generate_function",false);
+    bool generate_function = rule->get("generate_function",true);
     bool no_log = rule->get("no_log",false);
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
