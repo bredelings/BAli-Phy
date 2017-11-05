@@ -499,13 +499,12 @@ ptree convert_rule_old(const vector<vector<string>>& s)
 
     if (contains_char(attributes, 'P')) rule.put("pass_arguments", "true");
     if (contains_char(attributes, 'L')) rule.put("list_arguments", "true");
-    if (contains_char(attributes, 'G')) rule.put("generate_function", "true");
+    if (not contains_char(attributes, 'G')) rule.put("generate_function", "false");
     if (contains_char(attributes, 'N')) rule.put("no_log", "true");
 
     // Add type constraints
-    ptree constraints;
-    if (s[0].size() >= 4) constraints = ptree(s[0][3]);
-    rule.push_back({"constraints", constraints});
+    if (s[0].size() >= 4)
+	rule.push_back({"constraints", ptree(s[0][3])});
 
     // Add function description
     if (s[0].size() >= 5 and not s[0][4].empty())
