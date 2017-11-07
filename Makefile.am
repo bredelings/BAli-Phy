@@ -10,7 +10,7 @@ endif
 SUBDIRS = $(MAYBE_BOOST) src/ 
 
 # Install these scripts in bin/
-bin_SCRIPTS = scripts/bali-phy-sge scripts/bp-analyze.pl scripts/bali-phy-pkg
+bin_SCRIPTS = scripts/bali-phy-sge scripts/bp-analyze scripts/bali-phy-pkg
 
 # Install these scripts in libexec
 pkglibexec_SCRIPTS = scripts/compare-runs.R scripts/compare-runs2.R \
