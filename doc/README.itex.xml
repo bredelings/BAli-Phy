@@ -181,7 +181,7 @@ Check that the executable runs:
 	</para>
       <para>
 	Setting your <envar>PATH</envar> is also a pre-requisite for running
-	the <command>bp-analyze.pl</command> script to summarize your
+	the <command>bp-analyze</command> script to summarize your
 	MCMC runs.
       </para>
       </section>
@@ -278,7 +278,7 @@ Check that the executable runs:
     <section xml:id="tests"><info><title>Testing the installed software</title></info>
     <para>In order to determine that the software has been correctly installed, and the <envar>PATH</envar> has been correctly set, run the following commands:
 <screen><prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/5S-rRNA/5d.fasta --iter=150</userinput>
-<prompt>%</prompt> <userinput>bp-analyze.pl 5d-1/</userinput></screen>
+<prompt>%</prompt> <userinput>bp-analyze 5d-1/</userinput></screen>
     </para>
     <para>Furthermore, the directory <filename>5d-1</filename> should contain a file called <filename>C1.log</filename>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</para>
     </section>
@@ -983,24 +983,24 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <para>
       Instead of manually running each of the steps to analyze the
       output files, you may instead run the PERL script
-      <command>bp-analyze.pl</command> to execute these commands.  The
+      <command>bp-analyze</command> to execute these commands.  The
       script will create an HTML page
       <filename>Results/index.html</filename> that summarizes the
       posterior distribution.
     </para>
 
-  <para>You may run <command>bp-analyze.pl</command> inside the output directory, like this:
-<screen><prompt>%</prompt> bp-analyze.pl --burnin=<replaceable>iterations</replaceable></screen>
+  <para>You may run <command>bp-analyze</command> inside the output directory, like this:
+<screen><prompt>%</prompt> bp-analyze --burnin=<replaceable>iterations</replaceable></screen>
       You may also run it with one or more output directories as
       arguments, like this:
-<screen><prompt>%</prompt> bp-analyze.pl --burnin=<replaceable>iterations</replaceable> <replaceable>directory</replaceable>-1/ <replaceable>directory</replaceable>-2/</screen>
+<screen><prompt>%</prompt> bp-analyze --burnin=<replaceable>iterations</replaceable> <replaceable>directory</replaceable>-1/ <replaceable>directory</replaceable>-2/</screen>
       In this case, output from multiple runs will be used to assess convergence and mixing, as well as to increase the precision of the estimates.
     </para>
 
-<para> All the commands that are executed by <command>bp-analyze.pl</command> will be logged to
+<para> All the commands that are executed by <command>bp-analyze</command> will be logged to
       <filename>Results/bp-analyze.log</filename>. You can also see these
       commands as they are executed by supplying the <command>--verbose</command> option:
-<screen><prompt>%</prompt> bp-analyze.pl --burnin=<replaceable>iterations</replaceable> --verbose</screen>
+<screen><prompt>%</prompt> bp-analyze --burnin=<replaceable>iterations</replaceable> --verbose</screen>
     </para>
 
     <section><info><title>Meaning of generated files</title></info>
@@ -2481,32 +2481,32 @@ your <command>bali-phy</command> runs on that computer.
     </section>
 
 
-    <section><info><title>Running <command>bp-analyze.pl</command>.</title></info>
+    <section><info><title>Running <command>bp-analyze</command>.</title></info>
       <qandaset>
 
 	<qandaentry>
-	  <question><para>Why does <command>bp-analyze.pl</command> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</para></question>
+	  <question><para>Why does <command>bp-analyze</command> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</para></question>
 	  <answer>
 	    <para>The program <command>draw-tree</command> was not distributed on this platform (Windows, Mac).  This is not a fatal error message, it just means that a pretty picture of the tree will not be generated automatically.  You can still view the tree with <application>FigTree</application>, for example.</para>
 	  </answer>
 	</qandaentry>
 
 	<qandaentry>
-	  <question><para>Why does <command>bp-analyze.pl</command> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</para></question>
+	  <question><para>Why does <command>bp-analyze</command> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</para></question>
 	  <answer>
 	    <para>This is because you have not installed <application>gnuplot</application>.  This is not a fatal error message, it just means that pictures of traces, partition support, and SRQ plots will not be generated automatically.  You can still view MCMC traces with <application>Tracer</application>.</para>
 	  </answer>
 	</qandaentry>
 
 	<qandaentry>
-	  <question><para>Why does <command>bp-analyze.pl</command> say "Program 'R' not found.  Some mixing graphs will not be generated"?</para></question>
+	  <question><para>Why does <command>bp-analyze</command> say "Program 'R' not found.  Some mixing graphs will not be generated"?</para></question>
 	  <answer>
 	    <para>This is because you have not installed <application>R</application>.  This is not a fatal error message, it just means that a plot showing differences in clade probabilities between runs will not be generated.</para>
 	  </answer>
 	</qandaentry>
 
 	<qandaentry>
-	  <question><para>Why is <command>bp-analyze.pl</command> stopping early, or failing to generate some files?</para></question>
+	  <question><para>Why is <command>bp-analyze</command> stopping early, or failing to generate some files?</para></question>
 	  <answer>
 	    <para>Look in the file <filename>Results/bp-analyze.log</filename>.  This should contain the actual commands that were run, along with error message from these commands.  These error message should give you a hint as to what the problem might be.</para>
 	  </answer>
