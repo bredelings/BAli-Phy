@@ -2677,6 +2677,8 @@ sub translate_cygwin
 
 sub tree_MDS
 {
+    return if (!$have_R);
+
     print "\nGenerate MDS plots of topology burnin ... ";
     my $i=1;
     foreach my $tree_file (@tree_files)
