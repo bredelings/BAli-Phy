@@ -288,7 +288,7 @@ Check that the executable runs:
   <section xml:id="compilation"><info><title>Compiling <application>BAli-Phy</application></title></info>
     
 
-    <para>Compiling <application>BAli-Phy</application> is intended to be a relatively painless process.  However, most people will want to <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://bali-phy.org/download.php">download a compiled version</link>.
+    <para>Compiling <application>BAli-Phy</application> is intended to be a relatively painless process.  However, most people will want to follow the standard installation instructions at <xref linkend="installation"/>.
 
     </para>
 
