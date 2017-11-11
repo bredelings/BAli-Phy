@@ -613,7 +613,7 @@ int main(int argc,char* argv[])
 
 	    do_pre_burnin(args, M, *files[0], out_both);
 
-	    out_screen<<"\nBAli-Phy does NOT detect when how many iterations is sufficient:\n   You need to monitor convergence and kill it when done."<<endl;
+	    out_screen<<"\nBAli-Phy does NOT detect how many iterations is sufficient:\n   You need to monitor convergence and kill it when done."<<endl;
 	    if (not args.count("iterations"))
 		out_screen<<"   Maximum number of iterations not specified: limiting to "<<max_iterations<<"."<<endl;
 	    else
