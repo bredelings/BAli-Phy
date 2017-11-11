@@ -197,7 +197,7 @@ The ASDSF (Average Standard-Deviation of Split Frequences) is a measure of how m
 <section ><info><title>Generating an HTML Report</title></info>
 <para>
 Now lets use the analysis script to run all the summaries and make an HTML report:
-% bp-analyze.pl ITS1-5.8S-ITS2-{1,2}/
+% bp-analyze ITS1-5.8S-ITS2-{1,2}/
 % firefox Results/index.html &#38;
 This PERL script runs <application>statreport</application> and <application>trees-consensus</application> for you.  Take a look at what commands were run:
 % less Results/bp-analyze.log
