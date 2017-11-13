@@ -20,7 +20,7 @@
 #include <set>
 #include <map>
 
-#include <boost/property_tree/ptree.hpp>
+#include <boost/variant.hpp>
 
 #include "util.H"
 #include "myexception.H"
@@ -35,7 +35,6 @@ using std::string;
 using std::set;
 
 using boost::dynamic_pointer_cast;
-using boost::property_tree::ptree;
 
 vector<expression_ref> model_parameter_expressions(const Model& M)
 {
@@ -100,7 +99,6 @@ log_double_t Model::prior() const
 Model::Model(const std::shared_ptr<module_loader>& L, const key_map_t& k)
     :context(L),keys(new key_map_t(k))
 { }
-
 
 
 void show_parameters(std::ostream& o,const Model& M, bool show_hidden) {
@@ -185,6 +183,42 @@ bool operator<(const vector<string>& p1, const vector<string>& p2)
 //  with the ones furthest from the root, and remove their children
 //  if it is allowable.
 
+
+struct ptree;
+struct ptree: public std::vector<std::pair<string,ptree>>
+{
+    boost::variant<int,double,string> value;
+    template <typename T>       T& get_value()       {return boost::get<T>(value);}
+    template <typename T> const T& get_value() const {return boost::get<T>(value);}
+    template <typename T> void put_value(const T& t) {value = t;}
+
+    boost::optional<ptree&> get_child_optional(const string& key)
+    {
+	for(auto& x: *this)
+	    if (x.first == key) return x.second;
+	return boost::none;
+    }
+
+    ptree() {};
+    ptree(int i):value(i) {};
+    ptree(double d):value(d) {};
+    ptree(const string& s):value(s) {};
+};
+
+string show(const ptree& pt, int depth=0)
+{
+    string result = "";
+    string indent(depth,' ');
+    string indent2(depth+2,' ');
+    result += "'"+convertToString(pt.value)+"'\n";
+    for(auto c: pt)
+    {
+	result += indent2 + c.first + " : ";
+	result += show(c.second,depth+4);
+    }
+    return result;
+}
+
 void copy_to_vec(const ptree& p, vector<string>& names2, const string& path = "")
 {
     if (p.empty())
@@ -243,6 +277,24 @@ void simplify(ptree& p)
     std::swap(p,p2);
 }
 
+void add_path(ptree& p, const vector<string>& path, int value, int first=0)
+{
+    if (first >= path.size())
+	p.put_value(value);
+    else
+    {
+	const string& x = path[first];
+	auto child = p.get_child_optional(x);
+	if (not child)
+	{
+	    p.push_back({x, ptree("yo")});
+	    child = p.get_child_optional(x);
+	}
+	assert(child);
+	add_path(*child, path, first+1, value);
+    }
+}
+
 vector<string> short_parameter_names(const vector<string>& names)
 {
     // construct the name paths
@@ -250,13 +302,15 @@ vector<string> short_parameter_names(const vector<string>& names)
     vector<bool> hidden(names.size(),false);
     for(int i=0;i<names.size();i++)
     {
-	if (names[i].size() and names[i][0] == '*')
+	string path = names[i];
+
+	if (path.size() and path[0] == '*')
 	{
-	    paths.put(names[i].substr(1),i);
+	    path = path.substr(1);
 	    hidden[i] = true;
 	}
-	else
-	    paths.put(names[i],i);
+
+	add_path(paths, split(path,"."), i);
     }
 
     // Remove levels that aren't needed for disambiguation
