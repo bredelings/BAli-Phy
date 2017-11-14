@@ -233,7 +233,7 @@ void copy_to_vec(const ptree& p, vector<string>& names2, const string& path = ""
 	    if (path.empty())
 		copy_to_vec(x.second, names2, x.first);
 	    else
-		copy_to_vec(x.second, names2, path + "." + x.first);
+		copy_to_vec(x.second, names2, path + "::" + x.first);
     }
 }
 
@@ -311,7 +311,7 @@ vector<string> short_parameter_names(const vector<string>& names)
 	    hidden[i] = true;
 	}
 
-	add_path(paths, split(path,"."), i);
+	add_path(paths, split(path,"::"), i);
     }
 
     // Remove levels that aren't needed for disambiguation

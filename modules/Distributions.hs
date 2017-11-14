@@ -48,7 +48,7 @@ sample' ps l rate (SamplingRate rate2 a) = sample' ps l rate2 a;
 add_prefix p m = Prefix p m;
 gen_model m = sample' [] True 1.0 m;
 
-prefix_name ps name = foldl (\a b -> b++"."++a) name ps;
+prefix_name ps name = foldl (\a b -> b++"::"++a) name ps;
 add_logger name x = do {Log name x ; return x};
 name ~~ dist = do { x <- dist ; Log name x ; return x};
 name @@ a = Prefix name a;
