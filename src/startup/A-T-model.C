@@ -6,6 +6,7 @@
 #include "alignment/load.H"
 #include "alignment/index-matrix.H"
 #include "models/parse.H"
+#include "models/rules.H"
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -112,11 +113,11 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 }
 
 vector<model_t>
-get_imodels(const shared_items<string>& imodel_names_mapping, const SequenceTree&)
+get_imodels(const Rules& R, const shared_items<string>& imodel_names_mapping, const SequenceTree&)
 {
     vector<model_t> imodels;
     for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
-	imodels.push_back( get_model("IndelModel",imodel_names_mapping.unique(i)) );
+	imodels.push_back( get_model(R, "IndelModel",imodel_names_mapping.unique(i)) );
     return imodels;
 }
 
@@ -336,6 +337,8 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 				      ostream& out_cache, ostream& out_screen, ostream& out_both,
 				      int proc_id)
 {
+    Rules R;
+
     //------ Determine number of partitions ------//
     vector<string> filenames = args["align"].as<vector<string> >();
     const int n_partitions = filenames.size();
@@ -356,7 +359,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
 	if (not smodel_names_mapping.unique(i).empty())
-	    full_smodels[i] = get_model("MultiMixtureModel[a]",smodel_names_mapping.unique(i));
+	    full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
 
     //------------- Get alphabet names -------------------
     shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filenames.size());
@@ -455,7 +458,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
     sanitize_branch_lengths(T);
 
     //--------- Set up indel model --------//
-    auto full_imodels = get_imodels(imodel_names_mapping, T);
+    auto full_imodels = get_imodels(R, imodel_names_mapping, T);
 
     //--------- Get substitution models that depend on default alphabet --------//
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
@@ -469,7 +472,7 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 	    if (smodel_names_mapping.unique(i) == "")
 		throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
 
-	    full_smodels[i] = get_model("MultiMixtureModel[a]",smodel_names_mapping.unique(i));
+	    full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
 	}
     
     // Apply alphabet
@@ -502,19 +505,19 @@ owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr
 	auto scale_model = scale_names_mapping.unique(i);
 	if (scale_model.empty())
 	    scale_model = "~Gamma[0.5,2]";
-	full_scale_models[i] = get_model("Double", scale_model);
+	full_scale_models[i] = get_model(R, "Double", scale_model);
     }
 
     //-------------- Branch length model --------------------//
     model_t branch_length_model;
     if (args.count("branch-length"))
-	branch_length_model = get_model("Double", args["branch-length"].as<string>());
+	branch_length_model = get_model(R, "Double", args["branch-length"].as<string>());
 
     // Don't divide by 0 if we have 1 sequence and T.n_branches() == 0
     else if (T.n_branches() > 0)
     {
 	string beta = std::to_string(2.0/T.n_branches());
-	branch_length_model = get_model("Double", string("~Gamma[0.5,")+beta+"]");
+	branch_length_model = get_model(R, "Double", string("~Gamma[0.5,")+beta+"]");
     }
 
     //-------------- Likelihood calculator types -----------//

@@ -17,14 +17,14 @@ using boost::property_tree::ptree;
 using boost::optional;
 
 // Translate pass M+FM -> RCTMC[M,FM]
-void pass1(ptree& p)
+void pass1(const Rules& R, ptree& p)
 {
     // 1. Handle children.
     for(auto& child: p)
-	pass1(child.second);
+	pass1(R, child.second);
     
     // 2. Convert e.g. TN+F -> RCTMC[TN,F]
-    if (unify(get_result_type(p),parse_type("FrequencyModel[_]")) and p.count("submodel"))
+    if (unify(R.get_result_type(p),parse_type("FrequencyModel[_]")) and p.count("submodel"))
     {
 	ptree q = p.get_child("submodel");
 	auto& r = p;
@@ -166,7 +166,7 @@ vector<pair<string, ptree>> extend_scope(const ptree& rule, int skip, const vect
 }
 
 // OK, so 'model' is going to have arg=value pairs set, but not necessarily in the right order.
-equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars, const vector<pair<string, ptree>>& scope)
+equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<string> bound_vars, const vector<pair<string, ptree>>& scope)
 {
     auto name = model.get_value<string>();
 
@@ -204,7 +204,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	if (not E)
 	{
 	    if (convertible_to(model, *type, required_type))
-		return pass2(required_type, model, bound_vars, scope);
+		return pass2(R, required_type, model, bound_vars, scope);
 	    else
 		throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(*type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
 	}
@@ -218,7 +218,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
     assert(includes(bound_vars, find_type_variables_from_scope(scope)));
 
     // 1. Get rule with fresh type vars
-    auto rule = require_rule_for_func(name);
+    auto rule = R.require_rule_for_func(name);
     rule = freshen_type_vars(rule, bound_vars);
 
     //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
@@ -234,7 +234,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
     if (not E)
     {
 	if (convertible_to(model, result_type, required_type))
-	    return pass2(required_type, model, bound_vars, scope);
+	    return pass2(R, required_type, model, bound_vars, scope);
 	else
 	    throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
     }
@@ -252,7 +252,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	for(auto& child: model)
 	{
 	    type_t arg_required_type = get_type_for_arg(rule, "*");
-	    E = E && pass2(arg_required_type, child.second, bound_vars, scope);
+	    E = E && pass2(R, arg_required_type, child.second, bound_vars, scope);
 	    if (not E)
 	    {
 		auto x = arg_required_type;
@@ -289,7 +289,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	    type_t arg_required_type = get_type_for_arg(rule, arg_name);
 	    substitute(E, arg_required_type);
 	    ptree arg_value = model.get_child(arg_name);
-	    E = E && pass2(arg_required_type, arg_value, bound_vars, extend_scope(rule,skip,scope));
+	    E = E && pass2(R, arg_required_type, arg_value, bound_vars, extend_scope(rule,skip,scope));
 	    if (not E)
 		throw myexception()<<"Expression '"<<unparse(arg_value)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
 	    model2.push_back({arg_name, arg_value});
@@ -307,7 +307,7 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
 	    auto arg_required_type = argument.get_child("arg_type");
 	    substitute(E, arg_required_type);
 	    auto default_arg = argument.get_child("default_value");
-	    E = E && pass2(arg_required_type, default_arg, bound_vars, extend_scope(rule, skip, scope));
+	    E = E && pass2(R, arg_required_type, default_arg, bound_vars, extend_scope(rule, skip, scope));
 	    if (not E)
 		throw myexception()<<"Expression '"<<unparse(default_arg)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
 	    add(bound_vars, E.referenced_vars());
@@ -325,10 +325,10 @@ equations pass2(const ptree& required_type, ptree& model, set<string> bound_vars
     return E;
 }
 
-std::pair<ptree,equations> translate_model(const ptree& required_type, ptree model)
+std::pair<ptree,equations> translate_model(const Rules& R, const ptree& required_type, ptree model)
 {
-    pass1(model);
-    auto E = pass2(required_type, model, find_variables_in_type(required_type), {});
+    pass1(R, model);
+    auto E = pass2(R, required_type, model, find_variables_in_type(required_type), {});
     return {model,E};
 }
 

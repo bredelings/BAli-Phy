@@ -204,9 +204,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    help_on_alphabet(std::cout);
 	    exit(0);
 	}
+	Rules R;
 	if (topic == "functions")
 	{
-	    auto rules = get_rules();
+	    auto rules = get_rules(R);
 	    for(auto& rule: rules)
 	    {
 		string name = rule.get_child("name").get_value<string>();
@@ -216,7 +217,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    exit(0);
 	}
 
-	if (auto rule = get_rule_for_func(topic))
+	if (auto rule = R.get_rule_for_func(topic))
 	{
 	    auto desc = rule->get_optional<string>("description");
 	    if (desc)

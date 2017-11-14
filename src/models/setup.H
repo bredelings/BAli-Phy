@@ -20,9 +20,11 @@ struct model_t
     expression_ref expression;
 };
 
-model_t get_model(const boost::property_tree::ptree& type, const boost::property_tree::ptree& model_rep);
+class Rules;
 
-model_t get_model(const std::string& type, const std::string& model);
+model_t get_model(const Rules& R, const boost::property_tree::ptree& type, const boost::property_tree::ptree& model_rep);
+
+model_t get_model(const Rules& R, const std::string& type, const std::string& model);
 
 std::string default_markov_model(const alphabet& a);
 

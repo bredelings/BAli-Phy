@@ -475,7 +475,7 @@ const vector< vector<vector<string>> > all_default_arguments =
     {{"RS07RelaxedRates", "IndelModel"}, {"IModel.rs07_relaxed_rates_model"}}
 };
 
-ptree parse(const string& s);
+ptree parse(const Rules&, const string& s);
 ptree parse_type(const string& s);
 
 ptree parse_constraints(const string& s)
@@ -542,7 +542,7 @@ ptree convert_rule_old(const vector<vector<string>>& s)
 
 
 
-ptree convert_rule(const vector<vector<string>>& s)
+ptree convert_rule(const Rules& R, const vector<vector<string>>& s)
 {
     ptree rule = convert_rule_old(s);
 
@@ -574,7 +574,7 @@ ptree convert_rule(const vector<vector<string>>& s)
 
 	if (auto default_value = x.get_child_optional("default_value"))
 	{
-	    (*default_value) = parse(default_value->get_value<string>());
+	    (*default_value) = parse(R, default_value->get_value<string>());
 	}
 
 	if (auto applied_args= x.get_child_optional("applied_args"))
@@ -586,23 +586,23 @@ ptree convert_rule(const vector<vector<string>>& s)
     return rule;
 }
 
-vector<Rule> get_rules()
+vector<Rule> get_rules(const Rules& R)
 {
     vector<Rule> rules;
     for(auto& rule: all_default_arguments)
-	rules.push_back(convert_rule(rule));
+	rules.push_back(convert_rule(R, rule));
     return rules;
 }
 
-optional<Rule> get_rule_for_func(const string& s)
+optional<Rule> Rules::get_rule_for_func(const string& s) const
 {
     for(const auto& rule: all_default_arguments)
 	if (rule[0][0] == s)
-	    return convert_rule(rule);
+	    return convert_rule(*this, rule);
     return boost::none;
 }
 
-Rule require_rule_for_func(const string& s)
+Rule Rules::require_rule_for_func(const string& s) const
 {
     if (auto rule = get_rule_for_func(s))
 	return *rule;
@@ -619,13 +619,12 @@ ptree get_arg(const Rule& rule, const string& arg_name)
     // FIXME give info about function here?
 }
 
-string get_keyword_for_positional_arg(const string& head, int i)
+string get_keyword_for_positional_arg(const Rule& rule, int i)
 {
-    auto rule = require_rule_for_func(head);
-
     const auto arguments = rule.get_child("args");
+    auto name = rule.get_child("result_type").get_value<string>();
     if (i > arguments.size())
-	throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<head<<"', which only has "<<arguments.size()<<" positional arguments.";
+	throw myexception()<<"Trying to access positional arg "<<i+1<<" for '"<<name<<"', which only has "<<arguments.size()<<" positional arguments.";
 
     auto it = arguments.begin();
     for(int j=0;j<i;j++)
@@ -639,15 +638,17 @@ ptree get_type_for_arg(const Rule& rule, const string& arg)
     return get_arg(rule,arg).get_child("arg_type");
 }
 
-ptree get_type_for_arg(const string& func, const string& arg)
+/*
+ptree get_type_for_arg(const string& func, const string& arg) const
 {
     if (auto rule = get_rule_for_func(func))
-	return get_type_for_arg(*rule, arg);
+	return ::get_type_for_arg(*rule, arg);
     else
 	return ptree("?");
 }
+*/
 
-ptree get_result_type(const string& func)
+ptree Rules::get_result_type(const string& func) const
 {
     if (can_be_converted_to<int>(func)) return ptree("Int");
     if (can_be_converted_to<double>(func)) return ptree("Double");
@@ -658,7 +659,7 @@ ptree get_result_type(const string& func)
 	return ptree("?");
 }
 
-ptree get_result_type(const ptree& model_rep)
+ptree Rules::get_result_type(const ptree& model_rep) const
 {
     return get_result_type(model_rep.get_value<string>());
 }

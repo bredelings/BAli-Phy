@@ -179,14 +179,14 @@ ptree array_index(const ptree& p, int i)
     return index(p,i).second;
 }
 
-bool is_loggable_function(const string& name)
+bool is_loggable_function(const Rules& R, const string& name)
 {
-    auto rule = get_rule_for_func(name);
+    auto rule = R.get_rule_for_func(name);
     if (not rule) return false;
     return not rule->get("no_log",false);
 }
 
-bool is_unlogged_random(const ptree& model)
+bool is_unlogged_random(const Rules& R, const ptree& model)
 {
     auto name = model.get_value<string>();
 
@@ -194,25 +194,25 @@ bool is_unlogged_random(const ptree& model)
     if (name == "Sample") return true;
 
     // 2. If this function is loggable then any random children have already been logged.
-    if (is_loggable_function(name)) return false;
+    if (is_loggable_function(R, name)) return false;
 
     // 3. Otherwise check if children are random and unlogged
     for(const auto& p: model)
-	if (is_unlogged_random(p.second))
+	if (is_unlogged_random(R, p.second))
 	    return true;
 
     return false;
 }
 
-bool should_log(const ptree& model, const string& arg_name)
+bool should_log(const Rules& R, const ptree& model, const string& arg_name)
 {
     auto name = model.get_value<string>();
 
-    if (not is_loggable_function(name)) return false;
+    if (not is_loggable_function(R, name)) return false;
 
     auto arg = model.get_child(arg_name);
 
-    if (is_unlogged_random(arg))
+    if (is_unlogged_random(R, arg))
 	return true;
     else
 	return false;
@@ -338,7 +338,7 @@ set<string> extend_scope(const ptree& rule, int skip, const set<string>& scope)
     return scope2;
 }
 
-expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, const set<string>& scope)
+expression_ref get_model_as(const Rules& R, const ptree& required_type, const ptree& model_rep, const set<string>& scope)
 {
     //  std::cout<<"model = "<<model<<std::endl;
     //  auto result = parse(model);
@@ -359,7 +359,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 
     // 4. Now we have a function -- get the rule
     auto name = model_rep.get_value<string>();
-    auto rule = get_rule_for_func(name);
+    auto rule = R.get_rule_for_func(name);
 
     if (not rule) throw myexception()<<"No rule for '"<<name<<"'";
     if (not rule->count("call")) throw myexception()<<"No call for '"<<name<<"'";
@@ -379,7 +379,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 	vector<expression_ref> arguments;
 	for(const auto& child: model_rep)
 	{
-	    expression_ref arg = get_model_as(arg_type, child.second, scope);
+	    expression_ref arg = get_model_as(R, arg_type, child.second, scope);
 	    arguments.push_back(Tuple(child.first, arg));
 	}
 	return (E,get_list(arguments));
@@ -389,7 +389,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 	ptree arg_type = get_type_for_arg(*rule, "*");
 	vector<expression_ref> arguments;
 	for(const auto& child: model_rep)
-	    arguments.push_back( get_model_as(arg_type, child.second, scope) );
+	    arguments.push_back( get_model_as(R, arg_type, child.second, scope) );
 	return (E,get_list(arguments));
     }
     else if (not generate_function)
@@ -401,7 +401,7 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 	    if (arg_tree.get("no_apply",false)) continue;
 
 	    ptree arg_type = arg_tree.get_child("arg_type");
-	    expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), scope);
+	    expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), scope);
 	    E = (E,arg);
 	}
 	return E;
@@ -431,20 +431,21 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 	string arg_name = array_index(argi,0).get_value<string>();
 	ptree arg_tree = get_arg(*rule, arg_name);
 	ptree arg_type = arg_tree.get_child("arg_type");
-	expression_ref arg = get_model_as(arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
+	expression_ref arg = get_model_as(R, arg_type, model_rep.get_child(arg_name), extend_scope(*rule, i, scope));
 
 	// Apply arguments if necessary
 	auto applied_args = argi.get_child_optional("applied_args");
 	if (applied_args)
 	    arg = apply_args(arg, *applied_args);
 
+	auto log_name = name + ":" + arg_name;
 	// Prefix "arg_name" (arg_+arg_name)
-	if (not no_log) arg = (Prefix, arg_name, arg);
+	if (not no_log) arg = (Prefix, log_name, arg);
 
 	// E = Log "arg_name" arg_name >> E
-	if (should_log(model_rep, arg_name))
+	if (should_log(R, model_rep, arg_name))
 	{
-	    auto log_action = (Log,arg_name,dummy("arg_"+arg_name));
+	    auto log_action = (Log, log_name, dummy("arg_"+arg_name));
 	    E = (dummy("Prelude.>>"),log_action,E);
 	}
 
@@ -452,8 +453,6 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 	E = (dummy("Prelude.>>="), arg, lambda_quantify(dummy("arg_"+arg_name), E));
     }
 
-    if (not no_log) E = (Prefix,name,E);
-	
     for(;i<args.size();i++)
     {
 	// E = (\arg_name -> E)
@@ -473,10 +472,10 @@ expression_ref get_model_as(const ptree& required_type, const ptree& model_rep, 
 /// \param a The alphabet.
 /// \param frequencies The initial letter frequencies in the model.
 ///
-model_t get_model(const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep)
+model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    expression_ref full_model = get_model_as(type, model_rep, std::set<string>{});
+    expression_ref full_model = get_model_as(R, type, model_rep, std::set<string>{});
 
     if (log_verbose)
 	std::cout<<"full_model = "<<full_model<<std::endl;
@@ -484,13 +483,13 @@ model_t get_model(const ptree& type, const std::set<term_t>& constraints, const 
     return {model_rep, type, constraints, full_model};
 }
 
-model_t get_model(const string& type, const string& model)
+model_t get_model(const Rules& R, const string& type, const string& model)
 {
     auto required_type = parse_type(type);
-    auto model_rep = parse(model);
+    auto model_rep = parse(R, model);
 //    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
 
-    auto p = translate_model(required_type, model_rep);
+    auto p = translate_model(R, required_type, model_rep);
     model_rep = p.first;
     auto equations = p.second;
     substitute(equations, model_rep);
@@ -501,5 +500,5 @@ model_t get_model(const string& type, const string& model)
 	std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
 	std::cout<<show(equations)<<std::endl;
     }
-    return get_model(required_type, equations.get_constraints(), model_rep);
+    return get_model(R, required_type, equations.get_constraints(), model_rep);
 }

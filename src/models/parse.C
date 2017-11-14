@@ -104,11 +104,11 @@ ptree add_sample(const ptree& p)
 }
 
 /// Parse strings of the form {~}head[value1, value2, key3=value3, ...]
-ptree parse_no_submodel(const string& s)
+ptree parse_no_submodel(const Rules& R, const string& s)
 {
     // 0. Handle ~
     if (not s.empty() and s[0] == '~')
-	return add_sample(parse(s.substr(1)));
+	return add_sample(parse(R, s.substr(1)));
 
     // 1. Split the head and the arguments
     auto args = split_args(s);
@@ -122,7 +122,7 @@ ptree parse_no_submodel(const string& s)
   
     if (args.empty()) return result;
 
-    auto rule = require_rule_for_func(head);
+    auto rule = R.require_rule_for_func(head);
     bool is_list_rule = rule.get("list_arguments",false);
     bool is_dict_rule = rule.get("pass_arguments",false);
 
@@ -160,7 +160,7 @@ ptree parse_no_submodel(const string& s)
 	    else if (is_dict_rule)
 		throw myexception()<<"Name required for argument "<<i+1<<" in of '"<<head<<"'";
 	    else
-		key_value = {get_keyword_for_positional_arg(head, i), args[i]};
+		key_value = {get_keyword_for_positional_arg(rule, i), args[i]};
 	}
 	if (is_list_rule and not key_value.first.empty())
 	    throw myexception()<<"No name for argument "<<i+1<<" of '"<<head<<"'";
@@ -168,7 +168,7 @@ ptree parse_no_submodel(const string& s)
 	// 8. Set the key = value after parsing the value.
 	if (not key_value.first.empty() and result.count(key_value.first))
 	    throw myexception()<<"Trying to set value for "<<head<<"."<<key_value.first<<" a second time!";
-	result.push_back({key_value.first, parse(key_value.second)});
+	result.push_back({key_value.first, parse(R, key_value.second)});
     }
 
     return result;
@@ -198,20 +198,20 @@ ptree parse_type(const string& s)
 }
 
 // Parse strings of the form head[args] + head[args] + ... + head[args]
-ptree parse(const string& s)
+ptree parse(const Rules& R, const string& s)
 {
     // 1. Get the last head[args]
     auto ss = split_last_plus(s);
 
     // 2. Parse the last head[args]
-    auto result = parse_no_submodel(ss.second);
+    auto result = parse_no_submodel(R, ss.second);
 
     // 3. Parse the remainder and add it as a "submodel" argument
     if (ss.first)
     {
 	if (result.count("submodel"))
 	    throw myexception()<<"Trying to specify a submodel with '+' when submodel already specified by keyword!";
-	result.push_back({"submodel",parse(*ss.first)});
+	result.push_back({"submodel",parse(R, *ss.first)});
     }
 
     return result;
