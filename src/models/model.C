@@ -21,6 +21,7 @@
 #include <map>
 
 #include <boost/variant.hpp>
+#include <boost/optional.hpp>
 
 #include "util.H"
 #include "myexception.H"
@@ -291,7 +292,7 @@ void add_path(ptree& p, const vector<string>& path, int value, int first=0)
 	    child = p.get_child_optional(x);
 	}
 	assert(child);
-	add_path(*child, path, first+1, value);
+	add_path(*child, path, value, first+1);
     }
 }
 
