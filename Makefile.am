@@ -92,8 +92,8 @@ nobase_functions_DATA = functions/AA.json \
 	functions/Normal.json \
 	functions/Pair.json \
 	functions/PAM.json \
-	functions/Rates.Gamma.json \
-	functions/Rates.logNormal.json \
+	functions/Rates/Gamma.json \
+	functions/Rates/logNormal.json \
 	functions/RCTMC.json \
 	functions/RNA.json \
 	functions/RS05.json \
