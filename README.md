@@ -27,7 +27,7 @@ You will also need to install
  * autoconf
  * automake
  * libtool
- * cairo graphics library (optional)
+ * cairo graphics library (optional, but required to build the `draw-tree` program)
 
 Build
 -----
@@ -46,11 +46,6 @@ make check
 make install
 ```
 
-If you want to build the `draw-tree` program to visualize trees in the HTML report, then
-you need to instead the cairo graphics library and header files.  Then change the configure line to
-```bash
-../BAli-Phy/configure --prefix=$HOME/Applications/bali-phy/ --enable-cairo
-```
 Additional options to `configure` can be revealed by supplying the `--help` flag.
 
 Adding bali-phy to your `$PATH`
