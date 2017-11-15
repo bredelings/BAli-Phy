@@ -223,8 +223,8 @@ int topology_distance2(const tree_record& t1, const tree_record& t2)
 {
     assert(t1.n_leaves() == t2.n_leaves());
 
-    unsigned n1 = t1.n_internal_branches();
-    unsigned n2 = t2.n_internal_branches();
+    const unsigned n1 = t1.n_internal_branches();
+    const unsigned n2 = t2.n_internal_branches();
 
     // Accumulate distances for T1 partitions
     unsigned shared=0;
@@ -246,6 +246,61 @@ int topology_distance2(const tree_record& t1, const tree_record& t2)
     }
 
     return (n1-shared) + (n2-shared);
+}
+
+double total_internal_branch_length(const tree_record& t)
+{
+    double L=0;
+    for(int i=t.n_leaves();i<t.n_branches();i++)
+	L += t.branch_lengths[i];
+    return L;
+}
+
+double internal_branch_distance2(const tree_record& t1, const tree_record& t2)
+{
+    assert(t1.n_leaves() == t2.n_leaves());
+    const int N = t1.n_leaves();
+
+    const unsigned n1 = t1.n_internal_branches();
+    const unsigned n2 = t2.n_internal_branches();
+
+    double D = total_internal_branch_length(t1) + total_internal_branch_length(t2);
+
+    for(int i=0,j=0; i<n1 and j<n2;)
+    {
+	if (t1.partitions[i] == t2.partitions[j])
+	{
+	    double L1 = t1.branch_lengths[N+i];
+	    double L2 = t2.branch_lengths[N+j];
+	    D -= (L1+L2);
+	    D += std::abs(t1.branch_lengths[N+i] - t2.branch_lengths[N+j]);
+	    i++;
+	    j++;
+	}
+	else if (t1.partitions[i] < t2.partitions[j])
+	    i++;
+	else
+	    j++;
+    }
+
+    return D;
+}
+
+double leaf_branch_distance2(const tree_record& t1, const tree_record& t2)
+{
+    assert(t1.n_leaves() == t2.n_leaves());
+    const int N = t1.n_leaves();
+
+    double D = 0;
+    for(int i=0;i<N;i++)
+	D += std::abs(t1.branch_lengths[i] - t2.branch_lengths[i]);
+
+    return D;
+}
+
+double branch_distance2(const tree_record& t1, const tree_record& t2)
+{
+    return internal_branch_distance2(t1,t2) + leaf_branch_distance2(t1,t2);
 }
 
 // G= is the (undirected) graph of edges in G with slack(x,y)=0.
@@ -556,16 +611,6 @@ double matching_distance(const tree_record& t1, const tree_record& t2)
 }
 
 double robinson_foulds_distance2(const tree_record& t1, const tree_record& t2)
-{
-    return topology_distance2(t1,t2);
-}
-
-double branch_distance2(const tree_record& t1, const tree_record& t2)
-{
-    return topology_distance2(t1,t2);
-}
-
-double internal_branch_distance2(const tree_record& t1, const tree_record& t2)
 {
     return topology_distance2(t1,t2);
 }
