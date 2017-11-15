@@ -64,6 +64,7 @@ namespace mpi = boost::mpi;
 
 #include "startup/A-T-model.H"
 #include "startup/files.H"
+#include "startup/paths.H"
 #include "startup/loggers.H"
 #include "startup/io.H"
 #include "startup/system.H"
@@ -297,34 +298,6 @@ void show_ending_messages(bool show_only)
  * 3. Improve the method for proposing new SPR attachment sites.
  *  3a. Can we walk along the tree making characters present?
  */
-
-fs::path get_system_lib_path(const string& exe_name)
-{
-    fs::path system_lib_path = find_exe_path(exe_name);
-    if (not system_lib_path.empty())
-    {
-	system_lib_path.remove_filename();
-	system_lib_path = system_lib_path / "lib" / "bali-phy";
-
-	if (not fs::exists(system_lib_path))
-	    system_lib_path = "";
-    }
-    return system_lib_path;
-}
-
-fs::path get_user_lib_path()
-{
-    fs::path user_lib_path;
-    if (getenv("HOME"))
-    {
-	user_lib_path = getenv("HOME");
-	user_lib_path = user_lib_path / ".local" / "share" / "bali-phy" / "packages";
-
-	if (not fs::exists(user_lib_path))
-	    user_lib_path = "";
-    }
-    return user_lib_path;
-}
 
 std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const string& filename)
 {
