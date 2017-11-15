@@ -50,6 +50,7 @@ namespace mpi = boost::mpi;
 #include "myexception.H"
 #include "rng.H"
 #include "models/parameters.H"
+#include "models/rules.H"
 #include "mcmc/mcmc.H"
 #include "util.H"
 #include "setup.H"
@@ -306,6 +307,9 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const st
 
     module_loader L;
 
+    // FIXME - use get_package_paths in startup/paths.H
+    // FIXME - why does the user lib path not look for the /modules version?
+
     // 1. Add user-specified package paths
     if (args.count("package-path"))
 	for(const string& p: split(args["package-path"].as<string>(),':'))
@@ -317,11 +321,7 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const st
 
     // 2. Add default user path
     if (not user_lib_path.empty())
-    {
-	fs::path user_module_path = user_lib_path;
-	if (fs::exists(user_module_path))
-	    L.plugins_path.push_back( user_module_path.string() );
-    }
+	L.try_add_plugin_path(user_lib_path.string());
   
     // 3. Add default system paths
     if (not system_lib_path.empty())
@@ -471,7 +471,10 @@ int main(int argc,char* argv[])
 	//---------- Create model object -----------//
 	owned_ptr<Model> M;
 	if (args.count("align"))
-	    M = create_A_and_T_model(args, L, out_cache, out_screen, out_both, proc_id);
+	{
+	    Rules R(get_package_paths(argv[0], args));
+	    M = create_A_and_T_model(R, args, L, out_cache, out_screen, out_both, proc_id);
+	}
 	else
 	{
 	    Model::key_map_t keys;

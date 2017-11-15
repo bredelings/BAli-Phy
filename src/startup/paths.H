@@ -1,11 +1,15 @@
 #ifndef PATHS_H
 #define PATHS_H
 
-#include <boost/filesystem/operations.hpp>
 #include <string>
+#include <vector>
+#include <boost/filesystem/operations.hpp>
+#include <boost/program_options.hpp>
 
 boost::filesystem::path find_exe_path(const boost::filesystem::path& argv0);
 boost::filesystem::path get_system_lib_path(const std::string& exe_name);
 boost::filesystem::path get_user_lib_path();
+std::vector<boost::filesystem::path> clean_paths(const std::vector<boost::filesystem::path>& paths);
+std::vector<boost::filesystem::path> get_package_paths(const std::string& argv0, boost::program_options::variables_map& args);
 
 #endif

@@ -1,4 +1,5 @@
 #include "startup/cmd_line.H"
+#include "startup/paths.H"
 #include "util.H"
 #include "../io.H"
 #include "setup.H"
@@ -204,11 +205,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    help_on_alphabet(std::cout);
 	    exit(0);
 	}
-	Rules R;
+
+	Rules R(get_package_paths(argv[0], args));
 	if (topic == "functions")
 	{
-	    auto rules = get_rules(R);
-	    for(auto& rule: rules)
+	    for(auto& rule: R)
 	    {
 		string name = rule.get_child("name").get_value<string>();
 		string result_type = unparse_type(rule.get_child("result_type"));

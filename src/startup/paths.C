@@ -6,6 +6,8 @@ using std::vector;
 using std::string;
 namespace fs = boost::filesystem;
 
+using boost::program_options::variables_map;
+
 fs::path find_exe_path(const fs::path& argv0)
 {
     /*
@@ -83,3 +85,29 @@ fs::path get_user_lib_path()
     return user_lib_path;
 }
 
+vector<fs::path> clean_paths(const vector<fs::path>& paths)
+{
+    vector<fs::path> paths2;
+    for(int i=0;i<paths.size();i++)
+	if (not paths[i].empty() and fs::exists(paths[i]))
+	    paths2.push_back(paths[i]);
+    return paths2;
+}
+
+vector<fs::path> get_package_paths(const string& argv0, variables_map& args)
+{
+    vector<fs::path> paths;
+
+    // 1. First add the user-specified package paths
+    if (args.count("package-path"))
+	for(const string& path: split(args["package-path"].as<string>(),':'))
+	    paths.push_back(path);
+
+    // 2. Then add the user package directories
+    paths.push_back(get_user_lib_path());
+
+    // 3. Finally add the default system paths
+    paths.push_back(get_system_lib_path(argv0));
+
+    return clean_paths(paths);
+}

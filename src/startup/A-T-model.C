@@ -7,6 +7,7 @@
 #include "alignment/index-matrix.H"
 #include "models/parse.H"
 #include "models/rules.H"
+#include "startup/paths.H"
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -333,12 +334,10 @@ alignment unalign_A(const alignment& A)
 }
 
 
-owned_ptr<Model> create_A_and_T_model(variables_map& args, const std::shared_ptr<module_loader>& L,
+owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
 				      ostream& out_cache, ostream& out_screen, ostream& out_both,
 				      int proc_id)
 {
-    Rules R;
-
     //------ Determine number of partitions ------//
     vector<string> filenames = args["align"].as<vector<string> >();
     const int n_partitions = filenames.size();
