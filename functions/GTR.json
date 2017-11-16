@@ -6,7 +6,7 @@
         {
             "arg_name": "S",
             "arg_type": "List[Pair[String,Double]]",
-	    "default_value":"~DirichletOn[List[\"AC\",\"AG\",\"AT\",\"CG\",\"CT\",\"GT\"],1]"
+	    "default_value":"~DirichletOn[letter_pairs[A],1]"
         },
         {
             "arg_name": "A",

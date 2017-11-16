@@ -1,0 +1,11 @@
+{
+    "name": "letter_pairs",
+    "result_type": "List[String]",
+    "call": "SModel.letter_pair_names[A]",
+    "args": [
+        {
+            "arg_name": "A",
+            "arg_type": "a"
+        }
+    ]
+}

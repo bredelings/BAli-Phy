@@ -232,6 +232,8 @@ exchange_model a =  do {
   }
 };
 
+letter_pair_names a = [l1++l2|(l1,l2) <- pairs (alphabet_letters a)];
+
 get_element_freqs []                 x = error ("No frequency specified for letter '" ++ x ++ "'");
 get_element_freqs ((key,value):rest) x = if (key == x) then value else get_element_freqs rest x;
 
