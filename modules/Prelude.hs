@@ -168,7 +168,11 @@ any p            =  or . map p;
 all p            =  and . map p;
 
 (x:xs) == (y:ys) = (x==y) && (xs == ys);
+(_:_)  == _      = False;
+_      == (_:_)  = False;
 []     == []     = True;
+[]     == _      = False;
+_      == []     = False;
 x      == y      = builtin_equals x y;
 
 elem x           =  any (== x);
