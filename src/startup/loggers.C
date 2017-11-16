@@ -144,7 +144,7 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	vector<int> logged_computations;
 	vector<string> logged_names;
 
-	vector<string> names_ = parameter_names(*M);
+	vector<string> names_ = short_parameter_names(*M);
 	set<string> names(names_.begin(), names_.end());
 
 	// FIXME: Using short_parameter_names should be nice... but
@@ -158,7 +158,7 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 
 	    int index = M->add_compute_expression(parameter(name));
 
-	    find_sub_loggers(*M, index, name, logged_computations, logged_names);
+	    find_sub_loggers(*M, index, names_[i], logged_computations, logged_names);
 	}
 
 	TableGroupFunction<expression_ref> T1;
