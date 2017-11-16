@@ -1,0 +1,11 @@
+{
+    "name": "getNucleotides",
+    "result_type": "a",
+    "call": "Alphabet.getNucleotides[A]",
+    "args": [
+        {
+            "arg_name": "A",
+            "arg_type": "Codon[a,b]"
+        }
+    ]
+}
