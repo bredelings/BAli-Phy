@@ -1,0 +1,15 @@
+{
+    "name": "DirichletOn",
+    "result_type": "Distribution[List[Pair[a,Double]]]",
+    "call": "Distributions.dirichlet_on'[items,n]",
+    "args": [
+        {
+            "arg_name": "items",
+            "arg_type": "List[a]"
+        },
+        {
+            "arg_name": "n",
+            "arg_type": "Double"
+        }
+    ]
+}
