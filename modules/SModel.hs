@@ -245,8 +245,6 @@ perform_hash ((x,y):xys) = do {y' <- y; xys' <- perform_hash xys; return ((x,y')
 
 constant_frequencies_model2 freqs a = do {freqs' <- freqs; return [get_element_freqs freqs' l|l <- alphabet_letters a]};
 
-constant_exchange_model ex a = sequence [get_element_exchange ex (l1++l2) (l2++l1)|(l1,l2) <- pairs (alphabet_letters a)];
-
 select_element x ((key,value):rest) = if x == key then value else select_element x rest;
 select_element x [] = error $ "Can't find element " ++ show x ++ " in dictionary!";
 
@@ -255,6 +253,12 @@ select_elements []      _ = [];
 
 get_ordered_elements xs xps plural = if length xs == length xps then select_elements xs xps else error $ "Expected "++show (length xs)++" "++plural
                                      ++" but got "++ show (length xps)++"!";
+
+gtr' es' a = gtr es a where {lpairs = pairs (alphabet_letters a);
+                             es = if length lpairs == length es' then
+                                      [get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]
+                                  else
+                                      error "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (length es')++"!"};
 
 plus_f' a pi' = plus_f a pi where {pi= get_ordered_elements (alphabet_letters a) pi' "frequencies"};
 

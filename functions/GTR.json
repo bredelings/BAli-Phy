@@ -1,13 +1,12 @@
 {
     "name": "GTR",
     "result_type": "ExchangeModel[a]",
-    "call": "SModel.gtr[S,A]",
+    "call": "SModel.gtr'[S,A]",
     "args": [
         {
             "arg_name": "S",
-            "arg_type": "E",
-            "default_value": "exchange_prior",
-            "applied_args": "A"
+            "arg_type": "List[Pair[String,Double]]",
+	    "default_value":"~DirichletOn[List[\"AC\",\"AG\",\"AT\",\"CG\",\"CT\",\"GT\"],1]"
         },
         {
             "arg_name": "A",

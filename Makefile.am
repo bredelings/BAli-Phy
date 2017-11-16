@@ -39,7 +39,6 @@ nobase_functions_DATA = functions/AA.json \
 	functions/DNA.json \
 	functions/DP.json \
 	functions/dp_omega.json \
-	functions/E.json \
 	functions/Empirical.json \
 	functions/EQU.json \
 	functions/exchange_prior.json \
@@ -52,7 +51,6 @@ nobase_functions_DATA = functions/AA.json \
 	functions/F.json \
 	functions/fMutSel0.json \
 	functions/fMutSel.json \
-	functions/Freq.json \
 	functions/Gamma.json \
 	functions/Geometric.json \
 	functions/GTR.json \
