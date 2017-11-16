@@ -1,9 +1,8 @@
 {
     "name": "Freq",
-    "result_type": "F",
+    "result_type": "List[Pair[String,Double]]",
     "pass_arguments": "true",
-    "generate_function": "false",
-    "call": "SModel.constant_frequencies_model",
+    "call": "SModel.perform_hash",
     "args": [
         {
             "arg_name": "*",

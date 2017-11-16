@@ -1,13 +1,12 @@
 {
     "name": "gwF",
     "result_type": "FrequencyModel[a]",
-    "call": "SModel.plus_gwf[A,pi,f]",
+    "call": "SModel.plus_gwf'[A,pi,f]",
     "args": [
         {
             "arg_name": "pi",
-            "arg_type": "F",
-            "default_value": "frequencies_prior",
-            "applied_args": "A"
+            "arg_type": "List[Pair[String,Double]]",
+            "default_value": "~DirichletOn[letters[A],1.0]"
         },
         {
             "arg_name": "f",

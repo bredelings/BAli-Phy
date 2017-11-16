@@ -1,7 +1,0 @@
-{
-    "name": "frequencies_prior",
-    "result_type": "F",
-    "generate_function": "false",
-    "call": "SModel.frequencies_model",
-    "args": ""
-}

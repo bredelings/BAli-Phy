@@ -100,7 +100,7 @@ uniform_int l u = ProbDensity (uniform_int_density l u) () (sample_uniform_int l
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
 dirichlet_density ns ps = builtin_dirichlet_density (listToVectorDouble ns) (listToVectorDouble ps);
-sample_dirichlet ns = do { vs <- mapM (\a->gamma a 1.0) ns;
+sample_dirichlet ns = SamplingRate (1.0/sqrt(intToDouble $ length ns)) $ do { vs <- mapM (\a->gamma a 1.0) ns;
                            return $ map (/(sum vs)) vs};
 dirichlet ns = ProbDensity (dirichlet_density ns) (no_quantile "dirichlet") (sample_dirichlet ns) (Simplex (length ns) 1.0);
 
@@ -113,7 +113,7 @@ sample_dirichlet_on xs ns = do
   };
 
 dirichlet_on_density ns xps = dirichlet_density ns ps where {ps = map (\(x,p) -> p) xps};
-dirichlet_on xs ns = ProbDensity (dirichlet_on_density ns) (no_quantile "dirichlet_on") (sample_dirichlet_on xs ns) (LabelledSimplex xs (length ns) 1.0);
+dirichlet_on xs ns = ProbDensity (dirichlet_on_density ns) (no_quantile "dirichlet_on") (sample_dirichlet_on xs ns) (LabelledSimplex xs 1.0);
 dirichlet_on' xs n = dirichlet_on xs (replicate (length xs) n);
 
 builtin binomial_density 3 "binomial_density" "Distribution";

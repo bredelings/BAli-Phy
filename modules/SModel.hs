@@ -240,9 +240,41 @@ get_element_exchange ((key,value):rest) x y = if key == x || key == y then value
 
 constant_frequencies_model freqs a = sequence [get_element_freqs freqs l|l <- alphabet_letters a];
 
+perform_hash [] = return [];
+perform_hash ((x,y):xys) = do {y' <- y; xys' <- perform_hash xys; return ((x,y'):xys')};
+
 constant_frequencies_model2 freqs a = do {freqs' <- freqs; return [get_element_freqs freqs' l|l <- alphabet_letters a]};
 
 constant_exchange_model ex a = sequence [get_element_exchange ex (l1++l2) (l2++l1)|(l1,l2) <- pairs (alphabet_letters a)];
+
+select_element x ((key,value):rest) = if x == key then value else select_element x rest;
+select_element x [] = error $ "Can't find element " ++ show x ++ " in dictionary!";
+
+select_elements (x:xs) pi = select_element x pi:select_elements xs pi;
+select_elements []      _ = [];
+
+get_ordered_elements xs xps plural = if length xs == length xps then select_elements xs xps else error $ "Expected "++show (length xs)++" "++plural
+                                     ++" but got "++ show (length xps)++"!";
+
+plus_f' a pi' = plus_f a pi where {pi= get_ordered_elements (alphabet_letters a) pi' "frequencies"};
+
+plus_gwf' a pi' f = plus_gwf a pi f where {pi= get_ordered_elements (alphabet_letters a) pi' "frequencies"};
+
+f1x4' a pi' = f1x4 a pi where {nuc_letters = alphabet_letters (getNucleotides a);
+                               pi = get_ordered_elements nuc_letters pi' "frequencies"};
+
+f3x4' a pi1' pi2' pi3' = f3x4 a pi1 pi2 pi3 where {nuc_letters = alphabet_letters (getNucleotides a);
+                                                   pi1 = get_ordered_elements nuc_letters pi1' "frequencies";
+                                                   pi2 = get_ordered_elements nuc_letters pi2' "frequencies";
+                                                   pi3 = get_ordered_elements nuc_letters pi3' "frequencies"};
+
+mg94' pi' a = mg94 pi a  where {nuc_letters = alphabet_letters (getNucleotides a);
+                                pi = get_ordered_elements nuc_letters pi' "frequencies"};
+
+mg94w9' pi1' pi2' pi3' a = mg94w9 pi1 pi2 pi3 a where {nuc_letters = alphabet_letters (getNucleotides a);
+                                                       pi1 = get_ordered_elements nuc_letters pi1' "frequencies";
+                                                       pi2 = get_ordered_elements nuc_letters pi2' "frequencies";
+                                                       pi3 = get_ordered_elements nuc_letters pi3' "frequencies"};
 
 simple_smap a = iotaUnsigned (alphabetSize a);
 
@@ -311,17 +343,11 @@ fMutSel0_model nuc_rm omega ws codon_a = Prefix "fMutSel" $ do
 plus_f_matrix a pi = plus_gwf_matrix a pi 1.0;
 
 -- pi is a vector double here
-plus_f' a pi = plus_gwf' a pi 1.0;
-
-plus_f a pi = plus_gwf a pi 1.0;
-
--- pi is a vector double here
 plus_gwf_matrix a pi f = builtin_plus_gwf a f pi;
 
--- pi is a vector double here
-plus_gwf' a pi f = ReversibleFrequency a (simple_smap a) pi (plus_gwf_matrix a pi f);
-
-plus_gwf a pi f = let {pi' = listToVectorDouble pi} in plus_gwf' a pi' f;
+-- pi is [Double] here
+plus_gwf a pi f = ReversibleFrequency a (simple_smap a) pi' (plus_gwf_matrix a pi' f) where {pi' = listToVectorDouble pi};
+plus_f a pi = plus_gwf a pi 1.0;
 
 f3x4_frequencies a pi1 pi2 pi3 = let {pi1' = listToVectorDouble pi1;
                                       pi2' = listToVectorDouble pi2;

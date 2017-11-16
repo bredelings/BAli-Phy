@@ -53,7 +53,6 @@ nobase_functions_DATA = functions/AA.json \
 	functions/fMutSel0.json \
 	functions/fMutSel.json \
 	functions/Freq.json \
-	functions/frequencies_prior.json \
 	functions/Gamma.json \
 	functions/Geometric.json \
 	functions/GTR.json \
