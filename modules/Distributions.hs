@@ -99,12 +99,22 @@ sample_uniform_int l u = Random (IOAction2 builtin_sample_uniform_int l u);
 uniform_int l u = ProbDensity (uniform_int_density l u) () (sample_uniform_int l u) (integer_between l u);
 
 builtin builtin_dirichlet_density 2 "dirichlet_density" "Distribution";
-dirichlet_density ps xs = builtin_dirichlet_density (listToVectorDouble ps) (listToVectorDouble xs);
-sample_dirichlet ps = do { vs <- mapM (\a->gamma a 1.0) ps;
+dirichlet_density ns ps = builtin_dirichlet_density (listToVectorDouble ns) (listToVectorDouble ps);
+sample_dirichlet ns = do { vs <- mapM (\a->gamma a 1.0) ns;
                            return $ map (/(sum vs)) vs};
-dirichlet ps = ProbDensity (dirichlet_density ps) (no_quantile "dirichlet") (sample_dirichlet ps) (Simplex (length ps) 1.0);
+dirichlet ns = ProbDensity (dirichlet_density ns) (no_quantile "dirichlet") (sample_dirichlet ns) (Simplex (length ns) 1.0);
 
-dirichlet' n x = dirichlet (replicate n x);
+dirichlet' l n = dirichlet (replicate l n);
+
+sample_dirichlet_on xs ns = do
+  {
+    ps <- sample_dirichlet ns;
+    return $ zip xs ps;
+  };
+
+dirichlet_on_density ns xps = dirichlet_density ns ps where {ps = map (\(x,p) -> p) xps};
+dirichlet_on xs ns = ProbDensity (dirichlet_on_density ns) (no_quantile "dirichlet_on") (sample_dirichlet_on xs ns) (LabelledSimplex xs (length ns) 1.0);
+dirichlet_on' xs n = dirichlet_on xs (replicate (length xs) n);
 
 builtin binomial_density 3 "binomial_density" "Distribution";
 builtin builtin_sample_binomial 2 "sample_binomial" "Distribution";
