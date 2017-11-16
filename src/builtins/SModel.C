@@ -597,11 +597,22 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
     auto arg1 = Args.evaluate(1);
     auto pi1 = arg1.as_<Vector<double>>();
 
+    int nuc_size = T.getNucleotides().size();
+
+    if (pi1.size() != nuc_size)
+	throw myexception()<<"f3x4_frequencies:site 1:expected "<<nuc_size<<" frequencies, but got "<<pi1.size()<<"!";
+
     auto arg2 = Args.evaluate(2);
     auto pi2 = arg2.as_<Vector<double>>();
 
+    if (pi2.size() != nuc_size)
+	throw myexception()<<"f3x4_frequencies:site 2:expected "<<nuc_size<<" frequencies, but got "<<pi2.size()<<"!";
+
     auto arg3 = Args.evaluate(3);
     auto pi3 = arg3.as_<Vector<double>>();
+
+    if (pi3.size() != nuc_size)
+	throw myexception()<<"f3x4_frequencies:site 3:expected "<<nuc_size<<" frequencies, but got "<<pi3.size()<<"!";
 
     Vector<double> pi;
     pi.resize(T.size());
