@@ -7,6 +7,27 @@ using std::string;
 namespace fs = boost::filesystem;
 
 using boost::program_options::variables_map;
+using boost::optional;
+
+optional<fs::path> check_file_in_path(const vector<string>& paths, const fs::path& file_path)
+{
+    for(const string& prefix: paths)
+    {
+	fs::path filename = prefix;
+	filename /= file_path;
+	if (not fs::exists(filename)) continue;
+	return filename;
+    }
+    return boost::none;
+}
+
+fs::path find_file_in_path(const vector<string>& path_list, const fs::path& file_path)
+{
+    auto path = check_file_in_path(path_list, file_path);
+    if (not path)
+	throw myexception()<<"Couldn't find file '"<<file_path.string()<<"' in path '"<<join(path_list,':')<<"'";
+    return *path;
+}
 
 fs::path find_exe_path(const fs::path& argv0)
 {
@@ -44,12 +65,9 @@ fs::path find_exe_path(const fs::path& argv0)
     {
 	string PATH = getenv("PATH");
 	vector<string> paths = split(PATH,':');
-	for(const string& prefix: paths)
-	{
-	    fs::path p = prefix / argv0;
-	    if (fs::exists(p))
-		program_location = p;
-	}
+	auto loc = check_file_in_path(paths, argv0);
+	if (loc)
+	    program_location = *loc;
     }
     program_location = canonical(program_location);
     program_location.remove_filename();

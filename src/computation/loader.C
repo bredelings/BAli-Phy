@@ -4,6 +4,7 @@
 #include <boost/filesystem/operations.hpp>
 #include "expression/expression.H"
 #include "expression/lambda.H"
+#include "startup/paths.H"
 
 #include "io.H"
 #include "parser/desugar.H"
@@ -49,18 +50,6 @@ bool module_loader::try_add_plugin_path(const string& path)
     }
     else
 	return false;
-}
-
-fs::path find_file_in_path(const vector<string>& paths, const fs::path& file_path)
-{
-    for(const string& prefix: paths)
-    {
-	fs::path filename = prefix;
-	filename /= file_path;
-	if (not fs::exists(filename)) continue;
-	return filename;
-    }
-    throw myexception()<<"Couldn't find file '"<<file_path.string()<<"' in path '"<<join(paths,':')<<"'";
 }
 
 fs::path get_relative_path_from_haskell_id(const string& modid)

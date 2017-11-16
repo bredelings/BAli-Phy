@@ -5,7 +5,10 @@
 #include <vector>
 #include <boost/filesystem/operations.hpp>
 #include <boost/program_options.hpp>
+#include <boost/optional.hpp>
 
+boost::optional<boost::filesystem::path> check_file_in_path(const std::vector<std::string>& paths, const boost::filesystem::path& file_path);
+boost::filesystem::path find_file_in_path(const std::vector<std::string>& paths, const boost::filesystem::path& file_path);
 boost::filesystem::path find_exe_path(const boost::filesystem::path& argv0);
 boost::filesystem::path get_system_lib_path(const std::string& exe_name);
 boost::filesystem::path get_user_lib_path();
