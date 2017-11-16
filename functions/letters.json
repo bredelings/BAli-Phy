@@ -1,0 +1,11 @@
+{
+    "name": "letters",
+    "result_type": "List[String]",
+    "call": "Alphabet.alphabet_letters[A]",
+    "args": [
+        {
+            "arg_name": "A",
+            "arg_type": "a"
+        }
+    ]
+}

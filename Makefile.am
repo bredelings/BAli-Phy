@@ -107,7 +107,8 @@ nobase_functions_DATA = functions/AA.json \
 	functions/UnitMixture.json \
 	functions/WAG.json \
 	functions/x3.json \
-	functions/DirichletOn.json
+	functions/DirichletOn.json \
+	functions/letters.json
 
 # Distributed in the doc/ directory
 docdir = $(datadir)/doc/@PACKAGE@
