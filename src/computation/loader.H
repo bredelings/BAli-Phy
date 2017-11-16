@@ -5,6 +5,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <boost/filesystem/operations.hpp>
 #include "computation/module.H"
 #include "computation/optimization/simplifier.H" // for simplifier_options
 
@@ -23,6 +24,7 @@ public:
     /// Add the hard-coded elements to the module.
     Module load_module_from_file(const std::string&) const;
     Module load_module(const std::string&) const;
+    module_loader(const std::vector<boost::filesystem::path>& paths);
 };
 
 expression_ref load_builtin(const module_loader& L, const std::string& symbol_name, const std::string& filename, int n, const std::string& fname);

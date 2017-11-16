@@ -958,7 +958,7 @@ bool is_all_space(const string& line)
 Module read_model(const string& filename)
 {
     // 1. Read module
-    Module M ( module_loader().read_module_from_file(filename) );
+    Module M ( module_loader({}).read_module_from_file(filename) );
 
     return M;
 }

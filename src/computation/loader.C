@@ -68,7 +68,7 @@ string module_loader::find_module(const string& modid) const
 	fs::path path = get_relative_path_from_haskell_id(modid);
 	path.replace_extension(".hs");
     
-	fs::path filename = find_file_in_path(plugins_path, path );
+	fs::path filename = find_file_in_path(plugins_path, "modules"/path );
 	return filename.string();
     }
     catch (myexception& e)
@@ -102,6 +102,12 @@ Module module_loader::load_module(const string& module_name) const
     if (M.name != module_name)
 	throw myexception()<<"Loading module file '"<<filename<<"'\n  Expected module '"<<module_name<<"'\n  Found module    '"<<M.name<<"'";
     return M;
+}
+
+module_loader::module_loader(const vector<fs::path>& path_list)
+{
+    for(auto& path: path_list)
+	try_add_plugin_path(path.string());
 }
 
 #include <dlfcn.h>

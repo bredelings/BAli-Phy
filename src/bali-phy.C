@@ -300,35 +300,9 @@ void show_ending_messages(bool show_only)
  *  3a. Can we walk along the tree making characters present?
  */
 
-std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const string& filename)
+std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const string& argv0)
 {
-    fs::path system_lib_path = get_system_lib_path(filename);
-    fs::path user_lib_path = get_user_lib_path();
-
-    module_loader L;
-
-    // FIXME - use get_package_paths in startup/paths.H
-    // FIXME - why does the user lib path not look for the /modules version?
-
-    // 1. Add user-specified package paths
-    if (args.count("package-path"))
-	for(const string& p: split(args["package-path"].as<string>(),':'))
-	{
-	    fs::path path = p;
-	    L.try_add_plugin_path( (path / "modules").string() );
-	    L.try_add_plugin_path( path.string() );
-	}
-
-    // 2. Add default user path
-    if (not user_lib_path.empty())
-	L.try_add_plugin_path(user_lib_path.string());
-  
-    // 3. Add default system paths
-    if (not system_lib_path.empty())
-    {
-	L.try_add_plugin_path( (system_lib_path / "modules").string() );
-	L.try_add_plugin_path( system_lib_path.string() );
-    }
+    module_loader L( get_package_paths(argv0, args) );
 
     // 4. Write out paths to C1.err
     if (log_verbose)
