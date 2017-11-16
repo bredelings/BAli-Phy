@@ -34,6 +34,7 @@
 using std::vector;
 using std::string;
 using std::set;
+using std::multiset;
 
 using boost::dynamic_pointer_cast;
 
@@ -184,20 +185,31 @@ bool operator<(const vector<string>& p1, const vector<string>& p2)
 //  with the ones furthest from the root, and remove their children
 //  if it is allowable.
 
+struct monostate{};
+std::ostream& operator<<(std::ostream& o,const monostate&) {o<<"()";return o;}
 
 struct ptree;
 struct ptree: public std::vector<std::pair<string,ptree>>
 {
-    boost::variant<int,double,string> value;
+    boost::variant<monostate,int,double,string> value;
     template <typename T>       T& get_value()       {return boost::get<T>(value);}
     template <typename T> const T& get_value() const {return boost::get<T>(value);}
     template <typename T> void put_value(const T& t) {value = t;}
+    bool value_is_empty() const {return value.which() == 0;}
+
+    int get_child_index(const string& key)
+    {
+	for(int i=0;i<size();i++)
+	    if ((*this)[i].first == key)
+		return i;
+	return -1;
+    }
 
     boost::optional<ptree&> get_child_optional(const string& key)
     {
-	for(auto& x: *this)
-	    if (x.first == key) return x.second;
-	return boost::none;
+	int index = get_child_index(key);
+	if (index == -1) return boost::none;
+	return (*this)[index].second;
     }
 
     ptree() {};
@@ -222,12 +234,13 @@ string show(const ptree& pt, int depth=0)
 
 void copy_to_vec(const ptree& p, vector<string>& names2, const string& path = "")
 {
-    if (p.empty())
+    if (not p.value_is_empty())
     {
 	int i=p.get_value<int>();
 	names2[i] = path;
     }
-    else
+
+    if (not p.empty())
     {
 	for(auto& x: p)
 	    if (path.empty())
@@ -243,36 +256,67 @@ void simplify(ptree& p)
 {
     if (p.empty()) return;
 
+    // 1. First we simplify all the levels below this level.
     for(auto& x: p)
 	simplify(x.second);
 
-    // We require the names of children that map to values,
-    // and the names of grandchildren do not overlap.
-
-    set<string> names;
+    // 2. In order to move child-level names up to the top level, we have to avoid
+    //   a. clashing with the same name at the top level
+    //   b. clashing with the same name a sibling.
+    // We therefore count which names at these levels occur twice and avoid them.
+    // NOTE: If we have a situation like {I1::S1, S2::I1} then this approach won't simplify to {S1,I1}.
+    multiset<string> names;
     for(auto& x: p)
     {
-	if (x.second.empty())
-	{
-	    if (names.count(x.first)) return;
-	    names.insert(x.first);
-	}
-	else
-	    for(auto& y: x.second)
-	    {
-		if (names.count(y.first)) return;
-		names.insert(y.first);
-	    }
+	names.insert(x.first);
+	for(auto& y: x.second)
+	    names.insert(y.first);
     }
 
-    ptree p2;
-    for(auto& x: p)
+    // 3. If none of the names in an entry occur twice, then we can move all the
+    //    names in that entry up to the top level.
+    vector<bool> move_children(false, p.size());
+    for(int i=0; i<p.size(); i++)
     {
-	if (x.second.empty())
+	auto& x = p[i];
+	if (x.second.empty()) continue;
+
+	bool ok = true;
+	for(auto& y: x.second)
+	{
+	    if (names.count(y.first) > 1)
+	    {
+		ok = false;
+		break;
+	    }
+	}
+	if (ok)
+	    move_children[i] = true;
+    }
+
+    // 4. Move the children
+    ptree p2;
+    for(int i=0; i<p.size(); i++)
+    {
+	auto& x = p[i];
+
+	// 4a. Move the entry w/o changing it.
+	if (not move_children[i])
 	    p2.push_back(std::move(x));
+
+	// 4b. Move the children
 	else
+	{
 	    for(auto& y: x.second)
 		p2.push_back(std::move(y));
+
+	    // 4c. Maybe move the bare entry as well.
+	    if (not x.second.value_is_empty())
+	    {
+		x.second.clear();
+		p2.push_back(std::move(x));
+	    }
+	}
     }
 
     std::swap(p,p2);
@@ -326,8 +370,8 @@ vector<string> short_parameter_names(const vector<string>& names)
 	if (hidden[i])
 	    names2[i] = string("*") + names2[i];
 
-    for(int i=0;i<names2.size();i++)
-	std::cerr<<names[i]<<" -> "<<names2[i]<<std::endl;
+//    for(int i=0;i<names2.size();i++)
+//	std::cerr<<names[i]<<" -> "<<names2[i]<<std::endl;
     return names2;
 }
 
