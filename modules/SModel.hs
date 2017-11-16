@@ -210,27 +210,7 @@ branch_site s r fs ws posP posW codona = MixtureModels [bg_mixture,fg_mixture] w
 branch_site_test s r fs ws posP posW posSelection codona = branch_site s r fs ws posP posW' codona where
     {posW' = if (posSelection == 1) then posW else 1.0};
 
-frequencies_model a = do {
-  let {n_letters = alphabetSize a;
-       letters = alphabet_letters a};
-  SamplingRate (1.0/sqrt(intToDouble n_letters)) $ do {
-     pi <- dirichlet' n_letters 1.0;
-     sequence_ $ zipWith (\p l -> Log l p) pi letters;
-     return pi
-  }
-};
-
 pairs l = [(x,y) | (x:ys) <- tails l, y <- ys];
-
-exchange_model a =  do {
-  let {lpairs = pairs (alphabet_letters a);
-       n = length(lpairs)};
-  SamplingRate (1.0/sqrt(intToDouble n)) $ do {
-     pi <- dirichlet' n 1.0;
-     sequence_ $ zipWith (\p (l1,l2) -> Log (l1++l2) p) pi lpairs;
-     return pi
-  }
-};
 
 letter_pair_names a = [l1++l2|(l1,l2) <- pairs (alphabet_letters a)];
 
