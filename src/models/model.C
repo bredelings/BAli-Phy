@@ -275,7 +275,7 @@ void simplify(ptree& p)
 
     // 3. If none of the names in an entry occur twice, then we can move all the
     //    names in that entry up to the top level.
-    vector<bool> move_children(false, p.size());
+    vector<bool> move_children(p.size(), false);
     for(int i=0; i<p.size(); i++)
     {
 	auto& x = p[i];
