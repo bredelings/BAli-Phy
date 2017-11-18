@@ -356,6 +356,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
     vector<model_t> full_smodels(smodel_names_mapping.n_unique_items());
 
+    // 1. Get smodels for all SPECIFIED smodel names.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
 	if (not smodel_names_mapping.unique(i).empty())
 	    full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
@@ -366,6 +367,8 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     for(int i=0;i<alphabet_names_mapping.n_partitions();i++)
 	alphabet_names.push_back(alphabet_names_mapping[i]);
 
+    // 2. For all SPECIFIED smodels, try to determine the alphabet.
+    //    (Alphabets for SPECIFIED smodel groups must all specified or all unspecified).
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
     {
 	if (smodel_names_mapping.unique(i).empty()) continue;
@@ -419,16 +422,20 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     //----------- Load alignments  ---------//
     vector<alignment> A(filenames.size());
 
-    // -- load alphabets with specified names
+    // 3. -- load alignments for SPECIFIED alphabets
     for(int i=0;i<filenames.size();i++)
 	if (alphabet_names[i].size())
-	    // FIXME - if we are loading codons, FIRST determine the UNDERLYING alphabet, then 
+	    // FIXME - if we are loading codons, FIRST determine the UNDERLYING alphabet, then
+	    // But actually we DO this inside the routine, right?
 	    A[i] = load_alignment(filenames[i], alphabet_names[i]);
 
-    // -- load other alphabets
+    // 4. -- load alignments for UNSPECIFIED alphabets && set alphabet names.
     for(int i=0;i<filenames.size();i++)
+    {
 	if (not A[i].has_alphabet())
 	    A[i] = load_alignment(filenames[i]);
+	alphabet_names[i] = A[i].get_alphabet().name;
+    }
 
     for(int i=0;i<A.size();i++) {
 	check_alignment_names(A[i]);
@@ -459,11 +466,16 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     //--------- Set up indel model --------//
     auto full_imodels = get_imodels(R, imodel_names_mapping, T);
 
-    //--------- Get substitution models that depend on default alphabet --------//
+    // 5. --------- Get UNSPECIFIED substitution models, which depend on the alphabet --------//
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
 	if (smodel_names_mapping.unique(i).empty())
 	{
+	    // Check that all the alphabets are the same before using the alphabet to get a default model.
 	    int first_index = smodel_names_mapping.partitions_for_item[i][0];
+	    for(int j: smodel_names_mapping.partitions_for_item[i])
+		if (alphabet_names[j] != alphabet_names[first_index])
+		    throw myexception()<<"Partitions "<<first_index+1<<" and "<<j+1<<" have different alphabets, but are given the same substitution model!";
+
 	    const alphabet& a = A[first_index].get_alphabet();
 
 	    smodel_names_mapping.unique(i) = default_markov_model(a);
@@ -474,7 +486,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	    full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
 	}
     
-    // Apply alphabet
+    // 6. Check that alignment alphabet fits requirements from smodel && Apply alphabet
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
     {
 	int first_index = smodel_names_mapping.partitions_for_item[i][0];
