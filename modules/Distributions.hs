@@ -198,7 +198,8 @@ list_density ds xs = if (length ds == length xs) then pr else (doubleToLogDouble
   where {densities = zipWith density ds xs;
          pr = balanced_product densities};
 
-list dists = ProbDensity (list_density dists) (no_quantile "list") (sequence dists) (ListRange (map distRange dists));
+list dists = ProbDensity (list_density dists) (no_quantile "list") sample (ListRange (map distRange dists))
+             where {sample = SamplingRate (1.0/sqrt (intToDouble $ length dists)) $ sequence dists};
 
 -- define different examples of list distributions
 iid n dist = list (replicate n dist);
