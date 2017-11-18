@@ -486,6 +486,15 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	    full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
 	}
     
+    for(int i=0;i<alphabet_names_mapping.n_unique_items();i++)
+    {
+	int first_index = alphabet_names_mapping.partitions_for_item[i][0];
+	for(int other_index: alphabet_names_mapping.partitions_for_item[i])
+	{
+	    if (alphabet_names[first_index] != alphabet_names[other_index])
+		throw myexception()<<"Partitions "<<first_index+1<<" and "<<other_index+1<<" have different alphabets, but are specified as being linked!";
+	}
+    }
     // 6. Check that alignment alphabet fits requirements from smodel && Apply alphabet
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
     {
