@@ -281,6 +281,13 @@ where {codon_w = [w'!aa| codon <- codons,let {aa = translate a codon}];
          codons = take n_letters [0..];
          n_letters = alphabetSize a};
 
+-- The argument for ws should be something like:
+--   (zip (letters a) (iid (length $ letters a) (logNormal 0.0 0.5)))
+-- Alternatively we could use something like
+--   DirichletOn[letters[A],1.0]
+-- However the first prior would be rather easier to encode AFTER we stop performing actions,
+-- so I'll let this remain unchanged for now.
+
 fMutSel_model nuc_rm omega ws codon_a = Prefix "fMutSel" $ do
 {
   let {n_letters = alphabetSize codon_a;
@@ -292,11 +299,8 @@ fMutSel_model nuc_rm omega ws codon_a = Prefix "fMutSel" $ do
   omega' <- Prefix "omega" omega;
   Log "omega" omega';
 
-  ws' <- SamplingRate (1.0/sqrt(intToDouble n_letters)) $ do {
-     ws' <- ws;
-     sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws' letters;
-     return ws'
-  };
+  ws' <- ws;
+  sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws' letters;
 
   return $ fMutSel codon_a ws' omega' nuc_rm';
 };
@@ -313,11 +317,8 @@ fMutSel0_model nuc_rm omega ws codon_a = Prefix "fMutSel" $ do
   omega' <- Prefix "omega" omega;
   Log "omega" omega';
 
-  ws' <- SamplingRate (1.0/sqrt(intToDouble n_letters)) $ do {
-     ws' <- ws;
-     sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws' letters;
-     return ws'
-  };
+  ws' <- ws;
+  sequence_ $ zipWith (\w l -> Log ("w"++l) w) ws' letters;
 
   return $ fMutSel0 codon_a ws' omega' nuc_rm';
 };
