@@ -94,7 +94,6 @@ public:
 	}
 };
 
-std::string parse_partitions_and_model(std::string model, std::vector<int>& partitions);
 shared_items<std::string> get_mapping(const boost::program_options::variables_map& args, const std::string& key, int n);
 
 
