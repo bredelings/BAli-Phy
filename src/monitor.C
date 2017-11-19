@@ -95,43 +95,6 @@ void show_smodels(std::ostream& o, const Parameters& P)
   }
 }
 
-void print_stats(std::ostream& o, const Model& M, bool show_hidden) 
-{
-  const Parameters* P = dynamic_cast<const Parameters*>(&M);
-  log_double_t Pr_prior = M.prior();
-  log_double_t Pr_likelihood = M.likelihood();
-  log_double_t Pr = Pr_prior * Pr_likelihood;
-
-  o<<"    prior = "<<Pr_prior;
-  if (P)
-    for(int i=0;i<P->n_data_partitions();i++) 
-      o<<"   prior_A"<<i+1<<" = "<<(*P)[i].prior_alignment();
-
-  double beta = 1.0;
-  if (P)
-    beta = P->get_beta();
-
-  o<<"    likelihood = "<<Pr_likelihood<<"    logp = "<<Pr
-   <<"    beta = " <<beta  <<"\n";
-
-  o<<"\n";
-  show_parameters(o, M, show_hidden);
-  o.flush();
-
-  //  This takes too much disk space!
-  //  show_smodels(o,P);
-  //  o.flush();
-
-  // The leaf sequences should NOT change during alignment
-#ifndef NDEBUG
-  if (P)
-  {
-    for(int i=0;i<P->n_data_partitions();i++)
-      check_alignment((*P)[i].A(), P->t(), "print_stats:end");
-  }
-#endif
-}
-
 void report_mem() {
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 /*

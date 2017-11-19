@@ -25,8 +25,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <string>
 #include "models/model.H"
 
-void print_stats(std::ostream& o,const Model& M,bool=true);
-
 void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<double>&);
 void show_frequencies(std::ostream& o,const data_partition& MModel);
 void show_smodel(std::ostream& o, const data_partition& MModel);
