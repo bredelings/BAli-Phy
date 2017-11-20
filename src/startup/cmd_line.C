@@ -246,9 +246,15 @@ variables_map parse_cmd_line(int argc,char* argv[])
 		auto default_value = arg.get_child_optional("default_value");
 		boost::optional<string> desc = arg.get_optional<string>("description");
 		if (default_value or desc)
-		    std::cout<<"   "<<arg.get<string>("arg_name")<<" "<<show_model(*default_value)<<std::endl;
-		if (desc)
-		    std::cout<<"       "<<*desc<<std::endl<<std::endl;
+		{
+		    std::cout<<"   "<<arg.get<string>("arg_name");
+		    if (default_value)
+			std::cout<<" "<<show_model(*default_value)<<std::endl;
+		    else
+			std::cout<<":"<<std::endl;
+		    if (desc)
+			std::cout<<"       "<<*desc<<std::endl<<std::endl;
+		}
 	    }
 	    exit(0);
 	}
