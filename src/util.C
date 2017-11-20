@@ -175,18 +175,31 @@ vector<int> invert(const vector<int>& mapping)
     vector<int> imapping(mapping.size(),-1);
 
     for(int i=0;i<imapping.size();i++)
-	imapping[mapping[i]] = i;
+    {
+	int j = mapping[i];
+	if (j < 0 or j > mapping.size())
+	    throw myexception()<<"invert: mapping["<<i<<"] == "<<j<<"!";
+	if (imapping[j] != -1)
+	    throw myexception()<<"invert: mapping not invertible! Both "<<i<<" and "<<imapping[j]<<" map to "<<j<<"!";
+	imapping[j] = i;
+    }
 
     return imapping;
 }
 
-vector<int> compose(const vector<int>& mapping1,const vector<int>& mapping2) {
+vector<int> compose(const vector<int>& mapping1,const vector<int>& mapping2)
+{
     assert(mapping1.size() == mapping2.size());
 
     vector<int> mapping(mapping1.size());
 
     for(int i=0;i<mapping.size();i++)
-	mapping[i] = mapping2[mapping1[i]];
+    {
+	int j = mapping1[i];
+	if (j<0 or j>=mapping2.size())
+	    throw myexception()<<"compose: mapping1["<<i<<"] == "<<j<<"!";
+	mapping[i] = mapping2[j];
+    }
 
     return mapping;
 }
