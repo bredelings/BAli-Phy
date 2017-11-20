@@ -86,7 +86,7 @@ valarray<double> letter_counts(const alignment& A)
 /// \param args The command line parameters.
 /// \param A The alignment.
 ///
-valarray<double> empirical_frequencies(const variables_map& args,const alignment& A) 
+valarray<double> empirical_frequencies(const variables_map& /*args*/,const alignment& A) 
 {
     const alphabet& a = A.get_alphabet();
 
