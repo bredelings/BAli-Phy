@@ -372,7 +372,9 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
     ptree call = rule->get_child("call");
     ptree args = rule->get_child("args");
     
-    expression_ref E = qualified_dummy(call.get_value<string>());
+    if (not is_qualified_symbol(call.get_value<string>()) and not is_haskell_builtin_con_name(call.get_value<string>()))
+	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' must be a qualified symbol or a builtin constructor like '(,)', but it is neither!";
+    expression_ref E = dummy(call.get_value<string>());
     if (pass_arguments)
     {
 	ptree arg_type = get_type_for_arg(*rule, "*");
