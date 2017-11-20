@@ -121,7 +121,7 @@ Now lets see if there is evidence that the two runs have not converged yet:
 </pre><p>The ASDSF (Average Standard-Deviation of Split Frequences) is a measure of how much the estimated posterior probability of splits differ between the two runs.  If it is greater than 0.01 then you should probably accumulate more iterations.  The MSDSF (Maximum SDSF) indicates the variation between runs for the worst split.
 </p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="idm241"></a>7.3. Generating an HTML Report</h3></div></div></div><p>
 Now lets use the analysis script to run all the summaries and make an HTML report:
-</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bp-analyze.pl ITS1-5.8S-ITS2-{1,2}/</code></strong>
+</p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>bp-analyze ITS1-5.8S-ITS2-{1,2}/</code></strong>
 <code class="prompt">%</code> <strong class="userinput"><code>firefox Results/index.html &amp;</code></strong>
 </pre><p>This PERL script runs <span class="application">statreport</span> and <span class="application">trees-consensus</span> for you.  Take a look at what commands were run:
 </p><pre class="screen"><code class="prompt">%</code> <strong class="userinput"><code>less Results/bp-analyze.log</code></strong>

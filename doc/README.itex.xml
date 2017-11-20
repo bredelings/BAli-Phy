@@ -67,8 +67,33 @@
   </section>
 
   <section><info><title>MS Windows</title></info>
-  <section><info><title>Installing Msys2</title></info>
-      <para>Before you can use <application>BAli-Phy</application> on Windows you need to install a Unix command-line environment.  We recommand installing the 64-bit version of <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link>. You may then access the Unix command line environment by running the MSYS2 shell (not the normal windows command line).  The MSYS2 shell mounts the <filename>C:</filename> drive on <filename>/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/c/Users/</filename>, for example.</para> 
+  <section><info><title>Install a Unix command line: Cygwin (recommended)</title></info>
+  <para>Before you can use <application>BAli-Phy</application> on Windows you, need to install a Unix command-line environment.  We recommand installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>.  You may then access the Unix command line environment by running the Cygwin shell (not the normal windows command line).  The Cygwin shell mounts the <filename>C:</filename> drive on <filename>/cygdrive/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/cygdrive/c/Users/</filename> from within the Cygwin shell, for example.</para>
+  <para>
+    While running the Cygwin installer <filename>setup.exe</filename>, you will be given an opportunity to select additional packages.
+	<itemizedlist>
+	  <listitem><para>From <guilabel>Interpreters</guilabel>, select <guilabel>perl</guilabel>.</para></listitem>
+	  <listitem><para>From <guilabel>Web</guilabel>, select <guilabel>wget</guilabel>.</para></listitem>
+	  <listitem><para>From <guilabel>Editors</guilabel>, select <guilabel>nano</guilabel>.</para></listitem>
+	</itemizedlist>
+    You can re-run the installer to add packages that you did not add during the initial install.
+  </para>
+      <note>BAli-Phy refers to windows files using the normal
+      <filename>C:/</filename> method because it is compiled as a
+      native windows executable.
+      The combination of native windows executables (which want <filename>C:/</filename>)
+      and the Cygwin shell (which wants <filename>/cygdrive/c/</filename>) can be
+      confusing.  If you supply Cygwin filenames with
+      <filename>/cygdrive/</filename> to native windows executables like BAli-Phy, then it
+      may complain that the files cannot be found.  
+      </note>
+      <!-- note>
+	In the Cygwin shell you can access downloaded files at
+      <filename>/cygdrive/c/Documents\ and\ Settings/<replaceable>username</replaceable>/Downloads/</filename>. 
+      </note -->
+  </section>
+  <section><info><title>Install a Unix command line: Msys2</title> (alternative)</info>
+      <para>You can optionally use <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> instead of Cygwin. Both MSYS2 and Cygwin can be installed at the same time.  After installing MSYS2, You may access the Unix command line environment by running the MSYS2 shell (not the normal windows command line).  The MSYS2 shell mounts the <filename>C:</filename> drive on <filename>/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/c/Users/</filename> from within the MSYS2 shell, for example.</para> 
 
   </section>
   <section><info><title>Install BAli-Phy executables from website</title></info>
@@ -404,7 +429,7 @@ This can be done simply by starting several instances of the program, and does n
 	indicate which format it is using.</para>
 
       <para>In this simple example, <command>bali-phy</command> automatically detects whether <replaceable>sequence-file</replaceable> contains DNA, RNA, or Amino-Acids and uses default values for several command line options.  Thus, if <replaceable>sequence-file</replaceable> contains DNA, then this is equivalent to the more verbose command line
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --alphabet DNA --smodel TN --imodel RS07 --iterations=100000</screen>  Here the substitution model is Tamura-Nei, the insertion/deletion model is RS07, and the number of iterations is 100,000.  If <replaceable>sequence-file</replaceable> contains amino acids, then the defaults will be:<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --alphabet Amino-Acids --smodel LG --imodel RS07 --iterations=100000</screen> 
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --alphabet DNA --smodel TN --imodel RS07</screen>  Here the substitution model is Tamura-Nei, the insertion/deletion model is RS07.  If <replaceable>sequence-file</replaceable> contains amino acids, then the defaults will be:<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --alphabet Amino-Acids --smodel LG --imodel RS07</screen> 
       </para>
     </section>
 
