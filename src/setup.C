@@ -342,20 +342,72 @@ void load_bali_phy_rc(variables_map& args,const options_description& options)
 /// \param partitions The list of integers.
 /// \return the string.
 ///
-string parse_partitions_and_model(string model, vector<int>& partitions)
+string parse_partitions_and_model(string s, vector<int>& partitions, int n, bool default_model = true)
 {
-    partitions.clear();
-
-    int colon = model.find(':');
+    int colon = s.find(':');
+    string value;
     if (colon == -1)
-	return model;
+    {
+	if (default_model)
+	{
+	    partitions.clear();
+	    value = s;
+	}
+	else
+	{
+	    partitions = split<int>(s,',');
+	    value = "";
+	}
+    }
+    else
+    {
+	partitions = split<int>(s.substr(0,colon),',');
+	value = s.substr(colon+1);
+    }
 
-    string prefix = model.substr(0,colon);
-    model = model.substr(colon+1);
+    // Check for bad partition numbers.
+    for(int p: partitions)
+	if (p < 1 or p > n)
+	throw myexception()<<"Partition "<<p<<" doesn't exist.";
 
-    partitions = split<int>(prefix,',');
+    for(int i=1;i<partitions.size();i++)
+	for(int j=0;j<i;j++)
+	    if (partitions[i] == partitions[j])
+		throw myexception()<<"Partition '"<<i<<"' occurs twice in group '"<<s<<"'";
 
-    return model;
+    return value;
+}
+
+
+/// Handle commands like --link=1,2: or --link=1,2:alphabet,smodel
+/// For a given attribute (imodel, smodel, alphabet, scale) a partition should not be mentioned more than once.
+vector<vector<int>> get_link_groups(const variables_map& args, const string& key, int n)
+{
+    if (not args.count("link")) return vector<vector<int>>();
+
+    auto link_groups = args["link"].as<vector<string>>();
+
+    vector<vector<int>> groups;
+    for(auto& g: link_groups)
+    {
+	vector<int> partitions;
+	string keys = parse_partitions_and_model(g, partitions, n, false);
+	if (partitions.size() < 2)
+	    throw myexception()<<"You can't link < 2 partitions in link command '--link="<<g<<"'";
+	if (keys.empty() or includes(split(keys,","),key))
+	    groups.push_back(partitions);
+    }
+
+    vector<int> which_link_group(n, -1);
+    for(int i=0; i< link_groups.size();i++)
+    {
+	for(int j: groups[i])
+	    if (which_link_group[j-1] != -1)
+		throw myexception()<<"Partition "<<i+1<<" in two --link groups!"; // both group which_link_group[j] and i.
+	    else
+		which_link_group[j-1] = i;
+    }
+    return groups;
 }
 
 /// \brief Parse command line arguments of the form --key int,int,int:name1 --key int,int:name2
@@ -367,6 +419,13 @@ string parse_partitions_and_model(string model, vector<int>& partitions)
 /// \param n The number of partitions that exist.
 /// \return a mapping from partitions to names.
 ///
+
+/// We should be able to modify this by doing something like: --link 1,2:alphabet --link 2,3:smodel
+/// The rules are:
+/// 1. We can only link things that are not already in a group, so --smodel=1,2: --link=2,3:smodel would not work.
+/// 2. We can only link things are are both specified or both unspecified, so --smodel=1: --smodel=2:HKY --link=1,2:smodel would not work.
+/// 3. For any given attribute to link, no partition can be mentioned twice.
+
 shared_items<string> get_mapping(const variables_map& args, const string& key, int n)
 {
     vector<string> models;
@@ -380,7 +439,7 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
     if (models.size() == 1) 
     {
 	vector<int> partitions;
-	string model_name = parse_partitions_and_model(models[0],partitions);
+	string model_name = parse_partitions_and_model(models[0], partitions, n);
       
 	if (partitions.size() == 0) 
 	{
@@ -403,7 +462,7 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
 	vector<int> partitions;
 
 	int index = model_names.size();
-	string model_name = parse_partitions_and_model(models[i],partitions);
+	string model_name = parse_partitions_and_model(models[i], partitions, n);
 	if (model_name == "none")
 	    index = -1;
 	else 
@@ -424,10 +483,6 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
 	// 3. Map partitions to this model, unless they are already mapped
 	for(int j=0;j<partitions.size();j++) 
 	{
-	    // Check for bad partition numbers.
-	    if (partitions[j] < 1 or partitions[j] > n)
-		throw myexception()<<"Partition "<<partitions[j]<<" doesn't exist.";
-
 	    // Check for partition already mapped.
 	    if (mapping[partitions[j]-1] != -2)
 		throw myexception()<<"Trying to set '"<<key<<"' for partition "<<partitions[j]<<" twice.";
