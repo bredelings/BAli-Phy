@@ -154,6 +154,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("imodel,I",value<vector<string> >()->composing(),"Indel model: none, RS07, RS05.")
 	("branch-length",value<string>(),"Defaults to ~Gamma[0.5, 2/n_branches[T]].")
 	("scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
+	("link",value<vector<string>>()->composing(),"Link partitions")
 	;
     options_description all("All options");
     all.add(general).add(mcmc).add(parameters).add(model).add(advanced).add(optimization).add(developer);
