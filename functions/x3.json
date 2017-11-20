@@ -2,7 +2,7 @@
     "name": "x3",
     "result_type": "ExchangeModel[a]",
     "constraints": "Triplets[a]",
-    "description": "A triplet exchange model constructed from 3 singlet exchange models",
+    "description": "A triplet exchange model constructed by applying a singlet exchange model to all 3 nucleotide positions",
     "call": "SModel.singlet_to_triplet_exchange[A,submodel]",
     "args": [
         {
