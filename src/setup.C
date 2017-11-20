@@ -385,29 +385,33 @@ vector<vector<int>> get_link_groups(const variables_map& args, const string& key
 {
     if (not args.count("link")) return vector<vector<int>>();
 
-    auto link_groups = args["link"].as<vector<string>>();
+    auto link_group_names = args["link"].as<vector<string>>();
+    vector<string> relevant_link_group_names;
 
-    vector<vector<int>> groups;
-    for(auto& g: link_groups)
+    vector<vector<int>> link_groups;
+    for(auto& name: link_group_names)
     {
 	vector<int> partitions;
-	string keys = parse_partitions_and_model(g, partitions, n, false);
+	string keys = parse_partitions_and_model(name, partitions, n, false);
 	if (partitions.size() < 2)
-	    throw myexception()<<"You can't link < 2 partitions in link command '--link="<<g<<"'";
+	    throw myexception()<<"You can't link < 2 partitions in link command '--link="<<name<<"'";
 	if (keys.empty() or includes(split(keys,","),key))
-	    groups.push_back(partitions);
+	{
+	    relevant_link_group_names.push_back(name);
+	    link_groups.push_back(partitions);
+	}
     }
 
     vector<int> which_link_group(n, -1);
     for(int i=0; i< link_groups.size();i++)
     {
-	for(int j: groups[i])
+	for(int j: link_groups[i])
 	    if (which_link_group[j-1] != -1)
 		throw myexception()<<"Partition "<<i+1<<" in two --link groups!"; // both group which_link_group[j] and i.
 	    else
 		which_link_group[j-1] = i;
     }
-    return groups;
+    return link_groups;
 }
 
 /// \brief Parse command line arguments of the form --key int,int,int:name1 --key int,int:name2
