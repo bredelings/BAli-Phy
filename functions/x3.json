@@ -2,17 +2,20 @@
     "name": "x3",
     "result_type": "ExchangeModel[a]",
     "constraints": "Triplets[a]",
+    "description": "A triplet exchange model constructed from 3 singlet exchange models",
     "call": "SModel.singlet_to_triplet_exchange[A,submodel]",
     "args": [
         {
             "arg_name": "submodel",
             "arg_type": "ExchangeModel[b]",
-            "applied_args": "Alphabet.getNucleotides[A]"
+            "applied_args": "Alphabet.getNucleotides[A]",
+	    "description": "The singlet exchange model"
         },
         {
             "arg_name": "A",
             "arg_type": "a",
             "no_apply": "true"
         }
-    ]
+    ],
+    "examples": ["GTR+x3","TN+x3+MG94","x3[HKY]"]
 }
