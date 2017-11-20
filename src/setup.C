@@ -432,7 +432,7 @@ shared_items<string> remove_empty_partitions(const shared_items<string>& M)
 	    order.push_back(i);
     auto mapping = mapping_from_order(order, M.n_partitions());
 
-    return shared_items<string>(apply_indices(M.get_items(), order), apply_mapping(M.item_for_partition, mapping));
+    return shared_items<string>(apply_indices(M.get_items(), order), compose(M.item_for_partition, mapping));
 }
 
 shared_items<string> link_partitions(shared_items<string> M, const vector<vector<int>>& link_groups)
