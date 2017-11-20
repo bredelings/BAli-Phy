@@ -81,6 +81,8 @@ public:
 
     int n_partitions_for_item(int i) const {return partitions_for_item[i].size();}
 
+    const std::vector<T> get_items() const {return items;}
+
     shared_items(const std::vector<T>& v1, const std::vector<int>& v2)
 	:items(v1),
 	 item_for_partition(v2),
