@@ -261,7 +261,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 		    else
 			std::cout<<":"<<std::endl;
 		    if (desc)
-			std::cout<<"       "<<*desc<<std::endl<<std::endl;
+			std::cout<<"       "<<*desc<<std::endl;
+		    std::cout<<std::endl;
 		}
 	    }
 	    if (auto examples = rule->get_child_optional("examples"))
