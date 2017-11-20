@@ -66,7 +66,7 @@
     </para>
   </section>
 
-  <section><info><title>MS Windows requirements</title></info>
+  <section><info><title>MS Windows</title></info>
   <section><info><title>Installing Msys2</title></info>
       <para>Before you can use <application>BAli-Phy</application> on Windows you need to install a Unix command-line environment.  We recommand installing the 64-bit version of <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link>. You may then access the Unix command line environment by running the MSYS2 shell (not the normal windows command line).  The MSYS2 shell mounts the <filename>C:</filename> drive on <filename>/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/c/Users/</filename>, for example.</para> 
 
@@ -93,10 +93,9 @@
     <section><info><title>Mac OS X</title></info>
     <section><info><title>Install BAli-Phy using homebrew (recommended) </title></info>
     <para>First install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 6 or higher.
+    <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
 
-    Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>:
-    <screen><prompt>%</prompt> <userinput>/usr/bin/ruby -e "&#36;(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</userinput></screen>
-    Then use homebrew to compile and install <command>bali-phy</command>:
+    Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> and use homebrew to compile and install <command>bali-phy</command>:
 <screen><prompt>%</prompt> <userinput>brew tap bredelings/bioinformatics</userinput>
 <prompt>%</prompt> <userinput>brew install bali-phy</userinput></screen>
 Check that the executable runs:
@@ -128,8 +127,13 @@ Check that the executable runs:
 	<listitem>
       You can install <command>gnuplot</command> via homebrew:
 <screen><prompt>%</prompt> <userinput> brew install gnuplot</userinput></screen> </listitem>
-      <listitem>You can install R <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mran.microsoft.com/open/">from MRAN</link>.
-</listitem></itemizedlist>
+<listitem>You can install R via homebrew:
+<screen><prompt>%</prompt> <userinput> brew install cask</userinput>
+<prompt>%</prompt> <userinput> brew install Caskroom/cask/xquartz</userinput>
+<prompt>%</prompt> <userinput> brew install r</userinput></screen>
+However, note that this might conflict with R installed from other places, such as <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mran.microsoft.com/open/">MRAN</link>.
+      </listitem>
+      </itemizedlist>
     </section>
     </section>
 
