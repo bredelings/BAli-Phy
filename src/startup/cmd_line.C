@@ -229,6 +229,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    string result_type = unparse_type(rule->get_child("result_type"));
 	    auto args = rule->get_child("args");
 	    vector<string> args_names_types;
+	    // Actually, we may have a problem here...
+	    if (auto constraints = rule->get_child_optional("constraints"))
+	    {
+		vector<string> cs;
+		for(auto& x: *constraints)
+		    cs.push_back(unparse_type(x.second));
+//		std::cout<<join(cs,", ")<<" => ";
+	    }
 	    for(auto& argpair: args)
 	    {
 		auto& arg = argpair.second;
