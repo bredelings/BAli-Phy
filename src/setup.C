@@ -414,6 +414,69 @@ vector<vector<int>> get_link_groups(const variables_map& args, const string& key
     return link_groups;
 }
 
+// {0,1,4} -> {0,1,-1,-1,2}
+vector<int> mapping_from_order(const vector<int>& order, int n)
+{
+    assert(order.size() <= n);
+    vector<int> mapping(n, -1);
+    for(int i=0;i<order.size();i++)
+	mapping[order[i]] = i;
+    return mapping;
+}
+
+shared_items<string> remove_empty_partitions(const shared_items<string>& M)
+{
+    vector<int> order;
+    for(int i=0;i<M.partitions_for_item.size();i++)
+	if (not M.partitions_for_item[i].empty())
+	    order.push_back(i);
+    auto mapping = mapping_from_order(order, M.n_partitions());
+
+    return shared_items<string>(apply_indices(M.get_items(), order), apply_mapping(M.item_for_partition, mapping));
+}
+
+shared_items<string> link_partitions(shared_items<string> M, const vector<vector<int>>& link_groups)
+{
+    // 0. Precondition: none of the link_groups contain the same elements.
+
+    for(auto& link_group: link_groups)
+    {
+	// 1. Complain if trying to link elements that are already in a group > 1
+	for(auto p: link_group)
+	{
+	    int group_size = M.n_partitions_for_item(M.item_for_partition[p-1]);
+	    if (group_size > 1)
+		throw myexception()<<"Partition "<<p<<" cannot be used in --link command: already linked!";
+	}
+
+	// 2. Complain if trying to link elements with different values
+	for(int i=0;i<link_group.size();i++)
+	{
+	    int p0 = link_group[0]-1;
+	    int p1 = link_group[i]-1;
+	    if (M[p0] != M[p1])
+		throw myexception()<<"Partitions "<<p0+1<<" and "<<p1+1<<" cannot be linked because they have differing values '"<<M[p0]<<"' and '"<<M[p1]<<"'";
+	}
+
+	// 3. Move all items into the partition of the first item.
+	for(int i=1;i<link_group.size();i++)
+	{
+	    int p0 = link_group[0]-1;
+	    int p1 = link_group[i]-1;
+
+	    int u0 = M.item_for_partition[p0];
+	    int u1 = M.item_for_partition[p1];
+
+	    assert(M.partitions_for_item[u1].size() == 1);
+	    M.partitions_for_item[u1].clear();
+	    M.partitions_for_item[u0].push_back(p1);
+	    M.item_for_partition[p1] = u0;
+	}
+    }
+
+    // 4. Remove empty partitions
+    return remove_empty_partitions(M);
+}
 /// \brief Parse command line arguments of the form --key int,int,int:name1 --key int,int:name2
 ///
 /// Here the integers refer to partitions 1..n and so cannot be referred to twice.
@@ -504,5 +567,7 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
 	    model_names.push_back("");
 	}
 
-    return shared_items<string>(model_names,mapping);
+    auto M = shared_items<string>(model_names,mapping);
+
+    return link_partitions(M, get_link_groups(args, key, n));
 }
