@@ -256,6 +256,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
 			std::cout<<"       "<<*desc<<std::endl<<std::endl;
 		}
 	    }
+	    if (auto examples = rule->get_child_optional("examples"))
+	    {
+		std::cout<<"Examples:\n";
+		for(auto& x: *examples)
+		{
+		    std::cout<<"   "<<x.second.get_value<string>()<<std::endl;
+		}
+	    }
 	    exit(0);
 	}
 	else
