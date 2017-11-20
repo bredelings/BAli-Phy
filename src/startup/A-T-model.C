@@ -466,16 +466,31 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     //--------- Set up indel model --------//
     auto full_imodels = get_imodels(R, imodel_names_mapping, T);
 
-    // 5. --------- Get UNSPECIFIED substitution models, which depend on the alphabet --------//
+    // 5. ----- Check that all smodel-linked partitions end up with the same alphabet. -----
+    for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
+    {
+	int first_index = smodel_names_mapping.partitions_for_item[i][0];
+	for(int j: smodel_names_mapping.partitions_for_item[i])
+	    if (alphabet_names[j] != alphabet_names[first_index])
+		throw myexception()<<"Partitions "<<first_index+1<<" and "<<j+1<<" have different alphabets '"<<alphabet_names[first_index]<<"' and '"<<alphabet_names[j]<<"', but share a linked substitution model!";
+    }
+
+    // 6. ------ Check that all alphabet-linked partitions end up with the same alphabet. -----
+    for(int i=0;i<alphabet_names_mapping.n_unique_items();i++)
+    {
+	int first_index = alphabet_names_mapping.partitions_for_item[i][0];
+	for(int other_index: alphabet_names_mapping.partitions_for_item[i])
+	{
+	    if (alphabet_names[first_index] != alphabet_names[other_index])
+		throw myexception()<<"Partitions "<<first_index+1<<" and "<<other_index+1<<" have different alphabets, but are specified as being linked!";
+	}
+    }
+    // 7. --------- Get UNSPECIFIED substitution models, which depend on the alphabet --------//
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
 	if (smodel_names_mapping.unique(i).empty())
 	{
 	    // Check that all the alphabets are the same before using the alphabet to get a default model.
 	    int first_index = smodel_names_mapping.partitions_for_item[i][0];
-	    for(int j: smodel_names_mapping.partitions_for_item[i])
-		if (alphabet_names[j] != alphabet_names[first_index])
-		    throw myexception()<<"Partitions "<<first_index+1<<" and "<<j+1<<" have different alphabets, but are given the same substitution model!";
-
 	    const alphabet& a = A[first_index].get_alphabet();
 
 	    smodel_names_mapping.unique(i) = default_markov_model(a);
@@ -486,16 +501,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	    full_smodels[i] = get_model(R, "MultiMixtureModel[a]",smodel_names_mapping.unique(i));
 	}
     
-    for(int i=0;i<alphabet_names_mapping.n_unique_items();i++)
-    {
-	int first_index = alphabet_names_mapping.partitions_for_item[i][0];
-	for(int other_index: alphabet_names_mapping.partitions_for_item[i])
-	{
-	    if (alphabet_names[first_index] != alphabet_names[other_index])
-		throw myexception()<<"Partitions "<<first_index+1<<" and "<<other_index+1<<" have different alphabets, but are specified as being linked!";
-	}
-    }
-    // 6. Check that alignment alphabet fits requirements from smodel && Apply alphabet
+    // 8. Check that alignment alphabet fits requirements from smodel. Apply alphabet.
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
     {
 	int first_index = smodel_names_mapping.partitions_for_item[i][0];
