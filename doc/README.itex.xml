@@ -134,7 +134,7 @@ Check that the executable runs:
     </section>
 
     <section><info><title>Linux</title></info>
-    <section><info><title>Install BAli-Phy using executables from website (alternative)</title></info>
+    <section><info><title>Install BAli-Phy using executables from website</title></info>
 
     <para>First install <command>wget</command>.  If you have Debian or Ubuntu Linux, type:
     <screen><prompt>%</prompt> <userinput>sudo apt-get install wget</userinput></screen>
@@ -1140,7 +1140,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	
 	<para>If the substitution model is not specified, then the
 	  default model for the alphabet is used.  For DNA or RNA, the
-	  default model is TN.  For Triplets, the default is TNx3. For
+	  default model is TN.  For Triplets, the default is TN+x3. For
           Codons, the default model is M0.  For Amino-Acids, the
 	  default model is LG. 
 	</para>
@@ -1166,8 +1166,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  independent of their frequencies.
 	</para>
 	
-	<para>The basic CTMC models are EQU, HKY, TN, GTR, HKYx3,
-	TNx3, GTRx3, JTT, WAG, LG, and M0.  Each of these models is a
+	<para>The basic CTMC models are EQU, HKY, TN, GTR, HKY+x3,
+	TN+x3, GTR+x3, JTT, WAG, LG, and M0.  Each of these models is a
 	way of specifying the exchangeability matrix $S_{ij}$.</para>
 
 	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
@@ -1260,9 +1260,9 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	      <row>
 		<entry>
-		  <para><userinput>HKYx3</userinput></para>
-		  <para><userinput>TNx3</userinput></para>
-		  <para><userinput>GTRx3</userinput></para>
+		  <para><userinput>HKY+x3</userinput></para>
+		  <para><userinput>TN+x3</userinput></para>
+		  <para><userinput>GTR+x3</userinput></para>
 		</entry>
 		<entry>Triplets</entry>
 		<entry>
@@ -1273,8 +1273,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <row>
 		<entry>
 		  <para><userinput>M0</userinput></para>
-		  <para><userinput>M0[HKY]</userinput> (default)</para>
-		  <para><userinput>M0[GTR]</userinput></para>
+		  <para><userinput>M0[,HKY]</userinput> (default)</para>
+		  <para><userinput>M0[,GTR]</userinput></para>
 		  <para>Nielsen and Yang (1998)</para>
 		</entry>
 		<entry>Codons</entry>
