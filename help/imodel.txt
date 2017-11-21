@@ -1,3 +1,5 @@
+The --imodel command:
+
 -I       [partitions:]model                 Insertion-deletion model.
 --imodel [partitions:]model
 

@@ -1,3 +1,5 @@
+The --alphabet command:
+
 -A         [partitions:]alphabet            The alphabet.
 --alphabet [partitions:]alphabet
 

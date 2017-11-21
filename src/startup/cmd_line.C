@@ -50,6 +50,25 @@ vector<string> trailing_args(int argc, char* argv[], const string& separator)
     return args;
 }
 
+string get_topic_from_string(const string& s)
+{
+    string s2 = s;
+    int index = s2.find_first_of("\r\n");
+    if (index != string::npos)
+	s2 = s2.substr(0,index);
+    if (not s2.empty() and s2[s2.size()-1] == ':')
+	s2[s2.size()-1] = '.';
+    return s2;
+}
+
+string pad(const string& s, int n)
+{
+    if (s.size() < n)
+	return s+string(n-s.size(),' ');
+    return s;
+}
+
+
 void help_on_help(std::ostream& o, const map<string,string>& help)
 {
     o<<"Help topics via --help=arg are available for:\n";
@@ -59,7 +78,7 @@ void help_on_help(std::ostream& o, const map<string,string>& help)
     o<<"  =<function name>     Function type, description, and argument names.\n\n";
     o<<"  =help                This list of topics.\n\n";
     for(auto& x: help)
-	o<<"  ="<<x.first<<"\n";
+	o<<"  ="<<pad(x.first,15)<<"     "<<get_topic_from_string(x.second)<<"\n";
     o<<"\n";
 }
 
