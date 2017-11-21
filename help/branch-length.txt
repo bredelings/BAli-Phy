@@ -1,0 +1,11 @@
+The --branch-length command:
+
+-B              prior                       Prior on branch-lengths.
+--branch-length prior
+
+The default branch-length prior is "~Gamma[0.5,2/B]" where B is the number
+of branches on the tree.
+
+Examples:
+   -B ~Gamma[0.5,0.001]
+   --branch-length ~Gamma[0.5,0.001]

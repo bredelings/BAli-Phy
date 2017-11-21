@@ -1,0 +1,25 @@
+The --smodel command:
+
+-S       [partitions:]model                 Substitution model.
+--smodel [partitions:]model
+
+If no model is specified for a partition, then a default model is chosen
+based on the alphabet for that partition.  The defaults are:
+   DNA        -> TN
+   RNA        -> TN
+   AminoAcids -> LG
+   Triplets   -> TN+x3
+   Codons     -> M0
+
+If no partitions are specified, then every partition gets a separate
+(unlinked) copy of the model.
+
+If partitions are specified, then the partitions are linked.
+That is, they share the same parameter values for the model.
+
+Examples:
+   -S HKY
+   --smodel=HKY
+   -S GTR+Rates.Gamma+INV
+   -S 1,3:HKY+Rates.Gamma[n=4]+INV -S 2:LG+Rates.Gamma+INV
+In the last example, the substitution models of partitions 1 and 3 are linked.

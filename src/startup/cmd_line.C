@@ -56,8 +56,12 @@ string get_topic_from_string(const string& s)
     int index = s2.find_first_of("\r\n");
     if (index != string::npos)
 	s2 = s2.substr(0,index);
-    if (not s2.empty() and s2[s2.size()-1] == ':')
+    if (s2.empty() or s2[s2.size()-1] == '.')
+	;
+    else if (s2[s2.size()-1] == ':')
 	s2[s2.size()-1] = '.';
+    else
+	s2.push_back('.');
     return s2;
 }
 
@@ -180,8 +184,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("alphabet,A",value<vector<string> >()->composing(),"The alphabet.")
 	("smodel,S",value<vector<string> >()->composing(),"Substitution model.")
 	("imodel,I",value<vector<string> >()->composing(),"Insertion-deletion model.")
-	("branch-length,B",value<string>(),"Prior on branch lengths.")
 	("scale,R",value<vector<string> >()->composing(),"Prior on the scale.")
+	("branch-length,B",value<string>(),"Prior on branch lengths.")
 	("link,L",value<vector<string>>()->composing(),"Link partitions")
 	;
     options_description all("All options");

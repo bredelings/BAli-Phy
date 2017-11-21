@@ -9,7 +9,7 @@ The default is "RS07".  A value of "none" means that the alignment is fixed.
 If no partitions are specified, then every partition gets a separate
 (unlinked) copy of the model.
 
-If partitions are specified, then the partitions have linked indel models.
+If partitions are specified, then the partitions are linked.
 That is, they share the same parameter values for the model.
 
 Examples:
