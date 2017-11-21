@@ -28,7 +28,8 @@ nobase_modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude
 
 helpdir = $(libdir)/@PACKAGE@/
 nobase_help_DATA = help/alphabet.txt \
-	help/imodel.txt
+	help/imodel.txt \
+	help/genetic-code.txt
 
 functionsdir = $(libdir)/@PACKAGE@/
 nobase_functions_DATA = functions/AA.json \

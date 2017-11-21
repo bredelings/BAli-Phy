@@ -2,21 +2,18 @@
 --alphabet [partitions:]alphabet
 
 The alphabet can be:
-   'DNA', 'RNA', 'Amino-Acids', 'Numeric', 'Triplets', or 'Codons'
+   "DNA", "RNA", "Amino-Acids", "Numeric", "Triplets", or "Codons"
 
 If no partitions are specified, then the alphabet is applied to
-every partition.
+every partition.  The Triplets and Codons alphabets take optional
+extra arguments specifying the nucleotide alphabet and genetic code:
 
-You can specify the nucleotide alphabet for Triplets or Codons.
-    'Triplets[DNA]'           'Codons[RNA]'
+    "Triplets[DNA]"           "Codons[RNA,standard]"
 
-You can specify the genetic code Codons.
-    'Codons[,standard]'       'Codons[RNA,mt-vert]'
-The code can be 'standard' (the default), 'mt-vert', 'mt-invert',
- 'mt-yeast', or 'mt-protozoan'
+See help on Triplets and Codons for more information.
 
 Examples:
-    '--alphabet=DNA'
-    '-A RNA'
-    '--alphabet=1,3:DNA --alphabet=2:Codons'
+   --alphabet=DNA
+   -A RNA
+   --alphabet=1,3:DNA --alphabet=2:Codons
 

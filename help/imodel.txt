@@ -11,7 +11,9 @@ If partitions are specified, then the partitions have linked indel models.
 That is, they share the same parameter values for the model.
 
 Examples:
-    "--imodel=RS07"    or    "-I RS07"
-    "--imodel=none"    or    "-I none"
-    "-I 1,3:RS07 -I 2:none"
+   -I RS07
+   --imodel=RS07
+   -I none
+   --imodel=none
+   -I 1,3:RS07 -I 2:none
 In the last example, the indel models of partitions 1 and 3 are linked.

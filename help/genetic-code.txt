@@ -1,0 +1,13 @@
+Genetic code names include:
+ standard
+ mt-vert
+ mt-invert
+ mt-yeast
+ mt-protozoan
+Genetic codes can be specified to the Codons alphabet.
+
+See: Codons.
+
+
+
+
