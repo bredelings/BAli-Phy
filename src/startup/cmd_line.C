@@ -149,7 +149,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description model("Model options");
     model.add_options()
-	("alphabet",value<vector<string> >()->composing(),"DNA, RNA, Amino-Acids, Codons, etc.")
+	("alphabet,A",value<vector<string> >()->composing(),"DNA, RNA, Amino-Acids, Codons, etc.")
 	("smodel,S",value<vector<string> >()->composing(),"Substitution model.")
 	("imodel,I",value<vector<string> >()->composing(),"Indel model: none, RS07, RS05.")
 	("branch-length,B",value<string>(),"Defaults to ~Gamma[0.5, 2/n_branches[T]].")
