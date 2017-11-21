@@ -1,0 +1,17 @@
+-I       [partitions:]model                 Insertion-deletion model.
+--imodel [partitions:]model
+
+The insertion deletion model can be "RS07", "RS05", or "none".
+The default is "RS07".  A value of "none" means that the alignment is fixed.
+
+If no partitions are specified, then every partition gets a separate
+(unlinked) copy of the model.
+
+If partitions are specified, then the partitions have linked indel models.
+That is, they share the same parameter values for the model.
+
+Examples:
+    "--imodel=RS07"    or    "-I RS07"
+    "--imodel=none"    or    "-I none"
+    "-I 1,3:RS07 -I 2:none"
+In the last example, the indel models of partitions 1 and 3 are linked.

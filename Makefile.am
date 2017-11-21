@@ -26,6 +26,10 @@ nobase_modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude
 		modules/MCMC.hs modules/IModel.hs modules/System/Environment.hs modules/Data/ReadFile.hs \
 		modules/SubAIndex.hs
 
+helpdir = $(libdir)/@PACKAGE@/
+nobase_help_DATA = help/alphabet.txt \
+	help/imodel.txt
+
 functionsdir = $(libdir)/@PACKAGE@/
 nobase_functions_DATA = functions/AA.json \
 	functions/Add.json \

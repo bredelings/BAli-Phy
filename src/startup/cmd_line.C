@@ -1,3 +1,4 @@
+#include <boost/filesystem/operations.hpp>
 #include "startup/cmd_line.H"
 #include "startup/paths.H"
 #include "util.H"
@@ -8,6 +9,7 @@
 #include "models/parse.H"
 
 using std::string;
+using std::map;
 using std::vector;
 using std::cout;
 
@@ -15,6 +17,8 @@ namespace po = boost::program_options;
 using po::variables_map;
 
 const string trailing_args_separator = "---";
+
+namespace fs = boost::filesystem;
 
 vector<string> drop_trailing_args(int argc, char* argv[], const string& separator)
 {
@@ -58,45 +62,29 @@ void help_on_help(std::ostream& o)
     o<<"\n";
 }
 
-void help_on_alphabet(std::ostream& o)
+std::map<string,string> load_help_files(const std::vector<fs::path>& package_paths)
 {
-    o<<"You can specify the alphabet to specific partitions writing:\n";
-    o<<"    '--alphabet=1:DNA --alphabet=3,4:Codons'\n";
-    o<<"If the partitions are unspecified, the alphabet applies to all partitions:\n";
-    o<<"    '--alphabet=DNA'\n\n";
+    map<string,string> help;
 
-    o<<"The alphabet for each partition can be:\n";
-    o<<"   'DNA', 'RNA', 'Amino-Acids', 'Numeric', 'Triplets', or 'Codons'\n\n";
+    for(auto& package_path: package_paths)
+    {
+	auto path = package_path / "help";
 
-    o<<"You can specify the nucleotide alphabet for Triplets or Codons.\n";
-    o<<"    'Triplets[DNA]'           'Codons[RNA]'\n\n";
+	if (fs::exists(path))
+	    for(auto& dir_entry: fs::directory_iterator(path))
+	    {
+		auto abs_path = fs::canonical(dir_entry.path() );
+		string topic = abs_path.stem().string();
+		
+		if (abs_path.extension() == ".txt")
+		{
+		    if (not help.count(topic))
+			help[topic] = read_file(abs_path.string(), "help file");
+		}
+	    }
+    }
 
-    o<<"You can specify the genetic code Codons.\n";
-    o<<"    'Codons[,standard]'       'Codons[RNA,mt-vert]'\n";
-    o<<"The code can be 'standard' (the default), 'mt-vert', 'mt-invert',\n 'mt-yeast', or 'mt-protozoan'\n";
-    // FIXME - add separate help topics for: triplets, codons, genetic-codes
-}
-
-void help_on_imodel(std::ostream& o)
-{
-    o<<"-I       [partitions:]model              Insertion-deletion model.\n";
-    o<<"--imodel [partitions:]model\n";
-    o<<"\n";
-    o<<"The insertion deletion model can be \"RS07\", \"RS05\", or \"none\".\n";
-    o<<"The default is \"RS07\".  A value of \"none\" means that the alignment is fixed.\n";
-    o<<"\n";
-    o<<"If no partitions are specified, then every partition gets a separate\n";
-    o<<"(unlinked) copy of the model.\n";
-    o<<"\n";
-    o<<"If partitions are specified, then the partitions have linked indel models.\n";
-    o<<"That is, they share the same parameter values for the model.\n";
-    o<<"\n";
-    o<<"Examples:\n";
-    o<<"    \"--imodel=RS07\"    or    \"-I RS07\"\n";
-    o<<"    \"--imodel=none\"    or    \"-I none\"\n";
-    o<<"    \"-I 1,3:RS07 -I 2:none\"\n";
-    o<<"In the last example, the indel models of partitions 1 and 3 are linked.\n";
-    o<<"\n";
+    return help;
 }
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
@@ -218,24 +206,22 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
 	    exit(0);
 	}
-
+	auto package_paths = get_package_paths(argv[0], args);
+	auto help = load_help_files(package_paths);
+	
 	if (topic == "help")
 	{
 	    help_on_help(std::cout);
 	    exit(0);
 	}
-	if (topic == "alphabet")
+	if (help.count(topic))
 	{
-	    help_on_alphabet(std::cout);
-	    exit(0);
-	}
-	if (topic == "imodel")
-	{
-	    help_on_imodel(std::cout);
+	    std::cout<<help[topic];
+	    std::cout<<std::endl;
 	    exit(0);
 	}
 
-	Rules R(get_package_paths(argv[0], args));
+	Rules R(package_paths);
 	if (topic == "functions")
 	{
 	    for(auto& rule: R)
