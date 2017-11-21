@@ -38,16 +38,7 @@
   </info>
 
   <section xml:id="intro"><info><title>Introduction</title></info>
-    <para><application>BAli-Phy</application> is a Unix command
-      line program that is developed primarily on
-      Linux.  <application>BAli-Phy</application> also runs on
-      Windows and Mac OS X, but it is not a GUI program and so you
-      must run it in a terminal.  Therefore, you might want to keep a
-      <link xmlns:xlink="http://www.w3.org/1999/xlink"
-	    xlink:href="http://www.ee.surrey.ac.uk/Teaching/Unix">Unix
-      tutorial</link> or <link xmlns:xlink="http://www.w3.org/1999/xlink"
-	    xlink:href="http://www.rain.org/~mkummel/unix.html">Unix
-      cheat sheet</link> handy while you work.
+    <para><application>BAli-Phy</application> is a Unix command line program that is developed primarily on Linux.  <application>BAli-Phy</application> also runs on Windows and Mac OS X, but it is not a GUI program and so you must run it in a terminal.  Therefore, you might want to keep a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.ee.surrey.ac.uk/Teaching/Unix">Unix tutorial</link> or <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.rain.org/~mkummel/unix.html">Unix cheat sheet</link> handy while you work.
     </para>
 
     <para>In addition to the main <command>bali-phy</command> executable, <application>BAli-Phy</application> comes with a collection of small command-line utilities such as <command>alignment-cat</command>, <command>trees-consensus</command>, etc.  These utilities can be used to process alignments, assemble data sets, and summarize the results of MCMC.
@@ -66,12 +57,15 @@
     </para>
   </section>
 
-  <section><info><title>MS Windows</title></info>
+  <section><info><title>Install on MS Windows</title></info>
+  <para>First check that you have a 64-bit version of the Windows operation system installed. The executables for download will only run on a 64-bit installation of Windows.  </para>
   <section><info><title>Install a Unix command line: Cygwin (recommended)</title></info>
-  <para>Before you can use <application>BAli-Phy</application> on Windows you, need to install a Unix command-line environment.  We recommand installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>.  You may then access the Unix command line environment by running the Cygwin shell (not the normal windows command line).  The Cygwin shell mounts the <filename>C:</filename> drive on <filename>/cygdrive/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/cygdrive/c/Users/</filename> from within the Cygwin shell, for example.</para>
+  <para>Before you can use <application>BAli-Phy</application> on Windows, you need to install a Unix command-line environment.  We recommand installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>.  You may then access the Unix command line environment by running the Cygwin shell (not the normal windows command line).  The Cygwin shell mounts the <filename>C:</filename> drive on <filename>/cygdrive/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/cygdrive/c/Users/</filename> from within the Cygwin shell, for example.</para>
   <para>
-    While running the Cygwin installer <filename>setup.exe</filename>, you will be given an opportunity to select additional packages.
+    While running the Cygwin installer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/setup-x86_64.exe"><filename>setup-x86_64.exe</filename></link>, you will be given an opportunity to select additional packages.
 	<itemizedlist>
+	  <listitem><para>From <guilabel>Science</guilabel>, select <guilabel>R</guilabel>.</para></listitem>
+	  <listitem><para>From <guilabel>Math</guilabel>, select <guilabel>gnuplot</guilabel>.</para></listitem>
 	  <listitem><para>From <guilabel>Interpreters</guilabel>, select <guilabel>perl</guilabel>.</para></listitem>
 	  <listitem><para>From <guilabel>Web</guilabel>, select <guilabel>wget</guilabel>.</para></listitem>
 	  <listitem><para>From <guilabel>Editors</guilabel>, select <guilabel>nano</guilabel>.</para></listitem>
@@ -92,7 +86,7 @@
       <filename>/cygdrive/c/Documents\ and\ Settings/<replaceable>username</replaceable>/Downloads/</filename>. 
       </note -->
   </section>
-  <section><info><title>Install a Unix command line: Msys2</title> (alternative)</info>
+  <section><info><title>Install a Unix command line: Msys2 (alternative)</title></info>
       <para>You can optionally use <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> instead of Cygwin. Both MSYS2 and Cygwin can be installed at the same time.  After installing MSYS2, You may access the Unix command line environment by running the MSYS2 shell (not the normal windows command line).  The MSYS2 shell mounts the <filename>C:</filename> drive on <filename>/c/</filename>, so you can access the directory <filename>C:/Users/</filename> as <filename>/c/Users/</filename> from within the MSYS2 shell, for example.</para> 
 
   </section>
@@ -105,19 +99,14 @@
 <prompt>%</prompt> <userinput>tar -zxf &win64.file;</userinput></screen>
        Second, check that the <command>bali-phy</command> executable runs:
       <screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy --version</userinput></screen>
+      You still need to add it to your PATH as described in <xref linkend="path"/>.
     </para>
-
-<para>Third, add the executables to your PATH, so that the shell knows where to find them:
-<screen><prompt>%</prompt> <userinput>export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH</userinput>
-<prompt>%</prompt> <userinput>test -r ~/.bash_profile &#38;&#38; echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.bash_profile</userinput>
-<prompt>%</prompt> <userinput>echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.profile</userinput></screen>
-</para>
 </section>
   </section>
 
-    <section><info><title>Mac OS X</title></info>
+    <section><info><title>Install on Mac OS X</title></info>
     <section><info><title>Install BAli-Phy using homebrew (recommended) </title></info>
-    <para>First install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 6 or higher.
+    <para>First install the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or higher) command line tools:
     <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
 
     Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> and use homebrew to compile and install <command>bali-phy</command>:
@@ -125,6 +114,7 @@
 <prompt>%</prompt> <userinput>brew install bali-phy</userinput></screen>
 Check that the executable runs:
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
+If you install with homebrew, you don't need to do anything extra to put bali-phy in your PATH.
     </para>
     </section>
 
@@ -137,32 +127,33 @@ Check that the executable runs:
 <prompt>%</prompt> <userinput>tar -zxf &mac64.file;</userinput></screen>
       Check that the executable runs:
       <screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy --version</userinput></screen>
-    </para>
-
-<para>Then, add it to your PATH, so that the shell knows where to find it:
-<screen><prompt>%</prompt> <userinput>export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH</userinput>
-<prompt>%</prompt> <userinput>test -r ~/.bash_profile &#38;&#38; echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.bash_profile</userinput>
-<prompt>%</prompt> <userinput>echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.profile</userinput></screen>
+      You still need to add it to your PATH as described in <xref linkend="path"/>.
     </para>
 
     </section>
 
-    <section><info><title>Install programs used by <command>bp-analyze</command></title></info>
-      <itemizedlist>
-	<listitem>
-      You can install <command>gnuplot</command> via homebrew:
-<screen><prompt>%</prompt> <userinput> brew install gnuplot</userinput></screen> </listitem>
-<listitem>You can install R via homebrew:
-<screen><prompt>%</prompt> <userinput> brew install cask</userinput>
-<prompt>%</prompt> <userinput> brew install Caskroom/cask/xquartz</userinput>
+    <section><info><title>Install programs used by <command>bp-analyze</command> using homebrew</title></info>
+    <para>
+      You can install <application>gnuplot</application> via homebrew:
+<screen><prompt>%</prompt> <userinput> brew install gnuplot</userinput></screen> 
+You can install <application>R</application> via homebrew:
+<screen><prompt>%</prompt> <userinput> brew tap caskroom/cask</userinput>
+<prompt>%</prompt> <userinput> brew cask install xquartz</userinput>
 <prompt>%</prompt> <userinput> brew install r</userinput></screen>
 However, note that this might conflict with R installed from other places, such as <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mran.microsoft.com/open/">MRAN</link>.
-      </listitem>
-      </itemizedlist>
+</para>
+    </section>
+    <section><info><title>Install some of the programs used for viewing the results using homebrew</title></info>
+      <para>
+	You can install Figtree with homebrew:
+	<screen><prompt>%</prompt> <userinput>brew tap caskroom/cask</userinput>
+<prompt>%</prompt> <userinput>brew cask install figtree</userinput></screen>
+	However, Seaview and Tracer don't have homebrew packages at the moment.
+      </para>
     </section>
     </section>
 
-    <section><info><title>Linux</title></info>
+    <section><info><title>Install on Linux</title></info>
     <section><info><title>Install BAli-Phy using executables from website</title></info>
 
     <para>First install <command>wget</command>.  If you have Debian or Ubuntu Linux, type:
@@ -176,25 +167,50 @@ However, note that this might conflict with R installed from other places, such 
 <prompt>%</prompt> <userinput>tar -zxf &linux64.file;</userinput></screen>
       Second, check that the executable runs:
       <screen><prompt>%</prompt> <userinput>~/Applications/bali-phy-&version;/bin/bali-phy --version</userinput></screen>
+      You still need to add it to your PATH as described in <xref linkend="path"/>.
     </para>
-
-<para>Third, add it to your PATH, so that the shell knows where to find it:
-<screen><prompt>%</prompt> <userinput>export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH</userinput>
-<prompt>%</prompt> <userinput>test -r ~/.bash_profile &#38;&#38; echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.bash_profile</userinput>
-<prompt>%</prompt> <userinput>echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.profile</userinput></screen>
-</para>
     </section>
     <section><info><title>Install programs used by <command>bp-analyze</command></title></info>
-    <para>If you have Debian or Ubuntu linux, you can install other recommended programs by typing:
+    <para>If you have Debian or Ubuntu Linux, you can install other recommended programs by typing:
     <screen><prompt>%</prompt> <userinput>sudo apt-get install gnuplot</userinput>
-<prompt>%</prompt> <userinput>sudo apt-get install r-base</userinput>
-<prompt>%</prompt> <userinput>sudo apt-get install seaview</userinput></screen>
+<prompt>%</prompt> <userinput>sudo apt-get install r-base</userinput></screen>
     </para>
-
+    </section>
+    <section><info><title>Install programs used to view the results</title></info>
+    <para>
+<screen><prompt>%</prompt> <userinput>sudo apt-get install seaview</userinput>
+<prompt>%</prompt> <userinput>sudo apt-get install figtree</userinput></screen>
+    However, there isn't a Debian or Ubuntu package for Tracer at the moment.
+</para>
     </section>
     </section>
-    <section><info><title>Adding BAli-Phy to your <envar>PATH</envar></title></info>
 
+    <section xml:id="path"><info><title>Add BAli-Phy to your <envar>PATH</envar></title></info>
+
+    <section><title>Is bali-phy in your PATH already?</title>
+<para> First check if the executable is in your PATH.
+<screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
+If this shows version info, then <command>bali-phy</command> is already in your PATH and you can skip this section.  This should be true if you installed <command>bali-phy</command> using homebrew, or if you've already added it to your PATH.</para>
+<para>If bali-phy is not in your path, the you should see:
+<screen><prompt>%</prompt> <userinput>bali-phy --version</userinput>
+bali-phy: command not found.</screen>
+If bali-phy is not in your PATH, then continue with this section.
+</para>
+    </section>
+    <section><title>Quick version</title>
+<para>Add <command>bali-phy</command> to your PATH, so that the shell knows where to find it.  This command only affects the terminal in which it is typed, and will not affect new terminals:
+<screen><prompt>%</prompt> <userinput>export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH</userinput></screen>
+To set the PATH automatically for new terminals, type:
+<screen><prompt>%</prompt> <userinput>test -r ~/.bash_profile &#38;&#38; echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.bash_profile</userinput>
+<prompt>%</prompt> <userinput>echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.profile</userinput></screen>
+This will affect new terminals only after you log out and log back ink though.</para>
+<para>
+Now check that the executable runs:
+<screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
+If it does, then your PATH is set up correctly, and you can probably skip the rest of this section. 
+</para>
+    
+    </section>
       <section><title>I have a path?</title>
       <para>
 	If you installed <application>BAli-Phy</application> to the directory
@@ -266,45 +282,7 @@ However, note that this might conflict with R installed from other places, such 
       </section>
     </section>
 
-    <section xml:id="software_req"><info><title>Additional required software</title></info>
-
-    <para>The following software is important to install:
-    <itemizedlist>
-      
-      <listitem><para>The graphical MCMC diagnostic program
-      <link xmlns:xlink="http://www.w3.org/1999/xlink"
-	    xlink:href="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</link>.
-      </para></listitem> 
-
-    </itemizedlist>
-    </para>
-
-    <para>The following software is recommended to install:
-
-    <itemizedlist>
-
-      <listitem><para>The plotting program gnuplot.</para></listitem> 
-      
-      <listitem><para>The phylogeny-viewer <link
-      xmlns:xlink="http://www.w3.org/1999/xlink"
-      xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link>.</para></listitem>
-      
-      <listitem><para>The alignment-viewer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">Seaview</link>.</para></listitem>
-
-    </itemizedlist>
-    GNUplot can be installed using the Cygwin installer on Windows
-    systems.  It can also be installed using <link
-    xmlns:xlink="http://www.w3.org/1999/xlink"
-    xlink:href="http://www.macports.org">macports</link> or
-    <link xmlns:xlink="http://www.w3.org/1999/xlink"
-	  xlink:href="http://http://mxcl.github.com/homebrew/">homebrew</link>
-    on Macintosh systems, but installing these package managers
-    requires first installing Xcode Developer Tools.
-    </para>
-
-    </section>
-
-    <section xml:id="tests"><info><title>Testing the installed software</title></info>
+    <section xml:id="tests"><info><title>Test the installed software</title></info>
     <para>In order to determine that the software has been correctly installed, and the <envar>PATH</envar> has been correctly set, run the following commands:
 <screen><prompt>%</prompt> <userinput>bali-phy &install.path;/share/bali-phy/examples/sequences/5S-rRNA/5d.fasta --iter=150</userinput>
 <prompt>%</prompt> <userinput>bp-analyze 5d-1/</userinput></screen>
@@ -312,13 +290,52 @@ However, note that this might conflict with R installed from other places, such 
     <para>Furthermore, the directory <filename>5d-1</filename> should contain a file called <filename>C1.log</filename>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</para>
     </section>
 
-  </section>
 
-  <section xml:id="compilation"><info><title>Compiling <application>BAli-Phy</application></title></info>
+    <section xml:id="software_req"><info><title>Install programs used for viewing the results</title></info>
+
+    <para>
+      <itemizedlist>
+	<listitem>
+	  <para>
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
+		  xlink:href="http://tree.bio.ed.ac.uk/software/tracer/">
+	      Tracer
+	    </link>
+	    :  MCMC parameter/diagnostic viewer.
+	  </para>
+	</listitem> 
+
+	<listitem>
+	  <para>
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
+		  xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">
+	      FigTree
+	    </link>
+	    : Phylogeny Viewer
+	  </para>
+	</listitem>
+      
+	<listitem>
+	  <para>
+	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
+		  xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">
+	      SeaView
+	    </link>
+	    : Alignment viewer.
+	  </para>
+	</listitem>
+
+    </itemizedlist>
+    </para>
+
+    </section>
+    </section>
+
+
+    <section xml:id="compilation"><info><title>Compiling <application>BAli-Phy</application></title></info>
     
 
-    <para>Compiling <application>BAli-Phy</application> is intended to be a relatively painless process.  However, most people will want to follow the standard installation instructions at <xref linkend="installation"/>.
-
+    <para>Compiling <application>BAli-Phy</application> is intended to be a relatively painless process.  However, most people will want to follow the standard installation instructions at <xref linkend="installation"/> instead of compiling BAli-Phy themselves.
     </para>
 
     <section><info><title>Setup</title></info>
@@ -338,7 +355,8 @@ However, note that this might conflict with R installed from other places, such 
     </section>
 
     <section><info><title>Mac</title></info>
-    <para>On Mac OS X, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or newer), which comes with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link>. To get the other tools, first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>, and then type:
+    <para>On Mac OS X, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 6 or newer) command line tools, which come with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">clang</link>.
+ <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>    To get the other tools, first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>, and then type:
 <screen><prompt>%</prompt> brew install libtool
 <prompt>%</prompt> brew install autoconf
 <prompt>%</prompt> brew install automake
@@ -351,8 +369,11 @@ However, note that this might conflict with R installed from other places, such 
     </section>
     
     <section><info><title>Windows</title></info>
-    <para>We recommend compiling windows executables in the MINGW format instead of the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/">Cygwin</link> format.  MINGW executables are native windows executables, and do not need <filename>cygwin.dll</filename> to run.</para>
-    <para>However, the easiest way to build MINGW executables is to use either Linux or Cygwin as the host environment.  This is called using a "cross-compiler".  You can obtain cross compilers for MINGW on both Linux and Cygwin.  To inform the <filename>configure.sh</filename> script that you wish to use a cross compiler, add the <userinput>--host</userinput> flag.  You should add the flag <userinput>--host=x86_64-w64-mingw32</userinput> to build 64-bit windows, and <userinput>--host=i686-w64-mingw32</userinput> to build 32-bit executables.</para>
+    <para>BAli-Phy can be compiled as either a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/">Cygwin</link> executable or a native Windows executable.  The Cygwin executable needs the <filename>cygwin1.dll</filename> to run, and can handle cygwin filenames like <filename>/cygdrive/C/Users/</filename>.  To compile bali-phy for Cygwin, install Cygwin and the Cygwin packages for gcc, autoconf, automake, libtool, git, and cairo.  Then you can build bali-phy within Cygwin using the build instructions below.</para>
+
+    <para>You can also compile native windows executables using the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mingw-w64.org/doku.php">Mingw-w64</link> version of GCC.  These native windows executables do not need <filename>cygwin1.dll</filename>, and only understand Windows filenames, like <filename>C:\Users\</filename>.  You can build these executables in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> shell, which is a modified version of Cygwin for compiling native windows executables using the Mingw-w64 compiler.</para>
+
+    <para>You can also build Mingw-w64 executables using either Linux or Cygwin as the host environment, if you install a mingw-w64 "cross-compiler".  You can obtain cross compilers for Mingw-w64 on both Linux and Cygwin.  To inform the <filename>configure.sh</filename> script that you wish to use a cross compiler, add the flag <userinput>--host=x86_64-w64-mingw32</userinput> to build for 64-bit windows, and <userinput>--host=i686-w64-mingw32</userinput> to build 32-bit executables.</para>
     </section>
 
 	  
@@ -983,7 +1004,7 @@ The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://
 	
 <para>
 <screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> &lt; C1.P<replaceable>p</replaceable>.fastas | alignment-max &gt; P<replaceable>p</replaceable>-max.fasta</screen>
-You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">seaview</link> to view the alignment graphically.
+You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">SeaView</link> to view the alignment graphically.
 </para>
       </section>      
 
