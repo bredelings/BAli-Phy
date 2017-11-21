@@ -699,11 +699,11 @@ imodel = none
 	  to analyze several genes as long as each gene individually
 	  is not too long.</para> 
 
-	<para>You can speed up alignment for long genes by specifying
+	<!-- para>You can speed up alignment for long genes by specifying
 	  alignment constraints (See <xref linkend="alignment_constraints"/>).
 	  Ideally, 10 evenly spaced constraints should reduce the cost of
 	  re-aligning a sequence by a factor of 10.
-	</para>
+	</para -->
 
 	<para>Also, note that you can sometimes speed up the analysis
 	  of protein sequences by coding them as amino acids or codons, rather 
@@ -1899,69 +1899,6 @@ The NHX attribute must be applied to the branch, not the node.  Therefore it mus
 	    
 
       <para>Specifying an indel model of <userinput>none</userinput> for a given partition results in fixing the alignment for that partition to its initial value, and ignoring information in shared insertions or deletions.</para>
-    </section>
-
-    <section xml:id="alignment_constraints"><info><title>Alignment constraints</title></info>
-      
-      <para>To fix specific columns of the alignment, you may specify alignment
-	constraints in a file as follows: </para>
-
-      <orderedlist inheritnum="ignore" continuation="restarts">
-	<listitem><para>Use the argument
-	<userinput>--align-constraint <replaceable>filename</replaceable></userinput></para></listitem> 
-
-	<listitem><para>For multiple partitions, list multiple filenames separated by colons.  If a partition doesn't have a constraint, then use an empty filename.  For example, to specify constraints for partitions 1 and 3, write:
-	<userinput>--align-constraint <replaceable>filename1</replaceable>::<replaceable>filename3</replaceable></userinput></para></listitem> 
-
-
-	<listitem><para>Each filename refers to a file in which each
-	    line represents a constraint.</para></listitem> 
-
-      </orderedlist>
-
-      <section><info><title>Syntax</title></info>
-	
-	<para>The first line of the file is a header consisting of an
-	  ordered list of sequence names separated by spaces. Each subsequent line
-	  consists of a space-separated list of sequence positions, with the first position
-	  corresponding to the first leaf sequence, the second position
-	  corresponding to the second leaf sequence, etc. Thus, if there are
-	  <replaceable>n</replaceable> leaf taxa, then each line corresponds to a
-	  space-separated list of <replaceable>n</replaceable> integers.</para>
-      </section>
-      <section><info><title>Examples</title></info>
-	
-	<para>For example, the file</para>
-
-	<programlisting>A B C
-1 2 2</programlisting>
-
-	<para>implies that position 1 of leaf sequence A is aligned to
-	  position 2 of leaf sequences B and C. Note that the first
-	  position in a sequence is position 0.</para> 
-
-	<para>Optionally, one may use a '-' instead of an integer, which
-	  denotes a lack of constraint for that sequence. This can be
-	  useful as follows:</para> 
-
-	<programlisting>A B C D
-2 2 - - 
-- - 2 2
-	</programlisting>
-
-	<para>The above constraints force alignment between position 2
-	  of sequences A and B, and between position 2 of sequence C and
-	  D.</para>
-      </section>
-
-      <section><info><title>Computing the constraints</title></info>
-	
-	<para>
-	  The program <command>alignment-indices</command> may be used
-	  to aid in computing a constraint file from an input
-	  alignment.  See <xref linkend="generating_constraint_files"/>.
-	</para>
-      </section>
     </section>
 
   <section xml:id="mixing_and_convergence"><info><title>Convergence and Mixing: Is it done yet?</title></info>
