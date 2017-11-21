@@ -1,0 +1,14 @@
+The Triplets alphabet:
+
+Triplets[nucleotides]
+
+The Triplets alphabet is used for triplets of DNA or RNA data.
+
+The nucleotides argument can be "DNA", "RNA", or missing.  If it
+is missing, DNA or RNA is guessed based on frequency of
+A,T,G,U, and C in the file.
+
+Examples:
+   Triplets
+   Triplets[RNA]
+   Triplets[DNA]
