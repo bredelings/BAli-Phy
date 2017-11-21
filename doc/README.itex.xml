@@ -145,6 +145,9 @@ However, note that this might conflict with R installed from other places, such 
     </section>
     <section><info><title>Install some of the programs used for viewing the results using homebrew</title></info>
       <para>
+	<!-- This might be a better formula https://github.com/tseemann/homebrew-bioinformatics-linux/blob/master/figtree.rb
+	     I could copy it to bredelings/bioinformatics ...
+	-->
 	You can install Figtree with homebrew:
 	<screen><prompt>%</prompt> <userinput>brew tap caskroom/cask</userinput>
 <prompt>%</prompt> <userinput>brew cask install figtree</userinput></screen>
