@@ -1,4 +1,5 @@
 #include <boost/filesystem/operations.hpp>
+#include <boost/algorithm/string.hpp>
 #include "startup/cmd_line.H"
 #include "startup/paths.H"
 #include "util.H"
@@ -76,11 +77,8 @@ std::map<string,string> load_help_files(const std::vector<fs::path>& package_pat
 		auto abs_path = fs::canonical(dir_entry.path() );
 		string topic = abs_path.stem().string();
 		
-		if (abs_path.extension() == ".txt")
-		{
-		    if (not help.count(topic))
-			help[topic] = read_file(abs_path.string(), "help file");
-		}
+		if (abs_path.extension() == ".txt" and not help.count(topic))
+		    help[topic] = boost::trim_copy(read_file(abs_path.string(), "help file"));
 	    }
     }
 
