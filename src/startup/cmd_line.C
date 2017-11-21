@@ -54,6 +54,7 @@ void help_on_help(std::ostream& o)
     o<<"  =<function name>     Function type, description, and argument names.\n\n";
     o<<"  =help                This list of topics.\n\n";
     o<<"  =alphabet            Possible arguments to --alphabet\n";
+    o<<"  =imodel              Possible arguments to --imodel\n";
     o<<"\n";
 }
 
@@ -74,6 +75,28 @@ void help_on_alphabet(std::ostream& o)
     o<<"    'Codons[,standard]'       'Codons[RNA,mt-vert]'\n";
     o<<"The code can be 'standard' (the default), 'mt-vert', 'mt-invert',\n 'mt-yeast', or 'mt-protozoan'\n";
     // FIXME - add separate help topics for: triplets, codons, genetic-codes
+}
+
+void help_on_imodel(std::ostream& o)
+{
+    o<<"-I       [partitions:]model              Insertion-deletion model.\n";
+    o<<"--imodel [partitions:]model\n";
+    o<<"\n";
+    o<<"The insertion deletion model can be \"RS07\", \"RS05\", or \"none\".\n";
+    o<<"The default is \"RS07\".  A value of \"none\" means that the alignment is fixed.\n";
+    o<<"\n";
+    o<<"If no partitions are specified, then every partition gets a separate\n";
+    o<<"(unlinked) copy of the model.\n";
+    o<<"\n";
+    o<<"If partitions are specified, then the partitions have linked indel models.\n";
+    o<<"That is, they share the same parameter values for the model.\n";
+    o<<"\n";
+    o<<"Examples:\n";
+    o<<"    \"--imodel=RS07\"    or    \"-I RS07\"\n";
+    o<<"    \"--imodel=none\"    or    \"-I none\"\n";
+    o<<"    \"-I 1,3:RS07 -I 2:none\"\n";
+    o<<"In the last example, the indel models of partitions 1 and 3 are linked.\n";
+    o<<"\n";
 }
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
@@ -149,11 +172,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     options_description model("Model options");
     model.add_options()
-	("alphabet,A",value<vector<string> >()->composing(),"DNA, RNA, Amino-Acids, Codons, etc.")
+	("alphabet,A",value<vector<string> >()->composing(),"The alphabet.")
 	("smodel,S",value<vector<string> >()->composing(),"Substitution model.")
-	("imodel,I",value<vector<string> >()->composing(),"Indel model: none, RS07, RS05.")
-	("branch-length,B",value<string>(),"Defaults to ~Gamma[0.5, 2/n_branches[T]].")
-	("scale,R",value<vector<string> >()->composing(),"Which partitions have the same scale?")
+	("imodel,I",value<vector<string> >()->composing(),"Insertion-deletion model.")
+	("branch-length,B",value<string>(),"Prior on branch lengths.")
+	("scale,R",value<vector<string> >()->composing(),"Prior on the scale.")
 	("link,L",value<vector<string>>()->composing(),"Link partitions")
 	;
     options_description all("All options");
@@ -204,6 +227,11 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	if (topic == "alphabet")
 	{
 	    help_on_alphabet(std::cout);
+	    exit(0);
+	}
+	if (topic == "imodel")
+	{
+	    help_on_imodel(std::cout);
 	    exit(0);
 	}
 
