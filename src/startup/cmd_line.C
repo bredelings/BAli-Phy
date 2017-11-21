@@ -50,7 +50,7 @@ vector<string> trailing_args(int argc, char* argv[], const string& separator)
     return args;
 }
 
-void help_on_help(std::ostream& o)
+void help_on_help(std::ostream& o, const map<string,string>& help)
 {
     o<<"Help topics via --help=arg are available for:\n";
     o<<"  =commands            Command-line flags and a short description.\n";
@@ -58,8 +58,8 @@ void help_on_help(std::ostream& o)
     o<<"  =functions           A list of functions and result type.\n";
     o<<"  =<function name>     Function type, description, and argument names.\n\n";
     o<<"  =help                This list of topics.\n\n";
-    o<<"  =alphabet            Possible arguments to --alphabet\n";
-    o<<"  =imodel              Possible arguments to --imodel\n";
+    for(auto& x: help)
+	o<<"  ="<<x.first<<"\n";
     o<<"\n";
 }
 
@@ -209,7 +209,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	
 	if (topic == "help")
 	{
-	    help_on_help(std::cout);
+	    help_on_help(std::cout, help);
 	    exit(0);
 	}
 	if (help.count(topic))
@@ -290,7 +290,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	else
 	{
 	    cout<<"Help topic '"<<args["help"].as<string>()<<"' not found.\n\n";
-	    help_on_help(cout);
+	    help_on_help(cout,help);
 	    exit(0);
 	}
     }
