@@ -33,6 +33,8 @@ nobase_help_DATA = help/alphabet.txt \
 	help/scale.txt \
 	help/branch-length.txt \
 	help/link.txt \
+	help/parameters.txt \
+	help/priors.txt \
 	help/Triplets.txt \
 	help/Codons.txt \
 	help/genetic-code.txt

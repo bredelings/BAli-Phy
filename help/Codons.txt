@@ -1,6 +1,6 @@
 The Codons alphabet:
 
-Codons[nucleotides, genetic code]
+Codons[nucleotides,genetic-code]
 
 The Codons alphabet is used for triplets of DNA or RNA data
 where each triplet is mapped to an amino acid.  Stop codons are

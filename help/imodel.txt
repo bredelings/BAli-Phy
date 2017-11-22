@@ -6,6 +6,11 @@ The --imodel command:
 The insertion deletion model can be "RS07", "RS05", or "none".
 The default is "RS07".  A value of "none" means that the alignment is fixed.
 
+RS07 and RS05 have optional parameters.  These parameter have default priors
+that come into play if the parameters are not specified.  For example RS07
+   RS07[logLambda~Laplace[-4,0.707],meanIndelLength=Add[1.0,~Exponential[10]]]
+See help on "parameters" for information on specifying priors or values.
+
 If no partitions are specified, then every partition gets a separate
 (unlinked) copy of the model.
 
@@ -19,3 +24,5 @@ Examples:
    --imodel=none
    -I 1,3:RS07 -I 2:none
 In the last example, the indel models of partitions 1 and 3 are linked.
+
+See help on "RS07" and "RS05".
