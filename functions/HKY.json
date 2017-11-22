@@ -3,7 +3,14 @@
     "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
     "result_type": "ExchangeModel[a]",
     "constraints": "Nucleotides[a]",
-    "citation":"",
+    "citation":{"type":
+		"article",
+		"title": "Dating of the human-ape splitting by a molecular clock of mitochondrial DNA",
+		"year": "1985",
+		"author": [{"name": "Hasegawa, Masami"}, {"name": "Kishino, Hirohisa"}, {"name": "Yano, Taka-aki"}],
+		"journal": {"name": "Journal of molecular evolution", "volume": "22", "number": "2", "pages": "160--174"},
+		"identifier": [{"type":"doi","id":"10.1007/BF02101694"}]
+	       },
     "call": "SModel.hky[kappa,alphabet]",
     "args": [
         {
