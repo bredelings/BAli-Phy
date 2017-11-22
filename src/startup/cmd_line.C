@@ -126,7 +126,50 @@ string indent_lines(const string& lines, int n)
     return s.str();
 }
 
-optional<string> get_citation(const Rule& rule)
+
+optional<string> get_authors(const Rule& rule)
+{
+    auto citation = rule.get_child_optional("citation");
+    if (not citation)
+	return boost::none;
+
+    vector<string> authors;
+    if (auto authors_ = citation->get_child_optional("author"))
+	for(auto& author: *authors_)
+	    if (auto name = author.second.get_optional<string>("name"))
+	    {
+		auto names = split(*name,", ");
+		if (names.size() == 2)
+		{
+		    string ref = names[0];
+		    if (not names[1].empty())
+		    {
+			names[1] = string(1,names[1][0]) + '.';
+			if (authors.empty())
+			    ref = names[0] + ", " + names[1];
+			else
+			    ref = names[1] + " " +names[0];
+		    }
+		    authors.push_back(ref);
+		}
+		else
+		{
+		    authors.push_back(*name);
+		}
+	    }
+
+    if (authors.size())
+    {
+	if (authors.size() <= 2)
+	    return join(authors," and ");
+	else
+	    return authors[0]+" et al";
+    }
+    return boost::none;
+}
+
+
+optional<string> get_citation(const Rule& rule, bool show_title)
 {
     auto citation = rule.get_child_optional("citation");
     if (not citation)
@@ -138,17 +181,13 @@ optional<string> get_citation(const Rule& rule)
     vector<string> cite;
     auto title = citation->get_optional<string>("title");
     auto year = citation->get_optional<string>("year");
-    vector<string> authors;
-    if (auto authors_ = citation->get_child_optional("author"))
-	for(auto& author: *authors_)
-	    if (auto name = author.second.get_optional<string>("name"))
-		authors.push_back(*name);
+    auto authors = get_authors(rule);
 
-    if (authors.size())
-	cite.push_back(join(authors,",")+".");
+    if (authors)
+	cite.push_back(*authors);
     if (year)
 	cite.push_back("("+*year+")");
-    if (title)
+    if (title and show_title)
 	cite.push_back(*title);
 
     return join(cite," ");
@@ -217,7 +256,7 @@ string get_help_for_rule(const Rule& rule)
     if (auto title = rule.get_optional<string>("title"))
 	help<<*title<<std::endl<<std::endl;
 
-    if (auto citation = get_citation(rule))
+    if (auto citation = get_citation(rule,false))
     {
 	help<<*citation<<std::endl;
 	if (auto url = get_citation_url(rule))
