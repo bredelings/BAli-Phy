@@ -158,7 +158,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     // named options
     options_description general("General options");
     general.add_options()
-	("help,h", value<string>()->implicit_value("commands"),"Print usage information.")
+	("help,h", value<string>()->implicit_value("simple"),"Print usage information.")
 	("version,v", "Print version information.")
 	("config,c", value<string>(),"Config file to read.")
 	("test,t","Analyze the initial values and exit.")
@@ -188,9 +188,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("branch-length,B",value<string>(),"Prior on branch lengths.")
 	("link,L",value<vector<string>>()->composing(),"Link partitions.")
 	;
-    options_description all("All options");
+    options_description all("Advanced options");
     all.add(general).add(mcmc).add(parameters).add(model).add(advanced).add(optimization).add(developer);
-    options_description some("All options");
+    options_description some("Simple options");
     some.add(general).add(mcmc).add(parameters).add(model);
 
     // positional options
@@ -213,7 +213,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     if (args.count("help"))
     {
 	string topic = args["help"].as<string>();
-	if (topic == "commands")
+	if (topic == "simple")
 	{
 	    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
 	    cout<<some<<"\n";
