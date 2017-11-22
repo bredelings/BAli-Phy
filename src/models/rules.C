@@ -301,7 +301,13 @@ Rule Rules::load_rule(const std::string& name) const
 
     checked_ifstream infile(path->string(),"function file");
     Rule rule;
-    pt::read_json(infile, rule);
+    try {
+	pt::read_json(infile, rule);
+    }
+    catch (...)
+    {
+	throw myexception()<<"Error parsing JSON function description '"<<path->string()<<"'\n";
+    }
 
     // Complain if the file name doesn't descript the file name.
     if (rule.get<string>("name") != name)
@@ -314,7 +320,14 @@ Rule Rules::load_rule(const std::string& name) const
 
 void Rules::add_rule(const std::string& s)
 {
-    push_back(load_rule(s));
+    try{
+	push_back(load_rule(s));
+    }
+    catch (std::exception& e)
+    {
+	std::cerr<<"Error loading rule for '"<<s<<"'\n";
+    }
+    catch (...) { }
 }
 
 vector<string> Rules::find_all_rules() const
