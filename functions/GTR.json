@@ -1,17 +1,21 @@
 {
     "name": "GTR",
+    "description":"The General Time-Reversible model",
     "result_type": "ExchangeModel[a]",
     "call": "SModel.gtr'[S,A]",
+    "citation":"Tavare, 1986",
     "args": [
         {
             "arg_name": "S",
             "arg_type": "List[Pair[String,Double]]",
-	    "default_value":"~DirichletOn[letter_pairs[A],1]"
+	    "default_value":"~DirichletOn[letter_pairs[A],1]",
+	    "description":"Symmetric exchangability matrix"
         },
         {
             "arg_name": "A",
             "arg_type": "a",
             "no_apply": "true"
         }
-    ]
+    ],
+    "long-description":"This is actually just the exchange matrix for the GTR.\nGTR+F yields the standard GTR model."
 }

@@ -1,7 +1,9 @@
 {
     "name": "HKY",
+    "description": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
     "result_type": "ExchangeModel[a]",
     "constraints": "Nucleotides[a]",
+    "citation":"",
     "call": "SModel.hky[kappa,alphabet]",
     "args": [
         {
@@ -15,5 +17,6 @@
             "arg_type": "a",
             "no_apply": "true"
         }
-    ]
+    ],
+    "long-description":"Technically, this is just the symmetric matrix from HKY"
 }

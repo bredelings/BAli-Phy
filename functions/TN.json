@@ -1,5 +1,6 @@
 {
     "name": "TN",
+    "description": "The Tamura-Nei (1993) nucleotide rate matrix",
     "result_type": "ExchangeModel[a]",
     "constraints": "Nucleotides[a]",
     "call": "SModel.tn[kappaPur,kappaPyr,A]",

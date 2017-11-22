@@ -1,49 +1,66 @@
 {
     "name": "branch-site",
+    "description": "The branch-site test for positive selection from Zhang et al. (2005)",
     "result_type": "MultiMixtureModel[Codon[a,b]]",
+    "citation": {
+	"type": "article",
+	"title": "Evaluation of an improved branch-site likelihood method for detecting positive selection at the molecular level",
+	"year": "2005",
+	"author": [ { "name": "Zhang, Jianzhi" }, { "name": "Nielsen, Rasmus" }, { "name": "Yang, Ziheng" } ],
+	"journal": { "name": "Molecular biology and evolution", "volume": "22", "number": "12", "pages": "2472--2479"},
+	"identifier": [{"type":"doi","id":"10.1093/molbev/msi237"}]
+    },
     "call": "SModel.branch_site_test[nuc_model,freq_model,fs,omegas,posP,posW,posSelection,A]",
     "args": [
         {
             "arg_name": "nuc_model",
             "arg_type": "ExchangeModel[a]",
             "default_value": "HKY",
-            "applied_args": "Alphabet.getNucleotides[A]"
+            "applied_args": "Alphabet.getNucleotides[A]",
+	    "description":"The nucleotide exchange model."
         },
         {
             "arg_name": "freq_model",
             "arg_type": "FrequencyModel[Codon[a,b]]",
             "default_value": "F61",
-            "applied_args": "A"
+            "applied_args": "A",
+	    "description":"The codon frequency model."
         },
         {
             "arg_name": "fs",
             "arg_type": "List[Double]",
-            "default_value": "~Dirichlet[2,1]"
+            "default_value": "~Dirichlet[2,1]",
+	    "description":"Class frequencies in the background model."
         },
         {
             "arg_name": "omegas",
             "arg_type": "List[Double]",
-            "default_value": "~iid[1,Uniform[0,1]]"
+            "default_value": "~iid[1,Uniform[0,1]]",
+	    "description":"dN/dS ratios for the first n-1 classes in the background model."
         },
         {
             "arg_name": "posP",
             "arg_type": "Double",
-            "default_value": "~Beta[1,10]"
+            "default_value": "~Beta[1,10]",
+	    "description": "The fraction of sites switching to positive selection on the foreground branches."
         },
         {
             "arg_name": "posW",
             "arg_type": "Double",
-            "default_value": "~logGamma[4,0.25]"
+            "default_value": "~logGamma[4,0.25]",
+	    "description": "The dN/dS ratio for positively selected sites on the foreground branches."
         },
         {
             "arg_name": "posSelection",
             "arg_type": "Int",
-            "default_value": "~Bernoulli[0.5]"
+            "default_value": "~Bernoulli[0.5]",
+	    "description": "The model indicator: if 0, the sites only switch to neutrality on the foreground branches.\n If 1 then sites may switch to dN/dS=posW."
         },
         {
             "arg_name": "A",
             "arg_type": "a",
-            "no_apply": "true"
+            "no_apply": "true",
+	    "description": "The Codon alphabet."
         }
     ]
 }
