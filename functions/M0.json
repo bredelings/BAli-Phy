@@ -2,7 +2,7 @@
     "name": "M0",
     "result_type": "ExchangeModel[Codon[a,b]]",
     "constraints": "Nucleotides[a],AminoAcids[b]",
-    "description": "The Yang & Nielsen (2000) model of dN\/dS",
+    "title": "The Yang & Nielsen (2000) model of dN\/dS",
     "call": "SModel.m0[A,submodel,omega]",
     "args": [
         {
@@ -15,12 +15,14 @@
             "arg_name": "submodel",
             "arg_type": "ExchangeModel[a]",
             "default_value": "HKY",
+            "description": "The nucleotide exchange model - HKY in the original paper.",
             "applied_args": "Alphabet.getNucleotides[A]"
         },
         {
             "arg_name": "A",
             "arg_type": "a",
-            "no_apply": "true"
+            "no_apply": "true",
+	    "description": "The codon alphabet"
         }
     ],
     "examples": ["M0","HKY+M0+F61","M0[omega=2.0,HKY]+MG94"]

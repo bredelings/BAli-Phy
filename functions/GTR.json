@@ -1,6 +1,6 @@
 {
     "name": "GTR",
-    "description":"The General Time-Reversible model",
+    "title":"The General Time-Reversible model",
     "result_type": "ExchangeModel[a]",
     "call": "SModel.gtr'[S,A]",
     "citation":"Tavare, 1986",
@@ -17,5 +17,5 @@
             "no_apply": "true"
         }
     ],
-    "long-description":"This is actually just the exchange matrix for the GTR.\nGTR+F yields the standard GTR model."
+    "description":"This is actually just the exchange matrix for the GTR.\nGTR+F yields the standard GTR model."
 }

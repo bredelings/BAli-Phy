@@ -2,7 +2,7 @@
     "name": "x3",
     "result_type": "ExchangeModel[a]",
     "constraints": "Triplets[a]",
-    "description": "A triplet exchange model constructed by applying a singlet exchange model to all 3 nucleotide positions",
+    "title": "A triplet exchange model that applies a singlet exchange model to all 3 nucleotide positions",
     "call": "SModel.singlet_to_triplet_exchange[A,submodel]",
     "args": [
         {
@@ -14,7 +14,8 @@
         {
             "arg_name": "A",
             "arg_type": "a",
-            "no_apply": "true"
+            "no_apply": "true",
+	    "description": "The Triplets alphabet"
         }
     ],
     "examples": ["GTR+x3","TN+x3+MG94","x3[HKY]"]

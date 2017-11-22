@@ -1,6 +1,6 @@
 {
     "name": "branch-site",
-    "description": "The branch-site test for positive selection from Zhang et al. (2005)",
+    "title": "The branch-site test for positive selection from Zhang et al. (2005)",
     "result_type": "MultiMixtureModel[Codon[a,b]]",
     "citation": {
 	"type": "article",

@@ -1,6 +1,6 @@
 {
     "name": "HKY",
-    "description": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
+    "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
     "result_type": "ExchangeModel[a]",
     "constraints": "Nucleotides[a]",
     "citation":"",
@@ -18,5 +18,5 @@
             "no_apply": "true"
         }
     ],
-    "long-description":"Technically, this is just the symmetric matrix from HKY"
+    "description":"Technically, this is just the symmetric matrix from HKY"
 }

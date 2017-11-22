@@ -13,6 +13,7 @@ using std::string;
 using std::map;
 using std::vector;
 using std::cout;
+using boost::optional;
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -20,6 +21,9 @@ using po::variables_map;
 const string trailing_args_separator = "---";
 
 namespace fs = boost::filesystem;
+
+namespace pt = boost::property_tree;
+using pt::ptree;
 
 vector<string> drop_trailing_args(int argc, char* argv[], const string& separator)
 {
@@ -108,6 +112,173 @@ std::map<string,string> load_help_files(const std::vector<fs::path>& package_pat
     return help;
 }
 
+
+string indent_lines(const string& lines, int n)
+{
+    std::ostringstream s;
+    for(auto& line: split(lines,"\n"))
+    {
+	if (line.empty())
+	    s<<std::endl;
+	else
+	    s<<string(n,' ')<<line<<std::endl;
+    }
+    return s.str();
+}
+
+optional<string> get_citation(const Rule& rule)
+{
+    auto citation = rule.get_child_optional("citation");
+    if (not citation)
+	return boost::none;
+
+    if (not citation->get_value<string>().empty())
+	return citation->get_value<string>();
+
+    vector<string> cite;
+    auto title = citation->get_optional<string>("title");
+    auto year = citation->get_optional<string>("year");
+    vector<string> authors;
+    if (auto authors_ = citation->get_child_optional("author"))
+	for(auto& author: *authors_)
+	    if (auto name = author.second.get_optional<string>("name"))
+		authors.push_back(*name);
+
+    if (authors.size())
+	cite.push_back(join(authors,",")+".");
+    if (year)
+	cite.push_back("("+*year+")");
+    if (title)
+	cite.push_back(*title);
+
+    return join(cite," ");
+}
+
+
+
+optional<string> get_citation_doi(const Rule& rule)
+{
+    optional<string> url;
+
+    // 1. Check if there is a citation field.
+    auto citation = rule.get_child_optional("citation");
+    if (not citation) return boost::none;
+
+    // 2. Try to get the DOI
+    if (auto identifiers = citation->get_child_optional("identifier"))
+    {
+	for(auto& identifier: *identifiers)
+	{
+	    auto type = identifier.second.get_child_optional("type");
+	    if (not type or type->get_value<string>() != "doi") continue;
+
+	    auto id = identifier.second.get_child_optional("id");
+	    if (id)
+		return id->get_value<string>();
+	}
+    }
+    return boost::none;
+}
+
+optional<string> get_citation_url(const Rule& rule)
+{
+    // 1. Check if there is a citation field.
+    auto citation = rule.get_child_optional("citation");
+    if (not citation) return boost::none;
+
+    // 2. Try to get the URL from the "link" field.
+    if (auto links = citation->get_child_optional("link"))
+    {
+	for(auto& link: *links)
+	{
+	    auto url = link.second.get_child_optional("url");
+	    if (not url) continue;
+
+	    auto anchor = link.second.get_child_optional("anchor");
+	    if (anchor)
+		return url->get_value<string>()+"/#"+anchor->get_value<string>();
+	    else
+		return url->get_value<string>();
+	}
+	
+    }
+
+    if (auto doi = get_citation_doi(rule))
+    {
+	return "https://doi.org/"+*doi;
+    }
+
+    return boost::none;
+}
+
+string get_help_for_rule(const Rule& rule)
+{
+    std::ostringstream help;
+    if (auto title = rule.get_optional<string>("title"))
+	help<<*title<<std::endl<<std::endl;
+
+    if (auto citation = get_citation(rule))
+    {
+	help<<*citation<<std::endl;
+	if (auto url = get_citation_url(rule))
+	    help<<*url<<std::endl;
+	help<<std::endl;
+    }
+    
+    string name = rule.get<string>("name");
+    string result_type = unparse_type(rule.get_child("result_type"));
+    auto args = rule.get_child("args");
+    vector<string> args_names_types;
+    // Actually, we may have a problem here...
+    if (auto constraints = rule.get_child_optional("constraints"))
+    {
+	vector<string> cs;
+	for(auto& x: *constraints)
+	    cs.push_back(unparse_type(x.second));
+//		help<<join(cs,", ")<<" => ";
+    }
+    for(auto& argpair: args)
+    {
+	auto& arg = argpair.second;
+	if (arg.get_child_optional("no_apply")) continue;
+	args_names_types.push_back(arg.get<string>("arg_name") + " :: " + unparse_type(arg.get_child("arg_type")));
+    }
+    help<<name;
+    if (args_names_types.size()) help<<"["<<join(args_names_types,", ")<<"]";
+    help<<" -> "<<result_type << std::endl<<std::endl;
+
+    for(auto& argpair: args)
+    {
+	auto& arg = argpair.second;
+	if (arg.get_child_optional("no_apply")) continue;
+	auto default_value = arg.get_child_optional("default_value");
+	optional<string> description = arg.get_optional<string>("description");
+	if (default_value or description)
+	{
+	    help<<"   "<<arg.get<string>("arg_name");
+	    if (default_value)
+		help<<" "<<show_model(*default_value)<<std::endl;
+	    else
+		help<<":"<<std::endl;
+	    if (description)
+		help<<indent_lines(*description,7);
+	    help<<std::endl;
+	}
+    }
+    if (auto description = rule.get_optional<string>("description"))
+	help<<indent_lines(*description,1)<<std::endl;
+
+    if (auto examples = rule.get_child_optional("examples"))
+    {
+	help<<"Examples:\n";
+	for(auto& x: *examples)
+	{
+	    help<<"   "<<x.second.get_value<string>()<<std::endl;
+	}
+    }
+    return help.str();
+}
+	
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
     using namespace po;
@@ -256,58 +427,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 	if (auto rule = R.get_rule_for_func(topic))
 	{
-	    auto desc = rule->get_optional<string>("description");
-	    if (desc)
-		std::cout<<*desc<<std::endl<<std::endl;
-
-	    string name = rule->get<string>("name");
-	    string result_type = unparse_type(rule->get_child("result_type"));
-	    auto args = rule->get_child("args");
-	    vector<string> args_names_types;
-	    // Actually, we may have a problem here...
-	    if (auto constraints = rule->get_child_optional("constraints"))
-	    {
-		vector<string> cs;
-		for(auto& x: *constraints)
-		    cs.push_back(unparse_type(x.second));
-//		std::cout<<join(cs,", ")<<" => ";
-	    }
-	    for(auto& argpair: args)
-	    {
-		auto& arg = argpair.second;
-		if (arg.get_child_optional("no_apply")) continue;
-		args_names_types.push_back(arg.get<string>("arg_name") + " :: " + unparse_type(arg.get_child("arg_type")));
-	    }
-	    std::cout<<name;
-	    if (args_names_types.size()) std::cout<<"["<<join(args_names_types,", ")<<"]";
-	    std::cout<<" -> "<<result_type << std::endl<<std::endl;
-
-	    for(auto& argpair: args)
-	    {
-		auto& arg = argpair.second;
-		if (arg.get_child_optional("no_apply")) continue;
-		auto default_value = arg.get_child_optional("default_value");
-		boost::optional<string> desc = arg.get_optional<string>("description");
-		if (default_value or desc)
-		{
-		    std::cout<<"   "<<arg.get<string>("arg_name");
-		    if (default_value)
-			std::cout<<" "<<show_model(*default_value)<<std::endl;
-		    else
-			std::cout<<":"<<std::endl;
-		    if (desc)
-			std::cout<<"       "<<*desc<<std::endl;
-		    std::cout<<std::endl;
-		}
-	    }
-	    if (auto examples = rule->get_child_optional("examples"))
-	    {
-		std::cout<<"Examples:\n";
-		for(auto& x: *examples)
-		{
-		    std::cout<<"   "<<x.second.get_value<string>()<<std::endl;
-		}
-	    }
+	    std::cout<<get_help_for_rule(*rule);
 	    exit(0);
 	}
 	else
