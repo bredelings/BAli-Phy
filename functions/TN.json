@@ -2,6 +2,12 @@
     "name": "TN",
     "title": "The Tamura-Nei (1993) nucleotide rate matrix",
     "result_type": "ExchangeModel[a]",
+    "citation":{"type": "article",
+		"title": "Estimation of the number of nucleotide substitutions in the control region of mitochondrial DNA in humans and chimpanzees.",
+		"year": "1993",
+		"author": [{"name": "Tamura, Koichiro"}, {"name": "Nei, Masatoshi"}],
+		"journal": {"name": "Molecular biology and evolution", "volume": "10", "number": "3", "pages": "512--526"},
+		"identifier": ["type":"doi","id":"10.1093/oxfordjournals.molbev.a040023"]},
     "constraints": "Nucleotides[a]",
     "call": "SModel.tn[kappaPur,kappaPyr,A]",
     "args": [
