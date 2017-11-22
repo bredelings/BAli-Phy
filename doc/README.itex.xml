@@ -750,7 +750,7 @@ imodel = none
 	<varlistentry>
 	  <term>C1.P<replaceable>p</replaceable>.fastas</term>
 	  <listitem>
-	    <para>Sampled alignments for partition <replaceable>p</replaceable></para>
+	    <para>Sampled alignments for partition <replaceable>p</replaceable> including ancestral sequences.</para>
 	  </listitem>
 	</varlistentry>
 
@@ -1179,13 +1179,13 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
        <para>Substitution models in
        <application>BAli-Phy</application> are specified using a
-       stack, as follows: <userinput>Model[arg]+Model[arg]+...+Model[arg]</userinput>
+       stack, as follows: <userinput>Model[args]+Model[args]+...+Model[args]</userinput>
         where each model uses the previous models as input.  For
 	example, <userinput>LG+Rates.Gamma[4]+INV</userinput>. Some arguments are optional.</para>
 
 	<note>
 	  <para>
-	    If you are using the C-shell command line shell (<command>csh</command> or <command>tcsh</command>), then it will try to interpret each argument as an array reference, giving the error message "bali-phy: No match."  To avoid this, put quotes around the substitution model, like this: <userinput>--smodel="Model[arg]+Model[arg]+...+Model[arg]"</userinput>.
+	    If you are using the C-shell command line shell (<command>csh</command> or <command>tcsh</command>), then it will try to interpret each argument as an array reference, giving the error message "bali-phy: No match."  To avoid this, put quotes around the substitution model, like this: <userinput>--smodel="Model[args]+Model[args]+...+Model[args]"</userinput>.
 	  </para>
 	</note>
 
