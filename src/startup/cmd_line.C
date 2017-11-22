@@ -161,7 +161,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("help,h", value<string>()->implicit_value("commands"),"Print usage information.")
 	("version,v", "Print version information.")
 	("config,c", value<string>(),"Config file to read.")
-	("test,T","Analyze the initial values and exit.")
+	("test,t","Analyze the initial values and exit.")
 	("verbose,V",value<int>()->implicit_value(1),"Print extra output in case of error.")
 	;
 
@@ -169,14 +169,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
     mcmc.add_options()
 	("iterations,i",value<long int>(),"The number of iterations to run.")
 	("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
-	("seed,s", value<unsigned long>(),"Random seed")
-	("name,n", value<string>(),"Name for the analysis directory to create.")
+	("seed,s", value<unsigned long>(),"Random seed.")
+	("name,n", value<string>(),"Name for the output directory to create.")
 	;
 
     options_description parameters("Parameter options");
     parameters.add_options()
 	("align", value<vector<string> >()->composing(),"Sequence file & initial alignment.")
-	("tree",value<string>(),"File with initial tree")
+	("tree,T",value<string>(),"File with initial tree")
 	;
 
     options_description model("Model options");
@@ -186,7 +186,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("imodel,I",value<vector<string> >()->composing(),"Insertion-deletion model.")
 	("scale,R",value<vector<string> >()->composing(),"Prior on the scale.")
 	("branch-length,B",value<string>(),"Prior on branch lengths.")
-	("link,L",value<vector<string>>()->composing(),"Link partitions")
+	("link,L",value<vector<string>>()->composing(),"Link partitions.")
 	;
     options_description all("All options");
     all.add(general).add(mcmc).add(parameters).add(model).add(advanced).add(optimization).add(developer);
