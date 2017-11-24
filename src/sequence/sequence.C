@@ -92,16 +92,6 @@ double letter_fraction(const string& letters, const string& gaps, const vector<s
     return double(count)/total;
 }
 
-string guess_nucleotides(const vector<sequence>& sequences)
-{
-    double ATGCN = letter_fraction("ATGCN","-?",sequences);
-    double AUGCN = letter_fraction("AUGCN","-?",sequences);
-    if (ATGCN > AUGCN)
-	return "DNA";
-    else
-	return "RNA";
-}
-
 string guess_alphabet(const vector<sequence>& sequences)
 {
     // FIXME - we should maybe count things one time into a map from char -> int.
@@ -120,10 +110,23 @@ string guess_alphabet(const vector<sequence>& sequences)
     if (std::max(ATGCN,AUGCN) > 0.5)
 	throw myexception()<<"Can't guess alphabet";
 
-    if (letter_count("*",sequences) > 0)
-	return "Amino-Acids+stop";
-    else
-	return "Amino-Acids";
+    if (letter_fraction("ARNDCQEGHILKMFPSTWYVX","-?",sequences) > 0.9 and std::max(ATGCN,AUGCN)<0.5)
+    {
+	if (letter_count("*",sequences) > 0)
+	    return "Amino-Acids+stop";
+	else
+	    return "Amino-Acids";
+    }
+
+    throw myexception()<<"Can't guess alphabet";
+}
+
+string guess_nucleotides_for(const string& name, const vector<sequence>& sequences)
+{
+    auto a = guess_alphabet(sequences);
+    if (a != "DNA" and a != "RNA")
+	throw myexception()<<"Can't guess nucleotide alphabet for '"<<name<<"': sequences appear to be '"<<a<<"'";
+    return a;
 }
 
 string guess_alphabet(const string& name_, const vector<sequence>& sequences)
@@ -137,14 +140,14 @@ string guess_alphabet(const string& name_, const vector<sequence>& sequences)
     if (name == "Codons")
     {
 	if (arguments.size() < 2) arguments.resize(2);
-	if (arguments[0].empty()) arguments[0] = guess_nucleotides(sequences);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(name_, sequences);
 	if (arguments[1].empty()) arguments[1] = "standard";
 	return "Codons[" + arguments[0] + "," + arguments[1] + "]";
     }
     else if (name == "Triplets")
     {
 	if (arguments.size() < 1) arguments.resize(1);
-	if (arguments[0].empty()) arguments[0] = guess_nucleotides(sequences);
+	if (arguments[0].empty()) arguments[0] = guess_nucleotides_for(name_, sequences);
 	return "Triplets[" + arguments[0] + "]";
     }
     else
