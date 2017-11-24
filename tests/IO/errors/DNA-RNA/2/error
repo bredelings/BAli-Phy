@@ -1,1 +1,3 @@
-bali-phy: Error! In file 'AUTGC.fasta': Can't guess alphabet
+bali-phy: Error! In file 'AUTGC.fasta': Can't guess alphabet!
+ Seems to be DNA or RNA but contains both U and T:
+  AUTGCN=100%   T=20%   U=20%
