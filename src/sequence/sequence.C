@@ -97,20 +97,26 @@ string guess_alphabet(const vector<sequence>& sequences)
     // FIXME - we should maybe count things one time into a map from char -> int.
     double ATGCN = letter_fraction("ATGCN","-?",sequences);
     double AUGCN = letter_fraction("AUGCN","-?",sequences);
+    double AUTGCN = letter_fraction("AUTGCN","-?",sequences);
     if (ATGCN > 0.95 and AUGCN <= ATGCN)
 	return "DNA";
     else if (AUGCN > 0.95)
 	return "RNA";
+
+    if (AUTGCN > 0.95)
+    {
+	double T = letter_fraction("T","-?",sequences);
+	double U = letter_fraction("U","-?",sequences);
+	throw myexception()<<"Can't guess alphabet!\n Seems to be DNA or RNA but contains both U and T:\n  AUTGCN="<<int(AUTGCN*100)<<"%   T="<<int(T*100)<<"%   U="<<int(U*100)<<"%";
+    }
 
     double digits = letter_fraction("0123456789","-?X",sequences);
     // FIXME - We can check the largest number ... but each column might have a different highest number.
     if (digits > 0.95)
 	return "Numeric[2]";
 
-    if (std::max(ATGCN,AUGCN) > 0.5)
-	throw myexception()<<"Can't guess alphabet";
-
-    if (letter_fraction("ARNDCQEGHILKMFPSTWYVX","-?",sequences) > 0.9 and std::max(ATGCN,AUGCN)<0.5)
+    double aa = letter_fraction("ARNDCQEGHILKMFPSTWYVX","-?",sequences);
+    if (letter_fraction("ARNDCQEGHILKMFPSTWYVX","-?",sequences) > 0.9 and AUTGCN<0.5)
     {
 	if (letter_count("*",sequences) > 0)
 	    return "Amino-Acids+stop";
@@ -118,7 +124,7 @@ string guess_alphabet(const vector<sequence>& sequences)
 	    return "Amino-Acids";
     }
 
-    throw myexception()<<"Can't guess alphabet";
+    throw myexception()<<"Can't guess alphabet!\n AUTGCN="<<int(AUTGCN*100)<<"%   0123456789="<<int(digits*100)<<"%   ARNDCQEGHILKMFPSTWYVX="<<int(aa*100)<<"%";
 }
 
 string guess_nucleotides_for(const string& name, const vector<sequence>& sequences)
