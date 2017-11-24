@@ -1,7 +1,0 @@
-{
-    "name": "exchange_prior",
-    "result_type": "E",
-    "generate_function": "false",
-    "call": "SModel.exchange_model",
-    "args": ""
-}

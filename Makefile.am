@@ -54,7 +54,6 @@ nobase_functions_DATA = functions/AA.json \
 	functions/dp_omega.json \
 	functions/Empirical.json \
 	functions/EQU.json \
-	functions/exchange_prior.json \
 	functions/exp.json \
 	functions/Exponential.json \
 	functions/F1x4.json \
