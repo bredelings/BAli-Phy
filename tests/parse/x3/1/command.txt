@@ -1,1 +1,1 @@
---test <DATA>/codons-dna.fasta --smodel=TN+x3 --alphabet=Triplets
+--test <DATA>/codons-dna.fasta --smodel=TN+x3
