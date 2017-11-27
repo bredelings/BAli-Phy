@@ -45,7 +45,19 @@ equations convertible_to(ptree& model, const type_t& t1, type_t t2)
     if (E)
 	return E;
 
-    if (t2.get_value<string>() == "MultiMixtureModel")
+    if (t2.get_value<string>() == "Double")
+    {
+	t2.put_value("Int");
+	E = convertible_to(model, t1, t2);
+	if (E)
+	{
+	    ptree result;
+	    result.put_value("intToDouble");
+	    result.push_back({"x",model});
+	    model = result;
+	}
+    }
+    else if (t2.get_value<string>() == "MultiMixtureModel")
     {
 	t2.put_value("MixtureModel");
 	E = convertible_to(model,t1,t2);

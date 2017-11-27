@@ -226,7 +226,9 @@ string unparse(const ptree& p)
 	string R = unparse(p.get_child("R"));
 	return Q + " + " + R;
     }
-    if (s== "UnitMixture" or s == "MultiMixtureModel")
+    if (s == "intToDouble")
+	return unparse(p.get_child("x"));
+    if (s == "UnitMixture" or s == "MultiMixtureModel")
 	return unparse(p.get_child("submodel"));
     vector<string> args;
     string submodel;
