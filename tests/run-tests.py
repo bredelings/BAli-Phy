@@ -206,4 +206,5 @@ if __name__ == '__main__':
     if (len(FAILED_TESTS) > 0):
         exit(1)
     else:
+	print("SUCCESS")
         exit(0)
