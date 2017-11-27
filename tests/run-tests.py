@@ -234,13 +234,11 @@ class Tester:
         if not failures:
             print("... ok")
         elif failures:
-            print("... FAIL! ",end="")
             if xfail:
-                print("(expected) ",end="")
-                XFAILED_TESTS.insert(-1,test_subdir)
+                expected="(expected)"
             else:
-                FAILED_TESTS.insert(-1,test_subdir)
-                print(failures)
+                expected=""
+            print("... FAIL! {} {}".format(failures,expected))
             if message:
                 message = re.sub('^','    ',message)
                 message = message.rstrip('\n')+"\n"
@@ -287,8 +285,10 @@ if __name__ == '__main__':
 
     for test_subdir in tester.get_test_dirs():
         tester.perform_test(test_subdir)
-    print("Performed {} tests, {} expected failures, {} unexpected failures".format(NUM_TESTS, len(XFAILED_TESTS), len(FAILED_TESTS)))
     if (len(FAILED_TESTS) > 0):
         exit(1)
+        print("FAIL! ({} unexpected failures, {} expected failures, {} tests total)".format(len(FAILED_TESTS), len(XFAILED_TESTS), NUM_TESTS))
     else:
+        print("SUCCESS! ({} unexpected failures, {} expected failures, {} tests total)".format(len(FAILED_TESTS), len(XFAILED_TESTS), NUM_TESTS))
+
         exit(0)
