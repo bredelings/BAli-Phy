@@ -206,7 +206,7 @@ If bali-phy is not in your PATH, then continue with this section.
 To set the PATH automatically for new terminals, type:
 <screen><prompt>%</prompt> <userinput>test -r ~/.bash_profile &#38;&#38; echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.bash_profile</userinput>
 <prompt>%</prompt> <userinput>echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.profile</userinput></screen>
-This will affect new terminals only after you log out and log back ink though.</para>
+This will affect new terminals only after you log out and log back in though.</para>
 <para>
 Now check that the executable runs:
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
