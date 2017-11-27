@@ -8,8 +8,8 @@ Genetic code names include:
  mt-protozoan
 Genetic codes can be specified to the Codons alphabet.
 
+See https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi for
+more information on alternate genetic codes.  Let me know if you
+need more flexibility on the codes.
+
 See: Codons.
-
-
-
-
