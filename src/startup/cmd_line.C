@@ -80,7 +80,7 @@ string pad(const string& s, int n)
 void help_on_help(std::ostream& o, const map<string,string>& help)
 {
     o<<"Help topics via --help=arg are available for:\n";
-    o<<"  =commands            Command-line flags and a short description.\n";
+    o<<"  =simple              Command-line flags and a short description.\n";
     o<<"  =advanced            Extra command-line flags and a short description.\n\n";
     o<<"  =functions           A list of functions and result type.\n";
     o<<"  =<function name>     Function type, description, and argument names.\n\n";
