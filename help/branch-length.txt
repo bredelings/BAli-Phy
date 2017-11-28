@@ -3,9 +3,14 @@ The --branch-length command:
 -B              prior                       Prior on branch-lengths.
 --branch-length prior
 
-The default branch-length prior is "~Gamma[0.5,2/B]" where B is the number
-of branches on the tree.
+Specifies the prior for branch lengths of the common tree, before
+partition-specific scale factors are applied. The tree can be
+referenced as the variable T.
+
+The default branch-length prior is "~Gamma[0.5,Div[2,num_branches[T]]]".
+Since the expected total tree length is 1 under this prior, the
+expected tree length for each partition is given by the scale factor.
 
 Examples:
-   -B ~Gamma[0.5,0.001]
-   --branch-length ~Gamma[0.5,0.001]
+   -B ~Gamma[0.5,Div[2,num_branches[T]]]
+   --branch-length ~Exponential[Div[1,num_branches[T]]]

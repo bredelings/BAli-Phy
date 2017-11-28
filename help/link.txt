@@ -7,19 +7,18 @@ Linking partitions forces them to share not only the same model,
 but the same parameters for that model.
 
 Attributes that can be linked are "smodel", "imodel", and "scale".
-If no attributes are listed, then all attributes are linked.
+If no attributes are listed, then all three attributes are linked.
 
 Partitions can be linked if the attribute is unspecified for all
 partitions, as long as the default value or guessed value ends up
-being the same for all of the linked partitions.
- !: bali-phy dna.fasta dna.fasta --link=1,2
+being the same for all of the linked partitions:
+  bali-phy dna.fasta dna.fasta --link=1,2
 
 Partitions cannot be linked if the attribute is specified for some
-partitions, but not for others.
- !: bali-phy dna.fasta dna.fasta --smodel=1:TN --link=1,2
-
-Partitions cannot be linked if specified attributes differ:
- !: bali-phy dna.fasta dna.fasta --smodel=1:TN --smodel=1:HKY --link=1,2
+partitions, but not for others, or if the specified attributes differ.
+Thus both of these commands will trigger an error:
+  bali-phy dna.fasta dna.fasta --smodel=1:TN --link=1,2
+  bali-phy dna.fasta dna.fasta --smodel=1:TN --smodel=1:HKY --link=1,2
 
 Examples:
 

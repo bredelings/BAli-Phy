@@ -3,25 +3,30 @@ The --scale command:
 -R      [partitions:]prior                  Prior on the Scale.
 --scale [partitions:]prior
 
-The default scale prior is "~Gamma[0.5,2]".
-
-The branch lengths of the tree in each partition consist of
-the shared branch lengths multiplied by a partition-specific
-scaling factor.  Estimating this scale factor allows
+The branch lengths on the shared tree are multiple by a
+partition-specific scale factor to yield the branch lengths for
+each partition. Estimating this scale factor allows
 estimating the evolutionary rate for the partition.
 
-If no partitions are specified, then every partition gets a separate
-scale.
+If no partitions are specified, then every partition gets a
+separate scale.
+  --scale=~Gamma[0.5,2]
 
-If partitions are specified, then the partitions have linked scales.
-That is, they share not just the same distribution on the scale, but
-the same scale.
+If the scale is not specified, or if no prior is specified,
+then the default prior "~Gamma[0.5,2]" for the scale factor is used.
 
-If the scale is specified as a constant, such as "--scale=1", then
-the scale will not be estimated.
+If multiple partitions are specified in the same --scale command,
+then they share not just the same distribution on the scale, but
+also the same scale.  Thus,
+   --scale=2,3:
+indicates that partitions 2 and 3 share the same scale, which has
+the default scale prior.
+
+If the scale is specified as a constant, such as "--scale=1",
+then the scale will not be estimated.
 
 Examples:
    -R ~Gamma[0.5,2]
+   --scale=2,3:
    --scale=~Gamma[0.5,2]
-   -R 1
    --scale=1
