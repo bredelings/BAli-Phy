@@ -673,13 +673,16 @@ imodel = none
 	
 
 	<para><application>BAli-Phy</application> is quite CPU
-	  intensive, and so we recommend using 50 or fewer taxa in order
+	  intensive, and so we recommend using 150 or fewer taxa in order
 	  to limit the time required to accumulate enough MCMC
-	  samples. (Despite this recommendation, data sets with more 
-	  than 100 taxa have occasionally been known to converge.)
-	  We recommend initially pruning as many taxa as possible
-	  from your data set, then adding some back if the MCMC is not
-	  too slow.</para> 
+	  samples.
+	</para>
+	<para>When designing an MCMC analysis, I recommend performing an initial analysis
+	with a much smaller sample size.  This smaller analysis will run much faster, and
+	allow discovering mistakes much more quickly.  Then, one you are sure that you
+	are running the program correctly and have chosen the best model, you can ramp
+	up the sample size towards your desired number.
+	</para> 
 
       </section>
 
