@@ -26,17 +26,24 @@ using boost::dynamic_pointer_cast;
 
 string print_list(const expression_ref& E)
 {
-    vector<string> V;
     if (not has_constructor(E,":")) std::abort();
+
+    vector<string> V;
+    string S;
 
     expression_ref E2 = E;
     while(has_constructor(E2,":"))
     {
 	assert(E2.size() == 2);
-	V.push_back(E2.sub()[0].print());
+	auto x = E2.sub()[0];
+	if (x.is_char())
+	    S += x.as_char();
+	V.push_back(x.print());
 	E2 = E2.sub()[1];
     }
-    if (has_constructor(E2,"[]"))
+    if (not S.empty() and S.size() == V.size())
+	return "\"" + S + "\"";
+    else if (has_constructor(E2,"[]"))
 	return "["+join(V,", ")+"]";
     else {
 	V.push_back(E2.print());
