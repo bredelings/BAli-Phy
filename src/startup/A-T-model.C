@@ -8,6 +8,7 @@
 #include "models/parse.H"
 #include "models/rules.H"
 #include "startup/paths.H"
+#include "computation/expression/lambda.H"
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -549,14 +550,15 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
     //-------------- Branch length model --------------------//
     model_t branch_length_model;
-    if (args.count("branch-length"))
-	branch_length_model = get_model(R, "Double", args["branch-length"].as<string>());
-
-    // Don't divide by 0 if we have 1 sequence and T.n_branches() == 0
-    else if (T.n_branches() > 0)
     {
-	string beta = std::to_string(2.0/T.n_branches());
-	branch_length_model = get_model(R, "Double", string("~Gamma[0.5,")+beta+"]");
+	string M;
+	if (args.count("branch-length"))
+	    M = args["branch-length"].as<string>();
+	else
+	    M = "~Gamma[0.5,Div[2,num_branches[T]]]";
+
+	branch_length_model = get_model(R, "Double", M, {{"T","Tree"}});
+	branch_length_model.expression = lambda_quantify(dummy("arg_T"), branch_length_model.expression);
     }
 
     //-------------- Likelihood calculator types -----------//
