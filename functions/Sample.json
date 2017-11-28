@@ -1,8 +1,8 @@
 {
     "name": "Sample",
     "result_type": "a",
-    "generate_function": "false",
-    "call": "Prelude.performAction[x]",
+    "no_log": "true",
+    "call": "Distributions.perform_exp[x]",
     "args": [
         {
             "arg_name": "x",
