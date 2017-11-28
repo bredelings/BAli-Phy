@@ -474,10 +474,10 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
 /// \param a The alphabet.
 /// \param frequencies The initial letter frequencies in the model.
 ///
-model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep)
+model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& constraints, const ptree& model_rep, const set<string>& scope)
 {
     // --------- Convert model to MultiMixtureModel ------------//
-    expression_ref full_model = get_model_as(R, type, model_rep, std::set<string>{});
+    expression_ref full_model = get_model_as(R, type, model_rep, scope);
 
     if (log_verbose)
 	std::cout<<"full_model = "<<full_model<<std::endl;
@@ -485,13 +485,17 @@ model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& con
     return {model_rep, type, constraints, full_model};
 }
 
-model_t get_model(const Rules& R, const string& type, const string& model)
+model_t get_model(const Rules& R, const string& type, const string& model, const vector<pair<string,string>>& scope)
 {
     auto required_type = parse_type(type);
     auto model_rep = parse(R, model);
 //    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
 
-    auto p = translate_model(R, required_type, model_rep);
+    vector<pair<string,ptree>> typed_scope;
+    for(auto& x: scope)
+	typed_scope.push_back({x.first, parse_type(x.second)});
+    auto p = translate_model(R, required_type, model_rep, typed_scope);
+
     model_rep = p.first;
     auto equations = p.second;
     substitute(equations, model_rep);
@@ -502,5 +506,9 @@ model_t get_model(const Rules& R, const string& type, const string& model)
 	std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
 	std::cout<<show(equations)<<std::endl;
     }
-    return get_model(R, required_type, equations.get_constraints(), model_rep);
+
+    set<string> names_in_scope;
+    for(auto& x: scope)
+	names_in_scope.insert(x.first);
+    return get_model(R, required_type, equations.get_constraints(), model_rep, names_in_scope);
 }

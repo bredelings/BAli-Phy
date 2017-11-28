@@ -337,10 +337,10 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     return E;
 }
 
-std::pair<ptree,equations> translate_model(const Rules& R, const ptree& required_type, ptree model)
+std::pair<ptree,equations> translate_model(const Rules& R, const ptree& required_type, ptree model, const vector<pair<string,ptree>>& scope)
 {
     pass1(R, model);
-    auto E = pass2(R, required_type, model, find_variables_in_type(required_type), {});
+    auto E = pass2(R, required_type, model, find_variables_in_type(required_type), scope);
     return {model,E};
 }
 
