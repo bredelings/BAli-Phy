@@ -119,7 +119,8 @@ nobase_functions_DATA = functions/AA.json \
 	functions/letters.json \
 	functions/getNucleotides.json \
 	functions/letter_pairs.json \
-	functions/intToDouble.json
+	functions/intToDouble.json \
+	functions/num_branches.json
 
 # Distributed in the doc/ directory
 docdir = $(datadir)/doc/@PACKAGE@
