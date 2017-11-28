@@ -1,0 +1,3 @@
+bali-phy: Error! Partition 2 in two --link groups with attribute 'scale':
+  '--link=1,2:smodel,scale'
+  '--link=2,3:scale'

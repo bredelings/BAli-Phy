@@ -40,6 +40,7 @@
 using std::ifstream;
 using std::string;
 using std::vector;
+using std::set;
 using std::valarray;
 using std::cout;
 using std::cerr;
@@ -381,6 +382,9 @@ string parse_partitions_and_model(string s, vector<int>& partitions, int n, bool
 
 /// Handle commands like --link=1,2: or --link=1,2:alphabet,smodel
 /// For a given attribute (imodel, smodel, alphabet, scale) a partition should not be mentioned more than once.
+
+static set<string> valid_attributes {"smodel","imodel","scale","alphabet"};
+
 vector<vector<int>> get_link_groups(const variables_map& args, const string& key, int n)
 {
     if (not args.count("link")) return vector<vector<int>>();
@@ -394,8 +398,18 @@ vector<vector<int>> get_link_groups(const variables_map& args, const string& key
 	vector<int> partitions;
 	string keys = parse_partitions_and_model(name, partitions, n, false);
 	if (partitions.size() < 2)
-	    throw myexception()<<"You can't link < 2 partitions in link command '--link="<<name<<"'";
-	if (keys.empty() or includes(split(keys,","),key))
+	    throw myexception()<<"You can't link < 2 partitions in link command:\n  '--link="<<name<<"'";
+
+	auto attributes = split(keys,",");
+
+	if (not keys.empty())
+	{
+	    for(auto& attribute: attributes)
+		if (not valid_attributes.count(attribute))
+		    throw myexception()<<"Attribute '"<<attribute<<"' not recognized in link command:\n  '--link="<<name<<"'";
+	}
+
+	if (keys.empty() or includes(attributes,key))
 	{
 	    relevant_link_group_names.push_back(name);
 	    link_groups.push_back(partitions);
@@ -407,7 +421,9 @@ vector<vector<int>> get_link_groups(const variables_map& args, const string& key
     {
 	for(int j: link_groups[i])
 	    if (which_link_group[j-1] != -1)
-		throw myexception()<<"Partition "<<i+1<<" in two --link groups!"; // both group which_link_group[j] and i.
+		throw myexception()<<"Partition "<<i+1<<" in two --link groups with attribute '"<<key<<"':\n  '--link="
+				   <<relevant_link_group_names[which_link_group[j-1]]<<"'\n  '--link="
+				   <<relevant_link_group_names[i]<<"'"; // both group which_link_group[j] and i.
 	    else
 		which_link_group[j-1] = i;
     }

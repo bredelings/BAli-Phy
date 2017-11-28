@@ -1,0 +1,2 @@
+bali-phy: Error! Attribute 'scal' not recognized in link command:
+  '--link=1,2:smodel,scal'

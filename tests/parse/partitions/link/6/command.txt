@@ -1,0 +1,2 @@
+--test <DATA>/dna.fasta <DATA>/dna.fasta <DATA>/dna.fasta --link=1,2:smodel,scale --link=2,3:
+

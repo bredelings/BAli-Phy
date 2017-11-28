@@ -226,7 +226,7 @@ class Tester:
 
     def perform_test(self, test_subdir):
         import re
-        global NUM_TESTS, FAILED_TESTS
+        global NUM_TESTS, FAILED_TESTS, XFAILED_TESTS
         NUM_TESTS += 1
 
         self.run_test_cmd(test_subdir)
@@ -236,7 +236,9 @@ class Tester:
         elif failures:
             if xfail:
                 expected="(expected)"
+                XFAILED_TESTS.append(test_subdir)
             else:
+                FAILED_TESTS.append(test_subdir)
                 expected=""
             print("... FAIL! {} {}".format(failures,expected))
             if message:
@@ -286,8 +288,8 @@ if __name__ == '__main__':
     for test_subdir in tester.get_test_dirs():
         tester.perform_test(test_subdir)
     if (len(FAILED_TESTS) > 0):
-        exit(1)
         print("FAIL! ({} unexpected failures, {} expected failures, {} tests total)".format(len(FAILED_TESTS), len(XFAILED_TESTS), NUM_TESTS))
+        exit(1)
     else:
         print("SUCCESS! ({} unexpected failures, {} expected failures, {} tests total)".format(len(FAILED_TESTS), len(XFAILED_TESTS), NUM_TESTS))
 
