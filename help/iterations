@@ -1,0 +1,22 @@
+The --iterations command:
+
+-i           <number>                       Number of MCMC iterations.
+--iterations <number>
+
+BAli-phy doesn't use a stopping rule, so you need to diagnose
+convergence and stop bali-phy yourself.
+
+If you know how many iterations of MCMC you want, then this
+option allows stopping the MCMC after <number> iterations.
+
+To avoid using forgotten jobs consuming infinite CPU resources
+on a shared computing cluster, MCMC will stop after 200,000
+iterations if the maximum number of iterations is not specified.
+
+Examples:
+
+  # Stop after 4000 iterations
+  bali-phy dna.fasta -i 4000
+
+  # Don't stop after 200000 iterations:
+  bali-phy dna.fasta --iter=100000000000
