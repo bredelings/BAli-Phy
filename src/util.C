@@ -196,9 +196,12 @@ vector<int> compose(const vector<int>& mapping1,const vector<int>& mapping2)
     for(int i=0;i<mapping.size();i++)
     {
 	int j = mapping1[i];
-	if (j<0 or j>=mapping2.size())
+	if (j == -1)
+	    mapping[i] = -1;
+	else if (j<0 or j>=mapping2.size())
 	    throw myexception()<<"compose: mapping1["<<i<<"] == "<<j<<"!";
-	mapping[i] = mapping2[j];
+	else
+	    mapping[i] = mapping2[j];
     }
 
     return mapping;
