@@ -317,28 +317,56 @@ string get_help_for_rule(const Rule& rule)
     }
     return help.str();
 }
-	
-variables_map parse_cmd_line(int argc,char* argv[]) 
-{ 
+
+po::options_description general_options(int level)
+{
     using namespace po;
 
-    options_description advanced("Advanced options");
-    advanced.add_options()
-	("unalign,U","Unalign sequences (if variable-A)")
-	("unalign-all","Unalign sequences")
-	("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
-	("beta",value<string>(),"MCMCMC temperature")
-	("package-path,P",value<string>(),"Directories to search for packages (':'-separated)")
-	("enable",value<string>(),"Comma-separated list of kernels to enable.")
-	("disable",value<string>(),"Comma-separated list of kernels to disable.")
-	("set",value<vector<string> >()->composing(),"Set key=<value>")
-	("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>")
-	("model,m",value<string>(),"File containing hierarchical model.")
-	("Model,M",value<string>(),"Module containing hierarchical model.")
-	("test-module",value<string>(),"Parse and optimize the given module")
-	("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
-	("likelihood-calculators",value<string>(),"comma-separated integers")
+    // named options
+    options_description general("General options");
+    general.add_options()
+	("help,h", value<string>()->implicit_value("simple"),"Print usage information.")
+	("version,v", "Print version information.")
+	("test,t","Analyze the initial values and exit.")
 	;
+    if (level >= 1)
+	general.add_options()
+	    ("config,c", value<string>(),"Config file to read.");
+    if (level >= 2)
+	general.add_options()
+	    ("verbose,V",value<int>()->implicit_value(1),"Print extra output in case of error.");
+    return general;
+}
+
+po::options_description mcmc_options(int level)
+{
+    using namespace po;
+
+    options_description mcmc("MCMC options");
+    mcmc.add_options()
+	("iterations,i",value<long int>(),"The number of iterations to run.")
+	("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
+	("seed,s", value<unsigned long>(),"Random seed.")
+	("name,n", value<string>(),"Name for the output directory to create.")
+	;
+
+    if (level >= 1)
+	mcmc.add_options()
+	    ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
+	    ("enable",value<string>(),"Comma-separated list of kernels to enable.")
+	    ("disable",value<string>(),"Comma-separated list of kernels to disable.")
+	    ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.");
+
+    if (level >= 3)
+	mcmc.add_options()
+	    ("beta",value<string>(),"MCMCMC temperature");
+
+    return mcmc;
+}
+
+po::options_description haskell_optimization()
+{
+    using namespace po;
 
     options_description optimization("Haskell optimization options");
     optimization.add_options()
@@ -355,39 +383,24 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("beta-reduction",value<bool>()->default_value(true),"Beta-reduction")
 	("simplifier-max-iterations",value<int>()->default_value(4),"Bound on iterating simplifier")
 	;
-    
-    options_description developer("Developer options");
-    developer.add_options()
-	("partition-weights",value<string>(),"File containing tree with partition weights")
-	("dbeta",value<string>(),"MCMCMC temperature changes")
-	("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
-	("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
-	("align-constraint",value<string>(),"File with alignment constraints.")
-	;
+    return optimization;
+}
 
-    // named options
-    options_description general("General options");
-    general.add_options()
-	("help,h", value<string>()->implicit_value("simple"),"Print usage information.")
-	("version,v", "Print version information.")
-	("config,c", value<string>(),"Config file to read.")
-	("test,t","Analyze the initial values and exit.")
-	("verbose,V",value<int>()->implicit_value(1),"Print extra output in case of error.")
-	;
-
-    options_description mcmc("MCMC options");
-    mcmc.add_options()
-	("iterations,i",value<long int>(),"The number of iterations to run.")
-	("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
-	("seed,s", value<unsigned long>(),"Random seed.")
-	("name,n", value<string>(),"Name for the output directory to create.")
-	;
+po::options_description parameters_options(int level)
+{
+    using namespace po;
 
     options_description parameters("Parameter options");
     parameters.add_options()
 	("align", value<vector<string> >()->composing(),"Sequence file & initial alignment.")
 	("tree,T",value<string>(),"File with initial tree")
 	;
+    return parameters;
+}
+
+po::options_description model_options(int level)
+{
+    using namespace po;
 
     options_description model("Model options");
     model.add_options()
@@ -398,8 +411,64 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("branch-length,B",value<string>(),"Prior on branch lengths.")
 	("link,L",value<vector<string>>()->composing(),"Link partitions.")
 	;
+    return model;
+}
+
+po::options_description advanced_options()
+{
+    using namespace po;
+
+    options_description advanced("Advanced options");
+    advanced.add_options()
+	("unalign,U","Unalign sequences (if variable-A)")
+	("unalign-all","Unalign sequences")
+	("package-path,P",value<string>(),"Directories to search for packages (':'-separated)")
+	("set",value<vector<string> >()->composing(),"Set key=<value>")
+	("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>")
+	("model,m",value<string>(),"File containing hierarchical model.")
+	("Model,M",value<string>(),"Module containing hierarchical model.")
+	("test-module",value<string>(),"Parse and optimize the given module")
+	("likelihood-calculators",value<string>(),"comma-separated integers")
+	;
+    return advanced;
+}
+
+po::options_description developer_options()
+{
+    using namespace po;
+
+    options_description developer("Developer options");
+    developer.add_options()
+	("partition-weights",value<string>(),"File containing tree with partition weights")
+	("dbeta",value<string>(),"MCMCMC temperature changes")
+	("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
+	("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
+	("align-constraint",value<string>(),"File with alignment constraints.")
+	;
+    return developer;
+}
+
+variables_map parse_cmd_line(int argc,char* argv[]) 
+{ 
+    using namespace po;
+
+    auto general = general_options(3);
+
+    auto mcmc = mcmc_options(0);
+
+    auto parameters = parameters_options(0);
+
+    auto optimization = haskell_optimization();
+
+    auto model = model_options(0);
+    
+    auto advanced = advanced_options();
+
+    auto developer = developer_options();
+    
     options_description all("Advanced options");
     all.add(general).add(mcmc).add(parameters).add(model).add(advanced).add(optimization).add(developer);
+    
     options_description some("Simple options");
     some.add(general).add(mcmc).add(parameters).add(model);
 
