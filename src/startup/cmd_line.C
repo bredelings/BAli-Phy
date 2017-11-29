@@ -99,7 +99,7 @@ std::map<string,string> load_help_files(const std::vector<fs::path>& package_pat
 	auto path = package_path / "help";
 
 	if (fs::exists(path))
-	    for(auto& dir_entry: fs::directory_iterator(path))
+	    for(auto& dir_entry: fs::recursive_directory_iterator(path))
 	    {
 		auto abs_path = fs::canonical(dir_entry.path() );
 		string topic = abs_path.stem().string();

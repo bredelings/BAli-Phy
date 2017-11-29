@@ -27,25 +27,25 @@ nobase_modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude
 		modules/SubAIndex.hs
 
 helpdir = $(libdir)/@PACKAGE@/
-nobase_help_DATA = help/alphabet.txt \
-	help/smodel.txt \
-	help/imodel.txt \
-	help/scale.txt \
-	help/branch-length.txt \
-	help/link.txt \
+nobase_help_DATA = help/commands/alphabet.txt \
+	help/commands/smodel.txt \
+	help/commands/imodel.txt \
+	help/commands/scale.txt \
+	help/commands/branch-length.txt \
+	help/commands/link.txt \
 	help/parameters.txt \
 	help/priors.txt \
 	help/Triplets.txt \
 	help/Codons.txt \
 	help/genetic-code.txt \
-	help/config.txt \
-	help/name.txt \
-	help/tree.txt \
-	help/version.txt \
-	help/test.txt \
-	help/verbose.txt \
-	help/seed.txt \
-	help/iterations.txt
+	help/commands/config.txt \
+	help/commands/name.txt \
+	help/commands/tree.txt \
+	help/commands/version.txt \
+	help/commands/test.txt \
+	help/commands/verbose.txt \
+	help/commands/seed.txt \
+	help/commands/iterations.txt
 
 functionsdir = $(libdir)/@PACKAGE@/
 nobase_functions_DATA = functions/AA.json \
