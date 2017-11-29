@@ -38,7 +38,8 @@ nobase_help_DATA = help/alphabet.txt \
 	help/Triplets.txt \
 	help/Codons.txt \
 	help/genetic-code.txt \
-	help/config.txt
+	help/config.txt \
+	help/name.txt
 
 functionsdir = $(libdir)/@PACKAGE@/
 nobase_functions_DATA = functions/AA.json \
