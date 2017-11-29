@@ -1,0 +1,7 @@
+The --version command:
+
+-v                                   Print version information.
+--version
+
+Print version information and immediately exit.
+

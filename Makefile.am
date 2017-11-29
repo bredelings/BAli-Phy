@@ -40,7 +40,11 @@ nobase_help_DATA = help/alphabet.txt \
 	help/genetic-code.txt \
 	help/config.txt \
 	help/name.txt \
-	help/tree.txt
+	help/tree.txt \
+	help/version.txt \
+	help/test.txt \
+	help/verbose.txt \
+	help/seed.txt
 
 functionsdir = $(libdir)/@PACKAGE@/
 nobase_functions_DATA = functions/AA.json \
