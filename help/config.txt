@@ -6,6 +6,9 @@ The --config command:
 Read command-line options from <file>.  This can be useful for
 recording the options used in an analysis and re-running analyses.
 
+Any other command line options will be added after the ones read
+from <file>.
+
 Each option "--command=value" is given on its own line using the
 syntax "command = value".  If the option does not take a value then
 write just "command =".
@@ -13,7 +16,10 @@ write just "command =".
 Comments begin with '#', and blank lines are allowed.  Sequence
 data is specified using the command "align".
 
-Example file:
+Example command:
+  bali-phy --config=script --name=ITS
+
+Example script:
 
  # Compute probability and exit.
  test =
