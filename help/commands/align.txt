@@ -1,0 +1,20 @@
+The --align command:                        Sequence data.
+
+--align <file>
+
+Specify a collection of sequences to align in FASTA format.
+If this option is given multiple times, each FASTA file should
+contain sequences with the same names.  Sequences from each
+file form a separate partition and may be described with
+different models.
+
+FASTA files are usually specified without the --align command:
+   bali-phy dna.fasta rna.fasta
+This is equivalent to
+   bali-phy --align=dna.fasta --align=rna.fasta
+
+The initial alignment for each partition is taken from the
+alignment of the sequences in the FASTA file.
+
+Example command:
+  bali-phy dna.fasta
