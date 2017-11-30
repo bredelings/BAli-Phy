@@ -484,7 +484,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	exit(0);
     }
 
-    if (args.count("verbose")) log_verbose = 1;
+    if (args.count("verbose")) log_verbose = args["verbose"].as<int>();
 
     if (args.count("help"))
     {
