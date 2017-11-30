@@ -42,7 +42,7 @@ alignment load_alignment(const string& filename,const string& alph_name)
   
     int n_empty = remove_empty_columns(A);
     if (n_empty)
-	if (log_verbose) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
+	if (log_verbose >= 1) cerr<<"Warning: removed "<<n_empty<<" empty columns from alignment '"<<filename<<"'!\n"<<endl;
   
     if (A.n_sequences() == 0)
 	throw myexception()<<"Alignment file "<<filename<<" didn't contain any sequences!";

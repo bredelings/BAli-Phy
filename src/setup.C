@@ -324,13 +324,13 @@ void load_bali_phy_rc(variables_map& args,const options_description& options)
 	    string filename = home_dir + "/.bali-phy";
 
 	    if (fs::exists(filename)) {
-		if (log_verbose)
+		if (log_verbose >= 1)
 		    cerr<<"Reading ~/.bali-phy ...";
 		checked_ifstream file(filename, "config file");
       
 		store(parse_config_file(file, options), args);
 		notify(args);
-		if (log_verbose)
+		if (log_verbose >= 1)
 		    cerr<<" done."<<endl;
 	    }
 	}

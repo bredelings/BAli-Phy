@@ -598,7 +598,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int R)
 	    SS = compact_graph_expression(*this, R, get_identifiers()).print();
 	    string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
 					  get_identifiers()).print();
-	    if (log_verbose)
+	    if (log_verbose >= 3)
 		dot_graph_for_token(*this, root_token);
 #endif
 
