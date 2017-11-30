@@ -191,25 +191,13 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     type_t result_type;
     optional<Rule> rule;
     if (can_be_converted_to<int>(name))
-    {
-	assert(model.empty());
 	result_type=type_t("Int");
-    }
     else if (can_be_converted_to<double>(name))
-    {
-	assert(model.empty());
 	result_type=type_t("Double");
-    }
     else if (name.size()>=2 and name[0] == '"' and name.back() == '"' and required_type.get_value<string>() == "String") 
-    {
-	assert(model.empty());
 	result_type=type_t("String");
-    }
-
-    {
     else if (auto type = type_for_var_in_scope(name, scope))
 	result_type = *type;
-    }
     else
     {
 	rule = R.require_rule_for_func(name);
@@ -237,7 +225,13 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     }
 
     // 4. If this is a constant or variable, then we are done here.
-    if (not rule) return E;
+    if (not rule)
+    {
+	if (not model.empty())
+	    throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)
+			       <<"' should not have arguments!";
+	return E;
+    }
 
     // 5.1 Update required type and rules with discovered constraints
     rule = substitute_in_rule_types(E, *rule);
