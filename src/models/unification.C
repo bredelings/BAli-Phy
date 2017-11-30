@@ -4,6 +4,7 @@
 #include "parse.H"
 
 using std::list;
+using std::vector;
 using std::pair;
 using std::map;
 using std::set;
@@ -24,19 +25,24 @@ string show(const ptree& pt, int depth = 0);
 string show(const equations& E)
 {
     string result;
-    if (not E) result = "FAIL\n";
+    if (not E) result = "FAIL:\n";
 
+    vector<string> constraints;
     for(auto& constraint: E.get_constraints())
-	result += unparse_type(constraint) + " <=\n";
-    for(auto& e: E.get_values())
+	constraints.push_back(unparse_type(constraint));
+    if (not constraints.empty())
+    result += join(constraints,",") + " <= ";
+
+    vector<string> eqs;
+    for(auto& equation: E.get_values())
     {
-	for(auto& var: e.first)
-	    result += (var + " = ");
-	if (e.second)
-	    result += show(*e.second);
-	else
-	    result += "\n";
+	string e = join(equation.first," = ");
+	if (equation.second)
+	    e += " = " + show(*equation.second);
+	eqs.push_back(e);
     }
+    result += join(eqs,"\n");
+
     return result;
 }
 
