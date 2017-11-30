@@ -307,10 +307,10 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const st
     // 4. Write out paths to C1.err
     if (log_verbose)
     {
-	std::cerr<<"\nPackage path = \n";
+	std::cout<<"\nPackage path = \n";
 	for(const auto& path: L.plugins_path)
-	    cerr<<"  "<<path<<"\n";
-	cerr<<std::endl;
+	    cout<<"  "<<path<<"\n";
+	cout<<std::endl;
     }
 
     // 5a. Check for empty paths
