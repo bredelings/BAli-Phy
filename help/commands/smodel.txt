@@ -22,6 +22,9 @@ If no partitions are specified, then every partition gets a separate
 If partitions are specified, then the partitions are linked.
 That is, they share the same parameter values for the model.
 
+The --smodel command can be given multiple times, but the same
+partition cannot be referenced twice.
+
 Examples:
    -S HKY
    --smodel=HKY

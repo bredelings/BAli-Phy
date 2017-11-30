@@ -14,6 +14,9 @@ extra arguments specifying the nucleotide alphabet and genetic code:
 
 See help on Triplets and Codons for more information.
 
+The --alphabet command can be given multiple times, but the same
+partition cannot be referenced twice.
+
 Examples:
    --alphabet=DNA
    -A RNA

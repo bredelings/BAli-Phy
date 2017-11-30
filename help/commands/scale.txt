@@ -25,6 +25,9 @@ the default scale prior.
 If the scale is specified as a constant, such as "--scale=1",
 then the scale will not be estimated.
 
+The --scale command can be given multiple times, but the same
+partition cannot be referenced twice.
+
 Examples:
    -R ~Gamma[0.5,2]
    --scale=2,3:
