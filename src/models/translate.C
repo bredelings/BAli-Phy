@@ -149,7 +149,7 @@ set<string> find_type_variables_from_scope(const vector<pair<string, ptree>>& sc
     return vars;
 }
 
-optional<ptree> find_in_scope(const string& name, const vector<pair<string,ptree>>& in_scope)
+optional<ptree> type_for_var_in_scope(const string& name, const vector<pair<string,ptree>>& in_scope)
 {
     for(int i=int(in_scope.size())-1;i>=0;i--)
 	if (in_scope[i].first == name)
@@ -206,8 +206,8 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	result_type=type_t("String");
     }
 
-    else if (auto type = find_in_scope(name, scope))
     {
+    else if (auto type = type_for_var_in_scope(name, scope))
 	result_type = *type;
     }
     else
