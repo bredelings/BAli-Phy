@@ -180,9 +180,6 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 	auto scale_index = P.scale_index_for_partition(i);
 	out_screen<<"#"<<i+1<<": scale "<<show_model(ScaleModels[*scale_index].description)<<" (Scale"<<*scale_index+1<<")\n";
 	out_screen<<endl;
-
-	if (log_verbose)
-	    out_screen<<show(SModels[i].description);
     }
 }
 
