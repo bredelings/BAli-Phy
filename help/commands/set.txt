@@ -1,0 +1,17 @@
+The --set command:
+
+--set <key>=<value>                         Initialize parameter value.
+
+Pass a key-value pair into BAli-Phy.  The <value> is a
+floating-point number.
+
+Examples:
+
+  # Work twice at hard at resampling the alignment.
+  bali-phy dna.fasta --set alignment_sampling_factor=2
+
+  # Stop enforcing low gap probabilities after 10 iterations
+  bali-phy dna.fasta --set alignment-burnin=10
+
+  # Disallow site-compression
+  bali-phy dna.fasta -I none --set compression=0
