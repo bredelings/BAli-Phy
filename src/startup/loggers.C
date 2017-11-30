@@ -147,14 +147,10 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	vector<string> names_ = short_parameter_names(*M);
 	set<string> names(names_.begin(), names_.end());
 
-	// FIXME: Using short_parameter_names should be nice... but
-	//          we are now logging EXPRESSIONS as well as actual parameters
-	//        This makes such simplification difficult.
-
 	for(int i=0;i<M->n_parameters();i++)
 	{
 	    string name = M->parameter_name(i);
-	    if (name.size() and name[0] == '*' and not log_verbose) continue;
+	    if (name.size() and name[0] == '*' and log_verbose <= 0) continue;
 
 	    int index = M->add_compute_expression(parameter(name));
 
@@ -233,7 +229,7 @@ string table_logger_line(MCMC::TableFunction<string>& TF, const Model& M, long t
 
     for(int i=0;i<TF.n_fields();i++) {
 	string name = names[i];
-	if ((not log_verbose) and name.size() > 1 and name[0] == '*') continue;
+	if (log_verbose <= 0 and name.size() > 1 and name[0] == '*') continue;
 	o<<"    "<<name<<" = "<<values[i];
     }
     o<<"\n";

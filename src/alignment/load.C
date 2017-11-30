@@ -237,9 +237,9 @@ void insert_and_maybe_thin(alignment t, list<alignment>& Ts, int max, int& subsa
 	// start skipping twice as many alignments
 	subsample *= 2;
 
-	if (log_verbose) cerr<<"Went from "<<Ts.size();
+	if (log_verbose >= 1) cerr<<"Went from "<<Ts.size();
 	thin_by_half(Ts);
-	if (log_verbose) cerr<<" to "<<Ts.size()<<" alignments.\n";
+	if (log_verbose >= 1) cerr<<" to "<<Ts.size()<<" alignments.\n";
     }
 }
 
@@ -385,7 +385,7 @@ vector<alignment> load_alignments(istream& ifile, const string& alph_name)
 	std::cerr<<"  Exception: "<<e.what()<<endl;
     }
 
-    if (log_verbose) std::cerr<<"Loaded "<<alignments.size()<<" alignments.\n";
+    if (log_verbose >= 1) std::cerr<<"Loaded "<<alignments.size()<<" alignments.\n";
 
     return alignments;
 }

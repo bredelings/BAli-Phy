@@ -500,7 +500,7 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
     auto equations = p.second;
     substitute(equations, model_rep);
     substitute(equations, required_type);
-    if (log_verbose)
+    if (log_verbose >= 1)
     {
 	std::cout<<"model = "<<unparse(model_rep)<<std::endl;
 	std::cout<<"type = "<<unparse_type(required_type)<<std::endl;

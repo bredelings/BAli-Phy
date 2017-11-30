@@ -194,7 +194,7 @@ void show_ending_messages(bool show_only)
 {
     using namespace chrono;
 
-    if (not show_only or log_verbose >=2) {
+    if (not show_only or log_verbose >= 2) {
 
 	extern long total_reductions;
 	extern long total_changeable_eval;
@@ -305,7 +305,7 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args, const st
     module_loader L( get_package_paths(argv0, args) );
 
     // 4. Write out paths to C1.err
-    if (log_verbose)
+    if (log_verbose >= 1)
     {
 	std::cout<<"\nPackage path = \n";
 	for(const auto& path: L.plugins_path)
@@ -424,7 +424,7 @@ int main(int argc,char* argv[])
 	//---------- Initialize random seed -----------//
 	unsigned long seed = init_rng_and_get_seed(args);
     
-	if (log_verbose) out_cache<<"random seed = "<<seed<<endl<<endl;
+	if (log_verbose >= 1) out_cache<<"random seed = "<<seed<<endl<<endl;
 
 	//---------- test optimizer ----------------
 	if (args.count("test-module"))
@@ -463,7 +463,7 @@ int main(int argc,char* argv[])
 
 	//------------ Avoid printing seed during unrelated error messages ---//
 
-	if (not log_verbose) out_cache<<"random seed = "<<seed<<endl<<endl;
+	if (log_verbose < 1) out_cache<<"random seed = "<<seed<<endl<<endl;
 
 	//------------- Parse the Hierarchical Model description -----------//
 	if (args.count("model"))
