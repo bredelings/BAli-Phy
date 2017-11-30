@@ -336,7 +336,8 @@ po::options_description general_options(int level)
     if (level >= 2)
 	general.add_options()
 	    ("verbose,V",value<int>()->implicit_value(1),"Print extra output in case of error.")
-	    ("package-path,P",value<string>(),"Directories to search for packages (':'-separated)");
+	    ("package-path,P",value<string>(),"Directories to search for packages.")
+	    ("set",value<vector<string> >()->composing(),"Set key=<value>");
     return general;
 }
 
@@ -364,7 +365,8 @@ po::options_description mcmc_options(int level)
 
     if (level >= 3)
 	mcmc.add_options()
-	    ("beta",value<string>(),"MCMCMC temperature");
+	    ("beta",value<string>(),"MCMCMC temperature")
+	    ("dbeta",value<string>(),"MCMCMC temperature changes");
 
     return mcmc;
 }
@@ -404,6 +406,10 @@ po::options_description parameters_options(int level)
 	parameters.add_options()
 	    ("unalign,U","Unalign sequences (if variable-A)");
 
+    if (level >= 2)
+	parameters.add_options()
+	    ("unalign-all","Unalign sequences");
+
     return parameters;
 }
 
@@ -416,30 +422,19 @@ po::options_description model_options(int level)
 	("alphabet,A",value<vector<string> >()->composing(),"The alphabet.")
 	("smodel,S",value<vector<string> >()->composing(),"Substitution model.")
 	("imodel,I",value<vector<string> >()->composing(),"Insertion-deletion model.")
-	("scale,R",value<vector<string> >()->composing(),"Prior on the scale.")
-	("branch-length,B",value<string>(),"Prior on branch lengths.")
-	("link,L",value<vector<string>>()->composing(),"Link partitions.")
-	;
+	("scale,R",value<vector<string> >()->composing(),"Prior on the scale.");
+    if (level >= 1)
+	model.add_options()
+	("branch-length,B",value<string>(),"Prior on branch lengths.");
+    model.add_options()
+	("link,L",value<vector<string>>()->composing(),"Link partitions.");
+
     if (level >= 2)
 	model.add_options()
 	    ("model,m",value<string>(),"File containing hierarchical model.")
-	    ("Model,M",value<string>(),"Module containing hierarchical model.");
+	    ("Model,M",value<string>(),"Module containing hierarchical model.")
+	    ("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>");
     return model;
-}
-
-po::options_description advanced_options()
-{
-    using namespace po;
-
-    options_description advanced("Advanced options");
-    advanced.add_options()
-	("unalign-all","Unalign sequences")
-	("set",value<vector<string> >()->composing(),"Set key=<value>")
-	("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>")
-	("test-module",value<string>(),"Parse and optimize the given module")
-	("likelihood-calculators",value<string>(),"comma-separated integers")
-	;
-    return advanced;
 }
 
 po::options_description developer_options()
@@ -448,11 +443,12 @@ po::options_description developer_options()
 
     options_description developer("Developer options");
     developer.add_options()
+	("test-module",value<string>(),"Parse and optimize the given module")
 	("partition-weights",value<string>(),"File containing tree with partition weights")
-	("dbeta",value<string>(),"MCMCMC temperature changes")
 	("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
 	("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
 	("align-constraint",value<string>(),"File with alignment constraints.")
+	("likelihood-calculators",value<string>(),"comma-separated integers")
 	;
     return developer;
 }
@@ -462,10 +458,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
     using namespace po;
 
     options_description all("Developer options - some may not work!");
-    all.add(general_options(3)).add(mcmc_options(3)).add(parameters_options(3)).add(model_options(3)).add(advanced_options()).add(haskell_optimization()).add(developer_options());
+    all.add(general_options(3)).add(mcmc_options(3)).add(parameters_options(3)).add(model_options(3)).add(haskell_optimization()).add(developer_options());
     
     options_description expert("Expert options - some may not work!");
-    expert.add(general_options(2)).add(mcmc_options(2)).add(parameters_options(2)).add(model_options(2)).add(advanced_options());
+    expert.add(general_options(2)).add(mcmc_options(2)).add(parameters_options(2)).add(model_options(2));
     
     options_description advanced("Advanced options");
     advanced.add(general_options(1)).add(mcmc_options(1)).add(parameters_options(1)).add(model_options(1));
