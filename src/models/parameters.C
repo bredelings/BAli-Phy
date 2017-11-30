@@ -209,8 +209,7 @@ int data_partition::subst_root() const {
 
 bool data_partition::has_IModel() const
 {
-    int m = P->imodel_index_for_partition(partition_index);
-    return (m != -1);
+    return bool(P->imodel_index_for_partition(partition_index));
 }
 
 const std::vector<int>& data_partition::get_sequence(int i) const
@@ -228,37 +227,37 @@ const EVector& data_partition::transition_P(int b) const
 
 int data_partition::n_base_models() const
 {
-    int s = P->smodel_index_for_partition(partition_index);
+    int s = *P->smodel_index_for_partition(partition_index);
     return P->evaluate(P->PC->SModels[s].n_base_models).as_int();
 }
 
 int data_partition::n_states() const
 {
-    int s = P->smodel_index_for_partition(partition_index);
+    int s = *P->smodel_index_for_partition(partition_index);
     return P->evaluate(P->PC->SModels[s].n_states).as_int();
 }
 
 vector<double> data_partition::distribution() const
 {
-    int s = P->smodel_index_for_partition(partition_index);
+    int s = *P->smodel_index_for_partition(partition_index);
     return P->evaluate(P->PC->SModels[s].distribution).as_<Vector<double>>();
 }
 
 Matrix data_partition::WeightedFrequencyMatrix() const
 {
-    int s = P->smodel_index_for_partition(partition_index);
+    int s = *P->smodel_index_for_partition(partition_index);
     return P->evaluate(P->PC->SModels[s].weighted_frequency_matrix).as_<Box<Matrix>>();
 }
 
 Matrix data_partition::FrequencyMatrix() const
 {
-    int s = P->smodel_index_for_partition(partition_index);
+    int s = *P->smodel_index_for_partition(partition_index);
     return P->evaluate(P->PC->SModels[s].frequency_matrix).as_<Box<Matrix>>();
 }
 
 vector<unsigned> data_partition::state_letters() const
 {
-    int s = P->smodel_index_for_partition(partition_index);
+    int s = *P->smodel_index_for_partition(partition_index);
     return P->evaluate(P->PC->SModels[s].state_letters).as_<Vector<unsigned>>();
 }
 
@@ -527,9 +526,9 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
 	conditional_likelihoods_for_branch[b] = p->add_modifiable_parameter_with_value(invisible_prefix+"CL"+convertToString(b), 0);
 
     //  const int n_states = state_letters().size();
-    const int scale_index = p->scale_index_for_partition(i);
-    const int smodel_index = p->smodel_index_for_partition(i);
-    const int imodel_index = p->imodel_index_for_partition(i);
+    int scale_index = *p->scale_index_for_partition(i);
+    int smodel_index = *p->smodel_index_for_partition(i);
+    auto imodel_index = p->imodel_index_for_partition(i);
 
     // Add method indices for calculating transition matrices.
     auto transition_ps = p->get_expression(p->PC->branch_transition_p_indices(scale_index, smodel_index));
@@ -626,13 +625,13 @@ data_partition_constants::data_partition_constants(Parameters* p, int i, const a
     }
 
     // Add method indices for calculating branch HMMs and alignment prior
-    if (imodel_index != -1)
+    if (imodel_index)
     {
 	// D = Params.substitutionBranchLengths!scale_index
 	expression_ref D = (dummy("Prelude.!"),dummy("Params.substitutionBranchLengths"),scale_index);
 	expression_ref heat = parameter("Heat.beta");
 	expression_ref training = parameter("*IModels.training");
-	expression_ref model = ((dummy("Prelude.!"),dummy("IModels.models"),imodel_index), heat, training);
+	expression_ref model = ((dummy("Prelude.!"),dummy("IModels.models"), *imodel_index), heat, training);
 
 	expression_ref hmms = (dummy("Alignment.branch_hmms"), model, D, B);
 	hmms = p->get_expression( p->add_compute_expression(hmms) );
@@ -1263,7 +1262,7 @@ void Parameters::branch_scale(int i, double x)
 
 double Parameters::get_branch_subst_rate(int p, int /* b */) const
 {
-    return branch_scale( scale_index_for_partition(p) );
+    return branch_scale( *scale_index_for_partition(p) );
 }
 
 expression_ref Parameters::my_tree() const
@@ -1271,17 +1270,26 @@ expression_ref Parameters::my_tree() const
     return get_expression(TC->tree_head);
 }
 
+int num_distinct(const vector<optional<int>>& v)
+{
+    int m = -1;
+    for(auto& x: v)
+	if (x)
+	    m = std::max(m,*x);
+    return m+1;
+}
+
 parameters_constants::parameters_constants(const vector<alignment>& A, const SequenceTree& t,
 					   const vector<model_t>& SMs,
-					   const vector<int>& s_mapping,
+					   const vector<optional<int>>& s_mapping,
 					   const vector<model_t>& /* IMs */,
-					   const vector<int>& i_mapping,
-					   const vector<int>& scale_mapping)
+					   const vector<optional<int>>& i_mapping,
+					   const vector<optional<int>>& scale_mapping)
     :smodel_for_partition(s_mapping),
      imodel_for_partition(i_mapping),
-     n_imodels(max(i_mapping)+1),
+     n_imodels(num_distinct(i_mapping)),
      scale_for_partition(scale_mapping),
-     n_scales(max(scale_mapping)+1),
+     n_scales(num_distinct(scale_mapping)),
      scale_parameter_indices(n_scales),
      TC(star_tree(t.get_leaf_labels())),
      branch_HMM_type(t.n_branches(),0)
@@ -1294,7 +1302,7 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
 
     // check that we only map existing smodels to data partitions
     for(int i=0;i<smodel_for_partition.size();i++) {
-	int m = smodel_for_partition[i];
+	int m = *smodel_for_partition[i];
 	if (m >= SMs.size())
 	    throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
 			       <<" because there are only "<<SMs.size()<<" smodels.";
@@ -1304,11 +1312,11 @@ parameters_constants::parameters_constants(const vector<alignment>& A, const Seq
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<alignment>& A, const SequenceTree& tt,
 		       const vector<model_t>& SMs,
-		       const vector<int>& s_mapping,
+		       const vector<optional<int>>& s_mapping,
 		       const vector<model_t>& IMs,
-		       const vector<int>& i_mapping,
+		       const vector<optional<int>>& i_mapping,
 		       const vector<model_t>& scaleMs,
-		       const vector<int>& scale_mapping,
+		       const vector<optional<int>>& scale_mapping,
 		       const model_t& branch_length_model,
 		       const std::vector<int>& like_calcs,
 		       const key_map_t& k)
@@ -1483,13 +1491,13 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 		       const vector<alignment>& A, const SequenceTree& t,
 		       const vector<model_t>& SMs,
-		       const vector<int>& s_mapping,
+		       const vector<optional<int>>& s_mapping,
 		       const vector<model_t>& scaleMs,
-		       const vector<int>& scale_mapping,
+		       const vector<optional<int>>& scale_mapping,
 		       const model_t& branch_length_model,
 		       const std::vector<int>& like_calcs,
 		       const key_map_t& k)
-    :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<int>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, k)
+    :Parameters(L, A, t, SMs, s_mapping, vector<model_t>{}, vector<optional<int>>{}, scaleMs, scale_mapping, branch_length_model, like_calcs, k)
 { }
 
 bool accept_MH(const Model& P1,const Model& P2,double rho)

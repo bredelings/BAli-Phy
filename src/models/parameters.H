@@ -29,6 +29,8 @@
 
 #include <string>
 #include <valarray>
+#include <boost/optional.hpp>
+
 #include "sequence/alphabet.H"
 #include "tree/sequencetree.H"
 #include "models/model.H"
@@ -244,14 +246,14 @@ struct parameters_constants: public Object
 {
     /// The substitution::Model
     std::vector<smodel_methods> SModels;
-    std::vector<int> smodel_for_partition;
+    std::vector<boost::optional<int>> smodel_for_partition;
 
     /// The IndelModel
-    std::vector<int> imodel_for_partition;
+    std::vector<boost::optional<int>> imodel_for_partition;
     int n_imodels;
 
     // Scale for partition
-    std::vector<int> scale_for_partition;
+    std::vector<boost::optional<int>> scale_for_partition;
     int n_scales;
     std::vector<int> scale_parameter_indices;
 
@@ -289,10 +291,10 @@ struct parameters_constants: public Object
 
     parameters_constants(const std::vector<alignment>& A, const SequenceTree&, 
 			 const std::vector<model_t>&,
-			 const std::vector<int>&,
+			 const std::vector<boost::optional<int>>&,
 			 const std::vector<model_t>&,
-			 const std::vector<int>&,
-			 const std::vector<int>&);
+			 const std::vector<boost::optional<int>>&,
+			 const std::vector<boost::optional<int>>&);
 };
 
 /// A class to contain all the MCMC state except the alignment
@@ -327,11 +329,11 @@ public:
 
     data_partition operator[](int i) const {return get_data_partition(i);}
 
-    int smodel_index_for_partition(int i) const {return PC->smodel_for_partition[i];}
+    boost::optional<int> smodel_index_for_partition(int i) const {return PC->smodel_for_partition[i];}
 
-    int imodel_index_for_partition(int i) const {return PC->imodel_for_partition[i];}
+    boost::optional<int> imodel_index_for_partition(int i) const {return PC->imodel_for_partition[i];}
 
-    int scale_index_for_partition(int i) const {return PC->scale_for_partition[i];}
+    boost::optional<int> scale_index_for_partition(int i) const {return PC->scale_for_partition[i];}
   
     void set_beta(double b);
     double get_beta() const;
@@ -408,9 +410,9 @@ public:
     Parameters(const std::shared_ptr<module_loader>& L,
 	       const std::vector<alignment>& A, const SequenceTree&, 
 	       const std::vector<model_t>&,
-	       const std::vector<int>&,
+	       const std::vector<boost::optional<int>>&,
 	       const std::vector<model_t>&,
-	       const std::vector<int>&,
+	       const std::vector<boost::optional<int>>&,
 	       const model_t&,
 	       const std::vector<int>&,
 	       const key_map_t&);
@@ -418,11 +420,11 @@ public:
     Parameters(const std::shared_ptr<module_loader>& L,
 	       const std::vector<alignment>& A, const SequenceTree&, 
 	       const std::vector<model_t>&,
-	       const std::vector<int>&,
+	       const std::vector<boost::optional<int>>&,
 	       const std::vector<model_t>&,
-	       const std::vector<int>&,
+	       const std::vector<boost::optional<int>>&,
 	       const std::vector<model_t>&,
-	       const std::vector<int>&,
+	       const std::vector<boost::optional<int>>&,
 	       const model_t&,
 	       const std::vector<int>&,
 	       const key_map_t&);

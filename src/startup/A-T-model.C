@@ -22,6 +22,7 @@ using std::endl;
 using std::ostream;
 using std::string;
 using std::vector;
+using boost::optional;
 
 /// Replace negative or zero branch lengths with saner values.
 void sanitize_branch_lengths(SequenceTree& T)
@@ -161,23 +162,23 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
 
     for(int i=0;i<P.n_data_partitions();i++)
     {
-	int s_index = P.smodel_index_for_partition(i);
+	auto s_index = P.smodel_index_for_partition(i);
 	//    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
 	out_screen<<"#"<<i+1 <<": alphabet = "<<P.get_data_partition(i).get_alphabet().name<<"\n";
 
-	out_screen<<"#"<<i+1<<": subst "<<show_model(SModels[s_index].description)<<" (S"<<s_index+1<<")\n";
+	out_screen<<"#"<<i+1<<": subst "<<show_model(SModels[*s_index].description)<<" (S"<<*s_index+1<<")\n";
 
-	int i_index = P.imodel_index_for_partition(i);
+	auto i_index = P.imodel_index_for_partition(i);
 	string i_name = "= none";
-	if (i_index != -1)
-	    i_name = show_model(IModels[i_index].description);
+	if (i_index)
+	    i_name = show_model(IModels[*i_index].description);
 	out_screen<<"#"<<i+1<<": indel "<<i_name;
-	if (i_index >= 0)
-	    out_screen<<" (I"<<i_index+1<<")";
+	if (i_index and *i_index >= 0)
+	    out_screen<<" (I"<<*i_index+1<<")";
 	out_screen<<endl;
 
-	int scale_index = P.scale_index_for_partition(i);
-	out_screen<<"#"<<i+1<<": scale "<<show_model(ScaleModels[scale_index].description)<<" (Scale"<<scale_index+1<<")\n";
+	auto scale_index = P.scale_index_for_partition(i);
+	out_screen<<"#"<<i+1<<": scale "<<show_model(ScaleModels[*scale_index].description)<<" (Scale"<<*scale_index+1<<")\n";
 	out_screen<<endl;
 
 	if (log_verbose)
@@ -536,7 +537,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     //-------------- Which partitions share a scale? -----------//
     shared_items<string> scale_names_mapping = get_mapping(args, "scale", A.size());
 
-    vector<int> scale_mapping = scale_names_mapping.item_for_partition;
+    auto scale_mapping = scale_names_mapping.item_for_partition;
 
     vector<model_t> full_scale_models(scale_names_mapping.n_unique_items());
 

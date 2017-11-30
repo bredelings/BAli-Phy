@@ -34,6 +34,7 @@
 #include "alignment/alignment.H"
 #include "tree/sequencetree.H"
 #include <boost/program_options.hpp>
+#include <boost/optional.hpp>
 
 //----------------- Load trees and alignments ---------------------//
 
@@ -64,7 +65,7 @@ class shared_items
 public:
 
     // from partition -> item
-    std::vector<int> item_for_partition;  
+    std::vector<boost::optional<int>> item_for_partition;  
 
     // from item -> partition
     std::vector<std::vector<int> > partitions_for_item;
@@ -76,22 +77,23 @@ public:
     const T& unique(int i) const {return items[i];}
     T& unique(int i)       {return items[i];}
 
-    const T& operator[](int i) const {return items[item_for_partition[i]];}
-    T& operator[](int i)       {return items[item_for_partition[i]];}
+    const T& operator[](int i) const {return items[*item_for_partition[i]];}
+    T& operator[](int i)       {return items[*item_for_partition[i]];}
 
     int n_partitions_for_item(int i) const {return partitions_for_item[i].size();}
 
     const std::vector<T> get_items() const {return items;}
 
-    shared_items(const std::vector<T>& v1, const std::vector<int>& v2)
+    shared_items(const std::vector<T>& v1, const std::vector<boost::optional<int>>& v2)
 	:items(v1),
 	 item_for_partition(v2),
 	 partitions_for_item(items.size())
 	{
-	    for(int i=0;i<n_partitions();i++) {
-		int item = item_for_partition[i];
-		if (item != -1)
-		    partitions_for_item[item].push_back(i);
+	    for(int i=0;i<n_partitions();i++)
+	    {
+		auto item = item_for_partition[i];
+		if (item)
+		    partitions_for_item[*item].push_back(i);
 	    }
 	}
 };

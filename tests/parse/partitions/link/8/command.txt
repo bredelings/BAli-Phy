@@ -1,0 +1,1 @@
+--test <DATA>/5d.fasta <DATA>/5d.fasta -I 2:none --link=1,2

@@ -46,6 +46,8 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+using boost::optional;
+
 namespace fs = boost::filesystem;
 
 using namespace boost::program_options;
@@ -366,10 +368,12 @@ string parse_partitions_and_model(string s, vector<int>& partitions, int n, bool
 	value = s.substr(colon+1);
     }
 
-    // Check for bad partition numbers.
-    for(int p: partitions)
-	if (p < 1 or p > n)
-	throw myexception()<<"Partition "<<p<<" doesn't exist.";
+    // Adjust numbers from [1,n] -> [0,n-1].   Also check for bad partition numbers.
+    for(int& p: partitions)
+    {
+	if (p < 1 or p > n) throw myexception()<<"Partition "<<p<<" doesn't exist.";
+	p--;
+    }
 
     for(int i=1;i<partitions.size();i++)
 	for(int j=0;j<i;j++)
@@ -416,16 +420,16 @@ vector<vector<int>> get_link_groups(const variables_map& args, const string& key
 	}
     }
 
-    vector<int> which_link_group(n, -1);
+    vector<optional<int>> which_link_group(n);
     for(int i=0; i< link_groups.size();i++)
     {
 	for(int j: link_groups[i])
-	    if (which_link_group[j-1] != -1)
+	    if (which_link_group[j])
 		throw myexception()<<"Partition "<<i+1<<" in two --link groups with attribute '"<<key<<"':\n  '--link="
-				   <<relevant_link_group_names[which_link_group[j-1]]<<"'\n  '--link="
+				   <<relevant_link_group_names[*which_link_group[j]]<<"'\n  '--link="
 				   <<relevant_link_group_names[i]<<"'"; // both group which_link_group[j] and i.
 	    else
-		which_link_group[j-1] = i;
+		which_link_group[j] = i;
     }
     return link_groups;
 }
@@ -438,6 +442,24 @@ vector<int> mapping_from_order(const vector<int>& order, int n)
     for(int i=0;i<order.size();i++)
 	mapping[order[i]] = i;
     return mapping;
+}
+
+template<typename T>
+vector<optional<T>> compose(const vector<optional<int>>& mapping1, const vector<T>& mapping2)
+{
+    assert(mapping1.size() == mapping2.size());
+
+    vector<optional<T>> mapping3(mapping1.size(), boost::none);
+
+    for(int i=0;i<mapping3.size();i++)
+    {
+	if (not mapping1[i]) continue;
+	int j = *mapping1[i];
+	assert(j >=0 and j < mapping2.size());
+	mapping3[i] = mapping2[j];
+    }
+
+    return mapping3;
 }
 
 shared_items<string> remove_empty_partitions(const shared_items<string>& M)
@@ -460,7 +482,9 @@ shared_items<string> link_partitions(shared_items<string> M, const vector<vector
 	// 1. Complain if trying to link elements that are already in a group > 1
 	for(auto p: link_group)
 	{
-	    int group_size = M.n_partitions_for_item(M.item_for_partition[p-1]);
+	    auto item_index = M.item_for_partition[p];
+	    if (not item_index) continue;
+	    int group_size = M.n_partitions_for_item(*item_index);
 	    if (group_size > 1)
 		throw myexception()<<"Partition "<<p<<" cannot be used in --link command: already linked!";
 	}
@@ -468,8 +492,21 @@ shared_items<string> link_partitions(shared_items<string> M, const vector<vector
 	// 2. Complain if trying to link elements with different values
 	for(int i=0;i<link_group.size();i++)
 	{
-	    int p0 = link_group[0]-1;
-	    int p1 = link_group[i]-1;
+	    int p0 = link_group[0];
+	    int p1 = link_group[i];
+
+	    auto item_index0 = M.item_for_partition[p0];
+	    auto item_index1 = M.item_for_partition[p1];
+
+	    if (not item_index0 and not item_index1)
+		continue;
+
+	    if (not item_index0 and item_index1)
+		throw myexception()<<"Partitions "<<p0+1<<" and "<<p1+1<<" cannot be linked because they have differing values 'none' and '"<<M[p1]<<"'";
+		
+	    if (item_index0 and not item_index1)
+		throw myexception()<<"Partitions "<<p0+1<<" and "<<p1+1<<" cannot be linked because they have differing values '"<<M[p0]<<"' and 'none'";
+		
 	    if (M[p0] != M[p1])
 		throw myexception()<<"Partitions "<<p0+1<<" and "<<p1+1<<" cannot be linked because they have differing values '"<<M[p0]<<"' and '"<<M[p1]<<"'";
 	}
@@ -477,16 +514,21 @@ shared_items<string> link_partitions(shared_items<string> M, const vector<vector
 	// 3. Move all items into the partition of the first item.
 	for(int i=1;i<link_group.size();i++)
 	{
-	    int p0 = link_group[0]-1;
-	    int p1 = link_group[i]-1;
+	    int p0 = link_group[0];
+	    int p1 = link_group[i];
 
-	    int u0 = M.item_for_partition[p0];
-	    int u1 = M.item_for_partition[p1];
+	    auto item_index0 = M.item_for_partition[p0];
+	    auto item_index1 = M.item_for_partition[p1];
 
-	    assert(M.partitions_for_item[u1].size() == 1);
-	    M.partitions_for_item[u1].clear();
-	    M.partitions_for_item[u0].push_back(p1);
-	    M.item_for_partition[p1] = u0;
+	    assert((item_index0 and item_index1) or (not item_index0 and not item_index1));
+
+	    if (item_index0 and item_index1)
+	    {
+		assert(M.partitions_for_item[*item_index1].size() == 1);
+		M.partitions_for_item[*item_index1].clear();
+		M.partitions_for_item[*item_index0].push_back(p1);
+		M.item_for_partition[p1] = *item_index0;
+	    }
 	}
     }
 
@@ -515,7 +557,7 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
     if (args.count(key))
 	models = args[key].as<vector<string> >();
 
-    vector<int> mapping(n,-2);
+    vector<optional<int>> mapping(n,-2);
     vector<string> model_names;
 
     // If we just have --key=name, then each partition gets a separate version of 'name'
@@ -527,7 +569,7 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
 	if (partitions.size() == 0) 
 	{
 	    if (model_name == "none")
-		mapping = vector<int>(n,-1);
+		mapping = vector<optional<int>>(n);
 	    else 
 		for(int i=0;i<mapping.size();i++)
 		{
@@ -544,12 +586,13 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
 	// 1. Parse {int}+:name into partitions and model_name
 	vector<int> partitions;
 
-	int index = model_names.size();
+	optional<int> index;
 	string model_name = parse_partitions_and_model(models[i], partitions, n);
-	if (model_name == "none")
-	    index = -1;
-	else 
+	if (model_name != "none")
+	{
+	    index = model_names.size();
 	    model_names.push_back(model_name);
+	}
 
 	// 2. Check that partitions have been specified ...
 	if (partitions.size() == 0) 
@@ -567,11 +610,11 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
 	for(int j=0;j<partitions.size();j++) 
 	{
 	    // Check for partition already mapped.
-	    if (mapping[partitions[j]-1] != -2)
+	    if (mapping[partitions[j]] != -2)
 		throw myexception()<<"Trying to set '"<<key<<"' for partition "<<partitions[j]<<" twice.";
 
 	    // Map the partition to this model.
-	    mapping[partitions[j]-1] = index;
+	    mapping[partitions[j]] = index;
 	}
     }
 
