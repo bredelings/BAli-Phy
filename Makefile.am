@@ -46,7 +46,8 @@ nobase_help_DATA = help/commands/alphabet.txt \
 	help/commands/verbose.txt \
 	help/commands/seed.txt \
 	help/commands/iterations.txt \
-	help/commands/subsample.txt
+	help/commands/subsample.txt \
+	help/commands/initial-value.txt
 
 functionsdir = $(libdir)/@PACKAGE@/
 nobase_functions_DATA = functions/AA.json \
