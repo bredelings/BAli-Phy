@@ -14,7 +14,7 @@
         {
             "arg_name": "meanIndelLength",
             "arg_type": "Double",
-            "default_value": "Add[1.0,~Exponential[10]]"
+            "default_value": "Add[1,~Exponential[10]]"
         },
         {
             "arg_name": "tree",
