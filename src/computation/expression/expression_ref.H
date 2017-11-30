@@ -138,7 +138,8 @@ public:
 
     int as_int() const
 	{
-	    assert(is_int());
+	    if (not is_int())
+		throw myexception()<<"Treating '"<<*this<<"' as int!";
 	    return i;
 	}
 
@@ -149,7 +150,8 @@ public:
 
     double as_double() const
 	{
-	    assert(is_double());
+	    if (not is_double())
+		throw myexception()<<"Treating '"<<*this<<"' as double!";
 	    return d;
 	}
 
@@ -160,7 +162,8 @@ public:
 
     char as_char() const
 	{
-	    assert(is_char());
+	    if (not is_char())
+		throw myexception()<<"Treating '"<<*this<<"' as char!";
 	    return c;
 	}
 
@@ -171,7 +174,8 @@ public:
 
     log_double_t as_log_double() const
 	{
-	    assert(is_log_double());
+	    if (not is_log_double())
+		throw myexception()<<"Treating '"<<*this<<"' as log_double!";
 	    return ld;
 	}
 
@@ -182,13 +186,15 @@ public:
   
     int as_index_var() const
 	{
-	    assert(is_index_var());
+	    if (not is_index_var())
+		throw myexception()<<"Treating '"<<*this<<"' as index_var!";
 	    return i;
 	}
 
     inline const object_ptr<const Object>& ptr() const
 	{
-	    assert(is_object_type());
+	    if (not is_object_type())
+		throw myexception()<<"Treating '"<<*this<<"' as object type!";
 	    assert((bool)O);
 	    return O;
 	}
