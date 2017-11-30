@@ -81,7 +81,8 @@ void help_on_help(std::ostream& o, const map<string,string>& help)
 {
     o<<"Help topics via --help=arg are available for:\n";
     o<<"  =simple              Command-line flags and a short description.\n";
-    o<<"  =advanced            Extra command-line flags and a short description.\n\n";
+    o<<"  =advanced            Info on advanced command-line flags.\n";
+    o<<"  =expert              Info on expert flags - these might be broken!.\n\n";
     o<<"  =functions           A list of functions and result type.\n";
     o<<"  =<function name>     Function type, description, and argument names.\n\n";
     o<<"  =help                This list of topics.\n\n";
@@ -334,7 +335,8 @@ po::options_description general_options(int level)
 	    ("config,c", value<string>(),"Config file to read.");
     if (level >= 2)
 	general.add_options()
-	    ("verbose,V",value<int>()->implicit_value(1),"Print extra output in case of error.");
+	    ("verbose,V",value<int>()->implicit_value(1),"Print extra output in case of error.")
+	    ("package-path,P",value<string>(),"Directories to search for packages (':'-separated)");
     return general;
 }
 
@@ -345,14 +347,17 @@ po::options_description mcmc_options(int level)
     options_description mcmc("MCMC options");
     mcmc.add_options()
 	("iterations,i",value<long int>(),"The number of iterations to run.")
-	("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
-	("seed,s", value<unsigned long>(),"Random seed.")
 	("name,n", value<string>(),"Name for the output directory to create.")
 	;
 
     if (level >= 1)
 	mcmc.add_options()
-	    ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.")
+	    ("subsample,x",value<int>()->default_value(1),"Factor by which to subsample.")
+	    ("seed,s", value<unsigned long>(),"Random seed.")
+	    ("pre-burnin",value<int>()->default_value(3),"Iterations to refine initial tree.");
+
+    if (level >= 2)
+	mcmc.add_options()
 	    ("enable",value<string>(),"Comma-separated list of kernels to enable.")
 	    ("disable",value<string>(),"Comma-separated list of kernels to disable.")
 	    ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.");
@@ -393,8 +398,12 @@ po::options_description parameters_options(int level)
     options_description parameters("Parameter options");
     parameters.add_options()
 	("align", value<vector<string> >()->composing(),"Sequence file & initial alignment.")
-	("tree,T",value<string>(),"File with initial tree")
-	;
+	("tree,T",value<string>(),"File with initial tree");
+
+    if (level >= 1)
+	parameters.add_options()
+	    ("unalign,U","Unalign sequences (if variable-A)");
+
     return parameters;
 }
 
@@ -411,6 +420,10 @@ po::options_description model_options(int level)
 	("branch-length,B",value<string>(),"Prior on branch lengths.")
 	("link,L",value<vector<string>>()->composing(),"Link partitions.")
 	;
+    if (level >= 2)
+	model.add_options()
+	    ("model,m",value<string>(),"File containing hierarchical model.")
+	    ("Model,M",value<string>(),"Module containing hierarchical model.");
     return model;
 }
 
@@ -420,13 +433,9 @@ po::options_description advanced_options()
 
     options_description advanced("Advanced options");
     advanced.add_options()
-	("unalign,U","Unalign sequences (if variable-A)")
 	("unalign-all","Unalign sequences")
-	("package-path,P",value<string>(),"Directories to search for packages (':'-separated)")
 	("set",value<vector<string> >()->composing(),"Set key=<value>")
 	("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>")
-	("model,m",value<string>(),"File containing hierarchical model.")
-	("Model,M",value<string>(),"Module containing hierarchical model.")
 	("test-module",value<string>(),"Parse and optimize the given module")
 	("likelihood-calculators",value<string>(),"comma-separated integers")
 	;
@@ -452,25 +461,17 @@ variables_map parse_cmd_line(int argc,char* argv[])
 { 
     using namespace po;
 
-    auto general = general_options(3);
-
-    auto mcmc = mcmc_options(0);
-
-    auto parameters = parameters_options(0);
-
-    auto optimization = haskell_optimization();
-
-    auto model = model_options(0);
+    options_description all("Developer options - some may not work!");
+    all.add(general_options(3)).add(mcmc_options(3)).add(parameters_options(3)).add(model_options(3)).add(advanced_options()).add(haskell_optimization()).add(developer_options());
     
-    auto advanced = advanced_options();
-
-    auto developer = developer_options();
+    options_description expert("Expert options - some may not work!");
+    expert.add(general_options(2)).add(mcmc_options(2)).add(parameters_options(2)).add(model_options(2)).add(advanced_options());
     
-    options_description all("Advanced options");
-    all.add(general).add(mcmc).add(parameters).add(model).add(advanced).add(optimization).add(developer);
+    options_description advanced("Advanced options");
+    advanced.add(general_options(1)).add(mcmc_options(1)).add(parameters_options(1)).add(model_options(1));
     
-    options_description some("Simple options");
-    some.add(general).add(mcmc).add(parameters).add(model);
+    options_description simple("Simple options");
+    simple.add(general_options(0)).add(mcmc_options(0)).add(parameters_options(0)).add(model_options(0));
 
     // positional options
     positional_options_description p;
@@ -495,11 +496,25 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	if (topic == "simple")
 	{
 	    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
-	    cout<<some<<"\n";
+	    cout<<simple<<"\n";
 	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
 	    exit(0);
 	}
-	if (topic == "advanced")
+	else if (topic == "advanced")
+	{
+	    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
+	    cout<<advanced<<"\n";
+	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
+	    exit(0);
+	}
+	else if (topic == "expert")
+	{
+	    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
+	    cout<<expert<<"\n";
+	    cout<<"Try --help=help for a list of topics to ask for help on.\n\n";
+	    exit(0);
+	}
+	else if (topic == "developer")
 	{
 	    cout<<"Usage: bali-phy <sequence-file1> [<sequence-file2> [OPTIONS]]\n";
 	    cout<<all<<"\n";
