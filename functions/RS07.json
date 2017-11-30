@@ -1,7 +1,8 @@
 {
     "name": "RS07",
     "result_type": "IndelModel",
-    "constraints": "Redelings & Suchard (2007) model of insertions and deletions.",
+    "title": "Redelings & Suchard (2007) model of insertions and deletions.",
+    "citation": "Redelings & Suchard (2007)",
     "call": "IModel.rs07[logLambda,meanIndelLength,tree]",
     "args": [
         {
