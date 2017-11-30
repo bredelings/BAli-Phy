@@ -486,7 +486,7 @@ shared_items<string> link_partitions(shared_items<string> M, const vector<vector
 	    if (not item_index) continue;
 	    int group_size = M.n_partitions_for_item(*item_index);
 	    if (group_size > 1)
-		throw myexception()<<"Partition "<<p<<" cannot be used in --link command: already linked!";
+		throw myexception()<<"Partition "<<p+1<<" cannot be used in --link command: already linked!";
 	}
 
 	// 2. Complain if trying to link elements with different values
@@ -611,7 +611,7 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
 	{
 	    // Check for partition already mapped.
 	    if (mapping[partitions[j]] != -2)
-		throw myexception()<<"Trying to set '"<<key<<"' for partition "<<partitions[j]<<" twice.";
+		throw myexception()<<"Trying to set '"<<key<<"' for partition "<<partitions[j]+1<<" twice.";
 
 	    // Map the partition to this model.
 	    mapping[partitions[j]] = index;

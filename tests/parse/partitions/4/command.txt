@@ -1,0 +1,1 @@
+--test <DATA>/rna.fasta <DATA>/dna.fasta --smodel=2:TN --smodel=2:TN
