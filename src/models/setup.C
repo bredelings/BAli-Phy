@@ -479,7 +479,7 @@ model_t get_model(const Rules& R, const ptree& type, const std::set<term_t>& con
     // --------- Convert model to MultiMixtureModel ------------//
     expression_ref full_model = get_model_as(R, type, model_rep, scope);
 
-    if (log_verbose)
+    if (log_verbose >= 2)
 	std::cout<<"full_model = "<<full_model<<std::endl;
 
     return {model_rep, type, constraints, full_model};
@@ -504,7 +504,9 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
     {
 	std::cout<<"model = "<<unparse(model_rep)<<std::endl;
 	std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
-	std::cout<<show(equations)<<std::endl;
+	if (log_verbose >= 2)
+	    std::cout<<"equations = "<<show(equations)<<std::endl;
+	std::cerr<<std::endl;
     }
 
     set<string> names_in_scope;
