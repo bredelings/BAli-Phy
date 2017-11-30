@@ -1,7 +1,7 @@
 {
     "name": "M0",
     "result_type": "ExchangeModel[Codon[a,b]]",
-    "constraints": "Nucleotides[a],AminoAcids[b]",
+    "constraints": ["Nucleotides[a]","AminoAcids[b]"],
     "title": "The Yang & Nielsen (2000) model of dN\/dS",
     "call": "SModel.m0[A,submodel,omega]",
     "args": [

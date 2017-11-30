@@ -2,7 +2,7 @@
     "name": "HKY",
     "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
     "result_type": "ExchangeModel[a]",
-    "constraints": "Nucleotides[a]",
+    "constraints": ["Nucleotides[a]"],
     "citation":{"type":
 		"article",
 		"title": "Dating of the human-ape splitting by a molecular clock of mitochondrial DNA",

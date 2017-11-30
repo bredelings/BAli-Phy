@@ -114,12 +114,14 @@ namespace fs = boost::filesystem;
 ptree parse(const Rules&, const string& s);
 ptree parse_type(const string& s);
 
-ptree parse_constraints(const string& s)
+ptree parse_constraints(const ptree& cc)
 {
-    vector<string> ss = split(s,',');
     ptree constraints;
-    for(auto& c: ss)
-	constraints.push_back({"", parse_type(c)});
+    for(auto& c: cc)
+    {
+	string s = c.second.get_value<string>();
+	constraints.push_back({"", parse_type(s)});
+    }
     return constraints;
 }
 
@@ -135,7 +137,7 @@ ptree convert_rule(const Rules& R, Rule rule)
 	if (not rule.get_child_optional("constraints"))
 	    rule.push_back({"constraints",ptree()});
 	ptree& constraints = rule.get_child("constraints");
-	constraints = parse_constraints(constraints.get_value<string>());
+	constraints = parse_constraints(constraints);
     }
 
     {

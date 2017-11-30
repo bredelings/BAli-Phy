@@ -1,7 +1,7 @@
 {
     "name": "K80",
     "result_type": "RA[a]",
-    "constraints": "Nucleotides[a]",
+    "constraints": ["Nucleotides[a]"],
     "call": "SModel.k80[kappa,A]",
     "args": [
         {
