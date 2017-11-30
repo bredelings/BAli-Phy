@@ -1464,7 +1464,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     assert(like_calcs.size() == A.size());
     for(int i=0;i<A.size();i++)
     {
-	if (imodel_index_for_partition(i) == -1 and allow_compression)
+	if (not imodel_index_for_partition(i) and allow_compression)
 	{
 	    // construct compressed alignment, counts, and mapping
 	    vector<int> counts;
@@ -1479,7 +1479,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	{
 	    auto counts = vector<int>(A[i].length(), 1);
 	    PC->DPC.emplace_back(this, i, A[i], counts, like_calcs[i]);
-	    if (imodel_index_for_partition(i) == -1)
+	    if (not imodel_index_for_partition(i))
 		get_data_partition(i).set_alignment(A[i]);
 	}
     }
