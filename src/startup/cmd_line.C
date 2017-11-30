@@ -404,11 +404,7 @@ po::options_description parameters_options(int level)
 
     if (level >= 1)
 	parameters.add_options()
-	    ("unalign,U","Unalign sequences (if variable-A)");
-
-    if (level >= 2)
-	parameters.add_options()
-	    ("unalign-all","Unalign sequences");
+	    ("unalign,U","Unalign sequences if variable-A");
 
     return parameters;
 }

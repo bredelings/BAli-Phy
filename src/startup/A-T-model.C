@@ -579,9 +579,8 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     }
 
     bool unalign = args.count("unalign");
-    bool unalign_all = args.count("unalign-all");
     for(int i=0;i<A.size();i++)
-	if (unalign_all or (unalign and imodel_mapping[i] != -1))
+	if (unalign and imodel_mapping[i] != -1)
 	    if (likelihood_calculators[i] != 0)
 		throw myexception()<<"Can't unalign with calculator "<<likelihood_calculators[i]<<"!";
     
@@ -593,7 +592,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 
     //-------- Set the alignments for variable partitions ---------//
     for(int i=0;i<P.n_data_partitions();i++)
-	if (not unalign_all and not unalign and P.get_data_partition(i).has_IModel())
+	if (not unalign and P.get_data_partition(i).has_IModel())
 	    P.get_data_partition(i).set_alignment(A[i]);
 
     // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
