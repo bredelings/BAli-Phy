@@ -182,43 +182,37 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 {
     auto name = model.get_value<string>();
 
+    type_t result_type;
     if (can_be_converted_to<int>(name))
     {
 	assert(model.empty());
-	if (required_type.get_value<string>() == "Double") return {};
-
-	// PROBLEM -- parsing 5 of type a, we should try both a=Int and a=Double, but we only try a=Int
-	auto E = unify(required_type, ptree("Int"));
-	if (not E)
-	    throw myexception()<<"Can't convert '"<<name<<"' to type '"<<unparse_type(required_type)<<"'";
-	return E;
+	result_type=type_t("Int");
     }
-
-    if (can_be_converted_to<double>(name))
+    else if (can_be_converted_to<double>(name))
     {
 	assert(model.empty());
-
-	auto E = unify(required_type, ptree("Double"));
-	if (not E)
-	    throw myexception()<<"Can't convert '"<<name<<"' to type '"<<unparse_type(required_type)<<"'";
-	return E;
+	result_type=type_t("Double");
     }
-
-    if (name.size()>=2 and name[0] == '"' and name.back() == '"' and required_type.get_value<string>() == "String") 
+    else if (name.size()>=2 and name[0] == '"' and name.back() == '"' and required_type.get_value<string>() == "String") 
     {
 	assert(model.empty());
-	return {};
+	result_type=type_t("String");
     }
 
-    if (auto type = find_in_scope(name, scope))
+    else if (auto type = find_in_scope(name, scope))
     {
-	auto E = unify(*type, required_type);
+	result_type = *type;
+    }
+
+    if (result_type.get_value<string>() != "")
+    {
+	auto E = unify(result_type, required_type);
 	if (not E)
 	{
-	    if (convertible_to(model, *type, required_type))
+	    if (convertible_to(model, result_type, required_type))
 		return pass2(R, required_type, model, bound_vars, scope);
 	    else
-		throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(*type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
+		throw myexception()<<"Term '"<<model.get_value<string>()<<"' of type '"<<unparse_type(result_type)<<"' cannot be converted to type '"<<unparse_type(required_type)<<"'";
 	}
 	return E;
     }
@@ -236,7 +230,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     //	std::cout<<"name = "<<name<<" required_type = "<<unparse_type(required_type)<<"  result_type = "<<unparse_type(result_type)<<std::endl;
 
     // 2. Unify required type with rule result type
-    type_t result_type = rule.get_child("result_type");
+    result_type = rule.get_child("result_type");
     auto E = unify(result_type, required_type);
 
     for(const auto& constraint: rule.get_child("constraints"))
