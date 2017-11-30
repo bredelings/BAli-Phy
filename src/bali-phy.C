@@ -194,7 +194,7 @@ void show_ending_messages(bool show_only)
 {
     using namespace chrono;
 
-    if (not show_only or log_verbose) {
+    if (not show_only or log_verbose >=2) {
 
 	extern long total_reductions;
 	extern long total_changeable_eval;
