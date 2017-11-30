@@ -183,10 +183,11 @@ namespace MCMC {
     {
 	assert(i < order.size());
 
-#ifndef NDEBUG
-	clog<<" move = "<<name<<endl;
-	clog<<"   submove = "<<moves[order[i]]->name<<endl;
-#endif
+	if (log_verbose >= 3)
+	{
+	    clog<<" move = "<<name<<endl;
+	    clog<<"   submove = "<<moves[order[i]]->name<<endl;
+	}
 
 	try {
 	    moves[order[i]]->iterate(P,Stats,suborder[i]);
@@ -305,9 +306,7 @@ namespace MCMC {
 
     void SingleMove::iterate(owned_ptr<Model>& P,MoveStats& Stats,int) 
     {
-#ifndef NDEBUG
-	clog<<" [single] move = "<<name<<endl;
-#endif
+	if (log_verbose >= 3) clog<<" [single] move = "<<name<<endl;
 
 	iterations++;
 	try {
@@ -330,9 +329,7 @@ namespace MCMC {
 
     void MH_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int) 
     {
-#ifndef NDEBUG
-	clog<<" [MH] move = "<<name<<endl;
-#endif
+	if (log_verbose >= 3) clog<<" [MH] move = "<<name<<endl;
 
 	iterations++;
 
@@ -360,15 +357,16 @@ namespace MCMC {
 	}
 	Result result(n);
 
-#ifndef NDEBUG
-	show_parameters(std::cerr,*P);
-	std::cerr<<P->probability()<<" = "<<P->likelihood()<<" + "<<P->prior()<<endl;
-	std::cerr<<endl;
+	if (log_verbose >= 3)
+	{
+	    show_parameters(std::cerr,*P);
+	    std::cerr<<P->probability()<<" = "<<P->likelihood()<<" + "<<P->prior()<<endl;
+	    std::cerr<<endl;
 
-	show_parameters(std::cerr,*P2);
-	std::cerr<<P2->probability()<<" = "<<P2->likelihood()<<" + "<<P2->prior();
-	std::cerr<<endl<<endl;
-#endif
+	    show_parameters(std::cerr,*P2);
+	    std::cerr<<P2->probability()<<" = "<<P2->likelihood()<<" + "<<P2->prior();
+	    std::cerr<<endl<<endl;
+	}
 
 #ifndef NDEBUG
 	// Check that we have not strayed outside the bounds.
@@ -421,18 +419,18 @@ namespace MCMC {
 
     double Slice_Move::sample(Model& P, slice_function& slice_levels, double v1)
     {
-#ifndef NDEBUG
-	clog<<" [Slice] move = "<<name<<endl;
-#endif
+	if (log_verbose >= 3) clog<<" [Slice] move = "<<name<<endl;
 
 	iterations++;
 
 	//------------- Find new value --------------//
-#ifndef NDEBUG
-	show_parameters(std::cerr,P);
-	std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
-	std::cerr<<endl<<endl;
-#endif
+	if (log_verbose >= 3)
+	{
+	    show_parameters(std::cerr,P);
+	    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+	    std::cerr<<endl<<endl;
+	}
+
 	double transformed_v1 = transform(v1);
 	double transformed_v2 = slice_sample(transformed_v1,slice_levels,W,100);
 	double v2 = inverse(transformed_v2);
@@ -447,11 +445,13 @@ namespace MCMC {
 		W = 0.95*W + 0.05*W_predicted;
 	}
 
-#ifndef NDEBUG
-	show_parameters(std::cerr,P);
-	std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
-	std::cerr<<endl<<endl;
-#endif
+	if (log_verbose >= 3)
+	{
+	    show_parameters(std::cerr,P);
+	    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
+	    std::cerr<<endl<<endl;
+	}
+
 	return v2;
     }
 
@@ -562,9 +562,7 @@ namespace MCMC {
 
     void Modifiable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
     {
-#ifndef NDEBUG
-	clog<<" [modifiable slice] move = "<<m_index<<endl;
-#endif
+	if (log_verbose >= 3) clog<<" [modifiable slice] move = "<<m_index<<endl;
 
 	double v1 = P->get_modifiable_value(m_index).as_double();
 
@@ -606,9 +604,7 @@ namespace MCMC {
 
     void Integer_Modifiable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
     {
-#ifndef NDEBUG
-	clog<<" [integer modifiable slice] move = "<<m_index<<endl;
-#endif
+	if (log_verbose >= 3) clog<<" [integer modifiable slice] move = "<<m_index<<endl;
 
 	int v1 = P->get_modifiable_value(m_index).as_int();
 	double x1 = double(v1)+uniform();
@@ -651,9 +647,8 @@ namespace MCMC {
 
     void Dirichlet_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
     {
-#ifndef NDEBUG
-	clog<<" [dirichlet slice] move"<<endl;
-#endif
+	if (log_verbose >= 3) clog<<" [dirichlet slice] move"<<endl;
+
 	double v1 = P->get_parameter_value(indices[n]).as_double();
 	constant_sum_slice_function slice_levels_function(*P,indices,n);
 
@@ -676,9 +671,8 @@ namespace MCMC {
 
     void Dirichlet_Modifiable_Slice_Move::iterate(owned_ptr<Model>& P,MoveStats& Stats,int)
     {
-#ifndef NDEBUG
-	clog<<" [dirichlet modifiable slice] move"<<endl;
-#endif
+	if (log_verbose >= 3) clog<<" [dirichlet modifiable slice] move"<<endl;
+
 	double v1 = P->get_modifiable_value(indices[n]).as_double();
 	constant_sum_modifiable_slice_function slice_levels_function(*P,indices,n);
 
@@ -701,9 +695,8 @@ namespace MCMC {
 
     void Scale_Means_Only_Slice_Move::iterate(owned_ptr<Model>& P, MoveStats& Stats,int)
     {
-#ifndef NDEBUG
-	clog<<" [scale means only slice] move"<<endl;
-#endif
+	if (log_verbose >= 3) clog<<" [scale means only slice] move"<<endl;
+
 	Parameters& PP = *P.as<Parameters>();
 	// If any of the branch means are fixed, this won't work.
 
@@ -773,9 +766,8 @@ namespace MCMC {
 
     void IOMove::iterate(owned_ptr<Model>& P, MoveStats& /* M */, int)
     {
-#ifndef NDEBUG
-	clog<<" [IO Move] move = "<<head<<endl;
-#endif
+	if (log_verbose >= 3) clog<<" [IO Move] move = "<<head<<endl;
+
 	P->perform_transition_kernel(head);
     }
 
@@ -882,9 +874,7 @@ namespace MCMC {
 
     void MoveArgSingle::operator()(owned_ptr<Model>& P,MoveStats& Stats,int arg) 
     {
-#ifndef NDEBUG
-	clog<<" [single] move = "<<name<<endl;
-#endif
+	if (log_verbose >= 3) clog<<" [single] move = "<<name<<endl;
 
 	iterations++;
 	try {
@@ -1126,7 +1116,7 @@ namespace MCMC {
 #endif
 
 
-    void mcmc_log(long iterations, long /* max_iter*/, int subsample, Model& P, ostream& s_out, 
+    void mcmc_log(long iterations, long /* max_iter*/, int /*subsample*/, Model& P, ostream& s_out, 
 		  const MoveStats& /* S */, vector<Logger>& loggers)
     {
 	s_out<<"iterations = "<<iterations<<"\n";
