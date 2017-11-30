@@ -1,7 +1,7 @@
 {
     "name": "MG94",
     "result_type": "FrequencyModel[Codon[a,b]]",
-    "constraints": "The Muse & Gaut (1994) model of codon substitution.",
+    "title": "The Muse & Gaut (1994) model of codon substitution.",
     "call": "SModel.mg94'[pi,A]",
     "args": [
         {
