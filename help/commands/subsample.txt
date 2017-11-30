@@ -1,0 +1,25 @@
+The --subsample command:
+
+-x          <number>                        Factor by which to subsample.
+--subsample <number>
+
+This option should usually not be used.  BAli-Phy performs more
+work per iteration than some other software, so each sample
+contains new information.  Subsampling is also mathematically
+never necessary for correctness, and it can decrease accuracy
+by throwing away information.  However, subsampling is sometimes
+necessary to save disk space or processing time for large log files.
+
+While numeric samples (C1.log) and tree sample (C1.trees) are
+written every <number> iterations, alignments (C1.P1.fastas)
+are written every <number>*10 iterations to save disk space.
+
+Examples:
+
+  # Keep every 3rd sample in C1.log
+  bali-phy dna.fasta -x3
+
+  # Keep every sample (the default)
+  bali-phy dna.fasta -x1
+
+See help on 'iterations'.

@@ -3,6 +3,12 @@ The --iterations command:
 -i           <number>                       Number of MCMC iterations.
 --iterations <number>
 
+BAli-Phy resamples every parameter and every pairwise alignment
+during each iteration, as well as perform an NNI topology
+proposal across each internal branch.  BAli-Phy are therefore
+much lower than some other software, because BAli-Phy does more
+work per iteration.
+
 BAli-phy doesn't use a stopping rule, so you need to diagnose
 convergence and stop bali-phy yourself.
 
