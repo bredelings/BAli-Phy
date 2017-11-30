@@ -503,7 +503,7 @@ int main(int argc,char* argv[])
 	}
 	else 
 	{
-	    raise_cpu_limit(err_both);
+	    raise_cpu_limit(out_both);
 
 	    block_signals();
 

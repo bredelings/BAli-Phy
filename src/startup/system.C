@@ -36,8 +36,7 @@ void raise_cpu_limit(ostream& o)
 
   getrlimit(RLIMIT_CPU,&limits);
 
-  if (log_verbose) {
-    o<<endl;
+  if (log_verbose >= 1) {
     o<<"OLD cpu time limits = "<<rlim_minutes(limits.rlim_cur)<<" / "<<rlim_minutes(limits.rlim_max)<<endl;
   }
 
@@ -46,8 +45,11 @@ void raise_cpu_limit(ostream& o)
   setrlimit(RLIMIT_CPU,&limits);
   getrlimit(RLIMIT_CPU,&limits);
 
-  if (log_verbose)
+  if (log_verbose >= 1)
+  {
     o<<"NEW cpu time limits = "<<rlim_minutes(limits.rlim_cur)<<" / "<<rlim_minutes(limits.rlim_max)<<endl;
+    o<<endl;
+  }
 }
 #else
 void raise_cpu_limit(ostream& o) 
