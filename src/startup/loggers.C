@@ -238,6 +238,8 @@ string table_logger_line(MCMC::TableFunction<string>& TF, const Model& M, long t
 
 vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
 {
+    // FIXME - avoid the need to manually SubSampleFunction to every logger?
+
     using namespace MCMC;
     vector<Logger> loggers;
 
@@ -251,7 +253,7 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 
     auto TF3 = [TL](const Model& M, long t) mutable { return table_logger_line(*TL,M,t); };
 
-    Logger s = FunctionLogger(base +".log", Subsample_Function(TF,subsample));
+    Logger s = FunctionLogger(base +".log", Subsample_Function(TF, subsample));
   
     // Write out scalar numerical variables (and functions of them) to C<>.p
     loggers.push_back( s );
@@ -259,7 +261,7 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
     if (not P) return loggers;
 
     // Write out the (scaled) tree each iteration to C<>.trees
-    loggers.push_back( FunctionLogger(base + ".trees", TreeFunction()<<"\n" ) );
+    loggers.push_back( FunctionLogger(base + ".trees", Subsample_Function(TreeFunction()<<"\n", subsample) ) );
   
     // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
     {
@@ -278,7 +280,7 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
     if (P->contains_key("log-categories"))
 	for(int i=0;i<P->n_data_partitions();i++)
 	    loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
-					      Mixture_Components_Function(i) ) );
+					      Subsample_Function(Mixture_Components_Function(i),subsample) ) );
 
     // Write out the alignments for each (variable) partition to C<>.P<>.fastas
     if (P->t().n_nodes() > 1)
@@ -293,7 +295,7 @@ vector<MCMC::Logger> construct_loggers(owned_ptr<Model>& M, int subsample, const
 		F<<Ancestral_Sequences_Function(i);
 //		F<<AlignmentFunction(i);
 		
-		loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10) ) );
+		loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10*subsample) ) );
 	    }
 
     return loggers;
