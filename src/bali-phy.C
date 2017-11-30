@@ -158,10 +158,14 @@ void set_initial_parameter_values(Model& M, const variables_map& args)
 	}
 
 	int p_index = M.find_parameter(name);
+
 	if (p_index == -1)
 	    p_index = find_index(short_names,name);
 	if (p_index == -1)
 	    throw myexception()<<"Can't find parameter '"<<name<<"' to set value '"<<parse[1]<<"'";
+
+	if (not M.parameter_is_modifiable(p_index))
+	    throw myexception()<<"Can't set parameter value of '"<<name<<"' - it is not directly modifiable.";
 
 	M.set_parameter_value(p_index,value);
     }
@@ -485,8 +489,7 @@ int main(int argc,char* argv[])
 		P->branch_scale(i, 1.0);
 	}
 
-//      FIXME - With lots of tree nodes, this explodes in short_parameter_names( )
-//	set_initial_parameter_values(*M,args);
+	set_initial_parameter_values(*M,args);
 
 	//---------------Do something------------------//
 	vector<string> Rao_Blackwellize;
