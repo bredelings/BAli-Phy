@@ -504,8 +504,7 @@ model_t get_model(const Rules& R, const string& type, const string& model, const
     {
 	std::cout<<"model = "<<unparse(model_rep)<<std::endl;
 	std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
-	if (log_verbose >= 2)
-	    std::cout<<"equations = "<<show(equations)<<std::endl;
+	std::cout<<"equations: "<<show(equations)<<std::endl;
 	std::cout<<"structure = "<<show(model_rep)<<std::endl;
 	std::cout<<std::endl;
     }
