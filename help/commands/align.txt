@@ -1,6 +1,6 @@
-The --align command:                        Sequence data.
+The --align command:
 
---align <file>
+--align <file>                              Sequence data.
 
 Specify a collection of sequences to align in FASTA format.
 If this option is given multiple times, each FASTA file should
