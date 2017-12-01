@@ -1,0 +1,31 @@
+The --disable command:
+
+--disable <moves>                           Disable MCMC moves.
+
+Disable some MCMC moves, provided as a comma-separated list.
+This can be useful to hold the tree fixed.
+
+A hierarchy of MCMC moves, along with whether they are enabled
+or disabled, is displayed in the file "C1.out". 
+These moves can be enabled or disabled by name or attribute.
+
+MCMC moves have attributes that be used to disable them:
+  * topology:         changes the topology
+  * lengths:          changes the branch lengths
+  * alignment:        changes the alignment
+  * alignment_branch: change the alignment of leaf sequences
+This allows one to fix the topology by writine --disable=topology
+
+Examples:
+
+  # Fix the topology
+  bali-phy dna.fasta --tree=newick.tree --disable=topology
+
+  # Fix the topology and *relative* branch lengths
+  bali-phy dna.fasta --tree=newick.tree --disable=tree
+
+  # Fix the topology and branch lengths
+  bali-phy dna.fasta --tree=newick.tree --disable=tree --scale=1
+
+  # Disable SPR
+  bali-phy dna.fasta --disable=SPR
