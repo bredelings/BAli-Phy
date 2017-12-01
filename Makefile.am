@@ -50,6 +50,7 @@ nobase_help_DATA = help/commands/alphabet.txt \
 	help/commands/initial-value.txt \
 	help/commands/package-path.txt \
 	help/commands/align.txt \
+	help/commands/pre-burnin.txt \
 	help/commands/set.txt
 
 

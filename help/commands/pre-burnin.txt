@@ -1,0 +1,31 @@
+The --pre-burnin command:
+
+--pre-burnin <number>                       Number of pre-burnin iterations.
+
+BAli-Phy performs a few iterations of MCMC to estimate the
+tree only before starting full MCMC inference of alignment,
+tree, and parameters.  If the initial alignment is good
+but the initial tree is bad, MCMC may unalign all the sequences
+and lose the good alignment.  Estimating the tree before
+allowing the alignment to vary avoids this situation.
+
+The pre-burnin consists of a few stages:
+1. Estimate the scale-factor for each partition.
+2. Estimate the tree using an SPR for each branch.
+3. Estimate the tree using an NNI for each branch.
+
+The second stage can be quite slow for large trees.  BAli-Phy
+performs <number> iterations of SPR, with a default of 3.
+
+Specifying a value of 0 disables pre-burnin.
+
+Examples:
+
+  # The default.
+  bali-phy dna.fasta --pre-burnin=3
+
+  # Only do one round of SPR.
+  bali-phy dna.fasta --pre-burnin=1
+
+  # Disable pre-burnin
+  bali-phy dna.fasta --pre-burnin=0
