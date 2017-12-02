@@ -405,10 +405,8 @@ int reg_heap::find_parameter_modifiable_reg(int index)
     if (R != R2)
 	parameters[index].second = R2;
 
-#ifndef NDEBUG
     if (not is_modifiable(access(R2).C.exp))
 	throw myexception()<<"Parameter is not a modifiable!  Instead its value is '"<<access(R2).C.exp<<"'";
-#endif
 
     assert(R2>0);
     return R2;
