@@ -53,7 +53,8 @@ nobase_help_DATA = help/commands/alphabet.txt \
 	help/commands/pre-burnin.txt \
 	help/commands/disable.txt \
 	help/commands/enable.txt \
-	help/commands/set.txt
+	help/commands/set.txt \
+	help/commands/Rao-Blackwellize.txt
 
 
 functionsdir = $(libdir)/@PACKAGE@/
