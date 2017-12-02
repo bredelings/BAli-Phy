@@ -170,9 +170,13 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	TL->add_fields( ConvertTableToStringFunction<expression_ref>( T2 ) );
     }
 
+    vector<string> short_names = short_parameter_names(*M);
     for(const auto& p: Rao_Blackwellize)
     {
 	int p_index = M->find_parameter(p);
+	if (p_index == -1)
+	    p_index = find_index(short_names, p);
+
 	if (p_index == -1)
 	    throw myexception()<<"No such parameter '"<<p<<"' to Rao-Blackwellize";
 
