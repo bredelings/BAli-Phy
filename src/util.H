@@ -48,7 +48,7 @@ std::string demangle(const std::string&);
 #endif
 
 template <class T>
-boost::optional<T> can_be_converted_to(const std::string& s) 
+boost::optional<T> can_be_converted_to(const std::string& s)
 { 
     std::istringstream i(s);
     T t;
