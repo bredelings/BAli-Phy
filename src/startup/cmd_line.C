@@ -87,7 +87,7 @@ void help_on_help(std::ostream& o, const map<string,string>& help)
     o<<"  =<function name>     Function type, description, and argument names.\n\n";
     o<<"  =help                This list of topics.\n\n";
     for(auto& x: help)
-	o<<"  ="<<pad(x.first,15)<<"     "<<get_topic_from_string(x.second)<<"\n";
+	o<<"  ="<<pad(x.first,18)<<"  "<<get_topic_from_string(x.second)<<"\n";
     o<<"\n";
 }
 
