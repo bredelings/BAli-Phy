@@ -262,9 +262,13 @@ namespace MCMC {
 	vector<log_double_t> Prs;
 	log_double_t total = 0;
 
-	// Record probabilities
+	auto cur_value = M.get_parameter_value(parameter);
+
+        // Record probabilities
 	for(const auto& v: values)
 	{
+	    if (v.type() != cur_value.type())
+		throw myexception()<<"Rao-Blackwellization: Trying to set parameter with value '"<<cur_value<<"' to '"<<v<<"'";
 	    M2->set_parameter_value(parameter, v);
 	    log_double_t Pr = M2->probability();
 	    total += Pr;

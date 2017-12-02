@@ -179,6 +179,9 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 
 	if (p_index)
 	{
+	    if (not M->parameter_is_modifiable(*p_index))
+		throw myexception()<<"Can't Rao-Blackwellize parameter '"<<p<<"': not directly modifiable!";
+
 	    vector<expression_ref> values = {0,1};
 	    TL->add_field("RB-"+p, Get_Rao_Blackwellized_Parameter_Function(*p_index, values));
 	}
