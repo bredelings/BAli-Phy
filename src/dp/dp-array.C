@@ -187,9 +187,8 @@ log_double_t DParrayConstrained::path_P(const vector<int>& g_path) const
     }
 
     int state1 = g_path[l-1];
-    int s1 = find_index(states(i),state1);
-    assert(s1 != -1);
-    double p = choose_P(s1,transition);
+    auto s1 = find_index(states(i),state1);
+    double p = choose_P(*s1,transition);
     assert(p > 0.0);
 
     if (di(state1)) i--;

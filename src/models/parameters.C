@@ -787,17 +787,17 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     for(int b=0;b<T.n_branches();b++)
     {
 	string name = "*T"+convertToString(b+1);
-	int index = p->find_parameter(name);
+	auto index = p->maybe_find_parameter(name);
 
-	if (index == -1)
+	if (not index)
 	    throw myexception()<<"Branch "<<b<<": no branch length parameter "<<name<<"!";
 
-	if (not p->parameter_is_modifiable(index))
+	if (not p->parameter_is_modifiable(*index))
 	    throw myexception()<<"Branch "<<b<<": branch length parameter "<<name<<" is not modifiable!";
 
-	branch_length_parameters.push_back(index);
+	branch_length_parameters.push_back(*index);
 	const context* c = p;
-	const_cast<context*>(c)->set_parameter_value(index, T.branch(b).length());
+	const_cast<context*>(c)->set_parameter_value(*index, T.branch(b).length());
     }
 }
 

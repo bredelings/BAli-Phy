@@ -510,10 +510,10 @@ Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vecto
     :proposal(p),
      pnames(v)
 {
-    int index = P.find_parameter(s);
-    if (index == -1)
+    auto index = P.maybe_find_parameter(s);
+    if (not index)
 	throw myexception()<<"Model has no parameter called '"<<s<<"' - can't create proposal for it.";
-    indices.push_back(index);
+    indices.push_back(*index);
 }
 
 
@@ -523,10 +523,10 @@ Proposal2::Proposal2(const Proposal_Fn& p,const vector<std::string>& s, const st
      pnames(v)
 {
     for(int i=0;i<s.size();i++) {
-	int index = P.find_parameter(s[i]);
-	if (index == -1)
+	auto index = P.maybe_find_parameter(s[i]);
+	if (not index)
 	    throw myexception()<<"Model has no parameter called '"<<s[i]<<"' - can't create proposal for it.";
-	indices.push_back(index);
+	indices.push_back(*index);
     }
 }
 

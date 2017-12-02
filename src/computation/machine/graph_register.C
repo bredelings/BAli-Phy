@@ -12,6 +12,8 @@ using std::pair;
 using std::cerr;
 using std::endl;
 
+using boost::optional;
+
 long total_reg_allocations = 0;
 long total_step_allocations = 0;
 long total_comp_allocations = 0;
@@ -394,7 +396,7 @@ bool reg_heap::parameter_is_modifiable(int index)
     return is_modifiable(access(R2).C.exp);
 }
 
-int reg_heap::find_parameter_modifiable_reg(int index)
+optional<int> reg_heap::find_parameter_modifiable_reg(int index)
 {
     assert(index >= 0);
 
@@ -414,7 +416,7 @@ int reg_heap::find_parameter_modifiable_reg(int index)
 
 const expression_ref reg_heap::get_parameter_range(int c, int p)
 {
-    return get_range_for_reg(c, find_parameter_modifiable_reg(p));
+    return get_range_for_reg(c, *find_parameter_modifiable_reg(p));
 }
 
 const expression_ref reg_heap::get_range_for_reg(int c, int r)
@@ -1387,13 +1389,21 @@ vector<int>& reg_heap::get_scratch_list() const
     return v;
 }
 
-int reg_heap::find_parameter(const string& s) const
+optional<int> reg_heap::maybe_find_parameter(const string& s) const
 {
     for(int i=0;i<parameters.size();i++)
 	if (parameters[i].first == s)
 	    return i;
 
-    return -1;
+    return boost::none;
+}
+
+int reg_heap::find_parameter(const string& s) const
+{
+    auto index = maybe_find_parameter(s);
+    if (not index)
+	throw myexception()<<"Can't find parameter '"<<s<<"'!";
+    return *index;
 }
 
 const vector<int>& reg_heap::transition_kernels() const

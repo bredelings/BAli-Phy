@@ -156,17 +156,17 @@ int main(int argc,char* argv[])
 	    dynamic_bitset<> mask(T.n_leaves());
 	    dynamic_bitset<> group1(T.n_leaves());
 
-	    int separator = find_index(taxa,string("|"));
-	    if (separator == -1)
+	    auto separator = find_index(taxa,string("|"));
+	    if (not separator)
 		throw myexception()<<"Partition is missing a separator";
 
-	    for(int i=0;i<separator;i++) 
+	    for(int i=0;i<*separator;i++) 
 	    {
 		int ii = find_leaf(T,taxa[i]);
 		mask[ii] = true;
 		group1[ii] = true;
 	    }
-	    for(int i=separator+1;i<taxa.size();i++) 
+	    for(int i=*separator+1;i<taxa.size();i++) 
 	    {
 		int ii = find_leaf(T,taxa[i]);
 		mask[ii] = true;

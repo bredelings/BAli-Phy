@@ -78,11 +78,12 @@ dynamic_bitset<> group_from_names(const vector<string>& names,const vector<strin
 
     dynamic_bitset<> group(names.size());
 
-    for(int i=0; i<subset.size(); i++) {
-	if (includes(names,subset[i]))
-	    group[find_index(names,subset[i])] = true;
+    for(auto& taxon: subset)
+    {
+	if (auto index = find_index(names, taxon))
+	    group[*index] = true;
 	else
-	    throw myexception()<<"Can't find taxon '"<<subset[i]<<"' in taxa set.";
+	    throw myexception()<<"Can't find taxon '"<<taxon<<"' in taxa set.";
     }
 
     return group;

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <boost/optional.hpp>
 #include "object.H"
 #include "computation/expression/expression_ref.H"
 #include "util.H"
@@ -261,12 +262,15 @@ public:
     closure preprocess(const closure& C);
 
     /// Lookup the index for the named parameter s
+    boost::optional<int> maybe_find_parameter(const std::string& s) const;
+
+    /// Lookup the index for the named parameter s
     int find_parameter(const std::string& s) const;
 
     /*----- Modifiable ranges ----*/
     bool parameter_is_modifiable(int index);
 
-    int find_parameter_modifiable_reg(int i);
+    boost::optional<int> find_parameter_modifiable_reg(int i);
 
     const expression_ref get_parameter_range(int c, int r);
 

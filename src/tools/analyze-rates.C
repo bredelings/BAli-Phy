@@ -171,14 +171,14 @@ int main(int argc,char* argv[])
       string f_name = "DP::f" + convertToString(i+1);
       string r_name = "DP::rate" + convertToString(i+1);
 
-      int f_loc = find_index(headers,f_name);
-      int r_loc = find_index(headers,r_name);
+      auto f_loc = find_index(headers, f_name);
+      auto r_loc = find_index(headers, r_name);
 
-      if (f_loc == -1 or r_loc == -1)
+      if (not f_loc  or not r_loc)
 	break;
 
-      f_index.push_back(f_loc);
-      r_index.push_back(r_loc);
+      f_index.push_back(*f_loc);
+      r_index.push_back(*r_loc);
     }
     
     const int N = f_index.size();

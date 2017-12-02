@@ -310,17 +310,13 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 
 expression_ref parse_object(const string& s)
 {
-    bool bool_value;
-    int int_value;
-    double double_value;
-
-    if (can_be_converted_to<int>(s, int_value))
-	return int_value;
-    else if (can_be_converted_to<double>(s, double_value))
-	return double_value;
-    else if (can_be_converted_to<bool>(s, bool_value))
+    if (auto int_value = can_be_converted_to<int>(s))
+	return *int_value;
+    else if (auto double_value = can_be_converted_to<double>(s))
+	return *double_value;
+    else if (auto bool_value = can_be_converted_to<bool>(s))
     {
-	if (bool_value)
+	if (*bool_value)
 	    return constructor("Prelude.True",0);
 	else
 	    return constructor("Prelude.False",0);

@@ -117,8 +117,6 @@ key_value_condition::key_value_condition(const Table<string>& t, const string& c
 	throw myexception()<<"I can't understand the condition '"<<condition<<"' as a key=value pair.";
       
     key_index = t.find_column_index(parse[0]);
-    if (key_index == -1)
-	throw myexception()<<"Can't find column '"<<parse[0]<<"' in table.";
 
     value = parse[1];
 }

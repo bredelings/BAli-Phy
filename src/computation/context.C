@@ -17,6 +17,7 @@ using std::map;
 using std::pair;
 using std::set;
 using boost::dynamic_pointer_cast;
+using boost::optional;
 
 using std::cerr;
 using std::endl;
@@ -52,7 +53,7 @@ string context::parameter_name(int i) const
 
 int context::add_identifier(const string& name) const
 {
-    if (find_parameter(name) != -1)
+    if (maybe_find_parameter(name))
 	throw myexception()<<"Cannot add identifier '"<<name<<"': there is already a parameter with that name.";
 
     return memory()->add_identifier(name);
@@ -168,9 +169,7 @@ const expression_ref& context::get_parameter_value(int index) const
 /// Get the value of a non-constant, non-computed index
 const expression_ref& context::get_parameter_value(const std::string& name) const
 {
-    int index = find_parameter(name);
-    if (index == -1)
-	throw myexception()<<"Cannot find parameter called '"<<name<<"'";
+    auto index = find_parameter(name);
 
     return get_parameter_value(index);
 }
@@ -204,9 +203,11 @@ void context::set_parameter_value_(int index, closure&& C)
 {
     assert(index >= 0);
 
-    int P = find_parameter_modifiable_reg(index);
+    auto P = find_parameter_modifiable_reg(index);
+    if (not P)
+	throw myexception()<<"Can't set parameter value of '"<<parameter_name(index)<<"' - it is not directly modifiable!";
 
-    set_reg_value(P, std::move(C) );
+    set_reg_value(*P, std::move(C) );
 }
 
 void context::set_reg_value(int P, closure&& C)
@@ -218,8 +219,6 @@ void context::set_reg_value(int P, closure&& C)
 void context::set_parameter_value(const std::string& var, const expression_ref& O)
 {
     int i = find_parameter(var);
-    if (i == -1)
-	throw myexception()<<"Cannot find parameter called '"<<var<<"'";
     
     set_parameter_value(i, O);
 }
@@ -227,6 +226,11 @@ void context::set_parameter_value(const std::string& var, const expression_ref& 
 int context::n_parameters() const
 {
     return parameters().size();
+}
+
+optional<int> context::maybe_find_parameter(const string& s) const
+{
+    return memory()->maybe_find_parameter(s);
 }
 
 int context::find_parameter(const string& s) const
@@ -494,7 +498,7 @@ int context::get_parameter_reg(int index) const
     return parameters()[index].second;
 }
 
-int context::find_parameter_modifiable_reg(int index) const
+optional<int> context::find_parameter_modifiable_reg(int index) const
 {
     return memory()->find_parameter_modifiable_reg(index);
 }

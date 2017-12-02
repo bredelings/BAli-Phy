@@ -301,9 +301,8 @@ int find_unused_index(const set<string>& vars)
     {
 	if (var.size() > 3 and var.substr(0,3) == "var")
 	{
-	    int i;
-	    if (can_be_converted_to<int>(var.substr(3),i))
-		index = std::max(index,i);
+	    if (auto i = can_be_converted_to<int>(var.substr(3)))
+		index = std::max(index,*i);
 	}
     }
     return index+1;

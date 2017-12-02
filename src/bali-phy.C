@@ -157,17 +157,14 @@ void set_initial_parameter_values(Model& M, const variables_map& args)
 	    throw e;
 	}
 
-	int p_index = M.find_parameter(name);
+	auto p_index = M.maybe_find_parameter(name);
 
-	if (p_index == -1)
+	if (not p_index)
 	    p_index = find_index(short_names,name);
-	if (p_index == -1)
+	if (not p_index)
 	    throw myexception()<<"Can't find parameter '"<<name<<"' to set value '"<<parse[1]<<"'";
 
-	if (not M.parameter_is_modifiable(p_index))
-	    throw myexception()<<"Can't set parameter value of '"<<name<<"' - it is not directly modifiable.";
-
-	M.set_parameter_value(p_index,value);
+	M.set_parameter_value(*p_index,value);
     }
 }
 

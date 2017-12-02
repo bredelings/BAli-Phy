@@ -776,9 +776,9 @@ log_double_t DPmatrixConstrained::path_P(const vector<int>& path) const
 	}
 
 	int S1 = path[l-1];
-	int s1 = find_index(states(j),S1);
+	auto s1 = find_index(states(j),S1);
 
-	double p = choose_P(s1,transition);
+	double p = choose_P(*s1,transition);
 	assert(p > 0.0);
 
 	if (di(S1)) i--;

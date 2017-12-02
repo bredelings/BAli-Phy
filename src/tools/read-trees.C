@@ -484,10 +484,10 @@ namespace trees_format
 	}
 
 	for(int i=0;i<prune.size();i++) {
-	    int index = find_index(all_names,prune[i]);
-	    if (index == -1)
+	    if (auto index = find_index(all_names,prune[i]))
+		prune_index.push_back(*index);
+	    else
 		throw myexception()<<"Cannot find leaf '"<<prune[i]<<"' in sampled tree.";
-	    prune_index.push_back(index);
 	}
     }
 

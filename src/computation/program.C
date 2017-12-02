@@ -97,12 +97,9 @@ vector<string> sort_modules_by_dependencies(const module_loader& L, vector<strin
     for(int i=0;i<new_module_names.size();i++)
     {
 	auto& name = new_module_names[i];
-	for(auto& imp_name: L.load_module(name).dependencies())
-	{
-	    int j = find_index(new_module_names, imp_name);
-	    if (j != -1)
-		boost::add_edge(vertices[i], vertices[j], graph);
-	}
+	for(auto& import_name: L.load_module(name).dependencies())
+	    if (auto j = find_index(new_module_names, import_name))
+		boost::add_edge(vertices[i], vertices[*j], graph);
     }
 
     // Find connected components

@@ -30,6 +30,7 @@
 #include <cassert>
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/optional.hpp>
 #include <list>
 #include "tree-branchnode.H"
 #include "cached_value.H"
@@ -354,6 +355,8 @@ public:
 
     void node_attribute_set_name(int i, const std::string& s) {node_attribute_names[i] = s;}
 
+    boost::optional<int> maybe_find_node_attribute_index_by_name(const std::string& s) const;
+
     int find_node_attribute_index_by_name(const std::string& s) const;
 
     int add_node_attribute();
@@ -370,6 +373,8 @@ public:
 
     void undirected_branch_attribute_set_name(int i, const std::string& s) {undirected_branch_attribute_names[i] = s;}
 
+    boost::optional<int> maybe_find_undirected_branch_attribute_index_by_name(const std::string& s) const;
+
     int find_undirected_branch_attribute_index_by_name(const std::string& s) const;
 
     const std::string& undirected_branch_attribute_name(int i) const {return undirected_branch_attribute_names[i];}
@@ -382,6 +387,8 @@ public:
     bool directed_branch_attribute_has_name(int i) const {return not directed_branch_attribute_names[i].empty();}
 
     void directed_branch_attribute_set_name(int i, const std::string& s) {directed_branch_attribute_names[i] = s;}
+
+    boost::optional<int> maybe_find_directed_branch_attribute_index_by_name(const std::string& s) const;
 
     int find_directed_branch_attribute_index_by_name(const std::string& s) const;
 

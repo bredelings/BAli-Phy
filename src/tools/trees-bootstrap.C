@@ -657,7 +657,7 @@ int main(int argc,char* argv[])
 	double skip_fraction=0;
 	{
 	    string s = args["skip"].as<string>();
-	    if (not can_be_converted_to<int>(s,skip))
+	    if (not can_be_converted_to<int>(s))
 	    {
 		skip = 0;
 		if (not s.size() or s[s.size()-1] != '%')

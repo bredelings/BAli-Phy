@@ -265,15 +265,15 @@ int unique_letter(const alignment& A,int c)
     return -1;
 }
 
-vector<int> get_taxon_indices(const vector<string>& names,const vector<string>& lookup)
+vector<int> get_taxon_indices(const vector<string>& names, const vector<string>& lookup)
 {
     vector<int> indices(lookup.size());
     for(int i=0;i<indices.size();i++) 
     {
-	int l = find_index(names,lookup[i]);
-	if (l == -1)
+	if (auto l = find_index(names,lookup[i]))
+	    indices[i] = *l;
+	else
 	    throw myexception()<<"keep: can't find sequence '"<<lookup[i]<<"' to keep.";
-	indices[i] = l;
     }
     return indices;
 }
@@ -326,10 +326,10 @@ int main(int argc,char* argv[])
 	    protect = split(args["keep"].as<string>(),',');
 
 	for(int i=0;i<protect.size();i++) {
-	    int p = find_index(names,protect[i]);
-	    if (p == -1)
+	    if (auto p = find_index(names,protect[i]))
+		keep[*p] = 2;
+	    else
 		throw myexception()<<"keep: can't find sequence '"<<protect[i]<<"' to keep.";
-	    keep[p] = 2;
 	}
 
 	//----------------- remove by length ------------------//
@@ -358,16 +358,18 @@ int main(int argc,char* argv[])
 	if (args.count("remove"))
 	    remove = split(args["remove"].as<string>(),',');
 
-	for(int i=0;i<remove.size();i++) {
-	    int r = find_index(names,remove[i]);
-	    if (r == -1)
-		throw myexception()<<"remove: can't find sequence '"<<remove[i]<<"' to remove.";
-	    if (keep[r] == 2)
-		//	throw myexception()<<"Can't both keep AND remove '"<<remove[i]<<"'.";
-		;
+	for(auto& r: remove)
+	{
+	    if (auto r_index = find_index(names,r))
+	    {
+		if (keep[*r_index] == 2)
+		    //	throw myexception()<<"Can't both keep AND remove '"<<remove[i]<<"'.";
+		    ;
+		else
+		    keep[*r_index] = 0;
+	    }
 	    else
-		keep[r] = 0;
-
+		throw myexception()<<"remove: can't find sequence '"<<r<<"' to remove.";
 	}
       
 

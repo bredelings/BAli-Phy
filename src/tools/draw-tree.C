@@ -378,16 +378,16 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
     {
 	double L = branch_lengths[i];
 
-	int b1 = find_index(MC.partitions,branches[i]);
-	if (b1 == -1)
+	auto b1 = find_index(MC.partitions,branches[i]);
+	if (not b1)
 	    throw myexception()<<"Can't find partition I just added to tree!\n"<<"     "<<Partition(names, branches[i]);
 
-	int b2 = MC.reverse(b1);
+	int b2 = MC.reverse(*b1);
 
-	MC.branch_length(b1) = MC.branch_length(b2) = L;
+	MC.branch_length(*b1) = MC.branch_length(b2) = L;
 
 	if (branches[i].full())
-	    MC.T.directed_branch(b1).set_length(L);
+	    MC.T.directed_branch(*b1).set_length(L);
     }
 
     for(int i=0;i<nodes.size();i++)
@@ -3285,16 +3285,17 @@ MC_tree_with_lengths collapse_MC_tree(const MC_tree_with_lengths& MC1)
 
 	if (not MC1.partitions[b1].full()) continue;
 
-	int b2 = find_index(MC2.partitions,MC1.partitions[b1]);
-	if (b2 == -1) throw myexception()<<"Can't find full partition in collapsed tree!\n"<<Partition(MC1.names(), MC1.partitions[b1]);
+	auto b2 = find_index(MC2.partitions,MC1.partitions[b1]);
+	if (not b2)
+	    throw myexception()<<"Can't find full partition in collapsed tree!\n"<<Partition(MC1.names(), MC1.partitions[b1]);
 
-	branch_mapping[i1] = b2;
+	branch_mapping[i1] = *b2;
 
 	int left1 = MC1.mapping[MC1.reverse(b1)];
 	int right1 = MC1.mapping[b1];
 
-	int left2 = MC2.mapping[MC2.reverse(b2)];
-	int right2 = MC2.mapping[b2];
+	int left2 = MC2.mapping[MC2.reverse(*b2)];
+	int right2 = MC2.mapping[*b2];
 
 	node_mapping[right1] = right2;
 	node_mapping[left1] = left2;

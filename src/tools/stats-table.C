@@ -25,9 +25,9 @@
 #include "io.H"
 
 #include <boost/dynamic_bitset.hpp>
-#include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
 
-using boost::lexical_cast;
+using boost::optional;
 using namespace std;
 
 using boost::dynamic_bitset;
@@ -77,28 +77,34 @@ void write_header(std::ostream& o, const vector<string>& headers)
     }
 }
 
-bool is_numeric_range(const string& s, unsigned n, unsigned& start, unsigned& end)
+optional<pair<unsigned,unsigned>> is_numeric_range(const string& s, unsigned n)
 {
     vector<string> bounds = split(s,':');
 
-    if (bounds.size() != 2) return false;
+    if (bounds.size() != 2) return boost::none;
 
-    start = 1;
-    end = n;
+    unsigned start = 1;
+    unsigned end = n;
 
     if (bounds[0].size())
     {
-	if (not can_be_converted_to<unsigned>(bounds[0],start)) return false;
+	if (auto s = can_be_converted_to<unsigned>(bounds[0]))
+	    start = *s;
+	else
+	    return boost::none;
     }
 
     if (bounds[1].size())
     {
-	if (not can_be_converted_to<unsigned>(bounds[1],end)) return false;
+	if (auto e = can_be_converted_to<unsigned>(bounds[1]))
+	    end = *e;
+	else
+	    return boost::none;
     }
 
     start = max(1U,start);
     end = min(n,end);
-    return true;
+    return pair<unsigned,unsigned>{start,end};
 }
 
 dynamic_bitset<>
@@ -106,31 +112,24 @@ get_mask(const vector<string>& strings,const vector<string>& names)
 {
     dynamic_bitset<> mask(names.size());
 
-    for(int i=0;i<strings.size();i++) 
+    for(auto& s: strings)
     {
-	const string& s = strings[i];
-
-	int index = find_index(names,s);
-
-	if (index != -1)
+	if (auto index = find_index(names, s))
 	{
 	    // This is a field name
-	    mask[index] = true;
+	    mask[*index] = true;
 	    continue;
 	}
-
-	unsigned start = -1;
-	unsigned end = -1;
-	if (is_numeric_range(s, mask.size(), start, end))
+	else if (auto range = is_numeric_range(s, mask.size()))
 	{
 	    // This is a numeric range of fields
 	    for(int i=0;i<mask.size();i++)
-		if (start <=i+1 and i+1 <= end)
+		if (range->first <=i+1 and i+1 <= range->second)
 		    mask[i]=true;
 	    continue;
 	}
-
-	throw myexception()<<"No field named '"<<s<<"', and its not a numeric range either.";
+	else
+	    throw myexception()<<"No field named '"<<s<<"', and its not a numeric range either.";
     }
 
     return mask;

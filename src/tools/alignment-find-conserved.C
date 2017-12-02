@@ -116,13 +116,13 @@ vector<sequence_group> load_groups(const alignment& A,const string& filename)
 
 	current_group.name = n;
 
-	for(int i=0;i<names.size();i++)
-	    if (names[i].size())
+	for(auto& name: names)
+	    if (names.size())
 	    {
-		int j = find_index(seq_names, names[i]);
-		if (j == -1)
-		    throw myexception()<<"Group "<<g<<": I cant find taxon '"<<names[i]<<"' in the alignment!";
-		current_group.taxa.push_back(j);
+		if (auto j = find_index(seq_names, name))
+		    current_group.taxa.push_back(*j);
+		else
+		    throw myexception()<<"Group "<<g<<": I can't find taxon '"<<name<<"' in the alignment!";
 	    }
     }
 

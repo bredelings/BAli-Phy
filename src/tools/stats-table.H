@@ -24,6 +24,7 @@
 #include <string>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
+#include <boost/optional.hpp>
 #include "util.H"
 #include "io.H"
 
@@ -44,6 +45,8 @@ public:
 
     /// Access the data for the i-th column
     const std::vector<T>& column(int i) const {return data_[i];}
+
+    boost::optional<int> maybe_find_column_index(const std::string& s) const;
 
     int find_column_index(const std::string& s) const;
 
@@ -67,9 +70,18 @@ public:
 };
 
 template <typename T>
-int Table<T>::find_column_index(const std::string& s) const
+boost::optional<int> Table<T>::maybe_find_column_index(const std::string& s) const
 {
     return find_index(names_, s);
+}
+
+template <typename T>
+int Table<T>::find_column_index(const std::string& s) const
+{
+    if (auto index = maybe_find_column_index(s))
+	return *index;
+    else
+	throw myexception()<<"Can't find column '"<<s<<"' in table!";
 }
 
 template <typename T>

@@ -450,18 +450,20 @@ extern "C" closure builtin_function_reapply(OperationArgs& Args)
 extern "C" closure builtin_function_read_int(OperationArgs& Args)
 {
     string s = Args.evaluate(0).as_<String>();
-    int i;
-    if (can_be_converted_to(s,i))
-	return {i};
-    throw myexception()<<"Cannot convert string '"<<s<<"' to int!";
+
+    if (auto i = can_be_converted_to<int>(s))
+	return {*i};
+    else
+	throw myexception()<<"Cannot convert string '"<<s<<"' to int!";
 }
 
 extern "C" closure builtin_function_read_double(OperationArgs& Args)
 {
     string s = Args.evaluate(0).as_<String>();
-    double d;
-    if (can_be_converted_to(s,d))
-	return {d};
-    throw myexception()<<"Cannot convert string '"<<s<<"' to double!";
+
+    if (auto d = can_be_converted_to<double>(s))
+	return {*d};
+    else
+	throw myexception()<<"Cannot convert string '"<<s<<"' to double!";
 }
 

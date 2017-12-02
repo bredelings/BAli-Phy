@@ -282,7 +282,7 @@ void show_mean(const string& name, const vector<stats_table>& tables, int index,
     cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
 }
 
-void show_mode(const string& name, const vector<stats_table>& tables, int index, const vector<double>& total, bool show_individual)
+void show_mode(const string& name, const vector<stats_table>& /*tables*/, int /*index*/, const vector<double>& total, bool /*show_individual*/)
 {
     using namespace statistics;
 
@@ -397,7 +397,7 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
     }
 }
 
-void show_error(variables_map& args, const string& name, const vector<stats_table>& tables, int index, const vector<double>& total)
+void show_error(variables_map& args, const string& /*name*/, const vector<stats_table>& /*tables*/, int /*index*/, const vector<double>& total)
 {
     double truth = args["truth"].as<double>();
 
@@ -610,8 +610,8 @@ int main(int argc,char* argv[])
 	int skip = 0;
 	{
 	    string s = args["skip"].as<string>();
-	    if (can_be_converted_to<int>(s,skip))
-		skip /= subsample; //FIXME!  This is a side-effect of passing in 0 below.
+	    if (auto arg_skip = can_be_converted_to<int>(s))
+		skip = *arg_skip/subsample; //FIXME!  This is a side-effect of passing in 0 below.
 	    else 
 	    {
 		if (not s.size() or s[s.size()-1] != '%')

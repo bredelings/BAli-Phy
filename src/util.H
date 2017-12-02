@@ -33,6 +33,7 @@
 #include <cassert>
 #include <algorithm>
 #include "myexception.H"
+#include <boost/optional.hpp>
 #include <map>
 #include <set>
 #include <typeinfo>
@@ -47,26 +48,23 @@ std::string demangle(const std::string&);
 #endif
 
 template <class T>
-bool can_be_converted_to(const std::string& s, T& t) 
+boost::optional<T> can_be_converted_to(const std::string& s) 
 { 
     std::istringstream i(s);
-    return i>>std::boolalpha>>t and i.peek() == std::istream::traits_type::eof();
-}
-
-template <class T>
-bool can_be_converted_to(const std::string& s) 
-{ 
     T t;
-    return can_be_converted_to(s,t);
+    if (i>>std::boolalpha>>t and i.peek() == std::istream::traits_type::eof())
+	return std::move(t);
+    else
+	return boost::none;
 }
 
 template <class T>
 T convertTo(const std::string& s) 
 { 
-    T t;
-    if (not can_be_converted_to<T>(s,t))
+    auto t = can_be_converted_to<T>(s);
+    if (not t)
 	throw myexception()<<"String '"<<s<<"' is not of type "<<demangle(typeid(T).name());
-    return t;
+    return *t;
 }
 
 template <class T>
@@ -252,13 +250,13 @@ inline T minmax(T x,T min, T max) {
 
 /// Get index of t in v
 template <typename T>
-int find_index(const std::vector<T>& v,const T& t) 
+boost::optional<int> find_index(const std::vector<T>& v,const T& t) 
 {
     typename std::vector<T>::const_iterator loc = std::find(v.begin(),v.end(),t);
     if (loc == v.end())
-	return -1;
+	return boost::none;
     else
-	return loc - v.begin();
+	return int(loc - v.begin());
 }
 
 /// Does v include t?

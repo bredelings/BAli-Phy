@@ -1,5 +1,6 @@
 #ifndef CONTEXT_H
 
+#include <boost/optional.hpp>
 #include "computation/closure.H"
 #include "computation/program.H"
 #include "math/log-double.H"
@@ -43,7 +44,7 @@ private:
     int get_modifiable_reg(int i) const;
 
     /// Find the modifiable that parameter_reg points to.
-    int find_parameter_modifiable_reg(int i) const;
+    boost::optional<int> find_parameter_modifiable_reg(int i) const;
 
     closure preprocess(const closure& C) const;
 
@@ -135,6 +136,9 @@ public:
     void set_parameter_value(const std::string& var, const expression_ref&);
 
     int n_parameters() const;
+
+    /// Lookup the index for the named parameter s
+    boost::optional<int> maybe_find_parameter(const std::string& s) const;
 
     /// Lookup the index for the named parameter s
     int find_parameter(const std::string& s) const;

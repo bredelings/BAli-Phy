@@ -214,13 +214,11 @@ void check_alignment_values(const alignment& A,const string& filename)
 /// If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
 void set_foreground_branches(Parameters& P, const SequenceTree& T)
 {
-    if (T.find_undirected_branch_attribute_index_by_name("foreground") != -1)
+    if (auto attribute_index = T.maybe_find_undirected_branch_attribute_index_by_name("foreground"))
     {
-	int attribute_index = T.find_undirected_branch_attribute_index_by_name("foreground");
-
 	for(int b=0;b<T.n_branches();b++)
 	{
-	    boost::any value = T.branch(b).undirected_attribute(attribute_index);
+	    boost::any value = T.branch(b).undirected_attribute(*attribute_index);
 	    if (value.empty()) continue;
 
 	    int foreground_level = convertTo<int>( boost::any_cast<string>( value) );
@@ -272,15 +270,13 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
 	mask_groups[i].resize(TC.n_leaves());
 	mask_groups[i].reset();
 
-	for(int j=0;j<name_groups[i].size();j++) 
+	for(int j=0;j<name_groups[i].size();j++)
 	{
-	    int index = find_index(TC.get_leaf_labels(), name_groups[i][j]);
-
-	    if (index == -1)
+	    if (auto index = find_index(TC.get_leaf_labels(), name_groups[i][j]))
+		mask_groups[i][*index] = true;
+	    else
 		throw myexception()<<"Reading alignment constraint file '"<<filename<<"':\n"
 				   <<"   Can't find leaf taxon '"<<name_groups[i][j]<<"' in the tree.";
-	    else
-		mask_groups[i][index] = true;
 	}
     }
 

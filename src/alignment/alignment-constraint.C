@@ -302,19 +302,19 @@ vector< vector<int> > get_pins(const matrix<int>& constraint,const alignment& A,
 
 	if (column != -1)
 	{
-	    int x = find_index(seq1,column);
-	    int y = find_index(seq2,column);
+	    auto x = find_index(seq1,column);
+	    auto y = find_index(seq2,column);
 
 	    // Even if the constraints for the leaf nodes are satisfied, we can't align
 	    // to the relevant leaf characters THROUGH the relevant internal nodes, if the
 	    // character is not present at the internal nodes that we have
 	    // access to.  Therefore, no alignment that we choose can satisfy
 	    // this constraint, so we must bail out.
-	    if (x == -1 or y == -1)
+	    if (not x or not y)
 		return impossible;
 
-	    x_constraints[x].insert(i);
-	    y_constraints[y].insert(i);
+	    x_constraints[*x].insert(i);
+	    y_constraints[*y].insert(i);
 	}
     }
 

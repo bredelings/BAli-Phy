@@ -28,6 +28,7 @@ using std::string;
 using std::pair;
 using boost::any;
 using boost::dynamic_bitset;
+using boost::optional;
 
 void TreeView::destroy_tree(BranchNode* start) {
     assert(start);
@@ -1691,9 +1692,17 @@ int Tree::add_node_attribute(const string& name)
     return index;
 }
 
-int Tree::find_node_attribute_index_by_name(const string& name)  const
+optional<int> Tree::maybe_find_node_attribute_index_by_name(const string& name)  const
 {
     return find_index(node_attribute_names,name);
+}
+
+int Tree::find_node_attribute_index_by_name(const string& name)  const
+{
+    auto index = maybe_find_node_attribute_index_by_name(name);
+    if (not index)
+	throw myexception()<<"No node attribute '"<<name<<"'!";
+    return *index;
 }
 
 void Tree::set_n_node_attributes(int n)
@@ -1705,9 +1714,17 @@ void Tree::set_n_node_attributes(int n)
 	    (*BN)->node_attributes->resize(n);
 }
 
-int Tree::find_undirected_branch_attribute_index_by_name(const string& name)  const
+optional<int> Tree::maybe_find_undirected_branch_attribute_index_by_name(const string& name)  const
 {
     return find_index(undirected_branch_attribute_names,name);
+}
+
+int Tree::find_undirected_branch_attribute_index_by_name(const string& name)  const
+{
+    auto index = maybe_find_undirected_branch_attribute_index_by_name(name);
+    if (not index)
+	throw myexception()<<"No undirected branch attribute '"<<name<<"'!";
+    return *index;
 }
 
 void Tree::set_n_undirected_branch_attributes(int n)
@@ -1719,9 +1736,17 @@ void Tree::set_n_undirected_branch_attributes(int n)
 	    (*BN)->undirected_branch_attributes->resize(n);
 }
 
-int Tree::find_directed_branch_attribute_index_by_name(const string& name)  const
+optional<int> Tree::maybe_find_directed_branch_attribute_index_by_name(const string& name)  const
 {
     return find_index(directed_branch_attribute_names,name);
+}
+
+int Tree::find_directed_branch_attribute_index_by_name(const string& name)  const
+{
+    auto index = maybe_find_directed_branch_attribute_index_by_name(name);
+    if (not index)
+	throw myexception()<<"No directed branch attribute '"<<name<<"'!";
+    return *index;
 }
 
 void Tree::set_n_directed_branch_attributes(int n)
@@ -1759,9 +1784,9 @@ void set_attributes(const vector<pair<string,any> >& tags, vector<string>& attri
 {
     for(int k=0;k<tags.size();k++)
     {
-	int index = find_index(attribute_names, tags[k].first );
+	auto index = find_index(attribute_names, tags[k].first );
     
-	if (index == -1) {
+	if (not index) {
 	    index = attribute_names.size();
 	    attribute_names.push_back( tags[k].first );
 	}
@@ -1769,7 +1794,7 @@ void set_attributes(const vector<pair<string,any> >& tags, vector<string>& attri
 	if (attributes.size() < attribute_names.size())
 	    attributes.resize( attribute_names.size() );
     
-	attributes[index] = tags[k].second;
+	attributes[*index] = tags[k].second;
     }
 }
 
@@ -2016,23 +2041,24 @@ int Tree::parse_and_discover_names(const string& line)
 
 int get_leaf_index(const string& word, bool allow_numbers, const vector<string>& names)
 {
-    int leaf_index = -1;
-    if (allow_numbers and can_be_converted_to<int>(word,leaf_index)) {
-	leaf_index = convertTo<int>(word)-1;
-	if (leaf_index < 0)
+    auto leaf_index = can_be_converted_to<int>(word);
+    if (allow_numbers and leaf_index)
+    {
+	if (*leaf_index < 1)
 	    throw myexception()<<"Leaf index '"<<word<<"' is negative: not allowed!";
-	if (leaf_index >= names.size())
+	if (*leaf_index > names.size())
 	    throw myexception()<<"Leaf index '"<<word<<"' is too high: the taxon set contains only "<<names.size()<<" taxa.";
+	return *leaf_index - 1;
     }
     else if (names.size() == 0)
 	throw myexception()<<"Leaf name '"<<word<<"' is not an integer!";
     else 
     {
-	leaf_index = find_index(names,word);
-	if (leaf_index == -1)
+	if (leaf_index = find_index(names,word))
+	    return *leaf_index;
+	else
 	    throw myexception()<<"Leaf name '"<<word<<"' is not in the specified taxon set!";
     }
-    return leaf_index;
 }
 
 int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& names,bool allow_numbers)
