@@ -1,6 +1,6 @@
 {
     "name": "fMutSel0",
-    "result_type": "RA[Codon[a,b]]",
+    "result_type": "RA[Codons[a,b]]",
     "generate_function": "false",
     "call": "SModel.fMutSel0_model[submodel,omega,ws]",
     "args": [

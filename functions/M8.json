@@ -1,6 +1,6 @@
 {
     "name": "M8",
-    "result_type": "MixtureModel[Codon[a,b]]",
+    "result_type": "MixtureModel[Codons[a,b]]",
     "call": "SModel.m8[nuc_model,freq_model,mu,gamma,n,posP,posW,A]",
     "args": [
         {
@@ -16,7 +16,7 @@
         },
         {
             "arg_name": "freq_model",
-            "arg_type": "FrequencyModel[Codon[a,b]]",
+            "arg_type": "FrequencyModel[Codons[a,b]]",
             "default_value": "F61",
             "applied_args": "A"
         },

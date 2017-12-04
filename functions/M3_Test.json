@@ -1,6 +1,6 @@
 {
     "name": "M3_Test",
-    "result_type": "MixtureModel[Codon[a,b]]",
+    "result_type": "MixtureModel[Codons[a,b]]",
     "call": "SModel.m3_test[nuc_model,freq_model,ps,omegas,posP,posW,posSelection,A]",
     "args": [
         {
@@ -11,7 +11,7 @@
         },
         {
             "arg_name": "freq_model",
-            "arg_type": "FrequencyModel[Codon[a,b]]",
+            "arg_type": "FrequencyModel[Codons[a,b]]",
             "default_value": "F61",
             "applied_args": "A"
         },

@@ -1,6 +1,6 @@
 {
     "name": "M2a",
-    "result_type": "MixtureModel[Codon[a,b]]",
+    "result_type": "MixtureModel[Codons[a,b]]",
     "call": "SModel.m2a[nuc_model,freq_model,omega1,p1,posP,posW,A]",
     "args": [
         {
@@ -12,7 +12,7 @@
         },
         {
             "arg_name": "freq_model",
-            "arg_type": "FrequencyModel[Codon[a,b]]",
+            "arg_type": "FrequencyModel[Codons[a,b]]",
             "default_value": "F61",
             "applied_args": "A",
             "description": "The frequency model."

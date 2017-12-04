@@ -391,7 +391,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 		if (alphabet_names[j] != alphabet_names[a_specified[0]])
 		    throw myexception()<<"Partitions "<<a_specified[0]+1<<" and "<<j+1<<" have different alphabets, but are given the same substitution model!";
 	    string a = alphabet_names[a_specified[0]];
-	    if (alphabet_type.get_value<string>() == "Codon")
+	    if (alphabet_type.get_value<string>() == "Codons")
 	    {
 		if (a != "Codons")
 		    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a codon alphabet!";
@@ -407,7 +407,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 		    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires an amino-acid alphabet!";
 	    }
 	}
-	else if (alphabet_type.get_value<string>() == "Codon")
+	else if (alphabet_type.get_value<string>() == "Codons")
 	{
 	    for(int j: smodel_names_mapping.partitions_for_item[i])
 		alphabet_names[j] = "Codons";
@@ -527,7 +527,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	auto type = full_smodels[i].type;
 	auto alphabet_type = type.begin()->second;
 
-	if (alphabet_type.get_value<string>() == "Codon" and not dynamic_cast<const Codons*>(&a))
+	if (alphabet_type.get_value<string>() == "Codons" and not dynamic_cast<const Codons*>(&a))
 	    throw myexception()<<"Substitution model S"<<i+1<<" requires a codon alphabet, but sequences are '"<<a.name<<"'";;
 
 	if (alphabet_type.get_value<string>() == "Triplets" and not dynamic_cast<const Triplets*>(&a))
