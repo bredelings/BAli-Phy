@@ -48,37 +48,4 @@ duration_t total_cpu_time();
 
 std::string duration_string(boost::chrono::seconds);
 
-struct region_profile 
-{
-  duration_t duration;
-  long int n_calls;
-  region_profile():duration(0),n_calls(0) {}
-};
-
-class timer_stack
-{
-public:
-  typedef std::map<std::string,region_profile> container_t;
-
-private:
-  std::vector<container_t::iterator> record_stack;
-  std::vector<duration_t> start_time_stack;
-
-  container_t::iterator lookup_profile(const std::string&);
-  
-public:
-  container_t total_times;
-
-  void credit_active_timers();
-  void push_timer(const std::string& s);
-  void pop_timer();
-  const std::string& current_timer();
-  //  const std::vector<std::string>& active_timers() const {return name_stack;}
-  int n_active_timers() const {return record_stack.size();}
-
-  std::string report();
-};
-
-extern timer_stack default_timer_stack;
-
 #endif /* TIME_STACK_H */
