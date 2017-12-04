@@ -1,6 +1,6 @@
 {
     "name": "M3",
-    "result_type": "MixtureModel[Codons[a,b]]",
+    "result_type": "MixtureModel[Codons[a]]",
     "call": "SModel.m3[nuc_model,freq_model,ps,omegas,A]",
     "args": [
         {
@@ -11,7 +11,7 @@
         },
         {
             "arg_name": "freq_model",
-            "arg_type": "FrequencyModel[Codons[a,b]]",
+            "arg_type": "FrequencyModel[Codons[a]]",
             "default_value": "F61",
             "applied_args": "A"
         },

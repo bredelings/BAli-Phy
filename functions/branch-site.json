@@ -1,7 +1,7 @@
 {
     "name": "branch-site",
     "title": "The branch-site test for positive selection from Zhang et al. (2005)",
-    "result_type": "MultiMixtureModel[Codons[a,b]]",
+    "result_type": "MultiMixtureModel[Codons[a]]",
     "citation": {
 	"type": "article",
 	"title": "Evaluation of an improved branch-site likelihood method for detecting positive selection at the molecular level",
@@ -21,7 +21,7 @@
         },
         {
             "arg_name": "freq_model",
-            "arg_type": "FrequencyModel[Codons[a,b]]",
+            "arg_type": "FrequencyModel[Codons[a]]",
             "default_value": "F61",
             "applied_args": "A",
 	    "description":"The codon frequency model."
