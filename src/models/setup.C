@@ -106,20 +106,6 @@ using std::valarray;
 using boost::program_options::variables_map;
 using boost::shared_ptr;
 
-// N = no logging or arguments
-// M = this expression needs to be performed
-
-/*
-  Maybe convert 'rule' information to JSON like this:
-  {
-  name: "Uniform", 
-  type: "Double", 
-  action: true, 
-  call: ["uniform","a","b"], 
-  args: [["a","Double",0],["b","Double",1],
-  }
-*/
-
 /// Split a string of the form key=value into {key,value}
 string show(const ptree& pt, int depth)
 {
