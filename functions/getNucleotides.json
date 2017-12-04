@@ -1,11 +1,12 @@
 {
     "name": "getNucleotides",
-    "result_type": "a",
+    "result_type": "b",
+    "constraints": "Triplets[a,b]",
     "call": "Alphabet.getNucleotides[A]",
     "args": [
         {
             "arg_name": "A",
-            "arg_type": "Codon[a,b]"
+            "arg_type": "a"
         }
     ]
 }

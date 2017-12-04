@@ -369,6 +369,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	if (smodel_names_mapping.unique(i).empty()) continue;
 
 	auto type = full_smodels[i].type;
+	auto& constraints = full_smodels[i].constraints;
 	auto alphabet_type = type.begin()->second;
 
 	vector<int> a_specified;
@@ -392,12 +393,12 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	    string a = alphabet_names[a_specified[0]];
 	    if (alphabet_type.get_value<string>() == "Codon")
 	    {
-		if (a == "DNA" or a == "RNA" or a == "AA" or a == "Amino-Acids")
+		if (a != "Codons")
 		    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a codon alphabet!";
 	    }
-	    else if (alphabet_type.get_value<string>() == "Triplet")
+	    else if (alphabet_type.get_value<string>() == "Triplets")
 	    {
-		if (a == "DNA" or a == "RNA" or a == "AA" or a == "Amino-Acids")
+		if (a != "Triplets")
 		    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a triplet alphabet!";
 	    }
 	    else if (alphabet_type.get_value<string>() == "AA")
@@ -411,10 +412,21 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	    for(int j: smodel_names_mapping.partitions_for_item[i])
 		alphabet_names[j] = "Codons";
 	}
-	else if (alphabet_type.get_value<string>() == "Triplet")
+	else if (alphabet_type.get_value<string>() == "Triplets")
 	{
 	    for(int j: smodel_names_mapping.partitions_for_item[i])
 		alphabet_names[j] = "Triplets";
+	}
+	else
+	{
+	    bool triplet_constraint = false;
+	    for(auto& constraint: constraints)
+		if (constraint.get_value<string>() == "Triplets" and constraint.begin()->second.get_value<string>() == "a")
+		    triplet_constraint = true;
+
+	    if (triplet_constraint)
+		for(int j: smodel_names_mapping.partitions_for_item[i])
+		    alphabet_names[j] = "Triplets";
 	}
 //      Use the auto-detected alphabet right now -- it leaves to better error messages.
 //	else if (alphabet_type.get_value<string>() == "AA")
@@ -518,7 +530,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	if (alphabet_type.get_value<string>() == "Codon" and not dynamic_cast<const Codons*>(&a))
 	    throw myexception()<<"Substitution model S"<<i+1<<" requires a codon alphabet, but sequences are '"<<a.name<<"'";;
 
-	if (alphabet_type.get_value<string>() == "Triplet" and not dynamic_cast<const Triplets*>(&a))
+	if (alphabet_type.get_value<string>() == "Triplets" and not dynamic_cast<const Triplets*>(&a))
 	    throw myexception()<<"Substitution model S"<<i+1<<" requires a triplet alphabet, but sequences are '"<<a.name<<"'";;
 
 	if (alphabet_type.get_value<string>() == "AA" and not dynamic_cast<const AminoAcids*>(&a))

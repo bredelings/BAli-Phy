@@ -1,6 +1,7 @@
 {
     "name": "F3x4",
-    "result_type": "FrequencyModel[Codon[a,b]]",
+    "result_type": "FrequencyModel[a]",
+    "constraints": "Triplets[a,b]",
     "call": "SModel.f3x4'[A,pi1,pi2,pi3]",
     "args": [
         {
@@ -20,7 +21,7 @@
         },
         {
             "arg_name": "A",
-            "arg_type": "Codon[a,b]",
+            "arg_type": "a",
             "no_apply": "true"
         }
     ]

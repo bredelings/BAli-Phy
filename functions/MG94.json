@@ -1,6 +1,7 @@
 {
     "name": "MG94",
-    "result_type": "FrequencyModel[Codon[a,b]]",
+    "result_type": "FrequencyModel[a]",
+    "constraints": ["Triplets[a,b]","Nucleotides[b]"],
     "title": "The Muse & Gaut (1994) model of codon substitution.",
     "call": "SModel.mg94'[pi,A]",
     "args": [
@@ -11,7 +12,7 @@
         },
         {
             "arg_name": "A",
-            "arg_type": "Codon[a,b]",
+            "arg_type": "a",
             "no_apply": "true"
         }
     ]
