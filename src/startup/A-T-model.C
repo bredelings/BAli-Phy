@@ -398,7 +398,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	    else if (alphabet_type.get_value<string>() == "Triplet")
 	    {
 		if (a == "DNA" or a == "RNA" or a == "AA" or a == "Amino-Acids")
-		    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a codon alphabet!";
+		    throw myexception()<<"Partition "<<a_specified[0]+1<<" has specified alphabet '"<<a<<"' but the substitution model requires a triplet alphabet!";
 	    }
 	    else if (alphabet_type.get_value<string>() == "AA")
 	    {
