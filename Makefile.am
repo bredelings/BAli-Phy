@@ -54,6 +54,7 @@ nobase_help_DATA = help/commands/alphabet.txt \
 	help/commands/disable.txt \
 	help/commands/enable.txt \
 	help/commands/set.txt \
+	help/commands/model.txt \
 	help/commands/Rao-Blackwellize.txt
 
 
