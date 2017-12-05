@@ -1,3 +1,4 @@
-modelp_sources = ['tools/model_P.C', 'tools/statistics.C', 'rng.C', 'util.C']
-modelp = executable('model_P',modelp_sources)
+modelp_sources = ['tools/model_P.cc', 'tools/statistics.cc', 'rng.cc', 'util.cc']
+boost = dependency('boost', modules : [ 'program_options', 'random'])
+modelp = executable('model_P',modelp_sources, dependencies: boost)
 
