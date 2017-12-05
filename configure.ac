@@ -5,7 +5,7 @@ AC_PREREQ([2.68])
 AC_INIT([BAli-Phy],[3.0-beta5],[benjamin.redelings@duke.edu])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([1.11 foreign subdir-objects tar-ustar])
-AC_CONFIG_SRCDIR([src/bali-phy.C])
+AC_CONFIG_SRCDIR([src/bali-phy.cc])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 

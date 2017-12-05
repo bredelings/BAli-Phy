@@ -33,45 +33,45 @@ endif
 
 LDFLAGS = -module -shared -avoid-version -export-dynamic $(EXTRALDFLAGS)
 
-Array_la_SOURCES = Array.C
+Array_la_SOURCES = Array.cc
 Array_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Data_la_SOURCES = Data.C
+Data_la_SOURCES = Data.cc
 Data_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Prelude_la_SOURCES = Prelude.C
+Prelude_la_SOURCES = Prelude.cc
 Prelude_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Alphabet_la_SOURCES = Alphabet.C
+Alphabet_la_SOURCES = Alphabet.cc
 Alphabet_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Pair_la_SOURCES = Pair.C
+Pair_la_SOURCES = Pair.cc
 Pair_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Modifiables_la_SOURCES = Modifiables.C
+Modifiables_la_SOURCES = Modifiables.cc
 Modifiables_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Alignment_la_SOURCES = Alignment.C
+Alignment_la_SOURCES = Alignment.cc
 Alignment_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-PopGen_la_SOURCES = PopGen.C
+PopGen_la_SOURCES = PopGen.cc
 PopGen_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Distribution_la_SOURCES = Distribution.C
+Distribution_la_SOURCES = Distribution.cc
 Distribution_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Range_la_SOURCES = Range.C
+Range_la_SOURCES = Range.cc
 Range_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-SModel_la_SOURCES = SModel.C
+SModel_la_SOURCES = SModel.cc
 SModel_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-MCMC_la_SOURCES = MCMC.C
+MCMC_la_SOURCES = MCMC.cc
 MCMC_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Vector_la_SOURCES = Vector.C
+Vector_la_SOURCES = Vector.cc
 Vector_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
-Environment_la_SOURCES = Environment.C
+Environment_la_SOURCES = Environment.cc
 Environment_la_DEPENDENCIES = $(EXTRADEPENDENCIES)
 
