@@ -2,7 +2,13 @@
     "name": "RS07",
     "result_type": "IndelModel",
     "title": "Redelings & Suchard (2007) model of insertions and deletions.",
-    "citation": "Redelings & Suchard (2007)",
+    "citation":{"type": "article",
+		"title": "Incorporating indel information into phylogeny estimation for rapidly emerging pathogens.",
+		"year": "2007",
+		"author": [{"name": "Redelings, Benjamin D"}, {"name": "Suchard, Marc A"}],
+		"journal": {"name": "BMC Evolutionary Biology", "volume": "7", "number": "1", "pages": "40"},
+		"identifier": [{"type":"doi","id":"10.1186/1471-2148-7-40"}]
+	       },
     "call": "IModel.rs07[logLambda,meanIndelLength,tree]",
     "args": [
         {

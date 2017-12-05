@@ -2,6 +2,14 @@
     "name": "RS05",
     "result_type": "IndelModel",
     "call": "IModel.rs05[logDelta,meanIndelLengthMinus1,tau,tree]",
+    "title": "Redelings & Suchard (2005) model of insertions and deletions",
+    "citation":{"type": "article",
+		"title": "Joint Estimation of Alignment and Phylogeny.",
+		"year": "2005",
+		"author": [{"name": "Redelings, Benjamin D"}, {"name": "Suchard, Marc A"}],
+		"journal": {"name": "Systematic Biology", "volume": "54", "number": "3", "pages": "401-418"},
+		"identifier": [{"type":"doi","id":"10.1080/10635150590947041"}]
+	       },
     "args": [
         {
             "arg_name": "logDelta",
