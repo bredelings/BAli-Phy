@@ -229,7 +229,8 @@ string unparse(const ptree& p)
     if (s == "intToDouble")
 	return unparse(p.get_child("x"));
     if (s == "UnitMixture" or s == "MultiMixtureModel")
-	return unparse(p.get_child("submodel"));
+	if (auto child = p.get_child_optional("submodel"))
+	    return unparse(*child);
     vector<string> args;
     string submodel;
     for(const auto& pair: p)
