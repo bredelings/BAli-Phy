@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "config.h"
 #endif
 
-#include "git_version.h"
+#include "git-version.h"
 
 #ifndef PACKAGE_VERSION
 #define PACKAGE_VERSION "UNKNOWN"
