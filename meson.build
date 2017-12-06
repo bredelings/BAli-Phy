@@ -3,14 +3,13 @@
 # http://mesonbuild.com/howtox.html#set-default-cc-language-version
 project('bali-phy', 'cpp', version: '3.0-beta5', license: 'GPLv2', default_options : ['cpp_std=c++14'])
 
-
-#add_global_arguments('-DSOME_TOKEN=value', language : 'cpp')
+add_global_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing'], language : 'cpp')
 #glib_dep = dependency('glib-2.0')
 
-#inc = include_directories('include')
+eigen = include_directories('include')
 
 
-#pkg_mod = import('pkgconfig')
+pkg_mod = import('pkgconfig')
 #pkg_mod.generate(libraries : foolib,
 #                 version : '1.0',
 #                 name : 'libfoobar',
