@@ -292,6 +292,8 @@ public:
 	    // Add this number of null records.
 	    memory.resize(n);
 	}
+
+    virtual ~pool() = default;
 };
 
 #endif
