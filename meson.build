@@ -5,8 +5,8 @@ project('bali-phy', 'cpp', version: '3.0-beta5', license: 'GPLv2', default_optio
 
 add_global_arguments('-DPACKAGE_VERSION='+meson.project_version(), language : 'cpp')
 add_global_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing'], language : 'cpp')
-eigen = include_directories('include')
 
+eigen = include_directories('include', is_system: true)
 
 pkg_mod = import('pkgconfig')
 #pkg_mod.generate(libraries : foolib,
