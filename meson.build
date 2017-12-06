@@ -3,6 +3,7 @@
 # http://mesonbuild.com/howtox.html#set-default-cc-language-version
 project('bali-phy', 'cpp', version: '3.0-beta5', license: 'GPLv2', default_options : ['cpp_std=c++14'])
 
+add_global_arguments('-DPACKAGE_VERSION='+meson.project_version(), language : 'cpp')
 add_global_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing'], language : 'cpp')
 eigen = include_directories('include')
 
