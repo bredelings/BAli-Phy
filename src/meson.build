@@ -2,6 +2,14 @@ boost= dependency('boost', modules : [ 'program_options', 'random', 'system','fi
 
 libsums = static_library('libsums','computation/machine/sums.cc', cpp_args: '-fno-fast-math', install: false)
 
+gitversion_h = vcs_tag(
+  input : 'git-version.h.in',
+  output: 'git-version.h',
+  command: [ 'git', 'log', '-n1', '--date=format:"%b %d %Y %k:%M:%S"', '--pretty="format:[%D commit %h]' ],
+  replace_string: '@git_message@',
+  fallback: '',
+)
+
 baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc','sequence/sequence.cc',
    'tree/tree.cc','alignment/alignment.cc','substitution/substitution.cc',
    'mcmc/moves.cc', 'rng.cc','math/exponential.cc','math/eigenvalue.cc',
