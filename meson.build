@@ -8,12 +8,7 @@ add_global_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtua
 
 eigen = include_directories('include', is_system: true)
 
-pkg_mod = import('pkgconfig')
-#pkg_mod.generate(libraries : foolib,
-#                 version : '1.0',
-#                 name : 'libfoobar',
-#                 filebase : 'foobar',
-#                 description : 'A Library to barnicate your foos.')
+cairo = dependency('cairo', required: false)
 
 subdir('src')
 
