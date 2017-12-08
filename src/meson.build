@@ -49,10 +49,17 @@ baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc','sequenc
    'alignment/index-matrix.cc','startup/paths.cc', 'computation/optimization/occurrence.cc',
    'computation/optimization/inliner.cc']
 
+
+extra_link_args = []
+if host_machine.system() == 'linux'
+  extra_link_args += [ '-rdynamic' ]
+endif
+
 baliphy = executable('bali-phy',
 		     baliphy_sources,
 		     include_directories: eigen,
 		     dependencies:[boost,libdl],
+		     link_args: extra_link_args,
 		     link_with: libsums,
 		     install: true,
 		     implib: true)
