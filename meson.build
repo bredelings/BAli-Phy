@@ -16,8 +16,12 @@ add_project_arguments('-DPACKAGE_VERSION="'+meson.project_version()+'"', languag
 add_project_arguments('-D_ARCH_="'+host_machine.system()+' ' + host_machine.cpu_family() + '"', language : 'cpp')
 add_project_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing'], language : 'cpp')
 
-if host_machine.system() == 'osx'
+if get_option('buildtype') == 'release'
   add_project_arguments(['-DNDEBUG','-NDEBUG_DP','-funroll-loops','-ffast-math'], language : 'cpp')
+endif
+
+if host_machine.system() == 'darwin'
+  add_project_arguments('-fvisibility=default', language : 'cpp')
 endif
 
 eigen = include_directories('include', is_system: true)
