@@ -50,7 +50,9 @@ void print_version_info(ostream& file)
   file<<"ARCH: "<<_ARCH_<<endl;
 #endif
 
-#ifdef __GNUC__
+#ifdef _COMPILER_
+  file<<"COMPILER: "<<_COMPILER_<<endl;
+#elif __GNUC__
   file<<"COMPILER: GCC "<<__VERSION__<<endl;
 #endif
 

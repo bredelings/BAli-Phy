@@ -12,8 +12,11 @@ project('bali-phy', 'cpp',
 
 cpp = meson.get_compiler('cpp')
 
+# put this in a config file
 add_project_arguments('-DPACKAGE_VERSION="'+meson.project_version()+'"', language : 'cpp')
 add_project_arguments('-D_ARCH_="'+host_machine.system()+' ' + host_machine.cpu_family() + '"', language : 'cpp')
+add_project_arguments('-D_COMPILER_="'+cpp.get_id() + ' ' + cpp.version()+' ' + host_machine.cpu_family() + '"', language : 'cpp')
+
 add_project_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing'], language : 'cpp')
 
 if get_option('buildtype') == 'release'
