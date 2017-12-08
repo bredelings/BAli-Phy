@@ -1,6 +1,7 @@
 #ifndef MODELS_TRANSLATE_H
 #define MODELS_TRANSLATE_H
 
+#include <vector>
 #include <string>
 #include <boost/property_tree/ptree.hpp>
 #include <utility>
