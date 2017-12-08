@@ -1,26 +1,26 @@
 SED = sed
 GIT_VERSION_CMD = $(SHELL) $(top_srcdir)/scripts/git_version.sh
 git_version.stamp:
-	@if test -f "$(srcdir)/git_version.h"; then \
-		if test -f "git_version.h"; then :; \
+	@if test -f "$(srcdir)/git-version.h"; then \
+		if test -f "git-version.h"; then :; \
 		else \
-			cp "$(srcdir)/git_version.h" "git_version.h"; \
+			cp "$(srcdir)/git-version.h" "git-version.h"; \
 		fi; \
 	fi
-	$(GIT_VERSION_CMD) -k -s $(top_srcdir) -o git_version.h
-	@if test -s "$(srcdir)/git_version.h"; then \
-		if cmp "$(srcdir)/git_version.h" "git_version.h"; then :; \
+	$(GIT_VERSION_CMD) -k -s $(top_srcdir) -o git-version.h
+	@if test -s "$(srcdir)/git-version.h"; then \
+		if cmp "$(srcdir)/git-version.h" "git-version.h"; then :; \
 		else \
-			echo "Error: $(srcdir)/git_version.h and git_version.h differ."; \
+			echo "Error: $(srcdir)/git-version.h and git-version.h differ."; \
 			echo "       You probably want to remove the former."; \
 			exit 1; \
 		fi; \
 	fi
 
 dist-hook: git_version.stamp
-	if test -f "git_version.h"; then \
+	if test -f "git-version.h"; then \
 		$(SED) -e 's|^#undef GIT_IS_DIST.*|#define GIT_IS_DIST 1|' \
-			"git_version.h" > "$(distdir)/git_version.h"; \
+			"git-version.h" > "$(distdir)/git-version.h"; \
 	fi
 
 SUBDIRS = . builtins/
@@ -138,7 +138,7 @@ if HOST_MINGW32
 bali_phy_SOURCES += dlfcn-win32/dlfcn.c
 endif
 
-nodist_bali_phy_SOURCES = git_version.h
+nodist_bali_phy_SOURCES = git-version.h
 
 if HOST_LINUX
 bali_phy_LDFLAGS = @ldflags@ -rdynamic
