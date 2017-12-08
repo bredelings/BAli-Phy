@@ -57,9 +57,6 @@ baliphy = executable('bali-phy',
 		     install: true,
 		     implib: true)
 
-modelp_sources = ['tools/model_P.cc', 'tools/statistics.cc', 'rng.cc', 'util.cc']
-modelp = executable('model_P', modelp_sources, dependencies: boost, install:true)
-
 #compile_args += ['-Ipath/to/include']
 #link_args += ['-Lpath/to/lib', '-lfoo', '-lbar']
 #add_project_arguments(libahal_compile_args, language: 'c')
@@ -67,3 +64,207 @@ modelp = executable('model_P', modelp_sources, dependencies: boost, install:true
 
 #https://gitlab.gnome.org/chergert/gir2rst/blob/master/meson.build
 subdir('builtins')
+
+modelp_sources = ['tools/model_P.cc', 'tools/statistics.cc', 'rng.cc', 'util.cc']
+executable('model_P', modelp_sources, dependencies: boost, install:true)
+
+statreport_sources = ['tools/statreport.cc', 'tools/statistics.cc', 'util.cc',
+		      'tools/stats-table.cc', 'io.cc']
+executable('statreport', statreport_sources, dependencies: boost, install:true)
+
+stats_merge_sources = ['tools/stats-merge.cc','util.cc','io.cc']
+executable('stats-merge', stats_merge_sources, dependencies: boost, install:true)
+
+stats_select_sources = ['tools/stats-select.cc','util.cc','tools/stats-table.cc','io.cc']
+executable('stats-select', stats_select_sources, dependencies: boost, install:true)
+
+stats_cat_sources = ['tools/stats-cat.cc', 'util.cc', 'tools/stats-table.cc' ,'io.cc']
+executable('stats-cat', stats_cat_sources, dependencies:boost, install: true)
+
+alignment_gild_sources = ['tools/alignment-gild.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc',
+			  'sequence/sequence.cc', 'util.cc', 'rng.cc', 'tree/tree.cc', 'tree/sequencetree.cc',
+			  'tools/optimize.cc', 'tools/findroot.cc', 'setup.cc', 'sequence/sequence-format.cc',
+			  'tools/distance-methods.cc', 'alignment/alignment-random.cc', 'alignment/alignment-util.cc',
+			  'tree/randomtree.cc', 'tree/tree-util.cc', 'tools/inverse.cc', 'io.cc', 'tools/read-trees.cc',
+			  'alignment/load.cc']
+executable('alignment-gild', alignment_gild_sources, include_directories: eigen, dependencies:boost, install: true)
+
+#---------------------------------------------------------------
+
+alignment_median_SOURCES = ['tools/alignment-median.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc',
+	'tree/tree.cc', 'tree/sequencetree.cc', 'sequence/sequence-format.cc', 'alignment/alignment-util.cc', 'io.cc', 'tools/distance-report.cc', 'tools/statistics.cc',
+	'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+alignment_consensus_SOURCES = ['tools/alignment-consensus.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc',
+	'tree/tree.cc', 'tree/sequencetree.cc', 'util-random.cc', 'tools/statistics.cc',
+	'sequence/sequence-format.cc', 'alignment/alignment-util.cc', 'alignment/index-matrix.cc', 'io.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+alignment_max_SOURCES = ['tools/alignment-max.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc',
+	'tree/tree.cc', 'tree/sequencetree.cc', 'util-random.cc', 'tools/statistics.cc',
+	'sequence/sequence-format.cc', 'alignment/alignment-util.cc', 'alignment/index-matrix.cc', 'io.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+alignment_compare_SOURCES = ['tools/alignment-compare.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc',
+	'tree/tree.cc', 'tree/sequencetree.cc', 'util-random.cc', 'sequence/sequence-format.cc', 'alignment/alignment-util.cc', 'io.cc',
+	'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+alignment_identity_SOURCES = ['tools/alignment-identity.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc',
+	'tree/tree.cc', 'tree/sequencetree.cc', 'util-random.cc', 'tools/statistics.cc', 'alignment/load.cc',
+	'sequence/sequence-format.cc', 'alignment/alignment-util.cc', 'alignment/index-matrix.cc', 'io.cc']
+
+#---------------------------------------------------------------
+
+alignment_thin_SOURCES = ['tools/alignment-thin.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc',
+	'tree/tree.cc', 'tree/sequencetree.cc', 'setup.cc', 'sequence/sequence-format.cc', 'tree/randomtree.cc',
+	'alignment/alignment-util.cc', 'alignment/alignment-random.cc', 'tree/tree-util.cc', 'alignment/load.cc',
+	'tools/distance-methods.cc', 'tools/inverse.cc', 'alignment/index-matrix.cc', 'io.cc', 'tools/read-trees.cc']
+
+
+#---------------------------------------------------------------
+
+alignment_chop_internal_SOURCES = ['tools/alignment-chop-internal.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'tree/tree.cc',
+	'sequence/sequence-format.cc', 'alignment/alignment-util.cc', 'io.cc', 'tree/sequencetree.cc', 'alignment/load.cc', 'tree/tree-util.cc', 'tools/read-trees.cc']
+
+#---------------------------------------------------------------
+
+alignment_indices_SOURCES = ['tools/alignment-indices.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'tree/tree.cc', 'sequence/sequence-format.cc', 'alignment/alignment-util.cc', 'io.cc', 'tree/sequencetree.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+alignments_diff_SOURCES = ['tools/alignments-diff.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'tree/tree.cc', 'sequence/sequence-format.cc', 'alignment/alignment-util.cc', 'io.cc', 'tree/sequencetree.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+alignment_draw_SOURCES = ['tools/alignment-draw.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'sequence/sequence-format.cc', 'util.cc', 'alignment/alignment-util.cc', 'tools/colors.cc', 'tree/tree.cc', 'io.cc', 'tree/sequencetree.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+joint_indels_SOURCES = ['tools/joint-indels.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tree/tree-util.cc', 'setup.cc', 'sequence/sequence-format.cc', 'alignment/alignment-random.cc', 'alignment/alignment-util.cc', 'tree/randomtree.cc', 'tools/statistics.cc', 'tools/joint-A-T.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+joint_parsimony_SOURCES = ['tools/joint-parsimony.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc', 'tree/tree.cc',
+	'tree/sequencetree.cc', 'tree/tree-util.cc', 'setup.cc', 'sequence/sequence-format.cc',
+	'alignment/alignment-random.cc', 'alignment/alignment-util.cc', 'tree/randomtree.cc',
+	'tools/parsimony.cc', 'tools/joint-A-T.cc', 'n_indels.cc', 'io.cc', 'tools/read-trees.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+alignment_info_SOURCES = ['tools/alignment-info.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'setup.cc', 'tools/parsimony.cc', 'sequence/sequence-format.cc', 'tree/randomtree.cc', 'alignment/alignment-util.cc', 'alignment/alignment-random.cc', 'tree/tree-util.cc', 'tools/statistics.cc', 'io.cc', 'tools/read-trees.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+alignment_smc_SOURCES = ['tools/alignment-smc.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'setup.cc', 'tools/parsimony.cc', 'sequence/sequence-format.cc', 'tree/randomtree.cc', 'alignment/alignment-util.cc', 'alignment/alignment-random.cc', 'tree/tree-util.cc', 'tools/statistics.cc', 'io.cc', 'tools/read-trees.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+alignment_cat_SOURCES = ['tools/alignment-cat.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'sequence/sequence-format.cc', 'io.cc',
+	'tree/tree.cc', 'tree/sequencetree.cc', 'tools/optimize.cc', 'tools/findroot.cc']
+
+#---------------------------------------------------------------
+
+alignment_translate_SOURCES = ['tools/alignment-translate.cc', 'alignment/alignment.cc', 'alignment/alignment-util.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'sequence/sequence-format.cc', 'util.cc', 'tree/tree.cc', 'setup.cc', 'tree/sequencetree.cc', 'tree/randomtree.cc', 'rng.cc', 'tree/tree-util.cc', 'alignment/alignment-random.cc', 'io.cc', 'tools/tree-dist.cc', 'tools/partition.cc', 'tools/read-trees.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+alignment_find_SOURCES = ['tools/alignment-find.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'alignment/alignment-util.cc', 'rng.cc', 'util.cc', 'sequence/sequence-format.cc', 'tree/tree.cc', 'io.cc', 'tree/sequencetree.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+alignment_convert_SOURCES = ['tools/alignment-convert.cc', 'alignment/alignment.cc', 'alignment/alignment-util.cc', 'sequence/sequence.cc', 'sequence/alphabet.cc', 'util.cc', 'sequence/sequence-format.cc', 'tree/tree.cc', 'io.cc', 'tree/sequencetree.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+alignment_find_conserved_SOURCES = ['tools/alignment-find-conserved.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'setup.cc', 'tools/parsimony.cc', 'sequence/sequence-format.cc', 'tree/randomtree.cc', 'alignment/alignment-util.cc', 'alignment/alignment-random.cc', 'tree/tree-util.cc', 'tools/statistics.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
+
+trees_consensus_SOURCES = ['tools/trees-consensus.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'util.cc', 'tools/statistics.cc', 'tree/tree-util.cc', 'tools/mctree.cc', 'rng.cc', ' tools/partition.cc', 'tools/consensus-tree.cc', 'io.cc', 'tools/read-trees.cc']
+
+#---------------------------------------------------------------
+
+trees_bootstrap_SOURCES = ['tools/trees-bootstrap.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'util.cc', 'rng.cc', 'tools/statistics.cc', 'tools/bootstrap.cc', 'tree/tree-util.cc', ' tools/partition.cc', 'tools/consensus-tree.cc', 'io.cc', 'tools/read-trees.cc']
+
+#---------------------------------------------------------------
+
+partitions_supported_SOURCES = ['tools/partitions-supported.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'util.cc', ' tools/statistics.cc', 'tree/tree-util.cc', ' tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+
+#---------------------------------------------------------------
+
+draw_graph_SOURCES = ['tools/draw-graph.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'util.cc', 'tree/tree-util.cc', 'tools/mctree.cc', 'rng.cc', ' tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+
+#---------------------------------------------------------------
+tree_mean_lengths_SOURCES = ['tools/tree-mean-lengths.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tools/statistics.cc', 'tree/tree-util.cc', ' tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+
+#---------------------------------------------------------------
+mctree_mean_lengths_SOURCES = ['tools/mctree-mean-lengths.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tools/statistics.cc', 'tree/tree-util.cc', 'tools/mctree.cc', 'rng.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+
+#---------------------------------------------------------------
+trees_pair_distances_SOURCES = ['tools/trees-pair-distances.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tools/statistics.cc', 'tree/tree-util.cc', ' tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+
+#---------------------------------------------------------------
+tree_partitions_SOURCES = ['tools/tree-partitions.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tree/tree-util.cc', ' tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+
+#---------------------------------------------------------------
+
+trees_to_SRQ_SOURCES = ['tools/trees-to-SRQ.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tools/read-trees.cc', 'tools/statistics.cc', 'tree/tree-util.cc', 'tools/partition.cc', 'io.cc']
+
+#---------------------------------------------------------------
+
+tree_reroot_SOURCES = ['tools/tree-reroot.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tree/tree-util.cc', 'util.cc', 'tools/tree-dist.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+
+#---------------------------------------------------------------
+
+pickout_SOURCES = ['tools/pickout.cc', 'util.cc', 'io.cc']
+
+#---------------------------------------------------------------
+
+subsample_SOURCES = ['tools/subsample.cc', 'io.cc']
+
+#---------------------------------------------------------------
+
+cut_range_SOURCES = ['tools/cut-range.cc', 'util.cc', 'io.cc']
+
+#---------------------------------------------------------------
+
+#analyze_distances_SOURCES = ['tools/analyze_distances.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc',
+#	sequence/sequence.cc', 'tools/distance-methods.cc',
+#	util.cc', 'tree/sequencetree.cc', 'substitution/substitution.cc', 'eigenvalue.cc', 'tree/tree.cc',
+#	exponential.cc', 'models/setup.cc', 'models/smodel.cc', 'imodel.cc', 'rng.cc', 'prior.cc',
+#	choose.cc', 'tools/optimize.cc', 'setup.cc', 'models/rates.cc', 'alignment/alignment-util.cc',
+#	sequence/sequence-format.cc', 'tree/randomtree.cc', 'model.cc', 'computation/graph_register.cc', ' probability.cc',
+#	substitution/substitution-cache.cc', 'substitution/substitution-index.cc', 'substitution/substitution-star.cc', 'tree/tree-util.cc',
+#	alignment-random.cc', 'parameters.cc', 'myexception.cc', 'monitor.cc',
+#	tools/tree-dist.cc', 'tools/inverse.cc', 'distribution.cc', 'tools/partition.cc',
+#	timer_stack.cc', 'io.cc', 'computation/operator.cc', 'computation/expression.cc', 'models/objects.cc',
+#	computation/computation.cc', 'computation/model_expression.cc', 'models/operations.cc',
+#	distribution-operations.cc', '2way.cc', 'computation/operations.cc', 'computation/module.cc',
+#	computation/loader.cc', 'computation/context.cc
+
+#---------------------------------------------------------------
+
+trees_distances_SOURCES = ['tools/trees-distances.cc', 'tree/tree.cc',
+	'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tools/partition.cc', 'util.cc',
+	'tree/tree-util.cc', 'tools/statistics.cc', 'io.cc', 'tools/distance-report.cc', 'tools/read-trees.cc', 'rng.cc']
+
+#---------------------------------------------------------------
+
+draw_tree_SOURCES = ['tools/draw-tree.cc', 'tree/tree.cc', 'tree/sequencetree.cc',
+	'tools/tree-dist.cc', 'util.cc', 'tree/tree-util.cc', 'tools/mctree.cc', 'rng.cc',
+	'util-random.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+
+executable('draw-tree', modelp_sources, dependencies: [boost,cairo], install:true)
+
+#---------------------------------------------------------------
+
+path_graph_SOURCES = ['tools/path-graph.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc',
+	'sequence/sequence-format.cc', 'alignment/alignment-util.cc', 'tree/tree.cc', 'io.cc', 'tree/sequencetree.cc', 'alignment/load.cc']
+
+#---------------------------------------------------------------
