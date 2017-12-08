@@ -17,7 +17,7 @@ add_project_arguments('-D_ARCH_="'+host_machine.system()+' ' + host_machine.cpu_
 add_project_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing'], language : 'cpp')
 
 if get_option('buildtype') == 'release'
-  add_project_arguments(['-DNDEBUG','-NDEBUG_DP','-funroll-loops','-ffast-math'], language : 'cpp')
+  add_project_arguments(['-DNDEBUG','-DNDEBUG_DP','-funroll-loops','-ffast-math'], language : 'cpp')
 endif
 
 if host_machine.system() == 'darwin'
