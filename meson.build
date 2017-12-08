@@ -19,6 +19,15 @@ install_subdir('modules', install_dir: 'lib/bali-phy')
 install_subdir('functions', install_dir: 'lib/bali-phy')
 install_subdir('help', install_dir: 'lib/bali-phy')
 
+if get_option('with-system-boost')
+endif
+
+if get_option('with-system-eigen')
+  eigen = include_directories('')
+else
+  eigen = include_directories('include', is_system: true)
+endif
+
 subdir('src')
 
 
