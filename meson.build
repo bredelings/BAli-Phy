@@ -1,7 +1,14 @@
 # https://github.com/mesonbuild/meson/blob/master/docs/markdown/Porting-from-autotools.md
 # http://mesonbuild.com/Syntax.html
 # http://mesonbuild.com/howtox.html#set-default-cc-language-version
-project('bali-phy', 'cpp', version: '3.0-beta5', license: 'GPLv2', default_options : ['cpp_std=c++14'])
+project('bali-phy', 'cpp',
+	version: '3.0-beta5',
+	default_options : [
+	  'buildtype=release',
+	  'cpp_std=c++14'
+	],
+	meson_version: '>= 0.43',
+	license: 'GPLv2')
 
 cpp = meson.get_compiler('cpp')
 
