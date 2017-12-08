@@ -2,7 +2,7 @@ boost= dependency('boost', modules : [ 'program_options', 'random', 'system','fi
 
 libsums = static_library('libsums','computation/machine/sums.cc', cpp_args: '-fno-fast-math', install: false)
 
-gitversion_h = vcs_tag(
+vcs_tag(
   input : 'git-version.h.in',
   output: 'git-version.h',
   command: [ 'git', 'log', '-n1', '--date=format:%b %d %Y %k:%M:%S', '--pretty=format:[%D commit %h]  (%cd)' ],
