@@ -52,7 +52,7 @@ baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc','sequenc
 baliphy = executable('bali-phy',
 		     baliphy_sources,
 		     include_directories: eigen,
-		     dependencies:boost,
+		     dependencies:[boost,libdl],
 		     link_with: libsums,
 		     implib: true)
 
