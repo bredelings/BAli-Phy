@@ -35,6 +35,9 @@ else
   eigen = include_directories('include', is_system: true)
 endif
 
+if get_option('with-mpi')
+endif
+
 subdir('src')
 
 
