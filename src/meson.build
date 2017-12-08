@@ -305,7 +305,9 @@ draw_tree_sources = ['tools/draw-tree.cc', 'tree/tree.cc', 'tree/sequencetree.cc
 	'tools/tree-dist.cc', 'util.cc', 'tree/tree-util.cc', 'tools/mctree.cc', 'rng.cc',
 	'util-random.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
 
-executable('draw-tree', modelp_sources, dependencies: [boost,cairo], install:true)
+if cairo.found()
+  executable('draw-tree', modelp_sources, dependencies: [boost,cairo], install:true)
+endif
 
 #---------------------------------------------------------------
 
