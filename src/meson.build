@@ -51,14 +51,20 @@ baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc','sequenc
 
 
 extra_link_args = []
+extra_includes = []
 if host_machine.system() == 'linux'
   extra_link_args += [ '-rdynamic' ]
+elif host_machine.system() == 'windows'
+  # We should have a system of 'cygwin' for cygwin.
+  baliphy_sources += [ 'dlfcn-win32/dlfcn.c' ]
+  extra_includes = include_directories('dlfcn-win32/')
+  libdl = []
 endif
 
 baliphy = executable('bali-phy',
 		     baliphy_sources,
-		     include_directories: eigen,
-		     dependencies:[boost,libdl],
+		     include_directories: [eigen,extra_includes],
+		     dependencies: [boost,libdl],
 		     link_args: extra_link_args,
 		     link_with: libsums,
 		     install: true,
