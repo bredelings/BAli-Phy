@@ -38,7 +38,8 @@ install_subdir('help', install_dir: 'lib/bali-phy')
 
 # for boost and eigen, we really want something like yes, no, auto* -- default to auto.
 # if we have 'auto', then build our own boost if we want stl-debug and bounds_checking
-if get_option('with-system-boost')
+if not get_option('with-system-boost')
+  subdir('boost')
 endif
 
 if get_option('with-system-eigen')
