@@ -63,3 +63,6 @@ modelp = executable('model_P', modelp_sources, dependencies: boost)
 #link_args += ['-Lpath/to/lib', '-lfoo', '-lbar']
 #add_project_arguments(libahal_compile_args, language: 'c')
 #add_project_link_arguments(link_args, language: 'c')
+
+#https://gitlab.gnome.org/chergert/gir2rst/blob/master/meson.build
+subdir('builtins')
