@@ -246,18 +246,22 @@ executable('trees-to-SRQ', trees_to_SRQ_sources, dependencies:boost, install: tr
 #---------------------------------------------------------------
 
 tree_reroot_sources = ['tools/tree-reroot.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tree/tree-util.cc', 'util.cc', 'tools/tree-dist.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+executable('tree-reroot', tree_reroot_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
 pickout_sources = ['tools/pickout.cc', 'util.cc', 'io.cc']
+executable('pickout', pickout_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
 subsample_sources = ['tools/subsample.cc', 'io.cc']
+executable('subsample', subsample_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
 cut_range_sources = ['tools/cut-range.cc', 'util.cc', 'io.cc']
+executable('cut-range', cut_range_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
@@ -280,6 +284,7 @@ cut_range_sources = ['tools/cut-range.cc', 'util.cc', 'io.cc']
 trees_distances_sources = ['tools/trees-distances.cc', 'tree/tree.cc',
 	'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tools/partition.cc', 'util.cc',
 	'tree/tree-util.cc', 'tools/statistics.cc', 'io.cc', 'tools/distance-report.cc', 'tools/read-trees.cc', 'rng.cc']
+executable('trees-distances', trees_distances_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
@@ -293,5 +298,6 @@ executable('draw-tree', modelp_sources, dependencies: [boost,cairo], install:tru
 
 path_graph_sources = ['tools/path-graph.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc',
 	'sequence/sequence-format.cc', 'alignment/alignment-util.cc', 'tree/tree.cc', 'io.cc', 'tree/sequencetree.cc', 'alignment/load.cc']
+executable('path-graph', path_graph_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
