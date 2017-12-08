@@ -50,6 +50,7 @@ baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc','sequenc
    'computation/optimization/inliner.cc']
 
 
+libdl = cpp.find_library('dl')
 extra_link_args = []
 extra_includes = []
 if host_machine.system() == 'linux'
