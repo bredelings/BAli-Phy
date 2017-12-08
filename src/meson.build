@@ -174,59 +174,74 @@ executable('alignment-info', alignment_info_sources, dependencies:boost, install
 #---------------------------------------------------------------
 
 alignment_smc_sources = ['tools/alignment-smc.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'setup.cc', 'tools/parsimony.cc', 'sequence/sequence-format.cc', 'tree/randomtree.cc', 'alignment/alignment-util.cc', 'alignment/alignment-random.cc', 'tree/tree-util.cc', 'tools/statistics.cc', 'io.cc', 'tools/read-trees.cc', 'alignment/load.cc']
+executable('alignment-smc', alignment_smc_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
 alignment_cat_sources = ['tools/alignment-cat.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'sequence/sequence-format.cc', 'io.cc',
 	'tree/tree.cc', 'tree/sequencetree.cc', 'tools/optimize.cc', 'tools/findroot.cc']
+executable('alignment-cat', alignment_cat_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
 alignment_translate_sources = ['tools/alignment-translate.cc', 'alignment/alignment.cc', 'alignment/alignment-util.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'sequence/sequence-format.cc', 'util.cc', 'tree/tree.cc', 'setup.cc', 'tree/sequencetree.cc', 'tree/randomtree.cc', 'rng.cc', 'tree/tree-util.cc', 'alignment/alignment-random.cc', 'io.cc', 'tools/tree-dist.cc', 'tools/partition.cc', 'tools/read-trees.cc', 'alignment/load.cc']
+executable('alignment-translate', alignment_translate_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
 alignment_find_sources = ['tools/alignment-find.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'alignment/alignment-util.cc', 'rng.cc', 'util.cc', 'sequence/sequence-format.cc', 'tree/tree.cc', 'io.cc', 'tree/sequencetree.cc', 'alignment/load.cc']
+executable('alignment-find', alignment_find_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
 alignment_convert_sources = ['tools/alignment-convert.cc', 'alignment/alignment.cc', 'alignment/alignment-util.cc', 'sequence/sequence.cc', 'sequence/alphabet.cc', 'util.cc', 'sequence/sequence-format.cc', 'tree/tree.cc', 'io.cc', 'tree/sequencetree.cc', 'alignment/load.cc']
+executable('alignment-convert', alignment_convert_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
 alignment_find_conserved_sources = ['tools/alignment-find-conserved.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'setup.cc', 'tools/parsimony.cc', 'sequence/sequence-format.cc', 'tree/randomtree.cc', 'alignment/alignment-util.cc', 'alignment/alignment-random.cc', 'tree/tree-util.cc', 'tools/statistics.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc', 'alignment/load.cc']
+executable('alignment-find-conserved', alignment_find_conserved_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
-trees_consensus_sources = ['tools/trees-consensus.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'util.cc', 'tools/statistics.cc', 'tree/tree-util.cc', 'tools/mctree.cc', 'rng.cc', ' tools/partition.cc', 'tools/consensus-tree.cc', 'io.cc', 'tools/read-trees.cc']
+trees_consensus_sources = ['tools/trees-consensus.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'util.cc', 'tools/statistics.cc', 'tree/tree-util.cc', 'tools/mctree.cc', 'rng.cc', 'tools/partition.cc', 'tools/consensus-tree.cc', 'io.cc', 'tools/read-trees.cc']
+executable('trees-consensus', trees_consensus_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
-trees_bootstrap_sources = ['tools/trees-bootstrap.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'util.cc', 'rng.cc', 'tools/statistics.cc', 'tools/bootstrap.cc', 'tree/tree-util.cc', ' tools/partition.cc', 'tools/consensus-tree.cc', 'io.cc', 'tools/read-trees.cc']
+trees_bootstrap_sources = ['tools/trees-bootstrap.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'util.cc', 'rng.cc', 'tools/statistics.cc', 'tools/bootstrap.cc', 'tree/tree-util.cc', 'tools/partition.cc', 'tools/consensus-tree.cc', 'io.cc', 'tools/read-trees.cc']
+executable('trees-bootstrap', trees_bootstrap_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
-partitions_supported_sources = ['tools/partitions-supported.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'util.cc', ' tools/statistics.cc', 'tree/tree-util.cc', ' tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+partitions_supported_sources = ['tools/partitions-supported.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'util.cc', 'tools/statistics.cc', 'tree/tree-util.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+executable('partitions-supported', partitions_supported_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
-draw_graph_sources = ['tools/draw-graph.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'util.cc', 'tree/tree-util.cc', 'tools/mctree.cc', 'rng.cc', ' tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+draw_graph_sources = ['tools/draw-graph.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'util.cc', 'tree/tree-util.cc', 'tools/mctree.cc', 'rng.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+executable('draw-graph', draw_graph_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
-tree_mean_lengths_sources = ['tools/tree-mean-lengths.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tools/statistics.cc', 'tree/tree-util.cc', ' tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+tree_mean_lengths_sources = ['tools/tree-mean-lengths.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tools/statistics.cc', 'tree/tree-util.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+executable('tree-mean-lengths', tree_mean_lengths_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 mctree_mean_lengths_sources = ['tools/mctree-mean-lengths.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tools/statistics.cc', 'tree/tree-util.cc', 'tools/mctree.cc', 'rng.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+executable('mctree-mean-lengths', mctree_mean_lengths_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
-trees_pair_distances_sources = ['tools/trees-pair-distances.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tools/statistics.cc', 'tree/tree-util.cc', ' tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+trees_pair_distances_sources = ['tools/trees-pair-distances.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tools/statistics.cc', 'tree/tree-util.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+executable('trees-pair-distances', trees_pair_distances_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
-tree_partitions_sources = ['tools/tree-partitions.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tree/tree-util.cc', ' tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+tree_partitions_sources = ['tools/tree-partitions.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tree/tree-util.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
+executable('tree-partitions', tree_partitions_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
 trees_to_SRQ_sources = ['tools/trees-to-SRQ.cc', 'util.cc', 'tree/tree.cc', 'tree/sequencetree.cc', 'tools/tree-dist.cc', 'tools/read-trees.cc', 'tools/statistics.cc', 'tree/tree-util.cc', 'tools/partition.cc', 'io.cc']
+executable('trees-to-SRQ', trees_to_SRQ_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
