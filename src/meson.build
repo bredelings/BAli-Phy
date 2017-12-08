@@ -5,7 +5,7 @@ libsums = static_library('libsums','computation/machine/sums.cc', cpp_args: '-fn
 gitversion_h = vcs_tag(
   input : 'git-version.h.in',
   output: 'git-version.h',
-  command: [ 'git', 'log', '-n1', '--date=format:"%b %d %Y %k:%M:%S"', '--pretty=format:[%D commit %h]' ],
+  command: [ 'git', 'log', '-n1', '--date=format:%b %d %Y %k:%M:%S', '--pretty=format:[%D commit %h]  (%cd)' ],
   replace_string: '@git_message@',
   fallback: '',
 )
