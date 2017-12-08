@@ -12,12 +12,12 @@ project('bali-phy', 'cpp',
 
 cpp = meson.get_compiler('cpp')
 
-add_global_arguments('-DPACKAGE_VERSION="'+meson.project_version()+'"', language : 'cpp')
-add_global_arguments('-D_ARCH_="'+host_machine.system()+' ' + host_machine.cpu() + '"', language : 'cpp')
-add_global_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing'], language : 'cpp')
+add_project_arguments('-DPACKAGE_VERSION="'+meson.project_version()+'"', language : 'cpp')
+add_project_arguments('-D_ARCH_="'+host_machine.system()+' ' + host_machine.cpu_family() + '"', language : 'cpp')
+add_project_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing'], language : 'cpp')
 
 if host_machine.system() == 'osx'
-  add_global_arguments('-fvisibility=default', language : 'cpp')
+  add_project_arguments(['-DNDEBUG','-NDEBUG_DP','-funroll-loops','-ffast-math'], language : 'cpp')
 endif
 
 eigen = include_directories('include', is_system: true)
