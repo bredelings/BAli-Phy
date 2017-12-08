@@ -40,7 +40,13 @@ void print_version_info(ostream& file)
 #ifdef GIT_MESSAGE
   string git_rev = GIT_MESSAGE;
   if (not git_rev.empty()) {
-    file<<"  "<<git_rev<<"";
+    if (git_rev[0] == '[')
+      file<<"  "<<git_rev<<"";
+    else
+      file<<"  ["<<git_rev<<"]";
+#ifdef GIT_COMMIT_DATE
+    file<<"  ("<<GIT_COMMIT_DATE<<")";
+#endif
   }
 #endif
 
