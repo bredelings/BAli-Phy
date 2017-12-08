@@ -54,10 +54,11 @@ baliphy = executable('bali-phy',
 		     include_directories: eigen,
 		     dependencies:[boost,libdl],
 		     link_with: libsums,
+		     install: true,
 		     implib: true)
 
 modelp_sources = ['tools/model_P.cc', 'tools/statistics.cc', 'rng.cc', 'util.cc']
-modelp = executable('model_P', modelp_sources, dependencies: boost)
+modelp = executable('model_P', modelp_sources, dependencies: boost, install:true)
 
 #compile_args += ['-Ipath/to/include']
 #link_args += ['-Lpath/to/lib', '-lfoo', '-lbar']
