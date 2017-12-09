@@ -307,7 +307,7 @@ draw_tree_sources = ['tools/draw-tree.cc', 'tree/tree.cc', 'tree/sequencetree.cc
 	'util-random.cc', 'tools/partition.cc', 'io.cc', 'tools/read-trees.cc']
 
 if cairo.found()
-  executable('draw-tree', modelp_sources, dependencies: [boost,cairo], install:true)
+  executable('draw-tree', draw_tree_sources, dependencies: [boost,cairo], install:true)
 endif
 
 #---------------------------------------------------------------
