@@ -122,7 +122,7 @@ executable('alignment-consensus', alignment_consensus_sources, dependencies:boos
 alignment_max_sources = ['tools/alignment-max.cc', 'alignment/alignment.cc', 'sequence/alphabet.cc', 'sequence/sequence.cc', 'util.cc', 'rng.cc',
 	'tree/tree.cc', 'tree/sequencetree.cc', 'util-random.cc', 'tools/statistics.cc',
 	'sequence/sequence-format.cc', 'alignment/alignment-util.cc', 'alignment/index-matrix.cc', 'io.cc', 'alignment/load.cc']
-executable('alignment-max', alignment_consensus_sources, dependencies:boost, install: true)
+executable('alignment-max', alignment_max_sources, dependencies:boost, install: true)
 
 #---------------------------------------------------------------
 
