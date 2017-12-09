@@ -14,5 +14,6 @@ foreach mod : builtins
 		include_directories: source_inc,
 		link_with: implibs,
 		install_dir: 'lib/bali-phy',
+		name_prefix: '',
 		install: true)
 endforeach
