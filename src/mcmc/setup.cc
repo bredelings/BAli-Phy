@@ -710,8 +710,7 @@ void log_preburnin(ostream& o, const Model& M, const string& name, int iter)
 }
 
 
-void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
-		   ostream& out_log,ostream& out_both)
+void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P, ostream& out_log,ostream& out_both)
 {
     using namespace MCMC;
     using namespace boost::chrono;
@@ -731,24 +730,89 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 	P.as<Parameters>()->variable_alignment(false);
 
     MoveStats Stats;
-    // 1. First choose the scale of the tree
+    // 1. First sample (a) scale of the tree
     {
 	MoveAll pre_burnin("pre-burnin");
 
 	pre_burnin.add(3,get_scale_slice_moves(*P.as<Parameters>()));
+	if (all_scales_modifiable(*P))
+	    pre_burnin.add(4,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
 
 	// enable and disable moves
 	enable_disable_transition_kernels(pre_burnin,args);
 
 	for(int i=0;i<3;i++) {
-	    log_preburnin(out_both, *P, "Tree size", i);
+	    log_preburnin(out_both, *P, "Tree (S)ize", i);
 	    show_parameters(out_log, *P, false);
 	    pre_burnin.iterate(P,Stats);
 	}
     }
     out_both<<endl;
 
-    // 2. Then do an initial tree search - SPR - ignore indel information
+    // 2. Then sample (a) scale and (b) branch lengths
+    {
+	MoveAll pre_burnin("pre-burnin");
+
+	pre_burnin.add(3,get_scale_slice_moves(*P.as<Parameters>()));
+	if (all_scales_modifiable(*P))
+	    pre_burnin.add(4,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
+	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths, "walk_tree_sample_branch_lengths","lengths") );
+
+	// enable and disable moves
+	enable_disable_transition_kernels(pre_burnin,args);
+
+	for(int i=0;i<3;i++) {
+	    log_preburnin(out_both, *P, "(S)+Branch (L)engths", i);
+	    show_parameters(out_log, *P, false);
+	    pre_burnin.iterate(P,Stats);
+	}
+    }
+    out_both<<endl;
+
+    // 3. Then sample  (a) scale and (b) branch lengths and (c) parameters
+    {
+	MoveAll pre_burnin("pre-burnin");
+
+	pre_burnin.add(3,get_scale_slice_moves(*P.as<Parameters>()));
+	if (all_scales_modifiable(*P))
+	    pre_burnin.add(4,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
+	pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths, "walk_tree_sample_branch_lengths","lengths") );
+	pre_burnin.add(1,get_parameter_slice_moves(*P));
+
+	// enable and disable moves
+	enable_disable_transition_kernels(pre_burnin,args);
+
+	for(int i=0;i<3;i++) {
+	    log_preburnin(out_both, *P, "(S)+(L)+(P)arameters", i);
+	    show_parameters(out_log, *P, false);
+	    pre_burnin.iterate(P,Stats);
+	}
+    }
+    out_both<<endl;
+
+    // 4. Then do a tree search - NNI - w/ the actual model
+    {
+	MoveAll pre_burnin("pre-burnin");
+
+	pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
+	if (all_scales_modifiable(*P))
+	    pre_burnin.add(4,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
+	pre_burnin.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths, "NNI_and_lengths","tree:topology:lengths"));
+	pre_burnin.add(1,get_parameter_slice_moves(*P));
+
+	// enable and disable moves
+	enable_disable_transition_kernels(pre_burnin,args);
+
+	int n_pre_burnin2 = n_pre_burnin + (int)log(P.as<Parameters>()->t().n_leaves());
+	for(int i=0;i<n_pre_burnin2;i++) {
+	    log_preburnin(out_both, *P, "(S)+(L)+(P)+NNI", i);
+	    show_parameters(out_log, *P, false);
+	    pre_burnin.iterate(P,Stats);
+	}
+    }
+    out_both<<endl;
+
+    // 5. Then do an further tree search - SPR - ignore indel information
     {
 	MoveAll pre_burnin("pre-burnin");
 	pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
@@ -760,15 +824,15 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 	// enable and disable moves
 	enable_disable_transition_kernels(pre_burnin,args);
 
-	for(int i=0;i<n_pre_burnin;i++) {
+	for(int i=0;i<1;i++) {
 	    log_preburnin(out_both, *P, "SPR", i);
-	    show_parameters(out_log, *P, false);
+ 	    show_parameters(out_log, *P, false);
 	    pre_burnin.iterate(P,Stats);
 	}
 	out_both<<endl;
     }
 
-    // 3. Then do a further tree search - NNI - w/ the actual model
+    // 6. Then do a tree search - NNI - w/ the actual model
     {
 	MoveAll pre_burnin("pre-burnin");
 
@@ -776,13 +840,14 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Model>& P,
 	if (all_scales_modifiable(*P))
 	    pre_burnin.add(4,MCMC::SingleMove(scale_means_only, "scale_means_only","mean"));
 	pre_burnin.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths, "NNI_and_lengths","tree:topology:lengths"));
+	pre_burnin.add(1,get_parameter_slice_moves(*P));
 
 	// enable and disable moves
 	enable_disable_transition_kernels(pre_burnin,args);
 
 	int n_pre_burnin2 = n_pre_burnin + (int)log(P.as<Parameters>()->t().n_leaves());
 	for(int i=0;i<n_pre_burnin2;i++) {
-	    log_preburnin(out_both, *P, "NNI", i);
+	    log_preburnin(out_both, *P, "(S)+(L)+(P)+NNI", i);
 	    show_parameters(out_log, *P, false);
 	    pre_burnin.iterate(P,Stats);
 	}
