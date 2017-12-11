@@ -136,4 +136,6 @@ std::vector<int> parameters_with_extension(const std::vector<std::string>& M, st
 std::string show_probability_expression(const expression_ref&);
 
 std::vector< std::string > show_probability_expressions(const context& C);
+
+extern const std::string model_separator;
 #endif
