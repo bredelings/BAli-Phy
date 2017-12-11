@@ -31,10 +31,18 @@ eigen = include_directories('include', is_system: true)
 
 cairo = dependency('cairo', required: false)
 
+install_data('scripts/bp-analyze', install_mode: 'rwxr-----', install_dir: 'bin')
+install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R', 'scripts/tree-plot1.R',
+	      'scripts/tree-plot2.R', 'scripts/tree-plot3.R', 'scripts/tree-plot2-3D.R',
+	      'scripts/tree-plot1-3D.R', 'scripts/tree-plot3-3D.R'],
+	     install_dir:'libexec/bali-phy')
+install_data(['doc/README.html','doc/README.xhtml','doc/README.pdf'], install_dir: 'share/doc/bali-phy')
+
 ## we need to build libdl if we are on windows (cygwin or mingw64, and then find the library
 install_subdir('modules', install_dir: 'lib/bali-phy')
 install_subdir('functions', install_dir: 'lib/bali-phy')
 install_subdir('help', install_dir: 'lib/bali-phy')
+install_subdir('examples', install_dir: 'share/bali-phy')
 
 # for boost and eigen, we really want something like yes, no, auto* -- default to auto.
 # if we have 'auto', then build our own boost if we want stl-debug and bounds_checking
