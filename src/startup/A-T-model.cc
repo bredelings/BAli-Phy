@@ -27,21 +27,28 @@ using boost::optional;
 /// Replace negative or zero branch lengths with saner values.
 void sanitize_branch_lengths(SequenceTree& T)
 {
-    double min_branch = 0.000001;
+    double min_branch = 1e-6;
     for(int i=0;i<T.n_branches();i++)
-    {
-	if (not T.branch(i).has_length())
-	    T.branch(i).set_length(3.0/T.n_branches());
-	if (T.branch(i).length() > 0)
+	if (T.branch(i).has_length() and T.branch(i).length() > 0)
 	    min_branch = std::min(min_branch,T.branch(i).length());
-    }
-  
-    for(int i=0;i<T.n_branches();i++) {
-	if (T.branch(i).length() == 0)
-	    T.branch(i).set_length(min_branch);
-	if (T.branch(i).length() < 0)
-	    T.branch(i).set_length( - T.branch(i).length() );
-    }
+
+    for(int i=0;i<T.n_branches();i++)
+	if (T.branch(i).has_length())
+	{
+	    double L = T.branch(i).length();
+	    if (L <= 0)
+	    {
+		if (log_verbose > 0)
+		{
+		    if (L < 0)
+			std::cerr<<"Read in negative branch length "<<L<<": ";
+		    else if (L == 0)
+			std::cerr<<"Read in zero branch length: ";
+		    std::cerr<<"setting length to "<<min_branch;
+		}
+		T.branch(i).set_length(min_branch);
+	    }
+	}
 }
 
 vector<double> get_geometric_heating_levels(const string& s)
@@ -463,7 +470,9 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     SequenceTree T;
 
     if (args.count("tree"))
+    {
 	T = load_T(args);
+    }
     else
     {
 	SequenceTree TC = star_tree(sequence_names(A[0]));
@@ -477,7 +486,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     for(auto& a: A)
 	link(a,T,true);
 
-    //--------- Handle branch lengths <= 0 --------//
+    //--------- Handle branch lengths <= 0 and very short branch lengths --------//
     sanitize_branch_lengths(T);
 
     //--------- Set up indel model --------//
