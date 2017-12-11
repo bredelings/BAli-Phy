@@ -34,6 +34,7 @@
 using std::vector;
 using std::string;
 using std::set;
+using std::map;
 using std::multiset;
 
 using boost::dynamic_pointer_cast;
@@ -145,15 +146,19 @@ bool has_parameter(const Model& M, const string& name)
 /// \param s1   The string
 /// \param s2   The pattern
 ///
-bool pattern_match(const string& s1, const string& s2)
+boost::optional<string> pattern_match(const string& s1, const string& s2)
 {
-    if (s2.size() and s2[s2.size()-1] == '*') {
+    if (s2.size() and s2[s2.size()-1] == '*')
+    {
 	int L = s2.size() - 1;
-	if (L > s1.size()) return false;
-	return (s1.substr(0,L) == s2.substr(0,L));
+	if (s1.substr(0,L) != s2.substr(0,L))
+	    return boost::none;
+	return s1.substr(L);
     }
+    else if (s1 != s2)
+	return boost::none;
     else
-	return s1 == s2;
+	return string("");
 }
 
 bool operator<(const vector<string>& p1, const vector<string>& p2)
@@ -451,23 +456,24 @@ bool path_match(const vector<string>& key, const vector<string>& pattern)
 /// \param M      The model
 /// \param name   The pattern
 ///
-vector<int> parameters_with_extension(const vector<string>& M, string name)
+map<string,map<string,int>> parameters_with_extension(const vector<string>& M, string name)
 {
-    vector<int> indices;
+    map<string,map<string,int>> indices;
 
     const vector<string> key = split(name, model_separator);
-
-    if (not key.size()) return indices;
-
-    vector<string> skeleton;
-
     for(int i=0;i<M.size();i++)
     {
 	vector<string> pattern = split(M[i], model_separator);
 
-	if (not path_match(key, pattern)) continue;
+	assert(not pattern.empty());
 
-	indices.push_back(i);
+	auto m = pattern_match(pattern.back(), name);
+
+	if (m)
+	{
+	    pattern.pop_back();
+	    indices[join(pattern,"::")][*m] = i;
+	}
     }
 
     return indices;
@@ -478,9 +484,18 @@ vector<int> parameters_with_extension(const vector<string>& M, string name)
 /// \param M      The model
 /// \param name   The pattern
 ///
-vector<int> parameters_with_extension(const Model& M, string name)
+map<string,map<string,int>> parameters_with_extension(const Model& M, string name)
 {
     return parameters_with_extension(parameter_names(M), name);
+}
+
+vector<int> flatten(const map<string,map<string,int>>& names)
+{
+    vector<int> indices;
+    for(auto& x: names)
+	for(auto& y: x.second)
+	    indices.push_back(y.second);
+    return indices;
 }
 
 Model::key_map_t parse_key_map(const vector<string>& key_value_strings)

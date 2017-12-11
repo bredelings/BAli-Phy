@@ -94,7 +94,7 @@ void add_MH_move(Model& P, const Proposal_Fn& proposal, const vector<string>& na
 void add_MH_move(Model& P,const Proposal_Fn& proposal, const string& name, const string& pname,double sigma, 
 		 MCMC::MoveAll& M,double weight=1)
 {
-    vector<int> indices = parameters_with_extension(P,name);
+    vector<int> indices = flatten( parameters_with_extension(P,name) );
     vector<string> names;
     for(int i: indices)
 	names.push_back(P.parameter_name(i));
@@ -150,7 +150,7 @@ void add_slice_moves(Model& P, const string& name,
 		     MCMC::MoveAll& M,
 		     double weight)
 {
-    vector<int> indices = parameters_with_extension(P,name);
+    vector<int> indices = flatten( parameters_with_extension(P,name) );
     for(int i=0;i<indices.size();i++) 
     {
 	string parameter_name = P.parameter_name(indices[i]);
@@ -169,7 +169,7 @@ void add_slice_moves(Model& P, const string& name,
 void add_slice_moves(Model& P, const string& name, 
 		     MCMC::MoveAll& M)
 {
-    vector<int> indices = parameters_with_extension(P,name);
+    vector<int> indices = flatten( parameters_with_extension(P,name) );
     for(int i=0;i<indices.size();i++) 
     {
 	string parameter_name = P.parameter_name(indices[i]);

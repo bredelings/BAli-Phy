@@ -129,9 +129,11 @@ std::vector<std::string> short_parameter_names(const Model& M);
 
 std::vector<std::string> short_parameter_names(const std::vector<std::string>& names);
 
-std::vector<int> parameters_with_extension(const Model& M, std::string name);
+std::map<std::string,std::map<std::string,int>> parameters_with_extension(const Model& M, std::string name);
 
-std::vector<int> parameters_with_extension(const std::vector<std::string>& M, std::string name);
+std::map<std::string,std::map<std::string,int>> parameters_with_extension(const std::vector<std::string>& M, std::string name);
+
+std::vector<int> flatten(const std::map<std::string,std::map<std::string,int>>& names);
 
 std::string show_probability_expression(const expression_ref&);
 

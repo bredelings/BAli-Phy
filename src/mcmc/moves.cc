@@ -31,6 +31,8 @@ using MCMC::MoveStats;
 
 using std::valarray;
 using std::vector;
+using std::string;
+using std::map;
 
 void slide_node_move(owned_ptr<Model>& P, MoveStats& Stats,int b) 
 {
@@ -122,12 +124,13 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& St
   double sigma = 0.5;
   if (uniform() < 0.5)
   {
-    indices = parameters_with_extension(*PP,"logLambda");
+    indices = flatten( parameters_with_extension(*PP,"logLambda") );
     //    sigma = 0.5;
   }
   else
   {
-    indices = parameters_with_extension(*PP,"meanIndelLengthMinus1");
+      // FIXME - this isn't going to work.
+    indices = flatten( parameters_with_extension(*PP,"meanIndelLengthMinus1") );
     //    sigma = 0.5;
   }
   if (not indices.size()) return;

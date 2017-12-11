@@ -9,6 +9,7 @@
 #include <set>
 
 using std::vector;
+using std::map;
 using std::string;
 using std::set;
 using std::shared_ptr;
@@ -16,37 +17,90 @@ using std::make_shared;
 
 using std::to_string;
 
-/// Determine the parameters of model \a M that must be sorted in order to enforce identifiability.
-vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, const vector<string>& names)
+map<string,set<string>> extract_signature(const map<string,map<string,int>>& extensions)
 {
-    if (not dynamic_cast<const Parameters*>(&M)) return {};
+    map<string, set<string>> prefix_to_labels;
+    for(auto& extension: extensions)
+	for(auto& label: extension.second)
+	    prefix_to_labels[extension.first].insert(label.first);
+    return prefix_to_labels;
+}
 
-    const Parameters& P = dynamic_cast<const Parameters&>(M);
+set<string> extract_signature(const map<string,int>& extensions)
+{
+    set<string> labels;
+    for(auto& label: extensions)
+	labels.insert(label.first);
+    return labels;
+}
+
+
+// {S1 -> {[0] -> [a,b],[1]->[c,d]}, S2 -> {[0] -> [x,y],[1] -> [z,w]} }
+vector<vector<vector<int>>> get_un_identifiable_indices(const vector<string>& names, const vector<string>& patterns)
+{
+    // groups[prefix][label] = {indices} ; and the number of indices should be patterns.size
+    map<string,map<string,vector<int>>> groups;
+    boost::optional<map<string,set<string>>> signature;
+    for(int i=0;i<patterns.size();i++)
+    {
+	const auto& pattern = patterns[i];
+
+	auto z = parameters_with_extension(names, pattern);
+	if (not signature)
+	    signature = extract_signature(z);
+	else
+	    if (*signature != extract_signature(z))
+		throw myexception()<<"Signature's don't match!";  // FIXME - how to display this?
+
+	// groups[prefix][label] = index
+	for(auto& x: z)
+	{
+	    auto& prefix = x.first;
+	    auto& label_mapping = x.second;
+
+	    auto& group = groups[prefix];
+	    for(auto& y: label_mapping)
+	    {
+		auto& label = y.first;
+		int index = y.second;
+		group[label].push_back(index);
+	    }
+	}
+    }
+
+    // 2. Create the indices, where each vector<vector<int>> contains patterns.size() components, and the first one is the one we sort on.
+    vector< vector< vector<int> > > indices;
+    for(auto& prefix_ : groups)
+    {
+	vector<vector<int> > group_indices;
+	// Extract the vector<int> for each pattern.
+	for(int i=0;i<patterns.size();i++)
+	{
+	    vector<int> indices;
+	    for(auto& label_: prefix_.second)
+	    {
+		if (i< label_.second.size())
+		    indices.push_back(label_.second[i]);
+		else
+		    throw myexception()<<"label group doesn't have "<<i+1<<" components!";
+	    }
+	    group_indices.push_back(std::move(indices));
+	}
+	indices.push_back(std::move(group_indices));
+    }
+
+    return indices;
+}
+
+/// Determine the parameters of model \a M that must be sorted in order to enforce identifiability.
+vector< vector< vector<int> > > get_un_identifiable_indices(const vector<string>& names)
+{
     vector< vector< vector<int> > > indices;
 
-    int n_smodels = P.n_smodels();
-
-    for(int i=0;i<n_smodels+1;i++) 
+    for(auto& patterns: vector<vector<string>>{ {"DP:rates*","DP:frequencies*"}, {"M3:omegas*","M3:ps*"} } )
     {
-	string prefix = "^";
-	if (i>0)
-	    prefix = string("S")+convertToString(i) + "::";
-
-	vector< vector<int> > DP;
-	if (parameters_with_extension(names, prefix + "*::DP:rates*").size()  )
-	{
-	    DP.push_back( parameters_with_extension(names, prefix + "*::DP:rates*") );
-	    DP.push_back( parameters_with_extension(names, prefix + "*::DP:frequencies*") );
-	    indices.push_back( DP );
-	}
-
-	vector< vector<int> > M3;
-	if (parameters_with_extension(names, prefix + "M3.omega*").size() )
-	{
-	    M3.push_back( parameters_with_extension(names, prefix + "M3:omegas*") );
-	    M3.push_back( parameters_with_extension(names, prefix + "M3:ps*") );
-	    indices.push_back( M3 );
-	}
+	auto x = get_un_identifiable_indices(names, patterns);
+	indices.insert(indices.end(), x.begin(), x.end());
     }
 
     return indices;
@@ -165,7 +219,7 @@ owned_ptr<MCMC::TableFunction<string>> construct_table_function(owned_ptr<Model>
 	    T1.add_field(name, [index](const Model& M, long) {return get_computation(M,index);} );
 	}
 
-	SortedTableFunction T2(T1, get_un_identifiable_indices(*M, logged_names));
+	SortedTableFunction T2(T1, get_un_identifiable_indices(logged_names));
 
 	TL->add_fields( ConvertTableToStringFunction<expression_ref>( T2 ) );
     }
