@@ -46,7 +46,15 @@ install_subdir('examples', install_dir: 'share/bali-phy')
 
 # for boost and eigen, we really want something like yes, no, auto* -- default to auto.
 # if we have 'auto', then build our own boost if we want stl-debug and bounds_checking
-if not get_option('with-system-boost')
+boost_modules = [ 'program_options', 'random', 'system','filesystem', 'chrono']
+if get_option('with-mpi')
+  boost_modules += ['serialization', 'mpi']
+endif
+
+if get_option('with-system-boost')
+  boost = dependency('boost', modules : boost_modules)
+else
+  boost_inc = include_directories('boost/include', is_system:true)
   subdir('boost')
 endif
 

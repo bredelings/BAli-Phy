@@ -1,5 +1,3 @@
-boost= dependency('boost', modules : [ 'program_options', 'random', 'system','filesystem','chrono'])
-
 libsums = static_library('libsums','computation/machine/sums.cc', cpp_args: '-fno-fast-math', install: false)
 
 vcs_tag(
