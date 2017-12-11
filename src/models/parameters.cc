@@ -797,7 +797,8 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 
 	branch_length_parameters.push_back(*index);
 	const context* c = p;
-	const_cast<context*>(c)->set_parameter_value(*index, T.branch(b).length());
+	if (T.branch(b).has_length())
+	    const_cast<context*>(c)->set_parameter_value(*index, T.branch(b).length());
     }
 }
 

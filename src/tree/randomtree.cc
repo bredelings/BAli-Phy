@@ -111,26 +111,10 @@ void RandomTree(Tree& T)
 }
 
 
-void RandomTree(Tree& T, double branch_mean) 
-{
-  RandomTree(T);
-
-  for(int i=0;i<T.n_branches();i++) 
-    T.branch(i).set_length( exponential(branch_mean) );
-}
-
-
-Tree RandomTree(int n,double branch_mean) 
-{
-  Tree T = star_tree(n);
-  RandomTree(T,branch_mean);
-  return T;
-}
-
-SequenceTree RandomTree(const vector<string>& s,double branch_mean) 
+SequenceTree RandomTree(const vector<string>& s) 
 {
   SequenceTree T = star_tree(s);
-  RandomTree(T,branch_mean);
+  RandomTree(T);
   return T;
 }
 

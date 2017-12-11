@@ -136,9 +136,7 @@ std::ostream& operator <<(std::ostream& o,const SequenceTree& T);
 
 bool same_topology(const SequenceTree&,const SequenceTree&);
 
-SequenceTree RandomTree(const std::vector<std::string>&,double);
-
-void RandomTree(Tree&,double);
+SequenceTree RandomTree(const std::vector<std::string>&);
 
 SequenceTree star_tree(const std::vector<std::string>&);
 

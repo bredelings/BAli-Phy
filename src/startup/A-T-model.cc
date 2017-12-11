@@ -471,7 +471,7 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
 	    TC = load_constraint_tree(args["t-constraint"].as<string>(),sequence_names(A[0]));
 
 	T = TC;
-	RandomTree(T, 1.0);
+	RandomTree(T);
     }
 
     for(auto& a: A)
