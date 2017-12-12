@@ -68,4 +68,12 @@ endif
 
 subdir('src')
 
+python = find_program('python')
+tests = join_paths(meson.source_root(),'tests')
+run_tests = files('tests/run-tests.py')
+baliphyexe = join_paths(meson.build_root(),'src/bali-phy')
+builtins = join_paths(meson.build_root(),'src/builtins')
 
+test('internal testsuite', python,
+     args: [run_tests, baliphyexe, '--package-path=@0@:@1@'.format(builtins,meson.source_root())],
+     workdir: tests)
