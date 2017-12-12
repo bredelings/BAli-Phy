@@ -5,6 +5,6 @@ if host_machine.system() == 'linux'
   rt_lib = cpp.find_library('rt')
 endif
 
-boost += static_library('boost_chrono', chrono_sources,
-			include_directories: boost_inc,
-			dependencies: rt_lib)
+boost_libs += static_library('boost_chrono', chrono_sources,
+			     include_directories: boost_inc,
+			     dependencies: rt_lib)

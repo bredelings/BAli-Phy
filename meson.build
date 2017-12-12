@@ -54,7 +54,6 @@ endif
 if get_option('with-system-boost')
   boost = dependency('boost', modules : boost_modules)
 else
-  boost_inc = include_directories('boost/include', is_system:true)
   subdir('boost')
 endif
 

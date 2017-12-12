@@ -36,6 +36,6 @@ serialization_sources =  ['src/archive_exception.cpp',
     'src/xml_wiarchive.cpp',
     'src/xml_woarchive.cpp']
 
-boost += static_library('boost_serialization', serialization_sources,
+boost_libs += static_library('boost_serialization', serialization_sources,
 			include_directories: boost_inc)
 

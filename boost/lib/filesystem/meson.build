@@ -7,5 +7,5 @@ filesystem_sources = ['src/operations.cpp',
 		      'src/windows_file_codecvt.cpp',
 		      'src/codecvt_error_category.cpp']
 
-boost += static_library('boost_filesystem', filesystem_sources,
+boost_libs += static_library('boost_filesystem', filesystem_sources,
 			include_directories: boost_inc)

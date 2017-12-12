@@ -10,5 +10,5 @@ program_options_sources = ['src/cmdline.cpp',
 			   'src/variables_map.cpp',
 			   'src/winmain.cpp']
 
-boost += static_library('boost_program_options', program_options_sources,
+boost_libs += static_library('boost_program_options', program_options_sources,
 			include_directories: boost_inc)

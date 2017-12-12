@@ -18,5 +18,5 @@ mpi_sources = ['src/broadcast.cpp',
     'src/text_skeleton_oarchive.cpp',
     'src/timer.cpp']
 
-boost += static_library('boost_mpi', mpi_sources, 
+boost_libs += static_library('boost_mpi', mpi_sources,
 			include_directories: boost_inc)
