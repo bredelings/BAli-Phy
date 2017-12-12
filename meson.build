@@ -44,6 +44,10 @@ install_subdir('functions', install_dir: 'lib/bali-phy')
 install_subdir('help', install_dir: 'lib/bali-phy')
 install_subdir('examples', install_dir: 'share/bali-phy')
 
+if get_option('with-mpi')
+  mpi = dependency('mpi', language='cpp')
+endif
+
 # for boost and eigen, we really want something like yes, no, auto* -- default to auto.
 # if we have 'auto', then build our own boost if we want stl-debug and bounds_checking
 boost_modules = [ 'program_options', 'random', 'system','filesystem', 'chrono']
@@ -61,9 +65,6 @@ if get_option('with-system-eigen')
   eigen = include_directories('')
 else
   eigen = include_directories('include', is_system: true)
-endif
-
-if get_option('with-mpi')
 endif
 
 subdir('src')
