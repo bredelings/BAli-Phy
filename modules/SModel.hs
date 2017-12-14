@@ -386,7 +386,6 @@ transition_p_index t smodel branch_cat_list ds = mkArray (numBranches t) (branch
 a_branch_length_model dist i =
 (do {
   t <- dist;
-  Log ("*T"++show i) t;
   return t
 });
 
