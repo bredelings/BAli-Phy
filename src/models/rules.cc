@@ -142,7 +142,11 @@ ptree convert_rule(const Rules& R, Rule rule)
 
     {
 	ptree& call = rule.get_child("call");
-	call = parse_type(call.get_value<string>());
+	auto s = call.get_value<string>();
+	if (s == "[]")
+	    call = ptree("[]");
+	else
+	    call = parse_type(call.get_value<string>());
     }
 
     for(auto& arg_pair: rule.get_child("args"))

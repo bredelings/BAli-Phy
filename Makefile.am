@@ -141,6 +141,7 @@ nobase_functions_DATA = functions/AA.json \
 	functions/intToDouble.json \
 	functions/replicate.json \
 	functions/Cons.json \
+	functions/Nil.json \
 	functions/num_branches.json
 
 # Distributed in the doc/ directory
