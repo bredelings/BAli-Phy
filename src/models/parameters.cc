@@ -1227,7 +1227,7 @@ int Parameters::subst_root() const
 
 double Parameters::branch_scale(int s) const
 {
-    return get_parameter_value(branch_scale_index(s)).as_double();;
+    return evaluate(branch_scale_index(s)).as_double();
 }
 
 object_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
@@ -1261,9 +1261,14 @@ int Parameters::branch_scale_index(int i) const
 }
 
 
-void Parameters::branch_scale(int i, double x)
+void Parameters::branch_scale(int s, double x)
 {
-    set_parameter_value(branch_scale_index(i),x);
+    auto R = compute_expression_is_modifiable_reg(branch_scale_index(s));
+
+    if (R)
+	return set_modifiable_value(*R, x);
+    else
+	throw myexception()<<"Branch scale "<<s+1<<" is not directly modifiable!";
 }
 
 double Parameters::get_branch_subst_rate(int p, int /* b */) const
@@ -1349,13 +1354,8 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     expression_ref scales_list = get_expression(scales_list_index);
     add_parameter("Scales", scales_list);
 
-    const string scale_prefix = "Scale";
     for(int i=0; i<n_branch_scales();i++)
-    {
-	string name = scale_prefix + std::to_string(i+1);
-
-	PC->scale_parameter_indices[i] = add_parameter(name, (dummy("Prelude.!!"),scales_list,i));
-    }
+	PC->scale_parameter_indices[i] = add_compute_expression( (dummy("Prelude.!!"),scales_list,i) );
 
     branches_from_affected_node.resize(tt.n_nodes());
 
@@ -1419,7 +1419,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     // Add and initialize variables for branch *lengths*: scale<s>.D<b>
     for(int s=0;s<n_branch_scales();s++)
     {
-	expression_ref scale = parameter("Scale" + convertToString(s+1));
+	expression_ref scale = get_expression(branch_scale_index(s));
 	PC->branch_length_indices.push_back(vector<int>());
 	for(int b=0;b<t().n_branches();b++)
 	{

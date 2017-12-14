@@ -266,7 +266,7 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
 optional<int> scale_is_modifiable_reg(const Model& M, int s)
 {
     auto& P = dynamic_cast<const Parameters&>(M);
-    return P.parameter_is_modifiable_reg(P.branch_scale_index(s));
+    return P.compute_expression_is_modifiable_reg(P.branch_scale_index(s));
 }
 
 bool all_scales_modifiable(const Model& M)
