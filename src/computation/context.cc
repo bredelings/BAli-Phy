@@ -217,11 +217,9 @@ void context::set_parameter_value_(int index, closure&& C)
 {
     assert(index >= 0);
 
-    auto P = parameter_is_modifiable_reg(index);
-    if (not P)
-	throw myexception()<<"Can't set parameter value of '"<<parameter_name(index)<<"' - it is not directly modifiable!";
+    int P = parameter_as_modifiable_reg(index);
 
-    set_reg_value(*P, std::move(C) );
+    set_reg_value(P, std::move(C) );
 }
 
 void context::set_reg_value(int P, closure&& C)
