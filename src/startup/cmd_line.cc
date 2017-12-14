@@ -421,7 +421,7 @@ po::options_description model_options(int level)
 	("scale,R",value<vector<string> >()->composing(),"Prior on the scale.");
     if (level >= 1)
 	model.add_options()
-	("branch-length,B",value<string>(),"Prior on branch lengths.");
+	("branch-lengths,B",value<string>(),"Prior on branch lengths.");
     model.add_options()
 	("link,L",value<vector<string>>()->composing(),"Link partitions.");
 

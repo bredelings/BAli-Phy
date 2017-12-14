@@ -31,7 +31,7 @@ nobase_help_DATA = help/commands/alphabet.txt \
 	help/commands/smodel.txt \
 	help/commands/imodel.txt \
 	help/commands/scale.txt \
-	help/commands/branch-length.txt \
+	help/commands/branch-lengths.txt \
 	help/commands/link.txt \
 	help/parameters.txt \
 	help/priors.txt \
