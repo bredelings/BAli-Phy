@@ -272,7 +272,11 @@ public:
 
     boost::optional<int> parameter_is_modifiable_reg(int index);
 
+    int parameter_as_modifiable_reg(int index);
+
     boost::optional<int> compute_expression_is_modifiable_reg(int index);
+
+    int compute_expression_as_modifiable_reg(int index);
 
     const expression_ref get_parameter_range(int c, int r);
 

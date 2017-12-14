@@ -145,9 +145,19 @@ optional<int> context::parameter_is_modifiable_reg(int index) const
     return memory()->parameter_is_modifiable_reg(index);
 }
 
+int context::parameter_as_modifiable_reg(int index) const
+{
+    return memory()->parameter_as_modifiable_reg(index);
+}
+
 optional<int> context::compute_expression_is_modifiable_reg(int index) const
 {
     return memory()->compute_expression_is_modifiable_reg(index);
+}
+
+int context::compute_expression_as_modifiable_reg(int index) const
+{
+    return memory()->compute_expression_as_modifiable_reg(index);
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?

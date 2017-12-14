@@ -397,6 +397,15 @@ optional<int> reg_heap::parameter_is_modifiable_reg(int index)
 	return boost::none;
 }
 
+int reg_heap::parameter_as_modifiable_reg(int index)
+{
+    auto R = parameter_is_modifiable_reg(index);
+    if (R)
+	return *R;
+    else
+	throw myexception()<<"Parameter '"<<parameters[index].first<<"' is not modifiable!";
+}
+
 optional<int> reg_heap::compute_expression_is_modifiable_reg(int index)
 {
     int& H = heads[index];
@@ -405,6 +414,15 @@ optional<int> reg_heap::compute_expression_is_modifiable_reg(int index)
 	return H;
     else
 	return boost::none;
+}
+
+int reg_heap::compute_expression_as_modifiable_reg(int index)
+{
+    auto R = compute_expression_is_modifiable_reg(index);
+    if (R)
+	return *R;
+    else
+	throw myexception()<<"Compute expression '"<<index<<"' is not modifiable!";
 }
 
 bool reg_heap::find_modifiable_reg(int& R)
@@ -417,7 +435,7 @@ bool reg_heap::find_modifiable_reg(int& R)
 
 const expression_ref reg_heap::get_parameter_range(int c, int p)
 {
-    return get_range_for_reg(c, *parameter_is_modifiable_reg(p));
+    return get_range_for_reg(c, parameter_as_modifiable_reg(p));
 }
 
 const expression_ref reg_heap::get_range_for_reg(int c, int r)
