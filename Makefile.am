@@ -139,6 +139,7 @@ nobase_functions_DATA = functions/AA.json \
 	functions/getNucleotides.json \
 	functions/letter_pairs.json \
 	functions/intToDouble.json \
+	functions/replicate.json \
 	functions/num_branches.json
 
 # Distributed in the doc/ directory

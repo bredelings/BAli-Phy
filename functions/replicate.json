@@ -1,0 +1,19 @@
+{
+    "name": "replicate",
+    "result_type": "List[a]",
+    "title": "The replicate function",
+    "call": "Prelude.replicate[n,x]",
+    "args": [
+        {
+            "arg_name": "n",
+            "arg_type": "Int",
+	    "description": "Number of times to replicate the object"
+        },
+        {
+            "arg_name": "x",
+            "arg_type": "a",
+	    "description": "The object to replicate"
+        }
+    ],
+    "description": "Produces a list of length n where every element is x."
+}
