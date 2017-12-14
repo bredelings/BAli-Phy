@@ -780,7 +780,8 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 	// We can't use iid[n, gamma[0.5,2/B]] yet because we need the branches to be named *T<b>, I think.
 	auto T = p->get_expression(tree_head);
 	expression_ref branch_lengths = (dummy("SModel.iid_branch_length_model"), T, (branch_length_model.expression, T));
-	p->evaluate_expression( perform_exp(branch_lengths) );
+	int branch_lengths_index = p->add_compute_expression( perform_exp(branch_lengths) );
+	p->evaluate(branch_lengths_index);
     }
 
     // Create the parameters that hold branch lengths
