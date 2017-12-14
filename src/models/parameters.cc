@@ -1419,7 +1419,7 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
 	PC->branch_length_indices.push_back(vector<int>());
 	for(int b=0;b<t().n_branches();b++)
 	{
-	    expression_ref length = parameter("*T" + convertToString(b+1));
+	    expression_ref length = reg_var(TC->branch_duration_regs[b]);
 	    int index = add_compute_expression( (dummy("Prelude.*"),scale,length) );
 	    PC->branch_length_indices[s].push_back(index);
 	}
