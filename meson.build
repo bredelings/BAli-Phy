@@ -30,6 +30,9 @@ endif
 eigen = include_directories('include', is_system: true)
 
 cairo = dependency('cairo', required: false)
+if not cairo.found()
+  cairo = disabler()
+endif
 
 install_data('scripts/bp-analyze', install_mode: 'rwxr-----', install_dir: 'bin')
 install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R', 'scripts/tree-plot1.R',

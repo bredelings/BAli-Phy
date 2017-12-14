@@ -203,10 +203,8 @@ executable('cut-range', cut_range_sources, dependencies:boost, link_with: libbal
 trees_distances_sources = ['tools/trees-distances.cc']
 executable('trees-distances', trees_distances_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
-if cairo.found()
-  draw_tree_sources = ['tools/draw-tree.cc']
-  executable('draw-tree', draw_tree_sources, dependencies: [boost, cairo], link_with: libbaliphy, install:true)
-endif
+draw_tree_sources = ['tools/draw-tree.cc']
+executable('draw-tree', draw_tree_sources, dependencies: [boost, cairo], link_with: libbaliphy, install:true)
 
 path_graph_sources = ['tools/path-graph.cc']
 executable('path-graph', path_graph_sources, dependencies:boost, link_with: libbaliphy, install: true)
