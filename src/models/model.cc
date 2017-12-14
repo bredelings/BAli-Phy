@@ -78,6 +78,27 @@ const Bounds<double>& Model::get_bounds(int i) const
     return e.as_<Bounds<double>>();
 }
 
+bool Model::compute_expression_has_bounds(int index) const
+{
+    int R = compute_expression_as_modifiable_reg(index);
+    auto e = get_range_for_reg(R);
+
+    return (e and e.is_a<Bounds<double>>());
+}
+
+const Bounds<double>& Model::get_bounds_for_compute_expression(int index) const
+{
+    auto R = compute_expression_as_modifiable_reg(index);
+    auto e = get_range_for_reg(R);
+
+    assert(e);
+
+    if (not e.is_a<Bounds<double>>())
+	throw myexception()<<"compute expression "<<index<<" doesn't have Bounds<double>.";
+
+    return e.as_<Bounds<double>>();
+}
+
 std::vector< expression_ref > Model::get_modifiable_values(const std::vector<int>& indices) const
 {
     std::vector< expression_ref > values(indices.size());
