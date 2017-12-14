@@ -773,6 +773,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 
     tree_head = p->add_compute_expression( (tree_con, node_branches_array, branch_nodes_array, T.n_nodes(), T.n_branches()));
   
+    expression_ref branch_durations;
     if (T.n_branches() > 0)
     {
 	p->evaluate_expression( p->get_expression(tree_head) );
@@ -782,21 +783,18 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 	expression_ref branch_lengths = (dummy("SModel.iid_branch_length_model"), T, (branch_length_model.expression, T));
 	int branch_lengths_index = p->add_compute_expression( perform_exp(branch_lengths) );
 	p->evaluate(branch_lengths_index);
+	branch_durations = p->get_expression(branch_lengths_index);
     }
 
     // Create the parameters that hold branch lengths
     for(int b=0;b<T.n_branches();b++)
     {
-	string name = "*T"+convertToString(b+1);
-	auto index = p->maybe_find_parameter(name);
+	int branch_duration_reg = p->add_compute_expression( (dummy("Prelude.!!"), branch_durations, b) );
 
-	if (not index)
-	    throw myexception()<<"Branch "<<b<<": no branch length parameter "<<name<<"!";
-
-	auto R = p->parameter_is_modifiable_reg(*index);
+	auto R = p->compute_expression_is_modifiable_reg(branch_duration_reg);
 
 	if (not R)
-	    throw myexception()<<"Branch "<<b<<": branch length parameter "<<name<<" is not modifiable!";
+	    throw myexception()<<"Branch "<<b<<": branch length is not directly modifiable!";
 
 	branch_duration_regs.push_back(*R);
 	const context* c = p;
