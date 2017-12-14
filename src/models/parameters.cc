@@ -772,15 +772,12 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
 
     tree_head = p->add_compute_expression( (tree_con, node_branches_array, branch_nodes_array, T.n_nodes(), T.n_branches()));
+    auto tree = p->get_expression(tree_head);
   
     expression_ref branch_durations;
     if (T.n_branches() > 0)
     {
-	p->evaluate_expression( p->get_expression(tree_head) );
-	// Add a *T<b> parameter for each branch b.
-	// We can't use iid[n, gamma[0.5,2/B]] yet because we need the branches to be named *T<b>, I think.
-	auto T = p->get_expression(tree_head);
-	expression_ref branch_lengths = (dummy("SModel.iid_branch_length_model"), T, (branch_length_model.expression, T));
+	expression_ref branch_lengths = (branch_length_model.expression, tree);
 	int branch_lengths_index = p->add_compute_expression( (dummy("Prelude.listArray'"),perform_exp(branch_lengths)) );
 	p->evaluate(branch_lengths_index);
 	branch_durations = p->get_expression(branch_lengths_index);
