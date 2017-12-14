@@ -72,6 +72,8 @@ public:
 
     boost::optional<int> parameter_is_modifiable_reg(int p) const;
 
+    boost::optional<int> compute_expression_is_modifiable_reg(int p) const;
+
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate(int index) const;
 

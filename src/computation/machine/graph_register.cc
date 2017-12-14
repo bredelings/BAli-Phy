@@ -397,6 +397,16 @@ optional<int> reg_heap::parameter_is_modifiable_reg(int index)
 	return boost::none;
 }
 
+optional<int> reg_heap::compute_expression_is_modifiable_reg(int index)
+{
+    int& H = heads[index];
+
+    if (find_modifiable_reg(H))
+	return H;
+    else
+	return boost::none;
+}
+
 bool reg_heap::find_modifiable_reg(int& R)
 {
     // Note: here we always update R
