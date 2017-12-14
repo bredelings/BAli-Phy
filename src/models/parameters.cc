@@ -781,7 +781,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 	// We can't use iid[n, gamma[0.5,2/B]] yet because we need the branches to be named *T<b>, I think.
 	auto T = p->get_expression(tree_head);
 	expression_ref branch_lengths = (dummy("SModel.iid_branch_length_model"), T, (branch_length_model.expression, T));
-	int branch_lengths_index = p->add_compute_expression( perform_exp(branch_lengths) );
+	int branch_lengths_index = p->add_compute_expression( (dummy("Prelude.listArray'"),perform_exp(branch_lengths)) );
 	p->evaluate(branch_lengths_index);
 	branch_durations = p->get_expression(branch_lengths_index);
     }
@@ -789,7 +789,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     // Create the parameters that hold branch lengths
     for(int b=0;b<T.n_branches();b++)
     {
-	int branch_duration_reg = p->add_compute_expression( (dummy("Prelude.!!"), branch_durations, b) );
+	int branch_duration_reg = p->add_compute_expression( (dummy("Prelude.!"), branch_durations, b) );
 
 	auto R = p->compute_expression_is_modifiable_reg(branch_duration_reg);
 
