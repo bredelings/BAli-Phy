@@ -153,9 +153,9 @@ const expression_ref& context::get_reg_value(int R) const
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-const expression_ref& context::get_modifiable_value(int index) const
+const expression_ref& context::get_modifiable_value(int R) const
 {
-    int R = get_modifiable_reg(index);
+    R = get_modifiable_reg(R);
 
     return get_reg_value(R);
 }
@@ -174,20 +174,20 @@ const expression_ref& context::get_parameter_value(const std::string& name) cons
     return get_parameter_value(index);
 }
 
-void context::set_modifiable_value_(int index, closure&& C)
+void context::set_modifiable_value_(int R, closure&& C)
 {
-    int R = get_modifiable_reg(index);
+    R = get_modifiable_reg(R);
 
     set_reg_value(R, std::move(C) );
 }
 
-void context::set_modifiable_value(int index, const expression_ref& E)
+void context::set_modifiable_value(int R, const expression_ref& E)
 {
     assert(not E.size());
     assert(not E.is_index_var());
     assert(not E.is_a<reg_var>());
     assert(not E.is_a<dummy>());
-    set_modifiable_value_(index, E);
+    set_modifiable_value_(R, E);
 }
 
 void context::set_parameter_value(int index, const expression_ref& E)
