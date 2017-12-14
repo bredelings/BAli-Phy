@@ -372,7 +372,7 @@ namespace MCMC {
 	// Check that we have not strayed outside the bounds.
 	for(int i=0;i<P->n_parameters();i++)
 	{
-	    if (not P->parameter_is_modifiable(i)) continue;
+	    if (not P->parameter_is_modifiable_reg(i)) continue;
 
 	    if (not P->get_parameter_value(i).is_double()) continue;
 

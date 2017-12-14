@@ -263,10 +263,10 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
     }
 }
 
-optional<int> scale_is_modifiable(const Model& M, int s)
+optional<int> scale_is_modifiable_reg(const Model& M, int s)
 {
     auto& P = dynamic_cast<const Parameters&>(M);
-    return P.parameter_is_modifiable(P.branch_scale_index(s));
+    return P.parameter_is_modifiable_reg(P.branch_scale_index(s));
 }
 
 bool all_scales_modifiable(const Model& M)
@@ -274,7 +274,7 @@ bool all_scales_modifiable(const Model& M)
     auto& P = dynamic_cast<const Parameters&>(M);
 
     for(int s=0;s<P.n_branch_scales();s++)
-	if (not scale_is_modifiable(M,s))
+	if (not scale_is_modifiable_reg(M,s))
 	    return false;
 
     return true;
@@ -295,7 +295,7 @@ MCMC::MoveAll get_parameter_MH_moves(Model& M)
 
     if (Parameters* P = dynamic_cast<Parameters*>(&M))
 	for(int i=0;i<P->n_branch_scales();i++)
-	    if (scale_is_modifiable(M, i))
+	    if (scale_is_modifiable_reg(M, i))
 		add_MH_move(M, log_scaled(Between(-20,20,shift_cauchy)),    "Scale"+convertToString(i+1),             "Scale_scale_sigma",     0.6,  MH_moves);
 
 
@@ -365,7 +365,7 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
 {
     MCMC::MoveAll slice_moves("parameters:scale:MH");
     for(int i=0;i<P.n_branch_scales();i++)
-	if (scale_is_modifiable(P,i))
+	if (scale_is_modifiable_reg(P,i))
 	    add_slice_moves(P, "Scale"+convertToString(i+1), slice_moves);
     return slice_moves;
 }
@@ -382,7 +382,7 @@ MCMC::MoveAll get_parameter_slice_moves(Model& M)
     {
 	// scale parameters - do we need this?
 	for(int i=0;i<P->n_branch_scales();i++)
-	    if (scale_is_modifiable(M,i))
+	    if (scale_is_modifiable_reg(M,i))
 		add_slice_moves(*P, "Scale"+convertToString(i+1), slice_moves);
 
 	if (all_scales_modifiable(M))

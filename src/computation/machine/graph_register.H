@@ -270,9 +270,7 @@ public:
     /*----- Modifiable ranges ----*/
     bool find_modifiable_reg(int& R);
 
-    boost::optional<int> parameter_is_modifiable(int index);
-
-    boost::optional<int> find_parameter_modifiable_reg(int i);
+    boost::optional<int> parameter_is_modifiable_reg(int index);
 
     const expression_ref get_parameter_range(int c, int r);
 

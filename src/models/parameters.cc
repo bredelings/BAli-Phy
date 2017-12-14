@@ -793,7 +793,7 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 	if (not index)
 	    throw myexception()<<"Branch "<<b<<": no branch length parameter "<<name<<"!";
 
-	if (not p->parameter_is_modifiable(*index))
+	if (not p->parameter_is_modifiable_reg(*index))
 	    throw myexception()<<"Branch "<<b<<": branch length parameter "<<name<<" is not modifiable!";
 
 	branch_length_parameters.push_back(*index);

@@ -43,9 +43,6 @@ private:
 
     int get_modifiable_reg(int i) const;
 
-    /// Find the modifiable that parameter_reg points to.
-    boost::optional<int> find_parameter_modifiable_reg(int i) const;
-
     closure preprocess(const closure& C) const;
 
     Program& get_Program();
@@ -73,7 +70,7 @@ public:
 
     context* clone() const {return new context(*this);}
 
-    boost::optional<int> parameter_is_modifiable(int p) const;
+    boost::optional<int> parameter_is_modifiable_reg(int p) const;
 
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate(int index) const;

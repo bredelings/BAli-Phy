@@ -537,7 +537,7 @@ int main(int argc,char* argv[])
 
 	    // Force the creation of parameters
 	    for(int i=0;i<M->n_parameters();i++)
-		M->parameter_is_modifiable(i);
+		M->parameter_is_modifiable_reg(i);
 
 	    avoid_zero_likelihood(M, *files[0], out_both);
 

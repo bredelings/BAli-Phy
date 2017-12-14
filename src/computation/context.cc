@@ -140,9 +140,9 @@ int context::n_transition_kernels() const
     return memory()->transition_kernels().size();
 }
 
-optional<int> context::parameter_is_modifiable(int index) const
+optional<int> context::parameter_is_modifiable_reg(int index) const
 {
-    return memory()->parameter_is_modifiable(index);
+    return memory()->parameter_is_modifiable_reg(index);
 }
 
 
@@ -203,7 +203,7 @@ void context::set_parameter_value_(int index, closure&& C)
 {
     assert(index >= 0);
 
-    auto P = find_parameter_modifiable_reg(index);
+    auto P = parameter_is_modifiable_reg(index);
     if (not P)
 	throw myexception()<<"Can't set parameter value of '"<<parameter_name(index)<<"' - it is not directly modifiable!";
 
@@ -496,11 +496,6 @@ int context::get_parameter_reg(int index) const
     assert(index >= 0 and index < n_parameters());
 
     return parameters()[index].second;
-}
-
-optional<int> context::find_parameter_modifiable_reg(int index) const
-{
-    return memory()->find_parameter_modifiable_reg(index);
 }
 
 int context::get_modifiable_reg(int r) const
