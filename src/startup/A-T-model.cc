@@ -567,8 +567,8 @@ owned_ptr<Model> create_A_and_T_model(const Rules& R, variables_map& args, const
     model_t branch_length_model;
     {
 	string M;
-	if (args.count("branch-length"))
-	    M = args["branch-length"].as<string>();
+	if (args.count("branch-lengths"))
+	    M = args["branch-lengths"].as<string>();
 	else
 	    M = "~iid[num_branches[T],Gamma[0.5,Div[2,num_branches[T]]]]";
 
