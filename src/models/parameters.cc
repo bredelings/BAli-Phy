@@ -793,13 +793,15 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
 	if (not index)
 	    throw myexception()<<"Branch "<<b<<": no branch length parameter "<<name<<"!";
 
-	if (not p->parameter_is_modifiable_reg(*index))
+	auto R = p->parameter_is_modifiable_reg(*index);
+
+	if (not R)
 	    throw myexception()<<"Branch "<<b<<": branch length parameter "<<name<<" is not modifiable!";
 
-	branch_length_parameters.push_back(*index);
+	branch_duration_regs.push_back(*R);
 	const context* c = p;
 	if (T.branch(b).has_length())
-	    const_cast<context*>(c)->set_parameter_value(*index, T.branch(b).length());
+	    const_cast<context*>(c)->set_modifiable_value(*R, T.branch(b).length());
     }
 }
 

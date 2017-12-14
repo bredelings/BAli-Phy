@@ -278,13 +278,13 @@ tree_edge TreeInterface::edge(int n1, int n2) const
 double TreeInterface::branch_length(int b) const
 {
     b %= n_branches();
-    return P->get_parameter_value(P->TC->branch_length_parameters[b]).as_double();
+    return P->get_modifiable_value(P->TC->branch_duration_regs[b]).as_double();
 }
 
 void TreeInterface::set_branch_length(int b, double l)
 {
     b %= n_branches();
-    const_cast<Parameters*>(P)->set_parameter_value(P->TC->branch_length_parameters[b], l);
+    const_cast<Parameters*>(P)->set_modifiable_value(P->TC->branch_duration_regs[b], l);
 }
 
 vector<int> branches_from_leaves(const TreeInterface& t) 
