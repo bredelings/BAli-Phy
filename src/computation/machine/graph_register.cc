@@ -387,13 +387,14 @@ int reg_heap::add_random_modifiable(int r)
     return i;
 }
 
-bool reg_heap::parameter_is_modifiable(int index)
+optional<int> reg_heap::parameter_is_modifiable(int index)
 {
-    int R = parameters[index].second;
+    int& R = parameters[index].second;
 
-    int R2 = incremental_evaluate_unchangeable(R);
-
-    return is_modifiable(access(R2).C.exp);
+    if (find_modifiable_reg(R))
+	return R;
+    else
+	return boost::none;
 }
 
 optional<int> reg_heap::find_parameter_modifiable_reg(int index)
@@ -412,6 +413,14 @@ optional<int> reg_heap::find_parameter_modifiable_reg(int index)
 
     assert(R2>0);
     return R2;
+}
+
+bool reg_heap::find_modifiable_reg(int& R)
+{
+    // Note: here we always update R
+    R = incremental_evaluate_unchangeable(R);
+
+    return is_modifiable(access(R).C.exp);
 }
 
 const expression_ref reg_heap::get_parameter_range(int c, int p)

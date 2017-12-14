@@ -268,7 +268,9 @@ public:
     int find_parameter(const std::string& s) const;
 
     /*----- Modifiable ranges ----*/
-    bool parameter_is_modifiable(int index);
+    bool find_modifiable_reg(int& R);
+
+    boost::optional<int> parameter_is_modifiable(int index);
 
     boost::optional<int> find_parameter_modifiable_reg(int i);
 

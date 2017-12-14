@@ -73,7 +73,7 @@ public:
 
     context* clone() const {return new context(*this);}
 
-    bool parameter_is_modifiable(int p) const;
+    boost::optional<int> parameter_is_modifiable(int p) const;
 
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate(int index) const;

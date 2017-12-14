@@ -42,6 +42,7 @@
 
 using boost::program_options::variables_map;
 using boost::dynamic_bitset;
+using boost::optional;
 using std::vector;
 using std::endl;
 using std::string;
@@ -262,7 +263,7 @@ void add_integer_slice_moves(const Model& P, MCMC::MoveAll& M, double weight)
     }
 }
 
-bool scale_is_modifiable(const Model& M, int s)
+optional<int> scale_is_modifiable(const Model& M, int s)
 {
     auto& P = dynamic_cast<const Parameters&>(M);
     return P.parameter_is_modifiable(P.branch_scale_index(s));
