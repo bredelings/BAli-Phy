@@ -1341,13 +1341,20 @@ Parameters::Parameters(const std::shared_ptr<module_loader>& L,
     add_modifiable_parameter_with_value("Heat.beta", 1.0);
 
     // Add parameter for each scale
+    vector<expression_ref> scales;
+    for(int i=0; i<n_branch_scales(); i++)
+	scales.push_back(scaleMs[i].expression);
+    expression_ref scales_list_action = (dummy("Prelude.sequence"), get_list(scales));
+    int scales_list_index = add_compute_expression( perform_exp(scales_list_action) );
+    expression_ref scales_list = get_expression(scales_list_index);
+    add_parameter("Scales", scales_list);
+
     const string scale_prefix = "Scale";
     for(int i=0; i<n_branch_scales();i++)
     {
 	string name = scale_prefix + std::to_string(i+1);
 
-	expression_ref scale = scaleMs[i].expression;
-	PC->scale_parameter_indices[i] = add_parameter(name, perform_exp(scale));
+	PC->scale_parameter_indices[i] = add_parameter(name, (dummy("Prelude.!!"),scales_list,i));
     }
 
     branches_from_affected_node.resize(tt.n_nodes());
