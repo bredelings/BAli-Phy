@@ -129,12 +129,14 @@ ptree add_sample(const ptree& p)
     return p2;
 }
 
+ptree parse(const string& s);
+
 /// Parse strings of the form {~}head[value1, value2, key3=value3, ...]
-ptree parse_no_submodel(const Rules& R, const string& s)
+ptree parse_no_submodel(const string& s)
 {
     // 0. Handle ~
     if (not s.empty() and s[0] == '~')
-	return add_sample(parse(R, s.substr(1)));
+	return add_sample(parse_no_submodel(s.substr(1)));
 
     // 1. Split the head and the arguments
     auto args = split_args(s);
@@ -146,78 +148,152 @@ ptree parse_no_submodel(const Rules& R, const string& s)
     ptree result;
     result.put_value(head);
   
-    if (args.empty()) return result;
-
-    auto rule = R.require_rule_for_func(head);
-    bool is_list_rule = rule.get("list_arguments",false);
-    bool is_dict_rule = rule.get("pass_arguments",false);
-
     // 3. Attempt to set the supplied arguments
-    bool seen_keyword_arg = false;
     for(int i=0;i<args.size();i++)
     {
 	pair<string,string> key_value;
 
-	// 4. Ignore empty arguments
-	if (args[i].empty()) continue;
-
-	// 5. If we have a keyword argument, remember it
+	// 3.1. 'key=value'
 	if (auto arg = split_keyword(args[i],'='))
 	{
-	    seen_keyword_arg = true;
 	    key_value = *arg;
+
 	    if (arg->first.empty())
 		throw myexception()<<"Parameter name missing in argument '"<<args[i]<<"'";
 	}
-	// 6. If we have a keyword argument, remember it
-	else if ((arg = split_keyword(args[i],'~')) and arg->first.size() and arg->first[0] != '~')
+	// 3.2 'key~value'
+	else if ((arg = split_keyword(args[i],'~')) and arg->first.size())
 	{
-	    seen_keyword_arg = true;
 	    key_value = *arg;
 	    key_value.second = "~"+key_value.second;
 	}
-	// 7. Otherwise find the keyword for the positional argument
+	// 3.3. 'value'
 	else
-	{
-	    if (seen_keyword_arg)
-		throw myexception()<<"Positional argument after keyword argument in '"<<s<<"'";
-	    if (is_list_rule)
-		key_value = {"",args[i]};
-	    else if (is_dict_rule)
-		throw myexception()<<"Name required for argument "<<i+1<<" in of '"<<head<<"'";
-	    else
-		key_value = {get_keyword_for_positional_arg(rule, i), args[i]};
-	}
-	if (is_list_rule and not key_value.first.empty())
-	    throw myexception()<<"No name for argument "<<i+1<<" of '"<<head<<"'";
+	    key_value.second = args[i];
 
-	// 8. Set the key = value after parsing the value.
-	if (not key_value.first.empty() and result.count(key_value.first))
-	    throw myexception()<<"Trying to set value for "<<head<<"."<<key_value.first<<" a second time!";
-	result.push_back({key_value.first, parse(R, key_value.second)});
+	result.push_back({key_value.first, parse(key_value.second)});
     }
 
     return result;
 }
 
-// Parse strings of the form head[args] + head[args] + ... + head[args]
-ptree parse(const Rules& R, const string& s)
+ptree parse(const string& s)
 {
     // 1. Get the last head[args]
     auto ss = split_last_plus(s);
 
     // 2. Parse the last head[args]
-    auto result = parse_no_submodel(R, ss.second);
+    auto result = parse_no_submodel(ss.second);
 
     // 3. Parse the remainder and add it as a "submodel" argument
     if (ss.first)
     {
 	if (result.count("submodel"))
 	    throw myexception()<<"Trying to specify a submodel with '+' when submodel already specified by keyword!";
-	result.push_back({"submodel",parse(R, *ss.first)});
+	result.push_back({"submodel",parse(*ss.first)});
     }
 
     return result;
+}
+
+void ptree_map(std::function<void(ptree&)> f, ptree& p)
+{
+    std::function<void(ptree&)> f2;
+
+    // generate recursive lambda
+    f2 = [&f,&f2](ptree& q) {
+	for(auto& child: q)
+	    f2(child.second);
+	f(q);
+    };
+
+    f2(p);
+}
+
+bool is_null(const ptree& p)
+{
+    return p.get_value<string>().empty() and p.empty();
+}
+
+void handle_positional_args(ptree& model, const Rules& R)
+{
+    if (model.size() == 0) return;
+
+    auto head = model.get_value<string>();
+    auto rule = R.require_rule_for_func(head);
+
+    int i=0;
+    bool seen_keyword = false;
+
+    ptree model2(head);
+
+    for(auto& x: model)
+    {
+	pair<string,ptree> child = x;
+
+	if (child.first.empty())
+	{
+	    if (seen_keyword)
+		throw myexception()<<"Positional argument after keyword argument in '"<<unparse(model)<<"'!";
+
+	    auto keyword = get_keyword_for_positional_arg(rule, i);
+
+	    if (model.count(keyword))
+		throw myexception()<<"Trying to set value for "<<head<<"."<<keyword<<" both by position and by keyword: \n"<<unparse(model);
+
+	    if (is_null(child.second))
+	    {
+		i++;
+		continue;
+	    }
+	    else
+		child.first = keyword;
+	}
+	else
+	    seen_keyword = true;
+
+	if (child.first.empty())
+	    throw myexception()<<"No keyword in argument for "<<head<<"?";
+
+	model2.push_back(child);
+
+	i++;
+    }
+
+    std::swap(model, model2);
+}
+
+// Convert List[x1,x2...] -> Cons[x1,[Cons[x2,...]]
+void pass_list(ptree& p)
+{
+    if (p.get_value<string>() == "List")
+    {
+	ptree l = ptree("Nil");
+	for(auto& child: reverse(p))
+	{
+	    ptree l2 = ptree("Cons");
+	    l2.push_back({"",child.second});
+	    l2.push_back({"",l});
+	    std::swap(l,l2);
+	}
+	std::swap(p,l);
+    }
+}
+
+// Parse strings of the form head[args] + head[args] + ... + head[args]
+ptree parse(const Rules& R, const string& s)
+{
+    // 1. Get the last head[args]
+    auto model = parse(s);
+
+    // 2. Convert List[x1,x2...] -> Cons[x1,[Cons[x2,...]]
+    ptree_map(pass_list, model);
+
+    // 3. Fill in keywords where they are not given
+    auto f2 = [&](ptree& p) {handle_positional_args(p,R);};
+    ptree_map(f2, model);
+
+    return model;
 }
 
 

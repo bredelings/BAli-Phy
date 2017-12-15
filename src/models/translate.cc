@@ -38,31 +38,6 @@ void pass1(const Rules& R, ptree& p)
     }
 }
 
-void pass_list(ptree& p)
-{
-    // 1. Handle children.
-    for(auto& child: p)
-	pass_list(child.second);
-
-    // 2. Convert e.g. TN+F -> RCTMC[TN,F]
-    if (p.get_value<string>() == "List")
-    {
-	ptree l = ptree("Nil");
-	vector<ptree> children;
-	for(auto& child: p)
-	    children.push_back(child.second);
-	std::reverse(children);
-	for(auto& child: children)
-	{
-	    ptree l2 = ptree("Cons");
-	    l2.push_back({{"first"},child});
-	    l2.push_back({{"second"},l});
-	    std::swap(l,l2);
-	}
-	std::swap(p,l);
-    }
-}
-
 /// True if some conversion function can be applied to the expression of type t1, so that it is of type t2
 equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 {
@@ -281,7 +256,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 	const auto& argument = arg.second;
 
 	string arg_name = argument.get<string>("arg_name");
-	bool arg_is_required = (arg_name != "*") and not argument.get("no_apply",false);
+	bool arg_is_required = not argument.get("no_apply",false);
 
 	// If this is a supplied argument
 	if (model.count(arg_name))
@@ -327,7 +302,6 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
 std::pair<ptree,equations> translate_model(const Rules& R, const ptree& required_type, ptree model, const vector<pair<string,ptree>>& scope)
 {
-    pass_list(model);
     pass1(R, model);
     auto E = pass2(R, required_type, model, find_variables_in_type(required_type), scope);
     return {model,E};
