@@ -383,15 +383,6 @@ branch_transition_p t smodel branch_cat_list ds b = list_to_vector $ branchTrans
 
 transition_p_index t smodel branch_cat_list ds = mkArray (numBranches t) (branch_transition_p t smodel branch_cat_list ds);
 
-a_branch_length_model dist i =
-(do {
-  t <- dist;
-  return t
-});
-
--- If we sample branches that are not adjacent, then it won't be efficient.
-iid_branch_length_model t dist = SamplingRate 0.0 $ mapM (\i -> a_branch_length_model dist i) [1..numBranches t];
-
 unit_mixture m = MixtureModel (certainly m);
 
 mmm m = MixtureModels [m];
