@@ -21,7 +21,7 @@
 #include <map>
 
 #include <boost/variant.hpp>
-#include <boost/optional.hpp>
+#include "util/ptree.H"
 
 #include "util.H"
 #include "myexception.H"
@@ -212,53 +212,6 @@ bool operator<(const vector<string>& p1, const vector<string>& p2)
 // We therefore consider all internal nodes of the tree, starting
 //  with the ones furthest from the root, and remove their children
 //  if it is allowable.
-
-struct monostate{};
-std::ostream& operator<<(std::ostream& o,const monostate&) {o<<"()";return o;}
-
-struct ptree;
-struct ptree: public std::vector<std::pair<string,ptree>>
-{
-    boost::variant<monostate,int,double,string> value;
-    template <typename T>       T& get_value()       {return boost::get<T>(value);}
-    template <typename T> const T& get_value() const {return boost::get<T>(value);}
-    template <typename T> void put_value(const T& t) {value = t;}
-    bool value_is_empty() const {return value.which() == 0;}
-
-    int get_child_index(const string& key)
-    {
-	for(int i=0;i<size();i++)
-	    if ((*this)[i].first == key)
-		return i;
-	return -1;
-    }
-
-    boost::optional<ptree&> get_child_optional(const string& key)
-    {
-	int index = get_child_index(key);
-	if (index == -1) return boost::none;
-	return (*this)[index].second;
-    }
-
-    ptree() {};
-    ptree(int i):value(i) {};
-    ptree(double d):value(d) {};
-    ptree(const string& s):value(s) {};
-};
-
-string show(const ptree& pt, int depth=0)
-{
-    string result = "";
-    string indent(depth,' ');
-    string indent2(depth+2,' ');
-    result += "'"+convertToString(pt.value)+"'\n";
-    for(auto c: pt)
-    {
-	result += indent2 + c.first + " : ";
-	result += show(c.second,depth+4);
-    }
-    return result;
-}
 
 void copy_to_vec(const ptree& p, vector<string>& names2, const string& path = "")
 {

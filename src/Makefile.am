@@ -132,7 +132,8 @@ bali_phy_SOURCES = parser/parse.cc dp/dp_hmm.cc parser/desugar.cc sequence/seque
 	  startup/loggers.cc startup/system.cc startup/cmd_line.cc models/rules.cc models/parse.cc \
 	  models/translate.cc models/unification.cc computation/optimization/simplifier.cc \
 	  tools/read-trees.cc alignment/load.cc alignment/index-matrix.cc startup/paths.cc \
-	  computation/optimization/occurrence.cc computation/optimization/inliner.cc
+	  computation/optimization/occurrence.cc computation/optimization/inliner.cc \
+	  util/ptree.cc
 
 if HOST_MINGW32
 bali_phy_SOURCES += dlfcn-win32/dlfcn.c
