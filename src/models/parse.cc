@@ -1,9 +1,11 @@
+#include <iostream>
 #include <vector>
 #include <list>
 #include "models/parse.H"
 #include "myexception.H"
 #include "util.H"
 #include "rules.H"
+#include "setup.H"
 
 using std::vector;
 using std::list;
