@@ -1,10 +1,12 @@
 #include <vector>
+#include <list>
 #include "models/parse.H"
 #include "myexception.H"
 #include "util.H"
 #include "rules.H"
 
 using std::vector;
+using std::list;
 using std::string;
 using std::pair;
 using boost::property_tree::ptree;
@@ -217,6 +219,26 @@ ptree parse(const Rules& R, const string& s)
     return result;
 }
 
+
+optional<list<ptree>> get_list_elements(const ptree& p)
+{
+    string s = p.get_value<string>();
+    if (s == "Nil") return list<ptree>();
+
+    if (s == "Cons")
+    {
+	ptree h = p.get_child("first");
+	ptree t = p.get_child("second");
+	auto xs = get_list_elements(t);
+	if (xs)
+	{
+	    (*xs).push_front(h);
+	    return xs;
+	}
+    }
+    return boost::none;
+}
+
 string unparse(const ptree& p)
 {
     string s = p.get_value<string>();
@@ -225,6 +247,13 @@ string unparse(const ptree& p)
 	string Q = unparse(p.get_child("Q"));
 	string R = unparse(p.get_child("R"));
 	return Q + " + " + R;
+    }
+    if (auto xs = get_list_elements(p))
+    {
+	vector<string> ss;
+	for(auto& x: *xs)
+	    ss.push_back(unparse(x));
+	return "List[" + join(ss,",") + "]";
     }
     if (s == "intToDouble")
 	return unparse(p.get_child("x"));

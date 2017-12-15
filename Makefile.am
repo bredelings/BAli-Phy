@@ -95,7 +95,6 @@ nobase_functions_DATA = functions/AA.json \
 	functions/Laplace.json \
 	functions/Length.json \
 	functions/LG.json \
-	functions/List.json \
 	functions/logGamma.json \
 	functions/log.json \
 	functions/logLaplace.json \

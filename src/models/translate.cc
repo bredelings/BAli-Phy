@@ -38,6 +38,31 @@ void pass1(const Rules& R, ptree& p)
     }
 }
 
+void pass_list(ptree& p)
+{
+    // 1. Handle children.
+    for(auto& child: p)
+	pass_list(child.second);
+
+    // 2. Convert e.g. TN+F -> RCTMC[TN,F]
+    if (p.get_value<string>() == "List")
+    {
+	ptree l = ptree("Nil");
+	vector<ptree> children;
+	for(auto& child: p)
+	    children.push_back(child.second);
+	std::reverse(children);
+	for(auto& child: children)
+	{
+	    ptree l2 = ptree("Cons");
+	    l2.push_back({{"first"},child});
+	    l2.push_back({{"second"},l});
+	    std::swap(l,l2);
+	}
+	std::swap(p,l);
+    }
+}
+
 /// True if some conversion function can be applied to the expression of type t1, so that it is of type t2
 equations convertible_to(ptree& model, const type_t& t1, type_t t2)
 {
@@ -240,25 +265,6 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
     //     (I think that only rules can introduce new variables)
     add(bound_vars, find_rule_type_vars(*rule));
     
-    // 5.3. Check type of arguments if pass_arguments
-    if (rule->get("pass_arguments",false) or rule->get("list_arguments",false))
-    {
-	for(auto& child: model)
-	{
-	    type_t arg_required_type = get_type_for_arg(*rule, "*");
-	    E = E && pass2(R, arg_required_type, child.second, bound_vars, scope);
-	    if (not E)
-	    {
-		auto x = arg_required_type;
-		substitute(E,x);
-		throw myexception()<<"Expression '"<<unparse(child.second)<<"' is not of required type "<<unparse_type(x)<<"!";
-	    }
-	    add(bound_vars, E.referenced_vars());
-	}
-	E.eliminate_except(find_variables_in_type(required_type));
-	return E;
-    }
-
     // 6. Complain if undescribed arguments are supplied
     for(auto& child: model)
 	if (get_arg(*rule, child.first).get("no_apply",false))
@@ -321,6 +327,7 @@ equations pass2(const Rules& R, const ptree& required_type, ptree& model, set<st
 
 std::pair<ptree,equations> translate_model(const Rules& R, const ptree& required_type, ptree model, const vector<pair<string,ptree>>& scope)
 {
+    pass_list(model);
     pass1(R, model);
     auto E = pass2(R, required_type, model, find_variables_in_type(required_type), scope);
     return {model,E};
