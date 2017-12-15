@@ -99,6 +99,29 @@ vector<string> split_args(string s)
     return args;
 }
 
+ptree parse_type(const string& s)
+{
+    // 1. Split the head and the arguments
+    auto args = split_args(s);
+
+    // 2. Set the head
+    string head = args.front();
+    args.erase(args.begin());
+
+    ptree result;
+    result.put_value(head);
+
+    // 3. Set the arguments
+    for(const auto& arg: args)
+    {
+	if (arg.empty()) throw myexception()<<"Type '"<<s<<"' has empty argument";
+
+	result.push_back({"", parse_type(arg)});
+    }
+
+    return result;
+}
+
 ptree add_sample(const ptree& p)
 {
     ptree p2 = {};
@@ -173,29 +196,6 @@ ptree parse_no_submodel(const Rules& R, const string& s)
 	if (not key_value.first.empty() and result.count(key_value.first))
 	    throw myexception()<<"Trying to set value for "<<head<<"."<<key_value.first<<" a second time!";
 	result.push_back({key_value.first, parse(R, key_value.second)});
-    }
-
-    return result;
-}
-
-ptree parse_type(const string& s)
-{
-    // 1. Split the head and the arguments
-    auto args = split_args(s);
-    
-    // 2. Set the head
-    string head = args.front();
-    args.erase(args.begin());
-
-    ptree result;
-    result.put_value(head);
-  
-    // 3. Set the arguments
-    for(const auto& arg: args)
-    {
-	if (arg.empty()) throw myexception()<<"Type '"<<s<<"' has empty argument";
-
-	result.push_back({"", parse_type(arg)});
     }
 
     return result;
