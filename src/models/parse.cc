@@ -124,9 +124,8 @@ ptree parse_type(const string& s)
 
 ptree add_sample(const ptree& p)
 {
-    ptree p2 = {};
-    p2.put_value("Sample");
-    p2.push_back({"x",p});
+    ptree p2("Sample");
+    p2.push_back({"",p});
     return p2;
 }
 
