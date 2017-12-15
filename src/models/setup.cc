@@ -351,8 +351,6 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
     if (not rule->count("call")) throw myexception()<<"No call for '"<<name<<"'";
 	
     // 5. Extract parts of the rule
-    bool pass_arguments = rule->get("pass_arguments",false);
-    bool is_list_rule = rule->get("list_arguments",false);
     bool generate_function = rule->get("generate_function",true);
     bool no_log = rule->get("no_log",false);
     ptree call = rule->get_child("call");
@@ -361,26 +359,7 @@ expression_ref get_model_as(const Rules& R, const ptree& required_type, const pt
     if (not is_qualified_symbol(call.get_value<string>()) and not is_haskell_builtin_con_name(call.get_value<string>()))
 	throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' must be a qualified symbol or a builtin constructor like '(,)', but it is neither!";
     expression_ref E = dummy(call.get_value<string>());
-    if (pass_arguments)
-    {
-	ptree arg_type = get_type_for_arg(*rule, "*");
-	vector<expression_ref> arguments;
-	for(const auto& child: model_rep)
-	{
-	    expression_ref arg = get_model_as(R, arg_type, child.second, scope);
-	    arguments.push_back(Tuple(child.first, arg));
-	}
-	return (E,get_list(arguments));
-    }
-    else if (is_list_rule)
-    {
-	ptree arg_type = get_type_for_arg(*rule, "*");
-	vector<expression_ref> arguments;
-	for(const auto& child: model_rep)
-	    arguments.push_back( get_model_as(R, arg_type, child.second, scope) );
-	return (E,get_list(arguments));
-    }
-    else if (not generate_function)
+    if (not generate_function)
     {
 	for(int i=0;i<call.size();i++)
 	{
