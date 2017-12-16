@@ -43,7 +43,7 @@ sample' ps l rate (AddMove m) = register_transition_kernel m;
 sample' ps l rate (Print s) = putStrLn (show s);
 sample' ps True rate (Log name x) = add_parameter (prefix_name ps name) x;
 sample' ps False rate (Log name x) = return ();
-sample' ps l rate (SamplingRate rate2 a) = sample' ps l rate2 a;
+sample' ps l rate (SamplingRate rate2 a) = sample' ps l (rate*rate2) a;
 
 add_prefix p m = Prefix p m;
 gen_model m = sample' [] True 1.0 m;
