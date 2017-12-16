@@ -778,7 +778,11 @@ tree_constants::tree_constants(Parameters* p, const SequenceTree& T, const model
     if (T.n_branches() > 0)
     {
 	expression_ref branch_lengths = (branch_length_model.expression, tree);
-	int branch_lengths_index = p->add_compute_expression( (dummy("Prelude.listArray'"),perform_exp(branch_lengths)) );
+	branch_lengths = (dummy("Distributions.sample'"), dummy("[]"), true, 0.0, branch_lengths);
+	branch_lengths = (dummy("Prelude.unsafePerformIO'"),branch_lengths);
+	branch_lengths = (dummy("Parameters.evaluate"),-1,branch_lengths);
+	branch_lengths = (dummy("Prelude.listArray'"),branch_lengths );
+	int branch_lengths_index = p->add_compute_expression( branch_lengths );
 	p->evaluate(branch_lengths_index);
 	branch_durations = p->get_expression(branch_lengths_index);
     }
