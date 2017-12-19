@@ -12,19 +12,23 @@ project('bali-phy', 'cpp',
 
 cpp = meson.get_compiler('cpp')
 
+# 2. Write a 'config.h'
 conf_data = configuration_data()
+
+# 2.1. Write some info to 'config.h'
+conf_data.set_quoted('PACKAGE_VERSION', meson.project_version())
+conf_data.set_quoted('_ARCH_', host_machine.system()+' ' + host_machine.cpu_family())
+conf_data.set_quoted('_COMPILER_', cpp.get_id() + ' ' + cpp.version()+' ' + host_machine.cpu_family())
+
+# 2.2. Write header and function checks to'config.h'
 conf_data.set('HAVE_SYS_RESOURCE_H', cpp.has_header('sys/resource.h'))
 conf_data.set('HAVE_FENV_H', cpp.has_header('fenv.h'))
 conf_data.set('HAVE_LOG_2', cpp.has_function('log2'))
+
+# 2.3. Write config file, get root_inc to include it, and tell the compiler it exists.
 configure_file(output : 'config.h', configuration : conf_data)
 root_inc = include_directories('.')
-
-
-# put this in a config file
 add_project_arguments('-DHAVE_CONFIG_H', language : 'cpp')
-add_project_arguments('-DPACKAGE_VERSION="'+meson.project_version()+'"', language : 'cpp')
-add_project_arguments('-D_ARCH_="'+host_machine.system()+' ' + host_machine.cpu_family() + '"', language : 'cpp')
-add_project_arguments('-D_COMPILER_="'+cpp.get_id() + ' ' + cpp.version()+' ' + host_machine.cpu_family() + '"', language : 'cpp')
 
 add_project_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing'], language : 'cpp')
 
