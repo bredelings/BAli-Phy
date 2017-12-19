@@ -18,6 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include <cmath>
+#include <limits>
 #include "util/assert.hh"
 #include <iostream>
 #include <valarray>
@@ -152,8 +153,8 @@ namespace optimize {
   void getlimits(const Vector& x,const Vector& v,double& min,double& max) {
     assert(x.size() == v.size());
 
-    min = -1.0/0;
-    max = 1.0/0;
+    min = -std::numeric_limits<double>::infinity();
+    max = std::numeric_limits<double>::infinity();
 
     for(int i=0;i<x.size();i++) {
       if (v[i] < 0)
