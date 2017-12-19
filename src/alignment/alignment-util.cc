@@ -415,7 +415,7 @@ optional<int> check_characters_present(const alignment& A, const vector<dynamic_
 }
 
 /// Check that internal node states are consistent
-void check_internal_nodes_connected(const alignment& A,const Tree& t,const vector<int>& ignore)
+void check_internal_nodes_connected(const alignment& A,const Tree& t)
 {
     // Only check if A in fact has internal node sequences.
     if (A.n_sequences() == t.n_leaves()) return;

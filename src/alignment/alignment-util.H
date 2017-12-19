@@ -73,7 +73,7 @@ bool names_are_unique(const alignment& A);
 void check_internal_sequences_composition(const alignment& A,int n_leaves);
 
 /// Check that internal node states are consistent
-void check_internal_nodes_connected(const alignment& A,const Tree& T,const std::vector<int>& ignore=std::vector<int>());
+void check_internal_nodes_connected(const alignment& A,const Tree& T);
 
 /// Are all un-ignored characters in column 'present' connected on T?
 bool all_characters_connected(const Tree& T,boost::dynamic_bitset<> present,const std::vector<int>& ignore);
