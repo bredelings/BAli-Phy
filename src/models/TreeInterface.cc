@@ -580,9 +580,9 @@ void TreeInterface::end_modify_topology()
 #endif
 }
 
+#ifndef NDEBUG
 void check_tree(const Tree& T, const TreeInterface& t)
 {
-#ifndef NDEBUG
     for(int b=0; b < 2*T.n_branches(); b++)
     {
 	assert(T.directed_branch(b).source() == t.source(b));
@@ -606,6 +606,11 @@ void check_tree(const Tree& T, const TreeInterface& t)
 	for(int elem: VV)
 	    assert(includes(vv,elem));
     }
-#endif
 }
+#else
+void check_tree(const Tree&, const TreeInterface&)
+{
+}
+#endif
+
 
