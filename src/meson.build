@@ -69,12 +69,18 @@ baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc',
    'computation/optimization/inliner.cc']
 
 
+extra_rpath = ''
+if host_machine.system() == 'linux'
+  extra_rpath = '$ORIGIN/../lib/bali-phy/'
+endif
+
 baliphy = executable('bali-phy',
 		     baliphy_sources,
 		     include_directories: [eigen,extra_includes],
 		     dependencies: [boost,libdl],
 		     link_args: extra_link_args,
 		     link_with: [libbaliphy,libsums],
+		     install_rpath: extra_rpath,
 		     install: true,
 		     implib: true)
 
