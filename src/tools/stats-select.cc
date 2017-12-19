@@ -90,6 +90,8 @@ struct table_row_function
     table_row_function(const string& s)
 	:name(s)
 	{}
+
+    virtual ~table_row_function() {};
 };
 
 struct key_value_condition: public table_row_function<bool>
@@ -102,6 +104,8 @@ struct key_value_condition: public table_row_function<bool>
     bool operator()(const Table<string>&,int row) const;
 
     key_value_condition(const Table<string>&, const string&);
+
+    virtual ~key_value_condition() {};
 };
 
 bool key_value_condition::operator()(const Table<string>& t,int row) const
