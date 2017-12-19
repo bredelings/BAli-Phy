@@ -872,7 +872,7 @@ namespace substitution {
 	return LCB;
     }
 
-    vector<double> f81_exp_a_t(const data_partition& P, int b0, double L)
+    vector<double> f81_exp_a_t(const data_partition& P, int /*b0*/, double L)
     {
 	const int n_models  = P.n_base_models();
 	//    const vector<unsigned>& smap = P.state_letters();
@@ -1144,7 +1144,7 @@ namespace substitution {
     peel_internal_branch_SEV(const Likelihood_Cache_Branch* LCB1,
 			     const Likelihood_Cache_Branch* LCB2,
 			     const EVector& transition_P,
-			     const Matrix& F)
+			     const Matrix& /*F*/)
     {
 	total_peel_internal_branches++;
 
@@ -1249,7 +1249,7 @@ namespace substitution {
 			     const pairwise_alignment_t& A1,
 			     const vector<double>& exp_a_t,
 			     const Matrix& FF,
-			     const Matrix& WF)
+			     const Matrix& /*WF*/)
     {
 	//    std::cerr<<"got here! (internal)"<<endl;
 	total_peel_internal_branches++;
