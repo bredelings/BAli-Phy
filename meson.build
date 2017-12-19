@@ -14,6 +14,7 @@ cpp = meson.get_compiler('cpp')
 
 conf_data = configuration_data()
 conf_data.set('HAVE_SYS_RESOURCE_H', cpp.has_header('sys/resource.h'))
+conf_data.set('HAVE_FENV_H', cpp.has_header('fenv.h'))
 configure_file(output : 'config.h', configuration : conf_data)
 root_inc = include_directories('.')
 
