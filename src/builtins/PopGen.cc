@@ -216,7 +216,7 @@ extern "C" closure builtin_function_ewens_sampling_mixture_probability(Operation
 // Here the total and the count do not include the current allele;
 double process_allele(int& count, int& total, int& n_theta_pow, double theta)
 {
-  double Pr;
+  double Pr = 0;
 
   if (theta < total)
   {
