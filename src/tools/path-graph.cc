@@ -147,7 +147,7 @@ vector<int> getorder(const alignment& A,int n1,int n2) {
   return bits;
 }
 
-void getpath(const alignment& A,const vector<int>& bits,vector<int>& cx, vector<int>& cy) {
+void getpath(const alignment& /*A*/,const vector<int>& bits,vector<int>& cx, vector<int>& cy) {
   cx.push_back(0);
   cy.push_back(0);
   int x=0;
