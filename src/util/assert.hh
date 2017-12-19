@@ -5,9 +5,11 @@
 #undef assert
 #endif
 #ifdef NDEBUG
-#define assert(expr)  (0?(void(expr)):(void(0)))
+#define assert(expr)          (0?(void(expr)):(void(0)))
+#define assert_msg(expr,message)  (0?(void(expr)):(void(0)))
 #else
 #define assert(expr)  BOOST_ASSERT(expr)
+#define assert_msg(expr,message)  BOOST_ASSERT_MSG(expr,message)
 #endif
 
 #ifndef UTIL_ASSERT_H
