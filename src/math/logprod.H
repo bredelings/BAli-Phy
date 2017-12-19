@@ -37,9 +37,8 @@ struct log_prod_underflow
 
     log_prod_underflow& operator*=(double x)
     {
-#ifndef NDEBUG
-	auto old = *this;
-#endif	
+	bool was_zero = is_zero();
+
 	double mult = prod * x;
 	if (mult >= std::numeric_limits<double>::min())
 	    prod = mult;
@@ -51,7 +50,8 @@ struct log_prod_underflow
 	}
 	else
 	    accum *= x;
-	assert(not this->is_zero() or x == 0 or old.is_zero());
+
+	assert(not this->is_zero() or x == 0 or was_zero);
 	return *this;
     }
 
@@ -62,9 +62,8 @@ struct log_prod_underflow
 
 	constexpr int count_limit = 4;
 
-#ifndef NDEBUG
-	auto old = *this;
-#endif
+	bool was_zero = is_zero();
+
 	if (c >= count_limit)
 	    accum *= pow(log_double_t(x),c);
 	else
@@ -86,7 +85,7 @@ struct log_prod_underflow
 		accum *= pow(log_double_t(x),c);
 	}
 
-	assert(not this->is_zero() or x == 0 or old.is_zero());
+	assert(not this->is_zero() or x == 0 or was_zero);
 	return *this;
     }
 
@@ -107,9 +106,8 @@ struct log_prod_rescale
 
     log_prod_rescale& operator*=(double x)
     {
-#ifndef NDEBUG
-	auto old = *this;
-#endif	
+	bool was_zero = is_zero();
+
 	prod *= x;
 
 	if (prod < scale_min)
@@ -118,13 +116,7 @@ struct log_prod_rescale
 	    scale++;
 	}
 
-#ifndef NDEBUG
-	if (this->is_zero() and x != 0 and not old.is_zero())
-	{
-	    std::cerr<<"prod = "<<old.prod<<"    x = "<<x<<std::endl;
-	}
-#endif
-	assert(not this->is_zero() or x == 0 or old.is_zero());
+	assert(not this->is_zero() or x == 0 or was_zero);
 	return *this;
 	    
     }
@@ -152,11 +144,10 @@ struct log_prod_logsum
 
     log_prod_logsum& operator*=(double x)
     {
-#ifndef NDEBUG
-	auto old = *this;
-#endif	
+	bool was_zero = is_zero();
+
 	accum *= x;
-	assert(not this->is_zero() or x == 0 or old.is_zero());
+	assert(not this->is_zero() or x == 0 or was_zero);
 	return *this;
     }
     constexpr log_double_t value() const {return accum;}

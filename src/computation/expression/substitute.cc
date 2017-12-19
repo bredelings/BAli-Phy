@@ -54,9 +54,8 @@ void alpha_rename(object_ptr<expression>& E, const expression_ref& x, const expr
 
 bool do_substitute(expression_ref& E1, const expression_ref& D, const expression_ref& E2)
 {
-#ifndef NDEBUG
     expression_ref orig = E1;
-#endif
+
     assert(not is_wildcard(D));
 
     // If this is the relevant dummy, then substitute

@@ -356,11 +356,9 @@ int TreeView::remove_node_from_branch(BranchNode* n1, int branch_to_move)
 	       b2->out->directed_branch_attributes->name == branch_to_move);
 
     //---------- get delta - and check it ------------//
-#ifndef NDEBUG
     int delta1 = std::abs(b1->directed_branch_attributes->name - b1->out->directed_branch_attributes->name);
     int delta2 = std::abs(b2->directed_branch_attributes->name - b2->out->directed_branch_attributes->name);
     assert(delta1 == delta2);
-#endif
 
     //-- Connect branches, merge lengths, use new name --//
     b1->out = b2;
@@ -1578,10 +1576,9 @@ int Tree::induce_partition(const dynamic_bitset<>& partition)
 	// split the node and note the name of the newly added branch
 	else {
 	    nodeview new_node = add_leaf_node(group1[0]->node_attributes->name);
-#ifndef NDEBUG
 	    int old_index = group1[0]->node_attributes->name;
 	    int new_index = new_node;
-#endif
+
 	    for(int i=0;i<group2.size();i++) {
 		reconnect_branch(group2[i]->out->node_attributes->name, group2[i]->node_attributes->name, new_node);
 		assert(group2[i]->node_attributes->name == new_index);
