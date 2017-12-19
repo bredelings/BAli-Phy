@@ -533,8 +533,6 @@ DPmatrixEmit::DPmatrixEmit(const HMM& M,
      s12_sub(d1.n_columns(), d2.n_columns()),
      dists1(std::move(d1)), dists2(std::move(d2))
 {
-    int NS = nstates();
-
     //----- cache G1,G2 emission probabilities -----//
     int scale = 0;
     log_prod prod;
