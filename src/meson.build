@@ -1,4 +1,4 @@
-libsums = static_library('libsums','computation/machine/sums.cc', cpp_args: '-fno-fast-math', install: false)
+libsums = static_library('libsums','computation/machine/sums.cc', dependencies: boost, cpp_args: '-fno-fast-math', install: false)
 
 vcs_tag(
   input : 'git-version.h.in',
