@@ -27,7 +27,7 @@
 #ifndef ETREE_H
 #define ETREE_H
 
-#include <cassert>
+#include "util/assert.hh"
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/optional.hpp>

@@ -2,7 +2,7 @@
 #define CACHE_LIST
 
 #include <list>
-#include <cassert>
+#include "util/assert.hh"
 #include <initializer_list>
 #include <boost/container/list.hpp>
 // Currently, since I'm not using T*, this only works for POD type.

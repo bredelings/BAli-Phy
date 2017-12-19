@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <iostream>
 #include <string>
-#include <cassert>
+#include "util/assert.hh"
 #include <vector>
 #include <valarray>
 #include <cmath>

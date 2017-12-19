@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "timer_stack.H"
 #include <sstream>
 #include <iomanip>
-#include <cassert>
+#include "util/assert.hh"
 #include "util.H"
 
 using namespace std;

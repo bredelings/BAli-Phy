@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <cassert>
+#include "util/assert.hh"
 #include <algorithm>
 #include "myexception.H"
 #include <boost/optional.hpp>

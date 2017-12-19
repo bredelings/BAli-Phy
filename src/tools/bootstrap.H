@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <valarray>
 #include <cmath>
-#include <cassert>
+#include "util/assert.hh"
 #include "rng.H"
 
 std::vector<int> bootstrap_sample_indices(unsigned size,unsigned blocksize=1);

@@ -20,7 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <string>
 #include <vector>
-#include <cassert>
+#include "util/assert.hh"
 #include "myexception.H"
 #include "util.H"
 #include "io.H"

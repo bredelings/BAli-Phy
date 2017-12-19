@@ -21,7 +21,7 @@
 #define LOGPROD_H
 
 #include <cmath>
-#include <cassert>
+#include "util/assert.hh"
 #include <iostream>
 
 struct log_prod_underflow

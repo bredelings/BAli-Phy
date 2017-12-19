@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include <ctime>
-#include <cassert>
+#include "util/assert.hh"
 #include <cmath>
 #include <fstream>
 #include <iostream>

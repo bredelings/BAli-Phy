@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include <vector>
-#include <cassert>
+#include "util/assert.hh"
 #include "rng.H"
 
 template <typename T>

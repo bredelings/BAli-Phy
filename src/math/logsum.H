@@ -21,7 +21,7 @@
 #define LOGSUM_H
 
 #include <cmath>
-#include <cassert>
+#include "util/assert.hh"
 
 constexpr double max_float = 3.40282347e+38F;
 constexpr double log_limit = -max_float/100;

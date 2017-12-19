@@ -18,7 +18,7 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include "alphabet.H"
-#include <cassert>
+#include "util/assert.hh"
 #include <fstream>
 #include "util.H"
 #include "io.H"

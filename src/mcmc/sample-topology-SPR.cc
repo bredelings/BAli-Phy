@@ -24,7 +24,7 @@
 ///
 
 #include <cmath>
-#include <cassert>
+#include "util/assert.hh"
 #include <iostream>
 #include "sample.H"
 #include "rng.H"

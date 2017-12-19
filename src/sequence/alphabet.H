@@ -28,7 +28,7 @@
 #include <valarray>
 #include <iostream>
 #include <string>
-#include <cassert>
+#include "util/assert.hh"
 #include <boost/dynamic_bitset.hpp>
 #include "myexception.H"
 #include "object.H"

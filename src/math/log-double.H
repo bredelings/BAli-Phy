@@ -20,7 +20,7 @@
 #ifndef LOG_DOUBLE_H
 #define LOG_DOUBLE_H
 
-#include <cassert>
+#include "util/assert.hh"
 #include <iostream>
 #include "math/logsum.H"
 

@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include <cmath>
-#include <cassert>
+#include "util/assert.hh"
 #include <iostream>
 #include <valarray>
 #include <vector>
