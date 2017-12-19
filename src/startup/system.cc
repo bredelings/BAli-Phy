@@ -52,7 +52,7 @@ void raise_cpu_limit(ostream& o)
   }
 }
 #else
-void raise_cpu_limit(ostream& o) 
+void raise_cpu_limit(ostream& /*o*/) 
 {
   //  o<<"Not checking CPU time limits..."<<endl;
 }
