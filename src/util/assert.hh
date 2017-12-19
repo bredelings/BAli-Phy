@@ -18,12 +18,12 @@ namespace boost
 {
     inline void assertion_failed(char const * expr, char const * function, char const * file, long line)
     {
-	throw myexception()<<"Assertion ("<<expr<<") failed at line "<<line<<" of '"<<function<<"' ('"<<file<<"')";
+	throw myexception()<<"Assertion ("<<expr<<") failed in '"<<function<<"' at "<<file<<":"<<line;
     }
 
     inline void assertion_failed_msg(char const * expr, char const * msg, char const * function, char const * file, long line)
     {
-	throw myexception()<<"Assertion ("<<expr<<") failed at line "<<line<<" of '"<<function<<"' ('"<<file<<"'):\n  "<<msg;
+	throw myexception()<<"Assertion ("<<expr<<") failed in '"<<function<<"' at "<<file<<":"<<line<<":\n   "<<msg;
     }
 }
 #endif
