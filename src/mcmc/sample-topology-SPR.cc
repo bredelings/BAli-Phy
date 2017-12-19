@@ -395,7 +395,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     //  std::cerr<<"before = "<<p[1].T<<endl;
 
     // FIXME - do we need to USE the ratio anywhere?
-    double ratio = do_SPR(p[1],b1,b2);
+    /* double ratio = */ do_SPR(p[1],b1,b2);
 
     std::vector<int> nodes = A3::get_nodes_branch(p[0].t(),n1,n2);
     assert(p[0].t().is_connected(nodes[0],nodes[1]));
@@ -589,7 +589,7 @@ void SPR_by_NNI(Parameters& P, const tree_edge& E1, const tree_edge& E2, bool cl
 
     // 3. Record lengths for branches before NNI.
     double L3 = t.branch_length(t.find_branch(E3));
-    double L2 = t.branch_length(t.find_branch(E2));
+    /* double L2 = */ t.branch_length(t.find_branch(E2));
     double L5 = t.branch_length(t.find_branch(E5));
 
     // 4. Do NNI.
