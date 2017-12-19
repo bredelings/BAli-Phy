@@ -76,7 +76,7 @@ endif
 
 baliphy = executable('bali-phy',
 		     baliphy_sources,
-		     include_directories: [eigen,extra_includes],
+		     include_directories: [root_inc, eigen, extra_includes],
 		     dependencies: [boost,libdl],
 		     link_args: extra_link_args,
 		     link_with: [libbaliphy,libsums],
@@ -204,7 +204,7 @@ trees_distances_sources = ['tools/trees-distances.cc']
 executable('trees-distances', trees_distances_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
 draw_tree_sources = ['tools/draw-tree.cc']
-executable('draw-tree', draw_tree_sources, dependencies: [boost, cairo], link_with: libbaliphy, install:true)
+executable('draw-tree', draw_tree_sources, dependencies: [boost, cairo], include_directories: root_inc, link_with: libbaliphy, install:true)
 
 path_graph_sources = ['tools/path-graph.cc']
 executable('path-graph', path_graph_sources, dependencies:boost, link_with: libbaliphy, install: true)

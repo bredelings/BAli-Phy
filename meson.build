@@ -12,7 +12,14 @@ project('bali-phy', 'cpp',
 
 cpp = meson.get_compiler('cpp')
 
+conf_data = configuration_data()
+conf_data.set('HAVE_SYS_RESOURCE_H', cpp.has_header('sys/resource.h'))
+configure_file(output : 'config.h', configuration : conf_data)
+root_inc = include_directories('.')
+
+
 # put this in a config file
+add_project_arguments('-DHAVE_CONFIG_H', language : 'cpp')
 add_project_arguments('-DPACKAGE_VERSION="'+meson.project_version()+'"', language : 'cpp')
 add_project_arguments('-D_ARCH_="'+host_machine.system()+' ' + host_machine.cpu_family() + '"', language : 'cpp')
 add_project_arguments('-D_COMPILER_="'+cpp.get_id() + ' ' + cpp.version()+' ' + host_machine.cpu_family() + '"', language : 'cpp')
