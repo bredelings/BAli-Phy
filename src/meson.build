@@ -8,18 +8,13 @@ vcs_tag(
   fallback: '',
 )
 
-libdl = cpp.find_library('dl')
+libdl = []
 extra_link_args = []
 extra_includes = []
 if host_machine.system() == 'linux'
   extra_link_args += [ '-rdynamic' ]
-elif host_machine.system() == 'windows'
-  # We should have a system of 'cygwin' for cygwin.
-  baliphy_sources += [ 'dlfcn-win32/dlfcn.c' ]
-  extra_includes = include_directories('dlfcn-win32/')
-  libdl = []
+  libdl = cpp.find_library('dl')
 endif
-
 
 # tools/findroot.cc -> tools/optimize.cc
 libbaliphy_sources = ['io.cc','util.cc','tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','setup.cc','tree/randomtree.cc','util-random.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc']
@@ -68,6 +63,12 @@ baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc',
    'startup/paths.cc', 'computation/optimization/occurrence.cc',
    'computation/optimization/inliner.cc']
 
+
+if host_machine.system() == 'windows'
+  # We should have a system of 'cygwin' for cygwin.
+  baliphy_sources += [ 'dlfcn-win32/dlfcn.c' ]
+  extra_includes = include_directories('dlfcn-win32/')
+endif
 
 extra_rpath = ''
 if host_machine.system() == 'linux'

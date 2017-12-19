@@ -1,7 +1,7 @@
 # https://github.com/mesonbuild/meson/blob/master/docs/markdown/Porting-from-autotools.md
 # http://mesonbuild.com/Syntax.html
 # http://mesonbuild.com/howtox.html#set-default-cc-language-version
-project('bali-phy', 'cpp',
+project('bali-phy', ['cpp','c'],
 	version: '3.0-beta5',
 	default_options : [
 	  'buildtype=release',
@@ -11,6 +11,7 @@ project('bali-phy', 'cpp',
 	license: 'GPLv2')
 
 cpp = meson.get_compiler('cpp')
+cc = meson.get_compiler('c')
 
 # 2. Write a 'config.h'
 conf_data = configuration_data()
