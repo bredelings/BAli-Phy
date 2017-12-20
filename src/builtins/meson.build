@@ -12,6 +12,7 @@ foreach mod : builtins
   shared_module(mod,
 		mod + '.cc',
 		include_directories: source_inc,
+		dependencies: boost,
 		link_with: implibs,
 		install_dir: 'lib/bali-phy',
 		name_prefix: '',
