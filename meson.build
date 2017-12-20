@@ -7,7 +7,7 @@ project('bali-phy', ['cpp','c'],
 	  'buildtype=release',
 	  'cpp_std=c++14'
 	],
-	meson_version: '>= 0.43',
+	meson_version: '>= 0.44',
 	license: 'GPLv2')
 
 cpp = meson.get_compiler('cpp')
