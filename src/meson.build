@@ -14,6 +14,8 @@ extra_includes = []
 if host_machine.system() == 'linux'
   extra_link_args += [ '-rdynamic' ]
   libdl = cpp.find_library('dl')
+elif host_machine.system() == 'windows'
+  extra_link_args += [ '-Wl,--export-all-symbols' ]
 endif
 
 # tools/findroot.cc -> tools/optimize.cc
