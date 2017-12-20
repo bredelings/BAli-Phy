@@ -2051,7 +2051,8 @@ int get_leaf_index(const string& word, bool allow_numbers, const vector<string>&
 	throw myexception()<<"Leaf name '"<<word<<"' is not an integer!";
     else 
     {
-	if (leaf_index = find_index(names,word))
+	leaf_index = find_index(names,word);
+	if (leaf_index)
 	    return *leaf_index;
 	else
 	    throw myexception()<<"Leaf name '"<<word<<"' is not in the specified taxon set!";
