@@ -103,7 +103,7 @@ stats_cat_sources = ['tools/stats-cat.cc']
 executable('stats-cat', stats_cat_sources, dependencies:boost, link_with: libbaliphy, install: true)
 
 alignment_gild_sources = ['tools/alignment-gild.cc']
-executable('alignment-gild', alignment_gild_sources, link_with: libbaliphy, install: true)
+executable('alignment-gild', alignment_gild_sources, dependencies: boost, link_with: libbaliphy, install: true)
 
 alignment_median_sources = ['tools/alignment-median.cc']
 executable('alignment-median', alignment_median_sources, dependencies:boost, link_with: libbaliphy, install: true)
