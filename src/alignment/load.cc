@@ -116,7 +116,7 @@ vector<sequence> load_next_sequences(istream& ifile)
 	auto sequences = sequence_format::read_fasta(ifile);
 	if (sequences.empty())
 	    throw myexception(string("Alignment didn't contain any sequences!"));
-	return std::move(sequences);
+	return sequences;
     }
     catch (std::exception& e)
     {
