@@ -4,8 +4,11 @@ builtins = ['Array','Data','Prelude','Alphabet','Pair','Modifiables','Alignment'
 	    'PopGen','Distribution','Range','SModel','MCMC','Vector','Environment']
 
 implibs = []
-if host_machine.system() == 'windows'
+if host_machine.system() == 'windows' or host_machine.system() == 'cygwin'
   implibs += baliphy
+  extension = 'dll'
+else
+  extension = 'so'
 endif
 
 foreach mod : builtins
@@ -16,5 +19,6 @@ foreach mod : builtins
 		link_with: implibs,
 		install_dir: 'lib/bali-phy',
 		name_prefix: '',
+		name_suffix: extension,
 		install: true)
 endforeach
