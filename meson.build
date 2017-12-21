@@ -33,8 +33,8 @@ add_project_arguments('-DHAVE_CONFIG_H', language : 'cpp')
 
 add_project_arguments(['-Wall','-Wextra','-Wno-sign-compare','-Woverloaded-virtual','-Wstrict-aliasing'], language : 'cpp')
 
-if get_option('buildtype') == 'release'
-  add_project_arguments(['-DNDEBUG','-DNDEBUG_DP','-funroll-loops','-ffast-math'], language : 'cpp')
+if get_option('buildtype') == 'release' or get_option('buildtype') == 'plain'
+  add_project_arguments(['-DNDEBUG','-DNDEBUG_DP','-O3','-funroll-loops','-ffast-math'], language : 'cpp')
 endif
 
 if host_machine.system() == 'darwin'
