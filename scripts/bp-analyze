@@ -2041,7 +2041,7 @@ sub get_tree_prior
 	{
 	    $topology_prior = $1;
 	}
-	if ($line =~ /^T:length\[b\] (.*)$/)
+	if ($line =~ /^T:lengths (.*)$/)
 	{
 	    $branch_prior = $1;
 	}
