@@ -1655,7 +1655,7 @@ sub get_libexec_script
 {
     my $file = shift;
     my $prefix = dirname(dirname(abs_path(__FILE__)));
-    my $libexecdir = "$prefix/libexec/bali-phy/";
+    my $libexecdir = "$prefix/lib/bali-phy/libexec/";
     die "Missing libexecdir '$libexecdir'!" if (! -e $libexecdir);
     my $path = "$libexecdir/$file";
     die "Missing libexec script '$file'!" if (! -e $path);

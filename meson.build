@@ -52,7 +52,7 @@ install_data('scripts/bp-analyze', install_mode: 'rwxr-----', install_dir: 'bin'
 install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R', 'scripts/tree-plot1.R',
 	      'scripts/tree-plot2.R', 'scripts/tree-plot3.R', 'scripts/tree-plot2-3D.R',
 	      'scripts/tree-plot1-3D.R', 'scripts/tree-plot3-3D.R'],
-	     install_dir:'libexec/bali-phy')
+	     install_dir:'lib/bali-phy/libexec')
 install_data(['doc/README.html','doc/README.xhtml','doc/README.pdf'], install_dir: 'share/doc/bali-phy')
 
 ## we need to build libdl if we are on windows (cygwin or mingw64, and then find the library
