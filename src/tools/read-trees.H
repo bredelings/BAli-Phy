@@ -39,7 +39,7 @@ namespace trees_format {
     struct reader_t
     {
 	std::vector<std::string> leaf_names;
-	virtual bool next_tree_(Tree&,int&)=0;
+	virtual bool next_tree_(Tree&,int&);
 	virtual bool current_tree(Tree&,int&)=0;
 	int lines_;
 
@@ -65,7 +65,6 @@ namespace trees_format {
 
 	void initialize();
 
-	bool next_tree_(Tree&,int&);
 	bool current_tree(Tree&,int&);
     public:
 	Newick* clone() const {return new Newick(*this);}

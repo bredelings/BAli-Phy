@@ -55,6 +55,14 @@ namespace trees_format
 	return lines_;
     }
   
+    bool reader_t::next_tree_(Tree& T,int& r)
+    {
+	bool ok = current_tree(T, r);
+	skip(1);
+	return ok;
+    }
+
+
     bool reader_t::next_tree(Tree& T)
     {
 	int r;
@@ -104,14 +112,6 @@ namespace trees_format
 	    return false;
 	}
 	return not done();
-    }
-
-
-    bool Newick::next_tree_(Tree& T,int& r)
-    {
-	bool ok = current_tree(T, r);
-	line.clear();
-	return ok;
     }
 
 
