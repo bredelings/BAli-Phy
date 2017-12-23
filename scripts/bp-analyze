@@ -2790,18 +2790,16 @@ sub write_x3d_file
 "<html>
   <head>
     <title>MDS 3D Plot</title>
-    <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'> </script>
-    <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
+    <script src='https://aframe.io/releases/0.7.0/aframe.min.js'> </script>
     <style>
-      x3d { border:2px solid darkorange; }
+      a-scene { border:2px solid darkorange; }
     </style>
   </head>
   <body>
-    <x3d width='1000px' height='1000px'>
-      <scene>";
-    print FILE &gen_x3d_of_mds($point_string);
+      <a-scene width='1000px' height='1000px'>";
+    print FILE &gen_a_frame_of_mds($point_string);
     print FILE "
-      </scene>
+      </a-scene>
     </x3d>
   </body>
 </html>
@@ -2845,12 +2843,23 @@ sub hsv_to_rgb
     }
 }
 
-sub rgb_to_color
+sub rgb_to_x3d_color
 {
     my $r = shift;
     my $g = shift;
     my $b = shift;
     return "$r $g $b";
+}
+
+sub rgb_to_hex_color
+{
+    my $r = shift;
+    my $g = shift;
+    my $b = shift;
+
+    my $color = sprintf("#%02X%02X%02X",int($r*255),int($g*255),int($b*255));
+    print STDERR $r," ",$g," ",$b," ",$color,"\n";
+    return $color;
 }
 
 sub interpolate
@@ -2862,7 +2871,7 @@ sub interpolate
     return $from + ($to-$from)*($i*1.0/($total-1));
 }
 
-sub gen_x3d_of_mds
+sub gen_a_frame_of_mds
 {
     my $point_string = shift;
 
@@ -2912,29 +2921,27 @@ sub gen_x3d_of_mds
 	my $g = ${$point}[3];
 	$g = 1 if (!defined($g));
 	$seen{$g} = 0 if (!defined($seen{$g}));
-	my $color;
+	my $color = rgb_to_hex_color(1,0,0);
 	my $size = 0.04;
-	my $scale = "$size $size $size";
-	$color = "1 0 0";
 
-	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.833333, 1.0),
+	$color = rgb_to_hex_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.833333, 1.0),
 #	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.0,      0.0),
 					 interpolate($seen{$g}, $n{$g}, 0.3,      1.0),
 					 1)
 	                      ) if (defined($g) && $g == 1);
 
-	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.5,      0.666666),
+	$color = rgb_to_hex_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.5,      0.666666),
 #	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.666666, 0.666666),
 					 interpolate($seen{$g}, $n{$g}, 0.3,      1.0),
 					 1)
 	                      ) if (defined($g) && $g == 2);
 
-	$color = rgb_to_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.166666, 0.333333),
+	$color = rgb_to_hex_color(hsv_to_rgb(interpolate($seen{$g}, $n{$g}, 0.166666, 0.333333),
 					 interpolate($seen{$g}, $n{$g}, 0.3,      1.0),
 					 1)
 	    ) if (defined($g) && $g == 3);
 
-	$x3d .= "<transform translation='$x $y $z' scale='$scale'><shape><appearance><material diffuseColor='$color'></material></appearance><sphere></sphere></shape></transform>";
+	$x3d .= "<a-sphere position='$x $y $z' radius='$size' color='$color'></a-sphere>";
 	$x3d .= "\n";
 	$seen{$g}++;
     }
