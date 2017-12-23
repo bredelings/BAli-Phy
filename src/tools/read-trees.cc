@@ -537,12 +537,9 @@ namespace trees_format
 	:wrapped_reader_t(r),subsample(s)
     { }
 
-    bool Last::next_tree_(Tree& T,int& r)
+    bool Last::skip(int n)
     {
-	if (wrapped_reader_t::lines() < last)
-	    return wrapped_reader_t::next_tree_(T,r);
-	else
-	    return false;
+	return (tfr->skip(n) and tfr->lines() < last);
     }
 
     Last::Last(int l, const reader_t& r)

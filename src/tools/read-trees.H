@@ -165,8 +165,8 @@ namespace trees_format {
     {
 	int last;
 
-	bool next_tree_(Tree&,int& r);
     public:
+	bool skip(int n);
 	Last* clone() const {return new Last(*this);}
     
 	Last(int, const reader_t&);
