@@ -89,7 +89,7 @@ namespace trees_format
 	return next_tree(static_cast<RootedTree&>(T));
     }
   
-    bool Newick::next_tree_(Tree& T,int& r)
+    bool Newick::current_tree(Tree& T,int& r)
     {
 	if (not line.size())
 	    while (portable_getline(fileref,line) and not line.size());
@@ -103,8 +103,15 @@ namespace trees_format
 	    fileref.setstate(std::ios::badbit);
 	    return false;
 	}
-	line.clear();
 	return not done();
+    }
+
+
+    bool Newick::next_tree_(Tree& T,int& r)
+    {
+	bool ok = current_tree(T, r);
+	line.clear();
+	return ok;
     }
 
 
@@ -272,7 +279,7 @@ namespace trees_format
 	return word;
     }
 
-    bool NEXUS::next_tree_(Tree& T,int& r)
+    bool NEXUS::current_tree(Tree& T,int& r)
     {
 	if (not line.size())
 	    get_NEXUS_command(fileref,line);
@@ -305,8 +312,14 @@ namespace trees_format
 	    fileref.setstate(std::ios::badbit);
 	    return false;
 	}
-	line.clear();
 	return not done();
+    }
+
+    bool NEXUS::next_tree_(Tree& T,int& r)
+    {
+	bool ok = current_tree(T, r);
+	line.clear();
+	return ok;
     }
 
     void NEXUS::parse_translate_command(const std::string& s)
@@ -411,6 +424,11 @@ namespace trees_format
     {
     }
 
+    bool wrapped_reader_t::current_tree(Tree& T,int& r)
+    {
+	return tfr->current_tree(T,r);
+    }
+
     bool wrapped_reader_t::next_tree_(Tree& T,int& r) {
 	if (tfr->next_tree_(T,r)) {
 	    lines_++;
@@ -461,6 +479,17 @@ namespace trees_format
     const vector<string>& Prune::names() const
     {
 	return leaf_names;
+    }
+
+    bool Prune::current_tree(Tree& T,int &r)
+    {
+	bool success = tfr->current_tree(T,r);
+	if (success and prune_index.size()) {
+	    T.Tree::prune_leaves(prune_index);
+	    // FIXME -- there has to be a more intelligent way to do this...
+	    r = T.n_nodes()-1;
+	}
+	return success;
     }
 
     bool Prune::next_tree_(Tree& T,int &r)
@@ -520,6 +549,19 @@ namespace trees_format
 	:wrapped_reader_t(r),last(l)
     { }
 
+    bool Fixroot::current_tree(Tree& T,int& r)
+    {
+	if (wrapped_reader_t::current_tree(T,r)) {
+	    if (T.node(r).degree() == 2) {
+		T.remove_node_from_branch(r);
+		r = T.n_nodes()-1;
+	    }
+	    return true;
+	}
+	else
+	    return false;
+    }
+
     bool Fixroot::next_tree_(Tree& T,int& r)
     {
 	if (wrapped_reader_t::next_tree_(T,r)) {
@@ -540,6 +582,16 @@ namespace trees_format
     const vector<string>& ReorderLeaves::names() const
     {
 	return leaf_names;
+    }
+
+    bool ReorderLeaves::current_tree(Tree& T,int& r)
+    {
+	if (wrapped_reader_t::current_tree(T,r)) {
+	    if (mapping.size()) T.standardize(mapping);
+	    return true;
+	}
+	else
+	    return false;
     }
 
     bool ReorderLeaves::next_tree_(Tree& T,int& r)

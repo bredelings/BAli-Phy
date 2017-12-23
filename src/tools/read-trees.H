@@ -40,6 +40,7 @@ namespace trees_format {
     {
 	std::vector<std::string> leaf_names;
 	virtual bool next_tree_(Tree&,int&)=0;
+	virtual bool current_tree(Tree&,int&)=0;
 	int lines_;
 
     public:
@@ -65,6 +66,7 @@ namespace trees_format {
 	void initialize();
 
 	bool next_tree_(Tree&,int&);
+	bool current_tree(Tree&,int&);
     public:
 	Newick* clone() const {return new Newick(*this);}
 
@@ -87,6 +89,7 @@ namespace trees_format {
 	void initialize();
 
 	bool next_tree_(Tree&,int&);
+	bool current_tree(Tree&,int&);
     public:
 	NEXUS* clone() const {return new NEXUS(*this);}
 
@@ -104,6 +107,7 @@ namespace trees_format {
 	boost::shared_ptr<reader_t> tfr;
 
 	bool next_tree_(Tree&,int&);
+	bool current_tree(Tree&,int&);
     public:
 	virtual wrapped_reader_t* clone() const=0;
 	virtual const std::vector<std::string>& names() const;
@@ -130,6 +134,7 @@ namespace trees_format {
 	std::vector<int> prune_index;
 
 	bool next_tree_(Tree&,int&);
+	bool current_tree(Tree&,int&);
 
     public:
 	Prune* clone() const {return new Prune(*this);}
@@ -172,6 +177,7 @@ namespace trees_format {
     class Fixroot: public wrapped_reader_t
     {
 	bool next_tree_(Tree&,int& r);
+	bool current_tree(Tree&,int& r);
     public:
 	Fixroot* clone() const {return new Fixroot(*this);}
     
@@ -182,6 +188,7 @@ namespace trees_format {
     {
 	std::vector<int> mapping;
 	bool next_tree_(Tree&,int& r);
+	bool current_tree(Tree&,int& r);
     public:
 	ReorderLeaves* clone() const {return new ReorderLeaves(*this);}
 	const std::vector<std::string>& names() const;

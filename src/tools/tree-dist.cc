@@ -215,14 +215,14 @@ int tree_sample::load_file(istream& file, int skip, int last, int subsample, int
     //----------- Construct File Reader / Filter -----------//
     shared_ptr<reader_t> trees_in(new Newick_or_NEXUS(file));
 
+    if (last > 0)
+	trees_in = shared_ptr<reader_t>(new Last(last,*trees_in));
+
     if (skip > 0)
 	trees_in = shared_ptr<reader_t>(new Skip(skip,*trees_in));
 
     if (subsample > 1)
 	trees_in = shared_ptr<reader_t>(new Subsample(subsample,*trees_in));
-
-    if (last > 0)
-	trees_in = shared_ptr<reader_t>(new Last(last,*trees_in));
 
     trees_in = shared_ptr<reader_t>(new Fixroot(*trees_in));
 
