@@ -39,7 +39,6 @@ namespace trees_format {
     struct reader_t
     {
 	std::vector<std::string> leaf_names;
-	virtual bool next_tree_(Tree&,int&);
 	virtual bool current_tree(Tree&,int&)=0;
 
     public:
@@ -129,7 +128,6 @@ namespace trees_format {
 	std::vector<std::string> prune;
 	std::vector<int> prune_index;
 
-	bool next_tree_(Tree&,int&);
 	bool current_tree(Tree&,int&);
 
     public:
@@ -171,7 +169,6 @@ namespace trees_format {
 
     class Fixroot: public wrapped_reader_t
     {
-	bool next_tree_(Tree&,int& r);
 	bool current_tree(Tree&,int& r);
     public:
 	Fixroot* clone() const {return new Fixroot(*this);}
@@ -182,7 +179,6 @@ namespace trees_format {
     class ReorderLeaves: public wrapped_reader_t
     {
 	std::vector<int> mapping;
-	bool next_tree_(Tree&,int& r);
 	bool current_tree(Tree&,int& r);
     public:
 	ReorderLeaves* clone() const {return new ReorderLeaves(*this);}

@@ -34,10 +34,10 @@ using std::istream;
 using boost::dynamic_bitset;
 using boost::shared_ptr;
 
-// FIXME: next_tree_(T) may invoke virtual functions of T that cause trouble.
+// FIXME: current_tree_(T) may invoke virtual functions of T that cause trouble.
 // EXAMPLE: T.prune_leaves( ) messeses with sequence names if not prevented by
 //          calling T.Tree::prune_leaves( ).
-// INTENSION: next_tree_(T) is supposed to treat T only as a Tree&, and therefore
+// INTENSION: current_tree(T) is supposed to treat T only as a Tree&, and therefore
 //             NOT call not call any virtual functions.  
 // QUESTION: should I fix the code that calls it, or the code itself, to not have this
 //             assumption?
@@ -51,26 +51,18 @@ namespace trees_format
 	return leaf_names;
     }
 
-    bool reader_t::next_tree_(Tree& T,int& r)
-    {
-	return current_tree(T,r) && skip(1);
-    }
-
     bool reader_t::next_tree(Tree& T)
     {
 	int r;
-	if (next_tree_(T,r)) {
-	    return true;
-	}
-	else
-	    return false;
+	return current_tree(T,r) and skip(1);
     }
 
     bool reader_t::next_tree(RootedTree& T)
     {
 	int r;
 	Tree& T2 = static_cast<Tree&>(T);
-	if (next_tree_(T2,r)) {
+	if (current_tree(T2,r) and skip(1))
+	{
 	    T.reroot(r);
 	    return true;
 	}
@@ -471,17 +463,6 @@ namespace trees_format
 	return success;
     }
 
-    bool Prune::next_tree_(Tree& T,int &r)
-    {
-	bool success = tfr->next_tree_(T,r);
-	if (success and prune_index.size()) {
-	    T.Tree::prune_leaves(prune_index);
-	    // FIXME -- there has to be a more intelligent way to do this...
-	    r = T.n_nodes()-1;
-	}
-	return success;
-    }
-
     Prune::Prune(const vector<string>& p,const reader_t& r)
 	:wrapped_reader_t(r),prune(p)
     {
@@ -537,19 +518,6 @@ namespace trees_format
 	    return false;
     }
 
-    bool Fixroot::next_tree_(Tree& T,int& r)
-    {
-	if (wrapped_reader_t::next_tree_(T,r)) {
-	    if (T.node(r).degree() == 2) {
-		T.remove_node_from_branch(r);
-		r = T.n_nodes()-1;
-	    }
-	    return true;
-	}
-	else
-	    return false;
-    }
-
     Fixroot::Fixroot(const reader_t& r)
 	:wrapped_reader_t(r)
     { }
@@ -562,16 +530,6 @@ namespace trees_format
     bool ReorderLeaves::current_tree(Tree& T,int& r)
     {
 	if (wrapped_reader_t::current_tree(T,r)) {
-	    if (mapping.size()) T.standardize(mapping);
-	    return true;
-	}
-	else
-	    return false;
-    }
-
-    bool ReorderLeaves::next_tree_(Tree& T,int& r)
-    {
-	if (wrapped_reader_t::next_tree_(T,r)) {
 	    if (mapping.size()) T.standardize(mapping);
 	    return true;
 	}
