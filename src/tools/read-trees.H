@@ -44,6 +44,8 @@ namespace trees_format {
     public:
 	virtual reader_t* clone() const=0;
 	virtual const std::vector<std::string>& names() const;
+	bool current_tree(Tree&);
+	bool current_tree(RootedTree&);
 	virtual bool next_tree(Tree&);
 	virtual bool next_tree(RootedTree&);
 	virtual bool next_tree(SequenceTree&);

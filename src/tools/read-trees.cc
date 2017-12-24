@@ -51,23 +51,32 @@ namespace trees_format
 	return leaf_names;
     }
 
-    bool reader_t::next_tree(Tree& T)
+    bool reader_t::current_tree(Tree& T)
     {
 	int r;
-	return current_tree(T,r) and skip(1);
+	return current_tree(T,r);
     }
 
-    bool reader_t::next_tree(RootedTree& T)
+    bool reader_t::current_tree(RootedTree& T)
     {
 	int r;
-	Tree& T2 = static_cast<Tree&>(T);
-	if (current_tree(T2,r) and skip(1))
+	if (current_tree(T,r))
 	{
 	    T.reroot(r);
 	    return true;
 	}
 	else
 	    return false;
+    }
+
+    bool reader_t::next_tree(Tree& T)
+    {
+	return current_tree(T) and skip(1);
+    }
+
+    bool reader_t::next_tree(RootedTree& T)
+    {
+	return current_tree(T) and skip(1);
     }
   
     bool reader_t::next_tree(SequenceTree& T)
