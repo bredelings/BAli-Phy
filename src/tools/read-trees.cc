@@ -79,16 +79,6 @@ namespace trees_format
 	return current_tree(T) and skip(1);
     }
   
-    bool reader_t::next_tree(SequenceTree& T)
-    {
-	return next_tree(static_cast<Tree&>(T));
-    }
-  
-    bool reader_t::next_tree(RootedSequenceTree& T)
-    {
-	return next_tree(static_cast<RootedTree&>(T));
-    }
-  
     bool Newick::current_tree(Tree& T,int& r)
     {
 	if (not line.size())

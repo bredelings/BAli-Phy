@@ -48,8 +48,6 @@ namespace trees_format {
 	bool current_tree(RootedTree&);
 	virtual bool next_tree(Tree&);
 	virtual bool next_tree(RootedTree&);
-	virtual bool next_tree(SequenceTree&);
-	virtual bool next_tree(RootedSequenceTree&);
 	int lines() const;
 	virtual bool skip(int) = 0;
 	virtual bool done() const = 0;
