@@ -41,7 +41,6 @@ namespace trees_format {
 	std::vector<std::string> leaf_names;
 	virtual bool next_tree_(Tree&,int&);
 	virtual bool current_tree(Tree&,int&)=0;
-	int lines_;
 
     public:
 	virtual reader_t* clone() const=0;
@@ -53,7 +52,7 @@ namespace trees_format {
 	int lines() const;
 	virtual bool skip(int) = 0;
 	virtual bool done() const = 0;
-	reader_t():lines_(0) {}
+	reader_t() = default;
 	virtual ~reader_t() {}
     };
 
@@ -87,7 +86,6 @@ namespace trees_format {
 	void parse_translate_command(const std::string&);
 	void initialize();
 
-	bool next_tree_(Tree&,int&);
 	bool current_tree(Tree&,int&);
     public:
 	NEXUS* clone() const {return new NEXUS(*this);}
@@ -105,7 +103,6 @@ namespace trees_format {
     protected:
 	boost::shared_ptr<reader_t> tfr;
 
-	bool next_tree_(Tree&,int&);
 	bool current_tree(Tree&,int&);
     public:
 	virtual wrapped_reader_t* clone() const=0;
@@ -153,9 +150,8 @@ namespace trees_format {
     class Subsample: public wrapped_reader_t
     {
 	int subsample;
-
-	bool next_tree_(Tree&,int& r);
     public:
+	bool skip(int);
 	Subsample* clone() const {return new Subsample(*this);}
     
 	Subsample(int, const reader_t&);
@@ -164,7 +160,7 @@ namespace trees_format {
     class Last: public wrapped_reader_t
     {
 	int last;
-
+	int lines=0;
     public:
 	bool skip(int n);
 	Last* clone() const {return new Last(*this);}

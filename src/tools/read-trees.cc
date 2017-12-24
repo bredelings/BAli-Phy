@@ -51,23 +51,15 @@ namespace trees_format
 	return leaf_names;
     }
 
-    int reader_t::lines() const {
-	return lines_;
-    }
-  
     bool reader_t::next_tree_(Tree& T,int& r)
     {
-	bool ok = current_tree(T, r);
-	skip(1);
-	return ok;
+	return current_tree(T,r) && skip(1);
     }
-
 
     bool reader_t::next_tree(Tree& T)
     {
 	int r;
 	if (next_tree_(T,r)) {
-	    lines_++;
 	    return true;
 	}
 	else
@@ -79,7 +71,6 @@ namespace trees_format
 	int r;
 	Tree& T2 = static_cast<Tree&>(T);
 	if (next_tree_(T2,r)) {
-	    lines_++;
 	    T.reroot(r);
 	    return true;
 	}
@@ -122,7 +113,9 @@ namespace trees_format
 	    n--;
 	}
 	for(int i=0;i<n and fileref;i++)
+	{
 	    portable_getline(fileref,line);
+	}
 	line.clear();
 	return not done();
     }
@@ -168,7 +161,9 @@ namespace trees_format
 	    n--;
 	}
 	for(int i=0;i<n and fileref;i++)
+	{
 	    getline(fileref, line, ';');
+	}
 	line.clear();
 	return not done();
     }
@@ -315,13 +310,6 @@ namespace trees_format
 	return not done();
     }
 
-    bool NEXUS::next_tree_(Tree& T,int& r)
-    {
-	bool ok = current_tree(T, r);
-	line.clear();
-	return ok;
-    }
-
     void NEXUS::parse_translate_command(const std::string& s)
     {
 	translate = true;
@@ -429,15 +417,6 @@ namespace trees_format
 	return tfr->current_tree(T,r);
     }
 
-    bool wrapped_reader_t::next_tree_(Tree& T,int& r) {
-	if (tfr->next_tree_(T,r)) {
-	    lines_++;
-	    return true;
-	}
-	else
-	    return false;
-    }
-
     const vector<string>& wrapped_reader_t::names() const
     {
 	return tfr->names();
@@ -526,11 +505,9 @@ namespace trees_format
 	wrapped_reader_t::skip(skip);
     }
 
-    bool Subsample::next_tree_(Tree& T,int& r)
+    bool Subsample::skip(int n)
     {
-	bool success = wrapped_reader_t::next_tree_(T,r);
-	wrapped_reader_t::skip(subsample-1);
-	return success;
+	return tfr->skip(subsample*n);
     }
 
     Subsample::Subsample(int s, const reader_t& r)
@@ -539,7 +516,8 @@ namespace trees_format
 
     bool Last::skip(int n)
     {
-	return (tfr->skip(n) and tfr->lines() < last);
+	lines += n;
+	return (tfr->skip(n) and lines < last);
     }
 
     Last::Last(int l, const reader_t& r)
