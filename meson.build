@@ -81,7 +81,7 @@ if get_option('with-system-eigen')
   eigen = dependency('eigen3')
 else
   eigen = include_directories('include', is_system: true)
-  eigen = declare_depencency(include_directories: eigen)
+  eigen = declare_dependency(include_directories: eigen)
 endif
 
 subdir('src')
