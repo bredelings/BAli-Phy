@@ -331,6 +331,7 @@ AC_SUBST(cairo_progs)
 AM_CONDITIONAL(HAVE_CAIRO, test "${cairo}" = yes)
 
 #---------------------- Check for Eigen ------------------#
+echo "------------------------------------------"
 if test "$use_system_eigen" = yes ; then
   echo " * Looking for system Eigen headers..."
   # We could complain on not found here, but complain below
