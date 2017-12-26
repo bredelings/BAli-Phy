@@ -33,6 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment.H"
 #include "models/parameters.H"
 #include "dp-matrix.H"
+#include "dp-cube.H"
 #include <boost/dynamic_bitset.hpp>
 #include "dp/5way.H"
 
@@ -56,6 +57,10 @@ int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<i
 int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
 		      const std::vector<log_double_t>& rho, bool do_OS,bool do_OP, int bandwidth);
 
+/// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
+int sample_cube_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
+		      const std::vector<log_double_t>& rho, bool do_OS,bool do_OP);
+
 
 struct sample_tri_multi_calculation
 {
@@ -72,6 +77,28 @@ struct sample_tri_multi_calculation
   int bandwidth;
 
   sample_tri_multi_calculation(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes_,
+			       bool do_OS,bool do_OP,int b=-1);
+
+  void set_proposal_probabilities(const std::vector<log_double_t>&);
+
+  int choose(std::vector<Parameters>& p, bool=true);
+};
+
+struct sample_cube_multi_calculation
+{
+#ifndef NDEBUG_DP
+  const Parameters P0;
+#endif
+  std::vector<std::vector<int> > nodes;
+  std::vector<log_double_t> rho;
+  std::vector<std::vector<boost::shared_ptr<DPcubeSimple> > > Matrices;
+  std::vector< std::vector<log_double_t> > OS;
+  std::vector< std::vector<log_double_t> > OP;
+  std::vector<log_double_t> Pr;
+  log_double_t C1;
+  int bandwidth;
+
+  sample_cube_multi_calculation(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes_,
 			       bool do_OS,bool do_OP,int b=-1);
 
   void set_proposal_probabilities(const std::vector<log_double_t>&);
