@@ -316,6 +316,20 @@ if test "$use_mpi" != no ; then
    AM_CPPFLAGS="$AM_CPPFLAGS $MPI_CPPFLAGS"
 fi
 
+#----------------------- Check for cairo ----------------#
+cairo_progs=""
+# the first call to PKG_CHECK_MODULES( ) must be executed because it checks if pkg-config exists.
+PKG_CHECK_MODULES(CAIRO,[cairo >= 1.8],cairo=yes,cairo=no)
+AC_SUBST(CAIRO_CFLAGS)
+AC_SUBST(CAIRO_LIBS)
+if test "$cairo" = "no" ; then
+   echo	"Can't find cairo library (using pkg-config)! The tool 'draw-tree' will not be built."
+fi
+
+AM_CXXFLAGS="$AM_CXXFLAGS -pedantic $CAIRO_CFLAGS"
+AC_SUBST(cairo_progs)
+AM_CONDITIONAL(HAVE_CAIRO, test "${cairo}" = yes)
+
 #---------------------- Check for Eigen ------------------#
 if test "$use_system_eigen" = yes ; then
   echo " * Looking for system Eigen headers..."
@@ -416,19 +430,6 @@ libs=$LIBS
 AC_SUBST(libs)
 AC_SUBST(BOOST_MPI_LIBS)
 echo "------------------------------------------"
-
-#----------------------- Check for cairo ----------------#
-cairo_progs=""
-PKG_CHECK_MODULES(CAIRO,[cairo >= 1.8],cairo=yes,cairo=no)
-AC_SUBST(CAIRO_CFLAGS)
-AC_SUBST(CAIRO_LIBS)
-if test "$cairo" = "no" ; then
-   echo	"Can't find cairo library (using pkg-config)! The tool 'draw-tree' will not be built."
-fi
-
-AM_CXXFLAGS="$AM_CXXFLAGS -pedantic $CAIRO_CFLAGS"
-AC_SUBST(cairo_progs)
-AM_CONDITIONAL(HAVE_CAIRO, test "${cairo}" = yes)
 
 ldflags=$LDFLAGS
 if test "${host_os_noversion}" = "linux" ; then
