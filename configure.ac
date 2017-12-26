@@ -318,12 +318,24 @@ fi
 
 #---------------------- Check for Eigen ------------------#
 if test "$use_system_eigen" = yes ; then
-echo " * Looking for system Eigen headers..."
-AC_CHECK_HEADERS([Eigen/Eigenvalues],[],[echo "Error: I can't find <Eigen/Eigenvalues>."; echo "Please install the Eigen headers, or specify their location using --with-extra-includes". ; exit 1])
+  echo " * Looking for system Eigen headers..."
+  # We could complain on not found here, but complain below
+  PKG_CHECK_MODULES(EIGEN,[eigen3],eigen=yes,eigen=no)
+
+  AM_CXXFLAGS="$EIGEN_CFLAGS $AM_CXXFLAGS"
+  AM_CPPFLAGS="$EIGEN_CFLAGS $AM_CPPFLAGS"
+
+  # The headers check runs under CXXFLAGS/CPPFLAGS, not AM_CXXFLAGS/AM_CPPFLAGS
+  CXXFLAGS="$EIGEN_CFLAGS $CXXFLAGS"
+  # This is necessary for the preprocessor test to pass.
+  CPPFLAGS="$EIGEN_CFLAGS $AM_CPPFLAGS"
+  AC_CHECK_HEADERS([Eigen/Eigenvalues],[],[echo "Error: I can't find <Eigen/Eigenvalues>.";
+  					   echo "Please install the Eigen headers, or specify their location using --with-extra-includes". ;
+					   exit 1])
 else
-echo " * Not using system Eigen headers: we'll use our own."
-eigen_includes="-isystem \$(top_srcdir)/include"
-AM_CXXFLAGS="$eigen_includes $AM_CXXFLAGS"
+  echo " * Not using system Eigen headers: we'll use our own."
+  eigen_includes="-isystem \$(top_srcdir)/include"
+  AM_CXXFLAGS="$eigen_includes $AM_CXXFLAGS"
 fi
 #---------------------- Check for BOOST ------------------#
 

@@ -22,8 +22,7 @@ endif
 libbaliphy_sources = ['io.cc','util.cc','tree/sequencetree.cc','tree/tree.cc','sequence/alphabet.cc','sequence/sequence.cc','tree/tree-util.cc','tools/read-trees.cc','sequence/sequence-format.cc','alignment/alignment-util.cc','rng.cc','alignment/load.cc','alignment/alignment.cc','tools/statistics.cc','tools/partition.cc','tools/tree-dist.cc','alignment/alignment-random.cc','setup.cc','tree/randomtree.cc','util-random.cc','tools/parsimony.cc','alignment/index-matrix.cc','tools/mctree.cc','tools/stats-table.cc','tools/findroot.cc','tools/optimize.cc','tools/distance-report.cc','n_indels.cc','tools/inverse.cc','tools/joint-A-T.cc','tools/distance-methods.cc','tools/consensus-tree.cc']
 
 libbaliphy = static_library('bali-phy', libbaliphy_sources, 
-			    include_directories: eigen,
-			    dependencies: [boost],
+			    dependencies: [boost, eigen],
 			    link_args: extra_link_args)
 
 baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc',
@@ -35,7 +34,7 @@ baliphy_sources = ['parser/parse.cc','dp/dp_hmm.cc','parser/desugar.cc',
    'models/TreeInterface.cc', 'dp/hmm.cc','dp/dp-engine.cc','dp/dp-array.cc',
    'dp/dp-matrix.cc','dp/3way.cc','dp/2way.cc','mcmc/sample-alignment.cc',
    'mcmc/sample-node.cc','imodel/imodel.cc','dp/5way.cc','mcmc/sample-topology-NNI.cc',
-   'mcmc/sample-two-nodes.cc',
+   'mcmc/sample-two-nodes.cc','dp/dp-cube.cc',
    'models/setup.cc',
    'mcmc/sample-topology-SPR.cc', 'dp/alignment-sums.cc',
    'probability/probability.cc','models/model.cc', 'alignment/alignment-constraint.cc',
@@ -79,10 +78,10 @@ endif
 
 baliphy = executable('bali-phy',
 		     baliphy_sources,
-		     include_directories: [root_inc, eigen, extra_includes],
-		     dependencies: [boost,libdl],
+		     include_directories: [root_inc,  extra_includes],
+		     dependencies: [boost, eigen, libdl],
 		     link_args: extra_link_args,
-		     link_with: [libbaliphy,libsums],
+		     link_with: [libbaliphy, libsums],
 		     install_rpath: extra_rpath,
 		     install: true,
 		     implib: true)

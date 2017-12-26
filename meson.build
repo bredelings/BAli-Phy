@@ -41,8 +41,6 @@ if host_machine.system() == 'darwin'
   add_project_arguments('-fvisibility=default', language : 'cpp')
 endif
 
-eigen = include_directories('include', is_system: true)
-
 cairo = dependency('cairo', required: false)
 if not cairo.found()
   cairo = disabler()
@@ -78,10 +76,12 @@ else
   subdir('boost')
 endif
 
+
 if get_option('with-system-eigen')
-  eigen = include_directories('')
+  eigen = dependency('eigen3')
 else
   eigen = include_directories('include', is_system: true)
+  eigen = declare_depencency(include_directories: eigen)
 endif
 
 subdir('src')
