@@ -23,8 +23,8 @@
  * @brief This file contains routines for 2-dimensional dynamic programming.
  */
 
-#ifndef DP_MATRIX_H
-#define DP_MATRIX_H
+#ifndef DP_CUBE_H
+#define DP_CUBE_H
 
 #include <vector>
 #include "dp-engine.H"
