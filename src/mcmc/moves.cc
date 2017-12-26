@@ -98,6 +98,55 @@ void sample_tri_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b)
   Stats.inc("sample_tri_branch",result);
 }
 
+void sample_cube_one(owned_ptr<Model>& P, MoveStats&,int b) 
+{
+  Parameters* PP = P.as<Parameters>();
+  auto t = PP->t();
+
+  int node1 = t.target(t.undirected(b));
+  int node2 = t.source(t.undirected(b));
+  
+  if (uniform() < 0.5)
+    std::swap(node1,node2);
+
+  if (node1 < t.n_leaves())
+    std::swap(node1,node2);
+    
+  cube_sample_alignment(*PP,node1,node2);
+}
+
+void sample_cube_branch_one(owned_ptr<Model>& P, MoveStats& Stats,int b) 
+{
+  Parameters* PP = P.as<Parameters>();
+
+  MCMC::Result result(2);
+
+  assert(PP->variable_alignment()); 
+
+  auto t = PP->t();
+  
+  int node1 = t.target(t.undirected(b));
+  int node2 = t.source(t.undirected(b));
+
+  if (uniform() < 0.5)
+    std::swap(node1,node2);
+
+  if (node1 < t.n_leaves())
+    std::swap(node1,node2);
+    
+  const double sigma = 0.3/2;
+  double length1 = t.branch_length(b);
+  double length2 = length1 + gaussian(0,sigma);
+  if (length2 < 0) length2 = -length2;
+
+  if (cube_sample_alignment_branch(*PP,node1,node2,b,1,length2)) {
+    result.totals[0] = 1;
+    result.totals[1] = std::abs(length2 - length1);
+  }
+
+  Stats.inc("sample_cube_branch",result);
+}
+
 
 void sample_parameter_and_alignment_on_branch(owned_ptr<Model>& P, MoveStats& Stats,int b) 
 {
