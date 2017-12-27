@@ -493,7 +493,7 @@ void DPcubeSimple::forward_cell(int i2,int j2,int k2)
 {
     assert(0 < i2 and i2 < size1());
     assert(0 < j2 and j2 < size2());
-    assert(0 < k2 and k2 < size2());
+    assert(0 < k2 and k2 < size3());
 
     prepare_cell(i2,j2,k2);
 
