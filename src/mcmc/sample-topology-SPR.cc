@@ -1091,8 +1091,14 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     vector< vector<int> > nodes(2);
     nodes[0] = A3::get_nodes_branch_random(p[0].t(), n1, n2);     // Using two random orders can lead to different total
     nodes[1] = A3::get_nodes_branch_random(p[1].t(), n1, n2);     //  probabilities for p[0] and p[1] when p[0] == p[1].
-    sample_tri_multi_calculation tri(p, nodes, true, true);
-    tri.run_dp();
+    bool do_cube = (uniform() < p[0].load_value("cube_fraction",0.0));
+
+    boost::shared_ptr<sample_A3_multi_calculation> tri;
+    if (do_cube)
+	tri = boost::shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, true, true));
+    else
+	tri = boost::shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, true, true));
+    tri->run_dp();
 
     //--------- Compute PrL2: reverse proposal probabilities ---------//
 
@@ -1118,10 +1124,10 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     rho[0] = L[0]*choose_MH_P(0, C, PrL ); // Pr(proposing 0->C)
     rho[1] = L[C]*choose_MH_P(C, 0, PrL2); // Pr(proposing C->0)
   
-    tri.set_proposal_probabilities(rho);
+    tri->set_proposal_probabilities(rho);
 
     //------------- Accept or reject the proposed topology -------------//
-    int C2 = tri.choose();
+    int C2 = tri->choose();
 
     // If the alignment is not variable, then we should always accept on this second move.
     //
