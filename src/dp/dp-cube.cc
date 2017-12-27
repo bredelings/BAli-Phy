@@ -528,7 +528,7 @@ void DPcubeSimple::forward_cell(int i2,int j2,int k2)
 	    temp += (*this)(i1,j1,k1,S1) * GQ(S1,S2);
 
 	//--- Include Emission Probability----
-	double sub = 0;
+	double sub;
 	// 3 letters emitted
 	if (i1 != i2 and j1 != j2 and k1 != k2)
 	    sub = emitMMM(i2,j2,k2);
@@ -550,8 +550,11 @@ void DPcubeSimple::forward_cell(int i2,int j2,int k2)
 	    sub = emit__M(i2,j2,k2);
 
 	// silent state - nothing emitted
-	else if (i1 == i2 and j1 == j2 and k1 == k2)
+	else
+	{
+	    assert(i1 == i2 and j1 == j2 and k1 == k2);
 	    sub = emit___(i2,j2,k2);
+	}
 
 	temp *= sub;
 
