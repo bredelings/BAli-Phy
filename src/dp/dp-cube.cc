@@ -267,7 +267,7 @@ vector<int> DPcube::sample_path() const
     int j = J;
     int k = K;
 
-    int state2 = endstate();
+    int S2 = endstate();
 
     vector<double> transition(n_dp_states());
 
@@ -277,14 +277,17 @@ vector<int> DPcube::sample_path() const
     // - check that we came from (0,0) though
     while (i>=1 and j>=1 and k >=1) 
     {
-	path.push_back(state2);
+	path.push_back(S2);
 
-	for(int state1=0;state1<n_dp_states();state1++)
-	    transition[state1] = (*this)(i,j,k,state1)*GQ(state1,state2);
+	for(int s1=0;s1<n_dp_states();s1++)
+	{
+	    int S1 = dp_order(s1);
+	    transition[s1] = (*this)(i,j,k,S1)*GQ(S1,S2);
+	}
 
-	int state1 = -1;
+	int s1 = -1;
 	try {
-	    state1 = choose_scratch(transition);
+	    s1 = choose_scratch(transition);
 	}
 	catch (choose_exception<double>& c)
 	{
@@ -297,14 +300,15 @@ vector<int> DPcube::sample_path() const
 
 	    throw c;
 	}
+	int S1 = dp_order(s1);
 
-	if (di(state1)) i--;
-	if (dj(state1)) j--;
-	if (dk(state1)) k--;
+	if (di(S1)) i--;
+	if (dj(S1)) j--;
+	if (dk(S1)) k--;
 
-	state2 = state1;
+	S2 = S1;
     }
-    assert(i+di(state2)==1 and j+dj(state2)==1 and k+dk(state2)==1);
+    assert(i+di(S2)==1 and j+dj(S2)==1 and k+dk(S2)==1);
 
     std::reverse(path.begin(),path.end());
 #ifndef NDEBUG_DP
