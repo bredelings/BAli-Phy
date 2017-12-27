@@ -391,6 +391,14 @@ log_double_t DPcubeEmit::path_Q_subst(const vector<int>& path) const
     return P_sub * Pr_extra_subst;
 }
 
+inline safepow(double x, double p)
+{
+    if (p==1.0)
+	return x;
+    else
+	return pow(x,p);
+}
+
 void DPcubeEmit::prepare_cell(int i,int j,int k) 
 {
     assert(i > 0);
@@ -416,10 +424,10 @@ void DPcubeEmit::prepare_cell(int i,int j,int k)
 	total23  += m2[t] * m3[t];
     }
 
-    s123_sub(i,j,k) = (B == 1.0)?total123:pow(total123,B);
-    s12_sub(i,j) = (B == 1.0)?total123:pow(total12,B);
-    s23_sub(j,k) = (B == 1.0)?total123:pow(total23,B);
-    s13_sub(i,k) = (B == 1.0)?total123:pow(total13,B);
+    s123_sub(i,j,k) = safe_pow(total123,B);
+    s12_sub(i,j) = safe_pow(total12,B);
+    s23_sub(j,k) = safe_pow(total23,B);
+    s13_sub(i,k) = safe_pow(total13,B);
 }
 
 DPcubeEmit::DPcubeEmit(const HMM& M,
