@@ -452,9 +452,9 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
     try {
 	boost::shared_ptr<sample_A3_multi_calculation> tri;
 	if (uniform() < p[0].load_value("cube_fraction",0.0))
-	    tri = boost::shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, do_OS, do_OP));
-	else
 	    tri = boost::shared_ptr<sample_A3_multi_calculation>(new sample_cube_multi_calculation(p, nodes, do_OS, do_OP));
+	else
+	    tri = boost::shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, do_OS, do_OP));
 	tri->run_dp();
 
 	// The DP matrix construction didn't work.
