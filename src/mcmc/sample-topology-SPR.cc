@@ -1120,7 +1120,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     tri.set_proposal_probabilities(rho);
 
     //------------- Accept or reject the proposed topology -------------//
-    int C2 = tri.choose(p);
+    int C2 = tri.choose();
 
     // If the alignment is not variable, then we should always accept on this second move.
     //

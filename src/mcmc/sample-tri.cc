@@ -215,12 +215,18 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition 
     return Matrices;
 }
 
-sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p,const vector< vector<int> >& nodes_,
+boost::shared_ptr<DPengine> sample_tri_multi_calculation::compute_matrix(int i, int j)
+{
+    return tri_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
+}
+
+sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
 							   bool do_OS,bool do_OP, int b)
     :
 #ifndef NDEBUG_DP
     P0(p[0]),
 #endif
+    p(pp),
     nodes(nodes_),
     Matrices(p.size()),
     OS(p.size()),
@@ -248,11 +254,10 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
 
     for(int i=0;i<p.size();i++) 
     {
+	Matrices[i].resize(p[i].n_data_partitions());
 	for(int j=0;j<p[i].n_data_partitions();j++) {
 	    if (p[i][j].variable_alignment())
-		Matrices[i].push_back( tri_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth) );
-	    else
-		Matrices[i].push_back( boost::shared_ptr<DPmatrixConstrained>());
+		Matrices[i][j] = compute_matrix(i,j);
 	}
     }
 
@@ -307,7 +312,7 @@ void sample_tri_multi_calculation::set_proposal_probabilities(const vector<log_d
     assert(Pr[0] > 0.0);
 }
 
-int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
+int sample_tri_multi_calculation::choose(bool correct)
 {
     assert(p.size() == nodes.size());
 
@@ -441,7 +446,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
 	tri.set_proposal_probabilities(rho);
 
-	return tri.choose(p);
+	return tri.choose();
     }
     catch (std::bad_alloc&) {
 	std::cerr<<"Allocation failed in sample_tri_multi!  Proceeding."<<std::endl;
@@ -464,7 +469,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
 	tri1.set_proposal_probabilities(rho);
 
-	int C1 = tri1.choose(p,false);
+	int C1 = tri1.choose(false);
 	assert(C1 != -1);
 
 	//----------------- Part 2: Backward -----------------//

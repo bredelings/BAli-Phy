@@ -67,21 +67,25 @@ struct sample_tri_multi_calculation
 #ifndef NDEBUG_DP
     const Parameters P0;
 #endif
+    std::vector<Parameters>& p;
     std::vector<std::vector<int> > nodes;
     std::vector<log_double_t> rho;
-    std::vector<std::vector<boost::shared_ptr<DPmatrixConstrained> > > Matrices;
+    std::vector<std::vector<boost::shared_ptr<DPengine> > > Matrices;
     std::vector< std::vector<log_double_t> > OS;
     std::vector< std::vector<log_double_t> > OP;
     std::vector<log_double_t> Pr;
     log_double_t C1;
     int bandwidth;
 
-    sample_tri_multi_calculation(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes_,
+    virtual boost::shared_ptr<DPengine> compute_matrix(int,int);
+
+    sample_tri_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
 				 bool do_OS,bool do_OP,int b=-1);
 
     void set_proposal_probabilities(const std::vector<log_double_t>&);
 
-    int choose(std::vector<Parameters>& p, bool=true);
+    int choose(bool=true);
+    virtual ~sample_tri_multi_calculation() {};
 };
 
 struct sample_cube_multi_calculation
