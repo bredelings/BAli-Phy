@@ -518,6 +518,8 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
   Parameters& PP = *P.as<Parameters>();
   vector<int> branches = walk_tree_path(PP.t(), PP[0].subst_root());
 
+  double cube_fraction = P->load_value("cube_fraction",0.00);
+
   for(int i=0;i<branches.size();i++) 
   {
     int b = branches[i];
@@ -528,7 +530,12 @@ void walk_tree_sample_alignments(owned_ptr<Model>& P, MoveStats& Stats)
     {
       // FIXME: don't call sample_parameter_and_alignment_on_branch( ): something is wrong.
       if (uniform() < 0.5 or true)
-	sample_tri_one(P,Stats,b);
+      {
+	if (uniform() < cube_fraction)
+	  sample_cube_one(P,Stats,b);
+	else
+	  sample_tri_one(P,Stats,b);
+      }
       else
 	sample_parameter_and_alignment_on_branch(P,Stats,b);
     }
