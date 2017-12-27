@@ -502,12 +502,7 @@ void DPcubeSimple::forward_cell(int i2,int j2,int k2)
 
     double maximum = 0;
 
-    // If we have silent states, then we have to process them in
-    // the correct order: after all non-silent states and maybe
-    // after some silent states.
-    assert(not silent(dp_order(n_dp_states()-1)));
-
-    for(int S2=0;S2<n_dp_states();S2++) 
+    for(int S2: dp_order())
     {
 	//--- Get (i1,j1) from (i2,j2) and S2
 	int i1 = i2;
