@@ -100,26 +100,12 @@ struct sample_tri_multi_calculation: public sample_A3_multi_calculation
 				 bool do_OS,bool do_OP,int b=-1);
 };
 
-struct sample_cube_multi_calculation
+struct sample_cube_multi_calculation: public sample_A3_multi_calculation
 {
-#ifndef NDEBUG_DP
-    const Parameters P0;
-#endif
-    std::vector<std::vector<int> > nodes;
-    std::vector<log_double_t> rho;
-    std::vector<std::vector<boost::shared_ptr<DPcubeSimple> > > Matrices;
-    std::vector< std::vector<log_double_t> > OS;
-    std::vector< std::vector<log_double_t> > OP;
-    std::vector<log_double_t> Pr;
-    log_double_t C1;
-    int bandwidth;
+    virtual boost::shared_ptr<DPengine> compute_matrix(int,int);
 
-    sample_cube_multi_calculation(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes_,
+    sample_cube_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
 				  bool do_OS,bool do_OP,int b=-1);
-
-    void set_proposal_probabilities(const std::vector<log_double_t>&);
-
-    int choose(std::vector<Parameters>& p, bool=true);
 };
 
 //------------------- Checking Routines ------------------------//

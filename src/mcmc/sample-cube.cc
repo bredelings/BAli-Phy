@@ -160,217 +160,15 @@ boost::shared_ptr<DPcubeSimple> cube_sample_alignment_base(data_partition P, con
     return Matrices;
 }
 
-sample_cube_multi_calculation::sample_cube_multi_calculation(vector<Parameters>& p,const vector< vector<int> >& nodes_,
+boost::shared_ptr<DPengine> sample_cube_multi_calculation::compute_matrix(int i, int j)
+{
+    return cube_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
+}
+
+sample_cube_multi_calculation::sample_cube_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
 							   bool do_OS,bool do_OP, int b)
-    :
-#ifndef NDEBUG_DP
-    P0(p[0]),
-#endif
-    nodes(nodes_),
-    Matrices(p.size()),
-    OS(p.size()),
-    OP(p.size()),
-    Pr(p.size()),
-    bandwidth(b)
-{
-    assert(p.size() == nodes.size());
-
-    //------------ Check the alignment branch constraints ------------//
-    /*
-      for(int i=0;i<p.size();i++) {
-      vector<int> branches;
-      branches.push_back(p[i].t().find_branch(nodes[i][0],nodes[i][1]));
-      branches.push_back(p[i].t().find_branch(nodes[i][0],nodes[i][2]));
-      branches.push_back(p[i].t().find_branch(nodes[i][0],nodes[i][3]));
-
-      //    if (any_branches_constrained(branches, p[i].t(), p[i].PC->TC, p[i].PC->AC))
-      //      return;// -1;
-      }
-    */
-  
-    //----------- Generate the different states and Matrices ---------//
-    C1 = A3::correction(p[0],nodes[0]);
-
-    for(int i=0;i<p.size();i++) 
-    {
-	for(int j=0;j<p[i].n_data_partitions();j++) {
-	    if (p[i][j].variable_alignment())
-		Matrices[i].push_back( cube_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth) );
-	    else
-		Matrices[i].push_back( boost::shared_ptr<DPcubeSimple>());
-	}
-    }
-
-    //-------- Calculate corrections to path probabilities ---------//
-
-    for(int i=0; i<p.size(); i++) 
-    {
-	if (do_OS)
-	    for(int j=0;j<p[i].n_data_partitions();j++)  {
-		if (p[i][j].variable_alignment())
-		    OS[i].push_back( other_subst(p[i][j],nodes[i]));
-		else
-		    OS[i].push_back( 1 );
-	    }
-	else
-	    OS[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
-
-	if (do_OP)
-	    for(int j=0;j<p[i].n_data_partitions();j++) 
-		OP[i].push_back( other_prior(p[i][j],nodes[i]) );
-	else
-	    OP[i] = vector<log_double_t>(p[i].n_data_partitions(),log_double_t(1));
-    }
-
-    //---------------- Calculate choice probabilities --------------//
-    for(int i=0;i<Pr.size();i++) 
-    {
-	Pr[i] = p[i].prior_no_alignment();
-
-	// sum of substitution and alignment probability over all paths
-	for(int j=0;j<p[i].n_data_partitions();j++)
-	    if (p[i][j].variable_alignment()) {
-		Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
-		Pr[i] *= pow(OS[i][j], p[i][j].get_beta());
-		Pr[i] *= OP[i][j];
-	    }
-	    else
-		Pr[i] *= p[i][j].heated_likelihood();
-    }
-    assert(Pr[0] > 0.0);
-}
-
-void sample_cube_multi_calculation::set_proposal_probabilities(const vector<log_double_t>& r)
-{
-    rho.resize(Pr.size());
-    for(int i=0;i<Pr.size();i++) 
-    {
-	rho[i] = r[i];
-	Pr[i] *= rho[i];
-    }
-
-    assert(Pr[0] > 0.0);
-}
-
-int sample_cube_multi_calculation::choose(vector<Parameters>& p, bool correct)
-{
-    assert(p.size() == nodes.size());
-
-    if (Pr[0] <= 0.0) return -1;
-
-    int C = -1;
-    try {
-	C = choose_MH(0,Pr);
-    }
-    catch (choose_exception<log_double_t>& c)
-    {
-	c.prepend(std::string(__PRETTY_FUNCTION__)+"\n");
-
-	c<<show_parameters(p[0]);
-	c<<p[0].probability()<<" = "<<p[0].likelihood()<<" + "<<p[0].prior()<<"\n";
-
-	throw c;
-    }
-  
-    // \todo What do we do if partition 0 works, but other partitions fail cuz of constraints?
-    assert(C == -1 or Pr[C] > 0.0);
-
-#ifndef NDEBUG_DP
-    std::cerr<<"choice = "<<C<<endl;
-
-    // FIXME: check that alignment of unaffected sequences w/in 2 blocks is unchanged!
-    
-    // Add another entry for the incoming configuration
-    p.push_back( P0 );
-    nodes.push_back(nodes[0]);
-    rho.push_back( rho[0] );
-    Matrices.push_back( Matrices[0] );
-    OS.push_back( OS[0] );
-    OP.push_back( OP[0] );
-
-    vector< vector< vector<int> > > paths(p.size());
-
-    // For the choices that violate a constraint, why don't we just ignore them?
-    // Well, this shifts the indices of each choice.  So, we don't do it yet.
-
-    //------------------- Check offsets from path_Q -> P -----------------//
-    for(int i=0;i<p.size();i++) 
-    {
-	// check whether this arrangement violates a constraint in any partition
-	bool ok = true;
-	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment() and Matrices[i][j]->Pr_sum_all_paths() <= 0.0) 
-		ok = false;
-
-	if (not ok)
-	    assert(i != 0 and i != p.size()-1);
-
-	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment() and ok)
-	    {
-		paths[i].push_back( get_path_unique(A3::get_bitpath(p[i][j],nodes[i]),*Matrices[i][j]) );
-	  
-		OS[i][j] = other_subst(p[i][j],nodes[i]);
-		OP[i][j] = other_prior(p[i][j],nodes[i]);
-	
-		log_double_t OP_i = OP[i][j] / A3::correction(p[i][j],nodes[i]);
-	
-		check_match_P(p[i][j], OS[i][j], OP_i, paths[i][j], *Matrices[i][j]);
-	    }
-	    else
-		paths[i].push_back( vector<int>() );
-    }
-
-    //--------- Compute path probabilities and sampling probabilities ---------//
-    vector< vector<log_double_t> > PR(p.size(), vector<log_double_t>(4,1));
-
-    for(int i=0;i<p.size();i++)
-    {
-	// check whether this arrangement violates a constraint in any partition
-	bool ok = true;
-	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment() and Matrices[i][j]->Pr_sum_all_paths() <= 0.0) 
-		ok = false;
-
-	if (not ok) {
-	    PR[i][0] = 0;
-	    assert(i != 0 and i != p.size()-1);
-	    continue;
-	}
-
-	log_double_t choice_ratio = 1;
-	if (i<Pr.size())
-	    choice_ratio = choose_MH_P(0,i,Pr)/choose_MH_P(i,0,Pr);
-	else
-	    choice_ratio = 1;
-
-	//    sample_P(p[i], choice_ratio, rho[i], paths[i], Matrices[i]) );
-	PR[i][0] = p[i].heated_probability();
-	PR[i][2] = rho[i];
-	PR[i][3] = choice_ratio;
-	for(int j=0;j<p[i].n_data_partitions();j++)
-	    if (p[i][j].variable_alignment())
-	    {
-		vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
-		PR[i][0] *= A3::correction(p[i][j],nodes[i]);
-		PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
-	    }
-    }
-
-    //--------- Check that each choice is sampled w/ the correct Probability ---------//
-    check_sampling_probabilities(PR);
-#endif
-
-    //---------------- Adjust for length of n4 and n5 changing --------------------//
-    // See Appendix A of Redelings & Suchard (2007) for an explanation.
-
-    log_double_t C2 = A3::correction(p[C],nodes[C]);
-    // If we reject the proposed move, then don't do anything.
-    if (correct and uniform() > double(C1/C2))
-	return -1;
-
-    return C;
-}
+    :sample_A3_multi_calculation(pp, nodes_, do_OS, do_OP, b)
+{ }
 
 // Consider making into object! That would make it easier to mix
 // and match parts of the routine, while saving state.
@@ -386,7 +184,7 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
 	tri.set_proposal_probabilities(rho);
 
-	return tri.choose(p);
+	return tri.choose();
     }
     catch (std::bad_alloc&) {
 	std::cerr<<"Allocation failed in sample_cube_multi!  Proceeding."<<std::endl;
@@ -409,7 +207,7 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
 	tri1.set_proposal_probabilities(rho);
 
-	int C1 = tri1.choose(p,false);
+	int C1 = tri1.choose(false);
 	assert(C1 != -1);
 
 	//----------------- Part 2: Backward -----------------//
