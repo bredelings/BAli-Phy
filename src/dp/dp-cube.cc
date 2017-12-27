@@ -141,8 +141,8 @@ inline void DPcube::forward_cube_first(int x1,int y1,int z1,int x2,int y2,int z2
 	    clear_cell(x,y1-1,z);
 
     // clear plane (*,*,0)
-    for(int z=z1-1;z<=z2;z++)
-	for(int y=y1-1;y<=y2;y++)
+    for(int y=y1-1;y<=y2;y++)
+	for(int z=z1-1;z<=z2;z++)
 	    clear_cell(x1-1,y,z);
 
     // fill first plane (x1,y,z)
