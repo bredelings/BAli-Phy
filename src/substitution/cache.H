@@ -93,7 +93,7 @@ public:
 	    m1[i] *= f;
     }
 
-    double dot(int c, const Matrix& M)
+    double dot(int c, const Matrix& M) const
     {
 	const double* __restrict__ m1 = data + matrix_size()*c;
 	const double* __restrict__ m2 = M.begin();
@@ -103,7 +103,7 @@ public:
 	return total;
     }
 
-    double sum(int c)
+    double sum(int c) const
     {
 	const double* m1 = data + matrix_size()*c;
 	double total = 0;
