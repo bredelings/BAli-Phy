@@ -407,7 +407,7 @@ void DPcubeEmit::prepare_cell(int i,int j,int k)
   
     const double* __restrict__ m1 = dists1[i];
     const double* __restrict__ m2 = dists2[j];
-    const double* __restrict__ m3 = dists3[j];
+    const double* __restrict__ m3 = dists3[k];
     const double* __restrict__ wf = weighted_frequencies.begin();
 
     double total123=0;
