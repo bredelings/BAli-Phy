@@ -88,6 +88,8 @@ void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, co
   log_double_t qpGQ = Matrices.path_GQ_path(path_g) *  Matrices.generalize_P(path);
   log_double_t qpQ  = Matrices.path_Q_path(path);
 
+  int prec = cerr.precision(10);
+
   cerr<<"GQ(path) = "<<qpGQ<<"   Q(path) = "<<qpQ<<endl<<endl;
   assert(std::abs(log(qpGQ)-log(qpQ)) < 1.0e-9);
   
@@ -113,6 +115,7 @@ void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, co
     std::abort();
   }
 
+  cerr.precision(prec);
 }
 
 /// Computes true, sampling, and proposal probabilities
