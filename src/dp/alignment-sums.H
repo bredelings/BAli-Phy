@@ -1,21 +1,21 @@
 /*
-   Copyright (C) 2004-2005,2007,2009 Benjamin Redelings
+  Copyright (C) 2004-2005,2007,2009 Benjamin Redelings
 
-This file is part of BAli-Phy.
+  This file is part of BAli-Phy.
 
-BAli-Phy is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 2, or (at your option) any later
-version.
+  BAli-Phy is free software; you can redistribute it and/or modify it under
+  the terms of the GNU General Public License as published by the Free
+  Software Foundation; either version 2, or (at your option) any later
+  version.
 
-BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+  BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
+  WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+  for more details.
 
-You should have received a copy of the GNU General Public License
-along with BAli-Phy; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>.  */
+  You should have received a copy of the GNU General Public License
+  along with BAli-Phy; see the file COPYING.  If not see
+  <http://www.gnu.org/licenses/>.  */
 
 ///
 /// \file alignment-sums.H
@@ -50,12 +50,12 @@ int sample_two_nodes_multi(std::vector<Parameters>& p,const std::vector< A5::hmm
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		      const std::vector<log_double_t>& rho, bool do_OS,bool do_OP);
+		     const std::vector<log_double_t>& rho, bool do_OS,bool do_OP);
 
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		      const std::vector<log_double_t>& rho, bool do_OS,bool do_OP, int bandwidth);
+		     const std::vector<log_double_t>& rho, bool do_OS,bool do_OP, int bandwidth);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_cube_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
@@ -65,45 +65,45 @@ int sample_cube_multi(std::vector<Parameters>& p,const std::vector< std::vector<
 struct sample_tri_multi_calculation
 {
 #ifndef NDEBUG_DP
-  const Parameters P0;
+    const Parameters P0;
 #endif
-  std::vector<std::vector<int> > nodes;
-  std::vector<log_double_t> rho;
-  std::vector<std::vector<boost::shared_ptr<DPmatrixConstrained> > > Matrices;
-  std::vector< std::vector<log_double_t> > OS;
-  std::vector< std::vector<log_double_t> > OP;
-  std::vector<log_double_t> Pr;
-  log_double_t C1;
-  int bandwidth;
+    std::vector<std::vector<int> > nodes;
+    std::vector<log_double_t> rho;
+    std::vector<std::vector<boost::shared_ptr<DPmatrixConstrained> > > Matrices;
+    std::vector< std::vector<log_double_t> > OS;
+    std::vector< std::vector<log_double_t> > OP;
+    std::vector<log_double_t> Pr;
+    log_double_t C1;
+    int bandwidth;
 
-  sample_tri_multi_calculation(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes_,
-			       bool do_OS,bool do_OP,int b=-1);
+    sample_tri_multi_calculation(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes_,
+				 bool do_OS,bool do_OP,int b=-1);
 
-  void set_proposal_probabilities(const std::vector<log_double_t>&);
+    void set_proposal_probabilities(const std::vector<log_double_t>&);
 
-  int choose(std::vector<Parameters>& p, bool=true);
+    int choose(std::vector<Parameters>& p, bool=true);
 };
 
 struct sample_cube_multi_calculation
 {
 #ifndef NDEBUG_DP
-  const Parameters P0;
+    const Parameters P0;
 #endif
-  std::vector<std::vector<int> > nodes;
-  std::vector<log_double_t> rho;
-  std::vector<std::vector<boost::shared_ptr<DPcubeSimple> > > Matrices;
-  std::vector< std::vector<log_double_t> > OS;
-  std::vector< std::vector<log_double_t> > OP;
-  std::vector<log_double_t> Pr;
-  log_double_t C1;
-  int bandwidth;
+    std::vector<std::vector<int> > nodes;
+    std::vector<log_double_t> rho;
+    std::vector<std::vector<boost::shared_ptr<DPcubeSimple> > > Matrices;
+    std::vector< std::vector<log_double_t> > OS;
+    std::vector< std::vector<log_double_t> > OP;
+    std::vector<log_double_t> Pr;
+    log_double_t C1;
+    int bandwidth;
 
-  sample_cube_multi_calculation(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes_,
-			       bool do_OS,bool do_OP,int b=-1);
+    sample_cube_multi_calculation(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes_,
+				  bool do_OS,bool do_OP,int b=-1);
 
-  void set_proposal_probabilities(const std::vector<log_double_t>&);
+    void set_proposal_probabilities(const std::vector<log_double_t>&);
 
-  int choose(std::vector<Parameters>& p, bool=true);
+    int choose(std::vector<Parameters>& p, bool=true);
 };
 
 //------------------- Checking Routines ------------------------//
@@ -112,7 +112,7 @@ void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, co
 
 
 std::vector<log_double_t> sample_P(const data_partition& P, log_double_t P_choice, log_double_t rho,
-			  const std::vector<int>& path, const DPengine& Matrices);
+				   const std::vector<int>& path, const DPengine& Matrices);
 
 void check_sampling_probabilities(const std::vector< std::vector<log_double_t> >& PR);
 
