@@ -510,8 +510,10 @@ void DPcubeSimple::forward_cell(int i2,int j2,int k2)
 
     double maximum = 0;
 
-    for(int S2: dp_order())
+    for(int s2 = 0; s2<n_dp_states(); s2++)
     {
+	int S2 = dp_order(s2);
+
 	//--- Get (i1,j1) from (i2,j2) and S2
 	int i1 = i2;
 	if (di(S2)) i1--;
@@ -523,9 +525,14 @@ void DPcubeSimple::forward_cell(int i2,int j2,int k2)
 	if (dk(S2)) k1--;
 
 	//--- Compute Arrival Probability ----
+	unsigned MAX = n_dp_states();
+	if (not di(S2) and not dj(S2) and not dk(S2)) MAX = s2;
+
 	double temp  = 0;
-	for(int S1=0;S1<n_dp_states();S1++)
+	for(int s1=0;s1<MAX;s1++) {
+	    int S1 = dp_order(s1);
 	    temp += (*this)(i1,j1,k1,S1) * GQ(S1,S2);
+	}
 
 	//--- Include Emission Probability----
 	double sub;
