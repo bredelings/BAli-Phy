@@ -57,7 +57,7 @@ public:
 	assert(0 <= i and i < s1);
 	assert(0 <= j and j < s2);
 	assert(0 <= k and k < s3);
-	assert(0 <= l and k < s4);
+	assert(0 <= l and l < s4);
 	return data[s4*(s3*(s2*(i) + j) + k) + l];
     }
 
