@@ -518,7 +518,13 @@ void DPcubeSimple::forward_cell(int i2,int j2,int k2)
     prepare_cell(i2,j2,k2);
 
     // determine initial scale for this cell
-    scale(i2,j2,k2) = max(scale(i2-1,j2,k2),max(scale(i2,j2-1,k2),max(scale(i2,j2-1,k2),max(scale(i2-1,j2-1,k2),max(scale(i2-1,j2,k2-1),max(scale(i2,j2-1,k2-1),scale(i2-1,j2-1,k2-1)))))));
+    scale(i2,j2,k2) = max(scale(i2-1, j2  , k2  ),
+		      max(scale(i2  , j2-1, k2  ),
+		      max(scale(i2  , j2  , k2-1),
+		      max(scale(i2-1, j2-1, k2  ),
+		      max(scale(i2-1, j2  , k2-1),
+		      max(scale(i2  , j2-1, k2-1),
+			  scale(i2-1, j2-1, k2-1)))))));
 
     double maximum = 0;
 
