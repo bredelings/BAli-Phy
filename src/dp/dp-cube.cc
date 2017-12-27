@@ -397,21 +397,23 @@ void DPcubeEmit::prepare_cell(int i,int j,int k)
     assert(j > 0);
     assert(k > 0);
   
-    double* __restrict__ m1 = dists1[i];
-    double* __restrict__ m2 = dists2[j];
-    double* __restrict__ m3 = dists3[j];
+    const double* __restrict__ m1 = dists1[i];
+    const double* __restrict__ m2 = dists2[j];
+    const double* __restrict__ m3 = dists3[j];
+    const double* __restrict__ wf = weighted_frequencies.begin();
 
     double total123=0;
     double total12=0;
     double total13=0;
     double total23=0;
     const int MS = dists1.matrix_size();
+    // The terms with m2 already have wf[t] multiplied in.
     for(int t=0;t<MS;t++)
     {
 	total123 += m1[t] * m2[t] * m3[t];
-	total12 += m1[t] * m2[t];
-	total13 += m1[t] * m3[t];
-	total23 += m2[t] * m3[t];
+	total12  += m1[t] * m2[t];
+	total13  += m1[t] * m3[t] * wf[t];
+	total23  += m2[t] * m3[t];
     }
 
     s123_sub(i,j,k) = (B == 1.0)?total123:pow(total123,B);
@@ -424,12 +426,13 @@ DPcubeEmit::DPcubeEmit(const HMM& M,
 			   EmissionProbs&& d1,
 			   EmissionProbs&& d2,
 			   EmissionProbs&& d3,
-			   const Matrix& weighted_frequencies)
+			   const Matrix& WF)
     :DPcube(d1.n_columns(), d2.n_columns(), d3.n_columns(), M),
      s123_sub(d1.n_columns(), d2.n_columns(), d3.n_columns()),
      s12_sub(d1.n_columns(), d2.n_columns()),
      s13_sub(d1.n_columns(), d3.n_columns()),
      s23_sub(d2.n_columns(), d3.n_columns()),
+     weighted_frequencies(WF),
      dists1(std::move(d1)), dists2(std::move(d2)), dists3(std::move(d3))
 {
     //----- cache G1,G2 emission probabilities -----//
@@ -465,9 +468,7 @@ DPcubeEmit::DPcubeEmit(const HMM& M,
 
     for(int i=2;i<dists3.n_columns();i++)
     {
-	dists3.mul(i, weighted_frequencies);
-
-	double sum = dists3.sum(i);
+	double sum = dists3.dot(i, weighted_frequencies);
 	assert(sum <= 1.000000001);
 	if (sum != 0)
 	{

@@ -153,6 +153,8 @@ protected:
     Matrix s13_sub;
     Matrix s23_sub;
 
+    Matrix weighted_frequencies;
+    
     inline void prepare_cell(int i,int j,int k);
 
 public:
