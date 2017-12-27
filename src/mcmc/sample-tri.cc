@@ -215,13 +215,8 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition 
     return Matrices;
 }
 
-boost::shared_ptr<DPengine> sample_tri_multi_calculation::compute_matrix(int i, int j)
-{
-    return tri_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
-}
-
-sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
-							   bool do_OS,bool do_OP, int b)
+sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
+							 bool do_OS_,bool do_OP_, int b)
     :
 #ifndef NDEBUG_DP
     P0(p[0]),
@@ -229,10 +224,16 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
     p(pp),
     nodes(nodes_),
     Matrices(p.size()),
+    do_OS(do_OS_),
+    do_OP(do_OP_),
     OS(p.size()),
     OP(p.size()),
     Pr(p.size()),
     bandwidth(b)
+{
+}
+
+void sample_A3_multi_calculation::run_dp()
 {
     assert(p.size() == nodes.size());
 
@@ -300,7 +301,7 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
     assert(Pr[0] > 0.0);
 }
 
-void sample_tri_multi_calculation::set_proposal_probabilities(const vector<log_double_t>& r)
+void sample_A3_multi_calculation::set_proposal_probabilities(const vector<log_double_t>& r)
 {
     rho.resize(Pr.size());
     for(int i=0;i<Pr.size();i++) 
@@ -312,7 +313,7 @@ void sample_tri_multi_calculation::set_proposal_probabilities(const vector<log_d
     assert(Pr[0] > 0.0);
 }
 
-int sample_tri_multi_calculation::choose(bool correct)
+int sample_A3_multi_calculation::choose(bool correct)
 {
     assert(p.size() == nodes.size());
 
@@ -432,6 +433,16 @@ int sample_tri_multi_calculation::choose(bool correct)
     return C;
 }
 
+boost::shared_ptr<DPengine> sample_tri_multi_calculation::compute_matrix(int i, int j)
+{
+    return tri_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
+}
+
+sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& pp,const vector< vector<int> >& nodes_,
+							   bool do_OS,bool do_OP, int b)
+    :sample_A3_multi_calculation(pp, nodes_, do_OS, do_OP, b)
+{ }
+
 // Consider making into object! That would make it easier to mix
 // and match parts of the routine, while saving state.
 
@@ -440,6 +451,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 {
     try {
 	sample_tri_multi_calculation tri(p, nodes, do_OS, do_OP);
+	tri.run_dp();
 
 	// The DP matrix construction didn't work.
 	if (tri.Pr[0] <= 0.0) return -1;
@@ -463,6 +475,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
 	//----------------- Part 1: Forward -----------------//
 	sample_tri_multi_calculation tri1(p, nodes, do_OS, do_OP, bandwidth);
+	tri1.run_dp();
 
 	// The DP matrix construction didn't work.
 	if (tri1.Pr[0] <= 0.0) return -1;
@@ -487,6 +500,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	std::abort();
 
 	sample_tri_multi_calculation tri2(p2, nodes, do_OS, do_OP, bandwidth);
+	tri2.run_dp();
 
 	// The DP matrix construction didn't work.
 	if (tri2.Pr[0] <= 0.0) return -1;

@@ -62,7 +62,7 @@ int sample_cube_multi(std::vector<Parameters>& p,const std::vector< std::vector<
 		      const std::vector<log_double_t>& rho, bool do_OS,bool do_OP);
 
 
-struct sample_tri_multi_calculation
+struct sample_A3_multi_calculation
 {
 #ifndef NDEBUG_DP
     const Parameters P0;
@@ -71,21 +71,33 @@ struct sample_tri_multi_calculation
     std::vector<std::vector<int> > nodes;
     std::vector<log_double_t> rho;
     std::vector<std::vector<boost::shared_ptr<DPengine> > > Matrices;
+    bool do_OS;
+    bool do_OP;
     std::vector< std::vector<log_double_t> > OS;
     std::vector< std::vector<log_double_t> > OP;
     std::vector<log_double_t> Pr;
     log_double_t C1;
     int bandwidth;
 
-    virtual boost::shared_ptr<DPengine> compute_matrix(int,int);
+    virtual boost::shared_ptr<DPengine> compute_matrix(int,int) = 0;
 
-    sample_tri_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
+    void run_dp();
+
+    sample_A3_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
 				 bool do_OS,bool do_OP,int b=-1);
 
     void set_proposal_probabilities(const std::vector<log_double_t>&);
 
     int choose(bool=true);
-    virtual ~sample_tri_multi_calculation() {};
+    virtual ~sample_A3_multi_calculation() {};
+};
+
+struct sample_tri_multi_calculation: public sample_A3_multi_calculation
+{
+    virtual boost::shared_ptr<DPengine> compute_matrix(int,int);
+
+    sample_tri_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
+				 bool do_OS,bool do_OP,int b=-1);
 };
 
 struct sample_cube_multi_calculation
