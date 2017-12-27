@@ -426,7 +426,10 @@ DPcubeEmit::DPcubeEmit(const HMM& M,
 			   EmissionProbs&& d3,
 			   const Matrix& weighted_frequencies)
     :DPcube(d1.n_columns(), d2.n_columns(), d3.n_columns(), M),
+     s123_sub(d1.n_columns(), d2.n_columns(), d3.n_columns()),
      s12_sub(d1.n_columns(), d2.n_columns()),
+     s13_sub(d1.n_columns(), d3.n_columns()),
+     s23_sub(d2.n_columns(), d3.n_columns()),
      dists1(std::move(d1)), dists2(std::move(d2)), dists3(std::move(d3))
 {
     //----- cache G1,G2 emission probabilities -----//
