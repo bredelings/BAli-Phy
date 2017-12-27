@@ -142,21 +142,6 @@ public:
 };
 
 
-/// 3D Dynamic Programming Cube for chains which only emit or don't emit
-class DPcubeNoEmit: public DPcube {
-public:
-    /// Compute the forward probabilities for a cell
-    void forward_cell(int,int,int);
-
-    log_double_t path_Q_subst(const std::vector<int>&) const {return 1;}
-
-    using DPcube::DPcube;
-
-    virtual ~DPcubeNoEmit() {}
-};
-
-
-
 /// 3D Dynamic Programming Cube for chains which emit different things
 class DPcubeEmit : public DPcube {
 protected:
