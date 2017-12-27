@@ -199,13 +199,16 @@ log_double_t DPcube::path_P(const vector<int>& path) const
     const int I = size1()-1;
     const int J = size2()-1;
     const int K = size3()-1;
+
     int i = I;
     int j = J;
     int k = K;
-    log_double_t Pr=1.0;
 
     int l = path.size()-1;
-    int state2 = path[l];
+    int S2 = path[l];
+    assert(S2 == endstate());
+
+    log_double_t Pr=1.0;
 
     vector<double> transition(n_dp_states());
 
@@ -218,33 +221,38 @@ log_double_t DPcube::path_P(const vector<int>& path) const
     //   is at path[-1]
     while (l>0) {
 
-	for(int state1=0;state1<n_dp_states();state1++)
-	    transition[state1] = (*this)(i,j,k,state1)*GQ(state1,state2);
+	for(int s1=0;s1<n_dp_states();s1++)
+	{
+	    int S1 = dp_order(s1);
+	    transition[s1] = (*this)(i,j,k,S1)*GQ(S1,S2);
+	}
 
-	int state1 = path[l-1];
-	double p = choose_P(state1,transition);
+	int S1 = path[l-1];
+	auto s1 = find_index(dp_order(),S1);
+
+	double p = choose_P(*s1,transition);
 	assert(p > 0.0);
 
-	if (di(state1)) i--;
-	if (dj(state1)) j--;
-	if (dk(state1)) k--;
+	if (di(S1)) i--;
+	if (dj(S1)) j--;
+	if (dk(S1)) k--;
 
 	l--;
-	state2 = state1;
+	S2 = S1;
 	Pr *= p;
     }
     assert(l == 0);
     assert(i == 1 and j == 1 and k == 1);
 
     // include probability of choosing 'Start' vs ---+ !
-    for(int state1=0;state1<n_dp_states();state1++)
-	transition[state1] = (*this)(1,1,1,state1) * GQ(state1,state2);
+    for(int S1=0;S1<n_dp_states();S1++)
+	transition[S1] = (*this)(1,1,1,S1) * GQ(S1,S2);
 
     // Get the probability that the previous state was 'Start'
     double p=0.0;
-    for(int state1=0;state1<n_dp_states();state1++)  
-	if (not silent(state1))
-	    p += choose_P(state1,transition);
+    for(int S1=0;S1<n_dp_states();S1++)  
+	if (not silent(S1))
+	    p += choose_P(S1,transition);
 
     Pr *= p;
 

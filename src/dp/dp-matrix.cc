@@ -747,11 +747,11 @@ log_double_t DPmatrixConstrained::path_P(const vector<int>& path) const
     const int J = size2()-1;
 
     // we are at S1(i,j) coming from S2, and seek to determine S1
-    int S2 = endstate();
     int i = I;
     int j = J;
-
     int l = path.size()-1;
+    int S2 = path[l];
+    assert(S2 == endstate());
 
     log_double_t Pr=1.0;
 
