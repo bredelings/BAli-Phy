@@ -131,17 +131,17 @@ inline void DPcube::forward_cube_first(int x1,int y1,int z1,int x2,int y2,int z2
     //   constantly check if substracting things will run off the edge.
 
     // clear plane (*,*,0) - not safe if we are chaining cubes at their corneres
-    for(int x=x1-1;x<x2;x++)
+    for(int x=x1-1;x<=x2;x++)
 	for(int y=y1-1;y<=y2;y++)
 	    clear_cell(x,y,z1-1);
 
     // clear plane (*,0,*)
     for(int x=x1-1;x<=x2;x++)
-	for(int z=z1-1;z<z2;z++)
+	for(int z=z1-1;z<=z2;z++)
 	    clear_cell(x,y1-1,z);
 
     // clear plane (*,*,0)
-    for(int z=z1-1;z<z2;z++)
+    for(int z=z1-1;z<=z2;z++)
 	for(int y=y1-1;y<=y2;y++)
 	    clear_cell(x1-1,y,z);
 
@@ -151,16 +151,16 @@ inline void DPcube::forward_cube_first(int x1,int y1,int z1,int x2,int y2,int z2
 	forward_first_cell(x1,y1,z1);
 
 	// (x1,=,>)
-	for(int z=z1+1;z<z2;z++)
+	for(int z=z1+1;z<=z2;z++)
 	    forward_cell(x1,y1,z);
 
 	// (x1,>,>=)
 	for(int y=y1+1;y<=y2;y++)
-	    for(int z=z1;z<z2;z++)
+	    for(int z=z1;z<=z2;z++)
 		forward_cell(x1,y,z);
     }
 
-    for(int x=x1+1; x<x2; x++)
+    for(int x=x1+1; x<=x2; x++)
 	for(int y=y1; y<=y2; y++)
 	    for(int z=z1; z<=z2; z++)
 		forward_cell(x,y,z);
