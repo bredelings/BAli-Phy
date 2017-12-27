@@ -391,9 +391,9 @@ log_double_t DPcubeEmit::path_Q_subst(const vector<int>& path) const
     return P_sub * Pr_extra_subst;
 }
 
-inline safepow(double x, double p)
+inline double safe_pow(double x, double p)
 {
-    if (p==1.0)
+    if (p == 1.0)
 	return x;
     else
 	return pow(x,p);
