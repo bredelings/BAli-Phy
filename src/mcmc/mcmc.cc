@@ -891,11 +891,6 @@ namespace MCMC {
     
 
 
-    std::ostream& operator<<(std::ostream& o,const Matrix& M) {
-	operator<<(o,M);
-	return o;
-    }
-
 #ifdef HAVE_MPI
     void exchange_random_pairs(int iterations, Parameters& P, MCMC::MoveStats& /*Stats*/)
     {
