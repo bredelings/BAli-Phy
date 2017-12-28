@@ -217,7 +217,7 @@ public:
 		return convertToString(d);
 		break;
 	    case log_double_type:
-		return convertToString(ld);
+		return "LD"+convertToString(ld);
 		break;
 	    case char_type:
 		return std::string("'")+c+"'";
