@@ -1,3 +1,4 @@
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 //#define DEBUG_RATE_MATRIX
 #include "computation/computation.H"
 #include "math/exponential.H"

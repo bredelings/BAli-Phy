@@ -1,3 +1,4 @@
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/computation.H"
 #include "dp/2way.H"
 #include "imodel/imodel.H"

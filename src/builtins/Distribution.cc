@@ -1,3 +1,4 @@
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #undef NDEBUG
 #include <vector>
 #include <valarray>

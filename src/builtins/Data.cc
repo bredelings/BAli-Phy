@@ -1,3 +1,4 @@
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include <vector>
 #include <string>
 #include "computation/computation.H"

@@ -1,3 +1,4 @@
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include <string>
 #include <vector>
 #include <map>
@@ -17,8 +18,6 @@ T get_line_of(std::istream& i)
   portable_getline(i, line);
   return convertTo<T>(line);
 }
-
-const int missing = -1;
 
 extern "C" closure builtin_function_read_phase_file(OperationArgs& Args)
 {
