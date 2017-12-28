@@ -8,4 +8,4 @@ filesystem_sources = ['src/operations.cpp',
 		      'src/codecvt_error_category.cpp']
 
 boost_libs += static_library('boost_filesystem', filesystem_sources,
-			include_directories: boost_inc)
+			include_directories: boost_inc, cpp_args: ['-Wno-deprecated-declarations','-Wno-unused-parameter'])
