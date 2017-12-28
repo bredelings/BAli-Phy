@@ -4,6 +4,9 @@
 #ifdef assert
 #undef assert
 #endif
+#ifdef assert_msg
+#undef assert_msg
+#endif
 #ifdef NDEBUG
 #define assert(expr)          (0?(void(expr)):(void(0)))
 #define assert_msg(expr,message)  (0?(void(expr)):(void(0)))
